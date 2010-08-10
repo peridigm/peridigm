@@ -1,0 +1,396 @@
+/*
+ * PdNeighborhood.cxx
+ *
+ *  Created on: Mar 10, 2010
+ *      Author: jamitch
+ */
+
+#include "PdNeighborhood.h"
+#include "PdQuickGrid.h"
+#include "PdVTK.h"
+#include "vtkIdList.h"
+#include "vtkKdTree.h"
+#include "vtkKdTreePointLocator.h"
+#include <stdexcept>
+
+
+namespace PdNeighborhood {
+
+/*
+ * Private function
+ */
+Pd_shared_ptr_Array<int> getPointsInNeighborhoodOfAxisAlignedMinimumValue
+(
+		CoordinateLabel axis,
+		double axisMinimumValue,
+		double horizon,
+		const Coordinates& c,
+		std::tr1::shared_ptr<int>& sortedMap
+);
+
+/*
+ * Private function
+ */
+Pd_shared_ptr_Array<int> getPointsInNeighborhoodOfAxisAlignedMaximumValue
+(
+		CoordinateLabel axis,
+		double axisMaximumValue,
+		double horizon,
+		const Coordinates& c,
+		std::tr1::shared_ptr<int>& sortedMap
+);
+
+/*
+ * Private function
+ */
+std::tr1::shared_ptr<int> getSortedMap(const Coordinates& c, CoordinateLabel axis);
+
+
+/**
+ * This interface assumes data layout like PdQuickGrid
+ * @param neighborsPtr -- pointer into start of
+ * neighborhood for localId
+ * @param neighbors -- first entry must be "numNeigh"
+ */
+NeighborhoodList::NeighborhoodList
+(
+		int numPoints,
+		std::tr1::shared_ptr<int> neighborsPtr,
+		std::tr1::shared_ptr<int> neighbors
+)
+:
+numPoints(numPoints),
+sizeNeighborhoodList(numPoints),
+numNeighbors(),
+neighborsPtr(neighborsPtr),
+neighbors(neighbors)
+{
+	/*
+	 * construct number of neighbors; accumulate sizeNeighborhoodList
+	 */
+
+	numNeighbors = std::tr1::shared_ptr<int>(new int[numPoints],PdQuickGrid::Deleter<int>());
+	int *nNeigh = numNeighbors.get();
+	int *ptr = neighborsPtr.get();
+	for(int i=0;i<numPoints;i++,nNeigh++,ptr++){
+		int p = *ptr;
+		*nNeigh = *(neighbors.get()+p);
+		sizeNeighborhoodList += *nNeigh;
+	}
+}
+
+
+std::tr1::shared_ptr<int> getSortedMap(const Coordinates& c, CoordinateLabel axis){
+	int numPoints = c.getNumPoints();
+	Coordinates::SortComparator compare = c.getSortComparator(axis);
+	std::tr1::shared_ptr<int> sortedMap = c.getIdentityMap();
+	/*
+	 * Sort points
+	 */
+	std::sort(sortedMap.get(),sortedMap.get()+numPoints,compare);
+	return sortedMap;
+}
+
+/**
+ * Mostly for rectangular type meshes; Returns points in plane perpendicular to "axis";
+ * All points within a distance of horizon of the axis minimum are returned
+ * @param axis -- X || Y || Z
+ * @param horizon
+ */
+Pd_shared_ptr_Array<int> getPointsAxisAlignedMinimum
+(
+		CoordinateLabel axis,
+		std::tr1::shared_ptr<double> xPtr,
+		int numPoints,
+		double horizon
+)
+{
+
+	const Coordinates c(xPtr,numPoints);
+//	Coordinates::SortComparator compare = c.getSortComparator(axis);
+//	std::tr1::shared_ptr<int> sortedMap = c.getIdentityMap();
+//	/*
+//	 * Sort points
+//	 */
+//	std::sort(sortedMap.get(),sortedMap.get()+numPoints,compare);
+
+	std::tr1::shared_ptr<int> sortedMap = getSortedMap(c,axis);
+
+	/*
+	 * Get sorted points
+	 */
+	int *mapX = sortedMap.get();
+	/*
+	 * First value in map corresponds with minimum value of coordinate "axis"
+	 */
+	int iMIN = *mapX;
+	double xMin = *(xPtr.get()+3*iMIN+axis);
+
+	/*
+	 * Look for points from "xMin" to "xMin+horizon"
+	 */
+//	double value = xMin + horizon;
+//	const Coordinates::SearchIterator start=c.begin(axis,sortedMap);
+//	const Coordinates::SearchIterator end=start+numPoints;
+//	Coordinates::SearchIterator upper = std::upper_bound(start,end,value);
+//	int numPointsInSet = upper.numPointsFromStart();
+//	Pd_shared_ptr_Array<int> pointIds(numPointsInSet);
+//	int *ids = pointIds.get();
+//	for(const int *i=upper.mapStart();i!=upper.mapIterator();i++,ids++)
+//		*ids = *i;
+//
+//	return pointIds;
+	return getPointsInNeighborhoodOfAxisAlignedMinimumValue(axis,xMin,horizon,c,sortedMap);
+}
+
+Pd_shared_ptr_Array<int> getPointsInNeighborhoodOfAxisAlignedMinimumValue
+(
+		CoordinateLabel axis,
+		std::tr1::shared_ptr<double> xPtr,
+		int numPoints,
+		double horizon,
+		double axisMinimumValue
+)
+{
+	const Coordinates c(xPtr,numPoints);
+	std::tr1::shared_ptr<int> sortedMap = getSortedMap(c,axis);
+	return getPointsInNeighborhoodOfAxisAlignedMinimumValue(axis,axisMinimumValue,horizon,c,sortedMap);
+}
+
+Pd_shared_ptr_Array<int> getPointsInNeighborhoodOfAxisAlignedMinimumValue
+(
+		CoordinateLabel axis,
+		double axisMinimumValue,
+		double horizon,
+		const Coordinates& c,
+		std::tr1::shared_ptr<int>& sortedMap
+){
+	int numPoints = c.getNumPoints();
+	/*
+	 * Look for points from "xMin" to "xMin+horizon"
+	 */
+	double value = axisMinimumValue + horizon;
+	const Coordinates::SearchIterator start=c.begin(axis,sortedMap);
+	const Coordinates::SearchIterator end=start+numPoints;
+	Coordinates::SearchIterator upper = std::upper_bound(start,end,value);
+	int numPointsInSet = upper.numPointsFromStart();
+	Pd_shared_ptr_Array<int> pointIds(numPointsInSet);
+	int *ids = pointIds.get();
+	for(const int *i=upper.mapStart();i!=upper.mapIterator();i++,ids++)
+		*ids = *i;
+
+	return pointIds;
+}
+
+Pd_shared_ptr_Array<int> getPointsAxisAlignedMaximum
+(
+		CoordinateLabel axis,
+		std::tr1::shared_ptr<double> xPtr,
+		int numPoints,
+		double horizon
+)
+{
+
+	const Coordinates c(xPtr,numPoints);
+//	Coordinates::SortComparator compare = c.getSortComparator(axis);
+//	std::tr1::shared_ptr<int> sortedMap = c.getIdentityMap();
+//	/*
+//	 * Sort points
+//	 */
+//	std::sort(sortedMap.get(),sortedMap.get()+numPoints,compare);
+
+	std::tr1::shared_ptr<int> sortedMap = getSortedMap(c,axis);
+	/*
+	 * Get sorted points
+	 */
+	int *mapX = sortedMap.get();
+
+	/*
+	 * Last value in map corresponds with maximum value
+	 */
+	int iMAX = *(mapX+numPoints-1);
+	double max = *(xPtr.get()+3*iMAX+axis);
+
+	/*
+	 * Look for points from "max-horizon" to "max"
+	 */
+//	double value = max - horizon;
+//	const Coordinates::SearchIterator start=c.begin(axis,sortedMap);
+//	const Coordinates::SearchIterator end=start+numPoints;
+//	Coordinates::SearchIterator upper = std::upper_bound(start,end,value);
+//	int numPointsInSet = upper.numPointsToEnd();
+//	Pd_shared_ptr_Array<int> pointIds(numPointsInSet);
+//	int *ids = pointIds.get();
+//	for(const int *i=upper.mapIterator();i!=upper.mapEnd();i++,ids++)
+//		*ids = *i;
+//	return pointIds;
+
+	return getPointsInNeighborhoodOfAxisAlignedMaximumValue(axis,max,horizon,c,sortedMap);
+}
+
+Pd_shared_ptr_Array<int> getPointsInNeighborhoodOfAxisAlignedMaximumValue
+(
+		CoordinateLabel axis,
+		std::tr1::shared_ptr<double> xPtr,
+		int numPoints,
+		double horizon,
+		double axisMaximumValue
+)
+{
+	const Coordinates c(xPtr,numPoints);
+	std::tr1::shared_ptr<int> sortedMap = getSortedMap(c,axis);
+	return getPointsInNeighborhoodOfAxisAlignedMaximumValue(axis,axisMaximumValue,horizon,c,sortedMap);
+}
+
+Pd_shared_ptr_Array<int> getPointsInNeighborhoodOfAxisAlignedMaximumValue
+(
+		CoordinateLabel axis,
+		double axisMaximumValue,
+		double horizon,
+		const Coordinates& c,
+		std::tr1::shared_ptr<int>& sortedMap
+){
+
+	int numPoints = c.getNumPoints();
+	/*
+	 * Look for points from "max-horizon" to "max"
+	 */
+	double value = axisMaximumValue - horizon;
+	const Coordinates::SearchIterator start=c.begin(axis,sortedMap);
+	const Coordinates::SearchIterator end=start+numPoints;
+	Coordinates::SearchIterator upper = std::upper_bound(start,end,value);
+	int numPointsInSet = upper.numPointsToEnd();
+	Pd_shared_ptr_Array<int> pointIds(numPointsInSet);
+	int *ids = pointIds.get();
+	for(const int *i=upper.mapIterator();i!=upper.mapEnd();i++,ids++)
+		*ids = *i;
+
+	return pointIds;
+
+}
+
+NeighborhoodList getNeighborhoodList
+(
+		double horizon,
+		int numPoints,
+		std::tr1::shared_ptr<double> xOwnedPtr,
+		vtkSmartPointer<vtkUnstructuredGrid> overlapGrid,
+		bool withSelf
+)
+{
+
+	std::tr1::shared_ptr<int> neighborsPtr(new int[numPoints],PdQuickGrid::Deleter<int>());
+
+	/*
+	 * Create KdTree
+	 */
+	vtkKdTreePointLocator* kdTree = vtkKdTreePointLocator::New();
+	kdTree->SetDataSet(overlapGrid);
+	int sizeList = 0;
+	{
+		/*
+		 * Loop over owned points and determine number of points in horizon
+		 */
+		int *ptr = neighborsPtr.get();
+		const int* const end = neighborsPtr.get()+numPoints;
+		double *x = xOwnedPtr.get();
+		int localId=0;
+		for(;ptr!=end;ptr++,x+=3, localId++){
+			/*
+			 * pointer to start of neighborhood list
+			 */
+			*ptr = sizeList;
+
+			vtkIdList* kdTreeList = vtkIdList::New();
+			/*
+			 * Note that list returned includes this point *
+			 */
+			kdTree->FindPointsWithinRadius(horizon, x, kdTreeList);
+
+			if(0==kdTreeList->GetNumberOfIds()){
+				/*
+				 * Houston, we have a problem
+				 */
+				std::stringstream sstr;
+				sstr << "\nERROR-->PdNeighborhood.cxx::getNeighborhoodList(..)\n";
+				sstr << "\tKdTree search failed to find any points in its neighborhood including itself!\n\tThis is probably a problem.\n";
+				sstr << "\tLocal point id = " << localId << "\n"
+					 << "\tSearch horizon = " << horizon << "\n"
+					 << "\tx,y,z = " << *(x) << ", " << *(x+1) << ", " << *(x+2) << std::endl;
+				std::string message=sstr.str();
+				throw std::runtime_error(message);
+			}
+			/*
+			 * Accumulate pointer;
+			 * NOTE that search includes "self"; if we want self then we need to add it
+			 * to the size of the list;  We already need one extra
+			 * for "numNeigh" so we must add another entry for self.  On the other
+			 * hand, if we don't want self, then we don't have to do anything since
+			 * the existing extra entry we can re-use for "numNeigh"
+			 *
+			 */
+			if(withSelf){
+				sizeList += (kdTreeList->GetNumberOfIds()+1);
+			}
+			else{
+				sizeList += (kdTreeList->GetNumberOfIds());
+			}
+
+			kdTreeList->Delete();
+		}
+	}
+	/*
+	 * Second pass to populate neighborhood list
+	 */
+	std::tr1::shared_ptr<int> neighborsList(new int[sizeList],PdQuickGrid::Deleter<int>());
+
+	{
+		/*
+		 * Loop over owned points and determine number of points in horizon
+		 */
+		int *list = neighborsList.get();
+		double *x = xOwnedPtr.get();
+		for(int p=0;p<numPoints;p++,x+=3){
+
+			vtkIdList* kdTreeList = vtkIdList::New();
+			/*
+			 * Note that list returned includes this point * but at start of list
+			 */
+			kdTree->FindPointsWithinRadius(horizon, x, kdTreeList);
+
+			if(withSelf){
+				/*
+				 * First entry is the number of neighbors
+				 */
+				*list = kdTreeList->GetNumberOfIds(); list++;
+
+				/*
+				 * Next entry is the "self" id
+				 */
+				*list = p; list++;
+			} else {
+				/*
+				 * First entry is the number of neighbors
+				 */
+				*list = kdTreeList->GetNumberOfIds()-1; list++;
+
+			}
+
+			/*
+			 * Loop over neighborhood and save all points except for "self id"
+			 */
+			for(int i=0;i<kdTreeList->GetNumberOfIds();i++){
+				int uid = kdTreeList->GetId(i);
+				if(uid == p) continue;
+				*list = uid;
+				list++;
+			}
+			kdTreeList->Delete();
+		}
+	}
+
+	kdTree->Delete();
+	return NeighborhoodList(numPoints,neighborsPtr,neighborsList);
+}
+
+}
