@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<!--
+Peridigm Version XXX: Tue Feb  9 19:57:11 2010
+-->
+<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian">
+  <UnstructuredGrid>
+    <Piece NumberOfPoints="2" NumberOfCells="2">
+      <Points>
+        <DataArray type="Float64" Name="Points" NumberOfComponents="3" format="ascii">
+         -9.99980000000000e-01 0.000000000000000e+00 0.000000000000000e+00
+         9.99980000000000e-01 0.000000000000000e+00 0.000000000000000e+00
+        </DataArray>
+      </Points>
+      <Cells>
+        <DataArray type="Int64" Name="connectivity" format="ascii" >
+         0 1
+        </DataArray>
+        <DataArray type="Int64" Name="offsets" format="ascii" >
+         1 2
+        </DataArray>
+        <DataArray type="UInt8" Name="types" format="ascii" >
+         1 1
+        </DataArray>
+      </Cells>
+      <CellData>
+      </CellData>
+      <PointData>
+        <DataArray type="Float64" Name="X_Position" format="ascii" >
+         -9.99980000000000e-01 9.99980000000000e-01
+        </DataArray>
+        <DataArray type="Float64" Name="Y_Position" format="ascii" >
+         0.000000000000000e+00 0.000000000000000e+00
+        </DataArray>
+        <DataArray type="Float64" Name="Z_Position" format="ascii" >
+         0.000000000000000e+00 0.000000000000000e+00
+        </DataArray>
+        <DataArray type="Float64" Name="X_Velocity" format="ascii" >
+         9.850000000000683e-01 -9.850000000000683e-01
+        </DataArray>
+        <DataArray type="Float64" Name="Y_Velocity" format="ascii" >
+         0.000000000000000e+00 0.000000000000000e+00
+        </DataArray>
+        <DataArray type="Float64" Name="Z_Velocity" format="ascii" >
+         0.000000000000000e+00 0.000000000000000e+00
+        </DataArray>
+        <DataArray type="Int64" Name="ID" format="ascii" >
+         0 1
+        </DataArray>
+        <DataArray type="Float64" Name="Dilatation" format="ascii" >
+         -3.0e-05 -3.0e-05
+        </DataArray>
+        <DataArray type="Float64" Name="Weighted_Volume" format="ascii" >
+         8.000000000000000e+00 8.000000000000000e+00
+        </DataArray>
+      </PointData>
+    </Piece>
+  </UnstructuredGrid>
+</VTKFile>

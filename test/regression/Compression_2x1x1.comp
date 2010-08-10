@@ -1,0 +1,10 @@
+<Tolerances>
+  <Tolerance variable="X_Position" value="1.1e-9"/>
+  <Tolerance variable="Y_Position" value="1.2e-9"/>
+  <Tolerance variable="Z_Position" value="1.3e-9"/>
+  <Tolerance variable="X_Velocity" value="1.4e-9"/>
+  <Tolerance variable="Y_Velocity" value="1.5e-9"/>
+  <Tolerance variable="Z_Velocity" value="1.6e-9"/>
+  <Tolerance variable="Weighted_Volume" value="1.7e-9"/>
+  <Tolerance variable="Dilatation" value="1.8e-9"/>
+</Tolerances>
