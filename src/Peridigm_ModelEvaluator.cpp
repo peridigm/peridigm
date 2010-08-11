@@ -54,6 +54,9 @@ Peridigm::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<const Epetra_Comm>& 
 	numPID(comm->NumProc()),
 	myPID(comm->MyPID())
 {
+
+INTENSIONALLY BREAK BUILD!
+
   Teuchos::RCP<Teuchos::ParameterList> problemParams = 
 	Teuchos::rcp(&(params->sublist("Problem")),false);
   out = Teuchos::VerboseObjectBase::getDefaultOStream();
