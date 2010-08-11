@@ -16,7 +16,7 @@ endif (NOT ${buildInSource})
 # Add the tests
 # 
 # Peridigm unit tests:
-add_test (utPeridigm_PdQuickGridDiscretization       python run_unit_test.py ../../src/utPeridigm_PdQuickGridDiscretization)
+##add_test (utPeridigm_PdQuickGridDiscretization       python run_unit_test.py ../../src/utPeridigm_PdQuickGridDiscretization)
 add_test (utPeridigm_LinearElasticIsotropicMaterial  python run_unit_test.py ../../src/utPeridigm_LinearElasticIsotropicMaterial)
 add_test (utPeridigm_IsotropicElasticPlasticMaterial python run_unit_test.py ../../src/utPeridigm_IsotropicElasticPlasticMaterial)
 add_test (utPHAL_UpdateForceState                    python run_unit_test.py ../../src/utPHAL_UpdateForceState)

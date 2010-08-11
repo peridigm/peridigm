@@ -14,10 +14,10 @@ endif (NOT ${buildInSource})
 #
 # Add the tests
 #
-add_test (no_args_serial python no_args_serial.py)
-add_test (no_args_parallel python no_args_parallel.py)
-add_test (PdQuickGrid_3x3_serial python PdQuickGrid_3x3_serial.py)
-add_test (PdQuickGrid_3x3_mpi2 python PdQuickGrid_3x3_mpi2.py)
+##add_test (no_args_serial python no_args_serial.py)
+##add_test (no_args_parallel python no_args_parallel.py)
+##add_test (PdQuickGrid_3x3_serial python PdQuickGrid_3x3_serial.py)
+##add_test (PdQuickGrid_3x3_mpi2 python PdQuickGrid_3x3_mpi2.py)
 
 add_custom_target( rtest
    COMMAND ctest
