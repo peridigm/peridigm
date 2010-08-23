@@ -51,32 +51,14 @@ namespace Peridigm {
     virtual ~AbstractDiscretization() {}
 
     //! One-dimensional map, used for cell volumes and scalar constitutive data.
-    virtual Teuchos::RCP<const Epetra_Map> getOneDimensionalMap() const = 0;
+    virtual Teuchos::RCP<const Epetra_BlockMap> getOneDimensionalMap() const = 0;
 
     //! One-dimensional overlap map, used for cell volumes and scalar constitutive data (includes ghosts).
-    virtual Teuchos::RCP<const Epetra_Map> getOneDimensionalOverlapMap() const = 0;
-
-    //! Three-dimensional overlap map, used for positions, displacements, velocities and vector constitutive data (includes ghosts).
-    virtual Teuchos::RCP<const Epetra_Map> getThreeDimensionalOverlapMap() const = 0;
-
-	/** \brief Three-dimensional two-entry map.
-	 *  Map for solver unknowns.
-	 *  The solver x vector contains current positions and velocities.
-	 *  The solver x_dot vector contains velocities and accelerations.
-	 *  The order of myGlobalElements is important here, need to allow
-	 *  for import/export with threeDimensionalOverlapMap and 
-     *  accelerationExportOverlapMap.
-	 *  This map must be of type Epetra_Map (not Epetra_BlockMap) so 
-	 *  it can be returned by ModelEvaluator::get_x_map(). */
-    virtual Teuchos::RCP<const Epetra_Map> getThreeDimensionalTwoEntryMap() const = 0;
-
-	/** \brief Secondary entry overlap map, used for force/acceleration vector
-	 *  and velocity vector, allows for import/export into solver's x and x_dot vectors. */
-	virtual Teuchos::RCP<const Epetra_Map> getSecondaryEntryOverlapMap() const = 0;
+    virtual Teuchos::RCP<const Epetra_BlockMap> getOneDimensionalOverlapMap() const = 0;
 
 	/** \brief Bond map, used for constitutive data stored on each bond. This is
      *   a non-overlapping map. */
-	virtual Teuchos::RCP<const Epetra_Map> getBondMap() const = 0;
+	virtual Teuchos::RCP<const Epetra_BlockMap> getBondMap() const = 0;
 
     //! Get initial positions
     virtual Teuchos::RCP<Epetra_Vector> getSolverInitialX() const = 0;

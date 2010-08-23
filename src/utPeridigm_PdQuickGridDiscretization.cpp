@@ -34,13 +34,33 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
+#include <Epetra_SerialComm.h>
 #include "Peridigm_PdQuickGridDiscretization.hpp"
 
 using namespace boost::unit_test;
+using namespace Teuchos;
 
 void initialize()
 {
-  BOOST_CHECK(0 == 0);
+  RCP<const Epetra_SerialComm> comm = rcp(new Epetra_SerialComm);
+  RCP<ParameterList> discParams = rcp(new ParameterList);
+
+  discParams->set("Type", "PdQuickGrid");
+  ParameterList& quickGridParams = discParams->sublist("TensorProduct3DMeshGenerator");
+  quickGridParams.set("Type", "PdQuickGrid");
+  quickGridParams.set("X Origin", 0.0);
+  quickGridParams.set("Y Origin", 0.0);
+  quickGridParams.set("Z Origin", 0.0);
+  quickGridParams.set("X Length", 1.0);
+  quickGridParams.set("Y Length", 1.0);
+  quickGridParams.set("Z Length", 1.0);
+  quickGridParams.set("Number Points X", 10);
+  quickGridParams.set("Number Points Y", 10);
+  quickGridParams.set("Number Points Z", 10);
+  quickGridParams.set("Horizon", 0.31);
+
+//   RCP<Peridigm::PdQuickGridDiscretization> discretization =
+//     rcp(new Peridigm::PdQuickGridDiscretization(comm, discParams));
 }
 
 bool init_unit_test_suite()
