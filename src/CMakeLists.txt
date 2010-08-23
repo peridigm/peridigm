@@ -41,14 +41,18 @@ link_directories (${TRILINOS_DIR}/lib ../io ../PdMaterialUtilities ${VTK_LIBRARY
 # Unit Tests
 #
 
-##add_executable(utPeridigm_PdQuickGridDiscretization
-##		utPeridigm_PdQuickGridDiscretization.cpp)
-##target_link_libraries(utPeridigm_PdQuickGridDiscretization
-##${TRILINOS_LIBS}
-##${PdQuickGridLibs}
-##${REQUIRED_LIBS}
-##${Boost_LIBRARIES}
-##)
+add_executable(utPeridigm_PdQuickGridDiscretization
+		utPeridigm_PdQuickGridDiscretization.cpp
+        Peridigm_PdQuickGridDiscretization.cpp)
+target_link_libraries(utPeridigm_PdQuickGridDiscretization
+${TRILINOS_LIBS}
+${PdZoltanLibs}
+${PdQuickGridLibs}
+${PdVTKLibs}
+${VTK_LIBS}
+${REQUIRED_LIBS}
+${Boost_LIBRARIES}
+)
 
 add_executable(utPeridigm_LinearElasticIsotropicMaterial
 		./materials/Peridigm_LinearElasticIsotropicMaterial.cpp

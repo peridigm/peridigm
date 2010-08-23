@@ -23,7 +23,7 @@ link_directories(${TRILINOS_DIR}/lib ${VTK_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS})
 set(VTK_LIBS vtkIO vtkGraphics)
 
 #PdQuickGrid library
-add_library(PdQuickGrid PdQuickGrid.cxx PdQuickGridParallel.cxx)
+add_library(PdQuickGrid PdQuickGrid.cxx PdQuickGridParallel.cxx Field.cxx)
 
 # PdVTK library
 add_library(PdVTK PdVTK.cxx Field.cxx)

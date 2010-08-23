@@ -56,37 +56,14 @@ namespace Peridigm {
     PdGridData getDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& param);
 
     //! One-dimensional map, used for cell volumes and scalar constitutive data.
-    virtual Teuchos::RCP<const Epetra_Map> 
-    getOneDimensionalMap() const;
+    virtual Teuchos::RCP<const Epetra_BlockMap> getOneDimensionalMap() const;
 
     //! One-dimensional overlap map, used for cell volumes and scalar constitutive data (includes ghosts).
-    virtual Teuchos::RCP<const Epetra_Map> 
-    getOneDimensionalOverlapMap() const;
-
-    //! Three-dimensional overlap map, used for positions, displacements, velocities and vector constitutive data (includes ghosts).
-    virtual Teuchos::RCP<const Epetra_Map> 
-    getThreeDimensionalOverlapMap() const;
-
-	/** \brief Three-dimensional two-entry map.
-	 *  Map for solver unknowns.
-	 *  The solver x vector contains current positions and velocities.
-	 *  The solver x_dot vector contains velocities and accelerations.
-	 *  The order of myGlobalElements is important here, need to allow
-	 *  for import/export with threeDimensionalOverlapMap and 
-     *  accelerationExportOverlapMap.
-	 *  This map must be of type Epetra_Map (not Epetra_BlockMap) so 
-	 *  it can be returned by ModelEvaluator::get_x_map(). */
-    virtual Teuchos::RCP<const Epetra_Map> 
-    getThreeDimensionalTwoEntryMap() const;
-
-	/** \brief Secondary entry overlap map, used for force/acceleration vector
-	 *  and velocity vector, allows for import/export into solver's x and x_dot vectors. */
-	virtual Teuchos::RCP<const Epetra_Map> 
-    getSecondaryEntryOverlapMap() const;
+    virtual Teuchos::RCP<const Epetra_BlockMap>  getOneDimensionalOverlapMap() const;
 
 	/** \brief Bond map, used for constitutive data stored on each bond. This is
      *   a non-overlapping map. */
-    virtual Teuchos::RCP<const Epetra_Map> 
+    virtual Teuchos::RCP<const Epetra_BlockMap> 
     getBondMap() const;
 
     //! Get initial positions
@@ -126,12 +103,9 @@ namespace Peridigm {
     Teuchos::RCP<const Epetra_Comm> comm;
 
     //! Maps
-    Teuchos::RCP<Epetra_Map> oneDimensionalMap;
-    Teuchos::RCP<Epetra_Map> oneDimensionalOverlapMap;
-    Teuchos::RCP<Epetra_Map> threeDimensionalOverlapMap;
-    Teuchos::RCP<Epetra_Map> threeDimensionalTwoEntryMap;
-    Teuchos::RCP<Epetra_Map> secondaryEntryOverlapMap;
-    Teuchos::RCP<Epetra_Map> bondMap;
+    Teuchos::RCP<Epetra_BlockMap> oneDimensionalMap;
+    Teuchos::RCP<Epetra_BlockMap> oneDimensionalOverlapMap;
+    Teuchos::RCP<Epetra_BlockMap> bondMap;
 
     //! Vector containing initial positions and velocities
     Teuchos::RCP<Epetra_Vector> solverInitialX;

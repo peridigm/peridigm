@@ -46,9 +46,6 @@ Peridigm::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::RC
   comm(epetra_comm),
   oneDimensionalMap(),
   oneDimensionalOverlapMap(),
-  threeDimensionalOverlapMap(),
-  threeDimensionalTwoEntryMap(),
-  secondaryEntryOverlapMap(),
   bondMap(),
   solverInitialX(),
   cellVolume(),
@@ -58,20 +55,7 @@ Peridigm::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::RC
 {
   TEST_FOR_EXCEPT_MSG(params->get<string>("Type") != "PdQuickGrid", "Invalid Type in PdQuickGridDiscretization");
 
-  /*
-   * This function should switch on types of discretizations
-   *  1) TensorProduct3D
-   *  2) TensorProductCylinder
-   *  3) Others as well
-   */
   PdGridData decomp = getDiscretization(params);
-
-  // Print decomposition (debugging)
-  // stringstream ss;
-//   ss << "Decomposition on processor " << myPID;
-//   ss << ": numGlobalPoints = " << decomp.globalNumPoints;
-//   ss << ", numPoints = " << decomp.numPoints << endl;
-//   std::cout << ss.str();
 
   createMaps(decomp);
   createVectors();
@@ -83,7 +67,7 @@ Peridigm::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::RC
   int numGlobalElements = -1;
   int numMyElements = numBonds;
   int indexBase = 0;
-  bondMap = Teuchos::rcp(new Epetra_Map(numGlobalElements, numMyElements, indexBase, *comm));
+  bondMap = Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, indexBase, *comm));
 
   // fill the solver's x vector with the current positions
   // this vector contains both positions and velocities
@@ -127,7 +111,6 @@ PdGridData Peridigm::PdQuickGridDiscretization::getDiscretization(const Teuchos:
 	/*
 	 * param list should have a "sublist" with different types that we switch on here
 	 */
-
 	PdGridData decomp;
 	if(params->isSublist("TensorProduct3DMeshGenerator")){
 		Teuchos::RCP<Teuchos::ParameterList> pdQuickGridParamList =
@@ -215,152 +198,61 @@ PdGridData Peridigm::PdQuickGridDiscretization::getDiscretization(const Teuchos:
 void
 Peridigm::PdQuickGridDiscretization::createMaps(PdGridData& decomp)
 {
-  // Create the maps required by Peridigm using maps that are created by
-  // pdQuickGrid.  These maps cannot be used directly because they are
-  // of type Epetra_BlockMap and we need Epetra_Map.  Epetra_Map is required
-  // for the ModelEvaluator interface.
-
   // oneDimensionalMap
   // used for global IDs and scalar data
-  int entriesPerNode = 1;
-  Epetra_BlockMap pdQuickGridMap = PdQuickGrid::getOwnedMap(*comm, decomp, entriesPerNode);
-  int numGlobalElements = pdQuickGridMap.NumGlobalElements();
-  int numMyElements = pdQuickGridMap.NumMyElements();
-  int* myGlobalElements = pdQuickGridMap.MyGlobalElements();
-  int indexBase = 0;
-  oneDimensionalMap = 
-	Teuchos::rcp(new Epetra_Map(numGlobalElements, numMyElements, myGlobalElements, indexBase, *comm));
+  int dimension = 1;
+  oneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOwnedMap(*comm, decomp, dimension)));
 
   // oneDimensionalOverlapMap
   // used for global IDs and scalar data, includes ghosts
-  entriesPerNode = 1;
-  Epetra_BlockMap pdQuickGridOverlapMap = PdQuickGrid::getOverlapMap(*comm, decomp, entriesPerNode);
-  numGlobalElements = pdQuickGridOverlapMap.NumGlobalElements();
-  numMyElements = pdQuickGridOverlapMap.NumMyElements();
-  myGlobalElements = pdQuickGridOverlapMap.MyGlobalElements();
-  indexBase = 0;
-  oneDimensionalOverlapMap = 
-     Teuchos::rcp(new Epetra_Map(numGlobalElements, numMyElements, myGlobalElements, indexBase, *comm));
+//   dimension = 1;
+//   Epetra_BlockMap pdQuickGridOverlapMap = PdQuickGrid::getOverlapMap(*comm, decomp, dimension);
+//   numGlobalElements = pdQuickGridOverlapMap.NumGlobalElements();
+//   numMyElements = pdQuickGridOverlapMap.NumMyElements();
+//   myGlobalElements = pdQuickGridOverlapMap.MyGlobalElements();
+//   indexBase = 0;
+//   oneDimensionalOverlapMap = 
+//      Teuchos::rcp(new Epetra_Map(numGlobalElements, numMyElements, myGlobalElements, indexBase, *comm));
 
-  // store some data for use below
-  int oneDimensionalMapNumGlobalElements = oneDimensionalMap->NumGlobalElements();
-  int oneDimensionalMapNumMyElements = oneDimensionalMap->NumMyElements();
-  int oneDimensionalOverlapMapNumMyElements = oneDimensionalOverlapMap->NumMyElements();
-
-  // threeDimensionalOverlapMap
-  // used for positions, displacements, velocities and vector constitutive data
-  // includes ghosts
-  numGlobalElements = 3*oneDimensionalOverlapMap->NumGlobalElements();
-  numMyElements = 3*oneDimensionalOverlapMapNumMyElements;
-  int* oneDimensionalOverlapMapMyGlobalElements = oneDimensionalOverlapMap->MyGlobalElements();
-  myGlobalElements = new int[numMyElements];
-  for(int i=0; i<oneDimensionalOverlapMapNumMyElements ; ++i){
-	int oneDimensionalOverlapMapElement = oneDimensionalOverlapMapMyGlobalElements[i];
-	myGlobalElements[3*i]   = 3*oneDimensionalOverlapMapElement;
-	myGlobalElements[3*i+1] = 3*oneDimensionalOverlapMapElement + 1;
-	myGlobalElements[3*i+2] = 3*oneDimensionalOverlapMapElement + 2;
-  }
-  indexBase = 0;
-  threeDimensionalOverlapMap = Teuchos::rcp(new Epetra_Map(numGlobalElements, numMyElements, myGlobalElements, indexBase, *comm)); 
-  delete[] myGlobalElements;
-  
-  // map for solver unknowns
-  // the solver x vector contains current positions and velocities
-  // the solver x_dot vector contains velocities and accelerations
-  // the order of myGlobalElements is important here, need to allow
-  // for import/export with threeDimensionalOverlapMap and 
-  // accelerationExportOverlapMap
-  // this map must be of type Epetra_Map (not Epetra_BlockMap) so it can be returned by get_x_map()
-  numGlobalElements = 6*oneDimensionalMapNumGlobalElements;
-  numMyElements = 6*oneDimensionalMapNumMyElements;
-  myGlobalElements = new int[numMyElements];
-  int* oneDimensionalMapMyGlobalElements = oneDimensionalMap->MyGlobalElements();
-  for(int i=0; i<oneDimensionalMapNumMyElements ; ++i){
-	int oneDimensionalMapElement = oneDimensionalMapMyGlobalElements[i];
-	myGlobalElements[6*i]   = 3*oneDimensionalMapElement;
-	myGlobalElements[6*i+1] = 3*oneDimensionalMapElement + 1;
-	myGlobalElements[6*i+2] = 3*oneDimensionalMapElement + 2;
-	myGlobalElements[6*i+3] = 3*oneDimensionalMapElement + 3*oneDimensionalMapNumGlobalElements;
-	myGlobalElements[6*i+4] = 3*oneDimensionalMapElement + 3*oneDimensionalMapNumGlobalElements + 1;
-	myGlobalElements[6*i+5] = 3*oneDimensionalMapElement + 3*oneDimensionalMapNumGlobalElements + 2;
-  }
-  indexBase = 0;
-  threeDimensionalTwoEntryMap = Teuchos::rcp(new Epetra_Map(numGlobalElements, numMyElements, myGlobalElements, indexBase, *comm)); 
-  delete[] myGlobalElements;
-
-  // secondaryEntryOverlapMap
-  // used for force/acceleration vector and velocity vector
-  // allows for import/export into solver's x and x_dot vectors
-  numGlobalElements = 3*oneDimensionalOverlapMap->NumGlobalElements();
-  numMyElements = 3*oneDimensionalOverlapMap->NumMyElements();
-  myGlobalElements = new int[numMyElements];
-  oneDimensionalOverlapMapMyGlobalElements = oneDimensionalOverlapMap->MyGlobalElements();
-  for(int i=0; i<oneDimensionalOverlapMapNumMyElements; ++i){
-	int oneDimensionalOverlapMapElement = oneDimensionalOverlapMapMyGlobalElements[i];
-	myGlobalElements[3*i]   = 3*oneDimensionalOverlapMapElement + 3*oneDimensionalMapNumGlobalElements;
-	myGlobalElements[3*i+1] = 3*oneDimensionalOverlapMapElement + 3*oneDimensionalMapNumGlobalElements + 1;
-	myGlobalElements[3*i+2] = 3*oneDimensionalOverlapMapElement + 3*oneDimensionalMapNumGlobalElements + 2;
-  }
-  indexBase = 0;
-  secondaryEntryOverlapMap = Teuchos::rcp(new Epetra_Map(numGlobalElements, numMyElements, myGlobalElements, indexBase, *comm)); 
-  delete[] myGlobalElements;
 }
 
 void
 Peridigm::PdQuickGridDiscretization::createVectors()
 {
-  solverInitialX = Teuchos::rcp(new Epetra_Vector(*threeDimensionalTwoEntryMap));
+  solverInitialX = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
   cellVolume = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
 }
 
 void
 Peridigm::PdQuickGridDiscretization::createNeighborhoodData(PdGridData& decomp)
 {
-  neighborhoodData = Teuchos::rcp(new Peridigm::NeighborhoodData);
-  neighborhoodData->SetNumOwned(decomp.numPoints);
-  memcpy(neighborhoodData->OwnedIDs(), 
-		 PdQuickGrid::getLocalOwnedIds(decomp, *oneDimensionalOverlapMap).get(),
-		 decomp.numPoints*sizeof(int));
-  memcpy(neighborhoodData->NeighborhoodPtr(), 
-		 decomp.neighborhoodPtr.get(),
-		 decomp.numPoints*sizeof(int));
-  neighborhoodData->SetNeighborhoodListSize(decomp.sizeNeighborhoodList);
-  memcpy(neighborhoodData->NeighborhoodList(),
-		 PdQuickGrid::getLocalNeighborList(decomp, *oneDimensionalOverlapMap).get(),
-		 decomp.sizeNeighborhoodList*sizeof(int));
+//   neighborhoodData = Teuchos::rcp(new Peridigm::NeighborhoodData);
+//   neighborhoodData->SetNumOwned(decomp.numPoints);
+//   memcpy(neighborhoodData->OwnedIDs(), 
+// 		 PdQuickGrid::getLocalOwnedIds(decomp, *oneDimensionalOverlapMap).get(),
+// 		 decomp.numPoints*sizeof(int));
+//   memcpy(neighborhoodData->NeighborhoodPtr(), 
+// 		 decomp.neighborhoodPtr.get(),
+// 		 decomp.numPoints*sizeof(int));
+//   neighborhoodData->SetNeighborhoodListSize(decomp.sizeNeighborhoodList);
+//   memcpy(neighborhoodData->NeighborhoodList(),
+// 		 PdQuickGrid::getLocalNeighborList(decomp, *oneDimensionalOverlapMap).get(),
+// 		 decomp.sizeNeighborhoodList*sizeof(int));
 }
 
-Teuchos::RCP<const Epetra_Map>
+Teuchos::RCP<const Epetra_BlockMap>
 Peridigm::PdQuickGridDiscretization::getOneDimensionalMap() const
 {
   return oneDimensionalMap;
 }
 
-Teuchos::RCP<const Epetra_Map>
+Teuchos::RCP<const Epetra_BlockMap>
 Peridigm::PdQuickGridDiscretization::getOneDimensionalOverlapMap() const
 {
   return oneDimensionalOverlapMap;
 }
 
-Teuchos::RCP<const Epetra_Map>
-Peridigm::PdQuickGridDiscretization::getThreeDimensionalOverlapMap() const
-{
-  return threeDimensionalOverlapMap;
-}
-
-Teuchos::RCP<const Epetra_Map>
-Peridigm::PdQuickGridDiscretization::getThreeDimensionalTwoEntryMap() const
-{
-  return threeDimensionalTwoEntryMap;
-}
-
-Teuchos::RCP<const Epetra_Map>
-Peridigm::PdQuickGridDiscretization::getSecondaryEntryOverlapMap() const
-{
-  return secondaryEntryOverlapMap;
-}
-
-Teuchos::RCP<const Epetra_Map>
+Teuchos::RCP<const Epetra_BlockMap>
 Peridigm::PdQuickGridDiscretization::getBondMap() const
 {
   return bondMap;
