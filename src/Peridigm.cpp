@@ -1,6 +1,6 @@
 /*! \file Peridigm.cpp
  *
- * File containing main routine for Peridigm: A parallel, multi-physics,
+ * File containing main class for Peridigm: A parallel, multi-physics,
  * peridynamics simulation code.
  */
 
@@ -35,114 +35,86 @@
 //
 // ***********************************************************************
 
-#include "Peridigm_SolverFactory.hpp"
 #include <iostream>
 
-//! Create silent run option.
-//#define SILENT
+#include <Teuchos_VerboseObject.hpp>
 
-/*!
- * \brief The main routine for Peridigm: A parallel, multi-physics,
- * peridynamics simulation code.
- */
-int main(int argc, char *argv[]) {
+#include "Peridigm.hpp"
+#include "Peridigm_DiscretizationFactory.hpp"
 
-  // Initialize MPI and timer
-  int mpi_id = 0;
-  int mpi_size = 1;
-#ifdef HAVE_MPI
-  MPI_Init(&argc,&argv);
-  double total_time = -MPI_Wtime();
-  MPI_Comm_rank(MPI_COMM_WORLD, &mpi_id);
-  MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-#endif
+Peridigm::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
+                   const Teuchos::RCP<Teuchos::ParameterList>& params)
+{
 
-  // Set up communicators
-  MPI_Comm appComm = MPI_COMM_WORLD;
-#ifdef HAVE_MPI
-  Teuchos::RCP<Epetra_MpiComm> appEpetraComm = Teuchos::rcp(new Epetra_MpiComm(appComm));
-#else
-  Teuchos::RCP<Epetra_MpiComm> appEpetraComm = Teuchos::rcp(new Epetra_SerialComm);
-#endif
+  peridigmComm = comm;
+  peridigmParams = params;
 
-  // Banner
-#ifndef SILENT
-  if(mpi_id == 0){
-    cout << "\n--Peridigm--\n" << endl ;
-    if(mpi_size > 1)
-      cout << "MPI initialized on " << mpi_size << " processors.\n" << endl;
-  }
-#endif
+  out = Teuchos::VerboseObjectBase::getDefaultOStream();
 
-  int status = 0;
-  try {
+  createDiscretization();
 
-	// input file
-	if(argc != 2){
-#ifndef SILENT
-	  if(mpi_id == 0)
-		cout << "Usage:  Peridigm <input.xml>\n" << endl;
-#endif
-#ifdef HAVE_MPI
-	  MPI_Finalize();
-#endif
-	  return 1;
-	}
-	string xml_file_name(argv[1]);
+}
 
-    // Create an instance of SolverFactory.  SolverFactory will be used to 
-    // generate an application ModelEvaluator.
-	Peridigm::SolverFactory slvrfctry(xml_file_name, appComm);
+void Peridigm::Peridigm::createDiscretization() {
 
-    // Create the application ModelEvaluator.  This ModelEvaluator provides the interface
-    // that drives the application itself and is distinct from other instances of 
-    // ModelEvaluator in the code.
- 	Teuchos::RCP<EpetraExt::ModelEvaluator> App = slvrfctry.create();
+  // Extract problem parameters sublist
+  Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::rcp(&(peridigmParams->sublist("Problem")),false);
 
-	EpetraExt::ModelEvaluator::InArgs params_in = App->createInArgs();
-    EpetraExt::ModelEvaluator::OutArgs responses_out = App->createOutArgs();
+  // Extract discretization parameters sublist
+  Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::rcp(&(problemParams->sublist("Discretization")), false);
 
-	// Give OutArgs someplace to put the response
-//  	Teuchos::RCP<Epetra_Vector> g = Teuchos::rcp(new Epetra_Vector(*App->get_g_map(0)));
-//  	responses_out.set_g(0, g);
+  // Create discretization object
+  // The discretization object creates:
+  // 1) The epetra maps
+  // 2) The vector of initial positions
+  DiscretizationFactory discFactory(discParams);
+  peridigmDisc = discFactory.create(peridigmComm);
 
-    // Evaluate model
-	App->evalModel(params_in, responses_out);
+/****
+
+  // Set up contact, if requested by user
+  if(problemParams->isSublist("Contact")){
+    Teuchos::ParameterList & contactParams = problemParams->sublist("Contact");
+    computeContact = true;
+    if(!contactParams.isParameter("Search Radius"))
+      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Contact parameter \"Search Radius\" not specified.");
+    contactSearchRadius = contactParams.get<double>("Search Radius");
+    if(!contactParams.isParameter("Search Frequency"))
+      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Contact parameter \"Search Frequency\" not specified.");
+    contactSearchFrequency = contactParams.get<int>("Search Frequency");
   }
 
-  // handle any exceptions thrown
-  catch (std::exception& e) {
-    cout << e.what() << endl;
-    status = 10;
-  }
-  catch (string& s) {
-    cout << s << endl;
-    status = 20;
-  }
-  catch (char *s) {
-    cout << s << endl;
-    status = 30;
-  }
-  catch (...) {
-    cout << "Caught unknown exception!" << endl;
-    status = 40;
-  }
+  // oneDimensionalMap
+  // used for cell volumes and scalar constitutive data
+  oneDimensionalMap = disc->getOneDimensionalMap(); //! \todo Is this used?
 
-#ifndef SILENT
-  if(mpi_id == 0)
-	cout << "\nComplete." << endl;
-#endif
-#ifdef HAVE_MPI
-  total_time += MPI_Wtime();
-  MPI_Barrier(MPI_COMM_WORLD);
-#ifndef SILENT
-  if(mpi_id == 0)
-    cout << "\nTotal time: " << total_time << endl;
-#endif
-  MPI_Finalize() ;
-#endif
-  if(mpi_id == 0)
-	cout << endl;
+  // oneDimensionalOverlapMap
+  // used for cell volumes and scalar constitutive data
+  // includes ghosts
+  oneDimensionalOverlapMap = disc->getOneDimensionalOverlapMap();
 
-  return status;
+  // threeDimensionalOverlapMap
+  // used for positions, displacements, velocities and vector constitutive data
+  // includes ghosts
+  threeDimensionalOverlapMap = disc->getThreeDimensionalOverlapMap();
+
+  // map for solver unknowns
+  // the solver x vector contains current positions and velocities
+  // the solver x_dot vector contains velocities and accelerations
+  // the order of myGlobalElements is important here, need to allow
+  // for import/export with threeDimensionalOverlapMap and
+  // accelerationExportOverlapMap
+  // this map must be of type Epetra_Map (not Epetra_BlockMap) so it can be returned by get_x_map()
+  threeDimensionalTwoEntryMap = disc->getThreeDimensionalTwoEntryMap();
+
+  // secondaryEntryOverlapMap
+  // used for force/acceleration vector and velocity vector
+  // allows for import/export into solver's x and x_dot vectors
+  secondaryEntryOverlapMap = disc->getSecondaryEntryOverlapMap();
+
+  // bondConstitutiveDataMap
+  // a non-overlapping map used for storing constitutive data on bonds
+  bondMap = disc->getBondMap();
+
+*/
 }

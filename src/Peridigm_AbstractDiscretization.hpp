@@ -34,9 +34,10 @@
 #ifndef PERIDIGM_ABSTRACTDISCRETIZATION_HPP
 #define PERIDIGM_ABSTRACTDISCRETIZATION_HPP
 
-#include <Teuchos_RCP.hpp>
 #include <Epetra_Map.h>
+#include <Teuchos_RCP.hpp>
 #include <Epetra_Vector.h>
+
 #include "Peridigm_NeighborhoodData.hpp"
 
 namespace Peridigm {
@@ -56,9 +57,9 @@ namespace Peridigm {
     //! One-dimensional overlap map, used for cell volumes and scalar constitutive data (includes ghosts).
     virtual Teuchos::RCP<const Epetra_BlockMap> getOneDimensionalOverlapMap() const = 0;
 
-	/** \brief Bond map, used for constitutive data stored on each bond. This is
+    /** \brief Bond map, used for constitutive data stored on each bond. This is
      *   a non-overlapping map. */
-	virtual Teuchos::RCP<const Epetra_BlockMap> getBondMap() const = 0;
+    virtual Teuchos::RCP<const Epetra_BlockMap> getBondMap() const = 0;
 
     //! Get initial positions
     virtual Teuchos::RCP<Epetra_Vector> getSolverInitialX() const = 0;
@@ -69,11 +70,11 @@ namespace Peridigm {
     //! Get the neighbor list for all locally-owned nodes
     virtual Teuchos::RCP<Peridigm::NeighborhoodData> getNeighborhoodData() const = 0;
 
-	//! Get the number of bonds on this processor
-	virtual unsigned int getNumBonds() const = 0;
+    //! Get the number of bonds on this processor
+    virtual unsigned int getNumBonds() const = 0;
 
-	//! Get the horizon
-	double getHorizon() const { return horizon; }
+    //! Get the horizon
+    double getHorizon() const { return horizon; }
 
   protected:
 
