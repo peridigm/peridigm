@@ -54,7 +54,7 @@ Peridigm::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::RC
   numPID(comm->NumProc())
 {
   TEST_FOR_EXCEPT_MSG(params->get<string>("Type") != "PdQuickGrid", "Invalid Type in PdQuickGridDiscretization");
-
+  return;
   PdGridData decomp = getDiscretization(params);
 
   createMaps(decomp);
