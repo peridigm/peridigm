@@ -1,4 +1,4 @@
-/*! \file Peridigm_ModelEvaluator.hpp */
+/*! \file Peridigm_Factory.hpp */
 
 // ***********************************************************************
 //
@@ -31,45 +31,55 @@
 //
 // ***********************************************************************
 
-#ifndef PERIDIGM_DISCRETIZATIONFACTORY_HPP
-#define PERIDIGM_DISCRETIZATIONFACTORY_HPP
+#ifndef PERIDIGM_FACTORY_HPP
+#define PERIDIGM_FACTORY_HPP
 
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_RCP.hpp>
-#include <Epetra_Comm.h>
-#include "Peridigm_AbstractDiscretization.hpp"
+#ifdef HAVE_MPI
+#include <Epetra_MpiComm.h>
+#else
+typedef int MPI_Comm;
+#define MPI_COMM_WORLD 1
+#include <Epetra_SerialComm.h>
+#endif
+
+#include "Peridigm.hpp"
 
 namespace Peridigm {
 
   /*!
-   * \brief A factory class to instantiate AbstractDiscretization objects
+   * \brief A factory class to instantiate Peridigm object
    */
-  class DiscretizationFactory {
+  class PeridigmFactory {
   public:
 
-    //! Default constructor
-    DiscretizationFactory(const Teuchos::RCP<Teuchos::ParameterList>& discParams);
+    //! Default constructor.
+    PeridigmFactory();
 
     //! Destructor
-    virtual ~DiscretizationFactory() {}
+    virtual ~PeridigmFactory() {}
 
-    virtual Teuchos::RCP<AbstractDiscretization> 
-    create(const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
+    virtual Teuchos::RCP<Peridigm::Peridigm> create(const std::string inputFile, const MPI_Comm& solverComm);
 
   private:
 
-    //! Private to prohibit copying
-    DiscretizationFactory(const DiscretizationFactory&);
+    //! Private function to set default problem parameter values in lieu of InArgs.
+    void setProblemParamDefaults(Teuchos::Ptr<Teuchos::ParameterList> peridigmParams_);
+    
+    //! Private function to set default solver parameter values in lieu of InArgs.
+    void setSolverParamDefaults(Teuchos::Ptr<Teuchos::ParameterList> peridigmParams_);
 
-    //! Private to prohibit copying
-    DiscretizationFactory& operator=(const DiscretizationFactory&);
+    //! Private copy constructory to prohibit copying.
+    PeridigmFactory(const PeridigmFactory&);
+
+    //! Private assignment operator to prohibit copying.
+    PeridigmFactory& operator=(const PeridigmFactory&);
 
   protected:
 
-    //! Parameter list specifying what element to create
-    Teuchos::RCP<Teuchos::ParameterList> discParams;
   };
 
 }
 
-#endif // PERIDIGM_DISCRETIZATIONFACTORY_HPP
+#endif // PERIDIGM_FACTORY_HPP

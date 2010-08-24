@@ -1,4 +1,4 @@
-/*! \file Peridigm_ModelEvaluator.hpp */
+/*! \file Peridigm.hpp */
 
 // ***********************************************************************
 //
@@ -31,45 +31,48 @@
 //
 // ***********************************************************************
 
-#ifndef PERIDIGM_DISCRETIZATIONFACTORY_HPP
-#define PERIDIGM_DISCRETIZATIONFACTORY_HPP
+#ifndef PERIDIGM_HPP
+#define PERIDIGM_HPP
 
+#include <Epetra_MpiComm.h>
+#include <Epetra_SerialComm.h>
+#include <Teuchos_FancyOStream.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_RCP.hpp>
-#include <Epetra_Comm.h>
+
 #include "Peridigm_AbstractDiscretization.hpp"
 
 namespace Peridigm {
 
-  /*!
-   * \brief A factory class to instantiate AbstractDiscretization objects
-   */
-  class DiscretizationFactory {
+  class Peridigm {
+
   public:
 
-    //! Default constructor
-    DiscretizationFactory(const Teuchos::RCP<Teuchos::ParameterList>& discParams);
+    //! Constructor
+    Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
+             const Teuchos::RCP<Teuchos::ParameterList>& params);
+
+    //! Create discretization object
+    void createDiscretization();
 
     //! Destructor
-    virtual ~DiscretizationFactory() {}
-
-    virtual Teuchos::RCP<AbstractDiscretization> 
-    create(const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
+    ~Peridigm(){};
 
   private:
 
-    //! Private to prohibit copying
-    DiscretizationFactory(const DiscretizationFactory&);
+    //! Parameterlist of entire input deck
+    Teuchos::RCP<Teuchos::ParameterList> peridigmParams;
 
-    //! Private to prohibit copying
-    DiscretizationFactory& operator=(const DiscretizationFactory&);
+    //! Epetra communicator established by Peridigm_Factory
+    Teuchos::RCP<const Epetra_Comm> peridigmComm;
 
-  protected:
+    //! Output stream
+    Teuchos::RCP<Teuchos::FancyOStream> out;
 
-    //! Parameter list specifying what element to create
-    Teuchos::RCP<Teuchos::ParameterList> discParams;
+    //! Discretization object
+    Teuchos::RCP<AbstractDiscretization> peridigmDisc;
+
   };
-
 }
 
-#endif // PERIDIGM_DISCRETIZATIONFACTORY_HPP
+#endif // PERIDIGM_HPP
