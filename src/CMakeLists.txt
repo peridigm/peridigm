@@ -47,6 +47,7 @@ add_executable(utPeridigm_PdQuickGridDiscretization
 target_link_libraries(utPeridigm_PdQuickGridDiscretization
 ${TRILINOS_LIBS}
 ${PdZoltanLibs}
+${Zoltan_LIBRARY}
 ${PdQuickGridLibs}
 ${PdVTKLibs}
 ${VTK_LIBS}
