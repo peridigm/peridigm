@@ -43,42 +43,36 @@ namespace Peridigm {
 
   //! Discretization class that creates discretizations using PdQuickGrid.
   class PdQuickGridDiscretization : public Peridigm::AbstractDiscretization {
+
   public:
 
     //! Constructor
     PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetraComm,
-							  const Teuchos::RCP<Teuchos::ParameterList>& params);
+                              const Teuchos::RCP<Teuchos::ParameterList>& params);
 
     //! Destructor
     virtual ~PdQuickGridDiscretization();
 
-    //! Returns the discretization object, switches on types of PdQuickGrids.
-    PdGridData getDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& param);
+    //! Return d-dimensional map
+    virtual Teuchos::RCP<const Epetra_BlockMap> getMap(int d) const;
 
-    //! One-dimensional map, used for cell volumes and scalar constitutive data.
-    virtual Teuchos::RCP<const Epetra_BlockMap> getOneDimensionalMap() const;
+    //! Return d-dimensional overlap map (includes ghosts)
+    virtual Teuchos::RCP<const Epetra_BlockMap> getOverlapMap(int d) const;
 
-    //! One-dimensional overlap map, used for cell volumes and scalar constitutive data (includes ghosts).
-    virtual Teuchos::RCP<const Epetra_BlockMap>  getOneDimensionalOverlapMap() const;
-
-	/** \brief Bond map, used for constitutive data stored on each bond. This is
-     *   a non-overlapping map. */
-    virtual Teuchos::RCP<const Epetra_BlockMap> 
-    getBondMap() const;
+    //! Bond map, used for constitutive data stored on each bond. This is a non-overlapping map.
+    virtual Teuchos::RCP<const Epetra_BlockMap> getBondMap() const;
 
     //! Get initial positions
-    virtual Teuchos::RCP<Epetra_Vector>
-    getSolverInitialX() const;
+    virtual Teuchos::RCP<Epetra_Vector> getSolverInitialX() const;
 
     //! Get cell volumes
-    virtual Teuchos::RCP<Epetra_Vector>
-    getCellVolume() const;
+    virtual Teuchos::RCP<Epetra_Vector> getCellVolume() const;
 
     //! Get the neighbor list for all locally-owned nodes
     virtual Teuchos::RCP<Peridigm::NeighborhoodData> getNeighborhoodData() const;
 
-	//! Get the number of bonds on this processor
-	unsigned int getNumBonds() const;
+    //! Get the number of bonds on this processor
+    unsigned int getNumBonds() const;
 
   private:
 
@@ -88,6 +82,9 @@ namespace Peridigm {
     //! Private to prohibit copying
     PdQuickGridDiscretization& operator=(const PdQuickGridDiscretization&);
 
+    //! Returns the discretization object, switches on types of PdQuickGrids.
+    PdGridData getDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& param);
+
   protected:
 
     //! Create maps
@@ -96,8 +93,8 @@ namespace Peridigm {
     //! Create vectors
     void createVectors();
 
-	//! Create NeighborhoodData
-	void createNeighborhoodData(PdGridData& decomp);
+    //! Create NeighborhoodData
+    void createNeighborhoodData(PdGridData& decomp);
 
     //! Epetra communicator
     Teuchos::RCP<const Epetra_Comm> comm;
@@ -105,6 +102,8 @@ namespace Peridigm {
     //! Maps
     Teuchos::RCP<Epetra_BlockMap> oneDimensionalMap;
     Teuchos::RCP<Epetra_BlockMap> oneDimensionalOverlapMap;
+    Teuchos::RCP<Epetra_BlockMap> threeDimensionalMap;
+    Teuchos::RCP<Epetra_BlockMap> threeDimensionalOverlapMap;
     Teuchos::RCP<Epetra_BlockMap> bondMap;
 
     //! Vector containing initial positions and velocities
@@ -113,11 +112,11 @@ namespace Peridigm {
     //! Vector containing cell volumes
     Teuchos::RCP<Epetra_Vector> cellVolume;
 	
-	//! Struct containing neighborhoods for owned nodes.
+    //! Struct containing neighborhoods for owned nodes.
     Teuchos::RCP<Peridigm::NeighborhoodData> neighborhoodData;
 
-	//! Returns number of bonds on this processor
-	unsigned int numBonds;
+    //! Returns number of bonds on this processor
+    unsigned int numBonds;
 
     //! Processor ID
     unsigned int myPID;
