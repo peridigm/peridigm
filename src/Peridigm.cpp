@@ -36,11 +36,16 @@
 // ***********************************************************************
 
 #include <iostream>
+#include <vector>
 
 #include <Teuchos_VerboseObject.hpp>
 
 #include "Peridigm.hpp"
 #include "Peridigm_DiscretizationFactory.hpp"
+#include "contact/Peridigm_ContactModel.hpp"
+#include "contact/Peridigm_ShortRangeForceContactModel.hpp"
+#include "materials/Peridigm_LinearElasticIsotropicMaterial.hpp"
+#include "materials/Peridigm_IsotropicElasticPlasticMaterial.hpp"
 
 Peridigm::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
                    const Teuchos::RCP<Teuchos::ParameterList>& params)
@@ -49,13 +54,21 @@ Peridigm::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   peridigmComm = comm;
   peridigmParams = params;
 
+  bondData = NULL;
+
   out = Teuchos::VerboseObjectBase::getDefaultOStream();
 
-  createDiscretization();
+  // Read mesh from disk or generate using geometric primatives.
+  // All maps are generated here
+  initializeDiscretization();
+
+  // Setup contact
+  initializeContact();
+
 
 }
 
-void Peridigm::Peridigm::createDiscretization() {
+void Peridigm::Peridigm::initializeDiscretization() {
 
   // Extract problem parameters sublist
   Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::rcp(&(peridigmParams->sublist("Problem")),false);
@@ -68,9 +81,44 @@ void Peridigm::Peridigm::createDiscretization() {
   // 1) The epetra maps
   // 2) The vector of initial positions
   DiscretizationFactory discFactory(discParams);
-  peridigmDisc = discFactory.create(peridigmComm);
+  Teuchos::RCP<AbstractDiscretization> peridigmDisc = discFactory.create(peridigmComm);
 
-/****
+  // oneDimensionalMap
+  // used for cell volumes and scalar constitutive data
+  oneDimensionalMap = peridigmDisc->getOneDimensionalMap(); 
+
+  // oneDimensionalOverlapMap
+  // used for cell volumes and scalar constitutive data
+  // includes ghosts
+  oneDimensionalOverlapMap = peridigmDisc->getOneDimensionalOverlapMap();
+
+  // threeDimensionalMap
+  // used for positions, displacements, velocities and vector constitutive data
+// MLP
+//  threeDimensionalMap = peridigmDisc->getThreeDimensionalMap();
+
+  // threeDimensionalOverlapMap
+  // used for positions, displacements, velocities and vector constitutive data
+  // includes ghosts
+// MLP
+//  threeDimensionalOverlapMap = peridigmDisc->getThreeDimensionalOverlapMap();
+
+  // bondConstitutiveDataMap
+  // a non-overlapping map used for storing constitutive data on bonds
+  bondMap = peridigmDisc->getBondMap();
+
+}
+
+void Peridigm::Peridigm::initializeContact() {
+
+  // Extract problem parameters sublist
+  Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::rcp(&(peridigmParams->sublist("Problem")),false);
+
+  // Assume no contact
+  computeContact = false;
+  contactSearchRadius = 0.0;
+  contactSearchFrequency = 0;
+
 
   // Set up contact, if requested by user
   if(problemParams->isSublist("Contact")){
@@ -84,37 +132,49 @@ void Peridigm::Peridigm::createDiscretization() {
     contactSearchFrequency = contactParams.get<int>("Search Frequency");
   }
 
-  // oneDimensionalMap
-  // used for cell volumes and scalar constitutive data
-  oneDimensionalMap = disc->getOneDimensionalMap(); //! \todo Is this used?
 
-  // oneDimensionalOverlapMap
-  // used for cell volumes and scalar constitutive data
-  // includes ghosts
-  oneDimensionalOverlapMap = disc->getOneDimensionalOverlapMap();
-
-  // threeDimensionalOverlapMap
-  // used for positions, displacements, velocities and vector constitutive data
-  // includes ghosts
-  threeDimensionalOverlapMap = disc->getThreeDimensionalOverlapMap();
-
-  // map for solver unknowns
-  // the solver x vector contains current positions and velocities
-  // the solver x_dot vector contains velocities and accelerations
-  // the order of myGlobalElements is important here, need to allow
-  // for import/export with threeDimensionalOverlapMap and
-  // accelerationExportOverlapMap
-  // this map must be of type Epetra_Map (not Epetra_BlockMap) so it can be returned by get_x_map()
-  threeDimensionalTwoEntryMap = disc->getThreeDimensionalTwoEntryMap();
-
-  // secondaryEntryOverlapMap
-  // used for force/acceleration vector and velocity vector
-  // allows for import/export into solver's x and x_dot vectors
-  secondaryEntryOverlapMap = disc->getSecondaryEntryOverlapMap();
-
-  // bondConstitutiveDataMap
-  // a non-overlapping map used for storing constitutive data on bonds
-  bondMap = disc->getBondMap();
-
-*/
 }
+
+void Peridigm::Peridigm::initializeMaterials() {
+
+  // Extract problem parameters sublist
+  Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::rcp(&(peridigmParams->sublist("Problem")),false);
+
+  // Instantiate material objects
+  //! \todo Move creation of material models to material model factory
+  TEST_FOR_EXCEPT_MSG(!problemParams->isSublist("Material"), "Material parameters not specified!");
+  Teuchos::ParameterList & materialParams = problemParams->sublist("Material");
+  Teuchos::ParameterList::ConstIterator it;
+  int scalarConstitutiveDataSize = 1; // Epetra barfs if you try to create a vector of zero size
+  int vectorConstitutiveDataSize = 1;
+  int bondConstitutiveDataSize = 1;
+  for(it = materialParams.begin() ; it != materialParams.end() ; it++){
+    const string & name = it->first;
+    Teuchos::ParameterList & matParams = materialParams.sublist(name);
+    Teuchos::RCP<Material> material;
+    if(name == "Linear Elastic" || name == "Elastic-Plastic"){
+      if(name == "Linear Elastic")
+        material = Teuchos::rcp(new LinearElasticIsotropicMaterial(matParams) );
+      else if(name == "Elastic-Plastic")
+        material = Teuchos::rcp(new IsotropicElasticPlasticMaterial(matParams) );
+      materials.push_back( Teuchos::rcp_implicit_cast<Material>(material) );
+      // Allocate enough space for the max number of state variables
+      if(material->NumScalarConstitutiveVariables() > scalarConstitutiveDataSize)
+            scalarConstitutiveDataSize = material->NumScalarConstitutiveVariables();
+      if(material->NumVectorConstitutiveVariables() > vectorConstitutiveDataSize)
+            vectorConstitutiveDataSize = material->NumVectorConstitutiveVariables();
+      if(material->NumBondConstitutiveVariables() > bondConstitutiveDataSize)
+            bondConstitutiveDataSize = material->NumBondConstitutiveVariables();
+    }
+    else {
+      string invalidMaterial("Unrecognized material model: ");
+      invalidMaterial += name;
+      invalidMaterial += ", must be Linear Elastic or Elastic-Plastic";
+      TEST_FOR_EXCEPT_MSG(true, invalidMaterial);
+    }
+  }
+  TEST_FOR_EXCEPT_MSG(materials.size() == 0, "No material models created!");
+
+}
+
+

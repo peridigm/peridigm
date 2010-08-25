@@ -183,7 +183,7 @@ namespace Peridigm {
 	double m_density;
 
     // damage model
-    Teuchos::RCP<Peridigm::DamageModel> m_damageModel;
+    Teuchos::RCP<DamageModel> m_damageModel;
   };
 }
 
