@@ -41,6 +41,7 @@
 #include <Teuchos_RCP.hpp>
 
 #include "Peridigm_AbstractDiscretization.hpp"
+#include "materials/Peridigm_Material.hpp"
 
 namespace Peridigm {
 
@@ -52,8 +53,14 @@ namespace Peridigm {
     Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
              const Teuchos::RCP<Teuchos::ParameterList>& params);
 
-    //! Create discretization object
-    void createDiscretization();
+    //! Initialize discretization and maps
+    void initializeDiscretization();
+
+    //! Initialize contact
+    void initializeContact();
+
+    //! Initialize material objects
+    void initializeMaterials();
 
     //! Destructor
     ~Peridigm(){};
@@ -69,8 +76,30 @@ namespace Peridigm {
     //! Output stream
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
-    //! Discretization object
-    Teuchos::RCP<AbstractDiscretization> peridigmDisc;
+    //! Maps for scalar and R3 vector data
+    Teuchos::RCP<const Epetra_BlockMap> oneDimensionalMap;
+    Teuchos::RCP<const Epetra_BlockMap> oneDimensionalOverlapMap;
+    Teuchos::RCP<const Epetra_BlockMap> threeDimensionalMap;
+    Teuchos::RCP<const Epetra_BlockMap> threeDimensionalOverlapMap;
+
+    //! Data structures for bonds
+    double* bondData;
+    Teuchos::RCP<const Epetra_BlockMap> bondMap;
+
+    //! Contact flag
+    bool computeContact;
+
+    //! Contact search radius
+    double contactSearchRadius;
+
+    //! Contact search frequency
+    int contactSearchFrequency;
+
+    //! Material models
+    //! \todo Use Teuchos::ArrayRCP to store materials?
+    std::vector< Teuchos::RCP<Material> > materials;
+
+
 
   };
 }
