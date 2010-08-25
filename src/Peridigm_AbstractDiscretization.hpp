@@ -51,11 +51,11 @@ namespace Peridigm {
     //! Destructor.
     virtual ~AbstractDiscretization() {}
 
-    //! One-dimensional map, used for cell volumes and scalar constitutive data.
-    virtual Teuchos::RCP<const Epetra_BlockMap> getOneDimensionalMap() const = 0;
+    //! Return d-dimensional map
+    virtual Teuchos::RCP<const Epetra_BlockMap> getMap(int d) const = 0;
 
-    //! One-dimensional overlap map, used for cell volumes and scalar constitutive data (includes ghosts).
-    virtual Teuchos::RCP<const Epetra_BlockMap> getOneDimensionalOverlapMap() const = 0;
+    //! Return d-dimensional overlap map
+    virtual Teuchos::RCP<const Epetra_BlockMap> getOverlapMap(int d) const = 0;
 
     /** \brief Bond map, used for constitutive data stored on each bond. This is
      *   a non-overlapping map. */

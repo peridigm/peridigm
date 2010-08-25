@@ -85,12 +85,12 @@ void Peridigm::Peridigm::initializeDiscretization() {
 
   // oneDimensionalMap
   // used for cell volumes and scalar constitutive data
-  oneDimensionalMap = peridigmDisc->getOneDimensionalMap(); 
+  oneDimensionalMap = peridigmDisc->getMap(1); 
 
   // oneDimensionalOverlapMap
   // used for cell volumes and scalar constitutive data
   // includes ghosts
-  oneDimensionalOverlapMap = peridigmDisc->getOneDimensionalOverlapMap();
+  oneDimensionalOverlapMap = peridigmDisc->getOverlapMap(1);
 
   // threeDimensionalMap
   // used for positions, displacements, velocities and vector constitutive data

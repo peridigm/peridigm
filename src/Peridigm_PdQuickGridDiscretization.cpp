@@ -42,7 +42,7 @@
 using namespace std;
 
 Peridigm::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
-															   const Teuchos::RCP<Teuchos::ParameterList>& params) :
+                                                               const Teuchos::RCP<Teuchos::ParameterList>& params) :
   comm(epetra_comm),
   oneDimensionalMap(),
   oneDimensionalOverlapMap(),
@@ -91,108 +91,84 @@ Peridigm::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::RC
   delete[] indices;
 }
 
-Peridigm::PdQuickGridDiscretization::~PdQuickGridDiscretization()
-{
-}
+Peridigm::PdQuickGridDiscretization::~PdQuickGridDiscretization() {}
 
 PdGridData Peridigm::PdQuickGridDiscretization::getDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& params) {
 
+  // This is the type of norm used to create neighborhood lists
+  PdQuickGrid::NormFunctionPointer neighborhoodType = PdQuickGrid::NoOpNorm;
+  Teuchos::ParameterEntry* normTypeEntry=params->getEntryPtr("NeighborhoodType");
+  if(NULL!=normTypeEntry){
+    std::string normType = params->get<string>("NeighborhoodType");
+    if(normType=="Spherical") neighborhoodType = PdQuickGrid::SphericalNorm;
+  }
 
-	/*
-	 * This is the type of norm used to create neighborhood lists
-	 */
-	PdQuickGrid::NormFunctionPointer neighborhoodType = PdQuickGrid::NoOpNorm;
-	Teuchos::ParameterEntry* normTypeEntry=params->getEntryPtr("NeighborhoodType");
-	if(NULL!=normTypeEntry){
-		std::string normType = params->get<string>("NeighborhoodType");
-		if(normType=="Spherical") neighborhoodType = PdQuickGrid::SphericalNorm;
-	}
+  // param list should have a "sublist" with different types that we switch on here
+  PdGridData decomp;
+  if (params->isSublist("TensorProduct3DMeshGenerator")){
+    Teuchos::RCP<Teuchos::ParameterList> pdQuickGridParamList = Teuchos::rcp(&(params->sublist("TensorProduct3DMeshGenerator")), false);
+    double xStart = pdQuickGridParamList->get<double>("X Origin");
+    double yStart = pdQuickGridParamList->get<double>("Y Origin");
+    double zStart = pdQuickGridParamList->get<double>("Z Origin");
+    double xLength = pdQuickGridParamList->get<double>("X Length");
+    double yLength = pdQuickGridParamList->get<double>("Y Length");
+    double zLength = pdQuickGridParamList->get<double>("Z Length");
+    int nx = pdQuickGridParamList->get<int>("Number Points X");
+    int ny = pdQuickGridParamList->get<int>("Number Points Y");
+    int nz = pdQuickGridParamList->get<int>("Number Points Z");
+    horizon = pdQuickGridParamList->get<double>("Horizon");
 
-	/*
-	 * param list should have a "sublist" with different types that we switch on here
-	 */
-	PdGridData decomp;
-	if(params->isSublist("TensorProduct3DMeshGenerator")){
-		Teuchos::RCP<Teuchos::ParameterList> pdQuickGridParamList =
-				Teuchos::rcp(&(params->sublist("TensorProduct3DMeshGenerator")), false);
+    const PdQuickGrid::PdQPointSet1d xSpec(nx,xStart,xLength);
+    const PdQuickGrid::PdQPointSet1d ySpec(ny,yStart,yLength);
+    const PdQuickGrid::PdQPointSet1d zSpec(nz,zStart,zLength);
 
-		double xStart = pdQuickGridParamList->get<double>("X Origin");
-		double yStart = pdQuickGridParamList->get<double>("Y Origin");
-		double zStart = pdQuickGridParamList->get<double>("Z Origin");
-		double xLength = pdQuickGridParamList->get<double>("X Length");
-		double yLength = pdQuickGridParamList->get<double>("Y Length");
-		double zLength = pdQuickGridParamList->get<double>("Z Length");
-		int nx = pdQuickGridParamList->get<int>("Number Points X");
-		int ny = pdQuickGridParamList->get<int>("Number Points Y");
-		int nz = pdQuickGridParamList->get<int>("Number Points Z");
-		horizon = pdQuickGridParamList->get<double>("Horizon");
+    // Create abstract decomposition iterator
+    PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numPID,horizon,xSpec,ySpec,zSpec,neighborhoodType);
+    decomp =  PdQuickGrid::getDiscretization(myPID, cellPerProcIter);
+    // Load balance and write new decomposition
+    decomp = getLoadBalancedDiscretization(decomp);
+  } 
+  else if (params->isSublist("TensorProductCylinderMeshGenerator")){
+    Teuchos::RCP<Teuchos::ParameterList> pdQuickGridParamList = Teuchos::rcp(&(params->sublist("TensorProductCylinderMeshGenerator")), false);
+    double innerRadius    = pdQuickGridParamList->get<double>("Inner Radius");
+    double outerRadius    = pdQuickGridParamList->get<double>("Outer Radius");
+    double cylinderLength = pdQuickGridParamList->get<double>("Cylinder Length");
+    int numRings          = pdQuickGridParamList->get<int>("Number Points Radius");
+    double xC             = pdQuickGridParamList->get<double>("Ring Center x");
+    double yC             = pdQuickGridParamList->get<double>("Ring Center y");
+    double zStart         = pdQuickGridParamList->get<double>("Z Origin");
+    horizon               = pdQuickGridParamList->get<double>("Horizon");
 
-		const PdQuickGrid::PdQPointSet1d xSpec(nx,xStart,xLength);
-		const PdQuickGrid::PdQPointSet1d ySpec(ny,yStart,yLength);
-		const PdQuickGrid::PdQPointSet1d zSpec(nz,zStart,zLength);
+    // Create 2d Ring
+    std::valarray<double> center(0.0,3);
+    center[0] = xC;
+    center[1] = yC;
+    center[2] = 0;
 
-		// Create abstract decomposition iterator
-		PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numPID,horizon,xSpec,ySpec,zSpec,neighborhoodType);
-		decomp =  PdQuickGrid::getDiscretization(myPID, cellPerProcIter);
-		/*
-		 * Load balance and write new decomposition
-		 */
-		decomp = getLoadBalancedDiscretization(decomp);
+    // Note that zStart is used for the 1D spec along cylinder axis
+    PdQuickGrid::PdQRing2d ring2dSpec(center,innerRadius,outerRadius,numRings);
 
-	} else if(params->isSublist("TensorProductCylinderMeshGenerator")){
-		Teuchos::RCP<Teuchos::ParameterList> pdQuickGridParamList =
-				Teuchos::rcp(&(params->sublist("TensorProductCylinderMeshGenerator")), false);
+    // Create 1d Spec along cylinder axis
+    // Compute number of cells along length of cylinder so that aspect ratio
+    // is cells is approximately 1.
+    // Cell sizes along axis are not exactly "cellSize" since last cell
+    // would be a fraction of a cellSize -- so 1 is added to numCellsAlongAxis.
+    // Actual cell sizes are slightly smaller than "cellSize" because of this.
+    double cellSize = ring2dSpec.getRaySpec().getCellSize();
+    int numCellsAxis = (int)(cylinderLength/cellSize)+1;
+    PdQuickGrid::PdQPointSet1d axisSpec(numCellsAxis,zStart,cylinderLength);
 
-		double innerRadius    = pdQuickGridParamList->get<double>("Inner Radius");
-		double outerRadius    = pdQuickGridParamList->get<double>("Outer Radius");
-		double cylinderLength = pdQuickGridParamList->get<double>("Cylinder Length");
-		int numRings          = pdQuickGridParamList->get<int>("Number Points Radius");
-		double xC             = pdQuickGridParamList->get<double>("Ring Center x");
-		double yC             = pdQuickGridParamList->get<double>("Ring Center y");
-		double zStart         = pdQuickGridParamList->get<double>("Z Origin");
-		horizon               = pdQuickGridParamList->get<double>("Horizon");
+    // Create abstract decomposition iterator
+    PdQuickGrid::TensorProductCylinderMeshGenerator cellPerProcIter(numPID, horizon,ring2dSpec, axisSpec,neighborhoodType);
+    decomp =  PdQuickGrid::getDiscretization(myPID, cellPerProcIter);
+    // Load balance and write new decomposition
+    decomp = getLoadBalancedDiscretization(decomp);
+  } 
+  else { // ERROR
+    TEST_FOR_EXCEPT_MSG(true, "Invalid Type in PdQuickGridDiscretization");
+  }
 
-		/*
-		 * Create 2d Ring
-		 */
-		std::valarray<double> center(0.0,3);
-		center[0] = xC;
-		center[1] = yC;
-		center[2] = 0;
-		/*
-		 * Note that zStart is used for the 1D spec along cylinder axis
-		 */
-		PdQuickGrid::PdQRing2d ring2dSpec(center,innerRadius,outerRadius,numRings);
-
-		/*
-		 * Create 1d Spec along cylinder axis
-	     * Compute number of cells along length of cylinder so that aspect ratio
-		 * is cells is approximately 1.
-		 * Cell sizes along axis are not exactly "cellSize" since last cell
-		 * would be a fraction of a cellSize -- so 1 is added to numCellsAlongAxis.
-		 * Actual cell sizes are slightly smaller than "cellSize" because of this.
-		 */
-
-		double cellSize = ring2dSpec.getRaySpec().getCellSize();
-		int numCellsAxis = (int)(cylinderLength/cellSize)+1;
-		PdQuickGrid::PdQPointSet1d axisSpec(numCellsAxis,zStart,cylinderLength);
-
-		// Create abstract decomposition iterator
-		PdQuickGrid::TensorProductCylinderMeshGenerator cellPerProcIter(numPID, horizon,ring2dSpec, axisSpec,neighborhoodType);
-		decomp =  PdQuickGrid::getDiscretization(myPID, cellPerProcIter);
-		/*
-		 * Load balance and write new decomposition
-		 */
-		decomp = getLoadBalancedDiscretization(decomp);
-
-	} else {
-		/*
-		 * ERROR
-		 */
-		TEST_FOR_EXCEPT_MSG(true, "Invalid Type in PdQuickGridDiscretization");
-	}
-
-	return decomp;
+  return decomp;
 }
 
 void
@@ -241,15 +217,35 @@ Peridigm::PdQuickGridDiscretization::createNeighborhoodData(PdGridData& decomp)
 }
 
 Teuchos::RCP<const Epetra_BlockMap>
-Peridigm::PdQuickGridDiscretization::getOneDimensionalMap() const
+Peridigm::PdQuickGridDiscretization::getMap(int d) const
 {
-  return oneDimensionalMap;
+  switch (d) {
+    case 1:
+      return oneDimensionalMap;
+      break;
+    case 3:
+      return threeDimensionalMap;
+      break;
+    default:
+      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
+                         std::endl << "PdQuickGridDiscretization::getMap(int d) only supports dimensions d=1 or d=3. Supplied dimension d=" << d << std::endl); 
+    }
 }
 
 Teuchos::RCP<const Epetra_BlockMap>
-Peridigm::PdQuickGridDiscretization::getOneDimensionalOverlapMap() const
+Peridigm::PdQuickGridDiscretization::getOverlapMap(int d) const
 {
-  return oneDimensionalOverlapMap;
+  switch (d) {
+    case 1:
+      return oneDimensionalOverlapMap;
+      break;
+    case 3:
+      return threeDimensionalOverlapMap;
+      break;
+    default:
+      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
+                         std::endl << "PdQuickGridDiscretization::getOverlapMap(int d) only supports dimensions d=1 or d=3. Supplied dimension d=" << d << std::endl); 
+    }
 }
 
 Teuchos::RCP<const Epetra_BlockMap>
