@@ -54,7 +54,6 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
   numPID(comm->NumProc())
 {
   TEST_FOR_EXCEPT_MSG(params->get<string>("Type") != "PdQuickGrid", "Invalid Type in PdQuickGridDiscretization");
-  return;
   PdGridData decomp = getDiscretization(params);
 
   createMaps(decomp);
@@ -67,6 +66,7 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
   int numGlobalElements = -1;
   int numMyElements = numBonds;
   int indexBase = 0;
+return;
   bondMap = Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, indexBase, *comm));
 
   // fill the solver's x vector with the current positions
@@ -126,7 +126,9 @@ PdGridData PeridigmNS::PdQuickGridDiscretization::getDiscretization(const Teucho
     PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numPID,horizon,xSpec,ySpec,zSpec,neighborhoodType);
     decomp =  PdQuickGrid::getDiscretization(myPID, cellPerProcIter);
     // Load balance and write new decomposition
-    decomp = getLoadBalancedDiscretization(decomp);
+    #ifdef HAVE_MPI
+      decomp = getLoadBalancedDiscretization(decomp);
+    #endif
   } 
   else if (params->isSublist("TensorProductCylinderMeshGenerator")){
     Teuchos::RCP<Teuchos::ParameterList> pdQuickGridParamList = Teuchos::rcp(&(params->sublist("TensorProductCylinderMeshGenerator")), false);
@@ -162,7 +164,9 @@ PdGridData PeridigmNS::PdQuickGridDiscretization::getDiscretization(const Teucho
     PdQuickGrid::TensorProductCylinderMeshGenerator cellPerProcIter(numPID, horizon,ring2dSpec, axisSpec,neighborhoodType);
     decomp =  PdQuickGrid::getDiscretization(myPID, cellPerProcIter);
     // Load balance and write new decomposition
-    decomp = getLoadBalancedDiscretization(decomp);
+    #ifdef HAVE_MPI
+      decomp = getLoadBalancedDiscretization(decomp);
+    #endif
   } 
   else { // ERROR
     TEST_FOR_EXCEPT_MSG(true, "Invalid Type in PdQuickGridDiscretization");
@@ -208,18 +212,18 @@ PeridigmNS::PdQuickGridDiscretization::createVectors()
 void
 PeridigmNS::PdQuickGridDiscretization::createNeighborhoodData(PdGridData& decomp)
 {
-//   neighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
-//   neighborhoodData->SetNumOwned(decomp.numPoints);
-//   memcpy(neighborhoodData->OwnedIDs(), 
-// 		 PdQuickGrid::getLocalOwnedIds(decomp, *oneDimensionalOverlapMap).get(),
-// 		 decomp.numPoints*sizeof(int));
-//   memcpy(neighborhoodData->NeighborhoodPtr(), 
-// 		 decomp.neighborhoodPtr.get(),
-// 		 decomp.numPoints*sizeof(int));
-//   neighborhoodData->SetNeighborhoodListSize(decomp.sizeNeighborhoodList);
-//   memcpy(neighborhoodData->NeighborhoodList(),
-// 		 PdQuickGrid::getLocalNeighborList(decomp, *oneDimensionalOverlapMap).get(),
-// 		 decomp.sizeNeighborhoodList*sizeof(int));
+   neighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
+   neighborhoodData->SetNumOwned(decomp.numPoints);
+   memcpy(neighborhoodData->OwnedIDs(), 
+ 		 PdQuickGrid::getLocalOwnedIds(decomp, *oneDimensionalOverlapMap).get(),
+ 		 decomp.numPoints*sizeof(int));
+   memcpy(neighborhoodData->NeighborhoodPtr(), 
+ 		 decomp.neighborhoodPtr.get(),
+ 		 decomp.numPoints*sizeof(int));
+   neighborhoodData->SetNeighborhoodListSize(decomp.sizeNeighborhoodList);
+   memcpy(neighborhoodData->NeighborhoodList(),
+ 		 PdQuickGrid::getLocalNeighborList(decomp, *oneDimensionalOverlapMap).get(),
+ 		 decomp.sizeNeighborhoodList*sizeof(int));
 }
 
 Teuchos::RCP<const Epetra_BlockMap>
