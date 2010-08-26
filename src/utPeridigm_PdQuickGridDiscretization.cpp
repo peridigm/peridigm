@@ -34,7 +34,12 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
-#include <Epetra_SerialComm.h>
+#include <Epetra_ConfigDefs.h> // used to define HAVE_MPI
+#ifdef HAVE_MPI
+  #include <Epetra_MpiComm.h>
+#else
+  #include <Epetra_SerialComm.h>
+#endif
 #include "Peridigm_PdQuickGridDiscretization.hpp"
 
 using namespace boost::unit_test;
@@ -43,7 +48,12 @@ using namespace PeridigmNS;
 
 void initialize()
 {
-  RCP<const Epetra_SerialComm> comm = rcp(new Epetra_SerialComm);
+  Teuchos::RCP<Epetra_Comm> comm;
+  #ifdef HAVE_MPI
+    comm = rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
+  #else
+    comm = rcp(new Epetra_SerialComm);
+  #endif
   RCP<ParameterList> discParams = rcp(new ParameterList);
 
   discParams->set("Type", "PdQuickGrid");
@@ -85,6 +95,14 @@ bool init_unit_test()
 int main
 (int argc, char* argv[])
 {
-	// Initialize UTF
-	return unit_test_main(init_unit_test, argc, argv);
+  #ifdef HAVE_MPI
+    MPI_Init(&argc,&argv);
+  #endif
+
+  // Initialize UTF
+  return unit_test_main(init_unit_test, argc, argv);
+
+  #ifdef HAVE_MPI
+    MPI_Finalize();
+  #endif
 }
