@@ -35,7 +35,7 @@
 #include <Peridigm_OutputManager.hpp>
 #include <Teuchos_ParameterList.hpp>
 
-namespace Peridigm {
+namespace PeridigmNS {
   
   class OutputManager_VTK_XML: public Peridigm::OutputManager {
     

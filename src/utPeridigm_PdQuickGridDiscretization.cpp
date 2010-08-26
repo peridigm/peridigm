@@ -39,6 +39,7 @@
 
 using namespace boost::unit_test;
 using namespace Teuchos;
+using namespace PeridigmNS;
 
 void initialize()
 {
@@ -59,8 +60,8 @@ void initialize()
   quickGridParams.set("Number Points Z", 10);
   quickGridParams.set("Horizon", 0.31);
 
-  RCP<Peridigm::PdQuickGridDiscretization> discretization =
-    rcp(new Peridigm::PdQuickGridDiscretization(comm, discParams));
+  RCP<PdQuickGridDiscretization> discretization =
+    rcp(new PdQuickGridDiscretization(comm, discParams));
 }
 
 bool init_unit_test_suite()

@@ -41,7 +41,7 @@
 
 using namespace std;
 
-Peridigm::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
+PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                                                                const Teuchos::RCP<Teuchos::ParameterList>& params) :
   comm(epetra_comm),
   oneDimensionalMap(),
@@ -91,9 +91,9 @@ Peridigm::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::RC
   delete[] indices;
 }
 
-Peridigm::PdQuickGridDiscretization::~PdQuickGridDiscretization() {}
+PeridigmNS::PdQuickGridDiscretization::~PdQuickGridDiscretization() {}
 
-PdGridData Peridigm::PdQuickGridDiscretization::getDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& params) {
+PdGridData PeridigmNS::PdQuickGridDiscretization::getDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& params) {
 
   // This is the type of norm used to create neighborhood lists
   PdQuickGrid::NormFunctionPointer neighborhoodType = PdQuickGrid::NoOpNorm;
@@ -172,7 +172,7 @@ PdGridData Peridigm::PdQuickGridDiscretization::getDiscretization(const Teuchos:
 }
 
 void
-Peridigm::PdQuickGridDiscretization::createMaps(PdGridData& decomp)
+PeridigmNS::PdQuickGridDiscretization::createMaps(PdGridData& decomp)
 {
   // oneDimensionalMap
   // used for global IDs and scalar data
@@ -193,16 +193,16 @@ Peridigm::PdQuickGridDiscretization::createMaps(PdGridData& decomp)
 }
 
 void
-Peridigm::PdQuickGridDiscretization::createVectors()
+PeridigmNS::PdQuickGridDiscretization::createVectors()
 {
   solverInitialX = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
   cellVolume = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
 }
 
 void
-Peridigm::PdQuickGridDiscretization::createNeighborhoodData(PdGridData& decomp)
+PeridigmNS::PdQuickGridDiscretization::createNeighborhoodData(PdGridData& decomp)
 {
-//   neighborhoodData = Teuchos::rcp(new Peridigm::NeighborhoodData);
+//   neighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
 //   neighborhoodData->SetNumOwned(decomp.numPoints);
 //   memcpy(neighborhoodData->OwnedIDs(), 
 // 		 PdQuickGrid::getLocalOwnedIds(decomp, *oneDimensionalOverlapMap).get(),
@@ -217,7 +217,7 @@ Peridigm::PdQuickGridDiscretization::createNeighborhoodData(PdGridData& decomp)
 }
 
 Teuchos::RCP<const Epetra_BlockMap>
-Peridigm::PdQuickGridDiscretization::getMap(int d) const
+PeridigmNS::PdQuickGridDiscretization::getMap(int d) const
 {
   switch (d) {
     case 1:
@@ -233,7 +233,7 @@ Peridigm::PdQuickGridDiscretization::getMap(int d) const
 }
 
 Teuchos::RCP<const Epetra_BlockMap>
-Peridigm::PdQuickGridDiscretization::getOverlapMap(int d) const
+PeridigmNS::PdQuickGridDiscretization::getOverlapMap(int d) const
 {
   switch (d) {
     case 1:
@@ -249,31 +249,31 @@ Peridigm::PdQuickGridDiscretization::getOverlapMap(int d) const
 }
 
 Teuchos::RCP<const Epetra_BlockMap>
-Peridigm::PdQuickGridDiscretization::getBondMap() const
+PeridigmNS::PdQuickGridDiscretization::getBondMap() const
 {
   return bondMap;
 }
 
 Teuchos::RCP<Epetra_Vector>
-Peridigm::PdQuickGridDiscretization::getSolverInitialX() const
+PeridigmNS::PdQuickGridDiscretization::getSolverInitialX() const
 {
   return solverInitialX;
 }
 
 Teuchos::RCP<Epetra_Vector>
-Peridigm::PdQuickGridDiscretization::getCellVolume() const
+PeridigmNS::PdQuickGridDiscretization::getCellVolume() const
 {
   return cellVolume;
 }
 
-Teuchos::RCP<Peridigm::NeighborhoodData> 
-Peridigm::PdQuickGridDiscretization::getNeighborhoodData() const
+Teuchos::RCP<PeridigmNS::NeighborhoodData> 
+PeridigmNS::PdQuickGridDiscretization::getNeighborhoodData() const
 {
   return neighborhoodData;
 }
 
 unsigned int
-Peridigm::PdQuickGridDiscretization::getNumBonds() const
+PeridigmNS::PdQuickGridDiscretization::getNumBonds() const
 {
   return numBonds;
 }

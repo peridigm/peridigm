@@ -47,7 +47,7 @@
 #include "materials/Peridigm_LinearElasticIsotropicMaterial.hpp"
 #include "materials/Peridigm_IsotropicElasticPlasticMaterial.hpp"
 
-Peridigm::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
+PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
                    const Teuchos::RCP<Teuchos::ParameterList>& params)
 {
 
@@ -68,7 +68,7 @@ Peridigm::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
 }
 
-void Peridigm::Peridigm::initializeDiscretization() {
+void PeridigmNS::Peridigm::initializeDiscretization() {
 
   // Extract problem parameters sublist
   Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::rcp(&(peridigmParams->sublist("Problem")),false);
@@ -109,7 +109,7 @@ void Peridigm::Peridigm::initializeDiscretization() {
 
 }
 
-void Peridigm::Peridigm::initializeContact() {
+void PeridigmNS::Peridigm::initializeContact() {
 
   // Extract problem parameters sublist
   Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::rcp(&(peridigmParams->sublist("Problem")),false);
@@ -135,7 +135,7 @@ void Peridigm::Peridigm::initializeContact() {
 
 }
 
-void Peridigm::Peridigm::initializeMaterials() {
+void PeridigmNS::Peridigm::initializeMaterials() {
 
   // Extract problem parameters sublist
   Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::rcp(&(peridigmParams->sublist("Problem")),false);

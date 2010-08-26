@@ -8,7 +8,7 @@
 #include "PdMaterialUtilities.h"
 
 
-Peridigm::IsotropicElasticPlasticMaterial::IsotropicElasticPlasticMaterial(const Teuchos::ParameterList & params)
+PeridigmNS::IsotropicElasticPlasticMaterial::IsotropicElasticPlasticMaterial(const Teuchos::ParameterList & params)
 :
 Material(params),
 decompStates()
@@ -25,12 +25,12 @@ decompStates()
 }
 
 
-Peridigm::IsotropicElasticPlasticMaterial::~IsotropicElasticPlasticMaterial()
+PeridigmNS::IsotropicElasticPlasticMaterial::~IsotropicElasticPlasticMaterial()
 {
 }
 
 
-void Peridigm::IsotropicElasticPlasticMaterial::initialize(const Epetra_Vector& x,
+void PeridigmNS::IsotropicElasticPlasticMaterial::initialize(const Epetra_Vector& x,
                                                      const Epetra_Vector& u,
                                                      const Epetra_Vector& v,
                                                      const double dt,
@@ -83,7 +83,7 @@ void Peridigm::IsotropicElasticPlasticMaterial::initialize(const Epetra_Vector& 
 }
 
 void
-Peridigm::IsotropicElasticPlasticMaterial::updateConstitutiveData(const Epetra_Vector& x,
+PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const Epetra_Vector& x,
 																 const Epetra_Vector& u,
 																 const Epetra_Vector& v,
 																 const double dt,
@@ -114,7 +114,7 @@ Peridigm::IsotropicElasticPlasticMaterial::updateConstitutiveData(const Epetra_V
 }
 
 void
-Peridigm::IsotropicElasticPlasticMaterial::computeForce(const Epetra_Vector& x,
+PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const Epetra_Vector& x,
 													   const Epetra_Vector& u,
 													   const Epetra_Vector& v,
 													   const double dt,

@@ -36,7 +36,7 @@
 #include "Peridigm_ContactModel.hpp"
 #include "Peridigm_DecompositionStates.hpp"
 
-namespace Peridigm {
+namespace PeridigmNS {
 
   class ShortRangeForceContactModel : public ContactModel{
   public:

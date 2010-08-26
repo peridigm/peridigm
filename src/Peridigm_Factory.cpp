@@ -37,11 +37,9 @@
 #include "Peridigm_Factory.hpp"
 #include "Peridigm.hpp"
 
-Peridigm::PeridigmFactory::PeridigmFactory()
-{
-}
+PeridigmNS::PeridigmFactory::PeridigmFactory(){}
 
-Teuchos::RCP<Peridigm::Peridigm> Peridigm::PeridigmFactory::create(const std::string inputFile, const MPI_Comm& peridigmComm)
+Teuchos::RCP<PeridigmNS::Peridigm> PeridigmNS::PeridigmFactory::create(const std::string inputFile, const MPI_Comm& peridigmComm)
 {
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -66,7 +64,7 @@ Teuchos::RCP<Peridigm::Peridigm> Peridigm::PeridigmFactory::create(const std::st
 
 }
 
-void Peridigm::PeridigmFactory::setProblemParamDefaults(Teuchos::Ptr<Teuchos::ParameterList> peridigmParams_)
+void PeridigmNS::PeridigmFactory::setProblemParamDefaults(Teuchos::Ptr<Teuchos::ParameterList> peridigmParams_)
 {
   Teuchos::ParameterList& problemParams = peridigmParams_->sublist("Problem");
 
@@ -74,7 +72,7 @@ void Peridigm::PeridigmFactory::setProblemParamDefaults(Teuchos::Ptr<Teuchos::Pa
   problemParams.set("Verbose", false);
 }
 
-void Peridigm::PeridigmFactory::setSolverParamDefaults(Teuchos::Ptr<Teuchos::ParameterList> peridigmParams_)
+void PeridigmNS::PeridigmFactory::setSolverParamDefaults(Teuchos::Ptr<Teuchos::ParameterList> peridigmParams_)
 {
   Teuchos::ParameterList& solverParams = peridigmParams_->sublist("Solver");
 

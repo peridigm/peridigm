@@ -40,7 +40,7 @@
 
 #include "Peridigm_NeighborhoodData.hpp"
 
-namespace Peridigm {
+namespace PeridigmNS {
 
   class AbstractDiscretization {
   public:
@@ -68,7 +68,7 @@ namespace Peridigm {
     virtual Teuchos::RCP<Epetra_Vector> getCellVolume() const = 0;
 
     //! Get the neighbor list for all locally-owned nodes
-    virtual Teuchos::RCP<Peridigm::NeighborhoodData> getNeighborhoodData() const = 0;
+    virtual Teuchos::RCP<PeridigmNS::NeighborhoodData> getNeighborhoodData() const = 0;
 
     //! Get the number of bonds on this processor
     virtual unsigned int getNumBonds() const = 0;

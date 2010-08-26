@@ -46,7 +46,7 @@ typedef int MPI_Comm;
 
 #include "Peridigm.hpp"
 
-namespace Peridigm {
+namespace PeridigmNS {
 
   /*!
    * \brief A factory class to instantiate Peridigm object

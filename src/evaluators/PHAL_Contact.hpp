@@ -61,7 +61,7 @@ private:
 
   std::size_t m_num_pt;
 
-  Peridigm::DecompositionStates m_decompStates;
+  PeridigmNS::DecompositionStates m_decompStates;
 
   void setup_vectors(const Teuchos::ParameterList& p);
 

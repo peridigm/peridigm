@@ -43,7 +43,7 @@
 #include "Peridigm_AbstractDiscretization.hpp"
 #include "materials/Peridigm_Material.hpp"
 
-namespace Peridigm {
+namespace PeridigmNS {
 
   class Peridigm {
 
@@ -97,7 +97,7 @@ namespace Peridigm {
 
     //! Material models
     //! \todo Use Teuchos::ArrayRCP to store materials?
-    std::vector< Teuchos::RCP<Material> > materials;
+    std::vector< Teuchos::RCP<PeridigmNS::Material> > materials;
 
 
 

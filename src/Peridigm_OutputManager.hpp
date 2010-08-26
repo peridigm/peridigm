@@ -38,7 +38,7 @@
 #include <Teuchos_ParameterList.hpp>
 #include "Peridigm_NeighborhoodData.hpp"
 
-namespace Peridigm {
+namespace PeridigmNS {
   
   class OutputManager {
     
