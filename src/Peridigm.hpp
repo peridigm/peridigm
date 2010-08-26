@@ -34,14 +34,17 @@
 #ifndef PERIDIGM_HPP
 #define PERIDIGM_HPP
 
+#include <vector>
+
 #include <Epetra_MpiComm.h>
 #include <Epetra_SerialComm.h>
 #include <Teuchos_FancyOStream.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_RCP.hpp>
 
-#include "Peridigm_AbstractDiscretization.hpp"
+#include "contact/Peridigm_ContactModel.hpp"
 #include "materials/Peridigm_Material.hpp"
+#include "Peridigm_AbstractDiscretization.hpp"
 
 namespace PeridigmNS {
 
@@ -99,7 +102,8 @@ namespace PeridigmNS {
     //! \todo Use Teuchos::ArrayRCP to store materials?
     std::vector< Teuchos::RCP<PeridigmNS::Material> > materials;
 
-
+    //! Contact models
+    std::vector< Teuchos::RCP<PeridigmNS::ContactModel> > contactModels;
 
   };
 }

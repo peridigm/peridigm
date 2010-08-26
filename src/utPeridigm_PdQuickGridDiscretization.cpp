@@ -57,6 +57,7 @@ void initialize()
   RCP<ParameterList> discParams = rcp(new ParameterList);
 
   discParams->set("Type", "PdQuickGrid");
+  discParams->set("Horizon", 0.31);
   ParameterList& quickGridParams = discParams->sublist("TensorProduct3DMeshGenerator");
   quickGridParams.set("Type", "PdQuickGrid");
   quickGridParams.set("X Origin", 0.0);
@@ -68,7 +69,6 @@ void initialize()
   quickGridParams.set("Number Points X", 10);
   quickGridParams.set("Number Points Y", 10);
   quickGridParams.set("Number Points Z", 10);
-  quickGridParams.set("Horizon", 0.31);
 
 return;
   RCP<PdQuickGridDiscretization> discretization =

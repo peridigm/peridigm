@@ -102,6 +102,9 @@ PdGridData PeridigmNS::PdQuickGridDiscretization::getDiscretization(const Teucho
     if(normType=="Spherical") neighborhoodType = PdQuickGrid::SphericalNorm;
   }
 
+  // Get the horizion
+  horizon = params->get<double>("Horizon");
+
   // param list should have a "sublist" with different types that we switch on here
   PdGridData decomp;
   if (params->isSublist("TensorProduct3DMeshGenerator")){
@@ -115,7 +118,6 @@ PdGridData PeridigmNS::PdQuickGridDiscretization::getDiscretization(const Teucho
     int nx = pdQuickGridParamList->get<int>("Number Points X");
     int ny = pdQuickGridParamList->get<int>("Number Points Y");
     int nz = pdQuickGridParamList->get<int>("Number Points Z");
-    horizon = pdQuickGridParamList->get<double>("Horizon");
 
     const PdQuickGrid::PdQPointSet1d xSpec(nx,xStart,xLength);
     const PdQuickGrid::PdQPointSet1d ySpec(ny,yStart,yLength);
@@ -138,7 +140,6 @@ PdGridData PeridigmNS::PdQuickGridDiscretization::getDiscretization(const Teucho
     double xC             = pdQuickGridParamList->get<double>("Ring Center x");
     double yC             = pdQuickGridParamList->get<double>("Ring Center y");
     double zStart         = pdQuickGridParamList->get<double>("Z Origin");
-    horizon               = pdQuickGridParamList->get<double>("Horizon");
 
     // Create 2d Ring
     std::valarray<double> center(0.0,3);

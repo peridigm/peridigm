@@ -112,11 +112,13 @@ void PeridigmNS::Peridigm::initializeContact() {
   // Extract problem parameters sublist
   Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::rcp(&(peridigmParams->sublist("Problem")),false);
 
+  // Extract discretization parameters sublist
+  Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::rcp(&(problemParams->sublist("Discretization")), false);
+
   // Assume no contact
   computeContact = false;
   contactSearchRadius = 0.0;
   contactSearchFrequency = 0;
-
 
   // Set up contact, if requested by user
   if(problemParams->isSublist("Contact")){
@@ -130,6 +132,32 @@ void PeridigmNS::Peridigm::initializeContact() {
     contactSearchFrequency = contactParams.get<int>("Search Frequency");
   }
 
+  // Instantiate contact models
+  //! \todo Move creation of contact models to contact model factory
+  if(computeContact){
+    Teuchos::ParameterList & contactParams = problemParams->sublist("Contact");
+    Teuchos::ParameterList::ConstIterator it;
+    for(it = contactParams.begin() ; it != contactParams.end() ; it++){
+      const string & name = it->first;
+      if(contactParams.isSublist(name)){
+        Teuchos::ParameterList & contactModelParams = contactParams.sublist(name);
+        // Add the horizon to the contact model parameters, if needed
+        if(!contactModelParams.isParameter("Horizon"))
+          contactModelParams.set("Horizon", discParams->get<double>("Horizon"));
+        Teuchos::RCP<PeridigmNS::ContactModel> contactModel;
+        if(name == "Short Range Force"){
+          contactModel = Teuchos::rcp(new PeridigmNS::ShortRangeForceContactModel(contactModelParams) );
+          contactModels.push_back( Teuchos::rcp_implicit_cast<PeridigmNS::ContactModel>(contactModel) );
+        }
+        else{
+          string invalidContactModel("Unrecognized contact model: ");
+          invalidContactModel += name;
+          invalidContactModel += ", must be Short Range Force";
+          TEST_FOR_EXCEPT_MSG(true, invalidContactModel);
+        }
+      }
+    }
+  }
 
 }
 
