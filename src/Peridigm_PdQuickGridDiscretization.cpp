@@ -42,7 +42,7 @@
 using namespace std;
 
 PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
-                                                               const Teuchos::RCP<Teuchos::ParameterList>& params) :
+                                                                 const Teuchos::RCP<Teuchos::ParameterList>& params) :
   comm(epetra_comm),
   oneDimensionalMap(),
   oneDimensionalOverlapMap(),
@@ -174,21 +174,27 @@ PdGridData PeridigmNS::PdQuickGridDiscretization::getDiscretization(const Teucho
 void
 PeridigmNS::PdQuickGridDiscretization::createMaps(PdGridData& decomp)
 {
+  int dimension;
+
   // oneDimensionalMap
   // used for global IDs and scalar data
-  int dimension = 1;
+  dimension = 1;
   oneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOwnedMap(*comm, decomp, dimension)));
 
   // oneDimensionalOverlapMap
   // used for global IDs and scalar data, includes ghosts
-//   dimension = 1;
-//   Epetra_BlockMap pdQuickGridOverlapMap = PdQuickGrid::getOverlapMap(*comm, decomp, dimension);
-//   numGlobalElements = pdQuickGridOverlapMap.NumGlobalElements();
-//   numMyElements = pdQuickGridOverlapMap.NumMyElements();
-//   myGlobalElements = pdQuickGridOverlapMap.MyGlobalElements();
-//   indexBase = 0;
-//   oneDimensionalOverlapMap = 
-//      Teuchos::rcp(new Epetra_Map(numGlobalElements, numMyElements, myGlobalElements, indexBase, *comm));
+  dimension = 1;
+  oneDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOverlapMap(*comm, decomp, dimension)));
+
+  // threeDimensionalMap
+  // used for R3 vector data, e.g., u, v, etc.
+  dimension = 3;
+  threeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOwnedMap(*comm, decomp, dimension)));
+
+  // threeDimensionalOverlapMap
+  // used for R3 vector data, e.g., u, v, etc.,  includes ghosts
+  dimension = 3;
+  threeDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOverlapMap(*comm, decomp, dimension)));
 
 }
 
