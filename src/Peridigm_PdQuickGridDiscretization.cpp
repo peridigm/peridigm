@@ -66,7 +66,6 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
   int numGlobalElements = -1;
   int numMyElements = numBonds;
   int indexBase = 0;
-return;
   bondMap = Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, indexBase, *comm));
 
   // fill the solver's x vector with the current positions
