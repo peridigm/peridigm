@@ -34,7 +34,7 @@
 #include "Peridigm_ShortRangeForceContactModel.hpp"
 #include <Teuchos_TestForException.hpp>
 
-Peridigm::ShortRangeForceContactModel::ShortRangeForceContactModel(const Teuchos::ParameterList& params)
+PeridigmNS::ShortRangeForceContactModel::ShortRangeForceContactModel(const Teuchos::ParameterList& params)
   : ContactModel(params),
     m_decompStates(),
     m_contactRadius(0.0),
@@ -53,12 +53,12 @@ Peridigm::ShortRangeForceContactModel::ShortRangeForceContactModel(const Teuchos
   m_horizon = params.get<double>("Horizon");
 }
 
-Peridigm::ShortRangeForceContactModel::~ShortRangeForceContactModel()
+PeridigmNS::ShortRangeForceContactModel::~ShortRangeForceContactModel()
 {
 }
 
 void
-Peridigm::ShortRangeForceContactModel::computeForce(const Epetra_Vector& x,
+PeridigmNS::ShortRangeForceContactModel::computeForce(const Epetra_Vector& x,
                                                     const Epetra_Vector& u,
                                                     const Epetra_Vector& v,
                                                     const double dt,
