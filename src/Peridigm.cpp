@@ -94,14 +94,12 @@ void PeridigmNS::Peridigm::initializeDiscretization() {
 
   // threeDimensionalMap
   // used for positions, displacements, velocities and vector constitutive data
-// MLP
-//  threeDimensionalMap = peridigmDisc->getThreeDimensionalMap();
+  threeDimensionalMap = peridigmDisc->getMap(3);
 
   // threeDimensionalOverlapMap
   // used for positions, displacements, velocities and vector constitutive data
   // includes ghosts
-// MLP
-//  threeDimensionalOverlapMap = peridigmDisc->getThreeDimensionalOverlapMap();
+  threeDimensionalOverlapMap = peridigmDisc->getOverlapMap(3);
 
   // bondConstitutiveDataMap
   // a non-overlapping map used for storing constitutive data on bonds
