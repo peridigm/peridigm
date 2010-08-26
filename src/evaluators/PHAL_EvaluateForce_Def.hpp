@@ -96,7 +96,7 @@ void EvaluateForce<EvalT, Traits>::evaluateFields(typename Traits::EvalData cell
   force.PutScalar(0.0);
 
   // handling of material models needs work!
-  Teuchos::RCP<Peridigm::Material> material = cellData.materials[0];
+  Teuchos::RCP<PeridigmNS::Material> material = cellData.materials[0];
 
   material->computeForce(x, 
 						 u, 

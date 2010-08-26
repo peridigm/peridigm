@@ -58,20 +58,20 @@ struct Workset {
   Teuchos::RCP<Epetra_Vector> contactForceOverlap;
   Teuchos::RCP<const double> timeStep;
   Teuchos::RCP<const Epetra_Vector> cellVolumeOverlap;
-  Teuchos::RCP<const Peridigm::NeighborhoodData> neighborhoodData;
+  Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData;
   Teuchos::RCP<double> bondData;
   Teuchos::RCP<Epetra_MultiVector> scalarConstitutiveDataOverlap;
   Teuchos::RCP<Epetra_MultiVector> vectorConstitutiveDataOverlap;
   Teuchos::RCP<Epetra_MultiVector> bondConstitutiveData;
 
-  Teuchos::RCP<const Peridigm::NeighborhoodData> contactNeighborhoodData;
+  Teuchos::RCP<const PeridigmNS::NeighborhoodData> contactNeighborhoodData;
 
   // The evaluators need access to the material models
   // For now, we're using a vector of materials
   //! \todo Use Teuchos::ArrayRCP to store materials?
-  std::vector< Teuchos::RCP<Peridigm::Material> > materials;
+  std::vector< Teuchos::RCP<PeridigmNS::Material> > materials;
 
-  std::vector< Teuchos::RCP<Peridigm::ContactModel> > contactModels;
+  std::vector< Teuchos::RCP<PeridigmNS::ContactModel> > contactModels;
 
   // MPI ID (debugging)
   int myPID;

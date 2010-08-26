@@ -16,7 +16,7 @@ typedef int MPI_Comm;
 #include <Epetra_SerialComm.h>
 #endif
 
-namespace Peridigm {
+namespace PeridigmNS {
 
 class VerletSolver: public EpetraExt::ModelEvaluator {
 

@@ -38,7 +38,7 @@
 #include "Peridigm_DecompositionStates.hpp"
 #include <cmath>
 
-namespace Peridigm {
+namespace PeridigmNS {
 
   /*! \brief State-based peridynamic linear elastic isotropic material model.
    *

@@ -41,7 +41,7 @@
 #include <vector>
 #include <map>
 
-namespace Peridigm {
+namespace PeridigmNS {
 
   //! Base class defining the Peridigm material model interface.
   class Material{

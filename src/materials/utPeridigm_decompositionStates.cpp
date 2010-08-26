@@ -16,14 +16,14 @@
 using namespace boost::unit_test;
 using namespace Pdut;
 using namespace std;
-using namespace Peridigm;
+using namespace PeridigmNS;
 
 static int myRank;
 static int numProcs;
 
 void addGetMethods(){
 
-	Peridigm::DecompositionStates d;
+	DecompositionStates d;
 	BOOST_CHECK(3==d.getNumScalarStateVariables());
 	BOOST_CHECK(1==d.getNumVectorStateVariables());
 	BOOST_CHECK(0==d.getNumScalarStateBondVariables());

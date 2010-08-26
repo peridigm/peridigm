@@ -42,7 +42,7 @@
 #include "Peridigm_ModelEvaluator.hpp"
 #include "Peridigm_OutputManager.hpp"
 
-namespace Peridigm {
+namespace PeridigmNS {
 
   typedef double Scalar;
 

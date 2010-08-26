@@ -39,10 +39,10 @@
 #include "Peridigm_AbstractDiscretization.hpp"
 #include "PdGridData.h"
 
-namespace Peridigm {
+namespace PeridigmNS {
 
   //! Discretization class that creates discretizations using PdQuickGrid.
-  class PdQuickGridDiscretization : public Peridigm::AbstractDiscretization {
+  class PdQuickGridDiscretization : public PeridigmNS::AbstractDiscretization {
 
   public:
 
@@ -69,7 +69,7 @@ namespace Peridigm {
     virtual Teuchos::RCP<Epetra_Vector> getCellVolume() const;
 
     //! Get the neighbor list for all locally-owned nodes
-    virtual Teuchos::RCP<Peridigm::NeighborhoodData> getNeighborhoodData() const;
+    virtual Teuchos::RCP<PeridigmNS::NeighborhoodData> getNeighborhoodData() const;
 
     //! Get the number of bonds on this processor
     unsigned int getNumBonds() const;
@@ -113,7 +113,7 @@ namespace Peridigm {
     Teuchos::RCP<Epetra_Vector> cellVolume;
 	
     //! Struct containing neighborhoods for owned nodes.
-    Teuchos::RCP<Peridigm::NeighborhoodData> neighborhoodData;
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData;
 
     //! Returns number of bonds on this processor
     unsigned int numBonds;

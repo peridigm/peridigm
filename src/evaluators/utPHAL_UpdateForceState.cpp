@@ -105,7 +105,7 @@ void testTwoPts()
   params.set("Density", 7800.0);
   params.set("Bulk Modulus", 130.0e9);
   params.set("Shear Modulus", 78.0e9);
-  Peridigm::LinearElasticIsotropicMaterial mat(params);
+  PeridigmNS::LinearElasticIsotropicMaterial mat(params);
 
   // set up the vectors
   Epetra_Vector xOverlap(threeDimensionalOverlapMap);
@@ -136,7 +136,7 @@ void testTwoPts()
   scalarConstitutiveDataOverlap[weightedVolumeIndex][1] = 1.0;
 
   // both points are neighbors of each other
-  Peridigm::NeighborhoodData neighborhoodData;
+  PeridigmNS::NeighborhoodData neighborhoodData;
   neighborhoodData.SetNumOwned(2);
   neighborhoodData.SetNeighborhoodListSize(4);
   int* const ownedIDs = neighborhoodData.OwnedIDs();
@@ -171,7 +171,7 @@ void testTwoPts()
   workset.forceOverlap = Teuchos::RCP<Epetra_Vector>(&forceOverlap, false);
   workset.timeStep = Teuchos::RCP<double>(&dt, false);
   workset.cellVolumeOverlap = Teuchos::RCP<Epetra_Vector>(&cellVolumeOverlap, false);
-  workset.neighborhoodData = Teuchos::RCP<Peridigm::NeighborhoodData>(&neighborhoodData, false);
+  workset.neighborhoodData = Teuchos::RCP<PeridigmNS::NeighborhoodData>(&neighborhoodData, false);
   workset.bondData = Teuchos::RCP<double>(bondData, false);
   workset.scalarConstitutiveDataOverlap = Teuchos::RCP<Epetra_MultiVector>(&scalarConstitutiveDataOverlap, false);
   workset.vectorConstitutiveDataOverlap = Teuchos::RCP<Epetra_MultiVector>(&vectorConstitutiveDataOverlap, false);

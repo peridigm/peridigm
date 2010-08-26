@@ -35,7 +35,7 @@
 #include "Peridigm_Material.hpp"
 #include "Peridigm_DecompositionStates.hpp"
 
-namespace Peridigm {
+namespace PeridigmNS {
 
   class IsotropicElasticPlasticMaterial : public Material {
   public:

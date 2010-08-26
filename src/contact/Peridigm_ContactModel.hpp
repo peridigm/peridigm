@@ -38,7 +38,7 @@
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_Vector.h>
 
-namespace Peridigm {
+namespace PeridigmNS {
 
   //! Base class defining the Peridigm material model interface.
   class ContactModel{

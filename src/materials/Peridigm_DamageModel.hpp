@@ -39,7 +39,7 @@
 #include <Epetra_Vector.h>
 #include <Epetra_Map.h>
 
-namespace Peridigm {
+namespace PeridigmNS {
 
   //! Base class defining the Peridigm damage model interface.
   class DamageModel{

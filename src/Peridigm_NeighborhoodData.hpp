@@ -34,7 +34,7 @@
 #ifndef PERIDIGM_NEIGHBORHOODDATA_HPP
 #define PERIDIGM_NEIGHBORHOODDATA_HPP
 
-namespace Peridigm {
+namespace PeridigmNS {
 
 class NeighborhoodData {
 

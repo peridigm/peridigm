@@ -48,7 +48,7 @@ typedef int MPI_Comm;
 
 #include "Peridigm_ModelEvaluator.hpp"
 
-namespace Peridigm {
+namespace PeridigmNS {
 
   /*!
    * \brief A factory class to instantiate AbstractSolver objects.

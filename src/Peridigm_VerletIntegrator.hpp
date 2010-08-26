@@ -37,7 +37,7 @@
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_RCP.hpp>
 
-namespace Peridigm {
+namespace PeridigmNS {
 
   class VerletIntegrator {
   public:

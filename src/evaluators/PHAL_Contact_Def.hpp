@@ -92,7 +92,7 @@ void Contact<EvalT, Traits>::evaluateFields(typename Traits::EvalData cellData)
   contactForce.PutScalar(0.0);
 
   // handling of contact models needs work!
-  Teuchos::RCP<Peridigm::ContactModel> contactModel = cellData.contactModels[0];
+  Teuchos::RCP<PeridigmNS::ContactModel> contactModel = cellData.contactModels[0];
 
   contactModel->computeForce(x, 
 						 u, 

@@ -39,7 +39,7 @@
 #include <Epetra_Comm.h>
 #include "Peridigm_AbstractDiscretization.hpp"
 
-namespace Peridigm {
+namespace PeridigmNS {
 
   /*!
    * \brief A factory class to instantiate AbstractDiscretization objects

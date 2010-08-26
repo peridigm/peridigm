@@ -39,7 +39,7 @@
 
 using namespace boost::unit_test;
 using namespace std;
-using namespace Peridigm;
+using namespace PeridigmNS;
 using namespace Teuchos;
 
 //! Tests state variable count and name accessor functions.

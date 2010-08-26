@@ -50,7 +50,7 @@
 #include "contact/Peridigm_ShortRangeForceContactModel.hpp"
 #include <vector>
 
-namespace Peridigm {
+namespace PeridigmNS {
 
   /*! \brief The main ModelEvaluator class; provides the interface 
    * between the driver code and the computational routines.

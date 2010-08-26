@@ -37,19 +37,19 @@
 
 using namespace std;
 
-Peridigm::CriticalStretchDamageModel::CriticalStretchDamageModel(const Teuchos::ParameterList& params)
+PeridigmNS::CriticalStretchDamageModel::CriticalStretchDamageModel(const Teuchos::ParameterList& params)
   : DamageModel(params), m_numScalarConstitutiveData(1), m_numVectorConstitutiveData(0),
     m_numBondConstitutiveData(0), m_yIndex(0)
 {
   m_criticalStretch = params.get<double>("Critical Stretch");
 }
 
-Peridigm::CriticalStretchDamageModel::~CriticalStretchDamageModel()
+PeridigmNS::CriticalStretchDamageModel::~CriticalStretchDamageModel()
 {
 }
 
 void
-Peridigm::CriticalStretchDamageModel::initialize(const Epetra_Vector& x,
+PeridigmNS::CriticalStretchDamageModel::initialize(const Epetra_Vector& x,
                                                  const Epetra_Vector& u,
                                                  const Epetra_Vector& v,
                                                  const double dt,
@@ -77,7 +77,7 @@ Peridigm::CriticalStretchDamageModel::initialize(const Epetra_Vector& x,
 }
 
 void
-Peridigm::CriticalStretchDamageModel::computeDamage(const Epetra_Vector& x,
+PeridigmNS::CriticalStretchDamageModel::computeDamage(const Epetra_Vector& x,
                                                     const Epetra_Vector& u,
                                                     const Epetra_Vector& v,
                                                     const double dt,

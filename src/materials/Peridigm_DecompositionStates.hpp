@@ -15,7 +15,7 @@
 
 class Epetra_MultiVector;
 
-namespace Peridigm {
+namespace PeridigmNS {
 
 class DecompositionStates {
 

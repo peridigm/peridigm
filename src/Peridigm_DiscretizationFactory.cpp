@@ -35,7 +35,7 @@
 #include "Peridigm_DiscretizationFactory.hpp"
 #include "Peridigm_PdQuickGridDiscretization.hpp"
 
-Peridigm::DiscretizationFactory::DiscretizationFactory(const Teuchos::RCP<Teuchos::ParameterList>& discParams_) :
+PeridigmNS::DiscretizationFactory::DiscretizationFactory(const Teuchos::RCP<Teuchos::ParameterList>& discParams_) :
   discParams(discParams_)
 {
   // check to see if a test configuration has been specified
@@ -47,10 +47,10 @@ Peridigm::DiscretizationFactory::DiscretizationFactory(const Teuchos::RCP<Teucho
 
 }
 
-Teuchos::RCP<Peridigm::AbstractDiscretization>
-Peridigm::DiscretizationFactory::create(const Teuchos::RCP<const Epetra_Comm>& epetra_comm)
+Teuchos::RCP<PeridigmNS::AbstractDiscretization>
+PeridigmNS::DiscretizationFactory::create(const Teuchos::RCP<const Epetra_Comm>& epetra_comm)
 {
-  Teuchos::RCP<Peridigm::AbstractDiscretization> discretization;
+  Teuchos::RCP<PeridigmNS::AbstractDiscretization> discretization;
 
   string type = discParams->get<string>("Type");
 
@@ -60,7 +60,7 @@ Peridigm::DiscretizationFactory::create(const Teuchos::RCP<const Epetra_Comm>& e
 					   "Software is currently unable to read mesh file, please try again later.");
   }
   else if(type == "PdQuickGrid"){
-	discretization = Teuchos::rcp(new Peridigm::PdQuickGridDiscretization(epetra_comm, discParams));
+	discretization = Teuchos::rcp(new PeridigmNS::PdQuickGridDiscretization(epetra_comm, discParams));
   }
   else{
     TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 

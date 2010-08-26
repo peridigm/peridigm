@@ -88,9 +88,9 @@ int main(int argc, char *argv[]) {
     string xml_file_name(argv[1]);
 
     // Create factory object to produce main Peridigm object
-    Peridigm::PeridigmFactory peridigmFactory;
+    PeridigmNS::PeridigmFactory peridigmFactory;
     // Create peridigm object
-    Teuchos::RCP<Peridigm::Peridigm> peridigm = peridigmFactory.create(xml_file_name, peridigmComm);
+    Teuchos::RCP<PeridigmNS::Peridigm> peridigm = peridigmFactory.create(xml_file_name, peridigmComm);
 
 /****************************
 	EpetraExt::ModelEvaluator::InArgs params_in = App->createInArgs();

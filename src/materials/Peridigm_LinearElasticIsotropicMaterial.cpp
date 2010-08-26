@@ -38,7 +38,7 @@
 
 using namespace std;
 
-Peridigm::LinearElasticIsotropicMaterial::LinearElasticIsotropicMaterial(const Teuchos::ParameterList& params)
+PeridigmNS::LinearElasticIsotropicMaterial::LinearElasticIsotropicMaterial(const Teuchos::ParameterList& params)
   : Material(params),
     m_decompStates(),
     m_damageModel()
@@ -56,7 +56,7 @@ Peridigm::LinearElasticIsotropicMaterial::LinearElasticIsotropicMaterial(const T
     }
     string& damageModelType = damageParams.get<string>("Type");
     if(damageModelType == "Critical Stretch"){
-      m_damageModel = Teuchos::rcp(new Peridigm::CriticalStretchDamageModel(damageParams));
+      m_damageModel = Teuchos::rcp(new PeridigmNS::CriticalStretchDamageModel(damageParams));
     }
     else{
       TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
@@ -78,12 +78,12 @@ Peridigm::LinearElasticIsotropicMaterial::LinearElasticIsotropicMaterial(const T
   }
 }
 
-Peridigm::LinearElasticIsotropicMaterial::~LinearElasticIsotropicMaterial()
+PeridigmNS::LinearElasticIsotropicMaterial::~LinearElasticIsotropicMaterial()
 {
 }
 
 void
-Peridigm::LinearElasticIsotropicMaterial::initialize(const Epetra_Vector& x,
+PeridigmNS::LinearElasticIsotropicMaterial::initialize(const Epetra_Vector& x,
                                                      const Epetra_Vector& u,
                                                      const Epetra_Vector& v,
                                                      const double dt,
@@ -138,7 +138,7 @@ Peridigm::LinearElasticIsotropicMaterial::initialize(const Epetra_Vector& x,
 }
 
 void
-Peridigm::LinearElasticIsotropicMaterial::updateConstitutiveData(const Epetra_Vector& x,
+PeridigmNS::LinearElasticIsotropicMaterial::updateConstitutiveData(const Epetra_Vector& x,
 																 const Epetra_Vector& u,
 																 const Epetra_Vector& v,
 																 const double dt,
@@ -284,7 +284,7 @@ PdMaterialUtilities::computeDilatation(x.Values(),y,weightedVolume,cellVolume.Va
 }
 
 void
-Peridigm::LinearElasticIsotropicMaterial::computeForce(const Epetra_Vector& x,
+PeridigmNS::LinearElasticIsotropicMaterial::computeForce(const Epetra_Vector& x,
 													   const Epetra_Vector& u,
 													   const Epetra_Vector& v,
 													   const double dt,

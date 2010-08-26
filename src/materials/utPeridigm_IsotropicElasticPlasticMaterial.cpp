@@ -45,7 +45,7 @@
 
 using namespace boost::unit_test;
 using namespace std;
-using namespace Peridigm;
+using namespace PeridigmNS;
 using namespace Teuchos;
 using namespace PdQuickGrid;
 using namespace PdMaterialUtilities;
