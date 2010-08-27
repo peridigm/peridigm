@@ -13,7 +13,7 @@
 # -G"Eclipse CDT4 - Unix Makefiles" \
 # -D CMAKE_VERBOSE_MAKEFILE:BOOL=TRUE \
 # -D ECLIPSE_CDT4_GENERATE_SOURCE_PROJECT=TRUE \
-# ../peridigm 
+# ../peridigm.votd 
 
 # Collection of libs that we need to link with
 include_directories(${TRILINOS_DIR}/include ${VTK_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
