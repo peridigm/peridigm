@@ -44,11 +44,6 @@ using namespace std;
 PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                                                                  const Teuchos::RCP<Teuchos::ParameterList>& params) :
   comm(epetra_comm),
-  oneDimensionalMap(),
-  oneDimensionalOverlapMap(),
-  bondMap(),
-  solverInitialX(),
-  cellVolume(),
   numBonds(0),
   myPID(comm->MyPID()),
   numPID(comm->NumProc())
@@ -57,7 +52,6 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
   PdGridData decomp = getDiscretization(params);
 
   createMaps(decomp);
-  createVectors();
   createNeighborhoodData(decomp);
 
   // determine the number of bonds based on the neighborhood data
@@ -68,26 +62,14 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
   int indexBase = 0;
   bondMap = Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, indexBase, *comm));
 
-  // fill the solver's x vector with the current positions
-  // this vector contains both positions and velocities
-  // here, the velocities are set to zero, they may be initialized downstream if needed
+  // 3D only
   TEST_FOR_EXCEPT_MSG(decomp.dimension != 3, "Invalid dimension in decomposition (only 3D is supported)");
-  int* indices = new int[decomp.numPoints*3];
-  for(int i=0 ; i<decomp.numPoints ; ++i){
-	indices[3*i]   = i*6;
-	indices[3*i+1] = i*6+1;
-	indices[3*i+2] = i*6+2;
-  }
-  solverInitialX->ReplaceMyValues(decomp.numPoints*decomp.dimension, decomp.myX.get(), indices);
-  delete[] indices;
+
+  // fill the x vector with the current positions (owned positions only)
+  initialX = Teuchos::rcp(new Epetra_Vector(Copy,*threeDimensionalMap,decomp.myX.get()) );
 
   // fill cell volumes
-  indices = new int[decomp.numPoints];
-  for(int i=0 ; i<decomp.numPoints ; ++i){
-	indices[i] = i;
-  }
-  cellVolume->ReplaceMyValues(decomp.numPoints, decomp.cellVolume.get(), indices);
-  delete[] indices;
+  cellVolume = Teuchos::rcp(new Epetra_Vector(Copy,*oneDimensionalMap,decomp.cellVolume.get()) );
 }
 
 PeridigmNS::PdQuickGridDiscretization::~PdQuickGridDiscretization() {}
@@ -203,13 +185,6 @@ PeridigmNS::PdQuickGridDiscretization::createMaps(PdGridData& decomp)
 }
 
 void
-PeridigmNS::PdQuickGridDiscretization::createVectors()
-{
-  solverInitialX = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
-  cellVolume = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
-}
-
-void
 PeridigmNS::PdQuickGridDiscretization::createNeighborhoodData(PdGridData& decomp)
 {
    neighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
@@ -265,9 +240,9 @@ PeridigmNS::PdQuickGridDiscretization::getBondMap() const
 }
 
 Teuchos::RCP<Epetra_Vector>
-PeridigmNS::PdQuickGridDiscretization::getSolverInitialX() const
+PeridigmNS::PdQuickGridDiscretization::getInitialX() const
 {
-  return solverInitialX;
+  return initialX;
 }
 
 Teuchos::RCP<Epetra_Vector>

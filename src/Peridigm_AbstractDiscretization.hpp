@@ -62,7 +62,7 @@ namespace PeridigmNS {
     virtual Teuchos::RCP<const Epetra_BlockMap> getBondMap() const = 0;
 
     //! Get initial positions
-    virtual Teuchos::RCP<Epetra_Vector> getSolverInitialX() const = 0;
+    virtual Teuchos::RCP<Epetra_Vector> getInitialX() const = 0;
 
     //! Get cell volumes
     virtual Teuchos::RCP<Epetra_Vector> getCellVolume() const = 0;
