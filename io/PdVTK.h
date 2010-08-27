@@ -23,13 +23,15 @@ using std::string;
 
 namespace PdVTK {
 
+enum VTK_FILE_TYPE { vtkASCII=0, vtkBINARY };
+
 vtkSmartPointer<vtkUnstructuredGrid> getGrid(shared_ptr<double>& y, int numPoints);
-vtkSmartPointer<vtkXMLPUnstructuredGridWriter> getWriter(const char* _fileName, int numProcs, int rank);
+vtkSmartPointer<vtkXMLPUnstructuredGridWriter> getWriter(const char* _fileName, int numProcs, int rank, VTK_FILE_TYPE type=vtkBINARY);
 void write(vtkSmartPointer<vtkXMLPUnstructuredGridWriter> w, vtkSmartPointer<vtkUnstructuredGrid> g);
 
 class CollectionWriter {
 public:
-	CollectionWriter(const char* _fileName, int numProcs, int rank);
+	CollectionWriter(const char* _fileName, int numProcs, int rank, VTK_FILE_TYPE t=vtkBINARY);
 	void writeTimeStep(double t, vtkSmartPointer<vtkUnstructuredGrid> grid);
 	void close();
 private:
