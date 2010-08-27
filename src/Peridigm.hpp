@@ -65,6 +65,9 @@ namespace PeridigmNS {
     //! Initialize material objects
     void initializeMaterials();
 
+    //! Initialize data structures
+    void initializeData();
+
     //! Destructor
     ~Peridigm(){};
 

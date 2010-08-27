@@ -65,6 +65,9 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   // Setup contact
   initializeContact();
 
+  // initialize data structures
+  initializeData();
+
 
 }
 
@@ -201,6 +204,50 @@ void PeridigmNS::Peridigm::initializeMaterials() {
   }
   TEST_FOR_EXCEPT_MSG(materials.size() == 0, "No material models created!");
 
+}
+
+void PeridigmNS::Peridigm::initializeData() {
+
+/*
+  // Create x, u, and v vectors
+  xOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
+  xOverlap->Import(*solverInitialX, *firstEntryImporter, Insert);
+  uOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
+  vOverlap = Teuchos::rcp(new Epetra_Vector(*secondaryEntryOverlapMap));
+  yOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
+
+  // Get the cell volumes and put them in the cellVolumeOverlap vector
+  cellVolumeOverlap = Teuchos::rcp(new Epetra_Vector(*oneDimensionalOverlapMap));
+  Epetra_Import oneDimensionalMapToOneDimensionalOverlapMapImporter(*oneDimensionalOverlapMap, *oneDimensionalMap);
+  cellVolumeOverlap->Import(*(disc->getCellVolume()), oneDimensionalMapToOneDimensionalOverlapMapImporter, Insert);
+
+  // containers for constitutive data
+  scalarConstitutiveDataOverlap = Teuchos::rcp(new Epetra_MultiVector(*oneDimensionalOverlapMap, scalarConstitutiveDataSize));
+  scalarConstitutiveDataOverlap->PutScalar(0.0);
+  vectorConstitutiveDataOverlap = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalOverlapMap, vectorConstitutiveDataSize));
+  vectorConstitutiveDataOverlap->PutScalar(0.0);
+  bondConstitutiveData = Teuchos::rcp(new Epetra_MultiVector(*bondMap, bondConstitutiveDataSize));
+  bondConstitutiveData->PutScalar(0.0);
+
+  // container for accelerations
+  forceOverlap = Teuchos::rcp(new Epetra_Vector(*secondaryEntryOverlapMap));
+
+  // get the neighborlist from the discretization
+  neighborhoodData = disc->getNeighborhoodData();
+
+  // container for accelerations due to contact
+  if(computeContact){
+    contactForceOverlap = Teuchos::rcp(new Epetra_Vector(*secondaryEntryOverlapMap));
+    contactNeighborhoodData = Teuchos::rcp(new Peridigm::NeighborhoodData);
+    updateContactNeighborList(solverInitialX);
+  }
+
+  // container for bond damage
+  bondData = new double[disc->getNumBonds()];
+  for(unsigned int i=0; i<disc->getNumBonds(); i++)
+        bondData[i] = 0.0;
+
+*/
 }
 
 
