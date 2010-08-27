@@ -29,8 +29,8 @@ vtkSmartPointer<vtkUnstructuredGrid> getGrid(const vtkSmartPointer<vtkPoints>& x
 vtkSmartPointer<vtkCellArray> getCellArray(vtkIdType numCells);
 
 
-CollectionWriter::CollectionWriter(const char* _fileName, int numProcs, int rank)
-: fileName(_fileName), times(), writer(getWriter(_fileName,numProcs,rank)){}
+CollectionWriter::CollectionWriter(const char* _fileName, int numProcs, int rank, VTK_FILE_TYPE type)
+: fileName(_fileName), times(), writer(getWriter(_fileName,numProcs,rank,type)){}
 
 /**
  * This call writes a single pvtu file associated with the grid at this time step
@@ -76,12 +76,17 @@ void CollectionWriter::close() {
 	fStream.close();
 }
 
-vtkSmartPointer<vtkXMLPUnstructuredGridWriter > getWriter(const char* _fileName, int numProcs, int rank){
+vtkSmartPointer<vtkXMLPUnstructuredGridWriter > getWriter(const char* _fileName, int numProcs, int rank, VTK_FILE_TYPE type){
 	vtkSmartPointer<vtkXMLPUnstructuredGridWriter > w = vtkSmartPointer<vtkXMLPUnstructuredGridWriter>::New();
 	w->SetNumberOfPieces(numProcs);
 	w->SetStartPiece(rank);
 	w->SetEndPiece(rank);
 	w->SetFileName(_fileName);
+	/*
+	 * If incoming file type is ascii -- write this type of file
+	 */
+	if(vtkASCII==type) w->SetDataModeToAscii();
+
 	return w;
 }
 
