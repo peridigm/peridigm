@@ -65,8 +65,8 @@ namespace PeridigmNS {
     //! Initialize material objects
     void initializeMaterials();
 
-    //! Initialize data structures
-    void initializeData();
+    //! Update contact neighborlist; do load rebalance
+    void updateContactNeighborList();
 
     //! Destructor
     ~Peridigm(){};
@@ -107,6 +107,47 @@ namespace PeridigmNS {
 
     //! Contact models
     std::vector< Teuchos::RCP<PeridigmNS::ContactModel> > contactModels;
+
+    //! Initial positions (vector includes ghosted dof)
+    Teuchos::RCP<Epetra_Vector> xOverlap;
+
+    //! Displacement at previously accepted solution (vector includes ghosted dof)
+    Teuchos::RCP<Epetra_Vector> uOverlap;
+
+    //! Current displacement (vector includes ghosted dof)
+    Teuchos::RCP<Epetra_Vector> yOverlap;
+
+    //! Current velocities (vector includes ghosted dof)
+    Teuchos::RCP<Epetra_Vector> vOverlap;
+
+    //! Internal force vector (vector includes ghosted dof)
+    Teuchos::RCP<Epetra_Vector> forceOverlap;
+
+    //! Force due to contact (vector includes ghosted dof)
+    Teuchos::RCP<Epetra_Vector> contactForceOverlap;
+
+    //! Cell volumes
+    Teuchos::RCP<Epetra_Vector> cellVolumeOverlap;
+
+    //! Scalar constitutive data (vector includes ghosted dof)
+    int scalarConstitutiveDataSize;
+    Teuchos::RCP<Epetra_MultiVector> scalarConstitutiveDataOverlap;
+
+    //! Vector constitutive data (vector includes ghosted dof)
+    int vectorConstitutiveDataSize;
+    Teuchos::RCP<Epetra_MultiVector> vectorConstitutiveDataOverlap;
+
+    //! Bond constitutive data
+    int bondConstitutiveDataSize;
+    Teuchos::RCP<Epetra_MultiVector> bondConstitutiveData;
+
+    //! List of neighbors for all locally-owned nodes
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData;
+
+    //! List of potential contact neighbors for all locally-owned nodes
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> contactNeighborhoodData;
+
+
 
   };
 }

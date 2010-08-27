@@ -38,6 +38,7 @@
 #include <iostream>
 #include <vector>
 
+#include <Epetra_Import.h>
 #include <Teuchos_VerboseObject.hpp>
 
 #include "Peridigm.hpp"
@@ -60,14 +61,11 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // Read mesh from disk or generate using geometric primatives.
   // All maps are generated here
+  // Vectors constructed here
   initializeDiscretization();
 
   // Setup contact
   initializeContact();
-
-  // initialize data structures
-  initializeData();
-
 
 }
 
@@ -107,6 +105,41 @@ void PeridigmNS::Peridigm::initializeDiscretization() {
   // bondConstitutiveDataMap
   // a non-overlapping map used for storing constitutive data on bonds
   bondMap = peridigmDisc->getBondMap();
+
+  // container for bond damage
+  bondData = new double[peridigmDisc->getNumBonds()];
+  for(unsigned int i=0; i<peridigmDisc->getNumBonds(); i++)
+    bondData[i] = 0.0;
+
+  // Get the initial positions and put them in the xOverlap vector
+  Epetra_Import threeDimensionalMapToThreeDimensionalOverlapMapImporter(*threeDimensionalOverlapMap, *threeDimensionalMap);
+  xOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
+  xOverlap->Import(*(peridigmDisc->getInitialX()), threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+
+  // Get the cell volumes and put them in the cellVolumeOverlap vector
+  cellVolumeOverlap = Teuchos::rcp(new Epetra_Vector(*oneDimensionalOverlapMap));
+  Epetra_Import oneDimensionalMapToOneDimensionalOverlapMapImporter(*oneDimensionalOverlapMap, *oneDimensionalMap);
+  cellVolumeOverlap->Import(*(peridigmDisc->getCellVolume()), oneDimensionalMapToOneDimensionalOverlapMapImporter, Insert);
+
+  // Create u, y, and v vectors
+  uOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
+  vOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
+  yOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
+
+  // containers for constitutive data
+  scalarConstitutiveDataOverlap = Teuchos::rcp(new Epetra_MultiVector(*oneDimensionalOverlapMap, scalarConstitutiveDataSize));
+  scalarConstitutiveDataOverlap->PutScalar(0.0);
+  vectorConstitutiveDataOverlap = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalOverlapMap, vectorConstitutiveDataSize));
+  vectorConstitutiveDataOverlap->PutScalar(0.0);
+  bondConstitutiveData = Teuchos::rcp(new Epetra_MultiVector(*bondMap, bondConstitutiveDataSize));
+  bondConstitutiveData->PutScalar(0.0);
+
+  // container for accelerations
+  forceOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
+
+  // get the neighborlist from the discretization
+  neighborhoodData = peridigmDisc->getNeighborhoodData();
+
 
 }
 
@@ -162,6 +195,13 @@ void PeridigmNS::Peridigm::initializeContact() {
     }
   }
 
+  // container for accelerations due to contact
+  if(computeContact){
+    contactForceOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
+    contactNeighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
+    updateContactNeighborList();
+  }
+
 }
 
 void PeridigmNS::Peridigm::initializeMaterials() {
@@ -174,9 +214,9 @@ void PeridigmNS::Peridigm::initializeMaterials() {
   TEST_FOR_EXCEPT_MSG(!problemParams->isSublist("Material"), "Material parameters not specified!");
   Teuchos::ParameterList & materialParams = problemParams->sublist("Material");
   Teuchos::ParameterList::ConstIterator it;
-  int scalarConstitutiveDataSize = 1; // Epetra barfs if you try to create a vector of zero size
-  int vectorConstitutiveDataSize = 1;
-  int bondConstitutiveDataSize = 1;
+  scalarConstitutiveDataSize = 1; // Epetra barfs if you try to create a vector of zero size
+  vectorConstitutiveDataSize = 1;
+  bondConstitutiveDataSize   = 1;
   for(it = materialParams.begin() ; it != materialParams.end() ; it++){
     const string & name = it->first;
     Teuchos::ParameterList & matParams = materialParams.sublist(name);
@@ -189,11 +229,11 @@ void PeridigmNS::Peridigm::initializeMaterials() {
       materials.push_back( Teuchos::rcp_implicit_cast<Material>(material) );
       // Allocate enough space for the max number of state variables
       if(material->NumScalarConstitutiveVariables() > scalarConstitutiveDataSize)
-            scalarConstitutiveDataSize = material->NumScalarConstitutiveVariables();
+        scalarConstitutiveDataSize = material->NumScalarConstitutiveVariables();
       if(material->NumVectorConstitutiveVariables() > vectorConstitutiveDataSize)
-            vectorConstitutiveDataSize = material->NumVectorConstitutiveVariables();
+        vectorConstitutiveDataSize = material->NumVectorConstitutiveVariables();
       if(material->NumBondConstitutiveVariables() > bondConstitutiveDataSize)
-            bondConstitutiveDataSize = material->NumBondConstitutiveVariables();
+        bondConstitutiveDataSize = material->NumBondConstitutiveVariables();
     }
     else {
       string invalidMaterial("Unrecognized material model: ");
@@ -206,48 +246,120 @@ void PeridigmNS::Peridigm::initializeMaterials() {
 
 }
 
-void PeridigmNS::Peridigm::initializeData() {
+void PeridigmNS::Peridigm::updateContactNeighborList() {
+  // initial implementation works in serial only
+  TEST_FOR_EXCEPT_MSG(peridigmComm->NumProc()  != 1, "Contact is currently not enabled in parallel.\n");
 
-/*
-  // Create x, u, and v vectors
-  xOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
-  xOverlap->Import(*solverInitialX, *firstEntryImporter, Insert);
-  uOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
-  vOverlap = Teuchos::rcp(new Epetra_Vector(*secondaryEntryOverlapMap));
-  yOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
+// MLP: Most of this code should go away due to use of new maps
+/* 
+  // Create a decomp object and fill necessary data for rebalance
+  int myNumElements = oneDimensionalMap->NumMyElements();
+  int dimension = 3;
+  PdGridData decomp = PdQuickGrid::allocatePdGridData(myNumElements, dimension);
 
-  // Get the cell volumes and put them in the cellVolumeOverlap vector
-  cellVolumeOverlap = Teuchos::rcp(new Epetra_Vector(*oneDimensionalOverlapMap));
-  Epetra_Import oneDimensionalMapToOneDimensionalOverlapMapImporter(*oneDimensionalOverlapMap, *oneDimensionalMap);
-  cellVolumeOverlap->Import(*(disc->getCellVolume()), oneDimensionalMapToOneDimensionalOverlapMapImporter, Insert);
+  // fill myGlobalIDs
+  shared_ptr<int> myGlobalIDs(new int[myNumElements], PdQuickGrid::Deleter<int>());
+  int* myGlobalIDsPtr = myGlobalIDs.get();
+  int* gIDs = oneDimensionalMap->MyGlobalElements();
+  for(int i=0 ; i<myNumElements ; ++i){
+    myGlobalIDsPtr[i] = gIDs[i];
+  }
+  decomp.myGlobalIDs = myGlobalIDs;
 
-  // containers for constitutive data
-  scalarConstitutiveDataOverlap = Teuchos::rcp(new Epetra_MultiVector(*oneDimensionalOverlapMap, scalarConstitutiveDataSize));
-  scalarConstitutiveDataOverlap->PutScalar(0.0);
-  vectorConstitutiveDataOverlap = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalOverlapMap, vectorConstitutiveDataSize));
-  vectorConstitutiveDataOverlap->PutScalar(0.0);
-  bondConstitutiveData = Teuchos::rcp(new Epetra_MultiVector(*bondMap, bondConstitutiveDataSize));
-  bondConstitutiveData->PutScalar(0.0);
+  // fill myX and cellVolume
+  shared_ptr<double> myX(new double[myNumElements*dimension], PdQuickGrid::Deleter<double>());
+  double* myXPtr = myX.get();
+  double* solverXPtr;
+  solverX->ExtractView(&solverXPtr);
+  shared_ptr<double> cellVolume(new double[myNumElements], PdQuickGrid::Deleter<double>());
+  double* cellVolumePtr = cellVolume.get();
+  double* cellVolumeOverlapPtr;
+  cellVolumeOverlap->ExtractView(&cellVolumeOverlapPtr);
+  for(int i=0 ; i<myNumElements ; ++i){
+    int oneDimensionalMapGlobalID = myGlobalIDsPtr[i];
+    int oneDimensionalOverlapMapLocalID = oneDimensionalOverlapMap->LID(oneDimensionalMapGlobalID);
+    int threeDimensionalTwoEntryMapGlobalID = oneDimensionalMapGlobalID*3;
+    int threeDimensionalTwoEntryMapLocalID = threeDimensionalTwoEntryMap->LID(threeDimensionalTwoEntryMapGlobalID);
+    myXPtr[i*3] = solverXPtr[threeDimensionalTwoEntryMapLocalID];
+    myXPtr[i*3+1] = solverXPtr[threeDimensionalTwoEntryMapLocalID+1];
+    myXPtr[i*3+2] = solverXPtr[threeDimensionalTwoEntryMapLocalID+2];
+    cellVolumePtr[i] = cellVolumeOverlapPtr[oneDimensionalOverlapMapLocalID];
+  }
+  decomp.myX = myX;
+  decomp.cellVolume = cellVolume;
 
-  // container for accelerations
-  forceOverlap = Teuchos::rcp(new Epetra_Vector(*secondaryEntryOverlapMap));
+  // rebalance
+  decomp = getLoadBalancedDiscretization(decomp);
 
-  // get the neighborlist from the discretization
-  neighborhoodData = disc->getNeighborhoodData();
+  // big todo: shuffle data around based on decomp
 
-  // container for accelerations due to contact
-  if(computeContact){
-    contactForceOverlap = Teuchos::rcp(new Epetra_Vector(*secondaryEntryOverlapMap));
-    contactNeighborhoodData = Teuchos::rcp(new Peridigm::NeighborhoodData);
-    updateContactNeighborList(solverInitialX);
+  // execute contact search
+  decomp = createAndAddNeighborhood(decomp, contactSearchRadius);
+
+  // Copy the data in decomp into the contact neighbor list
+  // Do not include points that are bonded
+
+  vector<int> contactOwnedIDs;
+  vector<int> contactNeighborhoodPtr;
+  vector<int> contactNeighborhoodList;
+
+  int searchListIndex = 0;
+  int searchNumPoints = decomp.numPoints;
+  int* searchNeighborhood = decomp.neighborhood.get();
+
+  for(int iLID=0 ; iLID<searchNumPoints ; ++iLID){
+
+    // find the cells that are bonded to this cell
+    // store the corresponding local IDs in bondedNeighbors, which is a stl::list
+    int* bondedNeighborhoodList = neighborhoodData->NeighborhoodList();
+    int bondedListIndex = neighborhoodData->NeighborhoodPtr()[iLID];
+    int numBondedNeighbors = bondedNeighborhoodList[bondedListIndex++];
+    list<int> bondedNeighbors; // \todo reserve space here
+    for(int i=0 ; i<numBondedNeighbors ; ++i){
+      bondedNeighbors.push_back(bondedNeighborhoodList[bondedListIndex++]);
+    }
+
+    // loop over the cells found by the contact search
+    // retain only those cells that are not bonded
+        int searchNumNeighbors = searchNeighborhood[searchListIndex++];
+
+    list<int>::iterator it;
+    bool hasContact = false;
+    int currentContactNeighborhoodPtr = 0;
+        for(int iNeighbor=0 ; iNeighbor<searchNumNeighbors ; ++iNeighbor){
+          int localNeighborID = searchNeighborhood[searchListIndex++];
+      it = find(bondedNeighbors.begin(), bondedNeighbors.end(), localNeighborID);
+      if(it == bondedNeighbors.end()){
+        if(!hasContact){
+          hasContact = true;
+          contactOwnedIDs.push_back(iLID);
+          currentContactNeighborhoodPtr = contactNeighborhoodList.size();
+          contactNeighborhoodPtr.push_back(currentContactNeighborhoodPtr);
+          contactNeighborhoodList.push_back(1);
+        }
+        else{
+          contactNeighborhoodList[currentContactNeighborhoodPtr] += 1;
+        }
+        contactNeighborhoodList.push_back(localNeighborID);
+      }
+        }
   }
 
-  // container for bond damage
-  bondData = new double[disc->getNumBonds()];
-  for(unsigned int i=0; i<disc->getNumBonds(); i++)
-        bondData[i] = 0.0;
+  TEST_FOR_EXCEPT_MSG(contactNeighborhoodPtr.size() != contactOwnedIDs.size(),
+                      "Error, contactOwnedIDs and contactNeighborhoodPtr are different sizes in ModelEvaluator::updateContactNeighborList().\n");
 
+  // copy the contact neighbor data into contactNeighborData
+  contactNeighborhoodData->SetNumOwned(contactOwnedIDs.size());
+  memcpy(contactNeighborhoodData->OwnedIDs(),
+                 &contactOwnedIDs[0],
+                 contactOwnedIDs.size()*sizeof(int));
+  memcpy(contactNeighborhoodData->NeighborhoodPtr(),
+                 &contactNeighborhoodPtr[0],
+                 contactOwnedIDs.size()*sizeof(int));
+  contactNeighborhoodData->SetNeighborhoodListSize(contactNeighborhoodList.size());
+  memcpy(contactNeighborhoodData->NeighborhoodList(),
+                 &contactNeighborhoodList[0],
+                 contactNeighborhoodList.size()*sizeof(int));
 */
+
 }
-
-

@@ -106,7 +106,7 @@ namespace PeridigmNS {
     Teuchos::RCP<Epetra_BlockMap> threeDimensionalOverlapMap;
     Teuchos::RCP<Epetra_BlockMap> bondMap;
 
-    //! Vector containing initial positions and velocities
+    //! Vector containing initial positions
     Teuchos::RCP<Epetra_Vector> initialX;
 
     //! Vector containing cell volumes
