@@ -70,7 +70,6 @@ void initialize()
   quickGridParams.set("Number Points Y", 10);
   quickGridParams.set("Number Points Z", 10);
 
-return;
   RCP<PdQuickGridDiscretization> discretization =
     rcp(new PdQuickGridDiscretization(comm, discParams));
 }
