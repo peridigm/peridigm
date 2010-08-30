@@ -59,8 +59,9 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
   // create the bondMap, a local map used for constitutive data stored on bonds
   int numGlobalElements = -1;
   int numMyElements = numBonds;
+  int elementSize = 1;
   int indexBase = 0;
-  bondMap = Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, indexBase, *comm));
+  bondMap = Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, elementSize, indexBase, *comm));
 
   // 3D only
   TEST_FOR_EXCEPT_MSG(decomp.dimension != 3, "Invalid dimension in decomposition (only 3D is supported)");
