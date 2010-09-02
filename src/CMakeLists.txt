@@ -55,6 +55,21 @@ ${REQUIRED_LIBS}
 ${Boost_LIBRARIES}
 )
 
+
+add_executable(utPeridigm_PdQuickGridDiscretization_MPI_np2
+		utPeridigm_PdQuickGridDiscretization_MPI_np2.cpp
+        Peridigm_PdQuickGridDiscretization.cpp)
+target_link_libraries(utPeridigm_PdQuickGridDiscretization_MPI_np2
+${TRILINOS_LIBS}
+${PdZoltanLibs}
+${Zoltan_LIBRARY}
+${PdQuickGridLibs}
+${PdVTKLibs}
+${VTK_LIBS}
+${REQUIRED_LIBS}
+${Boost_LIBRARIES}
+)
+
 add_executable(utPeridigm_LinearElasticIsotropicMaterial
 		./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
 		./materials/Peridigm_DecompositionStates.cpp
