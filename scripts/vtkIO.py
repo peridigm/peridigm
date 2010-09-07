@@ -5,6 +5,7 @@ Created on Aug 27, 2010
 '''
 import vtk.io as io
 from xml.dom.minidom import parse
+from operator import itemgetter
 
 def GetReader(fileName):
     """Creates and returns grid reader for input file
@@ -70,21 +71,22 @@ def GetCellDataTuplesDictionary(cellData):
 	Output: dictionary (keys=field names, values=vtkDoubleArray)
 	"""
 	return dict([(cellData.GetArrayName(i),cellData.GetArray(i)) for i in range(cellData.GetNumberOfArrays())])
-
+	
 def GetTimeCollection(filename):
-	"""Opens and reads "pvd" file; Returns dictionary (filenames, timestep) 
+	"""Opens and reads "pvd" file; Returns List of Tuples: [(timestep, filename)] 
 	
 	Input: string filename of "pvd" file to read
 	Preconditions: file must be an xml paraview collection file
-	Output: dictionary with key = "pvtu" file, value=timestep
+	Output: return list is sorted by time 
 	"""
+
 	dom=parse(filename)
 	vtkFileElement=dom.documentElement
 	collectionNodeList=vtkFileElement.getElementsByTagName("Collection")
 	collectionElement=collectionNodeList.item(0)
 	dataSetNodeList=collectionElement.getElementsByTagName("DataSet")
-	d=dict([(dataSetNodeList.item(i).getAttribute("file"),dataSetNodeList.item(i).getAttribute("timestep")) for i in range(dataSetNodeList.length)])
-	return d
-	
+	d=[(dataSetNodeList.item(i).getAttribute("timestep"),dataSetNodeList.item(i).getAttribute("file")) for i in range(dataSetNodeList.length)]
+	return sorted(d,key=itemgetter(0))
+
 	
 
