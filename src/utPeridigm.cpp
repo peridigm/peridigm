@@ -88,6 +88,26 @@ void initialize()
   pdQuickGridParams.set("Number Points Y", 1);
   pdQuickGridParams.set("Number Points Z", 1);
 
+  // boundary conditions
+  ParameterList& bcParams = problemParams.sublist("Boundary Conditions");
+  // node sets
+  // these sets associate a name with a list of node ids, stored as a string
+  // in this case there's only one node per set
+  bcParams.set("Min X Node Set", "0");
+  bcParams.set("Max X Node Set", "1");
+  // initial velocity boundary conditions
+  // each boundary condition is associated with a node set, defined above
+  ParameterList& initialVelocityMinXFace = bcParams.sublist("Initial Velocity Min X Face");
+  initialVelocityMinXFace.set("Type", "Initial Velocity");
+  initialVelocityMinXFace.set("Node Set", "Min X Node Set");
+  initialVelocityMinXFace.set("Coordinate", "x");
+  initialVelocityMinXFace.set("Value", -1.0);
+  ParameterList& initialVelocityMaxXFace = bcParams.sublist("Initial Velocity Max X Face");
+  initialVelocityMaxXFace.set("Type", "Initial Velocity");
+  initialVelocityMaxXFace.set("Node Set", "Max X Node Set");
+  initialVelocityMaxXFace.set("Coordinate", "x");
+  initialVelocityMaxXFace.set("Value", 1.0);
+
   // create the Peridigm object
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm = rcp(new Peridigm::Peridigm(comm, peridigmParams));
 }

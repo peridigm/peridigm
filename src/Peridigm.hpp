@@ -62,11 +62,17 @@ namespace PeridigmNS {
     //! Initialize discretization and maps
     void initializeDiscretization();
 
+    //! Apply boundary conditions
+    void applyInitialVelocities(Teuchos::RCP<Epetra_Vector>& v);
+
     //! Initialize contact
     void initializeContact();
 
     //! Update contact neighborlist; do load rebalance
     void updateContactNeighborList();
+
+    //! Accessor for three-dimensional map
+    Teuchos::RCP<const Epetra_BlockMap> getThreeDimensionalMap() { return threeDimensionalMap; }
 
     //! Destructor
     ~Peridigm(){};
@@ -146,8 +152,6 @@ namespace PeridigmNS {
 
     //! List of potential contact neighbors for all locally-owned nodes
     Teuchos::RCP<PeridigmNS::NeighborhoodData> contactNeighborhoodData;
-
-
 
   };
 }
