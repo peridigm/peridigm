@@ -56,14 +56,14 @@ namespace PeridigmNS {
     Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
              const Teuchos::RCP<Teuchos::ParameterList>& params);
 
+    //! Initialize material objects
+    void initializeMaterials();
+
     //! Initialize discretization and maps
     void initializeDiscretization();
 
     //! Initialize contact
     void initializeContact();
-
-    //! Initialize material objects
-    void initializeMaterials();
 
     //! Update contact neighborlist; do load rebalance
     void updateContactNeighborList();
