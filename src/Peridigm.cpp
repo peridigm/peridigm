@@ -37,6 +37,7 @@
 
 #include <iostream>
 #include <vector>
+#include <map>
 
 #include <Epetra_Import.h>
 #include <Teuchos_VerboseObject.hpp>
@@ -47,6 +48,8 @@
 #include "contact/Peridigm_ShortRangeForceContactModel.hpp"
 #include "materials/Peridigm_LinearElasticIsotropicMaterial.hpp"
 #include "materials/Peridigm_IsotropicElasticPlasticMaterial.hpp"
+
+using namespace std;
 
 PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
                    const Teuchos::RCP<Teuchos::ParameterList>& params)
@@ -188,8 +191,62 @@ void PeridigmNS::Peridigm::initializeDiscretization() {
 
   // get the neighborlist from the discretization
   neighborhoodData = peridigmDisc->getNeighborhoodData();
+}
 
+void PeridigmNS::Peridigm::applyInitialVelocities(Teuchos::RCP<Epetra_Vector>& v) {
 
+  TEST_FOR_EXCEPT_MSG(!threeDimensionalMap->SameAs(v->Map()), 
+                      "Peridigm::applyInitialVelocities():  Inconsistent velocity vector map.\n");
+
+  Teuchos::ParameterList& problemParams = peridigmParams->sublist("Problem");
+  Teuchos::ParameterList& bcParams = problemParams.sublist("Boundary Conditions");
+  Teuchos::ParameterList::ConstIterator it;
+
+  // get the node sets
+  map< string, vector<int> > nodeSets;
+  for(it = bcParams.begin() ; it != bcParams.end() ; it++){
+	const string& name = it->first;
+    // \todo Change input deck so that node sets are parameter lists, not parameters, to avoid this ridiculous search.
+	size_t position = name.find("Node Set");
+	if(position != string::npos){
+	  stringstream ss(Teuchos::getValue<string>(it->second));
+	  vector<int> nodeList;
+	  int nodeID;
+	  while(ss.good()){
+		ss >> nodeID;
+		nodeList.push_back(nodeID);
+	  }
+	  nodeSets[name] = nodeList;
+	}
+  }
+
+  // apply the initial conditions
+  for(it = bcParams.begin() ; it != bcParams.end() ; it++){
+	const string & name = it->first;
+	size_t position = name.find("Initial Velocity");
+	if(position != string::npos){
+	  Teuchos::ParameterList & boundaryConditionParams = Teuchos::getValue<Teuchos::ParameterList>(it->second);
+	  string nodeSet = boundaryConditionParams.get<string>("Node Set");
+	  string type = boundaryConditionParams.get<string>("Type");
+	  string coordinate = boundaryConditionParams.get<string>("Coordinate");
+	  double value = boundaryConditionParams.get<double>("Value");
+
+	  int coord = 0;
+	  if(coordinate == "y" || coordinate == "Y")
+		coord = 1;
+	  if(coordinate == "z" || coordinate == "Z")
+		coord = 2;
+
+	  // apply initial velocity boundary conditions
+	  // to locally-owned nodes
+	  vector<int> & nodeList = nodeSets[nodeSet];
+	  for(unsigned int i=0 ; i<nodeList.size() ; i++){
+		int localNodeID = threeDimensionalMap->LID(nodeList[i]);
+		if(localNodeID != -1)
+		  (*v)[localNodeID*3 + coord] = value;
+	  }
+	}
+  }
 }
 
 void PeridigmNS::Peridigm::initializeContact() {

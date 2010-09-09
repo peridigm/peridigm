@@ -92,6 +92,12 @@ int main(int argc, char *argv[]) {
     // Create peridigm object
     Teuchos::RCP<PeridigmNS::Peridigm> peridigm = peridigmFactory.create(xml_file_name, peridigmComm);
 
+    // Allocate the main vectors
+    Teuchos::RCP<Epetra_Vector> velocity = Teuchos::rcp(new Epetra_Vector(*(peridigm->getThreeDimensionalMap())));
+
+    // Apply the boundary conditions
+    peridigm->applyInitialVelocities(velocity);
+
 /****************************
 	EpetraExt::ModelEvaluator::InArgs params_in = App->createInArgs();
     EpetraExt::ModelEvaluator::OutArgs responses_out = App->createOutArgs();
