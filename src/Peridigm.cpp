@@ -50,6 +50,13 @@
 
 PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
                    const Teuchos::RCP<Teuchos::ParameterList>& params)
+  : bondData(0),
+    computeContact(false),
+    contactSearchRadius(0.0),
+    contactSearchFrequency(0),
+    scalarConstitutiveDataSize(1), // Epetra barfs if you try to create a multivector with zero vectors,
+    vectorConstitutiveDataSize(1), // so initialize multivector sizes to one
+    bondConstitutiveDataSize(1)
 {
 
   peridigmComm = comm;
@@ -59,6 +66,9 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   out = Teuchos::VerboseObjectBase::getDefaultOStream();
 
+  // initialize materials using provided parameters
+  initializeMaterials();
+
   // Read mesh from disk or generate using geometric primatives.
   // All maps are generated here
   // Vectors constructed here
@@ -66,6 +76,45 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // Setup contact
   initializeContact();
+
+}
+
+void PeridigmNS::Peridigm::initializeMaterials() {
+
+  // Extract problem parameters sublist
+  Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::rcp(&(peridigmParams->sublist("Problem")),false);
+
+  // Instantiate material objects
+  //! \todo Move creation of material models to material model factory
+  TEST_FOR_EXCEPT_MSG(!problemParams->isSublist("Material"), "Material parameters not specified!");
+  Teuchos::ParameterList & materialParams = problemParams->sublist("Material");
+  Teuchos::ParameterList::ConstIterator it;
+  for(it = materialParams.begin() ; it != materialParams.end() ; it++){
+    const string & name = it->first;
+    Teuchos::ParameterList & matParams = materialParams.sublist(name);
+    Teuchos::RCP<Material> material;
+    if(name == "Linear Elastic" || name == "Elastic-Plastic"){
+      if(name == "Linear Elastic")
+        material = Teuchos::rcp(new LinearElasticIsotropicMaterial(matParams) );
+      else if(name == "Elastic-Plastic")
+        material = Teuchos::rcp(new IsotropicElasticPlasticMaterial(matParams) );
+      materials.push_back( Teuchos::rcp_implicit_cast<Material>(material) );
+      // Allocate enough space for the max number of state variables
+      if(material->NumScalarConstitutiveVariables() > scalarConstitutiveDataSize)
+        scalarConstitutiveDataSize = material->NumScalarConstitutiveVariables();
+      if(material->NumVectorConstitutiveVariables() > vectorConstitutiveDataSize)
+        vectorConstitutiveDataSize = material->NumVectorConstitutiveVariables();
+      if(material->NumBondConstitutiveVariables() > bondConstitutiveDataSize)
+        bondConstitutiveDataSize = material->NumBondConstitutiveVariables();
+    }
+    else {
+      string invalidMaterial("Unrecognized material model: ");
+      invalidMaterial += name;
+      invalidMaterial += ", must be Linear Elastic or Elastic-Plastic";
+      TEST_FOR_EXCEPT_MSG(true, invalidMaterial);
+    }
+  }
+  TEST_FOR_EXCEPT_MSG(materials.size() == 0, "No material models created!");
 
 }
 
@@ -201,48 +250,6 @@ void PeridigmNS::Peridigm::initializeContact() {
     contactNeighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
     updateContactNeighborList();
   }
-
-}
-
-void PeridigmNS::Peridigm::initializeMaterials() {
-
-  // Extract problem parameters sublist
-  Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::rcp(&(peridigmParams->sublist("Problem")),false);
-
-  // Instantiate material objects
-  //! \todo Move creation of material models to material model factory
-  TEST_FOR_EXCEPT_MSG(!problemParams->isSublist("Material"), "Material parameters not specified!");
-  Teuchos::ParameterList & materialParams = problemParams->sublist("Material");
-  Teuchos::ParameterList::ConstIterator it;
-  scalarConstitutiveDataSize = 1; // Epetra barfs if you try to create a vector of zero size
-  vectorConstitutiveDataSize = 1;
-  bondConstitutiveDataSize   = 1;
-  for(it = materialParams.begin() ; it != materialParams.end() ; it++){
-    const string & name = it->first;
-    Teuchos::ParameterList & matParams = materialParams.sublist(name);
-    Teuchos::RCP<Material> material;
-    if(name == "Linear Elastic" || name == "Elastic-Plastic"){
-      if(name == "Linear Elastic")
-        material = Teuchos::rcp(new LinearElasticIsotropicMaterial(matParams) );
-      else if(name == "Elastic-Plastic")
-        material = Teuchos::rcp(new IsotropicElasticPlasticMaterial(matParams) );
-      materials.push_back( Teuchos::rcp_implicit_cast<Material>(material) );
-      // Allocate enough space for the max number of state variables
-      if(material->NumScalarConstitutiveVariables() > scalarConstitutiveDataSize)
-        scalarConstitutiveDataSize = material->NumScalarConstitutiveVariables();
-      if(material->NumVectorConstitutiveVariables() > vectorConstitutiveDataSize)
-        vectorConstitutiveDataSize = material->NumVectorConstitutiveVariables();
-      if(material->NumBondConstitutiveVariables() > bondConstitutiveDataSize)
-        bondConstitutiveDataSize = material->NumBondConstitutiveVariables();
-    }
-    else {
-      string invalidMaterial("Unrecognized material model: ");
-      invalidMaterial += name;
-      invalidMaterial += ", must be Linear Elastic or Elastic-Plastic";
-      TEST_FOR_EXCEPT_MSG(true, invalidMaterial);
-    }
-  }
-  TEST_FOR_EXCEPT_MSG(materials.size() == 0, "No material models created!");
 
 }
 

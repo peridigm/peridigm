@@ -55,18 +55,41 @@ void initialize()
     comm = rcp(new Epetra_SerialComm);
   #endif
 
-    BOOST_CHECK(1 == 1);  
+  // set up parameter lists
+  // these data would normally be read from an input xml file
+  Teuchos::RCP<Teuchos::ParameterList> peridigmParams = rcp(new Teuchos::ParameterList());
 
-    //RCP<ParameterList> discParams = rcp(new ParameterList);
+  // problem parameters
+  ParameterList& problemParams = peridigmParams->sublist("Problem");
+  problemParams.set("Verbose", false);
 
-//   discParams->set("Horizon", 0.501);
-//   ParameterList& quickGridParams = discParams->sublist("TensorProduct3DMeshGenerator");
+  // material parameters
+  ParameterList& materialParams = problemParams.sublist("Material");
+  ParameterList& linearElasticMaterialParams = materialParams.sublist("Linear Elastic");
+  linearElasticMaterialParams.set("Density", 7800.0);
+  linearElasticMaterialParams.set("Bulk Modulus", 130.0e9);
+  linearElasticMaterialParams.set("Shear Modulus", 78.0e9);
 
-    //  BOOST_CHECK_THROW(discretization->getMap(0), Teuchos::Exceptions::InvalidParameter);
+  // discretization parameters
+  ParameterList& discretizationParams = problemParams.sublist("Discretization");
+  discretizationParams.set("Type", "PdQuickGrid");
+  discretizationParams.set("Horizon", 2.0);
 
-  // BOOST_CHECK(map->NumGlobalElements() == 8);
-  //BOOST_CHECK_CLOSE((*initialX)[0],  0.25, 1.0e-16);
+  // pdQuickGrid tensor product mesh generator parameters
+  ParameterList& pdQuickGridParams = discretizationParams.sublist("TensorProduct3DMeshGenerator");
+  pdQuickGridParams.set("Type", "PdQuickGrid");
+  pdQuickGridParams.set("X Origin", -2.0);
+  pdQuickGridParams.set("Y Origin", -0.5);
+  pdQuickGridParams.set("Z Origin", -0.5);
+  pdQuickGridParams.set("X Length",  4.0);
+  pdQuickGridParams.set("Y Length",  1.0);
+  pdQuickGridParams.set("Z Length",  1.0);
+  pdQuickGridParams.set("Number Points X", 2);
+  pdQuickGridParams.set("Number Points Y", 1);
+  pdQuickGridParams.set("Number Points Z", 1);
 
+  // create the Peridigm object
+  Teuchos::RCP<PeridigmNS::Peridigm> peridigm = rcp(new Peridigm::Peridigm(comm, peridigmParams));
 }
 
 bool init_unit_test_suite()
