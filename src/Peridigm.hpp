@@ -63,10 +63,13 @@ namespace PeridigmNS {
     void initializeDiscretization();
 
     //! Apply boundary conditions
-    void applyInitialVelocities(Teuchos::RCP<Epetra_Vector>& v);
+    void applyInitialVelocities();
 
     //! Initialize contact
     void initializeContact();
+
+    //! Main routine to drive problem solution
+    void execute();
 
     //! Update contact neighborlist; do load rebalance
     void updateContactNeighborList();
@@ -113,6 +116,18 @@ namespace PeridigmNS {
 
     //! Contact models
     std::vector< Teuchos::RCP<PeridigmNS::ContactModel> > contactModels;
+
+    //! Global vector for initial positions
+    Teuchos::RCP<Epetra_Vector> x;
+
+    //! Global vector for displacement
+    Teuchos::RCP<Epetra_Vector> u;
+
+    //! Global vector for velocity
+    Teuchos::RCP<Epetra_Vector> v;
+
+    //! Global vector for force
+    Teuchos::RCP<Epetra_Vector> force;
 
     //! Initial positions (vector includes ghosted dof)
     Teuchos::RCP<Epetra_Vector> xOverlap;
