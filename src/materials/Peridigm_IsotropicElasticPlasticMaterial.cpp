@@ -143,23 +143,23 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const Epetra_Vector& x
 	  // with locally-owned nodes
 	  force.PutScalar(0.0);
 
-	  PdMaterialUtilities::computeInternalForceIsotropicElasticPlastic
-	  (
-			  x.Values(),
-			  y,
-			  weightedVolume,
-			  cellVolume.Values(),
-			  dilatation,
-			  bondState,
-			  edpN,
-			  force.Values(),
-			  neighborhoodList,
-			  numOwnedPoints,
-			  m_bulkModulus,
-			  m_shearModulus,
-			  m_horizon,
-			  m_yieldStress
-	  );
+//	  PdMaterialUtilities::computeInternalForceIsotropicElasticPlastic
+//	  (
+//			  x.Values(),
+//			  y,
+//			  weightedVolume,
+//			  cellVolume.Values(),
+//			  dilatation,
+//			  bondState,
+//			  edpN,
+//			  force.Values(),
+//			  neighborhoodList,
+//			  numOwnedPoints,
+//			  m_bulkModulus,
+//			  m_shearModulus,
+//			  m_horizon,
+//			  m_yieldStress
+//	  );
 
 }
 

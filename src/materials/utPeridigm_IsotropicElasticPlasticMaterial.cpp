@@ -321,7 +321,7 @@ void runPureShear() {
 			// computeDilatation(x,y,m,vol,bondState,theta,neigh,numPoints);
 
 			SET(fPtr.get(),fPtr.end(),0.0);
-			computeInternalForceIsotropicElasticPlastic(x,y,m,vol,theta,bondState,edpN,f,neigh,numPoints,K,MU,DELTA,Y);
+//			computeInternalForceIsotropicElasticPlastic(x,y,m,vol,theta,bondState,edpN,f,neigh,numPoints,K,MU,DELTA,Y);
 
 			/*
 			 * Next step
