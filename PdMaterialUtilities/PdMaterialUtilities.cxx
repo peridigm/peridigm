@@ -181,7 +181,8 @@ void computeInternalForceIsotropicElasticPlastic
 		const double* volumeOverlap,
 		const double* dilatationOwned,
 		const double* bondDamage,
-		double* deviatoricPlasticExtensionState,
+		const double* deviatoricPlasticExtensionStateN,
+		double* deviatoricPlasticExtensionStateNp1,
 		double* fInternalOverlap,
 		const int*  localNeighborList,
 		int numOwnedPoints,
@@ -223,7 +224,7 @@ void computeInternalForceIsotropicElasticPlastic
 		 * Compute norm of trial stress
 		 */
 		double tdNorm = 0.0;
-		tdNorm = computeDeviatoricForceStateNorm(numNeigh,*theta,neighPtr,bondDamage,deviatoricPlasticExtensionState,X,Y,xOverlap,yOverlap,v,alpha,OMEGA);
+		tdNorm = computeDeviatoricForceStateNorm(numNeigh,*theta,neighPtr,bondDamage,deviatoricPlasticExtensionStateN,X,Y,xOverlap,yOverlap,v,alpha,OMEGA);
 
 		/*
 		 * Evaluate yield function
@@ -254,7 +255,7 @@ void computeInternalForceIsotropicElasticPlastic
 //			std::cout << "\t ELASTIC" << std::endl;
 		}
 
-		for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++, deviatoricPlasticExtensionState++){
+		for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++, deviatoricPlasticExtensionStateN++, deviatoricPlasticExtensionStateNp1++){
 			int localId = *neighPtr;
 			cellVolume = v[localId];
 			const double *XP = &xOverlap[3*localId];
@@ -275,7 +276,7 @@ void computeInternalForceIsotropicElasticPlastic
 			/*
 			 * Deviatoric plastic extension state from last step
 			 */
-			edpN = *deviatoricPlasticExtensionState;
+			edpN = *deviatoricPlasticExtensionStateN;
 
 			/*
 			 * Compute trial stress
@@ -291,6 +292,11 @@ void computeInternalForceIsotropicElasticPlastic
 				 */
 				td = tdTrial;
 
+				/*
+				 * Therefore edpNp1 = edpN
+				 */
+				*deviatoricPlasticExtensionStateNp1 = *deviatoricPlasticExtensionStateN;
+
 			} else {
 				/*
 				 * Compute deviatoric force state
@@ -300,7 +306,8 @@ void computeInternalForceIsotropicElasticPlastic
 				/*
 				 * Update deviatoric plastic deformation state
 				 */
-				*deviatoricPlasticExtensionState = edpN + td * ( tdNorm / sqrt(2.0*yieldValue) - 1.0 ) / alpha;
+				*deviatoricPlasticExtensionStateNp1 = edpN + td * ( tdNorm / sqrt(2.0*yieldValue) - 1.0 ) / alpha;
+
 //				std::cout << "Neighbor Id = " << localId << "; Updating deviatoricPlasticExtensionState = " << *deviatoricPlasticExtensionState << std::endl;
 			}
 //			std::cout << "\tNeighbor Id = " << localId << "\n\ttd = " << td;
@@ -308,14 +315,7 @@ void computeInternalForceIsotropicElasticPlastic
 			 * Compute isotropic part of force state
 			 */
 			ti = c * zeta;
-			/*
-			 * DEBUG
-			 */
-//			std::cout << "\n\tti = " << ti << std::endl;
-//			ti=0;
-			/*
-			 * END DEBUG
-			 */
+
 			/*
 			 * Force state
 			 */
