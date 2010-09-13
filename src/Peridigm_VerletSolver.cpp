@@ -1,9 +1,9 @@
 #include "Peridigm_VerletSolver.hpp"
 #include <Thyra_EpetraModelEvaluator.hpp>
 
-Peridigm::VerletSolver::VerletSolver(Teuchos::RCP<Teuchos::ParameterList> appParams_,
+PeridigmNS::VerletSolver::VerletSolver(Teuchos::RCP<Teuchos::ParameterList> appParams_,
                                      Teuchos::RCP<EpetraExt::ModelEvaluator> model_,
-                                     Teuchos::RCP<Peridigm::VerletObserver> observer ) :
+                                     Teuchos::RCP<PeridigmNS::VerletObserver> observer ) :
   appParams(appParams_),
   model(model_) {
 
@@ -32,26 +32,26 @@ Peridigm::VerletSolver::VerletSolver(Teuchos::RCP<Teuchos::ParameterList> appPar
   if(verbose)
         *out << "\nB) Create the integrator for the forward problem ...\n";
 
-  integrator = Teuchos::rcp(new Peridigm::VerletIntegrator(model,verletPL));
+  integrator = Teuchos::rcp(new PeridigmNS::VerletIntegrator(model,verletPL));
 
   if (observer != Teuchos::null)
     integrator->setIntegrationObserver(observer);
 
 }
 
-Peridigm::VerletSolver::~VerletSolver() {}
+PeridigmNS::VerletSolver::~VerletSolver() {}
 
-Teuchos::RCP<const Epetra_Map> Peridigm::VerletSolver::get_x_map() const {
+Teuchos::RCP<const Epetra_Map> PeridigmNS::VerletSolver::get_x_map() const {
   Teuchos::RCP<const Epetra_Map> neverused;
   return neverused;
 }
 
-Teuchos::RCP<const Epetra_Map> Peridigm::VerletSolver::get_f_map() const {
+Teuchos::RCP<const Epetra_Map> PeridigmNS::VerletSolver::get_f_map() const {
   Teuchos::RCP<const Epetra_Map> neverused;
   return neverused;
 }
 
-EpetraExt::ModelEvaluator::InArgs Peridigm::VerletSolver::createInArgs() const {
+EpetraExt::ModelEvaluator::InArgs PeridigmNS::VerletSolver::createInArgs() const {
   EpetraExt::ModelEvaluator::InArgsSetup inArgs;
   inArgs.setModelEvalDescription(this->description());
 //   inArgs.set_Np(1);
@@ -59,7 +59,7 @@ EpetraExt::ModelEvaluator::InArgs Peridigm::VerletSolver::createInArgs() const {
   return inArgs;
 }
 
-EpetraExt::ModelEvaluator::OutArgs Peridigm::VerletSolver::createOutArgs() const {
+EpetraExt::ModelEvaluator::OutArgs PeridigmNS::VerletSolver::createOutArgs() const {
   EpetraExt::ModelEvaluator::OutArgsSetup outArgs;
   outArgs.setModelEvalDescription(this->description());
 //   outArgs.set_Np_Ng(1, 1);
@@ -67,7 +67,7 @@ EpetraExt::ModelEvaluator::OutArgs Peridigm::VerletSolver::createOutArgs() const
   return outArgs;
 }
 
-void Peridigm::VerletSolver::evalModel( const InArgs& inArgs, const OutArgs& outArgs ) const{
+void PeridigmNS::VerletSolver::evalModel( const InArgs& inArgs, const OutArgs& outArgs ) const{
 
   bool verbose = appParams->sublist("Problem").get("Verbose", false);
 

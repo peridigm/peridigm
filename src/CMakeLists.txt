@@ -11,13 +11,13 @@ add_executable (${EXECUTABLE_NAME}
         Peridigm.cpp
         Peridigm_DiscretizationFactory.cpp
         Peridigm_PdQuickGridDiscretization.cpp
-#        PHAL_Dimension.cpp
-#        PHAL_PeridigmTraits.cpp
-#        Peridigm_ModelEvaluator.cpp
-#        Peridigm_OutputManager_VTK_XML.cpp
-#        Peridigm_VerletSolver.cpp
-#        Peridigm_VerletIntegrator.cpp
-#        Peridigm_VerletObserver.cpp
+        Peridigm_ModelEvaluator.cpp
+        PHAL_Dimension.cpp
+        PHAL_PeridigmTraits.cpp
+        Peridigm_OutputManager_VTK_XML.cpp
+        Peridigm_VerletSolver.cpp
+        Peridigm_VerletIntegrator.cpp
+        Peridigm_VerletObserver.cpp
         ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
         ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
         ./materials/Peridigm_DecompositionStates.cpp
@@ -45,6 +45,13 @@ add_executable(utPeridigm
         Peridigm.cpp
         Peridigm_DiscretizationFactory.cpp
         Peridigm_PdQuickGridDiscretization.cpp
+        Peridigm_ModelEvaluator.cpp
+        PHAL_Dimension.cpp
+        PHAL_PeridigmTraits.cpp
+        Peridigm_OutputManager_VTK_XML.cpp
+        Peridigm_VerletSolver.cpp
+        Peridigm_VerletIntegrator.cpp
+        Peridigm_VerletObserver.cpp
         ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
         ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
         ./materials/Peridigm_DecompositionStates.cpp

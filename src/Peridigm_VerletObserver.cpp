@@ -37,13 +37,13 @@
 #include <Epetra_Map.h>
 #include "Peridigm_OutputManager_VTK_XML.hpp"
 
-Peridigm::VerletObserver::VerletObserver(Teuchos::RCP<EpetraExt::ModelEvaluator> model_,
+PeridigmNS::VerletObserver::VerletObserver(Teuchos::RCP<EpetraExt::ModelEvaluator> model_,
                                          const Teuchos::RCP<Teuchos::ParameterList>& params) {
 
   active = false;
 
-  model = Teuchos::rcp_dynamic_cast<Peridigm::ModelEvaluator>(model_);
-  TEST_FOR_EXCEPT_MSG( model.get() == NULL, "Peridigm::RythmosObserver: Peridigm::ModelEvaluator not passed in.");
+  model = Teuchos::rcp_dynamic_cast<PeridigmNS::ModelEvaluator>(model_);
+  TEST_FOR_EXCEPT_MSG( model.get() == NULL, "PeridigmNS::RythmosObserver: PeridigmNS::ModelEvaluator not passed in.");
 
   if (params->isSublist("Output")) {
     active = true;
@@ -57,15 +57,15 @@ Peridigm::VerletObserver::VerletObserver(Teuchos::RCP<EpetraExt::ModelEvaluator>
     string outputFormat = outputParams->get("Output File Type", "VTK_XML");
     TEST_FOR_EXCEPTION( outputFormat != "VTK_XML",
                         std::invalid_argument,
-                        "Peridigm::RythmosObserver: \"Output File Type\" must be either \"VTK_XML\".");
+                        "PeridigmNS::RythmosObserver: \"Output File Type\" must be either \"VTK_XML\".");
     if (outputFormat == "VTK_XML")
-       outputManager = Teuchos::rcp(new Peridigm::OutputManager_VTK_XML( outputParams ));
+       outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_VTK_XML( outputParams ));
     else
-      TEST_FOR_EXCEPTION( true, std::invalid_argument,"Peridigm::RythmosObserver: \"Output File Type\" must be \"VTK_XML\".");
+      TEST_FOR_EXCEPTION( true, std::invalid_argument,"PeridigmNS::RythmosObserver: \"Output File Type\" must be \"VTK_XML\".");
 
     // Query material models for their force state data descriptions
     forceStateDesc = Teuchos::rcp( new Teuchos::ParameterList() );
-    std::vector< Teuchos::RCP<Peridigm::Material> > materials = model->getMaterials();
+    std::vector< Teuchos::RCP<PeridigmNS::Material> > materials = model->getMaterials();
     for(unsigned int i=0; i<materials.size(); ++i){
       Teuchos::ParameterList& subList = forceStateDesc->sublist(materials[i]->Name());
       for(int j=0;j<materials[i]->NumScalarConstitutiveVariables(); ++j){
@@ -84,7 +84,7 @@ Peridigm::VerletObserver::VerletObserver(Teuchos::RCP<EpetraExt::ModelEvaluator>
 
 }
 
-void Peridigm::VerletObserver::observeCompletedTimeStep(Teuchos::RCP<const Epetra_Vector> currentSolution, double time) {
+void PeridigmNS::VerletObserver::observeCompletedTimeStep(Teuchos::RCP<const Epetra_Vector> currentSolution, double time) {
 
   // We have completed a time step, tell the Peridigm_ModelEvaluator to update its state information
   model->updateState();

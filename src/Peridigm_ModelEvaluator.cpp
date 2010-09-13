@@ -42,7 +42,7 @@
 #include "PdZoltan.h"
 #include <sstream>
 
-Peridigm::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<const Epetra_Comm>& comm,
+PeridigmNS::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<const Epetra_Comm>& comm,
 										 const Teuchos::RCP<Teuchos::ParameterList>& params)
   : supportsP(false),
     supportsG(false),
@@ -54,9 +54,7 @@ Peridigm::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<const Epetra_Comm>& 
 	numPID(comm->NumProc()),
 	myPID(comm->MyPID())
 {
-
-INTENSIONALLY BREAK BUILD!
-
+  /*
   Teuchos::RCP<Teuchos::ParameterList> problemParams = 
 	Teuchos::rcp(&(params->sublist("Problem")),false);
   out = Teuchos::VerboseObjectBase::getDefaultOStream();
@@ -68,7 +66,7 @@ INTENSIONALLY BREAK BUILD!
   // 2) The vector of initial positions
   Teuchos::RCP<Teuchos::ParameterList> discParams = 
 	Teuchos::rcp(&(problemParams->sublist("Discretization")), false);
-  Peridigm::DiscretizationFactory discFactory(discParams);
+  PeridigmNS::DiscretizationFactory discFactory(discParams);
   disc = discFactory.create(comm);
 
   // Set up contact, if requested by user
@@ -126,7 +124,7 @@ INTENSIONALLY BREAK BUILD!
   for(it = materialParams.begin() ; it != materialParams.end() ; it++){
 	const string & name = it->first;
 	Teuchos::ParameterList & matParams = materialParams.sublist(name);
-    Teuchos::RCP<Peridigm::Material> material;
+    Teuchos::RCP<PeridigmNS::Material> material;
 	if(name == "Linear Elastic" || name == "Elastic-Plastic"){
       if(name == "Linear Elastic"){
         material = Teuchos::rcp(new LinearElasticIsotropicMaterial(matParams) );
@@ -134,7 +132,7 @@ INTENSIONALLY BREAK BUILD!
       else if(name == "Elastic-Plastic"){
         material = Teuchos::rcp(new IsotropicElasticPlasticMaterial(matParams) );
       }
-	  materials.push_back( Teuchos::rcp_implicit_cast<Peridigm::Material>(material) );
+	  materials.push_back( Teuchos::rcp_implicit_cast<PeridigmNS::Material>(material) );
 	  // Allocate enough space for the max number of state variables
 	  if(material->NumScalarConstitutiveVariables() > scalarConstitutiveDataSize)
 		scalarConstitutiveDataSize = material->NumScalarConstitutiveVariables();
@@ -164,10 +162,10 @@ INTENSIONALLY BREAK BUILD!
         // Add the horizon to the contact model parameters, if needed
         if(!contactModelParams.isParameter("Horizon"))
           contactModelParams.set("Horizon", disc->getHorizon());
-        Teuchos::RCP<Peridigm::ContactModel> contactModel;
+        Teuchos::RCP<PeridigmNS::ContactModel> contactModel;
         if(name == "Short Range Force"){
           contactModel = Teuchos::rcp(new ShortRangeForceContactModel(contactModelParams) );
-          contactModels.push_back( Teuchos::rcp_implicit_cast<Peridigm::ContactModel>(contactModel) );
+          contactModels.push_back( Teuchos::rcp_implicit_cast<PeridigmNS::ContactModel>(contactModel) );
         }
         else{
           string invalidContactModel("Unrecognized contact model: ");
@@ -222,7 +220,7 @@ INTENSIONALLY BREAK BUILD!
   // container for accelerations due to contact
   if(computeContact){
     contactForceOverlap = Teuchos::rcp(new Epetra_Vector(*secondaryEntryOverlapMap));  
-    contactNeighborhoodData = Teuchos::rcp(new Peridigm::NeighborhoodData);
+    contactNeighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
     updateContactNeighborList(solverInitialX);
   }
 
@@ -232,7 +230,7 @@ INTENSIONALLY BREAK BUILD!
 	bondData[i] = 0.0;
 
   // Initialize material models
-  std::vector< Teuchos::RCP<Peridigm::Material> >::const_iterator matIt;
+  std::vector< Teuchos::RCP<PeridigmNS::Material> >::const_iterator matIt;
   for(matIt = materials.begin() ; matIt != materials.end() ; matIt++){
     double dt = 0.0;
     (*matIt)->initialize(*xOverlap,
@@ -253,20 +251,33 @@ INTENSIONALLY BREAK BUILD!
   // construct evaluators
   constructEvaluators(problemParams);
   fm->postRegistrationSetup(NULL);
-
+  */
   /** \todo If allowing access to member data (e.g. allowing
    *       Dakota to solve optimization problems), then 
    *       create hooks to a ParamLib here.
    */
 }
 
-Peridigm::ModelEvaluator::~ModelEvaluator(){
+PeridigmNS::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<const Epetra_Comm>& comm)
+  : supportsP(false),
+    supportsG(false),
+	verbose(false),
+	bondData(0),
+    computeContact(false),
+    contactSearchRadius(0.0),
+    contactSearchFrequency(1),
+	numPID(comm->NumProc()),
+	myPID(comm->MyPID())
+{
+}
+
+PeridigmNS::ModelEvaluator::~ModelEvaluator(){
   if(bondData != 0)
 	delete[] bondData;
 }
 
 void 
-Peridigm::ModelEvaluator::constructEvaluators(const Teuchos::RCP<Teuchos::ParameterList>& params)
+PeridigmNS::ModelEvaluator::constructEvaluators(const Teuchos::RCP<Teuchos::ParameterList>& params)
 {
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -354,19 +365,19 @@ Peridigm::ModelEvaluator::constructEvaluators(const Teuchos::RCP<Teuchos::Parame
 }
 
 Teuchos::RCP<const Epetra_Map>
-Peridigm::ModelEvaluator::get_x_map() const
+PeridigmNS::ModelEvaluator::get_x_map() const
 {
   return threeDimensionalTwoEntryMap;
 }
 
 Teuchos::RCP<const Epetra_Map>
-Peridigm::ModelEvaluator::get_f_map() const
+PeridigmNS::ModelEvaluator::get_f_map() const
 {
   return threeDimensionalTwoEntryMap;
 }
 
 Teuchos::RCP<const Epetra_Map>
-Peridigm::ModelEvaluator::get_p_map(int l) const
+PeridigmNS::ModelEvaluator::get_p_map(int l) const
 {
 //  TEST_FOR_EXCEPTION(supportsP == false, 
 //                     Teuchos::Exceptions::InvalidParameter,
@@ -384,7 +395,7 @@ Peridigm::ModelEvaluator::get_p_map(int l) const
 }
 
 Teuchos::RCP<const Epetra_Map>
-Peridigm::ModelEvaluator::get_g_map(int l) const
+PeridigmNS::ModelEvaluator::get_g_map(int l) const
 {
   TEST_FOR_EXCEPTION(supportsG == false, 
                      Teuchos::Exceptions::InvalidParameter,
@@ -402,13 +413,13 @@ Peridigm::ModelEvaluator::get_g_map(int l) const
 }
 
 Teuchos::RCP<const Epetra_Vector>
-Peridigm::ModelEvaluator::get_x_init() const
+PeridigmNS::ModelEvaluator::get_x_init() const
 {
   return solverInitialX;
 }
 
 Teuchos::RCP<const Epetra_Vector>
-Peridigm::ModelEvaluator::get_p_init(int l) const
+PeridigmNS::ModelEvaluator::get_p_init(int l) const
 {
   TEST_FOR_EXCEPTION(l != 0, Teuchos::Exceptions::InvalidParameter,
                      std::endl << 
@@ -419,50 +430,50 @@ Peridigm::ModelEvaluator::get_p_init(int l) const
   return epetraParamVec;
 }
 
-Teuchos::RCP<Peridigm::NeighborhoodData>
-Peridigm::ModelEvaluator::getNeighborhoodData() const
+Teuchos::RCP<PeridigmNS::NeighborhoodData>
+PeridigmNS::ModelEvaluator::getNeighborhoodData() const
 {
   return neighborhoodData;
 }
 
 Teuchos::RCP<const Epetra_MultiVector>
-Peridigm::ModelEvaluator::getScalarConstitutiveDataOverlap() const
+PeridigmNS::ModelEvaluator::getScalarConstitutiveDataOverlap() const
 {
   return scalarConstitutiveDataOverlap;
 }
 
 Teuchos::RCP<const Epetra_MultiVector>
-Peridigm::ModelEvaluator::getVectorConstitutiveDataOverlap() const
+PeridigmNS::ModelEvaluator::getVectorConstitutiveDataOverlap() const
 {
   return vectorConstitutiveDataOverlap;
 }
 
 Teuchos::RCP<const Epetra_MultiVector>
-Peridigm::ModelEvaluator::getBondConstitutiveData() const
+PeridigmNS::ModelEvaluator::getBondConstitutiveData() const
 {
   return bondConstitutiveData;
 }
 
 Teuchos::RCP<const Epetra_Map>
-Peridigm::ModelEvaluator::getOneDimensionalMap() const
+PeridigmNS::ModelEvaluator::getOneDimensionalMap() const
 {
   return oneDimensionalMap;
 }
 
 Teuchos::RCP<const Epetra_Map>
-Peridigm::ModelEvaluator::getOneDimensionalOverlapMap() const
+PeridigmNS::ModelEvaluator::getOneDimensionalOverlapMap() const
 {
   return oneDimensionalOverlapMap;
 }
 
-std::vector< Teuchos::RCP<Peridigm::Material> >
-Peridigm::ModelEvaluator::getMaterials() const
+std::vector< Teuchos::RCP<PeridigmNS::Material> >
+PeridigmNS::ModelEvaluator::getMaterials() const
 {
   return materials;
 }
 
 EpetraExt::ModelEvaluator::InArgs
-Peridigm::ModelEvaluator::createInArgs() const
+PeridigmNS::ModelEvaluator::createInArgs() const
 {
   InArgsSetup inArgs;
   inArgs.setModelEvalDescription(this->description());
@@ -478,7 +489,7 @@ Peridigm::ModelEvaluator::createInArgs() const
 }
 
 EpetraExt::ModelEvaluator::OutArgs
-Peridigm::ModelEvaluator::createOutArgs() const
+PeridigmNS::ModelEvaluator::createOutArgs() const
 {
   OutArgsSetup outArgs;
   outArgs.setModelEvalDescription(this->description());
@@ -512,7 +523,7 @@ Peridigm::ModelEvaluator::createOutArgs() const
 }
 
 void 
-Peridigm::ModelEvaluator::evalModel(const InArgs& inArgs, 
+PeridigmNS::ModelEvaluator::evalModel(const InArgs& inArgs, 
 									const OutArgs& outArgs) const
 {
   // Note:  This is the call by which Rythmos 
@@ -570,7 +581,7 @@ Peridigm::ModelEvaluator::evalModel(const InArgs& inArgs,
 }
 
 void
-Peridigm::ModelEvaluator::computeGlobalResidual(Teuchos::RCP<const Epetra_Vector>& solverX, 
+PeridigmNS::ModelEvaluator::computeGlobalResidual(Teuchos::RCP<const Epetra_Vector>& solverX, 
 												Teuchos::RCP<Epetra_Vector>& solverXDot, 
 												double timeStep) const
 { 
@@ -620,7 +631,7 @@ Peridigm::ModelEvaluator::computeGlobalResidual(Teuchos::RCP<const Epetra_Vector
 }
 
 void
-Peridigm::ModelEvaluator::evaluateResponses(const Epetra_Vector* xdot,
+PeridigmNS::ModelEvaluator::evaluateResponses(const Epetra_Vector* xdot,
 											const Epetra_Vector& x,
 											Epetra_Vector& g) const
 {
@@ -633,7 +644,7 @@ Peridigm::ModelEvaluator::evaluateResponses(const Epetra_Vector* xdot,
 }
 
 void
-Peridigm::ModelEvaluator::updateContact(Teuchos::RCP<const Epetra_Vector> solverX)
+PeridigmNS::ModelEvaluator::updateContact(Teuchos::RCP<const Epetra_Vector> solverX)
 {
   if(!computeContact)
     return;
@@ -646,7 +657,7 @@ Peridigm::ModelEvaluator::updateContact(Teuchos::RCP<const Epetra_Vector> solver
 }
 
 void
-Peridigm::ModelEvaluator::updateContactNeighborList(Teuchos::RCP<const Epetra_Vector> solverX)
+PeridigmNS::ModelEvaluator::updateContactNeighborList(Teuchos::RCP<const Epetra_Vector> solverX)
 {
   // initial implementation works in serial only
   TEST_FOR_EXCEPT_MSG(numPID != 1, "Contact is currently not enabled in parallel.\n");
@@ -762,7 +773,7 @@ Peridigm::ModelEvaluator::updateContactNeighborList(Teuchos::RCP<const Epetra_Ve
 }
 
 void
-Peridigm::ModelEvaluator::applyBoundaryConditions(const Teuchos::RCP<Teuchos::ParameterList>& params)
+PeridigmNS::ModelEvaluator::applyBoundaryConditions(const Teuchos::RCP<Teuchos::ParameterList>& params)
 {
   //! \todo Need a better way to parse boundary conditions.
   //! \todo Add assertions to boundary contition parsing
