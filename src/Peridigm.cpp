@@ -69,13 +69,16 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   out = Teuchos::VerboseObjectBase::getDefaultOStream();
 
-  // initialize materials using provided parameters
+  // Initialize materials using provided parameters
   initializeMaterials();
 
   // Read mesh from disk or generate using geometric primatives.
   // All maps are generated here
   // Vectors constructed here
   initializeDiscretization();
+
+  // apply initial velocities
+  applyInitialVelocities();
 
   // Setup contact
   initializeContact();
@@ -173,10 +176,15 @@ void PeridigmNS::Peridigm::initializeDiscretization() {
   Epetra_Import oneDimensionalMapToOneDimensionalOverlapMapImporter(*oneDimensionalOverlapMap, *oneDimensionalMap);
   cellVolumeOverlap->Import(*(peridigmDisc->getCellVolume()), oneDimensionalMapToOneDimensionalOverlapMapImporter, Insert);
 
-  // Create u, y, and v vectors
+  // Create x, u, y, v, and force vectors
+  x =  Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
+  u =  Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
+  v =  Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
+  force =  Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
   uOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
   vOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
   yOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
+  forceOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
 
   // containers for constitutive data
   scalarConstitutiveDataOverlap = Teuchos::rcp(new Epetra_MultiVector(*oneDimensionalOverlapMap, scalarConstitutiveDataSize));
@@ -186,14 +194,11 @@ void PeridigmNS::Peridigm::initializeDiscretization() {
   bondConstitutiveData = Teuchos::rcp(new Epetra_MultiVector(*bondMap, bondConstitutiveDataSize));
   bondConstitutiveData->PutScalar(0.0);
 
-  // container for accelerations
-  forceOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
-
   // get the neighborlist from the discretization
   neighborhoodData = peridigmDisc->getNeighborhoodData();
 }
 
-void PeridigmNS::Peridigm::applyInitialVelocities(Teuchos::RCP<Epetra_Vector>& v) {
+void PeridigmNS::Peridigm::applyInitialVelocities() {
 
   TEST_FOR_EXCEPT_MSG(!threeDimensionalMap->SameAs(v->Map()), 
                       "Peridigm::applyInitialVelocities():  Inconsistent velocity vector map.\n");
@@ -308,6 +313,11 @@ void PeridigmNS::Peridigm::initializeContact() {
     updateContactNeighborList();
   }
 
+}
+
+void PeridigmNS::Peridigm::execute() {
+
+  
 }
 
 void PeridigmNS::Peridigm::updateContactNeighborList() {
