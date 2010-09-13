@@ -37,7 +37,7 @@
 
 namespace PeridigmNS {
   
-  class OutputManager_VTK_XML: public Peridigm::OutputManager {
+  class OutputManager_VTK_XML: public PeridigmNS::OutputManager {
     
   public:
     

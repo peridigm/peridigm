@@ -24,7 +24,7 @@ class VerletSolver: public EpetraExt::ModelEvaluator {
 
   VerletSolver(Teuchos::RCP<Teuchos::ParameterList> appParams,
                Teuchos::RCP<EpetraExt::ModelEvaluator> model,
-               Teuchos::RCP<Peridigm::VerletObserver > observer = Teuchos::null
+               Teuchos::RCP<PeridigmNS::VerletObserver > observer = Teuchos::null
                );
 
   ~VerletSolver();
@@ -49,7 +49,7 @@ class VerletSolver: public EpetraExt::ModelEvaluator {
 
   Teuchos::RCP<Teuchos::FancyOStream> out;
   Teuchos::EVerbosityLevel solnVerbLevel;
-  Teuchos::RCP<Peridigm::VerletIntegrator> integrator;
+  Teuchos::RCP<PeridigmNS::VerletIntegrator> integrator;
   double t_final;
 
 };

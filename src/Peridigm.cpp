@@ -83,6 +83,8 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   // Setup contact
   initializeContact();
 
+  // Create the model evaluator
+  modelEvaluator =  Teuchos::rcp(new PeridigmNS::ModelEvaluator(comm));
 }
 
 void PeridigmNS::Peridigm::initializeMaterials() {

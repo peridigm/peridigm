@@ -39,7 +39,7 @@
 #include <Epetra_Comm.h>
 #include <Teuchos_TestForException.hpp>
 
-Peridigm::OutputManager_VTK_XML::OutputManager_VTK_XML(const Teuchos::RCP<Teuchos::ParameterList>& params) {
+PeridigmNS::OutputManager_VTK_XML::OutputManager_VTK_XML(const Teuchos::RCP<Teuchos::ParameterList>& params) {
   // MLP: Insert call to parameterlist validator here
 
   // Throws exception if parameters not present
@@ -47,27 +47,27 @@ Peridigm::OutputManager_VTK_XML::OutputManager_VTK_XML(const Teuchos::RCP<Teucho
     numProc = params->INVALID_TEMPLATE_QUALIFIER get<int>("NumProc");
   }
   catch ( const std::exception& e) {
-    TEST_FOR_EXCEPTION(1, std::invalid_argument, "Peridigm::OutputManager_VTK_XML:::OutputManager_VTK_XML() -- numProc not present.");
+    TEST_FOR_EXCEPTION(1, std::invalid_argument, "PeridigmNS::OutputManager_VTK_XML:::OutputManager_VTK_XML() -- numProc not present.");
   }
 
   try {
     myPID = params->INVALID_TEMPLATE_QUALIFIER get<int>("MyPID");
   }
   catch ( const std::exception& e) {
-    TEST_FOR_EXCEPTION(1,  std::invalid_argument, "Peridigm::OutputManager_VTK_XML:::OutputManager_VTK_XML() -- myPID not present.");
+    TEST_FOR_EXCEPTION(1,  std::invalid_argument, "PeridigmNS::OutputManager_VTK_XML:::OutputManager_VTK_XML() -- myPID not present.");
   }
 
   // Default to no output
   frequency = params->get<int>("Output Frequency",-1); 
   // Default to parallel i/o
   parallelWrite = params->get<bool>("Parallel Write",true); 
-  TEST_FOR_EXCEPTION( (numProc != 1) && (!parallelWrite),  std::invalid_argument, "Peridigm::OutputManager_VTK_XML:::OutputManager_VTK_XML() -- Multiprocessor serial I/O not currently supported.");
+  TEST_FOR_EXCEPTION( (numProc != 1) && (!parallelWrite),  std::invalid_argument, "PeridigmNS::OutputManager_VTK_XML:::OutputManager_VTK_XML() -- Multiprocessor serial I/O not currently supported.");
   // Default to ASCII output
   outputFormat = params->get<string>("Output Format","ASCII"); 
-  TEST_FOR_EXCEPTION( outputFormat != "ASCII",  std::invalid_argument, "Peridigm::OutputManager_VTK_XML:::OutputManager_VTK_XML() -- Binary I/O not currently supported.");
+  TEST_FOR_EXCEPTION( outputFormat != "ASCII",  std::invalid_argument, "PeridigmNS::OutputManager_VTK_XML:::OutputManager_VTK_XML() -- Binary I/O not currently supported.");
   // Default to not write full neighborlist
   writeNeighborlist = params->get<bool>("Bond Family",false); 
-  TEST_FOR_EXCEPTION( (numProc != 1) && (writeNeighborlist),  std::invalid_argument, "Peridigm::OutputManager_VTK_XML:::OutputManager_VTK_XML() -- Parallel write of bond families not currently supported.");
+  TEST_FOR_EXCEPTION( (numProc != 1) && (writeNeighborlist),  std::invalid_argument, "PeridigmNS::OutputManager_VTK_XML:::OutputManager_VTK_XML() -- Parallel write of bond families not currently supported.");
   // Output filename base
   filenameBase = params->get<string>("Output Filename","dump"); 
   // User-requested fields for output 
@@ -92,7 +92,7 @@ Peridigm::OutputManager_VTK_XML::OutputManager_VTK_XML(const Teuchos::RCP<Teucho
 
 }
 
-Peridigm::OutputManager_VTK_XML::~OutputManager_VTK_XML() {
+PeridigmNS::OutputManager_VTK_XML::~OutputManager_VTK_XML() {
   // Cleanup writing of time series container file (.pvd file)
   std::ofstream timeContainerOutfile;
   char timeContainerFilename[50];
@@ -105,7 +105,7 @@ Peridigm::OutputManager_VTK_XML::~OutputManager_VTK_XML() {
   }
 }
 
-void Peridigm::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> currentSolution,
+void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> currentSolution,
 											Teuchos::RCP<const Epetra_MultiVector> scalarConstitutiveData,
 											Teuchos::RCP<const NeighborhoodData> neighborhoodData,
 											Teuchos::RCP<Teuchos::ParameterList>& forceStateDesc) {

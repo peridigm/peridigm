@@ -32,7 +32,7 @@
 
 #include "Peridigm_VerletIntegrator.hpp"
 
-Peridigm::VerletIntegrator::VerletIntegrator(Teuchos::RCP<EpetraExt::ModelEvaluator> model_, Teuchos::RCP<Teuchos::ParameterList> PL) {
+PeridigmNS::VerletIntegrator::VerletIntegrator(Teuchos::RCP<EpetraExt::ModelEvaluator> model_, Teuchos::RCP<Teuchos::ParameterList> PL) {
   model = model_;
   solverParams = PL;
   t_initial = PL->get("Initial Time", 1.0); 
@@ -40,9 +40,9 @@ Peridigm::VerletIntegrator::VerletIntegrator(Teuchos::RCP<EpetraExt::ModelEvalua
   dt        = PL->get("Fixed dt", 1.0); 
 }
 
-int Peridigm::VerletIntegrator::setIntegrationObserver(Teuchos::RCP<Peridigm::VerletObserver> observer_) {observer = observer_; return 0;}
+int PeridigmNS::VerletIntegrator::setIntegrationObserver(Teuchos::RCP<PeridigmNS::VerletObserver> observer_) {observer = observer_; return 0;}
 
-int Peridigm::VerletIntegrator::integrate(double t_final) {
+int PeridigmNS::VerletIntegrator::integrate(double t_final) {
 
   // Get initial condition from model 
   Teuchos::RCP<Epetra_Vector> x_in = Teuchos::rcp(new Epetra_Vector(*(model->get_x_init())));
@@ -55,7 +55,7 @@ int Peridigm::VerletIntegrator::integrate(double t_final) {
   outArgs.set_f(x_out);
 
   // Get one-dimensional map from the model evaluator; This gives GID info for each node, and # nodes on my processor
-  Teuchos::RCP<Peridigm::ModelEvaluator> PDmodel = Teuchos::rcp_dynamic_cast<Peridigm::ModelEvaluator>(model);
+  Teuchos::RCP<PeridigmNS::ModelEvaluator> PDmodel = Teuchos::rcp_dynamic_cast<PeridigmNS::ModelEvaluator>(model);
   Teuchos::RCP<const Epetra_Map> dataMap = PDmodel->getOneDimensionalMap();
   int length = dataMap->NumMyElements();
 

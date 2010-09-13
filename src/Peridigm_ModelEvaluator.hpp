@@ -59,9 +59,12 @@ namespace PeridigmNS {
 
   public:
 
-    //! Constructor
+    //! Obsolete constructor
 	ModelEvaluator(const Teuchos::RCP<const Epetra_Comm>& comm,
 				   const Teuchos::RCP<Teuchos::ParameterList>& params);
+
+    //! Constructor
+    ModelEvaluator(const Teuchos::RCP<const Epetra_Comm>& comm);
 
     //! Destructor
 	~ModelEvaluator();
@@ -115,13 +118,13 @@ namespace PeridigmNS {
 
     //! Return array of materials
     //! \todo Return reference to array or change to ArrayRCP
-    std::vector< Teuchos::RCP<Peridigm::Material> > getMaterials() const;
+    std::vector< Teuchos::RCP<PeridigmNS::Material> > getMaterials() const;
 
     //! Return array of contact models
-    std::vector< Teuchos::RCP<Peridigm::ContactModel> > getContactModels() const;
+    std::vector< Teuchos::RCP<PeridigmNS::ContactModel> > getContactModels() const;
 
     //! Return neighborlist
-    Teuchos::RCP<Peridigm::NeighborhoodData> getNeighborhoodData() const;
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> getNeighborhoodData() const;
 
 	//! Return scalar constitutive data
 	Teuchos::RCP<const Epetra_MultiVector> getScalarConstitutiveDataOverlap() const;
@@ -176,7 +179,7 @@ namespace PeridigmNS {
     Teuchos::RCP<const Epetra_Map> bondMap;
 
 	//! Discretization
-	Teuchos::RCP<Peridigm::AbstractDiscretization> disc;
+	Teuchos::RCP<PeridigmNS::AbstractDiscretization> disc;
 
     //! Initial positions (vector formatted to interface with the solver)
     Teuchos::RCP<Epetra_Vector> solverInitialX;
@@ -239,16 +242,16 @@ namespace PeridigmNS {
 
 	//! Material models
 	//! \todo Use Teuchos::ArrayRCP to store materials?
-	std::vector< Teuchos::RCP<Peridigm::Material> > materials;
+	std::vector< Teuchos::RCP<PeridigmNS::Material> > materials;
 
 	//! List of neighbors for all locally-owned nodes
-	Teuchos::RCP<Peridigm::NeighborhoodData> neighborhoodData;
+	Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData;
 
 	//! Contact models
-	std::vector< Teuchos::RCP<Peridigm::ContactModel> > contactModels;
+	std::vector< Teuchos::RCP<PeridigmNS::ContactModel> > contactModels;
 
 	//! List of potential contact neighbors for all locally-owned nodes
-	Teuchos::RCP<Peridigm::NeighborhoodData> contactNeighborhoodData;
+	Teuchos::RCP<PeridigmNS::NeighborhoodData> contactNeighborhoodData;
 
     //! Contact flag
     bool computeContact;

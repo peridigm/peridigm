@@ -45,6 +45,7 @@
 #include "contact/Peridigm_ContactModel.hpp"
 #include "materials/Peridigm_Material.hpp"
 #include "Peridigm_AbstractDiscretization.hpp"
+#include "Peridigm_ModelEvaluator.hpp"
 
 namespace PeridigmNS {
 
@@ -167,6 +168,9 @@ namespace PeridigmNS {
 
     //! List of potential contact neighbors for all locally-owned nodes
     Teuchos::RCP<PeridigmNS::NeighborhoodData> contactNeighborhoodData;
+
+    //! The peridigm model evaluator
+    Teuchos::RCP<PeridigmNS::ModelEvaluator> modelEvaluator;
 
   };
 }

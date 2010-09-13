@@ -45,13 +45,13 @@ namespace PeridigmNS {
 
      ~VerletIntegrator() {};
 
-     int setIntegrationObserver(Teuchos::RCP<Peridigm::VerletObserver>);
+     int setIntegrationObserver(Teuchos::RCP<PeridigmNS::VerletObserver>);
 
      int integrate(double);
 
   private:
 
-     Teuchos::RCP<Peridigm::VerletObserver> observer;
+     Teuchos::RCP<PeridigmNS::VerletObserver> observer;
      Teuchos::RCP<Teuchos::ParameterList> solverParams;
      Teuchos::RCP<EpetraExt::ModelEvaluator> model;
      double t_initial;

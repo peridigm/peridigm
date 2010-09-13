@@ -58,9 +58,9 @@ namespace PeridigmNS {
 
   private:
 
-   Teuchos::RCP<Peridigm::ModelEvaluator> model;
+   Teuchos::RCP<PeridigmNS::ModelEvaluator> model;
    Teuchos::RCP<Epetra_Map> solutionMap;
-   Teuchos::RCP<Peridigm::OutputManager> outputManager;
+   Teuchos::RCP<PeridigmNS::OutputManager> outputManager;
 
    // Parameterlist to hold output parameters from input deck
    Teuchos::RCP<Teuchos::ParameterList> outputParams;
