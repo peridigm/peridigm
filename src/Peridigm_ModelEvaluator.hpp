@@ -100,6 +100,9 @@ namespace PeridigmNS {
     //! Evaluate model on InArgs (pure virtual in EpetraExt::ModelEvaluator)
     void evalModel(const InArgs& inArgs, const OutArgs& outArgs) const;
 
+    //! Model evaluation that acts directly on the workset
+    void evalModel(Teuchos::RCP<PHAL::Workset> workset) const;
+
     //! Callback function for updating contact.
     virtual void updateContact(Teuchos::RCP<const Epetra_Vector> solverX);
 
