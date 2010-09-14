@@ -85,7 +85,7 @@ def GetTimeCollection(filename):
 	collectionNodeList=vtkFileElement.getElementsByTagName("Collection")
 	collectionElement=collectionNodeList.item(0)
 	dataSetNodeList=collectionElement.getElementsByTagName("DataSet")
-	d=[(dataSetNodeList.item(i).getAttribute("timestep"),dataSetNodeList.item(i).getAttribute("file")) for i in range(dataSetNodeList.length)]
+	d=[(float(dataSetNodeList.item(i).getAttribute("timestep")),dataSetNodeList.item(i).getAttribute("file")) for i in range(dataSetNodeList.length)]
 	return sorted(d,key=itemgetter(0))
 
 	
