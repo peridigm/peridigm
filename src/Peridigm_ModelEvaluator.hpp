@@ -64,7 +64,8 @@ namespace PeridigmNS {
 				   const Teuchos::RCP<Teuchos::ParameterList>& params);
 
     //! Constructor
-    ModelEvaluator(const Teuchos::RCP<const Epetra_Comm>& comm);
+    ModelEvaluator(const Teuchos::RCP<std::vector<Teuchos::RCP<const PeridigmNS::Material> > > materialsList,
+                   const Teuchos::RCP<const Epetra_Comm>& comm);
 
     //! Destructor
 	~ModelEvaluator();
@@ -118,7 +119,7 @@ namespace PeridigmNS {
 
     //! Return array of materials
     //! \todo Return reference to array or change to ArrayRCP
-    std::vector< Teuchos::RCP<PeridigmNS::Material> > getMaterials() const;
+    Teuchos::RCP<std::vector<Teuchos::RCP<const PeridigmNS::Material> > > getMaterials() const;
 
     //! Return array of contact models
     std::vector< Teuchos::RCP<PeridigmNS::ContactModel> > getContactModels() const;
@@ -137,7 +138,7 @@ namespace PeridigmNS {
 
   protected:
 
-	void constructEvaluators(const Teuchos::RCP<Teuchos::ParameterList>& params);
+	void constructEvaluators();
 
 	//! Compute global residual
     void computeGlobalResidual(Teuchos::RCP<const Epetra_Vector>& solverX, 
@@ -242,13 +243,13 @@ namespace PeridigmNS {
 
 	//! Material models
 	//! \todo Use Teuchos::ArrayRCP to store materials?
-	std::vector< Teuchos::RCP<PeridigmNS::Material> > materials;
+    Teuchos::RCP<std::vector<Teuchos::RCP<const PeridigmNS::Material> > > materials;
 
 	//! List of neighbors for all locally-owned nodes
 	Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData;
 
 	//! Contact models
-	std::vector< Teuchos::RCP<PeridigmNS::ContactModel> > contactModels;
+	Teuchos::RCP<std::vector< Teuchos::RCP<const PeridigmNS::ContactModel> > > contactModels;
 
 	//! List of potential contact neighbors for all locally-owned nodes
 	Teuchos::RCP<PeridigmNS::NeighborhoodData> contactNeighborhoodData;

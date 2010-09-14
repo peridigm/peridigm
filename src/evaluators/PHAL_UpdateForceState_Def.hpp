@@ -109,7 +109,7 @@ void UpdateForceState<EvalT, Traits>::evaluateFields(typename Traits::EvalData c
   Epetra_Vector& force = *cellData.forceOverlap;
 
   // handling of material models needs work!
-  Teuchos::RCP<PeridigmNS::Material> material = cellData.materials[0];
+  Teuchos::RCP<const PeridigmNS::Material> material = (*cellData.materials)[0];
 
   material->updateConstitutiveData(x, 
 								   u, 

@@ -258,17 +258,27 @@ PeridigmNS::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<const Epetra_Comm>
    */
 }
 
-PeridigmNS::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<const Epetra_Comm>& comm)
+PeridigmNS::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<std::vector<Teuchos::RCP<const PeridigmNS::Material> > > materialsList,
+                                           const Teuchos::RCP<const Epetra_Comm>& comm)
   : supportsP(false),
     supportsG(false),
 	verbose(false),
 	bondData(0),
+    materials(materialsList),
     computeContact(false),
     contactSearchRadius(0.0),
     contactSearchFrequency(1),
 	numPID(comm->NumProc()),
 	myPID(comm->MyPID())
 {
+  // materials
+
+  // contact models
+
+  // need ability to work with workset
+
+
+  constructEvaluators();
 }
 
 PeridigmNS::ModelEvaluator::~ModelEvaluator(){
@@ -277,7 +287,7 @@ PeridigmNS::ModelEvaluator::~ModelEvaluator(){
 }
 
 void 
-PeridigmNS::ModelEvaluator::constructEvaluators(const Teuchos::RCP<Teuchos::ParameterList>& params)
+PeridigmNS::ModelEvaluator::constructEvaluators()
 {
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -466,7 +476,7 @@ PeridigmNS::ModelEvaluator::getOneDimensionalOverlapMap() const
   return oneDimensionalOverlapMap;
 }
 
-std::vector< Teuchos::RCP<PeridigmNS::Material> >
+Teuchos::RCP<std::vector<Teuchos::RCP<const PeridigmNS::Material> > >
 PeridigmNS::ModelEvaluator::getMaterials() const
 {
   return materials;
@@ -614,7 +624,7 @@ PeridigmNS::ModelEvaluator::computeGlobalResidual(Teuchos::RCP<const Epetra_Vect
 
   // convert force densities to accelerations
   // \todo Expand to handle multiple materials (would be nice if we could scale the blocks independently)
-  double density = materials[0]->Density();
+  double density = (*materials)[0]->Density();
   forceOverlap->Scale(1.0/density);
 
   // scatter add the forces into the solver's container

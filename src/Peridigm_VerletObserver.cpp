@@ -65,7 +65,7 @@ PeridigmNS::VerletObserver::VerletObserver(Teuchos::RCP<EpetraExt::ModelEvaluato
 
     // Query material models for their force state data descriptions
     forceStateDesc = Teuchos::rcp( new Teuchos::ParameterList() );
-    std::vector< Teuchos::RCP<PeridigmNS::Material> > materials = model->getMaterials();
+    std::vector<Teuchos::RCP<const PeridigmNS::Material> > materials = *(model->getMaterials());
     for(unsigned int i=0; i<materials.size(); ++i){
       Teuchos::ParameterList& subList = forceStateDesc->sublist(materials[i]->Name());
       for(int j=0;j<materials[i]->NumScalarConstitutiveVariables(); ++j){
