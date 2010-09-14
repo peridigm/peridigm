@@ -84,13 +84,15 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   initializeContact();
 
   // Create the model evaluator
-  modelEvaluator =  Teuchos::rcp(new PeridigmNS::ModelEvaluator(comm));
+  modelEvaluator = Teuchos::rcp(new PeridigmNS::ModelEvaluator(materials, comm));
 }
 
 void PeridigmNS::Peridigm::initializeMaterials() {
 
   // Extract problem parameters sublist
   Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::rcp(&(peridigmParams->sublist("Problem")),false);
+
+  materials = Teuchos::rcp(new std::vector< Teuchos::RCP<const PeridigmNS::Material> >()); 
 
   // Instantiate material objects
   //! \todo Move creation of material models to material model factory
@@ -106,7 +108,7 @@ void PeridigmNS::Peridigm::initializeMaterials() {
         material = Teuchos::rcp(new LinearElasticIsotropicMaterial(matParams) );
       else if(name == "Elastic-Plastic")
         material = Teuchos::rcp(new IsotropicElasticPlasticMaterial(matParams) );
-      materials.push_back( Teuchos::rcp_implicit_cast<Material>(material) );
+      materials->push_back( Teuchos::rcp_implicit_cast<Material>(material) );
       // Allocate enough space for the max number of state variables
       if(material->NumScalarConstitutiveVariables() > scalarConstitutiveDataSize)
         scalarConstitutiveDataSize = material->NumScalarConstitutiveVariables();
@@ -122,7 +124,7 @@ void PeridigmNS::Peridigm::initializeMaterials() {
       TEST_FOR_EXCEPT_MSG(true, invalidMaterial);
     }
   }
-  TEST_FOR_EXCEPT_MSG(materials.size() == 0, "No material models created!");
+  TEST_FOR_EXCEPT_MSG(materials->size() == 0, "No material models created!");
 
 }
 

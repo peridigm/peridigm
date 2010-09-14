@@ -176,7 +176,8 @@ void testTwoPts()
   workset.scalarConstitutiveDataOverlap = Teuchos::RCP<Epetra_MultiVector>(&scalarConstitutiveDataOverlap, false);
   workset.vectorConstitutiveDataOverlap = Teuchos::RCP<Epetra_MultiVector>(&vectorConstitutiveDataOverlap, false);
   workset.bondConstitutiveData = Teuchos::RCP<Epetra_MultiVector>(&bondConstitutiveData, false);
-  workset.materials.push_back(Teuchos::rcp(&mat, false));
+  workset.materials = Teuchos::rcp(new std::vector< Teuchos::RCP<const PeridigmNS::Material> >());
+  workset.materials->push_back(Teuchos::rcp(&mat, false));
   workset.myPID = comm.MyPID();
 
   // set up a parameter list that will be passed to the evaluator constructor
