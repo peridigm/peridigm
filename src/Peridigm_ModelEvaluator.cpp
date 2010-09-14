@@ -277,7 +277,6 @@ PeridigmNS::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<std::vector<Teucho
 
   // need ability to work with workset
 
-
   constructEvaluators();
 }
 
@@ -534,7 +533,7 @@ PeridigmNS::ModelEvaluator::createOutArgs() const
 
 void 
 PeridigmNS::ModelEvaluator::evalModel(const InArgs& inArgs, 
-									const OutArgs& outArgs) const
+                                      const OutArgs& outArgs) const
 {
   // Note:  This is the call by which Rythmos 
   //        interacts with the ModelEvaluator.
@@ -588,6 +587,25 @@ PeridigmNS::ModelEvaluator::evalModel(const InArgs& inArgs,
   }
 
   computeGlobalResidual(solverX, solverXDot, timeStep);
+}
+
+
+void 
+PeridigmNS::ModelEvaluator::evalModel(Teuchos::RCP<PHAL::Workset> workset) const
+{
+  cout << "DEBUGGING: PeridigmNS::ModelEvaluator::evalModel() has been called." << endl;
+//   // call field manager with workset
+//   fm->evaluateFields<PHAL::PeridigmTraits::Residual>(workset);
+
+//   // add the internal force and the contact force
+//   if(computeContact){
+//     forceOverlap->Update(1.0, *contactForceOverlap, 1.0);
+//   }
+
+//   // convert force densities to accelerations
+//   // \todo Expand to handle multiple materials (would be nice if we could scale the blocks independently)
+//   double density = (*materials)[0]->Density();
+//   forceOverlap->Scale(1.0/density);
 }
 
 void

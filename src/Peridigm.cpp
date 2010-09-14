@@ -83,6 +83,9 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   // Setup contact
   initializeContact();
 
+  // Initialize the workset
+  initializeWorkset();
+
   // Create the model evaluator
   modelEvaluator = Teuchos::rcp(new PeridigmNS::ModelEvaluator(materials, comm));
 }
@@ -285,6 +288,7 @@ void PeridigmNS::Peridigm::initializeContact() {
 
   // Instantiate contact models
   //! \todo Move creation of contact models to contact model factory
+  contactModels = Teuchos::rcp(new std::vector<Teuchos::RCP<const PeridigmNS::ContactModel> >);
   if(computeContact){
     Teuchos::ParameterList & contactParams = problemParams->sublist("Contact");
     Teuchos::ParameterList::ConstIterator it;
@@ -298,7 +302,7 @@ void PeridigmNS::Peridigm::initializeContact() {
         Teuchos::RCP<PeridigmNS::ContactModel> contactModel;
         if(name == "Short Range Force"){
           contactModel = Teuchos::rcp(new PeridigmNS::ShortRangeForceContactModel(contactModelParams) );
-          contactModels.push_back( Teuchos::rcp_implicit_cast<PeridigmNS::ContactModel>(contactModel) );
+          contactModels->push_back( Teuchos::rcp_implicit_cast<PeridigmNS::ContactModel>(contactModel) );
         }
         else{
           string invalidContactModel("Unrecognized contact model: ");
@@ -319,9 +323,33 @@ void PeridigmNS::Peridigm::initializeContact() {
 
 }
 
+
+void PeridigmNS::Peridigm::initializeWorkset() {
+  workset = Teuchos::rcp(new PHAL::Workset);
+  workset->xOverlap = xOverlap;
+  workset->uOverlap = uOverlap;
+  workset->vOverlap = vOverlap;
+  workset->forceOverlap = forceOverlap;
+  workset->contactForceOverlap = contactForceOverlap;
+  Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
+  *timeStep = 0.0;
+  workset->timeStep = timeStep;
+  workset->cellVolumeOverlap = cellVolumeOverlap;
+  workset->neighborhoodData = neighborhoodData;
+  workset->contactNeighborhoodData = contactNeighborhoodData;
+  workset->bondData = Teuchos::RCP<double>(bondData, false);
+  workset->scalarConstitutiveDataOverlap = scalarConstitutiveDataOverlap;
+  workset->vectorConstitutiveDataOverlap = vectorConstitutiveDataOverlap;
+  workset->bondConstitutiveData = bondConstitutiveData;
+  workset->materials = materials;
+  workset->contactModels = contactModels;
+  workset->myPID = -1;
+}
+
 void PeridigmNS::Peridigm::execute() {
 
-  
+  // evalModel() should be called by time integrator here...
+  modelEvaluator->evalModel(workset);
 }
 
 void PeridigmNS::Peridigm::updateContactNeighborList() {

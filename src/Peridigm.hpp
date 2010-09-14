@@ -69,6 +69,9 @@ namespace PeridigmNS {
     //! Initialize contact
     void initializeContact();
 
+    //! Initialize the workset
+    void initializeWorkset();
+
     //! Main routine to drive problem solution
     void execute();
 
@@ -116,7 +119,7 @@ namespace PeridigmNS {
     Teuchos::RCP< std::vector< Teuchos::RCP<const PeridigmNS::Material> > > materials;
 
     //! Contact models
-    std::vector< Teuchos::RCP<PeridigmNS::ContactModel> > contactModels;
+    Teuchos::RCP< std::vector<Teuchos::RCP<const PeridigmNS::ContactModel> > > contactModels;
 
     //! Global vector for initial positions
     Teuchos::RCP<Epetra_Vector> x;
@@ -168,6 +171,9 @@ namespace PeridigmNS {
 
     //! List of potential contact neighbors for all locally-owned nodes
     Teuchos::RCP<PeridigmNS::NeighborhoodData> contactNeighborhoodData;
+
+    //! Workset that is passed to the modelEvaluator
+    Teuchos::RCP<PHAL::Workset> workset;
 
     //! The peridigm model evaluator
     Teuchos::RCP<PeridigmNS::ModelEvaluator> modelEvaluator;
