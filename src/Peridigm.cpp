@@ -69,8 +69,8 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   out = Teuchos::VerboseObjectBase::getDefaultOStream();
 
-  // Initialize materials using provided parameters
-  initializeMaterials();
+  // Instantiate materials using provided parameters
+  instantiateMaterials();
 
   // Read mesh from disk or generate using geometric primatives.
   // All maps are generated here
@@ -88,9 +88,12 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // Create the model evaluator
   modelEvaluator = Teuchos::rcp(new PeridigmNS::ModelEvaluator(materials, comm));
+
+  // Initialize material models
+  initializeMaterials();
 }
 
-void PeridigmNS::Peridigm::initializeMaterials() {
+void PeridigmNS::Peridigm::instantiateMaterials() {
 
   // Extract problem parameters sublist
   Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::rcp(&(peridigmParams->sublist("Problem")),false);
@@ -129,6 +132,28 @@ void PeridigmNS::Peridigm::initializeMaterials() {
   }
   TEST_FOR_EXCEPT_MSG(materials->size() == 0, "No material models created!");
 
+}
+
+void PeridigmNS::Peridigm::initializeMaterials() {
+
+  std::vector< Teuchos::RCP<const PeridigmNS::Material> >::const_iterator matIt;
+
+  for(matIt = materials->begin() ; matIt != materials->end() ; matIt++){
+    double dt = 0.0;
+    (*matIt)->initialize(*xOverlap,
+                         *uOverlap,
+                         *vOverlap,
+                         dt,
+                         *cellVolumeOverlap,
+                         neighborhoodData->NumOwnedPoints(),
+                         neighborhoodData->OwnedIDs(),
+                         neighborhoodData->NeighborhoodList(),
+                         bondData,
+                         *scalarConstitutiveDataOverlap,
+                         *vectorConstitutiveDataOverlap,
+                         *bondConstitutiveData,
+                         *forceOverlap);
+  }
 }
 
 void PeridigmNS::Peridigm::initializeDiscretization() {
@@ -173,25 +198,25 @@ void PeridigmNS::Peridigm::initializeDiscretization() {
   for(unsigned int i=0; i<peridigmDisc->getNumBonds(); i++)
     bondData[i] = 0.0;
 
-  // Get the initial positions and put them in the xOverlap vector
-  Epetra_Import threeDimensionalMapToThreeDimensionalOverlapMapImporter(*threeDimensionalOverlapMap, *threeDimensionalMap);
-  xOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
-  xOverlap->Import(*(peridigmDisc->getInitialX()), threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-
-  // Get the cell volumes and put them in the cellVolumeOverlap vector
-  cellVolumeOverlap = Teuchos::rcp(new Epetra_Vector(*oneDimensionalOverlapMap));
-  Epetra_Import oneDimensionalMapToOneDimensionalOverlapMapImporter(*oneDimensionalOverlapMap, *oneDimensionalMap);
-  cellVolumeOverlap->Import(*(peridigmDisc->getCellVolume()), oneDimensionalMapToOneDimensionalOverlapMapImporter, Insert);
-
   // Create x, u, y, v, and force vectors
-  x =  Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
-  u =  Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
-  v =  Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
+  x = peridigmDisc->getInitialX();
+  u = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
+  v = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
   force =  Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
   uOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
   vOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
   yOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
   forceOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
+
+  // Get the initial positions and put them in the xOverlap vector
+  threeDimensionalMapToThreeDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*threeDimensionalOverlapMap, *threeDimensionalMap));
+  xOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
+  xOverlap->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+
+  // Get the cell volumes and put them in the cellVolumeOverlap vector
+  cellVolumeOverlap = Teuchos::rcp(new Epetra_Vector(*oneDimensionalOverlapMap));
+  oneDimensionalMapToOneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*oneDimensionalOverlapMap, *oneDimensionalMap));
+  cellVolumeOverlap->Import(*(peridigmDisc->getCellVolume()), *oneDimensionalMapToOneDimensionalOverlapMapImporter, Insert);
 
   // containers for constitutive data
   scalarConstitutiveDataOverlap = Teuchos::rcp(new Epetra_MultiVector(*oneDimensionalOverlapMap, scalarConstitutiveDataSize));
@@ -346,8 +371,35 @@ void PeridigmNS::Peridigm::initializeWorkset() {
 
 void PeridigmNS::Peridigm::execute() {
 
+  Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
+  workset->timeStep = timeStep;
+
+  // pull data from global displacement and velocity vectors
+  // to local overlap vectors
+  uOverlap->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  vOverlap->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+
+  // set time step in workset
+  *timeStep = 1.0e-9;
+
+//   cout << "BEFORE" << endl;
+//   cout << *(workset->xOverlap) << endl;
+//   cout << *(workset->uOverlap) << endl;
+//   cout << *(workset->vOverlap) << endl;
+//   cout << *(workset->forceOverlap) << endl;
+//   //  cout << *(workset->contactForceOverlap) << endl;
+//   cout << *(workset->timeStep) << endl;
+//   cout << *(cellVolumeOverlap) << endl;
+
   // evalModel() should be called by time integrator here...
+
   modelEvaluator->evalModel(workset);
+
+//   cout << "AFTER" << endl;
+//   cout << *(workset->xOverlap) << endl;
+//   cout << *(workset->uOverlap) << endl;
+//   cout << *(workset->vOverlap) << endl;
+//   cout << *(workset->forceOverlap) << endl;
 }
 
 void PeridigmNS::Peridigm::updateContactNeighborList() {
