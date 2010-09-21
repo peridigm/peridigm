@@ -57,6 +57,9 @@ namespace PeridigmNS {
     Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
              const Teuchos::RCP<Teuchos::ParameterList>& params);
 
+    //! Instantiate material objects
+    void instantiateMaterials();
+
     //! Initialize material objects
     void initializeMaterials();
 
@@ -100,6 +103,10 @@ namespace PeridigmNS {
     Teuchos::RCP<const Epetra_BlockMap> oneDimensionalOverlapMap;
     Teuchos::RCP<const Epetra_BlockMap> threeDimensionalMap;
     Teuchos::RCP<const Epetra_BlockMap> threeDimensionalOverlapMap;
+
+    //! Importers and exporters from global to overlapped vectors
+    Teuchos::RCP<const Epetra_Import> threeDimensionalMapToThreeDimensionalOverlapMapImporter;
+    Teuchos::RCP<const Epetra_Import> oneDimensionalMapToOneDimensionalOverlapMapImporter;
 
     //! Data structures for bonds
     double* bondData;
