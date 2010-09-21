@@ -14,10 +14,10 @@ add_executable (${EXECUTABLE_NAME}
         Peridigm_ModelEvaluator.cpp
         PHAL_Dimension.cpp
         PHAL_PeridigmTraits.cpp
-        Peridigm_OutputManager_VTK_XML.cpp
-        Peridigm_VerletSolver.cpp
-        Peridigm_VerletIntegrator.cpp
-        Peridigm_VerletObserver.cpp
+#        Peridigm_OutputManager_VTK_XML.cpp
+#        Peridigm_VerletSolver.cpp
+#        Peridigm_VerletIntegrator.cpp
+#        Peridigm_VerletObserver.cpp
         ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
         ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
         ./materials/Peridigm_DecompositionStates.cpp
@@ -49,9 +49,9 @@ add_executable(utPeridigm
         PHAL_Dimension.cpp
         PHAL_PeridigmTraits.cpp
         Peridigm_OutputManager_VTK_XML.cpp
-        Peridigm_VerletSolver.cpp
-        Peridigm_VerletIntegrator.cpp
-        Peridigm_VerletObserver.cpp
+#        Peridigm_VerletSolver.cpp
+#        Peridigm_VerletIntegrator.cpp
+#        Peridigm_VerletObserver.cpp
         ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
         ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
         ./materials/Peridigm_DecompositionStates.cpp

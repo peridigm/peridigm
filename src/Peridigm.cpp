@@ -320,9 +320,7 @@ void PeridigmNS::Peridigm::initializeContact() {
     contactNeighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
     updateContactNeighborList();
   }
-
 }
-
 
 void PeridigmNS::Peridigm::initializeWorkset() {
   workset = Teuchos::rcp(new PHAL::Workset);

@@ -41,7 +41,7 @@
 #include "PdQuickGrid.h"
 #include "PdZoltan.h"
 #include <sstream>
-
+/*
 PeridigmNS::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<const Epetra_Comm>& comm,
 										 const Teuchos::RCP<Teuchos::ParameterList>& params)
   : supportsP(false),
@@ -54,7 +54,6 @@ PeridigmNS::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<const Epetra_Comm>
 	numPID(comm->NumProc()),
 	myPID(comm->MyPID())
 {
-  /*
   Teuchos::RCP<Teuchos::ParameterList> problemParams = 
 	Teuchos::rcp(&(params->sublist("Problem")),false);
   out = Teuchos::VerboseObjectBase::getDefaultOStream();
@@ -251,25 +250,18 @@ PeridigmNS::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<const Epetra_Comm>
   // construct evaluators
   constructEvaluators(problemParams);
   fm->postRegistrationSetup(NULL);
-  */
-  /** \todo If allowing access to member data (e.g. allowing
-   *       Dakota to solve optimization problems), then 
-   *       create hooks to a ParamLib here.
-   */
 }
+*/
 
 PeridigmNS::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<std::vector<Teuchos::RCP<const PeridigmNS::Material> > > materialsList,
                                            const Teuchos::RCP<const Epetra_Comm>& comm)
-  : supportsP(false),
-    supportsG(false),
-	verbose(false),
-	bondData(0),
-    materials(materialsList),
+  : materials(materialsList),
     computeContact(false),
     contactSearchRadius(0.0),
     contactSearchFrequency(1),
 	numPID(comm->NumProc()),
-	myPID(comm->MyPID())
+	myPID(comm->MyPID()),
+    verbose(false)
 {
   // materials
 
@@ -278,11 +270,10 @@ PeridigmNS::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<std::vector<Teucho
   // need ability to work with workset
 
   constructEvaluators();
+  fm->postRegistrationSetup(NULL);
 }
 
 PeridigmNS::ModelEvaluator::~ModelEvaluator(){
-  if(bondData != 0)
-	delete[] bondData;
 }
 
 void 
@@ -373,164 +364,12 @@ PeridigmNS::ModelEvaluator::constructEvaluators()
   }
 }
 
-Teuchos::RCP<const Epetra_Map>
-PeridigmNS::ModelEvaluator::get_x_map() const
-{
-  return threeDimensionalTwoEntryMap;
-}
-
-Teuchos::RCP<const Epetra_Map>
-PeridigmNS::ModelEvaluator::get_f_map() const
-{
-  return threeDimensionalTwoEntryMap;
-}
-
-Teuchos::RCP<const Epetra_Map>
-PeridigmNS::ModelEvaluator::get_p_map(int l) const
-{
-//  TEST_FOR_EXCEPTION(supportsP == false, 
-//                     Teuchos::Exceptions::InvalidParameter,
-//                     std::endl << 
-//                     "Error!  Peridigm::ModelEvaluator::get_p_map():  " <<
-//                     "No parameters have been supplied.  " <<
-//                     "Supplied index l = " << l << std::endl);
-  TEST_FOR_EXCEPTION(l != 0, Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  Peridigm::ModelEvaluator::get_p_map() only " <<
-                     " supports 1 parameter vector.  Supplied index l = " << 
-                     l << std::endl);
-
-  return epetraParamMap;
-}
-
-Teuchos::RCP<const Epetra_Map>
-PeridigmNS::ModelEvaluator::get_g_map(int l) const
-{
-  TEST_FOR_EXCEPTION(supportsG == false, 
-                     Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  Peridigm::ModelEvaluator::get_g_map():  " <<
-                     "No response functions have been supplied.  " <<
-                     "Supplied index l = " << l << std::endl);
-  TEST_FOR_EXCEPTION(l != 0, Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  Peridigm::ModelEvaluator::get_g_map() only " <<
-                     " supports 1 response vector.  Supplied index l = " << 
-                     l << std::endl);
-
-  return responseMap;
-}
-
-Teuchos::RCP<const Epetra_Vector>
-PeridigmNS::ModelEvaluator::get_x_init() const
-{
-  return solverInitialX;
-}
-
-Teuchos::RCP<const Epetra_Vector>
-PeridigmNS::ModelEvaluator::get_p_init(int l) const
-{
-  TEST_FOR_EXCEPTION(l != 0, Teuchos::Exceptions::InvalidParameter,
-                     std::endl << 
-                     "Error!  Peridigm::ModelEvaluator::get_p_init() only " <<
-                     " supports 1 parameter vector.  Supplied index l = " << 
-                     l << std::endl);
-  
-  return epetraParamVec;
-}
-
-Teuchos::RCP<PeridigmNS::NeighborhoodData>
-PeridigmNS::ModelEvaluator::getNeighborhoodData() const
-{
-  return neighborhoodData;
-}
-
-Teuchos::RCP<const Epetra_MultiVector>
-PeridigmNS::ModelEvaluator::getScalarConstitutiveDataOverlap() const
-{
-  return scalarConstitutiveDataOverlap;
-}
-
-Teuchos::RCP<const Epetra_MultiVector>
-PeridigmNS::ModelEvaluator::getVectorConstitutiveDataOverlap() const
-{
-  return vectorConstitutiveDataOverlap;
-}
-
-Teuchos::RCP<const Epetra_MultiVector>
-PeridigmNS::ModelEvaluator::getBondConstitutiveData() const
-{
-  return bondConstitutiveData;
-}
-
-Teuchos::RCP<const Epetra_Map>
-PeridigmNS::ModelEvaluator::getOneDimensionalMap() const
-{
-  return oneDimensionalMap;
-}
-
-Teuchos::RCP<const Epetra_Map>
-PeridigmNS::ModelEvaluator::getOneDimensionalOverlapMap() const
-{
-  return oneDimensionalOverlapMap;
-}
-
 Teuchos::RCP<std::vector<Teuchos::RCP<const PeridigmNS::Material> > >
 PeridigmNS::ModelEvaluator::getMaterials() const
 {
   return materials;
 }
-
-EpetraExt::ModelEvaluator::InArgs
-PeridigmNS::ModelEvaluator::createInArgs() const
-{
-  InArgsSetup inArgs;
-  inArgs.setModelEvalDescription(this->description());
-  inArgs.setSupports(IN_ARG_x, true);
-  inArgs.setSupports(IN_ARG_t, true);
-
-  if (supportsP)
-    inArgs.set_Np(1); // 1 vector of parameters of length of epetraParamVec
-  else
-    inArgs.set_Np(0);
-
-  return inArgs;
-}
-
-EpetraExt::ModelEvaluator::OutArgs
-PeridigmNS::ModelEvaluator::createOutArgs() const
-{
-  OutArgsSetup outArgs;
-  outArgs.setModelEvalDescription(this->description());
-  outArgs.setSupports(OUT_ARG_f, true);
-  
-  if (supportsP && supportsG) {
-    outArgs.set_Np_Ng(1, 1); // 1 parameter vector, 1 response vector
-	//! \todo Resolve issue related to Dakota expecting DgDp support if g and p are defined.
-	//MLP: DgDp is requested by Dakota. Thyra is (apparently) assuming that if we have g and p
-	//     then we must have DgDp, and throws error if we do not support DgDp
-    outArgs.setSupports(OUT_ARG_DgDp, 0, 0, 
-                        DerivativeSupport(DERIV_MV_BY_COL));
-
-	//! \todo Resolve issue related to Dakota expecting DgDx support if g and x are defined.
-	//MLP: Ditto with DgDx
-    outArgs.setSupports(OUT_ARG_DgDx, 0, DerivativeSupport(DERIV_MV_BY_COL));
-  }
-  else if (supportsP)
-    outArgs.set_Np_Ng(1, 0); // 1 parameter vector
-  else if (supportsG)
-    outArgs.set_Np_Ng(0, 1); // 1 response vector
-  else
-    outArgs.set_Np_Ng(0, 0);
-
-  //! \todo Resolve issue related to setting for DfDp support.
-  // THIS SHOULD BE COMMENTED OUT; STATEMENT HERE TO AVOID THYRA BREAKING
-  // REPORT BUG TO ROSS 
-//   outArgs.setSupports(OUT_ARG_DfDp, 0, DerivativeSupport(DERIV_MV_BY_COL));
-
-  return outArgs;
-}
-
+/*
 void 
 PeridigmNS::ModelEvaluator::evalModel(const InArgs& inArgs, 
                                       const OutArgs& outArgs) const
@@ -588,19 +427,20 @@ PeridigmNS::ModelEvaluator::evalModel(const InArgs& inArgs,
 
   computeGlobalResidual(solverX, solverXDot, timeStep);
 }
-
+*/
 
 void 
 PeridigmNS::ModelEvaluator::evalModel(Teuchos::RCP<PHAL::Workset> workset) const
 {
   cout << "DEBUGGING: PeridigmNS::ModelEvaluator::evalModel() has been called." << endl;
-//   // call field manager with workset
-//   fm->evaluateFields<PHAL::PeridigmTraits::Residual>(workset);
 
-//   // add the internal force and the contact force
-//   if(computeContact){
-//     forceOverlap->Update(1.0, *contactForceOverlap, 1.0);
-//   }
+  // call field manager with workset
+  fm->evaluateFields<PHAL::PeridigmTraits::Residual>(*workset);
+
+  // add the internal force and the contact force
+  if(computeContact){
+    workset->forceOverlap->Update(1.0, *(workset->contactForceOverlap), 1.0);
+  }
 
 //   // convert force densities to accelerations
 //   // \todo Expand to handle multiple materials (would be nice if we could scale the blocks independently)
@@ -608,6 +448,7 @@ PeridigmNS::ModelEvaluator::evalModel(Teuchos::RCP<PHAL::Workset> workset) const
 //   forceOverlap->Scale(1.0/density);
 }
 
+/*
 void
 PeridigmNS::ModelEvaluator::computeGlobalResidual(Teuchos::RCP<const Epetra_Vector>& solverX, 
 												Teuchos::RCP<Epetra_Vector>& solverXDot, 
@@ -657,20 +498,9 @@ PeridigmNS::ModelEvaluator::computeGlobalResidual(Teuchos::RCP<const Epetra_Vect
 	(*solverXDot)[i*6+2] = (*solverX)[i*6+5];
   }
 }
+*/
 
-void
-PeridigmNS::ModelEvaluator::evaluateResponses(const Epetra_Vector* xdot,
-											const Epetra_Vector& x,
-											Epetra_Vector& g) const
-{
-  // This function defines the respose, as in the case of
-  // an optimization problem where we want to minimize a
-  // respose function.  For example, Dakota could interface
-  // with this ModelEvaluator and minmize this response
-  // function by altering parameters
-  TEST_FOR_EXCEPT(false);
-}
-
+/*
 void
 PeridigmNS::ModelEvaluator::updateContact(Teuchos::RCP<const Epetra_Vector> solverX)
 {
@@ -683,7 +513,9 @@ PeridigmNS::ModelEvaluator::updateContact(Teuchos::RCP<const Epetra_Vector> solv
   if(step%contactSearchFrequency == 0)
     updateContactNeighborList(solverX);
 }
+*/
 
+/*
 void
 PeridigmNS::ModelEvaluator::updateContactNeighborList(Teuchos::RCP<const Epetra_Vector> solverX)
 {
@@ -799,7 +631,9 @@ PeridigmNS::ModelEvaluator::updateContactNeighborList(Teuchos::RCP<const Epetra_
 		 &contactNeighborhoodList[0],
 		 contactNeighborhoodList.size()*sizeof(int));
 }
+*/
 
+/*
 void
 PeridigmNS::ModelEvaluator::applyBoundaryConditions(const Teuchos::RCP<Teuchos::ParameterList>& params)
 {
@@ -857,3 +691,4 @@ PeridigmNS::ModelEvaluator::applyBoundaryConditions(const Teuchos::RCP<Teuchos::
 	}
   }
 }
+*/
