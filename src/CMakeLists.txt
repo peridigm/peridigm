@@ -14,7 +14,7 @@ add_executable (${EXECUTABLE_NAME}
         Peridigm_ModelEvaluator.cpp
         PHAL_Dimension.cpp
         PHAL_PeridigmTraits.cpp
-#        Peridigm_OutputManager_VTK_XML.cpp
+        Peridigm_OutputManager_VTK_XML.cpp
 #        Peridigm_VerletSolver.cpp
 #        Peridigm_VerletIntegrator.cpp
 #        Peridigm_VerletObserver.cpp

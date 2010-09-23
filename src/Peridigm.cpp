@@ -44,6 +44,7 @@
 
 #include "Peridigm.hpp"
 #include "Peridigm_DiscretizationFactory.hpp"
+#include "Peridigm_OutputManager_VTK_XML.hpp"
 #include "contact/Peridigm_ContactModel.hpp"
 #include "contact/Peridigm_ShortRangeForceContactModel.hpp"
 #include "materials/Peridigm_LinearElasticIsotropicMaterial.hpp"
@@ -91,6 +92,9 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // Initialize material models
   initializeMaterials();
+
+  // Initialize output manager
+  initializeOutputManager();
 }
 
 void PeridigmNS::Peridigm::instantiateMaterials() {
@@ -205,7 +209,6 @@ void PeridigmNS::Peridigm::initializeDiscretization() {
   force =  Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
   uOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
   vOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
-  yOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
   forceOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
 
   // Get the initial positions and put them in the xOverlap vector
@@ -369,18 +372,61 @@ void PeridigmNS::Peridigm::initializeWorkset() {
   workset->myPID = -1;
 }
 
+void PeridigmNS::Peridigm::initializeOutputManager() {
+
+  bool active = false;
+  Teuchos::RCP<Teuchos::ParameterList> outputParams;
+
+  if (peridigmParams->isSublist("Output")) {
+    active = true;
+    outputParams  = Teuchos::rcp(&(peridigmParams->sublist("Output")),false);
+    outputParams->set("NumProc", (int)(peridigmComm->NumProc()));
+    outputParams->set("MyPID", (int)(peridigmComm->MyPID()));
+  }
+
+  if (active) {
+    // Make the default format "VTK_XML"
+    string outputFormat = outputParams->get("Output File Type", "VTK_XML");
+    TEST_FOR_EXCEPTION( outputFormat != "VTK_XML",
+                        std::invalid_argument,
+                        "PeridigmNS::RythmosObserver: \"Output File Type\" must be \"VTK_XML\".");
+    if (outputFormat == "VTK_XML")
+       outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_VTK_XML( outputParams ));
+    else
+      TEST_FOR_EXCEPTION( true, std::invalid_argument,"PeridigmNS::Peridigm::initializeOutputManager: \"Output File Type\" must be \"VTK_XML\".");
+
+    // Query material models for their force state data descriptions
+    forceStateDesc = Teuchos::rcp( new Teuchos::ParameterList() );
+    std::vector<Teuchos::RCP<const PeridigmNS::Material> > materials = *(modelEvaluator->getMaterials());
+    for(unsigned int i=0; i<materials.size(); ++i){
+      Teuchos::ParameterList& subList = forceStateDesc->sublist(materials[i]->Name());
+      for(int j=0;j<materials[i]->NumScalarConstitutiveVariables(); ++j){
+        subList.set( materials[i]->ScalarConstitutiveVariableName(j), j );
+      }
+    }
+    // Initialize current time in this parameterlist
+    forceStateDesc->set("Time", 0.0);
+    // Set RCP to neighborlist
+    forceStateDesc->set("Bond Family",neighborhoodData);
+    // Ask OutputManager to write initial conditions to disk
+    outputManager->write(u,scalarConstitutiveDataOverlap,neighborhoodData,forceStateDesc);
+  }
+
+  //  verbose = problemParams->get("Verbose", false);
+
+}
+
 void PeridigmNS::Peridigm::execute() {
+
+  // Use BLAS for local-only vector updates (BLAS-1)
+  Epetra_BLAS blas;
 
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   workset->timeStep = timeStep;
 
-  // pull data from global displacement and velocity vectors
-  // to local overlap vectors
+  // pull data from global displacement and velocity vectors to local overlap vectors
   uOverlap->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
   vOverlap->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-
-  // set time step in workset
-  *timeStep = 1.0e-9;
 
 //   cout << "BEFORE" << endl;
 //   cout << *(workset->xOverlap) << endl;
@@ -392,8 +438,67 @@ void PeridigmNS::Peridigm::execute() {
 //   cout << *(cellVolumeOverlap) << endl;
 
   // evalModel() should be called by time integrator here...
+  // For now, insert Verlet intergrator here
+  Teuchos::RCP<Teuchos::ParameterList> solverParams = Teuchos::rcp(&(peridigmParams->sublist("Solver")),false);
+  Teuchos::RCP<Teuchos::ParameterList> verletPL = sublist(solverParams, "Verlet", true);
+  double t_initial = verletPL->get("Initial Time", 1.0);
+  double t_current = t_initial;
+  double dt        = verletPL->get("Fixed dt", 1.0);
+*timeStep = dt;
+  double dt2 = dt/2.0;
+  double t_final   = verletPL->get("Final Time", 1.0);
+  int nsteps = (int)floor((t_final-t_initial)/dt);
+  // Pointer index into sub-vectors for use with BLAS
+  double *aptr,*vptr,*uptr;
+  force->ExtractView( &aptr );
+  u->ExtractView( &uptr );
+  v->ExtractView( &vptr );
+  int length = force->MyLength();
 
+  // Initialize forces
   modelEvaluator->evalModel(workset);
+
+  for (int step=0;step<nsteps;step++) {
+    // Do one step of velocity-Verlet
+
+    // V^{n+1/2} = V^{n} + (dt/2)*A^{n}
+    //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
+    blas.AXPY(length, dt2, aptr, vptr, 1, 1);
+
+    // U^{n+1}   = U^{n} + (dt)*V^{n+1/2}
+    //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
+    blas.AXPY(length, dt, vptr, uptr, 1, 1);
+
+    // Update forces based on new positions
+    modelEvaluator->evalModel(workset);
+    // Reverse comm on forces
+    // MLP: Check this -- is it right?
+    force->Export(*forceOverlap, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
+    // Convert force data to acceleration
+    // model->XXX
+
+    // V^{n+1}   = V^{n+1/2} + (dt/2)*A^{n+1}
+    //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
+    blas.AXPY(length, dt2, aptr, vptr, 1, 1);
+
+    t_current = t_initial + (step*dt);
+
+std::cout << "step = " << step << endl;
+
+    // MLP: Check this -- is it right?
+    uOverlap->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+    vOverlap->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+
+    // Update the contact configuration, if necessary
+//    model->updateContact(currentSolution);
+    // Only report status if Observer is active
+//    if (!active) return;
+    //cout << "PERIDIGM OBSERVER CALLED step=" <<  timeStepIter  << ",  time=" << stepper.getStepStatus().time << endl;
+    // Set current time in this parameterlist
+//    forceStateDesc->set("Time", time);
+    outputManager->write(u,scalarConstitutiveDataOverlap,neighborhoodData,forceStateDesc);
+
+  }
 
 //   cout << "AFTER" << endl;
 //   cout << *(workset->xOverlap) << endl;

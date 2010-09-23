@@ -46,6 +46,7 @@
 #include "materials/Peridigm_Material.hpp"
 #include "Peridigm_AbstractDiscretization.hpp"
 #include "Peridigm_ModelEvaluator.hpp"
+#include "Peridigm_OutputManager.hpp"
 
 namespace PeridigmNS {
 
@@ -74,6 +75,9 @@ namespace PeridigmNS {
 
     //! Initialize the workset
     void initializeWorkset();
+
+    //! Initialize the output manager
+    void initializeOutputManager();
 
     //! Main routine to drive problem solution
     void execute();
@@ -146,9 +150,6 @@ namespace PeridigmNS {
     //! Displacement at previously accepted solution (vector includes ghosted dof)
     Teuchos::RCP<Epetra_Vector> uOverlap;
 
-    //! Current displacement (vector includes ghosted dof)
-    Teuchos::RCP<Epetra_Vector> yOverlap;
-
     //! Current velocities (vector includes ghosted dof)
     Teuchos::RCP<Epetra_Vector> vOverlap;
 
@@ -184,6 +185,11 @@ namespace PeridigmNS {
 
     //! The peridigm model evaluator
     Teuchos::RCP<PeridigmNS::ModelEvaluator> modelEvaluator;
+
+    //! The peridigm output manager
+    Teuchos::RCP<PeridigmNS::OutputManager> outputManager;
+    //! Description of force state data used by output manager
+    Teuchos::RCP<Teuchos::ParameterList> forceStateDesc;
 
   };
 }
