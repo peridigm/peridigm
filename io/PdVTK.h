@@ -47,20 +47,33 @@ private:
  * vtk writer may try to access the data stored on "g" but it would have been deleted
  */
 template<class T>
-void writeField(vtkSmartPointer<vtkUnstructuredGrid> g, Field_NS::Field<T> field) {
+void writeField
+(
+		vtkSmartPointer<vtkUnstructuredGrid> g,
+		const char* name_null_terminated,
+		std::size_t degree,
+		std::size_t size,
+		T* data
+) {
 	vtkCellData *cellData = g->GetCellData();
-//	vtkIdType numCells = g->GetNumberOfCells();
 	/*
 	 * Add field to grid
 	 */
 	vtkSmartPointer<vtkDoubleArray> cellField = vtkSmartPointer<vtkDoubleArray>::New();
-	cellField->SetNumberOfComponents(field.getLength());
-	cellField->SetName(field.getLabel().c_str());
+	cellField->SetName(name_null_terminated);
+	cellField->SetNumberOfComponents(degree);
 	int save=1;
-//	cellField->SetArray(field.get(),numCells*field.getLength(),save);
-	Pd_shared_ptr_Array<T> fieldArray = field.getArray();
-	cellField->SetArray(fieldArray.get(),fieldArray.getSize(),save);
+	cellField->SetArray(data,size,save);
 	cellData->AddArray(cellField);
+}
+
+template<class T>
+void writeField(vtkSmartPointer<vtkUnstructuredGrid> g, Field_NS::Field<T> field) {
+	const char* name = field.getLabel().c_str();
+	std::size_t degree = field.getLength();
+	std::size_t size = field.getArray().getSize();
+	T* data = field.getArray().get();
+	writeField(g,name,degree,size,data);
 }
 
 } // PdVTK
