@@ -455,9 +455,6 @@ void PeridigmNS::Peridigm::execute() {
   v->ExtractView( &vptr );
   int length = force->MyLength();
 
-  // Initialize forces
-  modelEvaluator->evalModel(workset);
-
   for (int step=0;step<nsteps;step++) {
     // Do one step of velocity-Verlet
 
@@ -465,17 +462,21 @@ void PeridigmNS::Peridigm::execute() {
     //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
     blas.AXPY(length, dt2, aptr, vptr, 1, 1);
 
-    // U^{n+1}   = U^{n} + (dt)*V^{n+1/2}
-    //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
-    blas.AXPY(length, dt, vptr, uptr, 1, 1);
+    // Forward comm particle positions and velocities
+    uOverlap->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+    vOverlap->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
 
     // Update forces based on new positions
     modelEvaluator->evalModel(workset);
     // Reverse comm on forces
-    // MLP: Check this -- is it right?
+    // Reverse comm particle forces
     force->Export(*forceOverlap, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
     // Convert force data to acceleration
     // model->XXX
+
+    // U^{n+1}   = U^{n} + (dt)*V^{n+1/2}
+    //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
+    blas.AXPY(length, dt, vptr, uptr, 1, 1);
 
     // V^{n+1}   = V^{n+1/2} + (dt/2)*A^{n+1}
     //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
@@ -484,10 +485,6 @@ void PeridigmNS::Peridigm::execute() {
     t_current = t_initial + (step*dt);
 
 std::cout << "step = " << step << endl;
-
-    // MLP: Check this -- is it right?
-    uOverlap->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-    vOverlap->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
 
     // Update the contact configuration, if necessary
 //    model->updateContact(currentSolution);
