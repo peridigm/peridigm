@@ -63,6 +63,8 @@ def main():
 			link  =os.path.join(link_dir,f)
 #			print "target = ",target
 #			print "link = ",link
+			if os.path.lexists(link):
+				os.remove(link)
 			os.symlink(target,link)
 
 def usage():
