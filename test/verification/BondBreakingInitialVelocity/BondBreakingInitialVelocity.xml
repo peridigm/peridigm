@@ -3,6 +3,7 @@
 	<Parameter name="Verbose" type="bool" value="false"/>
         <ParameterList name="Discretization">
                 <Parameter name="Type" type="string" value="PdQuickGrid" />
+			<Parameter name="Horizon" type="double" value="0.51"/>
                 <ParameterList name="TensorProduct3DMeshGenerator">
 	  		<Parameter name="Type" type="string" value="PdQuickGrid"/>
 			<Parameter name="X Origin" type="double" value="0.0"/>
@@ -14,7 +15,6 @@
 			<Parameter name="Number Points X" type="int" value="2"/>
 			<Parameter name="Number Points Y" type="int" value="2"/>
 			<Parameter name="Number Points Z" type="int" value="1"/>
-			<Parameter name="Horizon" type="double" value="0.51"/>
 		</ParameterList>
 	</ParameterList>
     <ParameterList name="Material">
