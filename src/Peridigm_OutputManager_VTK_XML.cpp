@@ -105,10 +105,12 @@ PeridigmNS::OutputManager_VTK_XML::~OutputManager_VTK_XML() {
   }
 }
 
-void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> currentSolution,
-											Teuchos::RCP<const Epetra_MultiVector> scalarConstitutiveData,
-											Teuchos::RCP<const NeighborhoodData> neighborhoodData,
-											Teuchos::RCP<Teuchos::ParameterList>& forceStateDesc) {
+void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> x,
+					      Teuchos::RCP<const Epetra_Vector> u,
+					      Teuchos::RCP<const Epetra_Vector> v,
+						Teuchos::RCP<const Epetra_MultiVector> scalarConstitutiveData,
+						Teuchos::RCP<const NeighborhoodData> neighborhoodData,
+						Teuchos::RCP<Teuchos::ParameterList>& forceStateDesc) {
   if (!iWrite) return;
 
   // increment file index count
@@ -200,7 +202,7 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
   }
   
   // Get map corresponding to currentSolution
-  const Epetra_BlockMap& currentSolutionMap = currentSolution->Map();
+  const Epetra_BlockMap& currentSolutionMap = x->Map();
 
   // Get map corresponding to scalarConstitutiveData
   const Epetra_BlockMap& scalarConstitutiveDataMap = scalarConstitutiveData->Map();
@@ -245,7 +247,13 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
 //   }
   for(int i=0;i<numOwnedPoints;i++){
     indent(outfile,indentlevel);
-    outfile << " " <<  (*currentSolution)[3*i+0] << " " << (*currentSolution)[3*i+1] << " " << (*currentSolution)[3*i+2] << endl;
+    double xtmp_x = (*x)[3*i+0];
+    double utmp_x = (*u)[3*i+0];
+    double xtmp_y = (*x)[3*i+1];
+    double utmp_y = (*u)[3*i+1];
+    double xtmp_z = (*x)[3*i+2];
+    double utmp_z = (*u)[3*i+2];
+    outfile << " " <<  (xtmp_x+utmp_x) << " " << (xtmp_y+utmp_y) << " " << (xtmp_z+utmp_z) << endl;
   }
   indent(outfile,indentlevel);
   outfile << "</DataArray>" << endl;
@@ -406,7 +414,7 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
 //       outfile << " " << (*currentSolution)[i+0];
     for(int i=0;i<numOwnedPoints;i++){
 //      int index = threeDimensionalTwoEntryMapLocalIDs[i];
-      outfile << " " << (*currentSolution)[3*i];
+      outfile << " " << (*x)[3*i] + (*u)[3*i];
     }
     outfile << endl;
     indent(outfile,indentlevel);
@@ -430,7 +438,7 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
 //       outfile << " " << (*currentSolution)[i+1];
     for(int i=0;i<numOwnedPoints;i++){
 //      int index = threeDimensionalTwoEntryMapLocalIDs[i];
-      outfile << " " << (*currentSolution)[3*i+1];
+      outfile << " " << (*x)[3*i+1] + (*u)[3*i+1];
     }
     outfile << endl;
     indent(outfile,indentlevel);
@@ -454,7 +462,7 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
 //       outfile << " " << (*currentSolution)[i+2];
     for(int i=0;i<numOwnedPoints;i++){
 //      int index = threeDimensionalTwoEntryMapLocalIDs[i];
-      outfile << " " << (*currentSolution)[3*i+2];
+      outfile << " " << (*x)[3*i+2] + (*u)[3*i+2];
     }
     outfile << endl;
     indent(outfile,indentlevel);
@@ -469,7 +477,6 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
     }
   }
 
-/*
   if (thisMaterial->isParameter("X Velocity")) {
     indentlevel = indentlevel + 1;
     indent(outfile,indentlevel);
@@ -479,7 +486,7 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
 //       outfile << " " << (*currentSolution)[i+3];
     for(int i=0;i<numOwnedPoints;i++){
 //      int index = threeDimensionalTwoEntryMapLocalIDs[i];
-      outfile << " " << (*currentSolution)[i+3];
+      outfile << " " << (*v)[3*i];
     }
     outfile << endl;
     indent(outfile,indentlevel);
@@ -502,8 +509,8 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
 //     for(int i=0;i<currentSolutionLength;i+=6)
 //       outfile << " " << (*currentSolution)[i+4];
     for(int i=0;i<numOwnedPoints;i++){
-      int index = threeDimensionalTwoEntryMapLocalIDs[i];
-      outfile << " " << (*currentSolution)[index+4];
+//      int index = threeDimensionalTwoEntryMapLocalIDs[i];
+      outfile << " " << (*v)[3*i+1];
     }
     outfile << endl;
     indent(outfile,indentlevel);
@@ -526,8 +533,8 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
 //     for(int i=0;i<currentSolutionLength;i+=6)
 //       outfile << " " << (*currentSolution)[i+5];
     for(int i=0;i<numOwnedPoints;i++){
-      int index = threeDimensionalTwoEntryMapLocalIDs[i];
-      outfile << " " << (*currentSolution)[index+5];
+//      int index = threeDimensionalTwoEntryMapLocalIDs[i];
+      outfile << " " << (*v)[3*i+2];
     }
     outfile << endl;
     indent(outfile,indentlevel);
@@ -541,7 +548,6 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
       containerIndentlevel = containerIndentlevel - 1;
     }
   }
-*/
 
   if (thisMaterial->isParameter("ID")) {
     indentlevel = indentlevel + 1;

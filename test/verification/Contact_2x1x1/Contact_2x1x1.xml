@@ -4,6 +4,7 @@
         <ParameterList name="Discretization">
           <Parameter name="Type" type="string" value="PdQuickGrid" />
           <Parameter name="NeighborhoodType" type="string" value="Spherical"/>
+ 	  <Parameter name="Horizon" type="double" value="1.0"/>          <!-- mm -->
           <ParameterList name="TensorProduct3DMeshGenerator">
 	  		<Parameter name="Type" type="string" value="PdQuickGrid"/>
 			<Parameter name="X Origin" type="double" value="-2.0"/>        <!-- mm -->
@@ -15,7 +16,6 @@
 			<Parameter name="Number Points X" type="int" value="2"/>
 			<Parameter name="Number Points Y" type="int" value="1"/>
 			<Parameter name="Number Points Z" type="int" value="1"/>
-			<Parameter name="Horizon" type="double" value="1.0"/>          <!-- mm -->
 		</ParameterList>
 	</ParameterList>
     <ParameterList name="Material">

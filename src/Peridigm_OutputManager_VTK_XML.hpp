@@ -49,9 +49,11 @@ namespace PeridigmNS {
 
     //! Write data to disk
     virtual void write(Teuchos::RCP<const Epetra_Vector>,
-					   Teuchos::RCP<const Epetra_MultiVector>, 
-					   Teuchos::RCP<const NeighborhoodData>, 
-					   Teuchos::RCP<Teuchos::ParameterList>&);
+		       Teuchos::RCP<const Epetra_Vector>, 
+		       Teuchos::RCP<const Epetra_Vector>, 
+		       Teuchos::RCP<const Epetra_MultiVector>, 
+		       Teuchos::RCP<const NeighborhoodData>, 
+		       Teuchos::RCP<Teuchos::ParameterList>&);
 
   private:
     
