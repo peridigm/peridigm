@@ -2,8 +2,8 @@
 # Main executable for Peridigm
 #
 
-include_directories (../io ${TRILINOS_DIR}/include ${Boost_INCLUDE_DIRS} ./evaluators ./materials ./contact ./ ../PdMaterialUtilities)
-link_directories (${TRILINOS_DIR}/lib ../io ../PdMaterialUtilities ${VTK_LIBRARY_DIRS})
+#include_directories (../io ${TRILINOS_DIR}/include ${Boost_INCLUDE_DIRS} ./evaluators ./materials ./contact ./ ../PdMaterialUtilities)
+#link_directories (${TRILINOS_DIR}/lib ../io ../PdMaterialUtilities ${VTK_LIBRARY_DIRS})
 
 add_executable (${EXECUTABLE_NAME}
         Peridigm_Main.cpp

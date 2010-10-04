@@ -62,115 +62,120 @@ find_library(Phalanx_LIBRARY
   NAMES phalanx
   PATHS ${TRILINOS_DIR}/lib
 )
-set(TRILINOS_LIBS ${TRILINOS_LIBS} ${Phalanx_LIBRARY})
 
 find_library(Stratimikos_LIBRARY
   NAMES stratimikos
   PATHS ${TRILINOS_DIR}/lib
 )
-set(TRILINOS_LIBS ${TRILINOS_LIBS} ${Stratimikos_LIBRARY})
+
 
 find_library(StratimikosAmesos_LIBRARY
   NAMES stratimikosamesos
   PATHS ${TRILINOS_DIR}/lib
 )
-set(TRILINOS_LIBS ${TRILINOS_LIBS} ${StratimikosAmesos_LIBRARY})
 
 find_library(StratimikosIFPack_LIBRARY
   NAMES stratimikosifpack
   PATHS ${TRILINOS_DIR}/lib
 )
-set(TRILINOS_LIBS ${TRILINOS_LIBS} ${StratimikosIFPack_LIBRARY})
 
 find_library(StratimikosML_LIBRARY
   NAMES stratimikosml
   PATHS ${TRILINOS_DIR}/lib
 )
-set(TRILINOS_LIBS ${TRILINOS_LIBS} ${StratimikosML_LIBRARY})
 
 find_library(StratimikosAztecOO_LIBRARY
   NAMES stratimikosaztecoo
   PATHS ${TRILINOS_DIR}/lib
 )
-set(TRILINOS_LIBS ${TRILINOS_LIBS} ${StratimikosAztecOO_LIBRARY})
 
 find_library(ML_LIBRARY
   NAMES ml
   PATHS ${TRILINOS_DIR}/lib
 )
-set(TRILINOS_LIBS ${TRILINOS_LIBS} ${ML_LIBRARY})
 
 find_library(IFPack_LIBRARY
   NAMES ifpack
   PATHS ${TRILINOS_DIR}/lib
 )
-set(TRILINOS_LIBS ${TRILINOS_LIBS} ${IFPack_LIBRARY})
 
 find_library(Amesos_LIBRARY
   NAMES amesos
   PATHS ${TRILINOS_DIR}/lib
 )
-set(TRILINOS_LIBS ${TRILINOS_LIBS} ${Amesos_LIBRARY})
 
 find_library(AztecOO_LIBRARY
   NAMES aztecoo
   PATHS ${TRILINOS_DIR}/lib
 )
-set(TRILINOS_LIBS ${TRILINOS_LIBS} ${AztecOO_LIBRARY})
 
 find_library(ThyraEpetraExt_LIBRARY
   NAMES thyraepetraext
   PATHS ${TRILINOS_DIR}/lib
 )
-set(TRILINOS_LIBS ${TRILINOS_LIBS} ${ThyraEpetraExt_LIBRARY})
 
 find_library(ThyraEpetra_LIBRARY
   NAMES thyraepetra
   PATHS ${TRILINOS_DIR}/lib
 )
-set(TRILINOS_LIBS ${TRILINOS_LIBS} ${ThyraEpetra_LIBRARY})
 
 find_library(Thyra_LIBRARY
   NAMES thyra
   PATHS ${TRILINOS_DIR}/lib
 )
-set(TRILINOS_LIBS ${TRILINOS_LIBS} ${Thyra_LIBRARY})
 
 find_library(EpetraExt_LIBRARY
   NAMES epetraext
   PATHS ${TRILINOS_DIR}/lib
 )
-set(TRILINOS_LIBS ${TRILINOS_LIBS} ${EpetraExt_LIBRARY})
 
 find_library(Zoltan_LIBRARY
   NAMES zoltan
   PATHS ${TRILINOS_DIR}/lib
 )
-set(TRILINOS_LIBS ${TRILINOS_LIBS} ${Zoltan_LIBRARY})
 
 find_library(Shards_LIBRARY
   NAMES shards
   PATHS ${TRILINOS_DIR}/lib
 )
-set(TRILINOS_LIBS ${TRILINOS_LIBS} ${Shards_LIBRARY})
 
 find_library(Epetra_LIBRARY
   NAMES epetra
   PATHS ${TRILINOS_DIR}/lib
 )
-set(TRILINOS_LIBS ${TRILINOS_LIBS} ${Epetra_LIBRARY})
 
 find_library(RTOp_LIBRARY
   NAMES rtop
   PATHS ${TRILINOS_DIR}/lib
 )
-set(TRILINOS_LIBS ${TRILINOS_LIBS} ${RTOp_LIBRARY})
 
 find_library(Teuchos_LIBRARY
   NAMES teuchos
   PATHS ${TRILINOS_DIR}/lib
 )
-set(TRILINOS_LIBS ${TRILINOS_LIBS} ${Teuchos_LIBRARY})
+
+
+set(TRILINOS_LIBS
+phalanx
+stratimikos
+stratimikosamesos
+stratimikosifpack
+stratimikosml
+stratimikosaztecoo
+ml
+ifpack
+amesos
+aztecoo
+thyraepetraext
+thyraepetra
+thyra
+epetraext
+zoltan
+shards
+epetra
+rtop
+teuchos
+)
 
 # other required libraries
 # VTK libs
@@ -186,6 +191,27 @@ set(PdZoltanLibs PdZoltan)
 
 # other required libraries
 set(PdMaterialUtilitiesLib PdMaterialUtilities)
+
+# include for all directories
+# Collection of include and lib directories
+set(INCLUDE_DIRS 
+$ENV{TRILINOS_DIR}/include  
+${VTK_INCLUDE_DIRS} 
+${Boost_INCLUDE_DIRS} 
+${CMAKE_SOURCE_DIR}/io
+${CMAKE_SOURCE_DIR}/PdMaterialUtilities
+${CMAKE_SOURCE_DIR}/src
+${CMAKE_SOURCE_DIR}/src/contact
+${CMAKE_SOURCE_DIR}/src/evaluators
+${CMAKE_SOURCE_DIR}/src/materials
+)
+
+include_directories(${INCLUDE_DIRS})
+
+# link directories 
+set(LIB_DIRS ${TRILINOS_DIR}/lib ${VTK_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS})
+link_directories(${LIB_DIRS})
+
 
 set (REQUIRED_LIBS
 liblapack.a
@@ -203,3 +229,13 @@ add_subdirectory (PdMaterialUtilities)
 add_subdirectory (test/unit)
 add_subdirectory (test/regression)
 add_subdirectory (test/verification)
+
+# Create symbolic links to files in directories specified.  Does not recurse folders -- yet!
+# Can exclude files with flag -e <filename>
+string (COMPARE EQUAL ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} buildInSource)
+if (NOT ${buildInSource})
+   set(UT_DIRS ${UT_DIRS}  -d test/unit)
+   set(UT_DIRS ${UT_DIRS}  -d test/regression)
+   execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/cmake_symlinks.py -s ${CMAKE_SOURCE_DIR} -b ${CMAKE_BINARY_DIR} ${UT_DIRS} )
+endif (NOT ${buildInSource})
+
