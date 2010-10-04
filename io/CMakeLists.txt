@@ -16,8 +16,8 @@
 # ../peridigm.votd 
 
 # Collection of libs that we need to link with
-include_directories(${TRILINOS_DIR}/include ${VTK_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
-link_directories(${TRILINOS_DIR}/lib ${VTK_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS})
+#include_directories(${TRILINOS_DIR}/include ${VTK_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+#link_directories(${TRILINOS_DIR}/lib ${VTK_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS})
 
 # VTK configuration
 set(VTK_LIBS vtkIO vtkGraphics)
