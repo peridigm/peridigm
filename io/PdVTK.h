@@ -49,7 +49,7 @@ private:
 template<class T>
 void writeField
 (
-		vtkSmartPointer<vtkUnstructuredGrid> g,
+		vtkSmartPointer<vtkUnstructuredGrid>& g,
 		const char* name_null_terminated,
 		std::size_t degree,
 		std::size_t size,
@@ -68,11 +68,19 @@ void writeField
 }
 
 template<class T>
-void writeField(vtkSmartPointer<vtkUnstructuredGrid> g, Field_NS::Field<T> field) {
+void writeField(vtkSmartPointer<vtkUnstructuredGrid>& g, Field_NS::Field<T> field) {
 	const char* name = field.getLabel().c_str();
 	std::size_t degree = field.getLength();
 	std::size_t size = field.getArray().getSize();
 	T* data = field.getArray().get();
+	writeField(g,name,degree,size,data);
+}
+
+template<class T>
+void writeField(vtkSmartPointer<vtkUnstructuredGrid>& g, const Field_NS::FieldSpec& spec, T *data) {
+	const char* name = spec.getLabel().c_str();
+	std::size_t degree =spec.getLength();
+	std::size_t size = degree*g->GetNumberOfCells();
 	writeField(g,name,degree,size,data);
 }
 

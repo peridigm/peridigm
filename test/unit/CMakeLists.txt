@@ -47,6 +47,8 @@ add_test (utPdQuickGrid_solidCylinder_np1              python run_unit_test.py .
 add_test (utPdQuickGrid_solidCylinder_np2              python run_unit_test.py mpiexec -np 2 ../../io/unitTest/utPdQuickGrid_solidCylinder_np2)
 add_test (utReloadBalance_np4                          python run_unit_test.py mpiexec -np 4 ../../io/unitTest/utReloadBalance_np4)
 add_test (utPd_frameSet_2x2x1_np4                      python run_unit_test.py mpiexec -np 4 ../../io/unitTest/utPd_frameSet_2x2x1_np4)
+add_test (utVTK_ioExample_np4                          python run_unit_test.py mpiexec -np 4 ../../io/unitTest/utVTK_ioExample_np4)
+
 add_custom_target( utest
    COMMAND ctest
 )
