@@ -222,6 +222,16 @@ libgfortran.a
 libm.a
 )
 
+set (UT_REQUIRED_LIBS
+liblapack.a
+libblas.a
+libmpich.a
+libgfortran.a
+${Boost_LIBRARIES}
+libm.a
+)
+
+
 add_subdirectory (io)
 add_subdirectory (io/unitTest)
 add_subdirectory (src)
