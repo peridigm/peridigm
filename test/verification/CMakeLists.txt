@@ -2,28 +2,28 @@
 #
 # Create symbolic links to files in Test directory
 #
-string (COMPARE EQUAL ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} buildInSource)
-if (NOT ${buildInSource})
-   message ("Creating symbolic links for verification tests for out-of-source build\n")
+#string (COMPARE EQUAL ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} buildInSource)
+#if (NOT ${buildInSource})
+#   message ("Creating symbolic links for verification tests for out-of-source build\n")
    #
    # Loop over all files in the directory tree
    # Copy directory structure and create symbolic links to files
    #
-   file (GLOB_RECURSE directoryContents "${CMAKE_SOURCE_DIR}/test/verification/*")
-   foreach (item ${directoryContents})
+#   file (GLOB_RECURSE directoryContents "${CMAKE_SOURCE_DIR}/test/verification/*")
+#   foreach (item ${directoryContents})
       #
       # Create the subdirectory, if needed
       #
-      get_filename_component (itemPath ${item} PATH)
-      file (RELATIVE_PATH relPath "${CMAKE_SOURCE_DIR}/test/verification" ${itemPath})
-      file (MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/test/verification/${relPath})
+#      get_filename_component (itemPath ${item} PATH)
+#      file (RELATIVE_PATH relPath "${CMAKE_SOURCE_DIR}/test/verification" ${itemPath})
+#      file (MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/test/verification/${relPath})
 	  #
       # Create symbolic link to file
       #
-      get_filename_component (itemName ${item} NAME)
-      execute_process (COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_SOURCE_DIR}/test/verification/${relPath}/${itemName} ${CMAKE_BINARY_DIR}/test/verification/${relPath}/${itemName})  
-   endforeach (item)
-endif (NOT ${buildInSource})
+#      get_filename_component (itemName ${item} NAME)
+#      execute_process (COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_SOURCE_DIR}/test/verification/${relPath}/${itemName} ${CMAKE_BINARY_DIR}/test/verification/${relPath}/${itemName})  
+#   endforeach (item)
+#endif (NOT ${buildInSource})
 #
 # Add the tests
 #
