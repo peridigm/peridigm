@@ -73,6 +73,36 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
   cellVolume = Teuchos::rcp(new Epetra_Vector(Copy,*oneDimensionalMap,decomp.cellVolume.get()) );
 }
 
+
+PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
+                                                                 const Teuchos::RCP<PdGridData>& decomp) :
+  comm(epetra_comm),
+  numBonds(0),
+  myPID(comm->MyPID()),
+  numPID(comm->NumProc())
+{
+  createMaps(*decomp);
+  createNeighborhoodData(*decomp);
+
+  // determine the number of bonds based on the neighborhood data
+  numBonds = neighborhoodData->NeighborhoodListSize() - neighborhoodData->NumOwnedPoints();
+  // create the bondMap, a local map used for constitutive data stored on bonds
+  int numGlobalElements = -1;
+  int numMyElements = numBonds;
+  int elementSize = 1;
+  int indexBase = 0;
+  bondMap = Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, elementSize, indexBase, *comm));
+
+  // 3D only
+  TEST_FOR_EXCEPT_MSG(decomp->dimension != 3, "Invalid dimension in decomposition (only 3D is supported)");
+
+  // fill the x vector with the current positions (owned positions only)
+  initialX = Teuchos::rcp(new Epetra_Vector(Copy, *threeDimensionalMap, decomp->myX.get()) );
+
+  // fill cell volumes
+  cellVolume = Teuchos::rcp(new Epetra_Vector(Copy, *oneDimensionalMap, decomp->cellVolume.get()) );
+}
+
 PeridigmNS::PdQuickGridDiscretization::~PdQuickGridDiscretization() {}
 
 PdGridData PeridigmNS::PdQuickGridDiscretization::getDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& params) {

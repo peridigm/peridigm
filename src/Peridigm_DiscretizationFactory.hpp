@@ -38,6 +38,7 @@
 #include <Teuchos_RCP.hpp>
 #include <Epetra_Comm.h>
 #include "Peridigm_AbstractDiscretization.hpp"
+#include "PdGridData.h"
 
 namespace PeridigmNS {
 
@@ -55,6 +56,10 @@ namespace PeridigmNS {
 
     virtual Teuchos::RCP<AbstractDiscretization> 
     create(const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
+
+    virtual Teuchos::RCP<AbstractDiscretization> 
+    create(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
+           const Teuchos::RCP<PdGridData>& decomp);
 
   private:
 

@@ -69,3 +69,22 @@ PeridigmNS::DiscretizationFactory::create(const Teuchos::RCP<const Epetra_Comm>&
  
   return discretization;
 }
+
+Teuchos::RCP<PeridigmNS::AbstractDiscretization>
+PeridigmNS::DiscretizationFactory::create(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
+                                          const Teuchos::RCP<PdGridData>& decomp)
+{
+  Teuchos::RCP<PeridigmNS::AbstractDiscretization> discretization;
+
+  string type = discParams->get<string>("Type");
+
+  if(type == "PdQuickGrid"){
+	discretization = Teuchos::rcp(new PeridigmNS::PdQuickGridDiscretization(epetra_comm, decomp));
+  }
+  else{
+    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
+					   "Invalid type for construction of discretization from PdGridData object.  Valid type is \"PdQuickGrid\"");
+  }
+ 
+  return discretization;
+}
