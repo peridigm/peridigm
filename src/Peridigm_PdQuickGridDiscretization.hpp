@@ -50,6 +50,10 @@ namespace PeridigmNS {
     PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetraComm,
                               const Teuchos::RCP<Teuchos::ParameterList>& params);
 
+    //! Constructor
+    PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetraComm,
+                              const Teuchos::RCP<PdGridData>& decomp);
+
     //! Destructor
     virtual ~PdQuickGridDiscretization();
 

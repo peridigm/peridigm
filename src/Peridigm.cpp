@@ -554,6 +554,27 @@ void PeridigmNS::Peridigm::rebalance() {
   // rebalance
   decomp = getLoadBalancedDiscretization(decomp);
 
+  // create a new discretization based on the rebalanced decomp
+  
+  // Extract problem parameters sublist
+  Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::rcp(&(peridigmParams->sublist("Problem")),false);
+
+  // Extract discretization parameters sublist
+  Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::rcp(&(problemParams->sublist("Discretization")), false);
+
+  // Create discretization object
+  DiscretizationFactory discFactory(discParams);
+  Teuchos::RCP<PdGridData> rebalancedDecompPtr = Teuchos::rcp(&decomp, false);
+  Teuchos::RCP<AbstractDiscretization> rebalancedDisc = discFactory.create(peridigmComm, rebalancedDecompPtr);
+
+
+
+  // set the Peridigm maps to the rebalanced maps
+//   oneDimensionalMap = rebalancedOneDimensionalMap;
+//   oneDimensionalOverlapMap = rebalancedOneDimensionalOverlapMap;
+//   threeDimensionalMap = rebalancedThreeDimensionalOverlapMap;
+//   threeDimensionalOverlapMap = rebalancedThreeDimensionalOverlapMap;
+
 }
 
 void PeridigmNS::Peridigm::updateContactNeighborList() {
