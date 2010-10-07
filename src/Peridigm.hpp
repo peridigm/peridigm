@@ -82,6 +82,9 @@ namespace PeridigmNS {
     //! Main routine to drive problem solution
     void execute();
 
+    //! Rebalance the mesh
+    void rebalance();
+
     //! Update contact neighborlist; do load rebalance
     void updateContactNeighborList();
 

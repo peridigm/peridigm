@@ -49,6 +49,9 @@
 #include "contact/Peridigm_ShortRangeForceContactModel.hpp"
 #include "materials/Peridigm_LinearElasticIsotropicMaterial.hpp"
 #include "materials/Peridigm_IsotropicElasticPlasticMaterial.hpp"
+#include "PdGridData.h"
+#include "PdQuickGrid.h"
+#include "PdZoltan.h"
 
 using namespace std;
 
@@ -444,7 +447,7 @@ void PeridigmNS::Peridigm::execute() {
   double t_initial = verletPL->get("Initial Time", 1.0);
   double t_current = t_initial;
   double dt        = verletPL->get("Fixed dt", 1.0);
-*timeStep = dt;
+  *timeStep = dt;
   double dt2 = dt/2.0;
   double t_final   = verletPL->get("Final Time", 1.0);
   int nsteps = (int)floor((t_final-t_initial)/dt);
@@ -455,7 +458,14 @@ void PeridigmNS::Peridigm::execute() {
   v->ExtractView( &vptr );
   int length = force->MyLength();
 
+  bool rebal = false;
+
   for (int step=0;step<nsteps;step++) {
+
+    // rebalance, if requested
+    if(rebal)
+      rebalance();
+
     // Do one step of velocity-Verlet
 
     // V^{n+1/2} = V^{n} + (dt/2)*A^{n}
@@ -502,6 +512,48 @@ std::cout << "step = " << step << endl;
 //   cout << *(workset->uOverlap) << endl;
 //   cout << *(workset->vOverlap) << endl;
 //   cout << *(workset->forceOverlap) << endl;
+}
+
+void PeridigmNS::Peridigm::rebalance() {
+
+  // Create a decomp object and fill necessary data for rebalance
+  int myNumElements = oneDimensionalMap->NumMyElements();
+  int dimension = 3;
+  PdGridData decomp = PdQuickGrid::allocatePdGridData(myNumElements, dimension);
+
+  // fill myGlobalIDs
+  shared_ptr<int> myGlobalIDs(new int[myNumElements], PdQuickGrid::Deleter<int>());
+  int* myGlobalIDsPtr = myGlobalIDs.get();
+  int* gIDs = oneDimensionalMap->MyGlobalElements();
+  for(int i=0 ; i<myNumElements ; ++i){
+    myGlobalIDsPtr[i] = gIDs[i];
+  }
+  decomp.myGlobalIDs = myGlobalIDs;
+  
+  // fill myX and cellVolume
+  shared_ptr<double> myX(new double[myNumElements*dimension], PdQuickGrid::Deleter<double>());
+  double* myXPtr = myX.get();
+  double* xPtr;
+  x->ExtractView(&xPtr);
+  shared_ptr<double> cellVolume(new double[myNumElements], PdQuickGrid::Deleter<double>());
+  double* cellVolumePtr = cellVolume.get();
+  double* cellVolumeOverlapPtr;
+  cellVolumeOverlap->ExtractView(&cellVolumeOverlapPtr);
+  for(int i=0 ; i<myNumElements ; ++i){
+    int oneDimensionalMapGlobalID = myGlobalIDsPtr[i];
+    int oneDimensionalMapLocalID = oneDimensionalMap->LID(oneDimensionalMapGlobalID);
+    int oneDimensionalOverlapMapLocalID = oneDimensionalOverlapMap->LID(oneDimensionalMapGlobalID);
+    myXPtr[i*3] = xPtr[oneDimensionalMapLocalID];
+    myXPtr[i*3+1] = xPtr[oneDimensionalMapLocalID+1];
+    myXPtr[i*3+2] = xPtr[oneDimensionalMapLocalID+2];
+    cellVolumePtr[i] = cellVolumeOverlapPtr[oneDimensionalOverlapMapLocalID];
+  }  
+  decomp.myX = myX;
+  decomp.cellVolume = cellVolume;
+
+  // rebalance
+  decomp = getLoadBalancedDiscretization(decomp);
+
 }
 
 void PeridigmNS::Peridigm::updateContactNeighborList() {
