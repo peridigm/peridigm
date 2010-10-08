@@ -7,7 +7,7 @@ Cmake_minimum_required (VERSION 2.6)
 enable_testing ()
 
 # Basic settings for Peridigm project
-project (Peridigm.votd)
+project (peridigm)
 set (EXECUTABLE_NAME Peridigm)
 
 # MPI configuration
