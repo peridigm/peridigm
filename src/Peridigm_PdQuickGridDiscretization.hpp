@@ -92,7 +92,7 @@ namespace PeridigmNS {
   protected:
 
     //! Create maps
-    void createMaps(PdGridData& decomp);
+    void createMaps(const PdGridData& decomp);
 
     //! Create vectors
     void createVectors();

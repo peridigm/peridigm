@@ -16,8 +16,8 @@ using std::tr1::shared_ptr;
 /*
  * Declaration for private functions
  */
-std::pair<int, std::tr1::shared_ptr<int> > getSharedGlobalIds(PdGridData& pdGridData);
-const Epetra_BlockMap getOverlap(int dimension, int numShared, int*shared, int numOwned, int* owned, const Epetra_Comm& comm);
+std::pair<int, std::tr1::shared_ptr<int> > getSharedGlobalIds(const PdGridData& pdGridData);
+const Epetra_BlockMap getOverlap(int dimension, int numShared, int*shared, int numOwned, const int* owned, const Epetra_Comm& comm);
 
 bool SphericalNormFunction (const double* u, const double* v, double r) {
 	double dx = v[0]-u[0];
@@ -58,18 +58,18 @@ std::tr1::shared_ptr<int> getLocalNeighborList(PdGridData& gridData, const Epetr
 	return localNeighborList;
 }
 
-const Epetra_BlockMap getOwnedMap(const Epetra_Comm& comm,PdGridData& gridData, int ndf){
+const Epetra_BlockMap getOwnedMap(const Epetra_Comm& comm,const PdGridData& gridData, int ndf){
 	int numShared=0;
 	int *sharedPtr=NULL;
 	int numOwned = gridData.numPoints;
-	int *ownedPtr = gridData.myGlobalIDs.get();
+	const int *ownedPtr = gridData.myGlobalIDs.get();
 	return getOverlap(ndf, numShared,sharedPtr,numOwned,ownedPtr,comm);
 }
 
 /*
  * This function is private
  */
-const Epetra_BlockMap getOverlap(int ndf, int numShared, int*shared, int numOwned, int* owned, const Epetra_Comm& comm){
+const Epetra_BlockMap getOverlap(int ndf, int numShared, int*shared, int numOwned,const  int* owned, const Epetra_Comm& comm){
 
 	int numPoints = numShared+numOwned;
 	shared_ptr<int> ids(new int[numPoints],PdQuickGrid::Deleter<int>());
@@ -85,7 +85,7 @@ const Epetra_BlockMap getOverlap(int ndf, int numShared, int*shared, int numOwne
 
 }
 
-const Epetra_BlockMap getOverlapMap(const Epetra_Comm& comm, PdGridData& gridData, int ndf){
+const Epetra_BlockMap getOverlapMap(const Epetra_Comm& comm, const PdGridData& gridData, int ndf){
 	std::pair<int, std::tr1::shared_ptr<int> > sharedPair = PdQuickGrid::getSharedGlobalIds(gridData);
 	std::tr1::shared_ptr<int> sharedPtr = sharedPair.second;
 	int numShared = sharedPair.first;
@@ -95,7 +95,7 @@ const Epetra_BlockMap getOverlapMap(const Epetra_Comm& comm, PdGridData& gridDat
 	return getOverlap(ndf,numShared,shared,numOwned,owned,comm);
 }
 
-std::pair<int, std::tr1::shared_ptr<int> > getSharedGlobalIds(PdGridData& gridData){
+std::pair<int, std::tr1::shared_ptr<int> > getSharedGlobalIds(const PdGridData& gridData){
 	std::set<int> ownedIds(gridData.myGlobalIDs.get(),gridData.myGlobalIDs.get()+gridData.numPoints);
 	std::set<int> shared;
 	int *neighPtr = gridData.neighborhoodPtr.get();

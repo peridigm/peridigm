@@ -26,6 +26,8 @@ namespace PdVTK {
 enum VTK_FILE_TYPE { vtkASCII=0, vtkBINARY };
 
 vtkSmartPointer<vtkUnstructuredGrid> getGrid(shared_ptr<double>& y, int numPoints);
+vtkSmartPointer<vtkUnstructuredGrid> getGrid(double *y, int numPoints);
+
 vtkSmartPointer<vtkXMLPUnstructuredGridWriter> getWriter(const char* _fileName, int numProcs, int rank, VTK_FILE_TYPE type=vtkBINARY);
 void write(vtkSmartPointer<vtkXMLPUnstructuredGridWriter> w, vtkSmartPointer<vtkUnstructuredGrid> g);
 

@@ -189,7 +189,7 @@ PdGridData PeridigmNS::PdQuickGridDiscretization::getDiscretization(const Teucho
 }
 
 void
-PeridigmNS::PdQuickGridDiscretization::createMaps(PdGridData& decomp)
+PeridigmNS::PdQuickGridDiscretization::createMaps(const PdGridData& decomp)
 {
   int dimension;
 
