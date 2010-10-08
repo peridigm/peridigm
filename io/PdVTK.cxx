@@ -120,6 +120,41 @@ void write(vtkSmartPointer<vtkXMLPUnstructuredGridWriter> w, vtkSmartPointer<vtk
  * per point
  */
 vtkSmartPointer<vtkUnstructuredGrid> getGrid(shared_ptr<double>& y, int numPoints){
+//	// Set points and cells
+//	// note number of points is same as number of cells
+//	vtkSmartPointer<vtkPoints> pts = vtkSmartPointer<vtkPoints>::New();
+//	int numCells = numPoints;
+//	/*
+//	 * Add coordinates to grid
+//	 * This directly uses the pointer to data provided  -- this is the part that
+//	 * the note above refers to.
+//	 */
+//	vtkSmartPointer<vtkDoubleArray> ptsData = vtkSmartPointer<vtkDoubleArray>::New();
+//	int numComponents=3;
+//	ptsData->SetNumberOfComponents(numComponents);
+//	int save=1;
+//	ptsData->SetArray(y.get(),numCells*numComponents,save);
+//	pts->SetData(ptsData);
+//
+//	vtkSmartPointer<vtkCellArray> cells = getCellArray(numCells);
+//	vtkSmartPointer<vtkUnstructuredGrid> grid = getGrid(pts,cells);
+
+
+
+	return getGrid(y.get(),numPoints);
+}
+
+/*
+ * NOTE: pointer to data is used directly here;
+ * This method lets the user specify data to be held by the array.  The
+ * array argument is a pointer to the data.  Set save to 1 to keep the class
+ * from deleting the array when it cleans up or reallocates memory.
+ * The class uses the actual array provided; it does not copy the data
+ * from the suppled array.
+ * NOTE: Also -- the supplied coordinates 'y' should be a vector with 3 components
+ * per point
+ */
+vtkSmartPointer<vtkUnstructuredGrid> getGrid(double *yPtr, int numPoints){
 	// Set points and cells
 	// note number of points is same as number of cells
 	vtkSmartPointer<vtkPoints> pts = vtkSmartPointer<vtkPoints>::New();
@@ -133,7 +168,7 @@ vtkSmartPointer<vtkUnstructuredGrid> getGrid(shared_ptr<double>& y, int numPoint
 	int numComponents=3;
 	ptsData->SetNumberOfComponents(numComponents);
 	int save=1;
-	ptsData->SetArray(y.get(),numCells*numComponents,save);
+	ptsData->SetArray(yPtr,numCells*numComponents,save);
 	pts->SetData(ptsData);
 
 	vtkSmartPointer<vtkCellArray> cells = getCellArray(numCells);
@@ -141,7 +176,6 @@ vtkSmartPointer<vtkUnstructuredGrid> getGrid(shared_ptr<double>& y, int numPoint
 
 	return grid;
 }
-
 
 vtkSmartPointer<vtkUnstructuredGrid>  getGrid(const vtkSmartPointer<vtkPoints>& x, const vtkSmartPointer<vtkCellArray>& cells){
 
