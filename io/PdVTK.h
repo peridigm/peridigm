@@ -10,6 +10,7 @@
 #include "vtkUnstructuredGrid.h"
 #include "vtkSmartPointer.h"
 #include <vtkDoubleArray.h>
+#include <vtkIntArray.h>
 #include "vtkCellData.h"
 #include "vtkXMLPUnstructuredGridWriter.h"
 #include "PdGridData.h"
@@ -24,6 +25,19 @@ using std::string;
 namespace PdVTK {
 
 enum VTK_FILE_TYPE { vtkASCII=0, vtkBINARY };
+
+template<typename T>
+struct vtk_trait {};
+
+template<>
+struct vtk_trait<int> {
+   typedef vtkSmartPointer<vtkIntArray> vtk_type;
+};
+
+template<>
+struct vtk_trait<double> {
+   typedef vtkSmartPointer<vtkDoubleArray> vtk_type;
+};
 
 vtkSmartPointer<vtkUnstructuredGrid> getGrid(shared_ptr<double>& y, int numPoints);
 vtkSmartPointer<vtkUnstructuredGrid> getGrid(double *y, int numPoints);
@@ -48,26 +62,41 @@ private:
  * NOTE: field passed in must go out of scope AFTER the vtkUnstructuredGrid grid "g" otherwise
  * vtk writer may try to access the data stored on "g" but it would have been deleted
  */
-template<class T>
+//template<typename T>
+//void writeField
+//(
+//		vtkSmartPointer<vtkUnstructuredGrid>& g,
+//		const char* name_null_terminated,
+//		std::size_t degree,
+//		std::size_t size,
+//		T* data
+//);
+
+template<typename T>
 void writeField
 (
-		vtkSmartPointer<vtkUnstructuredGrid>& g,
-		const char* name_null_terminated,
-		std::size_t degree,
-		std::size_t size,
-		T* data
+vtkSmartPointer<vtkUnstructuredGrid>& g,
+const char* name_null_terminated,
+std::size_t degree,
+std::size_t size,
+T *data
 ) {
+
 	vtkCellData *cellData = g->GetCellData();
 	/*
 	 * Add field to grid
 	 */
-	vtkSmartPointer<vtkDoubleArray> cellField = vtkSmartPointer<vtkDoubleArray>::New();
+ 	typename vtk_trait<T>::vtk_type cellField;
+	cellField = vtk_trait<T>::vtk_type::New();
+
+//	vtkSmartPointer<vtkDoubleArray> cellField = vtkSmartPointer<vtkDoubleArray>::New();
 	cellField->SetName(name_null_terminated);
 	cellField->SetNumberOfComponents(degree);
 	int save=1;
 	cellField->SetArray(data,size,save);
 	cellData->AddArray(cellField);
 }
+
 
 template<class T>
 void writeField(vtkSmartPointer<vtkUnstructuredGrid>& g, Field_NS::Field<T> field) {
