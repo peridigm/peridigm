@@ -59,7 +59,7 @@ namespace PeridigmNS {
 
     virtual Teuchos::RCP<AbstractDiscretization> 
     create(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
-           const Teuchos::RCP<PdGridData>& decomp);
+           const Teuchos::RCP<const PdGridData>& decomp);
 
   private:
 

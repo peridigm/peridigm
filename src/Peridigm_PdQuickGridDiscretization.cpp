@@ -75,7 +75,7 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
 
 
 PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
-                                                                 const Teuchos::RCP<PdGridData>& decomp) :
+                                                                 const Teuchos::RCP<const PdGridData>& decomp) :
   comm(epetra_comm),
   numBonds(0),
   myPID(comm->MyPID()),
@@ -216,7 +216,7 @@ PeridigmNS::PdQuickGridDiscretization::createMaps(const PdGridData& decomp)
 }
 
 void
-PeridigmNS::PdQuickGridDiscretization::createNeighborhoodData(PdGridData& decomp)
+PeridigmNS::PdQuickGridDiscretization::createNeighborhoodData(const PdGridData& decomp)
 {
    neighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
    neighborhoodData->SetNumOwned(decomp.numPoints);

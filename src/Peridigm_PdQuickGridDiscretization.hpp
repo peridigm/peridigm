@@ -52,7 +52,7 @@ namespace PeridigmNS {
 
     //! Constructor
     PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetraComm,
-                              const Teuchos::RCP<PdGridData>& decomp);
+                              const Teuchos::RCP<const PdGridData>& decomp);
 
     //! Destructor
     virtual ~PdQuickGridDiscretization();
@@ -98,7 +98,7 @@ namespace PeridigmNS {
     void createVectors();
 
     //! Create NeighborhoodData
-    void createNeighborhoodData(PdGridData& decomp);
+    void createNeighborhoodData(const PdGridData& decomp);
 
     //! Epetra communicator
     Teuchos::RCP<const Epetra_Comm> comm;
