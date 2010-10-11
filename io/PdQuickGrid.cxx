@@ -30,7 +30,7 @@ bool NoOpNormFunction (const double* u, const double* v, double r) {
 	return true;
 }
 
-std::tr1::shared_ptr<int> getLocalOwnedIds(PdGridData& gridData, const Epetra_BlockMap& overlapMap){
+std::tr1::shared_ptr<int> getLocalOwnedIds(const PdGridData& gridData, const Epetra_BlockMap& overlapMap){
 	shared_ptr<int> localIds(new int[gridData.numPoints],PdQuickGrid::Deleter<int>());
 	int *lIds = localIds.get();
 	int *end = localIds.get()+gridData.numPoints;
@@ -40,7 +40,7 @@ std::tr1::shared_ptr<int> getLocalOwnedIds(PdGridData& gridData, const Epetra_Bl
 	return localIds;
 }
 
-std::tr1::shared_ptr<int> getLocalNeighborList(PdGridData& gridData, const Epetra_BlockMap& overlapMap){
+std::tr1::shared_ptr<int> getLocalNeighborList(const PdGridData& gridData, const Epetra_BlockMap& overlapMap){
 	shared_ptr<int> localNeighborList(new int[gridData.sizeNeighborhoodList],PdQuickGrid::Deleter<int>());
 	int *localNeig = localNeighborList.get();
 	int *neighPtr = gridData.neighborhoodPtr.get();

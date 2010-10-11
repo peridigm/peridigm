@@ -48,8 +48,8 @@ std::tr1::shared_ptr<double> getDiscretization(const PdQRing2d& spec);
 std::tr1::shared_ptr<double> getDiscretization(const PdQRing2d& spec, const PdQPointSet1d& axisSpec);
 const Epetra_BlockMap getOverlapMap(const Epetra_Comm& comm, const PdGridData& gridData, int ndf);
 const Epetra_BlockMap getOwnedMap(const Epetra_Comm& comm,const PdGridData& gridData, int ndf);
-std::tr1::shared_ptr<int> getLocalOwnedIds(PdGridData& gridData, const Epetra_BlockMap& overlapMap);
-std::tr1::shared_ptr<int> getLocalNeighborList(PdGridData& gridData, const Epetra_BlockMap& overlapMap);
+std::tr1::shared_ptr<int> getLocalOwnedIds(const PdGridData& gridData, const Epetra_BlockMap& overlapMap);
+std::tr1::shared_ptr<int> getLocalNeighborList(const PdGridData& gridData, const Epetra_BlockMap& overlapMap);
 
 class Horizon {
 private:
