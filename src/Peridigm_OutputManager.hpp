@@ -76,8 +76,6 @@ namespace PeridigmNS {
     int count;
     // Output frequency
     int frequency;
-    // Serial or Parallel?
-    bool parallelWrite;
     // ASCII or BINARY?
     string outputFormat;
     // Write full neighborlist for each particle?

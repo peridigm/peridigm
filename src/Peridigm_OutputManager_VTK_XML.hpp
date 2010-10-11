@@ -33,6 +33,8 @@
 #define PERIDIGM_OUTPUTMANAGER_VTK_XML_HPP
 
 #include <Peridigm_OutputManager.hpp>
+#include <PdVTK.h>
+
 #include <Teuchos_ParameterList.hpp>
 
 namespace PeridigmNS {
@@ -63,11 +65,9 @@ namespace PeridigmNS {
     //! Assignment operator.
     OutputManager_VTK_XML& operator=( const OutputManager& OM );
 
-    //! Utility to help with indenting
-    void indent(std::ofstream& outfile,int level) { for(int i=0;i<level;i++) outfile << "  "; }
+    Teuchos::RCP<PdVTK::CollectionWriter> vtkWriter;
 
-    //! True if .pvd file has been opened and must be closed out
-    bool pvd_open;
+    vtkSmartPointer<vtkUnstructuredGrid> grid;
 
   };
   

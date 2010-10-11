@@ -27,18 +27,18 @@
 #
 # Add the tests
 #
-add_test (Compression_2x1x1_np1 python ./Compression_2x1x1/np1/Compression_2x1x1.py)
-add_test (Compression_2x1x1_np2 python ./Compression_2x1x1/np2/Compression_2x1x1.py)
-add_test (Compression_3x1x1_np1 python ./Compression_3x1x1/np1/Compression_3x1x1.py)
-add_test (Compression_3x1x1_np2 python ./Compression_3x1x1/np2/Compression_3x1x1.py)
-add_test (Compression_3x1x1_np3 python ./Compression_3x1x1/np3/Compression_3x1x1.py)
+#add_test (Compression_2x1x1_np1 python ./Compression_2x1x1/np1/Compression_2x1x1.py)
+#add_test (Compression_2x1x1_np2 python ./Compression_2x1x1/np2/Compression_2x1x1.py)
+#add_test (Compression_3x1x1_np1 python ./Compression_3x1x1/np1/Compression_3x1x1.py)
+#add_test (Compression_3x1x1_np2 python ./Compression_3x1x1/np2/Compression_3x1x1.py)
+#add_test (Compression_3x1x1_np3 python ./Compression_3x1x1/np3/Compression_3x1x1.py)
 ##add_test (Compression_2x1x1_Rythmos_np1 python ./Compression_2x1x1_Rythmos/np1/Compression_2x1x1_Rythmos.py)
 ##add_test (Compression_2x1x1_Rythmos_np2 python ./Compression_2x1x1_Rythmos/np2/Compression_2x1x1_Rythmos.py)
 ##add_test (Compression_3x1x1_Rythmos_np1 python ./Compression_3x1x1_Rythmos/np1/Compression_3x1x1_Rythmos.py)
 ##add_test (Compression_3x1x1_Rythmos_np2 python ./Compression_3x1x1_Rythmos/np2/Compression_3x1x1_Rythmos.py)
 ##add_test (Compression_3x1x1_Rythmos_np3 python ./Compression_3x1x1_Rythmos/np3/Compression_3x1x1_Rythmos.py)
-add_test (BondBreakingInitialVelocity_np1 python ./BondBreakingInitialVelocity/np1/BondBreakingInitialVelocity.py)
-add_test (BondBreakingInitialVelocity_np3 python ./BondBreakingInitialVelocity/np3/BondBreakingInitialVelocity.py)
+#add_test (BondBreakingInitialVelocity_np1 python ./BondBreakingInitialVelocity/np1/BondBreakingInitialVelocity.py)
+#add_test (BondBreakingInitialVelocity_np3 python ./BondBreakingInitialVelocity/np3/BondBreakingInitialVelocity.py)
 ##add_test (Contact_2x1x1_np1 python ./Contact_2x1x1/np1/Contact_2x1x1.py)
 
 add_custom_target( vtest
