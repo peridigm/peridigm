@@ -62,16 +62,6 @@ private:
  * NOTE: field passed in must go out of scope AFTER the vtkUnstructuredGrid grid "g" otherwise
  * vtk writer may try to access the data stored on "g" but it would have been deleted
  */
-//template<typename T>
-//void writeField
-//(
-//		vtkSmartPointer<vtkUnstructuredGrid>& g,
-//		const char* name_null_terminated,
-//		std::size_t degree,
-//		std::size_t size,
-//		T* data
-//);
-
 template<typename T>
 void writeField
 (
@@ -89,7 +79,6 @@ T *data
  	typename vtk_trait<T>::vtk_type cellField;
 	cellField = vtk_trait<T>::vtk_type::New();
 
-//	vtkSmartPointer<vtkDoubleArray> cellField = vtkSmartPointer<vtkDoubleArray>::New();
 	cellField->SetName(name_null_terminated);
 	cellField->SetNumberOfComponents(degree);
 	int save=1;

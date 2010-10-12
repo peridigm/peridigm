@@ -120,27 +120,6 @@ void write(vtkSmartPointer<vtkXMLPUnstructuredGridWriter> w, vtkSmartPointer<vtk
  * per point
  */
 vtkSmartPointer<vtkUnstructuredGrid> getGrid(shared_ptr<double>& y, int numPoints){
-//	// Set points and cells
-//	// note number of points is same as number of cells
-//	vtkSmartPointer<vtkPoints> pts = vtkSmartPointer<vtkPoints>::New();
-//	int numCells = numPoints;
-//	/*
-//	 * Add coordinates to grid
-//	 * This directly uses the pointer to data provided  -- this is the part that
-//	 * the note above refers to.
-//	 */
-//	vtkSmartPointer<vtkDoubleArray> ptsData = vtkSmartPointer<vtkDoubleArray>::New();
-//	int numComponents=3;
-//	ptsData->SetNumberOfComponents(numComponents);
-//	int save=1;
-//	ptsData->SetArray(y.get(),numCells*numComponents,save);
-//	pts->SetData(ptsData);
-//
-//	vtkSmartPointer<vtkCellArray> cells = getCellArray(numCells);
-//	vtkSmartPointer<vtkUnstructuredGrid> grid = getGrid(pts,cells);
-
-
-
 	return getGrid(y.get(),numPoints);
 }
 
