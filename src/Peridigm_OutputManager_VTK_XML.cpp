@@ -85,8 +85,24 @@ PeridigmNS::OutputManager_VTK_XML::OutputManager_VTK_XML(const Teuchos::RCP<Teuc
   iWrite = true;
 
   // VTK doesn't like spaces or . so replace them with underscore
-  for ( unsigned int i = 0; i < filenameBase.length(); i++)
-    if (filenameBase[i] ==' ' || filenameBase[i]=='.') filenameBase.replace(i,1,"_");
+  {
+  int warningFlag = 0;
+  string outString;
+  outString.append("\n\n***WARNING***\n");
+  outString.append("PeridigmNS::OutputManager_VTK_XML:::OutputManager_VTK_XML() -- Avoid use of filenames containing '.' (period) and ' ' (space) with VTK.\n"); 
+  outString.append("Changing ");
+  outString.append(filenameBase);
+  outString.append(" to ");
+  for ( unsigned int i = 0; i < filenameBase.length(); i++) {
+    if (filenameBase[i] ==' ' || filenameBase[i]=='.')  {
+      filenameBase.replace(i,1,"_");
+      warningFlag = 1;
+    }
+  }
+  outString.append(filenameBase);
+  outString.append(".\n\n\n");
+  if (warningFlag) std::cout << outString; 
+  }
 
   // Create VTK collection writer
   if (outputFormat == "ASCII")
