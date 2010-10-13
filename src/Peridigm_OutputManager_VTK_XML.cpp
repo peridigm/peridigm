@@ -113,7 +113,19 @@ PeridigmNS::OutputManager_VTK_XML::OutputManager_VTK_XML(const Teuchos::RCP<Teuc
 }
 
 PeridigmNS::OutputManager_VTK_XML::~OutputManager_VTK_XML() {
-  vtkWriter->close();  
+
+  // get current system time
+  time_t rawtime;
+  struct tm *timeinfo;
+  time ( &rawtime );
+  timeinfo = localtime ( &rawtime );
+
+  // Construct comment string to be written to master .pvd file
+  string comment;
+  comment.append("Peridigm Version XXX: "); 
+  comment.append(asctime(timeinfo));
+
+  vtkWriter->close(comment);  
 }
 
 void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> x,
@@ -144,21 +156,6 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
 
   time ( &rawtime );
   timeinfo = localtime ( &rawtime );
-
-/*  Modify PdVTK routines to allow output of header info
-  // Initialize .pvd file (contains names of timeseries data files)
-  if (!pvd_open && (myPID==0) )  {
-    timeContainerOutfile.open(timeContainerFilename);
-    timeContainerOutfile << "<?xml version=\"1.0\"?>" << endl;
-    timeContainerOutfile << "<!--" << endl;
-    timeContainerOutfile << "Peridigm Version XXX: " << asctime(timeinfo);
-    timeContainerOutfile << "-->" << endl;
-    timeContainerOutfile << "<VTKFile type=\"Collection\" version=\"0.1\" byte_order=\"LittleEndian\">" << endl;
-    timeContainerOutfile << "  <Collection>" << endl;
-    timeContainerOutfile.close();
-    pvd_open = true;
-  }
-*/
 
   // Convenience definitions of FieldSpecs
   const Field_NS::FieldSpec Displacement(Field_NS::FieldSpec::DISPLACEMENT,Field_NS::FieldSpec::VECTOR3D, "Displacement");
@@ -219,6 +216,3 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
   vtkWriter->writeTimeStep(count,grid);
 
 }
-
-
-
