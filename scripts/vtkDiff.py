@@ -2,6 +2,7 @@
 
 import vtkIO
 from optparse import OptionParser
+from xml.dom.minidom import parse
 
 def IsInvalid(val):
     # other options exist to check for nan, but none is good
@@ -63,6 +64,32 @@ def CheckPvtuSanity(pvtuFileNames):
             raise Exception ("Error reading " + pvtuFileName + ".  Invalid data?  Possible NaN or Inf?")
     return
 
+def SetUniformTolerance(pvtuGoldFileName, pvtuFileName):
+    tolerances = {}
+    # get the list of fields from the first files in the time series
+    vtuGoldData = vtkIO.GetGrid(pvtuGoldFileName)
+    vtuGoldPointData = vtuGoldData.GetPointData()
+    goldArrayNames = vtkIO.GetCellDataFieldNames(vtuGoldPointData)
+    goldArrayNames.sort()
+    vtuData = vtkIO.GetGrid(pvtuFileName)
+    vtuPointData = vtuData.GetPointData()
+    arrayNames = vtkIO.GetCellDataFieldNames(vtuPointData)
+    arrayNames.sort()
+    for i in range(len(goldArrayNames)):
+        if arrayNames[i] != goldArrayNames[i]:
+            raise Exception("Data files must contain the same fields if using the --uniformTolerance option")
+        tolerances[arrayNames[i]] = float(options.uniformTolerance)
+    return tolerances
+
+def SetTolerances(toleranceFile):
+    tolerances = {}
+    toleranceElements = parse(toleranceFile).documentElement.getElementsByTagName("Tolerance")
+    for toleranceElement in toleranceElements:
+        variable = toleranceElement.getAttribute("variable")
+        tol = toleranceElement.getAttribute("value")
+        tolerances[variable] = float(tol)
+    return tolerances
+
 if __name__ == "__main__":
 
     print "\n----VTK File Comparison----\n"
@@ -87,8 +114,6 @@ if __name__ == "__main__":
 
     print "Data set one: ", pvdGoldFileName
     print "Data set two: ", pvdFileName
-
-    filesDiff = False
 
     # read the gold pvd file
     try:
@@ -117,38 +142,27 @@ if __name__ == "__main__":
     except Exception, e:
         print  "\nException thrown by CheckPvtuSanity():", e, "\n"
         exit(1)
-        
 
     # specify the fields to compare and set the tolerances
-    tolerances = {}
     if options.uniformTolerance != None and options.toleranceFile != None:
         parser.print_help()
         print "\nError: Invalid options, uniformTolerance and toleranceFile cannot both be specified\n"
         exit(1)
     if options.uniformTolerance != None:
         print "\nApplying uniform tolerance =", options.uniformTolerance
-        # get the list of fields from the first files in the time series
-        pvtuGoldFileName = pvtuGoldFileNames[0][1]
-        vtuGoldData = vtkIO.GetGrid(pvtuGoldFileName)
-        vtuGoldPointData = vtuGoldData.GetPointData()
-        goldArrayNames = vtkIO.GetCellDataFieldNames(vtuGoldPointData)
-        goldArrayNames.sort()
-        pvtuFileName = pvtuFileNames[0][1]
-        vtuData = vtkIO.GetGrid(pvtuFileName)
-        vtuPointData = vtuData.GetPointData()
-        arrayNames = vtkIO.GetCellDataFieldNames(vtuPointData)
-        arrayNames.sort()
-        for i in range(len(goldArrayNames)):
-            if arrayNames[i] != goldArrayNames[i]:
-                raise Exception("Data files must contain the same fields if using the --uniformTolerance option")
-            tolerances[arrayNames[i]] = float(options.uniformTolerance)
+        tolerances = SetUniformTolerance(pvtuGoldFileNames[0][1], pvtuFileNames[0][1])
     elif options.toleranceFile != None:
-        tolerances['Points'] = 1.0e-12
-        tolerances['Dilatation'] = 1.0e-12
+        tolerances = SetTolerances(options.toleranceFile)
 
+    # print out the fields to be compared and their tolerances
     print "\nFields to be comparied:"
     for key in tolerances.keys():
-        print " ", key
+        if len(key) < 20:
+            print " ", key, " "*(20-len(key)), tolerances[key]
+        else:
+            print " ", key, tolerances[key]
+    if len(tolerances.keys()) == 0:
+        print "  NONE!"
 
     # make sure the number of file names (timesteps) is the same
     if len(pvtuFileNames) != len(pvtuGoldFileNames):
@@ -156,6 +170,7 @@ if __name__ == "__main__":
         exit(1)
 
     # loop over the timesteps and compare requested data
+    filesDiff = False
     for timestep in range(len(pvtuFileNames)):
 
         verboseText = "\nTime step " + str(timestep)
@@ -188,13 +203,16 @@ if __name__ == "__main__":
                 goldData = vtuGoldData.GetPointData().GetVectors(dataName)
                 data = vtuData.GetPointData().GetVectors(dataName)
 
-            # make sure data fields are the same length
+            # make sure data fields exist and are the same length
+            if goldData == None or data == None:
+                print "\nError:  Data not found for requested", dataName, "field.  Error in .comp file?\n"
+                exit(1)
             if data.GetNumberOfTuples() != goldData.GetNumberOfTuples():
-                print "\nMismatched array sizes for \"", dataName, "\" field,", \
+                print "\nError:  Mismatched array sizes for", dataName, "field,", \
                     data.GetNumberOfTuples(), "!=", goldData.GetNumberOfTuples(), "\n"
                 exit(1)
 
-            # comparison tolerances, etc.
+            # comparison tolerance for this field
             tol = tolerances[dataName]
             maxDiff = 0.0
             dataDiff = False
