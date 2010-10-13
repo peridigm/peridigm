@@ -9,8 +9,8 @@
 #include "vtkSmartPointer.h"
 #include "vtkUnstructuredGrid.h"
 #include "vtkVertex.h"
-//#include "vtkCellArray.h"
-//#include "vtkCellData.h"
+#include "vtkCellArray.h"
+#include "vtkCellData.h"
 #include <vtkDoubleArray.h>
 #include "PdQuickGrid.h"
 #include <iostream>
@@ -26,11 +26,8 @@ using PdQuickGrid::PdQRing2d;
  * These are private
  */
 vtkSmartPointer<vtkUnstructuredGrid>  getGrid(const vtkSmartPointer<vtkPoints>& x);
-
-#if 0
 vtkSmartPointer<vtkUnstructuredGrid> getGrid(const vtkSmartPointer<vtkPoints>& x, const vtkSmartPointer<vtkCellArray>& cells);
 vtkSmartPointer<vtkCellArray> getCellArray(vtkIdType numCells);
-#endif
 
 CollectionWriter::CollectionWriter(const char* _fileName, int numProcs, int rank, VTK_FILE_TYPE type)
 : fileName(_fileName), times(), writer(getWriter(_fileName,numProcs,rank,type)){}
@@ -148,35 +145,15 @@ vtkSmartPointer<vtkUnstructuredGrid> getGrid(double *yPtr, int numPoints){
 	pts->SetData(ptsData);
 
 	/*
-	 * Creates a grid of "cells"
+	 * Creates a grid of "points" and "cells"
 	 */
-//	vtkSmartPointer<vtkCellArray> cells = getCellArray(numCells);
-//	vtkSmartPointer<vtkUnstructuredGrid> grid = getGrid(pts,cells);
+	vtkSmartPointer<vtkCellArray> cells = getCellArray(numPoints);
+	vtkSmartPointer<vtkUnstructuredGrid> grid = getGrid(pts,cells);
 
-	/*
-	 * Creates a grid of "points"
-	 */
-	vtkSmartPointer<vtkUnstructuredGrid> grid = getGrid(pts);
 	return grid;
 }
 
-vtkSmartPointer<vtkUnstructuredGrid>  getGrid(const vtkSmartPointer<vtkPoints>& x){
 
-	/**
-	 * Cells constructed are "vertex" type cells
-	 */
-	vtkSmartPointer<vtkUnstructuredGrid> grid = vtkSmartPointer<vtkUnstructuredGrid>::New();
-	grid->SetPoints(x);
-	return grid;
-}
-
-#if 0
-/*
- * Idea for adding a restricted set of cells
- */
-vtkSmartPointer<vtkUnstructuredGrid>  addCells(vtkSmartPointer<vtkUnstructuredGrid> grid, int* gids, numGids, int* neighborhood){
-
-}
 
 vtkSmartPointer<vtkUnstructuredGrid>  getGrid(const vtkSmartPointer<vtkPoints>& x, const vtkSmartPointer<vtkCellArray>& cells){
 
@@ -208,6 +185,15 @@ vtkSmartPointer<vtkCellArray> getCellArray(vtkIdType numCells){
 
 	return cells;
 }
+
+#if 0
+/*
+ * Idea for adding a restricted set of cells
+ */
+vtkSmartPointer<vtkUnstructuredGrid>  addCells(vtkSmartPointer<vtkUnstructuredGrid> grid, int* gids, numGids, int* neighborhood){
+
+}
+
 #endif
 
 } // PdVTK
