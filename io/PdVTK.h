@@ -11,7 +11,8 @@
 #include "vtkSmartPointer.h"
 #include <vtkDoubleArray.h>
 #include <vtkIntArray.h>
-#include "vtkCellData.h"
+//#include "vtkCellData.h"
+#include "vtkPointData.h"
 #include "vtkXMLPUnstructuredGridWriter.h"
 #include "PdGridData.h"
 #include <tr1/memory>
@@ -49,7 +50,7 @@ class CollectionWriter {
 public:
 	CollectionWriter(const char* _fileName, int numProcs, int rank, VTK_FILE_TYPE t=vtkBINARY);
 	void writeTimeStep(double t, vtkSmartPointer<vtkUnstructuredGrid> grid);
-	void close();
+	void close(const string& comment="");
 private:
 	string getPVTU_fileName(int index, const char* _fileName) const;
 	const char* fileName;
@@ -68,22 +69,43 @@ void writeField
 vtkSmartPointer<vtkUnstructuredGrid>& g,
 const char* name_null_terminated,
 std::size_t degree,
-std::size_t size,
 T *data
 ) {
 
-	vtkCellData *cellData = g->GetCellData();
+	/*
+	 * Write "cell data"
+	 */
+//	vtkCellData *cellData = g->GetCellData();
+//	/*
+//	 * Add field to grid
+//	 */
+// 	typename vtk_trait<T>::vtk_type cellField;
+//	cellField = vtk_trait<T>::vtk_type::New();
+//
+//	cellField->SetName(name_null_terminated);
+//	cellField->SetNumberOfComponents(degree);
+//	int save=1;
+//	std::size_t size = degree*g->GetNumberOfCells();
+//	cellField->SetArray(data,size,save);
+//	cellData->AddArray(cellField);
+
+	/*
+	 * Write "point data"
+	 */
+	vtkPointData *pointData = g->GetPointData();
 	/*
 	 * Add field to grid
 	 */
- 	typename vtk_trait<T>::vtk_type cellField;
-	cellField = vtk_trait<T>::vtk_type::New();
+	typename vtk_trait<T>::vtk_type field;
+	field = vtk_trait<T>::vtk_type::New();
 
-	cellField->SetName(name_null_terminated);
-	cellField->SetNumberOfComponents(degree);
+	field->SetName(name_null_terminated);
+	field->SetNumberOfComponents(degree);
 	int save=1;
-	cellField->SetArray(data,size,save);
-	cellData->AddArray(cellField);
+	std::size_t size = degree*g->GetNumberOfPoints();
+	field->SetArray(data,size,save);
+	pointData->AddArray(field);
+
 }
 
 
@@ -91,17 +113,15 @@ template<class T>
 void writeField(vtkSmartPointer<vtkUnstructuredGrid>& g, Field_NS::Field<T> field) {
 	const char* name = field.getLabel().c_str();
 	std::size_t degree = field.getLength();
-	std::size_t size = field.getArray().getSize();
 	T* data = field.getArray().get();
-	writeField(g,name,degree,size,data);
+	writeField(g,name,degree,data);
 }
 
 template<class T>
 void writeField(vtkSmartPointer<vtkUnstructuredGrid>& g, const Field_NS::FieldSpec& spec, T *data) {
 	const char* name = spec.getLabel().c_str();
 	std::size_t degree =spec.getLength();
-	std::size_t size = degree*g->GetNumberOfCells();
-	writeField(g,name,degree,size,data);
+	writeField(g,name,degree,data);
 }
 
 } // PdVTK
