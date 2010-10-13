@@ -147,7 +147,7 @@ void utVTK_ioExample()
 	/*
 	 * Create Spec(s) From Scratch
 	 */
-        const FieldSpec myIntSpec(FieldSpec::DEFAULT_FIELDTYPE,FieldSpec::SCALAR,"MyInt");
+	const FieldSpec myRankSpec(FieldSpec::DEFAULT_FIELDTYPE,FieldSpec::SCALAR,"MyRank");
 	const FieldSpec displacementSpec(FieldSpec::DISPLACEMENT,FieldSpec::VECTOR3D, "Displacement");
 	const FieldSpec velocitySpec(FieldSpec::VELOCITY,FieldSpec::VECTOR3D, "v");
 	const FieldSpec accelerationSpec(FieldSpec::ACCELERATION,FieldSpec::VECTOR3D, "a");
@@ -169,10 +169,10 @@ void utVTK_ioExample()
 	Field<double> X(COORD3D,pdGridData.myX,numPoints);
 	Field<double> uField(uSpec,numPoints), vField(vSpec,numPoints),aField(aSpec,numPoints);
 	Field<double> wField(wSpec,numPoints), thetaField(thetaSpec,numPoints);
-	Field<int> myInt(myIntSpec,numPoints);
+	Field<int> rankField(myRankSpec,numPoints);
 	uField.setValue(0.0); vField.setValue(0.0); aField.setValue(0.0);
 	wField.setValue(0.0); thetaField.setValue(0.0);
-	myInt.setValue(336699);
+	rankField.setValue(myRank);
 
 	/*
 	 * RAW POINTERS; GET THESE from Epetra_Vector
@@ -209,7 +209,7 @@ void utVTK_ioExample()
 	PdVTK::writeField(grid,volSpec,volPtr);
 	PdVTK::writeField(grid,wSpec,wPtr);
 	PdVTK::writeField(grid,thetaSpec,thetaPtr);
-	PdVTK::writeField(grid,myInt);
+	PdVTK::writeField(grid,rankField);
 
 	/*
 	 * Example that loops over time
@@ -243,7 +243,7 @@ void utVTK_ioExample()
 	/*
 	 * This writes the "pvd" collection file
 	 */
-	asciiWriter.close();
+	asciiWriter.close("mpiexec -np 4 ./utVTK_ioExample_np4\n");
 	binWriter.close();
 
 
@@ -288,7 +288,7 @@ int main
 	 * This test only make sense for numProcs == 4
 	 */
 	if(4 != numProcs){
-		std::cerr << "Unit test runtime ERROR: utVTK_ioExample_np4 only makes sense on 2 processors" << std::endl;
+		std::cerr << "Unit test runtime ERROR: utVTK_ioExample_np4 only makes sense on 4 processors" << std::endl;
 		std::cerr << "\t Re-run unit test $mpiexec -np 4 ./utVTK_ioExample_np4" << std::endl;
 		pimpMPI.PimpMpiFixture::~PimpMpiFixture();
 		std::exit(-1);

@@ -9,8 +9,8 @@
 #include "vtkSmartPointer.h"
 #include "vtkUnstructuredGrid.h"
 #include "vtkVertex.h"
-#include "vtkCellArray.h"
-#include "vtkCellData.h"
+//#include "vtkCellArray.h"
+//#include "vtkCellData.h"
 #include <vtkDoubleArray.h>
 #include "PdQuickGrid.h"
 #include <iostream>
@@ -25,9 +25,12 @@ using PdQuickGrid::PdQRing2d;
 /*
  * These are private
  */
+vtkSmartPointer<vtkUnstructuredGrid>  getGrid(const vtkSmartPointer<vtkPoints>& x);
+
+#if 0
 vtkSmartPointer<vtkUnstructuredGrid> getGrid(const vtkSmartPointer<vtkPoints>& x, const vtkSmartPointer<vtkCellArray>& cells);
 vtkSmartPointer<vtkCellArray> getCellArray(vtkIdType numCells);
-
+#endif
 
 CollectionWriter::CollectionWriter(const char* _fileName, int numProcs, int rank, VTK_FILE_TYPE type)
 : fileName(_fileName), times(), writer(getWriter(_fileName,numProcs,rank,type)){}
@@ -52,14 +55,18 @@ string CollectionWriter::getPVTU_fileName(int index, const char* _fileName) cons
 }
 
 /**
- * This function writes the collection file that allows paraview to open and read all time steps
+ **This function writes the collection file that allows paraview to open and read all time steps
+ * @param comment -- Comment added to xml header; should include "\n"
  */
-void CollectionWriter::close() {
+void CollectionWriter::close(const string& comment) {
 	string outFileName(fileName);
 	outFileName += ".pvd";
 	std::fstream fStream(outFileName.c_str(), fstream::out);
 
 	fStream << "<?xml version=\"1.0\"?>\n"
+			<< "<!--\n"
+			<< comment
+			<<	"-->\n"
 		    << "<VTKFile type=\"Collection\" version=\"0.1\" byte_order=\"LittleEndian\">\n"
 		    << "\t<Collection>\n";
 
@@ -95,30 +102,21 @@ void write(vtkSmartPointer<vtkXMLPUnstructuredGridWriter> w, vtkSmartPointer<vtk
 	/*
 	 * Add rank to each point; this should be the rank based upon original construction of writer (see getWriter)
 	 */
-	int pieceNum = w->GetStartPiece();
-	vtkSmartPointer<vtkIdTypeArray> cellRanks = vtkSmartPointer<vtkIdTypeArray>::New();
-	cellRanks->SetNumberOfComponents(1);
-	vtkCellData *cellData = g->GetCellData();
-	vtkIdType numCells = g->GetNumberOfCells();
-	cellRanks->SetName("rank");
-	for(int p=0;p<numCells;p++)
-		cellRanks->InsertNextValue(pieceNum);
-
-	cellData->AddArray(cellRanks);
+//	int pieceNum = w->GetStartPiece();
+//	vtkSmartPointer<vtkIdTypeArray> cellRanks = vtkSmartPointer<vtkIdTypeArray>::New();
+//	cellRanks->SetNumberOfComponents(1);
+//	vtkCellData *cellData = g->GetCellData();
+//	vtkIdType numCells = g->GetNumberOfCells();
+//	cellRanks->SetName("rank");
+//	for(int p=0;p<numCells;p++)
+//		cellRanks->InsertNextValue(pieceNum);
+//
+//	cellData->AddArray(cellRanks);
 	w->SetInput(g);
 	w->Write();
 }
 
-/*
- * NOTE: pointer to data is used directly here;
- * This method lets the user specify data to be held by the array.  The
- * array argument is a pointer to the data.  Set save to 1 to keep the class
- * from deleting the array when it cleans up or reallocates memory.
- * The class uses the actual array provided; it does not copy the data
- * from the suppled array.
- * NOTE: Also -- the supplied coordinates 'y' should be a vector with 3 components
- * per point
- */
+
 vtkSmartPointer<vtkUnstructuredGrid> getGrid(shared_ptr<double>& y, int numPoints){
 	return getGrid(y.get(),numPoints);
 }
@@ -134,10 +132,9 @@ vtkSmartPointer<vtkUnstructuredGrid> getGrid(shared_ptr<double>& y, int numPoint
  * per point
  */
 vtkSmartPointer<vtkUnstructuredGrid> getGrid(double *yPtr, int numPoints){
-	// Set points and cells
-	// note number of points is same as number of cells
+
 	vtkSmartPointer<vtkPoints> pts = vtkSmartPointer<vtkPoints>::New();
-	int numCells = numPoints;
+
 	/*
 	 * Add coordinates to grid
 	 * This directly uses the pointer to data provided  -- this is the part that
@@ -147,13 +144,38 @@ vtkSmartPointer<vtkUnstructuredGrid> getGrid(double *yPtr, int numPoints){
 	int numComponents=3;
 	ptsData->SetNumberOfComponents(numComponents);
 	int save=1;
-	ptsData->SetArray(yPtr,numCells*numComponents,save);
+	ptsData->SetArray(yPtr,numPoints*numComponents,save);
 	pts->SetData(ptsData);
 
-	vtkSmartPointer<vtkCellArray> cells = getCellArray(numCells);
-	vtkSmartPointer<vtkUnstructuredGrid> grid = getGrid(pts,cells);
+	/*
+	 * Creates a grid of "cells"
+	 */
+//	vtkSmartPointer<vtkCellArray> cells = getCellArray(numCells);
+//	vtkSmartPointer<vtkUnstructuredGrid> grid = getGrid(pts,cells);
 
+	/*
+	 * Creates a grid of "points"
+	 */
+	vtkSmartPointer<vtkUnstructuredGrid> grid = getGrid(pts);
 	return grid;
+}
+
+vtkSmartPointer<vtkUnstructuredGrid>  getGrid(const vtkSmartPointer<vtkPoints>& x){
+
+	/**
+	 * Cells constructed are "vertex" type cells
+	 */
+	vtkSmartPointer<vtkUnstructuredGrid> grid = vtkSmartPointer<vtkUnstructuredGrid>::New();
+	grid->SetPoints(x);
+	return grid;
+}
+
+#if 0
+/*
+ * Idea for adding a restricted set of cells
+ */
+vtkSmartPointer<vtkUnstructuredGrid>  addCells(vtkSmartPointer<vtkUnstructuredGrid> grid, int* gids, numGids, int* neighborhood){
+
 }
 
 vtkSmartPointer<vtkUnstructuredGrid>  getGrid(const vtkSmartPointer<vtkPoints>& x, const vtkSmartPointer<vtkCellArray>& cells){
@@ -167,7 +189,6 @@ vtkSmartPointer<vtkUnstructuredGrid>  getGrid(const vtkSmartPointer<vtkPoints>& 
 
 	return grid;
 }
-
 
 vtkSmartPointer<vtkCellArray> getCellArray(vtkIdType numCells){
 
@@ -187,5 +208,6 @@ vtkSmartPointer<vtkCellArray> getCellArray(vtkIdType numCells){
 
 	return cells;
 }
+#endif
 
 } // PdVTK
