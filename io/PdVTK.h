@@ -73,23 +73,6 @@ T *data
 ) {
 
 	/*
-	 * Write "cell data"
-	 */
-//	vtkCellData *cellData = g->GetCellData();
-//	/*
-//	 * Add field to grid
-//	 */
-// 	typename vtk_trait<T>::vtk_type cellField;
-//	cellField = vtk_trait<T>::vtk_type::New();
-//
-//	cellField->SetName(name_null_terminated);
-//	cellField->SetNumberOfComponents(degree);
-//	int save=1;
-//	std::size_t size = degree*g->GetNumberOfCells();
-//	cellField->SetArray(data,size,save);
-//	cellData->AddArray(cellField);
-
-	/*
 	 * Write "point data"
 	 */
 	vtkPointData *pointData = g->GetPointData();
