@@ -37,40 +37,47 @@ def GetPointTuples(grid):
 
 	xyz = grid.GetPoints().GetData()
 	return xyz
-	
-def GetCellData(grid):
+
+def GetData(grid, relationType='point'):
 	"""Returns cellData associated with grid
 	
-	Input:  vtkUnstructuredGrid --> vtkDataSet
-	Output: vtkCellData
+	Input: vtkUnstructuredGrid --> vtkDataSet
+	Input: relationType -- allowed: 'point' or 'cell'
+	Output: data -- type is vtkPointData OR vtkCellData
 	"""
-	cellData=grid.GetCellData()
-	return cellData
+	if 'point'==relationType:
+		data=grid.GetPointData()
+	elif 'cell'==relationType:
+		data=grid.GetCellData()
+	else:
+		raise TypeError("relationType must be: \'point\' or \'cell\'; input value = "+repr(relationType))
 
-def GetFieldTuple(fieldName,cellData):
+	return data
+
+def GetFieldTuple(fieldName,data):
 	"""Returns field data tuples on cellData 
 	
 	Input:  string fieldName
-	Input:  vtkCellData cellData
+	Input:  data -- type is vtkPointData OR vtkCellData
 	Output: vtkDoubleArray
 	"""
-	return cellData.GetVectors(fieldName)
+	return data.GetVectors(fieldName)
 
-def GetCellDataFieldNames(cellData):
-	"""List of field names on cellData
+def GetDataFieldNames(data):
+	"""List of field names on data
 	
-	Input:  vtkCellData cellData
+	Input:  data -- type is vtkPointData OR vtkCellData 
 	Output: python list
 	"""
-	return [cellData.GetArrayName(i) for i in range(cellData.GetNumberOfArrays())]
+	return [data.GetArrayName(i) for i in range(data.GetNumberOfArrays())]
 
-def GetCellDataTuplesDictionary(cellData):
+def GetDataTuplesDictionary(data):
 	"""Returns a dictionary : fieldName,fieldTuple
 	
-	Input:  vtkCellData cellData
+	Input:  data -- type is vtkPointData OR vtkCellData
 	Output: dictionary (keys=field names, values=vtkDoubleArray)
 	"""
-	return dict([(cellData.GetArrayName(i),cellData.GetArray(i)) for i in range(cellData.GetNumberOfArrays())])
+	return dict([(data.GetArrayName(i),data.GetArray(i)) for i in range(data.GetNumberOfArrays())])
 	
 def GetTimeCollection(filename):
 	"""Opens and reads "pvd" file; Returns List of Tuples: [(timestep, filename)] 
