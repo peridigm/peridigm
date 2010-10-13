@@ -1,6 +1,7 @@
 #! /usr/bin/env vtkpython
 
-import vtkIO 
+import vtkIO
+from optparse import OptionParser
 
 def IsInvalid(val):
     # other options exist to check for nan, but none is good
@@ -10,8 +11,25 @@ def IsInvalid(val):
         return True
     return False
 
-def GetDataTuples(goldData, data):
+def vtkDiffOptionParser():
+    usageMsg = "usage: %prog file1 file2 [option]"
+    parser = OptionParser(usage=usageMsg)
+    parser.add_option("-u", "--uniformTolerance", dest="uniformTolerance", metavar="TOLERANCE", \
+                          help="specify a uniform tolerance that will be applied to all fields")
+    parser.add_option("-f", "--toleranceFile", dest="toleranceFile", metavar="FILE", \
+                          help="specify a .tol file that contains tolerances for each field to be compared")
+    parser.add_option("-v", "--verbose", dest="verbose", metavar="BOOL", default="True",\
+                          help="verbosity flag")
+    return parser
 
+def vtkDiffCheckOptions(options, args):
+    if len(args) != 2:
+        raise Exception()
+    if options.uniformTolerance == None and options.toleranceFile == None:
+        raise Exception("\nException:  Either --uniformTolerance or --toleranceFile option is required\n")
+    return
+
+def GetDataTuples(goldData, data):
     numComponents = data.GetNumberOfComponents()
     goldDataTuple = None
     dataTuple = None
@@ -38,27 +56,35 @@ def GetDataTuples(goldData, data):
             
     return (numComponents, goldDataTuple, dataTuple)
 
-
 if __name__ == "__main__":
 
-    print "\n----VTK File Comparison----"
+    print "\n----VTK File Comparison----\n"
 
-    pvdGoldFileName = '/Users/djlittl/Peridigm/DEBUG/Compression_2x1x1_gold.pvd'
+    # handle command-line options
+    parser = vtkDiffOptionParser()
+    options, args = parser.parse_args()
+    try:
+        vtkDiffCheckOptions(options, args)
+    except Exception, e:
+        parser.print_help()
+        print e
+        exit(1)   
+
+    # data file names
+    pvdGoldFileName = args[0]
     pvtuGoldFileNames = None
     vtuGoldFileNames = None
-
-    pvdFileName = '/Users/djlittl/Peridigm/DEBUG/Compression_2x1x1.pvd'
+    pvdFileName = args[1]
     pvtuFileNames = None
     vtuFileNames = None
 
-    verbose = False
     filesDiff = False
 
     tolerances = {}
     tolerances['Points'] = 1.0e-12
     tolerances['Dilatation'] = 1.0e-12
 
-    print "\nData set one: ", pvdGoldFileName
+    print "Data set one: ", pvdGoldFileName
     print "Data set two: ", pvdFileName
 
 #    if tolerance_specification == "Uniform":
@@ -145,15 +171,15 @@ if __name__ == "__main__":
                     data.GetNumberOfTuples(), "!=", goldData.GetNumberOfTuples(), "\n"
                 exit(1)
 
-            # text specific to this data comparison
-            compText =  "\n  Comparing " + dataName + "\n"
-            compText += "    number of values: " + str(data.GetNumberOfTuples()) + '\n'
-            compText += "    tolerance: " + str(tol) + '\n'
-
             # comparison tolerances, etc.
             tol = tolerances[dataName]
             maxDiff = 0.0
             dataDiff = False
+
+            # text specific to this data comparison
+            compText =  "\n  Comparing " + dataName + "\n"
+            compText += "    number of values: " + str(data.GetNumberOfTuples()) + '\n'
+            compText += "    tolerance: " + str(tol) + '\n'
 
             # loop over the points and perform comparison
             for pt in xrange(data.GetNumberOfTuples()):
@@ -182,9 +208,9 @@ if __name__ == "__main__":
             if dataDiff == True:
                 nonVerboseText += compText
 
-        if verbose == True:
+        if options.verbose == True:
             print verboseText
-        if verbose == False and dataDiff == True:
+        if options.verbose == False and dataDiff == True:
             print nonVerboseText
 
     returnCode = 0
