@@ -57,12 +57,8 @@
         <Parameter name="Parallel Write" type="bool" value="true"/>
         <ParameterList name="Material Output Fields">
             <ParameterList name="Linear Elastic">
-                <Parameter name="X Position" type="bool" value="true"/>
-                <Parameter name="Y Position" type="bool" value="true"/>
-                <Parameter name="Z Position" type="bool" value="true"/>
-                <Parameter name="X Velocity" type="bool" value="true"/>
-                <Parameter name="Y Velocity" type="bool" value="true"/>
-                <Parameter name="Z Velocity" type="bool" value="true"/>
+                <Parameter name="Displacement" type="bool" value="true"/>
+                <Parameter name="Velocity" type="bool" value="true"/>
                 <Parameter name="ID" type="bool" value="true"/>
                 <Parameter name="Proc Num" type="bool" value="true"/>
                 <Parameter name="Dilatation" type="bool" value="true"/>
