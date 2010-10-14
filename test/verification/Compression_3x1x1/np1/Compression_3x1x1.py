@@ -31,12 +31,12 @@ if __name__ == "__main__":
     # between gold files and old output files can be tricky
     files_to_remove = []
     for file in os.listdir(os.getcwd()):
-        vals = re.split("\.t[0123456789]*\.vtu", file)
+        vals = re.split("\_t[0123456789]*\.vtu", file)
         if len(vals) > 1:
             vtu_basename = re.split("\.p[0123456789]*", vals[0])[0]
             if vtu_basename == base_name:
                 files_to_remove.append(file)
-        vals = re.split("\.t[0123456789]*\.pvtu", file)
+        vals = re.split("\_t[0123456789]*\.pvtu", file)
         if len(vals) > 1:
             pvtu_basename = re.split("\.p[0123456789]*", vals[0])[0]
             if pvtu_basename == base_name:
@@ -52,10 +52,10 @@ if __name__ == "__main__":
         result = return_code
 
     # compare output files against gold files
-    command = ["../../../regression/Peridigm_Output_Compare.py", \
-                   base_name, \
-                   base_name+".gold", \
-                   "-tolerance_file", \
+    command = ["../../../../scripts/vtkDiff.py", \
+                   base_name+".pvd", \
+                   base_name+"_gold.pvd", \
+                   "--toleranceFile", \
                    "../"+base_name+".comp"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
