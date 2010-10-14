@@ -52,7 +52,7 @@ if __name__ == "__main__":
         result = return_code
 
     # compare output files against gold files
-    command = ["../../../regression/Peridigm_Output_Compare.py", \
+    command = ["../../../../scripts/vtkDiff.py", \
                    base_name, \
                    base_name+".gold", \
                    "-tolerance_file", \
