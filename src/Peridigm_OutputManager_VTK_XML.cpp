@@ -150,17 +150,11 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
     grid = PdVTK::getGrid(xptr,length);
   }
 
-  // get current system time
-  time_t rawtime;
-  struct tm *timeinfo;
-
-  time ( &rawtime );
-  timeinfo = localtime ( &rawtime );
-
   // Convenience definitions of FieldSpecs
   const Field_NS::FieldSpec Displacement(Field_NS::FieldSpec::DISPLACEMENT,Field_NS::FieldSpec::VECTOR3D, "Displacement");
   const Field_NS::FieldSpec Velocity(Field_NS::FieldSpec::DISPLACEMENT,Field_NS::FieldSpec::VECTOR3D, "Velocity");
   const Field_NS::FieldSpec Id(Field_NS::FieldSpec::ID,Field_NS::FieldSpec::SCALAR, "Id");
+  const Field_NS::FieldSpec Proc_Num(Field_NS::FieldSpec::PROC_NUM,Field_NS::FieldSpec::SCALAR, "Proc_Num");
   const Field_NS::FieldSpec Dilatation(Field_NS::FieldSpec::ID,Field_NS::FieldSpec::SCALAR, "Dilatation");
   const Field_NS::FieldSpec Weighted_Volume(Field_NS::FieldSpec::WEIGHTED_VOLUME,Field_NS::FieldSpec::SCALAR, "Weighted_Volume");
 
@@ -183,6 +177,15 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
     // Get map corresponding to x
     const Epetra_BlockMap& xMap = x->Map();
     PdVTK::writeField<int>(grid,Id,xMap.MyGlobalElements());
+  }
+
+  std::vector<int> proc_num;
+  if (thisMaterial->isParameter("Proc Num")) {
+    // Get map corresponding to x
+    const Epetra_BlockMap& xMap = x->Map();
+    int length = xMap.NumMyElements();
+    proc_num.assign (length,myPID); 
+    PdVTK::writeField<int>(grid,Proc_Num,&proc_num[0]);
   }
 
   // MLP: For now, hardcode to "Linear Elastic" material type. Changes in Peridigm_ModelEvaluator to facilitate additional material types will be 
