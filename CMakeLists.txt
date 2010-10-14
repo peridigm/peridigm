@@ -248,5 +248,7 @@ if (NOT ${buildInSource})
    set(UT_DIRS ${UT_DIRS}  -d test/regression)
    set(UT_DIRS ${UT_DIRS}  -d test/verification)
    execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/mirror.py -s ${CMAKE_SOURCE_DIR} -b ${CMAKE_BINARY_DIR} ${UT_DIRS} )
+   set(SCRIPT_DIRS ${SCRIPT_DIRS}  -d scripts)
+   execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/mirror.py -s ${CMAKE_SOURCE_DIR} -b ${CMAKE_BINARY_DIR} ${SCRIPT_DIRS} )
 endif (NOT ${buildInSource})
 
