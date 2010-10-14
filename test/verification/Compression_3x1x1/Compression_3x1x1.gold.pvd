@@ -4,11 +4,11 @@ Peridigm Version XXX: Thu Oct 14 00:06:56 2010
 -->
 <VTKFile type="Collection" version="0.1" byte_order="LittleEndian">
 	<Collection>
-		<DataSet timestep="0" file="Compression_3x1x1_t0.pvtu"/>
-		<DataSet timestep="1" file="Compression_3x1x1_t1.pvtu"/>
-		<DataSet timestep="2" file="Compression_3x1x1_t2.pvtu"/>
-		<DataSet timestep="3" file="Compression_3x1x1_t3.pvtu"/>
-		<DataSet timestep="4" file="Compression_3x1x1_t4.pvtu"/>
-		<DataSet timestep="5" file="Compression_3x1x1_t5.pvtu"/>
+		<DataSet timestep="0" file="Compression_3x1x1_t0.gold.pvtu"/>
+		<DataSet timestep="1" file="Compression_3x1x1_t1.gold.pvtu"/>
+		<DataSet timestep="2" file="Compression_3x1x1_t2.gold.pvtu"/>
+		<DataSet timestep="3" file="Compression_3x1x1_t3.gold.pvtu"/>
+		<DataSet timestep="4" file="Compression_3x1x1_t4.gold.pvtu"/>
+		<DataSet timestep="5" file="Compression_3x1x1_t5.gold.pvtu"/>
 	</Collection>
 </VTKFile>
