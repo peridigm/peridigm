@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<!--
+Peridigm Version XXX: Thu Oct 14 10:49:48 2010
+-->
+<VTKFile type="Collection" version="0.1" byte_order="LittleEndian">
+	<Collection>
+		<DataSet timestep="0" file="Compression_2x1x1_gold_t0.pvtu"/>
+		<DataSet timestep="1" file="Compression_2x1x1_gold_t1.pvtu"/>
+		<DataSet timestep="2" file="Compression_2x1x1_gold_t2.pvtu"/>
+		<DataSet timestep="3" file="Compression_2x1x1_gold_t3.pvtu"/>
+		<DataSet timestep="4" file="Compression_2x1x1_gold_t4.pvtu"/>
+		<DataSet timestep="5" file="Compression_2x1x1_gold_t5.pvtu"/>
+	</Collection>
+</VTKFile>
