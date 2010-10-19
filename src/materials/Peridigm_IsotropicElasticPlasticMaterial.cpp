@@ -14,7 +14,8 @@ Material(params),
 decompStates()
 {
 
-	decompStates.addScalarStateBondVariable("scalarPlasticExtensionState");
+	decompStates.addScalarStateBondVariable("scalarPlasticExtensionState_N");
+	decompStates.addScalarStateBondVariable("scalarPlasticExtensionState_NP1");
 
 	//! \todo Add meaningful asserts on material properties.
 	m_bulkModulus = params.get<double>("Bulk Modulus");
@@ -137,29 +138,31 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const Epetra_Vector& x
 	  std::pair<int,double*> vectorView = decompStates.extractStrideView(vectorConstitutiveData);
 	  double *y = decompStates.extractCurrentPositionView(vectorView);
 	  std::pair<int,double*> scalarBondView = decompStates.extractStrideView(bondConstitutiveData);
-	  double* edpN = decompStates.extractScalarBondVariable(scalarBondView,"scalarPlasticExtensionState");
+	  double* edpN   = decompStates.extractScalarBondVariable(scalarBondView,"scalarPlasticExtensionState_N");
+	  double* edpNP1 = decompStates.extractScalarBondVariable(scalarBondView,"scalarPlasticExtensionState_NP1");
 
 	  // Compute the force on each particle that results from interactions
 	  // with locally-owned nodes
 	  force.PutScalar(0.0);
 
-//	  PdMaterialUtilities::computeInternalForceIsotropicElasticPlastic
-//	  (
-//			  x.Values(),
-//			  y,
-//			  weightedVolume,
-//			  cellVolume.Values(),
-//			  dilatation,
-//			  bondState,
-//			  edpN,
-//			  force.Values(),
-//			  neighborhoodList,
-//			  numOwnedPoints,
-//			  m_bulkModulus,
-//			  m_shearModulus,
-//			  m_horizon,
-//			  m_yieldStress
-//	  );
+	  PdMaterialUtilities::computeInternalForceIsotropicElasticPlastic
+	  (
+			  x.Values(),
+			  y,
+			  weightedVolume,
+			  cellVolume.Values(),
+			  dilatation,
+			  bondState,
+			  edpN,
+			  edpNP1,
+			  force.Values(),
+			  neighborhoodList,
+			  numOwnedPoints,
+			  m_bulkModulus,
+			  m_shearModulus,
+			  m_horizon,
+			  m_yieldStress
+	  );
 
 }
 
