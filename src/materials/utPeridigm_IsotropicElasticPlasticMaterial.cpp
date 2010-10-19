@@ -42,6 +42,8 @@
 #include "Pd_shared_ptr_Array.h"
 #include "PdMaterialUtilities.h"
 #include <math.h>
+#include "Field.h"
+#include <fstream>
 
 using namespace boost::unit_test;
 using namespace std;
@@ -50,18 +52,60 @@ using namespace Teuchos;
 using namespace PdQuickGrid;
 using namespace PdMaterialUtilities;
 using std::tr1::shared_ptr;
+using namespace Field_NS;
 
 const double horizon=sqrt(2);
 
-class Control {
+class StageFunction {
+
 private:
 	double start, end;
 
 public:
-	Control() : start(0), end(0) {}
-	Control(double start, double end) : start(start), end(end){}
-	double value(double lambda) const {return (1-lambda)*start + lambda*end;}
+	StageFunction() : start(0), end(0) {}
+
+	StageFunction(double start, double end) : start(start), end(end){}
+
+	/**
+	 * Control function which produces step or proportional loading;
+	 * Step loading is given with start==end
+	 * Proportional loading is given by start != end
+	 * @param lambda Load parameter for stage; it is assumed that 0<=lambda <=1.0
+	 * @return Function value
+	 */
+	double value(double lambda) const {
+		return (1-lambda)*start + lambda*end;
+	}
+
+	/**
+	 * @return slope of function
+	 */
 	double slope() const { return end-start; }
+
+
+	/**
+	 * StageFunction for next stage
+	 * @return new StageFunction will hold constant
+	 */
+	StageFunction next() const {
+		double fStartNew = this->end;
+		double fEndNew = fStartNew;
+		return StageFunction(fStartNew,fEndNew);
+	}
+
+
+
+	/**
+	 * StageFunction for next stage
+	 * @param <code>endVal </code>value of loader at end of load step
+	 * @return new proportional<code>StageFunction</code> with starting value of this end value and end value <code>endVal</code>
+	 */
+	StageFunction next(double endVal) const {
+		double fStartNew = this->end;
+		double fEndNew = endVal;
+		return StageFunction(fStartNew,fEndNew);
+	}
+
 };
 
 inline void SET(double* const start, const double* const end, double value){
@@ -126,9 +170,10 @@ ParameterList getParamList()
 	BOOST_CHECK(mat.VectorConstitutiveVariableName(0) == "Current Position");
 	BOOST_CHECK_THROW(mat.VectorConstitutiveVariableName(-1), std::range_error);
 	BOOST_CHECK_THROW(mat.VectorConstitutiveVariableName(1), std::range_error);
-	BOOST_CHECK(mat.BondConstitutiveVariableName(0) == "scalarPlasticExtensionState");
-	BOOST_CHECK_THROW(mat.BondConstitutiveVariableName(1), std::range_error);
-	BOOST_CHECK(mat.NumBondConstitutiveVariables()==1);
+	BOOST_CHECK(mat.BondConstitutiveVariableName(0) == "scalarPlasticExtensionState_N");
+	BOOST_CHECK(mat.BondConstitutiveVariableName(1) == "scalarPlasticExtensionState_NP1");
+	BOOST_CHECK_THROW(mat.BondConstitutiveVariableName(2), std::range_error);
+	BOOST_CHECK(mat.NumBondConstitutiveVariables()==2);
 
 	return params;
 }
@@ -233,13 +278,23 @@ void runPureShear() {
 
 
 	/*
-	 * Displacement, Velocity, Current Position, Force
+	 * Displacement and Internal Force Vectors
 	 */
-	Pd_shared_ptr_Array<double> uPtr(numPoints*3), vPtr(numPoints*3), yPtr(numPoints*3), fPtr(numPoints*3);
-	SET(uPtr.get(),uPtr.end(),0.0);
-	SET(vPtr.get(),vPtr.end(),0.0);
-	SET(yPtr.get(),yPtr.end(),0.0);
-	SET(fPtr.get(),fPtr.end(),0.0);
+	FieldSpec uSpec(FieldSpec::DISPLACEMENT,FieldSpec::VECTOR3D,"u");
+	Field<double> uOwnedField(uSpec,pdGridData.numPoints);
+	FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
+	Field_NS::Field<double> fNField(fNSpec,pdGridData.numPoints);
+	const FieldSpec velocitySpec(FieldSpec::VELOCITY,FieldSpec::VECTOR3D, "velocity");
+	Field<double> velField(velocitySpec,pdGridData.numPoints);
+	const FieldSpec ySpec(FieldSpec::COORDINATES,FieldSpec::VECTOR3D, "CURRENT_COORDINATES");
+	Field<double> yField(ySpec,pdGridData.numPoints);
+	uOwnedField.setValue(0.0);
+	velField.setValue(0.0);
+	fNField.setValue(0.0);
+	yField.setValue(0.0);
+	double *u1x = uOwnedField.getArray().get()+3;
+	double *v1x = velField.getArray().get()+3;
+	double *f1x = fNField.getArray().get()+3;
 
 	/*
 	 * Weighted Volume
@@ -257,10 +312,12 @@ void runPureShear() {
 	/*
 	 * Bond State and deviatoric plastic extension
 	 */
-	Pd_shared_ptr_Array<double> bondStatePtr(pdGridData.sizeNeighborhoodList-numPoints), edpNPtr(pdGridData.sizeNeighborhoodList-numPoints);
+	Pd_shared_ptr_Array<double> bondStatePtr(pdGridData.sizeNeighborhoodList-numPoints);
 	SET(bondStatePtr.get(),bondStatePtr.end(),0.0);
-	SET(edpNPtr.get(),edpNPtr.end(),0.0);
-
+	TemporalField<double> edpTemporalField(DEVIATORIC_PLASTIC_EXTENSION,pdGridData.sizeNeighborhoodList-numPoints);
+	Field<double> edpNField = edpTemporalField.getField(FieldSpec::STEP_N);
+	Field<double> edpNP1Field = edpTemporalField.getField(FieldSpec::STEP_NP1);
+	SET(edpNField.getArray().get(),edpNField.getArray().end(),0.0);
 	/*
 	 * Track
 	 */
@@ -270,64 +327,70 @@ void runPureShear() {
 	 * 2) unload
 	 * 3) reload
 	 */
-	std::vector<Control> stages(3);
+	std::vector<StageFunction> stages(3);
 	/*
 	 * Loading
 	 */
-	stages[0] = Control(0,epsYield);
+	stages[0] = StageFunction(0,epsYield);
 	/*
 	 * Unloading
 	 */
-	stages[1] = Control(1.25*epsYield,0);
+	stages[1] = stages[0].next(-.001275);
 
 	/*
 	 * Re-Unloading
 	 */
-	stages[2] = Control(0,0.5*epsYield);
+	stages[2] = stages[1].next(.001275);
 
 	int numStepsPerStage = 50;
 	double dt = 1.0/numStepsPerStage;
 
 	/*
+	 * Pointers to data that don't change in this test
+	 */
+	double *x = pdGridData.myX.get();
+	double *u = uOwnedField.getArray().get();
+	double *v = velField.getArray().get();
+	double *y = yField.getArray().get();
+	double *m = mPtr.get();
+	double *theta = thetaPtr.get();
+	double *bondState = bondStatePtr.get();
+	double *vol = pdGridData.cellVolume.get();
+	int *neigh = pdGridData.neighborhood.get();
+
+	/*
+	 * Create data file
+	 */
+	std::fstream out("ep.dat", std::fstream::out);
+
+	/*
 	 * Write out initial condition
 	 */
 	double t=0;
-	std::cout << 0 << " " << 0 << " " << 0 << std::endl;
-	for(std::vector<Control>::iterator stageIter=stages.begin(); stageIter!=stages.end();stageIter++){
+	out << 0 << " " << 0 << " " << 0 << std::endl;
+	for(std::vector<StageFunction>::iterator stageIter=stages.begin(); stageIter!=stages.end();stageIter++){
+
 		double vel = stageIter->slope();
-		int p1x = 3;
-		double *u1x = uPtr.get()+p1x;
-		double *v1x = vPtr.get()+p1x; *v1x=vel;
-		double *f1x = fPtr.get()+p1x;
+		*v1x = vel;
+
 
 		for(int step=0;step<numStepsPerStage;step++){
-			double *x = pdGridData.myX.get();
-			double *u = uPtr.get();
-			double *v = vPtr.get();
-			double *y = yPtr.get();
-			double *m = mPtr.get();
-			double *theta = thetaPtr.get();
-			double *bondState = bondStatePtr.get();
-			double *vol = pdGridData.cellVolume.get();
-			int *neigh = pdGridData.neighborhood.get();
-			double *edpN = edpNPtr.get();
-			double *f = fPtr.get();
+			Field<double> edpNField = edpTemporalField.getField(FieldSpec::STEP_N);
+			Field<double> edpNP1Field = edpTemporalField.getField(FieldSpec::STEP_NP1);
+			double *edpN = edpNField.getArray().get();
+			double *edpNP1 = edpNP1Field.getArray().get();
+			fNField.setValue(0.0);
+			double *f = fNField.getArray().get();
+
+			t += dt;
 
 			updateGeometry(x,u,v,y,numPoints*3,dt);
 
 			/*
 			 * Do not compute dilatation -- just set it to zero
 			 */
-			// computeDilatation(x,y,m,vol,bondState,theta,neigh,numPoints);
+			computeInternalForceIsotropicElasticPlastic(x,y,m,vol,theta,bondState,edpN,edpNP1,f,neigh,numPoints,K,MU,DELTA,Y);
 
-			SET(fPtr.get(),fPtr.end(),0.0);
-//			computeInternalForceIsotropicElasticPlastic(x,y,m,vol,theta,bondState,edpN,f,neigh,numPoints,K,MU,DELTA,Y);
-
-			/*
-			 * Next step
-			 */
-			*u1x += vel*dt;
-			t += dt;
 
 			/*
 			 * Get sign of "f" -- this works as long as f does not ever land "exactly" on zero
@@ -354,7 +417,17 @@ void runPureShear() {
 			double engineeringStrain=(l-L)/L;
 			double stretch=l/L;
 			double trueStrain=std::log(stretch);
-			std::cout << t << " " << *u1x << " " << signF*MAGNITUDE(f1x) << std::endl;
+			/*
+			 * Next step; this is a bit squirely -- has to do with updateGeometry
+			 * Update geometry takes velocity and existing displacement field (N)
+			 * Update geometry y = X + U(N) +Velocity*dt = X + U(NP1)
+			 * So, that is why we need this at the bottom of this loop
+			 */
+			*u1x += vel*dt;
+
+			out << t << " " << *u1x << " " << signF*MAGNITUDE(f1x) << std::endl;
+			edpTemporalField.advanceStep();
+
 		}
 	}
 
