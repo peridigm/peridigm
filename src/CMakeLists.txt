@@ -108,21 +108,6 @@ ${REQUIRED_LIBS}
 ${Boost_LIBRARIES}
 )
 
-add_executable(utPeridigm_IsotropicElasticPlasticMaterial
-		./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
-		./materials/Peridigm_DecompositionStates.cpp
-        ./materials/Peridigm_CriticalStretchDamageModel.cpp
-		./materials/utPeridigm_IsotropicElasticPlasticMaterial.cpp)
-target_link_libraries(utPeridigm_IsotropicElasticPlasticMaterial
-${TRILINOS_LIBS}
-${PdQuickGridLibs}
-${PdVTKLibs}
-${VTK_LIBS}
-${PdMaterialUtilitiesLib}
-${REQUIRED_LIBS}
-${Boost_LIBRARIES}
-)
-
 add_executable(utPeridigm_decompositionStates
 		./materials/Peridigm_DecompositionStates.cpp
 		./materials/utPeridigm_decompositionStates.cpp)
@@ -188,3 +173,5 @@ ${Boost_LIBRARIES}
 #${REQUIRED_LIBS}
 #${Boost_LIBRARIES}
 #)
+
+add_subdirectory (materials/)
