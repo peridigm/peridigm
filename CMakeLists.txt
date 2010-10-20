@@ -240,7 +240,7 @@ add_subdirectory (test/unit)
 add_subdirectory (test/regression)
 add_subdirectory (test/verification)
 
-# Create symbolic links to files in directories specified.  Does not recurse folders -- yet!
+# Create symbolic links to files in directories specified.  By default it recurses directories
 # Can exclude files with flag -e <filename>
 string (COMPARE EQUAL ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} buildInSource)
 if (NOT ${buildInSource})
