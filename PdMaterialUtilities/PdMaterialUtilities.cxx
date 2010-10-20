@@ -317,7 +317,7 @@ void computeInternalForceIsotropicElasticPlastic
 			ti = c * zeta;
 
 			/*
-			 * Force state
+			 * Force state (with damage)
 			 */
 			double d=(1.0-*bondDamage);
 			t = d*(ti + d*td);

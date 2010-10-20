@@ -3,6 +3,8 @@
  *
  */
 #include "Peridigm_IsotropicElasticPlasticMaterial.hpp"
+#include "Peridigm_CriticalStretchDamageModel.hpp"
+#include <Teuchos_TestForException.hpp>
 #include "Epetra_Vector.h"
 #include "Epetra_MultiVector.h"
 #include "PdMaterialUtilities.h"
@@ -11,7 +13,8 @@
 PeridigmNS::IsotropicElasticPlasticMaterial::IsotropicElasticPlasticMaterial(const Teuchos::ParameterList & params)
 :
 Material(params),
-decompStates()
+decompStates(),
+m_damageModel()
 {
 
 	decompStates.addScalarStateBondVariable("scalarPlasticExtensionState_N");
@@ -23,6 +26,22 @@ decompStates()
 	m_horizon = params.get<double>("Material Horizon");
 	m_density = params.get<double>("Density");
 	m_yieldStress = params.get<double>("Yield Stress");
+
+	if(params.isSublist("Damage Model")){
+		Teuchos::ParameterList damageParams = params.sublist("Damage Model");
+		if(!damageParams.isParameter("Type")){
+			TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+					"Damage model \"Type\" not specified in Damage Model parameter list.");
+		}
+		string& damageModelType = damageParams.get<string>("Type");
+		if(damageModelType == "Critical Stretch"){
+			m_damageModel = Teuchos::rcp(new PeridigmNS::CriticalStretchDamageModel(damageParams));
+		}
+		else{
+			TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+					"Invalid damage model, \"None\" or \"Critical Stretch\" required.");
+		}
+	}
 }
 
 
@@ -103,12 +122,48 @@ PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const Epetra
 	std::pair<int,double*> scalarView = decompStates.extractStrideView(scalarConstitutiveData);
 	double* weightedVolume = decompStates.extractWeightedVolumeView(scalarView);
 	double* dilatation = decompStates.extractDilatationView(scalarView);
+	double* damage = decompStates.extractDamageView(scalarView);
 
 	std::pair<int,double*> vectorView = decompStates.extractStrideView(vectorConstitutiveData);
 	double *y = decompStates.extractCurrentPositionView(vectorView);
 
 	// Update the geometry
 	PdMaterialUtilities::updateGeometry(x.Values(),u.Values(),v.Values(),y,x.MyLength(),dt);
+
+	// Update the bondState
+	if(!m_damageModel.is_null()){
+		m_damageModel->computeDamage(x,
+				u,
+				v,
+				dt,
+				cellVolume,
+				numOwnedPoints,
+				ownedIDs,
+				neighborhoodList,
+				bondState,
+				scalarConstitutiveData,
+				vectorConstitutiveData,
+				bondConstitutiveData,
+				force);
+	}
+
+	//  Update the element damage (percent of bonds broken)
+	int neighborhoodListIndex = 0;
+	int bondStateIndex = 0;
+	for(int iID=0 ; iID<numOwnedPoints ; ++iID){
+		int nodeID = ownedIDs[iID];
+		int numNeighbors = neighborhoodList[neighborhoodListIndex++];
+		neighborhoodListIndex += numNeighbors;
+		double totalDamage = 0.0;
+		for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
+			totalDamage += bondState[bondStateIndex++];
+		}
+		if(numNeighbors > 0)
+			totalDamage /= numNeighbors;
+		else
+			totalDamage = 0.0;
+		damage[nodeID] = totalDamage;
+	}
 
 
 	PdMaterialUtilities::computeDilatation(x.Values(),y,weightedVolume,cellVolume.Values(),bondState,dilatation,neighborhoodList,numOwnedPoints);
