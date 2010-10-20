@@ -319,7 +319,8 @@ void computeInternalForceIsotropicElasticPlastic
 			/*
 			 * Force state
 			 */
-			t = ti + td;
+			double d=(1.0-*bondDamage);
+			t = d*(ti + d*td);
 
 			/*
 			 * Assemble pair wise force function
