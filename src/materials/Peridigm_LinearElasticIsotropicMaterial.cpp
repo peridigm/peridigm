@@ -202,84 +202,6 @@ PeridigmNS::LinearElasticIsotropicMaterial::updateConstitutiveData(const Epetra_
  	damage[nodeID] = totalDamage;
   }
 
-  // Break bonds if the extension is greater than the critical extension
-  //! \todo Read criticalRelativeExtension from input deck; for now hard-code a reasonable value of 0.002.
-//   double criticalRelativeExtension = 1.0e20;
-//   double trialDamage = 0.0;
-//   int neighborhoodListIndex = 0;
-//   int bondStateIndex = 0;
-//   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
-// 	int nodeID = ownedIDs[iID];
-// 	TEST_FOR_EXCEPT_MSG(nodeID*3+2 >= x.MyLength(), "Invalid neighbor list / x vector\n");
-// 	double nodeInitialX[3] = { x[nodeID*3],
-// 							   x[nodeID*3+1],
-// 							   x[nodeID*3+2] };
-// 	double nodeCurrentX[3] = { y[nodeID*3],
-// 							   y[nodeID*3+1],
-// 							   y[nodeID*3+2] };
-// 	int numNeighbors = neighborhoodList[neighborhoodListIndex++];
-// 	double totalDamage = 0.0;
-// 	for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
-// 	  int neighborID = neighborhoodList[neighborhoodListIndex++];
-// 	  TEST_FOR_EXCEPT_MSG(neighborID < 0, "Invalid neighbor list\n");
-// 	  TEST_FOR_EXCEPT_MSG(neighborID*3+2 >= x.MyLength(), "Invalid neighbor list / initial x vector\n");
-// 	  double initialDistance = 
-// 		distance(nodeInitialX[0], nodeInitialX[1], nodeInitialX[2],
-// 				 x[neighborID*3], x[neighborID*3+1], x[neighborID*3+2]);
-// 	  double currentDistance = 
-// 		distance(nodeCurrentX[0], nodeCurrentX[1], nodeCurrentX[2],
-// 				 y[neighborID*3], y[neighborID*3+1], y[neighborID*3+2]);
-// 	  double relativeExtension = (currentDistance - initialDistance)/initialDistance;
-// 	  trialDamage = 0.0;
-// 	  if(relativeExtension > criticalRelativeExtension)
-// 		trialDamage = 1.0;
-// 	  if(trialDamage > bondState[bondStateIndex])
-// 		bondState[bondStateIndex] = trialDamage;
-// 	  totalDamage += bondState[bondStateIndex];
-// 	  bondStateIndex += 1;
-// 	}
-// 	if(numNeighbors > 0)
-// 	  totalDamage /= numNeighbors;
-// 	else
-// 	  totalDamage = 0.0;
-//  	damage[nodeID] = totalDamage;
-//   }
-
-  // Compute the dilatation
-  // Note:  The computation of dilatation IS considering
-  //        bond breakage.  Dilitation is being computed using
-  //        only the current bonds.
-//  neighborhoodListIndex = 0;
-//  bondStateIndex = 0;
-//  for(int iID=0 ; iID<numOwnedPoints ; ++iID){
-//	double dil = 0.0;
-//	int nodeID = ownedIDs[iID];
-//	TEST_FOR_EXCEPT_MSG(nodeID*3+2 >= x.MyLength(), "Invalid neighbor list / x vector\n");
-//	double nodeInitialX[3] = { x[nodeID*3],
-//							   x[nodeID*3+1],
-//							   x[nodeID*3+2] };
-//	double nodeCurrentX[3] = { y[nodeID*3],
-//							   y[nodeID*3+1],
-//							   y[nodeID*3+2] };
-//	int numNeighbors = neighborhoodList[neighborhoodListIndex++];
-//	for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
-//	  int neighborID = neighborhoodList[neighborhoodListIndex++];
-//	  TEST_FOR_EXCEPT_MSG(neighborID < 0, "Invalid neighbor list\n");
-//	  TEST_FOR_EXCEPT_MSG(neighborID*3+2 >= x.MyLength(), "Invalid neighbor list / initial x vector\n");
-//	  double initialDistance =
-//		distance(nodeInitialX[0], nodeInitialX[1], nodeInitialX[2],
-//				 x[neighborID*3], x[neighborID*3+1], x[neighborID*3+2]);
-//	  double currentDistance =
-//		distance(nodeCurrentX[0], nodeCurrentX[1], nodeCurrentX[2],
-//				 y[neighborID*3], y[neighborID*3+1], y[neighborID*3+2]);
-//	  double extension = currentDistance - initialDistance;
-//	  double neighborVolume = cellVolume[neighborID];
-//	  double bondDamage = bondState[bondStateIndex++];
-//	  dil += omega*initialDistance*(1.0-bondDamage)*extension*neighborVolume;
-//	}
-// 	dilatation[nodeID] = 3.0*dil/weightedVolume[nodeID];
-//  }
-
 PdMaterialUtilities::computeDilatation(x.Values(),y,weightedVolume,cellVolume.Values(),bondState,dilatation,neighborhoodList,numOwnedPoints);
 }
 
@@ -304,52 +226,12 @@ PeridigmNS::LinearElasticIsotropicMaterial::computeForce(const Epetra_Vector& x,
   std::pair<int,double*> scalarView = m_decompStates.extractStrideView(scalarConstitutiveData);
   double* weightedVolume = m_decompStates.extractWeightedVolumeView(scalarView);
   double* dilatation = m_decompStates.extractDilatationView(scalarView);
-//	double* damage = m_decompStates.extractDamageView(scalarView);
   std::pair<int,double*> vectorView = m_decompStates.extractStrideView(vectorConstitutiveData);
   double *y = m_decompStates.extractCurrentPositionView(vectorView);
 
   // Compute the force on each particle that results from interactions
   // with locally-owned nodes
   force.PutScalar(0.0);
-//  int neighborhoodListIndex = 0;
-//  int bondStateIndex = 0;
-//  for(int iID=0 ; iID<numOwnedPoints ; ++iID){
-//	int nodeID = ownedIDs[iID];
-//	TEST_FOR_EXCEPT_MSG(nodeID*3+2 >= x.MyLength(), "Invalid neighbor list / x vector\n");
-//	double nodeInitialX[3] = { x[nodeID*3],
-//							   x[nodeID*3+1],
-//							   x[nodeID*3+2] };
-//	double nodeCurrentX[3] = { y[nodeID*3],
-//							   y[nodeID*3+1],
-//							   y[nodeID*3+2] };
-//	int numNeighbors = neighborhoodList[neighborhoodListIndex++];
-//	for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
-//	  int neighborID = neighborhoodList[neighborhoodListIndex++];
-//	  TEST_FOR_EXCEPT_MSG(neighborID < 0, "Invalid neighbor list\n");
-//	  TEST_FOR_EXCEPT_MSG(neighborID*3+2 >= x.MyLength(), "Invalid neighbor list / initial x vector\n");
-//	  double initialDistance =
-//		distance(nodeInitialX[0], nodeInitialX[1], nodeInitialX[2],
-//				 x[neighborID*3], x[neighborID*3+1], x[neighborID*3+2]);
-//	  double currentDistance =
-//		distance(nodeCurrentX[0], nodeCurrentX[1], nodeCurrentX[2],
-//				 y[neighborID*3], y[neighborID*3+1], y[neighborID*3+2]);
-//	  double extension = currentDistance - initialDistance;
-//	  double extensionIsotropic = dilatation[nodeID]*initialDistance/3.0;
-//	  double bondDamage = bondState[bondStateIndex++];
-//	  double extensionDeviatoric = (1.0-bondDamage)*extension - extensionIsotropic;
-//	  double pressure = -1.0*m_bulkModulus*dilatation[nodeID];
-//	  double scalarForceState =
-//		(1.0-bondDamage)*(-3.0*pressure*omega*initialDistance/weightedVolume[nodeID] +
-//						  15.0*m_shearModulus*omega*extensionDeviatoric/weightedVolume[nodeID]);
-//
-//	  force[nodeID*3]       += scalarForceState*cellVolume[neighborID]*(y[neighborID*3]   - nodeCurrentX[0])/currentDistance;
-//	  force[nodeID*3+1]     += scalarForceState*cellVolume[neighborID]*(y[neighborID*3+1] - nodeCurrentX[1])/currentDistance;
-//	  force[nodeID*3+2]     += scalarForceState*cellVolume[neighborID]*(y[neighborID*3+2] - nodeCurrentX[2])/currentDistance;
-//	  force[neighborID*3]   -= scalarForceState*cellVolume[nodeID]*(y[neighborID*3]   - nodeCurrentX[0])/currentDistance;
-//	  force[neighborID*3+1] -= scalarForceState*cellVolume[nodeID]*(y[neighborID*3+1] - nodeCurrentX[1])/currentDistance;
-//	  force[neighborID*3+2] -= scalarForceState*cellVolume[nodeID]*(y[neighborID*3+2] - nodeCurrentX[2])/currentDistance;
-//	}
-//  }
 
   PdMaterialUtilities::computeInternalForceLinearElastic(x.Values(),y,weightedVolume,cellVolume.Values(),dilatation,bondState,force.Values(),neighborhoodList,numOwnedPoints,m_bulkModulus,m_shearModulus);
 
