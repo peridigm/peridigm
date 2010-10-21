@@ -155,6 +155,7 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
   const Field_NS::FieldSpec Velocity(Field_NS::FieldSpec::DISPLACEMENT,Field_NS::FieldSpec::VECTOR3D, "Velocity");
   const Field_NS::FieldSpec Id(Field_NS::FieldSpec::ID,Field_NS::FieldSpec::SCALAR, "Id");
   const Field_NS::FieldSpec Proc_Num(Field_NS::FieldSpec::PROC_NUM,Field_NS::FieldSpec::SCALAR, "Proc_Num");
+  const Field_NS::FieldSpec Damage(Field_NS::FieldSpec::DAMAGE,Field_NS::FieldSpec::SCALAR, "Damage");
   const Field_NS::FieldSpec Dilatation(Field_NS::FieldSpec::ID,Field_NS::FieldSpec::SCALAR, "Dilatation");
   const Field_NS::FieldSpec Weighted_Volume(Field_NS::FieldSpec::WEIGHTED_VOLUME,Field_NS::FieldSpec::SCALAR, "Weighted_Volume");
 
@@ -207,6 +208,9 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
       }
       else if (outstring == "Weighted Volume") {
         PdVTK::writeField<double>(grid,Weighted_Volume,dataptr);
+      }
+      else if (outstring == "Damage") {
+        PdVTK::writeField<double>(grid,Damage,dataptr);
       }
       else {
         // Unknown field
