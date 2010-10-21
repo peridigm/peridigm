@@ -432,12 +432,12 @@ PeridigmNS::ModelEvaluator::evalModel(const InArgs& inArgs,
 void 
 PeridigmNS::ModelEvaluator::evalModel(Teuchos::RCP<PHAL::Workset> workset) const
 {
-  cout << "DEBUGGING: PeridigmNS::ModelEvaluator::evalModel() has been called." << endl;
+//  cout << "DEBUGGING: PeridigmNS::ModelEvaluator::evalModel() has been called." << endl;
 
   // call field manager with workset
   fm->evaluateFields<PHAL::PeridigmTraits::Residual>(*workset);
 
-  cout << *(workset->forceOverlap) << endl;
+//  cout << *(workset->forceOverlap) << endl;
 
   // add the internal force and the contact force
   if(computeContact){

@@ -494,6 +494,7 @@ void PeridigmNS::Peridigm::execute() {
 
     t_current = t_initial + (step*dt);
 
+if (peridigmComm->MyPID() == 0)
 std::cout << "step = " << step << endl;
 
     // Update the contact configuration, if necessary
