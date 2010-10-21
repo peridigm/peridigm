@@ -8,6 +8,7 @@
 #include "Epetra_Vector.h"
 #include "Epetra_MultiVector.h"
 #include "PdMaterialUtilities.h"
+#include <limits>
 
 
 PeridigmNS::IsotropicElasticPlasticMaterial::IsotropicElasticPlasticMaterial(const Teuchos::ParameterList & params)
@@ -26,6 +27,12 @@ m_damageModel()
 	m_horizon = params.get<double>("Material Horizon");
 	m_density = params.get<double>("Density");
 	m_yieldStress = params.get<double>("Yield Stress");
+
+	/*
+	 * Set the yield stress to a very large value: this in effect makes the model run elastic -- useful for testing
+	 */
+	if(params.isType<string>("Test"))
+		m_yieldStress = std::numeric_limits<double>::max( );
 
 	if(params.isSublist("Damage Model")){
 		Teuchos::ParameterList damageParams = params.sublist("Damage Model");
