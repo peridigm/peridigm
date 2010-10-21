@@ -69,11 +69,11 @@ def SetUniformTolerance(pvtuGoldFileName, pvtuFileName):
     # get the list of fields from the first files in the time series
     vtuGoldData = vtkIO.GetGrid(pvtuGoldFileName)
     vtuGoldPointData = vtuGoldData.GetPointData()
-    goldArrayNames = vtkIO.GetCellDataFieldNames(vtuGoldPointData)
+    goldArrayNames = vtkIO.GetDataFieldNames(vtuGoldPointData)
     goldArrayNames.sort()
     vtuData = vtkIO.GetGrid(pvtuFileName)
     vtuPointData = vtuData.GetPointData()
-    arrayNames = vtkIO.GetCellDataFieldNames(vtuPointData)
+    arrayNames = vtkIO.GetDataFieldNames(vtuPointData)
     arrayNames.sort()
     for i in range(len(goldArrayNames)):
         if arrayNames[i] != goldArrayNames[i]:
