@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!--
+Peridigm Version XXX: Wed May 12 14:58:43 2010
+-->
+<VTKFile type="Collection" version="0.1" byte_order="LittleEndian">
+  <Collection>
+  <DataSet timestep="0.000000000000000e+00" file="BondBreakingInitialVelocity.gold.t0.vtu"/>
+  <DataSet timestep="1.000000000000000e-05" file="BondBreakingInitialVelocity.gold.t1000.vtu"/>
+  <DataSet timestep="2.000000000000000e-05" file="BondBreakingInitialVelocity.gold.t2000.vtu"/>
+  <DataSet timestep="3.000000000000000e-05" file="BondBreakingInitialVelocity.gold.t3000.vtu"/>
+  <DataSet timestep="4.000000000000000e-05" file="BondBreakingInitialVelocity.gold.t4000.vtu"/>
+  <DataSet timestep="5.000000000000000e-05" file="BondBreakingInitialVelocity.gold.t5000.vtu"/>
+  <DataSet timestep="6.000000000000000e-05" file="BondBreakingInitialVelocity.gold.t6000.vtu"/>
+  <DataSet timestep="7.000000000000001e-05" file="BondBreakingInitialVelocity.gold.t7000.vtu"/>
+  <DataSet timestep="8.000000000000001e-05" file="BondBreakingInitialVelocity.gold.t8000.vtu"/>
+  </Collection>
+</VTKFile>
