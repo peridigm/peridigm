@@ -8,6 +8,7 @@
 #ifndef FIELD_H_
 #define FIELD_H_
 #include "Pd_shared_ptr_Array.h"
+#include <stdexcept>
 #include <string>
 
 namespace Field_NS {
@@ -91,6 +92,9 @@ public:
     	case FieldSpec::STEP_NP1:
     		return NP1;
     		break;
+    	default:
+    		std::string m = "TemporalField::TemporalField(Invalid value for argument FieldStep)\n";
+    		throw std::invalid_argument(m);
     	}
     }
 
