@@ -43,18 +43,23 @@ public:
 	string getLabel() const;
 };
 
-const FieldSpec DEFAULT_FIELDTYPE(FieldSpec::DEFAULT_FIELDTYPE,FieldSpec::SCALAR, "DEFAULT_FIELDTYPE");
-const FieldSpec VOLUME(FieldSpec::VOLUME,FieldSpec::SCALAR, "VOLUME");
-const FieldSpec WEIGHTED_VOLUME(FieldSpec::WEIGHTED_VOLUME,FieldSpec::SCALAR, "WEIGHTED_VOLUME");
-const FieldSpec DILATATION(FieldSpec::DILATATION,FieldSpec::SCALAR, "DILATATION");
-const FieldSpec NUM_NEIGHBORS(FieldSpec::NUM_NEIGHBORS,FieldSpec::SCALAR, "NUM_NEIGHBORS");
-const FieldSpec DEVIATORIC_PLASTIC_EXTENSION(FieldSpec::E_DP,FieldSpec::SCALAR, "DEVIATORIC_PLASTIC_EXTENSION");
+// Scalar FieldSpecs
+const FieldSpec DEFAULT_FIELDTYPE(FieldSpec::DEFAULT_FIELDTYPE,FieldSpec::SCALAR, "Default_FieldType");
+const FieldSpec VOLUME(FieldSpec::VOLUME,FieldSpec::SCALAR, "Volume");
+const FieldSpec ID(Field_NS::FieldSpec::ID,Field_NS::FieldSpec::SCALAR, "Id");
+const FieldSpec PROC_NUM(Field_NS::FieldSpec::PROC_NUM,Field_NS::FieldSpec::SCALAR, "Proc_Num");
+const FieldSpec DAMAGE(FieldSpec::VOLUME,FieldSpec::SCALAR, "Damage");
+const FieldSpec WEIGHTED_VOLUME(FieldSpec::WEIGHTED_VOLUME,FieldSpec::SCALAR, "Weighted_Volume");
+const FieldSpec DILATATION(FieldSpec::DILATATION,FieldSpec::SCALAR, "Dilatation");
+const FieldSpec NUM_NEIGHBORS(FieldSpec::NUM_NEIGHBORS,FieldSpec::SCALAR, "Num_Neighbors");
+const FieldSpec DEVIATORIC_PLASTIC_EXTENSION(FieldSpec::E_DP,FieldSpec::SCALAR, "Deviatoric_Plastic_Extension");
 
-const FieldSpec COORD3D(FieldSpec::COORDINATES,FieldSpec::VECTOR3D, "COORD3D");
-const FieldSpec DISPL3D(FieldSpec::DISPLACEMENT,FieldSpec::VECTOR3D, "DISPL3D");
-const FieldSpec VELOC3D(FieldSpec::VELOCITY,    FieldSpec::VECTOR3D, "VELOC3D");
-const FieldSpec ACCEL3D(FieldSpec::ACCELERATION,FieldSpec::VECTOR3D, "ACCEL3D");
-const FieldSpec FORCE3D(FieldSpec::FORCE,FieldSpec::VECTOR3D, "FORCE3D");
+// Vector FieldSpecs
+const FieldSpec COORD3D(FieldSpec::COORDINATES,FieldSpec::VECTOR3D, "Coordinates");
+const FieldSpec DISPL3D(FieldSpec::DISPLACEMENT,FieldSpec::VECTOR3D, "Displacement");
+const FieldSpec VELOC3D(FieldSpec::VELOCITY,    FieldSpec::VECTOR3D, "Velocity");
+const FieldSpec ACCEL3D(FieldSpec::ACCELERATION,FieldSpec::VECTOR3D, "Acceleration");
+const FieldSpec FORCE3D(FieldSpec::FORCE,FieldSpec::VECTOR3D, "Force");
 
 template<typename T>
 class Field : public FieldSpec {
