@@ -150,34 +150,25 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
     grid = PdVTK::getGrid(xptr,length);
   }
 
-  // Convenience definitions of FieldSpecs
-  const Field_NS::FieldSpec Displacement(Field_NS::FieldSpec::DISPLACEMENT,Field_NS::FieldSpec::VECTOR3D, "Displacement");
-  const Field_NS::FieldSpec Velocity(Field_NS::FieldSpec::DISPLACEMENT,Field_NS::FieldSpec::VECTOR3D, "Velocity");
-  const Field_NS::FieldSpec Id(Field_NS::FieldSpec::ID,Field_NS::FieldSpec::SCALAR, "Id");
-  const Field_NS::FieldSpec Proc_Num(Field_NS::FieldSpec::PROC_NUM,Field_NS::FieldSpec::SCALAR, "Proc_Num");
-  const Field_NS::FieldSpec Damage(Field_NS::FieldSpec::DAMAGE,Field_NS::FieldSpec::SCALAR, "Damage");
-  const Field_NS::FieldSpec Dilatation(Field_NS::FieldSpec::ID,Field_NS::FieldSpec::SCALAR, "Dilatation");
-  const Field_NS::FieldSpec Weighted_Volume(Field_NS::FieldSpec::WEIGHTED_VOLUME,Field_NS::FieldSpec::SCALAR, "Weighted_Volume");
-
   // MLP: For now, hardcode to "Linear Elastic" material type. Changes to facilitate additional material types will be refelected here.
   Teuchos::RCP<Teuchos::ParameterList> thisMaterial = sublist(materialOutputFields, "Linear Elastic");
 
   if (thisMaterial->isParameter("Displacement")) {
     double *uptr;
     u->ExtractView( &uptr );
-    PdVTK::writeField<double>(grid,Displacement,uptr);
+    PdVTK::writeField<double>(grid,Field_NS::DISPL3D,uptr);
   }
 
   if (thisMaterial->isParameter("Velocity")) {
     double *vptr;
     v->ExtractView( &vptr );
-    PdVTK::writeField<double>(grid,Velocity,vptr);
+    PdVTK::writeField<double>(grid,Field_NS::VELOC3D,vptr);
   }
 
   if (thisMaterial->isParameter("ID")) {
     // Get map corresponding to x
     const Epetra_BlockMap& xMap = x->Map();
-    PdVTK::writeField<int>(grid,Id,xMap.MyGlobalElements());
+    PdVTK::writeField<int>(grid,Field_NS::ID,xMap.MyGlobalElements());
   }
 
   std::vector<int> proc_num;
@@ -186,7 +177,7 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
     const Epetra_BlockMap& xMap = x->Map();
     int length = xMap.NumMyElements();
     proc_num.assign (length,myPID); 
-    PdVTK::writeField<int>(grid,Proc_Num,&proc_num[0]);
+    PdVTK::writeField<int>(grid,Field_NS::PROC_NUM,&proc_num[0]);
   }
 
   // MLP: For now, hardcode to "Linear Elastic" material type. Changes in Peridigm_ModelEvaluator to facilitate additional material types will be 
@@ -204,13 +195,13 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
       double *dataptr;
       dataptr = (*scalarConstitutiveData)[colIdx];
       if (outstring == "Dilatation") {
-        PdVTK::writeField<double>(grid,Dilatation,dataptr);
+        PdVTK::writeField<double>(grid,Field_NS::DILATATION,dataptr);
       }
       else if (outstring == "Weighted Volume") {
-        PdVTK::writeField<double>(grid,Weighted_Volume,dataptr);
+        PdVTK::writeField<double>(grid,Field_NS::WEIGHTED_VOLUME,dataptr);
       }
       else if (outstring == "Damage") {
-        PdVTK::writeField<double>(grid,Damage,dataptr);
+        PdVTK::writeField<double>(grid,Field_NS::DAMAGE,dataptr);
       }
       else {
         // Unknown field
