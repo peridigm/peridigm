@@ -14,12 +14,12 @@
 PeridigmNS::IsotropicElasticPlasticMaterial::IsotropicElasticPlasticMaterial(const Teuchos::ParameterList & params)
 :
 Material(params),
-decompStates(),
+m_decompStates(),
 m_damageModel()
 {
 
-	decompStates.addScalarStateBondVariable("scalarPlasticExtensionState_N");
-	decompStates.addScalarStateBondVariable("scalarPlasticExtensionState_NP1");
+	m_decompStates.addScalarStateBondVariable("scalarPlasticExtensionState_N");
+	m_decompStates.addScalarStateBondVariable("scalarPlasticExtensionState_NP1");
 
 	//! \todo Add meaningful asserts on material properties.
 	m_bulkModulus = params.get<double>("Bulk Modulus");
@@ -102,8 +102,8 @@ void PeridigmNS::IsotropicElasticPlasticMaterial::initialize(const Epetra_Vector
 	  }
 
 	  // Extract pointers to the underlying data in the constitutiveData array
-	  std::pair<int,double*> scalarView = decompStates.extractStrideView(scalarConstitutiveData);
-	  double* weightedVolume = decompStates.extractWeightedVolumeView(scalarView);
+	  std::pair<int,double*> scalarView = m_decompStates.extractStrideView(scalarConstitutiveData);
+	  double* weightedVolume = m_decompStates.extractWeightedVolumeView(scalarView);
 
 	  PdMaterialUtilities::computeWeightedVolume(x.Values(),cellVolume.Values(),weightedVolume,numOwnedPoints,neighborhoodList);
 
@@ -126,13 +126,13 @@ PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const Epetra
 {
 
 	// Extract pointers to the underlying data in the constitutiveData array
-	std::pair<int,double*> scalarView = decompStates.extractStrideView(scalarConstitutiveData);
-	double* weightedVolume = decompStates.extractWeightedVolumeView(scalarView);
-	double* dilatation = decompStates.extractDilatationView(scalarView);
-	double* damage = decompStates.extractDamageView(scalarView);
+	std::pair<int,double*> scalarView = m_decompStates.extractStrideView(scalarConstitutiveData);
+	double* weightedVolume = m_decompStates.extractWeightedVolumeView(scalarView);
+	double* dilatation = m_decompStates.extractDilatationView(scalarView);
+	double* damage = m_decompStates.extractDamageView(scalarView);
 
-	std::pair<int,double*> vectorView = decompStates.extractStrideView(vectorConstitutiveData);
-	double *y = decompStates.extractCurrentPositionView(vectorView);
+	std::pair<int,double*> vectorView = m_decompStates.extractStrideView(vectorConstitutiveData);
+	double *y = m_decompStates.extractCurrentPositionView(vectorView);
 
 	// Update the geometry
 	PdMaterialUtilities::updateGeometry(x.Values(),u.Values(),v.Values(),y,x.MyLength(),dt);
@@ -193,15 +193,15 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const Epetra_Vector& x
 {
 
 	  // Extract pointers to the underlying data in the constitutiveData array
-	  std::pair<int,double*> scalarView = decompStates.extractStrideView(scalarConstitutiveData);
-	  double* weightedVolume = decompStates.extractWeightedVolumeView(scalarView);
-	  double* dilatation = decompStates.extractDilatationView(scalarView);
-	//	double* damage = decompStates.extractDamageView(scalarView);
-	  std::pair<int,double*> vectorView = decompStates.extractStrideView(vectorConstitutiveData);
-	  double *y = decompStates.extractCurrentPositionView(vectorView);
-	  std::pair<int,double*> scalarBondView = decompStates.extractStrideView(bondConstitutiveData);
-	  double* edpN   = decompStates.extractScalarBondVariable(scalarBondView,"scalarPlasticExtensionState_N");
-	  double* edpNP1 = decompStates.extractScalarBondVariable(scalarBondView,"scalarPlasticExtensionState_NP1");
+	  std::pair<int,double*> scalarView = m_decompStates.extractStrideView(scalarConstitutiveData);
+	  double* weightedVolume = m_decompStates.extractWeightedVolumeView(scalarView);
+	  double* dilatation = m_decompStates.extractDilatationView(scalarView);
+	//	double* damage = m_decompStates.extractDamageView(scalarView);
+	  std::pair<int,double*> vectorView = m_decompStates.extractStrideView(vectorConstitutiveData);
+	  double *y = m_decompStates.extractCurrentPositionView(vectorView);
+	  std::pair<int,double*> scalarBondView = m_decompStates.extractStrideView(bondConstitutiveData);
+	  double* edpN   = m_decompStates.extractScalarBondVariable(scalarBondView,"scalarPlasticExtensionState_N");
+	  double* edpNP1 = m_decompStates.extractScalarBondVariable(scalarBondView,"scalarPlasticExtensionState_NP1");
 
 	  // Compute the force on each particle that results from interactions
 	  // with locally-owned nodes

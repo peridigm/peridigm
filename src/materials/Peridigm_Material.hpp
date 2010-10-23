@@ -40,6 +40,7 @@
 #include <Epetra_Map.h>
 #include <vector>
 #include <map>
+#include "Field.h"
 
 namespace PeridigmNS {
 
@@ -59,6 +60,9 @@ namespace PeridigmNS {
 
 	//! Returns the density of the material.
 	virtual double Density() const = 0;
+
+    //! Returns a vector of field specs that specify the variables associated with the material
+    virtual Teuchos::RCP< std::vector<Field_NS::FieldSpec> > VariableSpecs() const = 0;
 
 	//! Returns the number of scalar constitutive variables used by the material model.
 	virtual int NumScalarConstitutiveVariables() const = 0;

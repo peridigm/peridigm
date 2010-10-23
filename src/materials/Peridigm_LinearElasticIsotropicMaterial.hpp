@@ -95,6 +95,9 @@ namespace PeridigmNS {
 	//! Returns the density of the material.
 	virtual double Density() const { return m_density; }
 
+    //! Returns a vector of field specs that specify the variables associated with the material
+    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > VariableSpecs() const { return m_variableSpecs; }
+
 	//! Returns the number of scalar constitutive variables used by the material model.
 	virtual int NumScalarConstitutiveVariables() const { return m_decompStates.getNumScalarStateVariables(); }
 
@@ -176,6 +179,7 @@ namespace PeridigmNS {
 	}
 
 	DecompositionStates m_decompStates;
+    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > m_variableSpecs;
 
 	// material parameters
 	double m_bulkModulus;
