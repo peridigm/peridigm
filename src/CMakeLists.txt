@@ -49,6 +49,7 @@ add_executable(utPeridigm
 #        Peridigm_VerletSolver.cpp
 #        Peridigm_VerletIntegrator.cpp
 #        Peridigm_VerletObserver.cpp
+        ../io/Field.cxx
         ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
         ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
         ./materials/Peridigm_DecompositionStates.cpp
@@ -97,6 +98,7 @@ ${Boost_LIBRARIES}
 )
 
 add_executable(utPeridigm_LinearElasticIsotropicMaterial
+        ../io/Field.cxx
 		./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
 		./materials/Peridigm_DecompositionStates.cpp
         ./materials/Peridigm_CriticalStretchDamageModel.cpp
@@ -121,6 +123,7 @@ ${Boost_LIBRARIES}
 add_executable(utPHAL_UpdateForceState
 		PHAL_PeridigmTraits.cpp
 		PHAL_Dimension.cpp
+        ../io/Field.cxx
 		./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
 		./materials/Peridigm_DecompositionStates.cpp
         ./materials/Peridigm_CriticalStretchDamageModel.cpp
@@ -149,6 +152,7 @@ ${Boost_LIBRARIES}
 add_executable(utPHAL_EvaluateForce
 		PHAL_PeridigmTraits.cpp
 		PHAL_Dimension.cpp
+        ../io/Field.cxx
 		./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
 		./materials/Peridigm_DecompositionStates.cpp
         ./materials/Peridigm_CriticalStretchDamageModel.cpp
