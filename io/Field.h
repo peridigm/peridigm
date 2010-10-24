@@ -24,7 +24,7 @@ struct FieldSpec {
 public:
 	enum FieldType {VOLUME=0, ID, PROC_NUM, WEIGHTED_VOLUME, DILATATION, DAMAGE, E_DP, NUM_NEIGHBORS, COORDINATES, DISPLACEMENT, VELOCITY, ACCELERATION, FORCE, DEFAULT_FIELDTYPE};
 	enum FieldLength {SCALAR=1, VECTOR2D=2, VECTOR3D=3};
-	enum FieldStep {STEP_N=0, STEP_NP1=1};
+    enum FieldStep {STEP_N=0, STEP_NP1=1, STEP_NONE=2};
 
 private:
 	FieldType type;
@@ -32,7 +32,7 @@ private:
 	std::string label;
 
 public:
-	explicit FieldSpec(const FieldSpec& c);
+	FieldSpec(const FieldSpec& c);
 	explicit FieldSpec(FieldType t, FieldLength len, const string& label);
 	bool operator == (const FieldSpec& right) const;
 	bool operator != (const FieldSpec& right) const;
