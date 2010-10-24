@@ -49,6 +49,18 @@ m_damageModel()
 					"Invalid damage model, \"None\" or \"Critical Stretch\" required.");
 		}
 	}
+
+    // set up vector of variable specs
+    m_variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
+    m_variableSpecs->push_back(Field_NS::VOLUME);
+    m_variableSpecs->push_back(Field_NS::DAMAGE);
+    m_variableSpecs->push_back(Field_NS::WEIGHTED_VOLUME);
+    m_variableSpecs->push_back(Field_NS::DILATATION);
+    m_variableSpecs->push_back(Field_NS::COORD3D);
+    m_variableSpecs->push_back(Field_NS::DISPL3D);
+    m_variableSpecs->push_back(Field_NS::VELOC3D);
+    m_variableSpecs->push_back(Field_NS::ACCEL3D);
+    m_variableSpecs->push_back(Field_NS::FORCE3D);
 }
 
 
