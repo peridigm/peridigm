@@ -150,8 +150,19 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
     grid = PdVTK::getGrid(xptr,length);
   }
 
-  // MLP: For now, hardcode to "Linear Elastic" material type. Changes to facilitate additional material types will be refelected here.
-  Teuchos::RCP<Teuchos::ParameterList> thisMaterial = sublist(materialOutputFields, "Linear Elastic");
+  // Currenly only support "Linear Elastic" and "Elastic Plastic" material models
+  Teuchos::RCP<Teuchos::ParameterList> thisMaterial;
+  if (materialOutputFields->isSublist ("Linear Elastic")) {
+    thisMaterial = sublist(materialOutputFields, "Linear Elastic");
+std::cout << "Material: Linear Elastic" << std::endl;
+  }
+  else if (materialOutputFields->isSublist ("Elastic Plastic")) {
+    thisMaterial = sublist(materialOutputFields, "Elastic Plastic");
+std::cout << "Material: Elastic Plastic" << std::endl;
+  }
+  else // Unrecognized material model. Throw error.
+    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    "Peridigm::OutputManager: Unknown material model. Only \"Linear Elastic\" or \"Elastic Plastic\" currently supported.");
 
   if (thisMaterial->isParameter("Displacement")) {
     double *uptr;
@@ -180,9 +191,21 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
     PdVTK::writeField<int>(grid,Field_NS::PROC_NUM,&proc_num[0]);
   }
 
-  // MLP: For now, hardcode to "Linear Elastic" material type. Changes in Peridigm_ModelEvaluator to facilitate additional material types will be 
-  // refelected here.
-  Teuchos::RCP<Teuchos::ParameterList> thisForceState = sublist(forceStateDesc, "Linear Elastic");
+  // Currenly only support "Linear Elastic" and "Elastic Plastic" material models
+  Teuchos::RCP<Teuchos::ParameterList> thisForceState;
+  if (materialOutputFields->isSublist ("Linear Elastic")) {
+    thisForceState = sublist(forceStateDesc, "Linear Elastic");
+std::cout << "Force: Linear Elastic" << std::endl;
+  } 
+  else if (materialOutputFields->isSublist ("Elastic Plastic")) {
+    thisForceState = sublist(forceStateDesc, "Elastic Plastic");
+std::cout << "Force: Elastic Plastic" << std::endl;
+  }
+  else // Unrecognized material model. Throw error.
+    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    "Peridigm::OutputManager: Unknown material model. Only \"Linear Elastic\" or \"Elastic Plastic\" currently supported.");
+
+std::cout << *forceStateDesc;
 
   Teuchos::ParameterList::ConstIterator iter;
   string outstring;
