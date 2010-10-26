@@ -124,11 +124,11 @@ PeridigmNS::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<const Epetra_Comm>
 	const string & name = it->first;
 	Teuchos::ParameterList & matParams = materialParams.sublist(name);
     Teuchos::RCP<PeridigmNS::Material> material;
-	if(name == "Linear Elastic" || name == "Elastic-Plastic"){
+	if(name == "Linear Elastic" || name == "Elastic Plastic"){
       if(name == "Linear Elastic"){
         material = Teuchos::rcp(new LinearElasticIsotropicMaterial(matParams) );
       }
-      else if(name == "Elastic-Plastic"){
+      else if(name == "Elastic Plastic"){
         material = Teuchos::rcp(new IsotropicElasticPlasticMaterial(matParams) );
       }
 	  materials.push_back( Teuchos::rcp_implicit_cast<PeridigmNS::Material>(material) );
@@ -143,7 +143,7 @@ PeridigmNS::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<const Epetra_Comm>
 	else{
 	  string invalidMaterial("Unrecognized material model: ");
 	  invalidMaterial += name;
-      invalidMaterial += ", must be Linear Elastic or Elastic-Plastic";
+      invalidMaterial += ", must be Linear Elastic or Elastic Plastic";
 	  TEST_FOR_EXCEPT_MSG(true, invalidMaterial);
 	}
   }
