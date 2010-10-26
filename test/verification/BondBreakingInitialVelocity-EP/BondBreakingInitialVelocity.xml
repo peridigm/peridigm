@@ -18,7 +18,7 @@
 		</ParameterList>
 	</ParameterList>
     <ParameterList name="Material">
-      <ParameterList name="Elastic-Plastic">
+      <ParameterList name="Elastic Plastic">
 		<Parameter name="Density" type="double" value="7800.0"/>
 		<Parameter name="Bulk Modulus" type="double" value="130.0e9"/>
 		<Parameter name="Shear Modulus" type="double" value="60.0e9"/>
