@@ -494,8 +494,8 @@ void PeridigmNS::Peridigm::execute() {
 
     t_current = t_initial + (step*dt);
 
-if (peridigmComm->MyPID() == 0)
-std::cout << "step = " << step << endl;
+// if (peridigmComm->MyPID() == 0)
+// std::cout << "step = " << step << endl;
 
     // Update the contact configuration, if necessary
 //    model->updateContact(currentSolution);
@@ -503,7 +503,7 @@ std::cout << "step = " << step << endl;
 //    if (!active) return;
     //cout << "PERIDIGM OBSERVER CALLED step=" <<  timeStepIter  << ",  time=" << stepper.getStepStatus().time << endl;
     // Set current time in this parameterlist
-//    forceStateDesc->set("Time", time);
+    forceStateDesc->set("Time", time);
     outputManager->write(x,u,v,scalarConstitutiveDataOverlap,neighborhoodData,forceStateDesc);
 
   }
