@@ -7,6 +7,11 @@ from subprocess import Popen
 
 if __name__ == "__main__":
 
+	# check for existence of 'ep.dat'
+	#  if it exists -- delete before running test
+	if os.path.exists("ep.dat"):
+		os.remove("ep.dat")
+
 	executable = sys.argv[-1]
 	base_name = string.splitfields(executable, '/')[-1]
 	logfile = open(base_name + ".log", 'w')
