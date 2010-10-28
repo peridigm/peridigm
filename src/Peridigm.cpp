@@ -209,6 +209,7 @@ void PeridigmNS::Peridigm::initializeDiscretization() {
   x = peridigmDisc->getInitialX();
   u = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
   v = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
+  a =  Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
   force =  Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
   uOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
   vOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
@@ -453,10 +454,10 @@ void PeridigmNS::Peridigm::execute() {
   int nsteps = (int)floor((t_final-t_initial)/dt);
   // Pointer index into sub-vectors for use with BLAS
   double *aptr,*vptr,*uptr;
-  force->ExtractView( &aptr );
+  a->ExtractView( &aptr );
   u->ExtractView( &uptr );
   v->ExtractView( &vptr );
-  int length = force->MyLength();
+  int length = a->MyLength();
 
   bool rebal = false;
 
@@ -478,11 +479,16 @@ void PeridigmNS::Peridigm::execute() {
 
     // Update forces based on new positions
     modelEvaluator->evalModel(workset);
-    // Reverse comm on forces
+
     // Reverse comm particle forces
     force->Export(*forceOverlap, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
-    // Convert force data to acceleration
-    // model->XXX
+
+    // fill the acceleration vector
+    (*a) = (*force);
+    // \todo Possibly move this functionality into ModelEvaluator.
+    // \todo Generalize this for multiple materials
+    double density = (*materials)[0]->Density();
+    a->Scale(1.0/density);
 
     // U^{n+1}   = U^{n} + (dt)*V^{n+1/2}
     //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
