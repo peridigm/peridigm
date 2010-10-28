@@ -12,3 +12,6 @@ ${PdMaterialUtilitiesLib}
 ${REQUIRED_LIBS}
 ${Boost_LIBRARIES}
 )
+
+add_test (utPeridigm_IsotropicElasticPlasticMaterial python run_unit_test.py ./utPeridigm_IsotropicElasticPlasticMaterial)
+

@@ -19,7 +19,6 @@
 add_test (utPeridigm_PdQuickGridDiscretization          python run_unit_test.py ../../src/utPeridigm_PdQuickGridDiscretization)
 add_test (utPeridigm_PdQuickGridDiscretization_MPI_np2  python run_unit_test.py mpiexec -np 2 ../../src/utPeridigm_PdQuickGridDiscretization_MPI_np2)
 add_test (utPeridigm_LinearElasticIsotropicMaterial     python run_unit_test.py ../../src/utPeridigm_LinearElasticIsotropicMaterial)
-add_test (utPeridigm_IsotropicElasticPlasticMaterial    python run_unit_test.py ../../src/materials/unitTest/utPeridigm_IsotropicElasticPlastic/utPeridigm_IsotropicElasticPlasticMaterial)
 add_test (utPHAL_UpdateForceState                       python run_unit_test.py ../../src/utPHAL_UpdateForceState)
 #add_test (utPHAL_UpdateForceState_MPI_np2              python run_unit_test.py mpiexec -np 2 ../../src/utPHAL_UpdateForceState_MPI_np2)
 add_test (utPHAL_EvaluateForce                          python run_unit_test.py ../../src/utPHAL_EvaluateForce)
