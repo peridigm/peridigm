@@ -443,11 +443,6 @@ PeridigmNS::ModelEvaluator::evalModel(Teuchos::RCP<PHAL::Workset> workset) const
   if(computeContact){
     workset->forceOverlap->Update(1.0, *(workset->contactForceOverlap), 1.0);
   }
-
-  // convert force densities to accelerations
-  // \todo Expand to handle multiple materials (would be nice if we could scale the blocks independently)
-  double density = (*materials)[0]->Density();
-  workset->forceOverlap->Scale(1.0/density);
 }
 
 /*

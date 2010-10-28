@@ -144,6 +144,9 @@ namespace PeridigmNS {
     //! Global vector for velocity
     Teuchos::RCP<Epetra_Vector> v;
 
+    //! Global vector for acceleration
+    Teuchos::RCP<Epetra_Vector> a;
+
     //! Global vector for force
     Teuchos::RCP<Epetra_Vector> force;
 
