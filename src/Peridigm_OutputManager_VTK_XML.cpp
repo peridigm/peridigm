@@ -131,6 +131,8 @@ PeridigmNS::OutputManager_VTK_XML::~OutputManager_VTK_XML() {
 void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> x,
                                               Teuchos::RCP<const Epetra_Vector> u,
                                               Teuchos::RCP<const Epetra_Vector> v,
+                                              Teuchos::RCP<const Epetra_Vector> a,
+                                              Teuchos::RCP<const Epetra_Vector> force,
                                               Teuchos::RCP<const Epetra_MultiVector> scalarConstitutiveData,
                                               Teuchos::RCP<const NeighborhoodData> neighborhoodData,
                                               Teuchos::RCP<Teuchos::ParameterList>& forceStateDesc) {
@@ -172,6 +174,18 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
     double *vptr;
     v->ExtractView( &vptr );
     PdVTK::writeField<double>(grid,Field_NS::VELOC3D,vptr);
+  }
+
+  if (thisMaterial->isParameter("Acceleration")) {
+    double *aptr;
+    a->ExtractView( &aptr );
+    PdVTK::writeField<double>(grid,Field_NS::ACCEL3D,aptr);
+  }
+
+  if (thisMaterial->isParameter("Force")) {
+    double *fptr;
+    force->ExtractView( &fptr );
+    PdVTK::writeField<double>(grid,Field_NS::FORCE3D,fptr);
   }
 
   if (thisMaterial->isParameter("ID")) {
