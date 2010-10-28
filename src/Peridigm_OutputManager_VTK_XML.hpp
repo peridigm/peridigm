@@ -67,6 +67,9 @@ namespace PeridigmNS {
     //! Assignment operator.
     OutputManager_VTK_XML& operator=( const OutputManager& OM );
 
+    //! Valid Teuchos::ParameterList 
+    Teuchos::ParameterList getValidParameterList();
+
     Teuchos::RCP<PdVTK::CollectionWriter> vtkWriter;
 
     vtkSmartPointer<vtkUnstructuredGrid> grid;

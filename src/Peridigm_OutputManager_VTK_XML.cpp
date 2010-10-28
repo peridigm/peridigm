@@ -42,10 +42,57 @@
 #include "Peridigm_OutputManager_VTK_XML.hpp"
 #include <Field.h>
 
-PeridigmNS::OutputManager_VTK_XML::OutputManager_VTK_XML(const Teuchos::RCP<Teuchos::ParameterList>& params) {
-  // MLP: Insert call to parameterlist validator here
+Teuchos::ParameterList PeridigmNS::OutputManager_VTK_XML::getValidParameterList() {
 
+  Teuchos::ParameterList validParameterList("Output");
+  validParameterList.set("MyPID",0);
+  validParameterList.set("NumProc",0);
+  validParameterList.set("Output File Type","VTK_XML");
+  validParameterList.set("Output Filename","OutfileName");
+  validParameterList.set("Output Format","BINARY");
+  validParameterList.set("Output Frequency",1);
+  validParameterList.set("Parallel Write",true);
+  Teuchos::ParameterList& matFields = validParameterList.sublist("Material Output Fields");
+  { // Valid output fields for Linear Elastic material type
+  Teuchos::ParameterList& matType = matFields.sublist("Linear Elastic");
+  matType.set("Displacement",true);
+  matType.set("Velocity",true);
+  matType.set("Acceleration",true);
+  matType.set("Force",true);
+  matType.set("Dilatation",true);
+  matType.set("ID",true);
+  matType.set("Proc Num",true);
+  matType.set("Weighted Volume",true);
+  matType.set("Damage",true);
+  }
+  { // Valid output fields for Elastic Plastic material type
+  Teuchos::ParameterList& matType = matFields.sublist("Elastic Plastic");
+  matType.set("Displacement",true);
+  matType.set("Velocity",true);
+  matType.set("Acceleration",true);
+  matType.set("Force",true);
+  matType.set("Dilatation",true);
+  matType.set("ID",true);
+  matType.set("Proc Num",true);
+  matType.set("Weighted Volume",true);
+  matType.set("Damage",true);
+  }
+
+  return validParameterList;
+  
+}
+
+PeridigmNS::OutputManager_VTK_XML::OutputManager_VTK_XML(const Teuchos::RCP<Teuchos::ParameterList>& params) {
   // Throws exception if parameters not present
+  Teuchos::ParameterList validParameterList = getValidParameterList();
+  try {
+    params->validateParameters(validParameterList);
+  }
+  catch(Teuchos::Exceptions::InvalidParameterName &excpt)  {cout<<excpt.what();}
+  catch(Teuchos::Exceptions::InvalidParameterType &excpt)  {cout<<excpt.what();}
+  catch(Teuchos::Exceptions::InvalidParameterValue &excpt) {cout<<excpt.what();}
+  catch(...) {}
+
   try {
     numProc = params->INVALID_TEMPLATE_QUALIFIER get<int>("NumProc");
   }
@@ -57,7 +104,7 @@ PeridigmNS::OutputManager_VTK_XML::OutputManager_VTK_XML(const Teuchos::RCP<Teuc
     myPID = params->INVALID_TEMPLATE_QUALIFIER get<int>("MyPID");
   }
   catch ( const std::exception& e) {
-    TEST_FOR_EXCEPTION(1,  std::invalid_argument, "PeridigmNS::OutputManager_VTK_XML:::OutputManager_VTK_XML() -- myPID not present.");
+    TEST_FOR_EXCEPTION(1,  std::invalid_argument, "PeridigmNS::OutputManager_VTK_XML:::OutputManager_VTK_XML() -- MyPID not present.");
   }
 
   // Default to no output
