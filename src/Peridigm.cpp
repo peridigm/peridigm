@@ -393,7 +393,7 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
     string outputFormat = outputParams->get("Output File Type", "VTK_XML");
     TEST_FOR_EXCEPTION( outputFormat != "VTK_XML",
                         std::invalid_argument,
-                        "PeridigmNS::RythmosObserver: \"Output File Type\" must be \"VTK_XML\".");
+                        "PeridigmNS::Peridigm: \"Output File Type\" must be \"VTK_XML\".");
     if (outputFormat == "VTK_XML")
        outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_VTK_XML( outputParams ));
     else
