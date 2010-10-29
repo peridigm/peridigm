@@ -38,60 +38,25 @@
 
 #include <Epetra_Comm.h>
 #include <Teuchos_TestForException.hpp>
+#include "Teuchos_StandardParameterEntryValidators.hpp"
 
 #include "Peridigm_OutputManager_VTK_XML.hpp"
 #include <Field.h>
 
-Teuchos::ParameterList PeridigmNS::OutputManager_VTK_XML::getValidParameterList() {
-
-  Teuchos::ParameterList validParameterList("Output");
-  validParameterList.set("MyPID",0);
-  validParameterList.set("NumProc",0);
-  validParameterList.set("Output File Type","VTK_XML");
-  validParameterList.set("Output Filename","OutfileName");
-  validParameterList.set("Output Format","BINARY");
-  validParameterList.set("Output Frequency",1);
-  validParameterList.set("Parallel Write",true);
-  Teuchos::ParameterList& matFields = validParameterList.sublist("Material Output Fields");
-  { // Valid output fields for Linear Elastic material type
-  Teuchos::ParameterList& matType = matFields.sublist("Linear Elastic");
-  matType.set("Displacement",true);
-  matType.set("Velocity",true);
-  matType.set("Acceleration",true);
-  matType.set("Force",true);
-  matType.set("Dilatation",true);
-  matType.set("ID",true);
-  matType.set("Proc Num",true);
-  matType.set("Weighted Volume",true);
-  matType.set("Damage",true);
-  }
-  { // Valid output fields for Elastic Plastic material type
-  Teuchos::ParameterList& matType = matFields.sublist("Elastic Plastic");
-  matType.set("Displacement",true);
-  matType.set("Velocity",true);
-  matType.set("Acceleration",true);
-  matType.set("Force",true);
-  matType.set("Dilatation",true);
-  matType.set("ID",true);
-  matType.set("Proc Num",true);
-  matType.set("Weighted Volume",true);
-  matType.set("Damage",true);
-  }
-
-  return validParameterList;
-  
-}
-
 PeridigmNS::OutputManager_VTK_XML::OutputManager_VTK_XML(const Teuchos::RCP<Teuchos::ParameterList>& params) {
-  // Throws exception if parameters not present
+  // Throws exception if parameters not present or of wrong type
+  // Teuchos::ParameterList validator can't validate all input -- it mainly checks for presence of invalid input and invalid input types
+  // Additional checking needed below 
   Teuchos::ParameterList validParameterList = getValidParameterList();
+  bool isValid = true;
   try {
     params->validateParameters(validParameterList);
   }
-  catch(Teuchos::Exceptions::InvalidParameterName &excpt)  {cout<<excpt.what();}
-  catch(Teuchos::Exceptions::InvalidParameterType &excpt)  {cout<<excpt.what();}
-  catch(Teuchos::Exceptions::InvalidParameterValue &excpt) {cout<<excpt.what();}
-  catch(...) {}
+  catch(Teuchos::Exceptions::InvalidParameterName &excpt)  {std::cout<<excpt.what(); isValid=false;}
+  catch(Teuchos::Exceptions::InvalidParameterType &excpt)  {std::cout<<excpt.what(); isValid=false;}
+  catch(Teuchos::Exceptions::InvalidParameterValue &excpt) {std::cout<<excpt.what(); isValid=false;}
+  catch(...) {isValid=false;}
+  if (!isValid) TEST_FOR_EXCEPTION(1, std::invalid_argument, "PeridigmNS::OutputManager_VTK_XML:::OutputManager_VTK_XML() -- Invalid parameter, type or value.");
 
   try {
     numProc = params->INVALID_TEMPLATE_QUALIFIER get<int>("NumProc");
@@ -157,6 +122,51 @@ PeridigmNS::OutputManager_VTK_XML::OutputManager_VTK_XML(const Teuchos::RCP<Teuc
   else if (outputFormat == "BINARY")
     vtkWriter = Teuchos::rcp(new PdVTK::CollectionWriter(filenameBase.c_str(), numProc, myPID, PdVTK::vtkBINARY));
 
+}
+
+Teuchos::ParameterList PeridigmNS::OutputManager_VTK_XML::getValidParameterList() {
+
+  // prevent Teuchos from converting parameter types
+  Teuchos::AnyNumberParameterEntryValidator::AcceptedTypes intParam(false), dblParam(false), strParam(false);
+  intParam.allowInt(true);
+  dblParam.allowDouble(true);
+  strParam.allowString(true);
+
+  Teuchos::ParameterList validParameterList("Output");
+  setIntParameter("MyPID",0,"Process ID",&validParameterList,intParam);
+  setIntParameter("NumProc",0,"Number of Process IDs",&validParameterList,intParam);
+  validParameterList.set("Output File Type","VTK_XML");
+  validParameterList.set("Output Filename","dump");
+  Teuchos::setStringToIntegralParameter<int>("Output Format","BINARY","ASCII or BINARY",Teuchos::tuple<string>("ASCII","BINARY"),&validParameterList);
+  setIntParameter("Output Frequency",-1,"Frequency of Output",&validParameterList,intParam);
+  validParameterList.set("Parallel Write",true);
+  Teuchos::ParameterList& matFields = validParameterList.sublist("Material Output Fields");
+  { // Valid output fields for Linear Elastic material type
+  Teuchos::ParameterList& matType = matFields.sublist("Linear Elastic");
+  matType.set("Displacement",true);
+  matType.set("Velocity",true);
+  matType.set("Acceleration",true);
+  matType.set("Force Density",true);
+  matType.set("Dilatation",true);
+  matType.set("ID",true);
+  matType.set("Proc Num",true);
+  matType.set("Weighted Volume",true);
+  matType.set("Damage",true);
+  }
+  { // Valid output fields for Elastic Plastic material type
+  Teuchos::ParameterList& matType = matFields.sublist("Elastic Plastic");
+  matType.set("Displacement",true);
+  matType.set("Velocity",true);
+  matType.set("Acceleration",true);
+  matType.set("Force Density",true);
+  matType.set("Dilatation",true);
+  matType.set("ID",true);
+  matType.set("Proc Num",true);
+  matType.set("Weighted Volume",true);
+  matType.set("Damage",true);
+  }
+
+  return validParameterList;
 }
 
 PeridigmNS::OutputManager_VTK_XML::~OutputManager_VTK_XML() {
@@ -229,10 +239,10 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
     PdVTK::writeField<double>(grid,Field_NS::ACCEL3D,aptr);
   }
 
-  if (thisMaterial->isParameter("Force")) {
+  if (thisMaterial->isParameter("Force Density")) {
     double *fptr;
     force->ExtractView( &fptr );
-    PdVTK::writeField<double>(grid,Field_NS::FORCE3D,fptr);
+    PdVTK::writeField<double>(grid,Field_NS::FORCE_DENSITY3D,fptr);
   }
 
   if (thisMaterial->isParameter("ID")) {
