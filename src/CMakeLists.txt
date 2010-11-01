@@ -8,6 +8,7 @@ add_executable (${EXECUTABLE_NAME}
         Peridigm.cpp
         Peridigm_DiscretizationFactory.cpp
         Peridigm_PdQuickGridDiscretization.cpp
+        Peridigm_DataManager.cpp
         Peridigm_ModelEvaluator.cpp
         PHAL_Dimension.cpp
         PHAL_PeridigmTraits.cpp
@@ -42,6 +43,7 @@ add_executable(utPeridigm
         Peridigm.cpp
         Peridigm_DiscretizationFactory.cpp
         Peridigm_PdQuickGridDiscretization.cpp
+        Peridigm_DataManager.cpp
         Peridigm_ModelEvaluator.cpp
         PHAL_Dimension.cpp
         PHAL_PeridigmTraits.cpp

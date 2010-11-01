@@ -34,7 +34,7 @@
 #ifndef PERIDIGM_STATE_HPP
 #define PERIDIGM_STATE_HPP
 
-//#include <Teuchos_RCP.hpp>
+#include <Teuchos_RCP.hpp>
 #include <Epetra_MultiVector.h>
 
 namespace PeridigmNS {

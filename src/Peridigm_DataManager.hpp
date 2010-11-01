@@ -34,6 +34,7 @@
 #ifndef PERIDIGM_DATAMANAGER_HPP
 #define PERIDIGM_DATAMANAGER_HPP
 
+#include "Field.h"
 #include "Peridigm_State.hpp"
 
 namespace PeridigmNS {
@@ -50,26 +51,7 @@ public:
   void setScalarMap(Teuchos::RCP<Epetra_BlockMap> map) { scalarMap = map; }
   void setVector2DMap(Teuchos::RCP<Epetra_BlockMap> map) { vector2DMap = map; }
   void setVector3DMap(Teuchos::RCP<Epetra_BlockMap> map) { vector3DMap = map; }
-
-  void allocateData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > specs)
-  {
-    fieldSpecs = specs;
-    
-    // loop over the specs and determine:
-    // 1) the number of scalar, vector2d, and vector3d fields
-    // 2) the FieldType for each of the data
-    // 3) whether the data has one or two states
-    int numScalar1State = 0, numVec2D1State = 0 , numVec3D1State = 0;
-    int numScalar2State = 0, numVec2D2State = 0 , numVec3D2State = 0;
-    for(unsigned int i=0; i<fieldSpecs->size() ; ++i){
-      Field_NS::FieldSpec& spec = (*fieldSpecs)[i];
-//       if(spec.length == SCALAR){
-//         if(spec.
-//       }
-      
-    }
-
-  }
+  void allocateData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > specs);
 
 protected:
 
