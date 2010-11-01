@@ -34,7 +34,7 @@
 #ifndef PERIDIGM_DATAMANAGER_HPP
 #define PERIDIGM_DATAMANAGER_HPP
 
-#include <Epetra_BlockMap>
+#include "Peridigm_State.hpp"
 
 namespace PeridigmNS {
 
@@ -59,8 +59,13 @@ public:
     // 1) the number of scalar, vector2d, and vector3d fields
     // 2) the FieldType for each of the data
     // 3) whether the data has one or two states
+    int numScalar1State = 0, numVec2D1State = 0 , numVec3D1State = 0;
+    int numScalar2State = 0, numVec2D2State = 0 , numVec3D2State = 0;
     for(unsigned int i=0; i<fieldSpecs->size() ; ++i){
       Field_NS::FieldSpec& spec = (*fieldSpecs)[i];
+//       if(spec.length == SCALAR){
+//         if(spec.
+//       }
       
     }
 
@@ -73,7 +78,7 @@ protected:
   int numStatefulScalar, numStatefulVector2D, numStatefulVector3D;
   Teuchos::RCP<Epetra_BlockMap> scalarMap;
   Teuchos::RCP<Epetra_BlockMap> vector2DMap;
-  Teuchos::RCP<Epetra_BlockMap> vector2DMap;
+  Teuchos::RCP<Epetra_BlockMap> vector3DMap;
   Teuchos::RCP<State> stateN;
   Teuchos::RCP<State> stateNP1;
   Teuchos::RCP<State> stateNONE;

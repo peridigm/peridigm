@@ -34,7 +34,8 @@
 #ifndef PERIDIGM_STATE_HPP
 #define PERIDIGM_STATE_HPP
 
-#include <Epetra_BlockMap>
+//#include <Teuchos_RCP.hpp>
+#include <Epetra_MultiVector.h>
 
 namespace PeridigmNS {
 
@@ -48,17 +49,17 @@ public:
 
   void allocateScalarData(int numVar, Teuchos::RCP<Epetra_BlockMap> map)
   {
-    scalarData = rcp(new Epetra_MultiVector(map, numVar));
+    scalarData = Teuchos::rcp(new Epetra_MultiVector(*map, numVar));
   }
 
   void allocateVector1DData(int numVar, Teuchos::RCP<Epetra_BlockMap> map)
   {
-    vector2DData = rcp(new Epetra_MultiVector(map, numVar));
+    vector2DData = Teuchos::rcp(new Epetra_MultiVector(*map, numVar));
   }
 
   void allocateVector2DData(int numVar, Teuchos::RCP<Epetra_BlockMap> map)
   {
-    vector3DData = rcp(new Epetra_MultiVector(map, numVar));
+    vector3DData = Teuchos::rcp(new Epetra_MultiVector(*map, numVar));
   }
 
 protected:
