@@ -76,6 +76,12 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   // Instantiate materials using provided parameters
   instantiateMaterials();
 
+  // Instantiate data manager
+  dataManager =  Teuchos::rcp(new PeridigmNS::DataManager);
+  // \todo Extend to multiple materials
+  dataManager->allocateData( (*materials)[0]->VariableSpecs() );
+  
+
   // Read mesh from disk or generate using geometric primatives.
   // All maps are generated here
   // Vectors constructed here

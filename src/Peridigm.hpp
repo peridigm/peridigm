@@ -46,6 +46,7 @@
 #include "materials/Peridigm_Material.hpp"
 #include "Peridigm_AbstractDiscretization.hpp"
 #include "Peridigm_ModelEvaluator.hpp"
+#include "Peridigm_DataManager.hpp"
 #include "Peridigm_OutputManager.hpp"
 
 namespace PeridigmNS {
@@ -134,6 +135,9 @@ namespace PeridigmNS {
 
     //! Contact models
     Teuchos::RCP< std::vector<Teuchos::RCP<const PeridigmNS::ContactModel> > > contactModels;
+
+    //! Data manager
+    Teuchos::RCP<PeridigmNS::DataManager> dataManager;
 
     //! Global vector for initial positions
     Teuchos::RCP<Epetra_Vector> x;
