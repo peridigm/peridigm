@@ -76,16 +76,17 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   // Instantiate materials using provided parameters
   instantiateMaterials();
 
-  // Instantiate data manager
-  dataManager =  Teuchos::rcp(new PeridigmNS::DataManager);
-  // \todo Extend to multiple materials
-  dataManager->allocateData( (*materials)[0]->VariableSpecs() );
-  
-
   // Read mesh from disk or generate using geometric primatives.
   // All maps are generated here
-  // Vectors constructed here
   initializeDiscretization();
+
+  // Instantiate data manager
+  dataManager =  Teuchos::rcp(new PeridigmNS::DataManager);
+  dataManager->setScalarMap(oneDimensionalOverlapMap);
+  dataManager->setVector2DMap(Teuchos::null);
+  dataManager->setVector3DMap(threeDimensionalOverlapMap);
+  // \todo Extend to multiple materials
+  dataManager->allocateData( (*materials)[0]->VariableSpecs() );
 
   // apply initial velocities
   applyInitialVelocities();
