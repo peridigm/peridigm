@@ -35,7 +35,7 @@
 #define PERIDIGM_STATE_HPP
 
 #include <Teuchos_RCP.hpp>
-#include <Epetra_MultiVector.h>
+#include <Epetra_Vector.h>
 
 namespace PeridigmNS {
 
@@ -47,19 +47,35 @@ public:
   State(const State& state){}
   ~State(){}
 
-  void allocateScalarData(int numVar, Teuchos::RCP<Epetra_BlockMap> map)
+  void allocateScalarData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
   {
-    scalarData = Teuchos::rcp(new Epetra_MultiVector(*map, numVar));
+    scalarData = Teuchos::rcp(new Epetra_MultiVector(*map, fieldSpecs->size()));
+    for(unsigned int i=0 ; i<fieldSpecs->size() ; ++i)
+      fieldSpecToDataMap[(*fieldSpecs)[i]] = Teuchos::rcp((*scalarData)(i), false);
   }
 
-  void allocateVector1DData(int numVar, Teuchos::RCP<Epetra_BlockMap> map)
+  void allocateVector2DData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
   {
-    vector2DData = Teuchos::rcp(new Epetra_MultiVector(*map, numVar));
+    vector2DData = Teuchos::rcp(new Epetra_MultiVector(*map, fieldSpecs->size()));
+    for(unsigned int i=0 ; i<fieldSpecs->size() ; ++i)
+      fieldSpecToDataMap[(*fieldSpecs)[i]] = Teuchos::rcp((*vector2DData)(i), false);
   }
 
-  void allocateVector2DData(int numVar, Teuchos::RCP<Epetra_BlockMap> map)
+  void allocateVector3DData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
   {
-    vector3DData = Teuchos::rcp(new Epetra_MultiVector(*map, numVar));
+    vector3DData = Teuchos::rcp(new Epetra_MultiVector(*map, fieldSpecs->size()));
+    for(unsigned int i=0 ; i<fieldSpecs->size() ; ++i)
+      fieldSpecToDataMap[(*fieldSpecs)[i]] = Teuchos::rcp((*vector3DData)(i), false);
+  }
+
+  Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec){
+    // search for the data
+    std::map< Field_NS::FieldSpec, Teuchos::RCP<Epetra_Vector> >::iterator lb = fieldSpecToDataMap.lower_bound(fieldSpec);
+    // if the key does not exist, throw an exception
+    bool keyExists = ( lb != fieldSpecToDataMap.end() && !(fieldSpecToDataMap.key_comp()(fieldSpec, lb->first)) );
+    TEST_FOR_EXCEPTION(!keyExists, Teuchos::RangeError, 
+                       "Error in PeridigmNS::State::getData(), key does not exist!");
+    return lb->second;
   }
 
 protected:
@@ -67,6 +83,7 @@ protected:
   Teuchos::RCP<Epetra_MultiVector> scalarData;
   Teuchos::RCP<Epetra_MultiVector> vector2DData;
   Teuchos::RCP<Epetra_MultiVector> vector3DData;
+  std::map< Field_NS::FieldSpec, Teuchos::RCP<Epetra_Vector> > fieldSpecToDataMap;
 };
 
 }

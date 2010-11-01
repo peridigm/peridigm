@@ -43,28 +43,31 @@ class DataManager {
 
 public:
 
-  DataManager() : numStatelessScalar(0), numStatelessVector2D(0), numStatelessVector3D(0),
-                  numStatefulScalar(0), numStatefulVector2D(0), numStatefulVector3D(0) {}
+  DataManager(){}
   DataManager(const DataManager& dataManager){}
   ~DataManager(){}
 
-  void setScalarMap(Teuchos::RCP<Epetra_BlockMap> map) { scalarMap = map; }
-  void setVector2DMap(Teuchos::RCP<Epetra_BlockMap> map) { vector2DMap = map; }
-  void setVector3DMap(Teuchos::RCP<Epetra_BlockMap> map) { vector3DMap = map; }
+  void setScalarMap(Teuchos::RCP<const Epetra_BlockMap> map) { scalarMap = map; }
+  void setVector2DMap(Teuchos::RCP<const Epetra_BlockMap> map) { vector2DMap = map; }
+  void setVector3DMap(Teuchos::RCP<const Epetra_BlockMap> map) { vector3DMap = map; }
   void allocateData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > specs);
+  Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec, Field_NS::FieldSpec::FieldStep fieldStep);
 
 protected:
 
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs;
-  int numStatelessScalar, numStatelessVector2D, numStatelessVector3D;
-  int numStatefulScalar, numStatefulVector2D, numStatefulVector3D;
-  Teuchos::RCP<Epetra_BlockMap> scalarMap;
-  Teuchos::RCP<Epetra_BlockMap> vector2DMap;
-  Teuchos::RCP<Epetra_BlockMap> vector3DMap;
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statelessScalarFieldSpecs;
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statelessVector2DFieldSpecs;
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statelessVector3DFieldSpecs;
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statefulScalarFieldSpecs;
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statefulVector2DFieldSpecs;
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statefulVector3DFieldSpecs;
+  Teuchos::RCP<const Epetra_BlockMap> scalarMap;
+  Teuchos::RCP<const Epetra_BlockMap> vector2DMap;
+  Teuchos::RCP<const Epetra_BlockMap> vector3DMap;
   Teuchos::RCP<State> stateN;
   Teuchos::RCP<State> stateNP1;
   Teuchos::RCP<State> stateNONE;
-  std::map< Field_NS::FieldSpec, Teuchos::RCP<Epetra_Vector> > fieldSpecToDataMap;
 };
 
 }
