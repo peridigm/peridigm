@@ -163,6 +163,7 @@ void PeridigmNS::Peridigm::initializeMaterials() {
                          neighborhoodData->OwnedIDs(),
                          neighborhoodData->NeighborhoodList(),
                          bondData,
+                         *dataManager,
                          *scalarConstitutiveDataOverlap,
                          *vectorConstitutiveDataOverlap,
                          *bondConstitutiveData,

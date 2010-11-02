@@ -120,6 +120,13 @@ void testTwoPts()
   BOOST_CHECK(mat.NumVectorConstitutiveVariables() == 1);
   Epetra_MultiVector vectorConstitutiveDataOverlap(threeDimensionalOverlapMap, numVectorConstitutiveVariables);
 
+  // create the material manager
+  PeridigmNS::DataManager dataManager;
+  dataManager.setScalarMap(Teuchos::rcp(&oneDimensionalOverlapMap, false));
+  dataManager.setVector2DMap(Teuchos::null);
+  dataManager.setVector3DMap(Teuchos::rcp(&threeDimensionalOverlapMap, false));
+  dataManager.allocateData(mat.VariableSpecs());
+
   // two-point discretization
   double dt = 1.0;
   xOverlap[0] = 0.0; xOverlap[1] = 0.0; xOverlap[2] = 0.0;
@@ -173,6 +180,7 @@ void testTwoPts()
   workset.cellVolumeOverlap = Teuchos::RCP<Epetra_Vector>(&cellVolumeOverlap, false);
   workset.neighborhoodData = Teuchos::RCP<PeridigmNS::NeighborhoodData>(&neighborhoodData, false);
   workset.bondData = Teuchos::RCP<double>(bondData, false);
+  workset.dataManager = Teuchos::RCP<PeridigmNS::DataManager>(&dataManager, false);
   workset.scalarConstitutiveDataOverlap = Teuchos::RCP<Epetra_MultiVector>(&scalarConstitutiveDataOverlap, false);
   workset.vectorConstitutiveDataOverlap = Teuchos::RCP<Epetra_MultiVector>(&vectorConstitutiveDataOverlap, false);
   workset.bondConstitutiveData = Teuchos::RCP<Epetra_MultiVector>(&bondConstitutiveData, false);

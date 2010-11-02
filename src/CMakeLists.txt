@@ -102,6 +102,7 @@ ${Boost_LIBRARIES}
 add_executable(utPeridigm_LinearElasticIsotropicMaterial
         ../io/Field.cxx
 		./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
+        Peridigm_DataManager.cpp
 		./materials/Peridigm_DecompositionStates.cpp
         ./materials/Peridigm_CriticalStretchDamageModel.cpp
 		./materials/utPeridigm_LinearElasticIsotropicMaterial.cpp)
@@ -127,6 +128,7 @@ add_executable(utPHAL_UpdateForceState
 		PHAL_Dimension.cpp
         ../io/Field.cxx
 		./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
+        Peridigm_DataManager.cpp
 		./materials/Peridigm_DecompositionStates.cpp
         ./materials/Peridigm_CriticalStretchDamageModel.cpp
 		./evaluators/utPHAL_UpdateForceState.cpp)
@@ -156,6 +158,7 @@ add_executable(utPHAL_EvaluateForce
 		PHAL_Dimension.cpp
         ../io/Field.cxx
 		./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
+        Peridigm_DataManager.cpp
 		./materials/Peridigm_DecompositionStates.cpp
         ./materials/Peridigm_CriticalStretchDamageModel.cpp
 		./evaluators/utPHAL_EvaluateForce.cpp)

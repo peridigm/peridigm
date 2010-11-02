@@ -93,6 +93,13 @@ void testTwoPts()
   Epetra_MultiVector vectorConstitutiveData(unknownMap, numVectorStateVariables);
   Epetra_Vector force(unknownMap);
 
+  // create the material manager
+  PeridigmNS::DataManager dataManager;
+  dataManager.setScalarMap(Teuchos::rcp(&nodeMap, false));
+  dataManager.setVector2DMap(Teuchos::null);
+  dataManager.setVector3DMap(Teuchos::rcp(&unknownMap, false));
+  dataManager.allocateData(mat.VariableSpecs());
+
   x[0] = 0.0; x[1] = 0.0; x[2] = 0.0;
   x[3] = 1.0; x[4] = 0.0; x[5] = 0.0;
   u[0] = 0.0; u[1] = 0.0; u[2] = 0.0;
@@ -139,6 +146,7 @@ void testTwoPts()
                  ownedIDs,
                  neighborhoodList,
                  bondState,
+                 dataManager,
                  scalarConstitutiveData,
                  vectorConstitutiveData,
                  bondConstitutiveData,
@@ -153,6 +161,7 @@ void testTwoPts()
 							 ownedIDs,
 							 neighborhoodList,
 							 bondState,
+                             dataManager,
 							 scalarConstitutiveData,
 							 vectorConstitutiveData,
                              bondConstitutiveData,
@@ -192,6 +201,7 @@ void testTwoPts()
 				   ownedIDs,
 				   neighborhoodList,
 				   bondState,
+                   dataManager,
 				   scalarConstitutiveData,
 				   vectorConstitutiveData,
                    bondConstitutiveData,
@@ -239,6 +249,13 @@ void testEightPts()
   BOOST_CHECK(mat.NumVectorConstitutiveVariables() == 1);
   Epetra_MultiVector vectorConstitutiveData(unknownMap, numVectorStateVariables);
   Epetra_Vector force(unknownMap);
+
+  // create the material manager
+  PeridigmNS::DataManager dataManager;
+  dataManager.setScalarMap(Teuchos::rcp(&nodeMap, false));
+  dataManager.setVector2DMap(Teuchos::null);
+  dataManager.setVector3DMap(Teuchos::rcp(&unknownMap, false));
+  dataManager.allocateData(mat.VariableSpecs());
 
   // initial positions
   x[0]  = 0.0; x[1]  = 0.0; x[2]  = 0.0;
@@ -326,6 +343,7 @@ void testEightPts()
                  ownedIDs,
                  neighborhoodList,
                  bondState,
+                 dataManager,
                  scalarConstitutiveData,
                  vectorConstitutiveData,
                  bondConstitutiveData,
@@ -340,6 +358,7 @@ void testEightPts()
 							 ownedIDs,
 							 neighborhoodList,
 							 bondState,
+                             dataManager,
 							 scalarConstitutiveData,
 							 vectorConstitutiveData,
                              bondConstitutiveData,
@@ -419,6 +438,7 @@ void testEightPts()
 				   ownedIDs,
 				   neighborhoodList,
 				   bondState,
+                   dataManager,
 				   scalarConstitutiveData,
 				   vectorConstitutiveData,
                    bondConstitutiveData,
@@ -553,6 +573,13 @@ void testThreePts()
   Epetra_MultiVector vectorConstitutiveData(unknownMap, numVectorStateVariables);
   Epetra_Vector force(unknownMap);
 
+  // create the material manager
+  PeridigmNS::DataManager dataManager;
+  dataManager.setScalarMap(Teuchos::rcp(&nodeMap, false));
+  dataManager.setVector2DMap(Teuchos::null);
+  dataManager.setVector3DMap(Teuchos::rcp(&unknownMap, false));
+  dataManager.allocateData(mat.VariableSpecs());
+
   // initial positions
   x[0] =  1.1; x[1] = 2.6;  x[2] = -0.1;
   x[3] = -2.0; x[4] = 0.9;  x[5] = -0.3;
@@ -624,6 +651,7 @@ void testThreePts()
                  ownedIDs,
                  neighborhoodList,
                  bondState,
+                 dataManager,
                  scalarConstitutiveData,
                  vectorConstitutiveData,
                  bondConstitutiveData,
@@ -638,6 +666,7 @@ void testThreePts()
 							 ownedIDs,
 							 neighborhoodList,
 							 bondState,
+                             dataManager,
 							 scalarConstitutiveData,
 							 vectorConstitutiveData,
                              bondConstitutiveData,
@@ -694,6 +723,7 @@ void testThreePts()
 				   ownedIDs,
 				   neighborhoodList,
 				   bondState,
+                   dataManager,
 				   scalarConstitutiveData,
 				   vectorConstitutiveData,
                    bondConstitutiveData,
