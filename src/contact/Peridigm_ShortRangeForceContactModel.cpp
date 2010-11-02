@@ -66,6 +66,7 @@ PeridigmNS::ShortRangeForceContactModel::computeForce(const Epetra_Vector& x,
                                                     const int numOwnedPoints,
                                                     const int* ownedIDs,
                                                     const int* contactNeighborhoodList,
+                                                    PeridigmNS::DataManager& dataManager,
                                                     Epetra_MultiVector& scalarConstitutiveData,
                                                     Epetra_MultiVector& vectorConstitutiveData,
                                                     Epetra_Vector& force) const

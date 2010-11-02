@@ -37,7 +37,6 @@
 #include <Phalanx_Evaluator_Derived.hpp>
 #include <Phalanx_MDField.hpp>
 #include <vector>
-#include "../materials/Peridigm_DecompositionStates.hpp"
 
 template<typename EvalT, typename Traits>
 class Contact : public PHX::EvaluatorWithBaseImpl<Traits>,
@@ -60,8 +59,6 @@ private:
   bool m_verbose;
 
   std::size_t m_num_pt;
-
-  PeridigmNS::DecompositionStates m_decompStates;
 
   void setup_vectors(const Teuchos::ParameterList& p);
 

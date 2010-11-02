@@ -37,6 +37,7 @@
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_Vector.h>
+#include "Peridigm_DataManager.hpp"
 
 namespace PeridigmNS {
 
@@ -64,6 +65,7 @@ namespace PeridigmNS {
 				 const int numOwnedPoints,
 				 const int* ownedIDs,
 				 const int* contactNeighborhoodList,
+                 PeridigmNS::DataManager& dataManager,
                  Epetra_MultiVector& scalarConstitutiveData,
                  Epetra_MultiVector& vectorConstitutiveData,
 				 Epetra_Vector& force) const = 0;

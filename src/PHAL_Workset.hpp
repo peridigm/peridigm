@@ -36,6 +36,7 @@
 #include <Epetra_Import.h>
 #include <vector>
 #include <map>
+#include "Peridigm_DataManager.hpp"
 #include "Peridigm_NeighborhoodData.hpp"
 #include "Peridigm_Material.hpp"
 #include "Peridigm_ContactModel.hpp"
@@ -59,6 +60,9 @@ struct Workset {
   Teuchos::RCP<const double> timeStep;
   Teuchos::RCP<const Epetra_Vector> cellVolumeOverlap;
   Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData;
+  Teuchos::RCP<PeridigmNS::DataManager> dataManager;
+
+  // \todo Remove these data containers and replace with dataManger
   Teuchos::RCP<double> bondData;
   Teuchos::RCP<Epetra_MultiVector> scalarConstitutiveDataOverlap;
   Teuchos::RCP<Epetra_MultiVector> vectorConstitutiveDataOverlap;
