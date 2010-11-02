@@ -422,7 +422,7 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
     // Set RCP to neighborlist
     forceStateDesc->set("Bond Family",neighborhoodData);
     // Ask OutputManager to write initial conditions to disk
-    outputManager->write(x,u,v,a,force,scalarConstitutiveDataOverlap,neighborhoodData,forceStateDesc);
+    outputManager->write(x,u,v,a,force,dataManager,scalarConstitutiveDataOverlap,neighborhoodData,forceStateDesc);
   }
 
   //  verbose = problemParams->get("Verbose", false);
@@ -519,7 +519,7 @@ void PeridigmNS::Peridigm::execute() {
     //cout << "PERIDIGM OBSERVER CALLED step=" <<  timeStepIter  << ",  time=" << stepper.getStepStatus().time << endl;
     // Set current time in this parameterlist
     forceStateDesc->set("Time", time);
-    outputManager->write(x,u,v,a,force,scalarConstitutiveDataOverlap,neighborhoodData,forceStateDesc);
+    outputManager->write(x,u,v,a,force,dataManager,scalarConstitutiveDataOverlap,neighborhoodData,forceStateDesc);
 
   }
 

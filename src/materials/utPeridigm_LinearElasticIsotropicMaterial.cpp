@@ -179,10 +179,9 @@ void testTwoPts()
   BOOST_CHECK_SMALL(currentPositionY2, 1.0e-14);
   double currentPositionZ2 = vectorConstitutiveData[0][5];
   BOOST_CHECK_SMALL(currentPositionZ2, 1.0e-14);
-  double weightedVolume = scalarConstitutiveData[0][0];
-  BOOST_CHECK_CLOSE(weightedVolume, 1.0, 1.0e-15);
-  weightedVolume = scalarConstitutiveData[0][1];
-  BOOST_CHECK_CLOSE(weightedVolume, 1.0, 1.0e-15);
+  Epetra_Vector& weightedVolume = *dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE);
+  BOOST_CHECK_CLOSE(weightedVolume[0], 1.0, 1.0e-15);
+  BOOST_CHECK_CLOSE(weightedVolume[1], 1.0, 1.0e-15);
   double dilatation = scalarConstitutiveData[1][0];
   BOOST_CHECK_CLOSE(dilatation, 3.0, 1.0e-15);
   dilatation = scalarConstitutiveData[1][1];
@@ -416,10 +415,10 @@ void testEightPts()
 
   // the weighted volumes and dilatations are the
   // same for all points in this test problem
+  Epetra_Vector& weightedVolume = *dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE);
   for(int i=0; i<8; ++i){
-	double weightedVolume = scalarConstitutiveData[0][i];
+	BOOST_CHECK_CLOSE(weightedVolume[i], 12.0, 1.0e-12);
 	double dilatation = scalarConstitutiveData[1][i];
-	BOOST_CHECK_CLOSE(weightedVolume, 12.0, 1.0e-12);
 	BOOST_CHECK_CLOSE(dilatation, -0.01991593994643333, 1.0e-12);
   }
 
@@ -694,17 +693,15 @@ void testThreePts()
 
   // check the weighted volume and dilatation
   // against hand calculations
-  double weightedVolume, dilatation;
-  weightedVolume = scalarConstitutiveData[0][0];
-  BOOST_CHECK_CLOSE(weightedVolume, 23.016479999999931, 1.0e-12);
+  Epetra_Vector& weightedVolume = *dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE);
+  double dilatation;
+  BOOST_CHECK_CLOSE(weightedVolume[0], 23.016479999999931, 1.0e-12);
   dilatation = scalarConstitutiveData[1][0];
   BOOST_CHECK_CLOSE(dilatation, -0.114127034572639, 1.0e-11);
-  weightedVolume = scalarConstitutiveData[0][1];
-  BOOST_CHECK_CLOSE(weightedVolume,18.64767999999997, 1.0e-12);
+  BOOST_CHECK_CLOSE(weightedVolume[1],18.64767999999997, 1.0e-12);
   dilatation = scalarConstitutiveData[1][1];
   BOOST_CHECK_CLOSE(dilatation, 0.08257537372985, 1.0e-11);
-  weightedVolume = scalarConstitutiveData[0][2];
-  BOOST_CHECK_CLOSE(weightedVolume, 20.497599999999963, 1.0e-12);
+  BOOST_CHECK_CLOSE(weightedVolume[2], 20.497599999999963, 1.0e-12);
   dilatation = scalarConstitutiveData[1][2];
   BOOST_CHECK_CLOSE(dilatation, -0.12166177890553, 1.0e-11);
 

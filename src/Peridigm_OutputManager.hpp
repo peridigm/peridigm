@@ -36,6 +36,7 @@
 #include <Epetra_Map.h>
 #include <Epetra_Vector.h>
 #include <Teuchos_ParameterList.hpp>
+#include "Peridigm_DataManager.hpp"
 #include "Peridigm_NeighborhoodData.hpp"
 
 namespace PeridigmNS {
@@ -62,6 +63,7 @@ namespace PeridigmNS {
                        Teuchos::RCP<const Epetra_Vector>,
                        Teuchos::RCP<const Epetra_Vector>,
                        Teuchos::RCP<const Epetra_Vector>,
+                       Teuchos::RCP<PeridigmNS::DataManager>,
 		       Teuchos::RCP<const Epetra_MultiVector>,
 		       Teuchos::RCP<const NeighborhoodData>,
 		       Teuchos::RCP<Teuchos::ParameterList>&) = 0;

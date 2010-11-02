@@ -143,8 +143,10 @@ PeridigmNS::LinearElasticIsotropicMaterial::initialize(const Epetra_Vector& x,
 					  "bondConstitutiveData vector and bondState array lengths do not match\n");
 
   // Extract pointers to the underlying data in the constitutiveData array
-  std::pair<int,double*> scalarView = m_decompStates.extractStrideView(scalarConstitutiveData);
-  double* weightedVolume = m_decompStates.extractWeightedVolumeView(scalarView);
+//   std::pair<int,double*> scalarView = m_decompStates.extractStrideView(scalarConstitutiveData);
+//   double* weightedVolume = m_decompStates.extractWeightedVolumeView(scalarView);
+  double* weightedVolume;
+  dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
 
   PdMaterialUtilities::computeWeightedVolume(x.Values(),cellVolume.Values(),weightedVolume,numOwnedPoints,neighborhoodList);
 }
@@ -170,7 +172,8 @@ PeridigmNS::LinearElasticIsotropicMaterial::updateConstitutiveData(const Epetra_
   
   // Extract pointers to the underlying data in the constitutiveData array
   std::pair<int,double*> scalarView = m_decompStates.extractStrideView(scalarConstitutiveData);
-  double* weightedVolume = m_decompStates.extractWeightedVolumeView(scalarView);
+  double* weightedVolume;
+  dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
   double* dilatation = m_decompStates.extractDilatationView(scalarView);
   double* damage = m_decompStates.extractDamageView(scalarView);
 
@@ -238,7 +241,8 @@ PeridigmNS::LinearElasticIsotropicMaterial::computeForce(const Epetra_Vector& x,
 
   // Extract pointers to the underlying data in the constitutiveData array
   std::pair<int,double*> scalarView = m_decompStates.extractStrideView(scalarConstitutiveData);
-  double* weightedVolume = m_decompStates.extractWeightedVolumeView(scalarView);
+  double* weightedVolume;
+  dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
   double* dilatation = m_decompStates.extractDilatationView(scalarView);
   std::pair<int,double*> vectorView = m_decompStates.extractStrideView(vectorConstitutiveData);
   double *y = m_decompStates.extractCurrentPositionView(vectorView);

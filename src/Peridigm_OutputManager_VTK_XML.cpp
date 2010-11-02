@@ -190,6 +190,7 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
                                               Teuchos::RCP<const Epetra_Vector> v,
                                               Teuchos::RCP<const Epetra_Vector> a,
                                               Teuchos::RCP<const Epetra_Vector> force,
+                                              Teuchos::RCP<PeridigmNS::DataManager> dataManager,
                                               Teuchos::RCP<const Epetra_MultiVector> scalarConstitutiveData,
                                               Teuchos::RCP<const NeighborhoodData> neighborhoodData,
                                               Teuchos::RCP<Teuchos::ParameterList>& forceStateDesc) {
@@ -286,6 +287,7 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
         PdVTK::writeField<double>(grid,Field_NS::DILATATION,dataptr);
       }
       else if (outstring == "Weighted Volume") {
+        dataManager->getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&dataptr);
         PdVTK::writeField<double>(grid,Field_NS::WEIGHTED_VOLUME,dataptr);
       }
       else if (outstring == "Damage") {
