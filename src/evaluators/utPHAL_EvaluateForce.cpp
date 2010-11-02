@@ -191,8 +191,9 @@ void testTwoPts()
   // the UpdateForceState evaluator
 
   // weighted volume
-  scalarConstitutiveDataOverlap[0][0] = 1.0;
-  scalarConstitutiveDataOverlap[0][1] = 1.0;
+  Epetra_Vector& weightedVolume = *dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE);
+  weightedVolume[0] = 1.0;
+  weightedVolume[1] = 1.0;
 
   // dilatation
   scalarConstitutiveDataOverlap[1][0] = 3.0;

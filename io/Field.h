@@ -53,7 +53,7 @@ const FieldSpec VOLUME(FieldSpec::VOLUME,                       FieldSpec::SCALA
 const FieldSpec ID(Field_NS::FieldSpec::ID,                     FieldSpec::SCALAR, FieldSpec::STATELESS, "Id");
 const FieldSpec PROC_NUM(Field_NS::FieldSpec::PROC_NUM,         FieldSpec::SCALAR, FieldSpec::STATELESS, "Proc_Num");
 const FieldSpec DAMAGE(FieldSpec::DAMAGE,                       FieldSpec::SCALAR, FieldSpec::STATEFUL,  "Damage");
-const FieldSpec WEIGHTED_VOLUME(FieldSpec::WEIGHTED_VOLUME,     FieldSpec::SCALAR, FieldSpec::STATEFUL,  "Weighted_Volume");
+const FieldSpec WEIGHTED_VOLUME(FieldSpec::WEIGHTED_VOLUME,     FieldSpec::SCALAR, FieldSpec::STATELESS, "Weighted_Volume");
 const FieldSpec DILATATION(FieldSpec::DILATATION,               FieldSpec::SCALAR, FieldSpec::STATEFUL,  "Dilatation");
 const FieldSpec NUM_NEIGHBORS(FieldSpec::NUM_NEIGHBORS,         FieldSpec::SCALAR, FieldSpec::STATELESS, "Num_Neighbors");
 const FieldSpec DEVIATORIC_PLASTIC_EXTENSION(FieldSpec::E_DP,   FieldSpec::SCALAR, FieldSpec::STATEFUL,  "Deviatoric_Plastic_Extension");

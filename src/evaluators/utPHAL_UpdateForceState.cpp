@@ -138,9 +138,9 @@ void testTwoPts()
   cellVolumeOverlap.PutScalar(1.0);
   scalarConstitutiveDataOverlap.PutScalar(0.0);
   vectorConstitutiveDataOverlap.PutScalar(0.0);
-  int weightedVolumeIndex = 0;
-  scalarConstitutiveDataOverlap[weightedVolumeIndex][0] = 1.0;
-  scalarConstitutiveDataOverlap[weightedVolumeIndex][1] = 1.0;
+  Epetra_Vector& weightedVolume = *dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE);
+  weightedVolume[0] = 1.0;
+  weightedVolume[1] = 1.0;
 
   // both points are neighbors of each other
   PeridigmNS::NeighborhoodData neighborhoodData;
@@ -219,10 +219,8 @@ void testTwoPts()
   BOOST_CHECK_CLOSE(currentPositionZ, 0.0, 1.0e-15);
 
   // assert the weighted volumes
-  double weightedVolume = scalarConstitutiveDataOverlap[0][0];
-  BOOST_CHECK_CLOSE(weightedVolume, 1.0, 1.0e-15);
-  weightedVolume = scalarConstitutiveDataOverlap[0][1];
-  BOOST_CHECK_CLOSE(weightedVolume, 1.0, 1.0e-15);
+  BOOST_CHECK_CLOSE(weightedVolume[0], 1.0, 1.0e-15);
+  BOOST_CHECK_CLOSE(weightedVolume[1], 1.0, 1.0e-15);
 
   // assert the dilatations
   double dilatation = scalarConstitutiveDataOverlap[1][0];
