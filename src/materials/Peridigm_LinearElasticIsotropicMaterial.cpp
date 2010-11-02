@@ -95,18 +95,19 @@ PeridigmNS::LinearElasticIsotropicMaterial::~LinearElasticIsotropicMaterial()
 
 void
 PeridigmNS::LinearElasticIsotropicMaterial::initialize(const Epetra_Vector& x,
-                                                     const Epetra_Vector& u,
-                                                     const Epetra_Vector& v,
-                                                     const double dt,
-                                                     const Epetra_Vector& cellVolume,
-                                                     const int numOwnedPoints,
-                                                     const int* ownedIDs,
-                                                     const int* neighborhoodList,
-                                                     double* bondState,
-                                                     Epetra_MultiVector& scalarConstitutiveData,
-                                                     Epetra_MultiVector& vectorConstitutiveData,
-                                                     Epetra_MultiVector& bondConstitutiveData,
-                                                     Epetra_Vector& force) const
+                                                       const Epetra_Vector& u,
+                                                       const Epetra_Vector& v,
+                                                       const double dt,
+                                                       const Epetra_Vector& cellVolume,
+                                                       const int numOwnedPoints,
+                                                       const int* ownedIDs,
+                                                       const int* neighborhoodList,
+                                                       double* bondState,
+                                                       PeridigmNS::DataManager& dataManager,
+                                                       Epetra_MultiVector& scalarConstitutiveData,
+                                                       Epetra_MultiVector& vectorConstitutiveData,
+                                                       Epetra_MultiVector& bondConstitutiveData,
+                                                       Epetra_Vector& force) const
 {
   // Sanity checks on vector sizes
   TEST_FOR_EXCEPT_MSG(x.MyLength() != u.MyLength(), 
@@ -150,18 +151,19 @@ PeridigmNS::LinearElasticIsotropicMaterial::initialize(const Epetra_Vector& x,
 
 void
 PeridigmNS::LinearElasticIsotropicMaterial::updateConstitutiveData(const Epetra_Vector& x,
-																 const Epetra_Vector& u,
-																 const Epetra_Vector& v,
-																 const double dt,
-																 const Epetra_Vector& cellVolume,
-																 const int numOwnedPoints,
-																 const int* ownedIDs,
-																 const int* neighborhoodList,
-																 double* bondState,
-																 Epetra_MultiVector& scalarConstitutiveData,
-																 Epetra_MultiVector& vectorConstitutiveData,
-																 Epetra_MultiVector& bondConstitutiveData,
-																 Epetra_Vector& force) const
+                                                                   const Epetra_Vector& u,
+                                                                   const Epetra_Vector& v,
+                                                                   const double dt,
+                                                                   const Epetra_Vector& cellVolume,
+                                                                   const int numOwnedPoints,
+                                                                   const int* ownedIDs,
+                                                                   const int* neighborhoodList,
+                                                                   double* bondState,
+                                                                   PeridigmNS::DataManager& dataManager,
+                                                                   Epetra_MultiVector& scalarConstitutiveData,
+                                                                   Epetra_MultiVector& vectorConstitutiveData,
+                                                                   Epetra_MultiVector& bondConstitutiveData,
+                                                                   Epetra_Vector& force) const
 {
   //! \todo Create structure for storing influence function values.
 //   double omega = 1.0;
@@ -218,18 +220,19 @@ PdMaterialUtilities::computeDilatation(x.Values(),y,weightedVolume,cellVolume.Va
 
 void
 PeridigmNS::LinearElasticIsotropicMaterial::computeForce(const Epetra_Vector& x,
-													   const Epetra_Vector& u,
-													   const Epetra_Vector& v,
-													   const double dt,
-													   const Epetra_Vector& cellVolume,
-													   const int numOwnedPoints,
-													   const int* ownedIDs,
-													   const int* neighborhoodList,
-													   double* bondState,
-													   Epetra_MultiVector& scalarConstitutiveData,
-													   Epetra_MultiVector& vectorConstitutiveData,
-													   Epetra_MultiVector& bondConstitutiveData,
-													   Epetra_Vector& force) const
+                                                         const Epetra_Vector& u,
+                                                         const Epetra_Vector& v,
+                                                         const double dt,
+                                                         const Epetra_Vector& cellVolume,
+                                                         const int numOwnedPoints,
+                                                         const int* ownedIDs,
+                                                         const int* neighborhoodList,
+                                                         double* bondState,
+                                                         PeridigmNS::DataManager& dataManager,
+                                                         Epetra_MultiVector& scalarConstitutiveData,
+                                                         Epetra_MultiVector& vectorConstitutiveData,
+                                                         Epetra_MultiVector& bondConstitutiveData,
+                                                         Epetra_Vector& force) const
 {
 //   double omega = 1.0;
 

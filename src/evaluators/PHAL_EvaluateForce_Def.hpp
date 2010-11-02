@@ -86,6 +86,8 @@ void EvaluateForce<EvalT, Traits>::evaluateFields(typename Traits::EvalData cell
   const int* ownedIDs = cellData.neighborhoodData->OwnedIDs();
   const int* neighborhoodList = cellData.neighborhoodData->NeighborhoodList();
 
+  PeridigmNS::DataManager& dataManager = *cellData.dataManager;
+
   // \todo expand bondData to allow for an arbitrary number of bond data per bond
   double* bondData = cellData.bondData.get();
 
@@ -107,6 +109,7 @@ void EvaluateForce<EvalT, Traits>::evaluateFields(typename Traits::EvalData cell
 						 ownedIDs,
 						 neighborhoodList,
 						 bondData,
+                         dataManager,
 						 scalarConstitutiveData,
 						 vectorConstitutiveData,
 						 bondConstitutiveData,

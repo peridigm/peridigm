@@ -70,18 +70,19 @@ PeridigmNS::IsotropicElasticPlasticMaterial::~IsotropicElasticPlasticMaterial()
 
 
 void PeridigmNS::IsotropicElasticPlasticMaterial::initialize(const Epetra_Vector& x,
-                                                     const Epetra_Vector& u,
-                                                     const Epetra_Vector& v,
-                                                     const double dt,
-                                                     const Epetra_Vector& cellVolume,
-                                                     const int numOwnedPoints,
-                                                     const int* ownedIDs,
-                                                     const int* neighborhoodList,
-                                                     double* bondState,
-                                                     Epetra_MultiVector& scalarConstitutiveData,
-                                                     Epetra_MultiVector& vectorConstitutiveData,
-                                                     Epetra_MultiVector& bondConstitutiveData,
-                                                     Epetra_Vector& force) const
+                                                             const Epetra_Vector& u,
+                                                             const Epetra_Vector& v,
+                                                             const double dt,
+                                                             const Epetra_Vector& cellVolume,
+                                                             const int numOwnedPoints,
+                                                             const int* ownedIDs,
+                                                             const int* neighborhoodList,
+                                                             double* bondState,
+                                                             PeridigmNS::DataManager& dataManager,
+                                                             Epetra_MultiVector& scalarConstitutiveData,
+                                                             Epetra_MultiVector& vectorConstitutiveData,
+                                                             Epetra_MultiVector& bondConstitutiveData,
+                                                             Epetra_Vector& force) const
 {
 
 	 // Sanity checks on vector sizes
@@ -123,18 +124,19 @@ void PeridigmNS::IsotropicElasticPlasticMaterial::initialize(const Epetra_Vector
 
 void
 PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const Epetra_Vector& x,
-																 const Epetra_Vector& u,
-																 const Epetra_Vector& v,
-																 const double dt,
-																 const Epetra_Vector& cellVolume,
-																 const int numOwnedPoints,
-																 const int* ownedIDs,
-																 const int* neighborhoodList,
-																 double* bondState,
-																 Epetra_MultiVector& scalarConstitutiveData,
-																 Epetra_MultiVector& vectorConstitutiveData,
-																 Epetra_MultiVector& bondConstitutiveData,
-																 Epetra_Vector& force) const
+                                                                    const Epetra_Vector& u,
+                                                                    const Epetra_Vector& v,
+                                                                    const double dt,
+                                                                    const Epetra_Vector& cellVolume,
+                                                                    const int numOwnedPoints,
+                                                                    const int* ownedIDs,
+                                                                    const int* neighborhoodList,
+                                                                    double* bondState,
+                                                                    PeridigmNS::DataManager& dataManager,
+                                                                    Epetra_MultiVector& scalarConstitutiveData,
+                                                                    Epetra_MultiVector& vectorConstitutiveData,
+                                                                    Epetra_MultiVector& bondConstitutiveData,
+                                                                    Epetra_Vector& force) const
 {
 
 	// Extract pointers to the underlying data in the constitutiveData array
@@ -190,18 +192,19 @@ PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const Epetra
 
 void
 PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const Epetra_Vector& x,
-													   const Epetra_Vector& u,
-													   const Epetra_Vector& v,
-													   const double dt,
-													   const Epetra_Vector& cellVolume,
-													   const int numOwnedPoints,
-													   const int* ownedIDs,
-													   const int* neighborhoodList,
-													   double* bondState,
-													   Epetra_MultiVector& scalarConstitutiveData,
-													   Epetra_MultiVector& vectorConstitutiveData,
-													   Epetra_MultiVector& bondConstitutiveData,
-													   Epetra_Vector& force) const
+                                                          const Epetra_Vector& u,
+                                                          const Epetra_Vector& v,
+                                                          const double dt,
+                                                          const Epetra_Vector& cellVolume,
+                                                          const int numOwnedPoints,
+                                                          const int* ownedIDs,
+                                                          const int* neighborhoodList,
+                                                          double* bondState,
+                                                          PeridigmNS::DataManager& dataManager,
+                                                          Epetra_MultiVector& scalarConstitutiveData,
+                                                          Epetra_MultiVector& vectorConstitutiveData,
+                                                          Epetra_MultiVector& bondConstitutiveData,
+                                                          Epetra_Vector& force) const
 {
 
 	  // Extract pointers to the underlying data in the constitutiveData array

@@ -70,14 +70,14 @@ void PeridigmNS::DataManager::allocateData(Teuchos::RCP< std::vector<Field_NS::F
     }
   }
 
-  cout << "\nDEBUGGING:" << endl;
-  cout << "  numStatelessScalar " << statelessScalarFieldSpecs->size() << endl;
-  cout << "  numStatefulScalar " << statefulScalarFieldSpecs->size() << endl;
-  cout << "  numStatelessVector2D  " << statelessVector2DFieldSpecs->size() << endl;
-  cout << "  numStatefulVector2D  " << statefulVector2DFieldSpecs->size() << endl;
-  cout << "  numStatelessVector3D  " << statelessVector3DFieldSpecs->size() << endl;
-  cout << "  numStatefulVector3D  " << statefulVector3DFieldSpecs->size() << endl;
-  cout << endl;
+//   cout << "\nDEBUGGING:" << endl;
+//   cout << "  numStatelessScalar " << statelessScalarFieldSpecs->size() << endl;
+//   cout << "  numStatefulScalar " << statefulScalarFieldSpecs->size() << endl;
+//   cout << "  numStatelessVector2D  " << statelessVector2DFieldSpecs->size() << endl;
+//   cout << "  numStatefulVector2D  " << statefulVector2DFieldSpecs->size() << endl;
+//   cout << "  numStatelessVector3D  " << statelessVector3DFieldSpecs->size() << endl;
+//   cout << "  numStatefulVector3D  " << statefulVector3DFieldSpecs->size() << endl;
+//   cout << endl;
 
   // make sure maps exist before trying to create states
   if(statelessScalarFieldSpecs->size() + statefulScalarFieldSpecs->size() > 0)
