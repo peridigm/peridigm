@@ -50,6 +50,7 @@ public:
   void setScalarMap(Teuchos::RCP<const Epetra_BlockMap> map) { scalarMap = map; }
   void setVector2DMap(Teuchos::RCP<const Epetra_BlockMap> map) { vector2DMap = map; }
   void setVector3DMap(Teuchos::RCP<const Epetra_BlockMap> map) { vector3DMap = map; }
+  void setBondMap(Teuchos::RCP<const Epetra_BlockMap> map) { bondMap = map; }
   void allocateData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > specs);
   Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec, Field_NS::FieldSpec::FieldStep fieldStep);
 
@@ -59,12 +60,15 @@ protected:
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statelessScalarFieldSpecs;
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statelessVector2DFieldSpecs;
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statelessVector3DFieldSpecs;
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statelessBondFieldSpecs;
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statefulScalarFieldSpecs;
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statefulVector2DFieldSpecs;
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statefulVector3DFieldSpecs;
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statefulBondFieldSpecs;
   Teuchos::RCP<const Epetra_BlockMap> scalarMap;
   Teuchos::RCP<const Epetra_BlockMap> vector2DMap;
   Teuchos::RCP<const Epetra_BlockMap> vector3DMap;
+  Teuchos::RCP<const Epetra_BlockMap> bondMap;
   Teuchos::RCP<State> stateN;
   Teuchos::RCP<State> stateNP1;
   Teuchos::RCP<State> stateNONE;

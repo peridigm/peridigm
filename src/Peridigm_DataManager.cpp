@@ -45,9 +45,11 @@ void PeridigmNS::DataManager::allocateData(Teuchos::RCP< std::vector<Field_NS::F
   statelessScalarFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
   statelessVector2DFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
   statelessVector3DFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
+  statelessBondFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
   statefulScalarFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
   statefulVector2DFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
   statefulVector3DFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
+  statefulBondFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
   for(unsigned int i=0; i<fieldSpecs->size() ; ++i){
     Field_NS::FieldSpec& spec = (*fieldSpecs)[i];
     if(spec.getLength() == Field_NS::FieldSpec::SCALAR){
@@ -56,39 +58,54 @@ void PeridigmNS::DataManager::allocateData(Teuchos::RCP< std::vector<Field_NS::F
       else
         statefulScalarFieldSpecs->push_back(spec);
     }
-    if(spec.getLength() == Field_NS::FieldSpec::VECTOR2D){
+    else if(spec.getLength() == Field_NS::FieldSpec::VECTOR2D){
       if(spec.getStateArchitecture() == Field_NS::FieldSpec::STATELESS)
         statelessVector2DFieldSpecs->push_back(spec);
       else
         statefulVector2DFieldSpecs->push_back(spec);
     }
-    if(spec.getLength() == Field_NS::FieldSpec::VECTOR3D){
+    else if(spec.getLength() == Field_NS::FieldSpec::VECTOR3D){
       if(spec.getStateArchitecture() == Field_NS::FieldSpec::STATELESS)
         statelessVector3DFieldSpecs->push_back(spec);
       else
         statefulVector3DFieldSpecs->push_back(spec);
     }
+    else if(spec.getLength() == Field_NS::FieldSpec::BOND){
+      if(spec.getStateArchitecture() == Field_NS::FieldSpec::STATELESS)
+        statelessBondFieldSpecs->push_back(spec);
+      else
+        statefulBondFieldSpecs->push_back(spec);
+    }
+    else{
+      TEST_FOR_EXCEPTION(false, Teuchos::RangeError, 
+                         "PeridigmNS::DataManager::allocateData, invalid FieldSpec!");
+    }
   }
 
 //   cout << "\nDEBUGGING:" << endl;
-//   cout << "  numStatelessScalar " << statelessScalarFieldSpecs->size() << endl;
-//   cout << "  numStatefulScalar " << statefulScalarFieldSpecs->size() << endl;
+//   cout << "  numStatelessScalar    " << statelessScalarFieldSpecs->size() << endl;
+//   cout << "  numStatefulScalar     " << statefulScalarFieldSpecs->size() << endl;
 //   cout << "  numStatelessVector2D  " << statelessVector2DFieldSpecs->size() << endl;
-//   cout << "  numStatefulVector2D  " << statefulVector2DFieldSpecs->size() << endl;
+//   cout << "  numStatelessBond      " << statelessBondFieldSpecs->size() << endl;
+//   cout << "  numStatefulVector2D   " << statefulVector2DFieldSpecs->size() << endl;
 //   cout << "  numStatelessVector3D  " << statelessVector3DFieldSpecs->size() << endl;
-//   cout << "  numStatefulVector3D  " << statefulVector3DFieldSpecs->size() << endl;
+//   cout << "  numStatefulVector3D   " << statefulVector3DFieldSpecs->size() << endl;
+//   cout << "  numStatefulBond       " << statefulBondFieldSpecs->size() << endl;
 //   cout << endl;
 
   // make sure maps exist before trying to create states
   if(statelessScalarFieldSpecs->size() + statefulScalarFieldSpecs->size() > 0)
     TEST_FOR_EXCEPTION(scalarMap == Teuchos::null, Teuchos::NullReferenceError, 
-                       "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate scalar data with no scalar data map (forget setScalarMap()?).");
+                       "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate scalar data with no map (forget setScalarMap()?).");
   if(statelessVector2DFieldSpecs->size() + statefulVector2DFieldSpecs->size() > 0)
     TEST_FOR_EXCEPTION(vector2DMap == Teuchos::null, Teuchos::NullReferenceError, 
-                       "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate vector2D data with no scalar data map (forget setVector2DMap()?).");
-  if(statelessVector3DFieldSpecs->size() != 0 + statefulVector3DFieldSpecs->size() > 0)
+                       "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate vector2D data with no map (forget setVector2DMap()?).");
+  if(statelessVector3DFieldSpecs->size() + statefulVector3DFieldSpecs->size() > 0)
     TEST_FOR_EXCEPTION(vector3DMap == Teuchos::null, Teuchos::NullReferenceError, 
-                       "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate vector3D data with no scalar data map (forget setVector3DMap()?).");
+                       "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate vector3D data with no map (forget setVector3DMap()?).");
+  if(statelessBondFieldSpecs->size() + statefulBondFieldSpecs->size() > 0)
+    TEST_FOR_EXCEPTION(bondMap == Teuchos::null, Teuchos::NullReferenceError, 
+                       "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate bond data with no map (forget setBondMap()?).");
 
   // create the states
   if(statelessScalarFieldSpecs->size() + statelessVector2DFieldSpecs->size() + statelessVector3DFieldSpecs->size() > 0){
@@ -99,6 +116,8 @@ void PeridigmNS::DataManager::allocateData(Teuchos::RCP< std::vector<Field_NS::F
       stateNONE->allocateVector2DData(statelessVector2DFieldSpecs, vector2DMap);
     if(statelessVector3DFieldSpecs->size() > 0)
       stateNONE->allocateVector3DData(statelessVector3DFieldSpecs, vector3DMap);
+    if(statelessBondFieldSpecs->size() > 0)
+      stateNONE->allocateBondData(statelessBondFieldSpecs, bondMap);
   }
   if(statefulScalarFieldSpecs->size() + statefulVector2DFieldSpecs->size() + statefulVector3DFieldSpecs->size() > 0){
     stateN = Teuchos::rcp(new State);
@@ -114,6 +133,10 @@ void PeridigmNS::DataManager::allocateData(Teuchos::RCP< std::vector<Field_NS::F
     if(statefulVector3DFieldSpecs->size() > 0){
       stateN->allocateVector3DData(statefulVector3DFieldSpecs, vector3DMap);
       stateNP1->allocateVector3DData(statefulVector3DFieldSpecs, vector3DMap);
+    }   
+    if(statefulBondFieldSpecs->size() > 0){
+      stateN->allocateBondData(statefulBondFieldSpecs, bondMap);
+      stateNP1->allocateBondData(statefulBondFieldSpecs, bondMap);
     }
   }
 }
