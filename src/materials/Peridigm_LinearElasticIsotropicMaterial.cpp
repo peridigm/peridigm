@@ -48,34 +48,6 @@ PeridigmNS::LinearElasticIsotropicMaterial::LinearElasticIsotropicMaterial(const
   m_shearModulus = params.get<double>("Shear Modulus");
   m_density = params.get<double>("Density");
 
-  if(params.isSublist("Damage Model")){
-    Teuchos::ParameterList damageParams = params.sublist("Damage Model");
-    if(!damageParams.isParameter("Type")){
-      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
-                         "Damage model \"Type\" not specified in Damage Model parameter list.");
-    }
-    string& damageModelType = damageParams.get<string>("Type");
-    if(damageModelType == "Critical Stretch"){
-      m_damageModel = Teuchos::rcp(new PeridigmNS::CriticalStretchDamageModel(damageParams));
-    }
-    else{
-      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
-                         "Invalid damage model, \"None\" or \"Critical Stretch\" required.");
-    }
-
-    // query damage model for number of constitutive data and the names of these data
-
-    // -> critical stretch says it needs scalar y
-
-    // check to see if new storage is required
-
-    // -> mat model sees that it already has y
-
-    // add new storage if required
-
-    // -> result is no new storage
-  }
-
   // set up vector of variable specs
   m_variableSpecs = Teuchos::rcp(new vector<Field_NS::FieldSpec>);
   m_variableSpecs->push_back(Field_NS::VOLUME);
@@ -87,6 +59,30 @@ PeridigmNS::LinearElasticIsotropicMaterial::LinearElasticIsotropicMaterial(const
   m_variableSpecs->push_back(Field_NS::VELOC3D);
   m_variableSpecs->push_back(Field_NS::ACCEL3D);
   m_variableSpecs->push_back(Field_NS::FORCE3D);
+
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > damageModelVariableSpecs;
+  if(params.isSublist("Damage Model")){
+    Teuchos::ParameterList damageParams = params.sublist("Damage Model");
+    if(!damageParams.isParameter("Type")){
+      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
+                         "Damage model \"Type\" not specified in Damage Model parameter list.");
+    }
+    string& damageModelType = damageParams.get<string>("Type");
+    if(damageModelType == "Critical Stretch"){
+      m_damageModel = Teuchos::rcp(new PeridigmNS::CriticalStretchDamageModel(damageParams));
+      damageModelVariableSpecs = m_damageModel->VariableSpecs();
+    }
+    else{
+      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
+                         "Invalid damage model, \"None\" or \"Critical Stretch\" required.");
+    }
+
+    // add damage model's variable specs to list of variable specs for this material
+    // \todo Avoid duplicate specs here!
+    for(unsigned int i=0 ; i<damageModelVariableSpecs->size() ; ++i)
+      m_variableSpecs->push_back( (*damageModelVariableSpecs)[i] );
+  }
+
 }
 
 PeridigmNS::LinearElasticIsotropicMaterial::~LinearElasticIsotropicMaterial()
