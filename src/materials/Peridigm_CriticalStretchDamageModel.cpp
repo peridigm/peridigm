@@ -42,6 +42,10 @@ PeridigmNS::CriticalStretchDamageModel::CriticalStretchDamageModel(const Teuchos
     m_numBondConstitutiveData(0), m_yIndex(0)
 {
   m_criticalStretch = params.get<double>("Critical Stretch");
+
+  // set up vector of variable specs
+  m_variableSpecs = Teuchos::rcp(new vector<Field_NS::FieldSpec>);
+  m_variableSpecs->push_back(Field_NS::BOND_DAMAGE);
 }
 
 PeridigmNS::CriticalStretchDamageModel::~CriticalStretchDamageModel()

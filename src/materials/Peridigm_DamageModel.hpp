@@ -38,6 +38,7 @@
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_Vector.h>
 #include <Epetra_Map.h>
+#include "Peridigm_DataManager.hpp"
 
 namespace PeridigmNS {
 
@@ -54,6 +55,9 @@ namespace PeridigmNS {
 
 	//! Return name of material type
 	virtual string Name() const = 0;
+
+    //! Returns a vector of field specs that specify the variables associated with the damage model
+    virtual Teuchos::RCP< std::vector<Field_NS::FieldSpec> > VariableSpecs() const = 0;
 
 	//! Returns the number of scalar constitutive variables used by the material model.
 	virtual int NumScalarConstitutiveVariables() const = 0;

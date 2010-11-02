@@ -56,6 +56,9 @@ namespace PeridigmNS {
 	//! Return name of material type
 	virtual string Name() const { return("Critical Stretch"); }
 
+    //! Returns a vector of field specs that specify the variables associated with the damage model
+    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > VariableSpecs() const { return m_variableSpecs; }
+
 	//! Returns the number of scalar constitutive variables used by the material model.
 	virtual int NumScalarConstitutiveVariables() const { return m_numScalarConstitutiveData; }
 
@@ -120,6 +123,8 @@ namespace PeridigmNS {
 	{
 	  return ( sqrt( (a1-b1)*(a1-b1) + (a2-b2)*(a2-b2) + (a3-b3)*(a3-b3) ) );
 	}
+
+    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > m_variableSpecs;
 
     double m_criticalStretch;
 

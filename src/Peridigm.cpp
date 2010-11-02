@@ -85,6 +85,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   dataManager->setScalarMap(oneDimensionalOverlapMap);
   dataManager->setVector2DMap(Teuchos::null);
   dataManager->setVector3DMap(threeDimensionalOverlapMap);
+  dataManager->setBondMap(bondMap);
   // \todo Extend to multiple materials
   dataManager->allocateData( (*materials)[0]->VariableSpecs() );
 
