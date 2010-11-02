@@ -37,8 +37,7 @@
 template<typename EvalT, typename Traits>
 Contact<EvalT, Traits>::Contact(Teuchos::ParameterList& p) :
   m_verbose(false),
-  m_num_pt(0),
-  m_decompStates()
+  m_num_pt(0)
 {
   if(p.isParameter("Verbose"))
 	 m_verbose = p.get<bool>("Verbose");
@@ -86,6 +85,7 @@ void Contact<EvalT, Traits>::evaluateFields(typename Traits::EvalData cellData)
   const int numOwnedPoints = cellData.neighborhoodData->NumOwnedPoints();
   const int* ownedIDs = cellData.neighborhoodData->OwnedIDs();
   const int* contactNeighborhoodList = cellData.contactNeighborhoodData->NeighborhoodList();
+  PeridigmNS::DataManager& dataManager = *cellData.dataManager;
   Epetra_MultiVector& scalarConstitutiveData = *cellData.scalarConstitutiveDataOverlap;
   Epetra_MultiVector& vectorConstitutiveData = *cellData.vectorConstitutiveDataOverlap;
   Epetra_Vector& contactForce = *cellData.contactForceOverlap;
@@ -102,6 +102,7 @@ void Contact<EvalT, Traits>::evaluateFields(typename Traits::EvalData cellData)
 						 numOwnedPoints,
 						 ownedIDs,
 						 contactNeighborhoodList,
+                         dataManager,
 						 scalarConstitutiveData,
 						 vectorConstitutiveData,
 						 contactForce);

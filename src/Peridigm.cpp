@@ -374,6 +374,7 @@ void PeridigmNS::Peridigm::initializeWorkset() {
   workset->cellVolumeOverlap = cellVolumeOverlap;
   workset->neighborhoodData = neighborhoodData;
   workset->contactNeighborhoodData = contactNeighborhoodData;
+  workset->dataManager = dataManager;
   workset->bondData = Teuchos::RCP<double>(bondData, false);
   workset->scalarConstitutiveDataOverlap = scalarConstitutiveDataOverlap;
   workset->vectorConstitutiveDataOverlap = vectorConstitutiveDataOverlap;
