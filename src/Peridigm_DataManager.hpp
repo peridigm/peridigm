@@ -54,6 +54,12 @@ public:
   void allocateData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > specs);
   Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec, Field_NS::FieldSpec::FieldStep fieldStep);
 
+  void updateState(){
+    Teuchos::RCP<State> temp = stateN;
+    stateN = stateNP1;
+    stateNP1 = temp;
+  }
+
 protected:
 
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs;

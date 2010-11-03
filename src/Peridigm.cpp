@@ -510,6 +510,9 @@ void PeridigmNS::Peridigm::execute() {
 
     t_current = t_initial + (step*dt);
 
+    // swap state N and state NP1
+    dataManager->updateState();
+
 // if (peridigmComm->MyPID() == 0)
 // std::cout << "step = " << step << endl;
 
