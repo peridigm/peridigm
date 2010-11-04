@@ -61,6 +61,7 @@ m_damageModel()
     m_variableSpecs->push_back(Field_NS::VELOC3D);
     m_variableSpecs->push_back(Field_NS::ACCEL3D);
     m_variableSpecs->push_back(Field_NS::FORCE3D);
+    m_variableSpecs->push_back(Field_NS::DEVIATORIC_PLASTIC_EXTENSION);
 }
 
 
@@ -216,8 +217,12 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const Epetra_Vector& x
 	  std::pair<int,double*> vectorView = m_decompStates.extractStrideView(vectorConstitutiveData);
 	  double *y = m_decompStates.extractCurrentPositionView(vectorView);
 	  std::pair<int,double*> scalarBondView = m_decompStates.extractStrideView(bondConstitutiveData);
-	  double* edpN   = m_decompStates.extractScalarBondVariable(scalarBondView,"scalarPlasticExtensionState_N");
-	  double* edpNP1 = m_decompStates.extractScalarBondVariable(scalarBondView,"scalarPlasticExtensionState_NP1");
+
+
+	  double* edpN;
+	  double* edpNP1;
+	  dataManager.getData(Field_NS::DEVIATORIC_PLASTIC_EXTENSION, Field_NS::FieldSpec::STEP_N)->ExtractView(&edpN);
+	  dataManager.getData(Field_NS::DEVIATORIC_PLASTIC_EXTENSION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&edpNP1);
 
       double* weightedVolume;
       dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
