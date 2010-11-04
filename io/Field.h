@@ -56,7 +56,7 @@ const FieldSpec DAMAGE(FieldSpec::DAMAGE,                       FieldSpec::SCALA
 const FieldSpec WEIGHTED_VOLUME(FieldSpec::WEIGHTED_VOLUME,     FieldSpec::SCALAR, FieldSpec::STATELESS, "Weighted_Volume");
 const FieldSpec DILATATION(FieldSpec::DILATATION,               FieldSpec::SCALAR, FieldSpec::STATEFUL,  "Dilatation");
 const FieldSpec NUM_NEIGHBORS(FieldSpec::NUM_NEIGHBORS,         FieldSpec::SCALAR, FieldSpec::STATELESS, "Num_Neighbors");
-const FieldSpec DEVIATORIC_PLASTIC_EXTENSION(FieldSpec::E_DP,   FieldSpec::SCALAR, FieldSpec::STATEFUL,  "Deviatoric_Plastic_Extension");
+const FieldSpec DEVIATORIC_PLASTIC_EXTENSION(FieldSpec::E_DP,   FieldSpec::BOND, FieldSpec::STATEFUL,  "Deviatoric_Plastic_Extension");
 
 // Vector FieldSpecs
 const FieldSpec COORD3D(FieldSpec::COORDINATES,           FieldSpec::VECTOR3D, FieldSpec::STATELESS, "Coordinates");
