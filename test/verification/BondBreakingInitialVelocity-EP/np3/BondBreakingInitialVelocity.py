@@ -5,7 +5,7 @@ import os
 import re
 from subprocess import Popen
 
-test_dir = "BondBreakingInitialVelocity/np3"
+test_dir = "BondBreakingInitialVelocity-EP/np3"
 base_name = "BondBreakingInitialVelocity"
 
 if __name__ == "__main__":

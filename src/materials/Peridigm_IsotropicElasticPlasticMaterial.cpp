@@ -114,9 +114,9 @@ void PeridigmNS::IsotropicElasticPlasticMaterial::initialize(const Epetra_Vector
 	    }
 	  }
 
-	  // Extract pointers to the underlying data in the constitutiveData array
-	  std::pair<int,double*> scalarView = m_decompStates.extractStrideView(scalarConstitutiveData);
-	  double* weightedVolume = m_decompStates.extractWeightedVolumeView(scalarView);
+	  // Extract pointers to the underlying data
+      double* weightedVolume;
+      dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
 
 	  PdMaterialUtilities::computeWeightedVolume(x.Values(),cellVolume.Values(),weightedVolume,numOwnedPoints,neighborhoodList);
 
@@ -141,9 +141,11 @@ PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const Epetra
 
 	// Extract pointers to the underlying data in the constitutiveData array
 	std::pair<int,double*> scalarView = m_decompStates.extractStrideView(scalarConstitutiveData);
-	double* weightedVolume = m_decompStates.extractWeightedVolumeView(scalarView);
 	double* dilatation = m_decompStates.extractDilatationView(scalarView);
 	double* damage = m_decompStates.extractDamageView(scalarView);
+
+    double* weightedVolume;
+    dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
 
 	std::pair<int,double*> vectorView = m_decompStates.extractStrideView(vectorConstitutiveData);
 	double *y = m_decompStates.extractCurrentPositionView(vectorView);
@@ -209,7 +211,6 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const Epetra_Vector& x
 
 	  // Extract pointers to the underlying data in the constitutiveData array
 	  std::pair<int,double*> scalarView = m_decompStates.extractStrideView(scalarConstitutiveData);
-	  double* weightedVolume = m_decompStates.extractWeightedVolumeView(scalarView);
 	  double* dilatation = m_decompStates.extractDilatationView(scalarView);
 	//	double* damage = m_decompStates.extractDamageView(scalarView);
 	  std::pair<int,double*> vectorView = m_decompStates.extractStrideView(vectorConstitutiveData);
@@ -217,6 +218,9 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const Epetra_Vector& x
 	  std::pair<int,double*> scalarBondView = m_decompStates.extractStrideView(bondConstitutiveData);
 	  double* edpN   = m_decompStates.extractScalarBondVariable(scalarBondView,"scalarPlasticExtensionState_N");
 	  double* edpNP1 = m_decompStates.extractScalarBondVariable(scalarBondView,"scalarPlasticExtensionState_NP1");
+
+      double* weightedVolume;
+      dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
 
 	  // Compute the force on each particle that results from interactions
 	  // with locally-owned nodes
