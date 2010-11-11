@@ -278,12 +278,10 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
   for(iter = thisMaterial->begin(); iter != thisMaterial->end(); iter++) {
     if (thisForceState->isParameter(thisMaterial->name(iter))) {
       outstring = thisMaterial->name(iter);
-      // get column index into scalarConstitutiveData for this parameter
-      int colIdx = Teuchos::getValue<int>(thisForceState->getEntry(thisMaterial->name(iter)));
 
       double *dataptr;
-      dataptr = (*scalarConstitutiveData)[colIdx];
       if (outstring == "Dilatation") {
+        dataManager->getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dataptr);
         PdVTK::writeField<double>(grid,Field_NS::DILATATION,dataptr);
       }
       else if (outstring == "Weighted Volume") {
@@ -291,6 +289,7 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
         PdVTK::writeField<double>(grid,Field_NS::WEIGHTED_VOLUME,dataptr);
       }
       else if (outstring == "Damage") {
+        dataManager->getData(Field_NS::DAMAGE, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dataptr);
         PdVTK::writeField<double>(grid,Field_NS::DAMAGE,dataptr);
       }
       else {

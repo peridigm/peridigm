@@ -139,6 +139,7 @@ void testTwoPts()
   scalarConstitutiveDataOverlap.PutScalar(0.0);
   vectorConstitutiveDataOverlap.PutScalar(0.0);
   Epetra_Vector& weightedVolume = *dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE);
+  Epetra_Vector& dilatation = *dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1);
   weightedVolume[0] = 1.0;
   weightedVolume[1] = 1.0;
 
@@ -223,10 +224,8 @@ void testTwoPts()
   BOOST_CHECK_CLOSE(weightedVolume[1], 1.0, 1.0e-15);
 
   // assert the dilatations
-  double dilatation = scalarConstitutiveDataOverlap[1][0];
-  BOOST_CHECK_CLOSE(dilatation, 3.0, 1.0e-15);
-  dilatation = scalarConstitutiveDataOverlap[1][1];
-  BOOST_CHECK_CLOSE(dilatation, 3.0, 1.0e-15);
+  BOOST_CHECK_CLOSE(dilatation[0], 3.0, 1.0e-15);
+  BOOST_CHECK_CLOSE(dilatation[1], 3.0, 1.0e-15);
 
   // assert the bond data (should be none)
   double bondDatum = bondConstitutiveData[0][0];

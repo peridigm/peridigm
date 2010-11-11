@@ -510,9 +510,6 @@ void PeridigmNS::Peridigm::execute() {
 
     t_current = t_initial + (step*dt);
 
-    // swap state N and state NP1
-    dataManager->updateState();
-
 // if (peridigmComm->MyPID() == 0)
 // std::cout << "step = " << step << endl;
 
@@ -525,6 +522,8 @@ void PeridigmNS::Peridigm::execute() {
     forceStateDesc->set("Time", time);
     outputManager->write(x,u,v,a,force,dataManager,scalarConstitutiveDataOverlap,neighborhoodData,forceStateDesc);
 
+    // swap state N and state NP1
+    dataManager->updateState();
   }
 
 //   cout << "AFTER" << endl;
