@@ -142,11 +142,10 @@ PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const Epetra
 
 	// Extract pointers to the underlying data in the constitutiveData array
 	std::pair<int,double*> scalarView = m_decompStates.extractStrideView(scalarConstitutiveData);
-	double* dilatation = m_decompStates.extractDilatationView(scalarView);
-	double* damage = m_decompStates.extractDamageView(scalarView);
-
-    double* weightedVolume;
-    dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
+	double *dilatation, *damage, *weightedVolume;
+        dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dilatation);
+        dataManager.getData(Field_NS::DAMAGE, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&damage);
+        dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
 
 	std::pair<int,double*> vectorView = m_decompStates.extractStrideView(vectorConstitutiveData);
 	double *y = m_decompStates.extractCurrentPositionView(vectorView);
@@ -212,20 +211,19 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const Epetra_Vector& x
 
 	  // Extract pointers to the underlying data in the constitutiveData array
 	  std::pair<int,double*> scalarView = m_decompStates.extractStrideView(scalarConstitutiveData);
-	  double* dilatation = m_decompStates.extractDilatationView(scalarView);
-	//	double* damage = m_decompStates.extractDamageView(scalarView);
+	  double* dilatation;
+          dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dilatation);
 	  std::pair<int,double*> vectorView = m_decompStates.extractStrideView(vectorConstitutiveData);
 	  double *y = m_decompStates.extractCurrentPositionView(vectorView);
 	  std::pair<int,double*> scalarBondView = m_decompStates.extractStrideView(bondConstitutiveData);
-
 
 	  double* edpN;
 	  double* edpNP1;
 	  dataManager.getData(Field_NS::DEVIATORIC_PLASTIC_EXTENSION, Field_NS::FieldSpec::STEP_N)->ExtractView(&edpN);
 	  dataManager.getData(Field_NS::DEVIATORIC_PLASTIC_EXTENSION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&edpNP1);
 
-      double* weightedVolume;
-      dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
+          double* weightedVolume;
+          dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
 
 	  // Compute the force on each particle that results from interactions
 	  // with locally-owned nodes

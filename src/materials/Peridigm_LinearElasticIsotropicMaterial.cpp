@@ -114,17 +114,11 @@ PeridigmNS::LinearElasticIsotropicMaterial::initialize(const Epetra_Vector& x,
 					  "x and vector constitutive data vector lengths do not match\n");
   TEST_FOR_EXCEPT_MSG(x.MyLength() != force.MyLength(), 
 					  "x and force vector lengths do not match\n");
-  TEST_FOR_EXCEPT_MSG(cellVolume.MyLength() != scalarConstitutiveData.MyLength(), 
-					  "cellVolume and scalar constitutive data vector lengths do not match\n");
 
   //! \todo Create structure for storing influence function values.
 //   double omega = 1.0;
 
   // Initialize data fields
-  scalarConstitutiveData.PutScalar(0.0);
-  vectorConstitutiveData.PutScalar(0.0);
-  bondConstitutiveData.PutScalar(0.0);
-  force.PutScalar(0.0);
   int neighborhoodListIndex = 0;
   int bondStateIndex = 0;
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
@@ -135,12 +129,7 @@ PeridigmNS::LinearElasticIsotropicMaterial::initialize(const Epetra_Vector& x,
     }
   }
 
-  TEST_FOR_EXCEPT_MSG(bondConstitutiveData.MyLength() != bondStateIndex,
-					  "bondConstitutiveData vector and bondState array lengths do not match\n");
-
   // Extract pointers to the underlying data in the constitutiveData array
-//   std::pair<int,double*> scalarView = m_decompStates.extractStrideView(scalarConstitutiveData);
-//   double* weightedVolume = m_decompStates.extractWeightedVolumeView(scalarView);
   double* weightedVolume;
   dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
 
@@ -167,11 +156,12 @@ PeridigmNS::LinearElasticIsotropicMaterial::updateConstitutiveData(const Epetra_
 //   double omega = 1.0;
   
   // Extract pointers to the underlying data in the constitutiveData array
-  std::pair<int,double*> scalarView = m_decompStates.extractStrideView(scalarConstitutiveData);
   double* weightedVolume;
   dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
-  double* dilatation = m_decompStates.extractDilatationView(scalarView);
-  double* damage = m_decompStates.extractDamageView(scalarView);
+  double* dilatation;
+  dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dilatation);
+  double* damage;
+  dataManager.getData(Field_NS::DAMAGE, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&damage);
 
   std::pair<int,double*> vectorView = m_decompStates.extractStrideView(vectorConstitutiveData);
   double *y = m_decompStates.extractCurrentPositionView(vectorView);
@@ -239,7 +229,9 @@ PeridigmNS::LinearElasticIsotropicMaterial::computeForce(const Epetra_Vector& x,
   std::pair<int,double*> scalarView = m_decompStates.extractStrideView(scalarConstitutiveData);
   double* weightedVolume;
   dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
-  double* dilatation = m_decompStates.extractDilatationView(scalarView);
+  double* dilatation;
+  dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dilatation);
+
   std::pair<int,double*> vectorView = m_decompStates.extractStrideView(vectorConstitutiveData);
   double *y = m_decompStates.extractCurrentPositionView(vectorView);
 

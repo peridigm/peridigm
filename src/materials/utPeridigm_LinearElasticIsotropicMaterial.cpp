@@ -182,10 +182,9 @@ void testTwoPts()
   Epetra_Vector& weightedVolume = *dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE);
   BOOST_CHECK_CLOSE(weightedVolume[0], 1.0, 1.0e-15);
   BOOST_CHECK_CLOSE(weightedVolume[1], 1.0, 1.0e-15);
-  double dilatation = scalarConstitutiveData[1][0];
-  BOOST_CHECK_CLOSE(dilatation, 3.0, 1.0e-15);
-  dilatation = scalarConstitutiveData[1][1];
-  BOOST_CHECK_CLOSE(dilatation, 3.0, 1.0e-15);
+  Epetra_Vector& dilatation = *dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1);
+  BOOST_CHECK_CLOSE(dilatation[0], 3.0, 1.0e-15);
+  BOOST_CHECK_CLOSE(dilatation[1], 3.0, 1.0e-15);
   double bondDatum = bondConstitutiveData[0][0];
   BOOST_CHECK_SMALL(bondDatum, 1.0e-15);
   bondDatum = bondConstitutiveData[0][1];
@@ -416,10 +415,10 @@ void testEightPts()
   // the weighted volumes and dilatations are the
   // same for all points in this test problem
   Epetra_Vector& weightedVolume = *dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE);
+  Epetra_Vector& dilatation = *dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1);
   for(int i=0; i<8; ++i){
 	BOOST_CHECK_CLOSE(weightedVolume[i], 12.0, 1.0e-12);
-	double dilatation = scalarConstitutiveData[1][i];
-	BOOST_CHECK_CLOSE(dilatation, -0.01991593994643333, 1.0e-12);
+	BOOST_CHECK_CLOSE(dilatation[i], -0.01991593994643333, 1.0e-12);
   }
 
   // the bond constitutive data should be all zeros (not
@@ -694,16 +693,13 @@ void testThreePts()
   // check the weighted volume and dilatation
   // against hand calculations
   Epetra_Vector& weightedVolume = *dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE);
-  double dilatation;
+  Epetra_Vector& dilatation = *dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1);
   BOOST_CHECK_CLOSE(weightedVolume[0], 23.016479999999931, 1.0e-12);
-  dilatation = scalarConstitutiveData[1][0];
-  BOOST_CHECK_CLOSE(dilatation, -0.114127034572639, 1.0e-11);
+  BOOST_CHECK_CLOSE(dilatation[0], -0.114127034572639, 1.0e-11);
   BOOST_CHECK_CLOSE(weightedVolume[1],18.64767999999997, 1.0e-12);
-  dilatation = scalarConstitutiveData[1][1];
-  BOOST_CHECK_CLOSE(dilatation, 0.08257537372985, 1.0e-11);
+  BOOST_CHECK_CLOSE(dilatation[1], 0.08257537372985, 1.0e-11);
   BOOST_CHECK_CLOSE(weightedVolume[2], 20.497599999999963, 1.0e-12);
-  dilatation = scalarConstitutiveData[1][2];
-  BOOST_CHECK_CLOSE(dilatation, -0.12166177890553, 1.0e-11);
+  BOOST_CHECK_CLOSE(dilatation[2], -0.12166177890553, 1.0e-11);
 
   // the bond constitutive data should be all zeros (not
   // used by this material model)
