@@ -61,9 +61,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
     computeContact(false),
     contactSearchRadius(0.0),
     contactSearchFrequency(0),
-    scalarConstitutiveDataSize(1), // Epetra barfs if you try to create a multivector with zero vectors,
-    vectorConstitutiveDataSize(1), // so initialize multivector sizes to one
-    bondConstitutiveDataSize(1)
+    vectorConstitutiveDataSize(1) // so initialize multivector sizes to one
 {
 
   peridigmComm = comm;
@@ -131,12 +129,8 @@ void PeridigmNS::Peridigm::instantiateMaterials() {
         material = Teuchos::rcp(new IsotropicElasticPlasticMaterial(matParams) );
       materials->push_back( Teuchos::rcp_implicit_cast<Material>(material) );
       // Allocate enough space for the max number of state variables
-      if(material->NumScalarConstitutiveVariables() > scalarConstitutiveDataSize)
-        scalarConstitutiveDataSize = material->NumScalarConstitutiveVariables();
       if(material->NumVectorConstitutiveVariables() > vectorConstitutiveDataSize)
         vectorConstitutiveDataSize = material->NumVectorConstitutiveVariables();
-      if(material->NumBondConstitutiveVariables() > bondConstitutiveDataSize)
-        bondConstitutiveDataSize = material->NumBondConstitutiveVariables();
     }
     else {
       string invalidMaterial("Unrecognized material model: ");
@@ -165,9 +159,7 @@ void PeridigmNS::Peridigm::initializeMaterials() {
                          neighborhoodData->NeighborhoodList(),
                          bondData,
                          *dataManager,
-                         *scalarConstitutiveDataOverlap,
                          *vectorConstitutiveDataOverlap,
-                         *bondConstitutiveData,
                          *forceOverlap);
   }
 }
@@ -235,12 +227,8 @@ void PeridigmNS::Peridigm::initializeDiscretization() {
   cellVolumeOverlap->Import(*(peridigmDisc->getCellVolume()), *oneDimensionalMapToOneDimensionalOverlapMapImporter, Insert);
 
   // containers for constitutive data
-  scalarConstitutiveDataOverlap = Teuchos::rcp(new Epetra_MultiVector(*oneDimensionalOverlapMap, scalarConstitutiveDataSize));
-  scalarConstitutiveDataOverlap->PutScalar(0.0);
   vectorConstitutiveDataOverlap = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalOverlapMap, vectorConstitutiveDataSize));
   vectorConstitutiveDataOverlap->PutScalar(0.0);
-  bondConstitutiveData = Teuchos::rcp(new Epetra_MultiVector(*bondMap, bondConstitutiveDataSize));
-  bondConstitutiveData->PutScalar(0.0);
 
   // get the neighborlist from the discretization
   neighborhoodData = peridigmDisc->getNeighborhoodData();
@@ -378,9 +366,7 @@ void PeridigmNS::Peridigm::initializeWorkset() {
   workset->contactNeighborhoodData = contactNeighborhoodData;
   workset->dataManager = dataManager;
   workset->bondData = Teuchos::RCP<double>(bondData, false);
-  workset->scalarConstitutiveDataOverlap = scalarConstitutiveDataOverlap;
   workset->vectorConstitutiveDataOverlap = vectorConstitutiveDataOverlap;
-  workset->bondConstitutiveData = bondConstitutiveData;
   workset->materials = materials;
   workset->contactModels = contactModels;
   workset->myPID = -1;
@@ -423,7 +409,7 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
     // Set RCP to neighborlist
     forceStateDesc->set("Bond Family",neighborhoodData);
     // Ask OutputManager to write initial conditions to disk
-    outputManager->write(x,u,v,a,force,dataManager,scalarConstitutiveDataOverlap,neighborhoodData,forceStateDesc);
+    outputManager->write(x,u,v,a,force,dataManager,neighborhoodData,forceStateDesc);
   }
 
   //  verbose = problemParams->get("Verbose", false);
@@ -520,7 +506,7 @@ void PeridigmNS::Peridigm::execute() {
     //cout << "PERIDIGM OBSERVER CALLED step=" <<  timeStepIter  << ",  time=" << stepper.getStepStatus().time << endl;
     // Set current time in this parameterlist
     forceStateDesc->set("Time", time);
-    outputManager->write(x,u,v,a,force,dataManager,scalarConstitutiveDataOverlap,neighborhoodData,forceStateDesc);
+    outputManager->write(x,u,v,a,force,dataManager,neighborhoodData,forceStateDesc);
 
     // swap state N and state NP1
     dataManager->updateState();

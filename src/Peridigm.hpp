@@ -172,17 +172,9 @@ namespace PeridigmNS {
     //! Cell volumes
     Teuchos::RCP<Epetra_Vector> cellVolumeOverlap;
 
-    //! Scalar constitutive data (vector includes ghosted dof)
-    int scalarConstitutiveDataSize;
-    Teuchos::RCP<Epetra_MultiVector> scalarConstitutiveDataOverlap;
-
     //! Vector constitutive data (vector includes ghosted dof)
     int vectorConstitutiveDataSize;
     Teuchos::RCP<Epetra_MultiVector> vectorConstitutiveDataOverlap;
-
-    //! Bond constitutive data
-    int bondConstitutiveDataSize;
-    Teuchos::RCP<Epetra_MultiVector> bondConstitutiveData;
 
     //! List of neighbors for all locally-owned nodes
     Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData;

@@ -88,9 +88,7 @@ namespace PeridigmNS {
                const int* ownedIDs,
                const int* neighborhoodList,
                double* bondState,
-               Epetra_MultiVector& scalarConstitutiveData,
                Epetra_MultiVector& vectorConstitutiveData,
-               Epetra_MultiVector& bondConstitutiveData,
                Epetra_Vector& force) const {}
 
 	//! Evaluate the damage
@@ -104,9 +102,7 @@ namespace PeridigmNS {
                   const int* ownedIDs,
                   const int* neighborhoodList,
                   double* bondState,
-                  Epetra_MultiVector& scalarConstitutiveData,
                   Epetra_MultiVector& vectorConstitutiveData,
-                  Epetra_MultiVector& bondConstitutiveData,
                   Epetra_Vector& force) const = 0;
 
   private:

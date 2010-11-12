@@ -80,9 +80,7 @@ void PeridigmNS::IsotropicElasticPlasticMaterial::initialize(const Epetra_Vector
                                                              const int* neighborhoodList,
                                                              double* bondState,
                                                              PeridigmNS::DataManager& dataManager,
-                                                             Epetra_MultiVector& scalarConstitutiveData,
                                                              Epetra_MultiVector& vectorConstitutiveData,
-                                                             Epetra_MultiVector& bondConstitutiveData,
                                                              Epetra_Vector& force) const
 {
 
@@ -95,14 +93,11 @@ void PeridigmNS::IsotropicElasticPlasticMaterial::initialize(const Epetra_Vector
 						  "x and vector constitutive data vector lengths do not match\n");
 	  TEST_FOR_EXCEPT_MSG(x.MyLength() != force.MyLength(),
 						  "x and force vector lengths do not match\n");
-	  TEST_FOR_EXCEPT_MSG(cellVolume.MyLength() != scalarConstitutiveData.MyLength(),
-						  "cellVolume and scalar constitutive data vector lengths do not match\n");
 
 	  //! \todo Create structure for storing influence function values.
 //	  double omega = 1.0;
 
 	  // Initialize data fields
-	  scalarConstitutiveData.PutScalar(0.0);
 	  vectorConstitutiveData.PutScalar(0.0);
 	  force.PutScalar(0.0);
 	  int neighborhoodListIndex = 0;
@@ -134,14 +129,11 @@ PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const Epetra
                                                                     const int* neighborhoodList,
                                                                     double* bondState,
                                                                     PeridigmNS::DataManager& dataManager,
-                                                                    Epetra_MultiVector& scalarConstitutiveData,
                                                                     Epetra_MultiVector& vectorConstitutiveData,
-                                                                    Epetra_MultiVector& bondConstitutiveData,
                                                                     Epetra_Vector& force) const
 {
 
 	// Extract pointers to the underlying data in the constitutiveData array
-	std::pair<int,double*> scalarView = m_decompStates.extractStrideView(scalarConstitutiveData);
 	double *dilatation, *damage, *weightedVolume;
         dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dilatation);
         dataManager.getData(Field_NS::DAMAGE, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&damage);
@@ -164,9 +156,7 @@ PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const Epetra
 				ownedIDs,
 				neighborhoodList,
 				bondState,
-				scalarConstitutiveData,
 				vectorConstitutiveData,
-				bondConstitutiveData,
 				force);
 	}
 
@@ -203,19 +193,15 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const Epetra_Vector& x
                                                           const int* neighborhoodList,
                                                           double* bondState,
                                                           PeridigmNS::DataManager& dataManager,
-                                                          Epetra_MultiVector& scalarConstitutiveData,
                                                           Epetra_MultiVector& vectorConstitutiveData,
-                                                          Epetra_MultiVector& bondConstitutiveData,
                                                           Epetra_Vector& force) const
 {
 
 	  // Extract pointers to the underlying data in the constitutiveData array
-	  std::pair<int,double*> scalarView = m_decompStates.extractStrideView(scalarConstitutiveData);
 	  double* dilatation;
           dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dilatation);
 	  std::pair<int,double*> vectorView = m_decompStates.extractStrideView(vectorConstitutiveData);
 	  double *y = m_decompStates.extractCurrentPositionView(vectorView);
-	  std::pair<int,double*> scalarBondView = m_decompStates.extractStrideView(bondConstitutiveData);
 
 	  double* edpN;
 	  double* edpNP1;

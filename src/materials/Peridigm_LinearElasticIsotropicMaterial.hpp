@@ -133,9 +133,7 @@ namespace PeridigmNS {
                const int* neighborhoodList,
                double* bondState,
                PeridigmNS::DataManager& dataManager,
-               Epetra_MultiVector& scalarConstitutiveData,
                Epetra_MultiVector& vectorConstitutiveData,
-               Epetra_MultiVector& bondConstitutiveData,
                Epetra_Vector& force) const;
 
 	//! Computes the dilatation.
@@ -150,9 +148,7 @@ namespace PeridigmNS {
 						   const int* neighborhoodList,
 						   double* bondState,
                            PeridigmNS::DataManager& dataManager,
-						   Epetra_MultiVector& scalarConstitutiveData,
 						   Epetra_MultiVector& vectorConstitutiveData,
-						   Epetra_MultiVector& bondConstitutiveData,
 						   Epetra_Vector& force) const;
 
 	//! Evaluate the forces on the cells.
@@ -167,9 +163,7 @@ namespace PeridigmNS {
 				 const int* neighborhoodList,
 				 double* bondState,
                  PeridigmNS::DataManager& dataManager,
-				 Epetra_MultiVector& scalarConstitutiveData,
 				 Epetra_MultiVector& vectorConstitutiveData,
-				 Epetra_MultiVector& bondConstitutiveData,
 				 Epetra_Vector& force) const;
 
   protected:

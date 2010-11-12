@@ -66,7 +66,6 @@ namespace PeridigmNS {
 				 const int* ownedIDs,
 				 const int* contactNeighborhoodList,
                  PeridigmNS::DataManager& dataManager,
-                 Epetra_MultiVector& scalarConstitutiveData,
                  Epetra_MultiVector& vectorConstitutiveData,
 				 Epetra_Vector& force) const = 0;
 

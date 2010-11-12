@@ -62,9 +62,7 @@ PeridigmNS::CriticalStretchDamageModel::initialize(const Epetra_Vector& x,
                                                  const int* ownedIDs,
                                                  const int* neighborhoodList,
                                                  double* bondState,
-                                                 Epetra_MultiVector& scalarConstitutiveData,
                                                  Epetra_MultiVector& vectorConstitutiveData,
-                                                 Epetra_MultiVector& bondConstitutiveData,
                                                  Epetra_Vector& force) const
 {
   // Sanity checks on vector sizes
@@ -76,8 +74,6 @@ PeridigmNS::CriticalStretchDamageModel::initialize(const Epetra_Vector& x,
 					  "x and vector constitutive data vector lengths do not match\n");
   TEST_FOR_EXCEPT_MSG(x.MyLength() != force.MyLength(), 
 					  "x and force vector lengths do not match\n");
-  TEST_FOR_EXCEPT_MSG(cellVolume.MyLength() != scalarConstitutiveData.MyLength(), 
-					  "cellVolume and scalar constitutive data vector lengths do not match\n");
 }
 
 void
@@ -90,9 +86,7 @@ PeridigmNS::CriticalStretchDamageModel::computeDamage(const Epetra_Vector& x,
                                                     const int* ownedIDs,
                                                     const int* neighborhoodList,
                                                     double* bondState,
-                                                    Epetra_MultiVector& scalarConstitutiveData,
                                                     Epetra_MultiVector& vectorConstitutiveData,
-                                                    Epetra_MultiVector& bondConstitutiveData,
                                                     Epetra_Vector& force) const
 {
   double* vectorConstitutiveDataView;
