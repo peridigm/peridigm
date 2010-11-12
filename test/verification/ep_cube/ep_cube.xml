@@ -65,7 +65,7 @@
 			<Parameter name="Proc Num" type="bool" value="true"/>
 			<Parameter name="Dilatation" type="bool" value="true"/>
 			<Parameter name="Force Density" type="bool" value="true"/>
-			<Parameter name="lambda" type="bool" value="true"/>
+			<Parameter name="Lambda" type="bool" value="true"/>
 		</ParameterList>
 	</ParameterList>
 </ParameterList>
