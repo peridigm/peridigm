@@ -371,7 +371,7 @@ void runPureShear() {
 	 * Write out initial condition
 	 */
 	double t=0;
-	out << 0 << " " << 0 << " " << 0 << std::endl;
+	out << 0 << " " << 0 << " " << 0 << " " << 0 << std::endl;
 	for(std::vector<StageFunction>::iterator stageIter=stages.begin(); stageIter!=stages.end();stageIter++){
 
 		double vel = stageIter->slope();
@@ -383,6 +383,8 @@ void runPureShear() {
 			Field<double> edpNP1Field = edpTemporalField.getField(FieldSpec::STEP_NP1);
 			double *edpN = edpNField.getArray().get();
 			double *edpNP1 = edpNP1Field.getArray().get();
+			Field<double> lambdaNField = lambdaTemporalField.getField(FieldSpec::STEP_N);
+			Field<double> lambdaNP1Field = lambdaTemporalField.getField(FieldSpec::STEP_NP1);
 			double *lambdaN = lambdaNField.getArray().get();
 			double *lambdaNP1 = lambdaNP1Field.getArray().get();
 			fNField.setValue(0.0);
@@ -431,9 +433,9 @@ void runPureShear() {
 			 */
 			*u1x += vel*dt;
 
-			out << t << " " << *u1x << " " << signF*MAGNITUDE(f1x) << std::endl;
+			out << t << " " << *u1x << " " << *lambdaNP1 << " "<< signF*MAGNITUDE(f1x) << std::endl;
 			edpTemporalField.advanceStep();
-
+			lambdaTemporalField.advanceStep();
 		}
 	}
 

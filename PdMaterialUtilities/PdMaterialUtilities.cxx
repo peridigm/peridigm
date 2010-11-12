@@ -258,7 +258,6 @@ void computeInternalForceIsotropicElasticPlastic
 			*lambdaNP1 = *lambdaN + deltaLambda;
 		} else {
 //			std::cout << "\t ELASTIC" << std::endl;
-			deltaLambda=0.0;
 			*lambdaNP1 = *lambdaN;
 		}
 

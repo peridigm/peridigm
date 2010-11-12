@@ -6,9 +6,14 @@ from pylab import *
 # load computed data
 d=loadtxt("ep.dat")
 
+# time
 t=[d[i][0] for i in range(len(d))]
+# applied displacement/shear
 u=[d[i][1] for i in range(len(d))]
-f=[d[i][2] for i in range(len(d))]
+# consistency parameter
+c=[d[i][2] for i in range(len(d))]
+# force
+f=[d[i][3] for i in range(len(d))]
 
 #f1=figure(figsize=(6,6))
 f1=figure(figsize=(12,6))
