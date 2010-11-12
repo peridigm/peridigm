@@ -1,4 +1,3 @@
-/*! \file utPHAL_UpdateForceState.cpp */
 
 // ***********************************************************************
 //
@@ -117,7 +116,6 @@ void testTwoPts()
   Epetra_Vector cellVolumeOverlap(oneDimensionalOverlapMap);
   int numScalarConstitutiveVariables = mat.NumScalarConstitutiveVariables();
   BOOST_CHECK(mat.NumScalarConstitutiveVariables() == 3);
-  Epetra_MultiVector scalarConstitutiveDataOverlap(oneDimensionalOverlapMap, numScalarConstitutiveVariables);
   int numVectorConstitutiveVariables = mat.NumVectorConstitutiveVariables();
   BOOST_CHECK(mat.NumVectorConstitutiveVariables() == 1);
   Epetra_MultiVector vectorConstitutiveDataOverlap(threeDimensionalOverlapMap, numVectorConstitutiveVariables);
@@ -138,7 +136,6 @@ void testTwoPts()
   vOverlap[0] = 0.0; vOverlap[1] = 0.0; vOverlap[2] = 0.0;
   vOverlap[3] = 0.5; vOverlap[4] = 0.0; vOverlap[5] = 0.0;
   cellVolumeOverlap.PutScalar(1.0);
-  scalarConstitutiveDataOverlap.PutScalar(0.0);
   vectorConstitutiveDataOverlap.PutScalar(0.0);
 
   // both points are neighbors of each other
@@ -163,11 +160,6 @@ void testTwoPts()
   numMyElements = numBonds;
   indexBase = 0;
   Epetra_Map bondMap(numGlobalElements, numMyElements, indexBase, comm);
-  int numBondConstitutiveVariables = mat.NumBondConstitutiveVariables();
-  BOOST_CHECK(mat.NumBondConstitutiveVariables() == 0);
-  if(numBondConstitutiveVariables < 1)
-    numBondConstitutiveVariables = 1;
-  Epetra_MultiVector bondConstitutiveData(bondMap, numBondConstitutiveVariables);
 
   // create a workset with rcps to the relevant data
   PHAL::Workset workset;
@@ -180,9 +172,7 @@ void testTwoPts()
   workset.neighborhoodData = Teuchos::RCP<PeridigmNS::NeighborhoodData>(&neighborhoodData, false);
   workset.dataManager = Teuchos::RCP<PeridigmNS::DataManager>(&dataManager, false);
   workset.bondData = Teuchos::RCP<double>(bondData, false);
-  workset.scalarConstitutiveDataOverlap = Teuchos::RCP<Epetra_MultiVector>(&scalarConstitutiveDataOverlap, false);
   workset.vectorConstitutiveDataOverlap = Teuchos::RCP<Epetra_MultiVector>(&vectorConstitutiveDataOverlap, false);
-  workset.bondConstitutiveData = Teuchos::RCP<Epetra_MultiVector>(&bondConstitutiveData, false);
   workset.materials = Teuchos::rcp(new std::vector< Teuchos::RCP<const PeridigmNS::Material> >());
   workset.materials->push_back(Teuchos::rcp(&mat, false));
   workset.myPID = comm.MyPID();
@@ -196,8 +186,9 @@ void testTwoPts()
   weightedVolume[1] = 1.0;
 
   // dilatation
-  scalarConstitutiveDataOverlap[1][0] = 3.0;
-  scalarConstitutiveDataOverlap[1][1] = 3.0;
+  Epetra_Vector& dilatation = *dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE);
+  dilatation[0] = 1.0;
+  dilatation[1] = 1.0;
 
   // current position
   vectorConstitutiveDataOverlap[0][0] = 0.0;

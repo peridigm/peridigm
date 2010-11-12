@@ -86,7 +86,6 @@ void Contact<EvalT, Traits>::evaluateFields(typename Traits::EvalData cellData)
   const int* ownedIDs = cellData.neighborhoodData->OwnedIDs();
   const int* contactNeighborhoodList = cellData.contactNeighborhoodData->NeighborhoodList();
   PeridigmNS::DataManager& dataManager = *cellData.dataManager;
-  Epetra_MultiVector& scalarConstitutiveData = *cellData.scalarConstitutiveDataOverlap;
   Epetra_MultiVector& vectorConstitutiveData = *cellData.vectorConstitutiveDataOverlap;
   Epetra_Vector& contactForce = *cellData.contactForceOverlap;
   contactForce.PutScalar(0.0);
@@ -103,7 +102,6 @@ void Contact<EvalT, Traits>::evaluateFields(typename Traits::EvalData cellData)
 						 ownedIDs,
 						 contactNeighborhoodList,
                          dataManager,
-						 scalarConstitutiveData,
 						 vectorConstitutiveData,
 						 contactForce);
 }

@@ -105,9 +105,7 @@ void UpdateForceState<EvalT, Traits>::evaluateFields(typename Traits::EvalData c
   // \todo expand bondData to allow for an arbitrary number of bond data per bond
   double* bondData = cellData.bondData.get();
   
-  Epetra_MultiVector& scalarConstitutiveData = *cellData.scalarConstitutiveDataOverlap;
   Epetra_MultiVector& vectorConstitutiveData = *cellData.vectorConstitutiveDataOverlap;
-  Epetra_MultiVector& bondConstitutiveData = *cellData.bondConstitutiveData;
   Epetra_Vector& force = *cellData.forceOverlap;
 
   // handling of material models needs work!
@@ -123,9 +121,7 @@ void UpdateForceState<EvalT, Traits>::evaluateFields(typename Traits::EvalData c
 								   neighborhoodList,
 								   bondData,
                                    dataManager,
-								   scalarConstitutiveData,
 								   vectorConstitutiveData,
-								   bondConstitutiveData,
 								   force);
 
   // distribute constitutive data across processors here, if required

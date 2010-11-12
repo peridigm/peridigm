@@ -117,9 +117,7 @@ PeridigmNS::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<const Epetra_Comm>
   TEST_FOR_EXCEPT_MSG(!problemParams->isSublist("Material"), "Material parameters not specified!");
   Teuchos::ParameterList & materialParams = problemParams->sublist("Material");
   Teuchos::ParameterList::ConstIterator it;
-  int scalarConstitutiveDataSize = 1; // Epetra barfs if you try to create a vector of zero size
   int vectorConstitutiveDataSize = 1;
-  int bondConstitutiveDataSize = 1;
   for(it = materialParams.begin() ; it != materialParams.end() ; it++){
 	const string & name = it->first;
 	Teuchos::ParameterList & matParams = materialParams.sublist(name);
@@ -133,12 +131,8 @@ PeridigmNS::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<const Epetra_Comm>
       }
 	  materials.push_back( Teuchos::rcp_implicit_cast<PeridigmNS::Material>(material) );
 	  // Allocate enough space for the max number of state variables
-	  if(material->NumScalarConstitutiveVariables() > scalarConstitutiveDataSize)
-		scalarConstitutiveDataSize = material->NumScalarConstitutiveVariables();
 	  if(material->NumVectorConstitutiveVariables() > vectorConstitutiveDataSize)
 		vectorConstitutiveDataSize = material->NumVectorConstitutiveVariables();
-	  if(material->NumBondConstitutiveVariables() > bondConstitutiveDataSize)
-		bondConstitutiveDataSize = material->NumBondConstitutiveVariables();
 	}
 	else{
 	  string invalidMaterial("Unrecognized material model: ");
@@ -203,12 +197,8 @@ PeridigmNS::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<const Epetra_Comm>
   cellVolumeOverlap->Import(*(disc->getCellVolume()), oneDimensionalMapToOneDimensionalOverlapMapImporter, Insert);
 
   // containers for constitutive data
-  scalarConstitutiveDataOverlap = Teuchos::rcp(new Epetra_MultiVector(*oneDimensionalOverlapMap, scalarConstitutiveDataSize));
-  scalarConstitutiveDataOverlap->PutScalar(0.0);
   vectorConstitutiveDataOverlap = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalOverlapMap, vectorConstitutiveDataSize));
   vectorConstitutiveDataOverlap->PutScalar(0.0);
-  bondConstitutiveData = Teuchos::rcp(new Epetra_MultiVector(*bondMap, bondConstitutiveDataSize));
-  bondConstitutiveData->PutScalar(0.0);
 
   // container for accelerations
   forceOverlap = Teuchos::rcp(new Epetra_Vector(*secondaryEntryOverlapMap));  
@@ -241,9 +231,7 @@ PeridigmNS::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<const Epetra_Comm>
                          neighborhoodData->OwnedIDs(),
                          neighborhoodData->NeighborhoodList(),
                          bondData,
-                         *scalarConstitutiveDataOverlap,
                          *vectorConstitutiveDataOverlap,
-                         *bondConstitutiveData,
                          *forceOverlap);
   }
 
@@ -463,9 +451,7 @@ PeridigmNS::ModelEvaluator::computeGlobalResidual(Teuchos::RCP<const Epetra_Vect
   workset.neighborhoodData = neighborhoodData;
   workset.contactNeighborhoodData = contactNeighborhoodData;
   workset.bondData = Teuchos::RCP<double>(bondData, false);
-  workset.scalarConstitutiveDataOverlap = scalarConstitutiveDataOverlap;
   workset.vectorConstitutiveDataOverlap = vectorConstitutiveDataOverlap;
-  workset.bondConstitutiveData = bondConstitutiveData;
   workset.materials = materials;
   workset.contactModels = contactModels;
   workset.myPID = myPID;

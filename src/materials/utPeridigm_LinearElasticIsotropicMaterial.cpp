@@ -87,7 +87,6 @@ void testTwoPts()
   double* bondState;
   int numScalarStateVariables = mat.NumScalarConstitutiveVariables();
   BOOST_CHECK(mat.NumScalarConstitutiveVariables() == 3);
-  Epetra_MultiVector scalarConstitutiveData(nodeMap, numScalarStateVariables);
   int numVectorStateVariables = mat.NumVectorConstitutiveVariables();
   BOOST_CHECK(mat.NumVectorConstitutiveVariables() == 1);
   Epetra_MultiVector vectorConstitutiveData(unknownMap, numVectorStateVariables);
@@ -109,7 +108,6 @@ void testTwoPts()
   for(int i=0; i<cellVolume.MyLength(); ++i){
 	cellVolume[i] = 1.0;
   }
-  scalarConstitutiveData.PutScalar(0.0);
   vectorConstitutiveData.PutScalar(0.0);
 
   numOwnedPoints = 2;
@@ -147,9 +145,7 @@ void testTwoPts()
                  neighborhoodList,
                  bondState,
                  dataManager,
-                 scalarConstitutiveData,
                  vectorConstitutiveData,
-                 bondConstitutiveData,
                  force);
 
   mat.updateConstitutiveData(x, 
@@ -162,9 +158,7 @@ void testTwoPts()
 							 neighborhoodList,
 							 bondState,
                              dataManager,
-							 scalarConstitutiveData,
 							 vectorConstitutiveData,
-                             bondConstitutiveData,
 							 force);
 
   double currentPositionX1 = vectorConstitutiveData[0][0];
@@ -200,9 +194,7 @@ void testTwoPts()
 				   neighborhoodList,
 				   bondState,
                    dataManager,
-				   scalarConstitutiveData,
 				   vectorConstitutiveData,
-                   bondConstitutiveData,
 				   force);
 
   BOOST_CHECK_CLOSE(force[0], 2.34e+12, 1.0e-2);
@@ -242,7 +234,6 @@ void testEightPts()
   double* bondState;
   int numScalarStateVariables = mat.NumScalarConstitutiveVariables();
   BOOST_CHECK(mat.NumScalarConstitutiveVariables() == 3);
-  Epetra_MultiVector scalarConstitutiveData(nodeMap, numScalarStateVariables);
   int numVectorStateVariables = mat.NumVectorConstitutiveVariables();
   BOOST_CHECK(mat.NumVectorConstitutiveVariables() == 1);
   Epetra_MultiVector vectorConstitutiveData(unknownMap, numVectorStateVariables);
@@ -291,7 +282,6 @@ void testEightPts()
   }
 
   // zero out constitutive data
-  scalarConstitutiveData.PutScalar(0.0);
   vectorConstitutiveData.PutScalar(0.0);
 
   // all cellss are neighbors of each other
@@ -342,9 +332,7 @@ void testEightPts()
                  neighborhoodList,
                  bondState,
                  dataManager,
-                 scalarConstitutiveData,
                  vectorConstitutiveData,
-                 bondConstitutiveData,
                  force);
 
   mat.updateConstitutiveData(x, 
@@ -357,9 +345,7 @@ void testEightPts()
 							 neighborhoodList,
 							 bondState,
                              dataManager,
-							 scalarConstitutiveData,
 							 vectorConstitutiveData,
-                             bondConstitutiveData,
 							 force);
 
   double currentPosition;
@@ -437,9 +423,7 @@ void testEightPts()
 				   neighborhoodList,
 				   bondState,
                    dataManager,
-				   scalarConstitutiveData,
 				   vectorConstitutiveData,
-                   bondConstitutiveData,
 				   force);
 
   // all the cells experience the same force magnitude, but
@@ -565,7 +549,6 @@ void testThreePts()
   double* bondState;
   int numScalarStateVariables = mat.NumScalarConstitutiveVariables();
   BOOST_CHECK(mat.NumScalarConstitutiveVariables() == 3);
-  Epetra_MultiVector scalarConstitutiveData(nodeMap, numScalarStateVariables);
   int numVectorStateVariables = mat.NumVectorConstitutiveVariables();
   BOOST_CHECK(mat.NumVectorConstitutiveVariables() == 1);
   Epetra_MultiVector vectorConstitutiveData(unknownMap, numVectorStateVariables);
@@ -599,7 +582,6 @@ void testThreePts()
   cellVolume[2] = 0.8;
 
   // zero out constitutive data
-  scalarConstitutiveData.PutScalar(0.0);
   vectorConstitutiveData.PutScalar(0.0);
 
   // all cells are neighbors of each other
@@ -650,9 +632,7 @@ void testThreePts()
                  neighborhoodList,
                  bondState,
                  dataManager,
-                 scalarConstitutiveData,
                  vectorConstitutiveData,
-                 bondConstitutiveData,
                  force);
 
   mat.updateConstitutiveData(x, 
@@ -665,9 +645,7 @@ void testThreePts()
 							 neighborhoodList,
 							 bondState,
                              dataManager,
-							 scalarConstitutiveData,
 							 vectorConstitutiveData,
-                             bondConstitutiveData,
 							 force);
 
   double currentPosition;
@@ -717,9 +695,7 @@ void testThreePts()
 				   neighborhoodList,
 				   bondState,
                    dataManager,
-				   scalarConstitutiveData,
 				   vectorConstitutiveData,
-                   bondConstitutiveData,
 				   force);
 
   // check the net forces against hand calculations

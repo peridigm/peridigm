@@ -94,9 +94,7 @@ namespace PeridigmNS {
                const int* neighborhoodList,
                double* bondState,
                PeridigmNS::DataManager& dataManager,
-               Epetra_MultiVector& scalarConstitutiveData,
                Epetra_MultiVector& vectorConstitutiveData,
-               Epetra_MultiVector& bondConstitutiveData,
                Epetra_Vector& force) const {}
 
 	//! Update the constitutive data based on the current configuration.
@@ -111,9 +109,7 @@ namespace PeridigmNS {
 						   const int* neighborhoodList,
 						   double* bondState,
                            PeridigmNS::DataManager& dataManager,
-						   Epetra_MultiVector& scalarConstitutiveData,
 						   Epetra_MultiVector& vectorConstitutiveData,
-                           Epetra_MultiVector& bondConstitutiveData,
 						   Epetra_Vector& force) const = 0;
 
 	//! Evaluate the forces on the cells
@@ -128,9 +124,7 @@ namespace PeridigmNS {
 				 const int* neighborhoodList,
 				 double* bondState,
                  PeridigmNS::DataManager& dataManager,
-				 Epetra_MultiVector& scalarConstitutiveData,
 				 Epetra_MultiVector& vectorConstitutiveData,
-                 Epetra_MultiVector& bondConstitutiveData,
 				 Epetra_Vector& force) const = 0;
 
   private:

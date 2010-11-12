@@ -100,9 +100,7 @@ PeridigmNS::LinearElasticIsotropicMaterial::initialize(const Epetra_Vector& x,
                                                        const int* neighborhoodList,
                                                        double* bondState,
                                                        PeridigmNS::DataManager& dataManager,
-                                                       Epetra_MultiVector& scalarConstitutiveData,
                                                        Epetra_MultiVector& vectorConstitutiveData,
-                                                       Epetra_MultiVector& bondConstitutiveData,
                                                        Epetra_Vector& force) const
 {
   // Sanity checks on vector sizes
@@ -147,9 +145,7 @@ PeridigmNS::LinearElasticIsotropicMaterial::updateConstitutiveData(const Epetra_
                                                                    const int* neighborhoodList,
                                                                    double* bondState,
                                                                    PeridigmNS::DataManager& dataManager,
-                                                                   Epetra_MultiVector& scalarConstitutiveData,
                                                                    Epetra_MultiVector& vectorConstitutiveData,
-                                                                   Epetra_MultiVector& bondConstitutiveData,
                                                                    Epetra_Vector& force) const
 {
   //! \todo Create structure for storing influence function values.
@@ -180,9 +176,7 @@ PeridigmNS::LinearElasticIsotropicMaterial::updateConstitutiveData(const Epetra_
                                  ownedIDs,
                                  neighborhoodList,
                                  bondState,
-                                 scalarConstitutiveData,
                                  vectorConstitutiveData,
-                                 bondConstitutiveData,
                                  force);
   }
 
@@ -218,15 +212,12 @@ PeridigmNS::LinearElasticIsotropicMaterial::computeForce(const Epetra_Vector& x,
                                                          const int* neighborhoodList,
                                                          double* bondState,
                                                          PeridigmNS::DataManager& dataManager,
-                                                         Epetra_MultiVector& scalarConstitutiveData,
                                                          Epetra_MultiVector& vectorConstitutiveData,
-                                                         Epetra_MultiVector& bondConstitutiveData,
                                                          Epetra_Vector& force) const
 {
 //   double omega = 1.0;
 
   // Extract pointers to the underlying data in the constitutiveData array
-  std::pair<int,double*> scalarView = m_decompStates.extractStrideView(scalarConstitutiveData);
   double* weightedVolume;
   dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
   double* dilatation;

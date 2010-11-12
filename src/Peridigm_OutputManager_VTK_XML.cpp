@@ -191,7 +191,6 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
                                               Teuchos::RCP<const Epetra_Vector> a,
                                               Teuchos::RCP<const Epetra_Vector> force,
                                               Teuchos::RCP<PeridigmNS::DataManager> dataManager,
-                                              Teuchos::RCP<const Epetra_MultiVector> scalarConstitutiveData,
                                               Teuchos::RCP<const NeighborhoodData> neighborhoodData,
                                               Teuchos::RCP<Teuchos::ParameterList>& forceStateDesc) {
   if (!iWrite) return;
