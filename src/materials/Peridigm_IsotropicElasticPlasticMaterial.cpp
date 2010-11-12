@@ -233,6 +233,8 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const Epetra_Vector& x
 			  bondState,
 			  edpN,
 			  edpNP1,
+			  lambdaN,
+			  lambdaNP1,
 			  force.Values(),
 			  neighborhoodList,
 			  numOwnedPoints,
