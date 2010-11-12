@@ -103,6 +103,8 @@ void computeInternalForceIsotropicElasticPlastic
 		const double* bondDamage,
 		const double* deviatoricPlasticExtensionStateN,
 		double* deviatoricPlasticExtensionStateNp1,
+		const double* lambdaN,
+		double* lambdaNP1,
 		double* fInternalOverlap,
 		const int*  localNeighborList,
 		int numOwnedPoints,

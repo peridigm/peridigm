@@ -183,6 +183,8 @@ void computeInternalForceIsotropicElasticPlastic
 		const double* bondDamage,
 		const double* deviatoricPlasticExtensionStateN,
 		double* deviatoricPlasticExtensionStateNp1,
+		const double* lambdaN,
+		double* lambdaNP1,
 		double* fInternalOverlap,
 		const int*  localNeighborList,
 		int numOwnedPoints,
@@ -210,7 +212,7 @@ void computeInternalForceIsotropicElasticPlastic
 
 	const int *neighPtr = localNeighborList;
 	double cellVolume, alpha, dx, dy, dz, zeta, dY, t, ti, td, ed, edpN, tdTrial;
-	for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yOwned +=3, fOwned+=3, m++, theta++){
+	for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yOwned +=3, fOwned+=3, m++, theta++, lambdaN++, lambdaNP1++){
 
 		int numNeigh = *neighPtr; neighPtr++;
 		const double *X = xOwned;
@@ -219,6 +221,7 @@ void computeInternalForceIsotropicElasticPlastic
 		alpha = 15.0*MU/weightedVol;
 		double selfCellVolume = v[p];
 		double c = 3 * K * (*theta) * OMEGA / weightedVol;
+		double deltaLambda=0.0;
 
 		/*
 		 * Compute norm of trial stress
@@ -249,10 +252,14 @@ void computeInternalForceIsotropicElasticPlastic
 			/*
 			 * This step is incrementally plastic
 			 */
+			//			std::cout << "\t PLASTIC" << std::endl;
 			elastic = false;
-//			std::cout << "\t PLASTIC" << std::endl;
+			deltaLambda=tdNorm / sqrt(2.0*yieldValue) - 1.0;
+			*lambdaNP1 = *lambdaN + deltaLambda;
 		} else {
 //			std::cout << "\t ELASTIC" << std::endl;
+			deltaLambda=0.0;
+			*lambdaNP1 = *lambdaN;
 		}
 
 		for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++, deviatoricPlasticExtensionStateN++, deviatoricPlasticExtensionStateNp1++){
@@ -306,7 +313,7 @@ void computeInternalForceIsotropicElasticPlastic
 				/*
 				 * Update deviatoric plastic deformation state
 				 */
-				*deviatoricPlasticExtensionStateNp1 = edpN + td * ( tdNorm / sqrt(2.0*yieldValue) - 1.0 ) / alpha;
+				*deviatoricPlasticExtensionStateNp1 = edpN + td * deltaLambda  / alpha;
 
 //				std::cout << "Neighbor Id = " << localId << "; Updating deviatoricPlasticExtensionState = " << *deviatoricPlasticExtensionState << std::endl;
 			}

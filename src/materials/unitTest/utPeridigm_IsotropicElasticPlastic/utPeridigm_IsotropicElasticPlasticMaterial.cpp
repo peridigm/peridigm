@@ -318,6 +318,10 @@ void runPureShear() {
 	Field<double> edpNField = edpTemporalField.getField(FieldSpec::STEP_N);
 	Field<double> edpNP1Field = edpTemporalField.getField(FieldSpec::STEP_NP1);
 	SET(edpNField.getArray().get(),edpNField.getArray().end(),0.0);
+	TemporalField<double> lambdaTemporalField(Field_NS::LAMBDA,pdGridData.numPoints);
+	Field<double> lambdaNField = lambdaTemporalField.getField(FieldSpec::STEP_N);
+	Field<double> lambdaNP1Field = lambdaTemporalField.getField(FieldSpec::STEP_NP1);
+	SET(lambdaNField.getArray().get(),lambdaNField.getArray().end(),0.0);
 	/*
 	 * Track
 	 */
@@ -379,6 +383,8 @@ void runPureShear() {
 			Field<double> edpNP1Field = edpTemporalField.getField(FieldSpec::STEP_NP1);
 			double *edpN = edpNField.getArray().get();
 			double *edpNP1 = edpNP1Field.getArray().get();
+			double *lambdaN = lambdaNField.getArray().get();
+			double *lambdaNP1 = lambdaNP1Field.getArray().get();
 			fNField.setValue(0.0);
 			double *f = fNField.getArray().get();
 
@@ -389,7 +395,7 @@ void runPureShear() {
 			/*
 			 * Do not compute dilatation -- just set it to zero
 			 */
-			computeInternalForceIsotropicElasticPlastic(x,y,m,vol,theta,bondState,edpN,edpNP1,f,neigh,numPoints,K,MU,DELTA,Y);
+			computeInternalForceIsotropicElasticPlastic(x,y,m,vol,theta,bondState,edpN,edpNP1,lambdaN,lambdaNP1,f,neigh,numPoints,K,MU,DELTA,Y);
 
 
 			/*
