@@ -62,6 +62,8 @@ m_damageModel()
     m_variableSpecs->push_back(Field_NS::ACCEL3D);
     m_variableSpecs->push_back(Field_NS::FORCE3D);
     m_variableSpecs->push_back(Field_NS::DEVIATORIC_PLASTIC_EXTENSION);
+    m_variableSpecs->push_back(Field_NS::LAMBDA);
+
 }
 
 
@@ -208,8 +210,14 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const Epetra_Vector& x
 	  dataManager.getData(Field_NS::DEVIATORIC_PLASTIC_EXTENSION, Field_NS::FieldSpec::STEP_N)->ExtractView(&edpN);
 	  dataManager.getData(Field_NS::DEVIATORIC_PLASTIC_EXTENSION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&edpNP1);
 
-          double* weightedVolume;
-          dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
+	  double* weightedVolume;
+	  dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
+
+	  double* lambdaN;
+	  double* lambdaNP1;
+	  dataManager.getData(Field_NS::LAMBDA, Field_NS::FieldSpec::STEP_N)->ExtractView(&lambdaN);
+	  dataManager.getData(Field_NS::LAMBDA, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&lambdaNP1);
+
 
 	  // Compute the force on each particle that results from interactions
 	  // with locally-owned nodes
