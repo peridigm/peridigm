@@ -36,7 +36,7 @@ add_test (BondBreakingInitialVelocity_np1 python ./BondBreakingInitialVelocity/n
 add_test (BondBreakingInitialVelocity_np3 python ./BondBreakingInitialVelocity/np3/BondBreakingInitialVelocity.py)
 add_test (BondBreakingInitialVelocity-EP_np1 python ./BondBreakingInitialVelocity-EP/np1/BondBreakingInitialVelocity.py)
 add_test (BondBreakingInitialVelocity-EP_np3 python ./BondBreakingInitialVelocity-EP/np3/BondBreakingInitialVelocity.py)
-##add_test (Contact_2x1x1_np1 python ./Contact_2x1x1/np1/Contact_2x1x1.py)
+#add_test (Contact_2x1x1_np1 python ./Contact_2x1x1/np1/Contact_2x1x1.py)
 
 add_custom_target( vtest
    COMMAND ctest

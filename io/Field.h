@@ -22,7 +22,7 @@ using std::string;
 
 struct FieldSpec {
 public:
-    enum FieldType {VOLUME=0, ID, PROC_NUM, WEIGHTED_VOLUME, DILATATION, DAMAGE, E_DP, NUM_NEIGHBORS, COORDINATES, DISPLACEMENT, VELOCITY, ACCELERATION, FORCE, FORCE_DENSITY, BOND_DAMAGE, DEFAULT_FIELDTYPE};
+    enum FieldType {VOLUME=0, ID, PROC_NUM, WEIGHTED_VOLUME, DILATATION, DAMAGE, E_DP, PLASTIC_CONSISTENCY, NUM_NEIGHBORS, COORDINATES, DISPLACEMENT, VELOCITY, ACCELERATION, FORCE, FORCE_DENSITY, BOND_DAMAGE, DEFAULT_FIELDTYPE};
     enum FieldLength {SCALAR=1, VECTOR2D=2, VECTOR3D=3, BOND=4};
     enum FieldStateArchitecture {STATELESS=0, STATEFUL=1}; 
     enum FieldStep {STEP_N=0, STEP_NP1=1, STEP_NONE=2};
@@ -56,6 +56,7 @@ const FieldSpec DAMAGE(FieldSpec::DAMAGE,                       FieldSpec::SCALA
 const FieldSpec WEIGHTED_VOLUME(FieldSpec::WEIGHTED_VOLUME,     FieldSpec::SCALAR, FieldSpec::STATELESS, "Weighted_Volume");
 const FieldSpec DILATATION(FieldSpec::DILATATION,               FieldSpec::SCALAR, FieldSpec::STATEFUL,  "Dilatation");
 const FieldSpec NUM_NEIGHBORS(FieldSpec::NUM_NEIGHBORS,         FieldSpec::SCALAR, FieldSpec::STATELESS, "Num_Neighbors");
+const FieldSpec LAMBDA(FieldSpec::PLASTIC_CONSISTENCY,          FieldSpec::SCALAR, FieldSpec::STATEFUL,  "lambda");
 const FieldSpec DEVIATORIC_PLASTIC_EXTENSION(FieldSpec::E_DP,   FieldSpec::BOND, FieldSpec::STATEFUL,  "Deviatoric_Plastic_Extension");
 
 // Vector FieldSpecs

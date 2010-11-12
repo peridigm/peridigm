@@ -47,7 +47,7 @@
 	<Parameter name="Verbose" type="bool" value="true"/>
 	<ParameterList name="Verlet">
 		<Parameter name="Initial Time" type="double" value="0.0"/>
-		<Parameter name="Final Time" type="double" value="0.5e-1"/>
+		<Parameter name="Final Time" type="double" value="0.35e-1"/>
 		<Parameter name="Fixed dt" type="double" value="1.0e-6"/>
 	</ParameterList>
 </ParameterList>
@@ -64,8 +64,8 @@
 			<Parameter name="ID" type="bool" value="true"/>
 			<Parameter name="Proc Num" type="bool" value="true"/>
 			<Parameter name="Dilatation" type="bool" value="true"/>
-			<Parameter name="Weighted Volume" type="bool" value="true"/>
 			<Parameter name="Force Density" type="bool" value="true"/>
+			<Parameter name="lambda" type="bool" value="true"/>
 		</ParameterList>
 	</ParameterList>
 </ParameterList>
