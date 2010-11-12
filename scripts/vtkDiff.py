@@ -3,6 +3,7 @@
 import vtkIO
 from optparse import OptionParser
 from xml.dom.minidom import parse
+from copy import deepcopy
 
 def IsInvalid(val):
     # other options exist to check for nan, but none is good
@@ -29,7 +30,7 @@ def vtkDiffCheckOptions(options, args):
         raise Exception("\nException:  Either --uniformTolerance or --toleranceFile option is required\n")
     return
 
-def GetDataTuples(goldData, data):
+def GetDataTuples(pt, goldData, data):
     numComponents = data.GetNumberOfComponents()
     goldDataTuple = None
     dataTuple = None
@@ -189,6 +190,28 @@ if __name__ == "__main__":
             print "\nError reading", pvtuFileName, "\n"
             exit(1)
 
+        # get the array of global node IDs and store them in lists
+        goldIDs = []
+        IDs = []        
+        goldIDData = vtuGoldData.GetPointData().GetVectors("Id")
+        IDData = vtuData.GetPointData().GetVectors("Id")
+        if goldIDData == None or IDData == None:
+            print "\nError:  Data not found for global ID field.  This field is required for vtkDiff.py.\n"
+            exit(1)
+        if IDData.GetNumberOfTuples() != goldIDData.GetNumberOfTuples():
+            print "\nError:  Mismatched array sizes for ID field,", \
+                data.GetNumberOfTuples(), "!=", goldData.GetNumberOfTuples(), "\n"
+            exit(1)
+        # Get the ID data
+        for pt in range(IDData.GetNumberOfTuples()):
+            try:
+                numComponents, goldIDTuple, IDTuple = GetDataTuples(pt, goldIDData, IDData)
+            except Exception, e:
+                print "\n", e, "\n"
+                exit(1)
+            goldIDs.append([int(goldIDTuple[0])])
+            IDs.append([int(IDTuple[0])])
+
         # compare data
         for dataName in tolerances.keys():
             
@@ -223,23 +246,37 @@ if __name__ == "__main__":
             compText += "    tolerance: " + str(tol) + '\n'
 
             # loop over the points and perform comparison
+            # care must be taken to ensure that points with the same global IDs are compared to each other
+            goldDataList = deepcopy(goldIDs)
+            dataList = deepcopy(IDs)
             for pt in xrange(data.GetNumberOfTuples()):
 
                 # determine the number of components and get the data
                 try:
-                    numComponents, goldDataTuple, dataTuple = GetDataTuples(goldData, data)
+                    numComponents, goldDataTuple, dataTuple = GetDataTuples(pt, goldData, data)
                 except Exception, e:
                     print "\n", e, "\n"
                     exit(1)
-
-                # compare each component of the data
                 for i in range(numComponents):
-                    diff = abs(goldDataTuple[i] - dataTuple[i])
+                    goldDataList[pt].append(goldDataTuple[i])
+                    dataList[pt].append(dataTuple[i])
+
+            # sort the lists (they will be sorted by global ID)
+            goldDataList.sort()
+            dataList.sort()
+
+            # loop over each point
+            for pt in xrange(len(goldDataList)):
+                # loop over each component of the data
+                for i in range(len(goldDataList[pt])-1): # skip the ID, which is the first entry in the list
+                    goldVal = goldDataList[pt][i+1]
+                    val = dataList[pt][i+1]
+                    diff = abs(goldVal - val)
                     if diff > maxDiff:
                         maxDiff = diff
-                    if diff > tol or IsInvalid(goldDataTuple[i]) or IsInvalid(dataTuple[i]):
+                    if diff > tol or IsInvalid(goldVal) or IsInvalid(val):
                         compText += "TOLERANCE EXCEEDED " # TODO GET GLOBAL IDS AND PRINT THEM
-                        compText += str(goldDataTuple[i]) + " != " + str(dataTuple[i])
+                        compText += str(goldVal) + " != " + str(val)
                         compText +=  ", difference = " + str(diff) + "\n"
                         dataDiff = True
                         filesDiff = True
