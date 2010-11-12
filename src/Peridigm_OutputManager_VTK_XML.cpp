@@ -164,7 +164,7 @@ Teuchos::ParameterList PeridigmNS::OutputManager_VTK_XML::getValidParameterList(
   matType.set("Proc Num",true);
   matType.set("Weighted Volume",true);
   matType.set("Damage",true);
-  matType.set("lambda",true);
+  matType.set("Lambda",true);
   }
 
   return validParameterList;
@@ -292,7 +292,7 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
         dataManager->getData(Field_NS::DAMAGE, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dataptr);
         PdVTK::writeField<double>(grid,Field_NS::DAMAGE,dataptr);
       }
-      else if (outstring == "lambda") {
+      else if (outstring == "Lambda") {
         dataManager->getData(Field_NS::LAMBDA, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dataptr);
         PdVTK::writeField<double>(grid,Field_NS::LAMBDA,dataptr);
       }
