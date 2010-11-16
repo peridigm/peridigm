@@ -254,7 +254,7 @@ void computeInternalForceIsotropicElasticPlastic
 			 */
 			//			std::cout << "\t PLASTIC" << std::endl;
 			elastic = false;
-			deltaLambda=tdNorm / sqrt(2.0*yieldValue) - 1.0;
+			deltaLambda=( tdNorm / sqrt(2.0*yieldValue) - 1.0 ) / alpha;
 			*lambdaNP1 = *lambdaN + deltaLambda;
 		} else {
 //			std::cout << "\t ELASTIC" << std::endl;
@@ -312,7 +312,7 @@ void computeInternalForceIsotropicElasticPlastic
 				/*
 				 * Update deviatoric plastic deformation state
 				 */
-				*deviatoricPlasticExtensionStateNp1 = edpN + td * deltaLambda  / alpha;
+				*deviatoricPlasticExtensionStateNp1 = edpN + td * deltaLambda;
 
 //				std::cout << "Neighbor Id = " << localId << "; Updating deviatoricPlasticExtensionState = " << *deviatoricPlasticExtensionState << std::endl;
 			}
