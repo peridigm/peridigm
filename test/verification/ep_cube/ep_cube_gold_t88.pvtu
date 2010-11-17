@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<VTKFile type="PUnstructuredGrid" version="0.1" byte_order="LittleEndian" compressor="vtkZLibDataCompressor">
+  <PUnstructuredGrid GhostLevel="0">
+    <PPointData>
+      <PDataArray type="Float64" Name="Displacement" NumberOfComponents="3"/>
+      <PDataArray type="Float64" Name="Velocity" NumberOfComponents="3"/>
+      <PDataArray type="Float64" Name="Force Density" NumberOfComponents="3"/>
+      <PDataArray type="Int32" Name="Id"/>
+      <PDataArray type="Int32" Name="Proc_Num"/>
+      <PDataArray type="Float64" Name="Dilatation"/>
+      <PDataArray type="Float64" Name="Lambda"/>
+    </PPointData>
+    <PPoints>
+      <PDataArray type="Float64" Name="Points" NumberOfComponents="3"/>
+    </PPoints>
+    <Piece Source="ep_cube_t88_0.vtu"/>
+  </PUnstructuredGrid>
+</VTKFile>
