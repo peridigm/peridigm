@@ -11,7 +11,7 @@
 #include "vtkSmartPointer.h"
 #include <vtkDoubleArray.h>
 #include <vtkIntArray.h>
-//#include "vtkCellData.h"
+#include <vtkCellType.h>
 #include "vtkPointData.h"
 #include "vtkXMLPUnstructuredGridWriter.h"
 #include "PdGridData.h"
@@ -40,8 +40,11 @@ struct vtk_trait<double> {
    typedef vtkSmartPointer<vtkDoubleArray> vtk_type;
 };
 
+vtkSmartPointer<vtkPoints> createVTK_Points(double *yPtr, int numPoints);
+vtkSmartPointer<vtkCellArray> createVTK_quadCells(size_t* vLinks, int numCells);
 vtkSmartPointer<vtkUnstructuredGrid> getGrid(shared_ptr<double>& y, int numPoints);
 vtkSmartPointer<vtkUnstructuredGrid> getGrid(double *y, int numPoints);
+vtkSmartPointer<vtkUnstructuredGrid> getGrid(const vtkSmartPointer<vtkPoints>& x, const vtkSmartPointer<vtkCellArray>& cells, VTKCellType type=VTK_VERTEX);
 
 vtkSmartPointer<vtkXMLPUnstructuredGridWriter> getWriter(const char* _fileName, int numProcs, int rank, VTK_FILE_TYPE type=vtkBINARY);
 void write(vtkSmartPointer<vtkXMLPUnstructuredGridWriter> w, vtkSmartPointer<vtkUnstructuredGrid> g);
