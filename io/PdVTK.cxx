@@ -19,14 +19,10 @@
 
 namespace PdVTK {
 
-
-using PdQuickGrid::PdQPointSet1d;
-using PdQuickGrid::PdQRing2d;
 /*
  * These are private
  */
 vtkSmartPointer<vtkUnstructuredGrid>  getGrid(const vtkSmartPointer<vtkPoints>& x);
-vtkSmartPointer<vtkUnstructuredGrid> getGrid(const vtkSmartPointer<vtkPoints>& x, const vtkSmartPointer<vtkCellArray>& cells);
 vtkSmartPointer<vtkCellArray> getCellArray(vtkIdType numCells);
 
 CollectionWriter::CollectionWriter(const char* _fileName, int numProcs, int rank, VTK_FILE_TYPE type)
@@ -96,19 +92,6 @@ vtkSmartPointer<vtkXMLPUnstructuredGridWriter > getWriter(const char* _fileName,
 
 
 void write(vtkSmartPointer<vtkXMLPUnstructuredGridWriter> w, vtkSmartPointer<vtkUnstructuredGrid> g){
-	/*
-	 * Add rank to each point; this should be the rank based upon original construction of writer (see getWriter)
-	 */
-//	int pieceNum = w->GetStartPiece();
-//	vtkSmartPointer<vtkIdTypeArray> cellRanks = vtkSmartPointer<vtkIdTypeArray>::New();
-//	cellRanks->SetNumberOfComponents(1);
-//	vtkCellData *cellData = g->GetCellData();
-//	vtkIdType numCells = g->GetNumberOfCells();
-//	cellRanks->SetName("rank");
-//	for(int p=0;p<numCells;p++)
-//		cellRanks->InsertNextValue(pieceNum);
-//
-//	cellData->AddArray(cellRanks);
 	w->SetInput(g);
 	w->Write();
 }
@@ -116,6 +99,22 @@ void write(vtkSmartPointer<vtkXMLPUnstructuredGridWriter> w, vtkSmartPointer<vtk
 
 vtkSmartPointer<vtkUnstructuredGrid> getGrid(shared_ptr<double>& y, int numPoints){
 	return getGrid(y.get(),numPoints);
+}
+
+vtkSmartPointer<vtkPoints> createVTK_Points(double *yPtr, int numPoints){
+	vtkSmartPointer<vtkPoints> pts = vtkSmartPointer<vtkPoints>::New();
+	/*
+	 * Add coordinates to grid
+	 * This directly uses the pointer to data provided  -- this is the part that
+	 * the note above refers to.
+	 */
+	vtkSmartPointer<vtkDoubleArray> ptsData = vtkSmartPointer<vtkDoubleArray>::New();
+	int numComponents=3;
+	ptsData->SetNumberOfComponents(numComponents);
+	int save=1;
+	ptsData->SetArray(yPtr,numPoints*numComponents,save);
+	pts->SetData(ptsData);
+	return pts;
 }
 
 /*
@@ -153,9 +152,24 @@ vtkSmartPointer<vtkUnstructuredGrid> getGrid(double *yPtr, int numPoints){
 	return grid;
 }
 
+vtkSmartPointer<vtkCellArray> createVTK_quadCells(size_t* vLinks, int numCells){
+	vtkSmartPointer<vtkIdTypeArray>  links = vtkSmartPointer<vtkIdTypeArray>::New();
+	vtkIdType npe(4);
+	links->SetNumberOfValues((npe+1)*numCells);
+	for(int cell=0;cell<numCells;cell++){
+		links->SetValue((npe+1)*cell,npe);
+		for(int n=0;n<npe;n++){
+			int node = vLinks[npe*cell+n];
+			links->SetValue((npe+1)*cell+(n+1),node);
+		}
+	}
+	vtkSmartPointer<vtkCellArray> cells = vtkSmartPointer<vtkCellArray>::New();
+	cells->SetCells(numCells,links);
+	cells->SetNumberOfCells(numCells);
+	return cells;
+}
 
-
-vtkSmartPointer<vtkUnstructuredGrid>  getGrid(const vtkSmartPointer<vtkPoints>& x, const vtkSmartPointer<vtkCellArray>& cells){
+vtkSmartPointer<vtkUnstructuredGrid>  getGrid(const vtkSmartPointer<vtkPoints>& x, const vtkSmartPointer<vtkCellArray>& cells, VTKCellType type){
 
 	/**
 	 * Cells constructed are "vertex" type cells
