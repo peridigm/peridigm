@@ -406,8 +406,10 @@ double computeDeviatoricForceStateNorm
 
 		/*
 		 * Compute trial stress
+		 * NOTE: include damage
 		 */
-		tdTrial = alpha * OMEGA * (ed - edpN);
+		double d=(1.0-*bondDamage);
+		tdTrial = d * alpha * OMEGA * (ed - edpN);
 
 		/*
 		 * Accumulate norm
