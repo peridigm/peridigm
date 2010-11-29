@@ -121,6 +121,11 @@ void PeridigmNS::Peridigm::instantiateMaterials() {
   for(it = materialParams.begin() ; it != materialParams.end() ; it++){
     const string & name = it->first;
     Teuchos::ParameterList & matParams = materialParams.sublist(name);
+    // Insert solver timestep into matParams. Some material models (e.g., viscoelastic) need to know timestep
+    Teuchos::RCP<Teuchos::ParameterList> solverParams = Teuchos::rcp(&(peridigmParams->sublist("Solver")),false);
+    //! \todo Generalize for other solvers besides Verlet
+    Teuchos::RCP<Teuchos::ParameterList> verletPL = sublist(solverParams, "Verlet", true);
+    matParams.set("Fixed dt", verletPL->get("Fixed dt", 1.0) );
     Teuchos::RCP<Material> material;
     if(name == "Linear Elastic" || name == "Elastic Plastic"){
       if(name == "Linear Elastic")
