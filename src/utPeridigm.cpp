@@ -108,6 +108,14 @@ void initialize()
   initialVelocityMaxXFace.set("Coordinate", "x");
   initialVelocityMaxXFace.set("Value", 1.0);
 
+  // solver parameters
+  ParameterList& solverParams = peridigmParams->sublist("Solver");
+  solverParams.set("Verbose", "false");
+  ParameterList& verletParams = solverParams.sublist("Verlet");
+  verletParams.set("Initial Time", 0.0);
+  verletParams.set("Final Time", 1.0);
+  verletParams.set("Fixed dt", 1.0);
+
   // create the Peridigm object
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm = rcp(new Peridigm::Peridigm(comm, peridigmParams));
 }
