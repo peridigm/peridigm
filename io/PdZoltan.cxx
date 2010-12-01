@@ -34,6 +34,21 @@ int computeSizeNewNeighborhoodList(int initialValue, int numImport, int *idx, ch
 
 struct Zoltan_Struct * createAndInitializeZoltan(PdGridData& pdGridData){
 
+	/*
+	 * The Zoltan_Initialize function initializes MPI for Zoltan.
+	 * If the application uses MPI, this function should be called after calling MPI_Init.
+	 * If the application does not use MPI, this function calls MPI_Init for use by Zoltan.
+	 * This function is called with the argc and argv command-line arguments from the main program,
+	 * which are used if Zoltan_Initialize calls MPI_Init. From C,  if MPI_Init has already been called,
+	 * the argc and argv arguments may have any value because their values will be ignored.
+	 * From Fortran, if one of argc or argv is omitted, they must both be omitted.
+	 * If they are omitted, ver does NOT have to be passed as a keyword argument.
+	 */
+	int numArgs=0;
+	char **argv=0;
+	float version=0;
+	int zoltanErr = Zoltan_Initialize(numArgs,argv,&version);
+
 	struct Zoltan_Struct *zoltan;
 
 	/******************************************************************
@@ -147,6 +162,7 @@ PdGridData& getLoadBalancedDiscretization(PdGridData& pdGridData){
 
 	struct Zoltan_Struct *zoltan = createAndInitializeZoltan(pdGridData);
 
+//	std::cout << "getLoadBalancedDiscretization(PdGridData& pdGridData) A"  << std::endl; std::cout.flush();
 	pdGridData.zoltanPtr = shared_ptr<struct Zoltan_Struct>(zoltan,ZoltanDestroyer());
 
 	/* Query functions, to provide geometry to Zoltan */
@@ -156,7 +172,7 @@ PdGridData& getLoadBalancedDiscretization(PdGridData& pdGridData){
 	 * Set number of bytes per node -- this is used for migration of data based after load balancing
 	 */
 	Zoltan_Set_Obj_Size_Multi_Fn(zoltan, zoltanQuery_pointSizeInBytes, &pdGridData);
-
+//	std::cout << "getLoadBalancedDiscretization(PdGridData& pdGridData) B"  << std::endl; std::cout.flush();
 	/*
 	 * A ZOLTAN_PACK_OBJ_FN query function allows the application to tell Zoltan how to copy all
 	 * needed data for a given object into a communication buffer. The object's data can then be
@@ -165,7 +181,7 @@ PdGridData& getLoadBalancedDiscretization(PdGridData& pdGridData){
 	 * Zoltan_Migrate for each object to be sent to another processor.
 	 */
 	Zoltan_Set_Pack_Obj_Multi_Fn(zoltan,zoltanQuery_packPointsMultiFunction,&pdGridData);
-
+//	std::cout << "getLoadBalancedDiscretization(PdGridData& pdGridData) C"  << std::endl; std::cout.flush();
 	/*
 	 * A ZOLTAN_UNPACK_OBJ_FN query function allows the application to tell Zoltan how to copy
 	 * all needed data for a given object from a communication buffer into the application's data
@@ -174,7 +190,7 @@ PdGridData& getLoadBalancedDiscretization(PdGridData& pdGridData){
 	 * lists for related data.
 	 */
 	Zoltan_Set_Unpack_Obj_Multi_Fn(zoltan,zoltanQuery_unPackPointsMultiFunction,&pdGridData);
-
+//	std::cout << "getLoadBalancedDiscretization(PdGridData& pdGridData) D"  << std::endl; std::cout.flush();
 
 	/******************************************************************
 	 ** Zoltan partition mesh: the number of partitions is
@@ -202,7 +218,7 @@ PdGridData& getLoadBalancedDiscretization(PdGridData& pdGridData){
 					&exportProcs,       /* Process to which I send each of the vertices */
 					&exportToPart       /* Partition to which each vertex will belong */
 			);
-
+//	std::cout << "getLoadBalancedDiscretization(PdGridData& pdGridData) E"  << std::endl; std::cout.flush();
 	Zoltan_Migrate
 	(
 			zoltan,
@@ -217,6 +233,7 @@ PdGridData& getLoadBalancedDiscretization(PdGridData& pdGridData){
 			exportProcs,
 			exportToPart
 	);
+//	std::cout << "getLoadBalancedDiscretization(PdGridData& pdGridData) F"  << std::endl; std::cout.flush();
 	/*
 	 * Now insure that all processors were unpacked
 	 * NOTE:
@@ -232,7 +249,7 @@ PdGridData& getLoadBalancedDiscretization(PdGridData& pdGridData){
 		char *buf = 0;
 		zoltanQuery_unPackPointsMultiFunction(&pdGridData,numGidEntries,numImport,gIds,sizes,idx,buf,&zoltanErr);
 	}
-
+//	std::cout << "getLoadBalancedDiscretization(PdGridData& pdGridData) G"  << std::endl; std::cout.flush();
 	/* Free memory allocated for load-balancing results by Zoltan */
 	Zoltan_LB_Free_Part(&importGlobalGids, &importLocalGids, &importProcs, &importToPart);
 	Zoltan_LB_Free_Part(&exportGlobalGids, &exportLocalGids, &exportProcs, &exportToPart);
