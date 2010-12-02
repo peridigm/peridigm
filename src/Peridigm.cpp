@@ -76,7 +76,11 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // Read mesh from disk or generate using geometric primatives.
   // All maps are generated here
-  initializeDiscretization();
+  Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::rcp(&(peridigmParams->sublist("Problem")),false);
+  Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::rcp(&(problemParams->sublist("Discretization")), false);
+  DiscretizationFactory discFactory(discParams);
+  Teuchos::RCP<AbstractDiscretization> peridigmDisc = discFactory.create(peridigmComm);
+  initializeDiscretization(peridigmDisc);
 
   // Instantiate data manager
   dataManager =  Teuchos::rcp(new PeridigmNS::DataManager);
@@ -84,8 +88,26 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   dataManager->setVector2DMap(Teuchos::null);
   dataManager->setVector3DMap(threeDimensionalOverlapMap);
   dataManager->setBondMap(bondMap);
-  // \todo Extend to multiple materials
-  dataManager->allocateData( (*materials)[0]->VariableSpecs() );
+  // Create a master list of variable specs
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
+  // Add the default specs
+  variableSpecs->push_back(Field_NS::VOLUME);
+  variableSpecs->push_back(Field_NS::COORD3D);
+  variableSpecs->push_back(Field_NS::DISPL3D);
+  variableSpecs->push_back(Field_NS::VELOC3D);
+  variableSpecs->push_back(Field_NS::ACCEL3D);
+  variableSpecs->push_back(Field_NS::FORCE3D);
+  // Add the variable specs requested by each material
+  for(unsigned int i=0; i<(*materials).size() ; ++i){
+    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > matVariableSpecs = (*materials)[i]->VariableSpecs();
+    for(unsigned int j=0 ; j<(*matVariableSpecs).size() ; ++j)
+      variableSpecs->push_back((*matVariableSpecs)[j]);
+  }
+  // Allocalte data in the dataManager
+  dataManager->allocateData(variableSpecs);
+
+  // Fill the dataManager with data from the discretization
+  dataManager->getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->Import(*(peridigmDisc->getCellVolume()), *oneDimensionalMapToOneDimensionalOverlapMapImporter, Insert);
 
   // apply initial velocities
   applyInitialVelocities();
@@ -158,7 +180,6 @@ void PeridigmNS::Peridigm::initializeMaterials() {
                          *uOverlap,
                          *vOverlap,
                          dt,
-                         *cellVolumeOverlap,
                          neighborhoodData->NumOwnedPoints(),
                          neighborhoodData->OwnedIDs(),
                          neighborhoodData->NeighborhoodList(),
@@ -169,20 +190,7 @@ void PeridigmNS::Peridigm::initializeMaterials() {
   }
 }
 
-void PeridigmNS::Peridigm::initializeDiscretization() {
-
-  // Extract problem parameters sublist
-  Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::rcp(&(peridigmParams->sublist("Problem")),false);
-
-  // Extract discretization parameters sublist
-  Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::rcp(&(problemParams->sublist("Discretization")), false);
-
-  // Create discretization object
-  // The discretization object creates:
-  // 1) The epetra maps
-  // 2) The vector of initial positions
-  DiscretizationFactory discFactory(discParams);
-  Teuchos::RCP<AbstractDiscretization> peridigmDisc = discFactory.create(peridigmComm);
+void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscretization> peridigmDisc) {
 
   // oneDimensionalMap
   // used for cell volumes and scalar constitutive data
@@ -221,15 +229,13 @@ void PeridigmNS::Peridigm::initializeDiscretization() {
   vOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
   forceOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
 
-  // Get the initial positions and put them in the xOverlap vector
+  // Create the importers
+  oneDimensionalMapToOneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*oneDimensionalOverlapMap, *oneDimensionalMap));
   threeDimensionalMapToThreeDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*threeDimensionalOverlapMap, *threeDimensionalMap));
+
+  // Get the initial positions and put them in the xOverlap vector
   xOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
   xOverlap->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-
-  // Get the cell volumes and put them in the cellVolumeOverlap vector
-  cellVolumeOverlap = Teuchos::rcp(new Epetra_Vector(*oneDimensionalOverlapMap));
-  oneDimensionalMapToOneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*oneDimensionalOverlapMap, *oneDimensionalMap));
-  cellVolumeOverlap->Import(*(peridigmDisc->getCellVolume()), *oneDimensionalMapToOneDimensionalOverlapMapImporter, Insert);
 
   // containers for constitutive data
   vectorConstitutiveDataOverlap = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalOverlapMap, vectorConstitutiveDataSize));
@@ -366,7 +372,6 @@ void PeridigmNS::Peridigm::initializeWorkset() {
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   *timeStep = 0.0;
   workset->timeStep = timeStep;
-  workset->cellVolumeOverlap = cellVolumeOverlap;
   workset->neighborhoodData = neighborhoodData;
   workset->contactNeighborhoodData = contactNeighborhoodData;
   workset->dataManager = dataManager;
@@ -440,7 +445,6 @@ void PeridigmNS::Peridigm::execute() {
 //   cout << *(workset->forceOverlap) << endl;
 //   //  cout << *(workset->contactForceOverlap) << endl;
 //   cout << *(workset->timeStep) << endl;
-//   cout << *(cellVolumeOverlap) << endl;
 
   // evalModel() should be called by time integrator here...
   // For now, insert Verlet intergrator here
@@ -548,7 +552,7 @@ void PeridigmNS::Peridigm::rebalance() {
   shared_ptr<double> cellVolume(new double[myNumElements], PdQuickGrid::Deleter<double>());
   double* cellVolumePtr = cellVolume.get();
   double* cellVolumeOverlapPtr;
-  cellVolumeOverlap->ExtractView(&cellVolumeOverlapPtr);
+  dataManager->getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&cellVolumeOverlapPtr);
   for(int i=0 ; i<myNumElements ; ++i){
     int oneDimensionalMapGlobalID = myGlobalIDsPtr[i];
     int oneDimensionalMapLocalID = oneDimensionalMap->LID(oneDimensionalMapGlobalID);
@@ -615,7 +619,7 @@ void PeridigmNS::Peridigm::updateContactNeighborList() {
   shared_ptr<double> cellVolume(new double[myNumElements], PdQuickGrid::Deleter<double>());
   double* cellVolumePtr = cellVolume.get();
   double* cellVolumeOverlapPtr;
-  cellVolumeOverlap->ExtractView(&cellVolumeOverlapPtr);
+  dataManager->getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&cellVolumeOverlapPtr);
   for(int i=0 ; i<myNumElements ; ++i){
     int oneDimensionalMapGlobalID = myGlobalIDsPtr[i];
     int oneDimensionalOverlapMapLocalID = oneDimensionalOverlapMap->LID(oneDimensionalMapGlobalID);

@@ -112,7 +112,6 @@ void testTwoPts()
   Epetra_Vector uOverlap(threeDimensionalOverlapMap);
   Epetra_Vector vOverlap(threeDimensionalOverlapMap);
   Epetra_Vector forceOverlap(threeDimensionalOverlapMap);
-  Epetra_Vector cellVolumeOverlap(oneDimensionalOverlapMap);
   int numScalarConstitutiveVariables = mat.NumScalarConstitutiveVariables();
   BOOST_CHECK(mat.NumScalarConstitutiveVariables() == 3);
   int numVectorConstitutiveVariables = mat.NumVectorConstitutiveVariables();
@@ -134,7 +133,7 @@ void testTwoPts()
   uOverlap[3] = 0.5; uOverlap[4] = 0.0; uOverlap[5] = 0.0;
   vOverlap[0] = 0.0; vOverlap[1] = 0.0; vOverlap[2] = 0.0;
   vOverlap[3] = 0.5; vOverlap[4] = 0.0; vOverlap[5] = 0.0;
-  cellVolumeOverlap.PutScalar(1.0);
+  dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->PutScalar(1.0);
   vectorConstitutiveDataOverlap.PutScalar(0.0);
   Epetra_Vector& weightedVolume = *dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE);
   Epetra_Vector& dilatation = *dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1);
@@ -165,7 +164,6 @@ void testTwoPts()
   workset.vOverlap = Teuchos::RCP<Epetra_Vector>(&vOverlap, false);
   workset.forceOverlap = Teuchos::RCP<Epetra_Vector>(&forceOverlap, false);
   workset.timeStep = Teuchos::RCP<double>(&dt, false);
-  workset.cellVolumeOverlap = Teuchos::RCP<Epetra_Vector>(&cellVolumeOverlap, false);
   workset.neighborhoodData = Teuchos::RCP<PeridigmNS::NeighborhoodData>(&neighborhoodData, false);
   workset.bondData = Teuchos::RCP<double>(bondData, false);
   workset.dataManager = Teuchos::RCP<PeridigmNS::DataManager>(&dataManager, false);

@@ -66,7 +66,7 @@ namespace PeridigmNS {
     void initializeMaterials();
 
     //! Initialize discretization and maps
-    void initializeDiscretization();
+    void initializeDiscretization(Teuchos::RCP<AbstractDiscretization> peridigmDisc);
 
     //! Apply boundary conditions
     void applyInitialVelocities();
@@ -168,9 +168,6 @@ namespace PeridigmNS {
 
     //! Force due to contact (vector includes ghosted dof)
     Teuchos::RCP<Epetra_Vector> contactForceOverlap;
-
-    //! Cell volumes
-    Teuchos::RCP<Epetra_Vector> cellVolumeOverlap;
 
     //! Vector constitutive data (vector includes ghosted dof)
     int vectorConstitutiveDataSize;

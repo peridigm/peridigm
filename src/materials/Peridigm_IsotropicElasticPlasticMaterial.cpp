@@ -77,7 +77,6 @@ void PeridigmNS::IsotropicElasticPlasticMaterial::initialize(const Epetra_Vector
                                                              const Epetra_Vector& u,
                                                              const Epetra_Vector& v,
                                                              const double dt,
-                                                             const Epetra_Vector& cellVolume,
                                                              const int numOwnedPoints,
                                                              const int* ownedIDs,
                                                              const int* neighborhoodList,
@@ -114,10 +113,11 @@ void PeridigmNS::IsotropicElasticPlasticMaterial::initialize(const Epetra_Vector
 	  }
 
 	  // Extract pointers to the underlying data
-      double* weightedVolume;
+      double *cellVolume, *weightedVolume;
+      dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&cellVolume);
       dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
 
-	  PdMaterialUtilities::computeWeightedVolume(x.Values(),cellVolume.Values(),weightedVolume,numOwnedPoints,neighborhoodList);
+	  PdMaterialUtilities::computeWeightedVolume(x.Values(),cellVolume,weightedVolume,numOwnedPoints,neighborhoodList);
 
 }
 
@@ -126,7 +126,6 @@ PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const Epetra
                                                                     const Epetra_Vector& u,
                                                                     const Epetra_Vector& v,
                                                                     const double dt,
-                                                                    const Epetra_Vector& cellVolume,
                                                                     const int numOwnedPoints,
                                                                     const int* ownedIDs,
                                                                     const int* neighborhoodList,
@@ -136,11 +135,12 @@ PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const Epetra
                                                                     Epetra_Vector& force) const
 {
 
-	// Extract pointers to the underlying data in the constitutiveData array
-	double *dilatation, *damage, *weightedVolume;
-        dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dilatation);
-        dataManager.getData(Field_NS::DAMAGE, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&damage);
-        dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
+  // Extract pointers to the underlying data in the constitutiveData array
+  double *volume, *dilatation, *damage, *weightedVolume;
+  dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&volume);
+  dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dilatation);
+  dataManager.getData(Field_NS::DAMAGE, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&damage);
+  dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
 
 	std::pair<int,double*> vectorView = m_decompStates.extractStrideView(vectorConstitutiveData);
 	double *y = m_decompStates.extractCurrentPositionView(vectorView);
@@ -154,7 +154,6 @@ PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const Epetra
 				u,
 				v,
 				dt,
-				cellVolume,
 				numOwnedPoints,
 				ownedIDs,
 				neighborhoodList,
@@ -182,7 +181,7 @@ PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const Epetra
 	}
 
 
-	PdMaterialUtilities::computeDilatation(x.Values(),y,weightedVolume,cellVolume.Values(),bondState,dilatation,neighborhoodList,numOwnedPoints);
+	PdMaterialUtilities::computeDilatation(x.Values(),y,weightedVolume,volume,bondState,dilatation,neighborhoodList,numOwnedPoints);
 }
 
 void
@@ -190,7 +189,6 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const Epetra_Vector& x
                                                           const Epetra_Vector& u,
                                                           const Epetra_Vector& v,
                                                           const double dt,
-                                                          const Epetra_Vector& cellVolume,
                                                           const int numOwnedPoints,
                                                           const int* ownedIDs,
                                                           const int* neighborhoodList,
@@ -214,6 +212,9 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const Epetra_Vector& x
 	  double* weightedVolume;
 	  dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
 
+      double *volume;
+      dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&volume);
+
 	  double* lambdaN;
 	  double* lambdaNP1;
 	  dataManager.getData(Field_NS::LAMBDA, Field_NS::FieldSpec::STEP_N)->ExtractView(&lambdaN);
@@ -229,7 +230,7 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const Epetra_Vector& x
 			  x.Values(),
 			  y,
 			  weightedVolume,
-			  cellVolume.Values(),
+			  volume,
 			  dilatation,
 			  bondState,
 			  edpN,
