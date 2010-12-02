@@ -81,7 +81,6 @@ void Contact<EvalT, Traits>::evaluateFields(typename Traits::EvalData cellData)
   const Epetra_Vector& u = *cellData.uOverlap;
   const Epetra_Vector& v = *cellData.vOverlap;
   const double dt = *cellData.timeStep;
-  const Epetra_Vector& cellVolume = *cellData.cellVolumeOverlap;
   const int numOwnedPoints = cellData.neighborhoodData->NumOwnedPoints();
   const int* ownedIDs = cellData.neighborhoodData->OwnedIDs();
   const int* contactNeighborhoodList = cellData.contactNeighborhoodData->NeighborhoodList();
@@ -97,7 +96,6 @@ void Contact<EvalT, Traits>::evaluateFields(typename Traits::EvalData cellData)
 						 u, 
 						 v, 
 						 dt, 
-						 cellVolume,
 						 numOwnedPoints,
 						 ownedIDs,
 						 contactNeighborhoodList,

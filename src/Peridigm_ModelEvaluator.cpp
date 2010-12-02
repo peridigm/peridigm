@@ -192,9 +192,8 @@ PeridigmNS::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<const Epetra_Comm>
   yOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
 
   // Get the cell volumes and put them in the cellVolumeOverlap vector
-  cellVolumeOverlap = Teuchos::rcp(new Epetra_Vector(*oneDimensionalOverlapMap));
   Epetra_Import oneDimensionalMapToOneDimensionalOverlapMapImporter(*oneDimensionalOverlapMap, *oneDimensionalMap);
-  cellVolumeOverlap->Import(*(disc->getCellVolume()), oneDimensionalMapToOneDimensionalOverlapMapImporter, Insert);
+  dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->Import(*(disc->getCellVolume()), oneDimensionalMapToOneDimensionalOverlapMapImporter, Insert);
 
   // containers for constitutive data
   vectorConstitutiveDataOverlap = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalOverlapMap, vectorConstitutiveDataSize));
@@ -226,7 +225,6 @@ PeridigmNS::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<const Epetra_Comm>
                          *uOverlap,
                          *vOverlap,
                          dt,
-                         *cellVolumeOverlap,
                          neighborhoodData->NumOwnedPoints(),
                          neighborhoodData->OwnedIDs(),
                          neighborhoodData->NeighborhoodList(),
@@ -447,7 +445,6 @@ PeridigmNS::ModelEvaluator::computeGlobalResidual(Teuchos::RCP<const Epetra_Vect
   workset.forceOverlap = forceOverlap;
   workset.contactForceOverlap = contactForceOverlap;
   workset.timeStep = Teuchos::RCP<double>(&timeStep, false);
-  workset.cellVolumeOverlap = cellVolumeOverlap;
   workset.neighborhoodData = neighborhoodData;
   workset.contactNeighborhoodData = contactNeighborhoodData;
   workset.bondData = Teuchos::RCP<double>(bondData, false);
@@ -527,7 +524,7 @@ PeridigmNS::ModelEvaluator::updateContactNeighborList(Teuchos::RCP<const Epetra_
   shared_ptr<double> cellVolume(new double[myNumElements], PdQuickGrid::Deleter<double>());
   double* cellVolumePtr = cellVolume.get();
   double* cellVolumeOverlapPtr;
-  cellVolumeOverlap->ExtractView(&cellVolumeOverlapPtr);
+  dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&cellVolumeOverlapPtr);
   for(int i=0 ; i<myNumElements ; ++i){
     int oneDimensionalMapGlobalID = myGlobalIDsPtr[i];
     int oneDimensionalOverlapMapLocalID = oneDimensionalOverlapMap->LID(oneDimensionalMapGlobalID);

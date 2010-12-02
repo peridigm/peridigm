@@ -62,7 +62,6 @@ PeridigmNS::ShortRangeForceContactModel::computeForce(const Epetra_Vector& x,
                                                     const Epetra_Vector& u,
                                                     const Epetra_Vector& v,
                                                     const double dt,
-                                                    const Epetra_Vector& cellVolume,
                                                     const int numOwnedPoints,
                                                     const int* ownedIDs,
                                                     const int* contactNeighborhoodList,
@@ -72,6 +71,9 @@ PeridigmNS::ShortRangeForceContactModel::computeForce(const Epetra_Vector& x,
 {
   std::pair<int,double*> vectorView = m_decompStates.extractStrideView(vectorConstitutiveData);
   double *y = m_decompStates.extractCurrentPositionView(vectorView);
+
+  double *cellVolume;
+  dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE);
 
   int neighborhoodListIndex = 0;
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){

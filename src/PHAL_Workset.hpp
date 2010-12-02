@@ -58,7 +58,6 @@ struct Workset {
   Teuchos::RCP<Epetra_Vector> forceOverlap;
   Teuchos::RCP<Epetra_Vector> contactForceOverlap;
   Teuchos::RCP<const double> timeStep;
-  Teuchos::RCP<const Epetra_Vector> cellVolumeOverlap;
   Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData;
   Teuchos::RCP<PeridigmNS::DataManager> dataManager;
 
