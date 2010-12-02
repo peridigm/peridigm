@@ -76,8 +76,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // Read mesh from disk or generate using geometric primatives.
   // All maps are generated here
-  Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::rcp(&(peridigmParams->sublist("Problem")),false);
-  Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::rcp(&(problemParams->sublist("Discretization")), false);
+  Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::rcp(&(peridigmParams->sublist("Problem").sublist("Discretization")), false);
   DiscretizationFactory discFactory(discParams);
   Teuchos::RCP<AbstractDiscretization> peridigmDisc = discFactory.create(peridigmComm);
   initializeDiscretization(peridigmDisc);
