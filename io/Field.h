@@ -22,7 +22,7 @@ using std::string;
 
 struct FieldSpec {
 public:
-  enum FieldType {VOLUME=0, ID, PROC_NUM, WEIGHTED_VOLUME, DILATATION, DAMAGE, E_DP, PLASTIC_CONSISTENCY, NUM_NEIGHBORS, COORDINATES, DISPLACEMENT, CURRENT_COORINATES, VELOCITY, ACCELERATION, FORCE, FORCE_DENSITY, BOND_DAMAGE, DEFAULT_FIELDTYPE};
+  enum FieldType {VOLUME=0, ID, PROC_NUM, WEIGHTED_VOLUME, DILATATION, DAMAGE, E_DP, PLASTIC_CONSISTENCY, NUM_NEIGHBORS, COORDINATES, DISPLACEMENT, CURRENT_COORDINATES, VELOCITY, ACCELERATION, FORCE, FORCE_DENSITY, BOND_DAMAGE, DEFAULT_FIELDTYPE};
     enum FieldLength {SCALAR=1, VECTOR2D=2, VECTOR3D=3, BOND=4};
     enum FieldStateArchitecture {STATELESS=0, STATEFUL=1}; 
     enum FieldStep {STEP_N=0, STEP_NP1=1, STEP_NONE=2};
@@ -62,7 +62,8 @@ const FieldSpec DEVIATORIC_PLASTIC_EXTENSION(FieldSpec::E_DP,   FieldSpec::BOND,
 // Vector FieldSpecs
 const FieldSpec COORD3D(FieldSpec::COORDINATES,            FieldSpec::VECTOR3D, FieldSpec::STATELESS, "Coordinates");
 const FieldSpec DISPL3D(FieldSpec::DISPLACEMENT,           FieldSpec::VECTOR3D, FieldSpec::STATEFUL,  "Displacement");
-const FieldSpec CURCOORD3D(FieldSpec::CURRENT_COORDINATES, FiledSec::VECTOR3D,  FieldSpec::STATEFUL,  "Current_Coordinates");
+const FieldSpec CURCOORD3D(FieldSpec::CURRENT_COORDINATES, FieldSpec::VECTOR3D, FieldSpec::STATEFUL,  "Current_Coordinates");
+const FieldSpec VELOC3D(FieldSpec::VELOCITY,               FieldSpec::VECTOR3D, FieldSpec::STATEFUL,  "Velocity");
 const FieldSpec ACCEL3D(FieldSpec::ACCELERATION,           FieldSpec::VECTOR3D, FieldSpec::STATEFUL,  "Acceleration");
 const FieldSpec FORCE3D(FieldSpec::FORCE,                  FieldSpec::VECTOR3D, FieldSpec::STATEFUL,  "Force");
 const FieldSpec FORCE_DENSITY3D(FieldSpec::FORCE_DENSITY,  FieldSpec::VECTOR3D, FieldSpec::STATEFUL,  "Force Density");
