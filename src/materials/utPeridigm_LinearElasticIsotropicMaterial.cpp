@@ -80,7 +80,6 @@ void testTwoPts()
   Epetra_Vector u(unknownMap);
   Epetra_Vector v(unknownMap);
   double dt = 1.0;
-  Epetra_Vector cellVolume(nodeMap);
   int numOwnedPoints;
   int* ownedIDs;
   int* neighborhoodList;
@@ -99,14 +98,16 @@ void testTwoPts()
   dataManager.setVector3DMap(Teuchos::rcp(&unknownMap, false));
   dataManager.allocateData(mat.VariableSpecs());
 
+  Teuchos::RCP<Epetra_Vector> cellVolume = dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE);
+
   x[0] = 0.0; x[1] = 0.0; x[2] = 0.0;
   x[3] = 1.0; x[4] = 0.0; x[5] = 0.0;
   u[0] = 0.0; u[1] = 0.0; u[2] = 0.0;
   u[3] = 0.0; u[4] = 0.0; u[5] = 0.0;
   v[0] = 0.0; v[1] = 0.0; v[2] = 0.0;
   v[3] = 1.0; v[4] = 0.0; v[5] = 0.0;
-  for(int i=0; i<cellVolume.MyLength(); ++i){
-	cellVolume[i] = 1.0;
+  for(int i=0; i<cellVolume->MyLength(); ++i){
+	(*cellVolume)[i] = 1.0;
   }
   vectorConstitutiveData.PutScalar(0.0);
 
@@ -139,7 +140,6 @@ void testTwoPts()
                  u, 
                  v, 
                  dt, 
-                 cellVolume,
                  numOwnedPoints,
                  ownedIDs,
                  neighborhoodList,
@@ -152,7 +152,6 @@ void testTwoPts()
 							 u, 
 							 v, 
 							 dt, 
-							 cellVolume,
 							 numOwnedPoints,
 							 ownedIDs,
 							 neighborhoodList,
@@ -188,7 +187,6 @@ void testTwoPts()
 				   u, 
 				   v, 
 				   dt, 
-				   cellVolume,
 				   numOwnedPoints,
 				   ownedIDs,
 				   neighborhoodList,
@@ -227,7 +225,6 @@ void testEightPts()
   Epetra_Vector u(unknownMap);
   Epetra_Vector v(unknownMap);
   double dt = 1.0;
-  Epetra_Vector cellVolume(nodeMap);
   int numOwnedPoints;
   int* ownedIDs;
   int* neighborhoodList;
@@ -245,6 +242,8 @@ void testEightPts()
   dataManager.setVector2DMap(Teuchos::null);
   dataManager.setVector3DMap(Teuchos::rcp(&unknownMap, false));
   dataManager.allocateData(mat.VariableSpecs());
+
+  Teuchos::RCP<Epetra_Vector> cellVolume = dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE);
 
   // initial positions
   x[0]  = 0.0; x[1]  = 0.0; x[2]  = 0.0;
@@ -277,8 +276,8 @@ void testEightPts()
   v[21] = 0.0; v[22] = 0.0; v[23] = 0.0;
 
   // cell volumes
-  for(int i=0; i<cellVolume.MyLength(); ++i){
-	cellVolume[i] = 1.0;
+  for(int i=0; i<cellVolume->MyLength(); ++i){
+	(*cellVolume)[i] = 1.0;
   }
 
   // zero out constitutive data
@@ -326,7 +325,6 @@ void testEightPts()
                  u, 
                  v, 
                  dt, 
-                 cellVolume,
                  numOwnedPoints,
                  ownedIDs,
                  neighborhoodList,
@@ -339,7 +337,6 @@ void testEightPts()
 							 u, 
 							 v, 
 							 dt, 
-							 cellVolume,
 							 numOwnedPoints,
 							 ownedIDs,
 							 neighborhoodList,
@@ -417,7 +414,6 @@ void testEightPts()
 				   u, 
 				   v, 
 				   dt, 
-				   cellVolume,
 				   numOwnedPoints,
 				   ownedIDs,
 				   neighborhoodList,
@@ -542,7 +538,6 @@ void testThreePts()
   Epetra_Vector u(unknownMap);
   Epetra_Vector v(unknownMap);
   double dt = 1.0;
-  Epetra_Vector cellVolume(nodeMap);
   int numOwnedPoints;
   int* ownedIDs;
   int* neighborhoodList;
@@ -561,6 +556,8 @@ void testThreePts()
   dataManager.setVector3DMap(Teuchos::rcp(&unknownMap, false));
   dataManager.allocateData(mat.VariableSpecs());
 
+  Teuchos::RCP<Epetra_Vector> cellVolume = dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE);
+
   // initial positions
   x[0] =  1.1; x[1] = 2.6;  x[2] = -0.1;
   x[3] = -2.0; x[4] = 0.9;  x[5] = -0.3;
@@ -577,9 +574,9 @@ void testThreePts()
   v[6]  = 0.0; v[7]  = 0.0; v[8]  = 0.0;
 
   // cell volumes
-  cellVolume[0] = 0.9;
-  cellVolume[1] = 1.1;
-  cellVolume[2] = 0.8;
+  (*cellVolume)[0] = 0.9;
+  (*cellVolume)[1] = 1.1;
+  (*cellVolume)[2] = 0.8;
 
   // zero out constitutive data
   vectorConstitutiveData.PutScalar(0.0);
@@ -626,7 +623,6 @@ void testThreePts()
                  u, 
                  v, 
                  dt, 
-                 cellVolume,
                  numOwnedPoints,
                  ownedIDs,
                  neighborhoodList,
@@ -639,7 +635,6 @@ void testThreePts()
 							 u, 
 							 v, 
 							 dt, 
-							 cellVolume,
 							 numOwnedPoints,
 							 ownedIDs,
 							 neighborhoodList,
@@ -689,7 +684,6 @@ void testThreePts()
 				   u, 
 				   v, 
 				   dt, 
-				   cellVolume,
 				   numOwnedPoints,
 				   ownedIDs,
 				   neighborhoodList,
@@ -704,22 +698,22 @@ void testThreePts()
   // cell 0
   // force on cell 0 due to interaction with cell 1
   // t_0 < x_1 - x_0 > dV_1
-  ref_soln_x = -2753550531.144094*cellVolume[1];
-  ref_soln_y = -1510011581.595148*cellVolume[1];
-  ref_soln_z = -621769474.7744727*cellVolume[1];
+  ref_soln_x = -2753550531.144094*(*cellVolume)[1];
+  ref_soln_y = -1510011581.595148*(*cellVolume)[1];
+  ref_soln_z = -621769474.7744727*(*cellVolume)[1];
   // - t_1 < x_0 - x_1 > dV_1
-  ref_soln_x -= 3398655528.6806289*cellVolume[1];
-  ref_soln_y -= 1863778838.308732*cellVolume[1];
-  ref_soln_z -= 767438345.18594845*cellVolume[1];
+  ref_soln_x -= 3398655528.6806289*(*cellVolume)[1];
+  ref_soln_y -= 1863778838.308732*(*cellVolume)[1];
+  ref_soln_z -= 767438345.18594845*(*cellVolume)[1];
   // add force on cell 0 due to interaction with cell 2
   // t_0 < x_2 - x_0 > dV_2
-  ref_soln_x += 7736514797.0571524*cellVolume[2];
-  ref_soln_y += 15402697641.41379*cellVolume[2];
-  ref_soln_z += -11956431959.088315*cellVolume[2];
+  ref_soln_x += 7736514797.0571524*(*cellVolume)[2];
+  ref_soln_y += 15402697641.41379*(*cellVolume)[2];
+  ref_soln_z += -11956431959.088315*(*cellVolume)[2];
   // - t_2 < x_0 - x_2 > dV_2
-  ref_soln_x -= -8687228655.850972*cellVolume[2];
-  ref_soln_y -= -17295482505.73966*cellVolume[2];
-  ref_soln_z -= 13425717013.587864*cellVolume[2];
+  ref_soln_x -= -8687228655.850972*(*cellVolume)[2];
+  ref_soln_y -= -17295482505.73966*(*cellVolume)[2];
+  ref_soln_z -= 13425717013.587864*(*cellVolume)[2];
   // assert the values of net force on cell 0
   BOOST_CHECK_CLOSE(force[0], ref_soln_x, 1.0e-11);
   BOOST_CHECK_CLOSE(force[1], ref_soln_y, 1.0e-11);
@@ -728,22 +722,22 @@ void testThreePts()
   // cell 1
   // force on cell 1 due to interaction with cell 0
   // t_1 < x_0 - x_1 > dV_0
-  ref_soln_x = 3398655528.6806289*cellVolume[0];
-  ref_soln_y = 1863778838.308732*cellVolume[0];
-  ref_soln_z = 767438345.18594845*cellVolume[0];
+  ref_soln_x = 3398655528.6806289*(*cellVolume)[0];
+  ref_soln_y = 1863778838.308732*(*cellVolume)[0];
+  ref_soln_z = 767438345.18594845*(*cellVolume)[0];
   // t_0 < x_1 - x_0 > dV_0
-  ref_soln_x -= -2753550531.144094*cellVolume[0];
-  ref_soln_y -= -1510011581.595148*cellVolume[0];
-  ref_soln_z -= -621769474.7744727*cellVolume[0];
+  ref_soln_x -= -2753550531.144094*(*cellVolume)[0];
+  ref_soln_y -= -1510011581.595148*(*cellVolume)[0];
+  ref_soln_z -= -621769474.7744727*(*cellVolume)[0];
   // add force on cell 1 due to interaction with cell 2
   // t_1 < x_2 - x_1 >
-  ref_soln_x += 5110873051.7924152*cellVolume[2];
-  ref_soln_y += -1252163897.689138*cellVolume[2];
-  ref_soln_z += 6133047662.15088*cellVolume[2];
+  ref_soln_x += 5110873051.7924152*(*cellVolume)[2];
+  ref_soln_y += -1252163897.689138*(*cellVolume)[2];
+  ref_soln_z += 6133047662.15088*(*cellVolume)[2];
   // - t_2 < x_1 - x_2 >
-  ref_soln_x -= -4649613866.523322*cellVolume[2];
-  ref_soln_y -= 1139155397.2982139*cellVolume[2];
-  ref_soln_z -= -5579536639.827986*cellVolume[2];
+  ref_soln_x -= -4649613866.523322*(*cellVolume)[2];
+  ref_soln_y -= 1139155397.2982139*(*cellVolume)[2];
+  ref_soln_z -= -5579536639.827986*(*cellVolume)[2];
   // assert the values of net force on cell 1
   BOOST_CHECK_CLOSE(force[3], ref_soln_x, 1.0e-11);
   BOOST_CHECK_CLOSE(force[4], ref_soln_y, 1.0e-10);
@@ -752,21 +746,21 @@ void testThreePts()
   // cell 2
   // add force on cell 2 due to interaction with cell 0
   // t_2 < x_0 - x_2 > dV_2
-  ref_soln_x = -8687228655.850972*cellVolume[0];
-  ref_soln_y = -17295482505.73966*cellVolume[0];
-  ref_soln_z = 13425717013.587864*cellVolume[0];
+  ref_soln_x = -8687228655.850972*(*cellVolume)[0];
+  ref_soln_y = -17295482505.73966*(*cellVolume)[0];
+  ref_soln_z = 13425717013.587864*(*cellVolume)[0];
   // - t_0 < x_2 - x_0 > dV_2
-  ref_soln_x -= 7736514797.0571524*cellVolume[0];
-  ref_soln_y -= 15402697641.41379*cellVolume[0];
-  ref_soln_z -= -11956431959.088315*cellVolume[0];
+  ref_soln_x -= 7736514797.0571524*(*cellVolume)[0];
+  ref_soln_y -= 15402697641.41379*(*cellVolume)[0];
+  ref_soln_z -= -11956431959.088315*(*cellVolume)[0];
   // t_2 < x_1 - x_2 >
-  ref_soln_x += -4649613866.523322*cellVolume[1];
-  ref_soln_y += 1139155397.2982139*cellVolume[1];
-  ref_soln_z += -5579536639.827986*cellVolume[1];
+  ref_soln_x += -4649613866.523322*(*cellVolume)[1];
+  ref_soln_y += 1139155397.2982139*(*cellVolume)[1];
+  ref_soln_z += -5579536639.827986*(*cellVolume)[1];
   // - t_1 < x_2 - x_1 >
-  ref_soln_x -= 5110873051.7924152*cellVolume[1];
-  ref_soln_y -= -1252163897.689138*cellVolume[1];
-  ref_soln_z -= 6133047662.15088*cellVolume[1];
+  ref_soln_x -= 5110873051.7924152*(*cellVolume)[1];
+  ref_soln_y -= -1252163897.689138*(*cellVolume)[1];
+  ref_soln_z -= 6133047662.15088*(*cellVolume)[1];
   // assert the values of net force on cell 2
   BOOST_CHECK_CLOSE(force[6], ref_soln_x, 1.0e-11);
   BOOST_CHECK_CLOSE(force[7], ref_soln_y, 1.0e-11);
