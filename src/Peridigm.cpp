@@ -100,6 +100,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // Fill the dataManager with data from the discretization
   dataManager->getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->Import(*(peridigmDisc->getCellVolume()), *oneDimensionalMapToOneDimensionalOverlapMapImporter, Insert);
+  dataManager->getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
 
   // apply initial velocities
   applyInitialVelocities();
@@ -168,8 +169,7 @@ void PeridigmNS::Peridigm::initializeMaterials() {
 
   for(matIt = materials->begin() ; matIt != materials->end() ; matIt++){
     double dt = 0.0;
-    (*matIt)->initialize(*xOverlap,
-                         *uOverlap,
+    (*matIt)->initialize(*uOverlap,
                          *vOverlap,
                          dt,
                          neighborhoodData->NumOwnedPoints(),
@@ -225,10 +225,6 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
   // Create the importers
   oneDimensionalMapToOneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*oneDimensionalOverlapMap, *oneDimensionalMap));
   threeDimensionalMapToThreeDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*threeDimensionalOverlapMap, *threeDimensionalMap));
-
-  // Get the initial positions and put them in the xOverlap vector
-  xOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
-  xOverlap->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
 
   // containers for constitutive data
   vectorConstitutiveDataOverlap = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalOverlapMap, vectorConstitutiveDataSize));
@@ -357,7 +353,6 @@ void PeridigmNS::Peridigm::initializeContact() {
 
 void PeridigmNS::Peridigm::initializeWorkset() {
   workset = Teuchos::rcp(new PHAL::Workset);
-  workset->xOverlap = xOverlap;
   workset->uOverlap = uOverlap;
   workset->vOverlap = vOverlap;
   workset->forceOverlap = forceOverlap;
@@ -432,7 +427,6 @@ void PeridigmNS::Peridigm::execute() {
   vOverlap->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
 
 //   cout << "BEFORE" << endl;
-//   cout << *(workset->xOverlap) << endl;
 //   cout << *(workset->uOverlap) << endl;
 //   cout << *(workset->vOverlap) << endl;
 //   cout << *(workset->forceOverlap) << endl;
@@ -515,7 +509,6 @@ void PeridigmNS::Peridigm::execute() {
   }
 
 //   cout << "AFTER" << endl;
-//   cout << *(workset->xOverlap) << endl;
 //   cout << *(workset->uOverlap) << endl;
 //   cout << *(workset->vOverlap) << endl;
 //   cout << *(workset->forceOverlap) << endl;

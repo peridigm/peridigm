@@ -52,8 +52,7 @@ namespace PeridigmNS {
 
 	//! Evaluate the forces on the cells.
 	virtual void
-	computeForce(const Epetra_Vector& x,
-				 const Epetra_Vector& u,
+	computeForce(const Epetra_Vector& u,
 				 const Epetra_Vector& v,
 				 const double dt,
 				 const int numOwnedPoints,

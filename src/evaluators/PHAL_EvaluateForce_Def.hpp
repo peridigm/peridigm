@@ -77,7 +77,6 @@ void EvaluateForce<EvalT, Traits>::evaluateFields(typename Traits::EvalData cell
   if(m_verbose)
 	cout << "CHECK inside EvaluateForce::evaluateFields()\n" << endl;
 
-  const Epetra_Vector& x = *cellData.xOverlap;
   const Epetra_Vector& u = *cellData.uOverlap;
   const Epetra_Vector& v = *cellData.vOverlap;
   const double dt = *cellData.timeStep;
@@ -97,8 +96,7 @@ void EvaluateForce<EvalT, Traits>::evaluateFields(typename Traits::EvalData cell
   // handling of material models needs work!
   Teuchos::RCP<const PeridigmNS::Material> material = (*cellData.materials)[0];
 
-  material->computeForce(x, 
-						 u, 
+  material->computeForce(u, 
 						 v, 
 						 dt, 
 						 numOwnedPoints,

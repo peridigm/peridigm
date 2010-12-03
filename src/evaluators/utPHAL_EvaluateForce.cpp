@@ -109,7 +109,6 @@ void testTwoPts()
   PeridigmNS::LinearElasticIsotropicMaterial mat(params);
 
   // set up the vectors
-  Epetra_Vector xOverlap(threeDimensionalOverlapMap);
   Epetra_Vector uOverlap(threeDimensionalOverlapMap);
   Epetra_Vector vOverlap(threeDimensionalOverlapMap);
   Epetra_Vector forceOverlap(threeDimensionalOverlapMap);
@@ -128,8 +127,9 @@ void testTwoPts()
 
   // two-point discretization
   double dt = 1.0;
-  xOverlap[0] = 0.0; xOverlap[1] = 0.0; xOverlap[2] = 0.0;
-  xOverlap[3] = 1.0; xOverlap[4] = 0.0; xOverlap[5] = 0.0;
+  Epetra_Vector& x = *dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE);
+  x[0] = 0.0; x[1] = 0.0; x[2] = 0.0;
+  x[3] = 1.0; x[4] = 0.0; x[5] = 0.0;
   uOverlap[0] = 0.0; uOverlap[1] = 0.0; uOverlap[2] = 0.0;
   uOverlap[3] = 0.5; uOverlap[4] = 0.0; uOverlap[5] = 0.0;
   vOverlap[0] = 0.0; vOverlap[1] = 0.0; vOverlap[2] = 0.0;
@@ -162,7 +162,6 @@ void testTwoPts()
 
   // create a workset with rcps to the relevant data
   PHAL::Workset workset;
-  workset.xOverlap = Teuchos::RCP<Epetra_Vector>(&xOverlap, false);
   workset.uOverlap = Teuchos::RCP<Epetra_Vector>(&uOverlap, false);
   workset.vOverlap = Teuchos::RCP<Epetra_Vector>(&vOverlap, false);
   workset.forceOverlap = Teuchos::RCP<Epetra_Vector>(&forceOverlap, false);
