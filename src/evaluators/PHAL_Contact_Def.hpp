@@ -77,7 +77,6 @@ void Contact<EvalT, Traits>::evaluateFields(typename Traits::EvalData cellData)
   if(m_verbose)
     cout << "CHECK inside Contact::evaluateFields()\n" << endl;
 
-  const Epetra_Vector& x = *cellData.xOverlap;
   const Epetra_Vector& u = *cellData.uOverlap;
   const Epetra_Vector& v = *cellData.vOverlap;
   const double dt = *cellData.timeStep;
@@ -92,15 +91,14 @@ void Contact<EvalT, Traits>::evaluateFields(typename Traits::EvalData cellData)
   // handling of contact models needs work!
   Teuchos::RCP<const PeridigmNS::ContactModel> contactModel = (*cellData.contactModels)[0];
 
-  contactModel->computeForce(x, 
-						 u, 
-						 v, 
-						 dt, 
-						 numOwnedPoints,
-						 ownedIDs,
-						 contactNeighborhoodList,
-                         dataManager,
-						 vectorConstitutiveData,
-						 contactForce);
+  contactModel->computeForce(u, 
+                             v, 
+                             dt, 
+                             numOwnedPoints,
+                             ownedIDs,
+                             contactNeighborhoodList,
+                             dataManager,
+                             vectorConstitutiveData,
+                             contactForce);
 }
 

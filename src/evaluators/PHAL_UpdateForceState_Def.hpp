@@ -91,7 +91,6 @@ void UpdateForceState<EvalT, Traits>::evaluateFields(typename Traits::EvalData c
   if(m_verbose)
 	cout << "CHECK inside UpdateForceState::evaluateFields()" << endl;
 
-  const Epetra_Vector& x = *cellData.xOverlap;
   const Epetra_Vector& u = *cellData.uOverlap;
   const Epetra_Vector& v = *cellData.vOverlap;
   const double dt = *cellData.timeStep;
@@ -110,8 +109,7 @@ void UpdateForceState<EvalT, Traits>::evaluateFields(typename Traits::EvalData c
   // handling of material models needs work!
   Teuchos::RCP<const PeridigmNS::Material> material = (*cellData.materials)[0];
 
-  material->updateConstitutiveData(x, 
-								   u, 
+  material->updateConstitutiveData(u, 
 								   v, 
 								   dt, 
 								   numOwnedPoints,

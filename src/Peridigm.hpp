@@ -157,9 +157,6 @@ namespace PeridigmNS {
     //! Global vector for force
     Teuchos::RCP<Epetra_Vector> force;
 
-    //! Initial positions (vector includes ghosted dof)
-    Teuchos::RCP<Epetra_Vector> xOverlap;
-
     //! Displacement at previously accepted solution (vector includes ghosted dof)
     Teuchos::RCP<Epetra_Vector> uOverlap;
 

@@ -88,8 +88,7 @@ PeridigmNS::LinearElasticIsotropicMaterial::~LinearElasticIsotropicMaterial()
 }
 
 void
-PeridigmNS::LinearElasticIsotropicMaterial::initialize(const Epetra_Vector& x,
-                                                       const Epetra_Vector& u,
+PeridigmNS::LinearElasticIsotropicMaterial::initialize(const Epetra_Vector& u,
                                                        const Epetra_Vector& v,
                                                        const double dt,
                                                        const int numOwnedPoints,
@@ -100,19 +99,6 @@ PeridigmNS::LinearElasticIsotropicMaterial::initialize(const Epetra_Vector& x,
                                                        Epetra_MultiVector& vectorConstitutiveData,
                                                        Epetra_Vector& force) const
 {
-  // Sanity checks on vector sizes
-  TEST_FOR_EXCEPT_MSG(x.MyLength() != u.MyLength(), 
-					  "x and u vector lengths do not match\n");
-  TEST_FOR_EXCEPT_MSG(x.MyLength() != v.MyLength(), 
-					  "x and v vector lengths do not match\n");
-  TEST_FOR_EXCEPT_MSG(x.MyLength() != vectorConstitutiveData.MyLength(), 
-					  "x and vector constitutive data vector lengths do not match\n");
-  TEST_FOR_EXCEPT_MSG(x.MyLength() != force.MyLength(), 
-					  "x and force vector lengths do not match\n");
-
-  //! \todo Create structure for storing influence function values.
-//   double omega = 1.0;
-
   // Initialize data fields
   int neighborhoodListIndex = 0;
   int bondStateIndex = 0;
@@ -125,16 +111,17 @@ PeridigmNS::LinearElasticIsotropicMaterial::initialize(const Epetra_Vector& x,
   }
 
   // Extract pointers to the underlying data in the constitutiveData array
-  double *cellVolume, *weightedVolume;
+  double *x, *cellVolume, *weightedVolume;
+  dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&x);
   dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&cellVolume);
   dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
 
-  PdMaterialUtilities::computeWeightedVolume(x.Values(),cellVolume,weightedVolume,numOwnedPoints,neighborhoodList);
+
+  PdMaterialUtilities::computeWeightedVolume(x,cellVolume,weightedVolume,numOwnedPoints,neighborhoodList);
 }
 
 void
-PeridigmNS::LinearElasticIsotropicMaterial::updateConstitutiveData(const Epetra_Vector& x,
-                                                                   const Epetra_Vector& u,
+PeridigmNS::LinearElasticIsotropicMaterial::updateConstitutiveData(const Epetra_Vector& u,
                                                                    const Epetra_Vector& v,
                                                                    const double dt,
                                                                    const int numOwnedPoints,
@@ -145,11 +132,11 @@ PeridigmNS::LinearElasticIsotropicMaterial::updateConstitutiveData(const Epetra_
                                                                    Epetra_MultiVector& vectorConstitutiveData,
                                                                    Epetra_Vector& force) const
 {
-  //! \todo Create structure for storing influence function values.
-//   double omega = 1.0;
-  
+  int vectorLength = dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->MyLength();
+
   // Extract pointers to the underlying data in the constitutiveData array
-  double *cellVolume, *weightedVolume, *dilatation, *damage;
+  double *x, *cellVolume, *weightedVolume, *dilatation, *damage;
+  dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&x);
   dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&cellVolume);
   dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
   dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dilatation);
@@ -159,18 +146,18 @@ PeridigmNS::LinearElasticIsotropicMaterial::updateConstitutiveData(const Epetra_
   double *y = m_decompStates.extractCurrentPositionView(vectorView);
 
   // Update the geometry
-  PdMaterialUtilities::updateGeometry(x.Values(),u.Values(),v.Values(),y,x.MyLength(),dt);
+  PdMaterialUtilities::updateGeometry(x,u.Values(),v.Values(),y,vectorLength,dt);
 
   // Update the bondState
   if(!m_damageModel.is_null()){
-    m_damageModel->computeDamage(x,
-								 u,
+    m_damageModel->computeDamage(u,
 								 v,
                                  dt,
                                  numOwnedPoints,
                                  ownedIDs,
                                  neighborhoodList,
                                  bondState,
+                                 dataManager,
                                  vectorConstitutiveData,
                                  force);
   }
@@ -193,12 +180,11 @@ PeridigmNS::LinearElasticIsotropicMaterial::updateConstitutiveData(const Epetra_
  	damage[nodeID] = totalDamage;
   }
 
-PdMaterialUtilities::computeDilatation(x.Values(),y,weightedVolume,cellVolume,bondState,dilatation,neighborhoodList,numOwnedPoints);
+PdMaterialUtilities::computeDilatation(x,y,weightedVolume,cellVolume,bondState,dilatation,neighborhoodList,numOwnedPoints);
 }
 
 void
-PeridigmNS::LinearElasticIsotropicMaterial::computeForce(const Epetra_Vector& x,
-                                                         const Epetra_Vector& u,
+PeridigmNS::LinearElasticIsotropicMaterial::computeForce(const Epetra_Vector& u,
                                                          const Epetra_Vector& v,
                                                          const double dt,
                                                          const int numOwnedPoints,
@@ -209,10 +195,9 @@ PeridigmNS::LinearElasticIsotropicMaterial::computeForce(const Epetra_Vector& x,
                                                          Epetra_MultiVector& vectorConstitutiveData,
                                                          Epetra_Vector& force) const
 {
-//   double omega = 1.0;
-
   // Extract pointers to the underlying data in the constitutiveData array
-  double *cellVolume, *weightedVolume, *dilatation;
+  double *x, *cellVolume, *weightedVolume, *dilatation;
+  dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&x);
   dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&cellVolume);
   dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
   dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dilatation);
@@ -224,6 +209,5 @@ PeridigmNS::LinearElasticIsotropicMaterial::computeForce(const Epetra_Vector& x,
   // with locally-owned nodes
   force.PutScalar(0.0);
 
-  PdMaterialUtilities::computeInternalForceLinearElastic(x.Values(),y,weightedVolume,cellVolume,dilatation,bondState,force.Values(),neighborhoodList,numOwnedPoints,m_bulkModulus,m_shearModulus);
-
+  PdMaterialUtilities::computeInternalForceLinearElastic(x,y,weightedVolume,cellVolume,dilatation,bondState,force.Values(),neighborhoodList,numOwnedPoints,m_bulkModulus,m_shearModulus);
 }

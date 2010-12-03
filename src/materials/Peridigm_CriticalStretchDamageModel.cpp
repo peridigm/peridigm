@@ -53,40 +53,35 @@ PeridigmNS::CriticalStretchDamageModel::~CriticalStretchDamageModel()
 }
 
 void
-PeridigmNS::CriticalStretchDamageModel::initialize(const Epetra_Vector& x,
-                                                 const Epetra_Vector& u,
-                                                 const Epetra_Vector& v,
-                                                 const double dt,
-                                                 const int numOwnedPoints,
-                                                 const int* ownedIDs,
-                                                 const int* neighborhoodList,
-                                                 double* bondState,
-                                                 Epetra_MultiVector& vectorConstitutiveData,
-                                                 Epetra_Vector& force) const
+PeridigmNS::CriticalStretchDamageModel::initialize(const Epetra_Vector& u,
+                                                   const Epetra_Vector& v,
+                                                   const double dt,
+                                                   const int numOwnedPoints,
+                                                   const int* ownedIDs,
+                                                   const int* neighborhoodList,
+                                                   double* bondState,
+                                                   PeridigmNS::DataManager& dataManager,
+                                                   Epetra_MultiVector& vectorConstitutiveData,
+                                                   Epetra_Vector& force) const
 {
-  // Sanity checks on vector sizes
-  TEST_FOR_EXCEPT_MSG(x.MyLength() != u.MyLength(), 
-					  "x and u vector lengths do not match\n");
-  TEST_FOR_EXCEPT_MSG(x.MyLength() != v.MyLength(), 
-					  "x and v vector lengths do not match\n");
-  TEST_FOR_EXCEPT_MSG(x.MyLength() != vectorConstitutiveData.MyLength(), 
-					  "x and vector constitutive data vector lengths do not match\n");
-  TEST_FOR_EXCEPT_MSG(x.MyLength() != force.MyLength(), 
-					  "x and force vector lengths do not match\n");
 }
 
 void
-PeridigmNS::CriticalStretchDamageModel::computeDamage(const Epetra_Vector& x,
-                                                    const Epetra_Vector& u,
-                                                    const Epetra_Vector& v,
-                                                    const double dt,
-                                                    const int numOwnedPoints,
-                                                    const int* ownedIDs,
-                                                    const int* neighborhoodList,
-                                                    double* bondState,
-                                                    Epetra_MultiVector& vectorConstitutiveData,
-                                                    Epetra_Vector& force) const
+PeridigmNS::CriticalStretchDamageModel::computeDamage(const Epetra_Vector& u,
+                                                      const Epetra_Vector& v,
+                                                      const double dt,
+                                                      const int numOwnedPoints,
+                                                      const int* ownedIDs,
+                                                      const int* neighborhoodList,
+                                                      double* bondState,
+                                                      PeridigmNS::DataManager& dataManager,
+                                                      Epetra_MultiVector& vectorConstitutiveData,
+                                                      Epetra_Vector& force) const
 {
+  int vectorLength = dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->MyLength();
+  double *x;
+  dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&x);
+
   double* vectorConstitutiveDataView;
   int vectorConstitutiveDataStride;
   vectorConstitutiveData.ExtractView(&vectorConstitutiveDataView, &vectorConstitutiveDataStride);
@@ -99,7 +94,7 @@ PeridigmNS::CriticalStretchDamageModel::computeDamage(const Epetra_Vector& x,
   int bondStateIndex = 0;
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
 	int nodeID = ownedIDs[iID];
-	TEST_FOR_EXCEPT_MSG(nodeID*3+2 >= x.MyLength(), "Invalid neighbor list / x vector\n");
+	TEST_FOR_EXCEPT_MSG(nodeID*3+2 >= vectorLength, "Invalid neighbor list / x vector\n");
 	double nodeInitialX[3] = { x[nodeID*3],
 							   x[nodeID*3+1],
 							   x[nodeID*3+2] };
@@ -110,7 +105,7 @@ PeridigmNS::CriticalStretchDamageModel::computeDamage(const Epetra_Vector& x,
 	for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
 	  int neighborID = neighborhoodList[neighborhoodListIndex++];
 	  TEST_FOR_EXCEPT_MSG(neighborID < 0, "Invalid neighbor list\n");
-	  TEST_FOR_EXCEPT_MSG(neighborID*3+2 >= x.MyLength(), "Invalid neighbor list / initial x vector\n");
+	  TEST_FOR_EXCEPT_MSG(neighborID*3+2 >= vectorLength, "Invalid neighbor list / initial x vector\n");
 	  double initialDistance = 
 		distance(nodeInitialX[0], nodeInitialX[1], nodeInitialX[2],
 				 x[neighborID*3], x[neighborID*3+1], x[neighborID*3+2]);

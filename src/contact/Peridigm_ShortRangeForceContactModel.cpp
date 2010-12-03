@@ -58,16 +58,15 @@ PeridigmNS::ShortRangeForceContactModel::~ShortRangeForceContactModel()
 }
 
 void
-PeridigmNS::ShortRangeForceContactModel::computeForce(const Epetra_Vector& x,
-                                                    const Epetra_Vector& u,
-                                                    const Epetra_Vector& v,
-                                                    const double dt,
-                                                    const int numOwnedPoints,
-                                                    const int* ownedIDs,
-                                                    const int* contactNeighborhoodList,
-                                                    PeridigmNS::DataManager& dataManager,
-                                                    Epetra_MultiVector& vectorConstitutiveData,
-                                                    Epetra_Vector& force) const
+PeridigmNS::ShortRangeForceContactModel::computeForce(const Epetra_Vector& u,
+                                                      const Epetra_Vector& v,
+                                                      const double dt,
+                                                      const int numOwnedPoints,
+                                                      const int* ownedIDs,
+                                                      const int* contactNeighborhoodList,
+                                                      PeridigmNS::DataManager& dataManager,
+                                                      Epetra_MultiVector& vectorConstitutiveData,
+                                                      Epetra_Vector& force) const
 {
   std::pair<int,double*> vectorView = m_decompStates.extractStrideView(vectorConstitutiveData);
   double *y = m_decompStates.extractCurrentPositionView(vectorView);

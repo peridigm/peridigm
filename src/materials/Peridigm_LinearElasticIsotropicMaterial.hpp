@@ -123,8 +123,7 @@ namespace PeridigmNS {
 
 	//! Initialized data containers and computes weighted volume.
 	virtual void
-	initialize(const Epetra_Vector& x,
-               const Epetra_Vector& u,
+	initialize(const Epetra_Vector& u,
                const Epetra_Vector& v,
                const double dt,
                const int numOwnedPoints,
@@ -137,8 +136,7 @@ namespace PeridigmNS {
 
 	//! Computes the dilatation.
 	virtual void
-	updateConstitutiveData(const Epetra_Vector& x,
-						   const Epetra_Vector& u,
+	updateConstitutiveData(const Epetra_Vector& u,
 						   const Epetra_Vector& v,
 						   const double dt,
 						   const int numOwnedPoints,
@@ -151,8 +149,7 @@ namespace PeridigmNS {
 
 	//! Evaluate the forces on the cells.
 	virtual void
-	computeForce(const Epetra_Vector& x,
-				 const Epetra_Vector& u,
+	computeForce(const Epetra_Vector& u,
 				 const Epetra_Vector& v,
 				 const double dt,
 				 const int numOwnedPoints,
