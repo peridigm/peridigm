@@ -54,6 +54,13 @@ else ()
   message ("\nVTK NOT FOUND!  (Try defining VTK_DIR)\n")
 endif ()
 
+#
+# DAKOTA configuration
+#
+option (USE_DAKOTA 
+   "Enable tests and functionality that depend on a DAKOTA installation." 
+   OFF
+)
 
 # Trilinos configuration
 set (TRILINOS_DIR CACHE PATH "Path to Trilinos directory")

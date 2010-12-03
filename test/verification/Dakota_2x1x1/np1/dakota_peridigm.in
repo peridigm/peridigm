@@ -1,0 +1,30 @@
+#  DAKOTA INPUT FILE - dakota_peridigm.in
+
+method,
+	nl2sol
+          convergence_tolerance = -1. # ==> default value (fairly tight)
+        regression_diagnostic covariance=3
+
+variables,
+	continuous_design = 1
+#	True value for Bulk Modulus is 130.0e9
+#	Make initial guess away from that and let Dakota find it
+	cdv_initial_point	130.0e8
+	cdv_descriptor		'BulkModulus'
+
+interface,
+	system
+#	  asynchronous
+	  analysis_driver = 'simulator_script'
+	  parameters_file = 'params.in'
+	  results_file    = 'results.out'
+	  work_directory directory_tag
+	  template_directory = 'templatedir'
+# uncomment to leave params.in and results.out files in work_dir subdirectories
+# 	  named 'workdir' file_save  directory_save
+	  aprepro
+	  
+responses,
+	num_least_squares_terms = 1
+ 	numerical_gradients
+	no_hessians
