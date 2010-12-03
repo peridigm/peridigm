@@ -145,6 +145,9 @@ namespace PeridigmNS {
     //! Global vector for displacement
     Teuchos::RCP<Epetra_Vector> u;
 
+    //! Global vector for current position
+    Teuchos::RCP<Epetra_Vector> y;
+
     //! Global vector for velocity
     Teuchos::RCP<Epetra_Vector> v;
 
