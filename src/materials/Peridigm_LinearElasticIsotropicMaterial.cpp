@@ -55,9 +55,7 @@ PeridigmNS::LinearElasticIsotropicMaterial::LinearElasticIsotropicMaterial(const
   m_variableSpecs->push_back(Field_NS::WEIGHTED_VOLUME);
   m_variableSpecs->push_back(Field_NS::DILATATION);
   m_variableSpecs->push_back(Field_NS::COORD3D);
-  m_variableSpecs->push_back(Field_NS::DISPL3D);
-  m_variableSpecs->push_back(Field_NS::VELOC3D);
-  m_variableSpecs->push_back(Field_NS::ACCEL3D);
+  m_variableSpecs->push_back(Field_NS::CURCOORD3D);
   m_variableSpecs->push_back(Field_NS::FORCE3D);
 
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > damageModelVariableSpecs;

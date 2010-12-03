@@ -87,16 +87,9 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   dataManager->setVector2DMap(Teuchos::null);
   dataManager->setVector3DMap(threeDimensionalOverlapMap);
   dataManager->setBondMap(bondMap);
-  // Create a master list of variable specs
+  // Create a master list of variable specs containing
+  // the variable specs requested by each material
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
-  // Add the default specs
-  variableSpecs->push_back(Field_NS::VOLUME);
-  variableSpecs->push_back(Field_NS::COORD3D);
-  variableSpecs->push_back(Field_NS::DISPL3D);
-  variableSpecs->push_back(Field_NS::VELOC3D);
-  variableSpecs->push_back(Field_NS::ACCEL3D);
-  variableSpecs->push_back(Field_NS::FORCE3D);
-  // Add the variable specs requested by each material
   for(unsigned int i=0; i<(*materials).size() ; ++i){
     Teuchos::RCP< std::vector<Field_NS::FieldSpec> > matVariableSpecs = (*materials)[i]->VariableSpecs();
     for(unsigned int j=0 ; j<(*matVariableSpecs).size() ; ++j)
@@ -218,12 +211,13 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
   for(unsigned int i=0; i<peridigmDisc->getNumBonds(); i++)
     bondData[i] = 0.0;
 
-  // Create x, u, y, v, and force vectors
-  x = peridigmDisc->getInitialX();
-  u = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
-  v = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
-  a =  Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
-  force =  Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
+  // Create x, u, y, v, a, and force vectors
+  x = peridigmDisc->getInitialX();                                 // initial positions
+  u = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));       // displacement
+  y = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));       // current positions
+  v = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));       // velocities
+  a =  Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));      // accelerations
+  force =  Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));  // force
   uOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
   vOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
   forceOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
