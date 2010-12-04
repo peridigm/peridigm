@@ -195,10 +195,6 @@ PeridigmNS::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<const Epetra_Comm>
   Epetra_Import oneDimensionalMapToOneDimensionalOverlapMapImporter(*oneDimensionalOverlapMap, *oneDimensionalMap);
   dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->Import(*(disc->getCellVolume()), oneDimensionalMapToOneDimensionalOverlapMapImporter, Insert);
 
-  // containers for constitutive data
-  vectorConstitutiveDataOverlap = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalOverlapMap, vectorConstitutiveDataSize));
-  vectorConstitutiveDataOverlap->PutScalar(0.0);
-
   // container for accelerations
   forceOverlap = Teuchos::rcp(new Epetra_Vector(*secondaryEntryOverlapMap));  
 
@@ -229,7 +225,6 @@ PeridigmNS::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<const Epetra_Comm>
                          neighborhoodData->OwnedIDs(),
                          neighborhoodData->NeighborhoodList(),
                          bondData,
-                         *vectorConstitutiveDataOverlap,
                          *forceOverlap);
   }
 
@@ -448,7 +443,6 @@ PeridigmNS::ModelEvaluator::computeGlobalResidual(Teuchos::RCP<const Epetra_Vect
   workset.neighborhoodData = neighborhoodData;
   workset.contactNeighborhoodData = contactNeighborhoodData;
   workset.bondData = Teuchos::RCP<double>(bondData, false);
-  workset.vectorConstitutiveDataOverlap = vectorConstitutiveDataOverlap;
   workset.materials = materials;
   workset.contactModels = contactModels;
   workset.myPID = myPID;

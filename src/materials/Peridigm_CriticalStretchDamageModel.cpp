@@ -38,8 +38,7 @@
 using namespace std;
 
 PeridigmNS::CriticalStretchDamageModel::CriticalStretchDamageModel(const Teuchos::ParameterList& params)
-  : DamageModel(params), m_numScalarConstitutiveData(1), m_numVectorConstitutiveData(0),
-    m_numBondConstitutiveData(0), m_yIndex(0)
+  : DamageModel(params)
 {
   m_criticalStretch = params.get<double>("Critical Stretch");
 
@@ -61,7 +60,6 @@ PeridigmNS::CriticalStretchDamageModel::initialize(const Epetra_Vector& u,
                                                    const int* neighborhoodList,
                                                    double* bondState,
                                                    PeridigmNS::DataManager& dataManager,
-                                                   Epetra_MultiVector& vectorConstitutiveData,
                                                    Epetra_Vector& force) const
 {
 }
@@ -75,7 +73,6 @@ PeridigmNS::CriticalStretchDamageModel::computeDamage(const Epetra_Vector& u,
                                                       const int* neighborhoodList,
                                                       double* bondState,
                                                       PeridigmNS::DataManager& dataManager,
-                                                      Epetra_MultiVector& vectorConstitutiveData,
                                                       Epetra_Vector& force) const
 {
   int vectorLength = dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->MyLength();

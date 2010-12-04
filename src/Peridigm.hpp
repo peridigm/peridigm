@@ -169,10 +169,6 @@ namespace PeridigmNS {
     //! Force due to contact (vector includes ghosted dof)
     Teuchos::RCP<Epetra_Vector> contactForceOverlap;
 
-    //! Vector constitutive data (vector includes ghosted dof)
-    int vectorConstitutiveDataSize;
-    Teuchos::RCP<Epetra_MultiVector> vectorConstitutiveDataOverlap;
-
     //! List of neighbors for all locally-owned nodes
     Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData;
 

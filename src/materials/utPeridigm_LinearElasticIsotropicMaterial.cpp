@@ -76,7 +76,6 @@ void testTwoPts()
   int* neighborhoodList;
   double* bondState;
   // \todo check field specs
-  Epetra_MultiVector vectorConstitutiveData(unknownMap, 1);
   Epetra_Vector force(unknownMap);
 
   // create the material manager
@@ -101,7 +100,6 @@ void testTwoPts()
   for(int i=0; i<cellVolume.MyLength(); ++i){
 	cellVolume[i] = 1.0;
   }
-  vectorConstitutiveData.PutScalar(0.0);
 
   numOwnedPoints = 2;
   ownedIDs = new int[numOwnedPoints];
@@ -132,7 +130,6 @@ void testTwoPts()
                  neighborhoodList,
                  bondState,
                  dataManager,
-                 vectorConstitutiveData,
                  force);
 
   mat.updateConstitutiveData(u, 
@@ -143,7 +140,6 @@ void testTwoPts()
 							 neighborhoodList,
 							 bondState,
                              dataManager,
-							 vectorConstitutiveData,
 							 force);
 
   double currentPositionX1 = y[0];
@@ -177,7 +173,6 @@ void testTwoPts()
 				   neighborhoodList,
 				   bondState,
                    dataManager,
-				   vectorConstitutiveData,
 				   force);
 
   BOOST_CHECK_CLOSE(force[0], 2.34e+12, 1.0e-2);
@@ -213,7 +208,6 @@ void testEightPts()
   int* ownedIDs;
   int* neighborhoodList;
   double* bondState;
-  Epetra_MultiVector vectorConstitutiveData(unknownMap, 1); // this will go!
   Epetra_Vector force(unknownMap);
 
   // create the material manager
@@ -272,9 +266,6 @@ void testEightPts()
 	cellVolume[i] = 1.0;
   }
 
-  // zero out constitutive data
-  vectorConstitutiveData.PutScalar(0.0);
-
   // all cellss are neighbors of each other
   numOwnedPoints = 8;
   ownedIDs = new int[numOwnedPoints];
@@ -317,7 +308,6 @@ void testEightPts()
                  neighborhoodList,
                  bondState,
                  dataManager,
-                 vectorConstitutiveData,
                  force);
 
   mat.updateConstitutiveData(u, 
@@ -328,7 +318,6 @@ void testEightPts()
 							 neighborhoodList,
 							 bondState,
                              dataManager,
-							 vectorConstitutiveData,
 							 force);
 
   double currentPosition;
@@ -404,7 +393,6 @@ void testEightPts()
 				   neighborhoodList,
 				   bondState,
                    dataManager,
-				   vectorConstitutiveData,
 				   force);
 
   // all the cells experience the same force magnitude, but
@@ -526,7 +514,6 @@ void testThreePts()
   int* ownedIDs;
   int* neighborhoodList;
   double* bondState;
-  Epetra_MultiVector vectorConstitutiveData(unknownMap, 1); // this will go!
   Epetra_Vector force(unknownMap);
 
   // create the material manager
@@ -564,9 +551,6 @@ void testThreePts()
   cellVolume[0] = 0.9;
   cellVolume[1] = 1.1;
   cellVolume[2] = 0.8;
-
-  // zero out constitutive data
-  vectorConstitutiveData.PutScalar(0.0);
 
   // all cells are neighbors of each other
   numOwnedPoints = 3;
@@ -610,7 +594,6 @@ void testThreePts()
                  neighborhoodList,
                  bondState,
                  dataManager,
-                 vectorConstitutiveData,
                  force);
 
   mat.updateConstitutiveData(u, 
@@ -621,7 +604,6 @@ void testThreePts()
 							 neighborhoodList,
 							 bondState,
                              dataManager,
-							 vectorConstitutiveData,
 							 force);
 
   double currentPosition;
@@ -669,7 +651,6 @@ void testThreePts()
 				   neighborhoodList,
 				   bondState,
                    dataManager,
-				   vectorConstitutiveData,
 				   force);
 
   // check the net forces against hand calculations

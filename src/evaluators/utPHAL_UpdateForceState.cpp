@@ -113,8 +113,6 @@ void testTwoPts()
 
   // \todo check field specs
 
-  Epetra_MultiVector vectorConstitutiveDataOverlap(threeDimensionalOverlapMap, 1); // this will go!
-
   // create the material manager
   PeridigmNS::DataManager dataManager;
   dataManager.setScalarMap(Teuchos::rcp(&oneDimensionalOverlapMap, false));
@@ -135,7 +133,6 @@ void testTwoPts()
   vOverlap[0] = 0.0; vOverlap[1] = 0.0; vOverlap[2] = 0.0;
   vOverlap[3] = 0.5; vOverlap[4] = 0.0; vOverlap[5] = 0.0;
   dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->PutScalar(1.0);
-  vectorConstitutiveDataOverlap.PutScalar(0.0);
   Epetra_Vector& weightedVolume = *dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE);
   Epetra_Vector& dilatation = *dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1);
   weightedVolume[0] = 1.0;
@@ -167,7 +164,6 @@ void testTwoPts()
   workset.neighborhoodData = Teuchos::RCP<PeridigmNS::NeighborhoodData>(&neighborhoodData, false);
   workset.bondData = Teuchos::RCP<double>(bondData, false);
   workset.dataManager = Teuchos::RCP<PeridigmNS::DataManager>(&dataManager, false);
-  workset.vectorConstitutiveDataOverlap = Teuchos::RCP<Epetra_MultiVector>(&vectorConstitutiveDataOverlap, false);
   workset.materials = Teuchos::rcp(new std::vector< Teuchos::RCP<const PeridigmNS::Material> >());
   workset.materials->push_back(Teuchos::rcp(&mat, false));
   workset.myPID = comm.MyPID();
