@@ -98,12 +98,15 @@ void testTwoPts()
   dataManager.allocateData(mat.VariableSpecs());
 
   Epetra_Vector& x = *dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE);
+  Epetra_Vector& y = *dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1);
   Epetra_Vector& cellVolume = *dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE);
 
   x[0] = 0.0; x[1] = 0.0; x[2] = 0.0;
   x[3] = 1.0; x[4] = 0.0; x[5] = 0.0;
   u[0] = 0.0; u[1] = 0.0; u[2] = 0.0;
   u[3] = 0.0; u[4] = 0.0; u[5] = 0.0;
+  y[0] = 0.0; y[1] = 0.0; y[2] = 0.0;
+  y[3] = 2.0; y[4] = 0.0; y[5] = 0.0;
   v[0] = 0.0; v[1] = 0.0; v[2] = 0.0;
   v[3] = 1.0; v[4] = 0.0; v[5] = 0.0;
   for(int i=0; i<cellVolume.MyLength(); ++i){
@@ -158,17 +161,17 @@ void testTwoPts()
 							 vectorConstitutiveData,
 							 force);
 
-  double currentPositionX1 = vectorConstitutiveData[0][0];
+  double currentPositionX1 = y[0];
   BOOST_CHECK_SMALL(currentPositionX1, 1.0e-14);
-  double currentPositionY1 = vectorConstitutiveData[0][1];
+  double currentPositionY1 = y[1];
   BOOST_CHECK_SMALL(currentPositionY1, 1.0e-14);
-  double currentPositionZ1 = vectorConstitutiveData[0][2];
+  double currentPositionZ1 = y[2];
   BOOST_CHECK_SMALL(currentPositionZ1, 1.0e-14);
-  double currentPositionX2 = vectorConstitutiveData[0][3];
+  double currentPositionX2 = y[3];
   BOOST_CHECK_CLOSE(currentPositionX2, 2.0, 1.0e-12);
-  double currentPositionY2 = vectorConstitutiveData[0][4];
+  double currentPositionY2 = y[4];
   BOOST_CHECK_SMALL(currentPositionY2, 1.0e-14);
-  double currentPositionZ2 = vectorConstitutiveData[0][5];
+  double currentPositionZ2 = y[5];
   BOOST_CHECK_SMALL(currentPositionZ2, 1.0e-14);
   Epetra_Vector& weightedVolume = *dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE);
   BOOST_CHECK_CLOSE(weightedVolume[0], 1.0, 1.0e-15);
@@ -240,6 +243,7 @@ void testEightPts()
   dataManager.allocateData(mat.VariableSpecs());
 
   Epetra_Vector& x = *dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE);
+  Epetra_Vector& y = *dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1);
   Epetra_Vector& cellVolume = *dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE);
 
   // initial positions
@@ -261,6 +265,16 @@ void testEightPts()
   u[15] = 0.0; u[16] = 0.0; u[17] = -0.02;
   u[18] = 0.0; u[19] = 0.0; u[20] = 0.0;
   u[21] = 0.0; u[22] = 0.0; u[23] = -0.02;
+
+  // current positions
+  y[0]  = 0.0; y[1]  = 0.0; y[2]  = 0.0;
+  y[3]  = 0.0; y[4]  = 0.0; y[5]  = 0.98;
+  y[6]  = 0.0; y[7]  = 1.0; y[8]  = 0.0;
+  y[9]  = 0.0; y[10] = 1.0; y[11] = 0.98;
+  y[12] = 1.0; y[13] = 0.0; y[14] = 0.0;
+  y[15] = 1.0; y[16] = 0.0; y[17] = 0.98;
+  y[18] = 1.0; y[19] = 1.0; y[20] = 0.0;
+  y[21] = 1.0; y[22] = 1.0; y[23] = 0.98;
 
   // velocities (not used by material model)
   v[0]  = 0.0; v[1]  = 0.0; v[2]  = 0.0;
@@ -341,53 +355,53 @@ void testEightPts()
 							 force);
 
   double currentPosition;
-  currentPosition = vectorConstitutiveData[0][0];
+  currentPosition = y[0];
   BOOST_CHECK_SMALL(currentPosition, 1.0e-14);
-  currentPosition = vectorConstitutiveData[0][1];
+  currentPosition = y[1];
   BOOST_CHECK_SMALL(currentPosition, 1.0e-14);
-  currentPosition = vectorConstitutiveData[0][2];
+  currentPosition = y[2];
   BOOST_CHECK_SMALL(currentPosition, 1.0e-14);
-  currentPosition = vectorConstitutiveData[0][3];
+  currentPosition = y[3];
   BOOST_CHECK_SMALL(currentPosition, 1.0e-14);
-  currentPosition = vectorConstitutiveData[0][4];
+  currentPosition = y[4];
   BOOST_CHECK_SMALL(currentPosition, 1.0e-14);
-  currentPosition = vectorConstitutiveData[0][5];
+  currentPosition = y[5];
   BOOST_CHECK_CLOSE(currentPosition, 0.98, 1.0e-15);
-  currentPosition = vectorConstitutiveData[0][6];
+  currentPosition = y[6];
   BOOST_CHECK_SMALL(currentPosition, 1.0e-14);
-  currentPosition = vectorConstitutiveData[0][7];
+  currentPosition = y[7];
   BOOST_CHECK_CLOSE(currentPosition, 1.0, 1.0e-15);
-  currentPosition = vectorConstitutiveData[0][8];
+  currentPosition = y[8];
   BOOST_CHECK_SMALL(currentPosition, 1.0e-14);
-  currentPosition = vectorConstitutiveData[0][9];
+  currentPosition = y[9];
   BOOST_CHECK_SMALL(currentPosition, 1.0e-14);
-  currentPosition = vectorConstitutiveData[0][10];
+  currentPosition = y[10];
   BOOST_CHECK_CLOSE(currentPosition, 1.0, 1.0e-15);
-  currentPosition = vectorConstitutiveData[0][11];
+  currentPosition = y[11];
   BOOST_CHECK_CLOSE(currentPosition, 0.98, 1.0e-15);
-  currentPosition = vectorConstitutiveData[0][12];
+  currentPosition = y[12];
   BOOST_CHECK_CLOSE(currentPosition, 1.0, 1.0e-15);
-  currentPosition = vectorConstitutiveData[0][13];
+  currentPosition = y[13];
   BOOST_CHECK_SMALL(currentPosition, 1.0e-14);
-  currentPosition = vectorConstitutiveData[0][14];
+  currentPosition = y[14];
   BOOST_CHECK_SMALL(currentPosition, 1.0e-14);
-  currentPosition = vectorConstitutiveData[0][15];
+  currentPosition = y[15];
   BOOST_CHECK_CLOSE(currentPosition, 1.0, 1.0e-15);
-  currentPosition = vectorConstitutiveData[0][16];
+  currentPosition = y[16];
   BOOST_CHECK_SMALL(currentPosition, 1.0e-14);
-  currentPosition = vectorConstitutiveData[0][17];
+  currentPosition = y[17];
   BOOST_CHECK_CLOSE(currentPosition, 0.98, 1.0e-15);
-  currentPosition = vectorConstitutiveData[0][18];
+  currentPosition = y[18];
   BOOST_CHECK_CLOSE(currentPosition, 1.0, 1.0e-15);
-  currentPosition = vectorConstitutiveData[0][19];
+  currentPosition = y[19];
   BOOST_CHECK_CLOSE(currentPosition, 1.0, 1.0e-15);
-  currentPosition = vectorConstitutiveData[0][20];
+  currentPosition = y[20];
   BOOST_CHECK_SMALL(currentPosition, 1.0e-14);
-  currentPosition = vectorConstitutiveData[0][21];
+  currentPosition = y[21];
   BOOST_CHECK_CLOSE(currentPosition, 1.0, 1.0e-15);
-  currentPosition = vectorConstitutiveData[0][22];
+  currentPosition = y[22];
   BOOST_CHECK_CLOSE(currentPosition, 1.0, 1.0e-15);
-  currentPosition = vectorConstitutiveData[0][23];
+  currentPosition = y[23];
   BOOST_CHECK_CLOSE(currentPosition, 0.98, 1.0e-15);
 
   // the weighted volumes and dilatations are the
@@ -550,6 +564,7 @@ void testThreePts()
   dataManager.allocateData(mat.VariableSpecs());
 
   Epetra_Vector& x = *dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE);
+  Epetra_Vector& y = *dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1);
   Epetra_Vector& cellVolume = *dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE);
 
   // initial positions
@@ -561,6 +576,11 @@ void testThreePts()
   u[0] = 0.1; u[1] = -0.2; u[2] =  0.0;
   u[3] = 0.1; u[4] = -0.2; u[5] = -0.5;
   u[6] = 0.1; u[7] =  0.2; u[8] = -0.2;
+
+  // current positions
+  y[0] = 1.1;  y[1] = 2.4;  y[2] = -0.1;
+  y[3] = -1.9; y[4] = 0.7;  y[5] = -0.8;
+  y[6] = 0.1;  y[7] = 0.21; y[8] =  1.6;
 
   // velocities (not used by material model)
   v[0]  = 0.0; v[1]  = 0.0; v[2]  = 0.0;
@@ -636,23 +656,23 @@ void testThreePts()
 							 force);
 
   double currentPosition;
-  currentPosition = vectorConstitutiveData[0][0];
+  currentPosition = y[0];
   BOOST_CHECK_CLOSE(currentPosition, 1.2, 1.0e-13);
-  currentPosition = vectorConstitutiveData[0][1];
+  currentPosition = y[1];
   BOOST_CHECK_CLOSE(currentPosition, 2.4, 1.0e-13);
-  currentPosition = vectorConstitutiveData[0][2];
+  currentPosition = y[2];
   BOOST_CHECK_CLOSE(currentPosition, -0.1, 1.0e-13);
-  currentPosition = vectorConstitutiveData[0][3];
+  currentPosition = y[3];
   BOOST_CHECK_CLOSE(currentPosition, -1.9, 1.0e-13);
-  currentPosition = vectorConstitutiveData[0][4];
+  currentPosition = y[4];
   BOOST_CHECK_CLOSE(currentPosition, 0.7, 1.0e-13);
-  currentPosition = vectorConstitutiveData[0][5];
+  currentPosition = y[5];
   BOOST_CHECK_CLOSE(currentPosition, -0.8, 1.0e-13);
-  currentPosition = vectorConstitutiveData[0][6];
+  currentPosition = y[6];
   BOOST_CHECK_CLOSE(currentPosition, 0.1, 1.0e-13);
-  currentPosition = vectorConstitutiveData[0][7];
+  currentPosition = y[7];
   BOOST_CHECK_CLOSE(currentPosition, 0.21, 1.0e-13);
-  currentPosition = vectorConstitutiveData[0][8];
+  currentPosition = y[8];
   BOOST_CHECK_CLOSE(currentPosition, 1.6, 1.0e-13);
 
   // check the weighted volume and dilatation

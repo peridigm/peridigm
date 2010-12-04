@@ -135,15 +135,13 @@ PeridigmNS::LinearElasticIsotropicMaterial::updateConstitutiveData(const Epetra_
   int vectorLength = dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->MyLength();
 
   // Extract pointers to the underlying data in the constitutiveData array
-  double *x, *cellVolume, *weightedVolume, *dilatation, *damage;
+  double *x, *y, *cellVolume, *weightedVolume, *dilatation, *damage;
   dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&x);
+  dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&y);
   dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&cellVolume);
   dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
   dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dilatation);
   dataManager.getData(Field_NS::DAMAGE, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&damage);
-
-  std::pair<int,double*> vectorView = m_decompStates.extractStrideView(vectorConstitutiveData);
-  double *y = m_decompStates.extractCurrentPositionView(vectorView);
 
   // Update the geometry
   PdMaterialUtilities::updateGeometry(x,u.Values(),v.Values(),y,vectorLength,dt);
@@ -196,14 +194,12 @@ PeridigmNS::LinearElasticIsotropicMaterial::computeForce(const Epetra_Vector& u,
                                                          Epetra_Vector& force) const
 {
   // Extract pointers to the underlying data in the constitutiveData array
-  double *x, *cellVolume, *weightedVolume, *dilatation;
+  double *x, *y, *cellVolume, *weightedVolume, *dilatation;
   dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&x);
+  dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&y);
   dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&cellVolume);
   dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
   dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dilatation);
-
-  std::pair<int,double*> vectorView = m_decompStates.extractStrideView(vectorConstitutiveData);
-  double *y = m_decompStates.extractCurrentPositionView(vectorView);
 
   // Compute the force on each particle that results from interactions
   // with locally-owned nodes

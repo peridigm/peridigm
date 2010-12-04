@@ -127,8 +127,11 @@ void testTwoPts()
   // two-point discretization
   double dt = 1.0;
   Epetra_Vector& x = *dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE);
+  Epetra_Vector& y = *dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1);
   x[0] = 0.0; x[1] = 0.0; x[2] = 0.0;
   x[3] = 1.0; x[4] = 0.0; x[5] = 0.0;
+  y[0] = 0.0; y[1] = 0.0; y[2] = 0.0;
+  y[3] = 2.0; y[4] = 0.0; y[5] = 0.0;
   uOverlap[0] = 0.0; uOverlap[1] = 0.0; uOverlap[2] = 0.0;
   uOverlap[3] = 0.5; uOverlap[4] = 0.0; uOverlap[5] = 0.0;
   vOverlap[0] = 0.0; vOverlap[1] = 0.0; vOverlap[2] = 0.0;
@@ -188,17 +191,17 @@ void testTwoPts()
   evaluator.evaluateFields(workset);
 
   // assert the current positions
-  double currentPositionX = vectorConstitutiveDataOverlap[0][0];
+  double currentPositionX = y[0];
   BOOST_CHECK_CLOSE(currentPositionX, 0.0, 1.0e-15);
-  double currentPositionY = vectorConstitutiveDataOverlap[0][1];
+  double currentPositionY = y[1];
   BOOST_CHECK_CLOSE(currentPositionY, 0.0, 1.0e-15);
-  double currentPositionZ = vectorConstitutiveDataOverlap[0][2];
+  double currentPositionZ = y[2];
   BOOST_CHECK_CLOSE(currentPositionZ, 0.0, 1.0e-15);
-  currentPositionX = vectorConstitutiveDataOverlap[0][3];
+  currentPositionX = y[3];
   BOOST_CHECK_CLOSE(currentPositionX, 2.0, 1.0e-15);
-  currentPositionY = vectorConstitutiveDataOverlap[0][4];
+  currentPositionY = y[4];
   BOOST_CHECK_CLOSE(currentPositionY, 0.0, 1.0e-15);
-  currentPositionZ = vectorConstitutiveDataOverlap[0][5];
+  currentPositionZ = y[5];
   BOOST_CHECK_CLOSE(currentPositionZ, 0.0, 1.0e-15);
 
   // assert the weighted volumes

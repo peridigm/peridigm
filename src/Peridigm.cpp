@@ -101,6 +101,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   // Fill the dataManager with data from the discretization
   dataManager->getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->Import(*(peridigmDisc->getCellVolume()), *oneDimensionalMapToOneDimensionalOverlapMapImporter, Insert);
   dataManager->getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  dataManager->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
 
   // apply initial velocities
   applyInitialVelocities();
@@ -445,10 +446,11 @@ void PeridigmNS::Peridigm::execute() {
   double t_final   = verletPL->get("Final Time", 1.0);
   int nsteps = (int)floor((t_final-t_initial)/dt);
   // Pointer index into sub-vectors for use with BLAS
-  double *aptr,*vptr,*uptr;
-  a->ExtractView( &aptr );
+  double *uptr, *yptr, *vptr, *aptr;
   u->ExtractView( &uptr );
+  y->ExtractView( &yptr );
   v->ExtractView( &vptr );
+  a->ExtractView( &aptr );
   int length = a->MyLength();
 
   bool rebal = false;
@@ -468,6 +470,7 @@ void PeridigmNS::Peridigm::execute() {
     // Forward comm particle positions and velocities
     uOverlap->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
     vOverlap->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+    dataManager->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->Import(*y, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
 
     // Update forces based on new positions
     modelEvaluator->evalModel(workset);
@@ -485,6 +488,7 @@ void PeridigmNS::Peridigm::execute() {
     // U^{n+1}   = U^{n} + (dt)*V^{n+1/2}
     //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
     blas.AXPY(length, dt, vptr, uptr, 1, 1);
+    blas.AXPY(length, dt, vptr, yptr, 1, 1);
 
     // V^{n+1}   = V^{n+1/2} + (dt/2)*A^{n+1}
     //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const

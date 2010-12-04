@@ -79,13 +79,9 @@ PeridigmNS::CriticalStretchDamageModel::computeDamage(const Epetra_Vector& u,
                                                       Epetra_Vector& force) const
 {
   int vectorLength = dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->MyLength();
-  double *x;
+  double *x, *y;
   dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&x);
-
-  double* vectorConstitutiveDataView;
-  int vectorConstitutiveDataStride;
-  vectorConstitutiveData.ExtractView(&vectorConstitutiveDataView, &vectorConstitutiveDataStride);
-  double* y = vectorConstitutiveDataView + vectorConstitutiveDataStride*m_yIndex;
+  dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&y);
 
   // Update the bondState
   // Break bonds if the extension is greater than the critical extension
