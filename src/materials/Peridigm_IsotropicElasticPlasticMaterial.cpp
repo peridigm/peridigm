@@ -73,11 +73,9 @@ void PeridigmNS::IsotropicElasticPlasticMaterial::initialize(const Epetra_Vector
                                                              const int* neighborhoodList,
                                                              double* bondState,
                                                              PeridigmNS::DataManager& dataManager,
-                                                             Epetra_MultiVector& vectorConstitutiveData,
                                                              Epetra_Vector& force) const
 {
 	  // Initialize data fields
-	  vectorConstitutiveData.PutScalar(0.0);
 	  force.PutScalar(0.0);
 	  int neighborhoodListIndex = 0;
 	  int bondStateIndex = 0;
@@ -107,7 +105,6 @@ PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const Epetra
                                                                     const int* neighborhoodList,
                                                                     double* bondState,
                                                                     PeridigmNS::DataManager& dataManager,
-                                                                    Epetra_MultiVector& vectorConstitutiveData,
                                                                     Epetra_Vector& force) const
 {
   int vectorLength = dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->MyLength();
@@ -134,7 +131,6 @@ PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const Epetra
                                      neighborhoodList,
                                      bondState,
                                      dataManager,
-                                     vectorConstitutiveData,
                                      force);
 	}
 
@@ -169,7 +165,6 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const Epetra_Vector& u
                                                           const int* neighborhoodList,
                                                           double* bondState,
                                                           PeridigmNS::DataManager& dataManager,
-                                                          Epetra_MultiVector& vectorConstitutiveData,
                                                           Epetra_Vector& force) const
 {
 

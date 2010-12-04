@@ -89,7 +89,6 @@ void EvaluateForce<EvalT, Traits>::evaluateFields(typename Traits::EvalData cell
   // \todo expand bondData to allow for an arbitrary number of bond data per bond
   double* bondData = cellData.bondData.get();
 
-  Epetra_MultiVector& vectorConstitutiveData = *cellData.vectorConstitutiveDataOverlap;
   Epetra_Vector& force = *cellData.forceOverlap;
   force.PutScalar(0.0);
 
@@ -104,7 +103,6 @@ void EvaluateForce<EvalT, Traits>::evaluateFields(typename Traits::EvalData cell
 						 neighborhoodList,
 						 bondData,
                          dataManager,
-						 vectorConstitutiveData,
 						 force);
 }
 

@@ -60,8 +60,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   : bondData(0),
     computeContact(false),
     contactSearchRadius(0.0),
-    contactSearchFrequency(0),
-    vectorConstitutiveDataSize(1) // so initialize multivector sizes to one
+    contactSearchFrequency(0)
 {
 
   peridigmComm = comm;
@@ -149,9 +148,6 @@ void PeridigmNS::Peridigm::instantiateMaterials() {
       else if(name == "Elastic Plastic")
         material = Teuchos::rcp(new IsotropicElasticPlasticMaterial(matParams) );
       materials->push_back( Teuchos::rcp_implicit_cast<Material>(material) );
-      // Allocate enough space for the max number of state variables
-//       if(material->NumVectorConstitutiveVariables() > vectorConstitutiveDataSize)
-//         vectorConstitutiveDataSize = material->NumVectorConstitutiveVariables();
     }
     else {
       string invalidMaterial("Unrecognized material model: ");
@@ -178,7 +174,6 @@ void PeridigmNS::Peridigm::initializeMaterials() {
                          neighborhoodData->NeighborhoodList(),
                          bondData,
                          *dataManager,
-                         *vectorConstitutiveDataOverlap,
                          *forceOverlap);
   }
 }
@@ -226,10 +221,6 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
   // Create the importers
   oneDimensionalMapToOneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*oneDimensionalOverlapMap, *oneDimensionalMap));
   threeDimensionalMapToThreeDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*threeDimensionalOverlapMap, *threeDimensionalMap));
-
-  // containers for constitutive data
-  vectorConstitutiveDataOverlap = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalOverlapMap, vectorConstitutiveDataSize));
-  vectorConstitutiveDataOverlap->PutScalar(0.0);
 
   // get the neighborlist from the discretization
   neighborhoodData = peridigmDisc->getNeighborhoodData();
@@ -365,7 +356,6 @@ void PeridigmNS::Peridigm::initializeWorkset() {
   workset->contactNeighborhoodData = contactNeighborhoodData;
   workset->dataManager = dataManager;
   workset->bondData = Teuchos::RCP<double>(bondData, false);
-  workset->vectorConstitutiveDataOverlap = vectorConstitutiveDataOverlap;
   workset->materials = materials;
   workset->contactModels = contactModels;
   workset->myPID = -1;

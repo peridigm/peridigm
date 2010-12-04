@@ -59,30 +59,6 @@ namespace PeridigmNS {
     //! Returns a vector of field specs that specify the variables associated with the damage model
     Teuchos::RCP< std::vector<Field_NS::FieldSpec> > VariableSpecs() const { return m_variableSpecs; }
 
-	//! Returns the number of scalar constitutive variables used by the material model.
-	virtual int NumScalarConstitutiveVariables() const { return m_numScalarConstitutiveData; }
-
-	//! Returns the number of vector constitutive variables used by the material model.
-	virtual int NumVectorConstitutiveVariables() const { return m_numVectorConstitutiveData; }
-
-	//! Returns the number of scalar constitutive bond variables used by the material model.
-	virtual int NumBondConstitutiveVariables() const { return m_numBondConstitutiveData; }
-
-	//! Returns the name of the scalar constitutive variable at position pos.
-	virtual const string & ScalarConstitutiveVariableName(int pos) const {
-      throw std::range_error("Peridigm::Peridigm_CriticalStretchDamageModel::ScalarConstitutiveVariableName(invalid position).");
-    };
-
-	//! Returns the name of the scalar constitutive variable at position pos.
-	virtual const string & VectorConstitutiveVariableName(int pos) const {
-      throw std::range_error("Peridigm::Peridigm_CriticalStretchDamageModel::VectorConstitutiveVariableName(invalid position).");
-    }
-
-	//! Returns the name of the bond constitutive variable at position pos.
-	virtual const string & BondConstitutiveVariableName(int pos) const {
-      throw std::range_error("Peridigm::Peridigm_CriticalStretchDamageModel::BondConstitutiveVariableName(invalid position).");
-    }
-
 	//! Initialize the damage model.
 	virtual void
 	initialize(const Epetra_Vector& u,
@@ -93,7 +69,6 @@ namespace PeridigmNS {
                const int* neighborhoodList,
                double* bondState,
                PeridigmNS::DataManager& dataManager,
-               Epetra_MultiVector& vectorConstitutiveData,
                Epetra_Vector& force) const ;
 
 	//! Evaluate the damage
@@ -106,7 +81,6 @@ namespace PeridigmNS {
                   const int* neighborhoodList,
                   double* bondState,
                   PeridigmNS::DataManager& dataManager,
-                  Epetra_MultiVector& vectorConstitutiveData,
                   Epetra_Vector& force) const ;
 
   protected:
@@ -121,11 +95,6 @@ namespace PeridigmNS {
     Teuchos::RCP< std::vector<Field_NS::FieldSpec> > m_variableSpecs;
 
     double m_criticalStretch;
-
-    int m_numScalarConstitutiveData;
-    int m_numVectorConstitutiveData;
-    int m_numBondConstitutiveData;
-    int m_yIndex;
   };
 
 }

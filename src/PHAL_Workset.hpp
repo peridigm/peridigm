@@ -62,7 +62,6 @@ struct Workset {
 
   // \todo Remove these data containers and replace with dataManger
   Teuchos::RCP<double> bondData;
-  Teuchos::RCP<Epetra_MultiVector> vectorConstitutiveDataOverlap;
 
   Teuchos::RCP<const PeridigmNS::NeighborhoodData> contactNeighborhoodData;
 
