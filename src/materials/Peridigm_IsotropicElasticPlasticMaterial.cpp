@@ -14,14 +14,8 @@
 PeridigmNS::IsotropicElasticPlasticMaterial::IsotropicElasticPlasticMaterial(const Teuchos::ParameterList & params)
 :
 Material(params),
-m_decompStates(),
 m_damageModel()
 {
-
-	m_decompStates.addScalarStateBondVariable("scalarPlasticExtensionState_N");
-	m_decompStates.addScalarStateBondVariable("scalarPlasticExtensionState_NP1");
-	m_decompStates.addScalarStateVariable("Lambda");
-
 	//! \todo Add meaningful asserts on material properties.
 	m_bulkModulus = params.get<double>("Bulk Modulus");
 	m_shearModulus = params.get<double>("Shear Modulus");

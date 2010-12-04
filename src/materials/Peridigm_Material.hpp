@@ -64,24 +64,6 @@ namespace PeridigmNS {
     //! Returns a vector of field specs that specify the variables associated with the material
     virtual Teuchos::RCP< std::vector<Field_NS::FieldSpec> > VariableSpecs() const = 0;
 
-	//! Returns the number of scalar constitutive variables used by the material model.
-	virtual int NumScalarConstitutiveVariables() const = 0;
-
-	//! Returns the number of vector constitutive variables used by the material model.
-	virtual int NumVectorConstitutiveVariables() const = 0;
-
-	//! Returns the number of scalar constitutive bond variables used by the material model.
-	virtual int NumBondConstitutiveVariables() const = 0;
-
-	//! Returns the name of the scalar constitutive variable at position pos.
-	virtual const string & ScalarConstitutiveVariableName(int pos) const = 0;
-
-	//! Returns the name of the scalar constitutive variable at position pos.
-	virtual const string & VectorConstitutiveVariableName(int pos) const = 0;
-
-	//! Returns the name of the bond constitutive variable at position pos.
-	virtual const string & BondConstitutiveVariableName(int pos) const = 0;
-
 	//! Initialize the material model.
 	virtual void
 	initialize(const Epetra_Vector& u,

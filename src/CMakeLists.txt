@@ -18,7 +18,6 @@ add_executable (${EXECUTABLE_NAME}
 #        Peridigm_VerletObserver.cpp
         ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
         ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
-        ./materials/Peridigm_DecompositionStates.cpp
         ./materials/Peridigm_CriticalStretchDamageModel.cpp
         ./contact/Peridigm_ShortRangeForceContactModel.cpp
 )
@@ -54,7 +53,6 @@ add_executable(utPeridigm
         ../io/Field.cxx
         ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
         ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
-        ./materials/Peridigm_DecompositionStates.cpp
         ./materials/Peridigm_CriticalStretchDamageModel.cpp
         ./contact/Peridigm_ShortRangeForceContactModel.cpp
 )
@@ -103,20 +101,9 @@ add_executable(utPeridigm_LinearElasticIsotropicMaterial
         ../io/Field.cxx
 		./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
         Peridigm_DataManager.cpp
-		./materials/Peridigm_DecompositionStates.cpp
         ./materials/Peridigm_CriticalStretchDamageModel.cpp
 		./materials/utPeridigm_LinearElasticIsotropicMaterial.cpp)
 target_link_libraries(utPeridigm_LinearElasticIsotropicMaterial
-${TRILINOS_LIBS}
-${PdMaterialUtilitiesLib}
-${REQUIRED_LIBS}
-${Boost_LIBRARIES}
-)
-
-add_executable(utPeridigm_decompositionStates
-		./materials/Peridigm_DecompositionStates.cpp
-		./materials/utPeridigm_decompositionStates.cpp)
-target_link_libraries(utPeridigm_decompositionStates
 ${TRILINOS_LIBS}
 ${PdMaterialUtilitiesLib}
 ${REQUIRED_LIBS}
@@ -129,7 +116,6 @@ add_executable(utPHAL_UpdateForceState
         ../io/Field.cxx
 		./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
         Peridigm_DataManager.cpp
-		./materials/Peridigm_DecompositionStates.cpp
         ./materials/Peridigm_CriticalStretchDamageModel.cpp
 		./evaluators/utPHAL_UpdateForceState.cpp)
 target_link_libraries(utPHAL_UpdateForceState
@@ -143,7 +129,6 @@ ${Boost_LIBRARIES}
 #		PHAL_PeridigmTraits.cpp
 #		PHAL_Dimension.cpp
 #		./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
-#       ./materials/Peridigm_DecompositionStates.cpp
 #       ./materials/Peridigm_CriticalStretchDamageModel.cpp
 #		./evaluators/utPHAL_UpdateForceState_MPI_np2.cpp)
 #target_link_libraries(utPHAL_UpdateForceState_MPI_np2
@@ -159,7 +144,6 @@ add_executable(utPHAL_EvaluateForce
         ../io/Field.cxx
 		./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
         Peridigm_DataManager.cpp
-		./materials/Peridigm_DecompositionStates.cpp
         ./materials/Peridigm_CriticalStretchDamageModel.cpp
 		./evaluators/utPHAL_EvaluateForce.cpp)
 target_link_libraries(utPHAL_EvaluateForce
@@ -173,7 +157,6 @@ ${Boost_LIBRARIES}
 #		PHAL_PeridigmTraits.cpp
 #        PHAL_Dimension.cpp
 #		./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
-#       ./materials/Peridigm_DecompositionStates.cpp
 #       ./materials/Peridigm_CriticalStretchDamageModel.cpp
 #		./evaluators/utPHAL_EvaluateForce_MPI_np2.cpp)
 #target_link_libraries(utPHAL_EvaluateForce_MPI_np2

@@ -50,16 +50,8 @@ void testStateVariableAccessors()
   params.set("Bulk Modulus", 130.0e9);
   params.set("Shear Modulus", 78.0e9);
   LinearElasticIsotropicMaterial mat(params);
-  BOOST_REQUIRE(mat.NumScalarConstitutiveVariables() == 3);
-  BOOST_CHECK(mat.ScalarConstitutiveVariableName(0) == "Weighted Volume");
-  BOOST_CHECK(mat.ScalarConstitutiveVariableName(1) == "Dilatation");
-  BOOST_CHECK(mat.ScalarConstitutiveVariableName(2) == "Damage");
-  BOOST_CHECK_THROW(mat.ScalarConstitutiveVariableName(-1), std::range_error);
-  BOOST_CHECK_THROW(mat.ScalarConstitutiveVariableName(3), std::range_error);
-  BOOST_REQUIRE(mat.NumVectorConstitutiveVariables() == 1);
-  BOOST_CHECK(mat.VectorConstitutiveVariableName(0) == "Current Position");
-  BOOST_CHECK_THROW(mat.VectorConstitutiveVariableName(-1), std::range_error);
-  BOOST_CHECK_THROW(mat.VectorConstitutiveVariableName(1), std::range_error);
+
+  // \todo check field specs
 }
 
 //! Tests two-point system under compression against hand calculations.
@@ -83,11 +75,8 @@ void testTwoPts()
   int* ownedIDs;
   int* neighborhoodList;
   double* bondState;
-  int numScalarStateVariables = mat.NumScalarConstitutiveVariables();
-  BOOST_CHECK(mat.NumScalarConstitutiveVariables() == 3);
-  int numVectorStateVariables = mat.NumVectorConstitutiveVariables();
-  BOOST_CHECK(mat.NumVectorConstitutiveVariables() == 1);
-  Epetra_MultiVector vectorConstitutiveData(unknownMap, numVectorStateVariables);
+  // \todo check field specs
+  Epetra_MultiVector vectorConstitutiveData(unknownMap, 1);
   Epetra_Vector force(unknownMap);
 
   // create the material manager
@@ -133,11 +122,7 @@ void testTwoPts()
   int numMyElements = numBonds;
   int indexBase = 0;
   Epetra_Map bondMap(numGlobalElements, numMyElements, indexBase, comm);
-  int numBondConstitutiveVariables = mat.NumBondConstitutiveVariables();
-  BOOST_CHECK(mat.NumBondConstitutiveVariables() == 0);
-  if(numBondConstitutiveVariables < 1)
-    numBondConstitutiveVariables = 1;
-  Epetra_MultiVector bondConstitutiveData(bondMap, numBondConstitutiveVariables);
+  Epetra_MultiVector bondConstitutiveData(bondMap, 1); // this will go!
 
   mat.initialize(u, 
                  v, 
@@ -228,11 +213,7 @@ void testEightPts()
   int* ownedIDs;
   int* neighborhoodList;
   double* bondState;
-  int numScalarStateVariables = mat.NumScalarConstitutiveVariables();
-  BOOST_CHECK(mat.NumScalarConstitutiveVariables() == 3);
-  int numVectorStateVariables = mat.NumVectorConstitutiveVariables();
-  BOOST_CHECK(mat.NumVectorConstitutiveVariables() == 1);
-  Epetra_MultiVector vectorConstitutiveData(unknownMap, numVectorStateVariables);
+  Epetra_MultiVector vectorConstitutiveData(unknownMap, 1); // this will go!
   Epetra_Vector force(unknownMap);
 
   // create the material manager
@@ -326,11 +307,7 @@ void testEightPts()
   int numMyElements = numBonds;
   int indexBase = 0;
   Epetra_Map bondMap(numGlobalElements, numMyElements, indexBase, comm);
-  int numBondConstitutiveVariables = mat.NumBondConstitutiveVariables();
-  BOOST_CHECK(mat.NumBondConstitutiveVariables() == 0);
-  if(numBondConstitutiveVariables < 1)
-    numBondConstitutiveVariables = 1;
-  Epetra_MultiVector bondConstitutiveData(bondMap, numBondConstitutiveVariables);
+  Epetra_MultiVector bondConstitutiveData(bondMap, 1); // this will go!
 
   mat.initialize(u, 
                  v, 
@@ -549,11 +526,7 @@ void testThreePts()
   int* ownedIDs;
   int* neighborhoodList;
   double* bondState;
-  int numScalarStateVariables = mat.NumScalarConstitutiveVariables();
-  BOOST_CHECK(mat.NumScalarConstitutiveVariables() == 3);
-  int numVectorStateVariables = mat.NumVectorConstitutiveVariables();
-  BOOST_CHECK(mat.NumVectorConstitutiveVariables() == 1);
-  Epetra_MultiVector vectorConstitutiveData(unknownMap, numVectorStateVariables);
+  Epetra_MultiVector vectorConstitutiveData(unknownMap, 1); // this will go!
   Epetra_Vector force(unknownMap);
 
   // create the material manager
@@ -627,11 +600,7 @@ void testThreePts()
   int numMyElements = numBonds;
   int indexBase = 0;
   Epetra_Map bondMap(numGlobalElements, numMyElements, indexBase, comm);
-  int numBondConstitutiveVariables = mat.NumBondConstitutiveVariables();
-  BOOST_CHECK(mat.NumBondConstitutiveVariables() == 0);
-  if(numBondConstitutiveVariables < 1)
-    numBondConstitutiveVariables = 1;
-  Epetra_MultiVector bondConstitutiveData(bondMap, numBondConstitutiveVariables);
+  Epetra_MultiVector bondConstitutiveData(bondMap, 1); // this will go!
 
   mat.initialize(u, 
                  v, 

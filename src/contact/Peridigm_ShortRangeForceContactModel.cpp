@@ -36,7 +36,6 @@
 
 PeridigmNS::ShortRangeForceContactModel::ShortRangeForceContactModel(const Teuchos::ParameterList& params)
   : ContactModel(params),
-    m_decompStates(),
     m_contactRadius(0.0),
     m_springConstant(0.0),
     m_horizon(0.0)
@@ -68,8 +67,8 @@ PeridigmNS::ShortRangeForceContactModel::computeForce(const Epetra_Vector& u,
                                                       Epetra_MultiVector& vectorConstitutiveData,
                                                       Epetra_Vector& force) const
 {
-  std::pair<int,double*> vectorView = m_decompStates.extractStrideView(vectorConstitutiveData);
-  double *y = m_decompStates.extractCurrentPositionView(vectorView);
+  double *y;
+  dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&y);
 
   double *cellVolume;
   dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE);
