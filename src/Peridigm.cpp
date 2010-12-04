@@ -90,9 +90,9 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   // Create a master list of variable specs containing
   // the variable specs requested by each material
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
-  for(unsigned int i=0; i<(*materials).size() ; ++i){
+  for(unsigned int i=0; i<materials->size() ; ++i){
     Teuchos::RCP< std::vector<Field_NS::FieldSpec> > matVariableSpecs = (*materials)[i]->VariableSpecs();
-    for(unsigned int j=0 ; j<(*matVariableSpecs).size() ; ++j)
+    for(unsigned int j=0 ; j<matVariableSpecs->size() ; ++j)
       variableSpecs->push_back((*matVariableSpecs)[j]);
   }
   // Allocalte data in the dataManager
@@ -150,8 +150,8 @@ void PeridigmNS::Peridigm::instantiateMaterials() {
         material = Teuchos::rcp(new IsotropicElasticPlasticMaterial(matParams) );
       materials->push_back( Teuchos::rcp_implicit_cast<Material>(material) );
       // Allocate enough space for the max number of state variables
-      if(material->NumVectorConstitutiveVariables() > vectorConstitutiveDataSize)
-        vectorConstitutiveDataSize = material->NumVectorConstitutiveVariables();
+//       if(material->NumVectorConstitutiveVariables() > vectorConstitutiveDataSize)
+//         vectorConstitutiveDataSize = material->NumVectorConstitutiveVariables();
     }
     else {
       string invalidMaterial("Unrecognized material model: ");
@@ -396,13 +396,13 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
 
     // Query material models for their force state data descriptions
     forceStateDesc = Teuchos::rcp( new Teuchos::ParameterList() );
-    std::vector<Teuchos::RCP<const PeridigmNS::Material> > materials = *(modelEvaluator->getMaterials());
-    for(unsigned int i=0; i<materials.size(); ++i){
-      Teuchos::ParameterList& subList = forceStateDesc->sublist(materials[i]->Name());
-      for(int j=0;j<materials[i]->NumScalarConstitutiveVariables(); ++j){
-        subList.set( materials[i]->ScalarConstitutiveVariableName(j), j );
-      }
+    for(unsigned int i=0; i<materials->size(); ++i){
+      Teuchos::ParameterList& subList = forceStateDesc->sublist((*materials)[i]->Name());
+      Teuchos::RCP< std::vector<Field_NS::FieldSpec> > matVariableSpecs = (*materials)[i]->VariableSpecs();
+      for(unsigned int j=0 ; j<matVariableSpecs->size() ; ++j)
+        subList.set( (*matVariableSpecs)[j].getLabel(), j);
     }
+
     // Initialize current time in this parameterlist
     forceStateDesc->set("Time", 0.0);
     // Set RCP to neighborlist

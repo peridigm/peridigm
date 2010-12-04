@@ -35,7 +35,6 @@
 
 #include "Peridigm_Material.hpp"
 #include "Peridigm_DamageModel.hpp"
-#include "Peridigm_DecompositionStates.hpp"
 #include <cmath>
 
 namespace PeridigmNS {
@@ -98,29 +97,6 @@ namespace PeridigmNS {
     //! Returns a vector of field specs that specify the variables associated with the material
     Teuchos::RCP< std::vector<Field_NS::FieldSpec> > VariableSpecs() const { return m_variableSpecs; }
 
-	//! Returns the number of scalar constitutive variables used by the material model.
-	virtual int NumScalarConstitutiveVariables() const { return m_decompStates.getNumScalarStateVariables(); }
-
-	//! Returns the number of vector constitutive variables used by the material model.
-	virtual int NumVectorConstitutiveVariables() const  { return m_decompStates.getNumVectorStateVariables(); }
-
-	//! Returns the number of scalar constitutive bond variables used by the material model.
-	virtual int NumBondConstitutiveVariables() const { return 0; }
-
-	//! Returns the name of the scalar constitutive variable at position pos.
-	virtual const string & ScalarConstitutiveVariableName(int pos) const { return m_decompStates.getScalarStateName (pos);}
-
-	//! Returns the name of the scalar constitutive variable at position pos.
-	virtual const string & VectorConstitutiveVariableName(int pos) const {return m_decompStates.getVectorStateName (pos); }
-
-	//! Returns the name of the bond constitutive variable at position pos.
-	virtual const string & BondConstitutiveVariableName(int pos) const
-    {
-      static string name("None");
-      throw std::range_error("Peridigm::Peridigm_LinearElasticIsotropicMaterial::BondConstitutiveVariableName(), name does not exist.");
-      return name;
-    }
-
 	//! Initialized data containers and computes weighted volume.
 	virtual void
 	initialize(const Epetra_Vector& u,
@@ -169,7 +145,6 @@ namespace PeridigmNS {
 	  return ( sqrt( (a1-b1)*(a1-b1) + (a2-b2)*(a2-b2) + (a3-b3)*(a3-b3) ) );
 	}
 
-	DecompositionStates m_decompStates;
     Teuchos::RCP< std::vector<Field_NS::FieldSpec> > m_variableSpecs;
 
 	// material parameters

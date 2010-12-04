@@ -34,7 +34,6 @@
 
 #include "Peridigm_Material.hpp"
 #include "Peridigm_DamageModel.hpp"
-#include "Peridigm_DecompositionStates.hpp"
 
 namespace PeridigmNS {
 
@@ -55,24 +54,6 @@ namespace PeridigmNS {
 
     //! Returns a vector of field specs that specify the variables associated with the material
     Teuchos::RCP< std::vector<Field_NS::FieldSpec> > VariableSpecs() const { return m_variableSpecs; }
-
-	//! Returns the number of scalar constitutive variables used by the material model.
-	virtual int NumScalarConstitutiveVariables() const { return m_decompStates.getNumScalarStateVariables(); }
-
-	//! Returns the number of vector constitutive variables used by the material model.
-	virtual int NumVectorConstitutiveVariables() const  { return m_decompStates.getNumVectorStateVariables(); }
-
-	//! Returns the number of scalar constitutive bond variables used by the material model.
-	virtual int NumBondConstitutiveVariables() const { return m_decompStates.getNumScalarStateBondVariables(); }
-
-	//! Returns the name of the scalar constitutive variable at position pos.
-	virtual const string & ScalarConstitutiveVariableName(int pos) const { return m_decompStates.getScalarStateName (pos);}
-
-	//! Returns the name of the scalar constitutive variable at position pos.
-	virtual const string & VectorConstitutiveVariableName(int pos) const {return m_decompStates.getVectorStateName (pos); }
-
-	//! Returns the name of the bond constitutive variable at position pos.
-	virtual const string & BondConstitutiveVariableName(int pos) const { return m_decompStates.getScalarStateBondVarName(pos); }
 
 	//! Initialized data containers and computes weighted volume.
 	virtual void
@@ -115,7 +96,6 @@ namespace PeridigmNS {
 
   protected:
 
-	DecompositionStates m_decompStates;
     Teuchos::RCP< std::vector<Field_NS::FieldSpec> > m_variableSpecs;
 
 	// material parameters

@@ -1,5 +1,4 @@
 /*! \file utPHAL_UpdateForceState.cpp */
-
 // ***********************************************************************
 //
 //                             Peridigm
@@ -111,11 +110,10 @@ void testTwoPts()
   Epetra_Vector uOverlap(threeDimensionalOverlapMap);
   Epetra_Vector vOverlap(threeDimensionalOverlapMap);
   Epetra_Vector forceOverlap(threeDimensionalOverlapMap);
-  int numScalarConstitutiveVariables = mat.NumScalarConstitutiveVariables();
-  BOOST_CHECK(mat.NumScalarConstitutiveVariables() == 3);
-  int numVectorConstitutiveVariables = mat.NumVectorConstitutiveVariables();
-  BOOST_CHECK(mat.NumVectorConstitutiveVariables() == 1);
-  Epetra_MultiVector vectorConstitutiveDataOverlap(threeDimensionalOverlapMap, numVectorConstitutiveVariables);
+
+  // \todo check field specs
+
+  Epetra_MultiVector vectorConstitutiveDataOverlap(threeDimensionalOverlapMap, 1); // this will go!
 
   // create the material manager
   PeridigmNS::DataManager dataManager;

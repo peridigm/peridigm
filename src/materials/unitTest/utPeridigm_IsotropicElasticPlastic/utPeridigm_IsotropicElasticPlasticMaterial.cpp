@@ -160,21 +160,8 @@ ParameterList getParamList()
 	params.set("Material Horizon", horizon);
 	params.set("Yield Stress",Y);
 	IsotropicElasticPlasticMaterial mat(params);
-        BOOST_REQUIRE(mat.NumScalarConstitutiveVariables() == 4);
-	BOOST_CHECK(mat.ScalarConstitutiveVariableName(0) == "Weighted Volume");
-	BOOST_CHECK(mat.ScalarConstitutiveVariableName(1) == "Dilatation");
-	BOOST_CHECK(mat.ScalarConstitutiveVariableName(2) == "Damage");
-	BOOST_CHECK(mat.ScalarConstitutiveVariableName(3) == "Lambda");
-	BOOST_CHECK_THROW(mat.ScalarConstitutiveVariableName(-1), std::range_error);
-	BOOST_CHECK_THROW(mat.ScalarConstitutiveVariableName(4), std::range_error);
-	BOOST_REQUIRE(mat.NumVectorConstitutiveVariables() == 1);
-	BOOST_CHECK(mat.VectorConstitutiveVariableName(0) == "Current Position");
-	BOOST_CHECK_THROW(mat.VectorConstitutiveVariableName(-1), std::range_error);
-	BOOST_CHECK_THROW(mat.VectorConstitutiveVariableName(1), std::range_error);
-	BOOST_CHECK(mat.BondConstitutiveVariableName(0) == "scalarPlasticExtensionState_N");
-	BOOST_CHECK(mat.BondConstitutiveVariableName(1) == "scalarPlasticExtensionState_NP1");
-	BOOST_CHECK_THROW(mat.BondConstitutiveVariableName(2), std::range_error);
-	BOOST_CHECK(mat.NumBondConstitutiveVariables()==2);
+
+    // \todo check field specs
 
 	return params;
 }

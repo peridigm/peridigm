@@ -222,23 +222,23 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
     TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
     "Peridigm::OutputManager: Unknown material model. Only \"Linear Elastic\" or \"Elastic Plastic\" currently supported.");
 
-  if (thisMaterial->isParameter("Displacement")) {
+   if (thisMaterial->isParameter("Displacement")) {
     double *uptr;
     u->ExtractView( &uptr );
     PdVTK::writeField<double>(grid,Field_NS::DISPL3D,uptr);
-  }
+   }
 
-  if (thisMaterial->isParameter("Velocity")) {
+   if (thisMaterial->isParameter("Velocity")) {
     double *vptr;
     v->ExtractView( &vptr );
     PdVTK::writeField<double>(grid,Field_NS::VELOC3D,vptr);
-  }
+   }
 
-  if (thisMaterial->isParameter("Acceleration")) {
+   if (thisMaterial->isParameter("Acceleration")) {
     double *aptr;
     a->ExtractView( &aptr );
     PdVTK::writeField<double>(grid,Field_NS::ACCEL3D,aptr);
-  }
+   }
 
   if (thisMaterial->isParameter("Force Density")) {
     double *fptr;
@@ -275,7 +275,7 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
 
   Teuchos::ParameterList::ConstIterator iter;
   string outstring;
-  for(iter = thisMaterial->begin(); iter != thisMaterial->end(); iter++) {
+  for(iter = thisForceState->begin(); iter != thisForceState->end(); iter++) {
     if (thisForceState->isParameter(thisMaterial->name(iter))) {
       outstring = thisMaterial->name(iter);
 
@@ -284,7 +284,7 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
         dataManager->getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dataptr);
         PdVTK::writeField<double>(grid,Field_NS::DILATATION,dataptr);
       }
-      else if (outstring == "Weighted Volume") {
+      else if (outstring == "Weighted_Volume") {
         dataManager->getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&dataptr);
         PdVTK::writeField<double>(grid,Field_NS::WEIGHTED_VOLUME,dataptr);
       }

@@ -40,7 +40,6 @@ using namespace std;
 
 PeridigmNS::LinearElasticIsotropicMaterial::LinearElasticIsotropicMaterial(const Teuchos::ParameterList& params)
   : Material(params),
-    m_decompStates(),
     m_damageModel()
 {
   //! \todo Add meaningful asserts on material properties.
