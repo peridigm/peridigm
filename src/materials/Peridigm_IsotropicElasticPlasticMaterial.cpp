@@ -65,18 +65,14 @@ PeridigmNS::IsotropicElasticPlasticMaterial::~IsotropicElasticPlasticMaterial()
 }
 
 
-void PeridigmNS::IsotropicElasticPlasticMaterial::initialize(const Epetra_Vector& u,
-                                                             const Epetra_Vector& v,
-                                                             const double dt,
+void PeridigmNS::IsotropicElasticPlasticMaterial::initialize(const double dt,
                                                              const int numOwnedPoints,
                                                              const int* ownedIDs,
                                                              const int* neighborhoodList,
                                                              double* bondState,
-                                                             PeridigmNS::DataManager& dataManager,
-                                                             Epetra_Vector& force) const
+                                                             PeridigmNS::DataManager& dataManager) const
 {
 	  // Initialize data fields
-	  force.PutScalar(0.0);
 	  int neighborhoodListIndex = 0;
 	  int bondStateIndex = 0;
 	  for(int iID=0 ; iID<numOwnedPoints ; ++iID){
@@ -97,18 +93,13 @@ void PeridigmNS::IsotropicElasticPlasticMaterial::initialize(const Epetra_Vector
 }
 
 void
-PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const Epetra_Vector& u,
-                                                                    const Epetra_Vector& v,
-                                                                    const double dt,
+PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const double dt,
                                                                     const int numOwnedPoints,
                                                                     const int* ownedIDs,
                                                                     const int* neighborhoodList,
                                                                     double* bondState,
-                                                                    PeridigmNS::DataManager& dataManager,
-                                                                    Epetra_Vector& force) const
+                                                                    PeridigmNS::DataManager& dataManager) const
 {
-  int vectorLength = dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->MyLength();
-
   // Extract pointers to the underlying data in the constitutiveData array
   double *x, *y, *volume, *dilatation, *damage, *weightedVolume;
   dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&x);
@@ -118,20 +109,14 @@ PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const Epetra
   dataManager.getData(Field_NS::DAMAGE, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&damage);
   dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
 
-	// Update the geometry
-	PdMaterialUtilities::updateGeometry(x,u.Values(),v.Values(),y,vectorLength,dt);
-
 	// Update the bondState
 	if(!m_damageModel.is_null()){
-		m_damageModel->computeDamage(u,
-                                     v,
-                                     dt,
+		m_damageModel->computeDamage(dt,
                                      numOwnedPoints,
                                      ownedIDs,
                                      neighborhoodList,
                                      bondState,
-                                     dataManager,
-                                     force);
+                                     dataManager);
 	}
 
 	//  Update the element damage (percent of bonds broken)
@@ -152,21 +137,19 @@ PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const Epetra
 		damage[nodeID] = totalDamage;
 	}
 
-
 	PdMaterialUtilities::computeDilatation(x,y,weightedVolume,volume,bondState,dilatation,neighborhoodList,numOwnedPoints);
 }
 
 void
-PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const Epetra_Vector& u,
-                                                          const Epetra_Vector& v,
-                                                          const double dt,
+PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const double dt,
                                                           const int numOwnedPoints,
                                                           const int* ownedIDs,
                                                           const int* neighborhoodList,
                                                           double* bondState,
-                                                          PeridigmNS::DataManager& dataManager,
-                                                          Epetra_Vector& force) const
+                                                          PeridigmNS::DataManager& dataManager) const
 {
+      // Zero out the force
+      dataManager.getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1)->PutScalar(0.0);
 
 	  // Extract pointers to the underlying data in the constitutiveData array
       double *x, *y;
@@ -191,11 +174,9 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const Epetra_Vector& u
 	  double* lambdaNP1;
 	  dataManager.getData(Field_NS::LAMBDA, Field_NS::FieldSpec::STEP_N)->ExtractView(&lambdaN);
 	  dataManager.getData(Field_NS::LAMBDA, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&lambdaNP1);
-
-
-	  // Compute the force on each particle that results from interactions
-	  // with locally-owned nodes
-	  force.PutScalar(0.0);
+      
+      double* force;
+      dataManager.getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&force);
 
 	  PdMaterialUtilities::computeInternalForceIsotropicElasticPlastic
         (x,
@@ -208,7 +189,7 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const Epetra_Vector& u
          edpNP1,
          lambdaN,
          lambdaNP1,
-         force.Values(),
+         force,
          neighborhoodList,
          numOwnedPoints,
          m_bulkModulus,

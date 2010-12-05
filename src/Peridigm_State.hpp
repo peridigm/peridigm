@@ -76,6 +76,7 @@ public:
   }
 
   Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec){
+
     // search for the data
     std::map< Field_NS::FieldSpec, Teuchos::RCP<Epetra_Vector> >::iterator lb = fieldSpecToDataMap.lower_bound(fieldSpec);
     // if the key does not exist, throw an exception

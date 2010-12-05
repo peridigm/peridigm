@@ -57,27 +57,24 @@ PeridigmNS::ShortRangeForceContactModel::~ShortRangeForceContactModel()
 }
 
 void
-PeridigmNS::ShortRangeForceContactModel::computeForce(const Epetra_Vector& u,
-                                                      const Epetra_Vector& v,
-                                                      const double dt,
+PeridigmNS::ShortRangeForceContactModel::computeForce(const double dt,
                                                       const int numOwnedPoints,
                                                       const int* ownedIDs,
                                                       const int* contactNeighborhoodList,
-                                                      PeridigmNS::DataManager& dataManager,
-                                                      Epetra_Vector& force) const
+                                                      PeridigmNS::DataManager& dataManager) const
 {
-  double *y;
+  double *cellVolume, *y, *force;
+  dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE);
   dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&y);
 
-  double *cellVolume;
-  dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE);
+  // THIS IS WRONG, NEED SEPARATE CONTACT FORCE VECTOR
+  dataManager.getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&force);
 
   int neighborhoodListIndex = 0;
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
 	int numNeighbors = contactNeighborhoodList[neighborhoodListIndex++];
     if(numNeighbors > 0){
       int nodeID = ownedIDs[iID];
-      TEST_FOR_EXCEPT_MSG(nodeID*3+2 >= force.MyLength(), "Invalid neighbor list / contact force vector\n");
       double nodeCurrentX[3] = { y[nodeID*3],
                                  y[nodeID*3+1],
                                  y[nodeID*3+2] };
@@ -85,7 +82,6 @@ PeridigmNS::ShortRangeForceContactModel::computeForce(const Epetra_Vector& u,
       for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
         int neighborID = contactNeighborhoodList[neighborhoodListIndex++];
         TEST_FOR_EXCEPT_MSG(neighborID < 0, "Invalid neighbor list\n");
-        TEST_FOR_EXCEPT_MSG(neighborID*3+2 >= force.MyLength(), "Invalid neighbor list / contact force vector\n");
         double currentDistance =
           distance(nodeCurrentX[0], nodeCurrentX[1], nodeCurrentX[2],
                    y[neighborID*3], y[neighborID*3+1], y[neighborID*3+2]);

@@ -77,8 +77,6 @@ void EvaluateForce<EvalT, Traits>::evaluateFields(typename Traits::EvalData cell
   if(m_verbose)
 	cout << "CHECK inside EvaluateForce::evaluateFields()\n" << endl;
 
-  const Epetra_Vector& u = *cellData.uOverlap;
-  const Epetra_Vector& v = *cellData.vOverlap;
   const double dt = *cellData.timeStep;
   const int numOwnedPoints = cellData.neighborhoodData->NumOwnedPoints();
   const int* ownedIDs = cellData.neighborhoodData->OwnedIDs();
@@ -89,20 +87,14 @@ void EvaluateForce<EvalT, Traits>::evaluateFields(typename Traits::EvalData cell
   // \todo expand bondData to allow for an arbitrary number of bond data per bond
   double* bondData = cellData.bondData.get();
 
-  Epetra_Vector& force = *cellData.forceOverlap;
-  force.PutScalar(0.0);
-
   // handling of material models needs work!
   Teuchos::RCP<const PeridigmNS::Material> material = (*cellData.materials)[0];
 
-  material->computeForce(u, 
-						 v, 
-						 dt, 
+  material->computeForce(dt, 
 						 numOwnedPoints,
 						 ownedIDs,
 						 neighborhoodList,
 						 bondData,
-                         dataManager,
-						 force);
+                         dataManager);
 }
 

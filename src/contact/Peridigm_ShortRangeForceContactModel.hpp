@@ -51,14 +51,11 @@ namespace PeridigmNS {
 
 	//! Evaluate the forces on the cells.
 	virtual void
-	computeForce(const Epetra_Vector& u,
-				 const Epetra_Vector& v,
-				 const double dt,
+	computeForce(const double dt,
 				 const int numOwnedPoints,
 				 const int* ownedIDs,
 				 const int* contactNeighborhoodList,
-                 PeridigmNS::DataManager& dataManager,
-				 Epetra_Vector& force) const;
+                 PeridigmNS::DataManager& dataManager) const;
 
   protected:
 	

@@ -68,15 +68,12 @@ void testTwoPts()
   Epetra_SerialComm comm;
   Epetra_Map nodeMap(2, 0, comm);
   Epetra_Map unknownMap(6, 0, comm);
-  Epetra_Vector u(unknownMap);
-  Epetra_Vector v(unknownMap);
   double dt = 1.0;
   int numOwnedPoints;
   int* ownedIDs;
   int* neighborhoodList;
   double* bondState;
   // \todo check field specs
-  Epetra_Vector force(unknownMap);
 
   // create the material manager
   PeridigmNS::DataManager dataManager;
@@ -91,12 +88,8 @@ void testTwoPts()
 
   x[0] = 0.0; x[1] = 0.0; x[2] = 0.0;
   x[3] = 1.0; x[4] = 0.0; x[5] = 0.0;
-  u[0] = 0.0; u[1] = 0.0; u[2] = 0.0;
-  u[3] = 0.0; u[4] = 0.0; u[5] = 0.0;
   y[0] = 0.0; y[1] = 0.0; y[2] = 0.0;
   y[3] = 2.0; y[4] = 0.0; y[5] = 0.0;
-  v[0] = 0.0; v[1] = 0.0; v[2] = 0.0;
-  v[3] = 1.0; v[4] = 0.0; v[5] = 0.0;
   for(int i=0; i<cellVolume.MyLength(); ++i){
 	cellVolume[i] = 1.0;
   }
@@ -122,25 +115,19 @@ void testTwoPts()
   Epetra_Map bondMap(numGlobalElements, numMyElements, indexBase, comm);
   Epetra_MultiVector bondConstitutiveData(bondMap, 1); // this will go!
 
-  mat.initialize(u, 
-                 v, 
-                 dt, 
+  mat.initialize(dt, 
                  numOwnedPoints,
                  ownedIDs,
                  neighborhoodList,
                  bondState,
-                 dataManager,
-                 force);
+                 dataManager);
 
-  mat.updateConstitutiveData(u, 
-							 v, 
-							 dt, 
+  mat.updateConstitutiveData(dt, 
 							 numOwnedPoints,
 							 ownedIDs,
 							 neighborhoodList,
 							 bondState,
-                             dataManager,
-							 force);
+                             dataManager);
 
   double currentPositionX1 = y[0];
   BOOST_CHECK_SMALL(currentPositionX1, 1.0e-14);
@@ -165,16 +152,14 @@ void testTwoPts()
   bondDatum = bondConstitutiveData[0][1];
   BOOST_CHECK_SMALL(bondDatum, 1.0e-15);
 
-  mat.computeForce(u, 
-				   v, 
-				   dt, 
+  mat.computeForce(dt, 
 				   numOwnedPoints,
 				   ownedIDs,
 				   neighborhoodList,
 				   bondState,
-                   dataManager,
-				   force);
+                   dataManager);
 
+  Epetra_Vector& force = *dataManager.getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1);
   BOOST_CHECK_CLOSE(force[0], 2.34e+12, 1.0e-2);
   BOOST_CHECK_SMALL(force[1], 1.0e-14);
   BOOST_CHECK_SMALL(force[2], 1.0e-14);
@@ -201,14 +186,11 @@ void testEightPts()
   Epetra_SerialComm comm;
   Epetra_Map nodeMap(8, 0, comm);
   Epetra_Map unknownMap(24, 0, comm);
-  Epetra_Vector u(unknownMap);
-  Epetra_Vector v(unknownMap);
   double dt = 1.0;
   int numOwnedPoints;
   int* ownedIDs;
   int* neighborhoodList;
   double* bondState;
-  Epetra_Vector force(unknownMap);
 
   // create the material manager
   PeridigmNS::DataManager dataManager;
@@ -231,16 +213,6 @@ void testEightPts()
   x[18] = 1.0; x[19] = 1.0; x[20] = 0.0;
   x[21] = 1.0; x[22] = 1.0; x[23] = 1.0;
 
-  // displacements (compression in z direction)
-  u[0]  = 0.0; u[1]  = 0.0; u[2]  = 0.0;
-  u[3]  = 0.0; u[4]  = 0.0; u[5]  = -0.02;
-  u[6]  = 0.0; u[7]  = 0.0; u[8]  = 0.0;
-  u[9]  = 0.0; u[10] = 0.0; u[11] = -0.02;
-  u[12] = 0.0; u[13] = 0.0; u[14] = 0.0;
-  u[15] = 0.0; u[16] = 0.0; u[17] = -0.02;
-  u[18] = 0.0; u[19] = 0.0; u[20] = 0.0;
-  u[21] = 0.0; u[22] = 0.0; u[23] = -0.02;
-
   // current positions
   y[0]  = 0.0; y[1]  = 0.0; y[2]  = 0.0;
   y[3]  = 0.0; y[4]  = 0.0; y[5]  = 0.98;
@@ -250,16 +222,6 @@ void testEightPts()
   y[15] = 1.0; y[16] = 0.0; y[17] = 0.98;
   y[18] = 1.0; y[19] = 1.0; y[20] = 0.0;
   y[21] = 1.0; y[22] = 1.0; y[23] = 0.98;
-
-  // velocities (not used by material model)
-  v[0]  = 0.0; v[1]  = 0.0; v[2]  = 0.0;
-  v[3]  = 0.0; v[4]  = 0.0; v[5]  = 0.0;
-  v[6]  = 0.0; v[7]  = 0.0; v[8]  = 0.0;
-  v[9]  = 0.0; v[10] = 0.0; v[11] = 0.0;
-  v[12] = 0.0; v[13] = 0.0; v[14] = 0.0;
-  v[15] = 0.0; v[16] = 0.0; v[17] = 0.0;
-  v[18] = 0.0; v[19] = 0.0; v[20] = 0.0;
-  v[21] = 0.0; v[22] = 0.0; v[23] = 0.0;
 
   // cell volumes
   for(int i=0; i<cellVolume.MyLength(); ++i){
@@ -300,25 +262,19 @@ void testEightPts()
   Epetra_Map bondMap(numGlobalElements, numMyElements, indexBase, comm);
   Epetra_MultiVector bondConstitutiveData(bondMap, 1); // this will go!
 
-  mat.initialize(u, 
-                 v, 
-                 dt, 
+  mat.initialize(dt, 
                  numOwnedPoints,
                  ownedIDs,
                  neighborhoodList,
                  bondState,
-                 dataManager,
-                 force);
+                 dataManager);
 
-  mat.updateConstitutiveData(u, 
-							 v, 
-							 dt, 
+  mat.updateConstitutiveData(dt, 
 							 numOwnedPoints,
 							 ownedIDs,
 							 neighborhoodList,
 							 bondState,
-                             dataManager,
-							 force);
+                             dataManager);
 
   double currentPosition;
   currentPosition = y[0];
@@ -385,15 +341,12 @@ void testEightPts()
       BOOST_CHECK_SMALL(bondConstitutiveData[0][i], 1.0e-15);
   }
 
-  mat.computeForce(u, 
-				   v, 
-				   dt, 
+  mat.computeForce(dt, 
 				   numOwnedPoints,
 				   ownedIDs,
 				   neighborhoodList,
 				   bondState,
-                   dataManager,
-				   force);
+                   dataManager);
 
   // all the cells experience the same force magnitude, but
   // it is applied in different directions
@@ -444,6 +397,8 @@ void testEightPts()
   vec_mag = sqrt(2.0 + 0.98*0.98);
   unit_vec[0] = 1.0/vec_mag; unit_vec[1] = 1.0/vec_mag; unit_vec[2] = 0.98/vec_mag;
   f[0] += 2.0*unit_vec[0]*t; f[1] += 2.0*unit_vec[1]*t; f[2] += 2.0*unit_vec[2]*t;
+
+  Epetra_Vector& force = *dataManager.getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1);
 
   // assert the net force on cell 0
   BOOST_CHECK_CLOSE(force[0], f[0], 1.0e-11);
@@ -507,14 +462,11 @@ void testThreePts()
   Epetra_SerialComm comm;
   Epetra_Map nodeMap(3, 0, comm);
   Epetra_Map unknownMap(9, 0, comm);
-  Epetra_Vector u(unknownMap);
-  Epetra_Vector v(unknownMap);
   double dt = 1.0;
   int numOwnedPoints;
   int* ownedIDs;
   int* neighborhoodList;
   double* bondState;
-  Epetra_Vector force(unknownMap);
 
   // create the material manager
   PeridigmNS::DataManager dataManager;
@@ -532,20 +484,10 @@ void testThreePts()
   x[3] = -2.0; x[4] = 0.9;  x[5] = -0.3;
   x[6] =  0.0; x[7] = 0.01; x[8] =  1.8;
 
-  // displacements
-  u[0] = 0.1; u[1] = -0.2; u[2] =  0.0;
-  u[3] = 0.1; u[4] = -0.2; u[5] = -0.5;
-  u[6] = 0.1; u[7] =  0.2; u[8] = -0.2;
-
   // current positions
-  y[0] = 1.1;  y[1] = 2.4;  y[2] = -0.1;
+  y[0] = 1.2;  y[1] = 2.4;  y[2] = -0.1;
   y[3] = -1.9; y[4] = 0.7;  y[5] = -0.8;
   y[6] = 0.1;  y[7] = 0.21; y[8] =  1.6;
-
-  // velocities (not used by material model)
-  v[0]  = 0.0; v[1]  = 0.0; v[2]  = 0.0;
-  v[3]  = 0.0; v[4]  = 0.0; v[5]  = 0.0;
-  v[6]  = 0.0; v[7]  = 0.0; v[8]  = 0.0;
 
   // cell volumes
   cellVolume[0] = 0.9;
@@ -586,25 +528,19 @@ void testThreePts()
   Epetra_Map bondMap(numGlobalElements, numMyElements, indexBase, comm);
   Epetra_MultiVector bondConstitutiveData(bondMap, 1); // this will go!
 
-  mat.initialize(u, 
-                 v, 
-                 dt, 
+  mat.initialize(dt, 
                  numOwnedPoints,
                  ownedIDs,
                  neighborhoodList,
                  bondState,
-                 dataManager,
-                 force);
+                 dataManager);
 
-  mat.updateConstitutiveData(u, 
-							 v, 
-							 dt, 
+  mat.updateConstitutiveData(dt, 
 							 numOwnedPoints,
 							 ownedIDs,
 							 neighborhoodList,
 							 bondState,
-                             dataManager,
-							 force);
+                             dataManager);
 
   double currentPosition;
   currentPosition = y[0];
@@ -643,15 +579,14 @@ void testThreePts()
       BOOST_CHECK_SMALL(bondConstitutiveData[0][i], 1.0e-15);
   }
 
-  mat.computeForce(u, 
-				   v, 
-				   dt, 
+  mat.computeForce(dt, 
 				   numOwnedPoints,
 				   ownedIDs,
 				   neighborhoodList,
 				   bondState,
-                   dataManager,
-				   force);
+                   dataManager);
+
+  Epetra_Vector& force = *dataManager.getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1);
 
   // check the net forces against hand calculations
   double ref_soln_x, ref_soln_y, ref_soln_z;
