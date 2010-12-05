@@ -91,8 +91,6 @@ void UpdateForceState<EvalT, Traits>::evaluateFields(typename Traits::EvalData c
   if(m_verbose)
 	cout << "CHECK inside UpdateForceState::evaluateFields()" << endl;
 
-  const Epetra_Vector& u = *cellData.uOverlap;
-  const Epetra_Vector& v = *cellData.vOverlap;
   const double dt = *cellData.timeStep;
   const int numOwnedPoints = cellData.neighborhoodData->NumOwnedPoints();
   const int* ownedIDs = cellData.neighborhoodData->OwnedIDs();
@@ -102,21 +100,16 @@ void UpdateForceState<EvalT, Traits>::evaluateFields(typename Traits::EvalData c
 
   // \todo expand bondData to allow for an arbitrary number of bond data per bond
   double* bondData = cellData.bondData.get();
-  
-  Epetra_Vector& force = *cellData.forceOverlap;
 
   // handling of material models needs work!
   Teuchos::RCP<const PeridigmNS::Material> material = (*cellData.materials)[0];
 
-  material->updateConstitutiveData(u, 
-								   v, 
-								   dt, 
+  material->updateConstitutiveData(dt, 
 								   numOwnedPoints,
 								   ownedIDs,
 								   neighborhoodList,
 								   bondData,
-                                   dataManager,
-								   force);
+                                   dataManager);
 
   // distribute constitutive data across processors here, if required
   //

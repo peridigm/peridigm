@@ -108,11 +108,6 @@ void testTwoPts()
   params.set("Shear Modulus", 78.0e9);
   PeridigmNS::LinearElasticIsotropicMaterial mat(params);
 
-  // set up the vectors
-  Epetra_Vector uOverlap(threeDimensionalOverlapMap);
-  Epetra_Vector vOverlap(threeDimensionalOverlapMap);
-  Epetra_Vector forceOverlap(threeDimensionalOverlapMap);
-
   // \todo Check field specs
 
   // create the material manager
@@ -130,10 +125,6 @@ void testTwoPts()
   x[3] = 1.0; x[4] = 0.0; x[5] = 0.0;
   y[0] = 0.0; y[1] = 0.0; y[2] = 0.0;
   y[3] = 2.0; y[4] = 0.0; y[5] = 0.0;
-  uOverlap[0] = 0.0; uOverlap[1] = 0.0; uOverlap[2] = 0.0;
-  uOverlap[3] = 0.5; uOverlap[4] = 0.0; uOverlap[5] = 0.0;
-  vOverlap[0] = 0.0; vOverlap[1] = 0.0; vOverlap[2] = 0.0;
-  vOverlap[3] = 0.5; vOverlap[4] = 0.0; vOverlap[5] = 0.0;
   dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->PutScalar(1.0);
 
   // both points are neighbors of each other
@@ -161,9 +152,6 @@ void testTwoPts()
 
   // create a workset with rcps to the relevant data
   PHAL::Workset workset;
-  workset.uOverlap = Teuchos::RCP<Epetra_Vector>(&uOverlap, false);
-  workset.vOverlap = Teuchos::RCP<Epetra_Vector>(&vOverlap, false);
-  workset.forceOverlap = Teuchos::RCP<Epetra_Vector>(&forceOverlap, false);
   workset.timeStep = Teuchos::RCP<double>(&dt, false);
   workset.neighborhoodData = Teuchos::RCP<PeridigmNS::NeighborhoodData>(&neighborhoodData, false);
   workset.dataManager = Teuchos::RCP<PeridigmNS::DataManager>(&dataManager, false);
@@ -198,21 +186,22 @@ void testTwoPts()
 
   // make a call to the evaluateFields() function in the evaluator
   // this is the workhorse function that calls the material model,
-  // evaluates the pairwise forces, and updates forceOverlap
+  // evaluates the pairwise forces, and updates the force
   evaluator.evaluateFields(workset);
 
   // assert the data in forceOverlap
-  double node0ForceX = forceOverlap[0];
+  Epetra_Vector& force = *dataManager.getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1);
+  double node0ForceX = force[0];
   BOOST_CHECK_CLOSE(node0ForceX, 2.34e12, 1.0e-14);
-  double node0ForceY = forceOverlap[1];
+  double node0ForceY = force[1];
   BOOST_CHECK_SMALL(node0ForceY, 1.0e-14);
-  double node0ForceZ = forceOverlap[2];
+  double node0ForceZ = force[2];
   BOOST_CHECK_SMALL(node0ForceZ, 1.0e-14);
-  double node1ForceX = forceOverlap[3];
+  double node1ForceX = force[3];
   BOOST_CHECK_CLOSE(node1ForceX, -2.34e12, 1.0e-14);
-  double node1ForceY = forceOverlap[4];
+  double node1ForceY = force[4];
   BOOST_CHECK_SMALL(node1ForceY, 1.0e-14);
-  double node1ForceZ = forceOverlap[5];
+  double node1ForceZ = force[5];
   BOOST_CHECK_SMALL(node1ForceZ, 1.0e-14);
 
   //  params.set("Density", 7800.0);

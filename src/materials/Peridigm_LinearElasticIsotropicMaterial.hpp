@@ -99,39 +99,30 @@ namespace PeridigmNS {
 
 	//! Initialized data containers and computes weighted volume.
 	virtual void
-	initialize(const Epetra_Vector& u,
-               const Epetra_Vector& v,
-               const double dt,
+	initialize(const double dt,
                const int numOwnedPoints,
                const int* ownedIDs,
                const int* neighborhoodList,
                double* bondState,
-               PeridigmNS::DataManager& dataManager,
-               Epetra_Vector& force) const;
+               PeridigmNS::DataManager& dataManager) const;
 
 	//! Computes the dilatation.
 	virtual void
-	updateConstitutiveData(const Epetra_Vector& u,
-						   const Epetra_Vector& v,
-						   const double dt,
+	updateConstitutiveData(const double dt,
 						   const int numOwnedPoints,
 						   const int* ownedIDs,
 						   const int* neighborhoodList,
 						   double* bondState,
-                           PeridigmNS::DataManager& dataManager,
-						   Epetra_Vector& force) const;
+                           PeridigmNS::DataManager& dataManager) const;
 
 	//! Evaluate the forces on the cells.
 	virtual void
-	computeForce(const Epetra_Vector& u,
-				 const Epetra_Vector& v,
-				 const double dt,
+	computeForce(const double dt,
 				 const int numOwnedPoints,
 				 const int* ownedIDs,
 				 const int* neighborhoodList,
 				 double* bondState,
-                 PeridigmNS::DataManager& dataManager,
-				 Epetra_Vector& force) const;
+                 PeridigmNS::DataManager& dataManager) const;
 
   protected:
 	

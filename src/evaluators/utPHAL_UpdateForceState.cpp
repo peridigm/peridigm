@@ -106,11 +106,6 @@ void testTwoPts()
   params.set("Shear Modulus", 78.0e9);
   PeridigmNS::LinearElasticIsotropicMaterial mat(params);
 
-  // set up the vectors
-  Epetra_Vector uOverlap(threeDimensionalOverlapMap);
-  Epetra_Vector vOverlap(threeDimensionalOverlapMap);
-  Epetra_Vector forceOverlap(threeDimensionalOverlapMap);
-
   // \todo check field specs
 
   // create the material manager
@@ -128,10 +123,6 @@ void testTwoPts()
   x[3] = 1.0; x[4] = 0.0; x[5] = 0.0;
   y[0] = 0.0; y[1] = 0.0; y[2] = 0.0;
   y[3] = 2.0; y[4] = 0.0; y[5] = 0.0;
-  uOverlap[0] = 0.0; uOverlap[1] = 0.0; uOverlap[2] = 0.0;
-  uOverlap[3] = 0.5; uOverlap[4] = 0.0; uOverlap[5] = 0.0;
-  vOverlap[0] = 0.0; vOverlap[1] = 0.0; vOverlap[2] = 0.0;
-  vOverlap[3] = 0.5; vOverlap[4] = 0.0; vOverlap[5] = 0.0;
   dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->PutScalar(1.0);
   Epetra_Vector& weightedVolume = *dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE);
   Epetra_Vector& dilatation = *dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1);
@@ -157,9 +148,6 @@ void testTwoPts()
 
   // create a workset with rcps to the relevant data
   PHAL::Workset workset;
-  workset.uOverlap = Teuchos::RCP<Epetra_Vector>(&uOverlap, false);
-  workset.vOverlap = Teuchos::RCP<Epetra_Vector>(&vOverlap, false);
-  workset.forceOverlap = Teuchos::RCP<Epetra_Vector>(&forceOverlap, false);
   workset.timeStep = Teuchos::RCP<double>(&dt, false);
   workset.neighborhoodData = Teuchos::RCP<PeridigmNS::NeighborhoodData>(&neighborhoodData, false);
   workset.bondData = Teuchos::RCP<double>(bondData, false);

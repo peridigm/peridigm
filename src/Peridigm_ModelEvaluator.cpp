@@ -421,9 +421,9 @@ PeridigmNS::ModelEvaluator::evalModel(Teuchos::RCP<PHAL::Workset> workset) const
 //  cout << *(workset->forceOverlap) << endl;
 
   // add the internal force and the contact force
-  if(computeContact){
-    workset->forceOverlap->Update(1.0, *(workset->contactForceOverlap), 1.0);
-  }
+//   if(computeContact){
+//     workset->forceOverlap->Update(1.0, *(workset->contactForceOverlap), 1.0);
+//   }
 }
 
 /*

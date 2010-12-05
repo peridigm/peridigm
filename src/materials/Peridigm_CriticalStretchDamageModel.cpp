@@ -52,28 +52,22 @@ PeridigmNS::CriticalStretchDamageModel::~CriticalStretchDamageModel()
 }
 
 void
-PeridigmNS::CriticalStretchDamageModel::initialize(const Epetra_Vector& u,
-                                                   const Epetra_Vector& v,
-                                                   const double dt,
+PeridigmNS::CriticalStretchDamageModel::initialize(const double dt,
                                                    const int numOwnedPoints,
                                                    const int* ownedIDs,
                                                    const int* neighborhoodList,
                                                    double* bondState,
-                                                   PeridigmNS::DataManager& dataManager,
-                                                   Epetra_Vector& force) const
+                                                   PeridigmNS::DataManager& dataManager) const
 {
 }
 
 void
-PeridigmNS::CriticalStretchDamageModel::computeDamage(const Epetra_Vector& u,
-                                                      const Epetra_Vector& v,
-                                                      const double dt,
+PeridigmNS::CriticalStretchDamageModel::computeDamage(const double dt,
                                                       const int numOwnedPoints,
                                                       const int* ownedIDs,
                                                       const int* neighborhoodList,
                                                       double* bondState,
-                                                      PeridigmNS::DataManager& dataManager,
-                                                      Epetra_Vector& force) const
+                                                      PeridigmNS::DataManager& dataManager) const
 {
   int vectorLength = dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->MyLength();
   double *x, *y;

@@ -81,14 +81,21 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   initializeDiscretization(peridigmDisc);
 
   // Instantiate data manager
-  dataManager =  Teuchos::rcp(new PeridigmNS::DataManager);
+  dataManager = Teuchos::rcp(new PeridigmNS::DataManager);
   dataManager->setScalarMap(oneDimensionalOverlapMap);
   dataManager->setVector2DMap(Teuchos::null);
   dataManager->setVector3DMap(threeDimensionalOverlapMap);
   dataManager->setBondMap(bondMap);
-  // Create a master list of variable specs containing
-  // the variable specs requested by each material
+  // Create a master list of variable specs
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
+  // Start with the specs used by Peridigm
+  variableSpecs->push_back(Field_NS::VOLUME);
+  variableSpecs->push_back(Field_NS::COORD3D);
+  variableSpecs->push_back(Field_NS::DISPL3D);
+  variableSpecs->push_back(Field_NS::CURCOORD3D);
+  variableSpecs->push_back(Field_NS::VELOC3D);
+  variableSpecs->push_back(Field_NS::FORCE3D);
+  // Add the variable specs requested by each material
   for(unsigned int i=0; i<materials->size() ; ++i){
     Teuchos::RCP< std::vector<Field_NS::FieldSpec> > matVariableSpecs = (*materials)[i]->VariableSpecs();
     for(unsigned int j=0 ; j<matVariableSpecs->size() ; ++j)
@@ -166,15 +173,12 @@ void PeridigmNS::Peridigm::initializeMaterials() {
 
   for(matIt = materials->begin() ; matIt != materials->end() ; matIt++){
     double dt = 0.0;
-    (*matIt)->initialize(*uOverlap,
-                         *vOverlap,
-                         dt,
+    (*matIt)->initialize(dt,
                          neighborhoodData->NumOwnedPoints(),
                          neighborhoodData->OwnedIDs(),
                          neighborhoodData->NeighborhoodList(),
                          bondData,
-                         *dataManager,
-                         *forceOverlap);
+                         *dataManager);
   }
 }
 
@@ -214,9 +218,6 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
   v = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));       // velocities
   a =  Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));      // accelerations
   force =  Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));  // force
-  uOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
-  vOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
-  forceOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
 
   // Create the importers
   oneDimensionalMapToOneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*oneDimensionalOverlapMap, *oneDimensionalMap));
@@ -345,9 +346,6 @@ void PeridigmNS::Peridigm::initializeContact() {
 
 void PeridigmNS::Peridigm::initializeWorkset() {
   workset = Teuchos::rcp(new PHAL::Workset);
-  workset->uOverlap = uOverlap;
-  workset->vOverlap = vOverlap;
-  workset->forceOverlap = forceOverlap;
   workset->contactForceOverlap = contactForceOverlap;
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   *timeStep = 0.0;
@@ -413,16 +411,10 @@ void PeridigmNS::Peridigm::execute() {
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   workset->timeStep = timeStep;
 
-  // pull data from global displacement and velocity vectors to local overlap vectors
-  uOverlap->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-  vOverlap->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-
-//   cout << "BEFORE" << endl;
-//   cout << *(workset->uOverlap) << endl;
-//   cout << *(workset->vOverlap) << endl;
-//   cout << *(workset->forceOverlap) << endl;
-//   //  cout << *(workset->contactForceOverlap) << endl;
-//   cout << *(workset->timeStep) << endl;
+  // Copy data from mothership vectors to overlap vectors in data manager
+  dataManager->getData(Field_NS::DISPL3D, Field_NS::FieldSpec::STEP_NP1)->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  dataManager->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->Import(*y, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_NP1)->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
 
   // evalModel() should be called by time integrator here...
   // For now, insert Verlet intergrator here
@@ -436,7 +428,8 @@ void PeridigmNS::Peridigm::execute() {
   double t_final   = verletPL->get("Final Time", 1.0);
   int nsteps = (int)floor((t_final-t_initial)/dt);
   // Pointer index into sub-vectors for use with BLAS
-  double *uptr, *yptr, *vptr, *aptr;
+  double *xptr, *uptr, *yptr, *vptr, *aptr;
+  x->ExtractView( &xptr );
   u->ExtractView( &uptr );
   y->ExtractView( &yptr );
   v->ExtractView( &vptr );
@@ -457,16 +450,21 @@ void PeridigmNS::Peridigm::execute() {
     //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
     blas.AXPY(length, dt2, aptr, vptr, 1, 1);
 
-    // Forward comm particle positions and velocities
-    uOverlap->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-    vOverlap->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+    // Y^{n+1}   = X_{o} + U^{n} + (dt)*V^{n+1/2}
+    // \todo Replace with blas call
+    for(int i=0 ; i<y->MyLength() ; ++i)
+      (*y)[i] = (*x)[i] + (*u)[i] + dt*(*v)[i];
+
+    // Copy data from mothership vectors to overlap vectors in data manager
+    dataManager->getData(Field_NS::DISPL3D, Field_NS::FieldSpec::STEP_NP1)->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
     dataManager->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->Import(*y, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+    dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_NP1)->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
 
     // Update forces based on new positions
     modelEvaluator->evalModel(workset);
 
     // Reverse comm particle forces
-    force->Export(*forceOverlap, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
+    force->Export(*dataManager->getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
 
     // fill the acceleration vector
     (*a) = (*force);
@@ -478,7 +476,6 @@ void PeridigmNS::Peridigm::execute() {
     // U^{n+1}   = U^{n} + (dt)*V^{n+1/2}
     //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
     blas.AXPY(length, dt, vptr, uptr, 1, 1);
-    blas.AXPY(length, dt, vptr, yptr, 1, 1);
 
     // V^{n+1}   = V^{n+1/2} + (dt/2)*A^{n+1}
     //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
@@ -501,11 +498,6 @@ void PeridigmNS::Peridigm::execute() {
     // swap state N and state NP1
     dataManager->updateState();
   }
-
-//   cout << "AFTER" << endl;
-//   cout << *(workset->uOverlap) << endl;
-//   cout << *(workset->vOverlap) << endl;
-//   cout << *(workset->forceOverlap) << endl;
 }
 
 void PeridigmNS::Peridigm::rebalance() {

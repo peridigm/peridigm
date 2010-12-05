@@ -61,27 +61,21 @@ namespace PeridigmNS {
 
 	//! Initialize the damage model.
 	virtual void
-	initialize(const Epetra_Vector& u,
-               const Epetra_Vector& v,
-               const double dt,
+	initialize(const double dt,
                const int numOwnedPoints,
                const int* ownedIDs,
                const int* neighborhoodList,
                double* bondState,
-               PeridigmNS::DataManager& dataManager,
-               Epetra_Vector& force) const {}
+               PeridigmNS::DataManager& dataManager) const {}
 
 	//! Evaluate the damage
 	virtual void
-	computeDamage(const Epetra_Vector& u,
-                  const Epetra_Vector& v,
-                  const double dt,
+	computeDamage(const double dt,
                   const int numOwnedPoints,
                   const int* ownedIDs,
                   const int* neighborhoodList,
                   double* bondState,
-                  PeridigmNS::DataManager& dataManager,
-                  Epetra_Vector& force) const = 0;
+                  PeridigmNS::DataManager& dataManager) const = 0;
 
   private:
 	
