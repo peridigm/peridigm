@@ -78,6 +78,7 @@ void testTwoPts()
 
   // set up a hard-coded layout for two points
   int numCells = 2;
+  int numBonds = 2;
 
   // set up overlap maps, which include ghosted nodes
   // in this case we're on a single processor, so these
@@ -98,6 +99,14 @@ void testTwoPts()
   elementSize = 3;
   Epetra_BlockMap threeDimensionalOverlapMap(numGlobalElements, numMyElements, myGlobalElements, elementSize, indexBase, comm); 
   delete[] myGlobalElements;
+  // bondMap
+  // used for bond damage and bond constitutive data
+  numGlobalElements = numBonds;
+  numMyElements = numGlobalElements;
+  myGlobalElements = new int[numMyElements];
+  elementSize = 1;
+  Epetra_BlockMap bondMap(numGlobalElements, numMyElements, myGlobalElements, elementSize, indexBase, comm); 
+  delete[] myGlobalElements;
 
   // create a linear elastic isotropic peridynamic solid  material model
   Teuchos::ParameterList params;
@@ -113,6 +122,7 @@ void testTwoPts()
   dataManager.setScalarMap(Teuchos::rcp(&oneDimensionalOverlapMap, false));
   dataManager.setVector2DMap(Teuchos::null);
   dataManager.setVector3DMap(Teuchos::rcp(&threeDimensionalOverlapMap, false));
+  dataManager.setBondMap(Teuchos::rcp(&bondMap, false));
   dataManager.allocateData(mat.VariableSpecs());
 
   // two-point discretization
@@ -141,7 +151,6 @@ void testTwoPts()
   neighborhoodList[1] = 1;
   neighborhoodList[2] = 1;
   neighborhoodList[3] = 0;
-  int numBonds = 2;
   double* bondData = new double[numBonds];
   bondData[0] = 0.0;
   bondData[1] = 0.0;
