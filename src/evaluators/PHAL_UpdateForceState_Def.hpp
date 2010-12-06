@@ -98,9 +98,6 @@ void UpdateForceState<EvalT, Traits>::evaluateFields(typename Traits::EvalData c
 
   PeridigmNS::DataManager& dataManager = *cellData.dataManager;
 
-  // \todo expand bondData to allow for an arbitrary number of bond data per bond
-  double* bondData = cellData.bondData.get();
-
   // handling of material models needs work!
   Teuchos::RCP<const PeridigmNS::Material> material = (*cellData.materials)[0];
 
@@ -108,7 +105,6 @@ void UpdateForceState<EvalT, Traits>::evaluateFields(typename Traits::EvalData c
 								   numOwnedPoints,
 								   ownedIDs,
 								   neighborhoodList,
-								   bondData,
                                    dataManager);
 
   // distribute constitutive data across processors here, if required

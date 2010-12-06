@@ -56,7 +56,6 @@ PeridigmNS::CriticalStretchDamageModel::initialize(const double dt,
                                                    const int numOwnedPoints,
                                                    const int* ownedIDs,
                                                    const int* neighborhoodList,
-                                                   double* bondState,
                                                    PeridigmNS::DataManager& dataManager) const
 {
 }
@@ -66,7 +65,6 @@ PeridigmNS::CriticalStretchDamageModel::computeDamage(const double dt,
                                                       const int numOwnedPoints,
                                                       const int* ownedIDs,
                                                       const int* neighborhoodList,
-                                                      double* bondState,
                                                       PeridigmNS::DataManager& dataManager) const
 {
   int vectorLength = dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->MyLength();

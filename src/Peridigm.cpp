@@ -57,16 +57,13 @@ using namespace std;
 
 PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
                    const Teuchos::RCP<Teuchos::ParameterList>& params)
-  : bondData(0),
-    computeContact(false),
+  : computeContact(false),
     contactSearchRadius(0.0),
     contactSearchFrequency(0)
 {
 
   peridigmComm = comm;
   peridigmParams = params;
-
-  bondData = NULL;
 
   out = Teuchos::VerboseObjectBase::getDefaultOStream();
 
@@ -177,7 +174,6 @@ void PeridigmNS::Peridigm::initializeMaterials() {
                          neighborhoodData->NumOwnedPoints(),
                          neighborhoodData->OwnedIDs(),
                          neighborhoodData->NeighborhoodList(),
-                         bondData,
                          *dataManager);
   }
 }
@@ -205,11 +201,6 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
   // bondConstitutiveDataMap
   // a non-overlapping map used for storing constitutive data on bonds
   bondMap = peridigmDisc->getBondMap();
-
-  // container for bond damage
-  bondData = new double[peridigmDisc->getNumBonds()];
-  for(unsigned int i=0; i<peridigmDisc->getNumBonds(); i++)
-    bondData[i] = 0.0;
 
   // Create x, u, y, v, a, and force vectors
   x = peridigmDisc->getInitialX();                                 // initial positions
@@ -353,7 +344,6 @@ void PeridigmNS::Peridigm::initializeWorkset() {
   workset->neighborhoodData = neighborhoodData;
   workset->contactNeighborhoodData = contactNeighborhoodData;
   workset->dataManager = dataManager;
-  workset->bondData = Teuchos::RCP<double>(bondData, false);
   workset->materials = materials;
   workset->contactModels = contactModels;
   workset->myPID = -1;

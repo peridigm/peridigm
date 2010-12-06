@@ -92,7 +92,6 @@ PeridigmNS::LinearElasticIsotropicMaterial::initialize(const double dt,
                                                        const int numOwnedPoints,
                                                        const int* ownedIDs,
                                                        const int* neighborhoodList,
-                                                       double* bondState,
                                                        PeridigmNS::DataManager& dataManager) const
 {
   // Extract pointers to the underlying data in the constitutiveData array
@@ -109,7 +108,6 @@ PeridigmNS::LinearElasticIsotropicMaterial::updateConstitutiveData(const double 
                                                                    const int numOwnedPoints,
                                                                    const int* ownedIDs,
                                                                    const int* neighborhoodList,
-                                                                   double* bondState,
                                                                    PeridigmNS::DataManager& dataManager) const
 {
   // Extract pointers to the underlying data in the constitutiveData array
@@ -122,13 +120,12 @@ PeridigmNS::LinearElasticIsotropicMaterial::updateConstitutiveData(const double 
   dataManager.getData(Field_NS::DAMAGE, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&damage);
   dataManager.getData(Field_NS::BOND_DAMAGE, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&bondDamage);
 
-  // Update the bondState
+  // Update the bond damgae
   if(!m_damageModel.is_null()){
     m_damageModel->computeDamage(dt,
                                  numOwnedPoints,
                                  ownedIDs,
                                  neighborhoodList,
-                                 bondState,
                                  dataManager);
   }
 
@@ -158,7 +155,6 @@ PeridigmNS::LinearElasticIsotropicMaterial::computeForce(const double dt,
                                                          const int numOwnedPoints,
                                                          const int* ownedIDs,
                                                          const int* neighborhoodList,
-                                                         double* bondState,
                                                          PeridigmNS::DataManager& dataManager) const
 {
   // Zero out the forces

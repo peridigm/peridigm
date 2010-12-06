@@ -69,7 +69,6 @@ void PeridigmNS::IsotropicElasticPlasticMaterial::initialize(const double dt,
                                                              const int numOwnedPoints,
                                                              const int* ownedIDs,
                                                              const int* neighborhoodList,
-                                                             double* bondState,
                                                              PeridigmNS::DataManager& dataManager) const
 {
 	  // Extract pointers to the underlying data
@@ -86,7 +85,6 @@ PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const double
                                                                     const int numOwnedPoints,
                                                                     const int* ownedIDs,
                                                                     const int* neighborhoodList,
-                                                                    double* bondState,
                                                                     PeridigmNS::DataManager& dataManager) const
 {
   // Extract pointers to the underlying data in the constitutiveData array
@@ -99,13 +97,12 @@ PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const double
   dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
   dataManager.getData(Field_NS::BOND_DAMAGE, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&bondDamage);
 
-	// Update the bondState
+	// Update the bond damage
 	if(!m_damageModel.is_null()){
 		m_damageModel->computeDamage(dt,
                                      numOwnedPoints,
                                      ownedIDs,
                                      neighborhoodList,
-                                     bondState,
                                      dataManager);
 	}
 
@@ -135,41 +132,25 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const double dt,
                                                           const int numOwnedPoints,
                                                           const int* ownedIDs,
                                                           const int* neighborhoodList,
-                                                          double* bondState,
                                                           PeridigmNS::DataManager& dataManager) const
 {
-      // Zero out the force
-      dataManager.getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1)->PutScalar(0.0);
-
+ 
 	  // Extract pointers to the underlying data in the constitutiveData array
-      double *x, *y;
+      double *x, *y, *volume, *dilatation, *weightedVolume, *bondDamage, *edpN, *edpNP1, *lambdaN, *lambdaNP1, *force;
       dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&x);
       dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&y);
-
-      double* dilatation;
+      dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&volume);
       dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dilatation);
-
-	  double* edpN;
-	  double* edpNP1;
+	  dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
+      dataManager.getData(Field_NS::BOND_DAMAGE, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&bondDamage);
 	  dataManager.getData(Field_NS::DEVIATORIC_PLASTIC_EXTENSION, Field_NS::FieldSpec::STEP_N)->ExtractView(&edpN);
 	  dataManager.getData(Field_NS::DEVIATORIC_PLASTIC_EXTENSION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&edpNP1);
-
-	  double* weightedVolume;
-	  dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
-
-      double *volume;
-      dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&volume);
-
-      double *bondDamage;
-      dataManager.getData(Field_NS::BOND_DAMAGE, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&bondDamage);
-
-	  double* lambdaN;
-	  double* lambdaNP1;
 	  dataManager.getData(Field_NS::LAMBDA, Field_NS::FieldSpec::STEP_N)->ExtractView(&lambdaN);
 	  dataManager.getData(Field_NS::LAMBDA, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&lambdaNP1);
-      
-      double* force;
       dataManager.getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&force);
+
+      // Zero out the force
+      dataManager.getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1)->PutScalar(0.0);
 
 	  PdMaterialUtilities::computeInternalForceIsotropicElasticPlastic
         (x,

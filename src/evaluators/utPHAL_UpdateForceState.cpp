@@ -151,15 +151,11 @@ void testTwoPts()
   neighborhoodList[1] = 1;
   neighborhoodList[2] = 1;
   neighborhoodList[3] = 0;
-  double* bondData = new double[numBonds];
-  bondData[0] = 0.0;
-  bondData[1] = 0.0;
 
   // create a workset with rcps to the relevant data
   PHAL::Workset workset;
   workset.timeStep = Teuchos::RCP<double>(&dt, false);
   workset.neighborhoodData = Teuchos::RCP<PeridigmNS::NeighborhoodData>(&neighborhoodData, false);
-  workset.bondData = Teuchos::RCP<double>(bondData, false);
   workset.dataManager = Teuchos::RCP<PeridigmNS::DataManager>(&dataManager, false);
   workset.materials = Teuchos::rcp(new std::vector< Teuchos::RCP<const PeridigmNS::Material> >());
   workset.materials->push_back(Teuchos::rcp(&mat, false));
@@ -202,8 +198,6 @@ void testTwoPts()
   // assert the dilatations
   BOOST_CHECK_CLOSE(dilatation[0], 3.0, 1.0e-15);
   BOOST_CHECK_CLOSE(dilatation[1], 3.0, 1.0e-15);
-
-  delete[] bondData;
 }
 
 bool init_unit_test_suite()

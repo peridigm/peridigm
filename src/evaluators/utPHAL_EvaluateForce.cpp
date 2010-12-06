@@ -132,9 +132,6 @@ void testTwoPts()
   neighborhoodList[1] = 1;
   neighborhoodList[2] = 1;
   neighborhoodList[3] = 0;
-  double* bondData = new double[numBonds];
-  bondData[0] = 0.0;
-  bondData[1] = 0.0;
 
   // create the material manager
   PeridigmNS::DataManager dataManager;
@@ -159,7 +156,6 @@ void testTwoPts()
   workset.timeStep = Teuchos::RCP<double>(&dt, false);
   workset.neighborhoodData = Teuchos::RCP<PeridigmNS::NeighborhoodData>(&neighborhoodData, false);
   workset.dataManager = Teuchos::RCP<PeridigmNS::DataManager>(&dataManager, false);
-  workset.bondData = Teuchos::RCP<double>(bondData, false);
   workset.materials = Teuchos::rcp(new std::vector< Teuchos::RCP<const PeridigmNS::Material> >());
   workset.materials->push_back(Teuchos::rcp(&mat, false));
   workset.myPID = comm.MyPID();
@@ -207,10 +203,6 @@ void testTwoPts()
   BOOST_CHECK_SMALL(node1ForceY, 1.0e-14);
   double node1ForceZ = force[5];
   BOOST_CHECK_SMALL(node1ForceZ, 1.0e-14);
-
-  //  params.set("Density", 7800.0);
-
-  delete[] bondData;
 }
 
 bool init_unit_test_suite()

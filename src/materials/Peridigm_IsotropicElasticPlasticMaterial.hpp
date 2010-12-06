@@ -61,7 +61,6 @@ namespace PeridigmNS {
                const int numOwnedPoints,
                const int* ownedIDs,
                const int* neighborhoodList,
-               double* bondState,
                PeridigmNS::DataManager& dataManager) const;
 
 	//! Computes the dilatation.
@@ -70,7 +69,6 @@ namespace PeridigmNS {
 						   const int numOwnedPoints,
 						   const int* ownedIDs,
 						   const int* neighborhoodList,
-						   double* bondState,
                            PeridigmNS::DataManager& dataManager) const;
 
 	//! Evaluate the forces on the cells.
@@ -79,7 +77,6 @@ namespace PeridigmNS {
 				 const int numOwnedPoints,
 				 const int* ownedIDs,
 				 const int* neighborhoodList,
-				 double* bondState,
                  PeridigmNS::DataManager& dataManager) const;
 
   protected:

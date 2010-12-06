@@ -70,7 +70,6 @@ namespace PeridigmNS {
                const int numOwnedPoints,
                const int* ownedIDs,
                const int* neighborhoodList,
-               double* bondState,
                PeridigmNS::DataManager& dataManager) const {}
 
 	//! Update the constitutive data based on the current configuration.
@@ -79,7 +78,6 @@ namespace PeridigmNS {
 						   const int numOwnedPoints,
 						   const int* ownedIDs,
 						   const int* neighborhoodList,
-						   double* bondState,
                            PeridigmNS::DataManager& dataManager) const = 0;
 
 	//! Evaluate the forces on the cells
@@ -88,7 +86,6 @@ namespace PeridigmNS {
 				 const int numOwnedPoints,
 				 const int* ownedIDs,
 				 const int* neighborhoodList,
-				 double* bondState,
                  PeridigmNS::DataManager& dataManager) const = 0;
 
   private:
