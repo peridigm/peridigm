@@ -68,6 +68,7 @@ void testTwoPts()
   Epetra_SerialComm comm;
   Epetra_Map nodeMap(2, 0, comm);
   Epetra_Map unknownMap(6, 0, comm);
+  Epetra_Map bondMap(2, 0, comm);
   double dt = 1.0;
   int numOwnedPoints;
   int* ownedIDs;
@@ -75,11 +76,23 @@ void testTwoPts()
   double* bondState;
   // \todo check field specs
 
+  // set up discretization
+  numOwnedPoints = 2;
+  ownedIDs = new int[numOwnedPoints];
+  ownedIDs[0] = 0;
+  ownedIDs[1] = 1;
+  neighborhoodList = new int[4];
+  neighborhoodList[0] = 1;
+  neighborhoodList[1] = 1;
+  neighborhoodList[2] = 1;
+  neighborhoodList[3] = 0;
+
   // create the material manager
   PeridigmNS::DataManager dataManager;
   dataManager.setScalarMap(Teuchos::rcp(&nodeMap, false));
   dataManager.setVector2DMap(Teuchos::null);
   dataManager.setVector3DMap(Teuchos::rcp(&unknownMap, false));
+  dataManager.setBondMap(Teuchos::rcp(&bondMap, false));
   dataManager.allocateData(mat.VariableSpecs());
 
   Epetra_Vector& x = *dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE);
@@ -94,26 +107,10 @@ void testTwoPts()
 	cellVolume[i] = 1.0;
   }
 
-  numOwnedPoints = 2;
-  ownedIDs = new int[numOwnedPoints];
-  ownedIDs[0] = 0;
-  ownedIDs[1] = 1;
-  neighborhoodList = new int[4];
-  neighborhoodList[0] = 1;
-  neighborhoodList[1] = 1;
-  neighborhoodList[2] = 1;
-  neighborhoodList[3] = 0;
   int numBonds = 2;
   bondState = new double[numBonds];
   bondState[0] = 0.0;
   bondState[1] = 0.0;
-  // bondMap
-  // used for storing constitutive data on bonds
-  int numGlobalElements = -1;
-  int numMyElements = numBonds;
-  int indexBase = 0;
-  Epetra_Map bondMap(numGlobalElements, numMyElements, indexBase, comm);
-  Epetra_MultiVector bondConstitutiveData(bondMap, 1); // this will go!
 
   mat.initialize(dt, 
                  numOwnedPoints,
@@ -147,9 +144,9 @@ void testTwoPts()
   Epetra_Vector& dilatation = *dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1);
   BOOST_CHECK_CLOSE(dilatation[0], 3.0, 1.0e-15);
   BOOST_CHECK_CLOSE(dilatation[1], 3.0, 1.0e-15);
-  double bondDatum = bondConstitutiveData[0][0];
+  double bondDatum = bondState[0];
   BOOST_CHECK_SMALL(bondDatum, 1.0e-15);
-  bondDatum = bondConstitutiveData[0][1];
+  bondDatum = bondState[1];
   BOOST_CHECK_SMALL(bondDatum, 1.0e-15);
 
   mat.computeForce(dt, 
@@ -186,17 +183,47 @@ void testEightPts()
   Epetra_SerialComm comm;
   Epetra_Map nodeMap(8, 0, comm);
   Epetra_Map unknownMap(24, 0, comm);
+  Epetra_Map bondMap(56, 0, comm); // total number of bonds = 8(7) = 56
   double dt = 1.0;
   int numOwnedPoints;
   int* ownedIDs;
   int* neighborhoodList;
   double* bondState;
 
+  // set up discretization
+  // all cells are neighbors of each other
+  numOwnedPoints = 8;
+  ownedIDs = new int[numOwnedPoints];
+  for(int i=0 ; i<numOwnedPoints; ++i){
+	ownedIDs[i] = i;
+  }
+  // the neighborhood list has the format
+  // numNeighborsNode1 nID1 nID2 ... nIDn numNeighborsNode2 nID1 nID2 ... nIDn ...
+  // there are 8 cells, each has 7 neighbors
+  // total length of neighborhoodList = 8(1+7) = 64
+  neighborhoodList = new int[64];
+  int neighborhoodListIndex = 0;
+  for(int i=0 ; i<numOwnedPoints; ++i){
+	neighborhoodList[neighborhoodListIndex++] = 7;
+	for(int j=0 ; j<8 ; ++j){
+	  if(i != j){
+		neighborhoodList[neighborhoodListIndex++] = j;
+	  }
+	}
+  }
+
+  int numBonds = 56;
+  bondState = new double[numBonds];
+  for(int i=0 ; i<numBonds ; ++i){
+	bondState[0] = 0.0;
+  }
+
   // create the material manager
   PeridigmNS::DataManager dataManager;
   dataManager.setScalarMap(Teuchos::rcp(&nodeMap, false));
   dataManager.setVector2DMap(Teuchos::null);
   dataManager.setVector3DMap(Teuchos::rcp(&unknownMap, false));
+  dataManager.setBondMap(Teuchos::rcp(&bondMap, false));
   dataManager.allocateData(mat.VariableSpecs());
 
   Epetra_Vector& x = *dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE);
@@ -227,40 +254,6 @@ void testEightPts()
   for(int i=0; i<cellVolume.MyLength(); ++i){
 	cellVolume[i] = 1.0;
   }
-
-  // all cellss are neighbors of each other
-  numOwnedPoints = 8;
-  ownedIDs = new int[numOwnedPoints];
-  for(int i=0 ; i<numOwnedPoints; ++i){
-	ownedIDs[i] = i;
-  }
-  // the neighborhood list has the format
-  // numNeighborsNode1 nID1 nID2 ... nIDn numNeighborsNode2 nID1 nID2 ... nIDn ...
-  // there are 8 cells, each has 7 neighbors
-  // total length of neighborhoodList = 8(1+7) = 64
-  neighborhoodList = new int[64];
-  int neighborhoodListIndex = 0;
-  for(int i=0 ; i<numOwnedPoints; ++i){
-	neighborhoodList[neighborhoodListIndex++] = 7;
-	for(int j=0 ; j<8 ; ++j){
-	  if(i != j){
-		neighborhoodList[neighborhoodListIndex++] = j;
-	  }
-	}
-  }
-  // total number of bonds = 8(7) = 56
-  int numBonds = 56;
-  bondState = new double[numBonds];
-  for(int i=0 ; i<numBonds ; ++i){
-	bondState[0] = 0.0;
-  }
-  // bondMap
-  // used for storing constitutive data on bonds
-  int numGlobalElements = -1;
-  int numMyElements = numBonds;
-  int indexBase = 0;
-  Epetra_Map bondMap(numGlobalElements, numMyElements, indexBase, comm);
-  Epetra_MultiVector bondConstitutiveData(bondMap, 1); // this will go!
 
   mat.initialize(dt, 
                  numOwnedPoints,
@@ -335,10 +328,9 @@ void testEightPts()
 	BOOST_CHECK_CLOSE(dilatation[i], -0.01991593994643333, 1.0e-12);
   }
 
-  // the bond constitutive data should be all zeros (not
-  // used by this material model)
+  // the bond state should be all zeros (no damage)
   for(int i=0 ; i<numBonds ; ++i){
-      BOOST_CHECK_SMALL(bondConstitutiveData[0][i], 1.0e-15);
+      BOOST_CHECK_SMALL(bondState[i], 1.0e-15);
   }
 
   mat.computeForce(dt, 
@@ -462,17 +454,41 @@ void testThreePts()
   Epetra_SerialComm comm;
   Epetra_Map nodeMap(3, 0, comm);
   Epetra_Map unknownMap(9, 0, comm);
+  Epetra_Map bondMap(6, 0, comm);
   double dt = 1.0;
   int numOwnedPoints;
   int* ownedIDs;
   int* neighborhoodList;
   double* bondState;
 
+  // set up discretization
+  // all cells are neighbors of each other
+  numOwnedPoints = 3;
+  ownedIDs = new int[numOwnedPoints];
+  for(int i=0 ; i<numOwnedPoints; ++i){
+	ownedIDs[i] = i;
+  }
+  // the neighborhood list has the format
+  // numNeighborsNode1 nID1 nID2 ... nIDn numNeighborsNode2 nID1 nID2 ... nIDn ...
+  // there are 3 cells, each has 2 neighbors
+  // total length of neighborhoodList = 3(1+2) = 9
+  neighborhoodList = new int[9];
+  int neighborhoodListIndex = 0;
+  for(int i=0 ; i<numOwnedPoints; ++i){
+	neighborhoodList[neighborhoodListIndex++] = 2;
+	for(int j=0 ; j<3 ; ++j){
+	  if(i != j){
+		neighborhoodList[neighborhoodListIndex++] = j;
+	  }
+	}
+  }
+
   // create the material manager
   PeridigmNS::DataManager dataManager;
   dataManager.setScalarMap(Teuchos::rcp(&nodeMap, false));
   dataManager.setVector2DMap(Teuchos::null);
   dataManager.setVector3DMap(Teuchos::rcp(&unknownMap, false));
+  dataManager.setBondMap(Teuchos::rcp(&bondMap, false));
   dataManager.allocateData(mat.VariableSpecs());
 
   Epetra_Vector& x = *dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE);
@@ -494,39 +510,13 @@ void testThreePts()
   cellVolume[1] = 1.1;
   cellVolume[2] = 0.8;
 
-  // all cells are neighbors of each other
-  numOwnedPoints = 3;
-  ownedIDs = new int[numOwnedPoints];
-  for(int i=0 ; i<numOwnedPoints; ++i){
-	ownedIDs[i] = i;
-  }
-  // the neighborhood list has the format
-  // numNeighborsNode1 nID1 nID2 ... nIDn numNeighborsNode2 nID1 nID2 ... nIDn ...
-  // there are 3 cells, each has 2 neighbors
-  // total length of neighborhoodList = 3(1+2) = 9
-  neighborhoodList = new int[9];
-  int neighborhoodListIndex = 0;
-  for(int i=0 ; i<numOwnedPoints; ++i){
-	neighborhoodList[neighborhoodListIndex++] = 2;
-	for(int j=0 ; j<3 ; ++j){
-	  if(i != j){
-		neighborhoodList[neighborhoodListIndex++] = j;
-	  }
-	}
-  }
+
   // total number of bonds = 3(2) = 6
   int numBonds = 6;
   bondState = new double[numBonds];
   for(int i=0 ; i<numBonds ; ++i){
 	bondState[0] = 0.0;
   }
-  // bondMap
-  // used for storing constitutive data on bonds
-  int numGlobalElements = -1;
-  int numMyElements = numBonds;
-  int indexBase = 0;
-  Epetra_Map bondMap(numGlobalElements, numMyElements, indexBase, comm);
-  Epetra_MultiVector bondConstitutiveData(bondMap, 1); // this will go!
 
   mat.initialize(dt, 
                  numOwnedPoints,
@@ -573,10 +563,9 @@ void testThreePts()
   BOOST_CHECK_CLOSE(weightedVolume[2], 20.497599999999963, 1.0e-12);
   BOOST_CHECK_CLOSE(dilatation[2], -0.12166177890553, 1.0e-11);
 
-  // the bond constitutive data should be all zeros (not
-  // used by this material model)
+  // the bond state should be all zeros (no damage)
   for(int i=0 ; i<numBonds ; ++i){
-      BOOST_CHECK_SMALL(bondConstitutiveData[0][i], 1.0e-15);
+      BOOST_CHECK_SMALL(bondState[i], 1.0e-15);
   }
 
   mat.computeForce(dt, 

@@ -57,7 +57,6 @@ const FieldSpec WEIGHTED_VOLUME(FieldSpec::WEIGHTED_VOLUME,     FieldSpec::SCALA
 const FieldSpec DILATATION(FieldSpec::DILATATION,               FieldSpec::SCALAR, FieldSpec::STATEFUL,  "Dilatation");
 const FieldSpec NUM_NEIGHBORS(FieldSpec::NUM_NEIGHBORS,         FieldSpec::SCALAR, FieldSpec::STATELESS, "Num_Neighbors");
 const FieldSpec LAMBDA(FieldSpec::PLASTIC_CONSISTENCY,          FieldSpec::SCALAR, FieldSpec::STATEFUL,  "Lambda");
-const FieldSpec DEVIATORIC_PLASTIC_EXTENSION(FieldSpec::E_DP,   FieldSpec::BOND,   FieldSpec::STATEFUL,  "Deviatoric_Plastic_Extension");
 
 // Vector FieldSpecs
 const FieldSpec COORD3D(FieldSpec::COORDINATES,            FieldSpec::VECTOR3D, FieldSpec::STATELESS, "Coordinates");
@@ -69,7 +68,8 @@ const FieldSpec FORCE3D(FieldSpec::FORCE,                  FieldSpec::VECTOR3D, 
 const FieldSpec FORCE_DENSITY3D(FieldSpec::FORCE_DENSITY,  FieldSpec::VECTOR3D, FieldSpec::STATEFUL,  "Force Density");
 
 // Bond FieldSpecs
-const FieldSpec BOND_DAMAGE(FieldSpec::BOND_DAMAGE, FieldSpec::BOND, FieldSpec::STATEFUL, "Bond_Damage");
+const FieldSpec BOND_DAMAGE(FieldSpec::BOND_DAMAGE,           FieldSpec::BOND, FieldSpec::STATEFUL, "Bond_Damage");
+const FieldSpec DEVIATORIC_PLASTIC_EXTENSION(FieldSpec::E_DP, FieldSpec::BOND, FieldSpec::STATEFUL, "Deviatoric_Plastic_Extension");
 
 template<typename T>
 class Field : public FieldSpec {

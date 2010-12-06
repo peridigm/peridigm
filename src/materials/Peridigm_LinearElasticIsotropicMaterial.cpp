@@ -56,6 +56,7 @@ PeridigmNS::LinearElasticIsotropicMaterial::LinearElasticIsotropicMaterial(const
   m_variableSpecs->push_back(Field_NS::COORD3D);
   m_variableSpecs->push_back(Field_NS::CURCOORD3D);
   m_variableSpecs->push_back(Field_NS::FORCE3D);
+  m_variableSpecs->push_back(Field_NS::BOND_DAMAGE);
 
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > damageModelVariableSpecs;
   if(params.isSublist("Damage Model")){

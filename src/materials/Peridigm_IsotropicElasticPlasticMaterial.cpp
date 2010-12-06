@@ -56,7 +56,7 @@ m_damageModel()
     m_variableSpecs->push_back(Field_NS::FORCE3D);
     m_variableSpecs->push_back(Field_NS::DEVIATORIC_PLASTIC_EXTENSION);
     m_variableSpecs->push_back(Field_NS::LAMBDA);
-
+    m_variableSpecs->push_back(Field_NS::BOND_DAMAGE);
 }
 
 
