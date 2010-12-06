@@ -53,7 +53,7 @@ if __name__ == "__main__":
         result = return_code
 
     # run Dakota
-    command = ["/home/mlparks/Apps/Dakota/src/dakota -in dakota_peridigm.in > dakota_output.txt"]
+    command = ["dakota -in dakota_peridigm.in > dakota_output.txt"]
     p = Popen(command, stdout=logfile, stderr=logfile, shell=True)
     return_code = p.wait()
     print return_code
