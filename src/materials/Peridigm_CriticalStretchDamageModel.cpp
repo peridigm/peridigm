@@ -70,15 +70,16 @@ PeridigmNS::CriticalStretchDamageModel::computeDamage(const double dt,
                                                       PeridigmNS::DataManager& dataManager) const
 {
   int vectorLength = dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->MyLength();
-  double *x, *y;
+  double *x, *y, *bondDamage;
   dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&x);
   dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&y);
+  dataManager.getData(Field_NS::BOND_DAMAGE, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&bondDamage);
 
-  // Update the bondState
+  // Update the bond damage
   // Break bonds if the extension is greater than the critical extension
   double trialDamage = 0.0;
   int neighborhoodListIndex = 0;
-  int bondStateIndex = 0;
+  int bondIndex = 0;
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
 	int nodeID = ownedIDs[iID];
 	TEST_FOR_EXCEPT_MSG(nodeID*3+2 >= vectorLength, "Invalid neighbor list / x vector\n");
@@ -103,10 +104,10 @@ PeridigmNS::CriticalStretchDamageModel::computeDamage(const double dt,
 	  trialDamage = 0.0;
 	  if(relativeExtension > m_criticalStretch)
 		trialDamage = 1.0;
-	  if(trialDamage > bondState[bondStateIndex]){
-		bondState[bondStateIndex] = trialDamage;
+	  if(trialDamage > bondDamage[bondIndex]){
+		bondDamage[bondIndex] = trialDamage;
       }
-	  bondStateIndex += 1;
+	  bondIndex += 1;
 	}
   }
 }

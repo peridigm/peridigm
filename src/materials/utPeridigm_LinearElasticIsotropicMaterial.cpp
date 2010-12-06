@@ -144,10 +144,9 @@ void testTwoPts()
   Epetra_Vector& dilatation = *dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1);
   BOOST_CHECK_CLOSE(dilatation[0], 3.0, 1.0e-15);
   BOOST_CHECK_CLOSE(dilatation[1], 3.0, 1.0e-15);
-  double bondDatum = bondState[0];
-  BOOST_CHECK_SMALL(bondDatum, 1.0e-15);
-  bondDatum = bondState[1];
-  BOOST_CHECK_SMALL(bondDatum, 1.0e-15);
+  Epetra_Vector& bondDamage = *dataManager.getData(Field_NS::BOND_DAMAGE, Field_NS::FieldSpec::STEP_NP1);
+  BOOST_CHECK_SMALL(bondDamage[0], 1.0e-15);
+  BOOST_CHECK_SMALL(bondDamage[1], 1.0e-15);
 
   mat.computeForce(dt, 
 				   numOwnedPoints,
@@ -323,6 +322,7 @@ void testEightPts()
   // same for all points in this test problem
   Epetra_Vector& weightedVolume = *dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE);
   Epetra_Vector& dilatation = *dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1);
+  Epetra_Vector& bondDamage = *dataManager.getData(Field_NS::BOND_DAMAGE, Field_NS::FieldSpec::STEP_NP1);
   for(int i=0; i<8; ++i){
 	BOOST_CHECK_CLOSE(weightedVolume[i], 12.0, 1.0e-12);
 	BOOST_CHECK_CLOSE(dilatation[i], -0.01991593994643333, 1.0e-12);
@@ -330,7 +330,7 @@ void testEightPts()
 
   // the bond state should be all zeros (no damage)
   for(int i=0 ; i<numBonds ; ++i){
-      BOOST_CHECK_SMALL(bondState[i], 1.0e-15);
+      BOOST_CHECK_SMALL(bondDamage[i], 1.0e-15);
   }
 
   mat.computeForce(dt, 
@@ -556,6 +556,7 @@ void testThreePts()
   // against hand calculations
   Epetra_Vector& weightedVolume = *dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE);
   Epetra_Vector& dilatation = *dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1);
+  Epetra_Vector& bondDamage = *dataManager.getData(Field_NS::BOND_DAMAGE, Field_NS::FieldSpec::STEP_NP1);
   BOOST_CHECK_CLOSE(weightedVolume[0], 23.016479999999931, 1.0e-12);
   BOOST_CHECK_CLOSE(dilatation[0], -0.114127034572639, 1.0e-11);
   BOOST_CHECK_CLOSE(weightedVolume[1],18.64767999999997, 1.0e-12);
@@ -565,7 +566,7 @@ void testThreePts()
 
   // the bond state should be all zeros (no damage)
   for(int i=0 ; i<numBonds ; ++i){
-      BOOST_CHECK_SMALL(bondState[i], 1.0e-15);
+      BOOST_CHECK_SMALL(bondDamage[i], 1.0e-15);
   }
 
   mat.computeForce(dt, 

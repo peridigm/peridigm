@@ -72,17 +72,6 @@ void PeridigmNS::IsotropicElasticPlasticMaterial::initialize(const double dt,
                                                              double* bondState,
                                                              PeridigmNS::DataManager& dataManager) const
 {
-	  // Initialize data fields
-	  int neighborhoodListIndex = 0;
-	  int bondStateIndex = 0;
-	  for(int iID=0 ; iID<numOwnedPoints ; ++iID){
-		int numNeighbors = neighborhoodList[neighborhoodListIndex++];
-		for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
-		  bondState[bondStateIndex++] = 0.0;
-	      neighborhoodListIndex++;
-	    }
-	  }
-
 	  // Extract pointers to the underlying data
       double *x, *cellVolume, *weightedVolume;
       dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&x);
@@ -101,13 +90,14 @@ PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const double
                                                                     PeridigmNS::DataManager& dataManager) const
 {
   // Extract pointers to the underlying data in the constitutiveData array
-  double *x, *y, *volume, *dilatation, *damage, *weightedVolume;
+  double *x, *y, *volume, *dilatation, *damage, *weightedVolume, *bondDamage;
   dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&x);
   dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&y);
   dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&volume);
   dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dilatation);
   dataManager.getData(Field_NS::DAMAGE, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&damage);
   dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
+  dataManager.getData(Field_NS::BOND_DAMAGE, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&bondDamage);
 
 	// Update the bondState
 	if(!m_damageModel.is_null()){
@@ -121,14 +111,14 @@ PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const double
 
 	//  Update the element damage (percent of bonds broken)
 	int neighborhoodListIndex = 0;
-	int bondStateIndex = 0;
+	int bondIndex = 0;
 	for(int iID=0 ; iID<numOwnedPoints ; ++iID){
 		int nodeID = ownedIDs[iID];
 		int numNeighbors = neighborhoodList[neighborhoodListIndex++];
 		neighborhoodListIndex += numNeighbors;
 		double totalDamage = 0.0;
 		for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
-			totalDamage += bondState[bondStateIndex++];
+			totalDamage += bondDamage[bondIndex++];
 		}
 		if(numNeighbors > 0)
 			totalDamage /= numNeighbors;
@@ -137,7 +127,7 @@ PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const double
 		damage[nodeID] = totalDamage;
 	}
 
-	PdMaterialUtilities::computeDilatation(x,y,weightedVolume,volume,bondState,dilatation,neighborhoodList,numOwnedPoints);
+	PdMaterialUtilities::computeDilatation(x,y,weightedVolume,volume,bondDamage,dilatation,neighborhoodList,numOwnedPoints);
 }
 
 void
@@ -170,6 +160,9 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const double dt,
       double *volume;
       dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&volume);
 
+      double *bondDamage;
+      dataManager.getData(Field_NS::BOND_DAMAGE, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&bondDamage);
+
 	  double* lambdaN;
 	  double* lambdaNP1;
 	  dataManager.getData(Field_NS::LAMBDA, Field_NS::FieldSpec::STEP_N)->ExtractView(&lambdaN);
@@ -184,7 +177,7 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const double dt,
          weightedVolume,
          volume,
          dilatation,
-         bondState,
+         bondDamage,
          edpN,
          edpNP1,
          lambdaN,
