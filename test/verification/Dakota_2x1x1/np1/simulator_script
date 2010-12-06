@@ -15,7 +15,7 @@ dprepro $1 peridigm.template.xml peridigm.xml
 # ANALYSIS
 # --------
 
-/home/mlparks/Peridigm/RELEASE/src/Peridigm peridigm.xml
+Peridigm peridigm.xml
 
 # ---------------
 # POST-PROCESSING
