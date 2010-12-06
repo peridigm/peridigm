@@ -45,30 +45,35 @@ if __name__ == "__main__":
         os.remove(file)
 
     # Setup soft link to Peridigm executable so that simulation driver script can find it
-    command = ["ln -s ../../../../src/Peridigm ."]
+    command = ["ln -f -s ../../../../src/Peridigm ."]
     p = Popen(command, stdout=logfile, stderr=logfile, shell=True)
     return_code = p.wait()
+    print return_code
     if return_code != 0:
         result = return_code
 
     # run Dakota
-    command = ["dakota -in dakota_peridigm.in > dakota_output.txt"]
+    command = ["/home/mlparks/Apps/Dakota/src/dakota -in dakota_peridigm.in > dakota_output.txt"]
     p = Popen(command, stdout=logfile, stderr=logfile, shell=True)
     return_code = p.wait()
+    print return_code
     if return_code != 0:
         result = return_code
 
     # Create results file to parse
     command = ["grep -A 1 -i \"<<<<< Best parameters\" dakota_output.txt | tail -n 1 | sed 's/^[ \t]*//' | cut -d\" \" -f1 > Dakota_2x1x1.dat"]
     p = Popen(command, stdout=logfile, stderr=logfile, shell=True)
+    print return_code
     return_code = p.wait()
     if return_code != 0:
         result = return_code
 
     # compare output files against gold files
     command = ["diff "+base_name+".dat "+"../"+base_name+"_gold.dat"]
+    print command
     p = Popen(command, stdout=logfile, stderr=logfile, shell=True)
     return_code = p.wait()
+    print return_code
     if return_code != 0:
         result = return_code
 
