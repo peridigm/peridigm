@@ -73,7 +73,6 @@ void testTwoPts()
   int numOwnedPoints;
   int* ownedIDs;
   int* neighborhoodList;
-  double* bondState;
   // \todo check field specs
 
   // set up discretization
@@ -107,23 +106,16 @@ void testTwoPts()
 	cellVolume[i] = 1.0;
   }
 
-  int numBonds = 2;
-  bondState = new double[numBonds];
-  bondState[0] = 0.0;
-  bondState[1] = 0.0;
-
   mat.initialize(dt, 
                  numOwnedPoints,
                  ownedIDs,
                  neighborhoodList,
-                 bondState,
                  dataManager);
 
   mat.updateConstitutiveData(dt, 
 							 numOwnedPoints,
 							 ownedIDs,
 							 neighborhoodList,
-							 bondState,
                              dataManager);
 
   double currentPositionX1 = y[0];
@@ -152,7 +144,6 @@ void testTwoPts()
 				   numOwnedPoints,
 				   ownedIDs,
 				   neighborhoodList,
-				   bondState,
                    dataManager);
 
   Epetra_Vector& force = *dataManager.getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1);
@@ -165,7 +156,6 @@ void testTwoPts()
 
   delete[] ownedIDs;
   delete[] neighborhoodList;
-  delete[] bondState;
 }
 
 //! Tests eight-cell block under compression against hand calculations.
@@ -187,7 +177,6 @@ void testEightPts()
   int numOwnedPoints;
   int* ownedIDs;
   int* neighborhoodList;
-  double* bondState;
 
   // set up discretization
   // all cells are neighbors of each other
@@ -209,12 +198,6 @@ void testEightPts()
 		neighborhoodList[neighborhoodListIndex++] = j;
 	  }
 	}
-  }
-
-  int numBonds = 56;
-  bondState = new double[numBonds];
-  for(int i=0 ; i<numBonds ; ++i){
-	bondState[0] = 0.0;
   }
 
   // create the material manager
@@ -258,14 +241,12 @@ void testEightPts()
                  numOwnedPoints,
                  ownedIDs,
                  neighborhoodList,
-                 bondState,
                  dataManager);
 
   mat.updateConstitutiveData(dt, 
 							 numOwnedPoints,
 							 ownedIDs,
 							 neighborhoodList,
-							 bondState,
                              dataManager);
 
   double currentPosition;
@@ -328,8 +309,8 @@ void testEightPts()
 	BOOST_CHECK_CLOSE(dilatation[i], -0.01991593994643333, 1.0e-12);
   }
 
-  // the bond state should be all zeros (no damage)
-  for(int i=0 ; i<numBonds ; ++i){
+  // the bond damage should be all zeros (no damage)
+  for(int i=0 ; i<bondDamage.MyLength() ; ++i){
       BOOST_CHECK_SMALL(bondDamage[i], 1.0e-15);
   }
 
@@ -337,7 +318,6 @@ void testEightPts()
 				   numOwnedPoints,
 				   ownedIDs,
 				   neighborhoodList,
-				   bondState,
                    dataManager);
 
   // all the cells experience the same force magnitude, but
@@ -437,7 +417,6 @@ void testEightPts()
 
   delete[] ownedIDs;
   delete[] neighborhoodList;
-  delete[] bondState;
 }
 
 //! Tests arbitrary three-cell system under arbitrary deformation against hand calculations.
@@ -454,12 +433,11 @@ void testThreePts()
   Epetra_SerialComm comm;
   Epetra_Map nodeMap(3, 0, comm);
   Epetra_Map unknownMap(9, 0, comm);
-  Epetra_Map bondMap(6, 0, comm);
+  Epetra_Map bondMap(6, 0, comm);    // total number of bonds = 3(2) = 6
   double dt = 1.0;
   int numOwnedPoints;
   int* ownedIDs;
   int* neighborhoodList;
-  double* bondState;
 
   // set up discretization
   // all cells are neighbors of each other
@@ -510,26 +488,16 @@ void testThreePts()
   cellVolume[1] = 1.1;
   cellVolume[2] = 0.8;
 
-
-  // total number of bonds = 3(2) = 6
-  int numBonds = 6;
-  bondState = new double[numBonds];
-  for(int i=0 ; i<numBonds ; ++i){
-	bondState[0] = 0.0;
-  }
-
   mat.initialize(dt, 
                  numOwnedPoints,
                  ownedIDs,
                  neighborhoodList,
-                 bondState,
                  dataManager);
 
   mat.updateConstitutiveData(dt, 
 							 numOwnedPoints,
 							 ownedIDs,
 							 neighborhoodList,
-							 bondState,
                              dataManager);
 
   double currentPosition;
@@ -565,7 +533,7 @@ void testThreePts()
   BOOST_CHECK_CLOSE(dilatation[2], -0.12166177890553, 1.0e-11);
 
   // the bond state should be all zeros (no damage)
-  for(int i=0 ; i<numBonds ; ++i){
+  for(int i=0 ; i<bondDamage.MyLength() ; ++i){
       BOOST_CHECK_SMALL(bondDamage[i], 1.0e-15);
   }
 
@@ -573,7 +541,6 @@ void testThreePts()
 				   numOwnedPoints,
 				   ownedIDs,
 				   neighborhoodList,
-				   bondState,
                    dataManager);
 
   Epetra_Vector& force = *dataManager.getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1);
@@ -654,7 +621,6 @@ void testThreePts()
 
   delete[] ownedIDs;
   delete[] neighborhoodList;
-  delete[] bondState;
 }
 
 bool init_unit_test_suite()

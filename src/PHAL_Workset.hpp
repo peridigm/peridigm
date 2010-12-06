@@ -57,9 +57,6 @@ struct Workset {
   Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData;
   Teuchos::RCP<PeridigmNS::DataManager> dataManager;
 
-  // \todo Remove these data containers and replace with dataManger
-  Teuchos::RCP<double> bondData;
-
   Teuchos::RCP<const PeridigmNS::NeighborhoodData> contactNeighborhoodData;
 
   // The evaluators need access to the material models

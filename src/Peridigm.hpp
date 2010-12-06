@@ -106,19 +106,16 @@ namespace PeridigmNS {
     //! Output stream
     Teuchos::RCP<Teuchos::FancyOStream> out;
 
-    //! Maps for scalar and R3 vector data
+    //! Maps for scalar, vector, and bond data
     Teuchos::RCP<const Epetra_BlockMap> oneDimensionalMap;
     Teuchos::RCP<const Epetra_BlockMap> oneDimensionalOverlapMap;
     Teuchos::RCP<const Epetra_BlockMap> threeDimensionalMap;
     Teuchos::RCP<const Epetra_BlockMap> threeDimensionalOverlapMap;
+    Teuchos::RCP<const Epetra_BlockMap> bondMap;
 
     //! Importers and exporters from global to overlapped vectors
     Teuchos::RCP<const Epetra_Import> threeDimensionalMapToThreeDimensionalOverlapMapImporter;
     Teuchos::RCP<const Epetra_Import> oneDimensionalMapToOneDimensionalOverlapMapImporter;
-
-    //! Data structures for bonds
-    double* bondData;
-    Teuchos::RCP<const Epetra_BlockMap> bondMap;
 
     //! Contact flag
     bool computeContact;

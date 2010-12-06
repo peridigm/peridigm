@@ -65,7 +65,6 @@ namespace PeridigmNS {
                const int numOwnedPoints,
                const int* ownedIDs,
                const int* neighborhoodList,
-               double* bondState,
                PeridigmNS::DataManager& dataManager) const ;
 
 	//! Evaluate the damage
@@ -74,7 +73,6 @@ namespace PeridigmNS {
                   const int numOwnedPoints,
                   const int* ownedIDs,
                   const int* neighborhoodList,
-                  double* bondState,
                   PeridigmNS::DataManager& dataManager) const ;
 
   protected:
