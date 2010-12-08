@@ -104,6 +104,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   // Fill the dataManager with data from the discretization
   dataManager->getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->Import(*(peridigmDisc->getCellVolume()), *oneDimensionalMapToOneDimensionalOverlapMapImporter, Insert);
   dataManager->getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  dataManager->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_N)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
   dataManager->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
 
   // apply initial velocities
@@ -492,6 +493,24 @@ void PeridigmNS::Peridigm::execute() {
 
 void PeridigmNS::Peridigm::rebalance() {
 
+  // Steps for rebalance:
+  //
+  // 1) Create a PdGridData object that contains, principally, the global IDs, 
+  //    current positions, and cell volumes (neighborhood info is left uninitialized).
+  // 2) Pass the PdGridData object to getLoadBalancedDiscretization(), which
+  //    does the heavy lifting and returns a PdGridData object with complete
+  //    neighborhood data.
+  // 3) Create new maps from the rebalanced PdGridData object.  The required maps
+  //    are the oneDimensionalMap, oneDimensionalOverlapMap, threeDimensionalMap,
+  //    threeDimensionalOverlapMap, and the bondMap.
+  // 4) Create Import objects that will transfer data from the old data containers
+  //    to the new data containers.  This is straightforward in all cases except
+  //    for the bond data.
+  // 5) Import data from the old data structures to the new data structures, update
+  //    the corresponding pointers so that everything uses the new data.
+
+  ///// STEP 1 ////
+
   // Create a decomp object and fill necessary data for rebalance
   int myNumElements = oneDimensionalMap->NumMyElements();
   int dimension = 3;
@@ -527,30 +546,76 @@ void PeridigmNS::Peridigm::rebalance() {
   decomp.myX = myX;
   decomp.cellVolume = cellVolume;
 
+  //// STEP 2 ////
+
   // rebalance
   decomp = getLoadBalancedDiscretization(decomp);
 
-  // create a new discretization based on the rebalanced decomp
-  
-  // Extract problem parameters sublist
-  Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::rcp(&(peridigmParams->sublist("Problem")),false);
+  //// STEP 3 ////
 
-  // Extract discretization parameters sublist
-  Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::rcp(&(problemParams->sublist("Discretization")), false);
+  Teuchos::RCP<Epetra_BlockMap> rebalancedOneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOwnedMap(*peridigmComm, decomp, 1)));
+  Teuchos::RCP<Epetra_BlockMap> rebalancedOneDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOverlapMap(*peridigmComm, decomp, 1)));
+  Teuchos::RCP<Epetra_BlockMap> rebalancedThreeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOwnedMap(*peridigmComm, decomp, 3)));
+  Teuchos::RCP<Epetra_BlockMap> rebalancedThreeDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOverlapMap(*peridigmComm, decomp, 3)));
 
-  // Create discretization object
-  DiscretizationFactory discFactory(discParams);
-  Teuchos::RCP<PdGridData> rebalancedDecompPtr = Teuchos::rcp(&decomp, false);
-  Teuchos::RCP<AbstractDiscretization> rebalancedDisc = discFactory.create(peridigmComm, rebalancedDecompPtr);
+  // functionality from PdQuickGridDiscretization::createNeighborhoodData
+  // \todo Eliminate code duplication here.
+  // \todo Can we just overwrite neighborhoodData here?
+  Teuchos::RCP<PeridigmNS::NeighborhoodData> rebalancedNeighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
+  rebalancedNeighborhoodData->SetNumOwned(decomp.numPoints);
+  memcpy(rebalancedNeighborhoodData->OwnedIDs(), 
+ 		 PdQuickGrid::getLocalOwnedIds(decomp, *rebalancedOneDimensionalOverlapMap).get(),
+ 		 decomp.numPoints*sizeof(int));
+  memcpy(rebalancedNeighborhoodData->NeighborhoodPtr(), 
+ 		 decomp.neighborhoodPtr.get(),
+ 		 decomp.numPoints*sizeof(int));
+  rebalancedNeighborhoodData->SetNeighborhoodListSize(decomp.sizeNeighborhoodList);
+  memcpy(rebalancedNeighborhoodData->NeighborhoodList(),
+ 		 PdQuickGrid::getLocalNeighborList(decomp, *rebalancedOneDimensionalOverlapMap).get(),
+ 		 decomp.sizeNeighborhoodList*sizeof(int));
 
+  // functionality from PdQuickGridDiscretization constructor
+  // determine the number of bonds based on the neighborhood data
+  // THIS IS WRONG, NEED TO FIGURE OUT THE GLOBAL IDS SO THE IMPORTER WILL WORK.
+  // \todo Fix rebalanced bond map.
+  int numBonds = rebalancedNeighborhoodData->NeighborhoodListSize() - rebalancedNeighborhoodData->NumOwnedPoints();
+  Teuchos::RCP<Epetra_BlockMap> rebalancedBondMap = Teuchos::rcp(new Epetra_BlockMap(-1, numBonds, 1, 0, *peridigmComm));
 
+  //// STEP 4 ////
 
-  // set the Peridigm maps to the rebalanced maps
-//   oneDimensionalMap = rebalancedOneDimensionalMap;
-//   oneDimensionalOverlapMap = rebalancedOneDimensionalOverlapMap;
-//   threeDimensionalMap = rebalancedThreeDimensionalOverlapMap;
-//   threeDimensionalOverlapMap = rebalancedThreeDimensionalOverlapMap;
+  Teuchos::RCP<const Epetra_Import> oneDimensionalMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedOneDimensionalMap, *oneDimensionalMap));
+  Teuchos::RCP<const Epetra_Import> oneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedOneDimensionalOverlapMap, *oneDimensionalOverlapMap));
+  Teuchos::RCP<const Epetra_Import> threeDimensionalMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedThreeDimensionalMap, *threeDimensionalMap));
+  Teuchos::RCP<const Epetra_Import> threeDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedThreeDimensionalOverlapMap, *threeDimensionalOverlapMap));
+  Teuchos::RCP<const Epetra_Import> bondMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedBondMap, *bondMap));
 
+  //// STEP 5 ////
+
+  Teuchos::RCP<Epetra_Vector> rebalancedX = Teuchos::rcp(new Epetra_Vector(*rebalancedThreeDimensionalMap));
+  rebalancedX->Import(*x, *threeDimensionalMapImporter, Insert);
+  x = rebalancedX;
+
+  Teuchos::RCP<Epetra_Vector> rebalancedU = Teuchos::rcp(new Epetra_Vector(*rebalancedThreeDimensionalMap));
+  rebalancedU->Import(*u, *threeDimensionalMapImporter, Insert);
+  u = rebalancedU;
+
+  Teuchos::RCP<Epetra_Vector> rebalancedY = Teuchos::rcp(new Epetra_Vector(*rebalancedThreeDimensionalMap));
+  rebalancedY->Import(*y, *threeDimensionalMapImporter, Insert);
+  y = rebalancedY;
+
+  Teuchos::RCP<Epetra_Vector> rebalancedV = Teuchos::rcp(new Epetra_Vector(*rebalancedThreeDimensionalMap));
+  rebalancedV->Import(*v, *threeDimensionalMapImporter, Insert);
+  v = rebalancedV;
+
+  Teuchos::RCP<Epetra_Vector> rebalancedA = Teuchos::rcp(new Epetra_Vector(*rebalancedThreeDimensionalMap));
+  rebalancedA->Import(*a, *threeDimensionalMapImporter, Insert);
+  a = rebalancedA;
+
+  Teuchos::RCP<Epetra_Vector> rebalancedForce = Teuchos::rcp(new Epetra_Vector(*rebalancedThreeDimensionalMap));
+  rebalancedForce->Import(*force, *threeDimensionalMapImporter, Insert);
+  force = rebalancedForce;
+
+  // \todo DataManager rebalance here.
 }
 
 void PeridigmNS::Peridigm::updateContactNeighborList() {

@@ -46,7 +46,7 @@ using namespace boost::unit_test;
 using namespace Teuchos;
 using namespace PeridigmNS;
 
-void initialize()
+Teuchos::RCP<PeridigmNS::Peridigm> createTwoPointModel()
 {
   Teuchos::RCP<Epetra_Comm> comm;
   #ifdef HAVE_MPI
@@ -118,6 +118,44 @@ void initialize()
 
   // create the Peridigm object
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm = rcp(new Peridigm::Peridigm(comm, peridigmParams));
+
+  return peridigm;
+}
+
+void initialize()
+{
+  Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createTwoPointModel();
+
+  // \todo Write meaningful asserts.
+}
+
+//! This is a one-dimensional rebalance test; the rebalance should have no effect.
+void rebalance()
+{
+  Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createTwoPointModel();
+
+  BOOST_CHECK_EQUAL(peridigm->getThreeDimensionalMap()->NumMyElements(), 2);
+  BOOST_CHECK_EQUAL(peridigm->getThreeDimensionalMap()->ElementSize(), 3);
+  Epetra_Vector initialX(*peridigm->getX());
+  Epetra_Vector initialU(*peridigm->getU());
+  Epetra_Vector initialY(*peridigm->getY());
+  Epetra_Vector initialV(*peridigm->getV());
+  Epetra_Vector initialA(*peridigm->getA());
+  Epetra_Vector initialForce(*peridigm->getForce());
+
+  peridigm->rebalance();
+
+  BOOST_CHECK_EQUAL(peridigm->getThreeDimensionalMap()->NumMyElements(), 2);
+  BOOST_CHECK_EQUAL(peridigm->getThreeDimensionalMap()->ElementSize(), 3);
+  for(int i=0 ; i<initialX.MyLength(); ++i){
+    BOOST_CHECK_CLOSE(initialX[i], (*peridigm->getX())[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(initialU[i], (*peridigm->getU())[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(initialY[i], (*peridigm->getY())[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(initialV[i], (*peridigm->getV())[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(initialA[i], (*peridigm->getA())[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(initialForce[i], (*peridigm->getForce())[i], 1.0e-15);
+  }
+
 }
 
 bool init_unit_test_suite()
@@ -127,6 +165,7 @@ bool init_unit_test_suite()
 
 	test_suite* proc = BOOST_TEST_SUITE("utPeridigm");
 	proc->add(BOOST_TEST_CASE(&initialize));
+	proc->add(BOOST_TEST_CASE(&rebalance));
 	framework::master_test_suite().add(proc);
 
 	return success;

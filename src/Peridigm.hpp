@@ -59,6 +59,9 @@ namespace PeridigmNS {
     Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
              const Teuchos::RCP<Teuchos::ParameterList>& params);
 
+    //! Destructor
+    ~Peridigm(){};
+
     //! Instantiate material objects
     void instantiateMaterials();
 
@@ -92,8 +95,13 @@ namespace PeridigmNS {
     //! Accessor for three-dimensional map
     Teuchos::RCP<const Epetra_BlockMap> getThreeDimensionalMap() { return threeDimensionalMap; }
 
-    //! Destructor
-    ~Peridigm(){};
+    //! Accessor for main solver-level vectors
+    Teuchos::RCP<const Epetra_Vector> getX() { return x; }
+    Teuchos::RCP<const Epetra_Vector> getU() { return u; }
+    Teuchos::RCP<const Epetra_Vector> getY() { return y; }
+    Teuchos::RCP<const Epetra_Vector> getV() { return v; }
+    Teuchos::RCP<const Epetra_Vector> getA() { return a; }
+    Teuchos::RCP<const Epetra_Vector> getForce() { return force; }
 
   private:
 
