@@ -53,7 +53,6 @@ if __name__ == "__main__":
     command = ["ln","-f","-s","../../../../src/Peridigm","."]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
-    print return_code
     if return_code != 0:
         result = return_code
 
@@ -62,7 +61,6 @@ if __name__ == "__main__":
     command = ["dakota","-in","dakota_peridigm.in"]
     p = Popen(command, stdout=dakota_output, stderr=dakota_output)
     return_code = p.wait()
-    print return_code
     if return_code != 0:
         result = return_code
 
@@ -70,7 +68,6 @@ if __name__ == "__main__":
     command = ["grep -A 1 -i \"<<<<< Best parameters\" dakota_output.txt | tail -n 1 | sed 's/^[ \t]*//' | cut -d\" \" -f1 > Dakota_2x1x1.dat"]
     p = Popen(command, stdout=logfile, stderr=logfile, shell=True)
     return_code = p.wait()
-    print return_code
     if return_code != 0:
         result = return_code
 
@@ -78,7 +75,6 @@ if __name__ == "__main__":
     command = ["diff "+base_name+".dat "+"../"+base_name+"_gold.dat"]
     p = Popen(command, stdout=logfile, stderr=logfile, shell=True)
     return_code = p.wait()
-    print return_code
     if return_code != 0:
         result = return_code
 
