@@ -8,11 +8,13 @@
 #include "PdNeighborhood.h"
 #include "PdQuickGrid.h"
 #include "PdVTK.h"
+#include "PdBondFilter.h"
 #include "vtkIdList.h"
 #include "vtkKdTree.h"
 #include "vtkKdTreePointLocator.h"
 #include <stdexcept>
 
+using std::pair;
 
 namespace PdNeighborhood {
 
@@ -287,6 +289,7 @@ NeighborhoodList getNeighborhoodList
 	vtkKdTreePointLocator* kdTree = vtkKdTreePointLocator::New();
 	kdTree->SetDataSet(overlapGrid);
 	int sizeList = 0;
+
 	{
 		/*
 		 * Loop over owned points and determine number of points in horizon
@@ -322,7 +325,7 @@ NeighborhoodList getNeighborhoodList
 			}
 			/*
 			 * Accumulate pointer;
-			 * NOTE that search includes "self"; if we want self then we need to add it
+			 * NOTE that search results include "self"; if we want self then we need to add it
 			 * to the size of the list;  We already need one extra
 			 * for "numNeigh" so we must add another entry for self.  On the other
 			 * hand, if we don't want self, then we don't have to do anything since
@@ -391,6 +394,131 @@ NeighborhoodList getNeighborhoodList
 
 	kdTree->Delete();
 	return NeighborhoodList(numPoints,neighborsPtr,neighborsList);
+}
+
+NeighborhoodList getNeighborhoodListNew
+(
+		double horizon,
+		int numOwnedPoints,
+		int numOverlapPoints,
+		std::tr1::shared_ptr<double> xOwnedPtr,
+		std::tr1::shared_ptr<double> xOverlapPtr,
+		PdBondFilter::BondFilter& bondFilter
+)
+{
+
+
+
+	/*
+	 * Create KdTree
+	 */
+	vtkSmartPointer<vtkUnstructuredGrid> overlapGrid = PdVTK::getGrid(xOverlapPtr,numOverlapPoints);
+	vtkKdTreePointLocator* kdTree = vtkKdTreePointLocator::New();
+	kdTree->SetDataSet(overlapGrid);
+
+	/*
+	 * this is used by bond filters
+	 */
+	const double* xOverlap = xOverlapPtr.get();
+
+	std::tr1::shared_ptr<int> neighborsPtr(new int[numOwnedPoints],PdQuickGrid::Deleter<int>());
+	size_t sizeList = 0;
+	size_t max=0;
+	{
+		/*
+		 * Loop over owned points and determine number of points in horizon
+		 */
+		int *ptr = neighborsPtr.get();
+		const int* const end = neighborsPtr.get()+numOwnedPoints;
+		double *x = xOwnedPtr.get();
+		int localId=0;
+		for(;ptr!=end;ptr++,x+=3, localId++){
+			/*
+			 * pointer to start of neighborhood list
+			 */
+			*ptr = sizeList;
+
+			vtkIdList* kdTreeList = vtkIdList::New();
+			/*
+			 * Note that list returned includes this point *
+			 */
+			kdTree->FindPointsWithinRadius(horizon, x, kdTreeList);
+
+			if(0==kdTreeList->GetNumberOfIds()){
+				/*
+				 * Houston, we have a problem
+				 */
+				std::stringstream sstr;
+				sstr << "\nERROR-->PdNeighborhood.cxx::getNeighborhoodList(..)\n";
+				sstr << "\tKdTree search failed to find any points in its neighborhood including itself!\n\tThis is probably a problem.\n";
+				sstr << "\tLocal point id = " << localId << "\n"
+					 << "\tSearch horizon = " << horizon << "\n"
+					 << "\tx,y,z = " << *(x) << ", " << *(x+1) << ", " << *(x+2) << std::endl;
+				std::string message=sstr.str();
+				throw std::runtime_error(message);
+			}
+
+			size_t numNeigh = bondFilter.filterNumNeighbors(kdTreeList,x,xOverlap);
+			if(numNeigh>max) max=numNeigh;
+			sizeList += numNeigh;
+			kdTreeList->Delete();
+		}
+	}
+	/*
+	 * Second pass to populate neighborhood list
+	 */
+	std::tr1::shared_ptr<int> neighborsList(new int[sizeList],PdQuickGrid::Deleter<int>());
+	std::tr1::shared_ptr<bool> markForExclusion(new bool[max],PdQuickGrid::Deleter<bool>());
+	bool *bondFlags = markForExclusion.get();
+
+	{
+		/*
+		 * Loop over owned points and determine number of points in horizon
+		 */
+		int *list = neighborsList.get();
+		double *x = xOwnedPtr.get();
+		for(int p=0;p<numOwnedPoints;p++,x+=3){
+
+			vtkIdList* kdTreeList = vtkIdList::New();
+			/*
+			 * Note that list returned includes this point * but at start of list
+			 */
+			kdTree->FindPointsWithinRadius(horizon, x, kdTreeList);
+			pair<size_t,bool*> r = bondFilter.filterBonds(kdTreeList, x, xOverlap, bondFlags);
+			size_t len = r.first;
+			bondFlags = r.second;
+
+			/*
+			 * Determine number of neighbors from flags
+			 * Save start of list so that number of neighbors can be assigned after it
+			 * has been calculated; Then increment pointer to first neigbhor
+			 */
+
+			int *numNeighPtr = list; list++;
+			/*
+			 * Loop over flags and save neighbors as appropriate; also accumulate number of neighbors
+			 */
+			size_t numNeigh=0;
+			for(int n=0;n<kdTreeList->GetNumberOfIds();n++,bondFlags++){
+				if(*bondFlags) continue;
+				int uid = kdTreeList->GetId(n);
+				*list = uid;
+				list++;
+				numNeigh++;
+			}
+			/*
+			 * Now save number of neighbors
+			 */
+			*numNeighPtr = numNeigh;
+			/*
+			 * Delete list
+			 */
+			kdTreeList->Delete();
+		}
+	}
+
+	kdTree->Delete();
+	return NeighborhoodList(numOwnedPoints,neighborsPtr,neighborsList);
 }
 
 }

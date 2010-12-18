@@ -11,6 +11,7 @@
 #include<iostream>
 #include "PdVTK.h"
 #include "PdQuickGrid.h"
+#include "PdBondFilter.h"
 
 namespace PdNeighborhood {
 enum CoordinateLabel {X=0,Y,Z};
@@ -122,6 +123,16 @@ NeighborhoodList getNeighborhoodList
 		std::tr1::shared_ptr<double> xOwnedPtr,
 		vtkSmartPointer<vtkUnstructuredGrid> overlapGrid,
 		bool withSelf=false
+);
+
+NeighborhoodList getNeighborhoodListNew
+(
+		double horizon,
+		int numOwnedPoints,
+		int numOverlapPoints,
+		std::tr1::shared_ptr<double> xOwnedPtr,
+		std::tr1::shared_ptr<double> xOverlapPtr,
+		PdBondFilter::BondFilter& bondFilter
 );
 
 class Coordinates {
