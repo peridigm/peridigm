@@ -4,9 +4,13 @@
 
 #include "zoltan.h"
 #include "PdGridData.h"
+#include "PdBondFilter.h"
+#include <Teuchos_RCP.hpp>
 #include<tr1/memory>
 
 using std::tr1::shared_ptr;
+using Teuchos::RCP;
+using PdBondFilter::BondFilter;
 
 /*
  * Re-usable component that creates initializes, and returns a "Zoltan" object
@@ -29,9 +33,9 @@ PdGridData& getLoadBalancedDiscretization(PdGridData& pdGridData);
  * 1) Create a mesh
  * 2) Load balance mesh
  * 3) Call this function
- * 4) 4th argument -- withSelf : set true if each point should be part of its own neighborhood
- */
-PdGridData& createAndAddNeighborhood(PdGridData& decomp, double horizon, bool withSelf=false);
+ * 4) 4th argument -- BondFilter which defaults to neighborhood search that does not include 'self' point
+*/
+PdGridData& createAndAddNeighborhood(PdGridData& decomp, double horizon, RCP<BondFilter> bondFilterPtr=RCP<BondFilter>(new PdBondFilter::BondFilterDefault()));
 
 /*
  * Zoltan call back functions

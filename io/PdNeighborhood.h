@@ -110,22 +110,8 @@ Pd_shared_ptr_Array<int> getPointsInNeighborhoodOfAxisAlignedMaximumValue
 		double horizon,
 		double axisMaximumValue
 );
-/*
- * This function produces neighborhoods for each point "i"
- * If point "i" should be included in the list, then add
- * the extra optional argument withSelf=true;  Default
- * behaviour does not include point "i" in the neighborhood
- */
-NeighborhoodList getNeighborhoodList
-(
-		double horizon,
-		int numPoints,
-		std::tr1::shared_ptr<double> xOwnedPtr,
-		vtkSmartPointer<vtkUnstructuredGrid> overlapGrid,
-		bool withSelf=false
-);
 
-NeighborhoodList getNeighborhoodListNew
+NeighborhoodList getNeighborhoodList
 (
 		double horizon,
 		int numOwnedPoints,

@@ -27,6 +27,8 @@
 #include "zoltan.h"
 #include "PdZoltan.h"
 #include "Field.h"
+#include "PdBondFilter.h"
+#include <Teuchos_RCP.hpp>
 #include "mpi.h"
 #include <tr1/memory>
 #include <valarray>
@@ -40,6 +42,10 @@ using namespace PdQuickGrid;
 using namespace PdNeighborhood;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
+
+using Teuchos::RCP;
+using PdBondFilter::BondFilter;
+
 
 using namespace Pdut;
 using std::tr1::shared_ptr;
@@ -104,7 +110,8 @@ void createNeighborhood() {
 	BOOST_CHECK(1==decomp.numPoints);
 	BOOST_CHECK(4==decomp.globalNumPoints);
 	shared_ptr< std::set<int> > frameSet = constructFrame(decomp);
-	decomp = createAndAddNeighborhood(decomp,2*horizon,true);
+	RCP<BondFilter> bondFilterPtr(new PdBondFilter::BondFilterWithSelf());
+	decomp = createAndAddNeighborhood(decomp,2*horizon,bondFilterPtr);
 
 	BOOST_CHECK(1==decomp.numPoints);
 	BOOST_CHECK(4==decomp.globalNumPoints);

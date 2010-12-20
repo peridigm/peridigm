@@ -13,12 +13,16 @@
 #include "PdQuickGrid.h"
 #include "PdQuickGridParallel.h"
 #include "PdNeighborhood.h"
+#include "PdBondFilter.h"
+#include <Teuchos_RCP.hpp>
 #include <set>
 
 using namespace PdQuickGrid;
 using namespace PdNeighborhood;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
+using Teuchos::RCP;
+using PdBondFilter::BondFilter;
 
 const int nx = 1;
 const int ny = 1;
@@ -63,8 +67,11 @@ void axialBarLinearSpacing() {
 
 	/*
 	 * Construct neighborhood
+	 * NOTE THAT: Since this is a serial test, numPoints = numOverlapPoints; and x = xOverlap
 	 */
-	NeighborhoodList list = PdNeighborhood::getNeighborhoodList(horizon,numPoints,decomp.myX,grid,true);
+	RCP<BondFilter> bondFilterPtr(new PdBondFilter::BondFilterWithSelf());
+	NeighborhoodList list = PdNeighborhood::getNeighborhoodList(horizon,decomp.numPoints,decomp.numPoints,decomp.myX,decomp.myX,*bondFilterPtr);
+//	NeighborhoodList list = PdNeighborhood::getNeighborhoodList(horizon,numPoints,decomp.myX,grid,true);
 	BOOST_CHECK(list.getNumPoints() == numPoints);
 	int size = 0;
 	for(int n=0;n<numPoints;n++)

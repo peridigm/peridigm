@@ -737,9 +737,8 @@ void zoltanQuery_unPackPointsMultiFunction
 //	std::cout << "zoltanQuery_unPackPointsMultiFunction: Finish" << std::endl;
 }
 
-
-
-PdGridData& createAndAddNeighborhood(PdGridData& decomp, double horizon, bool withSelf){
+PdGridData& createAndAddNeighborhood(PdGridData& decomp, double horizon, RCP<BondFilter> bondFilterPtr){
+//PdGridData& createAndAddNeighborhood(PdGridData& decomp, double horizon, bool withSelf){
 	shared_ptr< std::set<int> > frameSet = constructParallelDecompositionFrameSet(decomp,horizon);
 	struct Zoltan_Struct *zoltan = decomp.zoltanPtr.get();
 
@@ -954,11 +953,7 @@ PdGridData& createAndAddNeighborhood(PdGridData& decomp, double horizon, bool wi
 	/*
 	 * create neighborhood and store on decomp
 	 */
-	vtkSmartPointer<vtkUnstructuredGrid> overlapGrid = PdVTK::getGrid(xOverlapArray.get_shared_ptr(),newNumPoints);
-	NeighborhoodList list = PdNeighborhood::getNeighborhoodList(horizon,decomp.numPoints,decomp.myX,overlapGrid,withSelf);
-//	PdBondFilter::BondFilterDefault bondFilter;
-//	PdBondFilter::BondFilterWithSelf bondFilter;
-//	NeighborhoodList list = PdNeighborhood::getNeighborhoodListNew(horizon,decomp.numPoints,newNumPoints,decomp.myX,xOverlapArray.get_shared_ptr(),bondFilter);
+	NeighborhoodList list = PdNeighborhood::getNeighborhoodList(horizon,decomp.numPoints,newNumPoints,decomp.myX,xOverlapArray.get_shared_ptr(),*bondFilterPtr);
 	decomp.sizeNeighborhoodList = list.getSizeNeighborhoodList();
 	decomp.neighborhood = list.getNeighborhood();
 	decomp.neighborhoodPtr = list.getNeighborhoodPtr();
