@@ -458,9 +458,9 @@ NeighborhoodList getNeighborhoodListNew
 				throw std::runtime_error(message);
 			}
 
-			size_t numNeigh = bondFilter.filterNumNeighbors(kdTreeList,x,xOverlap);
-			if(numNeigh>max) max=numNeigh;
-			sizeList += numNeigh;
+			size_t ptListSize = bondFilter.filterListSize(kdTreeList,x,xOverlap);
+			if(ptListSize>max) max=ptListSize;
+			sizeList += ptListSize;
 			kdTreeList->Delete();
 		}
 	}
@@ -469,7 +469,6 @@ NeighborhoodList getNeighborhoodListNew
 	 */
 	std::tr1::shared_ptr<int> neighborsList(new int[sizeList],PdQuickGrid::Deleter<int>());
 	std::tr1::shared_ptr<bool> markForExclusion(new bool[max],PdQuickGrid::Deleter<bool>());
-	bool *bondFlags = markForExclusion.get();
 
 	{
 		/*
@@ -484,28 +483,31 @@ NeighborhoodList getNeighborhoodListNew
 			 * Note that list returned includes this point * but at start of list
 			 */
 			kdTree->FindPointsWithinRadius(horizon, x, kdTreeList);
-			pair<size_t,bool*> r = bondFilter.filterBonds(kdTreeList, x, xOverlap, bondFlags);
-			size_t len = r.first;
-			bondFlags = r.second;
+			bool *bondFlags = markForExclusion.get();
+			bondFilter.filterBonds(kdTreeList, x, p, xOverlap, bondFlags);
 
 			/*
 			 * Determine number of neighbors from flags
 			 * Save start of list so that number of neighbors can be assigned after it
-			 * has been calculated; Then increment pointer to first neigbhor
+			 * has been calculated; Then increment pointer to first neighbor
 			 */
 
+			/*
+			 * Save address for number of neighbors; will assign later
+			 */
 			int *numNeighPtr = list; list++;
 			/*
 			 * Loop over flags and save neighbors as appropriate; also accumulate number of neighbors
 			 */
 			size_t numNeigh=0;
 			for(int n=0;n<kdTreeList->GetNumberOfIds();n++,bondFlags++){
-				if(*bondFlags) continue;
+				if(1==*bondFlags) continue;
 				int uid = kdTreeList->GetId(n);
 				*list = uid;
 				list++;
 				numNeigh++;
 			}
+
 			/*
 			 * Now save number of neighbors
 			 */

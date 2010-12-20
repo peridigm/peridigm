@@ -216,6 +216,7 @@ void moveCoordinatesAndReLoadBalance() {
 		int numPoints = decomp.numPoints;
 		BOOST_CHECK(numPoints==4);
 		BOOST_CHECK(25==decomp.sizeNeighborhoodList);
+//		cout << "myRank, decomp.sizeNeighborhoodList = " << myRank << ", " << decomp.sizeNeighborhoodList  << endl;
 
 		int myIds[] = {15,1,4,5};
 		int n15[] = {1,4,5};
@@ -237,6 +238,7 @@ void moveCoordinatesAndReLoadBalance() {
 			BOOST_CHECK(iEnd!=ids.find(*gIds));
 			set<int>& gIdNeigh = neighMap[*gIds];
 			int numNeigh = *neigh; neigh++;
+//			cout << "myRank, gIds, localId, numNeigh = " << myRank << ", " << *gIds << ", " << p << ", " << numNeigh << endl;
 			BOOST_CHECK(gIdNeigh.size() == numNeigh);
 			set<int>::iterator neighIter=gIdNeigh.begin();
 			set<int>::iterator neighEnd=gIdNeigh.end();
@@ -249,6 +251,7 @@ void moveCoordinatesAndReLoadBalance() {
 		int numPoints = decomp.numPoints;
 		BOOST_CHECK(numPoints==4);
 		BOOST_CHECK(25==decomp.sizeNeighborhoodList);
+//		cout << "myRank, decomp.sizeNeighborhoodList = " << myRank << ", " << decomp.sizeNeighborhoodList  << endl;
 		int myIds[] = {2,3,6,7};
 		int n2[] = {1,3,5,6,7};
 		int n3[] = {2,6,7};
@@ -269,6 +272,7 @@ void moveCoordinatesAndReLoadBalance() {
 			BOOST_CHECK(iEnd!=ids.find(*gIds));
 			set<int>& gIdNeigh = neighMap[*gIds];
 			int numNeigh = *neigh; neigh++;
+//			cout << "myRank, gIds, localId, numNeigh = " << myRank << ", " << *gIds << ", " << p << ", " << numNeigh << endl;
 			BOOST_CHECK(gIdNeigh.size() == numNeigh);
 			set<int>::iterator neighIter=gIdNeigh.begin();
 			set<int>::iterator neighEnd=gIdNeigh.end();

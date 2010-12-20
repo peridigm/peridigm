@@ -8,6 +8,7 @@
 #include "vtkSmartPointer.h"
 #include "vtkUnstructuredGrid.h"
 #include "PdNeighborhood.h"
+#include "PdBondFilter.h"
 #include <iostream>
 
 using namespace PdQuickGrid;
@@ -955,6 +956,8 @@ PdGridData& createAndAddNeighborhood(PdGridData& decomp, double horizon, bool wi
 	 */
 	vtkSmartPointer<vtkUnstructuredGrid> overlapGrid = PdVTK::getGrid(xOverlapArray.get_shared_ptr(),newNumPoints);
 	NeighborhoodList list = PdNeighborhood::getNeighborhoodList(horizon,decomp.numPoints,decomp.myX,overlapGrid,withSelf);
+//	PdBondFilter::BondFilterDefault bondFilter;
+//	NeighborhoodList list = PdNeighborhood::getNeighborhoodListNew(horizon,decomp.numPoints,newNumPoints,decomp.myX,xOverlapArray.get_shared_ptr(),bondFilter);
 	decomp.sizeNeighborhoodList = list.getSizeNeighborhoodList();
 	decomp.neighborhood = list.getNeighborhood();
 	decomp.neighborhoodPtr = list.getNeighborhoodPtr();

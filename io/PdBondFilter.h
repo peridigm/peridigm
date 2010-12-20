@@ -7,9 +7,11 @@
 
 #ifndef PDBONDFILTER_H_
 #define PDBONDFILTER_H_
-
+#include "vtkIdList.h"
+#include <cstddef>
 #include <utility>
 using std::pair;
+using std::size_t;
 
 namespace PdBondFilter {
 
@@ -17,8 +19,13 @@ namespace PdBondFilter {
 class BondFilter {
 public:
 	virtual ~BondFilter() {}
-	virtual size_t filterNumNeighbors(vtkIdList* kdTreeList, const double *pt, const double *xOverlap) = 0;
-	virtual pair<size_t,bool*> filterBonds(vtkIdList* kdTreeList, const double *pt, const double *xOverlap, bool* markForExclusion) = 0;
+	virtual size_t filterListSize(vtkIdList* kdTreeList, const double *pt, const double *xOverlap) = 0;
+	/*
+	 * NOTE: expectation is that bondFlags has been allocated to a sufficient length so that a
+	 * single scalar flag can be associated with every point in the neighborhood of 'pt';
+	 * bonds are included by default, ie flag=0; if a point is excluded then flag =1 is set
+	 */
+	virtual void filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool* bondFlags) = 0;
 };
 
 /**
@@ -28,8 +35,8 @@ class BondFilterDefault : public BondFilter {
 public:
 	BondFilterDefault() : BondFilter() {}
 	virtual ~BondFilterDefault() {}
-	virtual size_t filterNumNeighbors(vtkIdList* kdTreeList, const double *pt, const double *xOverlap);
-	virtual pair<size_t,bool*> filterBonds(vtkIdList* kdTreeList, const double *pt, const double *xOverlap, bool* markForExclusion);
+	virtual size_t filterListSize(vtkIdList* kdTreeList, const double *pt, const double *xOverlap);
+	virtual void filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool* markForExclusion);
 
 };
 
@@ -40,8 +47,8 @@ class BondFilterWithSelf : public BondFilter {
 public:
 	BondFilterWithSelf() : BondFilter() {}
 	virtual ~BondFilterWithSelf() {}
-	virtual size_t filterNumNeighbors(vtkIdList* kdTreeList, const double *pt, const double *xOverlap) {}
-	virtual pair<size_t,bool*> filterBonds(vtkIdList* kdTreeList, const double *pt, const double *xOverlap, bool* markForExclusion) {}
+	virtual size_t filterListSize(vtkIdList* kdTreeList, const double *pt, const double *xOverlap) {}
+	virtual void filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool* markForExclusion) {}
 };
 
 }
