@@ -47,8 +47,8 @@ class BondFilterWithSelf : public BondFilter {
 public:
 	BondFilterWithSelf() : BondFilter() {}
 	virtual ~BondFilterWithSelf() {}
-	virtual size_t filterListSize(vtkIdList* kdTreeList, const double *pt, const double *xOverlap) {}
-	virtual void filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool* markForExclusion) {}
+	virtual size_t filterListSize(vtkIdList* kdTreeList, const double *pt, const double *xOverlap);
+	virtual void filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool* markForExclusion);
 };
 
 }
