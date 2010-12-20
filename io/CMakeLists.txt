@@ -15,7 +15,7 @@ add_library(PdVTK PdVTK.cxx Field.cxx)
 add_library(PdZoltan PdZoltan.cxx)
 
 # Parallel Neighborhood Search library
-add_library(PdNeighborhood PdNeighborhood.cxx)
+add_library(PdNeighborhood PdNeighborhood.cxx PdBondFilter.cxx)
 
 
 
