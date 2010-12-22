@@ -71,7 +71,6 @@ void axialBarLinearSpacing() {
 	 */
 	RCP<BondFilter> bondFilterPtr(new PdBondFilter::BondFilterWithSelf());
 	NeighborhoodList list = PdNeighborhood::getNeighborhoodList(horizon,decomp.numPoints,decomp.numPoints,decomp.myX,decomp.myX,*bondFilterPtr);
-//	NeighborhoodList list = PdNeighborhood::getNeighborhoodList(horizon,numPoints,decomp.myX,grid,true);
 	BOOST_CHECK(list.getNumPoints() == numPoints);
 	int size = 0;
 	for(int n=0;n<numPoints;n++)
