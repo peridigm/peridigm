@@ -136,7 +136,6 @@ void testTwoPts()
   // create the material manager
   PeridigmNS::DataManager dataManager;
   dataManager.setScalarMap(Teuchos::rcp(&oneDimensionalOverlapMap, false));
-  dataManager.setVector2DMap(Teuchos::null);
   dataManager.setVector3DMap(Teuchos::rcp(&threeDimensionalOverlapMap, false));
   dataManager.setBondMap(Teuchos::rcp(&bondMap, false));
   dataManager.allocateData(mat.VariableSpecs());

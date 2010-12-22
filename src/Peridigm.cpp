@@ -80,7 +80,6 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   // Instantiate data manager
   dataManager = Teuchos::rcp(new PeridigmNS::DataManager);
   dataManager->setScalarMap(oneDimensionalOverlapMap);
-  dataManager->setVector2DMap(Teuchos::null);
   dataManager->setVector3DMap(threeDimensionalOverlapMap);
   dataManager->setBondMap(bondMap);
   // Create a master list of variable specs
