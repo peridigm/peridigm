@@ -89,7 +89,6 @@ void testTwoPts()
   // create the material manager
   PeridigmNS::DataManager dataManager;
   dataManager.setScalarMap(Teuchos::rcp(&nodeMap, false));
-  dataManager.setVector2DMap(Teuchos::null);
   dataManager.setVector3DMap(Teuchos::rcp(&unknownMap, false));
   dataManager.setBondMap(Teuchos::rcp(&bondMap, false));
   dataManager.allocateData(mat.VariableSpecs());
@@ -203,7 +202,6 @@ void testEightPts()
   // create the material manager
   PeridigmNS::DataManager dataManager;
   dataManager.setScalarMap(Teuchos::rcp(&nodeMap, false));
-  dataManager.setVector2DMap(Teuchos::null);
   dataManager.setVector3DMap(Teuchos::rcp(&unknownMap, false));
   dataManager.setBondMap(Teuchos::rcp(&bondMap, false));
   dataManager.allocateData(mat.VariableSpecs());
@@ -464,7 +462,6 @@ void testThreePts()
   // create the material manager
   PeridigmNS::DataManager dataManager;
   dataManager.setScalarMap(Teuchos::rcp(&nodeMap, false));
-  dataManager.setVector2DMap(Teuchos::null);
   dataManager.setVector3DMap(Teuchos::rcp(&unknownMap, false));
   dataManager.setBondMap(Teuchos::rcp(&bondMap, false));
   dataManager.allocateData(mat.VariableSpecs());
