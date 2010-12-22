@@ -92,3 +92,7 @@ target_link_libraries(utReloadBalance_np4  ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIB
 add_executable(utVTK_ioExample_np4 utVTK_ioExample_np4.cxx)
 target_link_libraries(utVTK_ioExample_np4  ${PdMaterialUtilitiesLib} ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 
+add_executable(utPdVtkPlane utPdVtkPlane.cxx)
+target_link_libraries(utPdVtkPlane  ${PdMaterialUtilitiesLib} ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+
+

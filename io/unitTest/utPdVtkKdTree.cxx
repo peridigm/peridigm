@@ -50,9 +50,9 @@ struct Dot : public binary_function< valarray<double>, valarray<double>, double 
 
 struct Cross : public binary_function< valarray<double>, valarray<double>, valarray<double> > {
 	valarray<double> operator()(const valarray<double>& u, const valarray<double>& v){
-		double r0=-u[3]* v[2] + u[2] * v[3];
-		double r1= u[3]* v[1] - u[1] * v[3];
-		double r2=-u[2]* v[1] + u[1] * v[2];
+		double r0=-u[2]* v[1] + u[1] * v[2];
+		double r1= u[2]* v[0] - u[0] * v[2];
+		double r2=-u[1]* v[0] + u[0] * v[1];
 		valarray<double> r(3); r[0]=r0;r[1]=r1;r[2]=r2;
 		return r;
 	}
