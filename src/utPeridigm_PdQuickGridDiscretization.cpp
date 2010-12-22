@@ -116,9 +116,9 @@ void simpleTensorProductMesh()
   // the horizon was chosen such that each point should have three neighbors
   // note that if the NeighborhoodType parameter is not set to Spherical, this will fail
   Teuchos::RCP<const Epetra_BlockMap> bondMap = discretization->getBondMap();
-  BOOST_CHECK(bondMap->NumGlobalElements() == 8*3);
-  BOOST_CHECK(bondMap->NumMyElements() == 8*3);
-  BOOST_CHECK(bondMap->ElementSize() == 1);
+  BOOST_CHECK(bondMap->NumGlobalElements() == 8);
+  BOOST_CHECK(bondMap->NumMyElements() == 8);
+  BOOST_CHECK(bondMap->ConstantElementSize() == 0);
   BOOST_CHECK(bondMap->IndexBase() == 0);
   BOOST_CHECK(bondMap->UniqueGIDs() == true);
   myGlobalElements = bondMap->MyGlobalElements();

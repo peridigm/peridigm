@@ -54,14 +54,22 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
   createMaps(decomp);
   createNeighborhoodData(decomp);
 
-  // determine the number of bonds based on the neighborhood data
-  numBonds = neighborhoodData->NeighborhoodListSize() - neighborhoodData->NumOwnedPoints();
   // create the bondMap, a local map used for constitutive data stored on bonds
-  int numGlobalElements = -1;
-  int numMyElements = numBonds;
-  int elementSize = 1;
+  int numGlobalElements = oneDimensionalMap->NumGlobalElements();
+  int numMyElements = oneDimensionalMap->NumMyElements();
+  int* myGlobalElements = oneDimensionalMap->MyGlobalElements();
+  int *elementSizeList = new int[numMyElements];
+  int* neighborhood = decomp.neighborhood.get();
+  int neighborhoodIndex = 0;
+  for(int i=0 ; i<decomp.numPoints ; ++i){
+    int numNeighbors = neighborhood[neighborhoodIndex];
+    elementSizeList[i] = numNeighbors;
+    numBonds += numNeighbors;
+    neighborhoodIndex += 1 + numNeighbors;
+  }
   int indexBase = 0;
-  bondMap = Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, elementSize, indexBase, *comm));
+  bondMap = Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, elementSizeList, indexBase, *comm));
+  delete[] elementSizeList;
 
   // 3D only
   TEST_FOR_EXCEPT_MSG(decomp.dimension != 3, "Invalid dimension in decomposition (only 3D is supported)");
@@ -84,14 +92,22 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
   createMaps(*decomp);
   createNeighborhoodData(*decomp);
 
-  // determine the number of bonds based on the neighborhood data
-  numBonds = neighborhoodData->NeighborhoodListSize() - neighborhoodData->NumOwnedPoints();
   // create the bondMap, a local map used for constitutive data stored on bonds
-  int numGlobalElements = -1;
-  int numMyElements = numBonds;
-  int elementSize = 1;
+  int numGlobalElements = oneDimensionalMap->NumGlobalElements();
+  int numMyElements = oneDimensionalMap->NumMyElements();
+  int* myGlobalElements = oneDimensionalMap->MyGlobalElements();
+  int *elementSizeList = new int[numMyElements];
+  int* neighborhood = decomp->neighborhood.get();
+  int neighborhoodIndex = 0;
+  for(int i=0 ; i<decomp->numPoints ; ++i){
+    int numNeighbors = neighborhood[neighborhoodIndex];
+    elementSizeList[i] = numNeighbors;
+    numBonds += numNeighbors;
+    neighborhoodIndex += 1 + numNeighbors;
+  }
   int indexBase = 0;
-  bondMap = Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, elementSize, indexBase, *comm));
+  bondMap = Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, elementSizeList, indexBase, *comm));
+  delete[] elementSizeList;
 
   // 3D only
   TEST_FOR_EXCEPT_MSG(decomp->dimension != 3, "Invalid dimension in decomposition (only 3D is supported)");
