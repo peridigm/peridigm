@@ -135,9 +135,9 @@ void testTwoPts()
 
   // create the material manager
   PeridigmNS::DataManager dataManager;
-  dataManager.setScalarMap(Teuchos::rcp(&oneDimensionalOverlapMap, false));
-  dataManager.setVector3DMap(Teuchos::rcp(&threeDimensionalOverlapMap, false));
-  dataManager.setBondMap(Teuchos::rcp(&bondMap, false));
+  dataManager.setMaps(Teuchos::rcp(&oneDimensionalOverlapMap, false),
+                      Teuchos::rcp(&threeDimensionalOverlapMap, false),
+                      Teuchos::rcp(&bondMap, false));
   dataManager.allocateData(mat.VariableSpecs());
 
   // two-point discretization

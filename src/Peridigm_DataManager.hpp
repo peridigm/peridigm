@@ -47,11 +47,22 @@ public:
   DataManager(const DataManager& dataManager){}
   ~DataManager(){}
 
-  void setScalarMap(Teuchos::RCP<const Epetra_BlockMap> map) { scalarMap = map; }
-  void setVector3DMap(Teuchos::RCP<const Epetra_BlockMap> map) { vector3DMap = map; }
-  void setBondMap(Teuchos::RCP<const Epetra_BlockMap> map) { bondMap = map; }
+  void setMaps(Teuchos::RCP<const Epetra_BlockMap> scalarMap_,
+               Teuchos::RCP<const Epetra_BlockMap> vector3DMap_,
+               Teuchos::RCP<const Epetra_BlockMap> bondMap_){
+    scalarMap = scalarMap_;
+    vector3DMap = vector3DMap_;
+    bondMap = bondMap_;
+  }
+
   void allocateData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > specs);
-  Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec, Field_NS::FieldSpec::FieldStep fieldStep);
+
+  void rebalance(Teuchos::RCP<const Epetra_BlockMap> scalarMap,
+                 Teuchos::RCP<const Epetra_BlockMap> vector3DMap,
+                 Teuchos::RCP<const Epetra_BlockMap> bondMap);
+
+  Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec,
+                                      Field_NS::FieldSpec::FieldStep fieldStep);
 
   void updateState(){
     Teuchos::RCP<State> temp = stateN;

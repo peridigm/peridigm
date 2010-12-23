@@ -86,13 +86,13 @@ void PeridigmNS::DataManager::allocateData(Teuchos::RCP< std::vector<Field_NS::F
   // make sure maps exist before trying to create states
   if(statelessScalarFieldSpecs->size() + statefulScalarFieldSpecs->size() > 0)
     TEST_FOR_EXCEPTION(scalarMap == Teuchos::null, Teuchos::NullReferenceError, 
-                       "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate scalar data with no map (forget setScalarMap()?).");
+                       "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate scalar data with no map (forget setMaps()?).");
   if(statelessVector3DFieldSpecs->size() + statefulVector3DFieldSpecs->size() > 0)
     TEST_FOR_EXCEPTION(vector3DMap == Teuchos::null, Teuchos::NullReferenceError, 
-                       "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate vector3D data with no map (forget setVector3DMap()?).");
+                       "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate vector3D data with no map (forget setMaps()?).");
   if(statelessBondFieldSpecs->size() + statefulBondFieldSpecs->size() > 0)
     TEST_FOR_EXCEPTION(bondMap == Teuchos::null, Teuchos::NullReferenceError, 
-                       "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate bond data with no map (forget setBondMap()?).");
+                       "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate bond data with no map (forget setMaps()?).");
 
   // create the states
   if(statelessScalarFieldSpecs->size() + statelessVector3DFieldSpecs->size() > 0){
@@ -120,6 +120,12 @@ void PeridigmNS::DataManager::allocateData(Teuchos::RCP< std::vector<Field_NS::F
       stateNP1->allocateBondData(statefulBondFieldSpecs, bondMap);
     }
   }
+}
+
+void PeridigmNS::DataManager::rebalance(Teuchos::RCP<const Epetra_BlockMap> scalarMap,
+                                        Teuchos::RCP<const Epetra_BlockMap> vector3DMap,
+                                        Teuchos::RCP<const Epetra_BlockMap> bondMap)
+{
 }
 
 Teuchos::RCP<Epetra_Vector> PeridigmNS::DataManager::getData(Field_NS::FieldSpec fieldSpec, Field_NS::FieldSpec::FieldStep fieldStep)

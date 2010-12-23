@@ -80,9 +80,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // Instantiate data manager
   dataManager = Teuchos::rcp(new PeridigmNS::DataManager);
-  dataManager->setScalarMap(oneDimensionalOverlapMap);
-  dataManager->setVector3DMap(threeDimensionalOverlapMap);
-  dataManager->setBondMap(bondMap);
+  dataManager->setMaps(oneDimensionalOverlapMap, threeDimensionalOverlapMap, bondMap);
   // Create a master list of variable specs
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
   // Start with the specs used by Peridigm
@@ -602,7 +600,7 @@ void PeridigmNS::Peridigm::rebalance() {
   // create a list of all the off-processor IDs that will need to be ghosted
   set<int> offProcessorIDs;
   for(int i=0 ; i<rebalancedNeighborGlobalIDs->MyLength() ; ++i){
-    int globalID = (*rebalancedNeighborGlobalIDs)[i];
+    int globalID = (int)( (*rebalancedNeighborGlobalIDs)[i] );
     if(!oneDimensionalMap->MyGID(globalID))
       offProcessorIDs.insert(globalID);
   }
@@ -656,7 +654,7 @@ void PeridigmNS::Peridigm::rebalance() {
     // next entries record the local ID of each neighbor
     int offset = firstPointInElementList[iLID];
     for(int iN=0 ; iN<numNeighbors ; ++iN){
-      int globalNeighborID = (*rebalancedNeighborGlobalIDs)[offset + iN];
+      int globalNeighborID = (int)( (*rebalancedNeighborGlobalIDs)[offset + iN] );
       int localNeighborID = oneDimensionalOverlapMap->LID(globalNeighborID);
       neighborhoodList[neighborhoodIndex++] = localNeighborID;
     }
@@ -688,7 +686,18 @@ void PeridigmNS::Peridigm::rebalance() {
   rebalancedForce->Import(*force, *threeDimensionalMapImporter, Insert);
   force = rebalancedForce;
 
-  // \todo DataManager rebalance here.
+  dataManager->rebalance(rebalancedOneDimensionalMap, rebalancedThreeDimensionalMap, rebalancedBondMap);
+
+  // set all the pointers to the new maps
+  oneDimensionalMap = rebalancedOneDimensionalMap;
+  oneDimensionalOverlapMap = rebalancedOneDimensionalOverlapMap;
+  threeDimensionalMap = rebalancedThreeDimensionalMap;
+  threeDimensionalOverlapMap = rebalancedThreeDimensionalOverlapMap;
+  bondMap = rebalancedBondMap;
+
+  // update importers
+  oneDimensionalMapToOneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*oneDimensionalOverlapMap, *oneDimensionalMap));
+  threeDimensionalMapToThreeDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*threeDimensionalOverlapMap, *threeDimensionalMap));
 }
 
 void PeridigmNS::Peridigm::updateContactNeighborList() {
