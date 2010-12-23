@@ -107,6 +107,13 @@ struct Plus : public binary_function< Vector3D, Vector3D, Vector3D > {
 
 class FinitePlane {
 public:
+	/**
+	 * @param normal: unit vector normal to plane
+	 * @param lowerLeftCorner: looking down the normal (-dir), this is the lower left hand coordinate of the plane
+	 * @param edgeA_UnitVector: unit vector along one edge of plane; tail is at 'lowerLeftCorner'
+	 * @param lengthA: length of the edge associated with 'edgeA_UnitVector'
+	 * @param lengthB: length of 2nd edge; assumption is that second edge is perpendicular to both the normal and edgeA
+	 */
 	explicit FinitePlane(double normal[3], double lowerLeftCorner[3], double edgeA_UnitVector[3], double lengthA, double lengthB);
 	/**
 	Description:
@@ -117,7 +124,7 @@ public:
 	   do not intersect between (0<=t<=1). If the plane and line are parallel,
 	   zero is returned and t is set to VTK_LARGE_DOUBLE.
 	   */
-	int bondIntersectInfinitePlane(double *p0, double *p1, double&t, double x[3]);
+	int bondIntersectInfinitePlane(const double *p0, const double *p1, double&t, double x[3]);
 	/*
 	 * Under the assumption that the bond (p1-p0) intersects 'this' infinite plane at
 	 * the point 'x', this function determines if the intersection exists
@@ -137,7 +144,7 @@ private:
 class BondFilter {
 public:
 	virtual ~BondFilter() {}
-	virtual size_t filterListSize(vtkIdList* kdTreeList, const double *pt, const double *xOverlap) = 0;
+	virtual size_t filterListSize(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap) = 0;
 	/*
 	 * NOTE: expectation is that bondFlags has been allocated to a sufficient length so that a
 	 * single scalar flag can be associated with every point in the neighborhood of 'pt';
@@ -153,7 +160,7 @@ class BondFilterDefault : public BondFilter {
 public:
 	BondFilterDefault() : BondFilter() {}
 	virtual ~BondFilterDefault() {}
-	virtual size_t filterListSize(vtkIdList* kdTreeList, const double *pt, const double *xOverlap);
+	virtual size_t filterListSize(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap);
 	virtual void filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool* markForExclusion);
 
 };
@@ -165,8 +172,22 @@ class BondFilterWithSelf : public BondFilter {
 public:
 	BondFilterWithSelf() : BondFilter() {}
 	virtual ~BondFilterWithSelf() {}
-	virtual size_t filterListSize(vtkIdList* kdTreeList, const double *pt, const double *xOverlap);
+	virtual size_t filterListSize(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap);
 	virtual void filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool* markForExclusion);
+};
+
+/**
+ * Filter removes bonds from Neighborhood that intersect with "FinitePlane";
+ * NOTE: This filter does NOT include the point x in its own neighborhood H(x)
+ */
+class FinitePlaneFilter: public BondFilter {
+public:
+	FinitePlaneFilter(const FinitePlane& plane) : BondFilter(), plane(plane) {}
+	virtual ~FinitePlaneFilter() {}
+	virtual size_t filterListSize(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap);
+	virtual void filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool* markForExclusion) { }
+private:
+	FinitePlane plane;
 };
 
 }

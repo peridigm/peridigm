@@ -26,6 +26,27 @@ using std::cout;
 using std::valarray;
 using std::binary_function;
 
+/*
+  TEST CONSTANT arrays
+ */
+void myConstFunction(const double x[3]) {}
+void myNonConstFunction(double x[3]){}
+
+void callFunctions(){
+	double x[3]; x[0]=0.0;x[1]=0.0;x[2]=0.0;
+	const double *constXPtr = x;
+	double *xPtr = x;
+	myConstFunction(xPtr);
+	myNonConstFunction(xPtr);
+	myConstFunction(constXPtr);
+	// this will not compile
+//	myNonConstFunction(constXPtr);
+
+}
+/*
+   END TEST CONSTANT arrays
+ */
+
 
 struct Distance : public binary_function< valarray<double>, valarray<double>, double > {
 	double operator()(const valarray<double>& u, const valarray<double>& v){
