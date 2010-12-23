@@ -88,9 +88,9 @@ void testTwoPts()
 
   // create the material manager
   PeridigmNS::DataManager dataManager;
-  dataManager.setScalarMap(Teuchos::rcp(&nodeMap, false));
-  dataManager.setVector3DMap(Teuchos::rcp(&unknownMap, false));
-  dataManager.setBondMap(Teuchos::rcp(&bondMap, false));
+  dataManager.setMaps(Teuchos::rcp(&nodeMap, false),
+                      Teuchos::rcp(&unknownMap, false),
+                      Teuchos::rcp(&bondMap, false));
   dataManager.allocateData(mat.VariableSpecs());
 
   Epetra_Vector& x = *dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE);
@@ -201,9 +201,9 @@ void testEightPts()
 
   // create the material manager
   PeridigmNS::DataManager dataManager;
-  dataManager.setScalarMap(Teuchos::rcp(&nodeMap, false));
-  dataManager.setVector3DMap(Teuchos::rcp(&unknownMap, false));
-  dataManager.setBondMap(Teuchos::rcp(&bondMap, false));
+  dataManager.setMaps(Teuchos::rcp(&nodeMap, false),
+                      Teuchos::rcp(&unknownMap, false),
+                      Teuchos::rcp(&bondMap, false));
   dataManager.allocateData(mat.VariableSpecs());
 
   Epetra_Vector& x = *dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE);
@@ -461,9 +461,9 @@ void testThreePts()
 
   // create the material manager
   PeridigmNS::DataManager dataManager;
-  dataManager.setScalarMap(Teuchos::rcp(&nodeMap, false));
-  dataManager.setVector3DMap(Teuchos::rcp(&unknownMap, false));
-  dataManager.setBondMap(Teuchos::rcp(&bondMap, false));
+  dataManager.setMaps(Teuchos::rcp(&nodeMap, false),
+                      Teuchos::rcp(&unknownMap, false),
+                      Teuchos::rcp(&bondMap, false));
   dataManager.allocateData(mat.VariableSpecs());
 
   Epetra_Vector& x = *dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE);
