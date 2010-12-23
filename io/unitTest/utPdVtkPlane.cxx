@@ -12,6 +12,7 @@
 #include "PdutMpiFixture.h"
 #include "vtkPlane.h"
 #include "vtkSmartPointer.h"
+#include "PdBondFilter.h"
 #include <iostream>
 #include <functional>
 #include <valarray>
@@ -100,6 +101,14 @@ void simplePlaneCase_1(){
 	 */
 	valarray<double> ua(3); ua[0]=0;ua[1]=1;ua[2]=0;
 	/*
+	 * Plane dimension along user input edge (USER INPUT)
+	 */
+	double a = 1.0;
+	/*
+	 * Plane dimension along edge perpendicular to plane normal and user input edge (USER INPUT)
+	 */
+	double b = 1.0;
+	/*
 	 * Unit vector along 'other' edge of plane
 	 * ub = n 'cross' ua
 	 */
@@ -110,14 +119,6 @@ void simplePlaneCase_1(){
 	BOOST_CHECK(0.0 == ub[0]);
 	BOOST_CHECK(0.0 == ub[1]);
 	BOOST_CHECK(1.0 == ub[2]);
-	/*
-	 * Plane dimension along user input edge (USER INPUT)
-	 */
-	double a = 1.0;
-	/*
-	 * Plane dimension along edge perpendicular to plane normal and user input edge (USER INPUT)
-	 */
-	double b = 1.0;
 
 	/*
 	 * bond b = p1 - p0
@@ -152,8 +153,75 @@ void simplePlaneCase_1(){
 	BOOST_CHECK(0.5==x[1]);
 	BOOST_CHECK(0.5==x[2]);
 
+	/*
+	 * Does the point of intersection exist within the finite plane?
+	 */
+	valarray<double> r(3); r[0]=x[0]; r[1]=x[1]; r[2]=x[2];
+	Minus minus;
+	valarray<double> dr = minus(r,r0);
+	BOOST_CHECK(0.0==dr[0]);
+	BOOST_CHECK(0.5==dr[1]);
+	BOOST_CHECK(0.5==dr[2]);
 
+	// Dot 'dr' onto 'ua' and 'ub'
+	double alpha = dot(dr,ua);
+	double beta = dot(dr,ub);
 
+	// if(alpha <= a &&  beta<= b) then bond intersects input plane OTHERWISE NOT
+	BOOST_CHECK(0.5==alpha);
+	BOOST_CHECK(0.5==beta);
+
+}
+
+void simplePlaneCase_2(){
+	/*
+	 * Lower left corner of plane (USER INPUT)
+	 */
+	double r0[3]; r0[0]=0;r0[1]=0;r0[2]=0;
+	/*
+	 * Normal to plane (USER INPUT)
+	 */
+	double n[3]; n[0]=1;n[1]=0;n[2]=0;
+	/*
+	 * Unit vector along edge of plane (USER INPUT)
+	 */
+	double ua[3]; ua[0]=0;ua[1]=1;ua[2]=0;
+	/*
+	 * Plane dimension along user input edge (USER INPUT)
+	 */
+	double a = 1.0;
+	/*
+	 * Plane dimension along edge perpendicular to plane normal and user input edge (USER INPUT)
+	 */
+	double b = 1.0;
+
+	PdBondFilter::FinitePlane plane(n,r0,ua,a,b);
+	double p1[3]; p1[0] =  .5; p1[1] = .5; p1[2] = .5;
+	double p0[3]; p0[0] = -.5; p0[1] = .5; p0[2] = .5;
+	double *p1Ptr=p1;
+	double *p0Ptr=p0;
+	double x[3];
+	double t;
+	BOOST_CHECK(0!=plane.bondIntersectInfinitePlane(p0Ptr,p1Ptr,t,x));
+	/*
+	 * Assert that intersection exists and that its at the center of the bond
+	 */
+	BOOST_CHECK(0.5 == t);
+	BOOST_CHECK(0.0==x[0]);
+	BOOST_CHECK(0.5==x[1]);
+	BOOST_CHECK(0.5==x[2]);
+
+	/*
+	 * Assert plane function that checks for bond intersection
+	 */
+	BOOST_CHECK(true==plane.bondIntersect(x));
+
+	/*
+	 * Create a 2nd bond; Should find NO intersection
+	 */
+	p1[0] = -.5; p1[1] = 1.5; p1[2] = .5;
+	p0[0] = -.5; p0[1] = .5; p0[2] = .5;
+	BOOST_CHECK(0==plane.bondIntersectInfinitePlane(p0Ptr,p1Ptr,t,x));
 }
 
 
@@ -163,6 +231,7 @@ bool init_unit_test_suite()
 	bool success=true;
 	test_suite* proc = BOOST_TEST_SUITE( "utPdVtkPlane" );
 	proc->add(BOOST_TEST_CASE( &simplePlaneCase_1 ));
+	proc->add(BOOST_TEST_CASE( &simplePlaneCase_2 ));
 	framework::master_test_suite().add( proc );
 	return success;
 }

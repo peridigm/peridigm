@@ -5,8 +5,34 @@
  *      Author: jamitch
  */
 #include "PdBondFilter.h"
+#include "vtkPlane.h"
 
 namespace PdBondFilter {
+
+static Dot dot;
+static Cross cross;
+static Minus minus;
+static Plus plus;
+
+FinitePlane::FinitePlane(double normal[3], double lowerLeftCorner[3], double edgeA_UnitVector[3], double lengthA, double lengthB)
+: n(normal), r0(lowerLeftCorner), ua(edgeA_UnitVector), ub(cross(n,ua)),  a(lengthA), b(lengthB)
+{}
+
+
+int FinitePlane::bondIntersectInfinitePlane(double *p0, double *p1, double&t, double x[3]) {
+	return vtkPlane::IntersectWithLine(p0,p1,n.get(),r0.get(),t,x);
+}
+
+bool FinitePlane::bondIntersect(double x[3]) {
+	bool intersects = false;
+	Vector3D r(x);
+	Vector3D dr(minus(r,r0));
+	double aa=dot(dr,ua);
+	double bb=dot(dr,ub);
+	if(0<=aa && aa<=a && 0<=bb && bb<=b)
+		intersects=true;
+	return intersects;
+}
 
 size_t BondFilterDefault::filterListSize(vtkIdList* kdTreeList, const double *pt, const double *xOverlap) {
 
