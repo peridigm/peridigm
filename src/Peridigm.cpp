@@ -38,6 +38,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <set>
 
 #include <Epetra_Import.h>
 #include <Teuchos_VerboseObject.hpp>
@@ -549,98 +550,117 @@ void PeridigmNS::Peridigm::rebalance() {
   // rebalance, this gives us the processor on which each element will live
   decomp = getLoadBalancedDiscretization(decomp);
 
-  //// STEP 3 ////
+  //// STEP 3 and 4 ////
 
   Teuchos::RCP<Epetra_BlockMap> rebalancedOneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOwnedMap(*peridigmComm, decomp, 1)));
   Teuchos::RCP<Epetra_BlockMap> rebalancedThreeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOwnedMap(*peridigmComm, decomp, 3)));
 
-  // construct vectors (original configuration) for the number of bonds and the first global bond ID for each point
-
-  Teuchos::RCP<Epetra_Vector> numberOfBonds = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
-  Teuchos::RCP<Epetra_Vector> firstGlobalBondID = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
-
-  int numOwnedPoints = neighborhoodData->NumOwnedPoints();
-  int* neighborhoodList = neighborhoodData->NeighborhoodList();
-  int neighborhoodListIndex = 0;
-  int bondMapIndex = 0;
-  for(int iID=0 ; iID<numOwnedPoints ; ++iID){
-	int numNeighbors = neighborhoodList[neighborhoodListIndex];
-    (*numberOfBonds)[iID] = numNeighbors;
-    (*firstGlobalBondID)[iID] = bondMap->GID(bondMapIndex);    
-    neighborhoodListIndex += 1 + numNeighbors;
-    bondMapIndex += numNeighbors;
-  }
-
-  // communicate the number of bonds and the first global bond ID to the processors that now own these points
-
   Teuchos::RCP<const Epetra_Import> oneDimensionalMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedOneDimensionalMap, *oneDimensionalMap));
+  Teuchos::RCP<const Epetra_Import> threeDimensionalMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedThreeDimensionalMap, *threeDimensionalMap));
 
-  // \todo replace these two vectors with a multivector
+  // in order to create the rebalanced bond map, we need to know the number of
+  // bonds for each on-processor element (i.e., each element that will be on
+  // processor following the rebalance)
+  Teuchos::RCP<Epetra_Vector> numberOfBonds = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
+  for(int i=0 ; i<bondMap->NumMyElements() ; ++i){
+    (*numberOfBonds)[i] = (double)( bondMap->ElementSize(i) );
+  }
   Teuchos::RCP<Epetra_Vector> rebalancedNumberOfBonds = Teuchos::rcp(new Epetra_Vector(*rebalancedOneDimensionalMap));
   rebalancedNumberOfBonds->Import(*numberOfBonds, *oneDimensionalMapImporter, Insert);
-  Teuchos::RCP<Epetra_Vector> rebalancedFirstGlobalBondID = Teuchos::rcp(new Epetra_Vector(*rebalancedOneDimensionalMap));
-  rebalancedFirstGlobalBondID->Import(*firstGlobalBondID, *oneDimensionalMapImporter, Insert);
 
-  // construct the rebalanced bond map
-  int rebalancedNumLocallyOwnedBonds = 0;
-  for(int i=0 ; i<rebalancedNumberOfBonds->MyLength() ; ++i){
-    rebalancedNumLocallyOwnedBonds += (*rebalancedNumberOfBonds)[i];
+  // create the rebalanced bond map
+  int numGlobalElements = rebalancedOneDimensionalMap->NumGlobalElements();
+  int numMyElements = rebalancedOneDimensionalMap->NumMyElements();
+  int* myGlobalElements = rebalancedOneDimensionalMap->MyGlobalElements();
+  int *elementSizeList = new int[numMyElements];
+  for(int i=0 ; i<numMyElements ; ++i){
+    elementSizeList[i] = (int)( (*rebalancedNumberOfBonds)[i] );
   }
-  int* rebalancedGlobalBondIDs = new int[rebalancedNumLocallyOwnedBonds];
-  int index = 0;
-  for(int i=0 ; i<rebalancedNumberOfBonds->MyLength() ; ++i){
-    int numBonds = (*rebalancedNumberOfBonds)[i];
-    int firstGlobalBondID = (*rebalancedFirstGlobalBondID)[i];
-    for(int j=0 ; j<numBonds ; ++j){
-      rebalancedGlobalBondIDs[index++] = firstGlobalBondID + j;
+  int indexBase = 0;
+  Teuchos::RCP<Epetra_BlockMap> rebalancedBondMap = 
+    Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, elementSizeList, indexBase, *peridigmComm));
+  delete[] elementSizeList;
+
+  Teuchos::RCP<const Epetra_Import> bondMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedBondMap, *bondMap));
+
+  // construct a globalID neighbor list
+  // this is required for the construction of the overlap maps
+  Teuchos::RCP<Epetra_Vector> neighborGlobalIDs = Teuchos::rcp(new Epetra_Vector(*bondMap));
+  int* neighborhoodList = neighborhoodData->NeighborhoodList();
+  int neighborhoodListIndex = 0;
+  int neighborGlobalIDIndex = 0;
+  for(int i=0 ; i<neighborhoodData->NumOwnedPoints() ; ++i){
+    int numNeighbors = neighborhoodList[neighborhoodListIndex++];
+    for(int j=0 ; j<numNeighbors ; ++j){
+      int neighborLocalID = neighborhoodList[neighborhoodListIndex++];
+      (*neighborGlobalIDs)[neighborGlobalIDIndex++] = oneDimensionalMap->GID(neighborLocalID);
     }
   }
-  //Teuchos::RCP<Epetra_BlockMap> rebalancedBlockMap = Teuchos::rcp(new Epetra_BlockMap(-1, rebalancedNumLocallyOwnedBonds, 0, 
+  Teuchos::RCP<Epetra_Vector> rebalancedNeighborGlobalIDs = Teuchos::rcp(new Epetra_Vector(*bondMap));
+  rebalancedNeighborGlobalIDs->Import(*neighborGlobalIDs, *bondMapImporter, Insert);
 
+  // create a list of all the off-processor IDs that will need to be ghosted
+  set<int> offProcessorIDs;
+  for(int i=0 ; i<rebalancedNeighborGlobalIDs->MyLength() ; ++i){
+    int globalID = (*rebalancedNeighborGlobalIDs)[i];
+    if(!oneDimensionalMap->MyGID(globalID))
+      offProcessorIDs.insert(globalID);
+  }
 
-  // need the global ID for the first entry in the above list for each point
+  // \todo Augment the list of off-processor IDs that need to be ghosted to include those found in the contact search
 
-  // need a list of global IDs of neighbors of each point in the original configuration & decomposition
-
-
-  // this will be wrong, it is based on a neighborhood list that was re-computed in the deformed configuration
-  Teuchos::RCP<Epetra_BlockMap> rebalancedOneDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOverlapMap(*peridigmComm, decomp, 1))); // WRONG!
-  Teuchos::RCP<Epetra_BlockMap> rebalancedThreeDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOverlapMap(*peridigmComm, decomp, 3)));
-
-  // need to know how many neighbors each locally-owned element has, and what the local ID (oneDimensionalOverlapMap) is for each neighbor.
-
-
-  // functionality from PdQuickGridDiscretization::createNeighborhoodData
-  // \todo Eliminate code duplication here.
-  // \todo Can we just overwrite neighborhoodData here?
-  // THIS IS WRONG, NEED TO PARALLEL COMMUNICATE ORIGINAL NEIGHBOR LIST, THE NEW LIST IS IN THE DEFORMAED CONFIGURATION
-  Teuchos::RCP<PeridigmNS::NeighborhoodData> rebalancedNeighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
-  rebalancedNeighborhoodData->SetNumOwned(decomp.numPoints);
-  memcpy(rebalancedNeighborhoodData->OwnedIDs(), 
- 		 PdQuickGrid::getLocalOwnedIds(decomp, *rebalancedOneDimensionalOverlapMap).get(),
- 		 decomp.numPoints*sizeof(int));
-  memcpy(rebalancedNeighborhoodData->NeighborhoodPtr(), 
- 		 decomp.neighborhoodPtr.get(),
- 		 decomp.numPoints*sizeof(int));
-  rebalancedNeighborhoodData->SetNeighborhoodListSize(decomp.sizeNeighborhoodList);
-  memcpy(rebalancedNeighborhoodData->NeighborhoodList(),
- 		 PdQuickGrid::getLocalNeighborList(decomp, *rebalancedOneDimensionalOverlapMap).get(),
- 		 decomp.sizeNeighborhoodList*sizeof(int));
-
-  // functionality from PdQuickGridDiscretization constructor
-  // determine the number of bonds based on the neighborhood data
-  // THIS IS WRONG, NEED TO FIGURE OUT THE GLOBAL IDS SO THE IMPORTER WILL WORK.
-  // \todo Fix rebalanced bond map.
-  int numBonds = rebalancedNeighborhoodData->NeighborhoodListSize() - rebalancedNeighborhoodData->NumOwnedPoints();
-  Teuchos::RCP<Epetra_BlockMap> rebalancedBondMap = Teuchos::rcp(new Epetra_BlockMap(-1, numBonds, 1, 0, *peridigmComm));
-
-  //// STEP 4 ////
-
+  // construct the rebalanced overlap maps
+  numGlobalElements = -1;
+  numMyElements = rebalancedOneDimensionalMap->NumMyElements() + offProcessorIDs.size();
+  myGlobalElements = new int[numMyElements];
+  rebalancedOneDimensionalMap->MyGlobalElements(myGlobalElements);
+  int offset = rebalancedOneDimensionalMap->NumMyElements();
+  int index = 0;
+  for(set<int>::const_iterator it=offProcessorIDs.begin() ; it!=offProcessorIDs.end() ; ++it, ++index){
+    myGlobalElements[offset+index] = *it;
+  }
+  Teuchos::RCP<Epetra_BlockMap> rebalancedOneDimensionalOverlapMap =
+    Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, 1, indexBase, *peridigmComm));
+  Teuchos::RCP<Epetra_BlockMap> rebalancedThreeDimensionalOverlapMap =
+    Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, 3, indexBase, *peridigmComm));
+  delete[] myGlobalElements;
 
   Teuchos::RCP<const Epetra_Import> oneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedOneDimensionalOverlapMap, *oneDimensionalOverlapMap));
-  Teuchos::RCP<const Epetra_Import> threeDimensionalMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedThreeDimensionalMap, *threeDimensionalMap));
   Teuchos::RCP<const Epetra_Import> threeDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedThreeDimensionalOverlapMap, *threeDimensionalOverlapMap));
-  Teuchos::RCP<const Epetra_Import> bondMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedBondMap, *bondMap));
+
+  // create a new NeighborhoodData object
+  Teuchos::RCP<PeridigmNS::NeighborhoodData> rebalancedNeighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
+  rebalancedNeighborhoodData->SetNumOwned(rebalancedOneDimensionalMap->NumMyElements());
+  int* ownedIDs = rebalancedNeighborhoodData->OwnedIDs();
+  for(int i=0 ; i<rebalancedOneDimensionalMap->NumMyElements() ; ++i){
+    int globalID = rebalancedOneDimensionalMap->GID(i);
+    int localID = rebalancedOneDimensionalOverlapMap->LID(globalID);
+    TEST_FOR_EXCEPTION(localID == -1, Teuchos::RangeError, "Invalid index into oneDimensionalOverlapMap");
+    ownedIDs[i] = localID;
+  }
+  rebalancedNeighborhoodData->SetNeighborhoodListSize(rebalancedBondMap->NumMyPoints() + rebalancedOneDimensionalMap->NumMyElements());
+  // numNeighbors1, n1LID, n2LID, n3LID, numNeighbors2, n1LID, n2LID, ...
+  neighborhoodList = rebalancedNeighborhoodData->NeighborhoodList();
+  // points into neighborhoodList, gives start of neighborhood information for each locally-owned element
+  int* neighborhoodPtr = rebalancedNeighborhoodData->NeighborhoodPtr();
+  // gives the offset at which the list of neighbors can be found in the rebalancedNeighborGlobalIDs vector for each locally-owned element
+  int* firstPointInElementList = rebalancedBondMap->FirstPointInElementList();
+  // loop over locally owned points
+  int neighborhoodIndex = 0;
+  for(int iLID=0 ; iLID<rebalancedBondMap->NumMyElements() ; ++iLID){
+    // location of this elements neighboord data in the neighborhoodList
+    neighborhoodPtr[iLID] = neighborhoodIndex;
+    // first entry is the number of neighbors
+    int numNeighbors = rebalancedBondMap->ElementSize(iLID);
+    neighborhoodList[neighborhoodIndex++] = numNeighbors;
+    // next entries record the local ID of each neighbor
+    int offset = firstPointInElementList[iLID];
+    for(int iN=0 ; iN<numNeighbors ; ++iN){
+      int globalNeighborID = (*rebalancedNeighborGlobalIDs)[offset + iN];
+      int localNeighborID = oneDimensionalOverlapMap->LID(globalNeighborID);
+      neighborhoodList[neighborhoodIndex++] = localNeighborID;
+    }
+  }
 
   //// STEP 5 ////
 
