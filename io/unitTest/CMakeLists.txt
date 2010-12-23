@@ -95,4 +95,7 @@ target_link_libraries(utVTK_ioExample_np4  ${PdMaterialUtilitiesLib} ${IO_LIBS} 
 add_executable(utPdVtkPlane utPdVtkPlane.cxx)
 target_link_libraries(utPdVtkPlane  ${PdMaterialUtilitiesLib} ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 
+add_executable(utFinitePlaneFilter utFinitePlaneFilter.cxx)
+target_link_libraries(utFinitePlaneFilter ${PdMaterialUtilitiesLib} ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+
 

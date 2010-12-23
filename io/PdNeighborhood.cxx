@@ -303,7 +303,7 @@ NeighborhoodList getNeighborhoodList
 		int *ptr = neighborsPtr.get();
 		const int* const end = neighborsPtr.get()+numOwnedPoints;
 		double *x = xOwnedPtr.get();
-		int localId=0;
+		size_t localId=0;
 		for(;ptr!=end;ptr++,x+=3, localId++){
 			/*
 			 * pointer to start of neighborhood list
@@ -330,7 +330,7 @@ NeighborhoodList getNeighborhoodList
 				throw std::runtime_error(message);
 			}
 
-			size_t ptListSize = bondFilter.filterListSize(kdTreeList,x,xOverlap);
+			size_t ptListSize = bondFilter.filterListSize(kdTreeList,x,localId,xOverlap);
 			if(ptListSize>max) max=ptListSize;
 			sizeList += ptListSize;
 			kdTreeList->Delete();
