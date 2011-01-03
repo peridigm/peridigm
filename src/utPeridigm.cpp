@@ -117,7 +117,7 @@ Teuchos::RCP<PeridigmNS::Peridigm> createTwoPointModel()
   verletParams.set("Fixed dt", 1.0);
 
   // create the Peridigm object
-  Teuchos::RCP<PeridigmNS::Peridigm> peridigm = rcp(new Peridigm::Peridigm(comm, peridigmParams));
+  Teuchos::RCP<PeridigmNS::Peridigm> peridigm = rcp(new PeridigmNS::Peridigm(comm, peridigmParams));
 
   return peridigm;
 }

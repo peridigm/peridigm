@@ -198,7 +198,7 @@ void simplePlaneCase_2(){
 	/*
 	 * Lower left corner of plane (USER INPUT)
 	 */
-	double r0[3]; r0[0]=0;r0[1]=0;r0[2]=0;
+	double r0[3]; r0[0]=0;r0[1]=1;r0[2]=0;
 	/*
 	 * Normal to plane (USER INPUT)
 	 */
@@ -206,7 +206,7 @@ void simplePlaneCase_2(){
 	/*
 	 * Unit vector along edge of plane (USER INPUT)
 	 */
-	double ua[3]; ua[0]=0;ua[1]=1;ua[2]=0;
+	double ua[3]; ua[0]=0;ua[1]=-1;ua[2]=0;
 	/*
 	 * Plane dimension along user input edge (USER INPUT)
 	 */

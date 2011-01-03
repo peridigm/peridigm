@@ -60,7 +60,7 @@ namespace PeridigmNS {
     //! Destructor
     virtual ~PeridigmFactory() {}
 
-    virtual Teuchos::RCP<Peridigm::Peridigm> create(const std::string inputFile, const MPI_Comm& solverComm);
+    virtual Teuchos::RCP<PeridigmNS::Peridigm> create(const std::string inputFile, const MPI_Comm& solverComm);
 
   private:
 

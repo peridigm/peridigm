@@ -60,7 +60,7 @@ Teuchos::RCP<PeridigmNS::Peridigm> PeridigmNS::PeridigmFactory::create(const std
   Teuchos::updateParametersFromXmlFile(inputFile, peridigmParams.get());
 
   // Create new Peridigm object
-  return rcp(new Peridigm::Peridigm(comm, peridigmParams));
+  return rcp(new PeridigmNS::Peridigm(comm, peridigmParams));
 
 }
 
