@@ -10,39 +10,6 @@ enable_testing ()
 project (peridigm)
 set (EXECUTABLE_NAME Peridigm)
 
-set(HOME_BUILD 0)
-set(HOME /home/wow)
-message("\nPeridigm build from $ENV{HOME}\n")
-if(EXISTS ${HOME})
-    set(HOME_BUILD 1)
-endif()
-
-if(HOME_BUILD)
-    # Blas and Lapack Libraries
-    find_library(ACML_LIBRARY
-      NAMES acml
-      PATHS ${BLAS_LIBRARY_DIRS}
-    )
-    set(BlasLapack_Libraries acml)
-else()
-    # Initialize BOOST 
-    set(BOOST_ROOT ${BOOST_ROOT})
-    set(BOOST_VERSION 1.37)
-    
-    # Blas and Lapack Libraries
-    find_library(Blas_LIBRARY
-      NAMES blas
-      PATHS ${BLAS_LIBRARY_DIRS}
-    )
-    find_library(Lapack_LIBRARY
-      NAMES lapack
-      PATHS ${LAPACK_LIBRARY_DIRS}
-    )
-    set(BlasLapack_Libraries blas lapack)
-endif()
-
-
-
 # MPI configuration
 # use the FindMPI module to find a version of MPI
 # expose CMAKE_CXX_COMPILER so that the user can change it to the MPI compiler
@@ -58,7 +25,7 @@ endif (NOT CMAKE_CXX_FLAGS)
 # Boost configuration
 # Questions?  See http://www.cmake.org/cmake/help/cmake2.6docs.html#module:FindBoost
 #
-find_package (Boost ${BOOST_VERSION} COMPONENTS unit_test_framework)
+find_package (Boost 1.37.0 COMPONENTS unit_test_framework)
 if (Boost_FOUND)
   message ("\nBoost installation:")
   message ("   Version: ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}")
@@ -86,6 +53,17 @@ if (VTK_FOUND)
 else ()
   message ("\nVTK NOT FOUND!  (Try defining VTK_DIR)\n")
 endif ()
+
+# Blas and Lapack Libraries  
+find_library(Blas_LIBRARY  
+   NAMES blas  
+   PATHS ${BLAS_LIBRARY_DIRS}  
+)  
+find_library(Lapack_LIBRARY  
+   NAMES lapack  
+   PATHS ${LAPACK_LIBRARY_DIRS}  
+)  
+set(BlasLapack_Libraries blas lapack)  
 
 #
 # DAKOTA configuration
@@ -249,11 +227,12 @@ ${CMAKE_SOURCE_DIR}/src/materials
 include_directories(${INCLUDE_DIRS})
 
 # link directories 
-set(LIB_DIRS ${TRILINOS_DIR}/lib ${VTK_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS} ${BLAS_LIBRARY_DIRS})
+set(LIB_DIRS ${TRILINOS_DIR}/lib ${VTK_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS})
 link_directories(${LIB_DIRS})
 
+
 set (REQUIRED_LIBS
-${BlasLapack_Libraries}
+${BlasLapack_Libraries}  
 mpich
 ${PTHREAD_LIB}
 libgfortran.a
@@ -261,8 +240,8 @@ libm.a
 )
 
 set (UT_REQUIRED_LIBS
-${BlasLapack_Libraries}
-mpich
+${BlasLapack_Libraries}  
+mpich 
 libgfortran.a
 ${Boost_LIBRARIES}
 libm.a
