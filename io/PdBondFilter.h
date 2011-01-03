@@ -109,13 +109,13 @@ class FinitePlane {
 public:
 	/**
 	 * @param normal: unit vector normal to plane
-	 * @param lowerLeftCorner: looking down the normal (+dir), this is the lower left hand coordinate of the plane
-	 * @param edgeA_UnitVector: unit vector along one edge of plane; tail is at 'lowerLeftCorner' (IMPORTANT)
-	 * @param lengthA: length of the edge associated with 'edgeA_UnitVector'
-	 * @param lengthB: length of 2nd edge; assumption is that second edge is perpendicular to both the normal and edgeA;
-	 * The positive direction for edge B is taken along 'edgeA_UnitVector cross 'normal'
+	 * @param lowerLeftCorner: looking down the normal (+dir), this is the lower left hand corner coordinate of the plane
+	 * @param bottom_UnitVector: unit vector along bottom edge of plane; tail is at 'lowerLeftCorner' (IMPORTANT)
+	 * @param lengthBottom: length of the bottom edge associated with 'bottom_UnitVector'
+	 * @param lengthA: length of 2nd edge; assumption is that second edge is perpendicular to both the normal and bottom edge;
+	 * The positive direction for edge A is taken along 'bottom_UnitVector cross 'normal'
 	 */
-	explicit FinitePlane(double normal[3], double lowerLeftCorner[3], double edgeA_UnitVector[3], double lengthA, double lengthB);
+	explicit FinitePlane(double normal[3], double lowerLeftCorner[3], double bottom_UnitVector[3], double lengthBottom, double lengthA);
 	/**
 	Description:
 	   Given a line defined by the two points p0,p1; and 'this' plane defined by the
@@ -137,7 +137,7 @@ public:
 	 */
 	bool bondIntersect(double x[3]);
 private:
-	Vector3D n, r0, ua, ub;
+	Vector3D n, r0, ub, ua;
 	double a, b;
 };
 

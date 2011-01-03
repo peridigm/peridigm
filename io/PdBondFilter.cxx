@@ -14,8 +14,8 @@ static Cross cross;
 static Minus minus;
 static Plus plus;
 
-FinitePlane::FinitePlane(double normal[3], double lowerLeftCorner[3], double edgeA_UnitVector[3], double lengthA, double lengthB)
-: n(normal), r0(lowerLeftCorner), ua(edgeA_UnitVector), ub(cross(ua,n)),  a(lengthA), b(lengthB)
+FinitePlane::FinitePlane(double normal[3], double lowerLeftCorner[3], double bottom_UnitVector[3], double lengthBottom, double lengthA)
+: n(normal), r0(lowerLeftCorner), ub(bottom_UnitVector), ua(cross(ub,n)), b(lengthBottom), a(lengthA)
 {}
 
 
@@ -31,7 +31,7 @@ bool FinitePlane::bondIntersect(double x[3]) {
 	Vector3D dr(minus(r,r0));
 	double aa=dot(dr,ua);
 	double bb=dot(dr,ub);
-	std::cout << "\tFinitePlane::bondIntersect aa, bb = " << aa << ", " << bb << std::endl;
+//	std::cout << "\tFinitePlane::bondIntersect aa, bb = " << aa << ", " << bb << std::endl;
 	if(0<=aa && aa<=a && 0<=bb && bb<=b)
 		intersects=true;
 	return intersects;
