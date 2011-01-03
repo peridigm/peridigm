@@ -100,6 +100,15 @@ FinitePlane getCase_1a(){
 	return FinitePlane(n,r0,ua,a,b);
 }
 
+FinitePlane getCase_2a(){
+	double sqrt2=sqrt(2.0);
+	double n[3]; n[0]=-1.0/sqrt2;n[1]=0.0; n[2]=1.0/sqrt2;
+	double r0[3]; r0[0]=0.0; r0[1]=0.0; r0[2]=0.0;
+	double ua[3]; ua[0]=0.0; ua[1]=1.0;ua[2]=0.0;
+	double a=1.0, b=sqrt2;
+	return FinitePlane(n,r0,ua,a,b);
+}
+
 
 void case_1a() {
 
@@ -179,12 +188,91 @@ void case_1a() {
 
 }
 
+void case_2a() {
+
+	PdGridData decomp = getGrid();
+	FinitePlane plane = getCase_2a();
+	RCP<BondFilter> filterPtr=RCP<BondFilter>(new FinitePlaneFilter(plane));
+
+	/*
+	 * Create KdTree; Since this is serial xOwned = xOverlap and numOwned = numOverlap
+	 */
+	std::tr1::shared_ptr<double> xOwnedPtr = decomp.myX;
+	std::tr1::shared_ptr<double> xOverlapPtr = decomp.myX;
+	size_t numOverlapPoints = decomp.numPoints;
+	vtkSmartPointer<vtkUnstructuredGrid> overlapGrid = PdVTK::getGrid(xOverlapPtr,numOverlapPoints);
+	vtkKdTreePointLocator* kdTree = vtkKdTreePointLocator::New();
+	kdTree->SetDataSet(overlapGrid);
+
+	/*
+	 * ANSWERS for each ID
+	 * list size for each point
+	 */
+	// known local ids
+	size_t ids[] = {0,1,2,3,4,5,6,7};
+	bool markForExclusion[8];
+	// Expected: filter should evaluate this list size for each id
+	size_t size[] = {4,2,4,2,2,4,2,4};
+	// Expected: filter should return these flags for each local id
+	bool n0[]={1,1,0,1,1,0,1,0};
+	bool n1[]={1,1,1,0,1,1,1,1};
+	bool n2[]={0,1,1,1,1,0,1,0};
+	bool n3[]={1,0,1,1,1,1,1,1};
+	bool n4[]={1,1,1,1,1,1,0,1};
+	bool n5[]={0,1,0,1,1,1,1,0};
+	bool n6[]={1,1,1,1,0,1,1,1};
+	bool n7[]={0,1,0,1,1,0,1,1};
+	bool * expectedFlags[] = {n0,n1,n2,n3,n4,n5,n6,n7};
+	{
+		for(size_t i=0;i<8;i++){
+			/*
+			 * look at neighborhood of id = 0
+			 */
+			size_t id=ids[i];
+			vtkIdList* kdTreeList = vtkIdList::New();
+			/*
+			 * Note that list returned includes this point *
+			 */
+			double *x = decomp.myX.get()+3*id;
+			kdTree->FindPointsWithinRadius(horizon, x, kdTreeList);
+			/*
+			 * Use filter to decide length of neighborhood list (will include extra entry for 'number of neighbors: numNeigh')
+			 */
+			size_t listSize = filterPtr->filterListSize(kdTreeList,x,id,decomp.myX.get());
+			BOOST_CHECK(listSize==size[id]);
+
+			/*
+			 * Now determine which points are included
+			 */
+			filterPtr->filterBonds(kdTreeList,x,id,decomp.myX.get(),markForExclusion);
+			bool *flags = expectedFlags[i];
+			/*
+			 * Assert flags
+			 */
+			for(int j=0;j<8;j++){
+//				cout << "filter flag, expected flag = " << *(markForExclusion+j) << ", " << *(flags+j) << endl;
+				BOOST_CHECK(*(flags+j)==*(markForExclusion+j));
+			}
+
+			// delete tree list for this point
+			kdTreeList->Delete();
+		}
+	}
+
+
+
+//	decomp = createAndAddNeighborhood(decomp,horizon,filterPtr);
+
+
+}
+
 bool init_unit_test_suite()
 {
 	// Add a suite for each processor in the test
 	bool success=true;
 	test_suite* proc = BOOST_TEST_SUITE( "utFinitePlaneFilter" );
 	proc->add(BOOST_TEST_CASE( &case_1a ));
+	proc->add(BOOST_TEST_CASE( &case_2a ));
 	framework::master_test_suite().add( proc );
 	return success;
 }
