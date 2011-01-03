@@ -109,10 +109,11 @@ class FinitePlane {
 public:
 	/**
 	 * @param normal: unit vector normal to plane
-	 * @param lowerLeftCorner: looking down the normal (-dir), this is the lower left hand coordinate of the plane
-	 * @param edgeA_UnitVector: unit vector along one edge of plane; tail is at 'lowerLeftCorner'
+	 * @param lowerLeftCorner: looking down the normal (+dir), this is the lower left hand coordinate of the plane
+	 * @param edgeA_UnitVector: unit vector along one edge of plane; tail is at 'lowerLeftCorner' (IMPORTANT)
 	 * @param lengthA: length of the edge associated with 'edgeA_UnitVector'
-	 * @param lengthB: length of 2nd edge; assumption is that second edge is perpendicular to both the normal and edgeA
+	 * @param lengthB: length of 2nd edge; assumption is that second edge is perpendicular to both the normal and edgeA;
+	 * The positive direction for edge B is taken along 'edgeA_UnitVector cross 'normal'
 	 */
 	explicit FinitePlane(double normal[3], double lowerLeftCorner[3], double edgeA_UnitVector[3], double lengthA, double lengthB);
 	/**
@@ -185,7 +186,7 @@ public:
 	FinitePlaneFilter(const FinitePlane& plane) : BondFilter(), plane(plane) {}
 	virtual ~FinitePlaneFilter() {}
 	virtual size_t filterListSize(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap);
-	virtual void filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool* markForExclusion) { }
+	virtual void filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool* markForExclusion);
 private:
 	FinitePlane plane;
 };

@@ -61,6 +61,33 @@ PdGridData getGrid() {
 
 	// This load-balances
 	decomp = getLoadBalancedDiscretization(decomp);
+
+	{
+		/*
+		 * SANITY CHECK on Expected coordinates and IDs
+		 */
+		size_t numOverlapPoints = decomp.numPoints;
+		int ids[] = {0,1,2,3,4,5,6,7};
+		double x[]={
+				0.0,0.0,0.0,
+				1.0,0.0,0.0,
+				0.0,1.0,0.0,
+				1.0,1.0,0.0,
+				0.0,0.0,1.0,
+				1.0,0.0,1.0,
+				0.0,1.0,1.0,
+				1.0,1.0,1.0
+		};
+		BOOST_CHECK(8==numOverlapPoints);
+		for(int j=0;j<numOverlapPoints;j++){
+			BOOST_CHECK(decomp.myGlobalIDs.get()[j]==ids[j]);
+			BOOST_CHECK(decomp.myX.get()[j*3+0]==x[j*3+0]);
+			BOOST_CHECK(decomp.myX.get()[j*3+1]==x[j*3+1]);
+			BOOST_CHECK(decomp.myX.get()[j*3+2]==x[j*3+2]);
+		}
+
+	}
+
 	return decomp;
 }
 
@@ -69,7 +96,7 @@ FinitePlane getCase_1a(){
 	double n[3]; n[0]=-1.0/sqrt2;n[1]=1.0/sqrt2;n[2]=0.0;
 	double r0[3]; r0[0]=0.0; r0[1]=0.0; r0[2]=0.0;
 	double ua[3]; ua[0]=1.0/sqrt2; ua[1]=1.0/sqrt2;ua[2]=0.0;
-	double a=1.0, b=1.0;
+	double a=sqrt(2), b=1.0;
 	return FinitePlane(n,r0,ua,a,b);
 }
 
@@ -90,66 +117,62 @@ void case_1a() {
 	vtkKdTreePointLocator* kdTree = vtkKdTreePointLocator::New();
 	kdTree->SetDataSet(overlapGrid);
 
+	/*
+	 * ANSWERS for each ID
+	 * list size for each point
+	 */
+	// known local ids
+	size_t ids[] = {0,1,2,3,4,5,6,7};
+	bool markForExclusion[8];
+	// Expected: filter should evaluate this list size for each id
+	size_t size[] = {4,2,2,4,4,2,2,4};
+	// Expected: filter should return these flags for each local id
+	bool n0[]={1,1,1,0,0,1,1,0};
+	bool n1[]={1,1,1,1,1,0,1,1};
+	bool n2[]={1,1,1,1,1,1,0,1};
+	bool n3[]={0,1,1,1,0,1,1,0};
+	bool n4[]={0,1,1,0,1,1,1,0};
+	bool n5[]={1,0,1,1,1,1,1,1};
+	bool n6[]={1,1,0,1,1,1,1,1};
+	bool n7[]={0,1,1,0,0,1,1,1};
+	bool * expectedFlags[] = {n0,n1,n2,n3,n4,n5,n6,n7};
 	{
-		/*
-		 * SANITY CHECK on Expected coordinates and IDs
-		 */
-		int ids[] = {0,1,2,3,4,5,6,7};
-		double x[]={
-				0.0,0.0,0.0,
-				1.0,0.0,0.0,
-				0.0,1.0,0.0,
-				1.0,1.0,0.0,
-				0.0,0.0,1.0,
-				1.0,0.0,1.0,
-				0.0,1.0,1.0,
-				1.0,1.0,1.0
-		};
-		BOOST_CHECK(8==numOverlapPoints);
-		for(int j=0;j<numOverlapPoints;j++){
-			BOOST_CHECK(decomp.myGlobalIDs.get()[j]==ids[j]);
-//			cout << "decomp.myX.get()[j*3+0], decomp.myX.get()[j*3+1], decomp.myX.get()[j*3+2] = "
-//					<< decomp.myX.get()[j*3+0] << ", "
-//					<< decomp.myX.get()[j*3+1] << ", "
-//					<< decomp.myX.get()[j*3+2] << std::endl;
-			BOOST_CHECK(decomp.myX.get()[j*3+0]==x[j*3+0]);
-			BOOST_CHECK(decomp.myX.get()[j*3+1]==x[j*3+1]);
-			BOOST_CHECK(decomp.myX.get()[j*3+2]==x[j*3+2]);
+		for(size_t i=0;i<8;i++){
+			/*
+			 * look at neighborhood of id = 0
+			 */
+			size_t id=ids[i];
+			vtkIdList* kdTreeList = vtkIdList::New();
+			/*
+			 * Note that list returned includes this point *
+			 */
+			double *x = decomp.myX.get()+3*id;
+			kdTree->FindPointsWithinRadius(horizon, x, kdTreeList);
+			/*
+			 * Use filter to decide length of neighborhood list (will include extra entry for 'number of neighbors: numNeigh')
+			 */
+			size_t listSize = filterPtr->filterListSize(kdTreeList,x,id,decomp.myX.get());
+			BOOST_CHECK(listSize==size[id]);
+
+			/*
+			 * Now determine which points are included
+			 */
+			filterPtr->filterBonds(kdTreeList,x,id,decomp.myX.get(),markForExclusion);
+			bool *flags = expectedFlags[i];
+			/*
+			 * Assert flags
+			 */
+			for(int j=0;j<8;j++){
+//				cout << "filter flag, expected flag = " << *(markForExclusion+j) << ", " << *(flags+j) << endl;
+				BOOST_CHECK(*(flags+j)==*(markForExclusion+j));
+			}
+
+			// delete tree list for this point
+			kdTreeList->Delete();
 		}
-
 	}
 
-	{
-		/*
-		 * look at neighborhood of id = 0
-		 */
-		int id=0;
-		vtkIdList* kdTreeList = vtkIdList::New();
-		/*
-		 * Note that list returned includes this point *
-		 */
-		double *x = decomp.myX.get()+3*id;
-		kdTree->FindPointsWithinRadius(horizon, x, kdTreeList);
-		size_t listSize = filterPtr->filterListSize(kdTreeList,x,id,decomp.myX.get());
-//		cout << "id, listSize = " << id << ", " << listSize << std::endl;
-		kdTreeList->Delete();
-	}
 
-	{
-		/*
-		 * look at neighborhood of id = 0
-		 */
-		int id=1;
-		vtkIdList* kdTreeList = vtkIdList::New();
-		/*
-		 * Note that list returned includes this point *
-		 */
-		double *x = decomp.myX.get()+3*id;
-		kdTree->FindPointsWithinRadius(horizon, x, kdTreeList);
-		size_t listSize = filterPtr->filterListSize(kdTreeList,x,id,decomp.myX.get());
-		cout << "id, listSize = " << id << ", " << listSize << std::endl;
-		kdTreeList->Delete();
-	}
 
 //	decomp = createAndAddNeighborhood(decomp,horizon,filterPtr);
 
