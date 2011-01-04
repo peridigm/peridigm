@@ -167,3 +167,4 @@ ${Boost_LIBRARIES}
 #)
 
 add_subdirectory (materials/)
+add_subdirectory (initial_conditions/)

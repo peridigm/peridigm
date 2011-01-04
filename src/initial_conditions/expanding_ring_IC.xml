@@ -34,7 +34,7 @@
 			<Parameter name="v_r0" type="double" value="200.0"/>
 			<Parameter name="v_r1" type="double" value="0.0"/>
 			<Parameter name="v_z0" type="double" value="0.0"/>
-			<Parameter name="Geometry" type="string" value="PdQuickGrid"/>
+			<Parameter name="Geometry" type="string" value="TensorProductCylinderMeshGenerator"/>
 		</ParameterList>
 	</ParameterList>
 	<ParameterList name="Solver">
