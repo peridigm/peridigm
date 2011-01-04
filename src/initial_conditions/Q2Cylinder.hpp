@@ -19,6 +19,9 @@ public:
 	virtual ~Q2Cylinder() {}
 	Q2Cylinder(const Teuchos::RCP<Teuchos::ParameterList>& peridigmParams) {}
 	virtual void apply() {}
+
+private:
+	double z0, a, vr0, vr1, vz0;
 };
 
 }  // namespace InitialConditionsNS
