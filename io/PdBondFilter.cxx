@@ -7,12 +7,13 @@
 #include "PdBondFilter.h"
 #include "vtkPlane.h"
 
-namespace PdBondFilter {
+using VectorUtilsNS::Vector3D;
+static VectorUtilsNS::Dot dot;
+static VectorUtilsNS::Cross cross;
+static VectorUtilsNS::Minus minus;
+static VectorUtilsNS::Plus plus;
 
-static Dot dot;
-static Cross cross;
-static Minus minus;
-static Plus plus;
+namespace PdBondFilter {
 
 FinitePlane::FinitePlane(double normal[3], double lowerLeftCorner[3], double bottom_UnitVector[3], double lengthBottom, double lengthA)
 : n(normal), r0(lowerLeftCorner), ub(bottom_UnitVector), ua(cross(ub,n)), b(lengthBottom), a(lengthA)
