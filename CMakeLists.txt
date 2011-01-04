@@ -222,6 +222,7 @@ ${CMAKE_SOURCE_DIR}/src
 ${CMAKE_SOURCE_DIR}/src/contact
 ${CMAKE_SOURCE_DIR}/src/evaluators
 ${CMAKE_SOURCE_DIR}/src/materials
+${CMAKE_SOURCE_DIR}/src/initial_conditions
 )
 
 include_directories(${INCLUDE_DIRS})

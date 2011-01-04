@@ -16,8 +16,8 @@ namespace PeridigmNS {
 namespace InitialConditionsNS {
 
 class InitialCondition {
-	virtual ~InitialCondition() {}
 public:
+	virtual ~InitialCondition() {}
 	virtual void apply() = 0;
 };
 
