@@ -1,0 +1,68 @@
+<ParameterList>
+<ParameterList name="Problem">
+	<Parameter name="Verbose" type="bool" value="false"/>
+	<ParameterList name="Discretization">
+		<Parameter name="Horizon" type="double" value="1.01" />
+		<Parameter name="NeighborhoodType" type="string" value="Spherical" />
+		<Parameter name="Type" type="string" value="PdQuickGrid" />
+		<ParameterList name="TensorProductCylinderMeshGenerator">
+			<Parameter name="Inner Radius" type="double" value="16.0" />
+			<Parameter name="Outer Radius" type="double" value="17.0" />
+			<Parameter name="Cylinder Length" type="double" value="1.0" />
+			<Parameter name="Ring Center x" type="double" value="0.0" />
+			<Parameter name="Ring Center y" type="double" value="0.0" />
+			<Parameter name="Z Origin" type="double" value="0.0" />
+			<Parameter name="Number Points Radius" type="int" value="4" />
+		</ParameterList>
+	</ParameterList>
+	<ParameterList name="Material">
+		<ParameterList name="Elastic Plastic">
+			<Parameter name="Density" type="double" value="2.71e-3"/>
+			<Parameter name="Bulk Modulus" type="double" value="67800.0"/>
+			<Parameter name="Shear Modulus" type="double" value="26000.0"/>
+			<Parameter name="Material Horizon" type="double" value="1.01"/>
+			<Parameter name="Yield Stress" type="double" value="345.0"/>
+			<ParameterList name="Damage Model">
+				<Parameter name="Type" type="string" value="Critical Stretch"/>
+				<Parameter name="Critical Stretch" type="double" value="0.18"/>
+			</ParameterList>
+		</ParameterList>
+	</ParameterList>
+	<ParameterList name="Initial Conditions">
+		<Parameter name="Type" type="string" value="Q2Cylinder" />
+		<ParameterList name="IC Params">
+			<Parameter name="v_r0" type="double" value="200.0"/>
+			<Parameter name="v_r1" type="double" value="0.0"/>
+			<Parameter name="v_z0" type="double" value="0.0"/>
+			<Parameter name="Geometry" type="string" value="PdQuickGrid"/>
+		</ParameterList>
+	</ParameterList>
+	<ParameterList name="Solver">
+		<Parameter name="Verbose" type="bool" value="false"/>
+		<ParameterList name="Verlet">
+			<Parameter name="Initial Time" type="double" value="0.0"/>
+			<Parameter name="Final Time" type="double" value="1.0e-1"/>
+			<Parameter name="Fixed dt" type="double" value="1.0e-6"/>
+		</ParameterList>
+	</ParameterList>
+	<ParameterList name="Output">
+		<Parameter name="Output File Type" type="string" value="VTK_XML"/>
+		<Parameter name="Output Format" type="string" value="ASCII"/>
+		<Parameter name="Output Frequency" type="int" value="200"/>
+		<Parameter name="Output Filename" type="string" value="Ring"/>
+		<Parameter name="Parallel Write" type="bool" value="true"/>
+		<ParameterList name="Material Output Fields">
+			<ParameterList name="Elastic Plastic">
+				<Parameter name="Proc Num" type="bool" value="true"/>
+				<Parameter name="Displacement" type="bool" value="true"/>
+				<Parameter name="Velocity" type="bool" value="true"/>
+				<Parameter name="ID" type="bool" value="true"/>
+				<Parameter name="Dilatation" type="bool" value="true"/>
+				<Parameter name="Damage" type="bool" value="true"/>
+				<Parameter name="Weighted Volume" type="bool" value="true"/>
+				<Parameter name="Lambda" type="bool" value="true"/>
+			</ParameterList>
+		</ParameterList>
+	</ParameterList>
+</ParameterList>
+</ParameterList>
