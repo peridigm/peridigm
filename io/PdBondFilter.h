@@ -50,7 +50,7 @@ public:
 	 *  if(0 != bondIntersectInfinitePlane(p0,p1,t,x))
 	 *      bondIntersect(x)
 	 */
-	bool bondIntersect(double x[3]);
+	bool bondIntersect(double x[3], double tolerance=1.0e-15);
 private:
 	VectorUtilsNS::Vector3D n, r0, ub, ua;
 	double a, b;
@@ -98,11 +98,12 @@ public:
  */
 class FinitePlaneFilter: public BondFilter {
 public:
-	FinitePlaneFilter(const FinitePlane& plane) : BondFilter(), plane(plane) {}
+	FinitePlaneFilter(const FinitePlane& plane, double tolerance=1.0e-15) : BondFilter(), tolerance(tolerance), plane(plane) {}
 	virtual ~FinitePlaneFilter() {}
 	virtual size_t filterListSize(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap);
 	virtual void filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool* markForExclusion);
 private:
+	double tolerance;
 	FinitePlane plane;
 };
 

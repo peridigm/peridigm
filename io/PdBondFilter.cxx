@@ -26,14 +26,15 @@ int FinitePlane::bondIntersectInfinitePlane(const double *p0, const double *p1, 
 	return vtkPlane::IntersectWithLine(non_const_p0,non_const_p1,n.get(),r0.get(),t,x);
 }
 
-bool FinitePlane::bondIntersect(double x[3]) {
+bool FinitePlane::bondIntersect(double x[3], double tolerance) {
+	double zero=tolerance;
+	double one = 1.0+zero;
 	bool intersects = false;
 	Vector3D r(x);
 	Vector3D dr(minus(r,r0));
 	double aa=dot(dr,ua);
 	double bb=dot(dr,ub);
-//	std::cout << "\tFinitePlane::bondIntersect aa, bb = " << aa << ", " << bb << std::endl;
-	if(0<=aa && aa<=a && 0<=bb && bb<=b)
+	if(-zero<aa && aa/a<one && -zero<bb && bb/b<one)
 		intersects=true;
 	return intersects;
 }
@@ -124,7 +125,7 @@ size_t FinitePlaneFilter::filterListSize(vtkIdList* kdTreeList, const double *pt
 		 * Now run plane filter
 		 */
 		p1 = xOverlap+(3*uid);
-		if( 0 != plane.bondIntersectInfinitePlane(p0,p1,t,x) && plane.bondIntersect(x) ){
+		if( 0 != plane.bondIntersectInfinitePlane(p0,p1,t,x) && plane.bondIntersect(x,tolerance) ){
 //			cout << "\tFinitePlaneFilter::filterListSize INTERSECTION; localId, t  = " << uid << ", " << t << endl;
 			size -= 1;
 		} // else {
@@ -172,7 +173,7 @@ void FinitePlaneFilter::filterBonds(vtkIdList* kdTreeList, const double *pt, con
 		 * Now run plane filter
 		 */
 		p1 = xOverlap+(3*uid);
-		if( 0 != plane.bondIntersectInfinitePlane(p0,p1,t,x) && plane.bondIntersect(x) ){
+		if( 0 != plane.bondIntersectInfinitePlane(p0,p1,t,x) && plane.bondIntersect(x,tolerance) ){
 //			cout << "\tFinitePlaneFilter::filterBonds DO INCLUDE PT DUE TO INTERSECTION; localId, t  = " << uid << ", " << t << endl;
 			*flagIter=1;
 		}

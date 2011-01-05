@@ -103,64 +103,58 @@ void assertNeighborhood(){
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	RCP<BondFilter> filterPtr=RCP<BondFilter>(new FinitePlaneFilter(crackPlane));
 	gridData = createAndAddNeighborhood(gridData,horizon,filterPtr);
+	int *neigh = gridData.neighborhood.get();
+
+	/*
+	 * There are a total of 48 points = nx * ny * nz = 4 * 4 * 3
+	 */
+	BOOST_CHECK(numCells == gridData.numPoints);
+
+	/*
+	 * Expected neighborhood data
+	 *
+	 * TO DO
+	 * FINISH remaining points -- TEDIOUS
+	 * The first 7 points are done below.  Need to finish all 48 points.
+	 */
+	int N[] = {21,21,21,21,29,26,26};
 	int n0[] = { 1, 4, 5, 8, 9, 12, 13, 16, 17, 20, 21, 24, 25, 28, 32, 33, 36, 37, 40, 41, 44 };
 	int n1[] = { 0, 4, 5, 8, 9, 12, 13, 16, 17, 20, 21, 24, 25, 29, 32, 33, 36, 37, 40, 41, 45 };
 	int n2[] = { 3, 6, 7, 10, 11, 14, 15, 18, 19, 22, 23, 26, 27, 30, 34, 35, 38, 39, 42, 43, 46 };
 	int n3[] = { 2, 6, 7, 10, 11, 14, 15, 18, 19, 22, 23, 26, 27, 31, 34, 35, 38, 39, 42, 43, 47 };
-	int *neigh = gridData.neighborhood.get();
+	int n4[] = { 0, 1, 5, 8, 9, 10, 12, 13, 14, 16, 17, 20, 21, 24, 25, 26, 28, 29, 30, 32, 33, 36, 37, 40, 41, 42, 44, 45, 46 };
+	int n5[] = { 0, 1, 4, 8, 9, 12, 13, 14, 16, 17, 20, 21, 24, 25, 28, 29, 30, 32, 33, 36, 37, 40, 41, 44, 45, 46 };
+	int n6[] = { 2, 3, 7, 10, 11, 13, 14, 15, 18, 19, 22, 23, 26, 27, 29, 30, 31, 34, 35, 38, 39, 42, 43, 45, 46, 47 };
+	int* NN[] = {n0,n1,n2,n3,n4,n5,n6};
+	int NUMPOINTS = 7;
 
-	{
-		/*
-		 * gid=0
-		 */
-		int gid=0;
+
+	for(int j=0;j<NUMPOINTS;j++){
+
+		int gid=j;
+		int numNeighAnswer = N[gid];
 		int numNeigh = *neigh; neigh++;
-		BOOST_CHECK(21==numNeigh);
+//		cout << "gid, numNeigh = " << gid << ", " << numNeigh << endl;
+//		printNeighborhood(numNeigh,neigh);
+		BOOST_CHECK(numNeighAnswer==numNeigh);
+		int *neighAnswer = NN[gid];
+		for(int n=0;n<numNeigh;n++){
+			BOOST_CHECK(*(neighAnswer+n)==*(neigh+n));
+		}
 
-		cout << "gid, numNeigh = " << gid << ", " << numNeigh << endl;
-		printNeighborhood(numNeigh,neigh);\
 		/*
 		 * Move to next point
 		 */
 		neigh = neigh+numNeigh;
 	}
 
-	{
-		/*
-		 * gid=1
-		 */
-		int gid=1;
-		int numNeigh = *neigh; neigh++;
-		BOOST_CHECK(21==numNeigh);
-		cout << "gid, numNeigh = " << gid << ", " << numNeigh << endl;
-		printNeighborhood(numNeigh,neigh);
-		neigh = neigh+numNeigh;
-	}
-
-	{
-		/*
-		 * gid=2
-		 */
-		int gid=2;
-		int numNeigh = *neigh; neigh++;
-		BOOST_CHECK(21==numNeigh);
-		cout << "gid, numNeigh = " << gid << ", " << numNeigh << endl;
-		printNeighborhood(numNeigh,neigh);
-		neigh = neigh+numNeigh;
-	}
-
-	{
-		/*
-		 * gid=3
-		 */
-		int gid=3;
-		int numNeigh = *neigh; neigh++;
-		BOOST_CHECK(21==numNeigh);
-		cout << "gid, numNeigh = " << gid << ", " << numNeigh << endl;
-		printNeighborhood(numNeigh,neigh);
-		neigh = neigh+numNeigh;
-	}
-
+//{
+//		int gid=7;
+//		int numNeigh = *neigh; neigh++;
+//		cout << "gid, numNeigh = " << gid << ", " << numNeigh << endl;
+//		printNeighborhood(numNeigh,neigh);
+//
+//	}
 
 
 }
