@@ -48,6 +48,8 @@ add_test (utPd_frameSet_2x2x1_np4                      python run_unit_test.py m
 add_test (utVTK_ioExample_np4                          python run_unit_test.py mpiexec -np 4 ../../io/unitTest/utVTK_ioExample_np4)
 add_test (utPdVtkPlane                                 python run_unit_test.py ../../io/unitTest/utPdVtkPlane)
 add_test (utFinitePlaneFilter                          python run_unit_test.py ../../io/unitTest/utFinitePlaneFilter)
+add_test (utPd_Y-Z_crack                               python run_unit_test.py ../../io/unitTest/utPd_Y-Z_crack)
+
 
 add_custom_target( utest
    COMMAND ctest
