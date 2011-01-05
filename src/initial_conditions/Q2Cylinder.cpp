@@ -15,7 +15,7 @@ namespace InitialConditionsNS {
 
 
 Q2Cylinder::Q2Cylinder(const Teuchos::RCP<Teuchos::ParameterList>& peridigmParams):
-		z0(0.0), a(0.0), vr0(0.0), vr1(0.0), vz0(0.0), center()
+		vr0(0.0), vr1(0.0), vz0(0.0), z0(0.0), a(0.0), center()
 {
 
 	Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp(&(peridigmParams->sublist("Problem").sublist("Initial Conditions")), false);
