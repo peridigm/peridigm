@@ -126,16 +126,23 @@ void initialize()
 {
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createTwoPointModel();
 
-  // \todo Write meaningful asserts.
+  BOOST_CHECK_EQUAL(peridigm->getOneDimensionalMap()->NumMyElements(), 2);
+  BOOST_CHECK_EQUAL(peridigm->getOneDimensionalMap()->ElementSize(), 1);
+  BOOST_CHECK_EQUAL(peridigm->getOneDimensionalOverlapMap()->NumMyElements(), 2);
+  BOOST_CHECK_EQUAL(peridigm->getOneDimensionalOverlapMap()->ElementSize(), 1);
+  BOOST_CHECK_EQUAL(peridigm->getThreeDimensionalMap()->NumMyElements(), 2);
+  BOOST_CHECK_EQUAL(peridigm->getThreeDimensionalMap()->ElementSize(), 3);
+  BOOST_CHECK_EQUAL(peridigm->getThreeDimensionalOverlapMap()->NumMyElements(), 2);
+  BOOST_CHECK_EQUAL(peridigm->getThreeDimensionalOverlapMap()->ElementSize(), 3);
+  BOOST_CHECK_EQUAL(peridigm->getBondMap()->NumMyElements(), 2);
+
+  // \todo Write additional asserts
 }
 
 //! This is a one-dimensional rebalance test; the rebalance should have no effect.
 void rebalance()
 {
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createTwoPointModel();
-
-  BOOST_CHECK_EQUAL(peridigm->getThreeDimensionalMap()->NumMyElements(), 2);
-  BOOST_CHECK_EQUAL(peridigm->getThreeDimensionalMap()->ElementSize(), 3);
 
   // Make copies of everything so that we can identify any changes
   // that might occur during rebalance (there should be none)
@@ -174,8 +181,6 @@ void rebalance()
   peridigm->rebalance();
 
   // check everything to make sure nothing changed
-  BOOST_CHECK_EQUAL(peridigm->getThreeDimensionalMap()->NumMyElements(), 2);
-  BOOST_CHECK_EQUAL(peridigm->getThreeDimensionalMap()->ElementSize(), 3);
   // check maps
   BOOST_CHECK(peridigm->getOneDimensionalMap()->SameAs(oneDimensionalMap));
   BOOST_CHECK(peridigm->getOneDimensionalOverlapMap()->SameAs(oneDimensionalOverlapMap));
