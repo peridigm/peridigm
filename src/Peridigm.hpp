@@ -92,16 +92,33 @@ namespace PeridigmNS {
     //! Update contact neighborlist; do load rebalance
     void updateContactNeighborList();
 
-    //! Accessor for three-dimensional map
+    //! @name Acessors for maps 
+    //@{ 
+    Teuchos::RCP<const Epetra_BlockMap> getOneDimensionalMap() { return oneDimensionalMap; }
+    Teuchos::RCP<const Epetra_BlockMap> getOneDimensionalOverlapMap() { return oneDimensionalOverlapMap; }
     Teuchos::RCP<const Epetra_BlockMap> getThreeDimensionalMap() { return threeDimensionalMap; }
+    Teuchos::RCP<const Epetra_BlockMap> getThreeDimensionalOverlapMap() { return threeDimensionalOverlapMap; }
+    Teuchos::RCP<const Epetra_BlockMap> getBondMap() { return bondMap; }
+    //@}
 
-    //! Accessor for main solver-level vectors
+    //! @name Accessors for main solver-level vectors
+    //@{ 
     Teuchos::RCP<const Epetra_Vector> getX() { return x; }
     Teuchos::RCP<const Epetra_Vector> getU() { return u; }
     Teuchos::RCP<const Epetra_Vector> getY() { return y; }
     Teuchos::RCP<const Epetra_Vector> getV() { return v; }
     Teuchos::RCP<const Epetra_Vector> getA() { return a; }
     Teuchos::RCP<const Epetra_Vector> getForce() { return force; }
+    //@}
+
+    //! @name Accessors for neighborhood data
+    //@{
+    Teuchos::RCP<const PeridigmNS::NeighborhoodData> getNeighborhoodData() { return neighborhoodData; }
+    Teuchos::RCP<const PeridigmNS::NeighborhoodData> getContactNeighborhoodData() { return contactNeighborhoodData; }
+    //@}
+
+    //! Accessor for DataManager
+    Teuchos::RCP<PeridigmNS::DataManager> getDataManager() { return dataManager; }
 
   private:
 

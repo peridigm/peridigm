@@ -43,6 +43,16 @@ public:
   NeighborhoodData() 
     : numOwnedPoints(0), ownedIDs(0), neighborhoodListSize(0), neighborhoodList(0), neighborhoodPtr(0) {}
 
+  NeighborhoodData(const NeighborhoodData& other)
+    : numOwnedPoints(0), ownedIDs(0), neighborhoodListSize(0), neighborhoodList(0), neighborhoodPtr(0)
+  {
+    SetNumOwned(other.NumOwnedPoints());
+    SetNeighborhoodListSize(other.NeighborhoodListSize());
+    memcpy(ownedIDs, other.ownedIDs, numOwnedPoints*sizeof(int));
+    memcpy(neighborhoodPtr, other.neighborhoodPtr, numOwnedPoints*sizeof(int));
+    memcpy(neighborhoodList, other.neighborhoodList, neighborhoodListSize*sizeof(int));
+  }
+
   ~NeighborhoodData(){
 	if(ownedIDs != 0)
 	  delete[] ownedIDs;
