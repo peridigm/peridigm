@@ -491,6 +491,8 @@ void PeridigmNS::Peridigm::execute() {
 
 void PeridigmNS::Peridigm::rebalance() {
 
+  // \todo Return immediately for serial runs.
+
   // Steps for rebalance:
   //
   // 1) Create a PdGridData object that contains, principally, the global IDs, 
@@ -598,6 +600,7 @@ void PeridigmNS::Peridigm::rebalance() {
   rebalancedNeighborGlobalIDs->Import(*neighborGlobalIDs, *bondMapImporter, Insert);
 
   // create a list of all the off-processor IDs that will need to be ghosted
+  // \todo Use set::reserve() for better memory allocation here.
   set<int> offProcessorIDs;
   for(int i=0 ; i<rebalancedNeighborGlobalIDs->MyLength() ; ++i){
     int globalID = (int)( (*rebalancedNeighborGlobalIDs)[i] );
@@ -605,7 +608,7 @@ void PeridigmNS::Peridigm::rebalance() {
       offProcessorIDs.insert(globalID);
   }
 
-  // \todo Augment the list of off-processor IDs that need to be ghosted to include those found in the contact search
+  // \todo Augment the list of off-processor IDs that need to be ghosted to include those found in the contact search.
 
   // construct the rebalanced overlap maps
   numGlobalElements = -1;
@@ -661,6 +664,8 @@ void PeridigmNS::Peridigm::rebalance() {
   }
 
   //// STEP 5 ////
+
+  // \todo Set up mothership vectors in Multivector so that this rebalance is done with a single call.
 
   Teuchos::RCP<Epetra_Vector> rebalancedX = Teuchos::rcp(new Epetra_Vector(*rebalancedThreeDimensionalMap));
   rebalancedX->Import(*x, *threeDimensionalMapImporter, Insert);
