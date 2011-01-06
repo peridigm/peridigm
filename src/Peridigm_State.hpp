@@ -44,7 +44,9 @@ class State {
 public:
 
   State(){}
-  State(const State& state){}
+  State(const State& state){
+    // \todo Write me.
+  }
   ~State(){}
 
   void allocateScalarData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
