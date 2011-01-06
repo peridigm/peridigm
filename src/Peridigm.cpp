@@ -593,7 +593,7 @@ void PeridigmNS::Peridigm::rebalance() {
     int numNeighbors = neighborhoodList[neighborhoodListIndex++];
     for(int j=0 ; j<numNeighbors ; ++j){
       int neighborLocalID = neighborhoodList[neighborhoodListIndex++];
-      (*neighborGlobalIDs)[neighborGlobalIDIndex++] = oneDimensionalMap->GID(neighborLocalID);
+      (*neighborGlobalIDs)[neighborGlobalIDIndex++] = oneDimensionalOverlapMap->GID(neighborLocalID);
     }
   }
   Teuchos::RCP<Epetra_Vector> rebalancedNeighborGlobalIDs = Teuchos::rcp(new Epetra_Vector(*bondMap));
