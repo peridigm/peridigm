@@ -24,6 +24,7 @@ add_test (utPHAL_UpdateForceState                       python run_unit_test.py 
 add_test (utPHAL_EvaluateForce                          python run_unit_test.py ../../src/utPHAL_EvaluateForce)
 #add_test (utPHAL_EvaluateForce_MPI_np2                 python run_unit_test.py mpiexec -np 2 ../../src/utPHAL_EvaluateForce_MPI_np2)
 add_test (utPeridigm                                    python run_unit_test.py ../../src/utPeridigm)
+add_test (utPeridigm_MPI_np2                            python run_unit_test.py mpiexec -np 2 ../../src/utPeridigm_MPI_np2)
 # io unit tests:
 add_test (utPdVtkKdTree                                python run_unit_test.py ../../io/unitTest/utPdVtkKdTree)
 add_test (utPdQuickGridHorizon                         python run_unit_test.py ../../io/unitTest/utPdQuickGridHorizon)

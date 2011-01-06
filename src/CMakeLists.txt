@@ -47,9 +47,6 @@ add_executable(utPeridigm
         PHAL_Dimension.cpp
         PHAL_PeridigmTraits.cpp
         Peridigm_OutputManager_VTK_XML.cpp
-#        Peridigm_VerletSolver.cpp
-#        Peridigm_VerletIntegrator.cpp
-#        Peridigm_VerletObserver.cpp
         ../io/Field.cxx
         ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
         ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
@@ -57,6 +54,34 @@ add_executable(utPeridigm
         ./contact/Peridigm_ShortRangeForceContactModel.cpp
 )
 target_link_libraries(utPeridigm
+${TRILINOS_LIBS}
+${PdZoltanLibs}
+${Zoltan_LIBRARY}
+${PdQuickGridLibs}
+${PdVTKLibs}
+${VTK_LIBS}
+${REQUIRED_LIBS}
+${PdMaterialUtilitiesLib}
+${Boost_LIBRARIES}
+)
+
+add_executable(utPeridigm_MPI_np2
+		utPeridigm_MPI_np2.cpp
+        Peridigm.cpp
+        Peridigm_DiscretizationFactory.cpp
+        Peridigm_PdQuickGridDiscretization.cpp
+        Peridigm_DataManager.cpp
+        Peridigm_ModelEvaluator.cpp
+        PHAL_Dimension.cpp
+        PHAL_PeridigmTraits.cpp
+        Peridigm_OutputManager_VTK_XML.cpp
+        ../io/Field.cxx
+        ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
+        ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
+        ./materials/Peridigm_CriticalStretchDamageModel.cpp
+        ./contact/Peridigm_ShortRangeForceContactModel.cpp
+)
+target_link_libraries(utPeridigm_MPI_np2
 ${TRILINOS_LIBS}
 ${PdZoltanLibs}
 ${Zoltan_LIBRARY}
