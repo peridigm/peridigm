@@ -44,7 +44,9 @@ class DataManager {
 public:
 
   DataManager(){}
-  DataManager(const DataManager& dataManager){}
+  DataManager(const DataManager& dataManager){
+    // \todo Write me.
+  }
   ~DataManager(){}
 
   void setMaps(Teuchos::RCP<const Epetra_BlockMap> scalarMap_,
@@ -65,9 +67,7 @@ public:
                                       Field_NS::FieldSpec::FieldStep fieldStep);
 
   void updateState(){
-    Teuchos::RCP<State> temp = stateN;
-    stateN = stateNP1;
-    stateNP1 = temp;
+    stateN.swap(stateNP1);
   }
 
 protected:
