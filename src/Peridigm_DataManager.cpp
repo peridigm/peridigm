@@ -37,7 +37,11 @@
 void PeridigmNS::DataManager::allocateData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > specs)
 {
   fieldSpecs = specs;
-  
+
+  // remove duplicates
+  sort(fieldSpecs->begin(), fieldSpecs->end());
+  unique(fieldSpecs->begin(), fieldSpecs->end());
+
   // loop over the specs and determine:
   // 1) the number of scalar, vector2d, and vector3d fields
   // 2) the FieldType for each of the data
