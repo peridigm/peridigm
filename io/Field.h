@@ -43,7 +43,6 @@ public:
 	FieldType getType() const;
 	FieldLength getLength() const;
     FieldStateArchitecture getStateArchitecture() const;
-
 	string getLabel() const;
 };
 
