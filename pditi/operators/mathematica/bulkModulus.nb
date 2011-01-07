@@ -1,0 +1,214 @@
+(* Content-type: application/mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 7.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       145,          7]
+NotebookDataLength[      5724,        205]
+NotebookOptionsPosition[      4758,        169]
+NotebookOutlinePosition[      5193,        186]
+CellTagsIndexPosition[      5150,        183]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[TextData[{
+ "Shear Modulus ",
+ Cell[BoxData[
+  FormBox["\[Mu]", TraditionalForm]],
+  FormatType->"TraditionalForm"],
+ "\nPoisson's Ratio ",
+ Cell[BoxData[
+  FormBox["\[Nu]", TraditionalForm]],
+  FormatType->"TraditionalForm"],
+ "\nBulk Modulus ",
+ Cell[BoxData[
+  FormBox["K", TraditionalForm]],
+  FormatType->"TraditionalForm"]
+}], "Text",
+ CellChangeTimes->{{3.4827604753822527`*^9, 3.4827605206710653`*^9}, {
+  3.482761171259351*^9, 3.482761178503368*^9}}],
+
+Cell[BoxData[
+ RowBox[{"\[Mu]", "=", 
+  RowBox[{"3", " ", "K", " ", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"(", 
+      RowBox[{"1", "-", 
+       RowBox[{"2", " ", "\[Nu]"}]}], ")"}], "/", "2"}], "/", 
+    RowBox[{"(", 
+     RowBox[{"1", "+", "\[Nu]"}], ")"}], " "}]}]}]], "Input",
+ CellChangeTimes->{{3.480273790160606*^9, 3.4802738708088093`*^9}, {
+   3.482760398721663*^9, 3.4827604035762787`*^9}, 3.482761186147828*^9}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"3", " ", "K", " ", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"(", 
+       RowBox[{"1", "-", 
+        RowBox[{"2", " ", "\[Nu]"}]}], ")"}], "/", "2"}], "/", 
+     RowBox[{"(", 
+      RowBox[{"1", "+", "\[Nu]"}], ")"}]}]}], " ", "/.", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"Y", "\[Rule]", 
+      RowBox[{"68.9", 
+       RowBox[{"Power", "[", 
+        RowBox[{"10", ",", "3"}], "]"}]}]}], ",", 
+     RowBox[{"\[Nu]", "\[Rule]", "0"}]}], "}"}]}]}]], "Input",
+ CellChangeTimes->{{3.493556470851906*^9, 3.493556482063497*^9}}],
+
+Cell[BoxData["34450.`"], "Output",
+ CellChangeTimes->{3.493556487802804*^9}]
+}, Open  ]],
+
+Cell[TextData[{
+ "\nYoung's Modulus ",
+ Cell[BoxData[
+  FormBox["Y", TraditionalForm]]]
+}], "Text",
+ CellChangeTimes->{{3.482760447366412*^9, 3.482760467072385*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"Y", " ", "=", " ", 
+  RowBox[{"3", " ", "K", " ", 
+   RowBox[{"(", 
+    RowBox[{"1", "-", 
+     RowBox[{"2", " ", "\[Nu]"}]}], ")"}]}]}]], "Input",
+ CellChangeTimes->{{3.482760389960535*^9, 3.482760437583734*^9}}],
+
+Cell[BoxData[
+ RowBox[{"3", " ", "K", " ", 
+  RowBox[{"(", 
+   RowBox[{"1", "-", 
+    RowBox[{"2", " ", "\[Nu]"}]}], ")"}]}]], "Output",
+ CellChangeTimes->{3.4827604431980143`*^9}]
+}, Open  ]],
+
+Cell[TextData[{
+ "\nBulk Modulus ",
+ Cell[BoxData[
+  FormBox["K", TraditionalForm]],
+  FormatType->"TraditionalForm"]
+}], "Text",
+ CellChangeTimes->{{3.482761256002101*^9, 3.4827612729675083`*^9}}],
+
+Cell[BoxData[
+ RowBox[{"K", " ", "=", " ", 
+  RowBox[{
+   RowBox[{"Y", " ", "/", " ", "3"}], " ", "/", " ", 
+   RowBox[{"(", 
+    RowBox[{"1", "-", 
+     RowBox[{"2", "\[Nu]"}]}], ")"}]}]}]], "Input",
+ CellChangeTimes->{{3.482761198182329*^9, 3.482761224184209*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{" ", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"Y", " ", "/", " ", "3"}], " ", "/", " ", 
+    RowBox[{"(", 
+     RowBox[{"1", "-", 
+      RowBox[{"2", "\[Nu]"}]}], ")"}]}], " ", "/.", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"Y", "\[Rule]", 
+      RowBox[{"68.9", 
+       RowBox[{"Power", "[", 
+        RowBox[{"10", ",", "3"}], "]"}]}]}], ",", 
+     RowBox[{"\[Nu]", "\[Rule]", ".33"}]}], "}"}]}]}]], "Input",
+ CellChangeTimes->{{3.493556332124775*^9, 3.4935564192716637`*^9}, {
+  3.4935564646323757`*^9, 3.493556465350548*^9}, {3.497901008865658*^9, 
+  3.497901009712674*^9}}],
+
+Cell[BoxData["67549.01960784313`"], "Output",
+ CellChangeTimes->{{3.4935563570660563`*^9, 3.493556420167857*^9}, 
+   3.493556466713319*^9, 3.497901019460553*^9}]
+}, Open  ]],
+
+Cell["Shear Modulus", "Text",
+ CellChangeTimes->{{3.497901108547495*^9, 3.4979011344002867`*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"3", " ", "K", " ", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"(", 
+      RowBox[{"1", "-", 
+       RowBox[{"2", " ", "\[Nu]"}]}], ")"}], "/", "2"}], "/", 
+    RowBox[{"(", 
+     RowBox[{"1", "+", "\[Nu]"}], ")"}]}]}], "/.", " ", 
+  RowBox[{"{", 
+   RowBox[{
+    RowBox[{"K", "->", "67549"}], ",", 
+    RowBox[{"\[Nu]", "\[Rule]", ".33"}]}], "}"}]}]], "Input",
+ CellChangeTimes->{{3.4979010689296017`*^9, 3.4979010912820263`*^9}}],
+
+Cell[BoxData["25902.248120300752`"], "Output",
+ CellChangeTimes->{{3.4979010851575327`*^9, 3.497901092880959*^9}}]
+}, Open  ]]
+},
+WindowSize->{1356, 851},
+WindowMargins->{{0, Automatic}, {Automatic, 0}},
+Magnification:>FEPrivate`If[
+  FEPrivate`Equal[FEPrivate`$VersionNumber, 6.], 1.5, 1.5 Inherited],
+FrontEndVersion->"7.0 for Linux x86 (64-bit) (February 25, 2009)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[545, 20, 464, 15, 99, "Text"],
+Cell[1012, 37, 422, 11, 46, "Input"],
+Cell[CellGroupData[{
+Cell[1459, 52, 596, 18, 77, "Input"],
+Cell[2058, 72, 76, 1, 45, "Output"]
+}, Open  ]],
+Cell[2149, 76, 165, 5, 72, "Text"],
+Cell[CellGroupData[{
+Cell[2339, 85, 237, 6, 46, "Input"],
+Cell[2579, 93, 180, 5, 45, "Output"]
+}, Open  ]],
+Cell[2774, 101, 197, 6, 72, "Text"],
+Cell[2974, 109, 266, 7, 46, "Input"],
+Cell[CellGroupData[{
+Cell[3265, 120, 598, 17, 46, "Input"],
+Cell[3866, 139, 161, 2, 45, "Output"]
+}, Open  ]],
+Cell[4042, 144, 97, 1, 44, "Text"],
+Cell[CellGroupData[{
+Cell[4164, 149, 461, 14, 46, "Input"],
+Cell[4628, 165, 114, 1, 45, "Output"]
+}, Open  ]]
+}
+]
+*)
+
+(* End of internal cache information *)
