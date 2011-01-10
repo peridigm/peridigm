@@ -145,7 +145,7 @@ Teuchos::RCP<PeridigmNS::Peridigm> createEightPointModel()
   // discretization parameters
   ParameterList& discretizationParams = problemParams.sublist("Discretization");
   discretizationParams.set("Type", "PdQuickGrid");
-  discretizationParams.set("Horizon", 2.0);
+  discretizationParams.set("Horizon", 2.1);
 
   // pdQuickGrid tensor product mesh generator parameters
   ParameterList& pdQuickGridParams = discretizationParams.sublist("TensorProduct3DMeshGenerator");
@@ -232,7 +232,7 @@ void rebalanceTwoPointModel()
   PeridigmNS::NeighborhoodData neighborhoodData(*peridigm->getNeighborhoodData());
   //PeridigmNS::NeighborhoodData contactNeighborhoodData(*peridigm->getContactNeighborhoodData());
 
-  // call the rebalance function, which should produce to changes in serial
+  // call the rebalance function, which should produce no changes
   peridigm->rebalance();
 
   // check everything to make sure nothing changed
@@ -340,7 +340,7 @@ void rebalanceEightPointModel()
   PeridigmNS::NeighborhoodData neighborhoodData(*peridigm->getNeighborhoodData());
   //PeridigmNS::NeighborhoodData contactNeighborhoodData(*peridigm->getContactNeighborhoodData());
 
-  // call the rebalance function, which should produce to changes in serial
+  // call the rebalance function, which should produce to changes
   peridigm->rebalance();
 
   // check everything to make sure nothing changed
@@ -407,6 +407,149 @@ void rebalanceEightPointModel()
   }
 }
 
+void rebalanceEightPointModelSwitchCorners()
+{
+  int rank, numProcs;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+
+  Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createEightPointModel();
+
+  // make sure the points have ended up where we expect them to be
+  // there is more than one 'correct' answer here, but for the purpose of this test we want
+  // to check the decomposition to see that it's the same as when the test was set up
+  if(rank == 0){
+    // global ID 0
+    BOOST_CHECK_EQUAL(peridigm->getOneDimensionalMap()->LID(0), 0);
+    BOOST_CHECK_CLOSE((*peridigm->getX())[0], -1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[1], -1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[2], -1.0, 1.0e-15);
+    // global ID 2
+    BOOST_CHECK_EQUAL(peridigm->getOneDimensionalMap()->LID(2), 1);
+    BOOST_CHECK_CLOSE((*peridigm->getX())[3], -1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[4], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[5], -1.0, 1.0e-15);
+    // global ID 4
+    BOOST_CHECK_EQUAL(peridigm->getOneDimensionalMap()->LID(4), 2);
+    BOOST_CHECK_CLOSE((*peridigm->getX())[6], -1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[7], -1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[8], 1.0, 1.0e-15);
+    // global ID 6
+    BOOST_CHECK_EQUAL(peridigm->getOneDimensionalMap()->LID(6), 3);
+    BOOST_CHECK_CLOSE((*peridigm->getX())[9], -1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[10], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[11], 1.0, 1.0e-15);
+  }
+  else if(rank == 1){
+    // global ID 5
+    BOOST_CHECK_EQUAL(peridigm->getOneDimensionalMap()->LID(5), 0);
+    BOOST_CHECK_CLOSE((*peridigm->getX())[0], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[1], -1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[2], 1.0, 1.0e-15);
+    // global ID 7
+    BOOST_CHECK_EQUAL(peridigm->getOneDimensionalMap()->LID(7), 1);
+    BOOST_CHECK_CLOSE((*peridigm->getX())[3], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[4], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[5], 1.0, 1.0e-15);
+    // global ID 1
+    BOOST_CHECK_EQUAL(peridigm->getOneDimensionalMap()->LID(1), 2);
+    BOOST_CHECK_CLOSE((*peridigm->getX())[6], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[7], -1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[8], -1.0, 1.0e-15);
+    // global ID 3
+    BOOST_CHECK_EQUAL(peridigm->getOneDimensionalMap()->LID(3), 3);
+    BOOST_CHECK_CLOSE((*peridigm->getX())[9], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[10], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[11], -1.0, 1.0e-15);
+  }
+
+  // switch the positions of the points with global IDs 2 and 7
+  // initial position of global ID 2 is (-1, 1, -1)
+  // initial position of global ID 7 is ( 1, 1,  1)
+  Teuchos::RCP<const Epetra_Vector> x = peridigm->getX();
+  Teuchos::RCP<Epetra_Vector> u = Teuchos::rcp_const_cast<Epetra_Vector>(peridigm->getU());
+  Teuchos::RCP<Epetra_Vector> y = Teuchos::rcp_const_cast<Epetra_Vector>(peridigm->getY());
+  if(rank == 0){
+    // displacement of global ID 2
+    (*u)[3] = 2.0;
+    (*u)[4] = 0.0;
+    (*u)[5] = 2.0;
+  }
+  else if(rank == 1){
+    // displacement of global ID 7
+    (*u)[3] = -2.0;
+    (*u)[4] = 0.0;
+    (*u)[5] = -2.0;
+  }
+  // update y with new displacement
+  for(int i=0 ; i<y->MyLength() ; ++i)
+    (*y)[i] = (*x)[i] + (*u)[i];
+  
+  // before rebalance the global IDs are distributed as follows:
+  // processor 0: 0 2 4 6
+  // processor 1: 5 7 1 3
+
+  // call the rebalance function
+  peridigm->rebalance();
+
+  // after rebalance the global IDs are distributed as follows:
+  // processor 0: 0 4 6 7
+  // processor 1: 5 1 3 2
+
+  // check global IDs
+  // the points with global IDs 2 and 7 should be swapped relative to where they started
+  if(rank == 0){
+    // global ID 0
+    BOOST_CHECK_EQUAL(peridigm->getOneDimensionalMap()->LID(0), 0);
+    BOOST_CHECK_CLOSE((*peridigm->getX())[0], -1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[1], -1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[2], -1.0, 1.0e-15);
+    BOOST_CHECK_CLOSE((*peridigm->getU())[0], 0.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getU())[1], 0.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getU())[2], 0.0, 1.0e-15);
+    BOOST_CHECK_CLOSE((*peridigm->getY())[0], -1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getY())[1], -1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getY())[2], -1.0, 1.0e-15);
+    // global ID 4
+    BOOST_CHECK_EQUAL(peridigm->getOneDimensionalMap()->LID(4), 1);
+    BOOST_CHECK_CLOSE((*peridigm->getX())[3], -1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[4], -1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[5], 1.0, 1.0e-15);
+    BOOST_CHECK_CLOSE((*peridigm->getU())[3], 0.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getU())[4], 0.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getU())[5], 0.0, 1.0e-15);
+    BOOST_CHECK_CLOSE((*peridigm->getY())[3], -1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getY())[4], -1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getY())[5], 1.0, 1.0e-15);
+    // global ID 6
+    BOOST_CHECK_EQUAL(peridigm->getOneDimensionalMap()->LID(6), 2);
+    BOOST_CHECK_CLOSE((*peridigm->getX())[6], -1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[7], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[8], 1.0, 1.0e-15);
+    BOOST_CHECK_CLOSE((*peridigm->getU())[6], 0.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getU())[7], 0.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getU())[8], 0.0, 1.0e-15);
+    BOOST_CHECK_CLOSE((*peridigm->getY())[6], -1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getY())[7], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getY())[8], 1.0, 1.0e-15);
+    // global ID 7 (should be where global ID 2 was originally)
+    BOOST_CHECK_EQUAL(peridigm->getOneDimensionalMap()->LID(7), 3);
+    BOOST_CHECK_CLOSE((*peridigm->getX())[9], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[10], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[11], 1.0, 1.0e-15);
+    BOOST_CHECK_CLOSE((*peridigm->getU())[9], -2.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getU())[10], 0.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getU())[11], -2.0, 1.0e-15);
+    BOOST_CHECK_CLOSE((*peridigm->getY())[9], -1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getY())[10], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getY())[11], -1.0, 1.0e-15);
+  }
+  else if(rank == 1){
+    // global ID 5
+    BOOST_CHECK_EQUAL(peridigm->getOneDimensionalMap()->LID(5), 0);
+    BOOST_CHECK_CLOSE((*peridigm->getX())[0], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[1], -1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[2], 1.0, 1.0e-15);
+    BOOST_CHECK_CLOSE((*peridigm->getU())[0], 0.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getU())[1], 0.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getU())[2], 0.0, 1.0e-15);
+    BOOST_CHECK_CLOSE((*peridigm->getY())[0], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getY())[1], -1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getY())[2], 1.0, 1.0e-15);
+    // global ID 1
+    BOOST_CHECK_EQUAL(peridigm->getOneDimensionalMap()->LID(1), 1);
+    BOOST_CHECK_CLOSE((*peridigm->getX())[3], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[4], -1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[5], -1.0, 1.0e-15);
+    BOOST_CHECK_CLOSE((*peridigm->getU())[3], 0.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getU())[4], 0.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getU())[5], 0.0, 1.0e-15);
+    BOOST_CHECK_CLOSE((*peridigm->getY())[3], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getY())[4], -1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getY())[5], -1.0, 1.0e-15);
+    // global ID 3
+    BOOST_CHECK_EQUAL(peridigm->getOneDimensionalMap()->LID(3), 2);
+    BOOST_CHECK_CLOSE((*peridigm->getX())[6], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[7], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[8], -1.0, 1.0e-15);
+    BOOST_CHECK_CLOSE((*peridigm->getU())[6], 0.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getU())[7], 0.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getU())[8], 0.0, 1.0e-15);
+    BOOST_CHECK_CLOSE((*peridigm->getY())[6], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getY())[7], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getY())[8], -1.0, 1.0e-15);
+    // global ID 2
+    BOOST_CHECK_EQUAL(peridigm->getOneDimensionalMap()->LID(2), 3);
+    BOOST_CHECK_CLOSE((*peridigm->getX())[9], -1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[10], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[11], -1.0, 1.0e-15);
+    BOOST_CHECK_CLOSE((*peridigm->getU())[9], 2.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getU())[10], 0.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getU())[11], 2.0, 1.0e-15);
+    BOOST_CHECK_CLOSE((*peridigm->getY())[9], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getY())[10], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getY())[11], 1.0, 1.0e-15);
+  }
+
+  // check acceleration and force mothership vectors
+  for(int i=0 ; i<peridigm->getX()->MyLength(); ++i){
+    BOOST_CHECK_CLOSE((*peridigm->getV())[i], 0.0, 1.0e-15);
+    BOOST_CHECK_CLOSE((*peridigm->getA())[i], 0.0, 1.0e-15);
+    BOOST_CHECK_CLOSE((*peridigm->getForce())[i], 0.0, 1.0e-15);
+  }
+
+  // check data in DataManager
+//   Teuchos::RCP<PeridigmNS::DataManager> dataManager = peridigm->getDataManager();
+//   if(rank == 0){
+//     double* coord3d;
+//     dataManager->getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&coord3d);
+//     // global ID 0
+//     BOOST_CHECK_CLOSE(coord3d[0], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[1], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[2], -1.0, 1.0e-15);
+//     // global ID 4
+//     BOOST_CHECK_CLOSE(coord3d[3], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[4], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[5], 1.0, 1.0e-15);
+//     // global ID 6
+//     BOOST_CHECK_CLOSE(coord3d[6], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[7], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[8], 1.0, 1.0e-15);
+//     // global ID 7 (should be where global ID 2 was originally)
+//     BOOST_CHECK_CLOSE(coord3d[9], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[10], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[11], 1.0, 1.0e-15);
+//   }
+}
+
 bool init_unit_test_suite()
 {
 	// Add a suite for each processor in the test
@@ -415,7 +558,7 @@ bool init_unit_test_suite()
 	test_suite* proc = BOOST_TEST_SUITE("utPeridigm__MPI_np2");
 	proc->add(BOOST_TEST_CASE(&initialize));
     proc->add(BOOST_TEST_CASE(&rebalanceTwoPointModel));
-    proc->add(BOOST_TEST_CASE(&rebalanceEightPointModel));
+    proc->add(BOOST_TEST_CASE(&rebalanceEightPointModelSwitchCorners));
 	framework::master_test_suite().add(proc);
 
 	return success;

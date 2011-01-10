@@ -523,15 +523,16 @@ void PeridigmNS::Peridigm::rebalance() {
   decomp.myGlobalIDs = myGlobalIDs;
 
   // fill myX and cellVolume
+  // use current positions for x
   shared_ptr<double> myX(new double[myNumElements*dimension], PdQuickGrid::Deleter<double>());
   double* myXPtr = myX.get();
-  double* xPtr;
-  x->ExtractView(&xPtr);
+  double* yPtr;
+  y->ExtractView(&yPtr);
+  memcpy(myXPtr, yPtr, myNumElements*3*sizeof(double));
   shared_ptr<double> cellVolume(new double[myNumElements], PdQuickGrid::Deleter<double>());
   double* cellVolumePtr = cellVolume.get();
   double* cellVolumeOverlapPtr;
   dataManager->getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&cellVolumeOverlapPtr);
-  memcpy(myXPtr, xPtr, myNumElements*3*sizeof(double));
   for(int i=0 ; i<myNumElements ; ++i){
     int oneDimensionalMapGlobalID = oneDimensionalMap->GID(i);
     int oneDimensionalOverlapMapLocalID = oneDimensionalOverlapMap->LID(oneDimensionalMapGlobalID);
