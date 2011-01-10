@@ -152,6 +152,11 @@ find_library(Zoltan_LIBRARY
   PATHS ${TRILINOS_DIR}/lib
 )
 
+find_library(Intrepid_LIBRARY
+  NAMES intrepid
+  PATHS ${TRILINOS_DIR}/lib
+)
+
 find_library(Shards_LIBRARY
   NAMES shards
   PATHS ${TRILINOS_DIR}/lib
@@ -189,6 +194,7 @@ thyraepetra
 thyra
 epetraext
 zoltan
+intrepid
 shards
 epetra
 rtop
@@ -248,7 +254,7 @@ ${Boost_LIBRARIES}
 libm.a
 )
 
-
+add_subdirectory (pditi)
 add_subdirectory (io)
 add_subdirectory (io/unitTest)
 add_subdirectory (src)
@@ -261,6 +267,9 @@ add_subdirectory (test/verification)
 # Can exclude files with flag -e <filename>
 string (COMPARE EQUAL ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} buildInSource)
 if (NOT ${buildInSource})
+   set(UT_DIRS ${UT_DIRS}  -d pditi/intrepid)
+   set(UT_DIRS ${UT_DIRS}  -d pditi/aliti)
+   set(UT_DIRS ${UT_DIRS}  -d pditi/operators/unitTest)
    set(UT_DIRS ${UT_DIRS}  -d test/unit)
    set(UT_DIRS ${UT_DIRS}  -d test/regression)
    set(UT_DIRS ${UT_DIRS}  -d test/verification)

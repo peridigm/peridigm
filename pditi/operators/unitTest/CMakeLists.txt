@@ -85,7 +85,7 @@ add_executable(utPdImp_implicitLinearDynamicsDemo_twoPoint utPdImp_implicitLinea
 target_link_libraries(utPdImp_implicitLinearDynamicsDemo_twoPoint PdImpOperators ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 add_test (utPdImp_implicitLinearDynamicsDemo_twoPoint python run_unit_test.py ./utPdImp_implicitLinearDynamicsDemo_twoPoint)
 
-add_custom_target( utest
-   COMMAND ctest
-)
+#add_custom_target( utest
+#   COMMAND ctest
+#)
 
