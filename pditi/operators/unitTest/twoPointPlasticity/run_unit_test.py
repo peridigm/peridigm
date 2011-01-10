@@ -4,7 +4,6 @@ import sys
 import os
 import string
 from subprocess import Popen
-from pylab import *
 
 if __name__ == "__main__":
 
@@ -27,11 +26,17 @@ if __name__ == "__main__":
 		sys.exit(1)
 		
 	# load computed and gold data
-	d=loadtxt("ep.dat")
-	dG=loadtxt("ep.gold.dat")
-	if len(d) != len(dG):
+	dFile=open('ep.dat','r')
+	dGFile=open('ep.gold.dat','r')
+	dLines=dFile.readlines()
+	dGLines=dGFile.readlines()
+	if len(dLines) != len(dGLines):
 		logfile.write("\nError: Files have different number of time steps!")
 		sys.exit(1)
+	dStr=[line.split(" ") for line in dLines]
+	d=[(float(dd[0]),float(dd[1]),float(dd[2])) for dd in dStr]
+	dGStr=[line.split(" ") for line in dGLines]
+	dG=[(float(dd[0]),float(dd[1]),float(dd[2])) for dd in dGStr]
 	
 	# diff files
 	logfile.write("\nDiffing Files ...")
