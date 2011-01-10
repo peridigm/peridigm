@@ -106,7 +106,7 @@ void twoPointJacobian() {
 		 * 1) create final configuration
 		 * 2) difference final configuration with starting configuration to get displacement
 		 */
-		double y[3];
+		double y[]={0.0,0.0,0.0};
 		double yMag = x1[0]+delta;
 		setRotatedValue(y,yMag);
 
@@ -231,7 +231,7 @@ void twoPointJacobian() {
 		 * 1) create final configuration
 		 * 2) difference final configuration with starting configuration to get displacement
 		 */
-		double y[3];
+		double y[]={0.0,0.0,0.0};
 		double *x1 = decomp.myX.get()+3;
 		double yMag = *(x1)+delta;
 		setRotatedValue(y,yMag);
@@ -299,7 +299,7 @@ Pd_shared_ptr_Array<double> computeAnalytical3x3Stiffness(const Field<double>& u
 
 	double x1 = bond;
 	double y0Mag = bond+delta;
-	double y0[3];
+	double y0[]={0.0,0.0,0.0};
 	y0[2]=0.0;
 	setRotatedValue(y0,y0Mag);
 	const double tolerance = 1.0e-15;
