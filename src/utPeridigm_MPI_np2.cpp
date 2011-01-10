@@ -118,7 +118,7 @@ Teuchos::RCP<PeridigmNS::Peridigm> createTwoPointModel()
   return peridigm;
 }
 
-Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel()
+Teuchos::RCP<PeridigmNS::Peridigm> createEightPointModel()
 {
   Teuchos::RCP<Epetra_Comm> comm;
   #ifdef HAVE_MPI
@@ -299,13 +299,13 @@ void rebalanceTwoPointModel()
   }
 }
 
-void rebalanceFourPointModel()
+void rebalanceEightPointModel()
 {
   int rank, numProcs;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 
-  Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createFourPointModel();
+  Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createEightPointModel();
 
   // Make copies of everything so that we can identify any changes
   // that might occur during rebalance (there should be none)
@@ -415,7 +415,7 @@ bool init_unit_test_suite()
 	test_suite* proc = BOOST_TEST_SUITE("utPeridigm__MPI_np2");
 	proc->add(BOOST_TEST_CASE(&initialize));
     proc->add(BOOST_TEST_CASE(&rebalanceTwoPointModel));
-    //proc->add(BOOST_TEST_CASE(&rebalanceFourPointModel));
+    proc->add(BOOST_TEST_CASE(&rebalanceEightPointModel));
 	framework::master_test_suite().add(proc);
 
 	return success;

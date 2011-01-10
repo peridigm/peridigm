@@ -519,11 +519,9 @@ void PeridigmNS::Peridigm::rebalance() {
   shared_ptr<int> myGlobalIDs(new int[myNumElements], PdQuickGrid::Deleter<int>());
   int* myGlobalIDsPtr = myGlobalIDs.get();
   int* gIDs = oneDimensionalMap->MyGlobalElements();
-  for(int i=0 ; i<myNumElements ; ++i){
-    myGlobalIDsPtr[i] = gIDs[i];
-  }
+  memcpy(myGlobalIDsPtr, gIDs, myNumElements*sizeof(int));
   decomp.myGlobalIDs = myGlobalIDs;
-  
+
   // fill myX and cellVolume
   shared_ptr<double> myX(new double[myNumElements*dimension], PdQuickGrid::Deleter<double>());
   double* myXPtr = myX.get();
@@ -533,13 +531,10 @@ void PeridigmNS::Peridigm::rebalance() {
   double* cellVolumePtr = cellVolume.get();
   double* cellVolumeOverlapPtr;
   dataManager->getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&cellVolumeOverlapPtr);
+  memcpy(myXPtr, xPtr, myNumElements*3*sizeof(double));
   for(int i=0 ; i<myNumElements ; ++i){
-    int oneDimensionalMapGlobalID = myGlobalIDsPtr[i];
-    int oneDimensionalMapLocalID = oneDimensionalMap->LID(oneDimensionalMapGlobalID);
+    int oneDimensionalMapGlobalID = oneDimensionalMap->GID(i);
     int oneDimensionalOverlapMapLocalID = oneDimensionalOverlapMap->LID(oneDimensionalMapGlobalID);
-    myXPtr[i*3] = xPtr[oneDimensionalMapLocalID];
-    myXPtr[i*3+1] = xPtr[oneDimensionalMapLocalID+1];
-    myXPtr[i*3+2] = xPtr[oneDimensionalMapLocalID+2];
     cellVolumePtr[i] = cellVolumeOverlapPtr[oneDimensionalOverlapMapLocalID];
   }  
   decomp.myX = myX;
