@@ -81,6 +81,10 @@ public:
     return lb->second;
   }
 
+  Teuchos::RCP<Epetra_MultiVector> getScalarMultiVector() { return scalarData; }
+  Teuchos::RCP<Epetra_MultiVector> getVector3DMultiVector() { return vector3DData; }
+  Teuchos::RCP<Epetra_MultiVector> getBondMultiVector() { return bondData; }
+
 protected:
 
   Teuchos::RCP<Epetra_MultiVector> scalarData;
