@@ -30,6 +30,7 @@ ${PdQuickGridLibs}
 ${PdVTKLibs}
 ${VTK_LIBS}
 ${PdMaterialUtilitiesLib}
+PdIC
 ${REQUIRED_LIBS}
 )
 
@@ -62,6 +63,7 @@ ${PdVTKLibs}
 ${VTK_LIBS}
 ${REQUIRED_LIBS}
 ${PdMaterialUtilitiesLib}
+PdIC
 ${Boost_LIBRARIES}
 )
 
@@ -90,6 +92,7 @@ ${PdVTKLibs}
 ${VTK_LIBS}
 ${REQUIRED_LIBS}
 ${PdMaterialUtilitiesLib}
+PdIC
 ${Boost_LIBRARIES}
 )
 

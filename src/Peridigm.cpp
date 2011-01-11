@@ -53,6 +53,7 @@
 #include "PdGridData.h"
 #include "PdQuickGrid.h"
 #include "PdZoltan.h"
+#include "InitialCondition.hpp"
 
 using namespace std;
 
@@ -219,12 +220,26 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
 
 void PeridigmNS::Peridigm::applyInitialVelocities() {
 
+
   TEST_FOR_EXCEPT_MSG(!threeDimensionalMap->SameAs(v->Map()), 
                       "Peridigm::applyInitialVelocities():  Inconsistent velocity vector map.\n");
 
+  /*
+   * UNCOMMENT the following two lines
+   */
+
+//  RCP<InitialConditionsNS::InitialCondition> icOperator = InitialConditionsNS::getInstance(*peridigmParams);
+//  icOperator->apply(*x,*u,*v);
+
+
+  /*
+   * COMMENT OUT ALL OF BELOW TO RUN new Initial Condition Capability
+   */
   Teuchos::ParameterList& problemParams = peridigmParams->sublist("Problem");
   Teuchos::ParameterList& bcParams = problemParams.sublist("Boundary Conditions");
   Teuchos::ParameterList::ConstIterator it;
+
+
 
   // get the node sets
   map< string, vector<int> > nodeSets;

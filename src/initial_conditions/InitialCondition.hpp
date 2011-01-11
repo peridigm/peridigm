@@ -11,28 +11,23 @@
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_RCP.hpp>
 
-namespace PeridigmNS {
+class Epetra_Vector;
 
 namespace InitialConditionsNS {
 
 using Teuchos::RCP;
 
-
-
-
-
 class InitialCondition {
 public:
+	InitialCondition() {}
 	virtual ~InitialCondition() {}
-	virtual void apply() = 0;
+	virtual void apply(const Epetra_Vector& x, Epetra_Vector& u, Epetra_Vector& v) = 0;
 };
 
-
-RCP<InitialCondition> getInstance(const Teuchos::RCP<Teuchos::ParameterList>& params);
+RCP<InitialCondition> getInstance(const Teuchos::ParameterList& peridigmParams);
 
 
 }  // namespace InitialConditionsNS
 
-} // namespace PeridigmNS
 
 #endif /* INITIALCONDITION_HPP_ */

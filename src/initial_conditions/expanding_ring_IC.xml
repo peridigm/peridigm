@@ -29,7 +29,7 @@
 		</ParameterList>
 	</ParameterList>
 	<ParameterList name="Initial Conditions">
-		<Parameter name="Type" type="string" value="Q2Cylinder" />
+		<Parameter name="Type" type="string" value="Q2Cylinder"/>
 		<ParameterList name="IC Params">
 			<Parameter name="v_r0" type="double" value="200.0"/>
 			<Parameter name="v_r1" type="double" value="0.0"/>
@@ -41,7 +41,7 @@
 		<Parameter name="Verbose" type="bool" value="false"/>
 		<ParameterList name="Verlet">
 			<Parameter name="Initial Time" type="double" value="0.0"/>
-			<Parameter name="Final Time" type="double" value="1.0e-1"/>
+			<Parameter name="Final Time" type="double" value="1.0e-6"/>
 			<Parameter name="Fixed dt" type="double" value="1.0e-6"/>
 		</ParameterList>
 	</ParameterList>
