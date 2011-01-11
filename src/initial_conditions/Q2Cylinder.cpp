@@ -6,54 +6,44 @@
  */
 
 #include "Q2Cylinder.hpp"
+#include <Epetra_Vector.h>
 #include <string>
 
 using std::string;
-namespace PeridigmNS {
+
 
 namespace InitialConditionsNS {
 
 
-Q2Cylinder::Q2Cylinder(const Teuchos::RCP<Teuchos::ParameterList>& peridigmParams):
-		vr0(0.0), vr1(0.0), vz0(0.0), z0(0.0), a(0.0), center()
-{
+Q2Cylinder::Q2Cylinder(double _vr0, double _vr1, double _vz0, double _z0, double _a, const VectorUtilsNS::Vector3D& _center):
+		vr0(_vr0), vr1(_vr1), vz0(_vz0), z0(_z0), a(_a), center(_center)
+{}
 
-	Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp(&(peridigmParams->sublist("Problem").sublist("Initial Conditions")), false);
-	TEST_FOR_EXCEPT_MSG(params->get<string>("Type") != "Q2Cylinder", "PeridigmNS::InitialConditionsNS::Q2Cylinder -- invalid \'Type\'");
-	if (params->isSublist("IC Params")){
-		Teuchos::RCP<Teuchos::ParameterList> ICParams = Teuchos::rcp(&(params->sublist("IC Params")), false);
-		TEST_FOR_EXCEPT_MSG(ICParams->get<string>("Geometry") != "TensorProductCylinderMeshGenerator",
-				"PeridigmNS::InitialConditionsNS::Q2Cylinder -- Invalid \'Geometry\'");
-		vr0 = ICParams->get<double>("v_r0");
-		vr1 = ICParams->get<double>("v_r1");
-		vz0 = ICParams->get<double>("v_z0");
-	}
-	else { // ERROR
-		TEST_FOR_EXCEPT_MSG(true, "PeridigmNS::InitialConditionsNS::Q2Cylinder-->missing \'IC Params\' sublist.");
-	}
-	Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::rcp(&(peridigmParams->sublist("Problem").sublist("Discretization")), false);
-	if (discParams->isSublist("TensorProductCylinderMeshGenerator")){
-		Teuchos::RCP<Teuchos::ParameterList> pdQuickGridParamList = Teuchos::rcp(&(discParams->sublist("TensorProductCylinderMeshGenerator")), false);
-		double cylinderLength = pdQuickGridParamList->get<double>("Cylinder Length");
-		double xC             = pdQuickGridParamList->get<double>("Ring Center x");
-		double yC             = pdQuickGridParamList->get<double>("Ring Center y");
-		double zStart         = pdQuickGridParamList->get<double>("Z Origin");
+void Q2Cylinder::apply(const Epetra_Vector& X, Epetra_Vector& u, Epetra_Vector& v) {
+	int numPoints = X.Map().NumMyElements();
 
-		/*
-		 * Initialize parameters for computing initial conditions
-		 */
-		z0=zStart;
-		a=cylinderLength/2.0;
-		center[0]=xC;
-		center[1]=yC;
-	}
-	else { // ERROR
-		TEST_FOR_EXCEPT_MSG(true, "PeridigmNS::InitialConditionsNS::Q2Cylinder -- invalid \'Type\' for");
+	for(int p=0;p<numPoints;p++){
+		int ptr = 3*p;
+		int iX = ptr;
+		int iY = ptr + 1;
+		int iZ = ptr + 2;
+
+		double x = X[iX];
+		double y = X[iY];
+		double z = X[iZ] - z0 - a;
+
+		double vr = vr0 - vr1*(z/a)*(z/a);
+		double vz = vz0*(z/a);
+		double vtheta = 0.0;
+		double theta = atan2(y, x);
+		v[iX] = vr*cos(theta) - vtheta*sin(theta);
+		v[iY] = vr*sin(theta) + vtheta*cos(theta);
+		v[iZ] = vz;
 	}
 
 }
 
-}
+} // InitialConditionsNS
 
 
-}
+
