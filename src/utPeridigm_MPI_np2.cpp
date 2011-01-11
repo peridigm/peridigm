@@ -145,7 +145,7 @@ Teuchos::RCP<PeridigmNS::Peridigm> createEightPointModel()
   // discretization parameters
   ParameterList& discretizationParams = problemParams.sublist("Discretization");
   discretizationParams.set("Type", "PdQuickGrid");
-  discretizationParams.set("Horizon", 2.1);
+  discretizationParams.set("Horizon", 4.1);
 
   // pdQuickGrid tensor product mesh generator parameters
   ParameterList& pdQuickGridParams = discretizationParams.sublist("TensorProduct3DMeshGenerator");
@@ -520,7 +520,7 @@ void rebalanceEightPointModelSwitchCorners()
     BOOST_CHECK_CLOSE((*peridigm->getX())[6], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[7], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[8], -1.0, 1.0e-15);
     BOOST_CHECK_CLOSE((*peridigm->getU())[6], 0.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getU())[7], 0.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getU())[8], 0.0, 1.0e-15);
     BOOST_CHECK_CLOSE((*peridigm->getY())[6], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getY())[7], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getY())[8], -1.0, 1.0e-15);
-    // global ID 2
+    // global ID 2 (should be where global ID 7 was originally)
     BOOST_CHECK_EQUAL(peridigm->getOneDimensionalMap()->LID(2), 3);
     BOOST_CHECK_CLOSE((*peridigm->getX())[9], -1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[10], 1.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getX())[11], -1.0, 1.0e-15);
     BOOST_CHECK_CLOSE((*peridigm->getU())[9], 2.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getU())[10], 0.0, 1.0e-15); BOOST_CHECK_CLOSE((*peridigm->getU())[11], 2.0, 1.0e-15);
@@ -537,6 +537,8 @@ void rebalanceEightPointModelSwitchCorners()
   // check data in DataManager
   Teuchos::RCP<PeridigmNS::DataManager> dataManager = peridigm->getDataManager();
   if(rank == 0){
+    // length of the overlap vectors should be 8*3 = 24, all the off-processor points are ghosted
+    BOOST_CHECK_EQUAL(dataManager->getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->MyLength(), 24);
     double* coord3d;
     dataManager->getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&coord3d);
     // global ID 0
@@ -545,8 +547,38 @@ void rebalanceEightPointModelSwitchCorners()
     BOOST_CHECK_CLOSE(coord3d[3], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[4], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[5], 1.0, 1.0e-15);
     // global ID 6
     BOOST_CHECK_CLOSE(coord3d[6], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[7], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[8], 1.0, 1.0e-15);
-    // global ID 7 (should be where global ID 2 was originally)
+    // global ID 7
     BOOST_CHECK_CLOSE(coord3d[9], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[10], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[11], 1.0, 1.0e-15);
+    // global ID 1, ghosted
+    BOOST_CHECK_CLOSE(coord3d[12], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[13], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[14], -1.0, 1.0e-15);    
+    // global ID 2, ghosted
+    BOOST_CHECK_CLOSE(coord3d[15], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[16], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[17], -1.0, 1.0e-15);    
+    // global ID 3, ghosted
+    BOOST_CHECK_CLOSE(coord3d[18], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[19], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[20], -1.0, 1.0e-15);    
+    // global ID 5, ghosted
+    BOOST_CHECK_CLOSE(coord3d[21], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[22], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[23], 1.0, 1.0e-15);    
+  }
+  else if(rank == 1){
+    // length of the overlap vectors should be 8*3 = 24, all the off-processor points are ghosted
+    BOOST_CHECK_EQUAL(dataManager->getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->MyLength(), 24);
+    double* coord3d;
+    dataManager->getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&coord3d);
+    // global ID 5
+    BOOST_CHECK_CLOSE(coord3d[0], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[1], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[2], 1.0, 1.0e-15);
+    // global ID 1
+    BOOST_CHECK_CLOSE(coord3d[3], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[4], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[5], -1.0, 1.0e-15);
+    // global ID 3
+    BOOST_CHECK_CLOSE(coord3d[6], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[7], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[8], -1.0, 1.0e-15);
+    // global ID 2
+    BOOST_CHECK_CLOSE(coord3d[9], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[10], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[11], -1.0, 1.0e-15);
+    // global ID 0, ghosted
+    BOOST_CHECK_CLOSE(coord3d[12], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[13], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[14], -1.0, 1.0e-15);    
+    // global ID 4, ghosted
+    BOOST_CHECK_CLOSE(coord3d[15], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[16], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[17], 1.0, 1.0e-15);    
+    // global ID 6, ghosted
+    BOOST_CHECK_CLOSE(coord3d[18], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[19], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[20], 1.0, 1.0e-15);    
+    // global ID 7, ghosted
+    BOOST_CHECK_CLOSE(coord3d[21], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[22], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[23], 1.0, 1.0e-15);    
   }
 }
 
@@ -556,8 +588,8 @@ bool init_unit_test_suite()
 	bool success = true;
 
 	test_suite* proc = BOOST_TEST_SUITE("utPeridigm__MPI_np2");
-	proc->add(BOOST_TEST_CASE(&initialize));
-    proc->add(BOOST_TEST_CASE(&rebalanceTwoPointModel));
+	//proc->add(BOOST_TEST_CASE(&initialize));
+    //proc->add(BOOST_TEST_CASE(&rebalanceTwoPointModel));
     proc->add(BOOST_TEST_CASE(&rebalanceEightPointModelSwitchCorners));
 	framework::master_test_suite().add(proc);
 
