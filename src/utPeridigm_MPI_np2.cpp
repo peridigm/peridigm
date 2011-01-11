@@ -535,19 +535,19 @@ void rebalanceEightPointModelSwitchCorners()
   }
 
   // check data in DataManager
-//   Teuchos::RCP<PeridigmNS::DataManager> dataManager = peridigm->getDataManager();
-//   if(rank == 0){
-//     double* coord3d;
-//     dataManager->getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&coord3d);
-//     // global ID 0
-//     BOOST_CHECK_CLOSE(coord3d[0], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[1], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[2], -1.0, 1.0e-15);
-//     // global ID 4
-//     BOOST_CHECK_CLOSE(coord3d[3], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[4], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[5], 1.0, 1.0e-15);
-//     // global ID 6
-//     BOOST_CHECK_CLOSE(coord3d[6], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[7], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[8], 1.0, 1.0e-15);
-//     // global ID 7 (should be where global ID 2 was originally)
-//     BOOST_CHECK_CLOSE(coord3d[9], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[10], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[11], 1.0, 1.0e-15);
-//   }
+  Teuchos::RCP<PeridigmNS::DataManager> dataManager = peridigm->getDataManager();
+  if(rank == 0){
+    double* coord3d;
+    dataManager->getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&coord3d);
+    // global ID 0
+    BOOST_CHECK_CLOSE(coord3d[0], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[1], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[2], -1.0, 1.0e-15);
+    // global ID 4
+    BOOST_CHECK_CLOSE(coord3d[3], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[4], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[5], 1.0, 1.0e-15);
+    // global ID 6
+    BOOST_CHECK_CLOSE(coord3d[6], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[7], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[8], 1.0, 1.0e-15);
+    // global ID 7 (should be where global ID 2 was originally)
+    BOOST_CHECK_CLOSE(coord3d[9], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[10], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[11], 1.0, 1.0e-15);
+  }
 }
 
 bool init_unit_test_suite()

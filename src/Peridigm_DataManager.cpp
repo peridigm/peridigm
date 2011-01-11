@@ -32,6 +32,7 @@
 // ***********************************************************************
 
 #include <Teuchos_Exceptions.hpp>
+#include <Epetra_Import.h>
 #include "Peridigm_DataManager.hpp"
 
 void PeridigmNS::DataManager::allocateData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > specs)
@@ -99,7 +100,7 @@ void PeridigmNS::DataManager::allocateData(Teuchos::RCP< std::vector<Field_NS::F
                        "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate bond data with no map (forget setMaps()?).");
 
   // create the states
-  if(statelessScalarFieldSpecs->size() + statelessVector3DFieldSpecs->size() > 0){
+  if(statelessScalarFieldSpecs->size() + statelessVector3DFieldSpecs->size() + statelessBondFieldSpecs->size() > 0){
     stateNONE = Teuchos::rcp(new State);
     if(statelessScalarFieldSpecs->size() > 0)
       stateNONE->allocateScalarData(statelessScalarFieldSpecs, scalarMap);
@@ -108,7 +109,7 @@ void PeridigmNS::DataManager::allocateData(Teuchos::RCP< std::vector<Field_NS::F
     if(statelessBondFieldSpecs->size() > 0)
       stateNONE->allocateBondData(statelessBondFieldSpecs, bondMap);
   }
-  if(statefulScalarFieldSpecs->size() + statefulVector3DFieldSpecs->size() > 0){
+  if(statefulScalarFieldSpecs->size() + statefulVector3DFieldSpecs->size() + statefulBondFieldSpecs->size() > 0){
     stateN = Teuchos::rcp(new State);
     stateNP1 = Teuchos::rcp(new State);
     if(statefulScalarFieldSpecs->size() > 0){
@@ -126,10 +127,79 @@ void PeridigmNS::DataManager::allocateData(Teuchos::RCP< std::vector<Field_NS::F
   }
 }
 
-void PeridigmNS::DataManager::rebalance(Teuchos::RCP<const Epetra_BlockMap> scalarMap,
-                                        Teuchos::RCP<const Epetra_BlockMap> vector3DMap,
-                                        Teuchos::RCP<const Epetra_BlockMap> bondMap)
+void PeridigmNS::DataManager::rebalance(Teuchos::RCP<const Epetra_BlockMap> rebalancedScalarMap,
+                                        Teuchos::RCP<const Epetra_BlockMap> rebalancedVector3DMap,
+                                        Teuchos::RCP<const Epetra_BlockMap> rebalancedBondMap)
 {
+  // importers
+  Teuchos::RCP<const Epetra_Import> scalarImporter;
+  if(!scalarMap.is_null() || !rebalancedScalarMap.is_null()){
+    TEST_FOR_EXCEPTION(scalarMap.is_null() || rebalancedScalarMap.is_null(), Teuchos::NullReferenceError,
+                       "Error in PeridigmNS::DataManager::rebalance(), inconsistent scalar maps.");
+    scalarImporter = Teuchos::rcp(new Epetra_Import(*rebalancedScalarMap, *scalarMap));
+  }
+  Teuchos::RCP<const Epetra_Import> vector3DImporter;
+  if(!vector3DMap.is_null() || !rebalancedVector3DMap.is_null()){
+    TEST_FOR_EXCEPTION(vector3DMap.is_null() || rebalancedVector3DMap.is_null(), Teuchos::NullReferenceError, 
+                       "Error in PeridigmNS::DataManager::rebalance(), inconsistent vector3D maps.");
+    vector3DImporter = Teuchos::rcp(new Epetra_Import(*rebalancedVector3DMap, *vector3DMap));
+  }
+  Teuchos::RCP<const Epetra_Import> bondImporter;
+  if(!bondMap.is_null() || !rebalancedBondMap.is_null()){
+    TEST_FOR_EXCEPTION(bondMap.is_null() || rebalancedBondMap.is_null(), Teuchos::NullReferenceError, 
+                       "Error in PeridigmNS::DataManager::rebalance(), inconsistent bond maps.");
+    bondImporter = Teuchos::rcp(new Epetra_Import(*rebalancedBondMap, *bondMap));
+  }
+    
+  // state NONE
+  if(statelessScalarFieldSpecs->size() + statelessVector3DFieldSpecs->size() + statelessBondFieldSpecs->size() > 0){
+    Teuchos::RCP<State> rebalancedStateNONE = Teuchos::rcp(new State);
+    if(statelessScalarFieldSpecs->size() > 0){
+      rebalancedStateNONE->allocateScalarData(statelessScalarFieldSpecs, rebalancedScalarMap);
+      rebalancedStateNONE->getScalarMultiVector()->Import(*stateNONE->getScalarMultiVector(), *scalarImporter, Insert);
+    }
+    if(statelessVector3DFieldSpecs->size() > 0){
+      rebalancedStateNONE->allocateVector3DData(statelessVector3DFieldSpecs, rebalancedVector3DMap);
+      rebalancedStateNONE->getVector3DMultiVector()->Import(*stateNONE->getVector3DMultiVector(), *vector3DImporter, Insert);
+    }
+    if(statelessBondFieldSpecs->size() > 0){
+      rebalancedStateNONE->allocateBondData(statelessBondFieldSpecs, rebalancedBondMap);
+      rebalancedStateNONE->getBondMultiVector()->Import(*stateNONE->getBondMultiVector(), *vector3DImporter, Insert);
+    }
+    stateNONE = rebalancedStateNONE;
+  }
+
+  // states N and NP1
+  if(statefulScalarFieldSpecs->size() + statefulVector3DFieldSpecs->size() + statefulBondFieldSpecs->size() > 0){
+    Teuchos::RCP<State> rebalancedStateN = Teuchos::rcp(new State);
+    if(statefulScalarFieldSpecs->size() > 0){
+      rebalancedStateN->allocateScalarData(statefulScalarFieldSpecs, rebalancedScalarMap);
+      rebalancedStateN->getScalarMultiVector()->Import(*stateN->getScalarMultiVector(), *scalarImporter, Insert);
+    }
+    if(statefulVector3DFieldSpecs->size() > 0){
+      rebalancedStateN->allocateVector3DData(statefulVector3DFieldSpecs, rebalancedVector3DMap);
+      rebalancedStateN->getVector3DMultiVector()->Import(*stateN->getVector3DMultiVector(), *vector3DImporter, Insert);
+    }
+    if(statefulBondFieldSpecs->size() > 0){
+      rebalancedStateN->allocateBondData(statefulBondFieldSpecs, rebalancedBondMap);
+      rebalancedStateN->getBondMultiVector()->Import(*stateN->getBondMultiVector(), *bondImporter, Insert);
+    }
+    stateN = rebalancedStateN;
+    Teuchos::RCP<State> rebalancedStateNP1 = Teuchos::rcp(new State);
+    if(statefulScalarFieldSpecs->size() > 0){
+      rebalancedStateNP1->allocateScalarData(statefulScalarFieldSpecs, rebalancedScalarMap);
+      rebalancedStateNP1->getScalarMultiVector()->Import(*stateNP1->getScalarMultiVector(), *scalarImporter, Insert);
+    }
+    if(statefulVector3DFieldSpecs->size() > 0){
+      rebalancedStateNP1->allocateVector3DData(statefulVector3DFieldSpecs, rebalancedVector3DMap);
+      rebalancedStateNP1->getVector3DMultiVector()->Import(*stateNP1->getVector3DMultiVector(), *vector3DImporter, Insert);
+    }
+    if(statefulBondFieldSpecs->size() > 0){
+      rebalancedStateNP1->allocateBondData(statefulBondFieldSpecs, rebalancedBondMap);
+      rebalancedStateNP1->getBondMultiVector()->Import(*stateNP1->getBondMultiVector(), *bondImporter, Insert);
+    }
+    stateNP1 = rebalancedStateNP1;
+  }
 }
 
 Teuchos::RCP<Epetra_Vector> PeridigmNS::DataManager::getData(Field_NS::FieldSpec fieldSpec, Field_NS::FieldSpec::FieldStep fieldStep)

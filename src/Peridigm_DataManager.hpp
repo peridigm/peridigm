@@ -59,9 +59,9 @@ public:
 
   void allocateData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > specs);
 
-  void rebalance(Teuchos::RCP<const Epetra_BlockMap> scalarMap,
-                 Teuchos::RCP<const Epetra_BlockMap> vector3DMap,
-                 Teuchos::RCP<const Epetra_BlockMap> bondMap);
+  void rebalance(Teuchos::RCP<const Epetra_BlockMap> rebalancedScalarMap,
+                 Teuchos::RCP<const Epetra_BlockMap> rebalancedVector3DMap,
+                 Teuchos::RCP<const Epetra_BlockMap> rebalancedBondMap);
 
   Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec,
                                       Field_NS::FieldSpec::FieldStep fieldStep);
