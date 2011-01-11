@@ -15,11 +15,21 @@ namespace PeridigmNS {
 
 namespace InitialConditionsNS {
 
+using Teuchos::RCP;
+
+
+
+
+
 class InitialCondition {
 public:
 	virtual ~InitialCondition() {}
 	virtual void apply() = 0;
 };
+
+
+RCP<InitialCondition> getInstance(const Teuchos::RCP<Teuchos::ParameterList>& params);
+
 
 }  // namespace InitialConditionsNS
 

@@ -3,6 +3,6 @@
 #
 
 # Library of Initial conditions
-add_library(PdIC Q2Cylinder.cpp)
+add_library(PdIC InitialCondition.cpp Q2Cylinder.cpp)
 
 
