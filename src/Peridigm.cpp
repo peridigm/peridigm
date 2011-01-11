@@ -592,7 +592,7 @@ void PeridigmNS::Peridigm::rebalance() {
       (*neighborGlobalIDs)[neighborGlobalIDIndex++] = oneDimensionalOverlapMap->GID(neighborLocalID);
     }
   }
-  Teuchos::RCP<Epetra_Vector> rebalancedNeighborGlobalIDs = Teuchos::rcp(new Epetra_Vector(*bondMap));
+  Teuchos::RCP<Epetra_Vector> rebalancedNeighborGlobalIDs = Teuchos::rcp(new Epetra_Vector(*rebalancedBondMap));
   rebalancedNeighborGlobalIDs->Import(*neighborGlobalIDs, *bondMapImporter, Insert);
 
   // create a list of all the off-processor IDs that will need to be ghosted
@@ -600,7 +600,7 @@ void PeridigmNS::Peridigm::rebalance() {
   set<int> offProcessorIDs;
   for(int i=0 ; i<rebalancedNeighborGlobalIDs->MyLength() ; ++i){
     int globalID = (int)( (*rebalancedNeighborGlobalIDs)[i] );
-    if(!oneDimensionalMap->MyGID(globalID))
+    if(!rebalancedOneDimensionalMap->MyGID(globalID))
       offProcessorIDs.insert(globalID);
   }
 
@@ -687,7 +687,7 @@ void PeridigmNS::Peridigm::rebalance() {
   rebalancedForce->Import(*force, *threeDimensionalMapImporter, Insert);
   force = rebalancedForce;
 
-  dataManager->rebalance(rebalancedOneDimensionalMap, rebalancedThreeDimensionalMap, rebalancedBondMap);
+  dataManager->rebalance(rebalancedOneDimensionalOverlapMap, rebalancedThreeDimensionalOverlapMap, rebalancedBondMap);
 
   // set all the pointers to the new maps
   oneDimensionalMap = rebalancedOneDimensionalMap;
