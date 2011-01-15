@@ -496,7 +496,12 @@ void PeridigmNS::Peridigm::execute() {
 //    if (!active) return;
     //cout << "PERIDIGM OBSERVER CALLED step=" <<  timeStepIter  << ",  time=" << stepper.getStepStatus().time << endl;
     // Set current time in this parameterlist
-    forceStateDesc->set("Time", time);
+    /*
+     * JAM: 1/15/2011
+     * THE FOLLOWING LINE is messed up 'time' is a function
+     */
+//    forceStateDesc->set("Time", time);
+    forceStateDesc->set("Time", t_current);
     outputManager->write(x,u,v,a,force,dataManager,neighborhoodData,forceStateDesc);
 
     // swap state N and state NP1

@@ -40,14 +40,14 @@
 #include "Peridigm_NeighborhoodData.hpp"
 
 namespace PeridigmNS {
-  
+
   class OutputManager {
-    
+
   public:
-    
+
     //! Basic constructor.
     OutputManager(){};
-    
+
     //! Destructor.
     virtual ~OutputManager() {};
 
@@ -58,7 +58,7 @@ namespace PeridigmNS {
     virtual void close(){};
 
     //! Write data to disk
-    virtual void write(Teuchos::RCP<const Epetra_Vector>, 
+    virtual void write(Teuchos::RCP<const Epetra_Vector>,
                        Teuchos::RCP<const Epetra_Vector>,
                        Teuchos::RCP<const Epetra_Vector>,
                        Teuchos::RCP<const Epetra_Vector>,
@@ -89,15 +89,15 @@ namespace PeridigmNS {
     Teuchos::RCP<Teuchos::ParameterList> materialOutputFields;
 
   private:
-    
+
     //! Copy constructor.
     OutputManager( const OutputManager& OM );
-    
+
     //! Assignment operator.
     OutputManager& operator=( const OutputManager& OM );
 
   };
-  
+
 }
- 
+
 #endif //PERIDIGM_OUTPUTMANAGER_HPP

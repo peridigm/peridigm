@@ -13,6 +13,9 @@
 #include <vtkIntArray.h>
 #include <vtkCellType.h>
 #include "vtkPointData.h"
+#include "vtkIdList.h"
+#include "vtkKdTree.h"
+#include "vtkKdTreePointLocator.h"
 #include "vtkXMLPUnstructuredGridWriter.h"
 #include "PdGridData.h"
 #include <tr1/memory>
@@ -109,6 +112,17 @@ void writeField(vtkSmartPointer<vtkUnstructuredGrid>& g, const Field_NS::FieldSp
 	std::size_t degree =spec.getLength();
 	writeField(g,name,degree,data);
 }
+
+
+
+/*
+ * Initial hack -- eventually this can be a virtual method
+ * Idea:
+ * 1) output fields already exist on grid -- output manager put them there
+ * 2) make this a virtual method
+ *
+ */
+void expandRingPostProcess(double t, vtkSmartPointer<vtkUnstructuredGrid> grid);
 
 } // PdVTK
 

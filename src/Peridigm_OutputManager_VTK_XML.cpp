@@ -304,6 +304,8 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
   }
 
   // All pointers reset; now write data
+  double current_time = forceStateDesc->get<double>("Time");
+//  vtkWriter->writeTimeStep(current_time,grid);
   vtkWriter->writeTimeStep(count,grid);
 
 }

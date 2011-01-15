@@ -4,6 +4,7 @@ Created on Aug 27, 2010
 @author: jamitch
 '''
 import vtk.io as io
+from vtk import vtkKdTreePointLocator
 from xml.dom.minidom import parse
 from operator import itemgetter
 
@@ -37,6 +38,17 @@ def GetPointTuples(grid):
 
 	xyz = grid.GetPoints().GetData()
 	return xyz
+
+def GetKdTreePointLocator(grid):
+	"""Returns a vtk KdTreePointLocator for grid
+	
+	Input: vtkUnstructuredGrid
+	Output: vtkKdTree
+	"""
+	kdTree = vtkKdTreePointLocator()
+	kdTree.SetDataSet(grid);
+	return kdTree
+	
 
 def GetData(grid, relationType='point'):
 	"""Returns cellData associated with grid
