@@ -200,14 +200,20 @@ vtkSmartPointer<vtkCellArray> getCellArray(vtkIdType numCells){
 	return cells;
 }
 
-#if 0
 /*
- * Idea for adding a restricted set of cells
+ * Initial hack for post processing step
  */
-vtkSmartPointer<vtkUnstructuredGrid>  addCells(vtkSmartPointer<vtkUnstructuredGrid> grid, int* gids, numGids, int* neighborhood){
+void expandRingPostProcess(double t, vtkSmartPointer<vtkUnstructuredGrid> grid){
+
+	vtkKdTreePointLocator* kdTree = vtkKdTreePointLocator::New();
+	kdTree->SetDataSet(grid);
+
+	double ri(16.0), ro(17.0), h(1.0);
+
+
+
 
 }
 
-#endif
 
 } // PdVTK
