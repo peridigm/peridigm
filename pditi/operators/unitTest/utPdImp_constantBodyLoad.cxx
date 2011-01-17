@@ -89,8 +89,8 @@ void constantBodyLoad() {
 	/*
 	 * Create force field to assemble body load into
 	 */
-	FieldSpec::FieldSpec fNP1Spec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fNP1");
-	FieldSpec::FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
+	Field_NS::FieldSpec fNP1Spec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fNP1");
+	Field_NS::FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
 	Field_NS::Field<double> fN(fNSpec,numPoints);
 	Field_NS::Field<double> fNP1(fNP1Spec,numPoints);
 

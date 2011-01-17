@@ -135,7 +135,7 @@ void computeInternalForce(){
 	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
 	shared_ptr<PdImp::PdImpOperator> op = getPimpOperator(decomp,comm);
 
-	FieldSpec::FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
+	Field_NS::FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
 	Field_NS::Field<double> fN(fNSpec,decomp.numPoints);
 	fN.setValue(0.0);
 	op->computeInternalForce(uOwnedField,fN);

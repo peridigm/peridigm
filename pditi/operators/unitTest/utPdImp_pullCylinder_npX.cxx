@@ -162,7 +162,7 @@ void utPimp_pullCylinder() {
 	 * 2) Negate internal force since we are using it as a residual on the RHS (THIS IS NOT DONE -- SIGNS need to be investigated)
 	 * 3) Apply kinematics to this vector so that solution properly includes the applied kinematics
 	 */
-	FieldSpec::FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
+	Field_NS::FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
 	Field_NS::Field<double> fN(fNSpec,decomp.numPoints);
 	fN.setValue(0.0);
 	op->computeInternalForce(uOwnedField,fN);
@@ -190,7 +190,7 @@ void utPimp_pullCylinder() {
 	/*
 	 * Write problem set up parameters to file
 	 */
-	FieldSpec::FieldSpec deltaSpec(FieldSpec::VELOCITY,FieldSpec::VECTOR3D,"delta");
+	Field_NS::FieldSpec deltaSpec(FieldSpec::VELOCITY,FieldSpec::VECTOR3D,"delta");
 	Field_NS::Field<double> delta(deltaSpec,decomp.numPoints);
 	delta.setValue(0.0);
 	bcApplied->applyKinematics(1.0,delta);
