@@ -60,6 +60,9 @@ private:
 class BondFilter {
 public:
 	virtual ~BondFilter() {}
+	/*
+	 * This list length includes an entry for the number of neighbors : "numNeigh"
+	 */
 	virtual size_t filterListSize(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap) = 0;
 	/*
 	 * NOTE: expectation is that bondFlags has been allocated to a sufficient length so that a

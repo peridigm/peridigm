@@ -331,8 +331,15 @@ NeighborhoodList getNeighborhoodList
 			}
 
 			size_t ptListSize = bondFilter.filterListSize(kdTreeList,x,localId,xOverlap);
-			if(ptListSize>max) max=ptListSize;
 			sizeList += ptListSize;
+
+			/*
+			 * Determine maximum possible number of neighbors over all points
+			 */
+			{
+				size_t numIds = kdTreeList->GetNumberOfIds();
+				if(numIds>max) max=numIds;
+			}
 			kdTreeList->Delete();
 		}
 	}
