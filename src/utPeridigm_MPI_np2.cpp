@@ -415,6 +415,8 @@ void rebalanceEightPointModelSwitchCorners()
 
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createEightPointModel();
 
+  Teuchos::RCP<PeridigmNS::DataManager> dataManager = peridigm->getDataManager();
+
   // make sure the points have ended up where we expect them to be
   // there is more than one 'correct' answer here, but for the purpose of this test we want
   // to check the decomposition to see that it's the same as when the test was set up
@@ -468,7 +470,60 @@ void rebalanceEightPointModelSwitchCorners()
   // update y with new displacement
   for(int i=0 ; i<y->MyLength() ; ++i)
     (*y)[i] = (*x)[i] + (*u)[i];
-  
+
+  // set BOND_DAMAGE to indicate broken bonds
+  // this will allow bond data rebalance to be checked
+  // \todo The following is a great illustration of why the neighborhood data structure needs work...
+  Teuchos::RCP<Epetra_Vector> bondDamageN = dataManager->getData(Field_NS::BOND_DAMAGE, Field_NS::FieldSpec::STEP_N);
+  Teuchos::RCP<Epetra_Vector> bondDamageNP1 = dataManager->getData(Field_NS::BOND_DAMAGE, Field_NS::FieldSpec::STEP_NP1);
+  if(rank == 0){
+    // break the second bond for the point with global ID 2
+    Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData = peridigm->getNeighborhoodData();
+    int numOwnedPoints = neighborhoodData->NumOwnedPoints();
+    int* ownedIDs = neighborhoodData->OwnedIDs();
+    int* neighborhoodList = neighborhoodData->NeighborhoodList();
+    int neighborhoodIndex = 0;
+    int dataIndex = 0;
+    for(int i=0 ; i<numOwnedPoints ; ++i){
+      int localID = ownedIDs[i];
+      int globalID = peridigm->getOneDimensionalOverlapMap()->GID(localID);
+      int numNeighbors = neighborhoodList[neighborhoodIndex++];
+      BOOST_CHECK_EQUAL(numNeighbors, 7);
+      for(int j=0 ; j<numNeighbors ; ++j){
+        if(globalID == 2 && j == 1){
+          // break the bond for the NP1 state
+          (*bondDamageNP1)[dataIndex] = 1.0;
+        }
+        neighborhoodIndex++;
+        dataIndex++;
+      }
+    }
+  }
+  else if(rank == 1){
+    // break the seventh bond for the point with global ID 7
+    Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData = peridigm->getNeighborhoodData();
+    int numOwnedPoints = neighborhoodData->NumOwnedPoints();
+    int* ownedIDs = neighborhoodData->OwnedIDs();
+    int* neighborhoodList = neighborhoodData->NeighborhoodList();
+    int neighborhoodIndex = 0;
+    int dataIndex = 0;
+    for(int i=0 ; i<numOwnedPoints ; ++i){
+      int localID = ownedIDs[i];
+      int globalID = peridigm->getOneDimensionalOverlapMap()->GID(localID);
+      int numNeighbors = neighborhoodList[neighborhoodIndex++];
+      BOOST_CHECK_EQUAL(numNeighbors, 7);
+      for(int j=0 ; j<numNeighbors ; ++j){
+        if(globalID == 7 && j == 6){
+          // break the bond for both states
+          (*bondDamageN)[dataIndex] = 1.0;
+          (*bondDamageNP1)[dataIndex] = 1.0;
+        }
+        neighborhoodIndex++;
+        dataIndex++;
+      }
+    }
+  }
+
   // before rebalance the global IDs are distributed as follows:
   // processor 0: 0 2 4 6
   // processor 1: 5 7 1 3
@@ -535,7 +590,6 @@ void rebalanceEightPointModelSwitchCorners()
   }
 
   // check data in DataManager
-  Teuchos::RCP<PeridigmNS::DataManager> dataManager = peridigm->getDataManager();
   if(rank == 0){
     // length of the overlap vectors should be 8*3 = 24, all the off-processor points are ghosted
     BOOST_CHECK_EQUAL(dataManager->getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->MyLength(), 24);
@@ -579,6 +633,66 @@ void rebalanceEightPointModelSwitchCorners()
     BOOST_CHECK_CLOSE(coord3d[18], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[19], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[20], 1.0, 1.0e-15);    
     // global ID 7, ghosted
     BOOST_CHECK_CLOSE(coord3d[21], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[22], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[23], 1.0, 1.0e-15);    
+  }
+
+  // check BOND_DAMAGE
+  bondDamageN = dataManager->getData(Field_NS::BOND_DAMAGE, Field_NS::FieldSpec::STEP_N);
+  bondDamageNP1 = dataManager->getData(Field_NS::BOND_DAMAGE, Field_NS::FieldSpec::STEP_NP1);
+  if(rank == 0){
+    // all bonds should be intact except for the seventh bond for the point with global ID 7.
+    Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData = peridigm->getNeighborhoodData();
+    int numOwnedPoints = neighborhoodData->NumOwnedPoints();
+    int* ownedIDs = neighborhoodData->OwnedIDs();
+    int* neighborhoodList = neighborhoodData->NeighborhoodList();
+    int neighborhoodIndex = 0;
+    int dataIndex = 0;
+    for(int i=0 ; i<numOwnedPoints ; ++i){
+      int localID = ownedIDs[i];
+      int globalID = peridigm->getOneDimensionalOverlapMap()->GID(localID);
+      int numNeighbors = neighborhoodList[neighborhoodIndex++];
+      BOOST_CHECK_EQUAL(numNeighbors, 7);
+      for(int j=0 ; j<numNeighbors ; ++j){
+        if(globalID == 7 && j == 6){
+          // bond should be broken for both states
+          BOOST_CHECK_CLOSE((*bondDamageN)[dataIndex], 1.0, 1.0e-14);
+          BOOST_CHECK_CLOSE((*bondDamageNP1)[dataIndex], 1.0, 1.0e-14);
+        }
+        else{
+          BOOST_CHECK_CLOSE((*bondDamageN)[dataIndex], 0.0, 1.0e-14);
+          BOOST_CHECK_CLOSE((*bondDamageNP1)[dataIndex], 0.0, 1.0e-14);
+        }
+        neighborhoodIndex++;
+        dataIndex++;
+      }
+    }
+  }
+  else if(rank == 1){
+    // all bonds should be intact except for the second bond for the point with global ID 2.
+    Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData = peridigm->getNeighborhoodData();
+    int numOwnedPoints = neighborhoodData->NumOwnedPoints();
+    int* ownedIDs = neighborhoodData->OwnedIDs();
+    int* neighborhoodList = neighborhoodData->NeighborhoodList();
+    int neighborhoodIndex = 0;
+    int dataIndex = 0;
+    for(int i=0 ; i<numOwnedPoints ; ++i){
+      int localID = ownedIDs[i];
+      int globalID = peridigm->getOneDimensionalOverlapMap()->GID(localID);
+      int numNeighbors = neighborhoodList[neighborhoodIndex++];
+      BOOST_CHECK_EQUAL(numNeighbors, 7);
+      for(int j=0 ; j<numNeighbors ; ++j){
+        if(globalID == 2 && j == 1){
+          // bond should be broken for NP1 state
+          BOOST_CHECK_CLOSE((*bondDamageN)[dataIndex], 0.0, 1.0e-14);
+          BOOST_CHECK_CLOSE((*bondDamageNP1)[dataIndex], 1.0, 1.0e-14);
+        }
+        else{
+          BOOST_CHECK_CLOSE((*bondDamageN)[dataIndex], 0.0, 1.0e-14);
+          BOOST_CHECK_CLOSE((*bondDamageNP1)[dataIndex], 0.0, 1.0e-14);
+        }
+        neighborhoodIndex++;
+        dataIndex++;
+      }
+    }
   }
 }
 
