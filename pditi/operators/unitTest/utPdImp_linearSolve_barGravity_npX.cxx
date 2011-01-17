@@ -144,7 +144,7 @@ void linearSolve_barGravity() {
 	/*
 	 * Create force field for body load
 	 */
-	FieldSpec::FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
+	Field_NS::FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
 	Field_NS::Field<double> fN(fNSpec,decomp.numPoints);
 
 	/*

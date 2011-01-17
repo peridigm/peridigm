@@ -183,7 +183,7 @@ void computeJacobian(){
 	 * 2) Negate internal force since we are using it as a residual on the RHS
 	 * 3) Apply kinematics to this vector so that solution properly includes the applied kinematics
 	 */
-	FieldSpec::FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
+	Field_NS::FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
 	Field_NS::Field<double> fN(fNSpec,decomp.numPoints);
 	fN.setValue(0.0);
 
