@@ -43,6 +43,13 @@ struct vtk_trait<double> {
    typedef vtkSmartPointer<vtkDoubleArray> vtk_type;
 };
 
+/*
+ * TEMPORARY
+ */
+void expandRingPostProcess(double current_time, vtkSmartPointer<vtkUnstructuredGrid> grid, int myRank);
+/*
+ * END TEMPORARY
+ */
 vtkSmartPointer<vtkPoints> createVTK_Points(double *yPtr, int numPoints);
 vtkSmartPointer<vtkCellArray> createVTK_quadCells(size_t* vLinks, int numCells);
 vtkSmartPointer<vtkUnstructuredGrid> getGrid(shared_ptr<double>& y, int numPoints);

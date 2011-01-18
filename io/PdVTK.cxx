@@ -13,6 +13,9 @@
 #include "vtkCellData.h"
 #include <vtkDoubleArray.h>
 #include "PdQuickGrid.h"
+
+#include "mpi.h"
+
 #include <iostream>
 #include <fstream>
 
@@ -201,17 +204,81 @@ vtkSmartPointer<vtkCellArray> getCellArray(vtkIdType numCells){
 }
 
 /*
- * Initial hack for post processing step
+ * Initial hack for post processing step; call this from output manager
+ * after all data has been set on 'grid'
  */
-void expandRingPostProcess(double t, vtkSmartPointer<vtkUnstructuredGrid> grid){
+void expandRingPostProcess(double current_time, vtkSmartPointer<vtkUnstructuredGrid> grid, int myRank){
 
 	vtkKdTreePointLocator* kdTree = vtkKdTreePointLocator::New();
 	kdTree->SetDataSet(grid);
-
 	double ri(16.0), ro(17.0), h(1.0);
+	double horizon = 1.01/2;
+	/*
+	 * Center point of search: Find points within sphere of radius = horizon
+	 */
+	double xC[] = {(ri+ro)/2.0,0.0,h/2.0};
 
+	/*
+	 * Search
+	 */
+	vtkIdList* kdTreeList = vtkIdList::New();
+	kdTree->FindPointsWithinRadius(horizon, xC, kdTreeList);
 
+	/*
+	 * number of points to average over
+	 */
+	size_t numPoints = kdTreeList->GetNumberOfIds();
 
+	/*
+	 * Compute 'volume' weighted sum over points found
+	 */
+	double sum[3]={0.0,0.0,0.0};
+	vtkPoints* points = grid->GetPoints();
+	vtkPointData* pointData = grid->GetPointData();
+	vtkDataArray* uData = pointData->GetVectors("Displacement");
+	vtkDataArray* volData = pointData->GetScalars("Volume");
+	vtkDataArray* lambdaData = pointData->GetScalars("Lambda");
+	for(size_t n=0;n<numPoints;n++){
+		vtkIdType localId = kdTreeList->GetId(n);
+		double *xyz = points->GetPoint(localId);
+		double x = xyz[0];
+		double y = xyz[1];
+		double theta = atan2(y,x);
+		double *u = uData->GetTuple3(localId);
+		double ur = u[0]*cos(theta) + u[1]*sin(theta);
+		double volume = volData->GetTuple1(localId);
+		double lambda = lambdaData->GetTuple1(localId);
+		sum[0]+= volume;
+		sum[1]+= ur*volume;
+		sum[2]+= lambda*volume;
+	}
+	kdTree->Delete();
+	kdTreeList->Delete();
+
+	/*
+	 * Sum across all processors
+	 */
+	int three(3);
+	double totalSum[3]={0.0,0.0,0.0};
+	MPI_Allreduce(sum,totalSum,three,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+
+	/*
+	 * Compute averages
+	 */
+	double urAvg = totalSum[1]/totalSum[0];
+	double lambdaAvg = totalSum[2]/totalSum[0];
+
+	/*
+	 * write out result on processor '0'
+	 */
+
+	if(0==myRank){
+		std::ofstream out;
+		out.open("meanValues.dat",std::ios_base::app);
+		out.precision(9);
+		out << std::ios_base::scientific << current_time << ", " << urAvg << ", " << lambdaAvg << std::endl;
+		out.close();
+	}
 
 }
 
