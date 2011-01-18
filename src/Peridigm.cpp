@@ -396,7 +396,7 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
     }
 
     // Initialize current time in this parameterlist
-    forceStateDesc->set("Time", 0.0);
+    forceStateDesc->set<double>("Time", 0.0);
     // Set RCP to neighborlist
     forceStateDesc->set("Bond Family",neighborhoodData);
     // Ask OutputManager to write initial conditions to disk

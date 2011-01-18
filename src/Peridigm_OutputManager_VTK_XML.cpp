@@ -42,6 +42,7 @@
 
 #include "Peridigm_OutputManager_VTK_XML.hpp"
 #include <Field.h>
+#include "PdVTK.h"
 
 PeridigmNS::OutputManager_VTK_XML::OutputManager_VTK_XML(const Teuchos::RCP<Teuchos::ParameterList>& params) {
   // Throws exception if parameters not present or of wrong type
@@ -152,6 +153,7 @@ Teuchos::ParameterList PeridigmNS::OutputManager_VTK_XML::getValidParameterList(
   matType.set("Proc Num",true);
   matType.set("Weighted Volume",true);
   matType.set("Damage",true);
+  matType.set("Volume",true);
   }
   { // Valid output fields for Elastic Plastic material type
   Teuchos::ParameterList& matType = matFields.sublist("Elastic Plastic");
@@ -165,6 +167,7 @@ Teuchos::ParameterList PeridigmNS::OutputManager_VTK_XML::getValidParameterList(
   matType.set("Weighted Volume",true);
   matType.set("Damage",true);
   matType.set("Lambda",true);
+  matType.set("Volume",true);
   }
 
   return validParameterList;
@@ -222,11 +225,20 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
     TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
     "Peridigm::OutputManager: Unknown material model. Only \"Linear Elastic\" or \"Elastic Plastic\" currently supported.");
 
-   if (thisMaterial->isParameter("Displacement")) {
-    double *uptr;
-    u->ExtractView( &uptr );
-    PdVTK::writeField<double>(grid,Field_NS::DISPL3D,uptr);
-   }
+
+
+
+  if (thisMaterial->isParameter("Volume")) {
+	  double *volume;
+	  dataManager->getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&volume);
+	  PdVTK::writeField<double>(grid,Field_NS::VOLUME,volume);
+  }
+
+  if (thisMaterial->isParameter("Displacement")) {
+	  double *uptr;
+	  u->ExtractView( &uptr );
+	  PdVTK::writeField<double>(grid,Field_NS::DISPL3D,uptr);
+  }
 
    if (thisMaterial->isParameter("Velocity")) {
     double *vptr;
@@ -307,5 +319,5 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
   double current_time = forceStateDesc->get<double>("Time");
 //  vtkWriter->writeTimeStep(current_time,grid);
   vtkWriter->writeTimeStep(count,grid);
-
+//  PdVTK::expandRingPostProcess(current_time, grid, myPID);
 }
