@@ -442,9 +442,19 @@ void PeridigmNS::Peridigm::execute() {
 
   bool rebal = false;
 
-  for (int step=0;step<nsteps;step++) {
+  for(int step=0; step<nsteps ; step++){
 
     // rebalance, if requested
+    if(rebal){
+      rebalance();
+      x->ExtractView( &xptr );
+      u->ExtractView( &uptr );
+      y->ExtractView( &yptr );
+      v->ExtractView( &vptr );
+      a->ExtractView( &aptr );
+      length = a->MyLength();
+    }
+
     if(rebal)
       rebalance();
 
@@ -487,20 +497,9 @@ void PeridigmNS::Peridigm::execute() {
 
     t_current = t_initial + (step*dt);
 
-// if (peridigmComm->MyPID() == 0)
-// std::cout << "step = " << step << endl;
-
     // Update the contact configuration, if necessary
 //    model->updateContact(currentSolution);
-    // Only report status if Observer is active
-//    if (!active) return;
-    //cout << "PERIDIGM OBSERVER CALLED step=" <<  timeStepIter  << ",  time=" << stepper.getStepStatus().time << endl;
-    // Set current time in this parameterlist
-    /*
-     * JAM: 1/15/2011
-     * THE FOLLOWING LINE is messed up 'time' is a function
-     */
-//    forceStateDesc->set("Time", time);
+
     forceStateDesc->set("Time", t_current);
     outputManager->write(x,u,v,a,force,dataManager,neighborhoodData,forceStateDesc);
 
@@ -548,7 +547,7 @@ void PeridigmNS::Peridigm::rebalance() {
   double* myXPtr = myX.get();
   double* yPtr;
   y->ExtractView(&yPtr);
-  memcpy(myXPtr, yPtr, myNumElements*3*sizeof(double));
+  memcpy(myXPtr, yPtr, myNumElements*dimension*sizeof(double));
   shared_ptr<double> cellVolume(new double[myNumElements], PdQuickGrid::Deleter<double>());
   double* cellVolumePtr = cellVolume.get();
   double* cellVolumeOverlapPtr;
@@ -715,6 +714,9 @@ void PeridigmNS::Peridigm::rebalance() {
   threeDimensionalMap = rebalancedThreeDimensionalMap;
   threeDimensionalOverlapMap = rebalancedThreeDimensionalOverlapMap;
   bondMap = rebalancedBondMap;
+
+  // update neighborhood data
+  neighborhoodData = rebalancedNeighborhoodData;
 
   // update importers
   oneDimensionalMapToOneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*oneDimensionalOverlapMap, *oneDimensionalMap));
