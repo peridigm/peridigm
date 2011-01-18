@@ -164,7 +164,7 @@ void PeridigmNS::DataManager::rebalance(Teuchos::RCP<const Epetra_BlockMap> reba
     }
     if(statelessBondFieldSpecs->size() > 0){
       rebalancedStateNONE->allocateBondData(statelessBondFieldSpecs, rebalancedBondMap);
-      rebalancedStateNONE->getBondMultiVector()->Import(*stateNONE->getBondMultiVector(), *vector3DImporter, Insert);
+      rebalancedStateNONE->getBondMultiVector()->Import(*stateNONE->getBondMultiVector(), *bondImporter, Insert);
     }
     stateNONE = rebalancedStateNONE;
   }

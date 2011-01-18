@@ -455,9 +455,6 @@ void PeridigmNS::Peridigm::execute() {
       length = a->MyLength();
     }
 
-    if(rebal)
-      rebalance();
-
     // Do one step of velocity-Verlet
 
     // V^{n+1/2} = V^{n} + (dt/2)*A^{n}
@@ -651,10 +648,10 @@ void PeridigmNS::Peridigm::rebalance() {
   for(int i=0 ; i<rebalancedOneDimensionalMap->NumMyElements() ; ++i){
     int globalID = rebalancedOneDimensionalMap->GID(i);
     int localID = rebalancedOneDimensionalOverlapMap->LID(globalID);
-    TEST_FOR_EXCEPTION(localID == -1, Teuchos::RangeError, "Invalid index into oneDimensionalOverlapMap");
+    TEST_FOR_EXCEPTION(localID == -1, Teuchos::RangeError, "Invalid index into rebalancedOneDimensionalOverlapMap");
     ownedIDs[i] = localID;
   }
-  rebalancedNeighborhoodData->SetNeighborhoodListSize(rebalancedBondMap->NumMyPoints() + rebalancedOneDimensionalMap->NumMyElements());
+  rebalancedNeighborhoodData->SetNeighborhoodListSize(rebalancedBondMap->NumMyElements() + rebalancedBondMap->NumMyPoints());
   // numNeighbors1, n1LID, n2LID, n3LID, numNeighbors2, n1LID, n2LID, ...
   neighborhoodList = rebalancedNeighborhoodData->NeighborhoodList();
   // points into neighborhoodList, gives start of neighborhood information for each locally-owned element
@@ -664,7 +661,7 @@ void PeridigmNS::Peridigm::rebalance() {
   // loop over locally owned points
   int neighborhoodIndex = 0;
   for(int iLID=0 ; iLID<rebalancedBondMap->NumMyElements() ; ++iLID){
-    // location of this elements neighboord data in the neighborhoodList
+    // location of this element's neighborhood data in the neighborhoodList
     neighborhoodPtr[iLID] = neighborhoodIndex;
     // first entry is the number of neighbors
     int numNeighbors = rebalancedBondMap->ElementSize(iLID);
@@ -673,7 +670,8 @@ void PeridigmNS::Peridigm::rebalance() {
     int offset = firstPointInElementList[iLID];
     for(int iN=0 ; iN<numNeighbors ; ++iN){
       int globalNeighborID = (int)( (*rebalancedNeighborGlobalIDs)[offset + iN] );
-      int localNeighborID = oneDimensionalOverlapMap->LID(globalNeighborID);
+      int localNeighborID = rebalancedOneDimensionalOverlapMap->LID(globalNeighborID);
+      TEST_FOR_EXCEPTION(localNeighborID == -1, Teuchos::RangeError, "Invalid index into rebalancedOneDimensionalOverlapMap");
       neighborhoodList[neighborhoodIndex++] = localNeighborID;
     }
   }
