@@ -276,7 +276,7 @@ void expandRingPostProcess(double current_time, vtkSmartPointer<vtkUnstructuredG
 		std::ofstream out;
 		out.open("meanValues.dat",std::ios_base::app);
 		out.precision(9);
-		out << std::ios_base::scientific << current_time << ", " << urAvg << ", " << lambdaAvg << std::endl;
+		out << current_time << ", " << urAvg << ", " << lambdaAvg << std::endl;
 		out.close();
 	}
 
