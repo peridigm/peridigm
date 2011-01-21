@@ -200,6 +200,11 @@ void PeridigmNS::DataManager::rebalance(Teuchos::RCP<const Epetra_BlockMap> reba
     }
     stateNP1 = rebalancedStateNP1;
   }
+
+  // Maps
+  scalarMap = rebalancedScalarMap;
+  vector3DMap = rebalancedVector3DMap;
+  bondMap = rebalancedBondMap;
 }
 
 Teuchos::RCP<Epetra_Vector> PeridigmNS::DataManager::getData(Field_NS::FieldSpec fieldSpec, Field_NS::FieldSpec::FieldStep fieldStep)
