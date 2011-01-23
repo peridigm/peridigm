@@ -81,7 +81,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // Instantiate data manager
   dataManager = Teuchos::rcp(new PeridigmNS::DataManager);
-  dataManager->setMaps(oneDimensionalOverlapMap, threeDimensionalOverlapMap, bondMap);
+  dataManager->setMaps(oneDimensionalMap, threeDimensionalMap, oneDimensionalOverlapMap, threeDimensionalOverlapMap, bondMap);
   // Create a master list of variable specs
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
   // Start with the specs used by Peridigm
@@ -704,7 +704,11 @@ void PeridigmNS::Peridigm::rebalance() {
   rebalancedForce->Import(*force, *threeDimensionalMapImporter, Insert);
   force = rebalancedForce;
 
-  dataManager->rebalance(rebalancedOneDimensionalOverlapMap, rebalancedThreeDimensionalOverlapMap, rebalancedBondMap);
+  dataManager->rebalance(rebalancedOneDimensionalMap,
+                         rebalancedThreeDimensionalMap,
+                         rebalancedOneDimensionalOverlapMap,
+                         rebalancedThreeDimensionalOverlapMap,
+                         rebalancedBondMap);
 
   // set all the pointers to the new maps
   oneDimensionalMap = rebalancedOneDimensionalMap;
@@ -715,6 +719,7 @@ void PeridigmNS::Peridigm::rebalance() {
 
   // update neighborhood data
   neighborhoodData = rebalancedNeighborhoodData;
+  workset->neighborhoodData = neighborhoodData; // \todo Better handling of workset, shouldn't have to do this here.
 
   // update importers
   oneDimensionalMapToOneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*oneDimensionalOverlapMap, *oneDimensionalMap));

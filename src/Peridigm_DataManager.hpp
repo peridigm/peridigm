@@ -43,25 +43,38 @@ class DataManager {
 
 public:
 
-  DataManager(){}
+  DataManager() : rebalanceCount(0) {}
   DataManager(const DataManager& dataManager){
     // \todo Write me.
   }
   ~DataManager(){}
 
-  void setMaps(Teuchos::RCP<const Epetra_BlockMap> scalarMap_,
-               Teuchos::RCP<const Epetra_BlockMap> vector3DMap_,
+  void setMaps(Teuchos::RCP<const Epetra_BlockMap> ownedIDScalarMap_,
+               Teuchos::RCP<const Epetra_BlockMap> ownedIDVectorMap_,
+               Teuchos::RCP<const Epetra_BlockMap> scalarMap_,
+               Teuchos::RCP<const Epetra_BlockMap> vectorMap_,
                Teuchos::RCP<const Epetra_BlockMap> bondMap_){
+    ownedIDScalarMap = ownedIDScalarMap_;
+    ownedIDVectorMap = ownedIDVectorMap_;
+    ownedIDBondMap.reset();
     scalarMap = scalarMap_;
-    vector3DMap = vector3DMap_;
+    vectorMap = vectorMap_;
     bondMap = bondMap_;
   }
 
   void allocateData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > specs);
 
-  void rebalance(Teuchos::RCP<const Epetra_BlockMap> rebalancedScalarMap,
-                 Teuchos::RCP<const Epetra_BlockMap> rebalancedVector3DMap,
+  //! For each global ID, copies data from the processor that owns the global ID to processors that have ghosted copies.
+  //  This ensures that all processors that have a copy of a given element have the same data values for that element.
+  void scatterToGhosts();
+
+  void rebalance(Teuchos::RCP<const Epetra_BlockMap> rebalancedOwnedIDScalarMap,
+                 Teuchos::RCP<const Epetra_BlockMap> rebalancedOwnedIDVectorMap,
+                 Teuchos::RCP<const Epetra_BlockMap> rebalancedScalarMap,
+                 Teuchos::RCP<const Epetra_BlockMap> rebalancedVectorMap,
                  Teuchos::RCP<const Epetra_BlockMap> rebalancedBondMap);
+
+  int getRebalanceCount(){ return rebalanceCount; }
 
   Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec,
                                       Field_NS::FieldSpec::FieldStep fieldStep);
@@ -72,15 +85,19 @@ public:
 
 protected:
 
+  int rebalanceCount;
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs;
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statelessScalarFieldSpecs;
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statelessVector3DFieldSpecs;
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statelessVectorFieldSpecs;
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statelessBondFieldSpecs;
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statefulScalarFieldSpecs;
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statefulVector3DFieldSpecs;
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statefulVectorFieldSpecs;
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statefulBondFieldSpecs;
+  Teuchos::RCP<const Epetra_BlockMap> ownedIDScalarMap;
+  Teuchos::RCP<const Epetra_BlockMap> ownedIDVectorMap;
+  Teuchos::RCP<const Epetra_BlockMap> ownedIDBondMap;
   Teuchos::RCP<const Epetra_BlockMap> scalarMap;
-  Teuchos::RCP<const Epetra_BlockMap> vector3DMap;
+  Teuchos::RCP<const Epetra_BlockMap> vectorMap;
   Teuchos::RCP<const Epetra_BlockMap> bondMap;
   Teuchos::RCP<State> stateN;
   Teuchos::RCP<State> stateNP1;

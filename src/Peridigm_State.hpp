@@ -56,11 +56,11 @@ public:
       fieldSpecToDataMap[(*fieldSpecs)[i]] = Teuchos::rcp((*scalarData)(i), false);
   }
 
-  void allocateVector3DData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
+  void allocateVectorData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
   {
-    vector3DData = Teuchos::rcp(new Epetra_MultiVector(*map, fieldSpecs->size()));
+    vectorData = Teuchos::rcp(new Epetra_MultiVector(*map, fieldSpecs->size()));
     for(unsigned int i=0 ; i<fieldSpecs->size() ; ++i)
-      fieldSpecToDataMap[(*fieldSpecs)[i]] = Teuchos::rcp((*vector3DData)(i), false);
+      fieldSpecToDataMap[(*fieldSpecs)[i]] = Teuchos::rcp((*vectorData)(i), false);
   }
 
   void allocateBondData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
@@ -82,13 +82,13 @@ public:
   }
 
   Teuchos::RCP<Epetra_MultiVector> getScalarMultiVector() { return scalarData; }
-  Teuchos::RCP<Epetra_MultiVector> getVector3DMultiVector() { return vector3DData; }
+  Teuchos::RCP<Epetra_MultiVector> getVectorMultiVector() { return vectorData; }
   Teuchos::RCP<Epetra_MultiVector> getBondMultiVector() { return bondData; }
 
 protected:
 
   Teuchos::RCP<Epetra_MultiVector> scalarData;
-  Teuchos::RCP<Epetra_MultiVector> vector3DData;
+  Teuchos::RCP<Epetra_MultiVector> vectorData;
   Teuchos::RCP<Epetra_MultiVector> bondData;
   std::map< Field_NS::FieldSpec, Teuchos::RCP<Epetra_Vector> > fieldSpecToDataMap;
 };
