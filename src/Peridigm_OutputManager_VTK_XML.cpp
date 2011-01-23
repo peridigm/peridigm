@@ -206,11 +206,13 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
   if (frequency<=0 || count%frequency!=0) return;
 
   // Initialize grid if needed
-  if (grid.GetPointer() == NULL) {
+  static int rebalanceCount = 0;
+  if (grid.GetPointer() == NULL || rebalanceCount != dataManager->getRebalanceCount()) {
     double *xptr;
     x->ExtractView( &xptr );
     int length = (x->Map()).NumMyElements();
     grid = PdVTK::getGrid(xptr,length);
+    rebalanceCount = dataManager->getRebalanceCount();
   }
 
   // Currenly only support "Linear Elastic" and "Elastic Plastic" material models

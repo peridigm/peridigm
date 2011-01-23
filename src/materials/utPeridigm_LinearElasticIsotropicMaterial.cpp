@@ -87,8 +87,11 @@ void testTwoPts()
   neighborhoodList[3] = 0;
 
   // create the material manager
+  // in serial, the overlap and non-overlap maps are the same
   PeridigmNS::DataManager dataManager;
   dataManager.setMaps(Teuchos::rcp(&nodeMap, false),
+                      Teuchos::rcp(&unknownMap, false),
+                      Teuchos::rcp(&nodeMap, false),
                       Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&bondMap, false));
   dataManager.allocateData(mat.VariableSpecs());
@@ -200,8 +203,11 @@ void testEightPts()
   }
 
   // create the material manager
+  // in serial, the overlap and non-overlap maps are the same
   PeridigmNS::DataManager dataManager;
   dataManager.setMaps(Teuchos::rcp(&nodeMap, false),
+                      Teuchos::rcp(&unknownMap, false),
+                      Teuchos::rcp(&nodeMap, false),
                       Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&bondMap, false));
   dataManager.allocateData(mat.VariableSpecs());
@@ -460,8 +466,11 @@ void testThreePts()
   }
 
   // create the material manager
+  // in serial, the overlap and non-overlap maps are the same
   PeridigmNS::DataManager dataManager;
   dataManager.setMaps(Teuchos::rcp(&nodeMap, false),
+                      Teuchos::rcp(&unknownMap, false),
+                      Teuchos::rcp(&nodeMap, false),
                       Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&bondMap, false));
   dataManager.allocateData(mat.VariableSpecs());

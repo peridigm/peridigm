@@ -134,8 +134,11 @@ void testTwoPts()
   neighborhoodList[3] = 0;
 
   // create the material manager
+  // in serial the overlap maps and the non-overlap maps are the same
   PeridigmNS::DataManager dataManager;
   dataManager.setMaps(Teuchos::rcp(&oneDimensionalOverlapMap, false),
+                      Teuchos::rcp(&threeDimensionalOverlapMap, false),
+                      Teuchos::rcp(&oneDimensionalOverlapMap, false),
                       Teuchos::rcp(&threeDimensionalOverlapMap, false),
                       Teuchos::rcp(&bondMap, false));
   dataManager.allocateData(mat.VariableSpecs());
