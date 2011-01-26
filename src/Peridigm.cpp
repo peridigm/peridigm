@@ -396,7 +396,10 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
     }
 
     // Initialize current time in this parameterlist
-    forceStateDesc->set<double>("Time", 0.0);
+    Teuchos::RCP<Teuchos::ParameterList> solverParams = Teuchos::rcp(&(peridigmParams->sublist("Solver")),false);
+    Teuchos::RCP<Teuchos::ParameterList> verletPL = sublist(solverParams, "Verlet", true);
+    double t_initial = verletPL->get("Initial Time", 0.0);
+    forceStateDesc->set<double>("Time", t_initial);
     // Set RCP to neighborlist
     forceStateDesc->set("Bond Family",neighborhoodData);
     // Ask OutputManager to write initial conditions to disk
@@ -424,7 +427,7 @@ void PeridigmNS::Peridigm::execute() {
   // For now, insert Verlet intergrator here
   Teuchos::RCP<Teuchos::ParameterList> solverParams = Teuchos::rcp(&(peridigmParams->sublist("Solver")),false);
   Teuchos::RCP<Teuchos::ParameterList> verletPL = sublist(solverParams, "Verlet", true);
-  double t_initial = verletPL->get("Initial Time", 1.0);
+  double t_initial = verletPL->get("Initial Time", 0.0);
   double t_current = t_initial;
   double dt        = verletPL->get("Fixed dt", 1.0);
   *timeStep = dt;
@@ -442,7 +445,7 @@ void PeridigmNS::Peridigm::execute() {
 
   bool rebal = false;
 
-  for(int step=0; step<nsteps ; step++){
+  for(int step=1; step<=nsteps ; step++){
 
     // rebalance, if requested
     if(rebal){
