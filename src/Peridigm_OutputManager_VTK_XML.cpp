@@ -228,8 +228,6 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
     "Peridigm::OutputManager: Unknown material model. Only \"Linear Elastic\" or \"Elastic Plastic\" currently supported.");
 
 
-
-
   if (thisMaterial->isParameter("Volume")) {
 	  double *volume;
 	  dataManager->getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&volume);
@@ -242,17 +240,17 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
 	  PdVTK::writeField<double>(grid,Field_NS::DISPL3D,uptr);
   }
 
-   if (thisMaterial->isParameter("Velocity")) {
-    double *vptr;
-    v->ExtractView( &vptr );
-    PdVTK::writeField<double>(grid,Field_NS::VELOC3D,vptr);
-   }
+  if (thisMaterial->isParameter("Velocity")) {
+   double *vptr;
+   v->ExtractView( &vptr );
+   PdVTK::writeField<double>(grid,Field_NS::VELOC3D,vptr);
+  }
 
-   if (thisMaterial->isParameter("Acceleration")) {
-    double *aptr;
-    a->ExtractView( &aptr );
-    PdVTK::writeField<double>(grid,Field_NS::ACCEL3D,aptr);
-   }
+  if (thisMaterial->isParameter("Acceleration")) {
+   double *aptr;
+   a->ExtractView( &aptr );
+   PdVTK::writeField<double>(grid,Field_NS::ACCEL3D,aptr);
+  }
 
   if (thisMaterial->isParameter("Force Density")) {
     double *fptr;
@@ -319,7 +317,7 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
 
   // All pointers reset; now write data
   double current_time = forceStateDesc->get<double>("Time");
-//  vtkWriter->writeTimeStep(current_time,grid);
-  vtkWriter->writeTimeStep(count,grid);
+  vtkWriter->writeTimeStep(current_time,grid);
+//  vtkWriter->writeTimeStep(count,grid);
 //  PdVTK::expandRingPostProcess(current_time, grid, myPID);
 }
