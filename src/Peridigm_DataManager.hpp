@@ -56,7 +56,6 @@ public:
                Teuchos::RCP<const Epetra_BlockMap> bondMap_){
     ownedIDScalarMap = ownedIDScalarMap_;
     ownedIDVectorMap = ownedIDVectorMap_;
-    ownedIDBondMap.reset();
     scalarMap = scalarMap_;
     vectorMap = vectorMap_;
     bondMap = bondMap_;
@@ -93,12 +92,19 @@ protected:
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statefulScalarFieldSpecs;
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statefulVectorFieldSpecs;
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statefulBondFieldSpecs;
+
+  // scalar and vector data is stored in overlapped vectors
+  // this allows for easy indexing in the material models
   Teuchos::RCP<const Epetra_BlockMap> ownedIDScalarMap;
   Teuchos::RCP<const Epetra_BlockMap> ownedIDVectorMap;
-  Teuchos::RCP<const Epetra_BlockMap> ownedIDBondMap;
   Teuchos::RCP<const Epetra_BlockMap> scalarMap;
   Teuchos::RCP<const Epetra_BlockMap> vectorMap;
+
+  // the bond map is not overlapping
+  // it follows the convensions of neighborhood data
   Teuchos::RCP<const Epetra_BlockMap> bondMap;
+
+  // data is stored in state objects
   Teuchos::RCP<State> stateN;
   Teuchos::RCP<State> stateNP1;
   Teuchos::RCP<State> stateNONE;

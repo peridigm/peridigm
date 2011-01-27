@@ -59,7 +59,9 @@ using namespace std;
 
 PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
                    const Teuchos::RCP<Teuchos::ParameterList>& params)
-  : computeContact(false),
+  : analysisHasRebalance(false),
+    rebalanceFrequency(1),
+    computeContact(false),
     contactSearchRadius(0.0),
     contactSearchFrequency(0)
 {
@@ -425,7 +427,7 @@ void PeridigmNS::Peridigm::execute() {
 
   // evalModel() should be called by time integrator here...
   // For now, insert Verlet intergrator here
-  Teuchos::RCP<Teuchos::ParameterList> solverParams = Teuchos::rcp(&(peridigmParams->sublist("Solver")),false);
+  Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
   Teuchos::RCP<Teuchos::ParameterList> verletPL = sublist(solverParams, "Verlet", true);
   double t_initial = verletPL->get("Initial Time", 0.0);
   double t_current = t_initial;
@@ -434,6 +436,11 @@ void PeridigmNS::Peridigm::execute() {
   double dt2 = dt/2.0;
   double t_final   = verletPL->get("Final Time", 1.0);
   int nsteps = (int)floor((t_final-t_initial)/dt);
+  if(solverParams->isSublist("Rebalance")){
+    Teuchos::RCP<Teuchos::ParameterList> rebalanceParams = sublist(solverParams, "Rebalance", true);
+    analysisHasRebalance = true;
+    rebalanceFrequency = rebalanceParams->get("Rebalance Frequency", 1);
+  }
   // Pointer index into sub-vectors for use with BLAS
   double *xptr, *uptr, *yptr, *vptr, *aptr;
   x->ExtractView( &xptr );
@@ -443,12 +450,11 @@ void PeridigmNS::Peridigm::execute() {
   a->ExtractView( &aptr );
   int length = a->MyLength();
 
-  bool rebal = false;
-
   for(int step=1; step<=nsteps ; step++){
 
     // rebalance, if requested
-    if(rebal){
+    if(analysisHasRebalance && step%rebalanceFrequency == 0){
+      cout << "Rebalance at step " << step << endl;
       rebalance();
       x->ExtractView( &xptr );
       u->ExtractView( &uptr );
@@ -584,16 +590,28 @@ void PeridigmNS::Peridigm::rebalance() {
   rebalancedNumberOfBonds->Import(*numberOfBonds, *oneDimensionalMapImporter, Insert);
 
   // create the rebalanced bond map
-  int numGlobalElements = rebalancedOneDimensionalMap->NumGlobalElements();
-  int numMyElements = rebalancedOneDimensionalMap->NumMyElements();
-  int* myGlobalElements = rebalancedOneDimensionalMap->MyGlobalElements();
-  int *elementSizeList = new int[numMyElements];
-  for(int i=0 ; i<numMyElements ; ++i){
-    elementSizeList[i] = (int)( (*rebalancedNumberOfBonds)[i] );
+  int numMyElementsUpperBound = rebalancedOneDimensionalMap->NumMyElements();
+  int numGlobalElements = -1; 
+  int numMyElements = 0;
+  int* rebalancedOneDimensionalMapGlobalElements = rebalancedOneDimensionalMap->MyGlobalElements();
+  int* myGlobalElements = new int[numMyElementsUpperBound];
+  int* elementSizeList = new int[numMyElementsUpperBound];
+  int numPointsWithZeroNeighbors = 0;
+  for(int i=0 ; i<numMyElementsUpperBound ; ++i){
+    int numBonds = (int)( (*rebalancedNumberOfBonds)[i] );
+    if(numBonds > 0){
+      numMyElements++;
+      myGlobalElements[i-numPointsWithZeroNeighbors] = rebalancedOneDimensionalMapGlobalElements[i];
+      elementSizeList[i-numPointsWithZeroNeighbors] = numBonds;
+    }
+    else{
+      numPointsWithZeroNeighbors++;
+    }
   }
   int indexBase = 0;
   Teuchos::RCP<Epetra_BlockMap> rebalancedBondMap = 
     Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, elementSizeList, indexBase, *peridigmComm));
+  delete[] myGlobalElements;
   delete[] elementSizeList;
 
   Teuchos::RCP<const Epetra_Import> bondMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedBondMap, *bondMap));
