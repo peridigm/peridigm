@@ -454,7 +454,6 @@ void PeridigmNS::Peridigm::execute() {
 
     // rebalance, if requested
     if(analysisHasRebalance && step%rebalanceFrequency == 0){
-      cout << "Rebalance at step " << step << endl;
       rebalance();
       x->ExtractView( &xptr );
       u->ExtractView( &uptr );
