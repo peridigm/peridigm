@@ -142,6 +142,12 @@ namespace PeridigmNS {
     Teuchos::RCP<const Epetra_Import> oneDimensionalMapToOneDimensionalOverlapMapImporter;
     Teuchos::RCP<const Epetra_Import> threeDimensionalMapToThreeDimensionalOverlapMapImporter;
 
+    //! Rebalance flag
+    bool analysisHasRebalance;
+
+    //! Rebalance frequency
+    int rebalanceFrequency;
+
     //! Contact flag
     bool computeContact;
 

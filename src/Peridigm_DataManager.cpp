@@ -196,54 +196,7 @@ void PeridigmNS::DataManager::scatterToGhosts()
       overlapMultiVector->Import(*nonOverlapMultiVector, *importer, Insert);
     }
 
-    // process bond data
-    overlapMultiVector = state->getBondMultiVector();
-    if(!overlapMultiVector.is_null()){
-
-      TEST_FOR_EXCEPTION(bondMap.is_null(), Teuchos::NullReferenceError,
-                         "Error in PeridigmNS::DataManager::scatterToGhosts(), invaid bond map.");
-
-      // if a ownedIDBondMap has not been created, do so now
-      if(ownedIDBondMap.is_null()){
-        int numGlobalElements = ownedIDScalarMap->NumGlobalElements();
-        int numMyElements = ownedIDScalarMap->NumMyElements();
-        int* myGlobalElements = ownedIDScalarMap->MyGlobalElements();
-        int* elementSizeList = new int[numMyElements];
-        for(int iLID=0 ; iLID<numMyElements ; ++iLID){
-          int globalID = ownedIDScalarMap->GID(iLID);
-          int bondMapLocalID = bondMap->LID(globalID);
-          elementSizeList[iLID] = bondMap->ElementSize(bondMapLocalID);
-        }
-        int indexBase = 0;
-        const Epetra_Comm& comm = ownedIDScalarMap->Comm();
-        ownedIDBondMap = 
-          Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, elementSizeList, indexBase, comm));
-        delete[] elementSizeList;
-      }
-
-      int numVectors = overlapMultiVector->NumVectors();
-      Teuchos::RCP<const Epetra_BlockMap> overlapMap = bondMap;
-      Teuchos::RCP<const Epetra_BlockMap> nonOverlapMap = ownedIDBondMap;
-      Teuchos::RCP<Epetra_MultiVector> nonOverlapMultiVector = Teuchos::rcp(new Epetra_MultiVector(*nonOverlapMap, numVectors));
-
-      // copy data from the overlap vector into the non-overlap vector
-      for(int iVec=0 ; iVec<numVectors ; ++iVec){
-        double* overlapData = (*overlapMultiVector)[iVec];
-        double* nonOverlapData = (*nonOverlapMultiVector)[iVec];
-        for(int iLID=0 ; iLID<nonOverlapMap->NumMyElements() ; ++iLID){
-          int globalID = nonOverlapMap->GID(iLID);
-          int overlapMapLocalID = overlapMap->LID(globalID);
-          int nonOverlapMapOffset = nonOverlapMap->FirstPointInElement(iLID);
-          int overlapMapOffset = overlapMap->FirstPointInElement(overlapMapLocalID);
-          for(int i=0 ; i<nonOverlapMap->ElementSize(iLID) ; ++i)
-            nonOverlapData[nonOverlapMapOffset+i] = overlapData[overlapMapOffset+i];
-        }
-      }
-
-      // scatter the data back from the non-overlap multivector into the overlap multivector
-      Teuchos::RCP<Epetra_Import> importer = Teuchos::rcp(new Epetra_Import(*overlapMap, *nonOverlapMap));
-      overlapMultiVector->Import(*nonOverlapMultiVector, *importer, Insert);
-    }
+    // note: bond data is not ghosted, so there's no need to scatter to ghosts.
   }
 }
 
@@ -334,7 +287,6 @@ void PeridigmNS::DataManager::rebalance(Teuchos::RCP<const Epetra_BlockMap> reba
   // Maps
   ownedIDScalarMap = rebalancedOwnedIDScalarMap;
   ownedIDVectorMap = rebalancedOwnedIDVectorMap;
-  ownedIDBondMap.reset();
   scalarMap = rebalancedScalarMap;
   vectorMap = rebalancedVectorMap;
   bondMap = rebalancedBondMap;
