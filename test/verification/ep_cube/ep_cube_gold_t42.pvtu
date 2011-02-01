@@ -7,12 +7,14 @@
       <PDataArray type="Float64" Name="Force Density" NumberOfComponents="3"/>
       <PDataArray type="Int32" Name="Id"/>
       <PDataArray type="Int32" Name="Proc_Num"/>
+      <PDataArray type="Float64" Name="Damage"/>
       <PDataArray type="Float64" Name="Dilatation"/>
       <PDataArray type="Float64" Name="Lambda"/>
+      <PDataArray type="Float64" Name="Weighted_Volume"/>
     </PPointData>
     <PPoints>
       <PDataArray type="Float64" Name="Points" NumberOfComponents="3"/>
     </PPoints>
-    <Piece Source="ep_cube_t42_0.vtu"/>
+    <Piece Source="ep_cube_gold_t42_0.vtu"/>
   </PUnstructuredGrid>
 </VTKFile>
