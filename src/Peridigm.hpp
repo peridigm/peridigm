@@ -49,6 +49,8 @@
 #include "Peridigm_DataManager.hpp"
 #include "Peridigm_OutputManager.hpp"
 
+#include "PdGridData.h"
+
 namespace PeridigmNS {
 
   class Peridigm {
@@ -88,6 +90,9 @@ namespace PeridigmNS {
 
     //! Rebalance the mesh
     void rebalance();
+
+    //! Compute a parallel decomposion based on the current configuration
+    PdGridData CurrentConfigurationDecomp();
 
     //! Update contact neighborlist; do load rebalance
     void updateContactNeighborList();

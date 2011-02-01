@@ -50,7 +50,6 @@
 #include "contact/Peridigm_ShortRangeForceContactModel.hpp"
 #include "materials/Peridigm_LinearElasticIsotropicMaterial.hpp"
 #include "materials/Peridigm_IsotropicElasticPlasticMaterial.hpp"
-#include "PdGridData.h"
 #include "PdQuickGrid.h"
 #include "PdZoltan.h"
 #include "InitialCondition.hpp"
@@ -521,7 +520,9 @@ void PeridigmNS::Peridigm::execute() {
 
 void PeridigmNS::Peridigm::rebalance() {
 
-  // \todo Return immediately for serial runs.
+  // return immediately if this is a serial run
+  if(peridigmComm->NumProc() == 1)
+    return;
 
   // Steps for rebalance:
   //
@@ -540,46 +541,12 @@ void PeridigmNS::Peridigm::rebalance() {
 
   ///// STEP 1 ////
 
-  // Create a decomp object and fill necessary data for rebalance
-  int myNumElements = oneDimensionalMap->NumMyElements();
-  int dimension = 3;
-  PdGridData decomp = PdQuickGrid::allocatePdGridData(myNumElements, dimension);
-
-  // fill myGlobalIDs
-  shared_ptr<int> myGlobalIDs(new int[myNumElements], PdQuickGrid::Deleter<int>());
-  int* myGlobalIDsPtr = myGlobalIDs.get();
-  int* gIDs = oneDimensionalMap->MyGlobalElements();
-  memcpy(myGlobalIDsPtr, gIDs, myNumElements*sizeof(int));
-  decomp.myGlobalIDs = myGlobalIDs;
-
-  // fill myX and cellVolume
-  // use current positions for x
-  shared_ptr<double> myX(new double[myNumElements*dimension], PdQuickGrid::Deleter<double>());
-  double* myXPtr = myX.get();
-  double* yPtr;
-  y->ExtractView(&yPtr);
-  memcpy(myXPtr, yPtr, myNumElements*dimension*sizeof(double));
-  shared_ptr<double> cellVolume(new double[myNumElements], PdQuickGrid::Deleter<double>());
-  double* cellVolumePtr = cellVolume.get();
-  double* cellVolumeOverlapPtr;
-  dataManager->getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&cellVolumeOverlapPtr);
-  for(int i=0 ; i<myNumElements ; ++i){
-    int oneDimensionalMapGlobalID = oneDimensionalMap->GID(i);
-    int oneDimensionalOverlapMapLocalID = oneDimensionalOverlapMap->LID(oneDimensionalMapGlobalID);
-    cellVolumePtr[i] = cellVolumeOverlapPtr[oneDimensionalOverlapMapLocalID];
-  }  
-  decomp.myX = myX;
-  decomp.cellVolume = cellVolume;
-
-  //// STEP 2 ////
-
-  // rebalance, this gives us the processor on which each element will live
-  decomp = getLoadBalancedDiscretization(decomp);
+  PdGridData rebalancedDecomp = CurrentConfigurationDecomp();
 
   //// STEP 3 and 4 ////
 
-  Teuchos::RCP<Epetra_BlockMap> rebalancedOneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOwnedMap(*peridigmComm, decomp, 1)));
-  Teuchos::RCP<Epetra_BlockMap> rebalancedThreeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOwnedMap(*peridigmComm, decomp, 3)));
+  Teuchos::RCP<Epetra_BlockMap> rebalancedOneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOwnedMap(*peridigmComm, rebalancedDecomp, 1)));
+  Teuchos::RCP<Epetra_BlockMap> rebalancedThreeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOwnedMap(*peridigmComm, rebalancedDecomp, 3)));
 
   Teuchos::RCP<const Epetra_Import> oneDimensionalMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedOneDimensionalMap, *oneDimensionalMap));
   Teuchos::RCP<const Epetra_Import> threeDimensionalMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedThreeDimensionalMap, *threeDimensionalMap));
@@ -746,6 +713,45 @@ void PeridigmNS::Peridigm::rebalance() {
   // update importers
   oneDimensionalMapToOneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*oneDimensionalOverlapMap, *oneDimensionalMap));
   threeDimensionalMapToThreeDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*threeDimensionalOverlapMap, *threeDimensionalMap));
+}
+
+PdGridData PeridigmNS::Peridigm::CurrentConfigurationDecomp() {
+
+  // Create a decomp object and fill necessary data for rebalance
+  int myNumElements = oneDimensionalMap->NumMyElements();
+  int dimension = 3;
+  PdGridData decomp = PdQuickGrid::allocatePdGridData(myNumElements, dimension);
+
+  // fill myGlobalIDs
+  shared_ptr<int> myGlobalIDs(new int[myNumElements], PdQuickGrid::Deleter<int>());
+  int* myGlobalIDsPtr = myGlobalIDs.get();
+  int* gIDs = oneDimensionalMap->MyGlobalElements();
+  memcpy(myGlobalIDsPtr, gIDs, myNumElements*sizeof(int));
+  decomp.myGlobalIDs = myGlobalIDs;
+
+  // fill myX and cellVolume
+  // use current positions for x
+  shared_ptr<double> myX(new double[myNumElements*dimension], PdQuickGrid::Deleter<double>());
+  double* myXPtr = myX.get();
+  double* yPtr;
+  y->ExtractView(&yPtr);
+  memcpy(myXPtr, yPtr, myNumElements*dimension*sizeof(double));
+  shared_ptr<double> cellVolume(new double[myNumElements], PdQuickGrid::Deleter<double>());
+  double* cellVolumePtr = cellVolume.get();
+  double* cellVolumeOverlapPtr;
+  dataManager->getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&cellVolumeOverlapPtr);
+  for(int i=0 ; i<myNumElements ; ++i){
+    int oneDimensionalMapGlobalID = oneDimensionalMap->GID(i);
+    int oneDimensionalOverlapMapLocalID = oneDimensionalOverlapMap->LID(oneDimensionalMapGlobalID);
+    cellVolumePtr[i] = cellVolumeOverlapPtr[oneDimensionalOverlapMapLocalID];
+  }  
+  decomp.myX = myX;
+  decomp.cellVolume = cellVolume;
+
+  // call the rebalance function on the current-configuration decomp
+  decomp = getLoadBalancedDiscretization(decomp);
+
+  return decomp;
 }
 
 void PeridigmNS::Peridigm::updateContactNeighborList() {
