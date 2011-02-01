@@ -1,0 +1,82 @@
+<?xml version="1.0"?>
+<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian" compressor="vtkZLibDataCompressor">
+  <UnstructuredGrid>
+    <Piece NumberOfPoints="14" NumberOfCells="14">
+      <PointData>
+        <DataArray type="Float64" Name="Displacement" NumberOfComponents="3" format="ascii" RangeMin="0" RangeMax="1.2">
+          0 0 0 -1.2 0 0
+          -1.2 0 0 1.2 0 0
+          0 0 0 0 0 0
+          -1.2 0 0 -1.2 0 0
+          1.2 0 0 0 0 0
+          -1.2 0 0 1.2 0 0
+          0 0 0 -1.2 0 0
+        </DataArray>
+        <DataArray type="Float64" Name="Velocity" NumberOfComponents="3" format="ascii" RangeMin="0" RangeMax="1000">
+          0 0 0 -1000 0 0
+          -1000 0 0 1000 0 0
+          0 0 0 0 0 0
+          -1000 0 0 -1000 0 0
+          1000 0 0 0 0 0
+          -1000 0 0 1000 0 0
+          0 0 0 -1000 0 0
+        </DataArray>
+        <DataArray type="Int32" Name="Id" format="ascii" RangeMin="0" RangeMax="25">
+          13 15 16 18 21 22
+          24 25 0 3 6 9
+          12 7
+        </DataArray>
+        <DataArray type="Int32" Name="Proc_Num" format="ascii" RangeMin="1" RangeMax="1">
+          1 1 1 1 1 1
+          1 1 1 1 1 1
+          1 1
+        </DataArray>
+        <DataArray type="Float64" Name="Damage" format="ascii" RangeMin="0" RangeMax="0">
+          0 0 0 0 0 0
+          0 0 0 0 0 0
+          0 0
+        </DataArray>
+        <DataArray type="Float64" Name="Dilatation" format="ascii" RangeMin="0" RangeMax="0">
+          0 0 0 0 0 0
+          0 0 0 0 0 0
+          0 0
+        </DataArray>
+        <DataArray type="Float64" Name="Weighted_Volume" format="ascii" RangeMin="0" RangeMax="0">
+          0 0 0 0 0 0
+          0 0 0 0 0 0
+          0 0
+        </DataArray>
+      </PointData>
+      <CellData>
+      </CellData>
+      <Points>
+        <DataArray type="Float64" Name="Points" NumberOfComponents="3" format="ascii" RangeMin="0" RangeMax="1.7320508076">
+          0 0 0 -1 1 0
+          0 1 0 -1 -1 1
+          -1 0 1 0 0 1
+          -1 1 1 0 1 1
+          -1 -1 -1 -1 0 -1
+          -1 1 -1 -1 -1 0
+          -1 0 0 0 1 -1
+        </DataArray>
+      </Points>
+      <Cells>
+        <DataArray type="Int32" Name="connectivity" format="ascii" RangeMin="0" RangeMax="13">
+          0 1 2 3 4 5
+          6 7 8 9 10 11
+          12 13
+        </DataArray>
+        <DataArray type="Int32" Name="offsets" format="ascii" RangeMin="1" RangeMax="14">
+          1 2 3 4 5 6
+          7 8 9 10 11 12
+          13 14
+        </DataArray>
+        <DataArray type="UInt8" Name="types" format="ascii" RangeMin="1" RangeMax="1">
+          1 1 1 1 1 1
+          1 1 1 1 1 1
+          1 1
+        </DataArray>
+      </Cells>
+    </Piece>
+  </UnstructuredGrid>
+</VTKFile>
