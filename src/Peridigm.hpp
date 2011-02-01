@@ -92,7 +92,21 @@ namespace PeridigmNS {
     void rebalance();
 
     //! Compute a parallel decomposion based on the current configuration
-    PdGridData CurrentConfigurationDecomp();
+    PdGridData currentConfigurationDecomp();
+
+    //! Create a rebalanced bond map
+    Teuchos::RCP<Epetra_BlockMap> createRebalancedBondMap(Teuchos::RCP<Epetra_BlockMap> rebalancedOneDimensionalMap,
+                                                          Teuchos::RCP<const Epetra_Import> oneDimensionalMapToRebalancedOneDimensionalMapImporter);
+
+    //! Create a global ID neighbor list in a rebalanced partitioning
+    Teuchos::RCP<Epetra_Vector> createRebalancedNeighborGlobalIDList(Teuchos::RCP<Epetra_BlockMap> rebalancedBondMap,
+                                                                     Teuchos::RCP<const Epetra_Import> bondMapToRebalancedBondMapImporter);
+
+    //! Create a rebalanced NeighborhoodData object
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> createRebalancedNeighborhoodData(Teuchos::RCP<Epetra_BlockMap> rebalancedOneDimensionalMap,
+                                                                                Teuchos::RCP<Epetra_BlockMap> rebalancedOneDimensionalOverlapMap,
+                                                                                Teuchos::RCP<Epetra_BlockMap> rebalancedBondMap,
+                                                                                Teuchos::RCP<Epetra_Vector> rebalancedNeighborGlobalIDs);
 
     //! Update contact neighborlist; do load rebalance
     void updateContactNeighborList();
