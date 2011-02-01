@@ -204,13 +204,22 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
   // a non-overlapping map used for storing constitutive data on bonds
   bondMap = peridigmDisc->getBondMap();
 
-  // Create x, u, y, v, a, and force vectors
-  x = peridigmDisc->getInitialX();                                 // initial positions
-  u = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));       // displacement
-  y = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));       // current positions
-  v = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));       // velocities
-  a =  Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));      // accelerations
-  force =  Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));  // force
+  // Create mothership vector
+  mothership = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalMap, 6));
+  // Set ref-count pointers for each of the global vectors
+  x = Teuchos::rcp((*mothership)(0), false);       // initial positions
+  u = Teuchos::rcp((*mothership)(1), false);       // displacement
+  y = Teuchos::rcp((*mothership)(2), false);       // current positions
+  v = Teuchos::rcp((*mothership)(3), false);       // velocities
+  a = Teuchos::rcp((*mothership)(4), false);       // accelerations
+  force = Teuchos::rcp((*mothership)(5), false);   // force
+
+  // Set the initial positions
+  double* initialX;
+  peridigmDisc->getInitialX()->ExtractView(&initialX);
+  double* xPtr;
+  x->ExtractView(&xPtr);
+  blas.COPY(x->MyLength(), initialX, xPtr);
 
   // Create the importers
   oneDimensionalMapToOneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*oneDimensionalOverlapMap, *oneDimensionalMap));
@@ -413,9 +422,6 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
 }
 
 void PeridigmNS::Peridigm::execute() {
-
-  // Use BLAS for local-only vector updates (BLAS-1)
-  Epetra_BLAS blas;
 
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   workset->timeStep = timeStep;
@@ -708,32 +714,18 @@ void PeridigmNS::Peridigm::rebalance() {
 
   //// STEP 5 ////
 
-  // \todo Set up mothership vectors in Multivector so that this rebalance is done with a single call.
+  // rebalance the global vectors (stored in the mothership multivector)
+  Teuchos::RCP<Epetra_MultiVector> rebalancedMothership = Teuchos::rcp(new Epetra_MultiVector(*rebalancedThreeDimensionalMap, mothership->NumVectors()));
+  rebalancedMothership->Import(*mothership, *threeDimensionalMapImporter, Insert);
+  mothership = rebalancedMothership;
+  x = Teuchos::rcp((*mothership)(0), false);
+  u = Teuchos::rcp((*mothership)(1), false);
+  y = Teuchos::rcp((*mothership)(2), false);
+  v = Teuchos::rcp((*mothership)(3), false);
+  a = Teuchos::rcp((*mothership)(4), false);
+  force = Teuchos::rcp((*mothership)(5), false);
 
-  Teuchos::RCP<Epetra_Vector> rebalancedX = Teuchos::rcp(new Epetra_Vector(*rebalancedThreeDimensionalMap));
-  rebalancedX->Import(*x, *threeDimensionalMapImporter, Insert);
-  x = rebalancedX;
-
-  Teuchos::RCP<Epetra_Vector> rebalancedU = Teuchos::rcp(new Epetra_Vector(*rebalancedThreeDimensionalMap));
-  rebalancedU->Import(*u, *threeDimensionalMapImporter, Insert);
-  u = rebalancedU;
-
-  Teuchos::RCP<Epetra_Vector> rebalancedY = Teuchos::rcp(new Epetra_Vector(*rebalancedThreeDimensionalMap));
-  rebalancedY->Import(*y, *threeDimensionalMapImporter, Insert);
-  y = rebalancedY;
-
-  Teuchos::RCP<Epetra_Vector> rebalancedV = Teuchos::rcp(new Epetra_Vector(*rebalancedThreeDimensionalMap));
-  rebalancedV->Import(*v, *threeDimensionalMapImporter, Insert);
-  v = rebalancedV;
-
-  Teuchos::RCP<Epetra_Vector> rebalancedA = Teuchos::rcp(new Epetra_Vector(*rebalancedThreeDimensionalMap));
-  rebalancedA->Import(*a, *threeDimensionalMapImporter, Insert);
-  a = rebalancedA;
-
-  Teuchos::RCP<Epetra_Vector> rebalancedForce = Teuchos::rcp(new Epetra_Vector(*rebalancedThreeDimensionalMap));
-  rebalancedForce->Import(*force, *threeDimensionalMapImporter, Insert);
-  force = rebalancedForce;
-
+  // rebalance the data manager
   dataManager->rebalance(rebalancedOneDimensionalMap,
                          rebalancedThreeDimensionalMap,
                          rebalancedOneDimensionalOverlapMap,

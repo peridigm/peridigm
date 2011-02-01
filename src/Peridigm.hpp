@@ -167,6 +167,9 @@ namespace PeridigmNS {
     //! Data manager
     Teuchos::RCP<PeridigmNS::DataManager> dataManager;
 
+    //! Mothership multivector that contains all the global vectors (x, u, y, v, a, force, etc.)
+    Teuchos::RCP<Epetra_MultiVector> mothership;
+
     //! Global vector for initial positions
     Teuchos::RCP<Epetra_Vector> x;
 
@@ -202,9 +205,12 @@ namespace PeridigmNS {
 
     //! The peridigm output manager
     Teuchos::RCP<PeridigmNS::OutputManager> outputManager;
+
     //! Description of force state data used by output manager
     Teuchos::RCP<Teuchos::ParameterList> forceStateDesc;
 
+    //! BLAS for local-only vector updates (BLAS-1)
+    Epetra_BLAS blas;
   };
 }
 
