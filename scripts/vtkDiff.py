@@ -200,7 +200,7 @@ if __name__ == "__main__":
             exit(1)
         if IDData.GetNumberOfTuples() != goldIDData.GetNumberOfTuples():
             print "\nError:  Mismatched array sizes for ID field,", \
-                data.GetNumberOfTuples(), "!=", goldData.GetNumberOfTuples(), "\n"
+                IDData.GetNumberOfTuples(), "!=", goldIDData.GetNumberOfTuples(), "\n"
             exit(1)
         # Get the ID data
         for pt in range(IDData.GetNumberOfTuples()):

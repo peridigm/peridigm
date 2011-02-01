@@ -37,8 +37,11 @@ if __name__ == "__main__":
         oldLine = oldFile.readline()
         while len(oldLine) != 0:
             insertLocation = oldLine.rfind('_t')
-            newLine = oldLine[:insertLocation] + '_gold' + oldLine[insertLocation:]
-            newFile.write(newLine)
+            if insertLocation != -1:
+                newLine = oldLine[:insertLocation] + '_gold' + oldLine[insertLocation:]
+                newFile.write(newLine)
+            else:
+                newFile.write(oldLine)
             oldLine = oldFile.readline()
         newFile.close()
 
@@ -48,8 +51,11 @@ if __name__ == "__main__":
         oldLine = oldFile.readline()
         while len(oldLine) != 0:
             insertLocation = oldLine.rfind('_t')
-            newLine = oldLine[:insertLocation] + '_gold' + oldLine[insertLocation:]
-            newFile.write(newLine)
+            if insertLocation != -1:
+                newLine = oldLine[:insertLocation] + '_gold' + oldLine[insertLocation:]
+                newFile.write(newLine)
+            else:
+                newFile.write(oldLine)
             oldLine = oldFile.readline()
         newFile.close()
 
