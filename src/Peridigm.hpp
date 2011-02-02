@@ -217,8 +217,8 @@ namespace PeridigmNS {
     //! Global vector for force
     Teuchos::RCP<Epetra_Vector> force;
 
-    //! Force due to contact (vector includes ghosted dof)
-    Teuchos::RCP<Epetra_Vector> contactForceOverlap;
+    //! Global vector for contact force
+    Teuchos::RCP<Epetra_Vector> contactForce;
 
     //! List of neighbors for all locally-owned nodes
     Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData;

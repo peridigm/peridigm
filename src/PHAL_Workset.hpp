@@ -43,28 +43,16 @@
 
 namespace PHAL {
 
-/*!
- * \brief A workset defines a set of data for processing, for example in a model 
- *        evaluation; for improved performance, the workset may be specified such
- *        that it fits in memory. 
- */
 struct Workset {
   
   Workset() {}
 
-  Teuchos::RCP<Epetra_Vector> contactForceOverlap;
   Teuchos::RCP<const double> timeStep;
-  Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData;
   Teuchos::RCP<PeridigmNS::DataManager> dataManager;
-
-  Teuchos::RCP<const PeridigmNS::NeighborhoodData> contactNeighborhoodData;
-
-  // The evaluators need access to the material models
-  // For now, we're using a vector of materials
-  //! \todo Use Teuchos::ArrayRCP to store materials?
   Teuchos::RCP< std::vector<Teuchos::RCP<const PeridigmNS::Material> > > materialModels;
-
+  Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData;
   Teuchos::RCP< std::vector<Teuchos::RCP<const PeridigmNS::ContactModel> > > contactModels;
+  Teuchos::RCP<const PeridigmNS::NeighborhoodData> contactNeighborhoodData;
 
   // MPI ID (debugging)
   int myPID;

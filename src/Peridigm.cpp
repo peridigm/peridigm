@@ -63,7 +63,6 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
     contactRebalanceFrequency(0),
     contactSearchRadius(0.0)
 {
-
   peridigmComm = comm;
   peridigmParams = params;
 
@@ -91,6 +90,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   variableSpecs->push_back(Field_NS::CURCOORD3D);
   variableSpecs->push_back(Field_NS::VELOC3D);
   variableSpecs->push_back(Field_NS::FORCE3D);
+  variableSpecs->push_back(Field_NS::CONTACT_FORCE3D);
   // Add the variable specs requested by each material
   for(unsigned int i=0; i<materialModels->size() ; ++i){
     Teuchos::RCP< std::vector<Field_NS::FieldSpec> > matVariableSpecs = (*materialModels)[i]->VariableSpecs();
@@ -123,6 +123,11 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // Initialize output manager
   initializeOutputManager();
+
+  // Call rebalance function if analysis has contact
+  // this is required to set up proper contact neighbor list
+  if(analysisHasContact)
+    rebalance();
 }
 
 void PeridigmNS::Peridigm::instantiateMaterials() {
@@ -203,14 +208,15 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
   bondMap = peridigmDisc->getBondMap();
 
   // Create mothership vector
-  mothership = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalMap, 6));
+  mothership = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalMap, 7));
   // Set ref-count pointers for each of the global vectors
-  x = Teuchos::rcp((*mothership)(0), false);       // initial positions
-  u = Teuchos::rcp((*mothership)(1), false);       // displacement
-  y = Teuchos::rcp((*mothership)(2), false);       // current positions
-  v = Teuchos::rcp((*mothership)(3), false);       // velocities
-  a = Teuchos::rcp((*mothership)(4), false);       // accelerations
-  force = Teuchos::rcp((*mothership)(5), false);   // force
+  x = Teuchos::rcp((*mothership)(0), false);             // initial positions
+  u = Teuchos::rcp((*mothership)(1), false);             // displacement
+  y = Teuchos::rcp((*mothership)(2), false);             // current positions
+  v = Teuchos::rcp((*mothership)(3), false);             // velocities
+  a = Teuchos::rcp((*mothership)(4), false);             // accelerations
+  force = Teuchos::rcp((*mothership)(5), false);         // force
+  contactForce = Teuchos::rcp((*mothership)(6), false);  // contact force
 
   // Set the initial positions
   double* initialX;
@@ -349,25 +355,18 @@ void PeridigmNS::Peridigm::initializeContact() {
       }
     }
   }
-
-  // container for accelerations due to contact
-  if(analysisHasContact){
-    contactForceOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
-    contactNeighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
-  }
 }
 
 void PeridigmNS::Peridigm::initializeWorkset() {
   workset = Teuchos::rcp(new PHAL::Workset);
-  workset->contactForceOverlap = contactForceOverlap;
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   *timeStep = 0.0;
   workset->timeStep = timeStep;
-  workset->neighborhoodData = neighborhoodData;
-  workset->contactNeighborhoodData = contactNeighborhoodData;
   workset->dataManager = dataManager;
   workset->materialModels = materialModels;
+  workset->neighborhoodData = neighborhoodData;
   workset->contactModels = contactModels;
+  workset->contactNeighborhoodData = contactNeighborhoodData;
   workset->myPID = -1;
 }
 
@@ -485,8 +484,15 @@ void PeridigmNS::Peridigm::execute() {
     // Update forces based on new positions
     modelEvaluator->evalModel(workset);
 
-    // Reverse comm particle forces
+    // Reverse comm forces
     force->Export(*dataManager->getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
+    
+    if(analysisHasContact){
+      // Reverse comm contact forces
+      contactForce->Export(*dataManager->getData(Field_NS::CONTACT_FORCE3D, Field_NS::FieldSpec::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
+      // Add contact forces to forces
+      force->Update(1.0, *contactForce, 1.0);
+    }
 
     // fill the acceleration vector
     (*a) = (*force);
@@ -504,11 +510,8 @@ void PeridigmNS::Peridigm::execute() {
     blas.AXPY(length, dt2, aptr, vptr, 1, 1);
 
     t_current = t_initial + (step*dt);
-
-    // Update the contact configuration, if necessary
-//    model->updateContact(currentSolution);
-
     forceStateDesc->set("Time", t_current);
+
     outputManager->write(x,u,v,a,force,dataManager,neighborhoodData,forceStateDesc);
 
     // swap state N and state NP1
@@ -619,6 +622,8 @@ void PeridigmNS::Peridigm::rebalance() {
   // update neighborhood data
   neighborhoodData = rebalancedNeighborhoodData;
   workset->neighborhoodData = neighborhoodData; // \todo Better handling of workset, shouldn't have to do this here.
+  contactNeighborhoodData = rebalancedContactNeighborhoodData;
+  workset->contactNeighborhoodData = contactNeighborhoodData;
 
   // update importers
   oneDimensionalMapToOneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*oneDimensionalOverlapMap, *oneDimensionalMap));
