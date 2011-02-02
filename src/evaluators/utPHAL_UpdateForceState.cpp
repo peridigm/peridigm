@@ -159,8 +159,8 @@ void testTwoPts()
   workset.timeStep = Teuchos::RCP<double>(&dt, false);
   workset.neighborhoodData = Teuchos::RCP<PeridigmNS::NeighborhoodData>(&neighborhoodData, false);
   workset.dataManager = Teuchos::RCP<PeridigmNS::DataManager>(&dataManager, false);
-  workset.materials = Teuchos::rcp(new std::vector< Teuchos::RCP<const PeridigmNS::Material> >());
-  workset.materials->push_back(Teuchos::rcp(&mat, false));
+  workset.materialModels = Teuchos::rcp(new std::vector< Teuchos::RCP<const PeridigmNS::Material> >());
+  workset.materialModels->push_back(Teuchos::rcp(&mat, false));
   workset.myPID = comm.MyPID();
 
   // set up a parameter list that will be passed to the evaluator constructor
