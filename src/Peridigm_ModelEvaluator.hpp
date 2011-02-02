@@ -59,7 +59,8 @@ namespace PeridigmNS {
   public:
 
     //! Constructor
-    ModelEvaluator(const Teuchos::RCP<std::vector<Teuchos::RCP<const PeridigmNS::Material> > > materialsList,
+    ModelEvaluator(const Teuchos::RCP<std::vector<Teuchos::RCP<const PeridigmNS::Material> > > materialModels,
+                   const Teuchos::RCP<std::vector<Teuchos::RCP<const PeridigmNS::ContactModel> > > contactModels,
                    const Teuchos::RCP<const Epetra_Comm>& comm);
 
     //! Destructor
@@ -68,22 +69,14 @@ namespace PeridigmNS {
     //! Model evaluation that acts directly on the workset
     void evalModel(Teuchos::RCP<PHAL::Workset> workset) const;
 
-    //! Callback function for updating contact.
-//     virtual void updateContact(Teuchos::RCP<const Epetra_Vector> solverX);
-
-    //! Update the contact neighbor list.  This involves a rebalance.
-//     virtual void updateContactNeighborList(Teuchos::RCP<const Epetra_Vector> solverX);
-
-    //@}
-
     //! Update internal history-dependent state information
     void updateState() {};
 
     //! Return vector of materials
-    Teuchos::RCP<std::vector<Teuchos::RCP<const PeridigmNS::Material> > > getMaterials() const;
+    Teuchos::RCP<std::vector<Teuchos::RCP<const PeridigmNS::Material> > > getMaterialModels() const;
 
     //! Return vector of contact models
-//     std::vector< Teuchos::RCP<PeridigmNS::ContactModel> > getContactModels() const;
+    Teuchos::RCP<std::vector< Teuchos::RCP<const PeridigmNS::ContactModel> > > getContactModels() const;
 
   protected:
 
@@ -93,22 +86,13 @@ namespace PeridigmNS {
 	Teuchos::RCP<PHX::FieldManager<PHAL::PeridigmTraits> > fm;
 
 	//! Material models
-    Teuchos::RCP<std::vector<Teuchos::RCP<const PeridigmNS::Material> > > materials;
+    Teuchos::RCP<std::vector<Teuchos::RCP<const PeridigmNS::Material> > > materialModels;
 
 	//! Contact models
-//  	Teuchos::RCP<std::vector< Teuchos::RCP<const PeridigmNS::ContactModel> > > contactModels;
-
-	//! List of potential contact neighbors for all locally-owned nodes
-// 	Teuchos::RCP<PeridigmNS::NeighborhoodData> contactNeighborhoodData;
+  	Teuchos::RCP<std::vector< Teuchos::RCP<const PeridigmNS::ContactModel> > > contactModels;
 
     //! Contact flag
-    bool computeContact;
-
-    //! Contact search radius
-    double contactSearchRadius;
-
-    //! Contact search frequency
-    int contactSearchFrequency;
+    bool analysisHasContact;
 
 	//! Number of processors
 	int numPID;

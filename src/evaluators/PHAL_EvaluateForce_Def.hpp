@@ -85,7 +85,7 @@ void EvaluateForce<EvalT, Traits>::evaluateFields(typename Traits::EvalData cell
   PeridigmNS::DataManager& dataManager = *cellData.dataManager;
 
   // handling of material models needs work!
-  Teuchos::RCP<const PeridigmNS::Material> material = (*cellData.materials)[0];
+  Teuchos::RCP<const PeridigmNS::Material> material = (*cellData.materialModels)[0];
 
   material->computeForce(dt, 
 						 numOwnedPoints,

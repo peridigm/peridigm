@@ -178,17 +178,17 @@ namespace PeridigmNS {
     int rebalanceFrequency;
 
     //! Contact flag
-    bool computeContact;
+    bool analysisHasContact;
+
+    //! Contact search frequency
+    int contactRebalanceFrequency;
 
     //! Contact search radius
     double contactSearchRadius;
 
-    //! Contact search frequency
-    int contactSearchFrequency;
-
     //! Material models
     //! \todo Use Teuchos::ArrayRCP to store materials?
-    Teuchos::RCP< std::vector< Teuchos::RCP<const PeridigmNS::Material> > > materials;
+    Teuchos::RCP< std::vector< Teuchos::RCP<const PeridigmNS::Material> > > materialModels;
 
     //! Contact models
     Teuchos::RCP< std::vector<Teuchos::RCP<const PeridigmNS::ContactModel> > > contactModels;
