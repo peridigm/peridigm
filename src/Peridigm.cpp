@@ -59,9 +59,9 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
                    const Teuchos::RCP<Teuchos::ParameterList>& params)
   : analysisHasRebalance(false),
     rebalanceFrequency(1),
-    computeContact(false),
-    contactSearchRadius(0.0),
-    contactSearchFrequency(0)
+    analysisHasContact(false),
+    contactRebalanceFrequency(0),
+    contactSearchRadius(0.0)
 {
 
   peridigmComm = comm;
@@ -92,8 +92,8 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   variableSpecs->push_back(Field_NS::VELOC3D);
   variableSpecs->push_back(Field_NS::FORCE3D);
   // Add the variable specs requested by each material
-  for(unsigned int i=0; i<materials->size() ; ++i){
-    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > matVariableSpecs = (*materials)[i]->VariableSpecs();
+  for(unsigned int i=0; i<materialModels->size() ; ++i){
+    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > matVariableSpecs = (*materialModels)[i]->VariableSpecs();
     for(unsigned int j=0 ; j<matVariableSpecs->size() ; ++j)
       variableSpecs->push_back((*matVariableSpecs)[j]);
   }
@@ -116,7 +116,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   initializeWorkset();
 
   // Create the model evaluator
-  modelEvaluator = Teuchos::rcp(new PeridigmNS::ModelEvaluator(materials, comm));
+  modelEvaluator = Teuchos::rcp(new PeridigmNS::ModelEvaluator(materialModels, contactModels, comm));
 
   // Initialize material models
   initializeMaterials();
@@ -130,7 +130,7 @@ void PeridigmNS::Peridigm::instantiateMaterials() {
   // Extract problem parameters sublist
   Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::rcp(&(peridigmParams->sublist("Problem")),false);
 
-  materials = Teuchos::rcp(new std::vector< Teuchos::RCP<const PeridigmNS::Material> >()); 
+  materialModels = Teuchos::rcp(new std::vector< Teuchos::RCP<const PeridigmNS::Material> >()); 
 
   // Instantiate material objects
   //! \todo Move creation of material models to material model factory
@@ -151,7 +151,7 @@ void PeridigmNS::Peridigm::instantiateMaterials() {
         material = Teuchos::rcp(new LinearElasticIsotropicMaterial(matParams) );
       else if(name == "Elastic Plastic")
         material = Teuchos::rcp(new IsotropicElasticPlasticMaterial(matParams) );
-      materials->push_back( Teuchos::rcp_implicit_cast<Material>(material) );
+      materialModels->push_back( Teuchos::rcp_implicit_cast<Material>(material) );
     }
     else {
       string invalidMaterial("Unrecognized material model: ");
@@ -160,7 +160,7 @@ void PeridigmNS::Peridigm::instantiateMaterials() {
       TEST_FOR_EXCEPT_MSG(true, invalidMaterial);
     }
   }
-  TEST_FOR_EXCEPT_MSG(materials->size() == 0, "No material models created!");
+  TEST_FOR_EXCEPT_MSG(materialModels->size() == 0, "No material models created!");
 
 }
 
@@ -168,7 +168,7 @@ void PeridigmNS::Peridigm::initializeMaterials() {
 
   std::vector< Teuchos::RCP<const PeridigmNS::Material> >::const_iterator matIt;
 
-  for(matIt = materials->begin() ; matIt != materials->end() ; matIt++){
+  for(matIt = materialModels->begin() ; matIt != materialModels->end() ; matIt++){
     double dt = 0.0;
     (*matIt)->initialize(dt,
                          neighborhoodData->NumOwnedPoints(),
@@ -306,26 +306,26 @@ void PeridigmNS::Peridigm::initializeContact() {
   Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::rcp(&(problemParams->sublist("Discretization")), false);
 
   // Assume no contact
-  computeContact = false;
+  analysisHasContact = false;
   contactSearchRadius = 0.0;
-  contactSearchFrequency = 0;
+  contactRebalanceFrequency = 0;
 
   // Set up contact, if requested by user
   if(problemParams->isSublist("Contact")){
     Teuchos::ParameterList & contactParams = problemParams->sublist("Contact");
-    computeContact = true;
+    analysisHasContact = true;
     if(!contactParams.isParameter("Search Radius"))
       TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Contact parameter \"Search Radius\" not specified.");
     contactSearchRadius = contactParams.get<double>("Search Radius");
     if(!contactParams.isParameter("Search Frequency"))
       TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Contact parameter \"Search Frequency\" not specified.");
-    contactSearchFrequency = contactParams.get<int>("Search Frequency");
+    contactRebalanceFrequency = contactParams.get<int>("Search Frequency");
   }
 
   // Instantiate contact models
   //! \todo Move creation of contact models to contact model factory
   contactModels = Teuchos::rcp(new std::vector<Teuchos::RCP<const PeridigmNS::ContactModel> >);
-  if(computeContact){
+  if(analysisHasContact){
     Teuchos::ParameterList & contactParams = problemParams->sublist("Contact");
     Teuchos::ParameterList::ConstIterator it;
     for(it = contactParams.begin() ; it != contactParams.end() ; it++){
@@ -351,7 +351,7 @@ void PeridigmNS::Peridigm::initializeContact() {
   }
 
   // container for accelerations due to contact
-  if(computeContact){
+  if(analysisHasContact){
     contactForceOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
     contactNeighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
   }
@@ -366,7 +366,7 @@ void PeridigmNS::Peridigm::initializeWorkset() {
   workset->neighborhoodData = neighborhoodData;
   workset->contactNeighborhoodData = contactNeighborhoodData;
   workset->dataManager = dataManager;
-  workset->materials = materials;
+  workset->materialModels = materialModels;
   workset->contactModels = contactModels;
   workset->myPID = -1;
 }
@@ -396,9 +396,9 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
 
     // Query material models for their force state data descriptions
     forceStateDesc = Teuchos::rcp( new Teuchos::ParameterList() );
-    for(unsigned int i=0; i<materials->size(); ++i){
-      Teuchos::ParameterList& subList = forceStateDesc->sublist((*materials)[i]->Name());
-      Teuchos::RCP< std::vector<Field_NS::FieldSpec> > matVariableSpecs = (*materials)[i]->VariableSpecs();
+    for(unsigned int i=0; i<materialModels->size(); ++i){
+      Teuchos::ParameterList& subList = forceStateDesc->sublist((*materialModels)[i]->Name());
+      Teuchos::RCP< std::vector<Field_NS::FieldSpec> > matVariableSpecs = (*materialModels)[i]->VariableSpecs();
       for(unsigned int j=0 ; j<matVariableSpecs->size() ; ++j)
         subList.set( (*matVariableSpecs)[j].getLabel(), j);
     }
@@ -456,7 +456,7 @@ void PeridigmNS::Peridigm::execute() {
   for(int step=1; step<=nsteps ; step++){
 
     // rebalance, if requested
-    if(analysisHasRebalance && step%rebalanceFrequency == 0){
+    if( (analysisHasRebalance && step%rebalanceFrequency == 0) || (analysisHasContact && step%contactRebalanceFrequency == 0) ){
       rebalance();
       x->ExtractView( &xptr );
       u->ExtractView( &uptr );
@@ -492,7 +492,7 @@ void PeridigmNS::Peridigm::execute() {
     (*a) = (*force);
     // \todo Possibly move this functionality into ModelEvaluator.
     // \todo Generalize this for multiple materials
-    double density = (*materials)[0]->Density();
+    double density = (*materialModels)[0]->Density();
     a->Scale(1.0/density);
 
     // U^{n+1}   = U^{n} + (dt)*V^{n+1/2}
@@ -550,7 +550,8 @@ void PeridigmNS::Peridigm::rebalance() {
   // 3) keeps track of the additional off-processor IDs that need to be ghosted as a result of the contact search (offProcessorContactIDs)
   Teuchos::RCP< map<int, vector<int> > > contactNeighborGlobalIDs = Teuchos::rcp(new map<int, vector<int> >());
   Teuchos::RCP< set<int> > offProcessorContactIDs = Teuchos::rcp(new set<int>());
-  //contactSearch(rebalancedBondMap, rebalancedNeighborGlobalIDs, rebalancedDecomp, contactNeighborGlobalIDs, offProcessorContactIDs);
+  if(analysisHasContact)
+    contactSearch(rebalancedBondMap, rebalancedNeighborGlobalIDs, rebalancedDecomp, contactNeighborGlobalIDs, offProcessorContactIDs);
 
   // add the off-processor IDs required for contact to the list of points that will be ghosted
   for(set<int>::const_iterator it=offProcessorContactIDs->begin() ; it!=offProcessorContactIDs->end() ; it++){
@@ -584,9 +585,11 @@ void PeridigmNS::Peridigm::rebalance() {
                                                                                                            rebalancedNeighborGlobalIDs);
 
   // create a new NeighborhoodData object for contact
-//   Teuchos::RCP<PeridigmNS::NeighborhoodData> rebalancedContactNeighborhoodData = createRebalancedContactNeighborhoodData(contactNeighborGlobalIDs,
-//                                                                                                                          rebalancedOneDimensionalMap,
-//                                                                                                                          rebalancedOneDimensionalOverlapMap);
+  Teuchos::RCP<PeridigmNS::NeighborhoodData> rebalancedContactNeighborhoodData;
+  if(analysisHasContact)
+    rebalancedContactNeighborhoodData = createRebalancedContactNeighborhoodData(contactNeighborGlobalIDs,
+                                                                                rebalancedOneDimensionalMap,
+                                                                                rebalancedOneDimensionalOverlapMap);
 
   // rebalance the global vectors (stored in the mothership multivector)
   Teuchos::RCP<Epetra_MultiVector> rebalancedMothership = Teuchos::rcp(new Epetra_MultiVector(*rebalancedThreeDimensionalMap, mothership->NumVectors()));
@@ -796,13 +799,16 @@ void PeridigmNS::Peridigm::contactSearch(Teuchos::RCP<const Epetra_BlockMap> reb
     vector<int>& contactNeighborGlobalIDList = (*contactNeighborGlobalIDs)[globalID];
 
     // create a stl::list of global IDs that this point is bonded to
-    int tempLocalID = rebalancedBondMap->LID(globalID);
-    int firstNeighbor = rebalancedBondMap->FirstPointInElementList()[tempLocalID];
-    int numNeighbors = rebalancedBondMap->ElementSize(tempLocalID);
     list<int> bondedNeighbors;
-    for(int i=0 ; i<numNeighbors ; ++i){
-      int neighborGlobalID = (*rebalancedNeighborGlobalIDs)[firstNeighbor + i];
-      bondedNeighbors.push_back(neighborGlobalID);
+    int tempLocalID = rebalancedBondMap->LID(globalID);
+    // if there is no entry in rebalancedBondMap, then there are no bonded neighbors for this point
+    if(tempLocalID != -1){
+      int firstNeighbor = rebalancedBondMap->FirstPointInElementList()[tempLocalID];
+      int numNeighbors = rebalancedBondMap->ElementSize(tempLocalID);
+      for(int i=0 ; i<numNeighbors ; ++i){
+        int neighborGlobalID = (*rebalancedNeighborGlobalIDs)[firstNeighbor + i];
+        bondedNeighbors.push_back(neighborGlobalID);
+      }
     }
 
     // loop over the neighbors found by the contact search
@@ -850,6 +856,8 @@ Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::Peridigm::createRebalance
     neighborhoodPtr[iLID] = neighborhoodIndex;
     // get the global ID of this point and the global IDs of its neighbors
     int globalID = rebalancedOneDimensionalMap->GID(iLID);
+    // require that this globalID be present as a key into contactNeighborGlobalIDs
+    TEST_FOR_EXCEPTION(contactNeighborGlobalIDs->count(globalID) == 0, Teuchos::RangeError, "Invalid index into contactNeighborGlobalIDs");
     const vector<int>& neighborGlobalIDs = (*contactNeighborGlobalIDs)[globalID];
     // first entry in the neighborhoodlist is the number of neighbors
     neighborhoodList[neighborhoodIndex++] = (int) neighborGlobalIDs.size();    

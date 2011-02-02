@@ -62,7 +62,7 @@ struct Workset {
   // The evaluators need access to the material models
   // For now, we're using a vector of materials
   //! \todo Use Teuchos::ArrayRCP to store materials?
-  Teuchos::RCP< std::vector<Teuchos::RCP<const PeridigmNS::Material> > > materials;
+  Teuchos::RCP< std::vector<Teuchos::RCP<const PeridigmNS::Material> > > materialModels;
 
   Teuchos::RCP< std::vector<Teuchos::RCP<const PeridigmNS::ContactModel> > > contactModels;
 
