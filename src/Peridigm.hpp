@@ -35,6 +35,7 @@
 #define PERIDIGM_HPP
 
 #include <vector>
+#include <set>
 
 #include <Epetra_MpiComm.h>
 #include <Epetra_SerialComm.h>
@@ -108,8 +109,17 @@ namespace PeridigmNS {
                                                                                 Teuchos::RCP<Epetra_BlockMap> rebalancedBondMap,
                                                                                 Teuchos::RCP<Epetra_Vector> rebalancedNeighborGlobalIDs);
 
-    //! Update contact neighborlist; do load rebalance
-    void updateContactNeighborList();
+    //! Fill the contact neighbor information in rebalancedDecomp and populate contactNeighborsGlobalIDs and offProcesorContactIDs
+    void contactSearch(Teuchos::RCP<const Epetra_BlockMap> rebalancedBondMap,
+                       Teuchos::RCP<const Epetra_Vector> rebalancedNeighborGlobalIDs,
+                       PdGridData& rebalancedDecomp,
+                       Teuchos::RCP< std::map<int, std::vector<int> > > contactNeighborGlobalIDs,
+                       Teuchos::RCP< std::set<int> > offProcessorContactIDs);
+
+    //! Create a rebalanced NeighborhoodData object for contact
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> createRebalancedContactNeighborhoodData(Teuchos::RCP<std::map<int, std::vector<int> > > contactNeighborGlobalIDs,
+                                                                                       Teuchos::RCP<const Epetra_BlockMap> rebalancedOneDimensionalMap,
+                                                                                       Teuchos::RCP<const Epetra_BlockMap> rebalancedOneDimensionalOverlapMap);
 
     //! @name Acessors for maps 
     //@{ 

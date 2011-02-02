@@ -38,7 +38,6 @@
 #include <iostream>
 #include <vector>
 #include <map>
-#include <set>
 
 #include <Epetra_Import.h>
 #include <Teuchos_VerboseObject.hpp>
@@ -355,7 +354,6 @@ void PeridigmNS::Peridigm::initializeContact() {
   if(computeContact){
     contactForceOverlap = Teuchos::rcp(new Epetra_Vector(*threeDimensionalOverlapMap));
     contactNeighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
-    updateContactNeighborList();
   }
 }
 
@@ -520,9 +518,7 @@ void PeridigmNS::Peridigm::execute() {
 
 void PeridigmNS::Peridigm::rebalance() {
 
-  // return immediately if this is a serial run
-  if(peridigmComm->NumProc() == 1)
-    return;
+  // \todo Handle serial case.  We don't need to rebalance, but we still want to update the contact search.
 
   PdGridData rebalancedDecomp = currentConfigurationDecomp();
 
@@ -548,7 +544,18 @@ void PeridigmNS::Peridigm::rebalance() {
       offProcessorIDs.insert(globalID);
   }
 
-  // \todo Augment the list of off-processor IDs that need to be ghosted to include those found in the contact search.
+  // this function does three things:
+  // 1) fills the neighborhood information in rebalancedDecomp based on the contact search
+  // 2) creates a list of global IDs for each locally-owned point that will need to be searched for contact (contactNeighborGlobalIDs)
+  // 3) keeps track of the additional off-processor IDs that need to be ghosted as a result of the contact search (offProcessorContactIDs)
+  Teuchos::RCP< map<int, vector<int> > > contactNeighborGlobalIDs = Teuchos::rcp(new map<int, vector<int> >());
+  Teuchos::RCP< set<int> > offProcessorContactIDs = Teuchos::rcp(new set<int>());
+  //contactSearch(rebalancedBondMap, rebalancedNeighborGlobalIDs, rebalancedDecomp, contactNeighborGlobalIDs, offProcessorContactIDs);
+
+  // add the off-processor IDs required for contact to the list of points that will be ghosted
+  for(set<int>::const_iterator it=offProcessorContactIDs->begin() ; it!=offProcessorContactIDs->end() ; it++){
+    offProcessorIDs.insert(*it);
+  }
 
   // construct the rebalanced overlap maps
   int numGlobalElements = -1;
@@ -571,11 +578,15 @@ void PeridigmNS::Peridigm::rebalance() {
   Teuchos::RCP<const Epetra_Import> threeDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedThreeDimensionalOverlapMap, *threeDimensionalOverlapMap));
 
   // create a new NeighborhoodData object
-  
   Teuchos::RCP<PeridigmNS::NeighborhoodData> rebalancedNeighborhoodData = createRebalancedNeighborhoodData(rebalancedOneDimensionalMap,
                                                                                                            rebalancedOneDimensionalOverlapMap,
                                                                                                            rebalancedBondMap,
                                                                                                            rebalancedNeighborGlobalIDs);
+
+  // create a new NeighborhoodData object for contact
+//   Teuchos::RCP<PeridigmNS::NeighborhoodData> rebalancedContactNeighborhoodData = createRebalancedContactNeighborhoodData(contactNeighborGlobalIDs,
+//                                                                                                                          rebalancedOneDimensionalMap,
+//                                                                                                                          rebalancedOneDimensionalOverlapMap);
 
   // rebalance the global vectors (stored in the mothership multivector)
   Teuchos::RCP<Epetra_MultiVector> rebalancedMothership = Teuchos::rcp(new Epetra_MultiVector(*rebalancedThreeDimensionalMap, mothership->NumVectors()));
@@ -765,120 +776,88 @@ Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::Peridigm::createRebalance
   return rebalancedNeighborhoodData;
 }
 
-void PeridigmNS::Peridigm::updateContactNeighborList() {
-  // initial implementation works in serial only
-  TEST_FOR_EXCEPT_MSG(peridigmComm->NumProc()  != 1, "Contact is currently not enabled in parallel.\n");
-
-// MLP: Most of this code should go away due to use of new maps
-/* 
-  // Create a decomp object and fill necessary data for rebalance
-  int myNumElements = oneDimensionalMap->NumMyElements();
-  int dimension = 3;
-  PdGridData decomp = PdQuickGrid::allocatePdGridData(myNumElements, dimension);
-
-  // fill myGlobalIDs
-  shared_ptr<int> myGlobalIDs(new int[myNumElements], PdQuickGrid::Deleter<int>());
-  int* myGlobalIDsPtr = myGlobalIDs.get();
-  int* gIDs = oneDimensionalMap->MyGlobalElements();
-  for(int i=0 ; i<myNumElements ; ++i){
-    myGlobalIDsPtr[i] = gIDs[i];
-  }
-  decomp.myGlobalIDs = myGlobalIDs;
-
-  // fill myX and cellVolume
-  shared_ptr<double> myX(new double[myNumElements*dimension], PdQuickGrid::Deleter<double>());
-  double* myXPtr = myX.get();
-  double* solverXPtr;
-  solverX->ExtractView(&solverXPtr);
-  shared_ptr<double> cellVolume(new double[myNumElements], PdQuickGrid::Deleter<double>());
-  double* cellVolumePtr = cellVolume.get();
-  double* cellVolumeOverlapPtr;
-  dataManager->getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&cellVolumeOverlapPtr);
-  for(int i=0 ; i<myNumElements ; ++i){
-    int oneDimensionalMapGlobalID = myGlobalIDsPtr[i];
-    int oneDimensionalOverlapMapLocalID = oneDimensionalOverlapMap->LID(oneDimensionalMapGlobalID);
-    int threeDimensionalTwoEntryMapGlobalID = oneDimensionalMapGlobalID*3;
-    int threeDimensionalTwoEntryMapLocalID = threeDimensionalTwoEntryMap->LID(threeDimensionalTwoEntryMapGlobalID);
-    myXPtr[i*3] = solverXPtr[threeDimensionalTwoEntryMapLocalID];
-    myXPtr[i*3+1] = solverXPtr[threeDimensionalTwoEntryMapLocalID+1];
-    myXPtr[i*3+2] = solverXPtr[threeDimensionalTwoEntryMapLocalID+2];
-    cellVolumePtr[i] = cellVolumeOverlapPtr[oneDimensionalOverlapMapLocalID];
-  }
-  decomp.myX = myX;
-  decomp.cellVolume = cellVolume;
-
-  // rebalance
-  decomp = getLoadBalancedDiscretization(decomp);
-
-  // big todo: shuffle data around based on decomp
-
+void PeridigmNS::Peridigm::contactSearch(Teuchos::RCP<const Epetra_BlockMap> rebalancedBondMap,
+                                         Teuchos::RCP<const Epetra_Vector> rebalancedNeighborGlobalIDs,
+                                         PdGridData& rebalancedDecomp,
+                                         Teuchos::RCP< map<int, vector<int> > > contactNeighborGlobalIDs,
+                                         Teuchos::RCP< set<int> > offProcessorContactIDs) {
   // execute contact search
-  decomp = createAndAddNeighborhood(decomp, contactSearchRadius);
+  rebalancedDecomp = createAndAddNeighborhood(rebalancedDecomp, contactSearchRadius);
 
-  // Copy the data in decomp into the contact neighbor list
-  // Do not include points that are bonded
+  // \todo Do we need to call new here, or can we just wrap what is returned by PdQuickGrid?
+  Teuchos::RCP<Epetra_BlockMap> searchOverlapMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOverlapMap(*peridigmComm, rebalancedDecomp, 1)));
 
-  vector<int> contactOwnedIDs;
-  vector<int> contactNeighborhoodPtr;
-  vector<int> contactNeighborhoodList;
-
+  int* searchNeighborhood = rebalancedDecomp.neighborhood.get();
+  int* searchGlobalIDs = rebalancedDecomp.myGlobalIDs.get();
   int searchListIndex = 0;
-  int searchNumPoints = decomp.numPoints;
-  int* searchNeighborhood = decomp.neighborhood.get();
+  for(int iPt=0 ; iPt<rebalancedDecomp.numPoints ; ++iPt){
 
-  for(int iLID=0 ; iLID<searchNumPoints ; ++iLID){
+    int globalID = searchGlobalIDs[iPt];
+    vector<int>& contactNeighborGlobalIDList = (*contactNeighborGlobalIDs)[globalID];
 
-    // find the cells that are bonded to this cell
-    // store the corresponding local IDs in bondedNeighbors, which is a stl::list
-    int* bondedNeighborhoodList = neighborhoodData->NeighborhoodList();
-    int bondedListIndex = neighborhoodData->NeighborhoodPtr()[iLID];
-    int numBondedNeighbors = bondedNeighborhoodList[bondedListIndex++];
-    list<int> bondedNeighbors; // \todo reserve space here
-    for(int i=0 ; i<numBondedNeighbors ; ++i){
-      bondedNeighbors.push_back(bondedNeighborhoodList[bondedListIndex++]);
+    // create a stl::list of global IDs that this point is bonded to
+    int tempLocalID = rebalancedBondMap->LID(globalID);
+    int firstNeighbor = rebalancedBondMap->FirstPointInElementList()[tempLocalID];
+    int numNeighbors = rebalancedBondMap->ElementSize(tempLocalID);
+    list<int> bondedNeighbors;
+    for(int i=0 ; i<numNeighbors ; ++i){
+      int neighborGlobalID = (*rebalancedNeighborGlobalIDs)[firstNeighbor + i];
+      bondedNeighbors.push_back(neighborGlobalID);
     }
 
-    // loop over the cells found by the contact search
-    // retain only those cells that are not bonded
-        int searchNumNeighbors = searchNeighborhood[searchListIndex++];
-
-    list<int>::iterator it;
-    bool hasContact = false;
-    int currentContactNeighborhoodPtr = 0;
-        for(int iNeighbor=0 ; iNeighbor<searchNumNeighbors ; ++iNeighbor){
-          int localNeighborID = searchNeighborhood[searchListIndex++];
-      it = find(bondedNeighbors.begin(), bondedNeighbors.end(), localNeighborID);
+    // loop over the neighbors found by the contact search
+    // retain only those neighbors that are not bonded
+    int searchNumNeighbors = searchNeighborhood[searchListIndex++];
+    for(int iNeighbor=0 ; iNeighbor<searchNumNeighbors ; ++iNeighbor){
+      int localNeighborID = searchNeighborhood[searchListIndex++];
+      int globalNeighborID = searchOverlapMap->GID(localNeighborID);
+      list<int>::iterator it = find(bondedNeighbors.begin(), bondedNeighbors.end(), globalNeighborID);
       if(it == bondedNeighbors.end()){
-        if(!hasContact){
-          hasContact = true;
-          contactOwnedIDs.push_back(iLID);
-          currentContactNeighborhoodPtr = contactNeighborhoodList.size();
-          contactNeighborhoodPtr.push_back(currentContactNeighborhoodPtr);
-          contactNeighborhoodList.push_back(1);
-        }
-        else{
-          contactNeighborhoodList[currentContactNeighborhoodPtr] += 1;
-        }
-        contactNeighborhoodList.push_back(localNeighborID);
+        offProcessorContactIDs->insert(globalNeighborID);
+        contactNeighborGlobalIDList.push_back(globalNeighborID);
       }
-        }
+    }
+  }
+}
+
+Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::Peridigm::createRebalancedContactNeighborhoodData(Teuchos::RCP<map<int, vector<int> > > contactNeighborGlobalIDs,
+                                                                                                         Teuchos::RCP<const Epetra_BlockMap> rebalancedOneDimensionalMap,
+                                                                                                         Teuchos::RCP<const Epetra_BlockMap> rebalancedOneDimensionalOverlapMap) {
+
+  Teuchos::RCP<PeridigmNS::NeighborhoodData> rebalancedContactNeighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
+  // record the owned IDs
+  rebalancedContactNeighborhoodData->SetNumOwned(rebalancedOneDimensionalMap->NumMyElements());
+  int* ownedIDs = rebalancedContactNeighborhoodData->OwnedIDs();
+  for(int i=0 ; i<rebalancedOneDimensionalMap->NumMyElements() ; ++i){
+    int globalID = rebalancedOneDimensionalMap->GID(i);
+    int localID = rebalancedOneDimensionalOverlapMap->LID(globalID);
+    TEST_FOR_EXCEPTION(localID == -1, Teuchos::RangeError, "Invalid index into rebalancedOneDimensionalOverlapMap");
+    ownedIDs[i] = localID;
+  }
+  // determine the neighborhood list size
+  int neighborhoodListSize = 0;
+  for(map<int, vector<int> >::const_iterator it=contactNeighborGlobalIDs->begin() ; it!=contactNeighborGlobalIDs->end() ; it++)
+    neighborhoodListSize += it->second.size() + 1;
+  rebalancedContactNeighborhoodData->SetNeighborhoodListSize(neighborhoodListSize);
+  // numNeighbors1, n1LID, n2LID, n3LID, numNeighbors2, n1LID, n2LID, ...
+  int* neighborhoodList = rebalancedContactNeighborhoodData->NeighborhoodList();
+  // points into neighborhoodList, gives start of neighborhood information for each locally-owned element
+  int* neighborhoodPtr = rebalancedContactNeighborhoodData->NeighborhoodPtr();
+  // loop over locally owned points
+  int neighborhoodIndex = 0;
+  for(int iLID=0 ; iLID<rebalancedOneDimensionalMap->NumMyElements() ; ++iLID){
+    // location of this element's neighborhood data in the neighborhoodList
+    neighborhoodPtr[iLID] = neighborhoodIndex;
+    // get the global ID of this point and the global IDs of its neighbors
+    int globalID = rebalancedOneDimensionalMap->GID(iLID);
+    const vector<int>& neighborGlobalIDs = (*contactNeighborGlobalIDs)[globalID];
+    // first entry in the neighborhoodlist is the number of neighbors
+    neighborhoodList[neighborhoodIndex++] = (int) neighborGlobalIDs.size();    
+    // next entries record the local ID of each neighbor
+    for(unsigned int iNeighbor=0 ; iNeighbor<neighborGlobalIDs.size() ; ++iNeighbor){
+      neighborhoodList[neighborhoodIndex++] = rebalancedOneDimensionalOverlapMap->LID( neighborGlobalIDs[iNeighbor] );
+    }
   }
 
-  TEST_FOR_EXCEPT_MSG(contactNeighborhoodPtr.size() != contactOwnedIDs.size(),
-                      "Error, contactOwnedIDs and contactNeighborhoodPtr are different sizes in ModelEvaluator::updateContactNeighborList().\n");
-
-  // copy the contact neighbor data into contactNeighborData
-  contactNeighborhoodData->SetNumOwned(contactOwnedIDs.size());
-  memcpy(contactNeighborhoodData->OwnedIDs(),
-                 &contactOwnedIDs[0],
-                 contactOwnedIDs.size()*sizeof(int));
-  memcpy(contactNeighborhoodData->NeighborhoodPtr(),
-                 &contactNeighborhoodPtr[0],
-                 contactOwnedIDs.size()*sizeof(int));
-  contactNeighborhoodData->SetNeighborhoodListSize(contactNeighborhoodList.size());
-  memcpy(contactNeighborhoodData->NeighborhoodList(),
-                 &contactNeighborhoodList[0],
-                 contactNeighborhoodList.size()*sizeof(int));
-*/
-
+  return rebalancedContactNeighborhoodData;
 }
