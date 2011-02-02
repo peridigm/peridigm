@@ -63,12 +63,10 @@ PeridigmNS::ShortRangeForceContactModel::computeForce(const double dt,
                                                       const int* contactNeighborhoodList,
                                                       PeridigmNS::DataManager& dataManager) const
 {
-  double *cellVolume, *y, *force;
+  double *cellVolume, *y, *contactForce;
   dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE);
   dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&y);
-
-  // THIS IS WRONG, NEED SEPARATE CONTACT FORCE VECTOR
-  dataManager.getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&force);
+  dataManager.getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&contactForce);
 
   int neighborhoodListIndex = 0;
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
@@ -92,12 +90,12 @@ PeridigmNS::ShortRangeForceContactModel::computeForce(const double dt,
 
           // compute contributions to force density
             
-          force[nodeID*3]       -= temp*neighborVolume*(y[neighborID*3]   - nodeCurrentX[0])/currentDistance;
-          force[nodeID*3+1]     -= temp*neighborVolume*(y[neighborID*3+1] - nodeCurrentX[1])/currentDistance;
-          force[nodeID*3+2]     -= temp*neighborVolume*(y[neighborID*3+2] - nodeCurrentX[2])/currentDistance;
-          force[neighborID*3]   += temp*nodeVolume*(y[neighborID*3]   - nodeCurrentX[0])/currentDistance;
-          force[neighborID*3+1] += temp*nodeVolume*(y[neighborID*3+1] - nodeCurrentX[1])/currentDistance;
-          force[neighborID*3+2] += temp*nodeVolume*(y[neighborID*3+2] - nodeCurrentX[2])/currentDistance;
+          contactForce[nodeID*3]       -= temp*neighborVolume*(y[neighborID*3]   - nodeCurrentX[0])/currentDistance;
+          contactForce[nodeID*3+1]     -= temp*neighborVolume*(y[neighborID*3+1] - nodeCurrentX[1])/currentDistance;
+          contactForce[nodeID*3+2]     -= temp*neighborVolume*(y[neighborID*3+2] - nodeCurrentX[2])/currentDistance;
+          contactForce[neighborID*3]   += temp*nodeVolume*(y[neighborID*3]   - nodeCurrentX[0])/currentDistance;
+          contactForce[neighborID*3+1] += temp*nodeVolume*(y[neighborID*3+1] - nodeCurrentX[1])/currentDistance;
+          contactForce[neighborID*3+2] += temp*nodeVolume*(y[neighborID*3+2] - nodeCurrentX[2])/currentDistance;
         }
       }
 	}
