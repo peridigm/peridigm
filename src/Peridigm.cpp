@@ -604,6 +604,7 @@ void PeridigmNS::Peridigm::rebalance() {
   v = Teuchos::rcp((*mothership)(3), false);
   a = Teuchos::rcp((*mothership)(4), false);
   force = Teuchos::rcp((*mothership)(5), false);
+  contactForce = Teuchos::rcp((*mothership)(6), false);
 
   // rebalance the data manager
   dataManager->rebalance(rebalancedOneDimensionalMap,

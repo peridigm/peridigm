@@ -78,8 +78,8 @@ void Contact<EvalT, Traits>::evaluateFields(typename Traits::EvalData cellData)
     cout << "CHECK inside Contact::evaluateFields()\n" << endl;
 
   const double dt = *cellData.timeStep;
-  const int numOwnedPoints = cellData.neighborhoodData->NumOwnedPoints();
-  const int* ownedIDs = cellData.neighborhoodData->OwnedIDs();
+  const int numOwnedPoints = cellData.contactNeighborhoodData->NumOwnedPoints();
+  const int* ownedIDs = cellData.contactNeighborhoodData->OwnedIDs();
   const int* contactNeighborhoodList = cellData.contactNeighborhoodData->NeighborhoodList();
   PeridigmNS::DataManager& dataManager = *cellData.dataManager;
 
