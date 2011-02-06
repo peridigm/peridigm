@@ -224,6 +224,9 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
   double* xPtr;
   x->ExtractView(&xPtr);
   blas.COPY(x->MyLength(), initialX, xPtr);
+  double* yPtr;
+  y->ExtractView(&yPtr);
+  blas.COPY(y->MyLength(), initialX, yPtr);
 
   // Create the importers
   oneDimensionalMapToOneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*oneDimensionalOverlapMap, *oneDimensionalMap));
@@ -638,6 +641,8 @@ PdGridData PeridigmNS::Peridigm::currentConfigurationDecomp() {
   int dimension = 3;
   PdGridData decomp = PdQuickGrid::allocatePdGridData(myNumElements, dimension);
 
+  decomp.globalNumPoints = oneDimensionalMap->NumGlobalElements();
+
   // fill myGlobalIDs
   shared_ptr<int> myGlobalIDs(new int[myNumElements], PdQuickGrid::Deleter<int>());
   int* myGlobalIDsPtr = myGlobalIDs.get();
@@ -793,9 +798,6 @@ void PeridigmNS::Peridigm::contactSearch(Teuchos::RCP<const Epetra_BlockMap> reb
   // execute contact search
   rebalancedDecomp = createAndAddNeighborhood(rebalancedDecomp, contactSearchRadius);
 
-  // \todo Do we need to call new here, or can we just wrap what is returned by PdQuickGrid?
-  Teuchos::RCP<Epetra_BlockMap> searchOverlapMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOverlapMap(*peridigmComm, rebalancedDecomp, 1)));
-
   int* searchNeighborhood = rebalancedDecomp.neighborhood.get();
   int* searchGlobalIDs = rebalancedDecomp.myGlobalIDs.get();
   int searchListIndex = 0;
@@ -821,11 +823,10 @@ void PeridigmNS::Peridigm::contactSearch(Teuchos::RCP<const Epetra_BlockMap> reb
     // retain only those neighbors that are not bonded
     int searchNumNeighbors = searchNeighborhood[searchListIndex++];
     for(int iNeighbor=0 ; iNeighbor<searchNumNeighbors ; ++iNeighbor){
-      int localNeighborID = searchNeighborhood[searchListIndex++];
-      int globalNeighborID = searchOverlapMap->GID(localNeighborID);
+      int globalNeighborID = searchNeighborhood[searchListIndex++];
       list<int>::iterator it = find(bondedNeighbors.begin(), bondedNeighbors.end(), globalNeighborID);
       if(it == bondedNeighbors.end()){
-        offProcessorContactIDs->insert(globalNeighborID);
+        offProcessorContactIDs->insert(globalNeighborID); //// CHECK THIS, how do we know it's off-processor?  is this handled downstream?  (if so, rename variable)
         contactNeighborGlobalIDList.push_back(globalNeighborID);
       }
     }
