@@ -487,12 +487,13 @@ void PeridigmNS::Peridigm::execute() {
     // Update forces based on new positions
     modelEvaluator->evalModel(workset);
 
-    // Reverse comm forces
+    // Copy force from the data manager to the mothership vector
     force->Export(*dataManager->getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
     
     if(analysisHasContact){
-      // Reverse comm contact forces
+      // Copy contact force from the data manager to the mothership vector
       contactForce->Export(*dataManager->getData(Field_NS::CONTACT_FORCE3D, Field_NS::FieldSpec::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
+
       // Add contact forces to forces
       force->Update(1.0, *contactForce, 1.0);
     }
@@ -557,7 +558,7 @@ void PeridigmNS::Peridigm::rebalance() {
   Teuchos::RCP< map<int, vector<int> > > contactNeighborGlobalIDs = Teuchos::rcp(new map<int, vector<int> >());
   Teuchos::RCP< set<int> > offProcessorContactIDs = Teuchos::rcp(new set<int>());
   if(analysisHasContact)
-    contactSearch(rebalancedBondMap, rebalancedNeighborGlobalIDs, rebalancedDecomp, contactNeighborGlobalIDs, offProcessorContactIDs);
+    contactSearch(rebalancedOneDimensionalMap, rebalancedBondMap, rebalancedNeighborGlobalIDs, rebalancedDecomp, contactNeighborGlobalIDs, offProcessorContactIDs);
 
   // add the off-processor IDs required for contact to the list of points that will be ghosted
   for(set<int>::const_iterator it=offProcessorContactIDs->begin() ; it!=offProcessorContactIDs->end() ; it++){
@@ -790,7 +791,8 @@ Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::Peridigm::createRebalance
   return rebalancedNeighborhoodData;
 }
 
-void PeridigmNS::Peridigm::contactSearch(Teuchos::RCP<const Epetra_BlockMap> rebalancedBondMap,
+void PeridigmNS::Peridigm::contactSearch(Teuchos::RCP<const Epetra_BlockMap> rebalancedOneDimensionalMap, 
+                                         Teuchos::RCP<const Epetra_BlockMap> rebalancedBondMap,
                                          Teuchos::RCP<const Epetra_Vector> rebalancedNeighborGlobalIDs,
                                          PdGridData& rebalancedDecomp,
                                          Teuchos::RCP< map<int, vector<int> > > contactNeighborGlobalIDs,
@@ -814,7 +816,7 @@ void PeridigmNS::Peridigm::contactSearch(Teuchos::RCP<const Epetra_BlockMap> reb
       int firstNeighbor = rebalancedBondMap->FirstPointInElementList()[tempLocalID];
       int numNeighbors = rebalancedBondMap->ElementSize(tempLocalID);
       for(int i=0 ; i<numNeighbors ; ++i){
-        int neighborGlobalID = (*rebalancedNeighborGlobalIDs)[firstNeighbor + i];
+        int neighborGlobalID = (int)( (*rebalancedNeighborGlobalIDs)[firstNeighbor + i] );
         bondedNeighbors.push_back(neighborGlobalID);
       }
     }
@@ -826,8 +828,9 @@ void PeridigmNS::Peridigm::contactSearch(Teuchos::RCP<const Epetra_BlockMap> reb
       int globalNeighborID = searchNeighborhood[searchListIndex++];
       list<int>::iterator it = find(bondedNeighbors.begin(), bondedNeighbors.end(), globalNeighborID);
       if(it == bondedNeighbors.end()){
-        offProcessorContactIDs->insert(globalNeighborID); //// CHECK THIS, how do we know it's off-processor?  is this handled downstream?  (if so, rename variable)
         contactNeighborGlobalIDList.push_back(globalNeighborID);
+        if(rebalancedOneDimensionalMap->LID(globalNeighborID) == -1)
+          offProcessorContactIDs->insert(globalNeighborID);
       }
     }
   }
