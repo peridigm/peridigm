@@ -3,6 +3,7 @@
 	<Parameter name="Verbose" type="bool" value="false"/>
         <ParameterList name="Discretization">
           <Parameter name="Type" type="string" value="PdQuickGrid" />
+          <Parameter name="Horizon" type="double" value="0.61"/>         <!-- mm -->
           <Parameter name="NeighborhoodType" type="string" value="Spherical"/>
           <ParameterList name="TensorProduct3DMeshGenerator">
 	  		<Parameter name="Type" type="string" value="PdQuickGrid"/>
@@ -15,7 +16,6 @@
 			<Parameter name="Number Points X" type="int" value="10"/>  
 			<Parameter name="Number Points Y" type="int" value="10"/>
 			<Parameter name="Number Points Z" type="int" value="2"/>
-			<Parameter name="Horizon" type="double" value="0.61"/>         <!-- mm -->
 		</ParameterList>
 	</ParameterList>
     <ParameterList name="Material">
@@ -27,8 +27,8 @@
 	</ParameterList>
 
     <ParameterList name="Contact">
-      <Parameter name="Search Radius" type="double" value="100.0"/>        <!-- mm -->
-      <Parameter name="Search Frequency" type="int" value="10000000000"/>
+      <Parameter name="Search Radius" type="double" value="2.0"/>  <!-- mm -->
+      <Parameter name="Search Frequency" type="int" value="100"/>  <!-- there are about 11400 total steps in the simulation -->
       <ParameterList name="Short Range Force">
         <Parameter name="Contact Radius" type="double" value="0.5"/>       <!-- mm -->
         <Parameter name="Spring Constant" type="double" value="1950.0e3"/> <!-- MPa -->
@@ -75,7 +75,7 @@
 	<ParameterList name="Verlet">
 	  <Parameter name="Initial Time" type="double" value="0.0"/>           <!-- ms -->
 	  <Parameter name="Final Time" type="double" value="0.1"/>             <!-- ms -->
- 	  <Parameter name="Fixed dt" type="double" value="8.7431e-6"/>            <!-- 1.0e-7 ms -->
+ 	  <Parameter name="Fixed dt" type="double" value="8.7431e-6"/>         <!-- ms -->
 	</ParameterList>
   </ParameterList>
   <ParameterList name="Output">
@@ -86,12 +86,8 @@
         <Parameter name="Parallel Write" type="bool" value="true"/>
         <ParameterList name="Material Output Fields">
             <ParameterList name="Linear Elastic">
-                <Parameter name="X Position" type="bool" value="true"/>
-                <Parameter name="Y Position" type="bool" value="true"/>
-                <Parameter name="Z Position" type="bool" value="true"/>
-                <Parameter name="X Velocity" type="bool" value="true"/>
-                <Parameter name="Y Velocity" type="bool" value="true"/>
-                <Parameter name="Z Velocity" type="bool" value="true"/>
+                <Parameter name="Displacement" type="bool" value="true"/>
+                <Parameter name="Velocity" type="bool" value="true"/>
                 <Parameter name="ID" type="bool" value="true"/>
                 <Parameter name="Proc Num" type="bool" value="true"/>
                 <Parameter name="Dilatation" type="bool" value="true"/>
