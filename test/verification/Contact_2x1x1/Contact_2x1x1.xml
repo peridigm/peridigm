@@ -27,7 +27,7 @@
 	</ParameterList>
     <ParameterList name="Contact">
       <Parameter name="Search Radius" type="double" value="5.0"/>          <!-- mm -->
-      <Parameter name="Search Frequency" type="int" value="1"/>
+      <Parameter name="Search Frequency" type="int" value="100"/>
       <ParameterList name="Short Range Force">
         <Parameter name="Contact Radius" type="double" value="2.0"/>       <!-- mm -->
         <Parameter name="Spring Constant" type="double" value="1950.0e3"/> <!-- MPa -->
