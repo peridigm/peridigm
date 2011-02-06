@@ -63,13 +63,13 @@ PeridigmNS::ShortRangeForceContactModel::computeForce(const double dt,
                                                       const int* contactNeighborhoodList,
                                                       PeridigmNS::DataManager& dataManager) const
 {
+  // Zero out the forces
+  dataManager.getData(Field_NS::CONTACT_FORCE3D, Field_NS::FieldSpec::STEP_NP1)->PutScalar(0.0);
+
   double *cellVolume, *y, *contactForce;
   dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&cellVolume);
   dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&y);
   dataManager.getData(Field_NS::CONTACT_FORCE3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&contactForce);
-
-  // Zero out the forces
-  dataManager.getData(Field_NS::CONTACT_FORCE3D, Field_NS::FieldSpec::STEP_NP1)->PutScalar(0.0);
 
   int neighborhoodListIndex = 0;
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
@@ -92,7 +92,6 @@ PeridigmNS::ShortRangeForceContactModel::computeForce(const double dt,
           double neighborVolume = cellVolume[neighborID];
 
           // compute contributions to force density
-            
           contactForce[nodeID*3]       -= temp*neighborVolume*(y[neighborID*3]   - nodeCurrentX[0])/currentDistance;
           contactForce[nodeID*3+1]     -= temp*neighborVolume*(y[neighborID*3+1] - nodeCurrentX[1])/currentDistance;
           contactForce[nodeID*3+2]     -= temp*neighborVolume*(y[neighborID*3+2] - nodeCurrentX[2])/currentDistance;

@@ -110,7 +110,8 @@ namespace PeridigmNS {
                                                                                 Teuchos::RCP<Epetra_Vector> rebalancedNeighborGlobalIDs);
 
     //! Fill the contact neighbor information in rebalancedDecomp and populate contactNeighborsGlobalIDs and offProcesorContactIDs
-    void contactSearch(Teuchos::RCP<const Epetra_BlockMap> rebalancedBondMap,
+    void contactSearch(Teuchos::RCP<const Epetra_BlockMap> rebalancedOneDimensionalMap,
+                       Teuchos::RCP<const Epetra_BlockMap> rebalancedBondMap,
                        Teuchos::RCP<const Epetra_Vector> rebalancedNeighborGlobalIDs,
                        PdGridData& rebalancedDecomp,
                        Teuchos::RCP< std::map<int, std::vector<int> > > contactNeighborGlobalIDs,
