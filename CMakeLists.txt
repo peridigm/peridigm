@@ -240,7 +240,6 @@ link_directories(${LIB_DIRS})
 
 set (REQUIRED_LIBS
 ${BlasLapack_Libraries}  
-mpich
 ${PTHREAD_LIB}
 libgfortran.a
 libm.a
@@ -248,7 +247,6 @@ libm.a
 
 set (UT_REQUIRED_LIBS
 ${BlasLapack_Libraries}  
-mpich 
 libgfortran.a
 ${Boost_LIBRARIES}
 libm.a
