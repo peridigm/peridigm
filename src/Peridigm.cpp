@@ -52,6 +52,7 @@
 #include "PdQuickGrid.h"
 #include "PdZoltan.h"
 #include "InitialCondition.hpp"
+#include "Peridigm_Timer.hpp"
 
 using namespace std;
 
@@ -459,7 +460,9 @@ void PeridigmNS::Peridigm::execute() {
 
     // rebalance, if requested
     if( (analysisHasRebalance && step%rebalanceFrequency == 0) || (analysisHasContact && step%contactRebalanceFrequency == 0) ){
+      PeridigmNS::Timer::self().startTimer("Rebalance");
       rebalance();
+      PeridigmNS::Timer::self().stopTimer("Rebalance");
       x->ExtractView( &xptr );
       u->ExtractView( &uptr );
       y->ExtractView( &yptr );
@@ -480,19 +483,27 @@ void PeridigmNS::Peridigm::execute() {
       (*y)[i] = (*x)[i] + (*u)[i] + dt*(*v)[i];
 
     // Copy data from mothership vectors to overlap vectors in data manager
+    PeridigmNS::Timer::self().startTimer("Gather/Scatter");
     dataManager->getData(Field_NS::DISPL3D, Field_NS::FieldSpec::STEP_NP1)->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
     dataManager->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->Import(*y, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
     dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_NP1)->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+    PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
     // Update forces based on new positions
+    PeridigmNS::Timer::self().startTimer("Model Evaluator");
     modelEvaluator->evalModel(workset);
+    PeridigmNS::Timer::self().stopTimer("Model Evaluator");
 
     // Copy force from the data manager to the mothership vector
+    PeridigmNS::Timer::self().startTimer("Gather/Scatter");
     force->Export(*dataManager->getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
-    
+    PeridigmNS::Timer::self().stopTimer("Gather/Scatter");    
+
     if(analysisHasContact){
       // Copy contact force from the data manager to the mothership vector
+      PeridigmNS::Timer::self().startTimer("Gather/Scatter");
       contactForce->Export(*dataManager->getData(Field_NS::CONTACT_FORCE3D, Field_NS::FieldSpec::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
+      PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
       // Add contact forces to forces
       force->Update(1.0, *contactForce, 1.0);
@@ -516,7 +527,9 @@ void PeridigmNS::Peridigm::execute() {
     t_current = t_initial + (step*dt);
     forceStateDesc->set("Time", t_current);
 
+    PeridigmNS::Timer::self().startTimer("Output");
     outputManager->write(x,u,v,a,force,dataManager,neighborhoodData,forceStateDesc);
+    PeridigmNS::Timer::self().stopTimer("Output");
 
     // swap state N and state NP1
     dataManager->updateState();

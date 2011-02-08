@@ -16,6 +16,7 @@ add_executable (${EXECUTABLE_NAME}
 #        Peridigm_VerletSolver.cpp
 #        Peridigm_VerletIntegrator.cpp
 #        Peridigm_VerletObserver.cpp
+        Peridigm_Timer.cpp
         ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
         ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
         ./materials/Peridigm_CriticalStretchDamageModel.cpp
@@ -48,6 +49,7 @@ add_executable(utPeridigm
         PHAL_Dimension.cpp
         PHAL_PeridigmTraits.cpp
         Peridigm_OutputManager_VTK_XML.cpp
+        Peridigm_Timer.cpp
         ../io/Field.cxx
         ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
         ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
@@ -77,6 +79,7 @@ add_executable(utPeridigm_MPI_np2
         PHAL_Dimension.cpp
         PHAL_PeridigmTraits.cpp
         Peridigm_OutputManager_VTK_XML.cpp
+        Peridigm_Timer.cpp
         ../io/Field.cxx
         ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
         ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
