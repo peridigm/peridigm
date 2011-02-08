@@ -46,6 +46,7 @@
 #include <Teuchos_RCP.hpp>
 
 #include "Peridigm_Factory.hpp"
+#include "Peridigm_Timer.hpp"
 
 /*!
  * \brief The main routine for Peridigm: A parallel, multi-physics,
@@ -65,6 +66,8 @@ int main(int argc, char *argv[]) {
 
   // Set up communicators
   MPI_Comm peridigmComm = MPI_COMM_WORLD;
+
+  PeridigmNS::Timer::self().startTimer("Total");
 
   // Banner
   if(mpi_id == 0){
@@ -126,8 +129,10 @@ int main(int argc, char *argv[]) {
     status = 40;
   }
 
-  if(mpi_id == 0)
-	cout << "\nComplete." << endl;
+  PeridigmNS::Timer::self().stopTimer("Total");
+  if(mpi_id == 0){
+    PeridigmNS::Timer::self().printTimingData(cout);
+  }
 #ifdef HAVE_MPI
   total_time += MPI_Wtime();
   MPI_Barrier(MPI_COMM_WORLD);

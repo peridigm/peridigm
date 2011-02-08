@@ -139,6 +139,7 @@ namespace PeridigmNS {
     Teuchos::RCP<const Epetra_Vector> getV() { return v; }
     Teuchos::RCP<const Epetra_Vector> getA() { return a; }
     Teuchos::RCP<const Epetra_Vector> getForce() { return force; }
+    Teuchos::RCP<const Epetra_Vector> getContactForce() { return contactForce; }
     //@}
 
     //! @name Accessors for neighborhood data
