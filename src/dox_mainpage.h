@@ -4,7 +4,7 @@
  * \section overview Overview
  * Peridigm is a parallel, multi-physics, peridynamics code.
  *
- * Peridigm makes heavy use of the Trilinos package (http://trilinos.sandia.gov).
+ * Peridigm makes heavy use of the Trilinos package, http://trilinos.sandia.gov.
  *
  * \section Peridigm Contributors
  * The following people have contributed to the development of Peridigm:
