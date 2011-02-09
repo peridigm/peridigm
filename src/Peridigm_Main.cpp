@@ -59,7 +59,6 @@ int main(int argc, char *argv[]) {
   int mpi_size = 1;
   #ifdef HAVE_MPI
     MPI_Init(&argc,&argv);
-    double total_time = -MPI_Wtime();
     MPI_Comm_rank(MPI_COMM_WORLD, &mpi_id);
     MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
   #endif
@@ -130,18 +129,11 @@ int main(int argc, char *argv[]) {
   }
 
   PeridigmNS::Timer::self().stopTimer("Total");
-  if(mpi_id == 0){
-    PeridigmNS::Timer::self().printTimingData(cout);
-  }
+  PeridigmNS::Timer::self().printTimingData(cout);
+
 #ifdef HAVE_MPI
-  total_time += MPI_Wtime();
-  MPI_Barrier(MPI_COMM_WORLD);
-  if(mpi_id == 0)
-    cout << "\nTotal time: " << total_time << endl;
   MPI_Finalize() ;
 #endif
-  if(mpi_id == 0)
-    cout << endl;
 
   return status;
 }

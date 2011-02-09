@@ -48,19 +48,24 @@ typedef int MPI_Comm;
 
 namespace PeridigmNS {
 
+//! Singleton class for performance monitoring; manages a set of TimeKeeper objects.
 class Timer {
 
 public:
 
+  //! Destructor.
   ~Timer(){}
 
   //! Singleton.
   static Timer& self();
 
+  //! Starts specified timer, creates the timer if it does not exist.
   void startTimer(std::string name) { timers[name].start(); }
 
+  //! Stops specified timer.
   void stopTimer(std::string name) { timers[name].stop(); }
 
+  //! Prints out a table of timing data.
   void printTimingData(std::ostream &out);
 
 private:
@@ -74,7 +79,7 @@ private:
   Timer& operator=(const Timer&);
   //@}  
 
-  //! Timer keeper class.
+  //! Time keeper class, operates like a stopwatch.
   class TimeKeeper {
 
   public:
@@ -95,15 +100,17 @@ private:
       elapsedTime += epetraTime->ElapsedTime();
     }
 
+    //! Returns the cummulative elapsed time.
     double getElapsedTime() const { return elapsedTime; }
 
   private:
     Teuchos::RCP<Epetra_Time> epetraTime;
     double elapsedTime;
-};
+  };
 
 protected:
 
+  //! Map that associates a name with a TimeKeeper.
   std::map<std::string, TimeKeeper> timers;
 };
 
