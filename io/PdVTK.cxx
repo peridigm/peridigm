@@ -213,6 +213,7 @@ void expandRingPostProcess(double current_time, vtkSmartPointer<vtkUnstructuredG
 	kdTree->SetDataSet(grid);
 	double ri(16.0), ro(17.0), h(1.0);
 	double horizon = 1.01/2;
+	double rho(2.71e-3);
 	/*
 	 * Center point of search: Find points within sphere of radius = horizon
 	 */
@@ -232,12 +233,16 @@ void expandRingPostProcess(double current_time, vtkSmartPointer<vtkUnstructuredG
 	/*
 	 * Compute 'volume' weighted sum over points found
 	 */
-	double sum[3]={0.0,0.0,0.0};
+	double sum[]={0.0,0.0,0.0,0.0};
 	vtkPoints* points = grid->GetPoints();
 	vtkPointData* pointData = grid->GetPointData();
+	vtkDataArray* vData = pointData->GetVectors("Velocity");
 	vtkDataArray* uData = pointData->GetVectors("Displacement");
 	vtkDataArray* volData = pointData->GetScalars("Volume");
 	vtkDataArray* lambdaData = pointData->GetScalars("Lambda");
+	/*
+	 * Weighted volume averages
+	 */
 	for(size_t n=0;n<numPoints;n++){
 		vtkIdType localId = kdTreeList->GetId(n);
 		double *xyz = points->GetPoint(localId);
@@ -256,17 +261,30 @@ void expandRingPostProcess(double current_time, vtkSmartPointer<vtkUnstructuredG
 	kdTreeList->Delete();
 
 	/*
+	 * Calculate kinetic energy
+	 * HERE WE LOOP OVER ALL OWNED POINTS on processor
+	 */
+	for(size_t n=0;n<grid->GetNumberOfPoints();n++){
+		vtkIdType localId = n;
+		double *v = vData->GetTuple3(localId);
+		double volume = volData->GetTuple1(localId);
+		sum[3] += (v[0]*v[0]+v[1]*v[1]+v[2]*v[2]) * volume;
+	}
+
+
+	/*
 	 * Sum across all processors
 	 */
-	int three(3);
-	double totalSum[3]={0.0,0.0,0.0};
-	MPI_Allreduce(sum,totalSum,three,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+	int four(4);
+	double totalSum[]={0.0,0.0,0.0,0.0};
+	MPI_Allreduce(sum,totalSum,four,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
 
 	/*
 	 * Compute averages
 	 */
 	double urAvg = totalSum[1]/totalSum[0];
 	double lambdaAvg = totalSum[2]/totalSum[0];
+	double KE = 0.5 * rho * totalSum[3];
 
 	/*
 	 * write out result on processor '0'
@@ -276,7 +294,7 @@ void expandRingPostProcess(double current_time, vtkSmartPointer<vtkUnstructuredG
 		std::ofstream out;
 		out.open("meanValues.dat",std::ios_base::app);
 		out.precision(9);
-		out << current_time << ", " << urAvg << ", " << lambdaAvg << std::endl;
+		out << current_time << ", " << urAvg << ", " << lambdaAvg << ", " << KE << std::endl;
 		out.close();
 	}
 
