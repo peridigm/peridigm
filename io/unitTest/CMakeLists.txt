@@ -101,4 +101,6 @@ target_link_libraries(utFinitePlaneFilter ${PdMaterialUtilitiesLib} ${IO_LIBS} $
 add_executable(utPd_Y-Z_crack utPd_Y-Z_crack.cxx)
 target_link_libraries(utPd_Y-Z_crack ${PdMaterialUtilitiesLib} ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 
+add_executable(utPd_Y-Z_crack_np4 utPd_Y-Z_crack_np4.cxx)
+target_link_libraries(utPd_Y-Z_crack_np4 ${PdMaterialUtilitiesLib} ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 

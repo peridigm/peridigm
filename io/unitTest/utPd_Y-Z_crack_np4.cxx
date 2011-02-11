@@ -1,7 +1,7 @@
 /*
- * utPd_Y-Z_crack.cxx
+ * utPd_Y-Z_crack_np4.cxx
  *
- *  Created on: Jan 5, 2011
+ *  Created on: Feb 11, 2011
  *      Author: jamitch
  */
 
@@ -13,17 +13,24 @@
 #include "PdZoltan.h"
 #include "PdQuickGrid.h"
 #include "PdQuickGridParallel.h"
+#include "PdutMpiFixture.h"
 #include "PdBondFilter.h"
+#include "PdVTK.h"
+#include "Field.h"
 #include <iostream>
+#include <set>
 
+using namespace Field_NS;
 using namespace PdQuickGrid;
 using namespace PdBondFilter;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
+using namespace Pdut;
 using std::cout;
+using std::set;
 
-const int numProcs = 1;
-const int myRank = 0;
+static int myRank;
+static int numProcs;
 const int nx = 4;
 const int ny = 4;
 const int nz = 3;
@@ -45,7 +52,6 @@ const double _cellVolume = dx*dy*dz;
  * function prototype
  */
 FinitePlane getYZ_CrackPlane();
-
 /*
  * Horizon
  */
@@ -70,8 +76,26 @@ PdGridData getGrid() {
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	RCP<BondFilter> filterPtr=RCP<BondFilter>(new FinitePlaneFilter(crackPlane));
 	gridData = createAndAddNeighborhood(gridData,horizon,filterPtr);
+
+	/*
+	 * Write file for debugging
+	 */
+	/*
+	const FieldSpec myRankSpec(FieldSpec::DEFAULT_FIELDTYPE,FieldSpec::SCALAR,"MyRank");
+	Field<double> X(COORD3D,gridData.myX,gridData.numPoints);
+	Field<int> rankField(myRankSpec,gridData.numPoints);
+	rankField.setValue(myRank);
+
+	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(gridData.myX.get(), gridData.numPoints);
+	PdVTK::writeField(grid,X);
+	PdVTK::writeField(grid,rankField);
+	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer= PdVTK::getWriter("utPd_Y-Z_crack_np4.pvtu", numProcs, myRank, PdVTK::vtkASCII);
+	PdVTK::write(writer,grid);
+	*/
+
 	return gridData;
 }
+
 
 
 FinitePlane getYZ_CrackPlane() {
@@ -105,45 +129,50 @@ void printNeighborhood(int numNeigh, int* neigh){
 	cout << endl;
 }
 
-void assertNeighborhood(){
+void assertNeighborhood_p0(){
 	PdGridData gridData = getGrid();
 	int *neigh = gridData.neighborhood.get();
+	int *gids = gridData.myGlobalIDs.get();
 
 	/*
 	 * There are a total of 48 points = nx * ny * nz = 4 * 4 * 3
+	 * Because of this mesh, each processor should get 12 points
 	 */
-	BOOST_CHECK(numCells == gridData.numPoints);
+	BOOST_CHECK(12 == gridData.numPoints);
 
+	/*
+	 * GIDS ON THIS PROCESSOR
+	 *
+	 */
+	int GIDS[] = {2,3,6,7,18,19,22,23,34,35,38,39};
 	/*
 	 * Expected neighborhood data
 	 *
 	 * TO DO
 	 * FINISH remaining points -- TEDIOUS
-	 * The first 7 points are done below.  Need to finish all 48 points.
+	 * The first 3 points are done below.  Need to finish all 12 points on this processor
 	 */
-	int N[] = {21,21,21,21,29,26,26};
-	int n0[] = { 1, 4, 5, 8, 9, 12, 13, 16, 17, 20, 21, 24, 25, 28, 32, 33, 36, 37, 40, 41, 44 };
-	int n1[] = { 0, 4, 5, 8, 9, 12, 13, 16, 17, 20, 21, 24, 25, 29, 32, 33, 36, 37, 40, 41, 45 };
+	int N[] = {21,21,26};
 	int n2[] = { 3, 6, 7, 10, 11, 14, 15, 18, 19, 22, 23, 26, 27, 30, 34, 35, 38, 39, 42, 43, 46 };
 	int n3[] = { 2, 6, 7, 10, 11, 14, 15, 18, 19, 22, 23, 26, 27, 31, 34, 35, 38, 39, 42, 43, 47 };
-	int n4[] = { 0, 1, 5, 8, 9, 10, 12, 13, 14, 16, 17, 20, 21, 24, 25, 26, 28, 29, 30, 32, 33, 36, 37, 40, 41, 42, 44, 45, 46 };
-	int n5[] = { 0, 1, 4, 8, 9, 12, 13, 14, 16, 17, 20, 21, 24, 25, 28, 29, 30, 32, 33, 36, 37, 40, 41, 44, 45, 46 };
 	int n6[] = { 2, 3, 7, 10, 11, 13, 14, 15, 18, 19, 22, 23, 26, 27, 29, 30, 31, 34, 35, 38, 39, 42, 43, 45, 46, 47 };
-	int* NN[] = {n0,n1,n2,n3,n4,n5,n6};
-	int NUMPOINTS = 7;
+	int* NN[] = {n2,n3,n6};
+	int NUMPOINTS = 3;
 
 
-	for(int j=0;j<NUMPOINTS;j++){
+	for(int j=0;j<NUMPOINTS;j++,gids++){
 
-		int gid=j;
-		int numNeighAnswer = N[gid];
+		BOOST_CHECK(GIDS[j]==*gids);
+		int numNeighAnswer = N[j];
 		int numNeigh = *neigh; neigh++;
-//		cout << "gid, numNeigh = " << gid << ", " << numNeigh << endl;
+//		cout << "rank, gid, numNeigh = " << myRank << ", " << *gids << ", " << numNeigh << endl;
 //		printNeighborhood(numNeigh,neigh);
 		BOOST_CHECK(numNeighAnswer==numNeigh);
-		int *neighAnswer = NN[gid];
+//		int *neighAnswer = NN[j];
+		set<int> neighAnswer(NN[j],NN[j]+numNeigh);
+		set<int>::iterator end = neighAnswer.end();
 		for(int n=0;n<numNeigh;n++){
-			BOOST_CHECK(*(neighAnswer+n)==*(neigh+n));
+			BOOST_CHECK(end != neighAnswer.find(*(neigh+n)));
 		}
 
 		/*
@@ -163,14 +192,69 @@ void assertNeighborhood(){
 
 }
 
+void assertNeighborhood_p1(){
+	PdGridData gridData = getGrid();
+	int *neigh = gridData.neighborhood.get();
+
+	/*
+	 * There are a total of 48 points = nx * ny * nz = 4 * 4 * 3
+	 * Because of this mesh, each processor should get 12 points
+	 */
+	BOOST_CHECK(12 == gridData.numPoints);
+}
+
+void assertNeighborhood_p2(){
+	PdGridData gridData = getGrid();
+	int *neigh = gridData.neighborhood.get();
+
+	/*
+	 * There are a total of 48 points = nx * ny * nz = 4 * 4 * 3
+	 * Because of this mesh, each processor should get 12 points
+	 */
+	BOOST_CHECK(12 == gridData.numPoints);
+
+}
+
+void assertNeighborhood_p3(){
+	PdGridData gridData = getGrid();
+	int *neigh = gridData.neighborhood.get();
+
+	/*
+	 * There are a total of 48 points = nx * ny * nz = 4 * 4 * 3
+	 * Because of this mesh, each processor should get 12 points
+	 */
+	BOOST_CHECK(12 == gridData.numPoints);
+}
+
 bool init_unit_test_suite()
 {
 	// Add a suite for each processor in the test
 	bool success=true;
-	test_suite* proc = BOOST_TEST_SUITE( "utPd_Y-Z_crack" );
-	proc->add(BOOST_TEST_CASE( &assertNeighborhood ));
-	framework::master_test_suite().add( proc );
-	return success;
+	if(0 == myRank){
+		test_suite* proc = BOOST_TEST_SUITE( "utPd_Y-Z_crack_np4_p0" );
+		proc->add(BOOST_TEST_CASE( &assertNeighborhood_p0 ));
+		framework::master_test_suite().add( proc );
+		return success;
+	}
+	if(1 == myRank){
+		test_suite* proc = BOOST_TEST_SUITE( "utPd_Y-Z_crack_np4_p1" );
+		proc->add(BOOST_TEST_CASE( &assertNeighborhood_p1 ));
+		framework::master_test_suite().add( proc );
+		return success;
+	}
+	if(2 == myRank){
+		test_suite* proc = BOOST_TEST_SUITE( "utPd_Y-Z_crack_np4_p2" );
+		proc->add(BOOST_TEST_CASE( &assertNeighborhood_p2 ));
+		framework::master_test_suite().add( proc );
+		return success;
+	}
+	if(3 == myRank){
+		test_suite* proc = BOOST_TEST_SUITE( "utPd_Y-Z_crack_np4_p3" );
+		proc->add(BOOST_TEST_CASE( &assertNeighborhood_p3 ));
+		framework::master_test_suite().add( proc );
+		return success;
+	}
+
 }
 
 
@@ -186,6 +270,23 @@ int main
 		char* argv[]
 )
 {
+	// Initialize MPI and timer
+	PdutMpiFixture myMpi = PdutMpiFixture(argc,argv);
+
+	// These are static (file scope) variables
+	myRank = myMpi.rank;
+	numProcs = myMpi.numProcs;
+	/**
+	 * This test only make sense for numProcs == 4
+	 */
+	if(4 != numProcs){
+		std::cerr << "Unit test runtime ERROR: utPd_Y-Z_crack_np4 only makes sense on 4 processors" << std::endl;
+		std::cerr << "\t Re-run unit test $mpiexec -np 4 ./utPd_Y-Z_crack_np4" << std::endl;
+		myMpi.PdutMpiFixture::~PdutMpiFixture();
+		std::exit(-1);
+	}
+
+
 
 	// Initialize UTF
 	return unit_test_main( init_unit_test, argc, argv );

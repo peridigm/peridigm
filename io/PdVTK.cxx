@@ -179,7 +179,7 @@ vtkSmartPointer<vtkUnstructuredGrid>  getGrid(const vtkSmartPointer<vtkPoints>& 
 	 */
 	vtkSmartPointer<vtkUnstructuredGrid> grid = vtkSmartPointer<vtkUnstructuredGrid>::New();
 	grid->SetPoints(x);
-	grid->SetCells(VTK_VERTEX,cells);
+	grid->SetCells(type,cells);
 
 	return grid;
 }
