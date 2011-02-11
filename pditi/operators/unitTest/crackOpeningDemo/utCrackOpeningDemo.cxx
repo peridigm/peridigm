@@ -1,7 +1,7 @@
 /*
- * utPd_Y-Z_crack.cxx
+ * utCrackOpeningDemo.cxx
  *
- *  Created on: Jan 5, 2011
+ *  Created on: Feb 11, 2011
  *      Author: jamitch
  */
 
@@ -41,10 +41,6 @@ const double dx = xSpec.getCellSize();
 const double dy = ySpec.getCellSize();
 const double dz = zSpec.getCellSize();
 const double _cellVolume = dx*dy*dz;
-/*
- * function prototype
- */
-FinitePlane getYZ_CrackPlane();
 
 /*
  * Horizon
@@ -70,6 +66,7 @@ PdGridData getGrid() {
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	RCP<BondFilter> filterPtr=RCP<BondFilter>(new FinitePlaneFilter(crackPlane));
 	gridData = createAndAddNeighborhood(gridData,horizon,filterPtr);
+
 	return gridData;
 }
 
@@ -107,6 +104,9 @@ void printNeighborhood(int numNeigh, int* neigh){
 
 void assertNeighborhood(){
 	PdGridData gridData = getGrid();
+	FinitePlane crackPlane=getYZ_CrackPlane();
+	RCP<BondFilter> filterPtr=RCP<BondFilter>(new FinitePlaneFilter(crackPlane));
+	gridData = createAndAddNeighborhood(gridData,horizon,filterPtr);
 	int *neigh = gridData.neighborhood.get();
 
 	/*
