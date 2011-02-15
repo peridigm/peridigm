@@ -203,7 +203,10 @@ teuchos
 
 # other required libraries
 # VTK libs
+#set(VTK_LIBS vtkIO vtkGraphics vtkHybrid vtkParallel)
+#set(VTK_LIBS ${VTK_KITS})
 set(VTK_LIBS vtkIO vtkGraphics)
+
 
 set(PdQuickGridLibs PdQuickGrid PdNeighborhood)
 

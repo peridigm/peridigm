@@ -104,3 +104,7 @@ target_link_libraries(utPd_Y-Z_crack ${PdMaterialUtilitiesLib} ${IO_LIBS} ${VTK_
 add_executable(utPd_Y-Z_crack_np4 utPd_Y-Z_crack_np4.cxx)
 target_link_libraries(utPd_Y-Z_crack_np4 ${PdMaterialUtilitiesLib} ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 
+#add_executable(utVTK_ParallelReaderDemo utVTK_ParallelReaderDemo.cxx)
+#target_link_libraries(utVTK_ParallelReaderDemo ${PdMaterialUtilitiesLib} ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+
+
