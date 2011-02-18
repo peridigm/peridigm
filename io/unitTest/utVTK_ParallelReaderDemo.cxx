@@ -26,8 +26,7 @@ int main (int argc, char *argv[])
   mpi->Initialize (&argc, &argv);
   vtkMultiProcessController::SetGlobalController (mpi);
 
-//  cerr << "proc " << mpi->GetLocalProcessId () << " nprocs " << mpi->GetNumberOfProcesses () << endl;
-
+  cerr << "proc " << mpi->GetLocalProcessId () << " nprocs " << mpi->GetNumberOfProcesses () << endl;
   VTK_CREATE (vtkXMLPUnstructuredGridReader, reader);
   reader->SetFileName (argv[1]);
   vtkStreamingDemandDrivenPipeline* exec =
@@ -37,7 +36,7 @@ int main (int argc, char *argv[])
   exec->Update ();
   vtkUnstructuredGrid *grid =
           vtkUnstructuredGrid::SafeDownCast (reader->GetOutput ());
-//  cerr << "grid cells " << grid->GetNumberOfCells () << " points " << grid->GetNumberOfPoints () << endl;
+  cerr << "grid cells " << grid->GetNumberOfCells () << " points " << grid->GetNumberOfPoints () << endl;
 
   mpi->Finalize ();
   return 0;
