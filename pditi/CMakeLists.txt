@@ -45,6 +45,7 @@ add_subdirectory (intrepid/unitTest)
 add_subdirectory (operators)
 add_subdirectory (operators/unitTest)
 add_subdirectory (operators/unitTest/implicitDynamicsDemo_bar)
+add_subdirectory (operators/unitTest/crackOpeningDemo)
 add_subdirectory (operators/unitTest/eigen1D)
 add_subdirectory (operators/unitTest/twoPointPlasticity)
 
