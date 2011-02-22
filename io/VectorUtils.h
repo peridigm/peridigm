@@ -85,7 +85,7 @@ struct Minus : public binary_function< Vector3D, Vector3D, Vector3D > {
 
 struct Plus : public binary_function< Vector3D, Vector3D, Vector3D > {
 	/*
-	 * u - v
+	 * u + v
 	 */
 	Vector3D operator()(const Vector3D& u, const Vector3D& v){
 		double r0=u[0]+v[0];

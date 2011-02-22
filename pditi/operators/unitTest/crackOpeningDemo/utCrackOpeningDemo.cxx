@@ -16,6 +16,7 @@
 #include "PdBondFilter.h"
 #include "PdVTK.h"
 #include "Field.h"
+#include "../utPdITI.h"
 #include "../../PdImpMpiFixture.h"
 #include "../../PdImpMaterials.h"
 #include "../../PdImpOperator.h"
@@ -24,6 +25,8 @@
 #include "../../StageFunction.h"
 #include "../../StageComponentDirichletBc.h"
 #include "../../ComponentDirichletBcSpec.h"
+#include <Epetra_LinearProblem.h>
+#include <AztecOO.h>
 
 #include <iostream>
 
@@ -37,14 +40,15 @@ using PdImp::IsotropicElasticConstitutiveModel;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
 using std::cout;
+using std::endl;
 
 static int numProcs;
 static int myRank;
 /*
  * This should be even so that the crack plane lies between to rows of points
  */
-const int nx = 50;
-const int ny = 50;
+const int nx = 6;
+const int ny = 6;
 const double xStart = -2.5;
 const double xLength = 5.0;
 const double yStart = -2.5;
@@ -72,8 +76,6 @@ const double horizon=1.1*sqrt( (3.0*dx)*(3.0*dx) );
  * Function prototypes in this file
  */
 FinitePlane getYZ_CrackPlane();
-IsotropicHookeSpec getMaterialSpec();
-
 
 /*
  * Young's Modulus (MPa)
@@ -91,11 +93,6 @@ static double nu = 0.0;
 static double rho = 2.7e-3;
 
 
-IsotropicHookeSpec getMaterialSpec() {
-	YoungsModulus youngsModulus = IsotropicHookeSpec::youngsModulus(E);
-	PoissonsRatio poissonsRatio = IsotropicHookeSpec::poissonsRatio(nu);
-	return IsotropicHookeSpec(youngsModulus,poissonsRatio);
-}
 
 
 /*
@@ -112,6 +109,10 @@ IsotropicHookeSpec getMaterialSpec() {
 
 PdGridData getGrid() {
 
+	if(0==myRank){
+		cout << "Creating and load balancing mesh..." << endl;
+	}
+
 	PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
 	PdGridData gridData =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
 	gridData=getLoadBalancedDiscretization(gridData);
@@ -120,26 +121,38 @@ PdGridData getGrid() {
 	gridData = createAndAddNeighborhood(gridData,horizon,filterPtr);
 
 	/*
+	 * Lower left hand corner of crack plane when viewing down
+	 * normal in the +dir
+	 */
+	const double x0 = xStart+xLength/2;
+	const double y0 = yStart;
+	const double z0 = zStart;
+
+	if(0==myRank){
+		cout << "\t\tDONE." << endl;
+		cout << "Total number of points in mesh = " << gridData.globalNumPoints << endl;
+		cout << "nx,ny,nz = " << nx << ", " << ny << ", "<< nz << ", "<< endl;
+		cout << "x0,y0,z0 = " << x0 << ", " << y0 << ", "<< z0 << ", "<< endl;
+	}
+
+	/*
 	 * Write file for debugging
 	 */
-	const FieldSpec myRankSpec(FieldSpec::DEFAULT_FIELDTYPE,FieldSpec::SCALAR,"MyRank");
-	Field<double> X(COORD3D,gridData.myX,gridData.numPoints);
-	Field<int> rankField(myRankSpec,gridData.numPoints);
-	rankField.setValue(myRank);
-
-	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(gridData.myX.get(), gridData.numPoints);
-	PdVTK::writeField(grid,X);
-	PdVTK::writeField(grid,rankField);
-	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer= PdVTK::getWriter("utCrackOpeningDemo.pvtu", numProcs, myRank, PdVTK::vtkBINARY);
-	PdVTK::write(writer,grid);
+//	const FieldSpec myRankSpec(FieldSpec::DEFAULT_FIELDTYPE,FieldSpec::SCALAR,"MyRank");
+//	Field<double> X(COORD3D,gridData.myX,gridData.numPoints);
+//	Field<int> rankField(myRankSpec,gridData.numPoints);
+//	rankField.setValue(myRank);
+//
+//	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(gridData.myX.get(), gridData.numPoints);
+//	PdVTK::writeField(grid,X);
+//	PdVTK::writeField(grid,rankField);
+//	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer= PdVTK::getWriter("utCrackOpeningDemo.pvtu", numProcs, myRank, PdVTK::vtkBINARY);
+//	PdVTK::write(writer,grid);
 
 	return gridData;
 }
 
-shared_ptr<PdImp::PdImpOperator> getPimpOperator(PdGridData& decomp,Epetra_MpiComm& comm) {
-	PdImp::PdImpOperator *op = new PdImp::PdImpOperator(comm,decomp);
-	return shared_ptr<PdImp::PdImpOperator>(op);
-}
+
 
 FinitePlane getYZ_CrackPlane() {
 
@@ -191,12 +204,12 @@ void crackOpeningDemo(){
 	/*
 	 * Material Properties
 	 */
-	IsotropicHookeSpec isotropicSpec = getMaterialSpec();
+	IsotropicHookeSpec isotropicSpec = utPdITI::getMaterialSpec(E,nu);
 
 	/*
 	 * Create PdITI Operator
 	 */
-	shared_ptr<PdImp::PdImpOperator> op = getPimpOperator(gridData,comm);
+	shared_ptr<PdImp::PdImpOperator> op = utPdITI::getPimpOperator(gridData,comm);
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
 	op->addConstitutiveModel(fIntOperator);
 
@@ -235,6 +248,70 @@ void crackOpeningDemo(){
 	uOwnedField.setValue(0.0);
 	bcApplied->applyKinematics(1.0,uOwnedField);
 	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op->getRowStiffnessOperator(uOwnedField,horizon);
+
+	/*
+	 * Create graph
+	 */
+	shared_ptr<Epetra_CrsGraph> graphPtr = utPdITI::getGraph(jacobian);
+
+	/*
+	 * Create Epetra_RowMatrix
+	 */
+	shared_ptr<Epetra_RowMatrix> mPtr = utPdITI::getOperator(bcs,graphPtr,jacobian);
+
+	/*
+	 * Create force field
+	 * IN this case,
+	 * 1) Compute internal force with displacement vector that has kinematics applied
+	 * 2) Negate internal force since we are using it as a residual on the RHS (THIS IS NOT DONE -- SIGNS need to be investigated)
+	 * 3) Apply kinematics to this vector so that solution properly includes the applied kinematics
+	 */
+	Field_NS::FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
+	Field_NS::Field<double> fN(fNSpec,gridData.numPoints);
+	fN.setValue(0.0);
+	op->computeInternalForce(uOwnedField,fN);
+	bcApplied->applyKinematics(1.0,fN);
+
+	Epetra_LinearProblem linProblem;
+	linProblem.SetOperator(mPtr.get());
+	linProblem.AssertSymmetric();
+
+	const Epetra_BlockMap& rangeMap  = mPtr->OperatorRangeMap();
+	const Epetra_BlockMap& domainMap  = mPtr->OperatorDomainMap();
+
+	double *f = fN.getArray().get();
+	Epetra_Vector rhs(View,rangeMap,f);
+	Epetra_Vector lhs(View,domainMap,uOwnedField.getArray().get());
+
+	linProblem.SetRHS(&rhs);
+	linProblem.SetLHS(&lhs);
+	BOOST_CHECK(0==linProblem.CheckInput());
+
+	AztecOO solver(linProblem);
+	solver.SetAztecOption(AZ_precond, AZ_Jacobi);
+	BOOST_CHECK(0==solver.CheckInput());
+	solver.Iterate(500,1e-6);
+	/*
+	 * Write problem set up parameters to file
+	 */
+	Field_NS::FieldSpec deltaSpec(FieldSpec::VELOCITY,FieldSpec::VECTOR3D,"delta");
+	Field_NS::Field<double> delta(deltaSpec,gridData.numPoints);
+	delta.setValue(0.0);
+	bcApplied->applyKinematics(1.0,delta);
+
+	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(gridData.myX,gridData.numPoints);
+
+	/*
+	 * Add processor rank to output
+	 */
+	Field_NS::Field<int> myRank(Field_NS::PROC_NUM,gridData.numPoints);
+	myRank.setValue(comm.MyPID());
+
+	PdVTK::writeField(grid,uOwnedField);
+	PdVTK::writeField(grid,delta);
+	writeField<int>(grid,myRank);
+	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("utPimp_pullCylinder_npX.pvtu", comm.NumProc(), comm.MyPID());
+	PdVTK::write(writer,grid);
 
 }
 
