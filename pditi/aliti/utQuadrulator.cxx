@@ -24,7 +24,7 @@ static int myRank;
 void getGrid(){
 	double x0 = 0.0, y0 = 0.0;
 	size_t nx = 3, ny = 3;
-	size_t hx = 1.0, hy = 1.0;
+	double hx = 1.0, hy = 1.0;
 	Quadrulator reader (x0, y0, nx, hx, ny, hy);
 
 	ArrayRCP<size_t> links = reader.getVertexLinks();

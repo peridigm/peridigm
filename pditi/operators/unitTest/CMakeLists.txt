@@ -14,6 +14,9 @@
 #endif (NOT ${buildInSource})
 #
 
+#unit test library for PdITI library
+add_library(utPdITI utPdITI.cxx)
+
 # Add test
 add_executable(utPdImpMatrix_np2_11x1x1 utPdImpMatrix_np2_11x1x1.cxx)
 target_link_libraries(utPdImpMatrix_np2_11x1x1 PdImpOperators ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
@@ -62,7 +65,7 @@ add_test (utPdImp_constantBodyLoad python run_unit_test.py ./utPdImp_constantBod
 
 # Add test
 add_executable(utPdImp_pullCylinder_npX utPdImp_pullCylinder_npX.cxx)
-target_link_libraries(utPdImp_pullCylinder_npX PdImpOperators ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdImp_pullCylinder_npX utPdITI PdImpOperators ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 #add_test (utPdImp_pullCylinder_npX python run_unit_test.py mpiexec -np 4 ./utPdImp_pullCylinder_npX)
 
 # Add test
