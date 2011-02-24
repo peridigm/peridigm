@@ -222,8 +222,8 @@ void rebalanceTwoPointModel()
   Epetra_Vector curcoord3dNP1(*peridigm->getDataManager()->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1));
   Epetra_Vector veloc3dN(*peridigm->getDataManager()->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_N));
   Epetra_Vector veloc3dNP1(*peridigm->getDataManager()->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_NP1));
-  Epetra_Vector force3dN(*peridigm->getDataManager()->getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_N));
-  Epetra_Vector force3dNP1(*peridigm->getDataManager()->getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1));
+  Epetra_Vector force3dN(*peridigm->getDataManager()->getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_N));
+  Epetra_Vector force3dNP1(*peridigm->getDataManager()->getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1));
   Epetra_Vector dilatationN(*peridigm->getDataManager()->getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_N));
   Epetra_Vector dilatationNP1(*peridigm->getDataManager()->getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1));
   Epetra_Vector damageN(*peridigm->getDataManager()->getData(Field_NS::DAMAGE, Field_NS::FieldSpec::STEP_N));
@@ -271,10 +271,10 @@ void rebalanceTwoPointModel()
     BOOST_CHECK_CLOSE(veloc3dN[i], (*dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_N))[i], 1.0e-15);
   for(int i=0 ; i<dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_NP1)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(veloc3dNP1[i], (*dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_NP1))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_N)->MyLength() ; ++i)
-    BOOST_CHECK_CLOSE(force3dN[i], (*dataManager->getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_N))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1)->MyLength() ; ++i)
-    BOOST_CHECK_CLOSE(force3dNP1[i], (*dataManager->getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1))[i], 1.0e-15);
+  for(int i=0 ; i<dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_N)->MyLength() ; ++i)
+    BOOST_CHECK_CLOSE(force3dN[i], (*dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_N))[i], 1.0e-15);
+  for(int i=0 ; i<dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1)->MyLength() ; ++i)
+    BOOST_CHECK_CLOSE(force3dNP1[i], (*dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1))[i], 1.0e-15);
   for(int i=0 ; i<dataManager->getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_N)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(dilatationN[i], (*dataManager->getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_N))[i], 1.0e-15);
   for(int i=0 ; i<dataManager->getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1)->MyLength() ; ++i)
@@ -326,8 +326,8 @@ void rebalanceFourPointModel()
   Epetra_Vector curcoord3dNP1(*peridigm->getDataManager()->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1));
   Epetra_Vector veloc3dN(*peridigm->getDataManager()->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_N));
   Epetra_Vector veloc3dNP1(*peridigm->getDataManager()->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_NP1));
-  Epetra_Vector force3dN(*peridigm->getDataManager()->getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_N));
-  Epetra_Vector force3dNP1(*peridigm->getDataManager()->getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1));
+  Epetra_Vector force3dN(*peridigm->getDataManager()->getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_N));
+  Epetra_Vector force3dNP1(*peridigm->getDataManager()->getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1));
   Epetra_Vector dilatationN(*peridigm->getDataManager()->getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_N));
   Epetra_Vector dilatationNP1(*peridigm->getDataManager()->getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1));
   Epetra_Vector damageN(*peridigm->getDataManager()->getData(Field_NS::DAMAGE, Field_NS::FieldSpec::STEP_N));
@@ -375,10 +375,10 @@ void rebalanceFourPointModel()
     BOOST_CHECK_CLOSE(veloc3dN[i], (*dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_N))[i], 1.0e-15);
   for(int i=0 ; i<dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_NP1)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(veloc3dNP1[i], (*dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_NP1))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_N)->MyLength() ; ++i)
-    BOOST_CHECK_CLOSE(force3dN[i], (*dataManager->getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_N))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1)->MyLength() ; ++i)
-    BOOST_CHECK_CLOSE(force3dNP1[i], (*dataManager->getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1))[i], 1.0e-15);
+  for(int i=0 ; i<dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_N)->MyLength() ; ++i)
+    BOOST_CHECK_CLOSE(force3dN[i], (*dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_N))[i], 1.0e-15);
+  for(int i=0 ; i<dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1)->MyLength() ; ++i)
+    BOOST_CHECK_CLOSE(force3dNP1[i], (*dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1))[i], 1.0e-15);
   for(int i=0 ; i<dataManager->getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_N)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(dilatationN[i], (*dataManager->getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_N))[i], 1.0e-15);
   for(int i=0 ; i<dataManager->getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1)->MyLength() ; ++i)

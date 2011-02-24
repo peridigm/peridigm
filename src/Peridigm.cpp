@@ -90,8 +90,8 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   variableSpecs->push_back(Field_NS::DISPL3D);
   variableSpecs->push_back(Field_NS::CURCOORD3D);
   variableSpecs->push_back(Field_NS::VELOC3D);
-  variableSpecs->push_back(Field_NS::FORCE3D);
-  variableSpecs->push_back(Field_NS::CONTACT_FORCE3D);
+  variableSpecs->push_back(Field_NS::FORCE_DENSITY3D);
+  variableSpecs->push_back(Field_NS::CONTACT_FORCE_DENSITY3D);
   // Add the variable specs requested by each material
   for(unsigned int i=0; i<materialModels->size() ; ++i){
     Teuchos::RCP< std::vector<Field_NS::FieldSpec> > matVariableSpecs = (*materialModels)[i]->VariableSpecs();
@@ -496,13 +496,13 @@ void PeridigmNS::Peridigm::execute() {
 
     // Copy force from the data manager to the mothership vector
     PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-    force->Export(*dataManager->getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
+    force->Export(*dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");    
 
     if(analysisHasContact){
       // Copy contact force from the data manager to the mothership vector
       PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-      contactForce->Export(*dataManager->getData(Field_NS::CONTACT_FORCE3D, Field_NS::FieldSpec::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
+      contactForce->Export(*dataManager->getData(Field_NS::CONTACT_FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
       PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
       // Add contact forces to forces

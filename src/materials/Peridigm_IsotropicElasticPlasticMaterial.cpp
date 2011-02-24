@@ -53,7 +53,7 @@ m_damageModel()
     m_variableSpecs->push_back(Field_NS::DILATATION);
     m_variableSpecs->push_back(Field_NS::COORD3D);
     m_variableSpecs->push_back(Field_NS::CURCOORD3D);
-    m_variableSpecs->push_back(Field_NS::FORCE3D);
+    m_variableSpecs->push_back(Field_NS::FORCE_DENSITY3D);
     m_variableSpecs->push_back(Field_NS::DEVIATORIC_PLASTIC_EXTENSION);
     m_variableSpecs->push_back(Field_NS::LAMBDA);
     m_variableSpecs->push_back(Field_NS::BOND_DAMAGE);
@@ -141,16 +141,16 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const double dt,
       dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&y);
       dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&volume);
       dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dilatation);
-	  dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
+      dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
       dataManager.getData(Field_NS::BOND_DAMAGE, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&bondDamage);
-	  dataManager.getData(Field_NS::DEVIATORIC_PLASTIC_EXTENSION, Field_NS::FieldSpec::STEP_N)->ExtractView(&edpN);
-	  dataManager.getData(Field_NS::DEVIATORIC_PLASTIC_EXTENSION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&edpNP1);
-	  dataManager.getData(Field_NS::LAMBDA, Field_NS::FieldSpec::STEP_N)->ExtractView(&lambdaN);
-	  dataManager.getData(Field_NS::LAMBDA, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&lambdaNP1);
-      dataManager.getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&force);
+      dataManager.getData(Field_NS::DEVIATORIC_PLASTIC_EXTENSION, Field_NS::FieldSpec::STEP_N)->ExtractView(&edpN);
+      dataManager.getData(Field_NS::DEVIATORIC_PLASTIC_EXTENSION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&edpNP1);
+      dataManager.getData(Field_NS::LAMBDA, Field_NS::FieldSpec::STEP_N)->ExtractView(&lambdaN);
+      dataManager.getData(Field_NS::LAMBDA, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&lambdaNP1);
+      dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&force);
 
       // Zero out the force
-      dataManager.getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1)->PutScalar(0.0);
+      dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1)->PutScalar(0.0);
 
 	  PdMaterialUtilities::computeInternalForceIsotropicElasticPlastic
         (x,

@@ -55,7 +55,7 @@ PeridigmNS::LinearElasticIsotropicMaterial::LinearElasticIsotropicMaterial(const
   m_variableSpecs->push_back(Field_NS::DILATATION);
   m_variableSpecs->push_back(Field_NS::COORD3D);
   m_variableSpecs->push_back(Field_NS::CURCOORD3D);
-  m_variableSpecs->push_back(Field_NS::FORCE3D);
+  m_variableSpecs->push_back(Field_NS::FORCE_DENSITY3D);
   m_variableSpecs->push_back(Field_NS::BOND_DAMAGE);
 
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > damageModelVariableSpecs;
@@ -158,7 +158,7 @@ PeridigmNS::LinearElasticIsotropicMaterial::computeForce(const double dt,
                                                          PeridigmNS::DataManager& dataManager) const
 {
   // Zero out the forces
-  dataManager.getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1)->PutScalar(0.0);
 
   // Extract pointers to the underlying data
   double *x, *y, *cellVolume, *weightedVolume, *dilatation, *bondDamage, *force;
@@ -168,7 +168,7 @@ PeridigmNS::LinearElasticIsotropicMaterial::computeForce(const double dt,
   dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
   dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dilatation);
   dataManager.getData(Field_NS::BOND_DAMAGE, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&bondDamage);
-  dataManager.getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&force);
+  dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&force);
 
   PdMaterialUtilities::computeInternalForceLinearElastic(x,y,weightedVolume,cellVolume,dilatation,bondDamage,force,neighborhoodList,numOwnedPoints,m_bulkModulus,m_shearModulus);
 }

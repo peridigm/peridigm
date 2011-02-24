@@ -64,12 +64,12 @@ PeridigmNS::ShortRangeForceContactModel::computeForce(const double dt,
                                                       PeridigmNS::DataManager& dataManager) const
 {
   // Zero out the forces
-  dataManager.getData(Field_NS::CONTACT_FORCE3D, Field_NS::FieldSpec::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(Field_NS::CONTACT_FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1)->PutScalar(0.0);
 
   double *cellVolume, *y, *contactForce;
   dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&cellVolume);
   dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&y);
-  dataManager.getData(Field_NS::CONTACT_FORCE3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&contactForce);
+  dataManager.getData(Field_NS::CONTACT_FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&contactForce);
 
   int neighborhoodListIndex = 0;
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
