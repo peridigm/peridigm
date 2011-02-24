@@ -148,7 +148,7 @@ void testTwoPts()
 				   neighborhoodList,
                    dataManager);
 
-  Epetra_Vector& force = *dataManager.getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1);
+  Epetra_Vector& force = *dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1);
   BOOST_CHECK_CLOSE(force[0], 2.34e+12, 1.0e-2);
   BOOST_CHECK_SMALL(force[1], 1.0e-14);
   BOOST_CHECK_SMALL(force[2], 1.0e-14);
@@ -374,7 +374,7 @@ void testEightPts()
   unit_vec[0] = 1.0/vec_mag; unit_vec[1] = 1.0/vec_mag; unit_vec[2] = 0.98/vec_mag;
   f[0] += 2.0*unit_vec[0]*t; f[1] += 2.0*unit_vec[1]*t; f[2] += 2.0*unit_vec[2]*t;
 
-  Epetra_Vector& force = *dataManager.getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1);
+  Epetra_Vector& force = *dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1);
 
   // assert the net force on cell 0
   BOOST_CHECK_CLOSE(force[0], f[0], 1.0e-11);
@@ -549,7 +549,7 @@ void testThreePts()
 				   neighborhoodList,
                    dataManager);
 
-  Epetra_Vector& force = *dataManager.getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1);
+  Epetra_Vector& force = *dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1);
 
   // check the net forces against hand calculations
   double ref_soln_x, ref_soln_y, ref_soln_z;

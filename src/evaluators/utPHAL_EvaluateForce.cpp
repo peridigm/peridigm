@@ -192,7 +192,7 @@ void testTwoPts()
   evaluator.evaluateFields(workset);
 
   // assert the data in forceOverlap
-  Epetra_Vector& force = *dataManager.getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1);
+  Epetra_Vector& force = *dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1);
   double node0ForceX = force[0];
   BOOST_CHECK_CLOSE(node0ForceX, 2.34e12, 1.0e-14);
   double node0ForceY = force[1];
