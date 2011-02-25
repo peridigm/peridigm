@@ -110,20 +110,16 @@ void createNeighborhood() {
 	PdGridData decomp = getGrid();
 	BOOST_CHECK(1==decomp.numPoints);
 	BOOST_CHECK(4==decomp.globalNumPoints);
-	PDNEIGH::NeighborhoodList list(decomp.numPoints,decomp.myGlobalIDs,decomp.myX,2.0*horizon);
+	shared_ptr<BondFilter> bondFilterPtr(new PdBondFilter::BondFilterWithSelf());
+	PDNEIGH::NeighborhoodList list(decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,2.0*horizon,bondFilterPtr);
 	shared_ptr< std::set<int> > frameSet = constructFrame(list);
-	RCP<BondFilter> bondFilterPtr(new PdBondFilter::BondFilterWithSelf());
-	decomp = createAndAddNeighborhood(decomp,2*horizon,bondFilterPtr);
-
-	BOOST_CHECK(1==decomp.numPoints);
-	BOOST_CHECK(4==decomp.globalNumPoints);
-	BOOST_CHECK(5==decomp.sizeNeighborhoodList);
+	BOOST_CHECK(5==list.get_size_neighborhood_list());
 	/*
 	 * Neighborhood of every point should have every other point
 	 */
 	int n[] = {0,1,2,3};
 	set<int> neighSet(n,n+4);
-	int *neighborhood = decomp.neighborhood.get();
+	int *neighborhood = list.get_neighborhood().get();
 	int numNeigh = *neighborhood;
 	BOOST_CHECK(4==numNeigh);
 	neighborhood++;
