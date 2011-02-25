@@ -11,8 +11,10 @@
 #include <tr1/memory>
 #include <set>
 #include "Epetra_BlockMap.h"
+#include "PdBondFilter.h"
 
 class Epetra_Comm;
+struct Zoltan_Struct;
 
 /**
  *
@@ -58,14 +60,26 @@ template<class T> struct ArrayDeleter{
 class NeighborhoodList {
 
 public:
-	NeighborhoodList(size_t numOwnedPoints, shared_ptr<int>& ownedGIDs, shared_ptr<double>& owned_coordinates, double horizon);
+	NeighborhoodList(
+			struct Zoltan_Struct* zz,
+			size_t numOwnedPoints,
+			shared_ptr<int>& ownedGIDs,
+			shared_ptr<double>& owned_coordinates,
+			double horizon,
+			shared_ptr<PdBondFilter::BondFilter> bondFilterPtr
+			);
+	shared_ptr<int> get_neighborhood_ptr() const;
+	shared_ptr<int> get_neighborhood() const;
+	const int* get_neighborhood (int localId) const;
+	int get_size_neighborhood_list() const;
 	const Epetra_BlockMap getOverlapMap(const Epetra_Comm& comm, int ndf) const;
 	const Epetra_BlockMap getOwnedMap(const Epetra_Comm& comm, int ndf) const;
 	shared_ptr< std::set<int> > constructParallelDecompositionFrameSet() const;
 
 private:
 	pair<int, shared_ptr<int> > getSharedGlobalIds() const;
-
+	void buildNeighborhoodList(int numOverlapPoints,shared_ptr<double> xOverlapPtr);
+	void createAndAddNeighborhood();
 
 private:
 	size_t num_owned_points, size_neighborhood_list;
@@ -73,6 +87,8 @@ private:
 	shared_ptr<int> owned_gids;
 	shared_ptr<double> owned_x;
 	shared_ptr<int> neighborhood, neighborhood_ptr;
+	struct Zoltan_Struct* zoltan;
+	shared_ptr<PdBondFilter::BondFilter> filter_ptr;
 
 };
 
