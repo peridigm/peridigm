@@ -26,6 +26,8 @@
 using std::deque;
 using std::string;
 
+class vtkPoints;
+
 namespace PdVTK {
 
 enum VTK_FILE_TYPE { vtkASCII=0, vtkBINARY };
@@ -50,12 +52,12 @@ void expandRingPostProcess(double current_time, vtkSmartPointer<vtkUnstructuredG
 /*
  * END TEMPORARY
  */
+double compute_hex8_volume(vtkPoints* points);
 vtkSmartPointer<vtkPoints> createVTK_Points(double *yPtr, int numPoints);
 vtkSmartPointer<vtkCellArray> createVTK_quadCells(size_t* vLinks, int numCells);
 vtkSmartPointer<vtkUnstructuredGrid> getGrid(shared_ptr<double>& y, int numPoints);
 vtkSmartPointer<vtkUnstructuredGrid> getGrid(double *y, int numPoints);
 vtkSmartPointer<vtkUnstructuredGrid> getGrid(const vtkSmartPointer<vtkPoints>& x, const vtkSmartPointer<vtkCellArray>& cells, VTKCellType type=VTK_VERTEX);
-
 vtkSmartPointer<vtkXMLPUnstructuredGridWriter> getWriter(const char* _fileName, int numProcs, int rank, VTK_FILE_TYPE type=vtkBINARY);
 void write(vtkSmartPointer<vtkXMLPUnstructuredGridWriter> w, vtkSmartPointer<vtkUnstructuredGrid> g);
 
