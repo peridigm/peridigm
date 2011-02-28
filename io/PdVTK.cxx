@@ -13,6 +13,7 @@
 #include "vtkCellData.h"
 #include <vtkDoubleArray.h>
 #include "PdQuickGrid.h"
+#include "VectorUtils.h"
 
 #include "mpi.h"
 
@@ -298,6 +299,53 @@ void expandRingPostProcess(double current_time, vtkSmartPointer<vtkUnstructuredG
 		out.close();
 	}
 
+}
+
+using VectorUtilsNS::Vector3D;
+double scalar_triple_product(const Vector3D& a, const Vector3D& b, const Vector3D& c){
+	double v;
+	double a11 = a[0], a12 = b[0], a13 = c[0];
+	double a21 = a[1], a22 = b[1], a23 = c[1];
+	double a31 = a[2], a32 = b[2], a33 = c[2];
+	v=a11*(a22*a33-a23*a32)-a12*(a21*a33-a23*a31)+a13*(a21*a32-a22*a31);
+	return v;
+}
+
+/**
+ * Computes volume of a single HEX8: Smokin Fast!
+ * Perhaps this calculation is done with very nearly the least
+ * number of flops.
+ * Note that there can only be 8 incoming points
+ * Order of points must be according to VTK convention (also same as exodus)  */
+double compute_hex8_volume(vtkPoints* points){
+	using namespace VectorUtilsNS;
+	/*
+	 * swap points 2 & 3
+	 * swap points 6 & 7
+	 */
+	int map[] = {0,1,3,2,4,5,7,6};
+	double xyz[3];
+	Vector3D x[8];
+	for(int p=0;p<8;p++){
+		points->GetPoint(map[p],xyz);
+		x[p]=Vector3D(xyz);
+	}
+	Minus m;
+	Vector3D x17(m(x[7],x[1]));
+	Vector3D x27(m(x[7],x[2]));
+	Vector3D x47(m(x[7],x[4]));
+	Vector3D x06(m(x[6],x[0]));
+	Vector3D x05(m(x[5],x[0]));
+	Vector3D x03(m(x[3],x[0]));
+
+	Plus p;
+	Vector3D A(p(x17,x06));
+	double v1 = scalar_triple_product(A,x27,x03);
+	Vector3D B(p(x27,x05));
+	double v2 = scalar_triple_product(x06,B,x47);
+	Vector3D C(p(x47,x03));
+	double v3 = scalar_triple_product(x17,x05,C);
+	return (v1+v2+v3)/12;
 }
 
 
