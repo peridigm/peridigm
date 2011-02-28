@@ -68,6 +68,8 @@ public:
 			double horizon,
 			shared_ptr<PdBondFilter::BondFilter> bondFilterPtr
 			);
+	int get_num_owned_points() const;
+	int get_num_neigh (int localId) const;
 	shared_ptr<int> get_neighborhood_ptr() const;
 	shared_ptr<int> get_neighborhood() const;
 	const int* get_neighborhood (int localId) const;
@@ -86,7 +88,7 @@ private:
 	double horizon;
 	shared_ptr<int> owned_gids;
 	shared_ptr<double> owned_x;
-	shared_ptr<int> neighborhood, neighborhood_ptr;
+	shared_ptr<int> neighborhood, neighborhood_ptr, num_neighbors;
 	struct Zoltan_Struct* zoltan;
 	shared_ptr<PdBondFilter::BondFilter> filter_ptr;
 
