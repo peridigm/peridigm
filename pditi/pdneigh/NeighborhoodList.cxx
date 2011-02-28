@@ -44,6 +44,10 @@ private:
 };
 
 
+int NeighborhoodList::get_num_owned_points() const {
+	return num_owned_points;
+}
+
 shared_ptr<int> NeighborhoodList::get_neighborhood_ptr() const {
 	return neighborhood_ptr;
 }
@@ -59,6 +63,10 @@ const int* NeighborhoodList::get_neighborhood (int localId) const {
 
 int NeighborhoodList::get_size_neighborhood_list () const {
 	return size_neighborhood_list;
+}
+
+int NeighborhoodList::get_num_neigh (int localId) const {
+	return *(num_neighbors.get()+localId);
 }
 
 NeighborhoodList::NeighborhoodList
@@ -78,6 +86,7 @@ NeighborhoodList::NeighborhoodList
 		owned_x(owned_coordinates),
 		neighborhood(new int[1],ArrayDeleter<int>()),
 		neighborhood_ptr(new int[numOwnedPoints],ArrayDeleter<int>()),
+		num_neighbors(new int[numOwnedPoints],ArrayDeleter<int>()),
 		zoltan(zz),
 		filter_ptr(bondFilterPtr)
 {
@@ -365,11 +374,12 @@ void NeighborhoodList::createAndAddNeighborhood(){
 	 */
 	size_neighborhood_list=num_owned_points;
 	int *gidNeigh = neighborhood.get();
+	int *num_neigh = num_neighbors.get();
 	int *gIdsOverlap = gIdsOverlapArray.get();
-	for(int p=0;p<num_owned_points;p++){
-		int numNeigh = *gidNeigh; gidNeigh++;
-		size_neighborhood_list += numNeigh;
-		for(int n=0;n<numNeigh;n++,gidNeigh++){
+	for(int p=0;p<num_owned_points;p++,num_neigh++){
+		*num_neigh = *gidNeigh; gidNeigh++;
+		size_neighborhood_list += *num_neigh;
+		for(int n=0;n<*num_neigh;n++,gidNeigh++){
 			*gidNeigh = *(gIdsOverlap+*gidNeigh);
 		}
 	}
