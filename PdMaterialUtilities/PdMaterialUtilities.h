@@ -33,29 +33,7 @@
 #define PDMATERIALUTILITIES_H_
 namespace PdMaterialUtilities {
 
-//void computeDilatation
-//(
-//		std::tr1::shared_ptr<double> xOverlapPtr,
-//		std::tr1::shared_ptr<double> yOverlapPtr,
-//		double *mOwned,
-//		std::tr1::shared_ptr<double> volumeOverlapPtr,
-//		double* dilatationOwned,
-//		std::tr1::shared_ptr<int> localNeighborList,
-//		int numOwnedPoints
-//);
 
-//void computeInternalForce
-//(
-//		std::tr1::shared_ptr<double> xOverlapPtr,
-//		std::tr1::shared_ptr<double> yOverlapPtr,
-//		double *mOwned,
-//		std::tr1::shared_ptr<double> volumeOverlapPtr,
-//		double *dilatationOwned,
-//		std::tr1::shared_ptr<double> fInternalOverlapPtr,
-//		std::tr1::shared_ptr<int> localNeighborList,
-//		int numOwnedPoints,
-//		Pimp::PimpIsotropicHookeSpec matSpec
-//);
 
 void computeWeightedVolume
 (
@@ -152,6 +130,16 @@ double computeDeviatoricForceStateNorm
 		const double *volumeOverlap,
 		double alpha,
 		double OMEGA
+);
+
+double probeShearModulusScaleFactor
+(
+		int numNeigh,
+		const int *neighPtr,
+		const double *X,
+		const double *xOverlap,
+		const double *volumeOverlap,
+		double horizon
 );
 
 }

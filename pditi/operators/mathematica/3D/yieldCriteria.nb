@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       145,          7]
-NotebookDataLength[     12557,        378]
-NotebookOptionsPosition[     11312,        332]
-NotebookOutlinePosition[     11752,        349]
-CellTagsIndexPosition[     11709,        346]
+NotebookDataLength[     13935,        422]
+NotebookOptionsPosition[     12579,        372]
+NotebookOutlinePosition[     13015,        389]
+CellTagsIndexPosition[     12972,        386]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -165,7 +165,47 @@ Cell[BoxData[
   SuperscriptBox[
    RowBox[{"Sin", "[", "\[Theta]", "]"}], "2"], " ", 
   RowBox[{"Sin", "[", "\[Phi]", "]"}]}]], "Output",
- CellChangeTimes->{3.484482089158963*^9}]
+ CellChangeTimes->{3.484482089158963*^9, 3.5079953191019297`*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   RowBox[{"Integrate", "[", 
+    RowBox[{
+     RowBox[{"Integrate", "[", 
+      RowBox[{
+       RowBox[{"Integrate", "[", 
+        RowBox[{
+         RowBox[{
+          RowBox[{"Power", "[", 
+           RowBox[{"e", ",", "2"}], "]"}], " ", 
+          SuperscriptBox[
+           RowBox[{"Abs", "[", "\[Xi]", "]"}], "2"], "  ", 
+          RowBox[{"Sin", "[", "\[Theta]", "]"}]}], ",", 
+         RowBox[{"{", 
+          RowBox[{"\[Xi]", ",", "0", ",", "\[Delta]"}], "}"}]}], "]"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"\[Theta]", ",", "0", ",", "Pi"}], "}"}]}], "]"}], ",", 
+     RowBox[{"{", 
+      RowBox[{"\[Phi]", ",", "0", ",", 
+       RowBox[{"2", " ", "Pi"}]}], "}"}]}], "]"}], "/.", 
+   RowBox[{
+    SuperscriptBox[
+     RowBox[{"Abs", "[", "\[Delta]", "]"}], "4"], "\[Rule]", 
+    RowBox[{"Power", "[", 
+     RowBox[{"\[Delta]", ",", "4"}], "]"}]}]}], 
+  "\[IndentingNewLine]"}]], "Input",
+ CellChangeTimes->{{3.507995329260736*^9, 3.507995376608408*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  FractionBox["4", "75"], " ", "\[Pi]", " ", 
+  SuperscriptBox["\[Gamma]", "2"], " ", 
+  SuperscriptBox["\[Delta]", "5"]}]], "Output",
+ CellChangeTimes->{3.507995383554098*^9}]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -331,7 +371,7 @@ Cell[BoxData[
  CellChangeTimes->{{3.4844953621947393`*^9, 3.4844953749944143`*^9}}]
 },
 WindowSize->{1415, 1016},
-WindowMargins->{{-1425, Automatic}, {Automatic, 0}},
+WindowMargins->{{0, Automatic}, {Automatic, 0}},
 Magnification:>FEPrivate`If[
   FEPrivate`Equal[FEPrivate`$VersionNumber, 6.], 1.5, 1.5 Inherited],
 FrontEndVersion->"7.0 for Linux x86 (64-bit) (February 25, 2009)",
@@ -354,32 +394,36 @@ Cell[1662, 51, 274, 9, 56, "Output"]
 }, Open  ]],
 Cell[1951, 63, 175, 4, 44, "Text"],
 Cell[CellGroupData[{
-Cell[2151, 71, 1584, 38, 66, "Input"],
+Cell[2151, 71, 1584, 38, 148, "Input"],
 Cell[3738, 111, 1256, 26, 45, "Output"]
 }, Open  ]],
 Cell[5009, 140, 127, 1, 44, "Text"],
 Cell[CellGroupData[{
 Cell[5161, 145, 600, 13, 46, "Input"],
-Cell[5764, 160, 295, 7, 45, "Output"]
+Cell[5764, 160, 319, 7, 45, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[6096, 172, 512, 13, 46, "Input"],
-Cell[6611, 187, 144, 3, 59, "Output"]
+Cell[6120, 172, 1003, 28, 109, "Input"],
+Cell[7126, 202, 200, 5, 61, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[6792, 195, 402, 10, 46, "Input"],
-Cell[7197, 207, 116, 2, 61, "Output"]
+Cell[7363, 212, 512, 13, 46, "Input"],
+Cell[7878, 227, 144, 3, 59, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[7350, 214, 461, 13, 46, "Input"],
-Cell[7814, 229, 185, 4, 65, "Output"]
+Cell[8059, 235, 402, 10, 46, "Input"],
+Cell[8464, 247, 116, 2, 61, "Output"]
 }, Open  ]],
-Cell[8014, 236, 714, 17, 46, "Input"],
 Cell[CellGroupData[{
-Cell[8753, 257, 1399, 37, 112, "Input"],
-Cell[10155, 296, 449, 10, 67, "Output"]
+Cell[8617, 254, 461, 13, 46, "Input"],
+Cell[9081, 269, 185, 4, 65, "Output"]
 }, Open  ]],
-Cell[10619, 309, 689, 21, 46, "Input"]
+Cell[9281, 276, 714, 17, 46, "Input"],
+Cell[CellGroupData[{
+Cell[10020, 297, 1399, 37, 112, "Input"],
+Cell[11422, 336, 449, 10, 67, "Output"]
+}, Open  ]],
+Cell[11886, 349, 689, 21, 46, "Input"]
 }
 ]
 *)
