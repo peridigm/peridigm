@@ -168,6 +168,7 @@ Teuchos::ParameterList PeridigmNS::OutputManager_VTK_XML::getValidParameterList(
   matType.set("Damage",true);
   matType.set("Lambda",true);
   matType.set("Volume",true);
+  matType.set("Shear_Correction_Factor",true);
   }
 
   return validParameterList;
