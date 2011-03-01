@@ -57,6 +57,8 @@ m_damageModel()
     m_variableSpecs->push_back(Field_NS::DEVIATORIC_PLASTIC_EXTENSION);
     m_variableSpecs->push_back(Field_NS::LAMBDA);
     m_variableSpecs->push_back(Field_NS::BOND_DAMAGE);
+    m_variableSpecs->push_back(Field_NS::SHEAR_CORRECTION_FACTOR);
+
 }
 
 
@@ -72,12 +74,14 @@ void PeridigmNS::IsotropicElasticPlasticMaterial::initialize(const double dt,
                                                              PeridigmNS::DataManager& dataManager) const
 {
 	  // Extract pointers to the underlying data
-      double *x, *cellVolume, *weightedVolume;
-      dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&x);
-      dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&cellVolume);
+      double *xOverlap, *cellVolumeOverlap, *weightedVolume, *shear_correction_factor;
+      dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&xOverlap);
+      dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&cellVolumeOverlap);
       dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
+      dataManager.getData(Field_NS::SHEAR_CORRECTION_FACTOR, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&shear_correction_factor);
 
-	  PdMaterialUtilities::computeWeightedVolume(x,cellVolume,weightedVolume,numOwnedPoints,neighborhoodList);
+	  PdMaterialUtilities::computeWeightedVolume(xOverlap,cellVolumeOverlap,weightedVolume,numOwnedPoints,neighborhoodList);
+	  PdMaterialUtilities::computeShearCorrectionFactor(numOwnedPoints,xOverlap,cellVolumeOverlap,neighborhoodList,m_horizon,shear_correction_factor);
 }
 
 void

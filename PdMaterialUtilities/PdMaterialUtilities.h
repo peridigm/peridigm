@@ -132,6 +132,16 @@ double computeDeviatoricForceStateNorm
 		double OMEGA
 );
 
+void computeShearCorrectionFactor
+(
+		int numOwnedPoints,
+		const double *xOverlap,
+		const double *volumeOverlap,
+		const int*  localNeighborList,
+		double horizon,
+		double *shearCorrectionFactorOwned
+);
+
 double probeShearModulusScaleFactor
 (
 		int numNeigh,
