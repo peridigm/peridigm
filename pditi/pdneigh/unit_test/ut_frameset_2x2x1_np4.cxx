@@ -3,6 +3,9 @@
  *
  *  Created on: Feb 25, 2011
  *      Author: jamitch
+ *
+ * NOTE:
+ * REPLACES io/unitTest/utPd_frameSet_2x2x1_np4.cxx
  */
 
 #define BOOST_TEST_DYN_LINK
