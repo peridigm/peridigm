@@ -426,6 +426,28 @@ double computeDeviatoricForceStateNorm
 	return sqrt(norm);
 }
 
+void computeShearCorrectionFactor
+(
+		int numOwnedPoints,
+		const double *xOverlap,
+		const double *volumeOverlap,
+		const int*  localNeighborList,
+		double horizon,
+		double *shearCorrectionFactorOwned
+){
+
+	const int *neighPtr = localNeighborList;
+	const double *xOwned = xOverlap;
+	double *scaleFactor = shearCorrectionFactorOwned;
+	for(int p=0;p<numOwnedPoints;p++, xOwned+=3, scaleFactor++){
+		int numNeigh = *neighPtr; neighPtr++;
+		const double *X = xOwned;
+		*scaleFactor=probeShearModulusScaleFactor(numNeigh,neighPtr,X,xOverlap,volumeOverlap,horizon);
+		neighPtr+=numNeigh;
+	}
+
+}
+
 double probeShearModulusScaleFactor
 (
 		int numNeigh,

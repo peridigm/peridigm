@@ -22,7 +22,29 @@ using std::string;
 
 struct FieldSpec {
 public:
-  enum FieldType {VOLUME=0, ID, PROC_NUM, WEIGHTED_VOLUME, DILATATION, DAMAGE, E_DP, PLASTIC_CONSISTENCY, NUM_NEIGHBORS, COORDINATES, DISPLACEMENT, CURRENT_COORDINATES, VELOCITY, ACCELERATION, FORCE, FORCE_DENSITY, CONTACT_FORCE, CONTACT_FORCE_DENSITY, BOND_DAMAGE, DEFAULT_FIELDTYPE};
+  enum FieldType {
+	  VOLUME=0,
+	  ID,
+	  PROC_NUM,
+	  WEIGHTED_VOLUME,
+	  DILATATION,
+	  DAMAGE,
+	  E_DP,
+	  PLASTIC_CONSISTENCY,
+	  SHEAR_CORRECTION_FACTOR,
+	  NUM_NEIGHBORS,
+	  COORDINATES,
+	  DISPLACEMENT,
+	  CURRENT_COORDINATES,
+	  VELOCITY,
+	  ACCELERATION,
+	  FORCE,
+	  FORCE_DENSITY,
+	  CONTACT_FORCE,
+	  CONTACT_FORCE_DENSITY,
+	  BOND_DAMAGE,
+	  DEFAULT_FIELDTYPE
+  };
     enum FieldLength {SCALAR=1, VECTOR2D=2, VECTOR3D=3, BOND=4};
     enum FieldStateArchitecture {STATELESS=0, STATEFUL=1}; 
     enum FieldStep {STEP_N=0, STEP_NP1=1, STEP_NONE=2};
@@ -56,6 +78,7 @@ const FieldSpec WEIGHTED_VOLUME(FieldSpec::WEIGHTED_VOLUME,     FieldSpec::SCALA
 const FieldSpec DILATATION(FieldSpec::DILATATION,               FieldSpec::SCALAR, FieldSpec::STATEFUL,  "Dilatation");
 const FieldSpec NUM_NEIGHBORS(FieldSpec::NUM_NEIGHBORS,         FieldSpec::SCALAR, FieldSpec::STATELESS, "Num_Neighbors");
 const FieldSpec LAMBDA(FieldSpec::PLASTIC_CONSISTENCY,          FieldSpec::SCALAR, FieldSpec::STATEFUL,  "Lambda");
+const FieldSpec SHEAR_CORRECTION_FACTOR(FieldSpec::SHEAR_CORRECTION_FACTOR,      FieldSpec::SCALAR, FieldSpec::STATELESS,  "Shear_Correction_Factor");
 
 // Vector FieldSpecs
 const FieldSpec COORD3D(FieldSpec::COORDINATES,            FieldSpec::VECTOR3D, FieldSpec::STATELESS, "Coordinates");
