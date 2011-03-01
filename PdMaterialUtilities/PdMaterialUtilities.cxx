@@ -505,7 +505,7 @@ double probeShearModulusScaleFactor
 
 	}
 
-	return norm/reference;
+	return reference/norm;
 }
 
 }
