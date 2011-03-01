@@ -426,4 +426,64 @@ double computeDeviatoricForceStateNorm
 	return sqrt(norm);
 }
 
+double probeShearModulusScaleFactor
+(
+		int numNeigh,
+		const int *neighPtr,
+		const double *X,
+		const double *xOverlap,
+		const double *volumeOverlap,
+		double horizon
+)
+{
+	double gamma=1.0e-6;
+	double reference = 4.0 * M_PI * gamma * gamma * pow(horizon,5) / 75.0;
+	const double *v = volumeOverlap;
+	double cellVolume, dx, dy, dz, zeta, dY, ed;
+	/*
+	 * Pure shear centered at X
+	 * X has no displacement
+	 */
+	double Y[] = {*X, *(X+1), *(X+2)};
+	double YP[3];
+	double norm=0.0;
+	for(int n=0;n<numNeigh;n++, neighPtr++){
+		int localId = *neighPtr;
+		cellVolume = v[localId];
+		const double *XP = &xOverlap[3*localId];
+		dx = XP[0]-X[0];
+		dy = XP[1]-X[1];
+		dz = XP[2]-X[2];
+		zeta = sqrt(dx*dx+dy*dy+dz*dz);
+		/*
+		 * Pure shear: XY
+		 */
+		YP[0] = XP[0] + gamma * dx;
+		YP[1] = XP[1];
+		YP[2] = XP[2];
+
+		/*
+		 * Deformation State
+		 */
+		dx = YP[0]-Y[0];
+		dy = YP[1]-Y[1];
+		dz = YP[2]-Y[2];
+		dY = sqrt(dx*dx+dy*dy+dz*dz);
+
+		/*
+		 * Deviatoric extension state
+		 * NOTE that this is under the assumption of pure shear
+		 */
+		ed = dY-zeta;
+
+		/*
+		 * Accumulate norm
+		 */
+		norm += ed * ed * cellVolume;
+
+	}
+
+	return norm/reference;
+}
+
 }
