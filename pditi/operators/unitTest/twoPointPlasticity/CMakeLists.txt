@@ -41,5 +41,5 @@
 
 # Add test
 add_executable(utPdIti_twoPointPlasticity utPdIti_twoPointPlasticity.cxx)
-target_link_libraries(utPdIti_twoPointPlasticity PdImpOperators ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS}  ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdIti_twoPointPlasticity PdITIOperators ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS}  ${UT_REQUIRED_LIBS})
 add_test (utPdIti_twoPointPlasticity python run_unit_test.py ./utPdIti_twoPointPlasticity)
