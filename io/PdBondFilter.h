@@ -105,9 +105,27 @@ public:
 	virtual ~FinitePlaneFilter() {}
 	virtual size_t filterListSize(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap);
 	virtual void filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool* markForExclusion);
-private:
+protected:
 	double tolerance;
 	FinitePlane plane;
+};
+
+/**
+ * Filter removes bonds from Neighborhood that intersect with "FinitePlane";
+ * NOTE: This filter DOES INCLUDE 'x' in the neighborhood H(x)
+ */
+class FinitePlaneFilterWithSelf: public FinitePlaneFilter {
+public:
+//	FinitePlaneFilterWithSelf(const FinitePlane& plane, double tolerance=1.0e-15) : BondFilter(), tolerance(tolerance), plane(plane) {}
+	FinitePlaneFilterWithSelf(const FinitePlane& plane, double tolerance=1.0e-15) : FinitePlaneFilter(plane, tolerance) {}
+	virtual ~FinitePlaneFilterWithSelf() {}
+	/*
+	 * This function is implemented in the base class -- turns out that this function really only needs to
+	 * compute an upper bound estimate neighborhood list length.  Its only later during the
+	 * 'filterBonds' call that the actual list length is finally determined
+	 */
+//	virtual size_t filterListSize(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap);
+	virtual void filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool* markForExclusion);
 };
 
 }
