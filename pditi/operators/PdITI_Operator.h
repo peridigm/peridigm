@@ -23,7 +23,7 @@ namespace PdITI {
 
 class PdITI_Operator {
 public:
-	PdITI_Operator(const Epetra_Comm& comm, const PDNEIGH::NeighborhoodList neighborhoodList);
+	PdITI_Operator(const Epetra_Comm& comm, const PDNEIGH::NeighborhoodList neighborhoodList, shared_ptr<double> ownedCellVolume);
 
 private:
 	const Epetra_Comm& epetraComm;
@@ -35,7 +35,7 @@ private:
 	Field_NS::Field<double> mOwnedField, dilatationOwnedField;
 	shared_ptr<double> bondDamage;
 	shared_ptr<double> xOverlapPtr, uOverlapPtr, yOverlapPtr, fInternalOverlapPtr, volumeOverlapPtr;
-//	shared_ptr<ConstitutiveModel> fIntPtr;
+	shared_ptr<ConstitutiveModel> fIntPtr;
 	vector< TemporalField<double> > temporalBondFields;
 
 };
