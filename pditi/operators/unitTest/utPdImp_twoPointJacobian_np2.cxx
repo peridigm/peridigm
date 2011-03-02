@@ -40,8 +40,8 @@
 using namespace PdQuickGrid;
 using namespace PdNeighborhood;
 using namespace Field_NS;
-using PdImp::IsotropicElasticConstitutiveModel;
-using PdImp::ConstitutiveModel;
+using PdITI::IsotropicElasticConstitutiveModel;
+using PdITI::ConstitutiveModel;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
 using std::cout;
@@ -188,7 +188,7 @@ void computeJacobian(){
 	fN.setValue(0.0);
 
 	op->computeInternalForce(uOwnedField,fN);
-	PdImp::SCALE_BY_VALUE(fN.getArray().get(),fN.getArray().end(),-1.0);
+	PdITI::SCALE_BY_VALUE(fN.getArray().get(),fN.getArray().end(),-1.0);
 	bcApplied->applyKinematics(1.0,fN);
 	bcFixed1->applyHomogeneousForm(fN);
 	bcFixed2->applyHomogeneousForm(fN);

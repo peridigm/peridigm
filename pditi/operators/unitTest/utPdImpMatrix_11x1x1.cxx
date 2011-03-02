@@ -32,8 +32,8 @@
 using namespace PdQuickGrid;
 using namespace PdNeighborhood;
 using namespace Field_NS;
-using PdImp::IsotropicElasticConstitutiveModel;
-using PdImp::ConstitutiveModel;
+using PdITI::IsotropicElasticConstitutiveModel;
+using PdITI::ConstitutiveModel;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
 
@@ -79,7 +79,7 @@ void axialBarLinearSpacing() {
 	PdImp::PdImpOperator op(comm,decomp);
 	op.addConstitutiveModel(fIntOperator);
 	Field<double> uOwnedField = Field<double>(DISPL3D,op.getNumOwnedPoints());
-	PdImp::SET(uOwnedField.getArray().get(),uOwnedField.getArray().get()+uOwnedField.getArray().getSize(),0.0);
+	PdITI::SET(uOwnedField.getArray().get(),uOwnedField.getArray().get()+uOwnedField.getArray().getSize(),0.0);
 
 
 	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getRowStiffnessOperator(uOwnedField,horizon);
@@ -175,7 +175,7 @@ void probe() {
 	op.addConstitutiveModel(fIntOperator);
 
 	Field_NS::Field<double> u(Field_NS::DISPL3D,rowMap.NumMyElements());
-	PdImp::SET(u.getArray().get(),u.getArray().get()+u.getArray().getSize(),0.0);
+	PdITI::SET(u.getArray().get(),u.getArray().get()+u.getArray().getSize(),0.0);
 
 	/*
 	 * Get first row of stiffness
@@ -184,9 +184,9 @@ void probe() {
 	*(u.getArray().get())=delta;
 	Field_NS::Field<double> force = Field_NS::getFORCE3D(rowMap.NumMyElements());
 	double *f = force.getArray().get();
-	PdImp::SET(f,f+force.getArray().getSize(),0.0);
+	PdITI::SET(f,f+force.getArray().getSize(),0.0);
 	op.computeInternalForce(u,force);
-	PdImp::SCALE_BY_VALUE(f,f+force.getArray().getSize(),1/delta);
+	PdITI::SCALE_BY_VALUE(f,f+force.getArray().getSize(),1/delta);
 //	for(;f!=fOwnedPtr.get()+3*4;f+=3)
 //		std::cout << std::scientific << *f << " " << *(f+1) << " " << *(f+2) << " ";
 
@@ -212,7 +212,7 @@ void rowMap() {
 void TENSOR_PRODUCT(){
 	double ux[] = {1,0,0};
 	double m[9];
-	PdImp::TENSOR_PRODUCT(ux,ux,m);
+	PdITI::TENSOR_PRODUCT(ux,ux,m);
 	const double tolerance = 1.0e-15;
 	/*
 	 * Column 1
@@ -241,7 +241,7 @@ void SET(){
 	double m[9];
 	const double tolerance = 1.0e-15;
 	double one(1.0f);
-	PdImp::SET(m,m+9,one);
+	PdITI::SET(m,m+9,one);
 	for(int i=0;i<9;i++)
 		BOOST_CHECK_CLOSE(m[i],one,tolerance);
 }
@@ -257,7 +257,7 @@ void BOND(){
 		answers[i] = ux2[i]-ux1[i];
 	}
 
-	PdImp::BOND(ux1,ux2,bond);
+	PdITI::BOND(ux1,ux2,bond);
 	const double tolerance = 1.0e-15;
 	for(int i=0;i<3;i++)
 		BOOST_CHECK_CLOSE(answers[i],bond[i],tolerance);
@@ -275,7 +275,7 @@ void UPDATE_GEOMETRY(){
 		answers[i] = x[i]+u[i];
 	}
 
-	PdImp::UPDATE_GEOMETRY(x,u,y);
+	PdITI::UPDATE_GEOMETRY(x,u,y);
 	const double tolerance = 1.0e-15;
 	for(int i=0;i<3;i++)
 		BOOST_CHECK_CLOSE(answers[i],y[i],tolerance);
@@ -291,7 +291,7 @@ void MAGNITUDE(){
 	}
 	double answer = sqrt(sum);
 	const double tolerance = 1.0e-15;
-	double norm = PdImp::MAGNITUDE(x);
+	double norm = PdITI::MAGNITUDE(x);
 	BOOST_CHECK_CLOSE(answer,norm,tolerance);
 }
 
@@ -308,7 +308,7 @@ void NORMALIZE(){
 		answer[i]=x[i]/norm;
 	}
 	const double tolerance = 1.0e-15;
-	PdImp::NORMALIZE(x);
+	PdITI::NORMALIZE(x);
 	for(int i=0;i<3;i++){
 		BOOST_CHECK_CLOSE(answer[i],x[i],tolerance);
 	}
@@ -324,7 +324,7 @@ void SUMINTO(){
 		answer[i]=x[i]+intoMe[i];
 	}
 	const double tolerance = 1.0e-15;
-	PdImp::SUMINTO(x,x+3,intoMe);
+	PdITI::SUMINTO(x,x+3,intoMe);
 	for(int i=0;i<3;i++){
 		BOOST_CHECK_CLOSE(answer[i],intoMe[i],tolerance);
 	}
@@ -340,7 +340,7 @@ void SUBTRACTINTO(){
 		answer[i]=intoMe[i]-x[i];
 	}
 	const double tolerance = 1.0e-15;
-	PdImp::SUBTRACTINTO(x,x+3,intoMe);
+	PdITI::SUBTRACTINTO(x,x+3,intoMe);
 	for(int i=0;i<3;i++){
 		BOOST_CHECK_CLOSE(answer[i],intoMe[i],tolerance);
 	}
@@ -355,7 +355,7 @@ void COPY(){
 		answer[i]=x[i];
 	}
 	const double tolerance = 1.0e-15;
-	PdImp::COPY(x,x+3,intoMe);
+	PdITI::COPY(x,x+3,intoMe);
 	for(int i=0;i<3;i++){
 		BOOST_CHECK_CLOSE(answer[i],intoMe[i],tolerance);
 	}
@@ -370,7 +370,7 @@ void SCALE_BY_VALUE(){
 		answer[i]=value*x[i];
 	}
 	const double tolerance = 1.0e-15;
-	PdImp::SCALE_BY_VALUE(x,x+3,value);
+	PdITI::SCALE_BY_VALUE(x,x+3,value);
 	for(int i=0;i<3;i++){
 		BOOST_CHECK_CLOSE(answer[i],x[i],tolerance);
 	}

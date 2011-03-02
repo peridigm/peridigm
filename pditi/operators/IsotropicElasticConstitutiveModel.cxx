@@ -11,7 +11,7 @@
 using std::cout;
 using std::endl;
 
-namespace PdImp {
+namespace PdITI {
 
 	vector<FieldSpec> IsotropicElasticConstitutiveModel::registerTemporalBondVariables() const {
 		return vector<FieldSpec>();

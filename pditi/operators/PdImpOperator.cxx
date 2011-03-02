@@ -23,7 +23,7 @@ using std::endl;
 using Teuchos::RCP;
 using namespace PdBondFilter;
 
-namespace PdImp {
+namespace  PdImp{
 
 using namespace PdMaterialUtilities;
 using std::tr1::shared_ptr;
@@ -243,7 +243,7 @@ const Pd_shared_ptr_Array<double>& PdImpOperator::RowOperator::computeRowStiffne
 	/*
 	 * Initialize row stiffness to zero
 	 */
-	SET(kRowI,kRowI+9*numColsRowI,zero);
+	PdITI::SET(kRowI,kRowI+9*numColsRowI,zero);
 	/*
 	 * Loop over neighbors of cell I and assemble stiffness
 	 */
@@ -260,7 +260,7 @@ const Pd_shared_ptr_Array<double>& PdImpOperator::RowOperator::computeRowStiffne
 			 * Assemble into 3x3
 			 * Copy into row
 			 */
-			SET(k3x3Ptr,k3x3Ptr+27,zero);
+			PdITI::SET(k3x3Ptr,k3x3Ptr+27,zero);
 			double *k1 = k3x3Ptr;
 			double *k2 = k3x3Ptr+9;
 			double *k3 = k3x3Ptr+18;
@@ -268,15 +268,15 @@ const Pd_shared_ptr_Array<double>& PdImpOperator::RowOperator::computeRowStiffne
 			 * Check for existence of bond IQ
 			 */
 			(I==Q || I==P) ? NULL :              op->fIntPtr->kIPQ3x3(I,P,Q,x,u,volume,m,dilatationOverlap,k1,horizon);
-			(P==I || P==Q) ? NULL : SUBTRACTINTO(op->fIntPtr->kIPQ3x3(P,I,Q,x,u,volume,m,dilatationOverlap,k2,horizon),k2+9,k1);
-			(Q==I || Q==P) ? NULL :      SUMINTO(op->fIntPtr->kIPQ3x3(Q,I,P,x,u,volume,m,dilatationOverlap,k3,horizon),k3+9,k1);
+			(P==I || P==Q) ? NULL : PdITI::SUBTRACTINTO(op->fIntPtr->kIPQ3x3(P,I,Q,x,u,volume,m,dilatationOverlap,k2,horizon),k2+9,k1);
+			(Q==I || Q==P) ? NULL :      PdITI::SUMINTO(op->fIntPtr->kIPQ3x3(Q,I,P,x,u,volume,m,dilatationOverlap,k3,horizon),k3+9,k1);
 
 			/*
 			 * Assembly into Row Matrix
 			 * Skip Diagonal : Will sum rows at bottom to place diagonal
 			 */
 			double *kIQ = kRowI + 9 * map[Q];
-			SUMINTO(k3x3Ptr,k3x3Ptr+9,kIQ);
+			PdITI::SUMINTO(k3x3Ptr,k3x3Ptr+9,kIQ);
 
 		}
 
@@ -289,7 +289,7 @@ const Pd_shared_ptr_Array<double>& PdImpOperator::RowOperator::computeRowStiffne
 	for(int q = 0;q<numColsRowI;q++){
 		if(map[I]==q) continue;
 		double *kIQ = kRowI + 9 * q;
-		SUBTRACTINTO(kIQ,kIQ+9,kII);
+		PdITI::SUBTRACTINTO(kIQ,kIQ+9,kII);
 	}
 
 	return rowStiffnessPtr;
@@ -503,7 +503,7 @@ void PdImpOperator::computeInternalForce(Field_NS::Field<double> uOwnedField, Fi
 }
 
 
-void PdImpOperator::addConstitutiveModel(shared_ptr<ConstitutiveModel>& model) {
+void PdImpOperator::addConstitutiveModel(shared_ptr<PdITI::ConstitutiveModel>& model) {
 
 	fIntPtr = model;
 	vector<FieldSpec> temporalBondSpecs = fIntPtr->registerTemporalBondVariables();

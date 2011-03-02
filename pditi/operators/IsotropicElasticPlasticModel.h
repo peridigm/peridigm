@@ -19,7 +19,7 @@ using Field_NS::Field;
 using Field_NS::TemporalField;
 using PdImp::IsotropicElasticPlasticSpec;
 
-namespace PdImp {
+namespace PdITI {
 
 
 class IsotropicElasticPlasticModel : public ConstitutiveModel {

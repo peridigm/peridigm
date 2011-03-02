@@ -19,8 +19,8 @@
 using std::cout;
 using std::endl;
 using PdVTK::writeField;
-using PdImp::IsotropicElasticConstitutiveModel;
-using PdImp::ConstitutiveModel;
+using PdITI::IsotropicElasticConstitutiveModel;
+using PdITI::ConstitutiveModel;
 
 shared_ptr<double> getAxialExtensionZ(int numOwnedPoints, shared_ptr<double>& xPtr);
 PdGridData getCylinderDiscretizaton(int rank, int numProcs);

@@ -28,8 +28,8 @@ using namespace boost::unit_test;
 using namespace std;
 using namespace PdMaterialUtilities;
 using namespace Field_NS;
-using PdImp::ConstitutiveModel;
-using PdImp::IsotropicElasticPlasticModel;
+using PdITI::ConstitutiveModel;
+using PdITI::IsotropicElasticPlasticModel;
 using std::tr1::shared_ptr;
 using namespace PdImp;
 using PdImp::DirichletBcSpec;
@@ -308,7 +308,7 @@ void runPureShear() {
 			 */
 			double signF = -*f1x/abs(*f1x);
 			t += dt;
-			std::cout << t << " " << *u1x << " " << signF*MAGNITUDE(f1x) << std::endl;
+			std::cout << t << " " << *u1x << " " << signF*PdITI::MAGNITUDE(f1x) << std::endl;
 
 		}
 	}

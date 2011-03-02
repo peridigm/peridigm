@@ -43,8 +43,8 @@
 using namespace PdQuickGrid;
 using namespace PdNeighborhood;
 using namespace Field_NS;
-using PdImp::IsotropicElasticConstitutiveModel;
-using PdImp::ConstitutiveModel;
+using PdITI::IsotropicElasticConstitutiveModel;
+using PdITI::ConstitutiveModel;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
 

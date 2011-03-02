@@ -37,8 +37,8 @@
 using namespace PdQuickGrid;
 using namespace PdNeighborhood;
 using namespace Field_NS;
-using PdImp::IsotropicElasticConstitutiveModel;
-using PdImp::ConstitutiveModel;
+using PdITI::IsotropicElasticConstitutiveModel;
+using PdITI::ConstitutiveModel;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
 using std::vector;
@@ -179,7 +179,7 @@ void applyHomogeneousForm() {
 	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
 
 
-	Field<double> uOwnedField = PdImp::getPureShearXY(Field_NS::Field<double>(Field_NS::COORD3D,decomp.myX,numPoints));
+	Field<double> uOwnedField = PdITI::getPureShearXY(Field_NS::Field<double>(Field_NS::COORD3D,decomp.myX,numPoints));
 
 	/*
 	 * Compute Tangent

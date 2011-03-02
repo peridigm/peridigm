@@ -28,8 +28,8 @@ using namespace boost::unit_test;
 using namespace std;
 using namespace PdMaterialUtilities;
 using namespace Field_NS;
-using PdImp::ConstitutiveModel;
-using PdImp::IsotropicElasticPlasticModel;
+using PdITI::ConstitutiveModel;
+using PdITI::IsotropicElasticPlasticModel;
 using std::tr1::shared_ptr;
 using namespace PdImp;
 using PdImp::DirichletBcSpec;
@@ -167,7 +167,7 @@ void runPureShear() {
 	 * Create PdImp Operator
 	 */
 	shared_ptr<PdImp::PdImpOperator> op = getPimpOperator(pdGridData,comm);
-	shared_ptr<ConstitutiveModel> fIntOperator(shared_ptr<ConstitutiveModel>(new IsotropicElasticPlasticModel(matSpec)));
+	shared_ptr<PdITI::ConstitutiveModel> fIntOperator(shared_ptr<PdITI::ConstitutiveModel>(new IsotropicElasticPlasticModel(matSpec)));
 	op->addConstitutiveModel(fIntOperator);
 
 	/*
@@ -271,7 +271,7 @@ void runPureShear() {
 			 */
 			double signF = -*f1x/abs(*f1x);
 			t += dt;
-			out << t << " " << *u1x << " " << signF*MAGNITUDE(f1x) << std::endl;
+			out << t << " " << *u1x << " " << signF*PdITI::MAGNITUDE(f1x) << std::endl;
 			op->advanceStateVariables();
 
 

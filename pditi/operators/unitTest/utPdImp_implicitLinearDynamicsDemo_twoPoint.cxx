@@ -52,8 +52,8 @@ using namespace PdQuickGrid;
 using namespace PdImp;
 using namespace PdNeighborhood;
 using namespace Field_NS;
-using PdImp::IsotropicElasticConstitutiveModel;
-using PdImp::ConstitutiveModel;
+using PdITI::IsotropicElasticConstitutiveModel;
+using PdITI::ConstitutiveModel;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
 
@@ -141,12 +141,12 @@ void initialConditions
 	double zero(0.0);
 	FieldSpec::FieldStep NP1 = FieldSpec::STEP_NP1;
 	FieldSpec::FieldStep N = FieldSpec::STEP_N;
-	PdImp::SET(displacement.getField(N).getArray().get(),displacement.getField(N).getArray().end(),zero);
-	PdImp::SET(displacement.getField(NP1).getArray().get(),displacement.getField(NP1).getArray().end(),zero);
-	PdImp::SET(velocity.getField(N).getArray().get(),velocity.getField(N).getArray().end(),zero);
-	PdImp::SET(velocity.getField(NP1).getArray().get(),velocity.getField(NP1).getArray().end(),zero);
-	PdImp::SET(acceleration.getField(N).getArray().get(),acceleration.getField(N).getArray().end(),zero);
-	PdImp::SET(acceleration.getField(NP1).getArray().get(),acceleration.getField(NP1).getArray().end(),zero);
+	PdITI::SET(displacement.getField(N).getArray().get(),displacement.getField(N).getArray().end(),zero);
+	PdITI::SET(displacement.getField(NP1).getArray().get(),displacement.getField(NP1).getArray().end(),zero);
+	PdITI::SET(velocity.getField(N).getArray().get(),velocity.getField(N).getArray().end(),zero);
+	PdITI::SET(velocity.getField(NP1).getArray().get(),velocity.getField(NP1).getArray().end(),zero);
+	PdITI::SET(acceleration.getField(N).getArray().get(),acceleration.getField(N).getArray().end(),zero);
+	PdITI::SET(acceleration.getField(NP1).getArray().get(),acceleration.getField(NP1).getArray().end(),zero);
 
 	/*
 	 * HACK -- set point 0 and point 1 to have initial velocity -- set it in NP1
@@ -253,7 +253,7 @@ getOperator
 				/*
 				 * Scale Jacobian by -1
 				 */
-				SCALE_BY_VALUE(kPtr,kPtr+9,-1);
+				PdITI::SCALE_BY_VALUE(kPtr,kPtr+9,-1);
 
 				int col = *colPtr;
 				double c = density/(beta*dt*dt);
