@@ -61,10 +61,6 @@ class BondFilter {
 public:
 	virtual ~BondFilter() {}
 	/*
-	 * This list length includes an entry for the number of neighbors : "numNeigh"
-	 */
-	virtual size_t filterListSize(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap) = 0;
-	/*
 	 * NOTE: expectation is that bondFlags has been allocated to a sufficient length so that a
 	 * single scalar flag can be associated with every point in the neighborhood of 'pt';
 	 * bonds are included by default, ie flag=0; if a point is excluded then flag =1 is set
@@ -79,7 +75,6 @@ class BondFilterDefault : public BondFilter {
 public:
 	BondFilterDefault() : BondFilter() {}
 	virtual ~BondFilterDefault() {}
-	virtual size_t filterListSize(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap);
 	virtual void filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool* markForExclusion);
 
 };
@@ -91,7 +86,6 @@ class BondFilterWithSelf : public BondFilter {
 public:
 	BondFilterWithSelf() : BondFilter() {}
 	virtual ~BondFilterWithSelf() {}
-	virtual size_t filterListSize(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap);
 	virtual void filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool* markForExclusion);
 };
 
@@ -103,7 +97,6 @@ class FinitePlaneFilter: public BondFilter {
 public:
 	FinitePlaneFilter(const FinitePlane& plane, double tolerance=1.0e-15) : BondFilter(), tolerance(tolerance), plane(plane) {}
 	virtual ~FinitePlaneFilter() {}
-	virtual size_t filterListSize(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap);
 	virtual void filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool* markForExclusion);
 protected:
 	double tolerance;
@@ -119,12 +112,6 @@ public:
 //	FinitePlaneFilterWithSelf(const FinitePlane& plane, double tolerance=1.0e-15) : BondFilter(), tolerance(tolerance), plane(plane) {}
 	FinitePlaneFilterWithSelf(const FinitePlane& plane, double tolerance=1.0e-15) : FinitePlaneFilter(plane, tolerance) {}
 	virtual ~FinitePlaneFilterWithSelf() {}
-	/*
-	 * This function is implemented in the base class -- turns out that this function really only needs to
-	 * compute an upper bound estimate neighborhood list length.  Its only later during the
-	 * 'filterBonds' call that the actual list length is finally determined
-	 */
-//	virtual size_t filterListSize(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap);
 	virtual void filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool* markForExclusion);
 };
 

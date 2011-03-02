@@ -39,19 +39,6 @@ bool FinitePlane::bondIntersect(double x[3], double tolerance) {
 	return intersects;
 }
 
-size_t BondFilterDefault::filterListSize(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap) {
-
-	/* THIS RETURNS the length of the neighborhood list which is not the same as numNeighbors;
-	 * In general, numNeighbors = sizeList - 1;
-	 *
-	 * NOTE that search results include "self"; if we want self then we need to add it
-	 * to the size of the list;
-	 * We already need one extra for "numNeigh" so we must add another entry for self.  On the other
-	 * hand, if we don't want self, then we don't have to do anything since
-	 * the existing extra entry we can re-use for "numNeigh"
-	 */
-	return kdTreeList->GetNumberOfIds();
-}
 
 void BondFilterDefault::filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool *bondFlags) {
 
@@ -67,17 +54,6 @@ void BondFilterDefault::filterBonds(vtkIdList* kdTreeList, const double *pt, con
 
 }
 
-size_t BondFilterWithSelf::filterListSize(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap) {
-
-	/* THIS RETURNS the length of the neighborhood list which is not the same as numNeighbors;
-	 * In general, numNeighbors = sizeList - 1;
-	 *
-	 * NOTE that search results include "self"; if we want self then we need to add it
-	 * to the size of the list;
-	 * We already need one extra for "numNeigh" so we must add another entry for self.
-	 */
-	return kdTreeList->GetNumberOfIds()+1;
-}
 
 void BondFilterWithSelf::filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool *bondFlags) {
 
@@ -90,57 +66,6 @@ void BondFilterWithSelf::filterBonds(vtkIdList* kdTreeList, const double *pt, co
 	}
 
 }
-
-/**
- * THIS FILTER REMOVES 'ptLocalId' -- ie does not include 'self'
- */
-size_t FinitePlaneFilter::filterListSize(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap) {
-
-//	cout << "FinitePlaneFilter::filterListSize::Evaluate Neighborhood of Local PT localId = " << ptLocalId << endl;
-//	cout << "\tFinitePlaneFilter::filterListSize::Initial num points in neighborhood = " << kdTreeList->GetNumberOfIds() << endl;
-
-	/*
-	 * Create bond points
-	 */
-	const double *p0 = pt;
-	const double *p1;
-	double x[3], t;
-	size_t size=kdTreeList->GetNumberOfIds();
-	for(size_t p=0;p<kdTreeList->GetNumberOfIds();p++){
-		/*
-		 * Local id of point within neighborhood
-		 */
-		size_t uid = kdTreeList->GetId(p);
-//		cout << "\tFinitePlaneFilter::filterListSize::Neighborhood PT localId = " << uid << endl;
-
-		/*
-		 * This filter does not include 'self'
-		 */
-		if(ptLocalId==uid) {
-//			cout << "\tFinitePlaneFilter::filterListSize DO NOT INCLUDE SELF;  localId =" << uid <<  endl;
-			continue;
-		}
-
-		/*
-		 * Now run plane filter
-		 */
-		p1 = xOverlap+(3*uid);
-		if( 0 != plane.bondIntersectInfinitePlane(p0,p1,t,x) && plane.bondIntersect(x,tolerance) ){
-//			cout << "\tFinitePlaneFilter::filterListSize INTERSECTION; localId, t  = " << uid << ", " << t << endl;
-			size -= 1;
-		} // else {
-//			/*
-//			 * ALL DEBUG PRINT STUFF
-//			 */
-//			cout << "\tplane.bondIntersectInfinitePlane(p0,p1,t,x) = " << plane.bondIntersectInfinitePlane(p0,p1,t,x) << endl;
-//			if(plane.bondIntersectInfinitePlane(p0,p1,t,x))
-//				cout << "\tplane.bondIntersect(x) = " << plane.bondIntersect(x) << endl;
-//		}
-	}
-
-	return size;
-}
-
 
 void FinitePlaneFilter::filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool *bondFlags) {
 

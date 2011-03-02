@@ -183,11 +183,6 @@ void case_1a() {
 			 */
 			double *x = decomp.myX.get()+3*id;
 			kdTree->FindPointsWithinRadius(horizon, x, kdTreeList);
-			/*
-			 * Use filter to decide length of neighborhood list (will include extra entry for 'number of neighbors: numNeigh')
-			 */
-			size_t listSize = filterPtr->filterListSize(kdTreeList,x,id,decomp.myX.get());
-			BOOST_CHECK(listSize==size[id]);
 
 			/*
 			 * Now determine which points are included
@@ -288,11 +283,6 @@ void case_1b() {
 			 */
 			double *x = decomp.myX.get()+3*id;
 			kdTree->FindPointsWithinRadius(horizon, x, kdTreeList);
-			/*
-			 * Use filter to decide length of neighborhood list (will include extra entry for 'number of neighbors: numNeigh')
-			 */
-			size_t listSize = filterPtr->filterListSize(kdTreeList,x,id,decomp.myX.get());
-			BOOST_CHECK(listSize==size[id]);
 
 			/*
 			 * Now determine which points are included
@@ -392,11 +382,6 @@ void case_2a() {
 			 */
 			double *x = decomp.myX.get()+3*id;
 			kdTree->FindPointsWithinRadius(horizon, x, kdTreeList);
-			/*
-			 * Use filter to decide length of neighborhood list (will include extra entry for 'number of neighbors: numNeigh')
-			 */
-			size_t listSize = filterPtr->filterListSize(kdTreeList,x,id,decomp.myX.get());
-			BOOST_CHECK(listSize==size[id]);
 
 			/*
 			 * Now determine which points are included
@@ -497,11 +482,6 @@ void case_2b() {
 			 */
 			double *x = decomp.myX.get()+3*id;
 			kdTree->FindPointsWithinRadius(horizon, x, kdTreeList);
-			/*
-			 * Use filter to decide length of neighborhood list (will include extra entry for 'number of neighbors: numNeigh')
-			 */
-			size_t listSize = filterPtr->filterListSize(kdTreeList,x,id,decomp.myX.get());
-			BOOST_CHECK(listSize==size[id]);
 
 			/*
 			 * Now determine which points are included
@@ -601,11 +581,6 @@ void case_3a() {
 			 */
 			double *x = decomp.myX.get()+3*id;
 			kdTree->FindPointsWithinRadius(horizon, x, kdTreeList);
-			/*
-			 * Use filter to decide length of neighborhood list (will include extra entry for 'number of neighbors: numNeigh')
-			 */
-			size_t listSize = filterPtr->filterListSize(kdTreeList,x,id,decomp.myX.get());
-			BOOST_CHECK(listSize==size[id]);
 
 			/*
 			 * Now determine which points are included
