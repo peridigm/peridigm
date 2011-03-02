@@ -51,6 +51,10 @@ int NeighborhoodList::get_num_owned_points() const {
 	return num_owned_points;
 }
 
+shared_ptr<double> NeighborhoodList::get_owned_x() const {
+	return owned_x;
+}
+
 shared_ptr<int> NeighborhoodList::get_neighborhood_ptr() const {
 	return neighborhood_ptr;
 }
