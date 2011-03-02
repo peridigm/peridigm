@@ -43,6 +43,9 @@ private:
 	double xMin, xMax, yMin, yMax, zMin, zMax;
 };
 
+double NeighborhoodList::get_horizon() const {
+	return horizon;
+}
 
 int NeighborhoodList::get_num_owned_points() const {
 	return num_owned_points;
