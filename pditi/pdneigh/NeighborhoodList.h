@@ -75,6 +75,7 @@ public:
 	shared_ptr<int> get_neighborhood() const;
 	const int* get_neighborhood (int localId) const;
 	int get_size_neighborhood_list() const;
+	shared_ptr<double> get_owned_x() const;
 	const Epetra_BlockMap getOverlapMap(const Epetra_Comm& comm, int ndf) const;
 	const Epetra_BlockMap getOwnedMap(const Epetra_Comm& comm, int ndf) const;
 	shared_ptr< std::set<int> > constructParallelDecompositionFrameSet() const;
