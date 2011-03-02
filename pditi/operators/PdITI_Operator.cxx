@@ -7,8 +7,10 @@
 #include "PdITI_Operator.h"
 #include "Epetra_Comm.h"
 #include "Epetra_BlockMap.h"
+#include "Epetra_Vector.h"
+#include "PdMaterialUtilities.h"
 
-
+using namespace PdMaterialUtilities;
 namespace PdITI {
 
 const int scalarNDF = 1;
@@ -20,7 +22,7 @@ template<class T> struct ArrayDeleter{
 	}
 };
 
-PdITI_Operator::PdITI_Operator(const Epetra_Comm& comm, const PDNEIGH::NeighborhoodList neighborhoodList)
+PdITI_Operator::PdITI_Operator(const Epetra_Comm& comm, const PDNEIGH::NeighborhoodList neighborhoodList, shared_ptr<double> ownedCellVolume)
 :
 epetraComm(comm),
 list(neighborhoodList),
@@ -39,9 +41,31 @@ uOverlapPtr(new double[overlapMapScalar.NumMyElements()*vectorNDF],ArrayDeleter<
 yOverlapPtr(new double[overlapMapScalar.NumMyElements()*vectorNDF],ArrayDeleter<double>()),
 fInternalOverlapPtr(new double[overlapMapScalar.NumMyElements()*vectorNDF],ArrayDeleter<double>()),
 volumeOverlapPtr(new double[overlapMapScalar.NumMyElements()*scalarNDF],ArrayDeleter<double>()),
+fIntPtr(),
 temporalBondFields()
 {
 
+	/*
+	 * Pull in shared coordinates
+	 * NOTE View versions of Epetra_Vectors
+	 */
+	Epetra_Vector xOverlap(View,overlapMapNDF,xOverlapPtr.get());
+	Epetra_Vector xOwned(View,ownedMapNDF,list.get_owned_x().get());
+	xOverlap.Import(xOwned,importNDF,Insert);
+
+
+	/*
+	 * Pull in shared volume
+	 * NOTE View versions of Epetra_Vectors
+	 */
+	Epetra_Vector volumeOverlap(View,overlapMapScalar,volumeOverlapPtr.get());
+	Epetra_Vector volOwned(View,ownedMapScalar,ownedCellVolume.get());
+	volumeOverlap.Import(volOwned,importScalar,Insert);
+
+	/*
+	 * Compute weighted volume
+	 */
+	computeWeightedVolume(xOverlapPtr.get(),volumeOverlapPtr.get(),mOwnedField.getArray().get(),neighborhoodList.get_num_owned_points(),list.get_neighborhood().get());
 
 }
 
