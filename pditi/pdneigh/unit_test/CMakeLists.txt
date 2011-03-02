@@ -16,3 +16,7 @@ add_test (ut_Y-Z_crack python run_unit_test.py ./ut_Y-Z_crack)
 add_executable(ut_Y-Z_crack_np4 ut_Y-Z_crack_np4.cxx)
 target_link_libraries(ut_Y-Z_crack_np4  PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 add_test (ut_Y-Z_crack_np4 python run_unit_test.py mpiexec -np 4 ./ut_Y-Z_crack_np4)
+
+add_executable(ut_Y-Z_crack_jacobian_np4 ut_Y-Z_crack_jacobian_np4.cxx)
+target_link_libraries(ut_Y-Z_crack_jacobian_np4  PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+add_test (ut_Y-Z_crack_jacobian_np4 python run_unit_test.py mpiexec -np 4 ./ut_Y-Z_crack_jacobian_np4)
