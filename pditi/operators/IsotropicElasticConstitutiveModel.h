@@ -18,7 +18,7 @@ using Field_NS::Field;
 using Field_NS::TemporalField;
 using PdImp::IsotropicHookeSpec;
 
-namespace PdImp {
+namespace PdITI {
 
 
 class IsotropicElasticConstitutiveModel : public ConstitutiveModel {

@@ -30,15 +30,15 @@ void StageComponentDirichletBc::applyHomogeneousForm(Field_NS::Field<double>& re
 		double *r = residual+3*(*idsPtr);
 		for(int i=0;i<numDirs;i++){
 			vector<double> u = dirs[i];
-			double rn = PdImp::DOT(&u[0],r);
+			double rn = PdITI::DOT(&u[0],r);
 			// Set vec=u
-			PdImp::COPY(&u[0],&u[0]+3,vec);
+			PdITI::COPY(&u[0],&u[0]+3,vec);
 
 			// Set vec = rn*vec = rn*u
-			PdImp::SCALE_BY_VALUE(vec,vec+3,rn);
+			PdITI::SCALE_BY_VALUE(vec,vec+3,rn);
 
 			// Set R = R - rn*vec
-			PdImp::SUBTRACTINTO(vec,vec+3,r);
+			PdITI::SUBTRACTINTO(vec,vec+3,r);
 
 		}
 	}

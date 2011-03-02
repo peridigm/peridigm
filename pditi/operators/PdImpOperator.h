@@ -35,7 +35,7 @@ namespace PdImp {
 class PdImpOperator {
 public:
 	PdImpOperator(const Epetra_Comm& comm, PdGridData& gridData);
-	void addConstitutiveModel(shared_ptr<ConstitutiveModel>& model);
+	void addConstitutiveModel(shared_ptr<PdITI::ConstitutiveModel>& model);
 	void advanceStateVariables();
 	Field_NS::Field<double> getWeightedVolume() const { return mOwnedField; }
 	const Epetra_Comm& getEpetra_Comm() const { return epetraComm; }
@@ -95,7 +95,7 @@ private:
 	PdNeighborhood::NeighborhoodList localList;
 	std::tr1::shared_ptr<RowOperator> rowStiffnessOperatorPtr;
 	PdGridData rowMatrixPdGridData;
-	shared_ptr<ConstitutiveModel> fIntPtr;
+	shared_ptr<PdITI::ConstitutiveModel> fIntPtr;
 	vector< TemporalField<double> > temporalBondFields;
 
 };

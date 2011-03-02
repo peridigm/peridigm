@@ -42,19 +42,19 @@ void BodyLoadSpec::BodyLoader::computeOwnedExternalForce(double lambda, Field_NS
 		/*
 		 * bF = u
 		 */
-		PdImp::COPY(u,u+3,bF);
+		PdITI::COPY(u,u+3,bF);
 
 		/*
 		 * bF = b * bF = b * u
 		 */
-		PdImp::SCALE_BY_VALUE(bF,bF+3,magnitude);
+		PdITI::SCALE_BY_VALUE(bF,bF+3,magnitude);
 
 		f = fHead + 3 * id;
 
 		/*
 		 * f = f + bF
 		 */
-		PdImp::SUMINTO(bF,bF+3,f);
+		PdITI::SUMINTO(bF,bF+3,f);
 
 	}
 

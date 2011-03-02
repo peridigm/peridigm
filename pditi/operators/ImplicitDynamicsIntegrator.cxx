@@ -33,7 +33,7 @@ void ImplicitDynamicsIntegrator::computeResidual
 	double zero(0.0);
 	FieldSpec::FieldStep NP1 = FieldSpec::STEP_NP1;
 	FieldSpec::FieldStep N = FieldSpec::STEP_N;
-	PdImp::SET(residual.getField(NP1).getArray().get(),residual.getField(NP1).getArray().end(),zero);
+	PdITI::SET(residual.getField(NP1).getArray().get(),residual.getField(NP1).getArray().end(),zero);
 	fIntOperator->computeInternalForce(displacement.getField(NP1),residual.getField(NP1));
 
 	Pd_shared_ptr_Array<double> fN    = residual.getField(N).getArray();

@@ -13,7 +13,7 @@ using std::cout;
 using std::endl;
 using PdImp::IsotropicHookeSpec;
 
-namespace PdImp {
+namespace PdITI {
 
 vector<FieldSpec> IsotropicElasticPlasticModel::registerTemporalBondVariables() const {
 	return fieldSpecs;

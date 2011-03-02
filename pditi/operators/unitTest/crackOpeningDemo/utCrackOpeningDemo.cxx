@@ -36,7 +36,7 @@ using namespace PdBondFilter;
 using namespace PdVTK;
 using namespace Field_NS;
 using namespace PdImp;
-using PdImp::IsotropicElasticConstitutiveModel;
+using PdITI::IsotropicElasticConstitutiveModel;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
 using std::cout;
@@ -210,7 +210,7 @@ void crackOpeningDemo(){
 	 * Create PdITI Operator
 	 */
 	shared_ptr<PdImp::PdImpOperator> op = utPdITI::getPimpOperator(gridData,comm);
-	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
+	shared_ptr<PdITI::ConstitutiveModel> fIntOperator(new PdITI::IsotropicElasticConstitutiveModel(isotropicSpec));
 	op->addConstitutiveModel(fIntOperator);
 
 	/*

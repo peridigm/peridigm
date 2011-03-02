@@ -33,8 +33,8 @@
 using namespace PdQuickGrid;
 using namespace PdNeighborhood;
 using namespace Field_NS;
-using PdImp::IsotropicElasticConstitutiveModel;
-using PdImp::ConstitutiveModel;
+using PdITI::IsotropicElasticConstitutiveModel;
+using PdITI::ConstitutiveModel;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
 using std::cout;
@@ -90,7 +90,7 @@ void twoPointJacobian() {
 	int numPoints = decomp.numPoints;
 	BOOST_CHECK(2==numPoints);
 	Field<double> uOwnedField = Field<double>(DISPL3D,numPoints);
-	PdImp::SET(uOwnedField.getArray().get(),uOwnedField.getArray().get()+uOwnedField.getArray().getSize(),0.0);
+	PdITI::SET(uOwnedField.getArray().get(),uOwnedField.getArray().get()+uOwnedField.getArray().getSize(),0.0);
 
 	{
 		/*
@@ -212,7 +212,7 @@ void twoPointJacobian() {
 		for(std::size_t col=0;col<rowLIDs.getSize();col++){
 			std::cout << "\tCOL = " << cols[col] << std::endl;
 			double *c = stiffness.get()+9*col;
-			PdImp::PRINT_3x3MATRIX(c,std::cout);
+			PdITI::PRINT_3x3MATRIX(c,std::cout);
 		}
 		std::cout << endl;
 	}
@@ -303,22 +303,22 @@ Pd_shared_ptr_Array<double> computeAnalytical3x3Stiffness(const Field<double>& u
 	y0[2]=0.0;
 	setRotatedValue(y0,y0Mag);
 	const double tolerance = 1.0e-15;
-	BOOST_CHECK_CLOSE(PdImp::NORMALIZE(y0),y0Mag,tolerance);
+	BOOST_CHECK_CLOSE(PdITI::NORMALIZE(y0),y0Mag,tolerance);
 	Pd_shared_ptr_Array<double> MY0xMY0(9);
 	double *k = MY0xMY0.get();
 
-	PdImp::TENSOR_PRODUCT(y0,y0,k);
-	PdImp::SCALE_BY_VALUE(k,k+9,-1.0);
+	PdITI::TENSOR_PRODUCT(y0,y0,k);
+	PdITI::SCALE_BY_VALUE(k,k+9,-1.0);
 	k[0] += 1.0;
 	k[4] += 1.0;
 	k[8] += 1.0;
-	PdImp::SCALE_BY_VALUE(k,k+9,-x1/y0Mag);
+	PdITI::SCALE_BY_VALUE(k,k+9,-x1/y0Mag);
 	k[0] += 1.0;
 	k[4] += 1.0;
 	k[8] += 1.0;
 
 	double c = 18.0*isotropicSpec.bulkModulus()/x1/x1;
-	PdImp::SCALE_BY_VALUE(k,k+9,c);
+	PdITI::SCALE_BY_VALUE(k,k+9,c);
 
 	return MY0xMY0;
 }

@@ -10,7 +10,7 @@
 #include <math.h>
 #include "Field.h"
 
-namespace PdImp {
+namespace PdITI {
 
 /*
  * INCOMING Arrays must have a minimum dimension of 3

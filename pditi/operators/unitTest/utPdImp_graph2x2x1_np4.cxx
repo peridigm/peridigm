@@ -105,7 +105,7 @@ void testGraph() {
 	 * Create Jacobian -- note that SCOPE of jacobian is associated with the PimpOperator "op"
 	 */
 	Field<double> uOverlapField(DISPL3D,op->getOverlapMapNDF().NumMyElements());
-	PdImp::SET(uOverlapField.getArray().get(),uOverlapField.getArray().end(),0.0);
+	PdITI::SET(uOverlapField.getArray().get(),uOverlapField.getArray().end(),0.0);
 	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op->getRowStiffnessOperator(uOverlapField,horizon);
 
 	/*

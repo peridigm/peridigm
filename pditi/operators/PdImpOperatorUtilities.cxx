@@ -7,7 +7,7 @@
 #include "PdImpOperatorUtilities.h"
 #include <ostream>
 
-namespace PdImp {
+namespace PdITI {
 
 using Field_NS::Field;
 

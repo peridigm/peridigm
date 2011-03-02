@@ -34,8 +34,8 @@
 using namespace PdQuickGrid;
 using namespace PdNeighborhood;
 using namespace Field_NS;
-using PdImp::IsotropicElasticConstitutiveModel;
-using PdImp::ConstitutiveModel;
+using PdITI::IsotropicElasticConstitutiveModel;
+using PdITI::ConstitutiveModel;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
 
@@ -73,7 +73,7 @@ void probe() {
 	int numPoints = decomp.numPoints;
 	BOOST_CHECK(numCells==numPoints);
 	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
-	Field<double> uOwnedField = PdImp::getPureShearXY(Field_NS::Field<double>(Field_NS::COORD3D,decomp.myX,numPoints));
+	Field<double> uOwnedField = PdITI::getPureShearXY(Field_NS::Field<double>(Field_NS::COORD3D,decomp.myX,numPoints));
 	Field<double> probeField = Field_NS::Field<double>(Field_NS::COORD3D,numPoints);
 
 	/*
@@ -115,15 +115,15 @@ void probe() {
 			/*
 			 * probe in x-dir
 			 */
-			PdImp::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
-			PdImp::SUMINTO(u,uOwnedField.getArray().end(),probeField.getArray().get());
+			PdITI::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
+			PdITI::SUMINTO(u,uOwnedField.getArray().end(),probeField.getArray().get());
 			double *p = probeField.getArray().get()+loc;
 			*p += delta;
 			op.computeInternalForce(probeField,force.getField(Field_NS::FieldSpec::STEP_NP1));
 			double *f1 = force.getField(Field_NS::FieldSpec::STEP_NP1).getArray().get();
 
-			PdImp::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
-			PdImp::SUMINTO(u,uOwnedField.getArray().end(),probeField.getArray().get());
+			PdITI::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
+			PdITI::SUMINTO(u,uOwnedField.getArray().end(),probeField.getArray().get());
 			p = probeField.getArray().get()+loc;
 			*p -= delta;
 			op.computeInternalForce(probeField,force.getField(Field_NS::FieldSpec::STEP_N));
@@ -139,15 +139,15 @@ void probe() {
 			/*
 			 * probe in y-dir
 			 */
-			PdImp::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
-			PdImp::SUMINTO(u,uOwnedField.getArray().end(),probeField.getArray().get());
+			PdITI::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
+			PdITI::SUMINTO(u,uOwnedField.getArray().end(),probeField.getArray().get());
 			double *p = probeField.getArray().get()+loc+1;
 			*p += delta;
 			op.computeInternalForce(probeField,force.getField(Field_NS::FieldSpec::STEP_NP1));
 			double *f1 = force.getField(Field_NS::FieldSpec::STEP_NP1).getArray().get();
 
-			PdImp::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
-			PdImp::SUMINTO(u,uOwnedField.getArray().end(),probeField.getArray().get());
+			PdITI::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
+			PdITI::SUMINTO(u,uOwnedField.getArray().end(),probeField.getArray().get());
 			p = probeField.getArray().get()+loc+1;
 			*p -= delta;
 			op.computeInternalForce(probeField,force.getField(Field_NS::FieldSpec::STEP_N));
@@ -162,15 +162,15 @@ void probe() {
 			/*
 			 * probe in z-dir
 			 */
-			PdImp::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
-			PdImp::SUMINTO(u,uOwnedField.getArray().end(),probeField.getArray().get());
+			PdITI::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
+			PdITI::SUMINTO(u,uOwnedField.getArray().end(),probeField.getArray().get());
 			double *p = probeField.getArray().get()+loc+2;
 			*p += delta;
 			op.computeInternalForce(probeField,force.getField(Field_NS::FieldSpec::STEP_NP1));
 			double *f1 = force.getField(Field_NS::FieldSpec::STEP_NP1).getArray().get();
 
-			PdImp::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
-			PdImp::SUMINTO(u,uOwnedField.getArray().end(),probeField.getArray().get());
+			PdITI::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
+			PdITI::SUMINTO(u,uOwnedField.getArray().end(),probeField.getArray().get());
 			p = probeField.getArray().get()+loc+2;
 			*p -= delta;
 			op.computeInternalForce(probeField,force.getField(Field_NS::FieldSpec::STEP_N));
