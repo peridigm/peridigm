@@ -68,6 +68,7 @@ public:
 			double horizon,
 			shared_ptr<PdBondFilter::BondFilter> bondFilterPtr
 			);
+	double get_horizon() const;
 	int get_num_owned_points() const;
 	int get_num_neigh (int localId) const;
 	shared_ptr<int> get_neighborhood_ptr() const;
