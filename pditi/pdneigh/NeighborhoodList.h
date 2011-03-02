@@ -66,7 +66,7 @@ public:
 			shared_ptr<int>& ownedGIDs,
 			shared_ptr<double>& owned_coordinates,
 			double horizon,
-			shared_ptr<PdBondFilter::BondFilter> bondFilterPtr
+			shared_ptr<PdBondFilter::BondFilter> bondFilterPtr = shared_ptr<PdBondFilter::BondFilter>(new PdBondFilter::BondFilterDefault())
 			);
 	double get_horizon() const;
 	int get_num_owned_points() const;

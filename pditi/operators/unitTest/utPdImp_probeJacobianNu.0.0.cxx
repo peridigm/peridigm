@@ -11,6 +11,7 @@
 #include <boost/test/parameterized_test.hpp>
 #include "../PdImpMpiFixture.h"
 #include "PdNeighborhood.h"
+#include "../../pdneigh/NeighborhoodList.h"
 #include "PdQuickGrid.h"
 #include "PdQuickGridParallel.h"
 #include "PdNeighborhood.h"
@@ -18,6 +19,7 @@
 #include "Field.h"
 #include "../PdImpMaterials.h"
 #include "../PdImpOperator.h"
+#include "../PdITI_Operator.h"
 #include "../PdImpOperatorUtilities.h"
 #include "../IsotropicElasticConstitutiveModel.h"
 #include "PdVTK.h"
@@ -71,6 +73,8 @@ void probe() {
 	PdGridData decomp =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
 	decomp = getLoadBalancedDiscretization(decomp);
 	int numPoints = decomp.numPoints;
+	PDNEIGH::NeighborhoodList list(decomp.zoltanPtr.get(),numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
+
 	BOOST_CHECK(numCells==numPoints);
 	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
 	Field<double> uOwnedField = PdITI::getPureShearXY(Field_NS::Field<double>(Field_NS::COORD3D,decomp.myX,numPoints));
@@ -82,8 +86,10 @@ void probe() {
 	 */
 	Field_NS::TemporalField<double> force = Field_NS::TemporalField<double>(Field_NS::FORCE3D,numPoints);
 	PdImp::PdImpOperator op(comm,decomp);
+	PdITI::PdITI_Operator pditiOp(comm,list,decomp.cellVolume);
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
 	op.addConstitutiveModel(fIntOperator);
+	pditiOp.addConstitutiveModel(fIntOperator);
 
 
 	/*
@@ -119,14 +125,14 @@ void probe() {
 			PdITI::SUMINTO(u,uOwnedField.getArray().end(),probeField.getArray().get());
 			double *p = probeField.getArray().get()+loc;
 			*p += delta;
-			op.computeInternalForce(probeField,force.getField(Field_NS::FieldSpec::STEP_NP1));
+			pditiOp.computeInternalForce(probeField,force.getField(Field_NS::FieldSpec::STEP_NP1));
 			double *f1 = force.getField(Field_NS::FieldSpec::STEP_NP1).getArray().get();
 
 			PdITI::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
 			PdITI::SUMINTO(u,uOwnedField.getArray().end(),probeField.getArray().get());
 			p = probeField.getArray().get()+loc;
 			*p -= delta;
-			op.computeInternalForce(probeField,force.getField(Field_NS::FieldSpec::STEP_N));
+			pditiOp.computeInternalForce(probeField,force.getField(Field_NS::FieldSpec::STEP_N));
 			double *f0 = force.getField(Field_NS::FieldSpec::STEP_N).getArray().get();
 
 			kProbe[0] = (f1[loc+0]-f0[loc+0])/2.0/delta;
@@ -143,14 +149,14 @@ void probe() {
 			PdITI::SUMINTO(u,uOwnedField.getArray().end(),probeField.getArray().get());
 			double *p = probeField.getArray().get()+loc+1;
 			*p += delta;
-			op.computeInternalForce(probeField,force.getField(Field_NS::FieldSpec::STEP_NP1));
+			pditiOp.computeInternalForce(probeField,force.getField(Field_NS::FieldSpec::STEP_NP1));
 			double *f1 = force.getField(Field_NS::FieldSpec::STEP_NP1).getArray().get();
 
 			PdITI::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
 			PdITI::SUMINTO(u,uOwnedField.getArray().end(),probeField.getArray().get());
 			p = probeField.getArray().get()+loc+1;
 			*p -= delta;
-			op.computeInternalForce(probeField,force.getField(Field_NS::FieldSpec::STEP_N));
+			pditiOp.computeInternalForce(probeField,force.getField(Field_NS::FieldSpec::STEP_N));
 			double *f0 = force.getField(Field_NS::FieldSpec::STEP_N).getArray().get();
 
 			kProbe[1] = (f1[loc+0]-f0[loc+0])/2.0/delta;
@@ -166,14 +172,14 @@ void probe() {
 			PdITI::SUMINTO(u,uOwnedField.getArray().end(),probeField.getArray().get());
 			double *p = probeField.getArray().get()+loc+2;
 			*p += delta;
-			op.computeInternalForce(probeField,force.getField(Field_NS::FieldSpec::STEP_NP1));
+			pditiOp.computeInternalForce(probeField,force.getField(Field_NS::FieldSpec::STEP_NP1));
 			double *f1 = force.getField(Field_NS::FieldSpec::STEP_NP1).getArray().get();
 
 			PdITI::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
 			PdITI::SUMINTO(u,uOwnedField.getArray().end(),probeField.getArray().get());
 			p = probeField.getArray().get()+loc+2;
 			*p -= delta;
-			op.computeInternalForce(probeField,force.getField(Field_NS::FieldSpec::STEP_N));
+			pditiOp.computeInternalForce(probeField,force.getField(Field_NS::FieldSpec::STEP_N));
 			double *f0 = force.getField(Field_NS::FieldSpec::STEP_N).getArray().get();
 
 			kProbe[2] = (f1[loc+0]-f0[loc+0])/2.0/delta;

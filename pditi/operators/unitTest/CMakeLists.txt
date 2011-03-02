@@ -40,7 +40,7 @@ add_test (utPdImp_twoPointJacobian_np2 python run_unit_test.py mpiexec -np 2 ./u
 # Add test
 #PdZoltan PdQuickGrid PdNeighborhood  PdVTK
 add_executable(utPdImp_probeJacobianNu.0.0 utPdImp_probeJacobianNu.0.0.cxx)
-target_link_libraries(utPdImp_probeJacobianNu.0.0 PdITIOperators ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdImp_probeJacobianNu.0.0 PdITIOperators PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 add_test (utPdImp_probeJacobianNu.0.0 python run_unit_test.py ./utPdImp_probeJacobianNu.0.0)
 
 # Add test
