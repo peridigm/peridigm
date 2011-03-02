@@ -485,22 +485,16 @@ void NeighborhoodList::buildNeighborhoodList
 	 */
 	const double* xOverlap = xOverlapPtr.get();
 
-	neighborhood_ptr = shared_ptr<int>(new int[num_owned_points],ArrayDeleter<int>());
 	size_t sizeList = 0;
 	size_t max=0;
 	{
 		/*
 		 * Loop over owned points and determine number of points in horizon
 		 */
-		int *ptr = neighborhood_ptr.get();
-		const int* const end = neighborhood_ptr.get()+num_owned_points;
 		double *x = owned_x.get();
+		const double *x_end = x+3*num_owned_points;
 		size_t localId=0;
-		for(;ptr!=end;ptr++,x+=3, localId++){
-			/*
-			 * pointer to start of neighborhood list
-			 */
-			*ptr = sizeList;
+		for(;x!=x_end;x+=3, localId++){
 
 			vtkIdList* kdTreeList = vtkIdList::New();
 			/*
@@ -522,7 +516,7 @@ void NeighborhoodList::buildNeighborhoodList
 				throw std::runtime_error(message);
 			}
 
-			size_t ptListSize = filter_ptr->filterListSize(kdTreeList,x,localId,xOverlap);
+			size_t ptListSize = kdTreeList->GetNumberOfIds()+1;
 			sizeList += ptListSize;
 
 			/*
@@ -538,6 +532,7 @@ void NeighborhoodList::buildNeighborhoodList
 	/*
 	 * Second pass to populate neighborhood list
 	 */
+	neighborhood_ptr = shared_ptr<int>(new int[num_owned_points],ArrayDeleter<int>());
 	neighborhood=shared_ptr<int>(new int[sizeList],ArrayDeleter<int>());
 	shared_ptr<bool> markForExclusion(new bool[max],ArrayDeleter<bool>());
 
@@ -545,10 +540,12 @@ void NeighborhoodList::buildNeighborhoodList
 		/*
 		 * Loop over owned points and determine number of points in horizon
 		 */
+		int *ptr = neighborhood_ptr.get();
+		int neighPtr = 0;
 		int *list = neighborhood.get();
 		double *x = owned_x.get();
-		for(int p=0;p<num_owned_points;p++,x+=3){
-
+		for(int p=0;p<num_owned_points;p++,x+=3,ptr++){
+			*ptr = neighPtr;
 			vtkIdList* kdTreeList = vtkIdList::New();
 			/*
 			 * Note that list returned includes this point * but at start of list
@@ -583,6 +580,10 @@ void NeighborhoodList::buildNeighborhoodList
 			 * Now save number of neighbors
 			 */
 			*numNeighPtr = numNeigh;
+			/*
+			 * increment neighborhood pointer
+			 */
+			neighPtr += (numNeigh+1);
 			/*
 			 * Delete list
 			 */

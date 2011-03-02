@@ -292,23 +292,16 @@ NeighborhoodList getNeighborhoodList
 	 * this is used by bond filters
 	 */
 	const double* xOverlap = xOverlapPtr.get();
-
-	std::tr1::shared_ptr<int> neighborsPtr(new int[numOwnedPoints],PdQuickGrid::Deleter<int>());
 	size_t sizeList = 0;
 	size_t max=0;
 	{
 		/*
 		 * Loop over owned points and determine number of points in horizon
 		 */
-		int *ptr = neighborsPtr.get();
-		const int* const end = neighborsPtr.get()+numOwnedPoints;
 		double *x = xOwnedPtr.get();
+		const double *x_end = x+3*numOwnedPoints;
 		size_t localId=0;
-		for(;ptr!=end;ptr++,x+=3, localId++){
-			/*
-			 * pointer to start of neighborhood list
-			 */
-			*ptr = sizeList;
+		for(;x!=x_end;x+=3, localId++){
 
 			vtkIdList* kdTreeList = vtkIdList::New();
 			/*
@@ -330,7 +323,7 @@ NeighborhoodList getNeighborhoodList
 				throw std::runtime_error(message);
 			}
 
-			size_t ptListSize = bondFilter.filterListSize(kdTreeList,x,localId,xOverlap);
+			size_t ptListSize = kdTreeList->GetNumberOfIds()+1;
 			sizeList += ptListSize;
 
 			/*
@@ -346,6 +339,7 @@ NeighborhoodList getNeighborhoodList
 	/*
 	 * Second pass to populate neighborhood list
 	 */
+	std::tr1::shared_ptr<int> neighborsPtr(new int[numOwnedPoints],PdQuickGrid::Deleter<int>());
 	std::tr1::shared_ptr<int> neighborsList(new int[sizeList],PdQuickGrid::Deleter<int>());
 	std::tr1::shared_ptr<bool> markForExclusion(new bool[max],PdQuickGrid::Deleter<bool>());
 
@@ -353,9 +347,12 @@ NeighborhoodList getNeighborhoodList
 		/*
 		 * Loop over owned points and determine number of points in horizon
 		 */
+		int *ptr = neighborsPtr.get();
+		int neighPtr = 0;
 		int *list = neighborsList.get();
 		double *x = xOwnedPtr.get();
-		for(int p=0;p<numOwnedPoints;p++,x+=3){
+		for(int p=0;p<numOwnedPoints;p++,x+=3,ptr++){
+			*ptr = neighPtr;
 
 			vtkIdList* kdTreeList = vtkIdList::New();
 			/*
@@ -391,6 +388,10 @@ NeighborhoodList getNeighborhoodList
 			 * Now save number of neighbors
 			 */
 			*numNeighPtr = numNeigh;
+			/*
+			 * increment neighborhood pointer
+			 */
+			neighPtr += (numNeigh+1);
 			/*
 			 * Delete list
 			 */
