@@ -41,6 +41,15 @@
 #include <map>
 #include <set>
 
+#include "Epetra_ConfigDefs.h"
+#ifdef HAVE_MPI
+#include "mpi.h"
+#include "Epetra_MpiComm.h"
+#else
+#include "Epetra_SerialComm.h"
+#endif
+
+
 
 using namespace PdQuickGrid;
 using namespace PdNeighborhood;
@@ -114,7 +123,7 @@ void createNeighborhood() {
 	BOOST_CHECK(1==decomp.numPoints);
 	BOOST_CHECK(4==decomp.globalNumPoints);
 	shared_ptr<BondFilter> bondFilterPtr(new PdBondFilter::BondFilterWithSelf());
-	PDNEIGH::NeighborhoodList list(decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,2.0*horizon,bondFilterPtr);
+	PDNEIGH::NeighborhoodList list(Epetra_MpiComm(MPI_COMM_WORLD),decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,2.0*horizon,bondFilterPtr);
 	shared_ptr< std::set<int> > frameSet = constructFrame(list);
 	BOOST_CHECK(5==list.get_size_neighborhood_list());
 	/*

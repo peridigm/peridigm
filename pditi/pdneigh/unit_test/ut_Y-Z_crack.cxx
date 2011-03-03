@@ -19,6 +19,14 @@
 #include "PdBondFilter.h"
 #include <iostream>
 
+#include "Epetra_ConfigDefs.h"
+#ifdef HAVE_MPI
+#include "mpi.h"
+#include "Epetra_MpiComm.h"
+#else
+#include "Epetra_SerialComm.h"
+#endif
+
 using namespace PdQuickGrid;
 using namespace PdBondFilter;
 using std::tr1::shared_ptr;
@@ -27,6 +35,7 @@ using std::cout;
 
 const int numProcs = 1;
 const int myRank = 0;
+
 const int nx = 4;
 const int ny = 4;
 const int nz = 3;
@@ -109,7 +118,7 @@ void assertNeighborhood(){
 	PdGridData gridData = getGrid();
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
-	PDNEIGH::NeighborhoodList list(gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);
+	PDNEIGH::NeighborhoodList list(Epetra_MpiComm(MPI_COMM_WORLD),gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);
 
 	int *neigh = list.get_neighborhood().get();
 
@@ -191,7 +200,13 @@ int main
 		char* argv[]
 )
 {
-
+#ifdef HAVE_MPI
+		MPI_Init(&argc, &argv);
+#endif
 	// Initialize UTF
 	return unit_test_main( init_unit_test, argc, argv );
+#ifdef HAVE_MPI
+	MPI_Finalize();
+#endif
+
 }

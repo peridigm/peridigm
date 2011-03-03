@@ -4,8 +4,8 @@
  *  Created on: Feb 25, 2011
  *      Author: jamitch
  */
-#include "NeighborhoodList.h"
 #include "Epetra_Comm.h"
+#include "NeighborhoodList.h"
 #include "zoltan.h"
 #include "PdVTK.h"
 #include "vtkIdList.h"
@@ -78,6 +78,7 @@ int NeighborhoodList::get_num_neigh (int localId) const {
 
 NeighborhoodList::NeighborhoodList
 (
+		const Epetra_Comm& comm,
 		struct Zoltan_Struct* zz,
 		size_t numOwnedPoints,
 		shared_ptr<int>& ownedGIDs,
@@ -86,12 +87,14 @@ NeighborhoodList::NeighborhoodList
 		shared_ptr<PdBondFilter::BondFilter> bondFilterPtr
 )
 :
+		epetraComm(comm),
 		num_owned_points(numOwnedPoints),
 		size_neighborhood_list(1),
 		horizon(horizon),
 		owned_gids(ownedGIDs),
 		owned_x(owned_coordinates),
 		neighborhood(new int[1],ArrayDeleter<int>()),
+		local_neighborhood(),
 		neighborhood_ptr(new int[numOwnedPoints],ArrayDeleter<int>()),
 		num_neighbors(new int[numOwnedPoints],ArrayDeleter<int>()),
 		zoltan(zz),
@@ -101,6 +104,12 @@ NeighborhoodList::NeighborhoodList
 	 * This single call performs the parallel search
 	 */
 	createAndAddNeighborhood();
+
+	/*
+	 * Compute local neighborhood list
+	 */
+	Epetra_BlockMap overlapMapScalar = getOverlapMap(comm,1);
+	local_neighborhood = getLocalNeighborList(overlapMapScalar);
 }
 
 /**
@@ -108,9 +117,12 @@ NeighborhoodList::NeighborhoodList
  * set of owned points but with a 'newHorizon'.  This is efficient
  * in that both classes share the same underlying coordinates and
  * global ids and 'zoltan' struct.
+ *
+ * NOTE: THIS PERFORMS A NEW PARALLEL SEARCH
+ * NOTE: Zoltan ptr stored must be valid
  */
 NeighborhoodList NeighborhoodList::cloneAndShare(double newHorizon) {
-	NeighborhoodList newList(zoltan,num_owned_points,owned_gids,owned_x,newHorizon,filter_ptr);
+	NeighborhoodList newList(epetraComm,zoltan,num_owned_points,owned_gids,owned_x,newHorizon,filter_ptr);
 	return newList;
 }
 
@@ -420,7 +432,6 @@ void NeighborhoodList::createAndAddNeighborhood(){
 			*gidNeigh = *(gIdsOverlap+*gidNeigh);
 		}
 	}
-
 
 	Zoltan_Comm_Destroy(&plan);
 

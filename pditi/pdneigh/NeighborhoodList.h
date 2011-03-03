@@ -15,7 +15,6 @@
 
 class Epetra_Comm;
 struct Zoltan_Struct;
-
 /**
  *
  *
@@ -61,6 +60,7 @@ class NeighborhoodList {
 
 public:
 	NeighborhoodList(
+			const Epetra_Comm& comm,
 			struct Zoltan_Struct* zz,
 			size_t numOwnedPoints,
 			shared_ptr<int>& ownedGIDs,
@@ -88,11 +88,12 @@ private:
 	void createAndAddNeighborhood();
 
 private:
+	const Epetra_Comm& epetraComm;
 	size_t num_owned_points, size_neighborhood_list;
 	double horizon;
 	shared_ptr<int> owned_gids;
 	shared_ptr<double> owned_x;
-	shared_ptr<int> neighborhood, neighborhood_ptr, num_neighbors;
+	shared_ptr<int> neighborhood, local_neighborhood, neighborhood_ptr, num_neighbors;
 	struct Zoltan_Struct* zoltan;
 	shared_ptr<PdBondFilter::BondFilter> filter_ptr;
 
