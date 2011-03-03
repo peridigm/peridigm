@@ -6,10 +6,10 @@
  */
 #include "PdImpOperator.h"
 #include "PdQuickGrid.h"
-#include "PdMaterialUtilities.h"
 #include <iostream>
 #include "Pd_shared_ptr_Array.h"
 #include "PdBondFilter.h"
+#include "PdMaterialUtilities.h"
 #include "PdVTK.h"
 #include "PdZoltan.h"
 #include "Epetra_Comm.h"

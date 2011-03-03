@@ -16,7 +16,7 @@
 #include "Field.h"
 #include "../PdImpMaterials.h"
 #include "../PdImpOperator.h"
-#include "../PdImpOperatorUtilities.h"
+#include "../PdITI_Utilities.h"
 #include "../IsotropicElasticConstitutiveModel.h"
 #include "../ConstitutiveModel.h"
 #include "../DirichletBcSpec.h"

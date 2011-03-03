@@ -20,7 +20,7 @@
 #include "../PdImpMaterials.h"
 #include "../PdImpOperator.h"
 #include "../PdITI_Operator.h"
-#include "../PdImpOperatorUtilities.h"
+#include "../PdITI_Utilities.h"
 #include "../IsotropicElasticConstitutiveModel.h"
 #include "PdVTK.h"
 #include <set>

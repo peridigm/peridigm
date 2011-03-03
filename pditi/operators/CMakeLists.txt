@@ -14,7 +14,7 @@ PdITI_Operator.cxx
 NewmarkBetaIntegrator.cxx
 ImplicitDynamicsIntegrator.cxx
 ImplicitLinearDynamicsIntegrator.cxx
-PdImpOperatorUtilities.cxx
+PdITI_Utilities.cxx
 BodyLoadSpec.cxx
 ComponentDirichletBcSpec.cxx
 StageComponentDirichletBc.cxx

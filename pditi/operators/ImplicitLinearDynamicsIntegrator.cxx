@@ -7,7 +7,7 @@
 
 #include "Field.h"
 #include "ImplicitLinearDynamicsIntegrator.h"
-#include "PdImpOperatorUtilities.h"
+#include "PdITI_Utilities.h"
 
 
 namespace PdImp {

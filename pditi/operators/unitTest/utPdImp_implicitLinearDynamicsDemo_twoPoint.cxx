@@ -19,7 +19,7 @@
 #include "Field.h"
 #include "../PdImpMaterials.h"
 #include "../PdImpOperator.h"
-#include "../PdImpOperatorUtilities.h"
+#include "../PdITI_Utilities.h"
 #include "../DirichletBcSpec.h"
 #include "../BodyLoadSpec.h"
 #include "../StageFunction.h"

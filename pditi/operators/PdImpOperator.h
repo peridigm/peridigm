@@ -17,7 +17,7 @@
 #include "Pd_shared_ptr_Array.h"
 #include "RowStiffnessOperator.h"
 #include "PdNeighborhood.h"
-#include "PdImpOperatorUtilities.h"
+#include "PdITI_Utilities.h"
 #include "ConstitutiveModel.h"
 #include "Field.h"
 #include <tr1/memory>
