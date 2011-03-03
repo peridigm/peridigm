@@ -26,6 +26,7 @@ IsotropicElasticPlasticModel.cxx
 add_executable(epetraDemo epetraDemo.cxx)
 target_link_libraries(epetraDemo 
 PdITIOperators
+PdNeigh
 ${PERIDIGM_LIBS}
 ${VTK_LIBS}
 ${TRILINOS_LIBS}
