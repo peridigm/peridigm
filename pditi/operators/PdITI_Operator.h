@@ -13,6 +13,7 @@
 #include "Epetra_Export.h"
 #include "Field.h"
 #include "ConstitutiveModel.h"
+#include "RowStiffnessOperator.h"
 #include <tr1/memory>
 
 using std::tr1::shared_ptr;
@@ -28,6 +29,7 @@ public:
 	void advanceStateVariables();
 	Field_NS::Field<double> computeOwnedDilatation(Field_NS::Field<double> uOwnedField);
 	void computeInternalForce(Field_NS::Field<double> uOwned, Field_NS::Field<double> fIntOwned, bool withDilatation=true);
+	shared_ptr<RowStiffnessOperator> getJacobian(Field_NS::Field<double> uOwned);
 	Field_NS::Field<double> getWeightedVolume() const { return mOwnedField; }
 	const Epetra_Comm& getEpetra_Comm() const { return epetraComm; }
 	const Epetra_BlockMap& getOwnedMapScalar() { return  ownedMapScalar; }
@@ -35,9 +37,10 @@ public:
 	const Epetra_BlockMap& getOwnedMapNDF()   const { return  ownedMapNDF; }
 	const Epetra_BlockMap& getOverlapMapNDF() const { return  overlapMapNDF; }
 
+
 private:
 	const Epetra_Comm& epetraComm;
-	PDNEIGH::NeighborhoodList list;
+	PDNEIGH::NeighborhoodList list/*, row_matrix_list*/;
 	shared_ptr<int> local_list;
 	const Epetra_BlockMap ownedMapScalar,ownedMapNDF;
 	const Epetra_BlockMap overlapMapScalar,overlapMapNDF;
@@ -48,7 +51,7 @@ private:
 	shared_ptr<double> xOverlapPtr, uOverlapPtr, yOverlapPtr, fInternalOverlapPtr, volumeOverlapPtr;
 	shared_ptr<ConstitutiveModel> fIntPtr;
 	vector< TemporalField<double> > temporalBondFields;
-
+	shared_ptr<RowStiffnessOperator> rowStiffnessOperatorPtr;
 };
 
 }

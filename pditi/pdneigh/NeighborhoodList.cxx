@@ -103,6 +103,17 @@ NeighborhoodList::NeighborhoodList
 	createAndAddNeighborhood();
 }
 
+/**
+ * This function creates a 'new neighborhood' based upon an existing
+ * set of owned points but with a 'newHorizon'.  This is efficient
+ * in that both classes share the same underlying coordinates and
+ * global ids and 'zoltan' struct.
+ */
+NeighborhoodList NeighborhoodList::cloneAndShare(double newHorizon) {
+	NeighborhoodList newList(zoltan,num_owned_points,owned_gids,owned_x,newHorizon,filter_ptr);
+	return newList;
+}
+
 shared_ptr<int> NeighborhoodList::getLocalNeighborList(const Epetra_BlockMap& overlapMap){
 	shared_ptr<int> localNeighborList(new int[size_neighborhood_list],PdQuickGrid::Deleter<int>());
 	int *localNeig = localNeighborList.get();
