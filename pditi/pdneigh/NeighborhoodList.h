@@ -73,9 +73,10 @@ public:
 	int get_num_neigh (int localId) const;
 	shared_ptr<int> get_neighborhood_ptr() const;
 	shared_ptr<int> get_neighborhood() const;
+	shared_ptr<int> get_local_neighborhood() const;
 	const int* get_neighborhood (int localId) const;
+	const int* get_local_neighborhood (int localId) const;
 	int get_size_neighborhood_list() const;
-	shared_ptr<int> getLocalNeighborList(const Epetra_BlockMap& overlapMap);
 	shared_ptr<double> get_owned_x() const;
 	const Epetra_BlockMap getOverlapMap(const Epetra_Comm& comm, int ndf) const;
 	const Epetra_BlockMap getOwnedMap(const Epetra_Comm& comm, int ndf) const;
@@ -85,6 +86,7 @@ public:
 private:
 	pair<int, shared_ptr<int> > getSharedGlobalIds() const;
 	void buildNeighborhoodList(int numOverlapPoints,shared_ptr<double> xOverlapPtr);
+	shared_ptr<int> createLocalNeighborList(const Epetra_BlockMap& overlapMap);
 	void createAndAddNeighborhood();
 
 private:
