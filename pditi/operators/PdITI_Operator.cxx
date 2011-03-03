@@ -46,7 +46,8 @@ yOverlapPtr(new double[overlapMapScalar.NumMyElements()*vectorNDF],ArrayDeleter<
 fInternalOverlapPtr(new double[overlapMapScalar.NumMyElements()*vectorNDF],ArrayDeleter<double>()),
 volumeOverlapPtr(new double[overlapMapScalar.NumMyElements()*scalarNDF],ArrayDeleter<double>()),
 fIntPtr(),
-temporalBondFields()
+temporalBondFields(),
+rowStiffnessOperatorPtr()
 {
 
 	/*
@@ -226,6 +227,24 @@ void PdITI_Operator::advanceStateVariables() {
 		temporalBondFields[f].advanceStep();
 	}
 
+}
+
+
+/**
+ * @param u Linearization about this displacement field
+ */
+shared_ptr<RowStiffnessOperator> PdITI_Operator::getJacobian(Field_NS::Field<double> uOwned) {
+	rowStiffnessOperatorPtr = shared_ptr<RowStiffnessOperator>();
+//	if (rowStiffnessOperatorPtr==shared_ptr<RowStiffnessOperator>()){
+//		rowStiffnessOperatorPtr = shared_ptr<RowOperator>(new RowOperator(this,horizon));
+//	}
+
+	/*
+	 * Reset row counter on operator
+	 */
+//	rowStiffnessOperatorPtr.get()->initialize(uOwned);
+
+	return rowStiffnessOperatorPtr;
 }
 
 
