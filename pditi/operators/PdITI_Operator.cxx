@@ -9,7 +9,9 @@
 #include "Epetra_BlockMap.h"
 #include "Epetra_Vector.h"
 #include "PdMaterialUtilities.h"
+#include "PdITI_Utilities.h"
 #include <iostream>
+#include <map>
 using std::cout;
 using std::endl;
 using namespace PdMaterialUtilities;
@@ -25,193 +27,211 @@ template<class T> struct ArrayDeleter{
 	}
 };
 
-//PdITI_Operator::
-//RowOperator::RowOperator
-//(
-//		const Epetra_Comm& comm,
-//		const PDNEIGH::NeighborhoodList row_matrix_list_2_horizon,
-//		shared_ptr<double> ownedCellVolume
-//):
-//row_matrix_list(row_matrix_list_2_horizon),
-//rowMapNDF(row_matrix_list.getOwnedMap(comm,vectorNDF)),
-//rowMapScalar(row_matrix_list.getOwnedMap(comm,scalarNDF)),
-//colMapNDF(row_matrix_list.getOverlapMap(comm,vectorNDF)),
-//colMapScalar(row_matrix_list.getOverlapMap(comm,scalarNDF)),
-//xOverlapPtr(new double[colMapNDF.NumMyElements()*vectorNDF],ArrayDeleter<double>()),
-//uOverlapPtr(new double[colMapNDF.NumMyElements()*vectorNDF],ArrayDeleter<double>()),
-//mOverlapPtr(new double[colMapNDF.NumMyElements()*scalarNDF],ArrayDeleter<double>()),
-//volOverlapPtr(new double[colMapNDF.NumMyElements()*scalarNDF],ArrayDeleter<double>()),
-//dilatationOverlapPtr(new double[colMapNDF.NumMyElements()*scalarNDF],ArrayDeleter<double>())
-//{
-//
-//	/*
-//	 * Communicate coordinates, volume, and weighted volume overlap vector
-//	 */
-//	Epetra_Import importNDF(colMapNDF,rowMap);
-//	Epetra_Vector xOverlap(View,colMapNDF,xOverlapPtr.get());
-//	Epetra_Vector xOwned(View,rowMap,row_matrix_list.get_owned_x().get());
-//	xOverlap.Import(xOwned,importNDF,Insert);
-////	/*
-////	 *Volume
-////	 */
-////	Epetra_Import importScalar(colMapScalar,rowMapScalar);
-////	Epetra_Vector vOverlap(View,colMapScalar,volOverlapPtr.get());
-////	Epetra_Vector vOwned(View,rowMapScalar,ownedCellVolume.get());
-////	vOverlap.Import(vOwned,importScalar,Insert);
-////	/*
-////	 * Weighted volume
-////	 */
-////	Epetra_Vector mOverlap(View,colMapScalar,mOverlapPtr.get());
-////	Epetra_Vector mOwned(View,rowMapScalar,op->mOwnedPtr.getArray().get());
-////	mOverlap.Import(mOwned,importScalar,Insert);
-//
-//
-//}
-//
-///**
-// * This function initializes the jacobian operator for the input displacement field
-// * 1) computes overlap vector for "displacement"
-// * 2) computes dilatation for input displacement and then computes the overlap vector for dilatation
-// */
-//void PdITI_Operator::RowOperator::initialize(Field_NS::Field<double> uOwnedField) {
-//
-//	/*
-//	 * Broadcast displacements to "overlap" vector
-//	 */
-//	Epetra_Import importNDF(colMapNDF,op->ownedMapNDF);
-//	Epetra_Vector uOverlap(View,colMapNDF,uOverlapField.getArray().get());
-//	Epetra_Vector uOwned(View,op->ownedMapNDF,uOwnedField.getArray().get());
-//	uOverlap.Import(uOwned,importNDF,Insert);
-//
-//	/*
-//	 * Compute dilatation and broadcast
-//	 */
-//	Epetra_Import importScalar(colMapScalar,op->ownedMapScalar);
-//	Field<double> ownedDilatationField = op->computeOwnedDilatation(uOwnedField);
-//	Epetra_Vector dilatationOverlap(View,colMapScalar,dilatationOverlapField.getArray().get());
-//	Epetra_Vector ownedDilatation(View,op->ownedMapScalar,ownedDilatationField.getArray().get());
-//	dilatationOverlap.Import(ownedDilatation,importScalar,Insert);
-//}
-//
-///**
-// * This function returns the local column ids in a particular row of the matrix
-// * @param localRowID -- this should be an "owned point"
-// * @return Pd_shared_ptr_Array<int>-- array of global ids in neighborhood
-// */
-//Pd_shared_ptr_Array<int> PdITI_Operator::RowOperator::getColumnLIDs(int localRowID) const {
-//	const int *neigh = row_matrix_list.getgetNeighborhood(localRowID);
-//	int numCols = *neigh; neigh++;
-//	Pd_shared_ptr_Array<int> lIds(numCols);
-//	int *idsPtr = lIds.get();
-//	for(;idsPtr != lIds.end();idsPtr++,neigh++){
-//		*idsPtr=*neigh;
-//	}
-//	return lIds;
-//}
-//
-//
-//const Pd_shared_ptr_Array<int>& PdITI_Operator::RowOperator::getNumColumnsPerRow() const {
-//	return numColumnsPerRow;
-//}
-//
-///**
-// * This function returns the number of points in a neighborhood -- which is also equal to number of columns in a row
-// * @return Pd_shared_ptr_Array<int> -- array of number of columns associated
-// * with each owned point (row)
-// */
-//Pd_shared_ptr_Array<int> PdITI_Operator::RowOperator::computeNumColumnsPerRow() const {
-//	int numPoints = op->getNumOwnedPoints();
-//	Pd_shared_ptr_Array<int> numCols(numPoints);
-//	int *numColsPtr = numCols.get();
-//	for(int I=0;I<numPoints;I++,numColsPtr++){
-//		*numColsPtr = rowMatrixNeighborhoodList.getNumNeigh(I);
-//	}
-//	return numCols;
-//}
-//
-//
-//const Pd_shared_ptr_Array<double>& PdITI_Operator::RowOperator::computeRowStiffness(int localRowID, Pd_shared_ptr_Array<int> rowLIDs){
-//
-////	std::cout << "PimpOperator::RowOperator::computeRowStiffness; localRowID = " << localRowID << std::endl;
-//
-//	int numColsRowI = rowLIDs.getSize();
-//
-//	std::vector< std::pair<int,int> > pairs(numColsRowI);
-//	{
-//		int *cols = rowLIDs.get();
-//		for(std::size_t i=0;i<pairs.size();i++,cols++){
-//			pairs[i] = std::make_pair(*cols,i);
-//		}
-//	}
-//	std::map<int,int> map(pairs.begin(),pairs.end());
-//
-//	const double zero = 0.0;
-//	double *kRowI = rowStiffnessPtr.get();
-//	double *k3x3Ptr = k3x3;
-//	double *x = xOverlapField.getArray().get();
-//	double *u = uOverlapField.getArray().get();
-//	double *volume = volOverlapField.getArray().get();
-//	double *m = mOverlapField.getArray().get();
-//	double *dilatationOverlap = dilatationOverlapField.getArray().get();
-//	/*
-//	 * This neighborhood includes 'I'
-//	 */
-//	int I = localRowID;
-//
-//	/*
-//	 * Initialize row stiffness to zero
-//	 */
-//	PdITI::SET(kRowI,kRowI+9*numColsRowI,zero);
-//	/*
-//	 * Loop over neighbors of cell I and assemble stiffness
-//	 */
-//	for(int *colsI = rowLIDs.get();colsI!=rowLIDs.end();colsI++){
-//		int Q = *colsI;
-//
-//		if(Q==I) continue;
-//
-//		for(int *colsP = rowLIDs.get();colsP!=rowLIDs.end();colsP++){
-//			int P = *colsP;
-//
-//			/*
-//			 * Initialize local 3x3 matrices to zero
-//			 * Assemble into 3x3
-//			 * Copy into row
-//			 */
-//			PdITI::SET(k3x3Ptr,k3x3Ptr+27,zero);
-//			double *k1 = k3x3Ptr;
-//			double *k2 = k3x3Ptr+9;
-//			double *k3 = k3x3Ptr+18;
-//			/*
-//			 * Check for existence of bond IQ
-//			 */
-//			(I==Q || I==P) ? NULL :              op->fIntPtr->kIPQ3x3(I,P,Q,x,u,volume,m,dilatationOverlap,k1,horizon);
-//			(P==I || P==Q) ? NULL : PdITI::SUBTRACTINTO(op->fIntPtr->kIPQ3x3(P,I,Q,x,u,volume,m,dilatationOverlap,k2,horizon),k2+9,k1);
-//			(Q==I || Q==P) ? NULL :      PdITI::SUMINTO(op->fIntPtr->kIPQ3x3(Q,I,P,x,u,volume,m,dilatationOverlap,k3,horizon),k3+9,k1);
-//
-//			/*
-//			 * Assembly into Row Matrix
-//			 * Skip Diagonal : Will sum rows at bottom to place diagonal
-//			 */
-//			double *kIQ = kRowI + 9 * map[Q];
-//			PdITI::SUMINTO(k3x3Ptr,k3x3Ptr+9,kIQ);
-//
-//		}
-//
-//	}
-//
-//	/*
-//	 * Final Step: Set diagonal entry by summing row and placing on diagonal
-//	 */
-//	double *kII = kRowI + 9 * map[I];
-//	for(int q = 0;q<numColsRowI;q++){
-//		if(map[I]==q) continue;
-//		double *kIQ = kRowI + 9 * q;
-//		PdITI::SUBTRACTINTO(kIQ,kIQ+9,kII);
-//	}
-//
-//	return rowStiffnessPtr;
-//}
+PdITI_Operator::
+RowOperator::RowOperator
+(
+		const Epetra_Comm& comm,
+		const PDNEIGH::NeighborhoodList row_matrix_list_2_horizon,
+		shared_ptr<double> ownedCellVolume,
+		shared_ptr<double> mOwnedPtr
+):
+row_matrix_list(row_matrix_list_2_horizon),
+rowMapNDF(row_matrix_list.getOwnedMap(comm,vectorNDF)),
+rowMapScalar(row_matrix_list.getOwnedMap(comm,scalarNDF)),
+colMapNDF(row_matrix_list.getOverlapMap(comm,vectorNDF)),
+colMapScalar(row_matrix_list.getOverlapMap(comm,scalarNDF)),
+xOverlapPtr(new double[colMapNDF.NumMyElements()*vectorNDF],ArrayDeleter<double>()),
+uOverlapPtr(new double[colMapNDF.NumMyElements()*vectorNDF],ArrayDeleter<double>()),
+mOverlapPtr(new double[colMapNDF.NumMyElements()*scalarNDF],ArrayDeleter<double>()),
+volOverlapPtr(new double[colMapNDF.NumMyElements()*scalarNDF],ArrayDeleter<double>()),
+dilatationOverlapPtr(new double[colMapNDF.NumMyElements()*scalarNDF],ArrayDeleter<double>())
+{
+
+	/*
+	 * Communicate coordinates, volume, and weighted volume overlap vector
+	 */
+	Epetra_Import importNDF(colMapNDF,rowMapNDF);
+	Epetra_Vector xOverlap(View,colMapNDF,xOverlapPtr.get());
+	Epetra_Vector xOwned(View,rowMapNDF,row_matrix_list.get_owned_x().get());
+	xOverlap.Import(xOwned,importNDF,Insert);
+	/*
+	 *Volume
+	 */
+	Epetra_Import importScalar(colMapScalar,rowMapScalar);
+	Epetra_Vector vOverlap(View,colMapScalar,volOverlapPtr.get());
+	Epetra_Vector vOwned(View,rowMapScalar,ownedCellVolume.get());
+	vOverlap.Import(vOwned,importScalar,Insert);
+	/*
+	 * Weighted volume
+	 */
+	Epetra_Vector mOverlap(View,colMapScalar,mOverlapPtr.get());
+	Epetra_Vector mOwned(View,rowMapScalar,mOwnedPtr.get());
+	mOverlap.Import(mOwned,importScalar,Insert);
+
+	/*
+	 * Computes number of columns per row
+	 */
+	numColumnsPerRow = computeNumColumnsPerRow();
+	/*
+	 * Loop over rows and determine the maximum row size;
+	 * Use maximum row size to allocate enough room for all row stiffnesses
+	 */
+	int max = 0;
+	int *numCols = numColumnsPerRow.get();
+	for(std::size_t r=0;r<numColumnsPerRow.getSize();r++, numCols++){
+		if (max < *numCols) max = *numCols;
+	}
+
+	rowStiffnessPtr = Pd_shared_ptr_Array<double>(9*max);
+
+}
+
+/**
+ * This function initializes the jacobian operator for the input displacement field 'uOwnedField'
+ * Incoming dilatation should be 'pre-computed' using 'uOwnedField'
+ */
+void PdITI_Operator::RowOperator::initialize(Field<double> uOwnedField, Field<double> ownedDilatationField, shared_ptr<ConstitutiveModel> fIntPtr) {
+
+	/*
+	 * Broadcast displacements to "overlap" vector
+	 */
+	Epetra_Import importNDF(colMapNDF,rowMapNDF);
+	Epetra_Vector uOverlap(View,colMapNDF,uOverlapPtr.get());
+	Epetra_Vector uOwned(View,rowMapNDF,uOwnedField.getArray().get());
+	uOverlap.Import(uOwned,importNDF,Insert);
+
+	/*
+	 * broadcast dilatation
+	 */
+	Epetra_Import importScalar(colMapScalar,rowMapScalar);
+	Epetra_Vector dilatationOverlap(View,colMapScalar,dilatationOverlapPtr.get());
+	Epetra_Vector ownedDilatation(View,rowMapScalar,ownedDilatationField.getArray().get());
+	dilatationOverlap.Import(ownedDilatation,importScalar,Insert);
+}
+
+/**
+ * This function returns the local column ids in a particular row of the matrix
+ * @param localRowID -- this should be an "owned point"
+ * @return Pd_shared_ptr_Array<int>-- array of global ids in neighborhood
+ */
+Pd_shared_ptr_Array<int> PdITI_Operator::RowOperator::getColumnLIDs(int localRowID) const {
+	const int *neigh = row_matrix_list.get_local_neighborhood(localRowID);
+	int numCols = *neigh; neigh++;
+	Pd_shared_ptr_Array<int> lIds(numCols);
+	int *idsPtr = lIds.get();
+	for(;idsPtr != lIds.end();idsPtr++,neigh++){
+		*idsPtr=*neigh;
+	}
+	return lIds;
+}
+
+
+const Pd_shared_ptr_Array<int>& PdITI_Operator::RowOperator::getNumColumnsPerRow() const {
+	return numColumnsPerRow;
+}
+
+/**
+ * This function returns the number of points in a neighborhood -- which is also equal to number of columns in a row
+ * @return Pd_shared_ptr_Array<int> -- array of number of columns associated
+ * with each owned point (row)
+ */
+Pd_shared_ptr_Array<int> PdITI_Operator::RowOperator::computeNumColumnsPerRow() const {
+	int numPoints = row_matrix_list.get_num_owned_points();
+	Pd_shared_ptr_Array<int> numCols(numPoints);
+	int *numColsPtr = numCols.get();
+	for(int I=0;I<numPoints;I++,numColsPtr++){
+		*numColsPtr = row_matrix_list.get_num_neigh(I);
+	}
+	return numCols;
+}
+
+
+const Pd_shared_ptr_Array<double>& PdITI_Operator::RowOperator::computeRowStiffness(int localRowID, Pd_shared_ptr_Array<int> rowLIDs){
+
+//	std::cout << "PimpOperator::RowOperator::computeRowStiffness; localRowID = " << localRowID << std::endl;
+	/*
+	 * Neighborhood list associated with Jacobian is constructed using 2 * horizon;
+	 * However, calculations here refer to 'horizon'
+	 */
+	double horizon = row_matrix_list.get_horizon()/2.0;
+	int numColsRowI = rowLIDs.getSize();
+
+	std::vector< std::pair<int,int> > pairs(numColsRowI);
+	{
+		int *cols = rowLIDs.get();
+		for(std::size_t i=0;i<pairs.size();i++,cols++){
+			pairs[i] = std::make_pair(*cols,i);
+		}
+	}
+	std::map<int,int> map(pairs.begin(),pairs.end());
+
+	const double zero = 0.0;
+	double *kRowI = rowStiffnessPtr.get();
+	double *k3x3Ptr = k3x3;
+	double *x = xOverlapPtr.get();
+	double *u = uOverlapPtr.get();
+	double *volume = volOverlapPtr.get();
+	double *m = mOverlapPtr.get();
+	double *dilatationOverlap = dilatationOverlapPtr.get();
+	/*
+	 * This neighborhood includes 'I'
+	 */
+	int I = localRowID;
+
+	/*
+	 * Initialize row stiffness to zero
+	 */
+	PdITI::SET(kRowI,kRowI+9*numColsRowI,zero);
+	/*
+	 * Loop over neighbors of cell I and assemble stiffness
+	 */
+	for(int *colsI = rowLIDs.get();colsI!=rowLIDs.end();colsI++){
+		int Q = *colsI;
+
+		if(Q==I) continue;
+
+		for(int *colsP = rowLIDs.get();colsP!=rowLIDs.end();colsP++){
+			int P = *colsP;
+
+			/*
+			 * Initialize local 3x3 matrices to zero
+			 * Assemble into 3x3
+			 * Copy into row
+			 */
+			PdITI::SET(k3x3Ptr,k3x3Ptr+27,zero);
+			double *k1 = k3x3Ptr;
+			double *k2 = k3x3Ptr+9;
+			double *k3 = k3x3Ptr+18;
+			/*
+			 * Check for existence of bond IQ
+			 */
+//			(I==Q || I==P) ? NULL :              fIntPtr->kIPQ3x3(I,P,Q,x,u,volume,m,dilatationOverlap,k1,horizon);
+//			(P==I || P==Q) ? NULL : PdITI::SUBTRACTINTO(fIntPtr->kIPQ3x3(P,I,Q,x,u,volume,m,dilatationOverlap,k2,horizon),k2+9,k1);
+//			(Q==I || Q==P) ? NULL :      PdITI::SUMINTO(fIntPtr->kIPQ3x3(Q,I,P,x,u,volume,m,dilatationOverlap,k3,horizon),k3+9,k1);
+
+			/*
+			 * Assembly into Row Matrix
+			 * Skip Diagonal : Will sum rows at bottom to place diagonal
+			 */
+			double *kIQ = kRowI + 9 * map[Q];
+			PdITI::SUMINTO(k3x3Ptr,k3x3Ptr+9,kIQ);
+
+		}
+
+	}
+
+	/*
+	 * Final Step: Set diagonal entry by summing row and placing on diagonal
+	 */
+	double *kII = kRowI + 9 * map[I];
+	for(int q = 0;q<numColsRowI;q++){
+		if(map[I]==q) continue;
+		double *kIQ = kRowI + 9 * q;
+		PdITI::SUBTRACTINTO(kIQ,kIQ+9,kII);
+	}
+
+	return rowStiffnessPtr;
+}
 
 
 PdITI_Operator::PdITI_Operator(const Epetra_Comm& comm, const PDNEIGH::NeighborhoodList neighborhoodList, shared_ptr<double> ownedCellVolume)
