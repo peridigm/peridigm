@@ -38,6 +38,7 @@ public:
 private:
 	const Epetra_Comm& epetraComm;
 	PDNEIGH::NeighborhoodList list;
+	shared_ptr<int> local_list;
 	const Epetra_BlockMap ownedMapScalar,ownedMapNDF;
 	const Epetra_BlockMap overlapMapScalar,overlapMapNDF;
 	Epetra_Import importScalar,importNDF;

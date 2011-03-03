@@ -103,6 +103,25 @@ NeighborhoodList::NeighborhoodList
 	createAndAddNeighborhood();
 }
 
+shared_ptr<int> NeighborhoodList::getLocalNeighborList(const Epetra_BlockMap& overlapMap){
+	shared_ptr<int> localNeighborList(new int[size_neighborhood_list],PdQuickGrid::Deleter<int>());
+	int *localNeig = localNeighborList.get();
+	int *neighPtr = neighborhood_ptr.get();
+	int *neigh = neighborhood.get();
+	for(int p=0;p<num_owned_points;p++){
+		int ptr = neighPtr[p];
+		int numNeigh = neigh[ptr];
+		localNeig[ptr]=numNeigh;
+		for(int n=1;n<=numNeigh;n++){
+			int gid = neigh[ptr+n];
+			int localId = overlapMap.LID(gid);
+			localNeig[ptr+n] = localId;
+		}
+	}
+	return localNeighborList;
+}
+
+
 pair<int, shared_ptr<int> > NeighborhoodList::getSharedGlobalIds() const {
 	std::set<int> ownedIds(owned_gids.get(),owned_gids.get()+num_owned_points);
 	std::set<int> shared;
