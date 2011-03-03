@@ -42,6 +42,7 @@
 #include <Teuchos_FancyOStream.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_RCP.hpp>
+#include <Epetra_CrsMatrix.h>
 
 #include "contact/Peridigm_ContactModel.hpp"
 #include "materials/Peridigm_Material.hpp"
@@ -86,8 +87,11 @@ namespace PeridigmNS {
     //! Initialize the output manager
     void initializeOutputManager();
 
-    //! Main routine to drive problem solution
-    void execute();
+    //! Main routine to drive problem solution with explicit time integration
+    void executeExplicit();
+
+    //! Main routine to drive problem solution with implicit time integration
+    void executeImplicit();
 
     //! Rebalance the mesh
     void rebalance();
@@ -221,6 +225,21 @@ namespace PeridigmNS {
 
     //! Global vector for contact force
     Teuchos::RCP<Epetra_Vector> contactForce;
+
+    //! Map for global tangent matrix (note, must be an Epetra_Map, not an Epetra_BlockMap)
+    Teuchos::RCP<Epetra_Map> tangentMap;
+
+    //! Global tangent matrix
+    Teuchos::RCP<Epetra_CrsMatrix> tangent;
+
+    //! Map for overlap tangent matrix
+    Teuchos::RCP<Epetra_Map> overlapTangentMap;
+
+    //! Overlap tangent matrix
+    Teuchos::RCP<Epetra_CrsMatrix> overlapTangent;
+
+    //! Importer for importing from the overlap tangents to the global tangent
+    Teuchos::RCP<const Epetra_Import> overlapTangentToGlobalTangentImporter;
 
     //! List of neighbors for all locally-owned nodes
     Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData;

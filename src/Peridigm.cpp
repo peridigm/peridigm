@@ -219,6 +219,50 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
   force = Teuchos::rcp((*mothership)(5), false);         // force
   contactForce = Teuchos::rcp((*mothership)(6), false);  // contact force
 
+  // Construct map for global tangent matrix
+  // Note that this must be an Epetra_Map, not an Epetra_BlockMap, so we can't use threeDimensionalMap directly
+  int numGlobalElements = 3*oneDimensionalMap->NumGlobalElements();
+  int numMyElements = 3*oneDimensionalMap->NumMyElements();
+  int* myGlobalElements = new int[numMyElements];
+  int* oneDimensionalMapGlobalElements = oneDimensionalMap->MyGlobalElements();
+  for(int iElem=0 ; iElem<oneDimensionalMap->NumMyElements() ; ++iElem){
+    myGlobalElements[3*iElem]     = 3*oneDimensionalMapGlobalElements[iElem];
+    myGlobalElements[3*iElem + 1] = 3*oneDimensionalMapGlobalElements[iElem] + 1;
+    myGlobalElements[3*iElem + 2] = 3*oneDimensionalMapGlobalElements[iElem] + 2;
+  }
+  int indexBase = 0;
+  tangentMap = Teuchos::rcp(new Epetra_Map(numGlobalElements, numMyElements, myGlobalElements, indexBase, *peridigmComm));
+  delete[] myGlobalElements;
+
+  // Create the global tangent matrix
+  Epetra_DataAccess CV = Copy;
+  int numEntriesPerRow = 0;  // If this is zero, allocation will take place during the insertion phase \todo Compute non-zeros instead of allocation during insertion.
+  bool staticProfile = false;  // \todo Can staticProfile be set to true?  Bond breaking would alter the non-zeros, but we could just leave them there to avoid reallocation.
+  tangent = Teuchos::rcp(new Epetra_CrsMatrix(CV, *tangentMap, numEntriesPerRow, staticProfile));
+
+  // Construct map for local tangent matrix
+  numGlobalElements = 3*oneDimensionalOverlapMap->NumGlobalElements();
+  numMyElements = 3*oneDimensionalOverlapMap->NumMyElements();
+  myGlobalElements = new int[numMyElements];
+  int* oneDimensionalOverlapMapGlobalElements = oneDimensionalOverlapMap->MyGlobalElements();
+  indexBase = 0;
+  for(int iElem=0 ; iElem<oneDimensionalOverlapMap->NumMyElements() ; ++iElem){
+    myGlobalElements[3*iElem]     = 3*oneDimensionalOverlapMapGlobalElements[iElem];
+    myGlobalElements[3*iElem + 1] = 3*oneDimensionalOverlapMapGlobalElements[iElem] + 1;
+    myGlobalElements[3*iElem + 2] = 3*oneDimensionalOverlapMapGlobalElements[iElem] + 2;
+  }
+  overlapTangentMap = Teuchos::rcp(new Epetra_Map(numGlobalElements, numMyElements, myGlobalElements, indexBase, *peridigmComm));
+  delete[] myGlobalElements;
+
+  // Create the local tangent matrix
+  CV = Copy;
+  numEntriesPerRow = 0;  // If this is zero, allocation will take place during the insertion phase \todo Compute non-zeros instead of allocation during insertion.
+  staticProfile = false;  // \todo Can staticProfile be set to true?  Bond breaking would alter the non-zeros, but we could just leave them there to avoid reallocation.
+  overlapTangent = Teuchos::rcp(new Epetra_CrsMatrix(CV, *overlapTangentMap, numEntriesPerRow, staticProfile));
+
+  // Create the tangent importer
+  overlapTangentToGlobalTangentImporter = Teuchos::rcp(new Epetra_Import(*tangentMap, *overlapTangentMap));
+
   // Set the initial positions
   double* initialX;
   peridigmDisc->getInitialX()->ExtractView(&initialX);
@@ -421,7 +465,7 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
 
 }
 
-void PeridigmNS::Peridigm::execute() {
+void PeridigmNS::Peridigm::executeExplicit() {
 
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   workset->timeStep = timeStep;
@@ -534,6 +578,94 @@ void PeridigmNS::Peridigm::execute() {
     // swap state N and state NP1
     dataManager->updateState();
   }
+}
+
+void PeridigmNS::Peridigm::executeImplicit() {
+
+  Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
+  workset->timeStep = timeStep;
+
+  // Copy data from mothership vectors to overlap vectors in data manager
+  dataManager->getData(Field_NS::DISPL3D, Field_NS::FieldSpec::STEP_NP1)->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  dataManager->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->Import(*y, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_NP1)->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+
+  // evalModel() should be called by time integrator here...
+  // For now, insert Verlet intergrator here
+  Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
+  Teuchos::RCP<Teuchos::ParameterList> verletPL = sublist(solverParams, "Verlet", true);
+  double t_initial = verletPL->get("Initial Time", 0.0);
+  double t_current = t_initial;
+  double dt        = verletPL->get("Fixed dt", 1.0);
+  *timeStep = dt;
+  double dt2 = dt/2.0;
+  double t_final   = verletPL->get("Final Time", 1.0);
+  int nsteps = (int)floor((t_final-t_initial)/dt);
+  // Pointer index into sub-vectors for use with BLAS
+  double *xptr, *uptr, *yptr, *vptr, *aptr;
+  x->ExtractView( &xptr );
+  u->ExtractView( &uptr );
+  y->ExtractView( &yptr );
+  v->ExtractView( &vptr );
+  a->ExtractView( &aptr );
+  int length = a->MyLength();
+
+  for(int step=1; step<=nsteps ; step++){
+
+    // Compute force_external
+
+    // Update nodal positions for nodes with kinematic B.C.
+
+    // While residual < tolerance
+
+    //      Compute tangent
+
+    //      Solver linear system
+
+    //      Apply increment to nodal positions
+
+    //      Compute residual
+
+  }
+
+  // Copy data from mothership vectors to overlap vectors in data manager
+  PeridigmNS::Timer::self().startTimer("Gather/Scatter");
+  dataManager->getData(Field_NS::DISPL3D, Field_NS::FieldSpec::STEP_NP1)->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  dataManager->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->Import(*y, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_NP1)->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+
+  // Compute local contributions to Jacobian
+  PeridigmNS::Timer::self().startTimer("Construct Local Tangent");
+  // Initial implementation uses identity matrix
+  // This fill will eventually be done by the material models
+  for(int LID=0 ; LID<tangentMap->NumMyElements() ; ++LID){
+    int globalID = tangentMap->GID(LID);
+    int numEntries = 1;
+    int* indices = new int[numEntries];
+    indices[0] = globalID;
+    double* values = new double[numEntries];
+    values[0] = 1.0;
+    overlapTangent->InsertGlobalValues(globalID, numEntries, values, indices);
+    delete[] indices;
+    delete[] values;
+  }
+  overlapTangent->FillComplete();
+  PeridigmNS::Timer::self().stopTimer("Construct Local Tangent");
+
+  // Scatter add from the overlap tangent to the global tangent
+  PeridigmNS::Timer::self().startTimer("Global Tangent Fill");
+  tangent->Import(*overlapTangent, *overlapTangentToGlobalTangentImporter, Add);
+  PeridigmNS::Timer::self().stopTimer("Global Tangent Fill");    
+
+  tangent->Print(cout);
+
+  PeridigmNS::Timer::self().startTimer("Output");
+  outputManager->write(x,u,v,a,force,dataManager,neighborhoodData,forceStateDesc);
+  PeridigmNS::Timer::self().stopTimer("Output");
+
+  // swap state N and state NP1
+  dataManager->updateState();
 }
 
 void PeridigmNS::Peridigm::rebalance() {
@@ -657,6 +789,8 @@ PdGridData PeridigmNS::Peridigm::currentConfigurationDecomp() {
 
   decomp.globalNumPoints = oneDimensionalMap->NumGlobalElements();
 
+  // \todo myGlobalIDs, cellVolume, and myX are allocated in allocatePdGridData(), don't need to allocate here.
+  
   // fill myGlobalIDs
   shared_ptr<int> myGlobalIDs(new int[myNumElements], PdQuickGrid::Deleter<int>());
   int* myGlobalIDsPtr = myGlobalIDs.get();
