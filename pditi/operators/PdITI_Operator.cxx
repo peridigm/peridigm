@@ -219,7 +219,6 @@ PdITI_Operator::PdITI_Operator(const Epetra_Comm& comm, const PDNEIGH::Neighborh
 epetraComm(comm),
 list(neighborhoodList),
 row_matrix_list(list.cloneAndShare(2.0*neighborhoodList.get_horizon())),
-local_list(),
 ownedMapScalar(neighborhoodList.getOwnedMap(comm,scalarNDF)),
 ownedMapNDF(neighborhoodList.getOwnedMap(comm,vectorNDF)),
 overlapMapScalar(neighborhoodList.getOverlapMap(comm,scalarNDF)),
@@ -240,12 +239,7 @@ temporalBondFields(),
 rowStiffnessOperatorPtr()
 {
 
-	/*
-	 * Compute local neighborhood list -- this converts
-	 * global ids in the neighborhood to local ids relevant to
-	 * overlap arrays
-	 */
-	local_list = list.getLocalNeighborList(overlapMapScalar);
+
 	/*
 	 * Pull in shared coordinates
 	 * NOTE View versions of Epetra_Vectors
@@ -265,7 +259,7 @@ rowStiffnessOperatorPtr()
 	/*
 	 * Compute weighted volume
 	 */
-	computeWeightedVolume(xOverlapPtr.get(),volumeOverlapPtr.get(),mOwnedField.getArray().get(),neighborhoodList.get_num_owned_points(),local_list.get());
+	computeWeightedVolume(xOverlapPtr.get(),volumeOverlapPtr.get(),mOwnedField.getArray().get(),list.get_num_owned_points(),list.get_local_neighborhood().get());
 
 }
 
@@ -297,7 +291,7 @@ Field_NS::Field<double> PdITI_Operator::computeOwnedDilatation(Field_NS::Field<d
 	 */
 	double *theta = dilatationOwnedField.getArray().get();
 
-	computeDilatation(xOverlapPtr.get(),yOverlapPtr.get(),mOwnedField.getArray().get(),volumeOverlapPtr.get(),bondDamage.get(),theta,local_list.get(),numOwnedPoints);
+	computeDilatation(xOverlapPtr.get(),yOverlapPtr.get(),mOwnedField.getArray().get(),volumeOverlapPtr.get(),bondDamage.get(),theta,list.get_local_neighborhood().get(),numOwnedPoints);
 
 	return dilatationOwnedField;
 }
@@ -337,7 +331,7 @@ void PdITI_Operator::computeInternalForce(Field_NS::Field<double> uOwnedField, F
 	 */
 	double *theta = dilatationOwnedField.getArray().get();
 	if(withDilatation){
-		computeDilatation(xOverlapPtr.get(),yOverlapPtr.get(),mOwnedField.getArray().get(),volumeOverlapPtr.get(),bondDamage.get(),theta,local_list.get(),numOwnedPoints);
+		computeDilatation(xOverlapPtr.get(),yOverlapPtr.get(),mOwnedField.getArray().get(),volumeOverlapPtr.get(),bondDamage.get(),theta,list.get_local_neighborhood().get(),numOwnedPoints);
 	} else {
 		dilatationOwnedField.setValue(0.0);
 	}
@@ -368,7 +362,7 @@ void PdITI_Operator::computeInternalForce(Field_NS::Field<double> uOwnedField, F
 			theta,
 			bondDamage.get(),
 			fInternalOverlapPtr.get(),
-			local_list.get(),
+			list.get_local_neighborhood().get(),
 			numOwnedPoints,
 			temporalBondFields
 	);

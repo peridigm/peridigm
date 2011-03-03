@@ -63,10 +63,20 @@ shared_ptr<int> NeighborhoodList::get_neighborhood() const {
 	return neighborhood;
 }
 
+shared_ptr<int> NeighborhoodList::get_local_neighborhood() const {
+	return local_neighborhood;
+}
+
 const int* NeighborhoodList::get_neighborhood (int localId) const {
 	int ptr = *(neighborhood_ptr.get()+localId);
 	return neighborhood.get()+ptr;
 }
+
+const int* NeighborhoodList::get_local_neighborhood (int localId) const {
+	int ptr = *(neighborhood_ptr.get()+localId);
+	return local_neighborhood.get()+ptr;
+}
+
 
 int NeighborhoodList::get_size_neighborhood_list () const {
 	return size_neighborhood_list;
@@ -109,7 +119,7 @@ NeighborhoodList::NeighborhoodList
 	 * Compute local neighborhood list
 	 */
 	Epetra_BlockMap overlapMapScalar = getOverlapMap(comm,1);
-	local_neighborhood = getLocalNeighborList(overlapMapScalar);
+	local_neighborhood = createLocalNeighborList(overlapMapScalar);
 }
 
 /**
@@ -126,7 +136,7 @@ NeighborhoodList NeighborhoodList::cloneAndShare(double newHorizon) {
 	return newList;
 }
 
-shared_ptr<int> NeighborhoodList::getLocalNeighborList(const Epetra_BlockMap& overlapMap){
+shared_ptr<int> NeighborhoodList::createLocalNeighborList(const Epetra_BlockMap& overlapMap){
 	shared_ptr<int> localNeighborList(new int[size_neighborhood_list],PdQuickGrid::Deleter<int>());
 	int *localNeig = localNeighborList.get();
 	int *neighPtr = neighborhood_ptr.get();
