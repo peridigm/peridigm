@@ -37,10 +37,40 @@ public:
 	const Epetra_BlockMap& getOwnedMapNDF()   const { return  ownedMapNDF; }
 	const Epetra_BlockMap& getOverlapMapNDF() const { return  overlapMapNDF; }
 
+//	class RowOperator;
+//	friend class RowOperator;
+//	class RowOperator : public RowStiffnessOperator {
+//	public:
+//		~RowOperator() {}
+//		int getNumRows() const { row_matrix_list.get_num_owned_points(); }
+//		Pd_shared_ptr_Array<int> getColumnLIDs(int localRowID) const;
+//		const Pd_shared_ptr_Array<int>& getNumColumnsPerRow() const;
+//		const Pd_shared_ptr_Array<double>& computeRowStiffness(int localRowID, Pd_shared_ptr_Array<int> rowGIDs);
+//		const Epetra_BlockMap& getRowMap() const { return rowMap; }
+//		const Epetra_BlockMap& getColMap() const { return colMapNDF; }
+//		RowOperator
+//		(
+//				const Epetra_Comm& comm,
+//				const PDNEIGH::NeighborhoodList row_matrix_list_2_horizon,
+//				shared_ptr<double> ownedCellVolume
+//		);
+//		void initialize(Field_NS::Field<double> uOwnedField);
+//
+//	private:
+//		PDNEIGH::NeighborhoodList row_matrix_list;
+//		Epetra_BlockMap rowMapNDF, rowMapScalar, colMapNDF, colMapScalar;
+//		shared_ptr<double> xOverlapPtr, uOverlapPtr;
+//		shared_ptr<double> mOverlapPtr, volOverlapPtr, dilatationOverlapPtr;
+//		Pd_shared_ptr_Array<double>  rowStiffnessPtr;
+//		Pd_shared_ptr_Array<int> numColumnsPerRow;
+//		double k3x3[27];
+//		Pd_shared_ptr_Array<int> computeNumColumnsPerRow() const;
+//	};
+
 
 private:
 	const Epetra_Comm& epetraComm;
-	PDNEIGH::NeighborhoodList list/*, row_matrix_list*/;
+	PDNEIGH::NeighborhoodList list,row_matrix_list;
 	shared_ptr<int> local_list;
 	const Epetra_BlockMap ownedMapScalar,ownedMapNDF;
 	const Epetra_BlockMap overlapMapScalar,overlapMapNDF;

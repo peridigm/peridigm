@@ -20,6 +20,14 @@
 #include "PdBondFilter.h"
 #include <Teuchos_RCP.hpp>
 #include <set>
+#include "Epetra_ConfigDefs.h"
+#ifdef HAVE_MPI
+#include "mpi.h"
+#include "Epetra_MpiComm.h"
+#else
+#include "Epetra_SerialComm.h"
+#endif
+
 
 using namespace PdQuickGrid;
 using namespace PdNeighborhood;
@@ -78,7 +86,7 @@ void axialBarLinearSpacing() {
 	 * NOTE THAT: Since this is a serial test, numPoints = numOverlapPoints; and x = xOverlap
 	 */
 	shared_ptr<BondFilter> bondFilterPtr(new PdBondFilter::BondFilterWithSelf());
-	PDNEIGH::NeighborhoodList list(decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon,bondFilterPtr);
+	PDNEIGH::NeighborhoodList list(Epetra_MpiComm(MPI_COMM_WORLD),decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon,bondFilterPtr);
 	BOOST_CHECK(list.get_num_owned_points() == numPoints);
 	int size = 0;
 	for(int n=0;n<numPoints;n++)

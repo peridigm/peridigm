@@ -84,7 +84,7 @@ int main( int argc, char *argv[]) {
 	 */
 	decomp=getLoadBalancedDiscretization(decomp);
 	int numPoints = decomp.numPoints;
-	PDNEIGH::NeighborhoodList list(decomp.zoltanPtr.get(),numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
+	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
 	/*
 	 * Create an operator
 	 */
