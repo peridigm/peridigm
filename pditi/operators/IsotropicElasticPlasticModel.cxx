@@ -41,6 +41,7 @@ void IsotropicElasticPlasticModel::computeInternalForce
    const double* volumeOverlapPtr,
    const double* dilatationOwned,
    const double* bondDamage,
+   const double* dsf,
    double* fInternalOverlapPtr,
    const int*  localNeighborList,
    int numOwnedPoints,
@@ -110,7 +111,8 @@ kIPQ3x3(
 		const double *m,
 		const double *dilatation,
 		double *k,
-		double horizon
+		double horizon,
+		double dsf_I
 ) {
 
 	IsotropicHookeSpec hookSpec = matSpec.getHookeSpec();

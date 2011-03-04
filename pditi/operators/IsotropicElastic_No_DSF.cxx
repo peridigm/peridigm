@@ -1,10 +1,11 @@
 /*
- * IsotropicElasticConstitutiveModel.cxx
+ * IsotropicElastic_No_DSF.cxx
  *
- *  Created on: Jun 23, 2010
+ *  Created on: Mar 3, 2011
  *      Author: jamitch
  */
-#include "IsotropicElasticConstitutiveModel.h"
+
+#include "IsotropicElastic_No_DSF.h"
 #include "PdMaterialUtilities.h"
 #include "PdITI_Utilities.h"
 #include <iostream>
@@ -13,16 +14,16 @@ using std::endl;
 
 namespace PdITI {
 
-	vector<FieldSpec> IsotropicElasticConstitutiveModel::registerTemporalBondVariables() const {
+	vector<FieldSpec> IsotropicElastic_No_DSF::registerTemporalBondVariables() const {
 		return vector<FieldSpec>();
 	}
 
-	IsotropicElasticConstitutiveModel::IsotropicElasticConstitutiveModel(IsotropicHookeSpec spec): ConstitutiveModel(), matSpec(spec) {
+	IsotropicElastic_No_DSF::IsotropicElastic_No_DSF(IsotropicHookeSpec spec): ConstitutiveModel(), matSpec(spec) {
 
 	}
 
 
-	void IsotropicElasticConstitutiveModel::computeInternalForce
+	void IsotropicElastic_No_DSF::computeInternalForce
 	(
 			const double* xOverlapPtr,
 			const double* yOverlapPtr,
@@ -42,7 +43,8 @@ namespace PdITI {
 		 */
 		double K  = matSpec.bulkModulus();
 		double MU = matSpec.shearModulus();
-		PdMaterialUtilities::computeInternalForceLinearElastic
+
+		computeInternalForceLinearElastic
 		(
 				xOverlapPtr,
 				yOverlapPtr,
@@ -50,6 +52,7 @@ namespace PdITI {
 				volumeOverlapPtr,
 				dilatationOwned,
 				bondDamage,
+				dsf,
 				fInternalOverlapPtr,
 				localNeighborList,
 				numOwnedPoints,
@@ -58,6 +61,77 @@ namespace PdITI {
 		);
 
 	}
+
+	void IsotropicElastic_No_DSF::computeInternalForceLinearElastic
+	(
+			const double* xOverlap,
+			const double* yOverlap,
+			const double* mOwned,
+			const double* volumeOverlap,
+			const double* dilatationOwned,
+			const double* bondDamage,
+			const double* dsf,
+			double* fInternalOverlap,
+			const int*  localNeighborList,
+			int numOwnedPoints,
+			double BULK_MODULUS,
+			double SHEAR_MODULUS
+	)
+	{
+
+		/*
+		 * Compute processor local contribution to internal force
+		 */
+		double K = BULK_MODULUS;
+		double MU = SHEAR_MODULUS;
+		double OMEGA=1.0;
+
+		const double *xOwned = xOverlap;
+		const double *yOwned = yOverlap;
+		const double *m = mOwned;
+		const double *v = volumeOverlap;
+		const double *theta = dilatationOwned;
+		double *fOwned = fInternalOverlap;
+
+		const int *neighPtr = localNeighborList;
+		double cellVolume, alpha, dx, dy, dz, zeta, dY, t;
+		for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yOwned +=3, fOwned+=3, m++, theta++, dsf++){
+
+			int numNeigh = *neighPtr; neighPtr++;
+			const double *X = xOwned;
+			const double *Y = yOwned;
+			alpha = *dsf*15.0*MU/(*m);
+			double selfCellVolume = v[p];
+			double c1 = OMEGA*(*theta)*(9.0*K-*dsf*15.0*MU)/(3.0*(*m));
+			for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++){
+				int localId = *neighPtr;
+				cellVolume = v[localId];
+				const double *XP = &xOverlap[3*localId];
+				const double *YP = &yOverlap[3*localId];
+				dx = XP[0]-X[0];
+				dy = XP[1]-X[1];
+				dz = XP[2]-X[2];
+				zeta = sqrt(dx*dx+dy*dy+dz*dz);
+				dx = YP[0]-Y[0];
+				dy = YP[1]-Y[1];
+				dz = YP[2]-Y[2];
+				dY = sqrt(dx*dx+dy*dy+dz*dz);
+				t = (1.0-*bondDamage)*(c1 * zeta + (1.0-*bondDamage) * OMEGA * alpha * (dY - zeta));
+				double fx = t * dx / dY;
+				double fy = t * dy / dY;
+				double fz = t * dz / dY;
+
+				*(fOwned+0) += fx*cellVolume;
+				*(fOwned+1) += fy*cellVolume;
+				*(fOwned+2) += fz*cellVolume;
+				fInternalOverlap[3*localId+0] -= fx*selfCellVolume;
+				fInternalOverlap[3*localId+1] -= fy*selfCellVolume;
+				fInternalOverlap[3*localId+2] -= fz*selfCellVolume;
+			}
+
+		}
+	}
+
 
 	/*
 	 **Linearized tangent stiffness about the displacement field 'u'
@@ -70,7 +144,7 @@ namespace PdITI {
 	 * @param k 3x3 stiffness associated with these three points
 	 * @return k
 	 */
-	double* IsotropicElasticConstitutiveModel::
+	double* IsotropicElastic_No_DSF::
 	kIPQ3x3(
 			int I,
 			int P,
@@ -86,7 +160,7 @@ namespace PdITI {
 	) {
 
 		double K  = matSpec.bulkModulus();
-		double MU = matSpec.shearModulus();
+		double MU = dsf_I * matSpec.shearModulus();
 
 		/*
 		 * Initialize stiffness
@@ -212,3 +286,5 @@ namespace PdITI {
 
 
 }
+
+

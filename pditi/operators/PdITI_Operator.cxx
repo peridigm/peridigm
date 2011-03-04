@@ -107,6 +107,11 @@ void PdITI_Operator::RowOperator::initialize(Field<double> uOwnedField, Field<do
 	Epetra_Vector dilatationOverlap(View,colMapScalar,dilatationOverlapPtr.get());
 	Epetra_Vector ownedDilatation(View,rowMapScalar,ownedDilatationField.getArray().get());
 	dilatationOverlap.Import(ownedDilatation,importScalar,Insert);
+
+	/*
+	 * Save matPtr for evaluation of constitutive model
+	 */
+	matPtr = fIntPtr;
 }
 
 /**
@@ -205,9 +210,9 @@ const Pd_shared_ptr_Array<double>& PdITI_Operator::RowOperator::computeRowStiffn
 			/*
 			 * Check for existence of bond IQ
 			 */
-//			(I==Q || I==P) ? NULL :              fIntPtr->kIPQ3x3(I,P,Q,x,u,volume,m,dilatationOverlap,k1,horizon);
-//			(P==I || P==Q) ? NULL : PdITI::SUBTRACTINTO(fIntPtr->kIPQ3x3(P,I,Q,x,u,volume,m,dilatationOverlap,k2,horizon),k2+9,k1);
-//			(Q==I || Q==P) ? NULL :      PdITI::SUMINTO(fIntPtr->kIPQ3x3(Q,I,P,x,u,volume,m,dilatationOverlap,k3,horizon),k3+9,k1);
+			(I==Q || I==P) ? NULL :                     matPtr->kIPQ3x3(I,P,Q,x,u,volume,m,dilatationOverlap,k1,horizon);
+			(P==I || P==Q) ? NULL : PdITI::SUBTRACTINTO(matPtr->kIPQ3x3(P,I,Q,x,u,volume,m,dilatationOverlap,k2,horizon),k2+9,k1);
+			(Q==I || Q==P) ? NULL :      PdITI::SUMINTO(matPtr->kIPQ3x3(Q,I,P,x,u,volume,m,dilatationOverlap,k3,horizon),k3+9,k1);
 
 			/*
 			 * Assembly into Row Matrix
@@ -248,7 +253,9 @@ importNDF(overlapMapNDF,ownedMapNDF),
 exportAssembly(overlapMapNDF,ownedMapNDF),
 mOwnedField(Field_NS::getWEIGHTED_VOLUME(neighborhoodList.get_num_owned_points())),
 dilatationOwnedField(Field_NS::Field<double>(Field_NS::DILATATION,neighborhoodList.get_num_owned_points())),
-bondDamage(new double[neighborhoodList.get_size_neighborhood_list()-neighborhoodList.get_num_owned_points()],ArrayDeleter<double>()),
+ownedVolPtr(ownedCellVolume),
+bondDamagePtr(new double[neighborhoodList.get_size_neighborhood_list()-neighborhoodList.get_num_owned_points()],ArrayDeleter<double>()),
+ownedDSF_Ptr(new double[overlapMapScalar.NumMyElements()*scalarNDF],ArrayDeleter<double>()),
 xOverlapPtr(new double[overlapMapScalar.NumMyElements()*vectorNDF],ArrayDeleter<double>()),
 uOverlapPtr(new double[overlapMapScalar.NumMyElements()*vectorNDF],ArrayDeleter<double>()),
 yOverlapPtr(new double[overlapMapScalar.NumMyElements()*vectorNDF],ArrayDeleter<double>()),
@@ -273,13 +280,20 @@ rowStiffnessOperatorPtr()
 	 * NOTE View versions of Epetra_Vectors
 	 */
 	Epetra_Vector volumeOverlap(View,overlapMapScalar,volumeOverlapPtr.get());
-	Epetra_Vector volOwned(View,ownedMapScalar,ownedCellVolume.get());
+	Epetra_Vector volOwned(View,ownedMapScalar,ownedVolPtr.get());
 	volumeOverlap.Import(volOwned,importScalar,Insert);
 
 	/*
 	 * Compute weighted volume
 	 */
-	computeWeightedVolume(xOverlapPtr.get(),volumeOverlapPtr.get(),mOwnedField.getArray().get(),list.get_num_owned_points(),list.get_local_neighborhood().get());
+	const int* local_list = list.get_local_neighborhood().get();
+	computeWeightedVolume(xOverlapPtr.get(),volumeOverlapPtr.get(),mOwnedField.getArray().get(),list.get_num_owned_points(),local_list);
+
+	/*
+	 * Initialized DSF
+	 */
+	double h = list.get_horizon()/2.0;
+	PdMaterialUtilities::computeShearCorrectionFactor(list.get_num_owned_points(),xOverlapPtr.get(),volumeOverlapPtr.get(),local_list,h,ownedDSF_Ptr.get());
 
 }
 
@@ -311,7 +325,7 @@ Field_NS::Field<double> PdITI_Operator::computeOwnedDilatation(Field_NS::Field<d
 	 */
 	double *theta = dilatationOwnedField.getArray().get();
 
-	computeDilatation(xOverlapPtr.get(),yOverlapPtr.get(),mOwnedField.getArray().get(),volumeOverlapPtr.get(),bondDamage.get(),theta,list.get_local_neighborhood().get(),numOwnedPoints);
+	computeDilatation(xOverlapPtr.get(),yOverlapPtr.get(),mOwnedField.getArray().get(),volumeOverlapPtr.get(),bondDamagePtr.get(),theta,list.get_local_neighborhood().get(),numOwnedPoints);
 
 	return dilatationOwnedField;
 }
@@ -351,7 +365,7 @@ void PdITI_Operator::computeInternalForce(Field_NS::Field<double> uOwnedField, F
 	 */
 	double *theta = dilatationOwnedField.getArray().get();
 	if(withDilatation){
-		computeDilatation(xOverlapPtr.get(),yOverlapPtr.get(),mOwnedField.getArray().get(),volumeOverlapPtr.get(),bondDamage.get(),theta,list.get_local_neighborhood().get(),numOwnedPoints);
+		computeDilatation(xOverlapPtr.get(),yOverlapPtr.get(),mOwnedField.getArray().get(),volumeOverlapPtr.get(),bondDamagePtr.get(),theta,list.get_local_neighborhood().get(),numOwnedPoints);
 	} else {
 		dilatationOwnedField.setValue(0.0);
 	}
@@ -380,7 +394,8 @@ void PdITI_Operator::computeInternalForce(Field_NS::Field<double> uOwnedField, F
 			mOwnedField.getArray().get(),
 			volumeOverlapPtr.get(),
 			theta,
-			bondDamage.get(),
+			bondDamagePtr.get(),
+			ownedDSF_Ptr.get(),
 			fInternalOverlapPtr.get(),
 			list.get_local_neighborhood().get(),
 			numOwnedPoints,
@@ -438,15 +453,17 @@ void PdITI_Operator::advanceStateVariables() {
  * @param u Linearization about this displacement field
  */
 shared_ptr<RowStiffnessOperator> PdITI_Operator::getJacobian(Field_NS::Field<double> uOwned) {
-	rowStiffnessOperatorPtr = shared_ptr<RowStiffnessOperator>();
-//	if (rowStiffnessOperatorPtr==shared_ptr<RowStiffnessOperator>()){
-//		rowStiffnessOperatorPtr = shared_ptr<RowOperator>(new RowOperator(this,horizon));
-//	}
+
+	if (rowStiffnessOperatorPtr==shared_ptr<RowStiffnessOperator>()){
+		shared_ptr<double> mPtr = mOwnedField.getArray().get_shared_ptr();
+		rowStiffnessOperatorPtr = shared_ptr<RowOperator>(new RowOperator(epetraComm,row_matrix_list,ownedVolPtr,mPtr));
+	}
 
 	/*
-	 * Reset row counter on operator
+	 * This call populates 'dilatationOwnedField'
 	 */
-//	rowStiffnessOperatorPtr.get()->initialize(uOwned);
+	computeOwnedDilatation(uOwned);
+	rowStiffnessOperatorPtr.get()->initialize(uOwned,dilatationOwnedField,fIntPtr);
 
 	return rowStiffnessOperatorPtr;
 }

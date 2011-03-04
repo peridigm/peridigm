@@ -19,6 +19,7 @@ BodyLoadSpec.cxx
 ComponentDirichletBcSpec.cxx
 StageComponentDirichletBc.cxx
 IsotropicElasticConstitutiveModel.cxx
+IsotropicElastic_No_DSF.cxx
 IsotropicElasticPlasticModel.cxx
 )
 
