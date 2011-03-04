@@ -32,6 +32,7 @@
 #include <vector>
 #include <cstdlib>
 #include <time.h>
+#include <string>
 
 
 using namespace PdQuickGrid;
@@ -101,8 +102,61 @@ void probe() {
 	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getRowStiffnessOperator(uOwnedField,horizon);
 //	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = pditiOp.getJacobian(uOwnedField);
 
+	/*
+	 * Print num cols for each ros
+	 */
+//	std::stringstream streamRows,streamNumRows,streamNumCols;
+//	streamRows << "int* rowPtr[]="<<"{";
+//	streamNumRows << "int numRows(" << numPoints << ");";
+//	streamNumCols << "int numCols[]="<< "{";
+//
+//	for(std::size_t row=0;row<numPoints;row++){
+//		if(row%10==0){
+//			streamRows << "\n";
+//			streamNumCols << "\n";
+//		}
+//		streamRows << "row" << row;
+//		Pd_shared_ptr_Array<int> rowLIDs = jacobian->getColumnLIDs(row);
+//		streamNumCols << rowLIDs.getSize();
+//		if(row!=numPoints-1){
+//			streamNumCols << ", ";
+//			streamRows << ", ";
+//		} else
+//		{
+//			streamNumCols << "};\n";
+//			streamRows << "};\n";
+//		}
+//	}
+//	std::string strNumRows=streamNumRows.str();
+//	std::string strNumCols=streamNumCols.str();
+//	std::cout << strNumRows << std::endl;
+//	std::cout << strNumCols << std::endl;
+	/*
+	 * end print num cols for each row
+	 */
+
 	for(std::size_t row=0;row<numPoints;row++){
 		Pd_shared_ptr_Array<int> rowLIDs = jacobian->getColumnLIDs(row);
+
+		/*
+		 * Print rows
+		 */
+//		std::stringstream streamRow;
+//		streamRow << "int row" << row << "[]={";
+//		for(int i=0;i<rowLIDs.getSize();i++){
+//			if(i%10==0)
+//				streamRow << "\n";
+//			streamRow << *(rowLIDs.get()+i);
+//			if(i!=rowLIDs.getSize()-1)
+//				streamRow << ", ";
+//			if(i==rowLIDs.getSize()-1)
+//				streamRow << "};\n";
+//		}
+//		std::cout << streamRow.str() << std::endl;
+		/*
+		 * End print rows
+		 */
+
 		std::size_t numColsRow = rowLIDs.getSize();
 		std::vector< std::pair<int,int> > pairs(numColsRow);
 		{
@@ -215,7 +269,10 @@ void probe() {
 			BOOST_CHECK_CLOSE(kII[i],kProbe[i],tolerance);
 		}
 	}
-
+	/*
+	 * PRINT pointer to each row
+	 */
+//	std::cout << streamRows.str() << std::endl;
 
 }
 

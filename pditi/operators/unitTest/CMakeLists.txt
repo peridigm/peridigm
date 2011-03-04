@@ -38,10 +38,14 @@ target_link_libraries(utPdImp_twoPointJacobian_np2 PdITIOperators ${PERIDIGM_LIB
 add_test (utPdImp_twoPointJacobian_np2 python run_unit_test.py mpiexec -np 2 ./utPdImp_twoPointJacobian_np2)
 
 # Add test
-#PdZoltan PdQuickGrid PdNeighborhood  PdVTK
 add_executable(utPdImp_probeJacobianNu.0.0 utPdImp_probeJacobianNu.0.0.cxx)
 target_link_libraries(utPdImp_probeJacobianNu.0.0 PdITIOperators PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 add_test (utPdImp_probeJacobianNu.0.0 python run_unit_test.py ./utPdImp_probeJacobianNu.0.0)
+
+# Add test
+add_executable(ut_jacobian_graph ut_jacobian_graph.cxx)
+target_link_libraries(ut_jacobian_graph PdITIOperators PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+add_test (ut_jacobian_graph python run_unit_test.py ./ut_jacobian_graph)
 
 # Add test
 add_executable(utPdImp_linearSolve_barGravity_npX utPdImp_linearSolve_barGravity_npX.cxx)
