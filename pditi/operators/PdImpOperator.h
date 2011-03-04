@@ -88,6 +88,7 @@ private:
 	Epetra_Import importScalar,importNDF;
 	Epetra_Export exportAssembly;
 	std::tr1::shared_ptr<double> xOwnedPtr;
+	std::tr1::shared_ptr<double> ownedDSF_Ptr;
 	Field_NS::Field<double> mOwnedField, dilatationOwnedField;
 	Pd_shared_ptr_Array<double> bondDamage;
 	std::tr1::shared_ptr<double> xOverlapPtr, uOverlapPtr, volumeOverlapPtr;

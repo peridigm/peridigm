@@ -22,6 +22,7 @@
 #include "../PdITI_Operator.h"
 #include "../PdITI_Utilities.h"
 #include "../IsotropicElasticConstitutiveModel.h"
+#include "../IsotropicElastic_No_DSF.h"
 #include "PdVTK.h"
 #include <set>
 #include <Epetra_FEVbrMatrix.h>
@@ -89,6 +90,7 @@ void probe() {
 	PdImp::PdImpOperator op(comm,decomp);
 	PdITI::PdITI_Operator pditiOp(comm,list,decomp.cellVolume);
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
+//	shared_ptr<ConstitutiveModel> fIntOperator(new PdITI::IsotropicElastic_No_DSF(isotropicSpec));
 	op.addConstitutiveModel(fIntOperator);
 	pditiOp.addConstitutiveModel(fIntOperator);
 
@@ -97,6 +99,7 @@ void probe() {
 	 * Compute jacobian in deformed state
 	 */
 	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getRowStiffnessOperator(uOwnedField,horizon);
+//	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = pditiOp.getJacobian(uOwnedField);
 
 	for(std::size_t row=0;row<numPoints;row++){
 		Pd_shared_ptr_Array<int> rowLIDs = jacobian->getColumnLIDs(row);

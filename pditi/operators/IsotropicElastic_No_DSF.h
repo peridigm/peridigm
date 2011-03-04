@@ -1,12 +1,12 @@
 /*
- * IsotropicElasticPlasticModel.h
+ * IsotropicElastic_No_DSF.h
  *
- *  Created on: Jul 19, 2010
+ *  Created on: Mar 3, 2011
  *      Author: jamitch
  */
 
-#ifndef ISOTROPICELASTICPLASTICMODEL_H_
-#define ISOTROPICELASTICPLASTICMODEL_H_
+#ifndef ISOTROPICELASTIC_NO_DSF_H_
+#define ISOTROPICELASTIC_NO_DSF_H_
 
 #include <vector>
 #include "Field.h"
@@ -17,15 +17,17 @@ using std::vector;
 using Field_NS::FieldSpec;
 using Field_NS::Field;
 using Field_NS::TemporalField;
-using PdImp::IsotropicElasticPlasticSpec;
+using PdImp::IsotropicHookeSpec;
 
 namespace PdITI {
 
 
-class IsotropicElasticPlasticModel : public ConstitutiveModel {
+class IsotropicElastic_No_DSF : public ConstitutiveModel {
 
 public:
-	IsotropicElasticPlasticModel(IsotropicElasticPlasticSpec matSpec);
+	~IsotropicElastic_No_DSF() {}
+
+	IsotropicElastic_No_DSF(IsotropicHookeSpec matSpec);
 	/*
 	 * Bond variables integrated with time; ie Temporal fields associated with each bond
 	 */
@@ -50,6 +52,25 @@ public:
 	);
 
 	/*
+	 * Calculation includes DSF factor
+	 */
+	void computeInternalForceLinearElastic
+	(
+			const double* xOverlap,
+			const double* yOverlap,
+			const double* mOwned,
+			const double* volumeOverlap,
+			const double* dilatationOwned,
+			const double* bondDamage,
+			const double* dsf,
+			double* fInternalOverlap,
+			const int*  localNeighborList,
+			int numOwnedPoints,
+			double BULK_MODULUS,
+			double SHEAR_MODULUS
+	);
+
+	/*
 	 * Compute 3x3 tangent stiffness associated with I, P, Q
 	 */
 	double* kIPQ3x3(
@@ -67,12 +88,10 @@ public:
 	);
 
 private:
-	vector<FieldSpec> fieldSpecs;
-	PdImp::IsotropicElasticPlasticSpec matSpec;
+	PdImp::IsotropicHookeSpec matSpec;
 
 };
 
 }
 
-
-#endif /* ISOTROPICELASTICPLASTICMODEL_H_ */
+#endif /* ISOTROPICELASTIC_NO_DSF_H_ */

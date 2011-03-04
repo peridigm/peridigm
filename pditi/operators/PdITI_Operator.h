@@ -66,6 +66,7 @@ public:
 		Pd_shared_ptr_Array<double>  rowStiffnessPtr;
 		Pd_shared_ptr_Array<int> numColumnsPerRow;
 		double k3x3[27];
+		shared_ptr<ConstitutiveModel> matPtr;
 		Pd_shared_ptr_Array<int> computeNumColumnsPerRow() const;
 	};
 
@@ -78,11 +79,12 @@ private:
 	Epetra_Import importScalar,importNDF;
 	Epetra_Export exportAssembly;
 	Field_NS::Field<double> mOwnedField, dilatationOwnedField;
-	shared_ptr<double> bondDamage;
+	shared_ptr<double> ownedVolPtr;
+	shared_ptr<double> bondDamagePtr, ownedDSF_Ptr;
 	shared_ptr<double> xOverlapPtr, uOverlapPtr, yOverlapPtr, fInternalOverlapPtr, volumeOverlapPtr;
 	shared_ptr<ConstitutiveModel> fIntPtr;
 	vector< TemporalField<double> > temporalBondFields;
-	shared_ptr<RowStiffnessOperator> rowStiffnessOperatorPtr;
+	shared_ptr<RowOperator> rowStiffnessOperatorPtr;
 };
 
 }

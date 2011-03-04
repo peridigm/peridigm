@@ -328,6 +328,7 @@ importScalar(overlapMapScalar,ownedMapScalar),
 importNDF(overlapMapNDF,ownedMapNDF),
 exportAssembly(overlapMapNDF,ownedMapNDF),
 xOwnedPtr(gridData.myX),
+ownedDSF_Ptr(new double[ownedMapScalar.NumMyElements()*scalarNDF],PdQuickGrid::Deleter<double>()),
 mOwnedField(Field_NS::getWEIGHTED_VOLUME(gridData.numPoints)),
 dilatationOwnedField(Field_NS::Field<double>(Field_NS::DILATATION,gridData.numPoints)),
 bondDamage(gridData.sizeNeighborhoodList-gridData.numPoints),
@@ -379,6 +380,15 @@ temporalBondFields()
 	 * Allocate overlap pointer for the internal force vector
 	 */
 	fInternalOverlapPtr = allocOverlap(vectorNDF);
+
+	/*
+	 * Set DSF=1
+	 */
+	double* dsf = ownedDSF_Ptr.get();
+	double* end = dsf+gridData.numPoints;
+	for(;dsf!=end;dsf++)
+		*dsf=1.0;
+
 
 }
 
@@ -483,6 +493,7 @@ void PdImpOperator::computeInternalForce(Field_NS::Field<double> uOwnedField, Fi
 			volumeOverlapPtr.get(),
 			theta,
 			bondDamage.get(),
+			ownedDSF_Ptr.get(),
 			fInternalOverlapPtr.get(),
 			localNeighborList.get(),
 			numOwnedPoints,
