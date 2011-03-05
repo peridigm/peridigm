@@ -320,5 +320,17 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
   double current_time = forceStateDesc->get<double>("Time");
   vtkWriter->writeTimeStep(current_time,grid);
 //  vtkWriter->writeTimeStep(count,grid);
-//  PdVTK::expandRingPostProcess(current_time, grid, myPID);
+}
+
+void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<PeridigmNS::DataManager> dataManager,
+                                              Teuchos::RCP<const NeighborhoodData> neighborhoodData,
+                                              Teuchos::RCP<Teuchos::ParameterList>& forceStateDesc) {
+  if (!iWrite) return;
+
+  // increment index count
+  count = count + 1;
+
+  // Only write if frequency count match
+  if (frequency<=0 || count%frequency!=0) return;
+
 }

@@ -459,6 +459,7 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
     forceStateDesc->set("Bond Family",neighborhoodData);
     // Ask OutputManager to write initial conditions to disk
     outputManager->write(x,u,v,a,force,dataManager,neighborhoodData,forceStateDesc);
+//    outputManager->write(dataManager,neighborhoodData,forceStateDesc);
   }
 
   //  verbose = problemParams->get("Verbose", false);
@@ -573,6 +574,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
 
     PeridigmNS::Timer::self().startTimer("Output");
     outputManager->write(x,u,v,a,force,dataManager,neighborhoodData,forceStateDesc);
+//    outputManager->write(dataManager,neighborhoodData,forceStateDesc);
     PeridigmNS::Timer::self().stopTimer("Output");
 
     // swap state N and state NP1
@@ -662,10 +664,14 @@ void PeridigmNS::Peridigm::executeImplicit() {
 
   PeridigmNS::Timer::self().startTimer("Output");
   outputManager->write(x,u,v,a,force,dataManager,neighborhoodData,forceStateDesc);
+//  outputManager->write(dataManager,neighborhoodData,forceStateDesc);
   PeridigmNS::Timer::self().stopTimer("Output");
 
   // swap state N and state NP1
   dataManager->updateState();
+}
+
+void PeridigmNS::Peridigm::synchDataManager() {
 }
 
 void PeridigmNS::Peridigm::rebalance() {
