@@ -93,6 +93,9 @@ namespace PeridigmNS {
     //! Main routine to drive problem solution with implicit time integration
     void executeImplicit();
 
+    //! Synchronize data in DataManager across processes (needed before call to OutputManager::write() )
+    void synchDataManager();
+
     //! Rebalance the mesh
     void rebalance();
 

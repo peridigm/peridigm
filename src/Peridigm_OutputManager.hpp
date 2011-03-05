@@ -67,6 +67,11 @@ namespace PeridigmNS {
 		       Teuchos::RCP<const NeighborhoodData>,
 		       Teuchos::RCP<Teuchos::ParameterList>&) = 0;
 
+    //! Write data to disk
+    virtual void write(Teuchos::RCP<PeridigmNS::DataManager>,
+		       Teuchos::RCP<const NeighborhoodData>,
+		       Teuchos::RCP<Teuchos::ParameterList>&) = 0;
+
   protected:
 
     //! Number of processors and processor ID
