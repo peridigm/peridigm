@@ -1,7 +1,9 @@
 add_executable(utPeridigm_IsotropicElasticPlasticMaterial
+		../../Peridigm_Material.cpp
 		../../Peridigm_IsotropicElasticPlasticMaterial.cpp
         ../../Peridigm_CriticalStretchDamageModel.cpp
         ../../../Peridigm_DataManager.cpp
+        ../../../Peridigm_DenseMatrix.cpp
 		./utPeridigm_IsotropicElasticPlasticMaterial.cpp)
 target_link_libraries(utPeridigm_IsotropicElasticPlasticMaterial
 ${TRILINOS_LIBS}

@@ -42,7 +42,7 @@
 #include <Teuchos_FancyOStream.hpp>
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_RCP.hpp>
-#include <Epetra_CrsMatrix.h>
+#include <Epetra_FECrsMatrix.h>
 
 #include "contact/Peridigm_ContactModel.hpp"
 #include "materials/Peridigm_Material.hpp"
@@ -233,16 +233,7 @@ namespace PeridigmNS {
     Teuchos::RCP<Epetra_Map> tangentMap;
 
     //! Global tangent matrix
-    Teuchos::RCP<Epetra_CrsMatrix> tangent;
-
-    //! Map for overlap tangent matrix
-    Teuchos::RCP<Epetra_Map> overlapTangentMap;
-
-    //! Overlap tangent matrix
-    Teuchos::RCP<Epetra_CrsMatrix> overlapTangent;
-
-    //! Importer for importing from the overlap tangents to the global tangent
-    Teuchos::RCP<const Epetra_Import> overlapTangentToGlobalTangentImporter;
+    Teuchos::RCP<Epetra_FECrsMatrix> tangent;
 
     //! List of neighbors for all locally-owned nodes
     Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData;
