@@ -49,6 +49,7 @@ struct Workset {
 
   Teuchos::RCP<const double> timeStep;
   Teuchos::RCP<PeridigmNS::DataManager> dataManager;
+  Teuchos::RCP<PeridigmNS::DenseMatrix> jacobian;
   Teuchos::RCP< std::vector<Teuchos::RCP<const PeridigmNS::Material> > > materialModels;
   Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData;
   Teuchos::RCP< std::vector<Teuchos::RCP<const PeridigmNS::ContactModel> > > contactModels;

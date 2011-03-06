@@ -41,6 +41,7 @@
 #include <vector>
 #include <map>
 #include "Peridigm_DataManager.hpp"
+#include "Peridigm_DenseMatrix.hpp"
 
 namespace PeridigmNS {
 
@@ -87,6 +88,15 @@ namespace PeridigmNS {
 				 const int* ownedIDs,
 				 const int* neighborhoodList,
                  PeridigmNS::DataManager& dataManager) const = 0;
+
+	//! Evaluate the jacobian
+	virtual void
+	computeJacobian(const double dt,
+                    const int numOwnedPoints,
+                    const int* ownedIDs,
+                    const int* neighborhoodList,
+                    PeridigmNS::DataManager& dataManager,
+                    PeridigmNS::DenseMatrix& jacobian) const;
 
   private:
 	
