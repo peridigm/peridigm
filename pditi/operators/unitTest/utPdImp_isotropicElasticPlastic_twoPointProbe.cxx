@@ -13,6 +13,7 @@
 #include "PdMaterialUtilities.h"
 #include "Field.h"
 #include "PdVTK.h"
+#include "PdZoltan.h"
 #include "../PdImpMpiFixture.h"
 #include "../PdImpMaterials.h"
 #include "../PdImpOperator.h"
@@ -154,6 +155,7 @@ shared_ptr<PdImp::PdImpOperator> getPimpOperator(PdGridData& decomp,Epetra_MpiCo
 void runPureShear() {
 	IsotropicElasticPlasticSpec matSpec = getMaterialSpec();
 	PdGridData pdGridData = getTwoPointGridData();
+	pdGridData = getLoadBalancedDiscretization(pdGridData);
 	int numPoints = pdGridData.numPoints;
 	BOOST_CHECK(2 == numPoints);
 	BOOST_CHECK(4 == pdGridData.sizeNeighborhoodList);
@@ -168,6 +170,7 @@ void runPureShear() {
 	 */
 	shared_ptr<PdImp::PdImpOperator> op = getPimpOperator(pdGridData,comm);
 	shared_ptr<ConstitutiveModel> fIntOperator(shared_ptr<ConstitutiveModel>(new IsotropicElasticPlasticModel(matSpec)));
+
 	op->addConstitutiveModel(fIntOperator);
 
 	/*

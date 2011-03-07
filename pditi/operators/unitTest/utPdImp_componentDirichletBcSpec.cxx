@@ -14,8 +14,11 @@
 #include "PdQuickGridParallel.h"
 #include "PdNeighborhood.h"
 #include "Field.h"
+#include "PdZoltan.h"
+#include "../../pdneigh/NeighborhoodList.h"
 #include "../PdImpMaterials.h"
-#include "../PdImpOperator.h"
+//#include "../PdImpOperator.h"
+#include "../PdITI_Operator.h"
 #include "../PdITI_Utilities.h"
 #include "../IsotropicElasticConstitutiveModel.h"
 #include "../ConstitutiveModel.h"
@@ -174,6 +177,7 @@ void allComponentsFixed_2() {
 void applyHomogeneousForm() {
 	PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec,PdQuickGrid::SphericalNorm);
 	PdGridData decomp =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
+	decomp = getLoadBalancedDiscretization(decomp);
 	int numPoints = decomp.numPoints;
 	BOOST_CHECK(numCells==numPoints);
 	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
@@ -190,12 +194,18 @@ void applyHomogeneousForm() {
 	Field_NS::TemporalField<double> force = Field_NS::TemporalField<double>(Field_NS::FORCE3D,numPoints);
 	Field_NS::Field<double> fN(fNSpec,numPoints);
 	Field_NS::Field<double> fNP1(fNP1Spec,numPoints);
-	PdImp::PdImpOperator op(comm,decomp);
+//	PdImp::PdImpOperator op(comm,decomp);
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
-	op.addConstitutiveModel(fIntOperator);
+//	op.addConstitutiveModel(fIntOperator);
 
-	op.computeInternalForce(uOwnedField,fN);
-	op.computeInternalForce(uOwnedField,fNP1);
+	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
+	PdITI::PdITI_Operator pditiOp(comm,list,decomp.cellVolume);
+	pditiOp.addConstitutiveModel(fIntOperator);
+	pditiOp.computeInternalForce(uOwnedField,fN);
+	pditiOp.computeInternalForce(uOwnedField,fNP1);
+
+//	op.computeInternalForce(uOwnedField,fN);
+//	op.computeInternalForce(uOwnedField,fNP1);
 
 	PdNeighborhood::CoordinateLabel axis = PdNeighborhood::Y;
 	Pd_shared_ptr_Array<int> bcIds = PdNeighborhood::getPointsAxisAlignedMinimum(axis,decomp.myX,numPoints,horizon);

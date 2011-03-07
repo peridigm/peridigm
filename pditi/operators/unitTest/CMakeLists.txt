@@ -54,12 +54,12 @@ add_test (utPdImp_linearSolve_barGravity_npX python run_unit_test.py mpiexec -np
 
 # Add test
 add_executable(utPdImp_graph2x2x1_np4 utPdImp_graph2x2x1_np4.cxx)
-target_link_libraries(utPdImp_graph2x2x1_np4 PdITIOperators ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdImp_graph2x2x1_np4 PdITIOperators PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 add_test (utPdImp_graph2x2x1_np4 python run_unit_test.py mpiexec -np 4 ./utPdImp_graph2x2x1_np4)
 
 # Add test
 add_executable(utPdImp_componentDirichletBcSpec utPdImp_componentDirichletBcSpec.cxx)
-target_link_libraries(utPdImp_componentDirichletBcSpec PdITIOperators ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdImp_componentDirichletBcSpec PdITIOperators PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 add_test (utPdImp_componentDirichletBcSpec python run_unit_test.py ./utPdImp_componentDirichletBcSpec)
 
 # Add test

@@ -16,9 +16,11 @@
 #include "PdNeighborhood.h"
 #include "PdZoltan.h"
 #include "Field.h"
+#include "../../pdneigh/NeighborhoodList.h"
 #include "../PdImpMaterials.h"
-#include "../PdImpOperator.h"
+//#include "../PdImpOperator.h"
 #include "../PdITI_Utilities.h"
+#include "../PdITI_Operator.h"
 #include "../DirichletBcSpec.h"
 #include "../StageComponentDirichletBc.h"
 #include "../ComponentDirichletBcSpec.h"
@@ -76,7 +78,7 @@ using PdImp::StageComponentDirichletBc;
 using std::cout;
 using std::endl;
 
-shared_ptr<PdImp::PdImpOperator> getPimpOperator(PdGridData& decomp,Epetra_MpiComm& comm);
+//shared_ptr<PdImp::PdImpOperator> getPimpOperator(PdGridData& decomp,Epetra_MpiComm& comm);
 shared_ptr<Epetra_CrsGraph> getGraph(shared_ptr<RowStiffnessOperator>& jacobian);
 
 void testGraph() {
@@ -93,20 +95,23 @@ void testGraph() {
 	/*
 	 * Create Pimp Operator
 	 */
-	shared_ptr<PdImp::PdImpOperator> op = getPimpOperator(decomp,comm);
+	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
+	PdITI::PdITI_Operator op(comm,list,decomp.cellVolume);
+//	shared_ptr<PdImp::PdImpOperator> op = getPimpOperator(decomp,comm);
 
 	/*
 	 * There should be 3 points total in the overlap vectors
 	 * Each point only has 3 neighbors -- it does not have the diagonal neighbor
 	 */
-	BOOST_CHECK(3==op->getOverlapMapNDF().NumMyElements());
+	Epetra_BlockMap overlapMap = list.getOverlapMap(comm,3);
+	BOOST_CHECK(3==overlapMap.NumMyElements());
 
 	/*
 	 * Create Jacobian -- note that SCOPE of jacobian is associated with the PimpOperator "op"
 	 */
-	Field<double> uOverlapField(DISPL3D,op->getOverlapMapNDF().NumMyElements());
+	Field<double> uOverlapField(DISPL3D,overlapMap.NumMyElements());
 	PdITI::SET(uOverlapField.getArray().get(),uOverlapField.getArray().end(),0.0);
-	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op->getRowStiffnessOperator(uOverlapField,horizon);
+	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOverlapField);
 
 	/*
 	 * Get points for bc's
@@ -130,10 +135,10 @@ void testGraph() {
 }
 
 
-shared_ptr<PdImp::PdImpOperator> getPimpOperator(PdGridData& decomp,Epetra_MpiComm& comm) {
-	PdImp::PdImpOperator *op = new PdImp::PdImpOperator(comm,decomp);
-	return shared_ptr<PdImp::PdImpOperator>(op);
-}
+//shared_ptr<PdImp::PdImpOperator> getPimpOperator(PdGridData& decomp,Epetra_MpiComm& comm) {
+//	PdImp::PdImpOperator *op = new PdImp::PdImpOperator(comm,decomp);
+//	return shared_ptr<PdImp::PdImpOperator>(op);
+//}
 
 shared_ptr<Epetra_CrsGraph> getGraph(shared_ptr<RowStiffnessOperator>& jacobian){
 	const Epetra_BlockMap& rowMap   = jacobian->getRowMap();
