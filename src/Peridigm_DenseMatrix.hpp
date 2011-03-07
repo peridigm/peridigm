@@ -36,6 +36,7 @@
 
 #include <vector>
 #include <map>
+#include <iostream>
 
 namespace PeridigmNS {
 
@@ -59,8 +60,14 @@ public:
   //! Add data at given location, indexed by local ID
   void addValue(int row, int col, double value);
 
-  //! Sum data into Epetra_CrsMatrix.
+  //! Sum data into Epetra_CrsMatrix
   void sumIntoCrsMatrix();
+
+  //! Set all entries to given scalar
+  void putScalar(double value);
+
+  //! Print
+  void print(std::ostream& out);
 
 protected:
 

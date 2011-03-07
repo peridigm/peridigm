@@ -67,7 +67,7 @@ void PeridigmNS::Material::computeJacobian(const double dt,
   //
   // dF_0x/dx_0 = ( F_0x(perturbed x_0) - F_0x(unperturbed) ) / epsilon
 
-  double epsilon = 1.0e-8; // \todo Instead, use 1.0e-6 * smallest_radius_in_model
+  double epsilon = 1.0e-6; // \todo Instead, use 1.0e-6 * smallest_radius_in_model
 
   // Create a temporary vector for storing the unperturbed force
   Teuchos::RCP<Epetra_Vector> forceVector = dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1);
@@ -86,7 +86,7 @@ void PeridigmNS::Material::computeJacobian(const double dt,
     vector<int> tempNeighborhoodList(numNeighbors+1); 
     tempNeighborhoodList[0] = numNeighbors;
     for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
-      int neighborID = neighborhoodList[neighborhoodListIndex + iNID];
+      int neighborID = neighborhoodList[neighborhoodListIndex++];
       tempNeighborhoodList[iNID+1] = neighborID;
     }
 
@@ -102,15 +102,15 @@ void PeridigmNS::Material::computeJacobian(const double dt,
 
       int perturbID;
       if(iNID < numNeighbors)
-        perturbID = tempNeighborhoodList[iNID];
+        perturbID = tempNeighborhoodList[iNID+1];
       else
         perturbID = iID;
 
       for(int dof=0 ; dof<3 ; ++dof){
 
         // perturb a dof and compute the forces
-        // \todo This will work but may be more expensive than it needs to be, may be able to compute unperturbed force only once.
-        y[3*perturbID+dof] += 0.0; // += epsilon;
+        double oldY = y[3*perturbID+dof];
+        y[3*perturbID+dof] += epsilon;
         updateConstitutiveData(dt, tempNumOwnedPoints, tempOwnedIDs, &tempNeighborhoodList[0], dataManager);
         computeForce(dt, tempNumOwnedPoints, tempOwnedIDs, &tempNeighborhoodList[0], dataManager);
 
@@ -119,23 +119,21 @@ void PeridigmNS::Material::computeJacobian(const double dt,
 
           int forceID;
           if(i < numNeighbors)
-            forceID = tempNeighborhoodList[i];
+            forceID = tempNeighborhoodList[i+1];
           else
             forceID = iID;
 
-          for(int j=0 ; j<3 ; ++j){
-            double value = ( force[3*forceID+j] - unperturbedForce[3*forceID+j] ) / epsilon;
-            int row = i*forceID + j;
+          for(int d=0 ; d<3 ; ++d){
+            double value = ( force[3*forceID+d] - unperturbedForce[3*forceID+d] ) / epsilon;
+            int row = 3*forceID + d;
             int col = 3*perturbID + dof;
             jacobian.addValue(row, col, value);
           }
         }
 
         // unperturb the dof
-        y[3*perturbID+dof] -= 0.0; // -= epsilon;
+        y[3*perturbID+dof] = oldY;
       }
     }
-
-    neighborhoodListIndex += numNeighbors;
   }
 }
