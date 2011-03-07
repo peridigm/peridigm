@@ -69,7 +69,7 @@ void axialBarLinearSpacing() {
 	 * Construct neighborhood
 	 * NOTE THAT: Since this is a serial test, numPoints = numOverlapPoints; and x = xOverlap
 	 */
-	RCP<BondFilter> bondFilterPtr(new PdBondFilter::BondFilterWithSelf());
+	RCP<BondFilter> bondFilterPtr(new PdBondFilter::BondFilterDefault(true));
 	NeighborhoodList list = PdNeighborhood::getNeighborhoodList(horizon,decomp.numPoints,decomp.numPoints,decomp.myX,decomp.myX,*bondFilterPtr);
 	BOOST_CHECK(list.getNumPoints() == numPoints);
 	int size = 0;

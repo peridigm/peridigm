@@ -85,7 +85,7 @@ void axialBarLinearSpacing() {
 	 * Construct neighborhood
 	 * NOTE THAT: Since this is a serial test, numPoints = numOverlapPoints; and x = xOverlap
 	 */
-	shared_ptr<BondFilter> bondFilterPtr(new PdBondFilter::BondFilterWithSelf());
+	shared_ptr<BondFilter> bondFilterPtr(new PdBondFilter::BondFilterDefault(true));
 	PDNEIGH::NeighborhoodList list(Epetra_MpiComm(MPI_COMM_WORLD),decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon,bondFilterPtr);
 	BOOST_CHECK(list.get_num_owned_points() == numPoints);
 	int size = 0;
