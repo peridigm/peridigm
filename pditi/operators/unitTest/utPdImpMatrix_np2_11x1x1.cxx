@@ -13,11 +13,10 @@
 #include "PdZoltan.h"
 #include "PdQuickGrid.h"
 #include "PdQuickGridParallel.h"
-#include "PdutMpiFixture.h"
+#include "../PdImpMpiFixture.h"
 #include <iostream>
 
 using namespace PdQuickGrid;
-using namespace Pdut;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
 using std::cout;
@@ -39,11 +38,21 @@ const PdQPointSet1d zSpec(nz,zStart,zLength);
 const double crossSectionalArea = xSpec.getCellSize()*ySpec.getCellSize();
 const double _cellVolume = crossSectionalArea*zSpec.getCellSize();
 const int numCells = nx*ny*nz;
-static PdGridData gridData;
+
+
+
+PdGridData getGrid() {
+	double horizon = .3;
+	PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
+	PdGridData gridData =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
+	gridData = getLoadBalancedDiscretization(gridData);
+	return gridData;
+}
 
 
 void p0()
 {
+	PdGridData gridData = getGrid();
 	BOOST_CHECK(0 == myRank);
 	/*
 	 * problem dimension is 3
@@ -65,6 +74,7 @@ void p0()
 
 void p1()
 {
+	PdGridData gridData = getGrid();
 	BOOST_CHECK(1 == myRank);
 	/*
 	 * problem dimension is 3
@@ -117,26 +127,24 @@ int main
 {
 
 	// Initialize MPI and timer
-	PdutMpiFixture myMpi = PdutMpiFixture(argc,argv);
+	PdImpRunTime::PimpMpiFixture pimpMPI = PdImpRunTime::PimpMpiFixture::getPimpMPI(argc,argv);
+	const Epetra_Comm& comm = pimpMPI.getEpetra_Comm();
 
 	// These are static (file scope) variables
-	myRank = myMpi.rank;
-	numProcs = myMpi.numProcs;
+	myRank = comm.MyPID();
+	numProcs = comm.NumProc();
+
 	/**
 	 * This test only make sense for numProcs == 2
 	 */
 	if(2 != numProcs){
 		std::cerr << "Unit test runtime ERROR: utPimpMatrix_np2_11x1x1 only makes sense on 2 processors" << std::endl;
 		std::cerr << "\t Re-run unit test $mpiexec -np 2 ./utPimpMatrix_np2_11x1x1" << std::endl;
-		myMpi.PdutMpiFixture::~PdutMpiFixture();
+		pimpMPI.PimpMpiFixture::~PimpMpiFixture();
 		std::exit(-1);
 	}
 
 
-	double horizon = .3;
-	PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
-	gridData =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
-	gridData = getLoadBalancedDiscretization(gridData);
 
 	// Initialize UTF
 	return unit_test_main( init_unit_test, argc, argv );
