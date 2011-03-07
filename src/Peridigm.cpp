@@ -459,6 +459,7 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
     forceStateDesc->set("Bond Family",neighborhoodData);
     // Ask OutputManager to write initial conditions to disk
     outputManager->write(x,u,v,a,force,dataManager,neighborhoodData,forceStateDesc);
+//    this->synchDataManager();
 //    outputManager->write(dataManager,neighborhoodData,forceStateDesc);
   }
 
@@ -574,6 +575,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
 
     PeridigmNS::Timer::self().startTimer("Output");
     outputManager->write(x,u,v,a,force,dataManager,neighborhoodData,forceStateDesc);
+//    this->synchDataManager();
 //    outputManager->write(dataManager,neighborhoodData,forceStateDesc);
     PeridigmNS::Timer::self().stopTimer("Output");
 
@@ -698,6 +700,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
 
   PeridigmNS::Timer::self().startTimer("Output");
   outputManager->write(x,u,v,a,force,dataManager,neighborhoodData,forceStateDesc);
+//  this->synchDataManager();
 //  outputManager->write(dataManager,neighborhoodData,forceStateDesc);
   PeridigmNS::Timer::self().stopTimer("Output");
 
@@ -706,6 +709,21 @@ void PeridigmNS::Peridigm::executeImplicit() {
 }
 
 void PeridigmNS::Peridigm::synchDataManager() {
+  // Need to ensure these primal fields are synchronized: VOLUME, COORD3D, DISPL3D, CURCOORD3D, VELOC3D, FORCE_DENSITY3D, CONTACT_FORCE_DENSITY_3D
+
+  // Copy data from mothership vectors to overlap vectors in data manager
+  // VOLUME is synched during creation and rebalance, and otherwise never changes
+  // COORD3D is synched during creation and rebalance, and otherwise never changes
+  PeridigmNS::Timer::self().startTimer("Gather/Scatter");
+  dataManager->getData(Field_NS::DISPL3D, Field_NS::FieldSpec::STEP_NP1)->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  dataManager->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->Import(*y, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_NP1)->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1)->Import(*force, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  if(analysisHasContact){
+    dataManager->getData(Field_NS::CONTACT_FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1)->Import(*contactForce, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  }
+  PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+
 }
 
 void PeridigmNS::Peridigm::rebalance() {

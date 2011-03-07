@@ -101,6 +101,12 @@ public:
   //! Returns the number of times rebalance has been called.
   int getRebalanceCount(){ return rebalanceCount; }
 
+  //! Returns RCP to owned scalar map
+  Teuchos::RCP<const Epetra_BlockMap> getOwnedIDScalarMap(){ return ownedIDScalarMap; }
+
+  //! Returns RCP to owned vector map
+  Teuchos::RCP<const Epetra_BlockMap> getOwnedIDVectorMap(){ return ownedIDVectorMap; }
+
   //! Provides access to the Epetra_Vector specified by the given FieldSped and FieldStep.
   Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec,
                                       Field_NS::FieldSpec::FieldStep fieldStep);
