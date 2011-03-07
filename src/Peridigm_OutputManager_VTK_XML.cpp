@@ -333,4 +333,126 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<PeridigmNS::DataManag
   // Only write if frequency count match
   if (frequency<=0 || count%frequency!=0) return;
 
+  // Initialize grid if needed
+  static int rebalanceCount = 0;
+  if (grid.GetPointer() == NULL || rebalanceCount != dataManager->getRebalanceCount()) {
+    double *xptr;
+    Teuchos::RCP<Epetra_Vector> myX =  dataManager->getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE);
+    myX->ExtractView( &xptr );
+    //int length = (myX->Map()).NumMyElements();
+    // Use only the number of owned elements
+    int length = (dataManager->getOwnedIDVectorMap())->NumMyElements();
+    grid = PdVTK::getGrid(xptr,length);
+    rebalanceCount = dataManager->getRebalanceCount();
+  }
+
+  // Currenly only support "Linear Elastic" and "Elastic Plastic" material models
+  Teuchos::RCP<Teuchos::ParameterList> thisMaterial;
+  if (materialOutputFields->isSublist ("Linear Elastic")) {
+    thisMaterial = sublist(materialOutputFields, "Linear Elastic");
+  }
+  else if (materialOutputFields->isSublist ("Elastic Plastic")) {
+    thisMaterial = sublist(materialOutputFields, "Elastic Plastic");
+  }
+  else // Unrecognized material model. Throw error.
+    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    "Peridigm::OutputManager: Unknown material model. Only \"Linear Elastic\" or \"Elastic Plastic\" currently supported.");
+
+
+  if (thisMaterial->isParameter("Volume")) {
+    double *volume;
+    dataManager->getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&volume);
+    PdVTK::writeField<double>(grid,Field_NS::VOLUME,volume);
+  }
+
+  if (thisMaterial->isParameter("Displacement")) {
+    double *uptr;
+    dataManager->getData(Field_NS::DISPL3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView( &uptr );
+    PdVTK::writeField<double>(grid,Field_NS::DISPL3D,uptr);
+  }
+
+  if (thisMaterial->isParameter("Velocity")) {
+    double *vptr;
+    dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView( &vptr );
+    PdVTK::writeField<double>(grid,Field_NS::VELOC3D,vptr);
+  }
+
+  if (thisMaterial->isParameter("Acceleration")) {
+// MLP: This is currently not stored in datamanager
+    double *aptr;
+    dataManager->getData(Field_NS::ACCEL3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView( &aptr );
+    PdVTK::writeField<double>(grid,Field_NS::ACCEL3D,aptr);
+  }
+
+  if (thisMaterial->isParameter("Force Density")) {
+    double *fptr;
+    dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView( &fptr );
+    PdVTK::writeField<double>(grid,Field_NS::FORCE_DENSITY3D,fptr);
+  }
+
+  if (thisMaterial->isParameter("ID")) {
+    // Get map corresponding to x
+    Teuchos::RCP<Epetra_Vector> myX =  dataManager->getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE);
+    const Epetra_BlockMap& xMap = myX->Map();
+    PdVTK::writeField<int>(grid,Field_NS::ID,xMap.MyGlobalElements());
+  }
+
+  std::vector<int> proc_num;
+  if (thisMaterial->isParameter("Proc Num")) {
+    // Get map corresponding to x
+    Teuchos::RCP<Epetra_Vector> myX =  dataManager->getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE);
+    const Epetra_BlockMap& xMap = myX->Map();
+//    int length = xMap.NumMyElements();
+    // Use only the number of owned elements
+    int length = (dataManager->getOwnedIDVectorMap())->NumMyElements();
+    proc_num.assign (length,myPID);
+    PdVTK::writeField<int>(grid,Field_NS::PROC_NUM,&proc_num[0]);
+  }
+
+  // Currenly only support "Linear Elastic" and "Elastic Plastic" material models
+  Teuchos::RCP<Teuchos::ParameterList> thisForceState;
+  if (materialOutputFields->isSublist ("Linear Elastic")) {
+    thisForceState = sublist(forceStateDesc, "Linear Elastic");
+  }
+  else if (materialOutputFields->isSublist ("Elastic Plastic")) {
+    thisForceState = sublist(forceStateDesc, "Elastic Plastic");
+  }
+  else // Unrecognized material model. Throw error.
+    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    "Peridigm::OutputManager: Unknown material model. Only \"Linear Elastic\" or \"Elastic Plastic\" currently supported.");
+
+  Teuchos::ParameterList::ConstIterator iter;
+  string outstring;
+  for(iter = thisForceState->begin(); iter != thisForceState->end(); iter++) {
+    if (thisForceState->isParameter(thisMaterial->name(iter))) {
+      outstring = thisMaterial->name(iter);
+
+      double *dataptr;
+      if (outstring == "Dilatation") {
+        dataManager->getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dataptr);
+        PdVTK::writeField<double>(grid,Field_NS::DILATATION,dataptr);
+      }
+      else if (outstring == "Weighted_Volume") {
+        dataManager->getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&dataptr);
+        PdVTK::writeField<double>(grid,Field_NS::WEIGHTED_VOLUME,dataptr);
+      }
+      else if (outstring == "Damage") {
+        dataManager->getData(Field_NS::DAMAGE, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dataptr);
+        PdVTK::writeField<double>(grid,Field_NS::DAMAGE,dataptr);
+      }
+      else if (outstring == "Lambda") {
+        dataManager->getData(Field_NS::LAMBDA, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dataptr);
+        PdVTK::writeField<double>(grid,Field_NS::LAMBDA,dataptr);
+      }
+      else {
+        // Unknown field
+      }
+
+    }
+  }
+
+  // All pointers reset; now write data
+  double current_time = forceStateDesc->get<double>("Time");
+  vtkWriter->writeTimeStep(current_time,grid);
+//  vtkWriter->writeTimeStep(count,grid);
 }
