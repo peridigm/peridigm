@@ -94,39 +94,41 @@ namespace PdITI {
 		double *fOwned = fInternalOverlap;
 
 		const int *neighPtr = localNeighborList;
-		double cellVolume, alpha, dx, dy, dz, zeta, dY, t;
-		for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yOwned +=3, fOwned+=3, m++, theta++, dsf++){
-
+		double dx, dy, dz, zeta, dY;
+		double cellVolumeX, mX, tX, dsfX, alphaX, c1X;
+		double cellVolumeQ;
+		for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yOwned +=3, fOwned+=3, theta++){
 			int numNeigh = *neighPtr; neighPtr++;
 			const double *X = xOwned;
 			const double *Y = yOwned;
-			alpha = *dsf*15.0*MU/(*m);
-			double selfCellVolume = v[p];
-			double c1 = OMEGA*(*theta)*(9.0*K-*dsf*15.0*MU)/(3.0*(*m));
-			for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++){
+			dsfX = *(dsf+p);
+			mX = *(m+p);
+			alphaX = dsfX*15.0*MU/(mX);
+			cellVolumeX = *(v+p);
+			c1X = OMEGA*(*theta)*(9.0*K-dsfX*15.0*MU)/(3.0*mX);
+			for(int q=0;q<numNeigh;q++,neighPtr++,bondDamage++){
 				int localId = *neighPtr;
-				cellVolume = v[localId];
-				const double *XP = &xOverlap[3*localId];
-				const double *YP = &yOverlap[3*localId];
-				dx = XP[0]-X[0];
-				dy = XP[1]-X[1];
-				dz = XP[2]-X[2];
+				cellVolumeQ = *(v+localId);
+				const double *XQ = &xOverlap[3*localId];
+				const double *YQ = &yOverlap[3*localId];
+				dx = XQ[0]-X[0];
+				dy = XQ[1]-X[1];
+				dz = XQ[2]-X[2];
 				zeta = sqrt(dx*dx+dy*dy+dz*dz);
-				dx = YP[0]-Y[0];
-				dy = YP[1]-Y[1];
-				dz = YP[2]-Y[2];
+				dx = YQ[0]-Y[0];
+				dy = YQ[1]-Y[1];
+				dz = YQ[2]-Y[2];
 				dY = sqrt(dx*dx+dy*dy+dz*dz);
-				t = (1.0-*bondDamage)*(c1 * zeta + (1.0-*bondDamage) * OMEGA * alpha * (dY - zeta));
-				double fx = t * dx / dY;
-				double fy = t * dy / dY;
-				double fz = t * dz / dY;
-
-				*(fOwned+0) += fx*cellVolume;
-				*(fOwned+1) += fy*cellVolume;
-				*(fOwned+2) += fz*cellVolume;
-				fInternalOverlap[3*localId+0] -= fx*selfCellVolume;
-				fInternalOverlap[3*localId+1] -= fy*selfCellVolume;
-				fInternalOverlap[3*localId+2] -= fz*selfCellVolume;
+				tX = (1.0-*bondDamage)*(c1X * zeta + (1.0-*bondDamage) * OMEGA * alphaX * (dY - zeta));
+				double fx = tX * dx / dY;
+				double fy = tX * dy / dY;
+				double fz = tX * dz / dY;
+				*(fOwned+0) += fx*cellVolumeQ;
+				*(fOwned+1) += fy*cellVolumeQ;
+				*(fOwned+2) += fz*cellVolumeQ;
+				fInternalOverlap[3*localId+0] -= fx*cellVolumeX;
+				fInternalOverlap[3*localId+1] -= fy*cellVolumeX;
+				fInternalOverlap[3*localId+2] -= fz*cellVolumeX;
 			}
 
 		}

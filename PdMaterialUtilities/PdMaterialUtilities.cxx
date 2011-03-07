@@ -615,7 +615,7 @@ double probeShearModulusScaleFactor
 		/*
 		 * Pure shear: XY
 		 */
-		YP[0] = XP[0] + gamma * dx;
+		YP[0] = XP[0] + gamma * dy;
 		YP[1] = XP[1];
 		YP[2] = XP[2];
 
