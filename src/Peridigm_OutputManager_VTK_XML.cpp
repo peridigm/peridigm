@@ -148,6 +148,7 @@ Teuchos::ParameterList PeridigmNS::OutputManager_VTK_XML::getValidParameterList(
   matType.set("Velocity",true);
   matType.set("Acceleration",true);
   matType.set("Force Density",true);
+  matType.set("Contact Force Density",true);
   matType.set("Dilatation",true);
   matType.set("ID",true);
   matType.set("Proc Num",true);
@@ -161,6 +162,7 @@ Teuchos::ParameterList PeridigmNS::OutputManager_VTK_XML::getValidParameterList(
   matType.set("Velocity",true);
   matType.set("Acceleration",true);
   matType.set("Force Density",true);
+  matType.set("Contact Force Density",true);
   matType.set("Dilatation",true);
   matType.set("ID",true);
   matType.set("Proc Num",true);
