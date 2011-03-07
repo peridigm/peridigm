@@ -16,8 +16,9 @@
 #include "PdNeighborhood.h"
 #include "PdZoltan.h"
 #include "Field.h"
+#include "../../pdneigh/NeighborhoodList.h"
 #include "../PdImpMaterials.h"
-#include "../PdImpOperator.h"
+#include "../PdITI_Operator.h"
 #include "../PdITI_Utilities.h"
 #include "../IsotropicElasticConstitutiveModel.h"
 #include "../StageComponentDirichletBc.h"
@@ -80,7 +81,6 @@ const int vectorNDF=3;
 
 void setRotatedValue(double* x, double magnitude);
 shared_ptr<Epetra_CrsGraph> getGraph(shared_ptr<RowStiffnessOperator>& jacobian);
-shared_ptr<PdImp::PdImpOperator> getPimpOperator(PdGridData& decomp,Epetra_MpiComm& comm);
 shared_ptr<Epetra_VbrMatrix>
 getOperator
 (
@@ -115,9 +115,14 @@ void computeJacobian(){
 	decomp = getLoadBalancedDiscretization(decomp);
 
 	/*
-	 * Create Pimp Operator
+	 * Create PdITI Operator
 	 */
-	shared_ptr<PdImp::PdImpOperator> op = getPimpOperator(decomp,comm);
+	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
+	PdITI::PdITI_Operator op(comm,list,decomp.cellVolume);
+	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
+	op.addConstitutiveModel(fIntOperator);
+
+//	shared_ptr<PdImp::PdImpOperator> op = getPimpOperator(decomp,comm);
 
 	/*
 	 * Get points for bc's
@@ -163,7 +168,7 @@ void computeJacobian(){
 	 * change the displacement field -- BUT NOT BEFORE jacobian has been computed otherwise since
 	 * the jacobian is a linearization about the displacement field
 	 */
-	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op->getRowStiffnessOperator(uOwnedField,horizon);
+	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOwnedField);
 
 
 	/*
@@ -187,7 +192,7 @@ void computeJacobian(){
 	Field_NS::Field<double> fN(fNSpec,decomp.numPoints);
 	fN.setValue(0.0);
 
-	op->computeInternalForce(uOwnedField,fN);
+	op.computeInternalForce(uOwnedField,fN);
 	PdITI::SCALE_BY_VALUE(fN.getArray().get(),fN.getArray().end(),-1.0);
 	bcApplied->applyKinematics(1.0,fN);
 	bcFixed1->applyHomogeneousForm(fN);
@@ -444,12 +449,12 @@ getOperator
 }
 
 
-shared_ptr<PdImp::PdImpOperator> getPimpOperator(PdGridData& decomp,Epetra_MpiComm& comm) {
-	PdImp::PdImpOperator *op = new PdImp::PdImpOperator(comm,decomp);
-	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
-	op->addConstitutiveModel(fIntOperator);
-	return shared_ptr<PdImp::PdImpOperator>(op);
-}
+//shared_ptr<PdImp::PdImpOperator> getPimpOperator(PdGridData& decomp,Epetra_MpiComm& comm) {
+//	PdImp::PdImpOperator *op = new PdImp::PdImpOperator(comm,decomp);
+//	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
+//	op->addConstitutiveModel(fIntOperator);
+//	return shared_ptr<PdImp::PdImpOperator>(op);
+//}
 
 void setRotatedValue(double* x, double magnitude){
 	*(x+0) = magnitude*cos(theta);

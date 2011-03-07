@@ -16,8 +16,9 @@
 #include "PdNeighborhood.h"
 #include "PdZoltan.h"
 #include "Field.h"
+#include "../../pdneigh/NeighborhoodList.h"
 #include "../PdImpMaterials.h"
-#include "../PdImpOperator.h"
+#include "../PdITI_Operator.h"
 #include "../PdITI_Utilities.h"
 #include "../IsotropicElasticConstitutiveModel.h"
 #include <set>
@@ -128,7 +129,11 @@ void twoPointJacobian() {
 	Epetra_BlockMap rowMap   = PdQuickGrid::getOwnedMap  (comm, decomp, vectorNDF);
 	Epetra_BlockMap colMap = PdQuickGrid::getOverlapMap(comm, decomp, vectorNDF);
 	BOOST_CHECK(rowMap.NumMyElements()==numPoints);
-	PdImp::PdImpOperator op(comm,decomp);
+	/*
+	 * Create PdITI Operator
+	 */
+	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
+	PdITI::PdITI_Operator op(comm,list,decomp.cellVolume);
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
 	op.addConstitutiveModel(fIntOperator);
 
@@ -139,7 +144,7 @@ void twoPointJacobian() {
 	Field_NS::TemporalField<double> force = Field_NS::TemporalField<double>(Field_NS::FORCE3D,numPoints);
 	op.computeInternalForce(uOwnedField,force.getField(Field_NS::FieldSpec::STEP_NP1));
 	assertForce(force.getField(Field_NS::FieldSpec::STEP_NP1));
-	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getRowStiffnessOperator(uOwnedField,horizon);
+	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOwnedField);
 
 	/*
 	 * Assert Diagonal Entries
@@ -206,15 +211,15 @@ void twoPointJacobian() {
 
 //		std::cout << "Diagonal of Jacobian by hand:" << endl;
 //		PdImp::PRINT_3x3MATRIX(kA.get(),std::cout);
-		std::cout << "Computed row:" << std::endl;
-		std::cout << "ROW = " << row <<  std::endl;
-		int *cols = rowLIDs.get();
-		for(std::size_t col=0;col<rowLIDs.getSize();col++){
-			std::cout << "\tCOL = " << cols[col] << std::endl;
-			double *c = stiffness.get()+9*col;
-			PdITI::PRINT_3x3MATRIX(c,std::cout);
-		}
-		std::cout << endl;
+//		std::cout << "Computed row:" << std::endl;
+//		std::cout << "ROW = " << row <<  std::endl;
+//		int *cols = rowLIDs.get();
+//		for(std::size_t col=0;col<rowLIDs.getSize();col++){
+//			std::cout << "\tCOL = " << cols[col] << std::endl;
+//			double *c = stiffness.get()+9*col;
+//			PdITI::PRINT_3x3MATRIX(c,std::cout);
+//		}
+//		std::cout << endl;
 	}
 	{
 //		Pd_shared_ptr_Array<double> kAnswer = computeAnalytical3x3Stiffness(uOwnedField);
@@ -278,7 +283,7 @@ void twoPointJacobian() {
 		{
 			u1[0] = y[0] - x1[0];
 			u1[1] = y[1] - x1[1];
-			jacobian = op.getRowStiffnessOperator(uOwnedField,horizon);
+			jacobian = op.getJacobian(uOwnedField);
 			int row=0;
 			Pd_shared_ptr_Array<int> rowLIDs = jacobian->getColumnLIDs(row);
 			Pd_shared_ptr_Array<double> stiffness = jacobian->computeRowStiffness(row, rowLIDs);

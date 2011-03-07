@@ -18,7 +18,6 @@
 #include "PdZoltan.h"
 #include "Field.h"
 #include "../PdImpMaterials.h"
-//#include "../PdImpOperator.h"
 #include "../PdITI_Operator.h"
 #include "../PdITI_Utilities.h"
 #include "../IsotropicElasticConstitutiveModel.h"

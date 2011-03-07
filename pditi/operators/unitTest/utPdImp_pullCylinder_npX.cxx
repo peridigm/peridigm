@@ -17,8 +17,9 @@
 #include "PdZoltan.h"
 #include "Field.h"
 #include "utPdITI.h"
+#include "../../pdneigh/NeighborhoodList.h"
 #include "../PdImpMaterials.h"
-#include "../PdImpOperator.h"
+#include "../PdITI_Operator.h"
 #include "../PdITI_Utilities.h"
 #include "../DirichletBcSpec.h"
 #include "../BodyLoadSpec.h"
@@ -94,14 +95,16 @@ void utPimp_pullCylinder() {
 	TensorProductSolidCylinder meshGen = getMeshGenerator();
 	PdGridData decomp =  PdQuickGrid::getDiscretization(myRank, meshGen);
 	decomp = getLoadBalancedDiscretization(decomp);
-	decomp = createAndAddNeighborhood(decomp,horizon);
+//	decomp = createAndAddNeighborhood(decomp,horizon);
 
 	/*
 	 * Create Pimp Operator
 	 */
-	shared_ptr<PdImp::PdImpOperator> op = utPdITI::getPimpOperator(decomp,comm);
+	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
+	PdITI::PdITI_Operator op(comm,list,decomp.cellVolume);
+//	shared_ptr<PdImp::PdImpOperator> op = utPdITI::getPimpOperator(decomp,comm);
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
-	op->addConstitutiveModel(fIntOperator);
+	op.addConstitutiveModel(fIntOperator);
 
 
 	/*
@@ -134,7 +137,7 @@ void utPimp_pullCylinder() {
 	Field<double> uOwnedField(DISPL3D,decomp.numPoints);
 	uOwnedField.setValue(0.0);
 	bcApplied->applyKinematics(1.0,uOwnedField);
-	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op->getRowStiffnessOperator(uOwnedField,horizon);
+	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOwnedField);
 
 	/*
 	 * Create graph
@@ -156,7 +159,7 @@ void utPimp_pullCylinder() {
 	Field_NS::FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
 	Field_NS::Field<double> fN(fNSpec,decomp.numPoints);
 	fN.setValue(0.0);
-	op->computeInternalForce(uOwnedField,fN);
+	op.computeInternalForce(uOwnedField,fN);
 	bcApplied->applyKinematics(1.0,fN);
 
 	Epetra_LinearProblem linProblem;

@@ -17,8 +17,9 @@
 #include "PdNeighborhood.h"
 #include "PdZoltan.h"
 #include "Field.h"
+#include "../../pdneigh/NeighborhoodList.h"
 #include "../PdImpMaterials.h"
-#include "../PdImpOperator.h"
+#include "../PdITI_Operator.h"
 #include "../PdITI_Utilities.h"
 #include "../DirichletBcSpec.h"
 #include "../BodyLoadSpec.h"
@@ -71,7 +72,7 @@ const PdImp::BulkModulus _K(130000.0);
 const PdImp::PoissonsRatio _MU(0.0);
 const PdImp::IsotropicHookeSpec isotropicSpec(_K,_MU);
 
-shared_ptr<PdImp::PdImpOperator> getPimpOperator(PdGridData& decomp,Epetra_MpiComm& comm);
+//shared_ptr<PdImp::PdImpOperator> getPimpOperator(PdGridData& decomp,Epetra_MpiComm& comm);
 
 TensorProductSolidCylinder getMeshGenerator(){
 
@@ -83,7 +84,7 @@ PdGridData getGrid() {
 	TensorProductSolidCylinder meshGen = getMeshGenerator();
 	PdGridData decomp =  PdQuickGrid::getDiscretization(myRank, meshGen);
 	decomp = getLoadBalancedDiscretization(decomp);
-	decomp = createAndAddNeighborhood(decomp,horizon);
+//	decomp = createAndAddNeighborhood(decomp,horizon);
 
 	const std::vector<PdQPointSet1d>& specs = meshGen.getTensorProductSpecs();
 	PdQPointSet1d zSpec = specs[2];
@@ -133,12 +134,15 @@ void computeInternalForce(){
 	 * Create Pimp Operator
 	 */
 	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
-	shared_ptr<PdImp::PdImpOperator> op = getPimpOperator(decomp,comm);
+	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
+	PdITI::PdITI_Operator op(comm,list,decomp.cellVolume);
+	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
+	op.addConstitutiveModel(fIntOperator);
 
 	Field_NS::FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
 	Field_NS::Field<double> fN(fNSpec,decomp.numPoints);
 	fN.setValue(0.0);
-	op->computeInternalForce(uOwnedField,fN);
+	op.computeInternalForce(uOwnedField,fN);
 
 	/*
 	 * Write problem set up parameters to file
@@ -152,13 +156,6 @@ void computeInternalForce(){
 	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("utPimp_smallCylinderPull_npX.pvtu", numProcs, myRank);
 	PdVTK::write(writer,grid);
 
-}
-
-shared_ptr<PdImp::PdImpOperator> getPimpOperator(PdGridData& decomp,Epetra_MpiComm& comm) {
-	PdImp::PdImpOperator *op = new PdImp::PdImpOperator(comm,decomp);
-	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
-	op->addConstitutiveModel(fIntOperator);
-	return shared_ptr<PdImp::PdImpOperator>(op);
 }
 
 bool init_unit_test_suite()

@@ -17,9 +17,11 @@
 #include "PdNeighborhood.h"
 #include "PdZoltan.h"
 #include "Field.h"
+#include "../../pdneigh/NeighborhoodList.h"
 #include "../PdImpMaterials.h"
-#include "../PdImpOperator.h"
+//#include "../PdImpOperator.h"
 #include "../PdITI_Utilities.h"
+#include "../PdITI_Operator.h"
 #include "../DirichletBcSpec.h"
 #include "../BodyLoadSpec.h"
 #include "../StageFunction.h"
@@ -126,10 +128,10 @@ PdGridData getTwoPointGridData(){
 
 }
 
-shared_ptr<PdImp::PdImpOperator> getPimpOperator(PdGridData& decomp,Epetra_MpiComm& comm) {
-	PdImp::PdImpOperator *op = new PdImp::PdImpOperator(comm,decomp);
-	return shared_ptr<PdImp::PdImpOperator>(op);
-}
+//shared_ptr<PdImp::PdImpOperator> getPimpOperator(PdGridData& decomp,Epetra_MpiComm& comm) {
+//	PdImp::PdImpOperator *op = new PdImp::PdImpOperator(comm,decomp);
+//	return shared_ptr<PdImp::PdImpOperator>(op);
+//}
 
 void initialConditions
 (
@@ -426,11 +428,14 @@ void runWave() {
 	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
 
 	/*
-	 * Create PdImp Operator
+	 * Create PdITI Operator
 	 */
-	shared_ptr<PdImp::PdImpOperator> op = getPimpOperator(pdGridData,comm);
+//	shared_ptr<PdImp::PdImpOperator> op = getPimpOperator(pdGridData,comm);
+	PDNEIGH::NeighborhoodList list(comm,pdGridData.zoltanPtr.get(),pdGridData.numPoints,pdGridData.myGlobalIDs,pdGridData.myX,horizon);
+	PdITI::PdITI_Operator op(comm,list,pdGridData.cellVolume);
+
 	shared_ptr<ConstitutiveModel> fIntOperator(shared_ptr<ConstitutiveModel>(new IsotropicElasticConstitutiveModel(matSpec)));
-	op->addConstitutiveModel(fIntOperator);
+	op.addConstitutiveModel(fIntOperator);
 
 	/*
 	 * Point '0' has initial velocity to LEFT
@@ -455,7 +460,7 @@ void runWave() {
 	/*
 	 * Create Jacobian -- note that SCOPE of jacobian is associated with the PimpOperator "op"
 	 */
-	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op->getRowStiffnessOperator(ut.getField(FieldSpec::STEP_N),horizon);
+	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(ut.getField(FieldSpec::STEP_N));
 
 	/*
 	 * Create graph
