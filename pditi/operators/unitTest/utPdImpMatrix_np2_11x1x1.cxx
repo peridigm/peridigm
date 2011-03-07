@@ -136,6 +136,7 @@ int main
 	double horizon = .3;
 	PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
 	gridData =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
+	gridData = getLoadBalancedDiscretization(gridData);
 
 	// Initialize UTF
 	return unit_test_main( init_unit_test, argc, argv );

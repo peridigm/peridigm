@@ -19,22 +19,22 @@ add_library(utPdITI utPdITI.cxx)
 
 # Add test
 add_executable(utPdImpMatrix_np2_11x1x1 utPdImpMatrix_np2_11x1x1.cxx)
-target_link_libraries(utPdImpMatrix_np2_11x1x1 PdITIOperators ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdImpMatrix_np2_11x1x1 PdITIOperators PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 add_test (utPdImpMatrix_np2_11x1x1 python run_unit_test.py mpiexec -np 2 utPdImpMatrix_np2_11x1x1)
 
 # Add test
 add_executable(utPdImpMatrix_11x1x1 utPdImpMatrix_11x1x1.cxx)
-target_link_libraries(utPdImpMatrix_11x1x1 PdITIOperators ${PERIDIGM_LIBS}  ${TRILINOS_LIBS} ${VTK_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdImpMatrix_11x1x1 PdITIOperators PdNeigh ${PERIDIGM_LIBS}  ${TRILINOS_LIBS} ${VTK_LIBS} ${UT_REQUIRED_LIBS})
 add_test (utPdImpMatrix_11x1x1 python run_unit_test.py ./utPdImpMatrix_11x1x1)
 
 # Add test
 add_executable(utPdImp_twoPointJacobian utPdImp_twoPointJacobian.cxx)
-target_link_libraries(utPdImp_twoPointJacobian PdITIOperators ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdImp_twoPointJacobian PdITIOperators PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 add_test (utPdImp_twoPointJacobian python run_unit_test.py ./utPdImp_twoPointJacobian)
 
 # Add test
 add_executable(utPdImp_twoPointJacobian_np2 utPdImp_twoPointJacobian_np2.cxx)
-target_link_libraries(utPdImp_twoPointJacobian_np2 PdITIOperators ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdImp_twoPointJacobian_np2 PdITIOperators PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 add_test (utPdImp_twoPointJacobian_np2 python run_unit_test.py mpiexec -np 2 ./utPdImp_twoPointJacobian_np2)
 
 # Add test
@@ -49,7 +49,7 @@ add_test (ut_jacobian_graph python run_unit_test.py ./ut_jacobian_graph)
 
 # Add test
 add_executable(utPdImp_linearSolve_barGravity_npX utPdImp_linearSolve_barGravity_npX.cxx)
-target_link_libraries(utPdImp_linearSolve_barGravity_npX PdITIOperators ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdImp_linearSolve_barGravity_npX PdITIOperators PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 add_test (utPdImp_linearSolve_barGravity_npX python run_unit_test.py mpiexec -np 5 ./utPdImp_linearSolve_barGravity_npX)
 
 # Add test
@@ -69,12 +69,12 @@ add_test (utPdImp_constantBodyLoad python run_unit_test.py ./utPdImp_constantBod
 
 # Add test
 add_executable(utPdImp_pullCylinder_npX utPdImp_pullCylinder_npX.cxx)
-target_link_libraries(utPdImp_pullCylinder_npX utPdITI PdITIOperators ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdImp_pullCylinder_npX utPdITI PdITIOperators PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 #add_test (utPdImp_pullCylinder_npX python run_unit_test.py mpiexec -np 4 ./utPdImp_pullCylinder_npX)
 
 # Add test
 add_executable(utPdImp_smallCylinderPull_npX utPdImp_smallCylinderPull_npX.cxx)
-target_link_libraries(utPdImp_smallCylinderPull_npX PdITIOperators ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdImp_smallCylinderPull_npX PdITIOperators PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 #add_test (utPdImp_smallCylinderPull_npX python run_unit_test.py mpiexec -np 4 ./utPdImp_smallCylinderPull_npX)
 
 # Add test
@@ -84,12 +84,12 @@ add_test (utPdImp_isotropicElasticPlasticSpec python run_unit_test.py ./utPdImp_
 
 # Add test
 add_executable(utPdImp_isotropicElasticPlastic_twoPointProbe utPdImp_isotropicElasticPlastic_twoPointProbe.cxx)
-target_link_libraries(utPdImp_isotropicElasticPlastic_twoPointProbe PdITIOperators ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdImp_isotropicElasticPlastic_twoPointProbe PdITIOperators PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 add_test (utPdImp_isotropicElasticPlastic_twoPointProbe python run_unit_test.py ./utPdImp_isotropicElasticPlastic_twoPointProbe)
 
 # Add test
 add_executable(utPdImp_implicitLinearDynamicsDemo_twoPoint utPdImp_implicitLinearDynamicsDemo_twoPoint.cxx)
-target_link_libraries(utPdImp_implicitLinearDynamicsDemo_twoPoint PdITIOperators ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdImp_implicitLinearDynamicsDemo_twoPoint PdITIOperators PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 add_test (utPdImp_implicitLinearDynamicsDemo_twoPoint python run_unit_test.py ./utPdImp_implicitLinearDynamicsDemo_twoPoint)
 
 #add_custom_target( utest

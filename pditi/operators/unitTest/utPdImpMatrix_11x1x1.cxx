@@ -16,8 +16,10 @@
 #include "PdNeighborhood.h"
 #include "PdZoltan.h"
 #include "Field.h"
+#include "../../pdneigh/NeighborhoodList.h"
 #include "../PdImpMaterials.h"
-#include "../PdImpOperator.h"
+#include "../PdITI_Operator.h"
+#include "../PdITI_Utilities.h"
 #include "../IsotropicElasticConstitutiveModel.h"
 #include <set>
 #include <Epetra_FEVbrMatrix.h>
@@ -76,13 +78,14 @@ void axialBarLinearSpacing() {
 	const PdImp::PoissonsRatio _MU(0.25);
 	const PdImp::IsotropicHookeSpec isotropicSpec(_K,_MU);
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
-	PdImp::PdImpOperator op(comm,decomp);
+	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
+	PdITI::PdITI_Operator op(comm,list,decomp.cellVolume);
+
+//	PdImp::PdImpOperator op(comm,decomp);
 	op.addConstitutiveModel(fIntOperator);
-	Field<double> uOwnedField = Field<double>(DISPL3D,op.getNumOwnedPoints());
+	Field<double> uOwnedField = Field<double>(DISPL3D,list.get_num_owned_points());
 	PdITI::SET(uOwnedField.getArray().get(),uOwnedField.getArray().get()+uOwnedField.getArray().getSize(),0.0);
-
-
-	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getRowStiffnessOperator(uOwnedField,horizon);
+	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOwnedField);
 
 //	int n0[]  = {0,1,2};
 //	int n1[]  = {0,1,2,3};
@@ -155,6 +158,7 @@ void axialBarLinearSpacing() {
 void probe() {
 	PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
 	PdGridData decomp =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
+	decomp = getLoadBalancedDiscretization(decomp);
 	int numPoints = decomp.numPoints;
 	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(decomp.myX,numPoints);
 
@@ -163,16 +167,18 @@ void probe() {
 	 */
 	const int vectorNDF=3;
 	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
-	Epetra_BlockMap rowMap   = PdQuickGrid::getOwnedMap  (comm, decomp, vectorNDF);
-	Epetra_BlockMap colMap = PdQuickGrid::getOverlapMap(comm, decomp, vectorNDF);
-	BOOST_CHECK(rowMap.NumMyElements()==numPoints);
 
 	const PdImp::BulkModulus _K(130000.0);
 	const PdImp::PoissonsRatio _MU(0.25);
 	const PdImp::IsotropicHookeSpec isotropicSpec(_K,_MU);
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
-	PdImp::PdImpOperator op(comm,decomp);
+	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
+	PdITI::PdITI_Operator op(comm,list,decomp.cellVolume);
 	op.addConstitutiveModel(fIntOperator);
+
+	Epetra_BlockMap rowMap   = list.getOwnedMap(comm,vectorNDF);
+	Epetra_BlockMap colMap = list.getOverlapMap(comm,vectorNDF);
+	BOOST_CHECK(rowMap.NumMyElements()==numPoints);
 
 	Field_NS::Field<double> u(Field_NS::DISPL3D,rowMap.NumMyElements());
 	PdITI::SET(u.getArray().get(),u.getArray().get()+u.getArray().getSize(),0.0);

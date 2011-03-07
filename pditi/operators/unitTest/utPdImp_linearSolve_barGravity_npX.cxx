@@ -16,8 +16,9 @@
 #include "PdNeighborhood.h"
 #include "PdZoltan.h"
 #include "Field.h"
+#include "../../pdneigh/NeighborhoodList.h"
 #include "../PdImpMaterials.h"
-#include "../PdImpOperator.h"
+#include "../PdITI_Operator.h"
 #include "../PdITI_Utilities.h"
 #include "../DirichletBcSpec.h"
 #include "../BodyLoadSpec.h"
@@ -82,7 +83,7 @@ using PdImp::ComponentDirichletBcSpec;
 using PdImp::StageFunction;
 using PdImp::StageComponentDirichletBc;
 
-shared_ptr<PdImp::PdImpOperator> getPimpOperator(PdGridData& decomp,Epetra_MpiComm& comm);
+//shared_ptr<PdImp::PdImpOperator> getPimpOperator(PdGridData& decomp,Epetra_MpiComm& comm);
 shared_ptr<Epetra_CrsGraph> getGraph(shared_ptr<RowStiffnessOperator>& jacobian);
 shared_ptr<Epetra_RowMatrix>
 getOperator
@@ -101,9 +102,11 @@ void linearSolve_barGravity() {
 	/*
 	 * Create Pimp Operator
 	 */
-	shared_ptr<PdImp::PdImpOperator> op = getPimpOperator(decomp,comm);
+	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
+	PdITI::PdITI_Operator op(comm,list,decomp.cellVolume);
+//	shared_ptr<PdImp::PdImpOperator> op = getPimpOperator(decomp,comm);
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
-	op->addConstitutiveModel(fIntOperator);
+	op.addConstitutiveModel(fIntOperator);
 
 
 
@@ -128,7 +131,7 @@ void linearSolve_barGravity() {
 	 */
 	Field<double> uOwnedField(DISPL3D,decomp.numPoints);
 	uOwnedField.setValue(0.0);
-	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op->getRowStiffnessOperator(uOwnedField,horizon);
+	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOwnedField);
 
 	/*
 	 * Create graph
@@ -203,10 +206,10 @@ void linearSolve_barGravity() {
 }
 
 
-shared_ptr<PdImp::PdImpOperator> getPimpOperator(PdGridData& decomp,Epetra_MpiComm& comm) {
-	PdImp::PdImpOperator *op = new PdImp::PdImpOperator(comm,decomp);
-	return shared_ptr<PdImp::PdImpOperator>(op);
-}
+//shared_ptr<PdImp::PdImpOperator> getPimpOperator(PdGridData& decomp,Epetra_MpiComm& comm) {
+//	PdImp::PdImpOperator *op = new PdImp::PdImpOperator(comm,decomp);
+//	return shared_ptr<PdImp::PdImpOperator>(op);
+//}
 
 shared_ptr<Epetra_CrsGraph> getGraph(shared_ptr<RowStiffnessOperator>& jacobian){
 	const Epetra_BlockMap& rowMap   = jacobian->getRowMap();

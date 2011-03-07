@@ -14,9 +14,12 @@
 #include "Field.h"
 #include "PdVTK.h"
 #include "PdZoltan.h"
+#include "../../pdneigh/NeighborhoodList.h"
 #include "../PdImpMpiFixture.h"
 #include "../PdImpMaterials.h"
-#include "../PdImpOperator.h"
+//#include "../PdImpOperator.h"
+#include "../PdITI_Operator.h"
+#include "../PdITI_Utilities.h"
 #include "../IsotropicElasticPlasticModel.h"
 #include "../ConstitutiveModel.h"
 #include "../DirichletBcSpec.h"
@@ -146,10 +149,10 @@ PdGridData getTwoPointGridData(){
 	 return pdGridData;
 }
 
-shared_ptr<PdImp::PdImpOperator> getPimpOperator(PdGridData& decomp,Epetra_MpiComm& comm) {
-	PdImp::PdImpOperator *op = new PdImp::PdImpOperator(comm,decomp);
-	return shared_ptr<PdImp::PdImpOperator>(op);
-}
+//shared_ptr<PdImp::PdImpOperator> getPimpOperator(PdGridData& decomp,Epetra_MpiComm& comm) {
+//	PdImp::PdImpOperator *op = new PdImp::PdImpOperator(comm,decomp);
+//	return shared_ptr<PdImp::PdImpOperator>(op);
+//}
 
 
 void runPureShear() {
@@ -166,12 +169,13 @@ void runPureShear() {
 	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
 
 	/*
-	 * Create PdImp Operator
+	 * Create PdITI Operator
 	 */
-	shared_ptr<PdImp::PdImpOperator> op = getPimpOperator(pdGridData,comm);
+	PDNEIGH::NeighborhoodList list(comm,pdGridData.zoltanPtr.get(),numPoints,pdGridData.myGlobalIDs,pdGridData.myX,horizon);
+	PdITI::PdITI_Operator op(comm,list,pdGridData.cellVolume);
 	shared_ptr<ConstitutiveModel> fIntOperator(shared_ptr<ConstitutiveModel>(new IsotropicElasticPlasticModel(matSpec)));
 
-	op->addConstitutiveModel(fIntOperator);
+	op.addConstitutiveModel(fIntOperator);
 
 	/*
 	 * Point '0' is fixed
@@ -302,8 +306,8 @@ void runPureShear() {
 			}
 
 			*u1x += *v1x * dt;
-			op->computeInternalForce(uOwnedField,fN,false);
-			op->advanceStateVariables();
+			op.computeInternalForce(uOwnedField,fN,false);
+			op.advanceStateVariables();
 
 			/*
 			 * Get sign of "f" -- this works as long as f does not ever land "exactly" on zero
