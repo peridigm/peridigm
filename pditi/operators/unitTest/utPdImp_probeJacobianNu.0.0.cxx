@@ -18,7 +18,7 @@
 #include "PdZoltan.h"
 #include "Field.h"
 #include "../PdImpMaterials.h"
-#include "../PdImpOperator.h"
+//#include "../PdImpOperator.h"
 #include "../PdITI_Operator.h"
 #include "../PdITI_Utilities.h"
 #include "../IsotropicElasticConstitutiveModel.h"
@@ -88,19 +88,19 @@ void probe() {
 	 * For each row, probe force operator and compare
 	 */
 	Field_NS::TemporalField<double> force = Field_NS::TemporalField<double>(Field_NS::FORCE3D,numPoints);
-	PdImp::PdImpOperator op(comm,decomp);
+//	PdImp::PdImpOperator op(comm,decomp);
 	PdITI::PdITI_Operator pditiOp(comm,list,decomp.cellVolume);
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
 //	shared_ptr<ConstitutiveModel> fIntOperator(new PdITI::IsotropicElastic_No_DSF(isotropicSpec));
-	op.addConstitutiveModel(fIntOperator);
+//	op.addConstitutiveModel(fIntOperator);
 	pditiOp.addConstitutiveModel(fIntOperator);
 
 
 	/*
 	 * Compute jacobian in deformed state
 	 */
-	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getRowStiffnessOperator(uOwnedField,horizon);
-//	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = pditiOp.getJacobian(uOwnedField);
+//	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getRowStiffnessOperator(uOwnedField,horizon);
+	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = pditiOp.getJacobian(uOwnedField);
 
 	/*
 	 * Print num cols for each ros

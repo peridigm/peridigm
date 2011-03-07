@@ -15,8 +15,10 @@
 #include "PdQuickGridParallel.h"
 #include "PdNeighborhood.h"
 #include "Field.h"
+#include "PdZoltan.h"
+#include "../../pdneigh/NeighborhoodList.h"
 #include "../PdImpMaterials.h"
-#include "../PdImpOperator.h"
+//#include "../PdImpOperator.h"
 #include "../PdITI_Utilities.h"
 #include "../DirichletBcSpec.h"
 #include "../BodyLoadSpec.h"
@@ -82,6 +84,7 @@ void constantBodyLoad() {
 
 	PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec,PdQuickGrid::SphericalNorm);
 	PdGridData decomp =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
+	decomp = getLoadBalancedDiscretization(decomp);
 	int numPoints = decomp.numPoints;
 	BOOST_CHECK(numCells==numPoints);
 	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
