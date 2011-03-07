@@ -48,23 +48,20 @@ void BondFilterDefault::filterBonds(vtkIdList* kdTreeList, const double *pt, con
 		 * All bonds are innocent until proven guilty
 		 */
 		*flagIter=0;
+
+		/*
+		 * If we want to include 'x' then we do not mark
+		 */
+		if(includeSelf) continue;
+
 		size_t uid = kdTreeList->GetId(n);
 		if(ptLocalId==uid) *flagIter=1;
 	}
 
 }
 
-
-void BondFilterWithSelf::filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool *bondFlags) {
-
-	bool *flagIter = bondFlags;
-	for(size_t n=0;n<kdTreeList->GetNumberOfIds();n++,flagIter++){
-		/*
-		 * All bonds are innocent until proven guilty; in this case they are all 'innocent'
-		 */
-		*flagIter=0;
-	}
-
+shared_ptr<BondFilter> BondFilterDefault::clone(bool withSelf) {
+	return shared_ptr<BondFilterDefault>(new BondFilterDefault(withSelf));
 }
 
 void FinitePlaneFilter::filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool *bondFlags) {
@@ -86,9 +83,9 @@ void FinitePlaneFilter::filterBonds(vtkIdList* kdTreeList, const double *pt, con
 		 */
 		*flagIter=0;
 		/*
-		 * This filter does not include 'self'
+		 * We mark points only if we do not want to include them
 		 */
-		if(ptLocalId==uid) {
+		if(ptLocalId==uid && !includeSelf) {
 //			cout << "\tFinitePlaneFilter::filterBonds DO NOT INCLUDE SELF;  localId =" << uid <<  endl;
 			*flagIter=1;
 			continue;
@@ -105,45 +102,8 @@ void FinitePlaneFilter::filterBonds(vtkIdList* kdTreeList, const double *pt, con
 	}
 }
 
-/**
- * THIS FILTER INCLUDES 'pt' in its own neighborhood.
- */
-void FinitePlaneFilterWithSelf::filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool *bondFlags) {
-
-	/*
-	 * Create bond points
-	 */
-	const double *p0 = pt;
-	const double *p1;
-	double x[3], t;
-	bool *flagIter = bondFlags;
-	for(size_t p=0;p<kdTreeList->GetNumberOfIds();p++,flagIter++){
-		/*
-		 * Local id of point within neighborhood
-		 */
-		size_t uid = kdTreeList->GetId(p);
-		/*
-		 * All bonds are innocent until proven guilty
-		 */
-		*flagIter=0;
-		/*
-		 * This filter does not include 'self'
-		 */
-		if(ptLocalId==uid) {
-//			cout << "\FinitePlaneFilterWithSelf::filterBonds INCLUDES 'x' in it own neighborhood;  localId =" << uid <<  endl;
-			continue;
-		}
-
-		/*
-		 * Now run plane filter
-		 */
-		p1 = xOverlap+(3*uid);
-		if( 0 != plane.bondIntersectInfinitePlane(p0,p1,t,x) && plane.bondIntersect(x,tolerance) ){
-//			cout << "\FinitePlaneFilterWithSelf::filterBonds DO INCLUDE PT DUE TO INTERSECTION; localId, t  = " << uid << ", " << t << endl;
-			*flagIter=1;
-		}
-	}
+shared_ptr<BondFilter> FinitePlaneFilter::clone(bool withSelf) {
+	return shared_ptr<FinitePlaneFilter>(new FinitePlaneFilter(plane,withSelf,tolerance));
 }
-
 
 }

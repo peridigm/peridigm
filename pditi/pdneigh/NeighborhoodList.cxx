@@ -131,8 +131,8 @@ NeighborhoodList::NeighborhoodList
  * NOTE: THIS PERFORMS A NEW PARALLEL SEARCH
  * NOTE: Zoltan ptr stored must be valid
  */
-NeighborhoodList NeighborhoodList::cloneAndShare(double newHorizon) {
-	NeighborhoodList newList(epetraComm,zoltan,num_owned_points,owned_gids,owned_x,newHorizon,filter_ptr);
+NeighborhoodList NeighborhoodList::cloneAndShare(double newHorizon,bool withSelf) {
+	NeighborhoodList newList(epetraComm,zoltan,num_owned_points,owned_gids,owned_x,newHorizon,filter_ptr->clone(withSelf));
 	return newList;
 }
 

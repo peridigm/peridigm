@@ -80,7 +80,13 @@ public:
 	shared_ptr<double> get_owned_x() const;
 	const Epetra_BlockMap getOverlapMap(const Epetra_Comm& comm, int ndf) const;
 	const Epetra_BlockMap getOwnedMap(const Epetra_Comm& comm, int ndf) const;
-	NeighborhoodList cloneAndShare(double newHorizon);
+	/*
+	 * This function is primarily intended for internal force operators
+	 * that do not include 'x' in the neighborhood H(x) but it is desirable
+	 * to have 'x' included in the newly cloned neighborhood -- hence the
+	 * default value 'withSelf=true'
+	 */
+	NeighborhoodList cloneAndShare(double newHorizon, bool withSelf=true);
 	shared_ptr< std::set<int> > constructParallelDecompositionFrameSet() const;
 
 private:

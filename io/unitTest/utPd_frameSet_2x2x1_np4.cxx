@@ -110,7 +110,7 @@ void createNeighborhood() {
 	BOOST_CHECK(1==decomp.numPoints);
 	BOOST_CHECK(4==decomp.globalNumPoints);
 	shared_ptr< std::set<int> > frameSet = constructFrame(decomp);
-	RCP<BondFilter> bondFilterPtr(new PdBondFilter::BondFilterWithSelf());
+	RCP<BondFilter> bondFilterPtr(new PdBondFilter::BondFilterDefault(true));
 	decomp = createAndAddNeighborhood(decomp,2*horizon,bondFilterPtr);
 
 	BOOST_CHECK(1==decomp.numPoints);

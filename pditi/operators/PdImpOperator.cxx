@@ -90,7 +90,7 @@ colMapScalar(PdQuickGrid::getOverlapMap(parentOp->getEpetra_Comm(),op->rowMatrix
 	/*
 	 * Note multiplication of horizon by "2"
 	 */
-	RCP<BondFilter> filterPtr=RCP<BondFilter>(new BondFilterWithSelf());
+	RCP<BondFilter> filterPtr=RCP<BondFilter>(new BondFilterDefault(true));
 	op->rowMatrixPdGridData = createAndAddNeighborhood(op->rowMatrixPdGridData,2*h,filterPtr);
 	/*
 	 * Need to create map before computing "local" neighborhood list since map is created from "global" ids

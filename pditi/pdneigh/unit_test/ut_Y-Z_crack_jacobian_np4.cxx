@@ -137,7 +137,7 @@ void printNeighborhood(int numNeigh, int* neigh){
 void assertNeighborhood_p0(){
 	PdGridData gridData = getGrid();
 	FinitePlane crackPlane=getYZ_CrackPlane();
-	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilterWithSelf(crackPlane));
+	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane,true));
 	PDNEIGH::NeighborhoodList list(Epetra_MpiComm(MPI_COMM_WORLD),gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);
 
 	int *neigh = list.get_neighborhood().get();

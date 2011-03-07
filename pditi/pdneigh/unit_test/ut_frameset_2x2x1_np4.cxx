@@ -122,7 +122,7 @@ void createNeighborhood() {
 	PdGridData decomp = getGrid();
 	BOOST_CHECK(1==decomp.numPoints);
 	BOOST_CHECK(4==decomp.globalNumPoints);
-	shared_ptr<BondFilter> bondFilterPtr(new PdBondFilter::BondFilterWithSelf());
+	shared_ptr<BondFilter> bondFilterPtr(new PdBondFilter::BondFilterDefault(true));
 	PDNEIGH::NeighborhoodList list(Epetra_MpiComm(MPI_COMM_WORLD),decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,2.0*horizon,bondFilterPtr);
 	shared_ptr< std::set<int> > frameSet = constructFrame(list);
 	BOOST_CHECK(5==list.get_size_neighborhood_list());
