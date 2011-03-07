@@ -147,7 +147,7 @@ PeridigmNS::LinearElasticIsotropicMaterial::updateConstitutiveData(const double 
  	damage[nodeID] = totalDamage;
   }
 
-PdMaterialUtilities::computeDilatation(x,y,weightedVolume,cellVolume,bondDamage,dilatation,neighborhoodList,numOwnedPoints);
+  PdMaterialUtilities::computeDilatation(x,y,weightedVolume,cellVolume,bondDamage,dilatation,ownedIDs,neighborhoodList,numOwnedPoints);
 }
 
 void
@@ -170,5 +170,5 @@ PeridigmNS::LinearElasticIsotropicMaterial::computeForce(const double dt,
   dataManager.getData(Field_NS::BOND_DAMAGE, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&bondDamage);
   dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&force);
 
-  PdMaterialUtilities::computeInternalForceLinearElastic(x,y,weightedVolume,cellVolume,dilatation,bondDamage,force,neighborhoodList,numOwnedPoints,m_bulkModulus,m_shearModulus);
+  PdMaterialUtilities::computeInternalForceLinearElastic(x,y,weightedVolume,cellVolume,dilatation,bondDamage,force,ownedIDs,neighborhoodList,numOwnedPoints,m_bulkModulus,m_shearModulus);
 }

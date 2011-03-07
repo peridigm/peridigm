@@ -23,6 +23,7 @@ add_executable (${EXECUTABLE_NAME}
         ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
         ./materials/Peridigm_CriticalStretchDamageModel.cpp
         ./contact/Peridigm_ShortRangeForceContactModel.cpp
+        ../PdMaterialUtilities/PdMaterialUtilities.cxx
 )
 
 target_link_libraries (${EXECUTABLE_NAME}
@@ -54,6 +55,7 @@ add_executable(utPeridigm
         Peridigm_OutputManager_VTK_XML.cpp
         Peridigm_Timer.cpp
         ../io/Field.cxx
+        ../PdMaterialUtilities/PdMaterialUtilities.cxx
         ./materials/Peridigm_Material.cpp
         ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
         ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
@@ -86,6 +88,7 @@ add_executable(utPeridigm_MPI_np2
         Peridigm_OutputManager_VTK_XML.cpp
         Peridigm_Timer.cpp
         ../io/Field.cxx
+        ../PdMaterialUtilities/PdMaterialUtilities.cxx
         ./materials/Peridigm_Material.cpp
         ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
         ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
@@ -138,6 +141,7 @@ add_executable(utPeridigm_LinearElasticIsotropicMaterial
         Peridigm_DataManager.cpp
         Peridigm_DenseMatrix.cpp
         ../io/Field.cxx
+        ../PdMaterialUtilities/PdMaterialUtilities.cxx
         ./materials/Peridigm_Material.cpp
 		./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
         ./materials/Peridigm_CriticalStretchDamageModel.cpp
@@ -155,6 +159,7 @@ add_executable(utPHAL_UpdateForceState
         Peridigm_DataManager.cpp
         Peridigm_DenseMatrix.cpp
         ../io/Field.cxx
+        ../PdMaterialUtilities/PdMaterialUtilities.cxx
         ./materials/Peridigm_Material.cpp
 		./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
         ./materials/Peridigm_CriticalStretchDamageModel.cpp
@@ -185,6 +190,7 @@ add_executable(utPHAL_EvaluateForce
         Peridigm_DataManager.cpp
         Peridigm_DenseMatrix.cpp
         ../io/Field.cxx
+        ../PdMaterialUtilities/PdMaterialUtilities.cxx
         ./materials/Peridigm_Material.cpp
 		./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
         ./materials/Peridigm_CriticalStretchDamageModel.cpp

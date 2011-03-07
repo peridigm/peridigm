@@ -35,6 +35,7 @@
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
 #include "Peridigm_LinearElasticIsotropicMaterial.hpp"
+#include "Peridigm_DenseMatrix.hpp"
 #include <Epetra_SerialComm.h>
 
 using namespace boost::unit_test;
@@ -86,7 +87,7 @@ void testTwoPts()
   neighborhoodList[2] = 1;
   neighborhoodList[3] = 0;
 
-  // create the material manager
+  // create the data manager
   // in serial, the overlap and non-overlap maps are the same
   PeridigmNS::DataManager dataManager;
   dataManager.setMaps(Teuchos::rcp(&nodeMap, false),
@@ -202,7 +203,7 @@ void testEightPts()
 	}
   }
 
-  // create the material manager
+  // create the data manager
   // in serial, the overlap and non-overlap maps are the same
   PeridigmNS::DataManager dataManager;
   dataManager.setMaps(Teuchos::rcp(&nodeMap, false),
@@ -465,7 +466,7 @@ void testThreePts()
 	}
   }
 
-  // create the material manager
+  // create the data manager
   // in serial, the overlap and non-overlap maps are the same
   PeridigmNS::DataManager dataManager;
   dataManager.setMaps(Teuchos::rcp(&nodeMap, false),
@@ -629,6 +630,80 @@ void testThreePts()
   delete[] neighborhoodList;
 }
 
+//! Tests the finite-difference Jacobian for a two-point system.
+void twoPointProbeJacobian()
+{
+  // instantiate the material model
+  ParameterList params;
+  params.set("Density", 7800.0);
+  params.set("Bulk Modulus", 130.0e9);
+  params.set("Shear Modulus", 78.0e9);
+  LinearElasticIsotropicMaterial mat(params);
+
+  // arguments for calls to material model
+  Epetra_SerialComm comm;
+  Epetra_Map nodeMap(2, 0, comm);
+  Epetra_Map unknownMap(6, 0, comm);
+  Epetra_Map bondMap(2, 0, comm);
+  double dt = 1.0;
+  int numOwnedPoints;
+  int* ownedIDs;
+  int* neighborhoodList;
+  // \todo check field specs
+
+  // set up discretization
+  numOwnedPoints = 2;
+  ownedIDs = new int[numOwnedPoints];
+  ownedIDs[0] = 0;
+  ownedIDs[1] = 1;
+  neighborhoodList = new int[4];
+  neighborhoodList[0] = 1;
+  neighborhoodList[1] = 1;
+  neighborhoodList[2] = 1;
+  neighborhoodList[3] = 0;
+
+  // create the data manager
+  // in serial, the overlap and non-overlap maps are the same
+  PeridigmNS::DataManager dataManager;
+  dataManager.setMaps(Teuchos::rcp(&nodeMap, false),
+                      Teuchos::rcp(&unknownMap, false),
+                      Teuchos::rcp(&nodeMap, false),
+                      Teuchos::rcp(&unknownMap, false),
+                      Teuchos::rcp(&bondMap, false));
+  dataManager.allocateData(mat.VariableSpecs());
+
+  // create the Jacobian
+  PeridigmNS::DenseMatrix jacobian(2*3);
+
+  Epetra_Vector& x = *dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE);
+  Epetra_Vector& y = *dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1);
+  Epetra_Vector& cellVolume = *dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE);
+
+  x[0] = 0.0; x[1] = 0.0; x[2] = 0.0;
+  x[3] = 1.0; x[4] = 0.0; x[5] = 0.0;
+  y[0] = 0.0; y[1] = 0.0; y[2] = 0.0;
+  y[3] = 2.0; y[4] = 0.0; y[5] = 0.0;
+  for(int i=0; i<cellVolume.MyLength(); ++i){
+	cellVolume[i] = 1.0;
+  }
+
+  mat.initialize(dt, 
+                 numOwnedPoints,
+                 ownedIDs,
+                 neighborhoodList,
+                 dataManager);
+
+  mat.computeJacobian(dt, 
+                      numOwnedPoints,
+                      ownedIDs,
+                      neighborhoodList,
+                      dataManager,
+                      jacobian);
+
+//   cout << "\nJacobian:" << endl;
+//   jacobian.print(cout);
+}
+
 bool init_unit_test_suite()
 {
   // Add a suite for each processor in the test
@@ -639,6 +714,7 @@ bool init_unit_test_suite()
   proc->add(BOOST_TEST_CASE(&testTwoPts));
   proc->add(BOOST_TEST_CASE(&testEightPts));
   proc->add(BOOST_TEST_CASE(&testThreePts));
+  proc->add(BOOST_TEST_CASE(&twoPointProbeJacobian));
   framework::master_test_suite().add(proc);
 
   return success;

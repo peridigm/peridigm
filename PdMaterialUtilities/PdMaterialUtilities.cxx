@@ -104,6 +104,62 @@ void computeDilatation
 	}
 }
 
+//! Version of computeDilataion for arbitrary list of ownedIDs
+void computeDilatation
+(
+		const double* xOverlap,
+		const double* yOverlap,
+		const double *mOwned,
+		const double* volumeOverlap,
+		const double* bondDamage,
+		double* dilatationOwned,
+        const int* ownedIDs,
+		const int* localNeighborList,
+		int numOwnedPoints
+)
+{
+	double OMEGA=1.0;
+	const double *xOwned = xOverlap;
+	const double *yOwned = yOverlap;
+	const double *m = mOwned;
+	const double *v = volumeOverlap;
+	double *theta = dilatationOwned;
+	double cellVolume;
+	const int *neighPtr = localNeighborList;
+	for(int p=0; p<numOwnedPoints;p++){
+
+        int ID = ownedIDs[p];
+        xOwned = &xOverlap[3*ID];
+        yOwned = &yOverlap[3*ID];
+        m = &mOwned[ID];
+        theta = &dilatationOwned[ID];
+
+		int numNeigh = *neighPtr; neighPtr++;
+		const double *X = xOwned;
+		const double *Y = yOwned;
+		*theta = 0;
+		for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++){
+			int localId = *neighPtr;
+			cellVolume = v[localId];
+			const double *XP = &xOverlap[3*localId];
+			const double *YP = &yOverlap[3*localId];
+			double dx = XP[0]-X[0];
+			double dy = XP[1]-X[1];
+			double dz = XP[2]-X[2];
+			double zetaSqared = dx*dx+dy*dy+dz*dz;
+			dx = YP[0]-Y[0];
+			dy = YP[1]-Y[1];
+			dz = YP[2]-Y[2];
+			double dY = dx*dx+dy*dy+dz*dz;
+			double d = sqrt(zetaSqared);
+			double e = sqrt(dY)-d;
+			*theta += 3.0*OMEGA*(1.0-*bondDamage)*d*e*cellVolume/(*m);
+		}
+
+	}
+}
+
+
 void computeInternalForceLinearElastic
 (
 		const double* xOverlap,
@@ -172,6 +228,85 @@ void computeInternalForceLinearElastic
 
 	}
 }
+
+
+void computeInternalForceLinearElastic
+(
+		const double* xOverlap,
+		const double* yOverlap,
+		const double* mOwned,
+		const double* volumeOverlap,
+		const double* dilatationOwned,
+		const double* bondDamage,
+		double* fInternalOverlap,
+		const int*  ownedIDs,
+		const int*  localNeighborList,
+		int numOwnedPoints,
+		double BULK_MODULUS,
+		double SHEAR_MODULUS
+)
+{
+
+	/*
+	 * Compute processor local contribution to internal force
+	 */
+	double K = BULK_MODULUS;
+	double MU = SHEAR_MODULUS;
+	double OMEGA=1.0;
+
+	const double *xOwned = xOverlap;
+	const double *yOwned = yOverlap;
+	const double *m = mOwned;
+	const double *v = volumeOverlap;
+	const double *theta = dilatationOwned;
+	double *fOwned = fInternalOverlap;
+
+	const int *neighPtr = localNeighborList;
+	double cellVolume, alpha, dx, dy, dz, zeta, dY, t;
+	for(int p=0;p<numOwnedPoints;p++){
+
+        int ID = ownedIDs[p];
+        xOwned = &xOverlap[3*ID];
+        yOwned = &yOverlap[3*ID];
+        fOwned = &fInternalOverlap[3*ID];
+        m = &mOwned[ID];
+        theta = &dilatationOwned[ID];
+
+		int numNeigh = *neighPtr; neighPtr++;
+		const double *X = xOwned;
+		const double *Y = yOwned;
+		alpha = 15.0*MU/(*m);
+		double selfCellVolume = v[p];
+		double c1 = OMEGA*(*theta)*(9.0*K-15.0*MU)/(3.0*(*m));
+		for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++){
+			int localId = *neighPtr;
+			cellVolume = v[localId];
+			const double *XP = &xOverlap[3*localId];
+			const double *YP = &yOverlap[3*localId];
+			dx = XP[0]-X[0];
+			dy = XP[1]-X[1];
+			dz = XP[2]-X[2];
+			zeta = sqrt(dx*dx+dy*dy+dz*dz);
+			dx = YP[0]-Y[0];
+			dy = YP[1]-Y[1];
+			dz = YP[2]-Y[2];
+			dY = sqrt(dx*dx+dy*dy+dz*dz);
+			t = (1.0-*bondDamage)*(c1 * zeta + (1.0-*bondDamage) * OMEGA * alpha * (dY - zeta));
+			double fx = t * dx / dY;
+			double fy = t * dy / dY;
+			double fz = t * dz / dY;
+
+			*(fOwned+0) += fx*cellVolume;
+			*(fOwned+1) += fy*cellVolume;
+			*(fOwned+2) += fz*cellVolume;
+			fInternalOverlap[3*localId+0] -= fx*selfCellVolume;
+			fInternalOverlap[3*localId+1] -= fy*selfCellVolume;
+			fInternalOverlap[3*localId+2] -= fz*selfCellVolume;
+		}
+
+	}
+}
+
 
 void computeInternalForceIsotropicElasticPlastic
 (

@@ -56,6 +56,19 @@ void computeDilatation
 		int numOwnedPoints
 );
 
+void computeDilatation
+(
+		const double* xOverlap,
+		const double* yOverlap,
+		const double* mOwned,
+		const double* volumeOverlap,
+		const double* bondDamage,
+		double* dilatationOwned,
+		const int* ownedIDs,
+		const int* localNeighborList,
+		int numOwnedPoints
+);
+
 void computeInternalForceLinearElastic
 (
 		const double* xOverlapPtr,
@@ -65,6 +78,23 @@ void computeInternalForceLinearElastic
 		const double* dilatationOwned,
 		const double* bondDamage,
 		double* fInternalOverlapPtr,
+		const int*  localNeighborList,
+		int numOwnedPoints,
+		double BULK_MODULUS,
+		double SHEAR_MODULUS
+);
+
+
+void computeInternalForceLinearElastic
+(
+		const double* xOverlapPtr,
+		const double* yOverlapPtr,
+		const double* mOwned,
+		const double* volumeOverlapPtr,
+		const double* dilatationOwned,
+		const double* bondDamage,
+		double* fInternalOverlapPtr,
+		const int*  ownedIDs,
 		const int*  localNeighborList,
 		int numOwnedPoints,
 		double BULK_MODULUS,

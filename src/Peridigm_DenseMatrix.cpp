@@ -34,6 +34,7 @@
 #include <Teuchos_Exceptions.hpp>
 #include <Epetra_Import.h>
 #include "Peridigm_DenseMatrix.hpp"
+#include <sstream>
 
 PeridigmNS::DenseMatrix::DenseMatrix(int matrixDimension) : dim(matrixDimension)
 {
@@ -53,4 +54,23 @@ void PeridigmNS::DenseMatrix::insertValue(int row, int col, double value)
 void PeridigmNS::DenseMatrix::addValue(int row, int col, double value)
 {
   data[row*dim + col] += value;
+}
+
+void PeridigmNS::DenseMatrix::putScalar(double value)
+{
+  data.assign(data.size(), value);
+}
+
+void PeridigmNS::DenseMatrix::print(std::ostream& out)
+{
+  std::stringstream ss;
+  for(int i=0 ; i<dim ; ++i){
+    ss.str("");
+    ss.precision(10);
+    for(int j=0 ; j<dim ; ++j){
+      ss << std::setw(18) << data[i*dim+j] << " ";
+    }
+    ss << endl;
+    out << ss.str();
+  }
 }
