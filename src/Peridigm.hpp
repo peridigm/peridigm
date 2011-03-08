@@ -75,6 +75,9 @@ namespace PeridigmNS {
     //! Initialize discretization and maps
     void initializeDiscretization(Teuchos::RCP<AbstractDiscretization> peridigmDisc);
 
+    //! Initialize dataManager
+    void initializeDataManager(Teuchos::RCP<AbstractDiscretization> peridigmDisc);
+
     //! Apply boundary conditions
     void applyInitialVelocities();
 

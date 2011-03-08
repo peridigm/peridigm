@@ -403,7 +403,7 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<PeridigmNS::DataManag
   if (thisMaterial->isParameter("Proc Num")) {
     // Get map corresponding to x
     Teuchos::RCP<Epetra_Vector> myX =  dataManager->getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE);
-    const Epetra_BlockMap& xMap = myX->Map();
+//    const Epetra_BlockMap& xMap = myX->Map();
 //    int length = xMap.NumMyElements();
     // Use only the number of owned elements
     int length = (dataManager->getOwnedIDVectorMap())->NumMyElements();

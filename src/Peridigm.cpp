@@ -79,33 +79,8 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   Teuchos::RCP<AbstractDiscretization> peridigmDisc = discFactory.create(peridigmComm);
   initializeDiscretization(peridigmDisc);
 
-  // Instantiate data manager
-  dataManager = Teuchos::rcp(new PeridigmNS::DataManager);
-  dataManager->setMaps(oneDimensionalMap, threeDimensionalMap, oneDimensionalOverlapMap, threeDimensionalOverlapMap, bondMap);
-  // Create a master list of variable specs
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
-  // Start with the specs used by Peridigm
-  variableSpecs->push_back(Field_NS::VOLUME);
-  variableSpecs->push_back(Field_NS::COORD3D);
-  variableSpecs->push_back(Field_NS::DISPL3D);
-  variableSpecs->push_back(Field_NS::CURCOORD3D);
-  variableSpecs->push_back(Field_NS::VELOC3D);
-  variableSpecs->push_back(Field_NS::FORCE_DENSITY3D);
-  variableSpecs->push_back(Field_NS::CONTACT_FORCE_DENSITY3D);
-  // Add the variable specs requested by each material
-  for(unsigned int i=0; i<materialModels->size() ; ++i){
-    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > matVariableSpecs = (*materialModels)[i]->VariableSpecs();
-    for(unsigned int j=0 ; j<matVariableSpecs->size() ; ++j)
-      variableSpecs->push_back((*matVariableSpecs)[j]);
-  }
-  // Allocalte data in the dataManager
-  dataManager->allocateData(variableSpecs);
-
-  // Fill the dataManager with data from the discretization
-  dataManager->getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->Import(*(peridigmDisc->getCellVolume()), *oneDimensionalMapToOneDimensionalOverlapMapImporter, Insert);
-  dataManager->getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-  dataManager->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_N)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-  dataManager->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  // Initialize data manager
+  initializeDataManager(peridigmDisc);
 
   // apply initial velocities
   applyInitialVelocities();
@@ -279,6 +254,38 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
 
   // get the neighborlist from the discretization
   neighborhoodData = peridigmDisc->getNeighborhoodData();
+}
+
+void PeridigmNS::Peridigm::initializeDataManager(Teuchos::RCP<AbstractDiscretization> peridigmDisc) {
+
+  // Instantiate data manager
+  dataManager = Teuchos::rcp(new PeridigmNS::DataManager);
+  dataManager->setMaps(oneDimensionalMap, threeDimensionalMap, oneDimensionalOverlapMap, threeDimensionalOverlapMap, bondMap);
+  // Create a master list of variable specs
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
+  // Start with the specs used by Peridigm
+  variableSpecs->push_back(Field_NS::VOLUME);
+  variableSpecs->push_back(Field_NS::COORD3D);
+  variableSpecs->push_back(Field_NS::DISPL3D);
+  variableSpecs->push_back(Field_NS::CURCOORD3D);
+  variableSpecs->push_back(Field_NS::VELOC3D);
+  variableSpecs->push_back(Field_NS::FORCE_DENSITY3D);
+  variableSpecs->push_back(Field_NS::CONTACT_FORCE_DENSITY3D);
+  // Add the variable specs requested by each material
+  for(unsigned int i=0; i<materialModels->size() ; ++i){
+    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > matVariableSpecs = (*materialModels)[i]->VariableSpecs();
+    for(unsigned int j=0 ; j<matVariableSpecs->size() ; ++j)
+      variableSpecs->push_back((*matVariableSpecs)[j]);
+  }
+  // Allocalte data in the dataManager
+  dataManager->allocateData(variableSpecs);
+
+  // Fill the dataManager with data from the discretization
+  dataManager->getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->Import(*(peridigmDisc->getCellVolume()), *oneDimensionalMapToOneDimensionalOverlapMapImporter, Insert);
+  dataManager->getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  dataManager->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_N)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  dataManager->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+
 }
 
 void PeridigmNS::Peridigm::applyInitialVelocities() {
