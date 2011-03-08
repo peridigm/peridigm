@@ -53,7 +53,8 @@ public:
 				const Epetra_Comm& comm,
 				const PDNEIGH::NeighborhoodList row_matrix_list_2_horizon,
 				shared_ptr<double> ownedCellVolume,
-				shared_ptr<double> mOwnedPtr
+				shared_ptr<double> mOwnedPtr,
+				shared_ptr<double> dsfOwnedPtr
 		);
 
 		void initialize(Field<double> uOwnedField, Field<double> ownedDilatationField, shared_ptr<ConstitutiveModel> fIntPtr);
@@ -62,7 +63,7 @@ public:
 		PDNEIGH::NeighborhoodList row_matrix_list;
 		Epetra_BlockMap rowMapNDF, rowMapScalar, colMapNDF, colMapScalar;
 		shared_ptr<double> xOverlapPtr, uOverlapPtr;
-		shared_ptr<double> mOverlapPtr, volOverlapPtr, dilatationOverlapPtr;
+		shared_ptr<double> dsfOverlapPtr, mOverlapPtr, volOverlapPtr, dilatationOverlapPtr;
 		Pd_shared_ptr_Array<double>  rowStiffnessPtr;
 		Pd_shared_ptr_Array<int> numColumnsPerRow;
 		double k3x3[27];

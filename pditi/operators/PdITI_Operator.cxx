@@ -33,7 +33,8 @@ RowOperator::RowOperator
 		const Epetra_Comm& comm,
 		const PDNEIGH::NeighborhoodList row_matrix_list_2_horizon,
 		shared_ptr<double> ownedCellVolume,
-		shared_ptr<double> mOwnedPtr
+		shared_ptr<double> mOwnedPtr,
+		shared_ptr<double> dsfOwnedPtr
 ):
 row_matrix_list(row_matrix_list_2_horizon),
 rowMapNDF(row_matrix_list.getOwnedMap(comm,vectorNDF)),
@@ -42,6 +43,7 @@ colMapNDF(row_matrix_list.getOverlapMap(comm,vectorNDF)),
 colMapScalar(row_matrix_list.getOverlapMap(comm,scalarNDF)),
 xOverlapPtr(new double[colMapNDF.NumMyElements()*vectorNDF],ArrayDeleter<double>()),
 uOverlapPtr(new double[colMapNDF.NumMyElements()*vectorNDF],ArrayDeleter<double>()),
+dsfOverlapPtr(new double[colMapNDF.NumMyElements()*vectorNDF],ArrayDeleter<double>()),
 mOverlapPtr(new double[colMapNDF.NumMyElements()*scalarNDF],ArrayDeleter<double>()),
 volOverlapPtr(new double[colMapNDF.NumMyElements()*scalarNDF],ArrayDeleter<double>()),
 dilatationOverlapPtr(new double[colMapNDF.NumMyElements()*scalarNDF],ArrayDeleter<double>())
@@ -67,6 +69,13 @@ dilatationOverlapPtr(new double[colMapNDF.NumMyElements()*scalarNDF],ArrayDelete
 	Epetra_Vector mOverlap(View,colMapScalar,mOverlapPtr.get());
 	Epetra_Vector mOwned(View,rowMapScalar,mOwnedPtr.get());
 	mOverlap.Import(mOwned,importScalar,Insert);
+
+	/*
+	 * dsf overlap
+	 */
+	Epetra_Vector dsfOverlap(View,colMapNDF,dsfOverlapPtr.get());
+	Epetra_Vector dsfOwned(View,rowMapNDF,dsfOwnedPtr.get());
+	dsfOverlap.Import(dsfOwned,importNDF,Insert);
 
 	/*
 	 * Computes number of columns per row
@@ -178,10 +187,12 @@ const Pd_shared_ptr_Array<double>& PdITI_Operator::RowOperator::computeRowStiffn
 	double *volume = volOverlapPtr.get();
 	double *m = mOverlapPtr.get();
 	double *dilatationOverlap = dilatationOverlapPtr.get();
+	double *dsf = dsfOverlapPtr.get();
 	/*
 	 * This neighborhood includes 'I'
 	 */
 	int I = localRowID;
+	double dsfI = *(dsf+I);
 
 	/*
 	 * Initialize row stiffness to zero
@@ -194,9 +205,11 @@ const Pd_shared_ptr_Array<double>& PdITI_Operator::RowOperator::computeRowStiffn
 		int Q = *colsI;
 
 		if(Q==I) continue;
+		double dsfQ = *(dsf+Q);
 
 		for(int *colsP = rowLIDs.get();colsP!=rowLIDs.end();colsP++){
 			int P = *colsP;
+			double dsfP = *(dsf+P);
 
 			/*
 			 * Initialize local 3x3 matrices to zero
@@ -210,9 +223,9 @@ const Pd_shared_ptr_Array<double>& PdITI_Operator::RowOperator::computeRowStiffn
 			/*
 			 * Check for existence of bond IQ
 			 */
-			(I==Q || I==P) ? NULL :                     matPtr->kIPQ3x3(I,P,Q,x,u,volume,m,dilatationOverlap,k1,horizon);
-			(P==I || P==Q) ? NULL : PdITI::SUBTRACTINTO(matPtr->kIPQ3x3(P,I,Q,x,u,volume,m,dilatationOverlap,k2,horizon),k2+9,k1);
-			(Q==I || Q==P) ? NULL :      PdITI::SUMINTO(matPtr->kIPQ3x3(Q,I,P,x,u,volume,m,dilatationOverlap,k3,horizon),k3+9,k1);
+			(I==Q || I==P) ? NULL :                     matPtr->kIPQ3x3(I,P,Q,x,u,volume,m,dilatationOverlap,k1,horizon,dsfI);
+			(P==I || P==Q) ? NULL : PdITI::SUBTRACTINTO(matPtr->kIPQ3x3(P,I,Q,x,u,volume,m,dilatationOverlap,k2,horizon,dsfP),k2+9,k1);
+			(Q==I || Q==P) ? NULL :      PdITI::SUMINTO(matPtr->kIPQ3x3(Q,I,P,x,u,volume,m,dilatationOverlap,k3,horizon,dsfQ),k3+9,k1);
 
 			/*
 			 * Assembly into Row Matrix
@@ -294,7 +307,8 @@ rowStiffnessOperatorPtr()
 	 */
 	double h = list.get_horizon()/2.0;
 	PdMaterialUtilities::computeShearCorrectionFactor(list.get_num_owned_points(),xOverlapPtr.get(),volumeOverlapPtr.get(),local_list,h,ownedDSF_Ptr.get());
-
+	// INITIAL HACK -- reset DSF = 1.0
+	PdITI::SET(ownedDSF_Ptr.get(),ownedDSF_Ptr.get()+list.get_num_owned_points(),1.0);
 	/*
 	 * Initialize damage to 0
 	 */
@@ -463,7 +477,7 @@ shared_ptr<RowStiffnessOperator> PdITI_Operator::getJacobian(Field_NS::Field<dou
 
 	if (rowStiffnessOperatorPtr==shared_ptr<RowStiffnessOperator>()){
 		shared_ptr<double> mPtr = mOwnedField.getArray().get_shared_ptr();
-		rowStiffnessOperatorPtr = shared_ptr<RowOperator>(new RowOperator(epetraComm,row_matrix_list,ownedVolPtr,mPtr));
+		rowStiffnessOperatorPtr = shared_ptr<RowOperator>(new RowOperator(epetraComm,row_matrix_list,ownedVolPtr,mPtr, ownedDSF_Ptr));
 	}
 
 	/*
