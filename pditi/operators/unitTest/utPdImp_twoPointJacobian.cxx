@@ -120,23 +120,22 @@ void twoPointJacobian() {
 		u1[2] = y[2] - x1[2];
 	}
 
-
-	/*
-	 * Create parallel communication maps
-	 */
-	const int vectorNDF=3;
-	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
-	Epetra_BlockMap rowMap   = PdQuickGrid::getOwnedMap  (comm, decomp, vectorNDF);
-	Epetra_BlockMap colMap = PdQuickGrid::getOverlapMap(comm, decomp, vectorNDF);
-	BOOST_CHECK(rowMap.NumMyElements()==numPoints);
 	/*
 	 * Create PdITI Operator
 	 */
+	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
 	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
 	PdITI::PdITI_Operator op(comm,list,decomp.cellVolume);
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
 	op.addConstitutiveModel(fIntOperator);
 
+	/*
+	 * Create parallel communication maps
+	 */
+	const int vectorNDF=3;
+	Epetra_BlockMap rowMap   = list.getOwnedMap(comm,vectorNDF);
+	Epetra_BlockMap colMap = list.getOverlapMap(comm,vectorNDF);
+	BOOST_CHECK(rowMap.NumMyElements()==numPoints);
 
 	/*
 	 * Compute force
