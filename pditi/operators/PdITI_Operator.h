@@ -42,7 +42,7 @@ public:
 	class RowOperator : public RowStiffnessOperator {
 	public:
 		~RowOperator() {}
-		int getNumRows() const { row_matrix_list.get_num_owned_points(); }
+		int getNumRows() const { return row_matrix_list.get_num_owned_points(); }
 		Pd_shared_ptr_Array<int> getColumnLIDs(int localRowID) const;
 		const Pd_shared_ptr_Array<int>& getNumColumnsPerRow() const;
 		const Pd_shared_ptr_Array<double>& computeRowStiffness(int localRowID, Pd_shared_ptr_Array<int> rowGIDs);
