@@ -21,6 +21,7 @@
 #include "../PdITI_Operator.h"
 #include "../PdITI_Utilities.h"
 #include "../IsotropicElasticConstitutiveModel.h"
+#include "../IsotropicElastic_No_DSF.h"
 #include <set>
 #include "Epetra_MpiComm.h"
 #include <Epetra_FEVbrMatrix.h>
@@ -36,6 +37,7 @@ using namespace PdQuickGrid;
 using namespace PdNeighborhood;
 using namespace Field_NS;
 using PdITI::IsotropicElasticConstitutiveModel;
+using PdITI::IsotropicElastic_No_DSF;
 using PdITI::ConstitutiveModel;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
@@ -128,6 +130,7 @@ void twoPointJacobian() {
 	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
 	PdITI::PdITI_Operator op(comm,list,decomp.cellVolume);
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
+//	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElastic_No_DSF(isotropicSpec));
 	op.addConstitutiveModel(fIntOperator);
 	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOwnedField);
 
@@ -159,13 +162,14 @@ void twoPointJacobian() {
 		BOOST_CHECK(2 == rowLIDs.getSize());
 		BOOST_CHECK(0 == *(rowLIDs.get_shared_ptr().get()));
 		BOOST_CHECK(1 == *(rowLIDs.get_shared_ptr().get()+1));
-		const double *k = jacobian->computeRowStiffness(row, rowLIDs).get()+9*col;
+		Pd_shared_ptr_Array<double> stiffness = jacobian->computeRowStiffness(row, rowLIDs);
+		const double *k = stiffness.get()+9*col;
 		/*
 		 * This is the hand calculated 'diagonal' entry
 		 */
 		const Pd_shared_ptr_Array<double> kA = computeAnalytical3x3Stiffness(uOwnedField);
 		const double *kAns = kA.get();
-//		Pimp::PRINT_3x3MATRIX(k,std::cout);
+//		PdITI::PRINT_3x3MATRIX(k,std::cout);
 //		Pimp::PRINT_3x3MATRIX(kAns,std::cout);
 		 double tolerance = 1.0e-15;
 		for(int i=0;i<8;i++,k++,kAns++){
@@ -177,13 +181,13 @@ void twoPointJacobian() {
 		}
 
 
-//		std::cout << "ROW = " << row <<  std::endl;
-//		int *cols = rowLIDs.get();
-//		for(std::size_t col=0;col<rowLIDs.getSize();col++){
-//			std::cout << "\tCOL = " << cols[col] << std::endl;
-//			double *c = stiffness.get()+9*col;
-//			Pimp::PRINT_3x3MATRIX(c,std::cout);
-//		}
+		std::cout << "ROW = " << row <<  std::endl;
+		int *cols = rowLIDs.get();
+		for(std::size_t col=0;col<rowLIDs.getSize();col++){
+			std::cout << "\tCOL = " << cols[col] << std::endl;
+			double *c = stiffness.get()+9*col;
+			PdITI::PRINT_3x3MATRIX(c,std::cout);
+		}
 //		std::cout << endl;
 	}
 	{
@@ -200,7 +204,7 @@ void twoPointJacobian() {
 		 * This analytical jacobian computes the diagonal entry;
 		 * Therefore, we have to offset the pointer returned by 9 for comparison purposes.
 		 */
-		const double *k = jacobian->computeRowStiffness(row, rowLIDs).get()+9;
+		const double *k = stiffness.get()+9;
 		const Pd_shared_ptr_Array<double> kA = computeAnalytical3x3Stiffness(uOwnedField);
 		const double *kAns = kA.get();
 
@@ -213,17 +217,15 @@ void twoPointJacobian() {
 			BOOST_CHECK_CLOSE((*k),-(*kAns),tolerance);
 		}
 
-//		std::cout << "Diagonal of Jacobian by hand:" << endl;
-//		PdImp::PRINT_3x3MATRIX(kA.get(),std::cout);
-//		std::cout << "Computed row:" << std::endl;
-//		std::cout << "ROW = " << row <<  std::endl;
-//		int *cols = rowLIDs.get();
-//		for(std::size_t col=0;col<rowLIDs.getSize();col++){
-//			std::cout << "\tCOL = " << cols[col] << std::endl;
-//			double *c = stiffness.get()+9*col;
-//			PdITI::PRINT_3x3MATRIX(c,std::cout);
-//		}
-//		std::cout << endl;
+		std::cout << "Computed row:" << std::endl;
+		std::cout << "ROW = " << row <<  std::endl;
+		int *cols = rowLIDs.get();
+		for(std::size_t col=0;col<rowLIDs.getSize();col++){
+			std::cout << "\tCOL = " << cols[col] << std::endl;
+			double *c = stiffness.get()+9*col;
+			PdITI::PRINT_3x3MATRIX(c,std::cout);
+		}
+		std::cout << endl;
 	}
 	{
 //		Pd_shared_ptr_Array<double> kAnswer = computeAnalytical3x3Stiffness(uOwnedField);
