@@ -9,7 +9,7 @@
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
-#include "../PdImpMpiFixture.h"
+#include "PdutMpiFixture.h"
 #include "PdNeighborhood.h"
 #include "PdQuickGrid.h"
 #include "PdQuickGridParallel.h"
@@ -22,6 +22,7 @@
 #include "../PdITI_Utilities.h"
 #include "../IsotropicElasticConstitutiveModel.h"
 #include <set>
+#include "Epetra_MpiComm.h"
 #include <Epetra_FEVbrMatrix.h>
 #include <Epetra_SerialSymDenseMatrix.h>
 #include <utility>
@@ -32,6 +33,7 @@
 
 
 using namespace PdQuickGrid;
+using namespace Pdut;
 using namespace PdNeighborhood;
 using namespace Field_NS;
 using PdITI::IsotropicElasticConstitutiveModel;
@@ -400,19 +402,19 @@ int main
 )
 {
 	// Initialize MPI and timer
-	PdImpRunTime::PimpMpiFixture pimpMPI = PdImpRunTime::PimpMpiFixture::getPimpMPI(argc,argv);
-	const Epetra_Comm& comm = pimpMPI.getEpetra_Comm();
+	PdutMpiFixture myMpi = PdutMpiFixture(argc,argv);
 
 	// These are static (file scope) variables
-	myRank = comm.MyPID();
-	numProcs = comm.NumProc();
+	myRank = myMpi.rank;
+	numProcs = myMpi.numProcs;
+
 	/**
 	 * This test only make sense for numProcs == 1
 	 */
 	if(1 != numProcs){
 		std::cerr << "Unit test runtime ERROR: utPimp_twoPointJacobian is intended for \"serial\" run only and makes sense on 1 processor" << std::endl;
 		std::cerr << "\t Re-run unit test $mpiexec -np 1 ./utPimp_twoPointJacobian" << std::endl;
-		pimpMPI.PimpMpiFixture::~PimpMpiFixture();
+		myMpi.PdutMpiFixture::~PdutMpiFixture();
 		std::exit(-1);
 	}
 
