@@ -33,7 +33,6 @@
 
 
 using namespace PdQuickGrid;
-using namespace Pdut;
 using namespace PdNeighborhood;
 using namespace Field_NS;
 using PdITI::IsotropicElasticConstitutiveModel;
@@ -44,8 +43,8 @@ using std::cout;
 using std::endl;
 
 
-static int myRank;
-static int numProcs;
+const int myRank = 0;
+const int numProcs = 1;
 
 const int nx = 2;
 const int ny = 1;
@@ -126,10 +125,13 @@ void twoPointJacobian() {
 	 * Create PdITI Operator
 	 */
 	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
+//    PdImp::PdImpOperator op(comm,decomp);
 	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
 	PdITI::PdITI_Operator op(comm,list,decomp.cellVolume);
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
 	op.addConstitutiveModel(fIntOperator);
+	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOwnedField);
+//	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getRowStiffnessOperator(uOwnedField,horizon);
 
 	/*
 	 * Create parallel communication maps
@@ -137,15 +139,20 @@ void twoPointJacobian() {
 	const int vectorNDF=3;
 	Epetra_BlockMap rowMap   = list.getOwnedMap(comm,vectorNDF);
 	Epetra_BlockMap colMap = list.getOverlapMap(comm,vectorNDF);
+//	Epetra_BlockMap rowMap   = PdQuickGrid::getOwnedMap  (comm, decomp, vectorNDF);
+//	Epetra_BlockMap colMap = PdQuickGrid::getOverlapMap(comm, decomp, vectorNDF);
 	BOOST_CHECK(rowMap.NumMyElements()==numPoints);
 
 	/*
 	 * Compute force
 	 */
 	Field_NS::TemporalField<double> force = Field_NS::TemporalField<double>(Field_NS::FORCE3D,numPoints);
-	op.computeInternalForce(uOwnedField,force.getField(Field_NS::FieldSpec::STEP_NP1));
-	assertForce(force.getField(Field_NS::FieldSpec::STEP_NP1));
-	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOwnedField);
+	Field<double> fN = force.getField(Field_NS::FieldSpec::STEP_N);
+	Field<double> fNp1 = force.getField(Field_NS::FieldSpec::STEP_NP1);
+	PdITI::SET(fN.getArray().get(),fN.getArray().get()+fN.getArray().getSize(),0.0);
+	PdITI::SET(fNp1.getArray().get(),fNp1.getArray().get()+fNp1.getArray().getSize(),0.0);
+	op.computeInternalForce(uOwnedField,fNp1);
+	assertForce(fNp1);
 
 	/*
 	 * Assert Diagonal Entries
@@ -281,13 +288,13 @@ void twoPointJacobian() {
 		std::cout << std::endl;
 
 
-		{
-			u1[0] = y[0] - x1[0];
-			u1[1] = y[1] - x1[1];
-			jacobian = op.getJacobian(uOwnedField);
-			int row=0;
-			Pd_shared_ptr_Array<int> rowLIDs = jacobian->getColumnLIDs(row);
-			Pd_shared_ptr_Array<double> stiffness = jacobian->computeRowStiffness(row, rowLIDs);
+//		{
+//			u1[0] = y[0] - x1[0];
+//			u1[1] = y[1] - x1[1];
+//			jacobian = op.getJacobian(uOwnedField);
+//			int row=0;
+//			Pd_shared_ptr_Array<int> rowLIDs = jacobian->getColumnLIDs(row);
+//			Pd_shared_ptr_Array<double> stiffness = jacobian->computeRowStiffness(row, rowLIDs);
 //			std::cout << "ROW = " << row <<  std::endl;
 //			int *cols = rowLIDs.get();
 //			for(std::size_t col=0;col<rowLIDs.getSize();col++){
@@ -296,7 +303,7 @@ void twoPointJacobian() {
 //				PdImp::PRINT_3x3MATRIX(c,std::cout);
 //			}
 //			std::cout << endl;
-		}
+//		}
 
 	}
 }
@@ -401,22 +408,22 @@ int main
 		char* argv[]
 )
 {
-	// Initialize MPI and timer
-	PdutMpiFixture myMpi = PdutMpiFixture(argc,argv);
-
-	// These are static (file scope) variables
-	myRank = myMpi.rank;
-	numProcs = myMpi.numProcs;
-
-	/**
-	 * This test only make sense for numProcs == 1
-	 */
-	if(1 != numProcs){
-		std::cerr << "Unit test runtime ERROR: utPimp_twoPointJacobian is intended for \"serial\" run only and makes sense on 1 processor" << std::endl;
-		std::cerr << "\t Re-run unit test $mpiexec -np 1 ./utPimp_twoPointJacobian" << std::endl;
-		myMpi.PdutMpiFixture::~PdutMpiFixture();
-		std::exit(-1);
-	}
+//	// Initialize MPI and timer
+//	PdutMpiFixture myMpi = PdutMpiFixture(argc,argv);
+//
+//	// These are static (file scope) variables
+//	myRank = myMpi.rank;
+//	numProcs = myMpi.numProcs;
+//
+//	/**
+//	 * This test only make sense for numProcs == 1
+//	 */
+//	if(1 != numProcs){
+//		std::cerr << "Unit test runtime ERROR: utPimp_twoPointJacobian is intended for \"serial\" run only and makes sense on 1 processor" << std::endl;
+//		std::cerr << "\t Re-run unit test $mpiexec -np 1 ./utPimp_twoPointJacobian" << std::endl;
+//		myMpi.PdutMpiFixture::~PdutMpiFixture();
+//		std::exit(-1);
+//	}
 
 	// Initialize UTF
 	return unit_test_main( init_unit_test, argc, argv );
