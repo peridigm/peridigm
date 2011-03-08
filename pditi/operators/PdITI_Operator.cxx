@@ -295,6 +295,13 @@ rowStiffnessOperatorPtr()
 	double h = list.get_horizon()/2.0;
 	PdMaterialUtilities::computeShearCorrectionFactor(list.get_num_owned_points(),xOverlapPtr.get(),volumeOverlapPtr.get(),local_list,h,ownedDSF_Ptr.get());
 
+	/*
+	 * Initialize damage to 0
+	 */
+	size_t len = neighborhoodList.get_size_neighborhood_list()-neighborhoodList.get_num_owned_points();
+	double *d = bondDamagePtr.get();
+	PdITI::SET(d,d+len,0.0);
+
 }
 
 Field_NS::Field<double> PdITI_Operator::computeOwnedDilatation(Field_NS::Field<double> uOwnedField) {

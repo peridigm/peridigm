@@ -125,13 +125,11 @@ void twoPointJacobian() {
 	 * Create PdITI Operator
 	 */
 	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
-//    PdImp::PdImpOperator op(comm,decomp);
 	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
 	PdITI::PdITI_Operator op(comm,list,decomp.cellVolume);
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
 	op.addConstitutiveModel(fIntOperator);
 	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOwnedField);
-//	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getRowStiffnessOperator(uOwnedField,horizon);
 
 	/*
 	 * Create parallel communication maps
@@ -139,8 +137,6 @@ void twoPointJacobian() {
 	const int vectorNDF=3;
 	Epetra_BlockMap rowMap   = list.getOwnedMap(comm,vectorNDF);
 	Epetra_BlockMap colMap = list.getOverlapMap(comm,vectorNDF);
-//	Epetra_BlockMap rowMap   = PdQuickGrid::getOwnedMap  (comm, decomp, vectorNDF);
-//	Epetra_BlockMap colMap = PdQuickGrid::getOverlapMap(comm, decomp, vectorNDF);
 	BOOST_CHECK(rowMap.NumMyElements()==numPoints);
 
 	/*
