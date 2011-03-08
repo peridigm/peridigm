@@ -255,7 +255,7 @@ mOwnedField(Field_NS::getWEIGHTED_VOLUME(neighborhoodList.get_num_owned_points()
 dilatationOwnedField(Field_NS::Field<double>(Field_NS::DILATATION,neighborhoodList.get_num_owned_points())),
 ownedVolPtr(ownedCellVolume),
 bondDamagePtr(new double[neighborhoodList.get_size_neighborhood_list()-neighborhoodList.get_num_owned_points()],ArrayDeleter<double>()),
-ownedDSF_Ptr(new double[overlapMapScalar.NumMyElements()*scalarNDF],ArrayDeleter<double>()),
+ownedDSF_Ptr(new double[ownedMapScalar.NumMyElements()*scalarNDF],ArrayDeleter<double>()),
 xOverlapPtr(new double[overlapMapScalar.NumMyElements()*vectorNDF],ArrayDeleter<double>()),
 uOverlapPtr(new double[overlapMapScalar.NumMyElements()*vectorNDF],ArrayDeleter<double>()),
 yOverlapPtr(new double[overlapMapScalar.NumMyElements()*vectorNDF],ArrayDeleter<double>()),
