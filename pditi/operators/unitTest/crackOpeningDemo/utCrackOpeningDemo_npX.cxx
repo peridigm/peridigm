@@ -18,8 +18,10 @@
 #include "Field.h"
 #include "../utPdITI.h"
 #include "../../PdImpMpiFixture.h"
+#include "../../../pdneigh/NeighborhoodList.h"
 #include "../../PdImpMaterials.h"
-#include "../../PdImpOperator.h"
+#include "../../PdITI_Operator.h"
+#include "../../PdITI_Utilities.h"
 #include "../../IsotropicElasticConstitutiveModel.h"
 #include "../../DirichletBcSpec.h"
 #include "../../StageFunction.h"
@@ -36,7 +38,7 @@ using namespace PdBondFilter;
 using namespace PdVTK;
 using namespace Field_NS;
 using namespace PdImp;
-using PdITI::IsotropicElasticConstitutiveModel;
+using namespace PdITI;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
 using std::cout;
@@ -47,8 +49,8 @@ static int myRank;
 /*
  * This should be even so that the crack plane lies between to rows of points
  */
-const int nx = 6;
-const int ny = 6;
+const int nx = 10;
+const int ny = 10;
 const double xStart = -2.5;
 const double xLength = 5.0;
 const double yStart = -2.5;
@@ -116,9 +118,6 @@ PdGridData getGrid() {
 	PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
 	PdGridData gridData =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
 	gridData=getLoadBalancedDiscretization(gridData);
-	FinitePlane crackPlane=getYZ_CrackPlane();
-	RCP<BondFilter> filterPtr=RCP<BondFilter>(new FinitePlaneFilter(crackPlane));
-	gridData = createAndAddNeighborhood(gridData,horizon,filterPtr);
 
 	/*
 	 * Lower left hand corner of crack plane when viewing down
@@ -190,16 +189,21 @@ FinitePlane getYZ_CrackPlane() {
 	return FinitePlane(n,r0,ub,b,a);
 }
 
-
 void crackOpeningDemo(){
 	/*
 	 * Get mesh and decomposition
 	 */
 	PdGridData gridData = getGrid();
+	gridData = createAndAddNeighborhood(gridData,horizon);
 	/*
 	 * Communicator
 	 */
 	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
+
+	FinitePlane crackPlane=getYZ_CrackPlane();
+//	shared_ptr<BondFilter> filterPtr = shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
+	shared_ptr<BondFilter> filterPtr = shared_ptr<BondFilter>(new BondFilterDefault());
+	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);
 
 	/*
 	 * Material Properties
@@ -209,9 +213,9 @@ void crackOpeningDemo(){
 	/*
 	 * Create PdITI Operator
 	 */
-	shared_ptr<PdImp::PdImpOperator> op = utPdITI::getPimpOperator(gridData,comm);
-	shared_ptr<PdITI::ConstitutiveModel> fIntOperator(new PdITI::IsotropicElasticConstitutiveModel(isotropicSpec));
-	op->addConstitutiveModel(fIntOperator);
+	PdITI::PdITI_Operator op(comm,list,gridData.cellVolume);
+	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
+	op.addConstitutiveModel(fIntOperator);
 
 	/*
 	 * Get points for bc's
@@ -247,7 +251,7 @@ void crackOpeningDemo(){
 	Field<double> uOwnedField(DISPL3D,gridData.numPoints);
 	uOwnedField.setValue(0.0);
 	bcApplied->applyKinematics(1.0,uOwnedField);
-	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op->getRowStiffnessOperator(uOwnedField,horizon);
+	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOwnedField);
 
 	/*
 	 * Create graph
@@ -269,7 +273,7 @@ void crackOpeningDemo(){
 	Field_NS::FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
 	Field_NS::Field<double> fN(fNSpec,gridData.numPoints);
 	fN.setValue(0.0);
-	op->computeInternalForce(uOwnedField,fN);
+	op.computeInternalForce(uOwnedField,fN);
 	bcApplied->applyKinematics(1.0,fN);
 
 	Epetra_LinearProblem linProblem;
@@ -310,7 +314,7 @@ void crackOpeningDemo(){
 	PdVTK::writeField(grid,uOwnedField);
 	PdVTK::writeField(grid,delta);
 	writeField<int>(grid,myRank);
-	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("utPimp_pullCylinder_npX.pvtu", comm.NumProc(), comm.MyPID());
+	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("utCrackOpeningDemo_npX.pvtu", comm.NumProc(), comm.MyPID());
 	PdVTK::write(writer,grid);
 
 }
@@ -319,7 +323,7 @@ bool init_unit_test_suite()
 {
 	// Add a suite for each processor in the test
 	bool success=true;
-	test_suite* proc = BOOST_TEST_SUITE( "utCrackOpeningDemo" );
+	test_suite* proc = BOOST_TEST_SUITE( "utCrackOpeningDemo_npX" );
 	proc->add(BOOST_TEST_CASE( &crackOpeningDemo ));
 	framework::master_test_suite().add( proc );
 	return success;
