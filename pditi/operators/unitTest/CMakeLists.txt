@@ -95,7 +95,7 @@ add_test (utPdImp_implicitLinearDynamicsDemo_twoPoint python run_unit_test.py ./
 # Add test
 add_executable(ut_dsf ut_dsf.cxx)
 target_link_libraries(ut_dsf PdITIOperators PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
-#add_test (ut_dsf python run_unit_test.py ./ut_dsf)
+add_test (ut_dsf python run_unit_test.py ./ut_dsf)
 
 #add_custom_target( utest
 #   COMMAND ctest

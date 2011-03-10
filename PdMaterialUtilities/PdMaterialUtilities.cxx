@@ -746,11 +746,13 @@ double probeShearModulusScaleFactor
 	 * Compute weighted volume
 	 */
 	double m = computeWeightedVolume(X,xOverlap,volumeOverlap,neighPtr);
+//	std::cout << NAMESPACE << "probeShearModulusScaleFactor weighted volume = " << m << std::endl;
 
 	/*
 	 * Compute dilatation
 	 */
 	double theta = computeDilatation(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
+//	std::cout << NAMESPACE << "probeShearModulusScaleFactor theta = " << theta << std::endl;
 
 	/*
 	 * Pure shear centered at X
