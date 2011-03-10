@@ -32,6 +32,7 @@ void updateGeometry
 		*y = *x + *u + *v * dt;
 }
 
+
 void computeWeightedVolume
 (
 		const double* xOverlap,
@@ -45,18 +46,10 @@ void computeWeightedVolume
 	double cellVolume;
 	const int *neighPtr = localNeighborList;
 	for(int p=0;p<myNumPoints;p++, xOwned+=3, m++){
-		int numNeigh = *neighPtr; neighPtr++;
+		int numNeigh = *neighPtr;
 		const double *X = xOwned;
-		*m=0;
-		for(int n=0;n<numNeigh;n++,neighPtr++){
-			int localId = *neighPtr;
-			cellVolume = volumeOverlap[localId];
-			const double *XP = &xOverlap[3*localId];
-			double dx = XP[0]-X[0];
-			double dy = XP[1]-X[1];
-			double dz = XP[2]-X[2];
-			*m+=(dx*dx+dy*dy+dz*dz)*cellVolume;
-		}
+		*m=computeWeightedVolume(X,xOverlap,volumeOverlap,neighPtr);
+		neighPtr+=(numNeigh+1);
 	}
 }
 
