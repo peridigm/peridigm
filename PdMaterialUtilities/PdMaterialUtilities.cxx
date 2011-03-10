@@ -561,49 +561,198 @@ double computeDeviatoricForceStateNorm
 	return sqrt(norm);
 }
 
+
+
+/**
+ * Call this function on a single point 'X'
+ * NOTE: neighPtr to should point to 'numNeigh' for 'X'
+ * and thus describe the neighborhood list as usual
+ * NOTE: this function will overwrite entries in 'yOverlap'
+ * for all of 'X' neighbors
+ * OUTPUT: yOverlap such that there is a state of pure
+ * shear at 'X'
+ */
+void set_pure_shear
+(
+		const int *neighPtr,
+		const double *X,
+		const double *xOverlap,
+		double *yOverlap,
+		PURE_SHEAR mode,
+		double gamma
+)
+{
+
+	/*
+	 * Pure shear centered at X
+	 * X has no displacement
+	 */
+	int numNeigh=*neighPtr; neighPtr++;
+	for(int n=0;n<numNeigh;n++, neighPtr++){
+		int localId = *neighPtr;
+		const double *XP = &xOverlap[3*localId];
+
+		double dx = XP[0]-X[0];
+		double dy = XP[1]-X[1];
+		double dz = XP[2]-X[2];
+
+		/*
+		 * Pure shear
+		 */
+		double xy(0.0), xz(0.0), yz(0.0);
+		switch(mode){
+		case XY:
+			xy = gamma * dy;
+			break;
+		case XZ:
+			xz = gamma * dz;
+			break;
+		case YZ:
+			yz = gamma * dz;
+			break;
+		}
+
+		double *YP = &yOverlap[3*localId];
+		YP[0] = XP[0] + xy + xz;
+		YP[1] = XP[1] + yz;
+		YP[2] = XP[2];
+
+	}
+
+}
+
+
+double computeWeightedVolume
+(
+		const double *X,
+		const double *xOverlap,
+		const double* volumeOverlap,
+		const int* localNeighborList
+){
+
+	double m=0.0;
+	double cellVolume;
+	const int *neighPtr = localNeighborList;
+	int numNeigh = *neighPtr; neighPtr++;
+	for(int n=0;n<numNeigh;n++,neighPtr++){
+		int localId = *neighPtr;
+		cellVolume = volumeOverlap[localId];
+		const double *XP = &xOverlap[3*localId];
+		double dx = XP[0]-X[0];
+		double dy = XP[1]-X[1];
+		double dz = XP[2]-X[2];
+		m+=(dx*dx+dy*dy+dz*dz)*cellVolume;
+	}
+
+	return m;
+}
+
+/**
+ * Call this function on a single point 'X'
+ * NOTE: neighPtr to should point to 'numNeigh' for 'X'
+ * and thus describe the neighborhood list as usual
+ */
+double computeDilatation
+(
+		const int *neighPtr,
+		const double *X,
+		const double *xOverlap,
+		const double *Y,
+		const double *yOverlap,
+		const double *volumeOverlap,
+		double weightedVolume
+)
+{
+	double OMEGA=1.0;
+	double bondDamage=0.0;
+	const double *v = volumeOverlap;
+	double m = weightedVolume;
+	double theta = 0.0;
+	int numNeigh=*neighPtr; neighPtr++;
+	for(int n=0;n<numNeigh;n++,neighPtr++){
+
+		int localId = *neighPtr;
+		double cellVolume = v[localId];
+
+		const double *XP = &xOverlap[3*localId];
+		double dx = XP[0]-X[0];
+		double dy = XP[1]-X[1];
+		double dz = XP[2]-X[2];
+		double zetaSqared = dx*dx+dy*dy+dz*dz;
+
+		const double *YP = &yOverlap[3*localId];
+		dx = YP[0]-Y[0];
+		dy = YP[1]-Y[1];
+		dz = YP[2]-Y[2];
+		double dY = dx*dx+dy*dy+dz*dz;
+		double d = sqrt(zetaSqared);
+		double e = sqrt(dY)-d;
+		theta += 3.0*OMEGA*(1.0-bondDamage)*d*e*cellVolume/m;
+
+	}
+	return theta;
+}
+
+
 void computeShearCorrectionFactor
 (
 		int numOwnedPoints,
 		const double *xOverlap,
+		double *yOverlap_scratch_required_work_space,
 		const double *volumeOverlap,
 		const int*  localNeighborList,
 		double horizon,
 		double *shearCorrectionFactorOwned
 ){
-
+	double gamma=1.0e-6;
 	const int *neighPtr = localNeighborList;
 	const double *xOwned = xOverlap;
+	const double *yOwned = yOverlap_scratch_required_work_space;
+	double *yOverlap = yOverlap_scratch_required_work_space;
 	double *scaleFactor = shearCorrectionFactorOwned;
-	for(int p=0;p<numOwnedPoints;p++, xOwned+=3, scaleFactor++){
-		int numNeigh = *neighPtr; neighPtr++;
+	for(int p=0;p<numOwnedPoints;p++, xOwned+=3, yOwned+=3, scaleFactor++){
+		int numNeigh = *neighPtr;
 		const double *X = xOwned;
-		*scaleFactor=probeShearModulusScaleFactor(numNeigh,neighPtr,X,xOverlap,volumeOverlap,horizon);
-		neighPtr+=numNeigh;
+		const double *Y = yOwned;
+		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,XY,gamma);
+		*scaleFactor=probeShearModulusScaleFactor(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,horizon,gamma);
+		neighPtr+=(numNeigh+1);
 	}
 
 }
 
 double probeShearModulusScaleFactor
 (
-		int numNeigh,
 		const int *neighPtr,
 		const double *X,
 		const double *xOverlap,
+		const double *Y,
+		const double *yOverlap,
 		const double *volumeOverlap,
-		double horizon
+		double horizon,
+		double gamma
 )
 {
-	double gamma=1.0e-6;
 	double reference = 4.0 * M_PI * gamma * gamma * pow(horizon,5) / 75.0;
 	const double *v = volumeOverlap;
 	double cellVolume, dx, dy, dz, zeta, dY, ed;
+
+	/*
+	 * Compute weighted volume
+	 */
+	double m = computeWeightedVolume(X,xOverlap,volumeOverlap,neighPtr);
+
+	/*
+	 * Compute dilatation
+	 */
+	double theta = computeDilatation(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
+
 	/*
 	 * Pure shear centered at X
 	 * X has no displacement
 	 */
-	double Y[] = {*X, *(X+1), *(X+2)};
-	double YP[3];
 	double norm=0.0;
+	int numNeigh=*neighPtr; neighPtr++;
 	for(int n=0;n<numNeigh;n++, neighPtr++){
 		int localId = *neighPtr;
 		cellVolume = v[localId];
@@ -612,16 +761,11 @@ double probeShearModulusScaleFactor
 		dy = XP[1]-X[1];
 		dz = XP[2]-X[2];
 		zeta = sqrt(dx*dx+dy*dy+dz*dz);
-		/*
-		 * Pure shear: XY
-		 */
-		YP[0] = XP[0] + gamma * dy;
-		YP[1] = XP[1];
-		YP[2] = XP[2];
 
 		/*
 		 * Deformation State
 		 */
+		const double *YP = &yOverlap[3*localId];
 		dx = YP[0]-Y[0];
 		dy = YP[1]-Y[1];
 		dz = YP[2]-Y[2];
@@ -629,9 +773,8 @@ double probeShearModulusScaleFactor
 
 		/*
 		 * Deviatoric extension state
-		 * NOTE that this is under the assumption of pure shear
 		 */
-		ed = dY-zeta;
+		ed = dY-zeta-theta*zeta/3;
 
 		/*
 		 * Accumulate norm

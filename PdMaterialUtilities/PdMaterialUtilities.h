@@ -33,7 +33,7 @@
 #define PDMATERIALUTILITIES_H_
 namespace PdMaterialUtilities {
 
-
+enum PURE_SHEAR { XY=0, XZ, YZ };
 
 void computeWeightedVolume
 (
@@ -162,10 +162,60 @@ double computeDeviatoricForceStateNorm
 		double OMEGA
 );
 
+/**
+ * Call this function on a single point 'X'
+ * NOTE: neighPtr to should point to 'numNeigh' for 'X'
+ * and thus describe the neighborhood list as usual
+ * NOTE: this function will overwrite entries in 'yOverlap'
+ * for all of 'X' neighbors
+ * OUTPUT: yOverlap such that there is a state of pure
+ * shear at 'X'
+ */
+void set_pure_shear
+(
+		const int *neighPtr,
+		const double *X,
+		const double *xOverlap,
+		double *yOverlap,
+		PURE_SHEAR mode,
+		double gamma
+);
+
+
+/**
+ * Call this function on a single point 'X'
+ * NOTE: neighPtr to should point to 'numNeigh' for 'X'
+ * and thus describe the neighborhood list as usual
+ */
+double computeWeightedVolume
+(
+		const double *X,
+		const double *xOverlap,
+		const double* volumeOverlap,
+		const int* localNeighborList
+);
+
+/**
+ * Call this function on a single point 'X'
+ * NOTE: neighPtr to should point to 'numNeigh' for 'X'
+ * and thus describe the neighborhood list as usual
+ */
+double computeDilatation
+(
+		const int *neighPtr,
+		const double *X,
+		const double *xOverlap,
+		const double *Y,
+		const double *yOverlap,
+		const double *volumeOverlap,
+		double weightedVolume
+);
+
 void computeShearCorrectionFactor
 (
 		int numOwnedPoints,
 		const double *xOverlap,
+		double *yOverlap_scratch_required_work_space,
 		const double *volumeOverlap,
 		const int*  localNeighborList,
 		double horizon,
@@ -174,12 +224,14 @@ void computeShearCorrectionFactor
 
 double probeShearModulusScaleFactor
 (
-		int numNeigh,
 		const int *neighPtr,
 		const double *X,
 		const double *xOverlap,
+		const double *Y,
+		const double *yOverlap,
 		const double *volumeOverlap,
-		double horizon
+		double horizon,
+		double gamma
 );
 
 }
