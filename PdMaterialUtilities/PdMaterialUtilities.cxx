@@ -5,9 +5,12 @@
 #include "PdMaterialUtilities.h"
 #include <math.h>
 #include <iostream>
+#include <string>
 
 namespace PdMaterialUtilities {
 
+
+const std::string NAMESPACE="PdMaterialUtilities::";
 
 void updateGeometry
 (
@@ -634,6 +637,8 @@ double computeWeightedVolume
 	double cellVolume;
 	const int *neighPtr = localNeighborList;
 	int numNeigh = *neighPtr; neighPtr++;
+//	std::cout << NAMESPACE <<"computeWeightedVolume\n";
+//	std::cout << "\tnumber of neighbors = " << numNeigh << std::endl;
 	for(int n=0;n<numNeigh;n++,neighPtr++){
 		int localId = *neighPtr;
 		cellVolume = volumeOverlap[localId];

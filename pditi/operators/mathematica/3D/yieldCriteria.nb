@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       145,          7]
-NotebookDataLength[     13935,        422]
-NotebookOptionsPosition[     12579,        372]
-NotebookOutlinePosition[     13015,        389]
-CellTagsIndexPosition[     12972,        386]
+NotebookDataLength[     14016,        424]
+NotebookOptionsPosition[     12660,        374]
+NotebookOutlinePosition[     13096,        391]
+CellTagsIndexPosition[     13053,        388]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -261,17 +261,19 @@ Cell[BoxData[
     RowBox[{"(", 
      RowBox[{"Integrate", "[", 
       RowBox[{
-       RowBox[{"Sin", "[", "\[Phi]", "]"}], ",", 
+       RowBox[{"Sin", "[", "\[Theta]", "]"}], ",", 
        RowBox[{"{", 
-        RowBox[{"\[Phi]", ",", "0", ",", "Pi"}], "}"}]}], "]"}], ")"}], "/", 
-    "5"}]}]}]], "Input",
- CellChangeTimes->{{3.4844830964140863`*^9, 3.4844832073524303`*^9}}],
+        RowBox[{"\[Theta]", ",", "0", ",", "Pi"}], "}"}]}], "]"}], ")"}], "/",
+     "5"}]}]}]], "Input",
+ CellChangeTimes->{{3.4844830964140863`*^9, 3.4844832073524303`*^9}, {
+  3.508762980303076*^9, 3.5087629832065268`*^9}}],
 
 Cell[BoxData[
  FractionBox[
   RowBox[{"4", " ", "\[Pi]", " ", 
    SuperscriptBox["\[Delta]", "5"]}], "5"]], "Output",
- CellChangeTimes->{{3.484483190842428*^9, 3.4844832111624613`*^9}}]
+ CellChangeTimes->{{3.484483190842428*^9, 3.4844832111624613`*^9}, 
+   3.508762989415113*^9}]
 }, Open  ]],
 
 Cell[BoxData[
@@ -415,15 +417,15 @@ Cell[8059, 235, 402, 10, 46, "Input"],
 Cell[8464, 247, 116, 2, 61, "Output"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[8617, 254, 461, 13, 46, "Input"],
-Cell[9081, 269, 185, 4, 65, "Output"]
+Cell[8617, 254, 516, 14, 46, "Input"],
+Cell[9136, 270, 211, 5, 65, "Output"]
 }, Open  ]],
-Cell[9281, 276, 714, 17, 46, "Input"],
+Cell[9362, 278, 714, 17, 46, "Input"],
 Cell[CellGroupData[{
-Cell[10020, 297, 1399, 37, 112, "Input"],
-Cell[11422, 336, 449, 10, 67, "Output"]
+Cell[10101, 299, 1399, 37, 112, "Input"],
+Cell[11503, 338, 449, 10, 67, "Output"]
 }, Open  ]],
-Cell[11886, 349, 689, 21, 46, "Input"]
+Cell[11967, 351, 689, 21, 46, "Input"]
 }
 ]
 *)

@@ -15,6 +15,7 @@
 #include "PdMaterialUtilities.h"
 #include "../PdITI_Utilities.h"
 #include "PdQuickGrid.h"
+#include "VectorUtils.h"
 
 using namespace boost::unit_test;
 using std::size_t;
@@ -23,6 +24,7 @@ using namespace PdVTK;
 using namespace Field_NS;
 using namespace PdMaterialUtilities;
 using namespace PdQuickGrid;
+using std::pair;
 
 template<class T> struct ArrayDeleter{
 	void operator()(T* d) {
@@ -30,54 +32,96 @@ template<class T> struct ArrayDeleter{
 	}
 };
 
-shared_ptr<double> create_spherical_neighborhood(double center[], double radius, size_t numR, size_t numTheta, size_t numPhi) {
+template<class T>
+class Array {
+
+public:
+	struct Deleter;
+	friend struct Deleter;
+	struct Deleter{
+		void operator()(T* d) {
+			delete [] d;
+		}
+	};
+
+public:
+	Array(size_t length) : aPtr(new T[length], Deleter()), size(length) {}
+	size_t get_size() const { return size; }
+	T* get() { return aPtr.get(); }
+	const T* get() const { return aPtr.get(); }
+	void set(T value) {
+		T* s = aPtr.get();
+		const T* e = s + size;
+		for(; s!=e; s++)
+			*s = value;
+	}
+
+private:
+	shared_ptr<T> aPtr;
+	size_t size;
+
+};
+
+Array<double> create_spherical_neighborhood(const double center[], double radius, size_t numX, size_t numY, size_t numZ) {
+	double pi = M_PI;
 	/*
-	 * Random coordinates within a sphere of 'radius' and centered at 'center'
+	 * Spherical coordinates
+	 * x = r * sin(theta) * cos(phi)
+	 * y = r * sin(theta) * sin(phi)
+	 * z = r * cos(theta)
+	 *
+	 * theta in [0,Pi]
+	 * phi   in [0,2 Pi)
 	 */
-	size_t N = numR * numTheta * numPhi;
-	shared_ptr<double> xPtr(new double[3*N],ArrayDeleter<double>());
+	const int nx = numX;
+	const int ny = numY;
+	const int nz = numZ;
+	size_t N = numX * numY * numZ;
+	const double xStart  = -radius;
+	const double xLength = 2 * radius;
+	const double yStart  = -radius;
+	const double yLength = 2 * radius;
+	const double zStart  = -radius;
+	const double zLength = 2 * radius;
+	const PdQPointSet1d xSpec(nx,xStart,xLength);
+	const PdQPointSet1d ySpec(ny,yStart,yLength);
+	const PdQPointSet1d zSpec(nz,zStart,zLength);
+	shared_ptr<double> xPtr=getDiscretization(xSpec,ySpec,zSpec);
+	shared_ptr<bool> flagPtr(new bool[N],ArrayDeleter<bool>());
+	size_t num_points = 0;
 	{
-		/*
-		 * Initialize random number generator
-		 */
-		srand ( time(NULL) );
-
-
-		double pi = M_PI;
-		/*
-		 * Spherical coordinates
-		 * x = r * sin(theta) * cos(phi)
-		 * y = r * sin(theta) * sin(phi)
-		 * z = r * cos(theta)
-		 *
-		 * theta in [0,Pi]
-		 * phi   in [0,2 Pi)
-		 */
-//		PdQPointSet1d specR(numR,0,radius);
-//		PdQPointSet1d specTheta(numTheta,0,M_PI);
-//		PdQPointSet1d specPhi(numPhi,0,2.0*M_PI);
-//		shared_ptr<double> thetaPtr = PdQuickGrid::getDiscretization(specTheta);
-//		shared_ptr<double> phiPtr = PdQuickGrid::getDiscretization(specPhi);
-//		shared_ptr<double> rPtr = PdQuickGrid::getDiscretization(specR);
-
-		double *X = xPtr.get();
-		for(int nR=0;nR<numR;nR++){
-//			double r     = *(rPtr.get()+nR);
-			double r     = radius * (rand()%numR)/numR;
-			for(int nTheta=0;nTheta<numTheta;nTheta++){
-//				double theta = *(thetaPtr.get()+nTheta);
-				double theta     = M_PI * (rand()%numTheta)/numTheta;
-				for(int nPhi=0;nPhi<numPhi;nPhi++){
-//					double phi   = *(phiPtr.get()+nPhi);
-					double phi     = 2.0 * M_PI * (rand()%numPhi)/numPhi;
-					*(X+0)= center[0] + r * sin(theta) * cos(phi);
-					*(X+1)= center[1] + r * sin(theta) * sin(phi);
-					*(X+2)= center[2] + r * cos(theta);
-					X+=3;
+		{
+			double *X = xPtr.get();
+			bool *flags = flagPtr.get();
+			for(int p=0;p<N;p++, X+=3, flags++){
+				*flags=false;
+				VectorUtilsNS::Vector3D u(X);
+				if(u.norm()<=radius){
+					*flags=true;
+					num_points+=1;
+					*(X+0) += center[0];
+					*(X+1) += center[1];
+					*(X+2) += center[2];
 				}
-
 			}
+		}
+	}
 
+	/*
+	 * Now populate final array
+	 */
+	Array<double> a(3*num_points);
+	{
+		double *X = xPtr.get();
+		double *X_Final = a.get();
+		bool *flags = flagPtr.get();
+		for(int p=0; p<N; p++, X+=3, flags++){
+			if(*flags){
+				*(X_Final+0) = *(X+0);
+				*(X_Final+1) = *(X+1);
+				*(X_Final+2) = *(X+2);
+				X_Final+=3;
+			}
 		}
 	}
 
@@ -86,33 +130,32 @@ shared_ptr<double> create_spherical_neighborhood(double center[], double radius,
 	 */
 	int numProcs=1;
 	int myRank=0;
-	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(xPtr.get(), N);
+	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(a.get(), num_points);
 	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer= PdVTK::getWriter("ut_dsf.pvtu", numProcs, myRank, PdVTK::vtkBINARY);
 	PdVTK::write(writer,grid);
 
-	return xPtr;
+	return a;
 }
 
 
 void dsf_probe() {
-	double x0[] = {0.0,0.0,0.0};
-	double radius = 1.0;
-	size_t numR(100), numTheta(100), numPhi(100);
-	size_t num_points = numR * numTheta * numPhi;
-	shared_ptr<double> xPtr = create_spherical_neighborhood(x0,radius,numR,numTheta,numPhi);
-	shared_ptr<double> volPtr(new double[num_points],ArrayDeleter<double>());
+	const double x0[] = {0.0,0.0,0.0};
+	const double radius = 1.0;
+	const size_t num_points_along_axis(60);
+	size_t numX(num_points_along_axis), numY(num_points_along_axis), numZ(num_points_along_axis);
+	Array<double> xPtr = create_spherical_neighborhood(x0,radius,numX,numY,numZ);
+	size_t num_points = xPtr.get_size()/3;
+	Array<double> volPtr(num_points);
 	double volSphere = 4.0 * M_PI * radius * radius * radius / 3.0;
 	double avgPointVolume = volSphere / num_points;
-	PdITI::SET(volPtr.get(),volPtr.get()+num_points,avgPointVolume);
-	std::cout << "ut_dsf::analytical value for volume of sphere = " << volSphere << std::endl;
-	std::cout << "ut_dsf::volume point in sphere = " << avgPointVolume << std::endl;
+	volPtr.set(avgPointVolume);
 
 	/*
 	 * In this case, the neighborhood is simply the list of point ids -- identity map
 	 * NOTE: but need to put number of neighbors at the start and length of list
 	 * is 'num_points+1'
 	 */
-	shared_ptr<int> neighborhoodPtr(new int[num_points+1],ArrayDeleter<int>());
+	Array<int> neighborhoodPtr(num_points+1);
 	{
 		int *i = neighborhoodPtr.get();
 		*i = num_points; i++;
@@ -129,8 +172,18 @@ void dsf_probe() {
 	std::cout << "ut_dsf::code computed weighted volume on sphere = " << m_code << std::endl;
 
 	double gamma = 1.0e-6;
-	shared_ptr<double> yPtr(new double[3*num_points],ArrayDeleter<double>());
-//	set_pure_shear(neighborhoodPtr.get(),x0,xPtr.get(),yPtr.get(),XY,gamma);
+	Array<double> yPtr(3*num_points);
+	/*
+	 * NOTE: x0 is center of sphere and there no displacement at this point
+	 * therefore, X=x0, Y=X=x0
+	 */
+	Array<double> X(3), Y(3);
+	X.set(0.0);
+	Y.set(0.0);
+	set_pure_shear(neighborhoodPtr.get(),X.get(),xPtr.get(),yPtr.get(),XY,gamma);
+	double theta = computeDilatation(neighborhoodPtr.get(),X.get(),xPtr.get(),Y.get(),yPtr.get(),volPtr.get(),m_code);
+	std::cout << "ut_dsf::computed dilatation in pure shear = " << theta << std::endl;
+
 //
 //
 //	double horizon = radius;
