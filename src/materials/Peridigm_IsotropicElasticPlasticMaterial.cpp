@@ -81,7 +81,7 @@ void PeridigmNS::IsotropicElasticPlasticMaterial::initialize(const double dt,
       dataManager.getData(Field_NS::SHEAR_CORRECTION_FACTOR, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&shear_correction_factor);
 
 	  PdMaterialUtilities::computeWeightedVolume(xOverlap,cellVolumeOverlap,weightedVolume,numOwnedPoints,neighborhoodList);
-//	  PdMaterialUtilities::computeShearCorrectionFactor(numOwnedPoints,xOverlap,cellVolumeOverlap,neighborhoodList,m_horizon,shear_correction_factor);
+//	  PdMaterialUtilities::computeShearCorrectionFactor(numOwnedPoints,xOverlap,cellVolumeOverlap,weightedVolume,neighborhoodList,m_horizon,shear_correction_factor);
 }
 
 void

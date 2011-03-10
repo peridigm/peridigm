@@ -705,6 +705,7 @@ void computeShearCorrectionFactor
 		const double *xOverlap,
 		double *yOverlap_scratch_required_work_space,
 		const double *volumeOverlap,
+		const double *owned_weighted_volume,
 		const int*  localNeighborList,
 		double horizon,
 		double *shearCorrectionFactorOwned
@@ -717,25 +718,26 @@ void computeShearCorrectionFactor
 	double *yOverlap = yOverlap_scratch_required_work_space;
 	double *scaleFactor = shearCorrectionFactorOwned;
 	PURE_SHEAR mode;
-	for(int p=0;p<numOwnedPoints;p++, xOwned+=3, yOwned+=3, scaleFactor++){
+	for(int p=0;p<numOwnedPoints;p++, xOwned+=3, yOwned+=3, scaleFactor++, owned_weighted_volume++){
 		int numNeigh = *neighPtr;
 		const double *X = xOwned;
 		const double *Y = yOwned;
+		double m = *owned_weighted_volume;
 		double dsf, max_dsf;
 
 		mode = XY;
 		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
-		dsf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap);
+		dsf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
 		max_dsf=dsf;
 
 		mode = XZ;
 		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
-		dsf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap);
+		dsf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
 		if(dsf>max_dsf) max_dsf = dsf;
 
 		mode = YZ;
 		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
-		dsf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap);
+		dsf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
 		if(dsf>max_dsf) max_dsf = dsf;
 
 		/*
@@ -759,7 +761,8 @@ double compute_norm_2_deviatoric_extension
 		const double *xOverlap,
 		const double *Y,
 		const double *yOverlap,
-		const double *volumeOverlap
+		const double *volumeOverlap,
+		double weighted_volume
 )
 {
 
@@ -769,7 +772,8 @@ double compute_norm_2_deviatoric_extension
 	/*
 	 * Compute weighted volume
 	 */
-	double m = computeWeightedVolume(X,xOverlap,volumeOverlap,neighPtr);
+	double m = weighted_volume;
+//	double m = computeWeightedVolume(X,xOverlap,volumeOverlap,neighPtr);
 //	std::cout << NAMESPACE << "probeShearModulusScaleFactor weighted volume = " << m << std::endl;
 
 	/*

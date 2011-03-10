@@ -307,7 +307,7 @@ rowStiffnessOperatorPtr()
 	 */
 	double h = list.get_horizon()/2.0;
 //	PdMaterialUtilities::computeShearCorrectionFactor(list.get_num_owned_points(),xOverlapPtr.get(),volumeOverlapPtr.get(),local_list,h,ownedDSF_Ptr.get());
-	PdMaterialUtilities::computeShearCorrectionFactor(list.get_num_owned_points(),xOverlapPtr.get(),yOverlapPtr.get(),volumeOverlapPtr.get(),local_list,h,ownedDSF_Ptr.get());
+	PdMaterialUtilities::computeShearCorrectionFactor(list.get_num_owned_points(),xOverlapPtr.get(),yOverlapPtr.get(),volumeOverlapPtr.get(),mOwnedField.getArray().get(),local_list,h,ownedDSF_Ptr.get());
 	// INITIAL HACK -- reset DSF = 1.0
 	PdITI::SET(ownedDSF_Ptr.get(),ownedDSF_Ptr.get()+list.get_num_owned_points(),1.0);
 	/*

@@ -227,7 +227,8 @@ double compute_norm_2_deviatoric_extension
 		const double *xOverlap,
 		const double *Y,
 		const double *yOverlap,
-		const double *volumeOverlap
+		const double *volumeOverlap,
+		double weighted_volume
 );
 
 void computeShearCorrectionFactor
@@ -236,6 +237,7 @@ void computeShearCorrectionFactor
 		const double *xOverlap,
 		double *yOverlap_scratch_required_work_space,
 		const double *volumeOverlap,
+		const double *owned_weighted_volume,
 		const int*  localNeighborList,
 		double horizon,
 		double *shearCorrectionFactorOwned
