@@ -710,17 +710,43 @@ void computeShearCorrectionFactor
 		double *shearCorrectionFactorOwned
 ){
 	double gamma=1.0e-6;
+	double reference = 4.0 * M_PI * gamma * gamma * pow(horizon,5) / 75.0;
 	const int *neighPtr = localNeighborList;
 	const double *xOwned = xOverlap;
 	const double *yOwned = yOverlap_scratch_required_work_space;
 	double *yOverlap = yOverlap_scratch_required_work_space;
 	double *scaleFactor = shearCorrectionFactorOwned;
+	PURE_SHEAR mode;
 	for(int p=0;p<numOwnedPoints;p++, xOwned+=3, yOwned+=3, scaleFactor++){
 		int numNeigh = *neighPtr;
 		const double *X = xOwned;
 		const double *Y = yOwned;
-		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,XY,gamma);
-		*scaleFactor=probeShearModulusScaleFactor(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,horizon,gamma);
+		double dsf, max_dsf;
+
+		mode = XY;
+		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
+		dsf=probeShearModulusScaleFactor(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,gamma);
+		max_dsf=dsf;
+
+		mode = XZ;
+		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
+		dsf=probeShearModulusScaleFactor(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,gamma);
+		if(dsf>max_dsf) max_dsf = dsf;
+
+		mode = YZ;
+		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
+		dsf=probeShearModulusScaleFactor(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,gamma);
+		if(dsf>max_dsf) max_dsf = dsf;
+
+		/*
+		 * guard against division by zero (not likely though considering the probe in all 3 directions)
+		 */
+		if(0.0 == max_dsf)
+			max_dsf=1.0;
+		else
+			max_dsf = reference/max_dsf;
+
+		*scaleFactor = max_dsf;
 		neighPtr+=(numNeigh+1);
 	}
 
@@ -734,11 +760,10 @@ double probeShearModulusScaleFactor
 		const double *Y,
 		const double *yOverlap,
 		const double *volumeOverlap,
-		double horizon,
 		double gamma
 )
 {
-	double reference = 4.0 * M_PI * gamma * gamma * pow(horizon,5) / 75.0;
+
 	const double *v = volumeOverlap;
 	double cellVolume, dx, dy, dz, zeta, dY, ed;
 
@@ -758,7 +783,7 @@ double probeShearModulusScaleFactor
 	 * Pure shear centered at X
 	 * X has no displacement
 	 */
-	double norm=0.0;
+	double ed_squared=0.0;
 	int numNeigh=*neighPtr; neighPtr++;
 	for(int n=0;n<numNeigh;n++, neighPtr++){
 		int localId = *neighPtr;
@@ -786,11 +811,11 @@ double probeShearModulusScaleFactor
 		/*
 		 * Accumulate norm
 		 */
-		norm += ed * ed * cellVolume;
+		ed_squared += ed * ed * cellVolume;
 
 	}
 
-	return reference/norm;
+	return ed_squared;
 }
 
 }

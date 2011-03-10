@@ -236,6 +236,10 @@ void probe_shear
 )
 {
 	/*
+	 * This is the reference value for ed_squared
+	 */
+	double reference = 4.0 * M_PI * gamma * gamma * pow(horizon,5) / 75.0;
+	/*
 	 * NOTE: X is center of sphere and there no displacement at this point
 	 * therefore, Y=X
 	 */
@@ -247,7 +251,8 @@ void probe_shear
 	/*
 	 * compute shear correction factor
 	 */
-	double dsf = probeShearModulusScaleFactor(neighborhoodPtr.get(),X.get(),xPtr.get(),Y.get(),yPtr.get(),volPtr.get(),horizon,gamma);
+	double ed_squared = probeShearModulusScaleFactor(neighborhoodPtr.get(),X.get(),xPtr.get(),Y.get(),yPtr.get(),volPtr.get(),gamma);
+	double dsf = reference/ed_squared;
 	//	std::cout << "ut_dsf::probe_shear MODE = " << mode << std::endl;
 	//	std::cout << "ut_dsf::probe_shear computed dilatation in pure shear = " << theta << std::endl;
 	/*
