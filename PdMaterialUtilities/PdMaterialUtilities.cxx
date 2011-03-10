@@ -725,17 +725,17 @@ void computeShearCorrectionFactor
 
 		mode = XY;
 		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
-		dsf=probeShearModulusScaleFactor(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,gamma);
+		dsf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap);
 		max_dsf=dsf;
 
 		mode = XZ;
 		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
-		dsf=probeShearModulusScaleFactor(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,gamma);
+		dsf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap);
 		if(dsf>max_dsf) max_dsf = dsf;
 
 		mode = YZ;
 		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
-		dsf=probeShearModulusScaleFactor(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,gamma);
+		dsf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap);
 		if(dsf>max_dsf) max_dsf = dsf;
 
 		/*
@@ -752,15 +752,14 @@ void computeShearCorrectionFactor
 
 }
 
-double probeShearModulusScaleFactor
+double compute_norm_2_deviatoric_extension
 (
 		const int *neighPtr,
 		const double *X,
 		const double *xOverlap,
 		const double *Y,
 		const double *yOverlap,
-		const double *volumeOverlap,
-		double gamma
+		const double *volumeOverlap
 )
 {
 
