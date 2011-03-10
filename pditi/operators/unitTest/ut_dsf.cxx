@@ -251,7 +251,7 @@ void probe_shear
 	/*
 	 * compute shear correction factor
 	 */
-	double ed_squared = probeShearModulusScaleFactor(neighborhoodPtr.get(),X.get(),xPtr.get(),Y.get(),yPtr.get(),volPtr.get(),gamma);
+	double ed_squared = compute_norm_2_deviatoric_extension(neighborhoodPtr.get(),X.get(),xPtr.get(),Y.get(),yPtr.get(),volPtr.get());
 	double dsf = reference/ed_squared;
 	//	std::cout << "ut_dsf::probe_shear MODE = " << mode << std::endl;
 	//	std::cout << "ut_dsf::probe_shear computed dilatation in pure shear = " << theta << std::endl;

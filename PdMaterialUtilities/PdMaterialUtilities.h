@@ -217,18 +217,17 @@ double computeDilatation
  * and thus describe the neighborhood list as usual
  * Y is the deformed configuration of 'X' but because
  * this is a probe, Y=X
- * This function essentially returns the norm of the
+ * This function returns the norm of the
  * deviatoric extension state squared.
  */
-double probeShearModulusScaleFactor
+double compute_norm_2_deviatoric_extension
 (
 		const int *neighPtr,
 		const double *X,
 		const double *xOverlap,
 		const double *Y,
 		const double *yOverlap,
-		const double *volumeOverlap,
-		double gamma
+		const double *volumeOverlap
 );
 
 void computeShearCorrectionFactor
