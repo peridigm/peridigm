@@ -211,17 +211,13 @@ double computeDilatation
 		double weightedVolume
 );
 
-void computeShearCorrectionFactor
-(
-		int numOwnedPoints,
-		const double *xOverlap,
-		double *yOverlap_scratch_required_work_space,
-		const double *volumeOverlap,
-		const int*  localNeighborList,
-		double horizon,
-		double *shearCorrectionFactorOwned
-);
-
+/**
+ * Call this function on a single point 'X'
+ * NOTE: neighPtr to should point to 'numNeigh' for 'X'
+ * and thus describe the neighborhood list as usual
+ * Y is the deformed configuration of 'X' but because
+ * this is a probe, Y=X
+ */
 double probeShearModulusScaleFactor
 (
 		const int *neighPtr,
@@ -233,6 +229,18 @@ double probeShearModulusScaleFactor
 		double horizon,
 		double gamma
 );
+
+void computeShearCorrectionFactor
+(
+		int numOwnedPoints,
+		const double *xOverlap,
+		double *yOverlap_scratch_required_work_space,
+		const double *volumeOverlap,
+		const int*  localNeighborList,
+		double horizon,
+		double *shearCorrectionFactorOwned
+);
+
 
 }
 

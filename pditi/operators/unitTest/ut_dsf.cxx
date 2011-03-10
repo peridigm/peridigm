@@ -26,6 +26,7 @@ using namespace PdMaterialUtilities;
 using namespace PdQuickGrid;
 using std::pair;
 
+
 template<class T> struct ArrayDeleter{
 	void operator()(T* d) {
 		delete [] d;
@@ -61,6 +62,20 @@ private:
 	size_t size;
 
 };
+
+void probe_shear
+(
+		PURE_SHEAR mode,
+		Array<int> neighborhoodPtr,
+		Array<double> X,
+		Array<double> xPtr,
+		Array<double> Y,
+		Array<double> yPtr,
+		Array<double> volPtr,
+		double horizon,
+		double gamma,
+		double m_code
+);
 
 Array<double> create_spherical_neighborhood(const double center[], double radius, size_t numX, size_t numY, size_t numZ) {
 	double pi = M_PI;
@@ -139,11 +154,22 @@ Array<double> create_spherical_neighborhood(const double center[], double radius
 
 
 void dsf_probe() {
-	const double x0[] = {0.0,0.0,0.0};
+	/*
+	 * X is the center of the sphere
+	 */
+	Array<double> X(3); X.set(0.0);
+	/*
+	 * Y = X since we are fixing the center of the sphere
+	 */
+	Array<double> Y(3); Y.set(0.0);
+
+	/*
+	 * Radius of sphere
+	 */
 	const double radius = 1.0;
-	const size_t num_points_along_axis(60);
+	const size_t num_points_along_axis(100);
 	size_t numX(num_points_along_axis), numY(num_points_along_axis), numZ(num_points_along_axis);
-	Array<double> xPtr = create_spherical_neighborhood(x0,radius,numX,numY,numZ);
+	Array<double> xPtr = create_spherical_neighborhood(X.get(),radius,numX,numY,numZ);
 	size_t num_points = xPtr.get_size()/3;
 	Array<double> volPtr(num_points);
 	double volSphere = 4.0 * M_PI * radius * radius * radius / 3.0;
@@ -162,38 +188,77 @@ void dsf_probe() {
 		int *end = i + num_points;
 		for(int j=0;i!=end;j++,i++)
 			*i = j;
-
 	}
 
 
 	double m_analytical = 4.0 * M_PI * pow(radius,5) / 5.0;
-	double m_code = computeWeightedVolume(x0,xPtr.get(),volPtr.get(),neighborhoodPtr.get());
-	std::cout << "ut_dsf::analytical value for weighted volume on sphere = " << m_analytical << std::endl;
-	std::cout << "ut_dsf::code computed weighted volume on sphere = " << m_code << std::endl;
+	double m_code = computeWeightedVolume(X.get(),xPtr.get(),volPtr.get(),neighborhoodPtr.get());
+	double rel_diff = abs(m_analytical-m_code)/m_analytical;
+	double tolerance=1.0e-3;
+	BOOST_CHECK_SMALL(rel_diff,tolerance);
+//	std::cout << "ut_dsf::analytical value for weighted volume on sphere = " << m_analytical << std::endl;
+//	std::cout << "ut_dsf::code computed weighted volume on sphere = " << m_code << std::endl;
 
 	double gamma = 1.0e-6;
+	double horizon = radius;
 	Array<double> yPtr(3*num_points);
-	/*
-	 * NOTE: x0 is center of sphere and there no displacement at this point
-	 * therefore, X=x0, Y=X=x0
-	 */
-	Array<double> X(3), Y(3);
-	X.set(0.0);
-	Y.set(0.0);
-	set_pure_shear(neighborhoodPtr.get(),X.get(),xPtr.get(),yPtr.get(),XY,gamma);
-	double theta = computeDilatation(neighborhoodPtr.get(),X.get(),xPtr.get(),Y.get(),yPtr.get(),volPtr.get(),m_code);
-	std::cout << "ut_dsf::computed dilatation in pure shear = " << theta << std::endl;
 
-//
-//
-//	double horizon = radius;
-//	/*
-//	 * there is no displacement at center point; therefore y0 = x0
-//	 */
-//	double y0[] = {x0[0],x0[1],x0[2]};
-//	double dsf = probeShearModulusScaleFactor(neighborhoodPtr.get(),x0,xPtr.get(),y0,yPtr.get(),volPtr.get(),horizon,gamma);
-//	std::cout << "ut_dsf::dsf = " << dsf << std::endl;
+	/*
+	 * PROBE XY
+	 */
+	probe_shear(XY,neighborhoodPtr,X,xPtr,Y,yPtr,volPtr,horizon,gamma,m_code);
+	/*
+	 * PROBE XZ
+	 */
+	probe_shear(XZ,neighborhoodPtr,X,xPtr,Y,yPtr,volPtr,horizon,gamma,m_code);
+
+	/*
+	 * PROBE YZ
+	 */
+	probe_shear(YZ,neighborhoodPtr,X,xPtr,Y,yPtr,volPtr,horizon,gamma,m_code);
+
+
+
 }
+
+void probe_shear
+(
+	PURE_SHEAR mode,
+	Array<int> neighborhoodPtr,
+	Array<double> X,
+	Array<double> xPtr,
+	Array<double> Y,
+	Array<double> yPtr,
+	Array<double> volPtr,
+	double horizon,
+	double gamma,
+	double m_code
+)
+{
+	/*
+	 * NOTE: X is center of sphere and there no displacement at this point
+	 * therefore, Y=X
+	 */
+	set_pure_shear(neighborhoodPtr.get(),X.get(),xPtr.get(),yPtr.get(),mode,gamma);
+	double theta = computeDilatation(neighborhoodPtr.get(),X.get(),xPtr.get(),X.get(),yPtr.get(),volPtr.get(),m_code);
+	double tolerance=1.0e-12;
+	BOOST_CHECK_SMALL(theta,tolerance);
+
+	/*
+	 * compute shear correction factor
+	 */
+	double dsf = probeShearModulusScaleFactor(neighborhoodPtr.get(),X.get(),xPtr.get(),Y.get(),yPtr.get(),volPtr.get(),horizon,gamma);
+	//	std::cout << "ut_dsf::probe_shear MODE = " << mode << std::endl;
+	//	std::cout << "ut_dsf::probe_shear computed dilatation in pure shear = " << theta << std::endl;
+	/*
+	 * For this nearly perfect 'sphere', the shear correction factor should be very close to '1.0'
+	 */
+	double rel_diff = abs(1.0-dsf);
+	tolerance=1.0e-3;
+	BOOST_CHECK_SMALL(rel_diff,tolerance);
+
+}
+
 
 bool init_unit_test_suite()
 {
