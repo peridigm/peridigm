@@ -245,16 +245,17 @@ void probe_shear
 	 */
 	set_pure_shear(neighborhoodPtr.get(),X.get(),xPtr.get(),yPtr.get(),mode,gamma);
 	double theta = computeDilatation(neighborhoodPtr.get(),X.get(),xPtr.get(),X.get(),yPtr.get(),volPtr.get(),m_code);
+	std::cout << "ut_dsf::probe_shear dilatation = " << theta << std::endl;
 	double tolerance=1.0e-12;
 	BOOST_CHECK_SMALL(theta,tolerance);
 
 	/*
 	 * compute shear correction factor
 	 */
-	double ed_squared = compute_norm_2_deviatoric_extension(neighborhoodPtr.get(),X.get(),xPtr.get(),Y.get(),yPtr.get(),volPtr.get());
+	double ed_squared = compute_norm_2_deviatoric_extension(neighborhoodPtr.get(),X.get(),xPtr.get(),Y.get(),yPtr.get(),volPtr.get(),m_code);
 	double dsf = reference/ed_squared;
-	//	std::cout << "ut_dsf::probe_shear MODE = " << mode << std::endl;
-	//	std::cout << "ut_dsf::probe_shear computed dilatation in pure shear = " << theta << std::endl;
+	std::cout << "ut_dsf::probe_shear MODE = " << mode << std::endl;
+	std::cout << "ut_dsf::probe_shear computed dsf in pure shear = " << dsf << std::endl;
 	/*
 	 * For this nearly perfect 'sphere', the shear correction factor should be very close to '1.0'
 	 */
