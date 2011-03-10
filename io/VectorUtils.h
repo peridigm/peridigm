@@ -18,6 +18,14 @@ public:
 	Vector3D(double v[3]) { u[0]=v[0]; u[1]=v[1]; u[2]=v[2]; }
 	Vector3D(const Vector3D& rhs) { u[0]=rhs[0]; u[1]=rhs[1]; u[2]=rhs[2]; }
 	double* get() { return u; }
+
+	double norm() const {
+		double dx = u[0];
+		double dy = u[1];
+		double dz = u[2];
+		return sqrt(dx*dx+dy*dy+dz*dz);
+	}
+
 	double operator[](int i) const {
 		if(0>i || 3<=i){
 			std::string message("ERROR\n\tVector3D::operator[](int i) const \'i\' out of range.");
