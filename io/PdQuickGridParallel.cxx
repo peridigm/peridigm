@@ -104,7 +104,7 @@ PdGridData getDiscretization(int rank, PdQuickGridMeshGenerationIterator &cellIt
 			MPI_Send(&ack, 1, MPI_INT, 0, ackTag, MPI_COMM_WORLD);
 			MPI_Recv(&globalNumPoints, 1, MPI_INT, 0, globalNumPointsTag, MPI_COMM_WORLD, &status);
 			MPI_Recv(&sizeNeighborhoodList, 1, MPI_INT, 0, sizeNeighborhoodListTag, MPI_COMM_WORLD, &status);
-			std::tr1::shared_ptr<int> neighborhood(new int[sizeNeighborhoodList],Deleter<int>());
+			std::tr1::shared_ptr<int> neighborhood(new int[sizeNeighborhoodList],PdQuickGrid::Deleter<int>());
 			MPI_Recv(gIds.get(), numPoints, MPI_INT, 0, idsTag, MPI_COMM_WORLD, &status);
 			MPI_Recv(g.get(), dimension*numPoints, MPI_DOUBLE, 0, coordinatesTag, MPI_COMM_WORLD, &status);
 			MPI_Recv(cellVolume.get(), numPoints, MPI_DOUBLE, 0,volumeTag, MPI_COMM_WORLD, &status);

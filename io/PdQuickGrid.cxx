@@ -119,7 +119,7 @@ std::pair<int, std::tr1::shared_ptr<int> > getSharedGlobalIds(const PdGridData& 
 	}
 
 	// Copy set into shared ptr
-	shared_ptr<int> sharedGlobalIds(new int[shared.size()],Deleter<int>());
+	shared_ptr<int> sharedGlobalIds(new int[shared.size()],PdQuickGrid::Deleter<int>());
 	int *sharedPtr = sharedGlobalIds.get();
 	set<int>::iterator it;
 	for ( it=shared.begin() ; it != shared.end(); it++, sharedPtr++ )
@@ -146,7 +146,7 @@ std::tr1::shared_ptr<double> getDiscretization(const PdQRing2d& spec) {
 	int numCells = spec.getNumCells();
 
 	// At each point store (x,y,z=0) + (c[0]+c[1]+c[2])
-	shared_ptr<double> gPtr(new double[3*numCells],Deleter<double>());
+	shared_ptr<double> gPtr(new double[3*numCells],PdQuickGrid::Deleter<double>());
 	double *g = gPtr.get();
 
 	// Outer loop on rays
@@ -172,7 +172,7 @@ std::tr1::shared_ptr<double>  getDiscretization(const PdQRing2d& spec, const PdQ
 	int nz = axisSpec.getNumCells();
 	int numCellsRing = spec.getNumCells();
 	int numCells = numCellsRing*nz;
-	shared_ptr<double> gPtr(new double[3*numCells],Deleter<double>());
+	shared_ptr<double> gPtr(new double[3*numCells],PdQuickGrid::Deleter<double>());
 	double *g = gPtr.get();
 
 	// Loop over VTK points and set
@@ -193,7 +193,7 @@ std::tr1::shared_ptr<double>  getDiscretization(const PdQRing2d& spec, const PdQ
 
 shared_ptr<double> getDiscretization(const PdQPointSet1d& spec){
 	int numCells = spec.getNumCells();
-	shared_ptr<double> ptr(new double[numCells],Deleter<double>());
+	shared_ptr<double> ptr(new double[numCells],PdQuickGrid::Deleter<double>());
 	double x0=spec.getX0();
 	double cellSize=spec.getCellSize();
 	double p = x0+cellSize/2.0;
@@ -212,7 +212,7 @@ shared_ptr<double> getDiscretization(const PdQPointSet1d& xSpec, const PdQPointS
 	int nx = xSpec.getNumCells();
 	int ny = ySpec.getNumCells();
 	int numCells = nx*ny;
-	std::tr1::shared_ptr<double> g(new double[2*numCells],Deleter<double>());
+	std::tr1::shared_ptr<double> g(new double[2*numCells],PdQuickGrid::Deleter<double>());
 	double* gPtr = g.get();
 	double *yPtr = y;
 	for(int j=0;j<ny;j++,yPtr++){
@@ -275,19 +275,19 @@ double PdQRing2d::getRingThickness() const { return abs(r0-rI); }
 PdGridData allocatePdGridData(int numCells, int dimension){
 
 	// coordinates
-	shared_ptr<double> X(new double[numCells*dimension],Deleter<double>());
+	shared_ptr<double> X(new double[numCells*dimension],PdQuickGrid::Deleter<double>());
 
 	// volume
-	shared_ptr<double> V(new double[numCells],Deleter<double>());
+	shared_ptr<double> V(new double[numCells],PdQuickGrid::Deleter<double>());
 
 	// Global ids for cells on this processor
-	shared_ptr<int> globalIds(new int[numCells],Deleter<int>());
+	shared_ptr<int> globalIds(new int[numCells],PdQuickGrid::Deleter<int>());
 
 	// array in indices that point to neighborhood for a given localId
-	shared_ptr<int> neighborhoodPtr(new int[numCells],Deleter<int>());
+	shared_ptr<int> neighborhoodPtr(new int[numCells],PdQuickGrid::Deleter<int>());
 
 	// Flag for marking points that get exported during load balance
-	shared_ptr<char> exportFlag(new char[numCells],Deleter<char>());
+	shared_ptr<char> exportFlag(new char[numCells],PdQuickGrid::Deleter<char>());
 
 
 	// Initialize all the above data to zero
@@ -321,7 +321,7 @@ PdGridData allocatePdGridData(int numCells, int dimension){
 	 * 3) Set neighborhood pointer for each point to 0
 	 */
 	int sizeNeighborhoodList=1;
-	shared_ptr<int> neighborhoodList(new int[sizeNeighborhoodList],Deleter<int>());
+	shared_ptr<int> neighborhoodList(new int[sizeNeighborhoodList],PdQuickGrid::Deleter<int>());
 	int *neighborhood = neighborhoodList.get();
 	/*
 	 * number of neighbors for every point is zero
@@ -360,7 +360,7 @@ shared_ptr<double> getDiscretization(const PdQPointSet1d& xSpec, const PdQPointS
 	double*z=zz.get();
 
 	int dimension=3;
-	shared_ptr<double> X(new double[numCells*dimension],Deleter<double>());
+	shared_ptr<double> X(new double[numCells*dimension],PdQuickGrid::Deleter<double>());
 	double *XPtr = X.get();
 	double point[3]={0.0,0.0,0.0};
 	for(int k=0;k<nz;k++){
@@ -487,7 +487,7 @@ std::pair<Cell3D,PdGridData> TensorProduct3DMeshGenerator::computePdGridData(int
 	// allocate neighborhood for incoming data since each one of these has a different length
 	int sizeNeighborhoodList = getSizeNeighborList(proc, cellLocator);
 	pdGridData.sizeNeighborhoodList = sizeNeighborhoodList;
-	shared_ptr<int> neighborhoodList(new int[sizeNeighborhoodList],Deleter<int>());
+	shared_ptr<int> neighborhoodList(new int[sizeNeighborhoodList],PdQuickGrid::Deleter<int>());
 	pdGridData.neighborhood = neighborhoodList;
 	int *neighborPtr = neighborhoodList.get();
 	int updateSizeNeighborhoodList = 0;
@@ -751,7 +751,7 @@ std::pair<Cell3D,PdGridData> TensorProductCylinderMeshGenerator::computePdGridDa
 	// allocate neighborhood for incoming data since each one of these has a different length
 	int sizeNeighborhoodList = getSizeNeighborList(proc, cellLocator);
 	pdGridData.sizeNeighborhoodList = sizeNeighborhoodList;
-	shared_ptr<int> neighborhoodList(new int[sizeNeighborhoodList],Deleter<int>());
+	shared_ptr<int> neighborhoodList(new int[sizeNeighborhoodList],PdQuickGrid::Deleter<int>());
 	pdGridData.neighborhood = neighborhoodList;
 	int *neighborPtr = neighborhoodList.get();
 	int updateSizeNeighborhoodList = 0;
@@ -1175,7 +1175,7 @@ std::pair<Cell3D,PdGridData> TensorProductSolidCylinder::computePdGridData(int p
 	 * and therefore the length of the neighborhood list for every point is zero
 	 */
 	pdGridData.sizeNeighborhoodList=1;
-	shared_ptr<int> neighborhoodList(new int[pdGridData.sizeNeighborhoodList],Deleter<int>());
+	shared_ptr<int> neighborhoodList(new int[pdGridData.sizeNeighborhoodList],PdQuickGrid::Deleter<int>());
 	pdGridData.neighborhood = neighborhoodList;
 	int *neighborhood = neighborhoodList.get();
 	/*

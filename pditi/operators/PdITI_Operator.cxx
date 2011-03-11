@@ -43,7 +43,7 @@ colMapNDF(row_matrix_list.getOverlapMap(comm,vectorNDF)),
 colMapScalar(row_matrix_list.getOverlapMap(comm,scalarNDF)),
 xOverlapPtr(new double[colMapNDF.NumMyElements()*vectorNDF],ArrayDeleter<double>()),
 uOverlapPtr(new double[colMapNDF.NumMyElements()*vectorNDF],ArrayDeleter<double>()),
-dsfOverlapPtr(new double[colMapNDF.NumMyElements()*vectorNDF],ArrayDeleter<double>()),
+dsfOverlapPtr(new double[colMapNDF.NumMyElements()*scalarNDF],ArrayDeleter<double>()),
 mOverlapPtr(new double[colMapNDF.NumMyElements()*scalarNDF],ArrayDeleter<double>()),
 volOverlapPtr(new double[colMapNDF.NumMyElements()*scalarNDF],ArrayDeleter<double>()),
 dilatationOverlapPtr(new double[colMapNDF.NumMyElements()*scalarNDF],ArrayDeleter<double>())
@@ -73,8 +73,8 @@ dilatationOverlapPtr(new double[colMapNDF.NumMyElements()*scalarNDF],ArrayDelete
 	/*
 	 * dsf overlap
 	 */
-	Epetra_Vector dsfOverlap(View,colMapNDF,dsfOverlapPtr.get());
-	Epetra_Vector dsfOwned(View,rowMapNDF,dsfOwnedPtr.get());
+	Epetra_Vector dsfOverlap(View,colMapScalar,dsfOverlapPtr.get());
+	Epetra_Vector dsfOwned(View,rowMapScalar,dsfOwnedPtr.get());
 	dsfOverlap.Import(dsfOwned,importNDF,Insert);
 
 	/*
@@ -307,15 +307,25 @@ rowStiffnessOperatorPtr()
 	 */
 	double h = list.get_horizon()/2.0;
 //	PdMaterialUtilities::computeShearCorrectionFactor(list.get_num_owned_points(),xOverlapPtr.get(),volumeOverlapPtr.get(),local_list,h,ownedDSF_Ptr.get());
+	{
+		/*
+		 * Initialize yOverlap = 0
+		 */
+		double *y = yOverlapPtr.get();
+		size_t len = overlapMapScalar.NumMyElements()*vectorNDF;
+		PdITI::SET(y,y+len,0.0);
+	}
 	PdMaterialUtilities::computeShearCorrectionFactor(list.get_num_owned_points(),xOverlapPtr.get(),yOverlapPtr.get(),volumeOverlapPtr.get(),mOwnedField.getArray().get(),local_list,h,ownedDSF_Ptr.get());
 	// INITIAL HACK -- reset DSF = 1.0
 	PdITI::SET(ownedDSF_Ptr.get(),ownedDSF_Ptr.get()+list.get_num_owned_points(),1.0);
-	/*
-	 * Initialize damage to 0
-	 */
-	size_t len = neighborhoodList.get_size_neighborhood_list()-neighborhoodList.get_num_owned_points();
-	double *d = bondDamagePtr.get();
-	PdITI::SET(d,d+len,0.0);
+	{
+		/*
+		 * Initialize damage to 0
+		 */
+		size_t len = neighborhoodList.get_size_neighborhood_list()-neighborhoodList.get_num_owned_points();
+		double *d = bondDamagePtr.get();
+		PdITI::SET(d,d+len,0.0);
+	}
 
 }
 
@@ -478,7 +488,7 @@ shared_ptr<RowStiffnessOperator> PdITI_Operator::getJacobian(Field_NS::Field<dou
 
 	if (rowStiffnessOperatorPtr==shared_ptr<RowStiffnessOperator>()){
 		shared_ptr<double> mPtr = mOwnedField.getArray().get_shared_ptr();
-		rowStiffnessOperatorPtr = shared_ptr<RowOperator>(new RowOperator(epetraComm,row_matrix_list,ownedVolPtr,mPtr, ownedDSF_Ptr));
+		rowStiffnessOperatorPtr = shared_ptr<RowOperator>(new RowOperator( epetraComm, row_matrix_list, ownedVolPtr, mPtr, ownedDSF_Ptr));
 	}
 
 	/*
