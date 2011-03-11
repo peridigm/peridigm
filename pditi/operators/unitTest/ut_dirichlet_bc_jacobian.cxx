@@ -1,7 +1,7 @@
 /*
- * utCrackOpeningDemo.cxx
+ * ut_dirichlet_bc_jacobian.cxx
  *
- *  Created on: Feb 11, 2011
+ *  Created on: Mar 11, 2011
  *      Author: jamitch
  */
 
@@ -16,17 +16,17 @@
 #include "PdBondFilter.h"
 #include "PdVTK.h"
 #include "Field.h"
-#include "../utPdITI.h"
-#include "../../PdImpMpiFixture.h"
-#include "../../../pdneigh/NeighborhoodList.h"
-#include "../../PdImpMaterials.h"
-#include "../../PdITI_Operator.h"
-#include "../../PdITI_Utilities.h"
-#include "../../IsotropicElasticConstitutiveModel.h"
-#include "../../DirichletBcSpec.h"
-#include "../../StageFunction.h"
-#include "../../StageComponentDirichletBc.h"
-#include "../../ComponentDirichletBcSpec.h"
+#include "utPdITI.h"
+#include "../PdImpMpiFixture.h"
+#include "../../pdneigh/NeighborhoodList.h"
+#include "../PdImpMaterials.h"
+#include "../PdITI_Operator.h"
+#include "../PdITI_Utilities.h"
+#include "../IsotropicElasticConstitutiveModel.h"
+#include "../DirichletBcSpec.h"
+#include "../StageFunction.h"
+#include "../StageComponentDirichletBc.h"
+#include "../ComponentDirichletBcSpec.h"
 #include <Epetra_LinearProblem.h>
 #include <AztecOO.h>
 
@@ -189,7 +189,8 @@ FinitePlane getYZ_CrackPlane() {
 	return FinitePlane(n,r0,ub,b,a);
 }
 
-void crackOpeningDemo(){
+
+void case_0() {
 	/*
 	 * Get mesh and decomposition
 	 */
@@ -204,131 +205,19 @@ void crackOpeningDemo(){
 	shared_ptr<BondFilter> filterPtr = shared_ptr<BondFilter>(new BondFilterDefault());
 	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);
 
-	/*
-	 * Material Properties
-	 */
-	IsotropicHookeSpec isotropicSpec = utPdITI::getMaterialSpec(E,nu);
-
-	/*
-	 * Create PdITI Operator
-	 */
-	PdITI::PdITI_Operator op(comm,list,gridData.cellVolume);
-	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
-	op.addConstitutiveModel(fIntOperator);
-
-	/*
-	 * Get points for bc's
-	 */
-	/*
-	 * Note that we are looking for the first three planes of points on ends
-	 */
-	double searchRadius=3.1*dx;
-	PdNeighborhood::CoordinateLabel axis = PdNeighborhood::X;
-	Pd_shared_ptr_Array<int> bcIdsFixed = PdNeighborhood::getPointsInNeighborhoodOfAxisAlignedMinimumValue(axis,gridData.myX,gridData.numPoints,searchRadius,xMin);
-	std::sort(bcIdsFixed.get(),bcIdsFixed.get()+bcIdsFixed.getSize());
-	Pd_shared_ptr_Array<int> bcIdsApplied = PdNeighborhood::getPointsInNeighborhoodOfAxisAlignedMaximumValue(axis,gridData.myX,gridData.numPoints,searchRadius,xMax);
-	std::sort(bcIdsApplied.get(),bcIdsApplied.get()+bcIdsApplied.getSize());
-
-	/**
-	 * Create boundary conditions spec
-	 */
-	vector<shared_ptr<StageComponentDirichletBc> > bcs(2);
-	ComponentDirichletBcSpec fixedSpec = ComponentDirichletBcSpec::getAllComponents(bcIdsFixed);
-	StageFunction constStageFunction(0.0,0.0);
-	shared_ptr<StageComponentDirichletBc> bcFixed(new StageComponentDirichletBc(fixedSpec,constStageFunction));
-	bcs[0] = bcFixed;
-	std::vector< DirichletBcSpec::ComponentLabel > c(1);
-	c[0] = DirichletBcSpec::X;
-	ComponentDirichletBcSpec appliedSpec(c,bcIdsApplied);
-	StageFunction dispStageFunction(1.0e-3,1.0e-3);
-	shared_ptr<StageComponentDirichletBc> bcApplied(new StageComponentDirichletBc(appliedSpec,dispStageFunction));
-	bcs[1] = bcApplied;
-
-	/*
-	 * Create Jacobian -- note that SCOPE of jacobian is associated with the PimpOperator "op"
-	 */
-	Field<double> uOwnedField(DISPL3D,gridData.numPoints);
-	uOwnedField.setValue(0.0);
-	bcApplied->applyKinematics(1.0,uOwnedField);
-	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOwnedField);
-
-	/*
-	 * Create graph
-	 */
-	shared_ptr<Epetra_CrsGraph> graphPtr = utPdITI::getGraph(jacobian);
-
-	/*
-	 * Create Epetra_RowMatrix
-	 */
-	shared_ptr<Epetra_RowMatrix> mPtr = utPdITI::getOperator(bcs,graphPtr,jacobian);
-
-	/*
-	 * Create force field
-	 * IN this case,
-	 * 1) Compute internal force with displacement vector that has kinematics applied
-	 * 2) Negate internal force since we are using it as a residual on the RHS (THIS IS NOT DONE -- SIGNS need to be investigated)
-	 * 3) Apply kinematics to this vector so that solution properly includes the applied kinematics
-	 */
-	Field_NS::FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
-	Field_NS::Field<double> fN(fNSpec,gridData.numPoints);
-	fN.setValue(0.0);
-	op.computeInternalForce(uOwnedField,fN);
-	bcApplied->applyKinematics(1.0,fN);
-
-	Epetra_LinearProblem linProblem;
-	linProblem.SetOperator(mPtr.get());
-	linProblem.AssertSymmetric();
-
-	const Epetra_BlockMap& rangeMap  = mPtr->OperatorRangeMap();
-	const Epetra_BlockMap& domainMap  = mPtr->OperatorDomainMap();
-
-	double *f = fN.getArray().get();
-	Epetra_Vector rhs(View,rangeMap,f);
-	Epetra_Vector lhs(View,domainMap,uOwnedField.getArray().get());
-
-	linProblem.SetRHS(&rhs);
-	linProblem.SetLHS(&lhs);
-//	BOOST_CHECK(0==linProblem.CheckInput());
-
-	AztecOO solver(linProblem);
-	solver.SetAztecOption(AZ_precond, AZ_Jacobi);
-//	BOOST_CHECK(0==solver.CheckInput());
-	solver.Iterate(500,1e-6);
-	/*
-	 * Write problem set up parameters to file
-	 */
-	Field_NS::FieldSpec deltaSpec(FieldSpec::VELOCITY,FieldSpec::VECTOR3D,"delta");
-	Field_NS::Field<double> delta(deltaSpec,gridData.numPoints);
-	delta.setValue(0.0);
-	bcApplied->applyKinematics(1.0,delta);
-
-	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(gridData.myX,gridData.numPoints);
-
-	/*
-	 * Add processor rank to output
-	 */
-	Field_NS::Field<int> myRank(Field_NS::PROC_NUM,gridData.numPoints);
-	myRank.setValue(comm.MyPID());
-
-	PdVTK::writeField(grid,uOwnedField);
-	PdVTK::writeField(grid,delta);
-	writeField<int>(grid,myRank);
-	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("utCrackOpeningDemo_npX.pvtu", comm.NumProc(), comm.MyPID());
-	PdVTK::write(writer,grid);
-
 }
 
 //bool init_unit_test_suite()
 //{
 //	// Add a suite for each processor in the test
 //	bool success=true;
-//	test_suite* proc = BOOST_TEST_SUITE( "utCrackOpeningDemo_npX" );
-//	proc->add(BOOST_TEST_CASE( &crackOpeningDemo ));
+//	test_suite* proc = BOOST_TEST_SUITE( "ut_dirichlet_bc_jacobian" );
+//	proc->add(BOOST_TEST_CASE( &case_0 ));
 //	framework::master_test_suite().add( proc );
 //	return success;
 //}
-//
-//
+
+
 //bool init_unit_test()
 //{
 //	init_unit_test_suite();
@@ -349,8 +238,7 @@ int main
 	myRank = comm.MyPID();
 	numProcs = comm.NumProc();
 
-	crackOpeningDemo();
-
 	// Initialize UTF
 //	return unit_test_main( init_unit_test, argc, argv );
+	case_0();
 }
