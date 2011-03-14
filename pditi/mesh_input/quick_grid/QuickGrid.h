@@ -30,13 +30,14 @@ const NormFunctionPointer NoOpNorm = NoOpNormFunction;
 
 class Spec1D;
 class SpecRing2D;
+class QuickGridMeshGenerationIterator;
 
 Array<double> getDiscretization(const Spec1D& spec);
 Array<double> getDiscretization(const Spec1D& xSpec, const Spec1D& ySpec);
 Array<double> getDiscretization(const Spec1D& xSpec, const Spec1D& ySpec, const Spec1D& zSpec);
 Array<double> getDiscretization(const SpecRing2D& spec);
 Array<double> getDiscretization(const SpecRing2D& spec, const Spec1D& axisSpec);
-
+QuickGridData getDiscretization(size_t rank, QuickGridMeshGenerationIterator &cellIter);
 QuickGridData allocatePdGridData(size_t numCells, size_t dimension);
 
 class Horizon {

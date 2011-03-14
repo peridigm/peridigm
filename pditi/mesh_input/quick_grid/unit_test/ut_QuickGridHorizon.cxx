@@ -11,7 +11,6 @@
 #include <boost/test/parameterized_test.hpp>
 #include <tr1/memory>
 #include "../QuickGrid.h"
-//#include "PdQuickGridParallel.h"
 #include <iostream>
 
 
