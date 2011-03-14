@@ -40,6 +40,7 @@ set(PERIDIGM_LIBS PdZoltan PdQuickGrid  PdNeighborhood PdVTK PdMaterialUtilities
 SET(PDITI_ROOT ${CMAKE_SOURCE_DIR}/pditi)
 SET(UTILITIES_DIR ${PDITI_ROOT}/utilities)
 SET(PDNEIGH_DIR ${PDITI_ROOT}/pdneigh)
+SET(MESH_INPUT_DIR ${PDITI_ROOT}/mesh_input)
 
 
 # Project directories

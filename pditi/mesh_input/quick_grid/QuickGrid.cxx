@@ -6,6 +6,7 @@
  */
 
 #include "QuickGrid.h"
+#include "mpi.h"
 #include <tr1/memory>
 #include <vector>
 #include <cmath>
@@ -1098,6 +1099,122 @@ std::pair<Cell3D,QuickGridData> TensorProductSolidCylinder::computePdGridData(in
 	 */
 	*neighborhood = 0;
 	return std::pair<Cell3D,QuickGridData>(cellLocator,pdGridData);
+}
+
+
+/**
+ * This function produces an unbalanced discretization although for some geometries it
+ * may not be too bad
+ */
+QuickGridData getDiscretization(size_t rank, QuickGridMeshGenerationIterator &cellIter)
+{
+	MPI_Status status;
+	int ack = 0;
+	int ackTag = 0;
+	int numPointsTag=1;
+	int idsTag = 2;
+	int coordinatesTag = 3;
+	int globalNumPointsTag=4;
+	int sizeNeighborhoodListTag=5;
+	int neighborhoodTag=6;
+	int volumeTag=7;
+	int neighborhoodPtrTag=8;
+	QuickGridData gridData;
+	int dimension = cellIter.getDimension();
+
+	if(0 == rank){
+
+		QuickGridData pdGridDataProc0 = cellIter.allocatePdGridData();
+		QuickGridData  pdGridDataProcN = cellIter.allocatePdGridData();
+		std::pair<Cell3D,QuickGridData> p0Data = cellIter.beginIterateProcs(pdGridDataProc0);
+		gridData = p0Data.second;
+		Cell3D nextCellLocator = p0Data.first;
+
+
+		while(cellIter.hasNextProc()){
+			int proc = cellIter.proc();
+			std::pair<Cell3D,QuickGridData> data = cellIter.nextProc(nextCellLocator,pdGridDataProcN);
+			QuickGridData gridData = data.second;
+			nextCellLocator = data.first;
+
+
+			// Need to send this data to proc
+			int globalNumPoints = gridData.globalNumPoints;
+			int numPoints = gridData.numPoints;
+			int sizeNeighborhoodList = gridData.sizeNeighborhoodList;
+			shared_ptr<int> gIds = gridData.myGlobalIDs;
+			shared_ptr<double> X = gridData.myX;
+			shared_ptr<double> V = gridData.cellVolume;
+			shared_ptr<int> neighborhood = gridData.neighborhood;
+			shared_ptr<int> neighborhoodPtr = gridData.neighborhoodPtr;
+
+			MPI_Send(&numPoints, 1, MPI_INT, proc, numPointsTag, MPI_COMM_WORLD);
+			MPI_Recv(&ack, 1, MPI_INT, proc, ackTag, MPI_COMM_WORLD, &status);
+			MPI_Send(&globalNumPoints, 1, MPI_INT, proc, globalNumPointsTag, MPI_COMM_WORLD);
+			MPI_Send(&sizeNeighborhoodList, 1, MPI_INT, proc, sizeNeighborhoodListTag, MPI_COMM_WORLD);
+			MPI_Send(gIds.get(), numPoints, MPI_INT, proc, idsTag, MPI_COMM_WORLD);
+			MPI_Send(X.get(), dimension*numPoints, MPI_DOUBLE, proc, coordinatesTag, MPI_COMM_WORLD);
+			MPI_Send(V.get(),numPoints, MPI_DOUBLE, proc, volumeTag, MPI_COMM_WORLD);
+			MPI_Send(neighborhood.get(), sizeNeighborhoodList, MPI_INT, proc, neighborhoodTag, MPI_COMM_WORLD);
+			MPI_Send(neighborhoodPtr.get(), numPoints, MPI_INT, proc, neighborhoodPtrTag, MPI_COMM_WORLD);
+
+		}
+	    /* signal all procs it is OK to go on */
+	    ack = 0;
+	    for(int proc=1;proc<cellIter.getNumProcs();proc++){
+	      MPI_Send(&ack, 1, MPI_INT, proc, ackTag, MPI_COMM_WORLD);
+	    }
+
+	}
+	else {
+		// Receive data from processor 0
+		// Create this procs 'GridData'
+		int numPoints=0;
+		int globalNumPoints = 0;
+		int sizeNeighborhoodList = 0;
+		MPI_Recv(&numPoints, 1, MPI_INT, 0, numPointsTag, MPI_COMM_WORLD, &status);
+		ack = 0;
+		if (numPoints > 0){
+			QuickGridData 	gData = QUICKGRID::allocatePdGridData(numPoints,dimension);
+			std::tr1::shared_ptr<double> g=gData.myX;
+			std::tr1::shared_ptr<double> cellVolume=gData.cellVolume;
+			std::tr1::shared_ptr<int> gIds=gData.myGlobalIDs;
+			std::tr1::shared_ptr<int> neighborhoodPtr=gData.neighborhoodPtr;
+			MPI_Send(&ack, 1, MPI_INT, 0, ackTag, MPI_COMM_WORLD);
+			MPI_Recv(&globalNumPoints, 1, MPI_INT, 0, globalNumPointsTag, MPI_COMM_WORLD, &status);
+			MPI_Recv(&sizeNeighborhoodList, 1, MPI_INT, 0, sizeNeighborhoodListTag, MPI_COMM_WORLD, &status);
+			Array<int> neighborhood(sizeNeighborhoodList);
+			MPI_Recv(gIds.get(), numPoints, MPI_INT, 0, idsTag, MPI_COMM_WORLD, &status);
+			MPI_Recv(g.get(), dimension*numPoints, MPI_DOUBLE, 0, coordinatesTag, MPI_COMM_WORLD, &status);
+			MPI_Recv(cellVolume.get(), numPoints, MPI_DOUBLE, 0,volumeTag, MPI_COMM_WORLD, &status);
+			MPI_Recv(neighborhood.get(), sizeNeighborhoodList, MPI_INT, 0, neighborhoodTag, MPI_COMM_WORLD, &status);
+			MPI_Recv(neighborhoodPtr.get(), numPoints, MPI_INT, 0, neighborhoodPtrTag, MPI_COMM_WORLD, &status);
+
+			gData.dimension = dimension;
+			gData.globalNumPoints = globalNumPoints;
+			gData.numPoints = numPoints;
+			gData.sizeNeighborhoodList = sizeNeighborhoodList;
+			gData.neighborhood=neighborhood.get_shared_ptr();
+
+			gridData = gData;
+
+		}
+		else if (numPoints == 0){
+			MPI_Send(&ack, 1, MPI_INT, 0, ackTag, MPI_COMM_WORLD);
+		}
+		else{
+			MPI_Finalize();
+			exit(1);
+		}
+
+	    MPI_Recv(&ack, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+	    if (ack < 0){
+	      MPI_Finalize();
+	      exit(1);
+	    }
+
+	}
+	return gridData;
 }
 
 }
