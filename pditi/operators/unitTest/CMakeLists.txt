@@ -14,6 +14,12 @@
 #endif (NOT ${buildInSource})
 #
 
+
+add_subdirectory(crackOpeningDemo)
+add_subdirectory(eigen1D)
+add_subdirectory(implicitDynamicsDemo_bar)
+add_subdirectory(twoPointPlasticity)
+
 include_directories(${UTILITIES_DIR} ${PDNEIGH_DIR} ${TRILINOS_DIR}/include )
 
 #unit test library for PdITI library
