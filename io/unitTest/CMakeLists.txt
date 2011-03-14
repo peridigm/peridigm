@@ -16,6 +16,8 @@
 # ../peridigm.votd 
 
 
+include_directories(${TRILINOS_DIR}/include )
+
 # convenience for this directory
 set(IO_LIBS PdZoltan PdQuickGrid PdNeighborhood  PdVTK)
 

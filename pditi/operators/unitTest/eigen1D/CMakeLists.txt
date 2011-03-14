@@ -21,6 +21,7 @@
 #
 
 # Add test
+include_directories(${UTILITIES_DIR} ${PDNEIGH_DIR} ${TRILINOS_DIR}/include )
 add_executable(utPdImp_eigen1D utPdImp_eigen1D.cxx)
 target_link_libraries(utPdImp_eigen1D PdITIOperators ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 #add_test (utPdImp_eigen1D python run_unit_test.py ./utPdImp_eigen1D)

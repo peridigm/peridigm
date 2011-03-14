@@ -1,4 +1,5 @@
 
+include_directories(${TRILINOS_DIR}/include)
 
 add_library(magOp2D 
 quadrulator.C

@@ -1,7 +1,8 @@
 #
 # Main executable for Peridigm
 #
- 
+include_directories(${TRILINOS_DIR}/include)
+  
 add_executable (${EXECUTABLE_NAME}
         Peridigm_Main.cpp
         Peridigm_Factory.cpp

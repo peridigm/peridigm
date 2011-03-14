@@ -37,6 +37,10 @@ if(HOME_BUILD)
 endif()
 
 set(PERIDIGM_LIBS PdZoltan PdQuickGrid  PdNeighborhood PdVTK PdMaterialUtilities)
+SET(PDITI_ROOT ${CMAKE_SOURCE_DIR}/pditi)
+SET(UTILITIES_DIR ${PDITI_ROOT}/utilities)
+SET(PDNEIGH_DIR ${PDITI_ROOT}/pdneigh)
+
 
 # Project directories
 add_subdirectory (aliti)
@@ -45,6 +49,9 @@ add_subdirectory (intrepid/unitTest)
 add_subdirectory (operators)
 add_subdirectory (pdneigh)
 add_subdirectory (pdneigh/unit_test)
+add_subdirectory (utilities)
+add_subdirectory (utilities/unit_test)
+add_subdirectory (mesh_input/quick_grid)
 add_subdirectory (operators/unitTest)
 add_subdirectory (operators/unitTest/implicitDynamicsDemo_bar)
 add_subdirectory (operators/unitTest/crackOpeningDemo)

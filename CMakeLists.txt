@@ -219,7 +219,6 @@ set(PdMaterialUtilitiesLib PdMaterialUtilities)
 # include for all directories
 # Collection of include and lib directories
 set(INCLUDE_DIRS 
-${TRILINOS_DIR}/include  
 ${VTK_INCLUDE_DIRS} 
 ${Boost_INCLUDE_DIRS} 
 ${CMAKE_SOURCE_DIR}/io
@@ -269,6 +268,8 @@ if (NOT ${buildInSource})
    set(UT_DIRS ${UT_DIRS}  -d pditi/aliti)
    set(UT_DIRS ${UT_DIRS}  -d pditi/operators/unitTest)
    set(UT_DIRS ${UT_DIRS}  -d pditi/pdneigh/unit_test)
+   set(UT_DIRS ${UT_DIRS}  -d pditi/utilities/unit_test)
+   set(UT_DIRS ${UT_DIRS}  -d pditi/mesh_input/quick_grid/unit_test)
    set(UT_DIRS ${UT_DIRS}  -d test/unit)
    set(UT_DIRS ${UT_DIRS}  -d test/regression)
    set(UT_DIRS ${UT_DIRS}  -d test/verification)
