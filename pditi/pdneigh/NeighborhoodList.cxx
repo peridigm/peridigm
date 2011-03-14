@@ -17,7 +17,7 @@
  * @TODO
  * Need to remove this header dependency
  */
-#include "PdNeighborhood.h"
+//#include "PdNeighborhood.h"
 
 
 namespace PDNEIGH {
@@ -450,82 +450,82 @@ void NeighborhoodList::createAndAddNeighborhood(){
 
 }
 
-shared_ptr< std::set<int> > NeighborhoodList::constructParallelDecompositionFrameSet_OLD() const {
-	shared_ptr<double> xPtr = owned_x;
-	int numCells = num_owned_points;
-	const PdNeighborhood::Coordinates c(xPtr,numCells);
-
-	int numAxes=3;
-	PdNeighborhood::CoordinateLabel labels[] = {PdNeighborhood::X,PdNeighborhood::Y, PdNeighborhood::Z};
-	std::vector<std::tr1::shared_ptr<int> > sortedMaps(numAxes);
-	for(int j=0;j<numAxes;j++){
-
-		PdNeighborhood::Coordinates::SortComparator compare = c.getSortComparator(labels[j]);
-		sortedMaps[j] = c.getIdentityMap();
-		/*
-		 * Sort points
-		 */
-		std::sort(sortedMaps[j].get(),sortedMaps[j].get()+numCells,compare);
-
-	}
-
-	/*
-	 * Loop over axes and collect points at min and max ranges
-	 * Add Points to frame set
-	 */
-	shared_ptr< std::set<int> >  frameSetPtr(new std::set<int>);
-	PdNeighborhood::CoordinateLabel *label = labels;
-	PdNeighborhood::CoordinateLabel *endLabel = labels+numAxes;
-	for(;label!=endLabel;label++){
-
-		{
-			/*
-			 * MINIMUM
-			 * Find least upper bound of points for Min+horizon
-			 */
-			int axis = *label;
-			const double *x = xPtr.get();
-			std::tr1::shared_ptr<int> mapPtr = sortedMaps[axis];
-			int *map = mapPtr.get();
-			/*
-			 * First value in map corresponds with minimum value
-			 */
-			int iMIN = *map;
-			double min = x[3*iMIN+axis];
-			double value = min + horizon;
-			const PdNeighborhood::Coordinates::SearchIterator start=c.begin(*label,mapPtr);
-			const PdNeighborhood::Coordinates::SearchIterator end=start+numCells;
-			PdNeighborhood::Coordinates::SearchIterator lub = std::upper_bound(start,end,value);
-			frameSetPtr->insert(lub.mapStart(),lub.mapIterator());
-
-		}
-
-		{
-			/*
-			 * MAXIMUM
-			 * Find greatest lower bound glb for Max-horizon
-			 */
-			int axis = *label;
-			const double *x = xPtr.get();
-			std::tr1::shared_ptr<int> mapPtr = sortedMaps[axis];
-			int *map = mapPtr.get();
-
-			/*
-			 * Last value in map corresponds with maximum value
-			 */
-			int iMAX = *(map+numCells-1);
-			double max = x[3*iMAX+axis];
-			double value = max - horizon;
-			const PdNeighborhood::Coordinates::SearchIterator start=c.begin(*label,mapPtr);
-			const PdNeighborhood::Coordinates::SearchIterator end=start+numCells;
-			PdNeighborhood::Coordinates::SearchIterator glb = std::upper_bound(start,end,value);
-			frameSetPtr->insert(glb.mapIterator(),glb.mapEnd());
-		}
-	}
-
-	return frameSetPtr;
-
-}
+//shared_ptr< std::set<int> > NeighborhoodList::constructParallelDecompositionFrameSet_OLD() const {
+//	shared_ptr<double> xPtr = owned_x;
+//	int numCells = num_owned_points;
+//	const PdNeighborhood::Coordinates c(xPtr,numCells);
+//
+//	int numAxes=3;
+//	PdNeighborhood::CoordinateLabel labels[] = {PdNeighborhood::X,PdNeighborhood::Y, PdNeighborhood::Z};
+//	std::vector<std::tr1::shared_ptr<int> > sortedMaps(numAxes);
+//	for(int j=0;j<numAxes;j++){
+//
+//		PdNeighborhood::Coordinates::SortComparator compare = c.getSortComparator(labels[j]);
+//		sortedMaps[j] = c.getIdentityMap();
+//		/*
+//		 * Sort points
+//		 */
+//		std::sort(sortedMaps[j].get(),sortedMaps[j].get()+numCells,compare);
+//
+//	}
+//
+//	/*
+//	 * Loop over axes and collect points at min and max ranges
+//	 * Add Points to frame set
+//	 */
+//	shared_ptr< std::set<int> >  frameSetPtr(new std::set<int>);
+//	PdNeighborhood::CoordinateLabel *label = labels;
+//	PdNeighborhood::CoordinateLabel *endLabel = labels+numAxes;
+//	for(;label!=endLabel;label++){
+//
+//		{
+//			/*
+//			 * MINIMUM
+//			 * Find least upper bound of points for Min+horizon
+//			 */
+//			int axis = *label;
+//			const double *x = xPtr.get();
+//			std::tr1::shared_ptr<int> mapPtr = sortedMaps[axis];
+//			int *map = mapPtr.get();
+//			/*
+//			 * First value in map corresponds with minimum value
+//			 */
+//			int iMIN = *map;
+//			double min = x[3*iMIN+axis];
+//			double value = min + horizon;
+//			const PdNeighborhood::Coordinates::SearchIterator start=c.begin(*label,mapPtr);
+//			const PdNeighborhood::Coordinates::SearchIterator end=start+numCells;
+//			PdNeighborhood::Coordinates::SearchIterator lub = std::upper_bound(start,end,value);
+//			frameSetPtr->insert(lub.mapStart(),lub.mapIterator());
+//
+//		}
+//
+//		{
+//			/*
+//			 * MAXIMUM
+//			 * Find greatest lower bound glb for Max-horizon
+//			 */
+//			int axis = *label;
+//			const double *x = xPtr.get();
+//			std::tr1::shared_ptr<int> mapPtr = sortedMaps[axis];
+//			int *map = mapPtr.get();
+//
+//			/*
+//			 * Last value in map corresponds with maximum value
+//			 */
+//			int iMAX = *(map+numCells-1);
+//			double max = x[3*iMAX+axis];
+//			double value = max - horizon;
+//			const PdNeighborhood::Coordinates::SearchIterator start=c.begin(*label,mapPtr);
+//			const PdNeighborhood::Coordinates::SearchIterator end=start+numCells;
+//			PdNeighborhood::Coordinates::SearchIterator glb = std::upper_bound(start,end,value);
+//			frameSetPtr->insert(glb.mapIterator(),glb.mapEnd());
+//		}
+//	}
+//
+//	return frameSetPtr;
+//
+//}
 
 shared_ptr< std::set<int> > NeighborhoodList::constructParallelDecompositionFrameSet() const {
 

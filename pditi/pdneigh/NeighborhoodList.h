@@ -11,7 +11,7 @@
 #include <tr1/memory>
 #include <set>
 #include "Epetra_BlockMap.h"
-#include "PdBondFilter.h"
+#include "BondFilter.h"
 #include "Array.h"
 
 class Epetra_Comm;
@@ -88,7 +88,7 @@ public:
 	 */
 	NeighborhoodList cloneAndShare(double newHorizon, bool withSelf=true);
 	shared_ptr< std::set<int> > constructParallelDecompositionFrameSet() const;
-	shared_ptr< std::set<int> > constructParallelDecompositionFrameSet_OLD() const;
+//	shared_ptr< std::set<int> > constructParallelDecompositionFrameSet_OLD() const;
 
 private:
 	Array<int> getSharedGlobalIds() const;

@@ -1,6 +1,7 @@
 
-include_directories(${TRILINOS_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/io ${TRILINOS_DIR}/include)
 
+#
 add_library(magOp2D 
 quadrulator.C
 Mag2D_Operator.C
