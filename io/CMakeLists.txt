@@ -2,6 +2,8 @@
 # Discretization I/O and load balancing for Peridigm
 #
 
+include_directories(${TRILINOS_DIR}/include )
+
 # VTK configuration
 set(VTK_LIBS vtkIO vtkGraphics)
 

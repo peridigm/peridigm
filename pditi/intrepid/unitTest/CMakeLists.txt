@@ -2,6 +2,7 @@
 # CMakeLists.txt file for PdITI -- Peridynamics::Implicit
 #
 
+include_directories(${TRILINOS_DIR}/include)
 
 # Add test
 add_executable(utLinkIntrepid utLinkIntrepid.cxx)

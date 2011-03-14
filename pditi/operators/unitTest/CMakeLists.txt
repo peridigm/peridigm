@@ -14,6 +14,8 @@
 #endif (NOT ${buildInSource})
 #
 
+include_directories(${UTILITIES_DIR} ${PDNEIGH_DIR} ${TRILINOS_DIR}/include )
+
 #unit test library for PdITI library
 add_library(utPdITI utPdITI.cxx)
 

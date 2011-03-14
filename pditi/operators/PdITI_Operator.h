@@ -8,7 +8,7 @@
 #ifndef PDITI_OPERATOR_H_
 #define PDITI_OPERATOR_H_
 
-#include "../pdneigh/NeighborhoodList.h"
+#include "NeighborhoodList.h"
 #include "Epetra_Import.h"
 #include "Epetra_Export.h"
 #include "Field.h"

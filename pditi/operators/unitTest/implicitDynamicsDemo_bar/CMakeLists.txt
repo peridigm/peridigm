@@ -16,6 +16,8 @@
 #
 
 # Add test
+include_directories(${UTILITIES_DIR} ${PDNEIGH_DIR} ${TRILINOS_DIR}/include )
+
 add_executable(implicitLinearDynamicsDemo_bar implicitLinearDynamicsDemo_bar.cxx)
 target_link_libraries(implicitLinearDynamicsDemo_bar PdITIOperators ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 #add_test (implicitLinearDynamicsDemo_bar python run_unit_test.py ./implicitLinearDynamicsDemo_bar)

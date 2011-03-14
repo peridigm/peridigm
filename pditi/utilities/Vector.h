@@ -8,6 +8,7 @@
 #ifndef VECTOR_H_
 #define VECTOR_H_
 #include <functional>
+#include <math.h>
 
 using std::binary_function;
 
@@ -104,6 +105,38 @@ struct Plus : public binary_function< Vector3D, Vector3D, Vector3D > {
 		return r;
 	}
 };
+
+struct InsideSphere : public binary_function< Vector3D, Vector3D, bool > {
+
+public:
+	InsideSphere(double radius) : r(radius) {}
+	bool operator()(const Vector3D& u, const Vector3D& v){
+		double dx = v[0]-u[0];
+		double dy = v[1]-u[1];
+		double dz = v[2]-u[2];
+		return dx*dx+dy*dy+dz*dz - r*r < 0.0;
+	}
+
+private:
+	double r;
+};
+
+struct OutsideSphere : public binary_function< Vector3D, Vector3D, bool > {
+
+public:
+	OutsideSphere(double radius) : r(radius) {}
+	bool operator()(const Vector3D& u, const Vector3D& v){
+		double dx = v[0]-u[0];
+		double dy = v[1]-u[1];
+		double dz = v[2]-u[2];
+		return dx*dx+dy*dy+dz*dz - r*r > 0.0;
+	}
+
+private:
+	double r;
+};
+
+
 
 } // UTILITIES
 

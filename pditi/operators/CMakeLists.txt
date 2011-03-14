@@ -3,9 +3,8 @@
 #
 
 
-#
-# CMakeLists.txt file for PdITI -- Peridynamics::Implicit
-#
+include_directories(${UTILITIES_DIR} ${PDNEIGH_DIR} ${TRILINOS_DIR}/include )
+
 
 #PimpOperators library
 add_library(PdITIOperators 

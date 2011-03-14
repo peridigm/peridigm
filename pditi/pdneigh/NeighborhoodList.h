@@ -12,32 +12,31 @@
 #include <set>
 #include "Epetra_BlockMap.h"
 #include "PdBondFilter.h"
+#include "Array.h"
 
 class Epetra_Comm;
 struct Zoltan_Struct;
 /**
  *
- *
-What does a neighborhood do?
-* Is associated with a horizon
-* Contains a list of Global Ids (this is similar or perhaps the same as an Epetra_Map)
-* Stores owned coordinates (these coordinates are the basis for the neighborhood calculation for each point)
-* Is associated with a set of filters -- filters prevent bonds from crossing particular surfaces
-* Produces Epetra overlap maps (scalar and vector)for a given horizon and set of points
-* Can produce Epetra_MultiVectors (owned and overlap)
-* Can perform communications on Epetra_MultiVectors
- * for example -- spreading locally owned values to overlap vectors
+What is a neighborhood and what does it do?
+* Is associated with a horizon.
+* Contains a list of Global Ids (this is similar or perhaps the same as an Epetra_Map).
+* Stores owned coordinates (these coordinates are the basis for the neighborhood calculation for each point).
+* Is associated with a set of filters -- filters prevent bonds from crossing particular surfaces.
+* Produces Epetra overlap maps (scalar and vector) for a given horizon and set of points.
+* Can produce Epetra_MultiVectors (owned and overlap).
+* Can perform communications on Epetra_MultiVectors,
+ *  for example -- spreading locally owned values to overlap vectors.
+*/
 
 /*
- * Use this function to perform parallel search and create a new neighborhood list;
+ * Use this 'class' to perform parallel search and create a new neighborhood list;
  * This function will construct neighborhood lists including across processor boundaries;
- * The resulting list will then be added to the incoming pdGridData -- note that any pre-existing
- * list on pdGridData will be overwritten/lost.
  * @param horizon -- this is the distance that should be used to form the neighborhood list
  * Use CASE Scenario:
  * 1) Create a mesh
  * 2) Load balance mesh
- * 3) Call this function
+ * 3) Create NeighborhoodList
  * 4) 4th argument -- BondFilter which defaults to neighborhood search that does not include 'self' point
 */
 
@@ -48,7 +47,8 @@ namespace PDNEIGH {
  */
 using std::tr1::shared_ptr;
 using std::size_t;
-using std::pair;
+using UTILITIES::Array;
+
 template<class T> struct ArrayDeleter{
 	void operator()(T* d) {
 		delete [] d;
@@ -88,11 +88,12 @@ public:
 	 */
 	NeighborhoodList cloneAndShare(double newHorizon, bool withSelf=true);
 	shared_ptr< std::set<int> > constructParallelDecompositionFrameSet() const;
+	shared_ptr< std::set<int> > constructParallelDecompositionFrameSet_OLD() const;
 
 private:
-	pair<int, shared_ptr<int> > getSharedGlobalIds() const;
+	Array<int> getSharedGlobalIds() const;
 	void buildNeighborhoodList(int numOverlapPoints,shared_ptr<double> xOverlapPtr);
-	shared_ptr<int> createLocalNeighborList(const Epetra_BlockMap& overlapMap);
+	Array<int> createLocalNeighborList(const Epetra_BlockMap& overlapMap);
 	void createAndAddNeighborhood();
 
 private:
@@ -101,7 +102,7 @@ private:
 	double horizon;
 	shared_ptr<int> owned_gids;
 	shared_ptr<double> owned_x;
-	shared_ptr<int> neighborhood, local_neighborhood, neighborhood_ptr, num_neighbors;
+	Array<int> neighborhood, local_neighborhood, neighborhood_ptr, num_neighbors;
 	struct Zoltan_Struct* zoltan;
 	shared_ptr<PdBondFilter::BondFilter> filter_ptr;
 

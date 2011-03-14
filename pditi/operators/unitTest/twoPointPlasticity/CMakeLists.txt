@@ -38,6 +38,7 @@
 #
 # CMakeLists.txt file for PdITI -- Peridynamics::Implicit
 #
+include_directories(${UTILITIES_DIR} ${PDNEIGH_DIR} ${TRILINOS_DIR}/include )
 
 # Add test
 add_executable(utPdIti_twoPointPlasticity utPdIti_twoPointPlasticity.cxx)
