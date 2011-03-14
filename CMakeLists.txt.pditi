@@ -1,17 +1,16 @@
 #
-# CMakeLists.txt file for Peridigm
+# CMakeLists.txt file for PdITI
 #
 
 Cmake_minimum_required (VERSION 2.6)
 
 enable_testing ()
 
-# Basic settings for Peridigm project
-project (peridigm)
-set (EXECUTABLE_NAME Peridigm)
+# Basic settings for PdITI project
+project (pditi)
 
 set(HOME_BUILD 0)
-set(HOME /home/wow)
+#set(HOME /home/wow)
 message("\nPeridigm build from $ENV{HOME}\n")
 if(EXISTS ${HOME})
     set(HOME_BUILD 1)
@@ -84,14 +83,6 @@ if (VTK_FOUND)
 else ()
   message ("\nVTK NOT FOUND!  (Try defining VTK_DIR)\n")
 endif ()
-
-#
-# DAKOTA configuration
-#
-option (USE_DAKOTA 
-   "Enable tests and functionality that depend on a DAKOTA installation." 
-   OFF
-)
 
 # Trilinos configuration
 set (TRILINOS_DIR CACHE PATH "Path to Trilinos directory")
@@ -225,13 +216,13 @@ teuchos
 # VTK libs
 set(VTK_LIBS vtkIO vtkGraphics vtkParallel vtkHybrid vtkexoIIc)
 
-set(PdQuickGridLibs PdQuickGrid PdNeighborhood)
+set(MESH_INPUT_LIBS QuickGrid)
 
 # other required libraries
-set(PdVTKLibs PdVTK)
+set(MESH_OUTPUT_LIBS PdVTK)
 
-# other required libraries
-set(PdZoltanLibs PdZoltan)
+# load balancing and neighborhood creation
+set(PDNEIGH_LIBS PdNeigh)
 
 # other required libraries
 set(PdMaterialUtilitiesLib PdMaterialUtilities)
@@ -241,13 +232,7 @@ set(PdMaterialUtilitiesLib PdMaterialUtilities)
 set(INCLUDE_DIRS 
 ${VTK_INCLUDE_DIRS} 
 ${Boost_INCLUDE_DIRS} 
-${CMAKE_SOURCE_DIR}/io
 ${CMAKE_SOURCE_DIR}/PdMaterialUtilities
-${CMAKE_SOURCE_DIR}/src
-${CMAKE_SOURCE_DIR}/src/contact
-${CMAKE_SOURCE_DIR}/src/evaluators
-${CMAKE_SOURCE_DIR}/src/materials
-${CMAKE_SOURCE_DIR}/src/initial_conditions
 )
 
 include_directories(${INCLUDE_DIRS})
@@ -274,31 +259,6 @@ libm.a
 )
 
 add_subdirectory (pditi)
-add_subdirectory (io)
-add_subdirectory (io/unitTest)
-#add_subdirectory (io/post_process)
-add_subdirectory (src)
 add_subdirectory (PdMaterialUtilities)
-add_subdirectory (test/unit)
-#add_subdirectory (test/regression)
-#add_subdirectory (test/verification)
 
-# Create symbolic links to files in directories specified.  By default it recurses directories
-# Can exclude files with flag -e <filename>
-string (COMPARE EQUAL ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} buildInSource)
-if (NOT ${buildInSource})
-   set(UT_DIRS ${UT_DIRS}  -d pditi/intrepid)
-   set(UT_DIRS ${UT_DIRS}  -d pditi/aliti)
-   set(UT_DIRS ${UT_DIRS}  -d pditi/operators/unitTest)
-   set(UT_DIRS ${UT_DIRS}  -d pditi/pdneigh/unit_test)
-   set(UT_DIRS ${UT_DIRS}  -d pditi/utilities/unit_test)
-   set(UT_DIRS ${UT_DIRS}  -d pditi/mesh_input/quick_grid/unit_test)
-   set(UT_DIRS ${UT_DIRS}  -d test/unit)
-#   set(UT_DIRS ${UT_DIRS}  -d test/regression)
-#   set(UT_DIRS ${UT_DIRS}  -d test/verification)
-   set(UT_DIRS ${UT_DIRS}  -d src/materials/unitTest/utPeridigm_IsotropicElasticPlastic)
-   execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/mirror.py -s ${CMAKE_SOURCE_DIR} -b ${CMAKE_BINARY_DIR} ${UT_DIRS} )
-   set(SCRIPT_DIRS ${SCRIPT_DIRS}  -d scripts)
-   execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/mirror.py -s ${CMAKE_SOURCE_DIR} -b ${CMAKE_BINARY_DIR} ${SCRIPT_DIRS} )
-endif (NOT ${buildInSource})
 
