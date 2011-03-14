@@ -1,12 +1,12 @@
 #include "PdImpMpiFixture.h"
 #include "PdITI_Operator.h"
-#include "../pdneigh/NeighborhoodList.h"
-#include "PdGridData.h"
-#include "PdQuickGrid.h"
-#include "PdQuickGridParallel.h"
+#include "NeighborhoodList.h"
+#include "../mesh_input/quick_grid/QuickGrid.h"
+#include "../mesh_input/quick_grid/QuickGridData.h"
 #include "PdVTK.h"
 #include "Field.h"
 #include "PdZoltan.h"
+#include "Array.h"
 #include "StageFunction.h"
 #include "IsotropicElasticConstitutiveModel.h"
 #include "ConstitutiveModel.h"
@@ -49,7 +49,7 @@ const std::valarray<double> center(centerPoint,3);
  * Note that zStart is used for the 1D spec along cylinder axis
  */
 const double zStart = 0.0;
-const PdQuickGrid::PdQRing2d ring2dSpec(center,innerRadius,outerRadius,numRings);
+const QUICKGRID::SpecRing2D ring2dSpec(center,innerRadius,outerRadius,numRings);
 
 /*
  * Create 1d Spec along cylinder axis
@@ -63,26 +63,26 @@ const PdQuickGrid::PdQRing2d ring2dSpec(center,innerRadius,outerRadius,numRings)
 const double SCALE=2.51;
 const double cellSize = ring2dSpec.getRaySpec().getCellSize();
 const double horizon = SCALE*cellSize;
-const int numCellsAxis = (int)(cylinderLength/cellSize)+1;
-const PdQuickGrid::PdQPointSet1d axisSpec(numCellsAxis,zStart,cylinderLength);
+const size_t numCellsAxis = (int)(cylinderLength/cellSize)+1;
+const QUICKGRID::Spec1D axisSpec(numCellsAxis,zStart,cylinderLength);
 
 
 
-shared_ptr<double> getAxialExtensionZ(int numOwnedPoints, shared_ptr<double>& xPtr);
-PdGridData getCylinderDiscretizaton(int rank, int numProcs);
-PdGridData getDemoDiscretizaton(int myRank, int numProcs);
-Field_NS::TemporalField<double> getOwnedQ2CylinderInitialConditions(double vr0, double vr1, double vz0, double a, PdGridData& gridData);
+shared_ptr<double> getAxialExtensionZ(size_t numOwnedPoints, shared_ptr<double>& xPtr);
+QUICKGRID::QuickGridData getCylinderDiscretizaton(int rank, int numProcs);
+size_t getDemoDiscretizaton(size_t size_t, int numProcs);
+Field_NS::TemporalField<double> getOwnedQ2CylinderInitialConditions(double vr0, double vr1, double vz0, double a, QUICKGRID::QuickGridData& gridData);
 
 int main( int argc, char *argv[]) {
 	PdImpRunTime::PimpMpiFixture pimpMPI = PdImpRunTime::PimpMpiFixture::getPimpMPI(argc,argv);
 	const Epetra_Comm& comm = pimpMPI.getEpetra_Comm();
-	PdGridData decomp = getCylinderDiscretizaton(comm.MyPID(), comm.NumProc());
+	size_t decomp = getCylinderDiscretizaton(comm.MyPID(), comm.NumProc());
 //	PdGridData decomp = getDemoDiscretizaton(comm.MyPID(), comm.NumProc());
 
 	/*
 	 * Load balance and write new decomposition
 	 */
-	decomp=getLoadBalancedDiscretization(decomp);
+	decomp=QUICKGRID::getLoadBalancedDiscretization(decomp);
 	int numPoints = decomp.numPoints;
 	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
 	/*
@@ -153,14 +153,14 @@ int main( int argc, char *argv[]) {
 
 }
 
-PdGridData getCylinderDiscretizaton(int myRank, int numProcs){
+QUICKGRID::QuickGridData getCylinderDiscretizaton(size_t myRank, size_t numProcs){
 	// Create abstract decomposition iterator
-	PdQuickGrid::TensorProductCylinderMeshGenerator cellPerProcIter(numProcs, horizon,ring2dSpec, axisSpec, PdQuickGrid::SphericalNorm);
-	PdGridData decomp =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
+	QUICKGRID::TensorProductCylinderMeshGenerator cellPerProcIter(numProcs, horizon,ring2dSpec, axisSpec, PdQuickGrid::SphericalNorm);
+	QUICKGRID::QuickGridData decomp =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
 	return decomp;
 }
 
-Field_NS::TemporalField<double> getOwnedQ2CylinderInitialConditions(double vr0, double vr1, double vz0, double a, PdGridData& gridData){
+Field_NS::TemporalField<double> getOwnedQ2CylinderInitialConditions(double vr0, double vr1, double vz0, double a, QUICKGRID::QuickGridData& gridData){
 	int numPoints = gridData.numPoints;
 	Field_NS::TemporalField<double> v0(Field_NS::getDISPL3D(numPoints));
 	double *v = v0.getField(Field_NS::FieldSpec::STEP_NP1).getArray().get();
@@ -181,8 +181,8 @@ Field_NS::TemporalField<double> getOwnedQ2CylinderInitialConditions(double vr0, 
 	return v0;
 }
 
-shared_ptr<double> getAxialExtensionZ(int numOwnedPoints, shared_ptr<double>& xPtr){
-	shared_ptr<double> uPtr(new double[3*numOwnedPoints],PdQuickGrid::Deleter<double>());
+UTILITIES::Array<double> getAxialExtensionZ(int numOwnedPoints, shared_ptr<double>& xPtr){
+	UTILITIES::Array<double> uPtr(3*numOwnedPoints);
 	double *u = uPtr.get();
 	double *x = xPtr.get();
 	double gamma=1.0;
@@ -208,7 +208,7 @@ void printNeighborList(std::tr1::shared_ptr<int> localNeighborList,int numOwned)
 }
 
 
-PdGridData getDemoDiscretizaton(int myRank, int numProcs){
+QUICKGRID::QuickGridData getDemoDiscretizaton(size_t myRank, size_t numProcs){
 	const int nx = 1;
 	const int ny = 1;
 	const int nz = 100;
@@ -219,11 +219,11 @@ PdGridData getDemoDiscretizaton(int myRank, int numProcs){
 	const double zStart = 0.0;
 	const double zLength = 1.0;
 //	const double zLength = nz*xLength/nx; // this makes cell size along z -- same as x, y
-	const PdQuickGrid::PdQPointSet1d xSpec(nx,xStart,xLength);
-	const PdQuickGrid::PdQPointSet1d ySpec(ny,yStart,yLength);
-	const PdQuickGrid::PdQPointSet1d zSpec(nz,zStart,zLength);
+	const QUICKGRID::Spec1D xSpec(nx,xStart,xLength);
+	const QUICKGRID::Spec1D ySpec(ny,yStart,yLength);
+	const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
 	double horizon = .1;
-	PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
-	return PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
+	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
+	return QUICKGRID::getDiscretization(myRank, cellPerProcIter);
 }
 

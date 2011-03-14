@@ -10,6 +10,37 @@ enable_testing ()
 project (peridigm)
 set (EXECUTABLE_NAME Peridigm)
 
+set(HOME_BUILD 0)
+set(HOME /home/wow)
+message("\nPeridigm build from $ENV{HOME}\n")
+if(EXISTS ${HOME})
+    set(HOME_BUILD 1)
+endif()
+
+if(HOME_BUILD)
+    # Blas and Lapack Libraries
+    find_library(ACML_LIBRARY
+      NAMES acml
+      PATHS ${BLAS_LIBRARY_DIRS}
+    )
+    set(BlasLapack_Libraries acml)
+else()
+    # Initialize BOOST 
+    set(BOOST_ROOT ${BOOST_ROOT})
+    set(BOOST_VERSION 1.37)
+    
+    # Blas and Lapack Libraries
+    find_library(Blas_LIBRARY
+      NAMES blas
+      PATHS ${BLAS_LIBRARY_DIRS}
+    )
+    find_library(Lapack_LIBRARY
+      NAMES lapack
+      PATHS ${LAPACK_LIBRARY_DIRS}
+    )
+    set(BlasLapack_Libraries blas lapack)
+endif()
+
 # MPI configuration
 # use the FindMPI module to find a version of MPI
 # expose CMAKE_CXX_COMPILER so that the user can change it to the MPI compiler
@@ -53,17 +84,6 @@ if (VTK_FOUND)
 else ()
   message ("\nVTK NOT FOUND!  (Try defining VTK_DIR)\n")
 endif ()
-
-# Blas and Lapack Libraries  
-find_library(Blas_LIBRARY  
-   NAMES blas  
-   PATHS ${BLAS_LIBRARY_DIRS}  
-)  
-find_library(Lapack_LIBRARY  
-   NAMES lapack  
-   PATHS ${LAPACK_LIBRARY_DIRS}  
-)  
-set(BlasLapack_Libraries blas lapack)  
 
 #
 # DAKOTA configuration
@@ -203,7 +223,7 @@ teuchos
 
 # other required libraries
 # VTK libs
-set(VTK_LIBS vtkIO vtkGraphics vtkHybrid vtkParallel)
+set(VTK_LIBS vtkIO vtkGraphics vtkParallel vtkHybrid vtkexoIIc)
 
 set(PdQuickGridLibs PdQuickGrid PdNeighborhood)
 
@@ -233,12 +253,13 @@ ${CMAKE_SOURCE_DIR}/src/initial_conditions
 include_directories(${INCLUDE_DIRS})
 
 # link directories 
-set(LIB_DIRS ${TRILINOS_DIR}/lib ${VTK_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS})
+set(LIB_DIRS ${TRILINOS_DIR}/lib ${VTK_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS} ${BLAS_LIBRARY_DIRS})
 link_directories(${LIB_DIRS})
 
 
 set (REQUIRED_LIBS
 ${BlasLapack_Libraries}  
+mpich
 ${PTHREAD_LIB}
 libgfortran.a
 libm.a
@@ -246,26 +267,35 @@ libm.a
 
 set (UT_REQUIRED_LIBS
 ${BlasLapack_Libraries}  
+mpich 
 libgfortran.a
 ${Boost_LIBRARIES}
 libm.a
 )
 
+add_subdirectory (pditi)
 add_subdirectory (io)
 add_subdirectory (io/unitTest)
+#add_subdirectory (io/post_process)
 add_subdirectory (src)
 add_subdirectory (PdMaterialUtilities)
 add_subdirectory (test/unit)
-add_subdirectory (test/regression)
-add_subdirectory (test/verification)
+#add_subdirectory (test/regression)
+#add_subdirectory (test/verification)
 
 # Create symbolic links to files in directories specified.  By default it recurses directories
 # Can exclude files with flag -e <filename>
 string (COMPARE EQUAL ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} buildInSource)
 if (NOT ${buildInSource})
+   set(UT_DIRS ${UT_DIRS}  -d pditi/intrepid)
+   set(UT_DIRS ${UT_DIRS}  -d pditi/aliti)
+   set(UT_DIRS ${UT_DIRS}  -d pditi/operators/unitTest)
+   set(UT_DIRS ${UT_DIRS}  -d pditi/pdneigh/unit_test)
+   set(UT_DIRS ${UT_DIRS}  -d pditi/utilities/unit_test)
+   set(UT_DIRS ${UT_DIRS}  -d pditi/mesh_input/quick_grid/unit_test)
    set(UT_DIRS ${UT_DIRS}  -d test/unit)
-   set(UT_DIRS ${UT_DIRS}  -d test/regression)
-   set(UT_DIRS ${UT_DIRS}  -d test/verification)
+#   set(UT_DIRS ${UT_DIRS}  -d test/regression)
+#   set(UT_DIRS ${UT_DIRS}  -d test/verification)
    set(UT_DIRS ${UT_DIRS}  -d src/materials/unitTest/utPeridigm_IsotropicElasticPlastic)
    execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/mirror.py -s ${CMAKE_SOURCE_DIR} -b ${CMAKE_BINARY_DIR} ${UT_DIRS} )
    set(SCRIPT_DIRS ${SCRIPT_DIRS}  -d scripts)

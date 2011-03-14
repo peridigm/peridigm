@@ -12,13 +12,13 @@
 #include "vtkCellArray.h"
 #include "vtkCellData.h"
 #include <vtkDoubleArray.h>
-#include "PdQuickGrid.h"
+//#include "PdQuickGrid.h"
 #include "VectorUtils.h"
 
 #include "mpi.h"
-
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 
 namespace PdVTK {

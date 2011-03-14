@@ -17,7 +17,6 @@
 #include "vtkKdTree.h"
 #include "vtkKdTreePointLocator.h"
 #include "vtkXMLPUnstructuredGridWriter.h"
-#include "PdGridData.h"
 #include <tr1/memory>
 #include "Field.h"
 #include <deque>
@@ -25,6 +24,7 @@
 
 using std::deque;
 using std::string;
+using std::tr1::shared_ptr;
 
 class vtkPoints;
 

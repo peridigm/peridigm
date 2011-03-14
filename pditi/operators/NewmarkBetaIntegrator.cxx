@@ -5,7 +5,6 @@
  *      Author: jamitch
  */
 #include "NewmarkBetaIntegrator.h"
-#include "Field.h"
 
 namespace PdImp {
 
