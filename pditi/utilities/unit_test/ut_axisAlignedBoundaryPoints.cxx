@@ -11,7 +11,7 @@
 #include <boost/test/parameterized_test.hpp>
 #include "quick_grid/QuickGrid.h"
 #include "Sortable.h"
-#include "../NeighborhoodList.h"
+#include "NeighborhoodList.h"
 #include <set>
 #include <utility>
 #include <map>
@@ -71,10 +71,10 @@ void axisAlignedMinimum() {
 	/*
 	 * This finds 2 planes of points (x-y plane) at the minimum value of z-end of the bar
 	 */
-//	Pd_shared_ptr_Array<int> bcIds = PdNeighborhood::getPointsAxisAlignedMinimum(axis,xPtr,numPoints,horizon);
-//	BOOST_CHECK(32==bcIds.getSize());
-//	for(int *ids = bcIds.get();ids!=bcIds.end();ids++)
-//		BOOST_CHECK(setEnd != answerIds.find(*ids));
+	Array<int> bcIds = UTILITIES::getPointsAxisAlignedMinimum(axis,xPtr,numPoints,horizon);
+	BOOST_CHECK(32==bcIds.get_size());
+	for(int *ids = bcIds.get();ids!=bcIds.end();ids++)
+		BOOST_CHECK(setEnd != answerIds.find(*ids));
 
 }
 
@@ -98,11 +98,11 @@ void axisAlignedMaximum() {
 	/*
 	 * This finds 2 planes of points (x-y plane) at the maximum value of z-end of the bar
 	 */
-//	Pd_shared_ptr_Array<int> bcIds = PdNeighborhood::getPointsAxisAlignedMaximum(axis,xPtr,numPoints,horizon);
-//	BOOST_CHECK(32==bcIds.getSize());
-//	for(int *ids = bcIds.get();ids!=bcIds.end();ids++){
-//		BOOST_CHECK(setEnd != answerIds.find(*ids));
-//	}
+	Array<int> bcIds = UTILITIES::getPointsAxisAlignedMaximum(axis,xPtr,numPoints,horizon);
+	BOOST_CHECK(32==bcIds.get_size());
+	for(int *ids = bcIds.get();ids!=bcIds.end();ids++){
+		BOOST_CHECK(setEnd != answerIds.find(*ids));
+	}
 
 }
 

@@ -44,6 +44,8 @@ public:
 
 	const T* get() const { return aPtr.get(); }
 
+	const T* end() const { return raw_ptr + size; }
+
 	T operator[](int i) const {
 		if(0>i || size<=i){
 			std::string message("ERROR\n\tArray::operator[](int i) const \'i\' out of range.");
