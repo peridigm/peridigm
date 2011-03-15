@@ -329,11 +329,11 @@ double compute_hex8_volume(vtkPoints* points){
 
 	Plus p;
 	Vector3D A(p(x17,x06));
-	double v1 = scalar_triple_product(A,x27,x03);
+	double v1 = UTILITIES::scalar_triple_product(A,x27,x03);
 	Vector3D B(p(x27,x05));
-	double v2 = scalar_triple_product(x06,B,x47);
+	double v2 = UTILITIES::scalar_triple_product(x06,B,x47);
 	Vector3D C(p(x47,x03));
-	double v3 = scalar_triple_product(x17,x05,C);
+	double v3 = UTILITIES::scalar_triple_product(x17,x05,C);
 	return (v1+v2+v3)/12;
 }
 

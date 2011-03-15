@@ -7,7 +7,7 @@ Cmake_minimum_required (VERSION 2.6)
 enable_testing ()
 
 # Basic settings for PdITI project
-project (pditi)
+project (PdITI)
 
 set(HOME_BUILD 0)
 #set(HOME /home/wow)
