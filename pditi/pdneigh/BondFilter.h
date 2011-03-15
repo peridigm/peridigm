@@ -13,7 +13,7 @@
 #include <stdexcept>
 #include <string>
 #include <tr1/memory>
-#include "VectorUtils.h"
+#include "Vector.h"
 
 using std::size_t;
 using std::tr1::shared_ptr;
@@ -54,7 +54,7 @@ public:
 	 */
 	bool bondIntersect(double x[3], double tolerance=1.0e-15);
 private:
-	VectorUtilsNS::Vector3D n, r0, ub, ua;
+	UTILITIES::Vector3D n, r0, ub, ua;
 	double a, b;
 };
 

@@ -12,10 +12,10 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
 #include <tr1/memory>
-#include "PdZoltan.h"
+#include "../PdZoltan.h"
 #include "quick_grid/QuickGrid.h"
 #include "../NeighborhoodList.h"
-#include "BondFilter.h"
+#include "../BondFilter.h"
 #include <iostream>
 
 #include "Epetra_ConfigDefs.h"

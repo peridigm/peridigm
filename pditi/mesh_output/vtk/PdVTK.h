@@ -45,6 +45,8 @@ struct vtk_trait<double> {
    typedef vtkSmartPointer<vtkDoubleArray> vtk_type;
 };
 
+vtkSmartPointer<vtkUnstructuredGrid> getGrid(shared_ptr<double>& y, int numPoints);
+
 /*
  * TEMPORARY
  */

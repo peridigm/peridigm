@@ -12,7 +12,6 @@
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
-#include "PdVTK.h"
 #include "vtkXMLStructuredGridWriter.h"
 #include "vtkXMLStructuredGridReader.h"
 #include "vtkXMLUnstructuredGridWriter.h"
@@ -22,17 +21,14 @@
 #include "vtkIdList.h"
 #include "vtkKdTree.h"
 #include "vtkKdTreePointLocator.h"
-#include "PdQuickGrid.h"
-#include "PdQuickGridParallel.h"
-#include "PdGridData.h"
-#include "PdutMpiFixture.h"
-#include "PdNeighborhood.h"
+#include "../PdZoltan.h"
+#include "quick_grid/QuickGrid.h"
 #include "../NeighborhoodList.h"
+#include "../BondFilter.h"
+#include "vtk/PdVTK.h"
+#include "PdutMpiFixture.h"
 #include "zoltan.h"
-#include "PdZoltan.h"
-#include "Field.h"
-#include "PdBondFilter.h"
-#include <Teuchos_RCP.hpp>
+#include "vtk/Field.h"
 #include "mpi.h"
 #include <tr1/memory>
 #include <valarray>
@@ -51,14 +47,11 @@
 
 
 
-using namespace PdQuickGrid;
-using namespace PdNeighborhood;
+using namespace Field_NS;
+using namespace PdBondFilter;
+using namespace PDNEIGH;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
-
-using Teuchos::RCP;
-using PdBondFilter::BondFilter;
-
 
 using namespace Pdut;
 using std::tr1::shared_ptr;
@@ -67,12 +60,9 @@ using std::set;
 using std::map;
 
 
-using namespace PdQuickGrid;
-using namespace PdNeighborhood;
+using namespace QUICKGRID;
+using namespace PDNEIGH;
 using namespace Field_NS;
-using std::tr1::shared_ptr;
-using namespace boost::unit_test;
-
 
 static int numProcs;
 static int myRank;
@@ -89,19 +79,19 @@ const double yLength =  lY;
 const int nz = 1;
 const double zStart  = -lZ/2.0/nz;
 const double zLength =  lZ;
-const PdQPointSet1d xSpec(nx,xStart,xLength);
-const PdQPointSet1d ySpec(ny,yStart,yLength);
-const PdQPointSet1d zSpec(nz,zStart,zLength);
-const int numCells = nx*ny*nz;
+const QUICKGRID::Spec1D xSpec(nx,xStart,xLength);
+const QUICKGRID::Spec1D ySpec(ny,yStart,yLength);
+const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
+const size_t numCells = nx*ny*nz;
 const double horizon=1.1;
 using std::cout;
 using std::endl;
 
 
 
-PdGridData getGrid() {
-	PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec,PdQuickGrid::SphericalNorm);
-	PdGridData decomp =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
+QUICKGRID::QuickGridData getGrid() {
+	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
+	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
 
 	// This load-balances
 	decomp = getLoadBalancedDiscretization(decomp);
@@ -119,7 +109,7 @@ shared_ptr< std::set<int> > constructFrame(PDNEIGH::NeighborhoodList& list) {
 }
 
 void createNeighborhood() {
-	PdGridData decomp = getGrid();
+	QUICKGRID::QuickGridData decomp = getGrid();
 	BOOST_CHECK(1==decomp.numPoints);
 	BOOST_CHECK(4==decomp.globalNumPoints);
 	shared_ptr<BondFilter> bondFilterPtr(new PdBondFilter::BondFilterDefault(true));

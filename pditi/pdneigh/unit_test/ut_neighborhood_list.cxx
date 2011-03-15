@@ -12,13 +12,10 @@
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
-#include "PdNeighborhood.h"
-#include "PdQuickGrid.h"
-#include "PdQuickGridParallel.h"
-#include "PdZoltan.h"
+#include "../PdZoltan.h"
+#include "quick_grid/QuickGrid.h"
 #include "../NeighborhoodList.h"
-#include "PdBondFilter.h"
-#include <Teuchos_RCP.hpp>
+#include "../BondFilter.h"
 #include <set>
 #include "Epetra_ConfigDefs.h"
 #ifdef HAVE_MPI
@@ -29,12 +26,10 @@
 #endif
 
 
-using namespace PdQuickGrid;
-using namespace PdNeighborhood;
+using namespace PdBondFilter;
+using namespace PDNEIGH;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
-using Teuchos::RCP;
-using PdBondFilter::BondFilter;
 
 const int nx = 1;
 const int ny = 1;
@@ -45,9 +40,9 @@ const double yStart = 0.0;
 const double yLength = 1.0;
 const double zStart = 0.0;
 const double zLength = 1.0;
-const PdQPointSet1d xSpec(nx,xStart,xLength);
-const PdQPointSet1d ySpec(ny,yStart,yLength);
-const PdQPointSet1d zSpec(nz,zStart,zLength);
+const QUICKGRID::Spec1D xSpec(nx,xStart,xLength);
+const QUICKGRID::Spec1D ySpec(ny,yStart,yLength);
+const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
 const int numCells = nx*ny*nz;
 
 
@@ -58,8 +53,8 @@ void axialBarLinearSpacing() {
 	int myRank=0;
 	double SCALE=3.1;
 	double horizon = SCALE*zSpec.getCellSize();
-	PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
-	PdGridData decomp =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
+	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
+	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
 	// This load-balances
 	/*
 	 * NOTE: to run the neighborhood calculation below, the discretization must be load balanced!

@@ -7,12 +7,13 @@
 #include "Epetra_Comm.h"
 #include "NeighborhoodList.h"
 #include "zoltan.h"
-#include "PdVTK.h"
+#include "vtk/PdVTK.h"
 #include "vtkIdList.h"
 #include "vtkKdTree.h"
 #include "vtkKdTreePointLocator.h"
 #include <stdexcept>
 #include "Sortable.h"
+#include "Array.h"
 /*
  * @TODO
  * Need to remove this header dependency
@@ -24,6 +25,7 @@ namespace PDNEIGH {
 
 using UTILITIES::Sortable;
 using UTILITIES::CartesianComponent;
+using UTILITIES::Array;
 
 /*
  * Prototype for private function
@@ -224,9 +226,9 @@ void NeighborhoodList::createAndAddNeighborhood(){
 	/*
 	 * This is the maximum possible length of communication -- every frame point goes to every processor
 	 */
-	Pd_shared_ptr_Array<int> procsArrayPoint(numProcs);
-	Pd_shared_ptr_Array<int> sendProcsArray(numProcs*frameSet->size());
-	Pd_shared_ptr_Array<int> pointLocalIdsArray(numProcs*frameSet->size());
+	Array<int> procsArrayPoint(numProcs);
+	Array<int> sendProcsArray(numProcs*frameSet->size());
+	Array<int> pointLocalIdsArray(numProcs*frameSet->size());
 	/*
 	 * Total number of points to be sent
 	 */
@@ -371,8 +373,8 @@ void NeighborhoodList::createAndAddNeighborhood(){
 	/*
 	 * First, create set of overlap points
 	 */
-	Pd_shared_ptr_Array<double> xOverlapArray(newNumPoints*dimension);
-	Pd_shared_ptr_Array<int> gIdsOverlapArray(newNumPoints);
+	Array<double> xOverlapArray(newNumPoints*dimension);
+	Array<int> gIdsOverlapArray(newNumPoints);
 
 	{
 		double *xOverlap = xOverlapArray.get();

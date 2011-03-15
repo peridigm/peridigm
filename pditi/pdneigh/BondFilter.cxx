@@ -4,14 +4,13 @@
  *  Created on: Dec 17, 2010
  *      Author: jamitch
  */
-#include "PdBondFilter.h"
+#include "BondFilter.h"
 #include "vtkPlane.h"
 
-using VectorUtilsNS::Vector3D;
-static VectorUtilsNS::Dot dot;
-static VectorUtilsNS::Cross cross;
-static VectorUtilsNS::Minus minus;
-static VectorUtilsNS::Plus plus;
+using UTILITIES::Vector3D;
+static UTILITIES::Dot dot;
+static UTILITIES::Cross cross;
+static UTILITIES::Minus minus;
 
 namespace PdBondFilter {
 
