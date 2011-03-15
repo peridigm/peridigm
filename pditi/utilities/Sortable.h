@@ -146,6 +146,52 @@ Array<int> Sortable::getIdentityMap() const {
 }
 
 
+
+Array<int> getSortedMap(const Sortable& c, CartesianComponent axis);
+
+Array<int> getPointsInNeighborhoodOfAxisAlignedMinimumValue
+(
+		CartesianComponent axis,
+		shared_ptr<double> xPtr,
+		size_t numPoints,
+		double horizon,
+		double axisMinimumValue
+);
+
+Array<int> getPointsInNeighborhoodOfAxisAlignedMaximumValue
+(
+		CartesianComponent axis,
+		shared_ptr<double> xPtr,
+		size_t numPoints,
+		double horizon,
+		double axisMaximumValue
+);
+
+/**
+ * Mostly for rectangular type meshes; Returns points in plane perpendicular to "axis";
+ * All points within a distance of horizon of the axis minimum are returned
+ * @param axis -- X || Y || Z
+ * @param horizon
+ */
+Array<int> getPointsAxisAlignedMinimum
+(
+		CartesianComponent axis,
+		shared_ptr<double> xPtr,
+		size_t numPoints,
+		double horizon
+);
+
+Array<int> getPointsAxisAlignedMaximum
+(
+		CartesianComponent axis,
+		shared_ptr<double> xPtr,
+		size_t numPoints,
+		double horizon
+);
+
+
+
+
 }
 
 #endif /* SORTABLE_H_ */

@@ -28,6 +28,3 @@ add_executable(ut_Y-Z_crack_jacobian_np4 ut_Y-Z_crack_jacobian_np4.cxx)
 target_link_libraries(ut_Y-Z_crack_jacobian_np4  PdNeigh QuickGrid PdVTK ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 add_test (ut_Y-Z_crack_jacobian_np4 python run_unit_test.py mpiexec -np 4 ./ut_Y-Z_crack_jacobian_np4)
 
-add_executable(ut_axisAlignedBoundaryPoints ut_axisAlignedBoundaryPoints.cxx)
-target_link_libraries(ut_axisAlignedBoundaryPoints  PdNeigh QuickGrid ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
-add_test (ut_axisAlignedBoundaryPoints python run_unit_test.py mpiexec -np 4 ./ut_axisAlignedBoundaryPoints)

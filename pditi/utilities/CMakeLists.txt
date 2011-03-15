@@ -6,4 +6,4 @@ add_subdirectory(unit_test)
 #
 # Utilities library
 #
-#add_library(utilities)
+add_library(Utilities Sortable.cxx)
