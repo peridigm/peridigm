@@ -1,9 +1,9 @@
 #include <tr1/memory>
 #include <vector>
-#include "zoltan.h"
 #include "PdZoltan.h"
 #include "Array.h"
-#include "PdBondFilter.h"
+#include "BondFilter.h"
+#include "quick_grid/QuickGrid.h"
 #include <iostream>
 
 
@@ -14,6 +14,7 @@ using std::vector;
 using std::cerr;
 using std::cout;
 using std::endl;
+using QUICKGRID::QuickGridData;
 
 struct ZoltanDestroyer{
 	void operator()(struct Zoltan_Struct *zoltan) {
@@ -528,8 +529,6 @@ void zoltanQuery_packPointsMultiFunction
 
 }
 
-
-
 void zoltanQuery_unPackPointsMultiFunction
 (
 		void *pdGridData,
@@ -567,7 +566,7 @@ void zoltanQuery_unPackPointsMultiFunction
 	 * Points that were not originally exported will be at the top
 	 * Imported points will be at the bottom
 	 */
-	int dimension = gridData->dimension;
+	size_t dimension = gridData->dimension;
 	size_t newNumPoints = gridData->numPoints - gridData->numExport + numImport;
 	QuickGridData newGridData = QUICKGRID::allocatePdGridData(newNumPoints,dimension);
 

@@ -12,14 +12,11 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
 #include <tr1/memory>
-#include "PdZoltan.h"
-#include "PdQuickGrid.h"
-#include "PdQuickGridParallel.h"
+#include "../PdZoltan.h"
+#include "quick_grid/QuickGrid.h"
 #include "../NeighborhoodList.h"
+#include "../BondFilter.h"
 #include "PdutMpiFixture.h"
-#include "PdBondFilter.h"
-#include "PdVTK.h"
-#include "Field.h"
 #include <iostream>
 #include <set>
 #include "Epetra_ConfigDefs.h"
@@ -30,9 +27,8 @@
 #include "Epetra_SerialComm.h"
 #endif
 
-using namespace Field_NS;
-using namespace PdQuickGrid;
 using namespace PdBondFilter;
+using namespace PDNEIGH;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
 using namespace Pdut;
@@ -51,9 +47,9 @@ const double yStart = -2.5;
 const double yLength = 5.0;
 const double zStart = -0.5;
 const double zLength = 1.0;
-const PdQPointSet1d xSpec(nx,xStart,xLength);
-const PdQPointSet1d ySpec(ny,yStart,yLength);
-const PdQPointSet1d zSpec(nz,zStart,zLength);
+const QUICKGRID::Spec1D xSpec(nx,xStart,xLength);
+const QUICKGRID::Spec1D ySpec(ny,yStart,yLength);
+const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
 const double dx = xSpec.getCellSize();
 const double dy = ySpec.getCellSize();
 const double dz = zSpec.getCellSize();
@@ -78,11 +74,12 @@ const double horizon=1.1*sqrt( (2.0*dx)*(2.0*dx) +(2.0*dy)*(2.0*dy) +(2.0*dz)*(2
 //const double z1 = z0 + zSpec.getCellSize();
 
 
-PdGridData getGrid() {
+QUICKGRID::QuickGridData getGrid() {
 
-	PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
-	PdGridData gridData =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
+	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
+	QUICKGRID::QuickGridData gridData =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
 	gridData=getLoadBalancedDiscretization(gridData);
+	return gridData;
 	/*
 	 * Write file for debugging
 	 */
@@ -136,7 +133,7 @@ void printNeighborhood(int numNeigh, int* neigh){
 }
 
 void assertNeighborhood_p0(){
-	PdGridData gridData = getGrid();
+	QUICKGRID::QuickGridData gridData = getGrid();
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
 	PDNEIGH::NeighborhoodList list(Epetra_MpiComm(MPI_COMM_WORLD),gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);
@@ -205,7 +202,7 @@ void assertNeighborhood_p0(){
 }
 
 void assertNeighborhood_p1(){
-	PdGridData gridData = getGrid();
+	QUICKGRID::QuickGridData gridData = getGrid();
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
 	PDNEIGH::NeighborhoodList list(Epetra_MpiComm(MPI_COMM_WORLD),gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);
@@ -223,7 +220,7 @@ void assertNeighborhood_p1(){
 }
 
 void assertNeighborhood_p2(){
-	PdGridData gridData = getGrid();
+	QUICKGRID::QuickGridData gridData = getGrid();
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
 	PDNEIGH::NeighborhoodList list(Epetra_MpiComm(MPI_COMM_WORLD),gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);
@@ -241,7 +238,7 @@ void assertNeighborhood_p2(){
 }
 
 void assertNeighborhood_p3(){
-	PdGridData gridData = getGrid();
+	QUICKGRID::QuickGridData gridData = getGrid();
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
 	PDNEIGH::NeighborhoodList list(Epetra_MpiComm(MPI_COMM_WORLD),gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);

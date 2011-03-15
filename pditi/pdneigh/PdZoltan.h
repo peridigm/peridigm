@@ -4,29 +4,20 @@
 
 #include "zoltan.h"
 #include "quick_grid/QuickGridData.h"
-#include "quick_grid/QuickGrid.h"
-#include "PdBondFilter.h"
-#include <Teuchos_RCP.hpp>
-#include<tr1/memory>
-
 
 namespace PDNEIGH {
 
-using std::tr1::shared_ptr;
-using Teuchos::RCP;
-using PdBondFilter::BondFilter;
-using QUICKGRID::QuickGridData;
 
 /*
  * Re-usable component that creates initializes, and returns a "Zoltan" object
  */
-struct Zoltan_Struct * createAndInitializeZoltan(QuickGridData& pdGridData);
+struct Zoltan_Struct * createAndInitializeZoltan(QUICKGRID::QuickGridData& pdGridData);
 
 /*
  * Load balancing given a pre-computed neighborhood list -- eg for use with PdQuickGrid where
  * the neighborhood is generally pre-computed
  */
-QuickGridData& getLoadBalancedDiscretization(QuickGridData& pdGridData);
+QUICKGRID::QuickGridData& getLoadBalancedDiscretization(QUICKGRID::QuickGridData& pdGridData);
 
 /*
  * Zoltan call back functions
