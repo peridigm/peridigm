@@ -232,7 +232,6 @@ set(PdMaterialUtilitiesLib PdMaterialUtilities)
 set(INCLUDE_DIRS 
 ${VTK_INCLUDE_DIRS} 
 ${Boost_INCLUDE_DIRS} 
-${CMAKE_SOURCE_DIR}/PdMaterialUtilities
 )
 
 include_directories(${INCLUDE_DIRS})
