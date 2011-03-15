@@ -136,7 +136,7 @@ private:
 	double r;
 };
 
-double scalar_triple_product(const Vector3D& a, const Vector3D& b, const Vector3D& c){
+inline double scalar_triple_product(const Vector3D& a, const Vector3D& b, const Vector3D& c){
 	double v;
 	double a11 = a[0], a12 = b[0], a13 = c[0];
 	double a21 = a[1], a22 = b[1], a23 = c[1];
