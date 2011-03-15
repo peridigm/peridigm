@@ -5,6 +5,7 @@
  *      Author: awesome
  */
 #include "PdVTK.h"
+#include "Vector.h"
 #include "vtkXMLUnstructuredGridWriter.h"
 #include "vtkSmartPointer.h"
 #include "vtkUnstructuredGrid.h"
@@ -299,16 +300,6 @@ void expandRingPostProcess(double current_time, vtkSmartPointer<vtkUnstructuredG
 
 }
 
-using VectorUtilsNS::Vector3D;
-double scalar_triple_product(const Vector3D& a, const Vector3D& b, const Vector3D& c){
-	double v;
-	double a11 = a[0], a12 = b[0], a13 = c[0];
-	double a21 = a[1], a22 = b[1], a23 = c[1];
-	double a31 = a[2], a32 = b[2], a33 = c[2];
-	v=a11*(a22*a33-a23*a32)-a12*(a21*a33-a23*a31)+a13*(a21*a32-a22*a31);
-	return v;
-}
-
 /**
  * Computes volume of a single HEX8: Smokin Fast!
  * Perhaps this calculation is done with very nearly the least
@@ -316,7 +307,7 @@ double scalar_triple_product(const Vector3D& a, const Vector3D& b, const Vector3
  * Note that there can only be 8 incoming points
  * Order of points must be according to VTK convention (also same as exodus)  */
 double compute_hex8_volume(vtkPoints* points){
-	using namespace VectorUtilsNS;
+	using namespace UTILITIES;
 	/*
 	 * swap points 2 & 3
 	 * swap points 6 & 7

@@ -12,7 +12,7 @@
 #include "quadrulator.h"
 #include <cstdio>
 #include <iostream>
-#include "PdVTK.h"
+#include "vtk/PdVTK.h"
 #include <vtkCellType.h>
 
 using std::size_t;
