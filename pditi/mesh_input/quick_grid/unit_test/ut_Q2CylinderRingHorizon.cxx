@@ -1,5 +1,5 @@
 /*
- * utPdQ2CylinderRingHorizon.cxx
+ * ut_Q2CylinderRingHorizon.cxx
  *
  *  Created on: Jan 6, 2010
  *      Author: jamitch
