@@ -955,7 +955,7 @@ QuickGridData TensorProductSolidCylinder::allocatePdGridData() const {
 
 }
 
-std::pair<Cell3D,QuickGridData> TensorProductSolidCylinder::computePdGridData(int proc, Cell3D cellLocator, QuickGridData& pdGridData, NormFunctionPointer norm) const {
+std::pair<Cell3D,QuickGridData> TensorProductSolidCylinder::computePdGridData(size_t proc, Cell3D cellLocator, QuickGridData& pdGridData, NormFunctionPointer norm) const {
 
 	/**
 	 * This routine attempts to make as close of an analogy to CellsPerProcessor3D::computePdGridData(...)

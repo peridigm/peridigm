@@ -286,7 +286,7 @@ public:
 	virtual QuickGridData allocatePdGridData() const;
 	size_t getNumGlobalCells() const { return globalNumberOfCells; }
 	size_t getDimension() const { return 3; }
-	std::pair<Cell3D,QuickGridData> computePdGridData(int proc, Cell3D cellLocator, QuickGridData& pdGridData, NormFunctionPointer norm = NoOpNorm) const;
+	std::pair<Cell3D,QuickGridData> computePdGridData(size_t proc, Cell3D cellLocator, QuickGridData& pdGridData, NormFunctionPointer norm = NoOpNorm) const;
 	const std::vector<Spec1D>& getTensorProductSpecs() const { return specs; }
 
 private:
