@@ -11,7 +11,7 @@
 #include <boost/test/parameterized_test.hpp>
 #include "quick_grid/QuickGrid.h"
 #include "Sortable.h"
-#include "NeighborhoodList.h"
+#include "../NeighborhoodList.h"
 #include <set>
 #include <utility>
 #include <map>
