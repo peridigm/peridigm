@@ -56,3 +56,17 @@ add_executable(ut_QuickGrid_loadBal_np8_4x4x4 ut_QuickGrid_loadBal_np8_4x4x4.cxx
 target_link_libraries(ut_QuickGrid_loadBal_np8_4x4x4  PdNeigh QuickGrid Utilities ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 add_test (ut_QuickGrid_loadBal_np8_4x4x4 python run_unit_test.py mpiexec -np 8 ./ut_QuickGrid_loadBal_np8_4x4x4)
 
+#
+add_executable(utPdVtkKdTree utPdVtkKdTree.cxx)
+target_link_libraries(utPdVtkKdTree  QuickGrid PdVTK Utilities ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+add_test (utPdVtkKdTree python run_unit_test.py ./utPdVtkKdTree)
+
+#
+add_executable(utPdVtkPlane utPdVtkPlane.cxx)
+target_link_libraries(utPdVtkPlane  PdNeigh Utilities ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+add_test (utPdVtkPlane python run_unit_test.py ./utPdVtkPlane)
+
+add_executable(utReloadBalance_np4 utReloadBalance_np4.cxx)
+target_link_libraries(utReloadBalance_np4  PdNeigh QuickGrid Utilities PdVTK ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+add_test (utReloadBalance_np4 python run_unit_test.py mpiexec -np 4 ./utReloadBalance_np4)
+

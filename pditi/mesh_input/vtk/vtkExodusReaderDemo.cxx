@@ -12,7 +12,7 @@
 #include "vtkUnstructuredGrid.h"
 #include "vtkCellArray.h"
 #include "vtkCommunicator.h"
-#include "../PdVTK.h"
+#include "vtk/PdVTK.h"
 #include <iostream>
 #include <fstream>
 
@@ -20,7 +20,6 @@
 #define VTK_CREATE(type, name) \
   vtkSmartPointer<type> name = vtkSmartPointer<type>::New()
 
-double compute_hex8_volume(vtkPoints* points);
 
 
 int main (int argc, char *argv[])
