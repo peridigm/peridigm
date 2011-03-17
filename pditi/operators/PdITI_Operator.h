@@ -11,13 +11,16 @@
 #include "NeighborhoodList.h"
 #include "Epetra_Import.h"
 #include "Epetra_Export.h"
-#include "Field.h"
+#include "Array.h"
+#include "vtk/Field.h"
 #include "ConstitutiveModel.h"
 #include "RowStiffnessOperator.h"
 #include <tr1/memory>
 
 using std::tr1::shared_ptr;
 using Field_NS::TemporalField;
+using Field_NS::Field;
+using UTILITIES::Array;
 class Epetra_Comm;
 
 namespace PdITI {
@@ -27,10 +30,10 @@ public:
 	PdITI_Operator(const Epetra_Comm& comm, const PDNEIGH::NeighborhoodList neighborhoodList, shared_ptr<double> ownedCellVolume);
 	void addConstitutiveModel(shared_ptr<ConstitutiveModel>& model);
 	void advanceStateVariables();
-	Field_NS::Field<double> computeOwnedDilatation(Field_NS::Field<double> uOwnedField);
-	void computeInternalForce(Field_NS::Field<double> uOwned, Field_NS::Field<double> fIntOwned, bool withDilatation=true);
-	shared_ptr<RowStiffnessOperator> getJacobian(Field_NS::Field<double> uOwned);
-	Field_NS::Field<double> getWeightedVolume() const { return mOwnedField; }
+	Field<double> computeOwnedDilatation(Field<double> uOwnedField);
+	void computeInternalForce(Field<double> uOwned, Field<double> fIntOwned, bool withDilatation=true);
+	shared_ptr<RowStiffnessOperator> getJacobian(Field<double> uOwned);
+	Field<double> getWeightedVolume() const { return mOwnedField; }
 	const Epetra_Comm& getEpetra_Comm() const { return epetraComm; }
 	const Epetra_BlockMap& getOwnedMapScalar() { return  ownedMapScalar; }
 	const Epetra_BlockMap& getOverlapMapScalar() { return  overlapMapScalar; }
@@ -43,9 +46,9 @@ public:
 	public:
 		~RowOperator() {}
 		int getNumRows() const { return row_matrix_list.get_num_owned_points(); }
-		Pd_shared_ptr_Array<int> getColumnLIDs(int localRowID) const;
-		const Pd_shared_ptr_Array<int>& getNumColumnsPerRow() const;
-		const Pd_shared_ptr_Array<double>& computeRowStiffness(int localRowID, Pd_shared_ptr_Array<int> rowGIDs);
+		Array<int> getColumnLIDs(int localRowID) const;
+		const Array<int>& getNumColumnsPerRow() const;
+		const Array<double>& computeRowStiffness(int localRowID, Array<int> rowGIDs);
 		const Epetra_BlockMap& getRowMap() const { return rowMapNDF; }
 		const Epetra_BlockMap& getColMap() const { return colMapNDF; }
 		RowOperator
@@ -64,11 +67,11 @@ public:
 		Epetra_BlockMap rowMapNDF, rowMapScalar, colMapNDF, colMapScalar;
 		shared_ptr<double> xOverlapPtr, uOverlapPtr;
 		shared_ptr<double> dsfOverlapPtr, mOverlapPtr, volOverlapPtr, dilatationOverlapPtr;
-		Pd_shared_ptr_Array<double>  rowStiffnessPtr;
-		Pd_shared_ptr_Array<int> numColumnsPerRow;
+		Array<double>  rowStiffnessPtr;
+		Array<int> numColumnsPerRow;
 		double k3x3[27];
 		shared_ptr<ConstitutiveModel> matPtr;
-		Pd_shared_ptr_Array<int> computeNumColumnsPerRow() const;
+		Array<int> computeNumColumnsPerRow() const;
 	};
 
 

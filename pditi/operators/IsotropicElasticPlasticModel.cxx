@@ -9,8 +9,8 @@
 #include "PdMaterialUtilities.h"
 #include "PdITI_Utilities.h"
 #include <iostream>
-using std::cout;
-using std::endl;
+//using std::cout;
+//using std::endl;
 using PdImp::IsotropicHookeSpec;
 
 namespace PdITI {
@@ -58,12 +58,12 @@ void IsotropicElasticPlasticModel::computeInternalForce
 	double YIELD_STRESS=matSpec.yieldStress();
 	Field<double> fieldN   = temporalBondFields[0].getField(Field_NS::FieldSpec::STEP_N);
 	Field<double> fieldNp1 = temporalBondFields[0].getField(Field_NS::FieldSpec::STEP_NP1);
-	const double* deviatoricPlasticExtensionStateN   = fieldN.getArray().get();
-	double* deviatoricPlasticExtensionStateNp1 = fieldNp1.getArray().get();
+	const double* deviatoricPlasticExtensionStateN   = fieldN.get();
+	double* deviatoricPlasticExtensionStateNp1 = fieldNp1.get();
 	Field<double> lambdaFieldN   = temporalBondFields[1].getField(Field_NS::FieldSpec::STEP_N);
 	Field<double> lambdaFieldNP1 = temporalBondFields[1].getField(Field_NS::FieldSpec::STEP_NP1);
-	const double* lambdaN   = lambdaFieldN.getArray().get();
-	double* lambdaNP1 = lambdaFieldNP1.getArray().get();
+	const double* lambdaN   = lambdaFieldN.get();
+	double* lambdaNP1 = lambdaFieldNP1.get();
 
 
 	PdMaterialUtilities::computeInternalForceIsotropicElasticPlastic
