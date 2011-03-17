@@ -11,48 +11,46 @@
 #include <boost/test/parameterized_test.hpp>
 #include <tr1/memory>
 #include "PdZoltan.h"
-#include "PdQuickGrid.h"
-#include "PdQuickGridParallel.h"
-#include "../PdImpMpiFixture.h"
+#include "quick_grid/QuickGrid.h"
+#include "PdutMpiFixture.h"
 #include <iostream>
 
-using namespace PdQuickGrid;
+
+using namespace Pdut;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
 using std::cout;
 
-static int myRank;
-static int numProcs;
-const int nx = 1;
-const int ny = 1;
-const int nz = 11;
+static size_t myRank;
+static size_t numProcs;
+const size_t nx = 1;
+const size_t ny = 1;
+const size_t nz = 11;
 const double xStart =  0.0;
 const double xLength = 1.0;
 const double yStart =  0.0;
 const double yLength = 1.0;
 const double zStart =  0.0;
 const double zLength = 1.0;
-const PdQPointSet1d xSpec(nx,xStart,xLength);
-const PdQPointSet1d ySpec(ny,yStart,yLength);
-const PdQPointSet1d zSpec(nz,zStart,zLength);
+const QUICKGRID::Spec1D xSpec(nx,xStart,xLength);
+const QUICKGRID::Spec1D ySpec(ny,yStart,yLength);
+const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
 const double crossSectionalArea = xSpec.getCellSize()*ySpec.getCellSize();
 const double _cellVolume = crossSectionalArea*zSpec.getCellSize();
-const int numCells = nx*ny*nz;
+const size_t numCells = nx*ny*nz;
 
-
-
-PdGridData getGrid() {
+QUICKGRID::QuickGridData getGrid() {
 	double horizon = .3;
-	PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
-	PdGridData gridData =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
-	gridData = getLoadBalancedDiscretization(gridData);
+	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
+	QUICKGRID::QuickGridData gridData =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
+	gridData = PDNEIGH::getLoadBalancedDiscretization(gridData);
 	return gridData;
 }
 
 
 void p0()
 {
-	PdGridData gridData = getGrid();
+	QUICKGRID::QuickGridData gridData = getGrid();
 	BOOST_CHECK(0 == myRank);
 	/*
 	 * problem dimension is 3
@@ -74,7 +72,7 @@ void p0()
 
 void p1()
 {
-	PdGridData gridData = getGrid();
+	QUICKGRID::QuickGridData gridData = getGrid();
 	BOOST_CHECK(1 == myRank);
 	/*
 	 * problem dimension is 3
@@ -127,12 +125,11 @@ int main
 {
 
 	// Initialize MPI and timer
-	PdImpRunTime::PimpMpiFixture pimpMPI = PdImpRunTime::PimpMpiFixture::getPimpMPI(argc,argv);
-	const Epetra_Comm& comm = pimpMPI.getEpetra_Comm();
+	PdutMpiFixture myMpi = PdutMpiFixture(argc,argv);
 
 	// These are static (file scope) variables
-	myRank = comm.MyPID();
-	numProcs = comm.NumProc();
+	myRank = myMpi.rank;
+	numProcs = myMpi.numProcs;
 
 	/**
 	 * This test only make sense for numProcs == 2
@@ -140,7 +137,7 @@ int main
 	if(2 != numProcs){
 		std::cerr << "Unit test runtime ERROR: utPimpMatrix_np2_11x1x1 only makes sense on 2 processors" << std::endl;
 		std::cerr << "\t Re-run unit test $mpiexec -np 2 ./utPimpMatrix_np2_11x1x1" << std::endl;
-		pimpMPI.PimpMpiFixture::~PimpMpiFixture();
+		myMpi.PdutMpiFixture::~PdutMpiFixture();
 		std::exit(-1);
 	}
 
