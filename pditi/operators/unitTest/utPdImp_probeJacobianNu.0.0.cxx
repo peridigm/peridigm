@@ -9,20 +9,35 @@
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
-#include "../PdImpMpiFixture.h"
-#include "PdNeighborhood.h"
-#include "../../pdneigh/NeighborhoodList.h"
-#include "PdQuickGrid.h"
-#include "PdQuickGridParallel.h"
-#include "PdNeighborhood.h"
+#include "PdutMpiFixture.h"
+#include "Sortable.h"
+#include "Array.h"
+#include "quick_grid/QuickGrid.h"
+#include "NeighborhoodList.h"
 #include "PdZoltan.h"
-#include "Field.h"
+#include "vtk/Field.h"
+#include "vtk/PdVTK.h"
 #include "../PdImpMaterials.h"
 #include "../PdITI_Operator.h"
 #include "../PdITI_Utilities.h"
+#include "../DirichletBcSpec.h"
+#include "../BodyLoadSpec.h"
+#include "../StageFunction.h"
+#include "../Loader.h"
+#include "../StageComponentDirichletBc.h"
+#include "../ComponentDirichletBcSpec.h"
 #include "../IsotropicElasticConstitutiveModel.h"
-#include "../IsotropicElastic_No_DSF.h"
-#include "PdVTK.h"
+#include "../ConstitutiveModel.h"
+#include "PdutMpiFixture.h"
+
+#include "Epetra_ConfigDefs.h"
+#ifdef HAVE_MPI
+#include "mpi.h"
+#include "Epetra_MpiComm.h"
+#else
+#include "Epetra_SerialComm.h"
+#endif
+
 #include <set>
 #include <Epetra_FEVbrMatrix.h>
 #include <Epetra_SerialSymDenseMatrix.h>
@@ -34,21 +49,20 @@
 #include <string>
 
 
-using namespace PdQuickGrid;
-using namespace PdNeighborhood;
 using namespace Field_NS;
+using namespace Pdut;
 using PdITI::IsotropicElasticConstitutiveModel;
 using PdITI::ConstitutiveModel;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
 
 
-static int myRank;
-static int numProcs;
+static size_t myRank;
+static size_t numProcs;
 
-const int nx = 4;
-const int ny = 4;
-const int nz = 8;
+const size_t nx = 4;
+const size_t ny = 4;
+const size_t nz = 8;
 const double lX = 1.0;
 const double lY = 1.0;
 const double lZ = 1.0;
@@ -58,10 +72,10 @@ const double yStart  = -lY/2.0/ny;
 const double yLength =  lY;
 const double zStart  = -lZ/2.0/nz;
 const double zLength =  lZ;
-const PdQPointSet1d xSpec(nx,xStart,xLength);
-const PdQPointSet1d ySpec(ny,yStart,yLength);
-const PdQPointSet1d zSpec(nz,zStart,zLength);
-const int numCells = nx*ny*nz;
+const QUICKGRID::Spec1D xSpec(nx,xStart,xLength);
+const QUICKGRID::Spec1D ySpec(ny,yStart,yLength);
+const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
+const size_t numCells = nx*ny*nz;
 const double horizon=1.01*sqrt(pow(lX/nx,2)+pow(lY/ny,2)+pow(lZ/nz,2));
 const PdImp::BulkModulus _K(130000.0);
 const PdImp::PoissonsRatio _MU(0.0);
@@ -70,9 +84,9 @@ const PdImp::IsotropicHookeSpec isotropicSpec(_K,_MU);
 using PdVTK::writeField;
 
 void probe() {
-	PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec,PdQuickGrid::SphericalNorm);
-	PdGridData decomp =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
-	decomp = getLoadBalancedDiscretization(decomp);
+	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec,QUICKGRID::SphericalNorm);
+	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
+	decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
 	int numPoints = decomp.numPoints;
 
 
@@ -87,18 +101,15 @@ void probe() {
 	 * For each row, probe force operator and compare
 	 */
 	Field_NS::TemporalField<double> force = Field_NS::TemporalField<double>(Field_NS::FORCE3D,numPoints);
-//	PdImp::PdImpOperator op(comm,decomp);
 	PdITI::PdITI_Operator pditiOp(comm,list,decomp.cellVolume);
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
 //	shared_ptr<ConstitutiveModel> fIntOperator(new PdITI::IsotropicElastic_No_DSF(isotropicSpec));
-//	op.addConstitutiveModel(fIntOperator);
 	pditiOp.addConstitutiveModel(fIntOperator);
 
 
 	/*
 	 * Compute jacobian in deformed state
 	 */
-//	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getRowStiffnessOperator(uOwnedField,horizon);
 	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = pditiOp.getJacobian(uOwnedField);
 
 	/*
@@ -115,7 +126,7 @@ void probe() {
 //			streamNumCols << "\n";
 //		}
 //		streamRows << "row" << row;
-//		Pd_shared_ptr_Array<int> rowLIDs = jacobian->getColumnLIDs(row);
+//		Array<int> rowLIDs = jacobian->getColumnLIDs(row);
 //		streamNumCols << rowLIDs.getSize();
 //		if(row!=numPoints-1){
 //			streamNumCols << ", ";
@@ -135,14 +146,14 @@ void probe() {
 	 */
 
 	for(std::size_t row=0;row<numPoints;row++){
-		Pd_shared_ptr_Array<int> rowLIDs = jacobian->getColumnLIDs(row);
+		Array<int> rowLIDs = jacobian->getColumnLIDs(row);
 
 		/*
 		 * Print rows
 		 */
 //		std::stringstream streamRow;
 //		streamRow << "int row" << row << "[]={";
-//		for(int i=0;i<rowLIDs.getSize();i++){
+//		for(int i=0;i<rowLIDs.get_size();i++){
 //			if(i%10==0)
 //				streamRow << "\n";
 //			streamRow << *(rowLIDs.get()+i);
@@ -156,7 +167,7 @@ void probe() {
 		 * End print rows
 		 */
 
-		std::size_t numColsRow = rowLIDs.getSize();
+		std::size_t numColsRow = rowLIDs.get_size();
 		std::vector< std::pair<int,int> > pairs(numColsRow);
 		{
 			int *cols = rowLIDs.get();
@@ -173,24 +184,26 @@ void probe() {
 		int loc = 3*row;
 		double delta = horizon*1.0e-4;
 		double kProbe[9];
-		double *u = uOwnedField.getArray().get();
+		double *u = uOwnedField.get();
 		{
 			/*
 			 * probe in x-dir
 			 */
-			PdITI::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
-			PdITI::SUMINTO(u,uOwnedField.getArray().end(),probeField.getArray().get());
-			double *p = probeField.getArray().get()+loc;
+//			PdITI::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
+			probeField.set(0.0);
+			PdITI::SUMINTO(u,uOwnedField.end(),probeField.get());
+			double *p = probeField.get()+loc;
 			*p += delta;
 			pditiOp.computeInternalForce(probeField,force.getField(Field_NS::FieldSpec::STEP_NP1));
-			double *f1 = force.getField(Field_NS::FieldSpec::STEP_NP1).getArray().get();
+			double *f1 = force.getField(Field_NS::FieldSpec::STEP_NP1).get();
 
-			PdITI::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
-			PdITI::SUMINTO(u,uOwnedField.getArray().end(),probeField.getArray().get());
-			p = probeField.getArray().get()+loc;
+//			PdITI::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
+			probeField.set(0.0);
+			PdITI::SUMINTO(u,uOwnedField.end(),probeField.get());
+			p = probeField.get()+loc;
 			*p -= delta;
 			pditiOp.computeInternalForce(probeField,force.getField(Field_NS::FieldSpec::STEP_N));
-			double *f0 = force.getField(Field_NS::FieldSpec::STEP_N).getArray().get();
+			double *f0 = force.getField(Field_NS::FieldSpec::STEP_N).get();
 
 			kProbe[0] = (f1[loc+0]-f0[loc+0])/2.0/delta;
 			kProbe[3] = (f1[loc+1]-f0[loc+1])/2.0/delta;
@@ -202,19 +215,21 @@ void probe() {
 			/*
 			 * probe in y-dir
 			 */
-			PdITI::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
-			PdITI::SUMINTO(u,uOwnedField.getArray().end(),probeField.getArray().get());
-			double *p = probeField.getArray().get()+loc+1;
+//			PdITI::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
+			probeField.set(0.0);
+			PdITI::SUMINTO(u,uOwnedField.end(),probeField.get());
+			double *p = probeField.get()+loc+1;
 			*p += delta;
 			pditiOp.computeInternalForce(probeField,force.getField(Field_NS::FieldSpec::STEP_NP1));
-			double *f1 = force.getField(Field_NS::FieldSpec::STEP_NP1).getArray().get();
+			double *f1 = force.getField(Field_NS::FieldSpec::STEP_NP1).get();
 
-			PdITI::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
-			PdITI::SUMINTO(u,uOwnedField.getArray().end(),probeField.getArray().get());
-			p = probeField.getArray().get()+loc+1;
+//			PdITI::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
+			probeField.set(0.0);
+			PdITI::SUMINTO(u,uOwnedField.end(),probeField.get());
+			p = probeField.get()+loc+1;
 			*p -= delta;
 			pditiOp.computeInternalForce(probeField,force.getField(Field_NS::FieldSpec::STEP_N));
-			double *f0 = force.getField(Field_NS::FieldSpec::STEP_N).getArray().get();
+			double *f0 = force.getField(Field_NS::FieldSpec::STEP_N).get();
 
 			kProbe[1] = (f1[loc+0]-f0[loc+0])/2.0/delta;
 			kProbe[4] = (f1[loc+1]-f0[loc+1])/2.0/delta;
@@ -225,19 +240,21 @@ void probe() {
 			/*
 			 * probe in z-dir
 			 */
-			PdITI::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
-			PdITI::SUMINTO(u,uOwnedField.getArray().end(),probeField.getArray().get());
-			double *p = probeField.getArray().get()+loc+2;
+//			PdITI::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
+			probeField.set(0.0);
+			PdITI::SUMINTO(u,uOwnedField.end(),probeField.get());
+			double *p = probeField.get()+loc+2;
 			*p += delta;
 			pditiOp.computeInternalForce(probeField,force.getField(Field_NS::FieldSpec::STEP_NP1));
-			double *f1 = force.getField(Field_NS::FieldSpec::STEP_NP1).getArray().get();
+			double *f1 = force.getField(Field_NS::FieldSpec::STEP_NP1).get();
 
-			PdITI::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
-			PdITI::SUMINTO(u,uOwnedField.getArray().end(),probeField.getArray().get());
-			p = probeField.getArray().get()+loc+2;
+//			PdITI::SET(probeField.getArray().get(),probeField.getArray().get()+probeField.getArray().getSize(),0.0);
+			probeField.set(0.0);
+			PdITI::SUMINTO(u,uOwnedField.end(),probeField.get());
+			p = probeField.get()+loc+2;
 			*p -= delta;
 			pditiOp.computeInternalForce(probeField,force.getField(Field_NS::FieldSpec::STEP_N));
-			double *f0 = force.getField(Field_NS::FieldSpec::STEP_N).getArray().get();
+			double *f0 = force.getField(Field_NS::FieldSpec::STEP_N).get();
 
 			kProbe[2] = (f1[loc+0]-f0[loc+0])/2.0/delta;
 			kProbe[5] = (f1[loc+1]-f0[loc+1])/2.0/delta;
@@ -300,19 +317,19 @@ int main
 )
 {
 	// Initialize MPI and timer
-	PdImpRunTime::PimpMpiFixture pimpMPI = PdImpRunTime::PimpMpiFixture::getPimpMPI(argc,argv);
-	const Epetra_Comm& comm = pimpMPI.getEpetra_Comm();
+	PdutMpiFixture myMpi = PdutMpiFixture(argc,argv);
 
 	// These are static (file scope) variables
-	myRank = comm.MyPID();
-	numProcs = comm.NumProc();
+	myRank = myMpi.rank;
+	numProcs = myMpi.numProcs;
+
 	/**
 	 * This test only make sense for numProcs == 1
 	 */
 	if(1 != numProcs){
 		std::cerr << "Unit test runtime ERROR: utPimp_probeJacobianNu.0.0 is intended for \"serial\" run only and makes sense on 1 processor" << std::endl;
 		std::cerr << "\t Re-run unit test $mpiexec -np 1 ./utPimp_probeJacobianNu.0.0" << std::endl;
-		pimpMPI.PimpMpiFixture::~PimpMpiFixture();
+		myMpi.PdutMpiFixture::~PdutMpiFixture();
 		std::exit(-1);
 	}
 
