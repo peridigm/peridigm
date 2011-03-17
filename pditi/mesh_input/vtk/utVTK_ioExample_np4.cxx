@@ -49,9 +49,9 @@ const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
 const size_t numCells = nx*ny*nz;
 
 Field<double> getPureShearXY(double gamma, const Field<double>& X, Field<double>& U){
-	std::size_t numPoints = X.getNumPoints();
-	double *u = U.getArray().get();
-	const double *x = X.getArray().get();
+	std::size_t numPoints = X.get_num_points();
+	double *u = U.get();
+	const double *x = X.get();
 
 	for(std::size_t i=0;i<numPoints;i++){
 		int p=3*i;
@@ -115,20 +115,20 @@ void utVTK_ioExample()
 	Field<double> uField(uSpec,numPoints), vField(vSpec,numPoints),aField(aSpec,numPoints);
 	Field<double> wField(wSpec,numPoints), thetaField(thetaSpec,numPoints);
 	Field<int> rankField(myRankSpec,numPoints);
-	uField.setValue(0.0); vField.setValue(0.0); aField.setValue(0.0);
-	wField.setValue(0.0); thetaField.setValue(0.0);
-	rankField.setValue(myRank);
+	uField.set(0.0); vField.set(0.0); aField.set(0.0);
+	wField.set(0.0); thetaField.set(0.0);
+	rankField.set(myRank);
 
 	/*
 	 * RAW POINTERS; GET THESE from Epetra_Vector
 	 */
-	const double *xPtr = X.getArray().get();
-	double *uPtr = uField.getArray().get();
-	double *vPtr = vField.getArray().get();
-	double *aPtr = aField.getArray().get();
+	const double *xPtr = X.get();
+	double *uPtr = uField.get();
+	double *vPtr = vField.get();
+	double *aPtr = aField.get();
 	double *volPtr = pdGridData.cellVolume.get();
-	double *wPtr = wField.getArray().get();
-	double *thetaPtr = thetaField.getArray().get();
+	double *wPtr = wField.get();
+	double *thetaPtr = thetaField.get();
 	const int *neighPtr = pdGridData.neighborhood.get();
 
 	/*

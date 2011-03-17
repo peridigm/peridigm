@@ -113,7 +113,7 @@ template<class T>
 void writeField(vtkSmartPointer<vtkUnstructuredGrid>& g, Field_NS::Field<T> field) {
 	const char* name = field.getLabel().c_str();
 	std::size_t degree = field.getLength();
-	T* data = field.getArray().get();
+	T* data = field.get();
 	writeField(g,name,degree,data);
 }
 

@@ -98,24 +98,14 @@ const FieldSpec BOND_DAMAGE(FieldSpec::BOND_DAMAGE,           FieldSpec::BOND, F
 const FieldSpec DEVIATORIC_PLASTIC_EXTENSION(FieldSpec::E_DP, FieldSpec::BOND, FieldSpec::STATEFUL, "Deviatoric_Plastic_Extension");
 
 template<typename T>
-class Field : public FieldSpec {
-
+class Field : public FieldSpec, public Array<T> {
 private:
-	Array<T> data;
-	std::size_t numPoints;
+	std::size_t num_points;
 
 public:
-    Field(const FieldSpec& c, std::size_t numPoints) : FieldSpec(c), data(numPoints*c.getLength()), numPoints(numPoints){}
-    Field(const FieldSpec& c, shared_ptr<T> data, std::size_t numPoints) : FieldSpec(c), data(numPoints*c.getLength(),data), numPoints(numPoints) {}
-    std::size_t getNumPoints() const { return numPoints; }
-    Array<T>& getArray() { return data; }
-    const Array<T>& getArray() const { return data; }
-    void setValue(T value) {
-    	const T* const end = data.end();
-    	T* f = data.get();
-    	for(;f!=end;f++)
-    		*f=value;
-    }
+    Field(const FieldSpec& c, std::size_t numPoints) : FieldSpec(c), Array<T>(numPoints*c.getLength()), num_points(numPoints) {}
+    Field(const FieldSpec& c, shared_ptr<T> data, std::size_t numPoints) : FieldSpec(c), Array<T>(numPoints*c.getLength(),data), num_points(numPoints) {}
+    std::size_t get_num_points() const { return num_points; }
 };
 
 
@@ -123,8 +113,8 @@ template<typename T>
 class TemporalField {
 public:
 
-	TemporalField(const FieldSpec& c=DEFAULT_FIELDTYPE, std::size_t numPoints=0): numPoints(numPoints), N(c,numPoints), NP1(c,numPoints) {}
-	std::size_t getNumPoints() const { return numPoints; }
+	TemporalField(const FieldSpec& c=DEFAULT_FIELDTYPE, std::size_t numPoints=0): num_points(numPoints), N(c,numPoints), NP1(c,numPoints) {}
+	std::size_t get_num_points() const { return num_points; }
     Field<T> getField(FieldSpec::FieldStep step) const {
     	switch(step){
     	case FieldSpec::STEP_N:
@@ -151,7 +141,7 @@ public:
     void advanceStep() { std::swap(N,NP1); }
 
 private:
-	int numPoints;
+    std::size_t num_points;
 	Field<T> N, NP1;
 };
 
