@@ -8,7 +8,7 @@
 #ifndef PIMP_OPERATOR_UTILITIES_H_
 #define PIMP_OPERATOR_UTILITIES_H_
 #include <math.h>
-#include "Field.h"
+#include "vtk/Field.h"
 
 namespace PdITI {
 

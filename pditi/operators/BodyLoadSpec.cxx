@@ -9,7 +9,9 @@
 
 namespace PdImp {
 
-BodyLoadSpec::BodyLoadSpec(double unitDirection[3], const Pd_shared_ptr_Array<int>& pointIds)
+using Field_NS::Field;
+
+BodyLoadSpec::BodyLoadSpec(double unitDirection[3], const UTILITIES::Array<int> pointIds)
 :
 		localIds(pointIds)
 {
@@ -31,9 +33,9 @@ BodyLoadSpec::BodyLoader::BodyLoader(const BodyLoadSpec& spec, const StageFuncti
 	u[2] = spec.u[2];
 }
 
-void BodyLoadSpec::BodyLoader::computeOwnedExternalForce(double lambda, Field_NS::Field<double> force) const {
+void BodyLoadSpec::BodyLoader::computeOwnedExternalForce(double lambda, Field<double> force) const {
 	double bF[3];
-	double *fHead = force.getArray().get();
+	double *fHead = force.get();
 	double *f;
 	double magnitude = stageFunction.value(lambda);
 	for(const int *p = localIds.get();p!=localIds.end();p++){

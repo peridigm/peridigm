@@ -9,6 +9,7 @@
 #define BODYLOADSPEC_H_
 #include "Loader.h"
 #include "StageFunction.h"
+#include "Array.h"
 #include <tr1/memory>
 
 using std::tr1::shared_ptr;
@@ -16,15 +17,15 @@ using std::tr1::shared_ptr;
 namespace PdImp {
 class BodyLoadSpec {
 public:
-	BodyLoadSpec(double unitDirection[3], const Pd_shared_ptr_Array<int>& pointIds);
-	const Pd_shared_ptr_Array<int>& getPointIds() const { return localIds; }
+	BodyLoadSpec(double unitDirection[3], const UTILITIES::Array<int> pointIds);
+	const UTILITIES::Array<int>& getPointIds() const { return localIds; }
 	shared_ptr<PdImp::Loader> getStageLoader(const StageFunction& stageFunction) const;
 
 private:
 	/*
 	 * Set of point Ids -- these Ids should be relevant to the fields passed in to the loader
 	 */
-	const Pd_shared_ptr_Array<int> localIds;
+	const UTILITIES::Array<int> localIds;
 
 	/*
 	 * Unit Direction
@@ -40,7 +41,7 @@ private:
 
 	private:
 		StageFunction stageFunction;
-		const Pd_shared_ptr_Array<int> localIds;
+		const UTILITIES::Array<int> localIds;
 		double u[3];
 
 	};

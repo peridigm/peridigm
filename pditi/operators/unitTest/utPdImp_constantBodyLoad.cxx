@@ -10,11 +10,9 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
 #include "quick_grid/QuickGrid.h"
-#include "Array.h"
-#include "PdZoltan.h"
-#include "Field.h"
 #include "PdZoltan.h"
 #include "NeighborhoodList.h"
+#include "../PdImpMaterials.h"
 #include "../PdITI_Utilities.h"
 #include "../DirichletBcSpec.h"
 #include "../BodyLoadSpec.h"
@@ -22,7 +20,11 @@
 #include "../Loader.h"
 #include "../StageComponentDirichletBc.h"
 #include "../ComponentDirichletBcSpec.h"
-#include "PdVTK.h"
+#include "PdutMpiFixture.h"
+#include "vtk/Field.h"
+#include "vtk/PdVTK.h"
+#include "Array.h"
+#include "Sortable.h"
 #include <set>
 #include <Epetra_FEVbrMatrix.h>
 #include <Epetra_SerialSymDenseMatrix.h>
@@ -34,7 +36,15 @@
 #include <time.h>
 #include <tr1/memory>
 
+#include "Epetra_ConfigDefs.h"
+#ifdef HAVE_MPI
+#include "Epetra_MpiComm.h"
+#else
+#include "Epetra_SerialComm.h"
+#endif
 
+
+using namespace Pdut;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
 using std::vector;
@@ -72,12 +82,14 @@ using PdVTK::writeField;
 using PdImp::ComponentDirichletBcSpec;
 using PdImp::StageFunction;
 using PdImp::StageComponentDirichletBc;
+using Field_NS::Field;
+using Field_NS::FieldSpec;
 
 void constantBodyLoad() {
 
 
-	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec,PdQuickGrid::SphericalNorm);
-	QUICKGRID::QuickGridData decomp =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
+	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec,QUICKGRID::SphericalNorm);
+	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
 	decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
 	int numPoints = decomp.numPoints;
 	BOOST_CHECK(numCells==numPoints);
@@ -86,15 +98,15 @@ void constantBodyLoad() {
 	/*
 	 * Create force field to assemble body load into
 	 */
-	Field_NS::FieldSpec fNP1Spec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fNP1");
-	Field_NS::FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
-	Field_NS::Field<double> fN(fNSpec,numPoints);
-	Field_NS::Field<double> fNP1(fNP1Spec,numPoints);
+	FieldSpec fNP1Spec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fNP1");
+	FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
+	Field<double> fN(fNSpec,numPoints); fN.set(0.0);
+	Field<double> fNP1(fNP1Spec,numPoints); fNP1.set(0.0);
 
 	/*
 	 * Get points for bc's
 	 */
-	CartesianComponent axis = UTILITIES::Z;
+	UTILITIES::CartesianComponent axis = UTILITIES::Z;
 	UTILITIES::Array<int> bcIds = UTILITIES::getPointsAxisAlignedMaximum(axis,decomp.myX,numPoints,horizon);
 	/**
 	 * Create array of boundary conditions
@@ -118,7 +130,8 @@ void constantBodyLoad() {
 			*ids = i;
 	}
 	double u[] = {0,0,-1};
-	double uMag = g*rho;
+	double uMag = g*rho; /* uMag = 7.64945e-5 =  9.807e-3  * 7800e-6 */
+
 	PdImp::BodyLoadSpec bodyLoadSpec(u,localIds);
 	StageFunction bodyLoadFunction(0,uMag);
 	shared_ptr<PdImp::Loader> bodyLoad = bodyLoadSpec.getStageLoader(bodyLoadFunction);
@@ -162,19 +175,18 @@ int main
 )
 {
 	// Initialize MPI and timer
-	PdImpRunTime::PimpMpiFixture pimpMPI = PdImpRunTime::PimpMpiFixture::getPimpMPI(argc,argv);
-	const Epetra_Comm& comm = pimpMPI.getEpetra_Comm();
+	PdutMpiFixture myMpi = PdutMpiFixture(argc,argv);
 
 	// These are static (file scope) variables
-	myRank = comm.MyPID();
-	numProcs = comm.NumProc();
+	myRank = myMpi.rank;
+	numProcs = myMpi.numProcs;
 	/**
 	 * This test only make sense for numProcs == 1
 	 */
 	if(1 != numProcs){
 		std::cerr << "Unit test runtime ERROR: utPimp_constantBodyLoad is intended for \"serial\" run only and makes sense on 1 processor" << std::endl;
 		std::cerr << "\t Re-run unit test $mpiexec -np 1 ./utPimp_constantBodyLoad" << std::endl;
-		pimpMPI.PimpMpiFixture::~PimpMpiFixture();
+		myMpi.PdutMpiFixture::~PdutMpiFixture();
 		std::exit(-1);
 	}
 

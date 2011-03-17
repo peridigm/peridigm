@@ -8,7 +8,7 @@
 #ifndef STAGECOMPONENTDIRICHLETBC_H_
 #define STAGECOMPONENTDIRICHLETBC_H_
 
-#include "Field.h"
+#include "vtk/Field.h"
 #include "StageDirichletBc.h"
 #include "StageFunction.h"
 #include "ComponentDirichletBcSpec.h"

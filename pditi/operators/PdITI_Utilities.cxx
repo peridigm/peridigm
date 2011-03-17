@@ -44,10 +44,10 @@ void TENSOR_PRODUCT(const double *x, const double *y, double *k){
 }
 
 Field<double> getPureShearXY(const Field<double>& X){
-	std::size_t numPoints = X.getNumPoints();
+	std::size_t numPoints = X.get_num_points();
 	Field<double> uOwnedField = Field<double>(Field_NS::DISPL3D,numPoints);
-	double *u = uOwnedField.getArray().get();
-	const double *x = X.getArray().get();
+	double *u = uOwnedField.get();
+	const double *x = X.get();
 
 	double gamma=2.0;
 	for(std::size_t i=0;i<numPoints;i++){

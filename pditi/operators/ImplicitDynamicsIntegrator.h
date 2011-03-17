@@ -57,7 +57,7 @@ private:
 
 	NewmarkBetaIntegrator timeIntegrator;
 	MassDensity rho;
-	std::tr1::shared_ptr<PdImpOperator> fIntOperator;
+//	std::tr1::shared_ptr<PdImpOperator> fIntOperator;
 };
 
 }
