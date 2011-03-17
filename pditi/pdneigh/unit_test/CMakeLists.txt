@@ -70,3 +70,13 @@ add_executable(utReloadBalance_np4 utReloadBalance_np4.cxx)
 target_link_libraries(utReloadBalance_np4  PdNeigh QuickGrid Utilities PdVTK ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 add_test (utReloadBalance_np4 python run_unit_test.py mpiexec -np 4 ./utReloadBalance_np4)
 
+add_executable(utZoltanQuery_pointSizeInBytes utZoltanQuery_pointSizeInBytes.cxx)
+target_link_libraries(utZoltanQuery_pointSizeInBytes  PdNeigh QuickGrid Utilities ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+add_test (utZoltanQuery_pointSizeInBytes python run_unit_test.py ./utZoltanQuery_pointSizeInBytes)
+
+add_executable(utZoltanQuery_packUnpackPointsMultiFunction utZoltanQuery_packUnpackPointsMultiFunction.cxx)
+target_link_libraries(utZoltanQuery_packUnpackPointsMultiFunction PdNeigh QuickGrid Utilities ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+add_test (utZoltanQuery_packUnpackPointsMultiFunction python run_unit_test.py ./utZoltanQuery_packUnpackPointsMultiFunction)
+
+
+
