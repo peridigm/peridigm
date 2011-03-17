@@ -41,10 +41,9 @@ public:
 	size_t get_size() const { return size; }
 
 	T* get() { return aPtr.get(); }
-
 	const T* get() const { return aPtr.get(); }
-
 	const T* end() const { return raw_ptr + size; }
+	      T* end() { return raw_ptr + size; }
 
 	T operator[](int i) const {
 		if(0>i || size<=i){

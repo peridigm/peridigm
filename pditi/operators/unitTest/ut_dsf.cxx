@@ -8,7 +8,7 @@
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
-#include <math.h>
+#include <cmath>
 #include <tr1/memory>
 #include "vtk/PdVTK.h"
 #include "vtk/Field.h"
@@ -159,7 +159,7 @@ void dsf_probe() {
 
 	double m_analytical = 4.0 * M_PI * pow(radius,5) / 5.0;
 	double m_code = computeWeightedVolume(X.get(),xPtr.get(),volPtr.get(),neighborhoodPtr.get());
-	double rel_diff = abs(m_analytical-m_code)/m_analytical;
+	double rel_diff = std::abs(m_analytical-m_code)/m_analytical;
 	double tolerance=1.0e-3;
 	BOOST_CHECK_SMALL(rel_diff,tolerance);
 //	std::cout << "ut_dsf::analytical value for weighted volume on sphere = " << m_analytical << std::endl;
@@ -225,7 +225,7 @@ void probe_shear
 	/*
 	 * For this nearly perfect 'sphere', the shear correction factor should be very close to '1.0'
 	 */
-	double rel_diff = abs(1.0-dsf);
+	double rel_diff = std::abs(1.0-dsf);
 	tolerance=1.0e-3;
 	BOOST_CHECK_SMALL(rel_diff,tolerance);
 

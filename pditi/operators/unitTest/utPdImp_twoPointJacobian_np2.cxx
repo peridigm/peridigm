@@ -9,14 +9,13 @@
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
-#include "../PdImpMpiFixture.h"
-#include "PdNeighborhood.h"
-#include "PdQuickGrid.h"
-#include "PdQuickGridParallel.h"
-#include "PdNeighborhood.h"
+#include "Sortable.h"
+#include "Array.h"
+#include "quick_grid/QuickGrid.h"
+#include "NeighborhoodList.h"
 #include "PdZoltan.h"
-#include "Field.h"
-#include "../../pdneigh/NeighborhoodList.h"
+#include "vtk/Field.h"
+#include "vtk/PdVTK.h"
 #include "../PdImpMaterials.h"
 #include "../PdITI_Operator.h"
 #include "../PdITI_Utilities.h"
@@ -25,7 +24,17 @@
 #include "../ComponentDirichletBcSpec.h"
 #include "../DirichletBcSpec.h"
 #include "../StageFunction.h"
+#include "PdutMpiFixture.h"
+#include "Epetra_ConfigDefs.h"
+#ifdef HAVE_MPI
+#include "mpi.h"
+#include "Epetra_MpiComm.h"
+#else
+#include "Epetra_SerialComm.h"
+#endif
+
 #include <set>
+#include <algorithm>
 #include <Epetra_FEVbrMatrix.h>
 #include <Epetra_SerialSymDenseMatrix.h>
 #include <Epetra_LinearProblem.h>
@@ -38,25 +47,25 @@
 #include <time.h>
 
 
-using namespace PdQuickGrid;
-using namespace PdNeighborhood;
 using namespace Field_NS;
 using PdITI::IsotropicElasticConstitutiveModel;
 using PdITI::ConstitutiveModel;
+using UTILITIES::CartesianComponent;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
+using namespace Pdut;
 using std::cout;
 using std::endl;
 using std::vector;
 using std::set;
 using namespace PdImp;
 
-static int myRank;
-static int numProcs;
+static size_t myRank;
+static size_t numProcs;
 
-const int nx = 2;
-const int ny = 1;
-const int nz = 1;
+const size_t nx = 2;
+const size_t ny = 1;
+const size_t nz = 1;
 const double lX = 1.0;
 const double theta = 0.0;
 const double xStart  = -lX/4.0;
@@ -67,9 +76,9 @@ const double yStart  = -lX/ny/2.0;
 const double yLength =  lX;
 const double zStart  = -lX/nz/2.0;
 const double zLength =  lX;
-const PdQPointSet1d xSpec(nx,xStart,xLength);
-const PdQPointSet1d ySpec(ny,yStart,yLength);
-const PdQPointSet1d zSpec(nz,zStart,zLength);
+const QUICKGRID::Spec1D xSpec(nx,xStart,xLength);
+const QUICKGRID::Spec1D ySpec(ny,yStart,yLength);
+const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
 const int numCells = nx*ny*nz;
 const double horizon=1.1*lX;
 const double delta = 1.0e-2 * lX;
@@ -90,10 +99,10 @@ getOperator
 );
 
 
-PdGridData getGrid() {
-	PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
-	PdGridData decomp =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
-	decomp = getLoadBalancedDiscretization(decomp);
+QUICKGRID::QuickGridData getGrid() {
+	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
+	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
+	decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
 	BOOST_CHECK(1==decomp.numPoints);
 	BOOST_CHECK(2==decomp.globalNumPoints);
 	int myPoint = *(decomp.myGlobalIDs.get());
@@ -111,8 +120,7 @@ PdGridData getGrid() {
 
 void computeJacobian(){
 	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
-	PdGridData decomp = getGrid();
-	decomp = getLoadBalancedDiscretization(decomp);
+	QUICKGRID::QuickGridData decomp = getGrid();
 
 	/*
 	 * Create PdITI Operator
@@ -127,11 +135,11 @@ void computeJacobian(){
 	/*
 	 * Get points for bc's
 	 */
-	PdNeighborhood::CoordinateLabel axis = PdNeighborhood::X;
-	Pd_shared_ptr_Array<int> bcIdsFixed = PdNeighborhood::getPointsInNeighborhoodOfAxisAlignedMinimumValue(axis,decomp.myX,decomp.numPoints,1.0e-3*horizon,xMin);
-	std::sort(bcIdsFixed.get(),bcIdsFixed.get()+bcIdsFixed.getSize());
-	Pd_shared_ptr_Array<int> bcIdsApplied = PdNeighborhood::getPointsInNeighborhoodOfAxisAlignedMaximumValue(axis,decomp.myX,decomp.numPoints,1.0e-3*horizon,xMax);
-	std::sort(bcIdsApplied.get(),bcIdsApplied.get()+bcIdsApplied.getSize());
+	CartesianComponent axis = UTILITIES::X;
+	Array<int> bcIdsFixed = UTILITIES::getPointsInNeighborhoodOfAxisAlignedMinimumValue(axis,decomp.myX,decomp.numPoints,1.0e-3*horizon,xMin);
+	std::sort(bcIdsFixed.get(),bcIdsFixed.end());
+	Array<int> bcIdsApplied = UTILITIES::getPointsInNeighborhoodOfAxisAlignedMaximumValue(axis,decomp.myX,decomp.numPoints,1.0e-3*horizon,xMax);
+	std::sort(bcIdsApplied.get(),bcIdsApplied.end());
 
 	/**
 	 * Create boundary conditions spec
@@ -161,7 +169,7 @@ void computeJacobian(){
 	 * Create Jacobian -- note that SCOPE of jacobian is associated with the PimpOperator "op"
 	 */
 	Field<double> uOwnedField(DISPL3D,decomp.numPoints);
-	uOwnedField.setValue(0.0);
+	uOwnedField.set(0.0);
 	bcApplied->applyKinematics(1.0,uOwnedField);
 	/*
 	 * NOTE: once the jacobian has been computed with the given displacement field, it is safe to
@@ -190,14 +198,14 @@ void computeJacobian(){
 	 */
 	Field_NS::FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
 	Field_NS::Field<double> fN(fNSpec,decomp.numPoints);
-	fN.setValue(0.0);
+	fN.set(0.0);
 
 	op.computeInternalForce(uOwnedField,fN);
-	PdITI::SCALE_BY_VALUE(fN.getArray().get(),fN.getArray().end(),-1.0);
+	fN.scale(-1.0);
 	bcApplied->applyKinematics(1.0,fN);
 	bcFixed1->applyHomogeneousForm(fN);
 	bcFixed2->applyHomogeneousForm(fN);
-	uOwnedField.setValue(0.0);
+	uOwnedField.set(0.0);
 //	bcApplied->applyKinematics(1.0,uOwnedField);
 
 
@@ -234,9 +242,9 @@ void computeJacobian(){
 
 
 
-	double *f = fN.getArray().get();
+	double *f = fN.get();
 	Epetra_Vector rhs(View,rangeMap,f);
-	Epetra_Vector lhs(View,domainMap,uOwnedField.getArray().get());
+	Epetra_Vector lhs(View,domainMap,uOwnedField.get());
 
 	linProblem.SetRHS(&rhs);
 	linProblem.SetLHS(&lhs);
@@ -281,8 +289,8 @@ getOperator
 		for(int i=0;bcIter != bcArray.end(); i++,bcIter++){
 			StageComponentDirichletBc* stageComponentPtr = bcIter->get();
 			const DirichletBcSpec& spec = stageComponentPtr->getSpec();
-			const Pd_shared_ptr_Array<int>& ids = spec.getPointIds();
-			bcPointIds[i]= std::set<int>(ids.get(),ids.get()+ids.getSize());
+			const Array<int>& ids = spec.getPointIds();
+			bcPointIds[i]= std::set<int>(ids.get(),ids.end());
 		}
 	}
 
@@ -301,15 +309,15 @@ getOperator
 	Epetra_SerialDenseMatrix k;
 	k.Shape(vectorNDF,vectorNDF);
 	for(int row=0;row<rowMap.NumMyElements();row++){
-		Pd_shared_ptr_Array<int> rowLIDs = jacobian->getColumnLIDs(row);
-		std::size_t numCol = rowLIDs.getSize();
+		Array<int> rowLIDs = jacobian->getColumnLIDs(row);
+		std::size_t numCol = rowLIDs.get_size();
 		int *cols = rowLIDs.get();
 		BOOST_CHECK(0==m->BeginReplaceMyValues(row,numCol,cols));
 
 		/*
 		 * loop over columns in row and submit block entry
 		 */
-		Pd_shared_ptr_Array<double> actualK = jacobian->computeRowStiffness(row, rowLIDs);
+		Array<double> actualK = jacobian->computeRowStiffness(row, rowLIDs);
 
 
 		/*
@@ -469,11 +477,11 @@ shared_ptr<Epetra_CrsGraph> getGraph(shared_ptr<RowStiffnessOperator>& jacobian)
 	/*
 	 * Epetra Graph
 	 */
-	Pd_shared_ptr_Array<int> numCols = jacobian->getNumColumnsPerRow();
+	Array<int> numCols = jacobian->getNumColumnsPerRow();
 	Epetra_CrsGraph *graph = new Epetra_CrsGraph(Copy,rowMap,colMap,numCols.get(),true);
 	for(int row=0;row<jacobian->getNumRows();row++){
-		Pd_shared_ptr_Array<int> rowLIDs = jacobian->getColumnLIDs(row);
-		std::size_t numCol = rowLIDs.getSize();
+		Array<int> rowLIDs = jacobian->getColumnLIDs(row);
+		std::size_t numCol = rowLIDs.get_size();
 		/*
 		 * Each row should have 4 entries
 		 */
@@ -510,19 +518,18 @@ int main
 )
 {
 	// Initialize MPI and timer
-	PdImpRunTime::PimpMpiFixture pimpMPI = PdImpRunTime::PimpMpiFixture::getPimpMPI(argc,argv);
-	const Epetra_Comm& comm = pimpMPI.getEpetra_Comm();
+	PdutMpiFixture myMpi = PdutMpiFixture(argc,argv);
 
 	// These are static (file scope) variables
-	myRank = comm.MyPID();
-	numProcs = comm.NumProc();
+	myRank = myMpi.rank;
+	numProcs = myMpi.numProcs;
 	/**
 	 * This test only make sense for numProcs == 2
 	 */
 	if(2 != numProcs){
 		std::cerr << "Unit test runtime ERROR: utPimp_twoPointJacobian_np2 is intended for 2 processors only." << std::endl;
 		std::cerr << "\t Re-run unit test $mpiexec -np 2 ./utPimp_twoPointJacobian_np2" << std::endl;
-		pimpMPI.PimpMpiFixture::~PimpMpiFixture();
+		myMpi.PdutMpiFixture::~PdutMpiFixture();
 		std::exit(-1);
 	}
 

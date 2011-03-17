@@ -1,5 +1,6 @@
 #
-# CMakeLists.txt file for PdITI -- Peridynamics::Implicit
+# CMakeLists.txt file for PdITI_Operator unit test.
+# PdITI -- Peridynamics::Implicit
 #
 # Create symbolic links to files in Test directory
 #
@@ -27,14 +28,14 @@ include_directories(${PD_MATERIAL_UTILITIES_DIR} ${PDNEIGH_DIR} ${MESH_INPUT_DIR
 add_library(utPdITI utPdITI.cxx)
 
 # Add test
-#add_executable(utPdImpMatrix_np2_11x1x1 utPdImpMatrix_np2_11x1x1.cxx)
-#target_link_libraries(utPdImpMatrix_np2_11x1x1 PdITIOperatorsOLD PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
-#add_test (utPdImpMatrix_np2_11x1x1 python run_unit_test.py mpiexec -np 2 utPdImpMatrix_np2_11x1x1)
+add_executable(utPdImpMatrix_np2_11x1x1 utPdImpMatrix_np2_11x1x1.cxx)
+target_link_libraries(utPdImpMatrix_np2_11x1x1 PdITIOperators QuickGrid PdNeigh Utilities PdVTK ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+add_test (utPdImpMatrix_np2_11x1x1 python run_unit_test.py mpiexec -np 2 utPdImpMatrix_np2_11x1x1)
 
 # Add test
-#add_executable(utPdImpMatrix_11x1x1 utPdImpMatrix_11x1x1.cxx)
-#target_link_libraries(utPdImpMatrix_11x1x1 PdITIOperatorsOLD PdNeigh ${PERIDIGM_LIBS}  ${TRILINOS_LIBS} ${VTK_LIBS} ${UT_REQUIRED_LIBS})
-#add_test (utPdImpMatrix_11x1x1 python run_unit_test.py ./utPdImpMatrix_11x1x1)
+add_executable(utPdImpMatrix_11x1x1 utPdImpMatrix_11x1x1.cxx)
+target_link_libraries(utPdImpMatrix_11x1x1 PdITIOperators QuickGrid PdNeigh Utilities PdVTK PdMaterialUtilities ${TRILINOS_LIBS} ${VTK_LIBS} ${UT_REQUIRED_LIBS})
+add_test (utPdImpMatrix_11x1x1 python run_unit_test.py ./utPdImpMatrix_11x1x1)
 
 # Add test
 add_executable(utPdImp_twoPointJacobian utPdImp_twoPointJacobian.cxx)
@@ -42,9 +43,9 @@ target_link_libraries(utPdImp_twoPointJacobian PdITIOperators QuickGrid PdNeigh 
 add_test (utPdImp_twoPointJacobian python run_unit_test.py ./utPdImp_twoPointJacobian)
 
 # Add test
-#add_executable(utPdImp_twoPointJacobian_np2 utPdImp_twoPointJacobian_np2.cxx)
-#target_link_libraries(utPdImp_twoPointJacobian_np2 PdITIOperatorsOLD PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
-#add_test (utPdImp_twoPointJacobian_np2 python run_unit_test.py mpiexec -np 2 ./utPdImp_twoPointJacobian_np2)
+add_executable(utPdImp_twoPointJacobian_np2 utPdImp_twoPointJacobian_np2.cxx)
+target_link_libraries(utPdImp_twoPointJacobian_np2 PdITIOperators QuickGrid PdNeigh Utilities PdVTK PdMaterialUtilities ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+add_test (utPdImp_twoPointJacobian_np2 python run_unit_test.py mpiexec -np 2 ./utPdImp_twoPointJacobian_np2)
 
 # Add test
 #add_executable(utPdImp_probeJacobianNu.0.0 utPdImp_probeJacobianNu.0.0.cxx)

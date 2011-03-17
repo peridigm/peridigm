@@ -10,13 +10,13 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
 #include "../PdImpMpiFixture.h"
-#include "PdNeighborhood.h"
-#include "PdQuickGrid.h"
-#include "PdQuickGridParallel.h"
-#include "PdNeighborhood.h"
 #include "PdZoltan.h"
-#include "Field.h"
-#include "../../pdneigh/NeighborhoodList.h"
+#include "quick_grid/QuickGrid.h"
+#include "PdutMpiFixture.h"
+#include "vtk/Field.h"
+#include "vtk/PdVTK.h"
+#include "NeighborhoodList.h"
+#include "Array.h"
 #include "../PdImpMaterials.h"
 #include "../PdITI_Operator.h"
 #include "../PdITI_Utilities.h"
@@ -31,8 +31,7 @@
 #include <time.h>
 
 
-using namespace PdQuickGrid;
-using namespace PdNeighborhood;
+using namespace Pdut;
 using namespace Field_NS;
 using PdITI::IsotropicElasticConstitutiveModel;
 using PdITI::ConstitutiveModel;
@@ -40,29 +39,29 @@ using std::tr1::shared_ptr;
 using namespace boost::unit_test;
 
 
-static int myRank;
-static int numProcs;
+static size_t myRank;
+static size_t numProcs;
 
-const int nx = 11;
-const int ny = 1;
-const int nz = 1;
+const size_t nx = 11;
+const size_t ny = 1;
+const size_t nz = 1;
 const double xStart = 0.0;
 const double xLength = 1.0;
 const double yStart = 0.0;
 const double yLength = 1.0;
 const double zStart = 0.0;
 const double zLength = 1.0;
-const PdQPointSet1d xSpec(nx,xStart,xLength);
-const PdQPointSet1d ySpec(ny,yStart,yLength);
-const PdQPointSet1d zSpec(nz,zStart,zLength);
-const int numCells = nx*ny*nz;
+const QUICKGRID::Spec1D xSpec(nx,xStart,xLength);
+const QUICKGRID::Spec1D ySpec(ny,yStart,yLength);
+const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
+const size_t numCells = nx*ny*nz;
 const double horizon=.1;
 
 void axialBarLinearSpacing() {
 
-	PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
-	PdGridData decomp =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
-	decomp = getLoadBalancedDiscretization(decomp);
+	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
+	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
+	decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
 	int numPoints = decomp.numPoints;
 
 	/*
@@ -70,21 +69,24 @@ void axialBarLinearSpacing() {
 	 */
 	const int vectorNDF=3;
 	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
-	Epetra_BlockMap rowMap   = PdQuickGrid::getOwnedMap  (comm, decomp, vectorNDF);
-	Epetra_BlockMap colMap = PdQuickGrid::getOverlapMap(comm, decomp, vectorNDF);
-	BOOST_CHECK(rowMap.NumMyElements()==numPoints);
+//	Epetra_BlockMap rowMap   = PdQuickGrid::getOwnedMap  (comm, decomp, vectorNDF);
+//	Epetra_BlockMap colMap = PdQuickGrid::getOverlapMap(comm, decomp, vectorNDF);
+//	BOOST_CHECK(rowMap.NumMyElements()==numPoints);
 
 	const PdImp::BulkModulus _K(130000.0);
 	const PdImp::PoissonsRatio _MU(0.25);
 	const PdImp::IsotropicHookeSpec isotropicSpec(_K,_MU);
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
 	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
+	Epetra_BlockMap rowMap = list.getOwnedMap(comm,vectorNDF);
+	Epetra_BlockMap colMap = list.getOverlapMap(comm,vectorNDF);
+	BOOST_CHECK(rowMap.NumMyElements()==numPoints);
 	PdITI::PdITI_Operator op(comm,list,decomp.cellVolume);
 
 //	PdImp::PdImpOperator op(comm,decomp);
 	op.addConstitutiveModel(fIntOperator);
 	Field<double> uOwnedField = Field<double>(DISPL3D,list.get_num_owned_points());
-	PdITI::SET(uOwnedField.getArray().get(),uOwnedField.getArray().get()+uOwnedField.getArray().getSize(),0.0);
+	uOwnedField.set(0.0);
 	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOwnedField);
 
 //	int n0[]  = {0,1,2};
@@ -104,11 +106,11 @@ void axialBarLinearSpacing() {
 	/*
 	 * Epetra Graph
 	 */
-	Pd_shared_ptr_Array<int> numCols = jacobian->getNumColumnsPerRow();
+	Array<int> numCols = jacobian->getNumColumnsPerRow();
 	Epetra_CrsGraph graph(Copy,rowMap,colMap,numCols.get());
 	for(int row=0;row<rowMap.NumMyElements();row++){
-		Pd_shared_ptr_Array<int> rowLIDs = jacobian->getColumnLIDs(row);
-		std::size_t numCol = rowLIDs.getSize();
+		Array<int> rowLIDs = jacobian->getColumnLIDs(row);
+		std::size_t numCol = rowLIDs.get_size();
 		BOOST_CHECK(s[row]==numCol);
 		int *cols = rowLIDs.get();
 		BOOST_CHECK(0==graph.InsertMyIndices(row,numCol,cols));
@@ -124,15 +126,15 @@ void axialBarLinearSpacing() {
 	Epetra_SerialDenseMatrix k;
 	k.Shape(vectorNDF,vectorNDF);
 	for(int row=0;row<rowMap.NumMyElements();row++){
-		Pd_shared_ptr_Array<int> rowLIDs = jacobian->getColumnLIDs(row);
-		std::size_t numCol = rowLIDs.getSize();
+		Array<int> rowLIDs = jacobian->getColumnLIDs(row);
+		std::size_t numCol = rowLIDs.get_size();
 		BOOST_CHECK(s[row]==numCol);
 		int *cols = rowLIDs.get();
 		BOOST_CHECK(0==m.BeginReplaceMyValues(row,numCol,cols));
 		/*
 		 * loop over columns in row and submit block entry
 		 */
-		Pd_shared_ptr_Array<double> actualK = jacobian->computeRowStiffness(row, rowLIDs);
+		Array<double> actualK = jacobian->computeRowStiffness(row, rowLIDs);
 		double *kPtr = actualK.get();
 		for(std::size_t col=0;col<numCol;col++){
 			/*
@@ -156,9 +158,9 @@ void axialBarLinearSpacing() {
 }
 
 void probe() {
-	PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
-	PdGridData decomp =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
-	decomp = getLoadBalancedDiscretization(decomp);
+	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
+	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
+	decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
 	int numPoints = decomp.numPoints;
 	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(decomp.myX,numPoints);
 
@@ -179,20 +181,19 @@ void probe() {
 	Epetra_BlockMap rowMap   = list.getOwnedMap(comm,vectorNDF);
 	Epetra_BlockMap colMap = list.getOverlapMap(comm,vectorNDF);
 	BOOST_CHECK(rowMap.NumMyElements()==numPoints);
-
 	Field_NS::Field<double> u(Field_NS::DISPL3D,rowMap.NumMyElements());
-	PdITI::SET(u.getArray().get(),u.getArray().get()+u.getArray().getSize(),0.0);
+	u.set(0.0);
 
 	/*
 	 * Get first row of stiffness
 	 */
 	double delta = .00001;
-	*(u.getArray().get())=delta;
-	Field_NS::Field<double> force = Field_NS::getFORCE3D(rowMap.NumMyElements());
-	double *f = force.getArray().get();
-	PdITI::SET(f,f+force.getArray().getSize(),0.0);
+	*(u.get())=delta;
+	Field<double> force = Field_NS::getFORCE3D(rowMap.NumMyElements());
+	force.set(0.0);
+	double *f = force.get();
 	op.computeInternalForce(u,force);
-	PdITI::SCALE_BY_VALUE(f,f+force.getArray().getSize(),1/delta);
+	force.scale(1/delta);
 //	for(;f!=fOwnedPtr.get()+3*4;f+=3)
 //		std::cout << std::scientific << *f << " " << *(f+1) << " " << *(f+2) << " ";
 
