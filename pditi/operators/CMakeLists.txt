@@ -16,7 +16,7 @@ ${TRILINOS_DIR}/include
 add_library(PdITIOperators 
 PdITI_Operator.cxx
 NewmarkBetaIntegrator.cxx
-#ImplicitDynamicsIntegrator.cxx
+ImplicitDynamicsIntegrator.cxx
 ImplicitLinearDynamicsIntegrator.cxx
 PdITI_Utilities.cxx
 BodyLoadSpec.cxx

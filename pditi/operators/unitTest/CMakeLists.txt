@@ -21,10 +21,10 @@
 #add_subdirectory(twoPointPlasticity)
 
 # include this path
-include_directories( ${PDNEIGH_DIR} ${MESH_INPUT_DIR} ${MESH_OUTPUT_DIR} ${UTILITIES_DIR} ${TRILINOS_DIR}/include)
+include_directories(${PD_MATERIAL_UTILITIES_DIR} ${PDNEIGH_DIR} ${MESH_INPUT_DIR} ${MESH_OUTPUT_DIR} ${UTILITIES_DIR} ${TRILINOS_DIR}/include)
 
 #unit test library for PdITI library
-#add_library(utPdITI utPdITI.cxx)
+add_library(utPdITI utPdITI.cxx)
 
 # Add test
 #add_executable(utPdImpMatrix_np2_11x1x1 utPdImpMatrix_np2_11x1x1.cxx)
@@ -37,9 +37,9 @@ include_directories( ${PDNEIGH_DIR} ${MESH_INPUT_DIR} ${MESH_OUTPUT_DIR} ${UTILI
 #add_test (utPdImpMatrix_11x1x1 python run_unit_test.py ./utPdImpMatrix_11x1x1)
 
 # Add test
-#add_executable(utPdImp_twoPointJacobian utPdImp_twoPointJacobian.cxx)
-#target_link_libraries(utPdImp_twoPointJacobian PdITIOperatorsOLD PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
-#add_test (utPdImp_twoPointJacobian python run_unit_test.py ./utPdImp_twoPointJacobian)
+add_executable(utPdImp_twoPointJacobian utPdImp_twoPointJacobian.cxx)
+target_link_libraries(utPdImp_twoPointJacobian PdITIOperators QuickGrid PdNeigh PdVTK PdMaterialUtilities ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+add_test (utPdImp_twoPointJacobian python run_unit_test.py ./utPdImp_twoPointJacobian)
 
 # Add test
 #add_executable(utPdImp_twoPointJacobian_np2 utPdImp_twoPointJacobian_np2.cxx)
@@ -102,9 +102,9 @@ add_test (utPdImp_constantBodyLoad python run_unit_test.py ./utPdImp_constantBod
 #add_test (utPdImp_implicitLinearDynamicsDemo_twoPoint python run_unit_test.py ./utPdImp_implicitLinearDynamicsDemo_twoPoint)
 
 # Add test
-#add_executable(ut_dsf ut_dsf.cxx)
-#target_link_libraries(ut_dsf PdITIOperatorsOLD PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
-#add_test (ut_dsf python run_unit_test.py ./ut_dsf)
+add_executable(ut_dsf ut_dsf.cxx)
+target_link_libraries(ut_dsf PdITIOperators QuickGrid PdNeigh PdVTK PdMaterialUtilities ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+add_test (ut_dsf python run_unit_test.py ./ut_dsf)
 
 #add_executable(ut_dirichlet_bc_jacobian ut_dirichlet_bc_jacobian.cxx)
 #target_link_libraries(ut_dirichlet_bc_jacobian PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})

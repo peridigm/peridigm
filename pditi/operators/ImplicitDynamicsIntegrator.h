@@ -7,16 +7,17 @@
 
 #ifndef IMPLICIT_DYNAMICS_RESIDUAL_H_
 #define IMPLICIT_DYNAMICS_RESIDUAL_H_
-#include "PdImpOperator.h"
+#include "PdITI_Operator.h"
 #include "PdImpMaterials.h"
 #include "NewmarkBetaIntegrator.h"
 #include <tr1/memory>
-#include "Field.h"
+#include "vtk/Field.h"
 
 
 namespace PdImp {
 
 using Field_NS::TemporalField;
+using std::tr1::shared_ptr;
 
 class ImplicitDynamicsIntegrator {
 public:
@@ -27,7 +28,7 @@ public:
 	 * @param beta=1/4
 	 * Above parameters create the "average acceleration" method
 	 */
-	ImplicitDynamicsIntegrator(PdImp::MassDensity val, std::tr1::shared_ptr<PdImpOperator> fIntOp) : timeIntegrator(0.5, 0.25), rho(val), fIntOperator(fIntOp) {}
+	ImplicitDynamicsIntegrator(PdImp::MassDensity val, shared_ptr<PdITI::PdITI_Operator> fIntOp) : timeIntegrator(0.5, 0.25), rho(val), fIntOperator(fIntOp) {}
 	virtual ~ImplicitDynamicsIntegrator() {}
 	void computeResidual
 	(
@@ -57,7 +58,7 @@ private:
 
 	NewmarkBetaIntegrator timeIntegrator;
 	MassDensity rho;
-//	std::tr1::shared_ptr<PdImpOperator> fIntOperator;
+	shared_ptr<PdITI::PdITI_Operator> fIntOperator;
 };
 
 }

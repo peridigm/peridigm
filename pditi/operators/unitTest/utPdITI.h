@@ -8,9 +8,7 @@
 #ifndef UTPDITI_H_
 #define UTPDITI_H_
 
-#include "../PdImpOperator.h"
 #include "../RowStiffnessOperator.h"
-#include "../PdImpOperator.h"
 #include "../PdImpMaterials.h"
 #include "../StageComponentDirichletBc.h"
 #include <tr1/memory>
@@ -23,7 +21,6 @@ class Epetra_RowMatrix;
 
 namespace utPdITI {
 	shared_ptr<Epetra_CrsGraph> getGraph(shared_ptr<RowStiffnessOperator>& jacobian);
-	shared_ptr<PdImp::PdImpOperator> getPimpOperator(PdGridData& decomp,Epetra_MpiComm& comm);
 	PdImp::IsotropicHookeSpec getMaterialSpec(double e, double nu);
 	shared_ptr<Epetra_RowMatrix>getOperator
 	(

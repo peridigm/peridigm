@@ -13,6 +13,7 @@ namespace PdImp {
 using Field_NS::Field;
 using Field_NS::FieldSpec;
 using Field_NS::TemporalField;
+using PdITI::PdITI_Operator;
 
 void ImplicitDynamicsIntegrator::computeResidual
 (
@@ -34,7 +35,7 @@ void ImplicitDynamicsIntegrator::computeResidual
 	FieldSpec::FieldStep N = FieldSpec::STEP_N;
 	Field<double> rNp1Field = residual.getField(NP1);
 	rNp1Field.set(zero);
-//	fIntOperator->computeInternalForce(displacement.getField(NP1),residual.getField(NP1));
+	fIntOperator->computeInternalForce(displacement.getField(NP1),residual.getField(NP1));
 
 	double* fN    = residual.getField(N).get();
 	double* resid = residual.getField(NP1).get();

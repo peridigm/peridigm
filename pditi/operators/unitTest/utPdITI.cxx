@@ -14,7 +14,7 @@
 #include <vector>
 #include <set>
 
-#include "PdGridData.h"
+#include "Array.h"
 #include "utPdITI.h"
 #include "../DirichletBcSpec.h"
 
@@ -27,7 +27,8 @@
 
 using std::vector;
 using std::set;
-//using PdImp::DirichletBcSpec;
+using PdImp::DirichletBcSpec;
+using UTILITIES::Array;
 using namespace PdImp;
 
 const int vectorNDF=3;
@@ -42,11 +43,11 @@ shared_ptr<Epetra_CrsGraph> getGraph(shared_ptr<RowStiffnessOperator>& jacobian)
 	/*
 	 * Epetra Graph
 	 */
-	Pd_shared_ptr_Array<int> numCols = jacobian->getNumColumnsPerRow();
+	Array<int> numCols = jacobian->getNumColumnsPerRow();
 	Epetra_CrsGraph *graph = new Epetra_CrsGraph(Copy,rowMap,colMap,numCols.get());
 	for(int row=0;row<rowMap.NumMyElements();row++){
-		Pd_shared_ptr_Array<int> rowLIDs = jacobian->getColumnLIDs(row);
-		std::size_t numCol = rowLIDs.getSize();
+		Array<int> rowLIDs = jacobian->getColumnLIDs(row);
+		std::size_t numCol = rowLIDs.get_size();
 		int *cols = rowLIDs.get();
 		if(0!=graph->InsertMyIndices(row,numCol,cols)){
 			std::string message("utPdITI::graph->InsertMyIndices(row,numCol,cols)\n");
@@ -61,11 +62,6 @@ shared_ptr<Epetra_CrsGraph> getGraph(shared_ptr<RowStiffnessOperator>& jacobian)
 		throw std::runtime_error(message);
 	}
 	return shared_ptr<Epetra_CrsGraph>(graph);
-}
-
-shared_ptr<PdImp::PdImpOperator> getPimpOperator(PdGridData& decomp,Epetra_MpiComm& comm) {
-	PdImp::PdImpOperator *op = new PdImp::PdImpOperator(comm,decomp);
-	return shared_ptr<PdImp::PdImpOperator>(op);
 }
 
 IsotropicHookeSpec getMaterialSpec(double e, double nu) {
@@ -95,8 +91,8 @@ getOperator
 		for(int i=0;bcIter != bcArray.end(); i++,bcIter++){
 			StageComponentDirichletBc* stageComponentPtr = bcIter->get();
 			const DirichletBcSpec& spec = stageComponentPtr->getSpec();
-			const Pd_shared_ptr_Array<int>& ids = spec.getPointIds();
-			bcPointIds[i]= std::set<int>(ids.get(),ids.get()+ids.getSize());
+			const Array<int>& ids = spec.getPointIds();
+			bcPointIds[i]= std::set<int>(ids.get(),ids.get()+ids.get_size());
 		}
 	}
 
@@ -115,8 +111,8 @@ getOperator
 	Epetra_SerialDenseMatrix k;
 	k.Shape(vectorNDF,vectorNDF);
 	for(int row=0;row<rowMap.NumMyElements();row++){
-		Pd_shared_ptr_Array<int> rowLIDs = jacobian->getColumnLIDs(row);
-		std::size_t numCol = rowLIDs.getSize();
+		Array<int> rowLIDs = jacobian->getColumnLIDs(row);
+		std::size_t numCol = rowLIDs.get_size();
 		int *cols = rowLIDs.get();
 
 		if(0!=m->BeginReplaceMyValues(row,numCol,cols)){
@@ -128,7 +124,7 @@ getOperator
 		/*
 		 * loop over columns in row and submit block entry
 		 */
-		Pd_shared_ptr_Array<double> actualK = jacobian->computeRowStiffness(row, rowLIDs);
+		Array<double> actualK = jacobian->computeRowStiffness(row, rowLIDs);
 
 
 		/*

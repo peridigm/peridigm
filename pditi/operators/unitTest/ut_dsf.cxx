@@ -10,12 +10,12 @@
 #include <boost/test/parameterized_test.hpp>
 #include <math.h>
 #include <tr1/memory>
-#include "PdVTK.h"
-#include "Field.h"
+#include "vtk/PdVTK.h"
+#include "vtk/Field.h"
+#include "quick_grid/QuickGrid.h"
 #include "PdMaterialUtilities.h"
 #include "../PdITI_Utilities.h"
-#include "PdQuickGrid.h"
-#include "VectorUtils.h"
+#include "Array.h"
 
 using namespace boost::unit_test;
 using std::size_t;
@@ -23,45 +23,11 @@ using std::tr1::shared_ptr;
 using namespace PdVTK;
 using namespace Field_NS;
 using namespace PdMaterialUtilities;
-using namespace PdQuickGrid;
+using UTILITIES::Array;
+using UTILITIES::Vector3D;
 using std::pair;
 
 
-template<class T> struct ArrayDeleter{
-	void operator()(T* d) {
-		delete [] d;
-	}
-};
-
-template<class T>
-class Array {
-
-public:
-	struct Deleter;
-	friend struct Deleter;
-	struct Deleter{
-		void operator()(T* d) {
-			delete [] d;
-		}
-	};
-
-public:
-	Array(size_t length) : aPtr(new T[length], Deleter()), size(length) {}
-	size_t get_size() const { return size; }
-	T* get() { return aPtr.get(); }
-	const T* get() const { return aPtr.get(); }
-	void set(T value) {
-		T* s = aPtr.get();
-		const T* e = s + size;
-		for(; s!=e; s++)
-			*s = value;
-	}
-
-private:
-	shared_ptr<T> aPtr;
-	size_t size;
-
-};
 
 void probe_shear
 (
@@ -88,9 +54,9 @@ Array<double> create_spherical_neighborhood(const double center[], double radius
 	 * theta in [0,Pi]
 	 * phi   in [0,2 Pi)
 	 */
-	const int nx = numX;
-	const int ny = numY;
-	const int nz = numZ;
+	const size_t nx = numX;
+	const size_t ny = numY;
+	const size_t nz = numZ;
 	size_t N = numX * numY * numZ;
 	const double xStart  = -radius;
 	const double xLength = 2 * radius;
@@ -98,11 +64,11 @@ Array<double> create_spherical_neighborhood(const double center[], double radius
 	const double yLength = 2 * radius;
 	const double zStart  = -radius;
 	const double zLength = 2 * radius;
-	const PdQPointSet1d xSpec(nx,xStart,xLength);
-	const PdQPointSet1d ySpec(ny,yStart,yLength);
-	const PdQPointSet1d zSpec(nz,zStart,zLength);
-	shared_ptr<double> xPtr=getDiscretization(xSpec,ySpec,zSpec);
-	shared_ptr<bool> flagPtr(new bool[N],ArrayDeleter<bool>());
+	const QUICKGRID::Spec1D xSpec(nx,xStart,xLength);
+	const QUICKGRID::Spec1D ySpec(ny,yStart,yLength);
+	const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
+	Array<double> xPtr=getDiscretization(xSpec,ySpec,zSpec);
+	Array<bool> flagPtr(N);
 	size_t num_points = 0;
 	{
 		{
@@ -110,7 +76,7 @@ Array<double> create_spherical_neighborhood(const double center[], double radius
 			bool *flags = flagPtr.get();
 			for(int p=0;p<N;p++, X+=3, flags++){
 				*flags=false;
-				VectorUtilsNS::Vector3D u(X);
+				Vector3D u(X);
 				if(u.norm()<=radius){
 					*flags=true;
 					num_points+=1;

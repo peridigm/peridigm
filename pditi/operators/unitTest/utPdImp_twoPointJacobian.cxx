@@ -10,13 +10,10 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
 #include "PdutMpiFixture.h"
-#include "PdNeighborhood.h"
-#include "PdQuickGrid.h"
-#include "PdQuickGridParallel.h"
-#include "PdNeighborhood.h"
+#include "quick_grid/QuickGrid.h"
 #include "PdZoltan.h"
-#include "Field.h"
-#include "../../pdneigh/NeighborhoodList.h"
+#include "vtk/Field.h"
+#include "NeighborhoodList.h"
 #include "../PdImpMaterials.h"
 #include "../PdITI_Operator.h"
 #include "../PdITI_Utilities.h"
@@ -33,8 +30,6 @@
 #include <time.h>
 
 
-using namespace PdQuickGrid;
-using namespace PdNeighborhood;
 using namespace Field_NS;
 using PdITI::IsotropicElasticConstitutiveModel;
 using PdITI::IsotropicElastic_No_DSF;
@@ -45,12 +40,12 @@ using std::cout;
 using std::endl;
 
 
-const int myRank = 0;
-const int numProcs = 1;
+const size_t myRank = 0;
+const size_t numProcs = 1;
 
-const int nx = 2;
-const int ny = 1;
-const int nz = 1;
+const size_t nx = 2;
+const size_t ny = 1;
+const size_t nz = 1;
 const double lX = 1.0;
 const double theta = M_PI/6.0;
 const double xStart  = -lX/4.0;
@@ -59,10 +54,10 @@ const double yStart  = -0.5;
 const double yLength =  1.0;
 const double zStart  = -0.5;
 const double zLength =  1.0;
-const PdQPointSet1d xSpec(nx,xStart,xLength);
-const PdQPointSet1d ySpec(ny,yStart,yLength);
-const PdQPointSet1d zSpec(nz,zStart,zLength);
-const int numCells = nx*ny*nz;
+const QUICKGRID::Spec1D xSpec(nx,xStart,xLength);
+const QUICKGRID::Spec1D ySpec(ny,yStart,yLength);
+const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
+const size_t numCells = nx*ny*nz;
 const double horizon=1.1*lX;
 const double delta = 1.0e-2 * lX;
 const double bond = lX/2.0;
@@ -76,7 +71,7 @@ void assertPoint_1_at_lX_by_2(double* x1);
 void setRotatedValue(double* x, double magnitude);
 void assertRotatedPoint_1(double *x1);
 void assertForce(const Field<double>& fOwnedField);
-Pd_shared_ptr_Array<double> computeAnalytical3x3Stiffness(const Field<double>& uOwnedField);
+Array<double> computeAnalytical3x3Stiffness(const Field<double>& uOwnedField);
 
 /*
  * Unit Test Description
@@ -88,13 +83,13 @@ Pd_shared_ptr_Array<double> computeAnalytical3x3Stiffness(const Field<double>& u
  * 4) Computes jacobian at deformed configuration
  */
 void twoPointJacobian() {
-	PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
-	PdGridData decomp =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
-	decomp = getLoadBalancedDiscretization(decomp);
+	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
+	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
+	decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
 	int numPoints = decomp.numPoints;
 	BOOST_CHECK(2==numPoints);
 	Field<double> uOwnedField = Field<double>(DISPL3D,numPoints);
-	PdITI::SET(uOwnedField.getArray().get(),uOwnedField.getArray().get()+uOwnedField.getArray().getSize(),0.0);
+	uOwnedField.set(0.0);
 
 	{
 		/*
@@ -117,7 +112,7 @@ void twoPointJacobian() {
 		/*
 		 * Set displacement on point 1
 		 */
-		double *u1 = uOwnedField.getArray().get()+3;
+		double *u1 = uOwnedField.get()+3;
 		u1[0] = y[0] - x1[0];
 		u1[1] = y[1] - x1[1];
 		u1[2] = y[2] - x1[2];
@@ -132,7 +127,7 @@ void twoPointJacobian() {
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
 //	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElastic_No_DSF(isotropicSpec));
 	op.addConstitutiveModel(fIntOperator);
-	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOwnedField);
+	shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOwnedField);
 
 	/*
 	 * Create parallel communication maps
@@ -148,8 +143,8 @@ void twoPointJacobian() {
 	Field_NS::TemporalField<double> force = Field_NS::TemporalField<double>(Field_NS::FORCE3D,numPoints);
 	Field<double> fN = force.getField(Field_NS::FieldSpec::STEP_N);
 	Field<double> fNp1 = force.getField(Field_NS::FieldSpec::STEP_NP1);
-	PdITI::SET(fN.getArray().get(),fN.getArray().get()+fN.getArray().getSize(),0.0);
-	PdITI::SET(fNp1.getArray().get(),fNp1.getArray().get()+fNp1.getArray().getSize(),0.0);
+	fN.set(0.0);
+	fNp1.set(0.0);
 	op.computeInternalForce(uOwnedField,fNp1);
 	assertForce(fNp1);
 
@@ -158,16 +153,16 @@ void twoPointJacobian() {
 	 */
 	{
 		int row(0),col(0);
-		Pd_shared_ptr_Array<int> rowLIDs = jacobian->getColumnLIDs(row);
-		BOOST_CHECK(2 == rowLIDs.getSize());
-		BOOST_CHECK(0 == *(rowLIDs.get_shared_ptr().get()));
-		BOOST_CHECK(1 == *(rowLIDs.get_shared_ptr().get()+1));
-		Pd_shared_ptr_Array<double> stiffness = jacobian->computeRowStiffness(row, rowLIDs);
+		Array<int> rowLIDs = jacobian->getColumnLIDs(row);
+		BOOST_CHECK(2 == rowLIDs.get_size());
+		BOOST_CHECK(0 == *(rowLIDs.get()));
+		BOOST_CHECK(1 == *(rowLIDs.get()+1));
+		Array<double> stiffness = jacobian->computeRowStiffness(row, rowLIDs);
 		const double *k = stiffness.get()+9*col;
 		/*
 		 * This is the hand calculated 'diagonal' entry
 		 */
-		const Pd_shared_ptr_Array<double> kA = computeAnalytical3x3Stiffness(uOwnedField);
+		const Array<double> kA = computeAnalytical3x3Stiffness(uOwnedField);
 		const double *kAns = kA.get();
 //		PdITI::PRINT_3x3MATRIX(k,std::cout);
 //		Pimp::PRINT_3x3MATRIX(kAns,std::cout);
@@ -183,7 +178,7 @@ void twoPointJacobian() {
 
 		std::cout << "ROW = " << row <<  std::endl;
 		int *cols = rowLIDs.get();
-		for(std::size_t col=0;col<rowLIDs.getSize();col++){
+		for(std::size_t col=0;col<rowLIDs.get_size();col++){
 			std::cout << "\tCOL = " << cols[col] << std::endl;
 			double *c = stiffness.get()+9*col;
 			PdITI::PRINT_3x3MATRIX(c,std::cout);
@@ -192,20 +187,20 @@ void twoPointJacobian() {
 	}
 	{
 		int row(1);
-		Pd_shared_ptr_Array<int> rowLIDs = jacobian->getColumnLIDs(row);
-		BOOST_CHECK(2 == rowLIDs.getSize());
+		Array<int> rowLIDs = jacobian->getColumnLIDs(row);
+		BOOST_CHECK(2 == rowLIDs.get_size());
 //		cout << "Row = " << row << "; first col id = " << *(rowLIDs.get_shared_ptr().get()) << endl;
 //		cout << "Row = " << row << "; 2nd col id = " << *(rowLIDs.get_shared_ptr().get()+1) << endl;
-		BOOST_CHECK(0 == *(rowLIDs.get_shared_ptr().get()));
-		BOOST_CHECK(1 == *(rowLIDs.get_shared_ptr().get()+1));
-		Pd_shared_ptr_Array<double> stiffness = jacobian->computeRowStiffness(row, rowLIDs);
+		BOOST_CHECK(0 == *(rowLIDs.get()));
+		BOOST_CHECK(1 == *(rowLIDs.get()+1));
+		Array<double> stiffness = jacobian->computeRowStiffness(row, rowLIDs);
 
 		/*
 		 * This analytical jacobian computes the diagonal entry;
 		 * Therefore, we have to offset the pointer returned by 9 for comparison purposes.
 		 */
 		const double *k = stiffness.get()+9;
-		const Pd_shared_ptr_Array<double> kA = computeAnalytical3x3Stiffness(uOwnedField);
+		const Array<double> kA = computeAnalytical3x3Stiffness(uOwnedField);
 		const double *kAns = kA.get();
 
 		double tolerance = 1.0e-15;
@@ -220,7 +215,7 @@ void twoPointJacobian() {
 		std::cout << "Computed row:" << std::endl;
 		std::cout << "ROW = " << row <<  std::endl;
 		int *cols = rowLIDs.get();
-		for(std::size_t col=0;col<rowLIDs.getSize();col++){
+		for(std::size_t col=0;col<rowLIDs.get_size();col++){
 			std::cout << "\tCOL = " << cols[col] << std::endl;
 			double *c = stiffness.get()+9*col;
 			PdITI::PRINT_3x3MATRIX(c,std::cout);
@@ -228,7 +223,7 @@ void twoPointJacobian() {
 		std::cout << endl;
 	}
 	{
-//		Pd_shared_ptr_Array<double> kAnswer = computeAnalytical3x3Stiffness(uOwnedField);
+//		Array<double> kAnswer = computeAnalytical3x3Stiffness(uOwnedField);
 //		double *c = kAnswer.get();
 //		Pimp::PRINT_3x3MATRIX(c,std::cout);
 	}
@@ -250,12 +245,12 @@ void twoPointJacobian() {
 		/*
 		 * Set displacement on point 1
 		 */
-		double *u1 = uOwnedField.getArray().get()+3;
+		double *u1 = uOwnedField.get()+3;
 		u1[0] = y[0] - x1[0];
 		u1[1] = y[1] - x1[1];
 		u1[2] = y[2] - x1[2];
 		op.computeInternalForce(uOwnedField,force.getField(Field_NS::FieldSpec::STEP_N));
-		double *fN = force.getField(Field_NS::FieldSpec::STEP_N).getArray().get();
+		double *fN = force.getField(Field_NS::FieldSpec::STEP_N).get();
 		/*
 		 * Now probe
 		 * NOTE: The following two rows of forces should match with the
@@ -268,7 +263,7 @@ void twoPointJacobian() {
 //		std::cout << "PROBE " << std::endl;
 		u1[0] = y[0] - x1[0] + 1.0e-6*delta;
 		op.computeInternalForce(uOwnedField,force.getField(Field_NS::FieldSpec::STEP_NP1));
-		double *fNP1X = force.getField(Field_NS::FieldSpec::STEP_NP1).getArray().get();
+		double *fNP1X = force.getField(Field_NS::FieldSpec::STEP_NP1).get();
 		std::cout <<  std::scientific << "\t";
 		for(int r=0;r<6;r++)
 			std::cout <<   (*(fNP1X+r) - *(fN+r))/(1.0e-6*delta) << " ";
@@ -278,7 +273,7 @@ void twoPointJacobian() {
 		u1[0] = y[0] - x1[0];
 		u1[1] = y[1] - x1[1] + 1.0e-6*delta;
 		op.computeInternalForce(uOwnedField,force.getField(Field_NS::FieldSpec::STEP_NP1));
-		fNP1X = force.getField(Field_NS::FieldSpec::STEP_NP1).getArray().get();
+		fNP1X = force.getField(Field_NS::FieldSpec::STEP_NP1).get();
 		std::cout <<  std::scientific << "\t";
 		for(int r=0;r<6;r++)
 			std::cout <<   (*(fNP1X+r) - *(fN+r))/(1.0e-6*delta) << " ";
@@ -291,8 +286,8 @@ void twoPointJacobian() {
 //			u1[1] = y[1] - x1[1];
 //			jacobian = op.getJacobian(uOwnedField);
 //			int row=0;
-//			Pd_shared_ptr_Array<int> rowLIDs = jacobian->getColumnLIDs(row);
-//			Pd_shared_ptr_Array<double> stiffness = jacobian->computeRowStiffness(row, rowLIDs);
+//			Array<int> rowLIDs = jacobian->getColumnLIDs(row);
+//			Array<double> stiffness = jacobian->computeRowStiffness(row, rowLIDs);
 //			std::cout << "ROW = " << row <<  std::endl;
 //			int *cols = rowLIDs.get();
 //			for(std::size_t col=0;col<rowLIDs.getSize();col++){
@@ -306,7 +301,7 @@ void twoPointJacobian() {
 	}
 }
 
-Pd_shared_ptr_Array<double> computeAnalytical3x3Stiffness(const Field<double>& uOwnedField){
+Array<double> computeAnalytical3x3Stiffness(const Field<double>& uOwnedField){
 
 	double x1 = bond;
 	double y0Mag = bond+delta;
@@ -315,7 +310,7 @@ Pd_shared_ptr_Array<double> computeAnalytical3x3Stiffness(const Field<double>& u
 	setRotatedValue(y0,y0Mag);
 	const double tolerance = 1.0e-15;
 	BOOST_CHECK_CLOSE(PdITI::NORMALIZE(y0),y0Mag,tolerance);
-	Pd_shared_ptr_Array<double> MY0xMY0(9);
+	Array<double> MY0xMY0(9);
 	double *k = MY0xMY0.get();
 
 	PdITI::TENSOR_PRODUCT(y0,y0,k);
@@ -340,7 +335,7 @@ void assertForce(const Field<double>& fOwnedField){
 	double fMag = 18.0*isotropicSpec.bulkModulus()*(y-x1)/x1/x1;
 	double fAnswer[3] = {0,0,0};
 	setRotatedValue(fAnswer,fMag);
-	const double *f = fOwnedField.getArray().get();
+	const double *f = fOwnedField.get();
 	const double tolerance = 1.0e-15;
 	BOOST_CHECK_CLOSE(*(f+0),fAnswer[0],tolerance*100);
 	BOOST_CHECK_SMALL(*(f+1)-fAnswer[1],tolerance);
