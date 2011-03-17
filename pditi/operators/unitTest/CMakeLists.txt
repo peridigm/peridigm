@@ -48,9 +48,9 @@ target_link_libraries(utPdImp_twoPointJacobian_np2 PdITIOperators QuickGrid PdNe
 add_test (utPdImp_twoPointJacobian_np2 python run_unit_test.py mpiexec -np 2 ./utPdImp_twoPointJacobian_np2)
 
 # Add test
-#add_executable(utPdImp_probeJacobianNu.0.0 utPdImp_probeJacobianNu.0.0.cxx)
-#target_link_libraries(utPdImp_probeJacobianNu.0.0 PdITIOperatorsOLD PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
-#add_test (utPdImp_probeJacobianNu.0.0 python run_unit_test.py ./utPdImp_probeJacobianNu.0.0)
+add_executable(utPdImp_probeJacobianNu.0.0 utPdImp_probeJacobianNu.0.0.cxx)
+target_link_libraries(utPdImp_probeJacobianNu.0.0 PdITIOperators QuickGrid PdNeigh Utilities PdVTK PdMaterialUtilities ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+add_test (utPdImp_probeJacobianNu.0.0 python run_unit_test.py ./utPdImp_probeJacobianNu.0.0)
 
 # Add test
 #add_executable(ut_jacobian_graph ut_jacobian_graph.cxx)
@@ -58,9 +58,9 @@ add_test (utPdImp_twoPointJacobian_np2 python run_unit_test.py mpiexec -np 2 ./u
 #add_test (ut_jacobian_graph python run_unit_test.py ./ut_jacobian_graph)
 
 # Add test
-#add_executable(utPdImp_linearSolve_barGravity_npX utPdImp_linearSolve_barGravity_npX.cxx)
-#target_link_libraries(utPdImp_linearSolve_barGravity_npX PdITIOperatorsOLD PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
-#add_test (utPdImp_linearSolve_barGravity_npX python run_unit_test.py mpiexec -np 5 ./utPdImp_linearSolve_barGravity_npX)
+add_executable(utPdImp_linearSolve_barGravity_npX utPdImp_linearSolve_barGravity_npX.cxx)
+target_link_libraries(utPdImp_linearSolve_barGravity_npX PdITIOperators QuickGrid PdNeigh Utilities PdVTK PdMaterialUtilities ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+add_test (utPdImp_linearSolve_barGravity_npX python run_unit_test.py mpiexec -np 5 ./utPdImp_linearSolve_barGravity_npX)
 
 # Add test
 #add_executable(utPdImp_graph2x2x1_np4 utPdImp_graph2x2x1_np4.cxx)

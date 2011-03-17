@@ -9,14 +9,13 @@
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
-#include "../PdImpMpiFixture.h"
-#include "PdNeighborhood.h"
-#include "PdQuickGrid.h"
-#include "PdQuickGridParallel.h"
-#include "PdNeighborhood.h"
+#include "Sortable.h"
+#include "Array.h"
+#include "quick_grid/QuickGrid.h"
+#include "NeighborhoodList.h"
 #include "PdZoltan.h"
-#include "Field.h"
-#include "../../pdneigh/NeighborhoodList.h"
+#include "vtk/Field.h"
+#include "vtk/PdVTK.h"
 #include "../PdImpMaterials.h"
 #include "../PdITI_Operator.h"
 #include "../PdITI_Utilities.h"
@@ -28,7 +27,15 @@
 #include "../ComponentDirichletBcSpec.h"
 #include "../IsotropicElasticConstitutiveModel.h"
 #include "../ConstitutiveModel.h"
-#include "PdVTK.h"
+#include "PdutMpiFixture.h"
+#include "Epetra_ConfigDefs.h"
+#ifdef HAVE_MPI
+#include "mpi.h"
+#include "Epetra_MpiComm.h"
+#else
+#include "Epetra_SerialComm.h"
+#endif
+
 #include <set>
 #include <Epetra_FEVbrMatrix.h>
 #include <Epetra_SerialSymDenseMatrix.h>
@@ -41,19 +48,19 @@
 #include <time.h>
 
 
-using namespace PdQuickGrid;
-using namespace PdNeighborhood;
 using namespace Field_NS;
 using PdITI::IsotropicElasticConstitutiveModel;
 using PdITI::ConstitutiveModel;
+using UTILITIES::CartesianComponent;
+using namespace Pdut;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
 
-static int numProcs;
-static int myRank;
+static size_t myRank;
+static size_t numProcs;
 
-const int nx = 5;
-const int ny = nx;
+const size_t nx = 5;
+const size_t ny = nx;
 const double lX = 1.0;
 const double lY = lX;
 const double lZ = 10.0;
@@ -61,14 +68,14 @@ const double xStart  = -lX/2.0/nx;
 const double xLength =  lX;
 const double yStart  = -lY/2.0/ny;
 const double yLength =  lY;
-const int nz = (int)(lZ * nx / lX);
+const size_t nz = (int)(lZ * nx / lX);
 const double zStart  = -lZ/2.0/nz;
 const double zLength =  lZ;
 const double zMAX = zStart + zLength - zLength / 2.0 / nz;
-const PdQPointSet1d xSpec(nx,xStart,xLength);
-const PdQPointSet1d ySpec(ny,yStart,yLength);
-const PdQPointSet1d zSpec(nz,zStart,zLength);
-const int numCells = nx*ny*nz;
+const QUICKGRID::Spec1D xSpec(nx,xStart,xLength);
+const QUICKGRID::Spec1D ySpec(ny,yStart,yLength);
+const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
+const size_t numCells = nx*ny*nz;
 const double horizon=1.5*sqrt(pow(lX/nx,2)+pow(lY/ny,2)+pow(lZ/nz,2));
 const PdImp::BulkModulus _K(130000.0);
 const PdImp::PoissonsRatio _MU(0.0);
@@ -95,16 +102,15 @@ getOperator
 
 void linearSolve_barGravity() {
 	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
-	PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec,PdQuickGrid::SphericalNorm);
-	PdGridData decomp =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
-	decomp = getLoadBalancedDiscretization(decomp);
+	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec,QUICKGRID::SphericalNorm);
+	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
+	decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
 
 	/*
 	 * Create Pimp Operator
 	 */
 	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
 	PdITI::PdITI_Operator op(comm,list,decomp.cellVolume);
-//	shared_ptr<PdImp::PdImpOperator> op = getPimpOperator(decomp,comm);
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
 	op.addConstitutiveModel(fIntOperator);
 
@@ -113,9 +119,9 @@ void linearSolve_barGravity() {
 	/*
 	 * Get points for bc's
 	 */
-	PdNeighborhood::CoordinateLabel axis = PdNeighborhood::Z;
-	Pd_shared_ptr_Array<int> bcIdsFixed = PdNeighborhood::getPointsInNeighborhoodOfAxisAlignedMaximumValue(axis,decomp.myX,decomp.numPoints,horizon,zMAX);
-	std::sort(bcIdsFixed.get(),bcIdsFixed.get()+bcIdsFixed.getSize());
+	CartesianComponent axis = UTILITIES::Z;
+	Array<int> bcIdsFixed = UTILITIES::getPointsInNeighborhoodOfAxisAlignedMaximumValue(axis,decomp.myX,decomp.numPoints,horizon,zMAX);
+	std::sort(bcIdsFixed.get(),bcIdsFixed.end());
 
 	/**
 	 * Create boundary conditions spec
@@ -130,7 +136,7 @@ void linearSolve_barGravity() {
 	 * Create Jacobian -- note that SCOPE of jacobian is associated with the PimpOperator "op"
 	 */
 	Field<double> uOwnedField(DISPL3D,decomp.numPoints);
-	uOwnedField.setValue(0.0);
+	uOwnedField.set(0.0);
 	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOwnedField);
 
 	/*
@@ -153,7 +159,7 @@ void linearSolve_barGravity() {
 	/*
 	 * Create body load
 	 */
-	Pd_shared_ptr_Array<int> localIds(decomp.numPoints);
+	Array<int> localIds(decomp.numPoints);
 	{
 		/*
 		 * Create list of local ids
@@ -173,7 +179,7 @@ void linearSolve_barGravity() {
 	/*
 	 * Apply boundary conditions to body load
 	 */
-	double *f = fN.getArray().get();
+	double *f = fN.get();
 	bcFixed->applyHomogeneousForm(fN);
 
 	Epetra_LinearProblem linProblem;
@@ -184,7 +190,7 @@ void linearSolve_barGravity() {
 	const Epetra_BlockMap& domainMap  = mPtr->OperatorDomainMap();
 
 	Epetra_Vector rhs(View,rangeMap,f);
-	Epetra_Vector lhs(View,domainMap,uOwnedField.getArray().get());
+	Epetra_Vector lhs(View,domainMap,uOwnedField.get());
 
 	linProblem.SetRHS(&rhs);
 	linProblem.SetLHS(&lhs);
@@ -206,10 +212,6 @@ void linearSolve_barGravity() {
 }
 
 
-//shared_ptr<PdImp::PdImpOperator> getPimpOperator(PdGridData& decomp,Epetra_MpiComm& comm) {
-//	PdImp::PdImpOperator *op = new PdImp::PdImpOperator(comm,decomp);
-//	return shared_ptr<PdImp::PdImpOperator>(op);
-//}
 
 shared_ptr<Epetra_CrsGraph> getGraph(shared_ptr<RowStiffnessOperator>& jacobian){
 	const Epetra_BlockMap& rowMap   = jacobian->getRowMap();
@@ -218,11 +220,11 @@ shared_ptr<Epetra_CrsGraph> getGraph(shared_ptr<RowStiffnessOperator>& jacobian)
 	/*
 	 * Epetra Graph
 	 */
-	Pd_shared_ptr_Array<int> numCols = jacobian->getNumColumnsPerRow();
+	Array<int> numCols = jacobian->getNumColumnsPerRow();
 	Epetra_CrsGraph *graph = new Epetra_CrsGraph(Copy,rowMap,colMap,numCols.get());
 	for(int row=0;row<rowMap.NumMyElements();row++){
-		Pd_shared_ptr_Array<int> rowLIDs = jacobian->getColumnLIDs(row);
-		std::size_t numCol = rowLIDs.getSize();
+		Array<int> rowLIDs = jacobian->getColumnLIDs(row);
+		std::size_t numCol = rowLIDs.get_size();
 		int *cols = rowLIDs.get();
 		BOOST_CHECK(0==graph->InsertMyIndices(row,numCol,cols));
 	}
@@ -251,8 +253,8 @@ getOperator
 		for(int i=0;bcIter != bcArray.end(); i++,bcIter++){
 			StageComponentDirichletBc* stageComponentPtr = bcIter->get();
 			const DirichletBcSpec& spec = stageComponentPtr->getSpec();
-			const Pd_shared_ptr_Array<int>& ids = spec.getPointIds();
-			bcPointIds[i]= std::set<int>(ids.get(),ids.get()+ids.getSize());
+			const Array<int>& ids = spec.getPointIds();
+			bcPointIds[i]= std::set<int>(ids.get(),ids.end());
 		}
 	}
 
@@ -271,15 +273,15 @@ getOperator
 	Epetra_SerialDenseMatrix k;
 	k.Shape(vectorNDF,vectorNDF);
 	for(int row=0;row<rowMap.NumMyElements();row++){
-		Pd_shared_ptr_Array<int> rowLIDs = jacobian->getColumnLIDs(row);
-		std::size_t numCol = rowLIDs.getSize();
+		Array<int> rowLIDs = jacobian->getColumnLIDs(row);
+		std::size_t numCol = rowLIDs.get_size();
 		int *cols = rowLIDs.get();
 		BOOST_CHECK(0==m->BeginReplaceMyValues(row,numCol,cols));
 
 		/*
 		 * loop over columns in row and submit block entry
 		 */
-		Pd_shared_ptr_Array<double> actualK = jacobian->computeRowStiffness(row, rowLIDs);
+		Array<double> actualK = jacobian->computeRowStiffness(row, rowLIDs);
 
 
 		/*
@@ -441,12 +443,11 @@ int main
 )
 {
 	// Initialize MPI and timer
-	PdImpRunTime::PimpMpiFixture pimpMPI = PdImpRunTime::PimpMpiFixture::getPimpMPI(argc,argv);
-	const Epetra_Comm& comm = pimpMPI.getEpetra_Comm();
+	PdutMpiFixture myMpi = PdutMpiFixture(argc,argv);
 
 	// These are static (file scope) variables
-	myRank = comm.MyPID();
-	numProcs = comm.NumProc();
+	myRank = myMpi.rank;
+	numProcs = myMpi.numProcs;
 
 	// Initialize UTF
 	return unit_test_main( init_unit_test, argc, argv );
