@@ -8,13 +8,12 @@
 #ifndef ISOTROPICELASTICCONSTITUTIVEMODEL_H_
 #define ISOTROPICELASTICCONSTITUTIVEMODEL_H_
 #include <vector>
-#include "Field.h"
+#include "vtk/Field.h"
 #include "PdImpMaterials.h"
 #include "ConstitutiveModel.h"
 
 using std::vector;
 using Field_NS::FieldSpec;
-using Field_NS::Field;
 using Field_NS::TemporalField;
 using PdImp::IsotropicHookeSpec;
 

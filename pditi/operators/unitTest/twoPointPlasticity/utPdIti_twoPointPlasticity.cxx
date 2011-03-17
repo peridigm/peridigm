@@ -11,8 +11,8 @@
 #include "PdQuickGrid.h"
 #include <math.h>
 #include "PdMaterialUtilities.h"
-#include "Field.h"
-#include "PdVTK.h"
+#include "vtk/Field.h"
+#include "vtk/PdVTK.h"
 #include "../../PdImpMpiFixture.h"
 #include "../../PdImpMaterials.h"
 #include "../../PdImpOperator.h"

@@ -7,7 +7,7 @@
 
 #ifndef CONSTITUTIVEMODEL_H_
 #define CONSTITUTIVEMODEL_H_
-#include "Field.h"
+#include "vtk/Field.h"
 #include <vector>
 
 using std::vector;

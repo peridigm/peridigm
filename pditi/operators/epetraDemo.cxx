@@ -3,14 +3,15 @@
 #include "NeighborhoodList.h"
 #include "../mesh_input/quick_grid/QuickGrid.h"
 #include "../mesh_input/quick_grid/QuickGridData.h"
-#include "PdVTK.h"
-#include "Field.h"
+#include "vtk/PdVTK.h"
+#include "vtk/Field.h"
 #include "PdZoltan.h"
 #include "Array.h"
+#include "Vector.h"
 #include "StageFunction.h"
 #include "IsotropicElasticConstitutiveModel.h"
 #include "ConstitutiveModel.h"
-#include "ImplicitDynamicsIntegrator.h"
+#include "PdutMpiFixture.h"
 #include "Epetra_Map.h"
 #include "Epetra_Vector.h"
 #include "Epetra_Export.h"
@@ -19,6 +20,9 @@
 #include <iostream>
 using std::cout;
 using std::endl;
+using namespace Pdut;
+using Field_NS::Field;
+using Field_NS::TemporalField;
 using PdVTK::writeField;
 using PdITI::IsotropicElasticConstitutiveModel;
 using PdITI::ConstitutiveModel;
@@ -34,16 +38,13 @@ const double innerRadius = 20.0;
 const double outerRadius = 25.0;
 const double a = 50.0;
 const double cylinderLength = 2.0*a;
-const int numRings = 3;
+const size_t numRings = 3;
 
 /*
  * Create 2d Ring
  */
-const double xC = 0.0;
-const double yC = 0.0;
-const double zC = 0.0;
-const double centerPoint[] = {xC, yC, zC} ;
-const std::valarray<double> center(centerPoint,3);
+// this initializes ring at origin
+const UTILITIES::Vector3D center;
 
 /*
  * Note that zStart is used for the 1D spec along cylinder axis
@@ -69,20 +70,20 @@ const QUICKGRID::Spec1D axisSpec(numCellsAxis,zStart,cylinderLength);
 
 
 shared_ptr<double> getAxialExtensionZ(size_t numOwnedPoints, shared_ptr<double>& xPtr);
-QUICKGRID::QuickGridData getCylinderDiscretizaton(int rank, int numProcs);
-size_t getDemoDiscretizaton(size_t size_t, int numProcs);
+QUICKGRID::QuickGridData getCylinderDiscretization(size_t rank, size_t numProcs);
+size_t getDemoDiscretizaton(size_t myRank, int numProcs);
 Field_NS::TemporalField<double> getOwnedQ2CylinderInitialConditions(double vr0, double vr1, double vz0, double a, QUICKGRID::QuickGridData& gridData);
 
 int main( int argc, char *argv[]) {
-	PdImpRunTime::PimpMpiFixture pimpMPI = PdImpRunTime::PimpMpiFixture::getPimpMPI(argc,argv);
-	const Epetra_Comm& comm = pimpMPI.getEpetra_Comm();
-	size_t decomp = getCylinderDiscretizaton(comm.MyPID(), comm.NumProc());
-//	PdGridData decomp = getDemoDiscretizaton(comm.MyPID(), comm.NumProc());
+	// Initialize MPI and timer
+	PdutMpiFixture myMpi = PdutMpiFixture(argc,argv);
+	Epetra_MpiComm comm(MPI_COMM_WORLD);
+	QUICKGRID::QuickGridData decomp = getCylinderDiscretization(comm.MyPID(), comm.NumProc());
 
 	/*
 	 * Load balance and write new decomposition
 	 */
-	decomp=QUICKGRID::getLoadBalancedDiscretization(decomp);
+	decomp=PDNEIGH::getLoadBalancedDiscretization(decomp);
 	int numPoints = decomp.numPoints;
 	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
 	/*
@@ -107,7 +108,7 @@ int main( int argc, char *argv[]) {
 	 * Add processor rank to output
 	 */
 	Field_NS::Field<int> myRank(Field_NS::PROC_NUM,decomp.numPoints);
-	myRank.setValue(comm.MyPID());
+	myRank.set(comm.MyPID());
 	writeField<int>(grid,myRank);
 	/*
 	 * These fields are independent of the displacement
@@ -153,17 +154,17 @@ int main( int argc, char *argv[]) {
 
 }
 
-QUICKGRID::QuickGridData getCylinderDiscretizaton(size_t myRank, size_t numProcs){
+QUICKGRID::QuickGridData getCylinderDiscretization(size_t myRank, size_t numProcs){
 	// Create abstract decomposition iterator
-	QUICKGRID::TensorProductCylinderMeshGenerator cellPerProcIter(numProcs, horizon,ring2dSpec, axisSpec, PdQuickGrid::SphericalNorm);
-	QUICKGRID::QuickGridData decomp =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
+	QUICKGRID::TensorProductCylinderMeshGenerator cellPerProcIter(numProcs, horizon,ring2dSpec, axisSpec, QUICKGRID::SphericalNorm);
+	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
 	return decomp;
 }
 
-Field_NS::TemporalField<double> getOwnedQ2CylinderInitialConditions(double vr0, double vr1, double vz0, double a, QUICKGRID::QuickGridData& gridData){
+TemporalField<double> getOwnedQ2CylinderInitialConditions(double vr0, double vr1, double vz0, double a, QUICKGRID::QuickGridData& gridData){
 	int numPoints = gridData.numPoints;
-	Field_NS::TemporalField<double> v0(Field_NS::getDISPL3D(numPoints));
-	double *v = v0.getField(Field_NS::FieldSpec::STEP_NP1).getArray().get();
+	TemporalField<double> v0(Field_NS::getDISPL3D(numPoints));
+	double *v = v0.getField(Field_NS::FieldSpec::STEP_NP1).get();
 	double *x = gridData.myX.get();
 	for(int i=0;i<numPoints;i++,x+=3){
 		double zBya = (*(x+2))/a;
