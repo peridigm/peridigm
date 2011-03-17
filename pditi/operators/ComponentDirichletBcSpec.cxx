@@ -13,7 +13,7 @@ namespace PdImp {
 using Field_NS::Field;
 
 ComponentDirichletBcSpec::
-ComponentDirichletBcSpec(const vector<DirichletBcSpec::ComponentLabel>& components,const Pd_shared_ptr_Array<int>& pointIds)
+ComponentDirichletBcSpec(const vector<DirichletBcSpec::ComponentLabel>& components,const UTILITIES::Array<int> pointIds)
 :
 components(components),
 directions(components.size()),
@@ -52,13 +52,13 @@ vector<DirichletBcSpec::ComponentLabel> ComponentDirichletBcSpec::getComponents(
 
 vector< vector<double> >ComponentDirichletBcSpec::getUnitDirections() const { return directions; }
 
-const Pd_shared_ptr_Array<int>& ComponentDirichletBcSpec::getPointIds() const { return localIds; }
+const UTILITIES::Array<int>& ComponentDirichletBcSpec::getPointIds() const { return localIds; }
 
 const StageDirichletBc& ComponentDirichletBcSpec::getStageDirichletBc(const StageFunction& stageFunction) const {
 	return StageComponentDirichletBc(*this,stageFunction);
 }
 
-ComponentDirichletBcSpec ComponentDirichletBcSpec::getAllComponents(const Pd_shared_ptr_Array<int>& pointIds) {
+ComponentDirichletBcSpec ComponentDirichletBcSpec::getAllComponents(const UTILITIES::Array<int> pointIds) {
 	std::vector< DirichletBcSpec::ComponentLabel > c(3);
 	c[0] = DirichletBcSpec::X;
 	c[1] = DirichletBcSpec::Y;

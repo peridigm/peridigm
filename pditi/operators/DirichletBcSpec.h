@@ -7,13 +7,11 @@
 
 #ifndef DIRICHLETBCSPEC_H_
 #define DIRICHLETBCSPEC_H_
-#include "Pd_shared_ptr_Array.h"
+#include "Array.h"
 #include "StageDirichletBc.h"
 #include <vector>
 
 using std::vector;
-
-
 
 namespace PdImp {
 
@@ -26,7 +24,7 @@ public:
 	virtual ~DirichletBcSpec() {}
 	virtual vector<ComponentLabel> getComponents() const = 0;
 	virtual vector< vector<double> > getUnitDirections() const = 0;
-	virtual const Pd_shared_ptr_Array<int>& getPointIds() const = 0;
+	virtual const UTILITIES::Array<int>& getPointIds() const = 0;
 	virtual const StageDirichletBc& getStageDirichletBc(const StageFunction& stageFunction) const = 0;
 };
 

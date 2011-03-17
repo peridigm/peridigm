@@ -6,7 +6,6 @@
  */
 
 #include "ImplicitDynamicsIntegrator.h"
-#include "PdITI_Utilities.h"
 
 
 namespace PdImp {
@@ -33,17 +32,19 @@ void ImplicitDynamicsIntegrator::computeResidual
 	double zero(0.0);
 	FieldSpec::FieldStep NP1 = FieldSpec::STEP_NP1;
 	FieldSpec::FieldStep N = FieldSpec::STEP_N;
-	PdITI::SET(residual.getField(NP1).getArray().get(),residual.getField(NP1).getArray().end(),zero);
-	fIntOperator->computeInternalForce(displacement.getField(NP1),residual.getField(NP1));
+	Field<double> rNp1Field = residual.getField(NP1);
+	rNp1Field.set(zero);
+//	fIntOperator->computeInternalForce(displacement.getField(NP1),residual.getField(NP1));
 
-	Pd_shared_ptr_Array<double> fN    = residual.getField(N).getArray();
-	Pd_shared_ptr_Array<double> resid = residual.getField(NP1).getArray();
-	Pd_shared_ptr_Array<double> uN    = displacement.getField(N).getArray();
-	Pd_shared_ptr_Array<double> uNp1  = displacement.getField(NP1).getArray();
-	Pd_shared_ptr_Array<double> vN    = velocity.getField(N).getArray();
+	double* fN    = residual.getField(N).get();
+	double* resid = residual.getField(NP1).get();
+	double* uN    = displacement.getField(N).get();
+	double* uNp1  = displacement.getField(NP1).get();
+	double* vN    = velocity.getField(N).get();
 
 	double beta = timeIntegrator.getBeta();
-	computeResidual(rho.getValue(),fN.getSize(),beta,fN.get(),resid.get(),uN.get(),uNp1.get(),vN.get(),delta_T);
+	size_t n = rNp1Field.get_size();
+	computeResidual(rho.getValue(),n,beta,fN,resid,uN,uNp1,vN,delta_T);
 }
 
 void ImplicitDynamicsIntegrator::computeResidual

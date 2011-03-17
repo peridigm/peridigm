@@ -21,7 +21,7 @@
 #add_subdirectory(twoPointPlasticity)
 
 # include this path
-include_directories(${MESH_INPUT_DIR} ${MESH_OUTPUT_DIR} ${UTILITIES_DIR} ${TRILINOS_DIR}/include)
+include_directories( ${PDNEIGH_DIR} ${MESH_INPUT_DIR} ${MESH_OUTPUT_DIR} ${UTILITIES_DIR} ${TRILINOS_DIR}/include)
 
 #unit test library for PdITI library
 #add_library(utPdITI utPdITI.cxx)
@@ -72,9 +72,9 @@ include_directories(${MESH_INPUT_DIR} ${MESH_OUTPUT_DIR} ${UTILITIES_DIR} ${TRIL
 #add_test (utPdImp_componentDirichletBcSpec python run_unit_test.py ./utPdImp_componentDirichletBcSpec)
 
 # Add test
-#add_executable(utPdImp_constantBodyLoad utPdImp_constantBodyLoad.cxx)
-#target_link_libraries(utPdImp_constantBodyLoad PdITIOperators ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
-#add_test (utPdImp_constantBodyLoad python run_unit_test.py ./utPdImp_constantBodyLoad)
+add_executable(utPdImp_constantBodyLoad utPdImp_constantBodyLoad.cxx)
+target_link_libraries(utPdImp_constantBodyLoad PdITIOperators QuickGrid PdNeigh Utilities PdVTK ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+add_test (utPdImp_constantBodyLoad python run_unit_test.py ./utPdImp_constantBodyLoad)
 
 # Add test
 #add_executable(utPdImp_pullCylinder_npX utPdImp_pullCylinder_npX.cxx)

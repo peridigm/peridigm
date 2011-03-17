@@ -8,7 +8,7 @@
 #ifndef LOADER_H_
 #define LOADER_H_
 
-#include "Field.h"
+#include "vtk/Field.h"
 
 namespace PdImp {
 

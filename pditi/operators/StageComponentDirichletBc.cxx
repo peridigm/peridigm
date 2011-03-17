@@ -11,17 +11,18 @@
 
 namespace PdImp {
 
+using Field_NS::Field;
 
 StageComponentDirichletBc::StageComponentDirichletBc(const ComponentDirichletBcSpec& spec, const StageFunction& stageFunction)
 : spec(spec), stageFunction(stageFunction)
 {}
 
-void StageComponentDirichletBc::applyHomogeneousForm(Field_NS::Field<double>& residualField) const {
+void StageComponentDirichletBc::applyHomogeneousForm(Field<double>& residualField) const {
 	vector< vector<double> > dirs = spec.getUnitDirections();
-	const Pd_shared_ptr_Array<int>& ids = spec.getPointIds();
+	const UTILITIES::Array<int>& ids = spec.getPointIds();
 	int numDirs = dirs.size();
 	double vec[3];
-	double *residual = residualField.getArray().get();
+	double *residual = residualField.get();
 	for(const int *idsPtr=ids.get();idsPtr!=ids.end();idsPtr++){
 		/*
 		 * NOTE:
@@ -45,12 +46,12 @@ void StageComponentDirichletBc::applyHomogeneousForm(Field_NS::Field<double>& re
 }
 
 
-void StageComponentDirichletBc::applyKinematics(double lambda, Field_NS::Field<double>& displacement) const {
+void StageComponentDirichletBc::applyKinematics(double lambda, Field<double>& displacement) const {
 	vector< vector<double> > dirs = spec.getUnitDirections();
-	const Pd_shared_ptr_Array<int>& ids = spec.getPointIds();
+	const UTILITIES::Array<int>& ids = spec.getPointIds();
 	int numDirs = dirs.size();
 	double vec[3];
-	double *uHead = displacement.getArray().get();
+	double *uHead = displacement.get();
 	double val = stageFunction.value(lambda);
 	for(const int *idsPtr=ids.get();idsPtr!=ids.end();idsPtr++){
 		/*

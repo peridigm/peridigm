@@ -7,7 +7,7 @@
 
 #ifndef STAGE_DIRICHLETBC_H_
 #define STAGE_DIRICHLETBC_H_
-#include "Field.h"
+#include "vtk/Field.h"
 
 namespace PdImp {
 

@@ -17,13 +17,13 @@ namespace PdImp {
 
 class ComponentDirichletBcSpec : public DirichletBcSpec {
 public:
-	ComponentDirichletBcSpec(const vector<DirichletBcSpec::ComponentLabel>& components, const Pd_shared_ptr_Array<int>& pointIds);
+	ComponentDirichletBcSpec(const vector<DirichletBcSpec::ComponentLabel>& components, const UTILITIES::Array<int> pointIds);
 	~ComponentDirichletBcSpec();
 	vector<DirichletBcSpec::ComponentLabel> getComponents() const;
 	vector< vector<double> > getUnitDirections() const;
-	const Pd_shared_ptr_Array<int>& getPointIds() const;
+	const UTILITIES::Array<int>& getPointIds() const;
 	const StageDirichletBc& getStageDirichletBc(const StageFunction& stageFunction) const;
-	static ComponentDirichletBcSpec getAllComponents(const Pd_shared_ptr_Array<int>& pointIds);
+	static ComponentDirichletBcSpec getAllComponents(const UTILITIES::Array<int> pointIds);
 
 private:
 	vector<DirichletBcSpec::ComponentLabel> components;
@@ -31,7 +31,7 @@ private:
 	/*
 	 * Set of point Ids -- these Ids should be relevant to the fields passed in to the constructor
 	 */
-	const Pd_shared_ptr_Array<int> localIds;
+	const UTILITIES::Array<int> localIds;
 
 };
 
