@@ -14,9 +14,9 @@ using Field_NS::TemporalField;
 
 void NewmarkBetaIntegrator::integrateStep
 (
-		Field_NS::TemporalField<double>& displacement,
-		Field_NS::TemporalField<double>& velocity,
-		Field_NS::TemporalField<double>& acceleration,
+		TemporalField<double>& displacement,
+		TemporalField<double>& velocity,
+		TemporalField<double>& acceleration,
 		double delta_T
 ) const
 {
@@ -24,24 +24,26 @@ void NewmarkBetaIntegrator::integrateStep
 	FieldSpec::FieldStep NP1 = FieldSpec::STEP_NP1;
 	FieldSpec::FieldStep N = FieldSpec::STEP_N;
 
-	Pd_shared_ptr_Array<double> uN    = displacement.getField(N).getArray();
-	Pd_shared_ptr_Array<double> uNp1  = displacement.getField(NP1).getArray();
-	Pd_shared_ptr_Array<double> vN    = velocity.getField(N).getArray();
-	Pd_shared_ptr_Array<double> vNp1  = velocity.getField(NP1).getArray();
-	Pd_shared_ptr_Array<double> aN    = acceleration.getField(N).getArray();
-	Pd_shared_ptr_Array<double> aNp1  = acceleration.getField(NP1).getArray();
+	const double* uN    = displacement.getField(N).get();
+	const double* uNp1  = displacement.getField(NP1).get();
+	const double* vN    = velocity.getField(N).get();
+	double* vNp1  = velocity.getField(NP1).get();
+	const double* aN    = acceleration.getField(N).get();
+	double* aNp1  = acceleration.getField(NP1).get();
 
-	std::size_t n = uN.getSize();
-	integrateStep(n,alpha,beta,uN.get(),uNp1.get(),vN.get(),vNp1.get(),aN.get(),aNp1.get(),delta_T);
-
+	/*
+	 * Note that 'get_size' is not the same as 'get_num_points'
+	 */
+	std::size_t n = displacement.getField(N).get_size();
+	integrateStep(n,alpha,beta,uN,uNp1,vN,vNp1,aN,aNp1,delta_T);
 
 }
 
 void NewmarkBetaIntegrator::advanceState
 (
-		Field_NS::TemporalField<double>& displacement,
-		Field_NS::TemporalField<double>& velocity,
-		Field_NS::TemporalField<double>& acceleration
+		TemporalField<double>& displacement,
+		TemporalField<double>& velocity,
+		TemporalField<double>& acceleration
 )
 {
 	displacement.advanceStep();

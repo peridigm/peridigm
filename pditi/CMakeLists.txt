@@ -15,7 +15,7 @@ add_subdirectory (pdneigh)
 add_subdirectory (utilities)
 add_subdirectory (mesh_input)
 add_subdirectory (mesh_output)
-#add_subdirectory (operators)
+add_subdirectory (operators)
 
 
 

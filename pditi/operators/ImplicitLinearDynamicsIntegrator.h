@@ -6,7 +6,7 @@
  */
 #include "PdImpMaterials.h"
 #include "NewmarkBetaIntegrator.h"
-#include "Field.h"
+#include "vtk/Field.h"
 #include <tr1/memory>
 
 namespace PdImp {

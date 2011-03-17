@@ -9,16 +9,12 @@
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
-#include "../PdImpMpiFixture.h"
-#include "PdNeighborhood.h"
-#include "PdQuickGrid.h"
-#include "PdQuickGridParallel.h"
-#include "PdNeighborhood.h"
+#include "quick_grid/QuickGrid.h"
+#include "Array.h"
+#include "PdZoltan.h"
 #include "Field.h"
 #include "PdZoltan.h"
-#include "../../pdneigh/NeighborhoodList.h"
-#include "../PdImpMaterials.h"
-//#include "../PdImpOperator.h"
+#include "NeighborhoodList.h"
 #include "../PdITI_Utilities.h"
 #include "../DirichletBcSpec.h"
 #include "../BodyLoadSpec.h"
@@ -38,19 +34,17 @@
 #include <time.h>
 #include <tr1/memory>
 
-using namespace PdQuickGrid;
-using namespace PdNeighborhood;
-using namespace Field_NS;
+
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
 using std::vector;
 
 
-static int numProcs;
-static int myRank;
+static size_t myRank;
+static size_t numProcs;
 
-const int nx = 5;
-const int ny = nx;
+const size_t nx = 5;
+const size_t ny = nx;
 const double lX = 1.0;
 const double lY = lX;
 const double lZ = 10.0;
@@ -58,13 +52,13 @@ const double xStart  = -lX/2.0/nx;
 const double xLength =  lX;
 const double yStart  = -lY/2.0/ny;
 const double yLength =  lY;
-const int nz = (int)(lZ * nx / lX);
+const size_t nz = (int)(lZ * nx / lX);
 const double zStart  = -lZ/2.0/nz;
 const double zLength =  lZ;
-const PdQPointSet1d xSpec(nx,xStart,xLength);
-const PdQPointSet1d ySpec(ny,yStart,yLength);
-const PdQPointSet1d zSpec(nz,zStart,zLength);
-const int numCells = nx*ny*nz;
+const QUICKGRID::Spec1D xSpec(nx,xStart,xLength);
+const QUICKGRID::Spec1D ySpec(ny,yStart,yLength);
+const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
+const size_t numCells = nx*ny*nz;
 const double horizon=1.5*sqrt(pow(lX/nx,2)+pow(lY/ny,2)+pow(lZ/nz,2));
 const PdImp::BulkModulus _K(130000.0);
 const PdImp::PoissonsRatio _MU(0.0);
@@ -82,9 +76,9 @@ using PdImp::StageComponentDirichletBc;
 void constantBodyLoad() {
 
 
-	PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec,PdQuickGrid::SphericalNorm);
-	PdGridData decomp =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
-	decomp = getLoadBalancedDiscretization(decomp);
+	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec,PdQuickGrid::SphericalNorm);
+	QUICKGRID::QuickGridData decomp =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
+	decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
 	int numPoints = decomp.numPoints;
 	BOOST_CHECK(numCells==numPoints);
 	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
@@ -100,8 +94,8 @@ void constantBodyLoad() {
 	/*
 	 * Get points for bc's
 	 */
-	PdNeighborhood::CoordinateLabel axis = PdNeighborhood::Z;
-	Pd_shared_ptr_Array<int> bcIds = PdNeighborhood::getPointsAxisAlignedMaximum(axis,decomp.myX,numPoints,horizon);
+	CartesianComponent axis = UTILITIES::Z;
+	UTILITIES::Array<int> bcIds = UTILITIES::getPointsAxisAlignedMaximum(axis,decomp.myX,numPoints,horizon);
 	/**
 	 * Create array of boundary conditions
 	 */
@@ -113,7 +107,7 @@ void constantBodyLoad() {
 	/*
 	 * Create body load
 	 */
-	Pd_shared_ptr_Array<int> localIds(decomp.numPoints);
+	UTILITIES::Array<int> localIds(decomp.numPoints);
 	{
 		/*
 		 * Create list of local ids

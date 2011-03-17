@@ -7,7 +7,7 @@
 
 #ifndef NEWMARKBETAINTEGRATOR_H_
 #define NEWMARKBETAINTEGRATOR_H_
-#include "Field.h"
+#include "vtk/Field.h"
 
 namespace PdImp {
 

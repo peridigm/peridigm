@@ -5,10 +5,7 @@
  *      Author: jamitch
  */
 
-#include "Field.h"
 #include "ImplicitLinearDynamicsIntegrator.h"
-#include "PdITI_Utilities.h"
-
 
 namespace PdImp {
 
@@ -33,15 +30,17 @@ void ImplicitLinearDynamicsIntegrator::computeResidual
 	double zero(0.0);
 	FieldSpec::FieldStep NP1 = FieldSpec::STEP_NP1;
 	FieldSpec::FieldStep N = FieldSpec::STEP_N;
-	PdITI::SET(residual.getField(NP1).getArray().get(),residual.getField(NP1).getArray().end(),zero);
+	Field<double> rNp1Field = residual.getField(NP1);
+	rNp1Field.set(zero);
 
-	Pd_shared_ptr_Array<double> uN    = displacement.getField(N).getArray();
-	Pd_shared_ptr_Array<double> vN    = velocity.getField(N).getArray();
-	Pd_shared_ptr_Array<double> aN    = acceleration.getField(N).getArray();
-	Pd_shared_ptr_Array<double> rNp1  = residual.getField(NP1).getArray();
+	double* uN    = displacement.getField(N).get();
+	double* vN    = velocity.getField(N).get();
+	double* aN    = acceleration.getField(N).get();
+	double* rNp1  = residual.getField(NP1).get();
 
 	double beta = timeIntegrator.getBeta();
-	computeResidual(rho.getValue(),rNp1.getSize(),beta,rNp1.get(),uN.get(),vN.get(),aN.get(),delta_T);
+	size_t n = rNp1Field.get_size();
+	computeResidual(rho.getValue(),n,beta,rNp1,uN,vN,aN,delta_T);
 
 }
 
