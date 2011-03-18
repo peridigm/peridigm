@@ -9,20 +9,34 @@
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
-#include "../PdImpMpiFixture.h"
-#include "PdNeighborhood.h"
-#include "../../pdneigh/NeighborhoodList.h"
-#include "PdQuickGrid.h"
-#include "PdQuickGridParallel.h"
-#include "PdNeighborhood.h"
+#include "Sortable.h"
+#include "Array.h"
+#include "quick_grid/QuickGrid.h"
+#include "NeighborhoodList.h"
 #include "PdZoltan.h"
-#include "Field.h"
+#include "vtk/Field.h"
+#include "vtk/PdVTK.h"
 #include "../PdImpMaterials.h"
 #include "../PdITI_Operator.h"
 #include "../PdITI_Utilities.h"
+#include "../DirichletBcSpec.h"
+#include "../BodyLoadSpec.h"
+#include "../StageFunction.h"
+#include "../Loader.h"
+#include "../StageComponentDirichletBc.h"
+#include "../ComponentDirichletBcSpec.h"
 #include "../IsotropicElasticConstitutiveModel.h"
-#include "../IsotropicElastic_No_DSF.h"
-#include "PdVTK.h"
+#include "../ConstitutiveModel.h"
+#include "PdutMpiFixture.h"
+
+#include "Epetra_ConfigDefs.h"
+#ifdef HAVE_MPI
+#include "mpi.h"
+#include "Epetra_MpiComm.h"
+#else
+#include "Epetra_SerialComm.h"
+#endif
+
 #include <set>
 #include <Epetra_FEVbrMatrix.h>
 #include <Epetra_SerialSymDenseMatrix.h>
@@ -34,8 +48,7 @@
 #include <string>
 
 
-using namespace PdQuickGrid;
-using namespace PdNeighborhood;
+using namespace Pdut;
 using namespace Field_NS;
 using PdITI::IsotropicElasticConstitutiveModel;
 using PdITI::ConstitutiveModel;
@@ -43,12 +56,12 @@ using std::tr1::shared_ptr;
 using namespace boost::unit_test;
 
 
-static int myRank;
-static int numProcs;
+static size_t myRank;
+static size_t numProcs;
 
-const int nx = 4;
-const int ny = 4;
-const int nz = 8;
+const size_t nx = 4;
+const size_t ny = 4;
+const size_t nz = 8;
 const double lX = 1.0;
 const double lY = 1.0;
 const double lZ = 1.0;
@@ -58,10 +71,10 @@ const double yStart  = -lY/2.0/ny;
 const double yLength =  lY;
 const double zStart  = -lZ/2.0/nz;
 const double zLength =  lZ;
-const PdQPointSet1d xSpec(nx,xStart,xLength);
-const PdQPointSet1d ySpec(ny,yStart,yLength);
-const PdQPointSet1d zSpec(nz,zStart,zLength);
-const int numCells = nx*ny*nz;
+const QUICKGRID::Spec1D xSpec(nx,xStart,xLength);
+const QUICKGRID::Spec1D ySpec(ny,yStart,yLength);
+const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
+const size_t numCells = nx*ny*nz;
 const double horizon=1.01*sqrt(pow(lX/nx,2)+pow(lY/ny,2)+pow(lZ/nz,2));
 const PdImp::BulkModulus _K(130000.0);
 const PdImp::PoissonsRatio _MU(0.0);
@@ -70,16 +83,16 @@ const PdImp::IsotropicHookeSpec isotropicSpec(_K,_MU);
 using PdVTK::writeField;
 
 void graph() {
-	PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec,PdQuickGrid::SphericalNorm);
-	PdGridData decomp =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
-	decomp = getLoadBalancedDiscretization(decomp);
+	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec,QUICKGRID::SphericalNorm);
+	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
+	decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
 	int numPoints = decomp.numPoints;
 
 
 	BOOST_CHECK(numCells==numPoints);
 	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
 	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
-	Field<double> uOwnedField = PdITI::getPureShearXY(Field_NS::Field<double>(Field_NS::COORD3D,decomp.myX,numPoints));
+	Field<double> uOwnedField = PdITI::getPureShearXY(Field<double>(Field_NS::COORD3D,decomp.myX,numPoints));
 	Field<double> probeField = Field_NS::Field<double>(Field_NS::COORD3D,numPoints);
 
 	/*
@@ -95,7 +108,7 @@ void graph() {
 	/*
 	 * Compute jacobian in deformed state
 	 */
-	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = pditiOp.getJacobian(uOwnedField);
+	shared_ptr<RowStiffnessOperator> jacobian = pditiOp.getJacobian(uOwnedField);
 
 	int numRows(128);
 	int numCols[]={
@@ -1497,8 +1510,8 @@ void graph() {
 	row120, row121, row122, row123, row124, row125, row126, row127};
 
 	for(std::size_t row=0;row<numPoints;row++){
-		Pd_shared_ptr_Array<int> rowLIDs = jacobian->getColumnLIDs(row);
-		std::size_t numColsRow = rowLIDs.getSize();
+		UTILITIES::Array<int> rowLIDs = jacobian->getColumnLIDs(row);
+		std::size_t numColsRow = rowLIDs.get_size();
 		BOOST_CHECK(numColsRow==numCols[row]);
 		int *colAns = rowPtr[row];
 		int *cols = rowLIDs.get();
@@ -1535,19 +1548,18 @@ int main
 )
 {
 	// Initialize MPI and timer
-	PdImpRunTime::PimpMpiFixture pimpMPI = PdImpRunTime::PimpMpiFixture::getPimpMPI(argc,argv);
-	const Epetra_Comm& comm = pimpMPI.getEpetra_Comm();
+	PdutMpiFixture myMpi = PdutMpiFixture(argc,argv);
 
 	// These are static (file scope) variables
-	myRank = comm.MyPID();
-	numProcs = comm.NumProc();
+	myRank = myMpi.rank;
+	numProcs = myMpi.numProcs;
 	/**
 	 * This test only make sense for numProcs == 1
 	 */
 	if(1 != numProcs){
 		std::cerr << "Unit test runtime ERROR: ut_jacobian_graph is intended for \"serial\" run only and makes sense on 1 processor" << std::endl;
 		std::cerr << "\t Re-run unit test $mpiexec -np 1 ./ut_jacobian_graph" << std::endl;
-		pimpMPI.PimpMpiFixture::~PimpMpiFixture();
+		myMpi.PdutMpiFixture::~PdutMpiFixture();
 		std::exit(-1);
 	}
 

@@ -10,14 +10,13 @@
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
-#include "../PdImpMpiFixture.h"
-#include "PdNeighborhood.h"
-#include "PdQuickGrid.h"
-#include "PdQuickGridParallel.h"
-#include "PdNeighborhood.h"
+#include "Sortable.h"
+#include "Array.h"
+#include "quick_grid/QuickGrid.h"
+#include "NeighborhoodList.h"
 #include "PdZoltan.h"
-#include "Field.h"
-#include "../../pdneigh/NeighborhoodList.h"
+#include "vtk/Field.h"
+#include "vtk/PdVTK.h"
 #include "../PdImpMaterials.h"
 #include "../PdITI_Operator.h"
 #include "../PdITI_Utilities.h"
@@ -28,7 +27,18 @@
 #include "../StageComponentDirichletBc.h"
 #include "../ComponentDirichletBcSpec.h"
 #include "../IsotropicElasticConstitutiveModel.h"
-#include "PdVTK.h"
+#include "../ConstitutiveModel.h"
+#include "utPdITI.h"
+#include "PdutMpiFixture.h"
+
+#include "Epetra_ConfigDefs.h"
+#ifdef HAVE_MPI
+#include "mpi.h"
+#include "Epetra_MpiComm.h"
+#else
+#include "Epetra_SerialComm.h"
+#endif
+
 #include <set>
 #include <Epetra_FEVbrMatrix.h>
 #include <Epetra_SerialSymDenseMatrix.h>
@@ -40,26 +50,25 @@
 #include <cstdlib>
 #include <time.h>
 
-using namespace PdQuickGrid;
-using namespace PdNeighborhood;
-using std::tr1::shared_ptr;
-using namespace boost::unit_test;
+using namespace Pdut;
+using UTILITIES::CartesianComponent;
 using namespace Field_NS;
+using UTILITIES::Array;
 using PdITI::IsotropicElasticConstitutiveModel;
 using PdITI::ConstitutiveModel;
-using PdVTK::writeField;
-using PdImp::DirichletBcSpec;
-using PdImp::ComponentDirichletBcSpec;
-using PdImp::StageFunction;
 using PdImp::StageComponentDirichletBc;
-
-using std::cout;
-using std::set;
-using std::map;
+using PdImp::StageFunction;
+using PdImp::ComponentDirichletBcSpec;
+using PdImp::DirichletBcSpec;
+using std::tr1::shared_ptr;
+using namespace boost::unit_test;
 using std::vector;
+using std::cout;
+using std::endl;
 
-static int myRank;
-static int numProcs;
+static size_t numProcs;
+static size_t myRank;
+
 const double cylinderRadius = 1.0;
 const int numRings = 2;
 const double zStart = 0.0;
@@ -74,20 +83,19 @@ const PdImp::IsotropicHookeSpec isotropicSpec(_K,_MU);
 
 //shared_ptr<PdImp::PdImpOperator> getPimpOperator(PdGridData& decomp,Epetra_MpiComm& comm);
 
-TensorProductSolidCylinder getMeshGenerator(){
+QUICKGRID::TensorProductSolidCylinder getMeshGenerator(){
 
-	TensorProductSolidCylinder meshGen(numProcs,cylinderRadius,numRings,zStart,cylinderLength);
+	QUICKGRID::TensorProductSolidCylinder meshGen(numProcs,cylinderRadius,numRings,zStart,cylinderLength);
 	return meshGen;
 }
 
-PdGridData getGrid() {
-	TensorProductSolidCylinder meshGen = getMeshGenerator();
-	PdGridData decomp =  PdQuickGrid::getDiscretization(myRank, meshGen);
-	decomp = getLoadBalancedDiscretization(decomp);
-//	decomp = createAndAddNeighborhood(decomp,horizon);
+QUICKGRID::QuickGridData getGrid() {
+	QUICKGRID::TensorProductSolidCylinder meshGen = getMeshGenerator();
+	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, meshGen);
+	decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
 
-	const std::vector<PdQPointSet1d>& specs = meshGen.getTensorProductSpecs();
-	PdQPointSet1d zSpec = specs[2];
+	const std::vector<QUICKGRID::Spec1D>& specs = meshGen.getTensorProductSpecs();
+	QUICKGRID::Spec1D zSpec = specs[2];
 	double dZ = zSpec.getCellSize();
 	/*
 	 * Assign a couple of static variables
@@ -99,16 +107,16 @@ PdGridData getGrid() {
 }
 
 void computeInternalForce(){
-	PdGridData decomp = getGrid();
+	QUICKGRID::QuickGridData decomp = getGrid();
 
 	/*
 	 * Get points for bc's
 	 */
-	PdNeighborhood::CoordinateLabel axis = PdNeighborhood::Z;
-	Pd_shared_ptr_Array<int> bcIdsFixed = PdNeighborhood::getPointsInNeighborhoodOfAxisAlignedMaximumValue(axis,decomp.myX,decomp.numPoints,horizon,zMax);
-	std::sort(bcIdsFixed.get(),bcIdsFixed.get()+bcIdsFixed.getSize());
-	Pd_shared_ptr_Array<int> bcIdsApplied = PdNeighborhood::getPointsInNeighborhoodOfAxisAlignedMinimumValue(axis,decomp.myX,decomp.numPoints,horizon,zMin);
-	std::sort(bcIdsApplied.get(),bcIdsApplied.get()+bcIdsApplied.getSize());
+	CartesianComponent axis = UTILITIES::Z;
+	Array<int> bcIdsFixed = UTILITIES::getPointsInNeighborhoodOfAxisAlignedMaximumValue(axis,decomp.myX,decomp.numPoints,horizon,zMax);
+	std::sort(bcIdsFixed.get(),bcIdsFixed.end());
+	Array<int> bcIdsApplied = UTILITIES::getPointsInNeighborhoodOfAxisAlignedMinimumValue(axis,decomp.myX,decomp.numPoints,horizon,zMin);
+	std::sort(bcIdsApplied.get(),bcIdsApplied.end());
 
 	/**
 	 * Create boundary conditions spec
@@ -126,12 +134,12 @@ void computeInternalForce(){
 	bcs[1] = bcApplied;
 
 	Field<double> uOwnedField(DISPL3D,decomp.numPoints);
-	uOwnedField.setValue(0.0);
+	uOwnedField.set(0.0);
 	bcApplied->applyKinematics(1.0,uOwnedField);
 
 
 	/*
-	 * Create Pimp Operator
+	 * Create PdITI Operator
 	 */
 	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
 	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
@@ -139,9 +147,9 @@ void computeInternalForce(){
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
 	op.addConstitutiveModel(fIntOperator);
 
-	Field_NS::FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
-	Field_NS::Field<double> fN(fNSpec,decomp.numPoints);
-	fN.setValue(0.0);
+	FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
+	Field<double> fN(fNSpec,decomp.numPoints);
+	fN.set(0.0);
 	op.computeInternalForce(uOwnedField,fN);
 
 	/*
@@ -149,10 +157,13 @@ void computeInternalForce(){
 	 */
 	int numPoints = decomp.numPoints;
 	Field_NS::Field<double> volField = Field_NS::getVOLUME(decomp.cellVolume,numPoints);
+	Field<int> fieldRank(Field_NS::PROC_NUM,decomp.numPoints);
+	fieldRank.set(myRank);
 	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(decomp.myX,numPoints);
 	PdVTK::writeField<double>(grid,volField);
 	PdVTK::writeField(grid,uOwnedField);
 	PdVTK::writeField(grid,fN);
+	PdVTK::writeField(grid,fieldRank);
 	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("utPimp_smallCylinderPull_npX.pvtu", numProcs, myRank);
 	PdVTK::write(writer,grid);
 
@@ -186,12 +197,11 @@ int main
 {
 
 	// Initialize MPI and timer
-	PdImpRunTime::PimpMpiFixture pimpMPI = PdImpRunTime::PimpMpiFixture::getPimpMPI(argc,argv);
-	const Epetra_Comm& comm = pimpMPI.getEpetra_Comm();
+	PdutMpiFixture myMpi = PdutMpiFixture(argc,argv);
 
 	// These are static (file scope) variables
-	myRank = comm.MyPID();
-	numProcs = comm.NumProc();
+	myRank = myMpi.rank;
+	numProcs = myMpi.numProcs;
 
 	// Initialize UTF
 	return unit_test_main( init_unit_test, argc, argv );

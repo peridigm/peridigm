@@ -9,22 +9,33 @@
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
-#include "../PdImpMpiFixture.h"
-#include "PdNeighborhood.h"
-#include "PdQuickGrid.h"
-#include "PdQuickGridParallel.h"
-#include "PdNeighborhood.h"
+#include "Sortable.h"
+#include "Array.h"
+#include "quick_grid/QuickGrid.h"
+#include "NeighborhoodList.h"
 #include "PdZoltan.h"
-#include "Field.h"
-#include "../../pdneigh/NeighborhoodList.h"
+#include "vtk/Field.h"
+#include "vtk/PdVTK.h"
 #include "../PdImpMaterials.h"
-//#include "../PdImpOperator.h"
-#include "../PdITI_Utilities.h"
 #include "../PdITI_Operator.h"
+#include "../PdITI_Utilities.h"
 #include "../DirichletBcSpec.h"
+#include "../BodyLoadSpec.h"
+#include "../StageFunction.h"
+#include "../Loader.h"
 #include "../StageComponentDirichletBc.h"
 #include "../ComponentDirichletBcSpec.h"
-#include "PdVTK.h"
+#include "../IsotropicElasticConstitutiveModel.h"
+#include "../ConstitutiveModel.h"
+#include "PdutMpiFixture.h"
+
+#include "Epetra_ConfigDefs.h"
+#ifdef HAVE_MPI
+#include "mpi.h"
+#include "Epetra_MpiComm.h"
+#else
+#include "Epetra_SerialComm.h"
+#endif
 #include <set>
 #include <Epetra_FEVbrMatrix.h>
 #include <Epetra_SerialSymDenseMatrix.h>
@@ -36,19 +47,18 @@
 #include <cstdlib>
 #include <time.h>
 
-
-using namespace PdQuickGrid;
-using namespace PdNeighborhood;
+using UTILITIES::CartesianComponent;
+using namespace Pdut;
 using namespace Field_NS;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
 
 
-static int numProcs;
-static int myRank;
+static size_t myRank;
+static size_t numProcs;
 
-const int nx = 2;
-const int ny = nx;
+const size_t nx = 2;
+const size_t ny = nx;
 const double lX = 2.0;
 const double lY = lX;
 const double lZ = 1.0;
@@ -56,13 +66,13 @@ const double xStart  = -lX/2.0/nx;
 const double xLength =  lX;
 const double yStart  = -lY/2.0/ny;
 const double yLength =  lY;
-const int nz = 1;
+const size_t nz = 1;
 const double zStart  = -lZ/2.0/nz;
 const double zLength =  lZ;
-const PdQPointSet1d xSpec(nx,xStart,xLength);
-const PdQPointSet1d ySpec(ny,yStart,yLength);
-const PdQPointSet1d zSpec(nz,zStart,zLength);
-const int numCells = nx*ny*nz;
+const QUICKGRID::Spec1D xSpec(nx,xStart,xLength);
+const QUICKGRID::Spec1D ySpec(ny,yStart,yLength);
+const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
+const size_t numCells = nx*ny*nz;
 const double horizon=1.1;
 const PdImp::BulkModulus _K(130000.0);
 const PdImp::PoissonsRatio _MU(0.0);
@@ -83,9 +93,9 @@ shared_ptr<Epetra_CrsGraph> getGraph(shared_ptr<RowStiffnessOperator>& jacobian)
 
 void testGraph() {
 	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
-	PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec,PdQuickGrid::SphericalNorm);
-	PdGridData decomp =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
-	decomp = getLoadBalancedDiscretization(decomp);
+	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec,QUICKGRID::SphericalNorm);
+	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
+	decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
 
 	/*
 	 * Each processor should own 1 point
@@ -97,7 +107,6 @@ void testGraph() {
 	 */
 	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
 	PdITI::PdITI_Operator op(comm,list,decomp.cellVolume);
-//	shared_ptr<PdImp::PdImpOperator> op = getPimpOperator(decomp,comm);
 
 	/*
 	 * There should be 3 points total in the overlap vectors
@@ -110,15 +119,15 @@ void testGraph() {
 	 * Create Jacobian -- note that SCOPE of jacobian is associated with the PimpOperator "op"
 	 */
 	Field<double> uOverlapField(DISPL3D,overlapMap.NumMyElements());
-	PdITI::SET(uOverlapField.getArray().get(),uOverlapField.getArray().end(),0.0);
-	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOverlapField);
+	uOverlapField.set(0.0);
+	shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOverlapField);
 
 	/*
 	 * Get points for bc's
 	 */
-	PdNeighborhood::CoordinateLabel axis = PdNeighborhood::Z;
-	Pd_shared_ptr_Array<int> bcIds = PdNeighborhood::getPointsAxisAlignedMaximum(axis,decomp.myX,decomp.numPoints,horizon);
-	std::sort(bcIds.get(),bcIds.get()+bcIds.getSize());
+	CartesianComponent axis = UTILITIES::Z;
+	UTILITIES::Array<int> bcIds = UTILITIES::getPointsAxisAlignedMaximum(axis,decomp.myX,decomp.numPoints,horizon);
+	std::sort(bcIds.get(),bcIds.end());
 
 	/**
 	 * Create boundary conditions spec
@@ -147,11 +156,11 @@ shared_ptr<Epetra_CrsGraph> getGraph(shared_ptr<RowStiffnessOperator>& jacobian)
 	/*
 	 * Epetra Graph
 	 */
-	Pd_shared_ptr_Array<int> numCols = jacobian->getNumColumnsPerRow();
+	UTILITIES::Array<int> numCols = jacobian->getNumColumnsPerRow();
 	Epetra_CrsGraph *graph = new Epetra_CrsGraph(Copy,rowMap,colMap,numCols.get());
 	for(int row=0;row<jacobian->getNumRows();row++){
-		Pd_shared_ptr_Array<int> rowLIDs = jacobian->getColumnLIDs(row);
-		std::size_t numCol = rowLIDs.getSize();
+		UTILITIES::Array<int> rowLIDs = jacobian->getColumnLIDs(row);
+		std::size_t numCol = rowLIDs.get_size();
 		/*
 		 * Each row should have 4 entries
 		 */
@@ -189,19 +198,18 @@ int main
 )
 {
 	// Initialize MPI and timer
-	PdImpRunTime::PimpMpiFixture pimpMPI = PdImpRunTime::PimpMpiFixture::getPimpMPI(argc,argv);
-	const Epetra_Comm& comm = pimpMPI.getEpetra_Comm();
+	PdutMpiFixture myMpi = PdutMpiFixture(argc,argv);
 
 	// These are static (file scope) variables
-	myRank = comm.MyPID();
-	numProcs = comm.NumProc();
+	myRank = myMpi.rank;
+	numProcs = myMpi.numProcs;
 	/**
 	 * This test only make sense for numProcs == 4
 	 */
 	if(4 != numProcs){
 		std::cerr << "Unit test runtime ERROR: utPimp_graph2x2x1_np4 only makes sense on 4 processors" << std::endl;
 		std::cerr << "\t Re-run unit test $mpiexec -np 4 ./utPimp_graph2x2x1_np4." << std::endl;
-		pimpMPI.PimpMpiFixture::~PimpMpiFixture();
+		myMpi.PdutMpiFixture::~PdutMpiFixture();
 		std::exit(-1);
 	}
 
