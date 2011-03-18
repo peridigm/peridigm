@@ -9,15 +9,13 @@
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
-#include "../PdImpMpiFixture.h"
-#include "PdNeighborhood.h"
-#include "PdQuickGrid.h"
-#include "PdQuickGridParallel.h"
-#include "PdNeighborhood.h"
+#include "Sortable.h"
+#include "Array.h"
+#include "quick_grid/QuickGrid.h"
+#include "NeighborhoodList.h"
 #include "PdZoltan.h"
-#include "Field.h"
-#include "utPdITI.h"
-#include "../../pdneigh/NeighborhoodList.h"
+#include "vtk/Field.h"
+#include "vtk/PdVTK.h"
 #include "../PdImpMaterials.h"
 #include "../PdITI_Operator.h"
 #include "../PdITI_Utilities.h"
@@ -28,7 +26,18 @@
 #include "../StageComponentDirichletBc.h"
 #include "../ComponentDirichletBcSpec.h"
 #include "../IsotropicElasticConstitutiveModel.h"
-#include "PdVTK.h"
+#include "../ConstitutiveModel.h"
+#include "utPdITI.h"
+#include "PdutMpiFixture.h"
+
+#include "Epetra_ConfigDefs.h"
+#ifdef HAVE_MPI
+#include "mpi.h"
+#include "Epetra_MpiComm.h"
+#else
+#include "Epetra_SerialComm.h"
+#endif
+
 #include <set>
 #include <Epetra_FEVbrMatrix.h>
 #include <Epetra_SerialSymDenseMatrix.h>
@@ -41,30 +50,30 @@
 #include <time.h>
 
 
-using namespace PdQuickGrid;
-using namespace PdNeighborhood;
+using namespace Pdut;
+using UTILITIES::CartesianComponent;
 using namespace Field_NS;
+using UTILITIES::Array;
 using PdITI::IsotropicElasticConstitutiveModel;
 using PdITI::ConstitutiveModel;
-using PdVTK::writeField;
-using PdImp::DirichletBcSpec;
-using PdImp::ComponentDirichletBcSpec;
-using PdImp::StageFunction;
 using PdImp::StageComponentDirichletBc;
-
+using PdImp::StageFunction;
+using PdImp::ComponentDirichletBcSpec;
+using PdImp::DirichletBcSpec;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
-
 using std::vector;
-using std::set;
+using std::cout;
+using std::endl;
 
-static int numProcs;
-static int myRank;
+static size_t numProcs;
+static size_t myRank;
+
 static double zMax;
 static double zMin;
 
 const double cylinderRadius = 1.0;
-const int numRings = 5;
+const int numRings = 4;
 const double zStart = 0.0;
 const double cylinderLength = 15.0;
 static double horizon;
@@ -76,10 +85,10 @@ const double rho = 7800e-6;
 const int vectorNDF=3;
 
 
-TensorProductSolidCylinder getMeshGenerator(){
-	TensorProductSolidCylinder meshGen(numProcs,cylinderRadius,numRings,zStart,cylinderLength);
-	const std::vector<PdQPointSet1d>& specs = meshGen.getTensorProductSpecs();
-	PdQPointSet1d zSpec = specs[2];
+QUICKGRID::TensorProductSolidCylinder getMeshGenerator(){
+	QUICKGRID::TensorProductSolidCylinder meshGen(numProcs,cylinderRadius,numRings,zStart,cylinderLength);
+	const std::vector<QUICKGRID::Spec1D>& specs = meshGen.getTensorProductSpecs();
+	QUICKGRID::Spec1D zSpec = specs[2];
 	double dZ = zSpec.getCellSize();
 	/*
 	 * Assign a couple of static variables
@@ -92,17 +101,15 @@ TensorProductSolidCylinder getMeshGenerator(){
 
 void utPimp_pullCylinder() {
 	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
-	TensorProductSolidCylinder meshGen = getMeshGenerator();
-	PdGridData decomp =  PdQuickGrid::getDiscretization(myRank, meshGen);
-	decomp = getLoadBalancedDiscretization(decomp);
-//	decomp = createAndAddNeighborhood(decomp,horizon);
+	QUICKGRID::TensorProductSolidCylinder meshGen = getMeshGenerator();
+	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, meshGen);
+	decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
 
 	/*
-	 * Create Pimp Operator
+	 * Create PdITI Operator
 	 */
 	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
 	PdITI::PdITI_Operator op(comm,list,decomp.cellVolume);
-//	shared_ptr<PdImp::PdImpOperator> op = utPdITI::getPimpOperator(decomp,comm);
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
 	op.addConstitutiveModel(fIntOperator);
 
@@ -110,11 +117,11 @@ void utPimp_pullCylinder() {
 	/*
 	 * Get points for bc's
 	 */
-	PdNeighborhood::CoordinateLabel axis = PdNeighborhood::Z;
-	Pd_shared_ptr_Array<int> bcIdsFixed = PdNeighborhood::getPointsInNeighborhoodOfAxisAlignedMinimumValue(axis,decomp.myX,decomp.numPoints,horizon,zMin);
-	std::sort(bcIdsFixed.get(),bcIdsFixed.get()+bcIdsFixed.getSize());
-	Pd_shared_ptr_Array<int> bcIdsApplied = PdNeighborhood::getPointsInNeighborhoodOfAxisAlignedMaximumValue(axis,decomp.myX,decomp.numPoints,horizon,zMax);
-	std::sort(bcIdsApplied.get(),bcIdsApplied.get()+bcIdsApplied.getSize());
+	CartesianComponent axis = UTILITIES::Z;
+	Array<int> bcIdsFixed = UTILITIES::getPointsInNeighborhoodOfAxisAlignedMinimumValue(axis,decomp.myX,decomp.numPoints,horizon,zMin);
+	std::sort(bcIdsFixed.get(),bcIdsFixed.end());
+	Array<int> bcIdsApplied = UTILITIES::getPointsInNeighborhoodOfAxisAlignedMaximumValue(axis,decomp.myX,decomp.numPoints,horizon,zMax);
+	std::sort(bcIdsApplied.get(),bcIdsApplied.end());
 
 	/**
 	 * Create boundary conditions spec
@@ -135,9 +142,9 @@ void utPimp_pullCylinder() {
 	 * Create Jacobian -- note that SCOPE of jacobian is associated with the PimpOperator "op"
 	 */
 	Field<double> uOwnedField(DISPL3D,decomp.numPoints);
-	uOwnedField.setValue(0.0);
+	uOwnedField.set(0.0);
 	bcApplied->applyKinematics(1.0,uOwnedField);
-	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOwnedField);
+	shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOwnedField);
 
 	/*
 	 * Create graph
@@ -156,9 +163,9 @@ void utPimp_pullCylinder() {
 	 * 2) Negate internal force since we are using it as a residual on the RHS (THIS IS NOT DONE -- SIGNS need to be investigated)
 	 * 3) Apply kinematics to this vector so that solution properly includes the applied kinematics
 	 */
-	Field_NS::FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
-	Field_NS::Field<double> fN(fNSpec,decomp.numPoints);
-	fN.setValue(0.0);
+	FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
+	Field<double> fN(fNSpec,decomp.numPoints);
+	fN.set(0.0);
 	op.computeInternalForce(uOwnedField,fN);
 	bcApplied->applyKinematics(1.0,fN);
 
@@ -169,9 +176,9 @@ void utPimp_pullCylinder() {
 	const Epetra_BlockMap& rangeMap  = mPtr->OperatorRangeMap();
 	const Epetra_BlockMap& domainMap  = mPtr->OperatorDomainMap();
 
-	double *f = fN.getArray().get();
+	double *f = fN.get();
 	Epetra_Vector rhs(View,rangeMap,f);
-	Epetra_Vector lhs(View,domainMap,uOwnedField.getArray().get());
+	Epetra_Vector lhs(View,domainMap,uOwnedField.get());
 
 	linProblem.SetRHS(&rhs);
 	linProblem.SetLHS(&lhs);
@@ -184,14 +191,17 @@ void utPimp_pullCylinder() {
 	/*
 	 * Write problem set up parameters to file
 	 */
-	Field_NS::FieldSpec deltaSpec(FieldSpec::VELOCITY,FieldSpec::VECTOR3D,"delta");
-	Field_NS::Field<double> delta(deltaSpec,decomp.numPoints);
-	delta.setValue(0.0);
+	FieldSpec deltaSpec(FieldSpec::VELOCITY,FieldSpec::VECTOR3D,"delta");
+	Field<double> delta(deltaSpec,decomp.numPoints);
+	delta.set(0.0);
 	bcApplied->applyKinematics(1.0,delta);
 
 	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(decomp.myX,decomp.numPoints);
+	Field<int> fieldRank(Field_NS::PROC_NUM,decomp.numPoints);
+	fieldRank.set(myRank);
 	PdVTK::writeField(grid,uOwnedField);
 	PdVTK::writeField(grid,delta);
+	PdVTK::writeField(grid,fieldRank);
 	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("utPimp_pullCylinder_npX.pvtu", comm.NumProc(), comm.MyPID());
 	PdVTK::write(writer,grid);
 
@@ -222,12 +232,11 @@ int main
 )
 {
 	// Initialize MPI and timer
-	PdImpRunTime::PimpMpiFixture pimpMPI = PdImpRunTime::PimpMpiFixture::getPimpMPI(argc,argv);
-	const Epetra_Comm& comm = pimpMPI.getEpetra_Comm();
+	PdutMpiFixture myMpi = PdutMpiFixture(argc,argv);
 
 	// These are static (file scope) variables
-	myRank = comm.MyPID();
-	numProcs = comm.NumProc();
+	myRank = myMpi.rank;
+	numProcs = myMpi.numProcs;
 
 	// Initialize UTF
 	return unit_test_main( init_unit_test, argc, argv );

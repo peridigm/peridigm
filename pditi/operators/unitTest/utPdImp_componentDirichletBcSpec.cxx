@@ -8,21 +8,34 @@
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
-#include "PdZoltan.h"
+#include "Sortable.h"
+#include "Array.h"
 #include "quick_grid/QuickGrid.h"
 #include "NeighborhoodList.h"
-#include "PdutMpiFixture.h"
-#include "Field.h"
-#include "NeighborhoodList.h"
+#include "PdZoltan.h"
+#include "vtk/Field.h"
+#include "vtk/PdVTK.h"
 #include "../PdImpMaterials.h"
 #include "../PdITI_Operator.h"
 #include "../PdITI_Utilities.h"
+#include "../DirichletBcSpec.h"
+#include "../BodyLoadSpec.h"
+#include "../StageFunction.h"
+#include "../Loader.h"
+#include "../StageComponentDirichletBc.h"
+#include "../ComponentDirichletBcSpec.h"
 #include "../IsotropicElasticConstitutiveModel.h"
 #include "../ConstitutiveModel.h"
-#include "../DirichletBcSpec.h"
-#include "../ComponentDirichletBcSpec.h"
-#include "../StageComponentDirichletBc.h"
-#include "PdVTK.h"
+#include "PdutMpiFixture.h"
+
+#include "Epetra_ConfigDefs.h"
+#ifdef HAVE_MPI
+#include "mpi.h"
+#include "Epetra_MpiComm.h"
+#else
+#include "Epetra_SerialComm.h"
+#endif
+
 #include <set>
 #include <Epetra_FEVbrMatrix.h>
 #include <Epetra_SerialSymDenseMatrix.h>
@@ -34,9 +47,10 @@
 #include <time.h>
 #include <tr1/memory>
 
-using namespace PdQuickGrid;
-using namespace PdNeighborhood;
+using namespace Pdut;
+using UTILITIES::CartesianComponent;
 using namespace Field_NS;
+using UTILITIES::Array;
 using PdITI::IsotropicElasticConstitutiveModel;
 using PdITI::ConstitutiveModel;
 using std::tr1::shared_ptr;
@@ -45,12 +59,12 @@ using std::vector;
 using std::cout;
 using std::endl;
 
-static int numProcs;
-static int myRank;
+static size_t numProcs;
+static size_t myRank;
 
-const int nx = 4;
-const int ny = 4;
-const int nz = 8;
+const size_t nx = 4;
+const size_t ny = 4;
+const size_t nz = 8;
 const double lX = 1.0;
 const double lY = 1.0;
 const double lZ = 1.0;
@@ -60,9 +74,9 @@ const double yStart  = -lY/2.0/ny;
 const double yLength =  lY;
 const double zStart  = -lZ/2.0/nz;
 const double zLength =  lZ;
-const PdQPointSet1d xSpec(nx,xStart,xLength);
-const PdQPointSet1d ySpec(ny,yStart,yLength);
-const PdQPointSet1d zSpec(nz,zStart,zLength);
+const QUICKGRID::Spec1D xSpec(nx,xStart,xLength);
+const QUICKGRID::Spec1D ySpec(ny,yStart,yLength);
+const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
 const int numCells = nx*ny*nz;
 const double horizon=1.01*sqrt(pow(lX/nx,2)+pow(lY/ny,2)+pow(lZ/nz,2));
 const PdImp::BulkModulus _K(130000.0);
@@ -70,7 +84,7 @@ const PdImp::PoissonsRatio _MU(0.0);
 const PdImp::IsotropicHookeSpec isotropicSpec(_K,_MU);
 const int vectorNDF=3;
 
-void assertBcIds(const Pd_shared_ptr_Array<int>& bcIds);
+void assertBcIds(const Array<int>& bcIds);
 using PdImp::DirichletBcSpec;
 using PdImp::ComponentDirichletBcSpec;
 using PdImp::StageComponentDirichletBc;
@@ -85,7 +99,7 @@ void allComponentsFixed_1() {
 	comps[0] = DirichletBcSpec::X;
 	comps[1] = DirichletBcSpec::Y;
 	comps[2] = DirichletBcSpec::Z;
-	Pd_shared_ptr_Array<int> ids(0);
+	Array<int> ids(0);
 	PdImp::ComponentDirichletBcSpec allFixedSpec(comps,ids);
 	vector<DirichletBcSpec::ComponentLabel> c = allFixedSpec.getComponents();
 	BOOST_CHECK(c.size()==3);
@@ -128,7 +142,7 @@ void allComponentsFixed_1() {
 
 void allComponentsFixed_2() {
 
-	Pd_shared_ptr_Array<int> ids(0);
+	Array<int> ids(0);
 	ComponentDirichletBcSpec allFixedSpec = ComponentDirichletBcSpec::getAllComponents(ids);
 
 	vector<DirichletBcSpec::ComponentLabel> c = allFixedSpec.getComponents();
@@ -172,15 +186,15 @@ void allComponentsFixed_2() {
 }
 
 void applyHomogeneousForm() {
-	PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec,PdQuickGrid::SphericalNorm);
-	PdGridData decomp =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
-	decomp = getLoadBalancedDiscretization(decomp);
+	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec,QUICKGRID::SphericalNorm);
+	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
+	decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
 	int numPoints = decomp.numPoints;
 	BOOST_CHECK(numCells==numPoints);
 	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
 
 
-	Field<double> uOwnedField = PdITI::getPureShearXY(Field_NS::Field<double>(Field_NS::COORD3D,decomp.myX,numPoints));
+	Field<double> uOwnedField = PdITI::getPureShearXY(Field<double>(Field_NS::COORD3D,decomp.myX,numPoints));
 
 	/*
 	 * Compute Tangent
@@ -191,9 +205,7 @@ void applyHomogeneousForm() {
 	Field_NS::TemporalField<double> force = Field_NS::TemporalField<double>(Field_NS::FORCE3D,numPoints);
 	Field_NS::Field<double> fN(fNSpec,numPoints);
 	Field_NS::Field<double> fNP1(fNP1Spec,numPoints);
-//	PdImp::PdImpOperator op(comm,decomp);
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
-//	op.addConstitutiveModel(fIntOperator);
 
 	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
 	PdITI::PdITI_Operator pditiOp(comm,list,decomp.cellVolume);
@@ -201,12 +213,9 @@ void applyHomogeneousForm() {
 	pditiOp.computeInternalForce(uOwnedField,fN);
 	pditiOp.computeInternalForce(uOwnedField,fNP1);
 
-//	op.computeInternalForce(uOwnedField,fN);
-//	op.computeInternalForce(uOwnedField,fNP1);
-
-	PdNeighborhood::CoordinateLabel axis = PdNeighborhood::Y;
-	Pd_shared_ptr_Array<int> bcIds = PdNeighborhood::getPointsAxisAlignedMinimum(axis,decomp.myX,numPoints,horizon);
-	std::sort(bcIds.get(),bcIds.get()+bcIds.getSize());
+	CartesianComponent axis = UTILITIES::Y;
+	Array<int> bcIds = UTILITIES::getPointsAxisAlignedMinimum(axis,decomp.myX,numPoints,horizon);
+	std::sort(bcIds.get(),bcIds.end());
 	assertBcIds(bcIds);
 	ComponentDirichletBcSpec allFixedSpec = ComponentDirichletBcSpec::getAllComponents(bcIds);
 	StageFunction constStageFunction(0.0,0.0);
@@ -226,12 +235,12 @@ void applyHomogeneousForm() {
 /*
  * Note that for this to work, incoming bcIds must be sorted
  */
-void assertBcIds(const Pd_shared_ptr_Array<int>& bcIds){
+void assertBcIds(const Array<int>& bcIds){
 
 	int delta=nx*ny;
 	int numPointsPerXY=8;
 
-	BOOST_CHECK(64==bcIds.getSize());
+	BOOST_CHECK(64==bcIds.get_size());
 	const int *ids = bcIds.get();
 	int c=0;
 	for(int j=0;j<nz;j++,c+=delta){
@@ -269,19 +278,18 @@ int main
 )
 {
 	// Initialize MPI and timer
-	PdImpRunTime::PimpMpiFixture pimpMPI = PdImpRunTime::PimpMpiFixture::getPimpMPI(argc,argv);
-	const Epetra_Comm& comm = pimpMPI.getEpetra_Comm();
+	PdutMpiFixture myMpi = PdutMpiFixture(argc,argv);
 
 	// These are static (file scope) variables
-	myRank = comm.MyPID();
-	numProcs = comm.NumProc();
+	myRank = myMpi.rank;
+	numProcs = myMpi.numProcs;
 	/**
 	 * This test only make sense for numProcs == 1
 	 */
 	if(1 != numProcs){
 		std::cerr << "Unit test runtime ERROR: utPimp_componentDirichletBcSpec is intended for \"serial\" run only and makes sense on 1 processor" << std::endl;
 		std::cerr << "\t Re-run unit test $mpiexec -np 1 ./utPimp_componentDirichletBcSpec" << std::endl;
-		pimpMPI.PimpMpiFixture::~PimpMpiFixture();
+		myMpi.PdutMpiFixture::~PdutMpiFixture();
 		std::exit(-1);
 	}
 

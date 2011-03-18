@@ -53,9 +53,9 @@ target_link_libraries(utPdImp_probeJacobianNu.0.0 PdITIOperators QuickGrid PdNei
 add_test (utPdImp_probeJacobianNu.0.0 python run_unit_test.py ./utPdImp_probeJacobianNu.0.0)
 
 # Add test
-#add_executable(ut_jacobian_graph ut_jacobian_graph.cxx)
-#target_link_libraries(ut_jacobian_graph PdITIOperatorsOLD PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
-#add_test (ut_jacobian_graph python run_unit_test.py ./ut_jacobian_graph)
+add_executable(ut_jacobian_graph ut_jacobian_graph.cxx)
+target_link_libraries(ut_jacobian_graph PdITIOperators QuickGrid PdNeigh Utilities PdVTK PdMaterialUtilities ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+add_test (ut_jacobian_graph python run_unit_test.py ./ut_jacobian_graph)
 
 # Add test
 add_executable(utPdImp_linearSolve_barGravity_npX utPdImp_linearSolve_barGravity_npX.cxx)
@@ -63,14 +63,14 @@ target_link_libraries(utPdImp_linearSolve_barGravity_npX PdITIOperators QuickGri
 add_test (utPdImp_linearSolve_barGravity_npX python run_unit_test.py mpiexec -np 5 ./utPdImp_linearSolve_barGravity_npX)
 
 # Add test
-#add_executable(utPdImp_graph2x2x1_np4 utPdImp_graph2x2x1_np4.cxx)
-#target_link_libraries(utPdImp_graph2x2x1_np4 PdITIOperatorsOLD PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
-#add_test (utPdImp_graph2x2x1_np4 python run_unit_test.py mpiexec -np 4 ./utPdImp_graph2x2x1_np4)
+add_executable(utPdImp_graph2x2x1_np4 utPdImp_graph2x2x1_np4.cxx)
+target_link_libraries(utPdImp_graph2x2x1_np4 PdITIOperators QuickGrid PdNeigh Utilities PdVTK PdMaterialUtilities ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+add_test (utPdImp_graph2x2x1_np4 python run_unit_test.py mpiexec -np 4 ./utPdImp_graph2x2x1_np4)
 
 # Add test
-#add_executable(utPdImp_componentDirichletBcSpec utPdImp_componentDirichletBcSpec.cxx)
-#target_link_libraries(utPdImp_componentDirichletBcSpec PdITIOperatorsOLD PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
-#add_test (utPdImp_componentDirichletBcSpec python run_unit_test.py ./utPdImp_componentDirichletBcSpec)
+add_executable(utPdImp_componentDirichletBcSpec utPdImp_componentDirichletBcSpec.cxx)
+target_link_libraries(utPdImp_componentDirichletBcSpec PdITIOperators QuickGrid PdNeigh Utilities PdVTK PdMaterialUtilities ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+add_test (utPdImp_componentDirichletBcSpec python run_unit_test.py ./utPdImp_componentDirichletBcSpec)
 
 # Add test
 add_executable(utPdImp_constantBodyLoad utPdImp_constantBodyLoad.cxx)
@@ -78,14 +78,14 @@ target_link_libraries(utPdImp_constantBodyLoad PdITIOperators QuickGrid PdNeigh 
 add_test (utPdImp_constantBodyLoad python run_unit_test.py ./utPdImp_constantBodyLoad)
 
 # Add test
-#add_executable(utPdImp_pullCylinder_npX utPdImp_pullCylinder_npX.cxx)
-#target_link_libraries(utPdImp_pullCylinder_npX utPdITI PdITIOperatorsOLD PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
-#add_test (utPdImp_pullCylinder_npX python run_unit_test.py mpiexec -np 4 ./utPdImp_pullCylinder_npX)
+add_executable(utPdImp_pullCylinder_npX utPdImp_pullCylinder_npX.cxx)
+target_link_libraries(utPdImp_pullCylinder_npX utPdITI PdITIOperators QuickGrid PdNeigh Utilities PdVTK PdMaterialUtilities ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+add_test (utPdImp_pullCylinder_npX python run_unit_test.py mpiexec -np 8 ./utPdImp_pullCylinder_npX)
 
 # Add test
-#add_executable(utPdImp_smallCylinderPull_npX utPdImp_smallCylinderPull_npX.cxx)
-#target_link_libraries(utPdImp_smallCylinderPull_npX PdITIOperatorsOLD PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
-#add_test (utPdImp_smallCylinderPull_npX python run_unit_test.py mpiexec -np 4 ./utPdImp_smallCylinderPull_npX)
+add_executable(utPdImp_smallCylinderPull_npX utPdImp_smallCylinderPull_npX.cxx)
+target_link_libraries(utPdImp_smallCylinderPull_npX utPdITI PdITIOperators QuickGrid PdNeigh Utilities PdVTK PdMaterialUtilities ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+add_test (utPdImp_smallCylinderPull_npX python run_unit_test.py mpiexec -np 4 ./utPdImp_smallCylinderPull_npX)
 
 # Add test
 #add_executable(utPdImp_isotropicElasticPlasticSpec utPdImp_isotropicElasticPlasticSpec.cxx)
