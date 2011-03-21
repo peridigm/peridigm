@@ -30,17 +30,17 @@ template<class T> struct ArrayDeleter{
 PdITI_Operator::
 RowOperator::RowOperator
 (
-		const Epetra_Comm& comm,
+		shared_ptr<Epetra_Comm> comm,
 		const PDNEIGH::NeighborhoodList row_matrix_list_2_horizon,
 		shared_ptr<double> ownedCellVolume,
 		shared_ptr<double> mOwnedPtr,
 		shared_ptr<double> dsfOwnedPtr
 ):
 row_matrix_list(row_matrix_list_2_horizon),
-rowMapNDF(row_matrix_list.getOwnedMap(comm,vectorNDF)),
-rowMapScalar(row_matrix_list.getOwnedMap(comm,scalarNDF)),
-colMapNDF(row_matrix_list.getOverlapMap(comm,vectorNDF)),
-colMapScalar(row_matrix_list.getOverlapMap(comm,scalarNDF)),
+rowMapNDF(*row_matrix_list.getOwnedMap(vectorNDF)),
+rowMapScalar(*row_matrix_list.getOwnedMap(scalarNDF)),
+colMapNDF(*row_matrix_list.getOverlapMap(vectorNDF)),
+colMapScalar(*row_matrix_list.getOverlapMap(scalarNDF)),
 xOverlapPtr(new double[colMapNDF.NumMyElements()*vectorNDF],ArrayDeleter<double>()),
 uOverlapPtr(new double[colMapNDF.NumMyElements()*vectorNDF],ArrayDeleter<double>()),
 dsfOverlapPtr(new double[colMapNDF.NumMyElements()*scalarNDF],ArrayDeleter<double>()),
@@ -252,15 +252,15 @@ const Array<double>& PdITI_Operator::RowOperator::computeRowStiffness(int localR
 }
 
 
-PdITI_Operator::PdITI_Operator(const Epetra_Comm& comm, const PDNEIGH::NeighborhoodList neighborhoodList, shared_ptr<double> ownedCellVolume)
+PdITI_Operator::PdITI_Operator(shared_ptr<Epetra_Comm> comm, const PDNEIGH::NeighborhoodList neighborhoodList, shared_ptr<double> ownedCellVolume)
 :
 epetraComm(comm),
 list(neighborhoodList),
 row_matrix_list(list.cloneAndShare(2.0*neighborhoodList.get_horizon())),
-ownedMapScalar(neighborhoodList.getOwnedMap(comm,scalarNDF)),
-ownedMapNDF(neighborhoodList.getOwnedMap(comm,vectorNDF)),
-overlapMapScalar(neighborhoodList.getOverlapMap(comm,scalarNDF)),
-overlapMapNDF(neighborhoodList.getOverlapMap(comm,vectorNDF)),
+ownedMapScalar(*neighborhoodList.getOwnedMap(scalarNDF)),
+ownedMapNDF(*neighborhoodList.getOwnedMap(vectorNDF)),
+overlapMapScalar(*neighborhoodList.getOverlapMap(scalarNDF)),
+overlapMapNDF(*neighborhoodList.getOverlapMap(vectorNDF)),
 importScalar(overlapMapScalar,ownedMapScalar),
 importNDF(overlapMapNDF,ownedMapNDF),
 exportAssembly(overlapMapNDF,ownedMapNDF),

@@ -18,8 +18,9 @@ namespace PdImp {
 class ComponentDirichletBcSpec : public DirichletBcSpec {
 public:
 	ComponentDirichletBcSpec(const vector<DirichletBcSpec::ComponentLabel>& components, const UTILITIES::Array<int> pointIds);
-	~ComponentDirichletBcSpec();
+	virtual ~ComponentDirichletBcSpec();
 	vector<DirichletBcSpec::ComponentLabel> getComponents() const;
+	char get_mask() const;
 	vector< vector<double> > getUnitDirections() const;
 	const UTILITIES::Array<int>& getPointIds() const;
 	const StageDirichletBc& getStageDirichletBc(const StageFunction& stageFunction) const;
@@ -32,6 +33,7 @@ private:
 	 * Set of point Ids -- these Ids should be relevant to the fields passed in to the constructor
 	 */
 	const UTILITIES::Array<int> localIds;
+	char mask;
 
 };
 

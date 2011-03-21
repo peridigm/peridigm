@@ -77,8 +77,8 @@ Field_NS::TemporalField<double> getOwnedQ2CylinderInitialConditions(double vr0, 
 int main( int argc, char *argv[]) {
 	// Initialize MPI and timer
 	PdutMpiFixture myMpi = PdutMpiFixture(argc,argv);
-	Epetra_MpiComm comm(MPI_COMM_WORLD);
-	QUICKGRID::QuickGridData decomp = getCylinderDiscretization(comm.MyPID(), comm.NumProc());
+	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
+	QUICKGRID::QuickGridData decomp = getCylinderDiscretization(comm->MyPID(), comm->NumProc());
 
 	/*
 	 * Load balance and write new decomposition
@@ -108,7 +108,7 @@ int main( int argc, char *argv[]) {
 	 * Add processor rank to output
 	 */
 	Field_NS::Field<int> myRank(Field_NS::PROC_NUM,decomp.numPoints);
-	myRank.set(comm.MyPID());
+	myRank.set(comm->MyPID());
 	writeField<int>(grid,myRank);
 	/*
 	 * These fields are independent of the displacement
@@ -146,7 +146,7 @@ int main( int argc, char *argv[]) {
 	writeField<double>(grid, displacement.getField(Field_NS::FieldSpec::STEP_N));
 	writeField<double>(grid, theta);
 	writeField<double>(grid, force.getField(Field_NS::FieldSpec::STEP_NP1));
-	PdVTK::CollectionWriter collectionWriter("Q2CylinderBalanced",comm.NumProc(), comm.MyPID());
+	PdVTK::CollectionWriter collectionWriter("Q2CylinderBalanced",comm->NumProc(), comm->MyPID());
 	collectionWriter.writeTimeStep(0.0, grid);
 	collectionWriter.close();
 

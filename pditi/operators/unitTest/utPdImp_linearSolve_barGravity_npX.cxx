@@ -101,7 +101,7 @@ getOperator
 );
 
 void linearSolve_barGravity() {
-	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
+	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
 	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec,QUICKGRID::SphericalNorm);
 	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
 	decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
@@ -206,7 +206,7 @@ void linearSolve_barGravity() {
 	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(decomp.myX,decomp.numPoints);
 	PdVTK::writeField(grid,uOwnedField);
 	PdVTK::writeField(grid,fN);
-	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("linearSolve_barGravity.pvtu", comm.NumProc(), comm.MyPID());
+	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("linearSolve_barGravity.pvtu", comm->NumProc(), comm->MyPID());
 	PdVTK::write(writer,grid);
 
 }

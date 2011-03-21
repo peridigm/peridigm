@@ -92,7 +92,7 @@ using std::endl;
 shared_ptr<Epetra_CrsGraph> getGraph(shared_ptr<RowStiffnessOperator>& jacobian);
 
 void testGraph() {
-	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
+	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
 	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec,QUICKGRID::SphericalNorm);
 	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
 	decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
@@ -112,7 +112,7 @@ void testGraph() {
 	 * There should be 3 points total in the overlap vectors
 	 * Each point only has 3 neighbors -- it does not have the diagonal neighbor
 	 */
-	Epetra_BlockMap overlapMap = list.getOverlapMap(comm,3);
+	Epetra_BlockMap overlapMap = *list.getOverlapMap(3);
 	BOOST_CHECK(3==overlapMap.NumMyElements());
 
 	/*

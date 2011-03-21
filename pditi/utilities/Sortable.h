@@ -8,6 +8,7 @@
 #ifndef SORTABLE_H_
 #define SORTABLE_H_
 
+#include <set>
 #include "Array.h"
 
 namespace UTILITIES {
@@ -189,7 +190,7 @@ Array<int> getPointsAxisAlignedMaximum
 		double horizon
 );
 
-
+shared_ptr< std::set<int> > constructFrameSet(size_t num_owned_points, shared_ptr<double> owned_x, double horizon);
 
 
 }

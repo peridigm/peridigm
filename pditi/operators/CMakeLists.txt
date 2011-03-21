@@ -36,6 +36,7 @@ PdNeigh
 PdVTK 
 PdMaterialUtilities
 QuickGrid
+Utilities
 ${VTK_LIBS}
 ${TRILINOS_LIBS}
 ${REQUIRED_LIBS}

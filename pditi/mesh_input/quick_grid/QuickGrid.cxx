@@ -13,6 +13,7 @@
 #include <cstring>
 #include <iostream>
 #include <set>
+#include <cstdlib>
 
 namespace QUICKGRID {
 
@@ -1204,13 +1205,13 @@ QuickGridData getDiscretization(size_t rank, QuickGridMeshGenerationIterator &ce
 		}
 		else{
 			MPI_Finalize();
-			exit(1);
+			std::exit(1);
 		}
 
 	    MPI_Recv(&ack, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
 	    if (ack < 0){
 	      MPI_Finalize();
-	      exit(1);
+	      std::exit(1);
 	    }
 
 	}

@@ -183,5 +183,83 @@ Array<int> getPointsInNeighborhoodOfAxisAlignedMaximumValue
 
 }
 
+shared_ptr< std::set<int> > constructFrameSet(size_t num_owned_points, shared_ptr<double> owned_x, double horizon) {
+
+	Sortable points(num_owned_points, owned_x);
+
+	size_t numAxes=3;
+	Array<CartesianComponent> components(numAxes);
+	components[0] = UTILITIES::X;
+	components[1] = UTILITIES::Y;
+	components[2] = UTILITIES::Z;
+
+	Array< Array<int> > sorted_maps(numAxes);
+	for(size_t c=0;c<components.get_size();c++){
+
+		Sortable::Comparator compare = points.getComparator(components[c]);
+		sorted_maps[c] = points.getIdentityMap();
+		/*
+		 * Sort points
+		 */
+		std::sort(sorted_maps[c].get(),sorted_maps[c].get()+num_owned_points,compare);
+
+	}
+
+	/*
+	 * Loop over axes and collect points at min and max ranges
+	 * Add Points to frame set
+	 */
+	shared_ptr< std::set<int> >  frameSetPtr(new std::set<int>);
+	for(size_t c=0;c<components.get_size();c++){
+
+		CartesianComponent comp = components[c];
+
+		Array<int> map_component = sorted_maps[c];
+
+		{
+			/*
+			 * MINIMUM
+			 * Find least upper bound of points for Min+horizon
+			 */
+			const double *x = points.get();
+			int *map = map_component.get();
+			/*
+			 * First value in map corresponds with minimum value
+			 */
+			int iMIN = *map;
+			double min = x[3*iMIN+comp];
+			double value = min + horizon;
+			const Sortable::SearchIterator start = points.begin(comp,map_component.get_shared_ptr());
+			const Sortable::SearchIterator end = start+num_owned_points;
+			Sortable::SearchIterator lub = std::upper_bound(start,end,value);
+			frameSetPtr->insert(lub.mapStart(),lub.mapIterator());
+
+		}
+
+		{
+			/*
+			 * MAXIMUM
+			 * Find greatest lower bound glb for Max-horizon
+			 */
+			const double *x = points.get();
+			int *map = map_component.get();
+
+			/*
+			 * Last value in map corresponds with maximum value
+			 */
+			int iMAX = *(map+num_owned_points-1);
+			double max = x[3*iMAX+comp];
+			double value = max - horizon;
+			const Sortable::SearchIterator start=points.begin(comp,map_component.get_shared_ptr());
+			const Sortable::SearchIterator end=start+num_owned_points;
+			Sortable::SearchIterator glb = std::upper_bound(start,end,value);
+			frameSetPtr->insert(glb.mapIterator(),glb.mapEnd());
+		}
+	}
+
+	return frameSetPtr;
+
+}
+
 
 } /* UTITILITIES */

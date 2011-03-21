@@ -19,6 +19,7 @@ public:
 	virtual const DirichletBcSpec& getSpec() const = 0;
 	virtual void applyHomogeneousForm(Field_NS::Field<double>& residual) const = 0;
 	virtual void applyKinematics(double lambda, Field_NS::Field<double>& displacement) const = 0;
+	virtual void imprint_bc(Field_NS::Field<char>& mask) const = 0;
 };
 
 }

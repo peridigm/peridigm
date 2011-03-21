@@ -4,57 +4,55 @@
  *  Created on: Feb 25, 2011
  *      Author: jamitch
  */
-#include "Epetra_Comm.h"
+
 #include "NeighborhoodList.h"
-#include "zoltan.h"
+
 #include "vtk/PdVTK.h"
 #include "vtkIdList.h"
 #include "vtkKdTree.h"
 #include "vtkKdTreePointLocator.h"
-#include <stdexcept>
+
 #include "Sortable.h"
 #include "Array.h"
-/*
- * @TODO
- * Need to remove this header dependency
- */
-//#include "PdNeighborhood.h"
+#include "Vector.h"
 
+#include "zoltan.h"
+#include "Epetra_Comm.h"
+#include "Epetra_Distributor.h"
+
+#include <stdexcept>
 
 namespace PDNEIGH {
+
 
 using UTILITIES::Sortable;
 using UTILITIES::CartesianComponent;
 using UTILITIES::Array;
+using UTILITIES::PointCenteredBoundingBox;
 
 /*
  * Prototype for private function
  */
-const Epetra_BlockMap getOverlap(int ndf, int numShared, const int* shared, int numOwned,const int* owned, const Epetra_Comm& comm);
+shared_ptr<Epetra_BlockMap> getOverlap(int ndf, int numShared, const int* shared, int numOwned, const int* owned, const Epetra_Comm& comm);
 
-class PointBB {
-public:
-	PointBB (const double* x, double horizon):
-	xMin(*(x+0)-horizon), xMax(*(x+0)+horizon),
-	yMin(*(x+1)-horizon), yMax(*(x+1)+horizon),
-	zMin(*(x+2)-horizon), zMax(*(x+2)+horizon) {}
-	inline double get_xMin() const { return xMin; }
-	inline double get_yMin() const { return yMin; }
-	inline double get_zMin() const { return zMin; }
-	inline double get_xMax() const { return xMax; }
-	inline double get_yMax() const { return yMax; }
-	inline double get_zMax() const { return zMax; }
+shared_ptr<Epetra_Comm> NeighborhoodList::get_Epetra_Comm() const {
+	return epetraComm;
+}
 
-private:
-	double xMin, xMax, yMin, yMax, zMin, zMax;
-};
+shared_ptr<Epetra_Distributor> NeighborhoodList::create_Epetra_Distributor() const {
+	return shared_ptr<Epetra_Distributor>(epetraComm->CreateDistributor());
+}
 
 double NeighborhoodList::get_horizon() const {
 	return horizon;
 }
 
-int NeighborhoodList::get_num_owned_points() const {
+size_t NeighborhoodList::get_num_owned_points() const {
 	return num_owned_points;
+}
+
+size_t NeighborhoodList::get_num_shared_points() const {
+	return sharedGIDs.get_size();
 }
 
 shared_ptr<double> NeighborhoodList::get_owned_x() const {
@@ -71,6 +69,10 @@ shared_ptr<int> NeighborhoodList::get_neighborhood() const {
 
 shared_ptr<int> NeighborhoodList::get_local_neighborhood() const {
 	return local_neighborhood.get_shared_ptr();
+}
+
+shared_ptr<int> NeighborhoodList::get_shared_gids() const {
+	return sharedGIDs.get_shared_ptr();
 }
 
 const int* NeighborhoodList::get_neighborhood (int localId) const {
@@ -94,7 +96,7 @@ int NeighborhoodList::get_num_neigh (int localId) const {
 
 NeighborhoodList::NeighborhoodList
 (
-		const Epetra_Comm& comm,
+		shared_ptr<Epetra_Comm> comm,
 		struct Zoltan_Struct* zz,
 		size_t numOwnedPoints,
 		shared_ptr<int>& ownedGIDs,
@@ -104,6 +106,7 @@ NeighborhoodList::NeighborhoodList
 )
 :
 		epetraComm(comm),
+		epetra_block_maps(),
 		num_owned_points(numOwnedPoints),
 		size_neighborhood_list(1),
 		horizon(horizon),
@@ -113,6 +116,7 @@ NeighborhoodList::NeighborhoodList
 		local_neighborhood(),
 		neighborhood_ptr(num_owned_points),
 		num_neighbors(num_owned_points),
+		sharedGIDs(),
 		zoltan(zz),
 		filter_ptr(bondFilterPtr)
 {
@@ -122,11 +126,29 @@ NeighborhoodList::NeighborhoodList
 	createAndAddNeighborhood();
 
 	/*
-	 * Compute local neighborhood list
+	 * Create list of shared GIDs; these are IDs that
+	 * are appended to 'ownedIDs'; together, ownedIDs
+	 * and sharedGIDs form the overlapVectors
 	 */
-	Epetra_BlockMap overlapMapScalar = getOverlapMap(comm,1);
-	local_neighborhood = createLocalNeighborList(overlapMapScalar);
+	sharedGIDs = createSharedGlobalIds();
+
+	/*
+	 * Create common maps
+	 */
+	epetra_block_maps[Epetra_MapTag(OWNED,1)] = create_Epetra_BlockMap(Epetra_MapTag(OWNED,1));
+	epetra_block_maps[Epetra_MapTag(OWNED,3)] = create_Epetra_BlockMap(Epetra_MapTag(OWNED,3));
+	epetra_block_maps[Epetra_MapTag(OVERLAP,1)] = create_Epetra_BlockMap(Epetra_MapTag(OVERLAP,1));
+	epetra_block_maps[Epetra_MapTag(OVERLAP,3)] = create_Epetra_BlockMap(Epetra_MapTag(OVERLAP,3));
+
+	/*
+	 * Compute local neighborhood list and
+	 */
+	local_neighborhood = createLocalNeighborList(*getOverlapMap(1));
+
+
+
 }
+
 
 /**
  * This function creates a 'new neighborhood' based upon an existing
@@ -161,7 +183,7 @@ Array<int> NeighborhoodList::createLocalNeighborList(const Epetra_BlockMap& over
 }
 
 
-Array<int> NeighborhoodList::getSharedGlobalIds() const {
+Array<int> NeighborhoodList::createSharedGlobalIds() const {
 	std::set<int> ownedIds(owned_gids.get(),owned_gids.get()+num_owned_points);
 	std::set<int> shared;
 	const int *neighPtr = neighborhood_ptr.get();
@@ -195,27 +217,73 @@ Array<int> NeighborhoodList::getSharedGlobalIds() const {
 }
 
 
-const Epetra_BlockMap NeighborhoodList::getOwnedMap(const Epetra_Comm& comm, int ndf) const {
+shared_ptr<Epetra_BlockMap> NeighborhoodList::create_Epetra_BlockMap(Epetra_MapTag key) {
+	Epetra_MapType t = key.type;
+	switch(t){
+	case OWNED:
+		return getOwnedMap(key.ndf);
+		break;
+	case OVERLAP:
+		return getOverlapMap(key.ndf);
+		break;
+	}
+}
+
+
+shared_ptr<Epetra_BlockMap> NeighborhoodList::getOwnedMap(int ndf) const {
+	std::map<Epetra_MapTag, shared_ptr<Epetra_BlockMap>, MapComparator >::const_iterator i=epetra_block_maps.find(Epetra_MapTag(OWNED,ndf));
+	if (epetra_block_maps.end() != i)
+		return i->second;
+	/*
+	 * No map found, so we must create one
+	 */
 	int numShared=0;
 	const int *sharedPtr=NULL;
 	int numOwned = num_owned_points;
 	const int *ownedPtr = owned_gids.get();
-	return getOverlap(ndf, numShared,sharedPtr,numOwned,ownedPtr,comm);
+	return getOverlap(ndf, numShared,sharedPtr,numOwned,ownedPtr,*epetraComm);
 }
 
-const Epetra_BlockMap NeighborhoodList::getOverlapMap(const Epetra_Comm& comm, int ndf) const {
-	Array<int> sharedPtr = this->getSharedGlobalIds();
+
+shared_ptr<Epetra_BlockMap> NeighborhoodList::getOverlapMap(int ndf) const {
+	std::map<Epetra_MapTag, shared_ptr<Epetra_BlockMap>, MapComparator >::const_iterator i=epetra_block_maps.find(Epetra_MapTag(OVERLAP,ndf));
+	if (epetra_block_maps.end() != i)
+		return i->second;
+	/*
+	 * No map found, so we must create one
+	 */
+	Array<int> sharedPtr = sharedGIDs;
 	int numShared = sharedPtr.get_size();
 	const int *shared = sharedPtr.get();
 	const int *owned = owned_gids.get();
 	int numOwned = num_owned_points;
-	return getOverlap(ndf,numShared,shared,numOwned,owned,comm);
+	return getOverlap(ndf,numShared,shared,numOwned,owned,*epetraComm);
+}
+
+/*
+ * PRIVATE FUNCTION
+ */
+shared_ptr<Epetra_BlockMap> getOverlap(int ndf, int numShared, const int* shared, int numOwned, const int* owned, const Epetra_Comm& comm){
+
+	int numPoints = numShared+numOwned;
+	Array<int> ids(numPoints);
+	int *ptr = ids.get();
+
+	for(int j=0;j<numOwned;j++,ptr++)
+		*ptr=owned[j];
+
+	for(int j=0;j<numShared;j++,ptr++)
+		*ptr=shared[j];
+
+	return shared_ptr<Epetra_BlockMap>(new Epetra_BlockMap(-1,numPoints, ids.get(),ndf, 0,comm));
 }
 
 void NeighborhoodList::createAndAddNeighborhood(){
 
-	enum Pd_MPI_TAGS {commCreate=9,commDo=10};
-	shared_ptr< std::set<int> > frameSet = constructParallelDecompositionFrameSet();
+	enum {COMM_CREATE=9,COMM_DO=10};
+
+//	shared_ptr< std::set<int> > frameSet = constructParallelDecompositionFrameSet();
+	shared_ptr< std::set<int> > frameSet = UTILITIES::constructFrameSet(num_owned_points,owned_x,horizon);
 
 
 //	std::cout << "createAndAddNeighborhood:A" << std::endl;
@@ -229,10 +297,7 @@ void NeighborhoodList::createAndAddNeighborhood(){
 	Array<int> procsArrayPoint(numProcs);
 	Array<int> sendProcsArray(numProcs*frameSet->size());
 	Array<int> pointLocalIdsArray(numProcs*frameSet->size());
-	/*
-	 * Total number of points to be sent
-	 */
-	int nSend(0), nReceive(0);
+
 
 	/*
 	 * dimension for each point must be '3'
@@ -243,6 +308,11 @@ void NeighborhoodList::createAndAddNeighborhood(){
 	 * Communication plan
 	 */
 	struct Zoltan_Comm_Obj *plan;
+
+	/*
+	 * Total number of points to be sent and received
+	 */
+	int nSend(0), nReceive(0);
 	int error;
 
 //	std::cout << "rank, nSend, numProcs*frameSet->size() = " << rank << ": " << nSend << ", " << numProcs*frameSet->size() << std::endl;
@@ -263,7 +333,7 @@ void NeighborhoodList::createAndAddNeighborhood(){
 			 */
 			int id = *myPointsIter;
 			const double *xP = x+dimension*id;
-			PointBB bb(xP,horizon);
+			PointCenteredBoundingBox bb(xP,horizon);
 //			if(1==rank){
 //				std::cout << "localId, x,y,z = " << id << ", " << *xP << ", " << *(xP+1) << ", " << *(xP+2) << std::endl;
 //				std::cout << "xMin, xMax " << bb.get_xMin() << ", " << bb.get_xMax() << std::endl;
@@ -304,7 +374,7 @@ void NeighborhoodList::createAndAddNeighborhood(){
 		/*
 		 * Create "communication" plan
 		 */
-		error = Zoltan_Comm_Create(&plan,nSend,sendProcsPtr,MPI_COMM_WORLD,commCreate,&nReceive);
+		error = Zoltan_Comm_Create(&plan,nSend,sendProcsPtr,MPI_COMM_WORLD,COMM_CREATE,&nReceive);
 	}
 
 
@@ -363,7 +433,7 @@ void NeighborhoodList::createAndAddNeighborhood(){
 	 */
 
 	char *receiveBuff = receBuffPtr.get();
-	Zoltan_Comm_Do(plan,commDo,sendBuffPtr.get(),nBytes,receiveBuff);
+	Zoltan_Comm_Do(plan,COMM_DO,sendBuffPtr.get(),nBytes,receiveBuff);
 
 	/*
 	 * Now create neighborhood list
@@ -449,161 +519,6 @@ void NeighborhoodList::createAndAddNeighborhood(){
 	}
 
 	Zoltan_Comm_Destroy(&plan);
-
-}
-
-//shared_ptr< std::set<int> > NeighborhoodList::constructParallelDecompositionFrameSet_OLD() const {
-//	shared_ptr<double> xPtr = owned_x;
-//	int numCells = num_owned_points;
-//	const PdNeighborhood::Coordinates c(xPtr,numCells);
-//
-//	int numAxes=3;
-//	PdNeighborhood::CoordinateLabel labels[] = {PdNeighborhood::X,PdNeighborhood::Y, PdNeighborhood::Z};
-//	std::vector<std::tr1::shared_ptr<int> > sortedMaps(numAxes);
-//	for(int j=0;j<numAxes;j++){
-//
-//		PdNeighborhood::Coordinates::SortComparator compare = c.getSortComparator(labels[j]);
-//		sortedMaps[j] = c.getIdentityMap();
-//		/*
-//		 * Sort points
-//		 */
-//		std::sort(sortedMaps[j].get(),sortedMaps[j].get()+numCells,compare);
-//
-//	}
-//
-//	/*
-//	 * Loop over axes and collect points at min and max ranges
-//	 * Add Points to frame set
-//	 */
-//	shared_ptr< std::set<int> >  frameSetPtr(new std::set<int>);
-//	PdNeighborhood::CoordinateLabel *label = labels;
-//	PdNeighborhood::CoordinateLabel *endLabel = labels+numAxes;
-//	for(;label!=endLabel;label++){
-//
-//		{
-//			/*
-//			 * MINIMUM
-//			 * Find least upper bound of points for Min+horizon
-//			 */
-//			int axis = *label;
-//			const double *x = xPtr.get();
-//			std::tr1::shared_ptr<int> mapPtr = sortedMaps[axis];
-//			int *map = mapPtr.get();
-//			/*
-//			 * First value in map corresponds with minimum value
-//			 */
-//			int iMIN = *map;
-//			double min = x[3*iMIN+axis];
-//			double value = min + horizon;
-//			const PdNeighborhood::Coordinates::SearchIterator start=c.begin(*label,mapPtr);
-//			const PdNeighborhood::Coordinates::SearchIterator end=start+numCells;
-//			PdNeighborhood::Coordinates::SearchIterator lub = std::upper_bound(start,end,value);
-//			frameSetPtr->insert(lub.mapStart(),lub.mapIterator());
-//
-//		}
-//
-//		{
-//			/*
-//			 * MAXIMUM
-//			 * Find greatest lower bound glb for Max-horizon
-//			 */
-//			int axis = *label;
-//			const double *x = xPtr.get();
-//			std::tr1::shared_ptr<int> mapPtr = sortedMaps[axis];
-//			int *map = mapPtr.get();
-//
-//			/*
-//			 * Last value in map corresponds with maximum value
-//			 */
-//			int iMAX = *(map+numCells-1);
-//			double max = x[3*iMAX+axis];
-//			double value = max - horizon;
-//			const PdNeighborhood::Coordinates::SearchIterator start=c.begin(*label,mapPtr);
-//			const PdNeighborhood::Coordinates::SearchIterator end=start+numCells;
-//			PdNeighborhood::Coordinates::SearchIterator glb = std::upper_bound(start,end,value);
-//			frameSetPtr->insert(glb.mapIterator(),glb.mapEnd());
-//		}
-//	}
-//
-//	return frameSetPtr;
-//
-//}
-
-shared_ptr< std::set<int> > NeighborhoodList::constructParallelDecompositionFrameSet() const {
-
-	Sortable points(num_owned_points, owned_x);
-
-	size_t numAxes=3;
-	Array<CartesianComponent> components(numAxes);
-	components[0] = UTILITIES::X;
-	components[1] = UTILITIES::Y;
-	components[2] = UTILITIES::Z;
-
-	Array< Array<int> > sorted_maps(numAxes);
-	for(size_t c=0;c<components.get_size();c++){
-
-		Sortable::Comparator compare = points.getComparator(components[c]);
-		sorted_maps[c] = points.getIdentityMap();
-		/*
-		 * Sort points
-		 */
-		std::sort(sorted_maps[c].get(),sorted_maps[c].get()+num_owned_points,compare);
-
-	}
-
-	/*
-	 * Loop over axes and collect points at min and max ranges
-	 * Add Points to frame set
-	 */
-	shared_ptr< std::set<int> >  frameSetPtr(new std::set<int>);
-	for(size_t c=0;c<components.get_size();c++){
-
-		CartesianComponent comp = components[c];
-
-		Array<int> map_component = sorted_maps[c];
-
-		{
-			/*
-			 * MINIMUM
-			 * Find least upper bound of points for Min+horizon
-			 */
-			const double *x = points.get();
-			int *map = map_component.get();
-			/*
-			 * First value in map corresponds with minimum value
-			 */
-			int iMIN = *map;
-			double min = x[3*iMIN+comp];
-			double value = min + horizon;
-			const Sortable::SearchIterator start = points.begin(comp,map_component.get_shared_ptr());
-			const Sortable::SearchIterator end = start+num_owned_points;
-			Sortable::SearchIterator lub = std::upper_bound(start,end,value);
-			frameSetPtr->insert(lub.mapStart(),lub.mapIterator());
-
-		}
-
-		{
-			/*
-			 * MAXIMUM
-			 * Find greatest lower bound glb for Max-horizon
-			 */
-			const double *x = points.get();
-			int *map = map_component.get();
-
-			/*
-			 * Last value in map corresponds with maximum value
-			 */
-			int iMAX = *(map+num_owned_points-1);
-			double max = x[3*iMAX+comp];
-			double value = max - horizon;
-			const Sortable::SearchIterator start=points.begin(comp,map_component.get_shared_ptr());
-			const Sortable::SearchIterator end=start+num_owned_points;
-			Sortable::SearchIterator glb = std::upper_bound(start,end,value);
-			frameSetPtr->insert(glb.mapIterator(),glb.mapEnd());
-		}
-	}
-
-	return frameSetPtr;
 
 }
 
@@ -734,25 +649,5 @@ void NeighborhoodList::buildNeighborhoodList
 	kdTree->Delete();
 
 }
-
-
-/*
- * PRIVATE FUNCTION
- */
-const Epetra_BlockMap getOverlap(int ndf, int numShared, const int* shared, int numOwned, const int* owned, const Epetra_Comm& comm){
-
-	int numPoints = numShared+numOwned;
-	Array<int> ids(numPoints);
-	int *ptr = ids.get();
-
-	for(int j=0;j<numOwned;j++,ptr++)
-		*ptr=owned[j];
-
-	for(int j=0;j<numShared;j++,ptr++)
-		*ptr=shared[j];
-
-	return Epetra_BlockMap(-1,numPoints, ids.get(),ndf, 0,comm);
-}
-
 
 }

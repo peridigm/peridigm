@@ -141,7 +141,7 @@ void computeInternalForce(){
 	/*
 	 * Create PdITI Operator
 	 */
-	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
+	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
 	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
 	PdITI::PdITI_Operator op(comm,list,decomp.cellVolume);
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));

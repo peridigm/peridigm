@@ -100,7 +100,7 @@ QUICKGRID::TensorProductSolidCylinder getMeshGenerator(){
 }
 
 void utPimp_pullCylinder() {
-	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
+	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
 	QUICKGRID::TensorProductSolidCylinder meshGen = getMeshGenerator();
 	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, meshGen);
 	decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
@@ -202,7 +202,7 @@ void utPimp_pullCylinder() {
 	PdVTK::writeField(grid,uOwnedField);
 	PdVTK::writeField(grid,delta);
 	PdVTK::writeField(grid,fieldRank);
-	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("utPimp_pullCylinder_npX.pvtu", comm.NumProc(), comm.MyPID());
+	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("utPimp_pullCylinder_npX.pvtu", comm->NumProc(), comm->MyPID());
 	PdVTK::write(writer,grid);
 
 }

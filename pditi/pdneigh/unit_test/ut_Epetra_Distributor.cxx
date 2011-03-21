@@ -1,11 +1,8 @@
 /*
- * ut_frameset_2x2x1_.cxx
+ * ut_Epetra_Distributor.cxx
  *
- *  Created on: Feb 25, 2011
- *      Author: jamitch
- *
- * NOTE:
- * REPLACES io/unitTest/utPd_frameSet_2x2x1_np4.cxx
+ *  Created on: Mar 19, 2011
+ *      Author: wow
  */
 
 #define BOOST_TEST_DYN_LINK
@@ -25,14 +22,14 @@
 #include "quick_grid/QuickGrid.h"
 #include "../NeighborhoodList.h"
 #include "../BondFilter.h"
+#include "../OverlapDistributor.h"
 #include "vtk/PdVTK.h"
 #include "PdutMpiFixture.h"
 #include "zoltan.h"
 #include "vtk/Field.h"
-#include "Sortable.h"
+#include "Array.h"
 #include "mpi.h"
 #include <tr1/memory>
-#include <valarray>
 #include <iostream>
 #include <cmath>
 #include <map>
@@ -51,12 +48,14 @@
 using namespace Field_NS;
 using namespace PdBondFilter;
 using namespace PDNEIGH;
+using UTILITIES::Array;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
 
 using namespace Pdut;
 using std::tr1::shared_ptr;
 using std::cout;
+using std::endl;
 using std::set;
 using std::map;
 
@@ -65,30 +64,29 @@ using namespace QUICKGRID;
 using namespace PDNEIGH;
 using namespace Field_NS;
 
-static int numProcs;
-static int myRank;
-
-const int nx = 2;
+static size_t myRank;
+static size_t numProcs;
+const int nx = 4;
 const int ny = nx;
-const double lX = 2.0;
-const double lY = lX;
-const double lZ = 1.0;
-const double xStart  = -lX/2.0/nx;
-const double xLength =  lX;
-const double yStart  = -lY/2.0/ny;
-const double yLength =  lY;
 const int nz = 1;
-const double zStart  = -lZ/2.0/nz;
-const double zLength =  lZ;
+const double xStart = 0.0;
+const double xLength = 1.0;
+const double yStart = 0.0;
+const double yLength = xLength;
+const double zStart = 0.0;
+const double zLength = xLength/nx;
 const QUICKGRID::Spec1D xSpec(nx,xStart,xLength);
 const QUICKGRID::Spec1D ySpec(ny,yStart,yLength);
 const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
 const size_t numCells = nx*ny*nz;
-const double horizon=1.1;
-using std::cout;
-using std::endl;
+const double horizon = 1.1 * std::sqrt(xSpec.getCellSize()*xSpec.getCellSize()+ySpec.getCellSize()*ySpec.getCellSize());
 
-
+void printNeighborhood(int numNeigh, int* neigh){
+	for(int i=0;i<numNeigh;i++,neigh++){
+		cout << ", " << *neigh;
+	}
+	cout << endl;
+}
 
 QUICKGRID::QuickGridData getGrid() {
 	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
@@ -99,38 +97,25 @@ QUICKGRID::QuickGridData getGrid() {
 	return decomp;
 }
 
-
-shared_ptr< std::set<int> > constructFrame(PDNEIGH::NeighborhoodList& list) {
-	shared_ptr< std::set<int> > frameSet = UTILITIES::constructFrameSet(list.get_num_owned_points(),list.get_owned_x(),list.get_horizon());
-	/*
-	 * There is only 1 point on each processor and by default it must show up in the frameset
-	 */
-	BOOST_CHECK(1==frameSet->size());
-	return frameSet;
-}
-
-void createNeighborhood() {
-	QUICKGRID::QuickGridData decomp = getGrid();
-	BOOST_CHECK(1==decomp.numPoints);
-	BOOST_CHECK(4==decomp.globalNumPoints);
+PDNEIGH::NeighborhoodList createNeighborhood(QUICKGRID::QuickGridData decomp) {
 	shared_ptr<BondFilter> bondFilterPtr(new PdBondFilter::BondFilterDefault(true));
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
-	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,2.0*horizon,bondFilterPtr);
-	shared_ptr< std::set<int> > frameSet = constructFrame(list);
-	BOOST_CHECK(5==list.get_size_neighborhood_list());
-	/*
-	 * Neighborhood of every point should have every other point
-	 */
-	int n[] = {0,1,2,3};
-	set<int> neighSet(n,n+4);
-	int *neighborhood = list.get_neighborhood().get();
-	int numNeigh = *neighborhood;
-	BOOST_CHECK(4==numNeigh);
-	neighborhood++;
-	for(int i=0;i<numNeigh;i++,neighborhood++){
-		BOOST_CHECK(neighSet.end()!=neighSet.find(*neighborhood));
-	}
+	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon,bondFilterPtr);
+	return list;
+}
 
+void createDistributor() {
+	QUICKGRID::QuickGridData decomp = getGrid();
+	BOOST_CHECK(4==decomp.numPoints);
+	PDNEIGH::NeighborhoodList list = createNeighborhood(decomp);
+	Array<int> sharedGIDs(list.get_num_shared_points(),list.get_shared_gids());
+	BOOST_CHECK(5==sharedGIDs.get_size());
+
+	Field<char> ownedBc(BC_MASK,decomp.numPoints);
+	ownedBc.set(2*myRank);
+	Field<char> overlapField = PDNEIGH::createOverlapField<char>(list,ownedBc);
+	size_t num_overlap_points = overlapField.get_num_points();
+	BOOST_CHECK(9==num_overlap_points);
 }
 
 bool init_unit_test_suite()
@@ -138,8 +123,8 @@ bool init_unit_test_suite()
 	// Add a suite for each processor in the test
 	bool success=true;
 
-	test_suite* proc = BOOST_TEST_SUITE( "createNeighborhood" );
-	proc->add(BOOST_TEST_CASE( &createNeighborhood ));
+	test_suite* proc = BOOST_TEST_SUITE( "createDistributor" );
+	proc->add(BOOST_TEST_CASE( &createDistributor ));
 	framework::master_test_suite().add( proc );
 	return success;
 
@@ -167,8 +152,8 @@ int main
 	 * This test only make sense for numProcs == 4
 	 */
 	if(4 != numProcs){
-		std::cerr << "Unit test runtime ERROR: ut_frameset_2x2x1_np4 only makes sense on 4 processors" << std::endl;
-		std::cerr << "\t Re-run unit test $mpiexec -np 4 ./ut_frameset_2x2x1_np4." << std::endl;
+		std::cerr << "Unit test runtime ERROR: ut_Epetra_Distributor only makes sense on 4 processors" << std::endl;
+		std::cerr << "\t Re-run unit test $mpiexec -np 4 ./ut_Epetra_Distributor." << std::endl;
 		myMpi.PdutMpiFixture::~PdutMpiFixture();
 		std::exit(-1);
 	}

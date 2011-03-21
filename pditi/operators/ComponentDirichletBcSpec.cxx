@@ -17,7 +17,8 @@ ComponentDirichletBcSpec(const vector<DirichletBcSpec::ComponentLabel>& componen
 :
 components(components),
 directions(components.size()),
-localIds(pointIds)
+localIds(pointIds),
+mask(0)
 {
 	vector<ComponentLabel>::iterator compIter = this->components.begin();
 	vector< vector<double> >::iterator dirIter = directions.begin();
@@ -30,13 +31,16 @@ localIds(pointIds)
 
 		case X:
 			(*dirIter)[0]=1.0;
+			mask += 1;
 			break;
 		case Y:
 			(*dirIter)[1]=1.0;
+			mask += 2;
 			break;
 
 		case Z:
 			(*dirIter)[2]=1.0;
+			mask += 4;
 			break;
 		}
 
@@ -46,6 +50,8 @@ localIds(pointIds)
 
 
 ComponentDirichletBcSpec::~ComponentDirichletBcSpec() {}
+
+char ComponentDirichletBcSpec::get_mask() const { return mask; }
 
 vector<DirichletBcSpec::ComponentLabel> ComponentDirichletBcSpec::getComponents() const { return components; }
 

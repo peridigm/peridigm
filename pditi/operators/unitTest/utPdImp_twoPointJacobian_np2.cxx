@@ -119,7 +119,7 @@ QUICKGRID::QuickGridData getGrid() {
 }
 
 void computeJacobian(){
-	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
+	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
 	QUICKGRID::QuickGridData decomp = getGrid();
 
 	/*
@@ -262,7 +262,7 @@ void computeJacobian(){
 	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(decomp.myX,decomp.numPoints);
 	PdVTK::writeField(grid,uOwnedField);
 	PdVTK::writeField(grid,fN);
-	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("utPimp_twoPointJacobian_np2.pvtu", comm.NumProc(), comm.MyPID());
+	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("utPimp_twoPointJacobian_np2.pvtu", comm->NumProc(), comm->MyPID());
 	PdVTK::write(writer,grid);
 
 
