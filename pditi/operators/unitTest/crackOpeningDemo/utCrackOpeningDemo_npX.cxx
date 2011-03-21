@@ -13,6 +13,7 @@
 #include "Array.h"
 #include "quick_grid/QuickGrid.h"
 #include "NeighborhoodList.h"
+#include "OverlapDistributor.h"
 #include "BondFilter.h"
 #include "PdZoltan.h"
 #include "vtk/Field.h"
@@ -92,6 +93,21 @@ const double dz = zSpec.getCellSize();
 const double _cellVolume = dx*dy*dz;
 
 /*
+ * Young's Modulus (MPa)
+ */
+const double E = 68.9e3;
+
+/*
+ * Poisson's ratio
+ */
+const double nu = 0.0;
+
+/*
+ * Density of aluminum g/mm^3
+ */
+const double rho = 2.7e-3;
+
+/*
  * Horizon
  */
 const double horizon=1.1*sqrt( (3.0*dx)*(3.0*dx) );
@@ -100,21 +116,8 @@ const double horizon=1.1*sqrt( (3.0*dx)*(3.0*dx) );
  * Function prototypes in this file
  */
 FinitePlane getYZ_CrackPlane();
+vector<DirichletBcSpec::ComponentLabel> getComponents(char mask);
 
-/*
- * Young's Modulus (MPa)
- */
-static double E = 68.9e3;
-
-/*
- * Poisson's ratio
- */
-static double nu = 0.0;
-
-/*
- * Density of aluminum g/mm^3
- */
-static double rho = 2.7e-3;
 
 shared_ptr<Epetra_CrsGraph> getGraph(shared_ptr<RowStiffnessOperator>& jacobian){
 	const Epetra_BlockMap& rowMap   = jacobian->getRowMap();
@@ -350,7 +353,169 @@ getOperator
 	return shared_ptr<Epetra_RowMatrix>(m);
 }
 
+shared_ptr<Epetra_RowMatrix>
+getOperator_NEW
+(
+		const Field<char> bcMaskFieldOverlap,
+		shared_ptr<Epetra_CrsGraph>& graphPtr,
+		shared_ptr<RowStiffnessOperator>& jacobian
+)
+{
+	std::cout << "Begin jacobian calculation\n";
+	const Epetra_BlockMap& rowMap   = jacobian->getRowMap();
 
+	/*
+	 * Epetra Matrix
+	 * PERHAPS the 'operator' can keep its own copy of Graph, then this
+	 * can be a 'View'
+	 */
+
+	Epetra_FEVbrMatrix *m = new Epetra_FEVbrMatrix(Copy,*(graphPtr.get()));
+
+	const char *bcMask = bcMaskFieldOverlap.get();
+	Epetra_SerialDenseMatrix k;
+	k.Shape(vectorNDF,vectorNDF);
+	for(int row=0;row<rowMap.NumMyElements();row++){
+		Array<int> rowLIDs = jacobian->getColumnLIDs(row);
+		std::size_t numCol = rowLIDs.get_size();
+		int *cols = rowLIDs.get();
+		char rowMask = bcMask[row];
+
+
+		if(0!=m->BeginReplaceMyValues(row,numCol,cols)){
+			std::string message("utPdITI::getOperator(bcArray,graphPtr,jacobian)\n");
+			message += "\t0!=m->BeginReplaceMyValues(row,numCol,cols)";
+			throw std::runtime_error(message);
+		}
+
+		/*
+		 * Create array of pointers to each row/component that BC is applied
+		 */
+		vector<DirichletBcSpec::ComponentLabel> rowComponentBcs = getComponents(rowMask);
+		vector<double*> rowPtrs(rowComponentBcs.size(), NULL);
+		vector<double*> diagPtrs(rowComponentBcs.size(), NULL);
+		Array<double> actualK = jacobian->computeRowStiffness(row, rowLIDs);
+
+		/*
+		 * Zero out row as necessary due to BC's
+		 */
+		double *colRoot = actualK.get();
+		for(int* colPtr=cols; colPtr!=cols+numCol;colPtr++,colRoot+=9){
+			int col = *colPtr;
+			char colMask = bcMask[col];
+
+			/*
+			 * Handle BCs for row
+			 */
+			for(std::size_t r=0;r<rowComponentBcs.size();r++){
+				rowPtrs[r]= colRoot + rowComponentBcs[r];
+				/*
+				 * 0) Save diagonal location
+				 * 1) Set row element to zero
+				 * 2) Move to next column
+				 * 3) Note that there are 3 columns in 3x3 matrix :) DUH!
+				 */
+
+				/*
+				 * Save location of diagonal for this component
+				 */
+				diagPtrs[r] = rowPtrs[r] + 3 * rowComponentBcs[r];
+
+				/*
+				 * Zero out row corresponding with component
+				 * Increment row pointer to next column
+				 */
+				*(rowPtrs[r])=0; rowPtrs[r]+=3;
+				*(rowPtrs[r])=0; rowPtrs[r]+=3;
+				*(rowPtrs[r])=0; rowPtrs[r]+=3;
+
+			}
+
+			/*
+			 * Now check column for dirichlet bc; here we will just zero everything out;
+			 * If this column happens to be the diagonal, then we will fix later;
+			 */
+			vector<DirichletBcSpec::ComponentLabel> colComponentBcs = getComponents(colMask);
+			double *stiffPtr(0);
+			for(std::size_t c=0;c<colComponentBcs.size();c++){
+				stiffPtr = colRoot + 3 * colComponentBcs[c];
+				for(int r=0;r<3;r++)
+					stiffPtr[r]=0;
+			}
+
+
+			/*
+			 * If this is true, then we are on the diagonal
+			 * Need to put "1" on the strict diagonal by component
+			 * Put -1 because later the whole matrix is negated
+			 */
+			if(row==col) {
+				for(std::size_t r=0;r<rowComponentBcs.size();r++){
+					*(diagPtrs[r]) = -1.0;
+				}
+			}
+
+
+		}
+
+		/*
+		 * Now just populate the matrix
+		 */
+		double *kPtr = actualK.get();
+		for(int* colPtr=cols; colPtr!=cols+numCol;colPtr++){
+
+			/*
+			 * Fill 'k'
+			 */
+			for(int c=0;c<3;c++){
+				double *colK = k[c];
+				for(int r=0;r<3;r++,kPtr++)
+					colK[r] = - *kPtr;
+			}
+
+			if(0!=m->SubmitBlockEntry(k)){
+				std::string message("utPdITI::getOperator(bcArray,graphPtr,jacobian)\n");
+				message += "\t0!=m->SubmitBlockEntry(k)";
+				throw std::runtime_error(message);
+			}
+
+		}
+
+		/*
+		 * Finalize this row
+		 */
+		if(0!=m->EndSubmitEntries()){
+			std::string message("utPdITI::getOperator(bcArray,graphPtr,jacobian)\n");
+			message += "\t0!=m->EndSubmitEntries()";
+			throw std::runtime_error(message);
+		}
+
+	}
+
+	if(0!=m->FillComplete()){
+		std::string message("utPdITI::getOperator(bcArray,graphPtr,jacobian)\n");
+		message += "\t0!=m->FillComplete()";
+		throw std::runtime_error(message);
+	}
+
+
+	std::cout << "END jacobian calculation\n";
+	return shared_ptr<Epetra_RowMatrix>(m);
+}
+
+
+vector<DirichletBcSpec::ComponentLabel> getComponents(char mask) {
+
+	vector<DirichletBcSpec::ComponentLabel> c;
+	if(1 & mask)
+		c.push_back(DirichletBcSpec::X);
+	if(2 & mask)
+		c.push_back(DirichletBcSpec::Y);
+	if(4 & mask)
+		c.push_back(DirichletBcSpec::Z);
+
+	return c;
+}
 
 /*
  * This demonstrates how the first and second coordinate
@@ -488,10 +653,11 @@ void crackOpeningDemo(){
 	StageFunction dispStageFunction(1.0e-3,1.0e-3);
 	shared_ptr<StageComponentDirichletBc> bcApplied(new StageComponentDirichletBc(appliedSpec,dispStageFunction));
 	bcs[1] = bcApplied;
-	Field<char> bcMaskField(BC_MASK,gridData.numPoints);
-	bcMaskField.set(0);
+	Field<char> bcMaskFieldOwned(BC_MASK,gridData.numPoints);
+	bcMaskFieldOwned.set(0);
 	for(int b=0;b<bcs.size();b++)
-		bcs[b]->imprint_bc(bcMaskField);
+		bcs[b]->imprint_bc(bcMaskFieldOwned);
+	Field<char> bcMaskFieldOverlap = PDNEIGH::createOverlapField(list,bcMaskFieldOwned);
 
 	/*
 	 * Create Jacobian -- note that SCOPE of jacobian is associated with the PimpOperator "op"
@@ -509,7 +675,8 @@ void crackOpeningDemo(){
 	/*
 	 * Create Epetra_RowMatrix
 	 */
-	shared_ptr<Epetra_RowMatrix> mPtr = getOperator(bcs,graphPtr,jacobian);
+//	shared_ptr<Epetra_RowMatrix> mPtr = getOperator(bcs,graphPtr,jacobian);
+	shared_ptr<Epetra_RowMatrix> mPtr = getOperator_NEW(bcMaskFieldOverlap,graphPtr,jacobian);
 
 	/*
 	 * Create force field
@@ -562,7 +729,7 @@ void crackOpeningDemo(){
 	PdVTK::writeField(grid,uOwnedField);
 	PdVTK::writeField(grid,delta);
 	PdVTK::writeField<int>(grid,myRank);
-	PdVTK::writeField<char>(grid,bcMaskField);
+	PdVTK::writeField<char>(grid,bcMaskFieldOwned);
 	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("utCrackOpeningDemo_npX.pvtu", comm->NumProc(), comm->MyPID());
 	PdVTK::write(writer,grid);
 
