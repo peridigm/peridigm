@@ -25,8 +25,8 @@ void StageComponentDirichletBc::imprint_bc(Field_NS::Field<char>& maskField) con
 	/*
 	 * NOTE bitwise 'or' since we are essentially concatenating boundary conditions
 	 */
-	for(const int *idsPtr=ids.get();idsPtr!=ids.end();idsPtr++, b++){
-		*b |= mask;
+	for(const int *idsPtr=ids.get();idsPtr!=ids.end();idsPtr++){
+		b[*idsPtr] |= mask;
 	}
 }
 

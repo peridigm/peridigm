@@ -16,7 +16,7 @@
 #
 
 
-#add_subdirectory(crackOpeningDemo)
+add_subdirectory(crackOpeningDemo)
 #add_subdirectory(eigen1D)
 #add_subdirectory(implicitDynamicsDemo_bar)
 #add_subdirectory(twoPointPlasticity)
