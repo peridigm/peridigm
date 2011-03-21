@@ -389,20 +389,6 @@ QUICKGRID::QuickGridData getGrid() {
 		cout << "x0,y0,z0 = " << x0 << ", " << y0 << ", "<< z0 << ", "<< endl;
 	}
 
-	/*
-	 * Write file for debugging
-	 */
-//	const FieldSpec myRankSpec(FieldSpec::DEFAULT_FIELDTYPE,FieldSpec::SCALAR,"MyRank");
-//	Field<double> X(COORD3D,gridData.myX,gridData.numPoints);
-//	Field<int> rankField(myRankSpec,gridData.numPoints);
-//	rankField.setValue(myRank);
-//
-//	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(gridData.myX.get(), gridData.numPoints);
-//	PdVTK::writeField(grid,X);
-//	PdVTK::writeField(grid,rankField);
-//	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer= PdVTK::getWriter("utCrackOpeningDemo.pvtu", numProcs, myRank, PdVTK::vtkBINARY);
-//	PdVTK::write(writer,grid);
-
 	return gridData;
 }
 
@@ -476,11 +462,12 @@ void crackOpeningDemo(){
 	 */
 	/*
 	 * Note that we are looking for a discrete number of points at end;
-	 * Set the scale factor the just larger than an integer where
-	 * the integer corresponds with the number of poits to be included in
+	 * Set the scale factor to just larger than an integer where
+	 * the integer corresponds with the number of points to be included in
 	 * the boundary conditions
 	 */
-	double searchRadius=2.1*dx;
+	double scaleFactor=2.1;
+	double searchRadius=scaleFactor*dx;
 	CartesianComponent axis = UTILITIES::X;
 	Array<int> bcIdsFixed = UTILITIES::getPointsInNeighborhoodOfAxisAlignedMinimumValue(axis,gridData.myX,gridData.numPoints,searchRadius,xMin);
 	std::sort(bcIdsFixed.get(),bcIdsFixed.end());
@@ -490,7 +477,6 @@ void crackOpeningDemo(){
 	/**
 	 * Create boundary conditions spec
 	 */
-
 	vector<shared_ptr<StageComponentDirichletBc> > bcs(2);
 	ComponentDirichletBcSpec fixedSpec = ComponentDirichletBcSpec::getAllComponents(bcIdsFixed);
 	StageFunction constStageFunction(0.0,0.0);
