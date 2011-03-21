@@ -9,51 +9,70 @@
 //#define BOOST_TEST_ALTERNATIVE_INIT_API
 //#include <boost/test/unit_test.hpp>
 //#include <boost/test/parameterized_test.hpp>
-#include <tr1/memory>
+#include "Sortable.h"
+#include "Array.h"
+#include "quick_grid/QuickGrid.h"
+#include "NeighborhoodList.h"
+#include "BondFilter.h"
 #include "PdZoltan.h"
-#include "PdQuickGrid.h"
-#include "PdQuickGridParallel.h"
-#include "PdBondFilter.h"
-#include "PdVTK.h"
-#include "Field.h"
-#include "../utPdITI.h"
-#include "../../PdImpMpiFixture.h"
-#include "../../../pdneigh/NeighborhoodList.h"
+#include "vtk/Field.h"
+#include "vtk/PdVTK.h"
 #include "../../PdImpMaterials.h"
 #include "../../PdITI_Operator.h"
 #include "../../PdITI_Utilities.h"
-#include "../../IsotropicElasticConstitutiveModel.h"
 #include "../../DirichletBcSpec.h"
+#include "../../BodyLoadSpec.h"
 #include "../../StageFunction.h"
+#include "../../Loader.h"
 #include "../../StageComponentDirichletBc.h"
 #include "../../ComponentDirichletBcSpec.h"
+#include "../../IsotropicElasticConstitutiveModel.h"
+#include "../../ConstitutiveModel.h"
+#include "../utPdITI.h"
+#include "PdutMpiFixture.h"
+
+#include "Epetra_ConfigDefs.h"
+#ifdef HAVE_MPI
+#include "mpi.h"
+#include "Epetra_MpiComm.h"
+#else
+#include "Epetra_SerialComm.h"
+#endif
+#include <set>
+#include <Epetra_FEVbrMatrix.h>
+#include <Epetra_SerialSymDenseMatrix.h>
 #include <Epetra_LinearProblem.h>
 #include <AztecOO.h>
-#include "Epetra_RowMatrix.h"
-#include <Epetra_FEVbrMatrix.h>
+#include <utility>
+#include <map>
+#include <vector>
+#include <cstdlib>
+#include <time.h>
 
-#include <iostream>
 
-
-using namespace PdQuickGrid;
+using UTILITIES::CartesianComponent;
+using UTILITIES::Array;
+using PdITI::ConstitutiveModel;
+using PdITI::IsotropicElasticConstitutiveModel;
+using PdImp::StageComponentDirichletBc;
+using PdImp::StageDirichletBc;
+using PdImp::DirichletBcSpec;
+using PdImp::ComponentDirichletBcSpec;
+using PdImp::StageFunction;
 using namespace PdBondFilter;
-using namespace PdVTK;
+using namespace Pdut;
 using namespace Field_NS;
-using namespace PdImp;
-using namespace PdITI;
 using std::tr1::shared_ptr;
-const int vectorNDF=3;
-//using namespace boost::unit_test;
-using std::cout;
-using std::endl;
 
-static int numProcs;
-static int myRank;
+const int vectorNDF=3;
+static size_t myRank;
+static size_t numProcs;
+
 /*
  * This should be even so that the crack plane lies between to rows of points
  */
-const int nx = 6;
-const int ny = 6;
+const size_t nx = 20;
+const size_t ny = 20;
 const double xStart = -2.5;
 const double xLength = 5.0;
 const double yStart = -2.5;
@@ -62,11 +81,11 @@ const double zStart = -0.5;
 const double zLength = 1.0;
 static double xMax=xStart+xLength;
 static double xMin=xStart;
-const int nz = nx* (zLength / xLength);
-const int numCells = nx*ny*nz;
-const PdQPointSet1d xSpec(nx,xStart,xLength);
-const PdQPointSet1d ySpec(ny,yStart,yLength);
-const PdQPointSet1d zSpec(nz,zStart,zLength);
+const size_t nz = nx* (zLength / xLength);
+const size_t numCells = nx*ny*nz;
+const QUICKGRID::Spec1D xSpec(nx,xStart,xLength);
+const QUICKGRID::Spec1D ySpec(ny,yStart,yLength);
+const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
 const double dx = xSpec.getCellSize();
 const double dy = ySpec.getCellSize();
 const double dz = zSpec.getCellSize();
@@ -104,11 +123,11 @@ shared_ptr<Epetra_CrsGraph> getGraph(shared_ptr<RowStiffnessOperator>& jacobian)
 	/*
 	 * Epetra Graph
 	 */
-	Pd_shared_ptr_Array<int> numCols = jacobian->getNumColumnsPerRow();
+	Array<int> numCols = jacobian->getNumColumnsPerRow();
 	Epetra_CrsGraph *graph = new Epetra_CrsGraph(Copy,rowMap,colMap,numCols.get());
 	for(int row=0;row<rowMap.NumMyElements();row++){
-		Pd_shared_ptr_Array<int> rowLIDs = jacobian->getColumnLIDs(row);
-		std::size_t numCol = rowLIDs.getSize();
+		Array<int> rowLIDs = jacobian->getColumnLIDs(row);
+		std::size_t numCol = rowLIDs.get_size();
 		int *cols = rowLIDs.get();
 		if(0!=graph->InsertMyIndices(row,numCol,cols)){
 			std::string message("graph->InsertMyIndices(row,numCol,cols)\n");
@@ -146,8 +165,8 @@ getOperator
 		for(int i=0;bcIter != bcArray.end(); i++,bcIter++){
 			StageComponentDirichletBc* stageComponentPtr = bcIter->get();
 			const DirichletBcSpec& spec = stageComponentPtr->getSpec();
-			const Pd_shared_ptr_Array<int>& ids = spec.getPointIds();
-			bcPointIds[i]= std::set<int>(ids.get(),ids.get()+ids.getSize());
+			const Array<int>& ids = spec.getPointIds();
+			bcPointIds[i]= std::set<int>(ids.get(),ids.end());
 		}
 	}
 
@@ -166,8 +185,8 @@ getOperator
 	Epetra_SerialDenseMatrix k;
 	k.Shape(vectorNDF,vectorNDF);
 	for(int row=0;row<rowMap.NumMyElements();row++){
-		Pd_shared_ptr_Array<int> rowLIDs = jacobian->getColumnLIDs(row);
-		std::size_t numCol = rowLIDs.getSize();
+		Array<int> rowLIDs = jacobian->getColumnLIDs(row);
+		std::size_t numCol = rowLIDs.get_size();
 		int *cols = rowLIDs.get();
 
 		if(0!=m->BeginReplaceMyValues(row,numCol,cols)){
@@ -179,7 +198,7 @@ getOperator
 		/*
 		 * loop over columns in row and submit block entry
 		 */
-		Pd_shared_ptr_Array<double> actualK = jacobian->computeRowStiffness(row, rowLIDs);
+		Array<double> actualK = jacobian->computeRowStiffness(row, rowLIDs);
 
 
 		/*
@@ -345,15 +364,15 @@ getOperator
 //const double z1 = z0 + zSpec.getCellSize();
 
 
-PdGridData getGrid() {
+QUICKGRID::QuickGridData getGrid() {
 
 	if(0==myRank){
 		cout << "Creating and load balancing mesh..." << endl;
 	}
 
-	PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
-	PdGridData gridData =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
-	gridData=getLoadBalancedDiscretization(gridData);
+	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
+	QUICKGRID::QuickGridData gridData =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
+	gridData=PDNEIGH::getLoadBalancedDiscretization(gridData);
 
 	/*
 	 * Lower left hand corner of crack plane when viewing down
@@ -429,15 +448,15 @@ void crackOpeningDemo(){
 	/*
 	 * Get mesh and decomposition
 	 */
-	PdGridData gridData = getGrid();
+	QUICKGRID::QuickGridData gridData = getGrid();
 	/*
 	 * Communicator
 	 */
-	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
+	shared_ptr<Epetra_Comm> comm = shared_ptr<Epetra_Comm>(new Epetra_MpiComm(MPI_COMM_WORLD));
 
 	FinitePlane crackPlane=getYZ_CrackPlane();
-//	shared_ptr<BondFilter> filterPtr = shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
-	shared_ptr<BondFilter> filterPtr = shared_ptr<BondFilter>(new BondFilterDefault());
+//	shared_ptr<BondFilter> filterPtr = shared_ptr<BondFilter>(new BondFilterDefault());
+	shared_ptr<BondFilter> filterPtr = shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
 	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);
 
 	/*
@@ -456,18 +475,22 @@ void crackOpeningDemo(){
 	 * Get points for bc's
 	 */
 	/*
-	 * Note that we are looking for the first three planes of points on ends
+	 * Note that we are looking for a discrete number of points at end;
+	 * Set the scale factor the just larger than an integer where
+	 * the integer corresponds with the number of poits to be included in
+	 * the boundary conditions
 	 */
-	double searchRadius=1.1*dx;
-	PdNeighborhood::CoordinateLabel axis = PdNeighborhood::X;
-	Pd_shared_ptr_Array<int> bcIdsFixed = PdNeighborhood::getPointsInNeighborhoodOfAxisAlignedMinimumValue(axis,gridData.myX,gridData.numPoints,searchRadius,xMin);
-	std::sort(bcIdsFixed.get(),bcIdsFixed.get()+bcIdsFixed.getSize());
-	Pd_shared_ptr_Array<int> bcIdsApplied = PdNeighborhood::getPointsInNeighborhoodOfAxisAlignedMaximumValue(axis,gridData.myX,gridData.numPoints,searchRadius,xMax);
-	std::sort(bcIdsApplied.get(),bcIdsApplied.get()+bcIdsApplied.getSize());
+	double searchRadius=2.1*dx;
+	CartesianComponent axis = UTILITIES::X;
+	Array<int> bcIdsFixed = UTILITIES::getPointsInNeighborhoodOfAxisAlignedMinimumValue(axis,gridData.myX,gridData.numPoints,searchRadius,xMin);
+	std::sort(bcIdsFixed.get(),bcIdsFixed.end());
+	Array<int> bcIdsApplied = UTILITIES::getPointsInNeighborhoodOfAxisAlignedMaximumValue(axis,gridData.myX,gridData.numPoints,searchRadius,xMax);
+	std::sort(bcIdsApplied.get(),bcIdsApplied.end());
 
 	/**
 	 * Create boundary conditions spec
 	 */
+
 	vector<shared_ptr<StageComponentDirichletBc> > bcs(2);
 	ComponentDirichletBcSpec fixedSpec = ComponentDirichletBcSpec::getAllComponents(bcIdsFixed);
 	StageFunction constStageFunction(0.0,0.0);
@@ -479,12 +502,16 @@ void crackOpeningDemo(){
 	StageFunction dispStageFunction(1.0e-3,1.0e-3);
 	shared_ptr<StageComponentDirichletBc> bcApplied(new StageComponentDirichletBc(appliedSpec,dispStageFunction));
 	bcs[1] = bcApplied;
+	Field<char> bcMaskField(BC_MASK,gridData.numPoints);
+	bcMaskField.set(0);
+	for(int b=0;b<bcs.size();b++)
+		bcs[b]->imprint_bc(bcMaskField);
 
 	/*
 	 * Create Jacobian -- note that SCOPE of jacobian is associated with the PimpOperator "op"
 	 */
 	Field<double> uOwnedField(DISPL3D,gridData.numPoints);
-	uOwnedField.setValue(0.0);
+	uOwnedField.set(0.0);
 	bcApplied->applyKinematics(1.0,uOwnedField);
 	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOwnedField);
 
@@ -507,7 +534,7 @@ void crackOpeningDemo(){
 	 */
 	Field_NS::FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
 	Field_NS::Field<double> fN(fNSpec,gridData.numPoints);
-	fN.setValue(0.0);
+	fN.set(0.0);
 	op.computeInternalForce(uOwnedField,fN);
 	bcApplied->applyKinematics(1.0,fN);
 
@@ -518,9 +545,9 @@ void crackOpeningDemo(){
 	const Epetra_BlockMap& rangeMap  = mPtr->OperatorRangeMap();
 	const Epetra_BlockMap& domainMap  = mPtr->OperatorDomainMap();
 
-	double *f = fN.getArray().get();
+	double *f = fN.get();
 	Epetra_Vector rhs(View,rangeMap,f);
-	Epetra_Vector lhs(View,domainMap,uOwnedField.getArray().get());
+	Epetra_Vector lhs(View,domainMap,uOwnedField.get());
 
 	linProblem.SetRHS(&rhs);
 	linProblem.SetLHS(&lhs);
@@ -535,7 +562,7 @@ void crackOpeningDemo(){
 	 */
 	Field_NS::FieldSpec deltaSpec(FieldSpec::VELOCITY,FieldSpec::VECTOR3D,"delta");
 	Field_NS::Field<double> delta(deltaSpec,gridData.numPoints);
-	delta.setValue(0.0);
+	delta.set(0.0);
 	bcApplied->applyKinematics(1.0,delta);
 
 	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(gridData.myX,gridData.numPoints);
@@ -544,32 +571,17 @@ void crackOpeningDemo(){
 	 * Add processor rank to output
 	 */
 	Field_NS::Field<int> myRank(Field_NS::PROC_NUM,gridData.numPoints);
-	myRank.setValue(comm.MyPID());
+	myRank.set(comm->MyPID());
 
 	PdVTK::writeField(grid,uOwnedField);
 	PdVTK::writeField(grid,delta);
-	writeField<int>(grid,myRank);
-	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("utCrackOpeningDemo_npX.pvtu", comm.NumProc(), comm.MyPID());
+	PdVTK::writeField<int>(grid,myRank);
+	PdVTK::writeField<char>(grid,bcMaskField);
+	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("utCrackOpeningDemo_npX.pvtu", comm->NumProc(), comm->MyPID());
 	PdVTK::write(writer,grid);
 
 }
 
-//bool init_unit_test_suite()
-//{
-//	// Add a suite for each processor in the test
-//	bool success=true;
-//	test_suite* proc = BOOST_TEST_SUITE( "utCrackOpeningDemo_npX" );
-//	proc->add(BOOST_TEST_CASE( &crackOpeningDemo ));
-//	framework::master_test_suite().add( proc );
-//	return success;
-//}
-//
-//
-//bool init_unit_test()
-//{
-//	init_unit_test_suite();
-//	return true;
-//}
 
 int main
 (
@@ -578,15 +590,12 @@ int main
 )
 {
 	// Initialize MPI and timer
-	PdImpRunTime::PimpMpiFixture pimpMPI = PdImpRunTime::PimpMpiFixture::getPimpMPI(argc,argv);
-	const Epetra_Comm& comm = pimpMPI.getEpetra_Comm();
+	PdutMpiFixture myMpi = PdutMpiFixture(argc,argv);
 
 	// These are static (file scope) variables
-	myRank = comm.MyPID();
-	numProcs = comm.NumProc();
+	myRank = myMpi.rank;
+	numProcs = myMpi.numProcs;
 
 	crackOpeningDemo();
 
-	// Initialize UTF
-//	return unit_test_main( init_unit_test, argc, argv );
 }
