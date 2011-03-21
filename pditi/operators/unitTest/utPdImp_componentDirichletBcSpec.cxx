@@ -191,8 +191,7 @@ void applyHomogeneousForm() {
 	decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
 	int numPoints = decomp.numPoints;
 	BOOST_CHECK(numCells==numPoints);
-	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
-
+	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
 
 	Field<double> uOwnedField = PdITI::getPureShearXY(Field<double>(Field_NS::COORD3D,decomp.myX,numPoints));
 
@@ -227,7 +226,7 @@ void applyHomogeneousForm() {
 	PdVTK::writeField(grid,fN);
 	PdVTK::writeField(grid,fNP1);
 
-	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("applyHomogeneousForm.pvtu", comm.NumProc(), comm.MyPID());
+	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("applyHomogeneousForm.pvtu", comm->NumProc(), comm->MyPID());
 	PdVTK::write(writer,grid);
 
 }

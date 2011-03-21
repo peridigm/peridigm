@@ -27,14 +27,14 @@ namespace PdITI {
 
 class PdITI_Operator {
 public:
-	PdITI_Operator(const Epetra_Comm& comm, const PDNEIGH::NeighborhoodList neighborhoodList, shared_ptr<double> ownedCellVolume);
+	PdITI_Operator(shared_ptr<Epetra_Comm> comm, const PDNEIGH::NeighborhoodList neighborhoodList, shared_ptr<double> ownedCellVolume);
 	void addConstitutiveModel(shared_ptr<ConstitutiveModel>& model);
 	void advanceStateVariables();
 	Field<double> computeOwnedDilatation(Field<double> uOwnedField);
 	void computeInternalForce(Field<double> uOwned, Field<double> fIntOwned, bool withDilatation=true);
 	shared_ptr<RowStiffnessOperator> getJacobian(Field<double> uOwned);
 	Field<double> getWeightedVolume() const { return mOwnedField; }
-	const Epetra_Comm& getEpetra_Comm() const { return epetraComm; }
+	shared_ptr<Epetra_Comm> getEpetra_Comm() const { return epetraComm; }
 	const Epetra_BlockMap& getOwnedMapScalar() { return  ownedMapScalar; }
 	const Epetra_BlockMap& getOverlapMapScalar() { return  overlapMapScalar; }
 	const Epetra_BlockMap& getOwnedMapNDF()   const { return  ownedMapNDF; }
@@ -53,7 +53,7 @@ public:
 		const Epetra_BlockMap& getColMap() const { return colMapNDF; }
 		RowOperator
 		(
-				const Epetra_Comm& comm,
+				shared_ptr<Epetra_Comm> comm,
 				const PDNEIGH::NeighborhoodList row_matrix_list_2_horizon,
 				shared_ptr<double> ownedCellVolume,
 				shared_ptr<double> mOwnedPtr,
@@ -76,7 +76,7 @@ public:
 
 
 private:
-	const Epetra_Comm& epetraComm;
+	shared_ptr<Epetra_Comm> epetraComm;
 	PDNEIGH::NeighborhoodList list,row_matrix_list;
 	const Epetra_BlockMap ownedMapScalar,ownedMapNDF;
 	const Epetra_BlockMap overlapMapScalar,overlapMapNDF;

@@ -115,6 +115,9 @@ void constantBodyLoad() {
 	StageFunction constStageFunction(0.0,0.0);
 	StageComponentDirichletBc bcOp(allFixedSpec,constStageFunction);
 
+	Field<char> bcMask(Field_NS::BC_MASK,numPoints);
+	bcMask.set(0);
+	bcOp.imprint_bc(bcMask);
 
 	/*
 	 * Create body load
@@ -142,7 +145,7 @@ void constantBodyLoad() {
 	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(decomp.myX,numPoints);
 	PdVTK::writeField(grid,fN);
 	PdVTK::writeField(grid,fNP1);
-
+	PdVTK::writeField(grid,bcMask);
 	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("constantBodyLoad.pvtu", comm.NumProc(), comm.MyPID());
 	PdVTK::write(writer,grid);
 

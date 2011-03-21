@@ -68,7 +68,7 @@ void axialBarLinearSpacing() {
 	 * Create parallel communication maps
 	 */
 	const int vectorNDF=3;
-	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
+	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
 //	Epetra_BlockMap rowMap   = PdQuickGrid::getOwnedMap  (comm, decomp, vectorNDF);
 //	Epetra_BlockMap colMap = PdQuickGrid::getOverlapMap(comm, decomp, vectorNDF);
 //	BOOST_CHECK(rowMap.NumMyElements()==numPoints);
@@ -78,8 +78,8 @@ void axialBarLinearSpacing() {
 	const PdImp::IsotropicHookeSpec isotropicSpec(_K,_MU);
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
 	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
-	Epetra_BlockMap rowMap = list.getOwnedMap(comm,vectorNDF);
-	Epetra_BlockMap colMap = list.getOverlapMap(comm,vectorNDF);
+	Epetra_BlockMap rowMap = *list.getOwnedMap(vectorNDF);
+	Epetra_BlockMap colMap = *list.getOverlapMap(vectorNDF);
 	BOOST_CHECK(rowMap.NumMyElements()==numPoints);
 	PdITI::PdITI_Operator op(comm,list,decomp.cellVolume);
 
@@ -168,8 +168,7 @@ void probe() {
 	 * Create parallel communication maps
 	 */
 	const int vectorNDF=3;
-	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
-
+	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
 	const PdImp::BulkModulus _K(130000.0);
 	const PdImp::PoissonsRatio _MU(0.25);
 	const PdImp::IsotropicHookeSpec isotropicSpec(_K,_MU);
@@ -178,8 +177,8 @@ void probe() {
 	PdITI::PdITI_Operator op(comm,list,decomp.cellVolume);
 	op.addConstitutiveModel(fIntOperator);
 
-	Epetra_BlockMap rowMap   = list.getOwnedMap(comm,vectorNDF);
-	Epetra_BlockMap colMap = list.getOverlapMap(comm,vectorNDF);
+	Epetra_BlockMap rowMap   = *list.getOwnedMap(vectorNDF);
+	Epetra_BlockMap colMap = *list.getOverlapMap(vectorNDF);
 	BOOST_CHECK(rowMap.NumMyElements()==numPoints);
 	Field_NS::Field<double> u(Field_NS::DISPL3D,rowMap.NumMyElements());
 	u.set(0.0);

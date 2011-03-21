@@ -39,7 +39,7 @@ add_test (utPdImpMatrix_11x1x1 python run_unit_test.py ./utPdImpMatrix_11x1x1)
 
 # Add test
 add_executable(utPdImp_twoPointJacobian utPdImp_twoPointJacobian.cxx)
-target_link_libraries(utPdImp_twoPointJacobian PdITIOperators QuickGrid PdNeigh PdVTK PdMaterialUtilities ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdImp_twoPointJacobian PdITIOperators QuickGrid PdNeigh PdVTK Utilities PdMaterialUtilities ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 add_test (utPdImp_twoPointJacobian python run_unit_test.py ./utPdImp_twoPointJacobian)
 
 # Add test

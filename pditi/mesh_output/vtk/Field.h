@@ -40,6 +40,7 @@ public:
 	  CURRENT_COORDINATES,
 	  VELOCITY,
 	  ACCELERATION,
+	  BC_MASK,
 	  FORCE,
 	  FORCE_DENSITY,
 	  CONTACT_FORCE,
@@ -81,6 +82,7 @@ const FieldSpec DILATATION(FieldSpec::DILATATION,               FieldSpec::SCALA
 const FieldSpec NUM_NEIGHBORS(FieldSpec::NUM_NEIGHBORS,         FieldSpec::SCALAR, FieldSpec::STATELESS, "Num_Neighbors");
 const FieldSpec LAMBDA(FieldSpec::PLASTIC_CONSISTENCY,          FieldSpec::SCALAR, FieldSpec::STATEFUL,  "Lambda");
 const FieldSpec SHEAR_CORRECTION_FACTOR(FieldSpec::SHEAR_CORRECTION_FACTOR,      FieldSpec::SCALAR, FieldSpec::STATELESS,  "Shear_Correction_Factor");
+const FieldSpec BC_MASK(FieldSpec::BC_MASK,      FieldSpec::SCALAR, FieldSpec::STATELESS,  "BC_MASK");
 
 // Vector FieldSpecs
 const FieldSpec COORD3D(FieldSpec::COORDINATES,            FieldSpec::VECTOR3D, FieldSpec::STATELESS, "Coordinates");
@@ -106,6 +108,7 @@ public:
     Field(const FieldSpec& c, std::size_t numPoints) : FieldSpec(c), Array<T>(numPoints*c.getLength()), num_points(numPoints) {}
     Field(const FieldSpec& c, shared_ptr<T> data, std::size_t numPoints) : FieldSpec(c), Array<T>(numPoints*c.getLength(),data), num_points(numPoints) {}
     std::size_t get_num_points() const { return num_points; }
+    const FieldSpec get_spec() const { return FieldSpec(getType(), getLength(), getStateArchitecture(), getLabel()); }
 };
 
 

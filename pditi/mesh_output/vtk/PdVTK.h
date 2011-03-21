@@ -11,6 +11,7 @@
 #include "vtkSmartPointer.h"
 #include <vtkDoubleArray.h>
 #include <vtkIntArray.h>
+#include <vtkCharArray.h>
 #include <vtkCellType.h>
 #include "vtkPointData.h"
 #include "vtkIdList.h"
@@ -34,6 +35,11 @@ enum VTK_FILE_TYPE { vtkASCII=0, vtkBINARY };
 
 template<typename T>
 struct vtk_trait {};
+
+template<>
+struct vtk_trait<char> {
+   typedef vtkSmartPointer<vtkCharArray> vtk_type;
+};
 
 template<>
 struct vtk_trait<int> {

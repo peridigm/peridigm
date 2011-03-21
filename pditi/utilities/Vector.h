@@ -109,31 +109,31 @@ struct Plus : public binary_function< Vector3D, Vector3D, Vector3D > {
 struct InsideSphere : public binary_function< Vector3D, Vector3D, bool > {
 
 public:
-	InsideSphere(double radius) : r(radius) {}
+	InsideSphere(double radius) : radius(radius) {}
 	bool operator()(const Vector3D& u, const Vector3D& v){
 		double dx = v[0]-u[0];
 		double dy = v[1]-u[1];
 		double dz = v[2]-u[2];
-		return dx*dx+dy*dy+dz*dz - r*r < 0.0;
+		return dx*dx+dy*dy+dz*dz - radius*radius < 0.0;
 	}
 
 private:
-	double r;
+	double radius;
 };
 
 struct OutsideSphere : public binary_function< Vector3D, Vector3D, bool > {
 
 public:
-	OutsideSphere(double radius) : r(radius) {}
+	OutsideSphere(double radius) : radius(radius) {}
 	bool operator()(const Vector3D& u, const Vector3D& v){
 		double dx = v[0]-u[0];
 		double dy = v[1]-u[1];
 		double dz = v[2]-u[2];
-		return dx*dx+dy*dy+dz*dz - r*r > 0.0;
+		return dx*dx+dy*dy+dz*dz - radius*radius > 0.0;
 	}
 
 private:
-	double r;
+	double radius;
 };
 
 inline double scalar_triple_product(const Vector3D& a, const Vector3D& b, const Vector3D& c){
@@ -145,6 +145,20 @@ inline double scalar_triple_product(const Vector3D& a, const Vector3D& b, const 
 	return v;
 }
 
+class PointCenteredBoundingBox {
+public:
+	PointCenteredBoundingBox (const double* X, double radius): x(X), horizon(radius) {}
+	inline double get_xMin() const { return *(x+0)-horizon; }
+	inline double get_yMin() const { return *(x+1)-horizon; }
+	inline double get_zMin() const { return *(x+2)-horizon; }
+	inline double get_xMax() const { return *(x+0)+horizon; }
+	inline double get_yMax() const { return *(x+1)+horizon; }
+	inline double get_zMax() const { return *(x+2)+horizon; }
+
+private:
+	const double *x;
+	double horizon;
+};
 
 } // UTILITIES
 

@@ -23,6 +23,7 @@ public:
 	enum ComponentLabel {X=0,Y,Z};
 	virtual ~DirichletBcSpec() {}
 	virtual vector<ComponentLabel> getComponents() const = 0;
+	virtual char get_mask() const = 0;
 	virtual vector< vector<double> > getUnitDirections() const = 0;
 	virtual const UTILITIES::Array<int>& getPointIds() const = 0;
 	virtual const StageDirichletBc& getStageDirichletBc(const StageFunction& stageFunction) const = 0;

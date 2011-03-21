@@ -23,6 +23,7 @@ public:
 	const DirichletBcSpec& getSpec() const { return spec; }
 	void applyHomogeneousForm(Field_NS::Field<double>& residual) const;
 	void applyKinematics(double lambda, Field_NS::Field<double>& displacement) const;
+	void imprint_bc(Field_NS::Field<char>& mask) const;
 
 private:
 	const ComponentDirichletBcSpec spec;

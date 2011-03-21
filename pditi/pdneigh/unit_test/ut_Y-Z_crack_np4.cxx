@@ -136,7 +136,8 @@ void assertNeighborhood_p0(){
 	QUICKGRID::QuickGridData gridData = getGrid();
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
-	PDNEIGH::NeighborhoodList list(Epetra_MpiComm(MPI_COMM_WORLD),gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);
+	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
+	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);
 
 	int *neigh = list.get_neighborhood().get();
 	int *gids = gridData.myGlobalIDs.get();
@@ -205,7 +206,8 @@ void assertNeighborhood_p1(){
 	QUICKGRID::QuickGridData gridData = getGrid();
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
-	PDNEIGH::NeighborhoodList list(Epetra_MpiComm(MPI_COMM_WORLD),gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);
+	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
+	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);
 
 	int *neigh = list.get_neighborhood().get();
 	int *gids = gridData.myGlobalIDs.get();
@@ -223,7 +225,8 @@ void assertNeighborhood_p2(){
 	QUICKGRID::QuickGridData gridData = getGrid();
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
-	PDNEIGH::NeighborhoodList list(Epetra_MpiComm(MPI_COMM_WORLD),gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);
+	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
+	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);
 
 	int *neigh = list.get_neighborhood().get();
 	int *gids = gridData.myGlobalIDs.get();
@@ -241,7 +244,8 @@ void assertNeighborhood_p3(){
 	QUICKGRID::QuickGridData gridData = getGrid();
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
-	PDNEIGH::NeighborhoodList list(Epetra_MpiComm(MPI_COMM_WORLD),gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);
+	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
+	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);
 
 	int *neigh = list.get_neighborhood().get();
 	int *gids = gridData.myGlobalIDs.get();

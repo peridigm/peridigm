@@ -17,6 +17,20 @@ StageComponentDirichletBc::StageComponentDirichletBc(const ComponentDirichletBcS
 : spec(spec), stageFunction(stageFunction)
 {}
 
+void StageComponentDirichletBc::imprint_bc(Field_NS::Field<char>& maskField) const {
+
+	char* b = maskField.get();
+	char mask = spec.get_mask();
+	const UTILITIES::Array<int>& ids = spec.getPointIds();
+	/*
+	 * NOTE bitwise 'or' since we are essentially concatenating boundary conditions
+	 */
+	for(const int *idsPtr=ids.get();idsPtr!=ids.end();idsPtr++, b++){
+		*b |= mask;
+	}
+}
+
+
 void StageComponentDirichletBc::applyHomogeneousForm(Field<double>& residualField) const {
 	vector< vector<double> > dirs = spec.getUnitDirections();
 	const UTILITIES::Array<int>& ids = spec.getPointIds();

@@ -210,7 +210,8 @@ void moveCoordinatesAndReLoadBalance() {
 	 */
 	decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
 	shared_ptr<PdBondFilter::BondFilter> bondFilterPtr(new PdBondFilter::BondFilterDefault());
-	PDNEIGH::NeighborhoodList list(Epetra_MpiComm(MPI_COMM_WORLD),decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon,bondFilterPtr);
+	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
+	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon,bondFilterPtr);
 
 	/*
 	 * Now check that new partition has swapped points and

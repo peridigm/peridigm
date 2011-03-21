@@ -90,7 +90,7 @@ void graph() {
 
 
 	BOOST_CHECK(numCells==numPoints);
-	Epetra_MpiComm comm = Epetra_MpiComm(MPI_COMM_WORLD);
+	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
 	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
 	Field<double> uOwnedField = PdITI::getPureShearXY(Field<double>(Field_NS::COORD3D,decomp.myX,numPoints));
 	Field<double> probeField = Field_NS::Field<double>(Field_NS::COORD3D,numPoints);
