@@ -20,7 +20,6 @@ public:
 	virtual const UTILITIES::Array<double>& computeRowStiffness(int localRowID, UTILITIES::Array<int> rowGIDs) = 0;
 	virtual const Epetra_BlockMap& getRowMap() const = 0;
 	virtual const Epetra_BlockMap& getColMap() const = 0;
-
 };
 
 
