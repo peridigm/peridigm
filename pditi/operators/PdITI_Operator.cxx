@@ -75,7 +75,7 @@ dilatationOverlapPtr(new double[colMapNDF.NumMyElements()*scalarNDF],ArrayDelete
 	 */
 	Epetra_Vector dsfOverlap(View,colMapScalar,dsfOverlapPtr.get());
 	Epetra_Vector dsfOwned(View,rowMapScalar,dsfOwnedPtr.get());
-	dsfOverlap.Import(dsfOwned,importNDF,Insert);
+	dsfOverlap.Import(dsfOwned,importScalar,Insert);
 
 	/*
 	 * Computes number of columns per row
@@ -302,11 +302,6 @@ rowStiffnessOperatorPtr()
 	const int* local_list = list.get_local_neighborhood().get();
 	computeWeightedVolume(xOverlapPtr.get(),volumeOverlapPtr.get(),mOwnedField.get(),list.get_num_owned_points(),local_list);
 
-	/*
-	 * Initialized DSF
-	 */
-	double h = list.get_horizon()/2.0;
-//	PdMaterialUtilities::computeShearCorrectionFactor(list.get_num_owned_points(),xOverlapPtr.get(),volumeOverlapPtr.get(),local_list,h,ownedDSF_Ptr.get());
 	{
 		/*
 		 * Initialize yOverlap = 0
@@ -315,9 +310,15 @@ rowStiffnessOperatorPtr()
 		size_t len = overlapMapScalar.NumMyElements()*vectorNDF;
 		PdITI::SET(y,y+len,0.0);
 	}
-	PdMaterialUtilities::computeShearCorrectionFactor(list.get_num_owned_points(),xOverlapPtr.get(),yOverlapPtr.get(),volumeOverlapPtr.get(),mOwnedField.get(),local_list,h,ownedDSF_Ptr.get());
-	// INITIAL HACK -- reset DSF = 1.0
+
+	/*
+	 * Initialize DSF = 1.0
+	 */
 	PdITI::SET(ownedDSF_Ptr.get(),ownedDSF_Ptr.get()+list.get_num_owned_points(),1.0);
+	double h = list.get_horizon();
+	PdMaterialUtilities::computeShearCorrectionFactor(list.get_num_owned_points(),xOverlapPtr.get(),yOverlapPtr.get(),volumeOverlapPtr.get(),mOwnedField.get(),local_list,h,ownedDSF_Ptr.get());
+	// TURN OFF DSF by setting it = 1.0
+//	PdITI::SET(ownedDSF_Ptr.get(),ownedDSF_Ptr.get()+list.get_num_owned_points(),1.0);
 	{
 		/*
 		 * Initialize damage to 0
