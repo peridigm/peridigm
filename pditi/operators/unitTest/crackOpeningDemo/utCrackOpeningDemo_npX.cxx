@@ -72,8 +72,8 @@ static size_t numProcs;
 /*
  * This should be even so that the crack plane lies between to rows of points
  */
-const size_t nx = 20;
-const size_t ny = 20;
+const size_t nx = 6;
+const size_t ny = 6;
 const double xStart = -2.5;
 const double xLength = 5.0;
 const double yStart = -2.5;
@@ -378,6 +378,17 @@ getOperator_NEW
 	for(int row=0;row<rowMap.NumMyElements();row++){
 		Array<int> rowLIDs = jacobian->getColumnLIDs(row);
 		std::size_t numCol = rowLIDs.get_size();
+
+		std::vector< std::pair<int,int> > pairs(numCol);
+		{
+			int *cols = rowLIDs.get();
+			for(std::size_t i=0;i<pairs.size();i++,cols++){
+				pairs[i] = std::make_pair(*cols,i);
+			}
+		}
+		std::map<int,int> map(pairs.begin(),pairs.end());
+
+
 		int *cols = rowLIDs.get();
 		char rowMask = bcMask[row];
 
@@ -399,14 +410,15 @@ getOperator_NEW
 		/*
 		 * Zero out row as necessary due to BC's
 		 */
-		double *colRoot = actualK.get();
-		for(int* colPtr=cols; colPtr!=cols+numCol;colPtr++,colRoot+=9){
+		double *colRoot;
+		for(int* colPtr=cols; colPtr!=cols+numCol;colPtr++){
 			int col = *colPtr;
 			char colMask = bcMask[col];
 
 			/*
 			 * Handle BCs for row
 			 */
+			colRoot = actualK.get() + 9 * map[col];
 			for(std::size_t r=0;r<rowComponentBcs.size();r++){
 				rowPtrs[r]= colRoot + rowComponentBcs[r];
 				/*
@@ -621,6 +633,7 @@ void crackOpeningDemo(){
 	PdITI::PdITI_Operator op(comm,list,gridData.cellVolume);
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
 	op.addConstitutiveModel(fIntOperator);
+	PDNEIGH::NeighborhoodList row_matrix_list = op.get_row_matrix_neighborhood();
 
 	/*
 	 * Get points for bc's
@@ -657,14 +670,15 @@ void crackOpeningDemo(){
 	bcMaskFieldOwned.set(0);
 	for(int b=0;b<bcs.size();b++)
 		bcs[b]->imprint_bc(bcMaskFieldOwned);
-	Field<char> bcMaskFieldOverlap = PDNEIGH::createOverlapField(list,bcMaskFieldOwned);
+	Field<char> bcMaskFieldOverlap = PDNEIGH::createOverlapField(row_matrix_list,bcMaskFieldOwned);
 
 	/*
 	 * Create Jacobian -- note that SCOPE of jacobian is associated with the PimpOperator "op"
 	 */
 	Field<double> uOwnedField(DISPL3D,gridData.numPoints);
 	uOwnedField.set(0.0);
-	bcApplied->applyKinematics(1.0,uOwnedField);
+	for(int b=0;b<bcs.size();b++)
+		bcs[b]->applyKinematics(1.0,uOwnedField);
 	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOwnedField);
 
 	/*
@@ -679,17 +693,23 @@ void crackOpeningDemo(){
 	shared_ptr<Epetra_RowMatrix> mPtr = getOperator_NEW(bcMaskFieldOverlap,graphPtr,jacobian);
 
 	/*
-	 * Create force field
-	 * IN this case,
+	 * TODO
+	 * Investigate SIGN of applied loading
 	 * 1) Compute internal force with displacement vector that has kinematics applied
-	 * 2) Negate internal force since we are using it as a residual on the RHS (THIS IS NOT DONE -- SIGNS need to be investigated)
-	 * 3) Apply kinematics to this vector so that solution properly includes the applied kinematics
+	 * 2) Apply kinematics to this vector so that solution properly includes the applied kinematics
 	 */
 	Field_NS::FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
-	Field_NS::Field<double> fN(fNSpec,gridData.numPoints);
-	fN.set(0.0);
-	op.computeInternalForce(uOwnedField,fN);
-	bcApplied->applyKinematics(1.0,fN);
+	Field_NS::Field<double> fNOwnedField(fNSpec,gridData.numPoints);
+	fNOwnedField.set(0.0);
+	Field_NS::FieldSpec deltaSpec(FieldSpec::VELOCITY,FieldSpec::VECTOR3D,"delta");
+	Field_NS::Field<double> delta(deltaSpec,gridData.numPoints);
+	delta.set(0.0);
+	op.computeInternalForce(uOwnedField,fNOwnedField);
+	for(int b=0;b<bcs.size();b++){
+		bcs[b]->applyKinematics(1.0,fNOwnedField);
+		bcs[b]->applyKinematics(1.0,delta);
+	}
+
 
 	Epetra_LinearProblem linProblem;
 	linProblem.SetOperator(mPtr.get());
@@ -698,7 +718,7 @@ void crackOpeningDemo(){
 	const Epetra_BlockMap& rangeMap  = mPtr->OperatorRangeMap();
 	const Epetra_BlockMap& domainMap  = mPtr->OperatorDomainMap();
 
-	double *f = fN.get();
+	double *f = fNOwnedField.get();
 	Epetra_Vector rhs(View,rangeMap,f);
 	Epetra_Vector lhs(View,domainMap,uOwnedField.get());
 
@@ -713,10 +733,6 @@ void crackOpeningDemo(){
 	/*
 	 * Write problem set up parameters to file
 	 */
-	Field_NS::FieldSpec deltaSpec(FieldSpec::VELOCITY,FieldSpec::VECTOR3D,"delta");
-	Field_NS::Field<double> delta(deltaSpec,gridData.numPoints);
-	delta.set(0.0);
-	bcApplied->applyKinematics(1.0,delta);
 
 	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(gridData.myX,gridData.numPoints);
 
@@ -726,6 +742,7 @@ void crackOpeningDemo(){
 	Field_NS::Field<int> myRank(Field_NS::PROC_NUM,gridData.numPoints);
 	myRank.set(comm->MyPID());
 
+	PdVTK::writeField(grid,fNOwnedField);
 	PdVTK::writeField(grid,uOwnedField);
 	PdVTK::writeField(grid,delta);
 	PdVTK::writeField<int>(grid,myRank);

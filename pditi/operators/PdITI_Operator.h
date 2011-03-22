@@ -28,6 +28,7 @@ namespace PdITI {
 class PdITI_Operator {
 public:
 	PdITI_Operator(shared_ptr<Epetra_Comm> comm, const PDNEIGH::NeighborhoodList neighborhoodList, shared_ptr<double> ownedCellVolume);
+	const PDNEIGH::NeighborhoodList get_row_matrix_neighborhood() const { return row_matrix_list; }
 	void addConstitutiveModel(shared_ptr<ConstitutiveModel>& model);
 	void advanceStateVariables();
 	Field<double> computeOwnedDilatation(Field<double> uOwnedField);
@@ -44,7 +45,7 @@ public:
 	friend class RowOperator;
 	class RowOperator : public RowStiffnessOperator {
 	public:
-		~RowOperator() {}
+		virtual ~RowOperator() {}
 		int getNumRows() const { return row_matrix_list.get_num_owned_points(); }
 		Array<int> getColumnLIDs(int localRowID) const;
 		const Array<int>& getNumColumnsPerRow() const;
