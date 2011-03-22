@@ -26,6 +26,7 @@
 #include "../StageComponentDirichletBc.h"
 #include "../ComponentDirichletBcSpec.h"
 #include "../IsotropicElasticConstitutiveModel.h"
+#include "../IsotropicElastic_No_DSF.h"
 #include "../ConstitutiveModel.h"
 #include "utPdITI.h"
 #include "PdutMpiFixture.h"
@@ -55,6 +56,7 @@ using UTILITIES::CartesianComponent;
 using namespace Field_NS;
 using UTILITIES::Array;
 using PdITI::IsotropicElasticConstitutiveModel;
+using PdITI::IsotropicElastic_No_DSF;
 using PdITI::ConstitutiveModel;
 using PdImp::StageComponentDirichletBc;
 using PdImp::StageFunction;
@@ -110,7 +112,9 @@ void utPimp_pullCylinder() {
 	 */
 	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
 	PdITI::PdITI_Operator op(comm,list,decomp.cellVolume);
-	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
+//	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
+	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElastic_No_DSF(isotropicSpec));
+
 	op.addConstitutiveModel(fIntOperator);
 
 
@@ -143,7 +147,9 @@ void utPimp_pullCylinder() {
 	 */
 	Field<double> uOwnedField(DISPL3D,decomp.numPoints);
 	uOwnedField.set(0.0);
-	bcApplied->applyKinematics(1.0,uOwnedField);
+	for(int b=0;b<bcs.size();b++)
+		bcs[b]->applyKinematics(1.0,uOwnedField);
+
 	shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOwnedField);
 
 	/*
@@ -164,10 +170,13 @@ void utPimp_pullCylinder() {
 	 * 3) Apply kinematics to this vector so that solution properly includes the applied kinematics
 	 */
 	FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
-	Field<double> fN(fNSpec,decomp.numPoints);
-	fN.set(0.0);
-	op.computeInternalForce(uOwnedField,fN);
-	bcApplied->applyKinematics(1.0,fN);
+	Field<double> fNOwnedField(fNSpec,decomp.numPoints);
+	fNOwnedField.set(0.0);
+	op.computeInternalForce(uOwnedField,fNOwnedField);
+	for(int b=0;b<bcs.size();b++){
+		bcs[b]->applyKinematics(1.0,fNOwnedField);
+	}
+
 
 	Epetra_LinearProblem linProblem;
 	linProblem.SetOperator(mPtr.get());
@@ -176,7 +185,7 @@ void utPimp_pullCylinder() {
 	const Epetra_BlockMap& rangeMap  = mPtr->OperatorRangeMap();
 	const Epetra_BlockMap& domainMap  = mPtr->OperatorDomainMap();
 
-	double *f = fN.get();
+	double *f = fNOwnedField.get();
 	Epetra_Vector rhs(View,rangeMap,f);
 	Epetra_Vector lhs(View,domainMap,uOwnedField.get());
 

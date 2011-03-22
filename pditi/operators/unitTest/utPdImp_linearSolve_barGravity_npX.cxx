@@ -26,6 +26,7 @@
 #include "../StageComponentDirichletBc.h"
 #include "../ComponentDirichletBcSpec.h"
 #include "../IsotropicElasticConstitutiveModel.h"
+#include "../IsotropicElastic_No_DSF.h"
 #include "../ConstitutiveModel.h"
 #include "PdutMpiFixture.h"
 #include "Epetra_ConfigDefs.h"
@@ -50,6 +51,7 @@
 
 using namespace Field_NS;
 using PdITI::IsotropicElasticConstitutiveModel;
+using PdITI::IsotropicElastic_No_DSF;
 using PdITI::ConstitutiveModel;
 using UTILITIES::CartesianComponent;
 using namespace Pdut;
@@ -112,6 +114,7 @@ void linearSolve_barGravity() {
 	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
 	PdITI::PdITI_Operator op(comm,list,decomp.cellVolume);
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
+//	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElastic_No_DSF(isotropicSpec));
 	op.addConstitutiveModel(fIntOperator);
 
 
