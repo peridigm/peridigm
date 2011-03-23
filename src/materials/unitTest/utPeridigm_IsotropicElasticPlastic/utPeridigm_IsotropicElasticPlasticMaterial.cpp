@@ -276,10 +276,13 @@ void runPureShear() {
 	Field<double> velField(velocitySpec,pdGridData.numPoints);
 	const FieldSpec ySpec(FieldSpec::COORDINATES,FieldSpec::VECTOR3D, "CURRENT_COORDINATES");
 	Field<double> yField(ySpec,pdGridData.numPoints);
+	const FieldSpec dsfSpec = Field_NS::SHEAR_CORRECTION_FACTOR;
+	Field<double> dsfField(dsfSpec,pdGridData.numPoints);
 	uOwnedField.setValue(0.0);
 	velField.setValue(0.0);
 	fNField.setValue(0.0);
 	yField.setValue(0.0);
+	dsfField.setValue(1.0);
 	double *u1x = uOwnedField.getArray().get()+3;
 	double *v1x = velField.getArray().get()+3;
 	double *f1x = fNField.getArray().get()+3;
@@ -347,6 +350,7 @@ void runPureShear() {
 	double *m = mPtr.get();
 	double *theta = thetaPtr.get();
 	double *bondState = bondStatePtr.get();
+	double* dsfOwned = dsfField.getArray().get();
 	double *vol = pdGridData.cellVolume.get();
 	int *neigh = pdGridData.neighborhood.get();
 
@@ -385,7 +389,7 @@ void runPureShear() {
 			/*
 			 * Do not compute dilatation -- just set it to zero
 			 */
-			computeInternalForceIsotropicElasticPlastic(x,y,m,vol,theta,bondState,edpN,edpNP1,lambdaN,lambdaNP1,f,neigh,numPoints,K,MU,DELTA,Y);
+			computeInternalForceIsotropicElasticPlastic(x,y,m,vol,theta,bondState,dsfOwned,edpN,edpNP1,lambdaN,lambdaNP1,f,neigh,numPoints,K,MU,DELTA,Y);
 
 
 			/*
