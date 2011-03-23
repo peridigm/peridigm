@@ -41,7 +41,7 @@ void IsotropicElasticPlasticModel::computeInternalForce
    const double* volumeOverlapPtr,
    const double* dilatationOwned,
    const double* bondDamage,
-   const double* dsf,
+   const double* dsfOwned,
    double* fInternalOverlapPtr,
    const int*  localNeighborList,
    int numOwnedPoints,
@@ -74,6 +74,7 @@ void IsotropicElasticPlasticModel::computeInternalForce
 			volumeOverlapPtr, //
 			dilatationOwned,  //
 			bondDamage,       //
+			dsfOwned,
 			deviatoricPlasticExtensionStateN, //
 			deviatoricPlasticExtensionStateNp1, //
 			lambdaN, //

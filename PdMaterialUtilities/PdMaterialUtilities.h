@@ -33,7 +33,7 @@
 #define PDMATERIALUTILITIES_H_
 namespace PdMaterialUtilities {
 
-enum PURE_SHEAR { XY=0, XZ, YZ };
+enum PURE_SHEAR { XY=0, YZ, ZX };
 
 void computeWeightedVolume
 (
