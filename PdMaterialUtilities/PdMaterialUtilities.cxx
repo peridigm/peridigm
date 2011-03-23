@@ -334,6 +334,18 @@ void computeInternalForceIsotropicElasticPlastic
 	double MU = SHEAR_MODULUS;
 	double OMEGA=1.0;
 	double DELTA=HORIZON;
+	/*
+	 * 3d variety of yield value
+	 */
+	double yieldValue = 75.0 * yieldStress * yieldStress / 8 / M_PI / pow(DELTA,5);
+	/*
+	 * Planar variety of yield value
+	 */
+//		double THICKNESS=1.0;
+//		double yieldValue = 225.0 * yieldStress * yieldStress / 8 / M_PI / THICKNESS / pow(DELTA,4);
+//		double yieldValue = 0.5 * pow(15*yieldStress/weightedVol,2) * M_PI * THICKNESS * pow(DELTA,4) / 16.0;
+
+
 
 	const double *xOwned = xOverlap;
 	const double *yOwned = yOverlap;
@@ -344,13 +356,13 @@ void computeInternalForceIsotropicElasticPlastic
 
 	const int *neighPtr = localNeighborList;
 	double cellVolume, alpha, dx, dy, dz, zeta, dY, t, ti, td, ed, edpN, tdTrial;
-	for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yOwned +=3, fOwned+=3, m++, theta++, lambdaN++, lambdaNP1++){
+	for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yOwned +=3, fOwned+=3, m++, theta++, lambdaN++, lambdaNP1++, dsfOwned++){
 
 		int numNeigh = *neighPtr; neighPtr++;
 		const double *X = xOwned;
 		const double *Y = yOwned;
 		double weightedVol = *m;
-		alpha = 15.0*MU/weightedVol;
+		alpha = *dsfOwned * 15.0*MU/weightedVol;
 		double selfCellVolume = v[p];
 		double c = 3 * K * (*theta) * OMEGA / weightedVol;
 		double deltaLambda=0.0;
@@ -364,17 +376,8 @@ void computeInternalForceIsotropicElasticPlastic
 		/*
 		 * Evaluate yield function
 		 */
-		/*
-		 * 3d variety of yield value
-		 */
-		double yieldValue = 75.0 * yieldStress * yieldStress / 8 / M_PI / pow(DELTA,5);
-		/*
-		 * Planar variety of yield value
-		 */
-//		double THICKNESS=1.0;
-//		double yieldValue = 225.0 * yieldStress * yieldStress / 8 / M_PI / THICKNESS / pow(DELTA,4);
-//		double yieldValue = 0.5 * pow(15*yieldStress/weightedVol,2) * M_PI * THICKNESS * pow(DELTA,4) / 16.0;
-		double f = tdNorm * tdNorm / 2 - yieldValue;
+		double pointWiseYieldValue = *dsfOwned * (*dsfOwned) * yieldValue;
+		double f = tdNorm * tdNorm / 2 - pointWiseYieldValue;
 		bool elastic = true;
 
 //		std::cout << "Point id = " << p << std::endl;
@@ -386,7 +389,7 @@ void computeInternalForceIsotropicElasticPlastic
 			 */
 			//			std::cout << "\t PLASTIC" << std::endl;
 			elastic = false;
-			deltaLambda=( tdNorm / sqrt(2.0*yieldValue) - 1.0 ) / alpha;
+			deltaLambda=( tdNorm / sqrt(2.0*pointWiseYieldValue) - 1.0 ) / alpha;
 			*lambdaNP1 = *lambdaN + deltaLambda;
 		} else {
 //			std::cout << "\t ELASTIC" << std::endl;
@@ -439,7 +442,7 @@ void computeInternalForceIsotropicElasticPlastic
 				/*
 				 * Compute deviatoric force state
 				 */
-				td = sqrt(2.0*yieldValue) * tdTrial / tdNorm;
+				td = sqrt(2.0*pointWiseYieldValue) * tdTrial / tdNorm;
 
 				/*
 				 * Update deviatoric plastic deformation state
