@@ -174,14 +174,13 @@ void dsf_probe() {
 	 */
 	probe_shear(XY,neighborhoodPtr,X,xPtr,Y,yPtr,volPtr,horizon,gamma,m_code);
 	/*
-	 * PROBE XZ
-	 */
-	probe_shear(XZ,neighborhoodPtr,X,xPtr,Y,yPtr,volPtr,horizon,gamma,m_code);
-
-	/*
 	 * PROBE YZ
 	 */
 	probe_shear(YZ,neighborhoodPtr,X,xPtr,Y,yPtr,volPtr,horizon,gamma,m_code);
+	/*
+	 * PROBE ZX
+	 */
+	probe_shear(ZX,neighborhoodPtr,X,xPtr,Y,yPtr,volPtr,horizon,gamma,m_code);
 
 
 

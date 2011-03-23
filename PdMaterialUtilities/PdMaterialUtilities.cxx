@@ -596,13 +596,13 @@ void set_pure_shear
 		/*
 		 * Pure shear
 		 */
-		double xy(0.0), xz(0.0), yz(0.0);
+		double zx(0.0), xy(0.0), yz(0.0);
 		switch(mode){
+		case ZX:
+			zx = gamma * dx;
+			break;
 		case XY:
 			xy = gamma * dy;
-			break;
-		case XZ:
-			xz = gamma * dz;
 			break;
 		case YZ:
 			yz = gamma * dz;
@@ -610,9 +610,9 @@ void set_pure_shear
 		}
 
 		double *YP = &yOverlap[3*localId];
-		YP[0] = XP[0] + xy + xz;
+		YP[0] = XP[0] + xy;
 		YP[1] = XP[1] + yz;
-		YP[2] = XP[2];
+		YP[2] = XP[2] + zx;
 
 	}
 
@@ -724,7 +724,7 @@ void computeShearCorrectionFactor
 		dsf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
 		max_dsf=dsf;
 
-		mode = XZ;
+		mode = ZX;
 		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
 		dsf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
 		if(dsf>max_dsf) max_dsf = dsf;
