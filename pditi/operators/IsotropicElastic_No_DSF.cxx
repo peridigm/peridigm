@@ -31,7 +31,7 @@ namespace PdITI {
 			const double* volumeOverlapPtr,
 			const double* dilatationOwned,
 			const double* bondDamage,
-			const double* dsf,
+			const double* dsfOwned,
 			double* fInternalOverlapPtr,
 			const int*  localNeighborList,
 			int numOwnedPoints,
@@ -52,7 +52,7 @@ namespace PdITI {
 				volumeOverlapPtr,
 				dilatationOwned,
 				bondDamage,
-				dsf,
+				dsfOwned,
 				fInternalOverlapPtr,
 				localNeighborList,
 				numOwnedPoints,
@@ -70,7 +70,7 @@ namespace PdITI {
 			const double* volumeOverlap,
 			const double* dilatationOwned,
 			const double* bondDamage,
-			const double* dsf,
+			const double* dsfOwned,
 			double* fInternalOverlap,
 			const int*  localNeighborList,
 			int numOwnedPoints,
@@ -101,7 +101,7 @@ namespace PdITI {
 			int numNeigh = *neighPtr; neighPtr++;
 			const double *X = xOwned;
 			const double *Y = yOwned;
-			dsfX = *(dsf+p);
+			dsfX = *(dsfOwned+p);
 			mX = *(m+p);
 			alphaX = dsfX*15.0*MU/(mX);
 			cellVolumeX = *(v+p);

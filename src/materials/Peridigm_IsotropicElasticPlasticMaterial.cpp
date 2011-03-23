@@ -74,14 +74,20 @@ void PeridigmNS::IsotropicElasticPlasticMaterial::initialize(const double dt,
                                                              PeridigmNS::DataManager& dataManager) const
 {
 	  // Extract pointers to the underlying data
-      double *xOverlap, *cellVolumeOverlap, *weightedVolume, *shear_correction_factor;
+      double *xOverlap, *yOverlapScratch, *cellVolumeOverlap, *weightedVolume, *shear_correction_factor;
       dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&xOverlap);
+      dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&yOverlapScratch);
       dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&cellVolumeOverlap);
       dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
       dataManager.getData(Field_NS::SHEAR_CORRECTION_FACTOR, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&shear_correction_factor);
 
 	  PdMaterialUtilities::computeWeightedVolume(xOverlap,cellVolumeOverlap,weightedVolume,numOwnedPoints,neighborhoodList);
-//	  PdMaterialUtilities::computeShearCorrectionFactor(numOwnedPoints,xOverlap,cellVolumeOverlap,weightedVolume,neighborhoodList,m_horizon,shear_correction_factor);
+	  PdMaterialUtilities::computeShearCorrectionFactor(numOwnedPoints,xOverlap,yOverlapScratch,cellVolumeOverlap,weightedVolume,neighborhoodList,m_horizon,shear_correction_factor);
+	  /*
+	   * Can override the shear correction factor here by simply setting it = 1.0
+	   */
+//	  for(double *dsf=shear_correction_factor; dsf!=shear_correction_factor+numOwnedPoints;dsf++)
+//		  *dsf = 1.0;
 }
 
 void
@@ -140,7 +146,7 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const double dt,
 {
  
 	  // Extract pointers to the underlying data in the constitutiveData array
-      double *x, *y, *volume, *dilatation, *weightedVolume, *bondDamage, *edpN, *edpNP1, *lambdaN, *lambdaNP1, *force;
+      double *x, *y, *volume, *dilatation, *weightedVolume, *bondDamage, *edpN, *edpNP1, *lambdaN, *lambdaNP1, *force, *ownedDSF;
       dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&x);
       dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&y);
       dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&volume);
@@ -152,6 +158,7 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const double dt,
       dataManager.getData(Field_NS::LAMBDA, Field_NS::FieldSpec::STEP_N)->ExtractView(&lambdaN);
       dataManager.getData(Field_NS::LAMBDA, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&lambdaNP1);
       dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&force);
+      dataManager.getData(Field_NS::SHEAR_CORRECTION_FACTOR, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&ownedDSF);
 
       // Zero out the force
       dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1)->PutScalar(0.0);
@@ -163,6 +170,7 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const double dt,
          volume,
          dilatation,
          bondDamage,
+         ownedDSF,
          edpN,
          edpNP1,
          lambdaN,

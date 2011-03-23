@@ -72,8 +72,8 @@ static size_t numProcs;
 /*
  * This should be even so that the crack plane lies between to rows of points
  */
-const size_t nx = 6;
-const size_t ny = 6;
+const size_t nx = 20;
+const size_t ny = 20;
 const double xStart = -2.5;
 const double xLength = 5.0;
 const double yStart = -2.5;
