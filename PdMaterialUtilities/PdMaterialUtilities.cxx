@@ -738,9 +738,11 @@ void computeShearCorrectionFactor
 		if(dsf>max_dsf) max_dsf = dsf;
 
 		/*
-		 * guard against division by zero (not likely though considering the probe in all 3 directions)
+		 * Better guard against division by zero
+		 *
 		 */
-		if(0.0 == max_dsf)
+		double tolerance(1.0e-15);
+		if(max_dsf/reference < tolerance)
 			max_dsf=1.0;
 		else
 			max_dsf = reference/max_dsf;
