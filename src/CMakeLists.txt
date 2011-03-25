@@ -15,6 +15,8 @@ add_executable (${EXECUTABLE_NAME}
         PHAL_Dimension.cpp
         PHAL_PeridigmTraits.cpp
         Peridigm_OutputManager_VTK_XML.cpp
+        Peridigm_ComputeManager.cpp
+        ./compute/Peridigm_Compute_ACCEL3D.cpp
 #        Peridigm_VerletSolver.cpp
 #        Peridigm_VerletIntegrator.cpp
 #        Peridigm_VerletObserver.cpp
@@ -54,6 +56,8 @@ add_executable(utPeridigm
         PHAL_Dimension.cpp
         PHAL_PeridigmTraits.cpp
         Peridigm_OutputManager_VTK_XML.cpp
+        Peridigm_ComputeManager.cpp
+        ./compute/Peridigm_Compute_ACCEL3D.cpp
         Peridigm_Timer.cpp
         ../io/Field.cxx
         ../PdMaterialUtilities/PdMaterialUtilities.cxx
@@ -87,6 +91,8 @@ add_executable(utPeridigm_MPI_np2
         PHAL_Dimension.cpp
         PHAL_PeridigmTraits.cpp
         Peridigm_OutputManager_VTK_XML.cpp
+        Peridigm_ComputeManager.cpp
+        ./compute/Peridigm_Compute_ACCEL3D.cpp
         Peridigm_Timer.cpp
         ../io/Field.cxx
         ../PdMaterialUtilities/PdMaterialUtilities.cxx
@@ -218,3 +224,4 @@ ${Boost_LIBRARIES}
 
 add_subdirectory (materials/)
 add_subdirectory (initial_conditions/)
+add_subdirectory (compute/)

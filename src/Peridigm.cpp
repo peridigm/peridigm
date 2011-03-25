@@ -45,6 +45,7 @@
 #include "Peridigm.hpp"
 #include "Peridigm_DiscretizationFactory.hpp"
 #include "Peridigm_OutputManager_VTK_XML.hpp"
+#include "Peridigm_ComputeManager.hpp"
 #include "contact/Peridigm_ContactModel.hpp"
 #include "contact/Peridigm_ShortRangeForceContactModel.hpp"
 #include "materials/Peridigm_LinearElasticIsotropicMaterial.hpp"
@@ -78,6 +79,9 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   DiscretizationFactory discFactory(discParams);
   Teuchos::RCP<AbstractDiscretization> peridigmDisc = discFactory.create(peridigmComm);
   initializeDiscretization(peridigmDisc);
+
+  // Initialize compute manager
+  initializeComputeManager();
 
   // Initialize data manager
   initializeDataManager(peridigmDisc);
@@ -425,6 +429,19 @@ void PeridigmNS::Peridigm::initializeWorkset() {
   workset->myPID = -1;
 }
 
+void PeridigmNS::Peridigm::initializeComputeManager() {
+
+  Teuchos::RCP<Teuchos::ParameterList> outputParams;
+
+  if (peridigmParams->isSublist("Output")) {
+    outputParams  = Teuchos::rcp(&(peridigmParams->sublist("Output")),false);
+  }
+
+  computeManager = Teuchos::rcp( new PeridigmNS::ComputeManager( outputParams  ) );
+
+}
+
+
 void PeridigmNS::Peridigm::initializeOutputManager() {
 
   bool active = false;
@@ -468,6 +485,9 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
     outputManager->write(x,u,v,a,force,dataManager,neighborhoodData,forceStateDesc);
 //    this->synchDataManager();
 //    outputManager->write(dataManager,neighborhoodData,forceStateDesc);
+  }
+  else { // no output requested
+    outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_VTK_XML( outputParams ));
   }
 
   //  verbose = problemParams->get("Verbose", false);
@@ -660,7 +680,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
   for(int LID=0 ; LID<neighborhoodData->NumOwnedPoints() ; ++LID){
     int GID =  oneDimensionalOverlapMap->GID(LID);
     int numNeighbors = neighborhoodList[neighborhoodListIndex++];
-    int numEntries = 3*(numNeighbors+1);
+    unsigned int numEntries = 3*(numNeighbors+1);
     globalIndicies.resize(numEntries);
     globalIndicies[0] = 3*GID;
     globalIndicies[1] = 3*GID + 1;
