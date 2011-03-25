@@ -45,6 +45,13 @@
 #include "PdVTK.h"
 
 PeridigmNS::OutputManager_VTK_XML::OutputManager_VTK_XML(const Teuchos::RCP<Teuchos::ParameterList>& params) {
+
+  // No input to validate; no output requested
+  if (params == Teuchos::null) {
+    iWrite = false;
+    return;
+  }
+
   // Throws exception if parameters not present or of wrong type
   // Teuchos::ParameterList validator can't validate all input -- it mainly checks for presence of invalid input and invalid input types
   // Additional checking needed below 
@@ -177,6 +184,8 @@ Teuchos::ParameterList PeridigmNS::OutputManager_VTK_XML::getValidParameterList(
 }
 
 PeridigmNS::OutputManager_VTK_XML::~OutputManager_VTK_XML() {
+
+  if (!iWrite) return;
 
   // get current system time
   time_t rawtime;

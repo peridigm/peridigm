@@ -50,6 +50,7 @@
 #include "Peridigm_ModelEvaluator.hpp"
 #include "Peridigm_DataManager.hpp"
 #include "Peridigm_OutputManager.hpp"
+#include "Peridigm_ComputeManager.hpp"
 
 #include "PdGridData.h"
 
@@ -86,6 +87,9 @@ namespace PeridigmNS {
 
     //! Initialize the workset
     void initializeWorkset();
+
+    //! Initialize the compute manager
+    void initializeComputeManager();
 
     //! Initialize the output manager
     void initializeOutputManager();
@@ -204,6 +208,9 @@ namespace PeridigmNS {
 
     //! Contact models
     Teuchos::RCP< std::vector<Teuchos::RCP<const PeridigmNS::ContactModel> > > contactModels;
+
+    //! Compute manager
+    Teuchos::RCP<PeridigmNS::ComputeManager> computeManager;
 
     //! Data manager
     Teuchos::RCP<PeridigmNS::DataManager> dataManager;
