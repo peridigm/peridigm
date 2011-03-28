@@ -515,6 +515,49 @@ getOperator_NEW
 	return shared_ptr<Epetra_RowMatrix>(m);
 }
 
+shared_ptr<Epetra_RowMatrix>
+getOperator_NEWER
+(
+        const Field<char> bcMaskFieldOverlap,
+        shared_ptr<Epetra_CrsGraph>& graphPtr,
+        shared_ptr<RowStiffnessOperator>& jacobian
+)
+{
+    std::cout << "Begin jacobian calculation NEWER\n";
+    const Epetra_BlockMap& rowMap   = jacobian->getRowMap();
+    const Epetra_BlockMap& colMap   = jacobian->getColMap();
+    Array<int> numColPerRow;
+    numColPerRow.deep_copy(jacobian->getNumColumnsPerRow());
+    Epetra_FEVbrMatrix *m = new Epetra_FEVbrMatrix(Copy,rowMap,numColPerRow.get());
+
+    const char *bcMask = bcMaskFieldOverlap.get();
+    Epetra_SerialDenseMatrix k;
+    k.Shape(vectorNDF,vectorNDF);
+    for(int row=0;row<rowMap.NumMyElements();row++){
+        int rowGID = rowMap.GID(row);
+        Array<int> rowLIDs = jacobian->getColumnLIDs(row);
+        std::size_t numCol = rowLIDs.get_size();
+        /*
+         * Hack to convert rowLIDs over to rowGIDs; If this approach
+         * to assembly works, then eliminate the rowLIDs call and create an
+         * analogous call 'getColumnGIDs(lowRow)
+         */
+        Array<int> colGIDs(numCol);
+        for(size_t c=0;c<numCol;c++)
+            colGIDs[c]=colMap.GID(rowLIDs[c]);
+
+        if(0!=m->BeginReplaceGlobalValues(rowGID,numCol,colGIDs.get())){
+            std::string message("utPdITI::getOperator_NEWER(bcArray,graphPtr,jacobian)\n");
+            message += "\t0!=m->BeginReplaceGlobalValues(rowGID,numCol,colGIDs.get())";
+            throw std::runtime_error(message);
+        }
+
+
+    }
+
+    return shared_ptr<Epetra_RowMatrix>(m);
+
+}
 
 vector<DirichletBcSpec::ComponentLabel> getComponents(char mask) {
 
@@ -690,7 +733,7 @@ void crackOpeningDemo(){
 	 * Create Epetra_RowMatrix
 	 */
 //	shared_ptr<Epetra_RowMatrix> mPtr = getOperator(bcs,graphPtr,jacobian);
-	shared_ptr<Epetra_RowMatrix> mPtr = getOperator_NEW(bcMaskFieldOverlap,graphPtr,jacobian);
+	shared_ptr<Epetra_RowMatrix> mPtr = getOperator_NEWER(bcMaskFieldOverlap,graphPtr,jacobian);
 
 	/*
 	 * TODO
@@ -726,10 +769,10 @@ void crackOpeningDemo(){
 	linProblem.SetLHS(&lhs);
 //	BOOST_CHECK(0==linProblem.CheckInput());
 
-	AztecOO solver(linProblem);
-	solver.SetAztecOption(AZ_precond, AZ_Jacobi);
+//	AztecOO solver(linProblem);
+//	solver.SetAztecOption(AZ_precond, AZ_Jacobi);
 //	BOOST_CHECK(0==solver.CheckInput());
-	solver.Iterate(500,1e-6);
+//	solver.Iterate(500,1e-6);
 	/*
 	 * Write problem set up parameters to file
 	 */
