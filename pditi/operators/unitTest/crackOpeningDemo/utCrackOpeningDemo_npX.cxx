@@ -537,6 +537,7 @@ getOperator_NEWER
         int rowGID = rowMap.GID(row);
         Array<int> rowLIDs = jacobian->getColumnLIDs(row);
         std::size_t numCol = rowLIDs.get_size();
+
         /*
          * Hack to convert rowLIDs over to rowGIDs; If this approach
          * to assembly works, then eliminate the rowLIDs call and create an
@@ -546,15 +547,132 @@ getOperator_NEWER
         for(size_t c=0;c<numCol;c++)
             colGIDs[c]=colMap.GID(rowLIDs[c]);
 
-        if(0!=m->BeginReplaceGlobalValues(rowGID,numCol,colGIDs.get())){
+        if(0!=m->BeginInsertGlobalValues(rowGID,numCol,colGIDs.get())){
             std::string message("utPdITI::getOperator_NEWER(bcArray,graphPtr,jacobian)\n");
             message += "\t0!=m->BeginReplaceGlobalValues(rowGID,numCol,colGIDs.get())";
             throw std::runtime_error(message);
         }
 
+        /*
+          * Dirichlet BC for this row
+          */
+ 		char rowMask = bcMask[row];
 
-    }
 
+		/*
+		 * Create array of pointers to each row/component that BC is applied
+		 */
+		vector<DirichletBcSpec::ComponentLabel> rowComponentBcs = getComponents(rowMask);
+		vector<double*> rowPtrs(rowComponentBcs.size(), NULL);
+		vector<double*> diagPtrs(rowComponentBcs.size(), NULL);
+		Array<double> actualK = jacobian->computeRowStiffness(row, rowLIDs);
+
+ 		/*
+ 		 * Submit block row entries based upon GID
+ 		 * GIDs for each column in row
+ 		 */
+        int *cols = colGIDs.get();
+		double *colRoot = actualK.get();
+		for(int* colPtr=cols; colPtr!=cols+numCol;colPtr++, colRoot+=9){
+			int col = *colPtr;
+
+			/*
+			 * Handle BCs for row
+			 */
+			for(std::size_t r=0;r<rowComponentBcs.size();r++){
+				rowPtrs[r] = colRoot + rowComponentBcs[r];
+				/*
+				 * 0) Save diagonal location
+				 * 1) Set row element to zero
+				 * 2) Move to next column
+				 * 3) Note that there are 3 columns in 3x3 matrix :) DUH!
+				 */
+
+				/*
+				 * Save location of diagonal for this component
+				 */
+				diagPtrs[r] = rowPtrs[r] + 3 * rowComponentBcs[r];
+
+				/*
+				 * Zero out row corresponding with component
+				 * Increment row pointer to next column
+				 */
+				*(rowPtrs[r])=0; rowPtrs[r]+=3;
+				*(rowPtrs[r])=0; rowPtrs[r]+=3;
+				*(rowPtrs[r])=0; rowPtrs[r]+=3;
+
+			}
+
+			/*
+			 * Now check column for dirichlet bc; here we will just zero everything out;
+			 * If this column happens to be the diagonal, then we will fix later;
+			 */
+			char colMask = bcMask[colMap.LID(col)];
+			vector<DirichletBcSpec::ComponentLabel> colComponentBcs = getComponents(colMask);
+			double *stiffPtr(0);
+			for(std::size_t c=0;c<colComponentBcs.size();c++){
+				stiffPtr = colRoot + 3 * colComponentBcs[c];
+				for(int r=0;r<3;r++)
+					stiffPtr[r]=0;
+			}
+
+
+			/*
+			 * If this is true, then we are on the diagonal
+			 * Need to put "1" on the strict diagonal by component
+			 * Put -1 because later the whole matrix is negated
+			 */
+			if(rowGID==col) {
+				for(std::size_t r=0;r<rowComponentBcs.size();r++){
+					*(diagPtrs[r]) = -1.0;
+				}
+			}
+
+
+		}
+
+		/*
+		 * Now just populate the matrix
+		 */
+		double *kPtr = actualK.get();
+		for(int* colPtr=cols; colPtr!=cols+numCol;colPtr++){
+
+			/*
+			 * Fill 'k'
+			 */
+			for(int c=0;c<3;c++){
+				double *colK = k[c];
+				for(int r=0;r<3;r++,kPtr++)
+					colK[r] = - *kPtr;
+			}
+
+			if(0!=m->SubmitBlockEntry(k)){
+				std::string message("utPdITI::getOperator(bcArray,graphPtr,jacobian)\n");
+				message += "\t0!=m->SubmitBlockEntry(k)";
+				throw std::runtime_error(message);
+			}
+
+		}
+
+		/*
+		 * Finalize this row
+		 */
+		if(0!=m->EndSubmitEntries()){
+			std::string message("utPdITI::getOperator(bcArray,graphPtr,jacobian)\n");
+			message += "\t0!=m->EndSubmitEntries()";
+			throw std::runtime_error(message);
+		}
+
+	}
+
+	if(0!=m->FillComplete()){
+		std::string message("utPdITI::getOperator(bcArray,graphPtr,jacobian)\n");
+		message += "\t0!=m->FillComplete()";
+		throw std::runtime_error(message);
+	}
+
+
+	std::cout << "END jacobian calculation\n";
     return shared_ptr<Epetra_RowMatrix>(m);
 
 }
@@ -769,10 +887,10 @@ void crackOpeningDemo(){
 	linProblem.SetLHS(&lhs);
 //	BOOST_CHECK(0==linProblem.CheckInput());
 
-//	AztecOO solver(linProblem);
-//	solver.SetAztecOption(AZ_precond, AZ_Jacobi);
+	AztecOO solver(linProblem);
+	solver.SetAztecOption(AZ_precond, AZ_Jacobi);
 //	BOOST_CHECK(0==solver.CheckInput());
-//	solver.Iterate(500,1e-6);
+	solver.Iterate(500,1e-6);
 	/*
 	 * Write problem set up parameters to file
 	 */
