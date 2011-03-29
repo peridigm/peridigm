@@ -170,14 +170,14 @@ const Array<double>& PdITI_Operator::RowOperator::computeRowStiffness(int localR
 	double horizon = row_matrix_list.get_horizon()/2.0;
 	int numColsRowI = rowLIDs.get_size();
 
-	std::vector< std::pair<int,int> > pairs(numColsRowI);
-	{
-		int *cols = rowLIDs.get();
-		for(std::size_t i=0;i<pairs.size();i++,cols++){
-			pairs[i] = std::make_pair(*cols,i);
-		}
-	}
-	std::map<int,int> map(pairs.begin(),pairs.end());
+//	std::vector< std::pair<int,int> > pairs(numColsRowI);
+//	{
+//		int *cols = rowLIDs.get();
+//		for(std::size_t i=0;i<pairs.size();i++,cols++){
+//			pairs[i] = std::make_pair(*cols,i);
+//		}
+//	}
+//	std::map<int,int> map(pairs.begin(),pairs.end());
 
 	const double zero = 0.0;
 	double *kRowI = rowStiffnessPtr.get();
@@ -201,10 +201,19 @@ const Array<double>& PdITI_Operator::RowOperator::computeRowStiffness(int localR
 	/*
 	 * Loop over neighbors of cell I and assemble stiffness
 	 */
-	for(int *colsI = rowLIDs.get();colsI!=rowLIDs.end();colsI++){
+	double *kIQ=kRowI;
+	double *kII = 0;
+	for(int *colsI = rowLIDs.get();colsI!=rowLIDs.end();colsI++,kIQ+=9){
 		int Q = *colsI;
 
-		if(Q==I) continue;
+		/*
+		 * Watch for diagonal
+		 */
+		if(Q==I) {
+			kII = kIQ;
+			continue;
+		}
+
 		double dsfQ = *(dsf+Q);
 
 		for(int *colsP = rowLIDs.get();colsP!=rowLIDs.end();colsP++){
@@ -231,7 +240,7 @@ const Array<double>& PdITI_Operator::RowOperator::computeRowStiffness(int localR
 			 * Assembly into Row Matrix
 			 * Skip Diagonal : Will sum rows at bottom to place diagonal
 			 */
-			double *kIQ = kRowI + 9 * map[Q];
+//			double *kIQ = kRowI + 9 * map[Q];
 			PdITI::SUMINTO(k3x3Ptr,k3x3Ptr+9,kIQ);
 
 		}
@@ -241,10 +250,11 @@ const Array<double>& PdITI_Operator::RowOperator::computeRowStiffness(int localR
 	/*
 	 * Final Step: Set diagonal entry by summing row and placing on diagonal
 	 */
-	double *kII = kRowI + 9 * map[I];
+//	double *kII = kRowI + 9 * map[I];
 	for(int q = 0;q<numColsRowI;q++){
-		if(map[I]==q) continue;
+//		if(map[I]==q) continue;
 		double *kIQ = kRowI + 9 * q;
+		if(kII==kIQ) continue;
 		PdITI::SUBTRACTINTO(kIQ,kIQ+9,kII);
 	}
 
