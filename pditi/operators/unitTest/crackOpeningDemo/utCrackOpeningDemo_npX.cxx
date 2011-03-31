@@ -79,8 +79,8 @@ static size_t numProcs;
 /*
  * This should be even so that the crack plane lies between to rows of points
  */
-const size_t nx = 10;
-const size_t ny = 10;
+const size_t nx = 30;
+const size_t ny = 30;
 const double xStart = -2.5;
 const double xLength = 5.0;
 const double yStart = -2.5;
@@ -301,71 +301,72 @@ void crackOpeningDemo(){
 
 
 	/*
-	 * AZTEC Setup
+	 * AZTEC Setup (THIS WORKS FINE)
 	 */
-	Epetra_LinearProblem linProblem;
-	linProblem.SetOperator(mPtr.get());
-	linProblem.AssertSymmetric();
-
+//	Epetra_LinearProblem linProblem;
+//	linProblem.SetOperator(mPtr.get());
+//	linProblem.AssertSymmetric();
+//
+//	/*
+//	 * Domain and Range Map are the same
+//	 */
+//	const Epetra_BlockMap& rangeMap  = mPtr->OperatorRangeMap();
+//	const Epetra_BlockMap& domainMap = mPtr->OperatorDomainMap();
+//	Epetra_Vector rhs(View,rangeMap,fNOwnedField.get());
+//	Epetra_Vector lhs(View,domainMap,uOwnedField.get());
+//	linProblem.SetRHS(&rhs);
+//	linProblem.SetLHS(&lhs);
+//	if(0 != linProblem.CheckInput()){
+//		cout << "0 != linProblem.CheckInput()" << endl;
+//		std::exit(1);
+//	}
+//
+//	AztecOO solver(linProblem);
+//	solver.SetAztecOption(AZ_precond, AZ_Jacobi);
+//	if(0 != solver.CheckInput()){
+//		cout << "0 != solver.CheckInput()" << endl;
+//		std::exit(1);
+//	}
+//	solver.Iterate(500,1e-6);
 	/*
-	 * Domain and Range Map are the same
-	 */
-	const Epetra_BlockMap& rangeMap  = mPtr->OperatorRangeMap();
-	const Epetra_BlockMap& domainMap = mPtr->OperatorDomainMap();
-	Epetra_Vector rhs(View,rangeMap,fNOwnedField.get());
-	Epetra_Vector lhs(View,domainMap,uOwnedField.get());
-	linProblem.SetRHS(&rhs);
-	linProblem.SetLHS(&lhs);
-	if(0 != linProblem.CheckInput()){
-		cout << "0 != linProblem.CheckInput()" << endl;
-		std::exit(1);
-	}
-
-	AztecOO solver(linProblem);
-	solver.SetAztecOption(AZ_precond, AZ_Jacobi);
-	if(0 != solver.CheckInput()){
-		cout << "0 != solver.CheckInput()" << endl;
-		std::exit(1);
-	}
-	solver.Iterate(500,1e-6);
-	/*
-	 * END AZTEC Setup
+	 * END AZTEC Setup (THIS WORKS FINE)
 	 */
 
 	/*
 	 * BELOS Setup (THIS WORKS FINE)
 	 */
-//	ParameterList belosList;
-//	int blocksize=1;
-//	int maxiters=500;
-//	double tol=1.0e-6;
-//	int frequency=1;
-//	belosList.set( "Block Size", blocksize );              // Blocksize to be used by iterative solver
-//	belosList.set( "Maximum Iterations", maxiters );       // Maximum number of iterations allowed
-//	belosList.set( "Convergence Tolerance", tol );         // Relative convergence tolerance requested
-//	belosList.set( "Verbosity", Belos::Errors + Belos::Warnings +
-//	Belos::TimingDetails + Belos::StatusTestDetails );
-//	belosList.set( "Output Frequency", frequency );
-//	//
-//	// Construct an unpreconditioned linear problem instance.
-//	//
-//	typedef Epetra_MultiVector                MV;
-//	typedef Epetra_Operator                   OP;
-//	RCP<Epetra_Vector> B = rcp(new Epetra_Vector(View,ownedMap,fNOwnedField.get()));
-//	RCP<Epetra_Vector> X = rcp(new Epetra_Vector(View,ownedMap,uOwnedField.get()));
-//	RCP<OP> A = rcp(mPtr.get(),false);
-//	Belos::LinearProblem<double,MV,OP> problem( A, X, B );
-//	bool set = problem.setProblem();
-//	if (set == false) {
-//		std::cout << std::endl << "ERROR:  Belos::LinearProblem failed to set up correctly!" << std::endl;
-//		std::exit(1);
-//	}
-//	RCP< Belos::SolverManager<double,MV,OP> > newSolver
-//	= rcp( new Belos::BlockCGSolMgr<double,MV,OP>(rcp(&problem,false), rcp(&belosList,false)) );
-//	//
-//	// Perform solve
-//	//
-//	Belos::ReturnType ret = newSolver->solve();
+	ParameterList belosList;
+	int blocksize=1;
+	int maxiters=500;
+	double tol=1.0e-6;
+	int frequency=1;
+	belosList.set( "Block Size", blocksize );              // Blocksize to be used by iterative solver
+	belosList.set( "Maximum Iterations", maxiters );       // Maximum number of iterations allowed
+	belosList.set( "Convergence Tolerance", tol );         // Relative convergence tolerance requested
+	belosList.set( "Verbosity", Belos::Errors + Belos::Warnings +
+	Belos::TimingDetails + Belos::StatusTestDetails );
+	belosList.set( "Output Frequency", frequency );
+	belosList.set("Output Style", Belos::Brief);
+	//
+	// Construct an unpreconditioned linear problem instance.
+	//
+	typedef Epetra_MultiVector                MV;
+	typedef Epetra_Operator                   OP;
+	RCP<Epetra_Vector> B = rcp(new Epetra_Vector(View,ownedMap,fNOwnedField.get()));
+	RCP<Epetra_Vector> X = rcp(new Epetra_Vector(View,ownedMap,uOwnedField.get()));
+	RCP<OP> A = rcp(mPtr.get(),false);
+	Belos::LinearProblem<double,MV,OP> problem( A, X, B );
+	bool set = problem.setProblem();
+	if (set == false) {
+		std::cout << std::endl << "ERROR:  Belos::LinearProblem failed to set up correctly!" << std::endl;
+		std::exit(1);
+	}
+	RCP< Belos::SolverManager<double,MV,OP> > newSolver
+	= rcp( new Belos::BlockCGSolMgr<double,MV,OP>(rcp(&problem,false), rcp(&belosList,false)) );
+	//
+	// Perform solve
+	//
+	Belos::ReturnType ret = newSolver->solve();
 	/*
 	 * END BELOS Setup (THIS WORKS FINE)
 	 */
