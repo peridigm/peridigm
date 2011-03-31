@@ -15,8 +15,8 @@
 #include <set>
 
 #include "Array.h"
+
 #include "utPdITI.h"
-#include "../DirichletBcSpec.h"
 
 
 #include "Epetra_BlockMap.h"
@@ -28,6 +28,7 @@
 using std::vector;
 using std::set;
 using PdImp::DirichletBcSpec;
+using Field_NS::Field;
 using UTILITIES::Array;
 using namespace PdImp;
 
@@ -73,162 +74,209 @@ IsotropicHookeSpec getMaterialSpec(double e, double nu) {
 shared_ptr<Epetra_RowMatrix>
 getOperator
 (
-		const vector<shared_ptr<StageComponentDirichletBc> >& bcArray,
-		shared_ptr<Epetra_CrsGraph>& graphPtr,
-		shared_ptr<RowStiffnessOperator>& jacobian
+        const Field<char> bcMaskFieldOverlap,
+        shared_ptr<RowStiffnessOperator>& jacobian
 )
 {
-	std::cout << "Begin jacobian calculation\n";
-	const Epetra_BlockMap& rowMap   = jacobian->getRowMap();
+    std::cout << "Begin jacobian calculation utPdITI::getOperator(...)\n";
+    const Epetra_BlockMap& rowMap   = jacobian->getRowMap();
+    const Epetra_BlockMap& colMap   = jacobian->getColMap();
+    Array<int> numColPerRow;
+    numColPerRow.deep_copy(jacobian->getNumColumnsPerRow());
+    Epetra_FEVbrMatrix *m = new Epetra_FEVbrMatrix(Copy,rowMap,numColPerRow.get());
 
-	/*
-	 * Loop over Bc's and create set of ids that can be searched
-	 */
+    const char *bcMask = bcMaskFieldOverlap.get();
+    Epetra_SerialDenseMatrix k;
+    k.Shape(vectorNDF,vectorNDF);
+    /*
+     * DEBUG PRINTING
+     */
+//    std::stringstream streamRows,streamNumRows,streamNumCols, streamBcMask;
+//    streamNumRows << "int numRows(" << rowMap.NumMyElements() << ");";
+//    streamNumCols << "int numCols[]="<< "{";
+//
+//    for(std::size_t row=0;row<rowMap.NumMyElements();row++){
+//    	if(0==row){
+//    		streamRows << "int* rowPtrPID" << rowMap.Comm().MyPID() << "[]={";
+//    		streamBcMask << "char bcMaskRowPID" << rowMap.Comm().MyPID() << "[]={";
+//    	}
+//    	if(row%10==0){
+//    		streamRows << "\n";
+//    		streamNumCols << "\n";
+//    		streamBcMask << "\n";
+//    	}
+//    	streamRows << "rowGID" << rowMap.GID(row);
+//    	int b = bcMask[row];
+//    	streamBcMask << b;
+//    	Array<int> rowLIDs = jacobian->getColumnLIDs(row);
+//    	streamNumCols << rowLIDs.get_size();
+//    	if(row!=rowMap.NumMyElements()-1){
+//    		streamNumCols << ", ";
+//    		streamRows << ", ";
+//    		streamBcMask << ", ";
+//    	} else
+//    	{
+//    		streamNumCols << "};\n";
+//    		streamRows << "};\n";
+//    		streamBcMask << "};\n";
+//    	}
+//    }
+//    std::string strNumRows=streamNumRows.str();
+//    std::string strNumCols=streamNumCols.str();
+//    std::cout << strNumRows << std::endl;
+//    std::cout << streamRows.str() << std::endl;
+//    std::cout << strNumCols << std::endl;
+//    std::cout << streamBcMask.str() << std::endl;
+    /*
+     * DEBUG PRINTING
+     */
 
-	vector<std::set<int> > bcPointIds(bcArray.size());
-	{
-		vector<shared_ptr<StageComponentDirichletBc> >::const_iterator bcIter = bcArray.begin();
-		for(int i=0;bcIter != bcArray.end(); i++,bcIter++){
-			StageComponentDirichletBc* stageComponentPtr = bcIter->get();
-			const DirichletBcSpec& spec = stageComponentPtr->getSpec();
-			const Array<int>& ids = spec.getPointIds();
-			bcPointIds[i]= std::set<int>(ids.get(),ids.get()+ids.get_size());
-		}
-	}
 
-	/*
-	 * Create a searchable set for bc
-	 */
+    for(int row=0;row<rowMap.NumMyElements();row++){
+        int rowGID = rowMap.GID(row);
+        Array<int> rowLIDs = jacobian->getColumnLIDs(row);
+        std::size_t numCol = rowLIDs.get_size();
 
-	/*
-	 * Epetra Matrix
-	 * PERHAPS the 'operator' can keep its own copy of Graph, then this
-	 * can be a 'View'
-	 */
+        /*
+         * Hack to convert rowLIDs over to rowGIDs; If this approach
+         * to assembly works, then eliminate the rowLIDs call and create an
+         * analogous call 'getColumnGIDs(lowRow)
+         */
+        Array<int> colGIDs(numCol);
+        for(size_t c=0;c<numCol;c++)
+            colGIDs[c]=colMap.GID(rowLIDs[c]);
 
-	Epetra_FEVbrMatrix *m = new Epetra_FEVbrMatrix(Copy,*(graphPtr.get()));
+        if(0!=m->BeginInsertGlobalValues(rowGID,numCol,colGIDs.get())){
+            std::string message("utPdITI::getOperator_NEWER(bcArray,jacobian)\n");
+            message += "\t0!=m->BeginReplaceGlobalValues(rowGID,numCol,colGIDs.get())";
+            throw std::runtime_error(message);
+        }
 
-	Epetra_SerialDenseMatrix k;
-	k.Shape(vectorNDF,vectorNDF);
-	for(int row=0;row<rowMap.NumMyElements();row++){
-		Array<int> rowLIDs = jacobian->getColumnLIDs(row);
-		std::size_t numCol = rowLIDs.get_size();
-		int *cols = rowLIDs.get();
+    	/*
+    	 * Print rows
+    	 */
 
-		if(0!=m->BeginReplaceMyValues(row,numCol,cols)){
-			std::string message("utPdITI::getOperator(bcArray,graphPtr,jacobian)\n");
-			message += "\t0!=m->BeginReplaceMyValues(row,numCol,cols)";
-			throw std::runtime_error(message);
-		}
+//        std::stringstream streamRow, streamColBcMask;
+//        streamRow << "int rowGID" << rowGID << "[]={";
+//        streamColBcMask << "int bcColMaskGID" << rowGID << "[]={";
+//        for(int i=0;i<colGIDs.get_size();i++){
+//        	if(i%10==0)
+//        		streamRow << "\n";
+//        	streamRow << *(colGIDs.get()+i);
+//        	if(i!=colGIDs.get_size()-1)
+//        		streamRow << ", ";
+//        	if(i==colGIDs.get_size()-1)
+//        		streamRow << "};\n";
+//        }
+//        std::cout << streamRow.str() << std::endl;
+
+    	/*
+    	 * End print rows
+    	 */
+
+
+        /*
+          * Dirichlet BC for this row
+          */
+ 		char rowMask = bcMask[row];
+
 
 		/*
-		 * loop over columns in row and submit block entry
+		 * Create array of pointers to each row/component that BC is applied
 		 */
+		vector<DirichletBcSpec::ComponentLabel> rowComponentBcs = getComponents(rowMask);
+		vector<double*> rowPtrs(rowComponentBcs.size(), NULL);
+		vector<double*> diagPtrs(rowComponentBcs.size(), NULL);
 		Array<double> actualK = jacobian->computeRowStiffness(row, rowLIDs);
 
-
-		/*
-		 * 1) Zero out row as necessary due to BC's
-		 * 2) Assemble into matrix -- zero columns as necessary
-		 * 3)
-		 */
-		vector<std::set<int> >::iterator pointSetIter = bcPointIds.begin();
-		vector<shared_ptr<StageComponentDirichletBc> >::const_iterator bcIter = bcArray.begin();
-		for(;bcIter != bcArray.end(); bcIter++, pointSetIter++){
-			const std::set<int>::const_iterator bcIdsEnd = pointSetIter->end();
-
-			/*
-			 * Get components to be applied
-			 */
-			StageComponentDirichletBc* stageComponentPtr = bcIter->get();
-			const DirichletBcSpec& spec = stageComponentPtr->getSpec();
-			vector<DirichletBcSpec::ComponentLabel> components = spec.getComponents();
+ 		/*
+ 		 * Submit block row entries based upon GID
+ 		 * GIDs for each column in row
+ 		 */
+        int *cols = colGIDs.get();
+		double *colRoot = actualK.get();
+		size_t dum=0;
+		for(int* colPtr=cols; colPtr!=cols+numCol;colPtr++, colRoot+=9, dum++){
+			int col = *colPtr;
 
 			/*
-			 * Search for row in bcIds
+			 * Handle BCs for row
 			 */
-			// if this is true, then this row is a bc row
-			if(bcIdsEnd != pointSetIter->find(row)) {
-
+			for(std::size_t r=0;r<rowComponentBcs.size();r++){
+				rowPtrs[r] = colRoot + rowComponentBcs[r];
 				/*
-				 * 1) This row has a bc; need to zero out in stiffness
-				 * 2) Watch for diagonal: place "1" on the diagonal
+				 * 0) Save diagonal location
+				 * 1) Set row element to zero
+				 * 2) Move to next column
+				 * 3) Note that there are 3 columns in 3x3 matrix :) DUH!
 				 */
 
 				/*
-				 * Create array of pointers to each row/component that BC is applied
+				 * Save location of diagonal for this component
 				 */
-				vector<double*> rowPtrs(components.size(), NULL);
-				vector<double*> diagPtrs(components.size(), NULL);
-				for(std::size_t r=0;r<components.size();r++)
-					rowPtrs[r]= actualK.get()+components[r];
+				diagPtrs[r] = rowPtrs[r] + 3 * rowComponentBcs[r];
 
-				for(int* colPtr=cols; colPtr!=cols+numCol;colPtr++){
-					int col = *colPtr;
-
-					for(std::size_t r=0;r<components.size();r++){
-						/*
-						 * 0) Save diagonal location
-						 * 1) Set row element to zero
-						 * 2) Move to next column
-						 * 3) Note that there are 3 columns in 3x3 matrix
-						 */
-
-						/*
-						 * Save location of diagonal for this component
-						 */
-						diagPtrs[r] = rowPtrs[r] + 3 * components[r];
-
-						/*
-						 * Zero out row corresponding with component
-						 * Increment row pointer to next column
-						 */
-						*(rowPtrs[r])=0; rowPtrs[r]+=3;
-						*(rowPtrs[r])=0; rowPtrs[r]+=3;
-						*(rowPtrs[r])=0; rowPtrs[r]+=3;
-
-					}
-					/*
-					 * If this is true, then we are on the diagonal
-					 * Need to put "1" on the strict diagonal by component
-					 * Put -1 because later the whole matrix is negated
-					 */
-					if(row==col) {
-						for(std::size_t r=0;r<components.size();r++){
-							*(diagPtrs[r]) = -1.0;
-						}
-
-					}
-
-				}
-
-			} else {
 				/*
-				 * This is not a bc row but we still have to check for columns that may have a bc assigned to them
-				 * In this case, we just have to zero the column
+				 * Zero out row corresponding with component
+				 * Increment row pointer to next column
 				 */
-				double *kPtr=actualK.get();
-				for(int* colPtr=cols; colPtr!=cols+numCol;colPtr++,kPtr+=9){
-					int col = *colPtr;
-					if(bcIdsEnd == pointSetIter->find(col)) continue;
-					/*
-					 * We have a column that must be zero'd
-					 */
-					/*
-					 * Zero out column for each component that is applied
-					 */
-					double *stiffPtr=0;
-					for(std::size_t r=0;r<components.size();r++){
-						stiffPtr = kPtr+3*components[r];
-						for(int r=0;r<3;r++)
-							stiffPtr[r]=0;
-					}
-
-				}
+				*(rowPtrs[r])=0; rowPtrs[r]+=3;
+				*(rowPtrs[r])=0; rowPtrs[r]+=3;
+				*(rowPtrs[r])=0; rowPtrs[r]+=3;
 
 			}
 
+			/*
+			 * Now check column for dirichlet bc; here we will just zero everything out;
+			 * If this column happens to be the diagonal, then we will fix later;
+			 */
+			char colMask = bcMask[colMap.LID(col)];
+			/*
+			 * DEBUG PRINTING
+			 */
+//			if(dum%10==0){
+//				streamColBcMask << "\n";
+//			}
+//			{
+//				int b = colMask;
+//				streamColBcMask << b;
+//			}
+//			if(dum!=numCol-1)
+//				streamColBcMask << ", ";
+//			if(dum==numCol-1)
+//				streamColBcMask << "};\n";
+			/*
+			 * END DEBUG PRINTING
+			 */
+			vector<DirichletBcSpec::ComponentLabel> colComponentBcs = getComponents(colMask);
+			double *stiffPtr(0);
+			for(std::size_t c=0;c<colComponentBcs.size();c++){
+				stiffPtr = colRoot + 3 * colComponentBcs[c];
+				for(int r=0;r<3;r++)
+					stiffPtr[r]=0;
+			}
+
+
+			/*
+			 * If this is true, then we are on the diagonal
+			 * Need to put "1" on the strict diagonal by component
+			 * Put -1 because later the whole matrix is negated
+			 */
+			if(rowGID==col) {
+				for(std::size_t r=0;r<rowComponentBcs.size();r++){
+					*(diagPtrs[r]) = -1.0;
+				}
+			}
+
+
 		}
+		/*
+		 * DEBUG PRINTING
+		 */
+//		std::cout << streamColBcMask.str() << std::endl;
+		/*
+		 * END DEBUG PRINTING
+		 */
 
 		/*
 		 * Now just populate the matrix
@@ -246,34 +294,48 @@ getOperator
 			}
 
 			if(0!=m->SubmitBlockEntry(k)){
-				std::string message("utPdITI::getOperator(bcArray,graphPtr,jacobian)\n");
+				std::string message("utPdITI::getOperator(bcArray,jacobian)\n");
 				message += "\t0!=m->SubmitBlockEntry(k)";
 				throw std::runtime_error(message);
 			}
 
 		}
 
-
 		/*
 		 * Finalize this row
 		 */
 		if(0!=m->EndSubmitEntries()){
-			std::string message("utPdITI::getOperator(bcArray,graphPtr,jacobian)\n");
+			std::string message("utPdITI::getOperator(bcArray,jacobian)\n");
 			message += "\t0!=m->EndSubmitEntries()";
 			throw std::runtime_error(message);
 		}
 
 	}
 
-	if(0!=m->FillComplete()){
-		std::string message("utPdITI::getOperator(bcArray,graphPtr,jacobian)\n");
+    int err = m->FillComplete(rowMap,rowMap);
+	if(0!=err){
+		std::string message("utPdITI::getOperator(bcArray,jacobian)\n");
 		message += "\t0!=m->FillComplete()";
 		throw std::runtime_error(message);
 	}
 
+	std::cout << "END jacobian calculation utPdITI::getOperator(...)\n";
+    return shared_ptr<Epetra_RowMatrix>(m);
 
-	std::cout << "END jacobian calculation\n";
-	return shared_ptr<Epetra_RowMatrix>(m);
 }
+
+vector<DirichletBcSpec::ComponentLabel> getComponents(char mask) {
+
+	vector<DirichletBcSpec::ComponentLabel> c;
+	if(1 & mask)
+		c.push_back(DirichletBcSpec::X);
+	if(2 & mask)
+		c.push_back(DirichletBcSpec::Y);
+	if(4 & mask)
+		c.push_back(DirichletBcSpec::Z);
+
+	return c;
+}
+
 
 }

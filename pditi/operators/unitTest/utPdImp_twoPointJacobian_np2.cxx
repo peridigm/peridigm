@@ -24,6 +24,8 @@
 #include "../ComponentDirichletBcSpec.h"
 #include "../DirichletBcSpec.h"
 #include "../StageFunction.h"
+#include "OverlapDistributor.h"
+#include "utPdITI.h"
 #include "PdutMpiFixture.h"
 #include "Epetra_ConfigDefs.h"
 #ifdef HAVE_MPI
@@ -129,17 +131,15 @@ void computeJacobian(){
 	PdITI::PdITI_Operator op(comm,list,decomp.cellVolume);
 	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
 	op.addConstitutiveModel(fIntOperator);
+	PDNEIGH::NeighborhoodList row_matrix_list = op.get_row_matrix_neighborhood();
 
-//	shared_ptr<PdImp::PdImpOperator> op = getPimpOperator(decomp,comm);
 
 	/*
 	 * Get points for bc's
 	 */
 	CartesianComponent axis = UTILITIES::X;
 	Array<int> bcIdsFixed = UTILITIES::getPointsInNeighborhoodOfAxisAlignedMinimumValue(axis,decomp.myX,decomp.numPoints,1.0e-3*horizon,xMin);
-	std::sort(bcIdsFixed.get(),bcIdsFixed.end());
 	Array<int> bcIdsApplied = UTILITIES::getPointsInNeighborhoodOfAxisAlignedMaximumValue(axis,decomp.myX,decomp.numPoints,1.0e-3*horizon,xMax);
-	std::sort(bcIdsApplied.get(),bcIdsApplied.end());
 
 	/**
 	 * Create boundary conditions spec
@@ -163,6 +163,11 @@ void computeJacobian(){
 	shared_ptr<StageComponentDirichletBc> bcApplied(new StageComponentDirichletBc(appliedSpec,dispStageFunction));
 	bcs[2] = bcApplied;
 
+	Field<char> bcMaskFieldOwned(BC_MASK,decomp.numPoints);
+	bcMaskFieldOwned.set(0);
+	for(int b=0;b<bcs.size();b++)
+		bcs[b]->imprint_bc(bcMaskFieldOwned);
+	Field<char> bcMaskFieldOverlap = PDNEIGH::createOverlapField(row_matrix_list,bcMaskFieldOwned);
 
 
 	/*
@@ -178,16 +183,10 @@ void computeJacobian(){
 	 */
 	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOwnedField);
 
-
-	/*
-	 * Create graph
-	 */
-	shared_ptr<Epetra_CrsGraph> graphPtr = getGraph(jacobian);
-
 	/*
 	 * Create Epetra_RowMatrix
 	 */
-	shared_ptr<Epetra_VbrMatrix> mPtr = getOperator(bcs,graphPtr,jacobian);
+	shared_ptr<Epetra_RowMatrix> mPtr = utPdITI::getOperator(bcMaskFieldOverlap,jacobian);
 
 	/*
 	 * Create force field
@@ -215,35 +214,8 @@ void computeJacobian(){
 
 	const Epetra_BlockMap& rangeMap  = mPtr->OperatorRangeMap();
 	const Epetra_BlockMap& domainMap  = mPtr->OperatorDomainMap();
-	const Epetra_BlockMap& rowMap = mPtr->RowMap();
-	const Epetra_BlockMap& colMap = mPtr->ColMap();
-//	if(0==myRank){
-////		cout << "column Map = " << colMap << endl;
-////		cout << "row Map = " << rowMap << endl;
-////		mPtr->Print(cout);
-//
-//		Field<double> xOverlapField(DISPL3D,2);
-//		xOverlapField.setValue(2.0);
-//		Epetra_Vector y(rowMap);
-//		Epetra_Vector x(View,colMap,xOverlapField.getArray().get());
-//		BOOST_CHECK(0==mPtr->Multiply1(false,x,y));
-//		cout << y << endl;
-//	} else {
-////		cout << "column Map = " << colMap << endl;
-////		cout << "row Map = " << rowMap << endl;
-////		mPtr->Print(cout);
-//		Field<double> xOverlapField(DISPL3D,2);
-//		xOverlapField.setValue(2.0);
-//		Epetra_Vector y(rowMap);
-//		Epetra_Vector x(View,colMap,xOverlapField.getArray().get());
-//		BOOST_CHECK(0==mPtr->Multiply1(false,x,y));
-//		cout << y << endl;
-//	}
 
-
-
-	double *f = fN.get();
-	Epetra_Vector rhs(View,rangeMap,f);
+	Epetra_Vector rhs(View,rangeMap,fN.get());
 	Epetra_Vector lhs(View,domainMap,uOwnedField.get());
 
 	linProblem.SetRHS(&rhs);
@@ -262,6 +234,7 @@ void computeJacobian(){
 	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(decomp.myX,decomp.numPoints);
 	PdVTK::writeField(grid,uOwnedField);
 	PdVTK::writeField(grid,fN);
+	PdVTK::writeField<char>(grid,bcMaskFieldOwned);
 	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("utPimp_twoPointJacobian_np2.pvtu", comm->NumProc(), comm->MyPID());
 	PdVTK::write(writer,grid);
 

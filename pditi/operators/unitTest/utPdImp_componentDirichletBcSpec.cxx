@@ -231,11 +231,10 @@ void applyHomogeneousForm() {
 
 }
 
-/*
- * Note that for this to work, incoming bcIds must be sorted
- */
 void assertBcIds(const Array<int>& bcIds){
-
+	/*
+	 * Note that for this to work, incoming bcIds must be sorted
+	 */
 	int delta=nx*ny;
 	int numPointsPerXY=8;
 
