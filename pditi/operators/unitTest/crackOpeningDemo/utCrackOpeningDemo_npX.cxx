@@ -32,6 +32,11 @@
 #include "../utPdITI.h"
 #include "PdutMpiFixture.h"
 
+#include "BelosConfigDefs.hpp"
+#include "BelosLinearProblem.hpp"
+#include "BelosEpetraAdapter.hpp"
+#include "BelosBlockCGSolMgr.hpp"
+
 #include "Epetra_ConfigDefs.h"
 #ifdef HAVE_MPI
 #include "mpi.h"
@@ -40,6 +45,7 @@
 #include "Epetra_SerialComm.h"
 #endif
 #include <set>
+#include <Teuchos_RCPDecl.hpp>
 #include <Epetra_FEVbrMatrix.h>
 #include <Epetra_SerialSymDenseMatrix.h>
 #include <Epetra_LinearProblem.h>
@@ -64,6 +70,7 @@ using namespace PdBondFilter;
 using namespace Pdut;
 using namespace Field_NS;
 using std::tr1::shared_ptr;
+using Teuchos::RCP;
 
 const int vectorNDF=3;
 static size_t myRank;
@@ -72,8 +79,8 @@ static size_t numProcs;
 /*
  * This should be even so that the crack plane lies between to rows of points
  */
-const size_t nx = 20;
-const size_t ny = 20;
+const size_t nx = 10;
+const size_t ny = 10;
 const double xStart = -2.5;
 const double xLength = 5.0;
 const double yStart = -2.5;
@@ -150,374 +157,6 @@ shared_ptr<Epetra_CrsGraph> getGraph(shared_ptr<RowStiffnessOperator>& jacobian)
 shared_ptr<Epetra_RowMatrix>
 getOperator
 (
-		const vector<shared_ptr<StageComponentDirichletBc> >& bcArray,
-		shared_ptr<Epetra_CrsGraph>& graphPtr,
-		shared_ptr<RowStiffnessOperator>& jacobian
-)
-{
-	std::cout << "Begin jacobian calculation\n";
-	const Epetra_BlockMap& rowMap   = jacobian->getRowMap();
-
-	/*
-	 * Loop over Bc's and create set of ids that can be searched
-	 */
-
-	vector<std::set<int> > bcPointIds(bcArray.size());
-	{
-		vector<shared_ptr<StageComponentDirichletBc> >::const_iterator bcIter = bcArray.begin();
-		for(int i=0;bcIter != bcArray.end(); i++,bcIter++){
-			StageComponentDirichletBc* stageComponentPtr = bcIter->get();
-			const DirichletBcSpec& spec = stageComponentPtr->getSpec();
-			const Array<int>& ids = spec.getPointIds();
-			bcPointIds[i]= std::set<int>(ids.get(),ids.end());
-		}
-	}
-
-	/*
-	 * Create a searchable set for bc
-	 */
-
-	/*
-	 * Epetra Matrix
-	 * PERHAPS the 'operator' can keep its own copy of Graph, then this
-	 * can be a 'View'
-	 */
-
-	Epetra_FEVbrMatrix *m = new Epetra_FEVbrMatrix(Copy,*(graphPtr.get()));
-
-	Epetra_SerialDenseMatrix k;
-	k.Shape(vectorNDF,vectorNDF);
-	for(int row=0;row<rowMap.NumMyElements();row++){
-		Array<int> rowLIDs = jacobian->getColumnLIDs(row);
-		std::size_t numCol = rowLIDs.get_size();
-		int *cols = rowLIDs.get();
-
-		if(0!=m->BeginReplaceMyValues(row,numCol,cols)){
-			std::string message("utPdITI::getOperator(bcArray,graphPtr,jacobian)\n");
-			message += "\t0!=m->BeginReplaceMyValues(row,numCol,cols)";
-			throw std::runtime_error(message);
-		}
-
-		/*
-		 * loop over columns in row and submit block entry
-		 */
-		Array<double> actualK = jacobian->computeRowStiffness(row, rowLIDs);
-
-
-		/*
-		 * 1) Zero out row as necessary due to BC's
-		 * 2) Assemble into matrix -- zero columns as necessary
-		 * 3)
-		 */
-		vector<std::set<int> >::iterator pointSetIter = bcPointIds.begin();
-		vector<shared_ptr<StageComponentDirichletBc> >::const_iterator bcIter = bcArray.begin();
-		for(;bcIter != bcArray.end(); bcIter++, pointSetIter++){
-			const std::set<int>::const_iterator bcIdsEnd = pointSetIter->end();
-
-			/*
-			 * Get components to be applied
-			 */
-			StageComponentDirichletBc* stageComponentPtr = bcIter->get();
-			const DirichletBcSpec& spec = stageComponentPtr->getSpec();
-			vector<DirichletBcSpec::ComponentLabel> components = spec.getComponents();
-
-			/*
-			 * Search for row in bcIds
-			 */
-			// if this is true, then this row is a bc row
-			if(bcIdsEnd != pointSetIter->find(row)) {
-
-				/*
-				 * 1) This row has a bc; need to zero out in stiffness
-				 * 2) Watch for diagonal: place "1" on the diagonal
-				 */
-
-				/*
-				 * Create array of pointers to each row/component that BC is applied
-				 */
-				vector<double*> rowPtrs(components.size(), NULL);
-				vector<double*> diagPtrs(components.size(), NULL);
-				for(std::size_t r=0;r<components.size();r++)
-					rowPtrs[r]= actualK.get()+components[r];
-
-				for(int* colPtr=cols; colPtr!=cols+numCol;colPtr++){
-					int col = *colPtr;
-
-					for(std::size_t r=0;r<components.size();r++){
-						/*
-						 * 0) Save diagonal location
-						 * 1) Set row element to zero
-						 * 2) Move to next column
-						 * 3) Note that there are 3 columns in 3x3 matrix
-						 */
-
-						/*
-						 * Save location of diagonal for this component
-						 */
-						diagPtrs[r] = rowPtrs[r] + 3 * components[r];
-
-						/*
-						 * Zero out row corresponding with component
-						 * Increment row pointer to next column
-						 */
-						*(rowPtrs[r])=0; rowPtrs[r]+=3;
-						*(rowPtrs[r])=0; rowPtrs[r]+=3;
-						*(rowPtrs[r])=0; rowPtrs[r]+=3;
-
-					}
-					/*
-					 * If this is true, then we are on the diagonal
-					 * Need to put "1" on the strict diagonal by component
-					 * Put -1 because later the whole matrix is negated
-					 */
-					if(row==col) {
-						for(std::size_t r=0;r<components.size();r++){
-							*(diagPtrs[r]) = -1.0;
-						}
-
-					}
-
-				}
-
-			} else {
-				/*
-				 * This is not a bc row but we still have to check for columns that may have a bc assigned to them
-				 * In this case, we just have to zero the column
-				 */
-				double *kPtr=actualK.get();
-				for(int* colPtr=cols; colPtr!=cols+numCol;colPtr++,kPtr+=9){
-					int col = *colPtr;
-					if(bcIdsEnd == pointSetIter->find(col)) continue;
-					/*
-					 * We have a column that must be zero'd
-					 */
-					/*
-					 * Zero out column for each component that is applied
-					 */
-					double *stiffPtr=0;
-					for(std::size_t r=0;r<components.size();r++){
-						stiffPtr = kPtr+3*components[r];
-						for(int r=0;r<3;r++)
-							stiffPtr[r]=0;
-					}
-
-				}
-
-			}
-
-		}
-
-		/*
-		 * Now just populate the matrix
-		 */
-		double *kPtr = actualK.get();
-		for(int* colPtr=cols; colPtr!=cols+numCol;colPtr++){
-
-			/*
-			 * Fill 'k'
-			 */
-			for(int c=0;c<3;c++){
-				double *colK = k[c];
-				for(int r=0;r<3;r++,kPtr++)
-					colK[r] = - *kPtr;
-			}
-
-			if(0!=m->SubmitBlockEntry(k)){
-				std::string message("utPdITI::getOperator(bcArray,graphPtr,jacobian)\n");
-				message += "\t0!=m->SubmitBlockEntry(k)";
-				throw std::runtime_error(message);
-			}
-
-		}
-
-
-		/*
-		 * Finalize this row
-		 */
-		if(0!=m->EndSubmitEntries()){
-			std::string message("utPdITI::getOperator(bcArray,graphPtr,jacobian)\n");
-			message += "\t0!=m->EndSubmitEntries()";
-			throw std::runtime_error(message);
-		}
-
-	}
-
-	if(0!=m->FillComplete()){
-		std::string message("utPdITI::getOperator(bcArray,graphPtr,jacobian)\n");
-		message += "\t0!=m->FillComplete()";
-		throw std::runtime_error(message);
-	}
-
-
-	std::cout << "END jacobian calculation\n";
-	return shared_ptr<Epetra_RowMatrix>(m);
-}
-
-shared_ptr<Epetra_RowMatrix>
-getOperator_NEW
-(
-		const Field<char> bcMaskFieldOverlap,
-		shared_ptr<Epetra_CrsGraph>& graphPtr,
-		shared_ptr<RowStiffnessOperator>& jacobian
-)
-{
-	std::cout << "Begin jacobian calculation\n";
-	const Epetra_BlockMap& rowMap   = jacobian->getRowMap();
-
-	/*
-	 * Epetra Matrix
-	 * PERHAPS the 'operator' can keep its own copy of Graph, then this
-	 * can be a 'View'
-	 */
-
-	Epetra_FEVbrMatrix *m = new Epetra_FEVbrMatrix(Copy,*(graphPtr.get()));
-
-	const char *bcMask = bcMaskFieldOverlap.get();
-	Epetra_SerialDenseMatrix k;
-	k.Shape(vectorNDF,vectorNDF);
-	for(int row=0;row<rowMap.NumMyElements();row++){
-		Array<int> rowLIDs = jacobian->getColumnLIDs(row);
-		std::size_t numCol = rowLIDs.get_size();
-
-		std::vector< std::pair<int,int> > pairs(numCol);
-		{
-			int *cols = rowLIDs.get();
-			for(std::size_t i=0;i<pairs.size();i++,cols++){
-				pairs[i] = std::make_pair(*cols,i);
-			}
-		}
-		std::map<int,int> map(pairs.begin(),pairs.end());
-
-
-		int *cols = rowLIDs.get();
-		char rowMask = bcMask[row];
-
-
-		if(0!=m->BeginReplaceMyValues(row,numCol,cols)){
-			std::string message("utPdITI::getOperator(bcArray,graphPtr,jacobian)\n");
-			message += "\t0!=m->BeginReplaceMyValues(row,numCol,cols)";
-			throw std::runtime_error(message);
-		}
-
-		/*
-		 * Create array of pointers to each row/component that BC is applied
-		 */
-		vector<DirichletBcSpec::ComponentLabel> rowComponentBcs = getComponents(rowMask);
-		vector<double*> rowPtrs(rowComponentBcs.size(), NULL);
-		vector<double*> diagPtrs(rowComponentBcs.size(), NULL);
-		Array<double> actualK = jacobian->computeRowStiffness(row, rowLIDs);
-
-		/*
-		 * Zero out row as necessary due to BC's
-		 */
-		double *colRoot;
-		for(int* colPtr=cols; colPtr!=cols+numCol;colPtr++){
-			int col = *colPtr;
-			char colMask = bcMask[col];
-
-			/*
-			 * Handle BCs for row
-			 */
-			colRoot = actualK.get() + 9 * map[col];
-			for(std::size_t r=0;r<rowComponentBcs.size();r++){
-				rowPtrs[r]= colRoot + rowComponentBcs[r];
-				/*
-				 * 0) Save diagonal location
-				 * 1) Set row element to zero
-				 * 2) Move to next column
-				 * 3) Note that there are 3 columns in 3x3 matrix :) DUH!
-				 */
-
-				/*
-				 * Save location of diagonal for this component
-				 */
-				diagPtrs[r] = rowPtrs[r] + 3 * rowComponentBcs[r];
-
-				/*
-				 * Zero out row corresponding with component
-				 * Increment row pointer to next column
-				 */
-				*(rowPtrs[r])=0; rowPtrs[r]+=3;
-				*(rowPtrs[r])=0; rowPtrs[r]+=3;
-				*(rowPtrs[r])=0; rowPtrs[r]+=3;
-
-			}
-
-			/*
-			 * Now check column for dirichlet bc; here we will just zero everything out;
-			 * If this column happens to be the diagonal, then we will fix later;
-			 */
-			vector<DirichletBcSpec::ComponentLabel> colComponentBcs = getComponents(colMask);
-			double *stiffPtr(0);
-			for(std::size_t c=0;c<colComponentBcs.size();c++){
-				stiffPtr = colRoot + 3 * colComponentBcs[c];
-				for(int r=0;r<3;r++)
-					stiffPtr[r]=0;
-			}
-
-
-			/*
-			 * If this is true, then we are on the diagonal
-			 * Need to put "1" on the strict diagonal by component
-			 * Put -1 because later the whole matrix is negated
-			 */
-			if(row==col) {
-				for(std::size_t r=0;r<rowComponentBcs.size();r++){
-					*(diagPtrs[r]) = -1.0;
-				}
-			}
-
-
-		}
-
-		/*
-		 * Now just populate the matrix
-		 */
-		double *kPtr = actualK.get();
-		for(int* colPtr=cols; colPtr!=cols+numCol;colPtr++){
-
-			/*
-			 * Fill 'k'
-			 */
-			for(int c=0;c<3;c++){
-				double *colK = k[c];
-				for(int r=0;r<3;r++,kPtr++)
-					colK[r] = - *kPtr;
-			}
-
-			if(0!=m->SubmitBlockEntry(k)){
-				std::string message("utPdITI::getOperator(bcArray,graphPtr,jacobian)\n");
-				message += "\t0!=m->SubmitBlockEntry(k)";
-				throw std::runtime_error(message);
-			}
-
-		}
-
-		/*
-		 * Finalize this row
-		 */
-		if(0!=m->EndSubmitEntries()){
-			std::string message("utPdITI::getOperator(bcArray,graphPtr,jacobian)\n");
-			message += "\t0!=m->EndSubmitEntries()";
-			throw std::runtime_error(message);
-		}
-
-	}
-
-	if(0!=m->FillComplete()){
-		std::string message("utPdITI::getOperator(bcArray,graphPtr,jacobian)\n");
-		message += "\t0!=m->FillComplete()";
-		throw std::runtime_error(message);
-	}
-
-
-	std::cout << "END jacobian calculation\n";
-	return shared_ptr<Epetra_RowMatrix>(m);
-}
-
-shared_ptr<Epetra_RowMatrix>
-getOperator_NEWER
-(
         const Field<char> bcMaskFieldOverlap,
         shared_ptr<Epetra_CrsGraph>& graphPtr,
         shared_ptr<RowStiffnessOperator>& jacobian
@@ -533,6 +172,50 @@ getOperator_NEWER
     const char *bcMask = bcMaskFieldOverlap.get();
     Epetra_SerialDenseMatrix k;
     k.Shape(vectorNDF,vectorNDF);
+    /*
+     * DEBUG PRINTING
+     */
+//    std::stringstream streamRows,streamNumRows,streamNumCols, streamBcMask;
+//    streamNumRows << "int numRows(" << rowMap.NumMyElements() << ");";
+//    streamNumCols << "int numCols[]="<< "{";
+//
+//    for(std::size_t row=0;row<rowMap.NumMyElements();row++){
+//    	if(0==row){
+//    		streamRows << "int* rowPtrPID" << rowMap.Comm().MyPID() << "[]={";
+//    		streamBcMask << "char bcMaskRowPID" << rowMap.Comm().MyPID() << "[]={";
+//    	}
+//    	if(row%10==0){
+//    		streamRows << "\n";
+//    		streamNumCols << "\n";
+//    		streamBcMask << "\n";
+//    	}
+//    	streamRows << "rowGID" << rowMap.GID(row);
+//    	int b = bcMask[row];
+//    	streamBcMask << b;
+//    	Array<int> rowLIDs = jacobian->getColumnLIDs(row);
+//    	streamNumCols << rowLIDs.get_size();
+//    	if(row!=rowMap.NumMyElements()-1){
+//    		streamNumCols << ", ";
+//    		streamRows << ", ";
+//    		streamBcMask << ", ";
+//    	} else
+//    	{
+//    		streamNumCols << "};\n";
+//    		streamRows << "};\n";
+//    		streamBcMask << "};\n";
+//    	}
+//    }
+//    std::string strNumRows=streamNumRows.str();
+//    std::string strNumCols=streamNumCols.str();
+//    std::cout << strNumRows << std::endl;
+//    std::cout << streamRows.str() << std::endl;
+//    std::cout << strNumCols << std::endl;
+//    std::cout << streamBcMask.str() << std::endl;
+    /*
+     * DEBUG PRINTING
+     */
+
+
     for(int row=0;row<rowMap.NumMyElements();row++){
         int rowGID = rowMap.GID(row);
         Array<int> rowLIDs = jacobian->getColumnLIDs(row);
@@ -552,6 +235,29 @@ getOperator_NEWER
             message += "\t0!=m->BeginReplaceGlobalValues(rowGID,numCol,colGIDs.get())";
             throw std::runtime_error(message);
         }
+
+    	/*
+    	 * Print rows
+    	 */
+
+//        std::stringstream streamRow, streamColBcMask;
+//        streamRow << "int rowGID" << rowGID << "[]={";
+//        streamColBcMask << "int bcColMaskGID" << rowGID << "[]={";
+//        for(int i=0;i<colGIDs.get_size();i++){
+//        	if(i%10==0)
+//        		streamRow << "\n";
+//        	streamRow << *(colGIDs.get()+i);
+//        	if(i!=colGIDs.get_size()-1)
+//        		streamRow << ", ";
+//        	if(i==colGIDs.get_size()-1)
+//        		streamRow << "};\n";
+//        }
+//        std::cout << streamRow.str() << std::endl;
+
+    	/*
+    	 * End print rows
+    	 */
+
 
         /*
           * Dirichlet BC for this row
@@ -573,7 +279,8 @@ getOperator_NEWER
  		 */
         int *cols = colGIDs.get();
 		double *colRoot = actualK.get();
-		for(int* colPtr=cols; colPtr!=cols+numCol;colPtr++, colRoot+=9){
+		size_t dum=0;
+		for(int* colPtr=cols; colPtr!=cols+numCol;colPtr++, colRoot+=9, dum++){
 			int col = *colPtr;
 
 			/*
@@ -608,6 +315,23 @@ getOperator_NEWER
 			 * If this column happens to be the diagonal, then we will fix later;
 			 */
 			char colMask = bcMask[colMap.LID(col)];
+			/*
+			 * DEBUG PRINTING
+			 */
+//			if(dum%10==0){
+//				streamColBcMask << "\n";
+//			}
+//			{
+//				int b = colMask;
+//				streamColBcMask << b;
+//			}
+//			if(dum!=numCol-1)
+//				streamColBcMask << ", ";
+//			if(dum==numCol-1)
+//				streamColBcMask << "};\n";
+			/*
+			 * END DEBUG PRINTING
+			 */
 			vector<DirichletBcSpec::ComponentLabel> colComponentBcs = getComponents(colMask);
 			double *stiffPtr(0);
 			for(std::size_t c=0;c<colComponentBcs.size();c++){
@@ -630,6 +354,13 @@ getOperator_NEWER
 
 
 		}
+		/*
+		 * DEBUG PRINTING
+		 */
+//		std::cout << streamColBcMask.str() << std::endl;
+		/*
+		 * END DEBUG PRINTING
+		 */
 
 		/*
 		 * Now just populate the matrix
@@ -665,12 +396,12 @@ getOperator_NEWER
 
 	}
 
-	if(0!=m->FillComplete()){
+    int err = m->FillComplete(rowMap,rowMap);
+	if(0!=err){
 		std::string message("utPdITI::getOperator(bcArray,graphPtr,jacobian)\n");
 		message += "\t0!=m->FillComplete()";
 		throw std::runtime_error(message);
 	}
-
 
 	std::cout << "END jacobian calculation\n";
     return shared_ptr<Epetra_RowMatrix>(m);
@@ -690,19 +421,20 @@ vector<DirichletBcSpec::ComponentLabel> getComponents(char mask) {
 	return c;
 }
 
-/*
- * This demonstrates how the first and second coordinate
- * along an axis are computed
- */
-//const double x0 = xStart+xSpec.getCellSize()/2.0;
-//const double x1 = x0 + xSpec.getCellSize();
-//const double y0 = yStart+ySpec.getCellSize()/2.0;
-//const double y1 = y0 + ySpec.getCellSize();
-//const double z0 = zStart+zSpec.getCellSize()/2.0;
-//const double z1 = z0 + zSpec.getCellSize();
 
 
 QUICKGRID::QuickGridData getGrid() {
+
+	/*
+	 * This demonstrates how the first and second coordinate
+	 * along an axis are computed
+	 * const double x0 = xStart+xSpec.getCellSize()/2.0;
+	 * const double x1 = x0 + xSpec.getCellSize();
+	 * const double y0 = yStart+ySpec.getCellSize()/2.0;
+	 * const double y1 = y0 + ySpec.getCellSize();
+	 * const double z0 = zStart+zSpec.getCellSize()/2.0;
+	 * const double z1 = z0 + zSpec.getCellSize();
+	*/
 
 	if(0==myRank){
 		cout << "Creating and load balancing mesh..." << endl;
@@ -796,6 +528,7 @@ void crackOpeningDemo(){
 	op.addConstitutiveModel(fIntOperator);
 	PDNEIGH::NeighborhoodList row_matrix_list = op.get_row_matrix_neighborhood();
 
+
 	/*
 	 * Get points for bc's
 	 */
@@ -809,24 +542,22 @@ void crackOpeningDemo(){
 	double searchRadius=scaleFactor*dx;
 	CartesianComponent axis = UTILITIES::X;
 	Array<int> bcIdsFixed = UTILITIES::getPointsInNeighborhoodOfAxisAlignedMinimumValue(axis,gridData.myX,gridData.numPoints,searchRadius,xMin);
-	std::sort(bcIdsFixed.get(),bcIdsFixed.end());
 	Array<int> bcIdsApplied = UTILITIES::getPointsInNeighborhoodOfAxisAlignedMaximumValue(axis,gridData.myX,gridData.numPoints,searchRadius,xMax);
-	std::sort(bcIdsApplied.get(),bcIdsApplied.end());
 
 	/**
 	 * Create boundary conditions spec
 	 */
-	vector<shared_ptr<StageComponentDirichletBc> > bcs(2);
+	vector<shared_ptr<StageComponentDirichletBc> > bcs;
 	ComponentDirichletBcSpec fixedSpec = ComponentDirichletBcSpec::getAllComponents(bcIdsFixed);
 	StageFunction constStageFunction(0.0,0.0);
 	shared_ptr<StageComponentDirichletBc> bcFixed(new StageComponentDirichletBc(fixedSpec,constStageFunction));
-	bcs[0] = bcFixed;
+	bcs.push_back(bcFixed);
 	std::vector< DirichletBcSpec::ComponentLabel > c(1);
 	c[0] = DirichletBcSpec::X;
 	ComponentDirichletBcSpec appliedSpec(c,bcIdsApplied);
 	StageFunction dispStageFunction(1.0e-3,1.0e-3);
 	shared_ptr<StageComponentDirichletBc> bcApplied(new StageComponentDirichletBc(appliedSpec,dispStageFunction));
-	bcs[1] = bcApplied;
+	bcs.push_back(bcApplied);
 	Field<char> bcMaskFieldOwned(BC_MASK,gridData.numPoints);
 	bcMaskFieldOwned.set(0);
 	for(int b=0;b<bcs.size();b++)
@@ -841,6 +572,7 @@ void crackOpeningDemo(){
 	for(int b=0;b<bcs.size();b++)
 		bcs[b]->applyKinematics(1.0,uOwnedField);
 	std::tr1::shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOwnedField);
+	Epetra_BlockMap ownedMap = jacobian->getRowMap();
 
 	/*
 	 * Create graph
@@ -851,7 +583,7 @@ void crackOpeningDemo(){
 	 * Create Epetra_RowMatrix
 	 */
 //	shared_ptr<Epetra_RowMatrix> mPtr = getOperator(bcs,graphPtr,jacobian);
-	shared_ptr<Epetra_RowMatrix> mPtr = getOperator_NEWER(bcMaskFieldOverlap,graphPtr,jacobian);
+	shared_ptr<Epetra_RowMatrix> mPtr = getOperator(bcMaskFieldOverlap,graphPtr,jacobian);
 
 	/*
 	 * TODO
@@ -872,29 +604,80 @@ void crackOpeningDemo(){
 	}
 
 
+	/*
+	 * AZTEC Setup
+	 */
 	Epetra_LinearProblem linProblem;
 	linProblem.SetOperator(mPtr.get());
 	linProblem.AssertSymmetric();
 
+	/*
+	 * Domain and Range Map are the same
+	 */
 	const Epetra_BlockMap& rangeMap  = mPtr->OperatorRangeMap();
-	const Epetra_BlockMap& domainMap  = mPtr->OperatorDomainMap();
-
-	double *f = fNOwnedField.get();
-	Epetra_Vector rhs(View,rangeMap,f);
+	const Epetra_BlockMap& domainMap = mPtr->OperatorDomainMap();
+	Epetra_Vector rhs(View,rangeMap,fNOwnedField.get());
 	Epetra_Vector lhs(View,domainMap,uOwnedField.get());
-
 	linProblem.SetRHS(&rhs);
 	linProblem.SetLHS(&lhs);
-//	BOOST_CHECK(0==linProblem.CheckInput());
+	if(0 != linProblem.CheckInput()){
+		cout << "0 != linProblem.CheckInput()" << endl;
+		std::exit(1);
+	}
 
 	AztecOO solver(linProblem);
 	solver.SetAztecOption(AZ_precond, AZ_Jacobi);
-//	BOOST_CHECK(0==solver.CheckInput());
+	if(0 != solver.CheckInput()){
+		cout << "0 != solver.CheckInput()" << endl;
+		std::exit(1);
+	}
 	solver.Iterate(500,1e-6);
+	/*
+	 * END AZTEC Setup
+	 */
+
+	/*
+	 * BELOS Setup (THIS WORKS FINE)
+	 */
+//	ParameterList belosList;
+//	int blocksize=1;
+//	int maxiters=500;
+//	double tol=1.0e-6;
+//	int frequency=1;
+//	belosList.set( "Block Size", blocksize );              // Blocksize to be used by iterative solver
+//	belosList.set( "Maximum Iterations", maxiters );       // Maximum number of iterations allowed
+//	belosList.set( "Convergence Tolerance", tol );         // Relative convergence tolerance requested
+//	belosList.set( "Verbosity", Belos::Errors + Belos::Warnings +
+//	Belos::TimingDetails + Belos::StatusTestDetails );
+//	belosList.set( "Output Frequency", frequency );
+//	//
+//	// Construct an unpreconditioned linear problem instance.
+//	//
+//	typedef Epetra_MultiVector                MV;
+//	typedef Epetra_Operator                   OP;
+//	RCP<Epetra_Vector> B = rcp(new Epetra_Vector(View,ownedMap,fNOwnedField.get()));
+//	RCP<Epetra_Vector> X = rcp(new Epetra_Vector(View,ownedMap,uOwnedField.get()));
+//	RCP<OP> A = rcp(mPtr.get(),false);
+//	Belos::LinearProblem<double,MV,OP> problem( A, X, B );
+//	bool set = problem.setProblem();
+//	if (set == false) {
+//		std::cout << std::endl << "ERROR:  Belos::LinearProblem failed to set up correctly!" << std::endl;
+//		std::exit(1);
+//	}
+//	RCP< Belos::SolverManager<double,MV,OP> > newSolver
+//	= rcp( new Belos::BlockCGSolMgr<double,MV,OP>(rcp(&problem,false), rcp(&belosList,false)) );
+//	//
+//	// Perform solve
+//	//
+//	Belos::ReturnType ret = newSolver->solve();
+	/*
+	 * END BELOS Setup (THIS WORKS FINE)
+	 */
+
+
 	/*
 	 * Write problem set up parameters to file
 	 */
-
 	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(gridData.myX,gridData.numPoints);
 
 	/*
