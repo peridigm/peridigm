@@ -44,7 +44,7 @@ add_test (utPdImp_twoPointJacobian python run_unit_test.py ./utPdImp_twoPointJac
 
 # Add test
 add_executable(utPdImp_twoPointJacobian_np2 utPdImp_twoPointJacobian_np2.cxx)
-target_link_libraries(utPdImp_twoPointJacobian_np2 PdITIOperators QuickGrid PdNeigh Utilities PdVTK PdMaterialUtilities ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdImp_twoPointJacobian_np2 utPdITI PdITIOperators QuickGrid PdNeigh Utilities PdVTK PdMaterialUtilities ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 add_test (utPdImp_twoPointJacobian_np2 python run_unit_test.py mpiexec -np 2 ./utPdImp_twoPointJacobian_np2)
 
 # Add test
@@ -106,9 +106,6 @@ add_test (utPdImp_smallCylinderPull_npX python run_unit_test.py mpiexec -np 4 ./
 add_executable(ut_dsf ut_dsf.cxx)
 target_link_libraries(ut_dsf PdITIOperators QuickGrid PdNeigh PdVTK PdMaterialUtilities ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 add_test (ut_dsf python run_unit_test.py ./ut_dsf)
-
-#add_executable(ut_dirichlet_bc_jacobian ut_dirichlet_bc_jacobian.cxx)
-#target_link_libraries(ut_dirichlet_bc_jacobian PdNeigh ${PERIDIGM_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 
 #add_custom_target( utest
 #   COMMAND ctest

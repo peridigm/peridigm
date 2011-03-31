@@ -11,6 +11,8 @@
 #include "../RowStiffnessOperator.h"
 #include "../PdImpMaterials.h"
 #include "../StageComponentDirichletBc.h"
+#include "../DirichletBcSpec.h"
+#include "vtk/Field.h"
 #include <tr1/memory>
 using std::tr1::shared_ptr;
 
@@ -21,12 +23,12 @@ class Epetra_RowMatrix;
 
 namespace utPdITI {
 	shared_ptr<Epetra_CrsGraph> getGraph(shared_ptr<RowStiffnessOperator>& jacobian);
+	vector<PdImp::DirichletBcSpec::ComponentLabel> getComponents(char mask);
 	PdImp::IsotropicHookeSpec getMaterialSpec(double e, double nu);
 	shared_ptr<Epetra_RowMatrix>getOperator
 	(
-			const vector<shared_ptr<PdImp::StageComponentDirichletBc> >& bcArray,
-			shared_ptr<Epetra_CrsGraph>& graphPtr,
-			shared_ptr<RowStiffnessOperator>& jacobian
+	        const Field_NS::Field<char> bcMaskFieldOverlap,
+	        shared_ptr<RowStiffnessOperator>& jacobian
 	);
 
 }

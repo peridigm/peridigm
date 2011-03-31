@@ -13,6 +13,7 @@
 #include "Array.h"
 #include "quick_grid/QuickGrid.h"
 #include "NeighborhoodList.h"
+#include "OverlapDistributor.h"
 #include "PdZoltan.h"
 #include "vtk/Field.h"
 #include "vtk/PdVTK.h"
@@ -112,10 +113,11 @@ void utPimp_pullCylinder() {
 	 */
 	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
 	PdITI::PdITI_Operator op(comm,list,decomp.cellVolume);
-//	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
-	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElastic_No_DSF(isotropicSpec));
+	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElasticConstitutiveModel(isotropicSpec));
+//	shared_ptr<ConstitutiveModel> fIntOperator(new IsotropicElastic_No_DSF(isotropicSpec));
 
 	op.addConstitutiveModel(fIntOperator);
+	PDNEIGH::NeighborhoodList row_matrix_list = op.get_row_matrix_neighborhood();
 
 
 	/*
@@ -123,9 +125,9 @@ void utPimp_pullCylinder() {
 	 */
 	CartesianComponent axis = UTILITIES::Z;
 	Array<int> bcIdsFixed = UTILITIES::getPointsInNeighborhoodOfAxisAlignedMinimumValue(axis,decomp.myX,decomp.numPoints,horizon,zMin);
-	std::sort(bcIdsFixed.get(),bcIdsFixed.end());
+//	std::sort(bcIdsFixed.get(),bcIdsFixed.end());
 	Array<int> bcIdsApplied = UTILITIES::getPointsInNeighborhoodOfAxisAlignedMaximumValue(axis,decomp.myX,decomp.numPoints,horizon,zMax);
-	std::sort(bcIdsApplied.get(),bcIdsApplied.end());
+//	std::sort(bcIdsApplied.get(),bcIdsApplied.end());
 
 	/**
 	 * Create boundary conditions spec
@@ -141,6 +143,11 @@ void utPimp_pullCylinder() {
 	StageFunction dispStageFunction(1.0e-3,1.0e-3);
 	shared_ptr<StageComponentDirichletBc> bcApplied(new StageComponentDirichletBc(appliedSpec,dispStageFunction));
 	bcs[1] = bcApplied;
+	Field<char> bcMaskFieldOwned(BC_MASK,decomp.numPoints);
+	bcMaskFieldOwned.set(0);
+	for(int b=0;b<bcs.size();b++)
+		bcs[b]->imprint_bc(bcMaskFieldOwned);
+	Field<char> bcMaskFieldOverlap = PDNEIGH::createOverlapField(row_matrix_list,bcMaskFieldOwned);
 
 	/*
 	 * Create Jacobian -- note that SCOPE of jacobian is associated with the PimpOperator "op"
@@ -152,15 +159,15 @@ void utPimp_pullCylinder() {
 
 	shared_ptr<RowStiffnessOperator> jacobian = op.getJacobian(uOwnedField);
 
-	/*
-	 * Create graph
-	 */
-	shared_ptr<Epetra_CrsGraph> graphPtr = utPdITI::getGraph(jacobian);
+//	/*
+//	 * Create graph
+//	 */
+//	shared_ptr<Epetra_CrsGraph> graphPtr = utPdITI::getGraph(jacobian);
 
 	/*
 	 * Create Epetra_RowMatrix
 	 */
-	shared_ptr<Epetra_RowMatrix> mPtr = utPdITI::getOperator(bcs,graphPtr,jacobian);
+	shared_ptr<Epetra_RowMatrix> mPtr = utPdITI::getOperator(bcMaskFieldOverlap,jacobian);
 
 	/*
 	 * Create force field
@@ -211,6 +218,7 @@ void utPimp_pullCylinder() {
 	PdVTK::writeField(grid,uOwnedField);
 	PdVTK::writeField(grid,delta);
 	PdVTK::writeField(grid,fieldRank);
+	PdVTK::writeField<char>(grid,bcMaskFieldOwned);
 	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("utPimp_pullCylinder_npX.pvtu", comm->NumProc(), comm->MyPID());
 	PdVTK::write(writer,grid);
 
