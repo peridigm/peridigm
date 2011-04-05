@@ -208,7 +208,7 @@ vtkSmartPointer<vtkCellArray> getCellArray(vtkIdType numCells){
  * Initial hack for post processing step; call this from output manager
  * after all data has been set on 'grid'
  */
-void expandRingPostProcess(double current_time, vtkSmartPointer<vtkUnstructuredGrid> grid, int myRank){
+void expandRingPostProcess(double current_time, vtkSmartPointer<vtkUnstructuredGrid> grid, int myRank, double inputHorizon){
 
 	vtkKdTreePointLocator* kdTree = vtkKdTreePointLocator::New();
 	kdTree->SetDataSet(grid);
