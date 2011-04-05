@@ -121,6 +121,10 @@ Array<double> create_spherical_neighborhood(const double center[], double radius
 
 void dsf_probe() {
 	/*
+	 * Dave's Influence Function
+	 * "x < 0.5 ? 1.0 : -4.0*x*x + 4.0*x"
+	 */
+	/*
 	 * X is the center of the sphere
 	 */
 	Array<double> X(3); X.set(0.0);

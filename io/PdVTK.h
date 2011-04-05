@@ -131,7 +131,7 @@ void writeField(vtkSmartPointer<vtkUnstructuredGrid>& g, const Field_NS::FieldSp
  * 2) make this a virtual method
  *
  */
-void expandRingPostProcess(double t, vtkSmartPointer<vtkUnstructuredGrid> grid);
+void expandRingPostProcess(double t, vtkSmartPointer<vtkUnstructuredGrid> grid, int myRank, double horizon);
 
 } // PdVTK
 
