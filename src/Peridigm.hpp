@@ -117,6 +117,9 @@ namespace PeridigmNS {
     //! Main routine to drive problem solution with implicit time integration
     void executeImplicit();
 
+    //! Allocate memory for non-zeros in global Jacobian
+    void allocateJacobian();
+
     //! Synchronize data in DataManager across processes (needed before call to OutputManager::write() )
     void synchDataManager();
 
