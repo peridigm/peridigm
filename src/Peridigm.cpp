@@ -261,7 +261,6 @@ void PeridigmNS::Peridigm::initializeDataManager(Teuchos::RCP<AbstractDiscretiza
 
 void PeridigmNS::Peridigm::applyInitialVelocities() {
 
-
   TEST_FOR_EXCEPT_MSG(!threeDimensionalMap->SameAs(v->Map()), 
                       "Peridigm::applyInitialVelocities():  Inconsistent velocity vector map.\n");
 
@@ -272,15 +271,12 @@ void PeridigmNS::Peridigm::applyInitialVelocities() {
 //  RCP<InitialConditionsNS::InitialCondition> icOperator = InitialConditionsNS::getInstance(*peridigmParams);
 //  icOperator->apply(*x,*u,*v);
 
-
   /*
    * COMMENT OUT ALL OF BELOW TO RUN new Initial Condition Capability
    */
   Teuchos::ParameterList& problemParams = peridigmParams->sublist("Problem");
   Teuchos::ParameterList& bcParams = problemParams.sublist("Boundary Conditions");
   Teuchos::ParameterList::ConstIterator it;
-
-
 
   // get the node sets
   map< string, vector<int> > nodeSets;
@@ -626,6 +622,8 @@ void PeridigmNS::Peridigm::executeImplicit() {
     // Compute force_external
 
     // Update nodal positions for nodes with kinematic B.C.
+    double loadIncrement = double(step)/double(numTimeSteps-1) - double(step-1)/double(numTimeSteps-1);
+    applyKinematicBCToForceVector(loadIncrement);
 
     // Compute residual
 
@@ -736,6 +734,58 @@ void PeridigmNS::Peridigm::allocateJacobian() {
     tangent->InsertGlobalValues(3*GID+2, numEntries, &zeros[0], &globalIndicies[0]); 
   }
   tangent->GlobalAssemble();
+}
+
+void PeridigmNS::Peridigm::applyKinematicBCToForceVector(double loadIncrement) {
+
+  Teuchos::ParameterList& problemParams = peridigmParams->sublist("Problem");
+  Teuchos::ParameterList& bcParams = problemParams.sublist("Boundary Conditions");
+  Teuchos::ParameterList::ConstIterator it;
+
+  // get the node sets
+  map< string, vector<int> > nodeSets;
+  for(it = bcParams.begin() ; it != bcParams.end() ; it++){
+	const string& name = it->first;
+    // \todo Change input deck so that node sets are parameter lists, not parameters, to avoid this ridiculous search.
+	size_t position = name.find("Node Set");
+	if(position != string::npos){
+	  stringstream ss(Teuchos::getValue<string>(it->second));
+	  vector<int> nodeList;
+	  int nodeID;
+	  while(ss.good()){
+		ss >> nodeID;
+		nodeList.push_back(nodeID);
+	  }
+	  nodeSets[name] = nodeList;
+	}
+  }
+
+  // apply the kinematic boundary conditions
+  for(it = bcParams.begin() ; it != bcParams.end() ; it++){
+	const string & name = it->first;
+	size_t position = name.find("Prescribed Displacement");
+	if(position != string::npos){
+	  Teuchos::ParameterList & boundaryConditionParams = Teuchos::getValue<Teuchos::ParameterList>(it->second);
+	  string nodeSet = boundaryConditionParams.get<string>("Node Set");
+	  string type = boundaryConditionParams.get<string>("Type");
+	  string coordinate = boundaryConditionParams.get<string>("Coordinate");
+	  double value = boundaryConditionParams.get<double>("Value");
+
+	  int coord = 0;
+	  if(coordinate == "y" || coordinate == "Y")
+		coord = 1;
+	  if(coordinate == "z" || coordinate == "Z")
+		coord = 2;
+
+	  // apply kinematic boundary conditions to locally-owned nodes
+	  vector<int> & nodeList = nodeSets[nodeSet];
+	  for(unsigned int i=0 ; i<nodeList.size() ; i++){
+		int localNodeID = threeDimensionalMap->LID(nodeList[i]);
+		if(localNodeID != -1)
+		  (*u)[localNodeID*3 + coord] += value*loadIncrement;
+	  }
+	}
+  }
 }
 
 void PeridigmNS::Peridigm::synchDataManager() {
