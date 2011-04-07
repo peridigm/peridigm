@@ -55,7 +55,7 @@ void PeridigmNS::Material::computeJacobian(const double dt,
                                            const int* ownedIDs,
                                            const int* neighborhoodList,
                                            PeridigmNS::DataManager& dataManager,
-                                           PeridigmNS::DenseMatrix& jacobian) const
+                                           PeridigmNS::SerialMatrix& jacobian) const
 {
   // Extract pointers to the underlying data in the constitutiveData array
   double *y, *force;

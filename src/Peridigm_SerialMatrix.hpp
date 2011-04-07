@@ -1,4 +1,4 @@
-/*! \file Peridigm_DenseMatrix.cpp */
+/*! \file Peridigm_SerialMatrix.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,46 +45,55 @@
 // ************************************************************************
 //@HEADER
 
-#include <Teuchos_Exceptions.hpp>
-#include <Epetra_Import.h>
-#include "Peridigm_DenseMatrix.hpp"
-#include <sstream>
+#ifndef PERIDIGM_DENSEMATRIX_HPP
+#define PERIDIGM_DENSEMATRIX_HPP
 
-PeridigmNS::DenseMatrix::DenseMatrix(int matrixDimension) : dim(matrixDimension)
-{
-  // \todo Have the constructor take neighborhood data and allocate only necessary nonzeros
-  data.resize(dim*dim, 0.0);
+#include <vector>
+#include <map>
+#include <iostream>
+
+namespace PeridigmNS {
+
+/*! \brief A dense serial matrix.
+ */
+class SerialMatrix {
+
+public:
+  
+  SerialMatrix(int matrixDimension);
+
+  //! Copy constructor.
+  SerialMatrix(const SerialMatrix& denseMatrix){}
+
+  //! Destructor.
+  ~SerialMatrix(){}
+
+  //! Set data at given location, indexed by local ID
+  void insertValue(int row, int col, double value);
+
+  //! Add data at given location, indexed by local ID
+  void addValue(int row, int col, double value);
+
+  //! Sum data into Epetra_CrsMatrix
+  void sumIntoCrsMatrix();
+
+  //! Set all entries to given scalar
+  void putScalar(double value);
+
+  //! Print
+  void print(std::ostream& out);
+
+protected:
+
+  int dim;
+  std::vector<double> data;
+
+private:
+
+  //! Default constructor, private to prohibit use.
+  SerialMatrix() {}
+};
+
 }
 
-void PeridigmNS::DenseMatrix::sumIntoCrsMatrix()
-{
-}
-
-void PeridigmNS::DenseMatrix::insertValue(int row, int col, double value)
-{
-  data[row*dim + col] = value;
-}
-
-void PeridigmNS::DenseMatrix::addValue(int row, int col, double value)
-{
-  data[row*dim + col] += value;
-}
-
-void PeridigmNS::DenseMatrix::putScalar(double value)
-{
-  data.assign(data.size(), value);
-}
-
-void PeridigmNS::DenseMatrix::print(std::ostream& out)
-{
-  std::stringstream ss;
-  for(int i=0 ; i<dim ; ++i){
-    ss.str("");
-    ss.precision(10);
-    for(int j=0 ; j<dim ; ++j){
-      ss << std::setw(18) << data[i*dim+j] << " ";
-    }
-    ss << endl;
-    out << ss.str();
-  }
-}
+#endif // PERIDIGM_DENSEMATRIX_HPP

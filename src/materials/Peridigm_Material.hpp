@@ -55,7 +55,7 @@
 #include <vector>
 #include <map>
 #include "Peridigm_DataManager.hpp"
-#include "Peridigm_DenseMatrix.hpp"
+#include "Peridigm_SerialMatrix.hpp"
 
 namespace PeridigmNS {
 
@@ -110,7 +110,7 @@ namespace PeridigmNS {
                     const int* ownedIDs,
                     const int* neighborhoodList,
                     PeridigmNS::DataManager& dataManager,
-                    PeridigmNS::DenseMatrix& jacobian) const;
+                    PeridigmNS::SerialMatrix& jacobian) const;
 
   private:
 	

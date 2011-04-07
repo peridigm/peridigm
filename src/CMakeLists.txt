@@ -10,7 +10,7 @@ add_executable (${EXECUTABLE_NAME}
         Peridigm_DiscretizationFactory.cpp
         Peridigm_PdQuickGridDiscretization.cpp
         Peridigm_DataManager.cpp
-        Peridigm_DenseMatrix.cpp
+        Peridigm_SerialMatrix.cpp
         Peridigm_ModelEvaluator.cpp
         PHAL_Dimension.cpp
         PHAL_PeridigmTraits.cpp
@@ -51,7 +51,7 @@ add_executable(utPeridigm
         Peridigm_DiscretizationFactory.cpp
         Peridigm_PdQuickGridDiscretization.cpp
         Peridigm_DataManager.cpp
-        Peridigm_DenseMatrix.cpp
+        Peridigm_SerialMatrix.cpp
         Peridigm_ModelEvaluator.cpp
         PHAL_Dimension.cpp
         PHAL_PeridigmTraits.cpp
@@ -86,7 +86,7 @@ add_executable(utPeridigm_MPI_np2
         Peridigm_DiscretizationFactory.cpp
         Peridigm_PdQuickGridDiscretization.cpp
         Peridigm_DataManager.cpp
-        Peridigm_DenseMatrix.cpp
+        Peridigm_SerialMatrix.cpp
         Peridigm_ModelEvaluator.cpp
         PHAL_Dimension.cpp
         PHAL_PeridigmTraits.cpp
@@ -146,7 +146,7 @@ ${Boost_LIBRARIES}
 
 add_executable(utPeridigm_LinearElasticIsotropicMaterial
         Peridigm_DataManager.cpp
-        Peridigm_DenseMatrix.cpp
+        Peridigm_SerialMatrix.cpp
         ../io/Field.cxx
         ../PdMaterialUtilities/PdMaterialUtilities.cxx
         ./materials/Peridigm_Material.cpp
@@ -164,7 +164,7 @@ add_executable(utPHAL_UpdateForceState
 		PHAL_PeridigmTraits.cpp
 		PHAL_Dimension.cpp
         Peridigm_DataManager.cpp
-        Peridigm_DenseMatrix.cpp
+        Peridigm_SerialMatrix.cpp
         ../io/Field.cxx
         ../PdMaterialUtilities/PdMaterialUtilities.cxx
         ./materials/Peridigm_Material.cpp
@@ -195,7 +195,7 @@ add_executable(utPHAL_EvaluateForce
 		PHAL_PeridigmTraits.cpp
 		PHAL_Dimension.cpp
         Peridigm_DataManager.cpp
-        Peridigm_DenseMatrix.cpp
+        Peridigm_SerialMatrix.cpp
         ../io/Field.cxx
         ../PdMaterialUtilities/PdMaterialUtilities.cxx
         ./materials/Peridigm_Material.cpp
