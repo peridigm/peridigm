@@ -109,8 +109,7 @@ int main(int argc, char *argv[]) {
     Teuchos::RCP<PeridigmNS::Peridigm> peridigm = peridigmFactory.create(xml_file_name, peridigmComm);
 
     // Solve the problem
-    peridigm->executeExplicit();
-//     peridigm->executeImplicit();
+    peridigm->execute();
 
 /****************************
 	EpetraExt::ModelEvaluator::InArgs params_in = App->createInArgs();

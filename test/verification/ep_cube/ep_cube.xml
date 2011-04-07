@@ -45,9 +45,9 @@
 </ParameterList>
 <ParameterList name="Solver">
 	<Parameter name="Verbose" type="bool" value="true"/>
+	<Parameter name="Initial Time" type="double" value="0.0"/>
+	<Parameter name="Final Time" type="double" value="0.35e-1"/>
 	<ParameterList name="Verlet">
-		<Parameter name="Initial Time" type="double" value="0.0"/>
-		<Parameter name="Final Time" type="double" value="0.35e-1"/>
 		<Parameter name="Fixed dt" type="double" value="1.0e-6"/>
 	</ParameterList>
 </ParameterList>

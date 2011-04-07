@@ -108,6 +108,9 @@ namespace PeridigmNS {
     //! Initialize the output manager
     void initializeOutputManager();
 
+    //! Main routine to drive time integration
+    void execute();
+
     //! Main routine to drive problem solution with explicit time integration
     void executeExplicit();
 

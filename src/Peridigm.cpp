@@ -141,9 +141,6 @@ void PeridigmNS::Peridigm::instantiateMaterials() {
     Teuchos::ParameterList & matParams = materialParams.sublist(name);
     // Insert solver timestep into matParams. Some material models (e.g., viscoelastic) need to know timestep
     Teuchos::RCP<Teuchos::ParameterList> solverParams = Teuchos::rcp(&(peridigmParams->sublist("Solver")),false);
-    //! \todo Generalize for other solvers besides Verlet
-    Teuchos::RCP<Teuchos::ParameterList> verletPL = sublist(solverParams, "Verlet", true);
-    matParams.set("Fixed dt", verletPL->get("Fixed dt", 1.0) );
     Teuchos::RCP<Material> material;
     if(name == "Linear Elastic" || name == "Elastic Plastic"){
       if(name == "Linear Elastic")
@@ -490,8 +487,7 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
 
     // Initialize current time in this parameterlist
     Teuchos::RCP<Teuchos::ParameterList> solverParams = Teuchos::rcp(&(peridigmParams->sublist("Solver")),false);
-    Teuchos::RCP<Teuchos::ParameterList> verletPL = sublist(solverParams, "Verlet", true);
-    double t_initial = verletPL->get("Initial Time", 0.0);
+    double t_initial = solverParams->get("Initial Time", 0.0);
     forceStateDesc->set<double>("Time", t_initial);
     // Set RCP to neighborlist
     forceStateDesc->set("Bond Family",neighborhoodData);
@@ -508,6 +504,20 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
 
 }
 
+void PeridigmNS::Peridigm::execute() {
+
+  Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
+
+  // allowable explicit time integration schemes:  Verlet
+  if(solverParams->isSublist("Verlet"))
+    executeExplicit();
+
+  // allowable implicit time integration schemes:  Implicit
+  else if(solverParams->isSublist("Implicit"))
+    executeImplicit();
+
+}
+
 void PeridigmNS::Peridigm::executeExplicit() {
 
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
@@ -521,13 +531,13 @@ void PeridigmNS::Peridigm::executeExplicit() {
   // evalModel() should be called by time integrator here...
   // For now, insert Verlet intergrator here
   Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
-  Teuchos::RCP<Teuchos::ParameterList> verletPL = sublist(solverParams, "Verlet", true);
-  double t_initial = verletPL->get("Initial Time", 0.0);
+  Teuchos::RCP<Teuchos::ParameterList> verletParams = sublist(solverParams, "Verlet", true);
+  double t_initial = solverParams->get("Initial Time", 0.0);
+  double t_final   = solverParams->get("Final Time", 1.0);
   double t_current = t_initial;
-  double dt        = verletPL->get("Fixed dt", 1.0);
+  double dt        = verletParams->get("Fixed dt", 1.0);
   *timeStep = dt;
   double dt2 = dt/2.0;
-  double t_final   = verletPL->get("Final Time", 1.0);
   int nsteps = (int)floor((t_final-t_initial)/dt);
   if(solverParams->isSublist("Rebalance")){
     Teuchos::RCP<Teuchos::ParameterList> rebalanceParams = sublist(solverParams, "Rebalance", true);
@@ -638,13 +648,12 @@ void PeridigmNS::Peridigm::executeImplicit() {
   // evalModel() should be called by time integrator here...
   // For now, insert Verlet intergrator here
   Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
-  Teuchos::RCP<Teuchos::ParameterList> verletPL = sublist(solverParams, "Verlet", true);
-  double t_initial = verletPL->get("Initial Time", 0.0);
+  double t_initial = solverParams->get("Initial Time", 0.0);
+  double t_final = solverParams->get("Final Time", 0.0);
   double t_current = t_initial;
-  double dt        = verletPL->get("Fixed dt", 1.0);
+  double dt        = 1.0;
   *timeStep = dt;
   double dt2 = dt/2.0;
-  double t_final   = verletPL->get("Final Time", 1.0);
   int nsteps = (int)floor((t_final-t_initial)/dt);
   // Pointer index into sub-vectors for use with BLAS
   double *xptr, *uptr, *yptr, *vptr, *aptr;

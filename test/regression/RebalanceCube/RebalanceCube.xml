@@ -43,13 +43,13 @@
   </ParameterList>
   <ParameterList name="Solver">
         <Parameter name="Verbose" type="bool" value="false"/>
+        <Parameter name="Initial Time" type="double" value="0.0"/>
+        <Parameter name="Final Time" type="double" value="0.0031"/>
+        <ParameterList name="Verlet">
+          <Parameter name="Fixed dt" type="double" value="0.00001"/>
+        </ParameterList>
         <ParameterList name="Rebalance">
           <Parameter name="Rebalance Frequency" type="int" value="100"/>
-        </ParameterList>
-        <ParameterList name="Verlet">
-          <Parameter name="Initial Time" type="double" value="0.0"/>
-          <Parameter name="Final Time" type="double" value="0.0031"/>
-          <Parameter name="Fixed dt" type="double" value="0.00001"/>
         </ParameterList>
   </ParameterList>
   <ParameterList name="Output">
