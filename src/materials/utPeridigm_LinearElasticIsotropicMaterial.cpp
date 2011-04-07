@@ -49,7 +49,7 @@
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
 #include "Peridigm_LinearElasticIsotropicMaterial.hpp"
-#include "Peridigm_DenseMatrix.hpp"
+#include "Peridigm_SerialMatrix.hpp"
 #include <Epetra_SerialComm.h>
 
 using namespace boost::unit_test;
@@ -687,7 +687,7 @@ void twoPointProbeJacobian()
   dataManager.allocateData(mat.VariableSpecs());
 
   // create the Jacobian
-  PeridigmNS::DenseMatrix jacobian(2*3);
+  PeridigmNS::SerialMatrix jacobian(2*3);
 
   Epetra_Vector& x = *dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE);
   Epetra_Vector& y = *dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1);
@@ -761,7 +761,7 @@ void twoPointProbeJacobianJAM()
   dataManager.allocateData(mat.VariableSpecs());
 
   // create the Jacobian
-  PeridigmNS::DenseMatrix jacobian(2*3);
+  PeridigmNS::SerialMatrix jacobian(2*3);
 
   Epetra_Vector& x = *dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE);
   Epetra_Vector& y = *dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1);

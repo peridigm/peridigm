@@ -1,4 +1,4 @@
-/*! \file Peridigm_DenseMatrix.hpp */
+/*! \file Peridigm_SerialMatrix.cpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,55 +45,46 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_DENSEMATRIX_HPP
-#define PERIDIGM_DENSEMATRIX_HPP
+#include <Teuchos_Exceptions.hpp>
+#include <Epetra_Import.h>
+#include "Peridigm_SerialMatrix.hpp"
+#include <sstream>
 
-#include <vector>
-#include <map>
-#include <iostream>
-
-namespace PeridigmNS {
-
-/*! \brief A dense serial matrix.
- */
-class DenseMatrix {
-
-public:
-  
-  DenseMatrix(int matrixDimension);
-
-  //! Copy constructor.
-  DenseMatrix(const DenseMatrix& denseMatrix){}
-
-  //! Destructor.
-  ~DenseMatrix(){}
-
-  //! Set data at given location, indexed by local ID
-  void insertValue(int row, int col, double value);
-
-  //! Add data at given location, indexed by local ID
-  void addValue(int row, int col, double value);
-
-  //! Sum data into Epetra_CrsMatrix
-  void sumIntoCrsMatrix();
-
-  //! Set all entries to given scalar
-  void putScalar(double value);
-
-  //! Print
-  void print(std::ostream& out);
-
-protected:
-
-  int dim;
-  std::vector<double> data;
-
-private:
-
-  //! Default constructor, private to prohibit use.
-  DenseMatrix() {}
-};
-
+PeridigmNS::SerialMatrix::SerialMatrix(int matrixDimension) : dim(matrixDimension)
+{
+  // \todo Have the constructor take neighborhood data and allocate only necessary nonzeros
+  data.resize(dim*dim, 0.0);
 }
 
-#endif // PERIDIGM_DENSEMATRIX_HPP
+void PeridigmNS::SerialMatrix::sumIntoCrsMatrix()
+{
+}
+
+void PeridigmNS::SerialMatrix::insertValue(int row, int col, double value)
+{
+  data[row*dim + col] = value;
+}
+
+void PeridigmNS::SerialMatrix::addValue(int row, int col, double value)
+{
+  data[row*dim + col] += value;
+}
+
+void PeridigmNS::SerialMatrix::putScalar(double value)
+{
+  data.assign(data.size(), value);
+}
+
+void PeridigmNS::SerialMatrix::print(std::ostream& out)
+{
+  std::stringstream ss;
+  for(int i=0 ; i<dim ; ++i){
+    ss.str("");
+    ss.precision(10);
+    for(int j=0 ; j<dim ; ++j){
+      ss << std::setw(18) << data[i*dim+j] << " ";
+    }
+    ss << endl;
+    out << ss.str();
+  }
+}
