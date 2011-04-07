@@ -209,50 +209,6 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
   force = Teuchos::rcp((*mothership)(5), false);         // force
   contactForce = Teuchos::rcp((*mothership)(6), false);  // contact force
 
-  // Construct map for global tangent matrix
-  // Note that this must be an Epetra_Map, not an Epetra_BlockMap, so we can't use threeDimensionalMap directly
-  int numGlobalElements = 3*oneDimensionalMap->NumGlobalElements();
-  int numMyElements = 3*oneDimensionalMap->NumMyElements();
-  int* myGlobalElements = new int[numMyElements];
-  int* oneDimensionalMapGlobalElements = oneDimensionalMap->MyGlobalElements();
-  for(int iElem=0 ; iElem<oneDimensionalMap->NumMyElements() ; ++iElem){
-    myGlobalElements[3*iElem]     = 3*oneDimensionalMapGlobalElements[iElem];
-    myGlobalElements[3*iElem + 1] = 3*oneDimensionalMapGlobalElements[iElem] + 1;
-    myGlobalElements[3*iElem + 2] = 3*oneDimensionalMapGlobalElements[iElem] + 2;
-  }
-  int indexBase = 0;
-  //tangentMap = Teuchos::rcp(new Epetra_Map(numGlobalElements, numMyElements, myGlobalElements, indexBase, *peridigmComm));
-  delete[] myGlobalElements;
-
-  // Create the global tangent matrix
-  Epetra_DataAccess CV = Copy;
-  int numEntriesPerRow = 0;  // If this is zero, allocation will take place during the insertion phase \todo Compute non-zeros instead of allocation during insertion.
-  bool staticProfile = false;  // \todo Can staticProfile be set to true?  Bond breaking would alter the non-zeros, but we could just leave them there to avoid reallocation.
-  //tangent = Teuchos::rcp(new Epetra_FECrsMatrix(CV, *tangentMap, numEntriesPerRow, staticProfile));
-
-//   // Construct map for local tangent matrix
-//   numGlobalElements = 3*oneDimensionalOverlapMap->NumGlobalElements();
-//   numMyElements = 3*oneDimensionalOverlapMap->NumMyElements();
-//   myGlobalElements = new int[numMyElements];
-//   int* oneDimensionalOverlapMapGlobalElements = oneDimensionalOverlapMap->MyGlobalElements();
-//   indexBase = 0;
-//   for(int iElem=0 ; iElem<oneDimensionalOverlapMap->NumMyElements() ; ++iElem){
-//     myGlobalElements[3*iElem]     = 3*oneDimensionalOverlapMapGlobalElements[iElem];
-//     myGlobalElements[3*iElem + 1] = 3*oneDimensionalOverlapMapGlobalElements[iElem] + 1;
-//     myGlobalElements[3*iElem + 2] = 3*oneDimensionalOverlapMapGlobalElements[iElem] + 2;
-//   }
-//   overlapTangentMap = Teuchos::rcp(new Epetra_Map(numGlobalElements, numMyElements, myGlobalElements, indexBase, *peridigmComm));
-//   delete[] myGlobalElements;
-
-//   // Create the local tangent matrix
-//   CV = Copy;
-//   numEntriesPerRow = 0;  // If this is zero, allocation will take place during the insertion phase \todo Compute non-zeros instead of allocation during insertion.
-//   staticProfile = false;  // \todo Can staticProfile be set to true?  Bond breaking would alter the non-zeros, but we could just leave them there to avoid reallocation.
-//   overlapTangent = Teuchos::rcp(new Epetra_CrsMatrix(CV, *overlapTangentMap, numEntriesPerRow, staticProfile));
-
-//   // Create the tangent importer
-//   overlapTangentToGlobalTangentImporter = Teuchos::rcp(new Epetra_Import(*tangentMap, *overlapTangentMap));
-
   // Set the initial positions
   double* initialX;
   peridigmDisc->getInitialX()->ExtractView(&initialX);
@@ -637,6 +593,9 @@ void PeridigmNS::Peridigm::executeExplicit() {
 
 void PeridigmNS::Peridigm::executeImplicit() {
 
+  // Allocate memory for non-zeros in global Jacobain and lock in the structure
+  allocateJacobian();
+
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   workset->timeStep = timeStep;
 
@@ -645,16 +604,14 @@ void PeridigmNS::Peridigm::executeImplicit() {
   dataManager->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->Import(*y, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
   dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_NP1)->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
 
-  // evalModel() should be called by time integrator here...
-  // For now, insert Verlet intergrator here
   Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
   double t_initial = solverParams->get("Initial Time", 0.0);
   double t_final = solverParams->get("Final Time", 0.0);
   double t_current = t_initial;
-  double dt        = 1.0;
+  int numTimeSteps = 5;
+  double dt        = (t_initial - t_final)/(numTimeSteps + 1);
   *timeStep = dt;
-  double dt2 = dt/2.0;
-  int nsteps = (int)floor((t_final-t_initial)/dt);
+
   // Pointer index into sub-vectors for use with BLAS
   double *xptr, *uptr, *yptr, *vptr, *aptr;
   x->ExtractView( &xptr );
@@ -664,7 +621,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
   a->ExtractView( &aptr );
   int length = a->MyLength();
 
-  for(int step=1; step<=nsteps ; step++){
+  for(int step=1; step<=numTimeSteps ; step++){
 
     // Compute force_external
 
@@ -694,35 +651,6 @@ void PeridigmNS::Peridigm::executeImplicit() {
   // Compute local contributions to Jacobian
   PeridigmNS::Timer::self().startTimer("Construct Local Tangent");
 
-  // loop over the neighborhood for each locally-owned point and create
-  // non-zero entries in the matrix
-  vector<int> globalIndicies;
-  vector<double> zeros;
-  int* neighborhoodList = neighborhoodData->NeighborhoodList();
-  int neighborhoodListIndex = 0;
-  for(int LID=0 ; LID<neighborhoodData->NumOwnedPoints() ; ++LID){
-    int GID =  oneDimensionalOverlapMap->GID(LID);
-    int numNeighbors = neighborhoodList[neighborhoodListIndex++];
-    unsigned int numEntries = 3*(numNeighbors+1);
-    globalIndicies.resize(numEntries);
-    globalIndicies[0] = 3*GID;
-    globalIndicies[1] = 3*GID + 1;
-    globalIndicies[2] = 3*GID + 2;
-    for(int j=0 ; j<numNeighbors ; ++j){
-      int neighborLocalID = neighborhoodList[neighborhoodListIndex++];
-      int neighborGlobalID = oneDimensionalOverlapMap->GID(neighborLocalID);
-      globalIndicies[3*j+3] = 3*neighborGlobalID;
-      globalIndicies[3*j+4] = 3*neighborGlobalID + 1;
-      globalIndicies[3*j+5] = 3*neighborGlobalID + 2;
-    }
-    if(numEntries > zeros.size())
-      zeros.resize(numEntries, 0.0);
-    tangent->InsertGlobalValues(3*GID,   numEntries, &zeros[0], &globalIndicies[0]); 
-    tangent->InsertGlobalValues(3*GID+1, numEntries, &zeros[0], &globalIndicies[0]); 
-    tangent->InsertGlobalValues(3*GID+2, numEntries, &zeros[0], &globalIndicies[0]); 
-  }
-  tangent->GlobalAssemble();
-  
 
 
   // Initial implementation uses identity matrix
@@ -756,6 +684,58 @@ void PeridigmNS::Peridigm::executeImplicit() {
 
   // swap state N and state NP1
   dataManager->updateState();
+}
+
+void PeridigmNS::Peridigm::allocateJacobian() {
+
+  // Construct map for global tangent matrix
+  // Note that this must be an Epetra_Map, not an Epetra_BlockMap, so we can't use threeDimensionalMap directly
+  int numGlobalElements = 3*oneDimensionalMap->NumGlobalElements();
+  int numMyElements = 3*oneDimensionalMap->NumMyElements();
+  int* myGlobalElements = new int[numMyElements];
+  int* oneDimensionalMapGlobalElements = oneDimensionalMap->MyGlobalElements();
+  for(int iElem=0 ; iElem<oneDimensionalMap->NumMyElements() ; ++iElem){
+    myGlobalElements[3*iElem]     = 3*oneDimensionalMapGlobalElements[iElem];
+    myGlobalElements[3*iElem + 1] = 3*oneDimensionalMapGlobalElements[iElem] + 1;
+    myGlobalElements[3*iElem + 2] = 3*oneDimensionalMapGlobalElements[iElem] + 2;
+  }
+  int indexBase = 0;
+  tangentMap = Teuchos::rcp(new Epetra_Map(numGlobalElements, numMyElements, myGlobalElements, indexBase, *peridigmComm));
+  delete[] myGlobalElements;
+
+  // Create the global tangent matrix
+  Epetra_DataAccess CV = Copy;
+  int numEntriesPerRow = 0;  // If this is zero, allocation will take place during the insertion phase \todo Compute non-zeros instead of allocation during insertion.
+  bool staticProfile = false;  // \todo Can staticProfile be set to true?  Bond breaking would alter the non-zeros, but we could just leave them there to avoid reallocation.
+  tangent = Teuchos::rcp(new Epetra_FECrsMatrix(CV, *tangentMap, numEntriesPerRow, staticProfile));
+
+  // Loop over the neighborhood for each locally-owned point and create non-zero entries in the matrix
+  vector<int> globalIndicies;
+  vector<double> zeros;
+  int* neighborhoodList = neighborhoodData->NeighborhoodList();
+  int neighborhoodListIndex = 0;
+  for(int LID=0 ; LID<neighborhoodData->NumOwnedPoints() ; ++LID){
+    int GID =  oneDimensionalOverlapMap->GID(LID);
+    int numNeighbors = neighborhoodList[neighborhoodListIndex++];
+    unsigned int numEntries = 3*(numNeighbors+1);
+    globalIndicies.resize(numEntries);
+    globalIndicies[0] = 3*GID;
+    globalIndicies[1] = 3*GID + 1;
+    globalIndicies[2] = 3*GID + 2;
+    for(int j=0 ; j<numNeighbors ; ++j){
+      int neighborLocalID = neighborhoodList[neighborhoodListIndex++];
+      int neighborGlobalID = oneDimensionalOverlapMap->GID(neighborLocalID);
+      globalIndicies[3*j+3] = 3*neighborGlobalID;
+      globalIndicies[3*j+4] = 3*neighborGlobalID + 1;
+      globalIndicies[3*j+5] = 3*neighborGlobalID + 2;
+    }
+    if(numEntries > zeros.size())
+      zeros.resize(numEntries, 0.0);
+    tangent->InsertGlobalValues(3*GID,   numEntries, &zeros[0], &globalIndicies[0]); 
+    tangent->InsertGlobalValues(3*GID+1, numEntries, &zeros[0], &globalIndicies[0]); 
+    tangent->InsertGlobalValues(3*GID+2, numEntries, &zeros[0], &globalIndicies[0]); 
+  }
+  tangent->GlobalAssemble();
 }
 
 void PeridigmNS::Peridigm::synchDataManager() {
