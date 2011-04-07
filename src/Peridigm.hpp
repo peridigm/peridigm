@@ -120,6 +120,9 @@ namespace PeridigmNS {
     //! Allocate memory for non-zeros in global Jacobian
     void allocateJacobian();
 
+    //! Apply kinematic boundary conditions to force vector (zero out forces on d.o.f. with kinematic b.c.).
+    void applyKinematicBCToForceVector(double loadIncrement);
+
     //! Synchronize data in DataManager across processes (needed before call to OutputManager::write() )
     void synchDataManager();
 
