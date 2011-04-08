@@ -63,6 +63,7 @@
 #include "Peridigm_AbstractDiscretization.hpp"
 #include "Peridigm_ModelEvaluator.hpp"
 #include "Peridigm_DataManager.hpp"
+#include "Peridigm_SerialMatrix.hpp"
 #include "Peridigm_OutputManager.hpp"
 #include "Peridigm_ComputeManager.hpp"
 
@@ -122,6 +123,9 @@ namespace PeridigmNS {
 
     //! Apply kinematic boundary conditions: for Jacobain, zero out rows and columns and put one on diagonal; for residual put displacement increment corresponding to bc.
     void applyKinematicBC(double loadIncrement, Teuchos::RCP<Epetra_Vector> vec, Teuchos::RCP<Epetra_FECrsMatrix> mat);
+
+    //! Compute the residual for quasi-statics
+    double computeResidual();
 
     //! Synchronize data in DataManager across processes (needed before call to OutputManager::write() )
     void synchDataManager();
@@ -242,6 +246,9 @@ namespace PeridigmNS {
 
     //! Mothership multivector that contains all the global vectors (x, u, y, v, a, force, etc.)
     Teuchos::RCP<Epetra_MultiVector> mothership;
+
+    //! Overlap Jacobian; filled by each processor and then assembled into the mothership Jacobian;
+    Teuchos::RCP<PeridigmNS::SerialMatrix> overlapJacobian;
 
     //! Global vector for initial positions
     Teuchos::RCP<Epetra_Vector> x;

@@ -1,4 +1,5 @@
-// @HEADER
+/*! \file PHAL_EvaluateJacobian.hpp */
+
 //@HEADER
 // ************************************************************************
 //
@@ -43,36 +44,38 @@
 //
 // ************************************************************************
 //@HEADER
-#ifndef PHAL_FACTORY_TRAITS_HPP
-#define PHAL_FACTORY_TRAITS_HPP
+#ifndef PHAL_EVALUATEJACOBIAN_HPP
+#define PHAL_EVALUATEJACOBIAN_HPP
 
-// User Defined Evaluator Types
-#include "PHAL_UpdateForceState.hpp"
-#include "PHAL_EvaluateForce.hpp"
-#include "PHAL_Contact.hpp"
-#include "PHAL_EvaluateJacobian.hpp"
-#include <boost/mpl/vector.hpp>
+#include <Phalanx_ConfigDefs.hpp>
+#include <Phalanx_Evaluator_WithBaseImpl.hpp>
+#include <Phalanx_Evaluator_Derived.hpp>
+#include <Phalanx_MDField.hpp>
+#include <vector>
 
-/*! \brief Struct to define Evaluator objects for the EvaluatorFactory.
-    
-    Preconditions:
-    - You must provide a boost::mpl::vector named EvaluatorTypes that contain all Evaluator objects that you wish the factory to build.  Do not confuse evaluator types (concrete instances of evaluator objects) with evaluation types (types of evaluations to perform, i.e., Residual, Jacobian). 
+template<typename EvalT, typename Traits>
+class EvaluateJacobian : public PHX::EvaluatorWithBaseImpl<Traits>,
+                         public PHX::EvaluatorDerived<EvalT, Traits>
+{
+  typedef typename EvalT::ScalarT ScalarT;
 
-*/
-template<typename Traits>
-struct FactoryTraits {
-  
-  static const int id_update_force_state        = 0;
-  static const int id_evaluate_force            = 1;
-  static const int id_contact                   = 2;
-  static const int id_evaluate_jacobian         = 3;
+public:
 
-  typedef boost::mpl::vector< UpdateForceState<_,Traits>,
-							  EvaluateForce<_,Traits>,
-							  Contact<_,Traits>,
-                              EvaluateJacobian<_,Traits>
-  > EvaluatorTypes;
-  
+  EvaluateJacobian(Teuchos::ParameterList& p);
+
+  void postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& vm);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+private:
+ 
+  Teuchos::RCP<PHX::FieldTag> evaluate_jacobian_field_tag;
+  bool m_verbose;
+
+  std::size_t m_num_pt;
 };
 
-#endif
+#include "PHAL_EvaluateJacobian_Def.hpp"
+
+#endif // PHAL_EVALUATEJACOBIAN_HPP

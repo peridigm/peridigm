@@ -388,6 +388,7 @@ void PeridigmNS::Peridigm::initializeWorkset() {
   *timeStep = 0.0;
   workset->timeStep = timeStep;
   workset->dataManager = dataManager;
+  workset->jacobian = overlapJacobian;
   workset->materialModels = materialModels;
   workset->neighborhoodData = neighborhoodData;
   workset->contactModels = contactModels;
@@ -468,7 +469,7 @@ void PeridigmNS::Peridigm::execute() {
     executeExplicit();
 
   // allowable implicit time integration schemes:  Implicit
-  else if(solverParams->isSublist("Implicit"))
+  else if(solverParams->isSublist("Implicit"))    
     executeImplicit();
 
 }
@@ -599,10 +600,13 @@ void PeridigmNS::Peridigm::executeImplicit() {
   workset->timeStep = timeStep;
 
   Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
+  Teuchos::RCP<Teuchos::ParameterList> implicitParams = sublist(solverParams, "Implicit", true);
   double timeInitial = solverParams->get("Initial Time", 0.0);
   double timeFinal = solverParams->get("Final Time", 1.0);
   double timeCurrent = timeInitial;
-  int numLoadSteps = 5;
+  int numLoadSteps = implicitParams->get("Number of Load Steps", 10);
+  double absoluteTolerance = implicitParams->get("Absolute Tolerance", 1.0e-6);
+  double maximumSolverIterations = implicitParams->get("Maximum Solver Iterations", 10);
 
   // Pointer index into sub-vectors for use with BLAS
   double *xptr, *uptr, *yptr, *vptr, *aptr;
@@ -630,44 +634,30 @@ void PeridigmNS::Peridigm::executeImplicit() {
     for(int i=0 ; i<y->MyLength() ; ++i)
       (*y)[i] = (*x)[i] + (*u)[i] + (*deltaU)[i];
 
-    // Compute the internal force
+    // compute the residual
+    double residualNorm = computeResidual();
 
-    // Copy data from mothership vectors to overlap vectors in data manager
-    PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-    dataManager->getData(Field_NS::DISPL3D, Field_NS::FieldSpec::STEP_NP1)->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-    dataManager->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->Import(*y, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-    dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_NP1)->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-    PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
-    // Update forces based on new positions
-    PeridigmNS::Timer::self().startTimer("Model Evaluator");
-    modelEvaluator->evalModel(workset);
-    PeridigmNS::Timer::self().stopTimer("Model Evaluator");
-    // Copy force from the data manager to the mothership vector
-    PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-    force->Export(*dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
-    PeridigmNS::Timer::self().stopTimer("Gather/Scatter");    
+    int solverIteration = 1;
+    while(residualNorm > absoluteTolerance && solverIteration <= maximumSolverIterations){
+      cout << "  residual = " << residualNorm << endl;
 
-    // copy the internal force to the residual vector
-    (*residual) = (*force);
-    
-    // zero out the rows corresponding to kinematic boundary conditions and compute the residual
-    applyKinematicBC(0.0, residual, Teuchos::RCP<Epetra_FECrsMatrix>());
-    double residualNorm2;
-    residual->Norm2(&residualNorm2);
-
-    cout << "  residual = " << residualNorm2 << endl;
-
-    // While residual < tolerance
-
-    //      Compute tangent
-    //applyKinematicBC(loadIncrement, residual, tangent);
-    //tangent->Print(cout);
+      // Compute the tangent
+      applyKinematicBC(loadIncrement, residual, tangent);
+      modelEvaluator->evalJacobian(workset);
+      //tangent->Print(cout);
 
     //      Solver linear system
 
     //      Apply increment to nodal positions
 
     //      Compute residual
+
+      residualNorm = computeResidual();
+
+      solverIteration++;
+    }
+
+    cout << "  residual = " << residualNorm << endl;
 
     // Add the converged displacement increment to the displacement
     for(int i=0 ; i<u->MyLength() ; ++i)
@@ -738,6 +728,11 @@ void PeridigmNS::Peridigm::allocateJacobian() {
     tangent->InsertGlobalValues(3*GID+2, numEntries, &zeros[0], &globalIndicies[0]); 
   }
   tangent->GlobalAssemble();
+
+  // create the serial Jacobian
+  // \todo Allocating full dense matrix, this is BAD BAD BAD.
+  overlapJacobian = Teuchos::rcp(new PeridigmNS::SerialMatrix(tangentMap->NumMyPoints()));
+  workset->jacobian = overlapJacobian;
 }
 
 void PeridigmNS::Peridigm::applyKinematicBC(double loadIncrement,
@@ -814,6 +809,39 @@ void PeridigmNS::Peridigm::applyKinematicBC(double loadIncrement,
 	  }
 	}
   }
+}
+
+double PeridigmNS::Peridigm::computeResidual() {
+
+  // The residual is computed as the L2 norm of the internal force vector with the
+  // entries corresponding to kinematic BC zeroed out.
+
+  // Copy data from mothership vectors to overlap vectors in data manager
+  PeridigmNS::Timer::self().startTimer("Gather/Scatter");
+  dataManager->getData(Field_NS::DISPL3D, Field_NS::FieldSpec::STEP_NP1)->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  dataManager->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->Import(*y, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_NP1)->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+
+  // Update forces based on new positions
+  PeridigmNS::Timer::self().startTimer("Model Evaluator");
+  modelEvaluator->evalModel(workset);
+  PeridigmNS::Timer::self().stopTimer("Model Evaluator");
+
+  // Copy force from the data manager to the mothership vector
+  PeridigmNS::Timer::self().startTimer("Gather/Scatter");
+  force->Export(*dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
+  PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+
+  // copy the internal force to the residual vector
+  (*residual) = (*force);
+    
+  // zero out the rows corresponding to kinematic boundary conditions and compute the residual
+  applyKinematicBC(0.0, residual, Teuchos::RCP<Epetra_FECrsMatrix>());
+  double residualNorm2;
+  residual->Norm2(&residualNorm2);
+
+  return residualNorm2;
 }
 
 void PeridigmNS::Peridigm::synchDataManager() {
