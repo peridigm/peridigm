@@ -631,7 +631,8 @@ void PeridigmNS::Peridigm::executeImplicit() {
     cout << "Load step " << step+1 << ", load increment = " << loadIncrement << ", time step = " << dt << ", current time = " << timeCurrent << endl;
 
     // Update nodal positions for nodes with kinematic B.C.
-    applyKinematicBC(-1.0*loadIncrement, deltaU, Teuchos::RCP<Epetra_FECrsMatrix>());
+    deltaU->PutScalar(0.0);
+    applyKinematicBC(loadIncrement, deltaU, Teuchos::RCP<Epetra_FECrsMatrix>());
 
     // Set the current position
     // \todo We probably want to rework this so that the material models get valid x, u, and y values
@@ -648,9 +649,9 @@ void PeridigmNS::Peridigm::executeImplicit() {
       cout << "  residual = " << residualNorm << endl;
 
       // Compute the tangent
+      tangent->PutScalar(0.0);
       modelEvaluator->evalJacobian(workset);
-      applyKinematicBC(loadIncrement, Teuchos::RCP<Epetra_Vector>(), tangent);
-      applyKinematicBC(0.0, residual, Teuchos::RCP<Epetra_FECrsMatrix>());
+      applyKinematicBC(0.0, residual, tangent);
       residual->Scale(-1.0);
 
       // Solver linear system
@@ -820,7 +821,7 @@ void PeridigmNS::Peridigm::applyKinematicBC(double loadIncrement,
         // this will cause the solution procedure to solve for the correct U at the bc
 		localNodeID = threeDimensionalMap->LID(nodeList[i]);
 		if(!vec.is_null() && localNodeID != -1){
-		  (*vec)[localNodeID*3 + coord] = -1.0*value*loadIncrement;
+		  (*vec)[localNodeID*3 + coord] = value*loadIncrement;
         }
 	  }
 	}

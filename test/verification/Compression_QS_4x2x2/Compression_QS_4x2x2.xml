@@ -3,7 +3,7 @@
 	<Parameter name="Verbose" type="bool" value="false"/>
         <ParameterList name="Discretization">
           <Parameter name="Type" type="string" value="PdQuickGrid" />
-	  <Parameter name="Horizon" type="double" value="1.42"/>
+	  <Parameter name="Horizon" type="double" value="1.75"/>
           <ParameterList name="TensorProduct3DMeshGenerator">
 	  		<Parameter name="Type" type="string" value="PdQuickGrid"/>
 			<Parameter name="X Origin" type="double" value="-2.0"/>
@@ -39,7 +39,7 @@
         <Parameter name="Type" type="string" value="Applied Displacement"/>
 	    <Parameter name="Node Set" type="string" value="Max X Node Set"/>
         <Parameter name="Coordinate" type="string" value="x"/>
-        <Parameter name="Value" type="double" value="-0.01"/>
+        <Parameter name="Value" type="double" value="-0.1"/>
 	  </ParameterList>
       <ParameterList name="Prescribed Displacement Y Axis">
         <Parameter name="Type" type="string" value="Applied Displacement"/>
@@ -61,8 +61,8 @@
     <Parameter name="Final Time" type="double" value="0.00005"/> 
 	<ParameterList name="Implicit">
       <Parameter name="Number of Load Steps" type="int" value="20"/>
-      <Parameter name="Absolute Tolerance" type="double" value="1.0e-6"/>
-      <Parameter name="Maximum Solver Iterations" type="int" value="1"/>
+      <Parameter name="Absolute Tolerance" type="double" value="1.0e-2"/>
+      <Parameter name="Maximum Solver Iterations" type="int" value="10"/>
 	</ParameterList>
   </ParameterList>
   <ParameterList name="Output">
