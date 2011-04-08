@@ -50,41 +50,34 @@
 #include "Peridigm_SerialMatrix.hpp"
 #include <sstream>
 
-PeridigmNS::SerialMatrix::SerialMatrix(int matrixDimension) : dim(matrixDimension)
+PeridigmNS::SerialMatrix::SerialMatrix(Teuchos::RCP<Epetra_FECrsMatrix> epetraFECrsMatrix)
+  : FECrsMatrix(epetraFECrsMatrix)
 {
-  // \todo Have the constructor take neighborhood data and allocate only necessary nonzeros
-  data.resize(dim*dim, 0.0);
-}
-
-void PeridigmNS::SerialMatrix::sumIntoCrsMatrix()
-{
-}
-
-void PeridigmNS::SerialMatrix::insertValue(int row, int col, double value)
-{
-  data[row*dim + col] = value;
 }
 
 void PeridigmNS::SerialMatrix::addValue(int row, int col, double value)
 {
-  data[row*dim + col] += value;
+  // what we really want to do here is cache a block of values and their
+  // row and column ids.  Then when the block is full, sum into the crs matrix.
+
+  // the initial implementation is just an interface to the underlying Epetra_FECrsMatrix,
+  // filling one value at a time (very inefficient).
+
+  int numRows = 1;
+  int localRowID = row;
+  int numCols = 1;
+  int localColID = col;
+  double** data = new double*[1];
+  data[0] = new double[1];
+  data[0][0] = value;
+
+  FECrsMatrix->SumIntoGlobalValues(numRows, &localRowID, numCols, &localColID, data);
+
+  delete[] data[0];
+  delete[] data;
 }
 
 void PeridigmNS::SerialMatrix::putScalar(double value)
 {
-  data.assign(data.size(), value);
-}
-
-void PeridigmNS::SerialMatrix::print(std::ostream& out)
-{
-  std::stringstream ss;
-  for(int i=0 ; i<dim ; ++i){
-    ss.str("");
-    ss.precision(10);
-    for(int j=0 ; j<dim ; ++j){
-      ss << std::setw(18) << data[i*dim+j] << " ";
-    }
-    ss << endl;
-    out << ss.str();
-  }
+  FECrsMatrix->PutScalar(value);
 }

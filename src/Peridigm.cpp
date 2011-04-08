@@ -54,6 +54,8 @@
 #include <map>
 
 #include <Epetra_Import.h>
+#include <Epetra_LinearProblem.h>
+#include <AztecOO.h>
 #include <Teuchos_VerboseObject.hpp>
 
 #include "Peridigm.hpp"
@@ -616,6 +618,9 @@ void PeridigmNS::Peridigm::executeImplicit() {
   v->ExtractView( &vptr );
   a->ExtractView( &aptr );
 
+  // \todo Put in mothership.
+  Epetra_Vector lhs(*residual);
+
   for(int step=0; step<numLoadSteps ; step++){
 
     double loadIncrement = 1.0/double(numLoadSteps);
@@ -623,10 +628,10 @@ void PeridigmNS::Peridigm::executeImplicit() {
     timeCurrent += dt;
     *timeStep = dt;
 
-    cout << "Load step " << step+1 << ", time step = " << dt << ", current time = " << timeCurrent << endl;
+    cout << "Load step " << step+1 << ", load increment = " << loadIncrement << ", time step = " << dt << ", current time = " << timeCurrent << endl;
 
     // Update nodal positions for nodes with kinematic B.C.
-    applyKinematicBC(loadIncrement, deltaU, Teuchos::RCP<Epetra_FECrsMatrix>());
+    applyKinematicBC(-1.0*loadIncrement, deltaU, Teuchos::RCP<Epetra_FECrsMatrix>());
 
     // Set the current position
     // \todo We probably want to rework this so that the material models get valid x, u, and y values
@@ -639,19 +644,33 @@ void PeridigmNS::Peridigm::executeImplicit() {
 
     int solverIteration = 1;
     while(residualNorm > absoluteTolerance && solverIteration <= maximumSolverIterations){
+
       cout << "  residual = " << residualNorm << endl;
 
       // Compute the tangent
-      applyKinematicBC(loadIncrement, residual, tangent);
       modelEvaluator->evalJacobian(workset);
-      //tangent->Print(cout);
+      applyKinematicBC(loadIncrement, Teuchos::RCP<Epetra_Vector>(), tangent);
+      applyKinematicBC(0.0, residual, Teuchos::RCP<Epetra_FECrsMatrix>());
+      residual->Scale(-1.0);
 
-    //      Solver linear system
+      // Solver linear system
+      Epetra_LinearProblem linearProblem;
+      AztecOO solver(linearProblem);
+      solver.SetAztecOption(AZ_precond, AZ_Jacobi);
+      stringstream ss;
+      solver.SetOutputStream(ss);
+      int maxAztecIterations = 500;
+      double aztecTolerance = 1.0e-6;
+      lhs.PutScalar(0.0);
+      solver.Iterate(tangent.get(), &lhs, residual.get(), maxAztecIterations, aztecTolerance);
 
-    //      Apply increment to nodal positions
-
-    //      Compute residual
-
+      // Apply increment to nodal positions
+      for(int i=0 ; i<y->MyLength() ; ++i)
+        (*deltaU)[i] += lhs[i];
+      for(int i=0 ; i<y->MyLength() ; ++i)
+        (*y)[i] = (*x)[i] + (*u)[i] + (*deltaU)[i];
+      
+      // Compute residual
       residualNorm = computeResidual();
 
       solverIteration++;
@@ -667,8 +686,6 @@ void PeridigmNS::Peridigm::executeImplicit() {
     PeridigmNS::Timer::self().startTimer("Output");
     forceStateDesc->set("Time", timeCurrent);
     outputManager->write(x,u,v,a,force,dataManager,neighborhoodData,forceStateDesc);
-//    this->synchDataManager();
-//    outputManager->write(dataManager,neighborhoodData,forceStateDesc);
     PeridigmNS::Timer::self().stopTimer("Output");
 
     // swap state N and state NP1
@@ -730,8 +747,7 @@ void PeridigmNS::Peridigm::allocateJacobian() {
   tangent->GlobalAssemble();
 
   // create the serial Jacobian
-  // \todo Allocating full dense matrix, this is BAD BAD BAD.
-  overlapJacobian = Teuchos::rcp(new PeridigmNS::SerialMatrix(tangentMap->NumMyPoints()));
+  overlapJacobian = Teuchos::rcp(new PeridigmNS::SerialMatrix(tangent));
   workset->jacobian = overlapJacobian;
 }
 
@@ -803,8 +819,8 @@ void PeridigmNS::Peridigm::applyKinematicBC(double loadIncrement,
         // set entry in residual vector equal to the displacement increment for the kinematic bc
         // this will cause the solution procedure to solve for the correct U at the bc
 		localNodeID = threeDimensionalMap->LID(nodeList[i]);
-		if(localNodeID != -1){
-		  (*vec)[localNodeID*3 + coord] = value*loadIncrement;
+		if(!vec.is_null() && localNodeID != -1){
+		  (*vec)[localNodeID*3 + coord] = -1.0*value*loadIncrement;
         }
 	  }
 	}

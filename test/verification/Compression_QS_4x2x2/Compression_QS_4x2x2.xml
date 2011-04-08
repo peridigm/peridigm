@@ -3,7 +3,7 @@
 	<Parameter name="Verbose" type="bool" value="false"/>
         <ParameterList name="Discretization">
           <Parameter name="Type" type="string" value="PdQuickGrid" />
-	  <Parameter name="Horizon" type="double" value="1.1"/>
+	  <Parameter name="Horizon" type="double" value="1.42"/>
           <ParameterList name="TensorProduct3DMeshGenerator">
 	  		<Parameter name="Type" type="string" value="PdQuickGrid"/>
 			<Parameter name="X Origin" type="double" value="-2.0"/>
@@ -39,7 +39,7 @@
         <Parameter name="Type" type="string" value="Applied Displacement"/>
 	    <Parameter name="Node Set" type="string" value="Max X Node Set"/>
         <Parameter name="Coordinate" type="string" value="x"/>
-        <Parameter name="Value" type="double" value="-0.5"/>
+        <Parameter name="Value" type="double" value="-0.01"/>
 	  </ParameterList>
       <ParameterList name="Prescribed Displacement Y Axis">
         <Parameter name="Type" type="string" value="Applied Displacement"/>
@@ -60,6 +60,9 @@
     <Parameter name="Initial Time" type="double" value="0.0"/>
     <Parameter name="Final Time" type="double" value="0.00005"/> 
 	<ParameterList name="Implicit">
+      <Parameter name="Number of Load Steps" type="int" value="20"/>
+      <Parameter name="Absolute Tolerance" type="double" value="1.0e-6"/>
+      <Parameter name="Maximum Solver Iterations" type="int" value="1"/>
 	</ParameterList>
   </ParameterList>
   <ParameterList name="Output">
@@ -75,6 +78,7 @@
                 <Parameter name="ID" type="bool" value="true"/>
                 <Parameter name="Proc Num" type="bool" value="true"/>
                 <Parameter name="Dilatation" type="bool" value="true"/>
+                <Parameter name="Force Density" type="bool" value="true"/>
                 <Parameter name="Weighted Volume" type="bool" value="true"/>
             </ParameterList>
         </ParameterList>

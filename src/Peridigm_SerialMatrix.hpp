@@ -51,6 +51,8 @@
 #include <vector>
 #include <map>
 #include <iostream>
+#include <Teuchos_RCP.hpp>
+#include <Epetra_FECrsMatrix.h>
 
 namespace PeridigmNS {
 
@@ -59,39 +61,27 @@ namespace PeridigmNS {
 class SerialMatrix {
 
 public:
-  
-  SerialMatrix(int matrixDimension);
 
-  //! Copy constructor.
-  SerialMatrix(const SerialMatrix& denseMatrix){}
+  SerialMatrix(Teuchos::RCP<Epetra_FECrsMatrix> epetraFECrsMatrix);
 
   //! Destructor.
   ~SerialMatrix(){}
 
-  //! Set data at given location, indexed by local ID
-  void insertValue(int row, int col, double value);
-
   //! Add data at given location, indexed by local ID
   void addValue(int row, int col, double value);
-
-  //! Sum data into Epetra_CrsMatrix
-  void sumIntoCrsMatrix();
 
   //! Set all entries to given scalar
   void putScalar(double value);
 
-  //! Print
-  void print(std::ostream& out);
-
 protected:
 
-  int dim;
-  std::vector<double> data;
+  Teuchos::RCP<Epetra_FECrsMatrix> FECrsMatrix;
 
 private:
 
-  //! Default constructor, private to prohibit use.
+  //! Private to prohibit use.
   SerialMatrix() {}
+  SerialMatrix(const SerialMatrix& serialMatrix){}
 };
 
 }
