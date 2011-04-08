@@ -83,6 +83,9 @@ namespace PeridigmNS {
     //! Model evaluation that acts directly on the workset
     void evalModel(Teuchos::RCP<PHAL::Workset> workset) const;
 
+    //! Model evaluation that acts directly on the workset
+    void evalJacobian(Teuchos::RCP<PHAL::Workset> workset) const;
+
     //! Update internal history-dependent state information
     void updateState() {};
 
@@ -94,10 +97,14 @@ namespace PeridigmNS {
 
   protected:
 
-	void constructEvaluators();
+	void constructForceEvaluators();
+	void constructJacobianEvaluators();
 
-	//! Phalanx field manager
-	Teuchos::RCP<PHX::FieldManager<PHAL::PeridigmTraits> > fm;
+	//! Phalanx field manager for internal force evaluation
+	Teuchos::RCP<PHX::FieldManager<PHAL::PeridigmTraits> > forceFieldManager;
+
+	//! Phalanx field manager for jacobian evaluation
+	Teuchos::RCP<PHX::FieldManager<PHAL::PeridigmTraits> > jacobianFieldManager;
 
 	//! Material models
     Teuchos::RCP<std::vector<Teuchos::RCP<const PeridigmNS::Material> > > materialModels;
