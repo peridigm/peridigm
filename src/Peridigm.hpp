@@ -120,8 +120,8 @@ namespace PeridigmNS {
     //! Allocate memory for non-zeros in global Jacobian
     void allocateJacobian();
 
-    //! Apply kinematic boundary conditions to force vector (zero out forces on d.o.f. with kinematic b.c.).
-    void applyKinematicBCToForceVector(double loadIncrement);
+    //! Apply kinematic boundary conditions: for Jacobain, zero out rows and columns and put one on diagonal; for residual put displacement increment corresponding to bc.
+    void applyKinematicBC(double loadIncrement, Teuchos::RCP<Epetra_Vector> vec, Teuchos::RCP<Epetra_FECrsMatrix> mat);
 
     //! Synchronize data in DataManager across processes (needed before call to OutputManager::write() )
     void synchDataManager();
@@ -177,6 +177,8 @@ namespace PeridigmNS {
     Teuchos::RCP<const Epetra_Vector> getA() { return a; }
     Teuchos::RCP<const Epetra_Vector> getForce() { return force; }
     Teuchos::RCP<const Epetra_Vector> getContactForce() { return contactForce; }
+    Teuchos::RCP<const Epetra_Vector> getDeltaU() { return deltaU; }
+    Teuchos::RCP<const Epetra_Vector> getResidual() { return residual; }
     //@}
 
     //! @name Accessors for neighborhood data
@@ -259,8 +261,14 @@ namespace PeridigmNS {
     //! Global vector for force
     Teuchos::RCP<Epetra_Vector> force;
 
-    //! Global vector for contact force
+    //! Global vector for contact force (used only in simulations with contact)
     Teuchos::RCP<Epetra_Vector> contactForce;
+
+    //! Global vector for delta u (used only in implicit time integration)
+    Teuchos::RCP<Epetra_Vector> deltaU;
+
+    //! Global vector for residual (used only in implicit time integration)
+    Teuchos::RCP<Epetra_Vector> residual;
 
     //! Map for global tangent matrix (note, must be an Epetra_Map, not an Epetra_BlockMap)
     Teuchos::RCP<Epetra_Map> tangentMap;

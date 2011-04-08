@@ -199,7 +199,8 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
   bondMap = peridigmDisc->getBondMap();
 
   // Create mothership vector
-  mothership = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalMap, 7));
+  // \todo Do not allocate space for the contact force, residual, and deltaU if not needed.
+  mothership = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalMap, 9));
   // Set ref-count pointers for each of the global vectors
   x = Teuchos::rcp((*mothership)(0), false);             // initial positions
   u = Teuchos::rcp((*mothership)(1), false);             // displacement
@@ -207,7 +208,9 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
   v = Teuchos::rcp((*mothership)(3), false);             // velocities
   a = Teuchos::rcp((*mothership)(4), false);             // accelerations
   force = Teuchos::rcp((*mothership)(5), false);         // force
-  contactForce = Teuchos::rcp((*mothership)(6), false);  // contact force
+  contactForce = Teuchos::rcp((*mothership)(6), false);  // contact force (used only for contact simulations)
+  deltaU = Teuchos::rcp((*mothership)(7), false);        // increment in displacement (used only for implicit time integration)
+  residual = Teuchos::rcp((*mothership)(8), false);      // residual (used only for implicit time integration)
 
   // Set the initial positions
   double* initialX;
@@ -595,18 +598,11 @@ void PeridigmNS::Peridigm::executeImplicit() {
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   workset->timeStep = timeStep;
 
-  // Copy data from mothership vectors to overlap vectors in data manager
-  dataManager->getData(Field_NS::DISPL3D, Field_NS::FieldSpec::STEP_NP1)->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-  dataManager->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->Import(*y, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-  dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_NP1)->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-
   Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
-  double t_initial = solverParams->get("Initial Time", 0.0);
-  double t_final = solverParams->get("Final Time", 0.0);
-  double t_current = t_initial;
-  int numTimeSteps = 5;
-  double dt        = (t_initial - t_final)/(numTimeSteps + 1);
-  *timeStep = dt;
+  double timeInitial = solverParams->get("Initial Time", 0.0);
+  double timeFinal = solverParams->get("Final Time", 1.0);
+  double timeCurrent = timeInitial;
+  int numLoadSteps = 5;
 
   // Pointer index into sub-vectors for use with BLAS
   double *xptr, *uptr, *yptr, *vptr, *aptr;
@@ -615,21 +611,57 @@ void PeridigmNS::Peridigm::executeImplicit() {
   y->ExtractView( &yptr );
   v->ExtractView( &vptr );
   a->ExtractView( &aptr );
-  int length = a->MyLength();
 
-  for(int step=1; step<=numTimeSteps ; step++){
+  for(int step=0; step<numLoadSteps ; step++){
 
-    // Compute force_external
+    double loadIncrement = 1.0/double(numLoadSteps);
+    double dt = (timeFinal - timeInitial)*loadIncrement;
+    timeCurrent += dt;
+    *timeStep = dt;
+
+    cout << "Load step " << step+1 << ", time step = " << dt << ", current time = " << timeCurrent << endl;
 
     // Update nodal positions for nodes with kinematic B.C.
-    double loadIncrement = double(step)/double(numTimeSteps-1) - double(step-1)/double(numTimeSteps-1);
-    applyKinematicBCToForceVector(loadIncrement);
+    applyKinematicBC(loadIncrement, deltaU, Teuchos::RCP<Epetra_FECrsMatrix>());
 
-    // Compute residual
+    // Set the current position
+    // \todo We probably want to rework this so that the material models get valid x, u, and y values
+    // Currently the u values are from the previous load step (and if we update u here we'll be unable to properly undo a time step, which we'll need to adaptive time stepping).
+    for(int i=0 ; i<y->MyLength() ; ++i)
+      (*y)[i] = (*x)[i] + (*u)[i] + (*deltaU)[i];
+
+    // Compute the internal force
+
+    // Copy data from mothership vectors to overlap vectors in data manager
+    PeridigmNS::Timer::self().startTimer("Gather/Scatter");
+    dataManager->getData(Field_NS::DISPL3D, Field_NS::FieldSpec::STEP_NP1)->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+    dataManager->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->Import(*y, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+    dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_NP1)->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+    PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+    // Update forces based on new positions
+    PeridigmNS::Timer::self().startTimer("Model Evaluator");
+    modelEvaluator->evalModel(workset);
+    PeridigmNS::Timer::self().stopTimer("Model Evaluator");
+    // Copy force from the data manager to the mothership vector
+    PeridigmNS::Timer::self().startTimer("Gather/Scatter");
+    force->Export(*dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
+    PeridigmNS::Timer::self().stopTimer("Gather/Scatter");    
+
+    // copy the internal force to the residual vector
+    (*residual) = (*force);
+    
+    // zero out the rows corresponding to kinematic boundary conditions and compute the residual
+    applyKinematicBC(0.0, residual, Teuchos::RCP<Epetra_FECrsMatrix>());
+    double residualNorm2;
+    residual->Norm2(&residualNorm2);
+
+    cout << "  residual = " << residualNorm2 << endl;
 
     // While residual < tolerance
 
     //      Compute tangent
+    //applyKinematicBC(loadIncrement, residual, tangent);
+    //tangent->Print(cout);
 
     //      Solver linear system
 
@@ -637,51 +669,23 @@ void PeridigmNS::Peridigm::executeImplicit() {
 
     //      Compute residual
 
+    // Add the converged displacement increment to the displacement
+    for(int i=0 ; i<u->MyLength() ; ++i)
+      (*u)[i] += (*deltaU)[i];
+
+    // Write output for completed load step
+    PeridigmNS::Timer::self().startTimer("Output");
+    forceStateDesc->set("Time", timeCurrent);
+    outputManager->write(x,u,v,a,force,dataManager,neighborhoodData,forceStateDesc);
+//    this->synchDataManager();
+//    outputManager->write(dataManager,neighborhoodData,forceStateDesc);
+    PeridigmNS::Timer::self().stopTimer("Output");
+
+    // swap state N and state NP1
+    dataManager->updateState();
+
+    cout << endl;
   }
-
-  // Copy data from mothership vectors to overlap vectors in data manager
-  PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-  dataManager->getData(Field_NS::DISPL3D, Field_NS::FieldSpec::STEP_NP1)->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-  dataManager->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->Import(*y, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-  dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_NP1)->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-  PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
-
-  // Compute local contributions to Jacobian
-  PeridigmNS::Timer::self().startTimer("Construct Local Tangent");
-
-
-
-  // Initial implementation uses identity matrix
-  // This fill will eventually be done by the material models
-//   for(int LID=0 ; LID<tangentMap->NumMyElements() ; ++LID){
-//     int globalID = tangentMap->GID(LID);
-//     int numEntries = 1;
-//     int* indices = new int[numEntries];
-//     indices[0] = globalID;
-//     double* values = new double[numEntries];
-//     values[0] = 1.0;
-//     overlapTangent->InsertGlobalValues(globalID, numEntries, values, indices);
-//     delete[] indices;
-//     delete[] values;
-//   }
-//   overlapTangent->FillComplete();
-   PeridigmNS::Timer::self().stopTimer("Construct Local Tangent");
-
-//   // Scatter add from the overlap tangent to the global tangent
-   PeridigmNS::Timer::self().startTimer("Global Tangent Fill");
-//   tangent->Import(*overlapTangent, *overlapTangentToGlobalTangentImporter, Add);
-   PeridigmNS::Timer::self().stopTimer("Global Tangent Fill");    
-
-  tangent->Print(cout);
-
-  PeridigmNS::Timer::self().startTimer("Output");
-  outputManager->write(x,u,v,a,force,dataManager,neighborhoodData,forceStateDesc);
-//  this->synchDataManager();
-//  outputManager->write(dataManager,neighborhoodData,forceStateDesc);
-  PeridigmNS::Timer::self().stopTimer("Output");
-
-  // swap state N and state NP1
-  dataManager->updateState();
 }
 
 void PeridigmNS::Peridigm::allocateJacobian() {
@@ -736,7 +740,9 @@ void PeridigmNS::Peridigm::allocateJacobian() {
   tangent->GlobalAssemble();
 }
 
-void PeridigmNS::Peridigm::applyKinematicBCToForceVector(double loadIncrement) {
+void PeridigmNS::Peridigm::applyKinematicBC(double loadIncrement,
+                                            Teuchos::RCP<Epetra_Vector> vec,
+                                            Teuchos::RCP<Epetra_FECrsMatrix> mat) {
 
   Teuchos::ParameterList& problemParams = peridigmParams->sublist("Problem");
   Teuchos::ParameterList& bcParams = problemParams.sublist("Boundary Conditions");
@@ -760,6 +766,16 @@ void PeridigmNS::Peridigm::applyKinematicBCToForceVector(double loadIncrement) {
 	}
   }
 
+  // create data structures for inserting ones and zeros into jacobian
+  vector<double> jacobianRow;
+  vector<int> jacobianRowIndicies;
+  if(!mat.is_null()){
+    jacobianRow.resize(tangentMap->NumMyPoints(), 0.0);
+    jacobianRowIndicies.resize(tangentMap->NumMyPoints());
+    for(unsigned int i=0 ; i<jacobianRowIndicies.size() ; ++i)
+      jacobianRowIndicies[i] = i;
+  }
+
   // apply the kinematic boundary conditions
   for(it = bcParams.begin() ; it != bcParams.end() ; it++){
 	const string & name = it->first;
@@ -780,9 +796,21 @@ void PeridigmNS::Peridigm::applyKinematicBCToForceVector(double loadIncrement) {
 	  // apply kinematic boundary conditions to locally-owned nodes
 	  vector<int> & nodeList = nodeSets[nodeSet];
 	  for(unsigned int i=0 ; i<nodeList.size() ; i++){
-		int localNodeID = threeDimensionalMap->LID(nodeList[i]);
-		if(localNodeID != -1)
-		  (*u)[localNodeID*3 + coord] += value*loadIncrement;
+        // zero out row and column in Jacobian, put one on diagonal
+		int localNodeID = tangentMap->LID(nodeList[i]);
+		if(!mat.is_null() && localNodeID != -1){
+          int entry = localNodeID*3 + coord;
+          jacobianRow[entry] = 1.0;
+          mat->ReplaceGlobalValues(1, &entry, jacobianRow.size(), &jacobianRowIndicies[0], &jacobianRow[0]);
+          mat->ReplaceGlobalValues(jacobianRow.size(), &jacobianRowIndicies[0], 1, &entry, &jacobianRow[0]);
+          jacobianRow[entry] = 0.0;
+        }
+        // set entry in residual vector equal to the displacement increment for the kinematic bc
+        // this will cause the solution procedure to solve for the correct U at the bc
+		localNodeID = threeDimensionalMap->LID(nodeList[i]);
+		if(localNodeID != -1){
+		  (*vec)[localNodeID*3 + coord] = value*loadIncrement;
+        }
 	  }
 	}
   }
