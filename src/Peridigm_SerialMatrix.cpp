@@ -50,8 +50,9 @@
 #include "Peridigm_SerialMatrix.hpp"
 #include <sstream>
 
-PeridigmNS::SerialMatrix::SerialMatrix(Teuchos::RCP<Epetra_FECrsMatrix> epetraFECrsMatrix)
-  : FECrsMatrix(epetraFECrsMatrix)
+PeridigmNS::SerialMatrix::SerialMatrix(Teuchos::RCP<Epetra_FECrsMatrix> epetraFECrsMatrix,
+                                       Teuchos::RCP<const Epetra_BlockMap> epetraOverlapMap)
+  : FECrsMatrix(epetraFECrsMatrix), overlapMap(epetraOverlapMap)
 {
 }
 
@@ -64,14 +65,14 @@ void PeridigmNS::SerialMatrix::addValue(int row, int col, double value)
   // filling one value at a time (very inefficient).
 
   int numRows = 1;
-  int localRowID = row;
+  int globalRowID = 3*overlapMap->GID(row/3) + row%3;
   int numCols = 1;
-  int localColID = col;
+  int globalColID = 3*overlapMap->GID(col/3) + col%3;
   double** data = new double*[1];
   data[0] = new double[1];
   data[0][0] = value;
 
-  FECrsMatrix->SumIntoGlobalValues(numRows, &localRowID, numCols, &localColID, data);
+  FECrsMatrix->SumIntoGlobalValues(numRows, &globalRowID, numCols, &globalColID, data);
 
   delete[] data[0];
   delete[] data;

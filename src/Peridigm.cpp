@@ -627,8 +627,9 @@ void PeridigmNS::Peridigm::executeImplicit() {
     double dt = (timeFinal - timeInitial)*loadIncrement;
     timeCurrent += dt;
     *timeStep = dt;
-
-    cout << "Load step " << step+1 << ", load increment = " << loadIncrement << ", time step = " << dt << ", current time = " << timeCurrent << endl;
+    
+    if(peridigmComm->MyPID() == 0)
+      cout << "Load step " << step+1 << ", load increment = " << loadIncrement << ", time step = " << dt << ", current time = " << timeCurrent << endl;
 
     // Update nodal positions for nodes with kinematic B.C.
     deltaU->PutScalar(0.0);
@@ -646,15 +647,20 @@ void PeridigmNS::Peridigm::executeImplicit() {
     int solverIteration = 1;
     while(residualNorm > absoluteTolerance && solverIteration <= maximumSolverIterations){
 
-      cout << "  residual = " << residualNorm << endl;
+      if(peridigmComm->MyPID() == 0)
+        cout << "  residual = " << residualNorm << endl;
 
       // Compute the tangent
       tangent->PutScalar(0.0);
+      PeridigmNS::Timer::self().startTimer("Evaluate Jacobian");
       modelEvaluator->evalJacobian(workset);
+      tangent->GlobalAssemble();
+      PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
       applyKinematicBC(0.0, residual, tangent);
       residual->Scale(-1.0);
 
       // Solver linear system
+      PeridigmNS::Timer::self().startTimer("Solve Linear System");
       Epetra_LinearProblem linearProblem;
       AztecOO solver(linearProblem);
       solver.SetAztecOption(AZ_precond, AZ_Jacobi);
@@ -664,6 +670,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
       double aztecTolerance = 1.0e-6;
       lhs.PutScalar(0.0);
       solver.Iterate(tangent.get(), &lhs, residual.get(), maxAztecIterations, aztecTolerance);
+      PeridigmNS::Timer::self().stopTimer("Solve Linear System");
 
       // Apply increment to nodal positions
       for(int i=0 ; i<y->MyLength() ; ++i)
@@ -677,7 +684,8 @@ void PeridigmNS::Peridigm::executeImplicit() {
       solverIteration++;
     }
 
-    cout << "  residual = " << residualNorm << endl;
+    if(peridigmComm->MyPID() == 0)
+      cout << "  residual = " << residualNorm << endl;
 
     // Add the converged displacement increment to the displacement
     for(int i=0 ; i<u->MyLength() ; ++i)
@@ -748,13 +756,14 @@ void PeridigmNS::Peridigm::allocateJacobian() {
   tangent->GlobalAssemble();
 
   // create the serial Jacobian
-  overlapJacobian = Teuchos::rcp(new PeridigmNS::SerialMatrix(tangent));
+  overlapJacobian = Teuchos::rcp(new PeridigmNS::SerialMatrix(tangent, oneDimensionalOverlapMap));
   workset->jacobian = overlapJacobian;
 }
 
 void PeridigmNS::Peridigm::applyKinematicBC(double loadIncrement,
                                             Teuchos::RCP<Epetra_Vector> vec,
                                             Teuchos::RCP<Epetra_FECrsMatrix> mat) {
+  PeridigmNS::Timer::self().startTimer("Apply Kinematic B.C.");
 
   Teuchos::ParameterList& problemParams = peridigmParams->sublist("Problem");
   Teuchos::ParameterList& bcParams = problemParams.sublist("Boundary Conditions");
@@ -780,12 +789,12 @@ void PeridigmNS::Peridigm::applyKinematicBC(double loadIncrement,
 
   // create data structures for inserting ones and zeros into jacobian
   vector<double> jacobianRow;
-  vector<int> jacobianRowIndicies;
+  vector<int> jacobianIndicies;
   if(!mat.is_null()){
-    jacobianRow.resize(tangentMap->NumMyPoints(), 0.0);
-    jacobianRowIndicies.resize(tangentMap->NumMyPoints());
-    for(unsigned int i=0 ; i<jacobianRowIndicies.size() ; ++i)
-      jacobianRowIndicies[i] = i;
+    jacobianRow.resize(mat->NumMyCols(), 0.0);
+    jacobianIndicies.resize(mat->NumMyCols());
+    for(unsigned int i=0 ; i<jacobianIndicies.size() ; ++i)
+      jacobianIndicies[i] = i;
   }
 
   // apply the kinematic boundary conditions
@@ -808,27 +817,46 @@ void PeridigmNS::Peridigm::applyKinematicBC(double loadIncrement,
 	  // apply kinematic boundary conditions to locally-owned nodes
 	  vector<int> & nodeList = nodeSets[nodeSet];
 	  for(unsigned int i=0 ; i<nodeList.size() ; i++){
-        // zero out row and column in Jacobian, put one on diagonal
-		int localNodeID = tangentMap->LID(nodeList[i]);
-		if(!mat.is_null() && localNodeID != -1){
-          int entry = localNodeID*3 + coord;
-          jacobianRow[entry] = 1.0;
-          mat->ReplaceGlobalValues(1, &entry, jacobianRow.size(), &jacobianRowIndicies[0], &jacobianRow[0]);
-          mat->ReplaceGlobalValues(jacobianRow.size(), &jacobianRowIndicies[0], 1, &entry, &jacobianRow[0]);
-          jacobianRow[entry] = 0.0;
+
+        // zero out the row and column and put a 1.0 on the diagonal
+        if(!mat.is_null()){
+          int globalID = 3*nodeList[i] + coord;
+          int localRowID = mat->LRID(globalID);
+          int localColID = mat->LCID(globalID);
+
+          // zero out all locally-owned entries in the column associated with this dof
+          // \todo Call ReplaceMyValues only for entries that actually exist in the matrix structure.
+          double zero = 0.0;
+          for(int iRow=0 ; iRow<mat->NumMyRows() ; ++iRow)
+            mat->ReplaceMyValues(iRow, 1, &zero, &localColID);
+
+          // zero out the row and put a 1.0 on the diagonal
+          if(localRowID != -1){
+            jacobianRow[localColID] = 1.0;
+            // From Epetra_CrsMatrix documentation:
+            // If a value is not already present for the specified location in the matrix, the
+            // input value will be ignored and a positive warning code will be returned.
+            // \todo Do the bookkeeping to send in data only for locations that actually exist in the matrix structure.
+            mat->ReplaceMyValues(localRowID, mat->NumMyCols(), &jacobianRow[0], &jacobianIndicies[0]);
+            jacobianRow[localColID] = 0.0;
+          }
         }
+
         // set entry in residual vector equal to the displacement increment for the kinematic bc
         // this will cause the solution procedure to solve for the correct U at the bc
-		localNodeID = threeDimensionalMap->LID(nodeList[i]);
+		int localNodeID = threeDimensionalMap->LID(nodeList[i]);
 		if(!vec.is_null() && localNodeID != -1){
-		  (*vec)[localNodeID*3 + coord] = value*loadIncrement;
+ 		  (*vec)[localNodeID*3 + coord] = value*loadIncrement;
         }
 	  }
 	}
   }
+  PeridigmNS::Timer::self().stopTimer("Apply Kinematic B.C.");
 }
 
 double PeridigmNS::Peridigm::computeResidual() {
+
+  PeridigmNS::Timer::self().startTimer("Compute Residual");
 
   // The residual is computed as the L2 norm of the internal force vector with the
   // entries corresponding to kinematic BC zeroed out.
@@ -857,6 +885,8 @@ double PeridigmNS::Peridigm::computeResidual() {
   applyKinematicBC(0.0, residual, Teuchos::RCP<Epetra_FECrsMatrix>());
   double residualNorm2;
   residual->Norm2(&residualNorm2);
+
+  PeridigmNS::Timer::self().stopTimer("Compute Residual");
 
   return residualNorm2;
 }
