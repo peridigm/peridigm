@@ -62,7 +62,8 @@ class SerialMatrix {
 
 public:
 
-  SerialMatrix(Teuchos::RCP<Epetra_FECrsMatrix> epetraFECrsMatrix);
+  SerialMatrix(Teuchos::RCP<Epetra_FECrsMatrix> epetraFECrsMatrix,
+               Teuchos::RCP<const Epetra_BlockMap> epetraOverlapMap);
 
   //! Destructor.
   ~SerialMatrix(){}
@@ -76,6 +77,7 @@ public:
 protected:
 
   Teuchos::RCP<Epetra_FECrsMatrix> FECrsMatrix;
+  Teuchos::RCP<const Epetra_BlockMap> overlapMap;
 
 private:
 
