@@ -1,4 +1,0 @@
-Generating Hysteresis Plot
---------------------------
-$ipython -pylab
->>> import plasticityPlot
