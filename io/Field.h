@@ -70,6 +70,7 @@ public:
 	  DILATATION,
 	  DAMAGE,
 	  E_DP,
+	  E_DB,
 	  PLASTIC_CONSISTENCY,
 	  SHEAR_CORRECTION_FACTOR,
 	  NUM_NEIGHBORS,
@@ -134,6 +135,7 @@ const FieldSpec CONTACT_FORCE_DENSITY3D(FieldSpec::CONTACT_FORCE_DENSITY,  Field
 // Bond FieldSpecs
 const FieldSpec BOND_DAMAGE(FieldSpec::BOND_DAMAGE,           FieldSpec::BOND, FieldSpec::STATEFUL, "Bond_Damage");
 const FieldSpec DEVIATORIC_PLASTIC_EXTENSION(FieldSpec::E_DP, FieldSpec::BOND, FieldSpec::STATEFUL, "Deviatoric_Plastic_Extension");
+const FieldSpec DEVIATORIC_BACK_EXTENSION(FieldSpec::E_DB, FieldSpec::BOND, FieldSpec::STATEFUL, "Deviatoric_Back_Extension");
 
 template<typename T>
 class Field : public FieldSpec {
