@@ -61,7 +61,27 @@ PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList>
   // No input to validate; no computes requested
   if (params == Teuchos::null) return;
 
-  if (params->isParameter("Acceleration")) {
+  Teuchos::RCP<Teuchos::ParameterList> materialOutputFields; 
+  // User-requested fields for output
+  if (params->isSublist("Material Output Fields"))
+    materialOutputFields = sublist(params, "Material Output Fields");
+  else 
+    // No input to validate; no computes requested
+    return;
+
+  // Currenly only support "Linear Elastic" and "Elastic Plastic" material models
+  Teuchos::RCP<Teuchos::ParameterList> thisMaterial;
+  if (materialOutputFields->isSublist ("Linear Elastic")) {
+    thisMaterial = sublist(materialOutputFields, "Linear Elastic");
+  }
+  else if (materialOutputFields->isSublist ("Elastic Plastic")) {
+    thisMaterial = sublist(materialOutputFields, "Elastic Plastic");
+  }
+  else // Unrecognized material model. Throw error.
+    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
+    "Peridigm::ComputeManager: Unknown material model. Only \"Linear Elastic\" or \"Elastic Plastic\" currently supported.");
+
+  if (thisMaterial->isParameter("Acceleration")) {
     compute = Teuchos::rcp(new PeridigmNS::Compute_ACCEL3D );
     computeObjects.push_back( Teuchos::rcp_implicit_cast<Compute>(compute) );
   }

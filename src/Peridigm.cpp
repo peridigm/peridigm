@@ -237,8 +237,10 @@ void PeridigmNS::Peridigm::initializeDataManager(Teuchos::RCP<AbstractDiscretiza
   // Instantiate data manager
   dataManager = Teuchos::rcp(new PeridigmNS::DataManager);
   dataManager->setMaps(oneDimensionalMap, threeDimensionalMap, oneDimensionalOverlapMap, threeDimensionalOverlapMap, bondMap);
+
   // Create a master list of variable specs
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
+
   // Start with the specs used by Peridigm
   variableSpecs->push_back(Field_NS::VOLUME);
   variableSpecs->push_back(Field_NS::COORD3D);
@@ -247,12 +249,23 @@ void PeridigmNS::Peridigm::initializeDataManager(Teuchos::RCP<AbstractDiscretiza
   variableSpecs->push_back(Field_NS::VELOC3D);
   variableSpecs->push_back(Field_NS::FORCE_DENSITY3D);
   variableSpecs->push_back(Field_NS::CONTACT_FORCE_DENSITY3D);
+
   // Add the variable specs requested by each material
   for(unsigned int i=0; i<materialModels->size() ; ++i){
     Teuchos::RCP< std::vector<Field_NS::FieldSpec> > matVariableSpecs = (*materialModels)[i]->VariableSpecs();
     for(unsigned int j=0 ; j<matVariableSpecs->size() ; ++j)
       variableSpecs->push_back((*matVariableSpecs)[j]);
   }
+
+  // Now add the variable specs requested by the compute manager
+  std::vector<Field_NS::FieldSpec> computeSpecs = computeManager->getFieldSpecs();
+  for (unsigned int i=0; i < computeSpecs.size(); i++) {
+     variableSpecs->push_back(computeSpecs[i]);
+  }
+
+  // Remove duplicates
+  std::unique(variableSpecs->begin(), variableSpecs->end());
+
   // Allocalte data in the dataManager
   dataManager->allocateData(variableSpecs);
 
