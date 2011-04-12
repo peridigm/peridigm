@@ -129,8 +129,8 @@ void PeridigmNS::IsotropicElasticPlasticMaterial::initialize(const double dt,
 	  /*
 	   * Can override the shear correction factor here by simply setting it = 1.0
 	   */
-//	  for(double *dsf=shear_correction_factor; dsf!=shear_correction_factor+numOwnedPoints;dsf++)
-//		  *dsf = 1.0;
+// 	  for(double *dsf=shear_correction_factor; dsf!=shear_correction_factor+numOwnedPoints;dsf++)
+// 		  *dsf = 1.0;
 }
 
 void
@@ -177,7 +177,7 @@ PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const double
 		damage[nodeID] = totalDamage;
 	}
 
-	PdMaterialUtilities::computeDilatation(x,y,weightedVolume,volume,bondDamage,dilatation,neighborhoodList,numOwnedPoints);
+	PdMaterialUtilities::computeDilatation(x,y,weightedVolume,volume,bondDamage,dilatation,ownedIDs,neighborhoodList,numOwnedPoints);
 }
 
 void
@@ -219,6 +219,7 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const double dt,
          lambdaN,
          lambdaNP1,
          force,
+         ownedIDs,
          neighborhoodList,
          numOwnedPoints,
          m_bulkModulus,
