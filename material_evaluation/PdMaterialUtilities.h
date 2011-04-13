@@ -53,6 +53,9 @@ using std::binary_function;
 
 namespace PdMaterialUtilities {
 
+/**
+ * Helper function for viscoelastic standard linear solid
+ */
 struct ViscoelasticBetaOperator : public binary_function< double, double, double > {
 	ViscoelasticBetaOperator(double tau, double tau_b, double delta_t) : c1(tau_b/tau), c2(tau_b/delta_t)  {}
 	double operator() (double deviatoric_extension, double delta_ed) const {
@@ -60,6 +63,7 @@ struct ViscoelasticBetaOperator : public binary_function< double, double, double
 	}
 	double c1,c2;
 };
+
 
 enum PURE_SHEAR { XY=0, YZ, ZX };
 
@@ -127,6 +131,33 @@ void computeInternalForceLinearElastic
 		int numOwnedPoints,
 		double BULK_MODULUS,
 		double SHEAR_MODULUS
+);
+
+/**
+ * Internal force calculator for viscoelastic standard linear solid.
+ * Integrates the deviatoric back strain forward in time.
+ * Output:
+ *   * force
+ *   * edbPN1 -- deviatoric back strain at end of step
+ */
+void computeInternalForceViscoelasticStandardLinearSolid
+  (double delta_t,
+   const double *xOverlap,
+   const double *yNOverlap,
+   const double *yNP1Overlap,
+   const double *mOwned,
+   const double* volumeOverlap,
+   const double* dilatationOwned,
+   const double* bondDamage,
+   const double *edbN,
+   double *edbNP1,
+   double *fInternalOverlap,
+   const int*  localNeighborList,
+   int numOwnedPoints,
+   double m_bulkModulus,
+   double m_shearModulus,
+   double m_tau,
+   double m_tau_b
 );
 
 void computeInternalForceIsotropicElasticPlastic

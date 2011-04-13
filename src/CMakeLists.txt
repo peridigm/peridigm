@@ -24,9 +24,10 @@ add_executable (${EXECUTABLE_NAME}
         ./materials/Peridigm_Material.cpp
         ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
         ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
+        ./materials/Peridigm_ViscoelasticStandardLinearSolid.cpp
         ./materials/Peridigm_CriticalStretchDamageModel.cpp
         ./contact/Peridigm_ShortRangeForceContactModel.cpp
-        ../PdMaterialUtilities/PdMaterialUtilities.cxx
+        ../material_evaluation/PdMaterialUtilities.cxx
 )
 
 target_link_libraries (${EXECUTABLE_NAME}
@@ -60,7 +61,7 @@ add_executable(utPeridigm
         ./compute/Peridigm_Compute_ACCEL3D.cpp
         Peridigm_Timer.cpp
         ../io/Field.cxx
-        ../PdMaterialUtilities/PdMaterialUtilities.cxx
+        ../material_evaluation/PdMaterialUtilities.cxx
         ./materials/Peridigm_Material.cpp
         ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
         ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
@@ -95,7 +96,7 @@ add_executable(utPeridigm_MPI_np2
         ./compute/Peridigm_Compute_ACCEL3D.cpp
         Peridigm_Timer.cpp
         ../io/Field.cxx
-        ../PdMaterialUtilities/PdMaterialUtilities.cxx
+        ../material_evaluation/PdMaterialUtilities.cxx
         ./materials/Peridigm_Material.cpp
         ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
         ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
@@ -148,7 +149,7 @@ add_executable(utPeridigm_LinearElasticIsotropicMaterial
         Peridigm_DataManager.cpp
         Peridigm_SerialMatrix.cpp
         ../io/Field.cxx
-        ../PdMaterialUtilities/PdMaterialUtilities.cxx
+        ../material_evaluation/PdMaterialUtilities.cxx
         ./materials/Peridigm_Material.cpp
 		./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
         ./materials/Peridigm_CriticalStretchDamageModel.cpp
@@ -166,7 +167,7 @@ add_executable(utPHAL_UpdateForceState
         Peridigm_DataManager.cpp
         Peridigm_SerialMatrix.cpp
         ../io/Field.cxx
-        ../PdMaterialUtilities/PdMaterialUtilities.cxx
+        ../material_evaluation/PdMaterialUtilities.cxx
         ./materials/Peridigm_Material.cpp
 		./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
         ./materials/Peridigm_CriticalStretchDamageModel.cpp
@@ -197,7 +198,7 @@ add_executable(utPHAL_EvaluateForce
         Peridigm_DataManager.cpp
         Peridigm_SerialMatrix.cpp
         ../io/Field.cxx
-        ../PdMaterialUtilities/PdMaterialUtilities.cxx
+        ../material_evaluation/PdMaterialUtilities.cxx
         ./materials/Peridigm_Material.cpp
 		./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
         ./materials/Peridigm_CriticalStretchDamageModel.cpp
