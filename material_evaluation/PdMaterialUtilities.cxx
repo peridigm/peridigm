@@ -793,6 +793,30 @@ double computeDeviatoricForceStateNorm
 }
 
 
+void computeInternalForceViscoelasticStandardLinearSolid
+  (
+   double delta_t,
+   const double *xOverlap,
+   const double *yNOverlap,
+   const double *yNP1Overlap,
+   const double *mOwned,
+   const double* volumeOverlap,
+   const double* dilatationOwned,
+   const double* bondDamage,
+   const double *edbN,
+   double *edbNP1,
+   double *fInternalOverlap,
+   const int*  localNeighborList,
+   int numOwnedPoints,
+   double m_bulkModulus,
+   double m_shearModulus,
+   double m_tau,
+   double m_tau_b
+) {
+	ViscoelasticBetaOperator beta(m_tau,m_tau_b,delta_t);
+
+}
+
 
 /**
  * Call this function on a single point 'X'

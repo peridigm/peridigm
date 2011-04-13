@@ -94,7 +94,8 @@ m_damageModel()
     m_variableSpecs->push_back(Field_NS::CURCOORD3D);
     m_variableSpecs->push_back(Field_NS::FORCE_DENSITY3D);
     m_variableSpecs->push_back(Field_NS::BOND_DAMAGE);
-    m_variableSpecs->push_back(Field_NS::SHEAR_CORRECTION_FACTOR);
+    m_variableSpecs->push_back(Field_NS::DEVIATORIC_BACK_EXTENSION);
+
 
 }
 
@@ -111,20 +112,13 @@ void PeridigmNS::ViscoelasticStandardLinearSolid::initialize(const double dt,
                                                              PeridigmNS::DataManager& dataManager) const
 {
 	  // Extract pointers to the underlying data
-      double *xOverlap, *yOverlapScratch, *cellVolumeOverlap, *weightedVolume, *shear_correction_factor;
+      double *xOverlap, *cellVolumeOverlap, *weightedVolume;
       dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&xOverlap);
-      dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&yOverlapScratch);
       dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&cellVolumeOverlap);
       dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
-      dataManager.getData(Field_NS::SHEAR_CORRECTION_FACTOR, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&shear_correction_factor);
 
 	  PdMaterialUtilities::computeWeightedVolume(xOverlap,cellVolumeOverlap,weightedVolume,numOwnedPoints,neighborhoodList);
-	  PdMaterialUtilities::computeShearCorrectionFactor(numOwnedPoints,xOverlap,yOverlapScratch,cellVolumeOverlap,weightedVolume,neighborhoodList,m_horizon,shear_correction_factor);
-	  /*
-	   * Can override the shear correction factor here by simply setting it = 1.0
-	   */
- 	  for(double *dsf=shear_correction_factor; dsf!=shear_correction_factor+numOwnedPoints;dsf++)
- 		  *dsf = 1.0;
+
 }
 
 void
@@ -135,9 +129,9 @@ PeridigmNS::ViscoelasticStandardLinearSolid::updateConstitutiveData(const double
                                                                     PeridigmNS::DataManager& dataManager) const
 {
   // Extract pointers to the underlying data in the constitutiveData array
-  double *x, *y, *volume, *dilatation, *damage, *weightedVolume, *bondDamage;
+  double *x, *yNP1, *volume, *dilatation, *damage, *weightedVolume, *bondDamage;
   dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&x);
-  dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&y);
+  dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&yNP1);
   dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&volume);
   dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dilatation);
   dataManager.getData(Field_NS::DAMAGE, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&damage);
@@ -171,7 +165,7 @@ PeridigmNS::ViscoelasticStandardLinearSolid::updateConstitutiveData(const double
 		damage[nodeID] = totalDamage;
 	}
 
-	PdMaterialUtilities::computeDilatation(x,y,weightedVolume,volume,bondDamage,dilatation,ownedIDs,neighborhoodList,numOwnedPoints);
+	PdMaterialUtilities::computeDilatation(x,yNP1,weightedVolume,volume,bondDamage,dilatation,ownedIDs,neighborhoodList,numOwnedPoints);
 }
 
 void
@@ -183,7 +177,7 @@ PeridigmNS::ViscoelasticStandardLinearSolid::computeForce(const double dt,
 {
 
 	  // Extract pointers to the underlying data in the constitutiveData array
-      double *x, *yN, yNP1, *volume, *dilatation, *weightedVolume, *bondDamage, *edpN, *edpNP1,  *force, *ownedDSF;
+      double *x, *yN, *yNP1, *volume, *dilatation, *weightedVolume, *bondDamage, *edbN, *edbNP1,  *force, *ownedDSF;
       dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&x);
       dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_N)->ExtractView(&yN);
       dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&yNP1);
@@ -191,34 +185,33 @@ PeridigmNS::ViscoelasticStandardLinearSolid::computeForce(const double dt,
       dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dilatation);
       dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
       dataManager.getData(Field_NS::BOND_DAMAGE, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&bondDamage);
-      dataManager.getData(Field_NS::DEVIATORIC_BACK_EXTENSION, Field_NS::FieldSpec::STEP_N)->ExtractView(&edpN);
-      dataManager.getData(Field_NS::DEVIATORIC_BACK_EXTENSION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&edpNP1);
+      dataManager.getData(Field_NS::DEVIATORIC_BACK_EXTENSION, Field_NS::FieldSpec::STEP_N)->ExtractView(&edbN);
+      dataManager.getData(Field_NS::DEVIATORIC_BACK_EXTENSION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&edbNP1);
       dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&force);
-      dataManager.getData(Field_NS::SHEAR_CORRECTION_FACTOR, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&ownedDSF);
 
       // Zero out the force
       dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1)->PutScalar(0.0);
 
-//	  PdMaterialUtilities::computeInternalForceViscoelasticStandardLinearSolid
-//        (x,
-//         y,
-//         weightedVolume,
-//         volume,
-//         dilatation,
-//         bondDamage,
-//         ownedDSF,
-//         edpN,
-//         edpNP1,
-//         lambdaN,
-//         lambdaNP1,
-//         force,
-//         ownedIDs,
-//         neighborhoodList,
-//         numOwnedPoints,
-//         m_bulkModulus,
-//         m_shearModulus,
-//         m_horizon,
-//         m_yieldStress);
+	  PdMaterialUtilities::computeInternalForceViscoelasticStandardLinearSolid
+        (
+         dt,
+          x,
+         yN,
+         yNP1,
+         weightedVolume,
+         volume,
+         dilatation,
+         bondDamage,
+         edbN,
+         edbNP1,
+         force,
+         neighborhoodList,
+         numOwnedPoints,
+         m_bulkModulus,
+         m_shearModulus,
+         m_tau,
+         m_tau_b
+);
 
 }
 

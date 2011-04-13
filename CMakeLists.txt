@@ -222,7 +222,7 @@ set(INCLUDE_DIRS
 ${VTK_INCLUDE_DIRS} 
 ${Boost_INCLUDE_DIRS} 
 ${CMAKE_SOURCE_DIR}/io
-${CMAKE_SOURCE_DIR}/PdMaterialUtilities
+${CMAKE_SOURCE_DIR}/material_evaluation
 ${CMAKE_SOURCE_DIR}/src
 ${CMAKE_SOURCE_DIR}/src/contact
 ${CMAKE_SOURCE_DIR}/src/evaluators
@@ -254,7 +254,7 @@ libm.a
 add_subdirectory (io)
 add_subdirectory (io/unitTest)
 add_subdirectory (src)
-add_subdirectory (PdMaterialUtilities)
+add_subdirectory (material_evaluation)
 add_subdirectory (test/unit)
 add_subdirectory (test/regression)
 add_subdirectory (test/verification)
