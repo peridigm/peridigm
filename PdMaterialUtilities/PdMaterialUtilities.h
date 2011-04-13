@@ -47,7 +47,19 @@
 
 #ifndef PDMATERIALUTILITIES_H_
 #define PDMATERIALUTILITIES_H_
+
+#include <functional>
+using std::binary_function;
+
 namespace PdMaterialUtilities {
+
+struct ViscoelasticBetaOperator : public binary_function< double, double, double > {
+	ViscoelasticBetaOperator(double tau, double tau_b, double delta_t) : c1(tau_b/tau), c2(tau_b/delta_t)  {}
+	double operator() (double deviatoric_extension, double delta_ed) const {
+		return c1 * (deviatoric_extension - c2 * delta_ed);
+	}
+	double c1,c2;
+};
 
 enum PURE_SHEAR { XY=0, YZ, ZX };
 
