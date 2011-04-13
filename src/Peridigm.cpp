@@ -541,14 +541,22 @@ void PeridigmNS::Peridigm::executeExplicit() {
 
     // Do one step of velocity-Verlet
 
+    // \todo This acceleration will be zero at time step 1, and that is not correct in general, need a bootstrap step prior to integration loop.
+
     // V^{n+1/2} = V^{n} + (dt/2)*A^{n}
     //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
     blas.AXPY(length, dt2, aptr, vptr, 1, 1);
 
-    // Y^{n+1}   = X_{o} + U^{n} + (dt)*V^{n+1/2}
+    // Y^{n+1} = X_{o} + U^{n} + (dt)*V^{n+1/2}
     // \todo Replace with blas call
     for(int i=0 ; i<y->MyLength() ; ++i)
-      (*y)[i] = (*x)[i] + (*u)[i] + dt*(*v)[i];
+      yptr[i] = xptr[i] + uptr[i] + dt*vptr[i];
+
+    // U^{n+1} = U^{n} + (dt)*V^{n+1/2}
+    //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
+    blas.AXPY(length, dt, vptr, uptr, 1, 1);
+
+    // \todo The velocity copied into the DataManager is actually the midstep velocity, not the NP1 velocity; this can be fixed by creating a midstep velocity field in the DataManager and setting the NP1 value as invalid.
 
     // Copy data from mothership vectors to overlap vectors in data manager
     PeridigmNS::Timer::self().startTimer("Gather/Scatter");
@@ -583,10 +591,6 @@ void PeridigmNS::Peridigm::executeExplicit() {
     // \todo Generalize this for multiple materials
     double density = (*materialModels)[0]->Density();
     a->Scale(1.0/density);
-
-    // U^{n+1}   = U^{n} + (dt)*V^{n+1/2}
-    //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
-    blas.AXPY(length, dt, vptr, uptr, 1, 1);
 
     // V^{n+1}   = V^{n+1/2} + (dt/2)*A^{n+1}
     //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
