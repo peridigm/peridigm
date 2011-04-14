@@ -808,12 +808,93 @@ void computeInternalForceViscoelasticStandardLinearSolid
    double *fInternalOverlap,
    const int*  localNeighborList,
    int numOwnedPoints,
-   double m_bulkModulus,
-   double m_shearModulus,
+   double BULK_MODULUS,
+   double SHEAR_MODULUS,
    double m_tau,
    double m_tau_b
-) {
+)
+{
 	ViscoelasticBetaOperator beta(m_tau,m_tau_b,delta_t);
+	/*
+	 * e^{-dt/tau_b}
+	 */
+	double decay = exp(-1.0/beta.c2);
+
+	/*
+	 * Compute processor local contribution to internal force
+	 */
+	double K = BULK_MODULUS;
+	double MU = SHEAR_MODULUS;
+	double OMEGA=1.0;
+
+	const double *xOwned = xOverlap;
+	const double *yNOwned = yNOverlap;
+	const double *yNP1Owned = yNP1Overlap;
+	const double *m = mOwned;
+	const double *v = volumeOverlap;
+	const double *theta = dilatationOwned;
+	double *fOwned = fInternalOverlap;
+
+	const int *neighPtr = localNeighborList;
+	double cellVolume, alpha, dx, dy, dz, zeta, dYN, dYNp1, t, edN, edNp1, delta_ed, beta_tN, beta_tNp1;
+	for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yNOwned +=3, yNP1Owned +=3, fOwned+=3, m++, theta++){
+
+		int numNeigh = *neighPtr; neighPtr++;
+		const double *X = xOwned;
+		const double *YN = yNOwned;
+		const double *YNP1 = yNP1Owned;
+		alpha = 15.0*MU/(*m);
+		double selfCellVolume = v[p];
+		double c1 = OMEGA*(*theta)*(9.0*K-15.0*MU)/(3.0*(*m));
+		for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++,edbN++,edbNP1++){
+			int localId = *neighPtr;
+			cellVolume = v[localId];
+			const double *XP    = &xOverlap[3*localId];
+			const double *YPN   = &yNOverlap[3*localId];
+			const double *YPNP1 = &yNP1Overlap[3*localId];
+			dx = XP[0]-X[0];
+			dy = XP[1]-X[1];
+			dz = XP[2]-X[2];
+			zeta = sqrt(dx*dx+dy*dy+dz*dz);
+			/*
+			 * COMPUTE edN
+			 */
+			dx = YPN[0]-YN[0];
+			dy = YPN[1]-YN[1];
+			dz = YPN[2]-YN[2];
+			dYN = sqrt(dx*dx+dy*dy+dz*dz);
+			edN = dYN - zeta - (*theta) * zeta / 3.0;
+
+			/*
+			 * COMPUTE edNp1
+			 */
+			dx = YPNP1[0]-YNP1[0];
+			dy = YPNP1[1]-YNP1[1];
+			dz = YPNP1[2]-YNP1[2];
+			dYNp1 = sqrt(dx*dx+dy*dy+dz*dz);
+			edNp1 = dYNp1 - zeta - (*theta) * zeta / 3.0;
+
+			delta_ed = edNp1-edN;
+			beta_tN = beta(edN,delta_ed);
+			beta_tNp1 = beta(edNp1,delta_ed);
+			/*
+			 * integrate back extension state forward in time
+			 */
+			*edbNP1 = ( (*edbN) - beta_tN ) * decay + beta_tNp1;
+
+			//			t = (1.0-*bondDamage)*(c1 * zeta + (1.0-*bondDamage) * OMEGA * alpha * (dY - zeta));
+			//			double fx = t * dx / dY;
+			//			double fy = t * dy / dY;
+			//			double fz = t * dz / dY;
+			//
+			//			*(fOwned+0) += fx*cellVolume;
+			//			*(fOwned+1) += fy*cellVolume;
+			//			*(fOwned+2) += fz*cellVolume;
+			//			fInternalOverlap[3*localId+0] -= fx*selfCellVolume;
+			//			fInternalOverlap[3*localId+1] -= fy*selfCellVolume;
+			//			fInternalOverlap[3*localId+2] -= fz*selfCellVolume;
+		}
+	}
 
 }
 
