@@ -53,16 +53,6 @@ using std::binary_function;
 
 namespace PdMaterialUtilities {
 
-/**
- * Helper function for viscoelastic standard linear solid
- */
-struct ViscoelasticBetaOperator : public binary_function< double, double, double > {
-	ViscoelasticBetaOperator(double tau, double tau_b, double delta_t) : c1(tau_b/tau), c2(tau_b/delta_t)  {}
-	double operator() (double deviatoric_extension, double delta_ed) const {
-		return c1 * (deviatoric_extension - c2 * delta_ed);
-	}
-	double c1,c2;
-};
 
 
 enum PURE_SHEAR { XY=0, YZ, ZX };
@@ -147,7 +137,8 @@ void computeInternalForceViscoelasticStandardLinearSolid
    const double *yNP1Overlap,
    const double *mOwned,
    const double* volumeOverlap,
-   const double* dilatationOwned,
+   const double* dilatationOwnedN,
+   const double* dilatationOwnedNp1,
    const double* bondDamage,
    const double *edbN,
    double *edbNP1,
