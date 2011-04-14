@@ -801,7 +801,8 @@ void computeInternalForceViscoelasticStandardLinearSolid
    const double *yNP1Overlap,
    const double *mOwned,
    const double* volumeOverlap,
-   const double* dilatationOwned,
+   const double* dilatationOwnedN,
+   const double* dilatationOwnedNp1,
    const double* bondDamage,
    const double *edbN,
    double *edbNP1,
@@ -814,6 +815,18 @@ void computeInternalForceViscoelasticStandardLinearSolid
    double m_tau_b
 )
 {
+
+	/**
+	 * Helper function for viscoelastic standard linear solid
+	 */
+	struct ViscoelasticBetaOperator : public binary_function< double, double, double > {
+		ViscoelasticBetaOperator(double tau, double tau_b, double delta_t) : c1(tau_b/tau), c2(tau_b/delta_t)  {}
+		double operator() (double deviatoric_extension, double delta_ed) const {
+			return c1 * (deviatoric_extension - c2 * delta_ed);
+		}
+		double c1,c2;
+	};
+
 	ViscoelasticBetaOperator beta(m_tau,m_tau_b,delta_t);
 	/*
 	 * e^{-dt/tau_b}
@@ -832,20 +845,24 @@ void computeInternalForceViscoelasticStandardLinearSolid
 	const double *yNP1Owned = yNP1Overlap;
 	const double *m = mOwned;
 	const double *v = volumeOverlap;
-	const double *theta = dilatationOwned;
+	const double *thetaN = dilatationOwnedN;
+	const double *thetaNp1 = dilatationOwnedNp1;
 	double *fOwned = fInternalOverlap;
 
 	const int *neighPtr = localNeighborList;
-	double cellVolume, alpha, dx, dy, dz, zeta, dYN, dYNp1, t, edN, edNp1, delta_ed, beta_tN, beta_tNp1;
-	for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yNOwned +=3, yNP1Owned +=3, fOwned+=3, m++, theta++){
+	double cellVolume, dx, dy, dz, zeta, dYN, dYNp1, t, ti, td, edN, edNp1, delta_ed, beta_tN, beta_tNp1;
+	for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yNOwned +=3, yNP1Owned +=3, fOwned+=3, m++, thetaN++, thetaNp1++){
 
 		int numNeigh = *neighPtr; neighPtr++;
 		const double *X = xOwned;
 		const double *YN = yNOwned;
 		const double *YNP1 = yNP1Owned;
-		alpha = 15.0*MU/(*m);
+		double weightedVolume = *m;
+		double dilatationN   = *thetaN;
+		double dilatationNp1 = *thetaNp1;
+		double alpha = 15.0*MU/weightedVolume;
 		double selfCellVolume = v[p];
-		double c1 = OMEGA*(*theta)*(9.0*K-15.0*MU)/(3.0*(*m));
+		double c = 3.0 * K * dilatationNp1 / weightedVolume;
 		for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++,edbN++,edbNP1++){
 			int localId = *neighPtr;
 			cellVolume = v[localId];
@@ -856,6 +873,24 @@ void computeInternalForceViscoelasticStandardLinearSolid
 			dy = XP[1]-X[1];
 			dz = XP[2]-X[2];
 			zeta = sqrt(dx*dx+dy*dy+dz*dz);
+
+			/*
+			 * damage state
+			 * NOTE: Some additional analysis (pencil and paper) may be required with
+			 * regard to handling damage.  The question is where to
+			 * apply the damage.  The approach taken here is to
+			 * apply damage to the incoming (computed) deviatoric extension state
+			 * and evolve the back extension state with the damaged
+			 * deviatoric extension state.
+			 */
+			double damage = (1.0-*bondDamage);
+
+			/*
+			 * volumetric scalar state
+			 */
+			double eiN   = dilatationN * zeta / 3.0;
+			double eiNp1 = dilatationNp1 * zeta / 3.0;
+
 			/*
 			 * COMPUTE edN
 			 */
@@ -863,7 +898,7 @@ void computeInternalForceViscoelasticStandardLinearSolid
 			dy = YPN[1]-YN[1];
 			dz = YPN[2]-YN[2];
 			dYN = sqrt(dx*dx+dy*dy+dz*dz);
-			edN = dYN - zeta - (*theta) * zeta / 3.0;
+			edN = damage * (dYN - zeta) - eiN;
 
 			/*
 			 * COMPUTE edNp1
@@ -872,7 +907,7 @@ void computeInternalForceViscoelasticStandardLinearSolid
 			dy = YPNP1[1]-YNP1[1];
 			dz = YPNP1[2]-YNP1[2];
 			dYNp1 = sqrt(dx*dx+dy*dy+dz*dz);
-			edNp1 = dYNp1 - zeta - (*theta) * zeta / 3.0;
+			edNp1 = damage * (dYNp1 - zeta) - eiNp1;
 
 			delta_ed = edNp1-edN;
 			beta_tN = beta(edN,delta_ed);
@@ -882,17 +917,30 @@ void computeInternalForceViscoelasticStandardLinearSolid
 			 */
 			*edbNP1 = ( (*edbN) - beta_tN ) * decay + beta_tNp1;
 
-			//			t = (1.0-*bondDamage)*(c1 * zeta + (1.0-*bondDamage) * OMEGA * alpha * (dY - zeta));
-			//			double fx = t * dx / dY;
-			//			double fy = t * dy / dY;
-			//			double fz = t * dz / dY;
-			//
-			//			*(fOwned+0) += fx*cellVolume;
-			//			*(fOwned+1) += fy*cellVolume;
-			//			*(fOwned+2) += fz*cellVolume;
-			//			fInternalOverlap[3*localId+0] -= fx*selfCellVolume;
-			//			fInternalOverlap[3*localId+1] -= fy*selfCellVolume;
-			//			fInternalOverlap[3*localId+2] -= fz*selfCellVolume;
+			/*
+			 * compute deviatoric force state
+			 */
+			td = alpha * OMEGA * ( edNp1 - *edbNP1 );
+
+			/*
+			 * Compute volumetric force state
+			 */
+			ti = c * OMEGA * zeta;
+
+			/*
+			 * Note that damage has already been applied once to 'td' (through ed) above.
+			 */
+			t = damage * (ti + td);
+			double fx = t * dx / dYNp1;
+			double fy = t * dy / dYNp1;
+			double fz = t * dz / dYNp1;
+
+			*(fOwned+0) += fx*cellVolume;
+			*(fOwned+1) += fy*cellVolume;
+			*(fOwned+2) += fz*cellVolume;
+			fInternalOverlap[3*localId+0] -= fx*selfCellVolume;
+			fInternalOverlap[3*localId+1] -= fy*selfCellVolume;
+			fInternalOverlap[3*localId+2] -= fz*selfCellVolume;
 		}
 	}
 
