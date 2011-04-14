@@ -48,9 +48,6 @@
 #ifndef PDMATERIALUTILITIES_H_
 #define PDMATERIALUTILITIES_H_
 
-#include <functional>
-using std::binary_function;
-
 namespace PdMaterialUtilities {
 
 

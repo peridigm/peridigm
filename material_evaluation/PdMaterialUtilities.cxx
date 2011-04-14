@@ -50,6 +50,9 @@
 #include <iostream>
 #include <string>
 
+#include <functional>
+using std::binary_function;
+
 namespace PdMaterialUtilities {
 
 
