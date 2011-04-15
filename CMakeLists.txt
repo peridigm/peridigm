@@ -81,64 +81,13 @@ find_library(Phalanx_LIBRARY
   PATHS ${TRILINOS_DIR}/lib
 )
 
-find_library(Stratimikos_LIBRARY
-  NAMES stratimikos
-  PATHS ${TRILINOS_DIR}/lib
-)
-
-
-find_library(StratimikosAmesos_LIBRARY
-  NAMES stratimikosamesos
-  PATHS ${TRILINOS_DIR}/lib
-)
-
-find_library(StratimikosIFPack_LIBRARY
-  NAMES stratimikosifpack
-  PATHS ${TRILINOS_DIR}/lib
-)
-
-find_library(StratimikosML_LIBRARY
-  NAMES stratimikosml
-  PATHS ${TRILINOS_DIR}/lib
-)
-
-find_library(StratimikosAztecOO_LIBRARY
-  NAMES stratimikosaztecoo
-  PATHS ${TRILINOS_DIR}/lib
-)
-
-find_library(ML_LIBRARY
-  NAMES ml
-  PATHS ${TRILINOS_DIR}/lib
-)
-
 find_library(IFPack_LIBRARY
   NAMES ifpack
   PATHS ${TRILINOS_DIR}/lib
 )
 
-find_library(Amesos_LIBRARY
-  NAMES amesos
-  PATHS ${TRILINOS_DIR}/lib
-)
-
 find_library(AztecOO_LIBRARY
   NAMES aztecoo
-  PATHS ${TRILINOS_DIR}/lib
-)
-
-find_library(ThyraEpetraExt_LIBRARY
-  NAMES thyraepetraext
-  PATHS ${TRILINOS_DIR}/lib
-)
-
-find_library(ThyraEpetra_LIBRARY
-  NAMES thyraepetra
-  PATHS ${TRILINOS_DIR}/lib
-)
-
-find_library(Thyra_LIBRARY
-  NAMES thyra
   PATHS ${TRILINOS_DIR}/lib
 )
 
@@ -152,23 +101,13 @@ find_library(Zoltan_LIBRARY
   PATHS ${TRILINOS_DIR}/lib
 )
 
-find_library(Intrepid_LIBRARY
-  NAMES intrepid
-  PATHS ${TRILINOS_DIR}/lib
-)
-
-find_library(Shards_LIBRARY
-  NAMES shards
-  PATHS ${TRILINOS_DIR}/lib
-)
-
 find_library(Epetra_LIBRARY
   NAMES epetra
   PATHS ${TRILINOS_DIR}/lib
 )
 
-find_library(RTOp_LIBRARY
-  NAMES rtop
+find_library(Shards_LIBRARY
+  NAMES shards
   PATHS ${TRILINOS_DIR}/lib
 )
 
@@ -180,25 +119,13 @@ find_library(Teuchos_LIBRARY
 
 set(TRILINOS_LIBS
 phalanx
-stratimikos
-stratimikosamesos
-stratimikosifpack
-stratimikosml
-stratimikosaztecoo
-ml
 ifpack
-amesos
 aztecoo
-thyraepetraext
-thyraepetra
-thyra
 epetraext
 zoltan
-intrepid
-shards
 epetra
-rtop
 teuchos
+shards
 )
 
 # other required libraries
