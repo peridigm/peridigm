@@ -55,6 +55,7 @@
 #include "PdQuickGridParallel.h"
 #include "Pd_shared_ptr_Array.h"
 #include "PdMaterialUtilities.h"
+#include "ordinary_elastic_plastic.h"
 #include <math.h>
 #include "Field.h"
 #include <fstream>
@@ -65,6 +66,7 @@ using namespace PeridigmNS;
 using namespace Teuchos;
 using namespace PdQuickGrid;
 using namespace PdMaterialUtilities;
+using namespace MATERIAL_EVALUATION;
 using std::tr1::shared_ptr;
 using namespace Field_NS;
 
