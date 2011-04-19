@@ -49,6 +49,7 @@
 #include "Peridigm_CriticalStretchDamageModel.hpp"
 #include <Teuchos_TestForException.hpp>
 #include "PdMaterialUtilities.h"
+#include "ordinary_elastic.h"
 
 using namespace std;
 
@@ -184,5 +185,5 @@ PeridigmNS::LinearElasticIsotropicMaterial::computeForce(const double dt,
   dataManager.getData(Field_NS::BOND_DAMAGE, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&bondDamage);
   dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&force);
 
-  PdMaterialUtilities::computeInternalForceLinearElastic(x,y,weightedVolume,cellVolume,dilatation,bondDamage,force,ownedIDs,neighborhoodList,numOwnedPoints,m_bulkModulus,m_shearModulus);
+  MATERIAL_EVALUATION::computeInternalForceLinearElastic(x,y,weightedVolume,cellVolume,dilatation,bondDamage,force,neighborhoodList,numOwnedPoints,m_bulkModulus,m_shearModulus);
 }
