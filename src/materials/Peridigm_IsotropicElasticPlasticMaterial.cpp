@@ -51,6 +51,7 @@
 #include "Epetra_Vector.h"
 #include "Epetra_MultiVector.h"
 #include "PdMaterialUtilities.h"
+#include "ordinary_elastic_plastic.h"
 #include <limits>
 
 
@@ -206,7 +207,7 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const double dt,
       // Zero out the force
       dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1)->PutScalar(0.0);
 
-	  PdMaterialUtilities::computeInternalForceIsotropicElasticPlastic
+	  MATERIAL_EVALUATION::computeInternalForceIsotropicElasticPlastic
         (x,
          y,
          weightedVolume,
@@ -219,7 +220,6 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const double dt,
          lambdaN,
          lambdaNP1,
          force,
-         ownedIDs,
          neighborhoodList,
          numOwnedPoints,
          m_bulkModulus,
