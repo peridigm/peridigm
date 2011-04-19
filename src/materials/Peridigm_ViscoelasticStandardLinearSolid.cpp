@@ -51,6 +51,7 @@
 #include "Epetra_Vector.h"
 #include "Epetra_MultiVector.h"
 #include "PdMaterialUtilities.h"
+#include "ordinary_std_linear_visco_solid.h"
 #include <limits>
 
 
@@ -193,7 +194,7 @@ PeridigmNS::ViscoelasticStandardLinearSolid::computeForce(const double dt,
       // Zero out the force
       dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1)->PutScalar(0.0);
 
-	  PdMaterialUtilities::computeInternalForceViscoelasticStandardLinearSolid
+	  MATERIAL_EVALUATION::computeInternalForceViscoelasticStandardLinearSolid
         (
          dt,
           x,
