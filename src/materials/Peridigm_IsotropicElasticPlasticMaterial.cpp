@@ -52,6 +52,7 @@
 #include "Epetra_MultiVector.h"
 #include "PdMaterialUtilities.h"
 #include "ordinary_elastic_plastic.h"
+#include "ordinary_utilities.h"
 #include <limits>
 
 
@@ -125,8 +126,8 @@ void PeridigmNS::IsotropicElasticPlasticMaterial::initialize(const double dt,
       dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
       dataManager.getData(Field_NS::SHEAR_CORRECTION_FACTOR, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&shear_correction_factor);
 
-	  PdMaterialUtilities::computeWeightedVolume(xOverlap,cellVolumeOverlap,weightedVolume,numOwnedPoints,neighborhoodList);
-	  PdMaterialUtilities::computeShearCorrectionFactor(numOwnedPoints,xOverlap,yOverlapScratch,cellVolumeOverlap,weightedVolume,neighborhoodList,m_horizon,shear_correction_factor);
+	  MATERIAL_EVALUATION::computeWeightedVolume(xOverlap,cellVolumeOverlap,weightedVolume,numOwnedPoints,neighborhoodList);
+	  MATERIAL_EVALUATION::computeShearCorrectionFactor(numOwnedPoints,xOverlap,yOverlapScratch,cellVolumeOverlap,weightedVolume,neighborhoodList,m_horizon,shear_correction_factor);
 	  /*
 	   * Can override the shear correction factor here by simply setting it = 1.0
 	   */

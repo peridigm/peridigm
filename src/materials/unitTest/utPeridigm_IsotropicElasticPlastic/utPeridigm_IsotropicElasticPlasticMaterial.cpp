@@ -54,7 +54,7 @@
 #include "PdQuickGrid.h"
 #include "PdQuickGridParallel.h"
 #include "Pd_shared_ptr_Array.h"
-#include "PdMaterialUtilities.h"
+#include "ordinary_utilities.h"
 #include "ordinary_elastic_plastic.h"
 #include <math.h>
 #include "Field.h"
@@ -65,7 +65,6 @@ using namespace std;
 using namespace PeridigmNS;
 using namespace Teuchos;
 using namespace PdQuickGrid;
-using namespace PdMaterialUtilities;
 using namespace MATERIAL_EVALUATION;
 using std::tr1::shared_ptr;
 using namespace Field_NS;
@@ -122,6 +121,26 @@ public:
 		return StageFunction(fStartNew,fEndNew);
 	}
 
+};
+
+void updateGeometry
+(
+		const double* xOverlap,
+		const double* uOverlap,
+		const double* velocityOverlap,
+		double* yOverlap,
+		int overLapLength,
+		double dt
+)
+{
+	const double* x = xOverlap;
+	const double* u = uOverlap;
+	const double* v = velocityOverlap;
+	double*       y = yOverlap;
+
+	int length = overLapLength;
+	for(;x!=xOverlap+length;x++,u++,v++,y++)
+		*y = *x + *u + *v * dt;
 };
 
 inline void SET(double* const start, const double* const end, double value){
@@ -308,7 +327,7 @@ void runPureShear() {
 	 */
 	Pd_shared_ptr_Array<double> mPtr(numPoints);
 	SET(mPtr.get(),mPtr.end(),0.0);
-	computeWeightedVolume(pdGridData.myX.get(),pdGridData.cellVolume.get(),mPtr.get(),numPoints,pdGridData.neighborhood.get());
+	MATERIAL_EVALUATION::computeWeightedVolume(pdGridData.myX.get(),pdGridData.cellVolume.get(),mPtr.get(),numPoints,pdGridData.neighborhood.get());
 
 	/*
 	 * Dilatation
@@ -400,7 +419,9 @@ void runPureShear() {
 
 			t += dt;
 
-			updateGeometry(x,u,v,y,numPoints*3,dt);
+			{
+				updateGeometry(x,u,v,y,numPoints*3,dt);
+			}
 
 			/*
 			 * Do not compute dilatation -- just set it to zero
