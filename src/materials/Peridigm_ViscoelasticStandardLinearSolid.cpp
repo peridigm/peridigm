@@ -50,8 +50,8 @@
 #include <Teuchos_TestForException.hpp>
 #include "Epetra_Vector.h"
 #include "Epetra_MultiVector.h"
-#include "PdMaterialUtilities.h"
 #include "ordinary_std_linear_visco_solid.h"
+#include "ordinary_utilities.h"
 #include <limits>
 
 
@@ -118,7 +118,7 @@ void PeridigmNS::ViscoelasticStandardLinearSolid::initialize(const double dt,
       dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&cellVolumeOverlap);
       dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
 
-	  PdMaterialUtilities::computeWeightedVolume(xOverlap,cellVolumeOverlap,weightedVolume,numOwnedPoints,neighborhoodList);
+	  MATERIAL_EVALUATION::computeWeightedVolume(xOverlap,cellVolumeOverlap,weightedVolume,numOwnedPoints,neighborhoodList);
 
 }
 
@@ -166,7 +166,7 @@ PeridigmNS::ViscoelasticStandardLinearSolid::updateConstitutiveData(const double
 		damage[nodeID] = totalDamage;
 	}
 
-	PdMaterialUtilities::computeDilatation(x,yNP1,weightedVolume,volume,bondDamage,dilatation,ownedIDs,neighborhoodList,numOwnedPoints);
+	MATERIAL_EVALUATION::computeDilatation(x,yNP1,weightedVolume,volume,bondDamage,dilatation,neighborhoodList,numOwnedPoints);
 }
 
 void

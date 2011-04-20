@@ -48,8 +48,8 @@
 #include "Peridigm_LinearElasticIsotropicMaterial.hpp"
 #include "Peridigm_CriticalStretchDamageModel.hpp"
 #include <Teuchos_TestForException.hpp>
-#include "PdMaterialUtilities.h"
 #include "ordinary_elastic.h"
+#include "ordinary_utilities.h"
 
 using namespace std;
 
@@ -115,7 +115,7 @@ PeridigmNS::LinearElasticIsotropicMaterial::initialize(const double dt,
   dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&cellVolume);
   dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
 
-  PdMaterialUtilities::computeWeightedVolume(x,cellVolume,weightedVolume,numOwnedPoints,neighborhoodList);
+  MATERIAL_EVALUATION::computeWeightedVolume(x,cellVolume,weightedVolume,numOwnedPoints,neighborhoodList);
 }
 
 void
@@ -162,7 +162,7 @@ PeridigmNS::LinearElasticIsotropicMaterial::updateConstitutiveData(const double 
  	damage[nodeID] = totalDamage;
   }
 
-  PdMaterialUtilities::computeDilatation(x,y,weightedVolume,cellVolume,bondDamage,dilatation,ownedIDs,neighborhoodList,numOwnedPoints);
+  MATERIAL_EVALUATION::computeDilatation(x,y,weightedVolume,cellVolume,bondDamage,dilatation,neighborhoodList,numOwnedPoints);
 }
 
 void
