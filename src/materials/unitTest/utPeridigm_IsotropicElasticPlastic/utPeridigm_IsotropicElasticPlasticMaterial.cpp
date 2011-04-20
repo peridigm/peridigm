@@ -141,7 +141,7 @@ void updateGeometry
 	int length = overLapLength;
 	for(;x!=xOverlap+length;x++,u++,v++,y++)
 		*y = *x + *u + *v * dt;
-};
+}
 
 inline void SET(double* const start, const double* const end, double value){
 	for(double *i = start; i!=end; i++)
