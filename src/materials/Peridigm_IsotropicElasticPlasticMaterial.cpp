@@ -49,8 +49,6 @@
 #include "Peridigm_CriticalStretchDamageModel.hpp"
 #include <Teuchos_TestForException.hpp>
 #include "Epetra_Vector.h"
-#include "Epetra_MultiVector.h"
-#include "PdMaterialUtilities.h"
 #include "ordinary_elastic_plastic.h"
 #include "ordinary_utilities.h"
 #include <limits>
@@ -179,7 +177,7 @@ PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const double
 		damage[nodeID] = totalDamage;
 	}
 
-	PdMaterialUtilities::computeDilatation(x,y,weightedVolume,volume,bondDamage,dilatation,ownedIDs,neighborhoodList,numOwnedPoints);
+	MATERIAL_EVALUATION::computeDilatation(x,y,weightedVolume,volume,bondDamage,dilatation,neighborhoodList,numOwnedPoints);
 }
 
 void
