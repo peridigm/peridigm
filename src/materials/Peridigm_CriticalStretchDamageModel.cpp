@@ -47,7 +47,6 @@
 
 #include "Peridigm_CriticalStretchDamageModel.hpp"
 #include <Teuchos_TestForException.hpp>
-#include "PdMaterialUtilities.h"
 
 using namespace std;
 

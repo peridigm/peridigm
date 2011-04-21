@@ -56,8 +56,6 @@
 #include "PdutMpiFixture.h"
 #include "PdVTK.h"
 #include <iostream>
-#include "PdMaterialUtilities.h"
-
 
 #include "Field.h"
 using namespace Field_NS;
