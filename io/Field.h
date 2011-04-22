@@ -50,11 +50,16 @@
 #include "Pd_shared_ptr_Array.h"
 #include <stdexcept>
 #include <string>
+#include <map>
+#include <iostream>
+#include <sstream>
 
 namespace Field_NS {
 
 using std::tr1::shared_ptr;
 using std::string;
+using std::map;
+
 /**
  *
  * FieldSpec Declaration
@@ -86,28 +91,34 @@ public:
 	  BOND_DAMAGE,
 	  DEFAULT_FIELDTYPE
   };
-    enum FieldLength {SCALAR=1, VECTOR2D=2, VECTOR3D=3, BOND=4};
-    enum FieldStateArchitecture {STATELESS=0, STATEFUL=1}; 
-    enum FieldStep {STEP_N=0, STEP_NP1=1, STEP_NONE=2};
+  enum FieldLength {SCALAR=1, VECTOR2D=2, VECTOR3D=3, BOND=4};
+  enum FieldStateArchitecture {STATELESS=0, STATEFUL=1}; 
+  enum FieldStep {STEP_N=0, STEP_NP1=1, STEP_NONE=2};
 
 private:
 	FieldType type;
 	FieldLength length;
-    FieldStateArchitecture stateArch;
+        FieldStateArchitecture stateArch;
 	std::string label;
 
 public:
+	FieldSpec();
 	FieldSpec(const FieldSpec& c);
-    explicit FieldSpec(FieldType t, FieldLength len, const string& label);
-    explicit FieldSpec(FieldType t, FieldLength len, FieldStateArchitecture arch, const string& label);
+        explicit FieldSpec(FieldType t, FieldLength len, const string& label);
+        explicit FieldSpec(FieldType t, FieldLength len, FieldStateArchitecture arch, const string& label);
 	bool operator == (const FieldSpec& right) const;
 	bool operator != (const FieldSpec& right) const;
 	bool operator < (const FieldSpec& right) const;
+        std::ostream& print(std::ostream& os) const;
 	FieldType getType() const;
 	FieldLength getLength() const;
-    FieldStateArchitecture getStateArchitecture() const;
+        FieldStateArchitecture getStateArchitecture() const;
 	string getLabel() const;
 };
+
+inline std::ostream& operator<<(std::ostream& os, const FieldSpec& fs) {
+  return fs.print(os);
+}
 
 // Scalar FieldSpecs
 const FieldSpec DEFAULT_FIELDTYPE(FieldSpec::DEFAULT_FIELDTYPE, FieldSpec::SCALAR, FieldSpec::STATELESS, "Default_FieldType");
@@ -119,7 +130,7 @@ const FieldSpec WEIGHTED_VOLUME(FieldSpec::WEIGHTED_VOLUME,     FieldSpec::SCALA
 const FieldSpec DILATATION(FieldSpec::DILATATION,               FieldSpec::SCALAR, FieldSpec::STATEFUL,  "Dilatation");
 const FieldSpec NUM_NEIGHBORS(FieldSpec::NUM_NEIGHBORS,         FieldSpec::SCALAR, FieldSpec::STATELESS, "Num_Neighbors");
 const FieldSpec LAMBDA(FieldSpec::PLASTIC_CONSISTENCY,          FieldSpec::SCALAR, FieldSpec::STATEFUL,  "Lambda");
-const FieldSpec SHEAR_CORRECTION_FACTOR(FieldSpec::SHEAR_CORRECTION_FACTOR,      FieldSpec::SCALAR, FieldSpec::STATELESS,  "Shear_Correction_Factor");
+const FieldSpec SHEAR_CORRECTION_FACTOR(FieldSpec::SHEAR_CORRECTION_FACTOR, FieldSpec::SCALAR, FieldSpec::STATELESS, "Shear_Correction_Factor");
 
 // Vector FieldSpecs
 const FieldSpec COORD3D(FieldSpec::COORDINATES,            FieldSpec::VECTOR3D, FieldSpec::STATELESS, "Coordinates");
@@ -130,19 +141,50 @@ const FieldSpec ACCEL3D(FieldSpec::ACCELERATION,           FieldSpec::VECTOR3D, 
 const FieldSpec FORCE3D(FieldSpec::FORCE,                  FieldSpec::VECTOR3D, FieldSpec::STATEFUL,  "Force");
 const FieldSpec FORCE_DENSITY3D(FieldSpec::FORCE_DENSITY,  FieldSpec::VECTOR3D, FieldSpec::STATEFUL,  "Force Density");
 const FieldSpec CONTACT_FORCE3D(FieldSpec::CONTACT_FORCE,  FieldSpec::VECTOR3D, FieldSpec::STATEFUL,  "Contact Force");
-const FieldSpec CONTACT_FORCE_DENSITY3D(FieldSpec::CONTACT_FORCE_DENSITY,  FieldSpec::VECTOR3D, FieldSpec::STATEFUL,  "Contact Force Density");
+const FieldSpec CONTACT_FORCE_DENSITY3D(FieldSpec::CONTACT_FORCE_DENSITY, FieldSpec::VECTOR3D, FieldSpec::STATEFUL, "Contact Force Density");
 
 // Bond FieldSpecs
 const FieldSpec BOND_DAMAGE(FieldSpec::BOND_DAMAGE,           FieldSpec::BOND, FieldSpec::STATEFUL, "Bond_Damage");
 const FieldSpec DEVIATORIC_PLASTIC_EXTENSION(FieldSpec::E_DP, FieldSpec::BOND, FieldSpec::STATEFUL, "Deviatoric_Plastic_Extension");
 const FieldSpec DEVIATORIC_BACK_EXTENSION(FieldSpec::E_DB, FieldSpec::BOND, FieldSpec::STATEFUL, "Deviatoric_Back_Extension");
 
+// Map from string ID to FieldSpec, for all fieldspecs
+struct FieldSpecMap {
+  static std::map<string, FieldSpec> create_map() {
+    std::map<string,FieldSpec> mymap;
+    mymap[DEFAULT_FIELDTYPE.getLabel()]            = DEFAULT_FIELDTYPE;
+    mymap[VOLUME.getLabel()]                       = VOLUME;
+    mymap[ID.getLabel()]                           = ID;
+    mymap[PROC_NUM.getLabel()]                     = PROC_NUM;
+    mymap[DAMAGE.getLabel()]                       = DAMAGE;
+    mymap[WEIGHTED_VOLUME.getLabel()]              = WEIGHTED_VOLUME;
+    mymap[DILATATION.getLabel()]                   = DILATATION;
+    mymap[NUM_NEIGHBORS.getLabel()]                = NUM_NEIGHBORS;
+    mymap[LAMBDA.getLabel()]                       = LAMBDA;
+    mymap[SHEAR_CORRECTION_FACTOR.getLabel()]      = SHEAR_CORRECTION_FACTOR;
+    mymap[COORD3D.getLabel()]                      = COORD3D;
+    mymap[DISPL3D.getLabel()]                      = DISPL3D;
+    mymap[CURCOORD3D.getLabel()]                   = CURCOORD3D;
+    mymap[VELOC3D.getLabel()]                      = VELOC3D;
+    mymap[ACCEL3D.getLabel()]                      = ACCEL3D;
+    mymap[FORCE3D.getLabel()]                      = FORCE3D;
+    mymap[FORCE_DENSITY3D.getLabel()]              = FORCE_DENSITY3D;
+    mymap[CONTACT_FORCE3D.getLabel()]              = CONTACT_FORCE3D;
+    mymap[CONTACT_FORCE_DENSITY3D.getLabel()]      = CONTACT_FORCE_DENSITY3D;
+    mymap[BOND_DAMAGE.getLabel()]                  = BOND_DAMAGE;
+    mymap[DEVIATORIC_PLASTIC_EXTENSION.getLabel()] = DEVIATORIC_PLASTIC_EXTENSION;
+    mymap[DEVIATORIC_BACK_EXTENSION.getLabel()]    = DEVIATORIC_BACK_EXTENSION ;
+    return mymap;
+  };
+  static const std::map<string, FieldSpec> Map;  
+};  
+
 template<typename T>
 class Field : public FieldSpec {
 
 private:
-	Pd_shared_ptr_Array<T> data;
-	std::size_t numPoints;
+    Pd_shared_ptr_Array<T> data;
+    std::size_t numPoints;
 
 public:
     Field(const FieldSpec& c, std::size_t numPoints) : FieldSpec(c), data(numPoints*c.getLength()), numPoints(numPoints){}
@@ -163,8 +205,8 @@ template<typename T>
 class TemporalField {
 public:
 
-	TemporalField(const FieldSpec& c=DEFAULT_FIELDTYPE, std::size_t numPoints=0): numPoints(numPoints), N(c,numPoints), NP1(c,numPoints) {}
-	std::size_t getNumPoints() const { return numPoints; }
+    TemporalField(const FieldSpec& c=DEFAULT_FIELDTYPE, std::size_t numPoints=0): numPoints(numPoints), N(c,numPoints), NP1(c,numPoints) {}
+    std::size_t getNumPoints() const { return numPoints; }
     Field<T> getField(FieldSpec::FieldStep step) const {
     	switch(step){
     	case FieldSpec::STEP_N:

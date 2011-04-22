@@ -266,7 +266,7 @@ void PeridigmNS::Peridigm::initializeDataManager(Teuchos::RCP<AbstractDiscretiza
   // Remove duplicates
   std::unique(variableSpecs->begin(), variableSpecs->end());
 
-  // Allocalte data in the dataManager
+  // Allocate data in the dataManager
   dataManager->allocateData(variableSpecs);
 
   // Fill the dataManager with data from the discretization
@@ -595,6 +595,9 @@ void PeridigmNS::Peridigm::executeExplicit() {
     // V^{n+1}   = V^{n+1/2} + (dt/2)*A^{n+1}
     //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
     blas.AXPY(length, dt2, aptr, vptr, 1, 1);
+
+    // Update computed quantities 
+    computeManager->compute( dataManager );
 
     t_current = t_initial + (step*dt);
     forceStateDesc->set("Time", t_current);

@@ -253,7 +253,6 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
     TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
     "Peridigm::OutputManager: Unknown material model. Only \"Linear Elastic\" or \"Elastic Plastic\" currently supported.");
 
-
   if (thisMaterial->isParameter("Volume")) {
 	  double *volume;
 	  dataManager->getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&volume);
@@ -382,7 +381,6 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<PeridigmNS::DataManag
   else // Unrecognized material model. Throw error.
     TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
     "Peridigm::OutputManager: Unknown material model. Only \"Linear Elastic\" or \"Elastic Plastic\" currently supported.");
-
 
   if (thisMaterial->isParameter("Volume")) {
     double *volume;
