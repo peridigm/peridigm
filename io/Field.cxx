@@ -49,9 +49,12 @@
 
 namespace Field_NS {
 
+const map<string, FieldSpec> FieldSpecMap::Map =  FieldSpecMap::create_map();
+
 /**
  * FieldSpec Implementation
  */
+FieldSpec::FieldSpec() : type(FieldSpec::DEFAULT_FIELDTYPE), length(FieldSpec::SCALAR), stateArch(STATELESS), label("DEFAULT"){}
 FieldSpec::FieldSpec(FieldType t, FieldLength len, const string& label) : type(t), length(len), stateArch(STATELESS), label(label){}
 FieldSpec::FieldSpec(FieldType t, FieldLength len, FieldStateArchitecture arch, const string& label) : type(t), length(len), stateArch(arch), label(label){}
 FieldSpec::FieldSpec(const FieldSpec& c) : type(c.getType()), length(c.getLength()), stateArch(c.getStateArchitecture()), label(c.getLabel()) {}
@@ -70,6 +73,12 @@ bool FieldSpec::operator < (const FieldSpec& right) const {
 	else
 		return false;
 }
+
+std::ostream& FieldSpec::print(std::ostream& os) const {
+  os << label;
+  return os;
+}
+
 FieldSpec::FieldType FieldSpec::getType() const { return type; }
 FieldSpec::FieldLength FieldSpec::getLength() const { return length; }
 FieldSpec::FieldStateArchitecture FieldSpec::getStateArchitecture() const { return stateArch; }
