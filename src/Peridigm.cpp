@@ -241,14 +241,9 @@ void PeridigmNS::Peridigm::initializeDataManager(Teuchos::RCP<AbstractDiscretiza
   // Create a master list of variable specs
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
 
-  // Start with the specs used by Peridigm
-  variableSpecs->push_back(Field_NS::VOLUME);
-  variableSpecs->push_back(Field_NS::COORD3D);
-  variableSpecs->push_back(Field_NS::DISPL3D);
-  variableSpecs->push_back(Field_NS::CURCOORD3D);
-  variableSpecs->push_back(Field_NS::VELOC3D);
-  variableSpecs->push_back(Field_NS::FORCE_DENSITY3D);
-  variableSpecs->push_back(Field_NS::CONTACT_FORCE_DENSITY3D);
+  // First fill list with specs utilized by this object (Peridigm)
+  std::vector<Field_NS::FieldSpec> peridigmSpecs = this->getFieldSpecs();
+  variableSpecs->insert(variableSpecs->end(),peridigmSpecs.begin(),peridigmSpecs.end());
 
   // Add the variable specs requested by each material
   for(unsigned int i=0; i<materialModels->size() ; ++i){
@@ -1199,6 +1194,21 @@ Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::Peridigm::createRebalance
   return rebalancedNeighborhoodData;
 }
 
+std::vector<Field_NS::FieldSpec> PeridigmNS::Peridigm::getFieldSpecs() {
+  // FieldSpecs used by Peridigm class
+  std::vector<Field_NS::FieldSpec> mySpecs;
+
+  mySpecs.push_back(Field_NS::VOLUME);
+  mySpecs.push_back(Field_NS::COORD3D);
+  mySpecs.push_back(Field_NS::DISPL3D);
+  mySpecs.push_back(Field_NS::CURCOORD3D);
+  mySpecs.push_back(Field_NS::VELOC3D);
+  mySpecs.push_back(Field_NS::FORCE_DENSITY3D);
+  mySpecs.push_back(Field_NS::CONTACT_FORCE_DENSITY3D);
+
+  return mySpecs;
+}
+
 void PeridigmNS::Peridigm::contactSearch(Teuchos::RCP<const Epetra_BlockMap> rebalancedOneDimensionalMap, 
                                          Teuchos::RCP<const Epetra_BlockMap> rebalancedBondMap,
                                          Teuchos::RCP<const Epetra_Vector> rebalancedNeighborGlobalIDs,
@@ -1287,3 +1297,5 @@ Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::Peridigm::createRebalance
 
   return rebalancedContactNeighborhoodData;
 }
+
+

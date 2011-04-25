@@ -194,6 +194,9 @@ namespace PeridigmNS {
     //! Accessor for DataManager
     Teuchos::RCP<PeridigmNS::DataManager> getDataManager() { return dataManager; }
 
+    //! Return list of field specs used by Peridigm object
+    std::vector<Field_NS::FieldSpec> getFieldSpecs();
+
   private:
 
     //! Parameterlist of entire input deck
