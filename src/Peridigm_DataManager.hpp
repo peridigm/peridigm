@@ -121,9 +121,15 @@ public:
   //! Returns RCP to owned vector map
   Teuchos::RCP<const Epetra_BlockMap> getOwnedIDVectorMap(){ return ownedIDVectorMap; }
 
+  //! Returns RCP to overlap scalar map
+  Teuchos::RCP<const Epetra_BlockMap> getOverlapIDScalarMap(){ return scalarMap; }
+
   //! Provides access to the Epetra_Vector specified by the given FieldSped and FieldStep.
   Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec,
                                       Field_NS::FieldSpec::FieldStep fieldStep);
+
+  //! Returns the complete list of field specs.
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > getFieldSpecs() { return fieldSpecs; }
 
   //! Swaps StateN and StateNP1; stateNONE is unaffected.
   void updateState(){
