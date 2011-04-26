@@ -132,7 +132,7 @@ double computeDeviatoricForceStateNorm
 void computeInternalForceIsotropicElasticPlastic
 (
 		const double* xOverlap,
-		const double* yOverlap,
+		const double* yNP1Overlap,
 		const double* mOwned,
 		const double* volumeOverlap,
 		const double* dilatationOwned,
@@ -173,7 +173,7 @@ void computeInternalForceIsotropicElasticPlastic
 
 
 	const double *xOwned = xOverlap;
-	const double *yOwned = yOverlap;
+	const double *yOwned = yNP1Overlap;
 	const double *m = mOwned;
 	const double *v = volumeOverlap;
 	const double *theta = dilatationOwned;
@@ -196,7 +196,7 @@ void computeInternalForceIsotropicElasticPlastic
 		 * Compute norm of trial stress
 		 */
 		double tdNorm = 0.0;
-		tdNorm = computeDeviatoricForceStateNorm(numNeigh,*theta,neighPtr,bondDamage,deviatoricPlasticExtensionStateN,X,Y,xOverlap,yOverlap,v,alpha,OMEGA);
+		tdNorm = computeDeviatoricForceStateNorm(numNeigh,*theta,neighPtr,bondDamage,deviatoricPlasticExtensionStateN,X,Y,xOverlap,yNP1Overlap,v,alpha,OMEGA);
 
 		/*
 		 * Evaluate yield function
@@ -225,7 +225,7 @@ void computeInternalForceIsotropicElasticPlastic
 			int localId = *neighPtr;
 			cellVolume = v[localId];
 			const double *XP = &xOverlap[3*localId];
-			const double *YP = &yOverlap[3*localId];
+			const double *YP = &yNP1Overlap[3*localId];
 			dx = XP[0]-X[0];
 			dy = XP[1]-X[1];
 			dz = XP[2]-X[2];

@@ -189,9 +189,9 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const double dt,
 {
  
 	  // Extract pointers to the underlying data in the constitutiveData array
-      double *x, *y, *volume, *dilatation, *weightedVolume, *bondDamage, *edpN, *edpNP1, *lambdaN, *lambdaNP1, *force, *ownedDSF;
+      double *x, *yNP1, *volume, *dilatation, *weightedVolume, *bondDamage, *edpN, *edpNP1, *lambdaN, *lambdaNP1, *force, *ownedDSF;
       dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&x);
-      dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&y);
+      dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&yNP1);
       dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&volume);
       dataManager.getData(Field_NS::DILATATION, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&dilatation);
       dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&weightedVolume);
@@ -208,7 +208,7 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const double dt,
 
 	  MATERIAL_EVALUATION::computeInternalForceIsotropicElasticPlastic
         (x,
-         y,
+         yNP1,
          weightedVolume,
          volume,
          dilatation,

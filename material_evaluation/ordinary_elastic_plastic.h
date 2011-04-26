@@ -82,7 +82,7 @@ double computeDeviatoricForceStateNorm
 void computeInternalForceIsotropicElasticPlastic
 (
 		const double* xOverlap,
-		const double* yOverlap,
+		const double *yNP1Overlap,
 		const double* mOwned,
 		const double* volumeOverlap,
 		const double* dilatationOwned,
