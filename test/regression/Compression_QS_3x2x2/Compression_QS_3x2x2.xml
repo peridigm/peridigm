@@ -6,13 +6,13 @@
 	  <Parameter name="Horizon" type="double" value="1.75"/>
           <ParameterList name="TensorProduct3DMeshGenerator">
 	  		<Parameter name="Type" type="string" value="PdQuickGrid"/>
-			<Parameter name="X Origin" type="double" value="-2.0"/>
+			<Parameter name="X Origin" type="double" value="-1.5"/>
 			<Parameter name="Y Origin" type="double" value="-1.0"/>
 			<Parameter name="Z Origin" type="double" value="-1.0"/>
-			<Parameter name="X Length" type="double" value="4.0"/>
+			<Parameter name="X Length" type="double" value="3.0"/>
 			<Parameter name="Y Length" type="double" value="2.0"/>
 			<Parameter name="Z Length" type="double" value="2.0"/>
-			<Parameter name="Number Points X" type="int" value="4"/>
+			<Parameter name="Number Points X" type="int" value="3"/>
 			<Parameter name="Number Points Y" type="int" value="2"/>
 			<Parameter name="Number Points Z" type="int" value="2"/>
 		</ParameterList>
@@ -25,10 +25,10 @@
 	  </ParameterList>
 	</ParameterList>
     <ParameterList name="Boundary Conditions">
-	  <Parameter name="Min X Node Set" type="string" value="0 4 8 12"/>
-	  <Parameter name="Max X Node Set" type="string" value="3 7 11 15"/>
-	  <Parameter name="Y Axis Node Set" type="string" value="0 4"/>
-	  <Parameter name="Z Axis Node Set" type="string" value="0 8"/>
+	  <Parameter name="Min X Node Set" type="string" value="0 3 6 9"/>
+	  <Parameter name="Max X Node Set" type="string" value="2 5 8 11"/>
+	  <Parameter name="Y Axis Node Set" type="string" value="0 3"/>
+	  <Parameter name="Z Axis Node Set" type="string" value="0 6"/>
       <ParameterList name="Prescribed Displacement Min X Face">
         <Parameter name="Type" type="string" value="Prescribed Displacement"/>
 	    <Parameter name="Node Set" type="string" value="Min X Node Set"/>
