@@ -3,4 +3,5 @@
   <Tolerance variable="Velocity" value="1.0e-9"/>
   <Tolerance variable="Weighted_Volume" value="1.0e-12"/>
   <Tolerance variable="Dilatation" value="1.0e-12"/>
+  <Tolerance variable="Force Density" value="1.0"/>
 </Tolerances>
