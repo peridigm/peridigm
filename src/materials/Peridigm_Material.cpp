@@ -130,14 +130,16 @@ void PeridigmNS::Material::computeJacobian(const double dt,
           for(unsigned int i=0 ; i<tempMyGlobalIDs.size() ; ++i){
             int globalID = tempMyGlobalIDs[i];
             int sourceLocalID = source.Map().LID(globalID);
-            int targetLocalID = target.Map().LID(globalID);
-            if(spec.getLength() == Field_NS::FieldSpec::SCALAR){
-              target[targetLocalID] = source[sourceLocalID];
-            }
-            else if(spec.getLength() == Field_NS::FieldSpec::VECTOR3D){
-              target[3*targetLocalID] = source[3*sourceLocalID];
-              target[3*targetLocalID+1] = source[3*sourceLocalID+1];
-              target[3*targetLocalID+2] = source[3*sourceLocalID+2];
+            if(sourceLocalID != -1){
+              int targetLocalID = target.Map().LID(globalID);
+              if(spec.getLength() == Field_NS::FieldSpec::SCALAR){
+                target[targetLocalID] = source[sourceLocalID];
+              }
+              else if(spec.getLength() == Field_NS::FieldSpec::VECTOR3D){
+                target[3*targetLocalID] = source[3*sourceLocalID];
+                target[3*targetLocalID+1] = source[3*sourceLocalID+1];
+                target[3*targetLocalID+2] = source[3*sourceLocalID+2];
+              }
             }
           }
         }
@@ -148,14 +150,16 @@ void PeridigmNS::Material::computeJacobian(const double dt,
             for(unsigned int i=0 ; i<tempMyGlobalIDs.size() ; ++i){
               int globalID = tempMyGlobalIDs[i];
               int sourceLocalID = source.Map().LID(globalID);
-              int targetLocalID = target.Map().LID(globalID);
-              if(spec.getLength() == Field_NS::FieldSpec::SCALAR){
-                target[targetLocalID] = source[sourceLocalID];
-              }
-              else if(spec.getLength() == Field_NS::FieldSpec::VECTOR3D){
-                target[3*targetLocalID] = source[3*sourceLocalID];
-                target[3*targetLocalID+1] = source[3*sourceLocalID+1];
-                target[3*targetLocalID+2] = source[3*sourceLocalID+2];
+              if(sourceLocalID != -1){
+                int targetLocalID = target.Map().LID(globalID);
+                if(spec.getLength() == Field_NS::FieldSpec::SCALAR){
+                  target[targetLocalID] = source[sourceLocalID];
+                }
+                else if(spec.getLength() == Field_NS::FieldSpec::VECTOR3D){
+                  target[3*targetLocalID] = source[3*sourceLocalID];
+                  target[3*targetLocalID+1] = source[3*sourceLocalID+1];
+                  target[3*targetLocalID+2] = source[3*sourceLocalID+2];
+                }
               }
             }
           }
@@ -165,14 +169,16 @@ void PeridigmNS::Material::computeJacobian(const double dt,
             for(unsigned int i=0 ; i<tempMyGlobalIDs.size() ; ++i){
               int globalID = tempMyGlobalIDs[i];
               int sourceLocalID = source.Map().LID(globalID);
-              int targetLocalID = target.Map().LID(globalID);
-              if(spec.getLength() == Field_NS::FieldSpec::SCALAR){
-                target[targetLocalID] = source[sourceLocalID];
-              }
-              else if(spec.getLength() == Field_NS::FieldSpec::VECTOR3D){
-                target[3*targetLocalID] = source[3*sourceLocalID];
-                target[3*targetLocalID+1] = source[3*sourceLocalID+1];
-                target[3*targetLocalID+2] = source[3*sourceLocalID+2];
+              if(sourceLocalID != -1){
+                int targetLocalID = target.Map().LID(globalID);
+                if(spec.getLength() == Field_NS::FieldSpec::SCALAR){
+                  target[targetLocalID] = source[sourceLocalID];
+                }
+                else if(spec.getLength() == Field_NS::FieldSpec::VECTOR3D){
+                  target[3*targetLocalID] = source[3*sourceLocalID];
+                  target[3*targetLocalID+1] = source[3*sourceLocalID+1];
+                  target[3*targetLocalID+2] = source[3*sourceLocalID+2];
+                }
               }
             }
           }
@@ -186,12 +192,14 @@ void PeridigmNS::Material::computeJacobian(const double dt,
           // there is bond data only for the owned ID
           int globalID = tempMyGlobalIDs[0];
           int sourceLocalID = source.Map().LID(globalID);
-          int targetLocalID = target.Map().LID(globalID);
-          int sourceFirstPointInElement = source.Map().FirstPointInElement(sourceLocalID);
-          int targetFirstPointInElement = target.Map().FirstPointInElement(targetLocalID);
-          int elementSize = source.Map().ElementSize(sourceLocalID);
-          for(int i=0 ; i<elementSize ; ++i)
-            target[targetFirstPointInElement+i] = source[sourceFirstPointInElement+i];
+          if(sourceLocalID != -1){
+            int targetLocalID = target.Map().LID(globalID);
+            int sourceFirstPointInElement = source.Map().FirstPointInElement(sourceLocalID);
+            int targetFirstPointInElement = target.Map().FirstPointInElement(targetLocalID);
+            int elementSize = source.Map().ElementSize(sourceLocalID);
+            for(int i=0 ; i<elementSize ; ++i)
+              target[targetFirstPointInElement+i] = source[sourceFirstPointInElement+i];
+          }
         }
         else if(arch == Field_NS::FieldSpec::STATEFUL){
           Epetra_Vector& source = *(dataManager.getData(spec, Field_NS::FieldSpec::STEP_N));
@@ -199,22 +207,26 @@ void PeridigmNS::Material::computeJacobian(const double dt,
           // there is bond data only for the owned ID
           int globalID = tempMyGlobalIDs[0];
           int sourceLocalID = source.Map().LID(globalID);
-          int targetLocalID = target.Map().LID(globalID);
-          int sourceFirstPointInElement = source.Map().FirstPointInElement(sourceLocalID);
-          int targetFirstPointInElement = target.Map().FirstPointInElement(targetLocalID);
-          int elementSize = source.Map().ElementSize(sourceLocalID);
-          for(int i=0 ; i<elementSize ; ++i)
-            target[targetFirstPointInElement+i] = source[sourceFirstPointInElement+i];
+          if(sourceLocalID != -1){
+            int targetLocalID = target.Map().LID(globalID);
+            int sourceFirstPointInElement = source.Map().FirstPointInElement(sourceLocalID);
+            int targetFirstPointInElement = target.Map().FirstPointInElement(targetLocalID);
+            int elementSize = source.Map().ElementSize(sourceLocalID);
+            for(int i=0 ; i<elementSize ; ++i)
+              target[targetFirstPointInElement+i] = source[sourceFirstPointInElement+i];
+          }
           source = *(dataManager.getData(spec, Field_NS::FieldSpec::STEP_NP1));
           target = *(tempDataManager.getData(spec, Field_NS::FieldSpec::STEP_NP1));
           globalID = tempMyGlobalIDs[0];
           sourceLocalID = source.Map().LID(globalID);
-          targetLocalID = target.Map().LID(globalID);
-          sourceFirstPointInElement = source.Map().FirstPointInElement(sourceLocalID);
-          targetFirstPointInElement = target.Map().FirstPointInElement(targetLocalID);
-          elementSize = source.Map().ElementSize(sourceLocalID);
-          for(int i=0 ; i<elementSize ; ++i)
-            target[targetFirstPointInElement+i] = source[sourceFirstPointInElement+i];
+          if(sourceLocalID != -1){
+            int targetLocalID = target.Map().LID(globalID);
+            int sourceFirstPointInElement = source.Map().FirstPointInElement(sourceLocalID);
+            int targetFirstPointInElement = target.Map().FirstPointInElement(targetLocalID);
+            int elementSize = source.Map().ElementSize(sourceLocalID);
+            for(int i=0 ; i<elementSize ; ++i)
+              target[targetFirstPointInElement+i] = source[sourceFirstPointInElement+i];
+          }
         }
       }
     }
@@ -273,8 +285,8 @@ void PeridigmNS::Material::computeJacobian(const double dt,
             double value = ( force[3*forceID+d] - unperturbedForce[3*forceID+d] ) / epsilon;
             int globalForceID = tempOneDimensionalMap->GID(forceID);
             int globalPerturbID = tempOneDimensionalMap->GID(perturbID);
-            int localForceID = dataManager.getOwnedIDScalarMap()->LID(globalForceID);
-            int localPerturbID = dataManager.getOwnedIDScalarMap()->LID(globalPerturbID);
+            int localForceID = dataManager.getOverlapIDScalarMap()->LID(globalForceID);
+            int localPerturbID = dataManager.getOverlapIDScalarMap()->LID(globalPerturbID);
             int row = 3*localForceID + d;
             int col = 3*localPerturbID + dof;
             jacobian.addValue(row, col, value);
