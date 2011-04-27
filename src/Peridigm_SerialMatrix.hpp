@@ -74,6 +74,9 @@ public:
   //! Set all entries to given scalar
   void putScalar(double value);
 
+  //! Return ref-count pointer to the FECrsMatrix
+  Teuchos::RCP<const Epetra_FECrsMatrix> getFECrsMatrix() { return FECrsMatrix; }
+
 protected:
 
   Teuchos::RCP<Epetra_FECrsMatrix> FECrsMatrix;
