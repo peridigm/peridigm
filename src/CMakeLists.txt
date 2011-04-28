@@ -127,7 +127,6 @@ ${REQUIRED_LIBS}
 ${Boost_LIBRARIES}
 )
 
-
 add_executable(utPeridigm_PdQuickGridDiscretization_MPI_np2
 		utPeridigm_PdQuickGridDiscretization_MPI_np2.cpp
         Peridigm_PdQuickGridDiscretization.cpp)
@@ -138,6 +137,15 @@ ${Zoltan_LIBRARY}
 ${PdQuickGridLibs}
 ${PdVTKLibs}
 ${VTK_LIBS}
+${REQUIRED_LIBS}
+${Boost_LIBRARIES}
+)
+
+add_executable(utPeridigm_State
+		utPeridigm_State.cpp
+        ../io/Field.cxx)
+target_link_libraries(utPeridigm_State
+${TRILINOS_LIBS}
 ${REQUIRED_LIBS}
 ${Boost_LIBRARIES}
 )

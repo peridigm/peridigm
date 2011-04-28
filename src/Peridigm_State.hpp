@@ -50,6 +50,7 @@
 
 #include <Teuchos_RCP.hpp>
 #include <Epetra_Vector.h>
+#include "Field.h"
 
 namespace PeridigmNS {
 

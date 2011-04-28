@@ -129,8 +129,8 @@ void PeridigmNS::IsotropicElasticPlasticMaterial::initialize(const double dt,
 	  /*
 	   * Can override the shear correction factor here by simply setting it = 1.0
 	   */
-// 	  for(double *dsf=shear_correction_factor; dsf!=shear_correction_factor+numOwnedPoints;dsf++)
-// 		  *dsf = 1.0;
+//  	  for(double *dsf=shear_correction_factor; dsf!=shear_correction_factor+numOwnedPoints;dsf++)
+//         *dsf = 1.0;
 }
 
 void
