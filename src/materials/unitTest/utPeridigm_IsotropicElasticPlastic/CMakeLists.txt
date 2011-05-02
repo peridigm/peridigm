@@ -6,7 +6,7 @@ add_executable(utPeridigm_IsotropicElasticPlasticMaterial
         ../../../Peridigm_SerialMatrix.cpp
 		./utPeridigm_IsotropicElasticPlasticMaterial.cpp)
 target_link_libraries(utPeridigm_IsotropicElasticPlasticMaterial
-${TRILINOS_LIBS}
+${Trilinos_LIBRARIES}
 ${PdQuickGridLibs}
 ${PdVTKLibs}
 ${VTK_LIBS}

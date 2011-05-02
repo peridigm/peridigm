@@ -35,29 +35,29 @@ add_executable(utPdSmallMeshCylinder_np4 utPdSmallMeshCylinder_np4.cxx)
 target_link_libraries(utPdSmallMeshCylinder_np4 ${IO_LIBS} ${VTK_LIBS}  ${Epetra_LIBRARY} ${UT_REQUIRED_LIBS})
 #
 add_executable(utPdQuickGrid_loadBal_np2_3x1x1 utPdQuickGrid_loadBal_np2_3x1x1.cxx)
-target_link_libraries(utPdQuickGrid_loadBal_np2_3x1x1  ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdQuickGrid_loadBal_np2_3x1x1  ${IO_LIBS} ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 #
 add_executable(utPdQuickGrid_loadBal_np2_4x4x4 utPdQuickGrid_loadBal_np2_4x4x4.cxx)
-target_link_libraries(utPdQuickGrid_loadBal_np2_4x4x4  ${IO_LIBS}  ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdQuickGrid_loadBal_np2_4x4x4  ${IO_LIBS}  ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 #
 add_executable(utPdQuickGrid_loadBal_np8_4x4x4 utPdQuickGrid_loadBal_np8_4x4x4.cxx)
-target_link_libraries(utPdQuickGrid_loadBal_np8_4x4x4  ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdQuickGrid_loadBal_np8_4x4x4  ${IO_LIBS} ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 #
 add_executable( utPdQuickGridMPI_np3  utPdQuickGridMPI_np3.cxx)
-target_link_libraries( utPdQuickGridMPI_np3 ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries( utPdQuickGridMPI_np3 ${IO_LIBS} ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 #
 add_executable(utPdQuickGridMPI_np2_3x3x2 utPdQuickGridMPI_np2_3x3x2.cxx)
-target_link_libraries(utPdQuickGridMPI_np2_3x3x2  ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdQuickGridMPI_np2_3x3x2  ${IO_LIBS} ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 #
 add_executable(utZoltanQuery_pointSizeInBytes utZoltanQuery_pointSizeInBytes.cxx)
-target_link_libraries(utZoltanQuery_pointSizeInBytes  ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utZoltanQuery_pointSizeInBytes  ${IO_LIBS} ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 #
 add_executable(utZoltanQuery_packUnpackPointsMultiFunction utZoltanQuery_packUnpackPointsMultiFunction.cxx)
-target_link_libraries(utZoltanQuery_packUnpackPointsMultiFunction  ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utZoltanQuery_packUnpackPointsMultiFunction  ${IO_LIBS} ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 
 #
 add_executable(utPdVtkKdTree utPdVtkKdTree.cxx)
-target_link_libraries(utPdVtkKdTree ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdVtkKdTree ${IO_LIBS} ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 
 #
 add_executable(utPdNeighborhoodSort utPdNeighborhoodSort.cxx)
@@ -65,51 +65,51 @@ target_link_libraries(utPdNeighborhoodSort  ${IO_LIBS} ${VTK_LIBS} ${UT_REQUIRED
 
 #
 add_executable(utPdNeighborhoodProcessorFrame utPdNeighborhoodProcessorFrame.cxx)
-target_link_libraries(utPdNeighborhoodProcessorFrame  ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdNeighborhoodProcessorFrame  ${IO_LIBS} ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 
 #
 add_executable(utPd_frameSet_2x2x1_np4 utPd_frameSet_2x2x1_np4.cxx)
-target_link_libraries(utPd_frameSet_2x2x1_np4  ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPd_frameSet_2x2x1_np4  ${IO_LIBS} ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 
 #
 add_executable(utPdNeighborhoodList utPdNeighborhoodList.cxx)
-target_link_libraries(utPdNeighborhoodList  ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdNeighborhoodList  ${IO_LIBS} ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 
 #
 add_executable(utPd_axisAlignedBoundaryPoints utPd_axisAlignedBoundaryPoints.cxx)
-target_link_libraries(utPd_axisAlignedBoundaryPoints  ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPd_axisAlignedBoundaryPoints  ${IO_LIBS} ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 
 #
 add_executable(utPdQuickGrid_solidCylinder_np1 utPdQuickGrid_solidCylinder_np1.cxx)
-target_link_libraries(utPdQuickGrid_solidCylinder_np1  ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdQuickGrid_solidCylinder_np1  ${IO_LIBS} ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 
 #
 add_executable(utPdQuickGrid_solidCylinder_np2 utPdQuickGrid_solidCylinder_np2.cxx)
-target_link_libraries(utPdQuickGrid_solidCylinder_np2  ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdQuickGrid_solidCylinder_np2  ${IO_LIBS} ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 
 #
 add_executable(utReloadBalance_np4 utReloadBalance_np4.cxx)
-target_link_libraries(utReloadBalance_np4  ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utReloadBalance_np4  ${IO_LIBS} ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 
 add_executable(utVTK_ioExample_np4 utVTK_ioExample_np4.cxx)
-target_link_libraries(utVTK_ioExample_np4  ${PdMaterialUtilitiesLib} ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utVTK_ioExample_np4  ${PdMaterialUtilitiesLib} ${IO_LIBS} ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 
 add_executable(utPdVtkPlane utPdVtkPlane.cxx)
-target_link_libraries(utPdVtkPlane  ${PdMaterialUtilitiesLib} ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdVtkPlane  ${PdMaterialUtilitiesLib} ${IO_LIBS} ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 
 add_executable(utFinitePlaneFilter utFinitePlaneFilter.cxx)
-target_link_libraries(utFinitePlaneFilter ${PdMaterialUtilitiesLib} ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utFinitePlaneFilter ${PdMaterialUtilitiesLib} ${IO_LIBS} ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 
 add_executable(utPd_Y-Z_crack utPd_Y-Z_crack.cxx)
-target_link_libraries(utPd_Y-Z_crack ${PdMaterialUtilitiesLib} ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPd_Y-Z_crack ${PdMaterialUtilitiesLib} ${IO_LIBS} ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 
 add_executable(utPd_Y-Z_crack_np4 utPd_Y-Z_crack_np4.cxx)
-target_link_libraries(utPd_Y-Z_crack_np4 ${PdMaterialUtilitiesLib} ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPd_Y-Z_crack_np4 ${PdMaterialUtilitiesLib} ${IO_LIBS} ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 
 #add_executable(utVTK_ParallelReaderDemo utVTK_ParallelReaderDemo.cxx)
-#target_link_libraries(utVTK_ParallelReaderDemo ${PdMaterialUtilitiesLib} ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+#target_link_libraries(utVTK_ParallelReaderDemo ${PdMaterialUtilitiesLib} ${IO_LIBS} ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 
 #add_executable(vtkExodusReaderDemo vtkExodusReaderDemo.cxx)
-#target_link_libraries(vtkExodusReaderDemo ${PdMaterialUtilitiesLib} ${IO_LIBS} ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+#target_link_libraries(vtkExodusReaderDemo ${PdMaterialUtilitiesLib} ${IO_LIBS} ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 
 
