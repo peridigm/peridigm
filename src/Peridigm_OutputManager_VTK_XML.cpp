@@ -189,10 +189,16 @@ Teuchos::ParameterList PeridigmNS::OutputManager_VTK_XML::getValidParameterList(
     // Container to hold all the valid specs for this material type
     std::vector<Field_NS::FieldSpec> matTypeSpecs;
     // Aggregate specs from Peridigm object, ComputeManager object, and Material object
-    matTypeSpecs.insert(matTypeSpecs.end(),peridigmSpecs.begin(),peridigmSpecs.end());
-    matTypeSpecs.insert(matTypeSpecs.end(),computeSpecs.begin(),computeSpecs.end());
-    materialSpecs = peridigm->materialModels->operator[](i)->VariableSpecs();
     // Do not insert any fieldSpecs with FieldLength == BOND (e.g., no bond data)
+    for(unsigned int j=0; j<peridigmSpecs.size() ; ++j) {
+      if (peridigmSpecs[j].getLength() != Field_NS::FieldSpec::BOND)
+        matTypeSpecs.insert(matTypeSpecs.end(),peridigmSpecs[j]);
+    }
+    for(unsigned int j=0; j<computeSpecs.size() ; ++j) {
+      if (computeSpecs[j].getLength() != Field_NS::FieldSpec::BOND)
+        matTypeSpecs.insert(matTypeSpecs.end(),computeSpecs[j]);
+    }
+    materialSpecs = peridigm->materialModels->operator[](i)->VariableSpecs();
     for(unsigned int j=0; j<materialSpecs->size() ; ++j) {
       if (materialSpecs->operator[](j).getLength() != Field_NS::FieldSpec::BOND)
         matTypeSpecs.insert(matTypeSpecs.end(),materialSpecs->operator[](j));
