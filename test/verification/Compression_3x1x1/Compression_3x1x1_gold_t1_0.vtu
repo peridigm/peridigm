@@ -11,7 +11,7 @@
           0.98875 0 0 1.1940033008e-18 0 0
           -0.98875 0 0
         </DataArray>
-        <DataArray type="Int32" Name="Id" format="ascii" RangeMin="0" RangeMax="2">
+        <DataArray type="Int32" Name="ID" format="ascii" RangeMin="0" RangeMax="2">
           0 1 2
         </DataArray>
         <DataArray type="Float64" Name="Dilatation" format="ascii" RangeMin="-3e-05" RangeMax="-3e-05">

@@ -61,7 +61,7 @@
                 <Parameter name="Velocity" type="bool" value="true"/>
                 <Parameter name="ID" type="bool" value="true"/>
                 <Parameter name="Dilatation" type="bool" value="true"/>
-                <Parameter name="Weighted Volume" type="bool" value="true"/>
+                <Parameter name="Weighted_Volume" type="bool" value="true"/>
             </ParameterList>
         </ParameterList>
   </ParameterList>

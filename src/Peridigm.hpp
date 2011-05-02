@@ -65,6 +65,7 @@
 #include "Peridigm_DataManager.hpp"
 #include "Peridigm_SerialMatrix.hpp"
 #include "Peridigm_OutputManager.hpp"
+#include "Peridigm_OutputManager_VTK_XML.hpp"
 #include "Peridigm_ComputeManager.hpp"
 
 #include "PdGridData.h"
@@ -198,6 +199,9 @@ namespace PeridigmNS {
     std::vector<Field_NS::FieldSpec> getFieldSpecs();
 
   private:
+
+    //! Friend classes
+    friend class OutputManager_VTK_XML;
 
     //! Parameterlist of entire input deck
     Teuchos::RCP<Teuchos::ParameterList> peridigmParams;

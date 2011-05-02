@@ -76,10 +76,10 @@
                 <Parameter name="Displacement" type="bool" value="true"/>
                 <Parameter name="Velocity" type="bool" value="true"/>
                 <Parameter name="ID" type="bool" value="true"/>
-                <Parameter name="Proc Num" type="bool" value="true"/>
+                <Parameter name="Proc_Num" type="bool" value="true"/>
                 <Parameter name="Dilatation" type="bool" value="true"/>
-                <Parameter name="Force Density" type="bool" value="true"/>
-                <Parameter name="Weighted Volume" type="bool" value="true"/>
+                <Parameter name="Force_Density" type="bool" value="true"/>
+                <Parameter name="Weighted_Volume" type="bool" value="true"/>
             </ParameterList>
         </ParameterList>
   </ParameterList>

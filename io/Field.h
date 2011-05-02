@@ -123,12 +123,12 @@ inline std::ostream& operator<<(std::ostream& os, const FieldSpec& fs) {
 // Scalar FieldSpecs
 const FieldSpec DEFAULT_FIELDTYPE(FieldSpec::DEFAULT_FIELDTYPE, FieldSpec::SCALAR, FieldSpec::STATELESS, "Default_FieldType");
 const FieldSpec VOLUME(FieldSpec::VOLUME,                       FieldSpec::SCALAR, FieldSpec::STATELESS, "Volume");
-const FieldSpec ID(Field_NS::FieldSpec::ID,                     FieldSpec::SCALAR, FieldSpec::STATELESS, "Id");
+const FieldSpec ID(Field_NS::FieldSpec::ID,                     FieldSpec::SCALAR, FieldSpec::STATELESS, "ID");
 const FieldSpec PROC_NUM(Field_NS::FieldSpec::PROC_NUM,         FieldSpec::SCALAR, FieldSpec::STATELESS, "Proc_Num");
 const FieldSpec DAMAGE(FieldSpec::DAMAGE,                       FieldSpec::SCALAR, FieldSpec::STATEFUL,  "Damage");
 const FieldSpec WEIGHTED_VOLUME(FieldSpec::WEIGHTED_VOLUME,     FieldSpec::SCALAR, FieldSpec::STATELESS, "Weighted_Volume");
 const FieldSpec DILATATION(FieldSpec::DILATATION,               FieldSpec::SCALAR, FieldSpec::STATEFUL,  "Dilatation");
-const FieldSpec NUM_NEIGHBORS(FieldSpec::NUM_NEIGHBORS,         FieldSpec::SCALAR, FieldSpec::STATELESS, "Num_Neighbors");
+const FieldSpec NUM_NEIGHBORS(FieldSpec::NUM_NEIGHBORS,         FieldSpec::SCALAR, FieldSpec::STATELESS, "NumNeighbors");
 const FieldSpec LAMBDA(FieldSpec::PLASTIC_CONSISTENCY,          FieldSpec::SCALAR, FieldSpec::STATEFUL,  "Lambda");
 const FieldSpec SHEAR_CORRECTION_FACTOR(FieldSpec::SHEAR_CORRECTION_FACTOR, FieldSpec::SCALAR, FieldSpec::STATELESS, "Shear_Correction_Factor");
 
@@ -139,9 +139,9 @@ const FieldSpec CURCOORD3D(FieldSpec::CURRENT_COORDINATES, FieldSpec::VECTOR3D, 
 const FieldSpec VELOC3D(FieldSpec::VELOCITY,               FieldSpec::VECTOR3D, FieldSpec::STATEFUL,  "Velocity");
 const FieldSpec ACCEL3D(FieldSpec::ACCELERATION,           FieldSpec::VECTOR3D, FieldSpec::STATEFUL,  "Acceleration");
 const FieldSpec FORCE3D(FieldSpec::FORCE,                  FieldSpec::VECTOR3D, FieldSpec::STATEFUL,  "Force");
-const FieldSpec FORCE_DENSITY3D(FieldSpec::FORCE_DENSITY,  FieldSpec::VECTOR3D, FieldSpec::STATEFUL,  "Force Density");
-const FieldSpec CONTACT_FORCE3D(FieldSpec::CONTACT_FORCE,  FieldSpec::VECTOR3D, FieldSpec::STATEFUL,  "Contact Force");
-const FieldSpec CONTACT_FORCE_DENSITY3D(FieldSpec::CONTACT_FORCE_DENSITY, FieldSpec::VECTOR3D, FieldSpec::STATEFUL, "Contact Force Density");
+const FieldSpec FORCE_DENSITY3D(FieldSpec::FORCE_DENSITY,  FieldSpec::VECTOR3D, FieldSpec::STATEFUL,  "Force_Density");
+const FieldSpec CONTACT_FORCE3D(FieldSpec::CONTACT_FORCE,  FieldSpec::VECTOR3D, FieldSpec::STATEFUL,  "Contact_Force");
+const FieldSpec CONTACT_FORCE_DENSITY3D(FieldSpec::CONTACT_FORCE_DENSITY, FieldSpec::VECTOR3D, FieldSpec::STATEFUL, "Contact_Force_Density");
 
 // Bond FieldSpecs
 const FieldSpec BOND_DAMAGE(FieldSpec::BOND_DAMAGE,           FieldSpec::BOND, FieldSpec::STATEFUL, "Bond_Damage");

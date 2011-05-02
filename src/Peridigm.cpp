@@ -426,7 +426,11 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
 
   if (peridigmParams->isSublist("Output")) {
     active = true;
-    outputParams  = Teuchos::rcp(&(peridigmParams->sublist("Output")),false);
+    // Get reference to existing sublit
+    Teuchos::ParameterList& masterList = peridigmParams->sublist("Output");
+    // Make copy of master list
+    outputParams  = Teuchos::rcp( new Teuchos::ParameterList(masterList) );
+    // Add proc id data to copied list
     outputParams->set("NumProc", (int)(peridigmComm->NumProc()));
     outputParams->set("MyPID", (int)(peridigmComm->MyPID()));
   }
@@ -438,7 +442,7 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
                         std::invalid_argument,
                         "PeridigmNS::Peridigm: \"Output File Type\" must be \"VTK_XML\".");
     if (outputFormat == "VTK_XML")
-       outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_VTK_XML( outputParams ));
+       outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_VTK_XML( outputParams, this ));
     else
       TEST_FOR_EXCEPTION( true, std::invalid_argument,"PeridigmNS::Peridigm::initializeOutputManager: \"Output File Type\" must be \"VTK_XML\".");
 
@@ -463,7 +467,7 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
 //    outputManager->write(dataManager,neighborhoodData,forceStateDesc);
   }
   else { // no output requested
-    outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_VTK_XML( outputParams ));
+    outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_VTK_XML( outputParams, this ));
   }
 
   //  verbose = problemParams->get("Verbose", false);

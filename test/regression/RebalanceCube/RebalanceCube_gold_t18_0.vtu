@@ -21,7 +21,7 @@
           0 0 0 -1000 0 0
           1000 0 0
         </DataArray>
-        <DataArray type="Int32" Name="Id" format="ascii" RangeMin="1" RangeMax="26">
+        <DataArray type="Int32" Name="ID" format="ascii" RangeMin="1" RangeMax="26">
           1 2 4 5 8 10
           11 14 17 20 23 26
           19

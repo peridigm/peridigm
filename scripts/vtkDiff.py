@@ -193,8 +193,8 @@ if __name__ == "__main__":
         # get the array of global node IDs and store them in lists
         goldIDs = []
         IDs = []        
-        goldIDData = vtuGoldData.GetPointData().GetVectors("Id")
-        IDData = vtuData.GetPointData().GetVectors("Id")
+        goldIDData = vtuGoldData.GetPointData().GetVectors("ID")
+        IDData = vtuData.GetPointData().GetVectors("ID")
         if goldIDData == None or IDData == None:
             print "\nError:  Data not found for global ID field.  This field is required for vtkDiff.py.\n"
             exit(1)
