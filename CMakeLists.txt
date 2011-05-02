@@ -97,9 +97,12 @@ MESSAGE("   Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
 # MESSAGE("   Trilinos_LIBRARY_DIRS = ${Trilinos_LIBRARY_DIRS}")
 MESSAGE("")
 
-# For some unit tests, we want to link only to the epetra library
+# For some unit tests, we want to link only to specfic libraries
 set(Epetra_LIBRARY
 epetra
+)
+set(Zoltan_LIBRARY
+zoltan
 )
 
 # other required libraries
