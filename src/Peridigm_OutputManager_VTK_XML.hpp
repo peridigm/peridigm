@@ -94,9 +94,14 @@ namespace PeridigmNS {
     //! Valid Teuchos::ParameterList 
     Teuchos::ParameterList getValidParameterList();
 
+    //! Object to write unstructured grid
     Teuchos::RCP<PdVTK::CollectionWriter> vtkWriter;
 
+    //! vtkUnstructuredGrid
     vtkSmartPointer<vtkUnstructuredGrid> grid;
+
+    //! Container for data array of processor ID number for each node on my proc
+    Teuchos::RCP< std::vector<int> > proc_num;
 
     //! Parent pointer
     PeridigmNS::Peridigm *peridigm;
