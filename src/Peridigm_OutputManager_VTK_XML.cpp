@@ -51,14 +51,18 @@
 #include <iomanip>
 
 #include <Epetra_Comm.h>
-#include <Teuchos_TestForException.hpp>
 #include "Teuchos_StandardParameterEntryValidators.hpp"
+#include <Teuchos_TestForException.hpp>
 
 #include "Peridigm_OutputManager_VTK_XML.hpp"
 #include <Field.h>
 #include "PdVTK.h"
+#include "Peridigm.hpp"
 
-PeridigmNS::OutputManager_VTK_XML::OutputManager_VTK_XML(const Teuchos::RCP<Teuchos::ParameterList>& params) {
+PeridigmNS::OutputManager_VTK_XML::OutputManager_VTK_XML(const Teuchos::RCP<Teuchos::ParameterList>& params, PeridigmNS::Peridigm *peridigm_) {
+ 
+  // Assign parent pointer
+  peridigm = peridigm_;
 
   // No input to validate; no output requested
   if (params == Teuchos::null) {
@@ -148,12 +152,24 @@ PeridigmNS::OutputManager_VTK_XML::OutputManager_VTK_XML(const Teuchos::RCP<Teuc
 
 Teuchos::ParameterList PeridigmNS::OutputManager_VTK_XML::getValidParameterList() {
 
+  //! Todo: This code assumes knowledage of materials in material library. Replace this code when material model manager in place.
+
   // prevent Teuchos from converting parameter types
   Teuchos::AnyNumberParameterEntryValidator::AcceptedTypes intParam(false), dblParam(false), strParam(false);
   intParam.allowInt(true);
   dblParam.allowDouble(true);
   strParam.allowString(true);
 
+  // Get valid output fields from parent (Peridigm object)
+  std::vector<Field_NS::FieldSpec> peridigmSpecs = peridigm->getFieldSpecs();
+
+  // Get valid output fields from compute manager
+  std::vector<Field_NS::FieldSpec> computeSpecs = peridigm->computeManager->getFieldSpecs();
+
+  // Container for valid output fields from material classes
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > materialSpecs;
+
+  // Construct a valid output parameter list based upon instantiated marterial and compute objects
   Teuchos::ParameterList validParameterList("Output");
   setIntParameter("MyPID",0,"Process ID",&validParameterList,intParam);
   setIntParameter("NumProc",0,"Number of Process IDs",&validParameterList,intParam);
@@ -163,35 +179,35 @@ Teuchos::ParameterList PeridigmNS::OutputManager_VTK_XML::getValidParameterList(
   setIntParameter("Output Frequency",-1,"Frequency of Output",&validParameterList,intParam);
   validParameterList.set("Parallel Write",true);
   Teuchos::ParameterList& matFields = validParameterList.sublist("Material Output Fields");
-  { // Valid output fields for Linear Elastic material type
-  Teuchos::ParameterList& matType = matFields.sublist("Linear Elastic");
-  matType.set("Displacement",true);
-  matType.set("Velocity",true);
-  matType.set("Acceleration",true);
-  matType.set("Force Density",true);
-  matType.set("Contact Force Density",true);
-  matType.set("Dilatation",true);
-  matType.set("ID",true);
-  matType.set("Proc Num",true);
-  matType.set("Weighted Volume",true);
-  matType.set("Damage",true);
-  matType.set("Volume",true);
-  }
-  { // Valid output fields for Elastic Plastic material type
-  Teuchos::ParameterList& matType = matFields.sublist("Elastic Plastic");
-  matType.set("Displacement",true);
-  matType.set("Velocity",true);
-  matType.set("Acceleration",true);
-  matType.set("Force Density",true);
-  matType.set("Contact Force Density",true);
-  matType.set("Dilatation",true);
-  matType.set("ID",true);
-  matType.set("Proc Num",true);
-  matType.set("Weighted Volume",true);
-  matType.set("Damage",true);
-  matType.set("Lambda",true);
-  matType.set("Volume",true);
-  matType.set("Shear_Correction_Factor",true);
+
+  // Now loop over all instantiated materials, filling material output fields sublist for each material type
+  for(unsigned int i=0; i<peridigm->materialModels->size() ; ++i){
+    // Get name of underlying material
+    string name = peridigm->materialModels->operator[](i)->Name();
+    // Create sublist with that name
+    Teuchos::ParameterList& matType = matFields.sublist(name);
+    // Container to hold all the valid specs for this material type
+    std::vector<Field_NS::FieldSpec> matTypeSpecs;
+    // Aggregate specs from Peridigm object, ComputeManager object, and Material object
+    matTypeSpecs.insert(matTypeSpecs.end(),peridigmSpecs.begin(),peridigmSpecs.end());
+    matTypeSpecs.insert(matTypeSpecs.end(),computeSpecs.begin(),computeSpecs.end());
+    materialSpecs = peridigm->materialModels->operator[](i)->VariableSpecs();
+    // Do not insert any fieldSpecs with FieldLength == BOND (e.g., no bond data)
+    for(unsigned int j=0; j<materialSpecs->size() ; ++j) {
+      if (materialSpecs->operator[](j).getLength() != Field_NS::FieldSpec::BOND)
+        matTypeSpecs.insert(matTypeSpecs.end(),materialSpecs->operator[](j));
+    }
+    // ID and ProcNum can be determined from any *Petra vector, so list them as well
+    matTypeSpecs.insert(matTypeSpecs.end(),Field_NS::ID);
+    matTypeSpecs.insert(matTypeSpecs.end(),Field_NS::PROC_NUM);
+    // Remove duplicates
+    std::unique(matTypeSpecs.begin(), matTypeSpecs.end());
+    // Sort for consistency
+    std::sort(matTypeSpecs.begin(), matTypeSpecs.end());
+    // Now walk the matTypeSpec vector and create the parameterlist
+    for(unsigned int j=0; j<matTypeSpecs.size() ; ++j) matType.set(matTypeSpecs.operator[](j).getLabel(),true);
+    // Clear vector
+    matTypeSpecs.clear();
   }
 
   return validParameterList;
@@ -277,7 +293,7 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
    PdVTK::writeField<double>(grid,Field_NS::ACCEL3D,aptr);
   }
 
-  if (thisMaterial->isParameter("Force Density")) {
+  if (thisMaterial->isParameter("Force_Density")) {
     double *fptr;
     force->ExtractView( &fptr );
     PdVTK::writeField<double>(grid,Field_NS::FORCE_DENSITY3D,fptr);
@@ -290,7 +306,7 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<const Epetra_Vector> 
   }
 
   std::vector<int> proc_num;
-  if (thisMaterial->isParameter("Proc Num")) {
+  if (thisMaterial->isParameter("Proc_Num")) {
     // Get map corresponding to x
     const Epetra_BlockMap& xMap = x->Map();
     int length = xMap.NumMyElements();
@@ -421,7 +437,7 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<PeridigmNS::DataManag
   }
 
   std::vector<int> proc_num;
-  if (thisMaterial->isParameter("Proc Num")) {
+  if (thisMaterial->isParameter("Proc_Num")) {
     // Get map corresponding to x
     Teuchos::RCP<Epetra_Vector> myX =  dataManager->getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE);
 //    const Epetra_BlockMap& xMap = myX->Map();

@@ -22,7 +22,7 @@ Peridigm peridigm.xml
 # ---------------
 
 # extract force-density values in x-direction from the simulation output
-grep -A 1 -i "Force Density" peridigm_t1_0.vtu | tail -n 1 | sed 's/^[ \t]*//' | cut -d" " -f1,4 > results.tmp
+grep -A 1 -i "Force_Density" peridigm_t1_0.vtu | tail -n 1 | sed 's/^[ \t]*//' | cut -d" " -f1,4 > results.tmp
 force1="$(cat results.tmp | cut -d" " -f1)"
 force2="$(cat results.tmp | cut -d" " -f2)"
 data1=11700000.0

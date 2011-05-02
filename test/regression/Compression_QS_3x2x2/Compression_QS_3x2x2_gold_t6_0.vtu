@@ -19,7 +19,7 @@
           0 0 0 0 0 0
           0 0 0 0 0 0
         </DataArray>
-        <DataArray type="Float64" Name="Force Density" NumberOfComponents="3" format="ascii" RangeMin="1.1824694827e-05" RangeMax="8119283327">
+        <DataArray type="Float64" Name="Force_Density" NumberOfComponents="3" format="ascii" RangeMin="1.1824694827e-05" RangeMax="8119283327">
           -8119283327 -5.0067901611e-06 -4.917383194e-06 -5.5879354477e-09 2.6235356927e-06 -2.3750588298e-05
           8119283327 3.4391880035e-05 1.8835067749e-05 -8119283327 5.1381066442e-06 -4.8279762268e-06
           0 -8.4660714492e-06 8.2552433014e-06 8119283327 -1.1223368347e-05 -4.8875808716e-06
@@ -27,7 +27,7 @@
           8119283327 -5.304813385e-06 5.1879363855e-06 -8119283327 1.7216429114e-05 1.6932375729e-05
           1.2159347534e-05 -3.8932077587e-05 -3.8676895201e-05 8119283327 5.5441632867e-06 5.4785050452e-06
         </DataArray>
-        <DataArray type="Int32" Name="Id" format="ascii" RangeMin="0" RangeMax="11">
+        <DataArray type="Int32" Name="ID" format="ascii" RangeMin="0" RangeMax="11">
           0 1 2 3 4 5
           6 7 8 9 10 11
         </DataArray>

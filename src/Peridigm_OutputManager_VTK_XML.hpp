@@ -51,6 +51,11 @@
 
 #include <Teuchos_ParameterList.hpp>
 
+// Forward declaration
+namespace PeridigmNS {
+  class Peridigm; 
+} 
+
 namespace PeridigmNS {
   
   class OutputManager_VTK_XML: public PeridigmNS::OutputManager {
@@ -58,7 +63,7 @@ namespace PeridigmNS {
   public:
     
     //! Basic constructor.
-    OutputManager_VTK_XML(const Teuchos::RCP<Teuchos::ParameterList>& params);
+    OutputManager_VTK_XML(const Teuchos::RCP<Teuchos::ParameterList>& params, PeridigmNS::Peridigm *peridigm_);
     
     //! Destructor.
     virtual ~OutputManager_VTK_XML();
@@ -92,6 +97,9 @@ namespace PeridigmNS {
     Teuchos::RCP<PdVTK::CollectionWriter> vtkWriter;
 
     vtkSmartPointer<vtkUnstructuredGrid> grid;
+
+    //! Parent pointer
+    PeridigmNS::Peridigm *peridigm;
 
   };
   
