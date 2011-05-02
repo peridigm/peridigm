@@ -1,4 +1,4 @@
-/*! \file Peridigm_ModelEvaluator.hpp */
+/*! \file Peridigm_DiscretizationFactory.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -48,6 +48,7 @@
 #include <Teuchos_TestForException.hpp>
 #include "Peridigm_DiscretizationFactory.hpp"
 #include "Peridigm_PdQuickGridDiscretization.hpp"
+#include "Peridigm_STKDiscretization.hpp"
 
 PeridigmNS::DiscretizationFactory::DiscretizationFactory(const Teuchos::RCP<Teuchos::ParameterList>& discParams_) :
   discParams(discParams_)
@@ -56,7 +57,7 @@ PeridigmNS::DiscretizationFactory::DiscretizationFactory(const Teuchos::RCP<Teuc
   // or if a mesh file has been supplied
   if(!discParams->isParameter("Type")){
     TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
-					   "Discretization not specified, \"Input File\" or \"PdQuickGrid\" required.");
+					   "Discretization not specified, \"Exodus\" or \"PdQuickGrid\" required.");
   }
 
 }
@@ -68,17 +69,15 @@ PeridigmNS::DiscretizationFactory::create(const Teuchos::RCP<const Epetra_Comm>&
 
   string type = discParams->get<string>("Type");
 
-  // currently there is only one available discretization, the PdQuickGridDiscretization
-  if(type == "Input File"){
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
-					   "Software is currently unable to read mesh file, please try again later.");
+  if(type == "Exodus"){
+	discretization = Teuchos::rcp(new PeridigmNS::STKDiscretization(epetra_comm, discParams));
   }
   else if(type == "PdQuickGrid"){
 	discretization = Teuchos::rcp(new PeridigmNS::PdQuickGridDiscretization(epetra_comm, discParams));
   }
   else{
     TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
-					   "Invalid discretization type.  Valid types are \"Input File\" and \"PdQuickGrid\"");
+					   "Invalid discretization type.  Valid types are \"Exodus\" and \"PdQuickGrid\"");
   }
  
   return discretization;

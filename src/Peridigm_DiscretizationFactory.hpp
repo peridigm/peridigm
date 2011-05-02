@@ -1,4 +1,4 @@
-/*! \file Peridigm_ModelEvaluator.hpp */
+/*! \file Peridigm_DiscretizationFactory.hpp */
 
 //@HEADER
 // ************************************************************************
