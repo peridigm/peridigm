@@ -9,6 +9,7 @@ add_executable (${EXECUTABLE_NAME}
         Peridigm.cpp
         Peridigm_DiscretizationFactory.cpp
         Peridigm_PdQuickGridDiscretization.cpp
+        Peridigm_STKDiscretization.cpp
         Peridigm_DataManager.cpp
         Peridigm_SerialMatrix.cpp
         Peridigm_ModelEvaluator.cpp
@@ -50,6 +51,7 @@ add_executable(utPeridigm
         Peridigm.cpp
         Peridigm_DiscretizationFactory.cpp
         Peridigm_PdQuickGridDiscretization.cpp
+        Peridigm_STKDiscretization.cpp
         Peridigm_DataManager.cpp
         Peridigm_SerialMatrix.cpp
         Peridigm_ModelEvaluator.cpp
@@ -84,6 +86,7 @@ add_executable(utPeridigm_MPI_np2
         Peridigm.cpp
         Peridigm_DiscretizationFactory.cpp
         Peridigm_PdQuickGridDiscretization.cpp
+        Peridigm_STKDiscretization.cpp
         Peridigm_DataManager.cpp
         Peridigm_SerialMatrix.cpp
         Peridigm_ModelEvaluator.cpp
