@@ -48,14 +48,17 @@ class OutOfSourceSymlinks():
 		print 'src = ',self._src
 		print 'bin = ',self._bin
 		print 'dirs = ',self._dirs
-		print 'exclude directories = ',self._exclude_dirs,'\n'
-		print 'exclude files = ',self._exclude_files,'\n'
+		print 'exclude directories = ',self._exclude_dirs
+		print 'exclude files = ',self._exclude_files
 
 		# loop over input dirs and create structure
+                num_removed_links = 0
 		for d in self._dirs:
 			src_dir=os.path.join(self._src,d)
 			bin_dir=os.path.join(self._bin,d)
-			mirror(src_dir,bin_dir,self._exclude_dirs,self._exclude_files)
+			num_removed_links += mirror(src_dir,bin_dir,self._exclude_dirs,self._exclude_files)
+
+		print 'total number of symbolic links removed/replaced =',num_removed_links,'\n'
 
 def mirror(src,bin,exclude_dirs,exclude_files):
 
@@ -65,7 +68,7 @@ def mirror(src,bin,exclude_dirs,exclude_files):
 		os.mkdir(bin)
 
 	# create links to files in top level 'bin'
-	create_file_links(src,bin,'.',exclude_files)
+	num_removed_links = create_file_links(src,bin,'.',exclude_files)
 	
 	# walk directory structure and create folders/links 
 	for root, dirs, files in os.walk(src):
@@ -90,12 +93,14 @@ def mirror(src,bin,exclude_dirs,exclude_files):
 				os.mkdir(new_dir)
 
 		# create links to all files in dirs
-		create_file_links(root,binpath,dirs,exclude_files)
+		num_removed_links += create_file_links(root,binpath,dirs,exclude_files)
 
+        return num_removed_links
 
 def create_file_links(src,bin,dirs,exclude):
 	src_dirs=[]
 	bin_dirs=[]
+        num_removed_links = 0
 	for d in dirs:
 		target_dir = os.path.join(src,d)
 		link_dir   = os.path.join(bin,d)
@@ -112,10 +117,11 @@ def create_file_links(src,bin,dirs,exclude):
 #			print '\t\tCreate link to file = ',f,'\n'
 #			print '\t\t',link,'-->',target,'\n'
 			if os.path.lexists(link):
-				print '\t\t\tremoving existing link: ',link
 				os.remove(link)
+				num_removed_links += 1
 			os.symlink(target,link)
 
+        return num_removed_links
 		
 def main():
 	try:

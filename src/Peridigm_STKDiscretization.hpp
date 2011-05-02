@@ -96,6 +96,9 @@ namespace PeridigmNS {
     //! Private to prohibit copying
     STKDiscretization& operator=(const STKDiscretization&);
 
+    //! Creates a discretization object using STK functionality.
+    PdGridData getDiscretization(const std::string& meshFileName);
+
   protected:
 
     //! Create maps

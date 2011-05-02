@@ -31,7 +31,7 @@ add_executable (${EXECUTABLE_NAME}
 )
 
 target_link_libraries (${EXECUTABLE_NAME}
-${TRILINOS_LIBS}
+${Trilinos_LIBRARIES}
 ${PdZoltanLibs}
 ${Zoltan_LIBRARY}
 ${PdQuickGridLibs}
@@ -69,7 +69,7 @@ add_executable(utPeridigm
         ./contact/Peridigm_ShortRangeForceContactModel.cpp
 )
 target_link_libraries(utPeridigm
-${TRILINOS_LIBS}
+${Trilinos_LIBRARIES}
 ${PdZoltanLibs}
 ${Zoltan_LIBRARY}
 ${PdQuickGridLibs}
@@ -104,7 +104,7 @@ add_executable(utPeridigm_MPI_np2
         ./contact/Peridigm_ShortRangeForceContactModel.cpp
 )
 target_link_libraries(utPeridigm_MPI_np2
-${TRILINOS_LIBS}
+${Trilinos_LIBRARIES}
 ${PdZoltanLibs}
 ${Zoltan_LIBRARY}
 ${PdQuickGridLibs}
@@ -120,7 +120,7 @@ add_executable(utPeridigm_PdQuickGridDiscretization
 		utPeridigm_PdQuickGridDiscretization.cpp
         Peridigm_PdQuickGridDiscretization.cpp)
 target_link_libraries(utPeridigm_PdQuickGridDiscretization
-${TRILINOS_LIBS}
+${Trilinos_LIBRARIES}
 ${PdZoltanLibs}
 ${Zoltan_LIBRARY}
 ${PdQuickGridLibs}
@@ -134,7 +134,7 @@ add_executable(utPeridigm_PdQuickGridDiscretization_MPI_np2
 		utPeridigm_PdQuickGridDiscretization_MPI_np2.cpp
         Peridigm_PdQuickGridDiscretization.cpp)
 target_link_libraries(utPeridigm_PdQuickGridDiscretization_MPI_np2
-${TRILINOS_LIBS}
+${Trilinos_LIBRARIES}
 ${PdZoltanLibs}
 ${Zoltan_LIBRARY}
 ${PdQuickGridLibs}
@@ -148,7 +148,7 @@ add_executable(utPeridigm_State
 		utPeridigm_State.cpp
         ../io/Field.cxx)
 target_link_libraries(utPeridigm_State
-${TRILINOS_LIBS}
+${Trilinos_LIBRARIES}
 ${REQUIRED_LIBS}
 ${Boost_LIBRARIES}
 )
@@ -162,7 +162,7 @@ add_executable(utPeridigm_LinearElasticIsotropicMaterial
         ./materials/Peridigm_CriticalStretchDamageModel.cpp
 		./materials/utPeridigm_LinearElasticIsotropicMaterial.cpp)
 target_link_libraries(utPeridigm_LinearElasticIsotropicMaterial
-${TRILINOS_LIBS}
+${Trilinos_LIBRARIES}
 ${PdMaterialUtilitiesLib}
 ${REQUIRED_LIBS}
 ${Boost_LIBRARIES}
@@ -179,7 +179,7 @@ add_executable(utPHAL_UpdateForceState
         ./materials/Peridigm_CriticalStretchDamageModel.cpp
 		./evaluators/utPHAL_UpdateForceState.cpp)
 target_link_libraries(utPHAL_UpdateForceState
-${TRILINOS_LIBS}
+${Trilinos_LIBRARIES}
 ${PdMaterialUtilitiesLib}
 ${REQUIRED_LIBS}
 ${Boost_LIBRARIES}
@@ -192,7 +192,7 @@ ${Boost_LIBRARIES}
 #       ./materials/Peridigm_CriticalStretchDamageModel.cpp
 #		./evaluators/utPHAL_UpdateForceState_MPI_np2.cpp)
 #target_link_libraries(utPHAL_UpdateForceState_MPI_np2
-#${TRILINOS_LIBS}
+#${Trilinos_LIBRARIES}
 #${PdMaterialUtilitiesLib}
 #${REQUIRED_LIBS}
 #${Boost_LIBRARIES}
@@ -209,7 +209,7 @@ add_executable(utPHAL_EvaluateForce
         ./materials/Peridigm_CriticalStretchDamageModel.cpp
 		./evaluators/utPHAL_EvaluateForce.cpp)
 target_link_libraries(utPHAL_EvaluateForce
-${TRILINOS_LIBS}
+${Trilinos_LIBRARIES}
 ${PdMaterialUtilitiesLib}
 ${REQUIRED_LIBS}
 ${Boost_LIBRARIES}
@@ -222,7 +222,7 @@ ${Boost_LIBRARIES}
 #       ./materials/Peridigm_CriticalStretchDamageModel.cpp
 #		./evaluators/utPHAL_EvaluateForce_MPI_np2.cpp)
 #target_link_libraries(utPHAL_EvaluateForce_MPI_np2
-#${TRILINOS_LIBS}
+#${Trilinos_LIBRARIES}
 #${PdMaterialUtilitiesLib}
 #${REQUIRED_LIBS}
 #${Boost_LIBRARIES}

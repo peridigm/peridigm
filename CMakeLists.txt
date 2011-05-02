@@ -74,58 +74,32 @@ option (USE_DAKOTA
 )
 
 # Trilinos configuration
-set (TRILINOS_DIR CACHE PATH "Path to Trilinos directory")
 
-find_library(Phalanx_LIBRARY
-  NAMES phalanx
-  PATHS ${TRILINOS_DIR}/lib
-)
+set(TRILINOS_DIR CACHE PATH "Path to Trilinos directory")
 
-find_library(IFPack_LIBRARY
-  NAMES ifpack
-  PATHS ${TRILINOS_DIR}/lib
-)
+# Get Trilinos as one entity
+SET(CMAKE_PREFIX_PATH ${TRILINOS_DIR} ${CMAKE_PREFIX_PATH})
+FIND_PACKAGE(Trilinos REQUIRED)
 
-find_library(AztecOO_LIBRARY
-  NAMES aztecoo
-  PATHS ${TRILINOS_DIR}/lib
-)
+MESSAGE("Trilinos installation:")
+MESSAGE("   Trilinos_DIR = ${Trilinos_DIR}")
+MESSAGE("   Trilinos_VERSION = ${Trilinos_VERSION}")
+MESSAGE("   Trilinos_PACKAGE_LIST = ${Trilinos_PACKAGE_LIST}")
+MESSAGE("   Trilinos_TPL_LIST = ${Trilinos_TPL_LIST}")
+MESSAGE("   Trilinos_TPL_INCLUDE_DIRS = ${Trilinos_TPL_INCLUDE_DIRS}")
+MESSAGE("   Trilinos_TPL_LIBRARIES = ${Trilinos_TPL_LIBRARIES}")
+MESSAGE("   Trilinos_TPL_LIBRARY_DIRS = ${Trilinos_TPL_LIBRARY_DIRS}")
+MESSAGE("   Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
+MESSAGE("   Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
+# verbose output
+# MESSAGE("   Trilinos_LIBRARIES = ${Trilinos_LIBRARIES}")
+# MESSAGE("   Trilinos_INCLUDE_DIRS = ${Trilinos_INCLUDE_DIRS}")
+# MESSAGE("   Trilinos_LIBRARY_DIRS = ${Trilinos_LIBRARY_DIRS}")
+MESSAGE("")
 
-find_library(EpetraExt_LIBRARY
-  NAMES epetraext
-  PATHS ${TRILINOS_DIR}/lib
-)
-
-find_library(Zoltan_LIBRARY
-  NAMES zoltan
-  PATHS ${TRILINOS_DIR}/lib
-)
-
-find_library(Epetra_LIBRARY
-  NAMES epetra
-  PATHS ${TRILINOS_DIR}/lib
-)
-
-find_library(Shards_LIBRARY
-  NAMES shards
-  PATHS ${TRILINOS_DIR}/lib
-)
-
-find_library(Teuchos_LIBRARY
-  NAMES teuchos
-  PATHS ${TRILINOS_DIR}/lib
-)
-
-
-set(TRILINOS_LIBS
-phalanx
-ifpack
-aztecoo
-epetraext
-zoltan
+# For some unit tests, we want to link only to the epetra library
+set(Epetra_LIBRARY
 epetra
-teuchos
-shards
 )
 
 # other required libraries
