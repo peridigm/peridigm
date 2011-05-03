@@ -5,10 +5,7 @@
 Cmake_minimum_required (VERSION 2.6)
 
 enable_testing ()
-
-# Basic settings for Peridigm project
-project (peridigm)
-set (EXECUTABLE_NAME Peridigm)
+project(Peridigm)
 
 # MPI configuration
 # use the FindMPI module to find a version of MPI
@@ -54,7 +51,9 @@ else ()
   message ("\nVTK NOT FOUND!  (Try defining VTK_DIR)\n")
 endif ()
 
+#
 # Blas and Lapack Libraries  
+#
 find_library(Blas_LIBRARY  
    NAMES blas  
    PATHS ${BLAS_LIBRARY_DIRS}  
@@ -73,14 +72,12 @@ option (USE_DAKOTA
    OFF
 )
 
+#
 # Trilinos configuration
-
+#
 set(TRILINOS_DIR CACHE PATH "Path to Trilinos directory")
-
-# Get Trilinos as one entity
 SET(CMAKE_PREFIX_PATH ${TRILINOS_DIR} ${CMAKE_PREFIX_PATH})
 FIND_PACKAGE(Trilinos REQUIRED)
-
 MESSAGE("Trilinos installation:")
 MESSAGE("   Trilinos_DIR = ${Trilinos_DIR}")
 MESSAGE("   Trilinos_VERSION = ${Trilinos_VERSION}")
@@ -95,6 +92,27 @@ MESSAGE("   Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
 # MESSAGE("   Trilinos_LIBRARIES = ${Trilinos_LIBRARIES}")
 # MESSAGE("   Trilinos_INCLUDE_DIRS = ${Trilinos_INCLUDE_DIRS}")
 # MESSAGE("   Trilinos_LIBRARY_DIRS = ${Trilinos_LIBRARY_DIRS}")
+MESSAGE("")
+
+# Build STK / Exodus support only if required packages are installed
+LIST(FIND Trilinos_PACKAGE_LIST STK STK_Package_Index)
+IF(STK_Package_Index GREATER -1)
+  MESSAGE("-- Found STK")
+ELSE()
+  MESSAGE("-- STK NOT found")
+ENDIF()
+LIST(FIND Trilinos_TPL_LIST Netcdf Netcdf_Package_Index)
+IF(Netcdf_Package_Index GREATER -1)
+  MESSAGE("-- Found Netcdf")
+ELSE()
+  MESSAGE("-- Netcdf NOT found")
+ENDIF()
+IF( (STK_Package_Index GREATER -1) AND (Netcdf_Package_Index GREATER -1) )
+  ADD_DEFINITIONS(-DPERIDIGM_STK)
+  MESSAGE("-- Exodus file support enabled")
+ELSE()
+  MESSAGE("-- Exodus file support NOT enabled (requires Netcdf and Trilinos STK package)")
+ENDIF()
 MESSAGE("")
 
 # For some unit tests, we want to link only to specfic libraries

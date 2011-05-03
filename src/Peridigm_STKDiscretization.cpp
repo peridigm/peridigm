@@ -50,10 +50,10 @@
 #include "PdQuickGridParallel.h"
 #include "PdZoltan.h"
 
-// #include <Epetra_MpiComm.h>
-// #include <stk_io/util/UseCase_mesh.hpp>
-// #include <stk_io/IossBridge.hpp>
-// #include <Ionit_Initializer.h>
+#include <Epetra_MpiComm.h>
+#include <stk_io/util/UseCase_mesh.hpp>
+#include <stk_io/IossBridge.hpp>
+#include <Ionit_Initializer.h>
 
 #include <vector>
 #include <list>
@@ -123,75 +123,75 @@ PeridigmNS::STKDiscretization::~STKDiscretization() {}
 
 PdGridData PeridigmNS::STKDiscretization::getDiscretization(const string& meshFileName) {
 
-//   string meshType = "exodusii";
-//   string workingDirectory = "";
-//   Teuchos::RCP<const Epetra_MpiComm> mpiComm = Teuchos::rcp_dynamic_cast<const Epetra_MpiComm>(comm, true);
-//   stk::mesh::fem::FEMMetaData metaData;
-//   stk::io::util::MeshData meshData;
-//   Ioss::Init::Initializer io;
-//   stk::io::util::create_input_mesh(meshType,
-//                                    meshFileName,
-//                                    workingDirectory,
-//                                    mpiComm->Comm(),
-//                                    metaData,
-//                                    meshData);
+  string meshType = "exodusii";
+  string workingDirectory = "";
+  Teuchos::RCP<const Epetra_MpiComm> mpiComm = Teuchos::rcp_dynamic_cast<const Epetra_MpiComm>(comm, true);
+  stk::mesh::fem::FEMMetaData metaData;
+  stk::io::util::MeshData meshData;
+  Ioss::Init::Initializer io;
+  stk::io::util::create_input_mesh(meshType,
+                                   meshFileName,
+                                   workingDirectory,
+                                   mpiComm->Comm(),
+                                   metaData,
+                                   meshData);
   
-//   int numberOfDimensions = metaData.spatial_dimension();
-//   TEST_FOR_EXCEPTION(numberOfDimensions != 3, std::invalid_argument, "Peridigm operates only on three-dimensional meshes.");
+  int numberOfDimensions = metaData.spatial_dimension();
+  TEST_FOR_EXCEPTION(numberOfDimensions != 3, std::invalid_argument, "Peridigm operates only on three-dimensional meshes.");
 
-//   // This assigns a null Ioss::GroupingEntity attribute to the universal part
-//   stk::io::put_io_part_attribute(metaData.universal_part());
+  // This assigns a null Ioss::GroupingEntity attribute to the universal part
+  stk::io::put_io_part_attribute(metaData.universal_part());
 
-//   // Loop over the parts and store the element parts, side parts, and node parts.
-//   const stk::mesh::PartVector& parts = metaData.get_parts();
-//   stk::mesh::PartVector elementBlocks;
-//   stk::mesh::PartVector sideSets;
-//   stk::mesh::PartVector nodeSets;
-//   for(stk::mesh::PartVector::const_iterator it = parts.begin(); it != parts.end(); ++it){
-//     stk::mesh::Part* const part = *it;
-//     if(part->name()[0] == '{')
-//       continue;
-//     if(part->primary_entity_rank() == metaData.element_rank())
-//       elementBlocks.push_back(part);
-//     else if(part->primary_entity_rank() == metaData.side_rank())
-//       sideSets.push_back(part);
-//     else if(part->primary_entity_rank() == metaData.node_rank())
-//       nodeSets.push_back(part);
-//     else
-//       if(myPID == 0)
-//         cout << "Warning, unknown part type for part " << part->name() << endl;
-//   }
-//   if(myPID == 0){
-//     stringstream ss;
-//     ss << "Element blocks:";
-//     for(stk::mesh::PartVector::const_iterator it = elementBlocks.begin(); it != elementBlocks.end(); ++it)
-//       ss << " " << (*it)->name();
-//     ss << endl;
-//     ss << "Side sets:";
-//     for(stk::mesh::PartVector::const_iterator it = sideSets.begin(); it != sideSets.end(); ++it)
-//       ss << " " << (*it)->name();
-//     ss << endl;
-//     ss << "Node sets:";
-//     for(stk::mesh::PartVector::const_iterator it = nodeSets.begin(); it != nodeSets.end(); ++it)
-//       ss << " " << (*it)->name();
-//     ss << endl;
-//     cout << ss.str() << endl;
-//   }
+  // Loop over the parts and store the element parts, side parts, and node parts.
+  const stk::mesh::PartVector& parts = metaData.get_parts();
+  stk::mesh::PartVector elementBlocks;
+  stk::mesh::PartVector sideSets;
+  stk::mesh::PartVector nodeSets;
+  for(stk::mesh::PartVector::const_iterator it = parts.begin(); it != parts.end(); ++it){
+    stk::mesh::Part* const part = *it;
+    if(part->name()[0] == '{')
+      continue;
+    if(part->primary_entity_rank() == metaData.element_rank())
+      elementBlocks.push_back(part);
+    else if(part->primary_entity_rank() == metaData.side_rank())
+      sideSets.push_back(part);
+    else if(part->primary_entity_rank() == metaData.node_rank())
+      nodeSets.push_back(part);
+    else
+      if(myPID == 0)
+        cout << "Warning, unknown part type for part " << part->name() << endl;
+  }
+  if(myPID == 0){
+    stringstream ss;
+    ss << "Element blocks:";
+    for(stk::mesh::PartVector::const_iterator it = elementBlocks.begin(); it != elementBlocks.end(); ++it)
+      ss << " " << (*it)->name();
+    ss << endl;
+    ss << "Side sets:";
+    for(stk::mesh::PartVector::const_iterator it = sideSets.begin(); it != sideSets.end(); ++it)
+      ss << " " << (*it)->name();
+    ss << endl;
+    ss << "Node sets:";
+    for(stk::mesh::PartVector::const_iterator it = nodeSets.begin(); it != nodeSets.end(); ++it)
+      ss << " " << (*it)->name();
+    ss << endl;
+    cout << ss.str() << endl;
+  }
 
-//   if (!metaData.is_FEM_initialized())
-//     metaData.FEM_initialize(numberOfDimensions);
+  if (!metaData.is_FEM_initialized())
+    metaData.FEM_initialize(numberOfDimensions);
 
-//   stk::mesh::BulkData bulkData(stk::mesh::fem::FEMMetaData::get_meta_data(metaData), mpiComm->Comm());
+  stk::mesh::BulkData bulkData(stk::mesh::fem::FEMMetaData::get_meta_data(metaData), mpiComm->Comm());
 
-// //   coordinates_field = & metaData->declare_field< VectorFieldType >( "coordinates" );
-// //   stk::mesh::put_field( *coordinates_field , metaData->node_rank() , metaData->universal_part(), numDim );
-// //   stk::io::set_field_role(*coordinates_field, Ioss::Field::MESH);
+//   coordinates_field = & metaData->declare_field< VectorFieldType >( "coordinates" );
+//   stk::mesh::put_field( *coordinates_field , metaData->node_rank() , metaData->universal_part(), numDim );
+//   stk::io::set_field_role(*coordinates_field, Ioss::Field::MESH);
 
 
 
-//   metaData.commit();
-//   stk::io::util::populate_bulk_data(bulkData, meshData, "exodusii");
-//   bulkData.modification_end();
+  metaData.commit();
+  stk::io::util::populate_bulk_data(bulkData, meshData, "exodusii");
+  bulkData.modification_end();
 
   PdGridData decomp;// =  PdQuickGrid::getDiscretization(1, 1);
   return decomp;
