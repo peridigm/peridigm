@@ -306,9 +306,6 @@ namespace PeridigmNS {
     //! The peridigm output manager
     Teuchos::RCP<PeridigmNS::OutputManager> outputManager;
 
-    //! Description of force state data used by output manager
-    Teuchos::RCP<Teuchos::ParameterList> forceStateDesc;
-
     //! BLAS for local-only vector updates (BLAS-1)
     Epetra_BLAS blas;
   };
