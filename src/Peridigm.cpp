@@ -446,25 +446,12 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
     else
       TEST_FOR_EXCEPTION( true, std::invalid_argument,"PeridigmNS::Peridigm::initializeOutputManager: \"Output File Type\" must be \"VTK_XML\".");
 
-    // Query material models for their force state data descriptions
-    forceStateDesc = Teuchos::rcp( new Teuchos::ParameterList() );
-    for(unsigned int i=0; i<materialModels->size(); ++i){
-      Teuchos::ParameterList& subList = forceStateDesc->sublist((*materialModels)[i]->Name());
-      Teuchos::RCP< std::vector<Field_NS::FieldSpec> > matVariableSpecs = (*materialModels)[i]->VariableSpecs();
-      for(unsigned int j=0 ; j<matVariableSpecs->size() ; ++j)
-        subList.set( (*matVariableSpecs)[j].getLabel(), j);
-    }
-
     // Initialize current time in this parameterlist
     Teuchos::RCP<Teuchos::ParameterList> solverParams = Teuchos::rcp(&(peridigmParams->sublist("Solver")),false);
     double t_initial = solverParams->get("Initial Time", 0.0);
-    forceStateDesc->set<double>("Time", t_initial);
-    // Set RCP to neighborlist
-    forceStateDesc->set("Bond Family",neighborhoodData);
     // Ask OutputManager to write initial conditions to disk
-//    outputManager->write(x,u,v,a,force,dataManager,neighborhoodData,forceStateDesc);
     this->synchDataManager();
-    outputManager->write(dataManager,neighborhoodData,forceStateDesc);
+    outputManager->write(dataManager,neighborhoodData,t_initial);
   }
   else { // no output requested
     outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_VTK_XML( outputParams, this ));
@@ -599,12 +586,10 @@ void PeridigmNS::Peridigm::executeExplicit() {
     computeManager->compute( dataManager );
 
     t_current = t_initial + (step*dt);
-    forceStateDesc->set("Time", t_current);
 
     PeridigmNS::Timer::self().startTimer("Output");
-//    outputManager->write(x,u,v,a,force,dataManager,neighborhoodData,forceStateDesc);
     this->synchDataManager();
-    outputManager->write(dataManager,neighborhoodData,forceStateDesc);
+    outputManager->write(dataManager,neighborhoodData,t_current);
     PeridigmNS::Timer::self().stopTimer("Output");
 
     // swap state N and state NP1
@@ -644,7 +629,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
 
     double loadIncrement = 1.0/double(numLoadSteps);
     double dt = (timeFinal - timeInitial)*loadIncrement;
-    timeCurrent += dt;
+    timeCurrent = timeInitial + step*dt;
     *timeStep = dt;
     
     if(peridigmComm->MyPID() == 0)
@@ -712,8 +697,8 @@ void PeridigmNS::Peridigm::executeImplicit() {
 
     // Write output for completed load step
     PeridigmNS::Timer::self().startTimer("Output");
-    forceStateDesc->set("Time", timeCurrent);
-    outputManager->write(x,u,v,a,force,dataManager,neighborhoodData,forceStateDesc);
+    this->synchDataManager();
+    outputManager->write(dataManager,neighborhoodData,timeCurrent);
     PeridigmNS::Timer::self().stopTimer("Output");
 
     // swap state N and state NP1
