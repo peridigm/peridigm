@@ -50,7 +50,7 @@
 
 #include "Peridigm_ComputeManager.hpp"
 #include "compute/Peridigm_Compute.hpp"
-#include "compute/Peridigm_Compute_ACCEL3D.hpp"
+#include "compute/Peridigm_Compute_Acceleration.hpp"
 #include "Peridigm_DataManager.hpp"
 #include <Field.h>
 
@@ -82,7 +82,7 @@ PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList>
     "Peridigm::ComputeManager: Unknown material model. Only \"Linear Elastic\" or \"Elastic Plastic\" currently supported.");
 
   if (thisMaterial->isParameter("Acceleration")) {
-    compute = Teuchos::rcp(new PeridigmNS::Compute_ACCEL3D );
+    compute = Teuchos::rcp(new PeridigmNS::Compute_Acceleration );
     computeObjects.push_back( Teuchos::rcp_implicit_cast<Compute>(compute) );
   }
 }
