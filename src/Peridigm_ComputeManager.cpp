@@ -49,8 +49,7 @@
 #include <iostream>
 
 #include "Peridigm_ComputeManager.hpp"
-#include "compute/Peridigm_Compute.hpp"
-#include "compute/Peridigm_Compute_Acceleration.hpp"
+#include "compute/compute_includes.hpp"
 #include "Peridigm_DataManager.hpp"
 #include <Field.h>
 
@@ -72,22 +71,31 @@ PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList>
     // No input to validate; no computes requested
     return;
 
-  // Currenly only support "Linear Elastic" and "Elastic Plastic" material models
-  Teuchos::RCP<Teuchos::ParameterList> thisMaterial;
-  if (materialOutputFields->isSublist ("Linear Elastic")) {
-    thisMaterial = sublist(materialOutputFields, "Linear Elastic");
-  }
-  else if (materialOutputFields->isSublist ("Elastic Plastic")) {
-    thisMaterial = sublist(materialOutputFields, "Elastic Plastic");
-  }
-  else // Unrecognized material model. Throw error.
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter,
-    "Peridigm::ComputeManager: Unknown material model. Only \"Linear Elastic\" or \"Elastic Plastic\" currently supported.");
+  Teuchos::ParameterList::ConstIterator i1;
+  // Loop over the material types in the materialOutputFields parameterlist
+  for (i1 = materialOutputFields->begin(); i1 != materialOutputFields->end(); ++i1) {
+    const Teuchos::ParameterEntry& val1 = materialOutputFields->entry(i1);
+    // const std::string& name1 = materialOutputFields->name(i1);
+    // For each material type, loop over requested output fields and hook up pointers
+    if (val1.isList()) { // each material type is a sublist
+      const Teuchos::ParameterList& sublist = Teuchos::getValue<Teuchos::ParameterList>(val1);
+      Teuchos::ParameterList::ConstIterator i2;
+      for (i2=sublist.begin(); i2 != sublist.end(); ++i2) {
+        const std::string& nm = sublist.name(i2);
 
-  if (thisMaterial->isParameter("Acceleration")) {
-    compute = Teuchos::rcp(new PeridigmNS::Compute_Acceleration(peridigm) );
-    computeObjects.push_back( Teuchos::rcp_implicit_cast<Compute>(compute) );
+        #define COMPUTE_CLASS
+        #define ComputeClass(key, Class, Args) \
+        if (nm == #key) { \
+          compute = Teuchos::rcp( new PeridigmNS::Class(Args) ); \
+          computeObjects.push_back( Teuchos::rcp_implicit_cast<Compute>(compute) ); \
+        }
+        #include "compute/compute_includes.hpp"
+        #undef  COMPUTE_CLASS
+
+      }
+    }
   }
+
 }
 
 Teuchos::ParameterList PeridigmNS::ComputeManager::getValidParameterList() {
