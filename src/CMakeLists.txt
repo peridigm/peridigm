@@ -17,7 +17,7 @@ set(Peridigm_SOURCES
     Peridigm_OutputManager_VTK_XML.cpp
     Peridigm_ComputeManager.cpp
     Peridigm_Timer.cpp
-    ./compute/Peridigm_Compute_ACCEL3D.cpp
+    ./compute/Peridigm_Compute_Acceleration.cpp
     ./materials/Peridigm_Material.cpp
     ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
     ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
@@ -59,7 +59,7 @@ set(utPeridigm_SOURCES
     Peridigm_OutputManager_VTK_XML.cpp
     Peridigm_ComputeManager.cpp
     Peridigm_Timer.cpp
-    ./compute/Peridigm_Compute_ACCEL3D.cpp
+    ./compute/Peridigm_Compute_Acceleration.cpp
     ../io/Field.cxx
     ./materials/Peridigm_Material.cpp
     ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp

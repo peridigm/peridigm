@@ -1,4 +1,4 @@
-/*! \file Peridigm_Material.cpp */
+/*! \file Peridigm_Compute_Acceleration.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,25 +45,32 @@
 // ************************************************************************
 //@HEADER
 
-#include <vector>
+#ifndef PERIDIGM_COMPUTE_Acceleration_HPP
+#define PERIDIGM_COMPUTE_Acceleration_HPP
 
-#include "Peridigm_Compute_ACCEL3D.hpp"
+#include "Peridigm_Compute.hpp"
+#include "Peridigm_DataManager.hpp"
 
-//! Standard constructor.
-PeridigmNS::Compute_ACCEL3D::Compute_ACCEL3D(){}
+namespace PeridigmNS {
 
-//! Destructor.
-PeridigmNS::Compute_ACCEL3D::~Compute_ACCEL3D(){}
+  //! Class for filling acceleration vector
+  class Compute_Acceleration : public PeridigmNS::Compute {
 
-//! Returns the fieldspecs computed by this class
-std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_ACCEL3D::getFieldSpecs() const {
-  std::vector<Field_NS::FieldSpec> myFieldSpecs;
-  myFieldSpecs.push_back(Field_NS::ACCEL3D);
+  public:
+	
+  //! Standard constructor.
+  Compute_Acceleration();
 
-  return myFieldSpecs;
+  //! Destructor.
+  ~Compute_Acceleration();
+
+  //! Returns the fieldspecs computed by this class
+  std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
+
+  //! Perform computation
+  int compute(Teuchos::RCP<PeridigmNS::DataManager> dataManager) const;
+
+  };
 }
 
-//! Fill the acceleration vector
-int PeridigmNS::Compute_ACCEL3D::compute(Teuchos::RCP<PeridigmNS::DataManager> dataManager) const {
-}
-
+#endif // PERIDIGM_COMPUTE_Acceleration_HPP

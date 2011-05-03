@@ -122,6 +122,9 @@ PeridigmNS::OutputManager_VTK_XML::OutputManager_VTK_XML(const Teuchos::RCP<Teuc
   // With VTK, every object writes
   iWrite = true;
 
+  // Create container to hold processor ID # data
+  proc_num = Teuchos::rcp( new std::vector<int>() );
+
   // VTK doesn't like spaces or . so replace them with underscore
   {
   int warningFlag = 0;
@@ -412,6 +415,7 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<PeridigmNS::DataManag
           // Get map corresponding to x (COORD3D FieldSpec guaranteed to exist by Peridigm object)
           Teuchos::RCP<Epetra_Vector> myX = dataManager->getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE);
           const Epetra_BlockMap& xMap = myX->Map();
+          // hook up pointer to data
           PdVTK::writeField<int>(grid,Field_NS::ID,xMap.MyGlobalElements());
         }
         else if (fs.getLabel() == "Proc_Num") { // Handle special case of Proc_Num (int type)
@@ -420,6 +424,7 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<PeridigmNS::DataManag
           // Use only the number of owned elements
           int length = (dataManager->getOwnedIDVectorMap())->NumMyElements();
           proc_num->assign(length,myPID);
+          // hook up pointer to data
           PdVTK::writeField<int>(grid,Field_NS::PROC_NUM,&(proc_num->at(0)));
         }
         else { // Handle all other cases (double type)
