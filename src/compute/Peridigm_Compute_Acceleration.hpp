@@ -51,6 +51,11 @@
 #include "Peridigm_Compute.hpp"
 #include "Peridigm_DataManager.hpp"
 
+// Forward declaration
+namespace PeridigmNS {
+  class Peridigm;
+}
+
 namespace PeridigmNS {
 
   //! Class for filling acceleration vector
@@ -59,7 +64,7 @@ namespace PeridigmNS {
   public:
 	
   //! Standard constructor.
-  Compute_Acceleration();
+  Compute_Acceleration( PeridigmNS::Peridigm *peridigm_ );
 
   //! Destructor.
   ~Compute_Acceleration();
@@ -69,6 +74,11 @@ namespace PeridigmNS {
 
   //! Perform computation
   int compute(Teuchos::RCP<PeridigmNS::DataManager> dataManager) const;
+
+  private:
+
+  //! Parent pointer
+  PeridigmNS::Peridigm *peridigm;
 
   };
 }

@@ -54,9 +54,12 @@
 #include "Peridigm_DataManager.hpp"
 #include <Field.h>
 
-PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList>& params) {
+PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList>& params, PeridigmNS::Peridigm *peridigm_ ) {
 
   Teuchos::RCP<Compute> compute;
+
+  // Hook up parent pointer
+  peridigm = peridigm_;
 
   // No input to validate; no computes requested
   if (params == Teuchos::null) return;
@@ -82,7 +85,7 @@ PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList>
     "Peridigm::ComputeManager: Unknown material model. Only \"Linear Elastic\" or \"Elastic Plastic\" currently supported.");
 
   if (thisMaterial->isParameter("Acceleration")) {
-    compute = Teuchos::rcp(new PeridigmNS::Compute_Acceleration );
+    compute = Teuchos::rcp(new PeridigmNS::Compute_Acceleration(peridigm) );
     computeObjects.push_back( Teuchos::rcp_implicit_cast<Compute>(compute) );
   }
 }
@@ -114,4 +117,8 @@ PeridigmNS::ComputeManager::~ComputeManager() {
 }
 
 void PeridigmNS::ComputeManager::compute(Teuchos::RCP<PeridigmNS::DataManager>& dataManager) {
+
+  for (unsigned int i=0; i < computeObjects.size(); i++)
+    computeObjects[i]->compute(dataManager);
+
 }
