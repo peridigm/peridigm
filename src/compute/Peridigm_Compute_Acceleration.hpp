@@ -45,6 +45,12 @@
 // ************************************************************************
 //@HEADER
 
+#ifdef COMPUTE_CLASS
+
+ComputeClass(Acceleration,Compute_Acceleration,peridigm)
+
+#else
+
 #ifndef PERIDIGM_COMPUTE_Acceleration_HPP
 #define PERIDIGM_COMPUTE_Acceleration_HPP
 
@@ -84,3 +90,4 @@ namespace PeridigmNS {
 }
 
 #endif // PERIDIGM_COMPUTE_Acceleration_HPP
+#endif // COMPUTE_CLASS
