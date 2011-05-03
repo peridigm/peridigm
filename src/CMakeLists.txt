@@ -39,7 +39,6 @@ set(Peridigm_LINK_LIBRARIES
     ${REQUIRED_LIBS}
     ${PdMaterialUtilitiesLib}
     PdIC
-    ${Boost_LIBRARIES}
 )
 
 add_executable(Peridigm ${Peridigm_SOURCES})
