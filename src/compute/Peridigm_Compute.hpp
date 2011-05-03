@@ -52,6 +52,11 @@
 
 #include "Peridigm_DataManager.hpp"
 
+// Forward declaration
+namespace PeridigmNS {
+  class Peridigm;
+}
+
 namespace PeridigmNS {
 
   //! Base class defining the Peridigm compute class interface.
@@ -60,7 +65,7 @@ namespace PeridigmNS {
   public:
 	
   //! Default constructor.
-  Compute(){};
+  Compute(){}
 
   //! Destructor.
   virtual ~Compute(){}
@@ -71,14 +76,14 @@ namespace PeridigmNS {
   //! Perform computation
   virtual int compute(Teuchos::RCP<PeridigmNS::DataManager> dataManager) const = 0;
 
-  private:
+  protected:
 
   //! Copy constructor.
   Compute( const Compute& C );
 
   //! Assignment operator.
   Compute& operator=( const Compute& C );
-	
+
   };
 }
 

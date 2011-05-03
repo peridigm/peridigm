@@ -48,9 +48,10 @@
 #include <vector>
 
 #include "Peridigm_Compute_Acceleration.hpp"
+#include "../Peridigm.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Acceleration::Compute_Acceleration(){}
+PeridigmNS::Compute_Acceleration::Compute_Acceleration(PeridigmNS::Peridigm *peridigm_ ){peridigm = peridigm_;}
 
 //! Destructor.
 PeridigmNS::Compute_Acceleration::~Compute_Acceleration(){}
@@ -65,5 +66,20 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Acceleration::getFieldSpecs
 
 //! Fill the acceleration vector
 int PeridigmNS::Compute_Acceleration::compute(Teuchos::RCP<PeridigmNS::DataManager> dataManager) const {
+
+  int retval;
+
+  // fill the acceleration vector
+  Teuchos::RCP<Epetra_Vector> force, acceleration;
+  force        = dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1);
+  acceleration = dataManager->getData(Field_NS::ACCEL3D, Field_NS::FieldSpec::STEP_NP1);
+  *acceleration = *force;
+
+  // \todo Generalize this for multiple materials
+  double density = peridigm->materialModels->operator[](0)->Density();
+  retval = acceleration->Scale(1.0/density);
+
+  return retval;
+
 }
 

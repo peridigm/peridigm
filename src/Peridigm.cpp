@@ -414,7 +414,7 @@ void PeridigmNS::Peridigm::initializeComputeManager() {
     outputParams  = Teuchos::rcp(&(peridigmParams->sublist("Output")),false);
   }
 
-  computeManager = Teuchos::rcp( new PeridigmNS::ComputeManager( outputParams  ) );
+  computeManager = Teuchos::rcp( new PeridigmNS::ComputeManager( outputParams, this  ) );
 
 }
 
@@ -462,9 +462,9 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
     // Set RCP to neighborlist
     forceStateDesc->set("Bond Family",neighborhoodData);
     // Ask OutputManager to write initial conditions to disk
-    outputManager->write(x,u,v,a,force,dataManager,neighborhoodData,forceStateDesc);
-//    this->synchDataManager();
-//    outputManager->write(dataManager,neighborhoodData,forceStateDesc);
+//    outputManager->write(x,u,v,a,force,dataManager,neighborhoodData,forceStateDesc);
+    this->synchDataManager();
+    outputManager->write(dataManager,neighborhoodData,forceStateDesc);
   }
   else { // no output requested
     outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_VTK_XML( outputParams, this ));
@@ -602,9 +602,9 @@ void PeridigmNS::Peridigm::executeExplicit() {
     forceStateDesc->set("Time", t_current);
 
     PeridigmNS::Timer::self().startTimer("Output");
-    outputManager->write(x,u,v,a,force,dataManager,neighborhoodData,forceStateDesc);
-//    this->synchDataManager();
-//    outputManager->write(dataManager,neighborhoodData,forceStateDesc);
+//    outputManager->write(x,u,v,a,force,dataManager,neighborhoodData,forceStateDesc);
+    this->synchDataManager();
+    outputManager->write(dataManager,neighborhoodData,forceStateDesc);
     PeridigmNS::Timer::self().stopTimer("Output");
 
     // swap state N and state NP1

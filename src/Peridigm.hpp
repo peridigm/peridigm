@@ -202,7 +202,6 @@ namespace PeridigmNS {
 
     //! Friend classes
     friend class OutputManager_VTK_XML;
-    friend class ComputeManager;
     friend class Compute_Acceleration;
 
     //! Parameterlist of entire input deck
