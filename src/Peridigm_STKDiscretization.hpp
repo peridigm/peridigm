@@ -98,7 +98,7 @@ namespace PeridigmNS {
     STKDiscretization& operator=(const STKDiscretization&);
 
     //! Creates a discretization object using STK functionality.
-    PdGridData getDiscretization(const std::string& meshFileName);
+    PdGridData getDecomp(const std::string& meshFileName);
 
   protected:
 
