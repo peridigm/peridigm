@@ -51,44 +51,11 @@
 #include "PdZoltan.h"
 
 #include <Epetra_MpiComm.h>
+#include <Ionit_Initializer.h>
 #include <stk_io/util/UseCase_mesh.hpp>
 #include <stk_io/IossBridge.hpp>
-#include <Ionit_Initializer.h>
-
-
-
-
-#include <stk_util/parallel/Parallel.hpp>
-#include <stk_util/parallel/ParallelReduce.hpp>
-
-#include <stk_mesh/base/BulkData.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
-#include <stk_mesh/base/GetBuckets.hpp>
-#include <stk_mesh/base/Field.hpp>
 #include <stk_mesh/base/FieldData.hpp>
-#include <stk_mesh/base/Comm.hpp>
-#include <stk_mesh/base/EntityComm.hpp>
-
-#include <stk_mesh/fem/CoordinateSystems.hpp>
-#include <stk_mesh/fem/TopologyDimensions.hpp>
-#include <stk_mesh/fem/FEMHelpers.hpp>
-
-#include <Shards_BasicTopologies.hpp>
-#include <Shards_CellTopologyTraits.hpp>
-
-#include <stk_util/parallel/Parallel.hpp>
-#include <stk_mesh/base/Types.hpp>
-#include <stk_mesh/fem/FEMMetaData.hpp>
-#include <stk_mesh/base/BulkData.hpp>
-#include <stk_mesh/base/Field.hpp>
-#include <stk_mesh/base/FieldTraits.hpp>
-#include <stk_mesh/fem/CoordinateSystems.hpp>
-
-
-
-
-
-
 
 #include <vector>
 #include <list>
@@ -106,11 +73,10 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   TEST_FOR_EXCEPT_MSG(params->get<string>("Type") != "Exodus", "Invalid Type in STKDiscretization");
 
   string meshFileName = params->get<string>("Input Mesh File");
-  PdGridData decomp = getDiscretization(meshFileName);
+  PdGridData decomp = getDecomp(meshFileName);
 
-//   createDecomp();
-//   createMaps(decomp);
-//   createNeighborhoodData(decomp);
+  createMaps(decomp);
+  createNeighborhoodData(decomp);
 
   // \todo Move this functionality to base class, it's currently duplicated in PdQuickGridDiscretization.
   // Create the bondMap, a local map used for constitutive data stored on bonds.
@@ -156,7 +122,7 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
 PeridigmNS::STKDiscretization::~STKDiscretization() {}
 
 
-PdGridData PeridigmNS::STKDiscretization::getDiscretization(const string& meshFileName) {
+PdGridData PeridigmNS::STKDiscretization::getDecomp(const string& meshFileName) {
 
   string meshType = "exodusii";
   string workingDirectory = "";
@@ -223,53 +189,50 @@ PdGridData PeridigmNS::STKDiscretization::getDiscretization(const string& meshFi
   stk::io::util::populate_bulk_data(bulkData, *meshData, "exodusii");
   bulkData.modification_end();
 
-
-//     typedef stk::mesh::Field<double,stk::mesh::Cartesian> VectorFieldType ;
-//     typedef stk::mesh::Field<double>                      ScalarFieldType ;
-//   coordinates_field = metaData->get_field<VectorFieldType>(std::string("coordinates"));
-//fem::CellTopology 	FEMMetaData::get_cell_topology  (const Part  &part) const 
-
-
-// typedef std::vector<FieldBase *> FieldVector;
-//   const stk::mesh::FieldVector& fields = metaData->get_fields();
-//   for(unsigned int i=0 ; i<fields.size() ; ++i)
-//     cout << "Field " << fields[i]->name() << endl;
-
-  stk::mesh::Field<double, stk::mesh::Cartesian>* coordinatesField = metaData->get_field< stk::mesh::Field<double, stk::mesh::Cartesian> >("coordinates");
-
+  stk::mesh::Field<double, stk::mesh::Cartesian>* coordinatesField = 
+    metaData->get_field< stk::mesh::Field<double, stk::mesh::Cartesian> >("coordinates");
 
   // Create a selector to select everything in the universal part that is either locally owned or globally shared
   stk::mesh::Selector selector = 
     stk::mesh::Selector( metaData->universal_part() ) & ( stk::mesh::Selector( metaData->locally_owned_part() ) | stk::mesh::Selector( metaData->globally_shared_part() ) );
 
   // Select the mesh entities that match the selector
-  std::vector<stk::mesh::Entity*> nodes;
-  stk::mesh::get_selected_entities(selector, bulkData.buckets(metaData->node_rank() ), nodes);
   std::vector<stk::mesh::Entity*> elements;
   stk::mesh::get_selected_entities(selector, bulkData.buckets(metaData->element_rank() ), elements);
 
+  // Copy data from stk into a decomp object
+  int myNumElements = elements.size();
+  int dimension = 3;
+  PdGridData decomp = PdQuickGrid::allocatePdGridData(myNumElements, dimension);
+  int* globalIds = decomp.myGlobalIDs.get();
+  double* volumes = decomp.cellVolume.get();
+  double* centroids = decomp.myX.get();
+
+  // loop over the elements and fill the decomp data structure
   for(unsigned int iElem=0 ; iElem<elements.size() ; ++iElem){
-    // typedef PairIter< std::vector<Relation>::const_iterator > PairIterRelation ;
     stk::mesh::PairIterRelation nodeRelations = elements[iElem]->node_relations();
-    cout << "Size = " << nodeRelations.size() << endl;
+    centroids[iElem*3] = 0.0;
+    centroids[iElem*3+1] = 0.0;
+    centroids[iElem*3+2] = 0.0;
     for(stk::mesh::PairIterRelation::iterator it=nodeRelations.begin() ; it!=nodeRelations.end() ; ++it){
       stk::mesh::Entity* node = it->entity();
       double* coordinates = stk::mesh::field_data(*coordinatesField, *node);
-      cout << "coordinates " << coordinates[0] << ", " << coordinates[1] << ", " << coordinates[2] << endl;
+      centroids[iElem*3] += coordinates[0];
+      centroids[iElem*3+1] += coordinates[1];
+      centroids[iElem*3+2] += coordinates[2];
     }
+    centroids[iElem*3] /= nodeRelations.size();
+    centroids[iElem*3+1] /= nodeRelations.size();
+    centroids[iElem*3+2] /= nodeRelations.size();
+    volumes[iElem] = 1.0; // \todo Compute volumes.
+    globalIds[iElem] = elements[iElem]->identifier() - 1; 
   }
-
-  //  PairIterRelation 	<stk::mesh::Entity::node_relations () const 
-
-
-
-
-  //stk_mesh/use_cases/centroid_algorithm.hpp
-
-  PdGridData decomp;// =  PdQuickGrid::getDiscretization(1, 1);
 
   // free the meshData
   meshData = Teuchos::RCP<stk::io::util::MeshData>();
+
+  // call the rebalance function on the current-configuration decomp
+  decomp = getLoadBalancedDiscretization(decomp);
 
   return decomp;
 }
