@@ -50,6 +50,7 @@
 
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_Comm.h>
+#include <stk_io/util/UseCase_mesh.hpp>
 #include "Peridigm_AbstractDiscretization.hpp"
 #include "PdGridData.h"
 
@@ -137,6 +138,12 @@ namespace PeridigmNS {
 
     //! Number of Processors
     unsigned int numPID;
+
+    //! Mesh meta data
+    Teuchos::RCP<stk::mesh::fem::FEMMetaData> metaData;
+
+    //! Mesh bulk data
+    Teuchos::RCP<stk::io::util::MeshData> meshData;
   };
 }
 
