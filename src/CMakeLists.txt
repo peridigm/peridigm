@@ -18,6 +18,8 @@ set(Peridigm_SOURCES
     Peridigm_ComputeManager.cpp
     Peridigm_Timer.cpp
     ./compute/Peridigm_Compute_Acceleration.cpp
+    ./compute/Peridigm_Compute_Force.cpp
+    ./compute/Peridigm_Compute_Contact_Force.cpp
     ./materials/Peridigm_Material.cpp
     ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
     ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
@@ -60,6 +62,8 @@ set(utPeridigm_SOURCES
     Peridigm_ComputeManager.cpp
     Peridigm_Timer.cpp
     ./compute/Peridigm_Compute_Acceleration.cpp
+    ./compute/Peridigm_Compute_Force.cpp
+    ./compute/Peridigm_Compute_Contact_Force.cpp
     ../io/Field.cxx
     ./materials/Peridigm_Material.cpp
     ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp

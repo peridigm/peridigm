@@ -1,4 +1,4 @@
-/*! \file Peridigm_Compute_Acceleration.hpp */
+/*! \file Peridigm_Compute_Contact_Force.cpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,49 +45,57 @@
 // ************************************************************************
 //@HEADER
 
-#ifdef COMPUTE_CLASS
+#include <vector>
 
-ComputeClass(Acceleration,Compute_Acceleration,peridigm)
+#include "Peridigm_Compute_Contact_Force.hpp"
+#include "../Peridigm.hpp"
 
-#else
+//! Standard constructor.
+PeridigmNS::Compute_Contact_Force::Compute_Contact_Force(PeridigmNS::Peridigm *peridigm_ ){peridigm = peridigm_;}
 
-#ifndef PERIDIGM_COMPUTE_ACCELERATION_HPP
-#define PERIDIGM_COMPUTE_ACCELERATION_HPP
+//! Destructor.
+PeridigmNS::Compute_Contact_Force::~Compute_Contact_Force(){}
 
-#include "Peridigm_Compute.hpp"
-#include "Peridigm_DataManager.hpp"
+//! Returns the fieldspecs computed by this class
+std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Contact_Force::getFieldSpecs() const {
+  std::vector<Field_NS::FieldSpec> myFieldSpecs;
+  myFieldSpecs.push_back(Field_NS::CONTACT_FORCE3D);
 
-// Forward declaration
-namespace PeridigmNS {
-  class Peridigm;
+  return myFieldSpecs;
 }
 
-namespace PeridigmNS {
+//! Fill the contact force vector
+int PeridigmNS::Compute_Contact_Force::compute(Teuchos::RCP<PeridigmNS::DataManager> dataManager) const {
 
-  //! Class for filling acceleration vector
-  class Compute_Acceleration : public PeridigmNS::Compute {
+  int retval;
 
-  public:
-	
-  //! Standard constructor.
-  Compute_Acceleration( PeridigmNS::Peridigm *peridigm_ );
+  Teuchos::RCP<Epetra_Vector> contact_force, contact_force_density, volume;
+  contact_force_density = dataManager->getData(Field_NS::CONTACT_FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1);
+  contact_force         = dataManager->getData(Field_NS::CONTACT_FORCE3D, Field_NS::FieldSpec::STEP_NP1);
+  volume                = dataManager->getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE);
 
-  //! Destructor.
-  ~Compute_Acceleration();
+  // Sanity check
+  if ( (contact_force_density->Map().NumMyElements() != volume->Map().NumMyElements()) ||  (contact_force->Map().NumMyElements() != volume->Map().NumMyElements()) ) {
+    retval = 1;
+    return(retval);
+  }
 
-  //! Returns the fieldspecs computed by this class
-  std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
+  *contact_force = *contact_force_density;
 
-  //! Perform computation
-  int compute(Teuchos::RCP<PeridigmNS::DataManager> dataManager) const;
+  double *volume_values = volume->Values();
+  double *contact_force_values  = contact_force->Values();
 
-  private:
+  // volume is a scalar and force a vector, so maps are different; must do multiplication on per-element basis
+  int numElements = volume->Map().NumMyElements();
+  double vol;
+  for (int i=0;i<numElements;i++) {
+    vol = volume_values[i]; 
+    contact_force_values[3*i] = vol*contact_force_values[3*i];
+    contact_force_values[3*i+1] = vol*contact_force_values[3*i+1];
+    contact_force_values[3*i+1] = vol*contact_force_values[3*i+2];
+  }
 
-  //! Parent pointer
-  PeridigmNS::Peridigm *peridigm;
+  return(0);
 
-  };
 }
 
-#endif // PERIDIGM_COMPUTE_ACCELERATION_HPP
-#endif // COMPUTE_CLASS

@@ -195,6 +195,9 @@ namespace PeridigmNS {
     //! Accessor for DataManager
     Teuchos::RCP<PeridigmNS::DataManager> getDataManager() { return dataManager; }
 
+    //! Accessor for Material Models
+    Teuchos::RCP< std::vector< Teuchos::RCP<const PeridigmNS::Material> > > getMaterialModels() {return materialModels; }
+
     //! Return list of field specs used by Peridigm object
     std::vector<Field_NS::FieldSpec> getFieldSpecs();
 
@@ -202,7 +205,6 @@ namespace PeridigmNS {
 
     //! Friend classes
     friend class OutputManager_VTK_XML;
-    friend class Compute_Acceleration;
 
     //! Parameterlist of entire input deck
     Teuchos::RCP<Teuchos::ParameterList> peridigmParams;

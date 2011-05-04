@@ -582,9 +582,6 @@ void PeridigmNS::Peridigm::executeExplicit() {
     //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
     blas.AXPY(length, dt2, aptr, vptr, 1, 1);
 
-    // Update computed quantities 
-    computeManager->compute( dataManager );
-
     t_current = t_initial + (step*dt);
 
     PeridigmNS::Timer::self().startTimer("Output");

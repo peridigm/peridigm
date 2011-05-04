@@ -76,7 +76,7 @@ int PeridigmNS::Compute_Acceleration::compute(Teuchos::RCP<PeridigmNS::DataManag
   *acceleration = *force;
 
   // \todo Generalize this for multiple materials
-  double density = peridigm->materialModels->operator[](0)->Density();
+  double density = peridigm->getMaterialModels()->operator[](0)->Density();
   retval = acceleration->Scale(1.0/density);
 
   return retval;
