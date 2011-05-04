@@ -79,12 +79,12 @@ PeridigmNS::DiscretizationFactory::create(const Teuchos::RCP<const Epetra_Comm>&
 	discretization = Teuchos::rcp(new PeridigmNS::STKDiscretization(epetra_comm, discParams));
 #else
     TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
-		       "Exodus file support requires Netcdf and Trilinos STK package (rebuild with Netcdf and STK).");
+		       "**** Exodus file support requires Netcdf and Trilinos STK package (rebuild with Netcdf and STK).\n");
 #endif
   }
   else{
     TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
-		       "Invalid discretization type.  Valid types are \"Exodus\" and \"PdQuickGrid\".");
+		       "**** Invalid discretization type.  Valid types are \"Exodus\" and \"PdQuickGrid\".\n");
   }
  
   return discretization;
