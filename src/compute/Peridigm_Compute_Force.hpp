@@ -1,4 +1,4 @@
-/*! \file Peridigm_Compute_Acceleration.hpp */
+/*! \file Peridigm_Compute_Force.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -47,12 +47,12 @@
 
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Acceleration,Compute_Acceleration,peridigm)
+ComputeClass(Force,Compute_Force,peridigm)
 
 #else
 
-#ifndef PERIDIGM_COMPUTE_ACCELERATION_HPP
-#define PERIDIGM_COMPUTE_ACCELERATION_HPP
+#ifndef PERIDIGM_COMPUTE_FORCE_HPP
+#define PERIDIGM_COMPUTE_FORCE_HPP
 
 #include "Peridigm_Compute.hpp"
 #include "Peridigm_DataManager.hpp"
@@ -65,15 +65,15 @@ namespace PeridigmNS {
 namespace PeridigmNS {
 
   //! Class for filling acceleration vector
-  class Compute_Acceleration : public PeridigmNS::Compute {
+  class Compute_Force : public PeridigmNS::Compute {
 
   public:
 	
   //! Standard constructor.
-  Compute_Acceleration( PeridigmNS::Peridigm *peridigm_ );
+  Compute_Force( PeridigmNS::Peridigm *peridigm_ );
 
   //! Destructor.
-  ~Compute_Acceleration();
+  ~Compute_Force();
 
   //! Returns the fieldspecs computed by this class
   std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
@@ -89,5 +89,5 @@ namespace PeridigmNS {
   };
 }
 
-#endif // PERIDIGM_COMPUTE_ACCELERATION_HPP
+#endif // PERIDIGM_COMPUTE_FORCE_HPP
 #endif // COMPUTE_CLASS
