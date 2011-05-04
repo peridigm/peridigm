@@ -68,6 +68,7 @@ set(utPeridigm_SOURCES
     ./materials/Peridigm_Material.cpp
     ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
     ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
+    ./materials/Peridigm_ViscoelasticStandardLinearSolid.cpp
     ./materials/Peridigm_CriticalStretchDamageModel.cpp
     ./contact/Peridigm_ShortRangeForceContactModel.cpp
 )
