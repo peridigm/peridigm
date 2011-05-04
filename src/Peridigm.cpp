@@ -66,6 +66,7 @@
 #include "contact/Peridigm_ShortRangeForceContactModel.hpp"
 #include "materials/Peridigm_LinearElasticIsotropicMaterial.hpp"
 #include "materials/Peridigm_IsotropicElasticPlasticMaterial.hpp"
+#include "materials/Peridigm_ViscoelasticStandardLinearSolid.hpp"
 #include "PdQuickGrid.h"
 #include "PdZoltan.h"
 #include "InitialCondition.hpp"
@@ -144,17 +145,19 @@ void PeridigmNS::Peridigm::instantiateMaterials() {
     // Insert solver timestep into matParams. Some material models (e.g., viscoelastic) need to know timestep
     Teuchos::RCP<Teuchos::ParameterList> solverParams = Teuchos::rcp(&(peridigmParams->sublist("Solver")),false);
     Teuchos::RCP<Material> material;
-    if(name == "Linear Elastic" || name == "Elastic Plastic"){
+    if(name == "Linear Elastic" || name == "Elastic Plastic" || name == "Viscoelastic Standard Linear Solid"){
       if(name == "Linear Elastic")
         material = Teuchos::rcp(new LinearElasticIsotropicMaterial(matParams) );
-      else if(name == "Elastic Plastic")
+      else if (name == "Elastic Plastic")
         material = Teuchos::rcp(new IsotropicElasticPlasticMaterial(matParams) );
+      else if (name == "Viscoelastic Standard Linear Solid")
+        material = Teuchos::rcp(new ViscoelasticStandardLinearSolid(matParams) );
       materialModels->push_back( Teuchos::rcp_implicit_cast<Material>(material) );
     }
     else {
       string invalidMaterial("Unrecognized material model: ");
       invalidMaterial += name;
-      invalidMaterial += ", must be Linear Elastic or Elastic Plastic";
+      invalidMaterial += ", must be Linear Elastic or Elastic Plastic or Viscoelastic Standard Linear Solid";
       TEST_FOR_EXCEPT_MSG(true, invalidMaterial);
     }
   }
