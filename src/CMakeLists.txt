@@ -20,6 +20,7 @@ set(Peridigm_SOURCES
     ./compute/Peridigm_Compute_Acceleration.cpp
     ./compute/Peridigm_Compute_Force.cpp
     ./compute/Peridigm_Compute_Contact_Force.cpp
+    ./compute/compute_includes.hpp
     ./materials/Peridigm_Material.cpp
     ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
     ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
@@ -64,6 +65,7 @@ set(utPeridigm_SOURCES
     ./compute/Peridigm_Compute_Acceleration.cpp
     ./compute/Peridigm_Compute_Force.cpp
     ./compute/Peridigm_Compute_Contact_Force.cpp
+    ./compute/compute_includes.hpp
     ../io/Field.cxx
     ./materials/Peridigm_Material.cpp
     ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
@@ -193,6 +195,19 @@ target_link_libraries(utPHAL_EvaluateForce
 #                      ${REQUIRED_LIBS}
 #                      ${Boost_LIBRARIES}
 #)
+
+#
+# Custom Commands
+#
+file (GLOB Peridigm_COMPUTE_HEADERS
+"${CMAKE_SOURCE_DIR}/src/compute/Peridigm*.hpp")
+
+add_custom_command(
+   OUTPUT ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp
+   DEPENDS ${Peridigm_COMPUTE_HEADERS}
+   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/compute
+   COMMAND sh ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.sh
+)
 
 add_subdirectory (materials/)
 add_subdirectory (initial_conditions/)
