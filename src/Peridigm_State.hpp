@@ -73,6 +73,9 @@ public:
   //! Destructor.
   ~State(){}
 
+  //! @name Memory allocation functions
+  //@{
+
   //! Instantiates the Epetra_MultiVector that holds scalar data and creates the FieldSpec-to-Epetra_Vector mappings.
   void allocateScalarData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map);
 
@@ -82,18 +85,27 @@ public:
   //! Instantiates the Epetra_MultiVector that holds bond data and creates the FieldSpec-to-Epetra_Vector mappings.
   void allocateBondData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map);
 
-  //! Provides access to an Epetra_Vector corresponding to the given FieldSpec.
-  Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec);
+  //@}
 
   //! @name Epetra_MultiVector accessor functions
   //@{
+
   //! Accessor for the scalar Epetra_MultiVector.
   Teuchos::RCP<Epetra_MultiVector> getScalarMultiVector() { return scalarData; }
+
   //! Accessor for the vector Epetra_MultiVector.
   Teuchos::RCP<Epetra_MultiVector> getVectorMultiVector() { return vectorData; }
+
   //! Accessor for the bond-data Epetra_MultiVector.
   Teuchos::RCP<Epetra_MultiVector> getBondMultiVector() { return bondData; }
+
   //@}
+
+  //! Provides access to an Epetra_Vector corresponding to the given FieldSpec.
+  Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec);
+
+  //! Copies data to a different state object based on global IDs (all global IDs in the target must exist in the source).
+  void copyTo(State& target);
 
 protected:
 
