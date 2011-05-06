@@ -9,6 +9,7 @@ set(Peridigm_SOURCES
     Peridigm.cpp
     Peridigm_DiscretizationFactory.cpp
     Peridigm_PdQuickGridDiscretization.cpp
+    Peridigm_State.cpp
     Peridigm_DataManager.cpp
     Peridigm_SerialMatrix.cpp
     Peridigm_ModelEvaluator.cpp
@@ -54,6 +55,7 @@ set(utPeridigm_SOURCES
     Peridigm.cpp
     Peridigm_DiscretizationFactory.cpp
     Peridigm_PdQuickGridDiscretization.cpp
+    Peridigm_State.cpp
     Peridigm_DataManager.cpp
     Peridigm_SerialMatrix.cpp
     Peridigm_ModelEvaluator.cpp
@@ -113,6 +115,7 @@ target_link_libraries(utPeridigm_PdQuickGridDiscretization_MPI_np2
 )
 
 add_executable(utPeridigm_State
+               Peridigm_State.cpp
                utPeridigm_State.cpp
                ../io/Field.cxx)
 target_link_libraries(utPeridigm_State
@@ -122,13 +125,15 @@ target_link_libraries(utPeridigm_State
 )
 
 add_executable(utPeridigm_LinearElasticIsotropicMaterial
-        Peridigm_DataManager.cpp
-        Peridigm_SerialMatrix.cpp
-        ../io/Field.cxx
-        ./materials/Peridigm_Material.cpp
-		./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
-        ./materials/Peridigm_CriticalStretchDamageModel.cpp
-		./materials/utPeridigm_LinearElasticIsotropicMaterial.cpp)
+               Peridigm_State.cpp
+               Peridigm_DataManager.cpp
+               Peridigm_SerialMatrix.cpp
+               ../io/Field.cxx
+               ./materials/Peridigm_Material.cpp
+		       ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
+               ./materials/Peridigm_CriticalStretchDamageModel.cpp
+		       ./materials/utPeridigm_LinearElasticIsotropicMaterial.cpp
+)
 target_link_libraries(utPeridigm_LinearElasticIsotropicMaterial
 ${Trilinos_LIBRARIES}
 ${PdMaterialUtilitiesLib}
@@ -137,8 +142,9 @@ ${Boost_LIBRARIES}
 )
 
 add_executable(utPHAL_UpdateForceState
-	       PHAL_PeridigmTraits.cpp
-	       PHAL_Dimension.cpp
+	           PHAL_PeridigmTraits.cpp
+	           PHAL_Dimension.cpp
+               Peridigm_State.cpp
                Peridigm_DataManager.cpp
                Peridigm_SerialMatrix.cpp
                ../io/Field.cxx
@@ -167,15 +173,17 @@ target_link_libraries(utPHAL_UpdateForceState
 #)
 
 add_executable(utPHAL_EvaluateForce
-	       PHAL_PeridigmTraits.cpp
-	       PHAL_Dimension.cpp
+	           PHAL_PeridigmTraits.cpp
+	           PHAL_Dimension.cpp
+               Peridigm_State.cpp
                Peridigm_DataManager.cpp
                Peridigm_SerialMatrix.cpp
                ../io/Field.cxx
                ./materials/Peridigm_Material.cpp
-	       ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
+	           ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
                ./materials/Peridigm_CriticalStretchDamageModel.cpp
-	       ./evaluators/utPHAL_EvaluateForce.cpp)
+	           ./evaluators/utPHAL_EvaluateForce.cpp
+)
 target_link_libraries(utPHAL_EvaluateForce
                       ${Trilinos_LIBRARIES}
                       ${PdMaterialUtilitiesLib}
