@@ -61,8 +61,8 @@ using namespace boost::unit_test;
 using namespace Teuchos;
 using namespace PeridigmNS;
 
-//! Create a State object for a two-point problem, check data storage and basic functionality.
-void twoPointProblem()
+//! Create a two-point problem for testing.
+PeridigmNS::State createTwoPointProblem()
 {
   Teuchos::RCP<Epetra_Comm> comm;
   #ifdef HAVE_MPI
@@ -76,7 +76,7 @@ void twoPointProblem()
   int numCells = 2;
 
   // set up overlap maps, which include ghosted nodes
-  int numGlobalElements(numCells), numMyElements, elementSize, indexBase(0);
+  int numGlobalElements(numCells), numMyElements(0), elementSize, indexBase(0);
   std::vector<int> myGlobalElements;
   if(numProcs == 1)
     numMyElements = 2;
@@ -148,6 +148,123 @@ void twoPointProblem()
   BOOST_CHECK_EQUAL( state.getBondMultiVector()->MyLength(), bondMap->NumMyPoints() );
   BOOST_CHECK( state.getBondMultiVector()->Map().SameAs( *bondMap ) );
 
+  return state;
+}
+
+//! Create a three-point problem for testing.
+PeridigmNS::State createThreePointProblem()
+{
+  Teuchos::RCP<Epetra_Comm> comm;
+  #ifdef HAVE_MPI
+    comm = rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
+  #else
+    comm = rcp(new Epetra_SerialComm);
+  #endif
+  int numProcs = comm->NumProc();
+  int myPID = comm->MyPID();
+
+  // set up a hard-coded layout for three points
+  int numCells = 3;
+
+  // set up overlap maps, which include ghosted nodes
+  int numGlobalElements(numCells), numMyElements(0), elementSize, indexBase(0);
+  std::vector<int> myGlobalElements;
+  if(numProcs == 1){
+    numMyElements = 3;
+  }
+  else if(numProcs == 2){
+    if(myPID == 0)
+      numMyElements = 1;
+    else if(myPID == 1)
+      numMyElements = 2;
+  }
+  myGlobalElements.resize(numMyElements);
+  for(int i=0; i<numMyElements ; ++i)
+    myGlobalElements[i] = i+myPID;
+  elementSize = 1;
+
+  // oneDimensionalOverlapMap
+  // used for cell volumes and scalar constitutive data
+  Teuchos::RCP<Epetra_BlockMap> oneDimensionalOverlapMap =
+    Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, &myGlobalElements[0], elementSize, indexBase, *comm));
+  // threeDimensionalOverlapMap
+  // used for positions, displacements, velocities and vector constitutive data
+  elementSize = 3;
+  Teuchos::RCP<Epetra_BlockMap> threeDimensionalOverlapMap = 
+    Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, &myGlobalElements[0], elementSize, indexBase, *comm)); 
+  // bondMap
+  // used for bond damage and bond constitutive data
+  std::vector<int> bondElementSize(numMyElements);
+  if(numProcs == 1){
+    bondElementSize[0] = 1;
+    bondElementSize[1] = 2;
+    bondElementSize[2] = 1;
+  }
+  else if(numProcs == 2){
+    if(myPID == 0){
+      bondElementSize[0] = 1;
+    }
+    else if(myPID == 1){
+      bondElementSize[0] = 2;
+      bondElementSize[1] = 1;
+    }
+  }
+  Teuchos::RCP<Epetra_BlockMap> bondMap = 
+    Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, &myGlobalElements[0], &bondElementSize[0], indexBase, *comm));
+
+  PeridigmNS::State state;
+
+  // create a list of scalar field specs and allocate the data
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > scalarFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
+  scalarFieldSpecs->push_back(Field_NS::DEFAULT_FIELDTYPE);
+  scalarFieldSpecs->push_back(Field_NS::VOLUME);
+  scalarFieldSpecs->push_back(Field_NS::ID);
+  scalarFieldSpecs->push_back(Field_NS::PROC_NUM);
+  scalarFieldSpecs->push_back(Field_NS::DAMAGE);
+  scalarFieldSpecs->push_back(Field_NS::WEIGHTED_VOLUME);
+  scalarFieldSpecs->push_back(Field_NS::DILATATION);
+  scalarFieldSpecs->push_back(Field_NS::NUM_NEIGHBORS);
+  scalarFieldSpecs->push_back(Field_NS::LAMBDA);
+  scalarFieldSpecs->push_back(Field_NS::SHEAR_CORRECTION_FACTOR);
+  state.allocateScalarData(scalarFieldSpecs, oneDimensionalOverlapMap);
+  BOOST_CHECK_EQUAL( state.getScalarMultiVector()->NumVectors(), (int)scalarFieldSpecs->size() );
+  BOOST_CHECK_EQUAL( state.getScalarMultiVector()->MyLength(), oneDimensionalOverlapMap->NumMyPoints() );
+  BOOST_CHECK( state.getScalarMultiVector()->Map().SameAs( *oneDimensionalOverlapMap ) );
+
+  // create a list of vector field specs and allocate the data
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > vectorFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
+  vectorFieldSpecs->push_back(Field_NS::COORD3D);
+  vectorFieldSpecs->push_back(Field_NS::DISPL3D);
+  vectorFieldSpecs->push_back(Field_NS::CURCOORD3D);
+  vectorFieldSpecs->push_back(Field_NS::VELOC3D);
+  vectorFieldSpecs->push_back(Field_NS::ACCEL3D);
+  vectorFieldSpecs->push_back(Field_NS::FORCE3D);
+  vectorFieldSpecs->push_back(Field_NS::FORCE_DENSITY3D);
+  vectorFieldSpecs->push_back(Field_NS::CONTACT_FORCE3D);
+  vectorFieldSpecs->push_back(Field_NS::CONTACT_FORCE_DENSITY3D);
+  state.allocateVectorData(vectorFieldSpecs, threeDimensionalOverlapMap);
+  BOOST_CHECK_EQUAL( state.getVectorMultiVector()->NumVectors(), (int)vectorFieldSpecs->size() );
+  BOOST_CHECK_EQUAL( state.getVectorMultiVector()->MyLength(), threeDimensionalOverlapMap->NumMyPoints() );
+  BOOST_CHECK( state.getVectorMultiVector()->Map().SameAs( *threeDimensionalOverlapMap ) );
+
+  // create a list of bond field specs and allocate the data
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > bondFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
+  bondFieldSpecs->push_back(Field_NS::BOND_DAMAGE);
+  bondFieldSpecs->push_back(Field_NS::DEVIATORIC_PLASTIC_EXTENSION);
+  bondFieldSpecs->push_back(Field_NS::DEVIATORIC_BACK_EXTENSION);
+  state.allocateBondData(bondFieldSpecs, bondMap);
+  BOOST_CHECK_EQUAL( state.getBondMultiVector()->NumVectors(), (int)bondFieldSpecs->size() );
+  BOOST_CHECK_EQUAL( state.getBondMultiVector()->MyLength(), bondMap->NumMyPoints() );
+  BOOST_CHECK( state.getBondMultiVector()->Map().SameAs( *bondMap ) );
+
+  return state;
+}
+
+//! Create a State object for a two-point problem, check data storage and basic functionality.
+void twoPointProblem()
+{
+  PeridigmNS::State state = createTwoPointProblem();
+
   // check initialization of data to zero
   Teuchos::RCP<Epetra_Vector> coordinates = state.getData(Field_NS::COORD3D);
   for(int i=0 ; i<coordinates->MyLength() ; ++i)
@@ -201,109 +318,7 @@ void twoPointProblem()
 //! Create a State object for a three-point problem, check data storage and basic functionality.
 void threePointProblem()
 {
-  Teuchos::RCP<Epetra_Comm> comm;
-  #ifdef HAVE_MPI
-    comm = rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
-  #else
-    comm = rcp(new Epetra_SerialComm);
-  #endif
-  int numProcs = comm->NumProc();
-  int myPID = comm->MyPID();
-
-  // set up a hard-coded layout for three points
-  int numCells = 3;
-
-  // set up overlap maps, which include ghosted nodes
-  int numGlobalElements(numCells), numMyElements, elementSize, indexBase(0);
-  std::vector<int> myGlobalElements;
-  if(numProcs == 1){
-    numMyElements = 3;
-  }
-  else if(numProcs == 2){
-    if(myPID == 0)
-      numMyElements = 1;
-    else if(myPID == 1)
-      numMyElements = 2;
-  }
-  myGlobalElements.resize(numMyElements);
-  for(int i=0; i<numMyElements ; ++i)
-    myGlobalElements[i] = i+myPID;
-  elementSize = 1;
-
-  // oneDimensionalOverlapMap
-  // used for cell volumes and scalar constitutive data
-  Teuchos::RCP<Epetra_BlockMap> oneDimensionalOverlapMap =
-    Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, &myGlobalElements[0], elementSize, indexBase, *comm));
-  // threeDimensionalOverlapMap
-  // used for positions, displacements, velocities and vector constitutive data
-  elementSize = 3;
-  Teuchos::RCP<Epetra_BlockMap> threeDimensionalOverlapMap = 
-    Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, &myGlobalElements[0], elementSize, indexBase, *comm)); 
-  // bondMap
-  // used for bond damage and bond constitutive data
-  std::vector<int> bondElementSize(numMyElements);
-  if(numProcs == 1){
-    bondElementSize[0] = 1;
-    bondElementSize[1] = 2;
-    bondElementSize[2] = 1;
-  }
-  else if(numProcs == 2){
-    if(myPID == 0){
-      bondElementSize[0] = 1;
-    }
-    else if(myPID == 1){
-      bondElementSize[0] = 2;
-      bondElementSize[1] = 1;
-    }
-  }
-  Teuchos::RCP<Epetra_BlockMap> bondMap = 
-    Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, &myGlobalElements[0], &bondElementSize[0], indexBase, *comm));
-
-  // create a state object
-  State state;
-
-  // create a list of scalar field specs and allocate the data
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > scalarFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
-  scalarFieldSpecs->push_back(Field_NS::DEFAULT_FIELDTYPE);
-  scalarFieldSpecs->push_back(Field_NS::VOLUME);
-  scalarFieldSpecs->push_back(Field_NS::ID);
-  scalarFieldSpecs->push_back(Field_NS::PROC_NUM);
-  scalarFieldSpecs->push_back(Field_NS::DAMAGE);
-  scalarFieldSpecs->push_back(Field_NS::WEIGHTED_VOLUME);
-  scalarFieldSpecs->push_back(Field_NS::DILATATION);
-  scalarFieldSpecs->push_back(Field_NS::NUM_NEIGHBORS);
-  scalarFieldSpecs->push_back(Field_NS::LAMBDA);
-  scalarFieldSpecs->push_back(Field_NS::SHEAR_CORRECTION_FACTOR);
-  state.allocateScalarData(scalarFieldSpecs, oneDimensionalOverlapMap);
-  BOOST_CHECK_EQUAL( state.getScalarMultiVector()->NumVectors(), (int)scalarFieldSpecs->size() );
-  BOOST_CHECK_EQUAL( state.getScalarMultiVector()->MyLength(), oneDimensionalOverlapMap->NumMyPoints() );
-  BOOST_CHECK( state.getScalarMultiVector()->Map().SameAs( *oneDimensionalOverlapMap ) );
-
-  // create a list of vector field specs and allocate the data
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > vectorFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
-  vectorFieldSpecs->push_back(Field_NS::COORD3D);
-  vectorFieldSpecs->push_back(Field_NS::DISPL3D);
-  vectorFieldSpecs->push_back(Field_NS::CURCOORD3D);
-  vectorFieldSpecs->push_back(Field_NS::VELOC3D);
-  vectorFieldSpecs->push_back(Field_NS::ACCEL3D);
-  vectorFieldSpecs->push_back(Field_NS::FORCE3D);
-  vectorFieldSpecs->push_back(Field_NS::FORCE_DENSITY3D);
-  vectorFieldSpecs->push_back(Field_NS::CONTACT_FORCE3D);
-  vectorFieldSpecs->push_back(Field_NS::CONTACT_FORCE_DENSITY3D);
-  state.allocateVectorData(vectorFieldSpecs, threeDimensionalOverlapMap);
-  BOOST_CHECK_EQUAL( state.getVectorMultiVector()->NumVectors(), (int)vectorFieldSpecs->size() );
-  BOOST_CHECK_EQUAL( state.getVectorMultiVector()->MyLength(), threeDimensionalOverlapMap->NumMyPoints() );
-  BOOST_CHECK( state.getVectorMultiVector()->Map().SameAs( *threeDimensionalOverlapMap ) );
-
-  // create a list of bond field specs and allocate the data
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > bondFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
-  bondFieldSpecs->push_back(Field_NS::BOND_DAMAGE);
-  bondFieldSpecs->push_back(Field_NS::DEVIATORIC_PLASTIC_EXTENSION);
-  bondFieldSpecs->push_back(Field_NS::DEVIATORIC_BACK_EXTENSION);
-  state.allocateBondData(bondFieldSpecs, bondMap);
-  BOOST_CHECK_EQUAL( state.getBondMultiVector()->NumVectors(), (int)bondFieldSpecs->size() );
-  BOOST_CHECK_EQUAL( state.getBondMultiVector()->MyLength(), bondMap->NumMyPoints() );
-  BOOST_CHECK( state.getBondMultiVector()->Map().SameAs( *bondMap ) );
+  PeridigmNS::State state = createThreePointProblem();
 
   // check initialization of data to zero
   Teuchos::RCP<Epetra_Vector> coordinates = state.getData(Field_NS::COORD3D);
@@ -358,6 +373,7 @@ void threePointProblem()
 //! Test ability to copy data from one State to another.
 void copyTo()
 {
+  PeridigmNS::State state = createThreePointProblem();
 }
 
 bool init_unit_test_suite()

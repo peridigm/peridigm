@@ -46,6 +46,7 @@
 //@HEADER
 
 #include "Peridigm_State.hpp"
+#include <Epetra_Import.h>
 
 void PeridigmNS::State::allocateScalarData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
 {
@@ -77,4 +78,12 @@ Teuchos::RCP<Epetra_Vector> PeridigmNS::State::getData(Field_NS::FieldSpec field
   TEST_FOR_EXCEPTION(!keyExists, Teuchos::RangeError, 
                        "Error in PeridigmNS::State::getData(), key does not exist!");
   return lb->second;
+}
+
+void PeridigmNS::State::copyTo(PeridigmNS::State& target)
+{
+  Epetra_Import scalarImporter(target.getScalarMultiVector()->Map(), scalarData->Map());
+  
+  target.getScalarMultiVector()->Import(*scalarData, scalarImporter, Insert);
+
 }
