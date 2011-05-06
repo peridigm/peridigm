@@ -74,40 +74,16 @@ public:
   ~State(){}
 
   //! Instantiates the Epetra_MultiVector that holds scalar data and creates the FieldSpec-to-Epetra_Vector mappings.
-  void allocateScalarData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
-  {
-    scalarData = Teuchos::rcp(new Epetra_MultiVector(*map, fieldSpecs->size()));
-    for(unsigned int i=0 ; i<fieldSpecs->size() ; ++i)
-      fieldSpecToDataMap[(*fieldSpecs)[i]] = Teuchos::rcp((*scalarData)(i), false);
-  }
+  void allocateScalarData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map);
 
   //! Instantiates the Epetra_MultiVector that holds vector data and creates the FieldSpec-to-Epetra_Vector mappings.
-  void allocateVectorData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
-  {
-    vectorData = Teuchos::rcp(new Epetra_MultiVector(*map, fieldSpecs->size()));
-    for(unsigned int i=0 ; i<fieldSpecs->size() ; ++i)
-      fieldSpecToDataMap[(*fieldSpecs)[i]] = Teuchos::rcp((*vectorData)(i), false);
-  }
+  void allocateVectorData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map);
 
   //! Instantiates the Epetra_MultiVector that holds bond data and creates the FieldSpec-to-Epetra_Vector mappings.
-  void allocateBondData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
-  {
-    bondData = Teuchos::rcp(new Epetra_MultiVector(*map, fieldSpecs->size()));
-    for(unsigned int i=0 ; i<fieldSpecs->size() ; ++i)
-      fieldSpecToDataMap[(*fieldSpecs)[i]] = Teuchos::rcp((*bondData)(i), false);
-  }
+  void allocateBondData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map);
 
   //! Provides access to an Epetra_Vector corresponding to the given FieldSpec.
-  Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec){
-
-    // search for the data
-    std::map< Field_NS::FieldSpec, Teuchos::RCP<Epetra_Vector> >::iterator lb = fieldSpecToDataMap.lower_bound(fieldSpec);
-    // if the key does not exist, throw an exception
-    bool keyExists = ( lb != fieldSpecToDataMap.end() && !(fieldSpecToDataMap.key_comp()(fieldSpec, lb->first)) );
-    TEST_FOR_EXCEPTION(!keyExists, Teuchos::RangeError, 
-                       "Error in PeridigmNS::State::getData(), key does not exist!");
-    return lb->second;
-  }
+  Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec);
 
   //! @name Epetra_MultiVector accessor functions
   //@{

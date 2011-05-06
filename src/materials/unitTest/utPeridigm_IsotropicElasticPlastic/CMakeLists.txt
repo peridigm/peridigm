@@ -2,6 +2,7 @@ add_executable(utPeridigm_IsotropicElasticPlasticMaterial
 		../../Peridigm_Material.cpp
 		../../Peridigm_IsotropicElasticPlasticMaterial.cpp
         ../../Peridigm_CriticalStretchDamageModel.cpp
+        ../../../Peridigm_State.cpp
         ../../../Peridigm_DataManager.cpp
         ../../../Peridigm_SerialMatrix.cpp
 		./utPeridigm_IsotropicElasticPlasticMaterial.cpp)
