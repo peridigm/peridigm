@@ -101,11 +101,14 @@ public:
 
   //@}
 
+  //! Returns the list of field specs of the given length (SCALAR, VECTOR3D, BOND); if no argument is given, returns complete list of field specs.
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > getFieldSpecs(Teuchos::RCP<Field_NS::FieldSpec::FieldLength> fieldLength = NULL);
+
   //! Provides access to an Epetra_Vector corresponding to the given FieldSpec.
   Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec);
 
-  //! Copies data to a different state object based on global IDs (all global IDs in the target must exist in the source).
-  void copyTo(State& target);
+  //! Copies data from a different state object based on global IDs.
+  void copyFrom(State& source);
 
 protected:
 
