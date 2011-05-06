@@ -8,7 +8,6 @@ set(utPeridigm_Compute_Force_SOURCES
     ../../Peridigm_State.cpp
     ../../Peridigm_ComputeManager.cpp
     ${computeSOURCES}
-    ../compute_includes.hpp
 )
 
 add_executable(utPeridigm_Compute_Force ./utPeridigm_Compute_Force.cpp ${utPeridigm_Compute_Force_SOURCES}) 
