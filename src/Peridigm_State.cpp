@@ -50,23 +50,40 @@
 
 void PeridigmNS::State::allocateScalarData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
 {
-  scalarData = Teuchos::rcp(new Epetra_MultiVector(*map, fieldSpecs->size()));
-  for(unsigned int i=0 ; i<fieldSpecs->size() ; ++i)
-    fieldSpecToDataMap[(*fieldSpecs)[i]] = Teuchos::rcp((*scalarData)(i), false);
+  std::vector<Field_NS::FieldSpec> sortedFieldSpecs(*fieldSpecs);
+  std::sort(sortedFieldSpecs.begin(), sortedFieldSpecs.end());
+  scalarData = Teuchos::rcp(new Epetra_MultiVector(*map, sortedFieldSpecs.size()));
+  for(unsigned int i=0 ; i<sortedFieldSpecs.size() ; ++i)
+    fieldSpecToDataMap[sortedFieldSpecs[i]] = Teuchos::rcp((*scalarData)(i), false);
 }
 
 void PeridigmNS::State::allocateVectorData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
 {
-  vectorData = Teuchos::rcp(new Epetra_MultiVector(*map, fieldSpecs->size()));
-  for(unsigned int i=0 ; i<fieldSpecs->size() ; ++i)
-    fieldSpecToDataMap[(*fieldSpecs)[i]] = Teuchos::rcp((*vectorData)(i), false);
+  std::vector<Field_NS::FieldSpec> sortedFieldSpecs(*fieldSpecs);
+  std::sort(sortedFieldSpecs.begin(), sortedFieldSpecs.end());
+  vectorData = Teuchos::rcp(new Epetra_MultiVector(*map, sortedFieldSpecs.size()));
+  for(unsigned int i=0 ; i<sortedFieldSpecs.size() ; ++i)
+    fieldSpecToDataMap[sortedFieldSpecs[i]] = Teuchos::rcp((*vectorData)(i), false);
 }
 
 void PeridigmNS::State::allocateBondData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
 {
-  bondData = Teuchos::rcp(new Epetra_MultiVector(*map, fieldSpecs->size()));
-  for(unsigned int i=0 ; i<fieldSpecs->size() ; ++i)
-    fieldSpecToDataMap[(*fieldSpecs)[i]] = Teuchos::rcp((*bondData)(i), false);
+  std::vector<Field_NS::FieldSpec> sortedFieldSpecs(*fieldSpecs);
+  std::sort(sortedFieldSpecs.begin(), sortedFieldSpecs.end());
+  bondData = Teuchos::rcp(new Epetra_MultiVector(*map, sortedFieldSpecs.size()));
+  for(unsigned int i=0 ; i<sortedFieldSpecs.size() ; ++i)
+    fieldSpecToDataMap[sortedFieldSpecs[i]] = Teuchos::rcp((*bondData)(i), false);
+}
+
+Teuchos::RCP< std::vector<Field_NS::FieldSpec> > PeridigmNS::State::getFieldSpecs(Teuchos::RCP<Field_NS::FieldSpec::FieldLength> fieldLength)
+{
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
+  std::map< Field_NS::FieldSpec, Teuchos::RCP<Epetra_Vector> >::const_iterator it;
+  for(it = fieldSpecToDataMap.begin() ; it != fieldSpecToDataMap.end() ; ++it){
+    if(fieldLength.is_null() || it->first.getLength() == *fieldLength)
+      fieldSpecs->push_back(it->first);
+  }
+  return fieldSpecs;
 }
 
 Teuchos::RCP<Epetra_Vector> PeridigmNS::State::getData(Field_NS::FieldSpec fieldSpec)
@@ -80,10 +97,12 @@ Teuchos::RCP<Epetra_Vector> PeridigmNS::State::getData(Field_NS::FieldSpec field
   return lb->second;
 }
 
-void PeridigmNS::State::copyTo(PeridigmNS::State& target)
+void PeridigmNS::State::copyFrom(PeridigmNS::State& source)
 {
-  Epetra_Import scalarImporter(target.getScalarMultiVector()->Map(), scalarData->Map());
-  
-  target.getScalarMultiVector()->Import(*scalarData, scalarImporter, Insert);
-
+  Epetra_Import scalarImporter(scalarData->Map(), source.getScalarMultiVector()->Map());
+  scalarData->Import(*source.getScalarMultiVector(), scalarImporter, Insert);
+  Epetra_Import vectorImporter(vectorData->Map(), source.getVectorMultiVector()->Map());
+  vectorData->Import(*source.getVectorMultiVector(), vectorImporter, Insert);
+  Epetra_Import bondImporter(bondData->Map(), source.getBondMultiVector()->Map());
+  bondData->Import(*source.getBondMultiVector(), bondImporter, Insert);
 }
