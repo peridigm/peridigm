@@ -92,7 +92,7 @@ int PeridigmNS::Compute_Contact_Force::compute(Teuchos::RCP<PeridigmNS::DataMana
     vol = volume_values[i]; 
     contact_force_values[3*i] = vol*contact_force_values[3*i];
     contact_force_values[3*i+1] = vol*contact_force_values[3*i+1];
-    contact_force_values[3*i+1] = vol*contact_force_values[3*i+2];
+    contact_force_values[3*i+2] = vol*contact_force_values[3*i+2];
   }
 
   return(0);

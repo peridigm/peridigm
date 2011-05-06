@@ -92,7 +92,7 @@ int PeridigmNS::Compute_Force::compute(Teuchos::RCP<PeridigmNS::DataManager> dat
     vol = volume_values[i]; 
     force_values[3*i] = vol*force_values[3*i];
     force_values[3*i+1] = vol*force_values[3*i+1];
-    force_values[3*i+1] = vol*force_values[3*i+2];
+    force_values[3*i+2] = vol*force_values[3*i+2];
   }
 
   return(0);

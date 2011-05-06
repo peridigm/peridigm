@@ -3,6 +3,8 @@
 #
 include_directories(${TRILINOS_DIR}/include)
 
+file (GLOB computeSOURCES "${CMAKE_SOURCE_DIR}/src/compute/*.cpp")
+
 set(Peridigm_SOURCES
     Peridigm_Main.cpp
     Peridigm_Factory.cpp
@@ -18,9 +20,7 @@ set(Peridigm_SOURCES
     Peridigm_OutputManager_VTK_XML.cpp
     Peridigm_ComputeManager.cpp
     Peridigm_Timer.cpp
-    ./compute/Peridigm_Compute_Acceleration.cpp
-    ./compute/Peridigm_Compute_Force.cpp
-    ./compute/Peridigm_Compute_Contact_Force.cpp
+    ${computeSOURCES}
     ./compute/compute_includes.hpp
     ./materials/Peridigm_Material.cpp
     ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
@@ -64,9 +64,7 @@ set(utPeridigm_SOURCES
     Peridigm_OutputManager_VTK_XML.cpp
     Peridigm_ComputeManager.cpp
     Peridigm_Timer.cpp
-    ./compute/Peridigm_Compute_Acceleration.cpp
-    ./compute/Peridigm_Compute_Force.cpp
-    ./compute/Peridigm_Compute_Contact_Force.cpp
+    ${computeSOURCES}
     ./compute/compute_includes.hpp
     ../io/Field.cxx
     ./materials/Peridigm_Material.cpp
