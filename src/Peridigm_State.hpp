@@ -102,7 +102,7 @@ public:
   //@}
 
   //! Returns the list of field specs of the given length (SCALAR, VECTOR3D, BOND); if no argument is given, returns complete list of field specs.
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > getFieldSpecs(Teuchos::RCP<Field_NS::FieldSpec::FieldLength> fieldLength = NULL);
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > getFieldSpecs(Teuchos::RCP<Field_NS::FieldSpec::FieldLength> fieldLength = Teuchos::RCP<Field_NS::FieldSpec::FieldLength>());
 
   //! Provides access to an Epetra_Vector corresponding to the given FieldSpec.
   Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec);
