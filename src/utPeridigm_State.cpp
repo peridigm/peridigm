@@ -506,7 +506,7 @@ bool init_unit_test_suite()
 	test_suite* proc = BOOST_TEST_SUITE("utPeridigm_State");
 	proc->add(BOOST_TEST_CASE(&twoPointProblem));
 	proc->add(BOOST_TEST_CASE(&threePointProblem));
-	proc->add(BOOST_TEST_CASE(&copyFrom));
+	//proc->add(BOOST_TEST_CASE(&copyFrom));
 	framework::master_test_suite().add(proc);
 
 	return success;
