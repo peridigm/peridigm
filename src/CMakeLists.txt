@@ -207,19 +207,6 @@ target_link_libraries(utPHAL_EvaluateForce
 #                      ${Boost_LIBRARIES}
 #)
 
-#
-# Custom Commands
-#
-file (GLOB Peridigm_COMPUTE_HEADERS
-"${CMAKE_SOURCE_DIR}/src/compute/Peridigm*.hpp")
-
-add_custom_command(
-   OUTPUT ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp
-   DEPENDS ${Peridigm_COMPUTE_HEADERS}
-   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/compute
-   COMMAND sh ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.sh
-)
-
 add_subdirectory (materials/)
 add_subdirectory (initial_conditions/)
 add_subdirectory (compute/)
