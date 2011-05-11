@@ -48,6 +48,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
+#include <boost/test/parameterized_test.hpp>
 #include <Epetra_ConfigDefs.h> // used to define HAVE_MPI
 #ifdef HAVE_MPI
   #include <Epetra_MpiComm.h>
@@ -296,20 +297,20 @@ void twoPointProblem()
     // scalar data
     Epetra_Vector& ids = *(state.getData(Field_NS::ID));
     for(int i=0 ; i<ids.MyLength() ; ++i)
-      BOOST_CHECK_CLOSE(ids[i], i, 1.0e-14);
+      BOOST_CHECK_CLOSE(ids[i], (double)(i), 1.0e-14);
     // vector data
     Epetra_Vector& force = *(state.getData(Field_NS::FORCE3D));
     for(int i=0 ; i<force.Map().NumMyElements() ; ++i){
-      BOOST_CHECK_CLOSE(force[i*3], i*3, 1.0e-14);
-      BOOST_CHECK_CLOSE(force[i*3+1], i*3+1, 1.0e-14);
-      BOOST_CHECK_CLOSE(force[i*3+2], i*3+2, 1.0e-14);
+      BOOST_CHECK_CLOSE(force[i*3], (double)(i*3), 1.0e-14);
+      BOOST_CHECK_CLOSE(force[i*3+1], (double)(i*3+1), 1.0e-14);
+      BOOST_CHECK_CLOSE(force[i*3+2], (double)(i*3+2), 1.0e-14);
     }
     // bond data
     Epetra_Vector& bondDamage = *(state.getData(Field_NS::BOND_DAMAGE));
     for(int i=0 ; i<bondDamage.Map().NumMyElements() ; ++i){
       int firstPointInElement = bondDamage.Map().FirstPointInElement(i);
       for(int j=0 ; j<bondDamage.Map().ElementSize(i); ++j)
-        BOOST_CHECK_CLOSE(bondDamage[firstPointInElement+j], firstPointInElement+j, 1.0e-14);
+        BOOST_CHECK_CLOSE(bondDamage[firstPointInElement+j], (double)(firstPointInElement+j), 1.0e-14);
     }
   }
 }
@@ -351,20 +352,20 @@ void threePointProblem()
     // scalar data
     Epetra_Vector& ids = *(state.getData(Field_NS::ID));
     for(int i=0 ; i<ids.MyLength() ; ++i)
-      BOOST_CHECK_CLOSE(ids[i], i, 1.0e-14);
+      BOOST_CHECK_CLOSE(ids[i], (double)(i), 1.0e-14);
     // vector data
     Epetra_Vector& force = *(state.getData(Field_NS::FORCE3D));
     for(int i=0 ; i<force.Map().NumMyElements() ; ++i){
-      BOOST_CHECK_CLOSE(force[i*3], i*3, 1.0e-14);
-      BOOST_CHECK_CLOSE(force[i*3+1], i*3+1, 1.0e-14);
-      BOOST_CHECK_CLOSE(force[i*3+2], i*3+2, 1.0e-14);
+      BOOST_CHECK_CLOSE(force[i*3], (double)(i*3), 1.0e-14);
+      BOOST_CHECK_CLOSE(force[i*3+1], (double)(i*3+1), 1.0e-14);
+      BOOST_CHECK_CLOSE(force[i*3+2], (double)(i*3+2), 1.0e-14);
     }
     // bond data
     Epetra_Vector& bondDamage = *(state.getData(Field_NS::BOND_DAMAGE));
     for(int i=0 ; i<bondDamage.Map().NumMyElements() ; ++i){
       int firstPointInElement = bondDamage.Map().FirstPointInElement(i);
       for(int j=0 ; j<bondDamage.Map().ElementSize(i); ++j)
-        BOOST_CHECK_CLOSE(bondDamage[firstPointInElement+j], firstPointInElement+j, 1.0e-14);
+        BOOST_CHECK_CLOSE(bondDamage[firstPointInElement+j], (double)(firstPointInElement+j), 1.0e-14);
     }
   }
 }
