@@ -214,17 +214,20 @@ PdGridData PeridigmNS::STKDiscretization::getDecomp(const string& meshFileName) 
     centroids[iElem*3] = 0.0;
     centroids[iElem*3+1] = 0.0;
     centroids[iElem*3+2] = 0.0;
+    std::vector<double*> nodeCoordinates(nodeRelations.size());
+    int iNode = 0;
     for(stk::mesh::PairIterRelation::iterator it=nodeRelations.begin() ; it!=nodeRelations.end() ; ++it){
       stk::mesh::Entity* node = it->entity();
       double* coordinates = stk::mesh::field_data(*coordinatesField, *node);
       centroids[iElem*3] += coordinates[0];
       centroids[iElem*3+1] += coordinates[1];
       centroids[iElem*3+2] += coordinates[2];
+      nodeCoordinates[iNode++] = coordinates;
     }
     centroids[iElem*3] /= nodeRelations.size();
     centroids[iElem*3+1] /= nodeRelations.size();
     centroids[iElem*3+2] /= nodeRelations.size();
-    volumes[iElem] = 1.0; // \todo Compute volumes.
+    volumes[iElem] = hexVolume(nodeCoordinates);
     globalIds[iElem] = elements[iElem]->identifier() - 1; 
   }
 
@@ -344,3 +347,36 @@ PeridigmNS::STKDiscretization::getNumBonds() const
   return numBonds;
 }
 
+double PeridigmNS::STKDiscretization::scalarTripleProduct(std::vector<double>& a,
+                                                          std::vector<double>& b,
+                                                          std::vector<double>& c) const
+{
+  double tripleProduct = 
+    a[0]*(b[1] - c[2])*(b[2] - c[1]) - a[1]*(b[0] - c[2])*(b[2] - c[0]) + a[2]*(b[0] - c[1])*(b[1] - c[0]);
+
+  return tripleProduct;
+}
+
+double PeridigmNS::STKDiscretization::hexVolume(std::vector<double*>& nodeCoordinates) const
+{
+  int map[] = {0,1,3,2,4,5,7,6};
+  std::vector<double> x17(3), x27(3), x47(3), x06(3), x05(3), x03(3), A(3), B(3), C(3);  
+  for(int dof=0 ; dof<3 ; ++dof){
+    x17[dof] = nodeCoordinates[map[7]][dof] - nodeCoordinates[map[1]][dof];
+    x27[dof] = nodeCoordinates[map[7]][dof] - nodeCoordinates[map[2]][dof];
+    x47[dof] = nodeCoordinates[map[7]][dof] - nodeCoordinates[map[4]][dof];
+    x06[dof] = nodeCoordinates[map[6]][dof] - nodeCoordinates[map[0]][dof];
+    x05[dof] = nodeCoordinates[map[5]][dof] - nodeCoordinates[map[0]][dof];
+    x03[dof] = nodeCoordinates[map[3]][dof] - nodeCoordinates[map[0]][dof];
+  }
+  for(int dof=0 ; dof<3 ; ++dof){
+    A[dof] = x17[dof] + x06[dof];
+    B[dof] = x27[dof] + x05[dof];
+    C[dof] = x47[dof] + x03[dof];
+  }
+  double v1 = scalarTripleProduct(A,x27,x03);
+  double v2 = scalarTripleProduct(x06,B,x47);
+  double v3 = scalarTripleProduct(x17,x05,C);
+
+  return (v1+v2+v3)/12.0;
+}

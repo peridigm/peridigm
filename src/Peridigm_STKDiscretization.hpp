@@ -111,6 +111,14 @@ namespace PeridigmNS {
     //! Create NeighborhoodData
     void createNeighborhoodData(const PdGridData& decomp);
 
+    //! Compute the scalar triple product
+    double scalarTripleProduct(std::vector<double>& a,
+                               std::vector<double>& b,
+                               std::vector<double>& c) const;
+
+    //! Compute the volume of a hexahedron element
+    double hexVolume(std::vector<double*>& nodeCoordinates) const;
+
     //! Epetra communicator
     Teuchos::RCP<const Epetra_Comm> comm;
 
