@@ -4,7 +4,9 @@
 include_directories(${TRILINOS_DIR}/include)
 
 # Glob the compute source files
-file (GLOB computeSOURCES "${CMAKE_SOURCE_DIR}/src/compute/*.cpp")
+file (GLOB computeSOURCES 
+  "${CMAKE_SOURCE_DIR}/src/compute/*.cpp"
+)
 # Tell CMake a header file won't be available until build time.
 set_source_files_properties(./compute/compute_includes.hpp PROPERTIES GENERATED 1)
 
@@ -24,6 +26,7 @@ set(Peridigm_SOURCES
     Peridigm_ComputeManager.cpp
     Peridigm_Timer.cpp
     ${computeSOURCES}
+    ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp
     ./materials/Peridigm_Material.cpp
     ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
     ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
@@ -49,8 +52,6 @@ set(Peridigm_LINK_LIBRARIES
 
 add_executable(Peridigm ${Peridigm_SOURCES})
 target_link_libraries(Peridigm ${Peridigm_LINK_LIBRARIES})
-# Make sure the header is generated before the executable builds.
-add_dependencies(Peridigm generate_compute_includes)
 
 #
 # Unit Tests
@@ -69,6 +70,7 @@ set(utPeridigm_SOURCES
     Peridigm_ComputeManager.cpp
     Peridigm_Timer.cpp
     ${computeSOURCES}
+    ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp
     ../io/Field.cxx
     ./materials/Peridigm_Material.cpp
     ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
@@ -83,11 +85,9 @@ endif()
 
 add_executable(utPeridigm utPeridigm.cpp ${utPeridigm_SOURCES})
 target_link_libraries(utPeridigm ${Peridigm_LINK_LIBRARIES} ${Boost_LIBRARIES})
-add_dependencies(utPeridigm generate_compute_includes)
 
 add_executable(utPeridigm_MPI_np2 utPeridigm_MPI_np2.cpp ${utPeridigm_SOURCES})
 target_link_libraries(utPeridigm_MPI_np2 ${Peridigm_LINK_LIBRARIES} ${Boost_LIBRARIES})
-add_dependencies(utPeridigm_MPI_np2 generate_compute_includes)
 
 add_executable(utPeridigm_PdQuickGridDiscretization
 	       utPeridigm_PdQuickGridDiscretization.cpp
@@ -210,3 +210,16 @@ target_link_libraries(utPHAL_EvaluateForce
 add_subdirectory (materials/)
 add_subdirectory (initial_conditions/)
 add_subdirectory (compute/)
+
+
+#
+# Custom Commands
+# 
+file (GLOB Peridigm_COMPUTE_HEADERS "${CMAKE_SOURCE_DIR}/src/compute/Peridigm*.hpp")
+add_custom_command(
+   OUTPUT  ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp
+   DEPENDS ${Peridigm_COMPUTE_HEADERS}
+   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/compute
+   COMMAND sh ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.sh
+)
+
