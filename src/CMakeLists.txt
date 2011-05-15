@@ -207,15 +207,39 @@ target_link_libraries(utPHAL_EvaluateForce
 #                      ${Boost_LIBRARIES}
 #)
 
+set(utPeridigm_Compute_Force_SOURCES
+   ${CMAKE_SOURCE_DIR}/src/compute/unitTest/utPeridigm_Compute_Force.cpp
+   Peridigm_DiscretizationFactory.cpp
+   Peridigm_PdQuickGridDiscretization.cpp
+   Peridigm_DataManager.cpp
+   Peridigm_State.cpp
+   Peridigm_ComputeManager.cpp
+   ${computeSOURCES}
+   ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp
+)
+if(PERIDIGM_STK)
+   set(utPeridigm_Compute_Force_SOURCES Peridigm_STKDiscretization.cpp ${utPeridigm_Compute_Force_SOURCES})
+endif()
+add_executable(utPeridigm_Compute_Force 
+   ${utPeridigm_Compute_Force_SOURCES}
+)
+target_link_libraries(utPeridigm_Compute_Force 
+   ${Peridigm_LINK_LIBRARIES} 
+   ${Boost_LIBRARIES}
+)
+
+# 
+# Add subdirectories
+#
 add_subdirectory (materials/)
 add_subdirectory (initial_conditions/)
 add_subdirectory (compute/)
-
 
 #
 # Custom Commands
 # 
 file (GLOB Peridigm_COMPUTE_HEADERS "${CMAKE_SOURCE_DIR}/src/compute/Peridigm*.hpp")
+list(REMOVE_ITEM Peridigm_COMPUTE_HEADERS ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp)
 add_custom_command(
    OUTPUT  ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp
    DEPENDS ${Peridigm_COMPUTE_HEADERS}
