@@ -3,11 +3,20 @@
   <UnstructuredGrid>
     <Piece NumberOfPoints="2" NumberOfCells="2">
       <PointData>
+        <DataArray type="Float64" Name="Acceleration" NumberOfComponents="3" format="ascii" RangeMin="7057.0470759" RangeMax="7057.0470759">
+          -7057.0470759 0 0 7057.0470759 0 0
+        </DataArray>
+        <DataArray type="Float64" Name="Dilatation" format="ascii" RangeMin="-0.00014114094152" RangeMax="-0.00014114094152">
+          -0.00014114094152 -0.00014114094152
+        </DataArray>
         <DataArray type="Float64" Name="Displacement" NumberOfComponents="3" format="ascii" RangeMin="4.7046980506e-05" RangeMax="4.7046980506e-05">
           4.7046980506e-05 0 0 -4.7046980506e-05 0 0
         </DataArray>
-        <DataArray type="Float64" Name="Velocity" NumberOfComponents="3" format="ascii" RangeMin="0.81806619025" RangeMax="0.81806619025">
-          0.81806619025 0 0 -0.81806619025 0 0
+        <DataArray type="Float64" Name="Force" NumberOfComponents="3" format="ascii" RangeMin="110089934.38" RangeMax="110089934.38">
+          -110089934.38 0 0 110089934.38 0 0
+        </DataArray>
+        <DataArray type="Float64" Name="Force_Density" NumberOfComponents="3" format="ascii" RangeMin="55044967.192" RangeMax="55044967.192">
+          -55044967.192 0 0 55044967.192 0 0
         </DataArray>
         <DataArray type="Int32" Name="ID" format="ascii" RangeMin="0" RangeMax="1">
           0 1
@@ -15,8 +24,8 @@
         <DataArray type="Int32" Name="Proc_Num" format="ascii" RangeMin="0" RangeMax="0">
           0 0
         </DataArray>
-        <DataArray type="Float64" Name="Dilatation" format="ascii" RangeMin="-0.00014114094152" RangeMax="-0.00014114094152">
-          -0.00014114094152 -0.00014114094152
+        <DataArray type="Float64" Name="Velocity" NumberOfComponents="3" format="ascii" RangeMin="0.81806619025" RangeMax="0.81806619025">
+          0.81806619025 0 0 -0.81806619025 0 0
         </DataArray>
         <DataArray type="Float64" Name="Weighted_Volume" format="ascii" RangeMin="8" RangeMax="8">
           8 8

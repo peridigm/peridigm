@@ -3,11 +3,20 @@
   <UnstructuredGrid>
     <Piece NumberOfPoints="2" NumberOfCells="2">
       <PointData>
+        <DataArray type="Float64" Name="Acceleration" NumberOfComponents="3" format="ascii" RangeMin="5777.0199375" RangeMax="5777.0199375">
+          -5777.0199375 0 0 5777.0199375 0 0
+        </DataArray>
+        <DataArray type="Float64" Name="Dilatation" format="ascii" RangeMin="-0.00011554039875" RangeMax="-0.00011554039875">
+          -0.00011554039875 -0.00011554039875
+        </DataArray>
         <DataArray type="Float64" Name="Displacement" NumberOfComponents="3" format="ascii" RangeMin="3.851346625e-05" RangeMax="3.851346625e-05">
           3.851346625e-05 0 0 -3.851346625e-05 0 0
         </DataArray>
-        <DataArray type="Float64" Name="Velocity" NumberOfComponents="3" format="ascii" RangeMin="0.88223652531" RangeMax="0.88223652531">
-          0.88223652531 0 0 -0.88223652531 0 0
+        <DataArray type="Float64" Name="Force" NumberOfComponents="3" format="ascii" RangeMin="90121511.025" RangeMax="90121511.025">
+          -90121511.025 0 0 90121511.025 0 0
+        </DataArray>
+        <DataArray type="Float64" Name="Force_Density" NumberOfComponents="3" format="ascii" RangeMin="45060755.513" RangeMax="45060755.513">
+          -45060755.513 0 0 45060755.513 0 0
         </DataArray>
         <DataArray type="Int32" Name="ID" format="ascii" RangeMin="0" RangeMax="1">
           0 1
@@ -15,8 +24,8 @@
         <DataArray type="Int32" Name="Proc_Num" format="ascii" RangeMin="0" RangeMax="0">
           0 0
         </DataArray>
-        <DataArray type="Float64" Name="Dilatation" format="ascii" RangeMin="-0.00011554039875" RangeMax="-0.00011554039875">
-          -0.00011554039875 -0.00011554039875
+        <DataArray type="Float64" Name="Velocity" NumberOfComponents="3" format="ascii" RangeMin="0.88223652531" RangeMax="0.88223652531">
+          0.88223652531 0 0 -0.88223652531 0 0
         </DataArray>
         <DataArray type="Float64" Name="Weighted_Volume" format="ascii" RangeMin="8" RangeMax="8">
           8 8
