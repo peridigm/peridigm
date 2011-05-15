@@ -3,11 +3,20 @@
   <UnstructuredGrid>
     <Piece NumberOfPoints="2" NumberOfCells="2">
       <PointData>
+        <DataArray type="Float64" Name="Acceleration" NumberOfComponents="3" format="ascii" RangeMin="0" RangeMax="0">
+          0 0 0 0 0 0
+        </DataArray>
+        <DataArray type="Float64" Name="Dilatation" format="ascii" RangeMin="0" RangeMax="0">
+          0 0
+        </DataArray>
         <DataArray type="Float64" Name="Displacement" NumberOfComponents="3" format="ascii" RangeMin="0" RangeMax="0">
           0 0 0 0 0 0
         </DataArray>
-        <DataArray type="Float64" Name="Velocity" NumberOfComponents="3" format="ascii" RangeMin="1" RangeMax="1">
-          1 0 0 -1 0 0
+        <DataArray type="Float64" Name="Force" NumberOfComponents="3" format="ascii" RangeMin="0" RangeMax="0">
+          0 0 0 0 0 0
+        </DataArray>
+        <DataArray type="Float64" Name="Force_Density" NumberOfComponents="3" format="ascii" RangeMin="0" RangeMax="0">
+          0 0 0 0 0 0
         </DataArray>
         <DataArray type="Int32" Name="ID" format="ascii" RangeMin="0" RangeMax="1">
           0 1
@@ -15,8 +24,8 @@
         <DataArray type="Int32" Name="Proc_Num" format="ascii" RangeMin="0" RangeMax="0">
           0 0
         </DataArray>
-        <DataArray type="Float64" Name="Dilatation" format="ascii" RangeMin="0" RangeMax="0">
-          0 0
+        <DataArray type="Float64" Name="Velocity" NumberOfComponents="3" format="ascii" RangeMin="1" RangeMax="1">
+          1 0 0 -1 0 0
         </DataArray>
         <DataArray type="Float64" Name="Weighted_Volume" format="ascii" RangeMin="8" RangeMax="8">
           8 8

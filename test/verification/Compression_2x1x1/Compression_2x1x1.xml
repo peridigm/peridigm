@@ -59,6 +59,9 @@
             <ParameterList name="Linear Elastic">
                 <Parameter name="Displacement" type="bool" value="true"/>
                 <Parameter name="Velocity" type="bool" value="true"/>
+                <Parameter name="Force" type="bool" value="true"/>
+                <Parameter name="Force_Density" type="bool" value="true"/>
+                <Parameter name="Acceleration" type="bool" value="true"/>
                 <Parameter name="ID" type="bool" value="true"/>
                 <Parameter name="Proc_Num" type="bool" value="true"/>
                 <Parameter name="Dilatation" type="bool" value="true"/>
