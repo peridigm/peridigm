@@ -8,7 +8,7 @@ file (GLOB computeSOURCES
   "${CMAKE_SOURCE_DIR}/src/compute/*.cpp"
 )
 # Tell CMake a header file won't be available until build time.
-set_source_files_properties(./compute/compute_includes.hpp PROPERTIES GENERATED 1)
+# set_source_files_properties(./compute/compute_includes.hpp PROPERTIES GENERATED 1)
 
 set(Peridigm_SOURCES
     Peridigm_Main.cpp
@@ -238,12 +238,12 @@ add_subdirectory (compute/)
 #
 # Custom Commands
 # 
-file (GLOB Peridigm_COMPUTE_HEADERS "${CMAKE_SOURCE_DIR}/src/compute/Peridigm*.hpp")
-list(REMOVE_ITEM Peridigm_COMPUTE_HEADERS ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp)
-add_custom_command(
-   OUTPUT  ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp
-   DEPENDS ${Peridigm_COMPUTE_HEADERS}
-   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/compute
-   COMMAND sh ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.sh
-)
+#file (GLOB Peridigm_COMPUTE_HEADERS "${CMAKE_SOURCE_DIR}/src/compute/Peridigm*.hpp")
+#list(REMOVE_ITEM Peridigm_COMPUTE_HEADERS ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp)
+#add_custom_command(
+#   OUTPUT  ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp
+#   DEPENDS ${Peridigm_COMPUTE_HEADERS}
+#   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/compute
+#   COMMAND sh ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.sh
+#)
 
