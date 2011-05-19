@@ -97,6 +97,7 @@ namespace PeridigmNS {
 
     //! Apply boundary conditions
     void applyInitialVelocities();
+    void applyInitialDisplacements();
 
     //! Initialize contact
     void initializeContact();
