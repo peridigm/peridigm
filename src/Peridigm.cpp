@@ -106,6 +106,9 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   // apply initial velocities
   applyInitialVelocities();
 
+  // apply initial displacements
+  applyInitialDisplacements();
+
   // Setup contact
   initializeContact();
 
@@ -341,6 +344,66 @@ void PeridigmNS::Peridigm::applyInitialVelocities() {
   }
 }
 
+void PeridigmNS::Peridigm::applyInitialDisplacements() {
+
+  TEST_FOR_EXCEPT_MSG(!threeDimensionalMap->SameAs(v->Map()),
+                      "Peridigm::applyInitialVelocities():  Inconsistent velocity vector map.\n");
+
+  Teuchos::ParameterList& problemParams = peridigmParams->sublist("Problem");
+  Teuchos::ParameterList& bcParams = problemParams.sublist("Boundary Conditions");
+  Teuchos::ParameterList::ConstIterator it;
+
+  // get the node sets
+  map< string, vector<int> > nodeSets;
+  for(it = bcParams.begin() ; it != bcParams.end() ; it++){
+        const string& name = it->first;
+    // \todo Change input deck so that node sets are parameter lists, not parameters, to avoid this ridiculous search.
+        size_t position = name.find("Node Set");
+        if(position != string::npos){
+          stringstream ss(Teuchos::getValue<string>(it->second));
+          vector<int> nodeList;
+          int nodeID;
+          while(ss.good()){
+                ss >> nodeID;
+                nodeList.push_back(nodeID);
+          }
+          nodeSets[name] = nodeList;
+        }
+  }
+
+  // apply the initial conditions
+  for(it = bcParams.begin() ; it != bcParams.end() ; it++){
+        const string & name = it->first;
+        size_t position = name.find("Initial Displacement");
+        if(position != string::npos){
+          Teuchos::ParameterList & boundaryConditionParams = Teuchos::getValue<Teuchos::ParameterList>(it->second);
+          string nodeSet = boundaryConditionParams.get<string>("Node Set");
+          string type = boundaryConditionParams.get<string>("Type");
+          string coordinate = boundaryConditionParams.get<string>("Coordinate");
+          double value = boundaryConditionParams.get<double>("Value");
+
+          int coord = 0;
+          if(coordinate == "y" || coordinate == "Y")
+                coord = 1;
+          if(coordinate == "z" || coordinate == "Z")
+                coord = 2;
+
+          // apply initial displacement boundary conditions
+          // to locally-owned nodes
+          vector<int> & nodeList = nodeSets[nodeSet];
+          for(unsigned int i=0 ; i<nodeList.size() ; i++){
+                int localNodeID = threeDimensionalMap->LID(nodeList[i]);
+                if(localNodeID != -1)
+                  (*u)[localNodeID*3 + coord] = value;
+          }
+        }
+  }
+
+  // Update curcoord field to be consistent with initial displacement
+  y->Update(1.0, *x, 1.0, *u, 0.0);
+
+}
+
 void PeridigmNS::Peridigm::initializeContact() {
 
   // Extract problem parameters sublist
@@ -452,9 +515,9 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
     // Initialize current time in this parameterlist
     Teuchos::RCP<Teuchos::ParameterList> solverParams = Teuchos::rcp(&(peridigmParams->sublist("Solver")),false);
     double t_initial = solverParams->get("Initial Time", 0.0);
-    // Ask OutputManager to write initial conditions to disk
-    this->synchDataManager();
-    outputManager->write(dataManager,neighborhoodData,t_initial);
+    // Initial conditions to disk written by time integrators before taking first step
+    //this->synchDataManager();
+    //outputManager->write(dataManager,neighborhoodData,t_initial);
   }
   else { // no output requested
     outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_VTK_XML( outputParams, this ));
@@ -484,9 +547,11 @@ void PeridigmNS::Peridigm::executeExplicit() {
   workset->timeStep = timeStep;
 
   // Copy data from mothership vectors to overlap vectors in data manager
+  PeridigmNS::Timer::self().startTimer("Gather/Scatter");
   dataManager->getData(Field_NS::DISPL3D, Field_NS::FieldSpec::STEP_NP1)->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
   dataManager->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->Import(*y, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
   dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_NP1)->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
   // evalModel() should be called by time integrator here...
   // For now, insert Verlet intergrator here
@@ -512,6 +577,43 @@ void PeridigmNS::Peridigm::executeExplicit() {
   v->ExtractView( &vptr );
   a->ExtractView( &aptr );
   int length = a->MyLength();
+
+  // Evaluate force in initial configuration for use in first timestep
+
+  // \todo The velocity copied into the DataManager is actually the midstep velocity, not the NP1 velocity; this can be fixed by creating a midstep velocity field in the DataManager and setting the NP1 value as invalid.
+
+  // Update forces based on initial displacements
+  PeridigmNS::Timer::self().startTimer("Model Evaluator");
+  modelEvaluator->evalModel(workset);
+  PeridigmNS::Timer::self().stopTimer("Model Evaluator");
+
+  // Copy force from the data manager to the mothership vector
+  PeridigmNS::Timer::self().startTimer("Gather/Scatter");
+  force->Export(*dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
+  PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+
+  if(analysisHasContact){
+    // Copy contact force from the data manager to the mothership vector
+    PeridigmNS::Timer::self().startTimer("Gather/Scatter");
+    contactForce->Export(*dataManager->getData(Field_NS::CONTACT_FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
+    PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+
+    // Add contact forces to forces
+    force->Update(1.0, *contactForce, 1.0);
+  }
+
+  // fill the acceleration vector
+  (*a) = (*force);
+  // \todo Possibly move this functionality into ModelEvaluator.
+  // \todo Generalize this for multiple materials
+  double density = (*materialModels)[0]->Density();
+  a->Scale(1.0/density);
+
+  // Write initial configuration to disk
+  PeridigmNS::Timer::self().startTimer("Output");
+  this->synchDataManager();
+  outputManager->write(dataManager,neighborhoodData,t_current);
+  PeridigmNS::Timer::self().stopTimer("Output");
 
   for(int step=1; step<=nsteps ; step++){
 
@@ -624,6 +726,12 @@ void PeridigmNS::Peridigm::executeImplicit() {
 
   // \todo Put in mothership.
   Epetra_Vector lhs(*residual);
+
+  // Write initial configuration to disk
+  PeridigmNS::Timer::self().startTimer("Output");
+  this->synchDataManager();
+  outputManager->write(dataManager,neighborhoodData,timeCurrent);
+  PeridigmNS::Timer::self().stopTimer("Output");
 
   for(int step=0; step<numLoadSteps ; step++){
 
