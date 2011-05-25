@@ -170,16 +170,15 @@ link_directories(${LIB_DIRS})
 
 set (REQUIRED_LIBS
 ${BlasLapack_Libraries}  
-${PTHREAD_LIB}
 libgfortran.a
-libm.a
+#libm.a
 )
 
 set (UT_REQUIRED_LIBS
 ${BlasLapack_Libraries}  
 libgfortran.a
 ${Boost_LIBRARIES}
-libm.a
+#libm.a
 )
 
 add_subdirectory (io)
