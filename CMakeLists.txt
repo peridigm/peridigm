@@ -46,10 +46,13 @@ if (VTK_FOUND)
   message ("   Version: ${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}")
   message ("   Include Directories: ${VTK_INCLUDE_DIRS}")
   message ("   Library Directory: ${VTK_LIBRARY_DIRS}")
-  message ("   VTK Kits: ${VTK_KITS}\n")
+  message ("   VTK Kits: ${VTK_KITS}")
+  message ("   VTK_USE_FILE: ${VTK_USE_FILE}\n")
+  include (${VTK_USE_FILE})
 else ()
   message ("\nVTK NOT FOUND!  (Try defining VTK_DIR)\n")
 endif ()
+set( VTK_LIBS vtkIO vtkGraphics vtkParallel )
 
 #
 # Blas and Lapack Libraries  
@@ -133,18 +136,9 @@ zoltan
 )
 
 # other required libraries
-# VTK libs
-set(VTK_LIBS vtkIO vtkGraphics vtkHybrid vtkParallel)
-
 set(PdQuickGridLibs PdQuickGrid PdNeighborhood)
-
-# other required libraries
 set(PdVTKLibs PdVTK)
-
-# other required libraries
 set(PdZoltanLibs PdZoltan)
-
-# other required libraries
 set(PdMaterialUtilitiesLib PdMaterialUtilities)
 
 # include for all directories

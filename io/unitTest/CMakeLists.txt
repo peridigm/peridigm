@@ -61,7 +61,7 @@ target_link_libraries(utPdVtkKdTree ${IO_LIBS} ${VTK_LIBS} ${Trilinos_LIBRARIES}
 
 #
 add_executable(utPdNeighborhoodSort utPdNeighborhoodSort.cxx)
-target_link_libraries(utPdNeighborhoodSort  ${IO_LIBS} ${VTK_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(utPdNeighborhoodSort  ${IO_LIBS} ${Epetra_LIBRARY} ${VTK_LIBS} ${UT_REQUIRED_LIBS})
 
 #
 add_executable(utPdNeighborhoodProcessorFrame utPdNeighborhoodProcessorFrame.cxx)
