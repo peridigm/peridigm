@@ -1,0 +1,118 @@
+\documentclass[10pt]{article}
+
+% FUZZ -----------------------------------------------------------
+\vfuzz2pt % Don't report over-full v-boxes if over-edge is small
+\hfuzz30pt % Don't bother to report overfull boxes < 30pt
+
+% PACKAGES ---------------------------------------------------------------
+\usepackage{fullpage}
+\usepackage{subfigure}
+\usepackage{amsfonts}
+\usepackage[centertags]{amsmath}
+\usepackage{amsthm}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{bbm}
+\usepackage{url}
+\usepackage{color}
+
+% THEOREMS ---------------------------------------------------------------
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{cor}[thm]{Corollary}
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{prop}[thm]{Proposition}
+\theoremstyle{definition}
+\newtheorem{defn}{Definition}[section]
+\theoremstyle{remark}
+\newtheorem{rem}{Remark}[section]
+\numberwithin{equation}{section}
+\renewcommand{\theequation}{\thesection.\arabic{equation}}
+\renewcommand{\theenumi}{\Roman{enumi}}
+
+% DEFINITIONS ------------------------------------------------------------
+\newcommand{\norm}[1]{\left\Vert#1\right\Vert}
+\newcommand{\abs}[1]{\left\vert#1\right\vert}
+
+% MACROS -----------------------------------------------------------
+
+\newcommand{\comment}[1]{} % makes its argument disappear
+
+% <<< Color >>>
+\newcommand\MLP[1]{\textcolor{blue}{[MLP: #1]}}
+%%% ----------------------------------------------------------------------
+
+
+%%% ----------------------------------------------------------------------
+\title{\emph{Peridigm} Summary Report:\\Lessons Learned in Development with \emph{Agile Components}}
+\author{David Littlewood, John Mitchell, and Michael Parks}
+%%% ----------------------------------------------------------------------
+
+\begin{document}
+
+%%% ----------------------------------------------------------------------
+\maketitle
+%%% ----------------------------------------------------------------------
+
+%%% ----------------------------------------------------------------------
+%\abstract{}
+%%% ----------------------------------------------------------------------
+
+%%% ----------------------------------------------------------------------
+\section*{Executive Summary} 
+
+%%% ----------------------------------------------------------------------
+\section{What is Peridigm?}
+
+Brief overview of peridynamics and discretization. 
+
+Summary of Peridigm capabilities. 
+
+%%% ----------------------------------------------------------------------
+\section{What is Agile Components?}
+
+\subsection{The Agile Components Interface Paradigm: The ModelEvaluator Class}
+
+ModelEvaluator as a manifestation of the parameters-in responses-out paradigm. 
+
+\subsection{\emph{SimpleODE} as an Agile Components MiniApp}
+
+Overview of SimpleODE, core components, and control flow of code as instantiation of Agile Components methodology. 
+
+%%% ----------------------------------------------------------------------
+\section{Lessons Learned}
+
+\subsection{Where the Agile Components Methodology Works Well: Target Use Cases}
+
+\subsection{Shortcomings of the Agile Components Implementation}
+
+\subsubsection{Handling Model State}
+
+\paragraph{History Dependance in Material Models}
+Compare/contrast simple PDEs with material models with state (e.g., damage, plasticity, etc.) Explain observer concept as mechanism to update state. Alternative approach: mechanism to hand in and out state data at each ME call, rather than have ME store state data that is updated by observer. However, in SimpleODE control flow outlined above, the time integrator is generic and does not know to pass in/out state data to the ME for the material model. So, where should state data live?
+
+\paragraph{Load Rebalance and Mesh Adaptivity}
+Discuss notion that maps (e.g., data distribution) are state data contained within ME class. ME class is thus not referentially transparent. Options to resolve issue are (1) rewrite all ME classes to accept maps as input, as opposed to current ME methodology where ME generates maps and initial conditions / initial data. This represents a massive recoding effort. (2) Generate remap classes for each model evaluator to remap ME from old map assignment to new map assignment. Due to internal data stored in ME, remap class is specific to each ME class (time integrator, material model, etc.) This likely also represents massive coding effort. 
+
+\paragraph{Data Distribution}
+ME enforces use of maps, not blockmaps. Mapping multiple-dof-per-node data to a map from the more natural blockmap is cumbersome. 
+
+\subsubsection{Time Integration}
+Discuss lack of availability of second-order integrators. These are now available via PIRO. Discuss Rythmos assumptions on model evaluator; lack of ability to return control to main() between timesteps (needed for iterative contact algorithms, etc.); issues having to stack vectors etc. Discussions with Andy lead to revision of Peridigm control flow from that used by SimpleODE to a three-object model: a controlling object, a time integrator, and a material model wrapped in a ModelEvaluator.
+
+%%% ----------------------------------------------------------------------
+\section{Recommendations}
+Despite shortcomings in the current implementation, we are supportive of the goals of \emph{Agile Components}. For its target use cases, the Agile Components methodology has proven to facilitate rapid development of powerful application code. For applications outside the target use cases, The potential rapid development capabilities that agile components may provide are simply too tantalizing to overlook. To that end, we make the following recommendations, which we feel would improve the impact of continued agile components efforts to new applications.
+
+\begin{enumerate}
+  \item Improved documentation along with easy-to-understand demonstration code, such as SimpleODE. This will greatly shorten the learning curve for new users, and help them to understand how their application fits within the agile components methodology. SimpleODE may be useful as a starting template for new users to develop their own application based upon Agile Components. 
+  \item Item 2.
+  \item Item 3.
+\end{enumerate}
+
+%%% ----------------------------------------------------------------------
+%\bibliographystyle{siam}
+%\bibliography{PeridigmFinalReport}
+%%% ----------------------------------------------------------------------
+
+\end{document}
