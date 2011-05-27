@@ -117,6 +117,9 @@ namespace PeridigmNS {
     //! Main routine to drive problem solution with explicit time integration
     void executeExplicit();
 
+    //! Main routine to drive problem solution for quasistatics
+    void executeQuasiStatic();
+
     //! Main routine to drive problem solution with implicit time integration
     void executeImplicit();
 
@@ -127,7 +130,10 @@ namespace PeridigmNS {
     void applyKinematicBC(double loadIncrement, Teuchos::RCP<Epetra_Vector> vec, Teuchos::RCP<Epetra_FECrsMatrix> mat);
 
     //! Compute the residual for quasi-statics
-    double computeResidual();
+    double computeQuasiStaticResidual();
+
+    //! Compute the residual for implicit dynamics
+    double computeImplicitResidual();
 
     //! Synchronize data in DataManager across processes (needed before call to OutputManager::write() )
     void synchDataManager();
