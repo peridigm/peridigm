@@ -126,6 +126,9 @@ namespace PeridigmNS {
     //! Allocate memory for non-zeros in global Jacobian
     void allocateJacobian();
 
+    //! Compute the Jacobian for implicit dynamics
+    void computeImplicitJacobian();
+
     //! Apply kinematic boundary conditions: for Jacobain, zero out rows and columns and put one on diagonal; for residual put displacement increment corresponding to bc.
     void applyKinematicBC(double loadIncrement, Teuchos::RCP<Epetra_Vector> vec, Teuchos::RCP<Epetra_FECrsMatrix> mat);
 
