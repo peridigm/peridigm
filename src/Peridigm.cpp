@@ -53,9 +53,16 @@
 #include <vector>
 #include <map>
 
+#include <AztecOO.h>
+#include <BelosBlockCGSolMgr.hpp>
+#include <BelosEpetraAdapter.hpp>
+#include <BelosLinearProblem.hpp>
 #include <Epetra_Import.h>
 #include <Epetra_LinearProblem.h>
-#include <AztecOO.h>
+#include <EpetraExt_BlockMapOut.h>
+#include <EpetraExt_MultiVectorOut.h>
+#include <EpetraExt_RowMatrixOut.h>
+#include <EpetraExt_Transpose_RowMatrix.h>
 #include <Teuchos_VerboseObject.hpp>
 
 #include "Peridigm.hpp"
@@ -342,6 +349,11 @@ void PeridigmNS::Peridigm::applyInitialVelocities() {
 	  }
 	}
   }
+
+// MLP: Do I need to do this?
+  // Fill the dataManager with initial velocity data
+  dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_N)->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+
 }
 
 void PeridigmNS::Peridigm::applyInitialDisplacements() {
@@ -634,8 +646,6 @@ void PeridigmNS::Peridigm::executeExplicit() {
 
     // Do one step of velocity-Verlet
 
-    // \todo This acceleration will be zero at time step 1, and that is not correct in general, need a bootstrap step prior to integration loop.
-
     // V^{n+1/2} = V^{n} + (dt/2)*A^{n}
     //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
     blas.AXPY(length, dt2, aptr, vptr, 1, 1);
@@ -773,7 +783,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
       applyKinematicBC(0.0, residual, tangent);
       residual->Scale(-1.0);
 
-      // Solver linear system
+      // Solve linear system
       PeridigmNS::Timer::self().startTimer("Solve Linear System");
       Epetra_LinearProblem linearProblem;
       AztecOO solver(linearProblem);
@@ -820,11 +830,19 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
 
 void PeridigmNS::Peridigm::executeImplicit() {
 
+// MLP
+//printf("Executing Implicit\n");
+
   // Allocate memory for non-zeros in global Jacobain and lock in the structure
   allocateJacobian();
 
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   workset->timeStep = timeStep;
+
+  // MLP: Move this to input deck
+  // Newmark parameters
+  double beta = 0.25;
+  double gamma = 0.5;
 
   Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
   Teuchos::RCP<Teuchos::ParameterList> implicitParams = sublist(solverParams, "Implicit", true);
@@ -846,26 +864,36 @@ void PeridigmNS::Peridigm::executeImplicit() {
   v->ExtractView( &vptr );
   a->ExtractView( &aptr );
 
-  // Update forces based on initial displacements
-  PeridigmNS::Timer::self().startTimer("Model Evaluator");
-  modelEvaluator->evalModel(workset);
-  PeridigmNS::Timer::self().stopTimer("Model Evaluator");
+  // Data for linear solver object
+  Belos::LinearProblem<double,Epetra_MultiVector,Epetra_Operator> linearProblem;
+  Teuchos::ParameterList belosList;
+  belosList.set( "Block Size", 1 );                                // Use single-vector iteration
+  belosList.set( "Maximum Iterations", tangent->NumGlobalRows() ); // Maximum number of iterations allowed
+  belosList.set( "Convergence Tolerance", 1.e-10 );                 // Relative convergence tolerance requested
+  belosList.set( "Output Frequency", -1 );
+  int verbosity = Belos::Errors + Belos::Warnings + Belos::StatusTestDetails;
+  belosList.set( "Verbosity", verbosity );
+  belosList.set( "Output Style", Belos::Brief );
+  RCP< Belos::SolverManager<double,Epetra_MultiVector,Epetra_Operator> > belosSolver
+    = Teuchos::rcp( new Belos::BlockCGSolMgr<double,Epetra_MultiVector,Epetra_Operator>(Teuchos::rcp(&linearProblem,false), Teuchos::rcp(&belosList,false)) );
 
-  // Copy force from the data manager to the mothership vector
-//MLP: Do I need to do this?
-  PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-  force->Export(*dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
-  PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+  // Create owned (e.g., "mothership") vectors for data at timestep n
+  // MLP: Move this to "Peridigm" level, along with residual vector, deltaU, etc.
+  Teuchos::RCP<Epetra_Vector> un = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
+  Teuchos::RCP<Epetra_Vector> vn = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
+  Teuchos::RCP<Epetra_Vector> an = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
 
-  // fill the acceleration vector
-  (*a) = (*force);
+  // Create temporary owned (e.g., "mothership") vectors for data at timestep n
+  // to be used in Newmark integration
+  Teuchos::RCP<Epetra_Vector> u2 = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
+  Teuchos::RCP<Epetra_Vector> v2 = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
+
   // \todo Possibly move this functionality into ModelEvaluator.
   // \todo Generalize this for multiple materials
   double density = (*materialModels)[0]->Density();
-  a->Scale(1.0/density);
 
   // \todo Put in mothership.
-  Epetra_Vector lhs(*residual);
+  Teuchos::RCP<Epetra_Vector> deltaU = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
 
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
@@ -875,70 +903,137 @@ void PeridigmNS::Peridigm::executeImplicit() {
 
   for(int step=0; step<nsteps ; step++){
 
-//    if(peridigmComm->MyPID() == 0)
-//      cout << "Load step " << step+1 << ", load increment = " << loadIncrement << ", time step = " << dt << ", current time = " << timeCurrent << endl;
+// MLP: Check this is correct
+    // Copy data from data manager to mothership vectors
+//    PeridigmNS::Timer::self().startTimer("Gather/Scatter");
+//    un->Export(*dataManager->getData(Field_NS::DISPL3D, Field_NS::FieldSpec::STEP_N), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+//    vn->Export(*dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_N), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+//    an->Export(*dataManager->getData(Field_NS::ACCEL3D, Field_NS::FieldSpec::STEP_N), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+//    PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+    *un = *u;
+    *vn = *v;
+    *an = *a;
 
-    // Update nodal positions for nodes with kinematic B.C.
-    deltaU->PutScalar(0.0);
+    //u2 = un + dt*vn + 0.5*dt*dt*(1-2*beta)*an
+    u2->Update(1.0,*un,0.0);
+    u2->Update(dt, *vn, 0.5*dt2*(1.0-2*beta), *an, 1.0);
+    //v2 = vn + dt*(1-gamma)*an
+    v2->Update(1.0, *vn, dt*(1.0-gamma), *an, 0.0);
+
+    // Fill the owned vectors with probe data
+    // Assign predictor (use u2)
+    u->Update(1.0,*u2,0.0);
+    // a = (1.0/(beta*dt*dt))*(u_np1 - u2);
+    //  a will be zero unless a different predictor is used, so do the following computation anyway
+    a->Update(1.0, *u, -1.0, *u2, 0.0);
+    a->Scale(1.0/(beta*dt2));
+    // v = v2 + dt*gamma*an
+    v->Update(1.0, *v2, dt*gamma, *a, 0.0);
+    // Update y to be consistent with u
+    y->Update(1.0, *x, 1.0, *u, 0.0);
+
+    // Copy data from mothership vectors to overlap vectors in data manager
+    PeridigmNS::Timer::self().startTimer("Gather/Scatter");
+    dataManager->getData(Field_NS::DISPL3D, Field_NS::FieldSpec::STEP_NP1)->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+    dataManager->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->Import(*y, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+    dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_NP1)->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+    dataManager->getData(Field_NS::ACCEL3D, Field_NS::FieldSpec::STEP_NP1)->Import(*a, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+    PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+
+    // Update forces based on new positions
+    PeridigmNS::Timer::self().startTimer("Model Evaluator");
+    modelEvaluator->evalModel(workset);
+    PeridigmNS::Timer::self().stopTimer("Model Evaluator");
+
+    // Copy force from the data manager to the mothership vector
+    PeridigmNS::Timer::self().startTimer("Gather/Scatter");
+    force->Export(*dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
+    PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+
+    // Compute the residual
+    // residual = beta*dt*dt*(M*a - force)
+    residual->Update(density,*a,0.0); // This computes M*a, since mass matrix is a multiple of the identity
+    residual->Update(-1.0,*force,1.0);
+    residual->Scale(beta*dt2);
+
+    double residualNorm;
+    residual->Norm2(&residualNorm);
+
 //    applyKinematicBC(loadIncrement, deltaU, Teuchos::RCP<Epetra_FECrsMatrix>());
 
-    // Set the current position
-    // \todo We probably want to rework this so that the material models get valid x, u, and y values
-    // Currently the u values are from the previous load step (and if we update u here we'll be unable to properly undo a time step, which we'll need to adaptive time stepping).
-//    for(int i=0 ; i<y->MyLength() ; ++i)
-//      (*y)[i] = (*x)[i] + (*u)[i] + (*deltaU)[i];
+//MLP
+//std::cout << "residual norm = " << residualNorm << std::endl;
 
-    // compute the residual
-    double residualNorm = computeImplicitResidual();
-
-    int solverIteration = 1;
-    while(residualNorm > absoluteTolerance && solverIteration <= maximumSolverIterations){
+    int NLSolverIteration = 0;
+    while(residualNorm > absoluteTolerance && NLSolverIteration <= maximumSolverIterations){
 
       if(peridigmComm->MyPID() == 0)
-        cout << "  residual = " << residualNorm << endl;
+        cout << "Time step " << step << ", Newton iteration = " << NLSolverIteration << ", norm(residual) = " << residualNorm << endl;
 
-      // Compute the tangent
-      tangent->PutScalar(0.0);
-      PeridigmNS::Timer::self().startTimer("Evaluate Jacobian");
-      modelEvaluator->evalJacobian(workset);
-      tangent->GlobalAssemble();
-      PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
-      applyKinematicBC(0.0, residual, tangent);
+      // Fill the Jacobian
+      computeImplicitJacobian();
+
+      // Want to solve J*deltaU = -residual
       residual->Scale(-1.0);
 
-      // Solver linear system
+      // Solve linear system
+      deltaU->PutScalar(0.0);
+      linearProblem.setOperator(tangent);
+      bool isSet = linearProblem.setProblem(deltaU, residual);
+      if (isSet == false) {
+        if(peridigmComm->MyPID() == 0)
+          std::cout << std::endl << "ERROR: Belos::LinearProblem failed to set up correctly!" << std::endl;
+      }
       PeridigmNS::Timer::self().startTimer("Solve Linear System");
-      Epetra_LinearProblem linearProblem;
-      AztecOO solver(linearProblem);
-      solver.SetAztecOption(AZ_precond, AZ_Jacobi);
-      stringstream ss;
-      solver.SetOutputStream(ss);
-      int maxAztecIterations = 500;
-      double aztecTolerance = 1.0e-6;
-      lhs.PutScalar(0.0);
-      solver.Iterate(tangent.get(), &lhs, residual.get(), maxAztecIterations, aztecTolerance);
+      Belos::ReturnType ret = belosSolver->solve();
       PeridigmNS::Timer::self().stopTimer("Solve Linear System");
 
       // Apply increment to nodal positions
-      for(int i=0 ; i<y->MyLength() ; ++i)
-        (*deltaU)[i] += lhs[i];
-      for(int i=0 ; i<y->MyLength() ; ++i)
-        (*y)[i] = (*x)[i] + (*u)[i] + (*deltaU)[i];
+      u->Update(1.0,*deltaU,1.0);
 
-      // Compute residual
-      residualNorm = computeImplicitResidual();
+      // Update y to be consistent with u
+      y->Update(1.0, *x, 1.0, *u, 0.0);
 
-      solverIteration++;
+      // a = (1.0/(beta*dt*dt))*(u_np1 - u2);
+      a->Update(1.0, *u, -1.0, *u2, 0.0);
+      a->Scale(1.0/(beta*dt2));
+      // v = v2 + dt*gamma*an
+      v->Update(1.0, *v2, dt*gamma, *a, 0.0);
+
+      // Copy data from mothership vectors to overlap vectors in data manager
+      PeridigmNS::Timer::self().startTimer("Gather/Scatter");
+      dataManager->getData(Field_NS::DISPL3D, Field_NS::FieldSpec::STEP_NP1)->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+      dataManager->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->Import(*y, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+      dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_NP1)->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+      dataManager->getData(Field_NS::ACCEL3D, Field_NS::FieldSpec::STEP_NP1)->Import(*a, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+      PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+
+      // Update forces based on new positions
+      PeridigmNS::Timer::self().startTimer("Model Evaluator");
+      modelEvaluator->evalModel(workset);
+      PeridigmNS::Timer::self().stopTimer("Model Evaluator");
+
+      // Copy force from the data manager to the mothership vector
+      PeridigmNS::Timer::self().startTimer("Gather/Scatter");
+      force->Export(*dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
+      PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+
+      // Compute residual vector and its norm
+      // residual = beta*dt*dt*(M*a - force)
+      residual->Update(density,*a,0.0); // This computes M*a, since mass matrix is a multiple of the identity
+      residual->Update(-1.0,*force,1.0);
+      residual->Scale(beta*dt2);
+      residual->Norm2(&residualNorm);
+
+      NLSolverIteration++;
     }
 
     if(peridigmComm->MyPID() == 0)
       cout << "  residual = " << residualNorm << endl;
 
-    // Add the converged displacement increment to the displacement
-    for(int i=0 ; i<u->MyLength() ; ++i)
-      (*u)[i] += (*deltaU)[i];
+    timeCurrent = timeInitial + step*dt;
 
-    // Write output for completed load step
+    // Write output for completed time step
     PeridigmNS::Timer::self().startTimer("Output");
     this->synchDataManager();
     outputManager->write(dataManager,neighborhoodData,timeCurrent);
@@ -1140,11 +1235,14 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual() {
 
 double PeridigmNS::Peridigm::computeImplicitResidual() {
 
+  // MLP: \beta for Newmark method. Move to input deck.
+  double beta = 0.5; 
+
   PeridigmNS::Timer::self().startTimer("Compute Residual");
 
   // The residual is computed with the entries corresponding to kinematic BC zeroed out.
 
-  // r(u_k^{n+1}) = \rho u_k^{n+1} - \beta dt^2 [ f_k^{n+1}(u_k^{n+1}) + f_k^{n+1}(u_k^{n+1}) ] - \rho [ u^n + dt \dot{u}^n + 1/2 dt^2 (1-2\beta) \ddot{u}^n  ] 
+  // r(u_k^{n+1}) = \rho u_k^{n+1} - \beta dt^2 [ f_k^{n+1}(u_k^{n+1}) + b_k^{n+1}(u_k^{n+1}) ] - \rho [ u^n + dt \dot{u}^n + 1/2 dt^2 (1-2\beta) \ddot{u}^n  ] 
 
   // Needed data:
   // dt, dt^2, \beta, \rho
@@ -1153,6 +1251,7 @@ double PeridigmNS::Peridigm::computeImplicitResidual() {
   // b_k^{n+1}(u_k^{n+1}) (body force)
   // u_k^{n+1}
 
+// MLP: Fix this -- not importing correct data
   // Copy data from mothership vectors to overlap vectors in data manager
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
   dataManager->getData(Field_NS::DISPL3D, Field_NS::FieldSpec::STEP_NP1)->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
@@ -1175,25 +1274,115 @@ double PeridigmNS::Peridigm::computeImplicitResidual() {
   Teuchos::RCP<Epetra_Vector> un = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
   Teuchos::RCP<Epetra_Vector> vn = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
   Teuchos::RCP<Epetra_Vector> an = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
-  
+
   // Copy data from data manager to mothership vectors
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-  dataManager->getData(Field_NS::DISPL3D, Field_NS::FieldSpec::STEP_N)->Import(*un, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-  dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_N)->Import(*vn, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-  dataManager->getData(Field_NS::ACCEL3D, Field_NS::FieldSpec::STEP_N)->Import(*an, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  un->Export(*dataManager->getData(Field_NS::DISPL3D, Field_NS::FieldSpec::STEP_N), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  vn->Export(*dataManager->getData(Field_NS::VELOC3D, Field_NS::FieldSpec::STEP_N), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  an->Export(*dataManager->getData(Field_NS::ACCEL3D, Field_NS::FieldSpec::STEP_N), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
+  // \todo Possibly move this functionality into ModelEvaluator.
+  // \todo Generalize this for multiple materials
+  double density = (*materialModels)[0]->Density();
+
+  // MLP: Pass this in from integrator routine
+  double dt = *(workset->timeStep);
+
   // fill the residual vector
-  (*residual) = (*force);
+  // Step #1:  r(u_k^{n+1}) = \rho u_k^{n+1}
+  residual->Update(density,*u,0.0);
+  // Step #2:  r(u_k^{n+1}) =  r(u_k^{n+1}) - \beta dt^2 [ f_k^{n+1}(u_k^{n+1}) + b_k^{n+1}(u_k^{n+1}) ] 
+  // MLP: Ignoring external forces b_k^{n+1}(u_k^{n+1}) for now
+  residual->Update(-beta*dt*dt,*force,1.0);
+  // Step #3:  r(u_k^{n+1}) =  r(u_k^{n+1}) - \rho [ u^n + dt \dot{u}^n + 1/2 dt^2 (1-2\beta) \ddot{u}^n ]
+  residual->Update(-density,*un,1.0);
+  residual->Update(-density*dt,*vn,1.0);
+  residual->Update(-density*0.5*dt*dt*(1-2*beta),*an,1.0);
 
   // zero out the rows corresponding to kinematic boundary conditions and compute the residual
-  applyKinematicBC(0.0, residual, Teuchos::RCP<Epetra_FECrsMatrix>());
+//  applyKinematicBC(0.0, residual, Teuchos::RCP<Epetra_FECrsMatrix>());
   double residualNorm2;
   residual->Norm2(&residualNorm2);
 
   PeridigmNS::Timer::self().stopTimer("Compute Residual");
 
   return residualNorm2;
+}
+
+void PeridigmNS::Peridigm::computeImplicitJacobian() {
+
+  // MLP: \beta for Newmark method. Move to input deck.
+  double beta = 0.25; 
+
+  // MLP: Pass this in from integrator routine
+  double dt = *(workset->timeStep);
+  double dt2 = dt*dt;
+
+  // Compute the tangent
+  tangent->PutScalar(0.0);
+  PeridigmNS::Timer::self().startTimer("Evaluate Jacobian");
+  modelEvaluator->evalJacobian(workset);
+  tangent->GlobalAssemble();
+  PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
+//      applyKinematicBC(0.0, residual, tangent);
+
+  // Code to symmeterize Jacobian
+
+  // First, construct transpose
+  bool makeDataContiguous = true;
+  EpetraExt::RowMatrix_Transpose transposer( makeDataContiguous );
+  Epetra_CrsMatrix & transTangent = dynamic_cast<Epetra_CrsMatrix&>(transposer(*tangent));
+
+  // Now loop over all owned rows and average entries of both
+  int numRows      = tangent->NumMyRows();
+  int numRowsTrans = transTangent.NumMyRows();
+  if (numRows != numRowsTrans) cout << "Number of rows mismatch!" << std::endl;
+  int numEntries, numEntriesTrans;
+  double *values, *valuesTrans;
+  int *indices, *indicesTrans;
+  // Assert here that numRows == numRowsTrans
+  for(int i=0;i<numRows;i++) {
+    tangent->ExtractMyRowView(i, numEntries, values, indices);
+    transTangent.ExtractMyRowView(i, numEntriesTrans, valuesTrans, indicesTrans);
+    if (numEntries != numEntriesTrans) cout << "Number of entries mismatch!" << std::endl;
+    for (int j=0;j<numEntries;j++) {
+      values[j] = 0.5*(values[j]+valuesTrans[j]);
+      if (indices[j] != indicesTrans[j]) cout << "index mismatch!" << std::endl;
+    }
+  }
+
+  // Now add in mass matrix contribution
+  // \todo Generalize this for multiple materials
+  double density = (*materialModels)[0]->Density();
+
+  // tangent = M - beta*dt*dt*K
+  tangent->Scale(-beta*dt2);
+
+  Epetra_Vector diagonal1(tangent->RowMap());
+  Epetra_Vector diagonal2(tangent->RowMap());
+  tangent->ExtractDiagonalCopy(diagonal1);
+  diagonal2.PutScalar(density);
+  diagonal1.Update(1.0, diagonal2, 1.0);
+  tangent->ReplaceDiagonalValues(diagonal1);
+
+/*
+  // MLP
+  // Code to output Jacobian
+  int size = residual->GlobalLength();
+  Epetra_MultiVector I(tangent->OperatorDomainMap(),size);
+  I.PutScalar(0.0);
+  Epetra_MultiVector MyTangent(tangent->OperatorRangeMap(),size);
+  MyTangent.PutScalar(0.0);
+  for(int i=0;i<size;i++)
+    I.ReplaceMyValue (i, i, 1.0);
+  tangent->Apply(I,MyTangent);
+  char filename[100];
+  int system_number = 0;
+  sprintf(filename,"MyTangent_%i.mat",system_number);
+  EpetraExt::MultiVectorToMatrixMarketFile(filename, MyTangent, "MyTangent", "MyTangent", true);
+*/
+
 }
 
 void PeridigmNS::Peridigm::synchDataManager() {
