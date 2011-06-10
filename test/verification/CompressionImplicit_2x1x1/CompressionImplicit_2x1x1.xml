@@ -47,6 +47,8 @@
 	<Parameter name="Final Time" type="double" value="0.00005"/>
 	<ParameterList name="Implicit">
  	  <Parameter name="Fixed dt" type="double" value="0.00001"/>
+ 	  <Parameter name="Beta" type="double" value="0.25"/>
+ 	  <Parameter name="Gamma" type="double" value="0.50"/>
           <Parameter name="Absolute Tolerance" type="double" value="1.0e-10"/>
           <Parameter name="Maximum Solver Iterations" type="int" value="10"/>
 	</ParameterList>

@@ -838,19 +838,16 @@ void PeridigmNS::Peridigm::executeImplicit() {
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   workset->timeStep = timeStep;
 
-  // MLP: Move this to input deck
-  // Newmark parameters
-  double beta = 0.25;
-  double gamma = 0.5;
-
   Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
   Teuchos::RCP<Teuchos::ParameterList> implicitParams = sublist(solverParams, "Implicit", true);
   double timeInitial = solverParams->get("Initial Time", 0.0);
   double timeFinal = solverParams->get("Final Time", 1.0);
   double timeCurrent = timeInitial;
-  double absoluteTolerance = implicitParams->get("Absolute Tolerance", 1.0e-6);
+  double absoluteTolerance       = implicitParams->get("Absolute Tolerance", 1.0e-6);
   double maximumSolverIterations = implicitParams->get("Maximum Solver Iterations", 10);
-  double dt        = implicitParams->get("Fixed dt", 1.0);
+  double dt                      = implicitParams->get("Fixed dt", 1.0);
+  double beta                    = implicitParams->get("Beta", 0.25);
+  double gamma                   = implicitParams->get("Gamma", 0.50);
   *timeStep = dt;
   double dt2 = dt*dt;
   int nsteps = (int)floor((timeFinal-timeInitial)/dt);
@@ -961,7 +958,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
         cout << "Time step " << step << ", Newton iteration = " << NLSolverIteration << ", norm(residual) = " << residualNorm << endl;
 
       // Fill the Jacobian
-      computeImplicitJacobian();
+      computeImplicitJacobian(beta);
 
       // Want to solve J*deltaU = -residual
       residual->Scale(-1.0);
@@ -1223,10 +1220,7 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual() {
   return residualNorm2;
 }
 
-void PeridigmNS::Peridigm::computeImplicitJacobian() {
-
-  // MLP: \beta for Newmark method. Move to input deck.
-  double beta = 0.25; 
+void PeridigmNS::Peridigm::computeImplicitJacobian(double beta) {
 
   // MLP: Pass this in from integrator routine
   double dt = *(workset->timeStep);
