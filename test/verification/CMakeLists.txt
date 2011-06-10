@@ -31,6 +31,7 @@ add_test (Compression_2x1x1_np1 python ./Compression_2x1x1/np1/Compression_2x1x1
 add_test (Compression_2x1x1_np2 python ./Compression_2x1x1/np2/Compression_2x1x1.py)
 add_test (CompressionInitDisp_2x1x1_np1 python ./CompressionInitDisp_2x1x1/np1/CompressionInitDisp_2x1x1.py)
 add_test (CompressionInitDisp_2x1x1_np2 python ./CompressionInitDisp_2x1x1/np2/CompressionInitDisp_2x1x1.py)
+add_test (CompressionImplicit_2x1x1_np1 python ./CompressionImplicit_2x1x1/np1/CompressionImplicit_2x1x1.py)
 add_test (Compression_3x1x1_np1 python ./Compression_3x1x1/np1/Compression_3x1x1.py)
 add_test (Compression_3x1x1_np2 python ./Compression_3x1x1/np2/Compression_3x1x1.py)
 add_test (Compression_3x1x1_np3 python ./Compression_3x1x1/np3/Compression_3x1x1.py)

@@ -135,9 +135,6 @@ namespace PeridigmNS {
     //! Compute the residual for quasi-statics
     double computeQuasiStaticResidual();
 
-    //! Compute the residual for implicit dynamics
-    double computeImplicitResidual();
-
     //! Synchronize data in DataManager across processes (needed before call to OutputManager::write() )
     void synchDataManager();
 
