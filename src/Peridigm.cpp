@@ -357,8 +357,8 @@ void PeridigmNS::Peridigm::applyInitialVelocities() {
 
 void PeridigmNS::Peridigm::applyInitialDisplacements() {
 
-  TEST_FOR_EXCEPT_MSG(!threeDimensionalMap->SameAs(v->Map()),
-                      "Peridigm::applyInitialVelocities():  Inconsistent velocity vector map.\n");
+  TEST_FOR_EXCEPT_MSG(!threeDimensionalMap->SameAs(u->Map()),
+                      "Peridigm::applyInitialDisplacements():  Inconsistent displacement vector map.\n");
 
   Teuchos::ParameterList& problemParams = peridigmParams->sublist("Problem");
   Teuchos::ParameterList& bcParams = problemParams.sublist("Boundary Conditions");
@@ -946,10 +946,11 @@ void PeridigmNS::Peridigm::executeImplicit() {
     residual->Update(-1.0,*force,1.0);
     residual->Scale(beta*dt2);
 
+    // Modify residual for kinematic BC
+    applyKinematicBC(0.0, residual, Teuchos::RCP<Epetra_FECrsMatrix>());
+
     double residualNorm;
     residual->Norm2(&residualNorm);
-
-//    applyKinematicBC(loadIncrement, deltaU, Teuchos::RCP<Epetra_FECrsMatrix>());
 
     int NLSolverIteration = 0;
     while(residualNorm > absoluteTolerance && NLSolverIteration <= maximumSolverIterations){
@@ -959,6 +960,9 @@ void PeridigmNS::Peridigm::executeImplicit() {
 
       // Fill the Jacobian
       computeImplicitJacobian(beta);
+
+      // Modify Jacobian for kinematic BC
+      applyKinematicBC(0.0, Teuchos::RCP<Epetra_Vector>(), tangent);
 
       // Want to solve J*deltaU = -residual
       residual->Scale(-1.0);
@@ -1010,6 +1014,10 @@ void PeridigmNS::Peridigm::executeImplicit() {
       residual->Update(density,*a,0.0); // This computes M*a, since mass matrix is a multiple of the identity
       residual->Update(-1.0,*force,1.0);
       residual->Scale(beta*dt2);
+
+      // Modify residual for kinematic BC
+      applyKinematicBC(0.0, residual, Teuchos::RCP<Epetra_FECrsMatrix>());
+
       residual->Norm2(&residualNorm);
 
       NLSolverIteration++;
@@ -1101,19 +1109,19 @@ void PeridigmNS::Peridigm::applyKinematicBC(double loadIncrement,
   // get the node sets
   map< string, vector<int> > nodeSets;
   for(it = bcParams.begin() ; it != bcParams.end() ; it++){
-	const string& name = it->first;
+    const string& name = it->first;
     // \todo Change input deck so that node sets are parameter lists, not parameters, to avoid this ridiculous search.
-	size_t position = name.find("Node Set");
-	if(position != string::npos){
-	  stringstream ss(Teuchos::getValue<string>(it->second));
-	  vector<int> nodeList;
-	  int nodeID;
-	  while(ss.good()){
-		ss >> nodeID;
-		nodeList.push_back(nodeID);
-	  }
-	  nodeSets[name] = nodeList;
-	}
+    size_t position = name.find("Node Set");
+    if(position != string::npos){
+      stringstream ss(Teuchos::getValue<string>(it->second));
+      vector<int> nodeList;
+      int nodeID;
+      while(ss.good()){
+        ss >> nodeID;
+        nodeList.push_back(nodeID);
+      }
+      nodeSets[name] = nodeList;
+    }
   }
 
   // create data structures for inserting ones and zeros into jacobian
@@ -1128,25 +1136,24 @@ void PeridigmNS::Peridigm::applyKinematicBC(double loadIncrement,
 
   // apply the kinematic boundary conditions
   for(it = bcParams.begin() ; it != bcParams.end() ; it++){
-	const string & name = it->first;
-	size_t position = name.find("Prescribed Displacement");
-	if(position != string::npos){
-	  Teuchos::ParameterList & boundaryConditionParams = Teuchos::getValue<Teuchos::ParameterList>(it->second);
-	  string nodeSet = boundaryConditionParams.get<string>("Node Set");
-	  string type = boundaryConditionParams.get<string>("Type");
-	  string coordinate = boundaryConditionParams.get<string>("Coordinate");
-	  double value = boundaryConditionParams.get<double>("Value");
+    const string & name = it->first;
+    size_t position = name.find("Prescribed Displacement");
+    if(position != string::npos){
+      Teuchos::ParameterList & boundaryConditionParams = Teuchos::getValue<Teuchos::ParameterList>(it->second);
+      string nodeSet = boundaryConditionParams.get<string>("Node Set");
+      string type = boundaryConditionParams.get<string>("Type");
+      string coordinate = boundaryConditionParams.get<string>("Coordinate");
+      double value = boundaryConditionParams.get<double>("Value");
 
-	  int coord = 0;
-	  if(coordinate == "y" || coordinate == "Y")
-		coord = 1;
-	  if(coordinate == "z" || coordinate == "Z")
-		coord = 2;
+      int coord = 0;
+      if(coordinate == "y" || coordinate == "Y")
+        coord = 1;
+      if(coordinate == "z" || coordinate == "Z")
+        coord = 2;
 
-	  // apply kinematic boundary conditions to locally-owned nodes
-	  vector<int> & nodeList = nodeSets[nodeSet];
-	  for(unsigned int i=0 ; i<nodeList.size() ; i++){
-
+      // apply kinematic boundary conditions to locally-owned nodes
+      vector<int> & nodeList = nodeSets[nodeSet];
+      for(unsigned int i=0 ; i<nodeList.size() ; i++){
         // zero out the row and column and put a 1.0 on the diagonal
         if(!mat.is_null()){
           int globalID = 3*nodeList[i] + coord;
@@ -1173,12 +1180,14 @@ void PeridigmNS::Peridigm::applyKinematicBC(double loadIncrement,
 
         // set entry in residual vector equal to the displacement increment for the kinematic bc
         // this will cause the solution procedure to solve for the correct U at the bc
-		int localNodeID = threeDimensionalMap->LID(nodeList[i]);
-		if(!vec.is_null() && localNodeID != -1){
- 		  (*vec)[localNodeID*3 + coord] = value*loadIncrement;
+        int localNodeID = threeDimensionalMap->LID(nodeList[i]);
+	if(!vec.is_null() && localNodeID != -1){
+ 	  (*vec)[localNodeID*3 + coord] = value*loadIncrement;
         }
-	  }
-	}
+
+      }
+
+    }
   }
   PeridigmNS::Timer::self().stopTimer("Apply Kinematic B.C.");
 }

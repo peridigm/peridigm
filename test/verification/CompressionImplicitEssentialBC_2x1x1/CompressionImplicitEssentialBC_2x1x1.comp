@@ -1,0 +1,3 @@
+<Tolerances>
+  <Tolerance variable="Displacement" value="1.0e-6"/>
+</Tolerances>
