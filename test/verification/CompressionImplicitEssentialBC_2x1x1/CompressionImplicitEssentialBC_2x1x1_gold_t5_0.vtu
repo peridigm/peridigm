@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian" compressor="vtkZLibDataCompressor">
+  <UnstructuredGrid>
+    <Piece NumberOfPoints="2" NumberOfCells="2">
+      <PointData>
+        <DataArray type="Float64" Name="Acceleration" NumberOfComponents="3" format="ascii" RangeMin="6935469.7589" RangeMax="6935469.7589">
+          -6935469.7589 3.6712636634e-22 3.6712636634e-22 6935469.7589 -3.6712636634e-22 -3.6712636634e-22
+        </DataArray>
+        <DataArray type="Float64" Name="Displacement" NumberOfComponents="3" format="ascii" RangeMin="0.0075270698819" RangeMax="0.1">
+          0.1 6.3301354479e-25 6.3301354479e-25 0.0075270698819 6.3291257059e-25 6.3291257059e-25
+        </DataArray>
+        <DataArray type="Float64" Name="Force" NumberOfComponents="3" format="ascii" RangeMin="1.0819332824e+11" RangeMax="1.0819332824e+11">
+          -1.0819332824e+11 5.727171315e-18 5.727171315e-18 1.0819332824e+11 -5.727171315e-18 -5.727171315e-18
+        </DataArray>
+        <DataArray type="Float64" Name="Force_Density" NumberOfComponents="3" format="ascii" RangeMin="54096664119" RangeMax="54096664119">
+          -54096664119 2.8635856575e-18 2.8635856575e-18 54096664119 -2.8635856575e-18 -2.8635856575e-18
+        </DataArray>
+        <DataArray type="Int32" Name="ID" format="ascii" RangeMin="0" RangeMax="1">
+          0 1
+        </DataArray>
+        <DataArray type="Int32" Name="Proc_Num" format="ascii" RangeMin="0" RangeMax="0">
+          0 0
+        </DataArray>
+        <DataArray type="Float64" Name="Velocity" NumberOfComponents="3" format="ascii" RangeMin="3.5448085938e-20" RangeMax="327.6110973">
+          0 2.5065581947e-20 2.5065581947e-20 327.6110973 2.5060533237e-20 2.5060533237e-20
+        </DataArray>
+      </PointData>
+      <CellData>
+      </CellData>
+      <Points>
+        <DataArray type="Float64" Name="Points" NumberOfComponents="3" format="ascii" RangeMin="1" RangeMax="1">
+          -1 0 0 1 0 0
+        </DataArray>
+      </Points>
+      <Cells>
+        <DataArray type="Int64" Name="connectivity" format="ascii" RangeMin="0" RangeMax="1">
+          0 1
+        </DataArray>
+        <DataArray type="Int64" Name="offsets" format="ascii" RangeMin="1" RangeMax="2">
+          1 2
+        </DataArray>
+        <DataArray type="UInt8" Name="types" format="ascii" RangeMin="1" RangeMax="1">
+          1 1
+        </DataArray>
+      </Cells>
+    </Piece>
+  </UnstructuredGrid>
+</VTKFile>
