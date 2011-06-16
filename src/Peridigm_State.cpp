@@ -97,12 +97,52 @@ Teuchos::RCP<Epetra_Vector> PeridigmNS::State::getData(Field_NS::FieldSpec field
   return lb->second;
 }
 
-void PeridigmNS::State::copyFrom(PeridigmNS::State& source)
+void PeridigmNS::State::copyLocallyOwnedDataFromState(Teuchos::RCP<PeridigmNS::State> source)
 {
-  Epetra_Import scalarImporter(scalarData->Map(), source.getScalarMultiVector()->Map());
-  scalarData->Import(*source.getScalarMultiVector(), scalarImporter, Insert);
-  Epetra_Import vectorImporter(vectorData->Map(), source.getVectorMultiVector()->Map());
-  vectorData->Import(*source.getVectorMultiVector(), vectorImporter, Insert);
-  Epetra_Import bondImporter(bondData->Map(), source.getBondMultiVector()->Map());
-  bondData->Import(*source.getBondMultiVector(), bondImporter, Insert);
+  // Make sure the source isn't a null ref-count pointer
+  TEST_FOR_EXCEPTION(source.is_null(), Teuchos::NullReferenceError,
+                     "PeridigmNS::State::copyLocallyOwnedDataFromState() called with null ref-count pointer.");
+
+  if(!scalarData.is_null()){
+    TEST_FOR_EXCEPTION(source->getScalarMultiVector().is_null(), Teuchos::NullReferenceError,
+                       "PeridigmNS::State::copyLocallyOwnedDataFromState() called with incompatible State.");
+    copyLocallyOwnedMultiVectorData( *(source->getScalarMultiVector()), *scalarData );
+  }
+  if(!vectorData.is_null()){
+    TEST_FOR_EXCEPTION(source->getVectorMultiVector().is_null(), Teuchos::NullReferenceError,
+                       "PeridigmNS::State::copyLocallyOwnedDataFromState() called with incompatible State.");
+    copyLocallyOwnedMultiVectorData( *(source->getVectorMultiVector()), *vectorData );
+  }
+  if(!bondData.is_null()){
+    TEST_FOR_EXCEPTION(source->getBondMultiVector().is_null(), Teuchos::NullReferenceError,
+                       "PeridigmNS::State::copyLocallyOwnedDataFromState() called with incompatible State.");
+    copyLocallyOwnedMultiVectorData( *(source->getBondMultiVector()), *bondData );
+  }
+}
+
+void PeridigmNS::State::copyLocallyOwnedMultiVectorData(Epetra_MultiVector& source, Epetra_MultiVector& target)
+{
+  TEST_FOR_EXCEPTION(source.NumVectors() != target.NumVectors(), std::runtime_error,
+                     "PeridigmNS::State::copyLocallyOwnedMultiVectorData() called with incompatible MultiVectors.");
+  int numVectors = target.NumVectors();
+  const Epetra_BlockMap& sourceMap = source.Map();
+  const Epetra_BlockMap& targetMap = target.Map();
+  for(int iVec=0 ; iVec<numVectors ; ++iVec){
+    Epetra_Vector& sourceVector = *source(iVec);
+    Epetra_Vector& targetVector = *target(iVec);
+    for(int targetLID=0 ; targetLID<targetMap.NumMyElements() ; ++targetLID){
+      int GID = targetMap.GID(targetLID);
+      int sourceLID = sourceMap.LID(GID);
+      TEST_FOR_EXCEPTION(sourceLID == -1, std::range_error,
+                         "PeridigmNS::State::copyLocallyOwnedMultiVectorData() called with incompatible MultiVectors.");
+      TEST_FOR_EXCEPTION(sourceMap.ElementSize(sourceLID) != targetMap.ElementSize(targetLID), std::range_error,
+                         "PeridigmNS::State::copyLocallyOwnedMultiVectorData() called with incompatible MultiVectors.");
+      int elementSize = targetMap.ElementSize(targetLID);
+      int sourceFirstPointInElement = sourceMap.FirstPointInElement(sourceLID);
+      int targetFirstPointInElement = targetMap.FirstPointInElement(targetLID);
+      for(int i=0 ; i<elementSize ; ++i){
+        targetVector[targetFirstPointInElement+i] = sourceVector[sourceFirstPointInElement+i];
+      }
+    }
+  }
 }

@@ -110,6 +110,7 @@ void PeridigmNS::Material::computeJacobian(const double dt,
 
     // the temporary data manager will have the same field specs as the real data manager
     Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs = dataManager.getFieldSpecs();
+
     tempDataManager.allocateData(fieldSpecs);
 
     // copy data into the tempDataManager

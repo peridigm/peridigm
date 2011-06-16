@@ -124,6 +124,18 @@ public:
   //! Returns RCP to overlap scalar map
   Teuchos::RCP<const Epetra_BlockMap> getOverlapIDScalarMap(){ return scalarMap; }
 
+  //! Returns RCP to the State N object
+  Teuchos::RCP<State> getStateN() const { return stateN; }
+
+  //! Returns RCP to the State NP1 object
+  Teuchos::RCP<State> getStateNP1(){ return stateNP1; }
+
+  //! Returns RCP to the State NONE object
+  Teuchos::RCP<State> getStateNONE(){ return stateNONE; }
+
+  //! Copies data from a different data manager based on global IDs; functions only if all the local IDs in the target map exist in and are locally-owned in the source map.
+  void copyLocallyOwnedDataFromDataManager(PeridigmNS::DataManager& source);
+
   //! Provides access to the Epetra_Vector specified by the given FieldSped and FieldStep.
   Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec,
                                       Field_NS::FieldSpec::FieldStep fieldStep);
