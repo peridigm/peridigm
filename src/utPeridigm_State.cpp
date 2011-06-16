@@ -448,7 +448,7 @@ void copyFrom()
   BOOST_CHECK( tempState.getBondMultiVector()->Map().SameAs( *tempBondMap ) );
 
   // copy the data from the initial State to the smaller, temporary state
-  tempState.copyFrom(state);
+  //tempState.copyFrom(state);
 
 
 

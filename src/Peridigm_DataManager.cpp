@@ -306,6 +306,24 @@ void PeridigmNS::DataManager::rebalance(Teuchos::RCP<const Epetra_BlockMap> reba
   bondMap = rebalancedBondMap;
 }
 
+void PeridigmNS::DataManager::copyLocallyOwnedDataFromDataManager(PeridigmNS::DataManager& source)
+{
+  if(!stateN.is_null())
+    stateN->copyLocallyOwnedDataFromState(source.getStateN());
+  else
+    TEST_FOR_EXCEPTION(!source.getStateN().is_null(), Teuchos::NullReferenceError, "PeridigmNS::State::copyLocallyOwnedDataFromDataManager() called with incompatible source and target.");
+  
+  if(!stateNP1.is_null())
+    stateN->copyLocallyOwnedDataFromState(source.getStateNP1());
+  else
+    TEST_FOR_EXCEPTION(!source.getStateNP1().is_null(), Teuchos::NullReferenceError, "PeridigmNS::State::copyLocallyOwnedDataFromDataManager() called with incompatible source and target.");
+
+  if(!stateNONE.is_null())
+    stateN->copyLocallyOwnedDataFromState(source.getStateNONE());
+  else
+    TEST_FOR_EXCEPTION(!source.getStateNONE().is_null(), Teuchos::NullReferenceError, "PeridigmNS::State::copyLocallyOwnedDataFromDataManager() called with incompatible source and target.");
+}
+
 Teuchos::RCP<Epetra_Vector> PeridigmNS::DataManager::getData(Field_NS::FieldSpec fieldSpec, Field_NS::FieldSpec::FieldStep fieldStep)
 {
   Teuchos::RCP<Epetra_Vector> data;

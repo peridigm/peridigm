@@ -107,8 +107,8 @@ public:
   //! Provides access to an Epetra_Vector corresponding to the given FieldSpec.
   Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec);
 
-  //! Copies data from a different state object based on global IDs.
-  void copyFrom(State& source);
+  //! Copies data from a different state object based on global IDs; functions only if all the local IDs in the target map exist in and are locally-owned in the source map.
+  void copyLocallyOwnedDataFromState(Teuchos::RCP<PeridigmNS::State> source);
 
 protected:
 
@@ -124,6 +124,9 @@ protected:
 
   //! Map that associates a FieldSpec with an individual Epetra_Vector contained within one of the Epetra_MultiVectors.
   std::map< Field_NS::FieldSpec, Teuchos::RCP<Epetra_Vector> > fieldSpecToDataMap;
+
+  //! Utility for copying locally-owned data from one multivector to another; succeeds only if all the local IDs in the target map exist in and are locally-owned in the source map.
+  void copyLocallyOwnedMultiVectorData(Epetra_MultiVector& source, Epetra_MultiVector& target);
 };
 
 }
