@@ -70,19 +70,13 @@ PeridigmNS::State createTwoPointProblem()
   #else
     comm = rcp(new Epetra_SerialComm);
   #endif
-  int numProcs = comm->NumProc();
 
   // set up a hard-coded layout for two points
   int numCells = 2;
 
   // set up overlap maps, which include ghosted nodes
-  int numGlobalElements(numCells), numMyElements(0), elementSize, indexBase(0);
-  std::vector<int> myGlobalElements;
-  if(numProcs == 1)
-    numMyElements = 2;
-  else if(numProcs == 2)
-    numMyElements = 1;
-  myGlobalElements.resize(numMyElements);
+  int numGlobalElements(numCells), numMyElements(2), elementSize, indexBase(0);
+  std::vector<int> myGlobalElements(numMyElements);
   for(int i=0; i<numMyElements ; ++i)
     myGlobalElements[i] = i;
   elementSize = 1;
@@ -167,46 +161,70 @@ PeridigmNS::State createThreePointProblem()
   int numCells = 3;
 
   // set up overlap maps, which include ghosted nodes
-  int numGlobalElements(numCells), numMyElements(0), elementSize, indexBase(0);
+  int numGlobalElements(numCells), numMyElements, elementSize, indexBase(0);
   std::vector<int> myGlobalElements;
   if(numProcs == 1){
     numMyElements = 3;
+    myGlobalElements.resize(numMyElements);
+    myGlobalElements[0] = 0;
+    myGlobalElements[1] = 1;
+    myGlobalElements[2] = 2;
   }
   else if(numProcs == 2){
-    if(myPID == 0)
-      numMyElements = 1;
-    else if(myPID == 1)
+    if(myPID == 0){
       numMyElements = 2;
+      myGlobalElements.resize(numMyElements);
+      myGlobalElements[0] = 0;
+      myGlobalElements[1] = 1;
+    }
+    else if(myPID == 1){
+      numMyElements = 2;
+      myGlobalElements.resize(numMyElements);
+      myGlobalElements[0] = 2;
+      myGlobalElements[1] = 1;
+    }
   }
-  myGlobalElements.resize(numMyElements);
-  for(int i=0; i<numMyElements ; ++i)
-    myGlobalElements[i] = i+myPID;
   elementSize = 1;
 
   // oneDimensionalOverlapMap
   // used for cell volumes and scalar constitutive data
   Teuchos::RCP<Epetra_BlockMap> oneDimensionalOverlapMap =
-    Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, &myGlobalElements[0], elementSize, indexBase, *comm));
+    Teuchos::rcp(new Epetra_BlockMap(-1, numMyElements, &myGlobalElements[0], elementSize, indexBase, *comm));
   // threeDimensionalOverlapMap
   // used for positions, displacements, velocities and vector constitutive data
   elementSize = 3;
   Teuchos::RCP<Epetra_BlockMap> threeDimensionalOverlapMap = 
-    Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, &myGlobalElements[0], elementSize, indexBase, *comm)); 
+    Teuchos::rcp(new Epetra_BlockMap(-1, numMyElements, &myGlobalElements[0], elementSize, indexBase, *comm)); 
   // bondMap
   // used for bond damage and bond constitutive data
-  std::vector<int> bondElementSize(numMyElements);
+  std::vector<int> bondElementSize;
   if(numProcs == 1){
+    numMyElements = 3;
+    myGlobalElements.resize(numMyElements);
+    myGlobalElements[0] = 0;
+    myGlobalElements[1] = 1;
+    myGlobalElements[2] = 2;
+    bondElementSize.resize(numMyElements);
     bondElementSize[0] = 1;
     bondElementSize[1] = 2;
     bondElementSize[2] = 1;
   }
   else if(numProcs == 2){
     if(myPID == 0){
+      numMyElements = 2;
+      myGlobalElements.resize(numMyElements);
+      myGlobalElements[0] = 0;
+      myGlobalElements[1] = 1;
+      bondElementSize.resize(numMyElements);
       bondElementSize[0] = 1;
+      bondElementSize[1] = 2;
     }
     else if(myPID == 1){
-      bondElementSize[0] = 2;
-      bondElementSize[1] = 1;
+      numMyElements = 1;
+      myGlobalElements.resize(numMyElements);
+      myGlobalElements[0] = 2;
+      bondElementSize.resize(numMyElements);
+      bondElementSize[0] = 1;
     }
   }
   Teuchos::RCP<Epetra_BlockMap> bondMap = 
@@ -394,19 +412,24 @@ void copyFrom()
       int firstPointInElement = bondDamage.Map().FirstPointInElement(i);
       for(int j=0 ; j<bondDamage.Map().ElementSize(i); ++j){
         bondDamage[firstPointInElement+j] = firstPointInElement+j;
-        cout << "setting GID " << bondDamage.Map().GID(i) << " to " << firstPointInElement+j << endl;
       }
     }
   }
 
   // create a temporary State
   // this mimics what is done behind the scenes in the finite-difference Jacobian routine
-  // there is one owned point, GID = 2
-  // there is one ghosted point, its neighbor, GID = 1
+  // there is one owned point, processor 0 has GID 0, and processor 1 (if it exists) has GID 2
+  // in either case there is one ghosted point, its neighbor, GID = 1
+  int procID = state.getScalarMultiVector()->Comm().MyPID();
   Epetra_SerialComm serialComm;
   int numOwnedIDs = 1;
   std::vector<int> tempMyGlobalIDs(2); // includes ghost
-  tempMyGlobalIDs[0] = 2;
+  // main owned point
+  if(procID == 0)
+    tempMyGlobalIDs[0] = 0;
+  else if(procID == 1)
+    tempMyGlobalIDs[0] = 2;
+  // neighbor
   tempMyGlobalIDs[1] = 1;
   std::vector<int> bondElementSize(1);
   bondElementSize[0] = 1;
@@ -448,38 +471,13 @@ void copyFrom()
   BOOST_CHECK( tempState.getBondMultiVector()->Map().SameAs( *tempBondMap ) );
 
   // copy the data from the initial State to the smaller, temporary state
-  //tempState.copyFrom(state);
-
-
-
-
-
-
-
-  Epetra_Vector& bondDamage = *(state.getData(Field_NS::BOND_DAMAGE));
-  for(int i=0 ; i<bondDamage.MyLength() ; ++i)
-    cout << "bondDamage[" << i << "] = " << bondDamage[i] << endl;
-  Epetra_Vector& tempBondDamage = *(tempState.getData(Field_NS::BOND_DAMAGE));
-  for(int i=0 ; i<tempBondDamage.MyLength() ; ++i)
-    cout << "tempBondDamage[" << i << "] = " << tempBondDamage[i] << endl;
-
-
-
-
-
-
-
-
-
+  tempState.copyLocallyOwnedDataFromState(Teuchos::RCP<PeridigmNS::State>(&state, false));
 
   // check the data
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > tempFieldSpecs = tempState.getFieldSpecs();
-  //for(unsigned int iSpec=0 ; iSpec<tempFieldSpecs->size() ; ++iSpec){
-  for(unsigned int iSpec=0 ; iSpec<bondFieldSpecs->size() ; ++iSpec){
-    //Teuchos::RCP<Epetra_Vector> data = state.getData( (*tempFieldSpecs)[iSpec] );
-    //Teuchos::RCP<Epetra_Vector> tempData = tempState.getData( (*tempFieldSpecs)[iSpec] );
-    Teuchos::RCP<Epetra_Vector> data = state.getData( (*bondFieldSpecs)[iSpec] );
-    Teuchos::RCP<Epetra_Vector> tempData = tempState.getData( (*bondFieldSpecs)[iSpec] );
+  for(unsigned int iSpec=0 ; iSpec<tempFieldSpecs->size() ; ++iSpec){
+    Teuchos::RCP<Epetra_Vector> data = state.getData( (*tempFieldSpecs)[iSpec] );
+    Teuchos::RCP<Epetra_Vector> tempData = tempState.getData( (*tempFieldSpecs)[iSpec] );
     for(int iLID=0 ; iLID<tempData->Map().NumMyElements() ; ++iLID){
       int globalID = tempData->Map().GID(iLID);
       BOOST_CHECK(globalID != -1);
@@ -491,9 +489,7 @@ void copyFrom()
       int tempFirstPointInElement = tempData->Map().FirstPointInElement(iLID);
       int stateFirstPointInElement = data->Map().FirstPointInElement(stateLID);
       for(int i=0 ; i<tempElementSize ; ++i){
-        cout << "iSpec " << iSpec << ", globalID " << globalID << ", iLID " << iLID << ", stateLID " << stateLID << ", tempElementSize " << tempElementSize << endl;
-        cout << "tempFirstPointInElement " << tempFirstPointInElement << ", stateFirstPointInElement " << stateFirstPointInElement << endl;
-        //BOOST_CHECK_EQUAL( (*tempData)[tempFirstPointInElement + i], (*data)[stateFirstPointInElement + i] );
+        BOOST_CHECK_EQUAL( (*tempData)[tempFirstPointInElement + i], (*data)[stateFirstPointInElement + i] );
       }
     }
   }
@@ -507,7 +503,7 @@ bool init_unit_test_suite()
 	test_suite* proc = BOOST_TEST_SUITE("utPeridigm_State");
 	proc->add(BOOST_TEST_CASE(&twoPointProblem));
 	proc->add(BOOST_TEST_CASE(&threePointProblem));
-	//proc->add(BOOST_TEST_CASE(&copyFrom));
+	proc->add(BOOST_TEST_CASE(&copyFrom));
 	framework::master_test_suite().add(proc);
 
 	return success;

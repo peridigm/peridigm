@@ -133,7 +133,11 @@ public:
   //! Returns RCP to the State NONE object
   Teuchos::RCP<State> getStateNONE(){ return stateNONE; }
 
-  //! Copies data from a different data manager based on global IDs; functions only if all the local IDs in the target map exist in and are locally-owned in the source map.
+  /*! \brief Copies data from a different data manager based on global IDs.
+   * 
+   * Functions only if all the local IDs in the target map exist in and are
+   * locally-owned in the source map.
+   */
   void copyLocallyOwnedDataFromDataManager(PeridigmNS::DataManager& source);
 
   //! Provides access to the Epetra_Vector specified by the given FieldSped and FieldStep.

@@ -113,6 +113,9 @@ void PeridigmNS::Material::computeJacobian(const double dt,
 
     tempDataManager.allocateData(fieldSpecs);
 
+    //tempDataManager.copyLocallyOwnedDataFromDataManager(dataManager);
+
+
     // copy data into the tempDataManager
     // \todo Can this be done with an import (parallel comm -> serial comm)?
     // \todo Write a DataManager function to perform this copy operation.
@@ -231,6 +234,11 @@ void PeridigmNS::Material::computeJacobian(const double dt,
         }
       }
     }
+
+
+
+
+
 
     // set up numOwnedPoints and ownedIDs
     // there is only one owned ID, and it has local ID zero in the tempDataManager
