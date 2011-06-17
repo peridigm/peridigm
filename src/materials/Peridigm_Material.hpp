@@ -63,7 +63,7 @@ namespace PeridigmNS {
   class Material{
 
   public:
-	
+
 	//! Standard constructor.
 	Material(const Teuchos::ParameterList & params){}
 
@@ -111,6 +111,18 @@ namespace PeridigmNS {
                     const int* neighborhoodList,
                     PeridigmNS::DataManager& dataManager,
                     PeridigmNS::SerialMatrix& jacobian) const;
+
+    enum FiniteDifferenceScheme { FORWARD_DIFFERENCE=0, CENTRAL_DIFFERENCE=1 };
+
+	//! Evaluate the jacobian via finite difference (probing)
+	void
+	computeFiniteDifferenceJacobian(const double dt,
+                                    const int numOwnedPoints,
+                                    const int* ownedIDs,
+                                    const int* neighborhoodList,
+                                    PeridigmNS::DataManager& dataManager,
+                                    PeridigmNS::SerialMatrix& jacobian,
+                                    FiniteDifferenceScheme finiteDifferenceScheme) const;
 
   private:
 	

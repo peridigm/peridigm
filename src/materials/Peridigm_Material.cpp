@@ -58,6 +58,18 @@ void PeridigmNS::Material::computeJacobian(const double dt,
                                            PeridigmNS::DataManager& dataManager,
                                            PeridigmNS::SerialMatrix& jacobian) const
 {
+  // Compute a finite-difference Jacobian using either FORWARD_DIFFERENCE or CENTRAL_DIFFERENCE
+  computeFiniteDifferenceJacobian(dt, numOwnedPoints, ownedIDs, neighborhoodList, dataManager, jacobian, CENTRAL_DIFFERENCE);
+}
+
+void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
+                                                           const int numOwnedPoints,
+                                                           const int* ownedIDs,
+                                                           const int* neighborhoodList,
+                                                           PeridigmNS::DataManager& dataManager,
+                                                           PeridigmNS::SerialMatrix& jacobian,
+                                                           FiniteDifferenceScheme finiteDifferenceScheme) const
+{
   // The Jacobian is of the form:
   //
   // dF_0x/dx_0  dF_0x/dy_0  dF_0x/dz_0  dF_0x/dx_1  dF_0x/dy_1  dF_0x/dz_1  ...  dF_0x/dx_n  dF_0x/dy_n  dF_0x/dz_n  
@@ -75,7 +87,11 @@ void PeridigmNS::Material::computeJacobian(const double dt,
 
   // Each entry is computed by finite difference:
   //
+  // Forward difference:
   // dF_0x/dx_0 = ( F_0x(perturbed x_0) - F_0x(unperturbed) ) / epsilon
+  //
+  // Central difference:
+  // dF_0x/dx_0 = ( F_0x(positive perturbed x_0) - F_0x(negative perturbed x_0) ) / ( 2.0*epsilon )
 
   double epsilon = 1.0e-6; // \todo Instead, use 1.0e-6 * smallest_radius_in_model
 
@@ -124,17 +140,19 @@ void PeridigmNS::Material::computeJacobian(const double dt,
     tempDataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&y);
     tempDataManager.getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&force);
 
-    // Create a temporary vector for storing the unperturbed force
+    // Create a temporary vector for storing force
     Teuchos::RCP<Epetra_Vector> forceVector = tempDataManager.getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1);
-    Teuchos::RCP<Epetra_Vector> unperturbedForceVector = Teuchos::rcp(new Epetra_Vector(*forceVector));
-    double* unperturbedForce;
-    unperturbedForceVector->ExtractView(&unperturbedForce);
+    Teuchos::RCP<Epetra_Vector> tempForceVector = Teuchos::rcp(new Epetra_Vector(*forceVector));
+    double* tempForce;
+    tempForceVector->ExtractView(&tempForce);
 
-    // compute and store the unperturbed force
-    updateConstitutiveData(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
-    computeForce(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
-    for(int i=0 ; i<forceVector->MyLength() ; ++i)
-      unperturbedForce[i] = force[i];
+    if(finiteDifferenceScheme == FORWARD_DIFFERENCE){
+      // compute and store the unperturbed force
+      updateConstitutiveData(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
+      computeForce(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
+      for(int i=0 ; i<forceVector->MyLength() ; ++i)
+        tempForce[i] = force[i];
+    }
 
     // perturb one dof in the neighborhood at a time and compute the force
     // the point itself plus each of its neighbors must be perturbed
@@ -144,15 +162,28 @@ void PeridigmNS::Material::computeJacobian(const double dt,
       if(iNID < numNeighbors)
         perturbID = tempNeighborhoodList[iNID+1];
       else
-        perturbID = 0;//iID;
+        perturbID = 0;
 
       for(int dof=0 ; dof<3 ; ++dof){
 
         // perturb a dof and compute the forces
         double oldY = y[3*perturbID+dof];
+
+        if(finiteDifferenceScheme == CENTRAL_DIFFERENCE){
+          // compute and store the negatively perturbed force
+          y[3*perturbID+dof] -= epsilon;
+          updateConstitutiveData(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
+          computeForce(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
+          y[3*perturbID+dof] = oldY;
+          for(int i=0 ; i<forceVector->MyLength() ; ++i)
+            tempForce[i] = force[i];
+        }
+
+        // compute the (positively) perturbed force
         y[3*perturbID+dof] += epsilon;
         updateConstitutiveData(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
         computeForce(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
+        y[3*perturbID+dof] = oldY;
 
         // fill in the corresponding Jacobian entries
         for(int i=0 ; i<numNeighbors+1 ; ++i){
@@ -161,10 +192,12 @@ void PeridigmNS::Material::computeJacobian(const double dt,
           if(i < numNeighbors)
             forceID = tempNeighborhoodList[i+1];
           else
-            forceID = 0;//iID;
+            forceID = 0;
 
           for(int d=0 ; d<3 ; ++d){
-            double value = ( force[3*forceID+d] - unperturbedForce[3*forceID+d] ) / epsilon;
+            double value = ( force[3*forceID+d] - tempForce[3*forceID+d] ) / epsilon;
+            if(finiteDifferenceScheme == CENTRAL_DIFFERENCE)
+              value *= 0.5;
             int globalForceID = tempOneDimensionalMap->GID(forceID);
             int globalPerturbID = tempOneDimensionalMap->GID(perturbID);
             int localForceID = dataManager.getOverlapIDScalarMap()->LID(globalForceID);
@@ -174,9 +207,6 @@ void PeridigmNS::Material::computeJacobian(const double dt,
             jacobian.addValue(row, col, value);
           }
         }
-
-        // unperturb the dof
-        y[3*perturbID+dof] = oldY;
       }
     }
   }
