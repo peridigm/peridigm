@@ -120,8 +120,6 @@ void PeridigmNS::State::copyLocallyOwnedDataFromState(Teuchos::RCP<PeridigmNS::S
   }
 }
 
-#include <Epetra_MpiComm.h>
-
 void PeridigmNS::State::copyLocallyOwnedMultiVectorData(Epetra_MultiVector& source, Epetra_MultiVector& target)
 {
   TEST_FOR_EXCEPTION(source.NumVectors() != target.NumVectors(), std::runtime_error,

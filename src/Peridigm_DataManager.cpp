@@ -51,11 +51,12 @@
 
 void PeridigmNS::DataManager::allocateData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > specs)
 {
-  fieldSpecs = specs;
-
+  fieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>(*specs));
+ 
   // remove duplicates
   sort(fieldSpecs->begin(), fieldSpecs->end());
-  unique(fieldSpecs->begin(), fieldSpecs->end());
+  std::vector<Field_NS::FieldSpec>::iterator newEnd = unique(fieldSpecs->begin(), fieldSpecs->end());
+  fieldSpecs->erase(newEnd, fieldSpecs->end());
 
   // loop over the specs and determine:
   // 1) the number of scalar, vector2d, and vector3d fields
@@ -308,20 +309,29 @@ void PeridigmNS::DataManager::rebalance(Teuchos::RCP<const Epetra_BlockMap> reba
 
 void PeridigmNS::DataManager::copyLocallyOwnedDataFromDataManager(PeridigmNS::DataManager& source)
 {
-  if(!stateN.is_null())
-    stateN->copyLocallyOwnedDataFromState(source.getStateN());
-  else
-    TEST_FOR_EXCEPTION(!source.getStateN().is_null(), Teuchos::NullReferenceError, "PeridigmNS::State::copyLocallyOwnedDataFromDataManager() called with incompatible source and target.");
-  
-  if(!stateNP1.is_null())
-    stateN->copyLocallyOwnedDataFromState(source.getStateNP1());
-  else
-    TEST_FOR_EXCEPTION(!source.getStateNP1().is_null(), Teuchos::NullReferenceError, "PeridigmNS::State::copyLocallyOwnedDataFromDataManager() called with incompatible source and target.");
+  if(!stateNONE.is_null()){
+    TEST_FOR_EXCEPTION(source.getStateNONE().is_null(), Teuchos::NullReferenceError, "PeridigmNS::State::copyLocallyOwnedDataFromDataManager() called with incompatible source and target.\n");
+    stateNONE->copyLocallyOwnedDataFromState(source.getStateNONE());
+  }
+  else{
+    TEST_FOR_EXCEPTION(!source.getStateNONE().is_null(), Teuchos::NullReferenceError, "PeridigmNS::State::copyLocallyOwnedDataFromDataManager() called with incompatible source and target.\n");
+  }
 
-  if(!stateNONE.is_null())
-    stateN->copyLocallyOwnedDataFromState(source.getStateNONE());
-  else
-    TEST_FOR_EXCEPTION(!source.getStateNONE().is_null(), Teuchos::NullReferenceError, "PeridigmNS::State::copyLocallyOwnedDataFromDataManager() called with incompatible source and target.");
+  if(!stateN.is_null()){
+    TEST_FOR_EXCEPTION(source.getStateN().is_null(), Teuchos::NullReferenceError, "PeridigmNS::State::copyLocallyOwnedDataFromDataManager() called with incompatible source and target.\n");
+    stateN->copyLocallyOwnedDataFromState(source.getStateN());
+  }
+  else{
+    TEST_FOR_EXCEPTION(!source.getStateN().is_null(), Teuchos::NullReferenceError, "PeridigmNS::State::copyLocallyOwnedDataFromDataManager() called with incompatible source and target.\n");
+  }
+
+  if(!stateNP1.is_null()){
+    TEST_FOR_EXCEPTION(source.getStateNP1().is_null(), Teuchos::NullReferenceError, "PeridigmNS::State::copyLocallyOwnedDataFromDataManager() called with incompatible source and target.\n");
+    stateNP1->copyLocallyOwnedDataFromState(source.getStateNP1());
+  }
+  else{
+    TEST_FOR_EXCEPTION(!source.getStateNP1().is_null(), Teuchos::NullReferenceError, "PeridigmNS::State::copyLocallyOwnedDataFromDataManager() called with incompatible source and target.\n");
+  }
 }
 
 Teuchos::RCP<Epetra_Vector> PeridigmNS::DataManager::getData(Field_NS::FieldSpec fieldSpec, Field_NS::FieldSpec::FieldStep fieldStep)
