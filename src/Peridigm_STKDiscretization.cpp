@@ -369,14 +369,16 @@ double PeridigmNS::STKDiscretization::hexVolume(std::vector<double*>& nodeCoordi
     x05[dof] = nodeCoordinates[map[5]][dof] - nodeCoordinates[map[0]][dof];
     x03[dof] = nodeCoordinates[map[3]][dof] - nodeCoordinates[map[0]][dof];
   }
+
   for(int dof=0 ; dof<3 ; ++dof){
     A[dof] = x17[dof] + x06[dof];
     B[dof] = x27[dof] + x05[dof];
     C[dof] = x47[dof] + x03[dof];
   }
-  double v1 = scalarTripleProduct(A,x27,x03);
-  double v2 = scalarTripleProduct(x06,B,x47);
-  double v3 = scalarTripleProduct(x17,x05,C);
+
+  double v1 = fabs( scalarTripleProduct(A,x27,x03) );
+  double v2 = fabs( scalarTripleProduct(x06,B,x47) );
+  double v3 = fabs( scalarTripleProduct(x17,x05,C) );
 
   return (v1+v2+v3)/12.0;
 }

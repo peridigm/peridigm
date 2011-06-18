@@ -1,0 +1,13 @@
+reset
+create brick x 3.0 y 2.0 z 2.0
+# min x node set
+nodeset 1 surface 4
+# max x node set
+nodeset 2 surface 6
+# y-axis node set
+nodeset 3 curve 7
+# z-axis node set
+nodeset 4 curve 9
+volume 1 size 1.0
+mesh volume 1
+export genesis 'Compression_QS_3x2x2_Exodus.g' overwrite
