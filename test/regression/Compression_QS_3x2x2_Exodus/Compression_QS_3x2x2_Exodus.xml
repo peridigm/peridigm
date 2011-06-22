@@ -14,31 +14,27 @@
 	  </ParameterList>
 	</ParameterList>
     <ParameterList name="Boundary Conditions">
-	  <Parameter name="Min X Node Set" type="string" value="0 1 2 3"/>
-	  <Parameter name="Max X Node Set" type="string" value="8 9 10 11"/>
-	  <Parameter name="Y Axis Node Set" type="string" value="1 3"/>
-	  <Parameter name="Z Axis Node Set" type="string" value="0 1"/>
       <ParameterList name="Prescribed Displacement Min X Face">
         <Parameter name="Type" type="string" value="Prescribed Displacement"/>
-	    <Parameter name="Node Set" type="string" value="Min X Node Set"/>
+	    <Parameter name="Node Set" type="string" value="nodelist_1"/> <!-- Min X node set, nodelist_1 defined in Exodus mesh file -->
         <Parameter name="Coordinate" type="string" value="x"/>
         <Parameter name="Value" type="double" value="0.0"/>
 	  </ParameterList>
       <ParameterList name="Prescribed Displacement Max X Face">
         <Parameter name="Type" type="string" value="Prescribed Displacement"/>
-	    <Parameter name="Node Set" type="string" value="Max X Node Set"/>
+	    <Parameter name="Node Set" type="string" value="nodelist_2"/> <!-- Max X node set, nodelist_2 defined in Exodus mesh file -->
         <Parameter name="Coordinate" type="string" value="x"/>
         <Parameter name="Value" type="double" value="-0.1"/>
 	  </ParameterList>
       <ParameterList name="Prescribed Displacement Y Axis">
         <Parameter name="Type" type="string" value="Prescribed Displacement"/>
-	    <Parameter name="Node Set" type="string" value="Y Axis Node Set"/>
+	    <Parameter name="Node Set" type="string" value="nodelist_3"/> <!-- Y Axis node set, nodelist_3 defined in Exodus mesh file -->
         <Parameter name="Coordinate" type="string" value="z"/>
         <Parameter name="Value" type="double" value="0.0"/>
 	  </ParameterList>
       <ParameterList name="Prescribed Displacement Z Axis">
         <Parameter name="Type" type="string" value="Prescribed Displacement"/>
-	    <Parameter name="Node Set" type="string" value="Z Axis Node Set"/>
+	    <Parameter name="Node Set" type="string" value="nodelist_4"/> <!-- Z Axis node set, nodelist_4 defined in Exodus mesh file -->
         <Parameter name="Coordinate" type="string" value="y"/>
         <Parameter name="Value" type="double" value="0.0"/>
 	  </ParameterList>
