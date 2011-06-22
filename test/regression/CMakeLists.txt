@@ -6,6 +6,7 @@ add_test (Compression_QS_3x2x2_np2 python ./Compression_QS_3x2x2/np2/Compression
 
 if(PERIDIGM_STK)
   add_test (Compression_QS_3x2x2_Exodus_np1 python ./Compression_QS_3x2x2_Exodus/np1/Compression_QS_3x2x2_Exodus.py)
+  add_test (Compression_QS_3x2x2_Exodus_np2 python ./Compression_QS_3x2x2_Exodus/np2/Compression_QS_3x2x2_Exodus.py)
 endif()
 
 add_custom_target( rtest
