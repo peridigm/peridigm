@@ -60,7 +60,7 @@ namespace PeridigmNS {
   public:
 
     //! Constructor.
-    AbstractDiscretization() : horizon(0.0) {}
+    AbstractDiscretization() : horizon(0.0), sphereMeshNodeSets(Teuchos::rcp(new std::map< std::string, std::vector<int> >())) {}
 
     //! Destructor.
     virtual ~AbstractDiscretization() {}
@@ -90,10 +90,16 @@ namespace PeridigmNS {
     //! Get the horizon
     double getHorizon() const { return horizon; }
 
+    //! Get the locally-owned IDs for each node set
+    Teuchos::RCP< std::map< std::string, std::vector<int> > > getNodeSets() { return sphereMeshNodeSets; } ;
+
   protected:
 
-    //! Family horizon
+    //! Horizon
     double horizon;
+
+    //! Map containing node sets (node set name and list of locally-owned node IDs for each node set).
+    Teuchos::RCP< std::map< std::string, std::vector<int> > > sphereMeshNodeSets;
 
   private:
 

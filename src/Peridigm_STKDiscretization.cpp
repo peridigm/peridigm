@@ -157,7 +157,7 @@ PdGridData PeridigmNS::STKDiscretization::getDecomp(const string& meshFileName,
   // Loop over the parts and store the element parts, side parts, and node parts.
   const stk::mesh::PartVector& parts = metaData->get_parts();
   stk::mesh::PartVector elementBlocks;
-  stk::mesh::PartVector sideSets;
+//   stk::mesh::PartVector sideSets;
   stk::mesh::PartVector nodeSets;
   for(stk::mesh::PartVector::const_iterator it = parts.begin(); it != parts.end(); ++it){
     stk::mesh::Part* const part = *it;
@@ -165,8 +165,8 @@ PdGridData PeridigmNS::STKDiscretization::getDecomp(const string& meshFileName,
       continue;
     if(part->primary_entity_rank() == metaData->element_rank())
       elementBlocks.push_back(part);
-    else if(part->primary_entity_rank() == metaData->side_rank())
-      sideSets.push_back(part);
+//     else if(part->primary_entity_rank() == metaData->side_rank())
+//       sideSets.push_back(part);
     else if(part->primary_entity_rank() == metaData->node_rank())
       nodeSets.push_back(part);
     else
@@ -180,10 +180,10 @@ PdGridData PeridigmNS::STKDiscretization::getDecomp(const string& meshFileName,
     for(stk::mesh::PartVector::const_iterator it = elementBlocks.begin(); it != elementBlocks.end(); ++it)
       ss << " " << (*it)->name();
     ss << endl;
-    ss << "  Side sets:";
-    for(stk::mesh::PartVector::const_iterator it = sideSets.begin(); it != sideSets.end(); ++it)
-      ss << " " << (*it)->name();
-    ss << endl;
+//     ss << "  Side sets:";
+//     for(stk::mesh::PartVector::const_iterator it = sideSets.begin(); it != sideSets.end(); ++it)
+//       ss << " " << (*it)->name();
+//     ss << endl;
     ss << "  Node sets:";
     for(stk::mesh::PartVector::const_iterator it = nodeSets.begin(); it != nodeSets.end(); ++it)
       ss << " " << (*it)->name();
@@ -248,6 +248,41 @@ PdGridData PeridigmNS::STKDiscretization::getDecomp(const string& meshFileName,
     centroids[iElem*3+2] /= nodeRelations.size();
     volumes[iElem] = hexVolume(nodeCoordinates);
     globalIds[iElem] = elements[iElem]->identifier() - 1; 
+  }
+
+  // loop over the node sets
+  for(unsigned int iNodeSet=0 ; iNodeSet<nodeSets.size() ; iNodeSet++){
+
+    const std::string nodeSetName = nodeSets[iNodeSet]->name();
+    TEST_FOR_EXCEPT_MSG(sphereMeshNodeSets->find(nodeSetName) != sphereMeshNodeSets->end(), "**** Duplicate node set found: " + nodeSetName + "\n");
+    (*sphereMeshNodeSets)[nodeSetName] = std::vector<int>();
+    std::vector<int>& sphereMeshNodeSet = (*sphereMeshNodeSets)[nodeSetName];
+
+    // Create a selector for all nodes in the node set
+    stk::mesh::Selector selector = 
+      stk::mesh::Selector( *nodeSets[iNodeSet] ) & ( stk::mesh::Selector( metaData->locally_owned_part() ) | stk::mesh::Selector( metaData->globally_shared_part() ) );
+
+    // Select the mesh entities that match the selector
+    std::vector<stk::mesh::Entity*> nodesInNodeSet;
+    stk::mesh::get_selected_entities(selector, bulkData.buckets(metaData->node_rank()), nodesInNodeSet);
+    
+    // Loop over the nodes in this node set
+    std::set<int> elementGlobalIds;
+    for(unsigned int iNode=0 ; iNode<nodesInNodeSet.size() ; iNode++){
+
+      // Get all the elements relations for this node and record the element ID in the node set
+      // This works because the original element ID is the same as the node ID in the sphere mesh
+      stk::mesh::PairIterRelation elementRelations = nodesInNodeSet[iNode]->relations(metaData->element_rank()); 
+      for(stk::mesh::PairIterRelation::iterator it=elementRelations.begin() ; it!=elementRelations.end() ; ++it){
+        stk::mesh::Entity* element = it->entity();
+        int globalId = element->identifier() - 1;
+        elementGlobalIds.insert(globalId);
+      }
+    }
+
+    // Load the node set into the sphereMeshNodeSets container
+    for(std::set<int>::iterator it=elementGlobalIds.begin() ; it!=elementGlobalIds.end() ; it++)
+      sphereMeshNodeSet.push_back(*it);
   }
 
   // free the meshData
