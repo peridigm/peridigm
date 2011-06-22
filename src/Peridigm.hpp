@@ -92,6 +92,10 @@ namespace PeridigmNS {
     //! Initialize discretization and maps
     void initializeDiscretization(Teuchos::RCP<AbstractDiscretization> peridigmDisc);
 
+    //! Load node sets from input deck and/or input mesh into nodeSets container
+    void initializeNodeSets(Teuchos::RCP<Teuchos::ParameterList>& bcParams,
+                            Teuchos::RCP<AbstractDiscretization> peridigmDisc);
+
     //! Initialize dataManager
     void initializeDataManager(Teuchos::RCP<AbstractDiscretization> peridigmDisc);
 
@@ -263,6 +267,9 @@ namespace PeridigmNS {
 
     //! Mothership multivector that contains all the global vectors (x, u, y, v, a, force, etc.)
     Teuchos::RCP<Epetra_MultiVector> mothership;
+
+    //! Node sets
+    Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets;
 
     //! Overlap Jacobian; filled by each processor and then assembled into the mothership Jacobian;
     Teuchos::RCP<PeridigmNS::SerialMatrix> overlapJacobian;

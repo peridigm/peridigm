@@ -104,6 +104,10 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   Teuchos::RCP<AbstractDiscretization> peridigmDisc = discFactory.create(peridigmComm);
   initializeDiscretization(peridigmDisc);
 
+  // Load node sets from input deck and/or input mesh file into nodeSets container
+  Teuchos::RCP<Teuchos::ParameterList> bcParams = Teuchos::rcp(&(peridigmParams->sublist("Problem").sublist("Boundary Conditions")), false);
+  initializeNodeSets(bcParams, peridigmDisc);
+
   // Initialize compute manager
   initializeComputeManager();
 
@@ -245,6 +249,38 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
   neighborhoodData = peridigmDisc->getNeighborhoodData();
 }
 
+
+void PeridigmNS::Peridigm::initializeNodeSets(Teuchos::RCP<Teuchos::ParameterList>& bcParams,
+                                              Teuchos::RCP<AbstractDiscretization> peridigmDisc) {
+
+  nodeSets = Teuchos::rcp(new map< string, vector<int> >());
+
+  // Load node sets defined in the input deck into the nodeSets container
+  for(Teuchos::ParameterList::ConstIterator it = bcParams->begin() ; it != bcParams->end() ; it++){
+	const string& name = it->first;
+	size_t position = name.find("Node Set");
+	if(position != string::npos){
+	  stringstream ss(Teuchos::getValue<string>(it->second));
+      TEST_FOR_EXCEPT_MSG(nodeSets->find(name) != nodeSets->end(), "**** Duplicate node set found: " + name + "\n");
+	  vector<int>& nodeList = (*nodeSets)[name];
+	  int nodeID;
+	  while(ss.good()){
+		ss >> nodeID;
+		nodeList.push_back(nodeID);
+	  }
+	}
+  }
+
+  // Load node sets defined in the mesh file into the nodeSets container
+  Teuchos::RCP< map< string, vector<int> > > discretizationNodeSets = peridigmDisc->getNodeSets();
+  for(map< string, vector<int> >::iterator it=discretizationNodeSets->begin() ; it!=discretizationNodeSets->end() ; it++){
+    string name = it->first;
+    TEST_FOR_EXCEPT_MSG(nodeSets->find(name) != nodeSets->end(), "**** Duplicate node set found: " + name + "\n");
+    vector<int>& nodeList = it->second;
+    (*nodeSets)[name] = nodeList;
+  }
+}
+
 void PeridigmNS::Peridigm::initializeDataManager(Teuchos::RCP<AbstractDiscretization> peridigmDisc) {
 
   // Instantiate data manager
@@ -270,9 +306,6 @@ void PeridigmNS::Peridigm::initializeDataManager(Teuchos::RCP<AbstractDiscretiza
   for (unsigned int i=0; i < computeSpecs.size(); i++) {
      variableSpecs->push_back(computeSpecs[i]);
   }
-
-  // Remove duplicates
-  std::unique(variableSpecs->begin(), variableSpecs->end());
 
   // Allocate data in the dataManager
   dataManager->allocateData(variableSpecs);
@@ -300,29 +333,9 @@ void PeridigmNS::Peridigm::applyInitialVelocities() {
   /*
    * COMMENT OUT ALL OF BELOW TO RUN new Initial Condition Capability
    */
-  Teuchos::ParameterList& problemParams = peridigmParams->sublist("Problem");
-  Teuchos::ParameterList& bcParams = problemParams.sublist("Boundary Conditions");
-  Teuchos::ParameterList::ConstIterator it;
-
-  // get the node sets
-  map< string, vector<int> > nodeSets;
-  for(it = bcParams.begin() ; it != bcParams.end() ; it++){
-	const string& name = it->first;
-    // \todo Change input deck so that node sets are parameter lists, not parameters, to avoid this ridiculous search.
-	size_t position = name.find("Node Set");
-	if(position != string::npos){
-	  stringstream ss(Teuchos::getValue<string>(it->second));
-	  vector<int> nodeList;
-	  int nodeID;
-	  while(ss.good()){
-		ss >> nodeID;
-		nodeList.push_back(nodeID);
-	  }
-	  nodeSets[name] = nodeList;
-	}
-  }
-
   // apply the initial conditions
+  Teuchos::ParameterList& bcParams = peridigmParams->sublist("Problem").sublist("Boundary Conditions");
+  Teuchos::ParameterList::ConstIterator it;
   for(it = bcParams.begin() ; it != bcParams.end() ; it++){
 	const string & name = it->first;
 	size_t position = name.find("Initial Velocity");
@@ -341,7 +354,8 @@ void PeridigmNS::Peridigm::applyInitialVelocities() {
 
 	  // apply initial velocity boundary conditions
 	  // to locally-owned nodes
-	  vector<int> & nodeList = nodeSets[nodeSet];
+      TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
+	  vector<int> & nodeList = (*nodeSets)[nodeSet];
 	  for(unsigned int i=0 ; i<nodeList.size() ; i++){
 		int localNodeID = threeDimensionalMap->LID(nodeList[i]);
 		if(localNodeID != -1)
@@ -364,24 +378,6 @@ void PeridigmNS::Peridigm::applyInitialDisplacements() {
   Teuchos::ParameterList& bcParams = problemParams.sublist("Boundary Conditions");
   Teuchos::ParameterList::ConstIterator it;
 
-  // get the node sets
-  map< string, vector<int> > nodeSets;
-  for(it = bcParams.begin() ; it != bcParams.end() ; it++){
-        const string& name = it->first;
-    // \todo Change input deck so that node sets are parameter lists, not parameters, to avoid this ridiculous search.
-        size_t position = name.find("Node Set");
-        if(position != string::npos){
-          stringstream ss(Teuchos::getValue<string>(it->second));
-          vector<int> nodeList;
-          int nodeID;
-          while(ss.good()){
-                ss >> nodeID;
-                nodeList.push_back(nodeID);
-          }
-          nodeSets[name] = nodeList;
-        }
-  }
-
   // apply the initial conditions
   for(it = bcParams.begin() ; it != bcParams.end() ; it++){
         const string & name = it->first;
@@ -401,7 +397,8 @@ void PeridigmNS::Peridigm::applyInitialDisplacements() {
 
           // apply initial displacement boundary conditions
           // to locally-owned nodes
-          vector<int> & nodeList = nodeSets[nodeSet];
+          TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
+          vector<int> & nodeList = (*nodeSets)[nodeSet];
           for(unsigned int i=0 ; i<nodeList.size() ; i++){
                 int localNodeID = threeDimensionalMap->LID(nodeList[i]);
                 if(localNodeID != -1)
@@ -528,7 +525,7 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
 
     // Initialize current time in this parameterlist
     Teuchos::RCP<Teuchos::ParameterList> solverParams = Teuchos::rcp(&(peridigmParams->sublist("Solver")),false);
-    double t_initial = solverParams->get("Initial Time", 0.0);
+    //double t_initial = solverParams->get("Initial Time", 0.0);
     // Initial conditions to disk written by time integrators before taking first step
     //this->synchDataManager();
     //outputManager->write(dataManager,neighborhoodData,t_initial);
@@ -976,7 +973,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
           std::cout << std::endl << "ERROR: Belos::LinearProblem failed to set up correctly!" << std::endl;
       }
       PeridigmNS::Timer::self().startTimer("Solve Linear System");
-      Belos::ReturnType ret = belosSolver->solve();
+      /* Belos::ReturnType ret = */ belosSolver->solve();
       PeridigmNS::Timer::self().stopTimer("Solve Linear System");
 
       // Apply increment to nodal positions
@@ -1106,24 +1103,6 @@ void PeridigmNS::Peridigm::applyKinematicBC(double loadIncrement,
   Teuchos::ParameterList& bcParams = problemParams.sublist("Boundary Conditions");
   Teuchos::ParameterList::ConstIterator it;
 
-  // get the node sets
-  map< string, vector<int> > nodeSets;
-  for(it = bcParams.begin() ; it != bcParams.end() ; it++){
-    const string& name = it->first;
-    // \todo Change input deck so that node sets are parameter lists, not parameters, to avoid this ridiculous search.
-    size_t position = name.find("Node Set");
-    if(position != string::npos){
-      stringstream ss(Teuchos::getValue<string>(it->second));
-      vector<int> nodeList;
-      int nodeID;
-      while(ss.good()){
-        ss >> nodeID;
-        nodeList.push_back(nodeID);
-      }
-      nodeSets[name] = nodeList;
-    }
-  }
-
   // create data structures for inserting ones and zeros into jacobian
   vector<double> jacobianRow;
   vector<int> jacobianIndicies;
@@ -1152,7 +1131,8 @@ void PeridigmNS::Peridigm::applyKinematicBC(double loadIncrement,
         coord = 2;
 
       // apply kinematic boundary conditions to locally-owned nodes
-      vector<int> & nodeList = nodeSets[nodeSet];
+      TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
+      vector<int> & nodeList = (*nodeSets)[nodeSet];
       for(unsigned int i=0 ; i<nodeList.size() ; i++){
         // zero out the row and column and put a 1.0 on the diagonal
         if(!mat.is_null()){

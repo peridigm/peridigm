@@ -135,7 +135,7 @@ namespace PeridigmNS {
 
     //! Vector containing cell volumes
     Teuchos::RCP<Epetra_Vector> cellVolume;
-	
+
     //! Struct containing neighborhoods for owned nodes.
     Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData;
 
