@@ -3,7 +3,8 @@
 	<Parameter name="Verbose" type="bool" value="false"/>
         <ParameterList name="Discretization">
           <Parameter name="Type" type="string" value="PdQuickGrid" />
-	  <Parameter name="Horizon" type="double" value="1.75"/>
+          <Parameter name="NeighborhoodType" type="string" value="Spherical"/>
+	      <Parameter name="Horizon" type="double" value="1.75"/>
           <ParameterList name="TensorProduct3DMeshGenerator">
 	  		<Parameter name="Type" type="string" value="PdQuickGrid"/>
 			<Parameter name="X Origin" type="double" value="-1.5"/>

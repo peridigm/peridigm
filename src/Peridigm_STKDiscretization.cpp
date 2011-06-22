@@ -51,6 +51,7 @@
 #include "PdZoltan.h"
 
 #include <Epetra_MpiComm.h>
+#include <Teuchos_MPIComm.hpp>
 #include <Ionit_Initializer.h>
 #include <stk_io/util/UseCase_mesh.hpp>
 #include <stk_io/IossBridge.hpp>
@@ -73,7 +74,8 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   TEST_FOR_EXCEPT_MSG(params->get<string>("Type") != "Exodus", "Invalid Type in STKDiscretization");
 
   string meshFileName = params->get<string>("Input Mesh File");
-  PdGridData decomp = getDecomp(meshFileName);
+  double horizon = params->get<double>("Horizon");
+  PdGridData decomp = getDecomp(meshFileName, horizon);
 
   createMaps(decomp);
   createNeighborhoodData(decomp);
@@ -117,12 +119,21 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
 
   // fill cell volumes
   cellVolume = Teuchos::rcp(new Epetra_Vector(Copy,*oneDimensionalMap,decomp.cellVolume.get()) );
+
+//   cout << "DECOMP:" << endl;
+//   cout << "  dimension " << decomp.dimension << endl;
+//   cout << "  globalNumPoints " << decomp.globalNumPoints << endl;
+//   cout << "  numPoints " << decomp.numPoints << endl;
+//   cout << "  sizeNeighborhoodList " << decomp.sizeNeighborhoodList << endl;
+//   cout << "  numExport " << decomp.numExport << endl;
+//   cout << "  unPack " << decomp.unPack << endl;
 }
 
 PeridigmNS::STKDiscretization::~STKDiscretization() {}
 
 
-PdGridData PeridigmNS::STKDiscretization::getDecomp(const string& meshFileName) {
+PdGridData PeridigmNS::STKDiscretization::getDecomp(const string& meshFileName,
+                                                    double horizon) {
 
   string meshType = "exodusii";
   string workingDirectory = "";
@@ -198,12 +209,20 @@ PdGridData PeridigmNS::STKDiscretization::getDecomp(const string& meshFileName) 
 
   // Select the mesh entities that match the selector
   std::vector<stk::mesh::Entity*> elements;
-  stk::mesh::get_selected_entities(selector, bulkData.buckets(metaData->element_rank() ), elements);
+  stk::mesh::get_selected_entities(selector, bulkData.buckets(metaData->element_rank()), elements);
+
+  // Determine the total number of elements in the model
+  // \todo There must be a cleaner way to determine the number of elements in a model.
+  Teuchos::MPIComm teuchosComm;
+  int localElemCount = elements.size();
+  int globalElemCount(0);
+  teuchosComm.allReduce(&localElemCount, &globalElemCount, 1, Teuchos::MPIComm::INT, Teuchos::MPIComm::SUM);
 
   // Copy data from stk into a decomp object
   int myNumElements = elements.size();
   int dimension = 3;
   PdGridData decomp = PdQuickGrid::allocatePdGridData(myNumElements, dimension);
+  decomp.globalNumPoints = globalElemCount;
   int* globalIds = decomp.myGlobalIDs.get();
   double* volumes = decomp.cellVolume.get();
   double* centroids = decomp.myX.get();
@@ -236,6 +255,9 @@ PdGridData PeridigmNS::STKDiscretization::getDecomp(const string& meshFileName) 
 
   // call the rebalance function on the current-configuration decomp
   decomp = getLoadBalancedDiscretization(decomp);
+  
+  // execute neighbor search and update the decomp to include resulting ghosts
+  decomp = createAndAddNeighborhood(decomp, horizon);
 
   return decomp;
 }

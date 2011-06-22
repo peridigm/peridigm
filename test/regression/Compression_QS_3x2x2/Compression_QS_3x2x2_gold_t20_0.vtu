@@ -3,29 +3,25 @@
   <UnstructuredGrid>
     <Piece NumberOfPoints="12" NumberOfCells="12">
       <PointData>
-        <DataArray type="Float64" Name="Displacement" NumberOfComponents="3" format="ascii" RangeMin="0" RangeMax="0.11286689563">
-          0 0 0 -0.05 0.013449271142 0.013449271142
-          -0.1 -4.807373862e-17 -2.2031537503e-16 0 0.037006324653 0
-          -0.05 0.023557053511 0.013449271142 -0.1 0.037006324653 -1.7843594283e-16
-          0 0 0.037006324653 -0.05 0.013449271142 0.023557053511
-          -0.1 -1.4962559734e-16 0.037006324653 0 0.037006324653 0.037006324653
-          -0.05 0.023557053511 0.023557053511 -0.1 0.037006324653 0.037006324653
+        <DataArray type="Float64" Name="Dilatation" format="ascii" RangeMin="-0.023243366841" RangeMax="-0.020524626456">
+          -0.023243366841 -0.020524626456 -0.023243366841 -0.023243366841 -0.020524626456 -0.023243366841
+          -0.023243366841 -0.020524626456 -0.023243366841 -0.023243366841 -0.020524626456 -0.023243366841
         </DataArray>
-        <DataArray type="Float64" Name="Velocity" NumberOfComponents="3" format="ascii" RangeMin="0" RangeMax="0">
-          0 0 0 0 0 0
-          0 0 0 0 0 0
-          0 0 0 0 0 0
-          0 0 0 0 0 0
-          0 0 0 0 0 0
-          0 0 0 0 0 0
+        <DataArray type="Float64" Name="Displacement" NumberOfComponents="3" format="ascii" RangeMin="0" RangeMax="0.10061237207">
+          0 0 0 -0.05 -0.010058207245 -0.010058207245
+          -0.1 8.7100866305e-17 -9.4084652013e-18 0 0.0078373915671 0
+          -0.05 0.017895598812 -0.010058207245 -0.1 0.0078373915671 1.629173005e-16
+          0 0 0.0078373915671 -0.05 -0.010058207245 0.017895598812
+          -0.1 9.0969207398e-18 0.0078373915671 0 0.0078373915671 0.0078373915671
+          -0.05 0.017895598812 0.017895598812 -0.1 0.0078373915671 0.0078373915671
         </DataArray>
-        <DataArray type="Float64" Name="Force_Density" NumberOfComponents="3" format="ascii" RangeMin="1.2471512345e-05" RangeMax="26397200747">
-          -26397200747 -9.5367431641e-06 -7.8678131104e-06 -5.4594129324e-06 -8.0782920122e-06 7.776543498e-06
-          26397200747 3.3378601074e-06 1.9073486328e-06 -26397200747 1.2922956903e-05 -7.8678131104e-06
-          -5.3644180298e-06 7.345341146e-06 3.2305717468e-05 26397200747 -1.7804167123e-05 2.8371810913e-05
-          -26397200747 -8.8214874268e-06 -1.6246066134e-05 -1.3649463654e-05 6.6757202148e-06 8.1062316895e-06
-          26397200747 -1.4305114746e-06 -3.9082584525e-06 -26397200747 -2.3815791025e-06 -1.6805903138e-05
-          5.4836273193e-06 8.4713101387e-06 -3.2983720303e-05 26397200747 8.9667737484e-06 8.0056488514e-06
+        <DataArray type="Float64" Name="Force_Density" NumberOfComponents="3" format="ascii" RangeMin="5.1620839021e-05" RangeMax="13059341179">
+          -13059341179 -3.6239624023e-05 -3.5643577576e-05 6.1213970184e-05 3.6418437958e-05 8.6605548859e-05
+          13059341179 1.5735626221e-05 1.59740448e-05 -13059341179 1.4582648873e-05 -1.6331672668e-05
+          2.3365020752e-05 4.6193599701e-05 -4.8398971558e-05 13059341179 -8.0376722679e-06 -1.5258789062e-05
+          -13059341179 -4.1484832764e-05 -9.7267329693e-06 0 -4.6968460083e-05 2.1416693926e-05
+          13059341179 -1.5616416931e-05 -8.7704791098e-06 -13059341179 1.4688819647e-05 1.559779048e-05
+          5.8174133301e-05 7.6338648796e-05 7.3470175266e-05 13059341179 -5.5536627769e-05 -7.9147517681e-05
         </DataArray>
         <DataArray type="Int32" Name="ID" format="ascii" RangeMin="0" RangeMax="11">
           0 1 2 3 4 5
@@ -35,17 +31,17 @@
           0 0 0 0 0 0
           0 0 0 0 0 0
         </DataArray>
-        <DataArray type="Float64" Name="Damage" format="ascii" RangeMin="0" RangeMax="0">
+        <DataArray type="Float64" Name="Velocity" NumberOfComponents="3" format="ascii" RangeMin="0" RangeMax="0">
+          0 0 0 0 0 0
+          0 0 0 0 0 0
+          0 0 0 0 0 0
+          0 0 0 0 0 0
           0 0 0 0 0 0
           0 0 0 0 0 0
         </DataArray>
-        <DataArray type="Float64" Name="Dilatation" format="ascii" RangeMin="-0.055630446275" RangeMax="-0.024191191825">
-          -0.055630446275 -0.024191191825 -0.055630446275 -0.055630446275 -0.024191191825 -0.055630446275
-          -0.055630446275 -0.024191191825 -0.055630446275 -0.055630446275 -0.024191191825 -0.055630446275
-        </DataArray>
-        <DataArray type="Float64" Name="Weighted_Volume" format="ascii" RangeMin="20" RangeMax="32">
-          32 20 32 32 20 32
-          32 20 32 32 20 32
+        <DataArray type="Float64" Name="Weighted_Volume" format="ascii" RangeMin="12" RangeMax="20">
+          12 20 12 12 20 12
+          12 20 12 12 20 12
         </DataArray>
       </PointData>
       <CellData>
@@ -61,11 +57,11 @@
         </DataArray>
       </Points>
       <Cells>
-        <DataArray type="Int32" Name="connectivity" format="ascii" RangeMin="0" RangeMax="11">
+        <DataArray type="Int64" Name="connectivity" format="ascii" RangeMin="0" RangeMax="11">
           0 1 2 3 4 5
           6 7 8 9 10 11
         </DataArray>
-        <DataArray type="Int32" Name="offsets" format="ascii" RangeMin="1" RangeMax="12">
+        <DataArray type="Int64" Name="offsets" format="ascii" RangeMin="1" RangeMax="12">
           1 2 3 4 5 6
           7 8 9 10 11 12
         </DataArray>
