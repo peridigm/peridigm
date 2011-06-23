@@ -63,7 +63,7 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
   numPID(comm->NumProc())
 {
   TEST_FOR_EXCEPT_MSG(params->get<string>("Type") != "PdQuickGrid", "Invalid Type in PdQuickGridDiscretization");
-  PdGridData decomp = getDiscretization(params);
+  QUICKGRID::Data decomp = getDiscretization(params);
 
   createMaps(decomp);
   createNeighborhoodData(decomp);
@@ -110,7 +110,7 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
 
 
 PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
-                                                                 const Teuchos::RCP<const PdGridData>& decomp) :
+                                                                 const Teuchos::RCP<const QUICKGRID::Data>& decomp) :
   comm(epetra_comm),
   numBonds(0),
   myPID(comm->MyPID()),
@@ -161,7 +161,7 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
 
 PeridigmNS::PdQuickGridDiscretization::~PdQuickGridDiscretization() {}
 
-PdGridData PeridigmNS::PdQuickGridDiscretization::getDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& params) {
+QUICKGRID::Data PeridigmNS::PdQuickGridDiscretization::getDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& params) {
 
   // This is the type of norm used to create neighborhood lists
   PdQuickGrid::NormFunctionPointer neighborhoodType = PdQuickGrid::NoOpNorm;
@@ -175,7 +175,7 @@ PdGridData PeridigmNS::PdQuickGridDiscretization::getDiscretization(const Teucho
   horizon = params->get<double>("Horizon");
 
   // param list should have a "sublist" with different types that we switch on here
-  PdGridData decomp;
+  QUICKGRID::Data decomp;
   if (params->isSublist("TensorProduct3DMeshGenerator")){
     Teuchos::RCP<Teuchos::ParameterList> pdQuickGridParamList = Teuchos::rcp(&(params->sublist("TensorProduct3DMeshGenerator")), false);
     double xStart = pdQuickGridParamList->get<double>("X Origin");
@@ -245,7 +245,7 @@ PdGridData PeridigmNS::PdQuickGridDiscretization::getDiscretization(const Teucho
 }
 
 void
-PeridigmNS::PdQuickGridDiscretization::createMaps(const PdGridData& decomp)
+PeridigmNS::PdQuickGridDiscretization::createMaps(const QUICKGRID::Data& decomp)
 {
   int dimension;
 
@@ -272,7 +272,7 @@ PeridigmNS::PdQuickGridDiscretization::createMaps(const PdGridData& decomp)
 }
 
 void
-PeridigmNS::PdQuickGridDiscretization::createNeighborhoodData(const PdGridData& decomp)
+PeridigmNS::PdQuickGridDiscretization::createNeighborhoodData(const QUICKGRID::Data& decomp)
 {
    neighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
    neighborhoodData->SetNumOwned(decomp.numPoints);

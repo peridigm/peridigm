@@ -142,7 +142,7 @@ public:
 
   //! Provides access to the Epetra_Vector specified by the given FieldSped and FieldStep.
   Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec,
-                                      Field_NS::FieldSpec::FieldStep fieldStep);
+                                      Field_ENUM::Step step);
 
   //! Returns the complete list of field specs.
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > getFieldSpecs() { return fieldSpecs; }

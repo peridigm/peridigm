@@ -169,10 +169,6 @@ private:
 	Field<T> N, NP1;
 };
 
-
-} // Field_NS
-
-
 /*
  * Constant FieldSpecs defined for use in PdITI namespace
  */
@@ -254,5 +250,7 @@ const Field_NS::FieldSpec DEVIATORIC_PLASTIC_EXTENSION
 
 const Field_NS::FieldSpec DEVIATORIC_BACK_EXTENSION
 (Field_ENUM::E_DB, Field_ENUM::BOND,    Field_ENUM::SCALAR,  Field_ENUM::TWO_STEP_INTEGRATED, "Deviatoric_Back_Extension");
+
+} // Field_NS
 
 #endif // FIELD_H_

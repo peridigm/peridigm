@@ -334,16 +334,16 @@ void PeridigmNS::DataManager::copyLocallyOwnedDataFromDataManager(PeridigmNS::Da
   }
 }
 
-Teuchos::RCP<Epetra_Vector> PeridigmNS::DataManager::getData(Field_NS::FieldSpec fieldSpec, Field_NS::FieldSpec::FieldStep fieldStep)
+Teuchos::RCP<Epetra_Vector> PeridigmNS::DataManager::getData(Field_NS::FieldSpec fieldSpec, Field_ENUM::Step step)
 {
   Teuchos::RCP<Epetra_Vector> data;
-  if(fieldStep == Field_NS::FieldSpec::STEP_NONE){
+  if(step == Field_ENUM::STEP_NONE){
     data = stateNONE->getData(fieldSpec);
   }
-  else if(fieldStep == Field_NS::FieldSpec::STEP_N){
+  else if(step == Field_ENUM::STEP_N){
     data = stateN->getData(fieldSpec);
   }
-  else if(fieldStep == Field_NS::FieldSpec::STEP_NP1){
+  else if(step == Field_ENUM::STEP_NP1){
     data = stateNP1->getData(fieldSpec);
   }
   else{

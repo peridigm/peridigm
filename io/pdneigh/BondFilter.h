@@ -13,7 +13,7 @@
 #include <stdexcept>
 #include <string>
 #include <tr1/memory>
-#include "Vector.h"
+#include "utilities/Vector.h"
 
 using std::size_t;
 using std::tr1::shared_ptr;

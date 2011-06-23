@@ -12,7 +12,7 @@
 #include <set>
 
 #include "BondFilter.h"
-#include "Array.h"
+#include "utilities/Array.h"
 
 #include "Epetra_BlockMap.h"
 #include <map>
