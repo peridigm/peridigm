@@ -78,11 +78,6 @@ add_executable(utZoltanQuery_packUnpackPointsMultiFunction utZoltanQuery_packUnp
 target_link_libraries(utZoltanQuery_packUnpackPointsMultiFunction PdNeigh QuickGrid Utilities ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 add_test (utZoltanQuery_packUnpackPointsMultiFunction python run_unit_test.py ./utZoltanQuery_packUnpackPointsMultiFunction)
 
-#
-add_executable(ut_OverlapDistributor ut_OverlapDistributor.cxx)
-target_link_libraries(ut_OverlapDistributor  PdITIOperators QuickGrid PdNeigh PdVTK Utilities ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
-add_test (ut_OverlapDistributor python run_unit_test.py mpiexec -np 3 ./ut_OverlapDistributor)
-
 
 
 
