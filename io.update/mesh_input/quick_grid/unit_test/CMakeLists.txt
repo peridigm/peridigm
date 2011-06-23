@@ -21,7 +21,7 @@ target_link_libraries(ut_QuickGrid_solidCylinder_np2  QuickGrid PdVTK PdNeigh ${
 add_test (ut_QuickGrid_solidCylinder_np2 python run_unit_test.py mpiexec -np 2 ./ut_QuickGrid_solidCylinder_np2)
 
 add_executable(ut_QuickGridMPI_np2_3x3x2 ut_QuickGridMPI_np2_3x3x2.cxx)
-target_link_libraries(ut_QuickGridMPI_np2_3x3x2  QuickGrid PdNeigh ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+target_link_libraries(ut_QuickGridMPI_np2_3x3x2 PdNeigh QuickGrid  ${VTK_LIBS} ${TRILINOS_LIBS}  ${UT_REQUIRED_LIBS})
 add_test (ut_QuickGridMPI_np2_3x3x2 python run_unit_test.py mpiexec -np 2 ./ut_QuickGridMPI_np2_3x3x2)
 
 add_executable(ut_QuickGridMPI_np3 ut_QuickGridMPI_np3.cxx)
