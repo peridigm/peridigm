@@ -75,12 +75,14 @@ void PeridigmNS::State::allocateBondData(Teuchos::RCP< std::vector<Field_NS::Fie
     fieldSpecToDataMap[sortedFieldSpecs[i]] = Teuchos::rcp((*bondData)(i), false);
 }
 
-Teuchos::RCP< std::vector<Field_NS::FieldSpec> > PeridigmNS::State::getFieldSpecs(Teuchos::RCP<Field_NS::FieldSpec::FieldLength> fieldLength)
+Teuchos::RCP< std::vector<Field_NS::FieldSpec> > PeridigmNS::State::getFieldSpecs(Teuchos::RCP<Field_ENUM::Relation> relation,
+				                                                                  Teuchos::RCP<Field_ENUM::Length> length)
 {
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
   std::map< Field_NS::FieldSpec, Teuchos::RCP<Epetra_Vector> >::const_iterator it;
   for(it = fieldSpecToDataMap.begin() ; it != fieldSpecToDataMap.end() ; ++it){
-    if(fieldLength.is_null() || it->first.getLength() == *fieldLength)
+	// \todo Rework me.
+    if((length.is_null() && relation.is_null()) || (it->first.getLength() == *length && it->first.getRelation() == *relation))
       fieldSpecs->push_back(it->first);
   }
   return fieldSpecs;

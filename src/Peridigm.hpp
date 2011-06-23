@@ -146,7 +146,7 @@ namespace PeridigmNS {
     void rebalance();
 
     //! Compute a parallel decomposion based on the current configuration
-    PdGridData currentConfigurationDecomp();
+    QUICKGRID::Data currentConfigurationDecomp();
 
     //! Create a rebalanced bond map
     Teuchos::RCP<Epetra_BlockMap> createRebalancedBondMap(Teuchos::RCP<Epetra_BlockMap> rebalancedOneDimensionalMap,
@@ -166,7 +166,7 @@ namespace PeridigmNS {
     void contactSearch(Teuchos::RCP<const Epetra_BlockMap> rebalancedOneDimensionalMap,
                        Teuchos::RCP<const Epetra_BlockMap> rebalancedBondMap,
                        Teuchos::RCP<const Epetra_Vector> rebalancedNeighborGlobalIDs,
-                       PdGridData& rebalancedDecomp,
+                       QUICKGRID::Data& rebalancedDecomp,
                        Teuchos::RCP< std::map<int, std::vector<int> > > contactNeighborGlobalIDs,
                        Teuchos::RCP< std::set<int> > offProcessorContactIDs);
 

@@ -89,7 +89,7 @@ void runTest() {
 	/*
 	 * Write problem set up parameters to file
 	 */
-	Field_NS::Field<double> volField(VOLUME,numPoints);
+	Field_NS::Field<double> volField(Field_NS::VOLUME,numPoints);
 	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(decomp.myX,numPoints);
 	PdVTK::writeField<double>(grid,volField);
 	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("solidCylinderMesh.pvtu", numProcs, myRank);

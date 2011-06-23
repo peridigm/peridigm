@@ -51,7 +51,7 @@
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_Comm.h>
 #include "Peridigm_AbstractDiscretization.hpp"
-#include "PdGridData.h"
+#include "mesh_input/quick_grid/QuickGridData.h"
 
 namespace PeridigmNS {
 
@@ -66,7 +66,7 @@ namespace PeridigmNS {
 
     //! Constructor
     PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetraComm,
-                              const Teuchos::RCP<const PdGridData>& decomp);
+                              const Teuchos::RCP<const QUICKGRID::Data>& decomp);
 
     //! Destructor
     virtual ~PdQuickGridDiscretization();
@@ -101,18 +101,18 @@ namespace PeridigmNS {
     PdQuickGridDiscretization& operator=(const PdQuickGridDiscretization&);
 
     //! Returns the discretization object, switches on types of PdQuickGrids.
-    PdGridData getDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& param);
+    QUICKGRID::Data getDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& param);
 
   protected:
 
     //! Create maps
-    void createMaps(const PdGridData& decomp);
+    void createMaps(const QUICKGRID::Data& decomp);
 
     //! Create vectors
     void createVectors();
 
     //! Create NeighborhoodData
-    void createNeighborhoodData(const PdGridData& decomp);
+    void createNeighborhoodData(const QUICKGRID::Data& decomp);
 
     //! Epetra communicator
     Teuchos::RCP<const Epetra_Comm> comm;
