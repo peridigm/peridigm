@@ -176,6 +176,7 @@ ${Boost_LIBRARIES}
 )
 
 add_subdirectory (io)
+add_subdirectory (io.update)
 add_subdirectory (io/unitTest)
 add_subdirectory (src)
 add_subdirectory (material_evaluation)
