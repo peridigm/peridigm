@@ -48,7 +48,7 @@
 #ifndef PERIDIGM_DATAMANAGER_HPP
 #define PERIDIGM_DATAMANAGER_HPP
 
-#include "Field.h"
+#include "mesh_output/vtk/Field.h"
 #include "Peridigm_State.hpp"
 
 namespace PeridigmNS {

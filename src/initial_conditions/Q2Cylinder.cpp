@@ -55,7 +55,7 @@ using std::string;
 namespace InitialConditionsNS {
 
 
-Q2Cylinder::Q2Cylinder(double _vr0, double _vr1, double _vz0, double _z0, double _a, const VectorUtilsNS::Vector3D& _center):
+Q2Cylinder::Q2Cylinder(double _vr0, double _vr1, double _vz0, double _z0, double _a, const UTILITIES::Vector3D& _center):
 		vr0(_vr0), vr1(_vr1), vz0(_vz0), z0(_z0), a(_a), center(_center)
 {}
 

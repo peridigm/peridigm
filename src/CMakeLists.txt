@@ -71,7 +71,7 @@ set(utPeridigm_SOURCES
     Peridigm_Timer.cpp
     ${computeSOURCES}
     ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp
-    ../io/Field.cxx
+    ../io/mesh_output/vtk/Field.cxx
     ./materials/Peridigm_Material.cpp
     ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
     ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
@@ -120,7 +120,7 @@ target_link_libraries(utPeridigm_PdQuickGridDiscretization_MPI_np2
 add_executable(utPeridigm_State
                Peridigm_State.cpp
                utPeridigm_State.cpp
-               ../io/Field.cxx)
+               ../io/mesh_output/vtk/Field.cxx)
 target_link_libraries(utPeridigm_State
                       ${Trilinos_LIBRARIES}
                       ${REQUIRED_LIBS}
@@ -131,7 +131,7 @@ add_executable(utPeridigm_LinearElasticIsotropicMaterial
                Peridigm_State.cpp
                Peridigm_DataManager.cpp
                Peridigm_SerialMatrix.cpp
-               ../io/Field.cxx
+               ../io/mesh_output/vtk/Field.cxx
                ./materials/Peridigm_Material.cpp
 		       ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
                ./materials/Peridigm_CriticalStretchDamageModel.cpp
@@ -150,7 +150,7 @@ add_executable(utPHAL_UpdateForceState
                Peridigm_State.cpp
                Peridigm_DataManager.cpp
                Peridigm_SerialMatrix.cpp
-               ../io/Field.cxx
+               ../io/mesh_output/vtk/Field.cxx
                ./materials/Peridigm_Material.cpp
 	       ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
                ./materials/Peridigm_CriticalStretchDamageModel.cpp
@@ -181,7 +181,7 @@ add_executable(utPHAL_EvaluateForce
                Peridigm_State.cpp
                Peridigm_DataManager.cpp
                Peridigm_SerialMatrix.cpp
-               ../io/Field.cxx
+               ../io/mesh_output/vtk/Field.cxx
                ./materials/Peridigm_Material.cpp
 	           ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
                ./materials/Peridigm_CriticalStretchDamageModel.cpp
