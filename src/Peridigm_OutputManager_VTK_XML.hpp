@@ -47,7 +47,7 @@
 #define PERIDIGM_OUTPUTMANAGER_VTK_XML_HPP
 
 #include <Peridigm_OutputManager.hpp>
-#include <PdVTK.h>
+#include <mesh_output/vtk/PdVTK.h>
 
 #include <Teuchos_ParameterList.hpp>
 

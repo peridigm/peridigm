@@ -86,7 +86,7 @@ RCP<InitialCondition> getInstance(const Teuchos::ParameterList& peridigmParams) 
 
 RCP<InitialCondition> getQ2CylinderIC(const Teuchos::ParameterList& peridigmParams) {
 	double vr0, vr1, vz0, z0, a;
-	VectorUtilsNS::Vector3D center;
+	UTILITIES::Vector3D center;
 
 	const Teuchos::ParameterList& params = peridigmParams.sublist("Problem").sublist("Initial Conditions");
 

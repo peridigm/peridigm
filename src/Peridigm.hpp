@@ -68,7 +68,7 @@
 #include "Peridigm_OutputManager_VTK_XML.hpp"
 #include "Peridigm_ComputeManager.hpp"
 
-#include "PdGridData.h"
+#include "mesh_input/quick_grid/QuickGridData.h"
 
 namespace PeridigmNS {
 
