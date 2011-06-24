@@ -46,9 +46,8 @@
 //@HEADER
 
 #include "Peridigm_PdQuickGridDiscretization.hpp"
-#include "PdQuickGrid.h"
-#include "PdQuickGridParallel.h"
-#include "PdZoltan.h"
+#include "quick_grid/QuickGrid.h"
+#include "pdneigh/PdZoltan.h"
 #include <vector>
 #include <list>
 #include <sstream>
@@ -349,4 +348,78 @@ PeridigmNS::PdQuickGridDiscretization::getNumBonds() const
 {
   return numBonds;
 }
+
+template<class T> struct ArrayDeleter{
+	void operator()(T* d) {
+		delete [] d;
+	}
+};
+
+const Epetra_BlockMap PeridigmNS::PdQuickGridDiscretization::getOverlap(int ndf, int numShared, int*shared, int numOwned,const  int* owned, const Epetra_Comm& comm){
+
+	int numPoints = numShared+numOwned;
+	shared_ptr<int> ids(new int[numPoints],ArrayDeleter<int>());
+	int *ptr = ids.get();
+
+	for(int j=0;j<numOwned;j++,ptr++)
+		*ptr=owned[j];
+
+	for(int j=0;j<numShared;j++,ptr++)
+		*ptr=shared[j];
+
+	return Epetra_BlockMap(-1,numPoints, ids.get(),ndf, 0,comm);
+
+}
+
+static const Epetra_BlockMap PeridigmNS::PdQuickGridDiscretization::getOwnedMap(const Epetra_Comm& comm,const QUICKGRID::Data& gridData, int ndf) {
+	int numShared=0;
+	int *sharedPtr=NULL;
+	int numOwned = gridData.numPoints;
+	const int *ownedPtr = gridData.myGlobalIDs.get();
+	return getOverlap(ndf, numShared,sharedPtr,numOwned,ownedPtr,comm);
+}
+
+static const Epetra_BlockMap PeridigmNS::PdQuickGridDiscretization::getOverlapMap(const Epetra_Comm& comm,const QUICKGRID::Data& gridData, int ndf) {
+	std::pair<int, std::tr1::shared_ptr<int> > sharedPair = getSharedGlobalIds(gridData);
+	std::tr1::shared_ptr<int> sharedPtr = sharedPair.second;
+	int numShared = sharedPair.first;
+	int *shared = sharedPtr.get();
+	int *owned = gridData.myGlobalIDs.get();
+	int numOwned = gridData.numPoints;
+	return getOverlap(ndf,numShared,shared,numOwned,owned,comm);
+}
+
+std::pair<int, std::tr1::shared_ptr<int> > PeridigmNS::PdQuickGridDiscretization::getSharedGlobalIds(const QUICKGRID::Data&){
+	std::set<int> ownedIds(gridData.myGlobalIDs.get(),gridData.myGlobalIDs.get()+gridData.numPoints);
+	std::set<int> shared;
+	int *neighPtr = gridData.neighborhoodPtr.get();
+	int *neigh = gridData.neighborhood.get();
+	std::set<int>::const_iterator ownedIdsEnd = ownedIds.end();
+	for(int p=0;p<gridData.numPoints;p++){
+		int ptr = neighPtr[p];
+		int numNeigh = neigh[ptr];
+		for(int n=1;n<=numNeigh;n++){
+			int id = neigh[ptr+n];
+			/*
+			 * look for id in owned points
+			 */
+			 if(ownedIdsEnd == ownedIds.find(id)){
+				 /*
+				  * add this point to shared
+				  */
+				 shared.insert(id);
+			 }
+		}
+	}
+
+	// Copy set into shared ptr
+	shared_ptr<int> sharedGlobalIds(new int[shared.size()],PdQuickGrid::Deleter<int>());
+	int *sharedPtr = sharedGlobalIds.get();
+	set<int>::iterator it;
+	for ( it=shared.begin() ; it != shared.end(); it++, sharedPtr++ )
+		*sharedPtr = *it;
+
+	return std::pair<int, std::tr1::shared_ptr<int> >(shared.size(),sharedGlobalIds);
+}
+
 

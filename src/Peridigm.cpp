@@ -67,6 +67,7 @@
 
 #include "Peridigm.hpp"
 #include "Peridigm_DiscretizationFactory.hpp"
+#include "Peridigm_PdQuickGridDiscretization.hpp"
 #include "Peridigm_OutputManager_VTK_XML.hpp"
 #include "Peridigm_ComputeManager.hpp"
 #include "contact/Peridigm_ContactModel.hpp"
@@ -74,6 +75,7 @@
 #include "materials/Peridigm_LinearElasticIsotropicMaterial.hpp"
 #include "materials/Peridigm_IsotropicElasticPlasticMaterial.hpp"
 #include "materials/Peridigm_ViscoelasticStandardLinearSolid.hpp"
+#include "mesh_input/quick_grid/QuickGrid.h"
 #include "mesh_input/quick_grid/QuickGridData.h"
 #include "pdneigh/PdZoltan.h"
 #include "pdneigh/NeighborhoodList.h"
@@ -1290,13 +1292,11 @@ void PeridigmNS::Peridigm::rebalance() {
 
   // \todo Handle serial case.  We don't need to rebalance, but we still want to update the contact search.
   QUICKGRID::Data rebalancedDecomp = currentConfigurationDecomp();
-  shared_ptr<Epetra_Comm> comm(peridigmComm.getRawPtr(),&FalseDeleter);
-  PDNEIGH::NeighborhoodList list(comm,rebalancedDecomp.zoltanPtr.get(),rebalancedDecomp.numPoints,rebalancedDecomp.myGlobalIDs,rebalancedDecomp.myX,horizon);
 
-  Teuchos::RCP<Epetra_BlockMap> rebalancedOneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOwnedMap(*peridigmComm, rebalancedDecomp, 1)));
+  Teuchos::RCP<Epetra_BlockMap> rebalancedOneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGridDiscretization::getOwnedMap(*peridigmComm, rebalancedDecomp, 1)));
   Teuchos::RCP<const Epetra_Import> oneDimensionalMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedOneDimensionalMap, *oneDimensionalMap));
 
-  Teuchos::RCP<Epetra_BlockMap> rebalancedThreeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOwnedMap(*peridigmComm, rebalancedDecomp, 3)));
+  Teuchos::RCP<Epetra_BlockMap> rebalancedThreeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGridDiscretization::getOwnedMap(*peridigmComm, rebalancedDecomp, 3)));
   Teuchos::RCP<const Epetra_Import> threeDimensionalMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedThreeDimensionalMap, *threeDimensionalMap));
 
   Teuchos::RCP<Epetra_BlockMap> rebalancedBondMap = createRebalancedBondMap(rebalancedOneDimensionalMap, oneDimensionalMapImporter);
@@ -1411,7 +1411,7 @@ QUICKGRID::Data PeridigmNS::Peridigm::currentConfigurationDecomp() {
   // \todo myGlobalIDs, cellVolume, and myX are allocated in allocatePdGridData(), don't need to allocate here.
   
   // fill myGlobalIDs
-  shared_ptr<int> myGlobalIDs(new int[myNumElements], PdQuickGrid::Deleter<int>());
+  shared_ptr<int> myGlobalIDs(new int[myNumElements], PeridigmNS::PdQuickGridDiscretization::ArrayDeleter<int>());
   int* myGlobalIDsPtr = myGlobalIDs.get();
   int* gIDs = oneDimensionalMap->MyGlobalElements();
   memcpy(myGlobalIDsPtr, gIDs, myNumElements*sizeof(int));
@@ -1419,12 +1419,12 @@ QUICKGRID::Data PeridigmNS::Peridigm::currentConfigurationDecomp() {
 
   // fill myX and cellVolume
   // use current positions for x
-  shared_ptr<double> myX(new double[myNumElements*dimension], PdQuickGrid::Deleter<double>());
+  shared_ptr<double> myX(new double[myNumElements*dimension], PeridigmNS::PdQuickGridDiscretization::ArrayDeleter<double>());
   double* myXPtr = myX.get();
   double* yPtr;
   y->ExtractView(&yPtr);
   memcpy(myXPtr, yPtr, myNumElements*dimension*sizeof(double));
-  shared_ptr<double> cellVolume(new double[myNumElements], PdQuickGrid::Deleter<double>());
+  shared_ptr<double> cellVolume(new double[myNumElements], PeridigmNS::PdQuickGridDiscretization::ArrayDeleter<double>());
   double* cellVolumePtr = cellVolume.get();
   double* cellVolumeOverlapPtr;
   dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&cellVolumeOverlapPtr);
@@ -1437,7 +1437,7 @@ QUICKGRID::Data PeridigmNS::Peridigm::currentConfigurationDecomp() {
   decomp.cellVolume = cellVolume;
 
   // call the rebalance function on the current-configuration decomp
-  decomp = getLoadBalancedDiscretization(decomp);
+  decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
 
   return decomp;
 }
