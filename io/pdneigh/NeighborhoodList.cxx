@@ -35,7 +35,7 @@ using UTILITIES::PointCenteredBoundingBox;
  */
 shared_ptr<Epetra_BlockMap> getOverlap(int ndf, int numShared, const int* shared, int numOwned, const int* owned, const Epetra_Comm& comm);
 
-shared_ptr<Epetra_Comm> NeighborhoodList::get_Epetra_Comm() const {
+shared_ptr<const Epetra_Comm> NeighborhoodList::get_Epetra_Comm() const {
 	return epetraComm;
 }
 
@@ -71,6 +71,10 @@ shared_ptr<int> NeighborhoodList::get_local_neighborhood() const {
 	return local_neighborhood.get_shared_ptr();
 }
 
+shared_ptr<int> NeighborhoodList::get_owned_gids() const {
+	return owned_gids;
+}
+
 shared_ptr<int> NeighborhoodList::get_shared_gids() const {
 	return sharedGIDs.get_shared_ptr();
 }
@@ -96,7 +100,7 @@ int NeighborhoodList::get_num_neigh (int localId) const {
 
 NeighborhoodList::NeighborhoodList
 (
-		shared_ptr<Epetra_Comm> comm,
+		shared_ptr<const Epetra_Comm> comm,
 		struct Zoltan_Struct* zz,
 		size_t numOwnedPoints,
 		shared_ptr<int>& ownedGIDs,

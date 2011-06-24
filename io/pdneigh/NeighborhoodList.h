@@ -84,7 +84,7 @@ private:
 
 public:
 	NeighborhoodList(
-			shared_ptr<Epetra_Comm> comm,
+			shared_ptr<const Epetra_Comm> comm,
 			struct Zoltan_Struct* zz,
 			size_t numOwnedPoints,
 			shared_ptr<int>& ownedGIDs,
@@ -99,6 +99,7 @@ public:
 	shared_ptr<int> get_neighborhood_ptr() const;
 	shared_ptr<int> get_neighborhood() const;
 	shared_ptr<int> get_local_neighborhood() const;
+	shared_ptr<int> get_owned_gids() const;
 	shared_ptr<int> get_shared_gids() const;
 	const int* get_neighborhood (int localId) const;
 	const int* get_local_neighborhood (int localId) const;
@@ -107,7 +108,7 @@ public:
 	shared_ptr<double> get_owned_x() const;
 	shared_ptr<Epetra_BlockMap> getOwnedMap(int ndf) const;
 	shared_ptr<Epetra_BlockMap> getOverlapMap(int ndf) const;
-	shared_ptr<Epetra_Comm> get_Epetra_Comm() const;
+	shared_ptr<const Epetra_Comm> get_Epetra_Comm() const;
 	shared_ptr<Epetra_Distributor> create_Epetra_Distributor() const;
 	/*
 	 * This function is primarily intended for internal force operators
@@ -126,7 +127,7 @@ private:
 	shared_ptr<Epetra_BlockMap> create_Epetra_BlockMap(Epetra_MapTag key);
 
 private:
-	shared_ptr<Epetra_Comm> epetraComm;
+	shared_ptr<const Epetra_Comm> epetraComm;
 	std::map<Epetra_MapTag, shared_ptr<Epetra_BlockMap>, MapComparator > epetra_block_maps;
 	size_t num_owned_points, size_neighborhood_list;
 	double horizon;
