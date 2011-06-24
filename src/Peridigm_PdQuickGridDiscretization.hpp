@@ -92,7 +92,18 @@ namespace PeridigmNS {
     //! Get the number of bonds on this processor
     unsigned int getNumBonds() const;
 
+    template<class T> struct ArrayDeleter{
+    	void operator()(T* d) {
+    		delete [] d;
+    	}
+    };
+    static const Epetra_BlockMap getOwnedMap(const Epetra_Comm& comm,const QUICKGRID::Data& gridData, int ndf);
+    static const Epetra_BlockMap getOverlapMap(const Epetra_Comm& comm, const QUICKGRID::Data& gridData, int ndf);
+
+
   private:
+
+    static std::pair<int, std::tr1::shared_ptr<int> > getSharedGlobalIds(const QUICKGRID::Data& gridData);
 
     //! Private to prohibit copying
     PdQuickGridDiscretization(const PdQuickGridDiscretization&);

@@ -9,8 +9,8 @@
 #define QUICKGRID_H_
 
 #include <vector>
-#include "Array.h"
-#include "Vector.h"
+#include "utilities/Array.h"
+#include "utilities/Vector.h"
 #include "QuickGridData.h"
 #include <functional>
 
