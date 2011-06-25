@@ -206,6 +206,9 @@ const Field_NS::FieldSpec DSF
 const Field_NS::FieldSpec BC_MASK
 (Field_ENUM::BC_MASK,  Field_ENUM::POINT,               Field_ENUM::SCALAR,    Field_ENUM::SCRATCH,      "BC_MASK");
 
+const Field_NS::FieldSpec DAMAGE
+(Field_ENUM::DAMAGE,  Field_ENUM::POINT,               Field_ENUM::SCALAR,    Field_ENUM::SCRATCH,      "Damage");
+
 /**
  * POINT VECTOR3D FieldSpecs
  */
@@ -242,8 +245,8 @@ const Field_NS::FieldSpec RESID3D
 /**
  * BOND SCALAR FieldSpecs
  */
-const Field_NS::FieldSpec DAMAGE
-(Field_ENUM::DAMAGE, Field_ENUM::BOND,  Field_ENUM::SCALAR, Field_ENUM::SCRATCH, "Damage");
+const Field_NS::FieldSpec BOND_DAMAGE
+(Field_ENUM::BOND_DAMAGE, Field_ENUM::BOND,  Field_ENUM::SCALAR, Field_ENUM::SCRATCH, "Bond Damage");
 
 const Field_NS::FieldSpec DEVIATORIC_PLASTIC_EXTENSION
 (Field_ENUM::E_DP, Field_ENUM::BOND,   Field_ENUM::SCALAR, Field_ENUM::TWO_STEP_INTEGRATED, "Deviatoric_Plastic_Extension");
