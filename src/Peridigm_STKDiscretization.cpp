@@ -46,9 +46,9 @@
 //@HEADER
 
 #include "Peridigm_STKDiscretization.hpp"
-#include "PdQuickGrid.h"
-#include "PdQuickGridParallel.h"
-#include "PdZoltan.h"
+#include "pdneigh/NeighborhoodList.h"
+//#include "quck_grid/QuickGridParallel.h"
+#include "pdneigh/PdZoltan.h"
 
 #include <Epetra_MpiComm.h>
 #include <Teuchos_MPIComm.hpp>
@@ -75,7 +75,7 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
 
   string meshFileName = params->get<string>("Input Mesh File");
   double horizon = params->get<double>("Horizon");
-  PdGridData decomp = getDecomp(meshFileName, horizon);
+  QUICKGRID::Data decomp = getDecomp(meshFileName, horizon);
 
   createMaps(decomp);
   createNeighborhoodData(decomp);
@@ -132,8 +132,8 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
 PeridigmNS::STKDiscretization::~STKDiscretization() {}
 
 
-PdGridData PeridigmNS::STKDiscretization::getDecomp(const string& meshFileName,
-                                                    double horizon) {
+QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileName,
+                                                         double horizon) {
 
   string meshType = "exodusii";
   string workingDirectory = "";
@@ -221,7 +221,7 @@ PdGridData PeridigmNS::STKDiscretization::getDecomp(const string& meshFileName,
   // Copy data from stk into a decomp object
   int myNumElements = elements.size();
   int dimension = 3;
-  PdGridData decomp = PdQuickGrid::allocatePdGridData(myNumElements, dimension);
+  QUICKGRID::Data decomp = QUICKGRID::allocatePdGridData(myNumElements, dimension);
   decomp.globalNumPoints = globalElemCount;
   int* globalIds = decomp.myGlobalIDs.get();
   double* volumes = decomp.cellVolume.get();
@@ -289,56 +289,57 @@ PdGridData PeridigmNS::STKDiscretization::getDecomp(const string& meshFileName,
   meshData = Teuchos::RCP<stk::io::util::MeshData>();
 
   // call the rebalance function on the current-configuration decomp
-  decomp = getLoadBalancedDiscretization(decomp);
+  decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
   
   // execute neighbor search and update the decomp to include resulting ghosts
-  decomp = createAndAddNeighborhood(decomp, horizon);
+  // \todo Fix createAndAddNeighborhood
+  // decomp = createAndAddNeighborhood(decomp, horizon);
 
   return decomp;
 }
 
 
 void
-PeridigmNS::STKDiscretization::createMaps(const PdGridData& decomp)
+PeridigmNS::STKDiscretization::createMaps(const QUICKGRID::Data& decomp)
 {
   int dimension;
 
   // oneDimensionalMap
   // used for global IDs and scalar data
   dimension = 1;
-  oneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOwnedMap(*comm, decomp, dimension)));
+  oneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGridDiscretization::getOwnedMap(*comm, decomp, dimension)));
 
   // oneDimensionalOverlapMap
   // used for global IDs and scalar data, includes ghosts
   dimension = 1;
-  oneDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOverlapMap(*comm, decomp, dimension)));
+  oneDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGridDiscretization::getOverlapMap(*comm, decomp, dimension)));
 
   // threeDimensionalMap
   // used for R3 vector data, e.g., u, v, etc.
   dimension = 3;
-  threeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOwnedMap(*comm, decomp, dimension)));
+  threeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGridDiscretization::getOwnedMap(*comm, decomp, dimension)));
 
   // threeDimensionalOverlapMap
   // used for R3 vector data, e.g., u, v, etc.,  includes ghosts
   dimension = 3;
-  threeDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOverlapMap(*comm, decomp, dimension)));
+  threeDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGridDiscretization::getOverlapMap(*comm, decomp, dimension)));
 
 }
 
 void
-PeridigmNS::STKDiscretization::createNeighborhoodData(const PdGridData& decomp)
+PeridigmNS::STKDiscretization::createNeighborhoodData(const QUICKGRID::Data& decomp)
 {
    neighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
    neighborhoodData->SetNumOwned(decomp.numPoints);
    memcpy(neighborhoodData->OwnedIDs(), 
- 		 PdQuickGrid::getLocalOwnedIds(decomp, *oneDimensionalOverlapMap).get(),
+ 		 PdQuickGridDiscretization::getLocalOwnedIds(decomp, *oneDimensionalOverlapMap).get(),
  		 decomp.numPoints*sizeof(int));
    memcpy(neighborhoodData->NeighborhoodPtr(), 
  		 decomp.neighborhoodPtr.get(),
  		 decomp.numPoints*sizeof(int));
    neighborhoodData->SetNeighborhoodListSize(decomp.sizeNeighborhoodList);
    memcpy(neighborhoodData->NeighborhoodList(),
- 		 PdQuickGrid::getLocalNeighborList(decomp, *oneDimensionalOverlapMap).get(),
+ 		 PdQuickGridDiscretization::getLocalNeighborList(decomp, *oneDimensionalOverlapMap).get(),
  		 decomp.sizeNeighborhoodList*sizeof(int));
 }
 

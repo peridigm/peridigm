@@ -52,7 +52,7 @@
 #include "Peridigm_ModelEvaluator.hpp"
 #include "Peridigm_DiscretizationFactory.hpp"
 #include "PdGridData.h"
-#include "PdQuickGrid.h"
+#include "mesh_input/quick_grid/QuickGrid.h"
 #include "PdZoltan.h"
 #include <sstream>
 

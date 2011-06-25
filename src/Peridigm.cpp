@@ -872,7 +872,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
   int verbosity = Belos::Errors + Belos::Warnings;
   belosList.set( "Verbosity", verbosity );
   belosList.set( "Output Style", Belos::Brief );
-  RCP< Belos::SolverManager<double,Epetra_MultiVector,Epetra_Operator> > belosSolver
+  Teuchos::RCP< Belos::SolverManager<double,Epetra_MultiVector,Epetra_Operator> > belosSolver
     = Teuchos::rcp( new Belos::BlockCGSolMgr<double,Epetra_MultiVector,Epetra_Operator>(Teuchos::rcp(&linearProblem,false), Teuchos::rcp(&belosList,false)) );
 
   // Create owned (e.g., "mothership") vectors for data at timestep n
