@@ -52,7 +52,7 @@
 #include <Epetra_Comm.h>
 #include <stk_io/util/UseCase_mesh.hpp>
 #include "Peridigm_AbstractDiscretization.hpp"
-#include "PdGridData.h"
+#include "mesh_input/quick_grid/QuickGrid.h"
 
 namespace PeridigmNS {
 
@@ -98,19 +98,19 @@ namespace PeridigmNS {
     STKDiscretization& operator=(const STKDiscretization&);
 
     //! Creates a discretization object using STK functionality.
-    PdGridData getDecomp(const std::string& meshFileName,
-                         double horizon);
+    QUICKGRID::Data getDecomp(const std::string& meshFileName,
+                              double horizon);
 
   protected:
 
     //! Create maps
-    void createMaps(const PdGridData& decomp);
+    void createMaps(const QUICKGRID::Data& decomp);
 
     //! Create vectors
     void createVectors();
 
     //! Create NeighborhoodData
-    void createNeighborhoodData(const PdGridData& decomp);
+    void createNeighborhoodData(const QUICKGRID::Data& decomp);
 
     //! Compute the scalar triple product
     double scalarTripleProduct(std::vector<double>& a,

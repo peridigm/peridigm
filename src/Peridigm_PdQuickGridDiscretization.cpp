@@ -46,7 +46,7 @@
 //@HEADER
 
 #include "Peridigm_PdQuickGridDiscretization.hpp"
-#include "quick_grid/QuickGrid.h"
+#include "mesh_input/quick_grid/QuickGrid.h"
 #include "pdneigh/PdZoltan.h"
 #include <vector>
 #include <list>

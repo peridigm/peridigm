@@ -51,7 +51,7 @@
 #include "Peridigm_IsotropicElasticPlasticMaterial.hpp"
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_SerialComm.h>
-#include "PdQuickGrid.h"
+#include "mesh_input/quick_grid/QuickGrid.h"
 #include "PdQuickGridParallel.h"
 #include "Pd_shared_ptr_Array.h"
 #include "ordinary_utilities.h"
