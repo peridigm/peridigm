@@ -102,12 +102,12 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     // create a temporary neighborhood consisting of a single point and its neighbors
     int numNeighbors = neighborhoodList[neighborhoodListIndex++];
     vector<int> tempMyGlobalIDs(numNeighbors+1);
-    tempMyGlobalIDs[0] = dataManager.getOverlapIDScalarMap()->GID(iID);
+    tempMyGlobalIDs[0] = dataManager.getOverlapScalarPointMap()->GID(iID);
     vector<int> tempNeighborhoodList(numNeighbors+1); 
     tempNeighborhoodList[0] = numNeighbors;
     for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
       int neighborID = neighborhoodList[neighborhoodListIndex++];
-      tempMyGlobalIDs[iNID+1] = dataManager.getOverlapIDScalarMap()->GID(neighborID);
+      tempMyGlobalIDs[iNID+1] = dataManager.getOverlapScalarPointMap()->GID(neighborID);
       tempNeighborhoodList[iNID+1] = iNID+1;
     }
 
@@ -137,11 +137,11 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
 
     // Extract pointers to the underlying data in the constitutiveData array
     double *y, *force;
-    tempDataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&y);
-    tempDataManager.getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&force);
+    tempDataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->ExtractView(&y);
+    tempDataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->ExtractView(&force);
 
     // Create a temporary vector for storing force
-    Teuchos::RCP<Epetra_Vector> forceVector = tempDataManager.getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1);
+    Teuchos::RCP<Epetra_Vector> forceVector = tempDataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1);
     Teuchos::RCP<Epetra_Vector> tempForceVector = Teuchos::rcp(new Epetra_Vector(*forceVector));
     double* tempForce;
     tempForceVector->ExtractView(&tempForce);
@@ -200,8 +200,8 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
               value *= 0.5;
             int globalForceID = tempOneDimensionalMap->GID(forceID);
             int globalPerturbID = tempOneDimensionalMap->GID(perturbID);
-            int localForceID = dataManager.getOverlapIDScalarMap()->LID(globalForceID);
-            int localPerturbID = dataManager.getOverlapIDScalarMap()->LID(globalPerturbID);
+            int localForceID = dataManager.getOverlapScalarPointMap()->LID(globalForceID);
+            int localPerturbID = dataManager.getOverlapScalarPointMap()->LID(globalPerturbID);
             int row = 3*localForceID + d;
             int col = 3*localPerturbID + dof;
             jacobian.addValue(row, col, value);
