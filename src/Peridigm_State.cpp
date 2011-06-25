@@ -48,31 +48,31 @@
 #include "Peridigm_State.hpp"
 #include <Epetra_Import.h>
 
-void PeridigmNS::State::allocateScalarData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
+void PeridigmNS::State::allocateScalarPointData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
 {
   std::vector<Field_NS::FieldSpec> sortedFieldSpecs(*fieldSpecs);
   std::sort(sortedFieldSpecs.begin(), sortedFieldSpecs.end());
-  scalarData = Teuchos::rcp(new Epetra_MultiVector(*map, sortedFieldSpecs.size()));
+  scalarPointData = Teuchos::rcp(new Epetra_MultiVector(*map, sortedFieldSpecs.size()));
   for(unsigned int i=0 ; i<sortedFieldSpecs.size() ; ++i)
-    fieldSpecToDataMap[sortedFieldSpecs[i]] = Teuchos::rcp((*scalarData)(i), false);
+    fieldSpecToDataMap[sortedFieldSpecs[i]] = Teuchos::rcp((*scalarPointData)(i), false);
 }
 
-void PeridigmNS::State::allocateVectorData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
+void PeridigmNS::State::allocateVectorPointData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
 {
   std::vector<Field_NS::FieldSpec> sortedFieldSpecs(*fieldSpecs);
   std::sort(sortedFieldSpecs.begin(), sortedFieldSpecs.end());
-  vectorData = Teuchos::rcp(new Epetra_MultiVector(*map, sortedFieldSpecs.size()));
+  vectorPointData = Teuchos::rcp(new Epetra_MultiVector(*map, sortedFieldSpecs.size()));
   for(unsigned int i=0 ; i<sortedFieldSpecs.size() ; ++i)
-    fieldSpecToDataMap[sortedFieldSpecs[i]] = Teuchos::rcp((*vectorData)(i), false);
+    fieldSpecToDataMap[sortedFieldSpecs[i]] = Teuchos::rcp((*vectorPointData)(i), false);
 }
 
-void PeridigmNS::State::allocateBondData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
+void PeridigmNS::State::allocateScalarBondData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
 {
   std::vector<Field_NS::FieldSpec> sortedFieldSpecs(*fieldSpecs);
   std::sort(sortedFieldSpecs.begin(), sortedFieldSpecs.end());
-  bondData = Teuchos::rcp(new Epetra_MultiVector(*map, sortedFieldSpecs.size()));
+  scalarBondData = Teuchos::rcp(new Epetra_MultiVector(*map, sortedFieldSpecs.size()));
   for(unsigned int i=0 ; i<sortedFieldSpecs.size() ; ++i)
-    fieldSpecToDataMap[sortedFieldSpecs[i]] = Teuchos::rcp((*bondData)(i), false);
+    fieldSpecToDataMap[sortedFieldSpecs[i]] = Teuchos::rcp((*scalarBondData)(i), false);
 }
 
 Teuchos::RCP< std::vector<Field_NS::FieldSpec> > PeridigmNS::State::getFieldSpecs(Teuchos::RCP<Field_ENUM::Relation> relation,
@@ -81,7 +81,6 @@ Teuchos::RCP< std::vector<Field_NS::FieldSpec> > PeridigmNS::State::getFieldSpec
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
   std::map< Field_NS::FieldSpec, Teuchos::RCP<Epetra_Vector> >::const_iterator it;
   for(it = fieldSpecToDataMap.begin() ; it != fieldSpecToDataMap.end() ; ++it){
-	// \todo Rework me.
     if((length.is_null() && relation.is_null()) || (it->first.getLength() == *length && it->first.getRelation() == *relation))
       fieldSpecs->push_back(it->first);
   }
@@ -105,20 +104,20 @@ void PeridigmNS::State::copyLocallyOwnedDataFromState(Teuchos::RCP<PeridigmNS::S
   TEST_FOR_EXCEPTION(source.is_null(), Teuchos::NullReferenceError,
                      "PeridigmNS::State::copyLocallyOwnedDataFromState() called with null ref-count pointer.\n");
 
-  if(!scalarData.is_null()){
-    TEST_FOR_EXCEPTION(source->getScalarMultiVector().is_null(), Teuchos::NullReferenceError,
+  if(!scalarPointData.is_null()){
+    TEST_FOR_EXCEPTION(source->getScalarPointMultiVector().is_null(), Teuchos::NullReferenceError,
                        "PeridigmNS::State::copyLocallyOwnedDataFromState() called with incompatible State.\n");
-    copyLocallyOwnedMultiVectorData( *(source->getScalarMultiVector()), *scalarData );
+    copyLocallyOwnedMultiVectorData( *(source->getScalarPointMultiVector()), *scalarPointData );
   }
-  if(!vectorData.is_null()){
-    TEST_FOR_EXCEPTION(source->getVectorMultiVector().is_null(), Teuchos::NullReferenceError,
+  if(!vectorPointData.is_null()){
+    TEST_FOR_EXCEPTION(source->getVectorPointMultiVector().is_null(), Teuchos::NullReferenceError,
                        "PeridigmNS::State::copyLocallyOwnedDataFromState() called with incompatible State.\n");
-    copyLocallyOwnedMultiVectorData( *(source->getVectorMultiVector()), *vectorData );
+    copyLocallyOwnedMultiVectorData( *(source->getVectorPointMultiVector()), *vectorPointData );
   }
-  if(!bondData.is_null()){
-    TEST_FOR_EXCEPTION(source->getBondMultiVector().is_null(), Teuchos::NullReferenceError,
+  if(!scalarBondData.is_null()){
+    TEST_FOR_EXCEPTION(source->getScalarBondMultiVector().is_null(), Teuchos::NullReferenceError,
                        "PeridigmNS::State::copyLocallyOwnedDataFromState() called with incompatible State.\n");
-    copyLocallyOwnedMultiVectorData( *(source->getBondMultiVector()), *bondData );
+    copyLocallyOwnedMultiVectorData( *(source->getScalarBondMultiVector()), *scalarBondData );
   }
 }
 
