@@ -54,11 +54,12 @@
 
 namespace PeridigmNS {
 
-/*! \brief Container class for scalar, vector, and bond data.
+/*! \brief Container class for scalar point data, vector point data, and scalar bond data.
  *
- * The State class is a container class for scalar, vector, and bond data.  Data is stored in Epetra_MultiVector objects.
- * Individual Epetra_Vectors corresponding to a specific FieldSpec are accessed through the getData function.  The
- * State class was designed for use within a DataManger.
+ * The State class is a container class for scalar point data, vector point data, and scalar bond data.
+ * Data is stored in Epetra_MultiVector objects.  Individual Epetra_Vectors corresponding to a specific
+ * FieldSpec are accessed through the getData function.  The State class was designed for use within a
+ * DataManger.
  */
 class State {
 
@@ -76,57 +77,57 @@ public:
   //! @name Memory allocation functions
   //@{
 
-  //! Instantiates the Epetra_MultiVector that holds scalar data and creates the FieldSpec-to-Epetra_Vector mappings.
-  void allocateScalarData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map);
+  //! Instantiates the Epetra_MultiVector that holds scalar point data and creates the FieldSpec-to-Epetra_Vector mappings.
+  void allocateScalarPointData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map);
 
-  //! Instantiates the Epetra_MultiVector that holds vector data and creates the FieldSpec-to-Epetra_Vector mappings.
-  void allocateVectorData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map);
+  //! Instantiates the Epetra_MultiVector that holds vector point data and creates the FieldSpec-to-Epetra_Vector mappings.
+  void allocateVectorPointData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map);
 
-  //! Instantiates the Epetra_MultiVector that holds bond data and creates the FieldSpec-to-Epetra_Vector mappings.
-  void allocateBondData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map);
+  //! Instantiates the Epetra_MultiVector that holds scalar bond data and creates the FieldSpec-to-Epetra_Vector mappings.
+  void allocateScalarBondData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map);
 
   //@}
 
   //! @name Epetra_MultiVector accessor functions
   //@{
 
-  //! Accessor for the scalar Epetra_MultiVector.
-  Teuchos::RCP<Epetra_MultiVector> getScalarMultiVector() { return scalarData; }
+  //! Accessor for the scalar point Epetra_MultiVector.
+  Teuchos::RCP<Epetra_MultiVector> getScalarPointMultiVector() { return scalarPointData; }
 
-  //! Accessor for the vector Epetra_MultiVector.
-  Teuchos::RCP<Epetra_MultiVector> getVectorMultiVector() { return vectorData; }
+  //! Accessor for the vector point Epetra_MultiVector.
+  Teuchos::RCP<Epetra_MultiVector> getVectorPointMultiVector() { return vectorPointData; }
 
-  //! Accessor for the bond-data Epetra_MultiVector.
-  Teuchos::RCP<Epetra_MultiVector> getBondMultiVector() { return bondData; }
+  //! Accessor for the scalar bond Epetra_MultiVector.
+  Teuchos::RCP<Epetra_MultiVector> getScalarBondMultiVector() { return scalarBondData; }
 
   //@}
 
-  //! Returns the list of field specs of the given length (SCALAR, VECTOR3D, BOND); if no argument is given, returns complete list of field specs.
+  //! Returns the list of field specs of the given relation (POINT, BOND) and length (SCALAR, VECTOR3D); if no argument is given, returns complete list of field specs.
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > getFieldSpecs(Teuchos::RCP<Field_ENUM::Relation> relation = Teuchos::RCP<Field_ENUM::Relation>(),
 		                                                         Teuchos::RCP<Field_ENUM::Length> length = Teuchos::RCP<Field_ENUM::Length>());
 
   //! Provides access to an Epetra_Vector corresponding to the given FieldSpec.
   Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec);
 
-  //! Copies data from a different state object based on global IDs; functions only if all the local IDs in the target map exist in and are locally-owned in the source map.
+  //! Copies data from a different state object based on global IDs; functions only if all the local IDs in the target map exist in and are locally owned in the source map.
   void copyLocallyOwnedDataFromState(Teuchos::RCP<PeridigmNS::State> source);
 
 protected:
 
   //! @name Epetra_MultiVectors
   //@{
-  //! Epetra_MultiVector for scalar data.
-  Teuchos::RCP<Epetra_MultiVector> scalarData;
-  //! Epetra_MultiVector for vector data.
-  Teuchos::RCP<Epetra_MultiVector> vectorData;
-  //! Epetra_MultiVector for bond data.
-  Teuchos::RCP<Epetra_MultiVector> bondData;
+  //! Epetra_MultiVector for scalar point data.
+  Teuchos::RCP<Epetra_MultiVector> scalarPointData;
+  //! Epetra_MultiVector for vector point data.
+  Teuchos::RCP<Epetra_MultiVector> vectorPointData;
+  //! Epetra_MultiVector for scalar bond data.
+  Teuchos::RCP<Epetra_MultiVector> scalarBondData;
   //@}
 
   //! Map that associates a FieldSpec with an individual Epetra_Vector contained within one of the Epetra_MultiVectors.
   std::map< Field_NS::FieldSpec, Teuchos::RCP<Epetra_Vector> > fieldSpecToDataMap;
 
-  //! Utility for copying locally-owned data from one multivector to another; succeeds only if all the local IDs in the target map exist in and are locally-owned in the source map.
+  //! Utility for copying locally-owned data from one multivector to another; succeeds only if all the local IDs in the target map exist in and are locally owned in the source map.
   void copyLocallyOwnedMultiVectorData(Epetra_MultiVector& source, Epetra_MultiVector& target);
 };
 

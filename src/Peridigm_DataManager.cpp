@@ -59,34 +59,37 @@ void PeridigmNS::DataManager::allocateData(Teuchos::RCP< std::vector<Field_NS::F
   fieldSpecs->erase(newEnd, fieldSpecs->end());
 
   // loop over the specs and determine:
-  // 1) the number of scalar, vector2d, and vector3d fields
-  // 2) the FieldType for each of the data
-  // 3) whether the data has one or two states
-  statelessScalarFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
-  statelessVectorFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
-  statelessBondFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
-  statefulScalarFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
-  statefulVectorFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
-  statefulBondFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
+  // 1) 
+  // 2) 
+  // 3) 
+  statelessScalarPointFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
+  statelessVectorPointFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
+  statelessScalarBondFieldSpecs  = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
+  statefulScalarPointFieldSpecs  = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
+  statefulVectorPointFieldSpecs  = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
+  statefulScalarBondFieldSpecs   = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
   for(unsigned int i=0; i<fieldSpecs->size() ; ++i){
     Field_NS::FieldSpec& spec = (*fieldSpecs)[i];
-    if(spec.getLength() == Field_NS::FieldSpec::SCALAR){
-      if(spec.getStateArchitecture() == Field_NS::FieldSpec::STATELESS)
-        statelessScalarFieldSpecs->push_back(spec);
+    // scalar point data
+    if(spec.getLength() == Field_ENUM::SCALAR && spec.getRelation() == Field_ENUM::POINT){
+      if(spec.get_temporal() == Field_ENUM::CONSTANT)
+        statelessScalarPointFieldSpecs->push_back(spec);
       else
-        statefulScalarFieldSpecs->push_back(spec);
+        statefulScalarPointFieldSpecs->push_back(spec);
     }
-    else if(spec.getLength() == Field_NS::FieldSpec::VECTOR3D){
-      if(spec.getStateArchitecture() == Field_NS::FieldSpec::STATELESS)
-        statelessVectorFieldSpecs->push_back(spec);
+    // vector point data
+    else if(spec.getLength() == Field_ENUM::VECTOR3D && spec.getRelation() == Field_ENUM::POINT){
+      if(spec.get_temporal() == Field_ENUM::CONSTANT)
+        statelessVectorPointFieldSpecs->push_back(spec);
       else
-        statefulVectorFieldSpecs->push_back(spec);
+        statefulVectorPointFieldSpecs->push_back(spec);
     }
-    else if(spec.getLength() == Field_NS::FieldSpec::BOND){
-      if(spec.getStateArchitecture() == Field_NS::FieldSpec::STATELESS)
-        statelessBondFieldSpecs->push_back(spec);
+    // scalar bond data
+    else if(spec.getLength() == Field_ENUM::SCALAR && spec.getRelation() == Field_ENUM::BOND){
+      if(spec.get_temporal() == Field_ENUM::CONSTANT)
+        statelessScalarBondFieldSpecs->push_back(spec);
       else
-        statefulBondFieldSpecs->push_back(spec);
+        statefulScalarBondFieldSpecs->push_back(spec);
     }
     else{
       TEST_FOR_EXCEPTION(false, Teuchos::RangeError, 
@@ -95,40 +98,40 @@ void PeridigmNS::DataManager::allocateData(Teuchos::RCP< std::vector<Field_NS::F
   }
 
   // make sure maps exist before trying to create states
-  if(statelessScalarFieldSpecs->size() + statefulScalarFieldSpecs->size() > 0)
-    TEST_FOR_EXCEPTION(scalarMap == Teuchos::null, Teuchos::NullReferenceError, 
+  if(statelessScalarPointFieldSpecs->size() + statefulScalarPointFieldSpecs->size() > 0)
+    TEST_FOR_EXCEPTION(overlapScalarPointMap == Teuchos::null, Teuchos::NullReferenceError, 
                        "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate scalar data with no map (forget setMaps()?).");
-  if(statelessVectorFieldSpecs->size() + statefulVectorFieldSpecs->size() > 0)
-    TEST_FOR_EXCEPTION(vectorMap == Teuchos::null, Teuchos::NullReferenceError, 
+  if(statelessVectorPointFieldSpecs->size() + statefulVectorPointFieldSpecs->size() > 0)
+    TEST_FOR_EXCEPTION(overlapVectorPointMap == Teuchos::null, Teuchos::NullReferenceError, 
                        "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate vector data with no map (forget setMaps()?).");
-  if(statelessBondFieldSpecs->size() + statefulBondFieldSpecs->size() > 0)
-    TEST_FOR_EXCEPTION(bondMap == Teuchos::null, Teuchos::NullReferenceError, 
+  if(statelessScalarBondFieldSpecs->size() + statefulScalarBondFieldSpecs->size() > 0)
+    TEST_FOR_EXCEPTION(ownedScalarBondMap == Teuchos::null, Teuchos::NullReferenceError, 
                        "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate bond data with no map (forget setMaps()?).");
 
   // create the states
-  if(statelessScalarFieldSpecs->size() + statelessVectorFieldSpecs->size() + statelessBondFieldSpecs->size() > 0){
+  if(statelessScalarPointFieldSpecs->size() + statelessVectorPointFieldSpecs->size() + statelessScalarBondFieldSpecs->size() > 0){
     stateNONE = Teuchos::rcp(new State);
-    if(statelessScalarFieldSpecs->size() > 0)
-      stateNONE->allocateScalarData(statelessScalarFieldSpecs, scalarMap);
-    if(statelessVectorFieldSpecs->size() > 0)
-      stateNONE->allocateVectorData(statelessVectorFieldSpecs, vectorMap);
-    if(statelessBondFieldSpecs->size() > 0)
-      stateNONE->allocateBondData(statelessBondFieldSpecs, bondMap);
+    if(statelessScalarPointFieldSpecs->size() > 0)
+      stateNONE->allocateScalarPointData(statelessScalarPointFieldSpecs, overlapScalarPointMap);
+    if(statelessVectorPointFieldSpecs->size() > 0)
+      stateNONE->allocateVectorPointData(statelessVectorPointFieldSpecs, overlapVectorPointMap);
+    if(statelessScalarBondFieldSpecs->size() > 0)
+      stateNONE->allocateScalarBondData(statelessScalarBondFieldSpecs, ownedScalarBondMap);
   }
-  if(statefulScalarFieldSpecs->size() + statefulVectorFieldSpecs->size() + statefulBondFieldSpecs->size() > 0){
+  if(statefulScalarPointFieldSpecs->size() + statefulVectorPointFieldSpecs->size() + statefulScalarBondFieldSpecs->size() > 0){
     stateN = Teuchos::rcp(new State);
     stateNP1 = Teuchos::rcp(new State);
-    if(statefulScalarFieldSpecs->size() > 0){
-      stateN->allocateScalarData(statefulScalarFieldSpecs, scalarMap);
-      stateNP1->allocateScalarData(statefulScalarFieldSpecs, scalarMap);
+    if(statefulScalarPointFieldSpecs->size() > 0){
+      stateN->allocateScalarPointData(statefulScalarPointFieldSpecs, overlapScalarPointMap);
+      stateNP1->allocateScalarPointData(statefulScalarPointFieldSpecs, overlapScalarPointMap);
     }
-    if(statefulVectorFieldSpecs->size() > 0){
-      stateN->allocateVectorData(statefulVectorFieldSpecs, vectorMap);
-      stateNP1->allocateVectorData(statefulVectorFieldSpecs, vectorMap);
+    if(statefulVectorPointFieldSpecs->size() > 0){
+      stateN->allocateVectorPointData(statefulVectorPointFieldSpecs, overlapVectorPointMap);
+      stateNP1->allocateVectorPointData(statefulVectorPointFieldSpecs, overlapVectorPointMap);
     }   
-    if(statefulBondFieldSpecs->size() > 0){
-      stateN->allocateBondData(statefulBondFieldSpecs, bondMap);
-      stateNP1->allocateBondData(statefulBondFieldSpecs, bondMap);
+    if(statefulScalarBondFieldSpecs->size() > 0){
+      stateN->allocateScalarBondData(statefulScalarBondFieldSpecs, ownedScalarBondMap);
+      stateNP1->allocateScalarBondData(statefulScalarBondFieldSpecs, ownedScalarBondMap);
     }
   }
 }
@@ -152,74 +155,70 @@ void PeridigmNS::DataManager::scatterToGhosts()
       state = stateNP1;
 
     // process scalar data
-    Teuchos::RCP<Epetra_MultiVector> overlapMultiVector = state->getScalarMultiVector();
-    if(!overlapMultiVector.is_null()){
+    Teuchos::RCP<Epetra_MultiVector> overlapScalarPointMultiVector = state->getScalarPointMultiVector();
+    if(!overlapScalarPointMultiVector.is_null()){
 
-      TEST_FOR_EXCEPTION(scalarMap.is_null() || ownedIDScalarMap.is_null(), Teuchos::NullReferenceError,
+      TEST_FOR_EXCEPTION(overlapScalarPointMap.is_null() || ownedScalarPointMap.is_null(), Teuchos::NullReferenceError,
                          "Error in PeridigmNS::DataManager::scatterToGhosts(), inconsistent scalar maps.");
 
-      // create a non-overlap multivector
-      int numVectors = overlapMultiVector->NumVectors();
-      Teuchos::RCP<const Epetra_BlockMap> overlapMap = scalarMap;
-      Teuchos::RCP<const Epetra_BlockMap> nonOverlapMap = ownedIDScalarMap;
-      Teuchos::RCP<Epetra_MultiVector> nonOverlapMultiVector = Teuchos::rcp(new Epetra_MultiVector(*nonOverlapMap, numVectors));
+      // create an owned (non-overlap) multivector
+      int numVectors = overlapScalarPointMultiVector->NumVectors();
+      Teuchos::RCP<Epetra_MultiVector> ownedScalarPointMultiVector = Teuchos::rcp(new Epetra_MultiVector(*ownedScalarPointMap, numVectors));
 
-      // copy data from the overlap vector into the non-overlap vector
+      // copy data from the overlap vector into the owned (non-overlap) vector
       for(int iVec=0 ; iVec<numVectors ; ++iVec){
-        double* overlapData = (*overlapMultiVector)[iVec];
-        double* nonOverlapData = (*nonOverlapMultiVector)[iVec];
-        for(int iLID=0 ; iLID<nonOverlapMap->NumMyElements() ; ++iLID){
-          int globalID = nonOverlapMap->GID(iLID);
-          int overlapMapLocalID = overlapMap->LID(globalID);
-          nonOverlapData[iLID] = overlapData[overlapMapLocalID];
+        double* overlapScalarPointData = (*overlapScalarPointMultiVector)[iVec];
+        double* ownedScalarPointData = (*ownedScalarPointMultiVector)[iVec];
+        for(int iLID=0 ; iLID<ownedScalarPointMap->NumMyElements() ; ++iLID){
+          int globalID = ownedScalarPointMap->GID(iLID);
+          int overlapMapLocalID = overlapScalarPointMap->LID(globalID);
+          ownedScalarPointData[iLID] = overlapScalarPointData[overlapMapLocalID];
         }
       }
 
-      // scatter the data back from the non-overlap multivector into the overlap multivector
-      Teuchos::RCP<Epetra_Import> importer = Teuchos::rcp(new Epetra_Import(*overlapMap, *nonOverlapMap));
-      overlapMultiVector->Import(*nonOverlapMultiVector, *importer, Insert);
+      // scatter the data back from the owned (non-overlap) multivector into the overlap multivector
+      Teuchos::RCP<Epetra_Import> importer = Teuchos::rcp(new Epetra_Import(*overlapScalarPointMap, *ownedScalarPointMap));
+      overlapScalarPointMultiVector->Import(*overlapScalarPointMultiVector, *importer, Insert);
     }
 
     // process vector data
-    overlapMultiVector = state->getVectorMultiVector();
-    if(!overlapMultiVector.is_null()){
+    Teuchos::RCP<Epetra_MultiVector>  overlapVectorPointMultiVector = state->getVectorPointMultiVector();
+    if(!overlapVectorPointMultiVector.is_null()){
 
-      TEST_FOR_EXCEPTION(vectorMap.is_null() || ownedIDVectorMap.is_null(), Teuchos::NullReferenceError,
+      TEST_FOR_EXCEPTION(overlapVectorPointMap.is_null() || ownedVectorPointMap.is_null(), Teuchos::NullReferenceError,
                          "Error in PeridigmNS::DataManager::scatterToGhosts(), inconsistent vector maps.");
 
-      // create a non-overlap multivector
-      int numVectors = overlapMultiVector->NumVectors();
-      Teuchos::RCP<const Epetra_BlockMap> overlapMap = vectorMap;
-      Teuchos::RCP<const Epetra_BlockMap> nonOverlapMap = ownedIDVectorMap;
-      Teuchos::RCP<Epetra_MultiVector> nonOverlapMultiVector = Teuchos::rcp(new Epetra_MultiVector(*nonOverlapMap, numVectors));
+      // create an owned (non-overlap) multivector
+      int numVectors = overlapVectorPointMultiVector->NumVectors();
+      Teuchos::RCP<Epetra_MultiVector> ownedVectorPointMultiVector = Teuchos::rcp(new Epetra_MultiVector(*ownedVectorPointMap, numVectors));
 
-      // copy data from the overlap vector into the non-overlap vector
+      // copy data from the overlap vector into the owned (non-overlap) vector
       for(int iVec=0 ; iVec<numVectors ; ++iVec){
-        double* overlapData = (*overlapMultiVector)[iVec];
-        double* nonOverlapData = (*nonOverlapMultiVector)[iVec];
-        for(int iLID=0 ; iLID<nonOverlapMap->NumMyElements() ; ++iLID){
-          int globalID = nonOverlapMap->GID(iLID);
-          int overlapMapLocalID = overlapMap->LID(globalID);
-          nonOverlapData[iLID*3] = overlapData[overlapMapLocalID*3];
-          nonOverlapData[iLID*3+1] = overlapData[overlapMapLocalID*3+1];
-          nonOverlapData[iLID*3+2] = overlapData[overlapMapLocalID*3+2];
+        double* overlapVectorPointData = (*overlapVectorPointMultiVector)[iVec];
+        double* ownedVectorPointData = (*ownedVectorPointMultiVector)[iVec];
+        for(int iLID=0 ; iLID<ownedVectorPointMap->NumMyElements() ; ++iLID){
+          int globalID = ownedVectorPointMap->GID(iLID);
+          int overlapMapLocalID = overlapVectorPointMap->LID(globalID);
+          ownedVectorPointData[iLID*3]   = overlapVectorPointData[overlapMapLocalID*3];
+          ownedVectorPointData[iLID*3+1] = overlapVectorPointData[overlapMapLocalID*3+1];
+          ownedVectorPointData[iLID*3+2] = overlapVectorPointData[overlapMapLocalID*3+2];
         }
       }
 
-      // scatter the data back from the non-overlap multivector into the overlap multivector
-      Teuchos::RCP<Epetra_Import> importer = Teuchos::rcp(new Epetra_Import(*overlapMap, *nonOverlapMap));
-      overlapMultiVector->Import(*nonOverlapMultiVector, *importer, Insert);
+      // scatter the data back from the owned (non-overlap) multivector into the overlap multivector
+      Teuchos::RCP<Epetra_Import> importer = Teuchos::rcp(new Epetra_Import(*overlapVectorPointMap, *ownedVectorPointMap));
+      overlapVectorPointMultiVector->Import(*ownedVectorPointMultiVector, *importer, Insert);
     }
 
     // note: bond data is not ghosted, so there's no need to scatter to ghosts.
   }
 }
 
-void PeridigmNS::DataManager::rebalance(Teuchos::RCP<const Epetra_BlockMap> rebalancedOwnedIDScalarMap,
-                                        Teuchos::RCP<const Epetra_BlockMap> rebalancedOwnedIDVectorMap,
-                                        Teuchos::RCP<const Epetra_BlockMap> rebalancedScalarMap,
-                                        Teuchos::RCP<const Epetra_BlockMap> rebalancedVectorMap,
-                                        Teuchos::RCP<const Epetra_BlockMap> rebalancedBondMap)
+void PeridigmNS::DataManager::rebalance(Teuchos::RCP<const Epetra_BlockMap> rebalancedOwnedScalarPointMap,
+                                        Teuchos::RCP<const Epetra_BlockMap> rebalancedOverlapScalarPointMap,
+                                        Teuchos::RCP<const Epetra_BlockMap> rebalancedOwnedVectorPointMap,
+                                        Teuchos::RCP<const Epetra_BlockMap> rebalancedOverlapVectorPointMap,
+                                        Teuchos::RCP<const Epetra_BlockMap> rebalancedOwnedScalarBondMap)
 {
   rebalanceCount++;
 
@@ -230,81 +229,81 @@ void PeridigmNS::DataManager::rebalance(Teuchos::RCP<const Epetra_BlockMap> reba
   scatterToGhosts();
 
   // importers
-  Teuchos::RCP<const Epetra_Import> scalarImporter;
-  if(!scalarMap.is_null() || !rebalancedScalarMap.is_null()){
-    TEST_FOR_EXCEPTION(scalarMap.is_null() || rebalancedScalarMap.is_null(), Teuchos::NullReferenceError,
+  Teuchos::RCP<const Epetra_Import> overlapScalarPointImporter;
+  if(!overlapScalarPointMap.is_null() || !rebalancedOverlapScalarPointMap.is_null()){
+    TEST_FOR_EXCEPTION(overlapScalarPointMap.is_null() || rebalancedOverlapScalarPointMap.is_null(), Teuchos::NullReferenceError,
                        "Error in PeridigmNS::DataManager::rebalance(), inconsistent scalar maps.");
-    scalarImporter = Teuchos::rcp(new Epetra_Import(*rebalancedScalarMap, *scalarMap));
+    overlapScalarPointImporter = Teuchos::rcp(new Epetra_Import(*rebalancedOverlapScalarPointMap, *overlapScalarPointMap));
   }
-  Teuchos::RCP<const Epetra_Import> vectorImporter;
-  if(!vectorMap.is_null() || !rebalancedVectorMap.is_null()){
-    TEST_FOR_EXCEPTION(vectorMap.is_null() || rebalancedVectorMap.is_null(), Teuchos::NullReferenceError, 
+  Teuchos::RCP<const Epetra_Import> overlapVectorPointImporter;
+  if(!overlapVectorPointMap.is_null() || !rebalancedOverlapVectorPointMap.is_null()){
+    TEST_FOR_EXCEPTION(overlapVectorPointMap.is_null() || rebalancedOverlapVectorPointMap.is_null(), Teuchos::NullReferenceError, 
                        "Error in PeridigmNS::DataManager::rebalance(), inconsistent vector maps.");
-    vectorImporter = Teuchos::rcp(new Epetra_Import(*rebalancedVectorMap, *vectorMap));
+    overlapVectorPointImporter = Teuchos::rcp(new Epetra_Import(*rebalancedOverlapVectorPointMap, *overlapVectorPointMap));
   }
-  Teuchos::RCP<const Epetra_Import> bondImporter;
-  if(!bondMap.is_null() || !rebalancedBondMap.is_null()){
-    TEST_FOR_EXCEPTION(bondMap.is_null() || rebalancedBondMap.is_null(), Teuchos::NullReferenceError, 
+  Teuchos::RCP<const Epetra_Import> ownedScalarBondImporter;
+  if(!ownedScalarBondMap.is_null() || !rebalancedOwnedScalarBondMap.is_null()){
+    TEST_FOR_EXCEPTION(ownedScalarBondMap.is_null() || rebalancedOwnedScalarBondMap.is_null(), Teuchos::NullReferenceError, 
                        "Error in PeridigmNS::DataManager::rebalance(), inconsistent bond maps.");
-    bondImporter = Teuchos::rcp(new Epetra_Import(*rebalancedBondMap, *bondMap));
+    ownedScalarBondImporter = Teuchos::rcp(new Epetra_Import(*rebalancedOwnedScalarBondMap, *ownedScalarBondMap));
   }
     
   // state NONE
-  if(statelessScalarFieldSpecs->size() + statelessVectorFieldSpecs->size() + statelessBondFieldSpecs->size() > 0){
+  if(statelessScalarPointFieldSpecs->size() + statelessVectorPointFieldSpecs->size() + statelessScalarBondFieldSpecs->size() > 0){
     Teuchos::RCP<State> rebalancedStateNONE = Teuchos::rcp(new State);
-    if(statelessScalarFieldSpecs->size() > 0){
-      rebalancedStateNONE->allocateScalarData(statelessScalarFieldSpecs, rebalancedScalarMap);
-      rebalancedStateNONE->getScalarMultiVector()->Import(*stateNONE->getScalarMultiVector(), *scalarImporter, Insert);
+    if(statelessScalarPointFieldSpecs->size() > 0){
+      rebalancedStateNONE->allocateScalarPointData(statelessScalarPointFieldSpecs, rebalancedOverlapScalarPointMap);
+      rebalancedStateNONE->getScalarPointMultiVector()->Import(*stateNONE->getScalarPointMultiVector(), *overlapScalarPointImporter, Insert);
     }
-    if(statelessVectorFieldSpecs->size() > 0){
-      rebalancedStateNONE->allocateVectorData(statelessVectorFieldSpecs, rebalancedVectorMap);
-      rebalancedStateNONE->getVectorMultiVector()->Import(*stateNONE->getVectorMultiVector(), *vectorImporter, Insert);
+    if(statelessVectorPointFieldSpecs->size() > 0){
+      rebalancedStateNONE->allocateVectorPointData(statelessVectorPointFieldSpecs, rebalancedOverlapVectorPointMap);
+      rebalancedStateNONE->getVectorPointMultiVector()->Import(*stateNONE->getVectorPointMultiVector(), *overlapVectorPointImporter, Insert);
     }
-    if(statelessBondFieldSpecs->size() > 0){
-      rebalancedStateNONE->allocateBondData(statelessBondFieldSpecs, rebalancedBondMap);
-      rebalancedStateNONE->getBondMultiVector()->Import(*stateNONE->getBondMultiVector(), *bondImporter, Insert);
+    if(statelessScalarBondFieldSpecs->size() > 0){
+      rebalancedStateNONE->allocateScalarBondData(statelessScalarBondFieldSpecs, rebalancedOwnedScalarBondMap);
+      rebalancedStateNONE->getScalarBondMultiVector()->Import(*stateNONE->getScalarBondMultiVector(), *ownedScalarBondImporter, Insert);
     }
     stateNONE = rebalancedStateNONE;
   }
 
   // states N and NP1
-  if(statefulScalarFieldSpecs->size() + statefulVectorFieldSpecs->size() + statefulBondFieldSpecs->size() > 0){
+  if(statefulScalarPointFieldSpecs->size() + statefulVectorPointFieldSpecs->size() + statefulScalarBondFieldSpecs->size() > 0){
     Teuchos::RCP<State> rebalancedStateN = Teuchos::rcp(new State);
-    if(statefulScalarFieldSpecs->size() > 0){
-      rebalancedStateN->allocateScalarData(statefulScalarFieldSpecs, rebalancedScalarMap);
-      rebalancedStateN->getScalarMultiVector()->Import(*stateN->getScalarMultiVector(), *scalarImporter, Insert);
+    if(statefulScalarPointFieldSpecs->size() > 0){
+      rebalancedStateN->allocateScalarPointData(statefulScalarPointFieldSpecs, rebalancedOverlapScalarPointMap);
+      rebalancedStateN->getScalarPointMultiVector()->Import(*stateN->getScalarPointMultiVector(), *overlapScalarPointImporter, Insert);
     }
-    if(statefulVectorFieldSpecs->size() > 0){
-      rebalancedStateN->allocateVectorData(statefulVectorFieldSpecs, rebalancedVectorMap);
-      rebalancedStateN->getVectorMultiVector()->Import(*stateN->getVectorMultiVector(), *vectorImporter, Insert);
+    if(statefulVectorPointFieldSpecs->size() > 0){
+      rebalancedStateN->allocateVectorPointData(statefulVectorPointFieldSpecs, rebalancedOverlapVectorPointMap);
+      rebalancedStateN->getVectorPointMultiVector()->Import(*stateN->getVectorPointMultiVector(), *overlapVectorPointImporter, Insert);
     }
-    if(statefulBondFieldSpecs->size() > 0){
-      rebalancedStateN->allocateBondData(statefulBondFieldSpecs, rebalancedBondMap);
-      rebalancedStateN->getBondMultiVector()->Import(*stateN->getBondMultiVector(), *bondImporter, Insert);
+    if(statefulScalarBondFieldSpecs->size() > 0){
+      rebalancedStateN->allocateScalarBondData(statefulScalarBondFieldSpecs, rebalancedOwnedScalarBondMap);
+      rebalancedStateN->getScalarBondMultiVector()->Import(*stateN->getScalarBondMultiVector(), *ownedScalarBondImporter, Insert);
     }
     stateN = rebalancedStateN;
     Teuchos::RCP<State> rebalancedStateNP1 = Teuchos::rcp(new State);
-    if(statefulScalarFieldSpecs->size() > 0){
-      rebalancedStateNP1->allocateScalarData(statefulScalarFieldSpecs, rebalancedScalarMap);
-      rebalancedStateNP1->getScalarMultiVector()->Import(*stateNP1->getScalarMultiVector(), *scalarImporter, Insert);
+    if(statefulScalarPointFieldSpecs->size() > 0){
+      rebalancedStateNP1->allocateScalarPointData(statefulScalarPointFieldSpecs, rebalancedOverlapScalarPointMap);
+      rebalancedStateNP1->getScalarPointMultiVector()->Import(*stateNP1->getScalarPointMultiVector(), *overlapScalarPointImporter, Insert);
     }
-    if(statefulVectorFieldSpecs->size() > 0){
-      rebalancedStateNP1->allocateVectorData(statefulVectorFieldSpecs, rebalancedVectorMap);
-      rebalancedStateNP1->getVectorMultiVector()->Import(*stateNP1->getVectorMultiVector(), *vectorImporter, Insert);
+    if(statefulVectorPointFieldSpecs->size() > 0){
+      rebalancedStateNP1->allocateVectorPointData(statefulVectorPointFieldSpecs, rebalancedOverlapVectorPointMap);
+      rebalancedStateNP1->getVectorPointMultiVector()->Import(*stateNP1->getVectorPointMultiVector(), *overlapVectorPointImporter, Insert);
     }
-    if(statefulBondFieldSpecs->size() > 0){
-      rebalancedStateNP1->allocateBondData(statefulBondFieldSpecs, rebalancedBondMap);
-      rebalancedStateNP1->getBondMultiVector()->Import(*stateNP1->getBondMultiVector(), *bondImporter, Insert);
+    if(statefulScalarBondFieldSpecs->size() > 0){
+      rebalancedStateNP1->allocateScalarBondData(statefulScalarBondFieldSpecs, rebalancedOwnedScalarBondMap);
+      rebalancedStateNP1->getScalarBondMultiVector()->Import(*stateNP1->getScalarBondMultiVector(), *ownedScalarBondImporter, Insert);
     }
     stateNP1 = rebalancedStateNP1;
   }
 
   // Maps
-  ownedIDScalarMap = rebalancedOwnedIDScalarMap;
-  ownedIDVectorMap = rebalancedOwnedIDVectorMap;
-  scalarMap = rebalancedScalarMap;
-  vectorMap = rebalancedVectorMap;
-  bondMap = rebalancedBondMap;
+  ownedScalarPointMap = rebalancedOwnedScalarPointMap;
+  overlapScalarPointMap = rebalancedOverlapScalarPointMap;
+  ownedVectorPointMap = rebalancedOwnedVectorPointMap;
+  overlapVectorPointMap = rebalancedOverlapVectorPointMap;
+  ownedScalarBondMap = rebalancedOwnedScalarBondMap;
 }
 
 void PeridigmNS::DataManager::copyLocallyOwnedDataFromDataManager(PeridigmNS::DataManager& source)

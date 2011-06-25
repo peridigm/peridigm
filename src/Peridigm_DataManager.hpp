@@ -57,8 +57,8 @@ namespace PeridigmNS {
  *
  * DataManager is a container class for managing the data required for peridynamic force evaluations. 
  * Data is stored in State objects which may be either stateless (STATE_NONE) or stateful (STATE_N, STATE_NP1).
- * Three types of data are supported:  scalar, vector, and bond data.  In the cases of scalar and vector data,
- * the DataManger class has notions of owned points and ghosted points, allowing force calcuations access
+ * Three types of data are supported:  scalar point data, vector point data, and scalar bond data.  In the case
+ * of point data, DataManger has notions of owned points and ghosted points, allowing force calcuations access
  * to off-processor points that are within the neighborhood of one or more owned points.
  * Data is accessed via the getData function, which provides access to the Epetra_Vector corresponding to
  * the given FieldSpec and FieldStep.
@@ -87,16 +87,16 @@ public:
    * <li> bondMap:           Map containing one element for each owned point; the length of the element is equal to the number of bonds.
    * </ul>
    */
-  void setMaps(Teuchos::RCP<const Epetra_BlockMap> ownedIDScalarMap_,
-               Teuchos::RCP<const Epetra_BlockMap> ownedIDVectorMap_,
-               Teuchos::RCP<const Epetra_BlockMap> scalarMap_,
-               Teuchos::RCP<const Epetra_BlockMap> vectorMap_,
-               Teuchos::RCP<const Epetra_BlockMap> bondMap_){
-    ownedIDScalarMap = ownedIDScalarMap_;
-    ownedIDVectorMap = ownedIDVectorMap_;
-    scalarMap = scalarMap_;
-    vectorMap = vectorMap_;
-    bondMap = bondMap_;
+  void setMaps(Teuchos::RCP<const Epetra_BlockMap> ownedScalarPointMap_,
+               Teuchos::RCP<const Epetra_BlockMap> overlapScalarPointMap_,
+               Teuchos::RCP<const Epetra_BlockMap> ownedVectorPointMap_,
+               Teuchos::RCP<const Epetra_BlockMap> overlapVectorPointMap_,
+               Teuchos::RCP<const Epetra_BlockMap> ownedScalarBondMap_){
+    ownedScalarPointMap = ownedScalarPointMap_;
+    overlapScalarPointMap = overlapScalarPointMap_;
+    ownedVectorPointMap = ownedVectorPointMap_;
+    overlapVectorPointMap = overlapVectorPointMap_;
+    ownedScalarBondMap = ownedScalarBondMap_;
   }
 
   //! Instantiates State objects corresponding to the given list of FieldSpecs. 
@@ -106,23 +106,23 @@ public:
   void scatterToGhosts();
 
   //! Redistributes data based on new partitioning as defined by given maps.
-  void rebalance(Teuchos::RCP<const Epetra_BlockMap> rebalancedOwnedIDScalarMap,
-                 Teuchos::RCP<const Epetra_BlockMap> rebalancedOwnedIDVectorMap,
-                 Teuchos::RCP<const Epetra_BlockMap> rebalancedScalarMap,
-                 Teuchos::RCP<const Epetra_BlockMap> rebalancedVectorMap,
-                 Teuchos::RCP<const Epetra_BlockMap> rebalancedBondMap);
+  void rebalance(Teuchos::RCP<const Epetra_BlockMap> rebalancedOwnedScalarPointMap,
+                 Teuchos::RCP<const Epetra_BlockMap> rebalancedOverlapScalarPointMap,
+                 Teuchos::RCP<const Epetra_BlockMap> rebalancedOwnedVectorPointMap,
+                 Teuchos::RCP<const Epetra_BlockMap> rebalancedOverlapVectorPointMap,
+                 Teuchos::RCP<const Epetra_BlockMap> rebalancedOwnedScalarBondMap);
 
   //! Returns the number of times rebalance has been called.
   int getRebalanceCount(){ return rebalanceCount; }
 
   //! Returns RCP to owned scalar map
-  Teuchos::RCP<const Epetra_BlockMap> getOwnedIDScalarMap(){ return ownedIDScalarMap; }
+  Teuchos::RCP<const Epetra_BlockMap> getOwnedScalarPointMap(){ return ownedScalarPointMap; }
 
   //! Returns RCP to owned vector map
-  Teuchos::RCP<const Epetra_BlockMap> getOwnedIDVectorMap(){ return ownedIDVectorMap; }
+  Teuchos::RCP<const Epetra_BlockMap> getOwnedVectorPointMap(){ return ownedVectorPointMap; }
 
   //! Returns RCP to overlap scalar map
-  Teuchos::RCP<const Epetra_BlockMap> getOverlapIDScalarMap(){ return scalarMap; }
+  Teuchos::RCP<const Epetra_BlockMap> getOverlapScalarPointMap(){ return overlapScalarPointMap; }
 
   //! Returns RCP to the State N object
   Teuchos::RCP<State> getStateN() const { return stateN; }
@@ -161,32 +161,32 @@ protected:
   //@{
   //! Complete list of field specs.
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs;
-  //! Field specs for stateless scalar data.
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statelessScalarFieldSpecs;
-  //! Field specs for stateless vector data.
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statelessVectorFieldSpecs;
-  //! Field specs for stateless bond data.
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statelessBondFieldSpecs;
-  //! Field specs for stateful scalar data.
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statefulScalarFieldSpecs;
-  //! Field specs for stateful vector data.
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statefulVectorFieldSpecs;
-  //! Field specs for stateful bond data.
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statefulBondFieldSpecs;
+  //! Field specs for stateless scalar point data.
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statelessScalarPointFieldSpecs;
+  //! Field specs for stateless vector point data.
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statelessVectorPointFieldSpecs;
+  //! Field specs for stateless scalar bond data.
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statelessScalarBondFieldSpecs;
+  //! Field specs for stateful scalar point data.
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statefulScalarPointFieldSpecs;
+  //! Field specs for stateful vector point data.
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statefulVectorPointFieldSpecs;
+  //! Field specs for stateful scalar bond data.
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statefulScalarBondFieldSpecs;
   //@}
 
   //! @name Maps
   //@{
   //! One-dimensional map for owned points.
-  Teuchos::RCP<const Epetra_BlockMap> ownedIDScalarMap;
-  //! Three-dimensional map for owned points.
-  Teuchos::RCP<const Epetra_BlockMap> ownedIDVectorMap;
+  Teuchos::RCP<const Epetra_BlockMap> ownedScalarPointMap;
   //! One-dimensional overlap map for owned points and ghosts.
-  Teuchos::RCP<const Epetra_BlockMap> scalarMap;
+  Teuchos::RCP<const Epetra_BlockMap> overlapScalarPointMap;
+  //! Three-dimensional map for owned points.
+  Teuchos::RCP<const Epetra_BlockMap> ownedVectorPointMap;
   //! Three-dimensional overlap map for owned points and ghosts.
-  Teuchos::RCP<const Epetra_BlockMap> vectorMap;
+  Teuchos::RCP<const Epetra_BlockMap> overlapVectorPointMap;
   //! Bond map for owned points; the map contains one element for each owned point, the element length is equal to the number of bonds for that point.
-  Teuchos::RCP<const Epetra_BlockMap> bondMap;
+  Teuchos::RCP<const Epetra_BlockMap> ownedScalarBondMap;
   //@}
 
   //! @name State objects
