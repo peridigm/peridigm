@@ -1411,20 +1411,23 @@ QUICKGRID::Data PeridigmNS::Peridigm::currentConfigurationDecomp() {
   // \todo myGlobalIDs, cellVolume, and myX are allocated in allocatePdGridData(), don't need to allocate here.
   
   // fill myGlobalIDs
-  shared_ptr<int> myGlobalIDs(new int[myNumElements], PeridigmNS::PdQuickGridDiscretization::ArrayDeleter<int>());
+  Array<int> myGlobalIDs(myNumElements);
+//  shared_ptr<int> myGlobalIDs(new int[myNumElements], PeridigmNS::PdQuickGridDiscretization::ArrayDeleter<int>());
   int* myGlobalIDsPtr = myGlobalIDs.get();
   int* gIDs = oneDimensionalMap->MyGlobalElements();
   memcpy(myGlobalIDsPtr, gIDs, myNumElements*sizeof(int));
-  decomp.myGlobalIDs = myGlobalIDs;
+  decomp.myGlobalIDs = myGlobalIDs.get_shared_ptr();
 
   // fill myX and cellVolume
   // use current positions for x
-  shared_ptr<double> myX(new double[myNumElements*dimension], PeridigmNS::PdQuickGridDiscretization::ArrayDeleter<double>());
+  Array<double> myX(myNumElements*dimension);
+//  shared_ptr<double> myX(new double[myNumElements*dimension], PeridigmNS::PdQuickGridDiscretization::ArrayDeleter<double>());
   double* myXPtr = myX.get();
   double* yPtr;
   y->ExtractView(&yPtr);
   memcpy(myXPtr, yPtr, myNumElements*dimension*sizeof(double));
-  shared_ptr<double> cellVolume(new double[myNumElements], PeridigmNS::PdQuickGridDiscretization::ArrayDeleter<double>());
+  Array<double> cellVolume(myNumElements);
+//  shared_ptr<double> cellVolume(new double[myNumElements], PeridigmNS::PdQuickGridDiscretization::ArrayDeleter<double>());
   double* cellVolumePtr = cellVolume.get();
   double* cellVolumeOverlapPtr;
   dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&cellVolumeOverlapPtr);
@@ -1433,8 +1436,8 @@ QUICKGRID::Data PeridigmNS::Peridigm::currentConfigurationDecomp() {
     int oneDimensionalOverlapMapLocalID = oneDimensionalOverlapMap->LID(oneDimensionalMapGlobalID);
     cellVolumePtr[i] = cellVolumeOverlapPtr[oneDimensionalOverlapMapLocalID];
   }  
-  decomp.myX = myX;
-  decomp.cellVolume = cellVolume;
+  decomp.myX = myX.get_shared_ptr();
+  decomp.cellVolume = cellVolume.get_shared_ptr();
 
   // call the rebalance function on the current-configuration decomp
   decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);

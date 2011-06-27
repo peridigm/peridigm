@@ -92,7 +92,7 @@ PeridigmNS::DiscretizationFactory::create(const Teuchos::RCP<const Epetra_Comm>&
 
 Teuchos::RCP<PeridigmNS::AbstractDiscretization>
 PeridigmNS::DiscretizationFactory::create(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
-                                          const Teuchos::RCP<const PdGridData>& decomp)
+                                          const Teuchos::RCP<const QUICKGRID::QuickGridData>& decomp)
 {
   Teuchos::RCP<PeridigmNS::AbstractDiscretization> discretization;
 

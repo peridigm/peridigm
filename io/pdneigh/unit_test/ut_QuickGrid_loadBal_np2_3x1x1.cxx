@@ -11,9 +11,9 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
 #include <tr1/memory>
-#include "../PdZoltan.h"
-#include "quick_grid/QuickGrid.h"
-#include "../NeighborhoodList.h"
+#include "pdneigh/PdZoltan.h"
+#include "mesh_input/quick_grid/QuickGrid.h"
+#include "pdneigh/NeighborhoodList.h"
 #include "PdutMpiFixture.h"
 #include <iostream>
 
