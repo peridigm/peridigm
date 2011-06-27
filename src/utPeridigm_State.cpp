@@ -102,6 +102,7 @@ PeridigmNS::State createTwoPointProblem()
   // create a list of scalar field specs and allocate the data
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > scalarPointFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
   scalarPointFieldSpecs->push_back(Field_NS::VOLUME);
+  scalarPointFieldSpecs->push_back(Field_NS::DAMAGE);
   scalarPointFieldSpecs->push_back(Field_NS::GID);
   scalarPointFieldSpecs->push_back(Field_NS::PROC_NUM);
   scalarPointFieldSpecs->push_back(Field_NS::WEIGHTED_VOLUME);
@@ -135,7 +136,7 @@ PeridigmNS::State createTwoPointProblem()
 
   // create a list of bond field specs and allocate the data
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > bondFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
-  bondFieldSpecs->push_back(Field_NS::DAMAGE);
+  bondFieldSpecs->push_back(Field_NS::BOND_DAMAGE);
   bondFieldSpecs->push_back(Field_NS::DEVIATORIC_PLASTIC_EXTENSION);
   bondFieldSpecs->push_back(Field_NS::DEVIATORIC_BACK_EXTENSION);
   state.allocateScalarBondData(bondFieldSpecs, ownedScalarBondMap);
@@ -236,6 +237,7 @@ PeridigmNS::State createThreePointProblem()
   // create a list of scalar field specs and allocate the data
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > scalarPointFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
   scalarPointFieldSpecs->push_back(Field_NS::VOLUME);
+  scalarPointFieldSpecs->push_back(Field_NS::DAMAGE);
   scalarPointFieldSpecs->push_back(Field_NS::GID);
   scalarPointFieldSpecs->push_back(Field_NS::PROC_NUM);
   scalarPointFieldSpecs->push_back(Field_NS::WEIGHTED_VOLUME);
@@ -269,7 +271,7 @@ PeridigmNS::State createThreePointProblem()
 
   // create a list of bond field specs and allocate the data
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > bondFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
-  bondFieldSpecs->push_back(Field_NS::DAMAGE);
+  bondFieldSpecs->push_back(Field_NS::BOND_DAMAGE);
   bondFieldSpecs->push_back(Field_NS::DEVIATORIC_PLASTIC_EXTENSION);
   bondFieldSpecs->push_back(Field_NS::DEVIATORIC_BACK_EXTENSION);
   state.allocateScalarBondData(bondFieldSpecs, ownedScalarBondMap);
