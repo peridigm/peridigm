@@ -48,11 +48,27 @@
 #include "Peridigm_PdQuickGridDiscretization.hpp"
 #include "mesh_input/quick_grid/QuickGrid.h"
 #include "pdneigh/PdZoltan.h"
+#include "utilities/Vector.h"
+#include "utilities/Array.h"
 #include <vector>
 #include <list>
 #include <sstream>
+#include <tr1/memory>
 
 using namespace std;
+using tr1::shared_ptr;
+
+/*
+ * Private Prototypes
+ */
+namespace PeridigmNS {
+	const Epetra_BlockMap getOverlap(int ndf, int numShared, int*shared, int numOwned,const  int* owned, const Epetra_Comm& comm);
+	UTILITIES::Array<int> getSharedGlobalIds(const QUICKGRID::Data& gridData);
+	shared_ptr<int> getLocalOwnedIds(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap);
+	shared_ptr<int> getLocalNeighborList(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap);
+}
+
+
 
 PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                                                                  const Teuchos::RCP<Teuchos::ParameterList>& params) :
@@ -163,11 +179,11 @@ PeridigmNS::PdQuickGridDiscretization::~PdQuickGridDiscretization() {}
 QUICKGRID::Data PeridigmNS::PdQuickGridDiscretization::getDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& params) {
 
   // This is the type of norm used to create neighborhood lists
-  PdQuickGrid::NormFunctionPointer neighborhoodType = PdQuickGrid::NoOpNorm;
+  QUICKGRID::NormFunctionPointer neighborhoodType = QUICKGRID::NoOpNorm;
   Teuchos::ParameterEntry* normTypeEntry=params->getEntryPtr("NeighborhoodType");
   if(NULL!=normTypeEntry){
     std::string normType = params->get<string>("NeighborhoodType");
-    if(normType=="Spherical") neighborhoodType = PdQuickGrid::SphericalNorm;
+    if(normType=="Spherical") neighborhoodType = QUICKGRID::SphericalNorm;
   }
 
   // Get the horizion
@@ -187,16 +203,16 @@ QUICKGRID::Data PeridigmNS::PdQuickGridDiscretization::getDiscretization(const T
     int ny = pdQuickGridParamList->get<int>("Number Points Y");
     int nz = pdQuickGridParamList->get<int>("Number Points Z");
 
-    const PdQuickGrid::PdQPointSet1d xSpec(nx,xStart,xLength);
-    const PdQuickGrid::PdQPointSet1d ySpec(ny,yStart,yLength);
-    const PdQuickGrid::PdQPointSet1d zSpec(nz,zStart,zLength);
+    const QUICKGRID::Spec1D xSpec(nx,xStart,xLength);
+    const QUICKGRID::Spec1D ySpec(ny,yStart,yLength);
+    const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
 
     // Create abstract decomposition iterator
-    PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numPID,horizon,xSpec,ySpec,zSpec,neighborhoodType);
-    decomp =  PdQuickGrid::getDiscretization(myPID, cellPerProcIter);
+    QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numPID,horizon,xSpec,ySpec,zSpec,neighborhoodType);
+    decomp =  QUICKGRID::getDiscretization(myPID, cellPerProcIter);
     // Load balance and write new decomposition
     #ifdef HAVE_MPI
-      decomp = getLoadBalancedDiscretization(decomp);
+      decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
     #endif
   } 
   else if (params->isSublist("TensorProductCylinderMeshGenerator")){
@@ -210,13 +226,13 @@ QUICKGRID::Data PeridigmNS::PdQuickGridDiscretization::getDiscretization(const T
     double zStart         = pdQuickGridParamList->get<double>("Z Origin");
 
     // Create 2d Ring
-    std::valarray<double> center(0.0,3);
+    UTILITIES::Vector3D center;
     center[0] = xC;
     center[1] = yC;
     center[2] = 0;
 
     // Note that zStart is used for the 1D spec along cylinder axis
-    PdQuickGrid::PdQRing2d ring2dSpec(center,innerRadius,outerRadius,numRings);
+    QUICKGRID::SpecRing2D ring2dSpec(center,innerRadius,outerRadius,numRings);
 
     // Create 1d Spec along cylinder axis
     // Compute number of cells along length of cylinder so that aspect ratio
@@ -226,14 +242,14 @@ QUICKGRID::Data PeridigmNS::PdQuickGridDiscretization::getDiscretization(const T
     // Actual cell sizes are slightly smaller than "cellSize" because of this.
     double cellSize = ring2dSpec.getRaySpec().getCellSize();
     int numCellsAxis = (int)(cylinderLength/cellSize)+1;
-    PdQuickGrid::PdQPointSet1d axisSpec(numCellsAxis,zStart,cylinderLength);
+    QUICKGRID::Spec1D axisSpec(numCellsAxis,zStart,cylinderLength);
 
     // Create abstract decomposition iterator
-    PdQuickGrid::TensorProductCylinderMeshGenerator cellPerProcIter(numPID, horizon,ring2dSpec, axisSpec,neighborhoodType);
-    decomp =  PdQuickGrid::getDiscretization(myPID, cellPerProcIter);
+    QUICKGRID::TensorProductCylinderMeshGenerator cellPerProcIter(numPID, horizon,ring2dSpec, axisSpec,neighborhoodType);
+    decomp =  QUICKGRID::getDiscretization(myPID, cellPerProcIter);
     // Load balance and write new decomposition
     #ifdef HAVE_MPI
-      decomp = getLoadBalancedDiscretization(decomp);
+      decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
     #endif
   } 
   else { // ERROR
@@ -251,22 +267,22 @@ PeridigmNS::PdQuickGridDiscretization::createMaps(const QUICKGRID::Data& decomp)
   // oneDimensionalMap
   // used for global IDs and scalar data
   dimension = 1;
-  oneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOwnedMap(*comm, decomp, dimension)));
+  oneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(getOwnedMap(*comm, decomp, dimension)));
 
   // oneDimensionalOverlapMap
   // used for global IDs and scalar data, includes ghosts
   dimension = 1;
-  oneDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOverlapMap(*comm, decomp, dimension)));
+  oneDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(getOverlapMap(*comm, decomp, dimension)));
 
   // threeDimensionalMap
   // used for R3 vector data, e.g., u, v, etc.
   dimension = 3;
-  threeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOwnedMap(*comm, decomp, dimension)));
+  threeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(getOwnedMap(*comm, decomp, dimension)));
 
   // threeDimensionalOverlapMap
   // used for R3 vector data, e.g., u, v, etc.,  includes ghosts
   dimension = 3;
-  threeDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGrid::getOverlapMap(*comm, decomp, dimension)));
+  threeDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(getOverlapMap(*comm, decomp, dimension)));
 
 }
 
@@ -275,16 +291,15 @@ PeridigmNS::PdQuickGridDiscretization::createNeighborhoodData(const QUICKGRID::D
 {
    neighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
    neighborhoodData->SetNumOwned(decomp.numPoints);
-   memcpy(neighborhoodData->OwnedIDs(), 
- 		 PdQuickGrid::getLocalOwnedIds(decomp, *oneDimensionalOverlapMap).get(),
- 		 decomp.numPoints*sizeof(int));
+   memcpy(neighborhoodData->OwnedIDs(), getLocalOwnedIds(decomp, *oneDimensionalOverlapMap).get(),
+ 		  decomp.numPoints*sizeof(int));
    memcpy(neighborhoodData->NeighborhoodPtr(), 
- 		 decomp.neighborhoodPtr.get(),
- 		 decomp.numPoints*sizeof(int));
+ 		  decomp.neighborhoodPtr.get(),
+ 		  decomp.numPoints*sizeof(int));
    neighborhoodData->SetNeighborhoodListSize(decomp.sizeNeighborhoodList);
    memcpy(neighborhoodData->NeighborhoodList(),
- 		 PdQuickGrid::getLocalNeighborList(decomp, *oneDimensionalOverlapMap).get(),
- 		 decomp.sizeNeighborhoodList*sizeof(int));
+		  getLocalNeighborList(decomp, *oneDimensionalOverlapMap).get(),
+ 		  decomp.sizeNeighborhoodList*sizeof(int));
 }
 
 Teuchos::RCP<const Epetra_BlockMap>
@@ -349,16 +364,10 @@ PeridigmNS::PdQuickGridDiscretization::getNumBonds() const
   return numBonds;
 }
 
-template<class T> struct ArrayDeleter{
-	void operator()(T* d) {
-		delete [] d;
-	}
-};
-
-const Epetra_BlockMap PeridigmNS::PdQuickGridDiscretization::getOverlap(int ndf, int numShared, int*shared, int numOwned,const  int* owned, const Epetra_Comm& comm){
+const Epetra_BlockMap PeridigmNS::getOverlap(int ndf, int numShared, int*shared, int numOwned,const  int* owned, const Epetra_Comm& comm){
 
 	int numPoints = numShared+numOwned;
-	shared_ptr<int> ids(new int[numPoints],ArrayDeleter<int>());
+	UTILITIES::Array<int> ids(numPoints);
 	int *ptr = ids.get();
 
 	for(int j=0;j<numOwned;j++,ptr++)
@@ -371,7 +380,7 @@ const Epetra_BlockMap PeridigmNS::PdQuickGridDiscretization::getOverlap(int ndf,
 
 }
 
-static const Epetra_BlockMap PeridigmNS::PdQuickGridDiscretization::getOwnedMap(const Epetra_Comm& comm,const QUICKGRID::Data& gridData, int ndf) {
+const Epetra_BlockMap PeridigmNS::PdQuickGridDiscretization::getOwnedMap(const Epetra_Comm& comm,const QUICKGRID::Data& gridData, int ndf) {
 	int numShared=0;
 	int *sharedPtr=NULL;
 	int numOwned = gridData.numPoints;
@@ -379,17 +388,17 @@ static const Epetra_BlockMap PeridigmNS::PdQuickGridDiscretization::getOwnedMap(
 	return getOverlap(ndf, numShared,sharedPtr,numOwned,ownedPtr,comm);
 }
 
-static const Epetra_BlockMap PeridigmNS::PdQuickGridDiscretization::getOverlapMap(const Epetra_Comm& comm,const QUICKGRID::Data& gridData, int ndf) {
-	std::pair<int, std::tr1::shared_ptr<int> > sharedPair = getSharedGlobalIds(gridData);
-	std::tr1::shared_ptr<int> sharedPtr = sharedPair.second;
-	int numShared = sharedPair.first;
+const Epetra_BlockMap PeridigmNS::PdQuickGridDiscretization::getOverlapMap(const Epetra_Comm& comm,const QUICKGRID::Data& gridData, int ndf) {
+	UTILITIES::Array<int> sharedGIDS = getSharedGlobalIds(gridData);
+	std::tr1::shared_ptr<int> sharedPtr = sharedGIDS.get_shared_ptr();
+	int numShared = sharedGIDS.get_size();
 	int *shared = sharedPtr.get();
 	int *owned = gridData.myGlobalIDs.get();
 	int numOwned = gridData.numPoints;
 	return getOverlap(ndf,numShared,shared,numOwned,owned,comm);
 }
 
-std::pair<int, std::tr1::shared_ptr<int> > PeridigmNS::PdQuickGridDiscretization::getSharedGlobalIds(const QUICKGRID::Data&){
+UTILITIES::Array<int> PeridigmNS::getSharedGlobalIds(const QUICKGRID::Data& gridData){
 	std::set<int> ownedIds(gridData.myGlobalIDs.get(),gridData.myGlobalIDs.get()+gridData.numPoints);
 	std::set<int> shared;
 	int *neighPtr = gridData.neighborhoodPtr.get();
@@ -413,13 +422,41 @@ std::pair<int, std::tr1::shared_ptr<int> > PeridigmNS::PdQuickGridDiscretization
 	}
 
 	// Copy set into shared ptr
-	shared_ptr<int> sharedGlobalIds(new int[shared.size()],PdQuickGrid::Deleter<int>());
+	UTILITIES::Array<int> sharedGlobalIds(shared.size());
 	int *sharedPtr = sharedGlobalIds.get();
 	set<int>::iterator it;
 	for ( it=shared.begin() ; it != shared.end(); it++, sharedPtr++ )
 		*sharedPtr = *it;
 
-	return std::pair<int, std::tr1::shared_ptr<int> >(shared.size(),sharedGlobalIds);
+	return sharedGlobalIds;
+}
+
+shared_ptr<int> PeridigmNS::getLocalOwnedIds(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap){
+	UTILITIES::Array<int> localIds(gridData.numPoints);
+	int *lIds = localIds.get();
+	int *end = localIds.get()+gridData.numPoints;
+	int *gIds = gridData.myGlobalIDs.get();
+	for(; lIds != end;lIds++, gIds++)
+		*lIds = overlapMap.LID(*gIds);
+	return localIds.get_shared_ptr();
+}
+
+shared_ptr<int> PeridigmNS::getLocalNeighborList(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap){
+	UTILITIES::Array<int> localNeighborList(gridData.sizeNeighborhoodList);
+	int *localNeig = localNeighborList.get();
+	int *neighPtr = gridData.neighborhoodPtr.get();
+	int *neigh = gridData.neighborhood.get();
+	for(int p=0;p<gridData.numPoints;p++){
+		int ptr = neighPtr[p];
+		int numNeigh = neigh[ptr];
+		localNeig[ptr]=numNeigh;
+		for(int n=1;n<=numNeigh;n++){
+			int gid = neigh[ptr+n];
+			int localId = overlapMap.LID(gid);
+			localNeig[ptr+n] = localId;
+		}
+	}
+	return localNeighborList.get_shared_ptr();
 }
 
 

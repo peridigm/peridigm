@@ -51,9 +51,6 @@
 #include "PHAL_FactoryTraits.hpp"
 #include "Peridigm_ModelEvaluator.hpp"
 #include "Peridigm_DiscretizationFactory.hpp"
-#include "PdGridData.h"
-#include "mesh_input/quick_grid/QuickGrid.h"
-#include "PdZoltan.h"
 #include <sstream>
 
 PeridigmNS::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<std::vector<Teuchos::RCP<const PeridigmNS::Material> > > materialModels_,
