@@ -9,13 +9,15 @@
 #define FIELD_H_
 #include <stdexcept>
 #include <tr1/memory>
-#include "utilities/Array.h"
 #include <string>
+#include <map>
+#include "utilities/Array.h"
 
 using std::tr1::shared_ptr;
 using UTILITIES::Array;
 using std::string;
 using std::size_t;
+using std::map;
 
 namespace Field_ENUM {
 
@@ -97,12 +99,14 @@ private:
 	FieldSpec(Field_ENUM::Type t, Field_ENUM::Relation r,  Field_ENUM::Length len, Field_ENUM::ParallelTopology p, Field_ENUM::Temporal temp, const string& label);
 
 public:
+	FieldSpec();
 	FieldSpec(const FieldSpec& c);
 	explicit FieldSpec(Field_ENUM::Type t, Field_ENUM::Relation r,  Field_ENUM::Length len, Field_ENUM::Temporal temp, const string& label);
 	const FieldSpec& operator=(const FieldSpec& c);
 	bool operator == (const FieldSpec& right) const;
 	bool operator != (const FieldSpec& right) const;
 	bool operator < (const FieldSpec& right) const;
+	std::ostream& print(std::ostream& os) const;
 	const Field_ENUM::Type getType() const { return type; }
 	const Field_ENUM::Relation getRelation() const { return relation; }
 	const Field_ENUM::Length getLength() const { return length; }
@@ -114,6 +118,9 @@ public:
 	const FieldSpec get_override(Field_ENUM::Temporal temp) const;
 };
 
+inline std::ostream& operator<<(std::ostream& os, const FieldSpec& fs) {
+	  return fs.print(os);
+}
 /*
  * UNDEFINED FIELDSPEC
  */
@@ -253,6 +260,37 @@ const Field_NS::FieldSpec DEVIATORIC_PLASTIC_EXTENSION
 
 const Field_NS::FieldSpec DEVIATORIC_BACK_EXTENSION
 (Field_ENUM::E_DB, Field_ENUM::BOND,    Field_ENUM::SCALAR,  Field_ENUM::TWO_STEP_INTEGRATED, "Deviatoric_Back_Extension");
+
+
+struct FieldSpecMap {
+	static std::map<string, FieldSpec> create_map() {
+		std::map<string,FieldSpec> mymap;
+		mymap[FIELDSPEC_UNDEFINED.getLabel()]          = FIELDSPEC_UNDEFINED;
+		mymap[VOLUME.getLabel()]                       = VOLUME;
+		mymap[GID.getLabel()]                          = GID;
+		mymap[PROC_NUM.getLabel()]                     = PROC_NUM;
+		mymap[DAMAGE.getLabel()]                       = DAMAGE;
+		mymap[WEIGHTED_VOLUME.getLabel()]              = WEIGHTED_VOLUME;
+		mymap[DILATATION.getLabel()]                   = DILATATION;
+		mymap[NUM_NEIGHBORS.getLabel()]                = NUM_NEIGHBORS;
+		mymap[LAMBDA.getLabel()]                       = LAMBDA;
+		mymap[DSF.getLabel()]                          = DSF;
+		mymap[COORD3D.getLabel()]                      = COORD3D;
+		mymap[DISPL3D.getLabel()]                      = DISPL3D;
+		mymap[CURCOORD3D.getLabel()]                   = CURCOORD3D;
+		mymap[VELOC3D.getLabel()]                      = VELOC3D;
+		mymap[ACCEL3D.getLabel()]                      = ACCEL3D;
+		mymap[FORCE3D.getLabel()]                      = FORCE3D;
+		mymap[FORCE_DENSITY3D.getLabel()]              = FORCE_DENSITY3D;
+		mymap[CONTACT_FORCE3D.getLabel()]              = CONTACT_FORCE3D;
+		mymap[CONTACT_FORCE_DENSITY3D.getLabel()]      = CONTACT_FORCE_DENSITY3D;
+		mymap[BOND_DAMAGE.getLabel()]                  = BOND_DAMAGE;
+		mymap[DEVIATORIC_PLASTIC_EXTENSION.getLabel()] = DEVIATORIC_PLASTIC_EXTENSION;
+		mymap[DEVIATORIC_BACK_EXTENSION.getLabel()]    = DEVIATORIC_BACK_EXTENSION ;
+		return mymap;
+	};
+	static const std::map<string, FieldSpec> Map;
+};
 
 } // Field_NS
 

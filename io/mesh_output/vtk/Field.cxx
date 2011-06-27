@@ -9,9 +9,27 @@
 
 namespace Field_NS {
 
+std::ostream& FieldSpec::print(std::ostream& os) const {
+	os << label;
+	return os;
+}
+
 /**
  * FieldSpec Implementation
  */
+
+// Default constructor
+FieldSpec::FieldSpec()
+:
+		type(FIELDSPEC_UNDEFINED.getType()),
+		relation(FIELDSPEC_UNDEFINED.getRelation()),
+		length(FIELDSPEC_UNDEFINED.getLength()),
+		par_top(FIELDSPEC_UNDEFINED.get_parallel_topology()),
+		temporal(FIELDSPEC_UNDEFINED.get_temporal()),
+		id(FIELDSPEC_UNDEFINED.getId()),
+		label(FIELDSPEC_UNDEFINED.getLabel())
+{}
+
 FieldSpec::
 FieldSpec(Field_ENUM::Type t, Field_ENUM::Relation r,  Field_ENUM::Length len, Field_ENUM::Temporal temp, const string& label)
 :
