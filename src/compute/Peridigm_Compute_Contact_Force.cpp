@@ -70,9 +70,9 @@ int PeridigmNS::Compute_Contact_Force::compute(Teuchos::RCP<PeridigmNS::DataMana
   int retval;
 
   Teuchos::RCP<Epetra_Vector> contact_force, contact_force_density, volume;
-  contact_force_density = dataManager->getData(Field_NS::CONTACT_FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1);
-  contact_force         = dataManager->getData(Field_NS::CONTACT_FORCE3D, Field_NS::FieldSpec::STEP_NP1);
-  volume                = dataManager->getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE);
+  contact_force_density = dataManager->getData(Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1);
+  contact_force         = dataManager->getData(Field_NS::CONTACT_FORCE3D, Field_ENUM::STEP_NP1);
+  volume                = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
 
   // Sanity check
   if ( (contact_force_density->Map().NumMyElements() != volume->Map().NumMyElements()) ||  (contact_force->Map().NumMyElements() != volume->Map().NumMyElements()) ) {
