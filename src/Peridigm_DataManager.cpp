@@ -58,10 +58,6 @@ void PeridigmNS::DataManager::allocateData(Teuchos::RCP< std::vector<Field_NS::F
   std::vector<Field_NS::FieldSpec>::iterator newEnd = unique(fieldSpecs->begin(), fieldSpecs->end());
   fieldSpecs->erase(newEnd, fieldSpecs->end());
 
-  // loop over the specs and determine:
-  // 1) 
-  // 2) 
-  // 3) 
   statelessScalarPointFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
   statelessVectorPointFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
   statelessScalarBondFieldSpecs  = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
@@ -92,7 +88,7 @@ void PeridigmNS::DataManager::allocateData(Teuchos::RCP< std::vector<Field_NS::F
         statefulScalarBondFieldSpecs->push_back(spec);
     }
     else{
-      TEST_FOR_EXCEPTION(false, Teuchos::RangeError, 
+      TEST_FOR_EXCEPTION(true, Teuchos::RangeError, 
                          "PeridigmNS::DataManager::allocateData, invalid FieldSpec!");
     }
   }

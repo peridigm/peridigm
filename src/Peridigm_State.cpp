@@ -47,14 +47,17 @@
 
 #include "Peridigm_State.hpp"
 #include <Epetra_Import.h>
+#include <Teuchos_TestForException.hpp>
 
 void PeridigmNS::State::allocateScalarPointData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
 {
   std::vector<Field_NS::FieldSpec> sortedFieldSpecs(*fieldSpecs);
   std::sort(sortedFieldSpecs.begin(), sortedFieldSpecs.end());
   scalarPointData = Teuchos::rcp(new Epetra_MultiVector(*map, sortedFieldSpecs.size()));
-  for(unsigned int i=0 ; i<sortedFieldSpecs.size() ; ++i)
+  for(unsigned int i=0 ; i<sortedFieldSpecs.size() ; ++i){
+    TEST_FOR_EXCEPT_MSG(sortedFieldSpecs[i].getRelation() != Field_ENUM::POINT, "PeridigmNS::State::allocateScalarPointData():  Invalid fieldSpec.\n");
     fieldSpecToDataMap[sortedFieldSpecs[i]] = Teuchos::rcp((*scalarPointData)(i), false);
+  }
 }
 
 void PeridigmNS::State::allocateVectorPointData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
@@ -62,8 +65,10 @@ void PeridigmNS::State::allocateVectorPointData(Teuchos::RCP< std::vector<Field_
   std::vector<Field_NS::FieldSpec> sortedFieldSpecs(*fieldSpecs);
   std::sort(sortedFieldSpecs.begin(), sortedFieldSpecs.end());
   vectorPointData = Teuchos::rcp(new Epetra_MultiVector(*map, sortedFieldSpecs.size()));
-  for(unsigned int i=0 ; i<sortedFieldSpecs.size() ; ++i)
+  for(unsigned int i=0 ; i<sortedFieldSpecs.size() ; ++i){
+    TEST_FOR_EXCEPT_MSG(sortedFieldSpecs[i].getRelation() != Field_ENUM::POINT, "PeridigmNS::State::allocateVectorPointData():  Invalid fieldSpec.\n");
     fieldSpecToDataMap[sortedFieldSpecs[i]] = Teuchos::rcp((*vectorPointData)(i), false);
+  }
 }
 
 void PeridigmNS::State::allocateScalarBondData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
@@ -71,8 +76,10 @@ void PeridigmNS::State::allocateScalarBondData(Teuchos::RCP< std::vector<Field_N
   std::vector<Field_NS::FieldSpec> sortedFieldSpecs(*fieldSpecs);
   std::sort(sortedFieldSpecs.begin(), sortedFieldSpecs.end());
   scalarBondData = Teuchos::rcp(new Epetra_MultiVector(*map, sortedFieldSpecs.size()));
-  for(unsigned int i=0 ; i<sortedFieldSpecs.size() ; ++i)
+  for(unsigned int i=0 ; i<sortedFieldSpecs.size() ; ++i){
+    TEST_FOR_EXCEPT_MSG(sortedFieldSpecs[i].getRelation() != Field_ENUM::BOND, "PeridigmNS::State::allocateScalarBondData():  Invalid fieldSpec.\n");
     fieldSpecToDataMap[sortedFieldSpecs[i]] = Teuchos::rcp((*scalarBondData)(i), false);
+  }
 }
 
 Teuchos::RCP< std::vector<Field_NS::FieldSpec> > PeridigmNS::State::getFieldSpecs(Teuchos::RCP<Field_ENUM::Relation> relation,
