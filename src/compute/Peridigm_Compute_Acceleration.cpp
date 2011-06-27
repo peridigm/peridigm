@@ -71,8 +71,8 @@ int PeridigmNS::Compute_Acceleration::compute(Teuchos::RCP<PeridigmNS::DataManag
 
   // fill the acceleration vector
   Teuchos::RCP<Epetra_Vector> force, acceleration;
-  force        = dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1);
-  acceleration = dataManager->getData(Field_NS::ACCEL3D, Field_NS::FieldSpec::STEP_NP1);
+  force        = dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1);
+  acceleration = dataManager->getData(Field_NS::ACCEL3D, Field_ENUM::STEP_NP1);
   *acceleration = *force;
 
   // \todo Generalize this for multiple materials
