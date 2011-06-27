@@ -55,8 +55,8 @@
 #include <Teuchos_TestForException.hpp>
 
 #include "Peridigm_OutputManager_VTK_XML.hpp"
-#include <Field.h>
-#include "PdVTK.h"
+#include "mesh_output/vtk/Field.h"
+#include "mesh_output/vtk/PdVTK.h"
 #include "Peridigm.hpp"
 
 PeridigmNS::OutputManager_VTK_XML::OutputManager_VTK_XML(const Teuchos::RCP<Teuchos::ParameterList>& params, PeridigmNS::Peridigm *peridigm_) {
@@ -194,20 +194,20 @@ Teuchos::ParameterList PeridigmNS::OutputManager_VTK_XML::getValidParameterList(
     // Aggregate specs from Peridigm object, ComputeManager object, and Material object
     // Do not insert any fieldSpecs with FieldLength == BOND (e.g., no bond data)
     for(unsigned int j=0; j<peridigmSpecs.size() ; ++j) {
-      if (peridigmSpecs[j].getLength() != Field_NS::FieldSpec::BOND)
+      if (peridigmSpecs[j].getRelation() != Field_ENUM::BOND)
         matTypeSpecs.insert(matTypeSpecs.end(),peridigmSpecs[j]);
     }
     for(unsigned int j=0; j<computeSpecs.size() ; ++j) {
-      if (computeSpecs[j].getLength() != Field_NS::FieldSpec::BOND)
+      if (computeSpecs[j].getRelation() != Field_ENUM::BOND)
         matTypeSpecs.insert(matTypeSpecs.end(),computeSpecs[j]);
     }
     materialSpecs = peridigm->materialModels->operator[](i)->VariableSpecs();
     for(unsigned int j=0; j<materialSpecs->size() ; ++j) {
-      if (materialSpecs->operator[](j).getLength() != Field_NS::FieldSpec::BOND)
+      if (materialSpecs->operator[](j).getRelation() != Field_ENUM::BOND)
         matTypeSpecs.insert(matTypeSpecs.end(),materialSpecs->operator[](j));
     }
     // ID and ProcNum can be determined from any *Petra vector, so list them as well
-    matTypeSpecs.insert(matTypeSpecs.end(),Field_NS::ID);
+    matTypeSpecs.insert(matTypeSpecs.end(),Field_NS::GID);
     matTypeSpecs.insert(matTypeSpecs.end(),Field_NS::PROC_NUM);
     // Remove duplicates
     std::unique(matTypeSpecs.begin(), matTypeSpecs.end());
@@ -259,11 +259,11 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<PeridigmNS::DataManag
   static int rebalanceCount = 0;
   if (grid.GetPointer() == NULL || rebalanceCount != dataManager->getRebalanceCount()) {
     double *xptr;
-    Teuchos::RCP<Epetra_Vector> myX =  dataManager->getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE);
+    Teuchos::RCP<Epetra_Vector> myX =  dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE);
     myX->ExtractView( &xptr );
     //int length = (myX->Map()).NumMyElements();
     // Use only the number of owned elements
-    int length = (dataManager->getOwnedIDVectorMap())->NumMyElements();
+    int length = (dataManager->getOwnedScalarPointMap())->NumMyElements();
     grid = PdVTK::getGrid(xptr,length);
     rebalanceCount = dataManager->getRebalanceCount();
   }
@@ -284,27 +284,27 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<PeridigmNS::DataManag
         i3 = Field_NS::FieldSpecMap::Map.find(nm); // Can't use operator[] on a const std::map
         Field_NS::FieldSpec const &fs = i3->second;
         double *ptr; ptr = NULL;
-        if (fs.getLabel() == "ID") { // Handle special case of ID (int type)
+        if (fs.getLabel() == "GID") { // Handle special case of GID (int type)
           // Get map corresponding to x (COORD3D FieldSpec guaranteed to exist by Peridigm object)
-          Teuchos::RCP<Epetra_Vector> myX = dataManager->getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE);
+          Teuchos::RCP<Epetra_Vector> myX = dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE);
           const Epetra_BlockMap& xMap = myX->Map();
           // hook up pointer to data
-          PdVTK::writeField<int>(grid,Field_NS::ID,xMap.MyGlobalElements());
+          PdVTK::writeField<int>(grid,Field_NS::GID,xMap.MyGlobalElements());
         }
         else if (fs.getLabel() == "Proc_Num") { // Handle special case of Proc_Num (int type)
           // Get map corresponding to x (COORD3D FieldSpec guaranteed to exist by Peridigm object)
-          Teuchos::RCP<Epetra_Vector> myX =  dataManager->getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE);
+          Teuchos::RCP<Epetra_Vector> myX =  dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE);
           // Use only the number of owned elements
-          int length = (dataManager->getOwnedIDVectorMap())->NumMyElements();
+          int length = (dataManager->getOwnedScalarPointMap())->NumMyElements();
           proc_num->assign(length,myPID);
           // hook up pointer to data
           PdVTK::writeField<int>(grid,Field_NS::PROC_NUM,&(proc_num->at(0)));
         }
         else { // Handle all other cases (double type)
-          if (fs.getStateArchitecture() == Field_NS::FieldSpec::STATELESS) // If stateless, get STEP_NONE
-            dataManager->getData(fs, Field_NS::FieldSpec::STEP_NONE)->ExtractView(&ptr);
+          if (fs.get_temporal() != Field_ENUM::TWO_STEP_INTEGRATED) // If stateless, get STEP_NONE
+            dataManager->getData(fs, Field_ENUM::STEP_NONE)->ExtractView(&ptr);
           else // If stateful, get STEP_NP1
-            dataManager->getData(fs, Field_NS::FieldSpec::STEP_NP1)->ExtractView(&ptr);
+            dataManager->getData(fs, Field_ENUM::STEP_NP1)->ExtractView(&ptr);
           // hook up pointer to data
           PdVTK::writeField<double>(grid,fs,ptr);
         }
