@@ -14,6 +14,7 @@ set(Peridigm_SOURCES
     Peridigm_Main.cpp
     Peridigm_Factory.cpp
     Peridigm.cpp
+    Peridigm_AbstractDiscretization.cpp
     Peridigm_DiscretizationFactory.cpp
     Peridigm_PdQuickGridDiscretization.cpp
     Peridigm_State.cpp
@@ -59,6 +60,7 @@ target_link_libraries(Peridigm ${Peridigm_LINK_LIBRARIES})
 #
 set(utPeridigm_SOURCES
     Peridigm.cpp
+    Peridigm_AbstractDiscretization.cpp
     Peridigm_DiscretizationFactory.cpp
     Peridigm_PdQuickGridDiscretization.cpp
     Peridigm_State.cpp
@@ -91,8 +93,9 @@ add_executable(utPeridigm_MPI_np2 utPeridigm_MPI_np2.cpp ${utPeridigm_SOURCES})
 target_link_libraries(utPeridigm_MPI_np2 ${Peridigm_LINK_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(utPeridigm_PdQuickGridDiscretization
-	       utPeridigm_PdQuickGridDiscretization.cpp
-               Peridigm_PdQuickGridDiscretization.cpp)
+               Peridigm_AbstractDiscretization.cpp
+               Peridigm_PdQuickGridDiscretization.cpp
+	           utPeridigm_PdQuickGridDiscretization.cpp)
 target_link_libraries(utPeridigm_PdQuickGridDiscretization
                       ${Trilinos_LIBRARIES}
                       ${PDNEIGH_LIBS}
@@ -105,8 +108,9 @@ target_link_libraries(utPeridigm_PdQuickGridDiscretization
 )
 
 add_executable(utPeridigm_PdQuickGridDiscretization_MPI_np2
-	       utPeridigm_PdQuickGridDiscretization_MPI_np2.cpp
-               Peridigm_PdQuickGridDiscretization.cpp)
+               Peridigm_AbstractDiscretization.cpp
+               Peridigm_PdQuickGridDiscretization.cpp
+               utPeridigm_PdQuickGridDiscretization_MPI_np2.cpp)
 target_link_libraries(utPeridigm_PdQuickGridDiscretization_MPI_np2
                       ${Trilinos_LIBRARIES}
                       ${PDNEIGH_LIBS}
@@ -212,6 +216,7 @@ target_link_libraries(utPHAL_EvaluateForce
 
 set(utPeridigm_Compute_Force_SOURCES
    ${CMAKE_SOURCE_DIR}/src/compute/unitTest/utPeridigm_Compute_Force.cpp
+   Peridigm_AbstractDiscretization.cpp
    Peridigm_DiscretizationFactory.cpp
    Peridigm_PdQuickGridDiscretization.cpp
    Peridigm_DataManager.cpp

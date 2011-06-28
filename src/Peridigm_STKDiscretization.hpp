@@ -120,9 +120,6 @@ namespace PeridigmNS {
     //! Compute the volume of a hexahedron element
     double hexVolume(std::vector<double*>& nodeCoordinates) const;
 
-    //! Epetra communicator
-    Teuchos::RCP<const Epetra_Comm> comm;
-
     //! Maps
     Teuchos::RCP<Epetra_BlockMap> oneDimensionalMap;
     Teuchos::RCP<Epetra_BlockMap> oneDimensionalOverlapMap;
@@ -153,6 +150,9 @@ namespace PeridigmNS {
 
     //! Mesh bulk data
     Teuchos::RCP<stk::io::util::MeshData> meshData;
+
+    //! Epetra communicator
+    Teuchos::RCP<const Epetra_Comm> comm;
   };
 }
 
