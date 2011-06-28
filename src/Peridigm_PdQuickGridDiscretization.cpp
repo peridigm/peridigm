@@ -114,10 +114,10 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
 
 PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                                                                  const Teuchos::RCP<const QUICKGRID::Data>& decomp) :
-  comm(epetra_comm),
   numBonds(0),
   myPID(comm->MyPID()),
-  numPID(comm->NumProc())
+  numPID(comm->NumProc()),
+  comm(epetra_comm)
 {
   createMaps(*decomp);
   createNeighborhoodData(*decomp);

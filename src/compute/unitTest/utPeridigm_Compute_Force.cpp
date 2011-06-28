@@ -135,10 +135,10 @@ Teuchos::RCP<PeridigmNS::DataManager> createDataManager(Teuchos::RCP<Teuchos::Pa
   dataManager->allocateData(variableSpecs);
 
   // Fill the dataManager with data from the discretization
-  dataManager->getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->Import(*(peridigmDisc->getCellVolume()), *oneDimensionalMapToOneDimensionalOverlapMapImporter, Insert);
-  dataManager->getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-  dataManager->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_N)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-  dataManager->getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->Import(*(peridigmDisc->getCellVolume()), *oneDimensionalMapToOneDimensionalOverlapMapImporter, Insert);
+  dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_N)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
 
   return dataManager;
 
@@ -172,9 +172,9 @@ void FourPointTest() {
 
   // Access the data we need
   Teuchos::RCP<Epetra_Vector> force, force_density, volume;
-  force_density = dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1);
-  force         = dataManager->getData(Field_NS::FORCE3D, Field_NS::FieldSpec::STEP_NP1);
-  volume        = dataManager->getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE);
+  force_density = dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1);
+  force         = dataManager->getData(Field_NS::FORCE3D, Field_ENUM::STEP_NP1);
+  volume        = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
 
   // Manufacture force density data
   double *force_density_values  = force_density->Values();
