@@ -284,14 +284,14 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<PeridigmNS::DataManag
         i3 = Field_NS::FieldSpecMap::Map.find(nm); // Can't use operator[] on a const std::map
         Field_NS::FieldSpec const &fs = i3->second;
         double *ptr; ptr = NULL;
-        if (fs.getLabel() == "GID") { // Handle special case of GID (int type)
+        if (fs == Field_NS::GID) { // Handle special case of ID (int type)
           // Get map corresponding to x (COORD3D FieldSpec guaranteed to exist by Peridigm object)
           Teuchos::RCP<Epetra_Vector> myX = dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE);
           const Epetra_BlockMap& xMap = myX->Map();
           // hook up pointer to data
           PdVTK::writeField<int>(grid,Field_NS::GID,xMap.MyGlobalElements());
         }
-        else if (fs.getLabel() == "Proc_Num") { // Handle special case of Proc_Num (int type)
+        else if (fs == Field_NS::PROC_NUM) { // Handle special case of Proc_Num (int type)
           // Get map corresponding to x (COORD3D FieldSpec guaranteed to exist by Peridigm object)
           Teuchos::RCP<Epetra_Vector> myX =  dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE);
           // Use only the number of owned elements
