@@ -40,11 +40,12 @@ endif()
 
 set(Peridigm_LINK_LIBRARIES
     ${Trilinos_LIBRARIES}
-    ${PdZoltanLibs}
+    ${PDNEIGH_LIBS}
     ${Zoltan_LIBRARY}
-    ${PdQuickGridLibs}
-    ${PdVTKLibs}
+    ${MESH_INPUT_LIBS}
+    ${UTILITIES_LIBS}
     ${VTK_LIBS}
+    ${MESH_OUTPUT_LIBS}
     ${REQUIRED_LIBS}
     ${PdMaterialUtilitiesLib}
     PdIC
@@ -94,10 +95,10 @@ add_executable(utPeridigm_PdQuickGridDiscretization
                Peridigm_PdQuickGridDiscretization.cpp)
 target_link_libraries(utPeridigm_PdQuickGridDiscretization
                       ${Trilinos_LIBRARIES}
-                      ${PdZoltanLibs}
+                      ${PDNEIGH_LIBS}
                       ${Zoltan_LIBRARY}
-                      ${PdQuickGridLibs}
-                      ${PdVTKLibs}
+                      ${MESH_INPUT_LIBS}
+                      ${MESH_OUTPUT_LIBS}
                       ${VTK_LIBS}
                       ${REQUIRED_LIBS}
                       ${Boost_LIBRARIES}
@@ -108,10 +109,10 @@ add_executable(utPeridigm_PdQuickGridDiscretization_MPI_np2
                Peridigm_PdQuickGridDiscretization.cpp)
 target_link_libraries(utPeridigm_PdQuickGridDiscretization_MPI_np2
                       ${Trilinos_LIBRARIES}
-                      ${PdZoltanLibs}
+                      ${PDNEIGH_LIBS}
                       ${Zoltan_LIBRARY}
-                      ${PdQuickGridLibs}
-                      ${PdVTKLibs}
+                      ${MESH_INPUT_LIBS}
+                      ${MESH_OUTPUT_LIBS}
                       ${VTK_LIBS}
                       ${REQUIRED_LIBS}
                       ${Boost_LIBRARIES}
@@ -123,6 +124,7 @@ add_executable(utPeridigm_State
                ../io/mesh_output/vtk/Field.cxx)
 target_link_libraries(utPeridigm_State
                       ${Trilinos_LIBRARIES}
+                      ${MESH_OUTPUT_LIBS}
                       ${REQUIRED_LIBS}
                       ${Boost_LIBRARIES}
 )
@@ -139,6 +141,7 @@ add_executable(utPeridigm_LinearElasticIsotropicMaterial
 )
 target_link_libraries(utPeridigm_LinearElasticIsotropicMaterial
 ${Trilinos_LIBRARIES}
+${MESH_OUTPUT_LIBS}
 ${PdMaterialUtilitiesLib}
 ${REQUIRED_LIBS}
 ${Boost_LIBRARIES}

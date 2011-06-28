@@ -136,10 +136,19 @@ zoltan
 )
 
 # other required libraries
-set(PdQuickGridLibs PdQuickGrid PdNeighborhood)
-set(PdVTKLibs PdVTK)
-set(PdZoltanLibs PdZoltan)
+set(MESH_INPUT_LIBS QuickGrid)
+
+# other required libraries
+set(MESH_OUTPUT_LIBS PdVTK)
+
+# load balancing and neighborhood creation
+set(PDNEIGH_LIBS PdNeigh)
+set(UTILITIES_LIBS Utilities)
+
+# other required libraries
 set(PdMaterialUtilitiesLib PdMaterialUtilities)
+
+
 
 # include for all directories
 # Collection of include and lib directories
