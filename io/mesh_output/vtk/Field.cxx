@@ -9,6 +9,12 @@
 
 namespace Field_NS {
 
+
+/*
+ * Static variable that must be initialized
+ */
+const map<string, FieldSpec> FieldSpecMap::Map =  FieldSpecMap::create_map();
+
 std::ostream& FieldSpec::print(std::ostream& os) const {
 	os << label;
 	return os;
