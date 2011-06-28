@@ -160,13 +160,13 @@ void testTwoPts()
 
   // two-point discretization
   double dt = 1.0;
-  Epetra_Vector& x = *dataManager.getData(Field_NS::COORD3D, Field_NS::FieldSpec::STEP_NONE);
-  Epetra_Vector& y = *dataManager.getData(Field_NS::CURCOORD3D, Field_NS::FieldSpec::STEP_NP1);
+  Epetra_Vector& x = *dataManager.getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE);
+  Epetra_Vector& y = *dataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1);
   x[0] = 0.0; x[1] = 0.0; x[2] = 0.0;
   x[3] = 1.0; x[4] = 0.0; x[5] = 0.0;
   y[0] = 0.0; y[1] = 0.0; y[2] = 0.0;
   y[3] = 2.0; y[4] = 0.0; y[5] = 0.0;
-  dataManager.getData(Field_NS::VOLUME, Field_NS::FieldSpec::STEP_NONE)->PutScalar(1.0);
+  dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->PutScalar(1.0);
 
   // create a workset with rcps to the relevant data
   PHAL::Workset workset;
@@ -181,12 +181,12 @@ void testTwoPts()
   // the UpdateForceState evaluator
 
   // weighted volume
-  Epetra_Vector& weightedVolume = *dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE);
+  Epetra_Vector& weightedVolume = *dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE);
   weightedVolume[0] = 1.0;
   weightedVolume[1] = 1.0;
 
   // dilatation
-  Epetra_Vector& dilatation = *dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_NS::FieldSpec::STEP_NONE);
+  Epetra_Vector& dilatation = *dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE);
   dilatation[0] = 1.0;
   dilatation[1] = 1.0;
 
@@ -207,7 +207,7 @@ void testTwoPts()
   evaluator.evaluateFields(workset);
 
   // assert the data in forceOverlap
-  Epetra_Vector& force = *dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_NS::FieldSpec::STEP_NP1);
+  Epetra_Vector& force = *dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1);
   double node0ForceX = force[0];
   BOOST_CHECK_CLOSE(node0ForceX, 2.34e12, 1.0e-14);
   double node0ForceY = force[1];
