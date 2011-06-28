@@ -62,7 +62,7 @@ using namespace PeridigmNS;
 
 void simpleTensorProductMesh()
 {
-  Teuchos::RCP<Epetra_Comm> comm;
+  Teuchos::RCP<const Epetra_Comm> comm;
   #ifdef HAVE_MPI
     comm = rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
   #else

@@ -67,8 +67,8 @@ using namespace std;
 PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                                                  const Teuchos::RCP<Teuchos::ParameterList>& params) :
   numBonds(0),
-  myPID(comm->MyPID()),
-  numPID(comm->NumProc()),
+  myPID(epetra_comm->MyPID()),
+  numPID(epetra_comm->NumProc()),
   comm(epetra_comm)
 {
   TEST_FOR_EXCEPT_MSG(params->get<string>("Type") != "Exodus", "Invalid Type in STKDiscretization");
