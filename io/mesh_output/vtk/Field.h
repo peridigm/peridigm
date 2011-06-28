@@ -187,7 +187,7 @@ const Field_NS::FieldSpec VOLUME
 (Field_ENUM::VOLUME, Field_ENUM::POINT,                 Field_ENUM::SCALAR,   Field_ENUM::CONSTANT,       "Volume");
 
 const Field_NS::FieldSpec GID
-(Field_ENUM::GID,Field_ENUM::POINT,                    Field_ENUM::SCALAR,    Field_ENUM::CONSTANT,          "GID");
+(Field_ENUM::GID,Field_ENUM::POINT,                    Field_ENUM::SCALAR,    Field_ENUM::CONSTANT,          "ID");
 
 const Field_NS::FieldSpec PROC_NUM
 ( Field_ENUM::PROC_NUM, Field_ENUM::POINT,             Field_ENUM::SCALAR,    Field_ENUM::CONSTANT,     "Proc_Num");
@@ -220,31 +220,31 @@ const Field_NS::FieldSpec DAMAGE
  * POINT VECTOR3D FieldSpecs
  */
 const Field_NS::FieldSpec COORD3D
-(Field_ENUM::COORDINATES,  Field_ENUM::POINT,           Field_ENUM::VECTOR3D,     Field_ENUM::CONSTANT,       "Coordinates");
+(Field_ENUM::COORDINATES,  Field_ENUM::POINT,           Field_ENUM::VECTOR3D,   Field_ENUM::CONSTANT,       "Coordinates");
 
 const Field_NS::FieldSpec DISPL3D
-(Field_ENUM::DISPLACEMENT,   Field_ENUM::POINT,         Field_ENUM::VECTOR3D,        Field_ENUM::TWO_STEP_INTEGRATED,   "Displacement");
+(Field_ENUM::DISPLACEMENT,   Field_ENUM::POINT,         Field_ENUM::VECTOR3D,   Field_ENUM::TWO_STEP_INTEGRATED,   "Displacement");
 
 const Field_NS::FieldSpec CURCOORD3D
 (Field_ENUM::CURRENT_COORDINATES, Field_ENUM::POINT,    Field_ENUM::VECTOR3D,   Field_ENUM::TWO_STEP_INTEGRATED, "Current_Coordinates");
 
 const Field_NS::FieldSpec VELOC3D
-(Field_ENUM::VELOCITY, Field_ENUM::POINT,               Field_ENUM::VECTOR3D,            Field_ENUM::TWO_STEP_INTEGRATED,  "Velocity");
+(Field_ENUM::VELOCITY, Field_ENUM::POINT,               Field_ENUM::VECTOR3D,   Field_ENUM::TWO_STEP_INTEGRATED,  "Velocity");
 
 const Field_NS::FieldSpec ACCEL3D
-(Field_ENUM::ACCELERATION,  Field_ENUM::POINT,          Field_ENUM::VECTOR3D,       Field_ENUM::TWO_STEP_INTEGRATED,   "Acceleration");
+(Field_ENUM::ACCELERATION,  Field_ENUM::POINT,          Field_ENUM::VECTOR3D,   Field_ENUM::TWO_STEP_INTEGRATED,   "Acceleration");
 
 const Field_NS::FieldSpec FORCE3D
-(Field_ENUM::FORCE,  Field_ENUM::POINT,                 Field_ENUM::VECTOR3D,              Field_ENUM::TWO_STEP_INTEGRATED,   "Force");
+(Field_ENUM::FORCE,  Field_ENUM::POINT,                 Field_ENUM::VECTOR3D,   Field_ENUM::TWO_STEP_INTEGRATED,   "Force");
 
 const Field_NS::FieldSpec FORCE_DENSITY3D
-(Field_ENUM::FORCE_DENSITY, Field_ENUM::POINT,          Field_ENUM::VECTOR3D,       Field_ENUM::TWO_STEP_INTEGRATED,  "Force Density");
+(Field_ENUM::FORCE_DENSITY, Field_ENUM::POINT,          Field_ENUM::VECTOR3D,   Field_ENUM::TWO_STEP_INTEGRATED,  "Force_Density");
 
 const Field_NS::FieldSpec CONTACT_FORCE3D
-(Field_ENUM::CONTACT_FORCE,  Field_ENUM::POINT,         Field_ENUM::VECTOR3D,    Field_ENUM::TWO_STEP_INTEGRATED,     "Contact Force");
+(Field_ENUM::CONTACT_FORCE,  Field_ENUM::POINT,         Field_ENUM::VECTOR3D,   Field_ENUM::TWO_STEP_INTEGRATED,     "Contact_Force");
 
 const Field_NS::FieldSpec CONTACT_FORCE_DENSITY3D
-(Field_ENUM::CONTACT_FORCE_DENSITY, Field_ENUM::POINT,  Field_ENUM::VECTOR3D, Field_ENUM::TWO_STEP_INTEGRATED, "Contact Force Density");
+(Field_ENUM::CONTACT_FORCE_DENSITY, Field_ENUM::POINT,  Field_ENUM::VECTOR3D,   Field_ENUM::TWO_STEP_INTEGRATED, "Contact_Force_Density");
 
 const Field_NS::FieldSpec RESID3D
 (Field_ENUM::RESIDUAL,  Field_ENUM::POINT,             Field_ENUM::VECTOR3D,    Field_ENUM::SCRATCH,          "Residual");
