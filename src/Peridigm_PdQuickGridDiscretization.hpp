@@ -93,10 +93,6 @@ namespace PeridigmNS {
     //! Get the number of bonds on this processor
     unsigned int getNumBonds() const;
 
-    static const Epetra_BlockMap getOwnedMap(const Epetra_Comm& comm,const QUICKGRID::Data& gridData, int ndf);
-    static const Epetra_BlockMap getOverlapMap(const Epetra_Comm& comm, const QUICKGRID::Data& gridData, int ndf);
-
-
   private:
 
     //! Private to prohibit copying
@@ -118,9 +114,6 @@ namespace PeridigmNS {
 
     //! Create NeighborhoodData
     void createNeighborhoodData(const QUICKGRID::Data& decomp);
-
-    //! Epetra communicator
-    Teuchos::RCP<const Epetra_Comm> comm;
 
     //! Maps
     Teuchos::RCP<Epetra_BlockMap> oneDimensionalMap;
@@ -146,6 +139,9 @@ namespace PeridigmNS {
 
     //! Number of Processors
     unsigned int numPID;
+
+    //! Epetra communicator
+    Teuchos::RCP<const Epetra_Comm> comm;
   };
 }
 

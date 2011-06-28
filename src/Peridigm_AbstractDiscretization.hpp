@@ -52,6 +52,7 @@
 #include <Teuchos_RCP.hpp>
 #include <Epetra_Vector.h>
 
+#include "mesh_input/quick_grid/QuickGrid.h"
 #include "Peridigm_NeighborhoodData.hpp"
 
 namespace PeridigmNS {
@@ -93,7 +94,25 @@ namespace PeridigmNS {
     //! Get the locally-owned IDs for each node set
     Teuchos::RCP< std::map< std::string, std::vector<int> > > getNodeSets() { return sphereMeshNodeSets; } ;
 
+    //! Get the owned (non-overlap) map.
+    static Epetra_BlockMap getOwnedMap(const Epetra_Comm& comm, const QUICKGRID::Data& gridData, int ndf);
+
+    //! Get the overlap map.
+    static Epetra_BlockMap getOverlapMap(const Epetra_Comm& comm, const QUICKGRID::Data& gridData, int ndf);
+
   protected:
+
+    //! Get the overlap map.
+    static Epetra_BlockMap getOverlap(int ndf, int numShared, int*shared, int numOwned, const  int* owned, const Epetra_Comm& comm);
+
+    //! Get the shared global IDs.
+    static UTILITIES::Array<int> getSharedGlobalIds(const QUICKGRID::Data& gridData);
+
+    //! Get the local owned IDs.
+    static shared_ptr<int> getLocalOwnedIds(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap);
+
+    //! Get the local neighborhood list.
+    static shared_ptr<int> getLocalNeighborList(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap);
 
     //! Horizon
     double horizon;
