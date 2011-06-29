@@ -265,6 +265,11 @@ size_t Spec1D::getCellNeighborhoodSize(double horizon, double ringRadius) const 
 	if(abs(dCx - nCx) >= .5 )
 		nCx += 1;
 //	std::cout << "Final nCx = " << nCx << std::endl;
+
+	// this handles the pathology when the horizon > 1.5 * xLength
+	if(nCx > numCells)
+     nCx = numCells;
+
 	return nCx;
 }
 
