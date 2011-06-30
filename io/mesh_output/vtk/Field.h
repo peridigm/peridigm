@@ -65,7 +65,7 @@ enum Length {
 enum Temporal {
 	SCRATCH=0,
 	CONSTANT,
-	TWO_STEP_INTEGRATED,
+	TWO_STEP,
 	TEMPORAL_UNDEFINED
 };
 
@@ -196,25 +196,25 @@ const Field_NS::FieldSpec WEIGHTED_VOLUME
 (Field_ENUM::WEIGHTED_VOLUME, Field_ENUM::POINT,       Field_ENUM::SCALAR,  Field_ENUM::CONSTANT, "Weighted_Volume");
 
 const Field_NS::FieldSpec DILATATION
-(Field_ENUM::DILATATION, Field_ENUM::POINT,            Field_ENUM::SCALAR,  Field_ENUM::TWO_STEP_INTEGRATED,     "Dilatation");
+(Field_ENUM::DILATATION, Field_ENUM::POINT,            Field_ENUM::SCALAR,  Field_ENUM::TWO_STEP,     "Dilatation");
 
 const Field_NS::FieldSpec NUM_NEIGHBORS
 ( Field_ENUM::NUM_NEIGHBORS, Field_ENUM::POINT,        Field_ENUM::SCALAR,  Field_ENUM::CONSTANT,  "Num_Neighbors");
 
 const Field_NS::FieldSpec LAMBDA
-(Field_ENUM::PLASTIC_CONSISTENCY, Field_ENUM::POINT,    Field_ENUM::SCALAR,   Field_ENUM::TWO_STEP_INTEGRATED,       "Lambda");
+(Field_ENUM::PLASTIC_CONSISTENCY, Field_ENUM::POINT,    Field_ENUM::SCALAR,   Field_ENUM::TWO_STEP,       "Lambda");
 
 const Field_NS::FieldSpec NORM_TD
 (Field_ENUM::NORM_DEVIATORIC_FORCE_STATE, Field_ENUM::POINT, Field_ENUM::SCALAR,   Field_ENUM::SCRATCH,      "Norm_td");
 
 const Field_NS::FieldSpec DSF
-(Field_ENUM::DSF,   Field_ENUM::POINT,                  Field_ENUM::SCALAR,    Field_ENUM::SCRATCH,          "DSF");
+(Field_ENUM::DSF,   Field_ENUM::POINT,                  Field_ENUM::SCALAR,    Field_ENUM::CONSTANT,          "DSF");
 
 const Field_NS::FieldSpec BC_MASK
-(Field_ENUM::BC_MASK,  Field_ENUM::POINT,               Field_ENUM::SCALAR,    Field_ENUM::SCRATCH,      "BC_MASK");
+(Field_ENUM::BC_MASK,  Field_ENUM::POINT,               Field_ENUM::SCALAR,    Field_ENUM::CONSTANT,      "BC_MASK");
 
 const Field_NS::FieldSpec DAMAGE
-(Field_ENUM::DAMAGE,  Field_ENUM::POINT,               Field_ENUM::SCALAR,    Field_ENUM::SCRATCH,      "Damage");
+(Field_ENUM::DAMAGE,  Field_ENUM::POINT,               Field_ENUM::SCALAR,    Field_ENUM::TWO_STEP,      "Damage");
 
 /**
  * POINT VECTOR3D FieldSpecs
@@ -223,28 +223,28 @@ const Field_NS::FieldSpec COORD3D
 (Field_ENUM::COORDINATES,  Field_ENUM::POINT,           Field_ENUM::VECTOR3D,   Field_ENUM::CONSTANT,       "Coordinates");
 
 const Field_NS::FieldSpec DISPL3D
-(Field_ENUM::DISPLACEMENT,   Field_ENUM::POINT,         Field_ENUM::VECTOR3D,   Field_ENUM::TWO_STEP_INTEGRATED,   "Displacement");
+(Field_ENUM::DISPLACEMENT,   Field_ENUM::POINT,         Field_ENUM::VECTOR3D,   Field_ENUM::TWO_STEP,   "Displacement");
 
 const Field_NS::FieldSpec CURCOORD3D
-(Field_ENUM::CURRENT_COORDINATES, Field_ENUM::POINT,    Field_ENUM::VECTOR3D,   Field_ENUM::TWO_STEP_INTEGRATED, "Current_Coordinates");
+(Field_ENUM::CURRENT_COORDINATES, Field_ENUM::POINT,    Field_ENUM::VECTOR3D,   Field_ENUM::TWO_STEP, "Current_Coordinates");
 
 const Field_NS::FieldSpec VELOC3D
-(Field_ENUM::VELOCITY, Field_ENUM::POINT,               Field_ENUM::VECTOR3D,   Field_ENUM::TWO_STEP_INTEGRATED,  "Velocity");
+(Field_ENUM::VELOCITY, Field_ENUM::POINT,               Field_ENUM::VECTOR3D,   Field_ENUM::TWO_STEP,  "Velocity");
 
 const Field_NS::FieldSpec ACCEL3D
-(Field_ENUM::ACCELERATION,  Field_ENUM::POINT,          Field_ENUM::VECTOR3D,   Field_ENUM::TWO_STEP_INTEGRATED,   "Acceleration");
+(Field_ENUM::ACCELERATION,  Field_ENUM::POINT,          Field_ENUM::VECTOR3D,   Field_ENUM::TWO_STEP,   "Acceleration");
 
 const Field_NS::FieldSpec FORCE3D
-(Field_ENUM::FORCE,  Field_ENUM::POINT,                 Field_ENUM::VECTOR3D,   Field_ENUM::TWO_STEP_INTEGRATED,   "Force");
+(Field_ENUM::FORCE,  Field_ENUM::POINT,                 Field_ENUM::VECTOR3D,   Field_ENUM::TWO_STEP,   "Force");
 
 const Field_NS::FieldSpec FORCE_DENSITY3D
-(Field_ENUM::FORCE_DENSITY, Field_ENUM::POINT,          Field_ENUM::VECTOR3D,   Field_ENUM::TWO_STEP_INTEGRATED,  "Force_Density");
+(Field_ENUM::FORCE_DENSITY, Field_ENUM::POINT,          Field_ENUM::VECTOR3D,   Field_ENUM::TWO_STEP,  "Force_Density");
 
 const Field_NS::FieldSpec CONTACT_FORCE3D
-(Field_ENUM::CONTACT_FORCE,  Field_ENUM::POINT,         Field_ENUM::VECTOR3D,   Field_ENUM::TWO_STEP_INTEGRATED,     "Contact_Force");
+(Field_ENUM::CONTACT_FORCE,  Field_ENUM::POINT,         Field_ENUM::VECTOR3D,   Field_ENUM::TWO_STEP,     "Contact_Force");
 
 const Field_NS::FieldSpec CONTACT_FORCE_DENSITY3D
-(Field_ENUM::CONTACT_FORCE_DENSITY, Field_ENUM::POINT,  Field_ENUM::VECTOR3D,   Field_ENUM::TWO_STEP_INTEGRATED, "Contact_Force_Density");
+(Field_ENUM::CONTACT_FORCE_DENSITY, Field_ENUM::POINT,  Field_ENUM::VECTOR3D,   Field_ENUM::TWO_STEP, "Contact_Force_Density");
 
 const Field_NS::FieldSpec RESID3D
 (Field_ENUM::RESIDUAL,  Field_ENUM::POINT,             Field_ENUM::VECTOR3D,    Field_ENUM::SCRATCH,          "Residual");
@@ -253,13 +253,13 @@ const Field_NS::FieldSpec RESID3D
  * BOND SCALAR FieldSpecs
  */
 const Field_NS::FieldSpec BOND_DAMAGE
-(Field_ENUM::BOND_DAMAGE, Field_ENUM::BOND,  Field_ENUM::SCALAR, Field_ENUM::SCRATCH, "Bond Damage");
+(Field_ENUM::BOND_DAMAGE, Field_ENUM::BOND,  Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Bond Damage");
 
 const Field_NS::FieldSpec DEVIATORIC_PLASTIC_EXTENSION
-(Field_ENUM::E_DP, Field_ENUM::BOND,   Field_ENUM::SCALAR, Field_ENUM::TWO_STEP_INTEGRATED, "Deviatoric_Plastic_Extension");
+(Field_ENUM::E_DP, Field_ENUM::BOND,   Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Deviatoric_Plastic_Extension");
 
 const Field_NS::FieldSpec DEVIATORIC_BACK_EXTENSION
-(Field_ENUM::E_DB, Field_ENUM::BOND,    Field_ENUM::SCALAR,  Field_ENUM::TWO_STEP_INTEGRATED, "Deviatoric_Back_Extension");
+(Field_ENUM::E_DB, Field_ENUM::BOND,    Field_ENUM::SCALAR,  Field_ENUM::TWO_STEP, "Deviatoric_Back_Extension");
 
 
 struct FieldSpecMap {

@@ -301,7 +301,7 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<PeridigmNS::DataManag
           PdVTK::writeField<int>(grid,Field_NS::PROC_NUM,&(proc_num->at(0)));
         }
         else { // Handle all other cases (double type)
-          if (fs.get_temporal() != Field_ENUM::TWO_STEP_INTEGRATED) // If stateless, get STEP_NONE
+          if (fs.get_temporal() != Field_ENUM::TWO_STEP) // If stateless, get STEP_NONE
             dataManager->getData(fs, Field_ENUM::STEP_NONE)->ExtractView(&ptr);
           else // If stateful, get STEP_NP1
             dataManager->getData(fs, Field_ENUM::STEP_NP1)->ExtractView(&ptr);
