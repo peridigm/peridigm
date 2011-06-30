@@ -70,6 +70,11 @@ add_executable(utReloadBalance_np4 utReloadBalance_np4.cxx)
 target_link_libraries(utReloadBalance_np4  PdNeigh QuickGrid Utilities PdVTK ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 add_test (utReloadBalance_np4 python run_unit_test.py mpiexec -np 4 ./utReloadBalance_np4)
 
+add_executable(ut_twoPointReloadBalance ut_twoPointReloadBalance.cxx)
+target_link_libraries(ut_twoPointReloadBalance  PdNeigh QuickGrid Utilities PdVTK ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
+add_test (ut_twoPointReloadBalance python run_unit_test.py ./ut_twoPointReloadBalance)
+
+
 add_executable(utZoltanQuery_pointSizeInBytes utZoltanQuery_pointSizeInBytes.cxx)
 target_link_libraries(utZoltanQuery_pointSizeInBytes  PdNeigh QuickGrid Utilities ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})
 add_test (utZoltanQuery_pointSizeInBytes python run_unit_test.py ./utZoltanQuery_pointSizeInBytes)
