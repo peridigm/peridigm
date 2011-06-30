@@ -119,8 +119,8 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     // create a temporary DataManager containing data for this point and its neighborhood
     PeridigmNS::DataManager tempDataManager;
     tempDataManager.setMaps(Teuchos::RCP<const Epetra_BlockMap>(),
-                            Teuchos::RCP<const Epetra_BlockMap>(),
                             tempOneDimensionalMap,
+                            Teuchos::RCP<const Epetra_BlockMap>(),
                             tempThreeDimensionalMap,
                             tempBondMap);
 
