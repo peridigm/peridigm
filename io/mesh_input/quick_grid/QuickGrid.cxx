@@ -12,6 +12,7 @@
 #include <cmath>
 #include <cstring>
 #include <iostream>
+#include <strstream>
 #include <set>
 #include <cstdlib>
 
@@ -21,6 +22,36 @@ using namespace std;
 using std::tr1::shared_ptr;
 using UTILITIES::Minus;
 using UTILITIES::Dot;
+
+void print_meta_data(const QuickGridData& gridData) {
+	std::strstream s;
+
+	s << "QUICKGRID.print_meta_data(const QuickGridData& gridData)\n";
+	s << "\tdimension : " << gridData.dimension << "\n";
+	s << "\tglobalNumPoints : " << gridData.globalNumPoints << "\n";
+	s << "\tsizeNeighborhoodList : " << gridData.sizeNeighborhoodList << "\n";
+	s << "\tnumExport : " << gridData.numExport << "\n";
+	std::string unpack = gridData.unPack ? "true" : "false";
+	s << "\tunPack : " << unpack << "\n";
+
+	int *ptr = gridData.neighborhoodPtr.get();
+	int *neigh = gridData.neighborhood.get();
+	for(size_t n=0;n<gridData.numPoints;n++,ptr++){
+		int num_neigh = *neigh; neigh++;
+		s << "\tNeighborhood : " << gridData.myGlobalIDs.get()[n]
+		  << "; neigh ptr : " << *ptr << "; num neigh : " << num_neigh << "\n";
+
+		for(size_t p=0;p<num_neigh;p++,neigh++){
+			if(0 == p%10 && p != 0)
+				s << "\n";
+			s << *neigh << ", ";
+		}
+		s << "\n";
+	}
+	std::cout << s.str();
+
+}
+
 
 bool SphericalNormFunction (const double* u, const double* v, double r) {
 	double dx = v[0]-u[0];

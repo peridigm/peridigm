@@ -87,7 +87,7 @@ Teuchos::RCP<PeridigmNS::Peridigm> createTwoPointModel()
   // discretization parameters
   ParameterList& discretizationParams = problemParams.sublist("Discretization");
   discretizationParams.set("Type", "PdQuickGrid");
-  discretizationParams.set("Horizon", 2.0);
+  discretizationParams.set("Horizon", 2.1);
 
   // pdQuickGrid tensor product mesh generator parameters
   ParameterList& pdQuickGridParams = discretizationParams.sublist("TensorProduct3DMeshGenerator");
@@ -163,7 +163,7 @@ Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel()
   // discretization parameters
   ParameterList& discretizationParams = problemParams.sublist("Discretization");
   discretizationParams.set("Type", "PdQuickGrid");
-  discretizationParams.set("Horizon", 2.0);
+  discretizationParams.set("Horizon", 2.1);
 
   // pdQuickGrid tensor product mesh generator parameters
   ParameterList& pdQuickGridParams = discretizationParams.sublist("TensorProduct3DMeshGenerator");

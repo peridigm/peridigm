@@ -41,6 +41,7 @@ Array<double> getDiscretization(const SpecRing2D& spec);
 Array<double> getDiscretization(const SpecRing2D& spec, const Spec1D& axisSpec);
 QuickGridData getDiscretization(size_t rank, QuickGridMeshGenerationIterator &cellIter);
 QuickGridData allocatePdGridData(size_t numCells, size_t dimension);
+void print_meta_data(const QuickGridData& gridData);
 
 
 class Horizon {
