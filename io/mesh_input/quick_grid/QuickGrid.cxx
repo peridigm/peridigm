@@ -6,7 +6,9 @@
  */
 
 #include "QuickGrid.h"
+
 #include "mpi.h"
+#include <boost/property_tree/json_parser.hpp>
 #include <tr1/memory>
 #include <vector>
 #include <cmath>
@@ -23,9 +25,71 @@ using std::tr1::shared_ptr;
 using UTILITIES::Minus;
 using UTILITIES::Dot;
 
-void print_meta_data(const QuickGridData& gridData) {
-	std::strstream s;
 
+shared_ptr<QuickGridMeshGenerationIterator> getMeshGenerator(size_t numProcs, const std::string& json_filename) {
+
+   // Create an empty property tree object
+   using boost::property_tree::ptree;
+   ptree pt;
+
+   // Load the json file into the property tree. If reading fails
+   // (cannot open file, parse error), an exception is thrown.
+   read_json(json_filename, pt);
+
+   /*
+    * Get Discretization
+    */
+   ptree discretization_tree=pt.find("Discretization")->second;
+   string path=discretization_tree.get<string>("Type");
+   double horizon=pt.get<double>("Discretization.Horizon");
+
+   string neighborhood_type="";
+   try {
+   neighborhood_type=pt.get<string>("Discretization.NeighborhoodType");
+   } catch(std::runtime_error e) {
+   	std::cout << "NOTE-->QUICKGRID::getMeshGenerator()\n";
+   	std::cout << "\tDiscretization.NeighborhoodType was not specified.  Default square norm will be used.\n";
+   }
+
+   shared_ptr<TensorProduct3DMeshGenerator> g;
+   NormFunctionPointer norm = NoOpNormFunction;
+   if("QuickGrid.TensorProduct3DMeshGenerator"==path){
+   	double xStart = pt.get<double>(path+".X Origin");
+   	double yStart = pt.get<double>(path+".Y Origin");
+   	double zStart = pt.get<double>(path+".Z Origin");
+
+   	double xLength = pt.get<double>(path+".X Length");
+   	double yLength = pt.get<double>(path+".Y Length");
+   	double zLength = pt.get<double>(path+".Z Length");
+
+   	const int nx = pt.get<int>(path+".Number Points X");
+   	const int ny = pt.get<int>(path+".Number Points Y");
+   	const int nz = pt.get<int>(path+".Number Points Z");
+   	const Spec1D xSpec(nx,xStart,xLength);
+   	const Spec1D ySpec(ny,yStart,yLength);
+   	const Spec1D zSpec(nz,zStart,zLength);
+
+   	// set neighborhood norm operator
+   	if("Spherical"==neighborhood_type)
+   		norm = SphericalNorm;
+
+   	// Create decomposition iterator
+   	g = shared_ptr<TensorProduct3DMeshGenerator>(new TensorProduct3DMeshGenerator(numProcs, horizon, xSpec, ySpec, zSpec, norm));
+   } else {
+   	std::string s;
+   	s = "Error-->QUICKGRID::getMeshGenerator()\n";
+   	s += "\tOnly Reader for Discretization.Type==QuickGrid.TensorProduct3DMeshGenerator is implemented\n";
+   	s += "\tCome back soon for the other type(s):)\n";
+   	throw std::runtime_error(s);
+   }
+	return g;
+
+}
+
+
+void print_meta_data(const QuickGridData& gridData, const std::string& label) {
+	std::strstream s;
+	s << label << "\n";
 	s << "QUICKGRID.print_meta_data(const QuickGridData& gridData)\n";
 	s << "\tdimension : " << gridData.dimension << "\n";
 	s << "\tglobalNumPoints : " << gridData.globalNumPoints << "\n";
@@ -39,11 +103,11 @@ void print_meta_data(const QuickGridData& gridData) {
 	for(size_t n=0;n<gridData.numPoints;n++,ptr++){
 		int num_neigh = *neigh; neigh++;
 		s << "\tNeighborhood : " << gridData.myGlobalIDs.get()[n]
-		  << "; neigh ptr : " << *ptr << "; num neigh : " << num_neigh << "\n";
+		  << "; neigh ptr : " << *ptr << "; num neigh : " << num_neigh << "\n\t";
 
 		for(size_t p=0;p<num_neigh;p++,neigh++){
-			if(0 == p%10 && p != 0)
-				s << "\n";
+			if(0 == p%10 && 0 != p)
+				s << "\n\t";
 			s << *neigh << ", ";
 		}
 		s << "\n";
