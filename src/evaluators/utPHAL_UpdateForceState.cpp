@@ -136,8 +136,8 @@ void testTwoPts()
   // in serial, the overlap and non-overlap maps are the same
   PeridigmNS::DataManager dataManager;
   dataManager.setMaps(Teuchos::rcp(&oneDimensionalOverlapMap, false),
-                      Teuchos::rcp(&threeDimensionalOverlapMap, false),
                       Teuchos::rcp(&oneDimensionalOverlapMap, false),
+                      Teuchos::rcp(&threeDimensionalOverlapMap, false),
                       Teuchos::rcp(&threeDimensionalOverlapMap, false),
                       Teuchos::rcp(&bondMap, false));
   dataManager.allocateData(mat.VariableSpecs());

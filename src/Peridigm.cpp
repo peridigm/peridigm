@@ -289,7 +289,7 @@ void PeridigmNS::Peridigm::initializeDataManager(Teuchos::RCP<AbstractDiscretiza
 
   // Instantiate data manager
   dataManager = Teuchos::rcp(new PeridigmNS::DataManager);
-  dataManager->setMaps(oneDimensionalMap, threeDimensionalMap, oneDimensionalOverlapMap, threeDimensionalOverlapMap, bondMap);
+  dataManager->setMaps(oneDimensionalMap, oneDimensionalOverlapMap, threeDimensionalMap, threeDimensionalOverlapMap, bondMap);
 
   // Create a master list of variable specs
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);

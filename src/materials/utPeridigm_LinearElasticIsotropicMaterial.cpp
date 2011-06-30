@@ -105,8 +105,8 @@ void testTwoPts()
   // in serial, the overlap and non-overlap maps are the same
   PeridigmNS::DataManager dataManager;
   dataManager.setMaps(Teuchos::rcp(&nodeMap, false),
-                      Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&nodeMap, false),
+                      Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&bondMap, false));
   dataManager.allocateData(mat.VariableSpecs());
@@ -221,8 +221,8 @@ void testEightPts()
   // in serial, the overlap and non-overlap maps are the same
   PeridigmNS::DataManager dataManager;
   dataManager.setMaps(Teuchos::rcp(&nodeMap, false),
-                      Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&nodeMap, false),
+                      Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&bondMap, false));
   dataManager.allocateData(mat.VariableSpecs());
@@ -484,8 +484,8 @@ void testThreePts()
   // in serial, the overlap and non-overlap maps are the same
   PeridigmNS::DataManager dataManager;
   dataManager.setMaps(Teuchos::rcp(&nodeMap, false),
-                      Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&nodeMap, false),
+                      Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&bondMap, false));
   dataManager.allocateData(mat.VariableSpecs());
@@ -680,8 +680,8 @@ void twoPointProbeJacobian()
   // in serial, the overlap and non-overlap maps are the same
   PeridigmNS::DataManager dataManager;
   dataManager.setMaps(Teuchos::rcp(&nodeMap, false),
-                      Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&nodeMap, false),
+                      Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&bondMap, false));
   dataManager.allocateData(mat.VariableSpecs());
@@ -754,8 +754,8 @@ void twoPointProbeJacobianJAM()
   // in serial, the overlap and non-overlap maps are the same
   PeridigmNS::DataManager dataManager;
   dataManager.setMaps(Teuchos::rcp(&nodeMap, false),
-                      Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&nodeMap, false),
+                      Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&bondMap, false));
   dataManager.allocateData(mat.VariableSpecs());
