@@ -48,6 +48,7 @@
 #include "Peridigm_State.hpp"
 #include <Epetra_Import.h>
 #include <Teuchos_TestForException.hpp>
+#include <sstream>
 
 void PeridigmNS::State::allocateScalarPointData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
 {
@@ -100,8 +101,12 @@ Teuchos::RCP<Epetra_Vector> PeridigmNS::State::getData(Field_NS::FieldSpec field
   std::map< Field_NS::FieldSpec, Teuchos::RCP<Epetra_Vector> >::iterator lb = fieldSpecToDataMap.lower_bound(fieldSpec);
   // if the key does not exist, throw an exception
   bool keyExists = ( lb != fieldSpecToDataMap.end() && !(fieldSpecToDataMap.key_comp()(fieldSpec, lb->first)) );
-  TEST_FOR_EXCEPTION(!keyExists, Teuchos::RangeError, 
-                       "Error in PeridigmNS::State::getData(), key does not exist!");
+  if(!keyExists){
+    std::stringstream ss;
+    ss << fieldSpec;
+    TEST_FOR_EXCEPTION(!keyExists, Teuchos::RangeError, 
+                       "****Error in PeridigmNS::State::getData(), key does not exist: " + ss.str() + "\n");
+  }
   return lb->second;
 }
 
