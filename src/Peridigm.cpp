@@ -1376,8 +1376,8 @@ void PeridigmNS::Peridigm::rebalance() {
 
   // rebalance the data manager
   dataManager->rebalance(rebalancedOneDimensionalMap,
-                         rebalancedThreeDimensionalMap,
                          rebalancedOneDimensionalOverlapMap,
+                         rebalancedThreeDimensionalMap,
                          rebalancedThreeDimensionalOverlapMap,
                          rebalancedBondMap);
 
