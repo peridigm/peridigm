@@ -375,4 +375,41 @@ void computeWeightedVolume
 }
 
 
+/*
+ * MIKE:
+ */
+
+/**
+ * Call this function to compute volume associated with
+ */
+//void compute_bond_volume
+//(
+//		size_t num_owned_points,
+//		const int*  localNeighborList,
+//		const double* xOverlap,
+//		double *bond_volumes,
+//		double horizon,
+//		const Bond_Volume_Calculator *c
+//) {
+//	const int *neighPtr = localNeighborList;
+//	const double *xOwned = xOverlap;
+//	for(size_t p=0;p<num_owned_points;p++, xOwned +=3){
+//		size_t numNeigh = *neighPtr; neighPtr++;
+//
+//		const double *P = xOwned;
+//
+//		/*
+//		 * Loop over neighborhood of point P and compute
+//		 * bond volume associated with each point Q
+//		 */
+//		for(int n=0;n<numNeigh;n++,neighPtr++,bond_volumes++){
+//			int localId = *neighPtr;
+//			const double *Q = &xOverlap[3*localId];
+//			*bond_volumes = c->operator ()(P,Q);
+//		}
+//	}
+//
+//}
+
+
 }

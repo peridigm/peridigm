@@ -1,0 +1,59 @@
+
+{
+    
+
+
+
+
+"Discretization": 
+
+    {
+        
+    
+
+"Horizon": 0.375,
+        
+    
+"NeighborhoodType": "Spherical",
+        
+    
+"Type": "QuickGrid.TensorProductCylinderMeshGenerator"
+
+
+
+    },
+    
+
+
+
+"QuickGrid": 
+    {
+        
+"TensorProductCylinderMeshGenerator":
+        {
+            
+"Inner Radius": 16.0,
+            
+"Outer Radius": 17.0,
+            
+"Cylinder Length": 1.0,
+            
+"Ring Center": 
+            [
+                0.0,
+                0.0,
+                0.0
+            ],
+            
+"Number Points Radius": 8
+
+        }
+        
+
+
+    }
+    
+
+
+}
+
