@@ -202,7 +202,9 @@ QUICKGRID::Data PeridigmNS::PdQuickGridDiscretization::getDiscretization(const T
     #ifdef HAVE_MPI
       decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
     #endif
-    QUICKGRID::print_meta_data(decomp);
+    /*
+     * MIKE: Create the volume calculator HERE
+     */
   } 
   else if (params->isSublist("TensorProductCylinderMeshGenerator")){
     Teuchos::RCP<Teuchos::ParameterList> pdQuickGridParamList = Teuchos::rcp(&(params->sublist("TensorProductCylinderMeshGenerator")), false);
@@ -240,6 +242,10 @@ QUICKGRID::Data PeridigmNS::PdQuickGridDiscretization::getDiscretization(const T
     #ifdef HAVE_MPI
       decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
     #endif
+      /*
+        * MIKE: Create the volume calculator HERE
+        */
+
   } 
   else { // ERROR
     TEST_FOR_EXCEPT_MSG(true, "Invalid Type in PdQuickGridDiscretization");

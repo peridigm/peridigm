@@ -155,6 +155,7 @@ set(PdMaterialUtilitiesLib PdMaterialUtilities)
 set(INCLUDE_DIRS 
 ${VTK_INCLUDE_DIRS} 
 ${Boost_INCLUDE_DIRS} 
+${CMAKE_SOURCE_DIR}/bond_volume
 ${CMAKE_SOURCE_DIR}/io
 ${CMAKE_SOURCE_DIR}/material_evaluation
 ${CMAKE_SOURCE_DIR}/src
@@ -184,6 +185,7 @@ ${Boost_LIBRARIES}
 #libm.a
 )
 
+add_subdirectory (bond_volume)
 add_subdirectory (io)
 add_subdirectory (src)
 add_subdirectory (material_evaluation)
@@ -199,6 +201,7 @@ if (NOT ${buildInSource})
    set(UT_DIRS ${UT_DIRS}  -d test/regression)
    set(UT_DIRS ${UT_DIRS}  -d test/verification)
    set(UT_DIRS ${UT_DIRS}  -d src/materials/unitTest/utPeridigm_IsotropicElasticPlastic)
+   set(UT_DIRS ${UT_DIRS}  -d bond_volume/quick_grid/unit_test)
    execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/mirror.py -s ${CMAKE_SOURCE_DIR} -b ${CMAKE_BINARY_DIR} ${UT_DIRS} )
    set(SCRIPT_DIRS ${SCRIPT_DIRS}  -d scripts)
    execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/mirror.py -s ${CMAKE_SOURCE_DIR} -b ${CMAKE_BINARY_DIR} ${SCRIPT_DIRS} )
