@@ -15,7 +15,8 @@ namespace VOLUME_FRACTION {
 using UTILITIES::Array;
 
 double RingVolumeFractionCalculator::cellVolume(const double* q) const {
-	Vector3D Q((double[3]){*q,*(q+1),*(q+2)});
+	Vector3D Q;
+        Q[0] = q[0]; Q[1] = q[1]; Q[2] = q[2];
 	Array<double> r, theta, z;
 	double dr, d_theta, dz;
 	{
@@ -71,8 +72,9 @@ double RingVolumeFractionCalculator::cellVolume(const double* q) const {
 
 double RingVolumeFractionCalculator::operator() (const double* pCenter, const double* qNeigh) const {
 
-	const Vector3D P((double[3]){*pCenter,*(pCenter+1),*(pCenter+2)});
-	const Vector3D Q((double[3]){*qNeigh,*(qNeigh+1),*(qNeigh+2)});
+	Vector3D P,Q;
+        P[0] = pCenter[0]; P[1] = pCenter[1]; P[2] = pCenter[2];
+        Q[0] = qNeigh[0]; Q[1] = qNeigh[1]; Q[2] = qNeigh[2];
 	Array<double> r, theta, z;
 	double dr, d_theta, dz;
 	{
@@ -134,8 +136,11 @@ double RingVolumeFractionCalculator::operator() (const double* pCenter, const do
 
 double VolumeFractionCalculator::operator() (const double* pCenter, const double* qNeigh) const {
 
-	const Vector3D P((double[3]){*pCenter,*(pCenter+1),*(pCenter+2)});
-	const Vector3D Q((double[3]){*qNeigh,*(qNeigh+1),*(qNeigh+2)});
+	//const Vector3D P((double[3]){*pCenter,*(pCenter+1),*(pCenter+2)});
+	//const Vector3D Q((double[3]){*qNeigh,*(qNeigh+1),*(qNeigh+2)});
+	Vector3D P,Q;
+        P[0] = pCenter[0]; P[1] = pCenter[1]; P[2] = pCenter[2];
+        Q[0] = qNeigh[0]; Q[1] = qNeigh[1]; Q[2] = qNeigh[2];
 	Spec1D xSpec(nX,Q[0]-DX/2,DX);
 	Spec1D ySpec(nY,Q[1]-DY/2,DY);
 	Spec1D zSpec(nZ,Q[2]-DZ/2,DZ);
