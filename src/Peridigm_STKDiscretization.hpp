@@ -103,6 +103,11 @@ namespace PeridigmNS {
 
   protected:
 
+    template<class T>
+    struct NonDeleter{
+      void operator()(T* d) {}
+    };
+
     //! Create maps
     void createMaps(const QUICKGRID::Data& decomp);
 

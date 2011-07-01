@@ -47,7 +47,7 @@
 
 #include "Peridigm_STKDiscretization.hpp"
 #include "pdneigh/NeighborhoodList.h"
-//#include "quck_grid/QuickGridParallel.h"
+#include "pdneigh/BondFilter.h"
 #include "pdneigh/PdZoltan.h"
 
 #include <Epetra_MpiComm.h>
@@ -292,8 +292,12 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
   decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
   
   // execute neighbor search and update the decomp to include resulting ghosts
-  // \todo Fix createAndAddNeighborhood
-  // decomp = createAndAddNeighborhood(decomp, horizon);
+  shared_ptr<PdBondFilter::BondFilter> bondFilterPtr(new PdBondFilter::BondFilterDefault(false));
+  shared_ptr<const Epetra_Comm> commSp(comm.getRawPtr(),NonDeleter<const Epetra_Comm>());
+  PDNEIGH::NeighborhoodList list(commSp,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon,bondFilterPtr);
+  decomp.neighborhood=list.get_neighborhood();
+  decomp.sizeNeighborhoodList=list.get_size_neighborhood_list();
+  decomp.neighborhoodPtr=list.get_neighborhood_ptr();
 
   return decomp;
 }
