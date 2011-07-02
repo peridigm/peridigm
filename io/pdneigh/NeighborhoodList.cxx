@@ -139,10 +139,14 @@ NeighborhoodList::NeighborhoodList
 	/*
 	 * Create common maps
 	 */
-	epetra_block_maps[Epetra_MapTag(OWNED,1)] = create_Epetra_BlockMap(Epetra_MapTag(OWNED,1));
-	epetra_block_maps[Epetra_MapTag(OWNED,3)] = create_Epetra_BlockMap(Epetra_MapTag(OWNED,3));
-	epetra_block_maps[Epetra_MapTag(OVERLAP,1)] = create_Epetra_BlockMap(Epetra_MapTag(OVERLAP,1));
-	epetra_block_maps[Epetra_MapTag(OVERLAP,3)] = create_Epetra_BlockMap(Epetra_MapTag(OVERLAP,3));
+    shared_ptr<Epetra_BlockMap> owned1DMap = create_Epetra_BlockMap(Epetra_MapTag(OWNED,1));
+	epetra_block_maps[Epetra_MapTag(OWNED,1)] = owned1DMap; 
+    shared_ptr<Epetra_BlockMap> owned3DMap = create_Epetra_BlockMap(Epetra_MapTag(OWNED,3));
+	epetra_block_maps[Epetra_MapTag(OWNED,3)] = owned3DMap; 
+    shared_ptr<Epetra_BlockMap> overlap1DMap = create_Epetra_BlockMap(Epetra_MapTag(OVERLAP,1));
+	epetra_block_maps[Epetra_MapTag(OVERLAP,1)] = overlap1DMap;
+    shared_ptr<Epetra_BlockMap> overlap3DMap = create_Epetra_BlockMap(Epetra_MapTag(OVERLAP,3));
+	epetra_block_maps[Epetra_MapTag(OVERLAP,3)] = overlap3DMap;
 
 	/*
 	 * Compute local neighborhood list and
