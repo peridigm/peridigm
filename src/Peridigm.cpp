@@ -1584,7 +1584,12 @@ void PeridigmNS::Peridigm::displayProgress(string title, double percentComplete)
   
   int numMarks = 20;
 
-  for(int i=0 ; i<(numMarks + 16 + title.size()) ; ++i) *out << "\b";
+  static bool firstCall = true;
+
+  if(firstCall)
+    firstCall = false;
+  else
+    for(int i=0 ; i<(numMarks + 16 + title.size()) ; ++i) *out << "\b";
 
   percentComplete = double(int(percentComplete));
 
