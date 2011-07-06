@@ -212,6 +212,9 @@ namespace PeridigmNS {
     //! Return list of field specs used by Peridigm object
     std::vector<Field_NS::FieldSpec> getFieldSpecs();
 
+    //! Display a progress bar
+    void displayProgress(string title, double percentComplete);
+
   private:
 
     //! Friend classes
