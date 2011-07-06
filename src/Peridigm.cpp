@@ -634,6 +634,9 @@ void PeridigmNS::Peridigm::executeExplicit() {
 
   for(int step=1; step<=nsteps ; step++){
 
+    if((step-1)*100%nsteps==0)
+      displayProgress("Explicit time integration", (step-1)*100.0/nsteps);
+
     // rebalance, if requested
     if( (analysisHasRebalance && step%rebalanceFrequency == 0) || (analysisHasContact && step%contactRebalanceFrequency == 0) ){
       PeridigmNS::Timer::self().startTimer("Rebalance");
@@ -712,6 +715,8 @@ void PeridigmNS::Peridigm::executeExplicit() {
     // swap state N and state NP1
     dataManager->updateState();
   }
+  displayProgress("Explicit time integration", 100.0);
+  *out << "\n\n";
 }
 
 void PeridigmNS::Peridigm::executeQuasiStatic() {
@@ -1573,6 +1578,30 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Peridigm::getFieldSpecs() {
   mySpecs.push_back(Field_NS::CONTACT_FORCE_DENSITY3D);
 
   return mySpecs;
+}
+
+void PeridigmNS::Peridigm::displayProgress(string title, double percentComplete){
+  
+  int numMarks = 20;
+
+  for(int i=0 ; i<(numMarks + 16 + title.size()) ; ++i) *out << "\b";
+
+  percentComplete = double(int(percentComplete));
+
+  stringstream ssPercentComplete;
+  ssPercentComplete << int(percentComplete);
+  int stringSize = ssPercentComplete.str().size();
+
+  stringstream ss;
+  ss << title << " [";
+  for(int i=0 ; i<int(percentComplete*(numMarks+2-stringSize)/100.0) ; i++)
+    ss << "=";
+  ss << ssPercentComplete.str() << "% Complete";
+  for(int i=int(percentComplete*(numMarks+2-stringSize)/100.0) ; i<(numMarks+2-stringSize) ; i++)
+    ss << "=";
+  ss << "] ";
+
+  *out << ss.str();
 }
 
 template<class T>
