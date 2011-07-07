@@ -58,7 +58,7 @@ void PeridigmNS::Timer::printTimingData(ostream &out){
     out << endl;
   }
   else if(nProc == 1){
-    out << "Wallclock Time (seconds):\n" << endl;
+    out << "Wallclock Time (seconds):" << endl;
     out.precision(2);
     for(unsigned int i=0 ; i<names.size() ; ++i){
       out << "  ";

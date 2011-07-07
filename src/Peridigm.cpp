@@ -53,6 +53,8 @@
 #include <vector>
 #include <map>
 
+#include <boost/math/special_functions/fpclassify.hpp>
+
 #include <AztecOO.h>
 #include <BelosBlockCGSolMgr.hpp>
 #include <BelosEpetraAdapter.hpp>
@@ -688,11 +690,20 @@ void PeridigmNS::Peridigm::executeExplicit() {
     force->Export(*dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");    
 
+    // Check for NaNs in force evaluation
+    // We'd like to know now because a NaN will likely cause a difficult-to-unravel crash downstream.
+    for(int i=0 ; i<force->MyLength() ; ++i)
+      TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*force)[i]), "**** NaN returned by force evaluation.\n");
+
     if(analysisHasContact){
       // Copy contact force from the data manager to the mothership vector
       PeridigmNS::Timer::self().startTimer("Gather/Scatter");
       contactForce->Export(*dataManager->getData(Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
       PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+
+      // Check for NaNs in contact force evaluation
+      for(int i=0 ; i<contactForce->MyLength() ; ++i)
+        TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*contactForce)[i]), "**** NaN returned by contact force evaluation.\n");
 
       // Add contact forces to forces
       force->Update(1.0, *contactForce, 1.0);
