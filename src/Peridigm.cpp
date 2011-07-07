@@ -632,9 +632,13 @@ void PeridigmNS::Peridigm::executeExplicit() {
   outputManager->write(dataManager,neighborhoodData,t_current);
   PeridigmNS::Timer::self().stopTimer("Output");
 
+  int displayTrigger = nsteps/100;
+  if(displayTrigger == 0)
+    displayTrigger = 1;
+
   for(int step=1; step<=nsteps; step++){
 
-    if((step-1)%(nsteps/100)==0)
+    if((step-1)%displayTrigger==0)
       displayProgress("Explicit time integration", (step-1)*100.0/nsteps);
 
     // rebalance, if requested
@@ -1589,7 +1593,7 @@ void PeridigmNS::Peridigm::displayProgress(string title, double percentComplete)
   if(firstCall)
     firstCall = false;
   else
-    for(int i=0 ; i<(numMarks + 16 + title.size()) ; ++i) *out << "\b";
+    for(int i=0 ; i<(numMarks + 16 + (int)title.size()) ; ++i) *out << "\b";
 
   percentComplete = double(int(percentComplete));
 
