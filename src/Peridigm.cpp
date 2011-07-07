@@ -632,9 +632,9 @@ void PeridigmNS::Peridigm::executeExplicit() {
   outputManager->write(dataManager,neighborhoodData,t_current);
   PeridigmNS::Timer::self().stopTimer("Output");
 
-  for(int step=1; step<=nsteps ; step++){
+  for(int step=1; step<=nsteps; step++){
 
-    if((step-1)*100%nsteps==0)
+    if((step-1)%(nsteps/100)==0)
       displayProgress("Explicit time integration", (step-1)*100.0/nsteps);
 
     // rebalance, if requested
