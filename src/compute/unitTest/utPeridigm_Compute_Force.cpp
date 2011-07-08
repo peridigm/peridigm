@@ -80,16 +80,16 @@ Teuchos::RCP<PeridigmNS::DataManager> createDataManager(Teuchos::RCP<Teuchos::Pa
   Teuchos::RCP<PeridigmNS::AbstractDiscretization> peridigmDisc = discFactory.create(comm);
 
   // oneDimensionalMap
-   Teuchos::RCP<const Epetra_BlockMap> oneDimensionalMap = peridigmDisc->getMap(1);
+   Teuchos::RCP<const Epetra_BlockMap> oneDimensionalMap = peridigmDisc->getGlobalMap(1);
 
   // oneDimensionalOverlapMap (includes ghosts)
-  Teuchos::RCP<const Epetra_BlockMap> oneDimensionalOverlapMap = peridigmDisc->getOverlapMap(1);
+  Teuchos::RCP<const Epetra_BlockMap> oneDimensionalOverlapMap = peridigmDisc->getGlobalOverlapMap(1);
 
   // threeDimensionalMap
-  Teuchos::RCP<const Epetra_BlockMap> threeDimensionalMap = peridigmDisc->getMap(3);
+  Teuchos::RCP<const Epetra_BlockMap> threeDimensionalMap = peridigmDisc->getGlobalMap(3);
 
   // threeDimensionalOverlapMap (includes ghosts)
-  Teuchos::RCP<const Epetra_BlockMap> threeDimensionalOverlapMap = peridigmDisc->getOverlapMap(3);
+  Teuchos::RCP<const Epetra_BlockMap> threeDimensionalOverlapMap = peridigmDisc->getGlobalOverlapMap(3);
 
   // bondConstitutiveDataMap (non-overlapping map)
   Teuchos::RCP<const Epetra_BlockMap> bondMap = peridigmDisc->getBondMap();

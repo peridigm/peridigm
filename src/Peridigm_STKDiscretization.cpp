@@ -368,7 +368,7 @@ PeridigmNS::STKDiscretization::createNeighborhoodData(const QUICKGRID::Data& dec
 }
 
 Teuchos::RCP<const Epetra_BlockMap>
-PeridigmNS::STKDiscretization::getMap(int d) const
+PeridigmNS::STKDiscretization::getGlobalMap(int d) const
 {
   switch (d) {
     case 1:
@@ -384,7 +384,7 @@ PeridigmNS::STKDiscretization::getMap(int d) const
 }
 
 Teuchos::RCP<const Epetra_BlockMap>
-PeridigmNS::STKDiscretization::getOverlapMap(int d) const
+PeridigmNS::STKDiscretization::getGlobalOverlapMap(int d) const
 {
   switch (d) {
     case 1:
