@@ -203,21 +203,21 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
 
   // oneDimensionalMap
   // used for cell volumes and scalar constitutive data
-  oneDimensionalMap = peridigmDisc->getMap(1); 
+  oneDimensionalMap = peridigmDisc->getGlobalMap(1); 
 
   // oneDimensionalOverlapMap
   // used for cell volumes and scalar constitutive data
   // includes ghosts
-  oneDimensionalOverlapMap = peridigmDisc->getOverlapMap(1);
+  oneDimensionalOverlapMap = peridigmDisc->getGlobalOverlapMap(1);
 
   // threeDimensionalMap
   // used for positions, displacements, velocities and vector constitutive data
-  threeDimensionalMap = peridigmDisc->getMap(3);
+  threeDimensionalMap = peridigmDisc->getGlobalMap(3);
 
   // threeDimensionalOverlapMap
   // used for positions, displacements, velocities and vector constitutive data
   // includes ghosts
-  threeDimensionalOverlapMap = peridigmDisc->getOverlapMap(3);
+  threeDimensionalOverlapMap = peridigmDisc->getGlobalOverlapMap(3);
 
   // bondConstitutiveDataMap
   // a non-overlapping map used for storing constitutive data on bonds

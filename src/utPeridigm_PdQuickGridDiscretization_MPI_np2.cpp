@@ -88,12 +88,12 @@ void simpleTensorProductMesh()
     rcp(new PdQuickGridDiscretization(comm, discParams));
 
   // sanity check, calling with a dimension other than 1 or 3 should throw an exception
-  BOOST_CHECK_THROW(discretization->getMap(0), Teuchos::Exceptions::InvalidParameter);
-  BOOST_CHECK_THROW(discretization->getMap(2), Teuchos::Exceptions::InvalidParameter);
-  BOOST_CHECK_THROW(discretization->getMap(4), Teuchos::Exceptions::InvalidParameter);
+  BOOST_CHECK_THROW(discretization->getGlobalMap(0), Teuchos::Exceptions::InvalidParameter);
+  BOOST_CHECK_THROW(discretization->getGlobalMap(2), Teuchos::Exceptions::InvalidParameter);
+  BOOST_CHECK_THROW(discretization->getGlobalMap(4), Teuchos::Exceptions::InvalidParameter);
 
   // basic checks on the 1d map
-  Teuchos::RCP<const Epetra_BlockMap> map = discretization->getMap(1);
+  Teuchos::RCP<const Epetra_BlockMap> map = discretization->getGlobalMap(1);
   BOOST_CHECK(map->NumGlobalElements() == 8);
   BOOST_CHECK(map->NumMyElements() == 4);
   BOOST_CHECK(map->ElementSize() == 1);
@@ -115,7 +115,7 @@ void simpleTensorProductMesh()
 
   // check the 1d overlap map
   // for this simple discretization, everything should be ghosted on both processors
-  Teuchos::RCP<const Epetra_BlockMap> overlapMap = discretization->getOverlapMap(1);
+  Teuchos::RCP<const Epetra_BlockMap> overlapMap = discretization->getGlobalOverlapMap(1);
   BOOST_CHECK(overlapMap->NumGlobalElements() == 16);
   BOOST_CHECK(overlapMap->NumMyElements() == 8);
   BOOST_CHECK(overlapMap->ElementSize() == 1);
@@ -144,7 +144,7 @@ void simpleTensorProductMesh()
   }
 
   // same checks for 3d map
-  map = discretization->getMap(3);
+  map = discretization->getGlobalMap(3);
   BOOST_CHECK(map->NumGlobalElements() == 8);
   BOOST_CHECK(map->NumMyElements() == 4);
   BOOST_CHECK(map->ElementSize() == 3);
@@ -166,7 +166,7 @@ void simpleTensorProductMesh()
 
   // check the 3d overlap map
   // for this simple discretization, everything should be ghosted on both processors
-  overlapMap = discretization->getOverlapMap(3);
+  overlapMap = discretization->getGlobalOverlapMap(3);
   BOOST_CHECK(overlapMap->NumGlobalElements() == 16);
   BOOST_CHECK(overlapMap->NumMyElements() == 8);
   BOOST_CHECK(overlapMap->ElementSize() == 3);
@@ -277,24 +277,24 @@ void simpleTensorProductMesh()
   int* neighborhoodPtr = neighborhoodData->NeighborhoodPtr();
   // remember, these are local IDs on each processor, 
   // which includes both owned and ghost nodes (confusing!)
-  if(rand == 0){
+  if(rank == 0){
     BOOST_CHECK(neighborhoodPtr[0] == 0);
     BOOST_CHECK(neighborhood[0]    == 3);
-    BOOST_CHECK(neighborhood[1]    == 1);
-    BOOST_CHECK(neighborhood[2]    == 2);
-    BOOST_CHECK(neighborhood[3]    == 4);
+    BOOST_CHECK(neighborhood[1]    == 4);
+    BOOST_CHECK(neighborhood[2]    == 1);
+    BOOST_CHECK(neighborhood[3]    == 2);
 
     BOOST_CHECK(neighborhoodPtr[1] == 4);
     BOOST_CHECK(neighborhood[4]    == 3);
     BOOST_CHECK(neighborhood[5]    == 0);
-    BOOST_CHECK(neighborhood[6]    == 3);
-    BOOST_CHECK(neighborhood[7]    == 5);
+    BOOST_CHECK(neighborhood[6]    == 5);
+    BOOST_CHECK(neighborhood[7]    == 3);
 
     BOOST_CHECK(neighborhoodPtr[2] == 8);
     BOOST_CHECK(neighborhood[8]    == 3);
     BOOST_CHECK(neighborhood[9]    == 0);
-    BOOST_CHECK(neighborhood[10]   == 3);
-    BOOST_CHECK(neighborhood[11]   == 6);
+    BOOST_CHECK(neighborhood[10]   == 6);
+    BOOST_CHECK(neighborhood[11]   == 3);
 
     BOOST_CHECK(neighborhoodPtr[3] == 12);
     BOOST_CHECK(neighborhood[12]   == 3);

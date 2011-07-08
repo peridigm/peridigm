@@ -92,12 +92,12 @@ void simpleTensorProductMesh()
     rcp(new PdQuickGridDiscretization(comm, discParams));
 
   // sanity check, calling with a dimension other than 1 or 3 should throw an exception
-  BOOST_CHECK_THROW(discretization->getMap(0), Teuchos::Exceptions::InvalidParameter);
-  BOOST_CHECK_THROW(discretization->getMap(2), Teuchos::Exceptions::InvalidParameter);
-  BOOST_CHECK_THROW(discretization->getMap(4), Teuchos::Exceptions::InvalidParameter);
+  BOOST_CHECK_THROW(discretization->getGlobalMap(0), Teuchos::Exceptions::InvalidParameter);
+  BOOST_CHECK_THROW(discretization->getGlobalMap(2), Teuchos::Exceptions::InvalidParameter);
+  BOOST_CHECK_THROW(discretization->getGlobalMap(4), Teuchos::Exceptions::InvalidParameter);
 
   // basic checks on the 1d map
-  Teuchos::RCP<const Epetra_BlockMap> map = discretization->getMap(1);
+  Teuchos::RCP<const Epetra_BlockMap> map = discretization->getGlobalMap(1);
   BOOST_CHECK(map->NumGlobalElements() == 8);
   BOOST_CHECK(map->NumMyElements() == 8);
   BOOST_CHECK(map->ElementSize() == 1);
@@ -108,11 +108,11 @@ void simpleTensorProductMesh()
     BOOST_CHECK(myGlobalElements[i] == i);
 
   // for the serial case, the map and the overlap map should match
-  Teuchos::RCP<const Epetra_BlockMap> overlapMap = discretization->getOverlapMap(1);
+  Teuchos::RCP<const Epetra_BlockMap> overlapMap = discretization->getGlobalOverlapMap(1);
   BOOST_CHECK(map->SameAs(*overlapMap) == true);
 
   // same checks for 3d map
-  map = discretization->getMap(3);
+  map = discretization->getGlobalMap(3);
   BOOST_CHECK(map->NumGlobalElements() == 8);
   BOOST_CHECK(map->NumMyElements() == 8);
   BOOST_CHECK(map->ElementSize() == 3);
@@ -123,7 +123,7 @@ void simpleTensorProductMesh()
     BOOST_CHECK(myGlobalElements[i] == i);
 
   // for the serial case, the map and the overlap map should match
-  overlapMap = discretization->getOverlapMap(3);
+  overlapMap = discretization->getGlobalOverlapMap(3);
   BOOST_CHECK(map->SameAs(*overlapMap) == true);
 
   // check the bond map
