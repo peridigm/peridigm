@@ -174,7 +174,7 @@ void PeridigmNS::DataManager::scatterToGhosts()
 
       // scatter the data back from the owned (non-overlap) multivector into the overlap multivector
       Teuchos::RCP<Epetra_Import> importer = Teuchos::rcp(new Epetra_Import(*overlapScalarPointMap, *ownedScalarPointMap));
-      overlapScalarPointMultiVector->Import(*overlapScalarPointMultiVector, *importer, Insert);
+      overlapScalarPointMultiVector->Import(*ownedScalarPointMultiVector, *importer, Insert);
     }
 
     // process vector data
