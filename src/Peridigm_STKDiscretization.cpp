@@ -119,14 +119,6 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
 
   // fill cell volumes
   cellVolume = Teuchos::rcp(new Epetra_Vector(Copy,*oneDimensionalMap,decomp.cellVolume.get()) );
-
-//   cout << "DECOMP:" << endl;
-//   cout << "  dimension " << decomp.dimension << endl;
-//   cout << "  globalNumPoints " << decomp.globalNumPoints << endl;
-//   cout << "  numPoints " << decomp.numPoints << endl;
-//   cout << "  sizeNeighborhoodList " << decomp.sizeNeighborhoodList << endl;
-//   cout << "  numExport " << decomp.numExport << endl;
-//   cout << "  unPack " << decomp.unPack << endl;
 }
 
 PeridigmNS::STKDiscretization::~STKDiscretization() {}
@@ -258,9 +250,9 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
     (*sphereMeshNodeSets)[nodeSetName] = std::vector<int>();
     std::vector<int>& sphereMeshNodeSet = (*sphereMeshNodeSets)[nodeSetName];
 
-    // Create a selector for all nodes in the node set
+    // Create a selector for all locally-owned nodes in the node set
     stk::mesh::Selector selector = 
-      stk::mesh::Selector( *nodeSets[iNodeSet] ) & ( stk::mesh::Selector( metaData->locally_owned_part() ) | stk::mesh::Selector( metaData->globally_shared_part() ) );
+      stk::mesh::Selector( *nodeSets[iNodeSet] ) & stk::mesh::Selector( metaData->locally_owned_part() );
 
     // Select the mesh entities that match the selector
     std::vector<stk::mesh::Entity*> nodesInNodeSet;
@@ -280,9 +272,38 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
       }
     }
 
+    // Get the full node list on every processor.
+    // This is important because we're about to rebalance, and after we do so nodes
+    // that are locally owned may not be locally owned.  If a node that
+    // changes processor is in a node set, this will cause problems downstream
+    // when assigning initial/boundary conditions.  A simple solution is to
+    // have all processors know about all the nodes in each node set.
+    // 
+    // \todo Figure out why it doesn't work to simpily use selector = stk::mesh::Selector( *nodeSets[iNodeSet] ) to get the complete node set.
+    //
+    vector<int> localNodeSetLength(numPID, 0);
+    vector<int> tempLocalNodeSetLength(numPID, 0);
+    tempLocalNodeSetLength[myPID] = (int)elementGlobalIds.size();
+    teuchosComm.allReduce(&tempLocalNodeSetLength[0], &localNodeSetLength[0], numPID, Teuchos::MPIComm::INT, Teuchos::MPIComm::SUM);
+    int totalNodeSetLength = 0;
+    int offset = 0;
+    for(unsigned int i=0 ; i<localNodeSetLength.size() ; ++i){
+      if(i < myPID)
+        offset += localNodeSetLength[i];
+      totalNodeSetLength += localNodeSetLength[i];
+    }
+    vector<int> completeElementGlobalIds(totalNodeSetLength, 0);
+    vector<int> tempCompleteElementGlobalIds(totalNodeSetLength, 0);
+    int index = 0;
+    for(std::set<int>::iterator it=elementGlobalIds.begin() ; it!=elementGlobalIds.end() ; it++){
+      tempCompleteElementGlobalIds[index+offset] = *it;
+      index++;
+    }
+    teuchosComm.allReduce(&tempCompleteElementGlobalIds[0], &completeElementGlobalIds[0], totalNodeSetLength, Teuchos::MPIComm::INT, Teuchos::MPIComm::SUM);
+
     // Load the node set into the sphereMeshNodeSets container
-    for(std::set<int>::iterator it=elementGlobalIds.begin() ; it!=elementGlobalIds.end() ; it++)
-      sphereMeshNodeSet.push_back(*it);
+    for(unsigned int i=0 ; i<completeElementGlobalIds.size() ; ++i)
+      sphereMeshNodeSet.push_back( completeElementGlobalIds[i] );
   }
 
   // free the meshData
