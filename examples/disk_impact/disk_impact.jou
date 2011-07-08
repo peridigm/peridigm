@@ -1,0 +1,24 @@
+#
+reset
+#
+create vertex x 0.037 y 0.0 z 0.0
+create vertex x -0.0185 y 0.03204293994 z 0.0
+create vertex x -0.0185 y -0.03204293994 z 0.0
+create curve arc three vertex 1 2 3 full
+create surface curve 1
+surface 1 move copy x 0.0 y 0.0 z .0025
+create volume loft surface 1 2
+block 1 volume 3
+#
+create sphere radius 0.005
+move volume 4 x 0.0 y 0.0 z 0.0135
+block 2 volume 4
+#
+block all element type hex8
+#volume all size 0.001
+volume all size 0.003
+mesh volume 3 4
+#
+nodeset 1 volume 4
+#
+export genesis 'disk_impact.g' overwrite

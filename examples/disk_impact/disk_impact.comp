@@ -1,0 +1,7 @@
+<Tolerances>
+  <Tolerance variable="Displacement" value="1.0e-9"/>
+  <Tolerance variable="Velocity" value="1.0e-8"/>
+  <Tolerance variable="Force_Density" value="2.0"/>
+  <Tolerance variable="Weighted_Volume" value="1.0e-12"/>
+  <Tolerance variable="Dilatation" value="1.0e-12"/>
+</Tolerances>
