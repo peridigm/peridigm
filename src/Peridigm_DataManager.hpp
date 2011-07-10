@@ -140,9 +140,11 @@ public:
    */
   void copyLocallyOwnedDataFromDataManager(PeridigmNS::DataManager& source);
 
+  //! Query the existence of a particular fieldSpec at a particular step.
+  bool hasData(Field_NS::FieldSpec fieldSpec, Field_ENUM::Step step);
+
   //! Provides access to the Epetra_Vector specified by the given FieldSped and FieldStep.
-  Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec,
-                                      Field_ENUM::Step step);
+  Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec, Field_ENUM::Step step);
 
   //! Returns the complete list of field specs.
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > getFieldSpecs() { return fieldSpecs; }

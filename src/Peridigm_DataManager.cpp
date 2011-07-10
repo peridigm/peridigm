@@ -329,6 +329,25 @@ void PeridigmNS::DataManager::copyLocallyOwnedDataFromDataManager(PeridigmNS::Da
   }
 }
 
+bool PeridigmNS::DataManager::hasData(Field_NS::FieldSpec fieldSpec, Field_ENUM::Step step)
+{
+  bool hasData = false;
+  if(step == Field_ENUM::STEP_NONE){
+    hasData = stateNONE->hasData(fieldSpec);
+  }
+  else if(step == Field_ENUM::STEP_N){
+    hasData = stateN->hasData(fieldSpec);
+  }
+  else if(step == Field_ENUM::STEP_NP1){
+    hasData = stateNP1->hasData(fieldSpec);
+  }
+  else{
+    TEST_FOR_EXCEPTION(false, Teuchos::RangeError, 
+                       "PeridigmNS::DataManager::getData, invalid FieldStep!");
+  }
+  return hasData;
+}
+
 Teuchos::RCP<Epetra_Vector> PeridigmNS::DataManager::getData(Field_NS::FieldSpec fieldSpec, Field_ENUM::Step step)
 {
   Teuchos::RCP<Epetra_Vector> data;

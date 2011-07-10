@@ -95,6 +95,13 @@ Teuchos::RCP< std::vector<Field_NS::FieldSpec> > PeridigmNS::State::getFieldSpec
   return fieldSpecs;
 }
 
+bool PeridigmNS::State::hasData(Field_NS::FieldSpec fieldSpec)
+{
+  std::map< Field_NS::FieldSpec, Teuchos::RCP<Epetra_Vector> >::iterator lb = fieldSpecToDataMap.lower_bound(fieldSpec);
+  bool keyExists = ( lb != fieldSpecToDataMap.end() && !(fieldSpecToDataMap.key_comp()(fieldSpec, lb->first)) );
+  return keyExists;
+}
+
 Teuchos::RCP<Epetra_Vector> PeridigmNS::State::getData(Field_NS::FieldSpec fieldSpec)
 {
   // search for the data
