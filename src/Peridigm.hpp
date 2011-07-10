@@ -96,8 +96,8 @@ namespace PeridigmNS {
     void initializeNodeSets(Teuchos::RCP<Teuchos::ParameterList>& bcParams,
                             Teuchos::RCP<AbstractDiscretization> peridigmDisc);
 
-    //! Initialize dataManager
-    void initializeDataManager(Teuchos::RCP<AbstractDiscretization> peridigmDisc);
+    //! Initialize DataManagers
+    void initializeDataManagers(Teuchos::RCP<AbstractDiscretization> peridigmDisc);
 
     //! Apply boundary conditions
     void applyInitialVelocities();
@@ -139,8 +139,8 @@ namespace PeridigmNS {
     //! Compute the residual for quasi-statics
     double computeQuasiStaticResidual();
 
-    //! Synchronize data in DataManager across processes (needed before call to OutputManager::write() )
-    void synchDataManager();
+    //! Synchronize data in DataManagers across processes (needed before call to OutputManager::write() )
+    void synchDataManagers();
 
     //! Rebalance the mesh
     void rebalance();
@@ -203,8 +203,8 @@ namespace PeridigmNS {
     Teuchos::RCP<const PeridigmNS::NeighborhoodData> getContactNeighborhoodData() { return contactNeighborhoodData; }
     //@}
 
-    //! Accessor for DataManager
-    Teuchos::RCP<PeridigmNS::DataManager> getDataManager() { return dataManager; }
+    //! Accessor for DataManagers
+    Teuchos::RCP< std::vector< Teuchos::RCP<PeridigmNS::DataManager> > > getDataManagers() { return dataManagers; }
 
     //! Accessor for Material Models
     Teuchos::RCP< std::vector< Teuchos::RCP<const PeridigmNS::Material> > > getMaterialModels() {return materialModels; }
@@ -240,6 +240,9 @@ namespace PeridigmNS {
     Teuchos::RCP<const Epetra_Import> oneDimensionalMapToOneDimensionalOverlapMapImporter;
     Teuchos::RCP<const Epetra_Import> threeDimensionalMapToThreeDimensionalOverlapMapImporter;
 
+    //! Number of blocks in the model
+    int numBlocks;
+
     //! Rebalance flag
     bool analysisHasRebalance;
 
@@ -256,7 +259,6 @@ namespace PeridigmNS {
     double contactSearchRadius;
 
     //! Material models
-    //! \todo Use Teuchos::ArrayRCP to store materials?
     Teuchos::RCP< std::vector< Teuchos::RCP<const PeridigmNS::Material> > > materialModels;
 
     //! Contact models
@@ -265,8 +267,8 @@ namespace PeridigmNS {
     //! Compute manager
     Teuchos::RCP<PeridigmNS::ComputeManager> computeManager;
 
-    //! Data manager
-    Teuchos::RCP<PeridigmNS::DataManager> dataManager;
+    //! Data managers (one for each block)
+    Teuchos::RCP< std::vector< Teuchos::RCP<PeridigmNS::DataManager> > > dataManagers;
 
     //! Mothership multivector that contains all the global vectors (x, u, y, v, a, force, etc.)
     Teuchos::RCP<Epetra_MultiVector> mothership;

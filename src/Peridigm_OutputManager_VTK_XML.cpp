@@ -253,7 +253,8 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<PeridigmNS::DataManag
   if (frequency<=0 || count%frequency!=0) return;
 
   // Call compute manager; Updated any computed quantities before write
-  peridigm->computeManager->compute(peridigm->dataManager);
+  // \todo This will break for multiple materials.
+  peridigm->computeManager->compute((*peridigm->dataManagers)[0]);
 
   // Initialize grid if needed
   static int rebalanceCount = 0;

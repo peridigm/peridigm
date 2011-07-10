@@ -106,6 +106,9 @@ public:
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > getFieldSpecs(Teuchos::RCP<Field_ENUM::Relation> relation = Teuchos::RCP<Field_ENUM::Relation>(),
 		                                                         Teuchos::RCP<Field_ENUM::Length> length = Teuchos::RCP<Field_ENUM::Length>());
 
+  //! Query the existence of a fieldSpec.
+  bool hasData(Field_NS::FieldSpec fieldSpec);
+
   //! Provides access to an Epetra_Vector corresponding to the given FieldSpec.
   Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec);
 
