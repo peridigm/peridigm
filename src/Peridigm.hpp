@@ -60,6 +60,7 @@
 
 #include "contact/Peridigm_ContactModel.hpp"
 #include "materials/Peridigm_Material.hpp"
+#include "Peridigm_Block.hpp"
 #include "Peridigm_AbstractDiscretization.hpp"
 #include "Peridigm_ModelEvaluator.hpp"
 #include "Peridigm_DataManager.hpp"
@@ -91,6 +92,9 @@ namespace PeridigmNS {
 
     //! Initialize discretization and maps
     void initializeDiscretization(Teuchos::RCP<AbstractDiscretization> peridigmDisc);
+
+    //! Initialize the element blocks
+    void initializeElementBlocks(Teuchos::RCP<AbstractDiscretization> peridigmDisc);    
 
     //! Load node sets from input deck and/or input mesh into nodeSets container
     void initializeNodeSets(Teuchos::RCP<Teuchos::ParameterList>& bcParams,
@@ -272,6 +276,9 @@ namespace PeridigmNS {
 
     //! Mothership multivector that contains all the global vectors (x, u, y, v, a, force, etc.)
     Teuchos::RCP<Epetra_MultiVector> mothership;
+
+    //! Blocks
+    Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks;
 
     //! Node sets
     Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets;

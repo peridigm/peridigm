@@ -336,6 +336,35 @@ PeridigmNS::PdQuickGridDiscretization::getBondMap() const
   return bondMap;
 }
 
+Teuchos::RCP<const Epetra_BlockMap>
+PeridigmNS::PdQuickGridDiscretization::getElementBlockOwnedMap(std::string& blockName, int dimension) const
+{
+  // There is only one element block, so the block maps are the same as the global maps.
+  return getGlobalMap(dimension);
+}
+
+
+Teuchos::RCP<const Epetra_BlockMap>
+PeridigmNS::PdQuickGridDiscretization::getElementBlockOverlapMap(std::string& blockName, int dimension) const
+{
+  // There is only one element block, so the block maps are the same as the global maps.
+  return getGlobalOverlapMap(dimension);
+}
+
+Teuchos::RCP<const Epetra_BlockMap>
+PeridigmNS::PdQuickGridDiscretization::getElementBlockBondMap(std::string& blockName) const
+{
+  // There is only one element block, so the block maps are the same as the global maps.
+  return getBondMap();
+}
+
+Teuchos::RCP<PeridigmNS::NeighborhoodData> 
+PeridigmNS::PdQuickGridDiscretization::getElementBlockNeighborhoodData(std::string& blockName) const
+{
+  // There is only one element block, and hence only one neighborhood.
+  return neighborhoodData;
+}
+
 Teuchos::RCP<Epetra_Vector>
 PeridigmNS::PdQuickGridDiscretization::getInitialX() const
 {
