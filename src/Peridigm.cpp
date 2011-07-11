@@ -111,6 +111,9 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   Teuchos::RCP<AbstractDiscretization> peridigmDisc = discFactory.create(peridigmComm);
   initializeDiscretization(peridigmDisc);
 
+  // Initialize the element blocks; loads the maps and neighborhood data from the discretization into element blocks
+  initializeElementBlocks(peridigmDisc);
+
   // Load node sets from input deck and/or input mesh file into nodeSets container
   Teuchos::RCP<Teuchos::ParameterList> bcParams = Teuchos::rcp(&(peridigmParams->sublist("Problem").sublist("Boundary Conditions")), false);
   initializeNodeSets(bcParams, peridigmDisc);
@@ -119,6 +122,9 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   initializeComputeManager();
 
   // Initialize data manager
+  // This requires that all the required fieldSpecs be known, including the mothership
+  // fieldSpecs and those from the material models, contact models, compute managers.
+  // \todo Will be obsolete with multiple material blocks.
   initializeDataManagers(peridigmDisc);
 
   // apply initial velocities
@@ -126,6 +132,10 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // apply initial displacements
   applyInitialDisplacements();
+
+  // Initialize material models
+  // Initialization functions require valid initial values, e.g. velocities and displacements.
+  initializeMaterials();
 
   // Setup contact
   initializeContact();
@@ -135,9 +145,6 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // Create the model evaluator
   modelEvaluator = Teuchos::rcp(new PeridigmNS::ModelEvaluator(materialModels, contactModels, comm));
-
-  // Initialize material models
-  initializeMaterials();
 
   // Initialize output manager
   initializeOutputManager();
@@ -256,6 +263,24 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
   neighborhoodData = peridigmDisc->getNeighborhoodData();
 }
 
+void PeridigmNS::Peridigm::initializeElementBlocks(Teuchos::RCP<AbstractDiscretization> peridigmDisc) {
+
+  blocks = Teuchos::rcp(new std::vector<PeridigmNS::Block>());
+  std::vector<std::string> blockNames = peridigmDisc->getBlockNames();
+
+  // Create a PeridigmNS::Block for each element block, set the maps, and set the neighborhood.
+  for(unsigned int iBlock=0 ; iBlock<blockNames.size() ; ++iBlock){
+    std::string blockName = blockNames[iBlock];
+    PeridigmNS::Block block(blockName);
+    block.setOwnedScalarPointMap( peridigmDisc->getElementBlockOwnedMap(blockName, 1) );
+    block.setOverlapScalarPointMap( peridigmDisc->getElementBlockOverlapMap(blockName, 1) );
+    block.setOwnedVectorPointMap( peridigmDisc->getElementBlockOwnedMap(blockName, 3) );
+    block.setOverlapVectorPointMap( peridigmDisc->getElementBlockOverlapMap(blockName, 3) );
+    block.setOwnedScalarBondMap( peridigmDisc->getElementBlockBondMap(blockName) );
+    block.setNeighborhoodData( peridigmDisc->getElementBlockNeighborhoodData(blockName) );
+    blocks->push_back(block);
+  }
+}
 
 void PeridigmNS::Peridigm::initializeNodeSets(Teuchos::RCP<Teuchos::ParameterList>& bcParams,
                                               Teuchos::RCP<AbstractDiscretization> peridigmDisc) {

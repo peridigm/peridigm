@@ -242,6 +242,57 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
     globalIds[iElem] = elements[iElem]->identifier() - 1; 
   }
 
+  // loop over the element blocks
+  for(unsigned int iBlock=0 ; iBlock<elementBlocks.size() ; iBlock++){
+
+    const std::string blockName = elementBlocks[iBlock]->name();
+    TEST_FOR_EXCEPT_MSG(sphereMeshElementBlocks->find(blockName) != sphereMeshElementBlocks->end(), "**** Duplicate block found: " + blockName + "\n");
+    (*sphereMeshElementBlocks)[blockName] = std::vector<int>();
+    std::vector<int>& sphereMeshElementBlock = (*sphereMeshElementBlocks)[blockName];
+
+    // Create a selector for all locally-owned elements in the block
+    stk::mesh::Selector selector = 
+      stk::mesh::Selector( *elementBlocks[iBlock] ) & stk::mesh::Selector( metaData->locally_owned_part() );
+
+    // Select the mesh entities that match the selector
+    std::vector<stk::mesh::Entity*> elementsInElementBlock;
+    stk::mesh::get_selected_entities(selector, bulkData.buckets(metaData->element_rank()), elementsInElementBlock);
+    
+    // Loop over the elements in this block
+    std::vector<int> elementGlobalIds;
+    for(unsigned int iElement=0 ; iElement<elementsInElementBlock.size() ; iElement++)
+      elementGlobalIds.push_back(elementsInElementBlock[iElement]->identifier() - 1);
+
+    //
+    //  \todo TEMPORARY SOLUTION THAT WILL NOT SCALE.
+    //
+    // Get the full element list on every processor.
+    // This is important because we're about to rebalance, and after we do so elements
+    // that are locally owned may not be locally owned.  This inconsistency between the
+    // STK mesh and the QuickGrid data structures causes problems.
+    //
+    vector<int> localElementBlockLength(numPID, 0);
+    vector<int> tempLocalElementBlockLength(numPID, 0);
+    tempLocalElementBlockLength[myPID] = (int)elementGlobalIds.size();
+    teuchosComm.allReduce(&tempLocalElementBlockLength[0], &localElementBlockLength[0], numPID, Teuchos::MPIComm::INT, Teuchos::MPIComm::SUM);
+    int totalElementBlockLength = 0;
+    int offset = 0;
+    for(unsigned int i=0 ; i<localElementBlockLength.size() ; ++i){
+      if(i < myPID)
+        offset += localElementBlockLength[i];
+      totalElementBlockLength += localElementBlockLength[i];
+    }
+    vector<int> completeElementGlobalIds(totalElementBlockLength, 0);
+    vector<int> tempCompleteElementGlobalIds(totalElementBlockLength, 0);
+    for(unsigned int i=0 ; i<elementGlobalIds.size() ; ++i)
+      tempCompleteElementGlobalIds[i+offset] = elementGlobalIds[i];
+    teuchosComm.allReduce(&tempCompleteElementGlobalIds[0], &completeElementGlobalIds[0], totalElementBlockLength, Teuchos::MPIComm::INT, Teuchos::MPIComm::SUM);
+
+    // Load the element block into the sphereMeshElementBlock container
+    for(unsigned int i=0 ; i<completeElementGlobalIds.size() ; ++i)
+      sphereMeshElementBlock.push_back( completeElementGlobalIds[i] );
+  }
+
   // loop over the node sets
   for(unsigned int iNodeSet=0 ; iNodeSet<nodeSets.size() ; iNodeSet++){
 
@@ -272,12 +323,16 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
       }
     }
 
+    //
+    //  \todo TEMPORARY SOLUTION THAT WILL NOT SCALE.
+    //
     // Get the full node list on every processor.
     // This is important because we're about to rebalance, and after we do so nodes
     // that are locally owned may not be locally owned.  If a node that
     // changes processor is in a node set, this will cause problems downstream
     // when assigning initial/boundary conditions.  A simple solution is to
-    // have all processors know about all the nodes in each node set.
+    // have all processors know about all the nodes in each node set.  But this
+    // won't scale.
     // 
     // \todo Figure out why it doesn't work to simpily use selector = stk::mesh::Selector( *nodeSets[iNodeSet] ) to get the complete node set.
     //
@@ -403,6 +458,34 @@ Teuchos::RCP<const Epetra_BlockMap>
 PeridigmNS::STKDiscretization::getBondMap() const
 {
   return bondMap;
+}
+
+Teuchos::RCP<const Epetra_BlockMap>
+PeridigmNS::STKDiscretization::getElementBlockOwnedMap(std::string& blockName, int dimension) const
+{
+  // \todo This will break for multiple blocks
+  return getGlobalMap(dimension);
+}
+
+Teuchos::RCP<const Epetra_BlockMap>
+PeridigmNS::STKDiscretization::getElementBlockOverlapMap(std::string& blockName, int dimension) const
+{
+  // \todo This will break for multiple blocks
+  return getGlobalOverlapMap(dimension);
+}
+
+Teuchos::RCP<const Epetra_BlockMap>
+PeridigmNS::STKDiscretization::getElementBlockBondMap(std::string& blockName) const
+{
+  // \todo This will break for multiple blocks
+  return getBondMap();
+}
+
+Teuchos::RCP<PeridigmNS::NeighborhoodData> 
+PeridigmNS::STKDiscretization::getElementBlockNeighborhoodData(std::string& blockName) const
+{
+  // \todo This will break for multiple blocks  
+  return neighborhoodData;
 }
 
 Teuchos::RCP<Epetra_Vector>

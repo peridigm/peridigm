@@ -48,8 +48,8 @@
 #ifndef PERIDIGM_ABSTRACTDISCRETIZATION_HPP
 #define PERIDIGM_ABSTRACTDISCRETIZATION_HPP
 
-#include <Epetra_Map.h>
 #include <Teuchos_RCP.hpp>
+#include <Epetra_Map.h>
 #include <Epetra_Vector.h>
 
 #include "mesh_input/quick_grid/QuickGrid.h"
@@ -60,23 +60,52 @@ namespace PeridigmNS {
   class AbstractDiscretization {
   public:
 
-    //! Constructor.
-    AbstractDiscretization() : horizon(0.0), sphereMeshNodeSets(Teuchos::rcp(new std::map< std::string, std::vector<int> >())) {}
+    //! Constructor
+    AbstractDiscretization() :
+      horizon(0.0),
+      sphereMeshElementBlocks(Teuchos::rcp(new std::map< std::string, std::vector<int> >())),
+      sphereMeshNodeSets(Teuchos::rcp(new std::map< std::string, std::vector<int> >()))
+    {}
 
-    //! Destructor.
+    //! Destructor
     virtual ~AbstractDiscretization() {}
+
+    //! Return the number of element blocks
+    int getNumBlocks() { return (int)sphereMeshElementBlocks->size(); }
+
+    //! Return a sorted list of element block names
+    std::vector<std::string> getBlockNames() {
+      std::vector<std::string> blockNames;
+      std::map< std::string, std::vector<int> >::const_iterator it;
+      for(it = sphereMeshElementBlocks->begin() ; it != sphereMeshElementBlocks->end() ; it++)
+        blockNames.push_back(it->first);
+      std::sort(blockNames.begin(), blockNames.end());
+      return blockNames;
+    }
 
     //! Return d-dimensional map
     virtual Teuchos::RCP<const Epetra_BlockMap> getGlobalMap(int d) const = 0;
 
     //! Return d-dimensional overlap map
+    // \todo Obsolete, remove.
     virtual Teuchos::RCP<const Epetra_BlockMap> getGlobalOverlapMap(int d) const = 0;
-
-    //! 
 
     /** \brief Bond map, used for constitutive data stored on each bond. This is
      *   a non-overlapping map. */
+    // \todo Obsolete, remove.
     virtual Teuchos::RCP<const Epetra_BlockMap> getBondMap() const = 0;
+
+    //! Return d-dimensional map for the given element block
+    virtual Teuchos::RCP<const Epetra_BlockMap> getElementBlockOwnedMap(std::string& blockName, int dimension) const = 0;
+
+    //! Return d-dimensional overlap map for the given element block (owned points + ghosts)
+    virtual Teuchos::RCP<const Epetra_BlockMap> getElementBlockOverlapMap(std::string& blockName, int dimension) const = 0;
+
+    //! Return 1-dimensional bond map for the given element block
+    virtual Teuchos::RCP<const Epetra_BlockMap> getElementBlockBondMap(std::string& blockName) const = 0;
+
+    //! Get the neighbor list for all locally-owned nodes for the given element block
+    virtual Teuchos::RCP<PeridigmNS::NeighborhoodData> getElementBlockNeighborhoodData(std::string& blockName) const = 0;
 
     //! Get initial positions
     virtual Teuchos::RCP<Epetra_Vector> getInitialX() const = 0;
@@ -93,8 +122,11 @@ namespace PeridigmNS {
     //! Get the horizon
     double getHorizon() const { return horizon; }
 
+    //! Get the locally-owned IDs for each element block
+    virtual Teuchos::RCP< std::map< std::string, std::vector<int> > > getElementBlocks() { return sphereMeshElementBlocks; } ;
+
     //! Get the locally-owned IDs for each node set
-    Teuchos::RCP< std::map< std::string, std::vector<int> > > getNodeSets() { return sphereMeshNodeSets; } ;
+    virtual Teuchos::RCP< std::map< std::string, std::vector<int> > > getNodeSets() { return sphereMeshNodeSets; } ;
 
     //! Get the owned (non-overlap) map.
     static Epetra_BlockMap getOwnedMap(const Epetra_Comm& comm, const QUICKGRID::Data& gridData, int ndf);
@@ -118,6 +150,9 @@ namespace PeridigmNS {
 
     //! Horizon
     double horizon;
+
+    //! Map containing element blocks (block name and list of locally-owned element IDs for each block).
+    Teuchos::RCP< std::map< std::string, std::vector<int> > > sphereMeshElementBlocks;
 
     //! Map containing node sets (node set name and list of locally-owned node IDs for each node set).
     Teuchos::RCP< std::map< std::string, std::vector<int> > > sphereMeshNodeSets;
