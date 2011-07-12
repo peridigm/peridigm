@@ -48,34 +48,18 @@
 #ifndef PERIDIGM_MODELEVALUATOR_HPP
 #define PERIDIGM_MODELEVALUATOR_HPP
 
-#include <Teuchos_RCP.hpp>
-#include <Teuchos_ParameterList.hpp>
-#include <Epetra_LocalMap.h>
-#include <Epetra_Import.h>
-#include <Epetra_Export.h>
 #include <Phalanx.hpp>
 #include "PHAL_PeridigmTraits.hpp"
-#include "Peridigm_AbstractDiscretization.hpp"
-#include "materials/Peridigm_Material.hpp"
-#include "materials/Peridigm_LinearElasticIsotropicMaterial.hpp"
-#include "materials/Peridigm_IsotropicElasticPlasticMaterial.hpp"
-#include "contact/Peridigm_ContactModel.hpp"
-#include "contact/Peridigm_ShortRangeForceContactModel.hpp"
-#include <vector>
 
 namespace PeridigmNS {
 
-  /*! \brief The main ModelEvaluator class; provides the interface 
-   * between the driver code and the computational routines.
-   */ 
+  //! The main ModelEvaluator class; provides the interface between the driver code and the computational routines.
   class ModelEvaluator {
 
   public:
 
     //! Constructor
-    ModelEvaluator(const Teuchos::RCP<std::vector<Teuchos::RCP<const PeridigmNS::Material> > > materialModels,
-                   const Teuchos::RCP<std::vector<Teuchos::RCP<const PeridigmNS::ContactModel> > > contactModels,
-                   const Teuchos::RCP<const Epetra_Comm>& comm);
+    ModelEvaluator(bool hasContact_);
 
     //! Destructor
 	virtual ~ModelEvaluator();
@@ -83,17 +67,8 @@ namespace PeridigmNS {
     //! Model evaluation that acts directly on the workset
     void evalModel(Teuchos::RCP<PHAL::Workset> workset) const;
 
-    //! Model evaluation that acts directly on the workset
+    //! Jacobian evaluation that acts directly on the workset
     void evalJacobian(Teuchos::RCP<PHAL::Workset> workset) const;
-
-    //! Update internal history-dependent state information
-    void updateState() {};
-
-    //! Return vector of materials
-    Teuchos::RCP<std::vector<Teuchos::RCP<const PeridigmNS::Material> > > getMaterialModels() const;
-
-    //! Return vector of contact models
-    Teuchos::RCP<std::vector< Teuchos::RCP<const PeridigmNS::ContactModel> > > getContactModels() const;
 
   protected:
 
@@ -106,20 +81,8 @@ namespace PeridigmNS {
 	//! Phalanx field manager for jacobian evaluation
 	Teuchos::RCP<PHX::FieldManager<PHAL::PeridigmTraits> > jacobianFieldManager;
 
-	//! Material models
-    Teuchos::RCP<std::vector<Teuchos::RCP<const PeridigmNS::Material> > > materialModels;
-
-	//! Contact models
-  	Teuchos::RCP<std::vector< Teuchos::RCP<const PeridigmNS::ContactModel> > > contactModels;
-
     //! Contact flag
-    bool analysisHasContact;
-
-	//! Number of processors
-	int numPID;
-
-	//! Processor ID
-	int myPID;
+    bool hasContact;
 
     //! Verbosity flag
     bool verbose;

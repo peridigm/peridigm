@@ -30,6 +30,7 @@ set(Peridigm_SOURCES
     ${computeSOURCES}
     ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp
     ./materials/Peridigm_Material.cpp
+    ./materials/Peridigm_MaterialFactory.cpp
     ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
     ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
     ./materials/Peridigm_ViscoelasticStandardLinearSolid.cpp
@@ -78,6 +79,7 @@ set(utPeridigm_SOURCES
     ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp
     ../io/mesh_output/vtk/Field.cxx
     ./materials/Peridigm_Material.cpp
+    ./materials/Peridigm_MaterialFactory.cpp
     ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
     ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
     ./materials/Peridigm_ViscoelasticStandardLinearSolid.cpp

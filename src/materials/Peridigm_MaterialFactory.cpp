@@ -1,4 +1,4 @@
-/*! \file Peridigm_DiscretizationFactory.hpp */
+/*! \file Peridigm_MaterialFactory.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,50 +45,35 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_DISCRETIZATIONFACTORY_HPP
-#define PERIDIGM_DISCRETIZATIONFACTORY_HPP
+#include <Teuchos_TestForException.hpp>
+#include "Peridigm_MaterialFactory.hpp"
+#include "Peridigm_LinearElasticIsotropicMaterial.hpp"
+#include "Peridigm_IsotropicElasticPlasticMaterial.hpp"
+#include "Peridigm_ViscoelasticStandardLinearSolid.hpp"
 
-#include <Teuchos_ParameterList.hpp>
-#include <Teuchos_RCP.hpp>
-#include <Epetra_Comm.h>
-#include "Peridigm_AbstractDiscretization.hpp"
-#include "mesh_input/quick_grid/QuickGridData.h"
+Teuchos::RCP<PeridigmNS::Material>
+PeridigmNS::MaterialFactory::create(Teuchos::RCP<const Teuchos::ParameterList>& materialParams)
+{
+  Teuchos::RCP<PeridigmNS::Material> materialModel;
 
-namespace PeridigmNS {
-
-  /*!
-   * \brief A factory class to instantiate AbstractDiscretization objects
-   */
-  class DiscretizationFactory {
-  public:
-
-    //! Default constructor
-    DiscretizationFactory(const Teuchos::RCP<Teuchos::ParameterList>& discParams);
-
-    //! Destructor
-    virtual ~DiscretizationFactory() {}
-
-    virtual Teuchos::RCP<AbstractDiscretization> 
-    create(const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
-
-    virtual Teuchos::RCP<AbstractDiscretization> 
-    create(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
-           const Teuchos::RCP<const QUICKGRID::Data>& decomp);
-
-  private:
-
-    //! Private to prohibit copying
-    DiscretizationFactory(const DiscretizationFactory&);
-
-    //! Private to prohibit copying
-    DiscretizationFactory& operator=(const DiscretizationFactory&);
-
-  protected:
-
-    //! Parameter list
-    Teuchos::RCP<Teuchos::ParameterList> discParams;
-  };
-
+  for(Teuchos::ParameterList::ConstIterator it = materialParams->begin() ; it != materialParams->end() ; it++){
+    const string& name = it->first;
+    const Teuchos::ParameterList& params = materialParams->sublist(name);
+    if (name == "Linear Elastic")
+      materialModel = Teuchos::rcp( new LinearElasticIsotropicMaterial(params) );
+    else if (name == "Elastic Plastic")
+      materialModel = Teuchos::rcp( new IsotropicElasticPlasticMaterial(params) );
+    else if (name == "Viscoelastic Standard Linear Solid")
+      materialModel = Teuchos::rcp( new ViscoelasticStandardLinearSolid(params) );
+    else {
+      string invalidMaterial("\n**** Unrecognized material model: ");
+      invalidMaterial += name;
+      invalidMaterial += ", must be Linear Elastic or Elastic Plastic or Viscoelastic Standard Linear Solid.\n";
+      TEST_FOR_EXCEPT_MSG(true, invalidMaterial);
+    }
+  }
+  
+  return materialModel;
 }
 
-#endif // PERIDIGM_DISCRETIZATIONFACTORY_HPP
+//Teuchos::rcp_implicit_cast<Material>(material)
