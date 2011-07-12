@@ -134,12 +134,15 @@ namespace PeridigmNS {
     //! Set the contact model
     void setContactModel(Teuchos::RCP<const PeridigmNS::ContactModel> contactModel_){ contactModel = contactModel_; }
 
-    /*! \brief Initialize the data manager.
+    /*! \brief Initialize the data manager
      *
      *  The DataManager will include all the field specs requested by the material model and
      *  the contact model, as well as those provided in the fieldSpecs input argument.
      */
     void initializeDataManager(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs);
+
+    //! Initialize the material model
+    void initializeMaterialModel();
 
     /*! \brief Import data from the given vector to the underlying Epetra_Vector associated with the given field spec.
      *
