@@ -45,31 +45,18 @@
 // ************************************************************************
 //@HEADER
 
-#include <Teuchos_RCPDecl.hpp>
-#include <Teuchos_VerboseObject.hpp>
 #include "PHAL_Dimension.hpp"
 #include "PHAL_FactoryTraits.hpp"
 #include "Peridigm_ModelEvaluator.hpp"
-#include "Peridigm_DiscretizationFactory.hpp"
-#include <sstream>
 
-PeridigmNS::ModelEvaluator::ModelEvaluator(const Teuchos::RCP<std::vector<Teuchos::RCP<const PeridigmNS::Material> > > materialModels_,
-                                           const Teuchos::RCP<std::vector<Teuchos::RCP<const PeridigmNS::ContactModel> > > contactModels_,
-                                           const Teuchos::RCP<const Epetra_Comm>& comm)
-  : materialModels(materialModels_),
-    contactModels(contactModels_),
-    analysisHasContact(false),
-	numPID(comm->NumProc()),
-	myPID(comm->MyPID()),
+PeridigmNS::ModelEvaluator::ModelEvaluator(bool hasContact_)
+  : hasContact(hasContact_),
     verbose(false)
 {
-  if(contactModels->size() > 0)
-    analysisHasContact = true;
-
   constructForceEvaluators();
   forceFieldManager->postRegistrationSetup(NULL);
 
-  // \todo Call only if needed (implicit time integration)
+  // \todo Call only if needed (implicit time integration); this might be done auto-magically by field evaluator.
   constructJacobianEvaluators();
   jacobianFieldManager->postRegistrationSetup(NULL);
 }
@@ -105,15 +92,6 @@ PeridigmNS::ModelEvaluator::constructForceEvaluators()
   p->set<int>("Type", type); 
   p->set<bool>("Verbose", verbose);
 
-  // Associate the ParameterLibrary with the evaluator
-  // this grants outside access (e.g. Dakota) to the parameters in the evaluator
-//   p->set<RCP<ParamLib> >("Parameter Library", paramLib);
-
-  // set the coefficient to the value in the parameter list
-  // the parameter list could have been read from file or set to a default value
-//   p->set<double>("Coefficient", params->get("Coefficient",1.0)); 
-//   p->set<Teuchos::ParameterList*>("Parameter List", &paramList);
-
   p->set< RCP<DataLayout> >("Dummy Data Layout", dummy);
 
   evaluatorsToBuild["UpdateForceState"] = p;
@@ -131,7 +109,7 @@ PeridigmNS::ModelEvaluator::constructForceEvaluators()
   }
 
   // Contact
-  if(analysisHasContact){
+  if(hasContact){
     RCP<ParameterList> p = rcp(new ParameterList);
     int type = FactoryTraits<PHAL::PeridigmTraits>::id_contact;
     p->set<int>("Type", type); 
@@ -159,7 +137,7 @@ PeridigmNS::ModelEvaluator::constructForceEvaluators()
   forceFieldManager->requireField<PHAL::PeridigmTraits::Residual>(evaluate_force_tag);
 
   // Require the contact force evaluation
-  if(analysisHasContact){
+  if(hasContact){
     PHX::Tag<PHAL::PeridigmTraits::Residual::ScalarT> contact_tag("Contact", dummy);
     forceFieldManager->requireField<PHAL::PeridigmTraits::Residual>(contact_tag);
   }
@@ -213,18 +191,6 @@ PeridigmNS::ModelEvaluator::constructJacobianEvaluators()
   // called as perscribed by dependencies).
   PHX::Tag<PHAL::PeridigmTraits::Residual::ScalarT> evaluate_jacobian_tag("EvaluateJacobian", dummy);
   jacobianFieldManager->requireField<PHAL::PeridigmTraits::Residual>(evaluate_jacobian_tag);
-}
-
-Teuchos::RCP<std::vector<Teuchos::RCP<const PeridigmNS::Material> > >
-PeridigmNS::ModelEvaluator::getMaterialModels() const
-{
-  return materialModels;
-}
-
-Teuchos::RCP<std::vector<Teuchos::RCP<const PeridigmNS::ContactModel> > >
-PeridigmNS::ModelEvaluator::getContactModels() const
-{
-  return contactModels;
 }
 
 void 

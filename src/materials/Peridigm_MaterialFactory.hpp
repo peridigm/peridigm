@@ -1,4 +1,4 @@
-/*! \file Peridigm_DiscretizationFactory.hpp */
+/*! \file Peridigm_MaterialFactory.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,50 +45,39 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_DISCRETIZATIONFACTORY_HPP
-#define PERIDIGM_DISCRETIZATIONFACTORY_HPP
+#ifndef PERIDIGM_MATERIALFACTORY_HPP
+#define PERIDIGM_MATERIALFACTORY_HPP
 
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_RCP.hpp>
 #include <Epetra_Comm.h>
-#include "Peridigm_AbstractDiscretization.hpp"
-#include "mesh_input/quick_grid/QuickGridData.h"
+#include "Peridigm_Material.hpp"
 
 namespace PeridigmNS {
 
   /*!
-   * \brief A factory class to instantiate AbstractDiscretization objects
+   * \brief A factory class to instantiate Material objects
    */
-  class DiscretizationFactory {
+  class MaterialFactory {
   public:
 
     //! Default constructor
-    DiscretizationFactory(const Teuchos::RCP<Teuchos::ParameterList>& discParams);
+    MaterialFactory() {}
 
     //! Destructor
-    virtual ~DiscretizationFactory() {}
+    virtual ~MaterialFactory() {}
 
-    virtual Teuchos::RCP<AbstractDiscretization> 
-    create(const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
-
-    virtual Teuchos::RCP<AbstractDiscretization> 
-    create(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
-           const Teuchos::RCP<const QUICKGRID::Data>& decomp);
+    virtual Teuchos::RCP<Material> create(Teuchos::RCP<const Teuchos::ParameterList>& materialParams);
 
   private:
 
     //! Private to prohibit copying
-    DiscretizationFactory(const DiscretizationFactory&);
+    MaterialFactory(const MaterialFactory&);
 
     //! Private to prohibit copying
-    DiscretizationFactory& operator=(const DiscretizationFactory&);
-
-  protected:
-
-    //! Parameter list
-    Teuchos::RCP<Teuchos::ParameterList> discParams;
+    MaterialFactory& operator=(const MaterialFactory&);
   };
 
 }
 
-#endif // PERIDIGM_DISCRETIZATIONFACTORY_HPP
+#endif // PERIDIGM_MATERIALFACTORY_HPP

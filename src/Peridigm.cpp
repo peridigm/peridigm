@@ -74,9 +74,7 @@
 #include "Peridigm_ComputeManager.hpp"
 #include "contact/Peridigm_ContactModel.hpp"
 #include "contact/Peridigm_ShortRangeForceContactModel.hpp"
-#include "materials/Peridigm_LinearElasticIsotropicMaterial.hpp"
-#include "materials/Peridigm_IsotropicElasticPlasticMaterial.hpp"
-#include "materials/Peridigm_ViscoelasticStandardLinearSolid.hpp"
+#include "materials/Peridigm_MaterialFactory.hpp"
 #include "mesh_input/quick_grid/QuickGrid.h"
 #include "mesh_input/quick_grid/QuickGridData.h"
 #include "pdneigh/PdZoltan.h"
@@ -106,7 +104,8 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // Read mesh from disk or generate using geometric primatives.
   // All maps are generated here
-  Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::rcp(&(peridigmParams->sublist("Problem").sublist("Discretization")), false);
+  Teuchos::RCP<Teuchos::ParameterList> discParams =
+    Teuchos::rcpFromRef( peridigmParams->sublist("Problem", true).sublist("Discretization", true) );
   DiscretizationFactory discFactory(discParams);
   Teuchos::RCP<AbstractDiscretization> peridigmDisc = discFactory.create(peridigmComm);
   initializeDiscretization(peridigmDisc);
@@ -115,7 +114,8 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   initializeBlocks(peridigmDisc);
 
   // Load node sets from input deck and/or input mesh file into nodeSets container
-  Teuchos::RCP<Teuchos::ParameterList> bcParams = Teuchos::rcp(&(peridigmParams->sublist("Problem").sublist("Boundary Conditions")), false);
+  Teuchos::RCP<Teuchos::ParameterList> bcParams =
+    Teuchos::rcpFromRef( peridigmParams->sublist("Problem", true).sublist("Boundary Conditions") );
   initializeNodeSets(bcParams, peridigmDisc);
 
   // The PeridigmNS::DataManager contained in each PeridigmNS::Block allocates space for field data.
@@ -141,11 +141,14 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   initializeDataManagers(peridigmDisc);
 
   // Load the materials into the blocks
-  // \todo This will break for multiple material blocks, need to create material factor and load models directly, figure out why we need to have this upstream anyway.
+  // \todo Hook up plumbing for multiple materials in the input deck, for now all blocks get the same material.
+  Teuchos::RCP<const Teuchos::ParameterList> materialParams =
+    Teuchos::rcpFromRef( peridigmParams->sublist("Problem", true).sublist("Material", true) );
+  MaterialFactory materialFactory;
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-    blockIt->setMaterialModel( (*materialModels)[0] );
+    blockIt->setMaterialModel( materialFactory.create(materialParams) );
 
-  // Initialize the data manager associated with each block
+  // Initialize the data manager associated with each block and apply data from the discretization
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
     blockIt->initializeDataManager(fieldSpecs);
     blockIt->import(*(peridigmDisc->getCellVolume()), Field_NS::VOLUME,     Field_ENUM::STEP_NONE, Insert);
@@ -176,7 +179,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   initializeWorkset();
 
   // Create the model evaluator
-  modelEvaluator = Teuchos::rcp(new PeridigmNS::ModelEvaluator(materialModels, contactModels, comm));
+  modelEvaluator = Teuchos::rcp(new PeridigmNS::ModelEvaluator(analysisHasContact));
 
   // Initialize output manager
   initializeOutputManager();
@@ -190,39 +193,18 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 void PeridigmNS::Peridigm::instantiateMaterials() {
 
   // Extract problem parameters sublist
-  Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::rcp(&(peridigmParams->sublist("Problem")),false);
-
-  materialModels = Teuchos::rcp(new std::vector< Teuchos::RCP<const PeridigmNS::Material> >()); 
+  Teuchos::ParameterList& problemParams = peridigmParams->sublist("Problem", true);
+  Teuchos::ParameterList& materialParams = problemParams.sublist("Material", true);
 
   // Instantiate material objects
-  //! \todo Move creation of material models to material model factory
-  TEST_FOR_EXCEPT_MSG(!problemParams->isSublist("Material"), "Material parameters not specified!");
-  Teuchos::ParameterList & materialParams = problemParams->sublist("Material");
-  Teuchos::ParameterList::ConstIterator it;
-  for(it = materialParams.begin() ; it != materialParams.end() ; it++){
-    const string & name = it->first;
-    Teuchos::ParameterList & matParams = materialParams.sublist(name);
-    // Insert solver timestep into matParams. Some material models (e.g., viscoelastic) need to know timestep
-    Teuchos::RCP<Teuchos::ParameterList> solverParams = Teuchos::rcp(&(peridigmParams->sublist("Solver")),false);
-    Teuchos::RCP<Material> material;
-    if(name == "Linear Elastic" || name == "Elastic Plastic" || name == "Viscoelastic Standard Linear Solid"){
-      if(name == "Linear Elastic")
-        material = Teuchos::rcp(new LinearElasticIsotropicMaterial(matParams) );
-      else if (name == "Elastic Plastic")
-        material = Teuchos::rcp(new IsotropicElasticPlasticMaterial(matParams) );
-      else if (name == "Viscoelastic Standard Linear Solid")
-        material = Teuchos::rcp(new ViscoelasticStandardLinearSolid(matParams) );
-      materialModels->push_back( Teuchos::rcp_implicit_cast<Material>(material) );
-    }
-    else {
-      string invalidMaterial("Unrecognized material model: ");
-      invalidMaterial += name;
-      invalidMaterial += ", must be Linear Elastic or Elastic Plastic or Viscoelastic Standard Linear Solid";
-      TEST_FOR_EXCEPT_MSG(true, invalidMaterial);
-    }
+  // \todo This will break for multiple material blocks.
+  MaterialFactory materialFactory;
+  materialModels = Teuchos::rcp(new std::vector< Teuchos::RCP<const PeridigmNS::Material> >()); 
+  for(Teuchos::ParameterList::ConstIterator it = materialParams.begin() ; it != materialParams.end() ; it++){
+    Teuchos::RCP<const Teuchos::ParameterList> matParams = Teuchos::rcpFromRef(materialParams);
+    materialModels->push_back( materialFactory.create(matParams) );
   }
   TEST_FOR_EXCEPT_MSG(materialModels->size() == 0, "No material models created!");
-
 }
 
 void PeridigmNS::Peridigm::initializeMaterials() {
