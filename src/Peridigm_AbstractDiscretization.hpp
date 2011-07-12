@@ -63,21 +63,21 @@ namespace PeridigmNS {
     //! Constructor
     AbstractDiscretization() :
       horizon(0.0),
-      sphereMeshElementBlocks(Teuchos::rcp(new std::map< std::string, std::vector<int> >())),
-      sphereMeshNodeSets(Teuchos::rcp(new std::map< std::string, std::vector<int> >()))
+      elementBlocks(Teuchos::rcp(new std::map< std::string, std::vector<int> >())),
+      nodeSets(Teuchos::rcp(new std::map< std::string, std::vector<int> >()))
     {}
 
     //! Destructor
     virtual ~AbstractDiscretization() {}
 
     //! Return the number of element blocks
-    int getNumBlocks() { return (int)sphereMeshElementBlocks->size(); }
+    int getNumBlocks() { return (int)elementBlocks->size(); }
 
     //! Return a sorted list of element block names
     std::vector<std::string> getBlockNames() {
       std::vector<std::string> blockNames;
       std::map< std::string, std::vector<int> >::const_iterator it;
-      for(it = sphereMeshElementBlocks->begin() ; it != sphereMeshElementBlocks->end() ; it++)
+      for(it = elementBlocks->begin() ; it != elementBlocks->end() ; it++)
         blockNames.push_back(it->first);
       std::sort(blockNames.begin(), blockNames.end());
       return blockNames;
@@ -123,10 +123,10 @@ namespace PeridigmNS {
     double getHorizon() const { return horizon; }
 
     //! Get the locally-owned IDs for each element block
-    virtual Teuchos::RCP< std::map< std::string, std::vector<int> > > getElementBlocks() { return sphereMeshElementBlocks; } ;
+    virtual Teuchos::RCP< std::map< std::string, std::vector<int> > > getElementBlocks() { return elementBlocks; } ;
 
     //! Get the locally-owned IDs for each node set
-    virtual Teuchos::RCP< std::map< std::string, std::vector<int> > > getNodeSets() { return sphereMeshNodeSets; } ;
+    virtual Teuchos::RCP< std::map< std::string, std::vector<int> > > getNodeSets() { return nodeSets; } ;
 
     //! Get the owned (non-overlap) map.
     static Epetra_BlockMap getOwnedMap(const Epetra_Comm& comm, const QUICKGRID::Data& gridData, int ndf);
@@ -152,10 +152,10 @@ namespace PeridigmNS {
     double horizon;
 
     //! Map containing element blocks (block name and list of locally-owned element IDs for each block).
-    Teuchos::RCP< std::map< std::string, std::vector<int> > > sphereMeshElementBlocks;
+    Teuchos::RCP< std::map< std::string, std::vector<int> > > elementBlocks;
 
     //! Map containing node sets (node set name and list of locally-owned node IDs for each node set).
-    Teuchos::RCP< std::map< std::string, std::vector<int> > > sphereMeshNodeSets;
+    Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets;
 
   private:
 

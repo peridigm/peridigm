@@ -20,6 +20,7 @@ set(Peridigm_SOURCES
     Peridigm_State.cpp
     Peridigm_DataManager.cpp
     Peridigm_SerialMatrix.cpp
+    Peridigm_Block.cpp
     Peridigm_ModelEvaluator.cpp
     PHAL_Dimension.cpp
     PHAL_PeridigmTraits.cpp
@@ -66,6 +67,7 @@ set(utPeridigm_SOURCES
     Peridigm_State.cpp
     Peridigm_DataManager.cpp
     Peridigm_SerialMatrix.cpp
+    Peridigm_Block.cpp
     Peridigm_ModelEvaluator.cpp
     PHAL_Dimension.cpp
     PHAL_PeridigmTraits.cpp

@@ -118,11 +118,14 @@ public:
   //! Returns RCP to owned scalar map
   Teuchos::RCP<const Epetra_BlockMap> getOwnedScalarPointMap(){ return ownedScalarPointMap; }
 
+  //! Returns RCP to overlap scalar map
+  Teuchos::RCP<const Epetra_BlockMap> getOverlapScalarPointMap(){ return overlapScalarPointMap; }
+
   //! Returns RCP to owned vector map
   Teuchos::RCP<const Epetra_BlockMap> getOwnedVectorPointMap(){ return ownedVectorPointMap; }
 
-  //! Returns RCP to overlap scalar map
-  Teuchos::RCP<const Epetra_BlockMap> getOverlapScalarPointMap(){ return overlapScalarPointMap; }
+  //! Returns RCP to overlap vector map
+  Teuchos::RCP<const Epetra_BlockMap> getOverlapVectorPointMap(){ return overlapVectorPointMap; }
 
   //! Returns RCP to the State N object
   Teuchos::RCP<State> getStateN() const { return stateN; }
