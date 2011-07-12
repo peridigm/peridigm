@@ -112,7 +112,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   initializeDiscretization(peridigmDisc);
 
   // Initialize the element blocks; loads the maps and neighborhood data from the discretization into element blocks
-  initializeElementBlocks(peridigmDisc);
+  initializeBlocks(peridigmDisc);
 
   // Load node sets from input deck and/or input mesh file into nodeSets container
   Teuchos::RCP<Teuchos::ParameterList> bcParams = Teuchos::rcp(&(peridigmParams->sublist("Problem").sublist("Boundary Conditions")), false);
@@ -141,13 +141,13 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   initializeDataManagers(peridigmDisc);
 
   // Load the materials into the blocks
-  // \todo This will break for multiple material blocks, need to create material factor and load models directly, figure out why we need to have the upstream anyway.
-  for(unsigned int iBlock=0 ; iBlock<blocks->size() ; ++iBlock)
-    (*blocks)[iBlock].setMaterialModel( (*materialModels)[0] );
+  // \todo This will break for multiple material blocks, need to create material factor and load models directly, figure out why we need to have this upstream anyway.
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+    blockIt->setMaterialModel( (*materialModels)[0] );
 
   // Initialize the data manager associated with each block
-  for(unsigned int iBlock=0 ; iBlock<blocks->size() ; ++iBlock)
-    (*blocks)[iBlock].initializeDataManager(fieldSpecs);
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+    blockIt->initializeDataManager(fieldSpecs);
 
   // apply initial velocities
   applyInitialVelocities();
@@ -157,9 +157,11 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // Initialize material models
   // Initialization functions require valid initial values, e.g. velocities and displacements.
+  // \todo Put in Block::finialize()?
   initializeMaterials();
 
   // Setup contact
+  // \todo Put in Block::finialize()?
   initializeContact();
 
   // Initialize the workset
@@ -285,7 +287,7 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
   neighborhoodData = peridigmDisc->getNeighborhoodData();
 }
 
-void PeridigmNS::Peridigm::initializeElementBlocks(Teuchos::RCP<AbstractDiscretization> peridigmDisc) {
+void PeridigmNS::Peridigm::initializeBlocks(Teuchos::RCP<AbstractDiscretization> peridigmDisc) {
 
   blocks = Teuchos::rcp(new std::vector<PeridigmNS::Block>());
   std::vector<std::string> blockNames = peridigmDisc->getBlockNames();
@@ -425,9 +427,12 @@ void PeridigmNS::Peridigm::applyInitialVelocities() {
   }
 
   // Fill the dataManager with initial velocity data
+  // \todo Obsolete once we switch to multiple material blocks.
   for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock)
     (*dataManagers)[iBlock]->getData(Field_NS::VELOC3D, Field_ENUM::STEP_N)->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
 
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+    blockIt->import(*v, Field_NS::VELOC3D, Field_ENUM::STEP_N, Insert);
 }
 
 void PeridigmNS::Peridigm::applyInitialDisplacements() {

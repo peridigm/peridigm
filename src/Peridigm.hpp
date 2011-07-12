@@ -94,7 +94,7 @@ namespace PeridigmNS {
     void initializeDiscretization(Teuchos::RCP<AbstractDiscretization> peridigmDisc);
 
     //! Initialize the element blocks
-    void initializeElementBlocks(Teuchos::RCP<AbstractDiscretization> peridigmDisc);    
+    void initializeBlocks(Teuchos::RCP<AbstractDiscretization> peridigmDisc);    
 
     //! Load node sets from input deck and/or input mesh into nodeSets container
     void initializeNodeSets(Teuchos::RCP<Teuchos::ParameterList>& bcParams,
@@ -279,6 +279,9 @@ namespace PeridigmNS {
 
     //! Blocks
     Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks;
+
+    //! Block iterator, for convenience
+    std::vector<PeridigmNS::Block>::iterator blockIt;
 
     //! Node sets
     Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets;

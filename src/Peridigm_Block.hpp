@@ -78,6 +78,7 @@ Code flow:
 #include <Teuchos_RCP.hpp>
 #include <Epetra_Map.h>
 #include <Epetra_Vector.h>
+#include <Epetra_Import.h>
 
 #include <string>
 
@@ -138,44 +139,15 @@ namespace PeridigmNS {
      *  The DataManager will include all the field specs requested by the material model and
      *  the contact model, as well as those provided in the fieldSpecs input argument.
      */
-    void initializeDataManager(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs)
-    {
-      // The material model and maps must all be set prior to initializing the data manager (and the contact model as well, if there is one).
-      // Note that not all the maps are strictly required, so these conditions could be relaxed somewhat.
-      TEST_FOR_EXCEPT_MSG(materialModel.is_null(), "\n**** Material model must be set via Block::setMaterialModel() prior to calling Block::initializeDataManager()\n");
-      TEST_FOR_EXCEPT_MSG(ownedScalarPointMap.is_null() ||
-                          ownedVectorPointMap.is_null() ||
-                          overlapScalarPointMap.is_null() ||
-                          overlapVectorPointMap.is_null() ||
-                          ownedScalarBondMap.is_null(),
-                          "\n**** Maps must be set prior to calling Block::initializeDataManager()\n");
+    void initializeDataManager(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs);
 
-      // Collect all the required field specs
-      Teuchos::RCP< std::vector<Field_NS::FieldSpec> > specs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
-      // Specs pass in via fieldSpecs argument (if any)
-      if(!fieldSpecs.is_null()){
-        specs->insert(specs->end(), fieldSpecs->begin(), fieldSpecs->end());
-      }
-      // Material model specs
-      Teuchos::RCP< std::vector<Field_NS::FieldSpec> > materialModelSpecs = materialModel->VariableSpecs();
-      specs->insert(specs->end(), materialModelSpecs->begin(), materialModelSpecs->end());
-      // Contact model specs (if any)
-      if(!contactModel.is_null()){
-        Teuchos::RCP< std::vector<Field_NS::FieldSpec> > contactModelSpecs = contactModel->VariableSpecs();
-        specs->insert(specs->end(), contactModelSpecs->begin(), contactModelSpecs->end());
-      }
-
-      dataManager = Teuchos::rcp(new PeridigmNS::DataManager);
-
-      dataManager->setMaps(ownedScalarPointMap,
-                           overlapScalarPointMap,
-                           ownedVectorPointMap,
-                           overlapVectorPointMap,
-                           ownedScalarBondMap);
-
-      // Allocate data in the data manager
-      dataManager->allocateData(specs);
-    }
+    /*! \brief Import data from the given vector to the underlying Epetra_Vector associated with the given field spec.
+     *
+     *  The intended use case is to import from a non-overlapped vector (i.e., no ghosts) to an overlap vector in
+     *  the Block's DataManager.  Note that if the Block does not have space allocated for the given spec and step,
+     *  then the function is a no-op.
+     */
+    void import(const Epetra_Vector& source, Field_NS::FieldSpec spec, Field_ENUM::Step step, Epetra_CombineMode combineMode);
 
   protected:
     
@@ -194,6 +166,12 @@ namespace PeridigmNS {
     //! Bond map for owned points; the map contains one element for each owned point, the element length is equal to the number of bonds for that point.
     Teuchos::RCP<const Epetra_BlockMap> ownedScalarBondMap;
     //@}
+
+    //! One-dimensional Importer from global to overlapped vectors
+    Teuchos::RCP<const Epetra_Import> oneDimensionalImporter;
+
+    //! One-dimensional Importer from global to overlapped vectors
+    Teuchos::RCP<const Epetra_Import> threeDimensionalImporter;
 
     //! The neighborhood data
     Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData;

@@ -109,6 +109,13 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
 
   // fill cell volumes
   cellVolume = Teuchos::rcp(new Epetra_Vector(Copy,*oneDimensionalMap,decomp.cellVolume.get()) );
+
+  // there is only one block, give it a name and list all the elements
+  // \todo THIS WILL NOT SCALE:  We want to load only the locally-owned elements, but there is foundational work required before this is possible.
+  string blockName = "Quick Grid";
+  (*elementBlocks)[blockName] = std::vector<int>( oneDimensionalMap->NumGlobalElements() );
+  for(unsigned int i=0 ; i<(*elementBlocks)[blockName].size() ; ++i)
+    (*elementBlocks)[blockName][i] = i;
 }
 
 

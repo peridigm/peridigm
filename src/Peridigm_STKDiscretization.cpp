@@ -147,20 +147,20 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
   stk::io::put_io_part_attribute(metaData->universal_part());
 
   // Loop over the parts and store the element parts, side parts, and node parts.
-  const stk::mesh::PartVector& parts = metaData->get_parts();
-  stk::mesh::PartVector elementBlocks;
-//   stk::mesh::PartVector sideSets;
-  stk::mesh::PartVector nodeSets;
-  for(stk::mesh::PartVector::const_iterator it = parts.begin(); it != parts.end(); ++it){
+  const stk::mesh::PartVector& stkParts = metaData->get_parts();
+  stk::mesh::PartVector stkElementBlocks;
+//   stk::mesh::PartVector stkSideSets;
+  stk::mesh::PartVector stkNodeSets;
+  for(stk::mesh::PartVector::const_iterator it = stkParts.begin(); it != stkParts.end(); ++it){
     stk::mesh::Part* const part = *it;
     if(part->name()[0] == '{')
       continue;
     if(part->primary_entity_rank() == metaData->element_rank())
-      elementBlocks.push_back(part);
+      stkElementBlocks.push_back(part);
 //     else if(part->primary_entity_rank() == metaData->side_rank())
-//       sideSets.push_back(part);
+//       stkSideSets.push_back(part);
     else if(part->primary_entity_rank() == metaData->node_rank())
-      nodeSets.push_back(part);
+      stkNodeSets.push_back(part);
     else
       if(myPID == 0)
         cout << "Warning, unknown part type for part " << part->name() << endl;
@@ -169,15 +169,15 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
     stringstream ss;
     ss << "Converting input file " << meshFileName << " to sphere mesh:" << endl;
     ss << "  Element blocks:";
-    for(stk::mesh::PartVector::const_iterator it = elementBlocks.begin(); it != elementBlocks.end(); ++it)
+    for(stk::mesh::PartVector::const_iterator it = stkElementBlocks.begin(); it != stkElementBlocks.end(); ++it)
       ss << " " << (*it)->name();
     ss << endl;
 //     ss << "  Side sets:";
-//     for(stk::mesh::PartVector::const_iterator it = sideSets.begin(); it != sideSets.end(); ++it)
+//     for(stk::mesh::PartVector::const_iterator it = stkSideSets.begin(); it != stkSideSets.end(); ++it)
 //       ss << " " << (*it)->name();
 //     ss << endl;
     ss << "  Node sets:";
-    for(stk::mesh::PartVector::const_iterator it = nodeSets.begin(); it != nodeSets.end(); ++it)
+    for(stk::mesh::PartVector::const_iterator it = stkNodeSets.begin(); it != stkNodeSets.end(); ++it)
       ss << " " << (*it)->name();
     ss << endl;
     cout << ss.str() << endl;
@@ -243,16 +243,16 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
   }
 
   // loop over the element blocks
-  for(unsigned int iBlock=0 ; iBlock<elementBlocks.size() ; iBlock++){
+  for(unsigned int iBlock=0 ; iBlock<stkElementBlocks.size() ; iBlock++){
 
-    const std::string blockName = elementBlocks[iBlock]->name();
-    TEST_FOR_EXCEPT_MSG(sphereMeshElementBlocks->find(blockName) != sphereMeshElementBlocks->end(), "**** Duplicate block found: " + blockName + "\n");
-    (*sphereMeshElementBlocks)[blockName] = std::vector<int>();
-    std::vector<int>& sphereMeshElementBlock = (*sphereMeshElementBlocks)[blockName];
+    const std::string blockName = stkElementBlocks[iBlock]->name();
+    TEST_FOR_EXCEPT_MSG(elementBlocks->find(blockName) != elementBlocks->end(), "**** Duplicate block found: " + blockName + "\n");
+    (*elementBlocks)[blockName] = std::vector<int>();
+    std::vector<int>& elementBlock = (*elementBlocks)[blockName];
 
     // Create a selector for all locally-owned elements in the block
     stk::mesh::Selector selector = 
-      stk::mesh::Selector( *elementBlocks[iBlock] ) & stk::mesh::Selector( metaData->locally_owned_part() );
+      stk::mesh::Selector( *stkElementBlocks[iBlock] ) & stk::mesh::Selector( metaData->locally_owned_part() );
 
     // Select the mesh entities that match the selector
     std::vector<stk::mesh::Entity*> elementsInElementBlock;
@@ -288,22 +288,22 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
       tempCompleteElementGlobalIds[i+offset] = elementGlobalIds[i];
     teuchosComm.allReduce(&tempCompleteElementGlobalIds[0], &completeElementGlobalIds[0], totalElementBlockLength, Teuchos::MPIComm::INT, Teuchos::MPIComm::SUM);
 
-    // Load the element block into the sphereMeshElementBlock container
+    // Load the element block into the elementBlock container
     for(unsigned int i=0 ; i<completeElementGlobalIds.size() ; ++i)
-      sphereMeshElementBlock.push_back( completeElementGlobalIds[i] );
+      elementBlock.push_back( completeElementGlobalIds[i] );
   }
 
   // loop over the node sets
-  for(unsigned int iNodeSet=0 ; iNodeSet<nodeSets.size() ; iNodeSet++){
+  for(unsigned int iNodeSet=0 ; iNodeSet<stkNodeSets.size() ; iNodeSet++){
 
-    const std::string nodeSetName = nodeSets[iNodeSet]->name();
-    TEST_FOR_EXCEPT_MSG(sphereMeshNodeSets->find(nodeSetName) != sphereMeshNodeSets->end(), "**** Duplicate node set found: " + nodeSetName + "\n");
-    (*sphereMeshNodeSets)[nodeSetName] = std::vector<int>();
-    std::vector<int>& sphereMeshNodeSet = (*sphereMeshNodeSets)[nodeSetName];
+    const std::string nodeSetName = stkNodeSets[iNodeSet]->name();
+    TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSetName) != nodeSets->end(), "**** Duplicate node set found: " + nodeSetName + "\n");
+    (*nodeSets)[nodeSetName] = std::vector<int>();
+    std::vector<int>& nodeSet = (*nodeSets)[nodeSetName];
 
     // Create a selector for all locally-owned nodes in the node set
     stk::mesh::Selector selector = 
-      stk::mesh::Selector( *nodeSets[iNodeSet] ) & stk::mesh::Selector( metaData->locally_owned_part() );
+      stk::mesh::Selector( *stkNodeSets[iNodeSet] ) & stk::mesh::Selector( metaData->locally_owned_part() );
 
     // Select the mesh entities that match the selector
     std::vector<stk::mesh::Entity*> nodesInNodeSet;
@@ -334,7 +334,7 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
     // have all processors know about all the nodes in each node set.  But this
     // won't scale.
     // 
-    // \todo Figure out why it doesn't work to simpily use selector = stk::mesh::Selector( *nodeSets[iNodeSet] ) to get the complete node set.
+    // \todo Figure out why it doesn't work to simpily use selector = stk::mesh::Selector( *stkNodeSets[iNodeSet] ) to get the complete node set.
     //
     vector<int> localNodeSetLength(numPID, 0);
     vector<int> tempLocalNodeSetLength(numPID, 0);
@@ -356,9 +356,9 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
     }
     teuchosComm.allReduce(&tempCompleteElementGlobalIds[0], &completeElementGlobalIds[0], totalNodeSetLength, Teuchos::MPIComm::INT, Teuchos::MPIComm::SUM);
 
-    // Load the node set into the sphereMeshNodeSets container
+    // Load the node set into the nodeSets container
     for(unsigned int i=0 ; i<completeElementGlobalIds.size() ; ++i)
-      sphereMeshNodeSet.push_back( completeElementGlobalIds[i] );
+      nodeSet.push_back( completeElementGlobalIds[i] );
   }
 
   // free the meshData
