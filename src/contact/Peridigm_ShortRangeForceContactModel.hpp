@@ -64,6 +64,17 @@ namespace PeridigmNS {
 	//! Return name of material type
 	virtual string Name() const { return("Short-Range Force"); }
 
+
+    //! Returns a vector of field specs that specify the variables associated with the contact model
+    virtual Teuchos::RCP< std::vector<Field_NS::FieldSpec> > VariableSpecs() const
+    {
+      Teuchos::RCP< std::vector<Field_NS::FieldSpec> > variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
+      variableSpecs->push_back(Field_NS::VOLUME);
+      variableSpecs->push_back(Field_NS::CURCOORD3D);
+      variableSpecs->push_back(Field_NS::CONTACT_FORCE_DENSITY3D);
+      return variableSpecs;
+    }
+
 	//! Evaluate the forces on the cells.
 	virtual void
 	computeForce(const double dt,
