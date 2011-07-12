@@ -146,8 +146,13 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
     blockIt->setMaterialModel( (*materialModels)[0] );
 
   // Initialize the data manager associated with each block
-  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
     blockIt->initializeDataManager(fieldSpecs);
+    blockIt->import(*(peridigmDisc->getCellVolume()), Field_NS::VOLUME,     Field_ENUM::STEP_NONE, Insert);
+    blockIt->import(*(peridigmDisc->getInitialX()),   Field_NS::COORD3D,    Field_ENUM::STEP_NONE, Insert);
+    blockIt->import(*(peridigmDisc->getInitialX()),   Field_NS::CURCOORD3D, Field_ENUM::STEP_N,    Insert);
+    blockIt->import(*(peridigmDisc->getInitialX()),   Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1,  Insert);
+  }
 
   // apply initial velocities
   applyInitialVelocities();
@@ -157,8 +162,11 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // Initialize material models
   // Initialization functions require valid initial values, e.g. velocities and displacements.
-  // \todo Put in Block::finialize()?
+  // \todo This will become obsolete, replaced with Block function
   initializeMaterials();
+
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+    blockIt->initializeMaterialModel();
 
   // Setup contact
   // \todo Put in Block::finialize()?
@@ -218,8 +226,6 @@ void PeridigmNS::Peridigm::instantiateMaterials() {
 }
 
 void PeridigmNS::Peridigm::initializeMaterials() {
-
-  std::vector< Teuchos::RCP<const PeridigmNS::Material> >::const_iterator matIt;
 
   for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock){
     double dt = 0.0;
@@ -475,10 +481,17 @@ void PeridigmNS::Peridigm::applyInitialDisplacements() {
 
   // Update curcoord field to be consistent with initial displacement
   y->Update(1.0, *x, 1.0, *u, 0.0);
+
   // Fill the dataManagers with initial displacement, position data
+  // \todo This will be obsolete when we switch to multiple material blocks.
   for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock){
     (*dataManagers)[iBlock]->getData(Field_NS::DISPL3D, Field_ENUM::STEP_N)->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
     (*dataManagers)[iBlock]->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_N)->Import(*y, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
+  }
+
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    blockIt->import(*u, Field_NS::DISPL3D, Field_ENUM::STEP_N, Insert);
+    blockIt->import(*y, Field_NS::CURCOORD3D, Field_ENUM::STEP_N, Insert);
   }
 }
 
