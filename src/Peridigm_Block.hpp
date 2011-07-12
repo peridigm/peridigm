@@ -82,6 +82,7 @@ Code flow:
 #include <string>
 
 #include "Peridigm_NeighborhoodData.hpp"
+#include "Peridigm_DataManager.hpp"
 #include "contact/Peridigm_ContactModel.hpp"
 #include "materials/Peridigm_Material.hpp"
 
@@ -132,6 +133,50 @@ namespace PeridigmNS {
     //! Set the contact model
     void setContactModel(Teuchos::RCP<const PeridigmNS::ContactModel> contactModel_){ contactModel = contactModel_; }
 
+    /*! \brief Initialize the data manager.
+     *
+     *  The DataManager will include all the field specs requested by the material model and
+     *  the contact model, as well as those provided in the fieldSpecs input argument.
+     */
+    void initializeDataManager(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs)
+    {
+      // The material model and maps must all be set prior to initializing the data manager (and the contact model as well, if there is one).
+      // Note that not all the maps are strictly required, so these conditions could be relaxed somewhat.
+      TEST_FOR_EXCEPT_MSG(materialModel.is_null(), "\n**** Material model must be set via Block::setMaterialModel() prior to calling Block::initializeDataManager()\n");
+      TEST_FOR_EXCEPT_MSG(ownedScalarPointMap.is_null() ||
+                          ownedVectorPointMap.is_null() ||
+                          overlapScalarPointMap.is_null() ||
+                          overlapVectorPointMap.is_null() ||
+                          ownedScalarBondMap.is_null(),
+                          "\n**** Maps must be set prior to calling Block::initializeDataManager()\n");
+
+      // Collect all the required field specs
+      Teuchos::RCP< std::vector<Field_NS::FieldSpec> > specs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
+      // Specs pass in via fieldSpecs argument (if any)
+      if(!fieldSpecs.is_null()){
+        specs->insert(specs->end(), fieldSpecs->begin(), fieldSpecs->end());
+      }
+      // Material model specs
+      Teuchos::RCP< std::vector<Field_NS::FieldSpec> > materialModelSpecs = materialModel->VariableSpecs();
+      specs->insert(specs->end(), materialModelSpecs->begin(), materialModelSpecs->end());
+      // Contact model specs (if any)
+      if(!contactModel.is_null()){
+        Teuchos::RCP< std::vector<Field_NS::FieldSpec> > contactModelSpecs = contactModel->VariableSpecs();
+        specs->insert(specs->end(), contactModelSpecs->begin(), contactModelSpecs->end());
+      }
+
+      dataManager = Teuchos::rcp(new PeridigmNS::DataManager);
+
+      dataManager->setMaps(ownedScalarPointMap,
+                           overlapScalarPointMap,
+                           ownedVectorPointMap,
+                           overlapVectorPointMap,
+                           ownedScalarBondMap);
+
+      // Allocate data in the data manager
+      dataManager->allocateData(specs);
+    }
+
   protected:
     
     std::string blockName;
@@ -152,6 +197,9 @@ namespace PeridigmNS {
 
     //! The neighborhood data
     Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData;
+
+    //! The DataManager
+    Teuchos::RCP<PeridigmNS::DataManager> dataManager;
 
     //! The material model
     Teuchos::RCP<const PeridigmNS::Material> materialModel;

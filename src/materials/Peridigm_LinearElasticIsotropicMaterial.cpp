@@ -63,7 +63,7 @@ PeridigmNS::LinearElasticIsotropicMaterial::LinearElasticIsotropicMaterial(const
   m_density = params.get<double>("Density");
 
   // set up vector of variable specs
-  m_variableSpecs = Teuchos::rcp(new vector<Field_NS::FieldSpec>);
+  m_variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
   m_variableSpecs->push_back(Field_NS::VOLUME);
   m_variableSpecs->push_back(Field_NS::DAMAGE);
   m_variableSpecs->push_back(Field_NS::WEIGHTED_VOLUME);

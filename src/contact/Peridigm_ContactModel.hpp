@@ -69,6 +69,9 @@ namespace PeridigmNS {
 	//! Return name of contact model
 	virtual string Name() const = 0;
 
+    //! Returns a vector of field specs that specify the variables associated with the contact model
+    virtual Teuchos::RCP< std::vector<Field_NS::FieldSpec> > VariableSpecs() const = 0;
+
 	//! Evaluate the forces on the cells
 	virtual void
 	computeForce(const double dt,

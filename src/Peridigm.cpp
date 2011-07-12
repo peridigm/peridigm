@@ -101,7 +101,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   out = Teuchos::VerboseObjectBase::getDefaultOStream();
 
-  // Instantiate materials using provided parameters
+  // Instantiate materials and associate them with the blocks
   instantiateMaterials();
 
   // Read mesh from disk or generate using geometric primatives.
@@ -118,14 +118,36 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   Teuchos::RCP<Teuchos::ParameterList> bcParams = Teuchos::rcp(&(peridigmParams->sublist("Problem").sublist("Boundary Conditions")), false);
   initializeNodeSets(bcParams, peridigmDisc);
 
+  // The PeridigmNS::DataManager contained in each PeridigmNS::Block allocates space for field data.
+  // Keep track of the data storage required by Peridigm and the ComputeManager and pass the associated
+  // field specs when calling Block::initializeDataManager().
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
+
+  // Load the Peridigm specs into fieldSpecs
+  std::vector<Field_NS::FieldSpec> peridigmSpecs = this->getFieldSpecs();
+  fieldSpecs->insert(fieldSpecs->end(), peridigmSpecs.begin(), peridigmSpecs.end());
+
   // Initialize compute manager
   initializeComputeManager();
+
+  // Load the compute manager's field specs into fieldSpecs
+  std::vector<Field_NS::FieldSpec> computeSpecs = computeManager->getFieldSpecs();
+  fieldSpecs->insert(fieldSpecs->end(), computeSpecs.begin(), computeSpecs.end());
 
   // Initialize data manager
   // This requires that all the required fieldSpecs be known, including the mothership
   // fieldSpecs and those from the material models, contact models, compute managers.
   // \todo Will be obsolete with multiple material blocks.
   initializeDataManagers(peridigmDisc);
+
+  // Load the materials into the blocks
+  // \todo This will break for multiple material blocks, need to create material factor and load models directly, figure out why we need to have the upstream anyway.
+  for(unsigned int iBlock=0 ; iBlock<blocks->size() ; ++iBlock)
+    (*blocks)[iBlock].setMaterialModel( (*materialModels)[0] );
+
+  // Initialize the data manager associated with each block
+  for(unsigned int iBlock=0 ; iBlock<blocks->size() ; ++iBlock)
+    (*blocks)[iBlock].initializeDataManager(fieldSpecs);
 
   // apply initial velocities
   applyInitialVelocities();
@@ -1657,6 +1679,7 @@ Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::Peridigm::createRebalance
 }
 
 std::vector<Field_NS::FieldSpec> PeridigmNS::Peridigm::getFieldSpecs() {
+
   // FieldSpecs used by Peridigm class
   std::vector<Field_NS::FieldSpec> mySpecs;
 
