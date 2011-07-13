@@ -63,7 +63,7 @@ namespace PeridigmNS {
   public:
 
     //! Default constructor
-    DiscretizationFactory(const Teuchos::RCP<Teuchos::ParameterList>& discParams);
+    DiscretizationFactory(const Teuchos::RCP<Teuchos::ParameterList>& discParams_);
 
     //! Destructor
     virtual ~DiscretizationFactory() {}

@@ -50,13 +50,13 @@
 #include "Peridigm_ShortRangeForceContactModel.hpp"
 
 Teuchos::RCP<PeridigmNS::ContactModel>
-PeridigmNS::ContactModelFactory::create(Teuchos::RCP<Teuchos::ParameterList>& contactModelParams)
+PeridigmNS::ContactModelFactory::create(const Teuchos::ParameterList& contactModelParams)
 {
   Teuchos::RCP<PeridigmNS::ContactModel> contactModel;
 
-  for(Teuchos::ParameterList::ConstIterator it = contactModelParams->begin() ; it != contactModelParams->end() ; it++){
+  for(Teuchos::ParameterList::ConstIterator it = contactModelParams.begin() ; it != contactModelParams.end() ; it++){
     const string& name = it->first;
-    const Teuchos::ParameterList& params = contactModelParams->sublist(name);
+    const Teuchos::ParameterList& params = contactModelParams.sublist(name);
     if (name == "Short Range Force")
       contactModel = Teuchos::rcp( new ShortRangeForceContactModel(params) );
     else {

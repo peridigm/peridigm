@@ -46,7 +46,7 @@
 //@HEADER
 
 #include "Peridigm_LinearElasticIsotropicMaterial.hpp"
-#include "Peridigm_CriticalStretchDamageModel.hpp"
+#include "Peridigm_DamageModelFactory.hpp"
 #include <Teuchos_TestForException.hpp>
 #include "ordinary_elastic.h"
 #include "ordinary_utilities.h"
@@ -73,29 +73,15 @@ PeridigmNS::LinearElasticIsotropicMaterial::LinearElasticIsotropicMaterial(const
   m_variableSpecs->push_back(Field_NS::FORCE_DENSITY3D);
   m_variableSpecs->push_back(Field_NS::BOND_DAMAGE);
 
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > damageModelVariableSpecs;
+  // Create the damage model, if any
   if(params.isSublist("Damage Model")){
-    Teuchos::ParameterList damageParams = params.sublist("Damage Model");
-    if(!damageParams.isParameter("Type")){
-      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
-                         "Damage model \"Type\" not specified in Damage Model parameter list.");
-    }
-    string& damageModelType = damageParams.get<string>("Type");
-    if(damageModelType == "Critical Stretch"){
-      m_damageModel = Teuchos::rcp(new PeridigmNS::CriticalStretchDamageModel(damageParams));
-      damageModelVariableSpecs = m_damageModel->VariableSpecs();
-    }
-    else{
-      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
-                         "Invalid damage model, \"None\" or \"Critical Stretch\" required.");
-    }
-
-    // add damage model's variable specs to list of variable specs for this material
-    // \todo Avoid duplicate specs here!
-    for(unsigned int i=0 ; i<damageModelVariableSpecs->size() ; ++i)
-      m_variableSpecs->push_back( (*damageModelVariableSpecs)[i] );
+    DamageModelFactory damageModelFactory;
+    m_damageModel = damageModelFactory.create( params.sublist("Damage Model") );
+    // Add damage model's variable specs to list of material model's variable specs
+    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > damageModelSpecs = m_damageModel->VariableSpecs();
+    for(unsigned int i=0 ; i<damageModelSpecs->size() ; ++i)
+      m_variableSpecs->push_back( (*damageModelSpecs)[i] );
   }
-
 }
 
 PeridigmNS::LinearElasticIsotropicMaterial::~LinearElasticIsotropicMaterial()

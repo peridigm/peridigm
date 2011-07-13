@@ -50,7 +50,6 @@
 
 #include "Peridigm_Material.hpp"
 #include "Peridigm_DamageModel.hpp"
-#include <cmath>
 
 namespace PeridigmNS {
 

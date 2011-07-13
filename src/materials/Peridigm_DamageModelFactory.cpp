@@ -1,4 +1,4 @@
-/*! \file Peridigm_ContactModelFactory.hpp */
+/*! \file Peridigm_DamageModelFactory.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,39 +45,26 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_CONTACTMODELFACTORY_HPP
-#define PERIDIGM_CONTACTMODELFACTORY_HPP
+#include <Teuchos_TestForException.hpp>
+#include "Peridigm_DamageModelFactory.hpp"
+#include "Peridigm_CriticalStretchDamageModel.hpp"
 
-#include <Teuchos_ParameterList.hpp>
-#include <Teuchos_RCP.hpp>
-#include <Epetra_Comm.h>
-#include "Peridigm_ContactModel.hpp"
+Teuchos::RCP<PeridigmNS::DamageModel>
+PeridigmNS::DamageModelFactory::create(const Teuchos::ParameterList& damageModelParams)
+{
+  Teuchos::RCP<PeridigmNS::DamageModel> damageModel;
 
-namespace PeridigmNS {
+  const string& damageModelType = damageModelParams.get<string>("Type");
 
-  /*!
-   * \brief A factory class to instantiate ContactModel objects
-   */
-  class ContactModelFactory {
-  public:
+  if(damageModelType == "Critical Stretch")
+    damageModel = Teuchos::rcp( new CriticalStretchDamageModel(damageModelParams) );
 
-    //! Default constructor
-    ContactModelFactory() {}
-
-    //! Destructor
-    virtual ~ContactModelFactory() {}
-
-    virtual Teuchos::RCP<ContactModel> create(const Teuchos::ParameterList& contactModelParams);
-
-  private:
-
-    //! Private to prohibit copying
-    ContactModelFactory(const ContactModelFactory&);
-
-    //! Private to prohibit copying
-    ContactModelFactory& operator=(const ContactModelFactory&);
-  };
-
+  else {
+    string invalidDamageModel("\n**** Unrecognized damage model type: ");
+    invalidDamageModel += damageModelType;
+    invalidDamageModel += ", must be \"Critical Stretch\".\n";
+    TEST_FOR_EXCEPT_MSG(true, invalidDamageModel);
+  }
+  
+  return damageModel;
 }
-
-#endif // PERIDIGM_CONTACTMODELFACTORY_HPP
