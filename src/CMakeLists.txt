@@ -34,6 +34,7 @@ set(Peridigm_SOURCES
     ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
     ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
     ./materials/Peridigm_ViscoelasticStandardLinearSolid.cpp
+    ./materials/Peridigm_DamageModelFactory.cpp
     ./materials/Peridigm_CriticalStretchDamageModel.cpp
     ./contact/Peridigm_ContactModelFactory.cpp
     ./contact/Peridigm_ShortRangeForceContactModel.cpp
@@ -84,6 +85,7 @@ set(utPeridigm_SOURCES
     ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
     ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
     ./materials/Peridigm_ViscoelasticStandardLinearSolid.cpp
+    ./materials/Peridigm_DamageModelFactory.cpp
     ./materials/Peridigm_CriticalStretchDamageModel.cpp
     ./contact/Peridigm_ContactModelFactory.cpp
     ./contact/Peridigm_ShortRangeForceContactModel.cpp
@@ -146,6 +148,7 @@ add_executable(utPeridigm_LinearElasticIsotropicMaterial
                ../io/mesh_output/vtk/Field.cxx
                ./materials/Peridigm_Material.cpp
 		       ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
+               ./materials/Peridigm_DamageModelFactory.cpp
                ./materials/Peridigm_CriticalStretchDamageModel.cpp
 		       ./materials/utPeridigm_LinearElasticIsotropicMaterial.cpp
 )
@@ -165,9 +168,10 @@ add_executable(utPHAL_UpdateForceState
                Peridigm_SerialMatrix.cpp
                ../io/mesh_output/vtk/Field.cxx
                ./materials/Peridigm_Material.cpp
-	       ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
+	           ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
+               ./materials/Peridigm_DamageModelFactory.cpp
                ./materials/Peridigm_CriticalStretchDamageModel.cpp
-	       ./evaluators/utPHAL_UpdateForceState.cpp)
+	           ./evaluators/utPHAL_UpdateForceState.cpp)
 target_link_libraries(utPHAL_UpdateForceState
                       ${Trilinos_LIBRARIES}
                       ${PdMaterialUtilitiesLib}
@@ -197,6 +201,7 @@ add_executable(utPHAL_EvaluateForce
                ../io/mesh_output/vtk/Field.cxx
                ./materials/Peridigm_Material.cpp
 	           ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
+               ./materials/Peridigm_DamageModelFactory.cpp
                ./materials/Peridigm_CriticalStretchDamageModel.cpp
 	           ./evaluators/utPHAL_EvaluateForce.cpp
 )

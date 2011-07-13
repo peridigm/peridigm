@@ -1,4 +1,4 @@
-/*! \file Peridigm_ContactModelFactory.hpp */
+/*! \file Peridigm_DamageModelFactory.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,39 +45,39 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_CONTACTMODELFACTORY_HPP
-#define PERIDIGM_CONTACTMODELFACTORY_HPP
+#ifndef PERIDIGM_DAMAGEMODELFACTORY_HPP
+#define PERIDIGM_DAMAGEMODELFACTORY_HPP
 
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_RCP.hpp>
 #include <Epetra_Comm.h>
-#include "Peridigm_ContactModel.hpp"
+#include "Peridigm_DamageModel.hpp"
 
 namespace PeridigmNS {
 
   /*!
-   * \brief A factory class to instantiate ContactModel objects
+   * \brief A factory class to instantiate DamageModel objects
    */
-  class ContactModelFactory {
+  class DamageModelFactory {
   public:
 
     //! Default constructor
-    ContactModelFactory() {}
+    DamageModelFactory() {}
 
     //! Destructor
-    virtual ~ContactModelFactory() {}
+    virtual ~DamageModelFactory() {}
 
-    virtual Teuchos::RCP<ContactModel> create(const Teuchos::ParameterList& contactModelParams);
+    virtual Teuchos::RCP<DamageModel> create(const Teuchos::ParameterList& damageModelParams);
 
   private:
 
     //! Private to prohibit copying
-    ContactModelFactory(const ContactModelFactory&);
+    DamageModelFactory(const DamageModelFactory&);
 
     //! Private to prohibit copying
-    ContactModelFactory& operator=(const ContactModelFactory&);
+    DamageModelFactory& operator=(const DamageModelFactory&);
   };
 
 }
 
-#endif // PERIDIGM_CONTACTMODELFACTORY_HPP
+#endif // PERIDIGM_DAMAGEMODELFACTORY_HPP

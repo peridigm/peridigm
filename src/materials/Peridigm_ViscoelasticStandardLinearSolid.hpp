@@ -109,7 +109,6 @@ namespace PeridigmNS {
 
     // damage model
     Teuchos::RCP<DamageModel> m_damageModel;
-
   };
 }
 

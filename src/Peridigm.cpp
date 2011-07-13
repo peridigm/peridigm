@@ -510,11 +510,11 @@ void PeridigmNS::Peridigm::initializeContact() {
       const string & name = it->first;
       // assume that the sublist is a set of parameters for a contact model
       if(contactParams.isSublist(name)){
-        Teuchos::RCP<Teuchos::ParameterList> contactModelParams = Teuchos::rcp(new Teuchos::ParameterList);
-        contactModelParams->set(name, contactParams.sublist(name));
+        Teuchos::ParameterList contactModelParams;
+        contactModelParams.set(name, contactParams.sublist(name));
         // Add the horizon to the contact model parameters, if needed
-        if(!contactModelParams->sublist(name).isParameter("Horizon"))
-          contactModelParams->sublist(name).set("Horizon", discParams->get<double>("Horizon"));
+        if(!contactModelParams.sublist(name).isParameter("Horizon"))
+          contactModelParams.sublist(name).set("Horizon", discParams->get<double>("Horizon"));
         contactModels->push_back( contactModelFactory.create(contactModelParams) );
 
         // \todo This will break for multiple material blocks, need scheme to associate blocks with contact models
