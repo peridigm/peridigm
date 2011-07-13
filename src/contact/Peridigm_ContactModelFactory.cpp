@@ -1,4 +1,4 @@
-/*! \file Peridigm_MaterialFactory.hpp */
+/*! \file Peridigm_ContactModelFactory.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -46,32 +46,26 @@
 //@HEADER
 
 #include <Teuchos_TestForException.hpp>
-#include "Peridigm_MaterialFactory.hpp"
-#include "Peridigm_LinearElasticIsotropicMaterial.hpp"
-#include "Peridigm_IsotropicElasticPlasticMaterial.hpp"
-#include "Peridigm_ViscoelasticStandardLinearSolid.hpp"
+#include "Peridigm_ContactModelFactory.hpp"
+#include "Peridigm_ShortRangeForceContactModel.hpp"
 
-Teuchos::RCP<PeridigmNS::Material>
-PeridigmNS::MaterialFactory::create(Teuchos::RCP<const Teuchos::ParameterList>& materialParams)
+Teuchos::RCP<PeridigmNS::ContactModel>
+PeridigmNS::ContactModelFactory::create(Teuchos::RCP<Teuchos::ParameterList>& contactModelParams)
 {
-  Teuchos::RCP<PeridigmNS::Material> materialModel;
+  Teuchos::RCP<PeridigmNS::ContactModel> contactModel;
 
-  for(Teuchos::ParameterList::ConstIterator it = materialParams->begin() ; it != materialParams->end() ; it++){
+  for(Teuchos::ParameterList::ConstIterator it = contactModelParams->begin() ; it != contactModelParams->end() ; it++){
     const string& name = it->first;
-    const Teuchos::ParameterList& params = materialParams->sublist(name);
-    if (name == "Linear Elastic")
-      materialModel = Teuchos::rcp( new LinearElasticIsotropicMaterial(params) );
-    else if (name == "Elastic Plastic")
-      materialModel = Teuchos::rcp( new IsotropicElasticPlasticMaterial(params) );
-    else if (name == "Viscoelastic Standard Linear Solid")
-      materialModel = Teuchos::rcp( new ViscoelasticStandardLinearSolid(params) );
+    const Teuchos::ParameterList& params = contactModelParams->sublist(name);
+    if (name == "Short Range Force")
+      contactModel = Teuchos::rcp( new ShortRangeForceContactModel(params) );
     else {
-      string invalidMaterial("\n**** Unrecognized material model: ");
-      invalidMaterial += name;
-      invalidMaterial += ", must be \"Linear Elastic\" or \"Elastic Plastic\" or \"Viscoelastic Standard Linear Solid\".\n";
-      TEST_FOR_EXCEPT_MSG(true, invalidMaterial);
+      string invalidContactModel("\n**** Unrecognized contact model: ");
+      invalidContactModel += name;
+      invalidContactModel += ", must be \"Short Range Force\".\n";
+      TEST_FOR_EXCEPT_MSG(true, invalidContactModel);
     }
   }
   
-  return materialModel;
+  return contactModel;
 }

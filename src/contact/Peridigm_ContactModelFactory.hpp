@@ -1,4 +1,4 @@
-/*! \file Peridigm_MaterialFactory.hpp */
+/*! \file Peridigm_ContactModelFactory.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,33 +45,39 @@
 // ************************************************************************
 //@HEADER
 
-#include <Teuchos_TestForException.hpp>
-#include "Peridigm_MaterialFactory.hpp"
-#include "Peridigm_LinearElasticIsotropicMaterial.hpp"
-#include "Peridigm_IsotropicElasticPlasticMaterial.hpp"
-#include "Peridigm_ViscoelasticStandardLinearSolid.hpp"
+#ifndef PERIDIGM_CONTACTMODELFACTORY_HPP
+#define PERIDIGM_CONTACTMODELFACTORY_HPP
 
-Teuchos::RCP<PeridigmNS::Material>
-PeridigmNS::MaterialFactory::create(Teuchos::RCP<const Teuchos::ParameterList>& materialParams)
-{
-  Teuchos::RCP<PeridigmNS::Material> materialModel;
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_RCP.hpp>
+#include <Epetra_Comm.h>
+#include "Peridigm_ContactModel.hpp"
 
-  for(Teuchos::ParameterList::ConstIterator it = materialParams->begin() ; it != materialParams->end() ; it++){
-    const string& name = it->first;
-    const Teuchos::ParameterList& params = materialParams->sublist(name);
-    if (name == "Linear Elastic")
-      materialModel = Teuchos::rcp( new LinearElasticIsotropicMaterial(params) );
-    else if (name == "Elastic Plastic")
-      materialModel = Teuchos::rcp( new IsotropicElasticPlasticMaterial(params) );
-    else if (name == "Viscoelastic Standard Linear Solid")
-      materialModel = Teuchos::rcp( new ViscoelasticStandardLinearSolid(params) );
-    else {
-      string invalidMaterial("\n**** Unrecognized material model: ");
-      invalidMaterial += name;
-      invalidMaterial += ", must be \"Linear Elastic\" or \"Elastic Plastic\" or \"Viscoelastic Standard Linear Solid\".\n";
-      TEST_FOR_EXCEPT_MSG(true, invalidMaterial);
-    }
-  }
-  
-  return materialModel;
+namespace PeridigmNS {
+
+  /*!
+   * \brief A factory class to instantiate ContactModel objects
+   */
+  class ContactModelFactory {
+  public:
+
+    //! Default constructor
+    ContactModelFactory() {}
+
+    //! Destructor
+    virtual ~ContactModelFactory() {}
+
+    virtual Teuchos::RCP<ContactModel> create(Teuchos::RCP<Teuchos::ParameterList>& contactModelParams);
+
+  private:
+
+    //! Private to prohibit copying
+    ContactModelFactory(const ContactModelFactory&);
+
+    //! Private to prohibit copying
+    ContactModelFactory& operator=(const ContactModelFactory&);
+  };
+
 }
+
+#endif // PERIDIGM_CONTACTMODELFACTORY_HPP

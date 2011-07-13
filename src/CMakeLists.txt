@@ -35,6 +35,7 @@ set(Peridigm_SOURCES
     ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
     ./materials/Peridigm_ViscoelasticStandardLinearSolid.cpp
     ./materials/Peridigm_CriticalStretchDamageModel.cpp
+    ./contact/Peridigm_ContactModelFactory.cpp
     ./contact/Peridigm_ShortRangeForceContactModel.cpp
 )
 if(PERIDIGM_STK)
@@ -84,6 +85,7 @@ set(utPeridigm_SOURCES
     ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
     ./materials/Peridigm_ViscoelasticStandardLinearSolid.cpp
     ./materials/Peridigm_CriticalStretchDamageModel.cpp
+    ./contact/Peridigm_ContactModelFactory.cpp
     ./contact/Peridigm_ShortRangeForceContactModel.cpp
 )
 if(PERIDIGM_STK)

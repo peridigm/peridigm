@@ -72,9 +72,8 @@
 #include "Peridigm_PdQuickGridDiscretization.hpp"
 #include "Peridigm_OutputManager_VTK_XML.hpp"
 #include "Peridigm_ComputeManager.hpp"
-#include "contact/Peridigm_ContactModel.hpp"
-#include "contact/Peridigm_ShortRangeForceContactModel.hpp"
 #include "materials/Peridigm_MaterialFactory.hpp"
+#include "contact/Peridigm_ContactModelFactory.hpp"
 #include "mesh_input/quick_grid/QuickGrid.h"
 #include "mesh_input/quick_grid/QuickGridData.h"
 #include "pdneigh/PdZoltan.h"
@@ -172,7 +171,6 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
     blockIt->initializeMaterialModel();
 
   // Setup contact
-  // \todo Put in Block::finialize()?
   initializeContact();
 
   // Initialize the workset
@@ -490,7 +488,7 @@ void PeridigmNS::Peridigm::initializeContact() {
   contactSearchRadius = 0.0;
   contactRebalanceFrequency = 0;
 
-  // Set up contact, if requested by user
+  // Set up global contact parameters for rebalance and proximity search
   if(problemParams->isSublist("Contact")){
     Teuchos::ParameterList & contactParams = problemParams->sublist("Contact");
     analysisHasContact = true;
@@ -503,29 +501,25 @@ void PeridigmNS::Peridigm::initializeContact() {
   }
 
   // Instantiate contact models
-  //! \todo Move creation of contact models to contact model factory
+  ContactModelFactory contactModelFactory;
   contactModels = Teuchos::rcp(new std::vector<Teuchos::RCP<const PeridigmNS::ContactModel> >);
   if(analysisHasContact){
-    Teuchos::ParameterList & contactParams = problemParams->sublist("Contact");
+    Teuchos::ParameterList& contactParams = problemParams->sublist("Contact");
     Teuchos::ParameterList::ConstIterator it;
     for(it = contactParams.begin() ; it != contactParams.end() ; it++){
       const string & name = it->first;
+      // assume that the sublist is a set of parameters for a contact model
       if(contactParams.isSublist(name)){
-        Teuchos::ParameterList & contactModelParams = contactParams.sublist(name);
+        Teuchos::RCP<Teuchos::ParameterList> contactModelParams = Teuchos::rcp(new Teuchos::ParameterList);
+        contactModelParams->set(name, contactParams.sublist(name));
         // Add the horizon to the contact model parameters, if needed
-        if(!contactModelParams.isParameter("Horizon"))
-          contactModelParams.set("Horizon", discParams->get<double>("Horizon"));
-        Teuchos::RCP<PeridigmNS::ContactModel> contactModel;
-        if(name == "Short Range Force"){
-          contactModel = Teuchos::rcp(new PeridigmNS::ShortRangeForceContactModel(contactModelParams) );
-          contactModels->push_back( Teuchos::rcp_implicit_cast<PeridigmNS::ContactModel>(contactModel) );
-        }
-        else{
-          string invalidContactModel("Unrecognized contact model: ");
-          invalidContactModel += name;
-          invalidContactModel += ", must be Short Range Force";
-          TEST_FOR_EXCEPT_MSG(true, invalidContactModel);
-        }
+        if(!contactModelParams->sublist(name).isParameter("Horizon"))
+          contactModelParams->sublist(name).set("Horizon", discParams->get<double>("Horizon"));
+        contactModels->push_back( contactModelFactory.create(contactModelParams) );
+
+        // \todo This will break for multiple material blocks, need scheme to associate blocks with contact models
+        for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+          blockIt->setContactModel( contactModelFactory.create(contactModelParams) );
       }
     }
   }
