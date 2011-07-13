@@ -50,6 +50,7 @@
 #include <Epetra_Import.h>
 #include <vector>
 #include <map>
+#include "Peridigm_Block.hpp"
 #include "Peridigm_DataManager.hpp"
 #include "Peridigm_NeighborhoodData.hpp"
 #include "Peridigm_Material.hpp"
@@ -68,6 +69,7 @@ struct Workset {
   Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData;
   Teuchos::RCP< std::vector<Teuchos::RCP<const PeridigmNS::ContactModel> > > contactModels;
   Teuchos::RCP<const PeridigmNS::NeighborhoodData> contactNeighborhoodData;
+  Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks;
 
   // MPI ID (debugging)
   int myPID;

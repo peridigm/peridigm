@@ -125,14 +125,45 @@ namespace PeridigmNS {
     void setOwnedScalarBondMap(Teuchos::RCP<const Epetra_BlockMap> map){ ownedScalarBondMap = map; }
     //@}
 
+    //! Get the neighborhood data
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> getNeighborhoodData(){
+      return neighborhoodData;
+    }
+
     //! Set the neighborhood data
-    void setNeighborhoodData(Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData_){ neighborhoodData = neighborhoodData_; }
+    void setNeighborhoodData(Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData_){
+      neighborhoodData = neighborhoodData_;
+    }
+
+    //! Get the contact neighborhood data
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> getContactNeighborhoodData(){
+      return contactNeighborhoodData;
+    }
+
+    //! Set the neighborhood data
+    void setContactNeighborhoodData(Teuchos::RCP<PeridigmNS::NeighborhoodData> contactNeighborhoodData_){
+      contactNeighborhoodData = contactNeighborhoodData_;
+    }
+
+    //! Get the material model
+    Teuchos::RCP<const PeridigmNS::Material> getMaterialModel(){
+      return materialModel;
+    }
 
     //! Set the material model
-    void setMaterialModel(Teuchos::RCP<const PeridigmNS::Material> materialModel_){ materialModel = materialModel_; }
+    void setMaterialModel(Teuchos::RCP<const PeridigmNS::Material> materialModel_){
+      materialModel = materialModel_;
+    }
+
+    //! Get the contact model
+    Teuchos::RCP<const PeridigmNS::ContactModel> getContactModel(){ 
+      return contactModel;
+    }
 
     //! Set the contact model
-    void setContactModel(Teuchos::RCP<const PeridigmNS::ContactModel> contactModel_){ contactModel = contactModel_; }
+    void setContactModel(Teuchos::RCP<const PeridigmNS::ContactModel> contactModel_){
+      contactModel = contactModel_;
+    }
 
     /*! \brief Initialize the data manager
      *
@@ -141,16 +172,32 @@ namespace PeridigmNS {
      */
     void initializeDataManager(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs);
 
+    //! Get the DataManager.
+    Teuchos::RCP<PeridigmNS::DataManager> getDataManager(){
+      return dataManager;
+    }
+
     //! Initialize the material model
     void initializeMaterialModel();
 
-    /*! \brief Import data from the given vector to the underlying Epetra_Vector associated with the given field spec.
+    /*! \brief Import data from the given source vector to the underlying target vector associated with the given field spec.
      *
      *  The intended use case is to import from a non-overlapped vector (i.e., no ghosts) to an overlap vector in
      *  the Block's DataManager.  Note that if the Block does not have space allocated for the given spec and step,
-     *  then the function is a no-op.
+     *  then by design the function is a no-op.
      */
-    void import(const Epetra_Vector& source, Field_NS::FieldSpec spec, Field_ENUM::Step step, Epetra_CombineMode combineMode);
+    void importData(const Epetra_Vector& source, Field_NS::FieldSpec spec, Field_ENUM::Step step, Epetra_CombineMode combineMode);
+
+    /*! \brief Export data from the underlying source vector associated with the given field spec to the given target vector.
+     *
+     *  The intended use case is to export from an overlapped vector (i.e., a vector that includes ghosts) to a non-overlap
+     *  (global) vector.  Note that if the Block does not have space allocated for the given spec and step, then by design
+     *  the function is a no-op.
+     */
+    void exportData(Epetra_Vector& target, Field_NS::FieldSpec spec, Field_ENUM::Step step, Epetra_CombineMode combineMode);
+
+    //! Swaps STATE_N and STATE_NP1.
+    void updateState(){ dataManager->updateState(); }
 
   protected:
     
@@ -178,6 +225,9 @@ namespace PeridigmNS {
 
     //! The neighborhood data
     Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData;
+
+    //! The contact neighborhood data
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> contactNeighborhoodData;
 
     //! The DataManager
     Teuchos::RCP<PeridigmNS::DataManager> dataManager;

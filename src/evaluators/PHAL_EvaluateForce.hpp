@@ -74,8 +74,6 @@ private:
   bool m_verbose;
 
   std::size_t m_num_pt;
-
-  void setup_vectors(const Teuchos::ParameterList& p);
 };
 
 #include "PHAL_EvaluateForce_Def.hpp"

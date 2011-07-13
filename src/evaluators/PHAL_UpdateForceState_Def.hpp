@@ -62,11 +62,6 @@ UpdateForceState<EvalT, Traits>::UpdateForceState(const Teuchos::ParameterList& 
   if(p.isParameter("Verbose"))
 	 m_verbose = p.get<bool>("Verbose");
 
-  /** \todo Connect parameters to ParamLib if allowing parameters to
-   *  be modified by external drivers (e.g. Dakota). */
-//   Teuchos::RCP<ParamLib> paramLib = p.get< Teuchos::RCP<ParamLib> >("Parameter Library", Teuchos::null);
-//   new PHAL::ParameterEntry<EvalT> ("Coefficient", this, paramLib);
-
   Teuchos::RCP<PHX::FieldTag> gather_neighborhood_data_field_tag = 
     Teuchos::rcp(new PHX::Tag<ScalarT>("GatherNeighborhoodData", p.get< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout")));
 
@@ -77,17 +72,6 @@ UpdateForceState<EvalT, Traits>::UpdateForceState(const Teuchos::ParameterList& 
 
   this->setName("UpdateForceState");
 }
-
-template<typename EvalT, typename Traits>
-void UpdateForceState<EvalT, Traits>::setup_vectors(const Teuchos::ParameterList& p)
-{
-  /** \todo Is this where we're supposed to access vectors via
-   *  the DataLayout?  Currently we're just passing ref-count
-   *  pointers to the data directly to the evaluateFields()
-   *  method.  Need to research what DemoApps applications
-   *  are doing. */
-}
-
 
 //**********************************************************************
 template<typename EvalT, typename Traits>
@@ -102,9 +86,6 @@ template<typename EvalT, typename Traits>
 void UpdateForceState<EvalT, Traits>::evaluateFields(typename Traits::EvalData cellData)
 {
   Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
-
-  if(m_verbose)
-	cout << "CHECK inside UpdateForceState::evaluateFields()" << endl;
 
   const double dt = *cellData.timeStep;
   const int numOwnedPoints = cellData.neighborhoodData->NumOwnedPoints();
@@ -122,10 +103,25 @@ void UpdateForceState<EvalT, Traits>::evaluateFields(typename Traits::EvalData c
 								   neighborhoodList,
                                    dataManager);
 
-  // distribute constitutive data across processors here, if required
-  //
-  // note:  is not required by any current material model, could potentiall be required
-  //        in the future.  optional parallel operations like this could be put in their
-  //        own evaluators, and the evaluator could be loaded into the field manager
-  //        only if needed.
+
+#if 0
+  const double dtTEST = *cellData.timeStep;
+
+  std::vector<PeridigmNS::Block>::iterator blockIt;
+  for(blockIt = cellData.blocks->begin() ; blockIt != cellData.blocks->end() ; blockIt++){
+
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
+    const int numOwnedPointsTEST = neighborhoodData->NumOwnedPoints();
+    const int* ownedIDsTEST = neighborhoodData->OwnedIDs();
+    const int* neighborhoodListTEST = neighborhoodData->NeighborhoodList();
+    Teuchos::RCP<PeridigmNS::DataManager> dataManagerTEST = blockIt->getDataManager();
+    Teuchos::RCP<const PeridigmNS::Material> materialModel = blockIt->getMaterialModel();
+
+    materialModel->updateConstitutiveData(dtTEST, 
+                                          numOwnedPointsTEST,
+                                          ownedIDsTEST,
+                                          neighborhoodListTEST,
+                                          *dataManagerTEST);
+  }
+#endif
 }
