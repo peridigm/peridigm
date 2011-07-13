@@ -48,6 +48,8 @@
 #ifndef PERIDIGM_HPP
 #define PERIDIGM_HPP
 
+//#define MULTIPLE_BLOCKS
+
 #include <vector>
 #include <set>
 
@@ -93,7 +95,7 @@ namespace PeridigmNS {
     //! Initialize discretization and maps
     void initializeDiscretization(Teuchos::RCP<AbstractDiscretization> peridigmDisc);
 
-    //! Initialize the element blocks
+    //! Initialize the element block
     void initializeBlocks(Teuchos::RCP<AbstractDiscretization> peridigmDisc);    
 
     //! Load node sets from input deck and/or input mesh into nodeSets container
@@ -208,7 +210,16 @@ namespace PeridigmNS {
     //@}
 
     //! Accessor for DataManagers
-    Teuchos::RCP< std::vector< Teuchos::RCP<PeridigmNS::DataManager> > > getDataManagers() { return dataManagers; }
+    Teuchos::RCP< std::vector< Teuchos::RCP<PeridigmNS::DataManager> > > getDataManagers() {
+#ifndef MULTIPLE_BLOCKS
+      return dataManagers;
+#else
+      // \todo This will break for multiple blocks.
+      Teuchos::RCP< std::vector< Teuchos::RCP<PeridigmNS::DataManager> > > tempHack = Teuchos::rcp(new std::vector< Teuchos::RCP<PeridigmNS::DataManager> >());
+      tempHack->push_back( blocks->begin()->getDataManager() );
+      return tempHack;
+#endif
+    }
 
     //! Accessor for Material Models
     Teuchos::RCP< std::vector< Teuchos::RCP<const PeridigmNS::Material> > > getMaterialModels() {return materialModels; }

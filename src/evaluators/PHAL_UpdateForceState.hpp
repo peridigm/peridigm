@@ -85,8 +85,6 @@ private:
   Teuchos::RCP<PHX::FieldTag> update_force_state_field_tag;
 
   std::size_t m_num_pt;
-
-  void setup_vectors(const Teuchos::ParameterList& p);
 };
 
 #include "PHAL_UpdateForceState_Def.hpp"

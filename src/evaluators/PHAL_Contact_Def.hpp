@@ -70,13 +70,6 @@ Contact<EvalT, Traits>::Contact(Teuchos::ParameterList& p) :
   this->setName("Contact");
 }
 
-template<typename EvalT, typename Traits>
-void Contact<EvalT, Traits>::setup_vectors(const Teuchos::ParameterList& p)
-{
-  // See todo comment in analogous function in PHAL_UpdateForceState_Def.hpp.
-}
-
-
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void Contact<EvalT, Traits>::postRegistrationSetup(
@@ -106,5 +99,26 @@ void Contact<EvalT, Traits>::evaluateFields(typename Traits::EvalData cellData)
                              ownedIDs,
                              contactNeighborhoodList,
                              dataManager);
+
+
+//   const double dtTEST = *cellData.timeStep;
+
+//   std::vector<PeridigmNS::Block>::iterator blockIt;
+//   for(blockIt = cellData.blocks->begin() ; blockIt != cellData.blocks->end() ; blockIt++){
+
+//     Teuchos::RCP<PeridigmNS::NeighborhoodData> contactNeighborhoodData = blockIt->getContactNeighborhoodData();
+//     const int numOwnedPointsTEST = contactNeighborhoodData->NumOwnedPoints();
+//     const int* ownedIDsTEST = contactNeighborhoodData->OwnedIDs();
+//     const int* neighborhoodListTEST = contactNeighborhoodData->NeighborhoodList();
+//     Teuchos::RCP<PeridigmNS::DataManager> dataManagerTEST = blockIt->getDataManager();
+//     Teuchos::RCP<const PeridigmNS::ContactModel> contactModel = blockIt->getContactModel();
+
+//     if(!contactModel.is_null())
+//       contactModel->computeForce(dtTEST, 
+//                                  numOwnedPointsTEST,
+//                                  ownedIDsTEST,
+//                                  neighborhoodListTEST,
+//                                  *dataManagerTEST);
+//   }
 }
 

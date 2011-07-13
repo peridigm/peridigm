@@ -70,13 +70,6 @@ EvaluateForce<EvalT, Traits>::EvaluateForce(Teuchos::ParameterList& p) :
   this->setName("EvaluateForce");
 }
 
-template<typename EvalT, typename Traits>
-void EvaluateForce<EvalT, Traits>::setup_vectors(const Teuchos::ParameterList& p)
-{
-  // See todo comment in analogous function in PHAL_UpdateForceState_Def.hpp.
-}
-
-
 //**********************************************************************
 template<typename EvalT, typename Traits>
 void EvaluateForce<EvalT, Traits>::postRegistrationSetup(
@@ -89,9 +82,6 @@ void EvaluateForce<EvalT, Traits>::postRegistrationSetup(
 template<typename EvalT, typename Traits>
 void EvaluateForce<EvalT, Traits>::evaluateFields(typename Traits::EvalData cellData)
 {
-  if(m_verbose)
-	cout << "CHECK inside EvaluateForce::evaluateFields()\n" << endl;
-
   const double dt = *cellData.timeStep;
   const int numOwnedPoints = cellData.neighborhoodData->NumOwnedPoints();
   const int* ownedIDs = cellData.neighborhoodData->OwnedIDs();
@@ -107,5 +97,29 @@ void EvaluateForce<EvalT, Traits>::evaluateFields(typename Traits::EvalData cell
 						 ownedIDs,
 						 neighborhoodList,
                          dataManager);
+
+
+
+
+#if 0
+  const double dtTEST = *cellData.timeStep;
+
+  std::vector<PeridigmNS::Block>::iterator blockIt;
+  for(blockIt = cellData.blocks->begin() ; blockIt != cellData.blocks->end() ; blockIt++){
+
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
+    const int numOwnedPointsTEST = neighborhoodData->NumOwnedPoints();
+    const int* ownedIDsTEST = neighborhoodData->OwnedIDs();
+    const int* neighborhoodListTEST = neighborhoodData->NeighborhoodList();
+    Teuchos::RCP<PeridigmNS::DataManager> dataManagerTEST = blockIt->getDataManager();
+    Teuchos::RCP<const PeridigmNS::Material> materialModel = blockIt->getMaterialModel();
+
+    materialModel->computeForce(dtTEST, 
+                                numOwnedPointsTEST,
+                                ownedIDsTEST,
+                                neighborhoodListTEST,
+                                *dataManagerTEST);
+  }
+#endif
 }
 
