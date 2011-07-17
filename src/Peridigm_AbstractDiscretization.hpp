@@ -113,6 +113,9 @@ namespace PeridigmNS {
     //! Get cell volumes
     virtual Teuchos::RCP<Epetra_Vector> getCellVolume() const = 0;
 
+    //! Get a vector containing the block ID of each element
+    virtual Teuchos::RCP<Epetra_Vector> getBlockID() const = 0;
+
     //! Get the neighbor list for all locally-owned nodes
     virtual Teuchos::RCP<PeridigmNS::NeighborhoodData> getNeighborhoodData() const = 0;
 
@@ -151,6 +154,7 @@ namespace PeridigmNS {
     //! Horizon
     double horizon;
 
+    //! \todo Eliminate old-style elementBlocks data structure.
     //! Map containing element blocks (block name and list of locally-owned element IDs for each block).
     Teuchos::RCP< std::map< std::string, std::vector<int> > > elementBlocks;
 

@@ -50,6 +50,10 @@
 #include "pdneigh/BondFilter.h"
 #include "pdneigh/PdZoltan.h"
 
+#include <Teuchos_RCP.hpp>
+#include <Epetra_Map.h>
+#include <Epetra_Vector.h>
+#include <Epetra_Import.h>
 #include <Epetra_MpiComm.h>
 #include <Teuchos_MPIComm.hpp>
 #include <Ionit_Initializer.h>
@@ -77,7 +81,8 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   double horizon = params->get<double>("Horizon");
   QUICKGRID::Data decomp = getDecomp(meshFileName, horizon);
 
-  createMaps(decomp);
+  // \todo Refactor; the createMaps() call is currently inside getDecomp() due to order-of-operations issues with tracking element blocks.
+  //createMaps(decomp);
   createNeighborhoodData(decomp);
 
   // \todo Move this functionality to base class, it's currently duplicated in PdQuickGridDiscretization.
@@ -263,6 +268,11 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
     for(unsigned int iElement=0 ; iElement<elementsInElementBlock.size() ; iElement++)
       elementGlobalIds.push_back(elementsInElementBlock[iElement]->identifier() - 1);
 
+    // \todo Just load elementBlock directly.
+    // Load the element block into the elementBlock container
+    for(unsigned int i=0 ; i<elementGlobalIds.size() ; ++i)
+      elementBlock.push_back( elementGlobalIds[i] );
+
     //
     //  \todo TEMPORARY SOLUTION THAT WILL NOT SCALE.
     //
@@ -271,26 +281,26 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
     // that are locally owned may not be locally owned.  This inconsistency between the
     // STK mesh and the QuickGrid data structures causes problems.
     //
-    vector<int> localElementBlockLength(numPID, 0);
-    vector<int> tempLocalElementBlockLength(numPID, 0);
-    tempLocalElementBlockLength[myPID] = (int)elementGlobalIds.size();
-    teuchosComm.allReduce(&tempLocalElementBlockLength[0], &localElementBlockLength[0], numPID, Teuchos::MPIComm::INT, Teuchos::MPIComm::SUM);
-    int totalElementBlockLength = 0;
-    int offset = 0;
-    for(unsigned int i=0 ; i<localElementBlockLength.size() ; ++i){
-      if(i < myPID)
-        offset += localElementBlockLength[i];
-      totalElementBlockLength += localElementBlockLength[i];
-    }
-    vector<int> completeElementGlobalIds(totalElementBlockLength, 0);
-    vector<int> tempCompleteElementGlobalIds(totalElementBlockLength, 0);
-    for(unsigned int i=0 ; i<elementGlobalIds.size() ; ++i)
-      tempCompleteElementGlobalIds[i+offset] = elementGlobalIds[i];
-    teuchosComm.allReduce(&tempCompleteElementGlobalIds[0], &completeElementGlobalIds[0], totalElementBlockLength, Teuchos::MPIComm::INT, Teuchos::MPIComm::SUM);
+//     vector<int> localElementBlockLength(numPID, 0);
+//     vector<int> tempLocalElementBlockLength(numPID, 0);
+//     tempLocalElementBlockLength[myPID] = (int)elementGlobalIds.size();
+//     teuchosComm.allReduce(&tempLocalElementBlockLength[0], &localElementBlockLength[0], numPID, Teuchos::MPIComm::INT, Teuchos::MPIComm::SUM);
+//     int totalElementBlockLength = 0;
+//     int offset = 0;
+//     for(unsigned int i=0 ; i<localElementBlockLength.size() ; ++i){
+//       if(i < myPID)
+//         offset += localElementBlockLength[i];
+//       totalElementBlockLength += localElementBlockLength[i];
+//     }
+//     vector<int> completeElementGlobalIds(totalElementBlockLength, 0);
+//     vector<int> tempCompleteElementGlobalIds(totalElementBlockLength, 0);
+//     for(unsigned int i=0 ; i<elementGlobalIds.size() ; ++i)
+//       tempCompleteElementGlobalIds[i+offset] = elementGlobalIds[i];
+//     teuchosComm.allReduce(&tempCompleteElementGlobalIds[0], &completeElementGlobalIds[0], totalElementBlockLength, Teuchos::MPIComm::INT, Teuchos::MPIComm::SUM);
 
-    // Load the element block into the elementBlock container
-    for(unsigned int i=0 ; i<completeElementGlobalIds.size() ; ++i)
-      elementBlock.push_back( completeElementGlobalIds[i] );
+//     // Load the element block into the elementBlock container
+//     for(unsigned int i=0 ; i<completeElementGlobalIds.size() ; ++i)
+//       elementBlock.push_back( completeElementGlobalIds[i] );
   }
 
   // loop over the node sets
@@ -361,6 +371,31 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
       nodeSet.push_back( completeElementGlobalIds[i] );
   }
 
+  // Create a blockID vector in the current configuration
+  // That is, the configuration prior to load balancing
+  Epetra_BlockMap tempOneDimensionalMap(decomp.globalNumPoints,
+                                        decomp.numPoints,
+                                        decomp.myGlobalIDs.get(),
+                                        1,
+                                        0,
+                                        *comm);
+  Epetra_Vector tempBlockID(tempOneDimensionalMap);
+  double* tempBlockIDPtr;
+  tempBlockID.ExtractView(&tempBlockIDPtr);
+  std::map< std::string, std::vector<int> >::const_iterator it;
+  int blockNumber = 0;
+  for(it = elementBlocks->begin() ; it != elementBlocks->end() ; it++){
+    const std::string& blockName = it->first;
+    const std::vector<int>& elementIDs = it->second;
+    blockNameToBlockNumberMap[blockName] = blockNumber;
+    for(unsigned int i=0 ; i<elementIDs.size() ; ++i){
+      int globalID = elementIDs[i];
+      int localID = tempOneDimensionalMap.LID(globalID);
+      tempBlockIDPtr[localID] = blockNumber;
+    }
+    blockNumber++;
+  }
+
   // free the meshData
   meshData = Teuchos::RCP<stk::io::util::MeshData>();
 
@@ -374,6 +409,16 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
   decomp.neighborhood=list.get_neighborhood();
   decomp.sizeNeighborhoodList=list.get_size_neighborhood_list();
   decomp.neighborhoodPtr=list.get_neighborhood_ptr();
+
+  // Create all the maps.
+  // \todo This call really should be outside this function, but we need the maps here; should somehow remove the element id stuff from this function.
+  createMaps(decomp);
+
+  // Create a blockID vector corresponding to the load balanced decomposition
+  // \todo Refactor to avoid duplication creation of 1D map, order of operations is currently jumbled
+  blockID = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
+  Epetra_Import tempImporter(blockID->Map(), tempBlockID.Map());
+  blockID->Import(tempBlockID, tempImporter, Insert);
 
   return decomp;
 }
@@ -498,6 +543,12 @@ Teuchos::RCP<Epetra_Vector>
 PeridigmNS::STKDiscretization::getCellVolume() const
 {
   return cellVolume;
+}
+
+Teuchos::RCP<Epetra_Vector>
+PeridigmNS::STKDiscretization::getBlockID() const
+{
+  return blockID;
 }
 
 Teuchos::RCP<PeridigmNS::NeighborhoodData> 
