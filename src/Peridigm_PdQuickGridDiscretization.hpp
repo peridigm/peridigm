@@ -99,6 +99,9 @@ namespace PeridigmNS {
     //! Get cell volumes
     virtual Teuchos::RCP<Epetra_Vector> getCellVolume() const;
 
+    //! Get a vector containing the block ID of each element
+    virtual Teuchos::RCP<Epetra_Vector> getBlockID() const;
+
     //! Get the neighbor list for all locally-owned nodes
     virtual Teuchos::RCP<PeridigmNS::NeighborhoodData> getNeighborhoodData() const;
 
@@ -139,7 +142,10 @@ namespace PeridigmNS {
 
     //! Vector containing cell volumes
     Teuchos::RCP<Epetra_Vector> cellVolume;
-	
+
+    //! Vector containing the block ID of each element
+    Teuchos::RCP<Epetra_Vector> blockID;
+
     //! Struct containing neighborhoods for owned nodes.
     Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData;
 
