@@ -47,6 +47,7 @@
 //@HEADER
 
 #include "ordinary_utilities.h"
+//#include "bond_volume_calculator.h"
 #include <cmath>
 
 namespace MATERIAL_EVALUATION {
@@ -375,41 +376,42 @@ void computeWeightedVolume
 }
 
 
-/*
- * MIKE:
- */
+namespace WITH_BOND_VOLUME {
 
 /**
- * Call this function to compute volume associated with
+ * Call this function on a single point 'X'
+ * NOTE: neighPtr to should point to 'numNeigh' for 'X'
+ * and thus describe the neighborhood list as usual
  */
-//void compute_bond_volume
-//(
-//		size_t num_owned_points,
-//		const int*  localNeighborList,
-//		const double* xOverlap,
-//		double *bond_volumes,
-//		double horizon,
-//		const Bond_Volume_Calculator *c
-//) {
-//	const int *neighPtr = localNeighborList;
-//	const double *xOwned = xOverlap;
-//	for(size_t p=0;p<num_owned_points;p++, xOwned +=3){
-//		size_t numNeigh = *neighPtr; neighPtr++;
-//
-//		const double *P = xOwned;
-//
-//		/*
-//		 * Loop over neighborhood of point P and compute
-//		 * bond volume associated with each point Q
-//		 */
-//		for(int n=0;n<numNeigh;n++,neighPtr++,bond_volumes++){
-//			int localId = *neighPtr;
-//			const double *Q = &xOverlap[3*localId];
-//			*bond_volumes = c->operator ()(P,Q);
-//		}
-//	}
-//
-//}
+
+double computeWeightedVolume
+(
+		const double *X,
+		const double *xOverlap,
+		const double* bondVolume,
+		const int* localNeighborList
+){
+
+	double m=0.0;
+	const int *neighPtr = localNeighborList;
+	const double *bond_volume = bondVolume;
+	int numNeigh = *neighPtr; neighPtr++;
+//	std::cout << NAMESPACE <<"computeWeightedVolume\n";
+//	std::cout << "\tnumber of neighbors = " << numNeigh << std::endl;
+	for(int n=0;n<numNeigh;n++,neighPtr++,bond_volume++){
+		int localId = *neighPtr;
+		const double *XP = &xOverlap[3*localId];
+		double dx = XP[0]-X[0];
+		double dy = XP[1]-X[1];
+		double dz = XP[2]-X[2];
+		m+=(dx*dx+dy*dy+dz*dz)*(*bond_volume);
+	}
+
+	return m;
+}
+
+
+}
 
 
 }

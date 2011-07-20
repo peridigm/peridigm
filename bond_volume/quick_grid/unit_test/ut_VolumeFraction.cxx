@@ -13,7 +13,7 @@
 #include <string>
 #include "mesh_input/quick_grid/QuickGrid.h"
 #include "mesh_input/quick_grid/QuickGridData.h"
-#include "quick_grid/calculators.h"
+#include "bond_volume/quick_grid/calculators.h"
 #include "pdneigh/NeighborhoodList.h"
 #include "pdneigh/PdZoltan.h"
 #include "utilities/PdutMpiFixture.h"
@@ -68,7 +68,7 @@ void compute_neighborhood_volumes
 		Field<double>& naiveNeighborhoodVol,
 		Array<double>& overlapCellVol,
 		shared_ptr<double> xOverlap,
-		const VOLUME_FRACTION::VolumeFractionCalculator& calculator
+		const BOND_VOLUME::QUICKGRID::VolumeFractionCalculator& calculator
 );
 
 void compute_cell_volumes
@@ -76,7 +76,7 @@ void compute_cell_volumes
 		const PDNEIGH::NeighborhoodList& list,
 		Field<double>& specialCellVolume,
 		shared_ptr<double> xOverlapPtr,
-		const VOLUME_FRACTION::VolumeFractionCalculator& calculator
+		const BOND_VOLUME::QUICKGRID::VolumeFractionCalculator& calculator
 );
 
 void cube()
@@ -122,7 +122,7 @@ void cube()
 	const QUICKGRID::Spec1D ySpec(ny,yStart,yLength);
 	const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
 
-	VOLUME_FRACTION::VolumeFractionCalculator calculator(xSpec,ySpec,zSpec,horizon);
+	BOND_VOLUME::QUICKGRID::VolumeFractionCalculator calculator(xSpec,ySpec,zSpec,horizon);
 
 	// Create decomposition iterator
 	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs, horizon, xSpec, ySpec, zSpec);
@@ -216,7 +216,7 @@ void compute_neighborhood_volumes
 		Field<double>& naiveNeighborhoodVol,
 		Array<double>& overlapCellVol,
 		shared_ptr<double> xOverlapPtr,
-		const VOLUME_FRACTION::VolumeFractionCalculator& calculator
+		const BOND_VOLUME::QUICKGRID::VolumeFractionCalculator& calculator
 )
 {
 	size_t N = list.get_num_owned_points();
@@ -260,7 +260,7 @@ void compute_cell_volumes
 		const PDNEIGH::NeighborhoodList& list,
 		Field<double>& specialCellVolume,
 		shared_ptr<double> xOverlapPtr,
-		const VOLUME_FRACTION::VolumeFractionCalculator& calculator
+		const BOND_VOLUME::QUICKGRID::VolumeFractionCalculator& calculator
 )
 {
 	size_t N = list.get_num_owned_points();

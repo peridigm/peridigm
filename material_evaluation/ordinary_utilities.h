@@ -49,8 +49,13 @@
 #ifndef ORDINARY_UTILITIES_H_
 #define ORDINARY_UTILITIES_H_
 
+#include <cstdlib>
+
+class Bond_Volume_Calculator;
+
 namespace MATERIAL_EVALUATION {
 
+using std::size_t;
 
 enum PURE_SHEAR { XY=0, YZ, ZX };
 
@@ -155,6 +160,26 @@ void computeDilatation
 		const int* localNeighborList,
 		int numOwnedPoints
 );
+
+namespace WITH_BOND_VOLUME {
+
+/**
+ * Call this function on a single point 'X'
+ * NOTE: neighPtr to should point to 'numNeigh' for 'X'
+ * and thus describe the neighborhood list as usual
+ */
+double computeWeightedVolume
+(
+		const double *X,
+		const double *xOverlap,
+		const double* bondVolume,
+		const int* localNeighborList
+);
+
+
+
+}
+
 
 }
 

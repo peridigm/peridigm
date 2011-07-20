@@ -13,7 +13,7 @@
 #include <string>
 #include "mesh_input/quick_grid/QuickGrid.h"
 #include "mesh_input/quick_grid/QuickGridData.h"
-#include "quick_grid/calculators.h"
+#include "bond_volume/quick_grid/calculators.h"
 #include "pdneigh/NeighborhoodList.h"
 #include "pdneigh/PdZoltan.h"
 #include "utilities/PdutMpiFixture.h"
@@ -68,7 +68,7 @@ void compute_neighborhood_volumes
 		Field<double>& naiveNeighborhoodVol,
 		Array<double>& overlapCellVol,
 		shared_ptr<double> xOverlap,
-		const VOLUME_FRACTION::RingVolumeFractionCalculator& calculator
+		const BOND_VOLUME::QUICKGRID::RingVolumeFractionCalculator& calculator
 );
 
 void compute_cell_volumes
@@ -76,7 +76,7 @@ void compute_cell_volumes
 		const PDNEIGH::NeighborhoodList& list,
 		Field<double>& specialCellVolume,
 		shared_ptr<double> xOverlapPtr,
-		const VOLUME_FRACTION::RingVolumeFractionCalculator& calculator
+		const BOND_VOLUME::QUICKGRID::RingVolumeFractionCalculator& calculator
 );
 
 void sphere()
@@ -134,7 +134,7 @@ void sphere()
 	int numCellsAxis = (int)(cylinderLength/cellSize)+1;
 	Spec1D axisSpec(numCellsAxis,zStart,cylinderLength);
 
-	VOLUME_FRACTION::RingVolumeFractionCalculator calculator(ring2dSpec,axisSpec,horizon);
+	BOND_VOLUME::QUICKGRID::RingVolumeFractionCalculator calculator(ring2dSpec,axisSpec,horizon);
 
 	// Create decomposition iterator
 	QUICKGRID::TensorProductCylinderMeshGenerator cellPerProcIter(numProcs, horizon,ring2dSpec, axisSpec);
@@ -228,7 +228,7 @@ void compute_neighborhood_volumes
 		Field<double>& naiveNeighborhoodVol,
 		Array<double>& overlapCellVol,
 		shared_ptr<double> xOverlapPtr,
-		const VOLUME_FRACTION::RingVolumeFractionCalculator& calculator
+		const BOND_VOLUME::QUICKGRID::RingVolumeFractionCalculator& calculator
 )
 {
 	size_t N = list.get_num_owned_points();
@@ -271,7 +271,7 @@ void compute_cell_volumes
 		const PDNEIGH::NeighborhoodList& list,
 		Field<double>& specialCellVolume,
 		shared_ptr<double> xOverlapPtr,
-		const VOLUME_FRACTION::RingVolumeFractionCalculator& calculator
+		const BOND_VOLUME::QUICKGRID::RingVolumeFractionCalculator& calculator
 )
 {
 	size_t N = list.get_num_owned_points();
