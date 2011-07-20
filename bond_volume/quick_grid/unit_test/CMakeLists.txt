@@ -1,7 +1,7 @@
 #
 # QuickGrid Unit Tests
 #                                                            
-include_directories(${CMAKE_SOURCE_DIR}/io ${CMAKE_SOURCE_DIR}/bond_volume ${TRILINOS_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/io ${CMAKE_SOURCE_DIR} ${TRILINOS_DIR}/include)
 
 add_executable(ut_ringCellVolumeFraction ut_ringCellVolumeFraction.cxx)
 target_link_libraries(ut_ringCellVolumeFraction  QuickGrid  PdNeigh PdVTK Utilities QuickGridVolFrac ${VTK_LIBS} ${TRILINOS_LIBS} ${UT_REQUIRED_LIBS})

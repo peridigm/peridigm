@@ -155,7 +155,7 @@ set(PdMaterialUtilitiesLib PdMaterialUtilities)
 set(INCLUDE_DIRS 
 ${VTK_INCLUDE_DIRS} 
 ${Boost_INCLUDE_DIRS} 
-${CMAKE_SOURCE_DIR}/bond_volume
+${CMAKE_SOURCE_DIR}
 ${CMAKE_SOURCE_DIR}/io
 ${CMAKE_SOURCE_DIR}/material_evaluation
 ${CMAKE_SOURCE_DIR}/src

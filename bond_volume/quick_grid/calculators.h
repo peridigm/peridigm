@@ -10,16 +10,18 @@
 
 #include "utilities/Vector.h"
 #include "mesh_input/quick_grid/QuickGrid.h"
-#include "bond_volume_calculator.h"
+#include "bond_volume/bond_volume_calculator.h"
 
 
 
-namespace VOLUME_FRACTION {
+namespace BOND_VOLUME {
+
+namespace QUICKGRID {
 
 using MATERIAL_EVALUATION::Bond_Volume_Calculator;
 using UTILITIES::Vector3D;
-using QUICKGRID::SpecRing2D;
-using QUICKGRID::Spec1D;
+using ::QUICKGRID::SpecRing2D;
+using ::QUICKGRID::Spec1D;
 
 struct RingVolumeFractionCalculator : public Bond_Volume_Calculator  {
 
@@ -104,6 +106,53 @@ public:
 	 */
 	double cellVolume(const double* q) const { return DX * DY * DZ; }
 };
+
+
+/**
+ * Call this function to compute bond volumes.  Those
+ * are volumes relating to a center point P and its neighbors
+ * points Q.  At the outer reaches of a neighborhood horizon,
+ * cells Q will typically only contribute a fraction of their
+ * cell volume.
+ * Input:
+ *  num_owned_points -- number of points owned by this processor
+ *  localNeighborhoodList -- this is the usually neighborhood list
+ *          that has the number of neighbors associated with each
+ *          owned point included at the start of each list
+ *  xOverlap -- mesh coordinates which includes overlap/ghosted points
+ *  Bond_Volume_Calculator: this is the operator that evaluates each bond
+ *          volume
+ *  Output:
+ *   bond_volumes -- this will be calculated but incoming pointer must
+ *          be pre-allocated.  Data layout is identical to the neighborhood list
+ *   			except that it does not include an extra value at the start (num neighbors)
+ *
+ */
+void compute_bond_volume
+(
+		size_t num_owned_points,
+		const int*  localNeighborList,
+		const double* xOverlap,
+		double *bond_volumes,
+		const Bond_Volume_Calculator *c
+);
+
+/**
+ * Call this function on a single point 'X'
+ * NOTE: neighPtr to should point to 'numNeigh' for 'X'
+ * and thus describe the neighborhood list as usual
+ */
+void compute_bond_volume
+(
+		const double *X,
+		const int*  localNeighborList,
+		const double* xOverlap,
+		double *bond_volumes,
+		const Bond_Volume_Calculator *c
+);
+
+
+} // namespace QUICKGRID
 
 } // namespace VOLUME_FRACTION
 
