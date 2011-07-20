@@ -39,7 +39,7 @@ inline Field<T> createOverlapField(NeighborhoodList& list, Field<T> ownedField) 
     /*
      * Initialize distributor object
      */
-    shared_ptr<Epetra_Comm> comm = list.get_Epetra_Comm();
+    shared_ptr<const Epetra_Comm> comm = list.get_Epetra_Comm();
     int myRank = comm->MyPID();
     int numProcs = comm->NumProc();
     shared_ptr<Epetra_Distributor> distributor(comm->CreateDistributor());
