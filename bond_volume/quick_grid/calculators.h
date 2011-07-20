@@ -27,8 +27,7 @@ private:
 	UTILITIES::InsideSphere comparator;
 	const double DR, D_THETA, DZ;
 	const size_t nR, nTheta, nZ;
-	const Vector3D c;
-	Vector3D axis;
+	const Vector3D c, axis;
 	double diagonal;
 
 public:
@@ -48,12 +47,12 @@ public:
 	  nR(16),
 	  nTheta(16),
 	  nZ(16),
-	  c(spec.getCenter())
+	  c(spec.getCenter()),
+	  axis(0.0,0.0,1.0)
 	{
 		/*
 		 * This estimates the diagonal of a cell -- its not exact but probably good enough
 		 */
-                axis[0] = 0.0; axis[1] = 0.0; axis[2] = 1.0;
 		double ro=spec.getr0();
 		diagonal=sqrt(DR*DR+(ro*D_THETA)*(ro*D_THETA)+DZ*DZ);
 	}

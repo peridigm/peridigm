@@ -19,6 +19,7 @@ namespace UTILITIES {
 class Vector3D {
 public:
 	Vector3D(){u[0]=0; u[1]=0; u[2]=0;}
+	Vector3D(double a, double b, double c) { u[0]=a; u[1]=b; u[2]=c; }
 	Vector3D(double v[3]) { u[0]=v[0]; u[1]=v[1]; u[2]=v[2]; }
 	Vector3D(const Vector3D& rhs) { u[0]=rhs[0]; u[1]=rhs[1]; u[2]=rhs[2]; }
 	double* get() { return u; }
