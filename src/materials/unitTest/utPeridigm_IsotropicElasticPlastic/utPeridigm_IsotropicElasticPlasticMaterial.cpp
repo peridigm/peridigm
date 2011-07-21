@@ -171,7 +171,7 @@ Teuchos::ParameterList getParamList()
 	 * Yield "Stress" estimate for perfect plasticity (MPa)
 	 * 6061-T6 data
 	 */
-	double Y = 351.79;
+	double Y = 351.79 / sqrt(3);
 
 	/*
 	 * Density of aluminum g/mm^3
@@ -282,19 +282,14 @@ void runPureShear() {
 	/*
 	 * Displacement and Internal Force Vectors
 	 */
-//	FieldSpec uSpec(FieldSpec::DISPLACEMENT,FieldSpec::VECTOR3D,"u");
 	FieldSpec uSpec = DISPL3D;
 	Field<double> uOwnedField(uSpec,pdGridData.numPoints);
-//	FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
 	FieldSpec fNSpec = FORCE_DENSITY3D;
 	Field_NS::Field<double> fNField(fNSpec,pdGridData.numPoints);
-//	const FieldSpec velocitySpec(FieldSpec::VELOCITY,FieldSpec::VECTOR3D, "velocity");
 	FieldSpec velocitySpec = VELOC3D;
 	Field<double> velField(velocitySpec,pdGridData.numPoints);
-//	const FieldSpec ySpec(FieldSpec::COORDINATES,FieldSpec::VECTOR3D, "CURRENT_COORDINATES");
 	FieldSpec ySpec = CURCOORD3D;
 	Field<double> yField(ySpec,pdGridData.numPoints);
-//	const FieldSpec dsfSpec = Field_NS::SHEAR_CORRECTION_FACTOR;
 	FieldSpec dsfSpec = DSF;
 	Field<double> dsfField(dsfSpec,pdGridData.numPoints);
 	uOwnedField.set(0.0);
@@ -349,7 +344,7 @@ void runPureShear() {
 	/*
 	 * Unloading
 	 */
-	stages[1] = stages[0].next(-.001275);
+	stages[1] = stages[0].next(-.0005);
 
 	/*
 	 * Re-Unloading
@@ -382,12 +377,11 @@ void runPureShear() {
 	 * Write out initial condition
 	 */
 	double t=0;
-	out << 0 << " " << 0 << " " << 0 << " " << 0 << std::endl;
+	out << 0 << " " << 0 << " " << 0 << std::endl;
 	for(std::vector<StageFunction>::iterator stageIter=stages.begin(); stageIter!=stages.end();stageIter++){
 
-		double vel = stageIter->slope();
-		*v1x = vel;
-
+		*v1x = stageIter->slope();
+		double vel = *v1x;
 
 		for(int step=0;step<numStepsPerStage;step++){
 			Field<double> edpNField = edpTemporalField.getField(Field_ENUM::STEP_N);
@@ -439,14 +433,15 @@ void runPureShear() {
 			double stretch=l/L;
 			double trueStrain=std::log(stretch);
 			/*
-			 * Next step; this is a bit squirely -- has to do with updateGeometry
+			 * Next step; this is a bit squirrely -- has to do with updateGeometry
 			 * Update geometry takes velocity and existing displacement field (N)
 			 * Update geometry y = X + U(N) +Velocity*dt = X + U(NP1)
 			 * So, that is why we need this at the bottom of this loop
 			 */
 			*u1x += vel*dt;
 
-			out << t << " " << *u1x << " " << *lambdaNP1 << " "<< signF*MAGNITUDE(f1x) << std::endl;
+			out << t << " " << *u1x << " " << signF * MAGNITUDE(f1x)
+								<< std::endl;
 			edpTemporalField.advanceStep();
 			lambdaTemporalField.advanceStep();
 		}
