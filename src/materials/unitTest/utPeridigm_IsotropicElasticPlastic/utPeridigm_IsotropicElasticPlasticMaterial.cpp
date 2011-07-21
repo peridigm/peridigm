@@ -52,22 +52,21 @@
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_SerialComm.h>
 #include "mesh_input/quick_grid/QuickGrid.h"
-#include "PdQuickGridParallel.h"
-#include "Pd_shared_ptr_Array.h"
+#include "mesh_output/vtk/Field.h"
+#include "utilities/Array.h"
 #include "ordinary_utilities.h"
 #include "ordinary_elastic_plastic.h"
 #include <math.h>
-#include "Field.h"
+
 #include <fstream>
 
 using namespace boost::unit_test;
 using namespace std;
 using namespace PeridigmNS;
-using namespace Teuchos;
-using namespace PdQuickGrid;
 using namespace MATERIAL_EVALUATION;
 using std::tr1::shared_ptr;
 using namespace Field_NS;
+
 
 const double horizon=sqrt(2);
 
@@ -156,7 +155,7 @@ inline double MAGNITUDE(const double *x){
 }
 
 //! Tests state variable count and name accessor functions.
-ParameterList getParamList()
+Teuchos::ParameterList getParamList()
 {
 	/*
 	 * Young's Modulus (MPa)
@@ -188,7 +187,7 @@ ParameterList getParamList()
 	 * Shear Modulus
 	 */
 	double mu = E / 2 / (1+nu);
-	ParameterList params;
+	Teuchos::ParameterList params;
 	params.set("Density", rho);
 	params.set("Bulk Modulus", K);
 	params.set("Shear Modulus", mu);
@@ -201,10 +200,10 @@ ParameterList getParamList()
 	return params;
 }
 
-PdGridData getTwoPointGridData(){
+QUICKGRID::QuickGridData getTwoPointGridData(){
 	int numCells = 2;
 	int dimension = 3;
-	PdGridData pdGridData = PdQuickGrid::allocatePdGridData(numCells,dimension);
+	QUICKGRID::QuickGridData pdGridData = QUICKGRID::allocatePdGridData(numCells,dimension);
 	/*
 	 * Create points
 	 */
@@ -238,16 +237,18 @@ PdGridData getTwoPointGridData(){
 	  * Create neighborhood
 	  */
 	 pdGridData.sizeNeighborhoodList=4;
-	 shared_ptr<int> neighborhood = shared_ptr<int>(new int[pdGridData.sizeNeighborhoodList],PdQuickGrid::Deleter<int>());
-	 pdGridData.neighborhood = neighborhood;
+	 UTILITIES::Array<int> neighborhood(pdGridData.sizeNeighborhoodList);
+//	 shared_ptr<int> neighborhood = shared_ptr<int>(new int[pdGridData.sizeNeighborhoodList],PdQuickGrid::Deleter<int>());
+	 pdGridData.neighborhood = neighborhood.get_shared_ptr();
 	 int *neigh = neighborhood.get();
 	 *(neigh+0)=1;
 	 *(neigh+1)=1;
 	 *(neigh+2)=1;
 	 *(neigh+3)=0;
 
-	 shared_ptr<int> neighborhoodPtr = shared_ptr<int>(new int[pdGridData.numPoints],PdQuickGrid::Deleter<int>());
-	 pdGridData.neighborhoodPtr=neighborhoodPtr;
+	 UTILITIES::Array<int> neighborhoodPtr(pdGridData.numPoints);
+//	 shared_ptr<int> neighborhoodPtr = shared_ptr<int>(new int[pdGridData.numPoints],PdQuickGrid::Deleter<int>());
+	 pdGridData.neighborhoodPtr=neighborhoodPtr.get_shared_ptr();
 	 int *nPtr = neighborhoodPtr.get();
 	 *(nPtr+0)=0;
 	 *(nPtr+1)=2;
@@ -255,32 +256,10 @@ PdGridData getTwoPointGridData(){
 	 return pdGridData;
 }
 
-PdGridData getFourPointGridData(){
-	const int nx = 2;
-	const int ny = 2;
-	const int nz = 1;
-	const double xStart = -0.5;
-	const double xLength = 2.0;
-	const double yStart = -0.5;
-	const double yLength = 2.0;
-	const double zStart = -0.5;
-	const double zLength = 1.0;
-	const PdQPointSet1d xSpec(nx,xStart,xLength);
-	const PdQPointSet1d ySpec(ny,yStart,yLength);
-	const PdQPointSet1d zSpec(nz,zStart,zLength);
-	const double horizon(1.1*sqrt(1));
-	const int myRank = 0;
-	const int numProcs = 1;
-	PdQuickGrid::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec, SphericalNorm);
-	PdGridData decomp =  PdQuickGrid::getDiscretization(myRank, cellPerProcIter);
-	return decomp;
-}
-
-
 void runPureShear() {
-	ParameterList paramList = getParamList();
+	Teuchos::ParameterList paramList = getParamList();
 	IsotropicElasticPlasticMaterial mat(paramList);
-	PdGridData pdGridData = getTwoPointGridData();
+	QUICKGRID::QuickGridData pdGridData = getTwoPointGridData();
 	int numPoints = pdGridData.numPoints;
 	BOOST_CHECK(2 == numPoints);
 	BOOST_CHECK(4 == pdGridData.sizeNeighborhoodList);
@@ -303,51 +282,56 @@ void runPureShear() {
 	/*
 	 * Displacement and Internal Force Vectors
 	 */
-	FieldSpec uSpec(FieldSpec::DISPLACEMENT,FieldSpec::VECTOR3D,"u");
+//	FieldSpec uSpec(FieldSpec::DISPLACEMENT,FieldSpec::VECTOR3D,"u");
+	FieldSpec uSpec = DISPL3D;
 	Field<double> uOwnedField(uSpec,pdGridData.numPoints);
-	FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
+//	FieldSpec fNSpec(FieldSpec::FORCE,FieldSpec::VECTOR3D,"fN");
+	FieldSpec fNSpec = FORCE_DENSITY3D;
 	Field_NS::Field<double> fNField(fNSpec,pdGridData.numPoints);
-	const FieldSpec velocitySpec(FieldSpec::VELOCITY,FieldSpec::VECTOR3D, "velocity");
+//	const FieldSpec velocitySpec(FieldSpec::VELOCITY,FieldSpec::VECTOR3D, "velocity");
+	FieldSpec velocitySpec = VELOC3D;
 	Field<double> velField(velocitySpec,pdGridData.numPoints);
-	const FieldSpec ySpec(FieldSpec::COORDINATES,FieldSpec::VECTOR3D, "CURRENT_COORDINATES");
+//	const FieldSpec ySpec(FieldSpec::COORDINATES,FieldSpec::VECTOR3D, "CURRENT_COORDINATES");
+	FieldSpec ySpec = CURCOORD3D;
 	Field<double> yField(ySpec,pdGridData.numPoints);
-	const FieldSpec dsfSpec = Field_NS::SHEAR_CORRECTION_FACTOR;
+//	const FieldSpec dsfSpec = Field_NS::SHEAR_CORRECTION_FACTOR;
+	FieldSpec dsfSpec = DSF;
 	Field<double> dsfField(dsfSpec,pdGridData.numPoints);
-	uOwnedField.setValue(0.0);
-	velField.setValue(0.0);
-	fNField.setValue(0.0);
-	yField.setValue(0.0);
-	dsfField.setValue(1.0);
-	double *u1x = uOwnedField.getArray().get()+3;
-	double *v1x = velField.getArray().get()+3;
-	double *f1x = fNField.getArray().get()+3;
+	uOwnedField.set(0.0);
+	velField.set(0.0);
+	fNField.set(0.0);
+	yField.set(0.0);
+	dsfField.set(1.0);
+	double *u1x = uOwnedField.get()+3;
+	double *v1x = velField.get()+3;
+	double *f1x = fNField.get()+3;
 
 	/*
 	 * Weighted Volume
 	 */
-	Pd_shared_ptr_Array<double> mPtr(numPoints);
-	SET(mPtr.get(),mPtr.end(),0.0);
+	UTILITIES::Array<double> mPtr(numPoints);
+	mPtr.set(0.0);
 	MATERIAL_EVALUATION::computeWeightedVolume(pdGridData.myX.get(),pdGridData.cellVolume.get(),mPtr.get(),numPoints,pdGridData.neighborhood.get());
 
 	/*
 	 * Dilatation
 	 */
-	Pd_shared_ptr_Array<double> thetaPtr(numPoints);
-	SET(thetaPtr.get(),thetaPtr.end(),0.0);
+	UTILITIES::Array<double> thetaPtr(numPoints);
+	thetaPtr.set(0.0);
 
 	/*
 	 * Bond State and deviatoric plastic extension
 	 */
-	Pd_shared_ptr_Array<double> bondStatePtr(pdGridData.sizeNeighborhoodList-numPoints);
-	SET(bondStatePtr.get(),bondStatePtr.end(),0.0);
+	UTILITIES::Array<double> bondStatePtr(pdGridData.sizeNeighborhoodList-numPoints);
+	bondStatePtr.set(0.0);
 	TemporalField<double> edpTemporalField(DEVIATORIC_PLASTIC_EXTENSION,pdGridData.sizeNeighborhoodList-numPoints);
-	Field<double> edpNField = edpTemporalField.getField(FieldSpec::STEP_N);
-	Field<double> edpNP1Field = edpTemporalField.getField(FieldSpec::STEP_NP1);
-	SET(edpNField.getArray().get(),edpNField.getArray().end(),0.0);
+	Field<double> edpNField = edpTemporalField.getField(Field_ENUM::STEP_N);
+	Field<double> edpNP1Field = edpTemporalField.getField(Field_ENUM::STEP_NP1);
+	edpNField.set(0.0);
 	TemporalField<double> lambdaTemporalField(Field_NS::LAMBDA,pdGridData.numPoints);
-	Field<double> lambdaNField = lambdaTemporalField.getField(FieldSpec::STEP_N);
-	Field<double> lambdaNP1Field = lambdaTemporalField.getField(FieldSpec::STEP_NP1);
-	SET(lambdaNField.getArray().get(),lambdaNField.getArray().end(),0.0);
+	Field<double> lambdaNField = lambdaTemporalField.getField(Field_ENUM::STEP_N);
+	Field<double> lambdaNP1Field = lambdaTemporalField.getField(Field_ENUM::STEP_NP1);
+	lambdaNField.set(0.0);
 	/*
 	 * Track
 	 */
@@ -379,13 +363,13 @@ void runPureShear() {
 	 * Pointers to data that don't change in this test
 	 */
 	double *x = pdGridData.myX.get();
-	double *u = uOwnedField.getArray().get();
-	double *v = velField.getArray().get();
-	double *y = yField.getArray().get();
+	double *u = uOwnedField.get();
+	double *v = velField.get();
+	double *y = yField.get();
 	double *m = mPtr.get();
 	double *theta = thetaPtr.get();
 	double *bondState = bondStatePtr.get();
-	double* dsfOwned = dsfField.getArray().get();
+	double* dsfOwned = dsfField.get();
 	double *vol = pdGridData.cellVolume.get();
 	int *neigh = pdGridData.neighborhood.get();
 
@@ -406,16 +390,16 @@ void runPureShear() {
 
 
 		for(int step=0;step<numStepsPerStage;step++){
-			Field<double> edpNField = edpTemporalField.getField(FieldSpec::STEP_N);
-			Field<double> edpNP1Field = edpTemporalField.getField(FieldSpec::STEP_NP1);
-			double *edpN = edpNField.getArray().get();
-			double *edpNP1 = edpNP1Field.getArray().get();
-			Field<double> lambdaNField = lambdaTemporalField.getField(FieldSpec::STEP_N);
-			Field<double> lambdaNP1Field = lambdaTemporalField.getField(FieldSpec::STEP_NP1);
-			double *lambdaN = lambdaNField.getArray().get();
-			double *lambdaNP1 = lambdaNP1Field.getArray().get();
-			fNField.setValue(0.0);
-			double *f = fNField.getArray().get();
+			Field<double> edpNField = edpTemporalField.getField(Field_ENUM::STEP_N);
+			Field<double> edpNP1Field = edpTemporalField.getField(Field_ENUM::STEP_NP1);
+			double *edpN = edpNField.get();
+			double *edpNP1 = edpNP1Field.get();
+			Field<double> lambdaNField = lambdaTemporalField.getField(Field_ENUM::STEP_N);
+			Field<double> lambdaNP1Field = lambdaTemporalField.getField(Field_ENUM::STEP_NP1);
+			double *lambdaN = lambdaNField.get();
+			double *lambdaNP1 = lambdaNP1Field.get();
+			fNField.set(0.0);
+			double *f = fNField.get();
 
 			t += dt;
 
