@@ -1,1 +1,1 @@
-#add_subdirectory (utPeridigm_IsotropicElasticPlastic/)
+add_subdirectory (utPeridigm_IsotropicElasticPlastic/)
