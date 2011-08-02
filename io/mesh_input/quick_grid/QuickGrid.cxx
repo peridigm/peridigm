@@ -46,7 +46,7 @@ shared_ptr<QuickGridMeshGenerationIterator> getMeshGenerator(size_t numProcs, co
    string neighborhood_type="";
    try {
    neighborhood_type=pt.get<string>("Discretization.NeighborhoodType");
-   } catch(std::runtime_error e) {
+   } catch(std::runtime_error& e) {
    	std::cout << "NOTE-->QUICKGRID::getMeshGenerator()\n";
    	std::cout << "\tDiscretization.NeighborhoodType was not specified.  Default square norm will be used.\n";
    }

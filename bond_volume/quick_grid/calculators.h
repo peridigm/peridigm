@@ -23,6 +23,7 @@ using UTILITIES::Vector3D;
 using ::QUICKGRID::SpecRing2D;
 using ::QUICKGRID::Spec1D;
 
+
 struct RingVolumeFractionCalculator : public Bond_Volume_Calculator  {
 
 private:
@@ -68,6 +69,8 @@ public:
 	 * Compute the volume of cell Q using QUICKGRID quadrature
 	 */
 	double cellVolume(const double* q) const;
+
+	double get_horizon() const { return comparator.get_radius(); }
 };
 
 
@@ -105,6 +108,8 @@ public:
 	 * Compute the volume of cell Q using QUICKGRID quadrature
 	 */
 	double cellVolume(const double* q) const { return DX * DY * DZ; }
+
+	double get_horizon() const { return comparator.get_radius(); }
 };
 
 
@@ -151,6 +156,10 @@ void compute_bond_volume
 		const Bond_Volume_Calculator *c
 );
 
+/**
+ * prototype
+ */
+shared_ptr<Bond_Volume_Calculator> get_Bond_Volume_Calculator(const std::string& json_filename);
 
 } // namespace QUICKGRID
 
