@@ -124,6 +124,7 @@ public:
 		double dz = v[2]-u[2];
 		return dx*dx+dy*dy+dz*dz - radius*radius < 0.0;
 	}
+	double get_radius() const { return radius; }
 
 private:
 	double radius;
@@ -139,6 +140,7 @@ public:
 		double dz = v[2]-u[2];
 		return dx*dx+dy*dy+dz*dz - radius*radius > 0.0;
 	}
+	double get_radius() const { return radius; }
 
 private:
 	double radius;

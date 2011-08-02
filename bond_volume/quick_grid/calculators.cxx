@@ -6,7 +6,10 @@
  */
 #include "calculators.h"
 #include "utilities/Array.h"
+
+#include <boost/property_tree/json_parser.hpp>
 #include <stdexcept>
+#include <string>
 
 
 
@@ -15,6 +18,62 @@ namespace BOND_VOLUME {
 namespace QUICKGRID {
 
 using UTILITIES::Array;
+
+shared_ptr<Bond_Volume_Calculator> get_Bond_Volume_Calculator(const std::string& json_filename) {
+
+	// Create an empty property tree object
+	using boost::property_tree::ptree;
+	ptree pt;
+
+	// Load the json file into the property tree. If reading fails
+	// (cannot open file, parse error), an exception is thrown.
+
+	try {
+		read_json(json_filename, pt);
+	} catch(std::exception& e){
+		std::cerr << e.what();
+		std::exit(1);
+	}
+
+	/*
+	 * Get Discretization
+	 */
+	ptree discretization_tree=pt.find("Discretization")->second;
+	std::string path=discretization_tree.get<std::string>("Type");
+	double horizon=pt.get<double>("Discretization.Horizon");
+
+	shared_ptr<Bond_Volume_Calculator> c;
+
+	if("QuickGrid.TensorProduct3DMeshGenerator"==path){
+		double xStart = pt.get<double>(path+".X Origin");
+		double yStart = pt.get<double>(path+".Y Origin");
+		double zStart = pt.get<double>(path+".Z Origin");
+
+		double xLength = pt.get<double>(path+".X Length");
+		double yLength = pt.get<double>(path+".Y Length");
+		double zLength = pt.get<double>(path+".Z Length");
+
+
+		const int nx = pt.get<int>(path+".Number Points X");
+		const int ny = pt.get<int>(path+".Number Points Y");
+		const int nz = pt.get<int>(path+".Number Points Z");
+
+		const QUICKGRID::Spec1D xSpec(nx,xStart,xLength);
+		const QUICKGRID::Spec1D ySpec(ny,yStart,yLength);
+		const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
+		c = shared_ptr<VolumeFractionCalculator>(new VolumeFractionCalculator(xSpec,ySpec,zSpec,horizon));
+	} else {
+		std::string s;
+		s = "Error-->BOND_VOLUME::QUICKGRID::get_Bond_Volume_Calculator()\n";
+		s += "\tOnly Reader for Discretization.Type==QuickGrid.TensorProduct3DMeshGenerator is implemented\n";
+		s += "\tCome back soon for the other type(s):)\n";
+		throw std::runtime_error(s);
+	}
+
+	return c;
+
+}
+
 
 double RingVolumeFractionCalculator::cellVolume(const double* q) const {
 	Vector3D Q(*q,*(q+1),*(q+2));

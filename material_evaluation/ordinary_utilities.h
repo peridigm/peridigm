@@ -176,7 +176,42 @@ double computeWeightedVolume
 		const int* localNeighborList
 );
 
+/**
+ * Call this function on a single point 'X'
+ * NOTE: neighPtr to should point to 'numNeigh' for 'X'
+ * and thus describe the neighborhood list as usual
+ */
+double computeDilatation
+(
+		const int *neighPtr,
+		const double *X,
+		const double *xOverlap,
+		const double *Y,
+		const double *yOverlap,
+		const double *bondVolume,
+		double weightedVolume
+);
 
+
+/**
+ * Call this function on a single point 'X'
+ * NOTE: neighPtr to should point to 'numNeigh' for 'X'
+ * and thus describe the neighborhood list as usual
+ * Y is the deformed configuration of 'X' but because
+ * this is a probe, Y=X
+ * This function returns the norm of the
+ * deviatoric extension state squared.
+ */
+double compute_norm_2_deviatoric_extension
+(
+		const int *neighPtr,
+		const double *X,
+		const double *xOverlap,
+		const double *Y,
+		const double *yOverlap,
+		const double *bondVolume,
+		double weighted_volume
+);
 
 }
 
