@@ -1,0 +1,41 @@
+{
+
+	"Discretization": {
+
+
+
+		"Horizon": 1.0,
+
+
+		"NeighborhoodType": "Spherical",
+
+
+		"Type": "QuickGrid.TensorProduct3DMeshGenerator"
+	},
+
+
+	"QuickGrid": {
+
+		"TensorProduct3DMeshGenerator": {
+
+			"X Origin": -1.0,
+
+			"Y Origin": -1.0,
+
+			"Z Origin": -1.0,
+
+			"X Length": 2.0,
+
+			"Y Length": 2.0,
+
+			"Z Length": 2.0,
+
+			"Number Points X": 17,
+
+			"Number Points Y": 17,
+
+			"Number Points Z": 17
+		}
+	}
+}
+
