@@ -1,7 +1,7 @@
 /*
- * ut_bondVolumeConvergenceStudy.cxx
+ * ut_naiveQuadratureConvergenceStudy.cxx
  *
- *  Created on: Aug 2, 2011
+ *  Created on: Aug 4, 2011
  *      Author: jamitch
  */
 
@@ -49,6 +49,7 @@ using std::pair;
 static int nx;
 static int ny;
 static int nz;
+static double horizon;
 const size_t numProcs=1;
 const size_t myRank=0;
 
@@ -87,6 +88,7 @@ void set_static_data(const std::string& json_filename)
 	 */
 	ptree discretization_tree=pt.find("Discretization")->second;
 	std::string path=discretization_tree.get<std::string>("Type");
+	horizon=pt.get<double>("Discretization.Horizon");
 
 	if("QuickGrid.TensorProduct3DMeshGenerator"==path){
 
@@ -96,7 +98,7 @@ void set_static_data(const std::string& json_filename)
 
 	} else {
 		std::string s;
-		s = "Error-->ut_bondVolumeConvergenceStudy\n";
+		s = "Error-->ut_naiveQuadratureConvergenceStudy\n";
 		s += "\tTest only works for Discretization.Type==QuickGrid.TensorProduct3DMeshGenerator\n";
 		throw std::runtime_error(s);
 	}
@@ -150,49 +152,49 @@ QUICKGRID::QuickGridData getGrid(const string& _json_filename) {
 	return decomp;
 }
 
-void ut_bondVolumeConvergenceStudy_n3() {
+void ut_naiveQuadratureConvergenceStudy_n3() {
 	std::string file = "./input_files/ut_bondVolumeConvergenceStudy_n=3.json";
 	set_static_data(file);
 	dsf_probe(file);
 }
 
-void ut_bondVolumeConvergenceStudy_n5() {
+void ut_naiveQuadratureConvergenceStudy_n5() {
 	std::string file = "./input_files/ut_bondVolumeConvergenceStudy_n=5.json";
 	set_static_data(file);
 	dsf_probe(file);
 }
 
-void ut_bondVolumeConvergenceStudy_n7() {
+void ut_naiveQuadratureConvergenceStudy_n7() {
 	std::string file = "./input_files/ut_bondVolumeConvergenceStudy_n=7.json";
 	set_static_data(file);
 	dsf_probe(file);
 }
 
-void ut_bondVolumeConvergenceStudy_n9() {
+void ut_naiveQuadratureConvergenceStudy_n9() {
 	std::string file = "./input_files/ut_bondVolumeConvergenceStudy_n=9.json";
 	set_static_data(file);
 	dsf_probe(file);
 }
 
-void ut_bondVolumeConvergenceStudy_n11() {
+void ut_naiveQuadratureConvergenceStudy_n11() {
 	std::string file = "./input_files/ut_bondVolumeConvergenceStudy_n=11.json";
 	set_static_data(file);
 	dsf_probe(file);
 }
 
-void ut_bondVolumeConvergenceStudy_n13() {
+void ut_naiveQuadratureConvergenceStudy_n13() {
 	std::string file = "./input_files/ut_bondVolumeConvergenceStudy_n=13.json";
 	set_static_data(file);
 	dsf_probe(file);
 }
 
-void ut_bondVolumeConvergenceStudy_n17() {
+void ut_naiveQuadratureConvergenceStudy_n17() {
 	std::string file = "./input_files/ut_bondVolumeConvergenceStudy_n=17.json";
 	set_static_data(file);
 	dsf_probe(file);
 }
 
-void ut_bondVolumeConvergenceStudy_n33() {
+void ut_naiveQuadratureConvergenceStudy_n33() {
 	std::string file = "./input_files/ut_bondVolumeConvergenceStudy_n=33.json";
 	set_static_data(file);
 	dsf_probe(file);
@@ -206,10 +208,6 @@ void ut_bondVolumeConvergenceStudy_n33() {
  */
 
 void dsf_probe(const std::string& json_filename) {
-//	const string json_filename="./input_files/ut_dsf.json";
-	shared_ptr<BOND_VOLUME::QUICKGRID::Bond_Volume_Calculator> c;
-	c = BOND_VOLUME::QUICKGRID::get_Bond_Volume_Calculator(json_filename);
-	double horizon = c->get_horizon();
 
 	QUICKGRID::QuickGridData gridData = getGrid(json_filename);
 
@@ -219,9 +217,9 @@ void dsf_probe(const std::string& json_filename) {
 	/*
 	 * Create neighborhood with an enlarged horizon
 	 */
-	double cell_diagonal=c->get_cell_diagonal();
+
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
-	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon+cell_diagonal);
+	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon);
 
 
 	/*
@@ -283,16 +281,9 @@ void dsf_probe(const std::string& json_filename) {
 	 */
 	Array<double> Y(3); Y.set(0.0);
 
-
-	/*
-	 * only computing bondVolume on center point 'X'
-	 */
-	Array<double> bondVolume(num_neigh);
-	bondVolume.set(0.0);
-	BOND_VOLUME::QUICKGRID::compute_bond_volume(X.get(),neighborhoodPtr.get(),xPtr.get(),bondVolume.get(),c.get());
-
+	Array<double> cellVolume(gridData.numPoints,gridData.cellVolume);
 	double m_analytical = 4.0 * M_PI * pow(horizon,5) / 5.0;
-	double m_code = MATERIAL_EVALUATION::WITH_BOND_VOLUME::computeWeightedVolume(X.get(),xPtr.get(),bondVolume.get(),neighborhoodPtr.get());
+	double m_code = MATERIAL_EVALUATION::computeWeightedVolume(X.get(),xPtr.get(),cellVolume.get(),neighborhoodPtr.get());
 	double rel_diff = std::abs(m_analytical-m_code)/m_analytical;
 	double tolerance=1.0e-3;
 //	BOOST_CHECK_SMALL(rel_diff,tolerance);
@@ -308,18 +299,19 @@ void dsf_probe(const std::string& json_filename) {
 	/*
 	 * PROBE XY
 	 */
-	probe_shear(MATERIAL_EVALUATION::XY,neighborhoodPtr,X,xPtr,Y,yPtr,bondVolume,horizon,gamma,m_code);
+	probe_shear(MATERIAL_EVALUATION::XY,neighborhoodPtr,X,xPtr,Y,yPtr,cellVolume,horizon,gamma,m_code);
 	/*
 	 * PROBE YZ
 	 */
-//	probe_shear(MATERIAL_EVALUATION::YZ,neighborhoodPtr,X,xPtr,Y,yPtr,bondVolume,horizon,gamma,m_code);
+//	probe_shear(MATERIAL_EVALUATION::YZ,neighborhoodPtr,X,xPtr,Y,yPtr,volPtr,horizon,gamma,m_code);
 	/*
 	 * PROBE ZX
 	 */
-//	probe_shear(MATERIAL_EVALUATION::ZX,neighborhoodPtr,X,xPtr,Y,yPtr,bondVolume,horizon,gamma,m_code);
+//	probe_shear(MATERIAL_EVALUATION::ZX,neighborhoodPtr,X,xPtr,Y,yPtr,volPtr,horizon,gamma,m_code);
 
 
 }
+
 
 void probe_shear
 (
@@ -329,7 +321,7 @@ void probe_shear
 	Array<double> xPtr,
 	Array<double> Y,
 	Array<double> yPtr,
-	Array<double> bondVolume,
+	Array<double> cellVolume,
 	double horizon,
 	double gamma,
 	double m_code
@@ -346,8 +338,8 @@ void probe_shear
 	 * therefore, Y=X
 	 */
 	MATERIAL_EVALUATION::set_pure_shear(neighborhoodPtr.get(),X.get(),xPtr.get(),yPtr.get(),mode,gamma);
-	double theta = MATERIAL_EVALUATION::WITH_BOND_VOLUME::computeDilatation(neighborhoodPtr.get(),X.get(),xPtr.get(),X.get(),yPtr.get(),bondVolume.get(),m_code);
-//	std::cout << "ut_bondVolumeConvergenceStudy::probe_shear dilatation = " << theta << std::endl;
+	double theta = MATERIAL_EVALUATION::computeDilatation(neighborhoodPtr.get(),X.get(),xPtr.get(),X.get(),yPtr.get(),cellVolume.get(),m_code);
+	std::cout << "ut_naiveQuadratureConvergenceStudy::probe_shear dilatation = " << theta << std::endl;
 	double tolerance=1.0e-12;
 	BOOST_CHECK_SMALL(theta,tolerance);
 
@@ -358,20 +350,14 @@ void probe_shear
 	 * This is the reference value for ed_squared
 	 */
 	double reference = 4.0 * M_PI * gamma * gamma * pow(horizon,5) / 75.0;
-	double ed2 = MATERIAL_EVALUATION::WITH_BOND_VOLUME::compute_norm_2_deviatoric_extension(neighborhoodPtr.get(),X.get(),xPtr.get(),Y.get(),yPtr.get(),bondVolume.get(),m_code);
+	double ed2 = MATERIAL_EVALUATION::compute_norm_2_deviatoric_extension(neighborhoodPtr.get(),X.get(),xPtr.get(),Y.get(),yPtr.get(),cellVolume.get(),m_code);
 	double dsf = reference/ed2;
 	double ed_err = fabs(reference-ed2)/reference;
 	std::cout << "ut_dsf::probe_shear MODE = " << mode << std::endl;
-	std::cout << "ut_dsf::ed = " << reference << std::endl;
+	std::cout << "ut_dsf::ed^2 = " << reference << std::endl;
 	cout.precision(2);
 	std::cout << std::scientific << "ut_dsf::probe_shear computed % ed_err in pure shear = " << 100*ed_err << std::endl;
 	std::cout << "ut_dsf::probe_shear computed dsf in pure shear = " << dsf << std::endl;
-	/*
-	 * For this nearly perfect 'sphere', the shear correction factor should be very close to '1.0'
-	 */
-	double rel_diff = std::abs(1.0-dsf);
-	tolerance=1.0e-3;
-//	BOOST_CHECK_SMALL(rel_diff,tolerance);
 
 	std::stringstream table_1_out;
 	table_1_out << nx << " & ";
@@ -381,15 +367,18 @@ void probe_shear
 	table_1_out.precision(3);
 	table_1_out << dsf << " \\\\ \n";
 
+	/*
+	 * write latex table
+	 */
 	std::ofstream file_stream;
-	file_stream.open("table_1.tex",ios::app|ios::out);
+	file_stream.open("naive_table_1.tex",ios::app|ios::out);
 	file_stream << table_1_out.str();
 	file_stream.close();
 
 	/*
 	 * write raw data
 	 */
-	file_stream.open("ut_bondVolumeConvergenceStudy.dat",ios::app|ios::out);
+	file_stream.open("ut_naiveQuadratureConvergenceStudy.dat",ios::app|ios::out);
 	file_stream << nx << " ";
 	file_stream << std::scientific;
 	file_stream.precision(15);
@@ -398,7 +387,6 @@ void probe_shear
 	file_stream << ed2 << "\n";
 	file_stream.close();
 
-
 }
 
 
@@ -406,15 +394,15 @@ bool init_unit_test_suite()
 {
 	// Add a suite for each processor in the test
 	bool success=true;
-	test_suite* proc = BOOST_TEST_SUITE( "ut_bondVolumeConvergenceStudy" );
-	proc->add(BOOST_TEST_CASE( &ut_bondVolumeConvergenceStudy_n3 ));
-	proc->add(BOOST_TEST_CASE( &ut_bondVolumeConvergenceStudy_n5 ));
-	proc->add(BOOST_TEST_CASE( &ut_bondVolumeConvergenceStudy_n7 ));
-	proc->add(BOOST_TEST_CASE( &ut_bondVolumeConvergenceStudy_n9 ));
-	proc->add(BOOST_TEST_CASE( &ut_bondVolumeConvergenceStudy_n11 ));
-	proc->add(BOOST_TEST_CASE( &ut_bondVolumeConvergenceStudy_n13 ));
-	proc->add(BOOST_TEST_CASE( &ut_bondVolumeConvergenceStudy_n17 ));
-//	proc->add(BOOST_TEST_CASE( &ut_bondVolumeConvergenceStudy_n33 ));
+	test_suite* proc = BOOST_TEST_SUITE( "ut_naiveQuadratureConvergenceStudy" );
+	proc->add(BOOST_TEST_CASE( &ut_naiveQuadratureConvergenceStudy_n3 ));
+	proc->add(BOOST_TEST_CASE( &ut_naiveQuadratureConvergenceStudy_n5 ));
+	proc->add(BOOST_TEST_CASE( &ut_naiveQuadratureConvergenceStudy_n7 ));
+	proc->add(BOOST_TEST_CASE( &ut_naiveQuadratureConvergenceStudy_n9 ));
+	proc->add(BOOST_TEST_CASE( &ut_naiveQuadratureConvergenceStudy_n11 ));
+	proc->add(BOOST_TEST_CASE( &ut_naiveQuadratureConvergenceStudy_n13 ));
+	proc->add(BOOST_TEST_CASE( &ut_naiveQuadratureConvergenceStudy_n17 ));
+//	proc->add(BOOST_TEST_CASE( &ut_naiveQuadratureConvergenceStudy_n33 ));
 	framework::master_test_suite().add( proc );
 	return success;
 
@@ -434,12 +422,13 @@ int main
 {
 
 
-	write_table_1_header("table_1.tex");
+	write_table_1_header("naive_table_1.tex");
 //	write_table_2_header("table_2.tex");
 
 	// Initialize UTF
 	int flag = unit_test_main( init_unit_test, argc, argv );
 
-	close_table_1("table_1.tex");
+	close_table_1("naive_table_1.tex");
 	return flag;
 }
+
