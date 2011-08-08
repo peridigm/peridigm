@@ -1,0 +1,4 @@
+Generating Relaxation Plot
+--------------------------
+$ipython -pylab
+>>> import relaxationPlot
