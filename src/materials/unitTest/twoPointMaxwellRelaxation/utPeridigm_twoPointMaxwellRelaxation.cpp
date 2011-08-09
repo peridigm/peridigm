@@ -55,7 +55,8 @@
 #include "mesh_output/vtk/Field.h"
 #include "utilities/Array.h"
 #include "ordinary_utilities.h"
-#include "ordinary_elastic_plastic.h"
+#include "ordinary_elastic.h"
+#include "ordinary_std_linear_visco_solid.h"
 #include <math.h>
 
 #include <fstream>
@@ -68,79 +69,16 @@ using std::tr1::shared_ptr;
 using namespace Field_NS;
 
 
-const double horizon=sqrt(2);
+/*
+ * Young's Modulus (MPa)
+ */
+const double E = 68.9e3;
 
-class StageFunction {
+/*
+ * Poisson's ratio
+ */
+const double nu = .33;
 
-private:
-	double start, end;
-
-public:
-	StageFunction() : start(0), end(0) {}
-
-	StageFunction(double start, double end) : start(start), end(end){}
-
-	/**
-	 * Control function which produces step or proportional loading;
-	 * Step loading is given with start==end
-	 * Proportional loading is given by start != end
-	 * @param lambda Load parameter for stage; it is assumed that 0<=lambda <=1.0
-	 * @return Function value
-	 */
-	double value(double lambda) const {
-		return (1-lambda)*start + lambda*end;
-	}
-
-	/**
-	 * @return slope of function
-	 */
-	double slope() const { return end-start; }
-
-
-	/**
-	 * StageFunction for next stage
-	 * @return new StageFunction will hold constant
-	 */
-	StageFunction next() const {
-		double fStartNew = this->end;
-		double fEndNew = fStartNew;
-		return StageFunction(fStartNew,fEndNew);
-	}
-
-
-
-	/**
-	 * StageFunction for next stage
-	 * @param <code>endVal </code>value of loader at end of load step
-	 * @return new proportional<code>StageFunction</code> with starting value of this end value and end value <code>endVal</code>
-	 */
-	StageFunction next(double endVal) const {
-		double fStartNew = this->end;
-		double fEndNew = endVal;
-		return StageFunction(fStartNew,fEndNew);
-	}
-
-};
-
-void updateGeometry
-(
-		const double* xOverlap,
-		const double* uOverlap,
-		const double* velocityOverlap,
-		double* yOverlap,
-		int overLapLength,
-		double dt
-)
-{
-	const double* x = xOverlap;
-	const double* u = uOverlap;
-	const double* v = velocityOverlap;
-	double*       y = yOverlap;
-
-	int length = overLapLength;
-	for(;x!=xOverlap+length;x++,u++,v++,y++)
-		*y = *x + *u + *v * dt;
-}
 
 inline void SET(double* const start, const double* const end, double value){
 	for(double *i = start; i!=end; i++)
@@ -158,20 +96,10 @@ inline double MAGNITUDE(const double *x){
 Teuchos::ParameterList getParamList()
 {
 	/*
-	 * Young's Modulus (MPa)
+	 * Horizon for this problem
 	 */
-	double E = 68.9e3;
 
-	/*
-	 * Poisson's ratio
-	 */
-	double nu = .33;
-
-	/*
-	 * Yield "Stress" estimate for perfect plasticity (MPa)
-	 * 6061-T6 data
-	 */
-	double Y = 351.79 / sqrt(3);
+	double horizon=1.01 * sqrt(2);
 
 	/*
 	 * Density of aluminum g/mm^3
@@ -187,13 +115,27 @@ Teuchos::ParameterList getParamList()
 	 * Shear Modulus
 	 */
 	double mu = E / 2 / (1+nu);
+
+	/*
+	 * Material time constant: Relaxation time
+	 */
+	double tau_b = 2.0;
+
+	/*
+	 * Material time constant: Creep time
+	 * Since this is a 'maxwell' model, tau=tau_b
+	 */
+	double tau = tau_b;
+
 	Teuchos::ParameterList params;
+
 	params.set("Density", rho);
 	params.set("Bulk Modulus", K);
 	params.set("Shear Modulus", mu);
 	params.set("Material Horizon", horizon);
-	params.set("Yield Stress",Y);
-	IsotropicElasticPlasticMaterial mat(params);
+	params.set("tau",tau);
+	params.set("tau b",tau_b);
+	ViscoelasticStandardLinearSolid mat(params);
 
     // \todo check field specs
 
@@ -237,8 +179,7 @@ QUICKGRID::QuickGridData getTwoPointGridData(){
 	  * Create neighborhood
 	  */
 	 pdGridData.sizeNeighborhoodList=4;
-	 UTILITIES::Array<int> neighborhood(pdGridData.sizeNeighborhoodList);
-//	 shared_ptr<int> neighborhood = shared_ptr<int>(new int[pdGridData.sizeNeighborhoodList],PdQuickGrid::Deleter<int>());
+	 Array<int> neighborhood(pdGridData.sizeNeighborhoodList);
 	 pdGridData.neighborhood = neighborhood.get_shared_ptr();
 	 int *neigh = neighborhood.get();
 	 *(neigh+0)=1;
@@ -246,8 +187,7 @@ QUICKGRID::QuickGridData getTwoPointGridData(){
 	 *(neigh+2)=1;
 	 *(neigh+3)=0;
 
-	 UTILITIES::Array<int> neighborhoodPtr(pdGridData.numPoints);
-//	 shared_ptr<int> neighborhoodPtr = shared_ptr<int>(new int[pdGridData.numPoints],PdQuickGrid::Deleter<int>());
+	 Array<int> neighborhoodPtr(pdGridData.numPoints);
 	 pdGridData.neighborhoodPtr=neighborhoodPtr.get_shared_ptr();
 	 int *nPtr = neighborhoodPtr.get();
 	 *(nPtr+0)=0;
@@ -256,12 +196,30 @@ QUICKGRID::QuickGridData getTwoPointGridData(){
 	 return pdGridData;
 }
 
+void updateGeometry
+(
+		const double* xOverlap,
+		const double* uOverlap,
+		double* yOverlap,
+		int overLapLength
+)
+{
+	const double* x = xOverlap;
+	const double* u = uOverlap;
+	double*       y = yOverlap;
+
+	int length = overLapLength;
+	for(;x!=xOverlap+length;x++,u++,y++)
+		*y = *x + *u;
+}
+
+
 void runPureShear() {
 	Teuchos::ParameterList paramList = getParamList();
-	IsotropicElasticPlasticMaterial mat(paramList);
+	ViscoelasticStandardLinearSolid mat(paramList);
 	QUICKGRID::QuickGridData pdGridData = getTwoPointGridData();
-	int numPoints = pdGridData.numPoints;
-	BOOST_CHECK(2 == numPoints);
+	int numOwnedPoints = pdGridData.numPoints;
+	BOOST_CHECK(2 == numOwnedPoints);
 	BOOST_CHECK(4 == pdGridData.sizeNeighborhoodList);
 
 	/*
@@ -269,15 +227,21 @@ void runPureShear() {
 	 */
 	double K = paramList.get<double>("Bulk Modulus");
 	double MU = paramList.get<double>("Shear Modulus");
-	double DELTA = paramList.get<double>("Material Horizon");
-	double Y = paramList.get<double>("Yield Stress");
+	double tau = paramList.get<double>("tau");
+	double tau_b = paramList.get<double>("tau b");
 
 	/*
-	 * yield strain ~.0051 -- 1/2 the engineering strain -- not the same as the
-	 * shear strain used here to load
+	 * Applied shear and Initial Condition
 	 */
-	double epsYield = .0051;
+	double my_gamma = 1.0e-6;
 
+	/*
+	 * Time stepping data
+	 */
+	double t_start=0.0;
+	double t_end = 2.0 * tau;
+	int numSteps_stage_1(100);
+	double dt = (t_end - t_start) / numSteps_stage_1;
 
 	/*
 	 * Displacement and Internal Force Vectors
@@ -286,167 +250,180 @@ void runPureShear() {
 	Field<double> uOwnedField(uSpec,pdGridData.numPoints);
 	FieldSpec fNSpec = FORCE_DENSITY3D;
 	Field_NS::Field<double> fNField(fNSpec,pdGridData.numPoints);
-	FieldSpec velocitySpec = VELOC3D;
-	Field<double> velField(velocitySpec,pdGridData.numPoints);
-	FieldSpec ySpec = CURCOORD3D;
-	Field<double> yField(ySpec,pdGridData.numPoints);
-	FieldSpec dsfSpec = DSF;
-	Field<double> dsfField(dsfSpec,pdGridData.numPoints);
 	uOwnedField.set(0.0);
-	velField.set(0.0);
 	fNField.set(0.0);
-	yField.set(0.0);
-	dsfField.set(1.0);
 	double *u1x = uOwnedField.get()+3;
-	double *v1x = velField.get()+3;
 	double *f1x = fNField.get()+3;
+
+
+
+	/*
+	 * INITIAL CONDITION
+	 */
+	*u1x = my_gamma;
+
 
 	/*
 	 * Weighted Volume
 	 */
-	UTILITIES::Array<double> mPtr(numPoints);
+	UTILITIES::Array<double> mPtr(numOwnedPoints);
 	mPtr.set(0.0);
-	MATERIAL_EVALUATION::computeWeightedVolume(pdGridData.myX.get(),pdGridData.cellVolume.get(),mPtr.get(),numPoints,pdGridData.neighborhood.get());
+	MATERIAL_EVALUATION::computeWeightedVolume(pdGridData.myX.get(),pdGridData.cellVolume.get(),mPtr.get(),numOwnedPoints,pdGridData.neighborhood.get());
 
 	/*
-	 * Dilatation
+	 * Dilatation: intialize to zero
 	 */
-	UTILITIES::Array<double> thetaPtr(numPoints);
-	thetaPtr.set(0.0);
-
+	TemporalField<double> dilatationTemporalField(DILATATION,numOwnedPoints);
+	{
+		Field<double> N = dilatationTemporalField.getField(Field_ENUM::STEP_N);
+		N.set(0.0);
+	}
 	/*
-	 * Bond State and deviatoric plastic extension
+	 * Bond State and deviatoric back extension state
 	 */
-	UTILITIES::Array<double> bondStatePtr(pdGridData.sizeNeighborhoodList-numPoints);
-	bondStatePtr.set(0.0);
-	TemporalField<double> edpTemporalField(DEVIATORIC_PLASTIC_EXTENSION,pdGridData.sizeNeighborhoodList-numPoints);
-	Field<double> edpNField = edpTemporalField.getField(Field_ENUM::STEP_N);
-	Field<double> edpNP1Field = edpTemporalField.getField(Field_ENUM::STEP_NP1);
-	edpNField.set(0.0);
-	TemporalField<double> lambdaTemporalField(Field_NS::LAMBDA,pdGridData.numPoints);
-	Field<double> lambdaNField = lambdaTemporalField.getField(Field_ENUM::STEP_N);
-	Field<double> lambdaNP1Field = lambdaTemporalField.getField(Field_ENUM::STEP_NP1);
-	lambdaNField.set(0.0);
-	/*
-	 * Track
-	 */
-	/*
-	 * Stages
-	 * 1) load
-	 * 2) unload
-	 * 3) reload
-	 */
-	std::vector<StageFunction> stages(3);
-	/*
-	 * Loading
-	 */
-	stages[0] = StageFunction(0,epsYield);
-	/*
-	 * Unloading
-	 */
-	stages[1] = stages[0].next(-.0005);
-
-	/*
-	 * Re-Unloading
-	 */
-	stages[2] = stages[1].next(.001275);
-
-	int numStepsPerStage = 50;
-	double dt = 1.0/numStepsPerStage;
-
+	UTILITIES::Array<double> bondDamagePtr(pdGridData.sizeNeighborhoodList-numOwnedPoints);
+	bondDamagePtr.set(0.0);
+	TemporalField<double> edbTemporalField(DEVIATORIC_BACK_EXTENSION,pdGridData.sizeNeighborhoodList-numOwnedPoints);
+	{
+		Field<double> N = edbTemporalField.getField(Field_ENUM::STEP_N);
+		N.set(0.0);
+	}
 	/*
 	 * Pointers to data that don't change in this test
 	 */
-	double *x = pdGridData.myX.get();
-	double *u = uOwnedField.get();
-	double *v = velField.get();
-	double *y = yField.get();
-	double *m = mPtr.get();
-	double *theta = thetaPtr.get();
-	double *bondState = bondStatePtr.get();
-	double* dsfOwned = dsfField.get();
-	double *vol = pdGridData.cellVolume.get();
-	int *neigh = pdGridData.neighborhood.get();
+	double *xOverlapPtr = pdGridData.myX.get();
+
+	double *mOwned = mPtr.get();
+	double *bondDamage = bondDamagePtr.get();
+	double *volumeOverlapPtr = pdGridData.cellVolume.get();
+	int *localNeighborList = pdGridData.neighborhood.get();
+	double *fInternalOverlapPtr = fNField.get();
+
+	/*
+	 * Current coordinates are fixed; Assign here
+	 */
+	TemporalField<double> yTemporalField(CURCOORD3D,numOwnedPoints);
+	updateGeometry(xOverlapPtr,uOwnedField.get(),yTemporalField.getField(Field_ENUM::STEP_N).get(),numOwnedPoints*3);
+	updateGeometry(xOverlapPtr,uOwnedField.get(),yTemporalField.getField(Field_ENUM::STEP_NP1).get(),numOwnedPoints*3);
+	double *yN_OverlapPtr = yTemporalField.getField(Field_ENUM::STEP_N).get();
+	double *yNp1_OverlapPtr = yTemporalField.getField(Field_ENUM::STEP_NP1).get();
 
 	/*
 	 * Create data file
 	 */
 	std::fstream out("utPeridigm_twoPointMaxwellRelaxation.dat", std::fstream::out);
+	out << std::scientific;
 
 	/*
-	 * Write out initial condition
+	 * Compute initial force with elastic constitutive model
 	 */
-	double t=0;
-	out << 0 << " " << 0 << " " << 0 << std::endl;
-	for(std::vector<StageFunction>::iterator stageIter=stages.begin(); stageIter!=stages.end();stageIter++){
+	MATERIAL_EVALUATION::computeInternalForceLinearElastic
+	(
+			xOverlapPtr,
+			yN_OverlapPtr,
+			mOwned,
+			volumeOverlapPtr,
+			dilatationTemporalField.getField(Field_ENUM::STEP_N).get(),
+			bondDamage,
+			fInternalOverlapPtr,
+			localNeighborList,
+			numOwnedPoints,
+			K,
+			MU
+	);
 
-		*v1x = stageIter->slope();
-		double vel = *v1x;
+	double t=t_start;
+	double signF = -*f1x/fabs(*f1x);
+	out.precision(2);
+	out << t << " ";
+	out.precision(0);
+	out << *u1x << " ";
+	out.precision(15);
+	out << signF*MAGNITUDE(f1x) << std::endl;
 
-		for(int step=0;step<numStepsPerStage;step++){
-			Field<double> edpNField = edpTemporalField.getField(Field_ENUM::STEP_N);
-			Field<double> edpNP1Field = edpTemporalField.getField(Field_ENUM::STEP_NP1);
-			double *edpN = edpNField.get();
-			double *edpNP1 = edpNP1Field.get();
-			Field<double> lambdaNField = lambdaTemporalField.getField(Field_ENUM::STEP_N);
-			Field<double> lambdaNP1Field = lambdaTemporalField.getField(Field_ENUM::STEP_NP1);
-			double *lambdaN = lambdaNField.get();
-			double *lambdaNP1 = lambdaNP1Field.get();
-			fNField.set(0.0);
-			double *f = fNField.get();
+	/*
+	 * this is the correct analytical value for the initial condition
+	 * ??? Why can't we get this closer than 1.0e-6 ???
+	 */
+	double f0 = 2.0 * 15.0 * E * my_gamma / 4.0 / (1+nu) / std::sqrt(2.0);
+	double tolerance=1.0e-6;
+	double rel_diff = std::fabs(f0-MAGNITUDE(f1x))/f0;
+	BOOST_CHECK_SMALL(rel_diff,tolerance);
 
-			t += dt;
+	for(size_t n=0;n<numSteps_stage_1;n++){
 
-			{
-				updateGeometry(x,u,v,y,numPoints*3,dt);
-			}
+		t += dt;
 
-			/*
-			 * Do not compute dilatation -- just set it to zero
-			 */
-			computeInternalForceIsotropicElasticPlastic(x,y,m,vol,theta,bondState,dsfOwned,edpN,edpNP1,lambdaN,lambdaNP1,f,neigh,numPoints,K,MU,DELTA,Y);
+		/*
+		 * Do not compute dilatation -- just set it to zero
+		 */
+		Field<double> thetaNField = dilatationTemporalField.getField(Field_ENUM::STEP_N);
+		Field<double> thetaNP1Field = dilatationTemporalField.getField(Field_ENUM::STEP_NP1);
+		thetaNP1Field.set(0.0);
+		const double* dilatationN_Owned   = thetaNField.get();
+		double* dilatationNp1_Owned       = thetaNP1Field.get();
 
+		Field<double> edbNField = edbTemporalField.getField(Field_ENUM::STEP_N);
+		Field<double> edbNP1Field = edbTemporalField.getField(Field_ENUM::STEP_NP1);
+		const double* deviatoricBackExtensionState_N   = edbNField.get();
+		double* deviatoricBackExtensionState_Np1       = edbNP1Field.get();
 
-			/*
-			 * Get sign of "f" -- this works as long as f does not ever land "exactly" on zero
-			 * Put a negative sign in front so that loading is "positive"
-			 */
-			double signF = -*f1x/abs(*f1x);
+		/*
+		 * initialize force to zero
+		 */
+		fNField.set(0.0);
 
-			/*
-			 * Length of bar
-			 * NOTE: original coordinates of point 1 were
-			 * x=w, y=w
-			 * where w=1.0
-			 * l: New length of bar
-			 * L: Original length of bar
-			 * NOTE: yielding occurs wrt to the shear strain -- not the same as the strain along the axis of the
-			 * bond.  This distinction is important to remember.  In this case, the shear strain is equivalent
-			 * to the displacement along the x-axis
-			 */
+		MATERIAL_EVALUATION::computeInternalForceViscoelasticStandardLinearSolid
+		(
+				dt,
+				xOverlapPtr,
+				yN_OverlapPtr,
+				yNp1_OverlapPtr,
+				mOwned,
+				volumeOverlapPtr,
+				dilatationN_Owned,
+				dilatationNp1_Owned,
+				bondDamage,
+				deviatoricBackExtensionState_N,
+				deviatoricBackExtensionState_Np1,
+				fInternalOverlapPtr,
+				localNeighborList,
+				numOwnedPoints,
+				K,
+				MU,
+				tau,
+				tau_b
+		);
 
-			double wx=1;
-			double wy=1;
-			double l = sqrt((wx+*u1x)*(wx+*u1x)+wy*wy);
-			double L = sqrt(wx*wx+wy*wy);
-			double engineeringStrain=(l-L)/L;
-			double stretch=l/L;
-			double trueStrain=std::log(stretch);
-			/*
-			 * Next step; this is a bit squirrely -- has to do with updateGeometry
-			 * Update geometry takes velocity and existing displacement field (N)
-			 * Update geometry y = X + U(N) +Velocity*dt = X + U(NP1)
-			 * So, that is why we need this at the bottom of this loop
-			 */
-			*u1x += vel*dt;
+		/*
+		 * Get sign of "f" -- this works as long as f does not ever land "exactly" on zero
+		 * Put a negative sign in front so that loading is "positive"
+		 */
+		double signF = -*f1x/abs(*f1x);
+		out.precision(2);
+		out << t << " ";
+		out.precision(0);
+		out << *u1x << " ";
+		out.precision(15);
+		out << signF*MAGNITUDE(f1x) << std::endl;
+		edbTemporalField.advanceStep();
+		dilatationTemporalField.advanceStep();
+		yTemporalField.advanceStep();
 
-			out << t << " " << *u1x << " " << signF * MAGNITUDE(f1x) << std::endl;
-			edpTemporalField.advanceStep();
-			lambdaTemporalField.advanceStep();
-		}
 	}
 
+	out.close();
+
+	/*
+	 * Last value computed: tests time integrator against exact value
+	 */
+	double fEnd = std::exp(-4.0/tau_b) * 2.0 * 15.0 * E * my_gamma / 4.0 / (1+nu) / std::sqrt(2.0);
+	rel_diff = std::fabs(fEnd-MAGNITUDE(f1x))/f0;
+	BOOST_CHECK_SMALL(rel_diff,tolerance);
+
 }
+
+
 
 
 bool init_unit_test_suite()
