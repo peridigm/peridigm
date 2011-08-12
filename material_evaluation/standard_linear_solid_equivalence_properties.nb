@@ -1,0 +1,140 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 8.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       157,          7]
+NotebookDataLength[      3505,        130]
+NotebookOptionsPosition[      2779,        100]
+NotebookOutlinePosition[      3215,        117]
+CellTagsIndexPosition[      3172,        114]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell[BoxData[
+ RowBox[{"eq1", "=", 
+  RowBox[{"\[Tau]b", "\[Equal]", 
+   RowBox[{"\[Eta]", "/", "Em"}]}]}]], "Input",
+ CellChangeTimes->{{3.522095277291587*^9, 3.5220953302616987`*^9}}],
+
+Cell[BoxData[
+ RowBox[{"\[Tau]b", "\[Equal]", 
+  FractionBox["\[Eta]", "Em"]}]], "Output",
+ CellChangeTimes->{3.522095333545096*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"eq2", "=", 
+  RowBox[{"\[Alpha]\[Omega]", "\[Equal]", 
+   RowBox[{"Em", "+", "Ei"}]}]}]], "Input",
+ CellChangeTimes->{{3.5220953446066103`*^9, 3.522095370500486*^9}}],
+
+Cell[BoxData[
+ RowBox[{"\[Alpha]\[Omega]", "\[Equal]", 
+  RowBox[{"Ei", "+", "Em"}]}]], "Output",
+ CellChangeTimes->{3.52209537400597*^9}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"eq3", "=", 
+  RowBox[{"\[Tau]", "==", 
+   RowBox[{
+    RowBox[{"(", 
+     RowBox[{"Em", "+", "Ei"}], ")"}], 
+    RowBox[{"\[Tau]b", "/", "Em"}]}]}]}]], "Input",
+ CellChangeTimes->{{3.522095379422434*^9, 3.522095404321875*^9}, {
+  3.5220955233332376`*^9, 3.522095527157527*^9}}],
+
+Cell[BoxData[
+ RowBox[{"\[Tau]", "\[Equal]", 
+  FractionBox[
+   RowBox[{
+    RowBox[{"(", 
+     RowBox[{"Ei", "+", "Em"}], ")"}], " ", "\[Tau]b"}], "Em"]}]], "Output",
+ CellChangeTimes->{
+  3.5220954083334093`*^9, {3.522095502268723*^9, 3.522095529720728*^9}}]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"Solve", "[", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{"eq1", ",", "eq2", ",", "eq3"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"Em", ",", "\[Eta]", ",", "Ei"}], "}"}]}], "]"}]], "Input",
+ CellChangeTimes->{{3.522095412270648*^9, 3.522095458661562*^9}}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{"{", 
+   RowBox[{
+    RowBox[{"Em", "\[Rule]", 
+     FractionBox[
+      RowBox[{"\[Alpha]\[Omega]", " ", "\[Tau]b"}], "\[Tau]"]}], ",", 
+    RowBox[{"\[Eta]", "\[Rule]", 
+     FractionBox[
+      RowBox[{"\[Alpha]\[Omega]", " ", 
+       SuperscriptBox["\[Tau]b", "2"]}], "\[Tau]"]}], ",", 
+    RowBox[{"Ei", "\[Rule]", 
+     RowBox[{"\[Alpha]\[Omega]", "-", 
+      FractionBox[
+       RowBox[{"\[Alpha]\[Omega]", " ", "\[Tau]b"}], "\[Tau]"]}]}]}], "}"}], 
+  "}"}]], "Output",
+ CellChangeTimes->{3.522095461220909*^9, 3.522095533138623*^9}]
+}, Open  ]]
+},
+WindowSize->{1019, 867},
+WindowMargins->{{150, Automatic}, {Automatic, 52}},
+Magnification:>FEPrivate`If[
+  FEPrivate`Equal[FEPrivate`$VersionNumber, 6.], 2., 2. Inherited],
+FrontEndVersion->"8.0 for Linux x86 (64-bit) (February 23, 2011)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[579, 22, 185, 4, 58, "Input"],
+Cell[767, 28, 132, 3, 74, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[936, 36, 190, 4, 58, "Input"],
+Cell[1129, 42, 138, 3, 58, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[1304, 50, 301, 8, 58, "Input"],
+Cell[1608, 60, 260, 7, 79, "Output"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[1905, 72, 278, 7, 58, "Input"],
+Cell[2186, 81, 577, 16, 83, "Output"]
+}, Open  ]]
+}
+]
+*)
+
+(* End of internal cache information *)
+

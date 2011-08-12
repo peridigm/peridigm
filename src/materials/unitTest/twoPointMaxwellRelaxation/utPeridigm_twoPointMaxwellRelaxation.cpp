@@ -79,6 +79,11 @@ const double E = 68.9e3;
  */
 const double nu = .33;
 
+/*
+ * Applied shear and Initial Condition
+ */
+const double my_gamma = 1.0e-6;
+
 
 inline void SET(double* const start, const double* const end, double value){
 	for(double *i = start; i!=end; i++)
@@ -92,8 +97,9 @@ inline double MAGNITUDE(const double *x){
 	return sqrt(x1*x1+x2*x2+x3*x3);
 }
 
-//! Tests state variable count and name accessor functions.
-Teuchos::ParameterList getParamList()
+enum CASE {MAXWELL_MODEL=0,STANDARD_LINEAR_SOLID=1};
+
+Teuchos::ParameterList getParamList(CASE model)
 {
 	/*
 	 * Horizon for this problem
@@ -123,9 +129,21 @@ Teuchos::ParameterList getParamList()
 
 	/*
 	 * Material time constant: Creep time
-	 * Since this is a 'maxwell' model, tau=tau_b
 	 */
 	double tau = tau_b;
+	switch(model) {
+	case MAXWELL_MODEL:
+		/*
+		 * 'maxwell' model, tau=tau_b
+		 */
+		break;
+	case STANDARD_LINEAR_SOLID:
+		/*
+		 * tau>0, tau_b >0 and tau != tau_b
+		 * Arbitrarily assigning tau=2*tau_b
+		 */
+		tau=2.0 * tau_b;
+	}
 
 	Teuchos::ParameterList params;
 
@@ -213,10 +231,10 @@ void updateGeometry
 		*y = *x + *u;
 }
 
-
-void runPureShear() {
-	Teuchos::ParameterList paramList = getParamList();
-	ViscoelasticStandardLinearSolid mat(paramList);
+/**
+ * Function returns value of force at last time step
+ */
+double runPureShear(Teuchos::ParameterList& paramList, std::string output_file_name){
 	QUICKGRID::QuickGridData pdGridData = getTwoPointGridData();
 	int numOwnedPoints = pdGridData.numPoints;
 	BOOST_CHECK(2 == numOwnedPoints);
@@ -229,11 +247,6 @@ void runPureShear() {
 	double MU = paramList.get<double>("Shear Modulus");
 	double tau = paramList.get<double>("tau");
 	double tau_b = paramList.get<double>("tau b");
-
-	/*
-	 * Applied shear and Initial Condition
-	 */
-	double my_gamma = 1.0e-6;
 
 	/*
 	 * Time stepping data
@@ -311,7 +324,7 @@ void runPureShear() {
 	/*
 	 * Create data file
 	 */
-	std::fstream out("utPeridigm_twoPointMaxwellRelaxation.dat", std::fstream::out);
+	std::fstream out(output_file_name.c_str(), std::fstream::out);
 	out << std::scientific;
 
 	/*
@@ -414,13 +427,47 @@ void runPureShear() {
 
 	out.close();
 
+	/**
+	 * this is value of force for last time step
+	 */
+	return MAGNITUDE(f1x);
+
+
+}
+
+
+
+void case_1() {
+	Teuchos::ParameterList paramList = getParamList(MAXWELL_MODEL);
+	ViscoelasticStandardLinearSolid mat(paramList);
+	double f=runPureShear(paramList,"utPeridigm_twoPointMaxwellRelaxation.dat");
 	/*
 	 * Last value computed: tests time integrator against exact value
 	 */
+	double tau = paramList.get<double>("tau");
+	double tau_b = paramList.get<double>("tau b");
+
 	double fEnd = std::exp(-4.0/tau_b) * 2.0 * 15.0 * E * my_gamma / 4.0 / (1+nu) / std::sqrt(2.0);
-	rel_diff = std::fabs(fEnd-MAGNITUDE(f1x))/f0;
+	double rel_diff = std::fabs(fEnd-f)/fEnd;
+	double tolerance=1.0e-6;
 	BOOST_CHECK_SMALL(rel_diff,tolerance);
 
+}
+
+void case_2() {
+	Teuchos::ParameterList paramList = getParamList(STANDARD_LINEAR_SOLID);
+	ViscoelasticStandardLinearSolid mat(paramList);
+	double f=runPureShear(paramList,"utPeridigm_twoPoint_SLS_Relaxation.dat");
+//	/*
+//	 * Last value computed: tests time integrator against exact value
+//	 */
+//	double tau = paramList.get<double>("tau");
+//	double tau_b = paramList.get<double>("tau b");
+//
+//	double fEnd = std::exp(-4.0/tau_b) * 2.0 * 15.0 * E * my_gamma / 4.0 / (1+nu) / std::sqrt(2.0);
+//	double rel_diff = std::fabs(fEnd-f)/fEnd;
+//	double tolerance=1.0e-6;
+//	BOOST_CHECK_SMALL(rel_diff,tolerance);
 }
 
 
@@ -432,7 +479,8 @@ bool init_unit_test_suite()
   bool success = true;
 
   test_suite* proc = BOOST_TEST_SUITE("utPeridigm_twoPointMaxwellRelaxation");
-  proc->add(BOOST_TEST_CASE(&runPureShear));
+  proc->add(BOOST_TEST_CASE(&case_1));
+  proc->add(BOOST_TEST_CASE(&case_2));
   framework::master_test_suite().add(proc);
 
   return success;
