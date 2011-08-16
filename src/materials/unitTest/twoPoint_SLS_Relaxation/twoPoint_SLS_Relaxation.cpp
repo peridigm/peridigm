@@ -252,7 +252,7 @@ double runPureShear(Teuchos::ParameterList& paramList, std::string output_file_n
 	 * Time stepping data
 	 */
 	double t_start=0.0;
-	double t_end = 2.0 * tau;
+	double t_end = 3.0 * tau_b;
 	int numSteps_stage_1(100);
 	double dt = (t_end - t_start) / numSteps_stage_1;
 
@@ -447,7 +447,8 @@ void case_1() {
 	double tau = paramList.get<double>("tau");
 	double tau_b = paramList.get<double>("tau b");
 
-	double fEnd = std::exp(-4.0/tau_b) * 2.0 * 15.0 * E * my_gamma / 4.0 / (1+nu) / std::sqrt(2.0);
+	double tEnd=6.0;
+	double fEnd = std::exp(-tEnd/tau_b) * 2.0 * 15.0 * E * my_gamma / 4.0 / (1+nu) / std::sqrt(2.0);
 	double rel_diff = std::fabs(fEnd-f)/fEnd;
 	double tolerance=1.0e-6;
 	BOOST_CHECK_SMALL(rel_diff,tolerance);
@@ -461,14 +462,19 @@ void case_2() {
 	/*
 	 * Last value computed: tests time integrator against exact value
 	 */
+	double tEnd=6.0;
 	double tau = paramList.get<double>("tau");
 	double tau_b = paramList.get<double>("tau b");
-	std::cout << "case_2::tau = " << tau << "\ncase_2::tau_b = " << tau_b << std::endl;
-//
-//	double fEnd = std::exp(-4.0/tau_b) * 2.0 * 15.0 * E * my_gamma / 4.0 / (1+nu) / std::sqrt(2.0);
-//	double rel_diff = std::fabs(fEnd-f)/fEnd;
-//	double tolerance=1.0e-6;
-//	BOOST_CHECK_SMALL(rel_diff,tolerance);
+
+	double m = 2.0;
+	double alpha = 15.0 * E / (1+nu) / 2.0 / m;
+	double e_infinity=alpha * (1 - tau_b/tau);
+	double ed0=1.0e-6/sqrt(2);
+	double td_long=e_infinity * ed0;
+	double fEnd=td_long + alpha * tau_b * ed0 * exp(-tEnd/tau_b) / tau;
+	double rel_diff = std::fabs(2.0*fEnd-f)/fEnd;
+	double tolerance=1.0e-6;
+	BOOST_CHECK_SMALL(rel_diff,tolerance);
 }
 
 
