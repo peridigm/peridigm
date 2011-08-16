@@ -10,16 +10,10 @@ def GetTickLabels(tickValues):
     lab=["$"+str(d)+"$" for d in tickValues]
     return lab
 
-# this is may or may not be required to export 'eps' files
-# this is not required for 'svg'
-# Also check or matplotlibrc file -->~/.matplotlib/matplotlibrc
-#from matplotlib import rc
-#rc('text',usetex=True)
    
 # load computed data
 d0=loadtxt(files[0][1])
 d1=loadtxt(files[1][1])
-#d2=loadtxt("ut_twoPoint_SLS_Relaxation.dat")
 
 t=[d0[i][0] for i in range(len(d0))]
 u=[d0[i][1] for i in range(len(d0))]
@@ -49,42 +43,45 @@ sls=standard_linear_solid(alpha,tau_b,tau)
 fa_2=sls.relax(ed0,ta)
 
 f1=figure(figsize=(11,6))
-ax1=f1.add_subplot(121,autoscale_on=False,xlim=(0,4.5),ylim=(0,.3))
-xTicks=linspace(0,4,5)
+ax1=f1.add_subplot(121,autoscale_on=False,xlim=(0,6.5),ylim=(0,.3))
+xTicks=linspace(0,6,5)
 ax1.set_xticks(xTicks)
 xTickLabels=GetTickLabels(xTicks)
 ax1.set_xticklabels(xTickLabels,fontsize=20)
 xminorticks=MultipleLocator(0.5)
-xminorticks.view_limits(0.5,4.0)
+xminorticks.view_limits(0.5,6.0)
 ax1.xaxis.set_minor_locator(xminorticks)
 yTicks=linspace(0,.3,7)
 ax1.set_yticks(yTicks)
 yTickLabels=GetTickLabels(yTicks)
 yminorticks=MultipleLocator(0.025)
 ax1.yaxis.set_minor_locator(yminorticks)
-#ax1.grid(which='minor')
+
 ax1.set_yticklabels(yTickLabels,fontsize=20)
-line1=ax1.plot(t,f,linewidth=2.0, color='b')
+line1=ax1.plot(t,f,linewidth=2.0, color='g')
 line12=ax1.plot(t,f2,linewidth=2.0, color='b')
+
+
 
 # plot analytical
 # We need to double this force: computing the 
 #  force density
 for i in range(len(fa_2)):
-    ax1.plot([ta[i]],[2*fa_1[i]],'o',color='g')
-    ax1.plot([ta[i]],[2*fa_2[i]],'o',color='c')
+    ax1.plot([ta[i]],[2*fa_1[i]],'o',color=(4.0/255.0,250.0/255.0,33.0/255.0))
+    ax1.plot([ta[i]],[2*fa_2[i]],'o',color=(0.0/255.0,220.0/255.0,251.0/255.0))
 
+ax1.legend((r"$\tau=\tau_b=2$",r'$\tau=4,\,\tau_b=2$', 'Analytical', 'Analytical'),'upper right',shadow=True)
 
 xlabel("Time (miliseconds)",fontsize=20)
 ylabel("Force Density Magnitude",fontsize=20)
 
 
-ax2=f1.add_subplot(122,autoscale_on=False,xlim=(0,4.5),ylim=(0,1.1e-6))
+ax2=f1.add_subplot(122,autoscale_on=False,xlim=(0,6.5),ylim=(0,1.1e-6))
 ax2.set_xticks(xTicks)
 xTickLabels=GetTickLabels(xTicks)
 ax2.set_xticklabels(xTickLabels,fontsize=20)
 xminorticks=MultipleLocator(0.5)
-xminorticks.view_limits(0.5,4.0)
+xminorticks.view_limits(0.5,6.0)
 ax2.xaxis.set_minor_locator(xminorticks)
 yTicks=linspace(0,11*pow(10,-7),12)
 ax2.set_yticks(yTicks)
@@ -96,6 +93,7 @@ xlabel("Time (miliseconds)",fontsize=20)
 ylabel("Step displacement input: "+r'$\delta$',fontsize=20)
 
 f1.subplots_adjust(bottom=.13, wspace=.34)
+
 
 
 
