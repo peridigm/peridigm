@@ -1,4 +1,4 @@
-/*! \file utPeridigm_twoPointMaxwellRelaxation.cpp */
+/*! \file twoPoint_SLS_Relaxation.cpp */
 
 //@HEADER
 // ************************************************************************
@@ -440,7 +440,7 @@ double runPureShear(Teuchos::ParameterList& paramList, std::string output_file_n
 void case_1() {
 	Teuchos::ParameterList paramList = getParamList(MAXWELL_MODEL);
 	ViscoelasticStandardLinearSolid mat(paramList);
-	double f=runPureShear(paramList,"utPeridigm_twoPointMaxwellRelaxation.dat");
+	double f=runPureShear(paramList,"twoPoint_Maxwell_Relaxation.dat");
 	/*
 	 * Last value computed: tests time integrator against exact value
 	 */
@@ -457,12 +457,13 @@ void case_1() {
 void case_2() {
 	Teuchos::ParameterList paramList = getParamList(STANDARD_LINEAR_SOLID);
 	ViscoelasticStandardLinearSolid mat(paramList);
-	double f=runPureShear(paramList,"utPeridigm_twoPoint_SLS_Relaxation.dat");
-//	/*
-//	 * Last value computed: tests time integrator against exact value
-//	 */
-//	double tau = paramList.get<double>("tau");
-//	double tau_b = paramList.get<double>("tau b");
+	double f=runPureShear(paramList,"twoPoint_SLS_Relaxation.dat");
+	/*
+	 * Last value computed: tests time integrator against exact value
+	 */
+	double tau = paramList.get<double>("tau");
+	double tau_b = paramList.get<double>("tau b");
+	std::cout << "case_2::tau = " << tau << "\ncase_2::tau_b = " << tau_b << std::endl;
 //
 //	double fEnd = std::exp(-4.0/tau_b) * 2.0 * 15.0 * E * my_gamma / 4.0 / (1+nu) / std::sqrt(2.0);
 //	double rel_diff = std::fabs(fEnd-f)/fEnd;
@@ -478,7 +479,7 @@ bool init_unit_test_suite()
   // Add a suite for each processor in the test
   bool success = true;
 
-  test_suite* proc = BOOST_TEST_SUITE("utPeridigm_twoPointMaxwellRelaxation");
+  test_suite* proc = BOOST_TEST_SUITE("twoPoint_SLS_Relaxation");
   proc->add(BOOST_TEST_CASE(&case_1));
   proc->add(BOOST_TEST_CASE(&case_2));
   framework::master_test_suite().add(proc);
