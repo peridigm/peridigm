@@ -1,4 +1,4 @@
-add_executable(utPeridigm_twoPointMaxwellRelaxation
+add_executable(twoPoint_SLS_Relaxation
 		../../Peridigm_Material.cpp
 		../../Peridigm_ViscoelasticStandardLinearSolid.cpp
 		../../Peridigm_DamageModelFactory.cpp
@@ -6,8 +6,8 @@ add_executable(utPeridigm_twoPointMaxwellRelaxation
         ../../../Peridigm_State.cpp
         ../../../Peridigm_DataManager.cpp
         ../../../Peridigm_SerialMatrix.cpp
-		./utPeridigm_twoPointMaxwellRelaxation.cpp)
-target_link_libraries(utPeridigm_twoPointMaxwellRelaxation
+		./twoPoint_SLS_Relaxation.cpp)
+target_link_libraries(twoPoint_SLS_Relaxation
 ${Trilinos_LIBRARIES}
 QuickGrid 
 PdNeigh 
@@ -19,5 +19,5 @@ ${UT_REQUIRED_LIBS}
 ${TRILINOS_LIBS} 
 )
 
-add_test (utPeridigm_twoPointMaxwellRelaxation python run_unit_test.py ./utPeridigm_twoPointMaxwellRelaxation)
+add_test (twoPoint_SLS_Relaxation python run_unit_test.py ./twoPoint_SLS_Relaxation)
 

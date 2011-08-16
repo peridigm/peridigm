@@ -27,8 +27,8 @@ if __name__ == "__main__":
 		sys.exit(1)
 		
 	# load computed and gold data
-	dFile=open('utPeridigm_twoPointMaxwellRelaxation.dat','r')
-	dGFile=open('utPeridigm_twoPointMaxwellRelaxation.gold.dat','r')
+	dFile=open('twoPoint_Maxwell_Relaxation.dat','r')
+	dGFile=open('twoPoint_Maxwell_Relaxation.gold.dat','r')
 	dLines=dFile.readlines()
 	dGLines=dGFile.readlines()
 	if len(dLines) != len(dGLines):
@@ -58,7 +58,7 @@ if __name__ == "__main__":
 		du=abs(d[i][1]-dG[i][1])
 		df=abs(d[i][2]-dG[i][2])
 		if dt/tMag > tol or du/uMag > tol or df/fMag > tol:
-			logfile.write("\utPeridigm_twoPointMaxwellRelaxation.dat DIFFERs with utPeridigm_twoPointMaxwellRelaxation.gold.dat\n\n")
+			logfile.write("\twoPoint_Maxwell_Relaxation.dat DIFFERs with twoPoint_Maxwell_Relaxation.gold.dat\n\n")
 			sys.exit(1)
 			
 	logfile.write("\nDiffing Files ...DONE\n")
