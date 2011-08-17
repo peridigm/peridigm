@@ -57,7 +57,6 @@
 #include <Epetra_MpiComm.h>
 #include <Teuchos_MPIComm.hpp>
 #include <Ionit_Initializer.h>
-#include <stk_io/util/UseCase_mesh.hpp>
 #include <stk_io/IossBridge.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/FieldData.hpp>
