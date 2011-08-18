@@ -42,8 +42,8 @@ tau=2.0*tau_b
 sls=standard_linear_solid(alpha,tau_b,tau)
 fa_2=sls.relax(ed0,ta)
 
-f1=figure(figsize=(11,6))
-ax1=f1.add_subplot(121,autoscale_on=False,xlim=(0,6.5),ylim=(0,.3))
+f1=figure(figsize=(6,6))
+ax1=f1.add_subplot(111,autoscale_on=False,xlim=(0,6.5),ylim=(0,.3))
 xTicks=linspace(0,6,5)
 ax1.set_xticks(xTicks)
 xTickLabels=GetTickLabels(xTicks)
@@ -74,26 +74,24 @@ ax1.legend((r"$\tau=\tau_b=2$",r'$\tau=4,\,\tau_b=2$', 'Analytical', 'Analytical
 
 xlabel("Time (miliseconds)",fontsize=20)
 ylabel("Force Density Magnitude",fontsize=20)
+f1.subplots_adjust(left=.18,top=.95,right=.96)
 
 
-ax2=f1.add_subplot(122,autoscale_on=False,xlim=(0,6.5),ylim=(0,1.1e-6))
-ax2.set_xticks(xTicks)
-xTickLabels=GetTickLabels(xTicks)
-ax2.set_xticklabels(xTickLabels,fontsize=20)
-xminorticks=MultipleLocator(0.5)
-xminorticks.view_limits(0.5,6.0)
-ax2.xaxis.set_minor_locator(xminorticks)
-yTicks=linspace(0,11*pow(10,-7),12)
-ax2.set_yticks(yTicks)
-yTickLabels=GetTickLabels(yTicks*pow(10,6))
-ax2.set_yticklabels(yTickLabels,fontsize=20)
-ax2.annotate(r'$\times 10^{-6}$',xy=(0,1),xycoords='axes fraction',fontsize=20)
-line2=ax2.plot(t,u,linewidth=2.0, color='b')
-xlabel("Time (miliseconds)",fontsize=20)
-ylabel("Step displacement input: "+r'$\delta$',fontsize=20)
-
-f1.subplots_adjust(bottom=.13, wspace=.34)
-
-
+#ax2=f1.add_subplot(122,autoscale_on=False,xlim=(0,6.5),ylim=(0,1.1e-6))
+#ax2.set_xticks(xTicks)
+#xTickLabels=GetTickLabels(xTicks)
+#ax2.set_xticklabels(xTickLabels,fontsize=20)
+#xminorticks=MultipleLocator(0.5)
+#xminorticks.view_limits(0.5,6.0)
+#ax2.xaxis.set_minor_locator(xminorticks)
+#yTicks=linspace(0,11*pow(10,-7),12)
+#ax2.set_yticks(yTicks)
+#yTickLabels=GetTickLabels(yTicks*pow(10,6))
+#ax2.set_yticklabels(yTickLabels,fontsize=20)
+#ax2.annotate(r'$\times 10^{-6}$',xy=(0,1),xycoords='axes fraction',fontsize=20)
+#line2=ax2.plot(t,u,linewidth=2.0, color='b')
+#xlabel("Time (miliseconds)",fontsize=20)
+#ylabel("Step displacement input: "+r'$\delta$',fontsize=20)
+#f1.subplots_adjust(bottom=.13, wspace=.34)
 
 
