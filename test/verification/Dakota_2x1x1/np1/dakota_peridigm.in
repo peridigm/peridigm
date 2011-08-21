@@ -21,7 +21,7 @@ interface,
 	  work_directory directory_tag
 	  template_directory = 'templatedir'
 # uncomment to leave params.in and results.out files in work_dir subdirectories
-# 	  named 'workdir' file_save  directory_save
+ 	  named 'workdir' file_save  directory_save
 	  aprepro
 	  
 responses,

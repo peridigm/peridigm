@@ -51,6 +51,7 @@ if __name__ == "__main__":
 
     # Setup soft link to Peridigm executable so that simulation driver script can find it
     command = ["ln","-f","-s","../../../../src/Peridigm","."]
+    command = ["ln","-f","-s","../../../../../src/Peridigm","./templatedir"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:
