@@ -48,8 +48,6 @@
 #ifndef PERIDIGM_HPP
 #define PERIDIGM_HPP
 
-//#define MULTIPLE_BLOCKS
-
 #include <vector>
 #include <set>
 

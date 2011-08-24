@@ -85,6 +85,7 @@ void Contact<EvalT, Traits>::evaluateFields(typename Traits::EvalData cellData)
   if(m_verbose)
     cout << "CHECK inside Contact::evaluateFields()\n" << endl;
 
+#ifndef MULTIPLE_BLOCKS
   const double dt = *cellData.timeStep;
   const int numOwnedPoints = cellData.contactNeighborhoodData->NumOwnedPoints();
   const int* ownedIDs = cellData.contactNeighborhoodData->OwnedIDs();
@@ -100,25 +101,26 @@ void Contact<EvalT, Traits>::evaluateFields(typename Traits::EvalData cellData)
                              contactNeighborhoodList,
                              dataManager);
 
+#else
+   const double dt = *cellData.timeStep;
 
-//   const double dtTEST = *cellData.timeStep;
+  std::vector<PeridigmNS::Block>::iterator blockIt;
+  for(blockIt = cellData.blocks->begin() ; blockIt != cellData.blocks->end() ; blockIt++){
 
-//   std::vector<PeridigmNS::Block>::iterator blockIt;
-//   for(blockIt = cellData.blocks->begin() ; blockIt != cellData.blocks->end() ; blockIt++){
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> contactNeighborhoodData = blockIt->getContactNeighborhoodData();
+    const int numOwnedPointsTEST = contactNeighborhoodData->NumOwnedPoints();
+    const int* ownedIDsTEST = contactNeighborhoodData->OwnedIDs();
+    const int* neighborhoodListTEST = contactNeighborhoodData->NeighborhoodList();
+    Teuchos::RCP<PeridigmNS::DataManager> dataManagerTEST = blockIt->getDataManager();
+    Teuchos::RCP<const PeridigmNS::ContactModel> contactModel = blockIt->getContactModel();
 
-//     Teuchos::RCP<PeridigmNS::NeighborhoodData> contactNeighborhoodData = blockIt->getContactNeighborhoodData();
-//     const int numOwnedPointsTEST = contactNeighborhoodData->NumOwnedPoints();
-//     const int* ownedIDsTEST = contactNeighborhoodData->OwnedIDs();
-//     const int* neighborhoodListTEST = contactNeighborhoodData->NeighborhoodList();
-//     Teuchos::RCP<PeridigmNS::DataManager> dataManagerTEST = blockIt->getDataManager();
-//     Teuchos::RCP<const PeridigmNS::ContactModel> contactModel = blockIt->getContactModel();
-
-//     if(!contactModel.is_null())
-//       contactModel->computeForce(dtTEST, 
-//                                  numOwnedPointsTEST,
-//                                  ownedIDsTEST,
-//                                  neighborhoodListTEST,
-//                                  *dataManagerTEST);
-//   }
+    if(!contactModel.is_null())
+      contactModel->computeForce(dt, 
+                                 numOwnedPointsTEST,
+                                 ownedIDsTEST,
+                                 neighborhoodListTEST,
+                                 *dataManagerTEST);
+  }
+#endif
 }
 
