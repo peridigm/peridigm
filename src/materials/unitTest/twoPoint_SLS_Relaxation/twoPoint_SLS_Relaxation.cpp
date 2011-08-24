@@ -97,9 +97,7 @@ inline double MAGNITUDE(const double *x){
 	return sqrt(x1*x1+x2*x2+x3*x3);
 }
 
-enum CASE {MAXWELL_MODEL=0,STANDARD_LINEAR_SOLID=1};
-
-Teuchos::ParameterList getParamList(CASE model)
+Teuchos::ParameterList getParamList(double tau_b_scale_factor=1.0)
 {
 	/*
 	 * Horizon for this problem
@@ -130,20 +128,7 @@ Teuchos::ParameterList getParamList(CASE model)
 	/*
 	 * Material time constant: Creep time
 	 */
-	double tau = tau_b;
-	switch(model) {
-	case MAXWELL_MODEL:
-		/*
-		 * 'maxwell' model, tau=tau_b
-		 */
-		break;
-	case STANDARD_LINEAR_SOLID:
-		/*
-		 * tau>0, tau_b >0 and tau != tau_b
-		 * Arbitrarily assigning tau=2*tau_b
-		 */
-		tau=2.0 * tau_b;
-	}
+	double tau = tau_b_scale_factor*tau_b;
 
 	Teuchos::ParameterList params;
 
@@ -438,7 +423,8 @@ double runPureShear(Teuchos::ParameterList& paramList, std::string output_file_n
 
 
 void case_1() {
-	Teuchos::ParameterList paramList = getParamList(MAXWELL_MODEL);
+	double scale=1.0;
+	Teuchos::ParameterList paramList = getParamList(scale);
 	ViscoelasticStandardLinearSolid mat(paramList);
 	double f=runPureShear(paramList,"twoPoint_Maxwell_Relaxation.dat");
 	/*
@@ -456,7 +442,8 @@ void case_1() {
 }
 
 void case_2() {
-	Teuchos::ParameterList paramList = getParamList(STANDARD_LINEAR_SOLID);
+	double scale=2.0;
+	Teuchos::ParameterList paramList = getParamList(scale);
 	ViscoelasticStandardLinearSolid mat(paramList);
 	double f=runPureShear(paramList,"twoPoint_SLS_Relaxation.dat");
 	/*
@@ -477,6 +464,31 @@ void case_2() {
 	BOOST_CHECK_SMALL(rel_diff,tolerance);
 }
 
+void case_1000() {
+	/*
+	 * This produces the 'elastic' response
+	 */
+	double scale=1000.0;
+	Teuchos::ParameterList paramList = getParamList(scale);
+	ViscoelasticStandardLinearSolid mat(paramList);
+	double f=runPureShear(paramList,"twoPoint_SLS_tau_1000.dat");
+	/*
+	 * Last value computed: tests time integrator against exact value
+	 */
+	double tEnd=6.0;
+	double tau = paramList.get<double>("tau");
+	double tau_b = paramList.get<double>("tau b");
+
+	double m = 2.0;
+	double alpha = 15.0 * E / (1+nu) / 2.0 / m;
+	double e_infinity=alpha * (1 - tau_b/tau);
+	double ed0=1.0e-6/sqrt(2);
+	double td_long=e_infinity * ed0;
+	double fEnd=td_long + alpha * tau_b * ed0 * exp(-tEnd/tau_b) / tau;
+	double rel_diff = std::fabs(2.0*fEnd-f)/fEnd;
+	double tolerance=1.0e-6;
+	BOOST_CHECK_SMALL(rel_diff,tolerance);
+}
 
 
 
@@ -488,6 +500,7 @@ bool init_unit_test_suite()
   test_suite* proc = BOOST_TEST_SUITE("twoPoint_SLS_Relaxation");
   proc->add(BOOST_TEST_CASE(&case_1));
   proc->add(BOOST_TEST_CASE(&case_2));
+  proc->add(BOOST_TEST_CASE(&case_1000));
   framework::master_test_suite().add(proc);
 
   return success;
