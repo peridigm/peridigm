@@ -186,10 +186,12 @@ namespace PeridigmNS {
     //! @name Acessors for maps 
     //@{ 
     Teuchos::RCP<const Epetra_BlockMap> getOneDimensionalMap() { return oneDimensionalMap; }
-    Teuchos::RCP<const Epetra_BlockMap> getOneDimensionalOverlapMap() { return oneDimensionalOverlapMap; }
     Teuchos::RCP<const Epetra_BlockMap> getThreeDimensionalMap() { return threeDimensionalMap; }
-    Teuchos::RCP<const Epetra_BlockMap> getThreeDimensionalOverlapMap() { return threeDimensionalOverlapMap; }
     Teuchos::RCP<const Epetra_BlockMap> getBondMap() { return bondMap; }
+#ifndef MULTIPLE_BLOCKS
+    Teuchos::RCP<const Epetra_BlockMap> getOneDimensionalOverlapMap() { return oneDimensionalOverlapMap; }
+    Teuchos::RCP<const Epetra_BlockMap> getThreeDimensionalOverlapMap() { return threeDimensionalOverlapMap; }
+#endif
     //@}
 
     //! @name Accessors for main solver-level vectors
@@ -207,8 +209,8 @@ namespace PeridigmNS {
 
     //! @name Accessors for neighborhood data
     //@{
-    Teuchos::RCP<const PeridigmNS::NeighborhoodData> getNeighborhoodData() { return neighborhoodData; }
-    Teuchos::RCP<const PeridigmNS::NeighborhoodData> getContactNeighborhoodData() { return contactNeighborhoodData; }
+    Teuchos::RCP<const PeridigmNS::NeighborhoodData> getGlobalNeighborhoodData() { return globalNeighborhoodData; }
+    Teuchos::RCP<const PeridigmNS::NeighborhoodData> getGlobalContactNeighborhoodData() { return globalContactNeighborhoodData; }
     //@}
 
     //! Accessor for DataManagers
@@ -224,7 +226,16 @@ namespace PeridigmNS {
     }
 
     //! Accessor for Material Models
-    Teuchos::RCP< std::vector< Teuchos::RCP<const PeridigmNS::Material> > > getMaterialModels() {return materialModels; }
+    Teuchos::RCP< std::vector< Teuchos::RCP<const PeridigmNS::Material> > > getMaterialModels() {
+#ifndef MULTIPLE_BLOCKS
+      return materialModels;
+#else
+      // \todo This will break for multiple blocks.
+      Teuchos::RCP< std::vector< Teuchos::RCP<const PeridigmNS::Material> > > tempHack = Teuchos::rcp(new std::vector< Teuchos::RCP<const PeridigmNS::Material> >());
+      tempHack->push_back( blocks->begin()->getMaterialModel() );
+      return tempHack;
+#endif
+    }
 
     //! Return list of field specs used by Peridigm object
     std::vector<Field_NS::FieldSpec> getFieldSpecs();
@@ -248,14 +259,16 @@ namespace PeridigmNS {
 
     //! Maps for scalar, vector, and bond data
     Teuchos::RCP<const Epetra_BlockMap> oneDimensionalMap;
-    Teuchos::RCP<const Epetra_BlockMap> oneDimensionalOverlapMap;
     Teuchos::RCP<const Epetra_BlockMap> threeDimensionalMap;
-    Teuchos::RCP<const Epetra_BlockMap> threeDimensionalOverlapMap;
     Teuchos::RCP<const Epetra_BlockMap> bondMap;
+    Teuchos::RCP<const Epetra_BlockMap> oneDimensionalOverlapMap;
+#ifndef MULTIPLE_BLOCKS
+    Teuchos::RCP<const Epetra_BlockMap> threeDimensionalOverlapMap;
 
     //! Importers and exporters from global to overlapped vectors
     Teuchos::RCP<const Epetra_Import> oneDimensionalMapToOneDimensionalOverlapMapImporter;
     Teuchos::RCP<const Epetra_Import> threeDimensionalMapToThreeDimensionalOverlapMapImporter;
+#endif
 
     //! Number of blocks in the model
     int numBlocks;
@@ -338,10 +351,10 @@ namespace PeridigmNS {
     Teuchos::RCP<Epetra_FECrsMatrix> tangent;
 
     //! List of neighbors for all locally-owned nodes
-    Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData;
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> globalNeighborhoodData;
 
     //! List of potential contact neighbors for all locally-owned nodes
-    Teuchos::RCP<PeridigmNS::NeighborhoodData> contactNeighborhoodData;
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> globalContactNeighborhoodData;
 
     //! Workset that is passed to the modelEvaluator
     Teuchos::RCP<PHAL::Workset> workset;

@@ -213,9 +213,9 @@ void PeridigmNS::Peridigm::initializeMaterials() {
   for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock){
     double dt = 0.0;
     (*materialModels)[iBlock]->initialize(dt,
-                                          neighborhoodData->NumOwnedPoints(),
-                                          neighborhoodData->OwnedIDs(),
-                                          neighborhoodData->NeighborhoodList(),
+                                          globalNeighborhoodData->NumOwnedPoints(),
+                                          globalNeighborhoodData->OwnedIDs(),
+                                          globalNeighborhoodData->NeighborhoodList(),
                                           *(*dataManagers)[iBlock]);
   }
 }
@@ -239,7 +239,9 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
   // threeDimensionalOverlapMap
   // used for positions, displacements, velocities and vector constitutive data
   // includes ghosts
+#ifndef MULTIPLE_BLOCKS
   threeDimensionalOverlapMap = peridigmDisc->getGlobalOverlapMap(3);
+#endif
 
   // bondConstitutiveDataMap
   // a non-overlapping map used for storing constitutive data on bonds
@@ -270,11 +272,13 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
   blas.COPY(y->MyLength(), initialX, yPtr);
 
   // Create the importers
+#ifndef MULTIPLE_BLOCKS
   oneDimensionalMapToOneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*oneDimensionalOverlapMap, *oneDimensionalMap));
   threeDimensionalMapToThreeDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*threeDimensionalOverlapMap, *threeDimensionalMap));
+#endif
 
   // get the neighborlist from the discretization
-  neighborhoodData = peridigmDisc->getNeighborhoodData();
+  globalNeighborhoodData = peridigmDisc->getNeighborhoodData();
 }
 
 void PeridigmNS::Peridigm::initializeBlocks(Teuchos::RCP<AbstractDiscretization> peridigmDisc) {
@@ -525,11 +529,14 @@ void PeridigmNS::Peridigm::initializeContact() {
         // Add the horizon to the contact model parameters, if needed
         if(!contactModelParams.sublist(name).isParameter("Horizon"))
           contactModelParams.sublist(name).set("Horizon", discParams->get<double>("Horizon"));
-        contactModels->push_back( contactModelFactory.create(contactModelParams) );
 
+#ifndef MULTIPLE_BLOCKS
+        contactModels->push_back( contactModelFactory.create(contactModelParams) );
+#else
         // \todo This will break for multiple material blocks, need scheme to associate blocks with contact models
         for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
           blockIt->setContactModel( contactModelFactory.create(contactModelParams) );
+#endif
       }
     }
   }
@@ -545,9 +552,9 @@ void PeridigmNS::Peridigm::initializeWorkset() {
   // \todo This will break for multiple blocks.
   workset->dataManager = (*dataManagers)[0];
   workset->materialModels = materialModels;
-  workset->neighborhoodData = neighborhoodData;
+  workset->neighborhoodData = globalNeighborhoodData;
   workset->contactModels = contactModels;
-  workset->contactNeighborhoodData = contactNeighborhoodData;
+  workset->contactNeighborhoodData = globalContactNeighborhoodData;
 #else
   workset->blocks = blocks;
 #endif
@@ -717,7 +724,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
   PeridigmNS::Timer::self().startTimer("Output");
   this->synchDataManagers();
 #ifndef MULTIPLE_BLOCKS
-  outputManager->write((*dataManagers)[0],neighborhoodData,timeCurrent);
+  outputManager->write((*dataManagers)[0],globalNeighborhoodData,timeCurrent);
 #else
   // \todo This will fail for multiple material blocks.
   outputManager->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),timeCurrent);
@@ -841,7 +848,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
     PeridigmNS::Timer::self().startTimer("Output");
     this->synchDataManagers();
 #ifndef MULTIPLE_BLOCKS
-    outputManager->write((*dataManagers)[0],neighborhoodData,timeCurrent);
+    outputManager->write((*dataManagers)[0],globalNeighborhoodData,timeCurrent);
 #else
     // \todo This will break for multiple materials.
     outputManager->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),timeCurrent);
@@ -894,7 +901,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
   this->synchDataManagers();
 
 #ifndef MULTIPLE_BLOCKS
-    outputManager->write((*dataManagers)[0],neighborhoodData,timeCurrent);
+    outputManager->write((*dataManagers)[0],globalNeighborhoodData,timeCurrent);
 #else
     // \todo This will break for multiple materials.
     outputManager->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),timeCurrent);
@@ -975,7 +982,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
     PeridigmNS::Timer::self().startTimer("Output");
     this->synchDataManagers();
 #ifndef MULTIPLE_BLOCKS
-    outputManager->write((*dataManagers)[0],neighborhoodData,timeCurrent);
+    outputManager->write((*dataManagers)[0],globalNeighborhoodData,timeCurrent);
 #else
     // \todo This will break for multiple materials.
     outputManager->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),timeCurrent);
@@ -1061,7 +1068,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
   PeridigmNS::Timer::self().startTimer("Output");
   this->synchDataManagers();
 #ifndef MULTIPLE_BLOCKS
-    outputManager->write((*dataManagers)[0],neighborhoodData,timeCurrent);
+    outputManager->write((*dataManagers)[0],globalNeighborhoodData,timeCurrent);
 #else
     // \todo This will break for multiple materials.
     outputManager->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),timeCurrent);
@@ -1238,7 +1245,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
     PeridigmNS::Timer::self().startTimer("Output");
     this->synchDataManagers();
 #ifndef MULTIPLE_BLOCKS
-    outputManager->write((*dataManagers)[0],neighborhoodData,timeCurrent);
+    outputManager->write((*dataManagers)[0],globalNeighborhoodData,timeCurrent);
 #else
     // \todo This will break for multiple materials.
     outputManager->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),timeCurrent);
@@ -1284,9 +1291,9 @@ void PeridigmNS::Peridigm::allocateJacobian() {
   // Loop over the neighborhood for each locally-owned point and create non-zero entries in the matrix
   vector<int> globalIndicies;
   vector<double> zeros;
-  int* neighborhoodList = neighborhoodData->NeighborhoodList();
+  int* neighborhoodList = globalNeighborhoodData->NeighborhoodList();
   int neighborhoodListIndex = 0;
-  for(int LID=0 ; LID<neighborhoodData->NumOwnedPoints() ; ++LID){
+  for(int LID=0 ; LID<globalNeighborhoodData->NumOwnedPoints() ; ++LID){
     int GID =  oneDimensionalOverlapMap->GID(LID);
     int numNeighbors = neighborhoodList[neighborhoodListIndex++];
     unsigned int numEntries = 3*(numNeighbors+1);
@@ -1590,8 +1597,10 @@ void PeridigmNS::Peridigm::rebalance() {
     Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, 3, indexBase, *peridigmComm));
   delete[] myGlobalElements;
 
+#ifndef MULTIPLE_BLOCKS
   Teuchos::RCP<const Epetra_Import> oneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedOneDimensionalOverlapMap, *oneDimensionalOverlapMap));
   Teuchos::RCP<const Epetra_Import> threeDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedThreeDimensionalOverlapMap, *threeDimensionalOverlapMap));
+#endif
 
   // create a new NeighborhoodData object
   Teuchos::RCP<PeridigmNS::NeighborhoodData> rebalancedNeighborhoodData = createRebalancedNeighborhoodData(rebalancedOneDimensionalMap,
@@ -1640,19 +1649,22 @@ void PeridigmNS::Peridigm::rebalance() {
   oneDimensionalMap = rebalancedOneDimensionalMap;
   oneDimensionalOverlapMap = rebalancedOneDimensionalOverlapMap;
   threeDimensionalMap = rebalancedThreeDimensionalMap;
+#ifndef MULTIPLE_BLOCKS
   threeDimensionalOverlapMap = rebalancedThreeDimensionalOverlapMap;
+#endif
   bondMap = rebalancedBondMap;
 
   // update neighborhood data
-  neighborhoodData = rebalancedNeighborhoodData;
-  contactNeighborhoodData = rebalancedContactNeighborhoodData;
+  globalNeighborhoodData = rebalancedNeighborhoodData;
+  globalContactNeighborhoodData = rebalancedContactNeighborhoodData;
 #ifndef MULTIPLE_BLOCKS
-  workset->neighborhoodData = neighborhoodData; // \todo Better handling of workset, shouldn't have to do this here.
-  workset->contactNeighborhoodData = contactNeighborhoodData;
-#endif
+  workset->neighborhoodData = globalNeighborhoodData; // \todo Better handling of workset, shouldn't have to do this here.
+  workset->contactNeighborhoodData = globalContactNeighborhoodData;
+
   // update importers
   oneDimensionalMapToOneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*oneDimensionalOverlapMap, *oneDimensionalMap));
   threeDimensionalMapToThreeDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*threeDimensionalOverlapMap, *threeDimensionalMap));
+#endif
 }
 
 QUICKGRID::Data PeridigmNS::Peridigm::currentConfigurationDecomp() {
@@ -1756,10 +1768,10 @@ Teuchos::RCP<Epetra_Vector> PeridigmNS::Peridigm::createRebalancedNeighborGlobal
 
   // construct a globalID neighbor list for the current decomposition
   Teuchos::RCP<Epetra_Vector> neighborGlobalIDs = Teuchos::rcp(new Epetra_Vector(*bondMap));
-  int* neighborhoodList = neighborhoodData->NeighborhoodList();
+  int* neighborhoodList = globalNeighborhoodData->NeighborhoodList();
   int neighborhoodListIndex = 0;
   int neighborGlobalIDIndex = 0;
-  for(int i=0 ; i<neighborhoodData->NumOwnedPoints() ; ++i){
+  for(int i=0 ; i<globalNeighborhoodData->NumOwnedPoints() ; ++i){
     int numNeighbors = neighborhoodList[neighborhoodListIndex++];
     for(int j=0 ; j<numNeighbors ; ++j){
       int neighborLocalID = neighborhoodList[neighborhoodListIndex++];
