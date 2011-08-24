@@ -90,7 +90,9 @@ namespace PeridigmNS {
     void instantiateMaterials();
 
     //! Initialize material objects
+#ifndef MULTIPLE_BLOCKS
     void initializeMaterials();
+#endif
 
     //! Initialize discretization and maps
     void initializeDiscretization(Teuchos::RCP<AbstractDiscretization> peridigmDisc);
@@ -103,7 +105,9 @@ namespace PeridigmNS {
                             Teuchos::RCP<AbstractDiscretization> peridigmDisc);
 
     //! Initialize DataManagers
+#ifndef MULTIPLE_BLOCKS
     void initializeDataManagers(Teuchos::RCP<AbstractDiscretization> peridigmDisc);
+#endif
 
     //! Apply boundary conditions
     void applyInitialVelocities();
@@ -282,8 +286,10 @@ namespace PeridigmNS {
     //! Compute manager
     Teuchos::RCP<PeridigmNS::ComputeManager> computeManager;
 
+#ifndef MULTIPLE_BLOCKS
     //! Data managers (one for each block)
     Teuchos::RCP< std::vector< Teuchos::RCP<PeridigmNS::DataManager> > > dataManagers;
+#endif
 
     //! Mothership multivector that contains all the global vectors (x, u, y, v, a, force, etc.)
     Teuchos::RCP<Epetra_MultiVector> mothership;
