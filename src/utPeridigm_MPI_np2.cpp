@@ -243,7 +243,7 @@ void rebalanceTwoPointModel()
   Epetra_Vector damageNP1(*(*peridigm->getDataManagers())[0]->getData(Field_NS::DAMAGE, Field_ENUM::STEP_NP1));
   Epetra_Vector bondDamageN(*(*peridigm->getDataManagers())[0]->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_N));
   Epetra_Vector bondDamageNP1(*(*peridigm->getDataManagers())[0]->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1));
-  PeridigmNS::NeighborhoodData neighborhoodData(*peridigm->getNeighborhoodData());
+  PeridigmNS::NeighborhoodData neighborhoodData(*peridigm->getGlobalNeighborhoodData());
   //PeridigmNS::NeighborhoodData contactNeighborhoodData(*peridigm->getContactNeighborhoodData());
 
   // call the rebalance function, which should produce no changes
@@ -302,14 +302,14 @@ void rebalanceTwoPointModel()
   for(int i=0 ; i<dataManager->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(bondDamageNP1[i], (*dataManager->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1))[i], 1.0e-15);
   // check neighborhood data
-  BOOST_CHECK_EQUAL(neighborhoodData.NumOwnedPoints(), peridigm->getNeighborhoodData()->NumOwnedPoints());
-  BOOST_CHECK_EQUAL(neighborhoodData.NeighborhoodListSize(), peridigm->getNeighborhoodData()->NeighborhoodListSize());
-  for(int i=0 ; i<peridigm->getNeighborhoodData()->NumOwnedPoints() ; ++i){
-    BOOST_CHECK_EQUAL(neighborhoodData.OwnedIDs()[i], peridigm->getNeighborhoodData()->OwnedIDs()[i]);
-    BOOST_CHECK_EQUAL(neighborhoodData.NeighborhoodPtr()[i], peridigm->getNeighborhoodData()->NeighborhoodPtr()[i]);
+  BOOST_CHECK_EQUAL(neighborhoodData.NumOwnedPoints(), peridigm->getGlobalNeighborhoodData()->NumOwnedPoints());
+  BOOST_CHECK_EQUAL(neighborhoodData.NeighborhoodListSize(), peridigm->getGlobalNeighborhoodData()->NeighborhoodListSize());
+  for(int i=0 ; i<peridigm->getGlobalNeighborhoodData()->NumOwnedPoints() ; ++i){
+    BOOST_CHECK_EQUAL(neighborhoodData.OwnedIDs()[i], peridigm->getGlobalNeighborhoodData()->OwnedIDs()[i]);
+    BOOST_CHECK_EQUAL(neighborhoodData.NeighborhoodPtr()[i], peridigm->getGlobalNeighborhoodData()->NeighborhoodPtr()[i]);
   }
-  for(int i=0 ; i<peridigm->getNeighborhoodData()->NeighborhoodListSize() ; ++i){
-    BOOST_CHECK_EQUAL(neighborhoodData.NeighborhoodList()[i], peridigm->getNeighborhoodData()->NeighborhoodList()[i]);
+  for(int i=0 ; i<peridigm->getGlobalNeighborhoodData()->NeighborhoodListSize() ; ++i){
+    BOOST_CHECK_EQUAL(neighborhoodData.NeighborhoodList()[i], peridigm->getGlobalNeighborhoodData()->NeighborhoodList()[i]);
   }
 }
 
@@ -351,7 +351,7 @@ void rebalanceEightPointModel()
   Epetra_Vector damageNP1(*(*peridigm->getDataManagers())[0]->getData(Field_NS::DAMAGE, Field_ENUM::STEP_NP1));
   Epetra_Vector bondDamageN(*(*peridigm->getDataManagers())[0]->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_N));
   Epetra_Vector bondDamageNP1(*(*peridigm->getDataManagers())[0]->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1));
-  PeridigmNS::NeighborhoodData neighborhoodData(*peridigm->getNeighborhoodData());
+  PeridigmNS::NeighborhoodData neighborhoodData(*peridigm->getGlobalNeighborhoodData());
   //PeridigmNS::NeighborhoodData contactNeighborhoodData(*peridigm->getContactNeighborhoodData());
 
   // call the rebalance function, which should produce to changes
@@ -410,14 +410,14 @@ void rebalanceEightPointModel()
   for(int i=0 ; i<dataManager->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(bondDamageNP1[i], (*dataManager->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1))[i], 1.0e-15);
   // check neighborhood data
-  BOOST_CHECK_EQUAL(neighborhoodData.NumOwnedPoints(), peridigm->getNeighborhoodData()->NumOwnedPoints());
-  BOOST_CHECK_EQUAL(neighborhoodData.NeighborhoodListSize(), peridigm->getNeighborhoodData()->NeighborhoodListSize());
-  for(int i=0 ; i<peridigm->getNeighborhoodData()->NumOwnedPoints() ; ++i){
-    BOOST_CHECK_EQUAL(neighborhoodData.OwnedIDs()[i], peridigm->getNeighborhoodData()->OwnedIDs()[i]);
-    BOOST_CHECK_EQUAL(neighborhoodData.NeighborhoodPtr()[i], peridigm->getNeighborhoodData()->NeighborhoodPtr()[i]);
+  BOOST_CHECK_EQUAL(neighborhoodData.NumOwnedPoints(), peridigm->getGlobalNeighborhoodData()->NumOwnedPoints());
+  BOOST_CHECK_EQUAL(neighborhoodData.NeighborhoodListSize(), peridigm->getGlobalNeighborhoodData()->NeighborhoodListSize());
+  for(int i=0 ; i<peridigm->getGlobalNeighborhoodData()->NumOwnedPoints() ; ++i){
+    BOOST_CHECK_EQUAL(neighborhoodData.OwnedIDs()[i], peridigm->getGlobalNeighborhoodData()->OwnedIDs()[i]);
+    BOOST_CHECK_EQUAL(neighborhoodData.NeighborhoodPtr()[i], peridigm->getGlobalNeighborhoodData()->NeighborhoodPtr()[i]);
   }
-  for(int i=0 ; i<peridigm->getNeighborhoodData()->NeighborhoodListSize() ; ++i){
-    BOOST_CHECK_EQUAL(neighborhoodData.NeighborhoodList()[i], peridigm->getNeighborhoodData()->NeighborhoodList()[i]);
+  for(int i=0 ; i<peridigm->getGlobalNeighborhoodData()->NeighborhoodListSize() ; ++i){
+    BOOST_CHECK_EQUAL(neighborhoodData.NeighborhoodList()[i], peridigm->getGlobalNeighborhoodData()->NeighborhoodList()[i]);
   }
 }
 
@@ -492,7 +492,7 @@ void rebalanceEightPointModelSwitchCorners()
   Teuchos::RCP<Epetra_Vector> bondDamageNP1 = dataManager->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1);
   if(rank == 0){
     // break the second bond for the point with global ID 2
-    Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData = peridigm->getNeighborhoodData();
+    Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData = peridigm->getGlobalNeighborhoodData();
     int numOwnedPoints = neighborhoodData->NumOwnedPoints();
     int* ownedIDs = neighborhoodData->OwnedIDs();
     int* neighborhoodList = neighborhoodData->NeighborhoodList();
@@ -515,7 +515,7 @@ void rebalanceEightPointModelSwitchCorners()
   }
   else if(rank == 1){
     // break the seventh bond for the point with global ID 7
-    Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData = peridigm->getNeighborhoodData();
+    Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData = peridigm->getGlobalNeighborhoodData();
     int numOwnedPoints = neighborhoodData->NumOwnedPoints();
     int* ownedIDs = neighborhoodData->OwnedIDs();
     int* neighborhoodList = neighborhoodData->NeighborhoodList();
@@ -654,7 +654,7 @@ void rebalanceEightPointModelSwitchCorners()
   bondDamageNP1 = dataManager->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1);
   if(rank == 0){
     // all bonds should be intact except for the seventh bond for the point with global ID 7.
-    Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData = peridigm->getNeighborhoodData();
+    Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData = peridigm->getGlobalNeighborhoodData();
     int numOwnedPoints = neighborhoodData->NumOwnedPoints();
     int* ownedIDs = neighborhoodData->OwnedIDs();
     int* neighborhoodList = neighborhoodData->NeighborhoodList();
@@ -682,7 +682,7 @@ void rebalanceEightPointModelSwitchCorners()
   }
   else if(rank == 1){
     // all bonds should be intact except for the second bond for the point with global ID 2.
-    Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData = peridigm->getNeighborhoodData();
+    Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData = peridigm->getGlobalNeighborhoodData();
     int numOwnedPoints = neighborhoodData->NumOwnedPoints();
     int* ownedIDs = neighborhoodData->OwnedIDs();
     int* neighborhoodList = neighborhoodData->NeighborhoodList();
