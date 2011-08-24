@@ -87,6 +87,7 @@ void UpdateForceState<EvalT, Traits>::evaluateFields(typename Traits::EvalData c
 {
   Teuchos::RCP<Teuchos::FancyOStream> out = Teuchos::VerboseObjectBase::getDefaultOStream();
 
+#ifndef MULTIPLE_BLOCKS
   const double dt = *cellData.timeStep;
   const int numOwnedPoints = cellData.neighborhoodData->NumOwnedPoints();
   const int* ownedIDs = cellData.neighborhoodData->OwnedIDs();
@@ -104,8 +105,8 @@ void UpdateForceState<EvalT, Traits>::evaluateFields(typename Traits::EvalData c
                                    dataManager);
 
 
-#if 0
-  const double dtTEST = *cellData.timeStep;
+#else
+  const double dt = *cellData.timeStep;
 
   std::vector<PeridigmNS::Block>::iterator blockIt;
   for(blockIt = cellData.blocks->begin() ; blockIt != cellData.blocks->end() ; blockIt++){
@@ -117,7 +118,7 @@ void UpdateForceState<EvalT, Traits>::evaluateFields(typename Traits::EvalData c
     Teuchos::RCP<PeridigmNS::DataManager> dataManagerTEST = blockIt->getDataManager();
     Teuchos::RCP<const PeridigmNS::Material> materialModel = blockIt->getMaterialModel();
 
-    materialModel->updateConstitutiveData(dtTEST, 
+    materialModel->updateConstitutiveData(dt, 
                                           numOwnedPointsTEST,
                                           ownedIDsTEST,
                                           neighborhoodListTEST,
