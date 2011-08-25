@@ -225,7 +225,7 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
 
   // oneDimensionalMap
   // used for cell volumes and scalar constitutive data
-  oneDimensionalMap = peridigmDisc->getGlobalMap(1); 
+  oneDimensionalMap = peridigmDisc->getGlobalOwnedMap(1); 
 
   // oneDimensionalOverlapMap
   // used for cell volumes and scalar constitutive data
@@ -234,7 +234,7 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
 
   // threeDimensionalMap
   // used for positions, displacements, velocities and vector constitutive data
-  threeDimensionalMap = peridigmDisc->getGlobalMap(3);
+  threeDimensionalMap = peridigmDisc->getGlobalOwnedMap(3);
 
   // threeDimensionalOverlapMap
   // used for positions, displacements, velocities and vector constitutive data
@@ -245,13 +245,13 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
 
   // bondConstitutiveDataMap
   // a non-overlapping map used for storing constitutive data on bonds
-  bondMap = peridigmDisc->getBondMap();
+  bondMap = peridigmDisc->getGlobalBondMap();
 
   // Create mothership vector
   // \todo Do not allocate space for the contact force, residual, and deltaU if not needed.
   mothership = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalMap, 10));
   // Set ref-count pointers for each of the global vectors
-  blockID = Teuchos::rcp((*mothership)(0), false);       // block ID
+  blockIDs = Teuchos::rcp((*mothership)(0), false);      // block ID
   x = Teuchos::rcp((*mothership)(1), false);             // initial positions
   u = Teuchos::rcp((*mothership)(2), false);             // displacement
   y = Teuchos::rcp((*mothership)(3), false);             // current positions
@@ -265,9 +265,9 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
   // Set the block IDs
   double* bID;
   peridigmDisc->getBlockID()->ExtractView(&bID);
-  double* blockIDPtr;
-  blockID->ExtractView(&blockIDPtr);
-  blas.COPY(blockID->MyLength(), bID, blockIDPtr);
+  double* blockIDsPtr;
+  blockIDs->ExtractView(&blockIDsPtr);
+  blas.COPY(blockIDs->MyLength(), bID, blockIDsPtr);
 
   // Set the initial positions
   double* initialX;
@@ -297,13 +297,14 @@ void PeridigmNS::Peridigm::initializeBlocks(Teuchos::RCP<AbstractDiscretization>
   // Create a PeridigmNS::Block for each element block, set the maps, and set the neighborhood.
   for(unsigned int iBlock=0 ; iBlock<blockNames.size() ; ++iBlock){
     std::string blockName = blockNames[iBlock];
-    PeridigmNS::Block block(blockName);
-    block.setOwnedScalarPointMap( peridigmDisc->getElementBlockOwnedMap(blockName, 1) );
-    block.setOverlapScalarPointMap( peridigmDisc->getElementBlockOverlapMap(blockName, 1) );
-    block.setOwnedVectorPointMap( peridigmDisc->getElementBlockOwnedMap(blockName, 3) );
-    block.setOverlapVectorPointMap( peridigmDisc->getElementBlockOverlapMap(blockName, 3) );
-    block.setOwnedScalarBondMap( peridigmDisc->getElementBlockBondMap(blockName) );
-    block.setNeighborhoodData( peridigmDisc->getElementBlockNeighborhoodData(blockName) );
+    PeridigmNS::Block block(blockName, iBlock+1);
+    block.createMapsFromGlobalMaps(peridigmDisc->getGlobalOwnedMap(1),
+                                   peridigmDisc->getGlobalOverlapMap(1),
+                                   peridigmDisc->getGlobalOwnedMap(3),
+                                   peridigmDisc->getGlobalOverlapMap(3),
+                                   peridigmDisc->getGlobalBondMap(),
+                                   blockIDs,
+                                   globalNeighborhoodData);
     blocks->push_back(block);
   }
 }
@@ -1627,7 +1628,7 @@ void PeridigmNS::Peridigm::rebalance() {
   Teuchos::RCP<Epetra_MultiVector> rebalancedMothership = Teuchos::rcp(new Epetra_MultiVector(*rebalancedThreeDimensionalMap, mothership->NumVectors()));
   rebalancedMothership->Import(*mothership, *threeDimensionalMapImporter, Insert);
   mothership = rebalancedMothership;
-  blockID = Teuchos::rcp((*mothership)(0), false);       // block ID
+  blockIDs = Teuchos::rcp((*mothership)(0), false);      // block ID
   x = Teuchos::rcp((*mothership)(1), false);             // initial positions
   u = Teuchos::rcp((*mothership)(2), false);             // displacement
   y = Teuchos::rcp((*mothership)(3), false);             // current positions
@@ -1751,7 +1752,7 @@ void PeridigmNS::Peridigm::rebalance() {
   Teuchos::RCP<Epetra_MultiVector> rebalancedMothership = Teuchos::rcp(new Epetra_MultiVector(*rebalancedThreeDimensionalMap, mothership->NumVectors()));
   rebalancedMothership->Import(*mothership, *threeDimensionalMapImporter, Insert);
   mothership = rebalancedMothership;
-  blockID = Teuchos::rcp((*mothership)(0), false);       // block ID
+  blockIDs = Teuchos::rcp((*mothership)(0), false);      // block ID
   x = Teuchos::rcp((*mothership)(1), false);             // initial positions
   u = Teuchos::rcp((*mothership)(2), false);             // displacement
   y = Teuchos::rcp((*mothership)(3), false);             // current positions
@@ -1781,7 +1782,8 @@ void PeridigmNS::Peridigm::rebalance() {
   // 1) set up discretizations to return global maps, vector of block IDs
   // 2) have Peridigm operate on global maps, neighborhoods (change names, make clear)
   // 3) have Block take global stuff as input, create block-specific stuff and pass downstream to DataManager
-
+  //
+  // rip out block-specific maps from discretizations
 
 
 

@@ -46,6 +46,140 @@
 //@HEADER
 
 #include "Peridigm_Block.hpp"
+#include <vector>
+#include <set>
+
+void PeridigmNS::Block::createMapsFromGlobalMaps(Teuchos::RCP<const Epetra_BlockMap> globalOwnedScalarPointMap,
+                                                 Teuchos::RCP<const Epetra_BlockMap> globalOverlapScalarPointMap,
+                                                 Teuchos::RCP<const Epetra_BlockMap> globalOwnedVectorPointMap,
+                                                 Teuchos::RCP<const Epetra_BlockMap> globalOverlapVectorPointMap,
+                                                 Teuchos::RCP<const Epetra_BlockMap> globalOwnedScalarBondMap,
+                                                 Teuchos::RCP<const Epetra_Vector>   globalBlockIds,
+                                                 Teuchos::RCP<const PeridigmNS::NeighborhoodData> globalNeighborhoodData)
+{
+  double* globalBlockIdsPtr;
+  globalBlockIds->ExtractView(&globalBlockIdsPtr);
+
+  // Create a list of all the on-processor elements that are part of this block
+
+  std::vector<int> IDs;
+  IDs.reserve(globalOverlapScalarPointMap->NumMyElements()); // upper bound
+  std::vector<int> bondIDs;
+  bondIDs.reserve(globalOverlapScalarPointMap->NumMyElements());
+  std::vector<int> bondElementSize;
+  bondElementSize.reserve(globalOwnedScalarPointMap->NumMyElements());
+
+  for(int iLID=0 ; iLID<globalOwnedScalarPointMap->NumMyElements() ; ++iLID){
+    if(globalBlockIdsPtr[iLID] == blockID) {
+      int globalID = globalOwnedScalarPointMap->GID(iLID);
+      IDs.push_back(globalID);
+    }
+  }
+
+  // Record the size of these elements in the bond map
+  // Note that if an element has no bonds, it has no entry in the bondMap
+  // So, the bond map and the scalar map can have a different number of entries (different local IDs)
+
+  for(int iLID=0 ; iLID<globalOwnedScalarBondMap->NumMyElements() ; ++iLID){
+    int globalID = globalOwnedScalarBondMap->GID(iLID);
+    int localID = globalOwnedScalarPointMap->LID(globalID);
+    if(globalBlockIdsPtr[localID] == blockID){
+      bondIDs.push_back(globalID);
+      bondElementSize.push_back(globalOwnedScalarBondMap->ElementSize(iLID));
+    }
+  }
+
+  // Create the owned scalar point map, the owned vector point map, and the owned scalar bond map
+
+  int numGlobalElements = -1;
+  int numMyElements = IDs.size();
+  int elementSize = 1;
+  int indexBase = 0;
+  ownedScalarPointMap =
+    Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, &IDs[0], elementSize, indexBase, globalOwnedScalarPointMap->Comm()));
+
+  elementSize = 3;
+  ownedVectorPointMap =
+    Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, &IDs[0], elementSize, indexBase, globalOwnedScalarPointMap->Comm()));
+
+  numMyElements = bondElementSize.size();
+  ownedScalarBondMap =
+    Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, &bondIDs[0], &bondElementSize[0], indexBase, globalOwnedScalarPointMap->Comm()));
+
+  // Create a list of nodes that need to be ghosted (both across material boundaries and across processor boundaries)
+  std::set<int> ghosts;
+  int* const globalNeighborhoodList = globalNeighborhoodData->NeighborhoodList();
+  int globalNeighborhoodListIndex = 0;
+  for(int iLID=0 ; iLID<globalNeighborhoodData->NumOwnedPoints() ; ++iLID){
+    int numNeighbors = globalNeighborhoodList[globalNeighborhoodListIndex++];
+    if(globalBlockIdsPtr[iLID] == blockID) {
+      for(int i=0 ; i<numNeighbors ; ++i){
+        int neighborGlobalID = globalOverlapScalarPointMap->GID( globalNeighborhoodList[globalNeighborhoodListIndex + i] );
+        ghosts.insert(neighborGlobalID);
+      }
+    }
+    globalNeighborhoodListIndex += numNeighbors;
+  }
+
+  // Remove entries from ghosts that are already in IDs
+  for(unsigned int i=0 ; i<IDs.size() ; ++i)
+    ghosts.erase(IDs[i]);
+
+  // Copy IDs, this is the owned global ID list
+  std::vector<int> ownedIDs(IDs.begin(), IDs.end());
+
+  // Append ghosts to IDs
+  // This creates the overlap global ID list
+  for(std::set<int>::iterator it=ghosts.begin() ; it!=ghosts.end() ; ++it)
+    IDs.push_back(*it);
+
+  // Create the overlap scalar point map and the overlap vector point map
+
+  numMyElements = IDs.size();
+  elementSize = 1;
+  overlapScalarPointMap =
+    Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, &IDs[0], elementSize, indexBase, globalOwnedScalarPointMap->Comm()));
+
+  elementSize = 3;
+  overlapVectorPointMap =
+    Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, &IDs[0], elementSize, indexBase, globalOwnedScalarPointMap->Comm()));
+
+  // Create the NeighborhoodData for this block
+  // All the IDs in the neighborhood list are local IDs into the new block-specific overlap map
+
+  std::vector<int> neighborhoodList;
+  std::vector<int> neighborhoodPtr(ownedIDs.size());
+  int* const globalNeighborhoodPtr = globalNeighborhoodData->NeighborhoodPtr();
+  for(unsigned int i=0 ; i<ownedIDs.size() ; ++i){
+    neighborhoodPtr[i] = (int)(neighborhoodList.size());
+    int globalNeighborhoodListIndex = globalNeighborhoodPtr[globalOverlapScalarPointMap->LID(ownedIDs[i])];
+    int numNeighbors = globalNeighborhoodList[globalNeighborhoodListIndex++];
+    neighborhoodList.push_back(numNeighbors);
+    for(int j=0 ; j<numNeighbors ; ++j){
+      int globalNeighborID = globalOverlapScalarPointMap->GID(globalNeighborhoodList[globalNeighborhoodListIndex++]);
+      neighborhoodList.push_back( overlapScalarPointMap->LID(globalNeighborID) );
+    }
+  }
+
+  // convert ownedIDs to local IDs into the new overlap map
+  for(unsigned int i=0 ; i<ownedIDs.size() ; ++i)
+    ownedIDs[i] = overlapScalarPointMap->LID(ownedIDs[i]);
+
+  // create the NeighborhoodData for this block
+
+  neighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
+  neighborhoodData->SetNumOwned(ownedIDs.size());
+  memcpy(neighborhoodData->OwnedIDs(), 
+ 		 &ownedIDs[0],
+ 		 ownedIDs.size()*sizeof(int));
+  memcpy(neighborhoodData->NeighborhoodPtr(), 
+ 		 &neighborhoodPtr[0],
+ 		 neighborhoodPtr.size()*sizeof(int));
+  neighborhoodData->SetNeighborhoodListSize(neighborhoodList.size());
+  memcpy(neighborhoodData->NeighborhoodList(),
+ 		 &neighborhoodList[0],
+ 		 neighborhoodList.size()*sizeof(int));
+}
 
 void PeridigmNS::Block::initializeDataManager(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs)
 {
@@ -75,7 +209,7 @@ void PeridigmNS::Block::initializeDataManager(Teuchos::RCP< std::vector<Field_NS
   }
   
   dataManager = Teuchos::rcp(new PeridigmNS::DataManager);
-  
+
   dataManager->setMaps(ownedScalarPointMap,
                        overlapScalarPointMap,
                        ownedVectorPointMap,

@@ -467,7 +467,7 @@ PeridigmNS::STKDiscretization::createNeighborhoodData(const QUICKGRID::Data& dec
 }
 
 Teuchos::RCP<const Epetra_BlockMap>
-PeridigmNS::STKDiscretization::getGlobalMap(int d) const
+PeridigmNS::STKDiscretization::getGlobalOwnedMap(int d) const
 {
   switch (d) {
     case 1:
@@ -478,7 +478,7 @@ PeridigmNS::STKDiscretization::getGlobalMap(int d) const
       break;
     default:
       TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
-                         std::endl << "STKDiscretization::getMap(int d) only supports dimensions d=1 or d=3. Supplied dimension d=" << d << std::endl); 
+                         std::endl << "STKDiscretization::getGlobalOwnedMap(int d) only supports dimensions d=1 or d=3. Supplied dimension d=" << d << std::endl); 
     }
 }
 
@@ -499,7 +499,7 @@ PeridigmNS::STKDiscretization::getGlobalOverlapMap(int d) const
 }
 
 Teuchos::RCP<const Epetra_BlockMap>
-PeridigmNS::STKDiscretization::getBondMap() const
+PeridigmNS::STKDiscretization::getGlobalBondMap() const
 {
   return bondMap;
 }
@@ -508,7 +508,7 @@ Teuchos::RCP<const Epetra_BlockMap>
 PeridigmNS::STKDiscretization::getElementBlockOwnedMap(std::string& blockName, int dimension) const
 {
   // \todo This will break for multiple blocks
-  return getGlobalMap(dimension);
+  return getGlobalOwnedMap(dimension);
 }
 
 Teuchos::RCP<const Epetra_BlockMap>
@@ -522,7 +522,7 @@ Teuchos::RCP<const Epetra_BlockMap>
 PeridigmNS::STKDiscretization::getElementBlockBondMap(std::string& blockName) const
 {
   // \todo This will break for multiple blocks
-  return getBondMap();
+  return getGlobalBondMap();
 }
 
 Teuchos::RCP<PeridigmNS::NeighborhoodData> 

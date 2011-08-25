@@ -88,12 +88,12 @@ void simpleTensorProductMesh()
     rcp(new PdQuickGridDiscretization(comm, discParams));
 
   // sanity check, calling with a dimension other than 1 or 3 should throw an exception
-  BOOST_CHECK_THROW(discretization->getGlobalMap(0), Teuchos::Exceptions::InvalidParameter);
-  BOOST_CHECK_THROW(discretization->getGlobalMap(2), Teuchos::Exceptions::InvalidParameter);
-  BOOST_CHECK_THROW(discretization->getGlobalMap(4), Teuchos::Exceptions::InvalidParameter);
+  BOOST_CHECK_THROW(discretization->getGlobalOwnedMap(0), Teuchos::Exceptions::InvalidParameter);
+  BOOST_CHECK_THROW(discretization->getGlobalOwnedMap(2), Teuchos::Exceptions::InvalidParameter);
+  BOOST_CHECK_THROW(discretization->getGlobalOwnedMap(4), Teuchos::Exceptions::InvalidParameter);
 
   // basic checks on the 1d map
-  Teuchos::RCP<const Epetra_BlockMap> map = discretization->getGlobalMap(1);
+  Teuchos::RCP<const Epetra_BlockMap> map = discretization->getGlobalOwnedMap(1);
   BOOST_CHECK(map->NumGlobalElements() == 8);
   BOOST_CHECK(map->NumMyElements() == 4);
   BOOST_CHECK(map->ElementSize() == 1);
@@ -144,7 +144,7 @@ void simpleTensorProductMesh()
   }
 
   // same checks for 3d map
-  map = discretization->getGlobalMap(3);
+  map = discretization->getGlobalOwnedMap(3);
   BOOST_CHECK(map->NumGlobalElements() == 8);
   BOOST_CHECK(map->NumMyElements() == 4);
   BOOST_CHECK(map->ElementSize() == 3);
@@ -197,7 +197,7 @@ void simpleTensorProductMesh()
   // check the bond map
   // the horizon was chosen such that each point should have three neighbors
   // note that if the NeighborhoodType parameter is not set to Spherical, this will fail
-  Teuchos::RCP<const Epetra_BlockMap> bondMap = discretization->getBondMap();
+  Teuchos::RCP<const Epetra_BlockMap> bondMap = discretization->getGlobalBondMap();
   BOOST_CHECK(bondMap->NumGlobalElements() == 8);
   BOOST_CHECK(bondMap->NumMyElements() == 4);
   BOOST_CHECK(bondMap->IndexBase() == 0);
