@@ -249,17 +249,25 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
 
   // Create mothership vector
   // \todo Do not allocate space for the contact force, residual, and deltaU if not needed.
-  mothership = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalMap, 9));
+  mothership = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalMap, 10));
   // Set ref-count pointers for each of the global vectors
-  x = Teuchos::rcp((*mothership)(0), false);             // initial positions
-  u = Teuchos::rcp((*mothership)(1), false);             // displacement
-  y = Teuchos::rcp((*mothership)(2), false);             // current positions
-  v = Teuchos::rcp((*mothership)(3), false);             // velocities
-  a = Teuchos::rcp((*mothership)(4), false);             // accelerations
-  force = Teuchos::rcp((*mothership)(5), false);         // force
-  contactForce = Teuchos::rcp((*mothership)(6), false);  // contact force (used only for contact simulations)
-  deltaU = Teuchos::rcp((*mothership)(7), false);        // increment in displacement (used only for implicit time integration)
-  residual = Teuchos::rcp((*mothership)(8), false);      // residual (used only for implicit time integration)
+  blockID = Teuchos::rcp((*mothership)(0), false);       // block ID
+  x = Teuchos::rcp((*mothership)(1), false);             // initial positions
+  u = Teuchos::rcp((*mothership)(2), false);             // displacement
+  y = Teuchos::rcp((*mothership)(3), false);             // current positions
+  v = Teuchos::rcp((*mothership)(4), false);             // velocities
+  a = Teuchos::rcp((*mothership)(5), false);             // accelerations
+  force = Teuchos::rcp((*mothership)(6), false);         // force
+  contactForce = Teuchos::rcp((*mothership)(7), false);  // contact force (used only for contact simulations)
+  deltaU = Teuchos::rcp((*mothership)(8), false);        // increment in displacement (used only for implicit time integration)
+  residual = Teuchos::rcp((*mothership)(9), false);      // residual (used only for implicit time integration)
+
+  // Set the block IDs
+  double* bID;
+  peridigmDisc->getBlockID()->ExtractView(&bID);
+  double* blockIDPtr;
+  blockID->ExtractView(&blockIDPtr);
+  blas.COPY(blockID->MyLength(), bID, blockIDPtr);
 
   // Set the initial positions
   double* initialX;
@@ -1539,6 +1547,8 @@ void PeridigmNS::Peridigm::synchDataManagers() {
 
 void FalseDeleter(Epetra_Comm* c) {}
 
+#ifndef MULTIPLE_BLOCKS
+
 void PeridigmNS::Peridigm::rebalance() {
 
   // \todo Handle serial case.  We don't need to rebalance, but we still want to update the contact search.
@@ -1597,10 +1607,8 @@ void PeridigmNS::Peridigm::rebalance() {
     Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, 3, indexBase, *peridigmComm));
   delete[] myGlobalElements;
 
-#ifndef MULTIPLE_BLOCKS
   Teuchos::RCP<const Epetra_Import> oneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedOneDimensionalOverlapMap, *oneDimensionalOverlapMap));
   Teuchos::RCP<const Epetra_Import> threeDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedThreeDimensionalOverlapMap, *threeDimensionalOverlapMap));
-#endif
 
   // create a new NeighborhoodData object
   Teuchos::RCP<PeridigmNS::NeighborhoodData> rebalancedNeighborhoodData = createRebalancedNeighborhoodData(rebalancedOneDimensionalMap,
@@ -1619,16 +1627,18 @@ void PeridigmNS::Peridigm::rebalance() {
   Teuchos::RCP<Epetra_MultiVector> rebalancedMothership = Teuchos::rcp(new Epetra_MultiVector(*rebalancedThreeDimensionalMap, mothership->NumVectors()));
   rebalancedMothership->Import(*mothership, *threeDimensionalMapImporter, Insert);
   mothership = rebalancedMothership;
-  x = Teuchos::rcp((*mothership)(0), false);
-  u = Teuchos::rcp((*mothership)(1), false);
-  y = Teuchos::rcp((*mothership)(2), false);
-  v = Teuchos::rcp((*mothership)(3), false);
-  a = Teuchos::rcp((*mothership)(4), false);
-  force = Teuchos::rcp((*mothership)(5), false);
-  contactForce = Teuchos::rcp((*mothership)(6), false);
+  blockID = Teuchos::rcp((*mothership)(0), false);       // block ID
+  x = Teuchos::rcp((*mothership)(1), false);             // initial positions
+  u = Teuchos::rcp((*mothership)(2), false);             // displacement
+  y = Teuchos::rcp((*mothership)(3), false);             // current positions
+  v = Teuchos::rcp((*mothership)(4), false);             // velocities
+  a = Teuchos::rcp((*mothership)(5), false);             // accelerations
+  force = Teuchos::rcp((*mothership)(6), false);         // force
+  contactForce = Teuchos::rcp((*mothership)(7), false);  // contact force (used only for contact simulations)
+  deltaU = Teuchos::rcp((*mothership)(8), false);        // increment in displacement (used only for implicit time integration)
+  residual = Teuchos::rcp((*mothership)(9), false);      // residual (used only for implicit time integration)
 
   // rebalance the data manager
-#ifndef MULTIPLE_BLOCKS
   for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock){
     (*dataManagers)[iBlock]->rebalance(rebalancedOneDimensionalMap,
                                        rebalancedOneDimensionalOverlapMap,
@@ -1636,36 +1646,175 @@ void PeridigmNS::Peridigm::rebalance() {
                                        rebalancedThreeDimensionalOverlapMap,
                                        rebalancedBondMap);
   }
-#else
-  // \todo This will break for multiple material blocks, lots of work required here.
-  blocks->begin()->getDataManager()->rebalance(rebalancedOneDimensionalMap,
-                                               rebalancedOneDimensionalOverlapMap,
-                                               rebalancedThreeDimensionalMap,
-                                               rebalancedThreeDimensionalOverlapMap,
-                                               rebalancedBondMap);
-#endif
 
   // set all the pointers to the new maps
   oneDimensionalMap = rebalancedOneDimensionalMap;
   oneDimensionalOverlapMap = rebalancedOneDimensionalOverlapMap;
   threeDimensionalMap = rebalancedThreeDimensionalMap;
-#ifndef MULTIPLE_BLOCKS
   threeDimensionalOverlapMap = rebalancedThreeDimensionalOverlapMap;
-#endif
   bondMap = rebalancedBondMap;
 
   // update neighborhood data
   globalNeighborhoodData = rebalancedNeighborhoodData;
   globalContactNeighborhoodData = rebalancedContactNeighborhoodData;
-#ifndef MULTIPLE_BLOCKS
   workset->neighborhoodData = globalNeighborhoodData; // \todo Better handling of workset, shouldn't have to do this here.
   workset->contactNeighborhoodData = globalContactNeighborhoodData;
 
   // update importers
   oneDimensionalMapToOneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*oneDimensionalOverlapMap, *oneDimensionalMap));
   threeDimensionalMapToThreeDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*threeDimensionalOverlapMap, *threeDimensionalMap));
-#endif
 }
+
+
+#else
+
+
+
+
+void PeridigmNS::Peridigm::rebalance() {
+
+  // \todo Handle serial case.  We don't need to rebalance, but we still want to update the contact search.
+  QUICKGRID::Data rebalancedDecomp = currentConfigurationDecomp();
+
+  Teuchos::RCP<Epetra_BlockMap> rebalancedOneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGridDiscretization::getOwnedMap(*peridigmComm, rebalancedDecomp, 1)));
+  Teuchos::RCP<const Epetra_Import> oneDimensionalMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedOneDimensionalMap, *oneDimensionalMap));
+
+  Teuchos::RCP<Epetra_BlockMap> rebalancedThreeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGridDiscretization::getOwnedMap(*peridigmComm, rebalancedDecomp, 3)));
+  Teuchos::RCP<const Epetra_Import> threeDimensionalMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedThreeDimensionalMap, *threeDimensionalMap));
+
+  Teuchos::RCP<Epetra_BlockMap> rebalancedBondMap = createRebalancedBondMap(rebalancedOneDimensionalMap, oneDimensionalMapImporter);
+  Teuchos::RCP<const Epetra_Import> bondMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedBondMap, *bondMap));
+
+  // create a list of neighbors in the rebalanced configuration
+  // this list has the global ID for each neighbor of each on-processor point (that is, on processor in the rebalanced configuration)
+  Teuchos::RCP<Epetra_Vector> rebalancedNeighborGlobalIDs = createRebalancedNeighborGlobalIDList(rebalancedBondMap, bondMapImporter);
+
+  // create a list of all the off-processor IDs that will need to be ghosted
+  // \todo Use set::reserve() for better memory allocation here.
+  set<int> offProcessorIDs;
+  for(int i=0 ; i<rebalancedNeighborGlobalIDs->MyLength() ; ++i){
+    int globalID = (int)( (*rebalancedNeighborGlobalIDs)[i] );
+    if(!rebalancedOneDimensionalMap->MyGID(globalID))
+      offProcessorIDs.insert(globalID);
+  }
+
+  // this function does three things:
+  // 1) fills the neighborhood information in rebalancedDecomp based on the contact search
+  // 2) creates a list of global IDs for each locally-owned point that will need to be searched for contact (contactNeighborGlobalIDs)
+  // 3) keeps track of the additional off-processor IDs that need to be ghosted as a result of the contact search (offProcessorContactIDs)
+  Teuchos::RCP< map<int, vector<int> > > contactNeighborGlobalIDs = Teuchos::rcp(new map<int, vector<int> >());
+  Teuchos::RCP< set<int> > offProcessorContactIDs = Teuchos::rcp(new set<int>());
+  if(analysisHasContact)
+    contactSearch(rebalancedOneDimensionalMap, rebalancedBondMap, rebalancedNeighborGlobalIDs, rebalancedDecomp, contactNeighborGlobalIDs, offProcessorContactIDs);
+
+  // add the off-processor IDs required for contact to the list of points that will be ghosted
+  for(set<int>::const_iterator it=offProcessorContactIDs->begin() ; it!=offProcessorContactIDs->end() ; it++){
+    offProcessorIDs.insert(*it);
+  }
+
+  // construct the rebalanced overlap maps
+  int numGlobalElements = -1;
+  int numMyElements = rebalancedOneDimensionalMap->NumMyElements() + offProcessorIDs.size();
+  int* myGlobalElements = new int[numMyElements];
+  rebalancedOneDimensionalMap->MyGlobalElements(myGlobalElements);
+  int offset = rebalancedOneDimensionalMap->NumMyElements();
+  int index = 0;
+  for(set<int>::const_iterator it=offProcessorIDs.begin() ; it!=offProcessorIDs.end() ; ++it, ++index){
+    myGlobalElements[offset+index] = *it;
+  }
+  int indexBase = 0;
+  Teuchos::RCP<Epetra_BlockMap> rebalancedOneDimensionalOverlapMap =
+    Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, 1, indexBase, *peridigmComm));
+  Teuchos::RCP<Epetra_BlockMap> rebalancedThreeDimensionalOverlapMap =
+    Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, 3, indexBase, *peridigmComm));
+  delete[] myGlobalElements;
+
+// #ifndef MULTIPLE_BLOCKS
+//   Teuchos::RCP<const Epetra_Import> oneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedOneDimensionalOverlapMap, *oneDimensionalOverlapMap));
+//   Teuchos::RCP<const Epetra_Import> threeDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedThreeDimensionalOverlapMap, *threeDimensionalOverlapMap));
+// #endif
+
+  // create a new NeighborhoodData object
+  Teuchos::RCP<PeridigmNS::NeighborhoodData> rebalancedNeighborhoodData = createRebalancedNeighborhoodData(rebalancedOneDimensionalMap,
+                                                                                                           rebalancedOneDimensionalOverlapMap,
+                                                                                                           rebalancedBondMap,
+                                                                                                           rebalancedNeighborGlobalIDs);
+
+  // create a new NeighborhoodData object for contact
+  Teuchos::RCP<PeridigmNS::NeighborhoodData> rebalancedContactNeighborhoodData;
+  if(analysisHasContact)
+    rebalancedContactNeighborhoodData = createRebalancedContactNeighborhoodData(contactNeighborGlobalIDs,
+                                                                                rebalancedOneDimensionalMap,
+                                                                                rebalancedOneDimensionalOverlapMap);
+
+  // rebalance the global vectors (stored in the mothership multivector)
+  Teuchos::RCP<Epetra_MultiVector> rebalancedMothership = Teuchos::rcp(new Epetra_MultiVector(*rebalancedThreeDimensionalMap, mothership->NumVectors()));
+  rebalancedMothership->Import(*mothership, *threeDimensionalMapImporter, Insert);
+  mothership = rebalancedMothership;
+  blockID = Teuchos::rcp((*mothership)(0), false);       // block ID
+  x = Teuchos::rcp((*mothership)(1), false);             // initial positions
+  u = Teuchos::rcp((*mothership)(2), false);             // displacement
+  y = Teuchos::rcp((*mothership)(3), false);             // current positions
+  v = Teuchos::rcp((*mothership)(4), false);             // velocities
+  a = Teuchos::rcp((*mothership)(5), false);             // accelerations
+  force = Teuchos::rcp((*mothership)(6), false);         // force
+  contactForce = Teuchos::rcp((*mothership)(7), false);  // contact force (used only for contact simulations)
+  deltaU = Teuchos::rcp((*mothership)(8), false);        // increment in displacement (used only for implicit time integration)
+  residual = Teuchos::rcp((*mothership)(9), false);      // residual (used only for implicit time integration)
+
+  // GAME PLAN HERE
+  //
+  // we want Block set*Map and rebalance to take global maps as input
+  // and downselect owned points internally
+  // or perhaps we want to take global neighborhood / contact neighborhood
+  // as input and downselect
+  //
+  // we want a global vector that contains the block ID for each element
+  //
+  // currently expecting discretizations to generate block-specific maps,
+  // but maybe this should be done by the Blocks (i.e., given the global maps
+  // and a vector with the block ID of every element, create a block-specific
+  // map).  This takes advantage of the fact that block-specific maps are
+  // subsets of the global maps.  This approach could be used to create block-
+  // specific maps and neighborhoods too.  Downselecting is serial, which is nice.
+  //
+  // 1) set up discretizations to return global maps, vector of block IDs
+  // 2) have Peridigm operate on global maps, neighborhoods (change names, make clear)
+  // 3) have Block take global stuff as input, create block-specific stuff and pass downstream to DataManager
+
+
+
+
+
+
+
+  // rebalance the data manager
+  // \todo This will break for multiple material blocks, lots of work required here.
+  blocks->begin()->getDataManager()->rebalance(rebalancedOneDimensionalMap,
+                                               rebalancedOneDimensionalOverlapMap,
+                                               rebalancedThreeDimensionalMap,
+                                               rebalancedThreeDimensionalOverlapMap,
+                                               rebalancedBondMap);
+
+  // set all the pointers to the new maps
+  oneDimensionalMap = rebalancedOneDimensionalMap;
+  oneDimensionalOverlapMap = rebalancedOneDimensionalOverlapMap;
+  threeDimensionalMap = rebalancedThreeDimensionalMap;
+// #ifndef MULTIPLE_BLOCKS
+//   threeDimensionalOverlapMap = rebalancedThreeDimensionalOverlapMap;
+// #endif
+  bondMap = rebalancedBondMap;
+
+  // update neighborhood data
+  globalNeighborhoodData = rebalancedNeighborhoodData;
+  globalContactNeighborhoodData = rebalancedContactNeighborhoodData;
+}
+
+#endif
+
+
+
+
 
 QUICKGRID::Data PeridigmNS::Peridigm::currentConfigurationDecomp() {
 
