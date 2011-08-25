@@ -84,7 +84,7 @@ namespace PeridigmNS {
     }
 
     //! Return d-dimensional map
-    virtual Teuchos::RCP<const Epetra_BlockMap> getGlobalMap(int d) const = 0;
+    virtual Teuchos::RCP<const Epetra_BlockMap> getGlobalOwnedMap(int d) const = 0;
 
     //! Return d-dimensional overlap map
     // \todo Obsolete, remove.
@@ -92,8 +92,7 @@ namespace PeridigmNS {
 
     /** \brief Bond map, used for constitutive data stored on each bond. This is
      *   a non-overlapping map. */
-    // \todo Obsolete, remove.
-    virtual Teuchos::RCP<const Epetra_BlockMap> getBondMap() const = 0;
+    virtual Teuchos::RCP<const Epetra_BlockMap> getGlobalBondMap() const = 0;
 
     //! Return d-dimensional map for the given element block
     virtual Teuchos::RCP<const Epetra_BlockMap> getElementBlockOwnedMap(std::string& blockName, int dimension) const = 0;

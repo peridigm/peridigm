@@ -310,7 +310,7 @@ PeridigmNS::PdQuickGridDiscretization::createNeighborhoodData(const QUICKGRID::D
 }
 
 Teuchos::RCP<const Epetra_BlockMap>
-PeridigmNS::PdQuickGridDiscretization::getGlobalMap(int d) const
+PeridigmNS::PdQuickGridDiscretization::getGlobalOwnedMap(int d) const
 {
   switch (d) {
     case 1:
@@ -321,7 +321,7 @@ PeridigmNS::PdQuickGridDiscretization::getGlobalMap(int d) const
       break;
     default:
       TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
-                         std::endl << "PdQuickGridDiscretization::getMap(int d) only supports dimensions d=1 or d=3. Supplied dimension d=" << d << std::endl); 
+                         std::endl << "PdQuickGridDiscretization::getGlobalOwnedMap(int d) only supports dimensions d=1 or d=3. Supplied dimension d=" << d << std::endl); 
     }
 }
 
@@ -342,7 +342,7 @@ PeridigmNS::PdQuickGridDiscretization::getGlobalOverlapMap(int d) const
 }
 
 Teuchos::RCP<const Epetra_BlockMap>
-PeridigmNS::PdQuickGridDiscretization::getBondMap() const
+PeridigmNS::PdQuickGridDiscretization::getGlobalBondMap() const
 {
   return bondMap;
 }
@@ -351,7 +351,7 @@ Teuchos::RCP<const Epetra_BlockMap>
 PeridigmNS::PdQuickGridDiscretization::getElementBlockOwnedMap(std::string& blockName, int dimension) const
 {
   // There is only one element block, so the block maps are the same as the global maps.
-  return getGlobalMap(dimension);
+  return getGlobalOwnedMap(dimension);
 }
 
 
@@ -366,7 +366,7 @@ Teuchos::RCP<const Epetra_BlockMap>
 PeridigmNS::PdQuickGridDiscretization::getElementBlockBondMap(std::string& blockName) const
 {
   // There is only one element block, so the block maps are the same as the global maps.
-  return getBondMap();
+  return getGlobalBondMap();
 }
 
 Teuchos::RCP<PeridigmNS::NeighborhoodData> 

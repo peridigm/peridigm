@@ -73,13 +73,13 @@ namespace PeridigmNS {
     virtual ~PdQuickGridDiscretization();
 
     //! Return d-dimensional map
-    virtual Teuchos::RCP<const Epetra_BlockMap> getGlobalMap(int d) const;
+    virtual Teuchos::RCP<const Epetra_BlockMap> getGlobalOwnedMap(int d) const;
 
     //! Return d-dimensional overlap map (includes ghosts)
     virtual Teuchos::RCP<const Epetra_BlockMap> getGlobalOverlapMap(int d) const;
 
     //! Bond map, used for constitutive data stored on each bond. This is a non-overlapping map.
-    virtual Teuchos::RCP<const Epetra_BlockMap> getBondMap() const;
+    virtual Teuchos::RCP<const Epetra_BlockMap> getGlobalBondMap() const;
 
     //! Return d-dimensional map for the given element block
     virtual Teuchos::RCP<const Epetra_BlockMap> getElementBlockOwnedMap(std::string& blockName, int dimension) const;

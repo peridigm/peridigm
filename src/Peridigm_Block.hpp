@@ -93,10 +93,10 @@ namespace PeridigmNS {
   public:
 
     //! Constructor
-    Block() : blockName("Undefined") {}
+    Block() : blockName("Undefined"), blockID(-1) {}
 
     //! Constructor
-    Block(std::string blockName_) : blockName(blockName_) {}
+    Block(std::string blockName_, int blockID_) : blockName(blockName_), blockID(blockID_) {}
 
     //! Destructor
     ~Block(){}
@@ -106,23 +106,23 @@ namespace PeridigmNS {
     //! Get the map for scalar data stored at owned points
     Teuchos::RCP<const Epetra_BlockMap> getOwnedScalarPointMap(){ return ownedScalarPointMap; }
     //! Set the map for scalar data stored at owned points
-    void setOwnedScalarPointMap(Teuchos::RCP<const Epetra_BlockMap> map){ ownedScalarPointMap = map; }
+//     void setOwnedScalarPointMap(Teuchos::RCP<const Epetra_BlockMap> map){ ownedScalarPointMap = map; }
     //! Get the map for scalar data stored at owned + overlap points
     Teuchos::RCP<const Epetra_BlockMap> getOverlapScalarPointMap(){ return overlapScalarPointMap; }
     //! Set the map for scalar data stored at owned + overlap points
-    void setOverlapScalarPointMap(Teuchos::RCP<const Epetra_BlockMap> map){ overlapScalarPointMap = map; }
+//     void setOverlapScalarPointMap(Teuchos::RCP<const Epetra_BlockMap> map){ overlapScalarPointMap = map; }
     //! Get the map for vector data stored at owned points
     Teuchos::RCP<const Epetra_BlockMap> getOwnedVectorPointMap(){ return ownedVectorPointMap; }
     //! Set the map for vector data stored at owned points
-    void setOwnedVectorPointMap(Teuchos::RCP<const Epetra_BlockMap> map){ ownedVectorPointMap = map; }
+//     void setOwnedVectorPointMap(Teuchos::RCP<const Epetra_BlockMap> map){ ownedVectorPointMap = map; }
     //! Get the map for vector data stored at owned + overlap points
     Teuchos::RCP<const Epetra_BlockMap> getOverlapVectorPointMap(){ return overlapVectorPointMap; }
     //! Set the map for vector data stored at owned + overlap points
-    void setOverlapVectorPointMap(Teuchos::RCP<const Epetra_BlockMap> map){ overlapVectorPointMap = map; }
+//     void setOverlapVectorPointMap(Teuchos::RCP<const Epetra_BlockMap> map){ overlapVectorPointMap = map; }
     //! Get the map for scalar data stored at owned bonds
     Teuchos::RCP<const Epetra_BlockMap> getOwnedScalarBondMap(){ return ownedScalarBondMap; }
     //! Set the map for scalar data stored at owned bonds
-    void setOwnedScalarBondMap(Teuchos::RCP<const Epetra_BlockMap> map){ ownedScalarBondMap = map; }
+//     void setOwnedScalarBondMap(Teuchos::RCP<const Epetra_BlockMap> map){ ownedScalarBondMap = map; }
     //@}
 
     //! Get the neighborhood data
@@ -131,9 +131,9 @@ namespace PeridigmNS {
     }
 
     //! Set the neighborhood data
-    void setNeighborhoodData(Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData_){
-      neighborhoodData = neighborhoodData_;
-    }
+//     void setNeighborhoodData(Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData_){
+//       neighborhoodData = neighborhoodData_;
+//     }
 
     //! Get the contact neighborhood data
     Teuchos::RCP<PeridigmNS::NeighborhoodData> getContactNeighborhoodData(){
@@ -165,7 +165,21 @@ namespace PeridigmNS {
       contactModel = contactModel_;
     }
 
-    /*! \brief Initialize the data manager
+    /*! \brief Create the maps for this block.
+     *
+     *  The owned and overlap maps for this block are a subset of the global maps.
+     *  This function creates the maps for this block based on the global maps and
+     *  the block IDs for each entry in those maps.
+     */
+    void createMapsFromGlobalMaps(Teuchos::RCP<const Epetra_BlockMap> globalOwnedScalarPointMap,
+                                  Teuchos::RCP<const Epetra_BlockMap> globalOverlapScalarPointMap,
+                                  Teuchos::RCP<const Epetra_BlockMap> globalOwnedVectorPointMap,
+                                  Teuchos::RCP<const Epetra_BlockMap> globalOverlapVectorPointMap,
+                                  Teuchos::RCP<const Epetra_BlockMap> globalOwnedScalarBondMap,
+                                  Teuchos::RCP<const Epetra_Vector> globalBlockIds,
+                                  Teuchos::RCP<const PeridigmNS::NeighborhoodData> globalNeighborhoodData);
+
+    /*! \brief Initialize the data manager.
      *
      *  The DataManager will include all the field specs requested by the material model and
      *  the contact model, as well as those provided in the fieldSpecs input argument.
@@ -202,6 +216,7 @@ namespace PeridigmNS {
   protected:
     
     std::string blockName;
+    int blockID;
 
     //! @name Maps
     //@{
