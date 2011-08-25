@@ -30,6 +30,7 @@ enum Relation {
 enum Type {
 	        VOLUME=0,
 			GID,
+            BLOCK_ID,
 			PROC_NUM,
 			WEIGHTED_VOLUME,
 			DILATATION,
@@ -188,6 +189,9 @@ const Field_NS::FieldSpec VOLUME
 
 const Field_NS::FieldSpec GID
 (Field_ENUM::GID,Field_ENUM::POINT,                    Field_ENUM::SCALAR,    Field_ENUM::CONSTANT,          "ID");
+
+const Field_NS::FieldSpec BLOCK_ID
+(Field_ENUM::BLOCK_ID,Field_ENUM::POINT,                    Field_ENUM::SCALAR,    Field_ENUM::CONSTANT,          "BLOCK_ID");
 
 const Field_NS::FieldSpec PROC_NUM
 ( Field_ENUM::PROC_NUM, Field_ENUM::POINT,             Field_ENUM::SCALAR,    Field_ENUM::CONSTANT,     "Proc_Num");

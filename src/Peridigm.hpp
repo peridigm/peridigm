@@ -196,6 +196,7 @@ namespace PeridigmNS {
 
     //! @name Accessors for main solver-level vectors
     //@{ 
+    Teuchos::RCP<const Epetra_Vector> getBlockID() { return blockID; }
     Teuchos::RCP<const Epetra_Vector> getX() { return x; }
     Teuchos::RCP<const Epetra_Vector> getU() { return u; }
     Teuchos::RCP<const Epetra_Vector> getY() { return y; }
@@ -302,7 +303,7 @@ namespace PeridigmNS {
     Teuchos::RCP< std::vector< Teuchos::RCP<PeridigmNS::DataManager> > > dataManagers;
 #endif
 
-    //! Mothership multivector that contains all the global vectors (x, u, y, v, a, force, etc.)
+    //! Mothership multivector that contains all the global vectors (blockID, x, u, y, v, a, force, etc.)
     Teuchos::RCP<Epetra_MultiVector> mothership;
 
     //! Blocks
@@ -316,6 +317,9 @@ namespace PeridigmNS {
 
     //! Overlap Jacobian; filled by each processor and then assembled into the mothership Jacobian;
     Teuchos::RCP<PeridigmNS::SerialMatrix> overlapJacobian;
+
+    //! Global vector for block ID
+    Teuchos::RCP<Epetra_Vector> blockID;
 
     //! Global vector for initial positions
     Teuchos::RCP<Epetra_Vector> x;
