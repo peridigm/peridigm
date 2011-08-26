@@ -382,7 +382,7 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
   double* tempBlockIDPtr;
   tempBlockID.ExtractView(&tempBlockIDPtr);
   std::map< std::string, std::vector<int> >::const_iterator it;
-  int blockNumber = 0;
+  int blockNumber = 1;
   for(it = elementBlocks->begin() ; it != elementBlocks->end() ; it++){
     const std::string& blockName = it->first;
     const std::vector<int>& elementIDs = it->second;
