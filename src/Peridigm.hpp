@@ -302,8 +302,11 @@ namespace PeridigmNS {
     Teuchos::RCP< std::vector< Teuchos::RCP<PeridigmNS::DataManager> > > dataManagers;
 #endif
 
-    //! Mothership multivector that contains all the global vectors (blockIDs, x, u, y, v, a, force, etc.)
+    //! Mothership multivector that contains all the global vectors (x, u, y, v, a, force, etc.)
     Teuchos::RCP<Epetra_MultiVector> mothership;
+
+    //! Mothership vector for block ID
+    Teuchos::RCP<Epetra_Vector> mothershipBlockIDs;
 
     //! Blocks
     Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks;

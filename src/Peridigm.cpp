@@ -166,7 +166,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
                         peridigmDisc->getGlobalOwnedMap(3),
                         peridigmDisc->getGlobalOverlapMap(3),
                         peridigmDisc->getGlobalBondMap(),
-                        blockIDs,
+                        mothershipBlockIDs,
                         globalNeighborhoodData);
 
   // Load initial data into the blocks
@@ -270,25 +270,27 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
 
   // Create mothership vector
   // \todo Do not allocate space for the contact force, residual, and deltaU if not needed.
-  mothership = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalMap, 10));
+  mothership = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalMap, 9));
   // Set ref-count pointers for each of the global vectors
-  blockIDs = Teuchos::rcp((*mothership)(0), false);      // block ID
-  x = Teuchos::rcp((*mothership)(1), false);             // initial positions
-  u = Teuchos::rcp((*mothership)(2), false);             // displacement
-  y = Teuchos::rcp((*mothership)(3), false);             // current positions
-  v = Teuchos::rcp((*mothership)(4), false);             // velocities
-  a = Teuchos::rcp((*mothership)(5), false);             // accelerations
-  force = Teuchos::rcp((*mothership)(6), false);         // force
-  contactForce = Teuchos::rcp((*mothership)(7), false);  // contact force (used only for contact simulations)
-  deltaU = Teuchos::rcp((*mothership)(8), false);        // increment in displacement (used only for implicit time integration)
-  residual = Teuchos::rcp((*mothership)(9), false);      // residual (used only for implicit time integration)
+  x = Teuchos::rcp((*mothership)(0), false);             // initial positions
+  u = Teuchos::rcp((*mothership)(1), false);             // displacement
+  y = Teuchos::rcp((*mothership)(2), false);             // current positions
+  v = Teuchos::rcp((*mothership)(3), false);             // velocities
+  a = Teuchos::rcp((*mothership)(4), false);             // accelerations
+  force = Teuchos::rcp((*mothership)(5), false);         // force
+  contactForce = Teuchos::rcp((*mothership)(6), false);  // contact force (used only for contact simulations)
+  deltaU = Teuchos::rcp((*mothership)(7), false);        // increment in displacement (used only for implicit time integration)
+  residual = Teuchos::rcp((*mothership)(8), false);      // residual (used only for implicit time integration)
+
+  // Create the mothership block ID vector
+  mothershipBlockIDs = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
 
   // Set the block IDs
   double* bID;
   peridigmDisc->getBlockID()->ExtractView(&bID);
-  double* blockIDsPtr;
-  blockIDs->ExtractView(&blockIDsPtr);
-  blas.COPY(blockIDs->MyLength(), bID, blockIDsPtr);
+  double* mothershipBlockIDsPtr;
+  mothershipBlockIDs->ExtractView(&mothershipBlockIDsPtr);
+  blas.COPY(mothershipBlockIDs->MyLength(), bID, mothershipBlockIDsPtr);
 
   // Set the initial positions
   double* initialX;
@@ -1567,7 +1569,7 @@ void PeridigmNS::Peridigm::rebalance() {
 
   // create a list of neighbors in the rebalanced configuration
   // this list has the global ID for each neighbor of each on-processor point (that is, on processor in the rebalanced configuration)
-  Teuchos::RCP<Epetra_Vector> rebalancedNeighborGlobalIDs = createRebalancedNeighborGlobalIDList(rebalancedBondMap, bondMapImporter);
+  Teuchos::RCP<Epetra_Vector> rebalancedNeighborGlobalIDs = createRebalancedNeighborGlobalIDList(rebalancedBondMap, bondMapImporter); 
 
   // create a list of all the off-processor IDs that will need to be ghosted
   // \todo Use set::reserve() for better memory allocation here.
@@ -1629,16 +1631,20 @@ void PeridigmNS::Peridigm::rebalance() {
   Teuchos::RCP<Epetra_MultiVector> rebalancedMothership = Teuchos::rcp(new Epetra_MultiVector(*rebalancedThreeDimensionalMap, mothership->NumVectors()));
   rebalancedMothership->Import(*mothership, *threeDimensionalMapImporter, Insert);
   mothership = rebalancedMothership;
-  blockIDs = Teuchos::rcp((*mothership)(0), false);      // block ID
-  x = Teuchos::rcp((*mothership)(1), false);             // initial positions
-  u = Teuchos::rcp((*mothership)(2), false);             // displacement
-  y = Teuchos::rcp((*mothership)(3), false);             // current positions
-  v = Teuchos::rcp((*mothership)(4), false);             // velocities
-  a = Teuchos::rcp((*mothership)(5), false);             // accelerations
-  force = Teuchos::rcp((*mothership)(6), false);         // force
-  contactForce = Teuchos::rcp((*mothership)(7), false);  // contact force (used only for contact simulations)
-  deltaU = Teuchos::rcp((*mothership)(8), false);        // increment in displacement (used only for implicit time integration)
-  residual = Teuchos::rcp((*mothership)(9), false);      // residual (used only for implicit time integration)
+  x = Teuchos::rcp((*mothership)(0), false);             // initial positions
+  u = Teuchos::rcp((*mothership)(1), false);             // displacement
+  y = Teuchos::rcp((*mothership)(2), false);             // current positions
+  v = Teuchos::rcp((*mothership)(3), false);             // velocities
+  a = Teuchos::rcp((*mothership)(4), false);             // accelerations
+  force = Teuchos::rcp((*mothership)(5), false);         // force
+  contactForce = Teuchos::rcp((*mothership)(6), false);  // contact force (used only for contact simulations)
+  deltaU = Teuchos::rcp((*mothership)(7), false);        // increment in displacement (used only for implicit time integration)
+  residual = Teuchos::rcp((*mothership)(8), false);      // residual (used only for implicit time integration)
+
+  // Create the rebalanced mothership block ID vector
+  Teuchos::RCP<Epetra_Vector> rebalancedMothershipBlockIDs = Teuchos::rcp(new Epetra_Vector(*rebalancedOneDimensionalMap));
+  rebalancedMothershipBlockIDs->Import(*mothershipBlockIDs, *oneDimensionalMapImporter, Insert);
+  mothershipBlockIDs = rebalancedMothershipBlockIDs;
 
   // rebalance the data manager
   for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock){
@@ -1753,16 +1759,20 @@ void PeridigmNS::Peridigm::rebalance() {
   Teuchos::RCP<Epetra_MultiVector> rebalancedMothership = Teuchos::rcp(new Epetra_MultiVector(*rebalancedThreeDimensionalMap, mothership->NumVectors()));
   rebalancedMothership->Import(*mothership, *threeDimensionalMapImporter, Insert);
   mothership = rebalancedMothership;
-  blockIDs = Teuchos::rcp((*mothership)(0), false);      // block ID
-  x = Teuchos::rcp((*mothership)(1), false);             // initial positions
-  u = Teuchos::rcp((*mothership)(2), false);             // displacement
-  y = Teuchos::rcp((*mothership)(3), false);             // current positions
-  v = Teuchos::rcp((*mothership)(4), false);             // velocities
-  a = Teuchos::rcp((*mothership)(5), false);             // accelerations
-  force = Teuchos::rcp((*mothership)(6), false);         // force
-  contactForce = Teuchos::rcp((*mothership)(7), false);  // contact force (used only for contact simulations)
-  deltaU = Teuchos::rcp((*mothership)(8), false);        // increment in displacement (used only for implicit time integration)
-  residual = Teuchos::rcp((*mothership)(9), false);      // residual (used only for implicit time integration)
+  x = Teuchos::rcp((*mothership)(0), false);             // initial positions
+  u = Teuchos::rcp((*mothership)(1), false);             // displacement
+  y = Teuchos::rcp((*mothership)(2), false);             // current positions
+  v = Teuchos::rcp((*mothership)(3), false);             // velocities
+  a = Teuchos::rcp((*mothership)(4), false);             // accelerations
+  force = Teuchos::rcp((*mothership)(5), false);         // force
+  contactForce = Teuchos::rcp((*mothership)(6), false);  // contact force (used only for contact simulations)
+  deltaU = Teuchos::rcp((*mothership)(7), false);        // increment in displacement (used only for implicit time integration)
+  residual = Teuchos::rcp((*mothership)(8), false);      // residual (used only for implicit time integration)
+
+  // Create the rebalanced mothership block ID vector
+  Teuchos::RCP<Epetra_Vector> rebalancedMothershipBlockIDs = Teuchos::rcp(new Epetra_Vector(*rebalancedOneDimensionalMap));
+  rebalancedMothershipBlockIDs->Import(*mothershipBlockIDs, *oneDimensionalMapImporter, Insert);
+  mothershipBlockIDs = rebalancedMothershipBlockIDs;
 
   // GAME PLAN HERE
   //
@@ -1786,18 +1796,15 @@ void PeridigmNS::Peridigm::rebalance() {
   //
   // rip out block-specific maps from discretizations
 
-
-
-
-
-
-  // rebalance the data manager
-  // \todo This will break for multiple material blocks, lots of work required here.
-  blocks->begin()->getDataManager()->rebalance(rebalancedOneDimensionalMap,
-                                               rebalancedOneDimensionalOverlapMap,
-                                               rebalancedThreeDimensionalMap,
-                                               rebalancedThreeDimensionalOverlapMap,
-                                               rebalancedBondMap);
+  // rebalance the blocks
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+    blockIt->rebalance(rebalancedOneDimensionalMap,
+                       rebalancedOneDimensionalOverlapMap,
+                       rebalancedThreeDimensionalMap,
+                       rebalancedThreeDimensionalOverlapMap,
+                       rebalancedBondMap,
+                       rebalancedMothershipBlockIDs,
+                       rebalancedNeighborhoodData);
 
   // set all the pointers to the new maps
   oneDimensionalMap = rebalancedOneDimensionalMap;
