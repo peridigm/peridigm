@@ -165,26 +165,32 @@ namespace PeridigmNS {
       contactModel = contactModel_;
     }
 
-    /*! \brief Create the maps for this block.
+    /*! \brief Initialize the block.
      *
-     *  The owned and overlap maps for this block are a subset of the global maps.
-     *  This function creates the maps for this block based on the global maps and
-     *  the block IDs for each entry in those maps.
+     *  This function will create the block-specific maps, neighborhood list, and DataManager.
+     *  The material model must be set via Block::setMaterialModel() prior to calling this function.
      */
-    void createMapsFromGlobalMaps(Teuchos::RCP<const Epetra_BlockMap> globalOwnedScalarPointMap,
-                                  Teuchos::RCP<const Epetra_BlockMap> globalOverlapScalarPointMap,
-                                  Teuchos::RCP<const Epetra_BlockMap> globalOwnedVectorPointMap,
-                                  Teuchos::RCP<const Epetra_BlockMap> globalOverlapVectorPointMap,
-                                  Teuchos::RCP<const Epetra_BlockMap> globalOwnedScalarBondMap,
-                                  Teuchos::RCP<const Epetra_Vector> globalBlockIds,
-                                  Teuchos::RCP<const PeridigmNS::NeighborhoodData> globalNeighborhoodData);
+    void initialize(Teuchos::RCP<const Epetra_BlockMap> globalOwnedScalarPointMap,
+                    Teuchos::RCP<const Epetra_BlockMap> globalOverlapScalarPointMap,
+                    Teuchos::RCP<const Epetra_BlockMap> globalOwnedVectorPointMap,
+                    Teuchos::RCP<const Epetra_BlockMap> globalOverlapVectorPointMap,
+                    Teuchos::RCP<const Epetra_BlockMap> globalOwnedScalarBondMap,
+                    Teuchos::RCP<const Epetra_Vector> globalBlockIds,
+                    Teuchos::RCP<const PeridigmNS::NeighborhoodData> globalNeighborhoodData);
 
-    /*! \brief Initialize the data manager.
-     *
-     *  The DataManager will include all the field specs requested by the material model and
-     *  the contact model, as well as those provided in the fieldSpecs input argument.
-     */
-    void initializeDataManager(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs);
+    //! Rebalance the block based on rebalanced global maps and neighborhood information.
+    void rebalance(Teuchos::RCP<const Epetra_BlockMap> rebalancedGlobalOwnedScalarPointMap,
+                   Teuchos::RCP<const Epetra_BlockMap> rebalancedGlobalOverlapScalarPointMap,
+                   Teuchos::RCP<const Epetra_BlockMap> rebalancedGlobalOwnedVectorPointMap,
+                   Teuchos::RCP<const Epetra_BlockMap> rebalancedGlobalOverlapVectorPointMap,
+                   Teuchos::RCP<const Epetra_BlockMap> rebalancedGlobalOwnedScalarBondMap,
+                   Teuchos::RCP<const Epetra_Vector> rebalancedGlobalBlockIds,
+                   Teuchos::RCP<const PeridigmNS::NeighborhoodData> rebalancedGlobalNeighborhoodData);
+
+    //! Stores a list of field specs that will be added to this block's DataManager.
+    void setAuxiliaryFieldSpecs(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs){
+      auxiliaryFieldSpecs = *fieldSpecs;
+    }
 
     //! Get the DataManager.
     Teuchos::RCP<PeridigmNS::DataManager> getDataManager(){
@@ -215,6 +221,31 @@ namespace PeridigmNS {
 
   protected:
     
+    /*! \brief Creates the set of block-specific maps.
+     *
+     *  The block-specific maps are a subset of the global maps.  This function creates the
+     *  block-specific maps based on the global maps and a vector containing the block ID
+     *  of each element.
+     */
+    void createMapsFromGlobalMaps(Teuchos::RCP<const Epetra_BlockMap> globalOwnedScalarPointMap,
+                                  Teuchos::RCP<const Epetra_BlockMap> globalOverlapScalarPointMap,
+                                  Teuchos::RCP<const Epetra_BlockMap> globalOwnedVectorPointMap,
+                                  Teuchos::RCP<const Epetra_BlockMap> globalOverlapVectorPointMap,
+                                  Teuchos::RCP<const Epetra_BlockMap> globalOwnedScalarBondMap,
+                                  Teuchos::RCP<const Epetra_Vector>   globalBlockIds,
+                                  Teuchos::RCP<const PeridigmNS::NeighborhoodData> globalNeighborhoodData);
+
+    //! Create the block-specific neighborhood data.
+    void createNeighborhoodDataFromGlobalNeighborhoodData(Teuchos::RCP<const Epetra_BlockMap> globalOverlapScalarPointMap,
+                                                          Teuchos::RCP<const PeridigmNS::NeighborhoodData> globalNeighborhoodData);
+
+    /*! \brief Initialize the data manager.
+     *
+     *  The DataManager will include all the field specs requested by the material model and
+     *  the contact model, as well as those provided by setAuxiliaryFieldSpecs().
+     */
+    void initializeDataManager();
+
     std::string blockName;
     int blockID;
 
@@ -243,6 +274,9 @@ namespace PeridigmNS {
 
     //! The contact neighborhood data
     Teuchos::RCP<PeridigmNS::NeighborhoodData> contactNeighborhoodData;
+
+    //! List of auxiliary field specs
+    std::vector<Field_NS::FieldSpec> auxiliaryFieldSpecs;
 
     //! The DataManager
     Teuchos::RCP<PeridigmNS::DataManager> dataManager;
