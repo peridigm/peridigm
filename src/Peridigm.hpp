@@ -95,9 +95,6 @@ namespace PeridigmNS {
     //! Initialize discretization and maps
     void initializeDiscretization(Teuchos::RCP<AbstractDiscretization> peridigmDisc);
 
-    //! Initialize the element block
-    void initializeBlocks(Teuchos::RCP<AbstractDiscretization> peridigmDisc);    
-
     //! Load node sets from input deck and/or input mesh into nodeSets container
     void initializeNodeSets(Teuchos::RCP<Teuchos::ParameterList>& bcParams,
                             Teuchos::RCP<AbstractDiscretization> peridigmDisc);
@@ -107,8 +104,10 @@ namespace PeridigmNS {
     void initializeDataManagers(Teuchos::RCP<AbstractDiscretization> peridigmDisc);
 #endif
 
-    //! Apply boundary conditions
+    //! Apply initial velocities
     void applyInitialVelocities();
+
+    //! Apply initial displacement
     void applyInitialDisplacements();
 
     //! Initialize contact

@@ -107,9 +107,6 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   Teuchos::RCP<AbstractDiscretization> peridigmDisc = discFactory.create(peridigmComm);
   initializeDiscretization(peridigmDisc);
 
-  // Initialize the element blocks; loads the maps and neighborhood data from the discretization into element blocks
-  initializeBlocks(peridigmDisc);
-
   // Load node sets from input deck and/or input mesh file into nodeSets container
   Teuchos::RCP<Teuchos::ParameterList> bcParams =
     Teuchos::rcpFromRef( peridigmParams->sublist("Problem", true).sublist("Boundary Conditions") );
@@ -139,7 +136,16 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   initializeDataManagers(peridigmDisc);
 #endif
 
-  // Load the materials into the blocks
+  // Instantiate the blocks
+  blocks = Teuchos::rcp(new std::vector<PeridigmNS::Block>());
+  std::vector<std::string> blockNames = peridigmDisc->getBlockNames();
+  for(unsigned int iBlock=0 ; iBlock<blockNames.size() ; ++iBlock){
+    std::string blockName = blockNames[iBlock];
+    PeridigmNS::Block block(blockName, iBlock+1);
+    blocks->push_back(block);
+  }
+
+  // Load the material models into the blocks
   // \todo Hook up plumbing for multiple materials in the input deck, for now all blocks get the same material.
   Teuchos::RCP<const Teuchos::ParameterList> materialParams =
     Teuchos::rcpFromRef( peridigmParams->sublist("Problem", true).sublist("Material", true) );
@@ -147,9 +153,24 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
     blockIt->setMaterialModel( materialFactory.create(materialParams) );
 
-  // Initialize the data manager associated with each block and apply data from the discretization
+  // Load the auxiliary field specs into the blocks (they will be
+  // combined with material model and contact model specs when allocating
+  // space in the Block's DataManager)
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+    blockIt->setAuxiliaryFieldSpecs(fieldSpecs);    
+
+  // Initialize the blocks (creates maps, neighborhoods, DataManager)
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+    blockIt->initialize(peridigmDisc->getGlobalOwnedMap(1),
+                        peridigmDisc->getGlobalOverlapMap(1),
+                        peridigmDisc->getGlobalOwnedMap(3),
+                        peridigmDisc->getGlobalOverlapMap(3),
+                        peridigmDisc->getGlobalBondMap(),
+                        blockIDs,
+                        globalNeighborhoodData);
+
+  // Load initial data into the blocks
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    blockIt->initializeDataManager(fieldSpecs);
     blockIt->importData(*(peridigmDisc->getCellVolume()), Field_NS::VOLUME,     Field_ENUM::STEP_NONE, Insert);
     blockIt->importData(*(peridigmDisc->getInitialX()),   Field_NS::COORD3D,    Field_ENUM::STEP_NONE, Insert);
     blockIt->importData(*(peridigmDisc->getInitialX()),   Field_NS::CURCOORD3D, Field_ENUM::STEP_N,    Insert);
@@ -287,26 +308,6 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
 
   // get the neighborlist from the discretization
   globalNeighborhoodData = peridigmDisc->getNeighborhoodData();
-}
-
-void PeridigmNS::Peridigm::initializeBlocks(Teuchos::RCP<AbstractDiscretization> peridigmDisc) {
-
-  blocks = Teuchos::rcp(new std::vector<PeridigmNS::Block>());
-  std::vector<std::string> blockNames = peridigmDisc->getBlockNames();
-
-  // Create a PeridigmNS::Block for each element block, set the maps, and set the neighborhood.
-  for(unsigned int iBlock=0 ; iBlock<blockNames.size() ; ++iBlock){
-    std::string blockName = blockNames[iBlock];
-    PeridigmNS::Block block(blockName, iBlock+1);
-    block.createMapsFromGlobalMaps(peridigmDisc->getGlobalOwnedMap(1),
-                                   peridigmDisc->getGlobalOverlapMap(1),
-                                   peridigmDisc->getGlobalOwnedMap(3),
-                                   peridigmDisc->getGlobalOverlapMap(3),
-                                   peridigmDisc->getGlobalBondMap(),
-                                   blockIDs,
-                                   globalNeighborhoodData);
-    blocks->push_back(block);
-  }
 }
 
 void PeridigmNS::Peridigm::initializeNodeSets(Teuchos::RCP<Teuchos::ParameterList>& bcParams,
