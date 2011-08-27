@@ -185,7 +185,8 @@ namespace PeridigmNS {
                    Teuchos::RCP<const Epetra_BlockMap> rebalancedGlobalOverlapVectorPointMap,
                    Teuchos::RCP<const Epetra_BlockMap> rebalancedGlobalOwnedScalarBondMap,
                    Teuchos::RCP<const Epetra_Vector> rebalancedGlobalBlockIds,
-                   Teuchos::RCP<const PeridigmNS::NeighborhoodData> rebalancedGlobalNeighborhoodData);
+                   Teuchos::RCP<const PeridigmNS::NeighborhoodData> rebalancedGlobalNeighborhoodData,
+                   Teuchos::RCP<const PeridigmNS::NeighborhoodData> rebalancedGlobalContactNeighborhoodData);
 
     //! Stores a list of field specs that will be added to this block's DataManager.
     void setAuxiliaryFieldSpecs(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs){
@@ -233,11 +234,12 @@ namespace PeridigmNS {
                                   Teuchos::RCP<const Epetra_BlockMap> globalOverlapVectorPointMap,
                                   Teuchos::RCP<const Epetra_BlockMap> globalOwnedScalarBondMap,
                                   Teuchos::RCP<const Epetra_Vector>   globalBlockIds,
-                                  Teuchos::RCP<const PeridigmNS::NeighborhoodData> globalNeighborhoodData);
+                                  Teuchos::RCP<const PeridigmNS::NeighborhoodData> globalNeighborhoodData,
+                                  Teuchos::RCP<const PeridigmNS::NeighborhoodData> globalContactNeighborhoodData);
 
     //! Create the block-specific neighborhood data.
-    void createNeighborhoodDataFromGlobalNeighborhoodData(Teuchos::RCP<const Epetra_BlockMap> globalOverlapScalarPointMap,
-                                                          Teuchos::RCP<const PeridigmNS::NeighborhoodData> globalNeighborhoodData);
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> createNeighborhoodDataFromGlobalNeighborhoodData(Teuchos::RCP<const Epetra_BlockMap> globalOverlapScalarPointMap,
+                                                                                                Teuchos::RCP<const PeridigmNS::NeighborhoodData> globalNeighborhoodData);
 
     /*! \brief Initialize the data manager.
      *

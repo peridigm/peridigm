@@ -1804,7 +1804,8 @@ void PeridigmNS::Peridigm::rebalance() {
                        rebalancedThreeDimensionalOverlapMap,
                        rebalancedBondMap,
                        rebalancedMothershipBlockIDs,
-                       rebalancedNeighborhoodData);
+                       rebalancedNeighborhoodData,
+                       rebalancedContactNeighborhoodData);
 
   // set all the pointers to the new maps
   oneDimensionalMap = rebalancedOneDimensionalMap;
