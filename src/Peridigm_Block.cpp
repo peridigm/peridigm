@@ -63,10 +63,11 @@ void PeridigmNS::Block::initialize(Teuchos::RCP<const Epetra_BlockMap> globalOwn
                            globalOverlapVectorPointMap,
                            globalOwnedScalarBondMap,
                            globalBlockIds,
-                           globalNeighborhoodData);
+                           globalNeighborhoodData,
+                           Teuchos::RCP<const PeridigmNS::NeighborhoodData>());
 
-  createNeighborhoodDataFromGlobalNeighborhoodData(globalOverlapScalarPointMap,
-                                                   globalNeighborhoodData);
+  neighborhoodData = createNeighborhoodDataFromGlobalNeighborhoodData(globalOverlapScalarPointMap,
+                                                                      globalNeighborhoodData);
 
   initializeDataManager();
 }
@@ -77,7 +78,8 @@ void PeridigmNS::Block::rebalance(Teuchos::RCP<const Epetra_BlockMap> rebalanced
                                   Teuchos::RCP<const Epetra_BlockMap> rebalancedGlobalOverlapVectorPointMap,
                                   Teuchos::RCP<const Epetra_BlockMap> rebalancedGlobalOwnedScalarBondMap,
                                   Teuchos::RCP<const Epetra_Vector> rebalancedGlobalBlockIds,
-                                  Teuchos::RCP<const PeridigmNS::NeighborhoodData> rebalancedGlobalNeighborhoodData)
+                                  Teuchos::RCP<const PeridigmNS::NeighborhoodData> rebalancedGlobalNeighborhoodData,
+                                  Teuchos::RCP<const PeridigmNS::NeighborhoodData> rebalancedGlobalContactNeighborhoodData)
 {
   createMapsFromGlobalMaps(rebalancedGlobalOwnedScalarPointMap,
                            rebalancedGlobalOverlapScalarPointMap,
@@ -85,10 +87,15 @@ void PeridigmNS::Block::rebalance(Teuchos::RCP<const Epetra_BlockMap> rebalanced
                            rebalancedGlobalOverlapVectorPointMap,
                            rebalancedGlobalOwnedScalarBondMap,
                            rebalancedGlobalBlockIds,
-                           rebalancedGlobalNeighborhoodData);
+                           rebalancedGlobalNeighborhoodData,
+                           rebalancedGlobalContactNeighborhoodData);
 
-  createNeighborhoodDataFromGlobalNeighborhoodData(rebalancedGlobalOverlapScalarPointMap,
-                                                   rebalancedGlobalNeighborhoodData);
+  neighborhoodData = createNeighborhoodDataFromGlobalNeighborhoodData(rebalancedGlobalOverlapScalarPointMap,
+                                                                      rebalancedGlobalNeighborhoodData);
+
+  if(!rebalancedGlobalContactNeighborhoodData.is_null())
+    contactNeighborhoodData = createNeighborhoodDataFromGlobalNeighborhoodData(rebalancedGlobalOverlapScalarPointMap,
+                                                                               rebalancedGlobalContactNeighborhoodData);
 
   dataManager->rebalance(ownedScalarPointMap,
                          overlapScalarPointMap,
@@ -140,15 +147,24 @@ void PeridigmNS::Block::exportData(Epetra_Vector& target, Field_NS::FieldSpec sp
 
     // scalar data
     if(target.Map().ElementSize() == 1){
-      if( oneDimensionalImporter.is_null() || !oneDimensionalImporter->SourceMap().SameAs(target.Map()) )
-        oneDimensionalImporter = Teuchos::rcp(new Epetra_Import(*dataManager->getOverlapScalarPointMap(), target.Map()));
+//       if( oneDimensionalImporter.is_null() || !oneDimensionalImporter->SourceMap().SameAs(target.Map()) )
+      oneDimensionalImporter = Teuchos::rcp(new Epetra_Import(*dataManager->getOverlapScalarPointMap(), target.Map()));
       target.Export(*(dataManager->getData(spec, step)), *oneDimensionalImporter, combineMode);  
     }
 
     // vector data
     else if(target.Map().ElementSize() == 3){
-      if( threeDimensionalImporter.is_null() || !threeDimensionalImporter->SourceMap().SameAs(target.Map()) )
-        threeDimensionalImporter = Teuchos::rcp(new Epetra_Import(*dataManager->getOverlapVectorPointMap(), target.Map()));
+
+      // \todo Figure out how expensive it is to create an importer versus checking all the SameAs calls.
+
+//       // create importer if necessary
+//       if( threeDimensionalImporter.is_null() ||
+//           !threeDimensionalImporter->SourceMap().SameAs(target.Map()) ||
+//           !threeDimensionalImporter->TargetMap().SameAs(*dataManager->getOverlapVectorPointMap()) ){
+//         threeDimensionalImporter = Teuchos::rcp(new Epetra_Import(*dataManager->getOverlapVectorPointMap(), target.Map()));
+//       }
+
+      threeDimensionalImporter = Teuchos::rcp(new Epetra_Import(*dataManager->getOverlapVectorPointMap(), target.Map()));
       target.Export(*(dataManager->getData(spec, step)), *threeDimensionalImporter, combineMode);  
     }
   }
@@ -160,7 +176,8 @@ void PeridigmNS::Block::createMapsFromGlobalMaps(Teuchos::RCP<const Epetra_Block
                                                  Teuchos::RCP<const Epetra_BlockMap> globalOverlapVectorPointMap,
                                                  Teuchos::RCP<const Epetra_BlockMap> globalOwnedScalarBondMap,
                                                  Teuchos::RCP<const Epetra_Vector>   globalBlockIds,
-                                                 Teuchos::RCP<const PeridigmNS::NeighborhoodData> globalNeighborhoodData)
+                                                 Teuchos::RCP<const PeridigmNS::NeighborhoodData> globalNeighborhoodData,
+                                                 Teuchos::RCP<const PeridigmNS::NeighborhoodData> globalContactNeighborhoodData)
 {
   double* globalBlockIdsPtr;
   globalBlockIds->ExtractView(&globalBlockIdsPtr);
@@ -222,6 +239,8 @@ void PeridigmNS::Block::createMapsFromGlobalMaps(Teuchos::RCP<const Epetra_Block
 
   // Create a list of nodes that need to be ghosted (both across material boundaries and across processor boundaries)
   std::set<int> ghosts;
+
+  // Check the neighborhood list for things that need to be ghosted
   int* const globalNeighborhoodList = globalNeighborhoodData->NeighborhoodList();
   int globalNeighborhoodListIndex = 0;
   for(int iLID=0 ; iLID<globalNeighborhoodData->NumOwnedPoints() ; ++iLID){
@@ -233,6 +252,22 @@ void PeridigmNS::Block::createMapsFromGlobalMaps(Teuchos::RCP<const Epetra_Block
       }
     }
     globalNeighborhoodListIndex += numNeighbors;
+  }
+
+  // Check the contact neighborhood list for things that need to be ghosted
+  if(!globalContactNeighborhoodData.is_null()){
+    int* const globalContactNeighborhoodList = globalContactNeighborhoodData->NeighborhoodList();
+    int globalContactNeighborhoodListIndex = 0;
+    for(int iLID=0 ; iLID<globalContactNeighborhoodData->NumOwnedPoints() ; ++iLID){
+      int numNeighbors = globalContactNeighborhoodList[globalContactNeighborhoodListIndex++];
+      if(globalBlockIdsPtr[iLID] == blockID) {
+        for(int i=0 ; i<numNeighbors ; ++i){
+          int neighborGlobalID = globalOverlapScalarPointMap->GID( globalContactNeighborhoodList[globalContactNeighborhoodListIndex + i] );
+          ghosts.insert(neighborGlobalID);
+        }
+      }
+      globalContactNeighborhoodListIndex += numNeighbors;
+    }
   }
 
   // Remove entries from ghosts that are already in IDs
@@ -262,8 +297,8 @@ void PeridigmNS::Block::createMapsFromGlobalMaps(Teuchos::RCP<const Epetra_Block
     Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, elementSize, indexBase, globalOwnedScalarPointMap->Comm()));
 }
 
-void PeridigmNS::Block::createNeighborhoodDataFromGlobalNeighborhoodData(Teuchos::RCP<const Epetra_BlockMap> globalOverlapScalarPointMap,
-                                                                         Teuchos::RCP<const PeridigmNS::NeighborhoodData> globalNeighborhoodData)
+Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::Block::createNeighborhoodDataFromGlobalNeighborhoodData(Teuchos::RCP<const Epetra_BlockMap> globalOverlapScalarPointMap,
+                                                                                                               Teuchos::RCP<const PeridigmNS::NeighborhoodData> globalNeighborhoodData)
 {
   int numOwnedPoints = ownedScalarPointMap->NumMyElements();
   int* ownedPointGlobalIDs = ownedScalarPointMap->MyGlobalElements();
@@ -275,9 +310,9 @@ void PeridigmNS::Block::createNeighborhoodDataFromGlobalNeighborhoodData(Teuchos
   int* const globalNeighborhoodList = globalNeighborhoodData->NeighborhoodList();
   int* const globalNeighborhoodPtr = globalNeighborhoodData->NeighborhoodPtr();
 
-  // Create the neighborhoodList and neighborhoodPtr for this block
+  // Create the neighborhoodList and neighborhoodPtr for this block.
   // All the IDs in the neighborhoodList and neighborhoodPtr are local IDs into 
-  // the block-specific overlap map
+  // the block-specific overlap map.
 
   for(int i=0 ; i<numOwnedPoints ; ++i){
     neighborhoodPtr[i] = (int)(neighborhoodList.size());
@@ -294,24 +329,26 @@ void PeridigmNS::Block::createNeighborhoodDataFromGlobalNeighborhoodData(Teuchos
 
   // create the NeighborhoodData for this block
 
-  neighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
-  neighborhoodData->SetNumOwned(ownedIDs.size());
+  Teuchos::RCP<PeridigmNS::NeighborhoodData> blockNeighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
+  blockNeighborhoodData->SetNumOwned(ownedIDs.size());
   if(ownedIDs.size() > 0){
-    memcpy(neighborhoodData->OwnedIDs(), 
+    memcpy(blockNeighborhoodData->OwnedIDs(), 
            &ownedIDs.at(0),
            ownedIDs.size()*sizeof(int));
   }
   if(neighborhoodPtr.size() > 0){
-    memcpy(neighborhoodData->NeighborhoodPtr(), 
+    memcpy(blockNeighborhoodData->NeighborhoodPtr(), 
            &neighborhoodPtr.at(0),
            neighborhoodPtr.size()*sizeof(int));
   }
-  neighborhoodData->SetNeighborhoodListSize(neighborhoodList.size());
+  blockNeighborhoodData->SetNeighborhoodListSize(neighborhoodList.size());
   if(neighborhoodList.size() > 0){
-    memcpy(neighborhoodData->NeighborhoodList(),
+    memcpy(blockNeighborhoodData->NeighborhoodList(),
            &neighborhoodList.at(0),
            neighborhoodList.size()*sizeof(int));
   }
+
+  return blockNeighborhoodData;
 }
 
 void PeridigmNS::Block::initializeDataManager()
