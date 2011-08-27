@@ -199,7 +199,15 @@ namespace PeridigmNS {
     }
 
     //! Initialize the material model
-    void initializeMaterialModel();
+    void initializeMaterialModel(double timeStep = 1.0);
+
+    //! Method for accessing data from the DataManager.
+    Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec, Field_ENUM::Step step){
+      TEST_FOR_EXCEPT_MSG(
+        dataManager.is_null(),
+        "\n**** DataManager must be initialized via Block::initializeDataManager() prior to calling Block::getData()\n");
+      return dataManager->getData(fieldSpec, step);
+    }
 
     /*! \brief Import data from the given source vector to the underlying target vector associated with the given field spec.
      *

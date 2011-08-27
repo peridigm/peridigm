@@ -104,7 +104,7 @@ void PeridigmNS::Block::rebalance(Teuchos::RCP<const Epetra_BlockMap> rebalanced
                          ownedScalarBondMap);
 }
 
-void PeridigmNS::Block::initializeMaterialModel()
+void PeridigmNS::Block::initializeMaterialModel(double timeStep)
 {
   TEST_FOR_EXCEPT_MSG(materialModel.is_null(),
                       "\n**** Material model must be set via Block::setMaterialModel() prior to calling Block::initializeMaterialModel()\n");
@@ -113,8 +113,7 @@ void PeridigmNS::Block::initializeMaterialModel()
   TEST_FOR_EXCEPT_MSG(dataManager.is_null(),
                       "\n**** DataManager must be initialized via Block::initializeDataManager() prior to calling Block::initializeMaterialModel()\n");
 
-  double dt = 0.0;
-  materialModel->initialize(dt,
+  materialModel->initialize(timeStep,
                             neighborhoodData->NumOwnedPoints(),
                             neighborhoodData->OwnedIDs(),
                             neighborhoodData->NeighborhoodList(),

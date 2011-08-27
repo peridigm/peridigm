@@ -163,6 +163,7 @@ ${Boost_LIBRARIES}
 add_executable(utPHAL_UpdateForceState
 	           PHAL_PeridigmTraits.cpp
 	           PHAL_Dimension.cpp
+               Peridigm_Block.cpp
                Peridigm_State.cpp
                Peridigm_DataManager.cpp
                Peridigm_SerialMatrix.cpp

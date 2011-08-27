@@ -89,6 +89,8 @@ void testInitialize()
 
 void testTwoPts()
 {
+#ifndef MULTIPLE_BLOCKS
+
   Epetra_SerialComm comm;
 
   // set up a hard-coded layout for two points
@@ -178,6 +180,129 @@ void testTwoPts()
   workset.neighborhoodData = Teuchos::RCP<PeridigmNS::NeighborhoodData>(&neighborhoodData, false);
   workset.myPID = comm.MyPID();
 
+
+
+
+
+#else 
+
+
+  Epetra_SerialComm comm;
+
+  // set up a hard-coded layout for two points
+  int numCells = 2;
+  int numBonds = 2;
+
+  // set up overlap maps, which include ghosted nodes
+  // in this case we're on a single processor, so these
+  // maps are essentially the identity map
+  int numGlobalElements = numCells;
+  int numMyElements = numGlobalElements;
+  int* myGlobalElements = new int[numMyElements];
+  int elementSize = 1;
+  for(int i=0; i<numMyElements ; ++i){
+	myGlobalElements[i] = i;
+  }
+  int indexBase = 0;
+
+  // oneDimensionalOverlapMap
+  // used for cell volumes and scalar constitutive data
+  Epetra_BlockMap oneDimensionalOverlapMap(numGlobalElements, numMyElements, myGlobalElements, elementSize, indexBase, comm); 
+  // used for positions, displacements, velocities and vector constitutive data
+  elementSize = 3;
+  Epetra_BlockMap threeDimensionalOverlapMap(numGlobalElements, numMyElements, myGlobalElements, elementSize, indexBase, comm); 
+  delete[] myGlobalElements;
+  // bondMap
+  // used for bond damage and bond constitutive data
+  numGlobalElements = numBonds;
+  numMyElements = numGlobalElements;
+  myGlobalElements = new int[numMyElements];
+  elementSize = 1;
+  Epetra_BlockMap bondMap(numGlobalElements, numMyElements, myGlobalElements, elementSize, indexBase, comm); 
+  delete[] myGlobalElements;
+
+  // create a linear elastic isotropic peridynamic solid  material model
+  // could also use a MaterialFactory object to create the material here
+  Teuchos::ParameterList params;
+  params.set("Density", 7800.0);
+  params.set("Bulk Modulus", 130.0e9);
+  params.set("Shear Modulus", 78.0e9);
+  PeridigmNS::LinearElasticIsotropicMaterial mat(params);
+
+  // create the NeighborhoodData
+  // both points are neighbors of each other
+  PeridigmNS::NeighborhoodData neighborhoodData;
+  neighborhoodData.SetNumOwned(2);
+  neighborhoodData.SetNeighborhoodListSize(4);
+  int* const ownedIDs = neighborhoodData.OwnedIDs();
+  ownedIDs[0] = 0;
+  ownedIDs[1] = 1;
+  int* const neighborhoodList = neighborhoodData.NeighborhoodList();
+  neighborhoodList[0] = 1;
+  neighborhoodList[1] = 1;
+  neighborhoodList[2] = 1;
+  neighborhoodList[3] = 0;
+  int* const neighborhoodPtr = neighborhoodData.NeighborhoodPtr();
+  neighborhoodPtr[0] = 0;
+  neighborhoodPtr[1] = 2;
+
+  // create a block and load the material model
+  PeridigmNS::Block block("test", 1);
+  block.setMaterialModel(Teuchos::rcp(&mat, false));
+
+  // create the blockID vector
+  Epetra_Vector blockIDs(oneDimensionalOverlapMap);
+  blockIDs.PutScalar(1.0);
+
+  // initialize the block
+  // in serial, the overlap and non-overlap maps are the same
+  block.initialize(Teuchos::rcp(&oneDimensionalOverlapMap, false),
+                   Teuchos::rcp(&oneDimensionalOverlapMap, false),
+                   Teuchos::rcp(&threeDimensionalOverlapMap, false),
+                   Teuchos::rcp(&threeDimensionalOverlapMap, false),
+                   Teuchos::rcp(&bondMap, false),
+                   Teuchos::rcp(&blockIDs, false),
+                   Teuchos::rcp(&neighborhoodData, false));
+
+  // time step
+  double dt = 1.0;
+
+  // create a workset with rcps to the relevant data
+  PHAL::Workset workset;
+  workset.timeStep = Teuchos::RCP<double>(&dt, false);
+  workset.jacobian = Teuchos::RCP<PeridigmNS::SerialMatrix>(); // null rcp, not used in this test
+  workset.blocks = Teuchos::rcp(new std::vector<PeridigmNS::Block>() );
+  workset.myPID = comm.MyPID();
+
+  workset.blocks->push_back(block);
+
+  // set the data for the two-point discretization
+  Epetra_Vector& x = *block.getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE);
+  Epetra_Vector& y = *block.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1);
+  x[0] = 0.0; x[1] = 0.0; x[2] = 0.0;
+  x[3] = 1.0; x[4] = 0.0; x[5] = 0.0;
+  y[0] = 0.0; y[1] = 0.0; y[2] = 0.0;
+  y[3] = 2.0; y[4] = 0.0; y[5] = 0.0;
+  block.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->PutScalar(1.0);
+//   Epetra_Vector& weightedVolume = *block.getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE);
+//   Epetra_Vector& dilatation = *block.getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1);
+//    weightedVolume[0] = 1.0;
+//    weightedVolume[1] = 1.0;
+
+  block.initializeMaterialModel();
+#endif
+
+
+
+
+
+
+
+
+
+
+
+
   // set up a parameter list that will be passed to the evaluator constructor
   Teuchos::RCP<Teuchos::ParameterList> p = rcp(new Teuchos::ParameterList);
   int type = FactoryTraits<PHAL::PeridigmTraits>::id_update_force_state;
@@ -209,10 +334,16 @@ void testTwoPts()
   BOOST_CHECK_CLOSE(currentPositionZ, 0.0, 1.0e-15);
 
   // assert the weighted volumes
+#ifdef MULTIPLE_BLOCKS
+  Epetra_Vector& weightedVolume = *block.getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE);
+#endif
   BOOST_CHECK_CLOSE(weightedVolume[0], 1.0, 1.0e-15);
   BOOST_CHECK_CLOSE(weightedVolume[1], 1.0, 1.0e-15);
 
   // assert the dilatations
+#ifdef MULTIPLE_BLOCKS
+  Epetra_Vector& dilatation = *block.getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1);
+#endif
   BOOST_CHECK_CLOSE(dilatation[0], 3.0, 1.0e-15);
   BOOST_CHECK_CLOSE(dilatation[1], 3.0, 1.0e-15);
 }
