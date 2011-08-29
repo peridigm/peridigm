@@ -198,6 +198,7 @@ add_executable(utPHAL_EvaluateForce
 	           PHAL_Dimension.cpp
                Peridigm_State.cpp
                Peridigm_DataManager.cpp
+               Peridigm_Block.cpp
                Peridigm_SerialMatrix.cpp
                ../io/mesh_output/vtk/Field.cxx
                ./materials/Peridigm_Material.cpp
