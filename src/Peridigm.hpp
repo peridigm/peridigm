@@ -187,8 +187,8 @@ namespace PeridigmNS {
     Teuchos::RCP<const Epetra_BlockMap> getOneDimensionalMap() { return oneDimensionalMap; }
     Teuchos::RCP<const Epetra_BlockMap> getThreeDimensionalMap() { return threeDimensionalMap; }
     Teuchos::RCP<const Epetra_BlockMap> getBondMap() { return bondMap; }
-#ifndef MULTIPLE_BLOCKS
     Teuchos::RCP<const Epetra_BlockMap> getOneDimensionalOverlapMap() { return oneDimensionalOverlapMap; }
+#ifndef MULTIPLE_BLOCKS
     Teuchos::RCP<const Epetra_BlockMap> getThreeDimensionalOverlapMap() { return threeDimensionalOverlapMap; }
 #endif
     //@}
@@ -223,6 +223,14 @@ namespace PeridigmNS {
       tempHack->push_back( blocks->begin()->getDataManager() );
       return tempHack;
 #endif
+    }
+
+    //! Accessor for vector of Blocks
+    Teuchos::RCP< std::vector<PeridigmNS::Block> > getBlocks() { return blocks; }
+
+    //! Accessor for individual Blocks
+    Teuchos::RCP<PeridigmNS::Block> getBlock(unsigned int blockNumber) {
+      return Teuchos::rcpFromRef(blocks->at(blockNumber));
     }
 
     //! Accessor for Material Models
