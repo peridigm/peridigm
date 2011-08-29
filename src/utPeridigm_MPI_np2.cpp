@@ -198,8 +198,10 @@ void initialize()
   BOOST_CHECK_EQUAL(peridigm->getOneDimensionalOverlapMap()->ElementSize(), 1);
   BOOST_CHECK_EQUAL(peridigm->getThreeDimensionalMap()->NumMyElements(), 1);
   BOOST_CHECK_EQUAL(peridigm->getThreeDimensionalMap()->ElementSize(), 3);
+#ifndef MULTIPLE_BLOCKS
   BOOST_CHECK_EQUAL(peridigm->getThreeDimensionalOverlapMap()->NumMyElements(), 2);
   BOOST_CHECK_EQUAL(peridigm->getThreeDimensionalOverlapMap()->ElementSize(), 3);
+#endif
   BOOST_CHECK_EQUAL(peridigm->getBondMap()->NumMyElements(), 1);
 
   // \todo Write additional asserts
@@ -218,7 +220,9 @@ void rebalanceTwoPointModel()
   Epetra_BlockMap oneDimensionalMap(*peridigm->getOneDimensionalMap());
   Epetra_BlockMap oneDimensionalOverlapMap(*peridigm->getOneDimensionalOverlapMap());
   Epetra_BlockMap threeDimensionalMap(*peridigm->getThreeDimensionalMap());
+#ifndef MULTIPLE_BLOCKS
   Epetra_BlockMap threeDimensionalOverlapMap(*peridigm->getThreeDimensionalOverlapMap());
+#endif
   Epetra_BlockMap bondMap(*peridigm->getBondMap());
   Epetra_Vector initialX(*peridigm->getX());
   Epetra_Vector initialU(*peridigm->getU());
@@ -226,6 +230,8 @@ void rebalanceTwoPointModel()
   Epetra_Vector initialV(*peridigm->getV());
   Epetra_Vector initialA(*peridigm->getA());
   Epetra_Vector initialForce(*peridigm->getForce());
+
+#ifndef MULTIPLE_BLOCKS
   Epetra_Vector volume(*(*peridigm->getDataManagers())[0]->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE));
   Epetra_Vector coord3d(*(*peridigm->getDataManagers())[0]->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE));
   Epetra_Vector weightedVolume(*(*peridigm->getDataManagers())[0]->getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE));
@@ -246,6 +252,30 @@ void rebalanceTwoPointModel()
   PeridigmNS::NeighborhoodData neighborhoodData(*peridigm->getGlobalNeighborhoodData());
   //PeridigmNS::NeighborhoodData contactNeighborhoodData(*peridigm->getContactNeighborhoodData());
 
+#else
+
+  Epetra_Vector volume( *peridigm->getBlock(0)->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE) );
+  Epetra_Vector coord3d( *peridigm->getBlock(0)->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE) );
+  Epetra_Vector weightedVolume( *peridigm->getBlock(0)->getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE) );
+  Epetra_Vector displ3dN( *peridigm->getBlock(0)->getData(Field_NS::DISPL3D, Field_ENUM::STEP_N) );
+  Epetra_Vector displ3dNP1( *peridigm->getBlock(0)->getData(Field_NS::DISPL3D, Field_ENUM::STEP_NP1) );
+  Epetra_Vector curcoord3dN( *peridigm->getBlock(0)->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_N) );
+  Epetra_Vector curcoord3dNP1( *peridigm->getBlock(0)->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1) );
+  Epetra_Vector veloc3dN( *peridigm->getBlock(0)->getData(Field_NS::VELOC3D, Field_ENUM::STEP_N) );
+  Epetra_Vector veloc3dNP1( *peridigm->getBlock(0)->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1) );
+  Epetra_Vector force3dN( *peridigm->getBlock(0)->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_N) );
+  Epetra_Vector force3dNP1( *peridigm->getBlock(0)->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1) );
+  Epetra_Vector dilatationN( *peridigm->getBlock(0)->getData(Field_NS::DILATATION, Field_ENUM::STEP_N) );
+  Epetra_Vector dilatationNP1( *peridigm->getBlock(0)->getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1) );
+  Epetra_Vector damageN( *peridigm->getBlock(0)->getData(Field_NS::DAMAGE, Field_ENUM::STEP_N) );
+  Epetra_Vector damageNP1( *peridigm->getBlock(0)->getData(Field_NS::DAMAGE, Field_ENUM::STEP_NP1) );
+  Epetra_Vector bondDamageN( *peridigm->getBlock(0)->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_N) );
+  Epetra_Vector bondDamageNP1( *peridigm->getBlock(0)->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1) );
+  PeridigmNS::NeighborhoodData neighborhoodData(*peridigm->getGlobalNeighborhoodData() );
+  //PeridigmNS::NeighborhoodData contactNeighborhoodData(*peridigm->getContactNeighborhoodData());
+
+#endif
+
   // call the rebalance function, which should produce no changes
   peridigm->rebalance();
 
@@ -254,7 +284,9 @@ void rebalanceTwoPointModel()
   BOOST_CHECK(peridigm->getOneDimensionalMap()->SameAs(oneDimensionalMap));
   BOOST_CHECK(peridigm->getOneDimensionalOverlapMap()->SameAs(oneDimensionalOverlapMap));
   BOOST_CHECK(peridigm->getThreeDimensionalMap()->SameAs(threeDimensionalMap));
+#ifndef MULTIPLE_BLOCKS
   BOOST_CHECK(peridigm->getThreeDimensionalOverlapMap()->SameAs(threeDimensionalOverlapMap));
+#endif
   BOOST_CHECK(peridigm->getBondMap()->SameAs(bondMap));
   // check mothership vectors
   for(int i=0 ; i<initialX.MyLength(); ++i){
@@ -265,42 +297,31 @@ void rebalanceTwoPointModel()
     BOOST_CHECK_CLOSE(initialA[i], (*peridigm->getA())[i], 1.0e-15);
     BOOST_CHECK_CLOSE(initialForce[i], (*peridigm->getForce())[i], 1.0e-15);
   }
+
+#ifndef MULTIPLE_BLOCKS
+
   // check data in DataManager
   Teuchos::RCP<PeridigmNS::DataManager> dataManager = (*peridigm->getDataManagers())[0];
-  for(int i=0 ; i<dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->MyLength() ; ++i)
+  int numOwnedPoints = dataManager->getOwnedScalarPointMap()->NumMyElements();
+  for(int i=0 ; i<numOwnedPoints ; ++i){
     BOOST_CHECK_CLOSE(volume[i], (*dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(coord3d[i], (*dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(weightedVolume[i], (*dataManager->getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::DISPL3D, Field_ENUM::STEP_N)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(displ3dN[i], (*dataManager->getData(Field_NS::DISPL3D, Field_ENUM::STEP_N))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::DISPL3D, Field_ENUM::STEP_NP1)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(displ3dNP1[i], (*dataManager->getData(Field_NS::DISPL3D, Field_ENUM::STEP_NP1))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_N)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(curcoord3dN[i], (*dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_N))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(curcoord3dNP1[i], (*dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_N)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(veloc3dN[i], (*dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_N))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(veloc3dNP1[i], (*dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_N)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(force3dN[i], (*dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_N))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(force3dNP1[i], (*dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::DILATATION, Field_ENUM::STEP_N)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(dilatationN[i], (*dataManager->getData(Field_NS::DILATATION, Field_ENUM::STEP_N))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(dilatationNP1[i], (*dataManager->getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::DAMAGE, Field_ENUM::STEP_N)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(damageN[i], (*dataManager->getData(Field_NS::DAMAGE, Field_ENUM::STEP_N))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::DAMAGE, Field_ENUM::STEP_NP1)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(damageNP1[i], (*dataManager->getData(Field_NS::DAMAGE, Field_ENUM::STEP_NP1))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_N)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(bondDamageN[i], (*dataManager->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_N))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(bondDamageNP1[i], (*dataManager->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1))[i], 1.0e-15);
+  }
   // check neighborhood data
   BOOST_CHECK_EQUAL(neighborhoodData.NumOwnedPoints(), peridigm->getGlobalNeighborhoodData()->NumOwnedPoints());
   BOOST_CHECK_EQUAL(neighborhoodData.NeighborhoodListSize(), peridigm->getGlobalNeighborhoodData()->NeighborhoodListSize());
@@ -311,6 +332,41 @@ void rebalanceTwoPointModel()
   for(int i=0 ; i<peridigm->getGlobalNeighborhoodData()->NeighborhoodListSize() ; ++i){
     BOOST_CHECK_EQUAL(neighborhoodData.NeighborhoodList()[i], peridigm->getGlobalNeighborhoodData()->NeighborhoodList()[i]);
   }
+
+#else
+  // check data fields
+  Teuchos::RCP<PeridigmNS::Block> block = peridigm->getBlock(0);
+  for(int i=0 ; i<block->numPoints() ; ++i){
+    BOOST_CHECK_CLOSE(volume[i], (*block->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(coord3d[i], (*block->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(weightedVolume[i], (*block->getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(displ3dN[i], (*block->getData(Field_NS::DISPL3D, Field_ENUM::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(displ3dNP1[i], (*block->getData(Field_NS::DISPL3D, Field_ENUM::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(curcoord3dN[i], (*block->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(curcoord3dNP1[i], (*block->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(veloc3dN[i], (*block->getData(Field_NS::VELOC3D, Field_ENUM::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(veloc3dNP1[i], (*block->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(force3dN[i], (*block->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(force3dNP1[i], (*block->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(dilatationN[i], (*block->getData(Field_NS::DILATATION, Field_ENUM::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(dilatationNP1[i], (*block->getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(damageN[i], (*block->getData(Field_NS::DAMAGE, Field_ENUM::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(damageNP1[i], (*block->getData(Field_NS::DAMAGE, Field_ENUM::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(bondDamageN[i], (*block->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(bondDamageNP1[i], (*block->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1))[i], 1.0e-15);
+  }
+  // check neighborhood data
+  BOOST_CHECK_EQUAL(neighborhoodData.NumOwnedPoints(), peridigm->getGlobalNeighborhoodData()->NumOwnedPoints());
+  BOOST_CHECK_EQUAL(neighborhoodData.NeighborhoodListSize(), peridigm->getGlobalNeighborhoodData()->NeighborhoodListSize());
+  for(int i=0 ; i<peridigm->getGlobalNeighborhoodData()->NumOwnedPoints() ; ++i){
+    BOOST_CHECK_EQUAL(neighborhoodData.OwnedIDs()[i], peridigm->getGlobalNeighborhoodData()->OwnedIDs()[i]);
+    BOOST_CHECK_EQUAL(neighborhoodData.NeighborhoodPtr()[i], peridigm->getGlobalNeighborhoodData()->NeighborhoodPtr()[i]);
+  }
+  for(int i=0 ; i<peridigm->getGlobalNeighborhoodData()->NeighborhoodListSize() ; ++i){
+    BOOST_CHECK_EQUAL(neighborhoodData.NeighborhoodList()[i], peridigm->getGlobalNeighborhoodData()->NeighborhoodList()[i]);
+  }
+#endif
+
 }
 
 void rebalanceEightPointModel()
@@ -326,7 +382,9 @@ void rebalanceEightPointModel()
   Epetra_BlockMap oneDimensionalMap(*peridigm->getOneDimensionalMap());
   Epetra_BlockMap oneDimensionalOverlapMap(*peridigm->getOneDimensionalOverlapMap());
   Epetra_BlockMap threeDimensionalMap(*peridigm->getThreeDimensionalMap());
+#ifndef MULTIPLE_BLOCKS
   Epetra_BlockMap threeDimensionalOverlapMap(*peridigm->getThreeDimensionalOverlapMap());
+#endif
   Epetra_BlockMap bondMap(*peridigm->getBondMap());
   Epetra_Vector initialX(*peridigm->getX());
   Epetra_Vector initialU(*peridigm->getU());
@@ -334,6 +392,8 @@ void rebalanceEightPointModel()
   Epetra_Vector initialV(*peridigm->getV());
   Epetra_Vector initialA(*peridigm->getA());
   Epetra_Vector initialForce(*peridigm->getForce());
+
+#ifndef MULTIPLE_BLOCKS
   Epetra_Vector volume(*(*peridigm->getDataManagers())[0]->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE));
   Epetra_Vector coord3d(*(*peridigm->getDataManagers())[0]->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE));
   Epetra_Vector weightedVolume(*(*peridigm->getDataManagers())[0]->getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE));
@@ -354,7 +414,31 @@ void rebalanceEightPointModel()
   PeridigmNS::NeighborhoodData neighborhoodData(*peridigm->getGlobalNeighborhoodData());
   //PeridigmNS::NeighborhoodData contactNeighborhoodData(*peridigm->getContactNeighborhoodData());
 
-  // call the rebalance function, which should produce to changes
+#else
+
+  Epetra_Vector volume( *peridigm->getBlock(0)->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE) );
+  Epetra_Vector coord3d( *peridigm->getBlock(0)->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE) );
+  Epetra_Vector weightedVolume( *peridigm->getBlock(0)->getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE) );
+  Epetra_Vector displ3dN( *peridigm->getBlock(0)->getData(Field_NS::DISPL3D, Field_ENUM::STEP_N) );
+  Epetra_Vector displ3dNP1( *peridigm->getBlock(0)->getData(Field_NS::DISPL3D, Field_ENUM::STEP_NP1) );
+  Epetra_Vector curcoord3dN( *peridigm->getBlock(0)->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_N) );
+  Epetra_Vector curcoord3dNP1( *peridigm->getBlock(0)->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1) );
+  Epetra_Vector veloc3dN( *peridigm->getBlock(0)->getData(Field_NS::VELOC3D, Field_ENUM::STEP_N) );
+  Epetra_Vector veloc3dNP1( *peridigm->getBlock(0)->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1) );
+  Epetra_Vector force3dN( *peridigm->getBlock(0)->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_N) );
+  Epetra_Vector force3dNP1( *peridigm->getBlock(0)->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1) );
+  Epetra_Vector dilatationN( *peridigm->getBlock(0)->getData(Field_NS::DILATATION, Field_ENUM::STEP_N) );
+  Epetra_Vector dilatationNP1( *peridigm->getBlock(0)->getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1) );
+  Epetra_Vector damageN( *peridigm->getBlock(0)->getData(Field_NS::DAMAGE, Field_ENUM::STEP_N) );
+  Epetra_Vector damageNP1( *peridigm->getBlock(0)->getData(Field_NS::DAMAGE, Field_ENUM::STEP_NP1) );
+  Epetra_Vector bondDamageN( *peridigm->getBlock(0)->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_N) );
+  Epetra_Vector bondDamageNP1( *peridigm->getBlock(0)->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1) );
+  PeridigmNS::NeighborhoodData neighborhoodData(*peridigm->getGlobalNeighborhoodData() );
+  //PeridigmNS::NeighborhoodData contactNeighborhoodData(*peridigm->getContactNeighborhoodData());
+
+#endif
+
+  // call the rebalance function, which should produce no changes
   peridigm->rebalance();
 
   // check everything to make sure nothing changed
@@ -362,7 +446,9 @@ void rebalanceEightPointModel()
   BOOST_CHECK(peridigm->getOneDimensionalMap()->SameAs(oneDimensionalMap));
   BOOST_CHECK(peridigm->getOneDimensionalOverlapMap()->SameAs(oneDimensionalOverlapMap));
   BOOST_CHECK(peridigm->getThreeDimensionalMap()->SameAs(threeDimensionalMap));
+#ifndef MULTIPLE_BLOCKS
   BOOST_CHECK(peridigm->getThreeDimensionalOverlapMap()->SameAs(threeDimensionalOverlapMap));
+#endif
   BOOST_CHECK(peridigm->getBondMap()->SameAs(bondMap));
   // check mothership vectors
   for(int i=0 ; i<initialX.MyLength(); ++i){
@@ -373,42 +459,29 @@ void rebalanceEightPointModel()
     BOOST_CHECK_CLOSE(initialA[i], (*peridigm->getA())[i], 1.0e-15);
     BOOST_CHECK_CLOSE(initialForce[i], (*peridigm->getForce())[i], 1.0e-15);
   }
+#ifndef MULTIPLE_BLOCKS
   // check data in DataManager
   Teuchos::RCP<PeridigmNS::DataManager> dataManager = (*peridigm->getDataManagers())[0];
-  for(int i=0 ; i<dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->MyLength() ; ++i)
+  int numOwnedPoints = dataManager->getOwnedScalarPointMap()->NumMyElements();
+  for(int i=0 ; i<numOwnedPoints ; ++i){
     BOOST_CHECK_CLOSE(volume[i], (*dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(coord3d[i], (*dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(weightedVolume[i], (*dataManager->getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::DISPL3D, Field_ENUM::STEP_N)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(displ3dN[i], (*dataManager->getData(Field_NS::DISPL3D, Field_ENUM::STEP_N))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::DISPL3D, Field_ENUM::STEP_NP1)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(displ3dNP1[i], (*dataManager->getData(Field_NS::DISPL3D, Field_ENUM::STEP_NP1))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_N)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(curcoord3dN[i], (*dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_N))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(curcoord3dNP1[i], (*dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_N)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(veloc3dN[i], (*dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_N))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(veloc3dNP1[i], (*dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_N)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(force3dN[i], (*dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_N))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(force3dNP1[i], (*dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::DILATATION, Field_ENUM::STEP_N)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(dilatationN[i], (*dataManager->getData(Field_NS::DILATATION, Field_ENUM::STEP_N))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(dilatationNP1[i], (*dataManager->getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::DAMAGE, Field_ENUM::STEP_N)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(damageN[i], (*dataManager->getData(Field_NS::DAMAGE, Field_ENUM::STEP_N))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::DAMAGE, Field_ENUM::STEP_NP1)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(damageNP1[i], (*dataManager->getData(Field_NS::DAMAGE, Field_ENUM::STEP_NP1))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_N)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(bondDamageN[i], (*dataManager->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_N))[i], 1.0e-15);
-  for(int i=0 ; i<dataManager->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1)->MyLength() ; ++i)
     BOOST_CHECK_CLOSE(bondDamageNP1[i], (*dataManager->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1))[i], 1.0e-15);
+  }
   // check neighborhood data
   BOOST_CHECK_EQUAL(neighborhoodData.NumOwnedPoints(), peridigm->getGlobalNeighborhoodData()->NumOwnedPoints());
   BOOST_CHECK_EQUAL(neighborhoodData.NeighborhoodListSize(), peridigm->getGlobalNeighborhoodData()->NeighborhoodListSize());
@@ -419,6 +492,42 @@ void rebalanceEightPointModel()
   for(int i=0 ; i<peridigm->getGlobalNeighborhoodData()->NeighborhoodListSize() ; ++i){
     BOOST_CHECK_EQUAL(neighborhoodData.NeighborhoodList()[i], peridigm->getGlobalNeighborhoodData()->NeighborhoodList()[i]);
   }
+
+#else
+
+  // check field data
+  Teuchos::RCP<PeridigmNS::Block> block = peridigm->getBlock(0);
+  for(int i=0 ; i<block->numPoints() ; ++i){
+    BOOST_CHECK_CLOSE(volume[i], (*block->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(coord3d[i], (*block->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(weightedVolume[i], (*block->getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(displ3dN[i], (*block->getData(Field_NS::DISPL3D, Field_ENUM::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(displ3dNP1[i], (*block->getData(Field_NS::DISPL3D, Field_ENUM::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(curcoord3dN[i], (*block->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(curcoord3dNP1[i], (*block->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(veloc3dN[i], (*block->getData(Field_NS::VELOC3D, Field_ENUM::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(veloc3dNP1[i], (*block->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(force3dN[i], (*block->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(force3dNP1[i], (*block->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(dilatationN[i], (*block->getData(Field_NS::DILATATION, Field_ENUM::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(dilatationNP1[i], (*block->getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(damageN[i], (*block->getData(Field_NS::DAMAGE, Field_ENUM::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(damageNP1[i], (*block->getData(Field_NS::DAMAGE, Field_ENUM::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(bondDamageN[i], (*block->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(bondDamageNP1[i], (*block->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1))[i], 1.0e-15);
+  }
+  // check neighborhood data
+  BOOST_CHECK_EQUAL(neighborhoodData.NumOwnedPoints(), peridigm->getGlobalNeighborhoodData()->NumOwnedPoints());
+  BOOST_CHECK_EQUAL(neighborhoodData.NeighborhoodListSize(), peridigm->getGlobalNeighborhoodData()->NeighborhoodListSize());
+  for(int i=0 ; i<peridigm->getGlobalNeighborhoodData()->NumOwnedPoints() ; ++i){
+    BOOST_CHECK_EQUAL(neighborhoodData.OwnedIDs()[i], peridigm->getGlobalNeighborhoodData()->OwnedIDs()[i]);
+    BOOST_CHECK_EQUAL(neighborhoodData.NeighborhoodPtr()[i], peridigm->getGlobalNeighborhoodData()->NeighborhoodPtr()[i]);
+  }
+  for(int i=0 ; i<peridigm->getGlobalNeighborhoodData()->NeighborhoodListSize() ; ++i){
+    BOOST_CHECK_EQUAL(neighborhoodData.NeighborhoodList()[i], peridigm->getGlobalNeighborhoodData()->NeighborhoodList()[i]);
+  }
+
+#endif
 }
 
 void rebalanceEightPointModelSwitchCorners()
@@ -429,7 +538,9 @@ void rebalanceEightPointModelSwitchCorners()
 
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createEightPointModel();
 
+#ifndef MULTIPLE_BLOCKS
   Teuchos::RCP<PeridigmNS::DataManager> dataManager = (*peridigm->getDataManagers())[0];
+#endif
 
   // make sure the points have ended up where we expect them to be
   // there is more than one 'correct' answer here, but for the purpose of this test we want
@@ -488,8 +599,14 @@ void rebalanceEightPointModelSwitchCorners()
   // set BOND_DAMAGE to indicate broken bonds
   // this will allow bond data rebalance to be checked
   // \todo The following is a great illustration of why the neighborhood data structure needs work...
+#ifndef MULTIPLE_BLOCKS
   Teuchos::RCP<Epetra_Vector> bondDamageN = dataManager->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_N);
   Teuchos::RCP<Epetra_Vector> bondDamageNP1 = dataManager->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1);
+#else
+  Teuchos::RCP<PeridigmNS::Block> block = peridigm->getBlock(0);
+  Teuchos::RCP<Epetra_Vector> bondDamageN = block->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_N);
+  Teuchos::RCP<Epetra_Vector> bondDamageNP1 = block->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1);
+#endif
   if(rank == 0){
     // break the second bond for the point with global ID 2
     Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData = peridigm->getGlobalNeighborhoodData();
@@ -603,6 +720,7 @@ void rebalanceEightPointModelSwitchCorners()
     BOOST_CHECK_CLOSE((*peridigm->getForce())[i], 0.0, 1.0e-15);
   }
 
+#ifndef MULTIPLE_BLOCKS
   // check data in DataManager
   if(rank == 0){
     // length of the overlap vectors should be 8*3 = 24, all the off-processor points are ghosted
@@ -708,6 +826,116 @@ void rebalanceEightPointModelSwitchCorners()
       }
     }
   }
+
+#else
+
+  // check field data
+  if(rank == 0){
+    // length of the overlap vectors should be 8*3 = 24, all the off-processor points are ghosted
+    BOOST_CHECK_EQUAL(block->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->MyLength(), 24);
+    double* coord3d;
+    block->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->ExtractView(&coord3d);
+    // global ID 0
+    BOOST_CHECK_CLOSE(coord3d[0], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[1], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[2], -1.0, 1.0e-15);
+    // global ID 4
+    BOOST_CHECK_CLOSE(coord3d[3], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[4], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[5], 1.0, 1.0e-15);
+    // global ID 6
+    BOOST_CHECK_CLOSE(coord3d[6], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[7], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[8], 1.0, 1.0e-15);
+    // global ID 7
+    BOOST_CHECK_CLOSE(coord3d[9], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[10], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[11], 1.0, 1.0e-15);
+    // global ID 1, ghosted
+    BOOST_CHECK_CLOSE(coord3d[12], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[13], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[14], -1.0, 1.0e-15);    
+    // global ID 2, ghosted
+    BOOST_CHECK_CLOSE(coord3d[15], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[16], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[17], -1.0, 1.0e-15);    
+    // global ID 3, ghosted
+    BOOST_CHECK_CLOSE(coord3d[18], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[19], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[20], -1.0, 1.0e-15);    
+    // global ID 5, ghosted
+    BOOST_CHECK_CLOSE(coord3d[21], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[22], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[23], 1.0, 1.0e-15);    
+  }
+  else if(rank == 1){
+    // length of the overlap vectors should be 8*3 = 24, all the off-processor points are ghosted
+    BOOST_CHECK_EQUAL(block->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->MyLength(), 24);
+    double* coord3d;
+    block->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->ExtractView(&coord3d);
+    // global ID 5
+    BOOST_CHECK_CLOSE(coord3d[0], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[1], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[2], 1.0, 1.0e-15);
+    // global ID 1
+    BOOST_CHECK_CLOSE(coord3d[3], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[4], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[5], -1.0, 1.0e-15);
+    // global ID 3
+    BOOST_CHECK_CLOSE(coord3d[6], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[7], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[8], -1.0, 1.0e-15);
+    // global ID 2
+    BOOST_CHECK_CLOSE(coord3d[9], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[10], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[11], -1.0, 1.0e-15);
+    // global ID 0, ghosted
+    BOOST_CHECK_CLOSE(coord3d[12], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[13], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[14], -1.0, 1.0e-15);    
+    // global ID 4, ghosted
+    BOOST_CHECK_CLOSE(coord3d[15], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[16], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[17], 1.0, 1.0e-15);    
+    // global ID 6, ghosted
+    BOOST_CHECK_CLOSE(coord3d[18], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[19], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[20], 1.0, 1.0e-15);    
+    // global ID 7, ghosted
+    BOOST_CHECK_CLOSE(coord3d[21], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[22], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[23], 1.0, 1.0e-15);    
+  }
+
+  // check BOND_DAMAGE
+  bondDamageN = block->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_N);
+  bondDamageNP1 = block->getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1);
+  if(rank == 0){
+    // all bonds should be intact except for the seventh bond for the point with global ID 7.
+    Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData = peridigm->getGlobalNeighborhoodData();
+    int numOwnedPoints = neighborhoodData->NumOwnedPoints();
+    int* ownedIDs = neighborhoodData->OwnedIDs();
+    int* neighborhoodList = neighborhoodData->NeighborhoodList();
+    int neighborhoodIndex = 0;
+    int dataIndex = 0;
+    for(int i=0 ; i<numOwnedPoints ; ++i){
+      int localID = ownedIDs[i];
+      int globalID = peridigm->getOneDimensionalOverlapMap()->GID(localID);
+      int numNeighbors = neighborhoodList[neighborhoodIndex++];
+      BOOST_CHECK_EQUAL(numNeighbors, 7);
+      for(int j=0 ; j<numNeighbors ; ++j){
+        if(globalID == 7 && j == 6){
+          // bond should be broken for both states
+          BOOST_CHECK_CLOSE((*bondDamageN)[dataIndex], 1.0, 1.0e-14);
+          BOOST_CHECK_CLOSE((*bondDamageNP1)[dataIndex], 1.0, 1.0e-14);
+        }
+        else{
+          BOOST_CHECK_CLOSE((*bondDamageN)[dataIndex], 0.0, 1.0e-14);
+          BOOST_CHECK_CLOSE((*bondDamageNP1)[dataIndex], 0.0, 1.0e-14);
+        }
+        neighborhoodIndex++;
+        dataIndex++;
+      }
+    }
+  }
+  else if(rank == 1){
+    // all bonds should be intact except for the second bond for the point with global ID 2.
+    Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData = peridigm->getGlobalNeighborhoodData();
+    int numOwnedPoints = neighborhoodData->NumOwnedPoints();
+    int* ownedIDs = neighborhoodData->OwnedIDs();
+    int* neighborhoodList = neighborhoodData->NeighborhoodList();
+    int neighborhoodIndex = 0;
+    int dataIndex = 0;
+    for(int i=0 ; i<numOwnedPoints ; ++i){
+      int localID = ownedIDs[i];
+      int globalID = peridigm->getOneDimensionalOverlapMap()->GID(localID);
+      int numNeighbors = neighborhoodList[neighborhoodIndex++];
+      BOOST_CHECK_EQUAL(numNeighbors, 7);
+      for(int j=0 ; j<numNeighbors ; ++j){
+        if(globalID == 2 && j == 1){
+          // bond should be broken for NP1 state
+          BOOST_CHECK_CLOSE((*bondDamageN)[dataIndex], 0.0, 1.0e-14);
+          BOOST_CHECK_CLOSE((*bondDamageNP1)[dataIndex], 1.0, 1.0e-14);
+        }
+        else{
+          BOOST_CHECK_CLOSE((*bondDamageN)[dataIndex], 0.0, 1.0e-14);
+          BOOST_CHECK_CLOSE((*bondDamageNP1)[dataIndex], 0.0, 1.0e-14);
+        }
+        neighborhoodIndex++;
+        dataIndex++;
+      }
+    }
+  }
+
+#endif
 }
 
 bool init_unit_test_suite()
@@ -716,8 +944,9 @@ bool init_unit_test_suite()
 	bool success = true;
 
 	test_suite* proc = BOOST_TEST_SUITE("utPeridigm__MPI_np2");
-	//proc->add(BOOST_TEST_CASE(&initialize));
-    //proc->add(BOOST_TEST_CASE(&rebalanceTwoPointModel));
+	proc->add(BOOST_TEST_CASE(&initialize));
+    proc->add(BOOST_TEST_CASE(&rebalanceTwoPointModel));
+    proc->add(BOOST_TEST_CASE(&rebalanceEightPointModel));
     proc->add(BOOST_TEST_CASE(&rebalanceEightPointModelSwitchCorners));
 	framework::master_test_suite().add(proc);
 

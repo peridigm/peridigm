@@ -201,6 +201,14 @@ namespace PeridigmNS {
     //! Initialize the material model
     void initializeMaterialModel(double timeStep = 1.0);
 
+    //! Get the number of points in the block (does not include ghosts)
+    int numPoints() {
+      TEST_FOR_EXCEPT_MSG(
+        ownedScalarPointMap.is_null(),
+        "\n**** Error in Block::numPoints():  Map not set, pointer is null.\n");
+      return ownedScalarPointMap->NumMyElements();
+    }
+
     //! Method for accessing data from the DataManager.
     Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec, Field_ENUM::Step step){
       TEST_FOR_EXCEPT_MSG(
