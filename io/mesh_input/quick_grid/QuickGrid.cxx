@@ -100,12 +100,12 @@ void print_meta_data(const QuickGridData& gridData, const std::string& label) {
 
 	int *ptr = gridData.neighborhoodPtr.get();
 	int *neigh = gridData.neighborhood.get();
-	for(size_t n=0;n<gridData.numPoints;n++,ptr++){
+	for(int n=0;n<gridData.numPoints;n++,ptr++){
 		int num_neigh = *neigh; neigh++;
 		s << "\tNeighborhood : " << gridData.myGlobalIDs.get()[n]
 		  << "; neigh ptr : " << *ptr << "; num neigh : " << num_neigh << "\n\t";
 
-		for(size_t p=0;p<num_neigh;p++,neigh++){
+		for(int p=0;p<num_neigh;p++,neigh++){
 			if(0 == p%10 && 0 != p)
 				s << "\n\t";
 			s << *neigh << ", ";
@@ -485,7 +485,7 @@ std::pair<Cell3D,QuickGridData> TensorProduct3DMeshGenerator::computePdGridData(
 
 
 	// Number of cells on this processor
-	size_t myNumCells = cellsPerProc[proc];
+	int myNumCells = cellsPerProc[proc];
 
 	// Coordinates used for tensor product space
 	const double*x=xx.get();
@@ -781,20 +781,20 @@ std::pair<Cell3D,QuickGridData> TensorProductCylinderMeshGenerator::computePdGri
 	size_t cell = 0;
 	double point[3]={0.0,0.0,0.0};
 	double pointNeighbor[3] = {0.0,0.0,0.0};
-	for(size_t k=kStart;k<nz && cell<myNumCells;k++){
+	for(int k=kStart;k<nz && cell<myNumCells;k++){
 		// kStart = 0; this one doesn't matter
 		cellLocator.k = k;
 		point[2]=z[k];
 		size_t zStart = hZ.start(k);
 		size_t nCz = hZ.numCells(k);
 
-		for(size_t j=jStart;j<ny && cell<myNumCells;j++){
+		for(int j=jStart;j<ny && cell<myNumCells;j++){
 			jStart=0; // begin at jStart only the first time
 			cellLocator.j = j;
 			double theta = y[j];
 			double c = cos(theta);
 			double s = sin(theta);
-			for(size_t i=iStart;i<nx && cell<myNumCells;i++,cell++,cellLocator.i++){
+			for(int i=iStart;i<nx && cell<myNumCells;i++,cell++,cellLocator.i++){
 				iStart=0; // begin at iStart only the first time
 				// global id
 				*gidsPtr = i + j * nx + k * nx * ny; gidsPtr++;

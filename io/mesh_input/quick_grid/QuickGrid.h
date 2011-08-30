@@ -177,7 +177,7 @@ private:
 struct Cell3D {
 public:
 	Cell3D(size_t ii, size_t jj, size_t kk) : i(ii), j(jj), k(kk) {}
-	size_t i, j, k;
+	int i, j, k;
 };
 
 
@@ -188,17 +188,17 @@ public:
 	virtual QuickGridData allocatePdGridData() const = 0;
 	virtual std::pair<Cell3D,QuickGridData> beginIterateProcs(QuickGridData& pdGridDataProc0);
 	bool hasNextProc() const { return iteratorProc < numProcs ? true : false; }
-	size_t proc() const { return iteratorProc; }
+	int proc() const { return iteratorProc; }
 	virtual std::pair<Cell3D,QuickGridData>  nextProc(Cell3D cellLocator, QuickGridData& pdGridDataProcN);
 	virtual size_t getNumGlobalCells() const = 0;
 	virtual size_t getDimension() const = 0;
 	virtual ~QuickGridMeshGenerationIterator() {}
 	virtual std::pair<Cell3D,QuickGridData> computePdGridData(size_t proc, Cell3D cellLocator, QuickGridData& pdGridData, NormFunctionPointer norm = NoOpNorm) const = 0;
 	static std::vector<size_t> getNumCellsPerProcessor(size_t globalNumCells, size_t numProcs);
-	size_t getNumProcs() const { return numProcs; }
+	int getNumProcs() const { return numProcs; }
 
 private:
-	size_t iteratorProc, numProcs;
+	int iteratorProc, numProcs;
 	NormFunctionPointer neighborHoodNorm;
 };
 

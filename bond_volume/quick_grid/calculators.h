@@ -59,6 +59,7 @@ public:
 		double ro=spec.getr0();
 		diagonal=sqrt(DR*DR+(ro*D_THETA)*(ro*D_THETA)+DZ*DZ);
 	}
+	virtual ~RingVolumeFractionCalculator(){}
 	double get_cell_diagonal() const { return diagonal; }
 	/**
 	 * Q is neighbor of P
@@ -98,6 +99,7 @@ public:
 		 */
 		diagonal=sqrt(DX*DX+DY*DY+DZ*DZ);
 	}
+	virtual ~VolumeFractionCalculator(){}
 	double get_cell_diagonal() const { return diagonal; }
 	/**
 	 * Q is neighbor of P
