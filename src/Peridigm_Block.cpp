@@ -126,14 +126,14 @@ void PeridigmNS::Block::importData(const Epetra_Vector& source, Field_NS::FieldS
 
     // scalar data
     if(source.Map().ElementSize() == 1){
-      if( oneDimensionalImporter.is_null() || !oneDimensionalImporter->SourceMap().SameAs(source.Map()) )
+      if(oneDimensionalImporter.is_null())
         oneDimensionalImporter = Teuchos::rcp(new Epetra_Import(*dataManager->getOverlapScalarPointMap(), source.Map()));
       dataManager->getData(spec, step)->Import(source, *oneDimensionalImporter, combineMode);
     }
 
     // vector data
     else if(source.Map().ElementSize() == 3){
-      if( threeDimensionalImporter.is_null() || !threeDimensionalImporter->SourceMap().SameAs(source.Map()) )
+      if(threeDimensionalImporter.is_null())
         threeDimensionalImporter = Teuchos::rcp(new Epetra_Import(*dataManager->getOverlapVectorPointMap(), source.Map()));
       dataManager->getData(spec, step)->Import(source, *threeDimensionalImporter, combineMode);
     }
@@ -146,24 +146,15 @@ void PeridigmNS::Block::exportData(Epetra_Vector& target, Field_NS::FieldSpec sp
 
     // scalar data
     if(target.Map().ElementSize() == 1){
-//       if( oneDimensionalImporter.is_null() || !oneDimensionalImporter->SourceMap().SameAs(target.Map()) )
-      oneDimensionalImporter = Teuchos::rcp(new Epetra_Import(*dataManager->getOverlapScalarPointMap(), target.Map()));
+      if(oneDimensionalImporter.is_null())
+        oneDimensionalImporter = Teuchos::rcp(new Epetra_Import(*dataManager->getOverlapScalarPointMap(), target.Map()));
       target.Export(*(dataManager->getData(spec, step)), *oneDimensionalImporter, combineMode);  
     }
 
     // vector data
     else if(target.Map().ElementSize() == 3){
-
-      // \todo Figure out how expensive it is to create an importer versus checking all the SameAs calls.
-
-//       // create importer if necessary
-//       if( threeDimensionalImporter.is_null() ||
-//           !threeDimensionalImporter->SourceMap().SameAs(target.Map()) ||
-//           !threeDimensionalImporter->TargetMap().SameAs(*dataManager->getOverlapVectorPointMap()) ){
-//         threeDimensionalImporter = Teuchos::rcp(new Epetra_Import(*dataManager->getOverlapVectorPointMap(), target.Map()));
-//       }
-
-      threeDimensionalImporter = Teuchos::rcp(new Epetra_Import(*dataManager->getOverlapVectorPointMap(), target.Map()));
+      if(threeDimensionalImporter.is_null())
+        threeDimensionalImporter = Teuchos::rcp(new Epetra_Import(*dataManager->getOverlapVectorPointMap(), target.Map()));
       target.Export(*(dataManager->getData(spec, step)), *threeDimensionalImporter, combineMode);  
     }
   }
@@ -294,6 +285,10 @@ void PeridigmNS::Block::createMapsFromGlobalMaps(Teuchos::RCP<const Epetra_Block
   elementSize = 3;
   overlapVectorPointMap =
     Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, elementSize, indexBase, globalOwnedScalarPointMap->Comm()));
+
+  // Invalidate the importers
+  oneDimensionalImporter = Teuchos::RCP<Epetra_Import>();
+  threeDimensionalImporter = Teuchos::RCP<Epetra_Import>();
 }
 
 Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::Block::createNeighborhoodDataFromGlobalNeighborhoodData(Teuchos::RCP<const Epetra_BlockMap> globalOverlapScalarPointMap,

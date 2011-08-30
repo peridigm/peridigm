@@ -1,4 +1,13 @@
 #
+#  Example of how to call loadbal to create parallel input files:
+#
+#  loadbal -No_subdirectory -suffix_mesh g -suffix_spread g -p 2 -R /home/djlittl/Desktop/ disk_impact 2
+# 
+#  ./disk_impact.spd
+#
+
+
+#
 reset
 #
 create vertex x 0.037 y 0.0 z 0.0
@@ -8,16 +17,17 @@ create curve arc three vertex 1 2 3 full
 create surface curve 1
 surface 1 move copy x 0.0 y 0.0 z .0025
 create volume loft surface 1 2
-block 1 volume 3
 #
 create sphere radius 0.005
 move volume 4 x 0.0 y 0.0 z 0.0135
-block 2 volume 4
 #
 block all element type hex8
-#volume all size 0.001
-volume all size 0.003
+volume all size 0.002
 mesh volume 3 4
+#
+#block 1 volume 3
+#block 2 volume 4
+block 1 volume 3 4
 #
 nodeset 1 volume 4
 #

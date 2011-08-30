@@ -55,7 +55,7 @@
 #include "Peridigm_Material.hpp"
 #include "Peridigm_ContactModel.hpp"
 
-//#define MULTIPLE_BLOCKS
+#define MULTIPLE_BLOCKS
 
 namespace PHAL {
 
