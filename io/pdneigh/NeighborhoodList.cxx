@@ -175,7 +175,7 @@ Array<int> NeighborhoodList::createLocalNeighborList(const Epetra_BlockMap& over
 	int *localNeig = localNeighborList.get();
 	int *neighPtr = neighborhood_ptr.get();
 	int *neigh = neighborhood.get();
-	for(int p=0;p<num_owned_points;p++){
+	for(size_t p=0;p<num_owned_points;p++){
 		int ptr = neighPtr[p];
 		int numNeigh = neigh[ptr];
 		localNeig[ptr]=numNeigh;
@@ -195,7 +195,7 @@ Array<int> NeighborhoodList::createSharedGlobalIds() const {
 	const int *neighPtr = neighborhood_ptr.get();
 	const int *neigh = neighborhood.get();
 	std::set<int>::const_iterator ownedIdsEnd = ownedIds.end();
-	for(int p=0;p<num_owned_points;p++){
+	for(size_t p=0;p<num_owned_points;p++){
 		int ptr = neighPtr[p];
 		int numNeigh = neigh[ptr];
 		for(int n=1;n<=numNeigh;n++){
@@ -225,14 +225,16 @@ Array<int> NeighborhoodList::createSharedGlobalIds() const {
 
 shared_ptr<Epetra_BlockMap> NeighborhoodList::create_Epetra_BlockMap(Epetra_MapTag key) {
 	Epetra_MapType t = key.type;
+	shared_ptr<Epetra_BlockMap> m;
 	switch(t){
 	case OWNED:
-		return getOwnedMap(key.ndf);
+		m = getOwnedMap(key.ndf);
 		break;
 	case OVERLAP:
-		return getOverlapMap(key.ndf);
+		m = getOverlapMap(key.ndf);
 		break;
 	}
+	return m;
 }
 
 
@@ -516,7 +518,7 @@ void NeighborhoodList::createAndAddNeighborhood(){
 	int *gidNeigh = neighborhood.get();
 	int *num_neigh = num_neighbors.get();
 	int *gIdsOverlap = gIdsOverlapArray.get();
-	for(int p=0;p<num_owned_points;p++,num_neigh++){
+	for(size_t p=0;p<num_owned_points;p++,num_neigh++){
 		*num_neigh = *gidNeigh; gidNeigh++;
 		size_neighborhood_list += *num_neigh;
 		for(int n=0;n<*num_neigh;n++,gidNeigh++){
@@ -605,7 +607,7 @@ void NeighborhoodList::buildNeighborhoodList
 		int neighPtr = 0;
 		int *list = neighborhood.get();
 		double *x = owned_x.get();
-		for(int p=0;p<num_owned_points;p++,x+=3,ptr++){
+		for(size_t p=0;p<num_owned_points;p++,x+=3,ptr++){
 			*ptr = neighPtr;
 			vtkIdList* kdTreeList = vtkIdList::New();
 			/*
