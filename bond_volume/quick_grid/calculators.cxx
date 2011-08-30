@@ -240,7 +240,7 @@ void compute_bond_volume
 	const int *neighPtr = localNeighborList;
 	const double *xOwned = xOverlap;
 	for(size_t p=0;p<num_owned_points;p++, xOwned +=3){
-		size_t numNeigh = *neighPtr; neighPtr++;
+		int numNeigh = *neighPtr; neighPtr++;
 
 		const double *P = xOwned;
 
@@ -268,7 +268,7 @@ void compute_bond_volume
 
 	const int *neighPtr = localNeighborList;
 	const double *P = X;
-	size_t numNeigh = *neighPtr; neighPtr++;
+	int numNeigh = *neighPtr; neighPtr++;
 	for(int n=0;n<numNeigh;n++,neighPtr++,bond_volumes++){
 		int localId = *neighPtr;
 		const double *Q = &xOverlap[3*localId];
