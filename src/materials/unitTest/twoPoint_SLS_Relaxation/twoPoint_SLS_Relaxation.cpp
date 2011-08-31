@@ -238,7 +238,7 @@ double runPureShear(Teuchos::ParameterList& paramList, std::string output_file_n
 	 */
 	double t_start=0.0;
 	double t_end = 3.0 * tau_b;
-	int numSteps_stage_1(100);
+	size_t numSteps_stage_1(100);
 	double dt = (t_end - t_start) / numSteps_stage_1;
 
 	/*
@@ -430,7 +430,6 @@ void case_1() {
 	/*
 	 * Last value computed: tests time integrator against exact value
 	 */
-	double tau = paramList.get<double>("tau");
 	double tau_b = paramList.get<double>("tau b");
 
 	double tEnd=6.0;

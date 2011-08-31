@@ -148,7 +148,6 @@ void moveCoordinatesAndReLoadBalance() {
 	 */
 	double *x = decomp.myX.get();
 	if(1==myRank){
-		int myIds[] = {0,1,4,5};
 		/*
 		 * point 0 has localId=2
 		 */
@@ -161,17 +160,10 @@ void moveCoordinatesAndReLoadBalance() {
 		*(x0+1)=y15;
 		*(x0+2)=z15;
 	}
-	if(0==myRank){
-		int myIds[] = {2,3,6,7};
-	}
-	if(2==myRank){
-		int myIds[] = {8,9,12,13};
-	}
 	if(3==myRank){
 		/*
 		 * point 15 has localId=1
 		 */
-		int myIds[] = {10,11,14,15};
 		int localId0 = 1;
 		double *x15 = x+3*localId0;
 		double x0 = xStart + xLength/nx/2;
@@ -243,12 +235,12 @@ void moveCoordinatesAndReLoadBalance() {
 		for(int p=0;p<numPoints;p++,gIds++){
 			BOOST_CHECK(iEnd!=ids.find(*gIds));
 			set<int>& gIdNeigh = neighMap[*gIds];
-			int numNeigh = *neigh; neigh++;
+			size_t numNeigh = *neigh; neigh++;
 //			cout << "myRank, gIds, localId, numNeigh = " << myRank << ", " << *gIds << ", " << p << ", " << numNeigh << endl;
 			BOOST_CHECK(gIdNeigh.size() == numNeigh);
 			set<int>::iterator neighIter=gIdNeigh.begin();
 			set<int>::iterator neighEnd=gIdNeigh.end();
-			for(int n=0;n<numNeigh;n++,neigh++){
+			for(size_t n=0;n<numNeigh;n++,neigh++){
 				BOOST_CHECK(neighEnd!=gIdNeigh.find(*neigh));
 			}
 		}

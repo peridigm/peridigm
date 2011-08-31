@@ -469,8 +469,7 @@ double compute_norm_2_deviatoric_extension
 )
 {
 
-	const double *v = bondVolume;
-	double cellVolume, dx, dy, dz, zeta, dY, ed;
+	double dx, dy, dz, zeta, dY, ed;
 
 	/*
 	 * Compute weighted volume

@@ -425,13 +425,6 @@ void runPureShear() {
 			 * to the displacement along the x-axis
 			 */
 
-			double wx=1;
-			double wy=1;
-			double l = sqrt((wx+*u1x)*(wx+*u1x)+wy*wy);
-			double L = sqrt(wx*wx+wy*wy);
-			double engineeringStrain=(l-L)/L;
-			double stretch=l/L;
-			double trueStrain=std::log(stretch);
 			/*
 			 * Next step; this is a bit squirrely -- has to do with updateGeometry
 			 * Update geometry takes velocity and existing displacement field (N)

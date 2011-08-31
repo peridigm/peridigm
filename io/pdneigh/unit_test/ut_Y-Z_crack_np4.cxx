@@ -209,9 +209,6 @@ void assertNeighborhood_p1(){
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
 	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);
 
-	int *neigh = list.get_neighborhood().get();
-	int *gids = gridData.myGlobalIDs.get();
-
 	/*
 	 * There are a total of 48 points = nx * ny * nz = 4 * 4 * 3
 	 * Because of this mesh, each processor should get 12 points
@@ -228,9 +225,6 @@ void assertNeighborhood_p2(){
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
 	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);
 
-	int *neigh = list.get_neighborhood().get();
-	int *gids = gridData.myGlobalIDs.get();
-
 	/*
 	 * There are a total of 48 points = nx * ny * nz = 4 * 4 * 3
 	 * Because of this mesh, each processor should get 12 points
@@ -246,9 +240,6 @@ void assertNeighborhood_p3(){
 	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
 	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);
-
-	int *neigh = list.get_neighborhood().get();
-	int *gids = gridData.myGlobalIDs.get();
 
 	/*
 	 * There are a total of 48 points = nx * ny * nz = 4 * 4 * 3
@@ -286,7 +277,7 @@ bool init_unit_test_suite()
 		framework::master_test_suite().add( proc );
 		return success;
 	}
-
+        return success;
 }
 
 
