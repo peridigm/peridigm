@@ -55,8 +55,6 @@
 #include "Peridigm_Material.hpp"
 #include "Peridigm_ContactModel.hpp"
 
-#define MULTIPLE_BLOCKS
-
 namespace PHAL {
 
 struct Workset {
@@ -65,15 +63,7 @@ struct Workset {
 
   Teuchos::RCP<const double> timeStep;
   Teuchos::RCP<PeridigmNS::SerialMatrix> jacobian;
-#ifndef MULTIPLE_BLOCKS
-  Teuchos::RCP<PeridigmNS::DataManager> dataManager;
-  Teuchos::RCP< std::vector<Teuchos::RCP<const PeridigmNS::Material> > > materialModels;
-  Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData;
-  Teuchos::RCP< std::vector<Teuchos::RCP<const PeridigmNS::ContactModel> > > contactModels;
-  Teuchos::RCP<const PeridigmNS::NeighborhoodData> contactNeighborhoodData;
-#else
   Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks;
-#endif
 
   // MPI ID (debugging)
   int myPID;

@@ -87,22 +87,12 @@ namespace PeridigmNS {
     //! Instantiate material objects
     void instantiateMaterials();
 
-    //! Initialize material objects
-#ifndef MULTIPLE_BLOCKS
-    void initializeMaterials();
-#endif
-
     //! Initialize discretization and maps
     void initializeDiscretization(Teuchos::RCP<AbstractDiscretization> peridigmDisc);
 
     //! Load node sets from input deck and/or input mesh into nodeSets container
     void initializeNodeSets(Teuchos::RCP<Teuchos::ParameterList>& bcParams,
                             Teuchos::RCP<AbstractDiscretization> peridigmDisc);
-
-    //! Initialize DataManagers
-#ifndef MULTIPLE_BLOCKS
-    void initializeDataManagers(Teuchos::RCP<AbstractDiscretization> peridigmDisc);
-#endif
 
     //! Apply initial velocities
     void applyInitialVelocities();
@@ -188,9 +178,6 @@ namespace PeridigmNS {
     Teuchos::RCP<const Epetra_BlockMap> getThreeDimensionalMap() { return threeDimensionalMap; }
     Teuchos::RCP<const Epetra_BlockMap> getBondMap() { return bondMap; }
     Teuchos::RCP<const Epetra_BlockMap> getOneDimensionalOverlapMap() { return oneDimensionalOverlapMap; }
-#ifndef MULTIPLE_BLOCKS
-    Teuchos::RCP<const Epetra_BlockMap> getThreeDimensionalOverlapMap() { return threeDimensionalOverlapMap; }
-#endif
     //@}
 
     //! @name Accessors for main solver-level vectors
@@ -214,15 +201,12 @@ namespace PeridigmNS {
     //@}
 
     //! Accessor for DataManagers
+    // \todo Remove this function
     Teuchos::RCP< std::vector< Teuchos::RCP<PeridigmNS::DataManager> > > getDataManagers() {
-#ifndef MULTIPLE_BLOCKS
-      return dataManagers;
-#else
       // \todo This will break for multiple blocks.
       Teuchos::RCP< std::vector< Teuchos::RCP<PeridigmNS::DataManager> > > tempHack = Teuchos::rcp(new std::vector< Teuchos::RCP<PeridigmNS::DataManager> >());
       tempHack->push_back( blocks->begin()->getDataManager() );
       return tempHack;
-#endif
     }
 
     //! Accessor for vector of Blocks
@@ -235,14 +219,10 @@ namespace PeridigmNS {
 
     //! Accessor for Material Models
     Teuchos::RCP< std::vector< Teuchos::RCP<const PeridigmNS::Material> > > getMaterialModels() {
-#ifndef MULTIPLE_BLOCKS
-      return materialModels;
-#else
       // \todo This will break for multiple blocks.
       Teuchos::RCP< std::vector< Teuchos::RCP<const PeridigmNS::Material> > > tempHack = Teuchos::rcp(new std::vector< Teuchos::RCP<const PeridigmNS::Material> >());
       tempHack->push_back( blocks->begin()->getMaterialModel() );
       return tempHack;
-#endif
     }
 
     //! Return list of field specs used by Peridigm object
@@ -270,13 +250,6 @@ namespace PeridigmNS {
     Teuchos::RCP<const Epetra_BlockMap> threeDimensionalMap;
     Teuchos::RCP<const Epetra_BlockMap> bondMap;
     Teuchos::RCP<const Epetra_BlockMap> oneDimensionalOverlapMap;
-#ifndef MULTIPLE_BLOCKS
-    Teuchos::RCP<const Epetra_BlockMap> threeDimensionalOverlapMap;
-
-    //! Importers and exporters from global to overlapped vectors
-    Teuchos::RCP<const Epetra_Import> oneDimensionalMapToOneDimensionalOverlapMapImporter;
-    Teuchos::RCP<const Epetra_Import> threeDimensionalMapToThreeDimensionalOverlapMapImporter;
-#endif
 
     //! Number of blocks in the model
     int numBlocks;
@@ -304,11 +277,6 @@ namespace PeridigmNS {
 
     //! Compute manager
     Teuchos::RCP<PeridigmNS::ComputeManager> computeManager;
-
-#ifndef MULTIPLE_BLOCKS
-    //! Data managers (one for each block)
-    Teuchos::RCP< std::vector< Teuchos::RCP<PeridigmNS::DataManager> > > dataManagers;
-#endif
 
     //! Mothership multivector that contains all the global vectors (x, u, y, v, a, force, etc.)
     Teuchos::RCP<Epetra_MultiVector> mothership;

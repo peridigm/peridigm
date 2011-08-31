@@ -82,27 +82,7 @@ void Contact<EvalT, Traits>::postRegistrationSetup(
 template<typename EvalT, typename Traits>
 void Contact<EvalT, Traits>::evaluateFields(typename Traits::EvalData cellData)
 {
-  if(m_verbose)
-    cout << "CHECK inside Contact::evaluateFields()\n" << endl;
-
-#ifndef MULTIPLE_BLOCKS
   const double dt = *cellData.timeStep;
-  const int numOwnedPoints = cellData.contactNeighborhoodData->NumOwnedPoints();
-  const int* ownedIDs = cellData.contactNeighborhoodData->OwnedIDs();
-  const int* contactNeighborhoodList = cellData.contactNeighborhoodData->NeighborhoodList();
-  PeridigmNS::DataManager& dataManager = *cellData.dataManager;
-
-  // handling of contact models needs work!
-  Teuchos::RCP<const PeridigmNS::ContactModel> contactModel = (*cellData.contactModels)[0];
-
-  contactModel->computeForce(dt, 
-                             numOwnedPoints,
-                             ownedIDs,
-                             contactNeighborhoodList,
-                             dataManager);
-
-#else
-   const double dt = *cellData.timeStep;
 
   std::vector<PeridigmNS::Block>::iterator blockIt;
   for(blockIt = cellData.blocks->begin() ; blockIt != cellData.blocks->end() ; blockIt++){
@@ -121,6 +101,5 @@ void Contact<EvalT, Traits>::evaluateFields(typename Traits::EvalData cellData)
                                  neighborhoodListTEST,
                                  *dataManagerTEST);
   }
-#endif
 }
 
