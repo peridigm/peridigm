@@ -285,8 +285,6 @@ void dsf_probe(const std::string& json_filename) {
 	double m_analytical = 4.0 * M_PI * pow(horizon,5) / 5.0;
 	double m_code = MATERIAL_EVALUATION::computeWeightedVolume(X.get(),xPtr.get(),cellVolume.get(),neighborhoodPtr.get());
 	double rel_diff = std::abs(m_analytical-m_code)/m_analytical;
-	double tolerance=1.0e-3;
-//	BOOST_CHECK_SMALL(rel_diff,tolerance);
 	std::cout << std::scientific;
 	std::cout.precision(3);
 	std::cout << "ut_dsf::analytical value for weighted volume on sphere = " << m_analytical << std::endl;

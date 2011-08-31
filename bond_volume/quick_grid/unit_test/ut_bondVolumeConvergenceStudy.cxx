@@ -294,8 +294,6 @@ void dsf_probe(const std::string& json_filename) {
 	double m_analytical = 4.0 * M_PI * pow(horizon,5) / 5.0;
 	double m_code = MATERIAL_EVALUATION::WITH_BOND_VOLUME::computeWeightedVolume(X.get(),xPtr.get(),bondVolume.get(),neighborhoodPtr.get());
 	double rel_diff = std::abs(m_analytical-m_code)/m_analytical;
-	double tolerance=1.0e-3;
-//	BOOST_CHECK_SMALL(rel_diff,tolerance);
 	std::cout << std::scientific;
 	std::cout.precision(3);
 	std::cout << "ut_dsf::analytical value for weighted volume on sphere = " << m_analytical << std::endl;
@@ -369,9 +367,6 @@ void probe_shear
 	/*
 	 * For this nearly perfect 'sphere', the shear correction factor should be very close to '1.0'
 	 */
-	double rel_diff = std::abs(1.0-dsf);
-	tolerance=1.0e-3;
-//	BOOST_CHECK_SMALL(rel_diff,tolerance);
 
 	std::stringstream table_1_out;
 	table_1_out << nx << " & ";

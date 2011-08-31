@@ -74,10 +74,6 @@ void assert_grid(QUICKGRID::QuickGridData decomp,const std::string& label) {
 	int gids_answer[] = {0,1};
 	int neighborhood_answer[] = {1,1,1,0};
 	int neighborhoodPtr_answer[] = {0,2};
-	double myX[] = {
-         -1.0,0.0,0.0,
-			 1.0,0.0,0.0
-	};
 
 	BOOST_CHECK(dimension_answer==decomp.dimension);
 	BOOST_CHECK(globalNumPoints_answer==decomp.globalNumPoints);
@@ -87,17 +83,17 @@ void assert_grid(QUICKGRID::QuickGridData decomp,const std::string& label) {
 	//	BOOST_CHECK(decomp.unPack);
 	{
 		const int* gids=decomp.myGlobalIDs.get();
-		for(size_t n=0;n<numPoints_answer;n++,gids++)
+		for(int n=0;n<numPoints_answer;n++,gids++)
 			BOOST_CHECK(gids_answer[n]==*gids);
 	}
 	{
 		const int* neighborhood = decomp.neighborhood.get();
-		for(size_t n=0;n<sizeNeighborhoodList_answer;n++,neighborhood++)
+		for(int n=0;n<sizeNeighborhoodList_answer;n++,neighborhood++)
 			BOOST_CHECK(neighborhood_answer[n]==*neighborhood);
 	}
 	{
 		const int* neighborhoodPtr = decomp.neighborhoodPtr.get();
-		for(size_t n=0;n<numPoints_answer;n++,neighborhoodPtr++)
+		for(int n=0;n<numPoints_answer;n++,neighborhoodPtr++)
 			BOOST_CHECK(neighborhoodPtr_answer[n]==*neighborhoodPtr);
 	}
 

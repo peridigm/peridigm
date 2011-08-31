@@ -659,7 +659,6 @@ void twoPointProbeJacobian()
   Epetra_Map nodeMap(2, 0, comm);
   Epetra_Map unknownMap(6, 0, comm);
   Epetra_Map bondMap(2, 0, comm);
-  double dt = 1.0;
   int numOwnedPoints;
   int* ownedIDs;
   int* neighborhoodList;
@@ -733,7 +732,6 @@ void twoPointProbeJacobianJAM()
   Epetra_Map nodeMap(2, 0, comm);
   Epetra_Map unknownMap(6, 0, comm);
   Epetra_Map bondMap(2, 0, comm);
-  double dt = 1.0;
   int numOwnedPoints;
   int* ownedIDs;
   int* neighborhoodList;

@@ -68,14 +68,6 @@ void simplePlaneCase_1(){
 	 */
 	Vector3D ua; ua[0]=0;ua[1]=1;ua[2]=0;
 	/*
-	 * Plane dimension along user input edge (USER INPUT)
-	 */
-	double a = 1.0;
-	/*
-	 * Plane dimension along edge perpendicular to plane normal and user input edge (USER INPUT)
-	 */
-	double b = 1.0;
-	/*
 	 * Unit vector along 'other' edge of plane
 	 * ub = n 'cross' ua
 	 */

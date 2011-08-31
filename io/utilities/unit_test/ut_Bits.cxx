@@ -66,7 +66,6 @@ void bit_ids(){
 	cout << "point = " << point << "; GID = " << gid << "; length = " << length << endl;
 	cout << "gid << 8 = " << (gid<<8) << endl;
 	cout << "length << 16 = " << (length << 16) << endl;
-	unsigned int id = point | (gid<<8) | (length << 16);
 	cout << "id = point | (gid<<8) | (length << 16) = " << (point | (gid<<8) | (length << 16)) << endl;
 
 }

@@ -241,7 +241,7 @@ void compute_neighborhood_volumes
 	const double *cellVolOverlap = overlapCellVol.get();
 	double *neighVol = neighborhoodVol.get();
 	double *naiveNeighVol = naiveNeighborhoodVol.get();
-	for(int p=0;p<N;p++, xOwned +=3, neighVol++,naiveNeighVol++){
+	for(size_t p=0;p<N;p++, xOwned +=3, neighVol++,naiveNeighVol++){
 		int numNeigh = *neighPtr; neighPtr++;
 		/*
 		 * initialize neighborhood to zero;
@@ -278,9 +278,8 @@ void compute_cell_volumes
 	BOOST_CHECK(specialCellVolume.get_num_points()==N);
 
 	const double *xOwned = list.get_owned_x().get();
-	const double *xOverlap = xOverlapPtr.get();
 	double *vOwned = specialCellVolume.get();
-	for(int p=0;p<N;p++, xOwned +=3, vOwned++){
+	for(size_t p=0;p<N;p++, xOwned +=3, vOwned++){
 
 		const double *P = xOwned;
 		/*

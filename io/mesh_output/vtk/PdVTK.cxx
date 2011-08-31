@@ -264,7 +264,7 @@ void expandRingPostProcess(double current_time, vtkSmartPointer<vtkUnstructuredG
 	 * Calculate kinetic energy
 	 * HERE WE LOOP OVER ALL OWNED POINTS on processor
 	 */
-	for(size_t n=0;n<grid->GetNumberOfPoints();n++){
+	for(int n=0;n<grid->GetNumberOfPoints();n++){
 		vtkIdType localId = n;
 		double *v = vData->GetTuple3(localId);
 		double volume = volData->GetTuple1(localId);
