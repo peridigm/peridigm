@@ -4,7 +4,13 @@
 #include "Array.h"
 #include "BondFilter.h"
 #include "quick_grid/QuickGrid.h"
+
+
 #include <iostream>
+#include <stdexcept>
+#include <sstream>
+#include <cstdlib>
+
 
 
 namespace PDNEIGH {
@@ -46,6 +52,27 @@ struct Zoltan_Struct * createAndInitializeZoltan(QuickGridData& pdGridData){
 	char **argv=0;
 	float version=0;
 	int zoltanErr = Zoltan_Initialize(numArgs,argv,&version);
+	std::stringstream m;
+	switch(zoltanErr){
+	case ZOLTAN_FATAL:
+		m << "ZOLTAN_FATAL ERROR\n";
+		m << "\tPDNEIGH::createAndInitializeZoltan(QuickGridData& pdGridData)\n";
+		std::runtime_error(m.str());
+		std::exit(-1);
+		break;
+	case ZOLTAN_MEMERR:
+		m << "ZOLTAN_MEMERR ERROR\n";
+		m << "\tPDNEIGH::createAndInitializeZoltan(QuickGridData& pdGridData)\n";
+		std::runtime_error(m.str());
+		std::exit(-1);
+		break;
+	case ZOLTAN_WARN:
+		m << "ZOLTAN_WARN WARNING\n";
+		m << "\tPDNEIGH::createAndInitializeZoltan(QuickGridData& pdGridData)\n";
+		std::runtime_error(m.str());
+		std::exit(-1);
+		break;
+	}
 
 	struct Zoltan_Struct *zoltan;
 
@@ -604,7 +631,7 @@ void zoltanQuery_unPackPointsMultiFunction
 		if(0==*exportPtr){
 
 			// coordinates
-			for(int d=0;d<dimension;d++)
+			for(size_t d=0;d<dimension;d++)
 				newXPtr[d] = xPtr[d];
 			newXPtr+=dimension;
 
