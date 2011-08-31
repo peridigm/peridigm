@@ -82,24 +82,6 @@ void EvaluateForce<EvalT, Traits>::postRegistrationSetup(
 template<typename EvalT, typename Traits>
 void EvaluateForce<EvalT, Traits>::evaluateFields(typename Traits::EvalData cellData)
 {
-#ifndef MULTIPLE_BLOCKS
-  const double dt = *cellData.timeStep;
-  const int numOwnedPoints = cellData.neighborhoodData->NumOwnedPoints();
-  const int* ownedIDs = cellData.neighborhoodData->OwnedIDs();
-  const int* neighborhoodList = cellData.neighborhoodData->NeighborhoodList();
-
-  PeridigmNS::DataManager& dataManager = *cellData.dataManager;
-
-  // handling of material models needs work!
-  Teuchos::RCP<const PeridigmNS::Material> material = (*cellData.materialModels)[0];
-
-  material->computeForce(dt, 
-						 numOwnedPoints,
-						 ownedIDs,
-						 neighborhoodList,
-                         dataManager);
-
-#else
   const double dt = *cellData.timeStep;
 
   std::vector<PeridigmNS::Block>::iterator blockIt;
@@ -118,6 +100,5 @@ void EvaluateForce<EvalT, Traits>::evaluateFields(typename Traits::EvalData cell
                                 neighborhoodListTEST,
                                 *dataManagerTEST);
   }
-#endif
 }
 

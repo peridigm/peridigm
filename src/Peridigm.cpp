@@ -128,14 +128,6 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   std::vector<Field_NS::FieldSpec> computeSpecs = computeManager->getFieldSpecs();
   fieldSpecs->insert(fieldSpecs->end(), computeSpecs.begin(), computeSpecs.end());
 
-  // Initialize data manager
-  // This requires that all the required fieldSpecs be known, including the mothership
-  // fieldSpecs and those from the material models, contact models, compute managers.
-  // \todo Will be obsolete with multiple material blocks.
-#ifndef MULTIPLE_BLOCKS
-  initializeDataManagers(peridigmDisc);
-#endif
-
   // Instantiate the blocks
   blocks = Teuchos::rcp(new std::vector<PeridigmNS::Block>());
   std::vector<std::string> blockNames = peridigmDisc->getBlockNames();
@@ -185,13 +177,8 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // Initialize material models
   // Initialization functions require valid initial values, e.g. velocities and displacements.
-  // \todo This will become obsolete, replaced with Block function
-#ifndef MULTIPLE_BLOCKS
-  initializeMaterials();
-#else
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
     blockIt->initializeMaterialModel();
-#endif
 
   // Setup contact
   initializeContact();
@@ -228,20 +215,6 @@ void PeridigmNS::Peridigm::instantiateMaterials() {
   TEST_FOR_EXCEPT_MSG(materialModels->size() == 0, "No material models created!");
 }
 
-#ifndef MULTIPLE_BLOCKS
-void PeridigmNS::Peridigm::initializeMaterials() {
-
-  for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock){
-    double dt = 0.0;
-    (*materialModels)[iBlock]->initialize(dt,
-                                          globalNeighborhoodData->NumOwnedPoints(),
-                                          globalNeighborhoodData->OwnedIDs(),
-                                          globalNeighborhoodData->NeighborhoodList(),
-                                          *(*dataManagers)[iBlock]);
-  }
-}
-#endif
-
 void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscretization> peridigmDisc) {
 
   // oneDimensionalMap
@@ -256,13 +229,6 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
   // threeDimensionalMap
   // used for positions, displacements, velocities and vector constitutive data
   threeDimensionalMap = peridigmDisc->getGlobalOwnedMap(3);
-
-  // threeDimensionalOverlapMap
-  // used for positions, displacements, velocities and vector constitutive data
-  // includes ghosts
-#ifndef MULTIPLE_BLOCKS
-  threeDimensionalOverlapMap = peridigmDisc->getGlobalOverlapMap(3);
-#endif
 
   // bondConstitutiveDataMap
   // a non-overlapping map used for storing constitutive data on bonds
@@ -302,12 +268,6 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
   y->ExtractView(&yPtr);
   blas.COPY(y->MyLength(), initialX, yPtr);
 
-  // Create the importers
-#ifndef MULTIPLE_BLOCKS
-  oneDimensionalMapToOneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*oneDimensionalOverlapMap, *oneDimensionalMap));
-  threeDimensionalMapToThreeDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*threeDimensionalOverlapMap, *threeDimensionalMap));
-#endif
-
   // get the neighborlist from the discretization
   globalNeighborhoodData = peridigmDisc->getNeighborhoodData();
 }
@@ -342,51 +302,6 @@ void PeridigmNS::Peridigm::initializeNodeSets(Teuchos::RCP<Teuchos::ParameterLis
     (*nodeSets)[name] = nodeList;
   }
 }
-
-#ifndef MULTIPLE_BLOCKS
-void PeridigmNS::Peridigm::initializeDataManagers(Teuchos::RCP<AbstractDiscretization> peridigmDisc) {
-
-  dataManagers = Teuchos::rcp(new std::vector< Teuchos::RCP<PeridigmNS::DataManager> >);
-
-  for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock){
-
-    // Instantiate data manager
-    Teuchos::RCP<PeridigmNS::DataManager> dataManager = Teuchos::rcp(new PeridigmNS::DataManager);
-    dataManager->setMaps(oneDimensionalMap, oneDimensionalOverlapMap, threeDimensionalMap, threeDimensionalOverlapMap, bondMap);
-
-    // Create a master list of variable specs
-    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
-
-    // First fill list with specs utilized by this object (Peridigm)
-    std::vector<Field_NS::FieldSpec> peridigmSpecs = this->getFieldSpecs();
-    variableSpecs->insert(variableSpecs->end(),peridigmSpecs.begin(),peridigmSpecs.end());
-
-    // Add the variable specs requested by each material
-    for(unsigned int i=0; i<materialModels->size() ; ++i){
-      Teuchos::RCP< std::vector<Field_NS::FieldSpec> > matVariableSpecs = (*materialModels)[i]->VariableSpecs();
-      for(unsigned int j=0 ; j<matVariableSpecs->size() ; ++j)
-        variableSpecs->push_back((*matVariableSpecs)[j]);
-    }
-
-    // Now add the variable specs requested by the compute manager
-    std::vector<Field_NS::FieldSpec> computeSpecs = computeManager->getFieldSpecs();
-    for (unsigned int i=0; i < computeSpecs.size(); i++) {
-      variableSpecs->push_back(computeSpecs[i]);
-    }
-
-    // Allocate data in the dataManager
-    dataManager->allocateData(variableSpecs);
-
-    // Fill the dataManager with data from the discretization
-    dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->Import(*(peridigmDisc->getCellVolume()), *oneDimensionalMapToOneDimensionalOverlapMapImporter, Insert);
-    dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-    dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_N)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-    dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-
-    dataManagers->push_back(dataManager);
-  }
-}
-#endif
 
 void PeridigmNS::Peridigm::applyInitialVelocities() {
 
@@ -435,14 +350,8 @@ void PeridigmNS::Peridigm::applyInitialVelocities() {
   }
 
   // Fill the dataManager with initial velocity data
-  // \todo Obsolete once we switch to multiple material blocks.
-#ifndef MULTIPLE_BLOCKS
-  for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock)
-    (*dataManagers)[iBlock]->getData(Field_NS::VELOC3D, Field_ENUM::STEP_N)->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-#else
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
     blockIt->importData(*v, Field_NS::VELOC3D, Field_ENUM::STEP_N, Insert);
-#endif
 }
 
 void PeridigmNS::Peridigm::applyInitialDisplacements() {
@@ -487,18 +396,10 @@ void PeridigmNS::Peridigm::applyInitialDisplacements() {
   y->Update(1.0, *x, 1.0, *u, 0.0);
 
   // Fill the dataManagers with initial displacement, position data
-  // \todo This will be obsolete when we switch to multiple material blocks.
-#ifndef MULTIPLE_BLOCKS
-  for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock){
-    (*dataManagers)[iBlock]->getData(Field_NS::DISPL3D, Field_ENUM::STEP_N)->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-    (*dataManagers)[iBlock]->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_N)->Import(*y, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-  }
-#else
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
     blockIt->importData(*u, Field_NS::DISPL3D, Field_ENUM::STEP_N, Insert);
     blockIt->importData(*y, Field_NS::CURCOORD3D, Field_ENUM::STEP_N, Insert);
   }
-#endif
 }
 
 void PeridigmNS::Peridigm::initializeContact() {
@@ -542,13 +443,9 @@ void PeridigmNS::Peridigm::initializeContact() {
         if(!contactModelParams.sublist(name).isParameter("Horizon"))
           contactModelParams.sublist(name).set("Horizon", discParams->get<double>("Horizon"));
 
-#ifndef MULTIPLE_BLOCKS
-        contactModels->push_back( contactModelFactory.create(contactModelParams) );
-#else
         // \todo This will break for multiple material blocks, need scheme to associate blocks with contact models
         for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
           blockIt->setContactModel( contactModelFactory.create(contactModelParams) );
-#endif
       }
     }
   }
@@ -560,16 +457,7 @@ void PeridigmNS::Peridigm::initializeWorkset() {
   *timeStep = 0.0;
   workset->timeStep = timeStep;
   workset->jacobian = overlapJacobian;
-#ifndef MULTIPLE_BLOCKS
-  // \todo This will break for multiple blocks.
-  workset->dataManager = (*dataManagers)[0];
-  workset->materialModels = materialModels;
-  workset->neighborhoodData = globalNeighborhoodData;
-  workset->contactModels = contactModels;
-  workset->contactNeighborhoodData = globalContactNeighborhoodData;
-#else
   workset->blocks = blocks;
-#endif
   workset->myPID = -1;
 }
 
@@ -650,19 +538,11 @@ void PeridigmNS::Peridigm::executeExplicit() {
 
   // Copy data from mothership vectors to overlap vectors in data manager
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-#ifndef MULTIPLE_BLOCKS
-  for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock){
-    (*dataManagers)[iBlock]->getData(Field_NS::DISPL3D, Field_ENUM::STEP_NP1)->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-    (*dataManagers)[iBlock]->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->Import(*y, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-    (*dataManagers)[iBlock]->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1)->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-  }
-#else
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
     blockIt->importData(*u, Field_NS::DISPL3D,    Field_ENUM::STEP_NP1, Insert);
     blockIt->importData(*y, Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1, Insert);
     blockIt->importData(*v, Field_NS::VELOC3D,    Field_ENUM::STEP_NP1, Insert);
   }
-#endif
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
   Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
@@ -699,27 +579,15 @@ void PeridigmNS::Peridigm::executeExplicit() {
 
   // Copy force from the data manager to the mothership vector
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-#ifndef MULTIPLE_BLOCKS
-  for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock){
-    force->Export(*(*dataManagers)[iBlock]->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
-  }
-#else
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
     blockIt->exportData(*force, Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
-#endif
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
   if(analysisHasContact){
     // Copy contact force from the data manager to the mothership vector
     PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-#ifndef MULTIPLE_BLOCKS
-    for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock){
-      contactForce->Export(*(*dataManagers)[iBlock]->getData(Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
-    }
-#else
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
       blockIt->exportData(*contactForce, Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
-#endif
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
     // Add contact forces to forces
     force->Update(1.0, *contactForce, 1.0);
@@ -735,12 +603,9 @@ void PeridigmNS::Peridigm::executeExplicit() {
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
   this->synchDataManagers();
-#ifndef MULTIPLE_BLOCKS
-  outputManager->write((*dataManagers)[0],globalNeighborhoodData,timeCurrent);
-#else
+
   // \todo This will fail for multiple material blocks.
   outputManager->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),timeCurrent);
-#endif
   PeridigmNS::Timer::self().stopTimer("Output");
 
   int displayTrigger = nsteps/100;
@@ -784,19 +649,11 @@ void PeridigmNS::Peridigm::executeExplicit() {
 
     // Copy data from mothership vectors to overlap vectors in data manager
     PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-#ifndef MULTIPLE_BLOCKS
-    for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock){
-      (*dataManagers)[iBlock]->getData(Field_NS::DISPL3D, Field_ENUM::STEP_NP1)->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-      (*dataManagers)[iBlock]->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->Import(*y, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-      (*dataManagers)[iBlock]->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1)->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-    }
-#else
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
       blockIt->importData(*u, Field_NS::DISPL3D,    Field_ENUM::STEP_NP1, Insert);
       blockIt->importData(*y, Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1, Insert);
       blockIt->importData(*v, Field_NS::VELOC3D,    Field_ENUM::STEP_NP1, Insert);
     }
-#endif
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
     // Update forces based on new positions
@@ -806,14 +663,8 @@ void PeridigmNS::Peridigm::executeExplicit() {
 
     // Copy force from the data manager to the mothership vector
     PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-#ifndef MULTIPLE_BLOCKS
-    for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock){
-      force->Export(*(*dataManagers)[iBlock]->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
-    }
-#else
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
       blockIt->exportData(*force, Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
-#endif
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");    
 
     // Check for NaNs in force evaluation
@@ -824,16 +675,8 @@ void PeridigmNS::Peridigm::executeExplicit() {
     if(analysisHasContact){
       // Copy contact force from the data manager to the mothership vector
       PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-#ifndef MULTIPLE_BLOCKS
-      for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock){
-        if((*dataManagers)[iBlock]->hasData(Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1)){
-          contactForce->Export(*(*dataManagers)[iBlock]->getData(Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
-        }
-      }
-#else
       for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
         blockIt->exportData(*contactForce, Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
-#endif
       PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
       // Check for NaNs in contact force evaluation
@@ -859,22 +702,14 @@ void PeridigmNS::Peridigm::executeExplicit() {
 
     PeridigmNS::Timer::self().startTimer("Output");
     this->synchDataManagers();
-#ifndef MULTIPLE_BLOCKS
-    outputManager->write((*dataManagers)[0],globalNeighborhoodData,timeCurrent);
-#else
+
     // \todo This will break for multiple materials.
     outputManager->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),timeCurrent);
-#endif    
     PeridigmNS::Timer::self().stopTimer("Output");
 
     // swap state N and state NP1
-#ifndef MULTIPLE_BLOCKS
-    for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock)
-      (*dataManagers)[iBlock]->updateState();
-#else
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
       blockIt->updateState();
-#endif
   }
   displayProgress("Explicit time integration", 100.0);
   *out << "\n\n";
@@ -912,12 +747,8 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
   PeridigmNS::Timer::self().startTimer("Output");
   this->synchDataManagers();
 
-#ifndef MULTIPLE_BLOCKS
-    outputManager->write((*dataManagers)[0],globalNeighborhoodData,timeCurrent);
-#else
-    // \todo This will break for multiple materials.
-    outputManager->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),timeCurrent);
-#endif
+  // \todo This will break for multiple materials.
+  outputManager->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),timeCurrent);
   PeridigmNS::Timer::self().stopTimer("Output");
 
   for(int step=0; step<numLoadSteps ; step++){
@@ -993,22 +824,14 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
     // Write output for completed load step
     PeridigmNS::Timer::self().startTimer("Output");
     this->synchDataManagers();
-#ifndef MULTIPLE_BLOCKS
-    outputManager->write((*dataManagers)[0],globalNeighborhoodData,timeCurrent);
-#else
+
     // \todo This will break for multiple materials.
     outputManager->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),timeCurrent);
-#endif
     PeridigmNS::Timer::self().stopTimer("Output");
 
     // swap state N and state NP1
-#ifndef MULTIPLE_BLOCKS
-    for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock)
-      (*dataManagers)[iBlock]->updateState();
-#else
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
       blockIt->updateState();
-#endif
 
     cout << endl;
   }
@@ -1079,12 +902,9 @@ void PeridigmNS::Peridigm::executeImplicit() {
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
   this->synchDataManagers();
-#ifndef MULTIPLE_BLOCKS
-    outputManager->write((*dataManagers)[0],globalNeighborhoodData,timeCurrent);
-#else
-    // \todo This will break for multiple materials.
-    outputManager->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),timeCurrent);
-#endif
+
+  // \todo This will break for multiple materials.
+  outputManager->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),timeCurrent);
   PeridigmNS::Timer::self().stopTimer("Output");
 
   for(int step=0; step<nsteps ; step++){
@@ -1113,21 +933,12 @@ void PeridigmNS::Peridigm::executeImplicit() {
 
     // Copy data from mothership vectors to overlap vectors in data manager
     PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-#ifndef MULTIPLE_BLOCKS
-    for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock){
-      (*dataManagers)[iBlock]->getData(Field_NS::DISPL3D, Field_ENUM::STEP_NP1)->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-      (*dataManagers)[iBlock]->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->Import(*y, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-      (*dataManagers)[iBlock]->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1)->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-      (*dataManagers)[iBlock]->getData(Field_NS::ACCEL3D, Field_ENUM::STEP_NP1)->Import(*a, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-    }
-#else
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
       blockIt->importData(*u, Field_NS::DISPL3D,    Field_ENUM::STEP_NP1, Insert);
       blockIt->importData(*y, Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1, Insert);
       blockIt->importData(*v, Field_NS::VELOC3D,    Field_ENUM::STEP_NP1, Insert);
       blockIt->importData(*v, Field_NS::ACCEL3D,    Field_ENUM::STEP_NP1, Insert);
     }
-#endif
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
     // Update forces based on new positions
@@ -1137,14 +948,8 @@ void PeridigmNS::Peridigm::executeImplicit() {
 
     // Copy force from the data manager to the mothership vector
     PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-#ifndef MULTIPLE_BLOCKS
-    for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock){
-      force->Export(*(*dataManagers)[iBlock]->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
-    }
-#else
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
       blockIt->exportData(*force, Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
-#endif
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
     // Compute the residual
@@ -1200,21 +1005,12 @@ void PeridigmNS::Peridigm::executeImplicit() {
 
       // Copy data from mothership vectors to overlap vectors in data manager
       PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-#ifndef MULTIPLE_BLOCKS
-      for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock){
-        (*dataManagers)[iBlock]->getData(Field_NS::DISPL3D, Field_ENUM::STEP_NP1)->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-        (*dataManagers)[iBlock]->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->Import(*y, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-        (*dataManagers)[iBlock]->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1)->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-        (*dataManagers)[iBlock]->getData(Field_NS::ACCEL3D, Field_ENUM::STEP_NP1)->Import(*a, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-      }
-#else
       for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
         blockIt->importData(*u, Field_NS::DISPL3D,    Field_ENUM::STEP_NP1, Insert);
         blockIt->importData(*y, Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1, Insert);
         blockIt->importData(*v, Field_NS::VELOC3D,    Field_ENUM::STEP_NP1, Insert);
         blockIt->importData(*v, Field_NS::ACCEL3D,    Field_ENUM::STEP_NP1, Insert);
       }
-#endif
       PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
       // Update forces based on new positions
@@ -1224,14 +1020,8 @@ void PeridigmNS::Peridigm::executeImplicit() {
 
       // Copy force from the data manager to the mothership vector
       PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-#ifndef MULTIPLE_BLOCKS
-      for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock){
-        force->Export(*(*dataManagers)[iBlock]->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
-      }
-#else
       for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
         blockIt->exportData(*force, Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
-#endif
       PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
       // Compute residual vector and its norm
@@ -1256,22 +1046,14 @@ void PeridigmNS::Peridigm::executeImplicit() {
     // Write output for completed time step
     PeridigmNS::Timer::self().startTimer("Output");
     this->synchDataManagers();
-#ifndef MULTIPLE_BLOCKS
-    outputManager->write((*dataManagers)[0],globalNeighborhoodData,timeCurrent);
-#else
+
     // \todo This will break for multiple materials.
     outputManager->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),timeCurrent);
-#endif
     PeridigmNS::Timer::self().stopTimer("Output");
 
     // swap state N and state NP1
-#ifndef MULTIPLE_BLOCKS
-    for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock)
-      (*dataManagers)[iBlock]->updateState();
-#else
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
       blockIt->updateState();
-#endif
 
     cout << endl;
   }
@@ -1420,19 +1202,11 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual() {
 
   // Copy data from mothership vectors to overlap vectors in data manager
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-#ifndef MULTIPLE_BLOCKS
-    for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock){
-      (*dataManagers)[iBlock]->getData(Field_NS::DISPL3D, Field_ENUM::STEP_NP1)->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-      (*dataManagers)[iBlock]->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->Import(*y, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-      (*dataManagers)[iBlock]->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1)->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-    }
-#else
-    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-      blockIt->importData(*u, Field_NS::DISPL3D,    Field_ENUM::STEP_NP1, Insert);
-      blockIt->importData(*y, Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1, Insert);
-      blockIt->importData(*v, Field_NS::VELOC3D,    Field_ENUM::STEP_NP1, Insert);
-    }
-#endif
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    blockIt->importData(*u, Field_NS::DISPL3D,    Field_ENUM::STEP_NP1, Insert);
+    blockIt->importData(*y, Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1, Insert);
+    blockIt->importData(*v, Field_NS::VELOC3D,    Field_ENUM::STEP_NP1, Insert);
+  }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
   // Update forces based on new positions
@@ -1442,14 +1216,8 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual() {
 
   // Copy force from the data manager to the mothership vector
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-#ifndef MULTIPLE_BLOCKS
-  for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock){
-    force->Export(*(*dataManagers)[iBlock]->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1), *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Add);
-  }
-#else
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
     blockIt->exportData(*force, Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
-#endif
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
   // copy the internal force to the residual vector
@@ -1527,17 +1295,6 @@ void PeridigmNS::Peridigm::synchDataManagers() {
   // VOLUME is synched during creation and rebalance, and otherwise never changes
   // COORD3D is synched during creation and rebalance, and otherwise never changes
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-#ifndef MULTIPLE_BLOCKS
-  for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock){
-    (*dataManagers)[iBlock]->getData(Field_NS::DISPL3D, Field_ENUM::STEP_NP1)->Import(*u, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-    (*dataManagers)[iBlock]->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->Import(*y, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-    (*dataManagers)[iBlock]->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1)->Import(*v, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-    (*dataManagers)[iBlock]->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->Import(*force, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-    if( (*dataManagers)[iBlock]->hasData(Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1) ){
-      (*dataManagers)[iBlock]->getData(Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->Import(*contactForce, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-    }
-  }
-#else
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
     blockIt->importData(*u, Field_NS::DISPL3D, Field_ENUM::STEP_NP1, Insert);
     blockIt->importData(*y, Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1, Insert);
@@ -1545,139 +1302,10 @@ void PeridigmNS::Peridigm::synchDataManagers() {
     blockIt->importData(*force, Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Insert);
     blockIt->importData(*contactForce, Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Insert);
   }
-#endif
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 }
 
 void FalseDeleter(Epetra_Comm* c) {}
-
-#ifndef MULTIPLE_BLOCKS
-
-void PeridigmNS::Peridigm::rebalance() {
-
-  // \todo Handle serial case.  We don't need to rebalance, but we still want to update the contact search.
-  QUICKGRID::Data rebalancedDecomp = currentConfigurationDecomp();
-
-  Teuchos::RCP<Epetra_BlockMap> rebalancedOneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGridDiscretization::getOwnedMap(*peridigmComm, rebalancedDecomp, 1)));
-  Teuchos::RCP<const Epetra_Import> oneDimensionalMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedOneDimensionalMap, *oneDimensionalMap));
-
-  Teuchos::RCP<Epetra_BlockMap> rebalancedThreeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGridDiscretization::getOwnedMap(*peridigmComm, rebalancedDecomp, 3)));
-  Teuchos::RCP<const Epetra_Import> threeDimensionalMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedThreeDimensionalMap, *threeDimensionalMap));
-
-  Teuchos::RCP<Epetra_BlockMap> rebalancedBondMap = createRebalancedBondMap(rebalancedOneDimensionalMap, oneDimensionalMapImporter);
-  Teuchos::RCP<const Epetra_Import> bondMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedBondMap, *bondMap));
-
-  // create a list of neighbors in the rebalanced configuration
-  // this list has the global ID for each neighbor of each on-processor point (that is, on processor in the rebalanced configuration)
-  Teuchos::RCP<Epetra_Vector> rebalancedNeighborGlobalIDs = createRebalancedNeighborGlobalIDList(rebalancedBondMap, bondMapImporter); 
-
-  // create a list of all the off-processor IDs that will need to be ghosted
-  // \todo Use set::reserve() for better memory allocation here.
-  set<int> offProcessorIDs;
-  for(int i=0 ; i<rebalancedNeighborGlobalIDs->MyLength() ; ++i){
-    int globalID = (int)( (*rebalancedNeighborGlobalIDs)[i] );
-    if(!rebalancedOneDimensionalMap->MyGID(globalID))
-      offProcessorIDs.insert(globalID);
-  }
-
-  // this function does three things:
-  // 1) fills the neighborhood information in rebalancedDecomp based on the contact search
-  // 2) creates a list of global IDs for each locally-owned point that will need to be searched for contact (contactNeighborGlobalIDs)
-  // 3) keeps track of the additional off-processor IDs that need to be ghosted as a result of the contact search (offProcessorContactIDs)
-  Teuchos::RCP< map<int, vector<int> > > contactNeighborGlobalIDs = Teuchos::rcp(new map<int, vector<int> >());
-  Teuchos::RCP< set<int> > offProcessorContactIDs = Teuchos::rcp(new set<int>());
-  if(analysisHasContact)
-    contactSearch(rebalancedOneDimensionalMap, rebalancedBondMap, rebalancedNeighborGlobalIDs, rebalancedDecomp, contactNeighborGlobalIDs, offProcessorContactIDs);
-
-  // add the off-processor IDs required for contact to the list of points that will be ghosted
-  for(set<int>::const_iterator it=offProcessorContactIDs->begin() ; it!=offProcessorContactIDs->end() ; it++){
-    offProcessorIDs.insert(*it);
-  }
-
-  // construct the rebalanced overlap maps
-  int numGlobalElements = -1;
-  int numMyElements = rebalancedOneDimensionalMap->NumMyElements() + offProcessorIDs.size();
-  int* myGlobalElements = new int[numMyElements];
-  rebalancedOneDimensionalMap->MyGlobalElements(myGlobalElements);
-  int offset = rebalancedOneDimensionalMap->NumMyElements();
-  int index = 0;
-  for(set<int>::const_iterator it=offProcessorIDs.begin() ; it!=offProcessorIDs.end() ; ++it, ++index){
-    myGlobalElements[offset+index] = *it;
-  }
-  int indexBase = 0;
-  Teuchos::RCP<Epetra_BlockMap> rebalancedOneDimensionalOverlapMap =
-    Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, 1, indexBase, *peridigmComm));
-  Teuchos::RCP<Epetra_BlockMap> rebalancedThreeDimensionalOverlapMap =
-    Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, 3, indexBase, *peridigmComm));
-  delete[] myGlobalElements;
-
-  Teuchos::RCP<const Epetra_Import> oneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedOneDimensionalOverlapMap, *oneDimensionalOverlapMap));
-  Teuchos::RCP<const Epetra_Import> threeDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedThreeDimensionalOverlapMap, *threeDimensionalOverlapMap));
-
-  // create a new NeighborhoodData object
-  Teuchos::RCP<PeridigmNS::NeighborhoodData> rebalancedNeighborhoodData = createRebalancedNeighborhoodData(rebalancedOneDimensionalMap,
-                                                                                                           rebalancedOneDimensionalOverlapMap,
-                                                                                                           rebalancedBondMap,
-                                                                                                           rebalancedNeighborGlobalIDs);
-
-  // create a new NeighborhoodData object for contact
-  Teuchos::RCP<PeridigmNS::NeighborhoodData> rebalancedContactNeighborhoodData;
-  if(analysisHasContact)
-    rebalancedContactNeighborhoodData = createRebalancedContactNeighborhoodData(contactNeighborGlobalIDs,
-                                                                                rebalancedOneDimensionalMap,
-                                                                                rebalancedOneDimensionalOverlapMap);
-
-  // rebalance the global vectors (stored in the mothership multivector)
-  Teuchos::RCP<Epetra_MultiVector> rebalancedMothership = Teuchos::rcp(new Epetra_MultiVector(*rebalancedThreeDimensionalMap, mothership->NumVectors()));
-  rebalancedMothership->Import(*mothership, *threeDimensionalMapImporter, Insert);
-  mothership = rebalancedMothership;
-  x = Teuchos::rcp((*mothership)(0), false);             // initial positions
-  u = Teuchos::rcp((*mothership)(1), false);             // displacement
-  y = Teuchos::rcp((*mothership)(2), false);             // current positions
-  v = Teuchos::rcp((*mothership)(3), false);             // velocities
-  a = Teuchos::rcp((*mothership)(4), false);             // accelerations
-  force = Teuchos::rcp((*mothership)(5), false);         // force
-  contactForce = Teuchos::rcp((*mothership)(6), false);  // contact force (used only for contact simulations)
-  deltaU = Teuchos::rcp((*mothership)(7), false);        // increment in displacement (used only for implicit time integration)
-  residual = Teuchos::rcp((*mothership)(8), false);      // residual (used only for implicit time integration)
-
-  // Create the rebalanced mothership block ID vector
-  Teuchos::RCP<Epetra_Vector> rebalancedMothershipBlockIDs = Teuchos::rcp(new Epetra_Vector(*rebalancedOneDimensionalMap));
-  rebalancedMothershipBlockIDs->Import(*mothershipBlockIDs, *oneDimensionalMapImporter, Insert);
-  mothershipBlockIDs = rebalancedMothershipBlockIDs;
-
-  // rebalance the data manager
-  for(int iBlock=0 ; iBlock<numBlocks ; ++iBlock){
-    (*dataManagers)[iBlock]->rebalance(rebalancedOneDimensionalMap,
-                                       rebalancedOneDimensionalOverlapMap,
-                                       rebalancedThreeDimensionalMap,
-                                       rebalancedThreeDimensionalOverlapMap,
-                                       rebalancedBondMap);
-  }
-
-  // set all the pointers to the new maps
-  oneDimensionalMap = rebalancedOneDimensionalMap;
-  oneDimensionalOverlapMap = rebalancedOneDimensionalOverlapMap;
-  threeDimensionalMap = rebalancedThreeDimensionalMap;
-  threeDimensionalOverlapMap = rebalancedThreeDimensionalOverlapMap;
-  bondMap = rebalancedBondMap;
-
-  // update neighborhood data
-  globalNeighborhoodData = rebalancedNeighborhoodData;
-  globalContactNeighborhoodData = rebalancedContactNeighborhoodData;
-  workset->neighborhoodData = globalNeighborhoodData; // \todo Better handling of workset, shouldn't have to do this here.
-  workset->contactNeighborhoodData = globalContactNeighborhoodData;
-
-  // update importers
-  oneDimensionalMapToOneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*oneDimensionalOverlapMap, *oneDimensionalMap));
-  threeDimensionalMapToThreeDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*threeDimensionalOverlapMap, *threeDimensionalMap));
-}
-
-
-#else
-
-
-
 
 void PeridigmNS::Peridigm::rebalance() {
 
@@ -1737,11 +1365,6 @@ void PeridigmNS::Peridigm::rebalance() {
     Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, 3, indexBase, *peridigmComm));
   delete[] myGlobalElements;
 
-// #ifndef MULTIPLE_BLOCKS
-//   Teuchos::RCP<const Epetra_Import> oneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedOneDimensionalOverlapMap, *oneDimensionalOverlapMap));
-//   Teuchos::RCP<const Epetra_Import> threeDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedThreeDimensionalOverlapMap, *threeDimensionalOverlapMap));
-// #endif
-
   // create a new NeighborhoodData object
   Teuchos::RCP<PeridigmNS::NeighborhoodData> rebalancedNeighborhoodData = createRebalancedNeighborhoodData(rebalancedOneDimensionalMap,
                                                                                                            rebalancedOneDimensionalOverlapMap,
@@ -1774,28 +1397,6 @@ void PeridigmNS::Peridigm::rebalance() {
   rebalancedMothershipBlockIDs->Import(*mothershipBlockIDs, *oneDimensionalMapImporter, Insert);
   mothershipBlockIDs = rebalancedMothershipBlockIDs;
 
-  // GAME PLAN HERE
-  //
-  // we want Block set*Map and rebalance to take global maps as input
-  // and downselect owned points internally
-  // or perhaps we want to take global neighborhood / contact neighborhood
-  // as input and downselect
-  //
-  // we want a global vector that contains the block ID for each element
-  //
-  // currently expecting discretizations to generate block-specific maps,
-  // but maybe this should be done by the Blocks (i.e., given the global maps
-  // and a vector with the block ID of every element, create a block-specific
-  // map).  This takes advantage of the fact that block-specific maps are
-  // subsets of the global maps.  This approach could be used to create block-
-  // specific maps and neighborhoods too.  Downselecting is serial, which is nice.
-  //
-  // 1) set up discretizations to return global maps, vector of block IDs
-  // 2) have Peridigm operate on global maps, neighborhoods (change names, make clear)
-  // 3) have Block take global stuff as input, create block-specific stuff and pass downstream to DataManager
-  //
-  // rip out block-specific maps from discretizations
-
   // rebalance the blocks
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
     blockIt->rebalance(rebalancedOneDimensionalMap,
@@ -1811,21 +1412,12 @@ void PeridigmNS::Peridigm::rebalance() {
   oneDimensionalMap = rebalancedOneDimensionalMap;
   oneDimensionalOverlapMap = rebalancedOneDimensionalOverlapMap;
   threeDimensionalMap = rebalancedThreeDimensionalMap;
-// #ifndef MULTIPLE_BLOCKS
-//   threeDimensionalOverlapMap = rebalancedThreeDimensionalOverlapMap;
-// #endif
   bondMap = rebalancedBondMap;
 
   // update neighborhood data
   globalNeighborhoodData = rebalancedNeighborhoodData;
   globalContactNeighborhoodData = rebalancedContactNeighborhoodData;
 }
-
-#endif
-
-
-
-
 
 QUICKGRID::Data PeridigmNS::Peridigm::currentConfigurationDecomp() {
 
@@ -1836,11 +1428,8 @@ QUICKGRID::Data PeridigmNS::Peridigm::currentConfigurationDecomp() {
 
   decomp.globalNumPoints = oneDimensionalMap->NumGlobalElements();
 
-  // \todo myGlobalIDs, cellVolume, and myX are allocated in allocatePdGridData(), don't need to allocate here.
-  
   // fill myGlobalIDs
   Array<int> myGlobalIDs(myNumElements);
-//  shared_ptr<int> myGlobalIDs(new int[myNumElements], PeridigmNS::PdQuickGridDiscretization::ArrayDeleter<int>());
   int* myGlobalIDsPtr = myGlobalIDs.get();
   int* gIDs = oneDimensionalMap->MyGlobalElements();
   memcpy(myGlobalIDsPtr, gIDs, myNumElements*sizeof(int));
@@ -1849,22 +1438,16 @@ QUICKGRID::Data PeridigmNS::Peridigm::currentConfigurationDecomp() {
   // fill myX and cellVolume
   // use current positions for x
   Array<double> myX(myNumElements*dimension);
-//  shared_ptr<double> myX(new double[myNumElements*dimension], PeridigmNS::PdQuickGridDiscretization::ArrayDeleter<double>());
   double* myXPtr = myX.get();
   double* yPtr;
   y->ExtractView(&yPtr);
   memcpy(myXPtr, yPtr, myNumElements*dimension*sizeof(double));
   Array<double> cellVolume(myNumElements);
-//  shared_ptr<double> cellVolume(new double[myNumElements], PeridigmNS::PdQuickGridDiscretization::ArrayDeleter<double>());
   double* cellVolumePtr = cellVolume.get();
   double* cellVolumeOverlapPtr;
-  // \todo Create mothership vector for volume and use it here; do not use dataManagers, this will break for multiple materials.
-#ifndef MULTIPLE_BLOCKS
-  (*dataManagers)[0]->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&cellVolumeOverlapPtr);
-#else
+
   // \todo This will break for multiple materials.
-  blocks->begin()->getDataManager()->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&cellVolumeOverlapPtr);
-#endif
+  blocks->begin()->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&cellVolumeOverlapPtr);
 
   for(int i=0 ; i<myNumElements ; ++i){
     int oneDimensionalMapGlobalID = oneDimensionalMap->GID(i);

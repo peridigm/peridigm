@@ -80,26 +80,6 @@ void EvaluateJacobian<EvalT, Traits>::postRegistrationSetup(
 template<typename EvalT, typename Traits>
 void EvaluateJacobian<EvalT, Traits>::evaluateFields(typename Traits::EvalData cellData)
 {
-#ifndef MULTIPLE_BLOCKS
-  const double dt = *cellData.timeStep;
-  const int numOwnedPoints = cellData.neighborhoodData->NumOwnedPoints();
-  const int* ownedIDs = cellData.neighborhoodData->OwnedIDs();
-  const int* neighborhoodList = cellData.neighborhoodData->NeighborhoodList();
-  PeridigmNS::DataManager& dataManager = *cellData.dataManager;
-  PeridigmNS::SerialMatrix& jacobian = *cellData.jacobian;
-
-  // handling of material models needs work!
-  Teuchos::RCP<const PeridigmNS::Material> material = (*cellData.materialModels)[0];
-
-  material->computeJacobian(dt, 
-                            numOwnedPoints,
-                            ownedIDs,
-                            neighborhoodList,
-                            dataManager,
-                            jacobian);
-
-#else
-
   const double dt = *cellData.timeStep;
   PeridigmNS::SerialMatrix& jacobian = *cellData.jacobian;
 
@@ -120,6 +100,5 @@ void EvaluateJacobian<EvalT, Traits>::evaluateFields(typename Traits::EvalData c
                                    *dataManagerTEST,
                                    jacobian);
   }
-#endif
 }
 
