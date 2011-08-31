@@ -15,7 +15,7 @@ static UTILITIES::Minus minus;
 namespace PdBondFilter {
 
 FinitePlane::FinitePlane(double normal[3], double lowerLeftCorner[3], double bottom_UnitVector[3], double lengthBottom, double lengthA)
-: n(normal), r0(lowerLeftCorner), ub(bottom_UnitVector), ua(cross(ub,n)), b(lengthBottom), a(lengthA)
+: n(normal), r0(lowerLeftCorner), ub(bottom_UnitVector), ua(cross(ub,n)), a(lengthA), b(lengthBottom)
 {}
 
 
@@ -42,7 +42,7 @@ bool FinitePlane::bondIntersect(double x[3], double tolerance) {
 void BondFilterDefault::filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool *bondFlags) {
 
 	bool *flagIter = bondFlags;
-	for(size_t n=0;n<kdTreeList->GetNumberOfIds();n++,flagIter++){
+	for(int n=0;n<kdTreeList->GetNumberOfIds();n++,flagIter++){
 		/*
 		 * All bonds are innocent until proven guilty
 		 */
@@ -72,7 +72,7 @@ void FinitePlaneFilter::filterBonds(vtkIdList* kdTreeList, const double *pt, con
 	const double *p1;
 	double x[3], t;
 	bool *flagIter = bondFlags;
-	for(size_t p=0;p<kdTreeList->GetNumberOfIds();p++,flagIter++){
+	for(int p=0;p<kdTreeList->GetNumberOfIds();p++,flagIter++){
 		/*
 		 * Local id of point within neighborhood
 		 */
