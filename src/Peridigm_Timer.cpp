@@ -1,9 +1,13 @@
 /*! \file Peridigm_Timer.cpp */
 
-#include <Teuchos_MPIComm.hpp>
 #include "Peridigm_Timer.hpp"
 #include <iostream>
 #include <vector>
+
+#include <Teuchos_CommHelpers.hpp>
+#include <Teuchos_DefaultComm.hpp>
+#include <Teuchos_GlobalMPISession.hpp>
+#include <Teuchos_RCP.hpp>
 
 using namespace std;
 
@@ -27,19 +31,19 @@ void PeridigmNS::Timer::printTimingData(ostream &out){
     i++;
   }
 
-  Teuchos::MPIComm teuchosComm;
-  teuchosComm.allReduce(&times[0], &minTimes[0], count, Teuchos::MPIComm::DOUBLE, Teuchos::MPIComm::MIN);
-  teuchosComm.allReduce(&times[0], &maxTimes[0], count, Teuchos::MPIComm::DOUBLE, Teuchos::MPIComm::MAX);
-  teuchosComm.allReduce(&times[0], &totalTimes[0], count, Teuchos::MPIComm::DOUBLE, Teuchos::MPIComm::SUM);
+  Teuchos::RCP<const Teuchos::Comm<int> > teuchosComm = Teuchos::createMpiComm<int>(Teuchos::opaqueWrapper<MPI_Comm>(MPI_COMM_WORLD));
+  Teuchos::reduceAll<int, double>(*teuchosComm,Teuchos::REDUCE_MIN,count,&times[0], &minTimes[0]);
+  Teuchos::reduceAll<int, double>(*teuchosComm,Teuchos::REDUCE_MAX,count,&times[0], &maxTimes[0]);
+  Teuchos::reduceAll<int, double>(*teuchosComm,Teuchos::REDUCE_SUM,count,&times[0], &totalTimes[0]);
 
   unsigned int nameLength = 0;
   for(unsigned int i=0 ; i<names.size() ; ++i)
     if(names[i].size() > nameLength) nameLength = names[i].size();
 
   int indent = 15;
-  int nProc = teuchosComm.getNProc();
+  int nProc = teuchosComm->getSize();
 
-  if(nProc > 1 && teuchosComm.getRank() == 0){
+  if(nProc > 1 && teuchosComm->getRank() == 0){
     out << "Wallclock Time (seconds):" << endl;
     out << "  ";
     out.width(nameLength + 17); out << "Min";
