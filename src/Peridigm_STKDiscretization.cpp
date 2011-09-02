@@ -50,12 +50,14 @@
 #include "pdneigh/BondFilter.h"
 #include "pdneigh/PdZoltan.h"
 
-#include <Teuchos_RCP.hpp>
 #include <Epetra_Map.h>
 #include <Epetra_Vector.h>
 #include <Epetra_Import.h>
 #include <Epetra_MpiComm.h>
-#include <Teuchos_MPIComm.hpp>
+#include <Teuchos_CommHelpers.hpp>
+#include <Teuchos_DefaultComm.hpp>
+#include <Teuchos_GlobalMPISession.hpp>
+#include <Teuchos_RCP.hpp>
 #include <Ionit_Initializer.h>
 #include <stk_io/IossBridge.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
@@ -209,10 +211,10 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
 
   // Determine the total number of elements in the model
   // \todo There must be a cleaner way to determine the number of elements in a model.
-  Teuchos::MPIComm teuchosComm;
+  Teuchos::RCP<const Teuchos::Comm<int> > teuchosComm = Teuchos::createMpiComm<int>(Teuchos::opaqueWrapper<MPI_Comm>(MPI_COMM_WORLD));
   int localElemCount = elements.size();
   int globalElemCount(0);
-  teuchosComm.allReduce(&localElemCount, &globalElemCount, 1, Teuchos::MPIComm::INT, Teuchos::MPIComm::SUM);
+  reduceAll(*teuchosComm,Teuchos::REDUCE_SUM,int(1),&localElemCount, &globalElemCount);
 
   // Copy data from stk into a decomp object
   int myNumElements = elements.size();
@@ -283,7 +285,7 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
 //     vector<int> localElementBlockLength(numPID, 0);
 //     vector<int> tempLocalElementBlockLength(numPID, 0);
 //     tempLocalElementBlockLength[myPID] = (int)elementGlobalIds.size();
-//     teuchosComm.allReduce(&tempLocalElementBlockLength[0], &localElementBlockLength[0], numPID, Teuchos::MPIComm::INT, Teuchos::MPIComm::SUM);
+//     reduceAll(*teuchosComm,Teuchos::REDUCE_SUM,(int)numPID,&tempLocalElementBlockLength[0], &localElementBlockLength[0]);
 //     int totalElementBlockLength = 0;
 //     int offset = 0;
 //     for(unsigned int i=0 ; i<localElementBlockLength.size() ; ++i){
@@ -295,7 +297,7 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
 //     vector<int> tempCompleteElementGlobalIds(totalElementBlockLength, 0);
 //     for(unsigned int i=0 ; i<elementGlobalIds.size() ; ++i)
 //       tempCompleteElementGlobalIds[i+offset] = elementGlobalIds[i];
-//     teuchosComm.allReduce(&tempCompleteElementGlobalIds[0], &completeElementGlobalIds[0], totalElementBlockLength, Teuchos::MPIComm::INT, Teuchos::MPIComm::SUM);
+//     reduceAll(*teuchosComm,Teuchos::REDUCE_SUM,totalElementBlockLength,&tempCompleteElementGlobalIds[0], &completeElementGlobalIds[0]);
 
 //     // Load the element block into the elementBlock container
 //     for(unsigned int i=0 ; i<completeElementGlobalIds.size() ; ++i)
@@ -348,7 +350,8 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
     vector<int> localNodeSetLength(numPID, 0);
     vector<int> tempLocalNodeSetLength(numPID, 0);
     tempLocalNodeSetLength[myPID] = (int)elementGlobalIds.size();
-    teuchosComm.allReduce(&tempLocalNodeSetLength[0], &localNodeSetLength[0], numPID, Teuchos::MPIComm::INT, Teuchos::MPIComm::SUM);
+    reduceAll(*teuchosComm,Teuchos::REDUCE_SUM,(int)numPID,&tempLocalNodeSetLength[0], &localNodeSetLength[0]);
+
     int totalNodeSetLength = 0;
     int offset = 0;
     for(unsigned int i=0 ; i<localNodeSetLength.size() ; ++i){
@@ -363,7 +366,7 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
       tempCompleteElementGlobalIds[index+offset] = *it;
       index++;
     }
-    teuchosComm.allReduce(&tempCompleteElementGlobalIds[0], &completeElementGlobalIds[0], totalNodeSetLength, Teuchos::MPIComm::INT, Teuchos::MPIComm::SUM);
+    reduceAll(*teuchosComm,Teuchos::REDUCE_SUM,totalNodeSetLength,&tempCompleteElementGlobalIds[0], &completeElementGlobalIds[0]);
 
     // Load the node set into the nodeSets container
     for(unsigned int i=0 ; i<completeElementGlobalIds.size() ; ++i)

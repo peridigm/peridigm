@@ -1,4 +1,4 @@
-/*! \file Peridigm.cpp
+/*! \file Peridigm_Main.cpp
  *
  * File containing main routine for Peridigm: A parallel, multi-physics,
  * peridynamics simulation code.
