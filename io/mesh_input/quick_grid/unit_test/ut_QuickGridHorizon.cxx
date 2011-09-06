@@ -255,7 +255,7 @@ void CellsPerProcessor3D_smallNeighborhoodSerialTest_NumProcs_1()
 	};
 
 	int sizeNeighborList = numPoints;
-	for(int i=0;i<numPoints;i++)
+	for(size_t i=0;i<numPoints;i++)
 		sizeNeighborList+=numNeighbors[i];
 
 	BOOST_CHECK( sizeNeighborList == gridData.sizeNeighborhoodList );
@@ -267,7 +267,7 @@ void CellsPerProcessor3D_smallNeighborhoodSerialTest_NumProcs_1()
 	// This iterates through all cell neighborhoods
 	int p=0;
 	int sum=0;
-	for(int id=0;id<numPoints;id++){
+	for(size_t id=0;id<numPoints;id++){
 		int numNeigh = *nPtr; nPtr++;
 		// this asserts the pointers into the neighborhood
 		BOOST_CHECK( neighPtr[id] == sum );
@@ -324,8 +324,8 @@ void CellsPerProcessor3D_SerialTest_NumProcs_3()
 	shared_ptr<int> gIds = gridData.myGlobalIDs;
 	int *gIdsPtr = gIds.get();
 	int start = 0;
-	for(int id=start;id<gridData.numPoints+start;id++,gIdsPtr++)
-		BOOST_CHECK( *gIdsPtr == id );
+	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++)
+		BOOST_CHECK( *gIdsPtr == (int)id );
 
 	// assert length of neighborlist
 	// sizeNeighborList = myNumCells + myNumCells*numNeighbors
@@ -376,8 +376,8 @@ void CellsPerProcessor3D_SerialTest_NumProcs_3()
 		// assert global ids for this processor
 		shared_ptr<int> gIds = gridData.myGlobalIDs;
 		int *gIdsPtr = gIds.get();
-		for(int id=start;id<gridData.numPoints+start;id++,gIdsPtr++){
-			BOOST_CHECK( *gIdsPtr == id );
+		for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++){
+			BOOST_CHECK( *gIdsPtr == (int)id );
 		}
 
 		// there are 9 nodes per processor
@@ -452,8 +452,8 @@ void CellsPerProcessor3D_SerialTest_NumProcs_4()
 	shared_ptr<int> gIds = gridData.myGlobalIDs;
 	int *gIdsPtr = gIds.get();
 	int start = 0;
-	for(int id=start;id<gridData.numPoints+start;id++,gIdsPtr++)
-		BOOST_CHECK( *gIdsPtr == id );
+	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++)
+		BOOST_CHECK( *gIdsPtr == (int)id );
 
 	// assert length of neighborlist
 	// sizeNeighborList = myNumCells + myNumCells*numNeighbors
@@ -509,8 +509,8 @@ void CellsPerProcessor3D_SerialTest_NumProcs_4()
 		// assert global ids for this processor
 		shared_ptr<int> gIds = gridData.myGlobalIDs;
 		int *gIdsPtr = gIds.get();
-		for(int id=start;id<gridData.numPoints+start;id++,gIdsPtr++){
-			BOOST_CHECK( *gIdsPtr == id );
+		for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++){
+			BOOST_CHECK( *gIdsPtr == (int)id );
 		}
 
 		// there are 6 nodes per processor
@@ -586,8 +586,8 @@ void CellsPerProcessor3D_SerialTest_NumProcs_5 ()
 	shared_ptr<int> gIds = gridData.myGlobalIDs;
 	int *gIdsPtr = gIds.get();
 	int start = 0;
-	for(int id=start;id<gridData.numPoints+start;id++,gIdsPtr++)
-		BOOST_CHECK( *gIdsPtr == id );
+	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++)
+		BOOST_CHECK( *gIdsPtr == (int)id );
 
 	// assert length of neighborlist
 	// sizeNeighborList = myNumCells + myNumCells*numNeighbors
@@ -642,8 +642,8 @@ void CellsPerProcessor3D_SerialTest_NumProcs_5 ()
 		// assert global ids for this processor
 		shared_ptr<int> gIds = gridData.myGlobalIDs;
 		int *gIdsPtr = gIds.get();
-		for(int id=start;id<gridData.numPoints+start;id++,gIdsPtr++){
-			BOOST_CHECK( *gIdsPtr == id );
+		for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++){
+			BOOST_CHECK( *gIdsPtr == (int)id );
 		}
 
 		// there are 5 points per processor

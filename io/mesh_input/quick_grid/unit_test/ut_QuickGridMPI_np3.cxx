@@ -76,7 +76,7 @@ void p0()
 	int *gIdsPtr = gIds.get();
 	int start = 0;
 	std::cout << "proc = 0 global ids = ";
-	for(int id=start;id<decomp.numPoints+start;id++,gIdsPtr++){
+	for(size_t id=start;id<decomp.numPoints+start;id++,gIdsPtr++){
 //		BOOST_CHECK( *gIdsPtr == id );
 		std::cout << *gIdsPtr << ", ";
 	}
@@ -146,7 +146,7 @@ void p1()
 	int *gIdsPtr = gIds.get();
 	int start = 9;
 	std::cout << "proc = 1 global ids = ";
-	for(int id=start;id<decomp.numPoints+start;id++,gIdsPtr++){
+	for(size_t id=start;id<decomp.numPoints+start;id++,gIdsPtr++){
 //		BOOST_CHECK( *gIdsPtr == id );
 		std::cout << *gIdsPtr << ", ";
 	}
@@ -220,7 +220,7 @@ void p2()
 	int *gIdsPtr = gIds.get();
 	int start = 18;
 	std::cout << "proc = 2 global ids = ";
-	for(int id=start;id<decomp.numPoints+start;id++,gIdsPtr++){
+	for(size_t id=start;id<decomp.numPoints+start;id++,gIdsPtr++){
 //		BOOST_CHECK( *gIdsPtr == id );
 		std::cout << *gIdsPtr << ", ";
 	}

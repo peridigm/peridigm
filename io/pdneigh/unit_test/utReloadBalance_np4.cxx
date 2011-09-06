@@ -82,7 +82,7 @@ void assertOriginalMesh() {
 	BOOST_CHECK(16==decomp.globalNumPoints);
 
 	if(1==myRank){
-		int numPoints = decomp.numPoints;
+		size_t numPoints = decomp.numPoints;
 		BOOST_CHECK(numPoints==decomp.numPoints);
 		BOOST_CHECK(25==decomp.sizeNeighborhoodList);
 		int myIds[] = {0,1,4,5};
@@ -90,13 +90,13 @@ void assertOriginalMesh() {
 		set<int>::iterator i=ids.begin();
 		set<int>::iterator iEnd=ids.end();
 		int *gIds = decomp.myGlobalIDs.get();
-		for(int p=0;p<numPoints;p++,gIds++){
+		for(size_t p=0;p<numPoints;p++,gIds++){
 //			cout << "myRank, gIds, localId = " << myRank << ", " << *gIds << ", " << p << endl;
 			BOOST_CHECK(iEnd!=ids.find(*gIds));
 		}
 	}
 	if(0==myRank){
-		int numPoints = decomp.numPoints;
+		size_t numPoints = decomp.numPoints;
 		BOOST_CHECK(numPoints==decomp.numPoints);
 		BOOST_CHECK(25==decomp.sizeNeighborhoodList);
 		int myIds[] = {2,3,6,7};
@@ -104,13 +104,13 @@ void assertOriginalMesh() {
 		set<int>::iterator i=ids.begin();
 		set<int>::iterator iEnd=ids.end();
 		int *gIds = decomp.myGlobalIDs.get();
-		for(int p=0;p<numPoints;p++,gIds++){
+		for(size_t p=0;p<numPoints;p++,gIds++){
 			BOOST_CHECK(iEnd!=ids.find(*gIds));
 		}
 
 	}
 	if(2==myRank){
-		int numPoints = decomp.numPoints;
+		size_t numPoints = decomp.numPoints;
 		BOOST_CHECK(numPoints==decomp.numPoints);
 		BOOST_CHECK(25==decomp.sizeNeighborhoodList);
 		int myIds[] = {8,9,12,13};
@@ -118,13 +118,13 @@ void assertOriginalMesh() {
 		set<int>::iterator i=ids.begin();
 		set<int>::iterator iEnd=ids.end();
 		int *gIds = decomp.myGlobalIDs.get();
-		for(int p=0;p<numPoints;p++,gIds++){
+		for(size_t p=0;p<numPoints;p++,gIds++){
 			BOOST_CHECK(iEnd!=ids.find(*gIds));
 		}
 
 	}
 	if(3==myRank){
-		int numPoints = decomp.numPoints;
+		size_t numPoints = decomp.numPoints;
 		BOOST_CHECK(numPoints==decomp.numPoints);
 		BOOST_CHECK(25==decomp.sizeNeighborhoodList);
 		int myIds[] = {10,11,14,15};
@@ -132,7 +132,7 @@ void assertOriginalMesh() {
 		set<int>::iterator i=ids.begin();
 		set<int>::iterator iEnd=ids.end();
 		int *gIds = decomp.myGlobalIDs.get();
-		for(int p=0;p<numPoints;p++,gIds++){
+		for(size_t p=0;p<numPoints;p++,gIds++){
 //			cout << "myRank, gIds, localId = " << myRank << ", " << *gIds << ", " << p << endl;
 			BOOST_CHECK(iEnd!=ids.find(*gIds));
 		}
@@ -193,7 +193,7 @@ void moveCoordinatesAndReLoadBalance() {
 	 * Re-set neighborhood pointer to point to first entry in list above
 	 */
 	int *neighPtr = decomp.neighborhoodPtr.get();
-	for(int p=0;p<decomp.numPoints;p++,neighPtr++)
+	for(size_t p=0;p<decomp.numPoints;p++,neighPtr++)
 		*neighPtr=0;
 
 	/*

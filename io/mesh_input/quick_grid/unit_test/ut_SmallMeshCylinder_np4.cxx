@@ -111,8 +111,8 @@ void p0(){
 	int *gIdsPtr = gIds.get();
 	int cell = 0;
 	int start=0;
-	for(int id=start;id<gridData.numPoints+start;id++,gIdsPtr++,cell++){
-		BOOST_CHECK( *gIdsPtr == id );
+	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++,cell++){
+		BOOST_CHECK( *gIdsPtr == (int)id );
 
 		BOOST_CHECK(xx[id*3]==X[3*cell]);
 		BOOST_CHECK(xx[id*3+1]==X[3*cell+1]);
@@ -167,8 +167,8 @@ void p1(){
 	int *gIdsPtr = gIds.get();
 	int cell = 0;
 	int start=8;
-	for(int id=start;id<gridData.numPoints+start;id++,gIdsPtr++,cell++){
-		BOOST_CHECK( *gIdsPtr == id );
+	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++,cell++){
+		BOOST_CHECK( *gIdsPtr == (int)id );
 
 		BOOST_CHECK(xx[id*3]==X[3*cell]);
 		BOOST_CHECK(xx[id*3+1]==X[3*cell+1]);
@@ -223,8 +223,8 @@ void p2(){
 	int *gIdsPtr = gIds.get();
 	int cell = 0;
 	int start=16;
-	for(int id=start;id<gridData.numPoints+start;id++,gIdsPtr++,cell++){
-		BOOST_CHECK( *gIdsPtr == id );
+	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++,cell++){
+		BOOST_CHECK( *gIdsPtr == (int)id );
 
 		BOOST_CHECK(xx[id*3]==X[3*cell]);
 		BOOST_CHECK(xx[id*3+1]==X[3*cell+1]);
@@ -279,8 +279,8 @@ void p3(){
 	int *gIdsPtr = gIds.get();
 	int cell = 0;
 	int start=24;
-	for(int id=start;id<gridData.numPoints+start;id++,gIdsPtr++,cell++){
-		BOOST_CHECK( *gIdsPtr == id );
+	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++,cell++){
+		BOOST_CHECK( *gIdsPtr == (int)id );
 
 		BOOST_CHECK(xx[id*3]==X[3*cell]);
 		BOOST_CHECK(xx[id*3+1]==X[3*cell+1]);

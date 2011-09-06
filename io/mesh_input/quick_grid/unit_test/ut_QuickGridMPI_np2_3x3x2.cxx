@@ -62,8 +62,8 @@ void p0()
 	shared_ptr<int> gIds = gridData.myGlobalIDs;
 	int *gIdsPtr = gIds.get();
 	int start = 0;
-	for(int id=start;id<gridData.numPoints+start;id++,gIdsPtr++)
-		BOOST_CHECK( *gIdsPtr == id );
+	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++)
+		BOOST_CHECK( *gIdsPtr == (int)id );
 
 	// assert length of neighborlist
 	// sizeNeighborList = numPoints = sum(numNeighbors)
@@ -151,8 +151,8 @@ void p1()
 	shared_ptr<int> gIds = gridData.myGlobalIDs;
 	int *gIdsPtr = gIds.get();
 	int start = 9;
-	for(int id=start;id<gridData.numPoints+start;id++,gIdsPtr++){
-		BOOST_CHECK( *gIdsPtr == id );
+	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++){
+		BOOST_CHECK( *gIdsPtr == (int)id );
 	}
 
 	// assert length of neighborlist

@@ -68,8 +68,8 @@ QUICKGRID::QuickGridData getGrid(const string json_filename) {
 void assert_grid(QUICKGRID::QuickGridData decomp,const std::string& label) {
 	std::cout << label << "\n";
 	int dimension_answer=3;
-	int globalNumPoints_answer=2;
-	int numPoints_answer=2;
+	size_t globalNumPoints_answer=2;
+	size_t numPoints_answer=2;
 	int sizeNeighborhoodList_answer=4;
 	int gids_answer[] = {0,1};
 	int neighborhood_answer[] = {1,1,1,0};
@@ -83,7 +83,7 @@ void assert_grid(QUICKGRID::QuickGridData decomp,const std::string& label) {
 	//	BOOST_CHECK(decomp.unPack);
 	{
 		const int* gids=decomp.myGlobalIDs.get();
-		for(int n=0;n<numPoints_answer;n++,gids++)
+		for(size_t n=0;n<numPoints_answer;n++,gids++)
 			BOOST_CHECK(gids_answer[n]==*gids);
 	}
 	{
@@ -93,7 +93,7 @@ void assert_grid(QUICKGRID::QuickGridData decomp,const std::string& label) {
 	}
 	{
 		const int* neighborhoodPtr = decomp.neighborhoodPtr.get();
-		for(int n=0;n<numPoints_answer;n++,neighborhoodPtr++)
+		for(size_t n=0;n<numPoints_answer;n++,neighborhoodPtr++)
 			BOOST_CHECK(neighborhoodPtr_answer[n]==*neighborhoodPtr);
 	}
 

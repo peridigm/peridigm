@@ -158,9 +158,9 @@ public:
 	double getrI() const { return rI; }
 	double getr0() const { return r0; }
 	double getRingThickness() const;
-	int getNumRings() const { return numRings; }
-	int getNumRays() const { return numRays; }
-	int getNumCells() const { return numCells; }
+	size_t getNumRings() const { return numRings; }
+	size_t getNumRays() const { return numRays; }
+	size_t getNumCells() const { return numCells; }
 	Spec1D getRingSpec() const {return Spec1D(getNumRays(), 0.0, 2.0*M_PI); }
 	Spec1D getRaySpec() const  {return Spec1D(getNumRings(), getrI(), getRingThickness()); }
 
@@ -170,14 +170,14 @@ private:
 	//  we are creating thousands of SpecRing2D objects
 	Vector3D c;
 	double rI, r0;
-	int numRings, numRays, numCells;
+	size_t numRings, numRays, numCells;
 };
 
 
 struct Cell3D {
 public:
 	Cell3D(size_t ii, size_t jj, size_t kk) : i(ii), j(jj), k(kk) {}
-	int i, j, k;
+	size_t i, j, k;
 };
 
 
@@ -188,7 +188,7 @@ public:
 	virtual QuickGridData allocatePdGridData() const = 0;
 	virtual std::pair<Cell3D,QuickGridData> beginIterateProcs(QuickGridData& pdGridDataProc0);
 	bool hasNextProc() const { return iteratorProc < numProcs ? true : false; }
-	int proc() const { return iteratorProc; }
+	size_t proc() const { return iteratorProc; }
 	virtual std::pair<Cell3D,QuickGridData>  nextProc(Cell3D cellLocator, QuickGridData& pdGridDataProcN);
 	virtual size_t getNumGlobalCells() const = 0;
 	virtual size_t getDimension() const = 0;

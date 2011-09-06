@@ -83,7 +83,7 @@ void axialBarLinearSpacing() {
 	shared_ptr<BondFilter> bondFilterPtr(new PdBondFilter::BondFilterDefault(true));
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
 	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon,bondFilterPtr);
-	BOOST_CHECK(list.get_num_owned_points() == numPoints);
+	BOOST_CHECK((int)list.get_num_owned_points() == numPoints);
 	int size = 0;
 	for(int n=0;n<numPoints;n++)
 		size+=list.get_num_neigh(n);
