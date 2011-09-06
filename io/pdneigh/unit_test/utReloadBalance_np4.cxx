@@ -272,7 +272,8 @@ void moveCoordinatesAndReLoadBalance() {
 			set<int>& gIdNeigh = neighMap[*gIds];
 			int numNeigh = *neigh; neigh++;
 //			cout << "myRank, gIds, localId, numNeigh = " << myRank << ", " << *gIds << ", " << p << ", " << numNeigh << endl;
-			BOOST_CHECK(gIdNeigh.size() == numNeigh);
+
+			BOOST_CHECK((int)gIdNeigh.size() == numNeigh);
 			set<int>::iterator neighIter=gIdNeigh.begin();
 			set<int>::iterator neighEnd=gIdNeigh.end();
 			for(int n=0;n<numNeigh;n++,neigh++){
@@ -307,7 +308,7 @@ void moveCoordinatesAndReLoadBalance() {
 			BOOST_CHECK(iEnd!=ids.find(*gIds));
 			set<int>& gIdNeigh = neighMap[*gIds];
 			int numNeigh = *neigh; neigh++;
-			BOOST_CHECK(gIdNeigh.size() == numNeigh);
+			BOOST_CHECK((int)gIdNeigh.size() == numNeigh);
 			set<int>::iterator neighIter=gIdNeigh.begin();
 			set<int>::iterator neighEnd=gIdNeigh.end();
 			for(int n=0;n<numNeigh;n++,neigh++){
@@ -342,7 +343,7 @@ void moveCoordinatesAndReLoadBalance() {
 			BOOST_CHECK(iEnd!=ids.find(*gIds));
 			set<int>& gIdNeigh = neighMap[*gIds];
 			int numNeigh = *neigh; neigh++;
-			BOOST_CHECK(gIdNeigh.size() == numNeigh);
+			BOOST_CHECK((int)gIdNeigh.size() == numNeigh);
 			set<int>::iterator neighIter=gIdNeigh.begin();
 			set<int>::iterator neighEnd=gIdNeigh.end();
 			for(int n=0;n<numNeigh;n++,neigh++){
