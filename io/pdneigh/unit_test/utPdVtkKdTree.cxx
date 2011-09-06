@@ -69,7 +69,7 @@ void knownNeighborhood()
 	/*
 	 * Number of cells on this processor
 	 */
-	int myNumPoints = decomp.numPoints;
+	size_t myNumPoints = decomp.numPoints;
 	BOOST_CHECK(numCells == myNumPoints);
 
 	std::tr1::shared_ptr<double> yPtr = decomp.myX;
@@ -95,16 +95,16 @@ void knownNeighborhood()
 	int* list[] = {n0,n1,n2,n3,n4,n5,n6,n7,n8};
 
 	double *x = decomp.myX.get();
-	for(int c=0;c<myNumPoints;c++,x+=3){
+	for(size_t c=0;c<myNumPoints;c++,x+=3){
 
 		vtkIdList* kdTreeList = vtkIdList::New();
 		kdTree->FindPointsWithinRadius(horizon, x, kdTreeList);
 		BOOST_CHECK(numNeigh[c] == kdTreeList->GetNumberOfIds()-1);
 		std::set<int> answers(list[c],list[c]+numNeigh[c]);
 		std::set<int>::iterator end = answers.end();
-		for(int i=0;i<kdTreeList->GetNumberOfIds();i++){
-			int uid = kdTreeList->GetId(i);
-			if(uid == c) continue;
+		for(vtkIdType i=0;i<kdTreeList->GetNumberOfIds();i++){
+			vtkIdType uid = kdTreeList->GetId(i);
+			if(uid == (vtkIdType)c) continue;
 			BOOST_CHECK(end != answers.find(uid));
 		}
 		kdTreeList->Delete();
@@ -148,7 +148,7 @@ void sphericalNeighborhood()
 	/*
 	 * Number of cells on this processor
 	 */
-	int myNumPoints = decomp.numPoints;
+	size_t myNumPoints = decomp.numPoints;
 	BOOST_CHECK(numCells == myNumPoints);
 
 
@@ -168,7 +168,7 @@ void sphericalNeighborhood()
 	int* list[] = {n0,n1,n2,n3,n4,n5,n6,n7,n8};
 
 	int *neighborhoodList = decomp.neighborhood.get();
-	for(int c=0;c<myNumPoints;c++){
+	for(size_t c=0;c<myNumPoints;c++){
 
 		BOOST_CHECK(numNeigh[c] == (*neighborhoodList));
 		neighborhoodList++;
@@ -216,7 +216,7 @@ void compareKdTreeWithSphericalNorm()
 	/*
 	 * Number of cells on this processor
 	 */
-	int myNumPoints = decomp.numPoints;
+	size_t myNumPoints = decomp.numPoints;
 	BOOST_CHECK(numCells == myNumPoints);
 
 	std::tr1::shared_ptr<double> yPtr = decomp.myX;
@@ -227,7 +227,7 @@ void compareKdTreeWithSphericalNorm()
 
 	double *x = decomp.myX.get();
 	int *neighborhoodList = decomp.neighborhood.get();
-	for(int c=0;c<myNumPoints;c++,x+=3){
+	for(size_t c=0;c<myNumPoints;c++,x+=3){
 		int numNeigh = *neighborhoodList; neighborhoodList++;
 		vtkIdList* kdTreeList = vtkIdList::New();
 		kdTree->FindPointsWithinRadius(horizon, x, kdTreeList);
@@ -236,7 +236,7 @@ void compareKdTreeWithSphericalNorm()
 		std::set<int>::iterator end = answers.end();
 		for(int i=0;i<numNeigh;i++){
 			int uid = kdTreeList->GetId(i);
-			if(uid == c) continue;
+			if(uid == (vtkIdType)c) continue;
 			BOOST_CHECK(end != answers.find(uid));
 		}
 		neighborhoodList+=numNeigh;

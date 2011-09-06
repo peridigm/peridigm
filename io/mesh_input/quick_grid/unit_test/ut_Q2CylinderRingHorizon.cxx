@@ -22,7 +22,7 @@ using std::tr1::shared_ptr;
 using namespace boost::unit_test;
 using std::size_t;
 
-int numNeighbors(int kZ);
+size_t numNeighbors(size_t kZ);
 void ringHorizon()
 {
 
@@ -520,7 +520,7 @@ void Q2CylinderNeighborhoods()
 		BOOST_CHECK(0==gridData.numExport);
 		int *gIds = gridData.myGlobalIDs.get();
 		for(size_t p=0;p<gridData.numPoints;p++,gIds++)
-			BOOST_CHECK(p==*gIds);
+			BOOST_CHECK((int)p==*gIds);
 
 
 		/*
@@ -553,7 +553,7 @@ void Q2CylinderNeighborhoods()
 					BOOST_CHECK(y==X[3*gId+1]);
 					BOOST_CHECK(z==X[3*gId+2]);
 					int ptr = neighborhoodPtr[gId];
-					BOOST_CHECK(numNeighbors(ranZid)==neighborhood[ptr]);
+					BOOST_CHECK((int)numNeighbors(ranZid)==neighborhood[ptr]);
 
 					/*
 					 * Volume
@@ -576,14 +576,14 @@ void Q2CylinderNeighborhoods()
  * For the Q2 cylinder, and mesh discretization used in this file, this
  * function returns the number of neighbors for a point in slab kZ along the axis.
  */
-int numNeighbors(int kZ){
+size_t numNeighbors(size_t kZ){
 	BOOST_CHECK(kZ<60);
 	if(kZ<3)
-		return 83+kZ*21;
+		return (size_t)(83+kZ*21);
 	else if(kZ>=3 && kZ <=55)
-		return 83+3*21;
+		return  (size_t)(83+3*21);
 	else
-		return 83+(59-kZ)*21;
+		return  (size_t)(83+(59-kZ)*21);
 }
 
 bool init_unit_test_suite()

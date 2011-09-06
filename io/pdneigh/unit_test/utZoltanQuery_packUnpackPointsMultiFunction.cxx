@@ -250,8 +250,8 @@ void zoltanQuery_unPackPointsMultiFunction
 	BOOST_CHECK(98 == gridData.sizeNeighborhoodList);
 	BOOST_CHECK(0 == gridData.numExport);
 	int *ids = gridData.myGlobalIDs.get();
-	for(int i=0;i<gridData.numPoints;i++)
-		BOOST_CHECK(i == ids[i]);
+	for(size_t i=0;i<gridData.numPoints;i++)
+		BOOST_CHECK((int)i == ids[i]);
 
 	// Need to get a new grid data to compare it with the one coming back from unPack
 	QUICKGRID::QuickGridData newGridData = setUp();
@@ -263,7 +263,7 @@ void zoltanQuery_unPackPointsMultiFunction
 	int dimension=3;
 	const double tolerance = 1.0e-15;
 	// Note that we are only asserting the first 9 points (these
-	for(int i=0;i<gridData.numPoints;i++){
+	for(size_t i=0;i<gridData.numPoints;i++){
 		// Volume
 		BOOST_CHECK_CLOSE(v[i],newV[i],tolerance);
 		// coordinates
@@ -345,8 +345,8 @@ void zoltanQuery_unPackPointsMultiFunction
 	BOOST_CHECK(98 == gridData.sizeNeighborhoodList);
 	BOOST_CHECK(0 == gridData.numExport);
 	int *ids = gridData.myGlobalIDs.get();
-	for(int i=0;i<gridData.numPoints;i++)
-		BOOST_CHECK(i == ids[i]);
+	for(size_t i=0;i<gridData.numPoints;i++)
+		BOOST_CHECK((int)i == ids[i]);
 
 	// At this point, grid data only the first 9 points; The following function should restore it to its original state
 	numImport=9;

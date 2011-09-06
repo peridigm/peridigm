@@ -116,8 +116,8 @@ void cylindericalCellPerProcIterator1Proc()
 		BOOST_CHECK((19*32+32)==gridData.sizeNeighborhoodList);
 		BOOST_CHECK(0==gridData.numExport);
 		int *gIds = gridData.myGlobalIDs.get();
-		for(int p=0;p<gridData.numPoints;p++,gIds++)
-			BOOST_CHECK(p==*gIds);
+		for(size_t p=0;p<gridData.numPoints;p++,gIds++)
+			BOOST_CHECK((int)p==*gIds);
 
 		int neighborAnswers[] = {
 				12,13,14,15,1,2,3,4,5,28,29,30,31,16,17,18,19,20,21,
@@ -165,11 +165,11 @@ void cylindericalCellPerProcIterator1Proc()
 		int *neighborhood = gridData.neighborhood.get();
 		double *vol = gridData.cellVolume.get();
 
-		for(int k=0;k<axisSpec.getNumCells();k++){
+		for(size_t k=0;k<axisSpec.getNumCells();k++){
 			double ranZ = z[k];
-			for(int j=0;j<thetaSpec.getNumCells();j++){
+			for(size_t j=0;j<thetaSpec.getNumCells();j++){
 				double ranTheta = theta[j];
-				for(int i=0;i<ring2dSpec.getNumRings();i++){
+				for(size_t i=0;i<ring2dSpec.getNumRings();i++){
 					double ranR = r[i];
 					double x = ranR*cos(ranTheta);
 					double y = ranR*sin(ranTheta);
@@ -300,8 +300,8 @@ void cylindericalCellPerProcIterator2Proc()
 		shared_ptr<int> gIds = gridData.myGlobalIDs;
 		int *gIdsPtr = gIds.get();
 		int start = 0;
-		for(int id=start;id<gridData.numPoints+start;id++,gIdsPtr++)
-			BOOST_CHECK( *gIdsPtr == id );
+		for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++)
+			BOOST_CHECK( *gIdsPtr == (int)id );
 
 		{
 			// Assert coordinates and volume
@@ -316,9 +316,9 @@ void cylindericalCellPerProcIterator2Proc()
 			int k=0;
 			int cell=0;
 			double ranZ = z[k];
-			for(int j=0;j<thetaSpec.getNumCells();j++){
+			for(size_t j=0;j<thetaSpec.getNumCells();j++){
 				double ranTheta = theta[j];
-				for(int i=0;i<ring2dSpec.getNumRings();i++){
+				for(size_t i=0;i<ring2dSpec.getNumRings();i++){
 					double ranR = r[i];
 					double x = ranR*cos(ranTheta);
 					double y = ranR*sin(ranTheta);
@@ -366,8 +366,8 @@ void cylindericalCellPerProcIterator2Proc()
 			// assert global ids for this processor
 			shared_ptr<int> gIds = gridData.myGlobalIDs;
 			int *gIdsPtr = gIds.get();
-			for(int id=start;id<gridData.numPoints+start;id++,gIdsPtr++){
-				BOOST_CHECK( *gIdsPtr == id );
+			for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++){
+				BOOST_CHECK( *gIdsPtr == (int)id );
 			}
 
 			// Assert coordinates
@@ -382,9 +382,9 @@ void cylindericalCellPerProcIterator2Proc()
 			int k=1;
 			int cell=0;
 			double ranZ = z[k];
-			for(int j=0;j<thetaSpec.getNumCells();j++){
+			for(size_t j=0;j<thetaSpec.getNumCells();j++){
 				double ranTheta = theta[j];
-				for(int i=0;i<ring2dSpec.getNumRings();i++){
+				for(size_t i=0;i<ring2dSpec.getNumRings();i++){
 					double ranR = r[i];
 					double x = ranR*cos(ranTheta);
 					double y = ranR*sin(ranTheta);
@@ -533,8 +533,8 @@ void cylindericalCellPerProcIterator4Proc()
 		int *gIdsPtr = gIds.get();
 		int cell = 0;
 		int start=0;
-		for(int id=start;id<gridData.numPoints+start;id++,gIdsPtr++,cell++){
-			BOOST_CHECK( *gIdsPtr == id );
+		for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++,cell++){
+			BOOST_CHECK( *gIdsPtr == (int)id );
 
 			BOOST_CHECK(xx[id*3]==X[3*cell]);
 			BOOST_CHECK(xx[id*3+1]==X[3*cell+1]);
@@ -586,8 +586,8 @@ void cylindericalCellPerProcIterator4Proc()
 			shared_ptr<int> gIds = gridData.myGlobalIDs;
 			int *gIdsPtr = gIds.get();
 			int cell = 0;
-			for(int id=start;id<gridData.numPoints+start;id++,gIdsPtr++,cell++){
-				BOOST_CHECK( *gIdsPtr == id );
+			for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++,cell++){
+				BOOST_CHECK( *gIdsPtr == (int)id );
 
 				BOOST_CHECK(xx[id*3]==X[3*cell]);
 				BOOST_CHECK(xx[id*3+1]==X[3*cell+1]);

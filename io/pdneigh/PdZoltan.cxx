@@ -318,7 +318,7 @@ void zoltanQuery_objectList
 	*ierr = ZOLTAN_OK;
 	QuickGridData *gridData = (QuickGridData *)pdGridData;
 	int *gIds = gridData->myGlobalIDs.get();
-	for(int i=0; i<gridData->numPoints; i++){
+	for(size_t i=0; i<gridData->numPoints; i++){
 		zoltanGlobalIds[i] = gIds[i];
 		zoltanLocalIds[i] = i;
 	}
@@ -382,7 +382,7 @@ void zoltanQuery_gridData
 	/*
 	 * This is also bad!
 	 */
-	if ( numPoints != gridData->numPoints ){
+	if ( numPoints != (int)gridData->numPoints ){
 		*ierr = ZOLTAN_FATAL;
 		return;
 	}
@@ -494,7 +494,7 @@ void zoltanQuery_packPointsMultiFunction
 
 	// mark points that are for export
 	char *exportFlagPtr = gridData->exportFlag.get();
-	for(int p=0;p<gridData->numPoints;p++){
+	for(size_t p=0;p<gridData->numPoints;p++){
 		exportFlagPtr[p]=0;
 	}
 	gridData->numExport=numExport;
@@ -626,7 +626,7 @@ void zoltanQuery_unPackPointsMultiFunction
 	int newSizeNeighborhoodList = 0;
 
 	// Copy over points from old gridData that have not been exported
-	for(int p=0;p<gridData->numPoints;p++, exportPtr++, neighPtrPtr++, vPtr++, idsPtr++){
+	for(size_t p=0;p<gridData->numPoints;p++, exportPtr++, neighPtrPtr++, vPtr++, idsPtr++){
 		// this means we keep this point
 		if(0==*exportPtr){
 
@@ -666,7 +666,7 @@ void zoltanQuery_unPackPointsMultiFunction
 	// Re-initialize
 	exportPtr = exportFlag.get();
 	neighPtrPtr = neighborhoodPtr.get();
-	for(int p=0;p<gridData->numPoints;p++, exportPtr++, neighPtrPtr++){
+	for(size_t p=0;p<gridData->numPoints;p++, exportPtr++, neighPtrPtr++){
 		// this means we keep this point
 		if(0==*exportPtr){
 

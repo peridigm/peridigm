@@ -102,8 +102,8 @@ void p0()
 	int *neighborhoodList = gridData.neighborhood.get();
 	int *_neighAns = _neighborList;
 	int start = 0;
-	for(int id=start;id<gridData.numPoints+start;id++,gIdsPtr++){
-		BOOST_CHECK( *gIdsPtr == id );
+	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++){
+		BOOST_CHECK( *gIdsPtr == (int)id );
 		int numNeigh = *_neighAns;
 
 		BOOST_CHECK( numNeigh == *neighborhoodList ); _neighAns++; neighborhoodList++;
@@ -177,8 +177,8 @@ void p1()
 	int *neighborhoodList = gridData.neighborhood.get();
 	int *_neighAns = &_neighborList[5];
 	int start = 2;
-	for(int id=start;id<gridData.numPoints+start;id++,gIdsPtr++){
-		BOOST_CHECK( *gIdsPtr == id );
+	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++){
+		BOOST_CHECK( *gIdsPtr == (int)id );
 		int numNeigh = *_neighAns;
 		BOOST_CHECK( numNeigh == *neighborhoodList ); _neighAns++; neighborhoodList++;
 		for(int i=0;i<numNeigh;i++){

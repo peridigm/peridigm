@@ -56,7 +56,7 @@ void axisAlignedMinimum() {
 
 	CartesianComponent axis = UTILITIES::Z;
 	std::tr1::shared_ptr<double> xPtr = decomp.myX;
-	int numPoints = decomp.numPoints;
+	size_t numPoints = decomp.numPoints;
 	BOOST_CHECK(numCells==numPoints);
 
 	/*
@@ -84,14 +84,14 @@ void axisAlignedMaximum() {
 
 	CartesianComponent axis = UTILITIES::Z;
 	std::tr1::shared_ptr<double> xPtr = decomp.myX;
-	int numPoints = decomp.numPoints;
+	size_t numPoints = decomp.numPoints;
 	BOOST_CHECK(numCells==numPoints);
 
 	/*
 	 * points at z-maximum end
 	 */
 	std::set<int> answerIds;
-	for(int i=608;i<numPoints;i++){
+	for(size_t i=608;i<numPoints;i++){
 		answerIds.insert(i);
 	}
 	std::set<int>::iterator setEnd = answerIds.end();

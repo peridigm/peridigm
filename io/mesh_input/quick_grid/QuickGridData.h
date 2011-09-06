@@ -16,8 +16,8 @@ namespace QUICKGRID {
 
 typedef struct Data {
 	int dimension;
-	int globalNumPoints;
-	int numPoints;
+	size_t globalNumPoints;
+	size_t numPoints;
 	int sizeNeighborhoodList;
 	int numExport;
 	bool unPack;

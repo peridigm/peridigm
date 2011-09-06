@@ -61,7 +61,7 @@ Array<double> createPoints(){
 		srand ( time(NULL) );
 		double *X = xPtr.get();
 		double pi = M_PI;
-		for(int p=0;p<N;p++,X+=3){
+		for(size_t p=0;p<N;p++,X+=3){
 			*(X+0)= pi*(rand()%N)/N;
 			*(X+1)= pi*(rand()%N)/N;
 			*(X+2)= pi*(rand()%N)/N;

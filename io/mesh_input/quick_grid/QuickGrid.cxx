@@ -100,7 +100,7 @@ void print_meta_data(const QuickGridData& gridData, const std::string& label) {
 
 	int *ptr = gridData.neighborhoodPtr.get();
 	int *neigh = gridData.neighborhood.get();
-	for(int n=0;n<gridData.numPoints;n++,ptr++){
+	for(size_t n=0;n<gridData.numPoints;n++,ptr++){
 		int num_neigh = *neigh; neigh++;
 		s << "\tNeighborhood : " << gridData.myGlobalIDs.get()[n]
 		  << "; neigh ptr : " << *ptr << "; num neigh : " << num_neigh << "\n\t";
@@ -485,7 +485,7 @@ std::pair<Cell3D,QuickGridData> TensorProduct3DMeshGenerator::computePdGridData(
 
 
 	// Number of cells on this processor
-	int myNumCells = cellsPerProc[proc];
+	size_t myNumCells = cellsPerProc[proc];
 
 	// Coordinates used for tensor product space
 	const double*x=xx.get();
@@ -595,7 +595,7 @@ std::pair<Cell3D,QuickGridData> TensorProduct3DMeshGenerator::computePdGridData(
 	int *neighPtr = pdGridData.neighborhoodPtr.get();
 	int *neighborListPtr = neighborhoodList.get();
 	int sum=0;
-	for(int n=0;n<myNumCells;n++){
+	for(size_t n=0;n<myNumCells;n++){
 		neighPtr[n]=sum;
 		int numCells = *neighborListPtr; neighborListPtr += (numCells+1);
 		sum += (numCells+1);
@@ -734,9 +734,9 @@ std::pair<Cell3D,QuickGridData> TensorProductCylinderMeshGenerator::computePdGri
 	Spec1D xSpec = specs[0]; // r
 	Spec1D ySpec = specs[1]; // theta
 	Spec1D zSpec = specs[2]; // z
-	int nx = xSpec.getNumCells();
-	int ny = ySpec.getNumCells();
-	int nz = zSpec.getNumCells();
+	size_t nx = xSpec.getNumCells();
+	size_t ny = ySpec.getNumCells();
+	size_t nz = zSpec.getNumCells();
 
 	// Each cell has the same volume arc size in radians --
 	//   Cells have different volumes bases upon "r"
@@ -751,7 +751,7 @@ std::pair<Cell3D,QuickGridData> TensorProductCylinderMeshGenerator::computePdGri
 	Horizon hZ = H[2];
 
 	// Number of cells on this processor
-	int myNumCells = cellsPerProc[proc];
+	size_t myNumCells = cellsPerProc[proc];
 
 	// Coordinates used for tensor product space
 	const double*x=rPtr.get();
@@ -774,27 +774,27 @@ std::pair<Cell3D,QuickGridData> TensorProductCylinderMeshGenerator::computePdGri
 	int updateSizeNeighborhoodList = 0;
 
 	// Compute discretization on processor
-	int kStart = cellLocator.k;
-	int jStart = cellLocator.j;
-	int iStart = cellLocator.i;
+	size_t kStart = cellLocator.k;
+	size_t jStart = cellLocator.j;
+	size_t iStart = cellLocator.i;
 
 	size_t cell = 0;
 	double point[3]={0.0,0.0,0.0};
 	double pointNeighbor[3] = {0.0,0.0,0.0};
-	for(int k=kStart;k<nz && cell<myNumCells;k++){
+	for(size_t k=kStart;k<nz && cell<myNumCells;k++){
 		// kStart = 0; this one doesn't matter
 		cellLocator.k = k;
 		point[2]=z[k];
 		size_t zStart = hZ.start(k);
 		size_t nCz = hZ.numCells(k);
 
-		for(int j=jStart;j<ny && cell<myNumCells;j++){
+		for(size_t j=jStart;j<ny && cell<myNumCells;j++){
 			jStart=0; // begin at jStart only the first time
 			cellLocator.j = j;
 			double theta = y[j];
 			double c = cos(theta);
 			double s = sin(theta);
-			for(int i=iStart;i<nx && cell<myNumCells;i++,cell++,cellLocator.i++){
+			for(size_t i=iStart;i<nx && cell<myNumCells;i++,cell++,cellLocator.i++){
 				iStart=0; // begin at iStart only the first time
 				// global id
 				*gidsPtr = i + j * nx + k * nx * ny; gidsPtr++;
@@ -868,7 +868,7 @@ std::pair<Cell3D,QuickGridData> TensorProductCylinderMeshGenerator::computePdGri
 	int *neighPtr = pdGridData.neighborhoodPtr.get();
 	int *neighborListPtr = neighborhoodList.get();
 	int sum=0;
-	for(int n=0;n<myNumCells;n++){
+	for(size_t n=0;n<myNumCells;n++){
 		neighPtr[n]=sum;
 		int numCells = *neighborListPtr; neighborListPtr += (numCells+1);
 		sum += (numCells+1);
