@@ -247,7 +247,7 @@ void dsf_probe(const std::string& json_filename) {
 	 * CAUTION: this test only makes sense in 'serial' -- local id
 	 * and gId are not the same in parallel.
 	 */
-	int num_neigh = list.get_num_neigh(gId);
+	size_t num_neigh = list.get_num_neigh(gId);
 //	std::cout << "ut_dsf::center cell num_neigh = " << num_neigh << std::endl;
 	Array<int> neighborhoodPtr(1+num_neigh);
 	{
@@ -255,7 +255,7 @@ void dsf_probe(const std::string& json_filename) {
 		 * copy neighborhood list for center point over to array
 		 */
 		const int *neighborhood = list.get_neighborhood(gId);
-		BOOST_CHECK(num_neigh == *neighborhood);
+		BOOST_CHECK((int)num_neigh == *neighborhood);
 		for(size_t j=0;j<num_neigh+1;j++,neighborhood++)
 			neighborhoodPtr[j]=*neighborhood;
 	}

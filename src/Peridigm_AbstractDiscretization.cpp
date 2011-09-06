@@ -72,7 +72,7 @@ UTILITIES::Array<int> PeridigmNS::AbstractDiscretization::getSharedGlobalIds(con
 	int *neighPtr = gridData.neighborhoodPtr.get();
 	int *neigh = gridData.neighborhood.get();
 	std::set<int>::const_iterator ownedIdsEnd = ownedIds.end();
-	for(int p=0;p<gridData.numPoints;p++){
+	for(size_t p=0;p<gridData.numPoints;p++){
 		int ptr = neighPtr[p];
 		int numNeigh = neigh[ptr];
 		for(int n=1;n<=numNeigh;n++){
@@ -114,7 +114,7 @@ shared_ptr<int> PeridigmNS::AbstractDiscretization::getLocalNeighborList(const Q
 	int *localNeig = localNeighborList.get();
 	int *neighPtr = gridData.neighborhoodPtr.get();
 	int *neigh = gridData.neighborhood.get();
-	for(int p=0;p<gridData.numPoints;p++){
+	for(size_t p=0;p<gridData.numPoints;p++){
 		int ptr = neighPtr[p];
 		int numNeigh = neigh[ptr];
 		localNeig[ptr]=numNeigh;
