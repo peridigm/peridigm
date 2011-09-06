@@ -99,7 +99,7 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   int* neighborhood = decomp.neighborhood.get();
   int neighborhoodIndex = 0;
   int numPointsWithZeroNeighbors = 0;
-  for(int i=0 ; i<decomp.numPoints ; ++i){
+  for(size_t i=0 ; i<decomp.numPoints ; ++i){
     int numNeighbors = neighborhood[neighborhoodIndex];
     if(numNeighbors > 0){
       numMyElements++;
