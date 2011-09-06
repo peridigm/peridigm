@@ -75,11 +75,10 @@ PeridigmNS::State createTwoPointProblem()
   int numCells = 2;
 
   // set up overlap maps, which include ghosted nodes
-  int numGlobalElements(numCells), numMyElements(2), elementSize, indexBase(0);
+  int numGlobalElements(numCells), numMyElements(2), elementSize(1), indexBase(0);
   std::vector<int> myGlobalElements(numMyElements);
   for(int i=0; i<numMyElements ; ++i)
     myGlobalElements[i] = i;
-  elementSize = 1;
 
   // overlapScalarPointMap
   // used for cell volumes and scalar constitutive data
@@ -163,7 +162,7 @@ PeridigmNS::State createThreePointProblem()
   int numCells = 3;
 
   // set up overlap maps, which include ghosted nodes
-  int numGlobalElements(numCells), numMyElements, elementSize, indexBase(0);
+  int numGlobalElements(numCells), numMyElements(0), elementSize(1), indexBase(0);
   std::vector<int> myGlobalElements;
   if(numProcs == 1){
     numMyElements = 3;
@@ -186,7 +185,6 @@ PeridigmNS::State createThreePointProblem()
       myGlobalElements[1] = 1;
     }
   }
-  elementSize = 1;
 
   // overlapScalarPointMap
   // used for cell volumes and scalar constitutive data
