@@ -41,7 +41,7 @@ void constructor(){
 
 void set(){
 
-	int size(10);
+	size_t size(10);
 	Array<int> a(size);
 	BOOST_CHECK(a.get_size()==size);
 	a.set(1);
@@ -52,7 +52,7 @@ void set(){
 
 void deep_copy(){
 
-	int size(10);
+	size_t size(10);
 	Array<int> a(size),b;
 	BOOST_CHECK(a.get_size()==size);
 	BOOST_CHECK(b.get_size()==0);
@@ -68,7 +68,7 @@ void deep_copy(){
 
 void scale(){
 
-	int size(10);
+	size_t size(10);
 	Array<int> a(size);
 	BOOST_CHECK(a.get_size()==size);
 	a.set(1);

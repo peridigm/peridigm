@@ -47,17 +47,17 @@ public:
 	const T* end() const { return raw_ptr + size; }
 	      T* end() { return raw_ptr + size; }
 
-	T operator[](int i) const {
-		if(0>i || size<=i){
-			std::string message("ERROR\n\tArray::operator[](int i) const \'i\' out of range.");
+	T operator[](size_t i) const {
+		if(size<=i){
+			std::string message("ERROR\n\tArray::operator[](size_t i) const \'i\' out of range.");
 			throw std::domain_error(message);
 		}
 		return raw_ptr[i];
 	  }
 
-	T & operator[](int i) {
-		if(0>i || size<=i){
-			std::string message("ERROR\n\tArray::operator[](int i) \'i\' out of range.");
+	T & operator[](size_t i) {
+		if(size<=i){
+			std::string message("ERROR\n\tArray::operator[](size_t i) \'i\' out of range.");
 			throw std::domain_error(message);
 		}
 		return raw_ptr[i];

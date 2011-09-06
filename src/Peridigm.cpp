@@ -1649,7 +1649,7 @@ void PeridigmNS::Peridigm::contactSearch(Teuchos::RCP<const Epetra_BlockMap> reb
 //	int* searchGlobalIDs = rebalancedDecomp.myGlobalIDs.get();
 	int* searchGlobalIDs = neighList.get_owned_gids().get();
 	int searchListIndex = 0;
-	for(int iPt=0 ; iPt<rebalancedDecomp.numPoints ; ++iPt){
+	for(size_t iPt=0 ; iPt<rebalancedDecomp.numPoints ; ++iPt){
 
 		int globalID = searchGlobalIDs[iPt];
 		vector<int>& contactNeighborGlobalIDList = (*contactNeighborGlobalIDs)[globalID];
