@@ -158,7 +158,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
                         peridigmDisc->getGlobalOwnedMap(3),
                         peridigmDisc->getGlobalOverlapMap(3),
                         peridigmDisc->getGlobalBondMap(),
-                        mothershipBlockIDs,
+                        blockIDs,
                         globalNeighborhoodData);
 
   // Load initial data into the blocks
@@ -234,29 +234,32 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
   // a non-overlapping map used for storing constitutive data on bonds
   bondMap = peridigmDisc->getGlobalBondMap();
 
-  // Create mothership vector
-  // \todo Do not allocate space for the contact force, residual, and deltaU if not needed.
-  mothership = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalMap, 9));
-  // Set ref-count pointers for each of the global vectors
-  x = Teuchos::rcp((*mothership)(0), false);             // initial positions
-  u = Teuchos::rcp((*mothership)(1), false);             // displacement
-  y = Teuchos::rcp((*mothership)(2), false);             // current positions
-  v = Teuchos::rcp((*mothership)(3), false);             // velocities
-  a = Teuchos::rcp((*mothership)(4), false);             // accelerations
-  force = Teuchos::rcp((*mothership)(5), false);         // force
-  contactForce = Teuchos::rcp((*mothership)(6), false);  // contact force (used only for contact simulations)
-  deltaU = Teuchos::rcp((*mothership)(7), false);        // increment in displacement (used only for implicit time integration)
-  residual = Teuchos::rcp((*mothership)(8), false);      // residual (used only for implicit time integration)
+  // Create mothership vectors
 
-  // Create the mothership block ID vector
-  mothershipBlockIDs = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
+  oneDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*oneDimensionalMap, 2));
+  blockIDs = Teuchos::rcp((*oneDimensionalMothership)(0), false);        // block ID
+  volume = Teuchos::rcp((*oneDimensionalMothership)(1), false);          // cell volume
+
+  // \todo Do not allocate space for the contact force, residual, and deltaU if not needed.
+  threeDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalMap, 10));
+  // Set ref-count pointers for each of the global vectors
+  x = Teuchos::rcp((*threeDimensionalMothership)(0), false);             // initial positions
+  u = Teuchos::rcp((*threeDimensionalMothership)(1), false);             // displacement
+  y = Teuchos::rcp((*threeDimensionalMothership)(2), false);             // current positions
+  v = Teuchos::rcp((*threeDimensionalMothership)(3), false);             // velocities
+  a = Teuchos::rcp((*threeDimensionalMothership)(4), false);             // accelerations
+  force = Teuchos::rcp((*threeDimensionalMothership)(5), false);         // force
+  contactForce = Teuchos::rcp((*threeDimensionalMothership)(6), false);  // contact force (used only for contact simulations)
+  deltaU = Teuchos::rcp((*threeDimensionalMothership)(7), false);        // increment in displacement (used only for implicit time integration)
+  residual = Teuchos::rcp((*threeDimensionalMothership)(8), false);      // residual (used only for implicit time integration)
+  scratch = Teuchos::rcp((*threeDimensionalMothership)(9), false);       // scratch space
 
   // Set the block IDs
   double* bID;
   peridigmDisc->getBlockID()->ExtractView(&bID);
-  double* mothershipBlockIDsPtr;
-  mothershipBlockIDs->ExtractView(&mothershipBlockIDsPtr);
-  blas.COPY(mothershipBlockIDs->MyLength(), bID, mothershipBlockIDsPtr);
+  double* blockIDsPtr;
+  blockIDs->ExtractView(&blockIDsPtr);
+  blas.COPY(blockIDs->MyLength(), bID, blockIDsPtr);
 
   // Set the initial positions
   double* initialX;
@@ -579,15 +582,21 @@ void PeridigmNS::Peridigm::executeExplicit() {
 
   // Copy force from the data manager to the mothership vector
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-    blockIt->exportData(*force, Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
+  force->PutScalar(0.0);
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    blockIt->exportData(*scratch, Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
+    force->Update(1.0, *scratch, 1.0);
+  }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
   if(analysisHasContact){
     // Copy contact force from the data manager to the mothership vector
     PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-      blockIt->exportData(*contactForce, Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
+    contactForce->PutScalar(0.0);
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+      blockIt->exportData(*scratch, Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
+      contactForce->Update(1.0, *scratch, 1.0);
+    }
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
     // Add contact forces to forces
     force->Update(1.0, *contactForce, 1.0);
@@ -663,8 +672,11 @@ void PeridigmNS::Peridigm::executeExplicit() {
 
     // Copy force from the data manager to the mothership vector
     PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-      blockIt->exportData(*force, Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
+    force->PutScalar(0.0);
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+      blockIt->exportData(*scratch, Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
+      force->Update(1.0, *scratch, 1.0);
+    }
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");    
 
     // Check for NaNs in force evaluation
@@ -675,8 +687,11 @@ void PeridigmNS::Peridigm::executeExplicit() {
     if(analysisHasContact){
       // Copy contact force from the data manager to the mothership vector
       PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-      for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-        blockIt->exportData(*contactForce, Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
+      contactForce->PutScalar(0.0);
+      for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+        blockIt->exportData(*scratch, Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
+        contactForce->Update(1.0, *scratch, 1.0);
+      }
       PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
       // Check for NaNs in contact force evaluation
@@ -748,7 +763,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
   this->synchDataManagers();
 
   // \todo This will break for multiple materials.
-  outputManager->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),timeCurrent);
+  outputManager->write(blocks->begin()->getDataManager(), blocks->begin()->getNeighborhoodData(), timeCurrent);
   PeridigmNS::Timer::self().stopTimer("Output");
 
   for(int step=0; step<numLoadSteps ; step++){
@@ -826,7 +841,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
     this->synchDataManagers();
 
     // \todo This will break for multiple materials.
-    outputManager->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),timeCurrent);
+    outputManager->write(blocks->begin()->getDataManager(), blocks->begin()->getNeighborhoodData(), timeCurrent);
     PeridigmNS::Timer::self().stopTimer("Output");
 
     // swap state N and state NP1
@@ -904,7 +919,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
   this->synchDataManagers();
 
   // \todo This will break for multiple materials.
-  outputManager->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),timeCurrent);
+  outputManager->write(blocks->begin()->getDataManager(), blocks->begin()->getNeighborhoodData(), timeCurrent);
   PeridigmNS::Timer::self().stopTimer("Output");
 
   for(int step=0; step<nsteps ; step++){
@@ -1048,7 +1063,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
     this->synchDataManagers();
 
     // \todo This will break for multiple materials.
-    outputManager->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),timeCurrent);
+    outputManager->write(blocks->begin()->getDataManager(), blocks->begin()->getNeighborhoodData(), timeCurrent);
     PeridigmNS::Timer::self().stopTimer("Output");
 
     // swap state N and state NP1
@@ -1378,24 +1393,27 @@ void PeridigmNS::Peridigm::rebalance() {
                                                                                 rebalancedOneDimensionalMap,
                                                                                 rebalancedOneDimensionalOverlapMap);
 
-  // rebalance the global vectors (stored in the mothership multivector)
-  Teuchos::RCP<Epetra_MultiVector> rebalancedMothership = Teuchos::rcp(new Epetra_MultiVector(*rebalancedThreeDimensionalMap, mothership->NumVectors()));
-  rebalancedMothership->Import(*mothership, *threeDimensionalMapImporter, Insert);
-  mothership = rebalancedMothership;
-  x = Teuchos::rcp((*mothership)(0), false);             // initial positions
-  u = Teuchos::rcp((*mothership)(1), false);             // displacement
-  y = Teuchos::rcp((*mothership)(2), false);             // current positions
-  v = Teuchos::rcp((*mothership)(3), false);             // velocities
-  a = Teuchos::rcp((*mothership)(4), false);             // accelerations
-  force = Teuchos::rcp((*mothership)(5), false);         // force
-  contactForce = Teuchos::rcp((*mothership)(6), false);  // contact force (used only for contact simulations)
-  deltaU = Teuchos::rcp((*mothership)(7), false);        // increment in displacement (used only for implicit time integration)
-  residual = Teuchos::rcp((*mothership)(8), false);      // residual (used only for implicit time integration)
+  // rebalance the global vectors (stored in the mothership multivectors)
 
-  // Create the rebalanced mothership block ID vector
-  Teuchos::RCP<Epetra_Vector> rebalancedMothershipBlockIDs = Teuchos::rcp(new Epetra_Vector(*rebalancedOneDimensionalMap));
-  rebalancedMothershipBlockIDs->Import(*mothershipBlockIDs, *oneDimensionalMapImporter, Insert);
-  mothershipBlockIDs = rebalancedMothershipBlockIDs;
+  Teuchos::RCP<Epetra_MultiVector> rebalancedOneDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*rebalancedOneDimensionalMap, oneDimensionalMothership->NumVectors()));
+  rebalancedOneDimensionalMothership->Import(*oneDimensionalMothership, *oneDimensionalMapImporter, Insert);
+  oneDimensionalMothership = rebalancedOneDimensionalMothership;
+  blockIDs = Teuchos::rcp((*oneDimensionalMothership)(0), false);        // block ID
+  volume = Teuchos::rcp((*oneDimensionalMothership)(1), false);          // cell volume
+
+  Teuchos::RCP<Epetra_MultiVector> rebalancedThreeDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*rebalancedThreeDimensionalMap, threeDimensionalMothership->NumVectors()));
+  rebalancedThreeDimensionalMothership->Import(*threeDimensionalMothership, *threeDimensionalMapImporter, Insert);
+  threeDimensionalMothership = rebalancedThreeDimensionalMothership;
+  x = Teuchos::rcp((*threeDimensionalMothership)(0), false);             // initial positions
+  u = Teuchos::rcp((*threeDimensionalMothership)(1), false);             // displacement
+  y = Teuchos::rcp((*threeDimensionalMothership)(2), false);             // current positions
+  v = Teuchos::rcp((*threeDimensionalMothership)(3), false);             // velocities
+  a = Teuchos::rcp((*threeDimensionalMothership)(4), false);             // accelerations
+  force = Teuchos::rcp((*threeDimensionalMothership)(5), false);         // force
+  contactForce = Teuchos::rcp((*threeDimensionalMothership)(6), false);  // contact force (used only for contact simulations)
+  deltaU = Teuchos::rcp((*threeDimensionalMothership)(7), false);        // increment in displacement (used only for implicit time integration)
+  residual = Teuchos::rcp((*threeDimensionalMothership)(8), false);      // residual (used only for implicit time integration)
+  scratch = Teuchos::rcp((*threeDimensionalMothership)(9), false);       // scratch space
 
   // rebalance the blocks
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
@@ -1404,7 +1422,7 @@ void PeridigmNS::Peridigm::rebalance() {
                        rebalancedThreeDimensionalMap,
                        rebalancedThreeDimensionalOverlapMap,
                        rebalancedBondMap,
-                       rebalancedMothershipBlockIDs,
+                       blockIDs,
                        rebalancedNeighborhoodData,
                        rebalancedContactNeighborhoodData);
 
@@ -1435,26 +1453,21 @@ QUICKGRID::Data PeridigmNS::Peridigm::currentConfigurationDecomp() {
   memcpy(myGlobalIDsPtr, gIDs, myNumElements*sizeof(int));
   decomp.myGlobalIDs = myGlobalIDs.get_shared_ptr();
 
-  // fill myX and cellVolume
+  // fill myX
   // use current positions for x
   Array<double> myX(myNumElements*dimension);
   double* myXPtr = myX.get();
   double* yPtr;
   y->ExtractView(&yPtr);
   memcpy(myXPtr, yPtr, myNumElements*dimension*sizeof(double));
+  decomp.myX = myX.get_shared_ptr();
+
+  // fill cellVolume
   Array<double> cellVolume(myNumElements);
   double* cellVolumePtr = cellVolume.get();
-  double* cellVolumeOverlapPtr;
-
-  // \todo This will break for multiple materials.
-  blocks->begin()->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&cellVolumeOverlapPtr);
-
-  for(int i=0 ; i<myNumElements ; ++i){
-    int oneDimensionalMapGlobalID = oneDimensionalMap->GID(i);
-    int oneDimensionalOverlapMapLocalID = oneDimensionalOverlapMap->LID(oneDimensionalMapGlobalID);
-    cellVolumePtr[i] = cellVolumeOverlapPtr[oneDimensionalOverlapMapLocalID];
-  }  
-  decomp.myX = myX.get_shared_ptr();
+  double* volumePtr;
+  volume->ExtractView(&volumePtr);
+  memcpy(cellVolumePtr, volumePtr, myNumElements*sizeof(double));
   decomp.cellVolume = cellVolume.get_shared_ptr();
 
   // call the rebalance function on the current-configuration decomp

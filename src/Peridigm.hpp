@@ -278,11 +278,11 @@ namespace PeridigmNS {
     //! Compute manager
     Teuchos::RCP<PeridigmNS::ComputeManager> computeManager;
 
-    //! Mothership multivector that contains all the global vectors (x, u, y, v, a, force, etc.)
-    Teuchos::RCP<Epetra_MultiVector> mothership;
+    //! Mothership multivector that contains all the three-dimensional global vectors (x, u, y, v, a, force, etc.)
+    Teuchos::RCP<Epetra_MultiVector> threeDimensionalMothership;
 
-    //! Mothership vector for block ID
-    Teuchos::RCP<Epetra_Vector> mothershipBlockIDs;
+    //! Mothership multivector that contains all the one-dimensional global vectors (blockID, volume)
+    Teuchos::RCP<Epetra_MultiVector> oneDimensionalMothership;
 
     //! Blocks
     Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks;
@@ -295,9 +295,6 @@ namespace PeridigmNS {
 
     //! Overlap Jacobian; filled by each processor and then assembled into the mothership Jacobian;
     Teuchos::RCP<PeridigmNS::SerialMatrix> overlapJacobian;
-
-    //! Global vector for block ID
-    Teuchos::RCP<Epetra_Vector> blockIDs;
 
     //! Global vector for initial positions
     Teuchos::RCP<Epetra_Vector> x;
@@ -325,6 +322,15 @@ namespace PeridigmNS {
 
     //! Global vector for residual (used only in implicit time integration)
     Teuchos::RCP<Epetra_Vector> residual;
+
+    //! Global scratch space vector
+    Teuchos::RCP<Epetra_Vector> scratch;
+
+    //! Global vector for block ID 
+    Teuchos::RCP<Epetra_Vector> blockIDs;
+
+    //! Global vector for cell volume 
+    Teuchos::RCP<Epetra_Vector> volume;
 
     //! Map for global tangent matrix (note, must be an Epetra_Map, not an Epetra_BlockMap)
     Teuchos::RCP<Epetra_Map> tangentMap;

@@ -507,34 +507,6 @@ PeridigmNS::STKDiscretization::getGlobalBondMap() const
   return bondMap;
 }
 
-Teuchos::RCP<const Epetra_BlockMap>
-PeridigmNS::STKDiscretization::getElementBlockOwnedMap(std::string& blockName, int dimension) const
-{
-  // \todo This will break for multiple blocks
-  return getGlobalOwnedMap(dimension);
-}
-
-Teuchos::RCP<const Epetra_BlockMap>
-PeridigmNS::STKDiscretization::getElementBlockOverlapMap(std::string& blockName, int dimension) const
-{
-  // \todo This will break for multiple blocks
-  return getGlobalOverlapMap(dimension);
-}
-
-Teuchos::RCP<const Epetra_BlockMap>
-PeridigmNS::STKDiscretization::getElementBlockBondMap(std::string& blockName) const
-{
-  // \todo This will break for multiple blocks
-  return getGlobalBondMap();
-}
-
-Teuchos::RCP<PeridigmNS::NeighborhoodData> 
-PeridigmNS::STKDiscretization::getElementBlockNeighborhoodData(std::string& blockName) const
-{
-  // \todo This will break for multiple blocks  
-  return neighborhoodData;
-}
-
 Teuchos::RCP<Epetra_Vector>
 PeridigmNS::STKDiscretization::getInitialX() const
 {
