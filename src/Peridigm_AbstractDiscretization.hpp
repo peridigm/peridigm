@@ -94,18 +94,6 @@ namespace PeridigmNS {
      *   a non-overlapping map. */
     virtual Teuchos::RCP<const Epetra_BlockMap> getGlobalBondMap() const = 0;
 
-    //! Return d-dimensional map for the given element block
-    virtual Teuchos::RCP<const Epetra_BlockMap> getElementBlockOwnedMap(std::string& blockName, int dimension) const = 0;
-
-    //! Return d-dimensional overlap map for the given element block (owned points + ghosts)
-    virtual Teuchos::RCP<const Epetra_BlockMap> getElementBlockOverlapMap(std::string& blockName, int dimension) const = 0;
-
-    //! Return 1-dimensional bond map for the given element block
-    virtual Teuchos::RCP<const Epetra_BlockMap> getElementBlockBondMap(std::string& blockName) const = 0;
-
-    //! Get the neighbor list for all locally-owned nodes for the given element block
-    virtual Teuchos::RCP<PeridigmNS::NeighborhoodData> getElementBlockNeighborhoodData(std::string& blockName) const = 0;
-
     //! Get initial positions
     virtual Teuchos::RCP<Epetra_Vector> getInitialX() const = 0;
 
