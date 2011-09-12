@@ -261,6 +261,13 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
   blockIDs->ExtractView(&blockIDsPtr);
   blas.COPY(blockIDs->MyLength(), bID, blockIDsPtr);
 
+  // Set the volumes
+  double* vol;
+  peridigmDisc->getCellVolume()->ExtractView(&vol);
+  double* volumePtr;
+  volume->ExtractView(&volumePtr);
+  blas.COPY(volume->MyLength(), vol, volumePtr);
+
   // Set the initial positions
   double* initialX;
   peridigmDisc->getInitialX()->ExtractView(&initialX);
@@ -553,7 +560,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
   double timeInitial = solverParams->get("Initial Time", 0.0);
   double timeFinal   = solverParams->get("Final Time", 1.0);
   double timeCurrent = timeInitial;
-  double dt        = verletParams->get("Fixed dt", 1.0);
+  double dt = verletParams->get("Fixed dt", 1.0);
   *timeStep = dt;
   double dt2 = dt/2.0;
   int nsteps = (int)floor((timeFinal-timeInitial)/dt);
@@ -605,7 +612,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
   // fill the acceleration vector
   (*a) = (*force);
   // \todo Possibly move this functionality into ModelEvaluator.
-  // \todo Generalize this for multiple materials
+  // \todo This will break for multiple materials
   double density = (*materialModels)[0]->Density();
   a->Scale(1.0/density);
 
@@ -613,7 +620,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
   PeridigmNS::Timer::self().startTimer("Output");
   this->synchDataManagers();
 
-  // \todo This will fail for multiple material blocks.
+  // \todo This will break for multiple blocks.
   outputManager->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),timeCurrent);
   PeridigmNS::Timer::self().stopTimer("Output");
 
@@ -705,7 +712,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
     // fill the acceleration vector
     (*a) = (*force);
     // \todo Possibly move this functionality into ModelEvaluator.
-    // \todo Generalize this for multiple materials
+    // \todo This will break for multiple materials.
     double density = (*materialModels)[0]->Density();
     a->Scale(1.0/density);
 
@@ -719,7 +726,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
     this->synchDataManagers();
 
     // \todo This will break for multiple materials.
-    outputManager->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),timeCurrent);
+    outputManager->write(blocks->begin()->getDataManager(), blocks->begin()->getNeighborhoodData(), timeCurrent);
     PeridigmNS::Timer::self().stopTimer("Output");
 
     // swap state N and state NP1
@@ -1425,6 +1432,19 @@ void PeridigmNS::Peridigm::rebalance() {
                        blockIDs,
                        rebalancedNeighborhoodData,
                        rebalancedContactNeighborhoodData);
+
+  // Initialize what we can for newly-created ghosts across material boundaries.
+  // These ghosts are added due to contact and will only be used by the contact evaluator.
+  // There is a problem here in that history data and material-specific data are not
+  // going to be available for these newly-created ghosts across material boundaries.
+  // As long as the contact algorithm only uses mothership data at STATE_NONE and
+  // STATE_NP1, then we can get away with the scatter operation below.  If history data
+  // is needed, then some additional MPI operations are needed.  Better yet, this issue
+  // could be resolved if contact were refactored to be totally separate from the material
+  // models (i.e., give contact its own mothership vectors and data managers, and rebalance
+  // only these objects when executing a contact search).
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+    blockIt->importData(*volume, Field_NS::VOLUME, Field_ENUM::STEP_NONE, Insert);
 
   // set all the pointers to the new maps
   oneDimensionalMap = rebalancedOneDimensionalMap;

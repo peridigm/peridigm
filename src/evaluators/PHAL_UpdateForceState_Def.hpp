@@ -91,16 +91,16 @@ void UpdateForceState<EvalT, Traits>::evaluateFields(typename Traits::EvalData c
   for(blockIt = cellData.blocks->begin() ; blockIt != cellData.blocks->end() ; blockIt++){
 
     Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
-    const int numOwnedPointsTEST = neighborhoodData->NumOwnedPoints();
-    const int* ownedIDsTEST = neighborhoodData->OwnedIDs();
-    const int* neighborhoodListTEST = neighborhoodData->NeighborhoodList();
-    Teuchos::RCP<PeridigmNS::DataManager> dataManagerTEST = blockIt->getDataManager();
+    const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
+    const int* ownedIDs = neighborhoodData->OwnedIDs();
+    const int* neighborhoodList = neighborhoodData->NeighborhoodList();
+    Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
     Teuchos::RCP<const PeridigmNS::Material> materialModel = blockIt->getMaterialModel();
 
     materialModel->updateConstitutiveData(dt, 
-                                          numOwnedPointsTEST,
-                                          ownedIDsTEST,
-                                          neighborhoodListTEST,
-                                          *dataManagerTEST);
+                                          numOwnedPoints,
+                                          ownedIDs,
+                                          neighborhoodList,
+                                          *dataManager);
   }
 }
