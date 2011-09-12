@@ -88,18 +88,18 @@ void Contact<EvalT, Traits>::evaluateFields(typename Traits::EvalData cellData)
   for(blockIt = cellData.blocks->begin() ; blockIt != cellData.blocks->end() ; blockIt++){
 
     Teuchos::RCP<PeridigmNS::NeighborhoodData> contactNeighborhoodData = blockIt->getContactNeighborhoodData();
-    const int numOwnedPointsTEST = contactNeighborhoodData->NumOwnedPoints();
-    const int* ownedIDsTEST = contactNeighborhoodData->OwnedIDs();
-    const int* neighborhoodListTEST = contactNeighborhoodData->NeighborhoodList();
-    Teuchos::RCP<PeridigmNS::DataManager> dataManagerTEST = blockIt->getDataManager();
+    const int numOwnedPoints = contactNeighborhoodData->NumOwnedPoints();
+    const int* ownedIDs = contactNeighborhoodData->OwnedIDs();
+    const int* neighborhoodList = contactNeighborhoodData->NeighborhoodList();
+    Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
     Teuchos::RCP<const PeridigmNS::ContactModel> contactModel = blockIt->getContactModel();
 
     if(!contactModel.is_null())
       contactModel->computeForce(dt, 
-                                 numOwnedPointsTEST,
-                                 ownedIDsTEST,
-                                 neighborhoodListTEST,
-                                 *dataManagerTEST);
+                                 numOwnedPoints,
+                                 ownedIDs,
+                                 neighborhoodList,
+                                 *dataManager);
   }
 }
 
