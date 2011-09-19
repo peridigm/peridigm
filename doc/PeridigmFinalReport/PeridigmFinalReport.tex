@@ -1,8 +1,27 @@
-\documentclass[10pt]{article}
-
-% FUZZ -----------------------------------------------------------
-\vfuzz2pt % Don't report over-full v-boxes if over-edge is small
-\hfuzz30pt % Don't bother to report overfull boxes < 30pt
+%
+% $Id: SANDExampleReportstrict.tex,v 1.28 2009/05/01 20:59:19 rolf Exp $
+%
+% This is an example LaTeX file which uses the SANDreport class file.
+% It shows how a SAND report should be formatted, what sections and
+% elements it should contain, and how to use the SANDreport class.
+% It uses the LaTeX report class and the strict option.
+%
+% Get the latest version of the class file and more at
+%    http://www.cs.sandia.gov/~rolf/SANDreport
+%
+% This file and the SANDreport.cls file are based on information
+% contained in "Guide to Preparing {SAND} Reports", Sand98-0730, edited
+% by Tamara K. Locke, and the newer "Guide to Preparing SAND Reports and
+% Other Communication Products", SAND2002-2068P.
+% Please send corrections and suggestions for improvements to
+% Rolf Riesen, Org. 9223, MS 1110, rolf@cs.sandia.gov
+%
+\documentclass[pdf,ps2pdf,12pt,report]{SANDreport}
+\usepackage{pslatex}
+\usepackage{mathptmx}	% Use the Postscript Times font
+\usepackage[FIGBOTCAP,normal,bf,tight]{subfigure}
+\usepackage[dvips,light,first,bottomafter]{draftcopy}
+\draftcopyName{Sample, contains no OUO}{70}
 
 % PACKAGES ---------------------------------------------------------------
 \usepackage{fullpage}
@@ -65,45 +84,107 @@
 %%% ----------------------------------------------------------------------
 
 
-%%% ----------------------------------------------------------------------
-\title{\emph{Peridigm} Summary Report:\\Lessons Learned in Development with Agile Components}
-\author{David Littlewood,  Michael Parks, Andy Salinger, and John Mitchell}
-%%% ----------------------------------------------------------------------
+% If you want to relax some of the SAND98-0730 requirements, use the "relax"
+% option. It adds spaces and boldface in the table of contents, and does not
+% force the page layout sizes.
+% e.g. \documentclass[relax,12pt]{SANDreport}
+%
+% You can also use the "strict" option, which applies even more of the
+% SAND98-0730 guidelines. It gets rid of section numbers which are often
+% useful; e.g. \documentclass[strict]{SANDreport}
 
+
+
+% ---------------------------------------------------------------------------- %
+%
+% Set the title, author, and date
+%
+    \title{\emph{Peridigm} Summary Report:\\Lessons Learned in Development with Agile Components}
+
+    \author{David Littlewood,  Michael Parks, Andy Salinger, and John Mitchell \\
+	  Sandia National Laboratories\\
+	  P.O. Box 5800\\
+	  Albuquerque, NM 87185 \\
+	 }
+
+    % There is a "Printed" date on the title page of a SAND report, so
+    % the generic \date should generally be empty.
+    \date{}
+
+
+% ---------------------------------------------------------------------------- %
+% Set some things we need for SAND reports. These are mandatory
+%
+\SANDnum{SAND2011-xxxx}
+\SANDprintDate{September 2011}
+%\SANDrePrintDate{January 2006}
+%\SANDrePrintDate{February 2006}
+%\SANDrePrintDate{March 2006}
+\SANDauthor{David Littlewood,  Michael Parks, Andy Salinger, and John Mitchell }
+
+
+% ---------------------------------------------------------------------------- %
+% Include the markings required for your SAND report. The default is "Unlimited
+% Release". You may have to edit the file included here, or create your own
+% (see the examples provided).
+%
+% \include{MarkUR} % Not needed for unlimted release reports
+
+
+% ---------------------------------------------------------------------------- %
+% The following definition does not have a default value and will not
+% print anything, if not defined
+%
+%\SANDsupersed{SAND1901-0001}{January 1901}
+
+
+% ---------------------------------------------------------------------------- %
+%
+% Start the document
+%
 \begin{document}
+    \maketitle
 
-%%% ----------------------------------------------------------------------
-\maketitle
-%%% ----------------------------------------------------------------------
-
-%%% ----------------------------------------------------------------------
-%\abstract{}
-%%% ----------------------------------------------------------------------
-
-%%% ----------------------------------------------------------------------
-
-% agile components:  effort to align development efforts, enable rapid code development, embed UQ, optimization.  Unifying.  ModelEvaluator.  Interoperibility.
-%
-% Created SimpleODE MiniApplication (template), Peridigm.  Albany of course exists as well.
-%
-% Practical experience gained:
-%  - if you fit the contraints, agile components work well.  if you don't, you have work to do.
-%  - specific non-fits for Peridigm are adaptivity, statelessness, need for fine control of time integration (flow control)
-%  - minor gripes as well, such as Map versus Block_Map
-%
-% took a different route due to need for non-fits to fit
-%
-% used lots of best practices from Trilinos
-%
-% recommendations.  Documentation, graceful handling of model state, minor gripes, flow control
-%
-% informed direction with regard to adaptivity and state
-
-
-\section*{Executive Summary}
+    % ------------------------------------------------------------------------ %
+    % An Abstract is required for SAND reports
+    %
+\begin{abstract}
 This report details efforts to deploy \emph{Agile Components} for rapid development of a peridynamics code, \emph{Peridigm}.  The goal of Agile Components is to enable the efficient development of production-quality software by providing a well-defined, unifying interface to a powerful set of component-based software.  Specifically, Agile Components facilitate interoperability among packages within the \emph{Trilinos Project}, including data management, time integration, uncertainty quantification, and optimization.  Development of the \emph{Peridigm} code served as a testbed for Agile Components and resulted in a number of recommendations for future development.  Agile Components successfully enabled rapid integration of \emph{Trilinos} packages into \emph{Peridigm}.  A cost of this approach, however, was a set of restrictions on \emph{Peridigm}'s architecture which impacted the ability to track history-dependent material data, dynamically modify the model discretization, and interject user-defined routines into the time integration algorithm.  These restrictions resulted in modifications to the Agile Components approach, as implemented in \emph{Peridigm}, and in a set of recommendations for future Agile Components development.  Specific recommendations include improved handling of material states, a more flexible flow control model, and improved documentation.  A demonstration mini-application, \emph{SimpleODE}, was developed at the onset of this project and is offered as a potential supplement to Agile Components documentation.
+\end{abstract}
 
-%%% ----------------------------------------------------------------------
+
+    % ------------------------------------------------------------------------ %
+    % The table of contents and list of figures and tables
+    % Comment out \listoffigures and \listoftables if there are no
+    % figures or tables. Make sure this starts on an odd numbered page
+    %
+    \cleardoublepage		% TOC needs to start on an odd page
+    \tableofcontents
+    \listoffigures
+    \listoftables
+
+
+    % ---------------------------------------------------------------------- %
+    % An optional preface or Foreword
+%    \clearpage
+%    \chapter*{Preface}
+%    \addcontentsline{toc}{chapter}{Preface}
+
+
+
+    % ---------------------------------------------------------------------- %
+    % An optional executive summary
+%    \clearpage
+%    \chapter*{Executive Summary}
+%    \addcontentsline{toc}{chapter}{Executive Summary}
+%This report details efforts to deploy \emph{Agile Components} for rapid development of a peridynamics code, \emph{Peridigm}.  The goal of Agile Components is to enable the efficient development of production-quality software by providing a well-defined, unifying interface to a powerful set of component-based software.  Specifically, Agile Components facilitate interoperability among packages within the \emph{Trilinos Project}, including data management, time integration, uncertainty quantification, and optimization.  Development of the \emph{Peridigm} code served as a testbed for Agile Components and resulted in a number of recommendations for future development.  Agile Components successfully enabled rapid integration of \emph{Trilinos} packages into \emph{Peridigm}.  A cost of this approach, however, was a set of restrictions on \emph{Peridigm}'s architecture which impacted the ability to track history-dependent material data, dynamically modify the model discretization, and interject user-defined routines into the time integration algorithm.  These restrictions resulted in modifications to the Agile Components approach, as implemented in \emph{Peridigm}, and in a set of recommendations for future Agile Components development.  Specific recommendations include improved handling of material states, a more flexible flow control model, and improved documentation.  A demonstration mini-application, \emph{SimpleODE}, was developed at the onset of this project and is offered as a potential supplement to Agile Components documentation.
+
+
+    % ---------------------------------------------------------------------- %
+    % This is where the body of the report begins; usually with an Introduction
+    %
+    \SANDmain		% Start the main part of the report
+
 \section{The Agile Components Methodology}
 
 \emph{Agile Components} is a strategic effort at Sandia to maximize both developer efficiency and the impact of our computational science libraries. The intent is to align the many software development efforts at Sandia, in particular those tied to the \emph{Trilinos Project}, for the modeling and simulation of physical systems (primarily PDEs). The strategic goals of the Agile Components methodology are:
@@ -126,8 +207,8 @@ The Agile Components methodology focuses on delivering capabilities of \emph{Tri
   \end{minipage}
   \begin{minipage}[b]{0.8\linewidth}
     \centering
-    \includegraphics[width=\linewidth]{AgileComponents2}
-    \caption{The component-based \emph{Albany} code: A deployment of capabilities from Figure 1 via Agile Components interfaces to form a demonstration application.}
+    \includegraphics[width=0.7\linewidth]{AgileComponents2}
+    \caption{The component-based \emph{Albany} code: A deployment of capabilities from Figure 1 via Agile Components to form a demonstration application.}
     \label{fig:ACAlbany}
   \end{minipage}
   \end{center}
@@ -252,7 +333,7 @@ where $\rho$ represents the mass density, $\underline{\mathbf{T}}$ the force vec
 
 \subsubsection{Handling Model State}
 
-The \emph{ModelEvaluator} interface assumes stateless models. When implementing \emph{Peridigm}, we encountered two significant issues regarding the handling of model state. The first arises because many material models of interest contain state in the form of history dependence, and these models violate the assumption made by the \emph{ModelEvaluator} of a stateless model. The second issue was discovered when attempting to implement load rebalance. Each \emph{ModelEvaluator}-derived class creates and stores its own parallel data distribution across processors, which is a form of state data. This behavior is ostensibly in violation of the \emph{ModelEvaluator} contract that they be stateless. This only manifests as a problem when attempting to resistribute data across processors, which is necessary when preforming either load rebalance, or mesh adaptivity. 
+The \emph{ModelEvaluator} interface assumes stateless models. When implementing \emph{Peridigm}, we encountered two significant issues regarding the handling of model state. The first arises because many material models of interest contain state in the form of history dependence, and these models violate the assumption made by the \emph{ModelEvaluator} of a stateless model. The second issue was discovered when attempting to implement load rebalance. Each \emph{ModelEvaluator}-derived class creates and stores its own parallel data distribution across processors, which is a form of state data. This behavior is ostensibly in violation of the \emph{ModelEvaluator} contract that they be stateless. This only manifests as a problem when attempting to resistribute data across processors, which is necessary when preforming either load rebalance, or mesh adaptivity.
 
 \paragraph{History Dependance in Material Models}
 
@@ -284,8 +365,8 @@ Load rebalance and mesh adaptivity have proven problematic with the \emph{ModelE
 This behavior is beneficial in that it makes the model self-contained. However, each model makes its own maps and control its data distribution across processors, as seen here, where the ModelEvaluator-derived class ``App'' returns a map:
 \begin{quote}
 \vspace{-5pt}
-\hspace{0pt}
-\verb"Teuchos::RCP<Epetra_Vector> g = Teuchos::rcp(new Epetra_Vector(*App->get_g_map(0)));"\\
+\verb"Teuchos::RCP<Epetra_Vector> g"\\
+\verb"= Teuchos::rcp(new Epetra_Vector(*App->get_g_map(0)));"\\
 \vspace{-17pt}
 \end{quote}
 This property of \emph{ModelEvaluator}-derived classes presented an issue when trying to perform a rebalance with \emph{Peridigm}. The maps are a form of state data contained within the \emph{ModelEvaluator}-derived classes, ostensibly in violation of the \emph{ModelEvaluator} contract that they be stateless. Unlike the issue with history-dependant material models, discussion with other \emph{Trilinos} developers did not reveal a path forward. One idea proposed was to generate a ``meta-ModelEvaluator'' that would transform a \emph{ModelEvaluator}-derived class (using an old map) to a \emph{ModelEvaluator}-derived class (using a new map). This idea was not pursued as it would require a substantial coding effort, in part because each \emph{ModelEvaluator}-derived class would require an associated expert-developed meta-ModelEvaluator class to effect a rebalance. An alternative approach is to destroy the existing \emph{ModelEvaluator} objects, creating new ones in their place. This process is equivalent to the process that would need to occur, for example, if a simulation running on $N_1$ processors was checkpointed and then restarted on $N_2$ processors.
@@ -296,7 +377,8 @@ Faced with this obstacle, to proceed \emph{Peridigm} development, we instead dev
 
 Another issues encountered during \emph{Peridigm} development was the requirement by the \emph{ModelEvaluator} interface that \verb"Epetra::Map" and \verb"Epetra::Vector" data structures be used, rather than the more general \verb"Epetra::BlockMap" and \verb"Epetra::MultiVector" data structures. In the Epetra inheritance diagrams, an \verb"Epetra::Vector" inherits from an \verb"Epetra::MultiVector", and an \verb"Epetra::Map" inherits from an \\ \verb"Epetra::BlockMap", meaning that the block map and multivector data structures are more general.
 
-In peridynamics, we frequently have multiple degrees of freedom per node (for example, all 3D vector fields have three degrees of freedom per node). The \verb"Epetra::BlockMap" and \verb"Epetra::MultiVector" data structures were designed for this use case, and are more natural to use within material model evaluation routines. To utilize the \emph{ModelEvaluator} interface, it was necessary to use the \verb"Epetra::Vector" and \verb"Epetra::Map" data structures, which required mapping from \verb"Epetra::MultiVector"s to \verb"Epetra::Vector"s and back every timestep. In addition to requiring extra computation, this also required us to keep twice as many map data structures as were really needed (one \verb"Epetra::BlockMap" and one \verb"Epetra::Map" for each field variable).
+In peridynamics, we frequently have multiple degrees of freedom per node (for example, all 3D vector fields have three degrees of freedom per node). The \verb"Epetra::BlockMap" and \\
+\verb"Epetra::MultiVector" data structures were designed for this use case, and are more natural to use within material model evaluation routines. To utilize the \emph{ModelEvaluator} interface, it was necessary to use the \verb"Epetra::Vector" and \verb"Epetra::Map" data structures, which required mapping from \verb"Epetra::MultiVector"s to \verb"Epetra::Vector"s and back every timestep. In addition to requiring extra computation, this also required us to keep twice as many map data structures as were really needed (one \verb"Epetra::BlockMap" and one \verb"Epetra::Map" for each field variable).
 
 \subsubsection{Time Integration}
 
@@ -339,10 +421,32 @@ Although some development issues were encountered deploying the Agile Components
 \end{algorithmic}
 \end{algorithm}
 
+    \nocite{*}
 
-%%% ----------------------------------------------------------------------
-\bibliographystyle{siam}
-\bibliography{PeridigmFinalReport}
-%%% ----------------------------------------------------------------------
+
+    % ---------------------------------------------------------------------- %
+    % References
+    %
+    \clearpage
+    % If hyperref is included, then \phantomsection is already defined.
+    % If not, we need to define it.
+    \providecommand*{\phantomsection}{}
+    \phantomsection
+    \addcontentsline{toc}{chapter}{References}
+    \bibliographystyle{plain}
+    \bibliography{PeridigmFinalReport}
+
+
+    % ---------------------------------------------------------------------- %
+    %
+%    \appendix
+%    \chapter{Historical Perspective}
+%    \chapter{Some Other Appendix}
+
+
+    % \printindex
+
+    \include{SANDdistribution}
+
 
 \end{document}

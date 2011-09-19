@@ -1,0 +1,39 @@
+%
+% This is an example of how to create the distribution page. Some
+% distributions are required by Sandia; e.g. the housekeeping copies.
+% Depending on the type of report; e.g. CRADA, Patent Caution, etc.
+% additional distribution lines may have to be added. See the
+% "Guide for Preparing SAND Reports"
+%
+% SANDdistribution takes CA or NM as an optional argument. If given,
+% the approrpiate housekeeping copies are inserted autmatically.
+% Inside the SANDdistribution environment, several commands can be used
+% insert the distributions for CRADA, LDRD, etc. See example below.
+%
+% You can leave the CA or NM option off and not use any of the SANDdist*
+% commands. This will allow you to create a distribution list manually.
+%
+\begin{SANDdistribution}[NM]
+    % Housekeeping copies necessary for every unclassified report:
+    % \SANDdistCRADA	% If this report is about CRADA work
+    % \SANDdistPatent	% If this report has a Patent Caution or Patent Interest
+    % \SANDdistLDRD	% If this report is about LDRD work
+
+    % The following MUST BE between the external and internal distributions!
+    % \SANDdistClassified % If this report is classified
+
+    % Internal Addresses
+    \SANDdistInternal{1}{1322}{John Aidun}{1425}
+    \SANDdistInternal{1}{1320}{Scott Collis}{1442}
+    \SANDdistInternal{1}{1322}{David Littlewood}{1444}
+    \SANDdistInternal{1}{1322}{John Mitchell}{1444}
+    \SANDdistInternal{1}{1320}{Michael Parks}{1444}
+    \SANDdistInternal{1}{1318}{Bruce Hendrickson}{1440}
+    \SANDdistInternal{1}{1318}{Robert Hoekstra}{1426}
+    \SANDdistInternal{1}{1318}{Andy Salinger}{1442}
+    \SANDdistInternal{1}{1321}{Randall Summers}{1444}        
+
+    % Example of a mail channel use (instead of a mail stop)
+%    \SANDdistInternalM{1}{M9999}{Someone}{01234}
+
+\end{SANDdistribution}
