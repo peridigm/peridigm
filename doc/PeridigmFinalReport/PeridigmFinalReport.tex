@@ -213,7 +213,7 @@ The Agile Components methodology focuses on delivering capabilities of \emph{Tri
   \end{minipage}
   \end{center}
 \end{figure}
-These design of these interfaces is key to delivering capabilities through Agile Components to an end-user application. Each software component in \emph{Trilinos} implements its own interface, requiring a component-based code to adhere to the different interfaces of each of the \emph{Trilinos} software components it consumes, as depicted in Figure \ref{fig:ACInterfaces1}.  This increases time to deployment, and requires code to be refactored every time a component interface changes.   Figure~\ref{fig:ACInterfaces2} illustrates the Agile Components approach to \emph{Trilinos} solver components; application codes are presented with a single interface with which to consume solver capabilities.  In addition to supplying a unified interface to component functionality, this interface can provide metadata analysis utilities such as embedded UQ, sensitivity analysis, and optimization.  Applications codes adhering to an Agile Components interface receive these additional capabilities with without additional burden on the developer.
+The design of these interfaces is key to delivering capabilities through Agile Components to an end-user application. Each software component in \emph{Trilinos} implements its own interface, requiring a component-based code to adhere to the different interfaces of each of the \emph{Trilinos} software components it consumes, as depicted in Figure \ref{fig:ACInterfaces1}.  This increases time to deployment, and requires code to be refactored every time a component interface changes.   Figure~\ref{fig:ACInterfaces2} illustrates the Agile Components approach to \emph{Trilinos} solver components; application codes are presented with a single interface with which to consume solver capabilities.  In addition to supplying a unified interface to component functionality, this interface can provide metadata analysis utilities such as embedded UQ, sensitivity analysis, and optimization.  Applications codes adhering to an Agile Components interface receive these additional capabilities with without additional burden on the developer.
 
 \begin{figure}[htbp]
   \begin{minipage}[b]{\linewidth}
@@ -236,7 +236,7 @@ These design of these interfaces is key to delivering capabilities through Agile
 
 \subsection{The Agile Components Interface Paradigm: The \emph{ModelEvaluator} Class}
 
-To achieve the strategic goals of the Agile Components methodology, a sufficiently general interface is required. The \emph{ModelEvaluator} interface has been proposed as the interface utilized by solver components and implemented by model developers.
+To achieve the strategic goals of the Agile Components methodology, a set of sufficiently general interfaces are required. These include interfaces around linear solvers, mesh database, solved applications, and even architecture aware compute kernels. Of central importance to the \emph{Peridigm} application is the \emph{ModelEvaluator}, the abstraction utilized by solver components (such as nonlinear solvers and time integrators) and which must be implemented by model developers.
 
 The leftmost column in Figure~\ref{fig:ACModelEvaluator} lists the mathematical problems for which solvers exist within \emph{Trilinos}. These solvers address mathematical problems without specific knowledge of the right-hand-side, $\mathbf{f}$. Model developers provide specific instances of $\mathbf{f}$. The \emph{ModelEvaluator} interface represents a contract between the solver and the model. The \emph{ModelEvaluator} supports the solution of nonlinear equations, stability analysis, explicit first-order ODEs, implicit first-order ODEs, explicit first-order ODE forward sensitivities, implicit first-order ODE forward sensitivities, constrained optimization, unconstrained optimization, and ODE constrained optimization.
 
@@ -300,7 +300,7 @@ The QCAD application was an ideal fit for the current state of the Agile Compone
 
 \subsubsection{\emph{Albany} LCM: Computation Mechanics Research Code} \label{sec:albany:lcm}
 
-The Laboratory for Computational Mechanics (LCM) project \cite{LCMWebPage:2011} is meant to be a research and development platform for mechanics, particularly failure and fracture models. Its serves as a platform to rapidly and flexibly test new ideas and algorithms, with subsequent migration into the associated production codes. As an open source code, it also serves as a vehicle for external collaborations.
+The Laboratory for Computational Mechanics (LCM) project \cite{LCMWebPage:2011} is creating a research and development platform for mechanics, particularly failure and fracture models. Its serves as a platform to rapidly and flexibly test new ideas and algorithms, with subsequent migration into the associated production codes. As an open source code, it also serves as a vehicle for external collaborations.
 
 The LCM is written as a (configure-time) physics set within the \emph{Albany} code. As with QCAD, the LCM project has made excellent progress in just one year, being an excellent fit with much of the finite-element based technology in \emph{Albany}. However, the LCM project also presents some of the same issues as the \emph{Peridigm} application that exposes assumptions or gaps in the current Agile Components instantiation. This includes the potential statefulness of the model, where the current residual evaluation depends on the history and not just the current state. In the case of solid mechanics, this can be the residual stress field or a model for material damage. The LCM and \emph{Peridigm} projects have leveraged each others experience in dealing with state data. As with \emph{Peridigm}, the time-dependent LCM applications are second order in time. One implicit and one explicit version of second-order time integrators have been written into Piro in \emph{Trilinos}, though currently require a ``hack'' to the model evaluator interface.
 
@@ -384,7 +384,7 @@ In peridynamics, we frequently have multiple degrees of freedom per node (for ex
 
 When initially developing \emph{Peridigm}, we attempted to use Rythmos, the lone time integration package in \emph{Trilinos}. Unfortunately, none of the explicit integrators in Rythmos are for second-order ODEs, and all of the explicit integrators in Rythmos are unconditionally unstable when applied to the peridynamic equation of motion when it is reformulated as a first-order ODE. This is not a shortcoming of the Agile Components approach, but simply an observation that the solver tools needed by \emph{Peridigm} were not initially present in any \emph{Trilinos} package.
 
-Since that time, a second-order explicit integrator has been added to the PIRO package within \emph{Trilinos}.
+Since that time, a second-order explicit integrator has been added to the Piro package within \emph{Trilinos}.
 
 \subsubsection{Control Flow}
 
@@ -396,7 +396,7 @@ This issue lead to a reformulation of the control flow within \emph{Peridigm}. O
 
 \section{Other Remarks}
 
-The Phalanx package for evaluating field variables was among the more recently developed \emph{Trilinos} components utilized in \verb"Peridigm". We found Phalanx relatively easily did what we needed. We expect this is the case because Phalanx was ripped from a production code, rather than being built from the ground up to be placed into production codes. Although perhaps initially counterintuitive, this ``backwards'' development model would appear to be highly effective at delivering mature capabilities.
+The Phalanx package \cite{PhalanxWebPage:2011} for evaluating field variables was among the more recently developed \emph{Trilinos} components utilized in \emph{Peridigm}. We found Phalanx relatively easily did what we needed. We expect this is the case because Phalanx was developed based on practical experience gained from the \emph{Charon} and \emph{Aria} codes. Feedback from production codes into new software components provides a highly effective mechanism for immediately delivering mature capability.
 
 %%% ----------------------------------------------------------------------
 \section{Recommendations} \label{sec:recommendations}
