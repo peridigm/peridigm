@@ -239,7 +239,11 @@ The leftmost column in Figure~\ref{fig:ACModelEvaluator} lists the mathematical 
 \label{fig:ACModelEvaluator}
 \end{figure}
 
-Specifically, the contract enforced by the \emph{ModelEvaluator} assumes that the models $\mathbf{f}$ are stateless, pure mathematical functions. This is a reasonable assumption, as an optimizer must evaluate a model for many different inputs without regard to the order in which evaluations occur. An important property of pure mathematical functions is that they are \emph{referentially transparent}. A referentially transparent function $\mathbf{f}$ always provides the same output when given the same input, as it contains no state.
+\begin{rem} \label{rem:MEContract}
+\textbf{The contract enforced by the \emph{ModelEvaluator} assumes that the models $\mathbf{f}$ are stateless, referentially, transparent, pure mathematical functions.}
+\end{rem}
+
+This is a reasonable assumption, as an optimizer must evaluate a model for many different inputs without regard to the order in which evaluations occur. An important property of pure mathematical functions is that they are \emph{referentially transparent}. A referentially transparent function $\mathbf{f}$ always provides the same output when given the same input, as it contains no state.
 \begin{defn} \label{defn:RT}
 An expression is referentially transparent if it can be replaced with its value without changing the behavior of a program~\cite{HGVJ:1994:DesignPatterns}.
 \end{defn}
@@ -250,7 +254,7 @@ An expression is referentially transparent if it can be replaced with its value 
 The Agile Components methodology has been deployed for the development of several application codes, including the multiphysics finite element code \emph{Albany}, the peridynamics code \emph{Peridigm}, and the demonstration mini-application, \emph{SimpleODE}.  An overview of the development process for each of these codes is given below, with an emphasis on the use of \emph{Trilinos} Agile Components.
 
 \begin{rem}
-\textbf{Models that naturally fit into the assumptions and implicit contract enforced by the \emph{ModelEvaluator} interface can naturally and relatively effortlessly utilize this interface for rapid development. Models that violate the assumptions of this interface can not.}
+\textbf{Models that fit into the assumptions and implicit contract enforced by the \emph{ModelEvaluator} interface (\emph{c.f.} Remark \ref{rem:MEContract}) can naturally and relatively effortlessly utilize this interface for rapid development. Models that violate the assumptions of this interface can not.}
 \end{rem}
 
 \subsection{\emph{SimpleODE}, an Agile Components Demonstration MiniApplication} \label{sec:simpleode}
@@ -369,7 +373,7 @@ To overcome this obstacle and proceed with \emph{Peridigm} development, we inste
 
 Another issues encountered during \emph{Peridigm} development was the requirement by the \emph{ModelEvaluator} interface that \texttt{Epetra::Map} and \texttt{Epetra::Vector} data structures be used, rather than the more general \texttt{Epetra::BlockMap} and \texttt{Epetra::MultiVector} data structures. In the Epetra inheritance diagrams, an \texttt{Epetra::Vector} inherits from an \texttt{Epetra::MultiVector}, and an \texttt{Epetra::Map} inherits from an \texttt{Epetra::BlockMap}, meaning that the block map and multivector data structures are more general.
 
-In peridynamics, we frequently have multiple degrees of freedom per node (for example, all 3D vector fields have three degrees of freedom per node). The \texttt{Epetra::BlockMap} and \texttt{Epetra::MultiVector} data structures were designed for this use case, and are more natural to use within material model evaluation routines. To utilize the \emph{ModelEvaluator} interface, it was necessary to use the \texttt{Epetra::Vector} and \texttt{Epetra::Map} data structures, which required mapping from \texttt{Epetra::MultiVector}s to \texttt{Epetra::Vector}s and back every time step. In addition to requiring extra computation, this led to redundant data structures in the code (\emph{e.g.}, one \texttt{Epetra::BlockMap} and one \texttt{Epetra::Map} for a given field variable).
+In peridynamics, we frequently have multiple degrees of freedom per node (for example, all 3D vector fields have three degrees of freedom per node). The \texttt{Epetra::BlockMap} and \texttt{Epetra::MultiVector} data structures were designed for this use case, and are more natural to use within material model evaluation routines. To utilize the \emph{ModelEvaluator} interface, it was necessary to use the \texttt{Epetra::Vector} and \texttt{Epetra::Map} data structures, which required mapping from \texttt{Epetra::MultiVector}s to \texttt{Epetra::Vector}s and back every time step. In addition to requiring extra computation, this led to redundant data structures in the code (\emph{e.g.}, one \texttt{Epetra::BlockMap} and one or more \texttt{Epetra::Map}s for every given field variable).
 
 \subsubsection{Time Integration}
 
