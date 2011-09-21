@@ -1,21 +1,3 @@
-%
-% $Id: SANDExampleReportstrict.tex,v 1.28 2009/05/01 20:59:19 rolf Exp $
-%
-% This is an example LaTeX file which uses the SANDreport class file.
-% It shows how a SAND report should be formatted, what sections and
-% elements it should contain, and how to use the SANDreport class.
-% It uses the LaTeX report class and the strict option.
-%
-% Get the latest version of the class file and more at
-%    http://www.cs.sandia.gov/~rolf/SANDreport
-%
-% This file and the SANDreport.cls file are based on information
-% contained in "Guide to Preparing {SAND} Reports", Sand98-0730, edited
-% by Tamara K. Locke, and the newer "Guide to Preparing SAND Reports and
-% Other Communication Products", SAND2002-2068P.
-% Please send corrections and suggestions for improvements to
-% Rolf Riesen, Org. 9223, MS 1110, rolf@cs.sandia.gov
-%
 \documentclass[pdf,ps2pdf,12pt,report]{SANDreport}
 \usepackage{pslatex}
 \usepackage{mathptmx}	% Use the Postscript Times font
@@ -57,6 +39,12 @@
 \renewcommand{\theequation}{\thesection.\arabic{equation}}
 \renewcommand{\theenumi}{\Roman{enumi}}
 
+% Change section numbering to remove chapter
+\renewcommand{\thesection}{\arabic{section}}
+
+%\numberwithin{equation}{section}
+%\renewcommand{\theequation}{\thesection.\arabic{equation}}
+
 % DEFINITIONS ------------------------------------------------------------
 %\newcommand{\norm}[1]{\left\Vert#1\right\Vert}
 %\newcommand{\abs}[1]{\left\vert#1\right\vert}
@@ -81,9 +69,7 @@
 \newcommand{\abs}[1]{\left\vert#1\right\vert}
 
 % MACROS -----------------------------------------------------------
-
 \newcommand{\comment}[1]{} % makes its argument disappear
-
 % <<< Color >>>
 \newcommand\MLP[1]{\textcolor{blue}{[MLP: #1]}}
 %%% ----------------------------------------------------------------------
@@ -106,7 +92,7 @@
 %
     \title{\emph{Peridigm} Summary Report:\\Lessons Learned in Development with Agile Components}
 
-    \author{David Littlewood,  Michael Parks, Andy Salinger, and John Mitchell \\
+    \author{Michael Parks, David Littlewood, Andy Salinger, and John Mitchell \\
 	  Sandia National Laboratories\\
 	  P.O. Box 5800\\
 	  Albuquerque, NM 87185 \\
@@ -125,7 +111,7 @@
 %\SANDrePrintDate{January 2006}
 %\SANDrePrintDate{February 2006}
 %\SANDrePrintDate{March 2006}
-\SANDauthor{David Littlewood,  Michael Parks, Andy Salinger, and John Mitchell }
+\SANDauthor{Michael Parks, David Littlewood, Andy Salinger, and John Mitchell }
 
 
 % ---------------------------------------------------------------------------- %
@@ -166,7 +152,7 @@ This report details efforts to deploy \emph{Agile Components} for rapid developm
     \cleardoublepage		% TOC needs to start on an odd page
     \tableofcontents
     \listoffigures
-    \listoftables
+%    \listoftables     % we don't have any tables
 
 
     % ---------------------------------------------------------------------- %
@@ -271,17 +257,17 @@ The Agile Components methodology has been deployed for the development of severa
 
 During the course of the development of \emph{Peridigm}, the MiniApp \emph{SimpleODE} was created to demonstrate the use of Agile Components on the simplest problem we could conceive:
 \begin{align}
-  \dot{x} = -c x,
+  \dot{x} = -c x, \qquad x(0)=x_0,
 \end{align}
 with $c>0$ a constant. The principle purpose of \emph{SimpleODE} is to provide a template for other developers wishing to create their own agile component code. Unlike \emph{Albany} (c.f.~\S\ref{sec:albany}), a full-blown Agile Components application, \emph{SimpleODE} contains all of the Agile Components infrastructure without a complex application model to obscure that infrastructure.
 
-The execution control flow of \emph{SimpleODE} is presented in Figure \ref{fig:SimpleODEInterface}.  Control flow begins with \verb"main()" making a call to a \emph{ModelEvaluator}, which wraps a Rythmos solver. The Rythmos solver, in turn, makes calls to a provided instance of a \emph{ModelEvaluator} that returns $-cx$ when given $x$. Note that the first model evaluator encapsulates the entire problem.
+The execution control flow of \emph{SimpleODE} is presented in Figure \ref{fig:SimpleODEInterface}.  Control flow begins with \texttt{main()} making a call to a \emph{ModelEvaluator}, which wraps a Rythmos solver. The Rythmos solver, in turn, makes calls to a provided instance of a \emph{ModelEvaluator} that returns $-cx$ when given $x$. Note that the first model evaluator encapsulates the entire problem.
 
 \begin{figure}[h!]
 \begin{center}
 	\includegraphics[width=\linewidth]{SimpleODEInterface}
  \end{center}
- \caption{Diagram of the control flow in \emph{SimpleODE}, showing two use cases of \emph{ModelEvaluator}. Execution begins with \emph{main()}, which calls a \emph{ModelEvaluator}-wrapped Rythmos solver to solve an abstract problem $g(p)$. The Rythmos solver integrates an ODE in time, with the solver making calls to a separate \emph{ModelEvaluator}-wrapped model.}
+ \caption{Diagram of the control flow in \emph{SimpleODE}, showing two use cases of \emph{ModelEvaluator}. Execution begins with \texttt{main()}, which calls a \emph{ModelEvaluator}-wrapped Rythmos solver to solve an abstract problem $g(p)$. The Rythmos solver integrates an ODE in time, with the solver making calls to a separate \emph{ModelEvaluator}-wrapped model.}
 \label{fig:SimpleODEInterface}
 \end{figure}
 
@@ -301,13 +287,13 @@ In its role as a prototype code, \emph{Albany} has a small physics set as part o
 
 The QCAD project is building a quantum device simulation tool within \emph{Albany}~\cite{QCADWebPage:2011}. The goal is to evaluate and design structures built from the tools of the semiconductor industry (doped semiconductors, oxide layers, gates) to isolate quantum dots. The primary computational science focus has been on development of a nonlinear Poisson solver to solve for the electrical potential in the device as a function of design and applied voltage. As a second step, a Schr\"{o}dinger solver has been developed and coupled to the nonlinear Poisson solver to capture quantum effects in the region of the device with few free electrons.
 
-The QCAD application was an ideal fit for the current state of the Agile Components vision and the pieces already assembled and matured in the Albany infrastructure. The application's models are stateless, referentially transparent pure mathematical functions, satisfying the assumptions of the \emph{ModelEvaluator} interface. It could make full use of the finite element mesh database, discretization algorithms, automatic differentiation technology, rapid insertion of new physics modules, nonlinear solvers, eigensolver, and optimization algorithms. As a result, this project is on its third year milestones at the end of one year and is being used by customers as a production code. Much of the infrastructure improvements motivated by QCAD involve post-processing capabilities.  Many of these capabilities reside in \emph{Albany}, and some have migrated back to \emph{Trilinos} in terms of bug fixes and enhancements to the SIERRA toolkit (STK) and Sandia Engineering Analysis Code Access System (SEACAS) I/O tools.
+The QCAD application was an ideal fit for the current state of the Agile Components vision and the pieces already assembled and matured in the Albany infrastructure. The application's models are stateless, referentially transparent pure mathematical functions, satisfying the assumptions of the \emph{ModelEvaluator} interface. The application could make full use of the finite element mesh database, discretization algorithms, automatic differentiation technology, rapid insertion of new physics modules, nonlinear solvers, eigensolver, and optimization algorithms. As a result, this project is on its third year milestones at the end of one year and is being used by customers as a production code. Much of the infrastructure improvements motivated by QCAD involve post-processing capabilities.  Many of these capabilities reside in \emph{Albany}, and some have migrated back to \emph{Trilinos} in terms of bug fixes and enhancements to the SIERRA toolkit (STK) and Sandia Engineering Analysis Code Access System (SEACAS) I/O tools.
 
 \subsubsection{\emph{Albany} LCM: Computation Mechanics Research Code} \label{sec:albany:lcm}
 
 The Laboratory for Computational Mechanics (LCM) project is creating a research and development platform for mechanics, particularly failure and fracture models~\cite{LCMWebPage:2011}. Its serves as a platform to rapidly and flexibly test new ideas and algorithms, with subsequent migration into associated production codes. As an open source code, it also serves as a vehicle for external collaborations.
 
-The LCM is written as a (configure-time) physics set within the \emph{Albany} code. As with QCAD, the LCM project has made excellent progress in just one year, being an excellent fit with much of the finite-element based technology in \emph{Albany}. However, the LCM project also presents some of the same issues as the \emph{Peridigm} application, exposing assumptions or gaps in the current Agile Components instantiation. These include the potential statefulness of the model, where the current residual evaluation depends on the history and not just the current state. In the case of solid mechanics, this can be the residual stress field or a model for material damage. The LCM and \emph{Peridigm} projects have leveraged each other's experience in dealing with state data. As with \emph{Peridigm}, the time-dependent LCM applications are second order in time. One implicit and one explicit second-order time integrator have been written into the \emph{Trilinos} package \emph{Piro}, but currently function only with a modified \emph{ModelEvaluator} interface.
+The LCM is written as a (configure-time) physics set within the \emph{Albany} code. As with QCAD, the LCM project has made excellent progress in just one year, being an excellent fit with much of the finite-element based technology in \emph{Albany}. However, the LCM project also presents some of the same issues as the \emph{Peridigm} application, exposing assumptions or gaps in the current Agile Components instantiation. These include the potential statefulness of the model, where the current residual evaluation depends on the history and not just the current state. In the case of solid mechanics, this can be the residual stress field or a model for material damage. The LCM and \emph{Peridigm} projects have leveraged each other's experience in dealing with state data. As with \emph{Peridigm}, the time-dependent LCM applications are second order in time. One implicit and one explicit second-order time integrator have been written into the \emph{Trilinos} package Piro, but currently function only with a modified \emph{ModelEvaluator} interface.
 
 \subsection{\emph{Peridigm}, A Peridynamics Code} \label{sec:peridigm}
 
@@ -338,7 +324,7 @@ where $\rho$ represents the mass density, $\underline{\mathbf{T}}$ the force vec
 
 \subsubsection{Handling Model State}
 
-The \emph{ModelEvaluator} interface assumes stateless models. When implementing \emph{Peridigm}, we encountered two significant issues regarding the handling of model state. The first arises because many material models of interest contain state in the form of history dependence, and these models violate the assumption made by the \emph{ModelEvaluator} of a stateless model. The second issue was discovered when attempting to implement load rebalance. Each \emph{ModelEvaluator}-derived class creates and stores its own parallel data distribution across processors, which is a form of state data. This behavior is ostensibly in violation of the \emph{ModelEvaluator} contract that they be stateless. This only manifests as a problem when attempting to redistribute data across processors, which is necessary when preforming either load rebalance, or mesh adaptivity.
+The \emph{ModelEvaluator} interface assumes stateless models. When implementing \emph{Peridigm}, we encountered two significant issues regarding the handling of model state. The first arises because many material models of interest contain state in the form of history dependence, and these models violate the assumption made by the \emph{ModelEvaluator} of a stateless model. The second issue was discovered when attempting to implement load rebalance. Each \emph{ModelEvaluator}-derived class creates and stores its own parallel data distribution across processors, which is a form of state data. This behavior is ostensibly in violation of the \emph{ModelEvaluator} contract that they be stateless. This only manifests as a problem when attempting to redistribute data across processors, which is necessary when performing either load rebalance, or mesh adaptivity.
 
 \paragraph{History Dependence in Material Models}
 
@@ -355,41 +341,41 @@ While this approach is effective for time integration, it's not clear that this 
 
 \paragraph{Load Rebalance and Mesh Adaptivity}
 
-Peridynamics is commonly used for modeling fragmentation problems, where material initially contained in a relatively small spatial region becomes spread over a much larger spatial region over the course of the simulation. In order to preserve parallel load balance, it is periodically necessary to redistribute data across processors. In the \emph{Trilinos} framework, data assignment to processors is encapsulated within a \emph{map} class, such as \verb"Epetra::Map" or \verb"Epetra::BlockMap". To perform a rebalance, \emph{Peridigm} asks the Zoltan package to determine a near-optimal data distribution across processors in the current configuration, which can be used to determine a new map. Given the current map (containing the current data distribution across processors) and the new map (containing the desired data distribution across processors), an import/export operation can be called to migrate data between processors.
+Peridynamics is commonly used for modeling fragmentation problems, where material initially contained in a relatively small spatial region becomes spread over a much larger spatial region during the course of the simulation. In order to preserve parallel load balance, it is periodically necessary to redistribute data across processors. In the \emph{Trilinos} framework, data assignment to processors is encapsulated within a \emph{map} class, such as \texttt{Epetra::Map} or \texttt{Epetra::BlockMap}. To perform a rebalance, \emph{Peridigm} asks the Zoltan package to determine a near-optimal data distribution across processors in the current configuration, which can be used to determine a new map. Given the current map (containing the current data distribution across processors) and the new map (containing the desired data distribution across processors), an import/export operation can be called to migrate data between processors.
 
 Mesh adaptivity, or adaptive mesh refinement, also involves redistributing data. During the course of a computation one may desire to adaptively refine a mesh, for example, to reduce error in localized regions of the computational domain. This dynamically introduces more degrees of freedom into the problem, necessitating that one migrate data from an old map (the coarse mesh) to a new map (the fine mesh).
 
 Load rebalance and mesh adaptivity have proven problematic with the \emph{ModelEvaluator} interface. \emph{ModelEvaluator}-derived classes have the property that they produce their own input parameter and output response data structures, as can be seen in this code segment taken from \emph{SimpleODE}:
 \begin{quote}
 \vspace{-5pt}
-\verb"SimpleODE::SolverFactory slvrfctry(xml_file_name, appComm);"\\
-\verb"Teuchos::RCP<EpetraExt::ModelEvaluator> App = slvrfctry.create();"\\
-\verb"EpetraExt::ModelEvaluator::InArgs params_in = App->createInArgs();"\\
-\verb"EpetraExt::ModelEvaluator::OutArgs responses_out = App->createOutArgs();"\\
+\texttt{SimpleODE::SolverFactory slvrfctry(xml\_file\_name, appComm);}\\
+\texttt{Teuchos::RCP<EpetraExt::ModelEvaluator> App = slvrfctry.create();}\\
+\texttt{EpetraExt::ModelEvaluator::InArgs params\_in = App->createInArgs();}\\
+\texttt{EpetraExt::ModelEvaluator::OutArgs responses\_out = App->createOutArgs();}\\
 \vspace{-17pt}
 \end{quote}
 This behavior is beneficial in that it makes the model self-contained. However, each model makes its own maps and control its data distribution across processors, as seen here, where the ModelEvaluator-derived class ``App'' returns a map:
 \begin{quote}
 \vspace{-5pt}
-\verb"Teuchos::RCP<Epetra_Vector> g"\\
-\verb"= Teuchos::rcp(new Epetra_Vector(*App->get_g_map(0)));"\\
+\texttt{Teuchos::RCP<Epetra\_Vector> g}\\
+\texttt{= Teuchos::rcp(new Epetra\_Vector(*App->get\_g\_map(0)));}\\
 \vspace{-17pt}
 \end{quote}
 This property of \emph{ModelEvaluator}-derived classes presented an issue when trying to perform a rebalance with \emph{Peridigm}. The maps are a form of state data contained within the \emph{ModelEvaluator}-derived classes, ostensibly in violation of the \emph{ModelEvaluator} contract that they be stateless. Unlike the issue with history-dependant material models, discussion with other \emph{Trilinos} developers did not reveal a clear path forward. One idea proposed was to generate a ``meta-ModelEvaluator'' that would transform a \emph{ModelEvaluator}-derived class (using an old map) to a \emph{ModelEvaluator}-derived class (using a new map). This idea was not pursued as it would require a substantial coding effort, in part because each \emph{ModelEvaluator}-derived class would require an associated expert-developed meta-ModelEvaluator class to effect a rebalance. An alternative approach is to destroy the existing \emph{ModelEvaluator} objects, creating new ones in their place. This process is equivalent to the process that would need to occur, for example, if a simulation running on $N_1$ processors was checkpointed and then restarted on $N_2$ processors.
 
-To overcome this obstacle and proceed with \emph{Peridigm} development, we instead developed a \emph{ModelEvaluator}-like class (\verb"Peridigm::ModelEvaluator") that mimics the interface of the \emph{ModelEvaluator} used in the Agile Components frameworks, but does not create maps, etc.
+To overcome this obstacle and proceed with \emph{Peridigm} development, we instead developed a \emph{ModelEvaluator}-like class (\texttt{Peridigm::ModelEvaluator}) that mimics the interface of the \emph{ModelEvaluator} used in the Agile Components frameworks, but does not create maps, etc.
 
 \subsubsection{Data Distribution}
 
-Another issues encountered during \emph{Peridigm} development was the requirement by the \emph{ModelEvaluator} interface that \verb"Epetra::Map" and \verb"Epetra::Vector" data structures be used, rather than the more general \verb"Epetra::BlockMap" and \verb"Epetra::MultiVector" data structures. In the Epetra inheritance diagrams, an \verb"Epetra::Vector" inherits from an \verb"Epetra::MultiVector", and an \verb"Epetra::Map" inherits from an \\ \verb"Epetra::BlockMap", meaning that the block map and multivector data structures are more general.
+Another issues encountered during \emph{Peridigm} development was the requirement by the \emph{ModelEvaluator} interface that \texttt{Epetra::Map} and \texttt{Epetra::Vector} data structures be used, rather than the more general \texttt{Epetra::BlockMap} and \texttt{Epetra::MultiVector} data structures. In the Epetra inheritance diagrams, an \texttt{Epetra::Vector} inherits from an \texttt{Epetra::MultiVector}, and an \texttt{Epetra::Map} inherits from an \texttt{Epetra::BlockMap}, meaning that the block map and multivector data structures are more general.
 
-In peridynamics, we frequently have multiple degrees of freedom per node (for example, all 3D vector fields have three degrees of freedom per node). The \verb"Epetra::BlockMap" and \verb"Epetra::MultiVector" data structures were designed for this use case, and are more natural to use within material model evaluation routines. To utilize the \emph{ModelEvaluator} interface, it was necessary to use the \verb"Epetra::Vector" and \verb"Epetra::Map" data structures, which required mapping from \verb"Epetra::MultiVector"s to \verb"Epetra::Vector"s and back every time step. In addition to requiring extra computation, this led to redundant data structures in the code (\emph{e.g.}, one \verb"Epetra::BlockMap" and one \verb"Epetra::Map" for a given field variable).
+In peridynamics, we frequently have multiple degrees of freedom per node (for example, all 3D vector fields have three degrees of freedom per node). The \texttt{Epetra::BlockMap} and \texttt{Epetra::MultiVector} data structures were designed for this use case, and are more natural to use within material model evaluation routines. To utilize the \emph{ModelEvaluator} interface, it was necessary to use the \texttt{Epetra::Vector} and \texttt{Epetra::Map} data structures, which required mapping from \texttt{Epetra::MultiVector}s to \texttt{Epetra::Vector}s and back every time step. In addition to requiring extra computation, this led to redundant data structures in the code (\emph{e.g.}, one \texttt{Epetra::BlockMap} and one \texttt{Epetra::Map} for a given field variable).
 
 \subsubsection{Time Integration}
 
 When initially developing \emph{Peridigm}, we attempted to use Rythmos, the lone time integration package in \emph{Trilinos}. Unfortunately, none of the explicit integrators in Rythmos are for second-order ODEs, and all of the explicit integrators in Rythmos are unconditionally unstable when applied to the peridynamic equation of motion when it is reformulated as a first-order ODE. This is not a shortcoming of the Agile Components approach, but simply an observation that the solver tools needed by \emph{Peridigm} were not initially present in any \emph{Trilinos} package.
 
-Since that time, a second-order explicit integrator has been added to the \emph{Piro} package within \emph{Trilinos}.
+Since that time, a second-order explicit integrator has been added to the Piro package within \emph{Trilinos}.
 
 \subsubsection{Control Flow}
 
@@ -397,7 +383,7 @@ Another issue encountered during \emph{Peridigm} development was managing the ex
 
 However, a standard expectation of developers of computational solid mechanics codes is that one has the ability to intervene and modify simulation data at arbitrary points during the simulation. As a practical example, it is standard practice to execute contact resolution algorithms between atomic steps of an explicit time integration algorithm to ensure that solids do not interpenetrate each other.
 
-This issue lead to a reformulation of the control flow within \emph{Peridigm}. Originally mimicking the control flow of \emph{SimpleODE} in Figure \ref{fig:SimpleODEInterface}, the control flow of \emph{Peridigm} now has only one instance of a \emph{ModelEvaluator} object (that encapsulates the material model), and a \verb"main()" routine that allows the simulation data to potentially be modified between atomic steps of time integration routines. The rationale for this decision is that it is not the providence of the material model nor the solver to perform tasks such as contact resolution or rebalance. Such tasks naturally fall to a \verb"main()" routine, at the the highest level of control in the program.
+This issue lead to a reformulation of the control flow within \emph{Peridigm}. Originally mimicking the control flow of \emph{SimpleODE} in Figure \ref{fig:SimpleODEInterface}, the control flow of \emph{Peridigm} now has only one instance of a \emph{ModelEvaluator} object (that encapsulates the material model), and a \texttt{main()} routine that allows the simulation data to potentially be modified between atomic steps of time integration routines. The rationale for this decision is that it is not the providence of the material model nor the solver to perform tasks such as contact resolution or rebalance. Such tasks naturally fall to a \texttt{main()} routine, at the the highest level of control in the program.
 
 \section{Other Remarks}
 
@@ -409,9 +395,9 @@ Although some development issues were encountered deploying the Agile Components
 
 \begin{description}
   \item[Documentation] Attempting to learn the Agile Components methodology by reading \emph{Albany} code is somewhat like drinking from a fire hydrant. Although Agile Components developers are always happy to explain any concept, this approach is not scalable if we want the Agile Components methodology to be widely adopted beyond the current expert users. We recommend improved documentation along with an easy-to-understand demonstration code, such as \emph{SimpleODE}. This will greatly shorten the learning curve for new users, and help them to understand how their application fits within the Agile Components methodology. \emph{SimpleODE} may be useful as a starting template for new users to develop their own application based upon Agile Components.
-  \item[Graceful Handling of Model State] We recommend that all service modules, such as \emph{ModelEvaluator}-derived classes, be made referentially transparent (\emph{c.f.} Defn. \ref{defn:RT}). This would eliminate any and all issues with regard to rebalance and mesh adaptivity, the biggest obstacles encountered. The consequence of this is that \emph{ModelEvaluator}-derived classes must no longer allocate their own maps, data structures, etc., but that these must be passed in externally. Referring to the control flow diagram of Figure \ref{fig:SimpleODEInterface}, it is not the role of the mathematical model $\mathbf{f}$ nor of the solver to create these data structures, meaning that they must be created at the level of \verb"main()" (by the application developer) and passed in. This requires a mechanism for the developer to gracefully and naturally hand in model state as input, have the \emph{ModelEvaluator} class potentially transform that state, and then hand that state back out. The \emph{ModelEvaluator} becomes less self-contained, but at the benefit of increased usability and flexibility. This recommendation comes at the cost of a substantial refactor of all agile component based code, and may not be feasible.
+  \item[Graceful Handling of Model State] We recommend that all service modules, such as \emph{ModelEvaluator}-derived classes, be made referentially transparent (\emph{c.f.} Defn. \ref{defn:RT}). This would eliminate any and all issues with regard to rebalance and mesh adaptivity, the biggest obstacles encountered. The consequence of this is that \emph{ModelEvaluator}-derived classes must no longer allocate their own maps, data structures, etc., but that these must be passed in externally. Referring to the control flow diagram of Figure \ref{fig:SimpleODEInterface}, it is not the role of the mathematical model $\mathbf{f}$ nor of the solver to create these data structures, meaning that they must be created at the level of \texttt{main()} (by the application developer) and passed in. This requires a mechanism for the developer to gracefully and naturally hand in model state as input, have the \emph{ModelEvaluator} class potentially transform that state, and then hand that state back out. The \emph{ModelEvaluator} becomes less self-contained, but at the benefit of increased usability and flexibility. This recommendation comes at the cost of a substantial refactor of all agile component based code, and may not be feasible.
   \item[Data Distribution] If possible, we recommend moving the \emph{ModelEvaluator} interface and \emph{ModelEvaluator}-derived solvers to support BlockMap and MultiVector data structures. A Map is a special case of a BlockMap, and a Vector is special case of a MultiVector, so this would not impact any current use cases.
-  \item[Control Flow] The control flow of Figure \ref{fig:SimpleODEInterface} could be preserved so long as the application developer has the opportunity and freedom to intervene during solver execution and modify simulation data in essentially arbitrary ways. One way to achieve this is by inserting callbacks between atomic steps in all \emph{ModelEvaluator}-derived solvers. The application developer would then have complete freedom to specify how simulation data should be transformed between atomic solver steps, without the solver itself ever having to know anything about contact resolution, rebalance, etc.\footnote{Such use of callbacks is common practice within Sandia's LAMMPS molecular dynamics code \cite{Plimpton:LAMMPS:1995}. The code makes callbacks to user-defined functions between atomic steps in time integration or minimization processes, and has been used to great effect.} For a specific example, see Algorithm \ref{alg:vel_verlet} with callbacks put in between steps of the velocity Verlet explicit time integrator.\footnote{This is exactly the callback structure used in LAMMPS.}
+  \item[Control Flow] The control flow of Figure \ref{fig:SimpleODEInterface} could be preserved so long as the application developer has the opportunity and freedom to intervene during solver execution and modify simulation data in essentially arbitrary ways. One way to achieve this is by inserting callbacks between atomic steps in all \emph{ModelEvaluator}-derived solvers. The application developer would then have complete freedom to specify how simulation data should be transformed between atomic solver steps, without the solver itself ever having to know anything about contact resolution, rebalance, etc.\footnote{Such use of callbacks is common practice within Sandia's LAMMPS molecular dynamics code \cite{Plimpton:LAMMPS:1995}. The code makes callbacks to user-defined functions between atomic steps in time integration or minimization processes, and has been used to great effect.} For a specific example, see Algorithm \ref{alg:vel_verlet}, showing callbacks put in between steps of the velocity Verlet explicit time integrator.\footnote{This is exactly the callback structure used in LAMMPS.}
 \end{description}
 
 \begin{algorithm}
