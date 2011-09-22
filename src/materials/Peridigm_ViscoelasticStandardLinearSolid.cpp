@@ -64,7 +64,7 @@ m_damageModel()
   m_shearModulus = params.get<double>("Shear Modulus");
   m_horizon = params.get<double>("Material Horizon");
   m_density = params.get<double>("Density");
-  m_tau   = params.get<double>("tau");
+  m_lambda_i   = params.get<double>("lambda_i");
   m_tau_b = params.get<double>("tau b");
 
   // set up vector of variable specs
@@ -196,7 +196,7 @@ PeridigmNS::ViscoelasticStandardLinearSolid::computeForce(const double dt,
                                                                            numOwnedPoints,
                                                                            m_bulkModulus,
                                                                            m_shearModulus,
-                                                                           m_tau,
+                                                                           m_lambda_i,
                                                                            m_tau_b);
 }
 

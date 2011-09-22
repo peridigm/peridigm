@@ -55,7 +55,7 @@ namespace MATERIAL_EVALUATION {
  * Integrates the deviatoric back strain forward in time.
  * Output:
  *   * force
- *   * edbPN1 -- deviatoric back strain at end of step
+ *   * edbNP1 -- deviatoric back strain at end of step
  */
 void computeInternalForceViscoelasticStandardLinearSolid
   (double delta_t,
@@ -74,9 +74,9 @@ void computeInternalForceViscoelasticStandardLinearSolid
    int numOwnedPoints,
    double m_bulkModulus,
    double m_shearModulus,
-   double m_tau,
-   double m_tau_b
-);
+   double m_lambda_i,
+   double m_tau_b_i
+   );
 
 }
 

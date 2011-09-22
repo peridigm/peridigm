@@ -3,9 +3,9 @@
 from pylab import *
 from relaxation import standard_linear_solid
 
-files=[(r'$\tau=\tau_b$',"twoPoint_Maxwell_Relaxation.dat"),
-       (r'$\tau=2\tau_b$',"twoPoint_SLS_Relaxation.dat"),
-       (r'$\tau!=1000\tau_b$',"twoPoint_SLS_tau_1000.dat")
+files=[(r'$\lambda_i=.01$',"twoPoint_SLS_Elastic.dat"),
+       (r'$\lambda_i=.5$',"twoPoint_SLS_Relaxation.dat"),
+       (r'$\lambda_i=.99$',"twoPoint_Maxwell_Relaxation.dat")
        ]
     
 def GetTickLabels(tickValues):
@@ -37,18 +37,19 @@ alpha = 15.0 * G / m
 ed0=my_gamma/sqrt(2)
 tau_b=2.0
 
-# analytical solution for maxwell case
-tau=tau_b
-maxwell=standard_linear_solid(alpha,tau_b,tau)
+# make model elastic
+modulus=.01
+maxwell=standard_linear_solid(alpha,tau_b,modulus)
 fa_1=maxwell.relax(ed0,ta)
-tau=2.0*tau_b
+modulus=.5
 # analytical value for standard linear solid
-sls=standard_linear_solid(alpha,tau_b,tau)
+sls=standard_linear_solid(alpha,tau_b,modulus)
 fa_2=sls.relax(ed0,ta)
 
-# make model elastic
-sls_1000=standard_linear_solid(alpha,tau_b,1000.0*tau)
-fa_1000=sls_1000.relax(ed0,ta)
+# analytical solution for maxwell case
+modulus=.99
+sls_elastic=standard_linear_solid(alpha,tau_b,modulus)
+fa_3=sls_elastic.relax(ed0,ta)
 
 
 f1=figure(figsize=(8,7))
@@ -79,9 +80,9 @@ line13=ax1.plot(t,f1000,linewidth=2.0, color='#FF9955')
 for i in range(len(fa_2)):
     ax1.plot([ta[i]],[2*fa_1[i]],'o',color=(4.0/255.0,250.0/255.0,33.0/255.0))
     ax1.plot([ta[i]],[2*fa_2[i]],'o',color=(0.0/255.0,220.0/255.0,251.0/255.0))
-    ax1.plot([ta[i]],[2*fa_1000[i]],'o',color='#D45500')
+    ax1.plot([ta[i]],[2*fa_3[i]],'o',color='#D45500')
 
-ax1.legend((r"$\tau=\tau_b=2$",r'$\tau=4,\,\tau_b=2$', r'$\tau=2000,\,\tau_b=2$','Analytical', 'Analytical', 'Analytical'),
+ax1.legend((r"$\lambda_i=.01$",r'$\lambda_i=.5$', r'$\lambda_i=.99$','Analytical', 'Analytical', 'Analytical'),
 "upper right",bbox_to_anchor=(0.96, 0.89),shadow=True)
 
 xlabel("Time (miliseconds)",fontsize=20)

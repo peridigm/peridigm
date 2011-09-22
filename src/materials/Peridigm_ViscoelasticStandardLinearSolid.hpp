@@ -104,7 +104,7 @@ namespace PeridigmNS {
 	double m_shearModulus;
 	double m_horizon;
 	double m_density;
-	double m_tau;
+	double m_lambda_i;
 	double m_tau_b;
 
     // damage model

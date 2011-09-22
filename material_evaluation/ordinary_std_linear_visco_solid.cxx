@@ -47,9 +47,9 @@
 
 #include <cmath>
 #include "ordinary_std_linear_visco_solid.h"
-#include <functional>
-using std::binary_function;
-
+#include <iostream>
+using std::cout;
+using std::endl;
 namespace MATERIAL_EVALUATION {
 
 void computeInternalForceViscoelasticStandardLinearSolid
@@ -70,27 +70,14 @@ void computeInternalForceViscoelasticStandardLinearSolid
    int numOwnedPoints,
    double BULK_MODULUS,
    double SHEAR_MODULUS,
-   double m_tau,
-   double m_tau_b
+   double m_lambda_i,
+   double m_tau_b_i
 )
 {
 
-	/**
-	 * Helper function for viscoelastic standard linear solid
-	 */
-	struct ViscoelasticBetaOperator : public binary_function< double, double, double > {
-		ViscoelasticBetaOperator(double tau, double tau_b, double delta_t) : c1(tau_b/tau), c2(tau_b/delta_t)  {}
-		double operator() (double deviatoric_extension, double delta_ed) const {
-			return c1 * (deviatoric_extension - c2 * delta_ed);
-		}
-		double c1,c2;
-	};
-
-	ViscoelasticBetaOperator beta(m_tau,m_tau_b,delta_t);
-	/*
-	 * e^{-dt/tau_b}
-	 */
-	double decay = exp(-1.0/beta.c2);
+	double c1 = m_tau_b_i / delta_t;
+	double decay = exp(-1.0/c1);
+	double beta_i=1.-c1*(1.-decay);
 
 	/*
 	 * Compute processor local contribution to internal force
@@ -109,7 +96,7 @@ void computeInternalForceViscoelasticStandardLinearSolid
 	double *fOwned = fInternalOverlap;
 
 	const int *neighPtr = localNeighborList;
-	double cellVolume, dx, dy, dz, zeta, dYN, dYNp1, t, ti, td, edN, edNp1, delta_ed, beta_tN, beta_tNp1;
+	double cellVolume, dx, dy, dz, zeta, dYN, dYNp1, t, ti, td, edN, edNp1, delta_ed;
 	for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yNOwned +=3, yNP1Owned +=3, fOwned+=3, m++, thetaN++, thetaNp1++){
 
 		int numNeigh = *neighPtr; neighPtr++;
@@ -134,15 +121,20 @@ void computeInternalForceViscoelasticStandardLinearSolid
 			zeta = sqrt(dx*dx+dy*dy+dz*dz);
 
 			/*
-			 * damage state
-			 * NOTE: Some additional analysis (pencil and paper) may be required with
+			 * JAM:damage state
+			 * Some additional analysis (pencil and paper) may be required with
 			 * regard to handling damage.  The question is where to
 			 * apply the damage.  The approach taken here is to
 			 * apply damage to the incoming (computed) deviatoric extension state
 			 * and evolve the back extension state with the damaged
 			 * deviatoric extension state.
+			 *
+			 * Also note that this assumes the
+			 * damage on step N is the same as step NP1;
+			 * ERROR: this needs to be fixed.
 			 */
-			double damage = (1.0-*bondDamage);
+			double damageN = (1.0-*bondDamage);
+			double damageNp1 = (1.0-*bondDamage);
 
 			/*
 			 * volumetric scalar state
@@ -157,7 +149,9 @@ void computeInternalForceViscoelasticStandardLinearSolid
 			dy = YPN[1]-YN[1];
 			dz = YPN[2]-YN[2];
 			dYN = sqrt(dx*dx+dy*dy+dz*dz);
-			edN = damage * (dYN - zeta) - eiN;
+			/*
+			 */
+			edN = damageN * (dYN - zeta) - eiN;
 
 			/*
 			 * COMPUTE edNp1
@@ -166,20 +160,21 @@ void computeInternalForceViscoelasticStandardLinearSolid
 			dy = YPNP1[1]-YNP1[1];
 			dz = YPNP1[2]-YNP1[2];
 			dYNp1 = sqrt(dx*dx+dy*dy+dz*dz);
-			edNp1 = damage * (dYNp1 - zeta) - eiNp1;
+			edNp1 = damageNp1 * (dYNp1 - zeta) - eiNp1;
 
+			/*
+			 * Increment to deviatoric extension state
+			 */
 			delta_ed = edNp1-edN;
-			beta_tN = beta(edN,delta_ed);
-			beta_tNp1 = beta(edNp1,delta_ed);
 			/*
-			 * integrate back extension state forward in time
+			 * Integrate back extension state forward in time
 			 */
-			*edbNP1 = ( (*edbN) - beta_tN ) * decay + beta_tNp1;
+			*edbNP1 = edN * (1-decay) + (*edbN)*decay  + beta_i * delta_ed;
 
 			/*
-			 * compute deviatoric force state
+			 * Compute deviatoric force state
 			 */
-			td = alpha * OMEGA * ( edNp1 - *edbNP1 );
+			td = (1.0-m_lambda_i) * alpha * OMEGA * edNp1 + m_lambda_i * alpha * OMEGA * ( edNp1 - *edbNP1 );
 
 			/*
 			 * Compute volumetric force state
@@ -189,7 +184,7 @@ void computeInternalForceViscoelasticStandardLinearSolid
 			/*
 			 * Note that damage has already been applied once to 'td' (through ed) above.
 			 */
-			t = damage * (ti + td);
+			t = damageNp1 * (ti + td);
 			double fx = t * dx / dYNp1;
 			double fy = t * dy / dYNp1;
 			double fz = t * dz / dYNp1;
