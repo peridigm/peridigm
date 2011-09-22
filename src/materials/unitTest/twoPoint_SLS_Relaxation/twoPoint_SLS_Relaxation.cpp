@@ -97,7 +97,7 @@ inline double MAGNITUDE(const double *x){
 	return sqrt(x1*x1+x2*x2+x3*x3);
 }
 
-Teuchos::ParameterList getParamList(double tau_b_scale_factor=1.0)
+Teuchos::ParameterList getParamList(double lambda)
 {
 	/*
 	 * Horizon for this problem
@@ -126,9 +126,9 @@ Teuchos::ParameterList getParamList(double tau_b_scale_factor=1.0)
 	double tau_b = 2.0;
 
 	/*
-	 * Material time constant: Creep time
+	 * Relaxation Modulus
 	 */
-	double tau = tau_b_scale_factor*tau_b;
+	double lambda_i = lambda;
 
 	Teuchos::ParameterList params;
 
@@ -136,7 +136,7 @@ Teuchos::ParameterList getParamList(double tau_b_scale_factor=1.0)
 	params.set("Bulk Modulus", K);
 	params.set("Shear Modulus", mu);
 	params.set("Material Horizon", horizon);
-	params.set("tau",tau);
+	params.set("lambda_i",lambda_i);
 	params.set("tau b",tau_b);
 	ViscoelasticStandardLinearSolid mat(params);
 
@@ -230,7 +230,7 @@ double runPureShear(Teuchos::ParameterList& paramList, std::string output_file_n
 	 */
 	double K = paramList.get<double>("Bulk Modulus");
 	double MU = paramList.get<double>("Shear Modulus");
-	double tau = paramList.get<double>("tau");
+	double lambda_i = paramList.get<double>("lambda_i");
 	double tau_b = paramList.get<double>("tau b");
 
 	/*
@@ -389,7 +389,7 @@ double runPureShear(Teuchos::ParameterList& paramList, std::string output_file_n
 				numOwnedPoints,
 				K,
 				MU,
-				tau,
+				lambda_i,
 				tau_b
 		);
 
@@ -423,17 +423,28 @@ double runPureShear(Teuchos::ParameterList& paramList, std::string output_file_n
 
 
 void case_1() {
-	double scale=1.0;
+	/*
+	 * This produces the 'elastic' response
+	 */
+	double scale=0.01;
 	Teuchos::ParameterList paramList = getParamList(scale);
 	ViscoelasticStandardLinearSolid mat(paramList);
-	double f=runPureShear(paramList,"twoPoint_Maxwell_Relaxation.dat");
+	double f=runPureShear(paramList,"twoPoint_SLS_Elastic.dat");
 	/*
 	 * Last value computed: tests time integrator against exact value
 	 */
 	double tau_b = paramList.get<double>("tau b");
+	double lambda_i = paramList.get<double>("lambda_i");
 
+	/*
+	 * step input deviatoric extension state
+	 */
+
+	double ed0=1.0e-6/sqrt(2);
+	double m = 2.0;
+	double alpha = 15.0 * E / (1+nu) / 2.0 / m;
 	double tEnd=6.0;
-	double fEnd = std::exp(-tEnd/tau_b) * 2.0 * 15.0 * E * my_gamma / 4.0 / (1+nu) / std::sqrt(2.0);
+	double fEnd = 2.0 * ed0*((1-lambda_i) * alpha +lambda_i * alpha * std::exp(-tEnd/tau_b));
 	double rel_diff = std::fabs(fEnd-f)/fEnd;
 	double tolerance=1.0e-6;
 	BOOST_CHECK_SMALL(rel_diff,tolerance);
@@ -441,50 +452,51 @@ void case_1() {
 }
 
 void case_2() {
-	double scale=2.0;
+	double scale=.5;
 	Teuchos::ParameterList paramList = getParamList(scale);
 	ViscoelasticStandardLinearSolid mat(paramList);
 	double f=runPureShear(paramList,"twoPoint_SLS_Relaxation.dat");
 	/*
 	 * Last value computed: tests time integrator against exact value
 	 */
-	double tEnd=6.0;
-	double tau = paramList.get<double>("tau");
 	double tau_b = paramList.get<double>("tau b");
+	double lambda_i = paramList.get<double>("lambda_i");
 
+	/*
+	 * step input deviatoric extension state
+	 */
+
+	double ed0=1.0e-6/sqrt(2);
 	double m = 2.0;
 	double alpha = 15.0 * E / (1+nu) / 2.0 / m;
-	double e_infinity=alpha * (1 - tau_b/tau);
-	double ed0=1.0e-6/sqrt(2);
-	double td_long=e_infinity * ed0;
-	double fEnd=td_long + alpha * tau_b * ed0 * exp(-tEnd/tau_b) / tau;
-	double rel_diff = std::fabs(2.0*fEnd-f)/fEnd;
+	double tEnd=6.0;
+	double fEnd = 2.0 * ed0*((1-lambda_i) * alpha +lambda_i * alpha * std::exp(-tEnd/tau_b));
+	double rel_diff = std::fabs(fEnd-f)/fEnd;
 	double tolerance=1.0e-6;
 	BOOST_CHECK_SMALL(rel_diff,tolerance);
 }
 
-void case_1000() {
-	/*
-	 * This produces the 'elastic' response
-	 */
-	double scale=1000.0;
+void case_3() {
+	double scale=0.99;
 	Teuchos::ParameterList paramList = getParamList(scale);
 	ViscoelasticStandardLinearSolid mat(paramList);
-	double f=runPureShear(paramList,"twoPoint_SLS_tau_1000.dat");
+	double f=runPureShear(paramList,"twoPoint_Maxwell_Relaxation.dat");
 	/*
 	 * Last value computed: tests time integrator against exact value
 	 */
-	double tEnd=6.0;
-	double tau = paramList.get<double>("tau");
 	double tau_b = paramList.get<double>("tau b");
+	double lambda_i = paramList.get<double>("lambda_i");
 
+	/*
+	 * step input deviatoric extension state
+	 */
+
+	double ed0=1.0e-6/sqrt(2);
 	double m = 2.0;
 	double alpha = 15.0 * E / (1+nu) / 2.0 / m;
-	double e_infinity=alpha * (1 - tau_b/tau);
-	double ed0=1.0e-6/sqrt(2);
-	double td_long=e_infinity * ed0;
-	double fEnd=td_long + alpha * tau_b * ed0 * exp(-tEnd/tau_b) / tau;
-	double rel_diff = std::fabs(2.0*fEnd-f)/fEnd;
+	double tEnd=6.0;
+	double fEnd = 2.0 * ed0*((1-lambda_i) * alpha +lambda_i * alpha * std::exp(-tEnd/tau_b));
+	double rel_diff = std::fabs(fEnd-f)/fEnd;
 	double tolerance=1.0e-6;
 	BOOST_CHECK_SMALL(rel_diff,tolerance);
 }
@@ -499,7 +511,7 @@ bool init_unit_test_suite()
   test_suite* proc = BOOST_TEST_SUITE("twoPoint_SLS_Relaxation");
   proc->add(BOOST_TEST_CASE(&case_1));
   proc->add(BOOST_TEST_CASE(&case_2));
-  proc->add(BOOST_TEST_CASE(&case_1000));
+  proc->add(BOOST_TEST_CASE(&case_3));
   framework::master_test_suite().add(proc);
 
   return success;
