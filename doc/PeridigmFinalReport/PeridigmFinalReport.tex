@@ -111,13 +111,12 @@
 % ---------------------------------------------------------------------------- %
 % Set some things we need for SAND reports. These are mandatory
 %
-\SANDnum{SAND2011-xxxx}
+\SANDnum{SAND2011-7045}
 \SANDprintDate{September 2011}
 %\SANDrePrintDate{January 2006}
 %\SANDrePrintDate{February 2006}
 %\SANDrePrintDate{March 2006}
 \SANDauthor{Michael Parks, David Littlewood, Andy Salinger, and John Mitchell }
-
 
 % ---------------------------------------------------------------------------- %
 % Include the markings required for your SAND report. The default is "Unlimited
@@ -183,11 +182,11 @@ This report details efforts to deploy \emph{Agile Components} for rapid developm
 
 \section{Introduction}
 
-The notion that software should be built from prefabricated components has been prominent since the late 1960s. Software components have sometimes been referred to as \emph{software ICs} \cite{Cox:OOP:1991}, with the visionary notion that component-based software can be as impactful to software development as integrated circuit components were to modern electronics. Following in that vein, Agile Components is a strategic effort at Sandia to to enable the efficient development of production-quality software by providing a well-defined, unifying interface to a powerful set of component-based software. 
+The notion that software should be built from prefabricated components has been prominent since the late 1960s. Software components have sometimes been referred to as \emph{software ICs} \cite{Cox:OOP:1991}, with the visionary notion that component-based software can be as impactful to software development as integrated circuit components were to modern electronics. Following in that vein, Agile Components is a strategic effort at Sandia to to enable the efficient development of production-quality software by providing a well-defined, unifying interface to a powerful set of component-based software.
 
 This report details efforts to test and evaluate the Agile Components methodology by deploying it for the rapid development of a peridynamics code, \emph{Peridigm}. Peridynamics was selected as the driver application because it is unlike the PDE-based finite element models for which Agile Components is most commonly used. Peridynamics is based upon integral equations, not PDEs, and is commonly discretized using a meshfree method, requiring a different computational structure than that of mesh-based finite elements. The \emph{Peridigm} code requires the ability to track history-dependent material data, dynamically modify the model discretization, and interject user-defined routines into the time integration algorithm -- capabilities prior applications had not demanded of Agile Components. These requirements helped to illuminate assumptions made by the interfaces utilized in Agile Components. This provided for a clear identification of the set of ideal target applications for Agile Components, as well as recommendations for modification to Agile Components to broaden their scope and impact.
 
-In \S\ref{sec:ACMeth} we review the Agile Components methodology, including the \emph{ModelEvaluator} interface. We discuss the practical experiences with Agile Components in \S\ref{sec:PracticalACExperience}, discussing the \emph{SimpleODE}, \emph{Albany}, and \emph{Peridigm} codes. In particular, we detail in \S\ref{sec:peridigm} specific issues encountered in deploying Agile Components within Peridigm, including the handling of state within models, history dependence in material models, load rebalance and mesh adaptivity, data distribution, time integration, and control flow. In \S\ref{sec:recommendations} we make specific recommendations to address the development issues we encountered, which we feel will broaden the scope of Agile Components.  
+In \S\ref{sec:ACMeth} we review the Agile Components methodology, including the \emph{ModelEvaluator} interface. We discuss the practical experiences with Agile Components in \S\ref{sec:PracticalACExperience}, discussing the \emph{SimpleODE}, \emph{Albany}, and \emph{Peridigm} codes. In particular, we detail in \S\ref{sec:peridigm} specific issues encountered in deploying Agile Components within Peridigm, including the handling of state within models, history dependence in material models, load rebalance and mesh adaptivity, data distribution, time integration, and control flow. In \S\ref{sec:recommendations} we make specific recommendations to address the development issues we encountered, which we feel will broaden the scope of Agile Components.
 
 \section{The Agile Components Methodology} \label{sec:ACMeth}
 
