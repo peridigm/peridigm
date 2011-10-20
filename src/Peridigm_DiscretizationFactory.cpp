@@ -45,7 +45,7 @@
 // ************************************************************************
 //@HEADER
 
-#include <Teuchos_TestForException.hpp>
+#include <Teuchos_Assert.hpp>
 #include "Peridigm_DiscretizationFactory.hpp"
 #include "Peridigm_PdQuickGridDiscretization.hpp"
 #ifdef PERIDIGM_STK
@@ -58,7 +58,7 @@ PeridigmNS::DiscretizationFactory::DiscretizationFactory(const Teuchos::RCP<Teuc
   // check to see if a test configuration has been specified
   // or if a mesh file has been supplied
   if(!discParams->isParameter("Type")){
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
 					   "Discretization not specified, \"Exodus\" or \"PdQuickGrid\" required.");
   }
 
@@ -78,12 +78,12 @@ PeridigmNS::DiscretizationFactory::create(const Teuchos::RCP<const Epetra_Comm>&
 #ifdef PERIDIGM_STK
 	discretization = Teuchos::rcp(new PeridigmNS::STKDiscretization(epetra_comm, discParams));
 #else
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
 		       "**** Exodus file support requires Netcdf and Trilinos STK package (rebuild with Netcdf and STK).\n");
 #endif
   }
   else{
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
 		       "**** Invalid discretization type.  Valid types are \"Exodus\" and \"PdQuickGrid\".\n");
   }
  
@@ -102,7 +102,7 @@ PeridigmNS::DiscretizationFactory::create(const Teuchos::RCP<const Epetra_Comm>&
 	discretization = Teuchos::rcp(new PeridigmNS::PdQuickGridDiscretization(epetra_comm, decomp));
   }
   else{
-    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
 					   "Invalid type for construction of discretization from PdGridData object.  Valid type is \"PdQuickGrid\"");
   }
  

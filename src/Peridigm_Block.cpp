@@ -106,11 +106,11 @@ void PeridigmNS::Block::rebalance(Teuchos::RCP<const Epetra_BlockMap> rebalanced
 
 void PeridigmNS::Block::initializeMaterialModel(double timeStep)
 {
-  TEST_FOR_EXCEPT_MSG(materialModel.is_null(),
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(materialModel.is_null(),
                       "\n**** Material model must be set via Block::setMaterialModel() prior to calling Block::initializeMaterialModel()\n");
-  TEST_FOR_EXCEPT_MSG(neighborhoodData.is_null(),
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(neighborhoodData.is_null(),
                       "\n**** Neighborhood data must be set via Block::setNeighborhoodData() prior to calling Block::initializeMaterialModel()\n");
-  TEST_FOR_EXCEPT_MSG(dataManager.is_null(),
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(dataManager.is_null(),
                       "\n**** DataManager must be initialized via Block::initializeDataManager() prior to calling Block::initializeMaterialModel()\n");
 
   materialModel->initialize(timeStep,
@@ -349,8 +349,8 @@ void PeridigmNS::Block::initializeDataManager()
 {
   // The material model and maps must all be set prior to initializing the data manager (and the contact model as well, if there is one).
   // Note that not all the maps are strictly required, so these conditions could be relaxed somewhat.
-  TEST_FOR_EXCEPT_MSG(materialModel.is_null(), "\n**** Material model must be set via Block::setMaterialModel() prior to calling Block::initializeDataManager()\n");
-  TEST_FOR_EXCEPT_MSG(ownedScalarPointMap.is_null() ||
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(materialModel.is_null(), "\n**** Material model must be set via Block::setMaterialModel() prior to calling Block::initializeDataManager()\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(ownedScalarPointMap.is_null() ||
                       ownedVectorPointMap.is_null() ||
                       overlapScalarPointMap.is_null() ||
                       overlapVectorPointMap.is_null() ||

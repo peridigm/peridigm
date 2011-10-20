@@ -65,7 +65,7 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
   numPID(epetra_comm->NumProc()),
   comm(epetra_comm)
 {
-  TEST_FOR_EXCEPT_MSG(params->get<string>("Type") != "PdQuickGrid", "Invalid Type in PdQuickGridDiscretization");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(params->get<string>("Type") != "PdQuickGrid", "Invalid Type in PdQuickGridDiscretization");
   QUICKGRID::Data decomp = getDiscretization(params);
 
   createMaps(decomp);
@@ -102,7 +102,7 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
   delete[] elementSizeList;
 
   // 3D only
-  TEST_FOR_EXCEPT_MSG(decomp.dimension != 3, "Invalid dimension in decomposition (only 3D is supported)");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(decomp.dimension != 3, "Invalid dimension in decomposition (only 3D is supported)");
 
   // fill the x vector with the current positions (owned positions only)
   initialX = Teuchos::rcp(new Epetra_Vector(Copy,*threeDimensionalMap,decomp.myX.get()) );
@@ -164,7 +164,7 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
   delete[] elementSizeList;
 
   // 3D only
-  TEST_FOR_EXCEPT_MSG(decomp->dimension != 3, "Invalid dimension in decomposition (only 3D is supported)");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(decomp->dimension != 3, "Invalid dimension in decomposition (only 3D is supported)");
 
   // fill the x vector with the current positions (owned positions only)
   initialX = Teuchos::rcp(new Epetra_Vector(Copy, *threeDimensionalMap, decomp->myX.get()) );
@@ -259,7 +259,7 @@ QUICKGRID::Data PeridigmNS::PdQuickGridDiscretization::getDiscretization(const T
 
   } 
   else { // ERROR
-    TEST_FOR_EXCEPT_MSG(true, "Invalid Type in PdQuickGridDiscretization");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "Invalid Type in PdQuickGridDiscretization");
   }
 
   return decomp;
@@ -320,7 +320,7 @@ PeridigmNS::PdQuickGridDiscretization::getGlobalOwnedMap(int d) const
       return threeDimensionalMap;
       break;
     default:
-      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
                          std::endl << "PdQuickGridDiscretization::getGlobalOwnedMap(int d) only supports dimensions d=1 or d=3. Supplied dimension d=" << d << std::endl); 
     }
 }
@@ -336,7 +336,7 @@ PeridigmNS::PdQuickGridDiscretization::getGlobalOverlapMap(int d) const
       return threeDimensionalOverlapMap;
       break;
     default:
-      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
                          std::endl << "PdQuickGridDiscretization::getOverlapMap(int d) only supports dimensions d=1 or d=3. Supplied dimension d=" << d << std::endl); 
     }
 }
