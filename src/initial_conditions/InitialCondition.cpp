@@ -90,17 +90,17 @@ RCP<InitialCondition> getQ2CylinderIC(const Teuchos::ParameterList& peridigmPara
 
 	const Teuchos::ParameterList& params = peridigmParams.sublist("Problem").sublist("Initial Conditions");
 
-	TEST_FOR_EXCEPT_MSG(params.get<string>("Type") != "Q2Cylinder", "PeridigmNS::InitialConditionsNS::getQ2CylinderIC -- invalid \'Type\'");
+	TEUCHOS_TEST_FOR_EXCEPT_MSG(params.get<string>("Type") != "Q2Cylinder", "PeridigmNS::InitialConditionsNS::getQ2CylinderIC -- invalid \'Type\'");
 	if (params.isSublist("IC Params")){
 		const Teuchos::ParameterList& ICParams = params.sublist("IC Params");
-		TEST_FOR_EXCEPT_MSG(ICParams.get<string>("Geometry") != "TensorProductCylinderMeshGenerator",
+		TEUCHOS_TEST_FOR_EXCEPT_MSG(ICParams.get<string>("Geometry") != "TensorProductCylinderMeshGenerator",
 				"PeridigmNS::InitialConditionsNS::Q2Cylinder -- Invalid \'Geometry\'");
 		vr0 = ICParams.get<double>("v_r0");
 		vr1 = ICParams.get<double>("v_r1");
 		vz0 = ICParams.get<double>("v_z0");
 	}
 	else { // ERROR
-		TEST_FOR_EXCEPT_MSG(true, "PeridigmNS::InitialConditionsNS::getQ2CylinderIC-->missing \'IC Params\' sublist.");
+		TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "PeridigmNS::InitialConditionsNS::getQ2CylinderIC-->missing \'IC Params\' sublist.");
 	}
 
 	const Teuchos::ParameterList& discParams = peridigmParams.sublist("Problem").sublist("Discretization");
@@ -119,7 +119,7 @@ RCP<InitialCondition> getQ2CylinderIC(const Teuchos::ParameterList& peridigmPara
 		center[1]=yC;
 	}
 	else { // ERROR
-		TEST_FOR_EXCEPT_MSG(true, "PeridigmNS::InitialConditionsNS::Q2Cylinder -- invalid \'Type\' for");
+		TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "PeridigmNS::InitialConditionsNS::Q2Cylinder -- invalid \'Type\' for");
 	}
 	return RCP<InitialCondition>(new Q2Cylinder(vr0, vr1, vz0, z0, a, center));
 }

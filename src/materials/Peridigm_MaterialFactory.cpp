@@ -45,7 +45,7 @@
 // ************************************************************************
 //@HEADER
 
-#include <Teuchos_TestForException.hpp>
+#include <Teuchos_Assert.hpp>
 #include "Peridigm_MaterialFactory.hpp"
 #include "Peridigm_LinearElasticIsotropicMaterial.hpp"
 #include "Peridigm_IsotropicElasticPlasticMaterial.hpp"
@@ -69,7 +69,7 @@ PeridigmNS::MaterialFactory::create(Teuchos::RCP<const Teuchos::ParameterList>& 
       string invalidMaterial("\n**** Unrecognized material model: ");
       invalidMaterial += name;
       invalidMaterial += ", must be \"Linear Elastic\" or \"Elastic Plastic\" or \"Viscoelastic Standard Linear Solid\".\n";
-      TEST_FOR_EXCEPT_MSG(true, invalidMaterial);
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, invalidMaterial);
     }
   }
   

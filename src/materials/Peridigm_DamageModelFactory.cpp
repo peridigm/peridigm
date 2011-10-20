@@ -45,7 +45,7 @@
 // ************************************************************************
 //@HEADER
 
-#include <Teuchos_TestForException.hpp>
+#include <Teuchos_Assert.hpp>
 #include "Peridigm_DamageModelFactory.hpp"
 #include "Peridigm_CriticalStretchDamageModel.hpp"
 
@@ -63,7 +63,7 @@ PeridigmNS::DamageModelFactory::create(const Teuchos::ParameterList& damageModel
     string invalidDamageModel("\n**** Unrecognized damage model type: ");
     invalidDamageModel += damageModelType;
     invalidDamageModel += ", must be \"Critical Stretch\".\n";
-    TEST_FOR_EXCEPT_MSG(true, invalidDamageModel);
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, invalidDamageModel);
   }
   
   return damageModel;

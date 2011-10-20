@@ -46,7 +46,7 @@
 //@HEADER
 
 #include "Peridigm_CriticalStretchDamageModel.hpp"
-#include <Teuchos_TestForException.hpp>
+#include <Teuchos_Assert.hpp>
 
 using namespace std;
 
@@ -93,7 +93,7 @@ PeridigmNS::CriticalStretchDamageModel::computeDamage(const double dt,
   int bondIndex = 0;
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
 	int nodeID = ownedIDs[iID];
-	TEST_FOR_EXCEPT_MSG(nodeID*3+2 >= vectorLength, "Invalid neighbor list / x vector\n");
+	TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeID*3+2 >= vectorLength, "Invalid neighbor list / x vector\n");
 	double nodeInitialX[3] = { x[nodeID*3],
 							   x[nodeID*3+1],
 							   x[nodeID*3+2] };
@@ -103,8 +103,8 @@ PeridigmNS::CriticalStretchDamageModel::computeDamage(const double dt,
 	int numNeighbors = neighborhoodList[neighborhoodListIndex++];
 	for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
 	  int neighborID = neighborhoodList[neighborhoodListIndex++];
-	  TEST_FOR_EXCEPT_MSG(neighborID < 0, "Invalid neighbor list\n");
-	  TEST_FOR_EXCEPT_MSG(neighborID*3+2 >= vectorLength, "Invalid neighbor list / initial x vector\n");
+	  TEUCHOS_TEST_FOR_EXCEPT_MSG(neighborID < 0, "Invalid neighbor list\n");
+	  TEUCHOS_TEST_FOR_EXCEPT_MSG(neighborID*3+2 >= vectorLength, "Invalid neighbor list / initial x vector\n");
 	  double initialDistance = 
 		distance(nodeInitialX[0], nodeInitialX[1], nodeInitialX[2],
 				 x[neighborID*3], x[neighborID*3+1], x[neighborID*3+2]);
