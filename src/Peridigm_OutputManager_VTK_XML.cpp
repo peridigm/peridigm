@@ -52,7 +52,7 @@
 
 #include <Epetra_Comm.h>
 #include "Teuchos_StandardParameterEntryValidators.hpp"
-#include <Teuchos_Assert.hpp>
+#include <Teuchos_TestForException.hpp>
 
 #include "Peridigm_OutputManager_VTK_XML.hpp"
 #include "mesh_output/vtk/Field.h"
@@ -82,20 +82,20 @@ PeridigmNS::OutputManager_VTK_XML::OutputManager_VTK_XML(const Teuchos::RCP<Teuc
   catch(Teuchos::Exceptions::InvalidParameterType &excpt)  {std::cout<<excpt.what(); isValid=false;}
   catch(Teuchos::Exceptions::InvalidParameterValue &excpt) {std::cout<<excpt.what(); isValid=false;}
   catch(...) {isValid=false;}
-  if (!isValid) TEUCHOS_TEST_FOR_EXCEPTION(1, std::invalid_argument, "PeridigmNS::OutputManager_VTK_XML:::OutputManager_VTK_XML() -- Invalid parameter, type or value.");
+  if (!isValid) TEST_FOR_EXCEPTION(1, std::invalid_argument, "PeridigmNS::OutputManager_VTK_XML:::OutputManager_VTK_XML() -- Invalid parameter, type or value.");
 
   try {
     numProc = params->INVALID_TEMPLATE_QUALIFIER get<int>("NumProc");
   }
   catch ( const std::exception& e) {
-    TEUCHOS_TEST_FOR_EXCEPTION(1, std::invalid_argument, "PeridigmNS::OutputManager_VTK_XML:::OutputManager_VTK_XML() -- numProc not present.");
+    TEST_FOR_EXCEPTION(1, std::invalid_argument, "PeridigmNS::OutputManager_VTK_XML:::OutputManager_VTK_XML() -- numProc not present.");
   }
 
   try {
     myPID = params->INVALID_TEMPLATE_QUALIFIER get<int>("MyPID");
   }
   catch ( const std::exception& e) {
-    TEUCHOS_TEST_FOR_EXCEPTION(1,  std::invalid_argument, "PeridigmNS::OutputManager_VTK_XML:::OutputManager_VTK_XML() -- MyPID not present.");
+    TEST_FOR_EXCEPTION(1,  std::invalid_argument, "PeridigmNS::OutputManager_VTK_XML:::OutputManager_VTK_XML() -- MyPID not present.");
   }
 
   // Default to no output
@@ -103,11 +103,11 @@ PeridigmNS::OutputManager_VTK_XML::OutputManager_VTK_XML(const Teuchos::RCP<Teuc
 
   // Default to BINARY output
   outputFormat = params->get<string>("Output Format","BINARY"); 
-  TEUCHOS_TEST_FOR_EXCEPTION( (outputFormat != "ASCII") && (outputFormat != "BINARY"),  std::invalid_argument, "PeridigmNS::OutputManager_VTK_XML:::OutputManager_VTK_XML() -- Unknown output format. Must be ASCII or BINARY.");
+  TEST_FOR_EXCEPTION( (outputFormat != "ASCII") && (outputFormat != "BINARY"),  std::invalid_argument, "PeridigmNS::OutputManager_VTK_XML:::OutputManager_VTK_XML() -- Unknown output format. Must be ASCII or BINARY.");
 
   // Default to not write full neighborlist
   writeNeighborlist = params->get<bool>("Bond Family",false); 
-  TEUCHOS_TEST_FOR_EXCEPTION( (numProc != 1) && (writeNeighborlist),  std::invalid_argument, "PeridigmNS::OutputManager_VTK_XML:::OutputManager_VTK_XML() -- Parallel write of bond families not currently supported.");
+  TEST_FOR_EXCEPTION( (numProc != 1) && (writeNeighborlist),  std::invalid_argument, "PeridigmNS::OutputManager_VTK_XML:::OutputManager_VTK_XML() -- Parallel write of bond families not currently supported.");
 
   // Output filename base
   filenameBase = params->get<string>("Output Filename","dump"); 

@@ -212,7 +212,7 @@ void PeridigmNS::Peridigm::instantiateMaterials() {
     Teuchos::RCP<const Teuchos::ParameterList> matParams = Teuchos::rcpFromRef(materialParams);
     materialModels->push_back( materialFactory.create(matParams) );
   }
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(materialModels->size() == 0, "No material models created!");
+  TEST_FOR_EXCEPT_MSG(materialModels->size() == 0, "No material models created!");
 }
 
 void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscretization> peridigmDisc) {
@@ -293,7 +293,7 @@ void PeridigmNS::Peridigm::initializeNodeSets(Teuchos::RCP<Teuchos::ParameterLis
 	size_t position = name.find("Node Set");
 	if(position != string::npos){
 	  stringstream ss(Teuchos::getValue<string>(it->second));
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(name) != nodeSets->end(), "**** Duplicate node set found: " + name + "\n");
+      TEST_FOR_EXCEPT_MSG(nodeSets->find(name) != nodeSets->end(), "**** Duplicate node set found: " + name + "\n");
 	  vector<int>& nodeList = (*nodeSets)[name];
 	  int nodeID;
 	  while(ss.good()){
@@ -307,7 +307,7 @@ void PeridigmNS::Peridigm::initializeNodeSets(Teuchos::RCP<Teuchos::ParameterLis
   Teuchos::RCP< map< string, vector<int> > > discretizationNodeSets = peridigmDisc->getNodeSets();
   for(map< string, vector<int> >::iterator it=discretizationNodeSets->begin() ; it!=discretizationNodeSets->end() ; it++){
     string name = it->first;
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(name) != nodeSets->end(), "**** Duplicate node set found: " + name + "\n");
+    TEST_FOR_EXCEPT_MSG(nodeSets->find(name) != nodeSets->end(), "**** Duplicate node set found: " + name + "\n");
     vector<int>& nodeList = it->second;
     (*nodeSets)[name] = nodeList;
   }
@@ -315,7 +315,7 @@ void PeridigmNS::Peridigm::initializeNodeSets(Teuchos::RCP<Teuchos::ParameterLis
 
 void PeridigmNS::Peridigm::applyInitialVelocities() {
 
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(!threeDimensionalMap->SameAs(v->Map()), 
+  TEST_FOR_EXCEPT_MSG(!threeDimensionalMap->SameAs(v->Map()), 
                       "Peridigm::applyInitialVelocities():  Inconsistent velocity vector map.\n");
 
   /*
@@ -349,7 +349,7 @@ void PeridigmNS::Peridigm::applyInitialVelocities() {
 
 	  // apply initial velocity boundary conditions
 	  // to locally-owned nodes
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
+      TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
 	  vector<int> & nodeList = (*nodeSets)[nodeSet];
 	  for(unsigned int i=0 ; i<nodeList.size() ; i++){
 		int localNodeID = threeDimensionalMap->LID(nodeList[i]);
@@ -366,7 +366,7 @@ void PeridigmNS::Peridigm::applyInitialVelocities() {
 
 void PeridigmNS::Peridigm::applyInitialDisplacements() {
 
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(!threeDimensionalMap->SameAs(u->Map()),
+  TEST_FOR_EXCEPT_MSG(!threeDimensionalMap->SameAs(u->Map()),
                       "Peridigm::applyInitialDisplacements():  Inconsistent displacement vector map.\n");
 
   Teuchos::ParameterList& problemParams = peridigmParams->sublist("Problem");
@@ -392,7 +392,7 @@ void PeridigmNS::Peridigm::applyInitialDisplacements() {
 
           // apply initial displacement boundary conditions
           // to locally-owned nodes
-          TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
+          TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
           vector<int> & nodeList = (*nodeSets)[nodeSet];
           for(unsigned int i=0 ; i<nodeList.size() ; i++){
                 int localNodeID = threeDimensionalMap->LID(nodeList[i]);
@@ -430,10 +430,10 @@ void PeridigmNS::Peridigm::initializeContact() {
     Teuchos::ParameterList & contactParams = problemParams->sublist("Contact");
     analysisHasContact = true;
     if(!contactParams.isParameter("Search Radius"))
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Contact parameter \"Search Radius\" not specified.");
+      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Contact parameter \"Search Radius\" not specified.");
     contactSearchRadius = contactParams.get<double>("Search Radius");
     if(!contactParams.isParameter("Search Frequency"))
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Contact parameter \"Search Frequency\" not specified.");
+      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Contact parameter \"Search Frequency\" not specified.");
     contactRebalanceFrequency = contactParams.get<int>("Search Frequency");
   }
 
@@ -503,13 +503,13 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
   if (active) {
     // Make the default format "VTK_XML"
     string outputFormat = outputParams->get("Output File Type", "VTK_XML");
-    TEUCHOS_TEST_FOR_EXCEPTION( outputFormat != "VTK_XML",
+    TEST_FOR_EXCEPTION( outputFormat != "VTK_XML",
                         std::invalid_argument,
                         "PeridigmNS::Peridigm: \"Output File Type\" must be \"VTK_XML\".");
     if (outputFormat == "VTK_XML")
        outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_VTK_XML( outputParams, this ));
     else
-      TEUCHOS_TEST_FOR_EXCEPTION( true, std::invalid_argument,"PeridigmNS::Peridigm::initializeOutputManager: \"Output File Type\" must be \"VTK_XML\".");
+      TEST_FOR_EXCEPTION( true, std::invalid_argument,"PeridigmNS::Peridigm::initializeOutputManager: \"Output File Type\" must be \"VTK_XML\".");
 
     // Initialize current time in this parameterlist
     Teuchos::RCP<Teuchos::ParameterList> solverParams = Teuchos::rcp(&(peridigmParams->sublist("Solver")),false);
@@ -689,7 +689,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
     // Check for NaNs in force evaluation
     // We'd like to know now because a NaN will likely cause a difficult-to-unravel crash downstream.
     for(int i=0 ; i<force->MyLength() ; ++i)
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*force)[i]), "**** NaN returned by force evaluation.\n");
+      TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*force)[i]), "**** NaN returned by force evaluation.\n");
 
     if(analysisHasContact){
       // Copy contact force from the data manager to the mothership vector
@@ -703,7 +703,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
 
       // Check for NaNs in contact force evaluation
       for(int i=0 ; i<contactForce->MyLength() ; ++i)
-        TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*contactForce)[i]), "**** NaN returned by contact force evaluation.\n");
+        TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*contactForce)[i]), "**** NaN returned by contact force evaluation.\n");
 
       // Add contact forces to forces
       force->Update(1.0, *contactForce, 1.0);
@@ -1174,7 +1174,7 @@ void PeridigmNS::Peridigm::applyKinematicBC(double loadIncrement,
         coord = 2;
 
       // apply kinematic boundary conditions to locally-owned nodes
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
+      TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
       vector<int> & nodeList = (*nodeSets)[nodeSet];
       for(unsigned int i=0 ; i<nodeList.size() ; i++){
         // zero out the row and column and put a 1.0 on the diagonal
@@ -1573,7 +1573,7 @@ Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::Peridigm::createRebalance
   for(int i=0 ; i<rebalancedOneDimensionalMap->NumMyElements() ; ++i){
     int globalID = rebalancedOneDimensionalMap->GID(i);
     int localID = rebalancedOneDimensionalOverlapMap->LID(globalID);
-    TEUCHOS_TEST_FOR_EXCEPTION(localID == -1, Teuchos::RangeError, "Invalid index into rebalancedOneDimensionalOverlapMap");
+    TEST_FOR_EXCEPTION(localID == -1, Teuchos::RangeError, "Invalid index into rebalancedOneDimensionalOverlapMap");
     ownedIDs[i] = localID;
   }
   rebalancedNeighborhoodData->SetNeighborhoodListSize(rebalancedOneDimensionalMap->NumMyElements() + rebalancedBondMap->NumMyPoints());
@@ -1599,7 +1599,7 @@ Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::Peridigm::createRebalance
       for(int iN=0 ; iN<numNeighbors ; ++iN){
         int globalNeighborID = (int)( (*rebalancedNeighborGlobalIDs)[offset + iN] );
         int localNeighborID = rebalancedOneDimensionalOverlapMap->LID(globalNeighborID);
-        TEUCHOS_TEST_FOR_EXCEPTION(localNeighborID == -1, Teuchos::RangeError, "Invalid index into rebalancedOneDimensionalOverlapMap");
+        TEST_FOR_EXCEPTION(localNeighborID == -1, Teuchos::RangeError, "Invalid index into rebalancedOneDimensionalOverlapMap");
         neighborhoodList[neighborhoodIndex++] = localNeighborID;
       }
     }
@@ -1726,7 +1726,7 @@ Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::Peridigm::createRebalance
 	for(int i=0 ; i<rebalancedOneDimensionalMap->NumMyElements() ; ++i){
 		int globalID = rebalancedOneDimensionalMap->GID(i);
 		int localID = rebalancedOneDimensionalOverlapMap->LID(globalID);
-		TEUCHOS_TEST_FOR_EXCEPTION(localID == -1, Teuchos::RangeError, "Invalid index into rebalancedOneDimensionalOverlapMap");
+		TEST_FOR_EXCEPTION(localID == -1, Teuchos::RangeError, "Invalid index into rebalancedOneDimensionalOverlapMap");
 		ownedIDs[i] = localID;
 	}
 	// determine the neighborhood list size
@@ -1746,7 +1746,7 @@ Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::Peridigm::createRebalance
 		// get the global ID of this point and the global IDs of its neighbors
 		int globalID = rebalancedOneDimensionalMap->GID(iLID);
 		// require that this globalID be present as a key into contactNeighborGlobalIDs
-		TEUCHOS_TEST_FOR_EXCEPTION(contactNeighborGlobalIDs->count(globalID) == 0, Teuchos::RangeError, "Invalid index into contactNeighborGlobalIDs");
+		TEST_FOR_EXCEPTION(contactNeighborGlobalIDs->count(globalID) == 0, Teuchos::RangeError, "Invalid index into contactNeighborGlobalIDs");
 		const vector<int>& neighborGlobalIDs = (*contactNeighborGlobalIDs)[globalID];
 		// first entry in the neighborhoodlist is the number of neighbors
 		neighborhoodList[neighborhoodIndex++] = (int) neighborGlobalIDs.size();

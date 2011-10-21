@@ -45,7 +45,7 @@
 // ************************************************************************
 //@HEADER
 
-#include <Teuchos_Assert.hpp>
+#include <Teuchos_TestForException.hpp>
 #include <Phalanx_DataLayout.hpp>
 #include <Teuchos_FancyOStream.hpp>
 #include <Teuchos_VerboseObject.hpp>

@@ -76,7 +76,7 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   numPID(epetra_comm->NumProc()),
   comm(epetra_comm)
 {
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(params->get<string>("Type") != "Exodus", "Invalid Type in STKDiscretization");
+  TEST_FOR_EXCEPT_MSG(params->get<string>("Type") != "Exodus", "Invalid Type in STKDiscretization");
 
   string meshFileName = params->get<string>("Input Mesh File");
   double horizon = params->get<double>("Horizon");
@@ -118,7 +118,7 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   delete[] elementSizeList;
 
   // 3D only
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(decomp.dimension != 3, "Invalid dimension in decomposition (only 3D is supported)");
+  TEST_FOR_EXCEPT_MSG(decomp.dimension != 3, "Invalid dimension in decomposition (only 3D is supported)");
 
   // fill the x vector with the current positions (owned positions only)
   initialX = Teuchos::rcp(new Epetra_Vector(Copy,*threeDimensionalMap,decomp.myX.get()) );
@@ -147,7 +147,7 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
                                    *meshData);
   
   int numberOfDimensions = metaData->spatial_dimension();
-  TEUCHOS_TEST_FOR_EXCEPTION(numberOfDimensions != 3, std::invalid_argument, "Peridigm operates only on three-dimensional meshes.");
+  TEST_FOR_EXCEPTION(numberOfDimensions != 3, std::invalid_argument, "Peridigm operates only on three-dimensional meshes.");
 
   // This assigns a null Ioss::GroupingEntity attribute to the universal part
   stk::io::put_io_part_attribute(metaData->universal_part());
@@ -252,7 +252,7 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
   for(unsigned int iBlock=0 ; iBlock<stkElementBlocks.size() ; iBlock++){
 
     const std::string blockName = stkElementBlocks[iBlock]->name();
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(elementBlocks->find(blockName) != elementBlocks->end(), "**** Duplicate block found: " + blockName + "\n");
+    TEST_FOR_EXCEPT_MSG(elementBlocks->find(blockName) != elementBlocks->end(), "**** Duplicate block found: " + blockName + "\n");
     (*elementBlocks)[blockName] = std::vector<int>();
     std::vector<int>& elementBlock = (*elementBlocks)[blockName];
 
@@ -308,7 +308,7 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
   for(unsigned int iNodeSet=0 ; iNodeSet<stkNodeSets.size() ; iNodeSet++){
 
     const std::string nodeSetName = stkNodeSets[iNodeSet]->name();
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSetName) != nodeSets->end(), "**** Duplicate node set found: " + nodeSetName + "\n");
+    TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSetName) != nodeSets->end(), "**** Duplicate node set found: " + nodeSetName + "\n");
     (*nodeSets)[nodeSetName] = std::vector<int>();
     std::vector<int>& nodeSet = (*nodeSets)[nodeSetName];
 
@@ -480,7 +480,7 @@ PeridigmNS::STKDiscretization::getGlobalOwnedMap(int d) const
       return threeDimensionalMap;
       break;
     default:
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
+      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
                          std::endl << "STKDiscretization::getGlobalOwnedMap(int d) only supports dimensions d=1 or d=3. Supplied dimension d=" << d << std::endl); 
     }
 }
@@ -496,7 +496,7 @@ PeridigmNS::STKDiscretization::getGlobalOverlapMap(int d) const
       return threeDimensionalOverlapMap;
       break;
     default:
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
+      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
                          std::endl << "STKDiscretization::getOverlapMap(int d) only supports dimensions d=1 or d=3. Supplied dimension d=" << d << std::endl); 
     }
 }

@@ -46,7 +46,7 @@
 //@HEADER
 
 #include "Peridigm_Material.hpp"
-#include <Teuchos_Assert.hpp>
+#include <Teuchos_TestForException.hpp>
 #include <Epetra_SerialComm.h>
 
 using namespace std;

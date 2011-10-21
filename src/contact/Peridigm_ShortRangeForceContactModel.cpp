@@ -46,7 +46,7 @@
 //@HEADER
 
 #include "Peridigm_ShortRangeForceContactModel.hpp"
-#include <Teuchos_Assert.hpp>
+#include <Teuchos_TestForException.hpp>
 
 PeridigmNS::ShortRangeForceContactModel::ShortRangeForceContactModel(const Teuchos::ParameterList& params)
   : ContactModel(params),
@@ -56,13 +56,13 @@ PeridigmNS::ShortRangeForceContactModel::ShortRangeForceContactModel(const Teuch
 {
   //! \todo Add meaningful asserts on material properties.
   if(!params.isParameter("Contact Radius"))
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Short range force contact parameter \"Contact Radius\" not specified.");
+    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Short range force contact parameter \"Contact Radius\" not specified.");
   m_contactRadius = params.get<double>("Contact Radius");
   if(!params.isParameter("Spring Constant"))
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Short range force contact parameter \"Spring Constant\" not specified.");
+    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Short range force contact parameter \"Spring Constant\" not specified.");
   m_springConstant = params.get<double>("Spring Constant");
   if(!params.isParameter("Horizon"))
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Short range force contact parameter \"Horizon\" not specified.");
+    TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Short range force contact parameter \"Horizon\" not specified.");
   m_horizon = params.get<double>("Horizon");
 }
 
@@ -96,7 +96,7 @@ PeridigmNS::ShortRangeForceContactModel::computeForce(const double dt,
       double nodeVolume = cellVolume[nodeID];
       for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
         int neighborID = contactNeighborhoodList[neighborhoodListIndex++];
-        TEUCHOS_TEST_FOR_EXCEPT_MSG(neighborID < 0, "Invalid neighbor list\n");
+        TEST_FOR_EXCEPT_MSG(neighborID < 0, "Invalid neighbor list\n");
         double currentDistance =
           distance(nodeCurrentX[0], nodeCurrentX[1], nodeCurrentX[2],
                    y[neighborID*3], y[neighborID*3+1], y[neighborID*3+2]);

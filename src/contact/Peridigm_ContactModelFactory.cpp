@@ -45,7 +45,7 @@
 // ************************************************************************
 //@HEADER
 
-#include <Teuchos_Assert.hpp>
+#include <Teuchos_TestForException.hpp>
 #include "Peridigm_ContactModelFactory.hpp"
 #include "Peridigm_ShortRangeForceContactModel.hpp"
 
@@ -63,7 +63,7 @@ PeridigmNS::ContactModelFactory::create(const Teuchos::ParameterList& contactMod
       string invalidContactModel("\n**** Unrecognized contact model: ");
       invalidContactModel += name;
       invalidContactModel += ", must be \"Short Range Force\".\n";
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, invalidContactModel);
+      TEST_FOR_EXCEPT_MSG(true, invalidContactModel);
     }
   }
   
