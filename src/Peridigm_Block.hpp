@@ -156,7 +156,7 @@ namespace PeridigmNS {
 
     //! Get the number of points in the block (does not include ghosts)
     int numPoints() {
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(
+      TEST_FOR_EXCEPT_MSG(
         ownedScalarPointMap.is_null(),
         "\n**** Error in Block::numPoints():  Map not set, pointer is null.\n");
       return ownedScalarPointMap->NumMyElements();
@@ -164,7 +164,7 @@ namespace PeridigmNS {
 
     //! Method for accessing data from the DataManager.
     Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec, Field_ENUM::Step step){
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(
+      TEST_FOR_EXCEPT_MSG(
         dataManager.is_null(),
         "\n**** DataManager must be initialized via Block::initializeDataManager() prior to calling Block::getData()\n");
       return dataManager->getData(fieldSpec, step);

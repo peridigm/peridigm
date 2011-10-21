@@ -57,7 +57,7 @@ PeridigmNS::VerletObserver::VerletObserver(Teuchos::RCP<EpetraExt::ModelEvaluato
   active = false;
 
   model = Teuchos::rcp_dynamic_cast<PeridigmNS::ModelEvaluator>(model_);
-  TEUCHOS_TEST_FOR_EXCEPT_MSG( model.get() == NULL, "PeridigmNS::RythmosObserver: PeridigmNS::ModelEvaluator not passed in.");
+  TEST_FOR_EXCEPT_MSG( model.get() == NULL, "PeridigmNS::RythmosObserver: PeridigmNS::ModelEvaluator not passed in.");
 
   if (params->isSublist("Output")) {
     active = true;
@@ -69,13 +69,13 @@ PeridigmNS::VerletObserver::VerletObserver(Teuchos::RCP<EpetraExt::ModelEvaluato
   if (active) {
     // Make the default format "VTK_XML"
     string outputFormat = outputParams->get("Output File Type", "VTK_XML");
-    TEUCHOS_TEST_FOR_EXCEPTION( outputFormat != "VTK_XML",
+    TEST_FOR_EXCEPTION( outputFormat != "VTK_XML",
                         std::invalid_argument,
                         "PeridigmNS::RythmosObserver: \"Output File Type\" must be either \"VTK_XML\".");
     if (outputFormat == "VTK_XML")
        outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_VTK_XML( outputParams ));
     else
-      TEUCHOS_TEST_FOR_EXCEPTION( true, std::invalid_argument,"PeridigmNS::RythmosObserver: \"Output File Type\" must be \"VTK_XML\".");
+      TEST_FOR_EXCEPTION( true, std::invalid_argument,"PeridigmNS::RythmosObserver: \"Output File Type\" must be \"VTK_XML\".");
 
     // Query material models for their force state data descriptions
     forceStateDesc = Teuchos::rcp( new Teuchos::ParameterList() );
