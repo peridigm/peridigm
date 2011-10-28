@@ -62,7 +62,8 @@
 #endif
 
 
-#include <tr1/memory>
+//#include <tr1/memory>
+//#include <memory>
 
 namespace PDNEIGH {
 

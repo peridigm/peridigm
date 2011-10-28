@@ -46,7 +46,8 @@
 #ifndef NEIGHBORHOOD_H_
 #define NEIGHBORHOOD_H_
 
-#include <tr1/memory>
+//#include <tr1/memory>
+//#include <memory>
 #include <set>
 
 #include "BondFilter.h"

@@ -62,7 +62,8 @@
 #include "vtk/Field.h"
 #include "PdZoltan.h"
 #include "PdutMpiFixture.h"
-#include <tr1/memory>
+//#include <tr1/memory>
+//#include <memory>
 #include <valarray>
 #include <iostream>
 #include <cmath>

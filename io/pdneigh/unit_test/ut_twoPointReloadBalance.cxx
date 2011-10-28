@@ -56,7 +56,8 @@
 #include "vtkIdList.h"
 #include "vtkKdTree.h"
 #include "vtkKdTreePointLocator.h"
-#include <tr1/memory>
+//#include <tr1/memory>
+//#include <memory>
 #include <iostream>
 #include <cmath>
 #include <map>

@@ -50,7 +50,9 @@
 #include <utility>
 #include <stdexcept>
 #include <string>
-#include <tr1/memory>
+//#include <tr1/memory>
+//#include <memory>
+#include "utilities/MemoryInclude.h"
 #include "utilities/Vector.h"
 
 using std::size_t;
