@@ -57,7 +57,8 @@
 #include "Array.h"
 #include "../QuickGrid.h"
 #include "PdutMpiFixture.h"
-#include <tr1/memory>
+//#include <tr1/memory>
+//#include <memory>
 #include <iostream>
 
 

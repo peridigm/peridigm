@@ -50,7 +50,8 @@
 #include <boost/property_tree/json_parser.hpp>
 
 #include <cmath>
-#include <tr1/memory>
+//#include <tr1/memory>
+//#include <memory>
 #include <iostream>
 #include <fstream>
 #include <sstream>

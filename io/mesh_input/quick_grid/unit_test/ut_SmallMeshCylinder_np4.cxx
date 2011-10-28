@@ -47,7 +47,8 @@
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
-#include <tr1/memory>
+//#include <tr1/memory>
+//#include <memory>
 #include "Vector.h"
 #include "Array.h"
 #include "../QuickGrid.h"

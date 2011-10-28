@@ -57,7 +57,8 @@
 #include "../QuickGrid.h"
 #include "vtk/PdVTK.h"
 #include "vtk/Field.h"
-#include <tr1/memory>
+//#include <tr1/memory>
+//#include <memory>
 #include <valarray>
 #include <iostream>
 #include <cmath>
