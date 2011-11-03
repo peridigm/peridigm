@@ -60,6 +60,16 @@ add_executable(Peridigm ${Peridigm_SOURCES})
 target_link_libraries(Peridigm ${Peridigm_LINK_LIBRARIES})
 
 #
+# Install target for Peridigm main executable
+#
+install(TARGETS Peridigm
+    RUNTIME DESTINATION bin
+)
+set_property(TARGET Peridigm
+    PROPERTY INSTALL_RPATH_USE_LINK_PATH TRUE
+)
+
+#
 # Unit Tests
 #
 set(utPeridigm_SOURCES
