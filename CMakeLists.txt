@@ -40,7 +40,7 @@ endif ()
 # VTK configuration
 # Questions? See http://www.cmake.org/cmake/help/cmake2.6docs.html#module:FindVTK
 #
-find_package (VTK)
+find_package (VTK ${VTK_VERSION} NAMES VTK PATHS ${VTK_ROOT})
 if (VTK_FOUND)
   message ("\nVTK installation:")
   message ("   Version: ${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}")
