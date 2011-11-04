@@ -57,8 +57,6 @@
 #include <cstdlib>
 #include <set>
 #include <time.h>
-//#include <tr1/memory>
-//#include <memory>
 
 
 using UTILITIES::CartesianComponent;

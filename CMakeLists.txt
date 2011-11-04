@@ -174,15 +174,11 @@ link_directories(${LIB_DIRS})
 
 set (REQUIRED_LIBS
 ${BlasLapack_Libraries}  
-libgfortran.a
-#libm.a
 )
 
 set (UT_REQUIRED_LIBS
 ${BlasLapack_Libraries}  
-libgfortran.a
 ${Boost_LIBRARIES}
-#libm.a
 )
 
 add_subdirectory (bond_volume)

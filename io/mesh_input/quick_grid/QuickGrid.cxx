@@ -49,8 +49,6 @@
 
 #include "mpi.h"
 #include <boost/property_tree/json_parser.hpp>
-//#include <tr1/memory>
-//#include <memory>
 #include <vector>
 #include <cmath>
 #include <cstring>

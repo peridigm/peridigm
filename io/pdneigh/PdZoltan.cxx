@@ -43,8 +43,6 @@
 // ************************************************************************
 //@HEADER
 
-//#include <tr1/memory>
-//#include <memory>
 #include <vector>
 #include "PdZoltan.h"
 #include "Array.h"

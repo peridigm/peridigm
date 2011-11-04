@@ -65,8 +65,6 @@
 #include "zoltan.h"
 #include "Sortable.h"
 #include "mpi.h"
-//#include <tr1/memory>
-//#include <memory>
 #include <valarray>
 #include <iostream>
 #include <cmath>

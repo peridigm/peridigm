@@ -47,8 +47,6 @@
 
 #ifndef QUICKGRIDDATA_H_
 #define QUICKGRIDDATA_H_
-//#include <tr1/memory>
-//#include <memory>
 #include "utilities/MemoryInclude.h"
 using std::tr1::shared_ptr;
 

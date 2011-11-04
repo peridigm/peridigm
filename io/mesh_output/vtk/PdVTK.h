@@ -56,8 +56,6 @@
 #include "vtkKdTree.h"
 #include "vtkKdTreePointLocator.h"
 #include "vtkXMLPUnstructuredGridWriter.h"
-//#include <tr1/memory>
-//#include <memory>
 #include "Field.h"
 #include <deque>
 #include <string>
