@@ -106,6 +106,23 @@ def GetTimeCollection(filename):
 	dataSetNodeList=collectionElement.getElementsByTagName("DataSet")
 	d=[(float(dataSetNodeList.item(i).getAttribute("timestep")),dataSetNodeList.item(i).getAttribute("file")) for i in range(dataSetNodeList.length)]
 	return sorted(d,key=itemgetter(0))
+	
+def GetPieceFileNames(filename):
+	"""Parses input file name and extract piece part names;  
+	
+	Input: string filename of ".pvtu" file to read
+	Preconditions: file must be an xml paraview .pvtu file
+	Output: return list containing piece part 'Source' filenames
+	"""
+	dom=parse(filename)
+	vtkFileElement=dom.documentElement
+	gridList=vtkFileElement.getElementsByTagName("PUnstructuredGrid")
+	grid=gridList.item(0)
+	pieceList=grid.getElementsByTagName("Piece")
+	return [pieceList.item(i).getAttribute('Source') for i in range(pieceList.length)]
+	
+	
+	
 
 	
 
