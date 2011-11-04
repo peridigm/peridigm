@@ -75,14 +75,9 @@
 #endif
 
 
-
-
-//#include <tr1/memory>
-//#include <memory>
 #include <iostream>
 #include <cmath>
 using namespace Pdut;
-
 
 
 using namespace QUICKGRID;

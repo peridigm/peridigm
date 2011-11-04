@@ -46,8 +46,6 @@
 #ifndef ARRAY_H_
 #define ARRAY_H_
 
-//#include <tr1/memory>
-//#include <memory>
 #include "utilities/MemoryInclude.h"
 #include <stdexcept>
 #include <cmath>

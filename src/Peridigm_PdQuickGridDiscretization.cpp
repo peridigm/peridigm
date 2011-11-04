@@ -53,8 +53,6 @@
 #include <vector>
 #include <list>
 #include <sstream>
-//#include <tr1/memory>
-//#include <memory>
 
 using namespace std;
 using tr1::shared_ptr;

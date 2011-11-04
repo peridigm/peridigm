@@ -62,9 +62,6 @@
 #endif
 
 
-//#include <tr1/memory>
-//#include <memory>
-
 namespace PDNEIGH {
 
 using Field_NS::Field;

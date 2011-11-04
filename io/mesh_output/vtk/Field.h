@@ -46,8 +46,6 @@
 #ifndef FIELD_H_
 #define FIELD_H_
 #include <stdexcept>
-//#include <tr1/memory>
-//#include <memory>
 #include <string>
 #include <map>
 #include "utilities/Array.h"
