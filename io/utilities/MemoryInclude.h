@@ -59,9 +59,9 @@
 
 // If compiler-supplied memory.hpp is not available, use Boost
 #else
-#ifndef REMARK_PRINTED
-#remark "Could not find compiler-supplied memory.hpp, substituting boost/tr1/memory.hpp"
-#define REMARK_PRINTED
+#ifndef WARNING_PRINTED
+#warning "Could not find compiler-supplied memory.hpp, substituting boost/tr1/memory.hpp"
+#define WARNING_PRINTED
 #endif
 #include <boost/tr1/memory.hpp>
 
