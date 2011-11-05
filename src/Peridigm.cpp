@@ -591,6 +591,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
   force->PutScalar(0.0);
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    scratch->PutScalar(0.0);
     blockIt->exportData(*scratch, Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
     force->Update(1.0, *scratch, 1.0);
   }
@@ -601,6 +602,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
     PeridigmNS::Timer::self().startTimer("Gather/Scatter");
     contactForce->PutScalar(0.0);
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+      scratch->PutScalar(0.0);
       blockIt->exportData(*scratch, Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
       contactForce->Update(1.0, *scratch, 1.0);
     }
@@ -681,6 +683,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
     PeridigmNS::Timer::self().startTimer("Gather/Scatter");
     force->PutScalar(0.0);
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+      scratch->PutScalar(0.0);
       blockIt->exportData(*scratch, Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
       force->Update(1.0, *scratch, 1.0);
     }
@@ -696,6 +699,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
       PeridigmNS::Timer::self().startTimer("Gather/Scatter");
       contactForce->PutScalar(0.0);
       for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+        scratch->PutScalar(0.0);
         blockIt->exportData(*scratch, Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
         contactForce->Update(1.0, *scratch, 1.0);
       }
