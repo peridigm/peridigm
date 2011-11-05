@@ -574,9 +574,9 @@ void cylindericalCellPerProcIterator4Proc()
 		for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++,cell++){
 			BOOST_CHECK( *gIdsPtr == (int)id );
 
-			BOOST_CHECK(xx[id*3]==X[3*cell]);
-			BOOST_CHECK(xx[id*3+1]==X[3*cell+1]);
-			BOOST_CHECK(xx[id*3+2]==X[3*cell+2]);
+			BOOST_CHECK_CLOSE(xx[id*3], X[3*cell], 1.0e-15);
+			BOOST_CHECK_CLOSE(xx[id*3+1], X[3*cell+1], 1.0e-15);
+			BOOST_CHECK_CLOSE(xx[id*3+2], X[3*cell+2], 1.0e-15);
 			int ptr = neighborhoodPtr[cell];
 			BOOST_CHECK(19==neighborhood[ptr]);
 			for(int p=0;p<19;p++){

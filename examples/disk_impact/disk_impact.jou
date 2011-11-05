@@ -1,7 +1,7 @@
 #
 #  Example of how to call loadbal to create parallel input files:
 #
-#  loadbal -No_subdirectory -suffix_mesh g -suffix_spread g -p 2 -R /home/djlittl/Desktop/ disk_impact 2
+#  loadbal -No_subdirectory -suffix_mesh g -suffix_spread g -p 2 disk_impact 2
 # 
 #  ./disk_impact.spd
 #

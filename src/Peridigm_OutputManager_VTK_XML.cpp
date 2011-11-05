@@ -283,6 +283,7 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<PeridigmNS::DataManag
         // use field name to get reference to const fieldSpec
         std::map<string, Field_NS::FieldSpec>::const_iterator i3; 
         i3 = Field_NS::FieldSpecMap::Map.find(nm); // Can't use operator[] on a const std::map
+        TEST_FOR_EXCEPT_MSG(i3 == Field_NS::FieldSpecMap::Map.end(), "Failed to find reference to fieldSpec!");
         Field_NS::FieldSpec const &fs = i3->second;
         double *ptr; ptr = NULL;
         if (fs == Field_NS::GID) { // Handle special case of ID (int type)
