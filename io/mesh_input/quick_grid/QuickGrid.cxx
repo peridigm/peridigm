@@ -55,6 +55,7 @@
 #include <iostream>
 #include <strstream>
 #include <set>
+#include <map>
 #include <cstdlib>
 
 namespace QUICKGRID {
@@ -462,6 +463,9 @@ std::vector<size_t> QuickGridMeshGenerationIterator::getNumCellsPerProcessor(siz
 	return cellsPerProc;
 }
 
+
+
+
 TensorProduct3DMeshGenerator::TensorProduct3DMeshGenerator
 (
 		size_t numProc,
@@ -706,6 +710,623 @@ size_t TensorProduct3DMeshGenerator::computeNumNeighbors(size_t i, size_t j, siz
 	return nCx * nCy * nCz - 1;
 }
 
+AxisSymmetric2DCylinderMeshGenerator::AxisSymmetric2DCylinderMeshGenerator
+(
+		size_t nProcs,
+		double radiusHorizon,
+		const SpecRing2D& rSpec,
+		double cylinder_length,
+		NormFunctionPointer norm
+) :
+QuickGridMeshGenerationIterator(nProcs,norm),
+horizonRadius(radiusHorizon),
+global_num_cells(0),
+global_num_master_cells(0),
+global_num_slave_cells(0),
+ringSpec(rSpec),
+specs(3,rSpec.getRaySpec()),
+ringHorizon(0,0),
+H(3,Horizon(0,0))
+{
+
+	// Set up tensor product specs
+	// radial direction
+	Spec1D raySpec=ringSpec.getRaySpec();
+	specs[0] = raySpec;
+	double dr=raySpec.getCellSize();
+	size_t nr=ringSpec.getNumRings();
+	H[0] = raySpec.getCellHorizon(radiusHorizon); // r
+
+	// theta direction -- ultimately this will be a 'wedge'
+	// number of slave cells on one side of master along theta dir
+	size_t nt = 2.0 * horizonRadius * nr / ringSpec.getRingThickness();
+	// Total number of cells along theta
+	//   master + 2 * nt
+	// By construction, nt is 'odd'
+	nt = 1 + 2 * nt;
+	// uses average radius of ring for computing cell 'd_theta'
+	double d_theta=2.0*ringSpec.getRingThickness() / nr / (ringSpec.getr0()+ringSpec.getrI());
+	// this is total wedge angle
+	double wedge_theta=nt * d_theta;
+	// mesh generator along theta begins at -wedge_theta/2
+	double theta_0=-wedge_theta/2.0;
+	specs[1] = Spec1D(nt,theta_0,wedge_theta);
+	// note that horizon of for theta direction is special because of the arc length
+	// note the use of average radius
+	// note that there is no 'H[1]' here; ringHorizon takes the place of 'H[1]'
+	ringHorizon = specs[1].getRingCellHorizon(radiusHorizon,(rSpec.getrI()+rSpec.getr0())/2.0);
+
+	// cylinder axis -- z direction
+	// set number of cells along axis so that dz~dr
+	double dz=dr;
+	size_t nz=cylinder_length/dz;
+	if(0==nz) nz+=1;
+	Vector3D center = rSpec.getCenter();
+	dz=cylinder_length/nz;
+	double z0=center[2]-dz/2;
+	Spec1D axisSpec(nz,z0,cylinder_length);
+	specs[2] = axisSpec;
+	H[2]=axisSpec.getCellHorizon(horizonRadius);
+
+	// number of cells in master
+	global_num_master_cells = nr * nz;
+
+	// Number of cells in wedge
+	global_num_cells = nr * nt * nz;
+
+	// number of slave cells
+	global_num_slave_cells=global_num_cells-global_num_master_cells;
+
+	// compute cellsPerProc -- this is for the 2D r-z mesh
+	cellsPerProc = QuickGridMeshGenerationIterator::getNumCellsPerProcessor(global_num_master_cells,nProcs);
+
+	rPtr = getDiscretization(specs[0]);
+	thetaPtr = getDiscretization(specs[1]);
+	zPtr = getDiscretization(specs[2]);
+
+
+}
+
+QuickGridData AxisSymmetric2DCylinderMeshGenerator::sweep_to_wedge
+(
+		QuickGridData decomp
+
+) const
+{
+	Spec1D r_spec = specs[0];
+	Spec1D theta_spec = specs[1];
+	Spec1D z_spec = specs[2];
+	size_t nr = r_spec.getNumCells();
+	size_t nt = theta_spec.getNumCells();
+	size_t nz = z_spec.getNumCells();
+	size_t num_half_sweep = (nt-1)/2;
+	size_t num_master=decomp.numPoints;
+	size_t num_owned=num_master * nt;
+
+	/*
+	 * Allocate a new wedge
+	 */
+	size_t dimension=3;
+	QuickGridData wedge=QUICKGRID::allocatePdGridData(num_owned, dimension);
+	Array<int> GIDs(wedge.numPoints,wedge.myGlobalIDs);
+	shared_ptr<double> xOwned=wedge.myX;
+	Array<double> cellVolume(wedge.numPoints*wedge.dimension,wedge.cellVolume);
+//	cout << "QuickGridData AxisSymmetric2DCylinderMeshGenerator::sweep_to_wedge \n";
+//	cout << "\tnum cells along sweep = " << nt << "\n";
+//	cout << "\tnum cells half sweep = " << num_half_sweep << "\n";
+	/*
+	 * Put GIDs of master points at front of list
+	 */
+	{
+		double *xMaster=decomp.myX.get();
+		double *xPtr=xOwned.get();
+		double *masterVolume=decomp.cellVolume.get();
+		for(int m=0,*gid=decomp.myGlobalIDs.get(), *end=decomp.myGlobalIDs.get()+num_master;gid!=end;m++,gid++){
+			size_t i=(*gid)%nr;
+			size_t k=(*gid)/nr;
+			// new master id
+			size_t master_id= nt * nz * i + k * nt + num_half_sweep;
+
+			/*
+			 * assign master id
+			 */
+			GIDs[m]=master_id;
+			/*
+			 * copy master volumes over to slaves
+			 */
+			cellVolume[m]=masterVolume[m];
+			/*
+			 * copy coordinates
+			 */
+			xPtr[0]=xMaster[0];
+			xPtr[1]=xMaster[1];
+			xPtr[2]=xMaster[2];
+			xPtr+=3;
+			xMaster+=3;
+		}
+	}
+	/*
+	 * Now add owned slave nodes
+	 * Note shift of xPtr to beginning of slave points since we already set master points at start in above
+	 */
+	double *xMaster=decomp.myX.get();
+	double *xPtr=xOwned.get()+3*num_master;
+	double *masterVolume=decomp.cellVolume.get();
+	double *slaveVolume=cellVolume.get()+num_master;
+	size_t m = 0;
+	for(int  *gid=decomp.myGlobalIDs.get(),*GID=GIDs.get()+num_master;m<num_master;m++){
+		size_t i=(gid[m])%nr;
+		size_t k=(gid[m])/nr;
+		// new master id
+		size_t master_id= nt * nz * i + k * nt + num_half_sweep;
+
+		// coordinate of master point to be swept out below
+		double r = *(xMaster+0);
+		double z = *(xMaster+2);
+		/*
+		 * move to next master point
+		 */
+		xMaster+=3;
+
+		double masterCellVolume=masterVolume[m];
+		// sweep theta
+		const double *theta=thetaPtr.get();
+		// sweep 1st half
+		// create 1st half of slave ids
+		for(size_t j=0;j<num_half_sweep;j++,GID++,theta++,xPtr+=3,slaveVolume++){
+
+			size_t slave_id=master_id - num_half_sweep + j;
+
+			*GID=slave_id;
+			xPtr[0] = r * cos(*theta);
+			xPtr[1] = r * sin(*theta);
+			xPtr[2] = z;
+			*slaveVolume=masterCellVolume;
+		}
+
+		// skip master theta=0
+		theta++;
+
+		// sweep 2nd half
+		// create 2nd half of slave ids
+		for(size_t j=num_half_sweep+1;j<2*num_half_sweep+1;j++,GID++,theta++,xPtr+=3,slaveVolume++){
+			size_t slave_id=master_id - num_half_sweep + j;
+
+			*GID=slave_id;
+			xPtr[0] = r * cos(*theta);
+			xPtr[1] = r * sin(*theta);
+			xPtr[2] = z;
+			*slaveVolume=masterCellVolume;
+		}
+
+
+	}
+
+	return wedge;
+}
+
+
+/*
+ * This function re-arranges owned points into the following order
+ * 1) master
+ * 2) slaves with masters owned by this processor
+ * 3) slaves with masters owned by another processor
+ */
+AxisSymmetricWedgeData AxisSymmetric2DCylinderMeshGenerator::create_wedge_data(QuickGridData& decomp) const {
+
+
+	Spec1D r_spec = specs[0];
+	Spec1D theta_spec = specs[1];
+	Spec1D z_spec = specs[2];
+//	size_t nr = r_spec.getNumCells();
+	size_t nt = theta_spec.getNumCells();
+	size_t nz = z_spec.getNumCells();
+	/*
+	 * note that nt = 2 num_half_sweep +1
+	 */
+	size_t num_half_sweep = (nt-1)/2;
+
+
+	/*
+	 * average radius of ring
+	 */
+	double R = (ringSpec.getrI()+ringSpec.getr0())/2.0;
+
+	size_t num_owned=decomp.numPoints;
+	Array<int> newGIDs(num_owned);
+	Array<double> new_theta(num_owned);
+	Array<double> newVolume(num_owned);
+	Array<double> newX(num_owned*3);
+	std::set<int> owned_masters;
+	std::map<int,int> masters_localid_map;
+	{
+		/*
+		 * This loop collects all owned points in the master surface
+		 */
+		int *gids=decomp.myGlobalIDs.get();
+		double *volume=decomp.cellVolume.get();
+		double *X=decomp.myX.get();
+		double tolerance=1.0e-15;
+
+		for(size_t p=0, num_master=0;p<num_owned;p++,gids++,X+=3){
+			/*
+			 * is gid a 'master' ??
+			 * Every point in the master surface has y = 0.0
+			 */
+			double y = *(X+1)/R;
+			if(abs(y)<=tolerance){
+				/*
+				 * This is a master point;
+				 * Add to set;
+				 */
+				owned_masters.insert(*gids);
+				masters_localid_map[*gids]=num_master;
+				newGIDs[num_master]=*gids;
+				/*
+				 * master points rotate into themselves: theta = 0.0
+				 */
+				new_theta[num_master]=0.0;
+				newVolume[num_master]=*volume;
+				newX[3*num_master+0]=*(X+0);
+				newX[3*num_master+1]=*(X+1);
+				newX[3*num_master+2]=*(X+2);
+				num_master+=1;
+			}
+		}
+	}
+	std::set<int>::iterator master_start = owned_masters.begin();
+	std::set<int>::const_iterator end=owned_masters.end();
+	size_t num_owned_slaves(0);
+	size_t num_master = owned_masters.size();
+	{
+		/*
+		 * This loop calculates the number of slave points whose master
+		 * is owned by this processor;
+		 * For these slave nodes, data is also moved to the
+		 * slave node
+		 */
+		int *gids=decomp.myGlobalIDs.get();
+		double *volume=decomp.cellVolume.get();
+		double *X=decomp.myX.get();
+		const double *theta=thetaPtr.get();
+		double tolerance=1.0e-15;
+		for(size_t p=0;p<num_owned;p++,gids++,volume++,X+=3){
+			/*
+			 * gid an owned 'master' ??
+			 */
+			double y = *(X+1)/R;
+			if(abs(y)<=tolerance){
+				/*
+				 * this case was already handled above
+				 */
+				continue;
+			}
+			/* gid is a slave
+			 * Is master owned by ANOTHER processor
+			 * NOTE '!='
+			 */
+			size_t j_theta = (*gids)%(nt*nz);
+			size_t master_id = *gids + num_half_sweep - j_theta;
+			if(end!=owned_masters.find(master_id)){
+				/*
+				 * we own this slave's master
+				 */
+				newGIDs[num_master+num_owned_slaves]=*gids;
+				new_theta[num_master+num_owned_slaves]=theta[j_theta];
+				newVolume[num_master+num_owned_slaves]=*volume;
+				newX[3*(num_master+num_owned_slaves)+0]=*(X+0);
+				newX[3*(num_master+num_owned_slaves)+1]=*(X+1);
+				newX[3*(num_master+num_owned_slaves)+2]=*(X+2);
+				num_owned_slaves+=1;
+
+			}
+		}
+	}
+	size_t num_overlap_slaves(0);
+	{
+		/*
+		 * This loop calculates the number of slave points
+		 * whose master we DO NOT own
+		 */
+		int *gids=decomp.myGlobalIDs.get();
+		double *volume=decomp.cellVolume.get();
+		double *X=decomp.myX.get();
+		const double *theta=thetaPtr.get();
+		double tolerance=1.0e-15;
+		for(size_t p=0;p<num_owned;p++,gids++,volume++,X+=3){
+			/*
+			 * gid an owned 'master' ??
+			 */
+			double y = *(X+1)/R;
+			if(abs(y)<=tolerance){
+				continue;
+			}
+			/* gid is a slave
+			 * Is master owned by ANOTHER processor
+			 * NOTE '=='
+			 */
+			size_t j_theta = (*gids)%(nt*nz);
+			size_t master_id = *gids + num_half_sweep - j_theta;
+			if(end==owned_masters.find(master_id)){
+				/*
+				 * we DO NOT own this slave's master;
+				 * Therefore we put their GIDs to the 'master' and act like
+				 * we don't own them -- use these to create 'overlap' map
+				 */
+				newGIDs[num_master+num_owned_slaves+num_overlap_slaves]=*gids;
+				new_theta[num_master+num_owned_slaves+num_overlap_slaves]=theta[j_theta];
+				newVolume[num_master+num_owned_slaves+num_overlap_slaves]=*volume;
+				newX[3*(num_master+num_owned_slaves+num_overlap_slaves)+0]=*(X+0);
+				newX[3*(num_master+num_owned_slaves+num_overlap_slaves)+1]=*(X+1);
+				newX[3*(num_master+num_owned_slaves+num_overlap_slaves)+2]=*(X+2);
+				num_overlap_slaves+=1;
+
+			}
+		}
+	}
+	/*
+	 * Fill num_master+num_owned_slave with local_id of master
+	 */
+	Array<int> local_master_ids(num_master+num_owned_slaves);
+	for(size_t m=0;m<num_master+num_owned_slaves;m++){
+		int gid=newGIDs[m];
+		int master_local_id=masters_localid_map[gid];
+		local_master_ids[m]=master_local_id;
+	}
+	size_t num_slave = num_owned_slaves+num_overlap_slaves;
+//	std::stringstream m;
+//	m << "num owned = " << num_owned << "\n";
+//	m << "num_master = " << num_master << "; num_owned_slaves = " << num_owned_slaves << "; num_overlap_slaves = " << num_overlap_slaves << "\n";
+//	std::cout << m.str();
+	if(num_owned!=num_slave+num_master){
+		std::stringstream s;
+		s << "ERROR: AxisSymmetric2DCylinderMeshGenerator::re_order_data_and_create_wedge_operator\n";
+		s << "\tCalculation of num_owned and num_slave points inconsistent\n";
+		s << "\tCannot proceed\n";
+		throw std::runtime_error(s.str());
+		std::exit(0);
+	}
+	AxisSymmetricWedgeData wedge_data;
+	wedge_data.numPoints=num_master+num_owned_slaves+num_overlap_slaves;
+	wedge_data.num_master=num_master;
+	wedge_data.num_slave_on_processor_masters=num_owned_slaves;
+	wedge_data.num_slave_off_processor_masters=num_overlap_slaves;
+	wedge_data.myGlobalIDs=newGIDs.get_shared_ptr();
+	wedge_data.local_master_ids=local_master_ids.get_shared_ptr();
+	wedge_data.theta=new_theta.get_shared_ptr();
+	wedge_data.cellVolume=newVolume.get_shared_ptr();
+	wedge_data.myX=newX.get_shared_ptr();
+	return wedge_data;
+}
+
+QuickGridData AxisSymmetric2DCylinderMeshGenerator::allocatePdGridData() const {
+
+	// Number of cells on this processor -- number of cells on last
+	//   processor is always <= numCellsPerProc
+	size_t numCellsAllocate = cellsPerProc[getNumProcs()-1];
+
+	size_t dimension = 3;
+	return QUICKGRID::allocatePdGridData(numCellsAllocate, dimension);
+
+}
+
+/**
+ * This function is distinct in that special care must be taken to
+ * properly account for a cylinder
+ */
+size_t AxisSymmetric2DCylinderMeshGenerator::computeNumNeighbors(size_t i, size_t j, size_t k) const {
+
+	// Horizon in each of the coordinate directions
+	Horizon hX = H[0];
+	// Horizon hY = H[1]; // cylinder uses ringHorizon
+	// RingHorizon::RingHorizonIterator hIter = ringHorizon.horizonIterator(j);
+	// However, in this case, RingHorizon is not needed either because this is a 2D mesh generator
+	Horizon hZ = H[2];
+
+	size_t nCx = hX.numCells(i);
+	size_t nCy = 1;
+	size_t nCz = hZ.numCells(k);
+	/*
+	 * Number of cells in this (i,j,k) neighborhood
+	 * Note that '1' is subtracted to remove "this cell"
+	 */
+
+	return nCx * nCy * nCz - 1;
+}
+
+size_t AxisSymmetric2DCylinderMeshGenerator::getSizeNeighborList
+(
+		size_t proc,
+		Cell3D cellLocator
+) const {
+
+	Spec1D xSpec = specs[0]; // r
+//	Spec1D ySpec = specs[1]; // theta un-used here
+	Spec1D zSpec = specs[2]; // z
+	size_t nx = xSpec.getNumCells();
+	size_t ny = 1;
+	size_t nz = zSpec.getNumCells();
+
+	/*
+	 * Compacted list of neighbors
+	 * 1) for i = 0,..(numCells-1)
+	 * 2)   numCellNeighborhood(i)
+	 * 3)   neighorhood(i) -- does not include "i"
+	 */
+	// for each cell store numCells +  neighborhood
+	// int size =  numCells    +                     sum(numCells(i),i);
+	size_t numCells = cellsPerProc[proc];
+	size_t size=numCells;
+
+	// Perform sum over all neighborhoods
+	size_t kStart = cellLocator.k;
+	size_t jStart = cellLocator.j;
+	size_t iStart = cellLocator.i;
+	size_t cell = 0;
+
+	for(size_t k=kStart;k<nz;k++){
+		// kStart = 0; this one doesn't matter
+
+		for(size_t j=jStart;j<ny;j++){
+			jStart=0; // begin at jStart only the first time
+
+			for(size_t i=iStart;i<nx && cell<numCells;i++,cell++){
+				// begin at iStart only the first time
+				iStart = 0;
+				size += computeNumNeighbors(i,j,k);
+			}
+		}
+	}
+
+	return size;
+
+}
+
+std::pair<Cell3D,QuickGridData> AxisSymmetric2DCylinderMeshGenerator::computePdGridData(size_t proc, Cell3D cellLocator, QuickGridData& pdGridData, NormFunctionPointer norm) const {
+
+	/**
+	 * This routine attempts to make as close of an analogy to CellsPerProcessor3D::computePdGridData(...)
+	 * as makes sense:
+	 *    x <--> r
+	 *    y <--> theta
+	 *    z <--> z
+	 */
+//	std::cout << "CellsPerProcessorCylinder::computePdGridData proc = " << proc << std::endl;
+	Spec1D xSpec = specs[0]; // r
+	Spec1D ySpec = specs[1]; // theta
+	Spec1D zSpec = specs[2]; // z
+	size_t nx = xSpec.getNumCells();
+	size_t ny = 1;
+	size_t nz = zSpec.getNumCells();
+
+	// Each cell has the same volume arc size in radians --
+	//   Cells have different volumes bases upon "r"
+	double dr = xSpec.getCellSize();
+	double dz = zSpec.getCellSize();
+	double cellRads = ySpec.getCellSize();
+	double cellVolume;
+
+	// Horizon in each of the coordinate directions
+	Horizon hX = H[0];
+//	Horizon hY = H[1]; // un-used here
+	Horizon hZ = H[2];
+
+	// Number of cells on this processor
+	size_t myNumCells = cellsPerProc[proc];
+
+	// Coordinates used for tensor product space
+	const double*x=rPtr.get();
+//	const double*y=thetaPtr.get(); // un-used here because theta=0=fixed
+	const double*z=zPtr.get();
+
+	// Discretization on this processor
+	pdGridData.dimension = 3;
+//	pdGridData.globalNumPoints = nx*nz;
+	pdGridData.numPoints = myNumCells;
+	int *gidsPtr = pdGridData.myGlobalIDs.get();
+	double *XPtr = pdGridData.myX.get();
+	double *volPtr = pdGridData.cellVolume.get();
+	// allocate neighborhood for incoming data since each one of these has a different length
+	int sizeNeighborhoodList = getSizeNeighborList(proc, cellLocator);
+	pdGridData.sizeNeighborhoodList = sizeNeighborhoodList;
+	Array<int> neighborhoodList(sizeNeighborhoodList);
+	pdGridData.neighborhood = neighborhoodList.get_shared_ptr();
+	int *neighborPtr = neighborhoodList.get();
+	int updateSizeNeighborhoodList = 0;
+
+	// Compute discretization on processor
+	int kStart = cellLocator.k;
+	int jStart = cellLocator.j;
+	int iStart = cellLocator.i;
+
+	size_t cell = 0;
+	double point[3]={0.0,0.0,0.0};
+	double pointNeighbor[3] = {0.0,0.0,0.0};
+	for(size_t k=kStart;k<nz && cell<myNumCells;k++){
+		// kStart = 0; this one doesn't matter
+		cellLocator.k = k;
+		point[2]=z[k];
+		size_t zStart = hZ.start(k);
+		size_t nCz = hZ.numCells(k);
+
+		for(size_t j=jStart;j<ny && cell<myNumCells;j++){
+			jStart=0; // begin at jStart only the first time
+			cellLocator.j = j;
+			for(size_t i=iStart;i<nx && cell<myNumCells;i++,cell++,cellLocator.i++){
+				iStart=0; // begin at iStart only the first time
+				// global id
+				*gidsPtr = i + j * nx + k * nx * ny; gidsPtr++;
+
+				double r = x[i];
+				point[0] = r;
+				point[1] = 0;
+				// copy point data
+				for(size_t p=0;p<3;p++,XPtr++)
+					*XPtr = point[p];
+
+				// copy cell volume
+				cellVolume = r*dr*cellRads*dz;
+				*volPtr = cellVolume; volPtr++;
+
+				size_t xStart = hX.start(i);
+				size_t nCx = hX.numCells(i);
+				// number of cells in this (i,j,k) neighborhood
+				// Compute neighborhood
+				int *numNeigh = neighborPtr; neighborPtr++;
+				size_t countNeighbors = 0;
+				for(size_t kk=zStart;kk<nCz+zStart;kk++){
+
+					for(size_t ii=xStart;ii<nCx+xStart;ii++){
+						// skip this cell since its its own neighbor
+						if(ii == i && kk == k) continue;
+
+						// Neighborhood norm calculation
+						double r = x[ii];
+						pointNeighbor[0] = r;
+						pointNeighbor[1] = 0;
+						pointNeighbor[2] = z[kk];
+
+						if(norm(pointNeighbor,point,horizonRadius)){
+							int globalId = ii +  kk * nx;
+							*neighborPtr = globalId; neighborPtr++;
+							countNeighbors++;
+						}
+					}
+
+				}
+				*numNeigh = countNeighbors;
+				updateSizeNeighborhoodList += countNeighbors;
+			}
+
+			if(cellLocator.i == nx){
+				cellLocator.i = 0;
+				if(cell==myNumCells){
+					// current j holds current last row which needs to be incremented
+					cellLocator.j += 1;
+					if(cellLocator.j == ny){
+						cellLocator.j = 0;
+						// current k holds current last row which needs to be incremented
+						cellLocator.k += 1;
+					}
+				}
+			}
+
+		}
+	}
+
+	// post process and compute neighborhoodPtr
+	pdGridData.sizeNeighborhoodList = updateSizeNeighborhoodList+myNumCells;
+	int *neighPtr = pdGridData.neighborhoodPtr.get();
+	int *neighborListPtr = neighborhoodList.get();
+	int sum=0;
+	for(size_t n=0;n<myNumCells;n++){
+		neighPtr[n]=sum;
+		int numCells = *neighborListPtr; neighborListPtr += (numCells+1);
+		sum += (numCells+1);
+	}
+
+	return std::pair<Cell3D,QuickGridData>(cellLocator,pdGridData);
+}
 
 
 TensorProductCylinderMeshGenerator::TensorProductCylinderMeshGenerator

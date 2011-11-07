@@ -242,6 +242,76 @@ private:
 	NormFunctionPointer neighborHoodNorm;
 };
 
+/*
+ * Produces a 2D mesh (r-z) plane for cylinder;
+ * 2D mesh is intermediate stage for creating a wedge;
+ * that can be used for axis symmetric peridynamics calculations
+ * Use case is as follows:
+	 * 1) create 2D mesh in the usual way (intermediate stage mesh)
+	 * 2) load balance mesh
+	 * 3) sweep 2D to produce wedge
+	 * 4) load balance wedge
+ */
+class AxisSymmetric2DCylinderMeshGenerator : public QuickGridMeshGenerationIterator {
+
+public:
+	explicit AxisSymmetric2DCylinderMeshGenerator
+	(
+			size_t numProcs,
+			double radiusHorizon,
+			const SpecRing2D& rSpec,
+			double cylinder_length,
+			NormFunctionPointer norm=NoOpNorm
+	);
+	virtual ~AxisSymmetric2DCylinderMeshGenerator() {}
+	virtual QuickGridData allocatePdGridData() const;
+
+	size_t getDimension() const { return 3; }
+	std::pair<Cell3D,QuickGridData> computePdGridData(size_t proc, Cell3D cellLocator, QuickGridData& pdGridData, NormFunctionPointer norm = NoOpNorm) const;
+	const std::vector<Spec1D>& getTensorProductSpecs() const { return specs; }
+	/**
+	 * HOWTO USE THIS CLASS to create an 'AxisSymmetricWedgeData'
+	 * Process is as follows:
+	 * 1) AxisSymmetric2DCylinderMeshGenerator meshGen(...)
+	 * 2) QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, meshGen);
+	 * 3) decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
+	 * 4) QUICKGRID::QuickGridData wedge=meshGen.sweep_to_wedge(decomp);
+	 * 5) wedge = PDNEIGH::getLoadBalancedDiscretization(wedge);
+	 * 6) AxisSymmetricWedgeData wedge_data=create_wedge_data(wedge)
+	 * Following the above steps, all previous data is null and void;
+	 * Only use data associated with 'wedge_data' -- it looks like
+	 * a QuickGridData except that it has a few additional members that
+	 * can be used to construct the internal force operator for
+	 * handling axis symmetric conditions
+	 */
+	QuickGridData sweep_to_wedge(QuickGridData decomp) const;
+	AxisSymmetricWedgeData create_wedge_data(QuickGridData& decomp) const;
+	/*
+	 * These are only public for testing purposes -- don't call these functions
+	 */
+	size_t getSizeNeighborList(size_t proc,Cell3D cellLocator) const;
+	size_t computeNumNeighbors(size_t i, size_t j, size_t k) const;
+
+
+private:
+	// Data
+	double horizonRadius;
+	size_t global_num_cells, global_num_master_cells,  global_num_slave_cells;
+	SpecRing2D ringSpec;
+	std::vector<Spec1D> specs;
+	RingHorizon ringHorizon;
+	std::vector<Horizon> H;
+	std::vector<size_t> cellsPerProc;
+
+	// This is for computing the tensor product space
+	Array<double> rPtr;
+	Array<double> thetaPtr;
+	Array<double> zPtr;
+
+
+};
+
+
 class TensorProduct3DMeshGenerator : public QuickGridMeshGenerationIterator {
 
 public:
