@@ -1,0 +1,27 @@
+#
+#  Example of how to call loadbal to create parallel input files:
+#
+#  loadbal -No_subdirectory -suffix_mesh g -suffix_spread g -p 3 WaveInBar 3
+# 
+#  ./WaveInBar.spd
+#
+
+# unit of length in WaveInBar.xml is meters
+
+#
+reset
+#
+create brick x 0.036 y 0.01 z 0.01
+volume 1 move x 0.003 y 0.0 z 0.0
+create brick x 0.006 y 0.01 z 0.01
+volume 2 move x -0.018
+#
+block all element type hex8
+volume all size 0.002
+mesh volume all
+#
+block 1 volume 1 2
+#
+nodeset 1 volume 2
+#
+export genesis 'WaveInBar.g' overwrite
