@@ -9,6 +9,8 @@ if(PERIDIGM_STK)
   add_test (Compression_QS_3x2x2_Exodus_np2 python ./Compression_QS_3x2x2_Exodus/np2/Compression_QS_3x2x2_Exodus.py)
   add_test (WaveInBar_np1 python ./WaveInBar/np1/WaveInBar.py)
   add_test (WaveInBar_np3 python ./WaveInBar/np3/WaveInBar.py)
+#  add_test (WaveInBar_MultiBlock_np1 python ./WaveInBar_MultiBlock/np1/WaveInBar_MultiBlock.py)
+#  add_test (WaveInBar_MultiBlock_np4 python ./WaveInBar_MultiBlock/np4/WaveInBar_MultiBlock.py)
 endif()
 
 add_custom_target( rtest

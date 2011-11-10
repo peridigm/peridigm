@@ -1,0 +1,63 @@
+#
+#  Example of how to call loadbal to create parallel input files:
+#
+#  loadbal -No_subdirectory -suffix_mesh g -suffix_spread g -p 4 WaveInBar_MultiBlock 4
+# 
+#  ./WaveInBar_MultiBlock.spd
+#
+
+# unit of length in WaveInBar_MultiBlock.xml is meters
+
+#
+reset
+#
+# create a brick that is 0.042 by 0.01 by 0.01
+# boundar conditions are to be applied to a three-element region on one end
+# break it up into a bunch of arbitrary blocks to test Peridigm's multi-block functionality
+#
+create brick x 0.036 y 0.01 z 0.01
+volume 1 move x 0.003 y 0.0 z 0.0
+#
+create brick x 0.010 y 0.002 z 0.002
+volume 2 move x 0.0 y 0.004 z 0.004
+subtract volume 2 from volume 1 keep
+delete volume 1
+#
+volume 2 copy move x -0.01 y -0.008 z -0.008
+subtract volume 4 from volume 3 keep
+delete volume 3
+#
+create brick x 0.01 y 0.01 z 0.01
+volume 6 move x 0.012 y 0.0 z 0.0
+subtract volume 6 from volume 5 keep
+delete volume 5
+#
+create brick x 0.006 y 0.01 z 0.01
+move volume 9 x -0.018 y 0.0 z 0.0
+#
+create brick x 0.006 y 0.006 z 0.006
+volume 10 move x -0.018 y -0.002 z 0.002
+subtract volume 10 from volume 9 keep
+delete volume 9
+#
+create brick x 0.002 y 0.002 z 0.002
+volume 12 move x -0.016 y 0.004 z 0.0
+subtract volume 12 from volume 11 keep
+delete volume 11
+#
+block 1 volume 2
+block 2 volume 4
+block 3 volume 6
+block 4 volume 7
+block 5 volume 8
+block 6 volume 10
+block 7 volume 12
+block 8 volume 13
+#
+block all element type hex8
+volume all size 0.002
+mesh volume all
+#
+nodeset 1 volume 10 12 13
+#
+export genesis 'WaveInBar_MultiBlock.g' overwrite

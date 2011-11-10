@@ -293,15 +293,19 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<PeridigmNS::DataManag
           // hook up pointer to data
           PdVTK::writeField<int>(grid,Field_NS::GID,xMap.MyGlobalElements());
         }
-        else if (fs == Field_NS::PROC_NUM) { // Handle special case of Proc_Num (int type)
+         else if (fs == Field_NS::PROC_NUM) { // Handle special case of Proc_Num (int type)
           // Get map corresponding to x (COORD3D FieldSpec guaranteed to exist by Peridigm object)
           Teuchos::RCP<Epetra_Vector> myX =  dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE);
           // Use only the number of owned elements
           int length = (dataManager->getOwnedScalarPointMap())->NumMyElements();
-          proc_num->assign(length,myPID);
+          // If the length is zero, this means there are no on-processor points for this block
+          if(length > 0)
+            proc_num->assign(length,myPID);
+          else
+            proc_num->assign(1,myPID); // Avoids access error in subsequent call to proc_num->at(0)
           // hook up pointer to data
           PdVTK::writeField<int>(grid,Field_NS::PROC_NUM,&(proc_num->at(0)));
-        }
+       }
         else { // Handle all other cases (double type)
           if (fs.get_temporal() != Field_ENUM::TWO_STEP) // If stateless, get STEP_NONE
             dataManager->getData(fs, Field_ENUM::STEP_NONE)->ExtractView(&ptr);
