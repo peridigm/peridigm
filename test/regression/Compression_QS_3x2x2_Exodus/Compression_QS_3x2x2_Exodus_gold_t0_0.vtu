@@ -39,9 +39,9 @@
           0 0 0 0 0 0
           0 0 0 0 0 0
         </DataArray>
-        <DataArray type="Float64" Name="Weighted_Volume" format="ascii" RangeMin="6" RangeMax="10">
-          6 6 6 6 10 10
-          10 10 6 6 6 6
+        <DataArray type="Float64" Name="Weighted_Volume" format="ascii" RangeMin="12" RangeMax="20">
+          12 12 12 12 20 20
+          20 20 12 12 12 12
         </DataArray>
       </PointData>
       <CellData>
