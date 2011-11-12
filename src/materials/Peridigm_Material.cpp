@@ -146,6 +146,28 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     double* tempForce;
     tempForceVector->ExtractView(&tempForce);
 
+    // Set up storage for sub-matrix containing tangent values
+    // \todo create utility function/class for this
+    if(scratchMatrixSize < 3*(numNeighbors+1)){
+      // increase the scratch matrix size if needed
+      if(scratchMatrixSize != 0){
+        for(int i=0 ; i<scratchMatrixSize ; ++i)
+          delete[] scratchMatrix[i];
+        delete[] scratchMatrix;
+      }
+      scratchMatrixSize = 3*(numNeighbors+1);
+      scratchMatrix = new double*[scratchMatrixSize];
+      for(int i=0 ; i<scratchMatrixSize ; ++i)
+        scratchMatrix[i] = new double[scratchMatrixSize];
+    }
+    vector<int> indices(3*(numNeighbors+1));
+    for(int i=0 ; i<numNeighbors+1 ; ++i){
+      int globalID = tempOneDimensionalMap->GID(i);
+      int localID = dataManager.getOverlapScalarPointMap()->LID(globalID);
+      for(int j=0 ; j<3 ; ++j)
+        indices[3*i+j] = 3*localID+j;
+    }
+
     if(finiteDifferenceScheme == FORWARD_DIFFERENCE){
       // compute and store the unperturbed force
       updateConstitutiveData(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
@@ -185,7 +207,6 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
         computeForce(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
         y[3*perturbID+dof] = oldY;
 
-        // fill in the corresponding Jacobian entries
         for(int i=0 ; i<numNeighbors+1 ; ++i){
 
           int forceID;
@@ -198,16 +219,13 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
             double value = ( force[3*forceID+d] - tempForce[3*forceID+d] ) / epsilon;
             if(finiteDifferenceScheme == CENTRAL_DIFFERENCE)
               value *= 0.5;
-            int globalForceID = tempOneDimensionalMap->GID(forceID);
-            int globalPerturbID = tempOneDimensionalMap->GID(perturbID);
-            int localForceID = dataManager.getOverlapScalarPointMap()->LID(globalForceID);
-            int localPerturbID = dataManager.getOverlapScalarPointMap()->LID(globalPerturbID);
-            int row = 3*localForceID + d;
-            int col = 3*localPerturbID + dof;
-            jacobian.addValue(row, col, value);
+            scratchMatrix[3*forceID+d][3*perturbID+dof] = value;
           }
         }
       }
     }
+
+    // sum the values into the global tangent matrix (this is expensive)
+    jacobian.addValues((int)indices.size(), &indices[0], scratchMatrix);
   }
 }

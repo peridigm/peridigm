@@ -58,11 +58,8 @@ PeridigmNS::SerialMatrix::SerialMatrix(Teuchos::RCP<Epetra_FECrsMatrix> epetraFE
 
 void PeridigmNS::SerialMatrix::addValue(int row, int col, double value)
 {
-  // what we really want to do here is cache a block of values and their
-  // row and column ids.  Then when the block is full, sum into the crs matrix.
-
-  // the initial implementation is just an interface to the underlying Epetra_FECrsMatrix,
-  // filling one value at a time (very inefficient).
+  // addValue sums into the underlying Epetra_FECrsMatrix one value at a time (very inefficient).
+  // addValues is prefered.
 
   int numRows = 1;
   int globalRowID = 3*overlapMap->GID(row/3) + row%3;
@@ -76,6 +73,15 @@ void PeridigmNS::SerialMatrix::addValue(int row, int col, double value)
 
   delete[] data[0];
   delete[] data;
+}
+
+void PeridigmNS::SerialMatrix::addValues(int numIndices, const int* indices, const double *const * values)
+{
+  std::vector<int> globalIndices(numIndices);
+  for(int i=0 ; i<numIndices ; ++i)
+    globalIndices[i] = 3*overlapMap->GID(indices[i]/3) + indices[i]%3;
+
+  FECrsMatrix->SumIntoGlobalValues(numIndices, &globalIndices[0], values);
 }
 
 void PeridigmNS::SerialMatrix::putScalar(double value)
