@@ -71,6 +71,9 @@ public:
   //! Add data at given location, indexed by local ID
   void addValue(int row, int col, double value);
 
+  //! Add block of data at given locations, indexed by local ID
+  void addValues(int numIndicies, const int* indicies, const double *const * values);
+
   //! Set all entries to given scalar
   void putScalar(double value);
 

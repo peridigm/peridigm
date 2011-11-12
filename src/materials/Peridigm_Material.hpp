@@ -65,10 +65,16 @@ namespace PeridigmNS {
   public:
 
 	//! Standard constructor.
-	Material(const Teuchos::ParameterList & params){}
+	Material(const Teuchos::ParameterList & params) : scratchMatrixSize(0), scratchMatrix(0) {}
 
 	//! Destructor.
-	virtual ~Material(){}
+	virtual ~Material(){
+      if(scratchMatrixSize != 0){
+        for(int i=0 ; i<scratchMatrixSize ; ++i)
+          delete[] scratchMatrix[i];
+        delete[] scratchMatrix;
+      }
+    }
 
 	//! Return name of material type
 	virtual string Name() const = 0;
@@ -126,6 +132,12 @@ namespace PeridigmNS {
 
   private:
 	
+    //! Size of scratch matrix.
+    mutable int scratchMatrixSize;
+
+    //! Scratch matrix.
+    mutable double** scratchMatrix;
+
 	//! Default constructor with no arguments, private to prevent use.
 	Material(){}
   };
