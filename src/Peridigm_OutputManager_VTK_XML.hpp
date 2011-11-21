@@ -63,15 +63,15 @@ namespace PeridigmNS {
   public:
     
     //! Basic constructor.
-    OutputManager_VTK_XML(const Teuchos::RCP<Teuchos::ParameterList>& params, PeridigmNS::Peridigm *peridigm_);
+    OutputManager_VTK_XML(const Teuchos::RCP<Teuchos::ParameterList>& params, 
+                          PeridigmNS::Peridigm *peridigm_,
+                          Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks);
     
     //! Destructor.
     virtual ~OutputManager_VTK_XML();
 
     //! Write data to disk
-    virtual void write(Teuchos::RCP<PeridigmNS::DataManager> dataManager,
-		       Teuchos::RCP<const NeighborhoodData>, 
-		       double);
+    virtual void write(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, double);
 
   private:
     
@@ -81,17 +81,30 @@ namespace PeridigmNS {
     //! Assignment operator.
     OutputManager_VTK_XML& operator=( const OutputManager& OM );
 
+    //! Write single block of data to disk
+    void write(Teuchos::RCP<PeridigmNS::DataManager> dataManager,
+               Teuchos::RCP<const NeighborhoodData>, 
+               vtkSmartPointer<vtkUnstructuredGrid> grid,
+               Teuchos::RCP<PdVTK::CollectionWriter> vtkWriter,
+               double current_time, int block_id = -1);
+
+    //! Write vtk VTM file to disk (container for multiple material block data)
+   void writeVTMFile(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks);
+
     //! Valid Teuchos::ParameterList 
     Teuchos::ParameterList getValidParameterList();
 
-    //! Object to write unstructured grid
-    Teuchos::RCP<PdVTK::CollectionWriter> vtkWriter;
+    //! Objects to write unstructured grid (one per block)
+    std::vector< Teuchos::RCP<PdVTK::CollectionWriter> > vtkWriters;
 
-    //! vtkUnstructuredGrid
-    vtkSmartPointer<vtkUnstructuredGrid> grid;
+    //! vector of vtkUnstructuredGrids, one per block
+    std::vector< vtkSmartPointer<vtkUnstructuredGrid> > grids;
 
     //! Container for data array of processor ID number for each node on my proc
     Teuchos::RCP< std::vector<int> > proc_num;
+
+    //! True if more than one block
+    bool isMultiBlock; 
 
     //! Parent pointer
     PeridigmNS::Peridigm *peridigm;

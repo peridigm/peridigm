@@ -44,6 +44,7 @@
 // ************************************************************************
 //@HEADER
 
+#include <fstream>
 #include <time.h>
 #include <vector>
 #include <string>
@@ -59,11 +60,13 @@
 #include "mesh_output/vtk/PdVTK.h"
 #include "Peridigm.hpp"
 
-PeridigmNS::OutputManager_VTK_XML::OutputManager_VTK_XML(const Teuchos::RCP<Teuchos::ParameterList>& params, PeridigmNS::Peridigm *peridigm_) {
+PeridigmNS::OutputManager_VTK_XML::OutputManager_VTK_XML(const Teuchos::RCP<Teuchos::ParameterList>& params, 
+                                                         PeridigmNS::Peridigm *peridigm_,
+                                                         Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks) {
  
   // Assign parent pointer
   peridigm = peridigm_;
-
+ 
   // No input to validate; no output requested
   if (params == Teuchos::null) {
     iWrite = false;
@@ -145,11 +148,25 @@ PeridigmNS::OutputManager_VTK_XML::OutputManager_VTK_XML(const Teuchos::RCP<Teuc
   if (warningFlag) std::cout << outString; 
   }
 
-  // Create VTK collection writer
-  if (outputFormat == "ASCII")
-    vtkWriter = Teuchos::rcp(new PdVTK::CollectionWriter(filenameBase.c_str(), numProc, myPID, PdVTK::vtkASCII));
-  else if (outputFormat == "BINARY")
-    vtkWriter = Teuchos::rcp(new PdVTK::CollectionWriter(filenameBase.c_str(), numProc, myPID, PdVTK::vtkBINARY));
+  // Flag if more than one block
+  if (blocks->size() > 1)
+    isMultiBlock = true;
+  else 
+    isMultiBlock = false;
+
+  // Create vector of VTK collection writers, one per block
+  vtkWriters.resize(blocks->size());
+  // Iterators over vector of grids and over blocks. Each vector is the same size by above line.
+  std::vector<PeridigmNS::Block>::iterator blockIt;
+  std::vector<Teuchos::RCP<PdVTK::CollectionWriter> >::iterator writerIt;
+  if (outputFormat == "ASCII") {
+    for(blockIt = blocks->begin(), writerIt=vtkWriters.begin() ; blockIt != blocks->end() ; blockIt++, writerIt++)
+      (*writerIt) = Teuchos::rcp(new PdVTK::CollectionWriter(filenameBase.c_str(), numProc, myPID, PdVTK::vtkASCII));
+  }
+  else if (outputFormat == "BINARY") {
+    for(blockIt = blocks->begin(), writerIt=vtkWriters.begin() ; blockIt != blocks->end() ; blockIt++, writerIt++)
+      (*writerIt) = Teuchos::rcp(new PdVTK::CollectionWriter(filenameBase.c_str(), numProc, myPID, PdVTK::vtkBINARY));
+  }
 
 }
 
@@ -226,6 +243,9 @@ PeridigmNS::OutputManager_VTK_XML::~OutputManager_VTK_XML() {
 
   if (!iWrite) return;
 
+  // Only proc 0 writes the .pvd file
+  if (myPID != 0) return;
+
   // get current system time
   time_t rawtime;
   struct tm *timeinfo;
@@ -237,12 +257,39 @@ PeridigmNS::OutputManager_VTK_XML::~OutputManager_VTK_XML() {
   comment.append("Peridigm Version XXX: "); 
   comment.append(asctime(timeinfo));
 
-  vtkWriter->close(comment);  
+  if (!isMultiBlock) // write normal .pvd file
+    vtkWriters.front()->close(comment);
+  else { // write pvd file as a container of vtm files
+    string outFileName(filenameBase);
+    outFileName += ".pvd";
+
+    std::fstream outFile;
+    outFile.open(outFileName.c_str(), fstream::out);
+
+    outFile << "<?xml version=\"1.0\"?>" << std::endl;
+    outFile << "<!--" << std::endl;
+    outFile << comment << std::endl;
+    outFile << "-->" << std::endl;
+    outFile << "<VTKFile type=\"Collection\" version=\"0.1\" byte_order=\"LittleEndian\">" << std::endl;
+    outFile << "  <Collection>" << std::endl;
+
+    deque<double> times = vtkWriters.front()->getTimes();
+    for(int i=0;i<times.size();i++) {
+      std::stringstream ss;
+      ss << filenameBase.c_str() << "_t" << i << ".vtm";
+      string vtmFileName(ss.str());
+      outFile << "    " << "<DataSet timestep=\"" << times[i] << "\" " << "file=\"" << vtmFileName << "\"/>" << std::endl;
+    }
+    outFile << "  </Collection>" << std::endl;
+    outFile << "</VTKFile>" << std::endl;
+
+    outFile.close();
+
+  } // end of else 
+
 }
 
-void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<PeridigmNS::DataManager> dataManager,
-                                              Teuchos::RCP<const NeighborhoodData> neighborhoodData,
-                                              double current_time) {
+void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, double current_time) {
 
   if (!iWrite) return;
 
@@ -252,22 +299,59 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<PeridigmNS::DataManag
   // Only write if frequency count match
   if (frequency<=0 || count%frequency!=0) return;
 
+  // Initialize/reinitialize grids if needed
+  // Each block is always rebalanced at the same time, so each datamanager should always return the same
+  // rebalance count. Hence, we keep only a single static int for the rebalance count.
+  static int rebalanceCount = 0;
+  bool reInitGrids = false;
+  // If the first block rebalanced since last write, then all of them did. Force reinit of all grids.
+  if (rebalanceCount != blocks->begin()->getDataManager()->getRebalanceCount()) {
+    reInitGrids = true;
+    rebalanceCount = blocks->begin()->getDataManager()->getRebalanceCount();
+  }
+  // Be sure vector of grids sized correctly
+  if (blocks->size() != grids.size() ) {
+    grids.resize(blocks->size());
+    reInitGrids = true;
+  }
+  // Iterators over vector of grids and over blocks. Each vector is  same size by above line.
+  std::vector<PeridigmNS::Block>::iterator blockIt;
+  std::vector<vtkSmartPointer<vtkUnstructuredGrid> >::iterator gridIt;
+  for(blockIt = blocks->begin(), gridIt=grids.begin() ; blockIt != blocks->end() ; blockIt++, gridIt++) {
+    if (gridIt->GetPointer() == NULL || reInitGrids) {
+      double *xptr;
+      Teuchos::RCP<Epetra_Vector> myX =  blockIt->getDataManager()->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE);
+      myX->ExtractView( &xptr );
+      // Use only the number of owned elements
+      int length = (blockIt->getDataManager()->getOwnedScalarPointMap())->NumMyElements();
+      (*gridIt) = PdVTK::getGrid(xptr,length);
+    }
+  }
+
+  if (blocks->size() == 1) // if only one block, don't write with block IDs
+    this->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),grids.front(),vtkWriters.front(),current_time);
+  else { // there are many blocks; write output using block IDs
+    std::vector<Teuchos::RCP<PdVTK::CollectionWriter> >::iterator writerIt;
+    for(blockIt = blocks->begin(), gridIt=grids.begin(), writerIt=vtkWriters.begin() ; blockIt != blocks->end() ; blockIt++, gridIt++, writerIt++)
+      this->write(blockIt->getDataManager(),blockIt->getNeighborhoodData(),*gridIt,*writerIt,current_time,blockIt->getID());
+  }
+
+  // If multiblock simulation, write container file for each block
+  if ( (blocks->size() > 1) && (myPID==0) ) {
+    writeVTMFile(blocks);
+  }
+
+}
+
+void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<PeridigmNS::DataManager> dataManager,
+                                              Teuchos::RCP<const NeighborhoodData> neighborhoodData,
+                                              vtkSmartPointer<vtkUnstructuredGrid> grid,
+                                              Teuchos::RCP<PdVTK::CollectionWriter> vtkWriter,
+                                              double current_time, int block_id) {
+
   // Call compute manager; Updated any computed quantities before write
   // \todo This will break for multiple materials.
   peridigm->computeManager->compute(dataManager);
-
-  // Initialize grid if needed
-  static int rebalanceCount = 0;
-  if (grid.GetPointer() == NULL || rebalanceCount != dataManager->getRebalanceCount()) {
-    double *xptr;
-    Teuchos::RCP<Epetra_Vector> myX =  dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE);
-    myX->ExtractView( &xptr );
-    //int length = (myX->Map()).NumMyElements();
-    // Use only the number of owned elements
-    int length = (dataManager->getOwnedScalarPointMap())->NumMyElements();
-    grid = PdVTK::getGrid(xptr,length);
-    rebalanceCount = dataManager->getRebalanceCount();
-  }
 
   Teuchos::ParameterList::ConstIterator i1;
   // Loop over the material types in the materialOutputFields parameterlist
@@ -318,8 +402,38 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<PeridigmNS::DataManag
     }
   }
 
-
   // All pointers reset; now write data
-  vtkWriter->writeTimeStep(current_time,grid);
-//  vtkWriter->writeTimeStep(count,grid);
+  vtkWriter->writeTimeStep(current_time,grid,block_id);
+}
+
+
+void PeridigmNS::OutputManager_VTK_XML::writeVTMFile(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks) {
+  std::stringstream ss;
+  std::size_t index = vtkWriters.front()->getIndex();
+  ss << filenameBase.c_str() << "_t" << index << ".vtm";
+  string outFileName(ss.str());
+
+  std::fstream outFile;
+  outFile.open(outFileName.c_str(), fstream::out); 
+
+  outFile << "<?xml version=\"1.0\"?>" << std::endl;
+  outFile << "<VTKFile type=\"vtkMultiBlockDataSet\" version=\"1.0\" byte_order=\"LittleEndian\" compressor=\"vtkZLibDataCompressor\">" << std::endl;
+  outFile << "  <vtkMultiBlockDataSet>" << std::endl;
+
+  std::vector<PeridigmNS::Block>::iterator blockIt;
+  std::vector<Teuchos::RCP<PdVTK::CollectionWriter> >::iterator writerIt;
+  for(blockIt = blocks->begin(), writerIt=vtkWriters.begin() ; blockIt != blocks->end() ; blockIt++, writerIt++) {
+    outFile << "     <Block index=\"" << blockIt->getID() << "\">" << std::endl;
+    for(int i=0;i<numProc;i++) {
+      std::stringstream ss;
+      ss << filenameBase << "_b" << blockIt->getID() << "_t" << (*writerIt)->getIndex() << "_" << i << ".vtu";
+      string vtuFileName(ss.str());
+      outFile << "        <DataSet index=\"" << i << "\" file=\"" << vtuFileName.c_str() << "\"></DataSet>" << std::endl;
+    }
+    outFile << "     </Block>" << std::endl;
+  }
+  outFile << "  </vtkMultiBlockDataSet>" << std::endl;
+  outFile << "</VTKFile>" << std::endl;
+
+  outFile.close();
 }

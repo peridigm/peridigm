@@ -507,7 +507,7 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
                         std::invalid_argument,
                         "PeridigmNS::Peridigm: \"Output File Type\" must be \"VTK_XML\".");
     if (outputFormat == "VTK_XML")
-       outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_VTK_XML( outputParams, this ));
+       outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_VTK_XML( outputParams, this, blocks ));
     else
       TEST_FOR_EXCEPTION( true, std::invalid_argument,"PeridigmNS::Peridigm::initializeOutputManager: \"Output File Type\" must be \"VTK_XML\".");
 
@@ -519,7 +519,7 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
     //outputManager->write(dataManager,neighborhoodData,timeInitial);
   }
   else { // no output requested
-    outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_VTK_XML( outputParams, this ));
+    outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_VTK_XML( outputParams, this, blocks ));
   }
 
   //  verbose = problemParams->get("Verbose", false);
@@ -622,8 +622,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
   PeridigmNS::Timer::self().startTimer("Output");
   this->synchDataManagers();
 
-  // \todo This will break for multiple blocks.
-  outputManager->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),timeCurrent);
+  outputManager->write(blocks,timeCurrent);
   PeridigmNS::Timer::self().stopTimer("Output");
 
   int displayTrigger = nsteps/100;
@@ -729,8 +728,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
     PeridigmNS::Timer::self().startTimer("Output");
     this->synchDataManagers();
 
-    // \todo This will break for multiple materials.
-    outputManager->write(blocks->begin()->getDataManager(), blocks->begin()->getNeighborhoodData(), timeCurrent);
+    outputManager->write(blocks, timeCurrent);
     PeridigmNS::Timer::self().stopTimer("Output");
 
     // swap state N and state NP1
@@ -773,8 +771,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
   PeridigmNS::Timer::self().startTimer("Output");
   this->synchDataManagers();
 
-  // \todo This will break for multiple materials.
-  outputManager->write(blocks->begin()->getDataManager(), blocks->begin()->getNeighborhoodData(), timeCurrent);
+  outputManager->write(blocks, timeCurrent);
   PeridigmNS::Timer::self().stopTimer("Output");
 
   for(int step=0; step<numLoadSteps ; step++){
@@ -851,8 +848,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
     PeridigmNS::Timer::self().startTimer("Output");
     this->synchDataManagers();
 
-    // \todo This will break for multiple materials.
-    outputManager->write(blocks->begin()->getDataManager(), blocks->begin()->getNeighborhoodData(), timeCurrent);
+    outputManager->write(blocks, timeCurrent);
     PeridigmNS::Timer::self().stopTimer("Output");
 
     // swap state N and state NP1
@@ -929,8 +925,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
   PeridigmNS::Timer::self().startTimer("Output");
   this->synchDataManagers();
 
-  // \todo This will break for multiple materials.
-  outputManager->write(blocks->begin()->getDataManager(), blocks->begin()->getNeighborhoodData(), timeCurrent);
+  outputManager->write(blocks, timeCurrent);
   PeridigmNS::Timer::self().stopTimer("Output");
 
   for(int step=0; step<nsteps ; step++){
@@ -1073,8 +1068,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
     PeridigmNS::Timer::self().startTimer("Output");
     this->synchDataManagers();
 
-    // \todo This will break for multiple materials.
-    outputManager->write(blocks->begin()->getDataManager(), blocks->begin()->getNeighborhoodData(), timeCurrent);
+    outputManager->write(blocks, timeCurrent);
     PeridigmNS::Timer::self().stopTimer("Output");
 
     // swap state N and state NP1

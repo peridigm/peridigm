@@ -50,8 +50,9 @@
 #include <Epetra_Map.h>
 #include <Epetra_Vector.h>
 #include <Teuchos_ParameterList.hpp>
-#include "Peridigm_DataManager.hpp"
-#include "Peridigm_NeighborhoodData.hpp"
+#include <Peridigm_Block.hpp>
+#include <Peridigm_DataManager.hpp>
+#include <Peridigm_NeighborhoodData.hpp>
 
 namespace PeridigmNS {
 
@@ -72,9 +73,7 @@ namespace PeridigmNS {
     virtual void close(){};
 
     //! Write data to disk
-    virtual void write(Teuchos::RCP<PeridigmNS::DataManager>,
-		       Teuchos::RCP<const NeighborhoodData>,
-		       double) = 0;
+    virtual void write(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, double) = 0;
 
   protected:
 
