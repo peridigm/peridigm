@@ -151,6 +151,16 @@ namespace PeridigmNS {
       return dataManager;
     }
 
+    //! Get the Block ID
+    int getID(){
+      return blockID;
+    }
+
+    //! Get the Name
+    std::string getName(){
+      return blockName;
+    }
+
     //! Initialize the material model
     void initializeMaterialModel(double timeStep = 1.0);
 
