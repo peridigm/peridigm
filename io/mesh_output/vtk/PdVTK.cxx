@@ -75,17 +75,20 @@ CollectionWriter::CollectionWriter(const char* _fileName, int numProcs, int rank
  * @param t -- time step added to collection
  * @param grid -- unstructured grid associated with time step
  */
-void CollectionWriter::writeTimeStep(double t, vtkSmartPointer<vtkUnstructuredGrid> grid){
+void CollectionWriter::writeTimeStep(double t, vtkSmartPointer<vtkUnstructuredGrid> grid, int block_id){
 	times.push_back(t);
 	std::size_t index = times.size() - 1;
-	string name(getPVTU_fileName(index,fileName));
+	string name(getPVTU_fileName(index,fileName,block_id));
 	writer->SetFileName(name.c_str());
 	write(writer,grid);
 }
 
-string CollectionWriter::getPVTU_fileName(int index, const char* _fileName) const {
+string CollectionWriter::getPVTU_fileName(int index, const char* _fileName, int block_id) const {
 	std::stringstream ss;
-	ss << _fileName << "_t" << index << ".pvtu";
+	if (block_id < 0) // single-block simulation
+	  ss << _fileName << "_t" << index << ".pvtu";
+	else // multi-block simulation; include block id in filenames
+	  ss << _fileName << "_b" << block_id << "_t" << index << ".pvtu";
 	return ss.str();
 }
 

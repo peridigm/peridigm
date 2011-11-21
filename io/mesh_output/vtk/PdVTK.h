@@ -109,12 +109,14 @@ void write(vtkSmartPointer<vtkXMLPUnstructuredGridWriter> w, vtkSmartPointer<vtk
 class CollectionWriter {
 public:
 	CollectionWriter(const char* _fileName, int numProcs, int rank, VTK_FILE_TYPE t=vtkBINARY);
-	void writeTimeStep(double t, vtkSmartPointer<vtkUnstructuredGrid> grid);
+	void writeTimeStep(double t, vtkSmartPointer<vtkUnstructuredGrid> grid, int block_id=-1);
 	void close(const string& comment="");
+	string getPVTU_fileName(int index, const char* _fileName, int block_id=-1) const;
+        int getIndex() {return (times.size() - 1);}
+        deque<double> getTimes() {return times;}
 private:
-	string getPVTU_fileName(int index, const char* _fileName) const;
-	const char* fileName;
 	deque<double> times;
+	const char* fileName;
 	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer;
 };
 
