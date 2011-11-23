@@ -47,8 +47,11 @@
 
 #include <Teuchos_Exceptions.hpp>
 #include <Epetra_Import.h>
+#include <Epetra_SerialDenseMatrix.h>
 #include "Peridigm_SerialMatrix.hpp"
-#include <sstream>
+#include <vector>
+
+using namespace std;
 
 PeridigmNS::SerialMatrix::SerialMatrix(Teuchos::RCP<Epetra_FECrsMatrix> epetraFECrsMatrix,
                                        Teuchos::RCP<const Epetra_BlockMap> epetraOverlapMap)
@@ -58,8 +61,8 @@ PeridigmNS::SerialMatrix::SerialMatrix(Teuchos::RCP<Epetra_FECrsMatrix> epetraFE
 
 void PeridigmNS::SerialMatrix::addValue(int row, int col, double value)
 {
-  // addValue sums into the underlying Epetra_FECrsMatrix one value at a time (very inefficient).
-  // addValues is prefered.
+  // addValue sums into the underlying Epetra_FECrsMatrix one value at a time.
+  // Useful for testing, but shockingly inefficient, addValues() is prefered.
 
   int numRows = 1;
   int globalRowID = 3*overlapMap->GID(row/3) + row%3;
@@ -77,11 +80,29 @@ void PeridigmNS::SerialMatrix::addValue(int row, int col, double value)
 
 void PeridigmNS::SerialMatrix::addValues(int numIndices, const int* indices, const double *const * values)
 {
-  std::vector<int> globalIndices(numIndices);
-  for(int i=0 ; i<numIndices ; ++i)
-    globalIndices[i] = 3*overlapMap->GID(indices[i]/3) + indices[i]%3;
+  vector<int> globalIndices(numIndices);
+  vector<int> localRowIndices(numIndices);
+  vector<int> localColIndices(numIndices);
+  for(int i=0 ; i<numIndices ; ++i){
+    int globalIndex = 3*overlapMap->GID(indices[i]/3) + indices[i]%3;
+    globalIndices[i] = globalIndex;
+    localRowIndices[i] = FECrsMatrix->LRID(globalIndex);
+    int localColIndex = FECrsMatrix->LCID(globalIndex);
+    TEST_FOR_EXCEPT_MSG(localColIndex == -1, "Error in PeridigmNS::SerialMatrix::addValues(), bad column index.");
+    localColIndices[i] = localColIndex;
+  }
 
-  FECrsMatrix->SumIntoGlobalValues(numIndices, &globalIndices[0], values);
+  for(int iRow=0 ; iRow<numIndices ; ++iRow){
+
+    // If the row is locally owned, then sum into the global tangent with Epetra_CrsMatrix::SumIntoMyValues().
+    if(localRowIndices[iRow] != -1)
+      FECrsMatrix->SumIntoMyValues(localRowIndices[iRow], numIndices, values[iRow], &localColIndices[0]);
+
+    // If the row is not locally owned, then sum into the global tangent with Epetra_FECrsMatrix::SumIntoGlobalValues().
+    // This is expensive.
+    else
+      FECrsMatrix->SumIntoGlobalValues(globalIndices[iRow], numIndices, values[iRow], &globalIndices[0]);
+  }
 }
 
 void PeridigmNS::SerialMatrix::putScalar(double value)

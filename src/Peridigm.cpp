@@ -754,7 +754,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
   double timeCurrent = timeInitial;
   int numLoadSteps = implicitParams->get("Number of Load Steps", 10);
   double absoluteTolerance = implicitParams->get("Absolute Tolerance", 1.0e-6);
-  double maximumSolverIterations = implicitParams->get("Maximum Solver Iterations", 10);
+  int maximumSolverIterations = implicitParams->get("Maximum Solver Iterations", 10);
 
   // Pointer index into sub-vectors for use with BLAS
   double *xptr, *uptr, *yptr, *vptr, *aptr;
@@ -873,7 +873,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
   double timeFinal = solverParams->get("Final Time", 1.0);
   double timeCurrent = timeInitial;
   double absoluteTolerance       = implicitParams->get("Absolute Tolerance", 1.0e-6);
-  double maximumSolverIterations = implicitParams->get("Maximum Solver Iterations", 10);
+  int maximumSolverIterations    = implicitParams->get("Maximum Solver Iterations", 10);
   double dt                      = implicitParams->get("Fixed dt", 1.0);
   double beta                    = implicitParams->get("Beta", 0.25);
   double gamma                   = implicitParams->get("Gamma", 0.50);
@@ -1097,10 +1097,12 @@ void PeridigmNS::Peridigm::allocateJacobian() {
   delete[] myGlobalElements;
 
   // Create the global tangent matrix
+  // If numEntriesPerRow is set to zero, allocation will take place during the insertion phase
+  // and will be locked in with the first all to GlobalAssemble
   Epetra_DataAccess CV = Copy;
-  int numEntriesPerRow = 0;  // If this is zero, allocation will take place during the insertion phase \todo Compute non-zeros instead of allocation during insertion.
-  bool staticProfile = false;  // \todo Can staticProfile be set to true?  Bond breaking would alter the non-zeros, but we could just leave them there to avoid reallocation.
-  tangent = Teuchos::rcp(new Epetra_FECrsMatrix(CV, *tangentMap, numEntriesPerRow, staticProfile));
+  int numEntriesPerRow = 0;  
+  bool ignoreNonLocalEntries = false;
+  tangent = Teuchos::rcp(new Epetra_FECrsMatrix(CV, *tangentMap, numEntriesPerRow, ignoreNonLocalEntries));
 
   // Loop over the neighborhood for each locally-owned point and create non-zero entries in the matrix
   vector<int> globalIndicies;
