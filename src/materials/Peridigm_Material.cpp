@@ -96,14 +96,18 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
 
   double epsilon = 1.0e-6; // \todo Instead, use 1.0e-6 * smallest_radius_in_model
 
-  // loop over all points
+  // Loop over all points.
   int neighborhoodListIndex = 0;
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
 
-    // create a temporary neighborhood consisting of a single point and its neighbors
+    // Create a temporary neighborhood consisting of a single point and its neighbors.
+    // The temporary neighborhood is sorted by global ID to somewhat increase the chance
+    // that the downstream Epetra_CrsMatrix::SumIntoMyValues() calls will be as efficient
+    // as possible.
     int numNeighbors = neighborhoodList[neighborhoodListIndex++];
     vector<int> tempMyGlobalIDs(numNeighbors+1);
-    tempMyGlobalIDs[0] = dataManager.getOverlapScalarPointMap()->GID(iID);
+    // Create a placeholder that will appear at the beginning of the sorted list.
+    tempMyGlobalIDs[0] = -1;
     vector<int> tempNeighborhoodList(numNeighbors+1); 
     tempNeighborhoodList[0] = numNeighbors;
     for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
@@ -111,13 +115,16 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
       tempMyGlobalIDs[iNID+1] = dataManager.getOverlapScalarPointMap()->GID(neighborID);
       tempNeighborhoodList[iNID+1] = iNID+1;
     }
+    sort(tempMyGlobalIDs.begin(), tempMyGlobalIDs.end());
+    // Put the node at the center of the neighborhood at the beginning of the list.
+    tempMyGlobalIDs[0] = dataManager.getOverlapScalarPointMap()->GID(iID);
 
     Epetra_SerialComm serialComm;
     Teuchos::RCP<Epetra_BlockMap> tempOneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(numNeighbors+1, numNeighbors+1, &tempMyGlobalIDs[0], 1, 0, serialComm));
     Teuchos::RCP<Epetra_BlockMap> tempThreeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(numNeighbors+1, numNeighbors+1, &tempMyGlobalIDs[0], 3, 0, serialComm));
     Teuchos::RCP<Epetra_BlockMap> tempBondMap = Teuchos::rcp(new Epetra_BlockMap(1, 1, &tempMyGlobalIDs[0], numNeighbors, 0, serialComm));
 
-    // create a temporary DataManager containing data for this point and its neighborhood
+    // Create a temporary DataManager containing data for this point and its neighborhood.
     PeridigmNS::DataManager tempDataManager;
     tempDataManager.setMaps(Teuchos::RCP<const Epetra_BlockMap>(),
                             tempOneDimensionalMap,
@@ -125,18 +132,18 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
                             tempThreeDimensionalMap,
                             tempBondMap);
 
-    // the temporary data manager will have the same field specs and data as the real data manager
+    // The temporary data manager will have the same field specs and data as the real data manager.
     Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs = dataManager.getFieldSpecs();
     tempDataManager.allocateData(fieldSpecs);
     tempDataManager.copyLocallyOwnedDataFromDataManager(dataManager);
 
-    // set up numOwnedPoints and ownedIDs
-    // there is only one owned ID, and it has local ID zero in the tempDataManager
+    // Set up numOwnedPoints and ownedIDs.
+    // There is only one owned ID, and it has local ID zero in the tempDataManager.
     int tempNumOwnedPoints = 1;
     vector<int> tempOwnedIDs(1);
     tempOwnedIDs[0] = 0;
 
-    // Extract pointers to the underlying data in the constitutiveData array
+    // Extract pointers to the underlying data in the constitutiveData array.
     double *y, *force;
     tempDataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->ExtractView(&y);
     tempDataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->ExtractView(&force);
@@ -147,13 +154,13 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     double* tempForce;
     tempForceVector->ExtractView(&tempForce);
 
-    // Use the scratchMatrix as sub-matrix for storing tangent values prior to loading them into the global tangent matrix
+    // Use the scratchMatrix as sub-matrix for storing tangent values prior to loading them into the global tangent matrix.
     // Resize scratchMatrix if necessary
     if(scratchMatrix.Dimension() < 3*(numNeighbors+1))
       scratchMatrix.Resize(3*(numNeighbors+1));
 
-    // Create a list of indices for the rows/columns in the scratch matrix
-    // These indices correspond to the DataManager's three-dimensional overlap map
+    // Create a list of indices for the rows/columns in the scratch matrix.
+    // These indices correspond to the DataManager's three-dimensional overlap map.
     vector<int> indices(3*(numNeighbors+1));
     for(int i=0 ; i<numNeighbors+1 ; ++i){
       int globalID = tempOneDimensionalMap->GID(i);
@@ -163,15 +170,15 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     }
 
     if(finiteDifferenceScheme == FORWARD_DIFFERENCE){
-      // compute and store the unperturbed force
+      // Compute and store the unperturbed force.
       updateConstitutiveData(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
       computeForce(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
       for(int i=0 ; i<forceVector->MyLength() ; ++i)
         tempForce[i] = force[i];
     }
 
-    // perturb one dof in the neighborhood at a time and compute the force
-    // the point itself plus each of its neighbors must be perturbed
+    // Perturb one dof in the neighborhood at a time and compute the force.
+    // The point itself plus each of its neighbors must be perturbed.
     for(int iNID=0 ; iNID<numNeighbors+1 ; ++iNID){
 
       int perturbID;
@@ -182,11 +189,11 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
 
       for(int dof=0 ; dof<3 ; ++dof){
 
-        // perturb a dof and compute the forces
+        // Perturb a dof and compute the forces.
         double oldY = y[3*perturbID+dof];
 
         if(finiteDifferenceScheme == CENTRAL_DIFFERENCE){
-          // compute and store the negatively perturbed force
+          // Compute and store the negatively perturbed force.
           y[3*perturbID+dof] -= epsilon;
           updateConstitutiveData(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
           computeForce(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
@@ -195,7 +202,7 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
             tempForce[i] = force[i];
         }
 
-        // compute the positively perturbed force
+        // Compute the positively perturbed force.
         y[3*perturbID+dof] += epsilon;
         updateConstitutiveData(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
         computeForce(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
@@ -219,7 +226,7 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
       }
     }
 
-    // sum the values into the global tangent matrix (this is expensive)
+    // Sum the values into the global tangent matrix (this is expensive).
     jacobian.addValues((int)indices.size(), &indices[0], scratchMatrix.Data());
   }
 }
