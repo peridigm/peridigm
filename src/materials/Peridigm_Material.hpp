@@ -53,9 +53,9 @@
 #include <Epetra_Vector.h>
 #include <Epetra_Map.h>
 #include <vector>
-#include <map>
 #include "Peridigm_DataManager.hpp"
 #include "Peridigm_SerialMatrix.hpp"
+#include "Peridigm_ScratchMatrix.hpp"
 
 namespace PeridigmNS {
 
@@ -65,16 +65,10 @@ namespace PeridigmNS {
   public:
 
 	//! Standard constructor.
-	Material(const Teuchos::ParameterList & params) : scratchMatrixSize(0), scratchMatrix(0) {}
+	Material(const Teuchos::ParameterList & params){}
 
 	//! Destructor.
-	virtual ~Material(){
-      if(scratchMatrixSize != 0){
-        for(int i=0 ; i<scratchMatrixSize ; ++i)
-          delete[] scratchMatrix[i];
-        delete[] scratchMatrix;
-      }
-    }
+	virtual ~Material(){}
 
 	//! Return name of material type
 	virtual string Name() const = 0;
@@ -131,12 +125,9 @@ namespace PeridigmNS {
                                     FiniteDifferenceScheme finiteDifferenceScheme) const;
 
   private:
-	
-    //! Size of scratch matrix.
-    mutable int scratchMatrixSize;
 
     //! Scratch matrix.
-    mutable double** scratchMatrix;
+    mutable ScratchMatrix scratchMatrix;
 
 	//! Default constructor with no arguments, private to prevent use.
 	Material(){}

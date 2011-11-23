@@ -1,4 +1,4 @@
-/*! \file Peridigm_SerialMatrix.hpp */
+/*! \file Peridigm_ScratchMatrix.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,58 +45,70 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_DENSEMATRIX_HPP
-#define PERIDIGM_DENSEMATRIX_HPP
-
-#include <vector>
-#include <map>
-#include <iostream>
-#include <Teuchos_RCP.hpp>
-#include <Epetra_FECrsMatrix.h>
+#ifndef PERIDIGM_SCRATCHMATRIX_HPP
+#define PERIDIGM_SCRATCHMATRIX_HPP
 
 namespace PeridigmNS {
 
-/*! \brief A matrix class providing an interface between material models and the global tangent matrix.
- *
- *  This class serves as an interface between material models and the global tangent matrix.  The material models operate on
- *  block-specific data and were designed such that a single, consistent indexing scheme is used for all calculations.  This
- *  indexing scheme differs from the global indexing scheme, hence the index values must be transformed prior to inserting
- *  values into the global tangent matrix.  This translation is the mmain purpose of PeridigmNS::SerialMatrix.
- */
-class SerialMatrix {
+  //! Utility class for managing dense matrix scratch space; designed for compatibility with Epetra_CrsMatrix.
+  class ScratchMatrix{
 
-public:
+  public:
 
-  SerialMatrix(Teuchos::RCP<Epetra_FECrsMatrix> epetraFECrsMatrix,
-               Teuchos::RCP<const Epetra_BlockMap> epetraOverlapMap);
+    //! Standard constructor.
+    ScratchMatrix() : dim(0), data(0) {}
 
-  //! Destructor.
-  ~SerialMatrix(){}
+    //! Destructor.
+    ~ScratchMatrix(){
+      if(dim != 0){
+        for(int i=0 ; i<dim ; ++i)
+          delete[] data[i];
+        delete[] data;
+      }
+    }
 
-  //! Add data at given location, indexed by local ID (the block version of this function, addValues(), is prefered for efficiency)
-  void addValue(int row, int col, double value);
+    //! Resizes the scratch space; underlying data arrays are destroyed and reallocated.
+    void Resize(int dimension){
+      if(dim != 0){
+        for(int i=0 ; i<dim ; ++i)
+          delete[] data[i];
+        delete[] data;
+      }
+      dim = dimension;
+      data = new double*[dim];
+      for(int i=0 ; i<dim ; ++i)
+        data[i] = new double[dim];
+    }
+      
+    //! Returns the dimension of the matrix.
+    int Dimension(){ return dim; }
 
-  //! Add block of data at given locations, indexed by local ID
-  void addValues(int numIndicies, const int* indicies, const double *const * values);
+    //! Access to underlying data array.
+    const double *const *const Data(){ return data; }
 
-  //! Set all entries to given scalar
-  void putScalar(double value);
+    //! @name Accessor functions (warning: no bounds checking).
+    //@{
 
-  //! Return ref-count pointer to the FECrsMatrix
-  Teuchos::RCP<const Epetra_FECrsMatrix> getFECrsMatrix() { return FECrsMatrix; }
+    inline
+    double& operator() (int row, int col){
+      return data[row][col];
+    }
 
-protected:
+    inline
+    const double& operator() (int row, int col) const {
+      return data[row][col];
+    }
 
-  Teuchos::RCP<Epetra_FECrsMatrix> FECrsMatrix;
-  Teuchos::RCP<const Epetra_BlockMap> overlapMap;
+    //@}
 
-private:
+  protected:
 
-  //! Private to prohibit use.
-  SerialMatrix() {}
-  SerialMatrix(const SerialMatrix& serialMatrix){}
-};
-
+    //! Dimension of square matrix.
+    int dim;
+    
+    //! Data storage, compatible with Epetra_CrsMatrix fill functions.
+    double** data;
+  };
 }
 
-#endif // PERIDIGM_DENSEMATRIX_HPP
+#endif // PERIDIGM_SCRATCHMATRIX_HPP

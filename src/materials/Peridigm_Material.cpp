@@ -47,6 +47,7 @@
 
 #include "Peridigm_Material.hpp"
 #include <Teuchos_TestForException.hpp>
+#include <Epetra_SerialDenseMatrix.h>
 #include <Epetra_SerialComm.h>
 
 using namespace std;
@@ -146,20 +147,13 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     double* tempForce;
     tempForceVector->ExtractView(&tempForce);
 
-    // Set up storage for sub-matrix containing tangent values
-    // \todo create utility function/class for this
-    if(scratchMatrixSize < 3*(numNeighbors+1)){
-      // increase the scratch matrix size if needed
-      if(scratchMatrixSize != 0){
-        for(int i=0 ; i<scratchMatrixSize ; ++i)
-          delete[] scratchMatrix[i];
-        delete[] scratchMatrix;
-      }
-      scratchMatrixSize = 3*(numNeighbors+1);
-      scratchMatrix = new double*[scratchMatrixSize];
-      for(int i=0 ; i<scratchMatrixSize ; ++i)
-        scratchMatrix[i] = new double[scratchMatrixSize];
-    }
+    // Use the scratchMatrix as sub-matrix for storing tangent values prior to loading them into the global tangent matrix
+    // Resize scratchMatrix if necessary
+    if(scratchMatrix.Dimension() < 3*(numNeighbors+1))
+      scratchMatrix.Resize(3*(numNeighbors+1));
+
+    // Create a list of indices for the rows/columns in the scratch matrix
+    // These indices correspond to the DataManager's three-dimensional overlap map
     vector<int> indices(3*(numNeighbors+1));
     for(int i=0 ; i<numNeighbors+1 ; ++i){
       int globalID = tempOneDimensionalMap->GID(i);
@@ -201,7 +195,7 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
             tempForce[i] = force[i];
         }
 
-        // compute the (positively) perturbed force
+        // compute the positively perturbed force
         y[3*perturbID+dof] += epsilon;
         updateConstitutiveData(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
         computeForce(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
@@ -219,13 +213,13 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
             double value = ( force[3*forceID+d] - tempForce[3*forceID+d] ) / epsilon;
             if(finiteDifferenceScheme == CENTRAL_DIFFERENCE)
               value *= 0.5;
-            scratchMatrix[3*forceID+d][3*perturbID+dof] = value;
+            scratchMatrix(3*forceID+d, 3*perturbID+dof) = value;
           }
         }
       }
     }
 
     // sum the values into the global tangent matrix (this is expensive)
-    jacobian.addValues((int)indices.size(), &indices[0], scratchMatrix);
+    jacobian.addValues((int)indices.size(), &indices[0], scratchMatrix.Data());
   }
 }
