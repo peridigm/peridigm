@@ -144,7 +144,8 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     tempOwnedIDs[0] = 0;
 
     // Extract pointers to the underlying data in the constitutiveData array.
-    double *y, *force;
+    double *volume, *y, *force;
+    tempDataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&volume);
     tempDataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->ExtractView(&y);
     tempDataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->ExtractView(&force);
 
@@ -223,6 +224,14 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
             scratchMatrix(3*forceID+d, 3*perturbID+dof) = value;
           }
         }
+      }
+    }
+
+    // Convert force density to force
+    // \todo Create utility function for this in ScratchMatrix
+    for(unsigned int row=0 ; row<indices.size() ; ++row){
+      for(unsigned int col=0 ; col<indices.size() ; ++col){
+        scratchMatrix(row, col) *= volume[row/3];
       }
     }
 

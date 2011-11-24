@@ -819,7 +819,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
       solver.SetAztecOption(AZ_precond, AZ_Jacobi);
       stringstream ss;
       solver.SetOutputStream(ss);
-      int maxAztecIterations = 500;
+      int maxAztecIterations = tangent->NumGlobalRows();
       double aztecTolerance = 1.0e-6;
       lhs.PutScalar(0.0);
       solver.Iterate(tangent.get(), &lhs, residual.get(), maxAztecIterations, aztecTolerance);
@@ -1253,6 +1253,10 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual() {
 
   // copy the internal force to the residual vector
   (*residual) = (*force);
+
+  // convert force density to force
+  for(int i=0 ; i<residual->MyLength() ; ++i)
+    (*residual)[i] *= (*volume)[i/3];
     
   // zero out the rows corresponding to kinematic boundary conditions and compute the residual
   applyKinematicBC(0.0, residual, Teuchos::RCP<Epetra_FECrsMatrix>());
