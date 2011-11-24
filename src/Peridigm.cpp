@@ -1104,7 +1104,8 @@ void PeridigmNS::Peridigm::allocateJacobian() {
   bool ignoreNonLocalEntries = false;
   tangent = Teuchos::rcp(new Epetra_FECrsMatrix(CV, *tangentMap, numEntriesPerRow, ignoreNonLocalEntries));
 
-  // Loop over the neighborhood for each locally-owned point and create non-zero entries in the matrix
+  // Loop over the neighborhood for each locally-owned point and create non-zero entries in the matrix.
+  // Entries will exist for any two points that are bonded, and any two points that are bonded to a common third point.
   vector<int> globalIndicies;
   vector<double> zeros;
   int* neighborhoodList = globalNeighborhoodData->NeighborhoodList();
@@ -1126,9 +1127,17 @@ void PeridigmNS::Peridigm::allocateJacobian() {
     }
     if(numEntries > zeros.size())
       zeros.resize(numEntries, 0.0);
-    tangent->InsertGlobalValues(3*GID,   numEntries, &zeros[0], &globalIndicies[0]); 
-    tangent->InsertGlobalValues(3*GID+1, numEntries, &zeros[0], &globalIndicies[0]); 
-    tangent->InsertGlobalValues(3*GID+2, numEntries, &zeros[0], &globalIndicies[0]); 
+    tangent->InsertGlobalValues(3*GID,   numEntries, &zeros[0], &globalIndicies[0]);
+    tangent->InsertGlobalValues(3*GID+1, numEntries, &zeros[0], &globalIndicies[0]);
+    tangent->InsertGlobalValues(3*GID+2, numEntries, &zeros[0], &globalIndicies[0]);
+    neighborhoodListIndex -= numNeighbors;
+    for(int j=0 ; j<numNeighbors ; ++j){
+      int neighborLocalID = neighborhoodList[neighborhoodListIndex++];
+      int neighborGlobalID = oneDimensionalOverlapMap->GID(neighborLocalID);
+      tangent->InsertGlobalValues(3*neighborGlobalID,   numEntries, &zeros[0], &globalIndicies[0]);
+      tangent->InsertGlobalValues(3*neighborGlobalID+1, numEntries, &zeros[0], &globalIndicies[0]);
+      tangent->InsertGlobalValues(3*neighborGlobalID+2, numEntries, &zeros[0], &globalIndicies[0]);
+    }  
   }
   tangent->GlobalAssemble();
 
