@@ -778,11 +778,12 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
 
     double loadIncrement = 1.0/double(numLoadSteps);
     double dt = (timeFinal - timeInitial)*loadIncrement;
-    timeCurrent = timeInitial + step*dt;
     *timeStep = dt;
     
     if(peridigmComm->MyPID() == 0)
       cout << "Load step " << step+1 << ", load increment = " << loadIncrement << ", time step = " << dt << ", current time = " << timeCurrent << endl;
+
+    timeCurrent = timeInitial + (step+1)*dt;
 
     // Update nodal positions for nodes with kinematic B.C.
     deltaU->PutScalar(0.0);
@@ -1063,7 +1064,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
     if(peridigmComm->MyPID() == 0)
       cout << "Time step " << step << ", Newton iteration = " << NLSolverIteration << ", norm(residual) = " << residualNorm << endl;
 
-    timeCurrent = timeInitial + step*dt;
+    timeCurrent = timeInitial + (step+1)*dt;
 
     // Write output for completed time step
     PeridigmNS::Timer::self().startTimer("Output");
