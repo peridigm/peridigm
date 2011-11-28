@@ -855,7 +855,8 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
       blockIt->updateState();
 
-    cout << endl;
+    if(peridigmComm->MyPID() == 0)
+      cout << endl;
   }
 }
 
