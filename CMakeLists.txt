@@ -153,7 +153,6 @@ set(PdMaterialUtilitiesLib PdMaterialUtilities)
 # include for all directories
 # Collection of include and lib directories
 set(INCLUDE_DIRS 
-${Trilinos_INCLUDE_DIRS} 
 ${VTK_INCLUDE_DIRS} 
 ${Boost_INCLUDE_DIRS} 
 ${CMAKE_SOURCE_DIR}
