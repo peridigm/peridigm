@@ -47,7 +47,7 @@
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
-#include "Vector.h"
+#include "Vector3D.h"
 #include "Array.h"
 #include "../QuickGrid.h"
 #include "PdZoltan.h"

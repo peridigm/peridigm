@@ -43,8 +43,8 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef VECTOR_H_
-#define VECTOR_H_
+#ifndef VECTOR3D_H_
+#define VECTOR3D_H_
 #include <functional>
 #include <math.h>
 #include <string>
@@ -210,4 +210,4 @@ private:
 
 } // UTILITIES
 
-#endif /* VECTOR_H_ */
+#endif /* VECTOR3D_H_ */

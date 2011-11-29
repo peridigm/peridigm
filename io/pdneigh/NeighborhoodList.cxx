@@ -52,7 +52,7 @@
 
 #include "Sortable.h"
 #include "Array.h"
-#include "Vector.h"
+#include "Vector3D.h"
 
 #include "zoltan.h"
 #include "Epetra_Comm.h"

@@ -49,7 +49,7 @@
 #include <boost/test/parameterized_test.hpp>
 
 #include "../QuickGrid.h"
-#include "Vector.h"
+#include "Vector3D.h"
 #include <iostream>
 #include <cmath>
 
