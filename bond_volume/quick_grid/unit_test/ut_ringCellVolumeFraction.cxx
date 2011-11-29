@@ -57,7 +57,7 @@
 #include "utilities/PdutMpiFixture.h"
 #include "mesh_output/vtk/Field.h"
 #include "mesh_output/vtk/PdVTK.h"
-#include "utilities/Vector.h"
+#include "utilities/Vector3D.h"
 #include "utilities/Array.h"
 #include <set>
 

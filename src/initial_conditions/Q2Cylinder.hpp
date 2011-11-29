@@ -49,7 +49,7 @@
 #define Q2CYLINDER_HPP_
 
 #include "InitialCondition.hpp"
-#include "utilities/Vector.h"
+#include "utilities/Vector3D.h"
 
 
 namespace InitialConditionsNS {

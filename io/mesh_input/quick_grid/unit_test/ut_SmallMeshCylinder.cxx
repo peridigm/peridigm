@@ -53,7 +53,7 @@
 #include "vtkXMLUnstructuredGridReader.h"
 #include "vtkSmartPointer.h"
 #include "vtkStructuredGrid.h"
-#include "Vector.h"
+#include "Vector3D.h"
 #include "Array.h"
 #include "../QuickGrid.h"
 #include "PdutMpiFixture.h"

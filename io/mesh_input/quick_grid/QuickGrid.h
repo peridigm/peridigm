@@ -50,7 +50,7 @@
 
 #include <vector>
 #include "utilities/Array.h"
-#include "utilities/Vector.h"
+#include "utilities/Vector3D.h"
 #include "QuickGridData.h"
 #include <functional>
 

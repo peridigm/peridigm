@@ -44,7 +44,7 @@
 //@HEADER
 
 #include "PdVTK.h"
-#include "Vector.h"
+#include "Vector3D.h"
 #include "vtkXMLUnstructuredGridWriter.h"
 #include "vtkSmartPointer.h"
 #include "vtkUnstructuredGrid.h"

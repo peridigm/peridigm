@@ -51,7 +51,7 @@
 #include <stdexcept>
 #include <string>
 #include "utilities/MemoryInclude.h"
-#include "utilities/Vector.h"
+#include "utilities/Vector3D.h"
 
 using std::size_t;
 using std::tr1::shared_ptr;

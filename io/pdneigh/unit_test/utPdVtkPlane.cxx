@@ -53,7 +53,7 @@
 #include <functional>
 #include <valarray>
 #include <set>
-#include "Vector.h"
+#include "Vector3D.h"
 #include "../BondFilter.h"
 
 using UTILITIES::Vector3D;
