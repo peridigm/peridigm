@@ -765,7 +765,23 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
   a->ExtractView( &aptr );
 
   // \todo Put in mothership.
-  Epetra_Vector lhs(*residual);
+  Teuchos::RCP<Epetra_Vector> lhs = Teuchos::rcp(new Epetra_Vector(*residual));
+
+/* Belos solver manager
+  // Data for linear solver object
+  Belos::LinearProblem<double,Epetra_MultiVector,Epetra_Operator> linearProblem;
+  Teuchos::ParameterList belosList;
+  belosList.set( "Block Size", 1 );                                // Use single-vector iteration
+  belosList.set( "Maximum Iterations", tangent->NumGlobalRows() ); // Maximum number of iterations allowed
+  belosList.set( "Convergence Tolerance", 1.e-6 );                 // Relative convergence tolerance requested
+  belosList.set( "Output Frequency", -1 );
+  //int verbosity = Belos::Errors + Belos::Warnings + Belos::StatusTestDetails;
+  int verbosity = Belos::Errors + Belos::Warnings;
+  belosList.set( "Verbosity", verbosity );
+  belosList.set( "Output Style", Belos::Brief );
+  Teuchos::RCP< Belos::SolverManager<double,Epetra_MultiVector,Epetra_Operator> > belosSolver
+    = Teuchos::rcp( new Belos::BlockCGSolMgr<double,Epetra_MultiVector,Epetra_Operator>(Teuchos::rcp(&linearProblem,false), Teuchos::rcp(&belosList,false)) );
+*/
 
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
@@ -811,7 +827,24 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
       tangent->GlobalAssemble();
       PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
       applyKinematicBC(0.0, residual, tangent);
-      residual->Scale(-1.0);
+      // MLP: For Belos, scale matrix by -1 so that it is SPD, not SND
+      // residual->Scale(-1.0);
+      tangent->Scale(-1.0);
+
+/* Belos solver
+      // Solve linear system
+      lhs->PutScalar(0.0);
+      linearProblem.setOperator(tangent);
+      bool isSet = linearProblem.setProblem(lhs, residual);
+      if (isSet == false) {
+        if(peridigmComm->MyPID() == 0)
+          std::cout << std::endl << "ERROR: Belos::LinearProblem failed to set up correctly!" << std::endl;
+      }
+      PeridigmNS::Timer::self().startTimer("Solve Linear System");
+      // Belos::ReturnType ret = belosSolver->solve();
+      belosSolver->solve();
+      PeridigmNS::Timer::self().stopTimer("Solve Linear System");
+*/
 
       // Solve linear system
       PeridigmNS::Timer::self().startTimer("Solve Linear System");
@@ -822,13 +855,13 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
       solver.SetOutputStream(ss);
       int maxAztecIterations = tangent->NumGlobalRows();
       double aztecTolerance = 1.0e-6;
-      lhs.PutScalar(0.0);
-      solver.Iterate(tangent.get(), &lhs, residual.get(), maxAztecIterations, aztecTolerance);
+      lhs->PutScalar(0.0);
+      solver.Iterate(tangent.get(), &(*lhs), residual.get(), maxAztecIterations, aztecTolerance);
       PeridigmNS::Timer::self().stopTimer("Solve Linear System");
 
       // Apply increment to nodal positions
       for(int i=0 ; i<y->MyLength() ; ++i)
-        (*deltaU)[i] += lhs[i];
+        (*deltaU)[i] += (*lhs)[i];
       for(int i=0 ; i<y->MyLength() ; ++i)
         (*y)[i] = (*x)[i] + (*u)[i] + (*deltaU)[i];
       
