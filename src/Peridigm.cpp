@@ -241,8 +241,8 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
   blockIDs = Teuchos::rcp((*oneDimensionalMothership)(0), false);        // block ID
   volume = Teuchos::rcp((*oneDimensionalMothership)(1), false);          // cell volume
 
-  // \todo Do not allocate space for the contact force, residual, and deltaU if not needed.
-  threeDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalMap, 10));
+  // \todo Do not allocate space for the contact force nor deltaU if not needed.
+  threeDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalMap, 9));
   // Set ref-count pointers for each of the global vectors
   x = Teuchos::rcp((*threeDimensionalMothership)(0), false);             // initial positions
   u = Teuchos::rcp((*threeDimensionalMothership)(1), false);             // displacement
@@ -252,8 +252,7 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
   force = Teuchos::rcp((*threeDimensionalMothership)(5), false);         // force
   contactForce = Teuchos::rcp((*threeDimensionalMothership)(6), false);  // contact force (used only for contact simulations)
   deltaU = Teuchos::rcp((*threeDimensionalMothership)(7), false);        // increment in displacement (used only for implicit time integration)
-  residual = Teuchos::rcp((*threeDimensionalMothership)(8), false);      // residual (used only for implicit time integration)
-  scratch = Teuchos::rcp((*threeDimensionalMothership)(9), false);       // scratch space
+  scratch = Teuchos::rcp((*threeDimensionalMothership)(8), false);       // scratch space
 
   // Set the block IDs
   double* bID;
@@ -742,8 +741,14 @@ void PeridigmNS::Peridigm::executeExplicit() {
 
 void PeridigmNS::Peridigm::executeQuasiStatic() {
 
-  // Allocate memory for non-zeros in global Jacobain and lock in the structure
+  // Allocate memory for non-zeros in global tangent and lock in the structure
   allocateJacobian();
+
+  // Create vectors that are specific to quasi-statics.
+  // These must use the same map as the tangent matrix, which is an Epetra_Map and is not consistent
+  // with the Epetra_BlockMap used for the mothership multivector.
+  Teuchos::RCP<Epetra_Vector> residual = Teuchos::rcp(new Epetra_Vector(tangent->Map()));
+  Teuchos::RCP<Epetra_Vector> lhs = Teuchos::rcp(new Epetra_Vector(tangent->Map()));
 
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   workset->timeStep = timeStep;
@@ -765,11 +770,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
   v->ExtractView( &vptr );
   a->ExtractView( &aptr );
 
-  // \todo Put in mothership.
-  Teuchos::RCP<Epetra_Vector> lhs = Teuchos::rcp(new Epetra_Vector(*residual));
-
-/* Belos solver manager
-  // Data for linear solver object
+  // Data for Belos linear solver object
   Belos::LinearProblem<double,Epetra_MultiVector,Epetra_Operator> linearProblem;
   Teuchos::ParameterList belosList;
   belosList.set( "Block Size", 1 );                                // Use single-vector iteration
@@ -782,12 +783,10 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
   belosList.set( "Output Style", Belos::Brief );
   Teuchos::RCP< Belos::SolverManager<double,Epetra_MultiVector,Epetra_Operator> > belosSolver
     = Teuchos::rcp( new Belos::BlockCGSolMgr<double,Epetra_MultiVector,Epetra_Operator>(Teuchos::rcp(&linearProblem,false), Teuchos::rcp(&belosList,false)) );
-*/
 
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
   this->synchDataManagers();
-
   outputManager->write(blocks, timeCurrent);
   PeridigmNS::Timer::self().stopTimer("Output");
 
@@ -813,7 +812,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
       (*y)[i] = (*x)[i] + (*u)[i] + (*deltaU)[i];
 
     // compute the residual
-    double residualNorm = computeQuasiStaticResidual();
+    double residualNorm = computeQuasiStaticResidual(residual);
 
     int solverIteration = 1;
     while(residualNorm > absoluteTolerance && solverIteration <= maximumSolverIterations){
@@ -828,37 +827,18 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
       tangent->GlobalAssemble();
       PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
       applyKinematicBC(0.0, residual, tangent);
-      // MLP: For Belos, scale matrix by -1 so that it is SPD, not SND
-      // residual->Scale(-1.0);
       tangent->Scale(-1.0);
 
-/* Belos solver
       // Solve linear system
       lhs->PutScalar(0.0);
       linearProblem.setOperator(tangent);
       bool isSet = linearProblem.setProblem(lhs, residual);
-      if (isSet == false) {
-        if(peridigmComm->MyPID() == 0)
-          std::cout << std::endl << "ERROR: Belos::LinearProblem failed to set up correctly!" << std::endl;
-      }
+      TEST_FOR_EXCEPT_MSG(!isSet, "**** Belos::LinearProblem::setProblem() returned nonzero error code.\n");
       PeridigmNS::Timer::self().startTimer("Solve Linear System");
-      // Belos::ReturnType ret = belosSolver->solve();
-      belosSolver->solve();
+      Belos::ReturnType isConverged = belosSolver->solve();
       PeridigmNS::Timer::self().stopTimer("Solve Linear System");
-*/
-
-      // Solve linear system
-      PeridigmNS::Timer::self().startTimer("Solve Linear System");
-      Epetra_LinearProblem linearProblem;
-      AztecOO solver(linearProblem);
-      solver.SetAztecOption(AZ_precond, AZ_Jacobi);
-      stringstream ss;
-      solver.SetOutputStream(ss);
-      int maxAztecIterations = tangent->NumGlobalRows();
-      double aztecTolerance = 1.0e-6;
-      lhs->PutScalar(0.0);
-      solver.Iterate(tangent.get(), &(*lhs), residual.get(), maxAztecIterations, aztecTolerance);
-      PeridigmNS::Timer::self().stopTimer("Solve Linear System");
+      if(isConverged != Belos::Converged && peridigmComm->MyPID() == 0)
+        cout << "Warning:  Belos linear solver failed to converge!  Proceeding with nonconverged solution..." << endl;
 
       // Apply increment to nodal positions
       for(int i=0 ; i<y->MyLength() ; ++i)
@@ -867,7 +847,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
         (*y)[i] = (*x)[i] + (*u)[i] + (*deltaU)[i];
       
       // Compute residual
-      residualNorm = computeQuasiStaticResidual();
+      residualNorm = computeQuasiStaticResidual(residual);
 
       solverIteration++;
     }
@@ -899,6 +879,14 @@ void PeridigmNS::Peridigm::executeImplicit() {
 
   // Allocate memory for non-zeros in global Jacobain and lock in the structure
   allocateJacobian();
+
+  // Create vectors that are specific to implicit dynamics
+  // The residual must use the same map as the tangent matrix, which is an Epetra_Map and is not consistent
+  // with the Epetra_BlockMap used for the mothership multivector.
+  Teuchos::RCP<Epetra_Vector> residual = Teuchos::rcp(new Epetra_Vector(tangent->Map()));
+  Teuchos::RCP<Epetra_Vector> un = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
+  Teuchos::RCP<Epetra_Vector> vn = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
+  Teuchos::RCP<Epetra_Vector> an = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
 
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   workset->timeStep = timeStep;
@@ -938,12 +926,6 @@ void PeridigmNS::Peridigm::executeImplicit() {
   belosList.set( "Output Style", Belos::Brief );
   Teuchos::RCP< Belos::SolverManager<double,Epetra_MultiVector,Epetra_Operator> > belosSolver
     = Teuchos::rcp( new Belos::BlockCGSolMgr<double,Epetra_MultiVector,Epetra_Operator>(Teuchos::rcp(&linearProblem,false), Teuchos::rcp(&belosList,false)) );
-
-  // Create owned (e.g., "mothership") vectors for data at timestep n
-  // MLP: Move this to "Peridigm" level, along with residual vector, deltaU, etc.
-  Teuchos::RCP<Epetra_Vector> un = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
-  Teuchos::RCP<Epetra_Vector> vn = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
-  Teuchos::RCP<Epetra_Vector> an = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
 
   // Create temporary owned (e.g., "mothership") vectors for data at timestep n
   // to be used in Newmark integration
@@ -1011,9 +993,10 @@ void PeridigmNS::Peridigm::executeImplicit() {
 
     // Compute the residual
     // residual = beta*dt*dt*(M*a - force)
-    residual->Update(density,*a,0.0); // This computes M*a, since mass matrix is a multiple of the identity
-    residual->Update(-1.0,*force,1.0);
-    residual->Scale(beta*dt2);
+    // Note that due to restrictions to CrsMatrix, the residual has a different (but equivalent) map
+    // than the force and acceleration
+    for(int i=0 ; i<residual->MyLength() ; ++i)
+      (*residual)[i] = beta*dt2*( density*(*a)[i] - (*force)[i] );
 
     // Modify residual for kinematic BC
     applyKinematicBC(0.0, residual, Teuchos::RCP<Epetra_FECrsMatrix>());
@@ -1045,7 +1028,9 @@ void PeridigmNS::Peridigm::executeImplicit() {
           std::cout << std::endl << "ERROR: Belos::LinearProblem failed to set up correctly!" << std::endl;
       }
       PeridigmNS::Timer::self().startTimer("Solve Linear System");
-      /* Belos::ReturnType ret = */ belosSolver->solve();
+      Belos::ReturnType isConverged = belosSolver->solve();
+      if(isConverged != Belos::Converged && peridigmComm->MyPID() == 0)
+        cout << "Warning:  Belos linear solver failed to converge!  Proceeding with nonconverged solution..." << endl;
       PeridigmNS::Timer::self().stopTimer("Solve Linear System");
 
       // Apply increment to nodal positions
@@ -1083,9 +1068,10 @@ void PeridigmNS::Peridigm::executeImplicit() {
 
       // Compute residual vector and its norm
       // residual = beta*dt*dt*(M*a - force)
-      residual->Update(density,*a,0.0); // This computes M*a, since mass matrix is a multiple of the identity
-      residual->Update(-1.0,*force,1.0);
-      residual->Scale(beta*dt2);
+      // Note that due to restrictions to CrsMatrix, the residual has a different (but equivalent) map
+      // than the force and acceleration
+      for(int i=0 ; i<residual->MyLength() ; ++i)
+        (*residual)[i] = beta*dt2*( density*(*a)[i] - (*force)[i] );
 
       // Modify residual for kinematic BC
       applyKinematicBC(0.0, residual, Teuchos::RCP<Epetra_FECrsMatrix>());
@@ -1245,8 +1231,8 @@ void PeridigmNS::Peridigm::applyKinematicBC(double loadIncrement,
         // set entry in residual vector equal to the displacement increment for the kinematic bc
         // this will cause the solution procedure to solve for the correct U at the bc
         int localNodeID = threeDimensionalMap->LID(nodeList[i]);
-	if(!vec.is_null() && localNodeID != -1){
- 	  (*vec)[localNodeID*3 + coord] = value*loadIncrement;
+        if(!vec.is_null() && localNodeID != -1){
+          (*vec)[localNodeID*3 + coord] = value*loadIncrement;
         }
 
       }
@@ -1256,7 +1242,7 @@ void PeridigmNS::Peridigm::applyKinematicBC(double loadIncrement,
   PeridigmNS::Timer::self().stopTimer("Apply Kinematic B.C.");
 }
 
-double PeridigmNS::Peridigm::computeQuasiStaticResidual() {
+double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vector> residual) {
 
   PeridigmNS::Timer::self().startTimer("Compute Residual");
 
@@ -1284,7 +1270,9 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual() {
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
   // copy the internal force to the residual vector
-  (*residual) = (*force);
+  // note that due to restrictions on CrsMatrix, these vectors have different (but equivalent) maps
+  for(int i=0 ; i<force->MyLength() ; ++i)
+    (*residual)[i] = (*force)[i];
 
   // convert force density to force
   for(int i=0 ; i<residual->MyLength() ; ++i)
@@ -1464,8 +1452,7 @@ void PeridigmNS::Peridigm::rebalance() {
   force = Teuchos::rcp((*threeDimensionalMothership)(5), false);         // force
   contactForce = Teuchos::rcp((*threeDimensionalMothership)(6), false);  // contact force (used only for contact simulations)
   deltaU = Teuchos::rcp((*threeDimensionalMothership)(7), false);        // increment in displacement (used only for implicit time integration)
-  residual = Teuchos::rcp((*threeDimensionalMothership)(8), false);      // residual (used only for implicit time integration)
-  scratch = Teuchos::rcp((*threeDimensionalMothership)(9), false);       // scratch space
+  scratch = Teuchos::rcp((*threeDimensionalMothership)(8), false);       // scratch space
 
   // rebalance the blocks
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)

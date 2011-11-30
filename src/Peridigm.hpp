@@ -134,7 +134,7 @@ namespace PeridigmNS {
     void applyKinematicBC(double loadIncrement, Teuchos::RCP<Epetra_Vector> vec, Teuchos::RCP<Epetra_FECrsMatrix> mat);
 
     //! Compute the residual for quasi-statics
-    double computeQuasiStaticResidual();
+    double computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vector> residual);
 
     //! Synchronize data in DataManagers across processes (needed before call to OutputManager::write() )
     void synchDataManagers();
