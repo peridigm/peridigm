@@ -274,7 +274,7 @@ PeridigmNS::OutputManager_VTK_XML::~OutputManager_VTK_XML() {
     outFile << "  <Collection>" << std::endl;
 
     deque<double> times = vtkWriters.front()->getTimes();
-    for(int i=0;i<times.size();i++) {
+    for(unsigned int i=0;i<times.size();i++) {
       std::stringstream ss;
       ss << filenameBase.c_str() << "_t" << i << ".vtm";
       string vtmFileName(ss.str());
