@@ -1141,7 +1141,7 @@ void PeridigmNS::Peridigm::allocateJacobian() {
 
   // Loop over the neighborhood for each locally-owned point and create non-zero entries in the matrix.
   // Entries will exist for any two points that are bonded, and any two points that are bonded to a common third point.
-  vector<int> globalIndicies;
+  vector<int> globalIndices;
   vector<double> zeros;
   int* neighborhoodList = globalNeighborhoodData->NeighborhoodList();
   int neighborhoodListIndex = 0;
@@ -1149,30 +1149,26 @@ void PeridigmNS::Peridigm::allocateJacobian() {
     int GID =  oneDimensionalOverlapMap->GID(LID);
     int numNeighbors = neighborhoodList[neighborhoodListIndex++];
     unsigned int numEntries = 3*(numNeighbors+1);
-    globalIndicies.resize(numEntries);
-    globalIndicies[0] = 3*GID;
-    globalIndicies[1] = 3*GID + 1;
-    globalIndicies[2] = 3*GID + 2;
+    globalIndices.resize(numEntries);
+    globalIndices[0] = 3*GID;
+    globalIndices[1] = 3*GID + 1;
+    globalIndices[2] = 3*GID + 2;
     for(int j=0 ; j<numNeighbors ; ++j){
       int neighborLocalID = neighborhoodList[neighborhoodListIndex++];
       int neighborGlobalID = oneDimensionalOverlapMap->GID(neighborLocalID);
-      globalIndicies[3*j+3] = 3*neighborGlobalID;
-      globalIndicies[3*j+4] = 3*neighborGlobalID + 1;
-      globalIndicies[3*j+5] = 3*neighborGlobalID + 2;
+      globalIndices[3*j+3] = 3*neighborGlobalID;
+      globalIndices[3*j+4] = 3*neighborGlobalID + 1;
+      globalIndices[3*j+5] = 3*neighborGlobalID + 2;
     }
     if(numEntries > zeros.size())
       zeros.resize(numEntries, 0.0);
-    tangent->InsertGlobalValues(3*GID,   numEntries, &zeros[0], &globalIndicies[0]);
-    tangent->InsertGlobalValues(3*GID+1, numEntries, &zeros[0], &globalIndicies[0]);
-    tangent->InsertGlobalValues(3*GID+2, numEntries, &zeros[0], &globalIndicies[0]);
-    neighborhoodListIndex -= numNeighbors;
-    for(int j=0 ; j<numNeighbors ; ++j){
-      int neighborLocalID = neighborhoodList[neighborhoodListIndex++];
-      int neighborGlobalID = oneDimensionalOverlapMap->GID(neighborLocalID);
-      tangent->InsertGlobalValues(3*neighborGlobalID,   numEntries, &zeros[0], &globalIndicies[0]);
-      tangent->InsertGlobalValues(3*neighborGlobalID+1, numEntries, &zeros[0], &globalIndicies[0]);
-      tangent->InsertGlobalValues(3*neighborGlobalID+2, numEntries, &zeros[0], &globalIndicies[0]);
-    }  
+
+    for(unsigned int j=0 ; j<numEntries ; ++j){
+      const double* values = &zeros[0];
+      const int* indices = &globalIndices[0];
+      int err = tangent->InsertGlobalValues(globalIndices[j], numEntries, values, indices);
+      TEST_FOR_EXCEPT_MSG(err < 0, "**** PeridigmNS::Peridigm::allocateJacobian(), InsertGlobalValues() returned negative error code.\n");
+    }
   }
   tangent->GlobalAssemble();
 
@@ -1192,12 +1188,12 @@ void PeridigmNS::Peridigm::applyKinematicBC(double loadIncrement,
 
   // create data structures for inserting ones and zeros into jacobian
   vector<double> jacobianRow;
-  vector<int> jacobianIndicies;
+  vector<int> jacobianIndices;
   if(!mat.is_null()){
     jacobianRow.resize(mat->NumMyCols(), 0.0);
-    jacobianIndicies.resize(mat->NumMyCols());
-    for(unsigned int i=0 ; i<jacobianIndicies.size() ; ++i)
-      jacobianIndicies[i] = i;
+    jacobianIndices.resize(mat->NumMyCols());
+    for(unsigned int i=0 ; i<jacobianIndices.size() ; ++i)
+      jacobianIndices[i] = i;
   }
 
   // apply the kinematic boundary conditions
@@ -1240,7 +1236,7 @@ void PeridigmNS::Peridigm::applyKinematicBC(double loadIncrement,
             // If a value is not already present for the specified location in the matrix, the
             // input value will be ignored and a positive warning code will be returned.
             // \todo Do the bookkeeping to send in data only for locations that actually exist in the matrix structure.
-            mat->ReplaceMyValues(localRowID, mat->NumMyCols(), &jacobianRow[0], &jacobianIndicies[0]);
+            mat->ReplaceMyValues(localRowID, mat->NumMyCols(), &jacobianRow[0], &jacobianIndices[0]);
             jacobianRow[localColID] = 0.0;
           }
         }
