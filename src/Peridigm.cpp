@@ -742,7 +742,14 @@ void PeridigmNS::Peridigm::executeExplicit() {
 void PeridigmNS::Peridigm::executeQuasiStatic() {
 
   // Allocate memory for non-zeros in global tangent and lock in the structure
+  if(peridigmComm->MyPID() == 0)
+    cout << "Allocating global tangent matrix...";
   allocateJacobian();
+  if(peridigmComm->MyPID() == 0){
+    cout << "\b\b\b:  " << endl;
+    cout << "  number of rows = " << tangent->NumGlobalRows() << endl;
+    cout << "  number of nonzeros = " << tangent->NumGlobalNonzeros() << "\n" << endl;
+  }
 
   // Create vectors that are specific to quasi-statics.
   // These must use the same map as the tangent matrix, which is an Epetra_Map and is not consistent
@@ -824,7 +831,8 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
       tangent->PutScalar(0.0);
       PeridigmNS::Timer::self().startTimer("Evaluate Jacobian");
       modelEvaluator->evalJacobian(workset);
-      tangent->GlobalAssemble();
+      int err = tangent->GlobalAssemble();
+      TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::executeQuasiStatic(), GlobalAssemble() returned nonzero error code.\n");
       PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
       applyKinematicBC(0.0, residual, tangent);
       tangent->Scale(-1.0);
@@ -878,7 +886,14 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
 void PeridigmNS::Peridigm::executeImplicit() {
 
   // Allocate memory for non-zeros in global Jacobain and lock in the structure
+  if(peridigmComm->MyPID() == 0)
+    cout << "Allocating global tangent matrix...";
   allocateJacobian();
+  if(peridigmComm->MyPID() == 0){
+    cout << "\b\b\b:  " << endl;
+    cout << "  number of rows = " << tangent->NumGlobalRows() << endl;
+    cout << "  number of nonzeros = " << tangent->NumGlobalNonzeros() << "\n" << endl;
+  }
 
   // Create vectors that are specific to implicit dynamics
   // The residual must use the same map as the tangent matrix, which is an Epetra_Map and is not consistent
@@ -1157,7 +1172,8 @@ void PeridigmNS::Peridigm::allocateJacobian() {
       TEST_FOR_EXCEPT_MSG(err < 0, "**** PeridigmNS::Peridigm::allocateJacobian(), InsertGlobalValues() returned negative error code.\n");
     }
   }
-  tangent->GlobalAssemble();
+  int err = tangent->GlobalAssemble();
+  TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::allocateJacobian(), GlobalAssemble() returned nonzero error code.\n");
 
   // create the serial Jacobian
   overlapJacobian = Teuchos::rcp(new PeridigmNS::SerialMatrix(tangent, oneDimensionalOverlapMap));
@@ -1298,7 +1314,8 @@ void PeridigmNS::Peridigm::computeImplicitJacobian(double beta) {
   tangent->PutScalar(0.0);
   PeridigmNS::Timer::self().startTimer("Evaluate Jacobian");
   modelEvaluator->evalJacobian(workset);
-  tangent->GlobalAssemble();
+  int err = tangent->GlobalAssemble();
+  TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::computeImplicitJacobian(), GlobalAssemble() returned nonzero error code.\n");
   PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
 //      applyKinematicBC(0.0, residual, tangent);
 

@@ -72,7 +72,8 @@ void PeridigmNS::SerialMatrix::addValue(int row, int col, double value)
   data[0] = new double[1];
   data[0][0] = value;
 
-  FECrsMatrix->SumIntoGlobalValues(numRows, &globalRowID, numCols, &globalColID, data);
+  int err = FECrsMatrix->SumIntoGlobalValues(numRows, &globalRowID, numCols, &globalColID, data);
+  TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::SerialMatrix::addValue(), SumIntoGlobalValues() returned nonzero error code.\n");
 
   delete[] data[0];
   delete[] data;
@@ -95,13 +96,16 @@ void PeridigmNS::SerialMatrix::addValues(int numIndices, const int* indices, con
   for(int iRow=0 ; iRow<numIndices ; ++iRow){
 
     // If the row is locally owned, then sum into the global tangent with Epetra_CrsMatrix::SumIntoMyValues().
-    if(localRowIndices[iRow] != -1)
-      FECrsMatrix->SumIntoMyValues(localRowIndices[iRow], numIndices, values[iRow], &localColIndices[0]);
-
+    if(localRowIndices[iRow] != -1){
+      int err = FECrsMatrix->SumIntoMyValues(localRowIndices[iRow], numIndices, values[iRow], &localColIndices[0]);
+      TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::SerialMatrix::addValues(), SumIntoMyValues() returned nonzero error code.\n");
+    }
     // If the row is not locally owned, then sum into the global tangent with Epetra_FECrsMatrix::SumIntoGlobalValues().
     // This is expensive.
-    else
-      FECrsMatrix->SumIntoGlobalValues(globalIndices[iRow], numIndices, values[iRow], &globalIndices[0]);
+    else{
+      int err = FECrsMatrix->SumIntoGlobalValues(globalIndices[iRow], numIndices, values[iRow], &globalIndices[0]);
+      TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::SerialMatrix::addValues(), SumIntoGlobalValues() returned nonzero error code.\n");
+    }
   }
 }
 
