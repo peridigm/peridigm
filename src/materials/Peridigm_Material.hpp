@@ -114,6 +114,8 @@ namespace PeridigmNS {
 
     enum FiniteDifferenceScheme { FORWARD_DIFFERENCE=0, CENTRAL_DIFFERENCE=1 };
 
+  protected:
+
 	//! Evaluate the jacobian via finite difference (probing)
 	void
 	computeFiniteDifferenceJacobian(const double dt,
@@ -124,10 +126,10 @@ namespace PeridigmNS {
                                     PeridigmNS::SerialMatrix& jacobian,
                                     FiniteDifferenceScheme finiteDifferenceScheme) const;
 
-  private:
-
     //! Scratch matrix.
     mutable ScratchMatrix scratchMatrix;
+
+  private:
 
 	//! Default constructor with no arguments, private to prevent use.
 	Material(){}

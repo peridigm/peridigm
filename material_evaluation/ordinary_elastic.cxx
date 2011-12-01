@@ -47,6 +47,8 @@
 
 #include <cmath>
 
+#include <Sacado.hpp>
+
 namespace MATERIAL_EVALUATION {
 
 
@@ -118,5 +120,108 @@ void computeInternalForceLinearElastic
 
 	}
 }
+
+template<typename ScalarT>
+void computeInternalForceLinearElasticAD
+(
+		const double* xOverlap,
+		const ScalarT* yOverlap,
+		const double* mOwned,
+		const double* volumeOverlap,
+		const ScalarT* dilatationOwned,
+		const double* bondDamage,
+		ScalarT* fInternalOverlap,
+		const int*  localNeighborList,
+		int numOwnedPoints,
+		double BULK_MODULUS,
+		double SHEAR_MODULUS
+)
+{
+
+	/*
+	 * Compute processor local contribution to internal force
+	 */
+	double K = BULK_MODULUS;
+	double MU = SHEAR_MODULUS;
+	double OMEGA=1.0;
+
+	const double *xOwned = xOverlap;
+	const ScalarT *yOwned = yOverlap;
+	const double *m = mOwned;
+	const double *v = volumeOverlap;
+	const ScalarT *theta = dilatationOwned;
+	ScalarT *fOwned = fInternalOverlap;
+
+	const int *neighPtr = localNeighborList;
+	double cellVolume, alpha, X_dx, X_dy, X_dz, zeta;
+    ScalarT Y_dx, Y_dy, Y_dz, dY, t, fx, fy, fz;
+	for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yOwned +=3, fOwned+=3, m++, theta++){
+
+		int numNeigh = *neighPtr; neighPtr++;
+		const double *X = xOwned;
+		const ScalarT *Y = yOwned;
+		alpha = 15.0*MU/(*m);
+		double selfCellVolume = v[p];
+		ScalarT c1 = OMEGA*(*theta)*(9.0*K-15.0*MU)/(3.0*(*m));
+		for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++){
+			int localId = *neighPtr;
+			cellVolume = v[localId];
+			const double *XP = &xOverlap[3*localId];
+			const ScalarT *YP = &yOverlap[3*localId];
+			X_dx = XP[0]-X[0];
+			X_dy = XP[1]-X[1];
+			X_dz = XP[2]-X[2];
+			zeta = sqrt(X_dx*X_dx+X_dy*X_dy+X_dz*X_dz);
+			Y_dx = YP[0]-Y[0];
+			Y_dy = YP[1]-Y[1];
+			Y_dz = YP[2]-Y[2];
+			dY = sqrt(Y_dx*Y_dx+Y_dy*Y_dy+Y_dz*Y_dz);
+			t = (1.0-*bondDamage)*(c1 * zeta + (1.0-*bondDamage) * OMEGA * alpha * (dY - zeta));
+			fx = t * Y_dx / dY;
+			fy = t * Y_dy / dY;
+			fz = t * Y_dz / dY;
+
+			*(fOwned+0) += fx*cellVolume;
+			*(fOwned+1) += fy*cellVolume;
+			*(fOwned+2) += fz*cellVolume;
+			fInternalOverlap[3*localId+0] -= fx*selfCellVolume;
+			fInternalOverlap[3*localId+1] -= fy*selfCellVolume;
+			fInternalOverlap[3*localId+2] -= fz*selfCellVolume;
+		}
+
+	}
+}
+
+/** Explicit template instantiation for double. */
+template void computeInternalForceLinearElasticAD<double>
+(
+		const double* xOverlap,
+		const double* yOverlap,
+		const double* mOwned,
+		const double* volumeOverlap,
+		const double* dilatationOwned,
+		const double* bondDamage,
+		double* fInternalOverlap,
+		const int*  localNeighborList,
+		int numOwnedPoints,
+		double BULK_MODULUS,
+		double SHEAR_MODULUS
+ );
+
+/** Explicit template instantiation for Sacado::Fad::DFad<double> . */
+template void computeInternalForceLinearElasticAD<Sacado::Fad::DFad<double> >
+(
+		const double* xOverlap,
+		const Sacado::Fad::DFad<double>* yOverlap,
+		const double* mOwned,
+		const double* volumeOverlap,
+		const Sacado::Fad::DFad<double>* dilatationOwned,
+		const double* bondDamage,
+		Sacado::Fad::DFad<double>* fInternalOverlap,
+		const int*  localNeighborList,
+		int numOwnedPoints,
+		double BULK_MODULUS,
+		double SHEAR_MODULUS
+);
 
 }

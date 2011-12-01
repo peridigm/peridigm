@@ -48,8 +48,12 @@
 #include "Peridigm_LinearElasticIsotropicMaterial.hpp"
 #include "Peridigm_DamageModelFactory.hpp"
 #include <Teuchos_TestForException.hpp>
+#include <Epetra_SerialDenseMatrix.h>
+#include <Epetra_SerialComm.h>
+#include <Sacado.hpp>
 #include "ordinary_elastic.h"
 #include "ordinary_utilities.h"
+#include "Peridigm_Timer.hpp"
 
 using namespace std;
 
@@ -121,6 +125,30 @@ PeridigmNS::LinearElasticIsotropicMaterial::updateConstitutiveData(const double 
   dataManager.getData(Field_NS::DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&damage);
   dataManager.getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
 
+  MATERIAL_EVALUATION::computeDilatationAD(x,y,weightedVolume,cellVolume,bondDamage,dilatation,neighborhoodList,numOwnedPoints);
+}
+
+void
+PeridigmNS::LinearElasticIsotropicMaterial::computeForce(const double dt,
+                                                         const int numOwnedPoints,
+                                                         const int* ownedIDs,
+                                                         const int* neighborhoodList,
+                                                         PeridigmNS::DataManager& dataManager) const
+{
+  // Zero out the forces
+  dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->PutScalar(0.0);
+
+  // Extract pointers to the underlying data
+  double *x, *y, *cellVolume, *weightedVolume, *dilatation, *damage, *bondDamage, *force;
+  dataManager.getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->ExtractView(&x);
+  dataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->ExtractView(&y);
+  dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&cellVolume);
+  dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&weightedVolume);
+  dataManager.getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1)->ExtractView(&dilatation);
+  dataManager.getData(Field_NS::DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&damage);
+  dataManager.getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
+  dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->ExtractView(&force);
+
   // Update the bond damgae
   if(!m_damageModel.is_null()){
     m_damageModel->computeDamage(dt,
@@ -148,28 +176,149 @@ PeridigmNS::LinearElasticIsotropicMaterial::updateConstitutiveData(const double 
  	damage[nodeID] = totalDamage;
   }
 
-  MATERIAL_EVALUATION::computeDilatation(x,y,weightedVolume,cellVolume,bondDamage,dilatation,neighborhoodList,numOwnedPoints);
+  MATERIAL_EVALUATION::computeInternalForceLinearElasticAD(x,y,weightedVolume,cellVolume,dilatation,bondDamage,force,neighborhoodList,numOwnedPoints,m_bulkModulus,m_shearModulus);
 }
 
 void
-PeridigmNS::LinearElasticIsotropicMaterial::computeForce(const double dt,
-                                                         const int numOwnedPoints,
-                                                         const int* ownedIDs,
-                                                         const int* neighborhoodList,
-                                                         PeridigmNS::DataManager& dataManager) const
+PeridigmNS::LinearElasticIsotropicMaterial::computeJacobian(const double dt,
+                                                            const int numOwnedPoints,
+                                                            const int* ownedIDs,
+                                                            const int* neighborhoodList,
+                                                            PeridigmNS::DataManager& dataManager,
+                                                            PeridigmNS::SerialMatrix& jacobian) const
 {
-  // Zero out the forces
-  dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->PutScalar(0.0);
+  // Call the base class function, which computes the Jacobian by finite difference
+  //PeridigmNS::Material::computeJacobian(dt, numOwnedPoints, ownedIDs, neighborhoodList, dataManager, jacobian);
 
-  // Extract pointers to the underlying data
-  double *x, *y, *cellVolume, *weightedVolume, *dilatation, *bondDamage, *force;
-  dataManager.getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->ExtractView(&x);
-  dataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->ExtractView(&y);
-  dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&cellVolume);
-  dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&weightedVolume);
-  dataManager.getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1)->ExtractView(&dilatation);
-  dataManager.getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
-  dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->ExtractView(&force);
+  // Compute the Jacobian via automatic differentiation
+  computeAutomaticDifferentiationJacobian(dt, numOwnedPoints, ownedIDs, neighborhoodList, dataManager, jacobian);  
+}
 
-  MATERIAL_EVALUATION::computeInternalForceLinearElastic(x,y,weightedVolume,cellVolume,dilatation,bondDamage,force,neighborhoodList,numOwnedPoints,m_bulkModulus,m_shearModulus);
+
+void
+PeridigmNS::LinearElasticIsotropicMaterial::computeAutomaticDifferentiationJacobian(const double dt,
+                                                                                    const int numOwnedPoints,
+                                                                                    const int* ownedIDs,
+                                                                                    const int* neighborhoodList,
+                                                                                    PeridigmNS::DataManager& dataManager,
+                                                                                    PeridigmNS::SerialMatrix& jacobian) const
+{
+  // Compute contributions to the tangent matrix on an element-by-element basis
+
+  // Loop over all points.
+  int neighborhoodListIndex = 0;
+  for(int iID=0 ; iID<numOwnedPoints ; ++iID){
+
+    PeridigmNS::Timer::self().startTimer("AD Jacobian General Set Up");
+
+    // Create a temporary neighborhood consisting of a single point and its neighbors.
+    // The temporary neighborhood is sorted by global ID to somewhat increase the chance
+    // that the downstream Epetra_CrsMatrix::SumIntoMyValues() calls will be as efficient
+    // as possible.
+    int numNeighbors = neighborhoodList[neighborhoodListIndex++];
+    vector<int> tempMyGlobalIDs(numNeighbors+1);
+    // Create a placeholder that will appear at the beginning of the sorted list.
+    tempMyGlobalIDs[0] = -1;
+    vector<int> tempNeighborhoodList(numNeighbors+1); 
+    tempNeighborhoodList[0] = numNeighbors;
+    for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
+      int neighborID = neighborhoodList[neighborhoodListIndex++];
+      tempMyGlobalIDs[iNID+1] = dataManager.getOverlapScalarPointMap()->GID(neighborID);
+      tempNeighborhoodList[iNID+1] = iNID+1;
+    }
+    sort(tempMyGlobalIDs.begin(), tempMyGlobalIDs.end());
+    // Put the node at the center of the neighborhood at the beginning of the list.
+    tempMyGlobalIDs[0] = dataManager.getOverlapScalarPointMap()->GID(iID);
+
+    Epetra_SerialComm serialComm;
+    Teuchos::RCP<Epetra_BlockMap> tempOneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(numNeighbors+1, numNeighbors+1, &tempMyGlobalIDs[0], 1, 0, serialComm));
+    Teuchos::RCP<Epetra_BlockMap> tempThreeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(numNeighbors+1, numNeighbors+1, &tempMyGlobalIDs[0], 3, 0, serialComm));
+    Teuchos::RCP<Epetra_BlockMap> tempBondMap = Teuchos::rcp(new Epetra_BlockMap(1, 1, &tempMyGlobalIDs[0], numNeighbors, 0, serialComm));
+
+    // Create a temporary DataManager containing data for this point and its neighborhood.
+    PeridigmNS::DataManager tempDataManager;
+    tempDataManager.setMaps(Teuchos::RCP<const Epetra_BlockMap>(),
+                            tempOneDimensionalMap,
+                            Teuchos::RCP<const Epetra_BlockMap>(),
+                            tempThreeDimensionalMap,
+                            tempBondMap);
+
+    // The temporary data manager will have the same field specs and data as the real data manager.
+    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs = dataManager.getFieldSpecs();
+    tempDataManager.allocateData(fieldSpecs);
+    tempDataManager.copyLocallyOwnedDataFromDataManager(dataManager);
+
+    // Set up numOwnedPoints and ownedIDs.
+    // There is only one owned ID, and it has local ID zero in the tempDataManager.
+    int tempNumOwnedPoints = 1;
+    vector<int> tempOwnedIDs(tempNumOwnedPoints);
+    tempOwnedIDs[0] = 0;
+
+    // Use the scratchMatrix as sub-matrix for storing tangent values prior to loading them into the global tangent matrix.
+    // Resize scratchMatrix if necessary
+    if(scratchMatrix.Dimension() < 3*(numNeighbors+1))
+      scratchMatrix.Resize(3*(numNeighbors+1));
+
+    // Create a list of indices for the rows/columns in the scratch matrix.
+    // These indices correspond to the DataManager's three-dimensional overlap map.
+    vector<int> indices(3*(numNeighbors+1));
+    for(int i=0 ; i<numNeighbors+1 ; ++i){
+      int globalID = tempOneDimensionalMap->GID(i);
+      int localID = dataManager.getOverlapScalarPointMap()->LID(globalID);
+      for(int j=0 ; j<3 ; ++j)
+        indices[3*i+j] = 3*localID+j;
+    }
+
+    // Extract pointers to the underlying data in the constitutiveData array.
+    double *x, *y, *cellVolume, *weightedVolume, *dilatation, *damage, *bondDamage, *force;
+    tempDataManager.getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->ExtractView(&x);
+    tempDataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->ExtractView(&y);
+    tempDataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&cellVolume);
+    tempDataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&weightedVolume);
+    tempDataManager.getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1)->ExtractView(&dilatation);
+    tempDataManager.getData(Field_NS::DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&damage);
+    tempDataManager.getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
+    tempDataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->ExtractView(&force);
+
+    PeridigmNS::Timer::self().stopTimer("AD Jacobian General Set Up");
+    PeridigmNS::Timer::self().startTimer("AD Jacobian FAD Set Up");
+
+    // Create arrays of Fad objects for the current coordinates, dilatation, and force density
+    vector<Sacado::Fad::DFad<double> > y_AD(3*(numNeighbors+1));
+    vector<Sacado::Fad::DFad<double> > dilatation_AD(numNeighbors+1);
+    vector<Sacado::Fad::DFad<double> > force_AD(3*(numNeighbors+1));
+
+    // The current coordinates are independent variables
+    int numberOfDerivatives = 3*(numNeighbors+1);
+    for(int i=0 ; i<numNeighbors+1 ; ++i){
+      for(int dof=0 ; dof<3 ; ++dof){
+        int independentVariableIndex = 3*i+dof;
+        double initialValue = y[3*i+dof];
+        y_AD[3*i+dof] = Sacado::Fad::DFad<double>(numberOfDerivatives, independentVariableIndex, initialValue);
+      }
+    }
+
+    PeridigmNS::Timer::self().stopTimer("AD Jacobian FAD Set Up");
+    PeridigmNS::Timer::self().startTimer("AD Jacobian Constitutive Model");
+
+    // Evaluate the constitutive model using the AD types
+    MATERIAL_EVALUATION::computeDilatationAD(x,&y_AD[0],weightedVolume,cellVolume,bondDamage,&dilatation_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints);
+    MATERIAL_EVALUATION::computeInternalForceLinearElasticAD(x,&y_AD[0],weightedVolume,cellVolume,&dilatation_AD[0],bondDamage,&force_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints,m_bulkModulus,m_shearModulus);
+
+    PeridigmNS::Timer::self().stopTimer("AD Jacobian Constitutive Model");
+    PeridigmNS::Timer::self().startTimer("AD Jacobian Global Fill");
+
+    // Load derivative values into scratch matrix
+    // Multiply by volume along the way to convert force density to force
+    for(int row=0 ; row<3*(numNeighbors+1) ; ++row){
+      for(int col=0 ; col<3*(numNeighbors+1) ; ++col){
+        scratchMatrix(row, col) = force_AD[row].dx(col) * cellVolume[row/3];
+      }
+    }
+
+    // Sum the values into the global tangent matrix (this is expensive).
+    jacobian.addValues((int)indices.size(), &indices[0], scratchMatrix.Data());
+
+    PeridigmNS::Timer::self().stopTimer("AD Jacobian Global Fill");
+  }
 }

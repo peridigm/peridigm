@@ -152,6 +152,7 @@ target_link_libraries(utPeridigm_State
 )
 
 add_executable(utPeridigm_LinearElasticIsotropicMaterial
+               Peridigm_Timer.cpp
                Peridigm_State.cpp
                Peridigm_DataManager.cpp
                Peridigm_SerialMatrix.cpp
@@ -173,6 +174,7 @@ ${Boost_LIBRARIES}
 add_executable(utPHAL_UpdateForceState
 	           PHAL_PeridigmTraits.cpp
 	           PHAL_Dimension.cpp
+               Peridigm_Timer.cpp
                Peridigm_Block.cpp
                Peridigm_State.cpp
                Peridigm_DataManager.cpp
@@ -206,6 +208,7 @@ target_link_libraries(utPHAL_UpdateForceState
 add_executable(utPHAL_EvaluateForce
 	           PHAL_PeridigmTraits.cpp
 	           PHAL_Dimension.cpp
+               Peridigm_Timer.cpp
                Peridigm_State.cpp
                Peridigm_DataManager.cpp
                Peridigm_Block.cpp

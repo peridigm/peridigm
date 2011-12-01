@@ -161,6 +161,19 @@ void computeDilatation
 		int numOwnedPoints
 );
 
+template<typename ScalarT>
+void computeDilatationAD
+(
+		const double* xOverlap,
+		const ScalarT* yOverlap,
+		const double *mOwned,
+		const double* volumeOverlap,
+		const double* bondDamage,
+		ScalarT* dilatationOwned,
+		const int* localNeighborList,
+		int numOwnedPoints
+ );
+
 namespace WITH_BOND_VOLUME {
 
 /**

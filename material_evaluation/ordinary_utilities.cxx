@@ -50,6 +50,8 @@
 //#include "bond_volume_calculator.h"
 #include <cmath>
 
+#include <Sacado.hpp>
+
 namespace MATERIAL_EVALUATION {
 
 /**
@@ -183,6 +185,82 @@ void computeDilatation
 
 	}
 }
+
+template<typename ScalarT>
+void computeDilatationAD
+(
+		const double* xOverlap,
+		const ScalarT* yOverlap,
+		const double *mOwned,
+		const double* volumeOverlap,
+		const double* bondDamage,
+		ScalarT* dilatationOwned,
+		const int* localNeighborList,
+		int numOwnedPoints
+)
+{
+	double OMEGA=1.0;
+	const double *xOwned = xOverlap;
+	const ScalarT *yOwned = yOverlap;
+	const double *m = mOwned;
+	const double *v = volumeOverlap;
+	ScalarT *theta = dilatationOwned;
+	double cellVolume;
+	const int *neighPtr = localNeighborList;
+	for(int p=0; p<numOwnedPoints;p++, xOwned+=3, yOwned+=3, m++, theta++){
+		int numNeigh = *neighPtr; neighPtr++;
+		const double *X = xOwned;
+		const ScalarT *Y = yOwned;
+		*theta = ScalarT(0.0);
+		for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++){
+			int localId = *neighPtr;
+			cellVolume = v[localId];
+			const double *XP = &xOverlap[3*localId];
+			const ScalarT *YP = &yOverlap[3*localId];
+			double X_dx = XP[0]-X[0];
+			double X_dy = XP[1]-X[1];
+			double X_dz = XP[2]-X[2];
+			double zetaSqared = X_dx*X_dx+X_dy*X_dy+X_dz*X_dz;
+			ScalarT Y_dx = YP[0]-Y[0];
+			ScalarT Y_dy = YP[1]-Y[1];
+			ScalarT Y_dz = YP[2]-Y[2];
+			ScalarT dY = Y_dx*Y_dx+Y_dy*Y_dy+Y_dz*Y_dz;
+			double d = sqrt(zetaSqared);
+			ScalarT e = sqrt(dY)-d;
+			*theta += 3.0*OMEGA*(1.0-*bondDamage)*d*e*cellVolume/(*m);
+		}
+
+	}
+}
+
+/** Explicit template instantiation for double. */
+template
+void computeDilatationAD<double>
+(
+		const double* xOverlap,
+		const double* yOverlap,
+		const double *mOwned,
+		const double* volumeOverlap,
+		const double* bondDamage,
+		double* dilatationOwned,
+		const int* localNeighborList,
+		int numOwnedPoints
+ );
+
+
+/** Explicit template instantiation for Sacado::Fad::DFad<double>. */
+template
+void computeDilatationAD<Sacado::Fad::DFad<double> >
+(
+		const double* xOverlap,
+		const Sacado::Fad::DFad<double>* yOverlap,
+		const double *mOwned,
+		const double* volumeOverlap,
+		const double* bondDamage,
+		Sacado::Fad::DFad<double>* dilatationOwned,
+		const int* localNeighborList,
+		int numOwnedPoints
+ );
 
 /**
  * Call this function on a single point 'X'

@@ -65,6 +65,22 @@ void computeInternalForceLinearElastic
 		double SHEAR_MODULUS
 );
 
+template<typename ScalarT>
+void computeInternalForceLinearElasticAD
+(
+		const double* xOverlapPtr,
+		const ScalarT* yOverlapPtr,
+		const double* mOwned,
+		const double* volumeOverlapPtr,
+		const ScalarT* dilatationOwned,
+		const double* bondDamage,
+		ScalarT* fInternalOverlapPtr,
+		const int*  localNeighborList,
+		int numOwnedPoints,
+		double BULK_MODULUS,
+		double SHEAR_MODULUS
+);
+
 }
 
 #endif /* ORDINARY_ELASTIC_H_ */

@@ -744,7 +744,9 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
   // Allocate memory for non-zeros in global tangent and lock in the structure
   if(peridigmComm->MyPID() == 0)
     cout << "Allocating global tangent matrix...";
+  PeridigmNS::Timer::self().startTimer("Allocate Global Tangent");
   allocateJacobian();
+  PeridigmNS::Timer::self().stopTimer("Allocate Global Tangent");
   if(peridigmComm->MyPID() == 0){
     cout << "\b\b\b:  " << endl;
     cout << "  number of rows = " << tangent->NumGlobalRows() << endl;
@@ -888,7 +890,9 @@ void PeridigmNS::Peridigm::executeImplicit() {
   // Allocate memory for non-zeros in global Jacobain and lock in the structure
   if(peridigmComm->MyPID() == 0)
     cout << "Allocating global tangent matrix...";
+  PeridigmNS::Timer::self().startTimer("Allocate Global Tangent");
   allocateJacobian();
+  PeridigmNS::Timer::self().stopTimer("Allocate Global Tangent");
   if(peridigmComm->MyPID() == 0){
     cout << "\b\b\b:  " << endl;
     cout << "  number of rows = " << tangent->NumGlobalRows() << endl;
