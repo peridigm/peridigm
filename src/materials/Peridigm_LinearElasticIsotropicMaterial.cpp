@@ -205,6 +205,10 @@ PeridigmNS::LinearElasticIsotropicMaterial::computeAutomaticDifferentiationJacob
 {
   // Compute contributions to the tangent matrix on an element-by-element basis
 
+  // To reduce memory re-allocation, use static variable to store Fad types for
+  // current coordinates (independent variables).
+  static vector<Sacado::Fad::DFad<double> > y_AD;
+
   // Loop over all points.
   int neighborhoodListIndex = 0;
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
@@ -216,10 +220,12 @@ PeridigmNS::LinearElasticIsotropicMaterial::computeAutomaticDifferentiationJacob
     // that the downstream Epetra_CrsMatrix::SumIntoMyValues() calls will be as efficient
     // as possible.
     int numNeighbors = neighborhoodList[neighborhoodListIndex++];
-    vector<int> tempMyGlobalIDs(numNeighbors+1);
+    int numEntries = numNeighbors+1;
+    int numDof = 3*numEntries;
+    vector<int> tempMyGlobalIDs(numEntries);
     // Create a placeholder that will appear at the beginning of the sorted list.
     tempMyGlobalIDs[0] = -1;
-    vector<int> tempNeighborhoodList(numNeighbors+1); 
+    vector<int> tempNeighborhoodList(numEntries); 
     tempNeighborhoodList[0] = numNeighbors;
     for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
       int neighborID = neighborhoodList[neighborhoodListIndex++];
@@ -231,8 +237,8 @@ PeridigmNS::LinearElasticIsotropicMaterial::computeAutomaticDifferentiationJacob
     tempMyGlobalIDs[0] = dataManager.getOverlapScalarPointMap()->GID(iID);
 
     Epetra_SerialComm serialComm;
-    Teuchos::RCP<Epetra_BlockMap> tempOneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(numNeighbors+1, numNeighbors+1, &tempMyGlobalIDs[0], 1, 0, serialComm));
-    Teuchos::RCP<Epetra_BlockMap> tempThreeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(numNeighbors+1, numNeighbors+1, &tempMyGlobalIDs[0], 3, 0, serialComm));
+    Teuchos::RCP<Epetra_BlockMap> tempOneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(numEntries, numEntries, &tempMyGlobalIDs[0], 1, 0, serialComm));
+    Teuchos::RCP<Epetra_BlockMap> tempThreeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(numEntries, numEntries, &tempMyGlobalIDs[0], 3, 0, serialComm));
     Teuchos::RCP<Epetra_BlockMap> tempBondMap = Teuchos::rcp(new Epetra_BlockMap(1, 1, &tempMyGlobalIDs[0], numNeighbors, 0, serialComm));
 
     // Create a temporary DataManager containing data for this point and its neighborhood.
@@ -256,13 +262,13 @@ PeridigmNS::LinearElasticIsotropicMaterial::computeAutomaticDifferentiationJacob
 
     // Use the scratchMatrix as sub-matrix for storing tangent values prior to loading them into the global tangent matrix.
     // Resize scratchMatrix if necessary
-    if(scratchMatrix.Dimension() < 3*(numNeighbors+1))
-      scratchMatrix.Resize(3*(numNeighbors+1));
+    if(scratchMatrix.Dimension() < numDof)
+      scratchMatrix.Resize(numDof);
 
     // Create a list of indices for the rows/columns in the scratch matrix.
     // These indices correspond to the DataManager's three-dimensional overlap map.
-    vector<int> indices(3*(numNeighbors+1));
-    for(int i=0 ; i<numNeighbors+1 ; ++i){
+    vector<int> indices(numDof);
+    for(int i=0 ; i<numEntries ; ++i){
       int globalID = tempOneDimensionalMap->GID(i);
       int localID = dataManager.getOverlapScalarPointMap()->LID(globalID);
       for(int j=0 ; j<3 ; ++j)
@@ -284,19 +290,16 @@ PeridigmNS::LinearElasticIsotropicMaterial::computeAutomaticDifferentiationJacob
     PeridigmNS::Timer::self().startTimer("AD Jacobian FAD Set Up");
 
     // Create arrays of Fad objects for the current coordinates, dilatation, and force density
-    vector<Sacado::Fad::DFad<double> > y_AD(3*(numNeighbors+1));
-    vector<Sacado::Fad::DFad<double> > dilatation_AD(numNeighbors+1);
-    vector<Sacado::Fad::DFad<double> > force_AD(3*(numNeighbors+1));
-
-    // The current coordinates are independent variables
-    int numberOfDerivatives = 3*(numNeighbors+1);
-    for(int i=0 ; i<numNeighbors+1 ; ++i){
-      for(int dof=0 ; dof<3 ; ++dof){
-        int independentVariableIndex = 3*i+dof;
-        double initialValue = y[3*i+dof];
-        y_AD[3*i+dof] = Sacado::Fad::DFad<double>(numberOfDerivatives, independentVariableIndex, initialValue);
-      }
+    // Modify the existing vector of Fad objects for the current coordinates
+    if((int)y_AD.size() < numDof)
+      y_AD.resize(numDof);
+    for(int i=0 ; i<numDof ; ++i){
+      y_AD[i].diff(i, numDof);
+      y_AD[i].val() = y[i];
     }
+    // Create vectors of empty AD types for the dependent variables
+    vector<Sacado::Fad::DFad<double> > dilatation_AD(numEntries);
+    vector<Sacado::Fad::DFad<double> > force_AD(numDof);
 
     PeridigmNS::Timer::self().stopTimer("AD Jacobian FAD Set Up");
     PeridigmNS::Timer::self().startTimer("AD Jacobian Constitutive Model");
@@ -310,8 +313,8 @@ PeridigmNS::LinearElasticIsotropicMaterial::computeAutomaticDifferentiationJacob
 
     // Load derivative values into scratch matrix
     // Multiply by volume along the way to convert force density to force
-    for(int row=0 ; row<3*(numNeighbors+1) ; ++row){
-      for(int col=0 ; col<3*(numNeighbors+1) ; ++col){
+    for(int row=0 ; row<numDof ; ++row){
+      for(int col=0 ; col<numDof ; ++col){
         scratchMatrix(row, col) = force_AD[row].dx(col) * cellVolume[row/3];
       }
     }
