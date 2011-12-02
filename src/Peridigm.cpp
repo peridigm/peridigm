@@ -56,7 +56,6 @@
 
 #include <boost/math/special_functions/fpclassify.hpp>
 
-#include <AztecOO.h>
 #include <BelosBlockCGSolMgr.hpp>
 #include <BelosEpetraAdapter.hpp>
 #include <BelosLinearProblem.hpp>
