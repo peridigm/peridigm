@@ -66,6 +66,8 @@
 #include <EpetraExt_MultiVectorOut.h>
 #include <EpetraExt_RowMatrixOut.h>
 #include <EpetraExt_Transpose_RowMatrix.h>
+#include <Ifpack.h>
+#include <Ifpack_IC.h>
 #include <Teuchos_VerboseObject.hpp>
 
 #include "Peridigm.hpp"
@@ -838,6 +840,25 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
       PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
       applyKinematicBC(0.0, residual, tangent);
       tangent->Scale(-1.0);
+
+      /* 
+      // Preconditioner
+      Ifpack IFPFactory;
+      Teuchos::RCP<Ifpack_Preconditioner> Prec = Teuchos::rcp( IFPFactory.Create("IC", &(*tangent), 0) );
+      Teuchos::ParameterList ifpackList;
+      ifpackList.set("fact: level-of-fill", 1);
+      TEST_FOR_EXCEPT_MSG(Prec->SetParameters(ifpackList), 
+        "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->SetParameters() returned nonzero error code.\n");
+      TEST_FOR_EXCEPT_MSG(Prec->Initialize(), 
+        "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->Initialize() returned nonzero error code.\n");
+      TEST_FOR_EXCEPT_MSG(Prec->Compute(), 
+        "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->Compute() returned nonzero error code.\n");
+      // Create the Belos preconditioned operator from the Ifpack preconditioner.
+      // NOTE:  This is necessary because Belos expects an operator to apply the
+      //        preconditioner with Apply() NOT ApplyInverse().
+      Teuchos::RCP<Belos::EpetraPrecOp> belosPrec = Teuchos::rcp( new Belos::EpetraPrecOp( Prec ) );
+      linearProblem.setLeftPrec( belosPrec );
+      */
 
       // Solve linear system
       lhs->PutScalar(0.0);
