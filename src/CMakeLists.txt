@@ -47,6 +47,7 @@ set(Peridigm_LINK_LIBRARIES
     ${Trilinos_LIBRARIES}
     ${PDNEIGH_LIBS}
     ${Zoltan_LIBRARY}
+    ${PARSER_LIBS}
     ${MESH_INPUT_LIBS}
     ${UTILITIES_LIBS}
     ${VTK_LIBS}
@@ -268,6 +269,7 @@ target_link_libraries(utPeridigm_Compute_Force
 add_subdirectory (materials/)
 add_subdirectory (initial_conditions/)
 add_subdirectory (compute/)
+add_subdirectory (muParser/)
 
 #
 # Custom Commands

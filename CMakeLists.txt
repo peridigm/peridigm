@@ -141,6 +141,9 @@ set(MESH_INPUT_LIBS QuickGrid)
 # other required libraries
 set(MESH_OUTPUT_LIBS PdVTK)
 
+# other required libraries
+set(PARSER_LIBS muParser)
+
 # load balancing and neighborhood creation
 set(PDNEIGH_LIBS PdNeigh)
 set(UTILITIES_LIBS Utilities)

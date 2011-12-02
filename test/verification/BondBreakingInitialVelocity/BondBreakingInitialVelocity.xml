@@ -37,25 +37,25 @@
 			<Parameter name="Type" type="string" value="Initial Velocity"/>
 			<Parameter name="Node Set" type="string" value="Node Set 0"/>
 			<Parameter name="Coordinate" type="string" value="y"/>
-			<Parameter name="Value" type="double" value="-244.939"/>
+			<Parameter name="Value" type="string" value="-244.939"/>
 		</ParameterList>
 		<ParameterList name="Initial Velocity 1">
 			<Parameter name="Type" type="string" value="Initial Velocity"/>
 			<Parameter name="Node Set" type="string" value="Node Set 1"/>
 			<Parameter name="Coordinate" type="string" value="y"/>
-			<Parameter name="Value" type="double" value="-244.959"/>
+			<Parameter name="Value" type="string" value="-244.959"/>
 		</ParameterList>
 		<ParameterList name="Initial Velocity 2">
 			<Parameter name="Type" type="string" value="Initial Velocity"/>
 			<Parameter name="Node Set" type="string" value="Node Set 2"/>
 			<Parameter name="Coordinate" type="string" value="y"/>
-			<Parameter name="Value" type="double" value="244.939"/>
+			<Parameter name="Value" type="string" value="244.939"/>
 		</ParameterList>
 		<ParameterList name="Initial Velocity 3">
 			<Parameter name="Type" type="string" value="Initial Velocity"/>
 			<Parameter name="Node Set" type="string" value="Node Set 3"/>
 			<Parameter name="Coordinate" type="string" value="y"/>
-			<Parameter name="Value" type="double" value="244.959"/>
+			<Parameter name="Value" type="string" value="244.959"/>
 		</ParameterList>
 	</ParameterList>
 </ParameterList>

@@ -111,12 +111,12 @@ Teuchos::RCP<PeridigmNS::Peridigm> createTwoPointModel()
   initialVelocityMinXFace.set("Type", "Initial Velocity");
   initialVelocityMinXFace.set("Node Set", "Min X Node Set");
   initialVelocityMinXFace.set("Coordinate", "x");
-  initialVelocityMinXFace.set("Value", -1.0);
+  initialVelocityMinXFace.set("Value", "-1.0");
   ParameterList& initialVelocityMaxXFace = bcParams.sublist("Initial Velocity Max X Face");
   initialVelocityMaxXFace.set("Type", "Initial Velocity");
   initialVelocityMaxXFace.set("Node Set", "Max X Node Set");
   initialVelocityMaxXFace.set("Coordinate", "x");
-  initialVelocityMaxXFace.set("Value", 1.0);
+  initialVelocityMaxXFace.set("Value", "1.0");
 
   // solver parameters
   ParameterList& solverParams = peridigmParams->sublist("Solver");

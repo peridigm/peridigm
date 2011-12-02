@@ -32,13 +32,13 @@
 			<Parameter name="Type" type="string" value="Initial Displacement"/>
 			<Parameter name="Node Set" type="string" value="Min X Node Set"/>
 			<Parameter name="Coordinate" type="string" value="x"/>
-			<Parameter name="Value" type="double" value="1e-5"/>
+			<Parameter name="Value" type="string" value="1e-5"/>
 		</ParameterList>
 		<ParameterList name="Initial Displacement Max X Face">
 			<Parameter name="Type" type="string" value="Initial Displacement"/>
 			<Parameter name="Node Set" type="string" value="Max X Node Set"/>
 			<Parameter name="Coordinate" type="string" value="x"/>
-			<Parameter name="Value" type="double" value="-1e-5"/>
+			<Parameter name="Value" type="string" value="-1e-5"/>
 		</ParameterList>
 	</ParameterList>
 </ParameterList>
