@@ -149,12 +149,13 @@ void p0(){
 	int *gIdsPtr = gIds.get();
 	int cell = 0;
 	int start=0;
+    const double tolerance = 1.0e-13;
 	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++,cell++){
 		BOOST_CHECK( *gIdsPtr == (int)id );
 
-		BOOST_CHECK(xx[id*3]==X[3*cell]);
-		BOOST_CHECK(xx[id*3+1]==X[3*cell+1]);
-		BOOST_CHECK(xx[id*3+2]==X[3*cell+2]);
+		BOOST_CHECK_CLOSE(xx[id*3], X[3*cell], tolerance);
+		BOOST_CHECK_CLOSE(xx[id*3+1], X[3*cell+1], tolerance);
+		BOOST_CHECK_CLOSE(xx[id*3+2], X[3*cell+2], tolerance);
 		int ptr = neighborhoodPtr[cell];
 		BOOST_CHECK(19==neighborhood[ptr]);
 		for(int p=0;p<19;p++){
@@ -164,7 +165,6 @@ void p0(){
 		/*
 		 * Volume
 		 */
-		const double tolerance = 1.0e-13;
 		double v = r*dr*cellRads*dz;
 		BOOST_CHECK_CLOSE(v,vol[cell],tolerance);
 	}
@@ -205,12 +205,13 @@ void p1(){
 	int *gIdsPtr = gIds.get();
 	int cell = 0;
 	int start=8;
+    const double tolerance = 1.0e-13;
 	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++,cell++){
 		BOOST_CHECK( *gIdsPtr == (int)id );
 
-		BOOST_CHECK(xx[id*3]==X[3*cell]);
-		BOOST_CHECK(xx[id*3+1]==X[3*cell+1]);
-		BOOST_CHECK(xx[id*3+2]==X[3*cell+2]);
+		BOOST_CHECK_CLOSE(xx[id*3], X[3*cell], tolerance);
+		BOOST_CHECK_CLOSE(xx[id*3+1], X[3*cell+1], tolerance);
+		BOOST_CHECK_CLOSE(xx[id*3+2], X[3*cell+2], tolerance);
 		int ptr = neighborhoodPtr[cell];
 		BOOST_CHECK(19==neighborhood[ptr]);
 		for(int p=0;p<19;p++){
@@ -220,7 +221,6 @@ void p1(){
 		/*
 		 * Volume
 		 */
-		const double tolerance = 1.0e-13;
 		double v = r*dr*cellRads*dz;
 		BOOST_CHECK_CLOSE(v,vol[cell],tolerance);
 	}
@@ -261,12 +261,13 @@ void p2(){
 	int *gIdsPtr = gIds.get();
 	int cell = 0;
 	int start=16;
+    const double tolerance = 1.0e-13;
 	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++,cell++){
 		BOOST_CHECK( *gIdsPtr == (int)id );
 
-		BOOST_CHECK(xx[id*3]==X[3*cell]);
-		BOOST_CHECK(xx[id*3+1]==X[3*cell+1]);
-		BOOST_CHECK(xx[id*3+2]==X[3*cell+2]);
+		BOOST_CHECK_CLOSE(xx[id*3], X[3*cell], tolerance);
+		BOOST_CHECK_CLOSE(xx[id*3+1], X[3*cell+1], tolerance);
+		BOOST_CHECK_CLOSE(xx[id*3+2], X[3*cell+2], tolerance);
 		int ptr = neighborhoodPtr[cell];
 		BOOST_CHECK(19==neighborhood[ptr]);
 		for(int p=0;p<19;p++){
@@ -276,7 +277,6 @@ void p2(){
 		/*
 		 * Volume
 		 */
-		const double tolerance = 1.0e-13;
 		double v = r*dr*cellRads*dz;
 		BOOST_CHECK_CLOSE(v,vol[cell],tolerance);
 	}
@@ -317,12 +317,13 @@ void p3(){
 	int *gIdsPtr = gIds.get();
 	int cell = 0;
 	int start=24;
+    const double tolerance = 1.0e-13;
 	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++,cell++){
 		BOOST_CHECK( *gIdsPtr == (int)id );
 
-		BOOST_CHECK(xx[id*3]==X[3*cell]);
-		BOOST_CHECK(xx[id*3+1]==X[3*cell+1]);
-		BOOST_CHECK(xx[id*3+2]==X[3*cell+2]);
+		BOOST_CHECK_CLOSE(xx[id*3], X[3*cell], tolerance);
+		BOOST_CHECK_CLOSE(xx[id*3+1], X[3*cell+1], tolerance);
+		BOOST_CHECK_CLOSE(xx[id*3+2], X[3*cell+2], tolerance);
 		int ptr = neighborhoodPtr[cell];
 		BOOST_CHECK(19==neighborhood[ptr]);
 		for(int p=0;p<19;p++){
@@ -332,7 +333,6 @@ void p3(){
 		/*
 		 * Volume
 		 */
-		const double tolerance = 1.0e-13;
 		double v = r*dr*cellRads*dz;
 		BOOST_CHECK_CLOSE(v,vol[cell],tolerance);
 	}

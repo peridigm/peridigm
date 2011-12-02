@@ -213,9 +213,10 @@ void cylindericalCellPerProcIterator1Proc()
 					double y = ranR*sin(ranTheta);
 					double z = ranZ;
 					int gId =  i + j * nx + k * nx * ny;
-					BOOST_CHECK(x==X[3*gId]);
-					BOOST_CHECK(y==X[3*gId+1]);
-					BOOST_CHECK(z==X[3*gId+2]);
+                    const double tolerance = 1.0e-13;
+					BOOST_CHECK_CLOSE(x, X[3*gId], tolerance);
+					BOOST_CHECK_CLOSE(y, X[3*gId+1], tolerance);
+					BOOST_CHECK_CLOSE(z, X[3*gId+2], tolerance);
 					int ptr = neighborhoodPtr[gId];
 					BOOST_CHECK(19==neighborhood[ptr]);
 					for(int p=0;p<19;p++)
@@ -224,7 +225,7 @@ void cylindericalCellPerProcIterator1Proc()
 					 * Volume
 					 */
 					double v =  ranR*dr*cellRads*dz;
-					BOOST_CHECK(v==vol[gId]);
+					BOOST_CHECK_CLOSE(v, vol[gId], tolerance);
 				}
 			}
 		}
@@ -361,9 +362,10 @@ void cylindericalCellPerProcIterator2Proc()
 					double x = ranR*cos(ranTheta);
 					double y = ranR*sin(ranTheta);
 					double z = ranZ;
-					BOOST_CHECK(x==X[3*cell]);
-					BOOST_CHECK(y==X[3*cell+1]);
-					BOOST_CHECK(z==X[3*cell+2]);
+                    const double tolerance = 1.0e-13;
+					BOOST_CHECK_CLOSE(x, X[3*cell], tolerance);
+					BOOST_CHECK_CLOSE(y, X[3*cell+1], tolerance);
+					BOOST_CHECK_CLOSE(z, X[3*cell+2], tolerance);
 					int ptr = neighborhoodPtr[cell];
 					BOOST_CHECK(19==neighborhood[ptr]);
 					for(int p=0;p<19;p++){
@@ -373,7 +375,7 @@ void cylindericalCellPerProcIterator2Proc()
 					 * Volume
 					 */
 					double v =  ranR*dr*cellRads*dz;
-					BOOST_CHECK(v==vol[cell]);
+					BOOST_CHECK_CLOSE(v, vol[cell], tolerance);
 					cell++;
 				}
 			}
@@ -427,9 +429,10 @@ void cylindericalCellPerProcIterator2Proc()
 					double x = ranR*cos(ranTheta);
 					double y = ranR*sin(ranTheta);
 					double z = ranZ;
-					BOOST_CHECK(x==X[3*cell]);
-					BOOST_CHECK(y==X[3*cell+1]);
-					BOOST_CHECK(z==X[3*cell+2]);
+                    const double tolerance = 1.0e-13;
+                    BOOST_CHECK_CLOSE(x, X[3*cell], tolerance);
+					BOOST_CHECK_CLOSE(y, X[3*cell+1], tolerance);
+					BOOST_CHECK_CLOSE(z, X[3*cell+2], tolerance);
 					int ptr = neighborhoodPtr[cell];
 					BOOST_CHECK(19==neighborhood[ptr]);
 					for(int p=0;p<19;p++){
@@ -439,7 +442,7 @@ void cylindericalCellPerProcIterator2Proc()
 					 * Volume
 					 */
 					double v =  ranR*dr*cellRads*dz;
-					BOOST_CHECK(v==vol[cell]);
+					BOOST_CHECK_CLOSE(v, vol[cell], tolerance);
 					cell++;
 				}
 			}
@@ -571,12 +574,13 @@ void cylindericalCellPerProcIterator4Proc()
 		int *gIdsPtr = gIds.get();
 		int cell = 0;
 		int start=0;
+        const double tolerance = 1.0e-13;
 		for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++,cell++){
 			BOOST_CHECK( *gIdsPtr == (int)id );
 
-			BOOST_CHECK_CLOSE(xx[id*3], X[3*cell], 1.0e-15);
-			BOOST_CHECK_CLOSE(xx[id*3+1], X[3*cell+1], 1.0e-15);
-			BOOST_CHECK_CLOSE(xx[id*3+2], X[3*cell+2], 1.0e-15);
+			BOOST_CHECK_CLOSE(xx[id*3], X[3*cell], tolerance);
+			BOOST_CHECK_CLOSE(xx[id*3+1], X[3*cell+1], tolerance);
+			BOOST_CHECK_CLOSE(xx[id*3+2], X[3*cell+2], tolerance);
 			int ptr = neighborhoodPtr[cell];
 			BOOST_CHECK(19==neighborhood[ptr]);
 			for(int p=0;p<19;p++){
@@ -586,7 +590,6 @@ void cylindericalCellPerProcIterator4Proc()
 			/*
 			 * Volume
 			 */
-			const double tolerance = 1.0e-13;
 			double v = r*dr*cellRads*dz;
 			BOOST_CHECK_CLOSE(v,vol[cell],tolerance);
 		}
@@ -624,12 +627,13 @@ void cylindericalCellPerProcIterator4Proc()
 			shared_ptr<int> gIds = gridData.myGlobalIDs;
 			int *gIdsPtr = gIds.get();
 			int cell = 0;
+            const double tolerance = 1.0e-13;
 			for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++,cell++){
 				BOOST_CHECK( *gIdsPtr == (int)id );
 
-				BOOST_CHECK(xx[id*3]==X[3*cell]);
-				BOOST_CHECK(xx[id*3+1]==X[3*cell+1]);
-				BOOST_CHECK(xx[id*3+2]==X[3*cell+2]);
+                BOOST_CHECK_CLOSE(xx[id*3], X[3*cell], tolerance);
+                BOOST_CHECK_CLOSE(xx[id*3+1], X[3*cell+1], tolerance);
+                BOOST_CHECK_CLOSE(xx[id*3+2], X[3*cell+2], tolerance);
 				int ptr = neighborhoodPtr[cell];
 				BOOST_CHECK(19==neighborhood[ptr]);
 				for(int p=0;p<19;p++){
@@ -639,7 +643,6 @@ void cylindericalCellPerProcIterator4Proc()
 				/*
 				 * Volume
 				 */
-				const double tolerance = 1.0e-13;
 				double v = r*dr*cellRads*dz;
 				BOOST_CHECK_CLOSE(v,vol[cell],tolerance);
 			}
