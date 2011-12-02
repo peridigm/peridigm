@@ -1,0 +1,75 @@
+#
+#  Example of call to loadbal to create parallel input files:
+#
+#  loadbal -No_subdirectory -suffix_mesh g -suffix_spread g -p 2 tensile_test 2
+# 
+#  ./tensile_test.spd
+#
+
+#{Units("si")}
+
+#{TOL1=0~in}
+#{TOL3=0~in}
+#{TOL5=0~in}
+#{TOL10=0~in}
+
+#{HOLE_RADIUS=0.125~in + TOL3}
+#{HOLE_CENTER=0.28~in + TOL3}
+#{GRIP_WIDTH=0.5~in + TOL5}
+#{GRIP_RADIUS=0.25~in + TOL10}
+#{LENGTH=4.00~in + TOL5}
+#{GAUGE_WIDTH=0.25~in + TOL1}
+#{GAUGE_LENGTH=1.5~in + TOL3}
+#{THICKNESS=0.124~in + TOL1}
+#{SLOT_CENTER=0.2425~in + TOL3}
+#{SLOT_RADIUS=0.0625~in + TOL3}
+
+#{NUM_ELEM_THROUGH_THICKNESS=3}
+
+#Build geometry
+create vertex 0 0 {THICKNESS/2}
+create vertex {GAUGE_WIDTH/2} 0 {THICKNESS/2}
+create vertex {GAUGE_WIDTH/2} {-GAUGE_LENGTH/2} {THICKNESS/2}
+create curve vertex 1 vertex 2
+create curve vertex 2 vertex 3
+
+create vertex {GAUGE_WIDTH/2 + GRIP_RADIUS} {-GAUGE_LENGTH/2} {THICKNESS/2}
+create vertex {GAUGE_WIDTH/2 + GRIP_RADIUS} {-GAUGE_LENGTH/2-GRIP_RADIUS} {THICKNESS/2}
+create curve arc center vertex 5 3 6 radius {GRIP_RADIUS}
+delete vertex 5
+
+create vertex {GAUGE_WIDTH/2 + GRIP_RADIUS} {-LENGTH/2} {THICKNESS/2}
+create vertex 0 {-LENGTH/2} {THICKNESS/2}
+create vertex 0 {-LENGTH/2} {THICKNESS/2}
+create curve vertex 6 vertex 8
+create curve vertex 8 vertex 9
+create curve vertex 10 vertex 1
+
+create surface curve all
+
+sweep surface all vector 0 0 1 distance {THICKNESS}
+volume all copy reflect x
+volume all copy reflect y
+unite volume all
+compress ids
+
+webcut volume 1 with plane xplane offset {GRIP_WIDTH/2} noimprint nomerge 
+webcut volume 1 with plane xplane offset {-GRIP_WIDTH/2} noimprint nomerge 
+
+delete volume 2 to 5
+
+volume 1 size {THICKNESS/NUM_ELEM_THROUGH_THICKNESS}
+
+webcut volume 1 with plane yplane offset {-LENGTH/2 + 3*THICKNESS/NUM_ELEM_THROUGH_THICKNESS} noimprint nomerge 
+webcut volume 6 with plane yplane offset {LENGTH/2 - 3*THICKNESS/NUM_ELEM_THROUGH_THICKNESS} noimprint nomerge 
+
+mesh volume all
+
+nodeset 1 volume 1
+nodeset 2 volume 7
+nodeset 3 curve 72
+nodeset 4 curve 80
+
+block 1 volume 1 6 7
+
+export genesis 'tensile_test.g' overwrite
