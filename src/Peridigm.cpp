@@ -82,6 +82,7 @@
 #include "pdneigh/NeighborhoodList.h"
 #include "InitialCondition.hpp"
 #include "Peridigm_Timer.hpp"
+#include "muParser/muParser.h"
 
 using namespace std;
 
@@ -333,31 +334,49 @@ void PeridigmNS::Peridigm::applyInitialVelocities() {
   Teuchos::ParameterList& bcParams = peridigmParams->sublist("Problem").sublist("Boundary Conditions");
   Teuchos::ParameterList::ConstIterator it;
   for(it = bcParams.begin() ; it != bcParams.end() ; it++){
-	const string & name = it->first;
-	size_t position = name.find("Initial Velocity");
-	if(position != string::npos){
-	  Teuchos::ParameterList & boundaryConditionParams = Teuchos::getValue<Teuchos::ParameterList>(it->second);
-	  string nodeSet = boundaryConditionParams.get<string>("Node Set");
-	  string type = boundaryConditionParams.get<string>("Type");
-	  string coordinate = boundaryConditionParams.get<string>("Coordinate");
-	  double value = boundaryConditionParams.get<double>("Value");
+    const string & name = it->first;
 
-	  int coord = 0;
-	  if(coordinate == "y" || coordinate == "Y")
-		coord = 1;
-	  if(coordinate == "z" || coordinate == "Z")
-		coord = 2;
+    size_t position = name.find("Initial Velocity");
+    if(position != string::npos){ // user wants to assign velocity using function
 
-	  // apply initial velocity boundary conditions
-	  // to locally-owned nodes
+      Teuchos::ParameterList & boundaryConditionParams = Teuchos::getValue<Teuchos::ParameterList>(it->second);
+      string nodeSet = boundaryConditionParams.get<string>("Node Set");
+      string type = boundaryConditionParams.get<string>("Type");
+      string coordinate = boundaryConditionParams.get<string>("Coordinate");
+      string function = boundaryConditionParams.get<string>("Value");
+
+      int coord = 0;
+      if(coordinate == "y" || coordinate == "Y")
+        coord = 1;
+      if(coordinate == "z" || coordinate == "Z")
+        coord = 2;
+
+      // Set up muParser parser
+      mu::Parser p;
+      // Allow user to define x,y,z to be the x,y,z coords of particle
+      double xpos,ypos,zpos;
+      try {
+        p.DefineVar("x", &xpos);
+        p.DefineVar("y", &ypos);
+        p.DefineVar("z", &zpos);
+        p.SetExpr(function);
+      } 
+      catch (mu::Parser::exception_type &e)
+        TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+
+      // apply initial velocity boundary conditions to locally-owned nodes
       TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
-	  vector<int> & nodeList = (*nodeSets)[nodeSet];
-	  for(unsigned int i=0 ; i<nodeList.size() ; i++){
-		int localNodeID = threeDimensionalMap->LID(nodeList[i]);
-		if(localNodeID != -1)
-		  (*v)[localNodeID*3 + coord] = value;
-	  }
-	}
+      vector<int> & nodeList = (*nodeSets)[nodeSet];
+      for(unsigned int i=0 ; i<nodeList.size() ; i++){
+        int localNodeID = threeDimensionalMap->LID(nodeList[i]);
+        if(localNodeID != -1) {
+          xpos = (*x)[localNodeID*3];
+          ypos = (*x)[localNodeID*3 + 1];
+          zpos = (*x)[localNodeID*3 + 2];
+          (*v)[localNodeID*3 + coord] = p.Eval();
+        }
+      }
+    }
   }
 
   // Fill the dataManager with initial velocity data
@@ -376,31 +395,47 @@ void PeridigmNS::Peridigm::applyInitialDisplacements() {
 
   // apply the initial conditions
   for(it = bcParams.begin() ; it != bcParams.end() ; it++){
-        const string & name = it->first;
-        size_t position = name.find("Initial Displacement");
-        if(position != string::npos){
-          Teuchos::ParameterList & boundaryConditionParams = Teuchos::getValue<Teuchos::ParameterList>(it->second);
-          string nodeSet = boundaryConditionParams.get<string>("Node Set");
-          string type = boundaryConditionParams.get<string>("Type");
-          string coordinate = boundaryConditionParams.get<string>("Coordinate");
-          double value = boundaryConditionParams.get<double>("Value");
+    const string & name = it->first;
+    size_t position = name.find("Initial Displacement");
+    if(position != string::npos){
+      Teuchos::ParameterList & boundaryConditionParams = Teuchos::getValue<Teuchos::ParameterList>(it->second);
+      string nodeSet = boundaryConditionParams.get<string>("Node Set");
+      string type = boundaryConditionParams.get<string>("Type");
+      string coordinate = boundaryConditionParams.get<string>("Coordinate");
+      string function = boundaryConditionParams.get<string>("Value");
 
-          int coord = 0;
-          if(coordinate == "y" || coordinate == "Y")
-                coord = 1;
-          if(coordinate == "z" || coordinate == "Z")
-                coord = 2;
+      int coord = 0;
+      if(coordinate == "y" || coordinate == "Y")
+        coord = 1;
+      if(coordinate == "z" || coordinate == "Z")
+        coord = 2;
 
-          // apply initial displacement boundary conditions
-          // to locally-owned nodes
-          TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
-          vector<int> & nodeList = (*nodeSets)[nodeSet];
-          for(unsigned int i=0 ; i<nodeList.size() ; i++){
-                int localNodeID = threeDimensionalMap->LID(nodeList[i]);
-                if(localNodeID != -1)
-                  (*u)[localNodeID*3 + coord] = value;
-          }
+      // Set up muParser parser
+      mu::Parser p;
+      // Allow user to define x,y,z to be the x,y,z coords of particle
+      double xpos,ypos,zpos;
+      try {
+        p.DefineVar("x", &xpos);
+        p.DefineVar("y", &ypos);
+        p.DefineVar("z", &zpos);
+        p.SetExpr(function);
+      } 
+      catch (mu::Parser::exception_type &e)
+        TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+
+      // apply initial displacement boundary conditions to locally-owned nodes
+      TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
+      vector<int> & nodeList = (*nodeSets)[nodeSet];
+      for(unsigned int i=0 ; i<nodeList.size() ; i++){
+        int localNodeID = threeDimensionalMap->LID(nodeList[i]);
+        if(localNodeID != -1) {
+          xpos = (*x)[localNodeID*3];
+          ypos = (*x)[localNodeID*3 + 1];
+          zpos = (*x)[localNodeID*3 + 2];
+          (*u)[localNodeID*3 + coord] = p.Eval();
         }
+      }
+    }
   }
 
   // Update curcoord field to be consistent with initial displacement

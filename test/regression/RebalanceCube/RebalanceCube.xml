@@ -31,13 +31,13 @@
         <Parameter name="Type" type="string" value="Initial Velocity"/>
 	    <Parameter name="Node Set" type="string" value="Min Z Node Set"/>
         <Parameter name="Coordinate" type="string" value="x"/>
-        <Parameter name="Value" type="double" value="1000.0"/>
+        <Parameter name="Value" type="string" value="1000.0"/>
 	  </ParameterList>
       <ParameterList name="Initial Velocity Max Z Face">
         <Parameter name="Type" type="string" value="Initial Velocity"/>
 	    <Parameter name="Node Set" type="string" value="Max Z Node Set"/>
         <Parameter name="Coordinate" type="string" value="x"/>
-        <Parameter name="Value" type="double" value="-1000.0"/>
+        <Parameter name="Value" type="string" value="-1000.0"/>
 	  </ParameterList>
     </ParameterList>
   </ParameterList>
