@@ -18,25 +18,25 @@
         <Parameter name="Type" type="string" value="Prescribed Displacement"/>
 	    <Parameter name="Node Set" type="string" value="nodelist_1"/> <!-- Min X node set, nodelist_1 defined in Exodus mesh file -->
         <Parameter name="Coordinate" type="string" value="x"/>
-        <Parameter name="Value" type="double" value="0.0"/>
+        <Parameter name="Value" type="string" value="0.0"/>
 	  </ParameterList>
       <ParameterList name="Prescribed Displacement Max X Face">
         <Parameter name="Type" type="string" value="Prescribed Displacement"/>
 	    <Parameter name="Node Set" type="string" value="nodelist_2"/> <!-- Max X node set, nodelist_2 defined in Exodus mesh file -->
         <Parameter name="Coordinate" type="string" value="x"/>
-        <Parameter name="Value" type="double" value="-0.1"/>
+        <Parameter name="Value" type="string" value="-0.1"/>
 	  </ParameterList>
       <ParameterList name="Prescribed Displacement Y Axis">
         <Parameter name="Type" type="string" value="Prescribed Displacement"/>
 	    <Parameter name="Node Set" type="string" value="nodelist_3"/> <!-- Y Axis node set, nodelist_3 defined in Exodus mesh file -->
         <Parameter name="Coordinate" type="string" value="z"/>
-        <Parameter name="Value" type="double" value="0.0"/>
+        <Parameter name="Value" type="string" value="0.0"/>
 	  </ParameterList>
       <ParameterList name="Prescribed Displacement Z Axis">
         <Parameter name="Type" type="string" value="Prescribed Displacement"/>
 	    <Parameter name="Node Set" type="string" value="nodelist_4"/> <!-- Z Axis node set, nodelist_4 defined in Exodus mesh file -->
         <Parameter name="Coordinate" type="string" value="y"/>
-        <Parameter name="Value" type="double" value="0.0"/>
+        <Parameter name="Value" type="string" value="0.0"/>
 	  </ParameterList>
     </ParameterList>
   </ParameterList>
