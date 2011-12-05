@@ -199,6 +199,9 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   // this is required to set up proper contact neighbor list
   if(analysisHasContact)
     rebalance();
+
+  // Set default value for current time;
+  timeCurrent = 0.0;
 }
 
 void PeridigmNS::Peridigm::instantiateMaterials() {
@@ -373,7 +376,11 @@ void PeridigmNS::Peridigm::applyInitialVelocities() {
           xpos = (*x)[localNodeID*3];
           ypos = (*x)[localNodeID*3 + 1];
           zpos = (*x)[localNodeID*3 + 2];
-          (*v)[localNodeID*3 + coord] = p.Eval();
+          try {
+            (*v)[localNodeID*3 + coord] = p.Eval();
+          }
+          catch (mu::Parser::exception_type &e)
+            TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
         }
       }
     }
@@ -432,7 +439,11 @@ void PeridigmNS::Peridigm::applyInitialDisplacements() {
           xpos = (*x)[localNodeID*3];
           ypos = (*x)[localNodeID*3 + 1];
           zpos = (*x)[localNodeID*3 + 2];
-          (*u)[localNodeID*3 + coord] = p.Eval();
+          try {
+            (*u)[localNodeID*3 + coord] = p.Eval();
+          }
+          catch (mu::Parser::exception_type &e)
+            TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
         }
       }
     }
@@ -595,7 +606,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
   Teuchos::RCP<Teuchos::ParameterList> verletParams = sublist(solverParams, "Verlet", true);
   double timeInitial = solverParams->get("Initial Time", 0.0);
   double timeFinal   = solverParams->get("Final Time", 1.0);
-  double timeCurrent = timeInitial;
+  timeCurrent = timeInitial;
   double dt = verletParams->get("Fixed dt", 1.0);
   *timeStep = dt;
   double dt2 = dt/2.0;
@@ -802,7 +813,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
   Teuchos::RCP<Teuchos::ParameterList> implicitParams = sublist(solverParams, "QuasiStatic", true);
   double timeInitial = solverParams->get("Initial Time", 0.0);
   double timeFinal = solverParams->get("Final Time", 1.0);
-  double timeCurrent = timeInitial;
+  timeCurrent = timeInitial;
   int numLoadSteps = implicitParams->get("Number of Load Steps", 10);
   double absoluteTolerance = implicitParams->get("Absolute Tolerance", 1.0e-6);
   int maximumSolverIterations = implicitParams->get("Maximum Solver Iterations", 10);
@@ -969,7 +980,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
   Teuchos::RCP<Teuchos::ParameterList> implicitParams = sublist(solverParams, "Implicit", true);
   double timeInitial = solverParams->get("Initial Time", 0.0);
   double timeFinal = solverParams->get("Final Time", 1.0);
-  double timeCurrent = timeInitial;
+  timeCurrent = timeInitial;
   double absoluteTolerance       = implicitParams->get("Absolute Tolerance", 1.0e-6);
   int maximumSolverIterations    = implicitParams->get("Maximum Solver Iterations", 10);
   double dt                      = implicitParams->get("Fixed dt", 1.0);
@@ -1258,6 +1269,20 @@ void PeridigmNS::Peridigm::applyKinematicBC(double loadIncrement,
       jacobianIndices[i] = i;
   }
 
+  // Set up muParser parser
+  mu::Parser p;
+  // Allow user to define x,y,z to be the x,y,z coords of particle
+  // and t to be the current simulation time
+  double xpos,ypos,zpos;
+  try {
+    p.DefineVar("x", &xpos);
+    p.DefineVar("y", &ypos);
+    p.DefineVar("z", &zpos);
+    p.DefineVar("t", &timeCurrent);
+  }
+  catch (mu::Parser::exception_type &e)
+    TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+
   // apply the kinematic boundary conditions
   for(it = bcParams.begin() ; it != bcParams.end() ; it++){
     const string & name = it->first;
@@ -1267,7 +1292,7 @@ void PeridigmNS::Peridigm::applyKinematicBC(double loadIncrement,
       string nodeSet = boundaryConditionParams.get<string>("Node Set");
       string type = boundaryConditionParams.get<string>("Type");
       string coordinate = boundaryConditionParams.get<string>("Coordinate");
-      double value = boundaryConditionParams.get<double>("Value");
+      string function = boundaryConditionParams.get<string>("Value");
 
       int coord = 0;
       if(coordinate == "y" || coordinate == "Y")
@@ -1307,6 +1332,17 @@ void PeridigmNS::Peridigm::applyKinematicBC(double loadIncrement,
         // this will cause the solution procedure to solve for the correct U at the bc
         int localNodeID = threeDimensionalMap->LID(nodeList[i]);
         if(!vec.is_null() && localNodeID != -1){
+          // set values for parser
+          xpos = (*x)[localNodeID*3];
+          ypos = (*x)[localNodeID*3 + 1];
+          zpos = (*x)[localNodeID*3 + 2];
+          double value = 0.0;
+          try {
+            p.SetExpr(function);
+            value = p.Eval();
+          }
+          catch (mu::Parser::exception_type &e)
+            TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
           (*vec)[localNodeID*3 + coord] = value*loadIncrement;
         }
 

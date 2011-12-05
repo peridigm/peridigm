@@ -251,6 +251,9 @@ namespace PeridigmNS {
     Teuchos::RCP<const Epetra_BlockMap> bondMap;
     Teuchos::RCP<const Epetra_BlockMap> oneDimensionalOverlapMap;
 
+    //! Current simulation time
+    double timeCurrent;
+
     //! Number of blocks in the model
     int numBlocks;
 
