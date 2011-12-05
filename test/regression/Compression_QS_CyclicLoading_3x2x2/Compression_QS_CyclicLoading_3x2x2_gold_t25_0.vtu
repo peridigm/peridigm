@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<VTKFile type="UnstructuredGrid" version="0.1" byte_order="LittleEndian" compressor="vtkZLibDataCompressor">
+  <UnstructuredGrid>
+    <Piece NumberOfPoints="12" NumberOfCells="12">
+      <PointData>
+        <DataArray type="Float64" Name="Dilatation" format="ascii" RangeMin="-0.059116017635" RangeMax="-0.047778642883">
+          -0.059116017635 -0.047778642883 -0.059116017635 -0.059116017635 -0.047778642883 -0.059116017635
+          -0.059116017635 -0.047778642883 -0.059116017635 -0.059116017635 -0.047778642883 -0.059116017635
+        </DataArray>
+        <DataArray type="Float64" Name="Displacement" NumberOfComponents="3" format="ascii" RangeMin="0" RangeMax="0.26355795023">
+          0 0 0 -0.1311487002 -0.02840313861 -0.02840313861
+          -0.26229740039 -2.4591105107e-16 4.8519006551e-17 0 0.018205313423 0
+          -0.1311487002 0.046608452034 -0.02840313861 -0.26229740039 0.018205313423 -1.8053380883e-16
+          0 0 0.018205313423 -0.1311487002 -0.02840313861 0.046608452034
+          -0.26229740039 -1.6848604865e-16 0.018205313423 0 0.018205313423 0.018205313423
+          -0.1311487002 0.046608452034 0.046608452034 -0.26229740039 0.018205313423 0.018205313423
+        </DataArray>
+        <DataArray type="Float64" Name="Force_Density" NumberOfComponents="3" format="ascii" RangeMin="5.5460000049e-05" RangeMax="32228719817">
+          -32228719817 2.1696090698e-05 4.2080879211e-05 -4.5537948608e-05 2.7537345886e-05 6.1511993408e-05
+          32228719817 -2.9325485229e-05 -4.2676925659e-05 -32228719817 -6.378442049e-05 7.0095062256e-05
+          -2.2888183594e-05 6.6801905632e-05 -3.5762786865e-05 32228719817 4.801136935e-05 1.3113021851e-05
+          -32228719817 -1.7166137695e-05 -5.2236020565e-05 -1.7166137695e-05 -4.8637390137e-05 -2.0384788513e-05
+          32228719817 1.5735626221e-05 8.4042377117e-05 -32228719817 3.0249357224e-05 -4.3660402298e-05
+          2.0980834961e-05 -3.1590461731e-05 -5.4955482483e-05 32228719817 -1.9133090973e-05 -2.0742416382e-05
+        </DataArray>
+        <DataArray type="Int32" Name="ID" format="ascii" RangeMin="0" RangeMax="11">
+          0 1 2 3 4 5
+          6 7 8 9 10 11
+        </DataArray>
+        <DataArray type="Int32" Name="Proc_Num" format="ascii" RangeMin="0" RangeMax="0">
+          0 0 0 0 0 0
+          0 0 0 0 0 0
+        </DataArray>
+        <DataArray type="Float64" Name="Velocity" NumberOfComponents="3" format="ascii" RangeMin="0" RangeMax="0">
+          0 0 0 0 0 0
+          0 0 0 0 0 0
+          0 0 0 0 0 0
+          0 0 0 0 0 0
+          0 0 0 0 0 0
+          0 0 0 0 0 0
+        </DataArray>
+        <DataArray type="Float64" Name="Weighted_Volume" format="ascii" RangeMin="12" RangeMax="20">
+          12 20 12 12 20 12
+          12 20 12 12 20 12
+        </DataArray>
+      </PointData>
+      <CellData>
+      </CellData>
+      <Points>
+        <DataArray type="Float64" Name="Points" NumberOfComponents="3" format="ascii" RangeMin="0.70710678119" RangeMax="1.2247448714">
+          -1 -0.5 -0.5 0 -0.5 -0.5
+          1 -0.5 -0.5 -1 0.5 -0.5
+          0 0.5 -0.5 1 0.5 -0.5
+          -1 -0.5 0.5 0 -0.5 0.5
+          1 -0.5 0.5 -1 0.5 0.5
+          0 0.5 0.5 1 0.5 0.5
+        </DataArray>
+      </Points>
+      <Cells>
+        <DataArray type="Int64" Name="connectivity" format="ascii" RangeMin="0" RangeMax="11">
+          0 1 2 3 4 5
+          6 7 8 9 10 11
+        </DataArray>
+        <DataArray type="Int64" Name="offsets" format="ascii" RangeMin="1" RangeMax="12">
+          1 2 3 4 5 6
+          7 8 9 10 11 12
+        </DataArray>
+        <DataArray type="UInt8" Name="types" format="ascii" RangeMin="1" RangeMax="1">
+          1 1 1 1 1 1
+          1 1 1 1 1 1
+        </DataArray>
+      </Cells>
+    </Piece>
+  </UnstructuredGrid>
+</VTKFile>

@@ -43,7 +43,7 @@
 			<Parameter name="Type" type="string" value="Prescribed Displacement"/>
 			<Parameter name="Node Set" type="string" value="Min X Node Set"/>
 			<Parameter name="Coordinate" type="string" value="x"/>
-			<Parameter name="Value" type="double" value="0.1"/>
+			<Parameter name="Value" type="string" value="0.1"/>
 		</ParameterList>
 	</ParameterList>
 </ParameterList>
