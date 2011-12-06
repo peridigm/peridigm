@@ -5,7 +5,7 @@
   |  Y Y  \|  |  /|    |     / __ \_|  | \/\___ \ \  ___/ |  | \/
   |__|_|  /|____/ |____|    (____  /|__|  /____  > \___  >|__|   
         \/                       \/            \/      \/        
-  Copyright (C) 2010 Ingo Berg
+  Copyright (C) 2011 Ingo Berg
 
   Permission is hereby granted, free of charge, to any person obtaining a copy of this 
   software and associated documentation files (the "Software"), to deal in the Software
@@ -160,7 +160,13 @@ namespace mu
   //---------------------------------------------------------------------------
   void ParserTokenReader::AddValIdent(identfun_type a_pCallback)
   {
-    m_vIdentFun.push_back(a_pCallback);
+    // Use push_front is used to give user defined callbacks a higher priority than
+    // the built in ones. Otherwise reading hex numbers would not work
+    // since the "0" in "0xff" would always be read first making parsing of 
+    // the rest impossible.
+    // reference:
+    // http://sourceforge.net/projects/muparser/forums/forum/462843/topic/4824956
+    m_vIdentFun.push_front(a_pCallback);
   }
 
   //---------------------------------------------------------------------------
@@ -194,7 +200,7 @@ namespace mu
 
   //---------------------------------------------------------------------------
   /** \brief Return a map containing the used variables only. */
-  const varmap_type& ParserTokenReader::GetUsedVar() const
+  varmap_type& ParserTokenReader::GetUsedVar() 
   {
     return m_UsedVar;
   }
@@ -237,7 +243,7 @@ namespace mu
   void ParserTokenReader::ReInit()
   {
     m_iPos = 0;
-    m_iSynFlags = noOPT | noBC | noPOSTOP | noASSIGN;
+    m_iSynFlags = sfSTART_OF_LINE;
     m_iBrackets = 0;
     m_UsedVar.clear();
     m_lastTok = token_type();
@@ -273,9 +279,9 @@ namespace mu
     // flag is set indicating to ignore undefined variables.
     // This is a way to conditionally avoid an error if 
     // undefined variables occur. 
-    // The GetUsedVar function must supress the error for
+    // (The GetUsedVar function must suppress the error for
     // undefined variables in order to collect all variable 
-    // names including the undefined ones.
+    // names including the undefined ones.)
     if ( (m_bIgnoreUndefVar || m_pFactory) && IsUndefVarTok(tok) )  
       return SaveBeforeReturn(tok);
 
@@ -378,9 +384,11 @@ namespace mu
       {
         switch(i)
         {
-        case cmAND:
-        case cmOR:
-        case cmXOR:
+        //case cmAND:
+        //case cmOR:
+        //case cmXOR:
+        case cmLAND:
+        case cmLOR:
         case cmLT:
         case cmGT:
         case cmLE:
@@ -412,7 +420,7 @@ namespace mu
                 Error(ecUNEXPECTED_OPERATOR, m_iPos, pOprtDef[i]);
               }
 
-              m_iSynFlags  = noBC | noOPT | noARG_SEP | noPOSTOP | noASSIGN;
+              m_iSynFlags  = noBC | noOPT | noARG_SEP | noPOSTOP | noASSIGN | noIF | noELSE;
               m_iSynFlags |= ( (i != cmEND) && ( i != cmBC) ) ? noEND : 0;
               break;
 
@@ -421,9 +429,9 @@ namespace mu
 	              Error(ecUNEXPECTED_PARENS, m_iPos, pOprtDef[i]);
               
               if (m_lastTok.GetCode()==cmFUNC)
-                m_iSynFlags = noOPT | noEND | noARG_SEP | noPOSTOP | noASSIGN;
+                m_iSynFlags = noOPT | noEND | noARG_SEP | noPOSTOP | noASSIGN | noIF | noELSE;
               else
-                m_iSynFlags = noBC | noOPT | noEND | noARG_SEP | noPOSTOP | noASSIGN;
+                m_iSynFlags = noBC | noOPT | noEND | noARG_SEP | noPOSTOP | noASSIGN| noIF | noELSE;
 
               ++m_iBrackets;
               break;
@@ -437,7 +445,21 @@ namespace mu
               if (--m_iBrackets<0)
                 Error(ecUNEXPECTED_PARENS, m_iPos, pOprtDef[i]);
               break;
-      	
+
+        case cmELSE:
+              if (m_iSynFlags & noELSE)
+                Error(ecUNEXPECTED_CONDITIONAL, m_iPos, pOprtDef[i]);
+
+              m_iSynFlags = noBC | noPOSTOP | noEND | noOPT | noIF | noELSE;
+              break;
+
+        case cmIF:
+              if (m_iSynFlags & noIF)
+                Error(ecUNEXPECTED_CONDITIONAL, m_iPos, pOprtDef[i]);
+
+              m_iSynFlags = noBC | noPOSTOP | noEND | noOPT | noIF | noELSE;
+              break;
+
 		    default:      // The operator is listed in c_DefaultOprt, but not here. This is a bad thing...
               Error(ecINTERNAL_ERROR);
         } // switch operator id
@@ -576,6 +598,14 @@ namespace mu
     if (iEnd==m_iPos)
       return false;
 
+    // Check if the operator is a built in operator, if so ignore it here
+    const char_type **const pOprtDef = m_pParser->GetOprtDef();
+    for (int i=0; m_pParser->HasBuiltInOprt() && pOprtDef[i]; ++i)
+    {
+      if (string_type(pOprtDef[i])==strTok)
+        return false;
+    }
+
     // Note:
     // All tokens in oprt_bin_maptype are have been sorted by their length
     // Long operators must come first! Otherwise short names (like: "add") that
@@ -599,8 +629,13 @@ namespace mu
           // can share characters in their identifiers.
           if ( IsInfixOpTok(a_Tok) ) 
             return true;
-          // nope, no infix operator
-          Error(ecUNEXPECTED_OPERATOR, m_iPos, a_Tok.GetAsString()); 
+          else
+          {
+            // nope, no infix operator
+            return false;
+            //Error(ecUNEXPECTED_OPERATOR, m_iPos, a_Tok.GetAsString()); 
+          }
+
         }
 
         m_iPos += (int)sID.length();
@@ -616,6 +651,17 @@ namespace mu
   /** \brief Check if a string position contains a unary post value operator. */
   bool ParserTokenReader::IsPostOpTok(token_type &a_Tok)
   {
+    // <ibg 20110629> Do not check for postfix operators if they are not allowed at
+    //                the current expression index.
+    //
+    //  This will fix the bug reported here:  
+    //
+    //  http://sourceforge.net/tracker/index.php?func=detail&aid=3343891&group_id=137191&atid=737979
+    //
+    if (m_iSynFlags & noPOSTOP)
+      return false;
+    // </ibg>
+
     // Tricky problem with equations like "3m+5":
     //     m is a postfix operator, + is a valid sign for postfix operators and 
     //     for binary operators parser detects "m+" as operator string and 
@@ -631,17 +677,14 @@ namespace mu
       return false;
 
     // iteraterate over all postfix operator strings
-    funmap_type::const_iterator item = m_pPostOprtDef->begin();
-    for (item=m_pPostOprtDef->begin(); item!=m_pPostOprtDef->end(); ++item)
+    funmap_type::const_reverse_iterator it = m_pPostOprtDef->rbegin();
+    for ( ; it!=m_pPostOprtDef->rend(); ++it)
     {
-      if (sTok.find(item->first)!=0)
+      if (sTok.find(it->first)!=0)
         continue;
 
-      a_Tok.Set(item->second, sTok);
-  	  m_iPos += (int)item->first.length();
-
-      if (m_iSynFlags & noPOSTOP)
-        Error(ecUNEXPECTED_OPERATOR, m_iPos-(int)item->first.length(), item->first);
+      a_Tok.Set(it->second, sTok);
+  	  m_iPos += (int)it->first.length();
 
       m_iSynFlags = noVAL | noVAR | noFUN | noBO | noPOSTOP | noSTR | noASSIGN;
       return true;
@@ -662,10 +705,6 @@ namespace mu
   {
     assert(m_pConstDef);
     assert(m_pParser);
-
-    #if defined(_MSC_VER)
-      #pragma warning( disable : 4244 )
-    #endif
 
     string_type strTok;
     value_type fVal(0);
@@ -692,7 +731,7 @@ namespace mu
 
     // 3.call the value recognition functions provided by the user
     // Call user defined value recognition functions
-    std::vector<identfun_type>::const_iterator item = m_vIdentFun.begin();
+    std::list<identfun_type>::const_iterator item = m_vIdentFun.begin();
     for (item = m_vIdentFun.begin(); item!=m_vIdentFun.end(); ++item)
     {
       int iStart = m_iPos;
@@ -709,10 +748,6 @@ namespace mu
     }
 
     return false;
-
-    #if defined(_MSC_VER)
-      #pragma warning( default : 4244 )
-    #endif
   }
 
   //---------------------------------------------------------------------------
@@ -774,7 +809,7 @@ namespace mu
 
     a_Tok.SetString(m_pParser->m_vStringVarBuf[item->second], m_pParser->m_vStringVarBuf.size() );
 
-    m_iSynFlags = m_iSynFlags = noANY ^ ( noBC | noOPT | noEND | noARG_SEP);
+    m_iSynFlags = noANY ^ ( noBC | noOPT | noEND | noARG_SEP);
     return true;
   }
 
@@ -866,7 +901,7 @@ namespace mu
     a_Tok.SetString(strTok, m_pParser->m_vStringBuf.size());
 
     m_iPos += (int)strTok.length() + 2 + (int)iSkip;  // +2 wg Anführungszeichen; +iSkip für entfernte escape zeichen
-    m_iSynFlags = m_iSynFlags = noANY ^ ( noARG_SEP | noBC | noOPT | noEND );
+    m_iSynFlags = noANY ^ ( noARG_SEP | noBC | noOPT | noEND );
 
     return true;
   }
