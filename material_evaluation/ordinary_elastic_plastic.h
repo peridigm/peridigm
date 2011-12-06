@@ -101,6 +101,60 @@ void computeInternalForceIsotropicElasticPlastic
 		double yieldStress
 );
 
+/**
+ * Computes norm of deviatoric force state at a particular point
+ * @param numNeigh -- number of neighbors at point
+ * @param theta    -- dilatation at point
+ * @param neighPtr -- list of neighbors at point
+ * @param bondDamage     -- damage parameter for each bond at point
+ * @param X              -- original coordinates of point
+ * @param Y              -- current coordinates of point
+ * @param xOverlap       -- pointer to overlap vector of original coordinates; use this to get neighbor original coordinates
+ * @param yOverlap       -- pointer to overlap vector of current coordinates; use this to get neighbor current coordinates
+ * @param volumeOverlap  -- pointer to volume overlap vector; use this to get volume of neighboring points
+ * @param alpha          -- material property (alpha = 15 mu / m
+ * @param OMEGA          -- weight function at point
+ */
+template<typename ScalarT>
+ScalarT computeDeviatoricForceStateNormAD
+(
+		int numNeigh,
+		ScalarT theta,
+		const int *neighPtr,
+		const double *bondDamage,
+		const double *deviatoricPlasticExtensionState,
+		const double *X,
+		const ScalarT *Y,
+		const double *xOverlap,
+		const ScalarT *yOverlap,
+		const double *volumeOverlap,
+		double alpha,
+		double OMEGA
+);
+
+template<typename ScalarT>
+void computeInternalForceIsotropicElasticPlasticAD
+(
+		const double* xOverlap,
+		const ScalarT* yNP1Overlap,
+		const double* mOwned,
+		const double* volumeOverlap,
+		const ScalarT* dilatationOwned,
+		const double* bondDamage,
+		const double* dsfOwned,
+		const double* deviatoricPlasticExtensionStateN,
+		ScalarT* deviatoricPlasticExtensionStateNp1,
+		const double* lambdaN,
+		ScalarT* lambdaNP1,
+		ScalarT* fInternalOverlap,
+		const int* localNeighborList,
+		int numOwnedPoints,
+		double BULK_MODULUS,
+		double SHEAR_MODULUS,
+		double HORIZON,
+		double yieldStress
+);
+
 }
 
 #endif /* ORDINARY_ELASTIC_PLASTIC_H_ */

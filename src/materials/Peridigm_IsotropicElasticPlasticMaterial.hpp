@@ -95,6 +95,24 @@ namespace PeridigmNS {
 				 const int* neighborhoodList,
                  PeridigmNS::DataManager& dataManager) const;
 
+	//! Evaluate the jacobian
+	virtual void
+	computeJacobian(const double dt,
+                    const int numOwnedPoints,
+                    const int* ownedIDs,
+                    const int* neighborhoodList,
+                    PeridigmNS::DataManager& dataManager,
+                    PeridigmNS::SerialMatrix& jacobian) const;
+
+	//! Evaluate the jacobian via automatic differentiation
+	virtual void
+	computeAutomaticDifferentiationJacobian(const double dt,
+                                            const int numOwnedPoints,
+                                            const int* ownedIDs,
+                                            const int* neighborhoodList,
+                                            PeridigmNS::DataManager& dataManager,
+                                            PeridigmNS::SerialMatrix& jacobian) const;
+
   protected:
 
     Teuchos::RCP< std::vector<Field_NS::FieldSpec> > m_variableSpecs;
