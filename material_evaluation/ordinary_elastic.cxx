@@ -46,8 +46,8 @@
 //@HEADER
 
 #include <cmath>
-
 #include <Sacado.hpp>
+#include "ordinary_elastic.h"
 
 namespace MATERIAL_EVALUATION {
 
@@ -208,7 +208,7 @@ template void computeInternalForceLinearElasticAD<double>
 		double SHEAR_MODULUS
  );
 
-/** Explicit template instantiation for Sacado::Fad::DFad<double> . */
+/** Explicit template instantiation for Sacado::Fad::DFad<double>. */
 template void computeInternalForceLinearElasticAD<Sacado::Fad::DFad<double> >
 (
 		const double* xOverlap,

@@ -48,7 +48,6 @@
 #include "Peridigm_LinearElasticIsotropicMaterial.hpp"
 #include "Peridigm_DamageModelFactory.hpp"
 #include <Teuchos_TestForException.hpp>
-#include <Epetra_SerialDenseMatrix.h>
 #include <Epetra_SerialComm.h>
 #include <Sacado.hpp>
 #include "ordinary_elastic.h"
@@ -276,15 +275,13 @@ PeridigmNS::LinearElasticIsotropicMaterial::computeAutomaticDifferentiationJacob
     }
 
     // Extract pointers to the underlying data in the constitutiveData array.
-    double *x, *y, *cellVolume, *weightedVolume, *dilatation, *damage, *bondDamage, *force;
+    double *x, *y, *cellVolume, *weightedVolume, *damage, *bondDamage;
     tempDataManager.getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->ExtractView(&x);
     tempDataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->ExtractView(&y);
     tempDataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&cellVolume);
     tempDataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&weightedVolume);
-    tempDataManager.getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1)->ExtractView(&dilatation);
     tempDataManager.getData(Field_NS::DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&damage);
     tempDataManager.getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
-    tempDataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->ExtractView(&force);
 
     PeridigmNS::Timer::self().stopTimer("AD Jacobian General Set Up");
     PeridigmNS::Timer::self().startTimer("AD Jacobian FAD Set Up");
