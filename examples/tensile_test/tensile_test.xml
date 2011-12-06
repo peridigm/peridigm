@@ -7,7 +7,7 @@
                 Horizon sizes: 2 elem through thickness use 0.0049
                                3 elem through thickness use 0.0035
                                5 elem through thickness use 0.0019 -->
-	      <Parameter name="Horizon" type="double" value="0.0035"/>
+	      <Parameter name="Horizon" type="double" value="0.0049"/>
 	      <Parameter name="Input Mesh File" type="string" value="tensile_test.g"/>
 	</ParameterList>
     <ParameterList name="Material">
@@ -23,26 +23,26 @@
         <Parameter name="Type" type="string" value="Prescribed Displacement"/>
 	    <Parameter name="Node Set" type="string" value="nodelist_1"/>
         <Parameter name="Coordinate" type="string" value="y"/>
-        <Parameter name="Value" type="double" value="0.0"/>
+        <Parameter name="Value" type="string" value="0.0"/>
 	  </ParameterList>
       <ParameterList name="Prescribed Displacement Fix Rigid Body Motion In X">
         <Parameter name="Type" type="string" value="Prescribed Displacement"/>
 	    <Parameter name="Node Set" type="string" value="nodelist_3"/>
         <Parameter name="Coordinate" type="string" value="x"/>
-        <Parameter name="Value" type="double" value="0.0"/>
+        <Parameter name="Value" type="string" value="0.0"/>
 	  </ParameterList>
       <ParameterList name="Prescribed Displacement Fix Rigid Body Motion In Y">
         <Parameter name="Type" type="string" value="Prescribed Displacement"/>
 	    <Parameter name="Node Set" type="string" value="nodelist_4"/>
         <Parameter name="Coordinate" type="string" value="z"/>
-        <Parameter name="Value" type="double" value="0.0"/>
+        <Parameter name="Value" type="string" value="0.0"/>
 	  </ParameterList>
       <!-- Pull the top to 1% strain -->
       <ParameterList name="Prescribed Displacement Top">
         <Parameter name="Type" type="string" value="Prescribed Displacement"/>
 	    <Parameter name="Node Set" type="string" value="nodelist_2"/>
         <Parameter name="Coordinate" type="string" value="y"/>
-        <Parameter name="Value" type="double" value="0.001005502"/>
+        <Parameter name="Value" type="string" value="0.001005502"/>
 	  </ParameterList>
     </ParameterList>
   </ParameterList>
@@ -71,7 +71,7 @@
                 <Parameter name="Dilatation" type="bool" value="true"/>
                 <Parameter name="Force_Density" type="bool" value="true"/>
                 <Parameter name="Force" type="bool" value="true"/>
-                <Parameter name="Weighted_Volume" type="bool" value="true"/>
+                <Parameter name="Volume" type="bool" value="true"/>
             </ParameterList>
         </ParameterList>
   </ParameterList>
