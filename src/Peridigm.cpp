@@ -83,6 +83,7 @@
 #include "InitialCondition.hpp"
 #include "Peridigm_Timer.hpp"
 #include "muParser/muParser.h"
+#include "muParser/muParserPeridigmFunctions.h"
 
 using namespace std;
 
@@ -99,6 +100,9 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   peridigmParams = params;
 
   out = Teuchos::VerboseObjectBase::getDefaultOStream();
+
+  // Seed random number generator for reproducable results
+  srand( 42 );
 
   // Instantiate materials and associate them with the blocks
   instantiateMaterials();
@@ -362,17 +366,14 @@ void PeridigmNS::Peridigm::applyInitialVelocities() {
         p.DefineVar("x", &xpos);
         p.DefineVar("y", &ypos);
         p.DefineVar("z", &zpos);
+        p.DefineFun(_T("rnd"), mu::Rnd, false);
         p.SetExpr(function);
       } 
       catch (mu::Parser::exception_type &e)
         TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
 
-      // apply initial velocity boundary conditions to locally-owned nodes
-      TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
-      vector<int> & nodeList = (*nodeSets)[nodeSet];
-      for(unsigned int i=0 ; i<nodeList.size() ; i++){
-        int localNodeID = threeDimensionalMap->LID(nodeList[i]);
-        if(localNodeID != -1) {
+      if (nodeSet == "All") { // Apply initial velocity to all locally-owned nodes
+        for(int localNodeID = 0; localNodeID < x->MyLength(); localNodeID++) {
           xpos = (*x)[localNodeID*3];
           ypos = (*x)[localNodeID*3 + 1];
           zpos = (*x)[localNodeID*3 + 2];
@@ -380,7 +381,25 @@ void PeridigmNS::Peridigm::applyInitialVelocities() {
             (*v)[localNodeID*3 + coord] = p.Eval();
           }
           catch (mu::Parser::exception_type &e)
+          TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+        }
+      }
+      else { // Apply initial velocity to specific node set
+        // apply initial velocity boundary conditions to locally-owned nodes
+        TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
+        vector<int> & nodeList = (*nodeSets)[nodeSet];
+        for(unsigned int i=0 ; i<nodeList.size() ; i++){
+          int localNodeID = threeDimensionalMap->LID(nodeList[i]);
+          if(localNodeID != -1) {
+            xpos = (*x)[localNodeID*3];
+            ypos = (*x)[localNodeID*3 + 1];
+            zpos = (*x)[localNodeID*3 + 2];
+            try {
+              (*v)[localNodeID*3 + coord] = p.Eval();
+            }
+            catch (mu::Parser::exception_type &e)
             TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+          }
         }
       }
     }
@@ -425,17 +444,14 @@ void PeridigmNS::Peridigm::applyInitialDisplacements() {
         p.DefineVar("x", &xpos);
         p.DefineVar("y", &ypos);
         p.DefineVar("z", &zpos);
+        p.DefineFun(_T("rnd"), mu::Rnd, false);
         p.SetExpr(function);
       } 
       catch (mu::Parser::exception_type &e)
         TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
 
-      // apply initial displacement boundary conditions to locally-owned nodes
-      TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
-      vector<int> & nodeList = (*nodeSets)[nodeSet];
-      for(unsigned int i=0 ; i<nodeList.size() ; i++){
-        int localNodeID = threeDimensionalMap->LID(nodeList[i]);
-        if(localNodeID != -1) {
+      if (nodeSet == "All") { // Apply initial position to all locally-owned nodes
+        for(int localNodeID = 0; localNodeID < x->MyLength(); localNodeID++) {
           xpos = (*x)[localNodeID*3];
           ypos = (*x)[localNodeID*3 + 1];
           zpos = (*x)[localNodeID*3 + 2];
@@ -443,7 +459,25 @@ void PeridigmNS::Peridigm::applyInitialDisplacements() {
             (*u)[localNodeID*3 + coord] = p.Eval();
           }
           catch (mu::Parser::exception_type &e)
-            TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+          TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+        }
+      }
+      else { // Apply initial position to specific node set
+        // apply initial displacement boundary conditions to locally-owned nodes
+        TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
+        vector<int> & nodeList = (*nodeSets)[nodeSet];
+        for(unsigned int i=0 ; i<nodeList.size() ; i++){
+          int localNodeID = threeDimensionalMap->LID(nodeList[i]);
+          if(localNodeID != -1) {
+            xpos = (*x)[localNodeID*3];
+            ypos = (*x)[localNodeID*3 + 1];
+            zpos = (*x)[localNodeID*3 + 2];
+            try {
+              (*u)[localNodeID*3 + coord] = p.Eval();
+            }
+            catch (mu::Parser::exception_type &e)
+              TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+          }
         }
       }
     }
@@ -1278,6 +1312,7 @@ void PeridigmNS::Peridigm::applyKinematicBC(double loadIncrement,
     p.DefineVar("x", &xpos);
     p.DefineVar("y", &ypos);
     p.DefineVar("z", &zpos);
+    p.DefineFun(_T("rnd"), mu::Rnd, false);
     p.DefineVar("t", &timeCurrent);
   }
   catch (mu::Parser::exception_type &e)
@@ -1902,5 +1937,3 @@ Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::Peridigm::createRebalance
 
 	return rebalancedContactNeighborhoodData;
 }
-
-
