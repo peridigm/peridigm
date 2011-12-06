@@ -5,7 +5,7 @@
   |  Y Y  \|  |  /|    |     / __ \_|  | \/\___ \ \  ___/ |  | \/
   |__|_|  /|____/ |____|    (____  /|__|  /____  > \___  >|__|   
         \/                       \/            \/      \/        
-  Copyright (C) 2004-2010 Ingo Berg
+  Copyright (C) 2004-2011 Ingo Berg
 
   Permission is hereby granted, free of charge, to any person obtaining a copy of this 
   software and associated documentation files (the "Software"), to deal in the Software
@@ -29,6 +29,7 @@
 #include <cassert>
 #include <cstdio>
 #include <cstring>
+#include <list>
 #include <map>
 #include <memory>
 #include <stack>
@@ -68,7 +69,7 @@ namespace mu
 
       int GetPos() const;
       const string_type& GetExpr() const;
-      const varmap_type& GetUsedVar() const;
+      varmap_type& GetUsedVar();
       char_type GetArgSep() const;
 
       void IgnoreUndefVar(bool bIgnore);
@@ -97,6 +98,9 @@ namespace mu
         noEND     = 1 << 9,  ///< to avoid unexpected end of formula
         noSTR     = 1 << 10, ///< to block numeric arguments on string functions
         noASSIGN  = 1 << 11, ///< to block assignement to constant i.e. "4=7"
+        noIF      = 1 << 12,
+        noELSE    = 1 << 13,
+        sfSTART_OF_LINE = noOPT | noBC | noPOSTOP | noASSIGN | noIF | noELSE | noARG_SEP,
         noANY     = ~0       ///< All of he above flags set
       };	
 
@@ -143,7 +147,7 @@ namespace mu
       varmap_type *m_pVarDef;  ///< The only non const pointer to parser internals
       facfun_type m_pFactory;
       void *m_pFactoryData;
-      std::vector<identfun_type> m_vIdentFun; ///< Value token identification function
+      std::list<identfun_type> m_vIdentFun; ///< Value token identification function
       varmap_type m_UsedVar;
       value_type m_fZero;      ///< Dummy value of zero, referenced by undefined variables
       int m_iBrackets;

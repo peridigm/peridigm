@@ -5,7 +5,7 @@
   |  Y Y  \|  |  /|    |     / __ \_|  | \/\___ \ \  ___/ |  | \/
   |__|_|  /|____/ |____|    (____  /|__|  /____  > \___  >|__|   
         \/                       \/            \/      \/        
-  Copyright (C) 2010 Ingo Berg
+  Copyright (C) 2011 Ingo Berg
 
   Permission is hereby granted, free of charge, to any person obtaining a copy of this 
   software and associated documentation files (the "Software"), to deal in the Software
@@ -31,6 +31,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <locale>
 
 //--- Parser includes --------------------------------------------------------------------------
 #include "muParserDef.h"
@@ -48,7 +49,7 @@ namespace mu
 
 //--------------------------------------------------------------------------------------------------
 /** \brief Mathematical expressions parser (base parser engine).
-    \author (C) 2010 Ingo Berg
+    \author (C) 2011 Ingo Berg
 
   This is the implementation of a bytecode based mathematical expressions parser. 
   The formula will be parsed from string and converted into a bytecode. 
@@ -83,6 +84,9 @@ private:
     /** \brief Type used for parser tokens. */
     typedef ParserToken<value_type, string_type> token_type;
 
+    /** \brief Maximum number of threads spawned by OpenMP when using the bulk mode. */
+    static const int s_MaxNumOpenMPThreads = 4;
+
  public:
 
     /** \brief Type of the error class. 
@@ -91,68 +95,44 @@ private:
     */
     typedef ParserError exception_type;
 
+    static void EnableDebugDump(bool bDumpCmd, bool bDumpStack);
+
     ParserBase(); 
     ParserBase(const ParserBase &a_Parser);
     ParserBase& operator=(const ParserBase &a_Parser);
 
     virtual ~ParserBase();
     
-    //---------------------------------------------------------------------------
-    /** \brief Calculate the result.
+	  value_type  Eval() const;
+    value_type* Eval(int &nStackSize) const;
+    void Eval(value_type *results, int nBulkSize);
 
-      A note on const correctness: 
-      I consider it important that Calc is a const function.
-      Due to caching operations Calc changes only the state of internal variables with one exception
-      m_UsedVar this is reset during string parsing and accessible from the outside. Instead of making
-      Calc non const GetUsedVar is non const because it explicitely calls Eval() forcing this update. 
-
-      \pre A formula must be set.
-      \pre Variables must have been set (if needed)
-  
-      \sa #m_pParseFormula
-      \return The evaluation result
-      \throw ParseException if no Formula is set or in case of any other error related to the formula.
-    */
-	  inline value_type Eval() const
-    {
-      return (this->*m_pParseFormula)(); 
-    }
+    int GetNumResults() const;
 
     void SetExpr(const string_type &a_sExpr);
     void SetVarFactory(facfun_type a_pFactory, void *pUserData = NULL);
 
+    void SetDecSep(char_type cDecSep);
+    void SetThousandsSep(char_type cThousandsSep = 0);
+    void ResetLocale();
+
     void EnableOptimizer(bool a_bIsOn=true);
-    void EnableByteCode(bool a_bIsOn=true);
     void EnableBuiltInOprt(bool a_bIsOn=true);
 
     bool HasBuiltInOprt() const;
     void AddValIdent(identfun_type a_pCallback);
 
-/** \fn void mu::ParserBase::DefineFun(const string_type &a_strName, fun_type0 a_pFun, bool a_bAllowOpt = true) 
-    \brief Define a parser function without arguments.
-    \param a_strName Name of the function
-    \param a_pFun Pointer to the callback function
-    \param a_bAllowOpt A flag indicating this function may be optimized
-*/
-
-#define MUP_DEFINE_FUNC(TYPE)                                                                  \
-    inline void DefineFun(const string_type &a_strName, TYPE a_pFun, bool a_bAllowOpt = true)  \
-    {                                                                                          \
-      AddCallback( a_strName, ParserCallback(a_pFun, a_bAllowOpt),                             \
-                   m_FunDef, ValidNameChars() );                                               \
+    /** \fn void mu::ParserBase::DefineFun(const string_type &a_strName, fun_type0 a_pFun, bool a_bAllowOpt = true) 
+        \brief Define a parser function without arguments.
+        \param a_strName Name of the function
+        \param a_pFun Pointer to the callback function
+        \param a_bAllowOpt A flag indicating this function may be optimized
+    */
+    template<typename T>
+    void DefineFun(const string_type &a_strName, T a_pFun, bool a_bAllowOpt = true)
+    {
+      AddCallback( a_strName, ParserCallback(a_pFun, a_bAllowOpt), m_FunDef, ValidNameChars() );
     }
-
-    MUP_DEFINE_FUNC(fun_type0)
-    MUP_DEFINE_FUNC(fun_type1)
-    MUP_DEFINE_FUNC(fun_type2)
-    MUP_DEFINE_FUNC(fun_type3)
-    MUP_DEFINE_FUNC(fun_type4)
-    MUP_DEFINE_FUNC(fun_type5)
-    MUP_DEFINE_FUNC(multfun_type)
-    MUP_DEFINE_FUNC(strfun_type1)
-    MUP_DEFINE_FUNC(strfun_type2)
-    MUP_DEFINE_FUNC(strfun_type3)
-#undef MUP_DEFINE_FUNC
 
     void DefineOprt(const string_type &a_strName, 
                     fun_type2 a_pFun, 
@@ -161,7 +141,6 @@ private:
                     bool a_bAllowOpt = false);
     void DefineConst(const string_type &a_sName, value_type a_fVal);
     void DefineStrConst(const string_type &a_sName, const string_type &a_strVal);
-//  void DefineArrayVar(const string_type &a_sName, value_type *a_fVar, std::size_t sz);
     void DefineVar(const string_type &a_sName, value_type *a_fVar);
     void DefinePostfixOprt(const string_type &a_strFun, fun_type1 a_pOprt, bool a_bAllowOpt=true);
     void DefineInfixOprt(const string_type &a_strName, fun_type1 a_pOprt, int a_iPrec=prINFIX, bool a_bAllowOpt=true);
@@ -180,7 +159,7 @@ private:
     const valmap_type& GetConst() const;
     const string_type& GetExpr() const;
     const funmap_type& GetFunDef() const;
-    string_type GetVersion() const;
+    string_type GetVersion(EParserVersionInfo eInfo = pviFULL) const;
 
     const char_type ** GetOprtDef() const;
     void DefineNameChars(const char_type *a_szCharset);
@@ -208,9 +187,52 @@ private:
     virtual void InitOprt() = 0; 
 
     virtual void OnDetectVar(string_type *pExpr, int &nStart, int &nEnd);
+
     static const char_type *c_DefaultOprt[]; 
+    static std::locale s_locale;  ///< The locale used by the parser
+    static bool g_DbgDumpCmdCode;
+    static bool g_DbgDumpStack;
+
+    /** \brief A facet class used to change decimal and thousands separator. */
+    template<class TChar>
+    class change_dec_sep : public std::numpunct<TChar>
+    {
+    public:
+      
+      explicit change_dec_sep(char_type cDecSep, char_type cThousandsSep = 0, int nGroup = 3)
+        :std::numpunct<TChar>()
+        ,m_cDecPoint(cDecSep)
+        ,m_cThousandsSep(cThousandsSep)
+        ,m_nGroup(nGroup)
+      {}
+      
+    protected:
+      
+      virtual char_type do_decimal_point() const
+      {
+        return m_cDecPoint;
+      }
+
+      virtual char_type do_thousands_sep() const
+      {
+        return m_cThousandsSep;
+      }
+
+      virtual std::string do_grouping() const 
+      { 
+        return std::string(1, m_nGroup); 
+      }
+
+    private:
+
+      int m_nGroup;
+      char_type m_cDecPoint;  
+      char_type m_cThousandsSep;
+    };
 
  private:
+
+    static value_type Pow(value_type v1, value_type v2);
 
     void Assign(const ParserBase &a_Parser);
     void InitTokenReader();
@@ -221,8 +243,13 @@ private:
                       funmap_type &a_Storage,
                       const char_type *a_szCharSet );
 
+    void ApplyRemainingOprt(ParserStack<token_type> &a_stOpt,
+                                ParserStack<token_type> &a_stVal) const;
     void ApplyBinOprt(ParserStack<token_type> &a_stOpt,
                       ParserStack<token_type> &a_stVal) const;
+
+    void ApplyIfElse(ParserStack<token_type> &a_stOpt,
+                     ParserStack<token_type> &a_stVal) const;
 
     void ApplyFunc(ParserStack<token_type> &a_stOpt,
                    ParserStack<token_type> &a_stVal, 
@@ -231,34 +258,36 @@ private:
     token_type ApplyNumFunc(const token_type &a_FunTok,
                             const std::vector<token_type> &a_vArg) const;
 
+    token_type ApplyBulkFunc(const token_type &a_FunTok,
+                             const std::vector<token_type> &a_vArg) const;
+
     token_type ApplyStrFunc(const token_type &a_FunTok,
                             const std::vector<token_type> &a_vArg) const;
 
     int GetOprtPrecedence(const token_type &a_Tok) const;
     EOprtAssociativity GetOprtAssociativity(const token_type &a_Tok) const;
 
+    void CreateRPN() const;
+
     value_type ParseString() const; 
     value_type ParseCmdCode() const;
-    value_type ParseValue() const;
+    value_type ParseCmdCodeBulk(int nOffset, int nThreadID) const;
 
-    void  ClearFormula();
     void  CheckName(const string_type &a_strName, const string_type &a_CharSet) const;
     void  CheckOprt(const string_type &a_sName,
                     const ParserCallback &a_Callback,
                     const string_type &a_szCharSet) const;
 
-#if defined(MUP_DUMP_STACK) | defined(MUP_DUMP_CMDCODE)
     void StackDump(const ParserStack<token_type > &a_stVal, 
                    const ParserStack<token_type > &a_stOprt) const;
-#endif
 
     /** \brief Pointer to the parser function. 
     
       Eval() calls the function whose address is stored there.
     */
     mutable ParseFunction  m_pParseFormula;
-    mutable const bytecode_type *m_pCmdCode; ///< Formula converted to bytecode, points to the data of the bytecode class.
-    mutable ParserByteCode m_vByteCode;   ///< The Bytecode class.
+    mutable const SToken *m_pRPN;
+    mutable ParserByteCode m_vRPN;   ///< The Bytecode class.
     mutable stringbuf_type  m_vStringBuf; ///< String buffer, used for storing string function arguments
     stringbuf_type  m_vStringVarBuf;
 
@@ -273,12 +302,13 @@ private:
     varmap_type  m_VarDef;        ///< user defind variables.
 
     bool m_bOptimize;             ///< Flag that indicates if the optimizer is on or off.
-    bool m_bUseByteCode;          ///< Flag that indicates if bytecode parsing is on or off.
     bool m_bBuiltInOp;            ///< Flag that can be used for switching built in operators on and off
 
     string_type m_sNameChars;      ///< Charset for names
     string_type m_sOprtChars;      ///< Charset for postfix/ binary operator tokens
     string_type m_sInfixOprtChars; ///< Charset for infix operator tokens
+    
+    mutable int m_nIfElseCounter;  ///< Internal counter for keeping track of nested if-then-else clauses
 
     // items merely used for caching state information
     mutable valbuf_type m_vStackBuffer; ///< This is merely a buffer used for the stack in the cmd parsing routine

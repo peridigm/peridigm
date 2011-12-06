@@ -5,7 +5,7 @@
   |  Y Y  \|  |  /|    |     / __ \_|  | \/\___ \ \  ___/ |  | \/
   |__|_|  /|____/ |____|    (____  /|__|  /____  > \___  >|__|   
         \/                       \/            \/      \/        
-  Copyright (C) 2004-2008 Ingo Berg
+  Copyright (C) 2004-2011 Ingo Berg
 
   Permission is hereby granted, free of charge, to any person obtaining a copy of this 
   software and associated documentation files (the "Software"), to deal in the Software
@@ -55,7 +55,7 @@ namespace mu
 	    <li>binary operator</li>
     </ul>
 
-   \author (C) 2004 Ingo Berg 
+   \author (C) 2004-2011 Ingo Berg 
   */
   template<typename TBase, typename TString>
   class ParserToken
@@ -77,7 +77,7 @@ namespace mu
       int  m_iIdx;        ///< An otional index to an external buffer storing the token data
       TString m_strTok;   ///< Token string
       TString m_strVal;   ///< Value for string variables
-      value_type m_fVal;
+      value_type m_fVal;  ///< the value 
       std::auto_ptr<ParserCallback> m_pCallback;
 
   public:

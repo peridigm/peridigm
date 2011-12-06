@@ -5,7 +5,7 @@
   |  Y Y  \|  |  /|    |     / __ \_|  | \/\___ \ \  ___/ |  | \/
   |__|_|  /|____/ |____|    (____  /|__|  /____  > \___  >|__|   
         \/                       \/            \/      \/        
-  Copyright (C) 2004-2006 Ingo Berg
+  Copyright (C) 2004-2011 Ingo Berg
 
   Permission is hereby granted, free of charge, to any person obtaining a copy of this 
   software and associated documentation files (the "Software"), to deal in the Software
@@ -47,7 +47,7 @@ namespace mu
       slightly changed in order to get an error code if the stack is empty.
       The stack is used within the Parser both as a value stack and as an operator stack.
 
-      \author (C) 2004-2008 Ingo Berg 
+      \author (C) 2004-2011 Ingo Berg 
   */
   template <typename TValueType>
   class ParserStack 

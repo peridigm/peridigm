@@ -5,7 +5,7 @@
   |  Y Y  \|  |  /|    |     / __ \_|  | \/\___ \ \  ___/ |  | \/
   |__|_|  /|____/ |____|    (____  /|__|  /____  > \___  >|__|   
         \/                       \/            \/      \/        
-  Copyright (C) 2004-2009 Ingo Berg
+  Copyright (C) 2004-2011 Ingo Berg
 
   Permission is hereby granted, free of charge, to any person obtaining a copy of this 
   software and associated documentation files (the "Software"), to deal in the Software
@@ -41,16 +41,43 @@
 
 namespace mu
 {
+  struct SToken
+  {
+    ECmdCode Cmd;
+    int StackPos;
 
+    union
+    {
+      union //SValData
+      {
+        value_type *ptr;
+        value_type data;
+      } Val;
 
-/** \brief Bytecode implementation of the Math Parser.
+      struct //SFunData
+      {
+        void* ptr;
+        int   argc;
+        int   idx;
+      } Fun;
+
+      struct //SOprtData
+      {
+        value_type *ptr;
+        int offset;
+      } Oprt;
+    };
+  };
+  
+  
+  /** \brief Bytecode implementation of the Math Parser.
 
   The bytecode contains the formula converted to revers polish notation stored in a continious
   memory area. Associated with this data are operator codes, variable pointers, constant 
   values and function pointers. Those are necessary in order to calculate the result.
   All those data items will be casted to the underlying datatype of the bytecode.
 
-  \author (C) 2004-2010 Ingo Berg 
+  \author (C) 2004-2011 Ingo Berg 
 */
 class ParserByteCode
 {
@@ -59,41 +86,17 @@ private:
     /** \brief Token type for internal use only. */
     typedef ParserToken<value_type, string_type> token_type;
 
-    /** \brief Core type of the bytecode. */
-    typedef std::vector<bytecode_type> storage_type;
+    /** \brief Token vector for storing the RPN. */
+    typedef std::vector<SToken> rpn_type;
 
     /** \brief Position in the Calculation array. */
     unsigned m_iStackPos;
 
     /** \brief Maximum size needed for the stack. */
     std::size_t m_iMaxStackSize;
-
-    /** \brief Core type of the bytecode. */
-    storage_type m_vBase;
-
-    /** \brief Size of a value entry in the bytecode, relative to TMapType size. */
-    const int mc_iSizeVal;
-
-    /** \brief Size of a pointer, relative to size of underlying TMapType.
-       
-        \attention The size is related to the size of TMapType not bytes!
-    */
-    const int mc_iSizePtr;
-
-    /** \brief A value entry requires that much entires in the bytecode. 
-        
-        Value entry consists of:
-        <ul>
-          <li>One entry for Stack index</li>
-          <li>One entry for Token identifier</li>
-          <li>mc_iSizeVal entries for the value</li>
-        <ul>
-
-        \sa AddVal(TBaseData a_fVal)
-    */
-    const int mc_iSizeValEntry;
-
-    void StorePtr(void *a_pAddr);
+    
+    /** \brief The actual rpn storage. */
+    rpn_type  m_vRPN;
 
 public:
 
@@ -105,38 +108,21 @@ public:
     void AddVar(value_type *a_pVar);
     void AddVal(value_type a_fVal);
     void AddOp(ECmdCode a_Oprt);
+    void AddIfElse(ECmdCode a_Oprt);
     void AddAssignOp(value_type *a_pVar);
     void AddFun(void *a_pFun, int a_iArgc);
+    void AddBulkFun(void *a_pFun, int a_iArgc);
     void AddStrFun(void *a_pFun, int a_iArgc, int a_iIdx);
 
     void Finalize();
     void clear();
     std::size_t GetMaxStackSize() const;
-    std::size_t GetBufSize() const;
 
-    const bytecode_type* GetRawData() const;
-
-    /** \brief Return size of a value entry. 
-    
-      That many bytecode entries are necessary to store a value.
-
-      \sa mc_iSizeVal
-    */
-    unsigned GetValSize() const 
-    {
-      return mc_iSizeVal;
-    }
-
-    /** \brief Return size of a pointer entry. 
-    
-      That many bytecode entries are necessary to store a pointer.
-
-      \sa mc_iSizePtr
-    */
-    unsigned GetPtrSize() const 
-    {
-      return mc_iSizePtr;
-    }
+    const SToken* GetBase() const;
+    //rpn_type Clone() const
+    //{
+    //  return rpn_type(m_vRPN);
+    //}
 
     void RemoveValEntries(unsigned a_iNumber);
     void AsciiDump();
