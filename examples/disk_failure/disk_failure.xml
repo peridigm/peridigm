@@ -26,7 +26,7 @@
         <Parameter name="Type" type="string" value="Initial Velocity"/>
 	    <Parameter name="Node Set" type="string" value="nodelist_1"/>
         <Parameter name="Coordinate" type="string" value="z"/>
-        <Parameter name="Value" type="double" value="-100.0"/>
+        <Parameter name="Value" type="string" value="-100.0"/>
 	  </ParameterList>
     </ParameterList>
   </ParameterList>
