@@ -68,6 +68,8 @@
 #include "Peridigm_OutputManager.hpp"
 #include "Peridigm_OutputManager_VTK_XML.hpp"
 #include "Peridigm_ComputeManager.hpp"
+// MLP
+#include "muParser/muParserDef.h"
 
 #include "mesh_input/quick_grid/QuickGridData.h"
 
