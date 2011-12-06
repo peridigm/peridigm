@@ -5,6 +5,10 @@
 # 
 #  ./tensile_test.spd
 #
+#  or alternatively if you have the SEACAS tools from Trilinos built:
+#
+#  decomp -p 2 tensile_test.g
+#
 
 #{Units("si")}
 
@@ -24,7 +28,7 @@
 #{SLOT_CENTER=0.2425~in + TOL3}
 #{SLOT_RADIUS=0.0625~in + TOL3}
 
-#{NUM_ELEM_THROUGH_THICKNESS=3}
+#{NUM_ELEM_THROUGH_THICKNESS=2}
 
 #Build geometry
 create vertex 0 0 {THICKNESS/2}
