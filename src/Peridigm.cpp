@@ -823,8 +823,10 @@ void PeridigmNS::Peridigm::executeExplicit() {
 void PeridigmNS::Peridigm::executeQuasiStatic() {
 
   // Allocate memory for non-zeros in global tangent and lock in the structure
-  if(peridigmComm->MyPID() == 0)
+  if(peridigmComm->MyPID() == 0){
     cout << "Allocating global tangent matrix...";
+    cout.flush();
+  }
   PeridigmNS::Timer::self().startTimer("Allocate Global Tangent");
   allocateJacobian();
   PeridigmNS::Timer::self().stopTimer("Allocate Global Tangent");
@@ -896,7 +898,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
     applyKinematicBC(loadIncrement, deltaU, Teuchos::RCP<Epetra_FECrsMatrix>());
 
     // Set the current position
-    // \todo We probably want to rework this so that the material models get valid x, u, and y values
+    // \todo We probably want to rework this so that the material models get valid x, u, and y values.
     // Currently the u values are from the previous load step (and if we update u here we'll be unable to properly undo a time step, which we'll need to adaptive time stepping).
     for(int i=0 ; i<y->MyLength() ; ++i)
       (*y)[i] = (*x)[i] + (*u)[i] + (*deltaU)[i];
@@ -1226,7 +1228,7 @@ void PeridigmNS::Peridigm::allocateJacobian() {
   // Note that this must be an Epetra_Map, not an Epetra_BlockMap, so we can't use threeDimensionalMap directly
   int numGlobalElements = 3*oneDimensionalMap->NumGlobalElements();
   int numMyElements = 3*oneDimensionalMap->NumMyElements();
-  int* myGlobalElements = new int[numMyElements];
+  vector<int> myGlobalElements(numMyElements);
   int* oneDimensionalMapGlobalElements = oneDimensionalMap->MyGlobalElements();
   for(int iElem=0 ; iElem<oneDimensionalMap->NumMyElements() ; ++iElem){
     myGlobalElements[3*iElem]     = 3*oneDimensionalMapGlobalElements[iElem];
@@ -1234,28 +1236,30 @@ void PeridigmNS::Peridigm::allocateJacobian() {
     myGlobalElements[3*iElem + 2] = 3*oneDimensionalMapGlobalElements[iElem] + 2;
   }
   int indexBase = 0;
-  tangentMap = Teuchos::rcp(new Epetra_Map(numGlobalElements, numMyElements, myGlobalElements, indexBase, *peridigmComm));
-  delete[] myGlobalElements;
+  tangentMap = Teuchos::rcp(new Epetra_Map(numGlobalElements, numMyElements, &myGlobalElements[0], indexBase, *peridigmComm));
+  myGlobalElements.clear();
 
   // Create the global tangent matrix
-  // If numEntriesPerRow is set to zero, allocation will take place during the insertion phase
-  // and will be locked in with the first all to GlobalAssemble
   Epetra_DataAccess CV = Copy;
-  int numEntriesPerRow = 0;  
+  int numEntriesPerRow = 0;  // Indicates allocation will take place during the insertion phase
   bool ignoreNonLocalEntries = false;
   tangent = Teuchos::rcp(new Epetra_FECrsMatrix(CV, *tangentMap, numEntriesPerRow, ignoreNonLocalEntries));
 
-  // Loop over the neighborhood for each locally-owned point and create non-zero entries in the matrix.
+  // Store nonzero columns for each row, with everything in global indices
+  map<int, set<int> > rowEntries;
+
+  // Loop over the neighborhood for each locally-owned point and record non-zero entries in the matrix.
   // Entries will exist for any two points that are bonded, and any two points that are bonded to a common third point.
-  vector<int> globalIndices;
-  vector<double> zeros;
   int* neighborhoodList = globalNeighborhoodData->NeighborhoodList();
   int neighborhoodListIndex = 0;
-  for(int LID=0 ; LID<globalNeighborhoodData->NumOwnedPoints() ; ++LID){
-    int GID =  oneDimensionalOverlapMap->GID(LID);
+  vector<int> globalIndices;
+  int numOwnedPoints = globalNeighborhoodData->NumOwnedPoints();
+  for(int LID=0 ; LID<numOwnedPoints ; ++LID){
+    int GID = oneDimensionalOverlapMap->GID(LID);
     int numNeighbors = neighborhoodList[neighborhoodListIndex++];
     unsigned int numEntries = 3*(numNeighbors+1);
-    globalIndices.resize(numEntries);
+    if(globalIndices.size() < numEntries)
+      globalIndices.resize(numEntries);
     globalIndices[0] = 3*GID;
     globalIndices[1] = 3*GID + 1;
     globalIndices[2] = 3*GID + 2;
@@ -1266,15 +1270,35 @@ void PeridigmNS::Peridigm::allocateJacobian() {
       globalIndices[3*j+4] = 3*neighborGlobalID + 1;
       globalIndices[3*j+5] = 3*neighborGlobalID + 2;
     }
-    if(numEntries > zeros.size())
-      zeros.resize(numEntries, 0.0);
 
-    for(unsigned int j=0 ; j<numEntries ; ++j){
-      const double* values = &zeros[0];
-      const int* indices = &globalIndices[0];
-      int err = tangent->InsertGlobalValues(globalIndices[j], numEntries, values, indices);
-      TEST_FOR_EXCEPT_MSG(err < 0, "**** PeridigmNS::Peridigm::allocateJacobian(), InsertGlobalValues() returned negative error code.\n");
+    // The entries going into the tangent are a dense matrix of size numEntries by numEntries.
+    // Each global ID in the list interacts with all other global IDs in the list.
+    for(unsigned int i=0 ; i<numEntries ; ++i){
+      for(unsigned int j=0 ; j<numEntries ; ++j)
+	rowEntries[globalIndices[i]].insert(globalIndices[j]);
     }
+  }
+
+  // Allocate space in the global Epetra_FECrsMatrix
+  vector<int> indices;
+  vector<double> zeros;
+  for(map<int, set<int> >::iterator rowEntry=rowEntries.begin(); rowEntry!=rowEntries.end() ; ++rowEntry){
+    unsigned int numRowNonzeros = rowEntry->second.size();
+    if(zeros.size() < numRowNonzeros)
+      zeros.resize(numRowNonzeros, 0.0);
+
+    // Load indices into a sorted vector
+    indices.resize(numRowNonzeros);
+    int i=0;
+    for(set<int>::const_iterator globalIndex=rowEntry->second.begin() ; globalIndex!=rowEntry->second.end() ; ++globalIndex)
+      indices[i++] = *globalIndex;
+    sort(indices.begin(), indices.end());
+
+    // Allocate space in the global matrix
+    int err = tangent->InsertGlobalValues(rowEntry->first, numRowNonzeros, (const double*)&zeros[0], (const int*)&indices[0]);
+    TEST_FOR_EXCEPT_MSG(err < 0, "**** PeridigmNS::Peridigm::allocateJacobian(), InsertGlobalValues() returned negative error code.\n");
+
+    rowEntry->second.clear();
   }
   int err = tangent->GlobalAssemble();
   TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::allocateJacobian(), GlobalAssemble() returned nonzero error code.\n");
