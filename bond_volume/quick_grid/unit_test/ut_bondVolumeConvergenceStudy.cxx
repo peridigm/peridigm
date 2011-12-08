@@ -55,8 +55,8 @@
 #include <sstream>
 
 
-#include "mesh_output/vtk/PdVTK.h"
-#include "mesh_output/vtk/Field.h"
+#include "mesh_output/PdVTK.h"
+#include "mesh_output/Field.h"
 #include "mesh_input/quick_grid/QuickGrid.h"
 #include "bond_volume/quick_grid/calculators.h"
 #include "ordinary_utilities.h"

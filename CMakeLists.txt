@@ -151,8 +151,6 @@ set(UTILITIES_LIBS Utilities)
 # other required libraries
 set(PdMaterialUtilitiesLib PdMaterialUtilities)
 
-
-
 # include for all directories
 # Collection of include and lib directories
 set(INCLUDE_DIRS 
@@ -160,8 +158,8 @@ ${Trilinos_INCLUDE_DIRS}
 ${VTK_INCLUDE_DIRS} 
 ${Boost_INCLUDE_DIRS} 
 ${CMAKE_SOURCE_DIR}
-${CMAKE_SOURCE_DIR}/io
 ${CMAKE_SOURCE_DIR}/src
+${CMAKE_SOURCE_DIR}/src/io
 ${CMAKE_SOURCE_DIR}/src/contact
 ${CMAKE_SOURCE_DIR}/src/evaluators
 ${CMAKE_SOURCE_DIR}/src/materials
@@ -185,7 +183,6 @@ ${Boost_LIBRARIES}
 )
 
 add_subdirectory (bond_volume)
-add_subdirectory (io)
 add_subdirectory (src)
 add_subdirectory (test/unit)
 add_subdirectory (test/regression)

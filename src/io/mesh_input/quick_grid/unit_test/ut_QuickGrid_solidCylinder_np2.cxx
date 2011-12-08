@@ -56,96 +56,57 @@
 #include "vtkIdList.h"
 #include "vtkKdTree.h"
 #include "vtkKdTreePointLocator.h"
+#include "../QuickGrid.h"
+#include "../QuickGridData.h"
+#include "PdVTK.h"
+#include "Field.h"
+#include "PdZoltan.h"
+#include "PdutMpiFixture.h"
+#include <valarray>
 #include <iostream>
 #include <cmath>
-#include <map>
-#include <set>
-
-#include "Epetra_ConfigDefs.h"
-#ifdef HAVE_MPI
-#include "mpi.h"
-#include "Epetra_MpiComm.h"
-#else
-#include "Epetra_SerialComm.h"
-#endif
-
-#include "utilities/Array.h"
-#include "../PdZoltan.h"
-#include "../BondFilter.h"
-#include "../NeighborhoodList.h"
-#include "mesh_input/quick_grid/QuickGrid.h"
-
-#include "mesh_output/vtk/Field.h"
-#include "utilities/PdutMpiFixture.h"
 
 
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
+using std::tr1::shared_ptr;
 
 using namespace Pdut;
+
 using std::cout;
-using std::set;
-using std::map;
+
 
 static size_t myRank;
 static size_t numProcs;
+const double cylinderRadius = 1.0;
+const size_t numRings = 2;
+const double zStart = 0.0;
+const double cylinderLength = 1.0;
+const double horizon = .6;
 
-void assert_grid(QUICKGRID::QuickGridData decomp, const std::string& label="");
-using QUICKGRID::QuickGridMeshGenerationIterator;
 
-QUICKGRID::QuickGridData getGrid(const string json_filename) {
-	shared_ptr<QuickGridMeshGenerationIterator> g = QUICKGRID::getMeshGenerator(numProcs,json_filename);
-	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, *g);
+QUICKGRID::TensorProductSolidCylinder getMeshGenerator(){
 
-	// This load-balances
+	QUICKGRID::TensorProductSolidCylinder meshGen(numProcs,cylinderRadius,numRings,zStart,cylinderLength);
+	return meshGen;
+}
+
+void runTest() {
+	QUICKGRID::TensorProductSolidCylinder meshGen = getMeshGenerator();
+	BOOST_CHECK(57==meshGen.getNumGlobalCells());
+	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, meshGen);
 	decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
-	return decomp;
-}
-
-void assert_grid(QUICKGRID::QuickGridData decomp,const std::string& label) {
-	std::cout << label << "\n";
-	int dimension_answer=3;
-	size_t globalNumPoints_answer=2;
-	size_t numPoints_answer=2;
-	int sizeNeighborhoodList_answer=4;
-	int gids_answer[] = {0,1};
-	int neighborhood_answer[] = {1,1,1,0};
-	int neighborhoodPtr_answer[] = {0,2};
-
-	BOOST_CHECK(dimension_answer==decomp.dimension);
-	BOOST_CHECK(globalNumPoints_answer==decomp.globalNumPoints);
-	BOOST_CHECK(numPoints_answer==decomp.numPoints);
-	BOOST_CHECK(sizeNeighborhoodList_answer==decomp.sizeNeighborhoodList);
-	//	BOOST_CHECK(0==decomp.numExport);
-	//	BOOST_CHECK(decomp.unPack);
-	{
-		const int* gids=decomp.myGlobalIDs.get();
-		for(size_t n=0;n<numPoints_answer;n++,gids++)
-			BOOST_CHECK(gids_answer[n]==*gids);
-	}
-	{
-		const int* neighborhood = decomp.neighborhood.get();
-		for(int n=0;n<sizeNeighborhoodList_answer;n++,neighborhood++)
-			BOOST_CHECK(neighborhood_answer[n]==*neighborhood);
-	}
-	{
-		const int* neighborhoodPtr = decomp.neighborhoodPtr.get();
-		for(size_t n=0;n<numPoints_answer;n++,neighborhoodPtr++)
-			BOOST_CHECK(neighborhoodPtr_answer[n]==*neighborhoodPtr);
-	}
-
-}
-
-void twoPointReloadBalance() {
-	const string json_file="input_files/ut_twoPointReLoadBalance.json";
-	QUICKGRID::QuickGridData decomp_1 = getGrid(json_file);
-	assert_grid(decomp_1,"\ttwoPointReloadBalance: UNBALANCED MESH assert_grid()\n");
+	BOOST_CHECK(57==decomp.globalNumPoints);
 
 	/*
-	 * Reload balance
+	 * Write problem set up parameters to file
 	 */
-	QUICKGRID::QuickGridData decomp_2 = PDNEIGH::getLoadBalancedDiscretization(decomp_1);
-	assert_grid(decomp_1,"\ttwoPointReloadBalance: LOADBALANCED MESH assert_grid()\n");
+	int numPoints = decomp.numPoints;
+	Field_NS::Field<double> volField(Field_NS::VOLUME,numPoints);
+	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(decomp.myX,numPoints);
+	PdVTK::writeField<double>(grid,volField);
+	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("solidCylinderMesh.pvtu", numProcs, myRank);
+	PdVTK::write(writer,grid);
 
 }
 
@@ -154,8 +115,8 @@ bool init_unit_test_suite()
 	// Add a suite for each processor in the test
 	bool success=true;
 
-	test_suite* proc = BOOST_TEST_SUITE( "ut_twoPointReloadBalance" );
-	proc->add(BOOST_TEST_CASE( &twoPointReloadBalance ));
+	test_suite* proc = BOOST_TEST_SUITE( "ut_QuickGrid_solidCylinder_np2" );
+	proc->add(BOOST_TEST_CASE( &runTest ));
 	framework::master_test_suite().add( proc );
 	return success;
 
@@ -182,8 +143,16 @@ int main
 	// These are static (file scope) variables
 	myRank = myMpi.rank;
 	numProcs = myMpi.numProcs;
+	/**
+	 * This test only make sense for numProcs == 2
+	 */
+	if(2 != numProcs){
+		std::cerr << "Unit test runtime ERROR: ut_QuickGrid_solidCylinder_np2 only makes sense on 2 processors" << std::endl;
+		std::cerr << "\t Re-run unit test $mpiexec -np 2 ./ut_QuickGrid_solidCylinder_np2" << std::endl;
+		myMpi.PdutMpiFixture::~PdutMpiFixture();
+		std::exit(-1);
+	}
 
 	// Initialize UTF
 	return unit_test_main( init_unit_test, argc, argv );
 }
-

@@ -53,7 +53,7 @@
 #include "../BondFilter.h"
 
 #include "PdutMpiFixture.h"
-#include "vtk/PdVTK.h"
+#include "PdVTK.h"
 #include <iostream>
 #include <set>
 #include "Epetra_ConfigDefs.h"

@@ -24,11 +24,11 @@ set(Peridigm_SOURCES
     Peridigm_ModelEvaluator.cpp
     PHAL_Dimension.cpp
     PHAL_PeridigmTraits.cpp
-    Peridigm_OutputManager_VTK_XML.cpp
     Peridigm_ComputeManager.cpp
     Peridigm_Timer.cpp
     ${computeSOURCES}
     ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp
+    ./io/Peridigm_OutputManager_VTK_XML.cpp
     ./materials/Peridigm_Material.cpp
     ./materials/Peridigm_MaterialFactory.cpp
     ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
@@ -85,12 +85,12 @@ set(utPeridigm_SOURCES
     Peridigm_ModelEvaluator.cpp
     PHAL_Dimension.cpp
     PHAL_PeridigmTraits.cpp
-    Peridigm_OutputManager_VTK_XML.cpp
     Peridigm_ComputeManager.cpp
     Peridigm_Timer.cpp
     ${computeSOURCES}
     ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp
-    ../io/mesh_output/vtk/Field.cxx
+    ./io/Peridigm_OutputManager_VTK_XML.cpp
+    ./io/mesh_output/Field.cxx
     ./materials/Peridigm_Material.cpp
     ./materials/Peridigm_MaterialFactory.cpp
     ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
@@ -144,7 +144,7 @@ target_link_libraries(utPeridigm_PdQuickGridDiscretization_MPI_np2
 add_executable(utPeridigm_State
                Peridigm_State.cpp
                utPeridigm_State.cpp
-               ../io/mesh_output/vtk/Field.cxx)
+               ./io/mesh_output/Field.cxx)
 target_link_libraries(utPeridigm_State
                       ${Trilinos_LIBRARIES}
                       ${MESH_OUTPUT_LIBS}
@@ -157,7 +157,7 @@ add_executable(utPeridigm_LinearElasticIsotropicMaterial
                Peridigm_State.cpp
                Peridigm_DataManager.cpp
                Peridigm_SerialMatrix.cpp
-               ../io/mesh_output/vtk/Field.cxx
+               ./io/mesh_output/Field.cxx
                ./materials/Peridigm_Material.cpp
 		       ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
                ./materials/Peridigm_DamageModelFactory.cpp
@@ -180,7 +180,7 @@ add_executable(utPHAL_UpdateForceState
                Peridigm_State.cpp
                Peridigm_DataManager.cpp
                Peridigm_SerialMatrix.cpp
-               ../io/mesh_output/vtk/Field.cxx
+               ./io/mesh_output/Field.cxx
                ./materials/Peridigm_Material.cpp
 	           ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
                ./materials/Peridigm_DamageModelFactory.cpp
@@ -207,19 +207,19 @@ target_link_libraries(utPHAL_UpdateForceState
 #)
 
 add_executable(utPHAL_EvaluateForce
-	           PHAL_PeridigmTraits.cpp
-	           PHAL_Dimension.cpp
+	       PHAL_PeridigmTraits.cpp
+	       PHAL_Dimension.cpp
                Peridigm_Timer.cpp
                Peridigm_State.cpp
                Peridigm_DataManager.cpp
                Peridigm_Block.cpp
                Peridigm_SerialMatrix.cpp
-               ../io/mesh_output/vtk/Field.cxx
+               ./io/mesh_output/Field.cxx
                ./materials/Peridigm_Material.cpp
-	           ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
+               ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
                ./materials/Peridigm_DamageModelFactory.cpp
                ./materials/Peridigm_CriticalStretchDamageModel.cpp
-	           ./evaluators/utPHAL_EvaluateForce.cpp
+	       ./evaluators/utPHAL_EvaluateForce.cpp
 )
 target_link_libraries(utPHAL_EvaluateForce
                       ${Trilinos_LIBRARIES}
@@ -266,6 +266,7 @@ target_link_libraries(utPeridigm_Compute_Force
 # 
 # Add subdirectories
 #
+add_subdirectory (io/)
 add_subdirectory (materials/)
 add_subdirectory (initial_conditions/)
 add_subdirectory (compute/)

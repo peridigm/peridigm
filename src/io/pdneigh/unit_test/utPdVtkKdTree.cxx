@@ -53,7 +53,7 @@
 #include <iostream>
 #include <set>
 
-#include "vtk/PdVTK.h"
+#include "PdVTK.h"
 #include "../PdZoltan.h"
 #include "quick_grid/QuickGrid.h"
 #include "../NeighborhoodList.h"
