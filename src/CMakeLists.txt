@@ -14,9 +14,9 @@ set(Peridigm_SOURCES
     Peridigm_Main.cpp
     Peridigm_Factory.cpp
     Peridigm.cpp
-    Peridigm_AbstractDiscretization.cpp
-    Peridigm_DiscretizationFactory.cpp
-    Peridigm_PdQuickGridDiscretization.cpp
+    ./io/discretization/Peridigm_AbstractDiscretization.cpp
+    ./io/discretization/Peridigm_DiscretizationFactory.cpp
+    ./io/discretization/Peridigm_PdQuickGridDiscretization.cpp
     Peridigm_State.cpp
     Peridigm_DataManager.cpp
     Peridigm_SerialMatrix.cpp
@@ -40,7 +40,7 @@ set(Peridigm_SOURCES
     ./contact/Peridigm_ShortRangeForceContactModel.cpp
 )
 if(PERIDIGM_STK)
-  set(Peridigm_SOURCES Peridigm_STKDiscretization.cpp ${Peridigm_SOURCES})
+  set(Peridigm_SOURCES ./io/discretization/Peridigm_STKDiscretization.cpp ${Peridigm_SOURCES})
 endif()
 
 set(Peridigm_LINK_LIBRARIES
@@ -75,9 +75,9 @@ set_property(TARGET Peridigm
 #
 set(utPeridigm_SOURCES
     Peridigm.cpp
-    Peridigm_AbstractDiscretization.cpp
-    Peridigm_DiscretizationFactory.cpp
-    Peridigm_PdQuickGridDiscretization.cpp
+    ./io/discretization/Peridigm_AbstractDiscretization.cpp
+    ./io/discretization/Peridigm_DiscretizationFactory.cpp
+    ./io/discretization/Peridigm_PdQuickGridDiscretization.cpp
     Peridigm_State.cpp
     Peridigm_DataManager.cpp
     Peridigm_SerialMatrix.cpp
@@ -102,7 +102,7 @@ set(utPeridigm_SOURCES
     ./contact/Peridigm_ShortRangeForceContactModel.cpp
 )
 if(PERIDIGM_STK)
-  set(utPeridigm_SOURCES Peridigm_STKDiscretization.cpp ${utPeridigm_SOURCES})
+  set(utPeridigm_SOURCES ./io/discretization/Peridigm_STKDiscretization.cpp ${utPeridigm_SOURCES})
 endif()
 
 add_executable(utPeridigm utPeridigm.cpp ${utPeridigm_SOURCES})
@@ -112,9 +112,9 @@ add_executable(utPeridigm_MPI_np2 utPeridigm_MPI_np2.cpp ${utPeridigm_SOURCES})
 target_link_libraries(utPeridigm_MPI_np2 ${Peridigm_LINK_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(utPeridigm_PdQuickGridDiscretization
-               Peridigm_AbstractDiscretization.cpp
-               Peridigm_PdQuickGridDiscretization.cpp
-	           utPeridigm_PdQuickGridDiscretization.cpp)
+               ./io/discretization/Peridigm_AbstractDiscretization.cpp
+               ./io/discretization/Peridigm_PdQuickGridDiscretization.cpp
+               utPeridigm_PdQuickGridDiscretization.cpp)
 target_link_libraries(utPeridigm_PdQuickGridDiscretization
                       ${Trilinos_LIBRARIES}
                       ${PDNEIGH_LIBS}
@@ -127,8 +127,8 @@ target_link_libraries(utPeridigm_PdQuickGridDiscretization
 )
 
 add_executable(utPeridigm_PdQuickGridDiscretization_MPI_np2
-               Peridigm_AbstractDiscretization.cpp
-               Peridigm_PdQuickGridDiscretization.cpp
+               ./io/discretization/Peridigm_AbstractDiscretization.cpp
+               ./io/discretization/Peridigm_PdQuickGridDiscretization.cpp
                utPeridigm_PdQuickGridDiscretization_MPI_np2.cpp)
 target_link_libraries(utPeridigm_PdQuickGridDiscretization_MPI_np2
                       ${Trilinos_LIBRARIES}
@@ -243,9 +243,9 @@ target_link_libraries(utPHAL_EvaluateForce
 
 set(utPeridigm_Compute_Force_SOURCES
    ${CMAKE_SOURCE_DIR}/src/compute/unitTest/utPeridigm_Compute_Force.cpp
-   Peridigm_AbstractDiscretization.cpp
-   Peridigm_DiscretizationFactory.cpp
-   Peridigm_PdQuickGridDiscretization.cpp
+   ./io/discretization/Peridigm_AbstractDiscretization.cpp
+   ./io/discretization/Peridigm_DiscretizationFactory.cpp
+   ./io/discretization/Peridigm_PdQuickGridDiscretization.cpp
    Peridigm_DataManager.cpp
    Peridigm_State.cpp
    Peridigm_ComputeManager.cpp
@@ -253,7 +253,7 @@ set(utPeridigm_Compute_Force_SOURCES
    ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp
 )
 if(PERIDIGM_STK)
-   set(utPeridigm_Compute_Force_SOURCES Peridigm_STKDiscretization.cpp ${utPeridigm_Compute_Force_SOURCES})
+   set(utPeridigm_Compute_Force_SOURCES ./io/discretization/Peridigm_STKDiscretization.cpp ${utPeridigm_Compute_Force_SOURCES})
 endif()
 add_executable(utPeridigm_Compute_Force 
    ${utPeridigm_Compute_Force_SOURCES}
