@@ -4,4 +4,3 @@
 SET(TRILINOS_LIBS ${Trilinos_LIBRARIES})
 add_subdirectory(quick_grid)
 
-
