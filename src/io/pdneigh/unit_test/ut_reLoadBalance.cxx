@@ -47,91 +47,105 @@
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
-
 #include "vtkXMLStructuredGridWriter.h"
 #include "vtkXMLStructuredGridReader.h"
 #include "vtkXMLUnstructuredGridWriter.h"
 #include "vtkXMLUnstructuredGridReader.h"
 #include "vtkSmartPointer.h"
 #include "vtkStructuredGrid.h"
-#include "../QuickGrid.h"
-#include "vtk/PdVTK.h"
-#include "vtk/Field.h"
-#include <valarray>
+#include "vtkIdList.h"
+#include "vtkKdTree.h"
+#include "vtkKdTreePointLocator.h"
 #include <iostream>
 #include <cmath>
+#include <map>
+#include <set>
 
+#include "Epetra_ConfigDefs.h"
+#ifdef HAVE_MPI
+#include "mpi.h"
+#include "Epetra_MpiComm.h"
+#else
+#include "Epetra_SerialComm.h"
+#endif
+
+#include "utilities/Array.h"
+#include "../PdZoltan.h"
+#include "../BondFilter.h"
+#include "../NeighborhoodList.h"
+#include "mesh_input/quick_grid/QuickGrid.h"
+
+#include "mesh_output/Field.h"
+#include "utilities/PdutMpiFixture.h"
 
 
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
+
+using namespace Pdut;
 using std::cout;
+using std::set;
+using std::map;
 
 static size_t myRank;
 static size_t numProcs;
-const double cylinderRadius = 1.0;
-const size_t numRings = 2;
-const double zStart = 0.0;
-const double cylinderLength = 1.0;
 
+void assert_grid(QUICKGRID::QuickGridData decomp, const std::string& label="");
+using QUICKGRID::QuickGridMeshGenerationIterator;
 
-QUICKGRID::TensorProductSolidCylinder getMeshGenerator(){
+QUICKGRID::QuickGridData getGrid(const string json_filename) {
+	shared_ptr<QuickGridMeshGenerationIterator> g = QUICKGRID::getMeshGenerator(numProcs,json_filename);
+	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, *g);
 
-	QUICKGRID::TensorProductSolidCylinder meshGen(numProcs,cylinderRadius,numRings,zStart,cylinderLength);
-	return meshGen;
+	// This load-balances
+	decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
+	return decomp;
 }
 
-void runTest() {
-	QUICKGRID::TensorProductSolidCylinder meshGen = getMeshGenerator();
-	BOOST_CHECK(57==meshGen.getNumGlobalCells());
-	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, meshGen);
-	int numPoints = decomp.numPoints;
-	BOOST_CHECK(57==numPoints);
+void assert_grid(QUICKGRID::QuickGridData decomp,const std::string& label) {
+	std::cout << label << "\n";
+	int dimension_answer=3;
+	size_t globalNumPoints_answer=2;
+	size_t numPoints_answer=2;
+	int sizeNeighborhoodList_answer=4;
+	int gids_answer[] = {0,1};
+	int neighborhood_answer[] = {1,1,1,0};
+	int neighborhoodPtr_answer[] = {0,2};
 
-	/*
-	 * Assert that there are 3 core points
-	 */
-	double *x = decomp.myX.get();
-	double dz = cylinderLength/3;
-	double z0 = zStart + dz/2;
-	const double tolerance = 1.0e-15;
-	BOOST_CHECK_CLOSE(*(x+0),0.0,tolerance);
-	BOOST_CHECK_CLOSE(*(x+1),0.0,tolerance);
-	BOOST_CHECK_CLOSE(*(x+2),z0,tolerance);
-	BOOST_CHECK_CLOSE(*(x+19*3+0),0.0,tolerance);
-	BOOST_CHECK_CLOSE(*(x+19*3+1),0.0,tolerance);
-	BOOST_CHECK_CLOSE(*(x+19*3+2),z0+dz,tolerance);
-	BOOST_CHECK_CLOSE(*(x+2*19*3+0),0.0,tolerance);
-	BOOST_CHECK_CLOSE(*(x+2*19*3+1),0.0,tolerance);
-	BOOST_CHECK_CLOSE(*(x+2*19*3+2),z0+2.0*dz,tolerance);
-
-	/*
-	 * Check volume of core of 3 core points
-	 */
-	double rI = cylinderRadius/numRings/sqrt(M_PI);
-	double vol = M_PI*rI*rI*dz;
-	double *v = decomp.cellVolume.get();
-	BOOST_CHECK_CLOSE(*(v+0),vol,tolerance);
-	BOOST_CHECK_CLOSE(*(v+19),vol,tolerance);
-	BOOST_CHECK_CLOSE(*(v+2*19),vol,tolerance);
-
-	/*
-	 * Check global assigned "global ids"
-	 */
-	int *ids = decomp.myGlobalIDs.get();
-	for(int i=0;ids!=decomp.myGlobalIDs.get()+numPoints;ids++,i++){
-		BOOST_CHECK(*ids==i);
+	BOOST_CHECK(dimension_answer==decomp.dimension);
+	BOOST_CHECK(globalNumPoints_answer==decomp.globalNumPoints);
+	BOOST_CHECK(numPoints_answer==decomp.numPoints);
+	BOOST_CHECK(sizeNeighborhoodList_answer==decomp.sizeNeighborhoodList);
+	//	BOOST_CHECK(0==decomp.numExport);
+	//	BOOST_CHECK(decomp.unPack);
+	{
+		const int* gids=decomp.myGlobalIDs.get();
+		for(size_t n=0;n<numPoints_answer;n++,gids++)
+			BOOST_CHECK(gids_answer[n]==*gids);
+	}
+	{
+		const int* neighborhood = decomp.neighborhood.get();
+		for(int n=0;n<sizeNeighborhoodList_answer;n++,neighborhood++)
+			BOOST_CHECK(neighborhood_answer[n]==*neighborhood);
+	}
+	{
+		const int* neighborhoodPtr = decomp.neighborhoodPtr.get();
+		for(size_t n=0;n<numPoints_answer;n++,neighborhoodPtr++)
+			BOOST_CHECK(neighborhoodPtr_answer[n]==*neighborhoodPtr);
 	}
 
-	/*
-	 * Write problem set up parameters to file
-	 */
-	Field_NS::Field<double> volField(Field_NS::VOLUME,numPoints);
-	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(decomp.myX,numPoints);
-	PdVTK::writeField<double>(grid,volField);
-	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("solidCylinderMesh.pvtu", numProcs, myRank);
-	PdVTK::write(writer,grid);
+}
 
+void twoPointReloadBalance() {
+	const string json_file="input_files/ut_twoPointReLoadBalance.json";
+	QUICKGRID::QuickGridData decomp_1 = getGrid(json_file);
+	assert_grid(decomp_1,"\ttwoPointReloadBalance: UNBALANCED MESH assert_grid()\n");
+
+	/*
+	 * Reload balance
+	 */
+	QUICKGRID::QuickGridData decomp_2 = PDNEIGH::getLoadBalancedDiscretization(decomp_1);
+	assert_grid(decomp_1,"\ttwoPointReloadBalance: LOADBALANCED MESH assert_grid()\n");
 
 }
 
@@ -140,8 +154,8 @@ bool init_unit_test_suite()
 	// Add a suite for each processor in the test
 	bool success=true;
 
-	test_suite* proc = BOOST_TEST_SUITE( "ut_QuickGrid_solidCylinder_np1" );
-	proc->add(BOOST_TEST_CASE( &runTest ));
+	test_suite* proc = BOOST_TEST_SUITE( "ut_twoPointReloadBalance" );
+	proc->add(BOOST_TEST_CASE( &twoPointReloadBalance ));
 	framework::master_test_suite().add( proc );
 	return success;
 
@@ -162,10 +176,14 @@ int main
 )
 {
 
+	// Initialize MPI and timer
+	PdutMpiFixture myMpi = PdutMpiFixture(argc,argv);
+
 	// These are static (file scope) variables
-	myRank = 0;
-	numProcs = 1;
+	myRank = myMpi.rank;
+	numProcs = myMpi.numProcs;
 
 	// Initialize UTF
 	return unit_test_main( init_unit_test, argc, argv );
 }
+

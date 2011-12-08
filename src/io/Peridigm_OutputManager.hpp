@@ -1,4 +1,4 @@
-/*! \file Peridigm_OutputManager_VTK_XML.hpp */
+/*! \file Peridigm_OutputManager.hpp */
 //@HEADER
 // ************************************************************************
 //
@@ -43,74 +43,69 @@
 //
 // ************************************************************************
 //@HEADER
-#ifndef PERIDIGM_OUTPUTMANAGER_VTK_XML_HPP
-#define PERIDIGM_OUTPUTMANAGER_VTK_XML_HPP
+#ifndef PERIDIGM_OUTPUTMANAGER_HPP
+#define PERIDIGM_OUTPUTMANAGER_HPP
 
-#include <Peridigm_OutputManager.hpp>
-#include <mesh_output/PdVTK.h>
-
+#include <Teuchos_RCP.hpp>
+#include <Epetra_Map.h>
+#include <Epetra_Vector.h>
 #include <Teuchos_ParameterList.hpp>
-
-// Forward declaration
-namespace PeridigmNS {
-  class Peridigm; 
-} 
+#include <Peridigm_Block.hpp>
+#include <Peridigm_DataManager.hpp>
+#include <Peridigm_NeighborhoodData.hpp>
 
 namespace PeridigmNS {
-  
-  class OutputManager_VTK_XML: public PeridigmNS::OutputManager {
-    
+
+  class OutputManager {
+
   public:
-    
+
     //! Basic constructor.
-    OutputManager_VTK_XML(const Teuchos::RCP<Teuchos::ParameterList>& params, 
-                          PeridigmNS::Peridigm *peridigm_,
-                          Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks);
-    
+    OutputManager(){};
+
     //! Destructor.
-    virtual ~OutputManager_VTK_XML();
+    virtual ~OutputManager() {};
+
+    //! Open file
+    virtual void open(){};
+
+    //! Close file
+    virtual void close(){};
 
     //! Write data to disk
-    virtual void write(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, double);
+    virtual void write(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, double) = 0;
+
+  protected:
+
+    //! Number of processors and processor ID
+    int numProc;
+    int myPID;
+
+    // True if this object writes to disk
+    bool iWrite;
+    // Number of times write() has been called
+    int count;
+    // Output frequency
+    int frequency;
+    // ASCII or BINARY?
+    string outputFormat;
+    // Write full neighborlist for each particle?
+    bool writeNeighborlist;
+    // Filename base
+    string filenameBase;
+    // Parameterlist of user-requested data for output
+    Teuchos::RCP<Teuchos::ParameterList> materialOutputFields;
 
   private:
-    
+
     //! Copy constructor.
-    OutputManager_VTK_XML( const OutputManager& OM );
-    
+    OutputManager( const OutputManager& OM );
+
     //! Assignment operator.
-    OutputManager_VTK_XML& operator=( const OutputManager& OM );
-
-    //! Write single block of data to disk
-    void write(Teuchos::RCP<PeridigmNS::DataManager> dataManager,
-               Teuchos::RCP<const NeighborhoodData>, 
-               vtkSmartPointer<vtkUnstructuredGrid> grid,
-               Teuchos::RCP<PdVTK::CollectionWriter> vtkWriter,
-               double current_time, int block_id = -1);
-
-    //! Write vtk VTM file to disk (container for multiple material block data)
-   void writeVTMFile(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks);
-
-    //! Valid Teuchos::ParameterList 
-    Teuchos::ParameterList getValidParameterList();
-
-    //! Objects to write unstructured grid (one per block)
-    std::vector< Teuchos::RCP<PdVTK::CollectionWriter> > vtkWriters;
-
-    //! vector of vtkUnstructuredGrids, one per block
-    std::vector< vtkSmartPointer<vtkUnstructuredGrid> > grids;
-
-    //! Container for data array of processor ID number for each node on my proc
-    Teuchos::RCP< std::vector<int> > proc_num;
-
-    //! True if more than one block
-    bool isMultiBlock; 
-
-    //! Parent pointer
-    PeridigmNS::Peridigm *peridigm;
+    OutputManager& operator=( const OutputManager& OM );
 
   };
-  
+
 }
- 
-#endif //PERIDIGM_OUTPUTMANAGER_VTK_XML_HPP
+
+#endif //PERIDIGM_OUTPUTMANAGER_HPP

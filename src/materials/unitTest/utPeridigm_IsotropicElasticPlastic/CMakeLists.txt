@@ -20,5 +20,5 @@ ${UT_REQUIRED_LIBS}
 ${TRILINOS_LIBS} 
 )
 
-add_test (utPeridigm_IsotropicElasticPlasticMaterial python run_unit_test.py ./utPeridigm_IsotropicElasticPlasticMaterial)
+add_test (utPeridigm_IsotropicElasticPlasticMaterial python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_IsotropicElasticPlasticMaterial)
 

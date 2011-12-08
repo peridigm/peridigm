@@ -56,8 +56,8 @@
 #include <Teuchos_TestForException.hpp>
 
 #include "Peridigm_OutputManager_VTK_XML.hpp"
-#include "mesh_output/vtk/Field.h"
-#include "mesh_output/vtk/PdVTK.h"
+#include "mesh_output/Field.h"
+#include "mesh_output/PdVTK.h"
 #include "Peridigm.hpp"
 
 PeridigmNS::OutputManager_VTK_XML::OutputManager_VTK_XML(const Teuchos::RCP<Teuchos::ParameterList>& params, 

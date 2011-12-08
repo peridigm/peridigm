@@ -75,7 +75,7 @@
 #include "../NeighborhoodList.h"
 #include "quick_grid/QuickGrid.h"
 
-#include "vtk/Field.h"
+#include "Field.h"
 #include "PdutMpiFixture.h"
 
 

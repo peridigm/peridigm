@@ -46,7 +46,7 @@
 #ifndef OVERLAP_DISTRIBUTOR_H_
 #define OVERLAP_DISTRIBUTOR_H_
 
-#include "vtk/Field.h"
+#include "Field.h"
 #include "Array.h"
 #include "NeighborhoodList.h"
 

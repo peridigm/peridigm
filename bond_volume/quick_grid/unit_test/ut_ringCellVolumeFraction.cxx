@@ -55,8 +55,8 @@
 #include "pdneigh/NeighborhoodList.h"
 #include "pdneigh/PdZoltan.h"
 #include "utilities/PdutMpiFixture.h"
-#include "mesh_output/vtk/Field.h"
-#include "mesh_output/vtk/PdVTK.h"
+#include "mesh_output/Field.h"
+#include "mesh_output/PdVTK.h"
 #include "utilities/Vector3D.h"
 #include "utilities/Array.h"
 #include <set>

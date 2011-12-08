@@ -50,7 +50,8 @@
 
 #include <Teuchos_RCP.hpp>
 #include <Epetra_Vector.h>
-#include "mesh_output/vtk/Field.h"
+
+#include "mesh_output/Field.h"
 
 namespace PeridigmNS {
 

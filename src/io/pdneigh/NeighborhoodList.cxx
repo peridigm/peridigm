@@ -45,7 +45,7 @@
 
 #include "NeighborhoodList.h"
 
-#include "vtk/PdVTK.h"
+#include "PdVTK.h"
 #include "vtkIdList.h"
 #include "vtkKdTree.h"
 #include "vtkKdTreePointLocator.h"

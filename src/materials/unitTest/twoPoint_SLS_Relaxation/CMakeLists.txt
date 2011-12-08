@@ -19,5 +19,5 @@ ${UT_REQUIRED_LIBS}
 ${TRILINOS_LIBS} 
 )
 
-add_test (twoPoint_SLS_Relaxation python run_unit_test.py ./twoPoint_SLS_Relaxation)
+add_test (twoPoint_SLS_Relaxation python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./twoPoint_SLS_Relaxation)
 

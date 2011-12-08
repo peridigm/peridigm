@@ -52,7 +52,7 @@
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_SerialComm.h>
 #include "mesh_input/quick_grid/QuickGrid.h"
-#include "mesh_output/vtk/Field.h"
+#include "mesh_output/Field.h"
 #include "utilities/Array.h"
 #include "ordinary_utilities.h"
 #include "ordinary_elastic_plastic.h"

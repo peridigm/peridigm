@@ -51,7 +51,7 @@
 #include "Peridigm_ComputeManager.hpp"
 #include "compute/compute_includes.hpp"
 #include "Peridigm_DataManager.hpp"
-#include "mesh_output/vtk/Field.h"
+#include "mesh_output/Field.h"
 
 PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList>& params, PeridigmNS::Peridigm *peridigm_ ) {
 
