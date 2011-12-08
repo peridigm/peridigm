@@ -26,7 +26,7 @@ if (NOT ${buildInSource})
    set(UT_DIRS ${UT_DIRS}  -d pdneigh/unit_test)
    set(UT_DIRS ${UT_DIRS}  -d utilities/unit_test)
    set(UT_DIRS ${UT_DIRS}  -d mesh_input/quick_grid/unit_test)
-   execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/mirror.py -s ${IO_ROOT} -b ${CMAKE_BINARY_DIR}/src/io ${UT_DIRS} )
+   execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/scripts/mirror.py -s ${IO_ROOT} -b ${CMAKE_BINARY_DIR}/src/io ${UT_DIRS} )
 endif (NOT ${buildInSource})
 
 
