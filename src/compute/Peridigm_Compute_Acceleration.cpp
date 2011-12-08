@@ -48,7 +48,7 @@
 #include <vector>
 
 #include "Peridigm_Compute_Acceleration.hpp"
-#include "../Peridigm.hpp"
+#include "../core/Peridigm.hpp"
 
 //! Standard constructor.
 PeridigmNS::Compute_Acceleration::Compute_Acceleration(PeridigmNS::Peridigm *peridigm_ ){peridigm = peridigm_;}

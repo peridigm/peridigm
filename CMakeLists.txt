@@ -159,7 +159,9 @@ ${VTK_INCLUDE_DIRS}
 ${Boost_INCLUDE_DIRS} 
 ${CMAKE_SOURCE_DIR}
 ${CMAKE_SOURCE_DIR}/src
+${CMAKE_SOURCE_DIR}/src/core
 ${CMAKE_SOURCE_DIR}/src/io
+${CMAKE_SOURCE_DIR}/src/io/discretization
 ${CMAKE_SOURCE_DIR}/src/contact
 ${CMAKE_SOURCE_DIR}/src/evaluators
 ${CMAKE_SOURCE_DIR}/src/materials

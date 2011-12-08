@@ -11,21 +11,21 @@ file (GLOB computeSOURCES
 # set_source_files_properties(./compute/compute_includes.hpp PROPERTIES GENERATED 1)
 
 set(Peridigm_SOURCES
-    Peridigm_Main.cpp
-    Peridigm_Factory.cpp
-    Peridigm.cpp
+    ./core/Peridigm_Main.cpp
+    ./core/Peridigm_Factory.cpp
+    ./core/Peridigm.cpp
     ./io/discretization/Peridigm_AbstractDiscretization.cpp
     ./io/discretization/Peridigm_DiscretizationFactory.cpp
     ./io/discretization/Peridigm_PdQuickGridDiscretization.cpp
-    Peridigm_State.cpp
-    Peridigm_DataManager.cpp
-    Peridigm_SerialMatrix.cpp
-    Peridigm_Block.cpp
-    Peridigm_ModelEvaluator.cpp
-    PHAL_Dimension.cpp
-    PHAL_PeridigmTraits.cpp
-    Peridigm_ComputeManager.cpp
-    Peridigm_Timer.cpp
+    ./core/Peridigm_State.cpp
+    ./core/Peridigm_DataManager.cpp
+    ./core/Peridigm_SerialMatrix.cpp
+    ./core/Peridigm_Block.cpp
+    ./core/Peridigm_ModelEvaluator.cpp
+    ./core/PHAL_Dimension.cpp
+    ./core/PHAL_PeridigmTraits.cpp
+    ./core/Peridigm_ComputeManager.cpp
+    ./core/Peridigm_Timer.cpp
     ${computeSOURCES}
     ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp
     ./io/Peridigm_OutputManager_VTK_XML.cpp
@@ -74,19 +74,19 @@ set_property(TARGET Peridigm
 # Unit Tests
 #
 set(utPeridigm_SOURCES
-    Peridigm.cpp
+    ./core/Peridigm.cpp
     ./io/discretization/Peridigm_AbstractDiscretization.cpp
     ./io/discretization/Peridigm_DiscretizationFactory.cpp
     ./io/discretization/Peridigm_PdQuickGridDiscretization.cpp
-    Peridigm_State.cpp
-    Peridigm_DataManager.cpp
-    Peridigm_SerialMatrix.cpp
-    Peridigm_Block.cpp
-    Peridigm_ModelEvaluator.cpp
-    PHAL_Dimension.cpp
-    PHAL_PeridigmTraits.cpp
-    Peridigm_ComputeManager.cpp
-    Peridigm_Timer.cpp
+    ./core/Peridigm_State.cpp
+    ./core/Peridigm_DataManager.cpp
+    ./core/Peridigm_SerialMatrix.cpp
+    ./core/Peridigm_Block.cpp
+    ./core/Peridigm_ModelEvaluator.cpp
+    ./core/PHAL_Dimension.cpp
+    ./core/PHAL_PeridigmTraits.cpp
+    ./core/Peridigm_ComputeManager.cpp
+    ./core/Peridigm_Timer.cpp
     ${computeSOURCES}
     ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp
     ./io/Peridigm_OutputManager_VTK_XML.cpp
@@ -105,16 +105,16 @@ if(PERIDIGM_STK)
   set(utPeridigm_SOURCES ./io/discretization/Peridigm_STKDiscretization.cpp ${utPeridigm_SOURCES})
 endif()
 
-add_executable(utPeridigm utPeridigm.cpp ${utPeridigm_SOURCES})
+add_executable(utPeridigm ./core/unit_test/utPeridigm.cpp ${utPeridigm_SOURCES})
 target_link_libraries(utPeridigm ${Peridigm_LINK_LIBRARIES} ${Boost_LIBRARIES})
 
-add_executable(utPeridigm_MPI_np2 utPeridigm_MPI_np2.cpp ${utPeridigm_SOURCES})
+add_executable(utPeridigm_MPI_np2 ./core/unit_test/utPeridigm_MPI_np2.cpp ${utPeridigm_SOURCES})
 target_link_libraries(utPeridigm_MPI_np2 ${Peridigm_LINK_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(utPeridigm_PdQuickGridDiscretization
                ./io/discretization/Peridigm_AbstractDiscretization.cpp
                ./io/discretization/Peridigm_PdQuickGridDiscretization.cpp
-               utPeridigm_PdQuickGridDiscretization.cpp)
+               ./core/unit_test/utPeridigm_PdQuickGridDiscretization.cpp)
 target_link_libraries(utPeridigm_PdQuickGridDiscretization
                       ${Trilinos_LIBRARIES}
                       ${PDNEIGH_LIBS}
@@ -129,7 +129,7 @@ target_link_libraries(utPeridigm_PdQuickGridDiscretization
 add_executable(utPeridigm_PdQuickGridDiscretization_MPI_np2
                ./io/discretization/Peridigm_AbstractDiscretization.cpp
                ./io/discretization/Peridigm_PdQuickGridDiscretization.cpp
-               utPeridigm_PdQuickGridDiscretization_MPI_np2.cpp)
+               ./core/unit_test/utPeridigm_PdQuickGridDiscretization_MPI_np2.cpp)
 target_link_libraries(utPeridigm_PdQuickGridDiscretization_MPI_np2
                       ${Trilinos_LIBRARIES}
                       ${PDNEIGH_LIBS}
@@ -142,8 +142,8 @@ target_link_libraries(utPeridigm_PdQuickGridDiscretization_MPI_np2
 )
 
 add_executable(utPeridigm_State
-               Peridigm_State.cpp
-               utPeridigm_State.cpp
+               ./core/Peridigm_State.cpp
+               ./core/unit_test/utPeridigm_State.cpp
                ./io/mesh_output/Field.cxx)
 target_link_libraries(utPeridigm_State
                       ${Trilinos_LIBRARIES}
@@ -153,16 +153,16 @@ target_link_libraries(utPeridigm_State
 )
 
 add_executable(utPeridigm_LinearElasticIsotropicMaterial
-               Peridigm_Timer.cpp
-               Peridigm_State.cpp
-               Peridigm_DataManager.cpp
-               Peridigm_SerialMatrix.cpp
+               ./core/Peridigm_Timer.cpp
+               ./core/Peridigm_State.cpp
+               ./core/Peridigm_DataManager.cpp
+               ./core/Peridigm_SerialMatrix.cpp
                ./io/mesh_output/Field.cxx
                ./materials/Peridigm_Material.cpp
-		       ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
+	       ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
                ./materials/Peridigm_DamageModelFactory.cpp
                ./materials/Peridigm_CriticalStretchDamageModel.cpp
-		       ./materials/utPeridigm_LinearElasticIsotropicMaterial.cpp
+	       ./materials/utPeridigm_LinearElasticIsotropicMaterial.cpp
 )
 target_link_libraries(utPeridigm_LinearElasticIsotropicMaterial
 ${Trilinos_LIBRARIES}
@@ -173,19 +173,19 @@ ${Boost_LIBRARIES}
 )
 
 add_executable(utPHAL_UpdateForceState
-	           PHAL_PeridigmTraits.cpp
-	           PHAL_Dimension.cpp
-               Peridigm_Timer.cpp
-               Peridigm_Block.cpp
-               Peridigm_State.cpp
-               Peridigm_DataManager.cpp
-               Peridigm_SerialMatrix.cpp
+               ./core/PHAL_PeridigmTraits.cpp
+	       ./core/PHAL_Dimension.cpp
+               ./core/Peridigm_Timer.cpp
+               ./core/Peridigm_Block.cpp
+               ./core/Peridigm_State.cpp
+               ./core/Peridigm_DataManager.cpp
+               ./core/Peridigm_SerialMatrix.cpp
                ./io/mesh_output/Field.cxx
                ./materials/Peridigm_Material.cpp
-	           ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
+               ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
                ./materials/Peridigm_DamageModelFactory.cpp
                ./materials/Peridigm_CriticalStretchDamageModel.cpp
-	           ./evaluators/utPHAL_UpdateForceState.cpp)
+               ./evaluators/utPHAL_UpdateForceState.cpp)
 target_link_libraries(utPHAL_UpdateForceState
                       ${Trilinos_LIBRARIES}
                       ${PdMaterialUtilitiesLib}
@@ -207,13 +207,13 @@ target_link_libraries(utPHAL_UpdateForceState
 #)
 
 add_executable(utPHAL_EvaluateForce
-	       PHAL_PeridigmTraits.cpp
-	       PHAL_Dimension.cpp
-               Peridigm_Timer.cpp
-               Peridigm_State.cpp
-               Peridigm_DataManager.cpp
-               Peridigm_Block.cpp
-               Peridigm_SerialMatrix.cpp
+	       ./core/PHAL_PeridigmTraits.cpp
+	       ./core/PHAL_Dimension.cpp
+               ./core/Peridigm_Timer.cpp
+               ./core/Peridigm_State.cpp
+               ./core/Peridigm_DataManager.cpp
+               ./core/Peridigm_Block.cpp
+               ./core/Peridigm_SerialMatrix.cpp
                ./io/mesh_output/Field.cxx
                ./materials/Peridigm_Material.cpp
                ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
@@ -246,9 +246,9 @@ set(utPeridigm_Compute_Force_SOURCES
    ./io/discretization/Peridigm_AbstractDiscretization.cpp
    ./io/discretization/Peridigm_DiscretizationFactory.cpp
    ./io/discretization/Peridigm_PdQuickGridDiscretization.cpp
-   Peridigm_DataManager.cpp
-   Peridigm_State.cpp
-   Peridigm_ComputeManager.cpp
+   ./core/Peridigm_DataManager.cpp
+   ./core/Peridigm_State.cpp
+   ./core/Peridigm_ComputeManager.cpp
    ${computeSOURCES}
    ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp
 )
@@ -266,6 +266,7 @@ target_link_libraries(utPeridigm_Compute_Force
 # 
 # Add subdirectories
 #
+add_subdirectory (core/)
 add_subdirectory (io/)
 add_subdirectory (materials/)
 add_subdirectory (initial_conditions/)
