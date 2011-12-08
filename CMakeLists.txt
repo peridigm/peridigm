@@ -184,7 +184,6 @@ ${BlasLapack_Libraries}
 ${Boost_LIBRARIES}
 )
 
-add_subdirectory (bond_volume)
 add_subdirectory (src)
 add_subdirectory (test/unit)
 add_subdirectory (test/regression)
