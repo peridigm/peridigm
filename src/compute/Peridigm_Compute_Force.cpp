@@ -48,7 +48,7 @@
 #include <vector>
 
 #include "Peridigm_Compute_Force.hpp"
-#include "../Peridigm.hpp"
+#include "../core/Peridigm.hpp"
 
 //! Standard constructor.
 PeridigmNS::Compute_Force::Compute_Force(PeridigmNS::Peridigm *peridigm_ ){peridigm = peridigm_;}

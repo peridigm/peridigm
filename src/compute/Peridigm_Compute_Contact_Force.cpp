@@ -48,7 +48,7 @@
 #include <vector>
 
 #include "Peridigm_Compute_Contact_Force.hpp"
-#include "../Peridigm.hpp"
+#include "../core/Peridigm.hpp"
 
 //! Standard constructor.
 PeridigmNS::Compute_Contact_Force::Compute_Contact_Force(PeridigmNS::Peridigm *peridigm_ ){peridigm = peridigm_;}
