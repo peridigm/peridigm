@@ -11,6 +11,7 @@ SET(TRILINOS_LIBS ${Trilinos_LIBRARIES})
 
 
 # Project directories
+add_subdirectory (discretization)
 add_subdirectory (mesh_input)
 add_subdirectory (mesh_output)
 add_subdirectory (pdneigh)
