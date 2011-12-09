@@ -128,12 +128,8 @@ ENDIF()
 MESSAGE("")
 
 # For some unit tests, we want to link only to specfic libraries
-set(Epetra_LIBRARY
-epetra
-)
-set(Zoltan_LIBRARY
-zoltan
-)
+set(Epetra_LIBRARY epetra )
+set(Zoltan_LIBRARY zoltan )
 
 # other required libraries
 set(MESH_INPUT_LIBS QuickGrid)
@@ -162,6 +158,11 @@ ${CMAKE_SOURCE_DIR}/src
 ${CMAKE_SOURCE_DIR}/src/core
 ${CMAKE_SOURCE_DIR}/src/io
 ${CMAKE_SOURCE_DIR}/src/io/discretization
+${CMAKE_SOURCE_DIR}/src/io/mesh_input
+${CMAKE_SOURCE_DIR}/src/io/mesh_output
+${CMAKE_SOURCE_DIR}/src/io/bond_volume
+${CMAKE_SOURCE_DIR}/src/io/utilities
+${CMAKE_SOURCE_DIR}/src/io/pdneigh
 ${CMAKE_SOURCE_DIR}/src/contact
 ${CMAKE_SOURCE_DIR}/src/evaluators
 ${CMAKE_SOURCE_DIR}/src/materials
@@ -169,6 +170,17 @@ ${CMAKE_SOURCE_DIR}/src/initial_conditions
 )
 
 include_directories(${INCLUDE_DIRS})
+
+#
+# Some convenience definitions
+#
+set(COMPUTE_DIR        ${CMAKE_SOURCE_DIR}/src/compute)
+set(CONTACT_DIR        ${CMAKE_SOURCE_DIR}/src/contact)
+set(CORE_DIR           ${CMAKE_SOURCE_DIR}/src/core)
+set(DISCRETIZATION_DIR ${CMAKE_SOURCE_DIR}/src/io/discretization)
+set(IO_DIR             ${CMAKE_SOURCE_DIR}/src/io)
+set(MATERIALS_DIR      ${CMAKE_SOURCE_DIR}/src/materials)
+set(MESH_OUTPUT_DIR    ${CMAKE_SOURCE_DIR}/src/io/mesh_output)
 
 # link directories 
 set(LIB_DIRS ${TRILINOS_DIR}/lib ${VTK_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS})
@@ -196,7 +208,6 @@ if (NOT ${buildInSource})
    set(UT_DIRS ${UT_DIRS}  -d test/unit)
    set(UT_DIRS ${UT_DIRS}  -d test/regression)
    set(UT_DIRS ${UT_DIRS}  -d test/verification)
-   set(UT_DIRS ${UT_DIRS}  -d bond_volume/quick_grid/unit_test)
    execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/scripts/mirror.py -s ${CMAKE_SOURCE_DIR} -b ${CMAKE_BINARY_DIR} ${UT_DIRS} )
    set(SCRIPT_DIRS ${SCRIPT_DIRS}  -d scripts)
    execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/scripts/mirror.py -s ${CMAKE_SOURCE_DIR} -b ${CMAKE_BINARY_DIR} ${SCRIPT_DIRS} )
