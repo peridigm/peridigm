@@ -13,6 +13,7 @@ set(utPeridigm_SOURCES
     ${CORE_DIR}/PHAL_PeridigmTraits.cpp
     ${CORE_DIR}/Peridigm_ComputeManager.cpp
     ${CORE_DIR}/Peridigm_Timer.cpp
+    ${CORE_DIR}/Peridigm_RandomNumber.cpp
     ${COMPUTE_DIR}/compute_includes.hpp
     ${CONTACT_DIR}/Peridigm_ContactModelFactory.cpp
     ${CONTACT_DIR}/Peridigm_ShortRangeForceContactModel.cpp
