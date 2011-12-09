@@ -100,17 +100,6 @@ target_link_libraries(utPeridigm_PdQuickGridDiscretization_MPI_np2
                       ${Boost_LIBRARIES}
 )
 
-add_executable(utPeridigm_State
-               ./core/Peridigm_State.cpp
-               ./core/unit_test/utPeridigm_State.cpp
-               ./io/mesh_output/Field.cxx)
-target_link_libraries(utPeridigm_State
-                      ${Trilinos_LIBRARIES}
-                      ${MESH_OUTPUT_LIBS}
-                      ${REQUIRED_LIBS}
-                      ${Boost_LIBRARIES}
-)
-
 add_executable(utPeridigm_LinearElasticIsotropicMaterial
                ./core/Peridigm_Timer.cpp
                ./core/Peridigm_State.cpp
@@ -130,75 +119,6 @@ ${PdMaterialUtilitiesLib}
 ${REQUIRED_LIBS}
 ${Boost_LIBRARIES}
 )
-
-add_executable(utPHAL_UpdateForceState
-               ./core/PHAL_PeridigmTraits.cpp
-	       ./core/PHAL_Dimension.cpp
-               ./core/Peridigm_Timer.cpp
-               ./core/Peridigm_Block.cpp
-               ./core/Peridigm_State.cpp
-               ./core/Peridigm_DataManager.cpp
-               ./core/Peridigm_SerialMatrix.cpp
-               ./io/mesh_output/Field.cxx
-               ./materials/Peridigm_Material.cpp
-               ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
-               ./materials/Peridigm_DamageModelFactory.cpp
-               ./materials/Peridigm_CriticalStretchDamageModel.cpp
-               ./evaluators/utPHAL_UpdateForceState.cpp)
-target_link_libraries(utPHAL_UpdateForceState
-                      ${Trilinos_LIBRARIES}
-                      ${PdMaterialUtilitiesLib}
-                      ${REQUIRED_LIBS}
-                      ${Boost_LIBRARIES}
-)
-
-#add_executable(utPHAL_UpdateForceState_MPI_np2
-#	        PHAL_PeridigmTraits.cpp
-#	        PHAL_Dimension.cpp
-#	        ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
-#               ./materials/Peridigm_CriticalStretchDamageModel.cpp
-#	        ./evaluators/utPHAL_UpdateForceState_MPI_np2.cpp)
-#target_link_libraries(utPHAL_UpdateForceState_MPI_np2
-#                      ${Trilinos_LIBRARIES}
-#                      ${PdMaterialUtilitiesLib}
-#                      ${REQUIRED_LIBS}
-#                      ${Boost_LIBRARIES}
-#)
-
-add_executable(utPHAL_EvaluateForce
-	       ./core/PHAL_PeridigmTraits.cpp
-	       ./core/PHAL_Dimension.cpp
-               ./core/Peridigm_Timer.cpp
-               ./core/Peridigm_State.cpp
-               ./core/Peridigm_DataManager.cpp
-               ./core/Peridigm_Block.cpp
-               ./core/Peridigm_SerialMatrix.cpp
-               ./io/mesh_output/Field.cxx
-               ./materials/Peridigm_Material.cpp
-               ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
-               ./materials/Peridigm_DamageModelFactory.cpp
-               ./materials/Peridigm_CriticalStretchDamageModel.cpp
-	       ./evaluators/utPHAL_EvaluateForce.cpp
-)
-target_link_libraries(utPHAL_EvaluateForce
-                      ${Trilinos_LIBRARIES}
-                      ${PdMaterialUtilitiesLib}
-                      ${REQUIRED_LIBS}
-                      ${Boost_LIBRARIES}
-)
-
-#add_executable(utPHAL_EvaluateForce_MPI_np2
-#	        PHAL_PeridigmTraits.cpp
-#               PHAL_Dimension.cpp
-#	        ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
-#               ./materials/Peridigm_CriticalStretchDamageModel.cpp
-#	        ./evaluators/utPHAL_EvaluateForce_MPI_np2.cpp)
-#target_link_libraries(utPHAL_EvaluateForce_MPI_np2
-#                      ${Trilinos_LIBRARIES}
-#                      ${PdMaterialUtilitiesLib}
-#                      ${REQUIRED_LIBS}
-#                      ${Boost_LIBRARIES}
-#)
 
 set(utPeridigm_Compute_Force_SOURCES
    ${CMAKE_SOURCE_DIR}/src/compute/unitTest/utPeridigm_Compute_Force.cpp
