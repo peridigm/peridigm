@@ -1,46 +1,43 @@
 #
 # Main executable for Peridigm
 #
-include_directories(${TRILINOS_DIR}/include)
 
 # Glob the compute source files
 file (GLOB computeSOURCES 
-  "${CMAKE_SOURCE_DIR}/src/compute/*.cpp"
+  "${COMPUTE_DIR}/*.cpp"
 )
-# Tell CMake a header file won't be available until build time.
-# set_source_files_properties(./compute/compute_includes.hpp PROPERTIES GENERATED 1)
 
 set(Peridigm_SOURCES
-    ./core/Peridigm_Main.cpp
-    ./core/Peridigm_Factory.cpp
-    ./core/Peridigm.cpp
-    ./io/discretization/Peridigm_AbstractDiscretization.cpp
-    ./io/discretization/Peridigm_DiscretizationFactory.cpp
-    ./io/discretization/Peridigm_PdQuickGridDiscretization.cpp
-    ./core/Peridigm_State.cpp
-    ./core/Peridigm_DataManager.cpp
-    ./core/Peridigm_SerialMatrix.cpp
-    ./core/Peridigm_Block.cpp
-    ./core/Peridigm_ModelEvaluator.cpp
-    ./core/PHAL_Dimension.cpp
-    ./core/PHAL_PeridigmTraits.cpp
-    ./core/Peridigm_ComputeManager.cpp
-    ./core/Peridigm_Timer.cpp
+    ${COMPUTE_DIR}/compute_includes.hpp
+    ${CONTACT_DIR}/Peridigm_ContactModelFactory.cpp
+    ${CONTACT_DIR}/Peridigm_ShortRangeForceContactModel.cpp
+    ${CORE_DIR}/Peridigm_Main.cpp
+    ${CORE_DIR}/Peridigm_Factory.cpp
+    ${CORE_DIR}/Peridigm.cpp
+    ${CORE_DIR}/Peridigm_State.cpp
+    ${CORE_DIR}/Peridigm_DataManager.cpp
+    ${CORE_DIR}/Peridigm_SerialMatrix.cpp
+    ${CORE_DIR}/Peridigm_Block.cpp
+    ${CORE_DIR}/Peridigm_ModelEvaluator.cpp
+    ${CORE_DIR}/PHAL_Dimension.cpp
+    ${CORE_DIR}/PHAL_PeridigmTraits.cpp
+    ${CORE_DIR}/Peridigm_ComputeManager.cpp
+    ${CORE_DIR}/Peridigm_Timer.cpp
+    ${DISCRETIZATION_DIR}/Peridigm_AbstractDiscretization.cpp
+    ${DISCRETIZATION_DIR}/Peridigm_DiscretizationFactory.cpp
+    ${DISCRETIZATION_DIR}/Peridigm_PdQuickGridDiscretization.cpp
+    ${IO_DIR}/Peridigm_OutputManager_VTK_XML.cpp
+    ${MATERIALS_DIR}/Peridigm_Material.cpp
+    ${MATERIALS_DIR}/Peridigm_MaterialFactory.cpp
+    ${MATERIALS_DIR}/Peridigm_LinearElasticIsotropicMaterial.cpp
+    ${MATERIALS_DIR}/Peridigm_IsotropicElasticPlasticMaterial.cpp
+    ${MATERIALS_DIR}/Peridigm_ViscoelasticStandardLinearSolid.cpp
+    ${MATERIALS_DIR}/Peridigm_DamageModelFactory.cpp
+    ${MATERIALS_DIR}/Peridigm_CriticalStretchDamageModel.cpp
     ${computeSOURCES}
-    ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp
-    ./io/Peridigm_OutputManager_VTK_XML.cpp
-    ./materials/Peridigm_Material.cpp
-    ./materials/Peridigm_MaterialFactory.cpp
-    ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
-    ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
-    ./materials/Peridigm_ViscoelasticStandardLinearSolid.cpp
-    ./materials/Peridigm_DamageModelFactory.cpp
-    ./materials/Peridigm_CriticalStretchDamageModel.cpp
-    ./contact/Peridigm_ContactModelFactory.cpp
-    ./contact/Peridigm_ShortRangeForceContactModel.cpp
 )
 if(PERIDIGM_STK)
-  set(Peridigm_SOURCES ./io/discretization/Peridigm_STKDiscretization.cpp ${Peridigm_SOURCES})
+  set(Peridigm_SOURCES ${DISCRETIZATION_DIR}/Peridigm_STKDiscretization.cpp ${Peridigm_SOURCES})
 endif()
 
 set(Peridigm_LINK_LIBRARIES
@@ -79,16 +76,3 @@ add_subdirectory (materials/)
 add_subdirectory (initial_conditions/)
 add_subdirectory (compute/)
 add_subdirectory (muParser/)
-
-#
-# Custom Commands
-# 
-#file (GLOB Peridigm_COMPUTE_HEADERS "${CMAKE_SOURCE_DIR}/src/compute/Peridigm*.hpp")
-#list(REMOVE_ITEM Peridigm_COMPUTE_HEADERS ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp)
-#add_custom_command(
-#   OUTPUT  ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp
-#   DEPENDS ${Peridigm_COMPUTE_HEADERS}
-#   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src/compute
-#   COMMAND sh ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.sh
-#)
-

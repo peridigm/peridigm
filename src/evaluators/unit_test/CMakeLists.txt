@@ -11,14 +11,14 @@ add_executable(utPHAL_UpdateForceState
                ${MATERIALS_DIR}/Peridigm_DamageModelFactory.cpp
                ${MATERIALS_DIR}/Peridigm_CriticalStretchDamageModel.cpp
                ${MESH_OUTPUT_DIR}/Field.cxx
-               utPHAL_UpdateForceState.cpp)
+               ./utPHAL_UpdateForceState.cpp)
 target_link_libraries(utPHAL_UpdateForceState
                       ${Trilinos_LIBRARIES}
                       ${PdMaterialUtilitiesLib}
                       ${REQUIRED_LIBS}
                       ${Boost_LIBRARIES}
 )
-add_test (utPHAL_UpdateForceState python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py utPHAL_UpdateForceState)
+add_test (utPHAL_UpdateForceState python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPHAL_UpdateForceState)
 
 #add_executable(utPHAL_UpdateForceState_MPI_np2
 #               ${CORE_DIR}/PHAL_PeridigmTraits.cpp
@@ -32,7 +32,7 @@ add_test (utPHAL_UpdateForceState python ${CMAKE_BINARY_DIR}/scripts/run_unit_te
 #                      ${REQUIRED_LIBS}
 #                      ${Boost_LIBRARIES}
 #)
-#add_test (utPHAL_UpdateForceState_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 utPHAL_UpdateForceState_MPI_np2)
+#add_test (utPHAL_UpdateForceState_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPHAL_UpdateForceState_MPI_np2)
 
 add_executable(utPHAL_EvaluateForce
                ${CORE_DIR}/PHAL_PeridigmTraits.cpp
@@ -47,7 +47,7 @@ add_executable(utPHAL_EvaluateForce
                ${MATERIALS_DIR}/Peridigm_LinearElasticIsotropicMaterial.cpp
                ${MATERIALS_DIR}/Peridigm_DamageModelFactory.cpp
                ${MATERIALS_DIR}/Peridigm_CriticalStretchDamageModel.cpp
-               utPHAL_EvaluateForce.cpp
+               ./utPHAL_EvaluateForce.cpp
 )
 target_link_libraries(utPHAL_EvaluateForce
                       ${Trilinos_LIBRARIES}
@@ -55,7 +55,7 @@ target_link_libraries(utPHAL_EvaluateForce
                       ${REQUIRED_LIBS}
                       ${Boost_LIBRARIES}
 )
-add_test (utPHAL_EvaluateForce python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py utPHAL_EvaluateForce)
+add_test (utPHAL_EvaluateForce python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPHAL_EvaluateForce)
 
 #add_executable(utPHAL_EvaluateForce_MPI_np2
 #               PHAL_PeridigmTraits.cpp
@@ -69,6 +69,6 @@ add_test (utPHAL_EvaluateForce python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.
 #                      ${REQUIRED_LIBS}
 #                      ${Boost_LIBRARIES}
 #)
-#add_test (utPHAL_EvaluateForce_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 utPHAL_EvaluateForce_MPI_np2)
+#add_test (utPHAL_EvaluateForce_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPHAL_EvaluateForce_MPI_np2)
 
 
