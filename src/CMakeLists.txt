@@ -70,36 +70,6 @@ set_property(TARGET Peridigm
     PROPERTY INSTALL_RPATH_USE_LINK_PATH TRUE
 )
 
-add_executable(utPeridigm_PdQuickGridDiscretization
-               ./io/discretization/Peridigm_AbstractDiscretization.cpp
-               ./io/discretization/Peridigm_PdQuickGridDiscretization.cpp
-               ./core/unit_test/utPeridigm_PdQuickGridDiscretization.cpp)
-target_link_libraries(utPeridigm_PdQuickGridDiscretization
-                      ${Trilinos_LIBRARIES}
-                      ${PDNEIGH_LIBS}
-                      ${Zoltan_LIBRARY}
-                      ${MESH_INPUT_LIBS}
-                      ${MESH_OUTPUT_LIBS}
-                      ${VTK_LIBS}
-                      ${REQUIRED_LIBS}
-                      ${Boost_LIBRARIES}
-)
-
-add_executable(utPeridigm_PdQuickGridDiscretization_MPI_np2
-               ./io/discretization/Peridigm_AbstractDiscretization.cpp
-               ./io/discretization/Peridigm_PdQuickGridDiscretization.cpp
-               ./core/unit_test/utPeridigm_PdQuickGridDiscretization_MPI_np2.cpp)
-target_link_libraries(utPeridigm_PdQuickGridDiscretization_MPI_np2
-                      ${Trilinos_LIBRARIES}
-                      ${PDNEIGH_LIBS}
-                      ${Zoltan_LIBRARY}
-                      ${MESH_INPUT_LIBS}
-                      ${MESH_OUTPUT_LIBS}
-                      ${VTK_LIBS}
-                      ${REQUIRED_LIBS}
-                      ${Boost_LIBRARIES}
-)
-
 # 
 # Add subdirectories
 #
