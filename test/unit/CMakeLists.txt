@@ -18,7 +18,6 @@
 # Peridigm unit tests:
 add_test (utPeridigm_PdQuickGridDiscretization          python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ../../src/utPeridigm_PdQuickGridDiscretization)
 add_test (utPeridigm_PdQuickGridDiscretization_MPI_np2  python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ../../src/utPeridigm_PdQuickGridDiscretization_MPI_np2)
-add_test (utPeridigm_LinearElasticIsotropicMaterial     python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ../../src/utPeridigm_LinearElasticIsotropicMaterial)
 add_test (utPeridigm_Compute_Force                      python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ../../src/utPeridigm_Compute_Force)
 add_test (utPeridigm_Compute_Force_MPI_np2              python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ../../src/utPeridigm_Compute_Force)
 

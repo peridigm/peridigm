@@ -100,26 +100,6 @@ target_link_libraries(utPeridigm_PdQuickGridDiscretization_MPI_np2
                       ${Boost_LIBRARIES}
 )
 
-add_executable(utPeridigm_LinearElasticIsotropicMaterial
-               ./core/Peridigm_Timer.cpp
-               ./core/Peridigm_State.cpp
-               ./core/Peridigm_DataManager.cpp
-               ./core/Peridigm_SerialMatrix.cpp
-               ./io/mesh_output/Field.cxx
-               ./materials/Peridigm_Material.cpp
-	       ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
-               ./materials/Peridigm_DamageModelFactory.cpp
-               ./materials/Peridigm_CriticalStretchDamageModel.cpp
-	       ./materials/utPeridigm_LinearElasticIsotropicMaterial.cpp
-)
-target_link_libraries(utPeridigm_LinearElasticIsotropicMaterial
-${Trilinos_LIBRARIES}
-${MESH_OUTPUT_LIBS}
-${PdMaterialUtilitiesLib}
-${REQUIRED_LIBS}
-${Boost_LIBRARIES}
-)
-
 set(utPeridigm_Compute_Force_SOURCES
    ${CMAKE_SOURCE_DIR}/src/compute/unitTest/utPeridigm_Compute_Force.cpp
    ./io/discretization/Peridigm_AbstractDiscretization.cpp
