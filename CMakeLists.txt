@@ -201,7 +201,6 @@ set (UT_REQUIRED_LIBS
 )
 
 add_subdirectory (src)
-add_subdirectory (test/unit)
 add_subdirectory (test/regression)
 add_subdirectory (test/verification)
 
@@ -209,7 +208,6 @@ add_subdirectory (test/verification)
 # Can exclude files with flag -e <filename>
 string (COMPARE EQUAL ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} buildInSource)
 if (NOT ${buildInSource})
-   set(UT_DIRS ${UT_DIRS}  -d test/unit)
    set(UT_DIRS ${UT_DIRS}  -d test/regression)
    set(UT_DIRS ${UT_DIRS}  -d test/verification)
    execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/scripts/mirror.py -s ${CMAKE_SOURCE_DIR} -b ${CMAKE_BINARY_DIR} ${UT_DIRS} )
