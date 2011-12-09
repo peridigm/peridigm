@@ -74,6 +74,7 @@
 #include "Peridigm_PdQuickGridDiscretization.hpp"
 #include "Peridigm_OutputManager_VTK_XML.hpp"
 #include "Peridigm_ComputeManager.hpp"
+#include "Peridigm_RandomNumber.hpp"
 #include "materials/Peridigm_MaterialFactory.hpp"
 #include "contact/Peridigm_ContactModelFactory.hpp"
 #include "mesh_input/quick_grid/QuickGrid.h"
@@ -102,7 +103,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   out = Teuchos::VerboseObjectBase::getDefaultOStream();
 
   // Seed random number generator for reproducable results
-  srand( 42 );
+  seed_rand_num( 42 );
 
   // Instantiate materials and associate them with the blocks
   instantiateMaterials();

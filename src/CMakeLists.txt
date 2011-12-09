@@ -22,6 +22,7 @@ set(Peridigm_SOURCES
     ${CORE_DIR}/PHAL_Dimension.cpp
     ${CORE_DIR}/PHAL_PeridigmTraits.cpp
     ${CORE_DIR}/Peridigm_ComputeManager.cpp
+    ${CORE_DIR}/Peridigm_RandomNumber.cpp
     ${CORE_DIR}/Peridigm_Timer.cpp
     ${DISCRETIZATION_DIR}/Peridigm_AbstractDiscretization.cpp
     ${DISCRETIZATION_DIR}/Peridigm_DiscretizationFactory.cpp
