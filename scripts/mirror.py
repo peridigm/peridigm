@@ -155,11 +155,11 @@ def usage():
 		              Note default exclusion: ['.project', '.cproject', 'cmake_symlinks.py']
 		              
 	Example:
-		Create links in PdITI binary directory for out-of-source build.
+		Create links in binary directory for out-of-source build.
 		Only create links in directories 'operator', 'intrepid' and 'operator/unitTest'.
 		Exclude build.home.sh -- ie do not create a link to this file.
 	
-		$cmake_symlinks.py  -s /home/awesome/c++/eclipseProjects/pimp \\
+		$cmake_symlinks.py  -s /home/awesome/c++/eclipseProjects/binary \\
 		          -b /home/awesome/c++/eclipseProjects/pimp.build \\ 
 		          -d operator -d intrepid -d operator/unitTests -e build.home.sh
 	"""

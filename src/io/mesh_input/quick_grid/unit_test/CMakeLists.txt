@@ -2,6 +2,14 @@
 # QuickGrid Unit Tests
 #
 
+# Create symbolic links to files in directories specified.  By default it recurses directories
+# Can exclude files with flag -e <filename>
+string (COMPARE EQUAL ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} buildInSource)
+if (NOT ${buildInSource})
+   set(UT_DIRS ${UT_DIRS} -d mesh_input/quick_grid/unit_test)
+   execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/scripts/mirror.py -s ${IO_DIR} -b ${CMAKE_BINARY_DIR}/src/io ${UT_DIRS} )
+endif (NOT ${buildInSource})
+
 add_executable(ut_Q2CylinderRingHorizon ut_Q2CylinderRingHorizon.cxx)
 target_link_libraries(ut_Q2CylinderRingHorizon  QuickGrid ${UT_REQUIRED_LIBS})
 add_test (ut_Q2CylinderRingHorizon python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./ut_Q2CylinderRingHorizon)
