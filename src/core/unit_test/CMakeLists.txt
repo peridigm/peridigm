@@ -2,9 +2,6 @@
 # Unit Tests
 #
 
-# includes
-include_directories(${INCLUDE_DIRS})
-
 set(utPeridigm_SOURCES
     ${CORE_DIR}/Peridigm.cpp
     ${CORE_DIR}/Peridigm_State.cpp

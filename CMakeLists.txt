@@ -184,17 +184,20 @@ set(MATERIALS_DIR      ${CMAKE_SOURCE_DIR}/src/materials)
 set(MESH_OUTPUT_DIR    ${CMAKE_SOURCE_DIR}/src/io/mesh_output)
 
 # link directories 
-set(LIB_DIRS ${TRILINOS_DIR}/lib ${VTK_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS})
+set(LIB_DIRS 
+  ${TRILINOS_DIR}/lib 
+  ${VTK_LIBRARY_DIRS} 
+  ${Boost_LIBRARY_DIRS})
 link_directories(${LIB_DIRS})
 
 
 set (REQUIRED_LIBS
-${BlasLapack_Libraries}  
+  ${BlasLapack_Libraries}  
 )
 
 set (UT_REQUIRED_LIBS
-${BlasLapack_Libraries}  
-${Boost_LIBRARIES}
+  ${BlasLapack_Libraries}  
+  ${Boost_LIBRARIES}
 )
 
 add_subdirectory (src)
