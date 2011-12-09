@@ -10,7 +10,6 @@ if (NOT ${buildInSource})
    execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/scripts/mirror.py -s ${CMAKE_SOURCE_DIR} -b ${CMAKE_BINARY_DIR} ${UT_DIRS} )
 endif (NOT ${buildInSource})
 
-
 add_executable(utPeridigm_LinearElasticIsotropicMaterial
                ${CORE_DIR}/Peridigm_Timer.cpp
                ${CORE_DIR}/Peridigm_State.cpp
