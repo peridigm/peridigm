@@ -100,28 +100,6 @@ target_link_libraries(utPeridigm_PdQuickGridDiscretization_MPI_np2
                       ${Boost_LIBRARIES}
 )
 
-set(utPeridigm_Compute_Force_SOURCES
-   ${CMAKE_SOURCE_DIR}/src/compute/unitTest/utPeridigm_Compute_Force.cpp
-   ./io/discretization/Peridigm_AbstractDiscretization.cpp
-   ./io/discretization/Peridigm_DiscretizationFactory.cpp
-   ./io/discretization/Peridigm_PdQuickGridDiscretization.cpp
-   ./core/Peridigm_DataManager.cpp
-   ./core/Peridigm_State.cpp
-   ./core/Peridigm_ComputeManager.cpp
-   ${computeSOURCES}
-   ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp
-)
-if(PERIDIGM_STK)
-   set(utPeridigm_Compute_Force_SOURCES ./io/discretization/Peridigm_STKDiscretization.cpp ${utPeridigm_Compute_Force_SOURCES})
-endif()
-add_executable(utPeridigm_Compute_Force 
-   ${utPeridigm_Compute_Force_SOURCES}
-)
-target_link_libraries(utPeridigm_Compute_Force 
-   ${Peridigm_LINK_LIBRARIES} 
-   ${Boost_LIBRARIES}
-)
-
 # 
 # Add subdirectories
 #
