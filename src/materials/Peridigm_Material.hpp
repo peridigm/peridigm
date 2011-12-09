@@ -126,6 +126,14 @@ namespace PeridigmNS {
                                     PeridigmNS::SerialMatrix& jacobian,
                                     FiniteDifferenceScheme finiteDifferenceScheme) const;
 
+    //! Compute the approximate deformation gradient
+    void
+    computeApproximateDeformationGradient(const double dt,
+                                          const int numOwnedPoints,
+                                          const int* ownedIDs,
+                                          const int* neighborhoodList,
+                                          PeridigmNS::DataManager& dataManager) const;
+
     //! Scratch matrix.
     mutable ScratchMatrix scratchMatrix;
 
