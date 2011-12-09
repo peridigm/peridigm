@@ -25,7 +25,7 @@ add_test (utPHAL_UpdateForceState python ${CMAKE_BINARY_DIR}/scripts/run_unit_te
 #               ${CORE_DIR}/PHAL_Dimension.cpp
 #               ${MATERIALS_DIR}/Peridigm_LinearElasticIsotropicMaterial.cpp
 #               ${MATERIALS_DIR}/Peridigm_CriticalStretchDamageModel.cpp
-#               utPHAL_UpdateForceState_MPI_np2.cpp)
+#               ./utPHAL_UpdateForceState_MPI_np2.cpp)
 #target_link_libraries(utPHAL_UpdateForceState_MPI_np2
 #                      ${Trilinos_LIBRARIES}
 #                      ${PdMaterialUtilitiesLib}
