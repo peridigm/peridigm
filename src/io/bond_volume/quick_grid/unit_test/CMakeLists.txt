@@ -1,3 +1,10 @@
+# Create symbolic links to files in directories specified.  By default it recurses directories
+# Can exclude files with flag -e <filename>
+string (COMPARE EQUAL ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} buildInSource)
+if (NOT ${buildInSource})
+   set(UT_DIRS ${UT_DIRS}  -d bond_volume/quick_grid/unit_test)
+   execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/scripts/mirror.py -s ${IO_DIR} -b ${CMAKE_BINARY_DIR}/src/io ${UT_DIRS} )
+endif (NOT ${buildInSource})
 
 add_executable(ut_ringCellVolumeFraction ut_ringCellVolumeFraction.cxx)
 target_link_libraries(ut_ringCellVolumeFraction  QuickGrid  PdNeigh PdVTK Utilities QuickGridVolFrac ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})

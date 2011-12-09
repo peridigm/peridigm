@@ -2,9 +2,13 @@
 # unit test for 'utilities' library
 #
 
-
-# include this path
-include_directories(${MESH_INPUT_DIR} ${PDNEIGH_DIR} ${UTILITIES_DIR} ${TRILINOS_DIR}/include)
+# Create symbolic links to files in directories specified.  By default it recurses directories
+# Can exclude files with flag -e <filename>
+string (COMPARE EQUAL ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} buildInSource)
+if (NOT ${buildInSource})
+   set(UT_DIRS ${UT_DIRS}  -d utilities/unit_test)
+   execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/scripts/mirror.py -s ${IO_DIR} -b ${CMAKE_BINARY_DIR}/src/io ${UT_DIRS} ) 
+endif (NOT ${buildInSource})
 
 add_executable(ut_Array ut_Array.cxx)
 target_link_libraries(ut_Array  ${UT_REQUIRED_LIBS})
