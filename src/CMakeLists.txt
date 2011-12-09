@@ -70,47 +70,6 @@ set_property(TARGET Peridigm
     PROPERTY INSTALL_RPATH_USE_LINK_PATH TRUE
 )
 
-#
-# Unit Tests
-#
-set(utPeridigm_SOURCES
-    ./core/Peridigm.cpp
-    ./io/discretization/Peridigm_AbstractDiscretization.cpp
-    ./io/discretization/Peridigm_DiscretizationFactory.cpp
-    ./io/discretization/Peridigm_PdQuickGridDiscretization.cpp
-    ./core/Peridigm_State.cpp
-    ./core/Peridigm_DataManager.cpp
-    ./core/Peridigm_SerialMatrix.cpp
-    ./core/Peridigm_Block.cpp
-    ./core/Peridigm_ModelEvaluator.cpp
-    ./core/PHAL_Dimension.cpp
-    ./core/PHAL_PeridigmTraits.cpp
-    ./core/Peridigm_ComputeManager.cpp
-    ./core/Peridigm_Timer.cpp
-    ${computeSOURCES}
-    ${CMAKE_SOURCE_DIR}/src/compute/compute_includes.hpp
-    ./io/Peridigm_OutputManager_VTK_XML.cpp
-    ./io/mesh_output/Field.cxx
-    ./materials/Peridigm_Material.cpp
-    ./materials/Peridigm_MaterialFactory.cpp
-    ./materials/Peridigm_LinearElasticIsotropicMaterial.cpp
-    ./materials/Peridigm_IsotropicElasticPlasticMaterial.cpp
-    ./materials/Peridigm_ViscoelasticStandardLinearSolid.cpp
-    ./materials/Peridigm_DamageModelFactory.cpp
-    ./materials/Peridigm_CriticalStretchDamageModel.cpp
-    ./contact/Peridigm_ContactModelFactory.cpp
-    ./contact/Peridigm_ShortRangeForceContactModel.cpp
-)
-if(PERIDIGM_STK)
-  set(utPeridigm_SOURCES ./io/discretization/Peridigm_STKDiscretization.cpp ${utPeridigm_SOURCES})
-endif()
-
-add_executable(utPeridigm ./core/unit_test/utPeridigm.cpp ${utPeridigm_SOURCES})
-target_link_libraries(utPeridigm ${Peridigm_LINK_LIBRARIES} ${Boost_LIBRARIES})
-
-add_executable(utPeridigm_MPI_np2 ./core/unit_test/utPeridigm_MPI_np2.cpp ${utPeridigm_SOURCES})
-target_link_libraries(utPeridigm_MPI_np2 ${Peridigm_LINK_LIBRARIES} ${Boost_LIBRARIES})
-
 add_executable(utPeridigm_PdQuickGridDiscretization
                ./io/discretization/Peridigm_AbstractDiscretization.cpp
                ./io/discretization/Peridigm_PdQuickGridDiscretization.cpp
