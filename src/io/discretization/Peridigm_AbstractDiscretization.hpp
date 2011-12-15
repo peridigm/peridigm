@@ -118,6 +118,12 @@ namespace PeridigmNS {
     //! Get the locally-owned IDs for each node set
     virtual Teuchos::RCP< std::map< std::string, std::vector<int> > > getNodeSets() { return nodeSets; } ;
 
+    //! Get the node positions in the original Exodus hex/tet mesh.
+    virtual Teuchos::RCP< std::vector<double> > getExodusMeshNodePositions(int globalNodeID){
+      // The default implementation returns a null pointer.
+      return Teuchos::RCP< std::vector<double> >();
+    }
+
     //! Get the owned (non-overlap) map.
     static Epetra_BlockMap getOwnedMap(const Epetra_Comm& comm, const QUICKGRID::Data& gridData, int ndf);
 
