@@ -174,7 +174,10 @@ namespace PeridigmNS {
                                                                                        Teuchos::RCP<const Epetra_BlockMap> rebalancedOneDimensionalMap,
                                                                                        Teuchos::RCP<const Epetra_BlockMap> rebalancedOneDimensionalOverlapMap);
 
-    //! @name Acessors for maps 
+    //! Accessor for comm object
+    Teuchos::RCP<const Epetra_Comm> getEpetraComm(){ return peridigmComm; }
+
+    //! @name Accessors for maps 
     //@{ 
     Teuchos::RCP<const Epetra_BlockMap> getOneDimensionalMap() { return oneDimensionalMap; }
     Teuchos::RCP<const Epetra_BlockMap> getThreeDimensionalMap() { return threeDimensionalMap; }
