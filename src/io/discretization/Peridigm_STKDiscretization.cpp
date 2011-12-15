@@ -205,16 +205,20 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
   stk::mesh::Selector selector = 
     stk::mesh::Selector( metaData->universal_part() ) & ( stk::mesh::Selector( metaData->locally_owned_part() ) | stk::mesh::Selector( metaData->globally_shared_part() ) );
 
-  // Select the mesh entities that match the selector
+  // Select element mesh entities that match the selector
   std::vector<stk::mesh::Entity*> elements;
   stk::mesh::get_selected_entities(selector, bulkData.buckets(metaData->element_rank()), elements);
+
+  // Select node mesh entities that match the selector
+  std::vector<stk::mesh::Entity*> nodes;
+  stk::mesh::get_selected_entities(selector, bulkData.buckets(metaData->node_rank()), nodes);
 
   // Determine the total number of elements in the model
   // \todo There must be a cleaner way to determine the number of elements in a model.
   Teuchos::RCP<const Teuchos::Comm<int> > teuchosComm = Teuchos::createMpiComm<int>(Teuchos::opaqueWrapper<MPI_Comm>(MPI_COMM_WORLD));
   int localElemCount = elements.size();
   int globalElemCount(0);
-  reduceAll(*teuchosComm,Teuchos::REDUCE_SUM,int(1),&localElemCount, &globalElemCount);
+  reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, int(1), &localElemCount, &globalElemCount);
 
   // Copy data from stk into a decomp object
   int myNumElements = elements.size();
@@ -225,9 +229,27 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
   double* volumes = decomp.cellVolume.get();
   double* centroids = decomp.myX.get();
 
+  // Store the positions of the nodes in the initial mesh
+  // This is used for the calculation of partial neighbor volumes
+  vector<int> myGlobalNodeIds(nodes.size());
+  for(unsigned int i=0 ; i<nodes.size() ; ++i)
+    myGlobalNodeIds[i] = nodes[i]->identifier() - 1;
+  Epetra_BlockMap exodusMeshNodePositionsMap(-1, nodes.size(), &myGlobalNodeIds[0], 3, 0, *comm);
+  exodusMeshNodePositions = Teuchos::RCP<Epetra_Vector>(new Epetra_Vector(exodusMeshNodePositionsMap));
+  for(unsigned int iNode=0 ; iNode<nodes.size() ; ++iNode){
+    int globalID = nodes[iNode]->identifier() - 1;
+    double* coordinates = stk::mesh::field_data(*coordinatesField, *nodes[iNode]);
+    int localID = exodusMeshNodePositionsMap.LID(globalID);
+    (*exodusMeshNodePositions)[3*localID]   = coordinates[0];
+    (*exodusMeshNodePositions)[3*localID+1] = coordinates[1];
+    (*exodusMeshNodePositions)[3*localID+2] = coordinates[2];
+  }
+
   // loop over the elements and fill the decomp data structure
   for(unsigned int iElem=0 ; iElem<elements.size() ; ++iElem){
     stk::mesh::PairIterRelation nodeRelations = elements[iElem]->node_relations();
+    int elementID = elements[iElem]->identifier() - 1;
+    exodusMeshElementConnectivity[elementID] = vector<int>();
     centroids[iElem*3] = 0.0;
     centroids[iElem*3+1] = 0.0;
     centroids[iElem*3+2] = 0.0;
@@ -235,6 +257,7 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
     int iNode = 0;
     for(stk::mesh::PairIterRelation::iterator it=nodeRelations.begin() ; it!=nodeRelations.end() ; ++it){
       stk::mesh::Entity* node = it->entity();
+      exodusMeshElementConnectivity[elementID].push_back(node->identifier() - 1);
       double* coordinates = stk::mesh::field_data(*coordinatesField, *node);
       centroids[iElem*3] += coordinates[0];
       centroids[iElem*3+1] += coordinates[1];
@@ -273,35 +296,6 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
     // Load the element block into the elementBlock container
     for(unsigned int i=0 ; i<elementGlobalIds.size() ; ++i)
       elementBlock.push_back( elementGlobalIds[i] );
-
-    //
-    //  \todo TEMPORARY SOLUTION THAT WILL NOT SCALE.
-    //
-    // Get the full element list on every processor.
-    // This is important because we're about to rebalance, and after we do so elements
-    // that are locally owned may not be locally owned.  This inconsistency between the
-    // STK mesh and the QuickGrid data structures causes problems.
-    //
-//     vector<int> localElementBlockLength(numPID, 0);
-//     vector<int> tempLocalElementBlockLength(numPID, 0);
-//     tempLocalElementBlockLength[myPID] = (int)elementGlobalIds.size();
-//     reduceAll(*teuchosComm,Teuchos::REDUCE_SUM,(int)numPID,&tempLocalElementBlockLength[0], &localElementBlockLength[0]);
-//     int totalElementBlockLength = 0;
-//     int offset = 0;
-//     for(unsigned int i=0 ; i<localElementBlockLength.size() ; ++i){
-//       if(i < myPID)
-//         offset += localElementBlockLength[i];
-//       totalElementBlockLength += localElementBlockLength[i];
-//     }
-//     vector<int> completeElementGlobalIds(totalElementBlockLength, 0);
-//     vector<int> tempCompleteElementGlobalIds(totalElementBlockLength, 0);
-//     for(unsigned int i=0 ; i<elementGlobalIds.size() ; ++i)
-//       tempCompleteElementGlobalIds[i+offset] = elementGlobalIds[i];
-//     reduceAll(*teuchosComm,Teuchos::REDUCE_SUM,totalElementBlockLength,&tempCompleteElementGlobalIds[0], &completeElementGlobalIds[0]);
-
-//     // Load the element block into the elementBlock container
-//     for(unsigned int i=0 ; i<completeElementGlobalIds.size() ; ++i)
-//       elementBlock.push_back( completeElementGlobalIds[i] );
   }
 
   // loop over the node sets
@@ -350,7 +344,7 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
     vector<int> localNodeSetLength(numPID, 0);
     vector<int> tempLocalNodeSetLength(numPID, 0);
     tempLocalNodeSetLength[myPID] = (int)elementGlobalIds.size();
-    reduceAll(*teuchosComm,Teuchos::REDUCE_SUM,(int)numPID,&tempLocalNodeSetLength[0], &localNodeSetLength[0]);
+    reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, (int)numPID, &tempLocalNodeSetLength[0], &localNodeSetLength[0]);
 
     int totalNodeSetLength = 0;
     int offset = 0;
@@ -366,7 +360,7 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
       tempCompleteElementGlobalIds[index+offset] = *it;
       index++;
     }
-    reduceAll(*teuchosComm,Teuchos::REDUCE_SUM,totalNodeSetLength,&tempCompleteElementGlobalIds[0], &completeElementGlobalIds[0]);
+    reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, totalNodeSetLength, &tempCompleteElementGlobalIds[0], &completeElementGlobalIds[0]);
 
     // Load the node set into the nodeSets container
     for(unsigned int i=0 ; i<completeElementGlobalIds.size() ; ++i)
@@ -424,7 +418,6 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
 
   return decomp;
 }
-
 
 void
 PeridigmNS::STKDiscretization::createMaps(const QUICKGRID::Data& decomp)
@@ -535,6 +528,23 @@ unsigned int
 PeridigmNS::STKDiscretization::getNumBonds() const
 {
   return numBonds;
+}
+
+Teuchos::RCP< std::vector<double> > PeridigmNS::STKDiscretization::getExodusMeshNodePositions(int globalNodeID)
+{
+  vector<int>& elementConnectivity = exodusMeshElementConnectivity[globalNodeID];
+  unsigned int numNodes = elementConnectivity.size();
+  Teuchos::RCP< vector<double> > nodePositionsPtr = Teuchos::RCP< vector<double> >(new vector<double>(3*numNodes));
+  vector<double>& nodePositions = *nodePositionsPtr;
+  Epetra_Vector& exodusNodePositions = *exodusMeshNodePositions;
+  for(unsigned int i=0 ; i<numNodes ; ++i){
+    int globalID = elementConnectivity[i];
+    int localID = exodusMeshNodePositions->Map().LID(globalID);
+    nodePositions[3*i]   = exodusNodePositions[localID];
+    nodePositions[3*i+1] = exodusNodePositions[localID+1];
+    nodePositions[3*i+2] = exodusNodePositions[localID+2];
+  }
+  return nodePositionsPtr;
 }
 
 double PeridigmNS::STKDiscretization::scalarTripleProduct(std::vector<double>& a,

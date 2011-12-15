@@ -53,6 +53,8 @@
 #include <stk_io/util/UseCase_mesh.hpp>
 #include "Peridigm_AbstractDiscretization.hpp"
 #include "mesh_input/quick_grid/QuickGrid.h"
+#include <vector>
+#include <map>
 
 namespace PeridigmNS {
 
@@ -91,6 +93,9 @@ namespace PeridigmNS {
 
     //! Get the number of bonds on this processor
     unsigned int getNumBonds() const;
+
+    //! Get the node positions in the original Exodus hex/tet mesh.
+    Teuchos::RCP< std::vector<double> > getExodusMeshNodePositions(int globalNodeID);
 
   private:
 
@@ -143,6 +148,12 @@ namespace PeridigmNS {
 
     //! Vector containing the block ID of each element
     Teuchos::RCP<Epetra_Vector> blockID;
+
+    //! Vector containing node positions in the initial hex/tet mesh
+    Teuchos::RCP<Epetra_Vector> exodusMeshNodePositions;
+
+    //! Vector containing element connectivity in the initial hex/tet mesh
+    std::map< int, std::vector<int> > exodusMeshElementConnectivity;
 
     //! Map between block name (from Exodus file) and block number (Peridigm numbering)
     std::map<std::string, int> blockNameToBlockNumberMap;
