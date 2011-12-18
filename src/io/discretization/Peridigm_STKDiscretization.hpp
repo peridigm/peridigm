@@ -52,7 +52,7 @@
 #include <Epetra_Comm.h>
 #include <stk_io/util/UseCase_mesh.hpp>
 #include "Peridigm_AbstractDiscretization.hpp"
-#include "mesh_input/quick_grid/QuickGrid.h"
+#include "mesh_input/quick_grid/QuickGridData.h"
 #include <vector>
 #include <map>
 

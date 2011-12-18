@@ -63,8 +63,6 @@
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/FieldData.hpp>
 
-#include <vector>
-#include <list>
 #include <sstream>
 
 using namespace std;
