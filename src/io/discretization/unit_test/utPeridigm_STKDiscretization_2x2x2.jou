@@ -1,0 +1,19 @@
+#
+#  Example of call to loadbal to create parallel input files:
+#
+#  loadbal -No_subdirectory -suffix_mesh g -suffix_spread g -p 2 utPeridigm_STKDiscretization_2x2x2 2
+# 
+#  ./utPeridigm_STKDiscretization_2x2x2.spd
+#
+#  or alternatively if you have the SEACAS tools from Trilinos built:
+#
+#  decomp -p 2 utPeridigm_STKDiscretization_2x2x2.g
+#
+
+reset
+create brick x 1.0 y 1.0 z 1.0
+move volume 1 x 0.5 y 0.5 z 0.5
+block 1 volume 1
+volume 1 size 0.5
+mesh volume 1
+export genesis 'utPeridigm_STKDiscretization_2x2x2.g' overwrite
