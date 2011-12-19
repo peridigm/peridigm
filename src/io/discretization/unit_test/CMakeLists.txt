@@ -1,3 +1,12 @@
+
+# Create symbolic links to files in directories specified.  By default it recurses directories
+# Can exclude files with flag -e <filename>
+string (COMPARE EQUAL ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} buildInSource)
+if (NOT ${buildInSource})
+   set(UT_DIRS ${UT_DIRS} -d discretization/unit_test)
+   execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/scripts/mirror.py -s ${IO_DIR} -b ${CMAKE_BINARY_DIR}/src/io ${UT_DIRS} )
+endif (NOT ${buildInSource})
+
 add_executable(utPeridigm_PdQuickGridDiscretization
                ${DISCRETIZATION_DIR}/Peridigm_AbstractDiscretization.cpp
                ${DISCRETIZATION_DIR}/Peridigm_PdQuickGridDiscretization.cpp
