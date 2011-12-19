@@ -77,8 +77,8 @@ void exodus2x2x2()
   discParams->set("Input Mesh File", "utPeridigm_STKDiscretization_2x2x2.g");
 
   // create the discretization
-//   RCP<STKDiscretization> discretization =
-//     rcp(new STKDiscretization(comm, discParams));
+  RCP<STKDiscretization> discretization =
+    rcp(new STKDiscretization(comm, discParams));
 
 
 
