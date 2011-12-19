@@ -538,9 +538,9 @@ Teuchos::RCP< std::vector<double> > PeridigmNS::STKDiscretization::getExodusMesh
   for(unsigned int i=0 ; i<numNodes ; ++i){
     int globalID = elementConnectivity[i];
     int localID = exodusMeshNodePositions->Map().LID(globalID);
-    nodePositions[3*i]   = exodusNodePositions[localID];
-    nodePositions[3*i+1] = exodusNodePositions[localID+1];
-    nodePositions[3*i+2] = exodusNodePositions[localID+2];
+    nodePositions[3*i]   = exodusNodePositions[3*localID];
+    nodePositions[3*i+1] = exodusNodePositions[3*localID+1];
+    nodePositions[3*i+2] = exodusNodePositions[3*localID+2];
   }
   return nodePositionsPtr;
 }
