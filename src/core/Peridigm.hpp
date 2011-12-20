@@ -277,6 +277,9 @@ namespace PeridigmNS {
     //! Contact search radius
     double contactSearchRadius;
 
+    //! Partial volume flag
+    bool analysisHasPartialVolumes;
+
     //! Material models
     Teuchos::RCP< std::vector< Teuchos::RCP<const PeridigmNS::Material> > > materialModels;
 
