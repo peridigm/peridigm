@@ -90,6 +90,7 @@ enum Type {
 			CONTACT_FORCE_DENSITY,
 			RESIDUAL,
 			BOND_DAMAGE,
+			PARTIAL_VOLUME,
 			TYPE_UNDEFINED
 };
 
@@ -296,6 +297,9 @@ const Field_NS::FieldSpec RESID3D
 const Field_NS::FieldSpec BOND_DAMAGE
 (Field_ENUM::BOND_DAMAGE, Field_ENUM::BOND,  Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Bond Damage");
 
+const Field_NS::FieldSpec PARTIAL_VOLUME
+(Field_ENUM::PARTIAL_VOLUME, Field_ENUM::BOND,  Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Partial Volume");
+
 const Field_NS::FieldSpec DEVIATORIC_PLASTIC_EXTENSION
 (Field_ENUM::E_DP, Field_ENUM::BOND,   Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Deviatoric_Plastic_Extension");
 
@@ -326,6 +330,7 @@ struct FieldSpecMap {
 		mymap[CONTACT_FORCE3D.getLabel()]              = CONTACT_FORCE3D;
 		mymap[CONTACT_FORCE_DENSITY3D.getLabel()]      = CONTACT_FORCE_DENSITY3D;
 		mymap[BOND_DAMAGE.getLabel()]                  = BOND_DAMAGE;
+		mymap[PARTIAL_VOLUME.getLabel()]               = PARTIAL_VOLUME;
 		mymap[DEVIATORIC_PLASTIC_EXTENSION.getLabel()] = DEVIATORIC_PLASTIC_EXTENSION;
 		mymap[DEVIATORIC_BACK_EXTENSION.getLabel()]    = DEVIATORIC_BACK_EXTENSION ;
 		return mymap;

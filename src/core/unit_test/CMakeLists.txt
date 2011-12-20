@@ -20,6 +20,7 @@ set(utPeridigm_SOURCES
     ${DISCRETIZATION_DIR}/Peridigm_AbstractDiscretization.cpp
     ${DISCRETIZATION_DIR}/Peridigm_DiscretizationFactory.cpp
     ${DISCRETIZATION_DIR}/Peridigm_PdQuickGridDiscretization.cpp
+    ${DISCRETIZATION_DIR}/Peridigm_PartialVolumeCalculator.cpp
     ${IO_DIR}/Peridigm_OutputManager_VTK_XML.cpp
     ${MATERIALS_DIR}/Peridigm_Material.cpp
     ${MATERIALS_DIR}/Peridigm_CriticalStretchDamageModel.cpp

@@ -72,6 +72,7 @@
 #include "Peridigm.hpp"
 #include "Peridigm_DiscretizationFactory.hpp"
 #include "Peridigm_PdQuickGridDiscretization.hpp"
+#include "Peridigm_PartialVolumeCalculator.hpp"
 #include "Peridigm_OutputManager_VTK_XML.hpp"
 #include "Peridigm_ComputeManager.hpp"
 #include "Peridigm_RandomNumber.hpp"
@@ -95,7 +96,8 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
     rebalanceFrequency(1),
     analysisHasContact(false),
     contactRebalanceFrequency(0),
-    contactSearchRadius(0.0)
+    contactSearchRadius(0.0),
+    analysisHasPartialVolumes(false)
 {
   peridigmComm = comm;
   peridigmParams = params;
@@ -175,6 +177,12 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
     blockIt->importData(*(peridigmDisc->getInitialX()),   Field_NS::COORD3D,    Field_ENUM::STEP_NONE, Insert);
     blockIt->importData(*(peridigmDisc->getInitialX()),   Field_NS::CURCOORD3D, Field_ENUM::STEP_N,    Insert);
     blockIt->importData(*(peridigmDisc->getInitialX()),   Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1,  Insert);
+  }
+
+  // compute partial volumes
+  if(analysisHasPartialVolumes){
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+      computePartialVolume(Teuchos::rcpFromRef(*blockIt), peridigmDisc);
   }
 
   // apply initial velocities
@@ -1827,6 +1835,9 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Peridigm::getFieldSpecs() {
   mySpecs.push_back(Field_NS::VELOC3D);
   mySpecs.push_back(Field_NS::FORCE_DENSITY3D);
   mySpecs.push_back(Field_NS::CONTACT_FORCE_DENSITY3D);
+
+  if(analysisHasPartialVolumes)
+    mySpecs.push_back(Field_NS::PARTIAL_VOLUME);
 
   return mySpecs;
 }
