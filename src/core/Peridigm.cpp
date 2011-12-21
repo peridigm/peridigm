@@ -131,8 +131,8 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   std::vector<Field_NS::FieldSpec> peridigmSpecs = this->getFieldSpecs();
   fieldSpecs->insert(fieldSpecs->end(), peridigmSpecs.begin(), peridigmSpecs.end());
 
-  // Initialize compute manager
-  initializeComputeManager();
+  // Instantiate compute manager
+  instantiateComputeManager();
 
   // Load the compute manager's field specs into fieldSpecs
   std::vector<Field_NS::FieldSpec> computeSpecs = computeManager->getFieldSpecs();
@@ -195,6 +195,9 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   // Initialization functions require valid initial values, e.g. velocities and displacements.
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
     blockIt->initializeMaterialModel();
+
+  // Initialize the compute classes
+  computeManager->initialize(blocks);
 
   // Setup contact
   initializeContact();
@@ -561,7 +564,7 @@ void PeridigmNS::Peridigm::initializeWorkset() {
   workset->myPID = -1;
 }
 
-void PeridigmNS::Peridigm::initializeComputeManager() {
+void PeridigmNS::Peridigm::instantiateComputeManager() {
 
   Teuchos::RCP<Teuchos::ParameterList> outputParams;
 
@@ -572,7 +575,6 @@ void PeridigmNS::Peridigm::initializeComputeManager() {
   computeManager = Teuchos::rcp( new PeridigmNS::ComputeManager( outputParams, this  ) );
 
 }
-
 
 void PeridigmNS::Peridigm::initializeOutputManager() {
 
@@ -712,7 +714,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
   PeridigmNS::Timer::self().startTimer("Output");
   this->synchDataManagers();
 
-  outputManager->write(blocks,timeCurrent);
+  outputManager->write(blocks, timeCurrent);
   PeridigmNS::Timer::self().stopTimer("Output");
 
   int displayTrigger = nsteps/100;

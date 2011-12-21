@@ -65,14 +65,17 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Acceleration::getFieldSpecs
 }
 
 //! Fill the acceleration vector
-int PeridigmNS::Compute_Acceleration::compute(Teuchos::RCP<PeridigmNS::DataManager> dataManager) const {
+int PeridigmNS::Compute_Acceleration::compute(const int numOwnedPoints,
+                                              const int* ownedIDs,
+                                              const int* neighborhoodList,
+                                              PeridigmNS::DataManager& dataManager) const {
 
   int retval;
 
   // fill the acceleration vector
   Teuchos::RCP<Epetra_Vector> force, acceleration;
-  force        = dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1);
-  acceleration = dataManager->getData(Field_NS::ACCEL3D, Field_ENUM::STEP_NP1);
+  force        = dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1);
+  acceleration = dataManager.getData(Field_NS::ACCEL3D, Field_ENUM::STEP_NP1);
   *acceleration = *force;
 
   // \todo Generalize this for multiple materials

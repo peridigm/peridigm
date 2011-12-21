@@ -65,14 +65,17 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Force::getFieldSpecs() cons
 }
 
 //! Fill the force vector
-int PeridigmNS::Compute_Force::compute(Teuchos::RCP<PeridigmNS::DataManager> dataManager) const {
+int PeridigmNS::Compute_Force::compute(const int numOwnedPoints,
+                                       const int* ownedIDs,
+                                       const int* neighborhoodList,
+                                       PeridigmNS::DataManager& dataManager) const {
 
   int retval;
 
   Teuchos::RCP<Epetra_Vector> force, force_density, volume;
-  force_density = dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1);
-  force         = dataManager->getData(Field_NS::FORCE3D, Field_ENUM::STEP_NP1);
-  volume        = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
+  force_density = dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1);
+  force         = dataManager.getData(Field_NS::FORCE3D, Field_ENUM::STEP_NP1);
+  volume        = dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
 
   // Sanity check
   if ( (force_density->Map().NumMyElements() != volume->Map().NumMyElements()) ||  (force->Map().NumMyElements() != volume->Map().NumMyElements()) ) {

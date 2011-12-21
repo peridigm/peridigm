@@ -60,7 +60,16 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Neighborhood_Volume::getFie
   return myFieldSpecs;
 }
 
-int PeridigmNS::Compute_Neighborhood_Volume::compute(Teuchos::RCP<PeridigmNS::DataManager> dataManager) const {
+void PeridigmNS::Compute_Neighborhood_Volume::initialize(const int numOwnedPoints,
+                                                         const int* ownedIDs,
+                                                         const int* neighborhoodList,
+                                                         PeridigmNS::DataManager& dataManager) const {
+}
+
+int PeridigmNS::Compute_Neighborhood_Volume::compute(const int numOwnedPoints,
+                                                     const int* ownedIDs,
+                                                     const int* neighborhoodList,
+                                                     PeridigmNS::DataManager& dataManager) const {
 
   // \todo Move to an initialization function, since this only needs to be computed once.
 
