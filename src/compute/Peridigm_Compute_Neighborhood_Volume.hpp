@@ -1,4 +1,4 @@
-/*! \file Peridigm_PartialVolumeCalculator.hpp */
+/*! \file Peridigm_Compute_Neighborhood_Volume.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,23 +45,49 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_PARTIALVOLUMECALCULATOR_HPP
-#define PERIDIGM_PARTIALVOLUMECALCULATOR_HPP
+#ifdef COMPUTE_CLASS
 
-#include "Peridigm_Block.hpp"
-#include "Peridigm_AbstractDiscretization.hpp"
-#include <vector>
+ComputeClass(Neighborhood_Volume,Compute_Neighborhood_Volume,peridigm)
+
+#else
+
+#ifndef PERIDIGM_COMPUTE_NEIGHBORHOOD_VOLUME_HPP
+#define PERIDIGM_COMPUTE_NEIGHBORHOOD_VOLUME_HPP
+
+#include "Peridigm_Compute.hpp"
+#include "Peridigm_DataManager.hpp"
+
+// Forward declaration
+namespace PeridigmNS {
+  class Peridigm;
+}
 
 namespace PeridigmNS {
 
-  //! Computes the partial volumes for all neighbors of all elements in the given block.
-  void computePartialVolume(Teuchos::RCP<PeridigmNS::Block> block,
-                            Teuchos::RCP<PeridigmNS::AbstractDiscretization> discretization);
+  //! Class for filling acceleration vector
+  class Compute_Neighborhood_Volume : public PeridigmNS::Compute {
 
-  //! Computes the volume of the given neighbor that falls within the neighborhood of the given point.
-  double computePartialVolume(const double* const pt,
-                              const double* const neighborElementNodes,
-                              const double horizon);
+  public:
+	
+  //! Standard constructor.
+  Compute_Neighborhood_Volume( PeridigmNS::Peridigm *peridigm_ );
+
+  //! Destructor.
+  ~Compute_Neighborhood_Volume();
+
+  //! Returns the fieldspecs computed by this class
+  std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
+
+  //! Perform computation
+  int compute(Teuchos::RCP<PeridigmNS::DataManager> dataManager) const;
+
+  private:
+
+  //! Parent pointer
+  PeridigmNS::Peridigm *peridigm;
+
+  };
 }
 
-#endif // PERIDIGM_PARTIALVOLUMECALCULATOR_HPP
+#endif // PERIDIGM_COMPUTE_NEIGHBORHOOD_VOLUME_HPP
+#endif // COMPUTE_CLASS

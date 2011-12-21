@@ -70,6 +70,7 @@ enum Type {
             BLOCK_ID,
 			PROC_NUM,
 			WEIGHTED_VOLUME,
+            NEIGHBORHOOD_VOLUME,
 			DILATATION,
 			DAMAGE,
 			E_DP,
@@ -237,6 +238,9 @@ const Field_NS::FieldSpec PROC_NUM
 const Field_NS::FieldSpec WEIGHTED_VOLUME
 (Field_ENUM::WEIGHTED_VOLUME, Field_ENUM::POINT,       Field_ENUM::SCALAR,  Field_ENUM::CONSTANT, "Weighted_Volume");
 
+const Field_NS::FieldSpec NEIGHBORHOOD_VOLUME
+(Field_ENUM::NEIGHBORHOOD_VOLUME, Field_ENUM::POINT,       Field_ENUM::SCALAR,  Field_ENUM::CONSTANT, "Neighborhood_Volume");
+
 const Field_NS::FieldSpec DILATATION
 (Field_ENUM::DILATATION, Field_ENUM::POINT,            Field_ENUM::SCALAR,  Field_ENUM::TWO_STEP,     "Dilatation");
 
@@ -316,6 +320,7 @@ struct FieldSpecMap {
 		mymap[PROC_NUM.getLabel()]                     = PROC_NUM;
 		mymap[DAMAGE.getLabel()]                       = DAMAGE;
 		mymap[WEIGHTED_VOLUME.getLabel()]              = WEIGHTED_VOLUME;
+		mymap[NEIGHBORHOOD_VOLUME.getLabel()]              = NEIGHBORHOOD_VOLUME;
 		mymap[DILATATION.getLabel()]                   = DILATATION;
 		mymap[NUM_NEIGHBORS.getLabel()]                = NUM_NEIGHBORS;
 		mymap[LAMBDA.getLabel()]                       = LAMBDA;

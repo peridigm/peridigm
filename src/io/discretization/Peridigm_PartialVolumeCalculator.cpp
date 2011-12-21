@@ -46,6 +46,7 @@
 //@HEADER
 
 #include "Peridigm_PartialVolumeCalculator.hpp"
+using namespace std;
 
 void PeridigmNS::computePartialVolume(Teuchos::RCP<PeridigmNS::Block> block,
                                       Teuchos::RCP<PeridigmNS::AbstractDiscretization> discretization)
@@ -93,5 +94,108 @@ double PeridigmNS::computePartialVolume(const double* const pt,
                                         const double* const neighborElementNodes,
                                         const double horizon)
 {
-  return 1.0;
+  int numSubdivisions = 3;
+  double upperBound = 1.0;
+  double lowerBound = -1.0;
+  double stepSize = (upperBound - lowerBound)/numSubdivisions;
+
+  double naturalX, naturalY, naturalZ, x, y, z, distance;
+  vector<double> shape(8), dShape_dNaturalX(8), dShape_dNaturalY(8), dShape_dNaturalZ(8);
+  double jacobian[3][3], jacobianDeterminate;
+
+  double referenceVolume = 8.0/(numSubdivisions*numSubdivisions*numSubdivisions);
+  double subVolume;
+  double volume = 0.0;
+  double volumeInNeighborhood = 0.0;
+
+  // Loop over a grid on the reference element
+  for(int k=0 ; k<numSubdivisions ; ++k){
+    for(int j=0 ; j<numSubdivisions ; ++j){
+      for(int i=0 ; i<numSubdivisions ; ++i){
+
+        naturalX = lowerBound + stepSize/2.0 + x*stepSize;
+        naturalY = lowerBound + stepSize/2.0 + y*stepSize;
+        naturalZ = lowerBound + stepSize/2.0 + z*stepSize;
+
+        shape[0] = 0.125*(1.0 - naturalX)*(1.0 - naturalY)*(1.0 - naturalZ);
+        shape[1] = 0.125*(1.0 + naturalX)*(1.0 - naturalY)*(1.0 - naturalZ);
+        shape[2] = 0.125*(1.0 + naturalX)*(1.0 + naturalY)*(1.0 - naturalZ);
+        shape[3] = 0.125*(1.0 - naturalX)*(1.0 + naturalY)*(1.0 - naturalZ);
+        shape[4] = 0.125*(1.0 - naturalX)*(1.0 - naturalY)*(1.0 + naturalZ);
+        shape[5] = 0.125*(1.0 + naturalX)*(1.0 - naturalY)*(1.0 + naturalZ);
+        shape[6] = 0.125*(1.0 + naturalX)*(1.0 + naturalY)*(1.0 + naturalZ);
+        shape[7] = 0.125*(1.0 - naturalX)*(1.0 + naturalY)*(1.0 + naturalZ);
+
+        x = 0.0;
+        y = 0.0;
+        z = 0.0;
+        for(int m=0 ; m<8 ; ++m){
+          x += neighborElementNodes[3*m  ]*shape[m];
+          y += neighborElementNodes[3*m+1]*shape[m];
+          z += neighborElementNodes[3*m+2]*shape[m];
+        }
+
+        dShape_dNaturalX[0] = -0.125*(1.0 - naturalY)*(1.0 - naturalZ);
+        dShape_dNaturalX[1] =  0.125*(1.0 - naturalY)*(1.0 - naturalZ);
+        dShape_dNaturalX[2] =  0.125*(1.0 + naturalY)*(1.0 - naturalZ);
+        dShape_dNaturalX[3] = -0.125*(1.0 + naturalY)*(1.0 - naturalZ);
+        dShape_dNaturalX[4] = -0.125*(1.0 - naturalY)*(1.0 + naturalZ);
+        dShape_dNaturalX[5] =  0.125*(1.0 - naturalY)*(1.0 + naturalZ);
+        dShape_dNaturalX[6] =  0.125*(1.0 + naturalY)*(1.0 + naturalZ);
+        dShape_dNaturalX[7] = -0.125*(1.0 + naturalY)*(1.0 + naturalZ);
+
+        dShape_dNaturalY[0] = -0.125*(1.0 - naturalX)*(1.0 - naturalZ);
+        dShape_dNaturalY[1] = -0.125*(1.0 + naturalX)*(1.0 - naturalZ);
+        dShape_dNaturalY[2] =  0.125*(1.0 + naturalX)*(1.0 - naturalZ);
+        dShape_dNaturalY[3] =  0.125*(1.0 - naturalX)*(1.0 - naturalZ);
+        dShape_dNaturalY[4] = -0.125*(1.0 - naturalX)*(1.0 + naturalZ);
+        dShape_dNaturalY[5] = -0.125*(1.0 + naturalX)*(1.0 + naturalZ);
+        dShape_dNaturalY[6] =  0.125*(1.0 + naturalX)*(1.0 + naturalZ);
+        dShape_dNaturalY[7] =  0.125*(1.0 - naturalX)*(1.0 + naturalZ);
+
+        dShape_dNaturalZ[0] = -0.125*(1.0 - naturalX)*(1.0 - naturalY);
+        dShape_dNaturalZ[1] = -0.125*(1.0 + naturalX)*(1.0 - naturalY);
+        dShape_dNaturalZ[2] = -0.125*(1.0 + naturalX)*(1.0 + naturalY);
+        dShape_dNaturalZ[3] = -0.125*(1.0 - naturalX)*(1.0 + naturalY);
+        dShape_dNaturalZ[4] =  0.125*(1.0 - naturalX)*(1.0 - naturalY);
+        dShape_dNaturalZ[5] =  0.125*(1.0 + naturalX)*(1.0 - naturalY);
+        dShape_dNaturalZ[6] =  0.125*(1.0 + naturalX)*(1.0 + naturalY);
+        dShape_dNaturalZ[7] =  0.125*(1.0 - naturalX)*(1.0 + naturalY);
+
+        for(int m=0 ; m<3 ; ++m){
+          for(int n=0 ; n<3 ; ++n){
+            jacobian[m][n] = 0.0;
+          }
+        }
+        for(int m=0 ; m<8 ; ++m){
+          jacobian[0][0] += neighborElementNodes[3*m  ]*dShape_dNaturalX[m];
+          jacobian[0][1] += neighborElementNodes[3*m+1]*dShape_dNaturalX[m];
+          jacobian[0][2] += neighborElementNodes[3*m+2]*dShape_dNaturalX[m];
+          jacobian[1][0] += neighborElementNodes[3*m  ]*dShape_dNaturalY[m];
+          jacobian[1][1] += neighborElementNodes[3*m+1]*dShape_dNaturalY[m];
+          jacobian[1][2] += neighborElementNodes[3*m+2]*dShape_dNaturalY[m];
+          jacobian[2][0] += neighborElementNodes[3*m  ]*dShape_dNaturalZ[m];
+          jacobian[2][1] += neighborElementNodes[3*m+1]*dShape_dNaturalZ[m];
+          jacobian[2][2] += neighborElementNodes[3*m+2]*dShape_dNaturalZ[m];
+        }
+
+        jacobianDeterminate =
+          jacobian[0][0]*(jacobian[1][1]*jacobian[2][2] - jacobian[1][2]*jacobian[2][1]) -
+          jacobian[0][1]*(jacobian[1][0]*jacobian[2][2] - jacobian[1][2]*jacobian[2][0]) +
+          jacobian[0][2]*(jacobian[1][0]*jacobian[2][1] - jacobian[1][1]*jacobian[2][0]);
+
+        subVolume = referenceVolume*jacobianDeterminate;
+
+        volume += subVolume;
+
+        distance = (pt[0] - x)*(pt[0] - x) + (pt[1] - y)*(pt[1] - y) + (pt[2] - z)*(pt[2] - z);
+        if(distance < horizon*horizon)
+          volumeInNeighborhood += subVolume;
+      }
+    }
+  }
+
+  double volumeFraction = volumeInNeighborhood/volume;
+
+  return volumeFraction;
 }
