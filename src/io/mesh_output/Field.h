@@ -71,6 +71,7 @@ enum Type {
 			PROC_NUM,
 			WEIGHTED_VOLUME,
             NEIGHBORHOOD_VOLUME,
+            NUMBER_OF_NEIGHBORS,
 			DILATATION,
 			DAMAGE,
 			E_DP,
@@ -241,6 +242,9 @@ const Field_NS::FieldSpec WEIGHTED_VOLUME
 const Field_NS::FieldSpec NEIGHBORHOOD_VOLUME
 (Field_ENUM::NEIGHBORHOOD_VOLUME, Field_ENUM::POINT,       Field_ENUM::SCALAR,  Field_ENUM::CONSTANT, "Neighborhood_Volume");
 
+const Field_NS::FieldSpec NUMBER_OF_NEIGHBORS
+(Field_ENUM::NUMBER_OF_NEIGHBORS, Field_ENUM::POINT,       Field_ENUM::SCALAR,  Field_ENUM::CONSTANT, "Number_Of_Neighbors");
+
 const Field_NS::FieldSpec DILATATION
 (Field_ENUM::DILATATION, Field_ENUM::POINT,            Field_ENUM::SCALAR,  Field_ENUM::TWO_STEP,     "Dilatation");
 
@@ -320,7 +324,8 @@ struct FieldSpecMap {
 		mymap[PROC_NUM.getLabel()]                     = PROC_NUM;
 		mymap[DAMAGE.getLabel()]                       = DAMAGE;
 		mymap[WEIGHTED_VOLUME.getLabel()]              = WEIGHTED_VOLUME;
-		mymap[NEIGHBORHOOD_VOLUME.getLabel()]              = NEIGHBORHOOD_VOLUME;
+		mymap[NEIGHBORHOOD_VOLUME.getLabel()]          = NEIGHBORHOOD_VOLUME;
+		mymap[NUMBER_OF_NEIGHBORS.getLabel()]          = NUMBER_OF_NEIGHBORS;
 		mymap[DILATATION.getLabel()]                   = DILATATION;
 		mymap[NUM_NEIGHBORS.getLabel()]                = NUM_NEIGHBORS;
 		mymap[LAMBDA.getLabel()]                       = LAMBDA;

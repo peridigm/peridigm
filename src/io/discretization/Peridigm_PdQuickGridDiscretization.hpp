@@ -95,6 +95,9 @@ namespace PeridigmNS {
     //! Get the number of bonds on this processor
     unsigned int getNumBonds() const;
 
+    //! Get the horizon
+    double getHorizon() const { return horizon; }
+
   private:
 
     //! Private to prohibit copying
@@ -123,6 +126,9 @@ namespace PeridigmNS {
     Teuchos::RCP<Epetra_BlockMap> threeDimensionalMap;
     Teuchos::RCP<Epetra_BlockMap> threeDimensionalOverlapMap;
     Teuchos::RCP<Epetra_BlockMap> bondMap;
+
+    //! Horizon
+    double horizon;
 
     //! Vector containing initial positions
     Teuchos::RCP<Epetra_Vector> initialX;
