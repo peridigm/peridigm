@@ -65,14 +65,17 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Contact_Force::getFieldSpec
 }
 
 //! Fill the contact force vector
-int PeridigmNS::Compute_Contact_Force::compute(Teuchos::RCP<PeridigmNS::DataManager> dataManager) const {
+int PeridigmNS::Compute_Contact_Force::compute(const int numOwnedPoints,
+                                               const int* ownedIDs,
+                                               const int* neighborhoodList,
+                                               PeridigmNS::DataManager& dataManager) const {
 
   int retval;
 
   Teuchos::RCP<Epetra_Vector> contact_force, contact_force_density, volume;
-  contact_force_density = dataManager->getData(Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1);
-  contact_force         = dataManager->getData(Field_NS::CONTACT_FORCE3D, Field_ENUM::STEP_NP1);
-  volume                = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
+  contact_force_density = dataManager.getData(Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1);
+  contact_force         = dataManager.getData(Field_NS::CONTACT_FORCE3D, Field_ENUM::STEP_NP1);
+  volume                = dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
 
   // Sanity check
   if ( (contact_force_density->Map().NumMyElements() != volume->Map().NumMyElements()) ||  (contact_force->Map().NumMyElements() != volume->Map().NumMyElements()) ) {

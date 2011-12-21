@@ -108,8 +108,8 @@ namespace PeridigmNS {
     //! Initialize the workset
     void initializeWorkset();
 
-    //! Initialize the compute manager
-    void initializeComputeManager();
+    //! Instantiate the compute manager
+    void instantiateComputeManager();
 
     //! Initialize the output manager
     void initializeOutputManager();

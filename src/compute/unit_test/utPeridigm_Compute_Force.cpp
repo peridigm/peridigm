@@ -185,8 +185,15 @@ void FourPointTest() {
     force_density_values[3*i+2] = (3.0*i)+2.0;
   }
 
+  // Create an empty neighborhood structure
+  // Valid neighborhood data is difficult to construct manually, and since Compute_Force does not use
+  // this information anyway, just send in an empty neighborhood data
+  const int numOwnedPoints = 0;
+  const int* ownedIDs = 0;
+  const int* neighborhoodList = 0;
+
   // Call the compute class
-  int retval = computeForce->compute(dataManager);
+  int retval = computeForce->compute(numOwnedPoints, ownedIDs, neighborhoodList, *dataManager);
   BOOST_CHECK_EQUAL( retval, 0 );
 
   // Now check that volumes and forces are correct

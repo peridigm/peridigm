@@ -299,6 +299,9 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP< std::vector<Peridigm
   // Only write if frequency count match
   if (frequency<=0 || count%frequency!=0) return;
 
+  // Call compute manager; Updated any computed quantities before write
+  peridigm->computeManager->compute(blocks);
+
   // Initialize/reinitialize grids if needed
   // Each block is always rebalanced at the same time, so each datamanager should always return the same
   // rebalance count. Hence, we keep only a single static int for the rebalance count.
@@ -348,10 +351,6 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<PeridigmNS::DataManag
                                               vtkSmartPointer<vtkUnstructuredGrid> grid,
                                               Teuchos::RCP<PdVTK::CollectionWriter> vtkWriter,
                                               double current_time, int block_id) {
-
-  // Call compute manager; Updated any computed quantities before write
-  // \todo This will break for multiple materials.
-  peridigm->computeManager->compute(dataManager);
 
   Teuchos::ParameterList::ConstIterator i1;
   // Loop over the material types in the materialOutputFields parameterlist

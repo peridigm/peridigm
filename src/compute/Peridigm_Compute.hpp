@@ -73,8 +73,18 @@ namespace PeridigmNS {
   //! Returns the fieldspecs computed by this class
   virtual std::vector<Field_NS::FieldSpec> getFieldSpecs() const = 0;
 
+  //! Initialize the compute class
+  virtual void
+  initialize(const int numOwnedPoints,
+             const int* ownedIDs,
+             const int* neighborhoodList,
+             PeridigmNS::DataManager& dataManager) const {}
+
   //! Perform computation
-  virtual int compute(Teuchos::RCP<PeridigmNS::DataManager> dataManager) const = 0;
+  virtual int compute(const int numOwnedPoints,
+                      const int* ownedIDs,
+                      const int* neighborhoodList,
+                      PeridigmNS::DataManager& dataManager) const = 0;
 
   protected:
 

@@ -51,7 +51,7 @@
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_RCP.hpp>
 
-#include <Peridigm_DataManager.hpp>
+#include <Peridigm_Block.hpp>
 #include <compute/Peridigm_Compute.hpp>
 
 namespace PeridigmNS {
@@ -69,8 +69,11 @@ namespace PeridigmNS {
     //! Destructor.
     virtual ~ComputeManager();
 
+    //! Initialize the compute classes
+    virtual void initialize(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks);
+
     //! Fire the individual compute objects
-    virtual void compute( Teuchos::RCP<PeridigmNS::DataManager>& dataManager );
+    virtual void compute(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks);
 
   private:
     
@@ -89,6 +92,8 @@ namespace PeridigmNS {
     //! Parent pointer
     PeridigmNS::Peridigm *peridigm;
 
+    //! Block iterator, for convenience
+    std::vector<PeridigmNS::Block>::iterator blockIt;
   };
   
 }

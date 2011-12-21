@@ -79,7 +79,10 @@ namespace PeridigmNS {
   std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
 
   //! Perform computation
-  int compute(Teuchos::RCP<PeridigmNS::DataManager> dataManager) const;
+  int compute(const int numOwnedPoints,
+              const int* ownedIDs,
+              const int* neighborhoodList,
+              PeridigmNS::DataManager& dataManager) const;
 
   private:
 
