@@ -1,4 +1,4 @@
-/*! \file Peridigm_PartialVolumeCalculator.hpp */
+/*! \file Peridigm_Compute_Neighborhood_Volume.cpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,23 +45,47 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_PARTIALVOLUMECALCULATOR_HPP
-#define PERIDIGM_PARTIALVOLUMECALCULATOR_HPP
-
-#include "Peridigm_Block.hpp"
-#include "Peridigm_AbstractDiscretization.hpp"
 #include <vector>
 
-namespace PeridigmNS {
+#include "Peridigm_Compute_Neighborhood_Volume.hpp"
+#include "../core/Peridigm.hpp"
 
-  //! Computes the partial volumes for all neighbors of all elements in the given block.
-  void computePartialVolume(Teuchos::RCP<PeridigmNS::Block> block,
-                            Teuchos::RCP<PeridigmNS::AbstractDiscretization> discretization);
+PeridigmNS::Compute_Neighborhood_Volume::Compute_Neighborhood_Volume(PeridigmNS::Peridigm *peridigm_ ){peridigm = peridigm_;}
 
-  //! Computes the volume of the given neighbor that falls within the neighborhood of the given point.
-  double computePartialVolume(const double* const pt,
-                              const double* const neighborElementNodes,
-                              const double horizon);
+PeridigmNS::Compute_Neighborhood_Volume::~Compute_Neighborhood_Volume(){}
+
+std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Neighborhood_Volume::getFieldSpecs() const {
+  std::vector<Field_NS::FieldSpec> myFieldSpecs;
+  myFieldSpecs.push_back(Field_NS::NEIGHBORHOOD_VOLUME);
+  return myFieldSpecs;
 }
 
-#endif // PERIDIGM_PARTIALVOLUMECALCULATOR_HPP
+int PeridigmNS::Compute_Neighborhood_Volume::compute(Teuchos::RCP<PeridigmNS::DataManager> dataManager) const {
+
+  // \todo Move to an initialization function, since this only needs to be computed once.
+
+//   double *volume, *partialVolume, *neighborhoodVolume;
+//   dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&volume);
+//   dataManager->getData(Field_NS::PARTIAL_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&partialVolume);
+//   dataManager->getData(Field_NS::NEIGHBORHOOD_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&neighborhoodVolume);
+
+//   Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = dataManager->getNeighborhoodData();
+//   const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
+//   const int* ownedIDs = neighborhoodData->OwnedIDs();
+//   const int* neighborhoodList = neighborhoodData->NeighborhoodList();
+
+//   int neighborhoodListIndex = 0;
+//   int bondIndex = 0;
+//   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
+// 	int nodeID = ownedIDs[iID];
+// 	int numNeighbors = neighborhoodList[neighborhoodListIndex++];
+//     neighborhoodVolume[iID] = 0.0;
+// 	for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
+// 	  int neighborID = neighborhoodList[neighborhoodListIndex++];
+//       double neighborVolume = volume[neighborID];
+//       double partialVolume = partialVolume[bondIndex++];
+//       neighborhoodVolume[iID] += neighborVolume*partialVolume;
+// 	}
+//   }
+  return 0;
+}
