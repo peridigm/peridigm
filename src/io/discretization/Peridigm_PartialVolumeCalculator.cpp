@@ -108,14 +108,33 @@ double PeridigmNS::computePartialVolume(const double* const pt,
   double volume = 0.0;
   double volumeInNeighborhood = 0.0;
 
+  // First, check to see if the neighbor's nodes are either all
+  // within the neighborhood, or all outside the neighborhood.
+  bool allIn = true;
+  bool allOut = true;
+  for(int i=0 ; i<8 ; ++i){
+    x = neighborElementNodes[3*i];
+    y = neighborElementNodes[3*i+1];
+    z = neighborElementNodes[3*i+2];
+    distance = (pt[0] - x)*(pt[0] - x) + (pt[1] - y)*(pt[1] - y) + (pt[2] - z)*(pt[2] - z);
+    if(distance > horizon*horizon)
+      allIn = false;
+    else
+      allOut = false;
+  }
+  if(allIn)
+    return 1.0;
+  else if(allOut)
+    return 0.0;
+
   // Loop over a grid on the reference element
   for(int k=0 ; k<numSubdivisions ; ++k){
     for(int j=0 ; j<numSubdivisions ; ++j){
       for(int i=0 ; i<numSubdivisions ; ++i){
 
-        naturalX = lowerBound + stepSize/2.0 + x*stepSize;
-        naturalY = lowerBound + stepSize/2.0 + y*stepSize;
-        naturalZ = lowerBound + stepSize/2.0 + z*stepSize;
+        naturalX = lowerBound + stepSize/2.0 + i*stepSize;
+        naturalY = lowerBound + stepSize/2.0 + j*stepSize;
+        naturalZ = lowerBound + stepSize/2.0 + k*stepSize;
 
         shape[0] = 0.125*(1.0 - naturalX)*(1.0 - naturalY)*(1.0 - naturalZ);
         shape[1] = 0.125*(1.0 + naturalX)*(1.0 - naturalY)*(1.0 - naturalZ);
@@ -189,12 +208,11 @@ double PeridigmNS::computePartialVolume(const double* const pt,
         volume += subVolume;
 
         distance = (pt[0] - x)*(pt[0] - x) + (pt[1] - y)*(pt[1] - y) + (pt[2] - z)*(pt[2] - z);
-        if(distance < horizon*horizon)
+        if(distance <= horizon*horizon)
           volumeInNeighborhood += subVolume;
       }
     }
   }
-
   double volumeFraction = volumeInNeighborhood/volume;
 
   return volumeFraction;

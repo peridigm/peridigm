@@ -62,7 +62,6 @@ namespace PeridigmNS {
 
     //! Constructor
     AbstractDiscretization() :
-      horizon(0.0),
       elementBlocks(Teuchos::rcp(new std::map< std::string, std::vector<int> >())),
       nodeSets(Teuchos::rcp(new std::map< std::string, std::vector<int> >()))
     {}
@@ -110,7 +109,7 @@ namespace PeridigmNS {
     virtual unsigned int getNumBonds() const = 0;
 
     //! Get the horizon
-    double getHorizon() const { return horizon; }
+    virtual double getHorizon() const = 0;
 
     //! Get the locally-owned IDs for each element block
     virtual Teuchos::RCP< std::map< std::string, std::vector<int> > > getElementBlocks() { return elementBlocks; } ;
@@ -143,9 +142,6 @@ namespace PeridigmNS {
 
     //! Get the local neighborhood list.
     static shared_ptr<int> getLocalNeighborList(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap);
-
-    //! Horizon
-    double horizon;
 
     //! \todo Eliminate old-style elementBlocks data structure.
     //! Map containing element blocks (block name and list of locally-owned element IDs for each block).

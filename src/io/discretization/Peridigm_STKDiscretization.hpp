@@ -94,6 +94,9 @@ namespace PeridigmNS {
     //! Get the number of bonds on this processor
     unsigned int getNumBonds() const;
 
+    //! Get the horizon
+    double getHorizon() const { return horizon; }
+
     //! Get the node positions in the original Exodus hex/tet mesh.
     Teuchos::RCP< std::vector<double> > getExodusMeshNodePositions(int globalNodeID);
 
@@ -139,6 +142,9 @@ namespace PeridigmNS {
     Teuchos::RCP<Epetra_BlockMap> threeDimensionalMap;
     Teuchos::RCP<Epetra_BlockMap> threeDimensionalOverlapMap;
     Teuchos::RCP<Epetra_BlockMap> bondMap;
+
+    //! Horizon
+    double horizon;
 
     //! Vector containing initial positions
     Teuchos::RCP<Epetra_Vector> initialX;

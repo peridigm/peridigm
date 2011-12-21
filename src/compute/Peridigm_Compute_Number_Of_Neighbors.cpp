@@ -47,47 +47,64 @@
 
 #include <vector>
 
-#include "Peridigm_Compute_Neighborhood_Volume.hpp"
+#include "Peridigm_Compute_Number_Of_Neighbors.hpp"
 #include "../core/Peridigm.hpp"
 
-PeridigmNS::Compute_Neighborhood_Volume::Compute_Neighborhood_Volume(PeridigmNS::Peridigm *peridigm_ ){peridigm = peridigm_;}
+PeridigmNS::Compute_Number_Of_Neighbors::Compute_Number_Of_Neighbors(PeridigmNS::Peridigm *peridigm_ ){peridigm = peridigm_;}
 
-PeridigmNS::Compute_Neighborhood_Volume::~Compute_Neighborhood_Volume(){}
+PeridigmNS::Compute_Number_Of_Neighbors::~Compute_Number_Of_Neighbors(){}
 
-std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Neighborhood_Volume::getFieldSpecs() const {
+std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Number_Of_Neighbors::getFieldSpecs() const {
   std::vector<Field_NS::FieldSpec> myFieldSpecs;
-  myFieldSpecs.push_back(Field_NS::NEIGHBORHOOD_VOLUME);
+  myFieldSpecs.push_back(Field_NS::NUMBER_OF_NEIGHBORS);
   return myFieldSpecs;
 }
 
-void PeridigmNS::Compute_Neighborhood_Volume::initialize(const int numOwnedPoints,
+void PeridigmNS::Compute_Number_Of_Neighbors::initialize(const int numOwnedPoints,
                                                          const int* ownedIDs,
                                                          const int* neighborhoodList,
                                                          PeridigmNS::DataManager& dataManager) const {
+  double *numberOfNeighbors;
+  dataManager.getData(Field_NS::NUMBER_OF_NEIGHBORS, Field_ENUM::STEP_NONE)->ExtractView(&numberOfNeighbors);
 
-  double *volume, *partialVolume, *neighborhoodVolume;
-  dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&volume);
-  dataManager.getData(Field_NS::PARTIAL_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&partialVolume);
-  dataManager.getData(Field_NS::NEIGHBORHOOD_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&neighborhoodVolume);
+  double *partialVolume = 0;
+  if( dataManager.hasData(Field_NS::PARTIAL_VOLUME, Field_ENUM::STEP_NONE) )
+    dataManager.getData(Field_NS::PARTIAL_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&partialVolume);
 
   int neighborhoodListIndex = 0;
   int bondIndex = 0;
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
 	int numNeighbors = neighborhoodList[neighborhoodListIndex++];
 
-    // Assume that the cell's volume is within its neighborhood
-    neighborhoodVolume[iID] = volume[iID];
+    if(partialVolume == 0){
+      
+      // The analysis does not utilized partial volumes,
+      // all neighbors are counted.
 
-	for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
-	  int neighborID = neighborhoodList[neighborhoodListIndex++];
-      double neighborVolume = volume[neighborID];
-      double fraction = partialVolume[bondIndex++];
-      neighborhoodVolume[iID] += neighborVolume*fraction;
+      numberOfNeighbors[iID] = numNeighbors;
+    }
+    else {
+
+      // Partial volumes are present.
+
+      // Allow for the case in which an element is within the neighborhood list,
+      // but actually does not have any volume within the neighborhood.
+      // This may or may not be possible, depending on the details of the neighborhood
+      // search, which must extend beyond the neighborhood when partial volumes are
+      // considered.
+
+      numberOfNeighbors[iID] = 0;
+      for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
+        double fraction = partialVolume[bondIndex++];
+        if(fraction > 0.0)
+          numberOfNeighbors[iID] += 1;
+      }
 	}
+    neighborhoodListIndex += numNeighbors;
   }
 }
 
-int PeridigmNS::Compute_Neighborhood_Volume::compute(const int numOwnedPoints,
+int PeridigmNS::Compute_Number_Of_Neighbors::compute(const int numOwnedPoints,
                                                      const int* ownedIDs,
                                                      const int* neighborhoodList,
                                                      PeridigmNS::DataManager& dataManager) const {
