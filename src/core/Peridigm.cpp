@@ -386,6 +386,7 @@ void PeridigmNS::Peridigm::applyInitialVelocities() {
         p.DefineVar("x", &xpos);
         p.DefineVar("y", &ypos);
         p.DefineVar("z", &zpos);
+        p.DefineVar("t", &timeCurrent);
         p.DefineFun(_T("rnd"), mu::Rnd, false);
         p.SetExpr(function);
       } 
@@ -464,6 +465,7 @@ void PeridigmNS::Peridigm::applyInitialDisplacements() {
         p.DefineVar("x", &xpos);
         p.DefineVar("y", &ypos);
         p.DefineVar("z", &zpos);
+        p.DefineVar("t", &timeCurrent);
         p.DefineFun(_T("rnd"), mu::Rnd, false);
         p.SetExpr(function);
       } 
