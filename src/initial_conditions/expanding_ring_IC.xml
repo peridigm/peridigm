@@ -20,7 +20,6 @@
 			<Parameter name="Density" type="double" value="2.71e-3"/>
 			<Parameter name="Bulk Modulus" type="double" value="67800.0"/>
 			<Parameter name="Shear Modulus" type="double" value="26000.0"/>
-			<Parameter name="Material Horizon" type="double" value="1.01"/>
 			<Parameter name="Yield Stress" type="double" value="345.0"/>
 			<ParameterList name="Damage Model">
 				<Parameter name="Type" type="string" value="Critical Stretch"/>

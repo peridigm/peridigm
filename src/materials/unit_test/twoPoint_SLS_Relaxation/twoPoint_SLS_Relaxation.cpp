@@ -135,7 +135,7 @@ Teuchos::ParameterList getParamList(double lambda)
 	params.set("Density", rho);
 	params.set("Bulk Modulus", K);
 	params.set("Shear Modulus", mu);
-	params.set("Material Horizon", horizon);
+	params.set("Horizon", horizon);
 	params.set("lambda_i",lambda_i);
 	params.set("tau b",tau_b);
 	ViscoelasticStandardLinearSolid mat(params);

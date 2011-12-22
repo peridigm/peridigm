@@ -191,7 +191,7 @@ Teuchos::ParameterList getParamList()
 	params.set("Density", rho);
 	params.set("Bulk Modulus", K);
 	params.set("Shear Modulus", mu);
-	params.set("Material Horizon", horizon);
+	params.set("Horizon", horizon);
 	params.set("Yield Stress",Y);
 	IsotropicElasticPlasticMaterial mat(params);
 
@@ -269,7 +269,7 @@ void runPureShear() {
 	 */
 	double K = paramList.get<double>("Bulk Modulus");
 	double MU = paramList.get<double>("Shear Modulus");
-	double DELTA = paramList.get<double>("Material Horizon");
+	double DELTA = paramList.get<double>("Horizon");
 	double Y = paramList.get<double>("Yield Stress");
 
 	/*

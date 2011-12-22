@@ -67,7 +67,7 @@ m_damageModel()
   //! \todo Add meaningful asserts on material properties.
   m_bulkModulus = params.get<double>("Bulk Modulus");
   m_shearModulus = params.get<double>("Shear Modulus");
-  m_horizon = params.get<double>("Material Horizon");
+  m_horizon = params.get<double>("Horizon");
   m_density = params.get<double>("Density");
   m_yieldStress = params.get<double>("Yield Stress");
 

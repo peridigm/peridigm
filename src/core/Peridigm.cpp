@@ -234,6 +234,22 @@ void PeridigmNS::Peridigm::instantiateMaterials() {
   Teuchos::ParameterList& problemParams = peridigmParams->sublist("Problem", true);
   Teuchos::ParameterList& materialParams = problemParams.sublist("Material", true);
 
+  // Create a list of material names
+  vector<string> materialNames;
+  for(Teuchos::ParameterList::ConstIterator it = materialParams.begin() ; it != materialParams.end() ; it++){
+    if(it->second.isList())
+      materialNames.push_back(it->first);
+  }
+
+  // If the material parameters do not include the horizon, add it
+  double horizon = problemParams.sublist("Discretization", true).get<double>("Horizon");
+  for(vector<string>::iterator it = materialNames.begin() ; it != materialNames.end() ; ++it){
+    // Get the material parameters for a given material and add the horizon if necessary
+    Teuchos::ParameterList& matParams = materialParams.get<Teuchos::ParameterList>(*it);
+    if(!matParams.isParameter("Horizon"))
+       matParams.set("Horizon", horizon);
+  }
+
   // Instantiate material objects
   // \todo This will break for multiple material blocks.
   MaterialFactory materialFactory;
