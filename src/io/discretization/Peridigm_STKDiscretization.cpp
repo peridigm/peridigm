@@ -77,8 +77,9 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   TEST_FOR_EXCEPT_MSG(params->get<string>("Type") != "Exodus", "Invalid Type in STKDiscretization");
 
   horizon = params->get<double>("Horizon");
+  searchHorizon = params->get<double>("Search Horizon");
   string meshFileName = params->get<string>("Input Mesh File");
-  QUICKGRID::Data decomp = getDecomp(meshFileName, horizon);
+  QUICKGRID::Data decomp = getDecomp(meshFileName, searchHorizon);
 
   // \todo Refactor; the createMaps() call is currently inside getDecomp() due to order-of-operations issues with tracking element blocks.
   //createMaps(decomp);

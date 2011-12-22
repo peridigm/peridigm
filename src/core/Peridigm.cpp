@@ -113,6 +113,14 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   // Read mesh from disk or generate using geometric primatives.
   Teuchos::RCP<Teuchos::ParameterList> discParams =
     Teuchos::rcpFromRef( peridigmParams->sublist("Problem", true).sublist("Discretization", true) );
+
+  // \todo When using partial volumes, the horizon should be increased by a value equal to the largest element dimension in the model (largest element diagonal for hexes).
+  //       For an initial test, just double the horizon and hope for the best.
+  if(analysisHasPartialVolumes)
+    discParams->set("Search Horizon", 2.0*discParams->get<double>("Horizon"));
+  else
+    discParams->set("Search Horizon", discParams->get<double>("Horizon"));
+
   DiscretizationFactory discFactory(discParams);
   Teuchos::RCP<AbstractDiscretization> peridigmDisc = discFactory.create(peridigmComm);
   initializeDiscretization(peridigmDisc);

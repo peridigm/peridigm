@@ -65,10 +65,13 @@ void PeridigmNS::Compute_Neighborhood_Volume::initialize(const int numOwnedPoint
                                                          const int* neighborhoodList,
                                                          PeridigmNS::DataManager& dataManager) const {
 
-  double *volume, *partialVolume, *neighborhoodVolume;
+  double *volume, *neighborhoodVolume;
   dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&volume);
-  dataManager.getData(Field_NS::PARTIAL_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&partialVolume);
   dataManager.getData(Field_NS::NEIGHBORHOOD_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&neighborhoodVolume);
+
+  double *partialVolume = 0;
+  if( dataManager.hasData(Field_NS::PARTIAL_VOLUME, Field_ENUM::STEP_NONE) )
+    dataManager.getData(Field_NS::PARTIAL_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&partialVolume);
 
   int neighborhoodListIndex = 0;
   int bondIndex = 0;
@@ -81,7 +84,9 @@ void PeridigmNS::Compute_Neighborhood_Volume::initialize(const int numOwnedPoint
 	for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
 	  int neighborID = neighborhoodList[neighborhoodListIndex++];
       double neighborVolume = volume[neighborID];
-      double fraction = partialVolume[bondIndex++];
+      double fraction = 1.0;
+      if(partialVolume != 0)
+        fraction = partialVolume[bondIndex++];
       neighborhoodVolume[iID] += neighborVolume*fraction;
 	}
   }
