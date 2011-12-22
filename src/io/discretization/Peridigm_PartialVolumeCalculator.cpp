@@ -94,7 +94,7 @@ double PeridigmNS::computePartialVolume(const double* const pt,
                                         const double* const neighborElementNodes,
                                         const double horizon)
 {
-  int numSubdivisions = 3;
+  int numSubdivisions = 16;
   double upperBound = 1.0;
   double lowerBound = -1.0;
   double stepSize = (upperBound - lowerBound)/numSubdivisions;

@@ -146,6 +146,9 @@ namespace PeridigmNS {
     //! Horizon
     double horizon;
 
+    //! Search horizon, which may be larger than the horizon if partial volumes are used
+    double searchHorizon;
+
     //! Vector containing initial positions
     Teuchos::RCP<Epetra_Vector> initialX;
 
