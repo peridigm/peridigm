@@ -22,7 +22,6 @@
 			<Parameter name="Density" type="double" value="2.7e-3"/>
 			<Parameter name="Bulk Modulus" type="double" value="67549.0"/>
 			<Parameter name="Shear Modulus" type="double" value="25902.2"/>
-			<Parameter name="Material Horizon" type="double" value="1.75"/>
 			<Parameter name="Yield Stress" type="double" value="351.79"/>
 		</ParameterList>
 	</ParameterList>
