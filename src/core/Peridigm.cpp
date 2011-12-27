@@ -75,15 +75,15 @@
 #include "Peridigm_PartialVolumeCalculator.hpp"
 #include "Peridigm_OutputManager_VTK_XML.hpp"
 #include "Peridigm_ComputeManager.hpp"
+#include "Peridigm_BoundaryAndInitialConditionManager.hpp"
 #include "Peridigm_RandomNumber.hpp"
+#include "Peridigm_Timer.hpp"
 #include "materials/Peridigm_MaterialFactory.hpp"
 #include "contact/Peridigm_ContactModelFactory.hpp"
 #include "mesh_input/quick_grid/QuickGrid.h"
 #include "mesh_input/quick_grid/QuickGridData.h"
 #include "pdneigh/PdZoltan.h"
 #include "pdneigh/NeighborhoodList.h"
-#include "InitialCondition.hpp"
-#include "Peridigm_Timer.hpp"
 #include "muParser/muParser.h"
 #include "muParser/muParserPeridigmFunctions.h"
 
@@ -129,6 +129,9 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   Teuchos::RCP<Teuchos::ParameterList> bcParams =
     Teuchos::rcpFromRef( peridigmParams->sublist("Problem", true).sublist("Boundary Conditions") );
   initializeNodeSets(bcParams, peridigmDisc);
+
+  boundaryAndInitialConditionManager =
+    Teuchos::RCP<BoundaryAndInitialConditionManager>(new BoundaryAndInitialConditionManager(*bcParams));
 
   // The PeridigmNS::DataManager contained in each PeridigmNS::Block allocates space for field data.
   // Keep track of the data storage required by Peridigm and the ComputeManager and pass the associated
@@ -363,16 +366,6 @@ void PeridigmNS::Peridigm::applyInitialVelocities() {
   TEST_FOR_EXCEPT_MSG(!threeDimensionalMap->SameAs(v->Map()), 
                       "Peridigm::applyInitialVelocities():  Inconsistent velocity vector map.\n");
 
-  /*
-   * UNCOMMENT the following two lines
-   */
-
-//  RCP<InitialConditionsNS::InitialCondition> icOperator = InitialConditionsNS::getInstance(*peridigmParams);
-//  icOperator->apply(*x,*u,*v);
-
-  /*
-   * COMMENT OUT ALL OF BELOW TO RUN new Initial Condition Capability
-   */
   // apply the initial conditions
   Teuchos::ParameterList& bcParams = peridigmParams->sublist("Problem").sublist("Boundary Conditions");
   Teuchos::ParameterList::ConstIterator it;
