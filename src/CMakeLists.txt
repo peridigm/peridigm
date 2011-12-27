@@ -18,6 +18,7 @@ set(Peridigm_SOURCES
     ${CORE_DIR}/Peridigm_DataManager.cpp
     ${CORE_DIR}/Peridigm_SerialMatrix.cpp
     ${CORE_DIR}/Peridigm_Block.cpp
+    ${CORE_DIR}/Peridigm_BoundaryAndInitialConditionManager.cpp
     ${CORE_DIR}/Peridigm_ModelEvaluator.cpp
     ${CORE_DIR}/PHAL_Dimension.cpp
     ${CORE_DIR}/PHAL_PeridigmTraits.cpp
@@ -53,7 +54,6 @@ set(Peridigm_LINK_LIBRARIES
     ${MESH_OUTPUT_LIBS}
     ${REQUIRED_LIBS}
     ${PdMaterialUtilitiesLib}
-    PdIC
 )
 
 add_executable(Peridigm ${Peridigm_SOURCES})
@@ -75,6 +75,5 @@ set_property(TARGET Peridigm
 add_subdirectory (core/)
 add_subdirectory (io/)
 add_subdirectory (materials/)
-add_subdirectory (initial_conditions/)
 add_subdirectory (compute/)
 add_subdirectory (muParser/)

@@ -58,8 +58,6 @@
 #include <Teuchos_RCP.hpp>
 #include <Epetra_FECrsMatrix.h>
 
-#include "contact/Peridigm_ContactModel.hpp"
-#include "materials/Peridigm_Material.hpp"
 #include "Peridigm_Block.hpp"
 #include "Peridigm_AbstractDiscretization.hpp"
 #include "Peridigm_ModelEvaluator.hpp"
@@ -68,6 +66,9 @@
 #include "Peridigm_OutputManager.hpp"
 #include "Peridigm_OutputManager_VTK_XML.hpp"
 #include "Peridigm_ComputeManager.hpp"
+#include "Peridigm_BoundaryAndInitialConditionManager.hpp"
+#include "contact/Peridigm_ContactModel.hpp"
+#include "materials/Peridigm_Material.hpp"
 // MLP
 #include "muParser/muParserDef.h"
 
@@ -282,6 +283,9 @@ namespace PeridigmNS {
 
     //! Material models
     Teuchos::RCP< std::vector< Teuchos::RCP<const PeridigmNS::Material> > > materialModels;
+
+    //! Boundary and initial condition manager
+    Teuchos::RCP<PeridigmNS::BoundaryAndInitialConditionManager> boundaryAndInitialConditionManager;
 
     //! Contact models
     Teuchos::RCP< std::vector<Teuchos::RCP<const PeridigmNS::ContactModel> > > contactModels;

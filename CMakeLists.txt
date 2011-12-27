@@ -166,7 +166,6 @@ ${CMAKE_SOURCE_DIR}/src/io/pdneigh
 ${CMAKE_SOURCE_DIR}/src/contact
 ${CMAKE_SOURCE_DIR}/src/evaluators
 ${CMAKE_SOURCE_DIR}/src/materials
-${CMAKE_SOURCE_DIR}/src/initial_conditions
 )
 
 include_directories(${INCLUDE_DIRS})
@@ -185,7 +184,6 @@ set(MESH_OUTPUT_DIR    ${CMAKE_SOURCE_DIR}/src/io/mesh_output)
 
 # link directories 
 set(LIB_DIRS 
-  ${TRILINOS_DIR}/lib 
   ${VTK_LIBRARY_DIRS} 
   ${Boost_LIBRARY_DIRS})
 link_directories(${LIB_DIRS})
