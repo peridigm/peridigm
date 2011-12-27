@@ -228,3 +228,106 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialVelocities(Teuc
     }
   }
 }
+
+
+void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC(double loadIncrement,
+                                                                      double time,
+                                                                      Teuchos::RCP<const Epetra_Vector> x,
+                                                                      Teuchos::RCP<Epetra_Vector> vec,
+                                                                      Teuchos::RCP<Epetra_FECrsMatrix> mat)
+{
+    // Apply kinematic boundary conditions: for Jacobain, zero out rows and columns and put one on diagonal; for residual put displacement increment corresponding to bc.
+
+  const Epetra_BlockMap& threeDimensionalMap = x->Map();
+
+  muParserT = time;
+
+  // create data structures for inserting ones and zeros into jacobian
+  vector<double> jacobianRow;
+  vector<int> jacobianIndices;
+  if(!mat.is_null()){
+    jacobianRow.resize(mat->NumMyCols(), 0.0);
+    jacobianIndices.resize(mat->NumMyCols());
+    for(unsigned int i=0 ; i<jacobianIndices.size() ; ++i)
+      jacobianIndices[i] = i;
+  }
+
+  // apply the kinematic boundary conditions
+  Teuchos::ParameterList::ConstIterator it;
+  for(it = params.begin() ; it != params.end() ; it++){
+    const string & name = it->first;
+    size_t position = name.find("Prescribed Displacement");
+    if(position != string::npos){
+      Teuchos::ParameterList & boundaryConditionParams = Teuchos::getValue<Teuchos::ParameterList>(it->second);
+      string nodeSet = boundaryConditionParams.get<string>("Node Set");
+      string type = boundaryConditionParams.get<string>("Type");
+      string coordinate = boundaryConditionParams.get<string>("Coordinate");
+      string function = boundaryConditionParams.get<string>("Value");
+
+      try{
+        muParser.SetExpr(function);
+      }
+      catch (mu::Parser::exception_type &e)
+        TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+
+      int coord = 0;
+      if(coordinate == "y" || coordinate == "Y")
+        coord = 1;
+      if(coordinate == "z" || coordinate == "Z")
+        coord = 2;
+
+      // apply kinematic boundary conditions to locally-owned nodes
+      TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
+      vector<int> & nodeList = (*nodeSets)[nodeSet];
+      for(unsigned int i=0 ; i<nodeList.size() ; i++){
+        // zero out the row and column and put a 1.0 on the diagonal
+        if(!mat.is_null()){
+          int globalID = 3*nodeList[i] + coord;
+          int localRowID = mat->LRID(globalID);
+          int localColID = mat->LCID(globalID);
+
+          // zero out all locally-owned entries in the column associated with this dof
+          // \todo Call ReplaceMyValues only for entries that actually exist in the matrix structure.
+          double zero = 0.0;
+          for(int iRow=0 ; iRow<mat->NumMyRows() ; ++iRow)
+            mat->ReplaceMyValues(iRow, 1, &zero, &localColID);
+
+          // zero out the row and put a 1.0 on the diagonal
+          if(localRowID != -1){
+            jacobianRow[localColID] = 1.0;
+            // From Epetra_CrsMatrix documentation:
+            // If a value is not already present for the specified location in the matrix, the
+            // input value will be ignored and a positive warning code will be returned.
+            // \todo Do the bookkeeping to send in data only for locations that actually exist in the matrix structure.
+            mat->ReplaceMyValues(localRowID, mat->NumMyCols(), &jacobianRow[0], &jacobianIndices[0]);
+            jacobianRow[localColID] = 0.0;
+          }
+        }
+
+        // set entry in residual vector equal to the displacement increment for the kinematic bc
+        // this will cause the solution procedure to solve for the correct U at the bc
+        int localNodeID = threeDimensionalMap.LID(nodeList[i]);
+        if(!vec.is_null() && localNodeID != -1){
+          // set values for parser
+          muParserX = (*x)[localNodeID*3];
+          muParserY = (*x)[localNodeID*3 + 1];
+          muParserZ = (*x)[localNodeID*3 + 2];
+
+          // \todo set muParserT
+
+          double value = 0.0;
+          try {
+            value = muParser.Eval();
+          }
+          catch (mu::Parser::exception_type &e)
+            TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+
+          (*vec)[localNodeID*3 + coord] = value*loadIncrement;
+        }
+
+      }
+
+    }
+  }
+}
+

@@ -48,10 +48,8 @@
 #ifndef PERIDIGM_BOUNARYANDINITIALCONDITIONMANAGER_HPP
 #define PERIDIGM_BOUNARYANDINITIALCONDITIONMANAGER_HPP
 
-// #include <Teuchos_RCP.hpp>
-// #include <Epetra_Map.h>
 #include <Epetra_Vector.h>
-// #include <Epetra_Import.h>
+#include <Epetra_FECrsMatrix.h>
 #include <Teuchos_ParameterList.hpp>
 
 #include "muParser/muParserDef.h" // \todo Is this required?
@@ -117,6 +115,11 @@ namespace PeridigmNS {
     void applyInitialVelocities(Teuchos::RCP<const Epetra_Vector> x,
                                 Teuchos::RCP<Epetra_Vector> v);
 
+    void applyKinematicBC(double loadIncrement,
+                          double time,
+                          Teuchos::RCP<const Epetra_Vector> x,
+                          Teuchos::RCP<Epetra_Vector> vec,
+                          Teuchos::RCP<Epetra_FECrsMatrix> mat);
   protected:
 
     //! Boundary and initial condition parameters

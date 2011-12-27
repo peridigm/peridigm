@@ -764,7 +764,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
 
     // Update nodal positions for nodes with kinematic B.C.
     deltaU->PutScalar(0.0);
-    applyKinematicBC(loadIncrement, deltaU, Teuchos::RCP<Epetra_FECrsMatrix>());
+    boundaryAndInitialConditionManager->applyKinematicBC(loadIncrement, timeCurrent, x, deltaU, Teuchos::RCP<Epetra_FECrsMatrix>());
 
     // Set the current position
     // \todo We probably want to rework this so that the material models get valid x, u, and y values.
@@ -788,7 +788,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
       int err = tangent->GlobalAssemble();
       TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::executeQuasiStatic(), GlobalAssemble() returned nonzero error code.\n");
       PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
-      applyKinematicBC(0.0, residual, tangent);
+      boundaryAndInitialConditionManager->applyKinematicBC(0.0, timeCurrent, x, residual, tangent);
       tangent->Scale(-1.0);
 
       /* 
@@ -989,7 +989,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
       (*residual)[i] = beta*dt2*( density*(*a)[i] - (*force)[i] );
 
     // Modify residual for kinematic BC
-    applyKinematicBC(0.0, residual, Teuchos::RCP<Epetra_FECrsMatrix>());
+    boundaryAndInitialConditionManager->applyKinematicBC(0.0, timeCurrent, x, residual, Teuchos::RCP<Epetra_FECrsMatrix>());
 
     double residualNorm;
     residual->Norm2(&residualNorm);
@@ -1004,7 +1004,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
       computeImplicitJacobian(beta);
 
       // Modify Jacobian for kinematic BC
-      applyKinematicBC(0.0, Teuchos::RCP<Epetra_Vector>(), tangent);
+      boundaryAndInitialConditionManager->applyKinematicBC(0.0, timeCurrent, x, Teuchos::RCP<Epetra_Vector>(), tangent);
 
       // Want to solve J*deltaU = -residual
       residual->Scale(-1.0);
@@ -1064,7 +1064,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
         (*residual)[i] = beta*dt2*( density*(*a)[i] - (*force)[i] );
 
       // Modify residual for kinematic BC
-      applyKinematicBC(0.0, residual, Teuchos::RCP<Epetra_FECrsMatrix>());
+      boundaryAndInitialConditionManager->applyKinematicBC(0.0, timeCurrent, x, residual, Teuchos::RCP<Epetra_FECrsMatrix>());
 
       residual->Norm2(&residualNorm);
 
@@ -1177,110 +1177,6 @@ void PeridigmNS::Peridigm::allocateJacobian() {
   workset->jacobian = overlapJacobian;
 }
 
-void PeridigmNS::Peridigm::applyKinematicBC(double loadIncrement,
-                                            Teuchos::RCP<Epetra_Vector> vec,
-                                            Teuchos::RCP<Epetra_FECrsMatrix> mat) {
-  PeridigmNS::Timer::self().startTimer("Apply Kinematic B.C.");
-
-  Teuchos::ParameterList& problemParams = peridigmParams->sublist("Problem");
-  Teuchos::ParameterList& bcParams = problemParams.sublist("Boundary Conditions");
-  Teuchos::ParameterList::ConstIterator it;
-
-  // create data structures for inserting ones and zeros into jacobian
-  vector<double> jacobianRow;
-  vector<int> jacobianIndices;
-  if(!mat.is_null()){
-    jacobianRow.resize(mat->NumMyCols(), 0.0);
-    jacobianIndices.resize(mat->NumMyCols());
-    for(unsigned int i=0 ; i<jacobianIndices.size() ; ++i)
-      jacobianIndices[i] = i;
-  }
-
-  // Set up muParser parser
-  mu::Parser p;
-  // Allow user to define x,y,z to be the x,y,z coords of particle
-  // and t to be the current simulation time
-  double xpos,ypos,zpos;
-  try {
-    p.DefineVar("x", &xpos);
-    p.DefineVar("y", &ypos);
-    p.DefineVar("z", &zpos);
-    p.DefineFun(_T("rnd"), mu::Rnd, false);
-    p.DefineVar("t", &timeCurrent);
-  }
-  catch (mu::Parser::exception_type &e)
-    TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-
-  // apply the kinematic boundary conditions
-  for(it = bcParams.begin() ; it != bcParams.end() ; it++){
-    const string & name = it->first;
-    size_t position = name.find("Prescribed Displacement");
-    if(position != string::npos){
-      Teuchos::ParameterList & boundaryConditionParams = Teuchos::getValue<Teuchos::ParameterList>(it->second);
-      string nodeSet = boundaryConditionParams.get<string>("Node Set");
-      string type = boundaryConditionParams.get<string>("Type");
-      string coordinate = boundaryConditionParams.get<string>("Coordinate");
-      string function = boundaryConditionParams.get<string>("Value");
-
-      int coord = 0;
-      if(coordinate == "y" || coordinate == "Y")
-        coord = 1;
-      if(coordinate == "z" || coordinate == "Z")
-        coord = 2;
-
-      // apply kinematic boundary conditions to locally-owned nodes
-      TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
-      vector<int> & nodeList = (*nodeSets)[nodeSet];
-      for(unsigned int i=0 ; i<nodeList.size() ; i++){
-        // zero out the row and column and put a 1.0 on the diagonal
-        if(!mat.is_null()){
-          int globalID = 3*nodeList[i] + coord;
-          int localRowID = mat->LRID(globalID);
-          int localColID = mat->LCID(globalID);
-
-          // zero out all locally-owned entries in the column associated with this dof
-          // \todo Call ReplaceMyValues only for entries that actually exist in the matrix structure.
-          double zero = 0.0;
-          for(int iRow=0 ; iRow<mat->NumMyRows() ; ++iRow)
-            mat->ReplaceMyValues(iRow, 1, &zero, &localColID);
-
-          // zero out the row and put a 1.0 on the diagonal
-          if(localRowID != -1){
-            jacobianRow[localColID] = 1.0;
-            // From Epetra_CrsMatrix documentation:
-            // If a value is not already present for the specified location in the matrix, the
-            // input value will be ignored and a positive warning code will be returned.
-            // \todo Do the bookkeeping to send in data only for locations that actually exist in the matrix structure.
-            mat->ReplaceMyValues(localRowID, mat->NumMyCols(), &jacobianRow[0], &jacobianIndices[0]);
-            jacobianRow[localColID] = 0.0;
-          }
-        }
-
-        // set entry in residual vector equal to the displacement increment for the kinematic bc
-        // this will cause the solution procedure to solve for the correct U at the bc
-        int localNodeID = threeDimensionalMap->LID(nodeList[i]);
-        if(!vec.is_null() && localNodeID != -1){
-          // set values for parser
-          xpos = (*x)[localNodeID*3];
-          ypos = (*x)[localNodeID*3 + 1];
-          zpos = (*x)[localNodeID*3 + 2];
-          double value = 0.0;
-          try {
-            p.SetExpr(function);
-            value = p.Eval();
-          }
-          catch (mu::Parser::exception_type &e)
-            TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-          (*vec)[localNodeID*3 + coord] = value*loadIncrement;
-        }
-
-      }
-
-    }
-  }
-  PeridigmNS::Timer::self().stopTimer("Apply Kinematic B.C.");
-}
-
 double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vector> residual) {
 
   PeridigmNS::Timer::self().startTimer("Compute Residual");
@@ -1318,7 +1214,7 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
     (*residual)[i] *= (*volume)[i/3];
     
   // zero out the rows corresponding to kinematic boundary conditions and compute the residual
-  applyKinematicBC(0.0, residual, Teuchos::RCP<Epetra_FECrsMatrix>());
+  boundaryAndInitialConditionManager->applyKinematicBC(0.0, timeCurrent, x, residual, Teuchos::RCP<Epetra_FECrsMatrix>());
   double residualNorm2;
   residual->Norm2(&residualNorm2);
 

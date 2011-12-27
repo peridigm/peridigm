@@ -127,9 +127,6 @@ namespace PeridigmNS {
     //! Compute the Jacobian for implicit dynamics
     void computeImplicitJacobian(double beta);
 
-    //! Apply kinematic boundary conditions: for Jacobain, zero out rows and columns and put one on diagonal; for residual put displacement increment corresponding to bc.
-    void applyKinematicBC(double loadIncrement, Teuchos::RCP<Epetra_Vector> vec, Teuchos::RCP<Epetra_FECrsMatrix> mat);
-
     //! Compute the residual for quasi-statics
     double computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vector> residual);
 
