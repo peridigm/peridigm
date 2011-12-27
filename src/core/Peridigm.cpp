@@ -788,7 +788,9 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
       int err = tangent->GlobalAssemble();
       TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::executeQuasiStatic(), GlobalAssemble() returned nonzero error code.\n");
       PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
-      boundaryAndInitialConditionManager->applyKinematicBC(0.0, timeCurrent, x, residual, tangent);
+      boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
+      boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndPutOnesOnDiagonal(tangent);
+
       tangent->Scale(-1.0);
 
       /* 
@@ -989,7 +991,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
       (*residual)[i] = beta*dt2*( density*(*a)[i] - (*force)[i] );
 
     // Modify residual for kinematic BC
-    boundaryAndInitialConditionManager->applyKinematicBC(0.0, timeCurrent, x, residual, Teuchos::RCP<Epetra_FECrsMatrix>());
+    boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
 
     double residualNorm;
     residual->Norm2(&residualNorm);
@@ -1004,7 +1006,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
       computeImplicitJacobian(beta);
 
       // Modify Jacobian for kinematic BC
-      boundaryAndInitialConditionManager->applyKinematicBC(0.0, timeCurrent, x, Teuchos::RCP<Epetra_Vector>(), tangent);
+      boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndPutOnesOnDiagonal(tangent);
 
       // Want to solve J*deltaU = -residual
       residual->Scale(-1.0);
@@ -1064,7 +1066,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
         (*residual)[i] = beta*dt2*( density*(*a)[i] - (*force)[i] );
 
       // Modify residual for kinematic BC
-      boundaryAndInitialConditionManager->applyKinematicBC(0.0, timeCurrent, x, residual, Teuchos::RCP<Epetra_FECrsMatrix>());
+      boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
 
       residual->Norm2(&residualNorm);
 
@@ -1214,7 +1216,7 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
     (*residual)[i] *= (*volume)[i/3];
     
   // zero out the rows corresponding to kinematic boundary conditions and compute the residual
-  boundaryAndInitialConditionManager->applyKinematicBC(0.0, timeCurrent, x, residual, Teuchos::RCP<Epetra_FECrsMatrix>());
+  boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
   double residualNorm2;
   residual->Norm2(&residualNorm2);
 
@@ -1236,7 +1238,6 @@ void PeridigmNS::Peridigm::computeImplicitJacobian(double beta) {
   int err = tangent->GlobalAssemble();
   TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::computeImplicitJacobian(), GlobalAssemble() returned nonzero error code.\n");
   PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
-//      applyKinematicBC(0.0, residual, tangent);
 
   // Code to symmeterize Jacobian
 
