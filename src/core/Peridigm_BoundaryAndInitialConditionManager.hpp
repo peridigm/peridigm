@@ -50,9 +50,14 @@
 
 // #include <Teuchos_RCP.hpp>
 // #include <Epetra_Map.h>
-// #include <Epetra_Vector.h>
+#include <Epetra_Vector.h>
 // #include <Epetra_Import.h>
 #include <Teuchos_ParameterList.hpp>
+
+#include "muParser/muParserDef.h" // \todo Is this required?
+#include "muParser/muParser.h"
+
+#include "Peridigm_AbstractDiscretization.hpp"
 
 namespace PeridigmNS {
 
@@ -74,6 +79,7 @@ namespace PeridigmNS {
  * Make sure compute manager initialize is called before material model initialize
  * Nix initial_conditions directory?
  * Move all muParser/randomNumber stuff out of Peridigm.cpp, into BC/IC classes, don't forget CMakeLists.txt
+ * Should we have separate managers for boundary and initial conditions?
  * 
  * Initial velocity:  Applied to mothership vector once
  * Initial displacments:  Applied to mothership vector once
@@ -93,10 +99,38 @@ namespace PeridigmNS {
   public:
 
     //! Constructor
-    BoundaryAndInitialConditionManager(const Teuchos::ParameterList& contactModelParams);
+    BoundaryAndInitialConditionManager(const Teuchos::ParameterList& boundaryAndInitialConditionParams);
 
     //! Destructor
     ~BoundaryAndInitialConditionManager(){}
+
+    //! Initialize node sets, etc.
+    void initialize(Teuchos::RCP<AbstractDiscretization> discretization);
+
+    //! Apply initial velocities.
+    void applyInitialVelocities(Teuchos::RCP<const Epetra_Vector> x,
+                                Teuchos::RCP<Epetra_Vector> v);
+
+  protected:
+
+    //! Boundary and initial condition parameters
+    Teuchos::ParameterList params;
+
+    // \todo Define nodesets with an Epetra_BlockMap, then export to x, v, etc., and rebalance as needed
+
+    //! Node sets
+    Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets;
+
+    //! Function parser
+    mu::Parser muParser;
+
+    //! @name Variables for function parser.
+    //@{ 
+    double muParserX;
+    double muParserY;
+    double muParserZ;
+    double muParserT;
+    //@}
 
   private:
 
