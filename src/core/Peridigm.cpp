@@ -133,6 +133,8 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   boundaryAndInitialConditionManager =
     Teuchos::RCP<BoundaryAndInitialConditionManager>(new BoundaryAndInitialConditionManager(*bcParams));
 
+  boundaryAndInitialConditionManager->initialize(peridigmDisc);
+
   // The PeridigmNS::DataManager contained in each PeridigmNS::Block allocates space for field data.
   // Keep track of the data storage required by Peridigm and the ComputeManager and pass the associated
   // field specs when calling Block::initializeDataManager().
@@ -197,7 +199,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   }
 
   // apply initial velocities
-  applyInitialVelocities();
+  boundaryAndInitialConditionManager->applyInitialVelocities(x, v);
 
   // apply initial displacements
   applyInitialDisplacements();
@@ -359,85 +361,6 @@ void PeridigmNS::Peridigm::initializeNodeSets(Teuchos::RCP<Teuchos::ParameterLis
     vector<int>& nodeList = it->second;
     (*nodeSets)[name] = nodeList;
   }
-}
-
-void PeridigmNS::Peridigm::applyInitialVelocities() {
-
-  TEST_FOR_EXCEPT_MSG(!threeDimensionalMap->SameAs(v->Map()), 
-                      "Peridigm::applyInitialVelocities():  Inconsistent velocity vector map.\n");
-
-  // apply the initial conditions
-  Teuchos::ParameterList& bcParams = peridigmParams->sublist("Problem").sublist("Boundary Conditions");
-  Teuchos::ParameterList::ConstIterator it;
-  for(it = bcParams.begin() ; it != bcParams.end() ; it++){
-    const string & name = it->first;
-
-    size_t position = name.find("Initial Velocity");
-    if(position != string::npos){ // user wants to assign velocity using function
-
-      Teuchos::ParameterList & boundaryConditionParams = Teuchos::getValue<Teuchos::ParameterList>(it->second);
-      string nodeSet = boundaryConditionParams.get<string>("Node Set");
-      string type = boundaryConditionParams.get<string>("Type");
-      string coordinate = boundaryConditionParams.get<string>("Coordinate");
-      string function = boundaryConditionParams.get<string>("Value");
-
-      int coord = 0;
-      if(coordinate == "y" || coordinate == "Y")
-        coord = 1;
-      if(coordinate == "z" || coordinate == "Z")
-        coord = 2;
-
-      // Set up muParser parser
-      mu::Parser p;
-      // Allow user to define x,y,z to be the x,y,z coords of particle
-      double xpos,ypos,zpos;
-      try {
-        p.DefineVar("x", &xpos);
-        p.DefineVar("y", &ypos);
-        p.DefineVar("z", &zpos);
-        p.DefineVar("t", &timeCurrent);
-        p.DefineFun(_T("rnd"), mu::Rnd, false);
-        p.SetExpr(function);
-      } 
-      catch (mu::Parser::exception_type &e)
-        TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-
-      if (nodeSet == "All") { // Apply initial velocity to all locally-owned nodes
-        for(int localNodeID = 0; localNodeID < x->MyLength(); localNodeID++) {
-          xpos = (*x)[localNodeID*3];
-          ypos = (*x)[localNodeID*3 + 1];
-          zpos = (*x)[localNodeID*3 + 2];
-          try {
-            (*v)[localNodeID*3 + coord] = p.Eval();
-          }
-          catch (mu::Parser::exception_type &e)
-          TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-        }
-      }
-      else { // Apply initial velocity to specific node set
-        // apply initial velocity boundary conditions to locally-owned nodes
-        TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
-        vector<int> & nodeList = (*nodeSets)[nodeSet];
-        for(unsigned int i=0 ; i<nodeList.size() ; i++){
-          int localNodeID = threeDimensionalMap->LID(nodeList[i]);
-          if(localNodeID != -1) {
-            xpos = (*x)[localNodeID*3];
-            ypos = (*x)[localNodeID*3 + 1];
-            zpos = (*x)[localNodeID*3 + 2];
-            try {
-              (*v)[localNodeID*3 + coord] = p.Eval();
-            }
-            catch (mu::Parser::exception_type &e)
-            TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-          }
-        }
-      }
-    }
-  }
-
-  // Fill the dataManager with initial velocity data
-  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-    blockIt->importData(*v, Field_NS::VELOC3D, Field_ENUM::STEP_N, Insert);
 }
 
 void PeridigmNS::Peridigm::applyInitialDisplacements() {
