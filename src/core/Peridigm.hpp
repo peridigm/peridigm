@@ -97,9 +97,6 @@ namespace PeridigmNS {
     void initializeNodeSets(Teuchos::RCP<Teuchos::ParameterList>& bcParams,
                             Teuchos::RCP<AbstractDiscretization> peridigmDisc);
 
-    //! Apply initial displacement
-    void applyInitialDisplacements();
-
     //! Initialize contact
     void initializeContact();
 

@@ -97,6 +97,73 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Abs
   }
 }
 
+void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialDisplacements(Teuchos::RCP<Epetra_Vector> x,
+                                                                               Teuchos::RCP<Epetra_Vector> u,
+                                                                               Teuchos::RCP<Epetra_Vector> y)
+{
+  const Epetra_BlockMap& threeDimensionalMap = x->Map();
+
+  // apply the initial conditions
+  Teuchos::ParameterList::ConstIterator it;
+  for(it = params.begin() ; it != params.end() ; it++){
+    const string & name = it->first;
+    size_t position = name.find("Initial Displacement");
+    if(position != string::npos){
+      Teuchos::ParameterList & boundaryConditionParams = Teuchos::getValue<Teuchos::ParameterList>(it->second);
+      string nodeSet = boundaryConditionParams.get<string>("Node Set");
+      string type = boundaryConditionParams.get<string>("Type");
+      string coordinate = boundaryConditionParams.get<string>("Coordinate");
+      string function = boundaryConditionParams.get<string>("Value");
+
+      int coord = 0;
+      if(coordinate == "y" || coordinate == "Y")
+        coord = 1;
+      if(coordinate == "z" || coordinate == "Z")
+        coord = 2;
+
+      try{
+        muParser.SetExpr(function);
+      }
+      catch (mu::Parser::exception_type &e)
+        TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+
+      if (nodeSet == "All") { // Apply initial position to all locally-owned nodes
+        for(int localNodeID = 0; localNodeID < x->MyLength(); localNodeID++) {
+          muParserX = (*x)[localNodeID*3];
+          muParserY = (*x)[localNodeID*3 + 1];
+          muParserZ = (*x)[localNodeID*3 + 2];
+          try {
+            (*u)[localNodeID*3 + coord] = muParser.Eval();
+          }
+          catch (mu::Parser::exception_type &e)
+          TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+        }
+      }
+      else { // Apply initial position to specific node set
+        // apply initial displacement boundary conditions to locally-owned nodes
+        TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
+        vector<int> & nodeList = (*nodeSets)[nodeSet];
+        for(unsigned int i=0 ; i<nodeList.size() ; i++){
+          int localNodeID = threeDimensionalMap.LID(nodeList[i]);
+          if(localNodeID != -1) {
+            muParserX = (*x)[localNodeID*3];
+            muParserY = (*x)[localNodeID*3 + 1];
+            muParserZ = (*x)[localNodeID*3 + 2];
+            try {
+              (*u)[localNodeID*3 + coord] = muParser.Eval();
+            }
+            catch (mu::Parser::exception_type &e)
+              TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+          }
+        }
+      }
+    }
+  }
+
+  // Update curcoord field to be consistent with initial displacement
+  y->Update(1.0, *x, 1.0, *u, 0.0);
+}
+
 void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialVelocities(Teuchos::RCP<const Epetra_Vector> x,
                                                                             Teuchos::RCP<Epetra_Vector> v)
 {
@@ -116,7 +183,11 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialVelocities(Teuc
       string coordinate = boundaryConditionParams.get<string>("Coordinate");
       string function = boundaryConditionParams.get<string>("Value");
 
-      muParser.SetExpr(function);
+      try{
+        muParser.SetExpr(function);
+      }
+      catch (mu::Parser::exception_type &e)
+        TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
 
       int coord = 0;
       if(coordinate == "y" || coordinate == "Y")
@@ -129,7 +200,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialVelocities(Teuc
           muParserX = (*x)[localNodeID*3];
           muParserY = (*x)[localNodeID*3 + 1];
           muParserZ = (*x)[localNodeID*3 + 2];
-          try {
+          try{
             (*v)[localNodeID*3 + coord] = muParser.Eval();
           }
           catch (mu::Parser::exception_type &e)

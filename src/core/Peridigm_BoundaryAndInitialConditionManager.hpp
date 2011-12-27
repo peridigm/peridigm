@@ -80,6 +80,7 @@ namespace PeridigmNS {
  * Nix initial_conditions directory?
  * Move all muParser/randomNumber stuff out of Peridigm.cpp, into BC/IC classes, don't forget CMakeLists.txt
  * Should we have separate managers for boundary and initial conditions?
+ * Change "all node sets" to "all blocks"
  * 
  * Initial velocity:  Applied to mothership vector once
  * Initial displacments:  Applied to mothership vector once
@@ -98,14 +99,19 @@ namespace PeridigmNS {
   class BoundaryAndInitialConditionManager {
   public:
 
-    //! Constructor
+    //! Constructor.
     BoundaryAndInitialConditionManager(const Teuchos::ParameterList& boundaryAndInitialConditionParams);
 
-    //! Destructor
+    //! Destructor.
     ~BoundaryAndInitialConditionManager(){}
 
     //! Initialize node sets, etc.
     void initialize(Teuchos::RCP<AbstractDiscretization> discretization);
+
+    //! Apply initial displacements.
+    void applyInitialDisplacements(Teuchos::RCP<Epetra_Vector> x,
+                                   Teuchos::RCP<Epetra_Vector> u,
+                                   Teuchos::RCP<Epetra_Vector> y);
 
     //! Apply initial velocities.
     void applyInitialVelocities(Teuchos::RCP<const Epetra_Vector> x,
