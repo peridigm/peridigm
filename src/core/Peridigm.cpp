@@ -202,7 +202,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   boundaryAndInitialConditionManager->applyInitialVelocities(x, v);
 
   // apply initial displacements
-  applyInitialDisplacements();
+  boundaryAndInitialConditionManager->applyInitialDisplacements(x, u, y);
 
   // Initialize material models
   // Initialization functions require valid initial values, e.g. velocities and displacements.
@@ -360,90 +360,6 @@ void PeridigmNS::Peridigm::initializeNodeSets(Teuchos::RCP<Teuchos::ParameterLis
     TEST_FOR_EXCEPT_MSG(nodeSets->find(name) != nodeSets->end(), "**** Duplicate node set found: " + name + "\n");
     vector<int>& nodeList = it->second;
     (*nodeSets)[name] = nodeList;
-  }
-}
-
-void PeridigmNS::Peridigm::applyInitialDisplacements() {
-
-  TEST_FOR_EXCEPT_MSG(!threeDimensionalMap->SameAs(u->Map()),
-                      "Peridigm::applyInitialDisplacements():  Inconsistent displacement vector map.\n");
-
-  Teuchos::ParameterList& problemParams = peridigmParams->sublist("Problem");
-  Teuchos::ParameterList& bcParams = problemParams.sublist("Boundary Conditions");
-  Teuchos::ParameterList::ConstIterator it;
-
-  // apply the initial conditions
-  for(it = bcParams.begin() ; it != bcParams.end() ; it++){
-    const string & name = it->first;
-    size_t position = name.find("Initial Displacement");
-    if(position != string::npos){
-      Teuchos::ParameterList & boundaryConditionParams = Teuchos::getValue<Teuchos::ParameterList>(it->second);
-      string nodeSet = boundaryConditionParams.get<string>("Node Set");
-      string type = boundaryConditionParams.get<string>("Type");
-      string coordinate = boundaryConditionParams.get<string>("Coordinate");
-      string function = boundaryConditionParams.get<string>("Value");
-
-      int coord = 0;
-      if(coordinate == "y" || coordinate == "Y")
-        coord = 1;
-      if(coordinate == "z" || coordinate == "Z")
-        coord = 2;
-
-      // Set up muParser parser
-      mu::Parser p;
-      // Allow user to define x,y,z to be the x,y,z coords of particle
-      double xpos,ypos,zpos;
-      try {
-        p.DefineVar("x", &xpos);
-        p.DefineVar("y", &ypos);
-        p.DefineVar("z", &zpos);
-        p.DefineVar("t", &timeCurrent);
-        p.DefineFun(_T("rnd"), mu::Rnd, false);
-        p.SetExpr(function);
-      } 
-      catch (mu::Parser::exception_type &e)
-        TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-
-      if (nodeSet == "All") { // Apply initial position to all locally-owned nodes
-        for(int localNodeID = 0; localNodeID < x->MyLength(); localNodeID++) {
-          xpos = (*x)[localNodeID*3];
-          ypos = (*x)[localNodeID*3 + 1];
-          zpos = (*x)[localNodeID*3 + 2];
-          try {
-            (*u)[localNodeID*3 + coord] = p.Eval();
-          }
-          catch (mu::Parser::exception_type &e)
-          TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-        }
-      }
-      else { // Apply initial position to specific node set
-        // apply initial displacement boundary conditions to locally-owned nodes
-        TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
-        vector<int> & nodeList = (*nodeSets)[nodeSet];
-        for(unsigned int i=0 ; i<nodeList.size() ; i++){
-          int localNodeID = threeDimensionalMap->LID(nodeList[i]);
-          if(localNodeID != -1) {
-            xpos = (*x)[localNodeID*3];
-            ypos = (*x)[localNodeID*3 + 1];
-            zpos = (*x)[localNodeID*3 + 2];
-            try {
-              (*u)[localNodeID*3 + coord] = p.Eval();
-            }
-            catch (mu::Parser::exception_type &e)
-              TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-          }
-        }
-      }
-    }
-  }
-
-  // Update curcoord field to be consistent with initial displacement
-  y->Update(1.0, *x, 1.0, *u, 0.0);
-
-  // Fill the dataManagers with initial displacement, position data
-  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    blockIt->importData(*u, Field_NS::DISPL3D, Field_ENUM::STEP_N, Insert);
-    blockIt->importData(*y, Field_NS::CURCOORD3D, Field_ENUM::STEP_N, Insert);
   }
 }
 
