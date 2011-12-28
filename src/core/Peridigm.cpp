@@ -496,15 +496,6 @@ void PeridigmNS::Peridigm::executeExplicit() {
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   workset->timeStep = timeStep;
 
-  // Copy data from mothership vectors to overlap vectors in data manager
-  PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    blockIt->importData(*u, Field_NS::DISPL3D,    Field_ENUM::STEP_NP1, Insert);
-    blockIt->importData(*y, Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1, Insert);
-    blockIt->importData(*v, Field_NS::VELOC3D,    Field_ENUM::STEP_NP1, Insert);
-  }
-  PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
-
   Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
   Teuchos::RCP<Teuchos::ParameterList> verletParams = sublist(solverParams, "Verlet", true);
   double timeInitial = solverParams->get("Initial Time", 0.0);
@@ -528,11 +519,25 @@ void PeridigmNS::Peridigm::executeExplicit() {
   a->ExtractView( &aptr );
   int length = a->MyLength();
 
-  // Evaluate force in initial configuration for use in first timestep
+  // Set the prescribed displacements (allow for nonzero initial displacements).
+  // Then back compute the displacement vector.  Leave the velocity as zero.
+  // \todo How do we really want to handle nonzero initial displacements?
+//   boundaryAndInitialConditionManager->applyKinematicBC_SetDisplacement(timeInitial, x, u);
+//   for(int i=0 ; i<u->MyLength() ; ++i)
+//     (*y)[i] += (*u)[i];
+
+  // Copy data from mothership vectors to overlap vectors in data manager
+  PeridigmNS::Timer::self().startTimer("Gather/Scatter");
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    blockIt->importData(*u, Field_NS::DISPL3D,    Field_ENUM::STEP_NP1, Insert);
+    blockIt->importData(*y, Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1, Insert);
+    blockIt->importData(*v, Field_NS::VELOC3D,    Field_ENUM::STEP_NP1, Insert);
+  }
+  PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
   // \todo The velocity copied into the DataManager is actually the midstep velocity, not the NP1 velocity; this can be fixed by creating a midstep velocity field in the DataManager and setting the NP1 value as invalid.
 
-  // Update forces based on initial displacements
+  // Evaluate force in initial configuration for use in first timestep
   PeridigmNS::Timer::self().startTimer("Model Evaluator");
   modelEvaluator->evalModel(workset);
   PeridigmNS::Timer::self().stopTimer("Model Evaluator");
@@ -581,6 +586,9 @@ void PeridigmNS::Peridigm::executeExplicit() {
 
   for(int step=1; step<=nsteps; step++){
 
+    double timePrevious = timeCurrent;
+    timeCurrent = timeInitial + (step*dt);
+
     if((step-1)%displayTrigger==0)
       displayProgress("Explicit time integration", (step-1)*100.0/nsteps);
 
@@ -602,6 +610,11 @@ void PeridigmNS::Peridigm::executeExplicit() {
     // V^{n+1/2} = V^{n} + (dt/2)*A^{n}
     //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
     blas.AXPY(length, dt2, aptr, vptr, 1, 1);
+
+    // Set the velocities for dof with kinematic boundary conditions.
+    // This will propagate through the Verlet integrator and result in the proper
+    // displacement boundary conditions on y and consistent values for v and u.
+    boundaryAndInitialConditionManager->applyKinematicBC_SetVelocity(timeCurrent, timePrevious, x, v);
 
     // Y^{n+1} = X_{o} + U^{n} + (dt)*V^{n+1/2}
     // \todo Replace with blas call
@@ -673,11 +686,8 @@ void PeridigmNS::Peridigm::executeExplicit() {
     //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
     blas.AXPY(length, dt2, aptr, vptr, 1, 1);
 
-    timeCurrent = timeInitial + (step*dt);
-
     PeridigmNS::Timer::self().startTimer("Output");
     this->synchDataManagers();
-
     outputManager->write(blocks, timeCurrent);
     PeridigmNS::Timer::self().stopTimer("Output");
 
@@ -792,7 +802,6 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
       PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
       boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
       boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndPutOnesOnDiagonal(tangent);
-
       tangent->Scale(-1.0);
 
       /* 

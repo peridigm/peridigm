@@ -79,7 +79,8 @@ namespace PeridigmNS {
  * Move all muParser/randomNumber stuff out of Peridigm.cpp, into BC/IC classes, don't forget CMakeLists.txt
  * Should we have separate managers for boundary and initial conditions?
  * Change "all node sets" to "all blocks"
- * 
+ * How do we really want to handle nonzero initial displacements? 
+ *
  * Initial velocity:  Applied to mothership vector once
  * Initial displacments:  Applied to mothership vector once
  * Prescribed displacement:  Applied to mothership vector, tangent, and displacement increment for QS/TD?
@@ -115,7 +116,24 @@ namespace PeridigmNS {
     void applyInitialVelocities(Teuchos::RCP<const Epetra_Vector> x,
                                 Teuchos::RCP<Epetra_Vector> v);
 
-    //! Set displacement increment in rows corresponding to kinematic boundary conditions; intended for use with deltaU vector in quasi-static time integration.
+    /** \brief Set velocity in rows corresponding to kinematic boundary conditions.
+     ** Intended for use with velocity vector in explicit time integration such that
+     ** the explicit integration scheme will propagate these values through to the
+     ** displacement and current coordinate vectors. **/
+    void applyKinematicBC_SetVelocity(double timeCurrent,
+                                      double timePrevious,
+                                      Teuchos::RCP<const Epetra_Vector> x,
+                                      Teuchos::RCP<Epetra_Vector> vec);
+
+    /** \brief Set displacement in rows corresponding to kinematic boundary conditions.
+     ** Intended use is setting nonzero displacements at time zero. **/
+    void applyKinematicBC_SetDisplacement(double timeCurrent,
+                                          Teuchos::RCP<const Epetra_Vector> x,
+                                          Teuchos::RCP<Epetra_Vector> vec);
+
+
+    /** \brief Set displacement increment in rows corresponding to kinematic boundary conditions.
+     ** Intended for use with displacement increment vector in quasi-static time integration. **/
     void applyKinematicBC_SetDisplacementIncrement(double timeCurrent,
                                                    double timePrevious,
                                                    Teuchos::RCP<const Epetra_Vector> x,
@@ -147,6 +165,14 @@ namespace PeridigmNS {
     double muParserZ;
     double muParserT;
     //@}
+
+    //! Set either a displacement or a displacement increment.
+    void setVectorValues(double timeCurrent,
+                         double timePrevious,
+                         Teuchos::RCP<const Epetra_Vector> x,
+                         Teuchos::RCP<Epetra_Vector> vec,
+                         bool setIncrement,
+                         double multiplier);
 
   private:
 
