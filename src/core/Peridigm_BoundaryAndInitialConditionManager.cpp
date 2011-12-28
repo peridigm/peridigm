@@ -229,76 +229,34 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialVelocities(Teuc
   }
 }
 
-// update deltaU for nodes with kinematic BC, need loadIncrement
-// Add functionality to set BC in explicit dynamics, do not use load increment
+void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_SetDisplacement(double timeCurrent,
+                                                                                      Teuchos::RCP<const Epetra_Vector> x,
+                                                                                      Teuchos::RCP<Epetra_Vector> vec)
+{
+  double timePrevious = 0.0;
+  bool setIncrement = false;
+  double multiplier = 1.0;
+  setVectorValues(timeCurrent, timePrevious, x, vec, setIncrement, multiplier);
+}
+
+void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_SetVelocity(double timeCurrent,
+                                                                                  double timePrevious,
+                                                                                  Teuchos::RCP<const Epetra_Vector> x,
+                                                                                  Teuchos::RCP<Epetra_Vector> vec)
+{
+  bool setIncrement = true;
+  double multiplier = 1.0/(timeCurrent - timePrevious);
+  setVectorValues(timeCurrent, timePrevious, x, vec, setIncrement, multiplier);
+}
 
 void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_SetDisplacementIncrement(double timeCurrent,
                                                                                                double timePrevious,
                                                                                                Teuchos::RCP<const Epetra_Vector> x,
                                                                                                Teuchos::RCP<Epetra_Vector> vec)
 {
-  const Epetra_BlockMap& threeDimensionalMap = vec->Map();
-
-  // apply the kinematic boundary conditions
-  Teuchos::ParameterList::ConstIterator it;
-  for(it = params.begin() ; it != params.end() ; it++){
-    const string & name = it->first;
-    size_t position = name.find("Prescribed Displacement");
-    if(position != string::npos){
-      Teuchos::ParameterList & boundaryConditionParams = Teuchos::getValue<Teuchos::ParameterList>(it->second);
-      string nodeSet = boundaryConditionParams.get<string>("Node Set");
-      string type = boundaryConditionParams.get<string>("Type");
-      string coordinate = boundaryConditionParams.get<string>("Coordinate");
-      string function = boundaryConditionParams.get<string>("Value");
-
-      try{
-        muParser.SetExpr(function);
-      }
-      catch (mu::Parser::exception_type &e)
-        TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-
-      int coord = 0;
-      if(coordinate == "y" || coordinate == "Y")
-        coord = 1;
-      if(coordinate == "z" || coordinate == "Z")
-        coord = 2;
-
-      // apply kinematic boundary conditions to locally-owned nodes
-      TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
-      vector<int> & nodeList = (*nodeSets)[nodeSet];
-      for(unsigned int i=0 ; i<nodeList.size() ; i++){
-
-        // set entry in residual vector equal to the displacement increment for the kinematic bc
-        // this will cause the solution procedure to solve for the correct U at the bc
-
-        int localNodeID = threeDimensionalMap.LID(nodeList[i]);
-        if(!vec.is_null() && localNodeID != -1){
-          // set values for parser
-          muParserX = (*x)[localNodeID*3];
-          muParserY = (*x)[localNodeID*3 + 1];
-          muParserZ = (*x)[localNodeID*3 + 2];
-
-          double previousValue = 0.0;
-          muParserT = timePrevious;
-          try {
-            previousValue = muParser.Eval();
-          }
-          catch (mu::Parser::exception_type &e)
-            TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-
-          double currentValue = 0.0;
-          muParserT = timeCurrent;
-          try {
-            currentValue = muParser.Eval();
-          }
-          catch (mu::Parser::exception_type &e)
-            TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-
-          (*vec)[localNodeID*3 + coord] = currentValue - previousValue;
-        }
-      }
-    }
-  }
+  bool setIncrement = true;
+  double multiplier = 1.0;
+  setVectorValues(timeCurrent, timePrevious, x, vec, setIncrement, multiplier);
 }
 
 void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZeros(Teuchos::RCP<Epetra_Vector> vec)
@@ -388,6 +346,80 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
           // \todo Do the bookkeeping to send in data only for locations that actually exist in the matrix structure.
           mat->ReplaceMyValues(localRowID, mat->NumMyCols(), &jacobianRow[0], &jacobianIndices[0]);
           jacobianRow[localColID] = 0.0;
+        }
+      }
+    }
+  }
+}
+
+
+void PeridigmNS::BoundaryAndInitialConditionManager::setVectorValues(double timeCurrent,
+                                                                     double timePrevious,
+                                                                     Teuchos::RCP<const Epetra_Vector> x,
+                                                                     Teuchos::RCP<Epetra_Vector> vec,
+                                                                     bool setIncrement,
+                                                                     double multiplier)
+{
+  const Epetra_BlockMap& threeDimensionalMap = vec->Map();
+
+  // apply the kinematic boundary conditions
+  Teuchos::ParameterList::ConstIterator it;
+  for(it = params.begin() ; it != params.end() ; it++){
+    const string & name = it->first;
+    size_t position = name.find("Prescribed Displacement");
+    if(position != string::npos){
+      Teuchos::ParameterList & boundaryConditionParams = Teuchos::getValue<Teuchos::ParameterList>(it->second);
+      string nodeSet = boundaryConditionParams.get<string>("Node Set");
+      string type = boundaryConditionParams.get<string>("Type");
+      string coordinate = boundaryConditionParams.get<string>("Coordinate");
+      string function = boundaryConditionParams.get<string>("Value");
+
+      try{
+        muParser.SetExpr(function);
+      }
+      catch (mu::Parser::exception_type &e)
+        TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+
+      int coord = 0;
+      if(coordinate == "y" || coordinate == "Y")
+        coord = 1;
+      if(coordinate == "z" || coordinate == "Z")
+        coord = 2;
+
+      // apply kinematic boundary conditions to locally-owned nodes
+      TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
+      vector<int> & nodeList = (*nodeSets)[nodeSet];
+      for(unsigned int i=0 ; i<nodeList.size() ; i++){
+
+        // set entry in residual vector equal to the displacement increment for the kinematic bc
+        // this will cause the solution procedure to solve for the correct U at the bc
+
+        int localNodeID = threeDimensionalMap.LID(nodeList[i]);
+        if(!vec.is_null() && localNodeID != -1){
+          // set values for parser
+          muParserX = (*x)[localNodeID*3];
+          muParserY = (*x)[localNodeID*3 + 1];
+          muParserZ = (*x)[localNodeID*3 + 2];
+
+          double previousValue = 0.0;
+          if(setIncrement){
+            muParserT = timePrevious;
+            try {
+              previousValue = muParser.Eval();
+            }
+            catch (mu::Parser::exception_type &e)
+              TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+          }
+
+          double currentValue = 0.0;
+          muParserT = timeCurrent;
+          try {
+            currentValue = muParser.Eval();
+          }
+          catch (mu::Parser::exception_type &e)
+            TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+
+          (*vec)[localNodeID*3 + coord] = (currentValue - previousValue)*multiplier ;
         }
       }
     }

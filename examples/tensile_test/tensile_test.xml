@@ -42,7 +42,7 @@
         <Parameter name="Type" type="string" value="Prescribed Displacement"/>
 	    <Parameter name="Node Set" type="string" value="nodelist_2"/>
         <Parameter name="Coordinate" type="string" value="y"/>
-        <Parameter name="Value" type="string" value="0.001005502"/>
+        <Parameter name="Value" type="string" value="0.001005502*t"/>
 	  </ParameterList>
     </ParameterList>
   </ParameterList>
