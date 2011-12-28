@@ -115,11 +115,11 @@ namespace PeridigmNS {
     void applyInitialVelocities(Teuchos::RCP<const Epetra_Vector> x,
                                 Teuchos::RCP<Epetra_Vector> v);
 
-    void applyKinematicBC(double loadIncrement,
-                          double time,
-                          Teuchos::RCP<const Epetra_Vector> x,
-                          Teuchos::RCP<Epetra_Vector> vec,
-                          Teuchos::RCP<Epetra_FECrsMatrix> mat);
+    //! Set displacement increment in rows corresponding to kinematic boundary conditions; intended for use with deltaU vector in quasi-static time integration.
+    void applyKinematicBC_SetDisplacementIncrement(double timeCurrent,
+                                                   double timePrevious,
+                                                   Teuchos::RCP<const Epetra_Vector> x,
+                                                   Teuchos::RCP<Epetra_Vector> vec);
 
     //! Set rows corresponding to kinematic boundary conditions to zero.
     void applyKinematicBC_InsertZeros(Teuchos::RCP<Epetra_Vector> vec);

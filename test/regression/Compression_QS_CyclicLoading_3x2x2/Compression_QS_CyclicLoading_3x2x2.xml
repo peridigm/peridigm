@@ -40,7 +40,7 @@
         <Parameter name="Type" type="string" value="Prescribed Displacement"/>
 	    <Parameter name="Node Set" type="string" value="Max X Node Set"/>
         <Parameter name="Coordinate" type="string" value="x"/>
-        <Parameter name="Value" type="string" value="-sin(2*3.14159*t/0.00005)"/>
+        <Parameter name="Value" type="string" value="-0.1*sin(3.1415926553589793*t/0.00005)"/>
 	  </ParameterList>
       <ParameterList name="Prescribed Displacement Y Axis">
         <Parameter name="Type" type="string" value="Prescribed Displacement"/>

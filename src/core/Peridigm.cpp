@@ -751,20 +751,22 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
   outputManager->write(blocks, timeCurrent);
   PeridigmNS::Timer::self().stopTimer("Output");
 
+  double timeCurrent = timeInitial;
+  double timePrevious = timeInitial;
+  double timeIncrement = (timeFinal-timeInitial)/double(numLoadSteps);
+
   for(int step=0; step<numLoadSteps ; step++){
 
-    double loadIncrement = 1.0/double(numLoadSteps);
-    double dt = (timeFinal - timeInitial)*loadIncrement;
-    *timeStep = dt;
-    
     if(peridigmComm->MyPID() == 0)
-      cout << "Load step " << step+1 << ", load increment = " << loadIncrement << ", time step = " << dt << ", current time = " << timeCurrent << endl;
+      cout << "Load step " << step+1 << ", current time = " << timeCurrent << ", time increment = " << timeIncrement << endl;
 
-    timeCurrent = timeInitial + (step+1)*dt;
+    timePrevious = timeCurrent;
+    timeCurrent = timeInitial + (step+1)*timeIncrement;
+    *timeStep = timeIncrement;
 
     // Update nodal positions for nodes with kinematic B.C.
     deltaU->PutScalar(0.0);
-    boundaryAndInitialConditionManager->applyKinematicBC(loadIncrement, timeCurrent, x, deltaU, Teuchos::RCP<Epetra_FECrsMatrix>());
+    boundaryAndInitialConditionManager->applyKinematicBC_SetDisplacementIncrement(timeCurrent, timePrevious, x, deltaU);
 
     // Set the current position
     // \todo We probably want to rework this so that the material models get valid x, u, and y values.
