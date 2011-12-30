@@ -34,7 +34,6 @@ set(Peridigm_SOURCES
     ${MATERIALS_DIR}/Peridigm_MaterialFactory.cpp
     ${MATERIALS_DIR}/Peridigm_LinearElasticIsotropicMaterial.cpp
     ${MATERIALS_DIR}/Peridigm_IsotropicElasticPlasticMaterial.cpp
-    ${MATERIALS_DIR}/Peridigm_IsotropicHardeningPlasticMaterial.cpp
     ${MATERIALS_DIR}/Peridigm_ViscoelasticStandardLinearSolid.cpp
     ${MATERIALS_DIR}/Peridigm_DamageModelFactory.cpp
     ${MATERIALS_DIR}/Peridigm_CriticalStretchDamageModel.cpp
