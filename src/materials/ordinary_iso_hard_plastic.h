@@ -1,4 +1,4 @@
-/*! \file Peridigm_MaterialFactory.hpp */
+/*! \file ordinary_iso_hard_plastic.h */
 
 //@HEADER
 // ************************************************************************
@@ -44,37 +44,81 @@
 //
 // ************************************************************************
 //@HEADER
+#ifndef ORDINARY_ISO_HARD_PLASTIC_H_
+#define ORDINARY_ISO_HARD_PLASTIC_H_
 
-#include <Teuchos_TestForException.hpp>
-#include "Peridigm_MaterialFactory.hpp"
-#include "Peridigm_LinearElasticIsotropicMaterial.hpp"
-#include "Peridigm_IsotropicElasticPlasticMaterial.hpp"
-#include "Peridigm_IsotropicHardeningPlasticMaterial.hpp"
-#include "Peridigm_ViscoelasticStandardLinearSolid.hpp"
+namespace MATERIAL_EVALUATION {
 
-Teuchos::RCP<PeridigmNS::Material>
-PeridigmNS::MaterialFactory::create(Teuchos::RCP<const Teuchos::ParameterList>& materialParams)
-{
-  Teuchos::RCP<PeridigmNS::Material> materialModel;
+double updateLambdaNP1
+(
+		double tdNorm,
+		const double lambdaN,
+        double pointWiseYieldValue,
+	    double alpha,
+        double HARD_MODULUS,
+        double dt
+);
 
-  for(Teuchos::ParameterList::ConstIterator it = materialParams->begin() ; it != materialParams->end() ; it++){
-    const string& name = it->first;
-    const Teuchos::ParameterList& params = materialParams->sublist(name);
-    if (name == "Linear Elastic")
-      materialModel = Teuchos::rcp( new LinearElasticIsotropicMaterial(params) );
-    else if (name == "Elastic Plastic")
-      materialModel = Teuchos::rcp( new IsotropicElasticPlasticMaterial(params) );
-    else if (name == "Isotropic Hardening Plastic")
-      materialModel = Teuchos::rcp( new IsotropicHardeningPlasticMaterial(params) );
-    else if (name == "Viscoelastic Standard Linear Solid")
-      materialModel = Teuchos::rcp( new ViscoelasticStandardLinearSolid(params) );
-    else {
-      string invalidMaterial("\n**** Unrecognized material model: ");
-      invalidMaterial += name;
-      invalidMaterial += ", must be \"Linear Elastic\" or \"Elastic Plastic\" or \"Isotropic Hardening Plastic\" or \"Viscoelastic Standard Linear Solid\".\n";
-      TEST_FOR_EXCEPT_MSG(true, invalidMaterial);
-    }
-  }
-  
-  return materialModel;
+//template <typename ScalarT>
+//void updateLambdaNP1AD
+//(
+		//double tdNorm,
+		//const double lambdaN,
+        //double pointWiseYieldValue,
+		//double alpha,
+        //double HARD_MODULUS,
+        //double dt
+//);
+
+void computeInternalForceIsotropicHardeningPlastic
+(
+		const double* xOverlap,
+		const double *yNP1Overlap,
+		const double* mOwned,
+		const double* volumeOverlap,
+		const double* dilatationOwned,
+		const double* bondDamage,
+		const double* dsfOwned_,
+		const double* deviatoricPlasticExtensionStateN,
+		double* deviatoricPlasticExtensionStateNp1,
+		const double* lambdaN_,
+		double* lambdaNP1_,
+		double* fInternalOverlap,
+		const int*  localNeighborList,
+		int numOwnedPoints,
+		double BULK_MODULUS,
+		double SHEAR_MODULUS,
+		double HORIZON,
+		double yieldStress,
+		double HARD_MODULUS,
+		double dt
+);
+
+//template<typename ScalarT>
+//void computeInternalForceIsotropicElasticPlasticAD
+//(
+		//const double* xOverlap,
+		//const ScalarT* yNP1Overlap,
+		//const double* mOwned,
+		//const double* volumeOverlap,
+		//const ScalarT* dilatationOwned,
+		//const double* bondDamage,
+		//const double* dsfOwned,
+		//const double* deviatoricPlasticExtensionStateN,
+		//ScalarT* deviatoricPlasticExtensionStateNp1,
+		//const double* lambdaN,
+		//ScalarT* lambdaNP1,
+		//ScalarT* fInternalOverlap,
+		//const int* localNeighborList,
+		//int numOwnedPoints,
+		//double BULK_MODULUS,
+		//double SHEAR_MODULUS,
+		//double HORIZON,
+		//double yieldStress,
+		//double HARD_MODULUS,
+		//double dt
+//);
+
 }
+
+#endif /* ORDINARY_ISO_HARD_PLASTIC_H_ */
