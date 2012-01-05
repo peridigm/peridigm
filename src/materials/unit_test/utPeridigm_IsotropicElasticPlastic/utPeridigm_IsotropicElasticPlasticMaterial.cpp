@@ -48,14 +48,13 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
-#include "Peridigm_IsotropicHardeningPlasticMaterial.hpp"
+#include "Peridigm_IsotropicElasticPlasticMaterial.hpp"
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_SerialComm.h>
 #include "mesh_input/quick_grid/QuickGrid.h"
 #include "mesh_output/Field.h"
 #include "utilities/Array.h"
 #include "ordinary_utilities.h"
-#include "ordinary_iso_hard_plastic.h"
 #include "ordinary_elastic_plastic.h"
 #include <math.h>
 
@@ -188,19 +187,13 @@ Teuchos::ParameterList getParamList()
 	 * Shear Modulus
 	 */
 	double mu = E / 2 / (1+nu);
-    /*
-     * Isotropic Hardening Modulus
-     */
-    double H = 0.02;
-
 	Teuchos::ParameterList params;
 	params.set("Density", rho);
 	params.set("Bulk Modulus", K);
 	params.set("Shear Modulus", mu);
 	params.set("Horizon", horizon);
 	params.set("Yield Stress",Y);
-	params.set("Isotropic Hardening Modulus",H);
-	IsotropicHardeningPlasticMaterial mat(params);
+	IsotropicElasticPlasticMaterial mat(params);
 
     // \todo check field specs
 
@@ -265,7 +258,7 @@ QUICKGRID::QuickGridData getTwoPointGridData(){
 
 void runPureShear() {
 	Teuchos::ParameterList paramList = getParamList();
-	IsotropicHardeningPlasticMaterial mat(paramList);
+	IsotropicElasticPlasticMaterial mat(paramList);
 	QUICKGRID::QuickGridData pdGridData = getTwoPointGridData();
 	int numPoints = pdGridData.numPoints;
 	BOOST_CHECK(2 == numPoints);
@@ -278,7 +271,6 @@ void runPureShear() {
 	double MU = paramList.get<double>("Shear Modulus");
 	double DELTA = paramList.get<double>("Horizon");
 	double Y = paramList.get<double>("Yield Stress");
-	double H = paramList.get<double>("Isotropic Hardening Modulus");
 
 	/*
 	 * yield strain ~.0051 -- 1/2 the engineering strain -- not the same as the
@@ -412,7 +404,7 @@ void runPureShear() {
 			/*
 			 * Do not compute dilatation -- just set it to zero
 			 */
-			computeInternalForceIsotropicHardeningPlastic(x,y,m,vol,theta,bondState,dsfOwned,edpN,edpNP1,lambdaN,lambdaNP1,f,neigh,numPoints,K,MU,DELTA,Y,H);
+			computeInternalForceIsotropicElasticPlastic(x,y,m,vol,theta,bondState,dsfOwned,edpN,edpNP1,lambdaN,lambdaNP1,f,neigh,numPoints,K,MU,DELTA,Y);
 
 
 			/*
@@ -456,7 +448,7 @@ bool init_unit_test_suite()
   // Add a suite for each processor in the test
   bool success = true;
 
-  test_suite* proc = BOOST_TEST_SUITE("utPeridigm_IsotropicHardeningMaterial");
+  test_suite* proc = BOOST_TEST_SUITE("utPeridigm_IsotropicElasticPlasticMaterial");
   proc->add(BOOST_TEST_CASE(&runPureShear));
   framework::master_test_suite().add(proc);
 

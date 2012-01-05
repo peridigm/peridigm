@@ -299,7 +299,7 @@ void computeInternalForceIsotropicHardeningPlastic
 		}
 
 	}
-};
+}
 
 //template<typename ScalarT>
 //void computeInternalForceIsotropicHardeningPlasticAD
