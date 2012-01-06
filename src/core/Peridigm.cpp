@@ -789,7 +789,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
       step++;
       if(loadStepReductionFactor > 0)
         loadStepReductionFactor--;
-      numRemainingSubsteps = pow(2, loadStepReductionFactor);
+      numRemainingSubsteps = pow(2.0, loadStepReductionFactor);
     }
 
     if(loadStepReductionFactor >= maxLoadStepReductionFactor){
@@ -800,7 +800,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
 
     // \todo Make sure floating-point errors don't get introduced into timeCurrent when employing adaptive time stepping.
 
-    double timeIncrement = nominalTimeIncrement / pow(2, loadStepReductionFactor);
+    double timeIncrement = nominalTimeIncrement / pow(2.0, loadStepReductionFactor);
     timeCurrent = timePrevious + timeIncrement;
     *timeStep = timeIncrement;
 
@@ -808,7 +808,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
       cout << "Load step " << step << ", current time = " << timePrevious << ", time increment = " << timeIncrement << endl;
     else if(peridigmComm->MyPID() == 0)
       cout << "Load step " << step << ", current time = " << timePrevious << ", time increment = " << timeIncrement << 
-        " (nominal step reduced by a factor of " << pow(2, loadStepReductionFactor) << ")" << endl;
+        " (nominal step reduced by a factor of " << pow(2.0, loadStepReductionFactor) << ")" << endl;
 
 
     // Update nodal positions for nodes with kinematic B.C.
