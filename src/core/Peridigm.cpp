@@ -879,9 +879,40 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
       PeridigmNS::Timer::self().stopTimer("Solve Linear System");
 
       if(isConverged == Belos::Converged){
+
+        // -- Try a poor-man's line search --
+
+        *scratch = *deltaU;
+
+        // Try some different values of alpha
+        double bestAlpha = 1.0;
+        double bestResidual = 1.0e50;
+        int numEvaluations = 40;
+
+        for(int i=0 ; i<numEvaluations ; ++i){
+
+          double alpha = 2.0*(i+1.0)/(double)numEvaluations;
+
+          for(int i=0 ; i<y->MyLength() ; ++i)
+            (*deltaU)[i] += alpha*(*lhs)[i];
+          for(int i=0 ; i<y->MyLength() ; ++i)
+            (*y)[i] = (*x)[i] + (*u)[i] + (*deltaU)[i];
+      
+          residualNorm = computeQuasiStaticResidual(residual);
+
+          *deltaU = *scratch;
+
+          if(residualNorm < bestResidual){
+            bestAlpha = alpha;
+            bestResidual = residualNorm;
+          }
+        }
+
+        // -- End poor-man's line search --
+
         // Apply increment to nodal positions
         for(int i=0 ; i<y->MyLength() ; ++i)
-          (*deltaU)[i] += (*lhs)[i];
+          (*deltaU)[i] += bestAlpha*(*lhs)[i];
         for(int i=0 ; i<y->MyLength() ; ++i)
           (*y)[i] = (*x)[i] + (*u)[i] + (*deltaU)[i];
       
@@ -1291,10 +1322,12 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
   boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
   double residualNorm2;
   residual->Norm2(&residualNorm2);
+  double residualNormInf;
+  residual->NormInf(&residualNormInf);
 
   PeridigmNS::Timer::self().stopTimer("Compute Residual");
 
-  return residualNorm2;
+  return residualNorm2 + 20.0*residualNormInf;
 }
 
 void PeridigmNS::Peridigm::computeImplicitJacobian(double beta) {
