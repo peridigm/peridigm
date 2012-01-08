@@ -108,6 +108,12 @@ namespace PeridigmNS {
 	//! Returns the density of the material.
 	virtual double Density() const { return m_density; }
 
+	//! Returns the bulk modulus of the material.
+	virtual double BulkModulus() const { return m_bulkModulus; }
+
+	//! Returns the horizon.
+	virtual double Horizon() const { return m_horizon; }
+
     //! Returns a vector of field specs that specify the variables associated with the material
     Teuchos::RCP< std::vector<Field_NS::FieldSpec> > VariableSpecs() const { return m_variableSpecs; }
 
@@ -168,6 +174,7 @@ namespace PeridigmNS {
 	double m_bulkModulus;
 	double m_shearModulus;
 	double m_density;
+    double m_horizon;
 
     // damage model
     Teuchos::RCP<DamageModel> m_damageModel;

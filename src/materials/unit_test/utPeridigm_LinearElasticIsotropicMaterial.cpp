@@ -64,6 +64,7 @@ void testStateVariableAccessors()
   params.set("Density", 7800.0);
   params.set("Bulk Modulus", 130.0e9);
   params.set("Shear Modulus", 78.0e9);
+  params.set("Horizon", 10.0);
   LinearElasticIsotropicMaterial mat(params);
 
   // \todo check field specs
@@ -77,6 +78,7 @@ void testTwoPts()
   params.set("Density", 7800.0);
   params.set("Bulk Modulus", 130.0e9);
   params.set("Shear Modulus", 78.0e9);
+  params.set("Horizon", 10.0);
   LinearElasticIsotropicMaterial mat(params);
 
   // arguments for calls to material model
@@ -183,6 +185,7 @@ void testEightPts()
   params.set("Density", 7800.0);
   params.set("Bulk Modulus", 130.0e9);
   params.set("Shear Modulus", 78.0e9);
+  params.set("Horizon", 10.0);
   LinearElasticIsotropicMaterial mat(params);
 
   // arguments for calls to material model
@@ -446,6 +449,7 @@ void testThreePts()
   params.set("Density", 7800.0);
   params.set("Bulk Modulus", 130.0e9);
   params.set("Shear Modulus", 78.0e9);
+  params.set("Horizon", 10.0);
   LinearElasticIsotropicMaterial mat(params);
 
   // arguments for calls to material model
@@ -652,6 +656,7 @@ void twoPointProbeJacobian()
   params.set("Density", 7800.0);
   params.set("Bulk Modulus", 130.0e9);
   params.set("Shear Modulus", 78.0e9);
+  params.set("Horizon", 10.0);
   LinearElasticIsotropicMaterial mat(params);
 
   // arguments for calls to material model
@@ -725,6 +730,7 @@ void twoPointProbeJacobianJAM()
   params.set("Density", 7800.0);  // \todo Fix these units, if needed.
   params.set("Bulk Modulus", 130000.0);
   params.set("Shear Modulus", 78000.0);
+  params.set("Horizon", 10.0);
   LinearElasticIsotropicMaterial mat(params);
 
   // arguments for calls to material model

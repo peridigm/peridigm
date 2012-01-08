@@ -9,6 +9,7 @@ set(utPeridigm_SOURCES
     ${CORE_DIR}/Peridigm_SerialMatrix.cpp
     ${CORE_DIR}/Peridigm_Block.cpp
     ${CORE_DIR}/Peridigm_BoundaryAndInitialConditionManager.cpp
+    ${CORE_DIR}/Peridigm_CriticalTimeStep.cpp
     ${CORE_DIR}/Peridigm_ModelEvaluator.cpp
     ${CORE_DIR}/PHAL_Dimension.cpp
     ${CORE_DIR}/PHAL_PeridigmTraits.cpp

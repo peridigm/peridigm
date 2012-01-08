@@ -76,6 +76,12 @@ namespace PeridigmNS {
 	//! Returns the density of the material.
 	virtual double Density() const = 0;
 
+	//! Returns the bulk modulus of the material.
+	virtual double BulkModulus() const = 0;
+
+	//! Returns the horizon.
+	virtual double Horizon() const = 0;
+
     //! Returns a vector of field specs that specify the variables associated with the material
     virtual Teuchos::RCP< std::vector<Field_NS::FieldSpec> > VariableSpecs() const = 0;
 

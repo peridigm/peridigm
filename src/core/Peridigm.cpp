@@ -77,6 +77,7 @@
 #include "Peridigm_OutputManager_VTK_XML.hpp"
 #include "Peridigm_ComputeManager.hpp"
 #include "Peridigm_BoundaryAndInitialConditionManager.hpp"
+#include "Peridigm_CriticalTimeStep.hpp"
 #include "Peridigm_RandomNumber.hpp"
 #include "Peridigm_Timer.hpp"
 #include "materials/Peridigm_MaterialFactory.hpp"
@@ -499,10 +500,47 @@ void PeridigmNS::Peridigm::executeExplicit() {
 
   Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
   Teuchos::RCP<Teuchos::ParameterList> verletParams = sublist(solverParams, "Verlet", true);
+
+  // Compute the approximate critical time step
+  double criticalTimeStep = 1.0e50;
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    double blockCriticalTimeStep = ComputeCriticalTimeStep(*peridigmComm, *blockIt);
+    if(blockCriticalTimeStep < criticalTimeStep)
+      criticalTimeStep = blockCriticalTimeStep;
+  }
+  double globalCriticalTimeStep;
+  peridigmComm->MinAll(&criticalTimeStep, &globalCriticalTimeStep, 1);
+  double dt = globalCriticalTimeStep;
+  // Query for a user-supplied time step, which overrides the computed value
+  double userDefinedTimeStep = 0.0;
+  if(verletParams->isParameter("Fixed dt")){
+    userDefinedTimeStep = verletParams->get<double>("Fixed dt");
+    dt = userDefinedTimeStep;
+  }
+  // Multiply the time step by the user-supplied safety factor, if provided
+  double safetyFactor = 1.0;
+  if(verletParams->isParameter("Safety Factor")){
+    safetyFactor = verletParams->get<double>("Safety Factor");
+    dt *= safetyFactor;
+  }
+  // Write time step information to stdout
+  if(peridigmComm->MyPID() == 0){
+    cout << "Time step (seconds):" << endl;
+    cout << "  Stable time step    " << globalCriticalTimeStep << endl;
+    if(verletParams->isParameter("Fixed dt"))
+      cout << "  User time step      " << dt << endl;
+    else
+      cout << "  User time step      not provided" << endl;
+    if(verletParams->isParameter("Safety Factor"))
+      cout << "  Safety factor       " << safetyFactor << endl;
+    else
+      cout << "  Safety factor       not provided " << endl;
+    cout << "  Time step           " << dt << "\n" << endl;
+  }
+
   double timeInitial = solverParams->get("Initial Time", 0.0);
   double timeFinal   = solverParams->get("Final Time", 1.0);
   timeCurrent = timeInitial;
-  double dt = verletParams->get("Fixed dt", 1.0);
   *timeStep = dt;
   double dt2 = dt/2.0;
   int nsteps = (int)floor((timeFinal-timeInitial)/dt);
