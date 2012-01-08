@@ -807,17 +807,21 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
 
   int step = 0;
   int loadStepReductionFactor = 0;
-  int maxLoadStepReductionFactor = 6;
+  int maxLoadStepReductionFactor = 4;
   bool reduceLoadStep = false;
   int numRemainingSubsteps = 1;
 
   while(step < numLoadSteps){
 
+    // \todo Make sure floating-point errors don't get introduced into timeCurrent when employing adaptive time stepping.
+
     if(!reduceLoadStep){
+      // Previous solve converged, no need to reduce load step, just forge ahead
       numRemainingSubsteps--;
       timePrevious = timeCurrent;
     }
     else{
+      // Previous solve did not converge, reduce the load step
       loadStepReductionFactor++;
       numRemainingSubsteps *= 2;
     }
@@ -830,14 +834,6 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
       numRemainingSubsteps = pow(2.0, loadStepReductionFactor);
     }
 
-    if(loadStepReductionFactor >= maxLoadStepReductionFactor){
-      if(peridigmComm->MyPID() == 0)
-        cout << "Error:  Load step reduction failed, aborting analysis...\n" << endl;
-      break;
-    }
-
-    // \todo Make sure floating-point errors don't get introduced into timeCurrent when employing adaptive time stepping.
-
     double timeIncrement = nominalTimeIncrement / pow(2.0, loadStepReductionFactor);
     timeCurrent = timePrevious + timeIncrement;
     *timeStep = timeIncrement;
@@ -847,7 +843,6 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
     else if(peridigmComm->MyPID() == 0)
       cout << "Load step " << step << ", current time = " << timePrevious << ", time increment = " << timeIncrement << 
         " (nominal step reduced by a factor of " << pow(2.0, loadStepReductionFactor) << ")" << endl;
-
 
     // Update nodal positions for nodes with kinematic B.C.
     deltaU->PutScalar(0.0);
@@ -925,11 +920,11 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
         // Try some different values of alpha
         double bestAlpha = 1.0;
         double bestResidual = 1.0e50;
-        int numEvaluations = 40;
+        int numEvaluations = 55;
 
         for(int i=0 ; i<numEvaluations ; ++i){
 
-          double alpha = 2.0*(i+1.0)/(double)numEvaluations;
+          double alpha = 1.1*(i+1.0)/(double)numEvaluations;
 
           for(int i=0 ; i<y->MyLength() ; ++i)
             (*deltaU)[i] += alpha*(*lhs)[i];
@@ -962,6 +957,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
       else{
         if(peridigmComm->MyPID() == 0)
           cout << "\nWarning:  Belos linear solver failed to converge, reducing load step..." << endl;
+        residualNorm = 1.0e50;
         reduceLoadStep = true;
         break;
       }
@@ -971,6 +967,22 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
       if(peridigmComm->MyPID() == 0)
         cout << "\nWarning:  Nonlinear solver failed to converge, reducing load step..." << endl;
       reduceLoadStep = true;
+    }
+
+    // If the maximum allowable number of load step reductions has been reached and the residual
+    // is within a reasonable tolerance, then just accept the solution and forge ahead.
+    // If not, abort the analysis.
+    if(reduceLoadStep && loadStepReductionFactor >= maxLoadStepReductionFactor){
+      if(residualNorm < 100.0*absoluteTolerance){
+        reduceLoadStep = false;
+        if(peridigmComm->MyPID() == 0)
+          cout << "\nWarning:  Maximum allowable load step reductions has been reached, accepting current solution and progressing to next load step...\n" << endl;
+      }
+      else{
+        if(peridigmComm->MyPID() == 0)
+          cout << "\nError:  Maximum allowable load step reductions has been reached, aborting analysis...\n" << endl;
+        break;
+      }
     }
 
     if(!reduceLoadStep){
