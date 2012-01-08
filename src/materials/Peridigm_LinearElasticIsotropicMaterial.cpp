@@ -64,6 +64,7 @@ PeridigmNS::LinearElasticIsotropicMaterial::LinearElasticIsotropicMaterial(const
   m_bulkModulus = params.get<double>("Bulk Modulus");
   m_shearModulus = params.get<double>("Shear Modulus");
   m_density = params.get<double>("Density");
+  m_horizon = params.get<double>("Horizon");
 
   // set up vector of variable specs
   m_variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
