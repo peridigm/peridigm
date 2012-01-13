@@ -57,6 +57,9 @@
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_RCP.hpp>
 #include <Epetra_FECrsMatrix.h>
+#include <BelosLinearProblem.hpp>
+#include <BelosBlockCGSolMgr.hpp>
+#include <BelosEpetraAdapter.hpp>
 
 #include "Peridigm_Block.hpp"
 #include "Peridigm_AbstractDiscretization.hpp"
@@ -117,6 +120,22 @@ namespace PeridigmNS {
 
     //! Main routine to drive problem solution for quasistatics
     void executeQuasiStatic();
+
+    //! Set the preconditioner for the global linear system
+    void quasiStaticsSetPreconditioner(Belos::LinearProblem<double,Epetra_MultiVector,Epetra_Operator>& linearProblem);
+
+    //! Damp the tangent matrix by scaling the diagonal and adding a small value to each entry in the diagonal
+    void quasiStaticsDampTangent();
+
+    //! Solve the global linear system
+    Belos::ReturnType quasiStaticsSolveSystem(Teuchos::RCP<Epetra_Vector> residual,
+					      Teuchos::RCP<Epetra_Vector> lhs,
+					      Belos::LinearProblem<double,Epetra_MultiVector,Epetra_Operator>& linearProblem,
+					      Teuchos::RCP< Belos::SolverManager<double,Epetra_MultiVector,Epetra_Operator> >& belosSolver);
+
+    //! Perform line search
+    double quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> residual,
+				  Teuchos::RCP<Epetra_Vector> lhs);
 
     //! Main routine to drive problem solution with implicit time integration
     void executeImplicit();
@@ -188,7 +207,6 @@ namespace PeridigmNS {
     Teuchos::RCP<const Epetra_Vector> getForce() { return force; }
     Teuchos::RCP<const Epetra_Vector> getContactForce() { return contactForce; }
     Teuchos::RCP<const Epetra_Vector> getDeltaU() { return deltaU; }
-    Teuchos::RCP<const Epetra_Vector> getResidual() { return residual; }
     //@}
 
     //! @name Accessors for neighborhood data
@@ -325,9 +343,6 @@ namespace PeridigmNS {
 
     //! Global vector for delta u (used only in implicit time integration)
     Teuchos::RCP<Epetra_Vector> deltaU;
-
-    //! Global vector for residual (used only in implicit time integration)
-    Teuchos::RCP<Epetra_Vector> residual;
 
     //! Global scratch space vector
     Teuchos::RCP<Epetra_Vector> scratch;

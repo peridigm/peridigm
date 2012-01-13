@@ -57,9 +57,6 @@
 
 #include <boost/math/special_functions/fpclassify.hpp>
 
-#include <BelosBlockCGSolMgr.hpp>
-#include <BelosEpetraAdapter.hpp>
-#include <BelosLinearProblem.hpp>
 #include <Epetra_Import.h>
 #include <Epetra_LinearProblem.h>
 #include <EpetraExt_BlockMapOut.h>
@@ -811,7 +808,6 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
   bool reduceLoadStep = false;
   int numRemainingSubsteps = 1;
   Belos::ReturnType isConverged;
-  double dampedNewtonDiagonalScaleFactor = 1.0001;
 
   while(step < numLoadSteps){
 
@@ -866,10 +862,8 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
       if(peridigmComm->MyPID() == 0)
         cout << "  residual = " << residualNorm << endl;
 
-      // Damped Newton
       // If we reach 8 iterations of the nonlinear solver, switch to a damped Newton approach.
-      // Increasing the diagonal moves the solver toward a stepest-decent approach which will hurt the convergence
-      // rate but improve robustness.
+      // This should hurt the convergence rate but improve robustness.
       bool dampedNewton = false;
       if(solverIteration > 7){
 	dampedNewton = true;
@@ -888,102 +882,28 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
 	boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
 	boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndPutOnesOnDiagonal(tangent);
 	tangent->Scale(-1.0);
-	if(dampedNewton){
-	  Epetra_Vector diagonal(tangent->Map());
-	  tangent->ExtractDiagonalCopy(diagonal);
-	  diagonal.Scale(dampedNewtonDiagonalScaleFactor);
-	  tangent->ReplaceDiagonalValues(diagonal);
-	}
+	if(dampedNewton)
+	  quasiStaticsDampTangent();
       }
-      /*
-      // Preconditioner
-      Ifpack IFPFactory;
-      Teuchos::RCP<Ifpack_Preconditioner> Prec = Teuchos::rcp( IFPFactory.Create("IC", &(*tangent), 0) );
-      Teuchos::ParameterList ifpackList;
-      ifpackList.set("fact: level-of-fill", 1);
-      TEST_FOR_EXCEPT_MSG(Prec->SetParameters(ifpackList), 
-			  "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->SetParameters() returned nonzero error code.\n");
-      TEST_FOR_EXCEPT_MSG(Prec->Initialize(), 
-        "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->Initialize() returned nonzero error code.\n");
-      TEST_FOR_EXCEPT_MSG(Prec->Compute(), 
-			  "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->Compute() returned nonzero error code.\n");
-      // Create the Belos preconditioned operator from the Ifpack preconditioner.
-      // NOTE:  This is necessary because Belos expects an operator to apply the
-      //        preconditioner with Apply() NOT ApplyInverse().
-      Teuchos::RCP<Belos::EpetraPrecOp> belosPrec = Teuchos::rcp( new Belos::EpetraPrecOp( Prec ) );
-      linearProblem.setLeftPrec( belosPrec );
-      */
+
+      // Set the preconditioner
+      quasiStaticsSetPreconditioner(linearProblem);
+
       // Solve linear system
-      lhs->PutScalar(0.0);
-      linearProblem.setOperator(tangent);
-      bool isSet = linearProblem.setProblem(lhs, residual);
-      TEST_FOR_EXCEPT_MSG(!isSet, "**** Belos::LinearProblem::setProblem() returned nonzero error code.\n");
-      PeridigmNS::Timer::self().startTimer("Solve Linear System");
+      isConverged = quasiStaticsSolveSystem(residual, lhs, linearProblem, belosSolver);
 
-      try{
-	isConverged = belosSolver->solve();
-      }
-      catch(const std::exception &e){
-	if(peridigmComm->MyPID() == 0)
-	  cout << "\nWarning:  Belos linear solver aborted with " << Teuchos::typeName(e) << " exception\n\n" << e.what() << endl;
-	isConverged = Belos::Unconverged;
-
+      if(isConverged == Belos::Unconverged){
 	// Adjust the tangent and try again
 	if(peridigmComm->MyPID() == 0)
-	  cout << "\nAdding small term to diagonal and attempting to re-solve" << endl;
-	Epetra_Vector diagonal(tangent->Map());
-	tangent->ExtractDiagonalCopy(diagonal);
-	double diagonalNormInf;
-	diagonal.NormInf(&diagonalNormInf);
-	for(int i=0 ; i<diagonal.MyLength() ; ++i)
-	  diagonal[i] += 1.0e-4*diagonalNormInf;
-	tangent->ReplaceDiagonalValues(diagonal);
-	lhs->PutScalar(0.0);
-	linearProblem.setOperator(tangent);
-	bool isSet = linearProblem.setProblem(lhs, residual);
-	TEST_FOR_EXCEPT_MSG(!isSet, "**** Belos::LinearProblem::setProblem() returned nonzero error code.\n");
-	try{
-	  isConverged = belosSolver->solve();
-	}
-	catch(const std::exception &e){
-	  if(peridigmComm->MyPID() == 0)
-	    cout << "\nWarning:  Belos linear solver aborted with " << Teuchos::typeName(e) << " exception\n\n" << e.what() << endl;
-	  isConverged = Belos::Unconverged;
-	}
+	  cout << "  --attempting to resolve system with modified tangent matrix and no preconditioner--" << endl;
+	quasiStaticsDampTangent();
+	linearProblem.setLeftPrec( Teuchos::RCP<Belos::EpetraPrecOp>() );
+	isConverged = quasiStaticsSolveSystem(residual, lhs, linearProblem, belosSolver);
       }
-      PeridigmNS::Timer::self().stopTimer("Solve Linear System");
 
       if(isConverged == Belos::Converged){
 
-        // -- Try a poor-man's line search --
-
-        *scratch = *deltaU;
-
-        // Try some different values of alpha
-        double bestAlpha = 1.0;
-        double bestResidual = 1.0e50;
-        int numEvaluations = 55;
-
-        for(int i=0 ; i<numEvaluations ; ++i){
-
-          double alpha = 1.1*(i+1.0)/(double)numEvaluations;
-
-          for(int i=0 ; i<y->MyLength() ; ++i)
-            (*deltaU)[i] += alpha*(*lhs)[i];
-          for(int i=0 ; i<y->MyLength() ; ++i)
-            (*y)[i] = (*x)[i] + (*u)[i] + (*deltaU)[i];
-      
-          residualNorm = computeQuasiStaticResidual(residual);
-
-          *deltaU = *scratch;
-
-          if(residualNorm < bestResidual){
-            bestAlpha = alpha;
-            bestResidual = residualNorm;
-          }
-        }
-
-        // -- End poor-man's line search --
+	double alpha = quasiStaticsLineSearch(residual, lhs);
 
 	// Zero out the entries corresponding to the kinematic boundary conditions
 	// The solver should have returned zeros, but there may be small errors.
@@ -991,7 +911,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
 
         // Apply increment to nodal positions
         for(int i=0 ; i<y->MyLength() ; ++i)
-          (*deltaU)[i] += bestAlpha*(*lhs)[i];
+          (*deltaU)[i] += alpha*(*lhs)[i];
         for(int i=0 ; i<y->MyLength() ; ++i)
           (*y)[i] = (*x)[i] + (*u)[i] + (*deltaU)[i];
       
@@ -1055,6 +975,109 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
     if(peridigmComm->MyPID() == 0)
       cout << endl;
   }
+}
+
+void PeridigmNS::Peridigm::quasiStaticsSetPreconditioner(Belos::LinearProblem<double,Epetra_MultiVector,Epetra_Operator>& linearProblem) {
+  Ifpack IFPFactory;
+  Teuchos::RCP<Ifpack_Preconditioner> Prec = Teuchos::rcp( IFPFactory.Create("IC", &(*tangent), 0) );
+  Teuchos::ParameterList ifpackList;
+  ifpackList.set("fact: level-of-fill", 1);
+  TEST_FOR_EXCEPT_MSG(Prec->SetParameters(ifpackList), 
+		      "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->SetParameters() returned nonzero error code.\n");
+  TEST_FOR_EXCEPT_MSG(Prec->Initialize(), 
+		      "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->Initialize() returned nonzero error code.\n");
+  TEST_FOR_EXCEPT_MSG(Prec->Compute(), 
+		      "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->Compute() returned nonzero error code.\n");
+  // Create the Belos preconditioned operator from the Ifpack preconditioner.
+  // NOTE:  This is necessary because Belos expects an operator to apply the
+  //        preconditioner with Apply() NOT ApplyInverse().
+  Teuchos::RCP<Belos::EpetraPrecOp> belosPrec = Teuchos::rcp( new Belos::EpetraPrecOp( Prec ) );
+  linearProblem.setLeftPrec( belosPrec );
+}
+
+void PeridigmNS::Peridigm::quasiStaticsDampTangent() {
+
+  double scaleFactor = 1.0001;
+  double shiftFactor = 0.00001;
+
+  // Create a vector to store the diagonal
+  static Teuchos::RCP<Epetra_Vector> diagonal;
+  if(diagonal.is_null() || !diagonal->Map().SameAs(tangent->Map()))
+    diagonal = Teuchos::rcp(new Epetra_Vector(tangent->Map()));
+
+  // Extract the diagonal, modify it, and re-insert it into the tangent
+  tangent->ExtractDiagonalCopy(*diagonal);
+  diagonal->Scale(scaleFactor);
+  double diagonalNormInf;
+  diagonal->NormInf(&diagonalNormInf);
+  double* diagonalPtr;
+  diagonal->ExtractView(&diagonalPtr);
+  for(int i=0 ; i<diagonal->MyLength() ; ++i)
+    diagonalPtr[i] += shiftFactor*diagonalNormInf;
+  tangent->ReplaceDiagonalValues(*diagonal);
+}
+
+Belos::ReturnType PeridigmNS::Peridigm::quasiStaticsSolveSystem(Teuchos::RCP<Epetra_Vector> residual,
+								Teuchos::RCP<Epetra_Vector> lhs,
+								Belos::LinearProblem<double,Epetra_MultiVector,Epetra_Operator>& linearProblem,
+								Teuchos::RCP< Belos::SolverManager<double,Epetra_MultiVector,Epetra_Operator> >& belosSolver)
+{
+  Belos::ReturnType isConverged(Belos::Unconverged);
+
+  lhs->PutScalar(0.0);
+  linearProblem.setOperator(tangent);
+  bool isSet = linearProblem.setProblem(lhs, residual);
+  TEST_FOR_EXCEPT_MSG(!isSet, "**** Belos::LinearProblem::setProblem() returned nonzero error code.\n");
+  PeridigmNS::Timer::self().startTimer("Solve Linear System");
+  try{
+    isConverged = belosSolver->solve();
+  }
+  catch(const std::exception &e){
+    if(peridigmComm->MyPID() == 0)
+      cout << "Warning:  Belos linear solver aborted with " << Teuchos::typeName(e) << "." << endl; // can dump details by printing e.what()
+    isConverged = Belos::Unconverged;
+  }
+
+  return isConverged;
+}
+
+double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> residual,
+						    Teuchos::RCP<Epetra_Vector> lhs)
+{
+  *scratch = *deltaU;
+
+  double bestAlpha = 1.0;
+  double bestResidual = 1.0e50;
+  int numEvaluations = 55;
+
+  double *lhsPtr, *residualPtr, *deltaUPtr, *xPtr, *yPtr, *uPtr;
+  lhs->ExtractView(&lhsPtr);
+  residual->ExtractView(&residualPtr);
+  deltaU->ExtractView(&deltaUPtr);
+  x->ExtractView(&xPtr);
+  y->ExtractView(&yPtr);
+  u->ExtractView(&uPtr);
+
+  for(int i=0 ; i<numEvaluations+1 ; ++i){
+
+    double alpha = 1.1*i/(double)numEvaluations;
+
+    for(int i=0 ; i<y->MyLength() ; ++i)
+      deltaUPtr[i] += alpha*lhsPtr[i];
+    for(int i=0 ; i<y->MyLength() ; ++i)
+      yPtr[i] = xPtr[i] + uPtr[i] + deltaUPtr[i];
+      
+    double residualNorm = computeQuasiStaticResidual(residual);
+
+    *deltaU = *scratch;
+
+    if(residualNorm < bestResidual){
+      bestAlpha = alpha;
+      bestResidual = residualNorm;
+    }
+  }
+
+  return bestAlpha;
 }
 
 void PeridigmNS::Peridigm::executeImplicit() {
@@ -1407,13 +1430,14 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
 
   // copy the internal force to the residual vector
   // note that due to restrictions on CrsMatrix, these vectors have different (but equivalent) maps
+  TEST_FOR_EXCEPT_MSG(residual->MyLength() != force->MyLength(), "**** PeridigmNS::Peridigm::computeQuasiStaticResidual() incompatible vector lengths!\n");
   for(int i=0 ; i<force->MyLength() ; ++i)
     (*residual)[i] = (*force)[i];
 
   // convert force density to force
   for(int i=0 ; i<residual->MyLength() ; ++i)
     (*residual)[i] *= (*volume)[i/3];
-    
+
   // zero out the rows corresponding to kinematic boundary conditions and compute the residual
   boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
   double residualNorm2;
