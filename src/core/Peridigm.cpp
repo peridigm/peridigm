@@ -874,7 +874,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
       if(solverIteration > 7){
 	dampedNewton = true;
 	if(solverIteration == 8 && peridigmComm->MyPID() == 0)
-	  cout << "  --Switching nonlinear solver to damped Newton--" << endl;
+	  cout << "  --switching nonlinear solver to damped Newton--" << endl;
       }
 
       // Compute the tangent
@@ -895,7 +895,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
 	  tangent->ReplaceDiagonalValues(diagonal);
 	}
       }
-
+      /*
       // Preconditioner
       Ifpack IFPFactory;
       Teuchos::RCP<Ifpack_Preconditioner> Prec = Teuchos::rcp( IFPFactory.Create("IC", &(*tangent), 0) );
@@ -912,7 +912,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
       //        preconditioner with Apply() NOT ApplyInverse().
       Teuchos::RCP<Belos::EpetraPrecOp> belosPrec = Teuchos::rcp( new Belos::EpetraPrecOp( Prec ) );
       linearProblem.setLeftPrec( belosPrec );
-
+      */
       // Solve linear system
       lhs->PutScalar(0.0);
       linearProblem.setOperator(tangent);
@@ -928,12 +928,15 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
 	  cout << "\nWarning:  Belos linear solver aborted with " << Teuchos::typeName(e) << " exception\n\n" << e.what() << endl;
 	isConverged = Belos::Unconverged;
 
-	// Scale the tangent and try again
+	// Adjust the tangent and try again
 	if(peridigmComm->MyPID() == 0)
-	  cout << "\nAttempting to re-solve system with damped tangent matrix..." << endl;
+	  cout << "\nAdding small term to diagonal and attempting to re-solve" << endl;
 	Epetra_Vector diagonal(tangent->Map());
 	tangent->ExtractDiagonalCopy(diagonal);
-	diagonal.Scale(dampedNewtonDiagonalScaleFactor);
+	double diagonalNormInf;
+	diagonal.NormInf(&diagonalNormInf);
+	for(int i=0 ; i<diagonal.MyLength() ; ++i)
+	  diagonal[i] += 1.0e-4*diagonalNormInf;
 	tangent->ReplaceDiagonalValues(diagonal);
 	lhs->PutScalar(0.0);
 	linearProblem.setOperator(tangent);
