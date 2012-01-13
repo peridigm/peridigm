@@ -860,6 +860,10 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
     double residualNorm = computeQuasiStaticResidual(residual);
 
     int solverIteration = 1;
+    bool dampedNewton = false;
+    bool usePreconditioner = true;
+    int numPureNewtonSteps = 4;
+    int dampedNewtonNumStepsBetweenTangentUpdates = 8;
     while(residualNorm > absoluteTolerance && solverIteration <= maxSolverIterations){
 
       if(peridigmComm->MyPID() == 0)
@@ -875,15 +879,14 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
       else{
 	// If we reach 8 iterations of the nonlinear solver, switch to a damped Newton approach.
 	// This should hurt the convergence rate but improve robustness.
-	bool dampedNewton = false;
-	if(solverIteration > 7){
-	  dampedNewton = true;
-	  if(solverIteration == 8 && peridigmComm->MyPID() == 0)
+	if(solverIteration > numPureNewtonSteps && !dampedNewton){
+	  if(peridigmComm->MyPID() == 0)
 	    cout << "  --switching nonlinear solver to damped Newton--" << endl;
+	  dampedNewton = true;
 	}
 
 	// Compute the tangent
-	if( !dampedNewton || solverIteration%8==0 ){
+	if( !dampedNewton || (solverIteration-numPureNewtonSteps-1)%dampedNewtonNumStepsBetweenTangentUpdates==0 ){
 	  tangent->PutScalar(0.0);
 	  PeridigmNS::Timer::self().startTimer("Evaluate Jacobian");
 	  modelEvaluator->evalJacobian(workset);
@@ -895,10 +898,9 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
 	  tangent->Scale(-1.0);
 	  if(dampedNewton)
 	    quasiStaticsDampTangent();
+	  if(usePreconditioner)
+	    quasiStaticsSetPreconditioner(linearProblem);
 	}
-
-	// Set the preconditioner
-	quasiStaticsSetPreconditioner(linearProblem);
 	
 	// Solve linear system
 	isConverged = quasiStaticsSolveSystem(residual, lhs, linearProblem, belosSolver);
@@ -906,9 +908,12 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
 	if(isConverged == Belos::Unconverged){
 	  // Adjust the tangent and try again
 	  if(peridigmComm->MyPID() == 0)
-	    cout << "  --attempting to resolve system with modified tangent matrix and no preconditioner--" << endl;
-	  quasiStaticsDampTangent();
+	    cout << "  --switching nonlinear solver to damped Newton and deactivating preconditioner--" << endl;
+	  if(!dampedNewton)
+	    quasiStaticsDampTangent();
+	  dampedNewton = true;
 	  linearProblem.setLeftPrec( Teuchos::RCP<Belos::EpetraPrecOp>() );
+	  usePreconditioner = false;
 	  isConverged = quasiStaticsSolveSystem(residual, lhs, linearProblem, belosSolver);
 	}
       }
@@ -1038,13 +1043,14 @@ Belos::ReturnType PeridigmNS::Peridigm::quasiStaticsSolveSystem(Teuchos::RCP<Epe
 								Belos::LinearProblem<double,Epetra_MultiVector,Epetra_Operator>& linearProblem,
 								Teuchos::RCP< Belos::SolverManager<double,Epetra_MultiVector,Epetra_Operator> >& belosSolver)
 {
+  PeridigmNS::Timer::self().startTimer("Solve Linear System");
+
   Belos::ReturnType isConverged(Belos::Unconverged);
 
   lhs->PutScalar(0.0);
   linearProblem.setOperator(tangent);
   bool isSet = linearProblem.setProblem(lhs, residual);
   TEST_FOR_EXCEPT_MSG(!isSet, "**** Belos::LinearProblem::setProblem() returned nonzero error code.\n");
-  PeridigmNS::Timer::self().startTimer("Solve Linear System");
   try{
     isConverged = belosSolver->solve();
   }
@@ -1053,6 +1059,8 @@ Belos::ReturnType PeridigmNS::Peridigm::quasiStaticsSolveSystem(Teuchos::RCP<Epe
       cout << "Warning:  Belos linear solver aborted with " << Teuchos::typeName(e) << "." << endl; // can dump details by printing e.what()
     isConverged = Belos::Unconverged;
   }
+
+  PeridigmNS::Timer::self().stopTimer("Solve Linear System");
 
   return isConverged;
 }
