@@ -70,6 +70,7 @@ enum Type {
             BLOCK_ID,
 			PROC_NUM,
 			WEIGHTED_VOLUME,
+		RADIUS,
             NEIGHBORHOOD_VOLUME,
             NUMBER_OF_NEIGHBORS,
             CRITICAL_TIME_STEP,
@@ -240,6 +241,9 @@ const Field_NS::FieldSpec PROC_NUM
 const Field_NS::FieldSpec WEIGHTED_VOLUME
 (Field_ENUM::WEIGHTED_VOLUME, Field_ENUM::POINT,       Field_ENUM::SCALAR,  Field_ENUM::CONSTANT, "Weighted_Volume");
 
+const Field_NS::FieldSpec RADIUS
+(Field_ENUM::RADIUS, Field_ENUM::POINT,       Field_ENUM::SCALAR,  Field_ENUM::CONSTANT, "Radius");
+
 const Field_NS::FieldSpec NEIGHBORHOOD_VOLUME
 (Field_ENUM::NEIGHBORHOOD_VOLUME, Field_ENUM::POINT,       Field_ENUM::SCALAR,  Field_ENUM::CONSTANT, "Neighborhood_Volume");
 
@@ -328,6 +332,7 @@ struct FieldSpecMap {
 		mymap[PROC_NUM.getLabel()]                     = PROC_NUM;
 		mymap[DAMAGE.getLabel()]                       = DAMAGE;
 		mymap[WEIGHTED_VOLUME.getLabel()]              = WEIGHTED_VOLUME;
+		mymap[RADIUS.getLabel()]          = RADIUS;
 		mymap[NEIGHBORHOOD_VOLUME.getLabel()]          = NEIGHBORHOOD_VOLUME;
 		mymap[NUMBER_OF_NEIGHBORS.getLabel()]          = NUMBER_OF_NEIGHBORS;
 		mymap[CRITICAL_TIME_STEP.getLabel()]           = CRITICAL_TIME_STEP;
