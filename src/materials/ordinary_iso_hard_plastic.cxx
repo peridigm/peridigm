@@ -52,6 +52,32 @@
 namespace MATERIAL_EVALUATION {
 
 /*
+ * Simple sign() function
+ */
+int sign(double v) {
+    return v > 0.0 ? 1 : (v < 0.0 ? -1 : 0);
+};
+
+/*
+ * function for finding the RHS of the root solve equation
+ */
+double lambdaRHS
+(
+		double tdNorm,
+		const double lambdaN,
+        double pointWiseYieldValue,
+	    double alpha,
+        double HARD_MODULUS,
+        double lambdaNP1
+)
+{
+    return tdNorm*tdNorm/2.0/(1.0+alpha*(lambdaNP1 - lambdaN))/(1.0+alpha*(lambdaNP1 - lambdaN))
+                    - pointWiseYieldValue;
+    //return tdNorm*tdNorm/2.0/(1.0+alpha*(lambdaNP1 - lambdaN))/(1.0+alpha*(lambdaNP1 - lambdaN))
+                    //- HARD_MODULUS*lambdaNP1 - pointWiseYieldValue;
+}
+
+/*
  * Finds the value of lambda at (n+1) using the solution of a backward-Euler
  * finite difference discretization of delta lambda
  */
@@ -64,56 +90,65 @@ double updateLambdaNP1
         double HARD_MODULUS
 )
 {
-    /*Sorry about the run-on solution, copied from Mathematica*/
-    return (4*alpha*(2*HARD_MODULUS*(-1 + alpha*lambdaN) + alpha*pointWiseYieldValue) - 
-     (4*pow(2,2.0/3.0)*pow(alpha,2)*
-        pow(HARD_MODULUS*(-1 + alpha*lambdaN) - alpha*pointWiseYieldValue,2))/
-      pow(-4*pow(alpha,3)*pow(HARD_MODULUS,3) + 
-        4*pow(alpha,6)*pow(HARD_MODULUS*lambdaN - pointWiseYieldValue,3) - 
-        12*pow(alpha,5)*HARD_MODULUS*
-         pow(-(HARD_MODULUS*lambdaN) + pointWiseYieldValue,2) + 
-        3*pow(alpha,4)*pow(HARD_MODULUS,2)*
-         (4*HARD_MODULUS*lambdaN - 4*pointWiseYieldValue + 9*pow(tdNorm,2)) + 
-        3*sqrt(3)*sqrt(pow(alpha,7)*pow(HARD_MODULUS,2)*pow(tdNorm,2)*
-           (8*pow(HARD_MODULUS,3)*pow(-1 + alpha*lambdaN,3) + 
-             24*pow(alpha,2)*HARD_MODULUS*(-1 + alpha*lambdaN)*
-              pow(pointWiseYieldValue,2) - 
-             8*pow(alpha,3)*pow(pointWiseYieldValue,3) - 
-             3*alpha*pow(HARD_MODULUS,2)*
-              (8*pow(-1 + alpha*lambdaN,2)*pointWiseYieldValue - 9*pow(tdNorm,2))))
-        ,1.0/3.0) - 2*pow(2,1.0/3.0)*
-      pow(-4*pow(alpha,3)*pow(HARD_MODULUS,3) + 
-        4*pow(alpha,6)*pow(HARD_MODULUS*lambdaN - pointWiseYieldValue,3) - 
-        12*pow(alpha,5)*HARD_MODULUS*
-         pow(-(HARD_MODULUS*lambdaN) + pointWiseYieldValue,2) + 
-        3*pow(alpha,4)*pow(HARD_MODULUS,2)*
-         (4*HARD_MODULUS*lambdaN - 4*pointWiseYieldValue + 9*pow(tdNorm,2)) + 
-        3*sqrt(3)*sqrt(pow(alpha,7)*pow(HARD_MODULUS,2)*pow(tdNorm,2)*
-           (8*pow(HARD_MODULUS,3)*pow(-1 + alpha*lambdaN,3) + 
-             24*pow(alpha,2)*HARD_MODULUS*(-1 + alpha*lambdaN)*
-              pow(pointWiseYieldValue,2) - 
-             8*pow(alpha,3)*pow(pointWiseYieldValue,3) - 
-             3*alpha*pow(HARD_MODULUS,2)*
-              (8*pow(-1 + alpha*lambdaN,2)*pointWiseYieldValue - 9*pow(tdNorm,2))))
-        ,1.0/3.0))/(12.*pow(alpha,2)*HARD_MODULUS);
+    // We'll start with a bisection root finder.
+    double a = 0.0;
+    double b = 10000.0;
 
+    double TOL1 = 0.1;
+
+    double FA = lambdaRHS ( tdNorm, lambdaN, pointWiseYieldValue, alpha, HARD_MODULUS, a);
+                
+    //Converge to the first tolerance using bisection method
+    for( int i=0; i < 10000; i++){
+        
+        // Calculate the midpoint of the interval.
+        double p = a + (b - a)/2;
+        // The function evaluated at the midpoint.
+        double FP = lambdaRHS ( tdNorm, lambdaN, pointWiseYieldValue, alpha, HARD_MODULUS, p);
+        
+        //Stop conditions
+        if( FP == 0 || (b-a)/2.0 < TOL1) 
+            break;
+
+        //Checks to see if the function changes sign over the interval [a,p]
+        if( sign(FA)*sign(FP) > 0){
+           a = p;
+           FA = FP;
+        } else {
+           b = p; 
+        }
+    
+    };
+
+    //Now we switch to the secant method to polish off the root.
+    double TOL2 = 1.0e-6;
+    double p=0.0;
+    double p0=a;
+    double p1=b;
+    double q0=lambdaRHS ( tdNorm, lambdaN, pointWiseYieldValue, alpha, HARD_MODULUS, p0);
+    double q1=lambdaRHS ( tdNorm, lambdaN, pointWiseYieldValue, alpha, HARD_MODULUS, p1);
+
+    for( int i=0; i < 10000; i++){
+    
+        //Find the root of the secant line between points p1 and p2
+        p = p1 - q1*(p1-p0)/(q1-q0);
+        
+        //Stop condition
+        if (fabs(p) < 1e-10 || fabs(p-p1) < TOL2) break;
+        
+        p0=p1;
+        q0=q1;
+        p1=p;
+        q1=lambdaRHS ( tdNorm, lambdaN, pointWiseYieldValue, alpha, HARD_MODULUS, p);
+
+        if(i == 9999){
+            p = 0.0;
+        }
+    };
+    
+    return p;
 }
-
-//template<typename ScalarT>
-//void updateLambdaNP1AD
-//(
-		//double tdNorm,
-		//const double lambdaN,
-        //double pointWiseYieldValue,
-		//double alpha,
-        //double HARD_MODULUS,
-        //double dt
-//)
-//{
-    //[>Sorry about the run-on solution, copied from Mathematica<]
-    //return (4*alpha*(-2*dt*HARD_MODULUS + alpha*(2*HARD_MODULUS*lambdaN + pointWiseYieldValue)) - (4*pow(2,2.0/3.0)*pow(alpha,2)*pow(dt*HARD_MODULUS + alpha*(-(HARD_MODULUS*lambdaN) + pointWiseYieldValue),2)) /pow(-4*pow(alpha,3)*pow(dt,3)*pow(HARD_MODULUS,3) + 4*pow(alpha,6)*pow(HARD_MODULUS*lambdaN - pointWiseYieldValue,3) - 12*pow(alpha,5)*dt*HARD_MODULUS* pow(-(HARD_MODULUS*lambdaN) + pointWiseYieldValue,2) + 3*pow(alpha,4)*pow(dt,2)*pow(HARD_MODULUS,2)* (4*HARD_MODULUS*lambdaN - 4*pointWiseYieldValue + 9*pow(tdNorm,2)) + 3*sqrt(3)*sqrt(pow(alpha,7)*pow(dt,2)*pow(HARD_MODULUS,2)*pow(tdNorm,2)* (-8*pow(dt,3)*pow(HARD_MODULUS,3) + 8*pow(alpha,3)*pow(HARD_MODULUS*lambdaN - pointWiseYieldValue,3) - 24*pow(alpha,2)*dt*HARD_MODULUS* pow(-(HARD_MODULUS*lambdaN) + pointWiseYieldValue,2) + 3*alpha*pow(dt,2)*pow(HARD_MODULUS,2)* (8*HARD_MODULUS*lambdaN - 8*pointWiseYieldValue + 9*pow(tdNorm,2)))), 1.0/3.0) - 2*pow(2,1.0/3.0)* pow(-4*pow(alpha,3)*pow(dt,3)*pow(HARD_MODULUS,3) + 4*pow(alpha,6)*pow(HARD_MODULUS*lambdaN - pointWiseYieldValue,3) - 12*pow(alpha,5)*dt*HARD_MODULUS* pow(-(HARD_MODULUS*lambdaN) + pointWiseYieldValue,2) + 3*pow(alpha,4)*pow(dt,2)*pow(HARD_MODULUS,2)* (4*HARD_MODULUS*lambdaN - 4*pointWiseYieldValue + 9*pow(tdNorm,2)) + 3*sqrt(3)*sqrt(pow(alpha,7)*pow(dt,2)*pow(HARD_MODULUS,2)*pow(tdNorm,2)* (-8*pow(dt,3)*pow(HARD_MODULUS,3) + 8*pow(alpha,3)*pow(HARD_MODULUS*lambdaN - pointWiseYieldValue,3) - 24*pow(alpha,2)*dt*HARD_MODULUS* pow(-(HARD_MODULUS*lambdaN) + pointWiseYieldValue,2) + 3*alpha*pow(dt,2)*pow(HARD_MODULUS,2)* (8*HARD_MODULUS*lambdaN - 8*pointWiseYieldValue + 9*pow(tdNorm,2)))), 1.0/3.0))/(12.*pow(alpha,2)*HARD_MODULUS);
-
-//};
+    
 
 void computeInternalForceIsotropicHardeningPlastic
 (
@@ -190,12 +225,16 @@ void computeInternalForceIsotropicHardeningPlastic
         /*
          * Compute lambdaNP1 using a backward Euler implicit scheme
         */
-        *lambdaNP1 =  updateLambdaNP1(tdNorm, *lambdaN, pointWiseYieldValue, alpha, H);
-		
+        if (tdNorm * tdNorm / 2 - pointWiseYieldValue > 0){
+            *lambdaNP1 =  updateLambdaNP1(tdNorm, *lambdaN, pointWiseYieldValue, alpha, H);
+        } else {
+            *lambdaNP1 = 0.0;
+        }
         /*
 		 * Evaluate yield function
 		 */
-		double f = tdNorm * tdNorm / 2 - pointWiseYieldValue - HARD_MODULUS*(*lambdaNP1);
+        //double f = tdNorm * tdNorm / 2 - pointWiseYieldValue - HARD_MODULUS*(*lambdaNP1);
+        double f = tdNorm * tdNorm / 2 - pointWiseYieldValue;
 		bool elastic = true;
 
 //		std::cout << "Point id = " << p << std::endl;
@@ -208,8 +247,11 @@ void computeInternalForceIsotropicHardeningPlastic
 			//			std::cout << "\t PLASTIC" << std::endl;
 			elastic = false;
             deltaLambda= (*lambdaNP1 - *lambdaN);
-			//deltaLambda=( tdNorm / sqrt(2.0*pointWiseYieldValue) - 1.0 ) / alpha;
-			//*lambdaNP1 = *lambdaN + deltaLambda;
+            if(deltaLambda > 0){
+                std::cout << "DeltaLambda is " << deltaLambda << std::endl;
+            };
+            //deltaLambda=( tdNorm / sqrt(2.0*pointWiseYieldValue) - 1.0 ) / alpha;
+            *lambdaNP1 = *lambdaN + deltaLambda;
 		} else {
 //			std::cout << "\t ELASTIC" << std::endl;
 			*lambdaNP1 = *lambdaN;
@@ -261,8 +303,8 @@ void computeInternalForceIsotropicHardeningPlastic
 				/*
 				 * Compute deviatoric force state
 				 */
-				//td = sqrt(2.0*pointWiseYieldValue) * tdTrial / tdNorm;
-				td = tdTrial / (1+alpha*deltaLambda);
+                td = sqrt(2.0*pointWiseYieldValue) * tdTrial / tdNorm;
+				//td = tdTrial / (1+alpha*deltaLambda);
 
 				/*
 				 * Update deviatoric plastic deformation state
