@@ -56,7 +56,7 @@ namespace MATERIAL_EVALUATION {
  */
 int sign(double v) {
     return v > 0.0 ? 1 : (v < 0.0 ? -1 : 0);
-};
+}
 
 /*
  * function for finding the RHS of the root solve equation
