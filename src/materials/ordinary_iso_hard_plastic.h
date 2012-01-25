@@ -49,6 +49,18 @@
 
 namespace MATERIAL_EVALUATION {
 
+int sign(double v); 
+
+double lambdaRHS
+(
+		double tdNorm,
+		const double lambdaN,
+        double pointWiseYieldValue,
+	    double alpha,
+        double HARD_MODULUS,
+        double lambdaNP1
+);
+
 double updateLambdaNP1
 (
 		double tdNorm,
