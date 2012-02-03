@@ -94,7 +94,7 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
   // Central difference:
   // dF_0x/dx_0 = ( F_0x(positive perturbed x_0) - F_0x(negative perturbed x_0) ) / ( 2.0*epsilon )
 
-  double epsilon = 1.0e-6; // \todo Instead, use 1.0e-6 * smallest_radius_in_model
+  double epsilon = 1.0e-6*0.0007874/4*2; // \todo Instead, use 1.0e-6 * smallest_radius_in_model
 
   // Loop over all points.
   int neighborhoodListIndex = 0;

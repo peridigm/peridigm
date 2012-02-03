@@ -111,13 +111,13 @@ namespace PeridigmNS {
                     PeridigmNS::SerialMatrix& jacobian) const;
 
 	//! Evaluate the jacobian via automatic differentiation
-	//virtual void
-	//computeAutomaticDifferentiationJacobian(const double dt,
-                                            //const int numOwnedPoints,
-                                            //const int* ownedIDs,
-                                            //const int* neighborhoodList,
-                                            //PeridigmNS::DataManager& dataManager,
-                                            //PeridigmNS::SerialMatrix& jacobian) const;
+    virtual void
+    computeAutomaticDifferentiationJacobian(const double dt,
+                                            const int numOwnedPoints,
+                                            const int* ownedIDs,
+                                            const int* neighborhoodList,
+                                            PeridigmNS::DataManager& dataManager,
+                                            PeridigmNS::SerialMatrix& jacobian) const;
 
   protected:
 
