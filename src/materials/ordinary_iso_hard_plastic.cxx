@@ -94,7 +94,7 @@ double updateLambdaNP1
     double a = 0.0;
     double b = 1.0e5;
 
-    double TOL1 = 1.0e-35;
+    double TOL1 = 1.0e-16;
 
     double FA = lambdaRHS ( tdNorm, lambdaN, pointWiseYieldValue, alpha, HARD_MODULUS, a);
     double p = 0.0;
@@ -120,7 +120,7 @@ double updateLambdaNP1
         }
 
         if( i == 999999) 
-            std::cout << "failed to converge" << std::endl;
+            std::cout << "Bisection method failed to converge" << std::endl;
     };
 
     //Now we switch to the secant method to polish off the root.
@@ -150,6 +150,32 @@ double updateLambdaNP1
     //};
     
     return p;
+    //return (4*alpha*(2*HARD_MODULUS*(-1 + alpha*lambdaN) - alpha*pointWiseYieldValue) + 
+     //(4*pow(2,2.0/3.0)*pow(alpha,2)*
+        //pow(HARD_MODULUS*(-1 + alpha*lambdaN) + alpha*pointWiseYieldValue,2))/
+      //pow(4*pow(alpha,3)*pow(HARD_MODULUS,3) + 
+        //12*pow(alpha,5)*HARD_MODULUS*pow(HARD_MODULUS*lambdaN + pointWiseYieldValue,2) - 
+        //4*pow(alpha,6)*pow(HARD_MODULUS*lambdaN + pointWiseYieldValue,3) - 
+        //3*pow(alpha,4)*pow(HARD_MODULUS,2)*
+         //(4*HARD_MODULUS*lambdaN + 4*pointWiseYieldValue - 9*pow(tdNorm,2)) + 
+        //3*sqrt(3)*sqrt(-(pow(alpha,7)*pow(HARD_MODULUS,2)*pow(tdNorm,2)*
+             //(8*pow(HARD_MODULUS,3)*pow(-1 + alpha*lambdaN,3) + 
+               //24*pow(alpha,2)*HARD_MODULUS*(-1 + alpha*lambdaN)*pow(pointWiseYieldValue,2) + 
+               //8*pow(alpha,3)*pow(pointWiseYieldValue,3) + 
+               //3*alpha*pow(HARD_MODULUS,2)*(8*pow(-1 + alpha*lambdaN,2)*pointWiseYieldValue - 
+                  //9*pow(tdNorm,2))))),1.0/3.0) + 
+     //2*pow(2,1.0/3.0)*
+      //pow(4*pow(alpha,3)*pow(HARD_MODULUS,3) + 
+        //12*pow(alpha,5)*HARD_MODULUS*pow(HARD_MODULUS*lambdaN + pointWiseYieldValue,2) - 
+        //4*pow(alpha,6)*pow(HARD_MODULUS*lambdaN + pointWiseYieldValue,3) - 
+        //3*pow(alpha,4)*pow(HARD_MODULUS,2)*
+         //(4*HARD_MODULUS*lambdaN + 4*pointWiseYieldValue - 9*pow(tdNorm,2)) + 
+        //3*sqrt(3)*sqrt(-(pow(alpha,7)*pow(HARD_MODULUS,2)*pow(tdNorm,2)*
+             //(8*pow(HARD_MODULUS,3)*pow(-1 + alpha*lambdaN,3) + 
+               //24*pow(alpha,2)*HARD_MODULUS*(-1 + alpha*lambdaN)*pow(pointWiseYieldValue,2) + 
+               //8*pow(alpha,3)*pow(pointWiseYieldValue,3) + 
+               //3*alpha*pow(HARD_MODULUS,2)*(8*pow(-1 + alpha*lambdaN,2)*pointWiseYieldValue - 
+                  //9*pow(tdNorm,2))))),1.0/3.0))/(12.*pow(alpha,2)*HARD_MODULUS);
 }
     
 
@@ -580,38 +606,64 @@ ScalarT updateLambdaNP1AD
 )
 {
     // We'll start with a bisection root finder.
-    ScalarT a = 0.0;
-    ScalarT b = 1.0e5;
+    //ScalarT a = 0.0;
+    //ScalarT b = 1.0e5;
 
-    double TOL1 = 1.0e-35;
+    //double TOL1 = 1.0e-16;
 
-    ScalarT FA = lambdaRHSAD ( tdNorm, lambdaN, pointWiseYieldValue, alpha, HARD_MODULUS, a);
-    ScalarT p = 0.0;
+    //ScalarT FA = lambdaRHSAD ( tdNorm, lambdaN, pointWiseYieldValue, alpha, HARD_MODULUS, a);
+    //ScalarT p = 0.0;
                 
-    //Converge to the first tolerance using bisection method
-    for( int i=0; i < 100000; i++){
+    ////Converge to the first tolerance using bisection method
+    //for( int i=0; i < 100000; i++){
         
-        // Calculate the midpoint of the interval.
-        p = a + (b - a)/2;
-        // The function evaluated at the midpoint.
-        ScalarT FP = lambdaRHSAD ( tdNorm, lambdaN, pointWiseYieldValue, alpha, HARD_MODULUS, p);
+        //// Calculate the midpoint of the interval.
+        //p = a + (b - a)/2;
+        //// The function evaluated at the midpoint.
+        //ScalarT FP = lambdaRHSAD ( tdNorm, lambdaN, pointWiseYieldValue, alpha, HARD_MODULUS, p);
         
-        //Stop conditions
-        if( FP == 0 || (b-a)/2.0 < TOL1) 
-            break;
+        ////Stop conditions
+        //if( FP == 0 || (b-a)/2.0 < TOL1) 
+            //break;
 
-        //Checks to see if the function changes sign over the interval [a,p]
-        if( signAD(FA)*signAD(FP) > 0){
-           a = p;
-           FA = FP;
-        } else {
-           b = p; 
-        }
+        ////Checks to see if the function changes sign over the interval [a,p]
+        //if( signAD(FA)*signAD(FP) > 0){
+           //a = p;
+           //FA = FP;
+        //} else {
+           //b = p; 
+        //}
 
-        if( i == 99999) 
-            std::cout << "failed to converge" << std::endl;
-    };
-
+        //if( i == 99999) 
+            //std::cout << "failed to converge" << std::endl;
+    //};
+    //return p;
+    return (4*alpha*(2*HARD_MODULUS*(-1 + alpha*lambdaN) - alpha*pointWiseYieldValue) + 
+     (4*pow(2,2.0/3.0)*pow(alpha,2)*
+        pow(HARD_MODULUS*(-1 + alpha*lambdaN) + alpha*pointWiseYieldValue,2))/
+      pow(4*pow(alpha,3)*pow(HARD_MODULUS,3) + 
+        12*pow(alpha,5)*HARD_MODULUS*pow(HARD_MODULUS*lambdaN + pointWiseYieldValue,2) - 
+        4*pow(alpha,6)*pow(HARD_MODULUS*lambdaN + pointWiseYieldValue,3) - 
+        3*pow(alpha,4)*pow(HARD_MODULUS,2)*
+         (4*HARD_MODULUS*lambdaN + 4*pointWiseYieldValue - 9*pow(tdNorm,2)) + 
+        3*sqrt(3)*sqrt(-(pow(alpha,7)*pow(HARD_MODULUS,2)*pow(tdNorm,2)*
+             (8*pow(HARD_MODULUS,3)*pow(-1 + alpha*lambdaN,3) + 
+               24*pow(alpha,2)*HARD_MODULUS*(-1 + alpha*lambdaN)*pow(pointWiseYieldValue,2) + 
+               8*pow(alpha,3)*pow(pointWiseYieldValue,3) + 
+               3*alpha*pow(HARD_MODULUS,2)*(8*pow(-1 + alpha*lambdaN,2)*pointWiseYieldValue - 
+                  9*pow(tdNorm,2))))),1.0/3.0) + 
+     2*pow(2,1.0/3.0)*
+      pow(4*pow(alpha,3)*pow(HARD_MODULUS,3) + 
+        12*pow(alpha,5)*HARD_MODULUS*pow(HARD_MODULUS*lambdaN + pointWiseYieldValue,2) - 
+        4*pow(alpha,6)*pow(HARD_MODULUS*lambdaN + pointWiseYieldValue,3) - 
+        3*pow(alpha,4)*pow(HARD_MODULUS,2)*
+         (4*HARD_MODULUS*lambdaN + 4*pointWiseYieldValue - 9*pow(tdNorm,2)) + 
+        3*sqrt(3)*sqrt(-(pow(alpha,7)*pow(HARD_MODULUS,2)*pow(tdNorm,2)*
+             (8*pow(HARD_MODULUS,3)*pow(-1 + alpha*lambdaN,3) + 
+               24*pow(alpha,2)*HARD_MODULUS*(-1 + alpha*lambdaN)*pow(pointWiseYieldValue,2) + 
+               8*pow(alpha,3)*pow(pointWiseYieldValue,3) + 
+               3*alpha*pow(HARD_MODULUS,2)*(8*pow(-1 + alpha*lambdaN,2)*pointWiseYieldValue - 
+                  9*pow(tdNorm,2))))),1.0/3.0))/(12.*pow(alpha,2)*HARD_MODULUS);
 }
 
 /** Explicit template instantiation for double. */
