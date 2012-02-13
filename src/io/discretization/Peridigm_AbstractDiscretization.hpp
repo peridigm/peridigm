@@ -111,6 +111,12 @@ namespace PeridigmNS {
     //! Get the horizon
     virtual double getHorizon() const = 0;
 
+    //! Get the minimum element radius in the model (used for example for determining magnitude of finite-difference probe).
+    virtual double getMinElementRadius() const = 0;
+
+    //! Get the maximum element dimension (for example the diagonal of a hex element, used for partial volume neighbor search).
+    virtual double getMaxElementDimension() const = 0;
+
     //! Get the locally-owned IDs for each element block
     virtual Teuchos::RCP< std::map< std::string, std::vector<int> > > getElementBlocks() { return elementBlocks; } ;
 

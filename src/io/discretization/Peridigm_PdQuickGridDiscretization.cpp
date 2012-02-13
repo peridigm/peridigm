@@ -56,6 +56,8 @@ using tr1::shared_ptr;
 
 PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                                                                  const Teuchos::RCP<Teuchos::ParameterList>& params) :
+  minElementRadius(1.0e50),
+  maxElementDimension(0.0),
   numBonds(0),
   myPID(epetra_comm->MyPID()),
   numPID(epetra_comm->NumProc()),
@@ -121,6 +123,8 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
 
 PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                                                                  const Teuchos::RCP<const QUICKGRID::Data>& decomp) :
+  minElementRadius(1.0e50),
+  maxElementDimension(0.0),
   numBonds(0),
   myPID(comm->MyPID()),
   numPID(comm->NumProc()),
@@ -206,12 +210,12 @@ QUICKGRID::Data PeridigmNS::PdQuickGridDiscretization::getDiscretization(const T
     QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numPID,horizon,xSpec,ySpec,zSpec,neighborhoodType);
     decomp =  QUICKGRID::getDiscretization(myPID, cellPerProcIter);
     // Load balance and write new decomposition
-    #ifdef HAVE_MPI
-      decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
-    #endif
-    /*
-     * MIKE: Create the volume calculator HERE
-     */
+#ifdef HAVE_MPI
+    decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
+#endif
+      
+    minElementRadius = pow(0.238732414637843*(xLength/nx)*(yLength/ny)*(zLength/nz), 0.33333333333333333);
+    maxElementDimension = sqrt((xLength/nx)*(xLength/nx) + (yLength/ny)*(yLength/ny) + (zLength/nz)*(zLength/nz));
   } 
   else if (params->isSublist("TensorProductCylinderMeshGenerator")){
     Teuchos::RCP<Teuchos::ParameterList> pdQuickGridParamList = Teuchos::rcp(&(params->sublist("TensorProductCylinderMeshGenerator")), false);
@@ -246,13 +250,12 @@ QUICKGRID::Data PeridigmNS::PdQuickGridDiscretization::getDiscretization(const T
     QUICKGRID::TensorProductCylinderMeshGenerator cellPerProcIter(numPID, horizon,ring2dSpec, axisSpec,neighborhoodType);
     decomp =  QUICKGRID::getDiscretization(myPID, cellPerProcIter);
     // Load balance and write new decomposition
-    #ifdef HAVE_MPI
-      decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
-    #endif
-      /*
-        * MIKE: Create the volume calculator HERE
-        */
+#ifdef HAVE_MPI
+    decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
+#endif
 
+//     minElementRadius = pow(0.238732414637843*(xLength/nx)*(yLength/ny)*(zLength/nz), 0.33333333333333333);
+//     maxElementDimension = sqrt((xLength/nx)*(xLength/nx) + (yLength/ny)*(yLength/ny) + (zLength/nz)*(zLength/nz));
   } 
   else { // ERROR
     TEST_FOR_EXCEPT_MSG(true, "Invalid Type in PdQuickGridDiscretization");
@@ -372,3 +375,4 @@ PeridigmNS::PdQuickGridDiscretization::getNumBonds() const
 {
   return numBonds;
 }
+

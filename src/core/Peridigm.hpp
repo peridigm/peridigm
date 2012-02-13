@@ -125,7 +125,8 @@ namespace PeridigmNS {
     void quasiStaticsSetPreconditioner(Belos::LinearProblem<double,Epetra_MultiVector,Epetra_Operator>& linearProblem);
 
     //! Damp the tangent matrix by scaling the diagonal and adding a small value to each entry in the diagonal
-    void quasiStaticsDampTangent();
+    void quasiStaticsDampTangent(double dampedNewtonDiagonalScaleFactor,
+                                 double dampedNewtonDiagonalShiftFactor);
 
     //! Solve the global linear system
     Belos::ReturnType quasiStaticsSolveSystem(Teuchos::RCP<Epetra_Vector> residual,

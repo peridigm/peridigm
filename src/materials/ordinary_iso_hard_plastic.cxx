@@ -219,7 +219,10 @@ double updateDeltaLambda
         24.*com_alpha*com_HARD_MODULUS*com_lambdaN*std::pow(com_HARD_MODULUS - com_alpha*com_pointWiseYieldValue,2.) - 
         3.*com_alpha*std::pow(com_HARD_MODULUS,2.)*(-8.*com_pointWiseYieldValue + 9.*std::pow(com_tdNorm,2.))))),1.0/3.0))/(24.*std::pow(com_alpha,2.)*com_HARD_MODULUS);
 
-    //std::cout << std::real(deltaLambda) << std::endl;
+    double realPart = std::real(deltaLambda);
+    double imagPart = std::imag(deltaLambda);
+    if( realPart > 1.0 || realPart < -1.0 || imagPart > 1.0e-10 || imagPart < -1.0e-10 )
+      std::cout << "Real part: " << realPart << ", Imaginary part: " << imagPart << std::endl;
 
         return (double)std::real(deltaLambda);    
 }
