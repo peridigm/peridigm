@@ -92,13 +92,19 @@ namespace PeridigmNS {
     virtual Teuchos::RCP<PeridigmNS::NeighborhoodData> getNeighborhoodData() const;
 
     //! Get the number of bonds on this processor
-    unsigned int getNumBonds() const;
+    virtual unsigned int getNumBonds() const;
 
     //! Get the horizon
-    double getHorizon() const { return horizon; }
+    virtual double getHorizon() const { return horizon; }
+
+    //! Get the minimum element radius in the model (used for example for determining magnitude of finite-difference probe).
+    virtual double getMinElementRadius() const { return minElementRadius; }
+
+    //! Get the maximum element dimension (for example the diagonal of a hex element, used for partial volume neighbor search).
+    virtual double getMaxElementDimension() const { return maxElementDimension; }
 
     //! Get the node positions in the original Exodus hex/tet mesh.
-    Teuchos::RCP< std::vector<double> > getExodusMeshNodePositions(int globalNodeID);
+    virtual Teuchos::RCP< std::vector<double> > getExodusMeshNodePositions(int globalNodeID);
 
   private:
 
@@ -136,6 +142,9 @@ namespace PeridigmNS {
     //! Compute the volume of a hexahedron element
     double hexVolume(std::vector<double*>& nodeCoordinates) const;
 
+    //! Compute the maximum length dimension for a hexahedron element
+    double hexMaxElementDimension(std::vector<double*>& nodeCoordinates) const;
+
     //! Maps
     Teuchos::RCP<Epetra_BlockMap> oneDimensionalMap;
     Teuchos::RCP<Epetra_BlockMap> oneDimensionalOverlapMap;
@@ -145,6 +154,12 @@ namespace PeridigmNS {
 
     //! Horizon
     double horizon;
+
+    //! Minimum element radius
+    double minElementRadius;
+
+    //! Maximum element dimension
+    double maxElementDimension;
 
     //! Search horizon, which may be larger than the horizon if partial volumes are used
     double searchHorizon;

@@ -770,6 +770,8 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
   int numLoadSteps = implicitParams->get("Number of Load Steps", 10);
   double absoluteTolerance = implicitParams->get("Absolute Tolerance", 1.0e-6);
   int maxSolverIterations = implicitParams->get("Maximum Solver Iterations", 10);
+  double dampedNewtonDiagonalScaleFactor = implicitParams->get("Damped Newton Diagonal Scale Factor", 1.0001);
+  double dampedNewtonDiagonalShiftFactor = implicitParams->get("Damped Newton Diagonal Shift Factor", 0.00001);
 
   // Pointer index into sub-vectors for use with BLAS
   double *xptr, *uptr, *yptr, *vptr, *aptr;
@@ -786,10 +788,14 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
   Belos::LinearProblem<double,Epetra_MultiVector,Epetra_Operator> linearProblem;
   Teuchos::ParameterList belosList;
   belosList.set( "Block Size", 1 );                                // Use single-vector iteration
-  belosList.set( "Maximum Iterations", tangent->NumGlobalRows() ); // Maximum number of iterations allowed
-  belosList.set( "Convergence Tolerance", 1.e-6 );                 // Relative convergence tolerance requested
+  belosList.set( "Maximum Iterations", implicitParams->get("Belos Maximum Iterations", tangent->NumGlobalRows()) ); // Maximum number of iterations allowed
+  belosList.set( "Convergence Tolerance", implicitParams->get("Belos Relative Tolerance", 1.0e-4) ); // Relative convergence tolerance requested
   belosList.set( "Output Frequency", -1 );
-  int verbosity = Belos::Errors + Belos::Warnings; // + Belos::StatusTestDetails;
+  int verbosity = Belos::Errors + Belos::Warnings;
+  if( implicitParams->get("Belos Print Status", false) == true ){
+    verbosity += Belos::StatusTestDetails;
+    belosList.set( "Output Frequency", 1 );
+  }
   belosList.set( "Verbosity", verbosity );
   belosList.set( "Output Style", Belos::Brief );
   Teuchos::RCP< Belos::SolverManager<double,Epetra_MultiVector,Epetra_Operator> > belosSolver
@@ -807,7 +813,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
 
   int step = 0;
   int loadStepReductionFactor = 0;
-  int maxLoadStepReductionFactor = 4;
+  int maxLoadStepReductionFactor = 2;
   bool reduceLoadStep = false;
   int numRemainingSubsteps = 1;
   Belos::ReturnType isConverged;
@@ -842,7 +848,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
     if(loadStepReductionFactor == 0 && peridigmComm->MyPID() == 0)
       cout << "Load step " << step << ", current time = " << timePrevious << ", time increment = " << timeIncrement << endl;
     else if(peridigmComm->MyPID() == 0)
-      cout << "Load step " << step << ", current time = " << timePrevious << ", time increment = " << timeIncrement << 
+      cout << "Load step " << step << ", current time = " << timePrevious << ", " << timeCurrent << ", time increment = " << timeIncrement << 
         " (nominal step reduced by a factor of " << pow(2.0, loadStepReductionFactor) << ")" << endl;
 
     // Update nodal positions for nodes with kinematic B.C.
@@ -862,69 +868,69 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
     int solverIteration = 1;
     bool dampedNewton = false;
     bool usePreconditioner = true;
-    int numPureNewtonSteps = 4;
+    int numPureNewtonSteps = 8;
     int dampedNewtonNumStepsBetweenTangentUpdates = 8;
     while(residualNorm > absoluteTolerance && solverIteration <= maxSolverIterations){
 
       if(peridigmComm->MyPID() == 0)
         cout << "  residual = " << residualNorm << endl;
-
+      
       // On the first iteration, use a predictor based on the velocity from the previous load step
       if(solverIteration == 1 && step > 1){
         for(int i=0 ; i<lhs->MyLength() ; ++i)
           (*lhs)[i] = (*v)[i]*timeIncrement;
-	boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(lhs);
-	isConverged = Belos::Converged;
+        boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(lhs);
+        isConverged = Belos::Converged;
       }
       else{
-	// If we reach 8 iterations of the nonlinear solver, switch to a damped Newton approach.
-	// This should hurt the convergence rate but improve robustness.
-	if(solverIteration > numPureNewtonSteps && !dampedNewton){
-	  if(peridigmComm->MyPID() == 0)
-	    cout << "  --switching nonlinear solver to damped Newton--" << endl;
-	  dampedNewton = true;
-	}
+        // If we reach the specified maximum number of iterations of the nonlinear solver, switch to a damped Newton approach.
+        // This should hurt the convergence rate but improve robustness.
+        if(solverIteration > numPureNewtonSteps && !dampedNewton){
+          if(peridigmComm->MyPID() == 0)
+            cout << "  --switching nonlinear solver to damped Newton--" << endl;
+          dampedNewton = true;
+        }
 
-	// Compute the tangent
-	if( !dampedNewton || (solverIteration-numPureNewtonSteps-1)%dampedNewtonNumStepsBetweenTangentUpdates==0 ){
-	  tangent->PutScalar(0.0);
-	  PeridigmNS::Timer::self().startTimer("Evaluate Jacobian");
-	  modelEvaluator->evalJacobian(workset);
-	  int err = tangent->GlobalAssemble();
-	  TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::executeQuasiStatic(), GlobalAssemble() returned nonzero error code.\n");
-	  PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
-	  boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
-	  boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndPutOnesOnDiagonal(tangent);
-	  tangent->Scale(-1.0);
-	  if(dampedNewton)
-	    quasiStaticsDampTangent();
-	  if(usePreconditioner)
-	    quasiStaticsSetPreconditioner(linearProblem);
-	}
+        // Compute the tangent
+        if( !dampedNewton || (solverIteration-numPureNewtonSteps-1)%dampedNewtonNumStepsBetweenTangentUpdates==0 ){
+          tangent->PutScalar(0.0);
+          PeridigmNS::Timer::self().startTimer("Evaluate Jacobian");
+          modelEvaluator->evalJacobian(workset);
+          int err = tangent->GlobalAssemble();
+          TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::executeQuasiStatic(), GlobalAssemble() returned nonzero error code.\n");
+          PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
+          boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
+          boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndPutOnesOnDiagonal(tangent);
+          tangent->Scale(-1.0);
+          if(dampedNewton)
+            quasiStaticsDampTangent(dampedNewtonDiagonalScaleFactor, dampedNewtonDiagonalShiftFactor);
+          if(usePreconditioner)
+            quasiStaticsSetPreconditioner(linearProblem);
+        }
 	
-	// Solve linear system
-	isConverged = quasiStaticsSolveSystem(residual, lhs, linearProblem, belosSolver);
+        // Solve linear system
+        isConverged = quasiStaticsSolveSystem(residual, lhs, linearProblem, belosSolver);
 
-	if(isConverged == Belos::Unconverged){
-	  // Adjust the tangent and try again
-	  if(peridigmComm->MyPID() == 0)
-	    cout << "  --switching nonlinear solver to damped Newton and deactivating preconditioner--" << endl;
-	  if(!dampedNewton)
-	    quasiStaticsDampTangent();
-	  dampedNewton = true;
-	  linearProblem.setLeftPrec( Teuchos::RCP<Belos::EpetraPrecOp>() );
-	  usePreconditioner = false;
-	  isConverged = quasiStaticsSolveSystem(residual, lhs, linearProblem, belosSolver);
-	}
+        if(isConverged == Belos::Unconverged){
+          // Adjust the tangent and try again
+          if(peridigmComm->MyPID() == 0)
+            cout << "  --switching nonlinear solver to damped Newton and deactivating preconditioner--" << endl;
+          if(!dampedNewton)
+            quasiStaticsDampTangent(dampedNewtonDiagonalScaleFactor, dampedNewtonDiagonalShiftFactor);
+          dampedNewton = true;
+          linearProblem.setLeftPrec( Teuchos::RCP<Belos::EpetraPrecOp>() );
+          usePreconditioner = false;
+          isConverged = quasiStaticsSolveSystem(residual, lhs, linearProblem, belosSolver);
+        }
       }
-
+      
       if(isConverged == Belos::Converged){
 
-	// Zero out the entries corresponding to the kinematic boundary conditions
-	// The solver should have returned zeros, but there may be small errors.
-	boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(lhs);
+        // Zero out the entries corresponding to the kinematic boundary conditions
+        // The solver should have returned zeros, but there may be small errors.
+        boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(lhs);
 
-	double alpha = quasiStaticsLineSearch(residual, lhs);
+        double alpha = quasiStaticsLineSearch(residual, lhs);
 
         // Apply increment to nodal positions
         for(int i=0 ; i<y->MyLength() ; ++i)
@@ -1016,11 +1022,8 @@ void PeridigmNS::Peridigm::quasiStaticsSetPreconditioner(Belos::LinearProblem<do
   linearProblem.setLeftPrec( belosPrec );
 }
 
-void PeridigmNS::Peridigm::quasiStaticsDampTangent() {
-
-  double scaleFactor = 1.0001;
-  double shiftFactor = 0.00001;
-
+void PeridigmNS::Peridigm::quasiStaticsDampTangent(double dampedNewtonDiagonalScaleFactor,
+                                                   double dampedNewtonDiagonalShiftFactor) {
   // Create a vector to store the diagonal
   static Teuchos::RCP<Epetra_Vector> diagonal;
   if(diagonal.is_null() || !diagonal->Map().SameAs(tangent->Map()))
@@ -1028,13 +1031,13 @@ void PeridigmNS::Peridigm::quasiStaticsDampTangent() {
 
   // Extract the diagonal, modify it, and re-insert it into the tangent
   tangent->ExtractDiagonalCopy(*diagonal);
-  diagonal->Scale(scaleFactor);
+  diagonal->Scale(dampedNewtonDiagonalScaleFactor);
   double diagonalNormInf;
   diagonal->NormInf(&diagonalNormInf);
   double* diagonalPtr;
   diagonal->ExtractView(&diagonalPtr);
   for(int i=0 ; i<diagonal->MyLength() ; ++i)
-    diagonalPtr[i] += shiftFactor*diagonalNormInf;
+    diagonalPtr[i] += dampedNewtonDiagonalShiftFactor*diagonalNormInf;
   tangent->ReplaceDiagonalValues(*diagonal);
 }
 

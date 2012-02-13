@@ -49,6 +49,7 @@
 #include <Teuchos_TestForException.hpp>
 #include <Epetra_SerialDenseMatrix.h>
 #include <Epetra_SerialComm.h>
+#include <boost/math/special_functions/fpclassify.hpp>
 
 using namespace std;
 
@@ -94,7 +95,8 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
   // Central difference:
   // dF_0x/dx_0 = ( F_0x(positive perturbed x_0) - F_0x(negative perturbed x_0) ) / ( 2.0*epsilon )
 
-  double epsilon = 1.0e-6*0.0007874/4*4*1000; // \todo Instead, use 1.0e-6 * smallest_radius_in_model
+  //double epsilon = 1.0e-6*0.0015748; // \todo Instead, use 1.0e-6 * smallest_radius_in_model
+  double epsilon = 1.0e-6*0.0007874/2*4*1000; 
 
   // Loop over all points.
   int neighborhoodListIndex = 0;
@@ -232,6 +234,13 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     for(unsigned int row=0 ; row<indices.size() ; ++row){
       for(unsigned int col=0 ; col<indices.size() ; ++col){
         scratchMatrix(row, col) *= volume[row/3];
+      }
+    }
+
+    // Check for NaNs
+    for(unsigned int row=0 ; row<indices.size() ; ++row){
+      for(unsigned int col=0 ; col<indices.size() ; ++col){
+        TEST_FOR_EXCEPT_MSG(!boost::math::isfinite(scratchMatrix(row, col)), "**** NaN detected in finite-difference Jacobian.\n");
       }
     }
 

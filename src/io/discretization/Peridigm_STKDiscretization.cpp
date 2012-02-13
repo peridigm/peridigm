@@ -69,6 +69,8 @@ using namespace std;
 
 PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                                                  const Teuchos::RCP<Teuchos::ParameterList>& params) :
+  minElementRadius(1.0e50),
+  maxElementDimension(0.0),
   numBonds(0),
   myPID(epetra_comm->MyPID()),
   numPID(epetra_comm->NumProc()),
@@ -124,6 +126,13 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
 
   // fill cell volumes
   cellVolume = Teuchos::rcp(new Epetra_Vector(Copy,*oneDimensionalMap,decomp.cellVolume.get()) );
+
+  // find the minimum element radius
+  for(int i=0 ; i<cellVolume->MyLength() ; ++i){
+    double radius = pow(0.238732414637843*(*cellVolume)[i], 0.33333333333333333);
+    if(radius < minElementRadius)
+      minElementRadius = radius;
+  }
 }
 
 PeridigmNS::STKDiscretization::~STKDiscretization() {}
@@ -580,4 +589,50 @@ double PeridigmNS::STKDiscretization::hexVolume(std::vector<double*>& nodeCoordi
   double v3 = fabs( scalarTripleProduct(x17,x05,C) );
 
   return (v1+v2+v3)/12.0;
+}
+
+double PeridigmNS::STKDiscretization::hexMaxElementDimension(std::vector<double*>& nodeCoordinates) const
+{
+  double maxDimension = 0.0;
+  double dx, dy, dz, diagonal;
+
+  // Check edges
+
+  // Check face diagonals
+
+  // Check element diagonals
+  
+  // Exodus nodes 1 7
+  dx = nodeCoordinates[0][0] - nodeCoordinates[6][0];
+  dy = nodeCoordinates[0][1] - nodeCoordinates[6][1];
+  dz = nodeCoordinates[0][2] - nodeCoordinates[6][2];
+  diagonal = sqrt(dx*dx + dy*dy + dz*dz);
+  if(diagonal > maxDimension)
+    maxDimension = diagonal;
+
+  // Exodus nodes 2 8
+  dx = nodeCoordinates[1][0] - nodeCoordinates[7][0];
+  dy = nodeCoordinates[1][1] - nodeCoordinates[7][1];
+  dz = nodeCoordinates[1][2] - nodeCoordinates[7][2];
+  diagonal = sqrt(dx*dx + dy*dy + dz*dz);
+  if(diagonal > maxDimension)
+    maxDimension = diagonal;
+
+  // Exodus nodes 3 5
+  dx = nodeCoordinates[2][0] - nodeCoordinates[4][0];
+  dy = nodeCoordinates[2][1] - nodeCoordinates[4][1];
+  dz = nodeCoordinates[2][2] - nodeCoordinates[4][2];
+  diagonal = sqrt(dx*dx + dy*dy + dz*dz);
+  if(diagonal > maxDimension)
+    maxDimension = diagonal;
+
+  // Exodus nodes 4 6
+  dx = nodeCoordinates[3][0] - nodeCoordinates[5][0];
+  dy = nodeCoordinates[3][1] - nodeCoordinates[5][1];
+  dz = nodeCoordinates[3][2] - nodeCoordinates[5][2];
+  diagonal = sqrt(dx*dx + dy*dy + dz*dz);
+  if(diagonal > maxDimension)
+    maxDimension = diagonal;
+
+  return maxDimension;
 }
