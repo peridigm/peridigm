@@ -222,7 +222,7 @@ double updateDeltaLambda
     //std::cout << std::real(deltaLambda) << std::endl;
 
         return (double)std::real(deltaLambda);    
-};
+}
     
 
 void computeInternalForceIsotropicHardeningPlastic
