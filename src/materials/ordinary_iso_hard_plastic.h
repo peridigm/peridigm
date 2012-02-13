@@ -70,6 +70,15 @@ double updateLambdaNP1
         double HARD_MODULUS
 );
 
+double updateDeltaLambda
+(
+		double tdNorm,
+		const double lambdaN,
+        double pointWiseYieldValue,
+	    double alpha,
+        double HARD_MODULUS
+);
+
 template<typename ScalarT>
 ScalarT lambdaRHSAD
 (
@@ -90,6 +99,16 @@ ScalarT updateLambdaNP1AD
 	    double alpha,
         double HARD_MODULUS
 );
+
+//template<typename ScalarT>
+//ScalarT updateDeltaLambdaAD
+//(
+		//ScalarT tdNorm,
+		//const double lambdaN,
+        //double pointWiseYieldValue,
+		//double alpha,
+        //double HARD_MODULUS
+//);
 
 void computeInternalForceIsotropicHardeningPlastic
 (
