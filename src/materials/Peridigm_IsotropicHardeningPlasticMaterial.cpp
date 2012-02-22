@@ -231,10 +231,10 @@ PeridigmNS::IsotropicHardeningPlasticMaterial::computeJacobian(const double dt,
                                                              PeridigmNS::SerialMatrix& jacobian) const
 {
   // Call the base class function, which computes the Jacobian by finite difference
-  PeridigmNS::Material::computeJacobian(dt, numOwnedPoints, ownedIDs, neighborhoodList, dataManager, jacobian);
+  //PeridigmNS::Material::computeJacobian(dt, numOwnedPoints, ownedIDs, neighborhoodList, dataManager, jacobian);
 
   // Compute the Jacobian via automatic differentiation
-  //computeAutomaticDifferentiationJacobian(dt, numOwnedPoints, ownedIDs, neighborhoodList, dataManager, jacobian);  
+  computeAutomaticDifferentiationJacobian(dt, numOwnedPoints, ownedIDs, neighborhoodList, dataManager, jacobian);  
 }
 
 void
