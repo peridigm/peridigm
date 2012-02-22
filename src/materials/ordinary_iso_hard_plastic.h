@@ -51,24 +51,11 @@ namespace MATERIAL_EVALUATION {
 
 int sign(double v); 
 
-double lambdaRHS
+template<typename ScalarT>
+ScalarT signAD
 (
-		double tdNorm,
-		const double lambdaN,
-        double pointWiseYieldValue,
-	    double alpha,
-        double HARD_MODULUS,
-        double lambdaNP1
-);
-
-double updateLambdaNP1
-(
-		double tdNorm,
-		const double lambdaN,
-        double pointWiseYieldValue,
-	    double alpha,
-        double HARD_MODULUS
-);
+        ScalarT v
+); 
 
 double updateDeltaLambda
 (
@@ -80,35 +67,14 @@ double updateDeltaLambda
 );
 
 template<typename ScalarT>
-ScalarT lambdaRHSAD
+ScalarT updateDeltaLambdaAD
 (
-		ScalarT tdNorm,
-		const double lambdaN,
+        ScalarT tdNorm,
+        const double lambdaN,
         double pointWiseYieldValue,
-	    double alpha,
-        double HARD_MODULUS,
-        ScalarT lambdaNP1
-);
-
-template<typename ScalarT>
-ScalarT updateLambdaNP1AD
-(
-		ScalarT tdNorm,
-		const double lambdaN,
-        double pointWiseYieldValue,
-	    double alpha,
+        double alpha,
         double HARD_MODULUS
 );
-
-//template<typename ScalarT>
-//ScalarT updateDeltaLambdaAD
-//(
-		//ScalarT tdNorm,
-		//const double lambdaN,
-        //double pointWiseYieldValue,
-		//double alpha,
-        //double HARD_MODULUS
-//);
 
 void computeInternalForceIsotropicHardeningPlastic
 (
@@ -157,11 +123,6 @@ void computeInternalForceIsotropicHardeningPlasticAD
 		double HARD_MODULUS
 );
 
-template<typename ScalarT>
-ScalarT signAD
-(
-        ScalarT v
-); 
 
 }
 

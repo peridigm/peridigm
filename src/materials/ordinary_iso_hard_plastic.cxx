@@ -55,130 +55,10 @@ namespace MATERIAL_EVALUATION {
 /*
  * Simple sign() function
  */
-//int sign(double v) {
-    //return v > 0.0 ? 1 : (v < 0.0 ? -1 : 0);
-//}
+int sign(double v) {
+    return v > 0.0 ? 1 : (v < 0.0 ? -1 : 0);
+}
 
-/*
- * function for finding the RHS of the root solve equation
- */
-//double lambdaRHS
-//(
-		//double tdNorm,
-		//const double lambdaN,
-        //double pointWiseYieldValue,
-		//double alpha,
-        //double HARD_MODULUS,
-        //double lambdaNP1
-//)
-//{
-    ////return tdNorm*tdNorm/2.0/(1.0+alpha*(lambdaNP1 - lambdaN))/(1.0+alpha*(lambdaNP1 - lambdaN))
-                    ////- pointWiseYieldValue;
-    //return tdNorm*tdNorm/2.0/(1.0+alpha*(lambdaNP1 - lambdaN))/(1.0+alpha*(lambdaNP1 - lambdaN))
-                    //- HARD_MODULUS*lambdaNP1 - pointWiseYieldValue;
-//}
-
-/*
- * Finds the value of lambda at (n+1) using the solution of a backward-Euler
- * finite difference discretization of delta lambda
- */
-//double updateLambdaNP1
-//(
-		//double tdNorm,
-		//const double lambdaN,
-        //double pointWiseYieldValue,
-		//double alpha,
-        //double HARD_MODULUS
-//)
-//{
-    //// We'll start with a bisection root finder.
-    //double a = -5.0;
-    //double b = 5.0;
-
-    //double TOL1 = 1.0e-16;
-
-    //double FA = lambdaRHS ( tdNorm, lambdaN, pointWiseYieldValue, alpha, HARD_MODULUS, a);
-    //double p = 0.0;
-                
-    ////Converge to the first tolerance using bisection method
-    //for( int i=0; i < 1000000; i++){
-        
-        //// Calculate the midpoint of the interval.
-        //p = a + (b - a)/2;
-        //// The function evaluated at the midpoint.
-        //double FP = lambdaRHS ( tdNorm, lambdaN, pointWiseYieldValue, alpha, HARD_MODULUS, p);
-        
-        ////Stop conditions
-        //if( FP == 0 || (b-a)/2.0 < TOL1) 
-            //break;
-
-        ////Checks to see if the function changes sign over the interval [a,p]
-        //if( sign(FA)*sign(FP) > 0){
-           //a = p;
-           //FA = FP;
-        //} else {
-           //b = p; 
-        //}
-
-        //if( i == 999999) 
-            //std::cout << "Bisection method failed to converge" << std::endl;
-    //};
-
-
-    //Now we switch to the secant method to polish off the root.
-    //double TOL2 = 1.0e-6;
-    //double p=0.0;
-    //double p0=a;
-    //double p1=b;
-    //double q0=lambdaRHS ( tdNorm, lambdaN, pointWiseYieldValue, alpha, HARD_MODULUS, p0);
-    //double q1=lambdaRHS ( tdNorm, lambdaN, pointWiseYieldValue, alpha, HARD_MODULUS, p1);
-
-    //for( int i=0; i < 10000; i++){
-    
-        ////Find the root of the secant line between points p1 and p2
-        //p = p1 - q1*(p1-p0)/(q1-q0);
-        
-        ////Stop condition
-        //if (fabs(p) < 1e-10 || fabs(p-p1) < TOL2) break;
-        
-        //p0=p1;
-        //q0=q1;
-        //p1=p;
-        //q1=lambdaRHS ( tdNorm, lambdaN, pointWiseYieldValue, alpha, HARD_MODULUS, p);
-
-        //if(i == 9999){
-            //p = 0.0;
-        //}
-    //};
-    
-    //return p;
-    //return (4*alpha*(2*HARD_MODULUS*(-1 + alpha*lambdaN) - alpha*pointWiseYieldValue) + 
-     //(4*pow(2,2.0/3.0)*pow(alpha,2)*
-        //pow(HARD_MODULUS*(-1 + alpha*lambdaN) + alpha*pointWiseYieldValue,2))/
-      //pow(4*pow(alpha,3)*pow(HARD_MODULUS,3) + 
-        //12*pow(alpha,5)*HARD_MODULUS*pow(HARD_MODULUS*lambdaN + pointWiseYieldValue,2) - 
-        //4*pow(alpha,6)*pow(HARD_MODULUS*lambdaN + pointWiseYieldValue,3) - 
-        //3*pow(alpha,4)*pow(HARD_MODULUS,2)*
-         //(4*HARD_MODULUS*lambdaN + 4*pointWiseYieldValue - 9*pow(tdNorm,2)) + 
-        //3*sqrt(3)*sqrt(-(pow(alpha,7)*pow(HARD_MODULUS,2)*pow(tdNorm,2)*
-             //(8*pow(HARD_MODULUS,3)*pow(-1 + alpha*lambdaN,3) + 
-               //24*pow(alpha,2)*HARD_MODULUS*(-1 + alpha*lambdaN)*pow(pointWiseYieldValue,2) + 
-               //8*pow(alpha,3)*pow(pointWiseYieldValue,3) + 
-               //3*alpha*pow(HARD_MODULUS,2)*(8*pow(-1 + alpha*lambdaN,2)*pointWiseYieldValue - 
-                  //9*pow(tdNorm,2))))),1.0/3.0) + 
-     //2*pow(2,1.0/3.0)*
-      //pow(4*pow(alpha,3)*pow(HARD_MODULUS,3) + 
-        //12*pow(alpha,5)*HARD_MODULUS*pow(HARD_MODULUS*lambdaN + pointWiseYieldValue,2) - 
-        //4*pow(alpha,6)*pow(HARD_MODULUS*lambdaN + pointWiseYieldValue,3) - 
-        //3*pow(alpha,4)*pow(HARD_MODULUS,2)*
-         //(4*HARD_MODULUS*lambdaN + 4*pointWiseYieldValue - 9*pow(tdNorm,2)) + 
-        //3*sqrt(3)*sqrt(-(pow(alpha,7)*pow(HARD_MODULUS,2)*pow(tdNorm,2)*
-             //(8*pow(HARD_MODULUS,3)*pow(-1 + alpha*lambdaN,3) + 
-               //24*pow(alpha,2)*HARD_MODULUS*(-1 + alpha*lambdaN)*pow(pointWiseYieldValue,2) + 
-               //8*pow(alpha,3)*pow(pointWiseYieldValue,3) + 
-               //3*alpha*pow(HARD_MODULUS,2)*(8*pow(-1 + alpha*lambdaN,2)*pointWiseYieldValue - 
-                  //9*pow(tdNorm,2))))),1.0/3.0))/(12.*pow(alpha,2)*HARD_MODULUS);
-//}
 
 double updateDeltaLambda
 (
@@ -188,43 +68,51 @@ double updateDeltaLambda
 	    double alpha,
         double HARD_MODULUS
 )
-{
-    std::complex<double> com_one(0.0,1.0);
-    std::complex<double> com_tdNorm(tdNorm);
-    std::complex<double> com_lambdaN(lambdaN);
-    std::complex<double> com_pointWiseYieldValue(pointWiseYieldValue);
-    std::complex<double> com_alpha(alpha);
-    std::complex<double> com_HARD_MODULUS(HARD_MODULUS);
+{   
+    double a  = 2./alpha + lambdaN + pointWiseYieldValue/HARD_MODULUS;
+    double b = (HARD_MODULUS + 2.*alpha*HARD_MODULUS*lambdaN + 2.*alpha*pointWiseYieldValue)/(pow(alpha,2.)*HARD_MODULUS);
+    double c = (2.*HARD_MODULUS*lambdaN + 2.*pointWiseYieldValue - pow(tdNorm,2.))/(2.*pow(alpha,2.)*HARD_MODULUS);
 
-    std::complex<double> deltaLambda = 
-        (-8.0*com_alpha*(2.*com_HARD_MODULUS + com_alpha*com_HARD_MODULUS*com_lambdaN + com_alpha*com_pointWiseYieldValue) + 
-        (4.*std::pow(2.,2.0/3.0)*(1. + com_one*sqrt(3.))*com_alpha*std::pow(-com_HARD_MODULUS + com_alpha*com_HARD_MODULUS*com_lambdaN + com_alpha*com_pointWiseYieldValue,2.))/
-        std::pow(-4.*std::pow(com_HARD_MODULUS,3.) + 4.*std::pow(com_alpha,3.)*std::pow(com_HARD_MODULUS,3.)*std::pow(com_lambdaN,3.) + 12.*com_alpha*std::pow(com_HARD_MODULUS,2.)*com_pointWiseYieldValue - 
-        12.*std::pow(com_alpha,2.)*com_HARD_MODULUS*std::pow(com_pointWiseYieldValue,2.) + 4.*std::pow(com_alpha,3.)*std::pow(com_pointWiseYieldValue,3.) - 
-        12.*std::pow(com_alpha,2.)*std::pow(com_HARD_MODULUS,2.)*std::pow(com_lambdaN,2.)*(com_HARD_MODULUS - com_alpha*com_pointWiseYieldValue) + 
-        12.*com_alpha*com_HARD_MODULUS*com_lambdaN*std::pow(com_HARD_MODULUS - com_alpha*com_pointWiseYieldValue,2.) - 27.*com_alpha*std::pow(com_HARD_MODULUS,2.)*std::pow(com_tdNorm,2.) + 
-        3.*sqrt(3.)*com_HARD_MODULUS*com_tdNorm*sqrt(-(com_alpha*(-8.*std::pow(com_HARD_MODULUS,3.) + 8.*std::pow(com_alpha,3.)*std::pow(com_HARD_MODULUS,3.)*std::pow(com_lambdaN,3.) - 
-        24.*std::pow(com_alpha,2.)*com_HARD_MODULUS*std::pow(com_pointWiseYieldValue,2.) + 8.*std::pow(com_alpha,3.)*std::pow(com_pointWiseYieldValue,3.) - 
-        24.*std::pow(com_alpha,2.)*std::pow(com_HARD_MODULUS,2.)*std::pow(com_lambdaN,2.)*(com_HARD_MODULUS - com_alpha*com_pointWiseYieldValue) + 
-        24.*com_alpha*com_HARD_MODULUS*com_lambdaN*std::pow(com_HARD_MODULUS - com_alpha*com_pointWiseYieldValue,2.) - 
-        3.*com_alpha*std::pow(com_HARD_MODULUS,2.)*(-8.*com_pointWiseYieldValue + 9.*std::pow(com_tdNorm,2.))))),1.0/3.0) + 
-        2.*std::pow(2.,1.0/3.0)*(1. - com_one*sqrt(3.))*com_alpha*
-        std::pow(-4.*std::pow(com_HARD_MODULUS,3.) + 4.*std::pow(com_alpha,3.)*std::pow(com_HARD_MODULUS,3.)*std::pow(com_lambdaN,3.) + 12.*com_alpha*std::pow(com_HARD_MODULUS,2.)*com_pointWiseYieldValue - 
-        12.*std::pow(com_alpha,2.)*com_HARD_MODULUS*std::pow(com_pointWiseYieldValue,2.) + 4.*std::pow(com_alpha,3.)*std::pow(com_pointWiseYieldValue,3.) - 
-        12.*std::pow(com_alpha,2.)*std::pow(com_HARD_MODULUS,2.)*std::pow(com_lambdaN,2.)*(com_HARD_MODULUS - com_alpha*com_pointWiseYieldValue) + 
-        12.*com_alpha*com_HARD_MODULUS*com_lambdaN*std::pow(com_HARD_MODULUS - com_alpha*com_pointWiseYieldValue,2.) - 27.*com_alpha*std::pow(com_HARD_MODULUS,2.)*std::pow(com_tdNorm,2.) + 
-        3.*sqrt(3.)*com_HARD_MODULUS*com_tdNorm*sqrt(-(com_alpha*(-8.*std::pow(com_HARD_MODULUS,3.) + 8.*std::pow(com_alpha,3.)*std::pow(com_HARD_MODULUS,3.)*std::pow(com_lambdaN,3.) - 
-        24.*std::pow(com_alpha,2.)*com_HARD_MODULUS*std::pow(com_pointWiseYieldValue,2.) + 8.*std::pow(com_alpha,3.)*std::pow(com_pointWiseYieldValue,3.) - 
-        24.*std::pow(com_alpha,2.)*std::pow(com_HARD_MODULUS,2.)*std::pow(com_lambdaN,2.)*(com_HARD_MODULUS - com_alpha*com_pointWiseYieldValue) + 
-        24.*com_alpha*com_HARD_MODULUS*com_lambdaN*std::pow(com_HARD_MODULUS - com_alpha*com_pointWiseYieldValue,2.) - 
-        3.*com_alpha*std::pow(com_HARD_MODULUS,2.)*(-8.*com_pointWiseYieldValue + 9.*std::pow(com_tdNorm,2.))))),1.0/3.0))/(24.*std::pow(com_alpha,2.)*com_HARD_MODULUS);
 
-    double realPart = std::real(deltaLambda);
-    double imagPart = std::imag(deltaLambda);
-    if( realPart > 1.0 || realPart < -1.0 || imagPart > 1.0e-10 || imagPart < -1.0e-10 )
-      std::cout << "Real part: " << realPart << ", Imaginary part: " << imagPart << std::endl;
+    double Q = (pow(a,2.) - 3.*b)/9.;
+    double R = (2.*pow(a,3.) - 9.*a*b + 27.*c)/54.;
 
-        return (double)std::real(deltaLambda);    
+    if ( pow(R,2.) < pow(Q,3.) )
+    {
+        double theta = acos( R/sqrt(pow(Q,3.)) );
+
+        double root1 = -2.*sqrt(Q)*cos(theta/3.) - a/3.;
+        double root2 = -2.*sqrt(Q)*cos(theta/3. + 2.*M_PI/3.) - a/3.;
+        double root3 = -2.*sqrt(Q)*cos(theta/3. - 2.*M_PI/3.) - a/3.;
+        
+        //if (root1 > 0 || root2 > 0 || root3 > 0)
+            //std::cout << "sol 1 " << root1  << " sol 2 " << root2  << " sol 3 " << root3 << std::endl;
+
+        double min = root1;
+
+        if ( root2 > 0.0 && std::abs(root2) < std::abs(min) )
+            min = root2;
+        if ( root3 > 0.0 && std::abs(root3) < std::abs(min) )
+            min = root3;
+
+        //if (root1 > 0 || root2 > 0 || root3 > 0)
+            //std::cout << "ans " << min << std::endl << std::endl; 
+        
+        return min;
+    
+    }
+    else
+    {
+        double A = -sign(R)*pow( abs(R) + sqrt(pow(R,2.) - pow(Q,3.)) ,1./3.);
+        double B = 0.;
+        
+        if ( A != 0.)
+            B = Q/A;
+
+        //std::cout << "ans " << (A + B) - a/3.<< std::endl << std::endl; 
+        return ( A + B ) - a/3.;
+    }
+
 }
     
 
@@ -263,7 +151,7 @@ void computeInternalForceIsotropicHardeningPlastic
 	/*
 	 * 3d variety of yield value
 	 */
-	double yieldValue = 75.0 * yieldStress * yieldStress / 8 / M_PI / pow(DELTA,5);
+	double yieldValue = 25.0 * yieldStress * yieldStress / 8 / M_PI / pow(DELTA,5);
 	/*
 	 * Planar variety of yield value
 	 */
@@ -310,6 +198,7 @@ void computeInternalForceIsotropicHardeningPlastic
         //}
         if (tdNorm * tdNorm / 2 - pointWiseYieldValue > 0){
             deltaLambda = updateDeltaLambda(tdNorm, *lambdaN, pointWiseYieldValue, alpha, H);
+            //std::cout << deltaLambda << std::endl;
             if (deltaLambda < 0.0 ){
                 deltaLambda = 0.0;
             }
@@ -319,6 +208,7 @@ void computeInternalForceIsotropicHardeningPlastic
         /*
 		 * Evaluate yield function
 		 */
+        //double f = tdNorm * tdNorm / 2 - pointWiseYieldValue - HARD_MODULUS*((*lambdaN));
         double f = tdNorm * tdNorm / 2 - pointWiseYieldValue - HARD_MODULUS*(deltaLambda + (*lambdaN));
         //double f = tdNorm * tdNorm / 2 - pointWiseYieldValue;
 		bool elastic = true;
@@ -400,6 +290,7 @@ void computeInternalForceIsotropicHardeningPlastic
 				 */
 				*deviatoricPlasticExtensionStateNp1 = edpN + td * deltaLambda;
 
+
 //				std::cout << "Neighbor Id = " << localId << "; Updating deviatoricPlasticExtensionState = " << *deviatoricPlasticExtensionState << std::endl;
 			}
 //			std::cout << "\tNeighbor Id = " << localId << "\n\ttd = " << td;
@@ -428,7 +319,7 @@ void computeInternalForceIsotropicHardeningPlastic
 			fInternalOverlap[3*localId+1] -= fy*selfCellVolume;
 			fInternalOverlap[3*localId+2] -= fz*selfCellVolume;
 		}
-
+		
 	}
 }
 
@@ -468,7 +359,7 @@ void computeInternalForceIsotropicHardeningPlasticAD
 	/*
 	 * 3d variety of yield value
 	 */
-	double yieldValue = 75.0 * yieldStress * yieldStress / 8 / M_PI / pow(DELTA,5);
+	double yieldValue = 25.0 * yieldStress * yieldStress / 8 / M_PI / pow(DELTA,5);
 	/*
 	 * Planar variety of yield value
 	 */
@@ -513,7 +404,7 @@ void computeInternalForceIsotropicHardeningPlasticAD
          * Compute lambdaNP1 using a backward Euler implicit scheme
         */
         if (tdNorm * tdNorm / 2 - pointWiseYieldValue > 0){
-            deltaLambda = updateLambdaNP1AD(tdNorm, *lambdaN, pointWiseYieldValue, alpha, H);
+            deltaLambda = updateDeltaLambdaAD(tdNorm, *lambdaN, pointWiseYieldValue, alpha, H);
             if (deltaLambda < 0.0 ){
                 deltaLambda = 0.0;
             }
@@ -522,7 +413,7 @@ void computeInternalForceIsotropicHardeningPlasticAD
         }
 
 
-        ScalarT f = tdNorm * tdNorm / 2 - pointWiseYieldValue - HARD_MODULUS*(*lambdaNP1);
+        ScalarT f = tdNorm * tdNorm / 2 - pointWiseYieldValue - HARD_MODULUS*(deltaLambda + (*lambdaN));
 		//ScalarT f = tdNorm * tdNorm / 2 - pointWiseYieldValue;
 		bool elastic = true;
 
@@ -638,140 +529,58 @@ ScalarT signAD(ScalarT v) {
 }
 
 template<typename ScalarT>
-ScalarT lambdaRHSAD
+ScalarT updateDeltaLambdaAD
 (
-		ScalarT tdNorm,
-		const double lambdaN,
-        double pointWiseYieldValue,
-	    double alpha,
-        double HARD_MODULUS,
-        ScalarT lambdaNP1
+    ScalarT tdNorm,
+    const double lambdaN,
+    double pointWiseYieldValue,
+    double alpha,
+    double HARD_MODULUS
 )
-{
-    //return tdNorm*tdNorm/2.0/(1.0+alpha*(lambdaNP1 - lambdaN))/(1.0+alpha*(lambdaNP1 - lambdaN))
-                    //- pointWiseYieldValue;
-    return tdNorm*tdNorm/2.0/(1.0+alpha*(lambdaNP1 - lambdaN))/(1.0+alpha*(lambdaNP1 - lambdaN))
-                    - HARD_MODULUS*lambdaNP1 - pointWiseYieldValue;
-}
+{   
+    double  a  = 2./alpha + lambdaN + pointWiseYieldValue/HARD_MODULUS;
+    double  b = (HARD_MODULUS + 2.*alpha*HARD_MODULUS*lambdaN + 2.*alpha*pointWiseYieldValue)/(pow(alpha,2.)*HARD_MODULUS);
+    ScalarT c = (2.*HARD_MODULUS*lambdaN + 2.*pointWiseYieldValue - pow(tdNorm,2.))/(2.*pow(alpha,2.)*HARD_MODULUS);
 
-//template<typename ScalarT>
-//ScalarT updateDeltaLambdaAD
-//(
-		//ScalarT tdNorm,
-		//const double lambdaN,
-        //double pointWiseYieldValue,
-		//double alpha,
-        //double HARD_MODULUS
-//)
-//{
-    //std::complex<double> com_one(0.0,1.0);
-    //std::complex<double> com_tdNorm(tdNorm);
-    //std::complex<double> com_lambdaN(lambdaN);
-    //std::complex<double> com_pointWiseYieldValue(pointWiseYieldValue);
-    //std::complex<double> com_alpha(alpha);
-    //std::complex<double> com_HARD_MODULUS(HARD_MODULUS);
+    double  Q = (pow(a,2.) - 3.*b)/9.;
+    ScalarT R = (2.*pow(a,3.) - 9.*a*b + 27.*c)/54.;
 
-    //std::complex<double> deltaLambda = 
-        //(-8.0*com_alpha*(2.*com_HARD_MODULUS + com_alpha*com_HARD_MODULUS*com_lambdaN + com_alpha*com_pointWiseYieldValue) + 
-        //(4.*std::pow(2.,2.0/3.0)*(1. + com_one*sqrt(3.))*com_alpha*std::pow(-com_HARD_MODULUS + com_alpha*com_HARD_MODULUS*com_lambdaN + com_alpha*com_pointWiseYieldValue,2.))/
-        //std::pow(-4.*std::pow(com_HARD_MODULUS,3.) + 4.*std::pow(com_alpha,3.)*std::pow(com_HARD_MODULUS,3.)*std::pow(com_lambdaN,3.) + 12.*com_alpha*std::pow(com_HARD_MODULUS,2.)*com_pointWiseYieldValue - 
-        //12.*std::pow(com_alpha,2.)*com_HARD_MODULUS*std::pow(com_pointWiseYieldValue,2.) + 4.*std::pow(com_alpha,3.)*std::pow(com_pointWiseYieldValue,3.) - 
-        //12.*std::pow(com_alpha,2.)*std::pow(com_HARD_MODULUS,2.)*std::pow(com_lambdaN,2.)*(com_HARD_MODULUS - com_alpha*com_pointWiseYieldValue) + 
-        //12.*com_alpha*com_HARD_MODULUS*com_lambdaN*std::pow(com_HARD_MODULUS - com_alpha*com_pointWiseYieldValue,2.) - 27.*com_alpha*std::pow(com_HARD_MODULUS,2.)*std::pow(com_tdNorm,2.) + 
-        //3.*sqrt(3.)*com_HARD_MODULUS*com_tdNorm*sqrt(-(com_alpha*(-8.*std::pow(com_HARD_MODULUS,3.) + 8.*std::pow(com_alpha,3.)*std::pow(com_HARD_MODULUS,3.)*std::pow(com_lambdaN,3.) - 
-        //24.*std::pow(com_alpha,2.)*com_HARD_MODULUS*std::pow(com_pointWiseYieldValue,2.) + 8.*std::pow(com_alpha,3.)*std::pow(com_pointWiseYieldValue,3.) - 
-        //24.*std::pow(com_alpha,2.)*std::pow(com_HARD_MODULUS,2.)*std::pow(com_lambdaN,2.)*(com_HARD_MODULUS - com_alpha*com_pointWiseYieldValue) + 
-        //24.*com_alpha*com_HARD_MODULUS*com_lambdaN*std::pow(com_HARD_MODULUS - com_alpha*com_pointWiseYieldValue,2.) - 
-        //3.*com_alpha*std::pow(com_HARD_MODULUS,2.)*(-8.*com_pointWiseYieldValue + 9.*std::pow(com_tdNorm,2.))))),1.0/3.0) + 
-        //2.*std::pow(2.,1.0/3.0)*(1. - com_one*sqrt(3.))*com_alpha*
-        //std::pow(-4.*std::pow(com_HARD_MODULUS,3.) + 4.*std::pow(com_alpha,3.)*std::pow(com_HARD_MODULUS,3.)*std::pow(com_lambdaN,3.) + 12.*com_alpha*std::pow(com_HARD_MODULUS,2.)*com_pointWiseYieldValue - 
-        //12.*std::pow(com_alpha,2.)*com_HARD_MODULUS*std::pow(com_pointWiseYieldValue,2.) + 4.*std::pow(com_alpha,3.)*std::pow(com_pointWiseYieldValue,3.) - 
-        //12.*std::pow(com_alpha,2.)*std::pow(com_HARD_MODULUS,2.)*std::pow(com_lambdaN,2.)*(com_HARD_MODULUS - com_alpha*com_pointWiseYieldValue) + 
-        //12.*com_alpha*com_HARD_MODULUS*com_lambdaN*std::pow(com_HARD_MODULUS - com_alpha*com_pointWiseYieldValue,2.) - 27.*com_alpha*std::pow(com_HARD_MODULUS,2.)*std::pow(com_tdNorm,2.) + 
-        //3.*sqrt(3.)*com_HARD_MODULUS*com_tdNorm*sqrt(-(com_alpha*(-8.*std::pow(com_HARD_MODULUS,3.) + 8.*std::pow(com_alpha,3.)*std::pow(com_HARD_MODULUS,3.)*std::pow(com_lambdaN,3.) - 
-        //24.*std::pow(com_alpha,2.)*com_HARD_MODULUS*std::pow(com_pointWiseYieldValue,2.) + 8.*std::pow(com_alpha,3.)*std::pow(com_pointWiseYieldValue,3.) - 
-        //24.*std::pow(com_alpha,2.)*std::pow(com_HARD_MODULUS,2.)*std::pow(com_lambdaN,2.)*(com_HARD_MODULUS - com_alpha*com_pointWiseYieldValue) + 
-        //24.*com_alpha*com_HARD_MODULUS*com_lambdaN*std::pow(com_HARD_MODULUS - com_alpha*com_pointWiseYieldValue,2.) - 
-        //3.*com_alpha*std::pow(com_HARD_MODULUS,2.)*(-8.*com_pointWiseYieldValue + 9.*std::pow(com_tdNorm,2.))))),1.0/3.0))/(24.*std::pow(com_alpha,2.)*com_HARD_MODULUS);
+    if ( pow(R,2.) < pow(Q,3.) )
+    {
+        ScalarT theta = acos( R/sqrt(pow(Q,3.)) );
 
-    ////std::cout << std::real(deltaLambda) << std::endl;
-
-        //return std::real(deltaLambda);    
-//};
-
-/*
- * Finds the value of lambda at (n+1) using the solution of a backward-Euler
- * finite difference discretization of delta lambda
- */
-template<typename ScalarT>
-ScalarT updateLambdaNP1AD
-(
-		ScalarT tdNorm,
-		const double lambdaN,
-        double pointWiseYieldValue,
-	    double alpha,
-        double HARD_MODULUS
-)
-{
-    // We'll start with a bisection root finder.
-    //ScalarT a = 0.0;
-    //ScalarT b = 1.0e5;
-
-    //double TOL1 = 1.0e-16;
-
-    //ScalarT FA = lambdaRHSAD ( tdNorm, lambdaN, pointWiseYieldValue, alpha, HARD_MODULUS, a);
-    //ScalarT p = 0.0;
-                
-    ////Converge to the first tolerance using bisection method
-    //for( int i=0; i < 100000; i++){
+        ScalarT root1 = -2.*sqrt(Q)*cos(theta/3.) - a/3.;
+        ScalarT root2 = -2.*sqrt(Q)*cos(theta/3. + 2.*M_PI/3.) - a/3.;
+        ScalarT root3 = -2.*sqrt(Q)*cos(theta/3. - 2.*M_PI/3.) - a/3.;
         
-        //// Calculate the midpoint of the interval.
-        //p = a + (b - a)/2;
-        //// The function evaluated at the midpoint.
-        //ScalarT FP = lambdaRHSAD ( tdNorm, lambdaN, pointWiseYieldValue, alpha, HARD_MODULUS, p);
+        //if (root1 > 0 || root2 > 0 || root3 > 0)
+            //std::cout << "sol 1 " << root1  << " sol 2 " << root2  << " sol 3 " << root3 << std::endl;
+
+        ScalarT min = root1;
+
+        if ( root2 > 0.0 && std::abs(root2) < std::abs(min) )
+            min = root2;
+        if ( root3 > 0.0 && std::abs(root3) < std::abs(min) )
+            min = root3;
+
+        //if (root1 > 0 || root2 > 0 || root3 > 0)
+            //std::cout << "ans " << min << std::endl << std::endl; 
         
-        ////Stop conditions
-        //if( FP == 0 || (b-a)/2.0 < TOL1) 
-            //break;
+        return min;
+    
+    }
+    else
+    {
+        ScalarT A = -signAD(R)*pow( abs(R) + sqrt(pow(R,2.) - pow(Q,3.)) ,1./3.);
+        ScalarT B = 0.;
+        
+        if ( A != 0.)
+            B = Q/A;
 
-        ////Checks to see if the function changes sign over the interval [a,p]
-        //if( signAD(FA)*signAD(FP) > 0){
-           //a = p;
-           //FA = FP;
-        //} else {
-           //b = p; 
-        //}
+        //std::cout << "ans " << (A + B) - a/3.<< std::endl << std::endl; 
+        return ( A + B ) - a/3.;
+    }
 
-        //if( i == 99999) 
-            //std::cout << "failed to converge" << std::endl;
-    //};
-    //return p;
-    return (4*alpha*(2*HARD_MODULUS*(-1 + alpha*lambdaN) - alpha*pointWiseYieldValue) + 
-     (4*pow(2,2.0/3.0)*pow(alpha,2)*
-        pow(HARD_MODULUS*(-1 + alpha*lambdaN) + alpha*pointWiseYieldValue,2))/
-      pow(4*pow(alpha,3)*pow(HARD_MODULUS,3) + 
-        12*pow(alpha,5)*HARD_MODULUS*pow(HARD_MODULUS*lambdaN + pointWiseYieldValue,2) - 
-        4*pow(alpha,6)*pow(HARD_MODULUS*lambdaN + pointWiseYieldValue,3) - 
-        3*pow(alpha,4)*pow(HARD_MODULUS,2)*
-         (4*HARD_MODULUS*lambdaN + 4*pointWiseYieldValue - 9*pow(tdNorm,2)) + 
-        3*sqrt(3)*sqrt(-(pow(alpha,7)*pow(HARD_MODULUS,2)*pow(tdNorm,2)*
-             (8*pow(HARD_MODULUS,3)*pow(-1 + alpha*lambdaN,3) + 
-               24*pow(alpha,2)*HARD_MODULUS*(-1 + alpha*lambdaN)*pow(pointWiseYieldValue,2) + 
-               8*pow(alpha,3)*pow(pointWiseYieldValue,3) + 
-               3*alpha*pow(HARD_MODULUS,2)*(8*pow(-1 + alpha*lambdaN,2)*pointWiseYieldValue - 
-                  9*pow(tdNorm,2))))),1.0/3.0) + 
-     2*pow(2,1.0/3.0)*
-      pow(4*pow(alpha,3)*pow(HARD_MODULUS,3) + 
-        12*pow(alpha,5)*HARD_MODULUS*pow(HARD_MODULUS*lambdaN + pointWiseYieldValue,2) - 
-        4*pow(alpha,6)*pow(HARD_MODULUS*lambdaN + pointWiseYieldValue,3) - 
-        3*pow(alpha,4)*pow(HARD_MODULUS,2)*
-         (4*HARD_MODULUS*lambdaN + 4*pointWiseYieldValue - 9*pow(tdNorm,2)) + 
-        3*sqrt(3)*sqrt(-(pow(alpha,7)*pow(HARD_MODULUS,2)*pow(tdNorm,2)*
-             (8*pow(HARD_MODULUS,3)*pow(-1 + alpha*lambdaN,3) + 
-               24*pow(alpha,2)*HARD_MODULUS*(-1 + alpha*lambdaN)*pow(pointWiseYieldValue,2) + 
-               8*pow(alpha,3)*pow(pointWiseYieldValue,3) + 
-               3*alpha*pow(HARD_MODULUS,2)*(8*pow(-1 + alpha*lambdaN,2)*pointWiseYieldValue - 
-                  9*pow(tdNorm,2))))),1.0/3.0))/(12.*pow(alpha,2)*HARD_MODULUS);
 }
 
 /** Explicit template instantiation for double. */
@@ -834,66 +643,25 @@ template Sacado::Fad::DFad<double> signAD<Sacado::Fad::DFad<double> >
         Sacado::Fad::DFad<double> v
 );
 
-/** Explicit template instantiation for double. */
-template double updateLambdaNP1AD<double>
+
+template double updateDeltaLambdaAD<double>
 (
-		double tdNorm,
-		const double lambdaN,
+        double tdNorm,
+        const double lambdaN,
         double pointWiseYieldValue,
-	    double alpha,
+        double alpha,
         double HARD_MODULUS
 );
 
-
 /** Explicit template instantiation for Sacado::Fad::DFad<double>. */
-template Sacado::Fad::DFad<double> updateLambdaNP1AD<Sacado::Fad::DFad<double> >
+template Sacado::Fad::DFad<double> updateDeltaLambdaAD<Sacado::Fad::DFad<double> >
 (
-		Sacado::Fad::DFad<double> tdNorm,
-		const double lambdaN,
+        Sacado::Fad::DFad<double> tdNorm,
+        const double lambdaN,
         double pointWiseYieldValue,
-	    double alpha,
+        double alpha,
         double HARD_MODULUS
 );
 
-//template double updateDeltaLambdaAD<double>
-//(
-		//double tdNorm,
-		//const double lambdaN,
-        //double pointWiseYieldValue,
-		//double alpha,
-        //double HARD_MODULUS
-//);
-
-//[>* Explicit template instantiation for Sacado::Fad::DFad<double>. <]
-//template Sacado::Fad::DFad<double> updateDeltaLambdaAD<Sacado::Fad::DFad<double> >
-//(
-		//Sacado::Fad::DFad<double> tdNorm,
-		//const double lambdaN,
-        //double pointWiseYieldValue,
-		//double alpha,
-        //double HARD_MODULUS
-//);
-
-/** Explicit template instantiation for double. */
-template double lambdaRHSAD<double>
-(
-		double tdNorm,
-		const double lambdaN,
-        double pointWiseYieldValue,
-	    double alpha,
-        double HARD_MODULUS,
-        double lambdaNP1
-);
-
-/** Explicit template instantiation for Sacado::Fad::DFad<double>. */
-template Sacado::Fad::DFad<double> lambdaRHSAD<Sacado::Fad::DFad<double> >
-(
-		Sacado::Fad::DFad<double> tdNorm,
-		const double lambdaN,
-        double pointWiseYieldValue,
-	    double alpha,
-        double HARD_MODULUS,
-        Sacado::Fad::DFad<double> lambdaNP1
-);
 
 }
