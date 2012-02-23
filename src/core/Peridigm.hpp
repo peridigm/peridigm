@@ -251,6 +251,7 @@ namespace PeridigmNS {
 
     //! Friend classes
     friend class OutputManager_VTK_XML;
+    friend class OutputManager_ExodusII;
 
     //! Parameterlist of entire input deck
     Teuchos::RCP<Teuchos::ParameterList> peridigmParams;

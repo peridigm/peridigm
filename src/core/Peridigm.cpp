@@ -72,6 +72,7 @@
 #include "Peridigm_PdQuickGridDiscretization.hpp"
 #include "Peridigm_PartialVolumeCalculator.hpp"
 #include "Peridigm_OutputManager_VTK_XML.hpp"
+#include "Peridigm_OutputManager_ExodusII.hpp"
 #include "Peridigm_ComputeManager.hpp"
 #include "Peridigm_BoundaryAndInitialConditionManager.hpp"
 #include "Peridigm_CriticalTimeStep.hpp"
@@ -452,11 +453,13 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
   if (active) {
     // Make the default format "VTK_XML"
     string outputFormat = outputParams->get("Output File Type", "VTK_XML");
-    TEST_FOR_EXCEPTION( outputFormat != "VTK_XML",
+    TEST_FOR_EXCEPTION( outputFormat != "VTK_XML" && outputFormat != "EXODUSII",
                         std::invalid_argument,
-                        "PeridigmNS::Peridigm: \"Output File Type\" must be \"VTK_XML\".");
+                        "PeridigmNS::Peridigm: \"Output File Type\" must be \"VTK_XML\" or \"EXODUSII\".");
     if (outputFormat == "VTK_XML")
        outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_VTK_XML( outputParams, this, blocks ));
+    else if (outputFormat == "EXODUSII")
+       outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_ExodusII( outputParams, this, blocks ));
     else
       TEST_FOR_EXCEPTION( true, std::invalid_argument,"PeridigmNS::Peridigm::initializeOutputManager: \"Output File Type\" must be \"VTK_XML\".");
 
