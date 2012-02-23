@@ -31,6 +31,7 @@ set(Peridigm_SOURCES
     ${DISCRETIZATION_DIR}/Peridigm_PdQuickGridDiscretization.cpp
     ${DISCRETIZATION_DIR}/Peridigm_PartialVolumeCalculator.cpp
     ${IO_DIR}/Peridigm_OutputManager_VTK_XML.cpp
+    ${IO_DIR}/Peridigm_OutputManager_ExodusII.cpp
     ${MATERIALS_DIR}/Peridigm_Material.cpp
     ${MATERIALS_DIR}/Peridigm_MaterialFactory.cpp
     ${MATERIALS_DIR}/Peridigm_LinearElasticIsotropicMaterial.cpp
