@@ -176,12 +176,17 @@ PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Te
 // MLP
 // Fix to use a RCP, but don't let the RCP own the memory. In the destructor do this: MyObject->Delete();
 //  vtkWriter->SetInputConnection (reader->GetOutputPort ());  
-  vtkWriters[0]->SetFileName (filenameBase.c_str());  
+  std::ostringstream filename; 
+  filename << filenameBase.c_str();
+  filename << "." << myPID;
+  filename << ".exii";
+  vtkWriters[0]->SetFileName (filename.str().c_str());  
   vtkWriters[0]->WriteOutBlockIdArrayOn ();  
   vtkWriters[0]->WriteOutGlobalNodeIdArrayOn ();  
   vtkWriters[0]->WriteOutGlobalElementIdArrayOn ();
-  vtkWriters[0]->WriteAllTimeStepsOn ();  
+//  vtkWriters[0]->WriteAllTimeStepsOn ();  
   vtkWriters[0]->Update ();
+
 
 }
 
@@ -325,7 +330,6 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP<PeridigmNS::DataMana
 
   vtkWriter->SetInput(grid);
   vtkWriter->Write();
-  return;
 
   Teuchos::ParameterList::ConstIterator i1;
   // Loop over the material types in the materialOutputFields parameterlist
