@@ -453,12 +453,12 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
   if (active) {
     // Make the default format "VTK_XML"
     string outputFormat = outputParams->get("Output File Type", "VTK_XML");
-    TEST_FOR_EXCEPTION( outputFormat != "VTK_XML" && outputFormat != "EXODUSII",
+    TEST_FOR_EXCEPTION( outputFormat != "VTK_XML" && outputFormat != "ExodusII",
                         std::invalid_argument,
-                        "PeridigmNS::Peridigm: \"Output File Type\" must be \"VTK_XML\" or \"EXODUSII\".");
+                        "PeridigmNS::Peridigm: \"Output File Type\" must be \"VTK_XML\" or \"ExodusII\".");
     if (outputFormat == "VTK_XML")
        outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_VTK_XML( outputParams, this, blocks ));
-    else if (outputFormat == "EXODUSII")
+    else if (outputFormat == "ExodusII")
        outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_ExodusII( outputParams, this, blocks ));
     else
       TEST_FOR_EXCEPTION( true, std::invalid_argument,"PeridigmNS::Peridigm::initializeOutputManager: \"Output File Type\" must be \"VTK_XML\".");
