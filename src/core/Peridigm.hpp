@@ -59,6 +59,7 @@
 #include <Epetra_FECrsMatrix.h>
 #include <BelosLinearProblem.hpp>
 #include <BelosBlockCGSolMgr.hpp>
+#include <BelosBlockGmresSolMgr.hpp>
 #include <BelosEpetraAdapter.hpp>
 
 #include "Peridigm_Block.hpp"
