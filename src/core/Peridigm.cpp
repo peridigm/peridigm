@@ -1102,6 +1102,22 @@ Belos::ReturnType PeridigmNS::Peridigm::quasiStaticsSolveSystem(Teuchos::RCP<Epe
 
   PeridigmNS::Timer::self().stopTimer("Solve Linear System");
 
+  // Debugging code: Debug linear system to disk
+  bool writeMatrixNow = false;
+  static int solverCount = 1;
+  solverCount++;
+  if (writeMatrixNow) {
+     char matFilename[50];
+     char LHSFilename[50];
+     char RHSFilename[50];
+     sprintf(matFilename,"A_%03i.mat",solverCount);
+     sprintf(LHSFilename,"x_%03i.mat",solverCount);
+     sprintf(RHSFilename,"b_%03i.mat",solverCount);
+     EpetraExt::RowMatrixToMatrixMarketFile(matFilename, *tangent, "Matrix", "Matrix");
+     EpetraExt::MultiVectorToMatrixMarketFile(LHSFilename, *(linearProblem.getLHS()), "LHS", "LHS", true );
+     EpetraExt::MultiVectorToMatrixMarketFile(RHSFilename, *(linearProblem.getRHS()), "RHS", "RHS", true );
+  }
+
   return isConverged;
 }
 
