@@ -98,8 +98,9 @@ namespace PeridigmNS {
 // MLP
     //! Objects to write unstructured grid (one per block)
 //    std::vector< Teuchos::RCP<PdVTK::CollectionWriter> > vtkWriters;
-//    Teuchos::RCP<vtkExodusIIWriter> vtkWriter;
-    std::vector< vtkSmartPointer<vtkExodusIIWriter> > vtkWriters;
+//      Teuchos::RCP<vtkExodusIIWriter> vtkWriter;
+      vtkSmartPointer<vtkExodusIIWriter> vtkWriter;
+//    std::vector< vtkSmartPointer<vtkExodusIIWriter> > vtkWriters;
 
 // MLP
     //! vector of vtkUnstructuredGrids, one per block
