@@ -60,6 +60,9 @@
 #include "mesh_output/Field.h"
 // MLP
 #include "mesh_output/PdVTK.h"
+#include <vtkMultiBlockDataSet.h>
+#include <vtkModelMetadata.h>
+
 
 PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Teuchos::ParameterList>& params, 
                                                            PeridigmNS::Peridigm *peridigm_,
@@ -171,21 +174,30 @@ PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Te
   }
 */
 
-//  vtkWriter = Teuchos::rcp( vtkExodusIIWriter::New() );
-   vtkWriters.push_back( vtkSmartPointer<vtkExodusIIWriter>::New() );
 // MLP
 // Fix to use a RCP, but don't let the RCP own the memory. In the destructor do this: MyObject->Delete();
-//  vtkWriter->SetInputConnection (reader->GetOutputPort ());  
+  vtkWriter = vtkSmartPointer<vtkExodusIIWriter>::New();
+//   vtkWriters.push_back( vtkSmartPointer<vtkExodusIIWriter>::New() );
   std::ostringstream filename; 
   filename << filenameBase.c_str();
   filename << "." << myPID;
   filename << ".exii";
-  vtkWriters[0]->SetFileName (filename.str().c_str());  
-  vtkWriters[0]->WriteOutBlockIdArrayOn ();  
-  vtkWriters[0]->WriteOutGlobalNodeIdArrayOn ();  
-  vtkWriters[0]->WriteOutGlobalElementIdArrayOn ();
-//  vtkWriters[0]->WriteAllTimeStepsOn ();  
-  vtkWriters[0]->Update ();
+  vtkWriter->SetFileName(filename.str().c_str());  
+  vtkWriter->WriteOutBlockIdArrayOn();  
+  vtkWriter->WriteOutGlobalNodeIdArrayOn();  
+  vtkWriter->WriteOutGlobalElementIdArrayOn();
+//  vtkWriter->WriteAllTimeStepsOn();  
+//  vtkWriter->Update();
+
+/*
+// MLP: Call SetInputConnection here?
+eb1 is my multi-block dataset.
+
+VTK_CREATE(vtkCompositeDataGeometryFilter, geom1);
+geom1->SetInputConnection(0, eb1->GetOutputPort(0));
+geom1->Update();
+*/
+
 
 
 }
@@ -305,20 +317,100 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
     }
   }
 
-  if (blocks->size() == 1) // if only one block, don't write with block IDs
-    this->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),grids.front(),vtkWriters.front(),current_time);
-  else { // there are many blocks; write output using block IDs
-    std::vector< vtkSmartPointer<vtkExodusIIWriter>  >::iterator writerIt;
-    for(blockIt = blocks->begin(), gridIt=grids.begin(), writerIt=vtkWriters.begin() ; blockIt != blocks->end() ; blockIt++, gridIt++, writerIt++)
-      this->write(blockIt->getDataManager(),blockIt->getNeighborhoodData(),*gridIt,*writerIt,current_time,blockIt->getID());
+// MLP: Modify for only one writer
+// Just need to loop over all blocks
+
+//  if (blocks->size() == 1) // if only one block, don't write with block IDs
+//    this->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),grids.front(),vtkWriters.front(),current_time);
+//  else { // there are many blocks; write output using block IDs
+//    std::vector< vtkSmartPointer<vtkExodusIIWriter>  >::iterator writerIt;
+//    for(blockIt = blocks->begin(), gridIt=grids.begin(), writerIt=vtkWriters.begin() ; blockIt != blocks->end() ; blockIt++, gridIt++, writerIt++)
+//      this->write(blockIt->getDataManager(),blockIt->getNeighborhoodData(),*gridIt,*writerIt,current_time,blockIt->getID());
+//  }
+
+ //MLP: Now insert all grids into multiblock data structure, SetInput to writer, and call write.
+  vtkMultiBlockDataSet* mbds = vtkMultiBlockDataSet::New();
+  mbds->SetNumberOfBlocks(blocks->size());
+
+  for(blockIt = blocks->begin(), gridIt=grids.begin() ; blockIt != blocks->end() ; blockIt++, gridIt++) {
+     // step #1: associate requested field data with each grid object
+
+     //this->write(blockIt->getDataManager(),blockIt->getNeighborhoodData(),*gridIt,*writerIt,current_time,blockIt->getID());
+
+     Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
+     Teuchos::RCP<const NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
+     vtkSmartPointer<vtkUnstructuredGrid> grid = *gridIt;
+
+     Teuchos::ParameterList::ConstIterator i1;
+     // Loop over the material types in the materialOutputFields parameterlist
+     for (i1 = materialOutputFields->begin(); i1 != materialOutputFields->end(); ++i1) {
+       const Teuchos::ParameterEntry& val1 = materialOutputFields->entry(i1);
+       // const std::string& name1 = materialOutputFields->name(i1);
+       // For each material type, loop over requested output fields and hook up pointers
+       if (val1.isList()) { // each material type is a sublist
+         const Teuchos::ParameterList& sublist = Teuchos::getValue<Teuchos::ParameterList>(val1);
+         Teuchos::ParameterList::ConstIterator i2;
+         for (i2=sublist.begin(); i2 != sublist.end(); ++i2) {
+           const std::string& nm = sublist.name(i2);
+           // use field name to get reference to const fieldSpec
+           std::map<string, Field_NS::FieldSpec>::const_iterator i3;
+           i3 = Field_NS::FieldSpecMap::Map.find(nm); // Can't use operator[] on a const std::map
+           TEST_FOR_EXCEPT_MSG(i3 == Field_NS::FieldSpecMap::Map.end(), "Failed to find reference to fieldSpec!");
+           Field_NS::FieldSpec const &fs = i3->second;
+           double *ptr; ptr = NULL;
+           if (fs == Field_NS::GID) { // Handle special case of ID (int type)
+             // Get map corresponding to x (COORD3D FieldSpec guaranteed to exist by Peridigm object)
+             Teuchos::RCP<Epetra_Vector> myX = dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE);
+             const Epetra_BlockMap& xMap = myX->Map();
+             // hook up pointer to data
+             PdVTK::writeField<int>(grid,Field_NS::GID,xMap.MyGlobalElements());
+           }
+           else if (fs == Field_NS::PROC_NUM) { // Handle special case of Proc_Num (int type)
+             // Get map corresponding to x (COORD3D FieldSpec guaranteed to exist by Peridigm object)
+             Teuchos::RCP<Epetra_Vector> myX =  dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE);
+             // Use only the number of owned elements
+             int length = (dataManager->getOwnedScalarPointMap())->NumMyElements();
+             // If the length is zero, this means there are no on-processor points for this block
+             if(length > 0)
+               proc_num->assign(length,myPID);
+             else
+               proc_num->assign(1,myPID); // Avoids access error in subsequent call to proc_num->at(0)
+             // hook up pointer to data
+             PdVTK::writeField<int>(grid,Field_NS::PROC_NUM,&(proc_num->at(0)));
+           }
+           else { // Handle all other cases (double type)
+             if (fs.get_temporal() != Field_ENUM::TWO_STEP) // If stateless, get STEP_NONE
+               dataManager->getData(fs, Field_ENUM::STEP_NONE)->ExtractView(&ptr);
+             else // If stateful, get STEP_NP1
+               dataManager->getData(fs, Field_ENUM::STEP_NP1)->ExtractView(&ptr);
+             // hook up pointer to data
+             PdVTK::writeField<double>(grid,fs,ptr);
+           }
+         }
+       }
+     }
+
+     // step #2: hand pointer to grid objec to multi block data set
+     mbds->SetBlock(blockIt->getID(), grid);
+
   }
 
-/* MLP Do something special here for multiblock case?
-  // If multiblock simulation, write container file for each block
-  if ( (blocks->size() > 1) && (myPID==0) ) {
-    writeVTMFile(blocks);
-  }
+/*
+  // set model meta data
+   vtkSmartPointer<vtkModelMetadata> metadata = vtkSmartPointer<vtkModelMetadata>::New();
+   metadata->SetTitle("Title");
+   metadata->SetNumberOfBlocks(blocks->size());
+   iint *blockids = new 
+   metadata->SetBlockIds(blocks->size());
+   vtkWriter->SetModelMetadata(metadata);
 */
+
+
+  // SetInput for writer as MBDS, then call write
+  vtkWriter->SetInput(mbds);
+  vtkWriter->Update();
+  vtkWriter->Write();
+
 
 }
 
@@ -328,8 +420,7 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP<PeridigmNS::DataMana
                                               vtkSmartPointer<vtkExodusIIWriter> vtkWriter,
                                               double current_time, int block_id) {
 
-  vtkWriter->SetInput(grid);
-  vtkWriter->Write();
+  return;
 
   Teuchos::ParameterList::ConstIterator i1;
   // Loop over the material types in the materialOutputFields parameterlist
