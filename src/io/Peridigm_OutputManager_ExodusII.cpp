@@ -62,6 +62,7 @@
 #include "mesh_output/PdVTK.h"
 #include <vtkMultiBlockDataSet.h>
 #include <vtkModelMetadata.h>
+#include <vtkTrivialProducer.h>
 
 
 PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Teuchos::ParameterList>& params, 
@@ -186,19 +187,7 @@ PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Te
   vtkWriter->WriteOutBlockIdArrayOn();  
   vtkWriter->WriteOutGlobalNodeIdArrayOn();  
   vtkWriter->WriteOutGlobalElementIdArrayOn();
-//  vtkWriter->WriteAllTimeStepsOn();  
-//  vtkWriter->Update();
-
-/*
-// MLP: Call SetInputConnection here?
-eb1 is my multi-block dataset.
-
-VTK_CREATE(vtkCompositeDataGeometryFilter, geom1);
-geom1->SetInputConnection(0, eb1->GetOutputPort(0));
-geom1->Update();
-*/
-
-
+  vtkWriter->WriteAllTimeStepsOn();  
 
 }
 
@@ -390,27 +379,92 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
        }
      }
 
-     // step #2: hand pointer to grid objec to multi block data set
+     // step #2: hand pointer to grid object to multi block data set
      mbds->SetBlock(blockIt->getID(), grid);
 
   }
 
-/*
-  // set model meta data
-   vtkSmartPointer<vtkModelMetadata> metadata = vtkSmartPointer<vtkModelMetadata>::New();
-   metadata->SetTitle("Title");
-   metadata->SetNumberOfBlocks(blocks->size());
-   iint *blockids = new 
-   metadata->SetBlockIds(blocks->size());
-   vtkWriter->SetModelMetadata(metadata);
-*/
+  // *********************
+  // setup model meta data
+  // *********************
+  metadata = vtkSmartPointer<vtkModelMetadata>::New();
+  metadata->SetTitle("Title");
+  metadata->SetNumberOfNodeSets(0); 
+  metadata->SetNumberOfSideSets(0); 
+  metadata->SetNumberOfBlocks(blocks->size());
 
+  char **names = new char*[3];
+  for(int i=0;i<3;i++) { names[i] = new char[2]; };
+  names[0][0] = 'X'; names[0][1] = '\0';
+  names[1][0] = 'Y'; names[1][1] = '\0';
+  names[2][0] = 'Z'; names[2][1] = '\0';
+  metadata->SetCoordinateNames  (3, names);
+
+  // see vtkExodusIIWriter CreateBlockIDMetadata
+  int *blockIds = new int[blocks->size()];
+  char **blockNames = new char *[blocks->size()];
+  int *numElements = new int[blocks->size()];
+  int *numNodesPerElement = new int[blocks->size()];
+  int *numAttributes = new int[blocks->size()];
+
+  int i=0;
+  for(i=0, blockIt = blocks->begin(); blockIt != blocks->end() ; i++, blockIt++) { 
+    // Set block ID
+    blockIds[i] = blockIt->getID(); 
+    // Set block name
+    char *nm = new char[12];
+    strcpy(nm, "sphere"); // see vtkExodusIIWriter::GetCellTypeName(), VTK_VERTEX maps to "sphere"
+    blockNames[i] = nm;
+    // Set number of elements in block
+    Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
+    Teuchos::RCP<Epetra_Vector> myX = dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE);
+    const Epetra_BlockMap& xMap = myX->Map();
+    numElements[i] = xMap.NumMyElements();
+    // Set number of nodes per element (always 1)
+    numNodesPerElement[i] = 1;
+    // Set number of attributes per element
+    numAttributes[i] = 0;
+  }
+  metadata->SetBlockIds(blockIds);
+  metadata->SetBlockElementType(blockNames);
+  metadata->SetBlockNumberOfElements(numElements);
+  metadata->SetBlockNodesPerElement(numNodesPerElement);
+  metadata->SetBlockNumberOfAttributesPerElement(numAttributes);
+
+  // Set global variable names (none)
+  char **globalVariableNames = NULL;
+  metadata->SetGlobalVariableNames(0, globalVariableNames);
+
+  float *times = new float[11];
+  times[0] = 0.0; times[1] = 0.1; times[2] = 0.2; times[3] = 0.3;
+  times[4] = 0.4; times[5] = 0.5; times[6] = 0.6; times[7] = 0.7;
+  times[8] = 0.8; times[9] = 0.9; times[10] = 1.0;
+  metadata->SetTimeSteps(11, times);
+
+  static int timestep = 0;
+  timestep++;
+  metadata->SetTimeStepIndex(timestep);
+
+//  Need to embed cell array in unstructured grid data?
+//  metadata->SetBlockIdArrayName  ( const char *   ) [virtual] 
+
+  vtkWriter->SetModelMetadata(metadata);
+
+  // metadata->PrintGlobalInformation();
+
+  // you must SetBlockIds and SetBlockIdArrayName. Your vtkUnstructuredGrid must have a cell array giving the block ID for each cell.
 
   // SetInput for writer as MBDS, then call write
-  vtkWriter->SetInput(mbds);
+  //vtkWriter->SetInput(mbds);
+
+  vtkSmartPointer<vtkTrivialProducer> tp = vtkSmartPointer<vtkTrivialProducer>::New();
+  tp->SetOutput(mbds);
+  vtkWriter->SetInputConnection(tp->GetOutputPort());
+
   vtkWriter->Update();
   vtkWriter->Write();
 
+exit(1);
 
 }
 
