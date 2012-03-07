@@ -106,6 +106,9 @@ namespace PeridigmNS {
     //! vector of vtkUnstructuredGrids, one per block
     std::vector< vtkSmartPointer<vtkUnstructuredGrid> > grids;
 
+    //! Object encapsulating metadata that appears ExodusII format but not contained within vtkUnstructuredGrid
+    vtkSmartPointer<vtkModelMetadata> metadata;
+
     //! Container for data array of processor ID number for each node on my proc
     Teuchos::RCP< std::vector<int> > proc_num;
 
