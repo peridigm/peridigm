@@ -51,6 +51,9 @@
 #include <iostream>
 #include <iomanip>
 
+#include <netcdf.h>
+#include <exodusII.h>
+
 #include <Epetra_Comm.h>
 #include "Teuchos_StandardParameterEntryValidators.hpp"
 #include <Teuchos_TestForException.hpp>
@@ -58,11 +61,6 @@
 #include "Peridigm.hpp"
 #include "Peridigm_OutputManager_ExodusII.hpp"
 #include "mesh_output/Field.h"
-// MLP
-#include "mesh_output/PdVTK.h"
-#include <vtkMultiBlockDataSet.h>
-#include <vtkModelMetadata.h>
-#include <vtkTrivialProducer.h>
 
 
 PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Teuchos::ParameterList>& params, 
@@ -124,8 +122,12 @@ PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Te
   materialOutputFields = sublist(params, "Material Output Fields");
 
   // Initialize count (number of times write() has been called)
-  // Initialize to -1 because first call to write() corresponds to timstep 0
-  count = -1;
+  // Initialize exodus_count (number of timesteps data actually written to exodus file)
+  // Initialize to 0 because first call to write() corresponds to timestep 1
+  exodus_count = count = 0;
+
+  // Sentinal value for file handle
+  file_handle = -1;
 
   // With ExodusII every object writes
   iWrite = true;
@@ -153,41 +155,131 @@ PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Te
   if (warningFlag) std::cout << outString; 
   }
 
-  // Flag if more than one block
-  if (blocks->size() > 1)
-    isMultiBlock = true;
-  else 
-    isMultiBlock = false;
+  // MLP: Todo - Check that response to return codes is valid in all cases
 
-/*
-  // Create vector of VTK collection writers, one per block
-  vtkWriters.resize(blocks->size());
-  // Iterators over vector of grids and over blocks. Each vector is the same size by above line.
-  std::vector<PeridigmNS::Block>::iterator blockIt;
-  std::vector<Teuchos::RCP<PdVTK::CollectionWriter> >::iterator writerIt;
-  if (outputFormat == "ASCII") {
-    for(blockIt = blocks->begin(), writerIt=vtkWriters.begin() ; blockIt != blocks->end() ; blockIt++, writerIt++)
-      (*writerIt) = Teuchos::rcp(new PdVTK::CollectionWriter(filenameBase.c_str(), numProc, myPID, PdVTK::vtkASCII));
-  }
-  else if (outputFormat == "BINARY") {
-    for(blockIt = blocks->begin(), writerIt=vtkWriters.begin() ; blockIt != blocks->end() ; blockIt++, writerIt++)
-      (*writerIt) = Teuchos::rcp(new PdVTK::CollectionWriter(filenameBase.c_str(), numProc, myPID, PdVTK::vtkBINARY));
-  }
-*/
-
-// MLP
-// Fix to use a RCP, but don't let the RCP own the memory. In the destructor do this: MyObject->Delete();
-  vtkWriter = vtkSmartPointer<vtkExodusIIWriter>::New();
-//   vtkWriters.push_back( vtkSmartPointer<vtkExodusIIWriter>::New() );
+  // Construct output filename
   std::ostringstream filename; 
-  filename << filenameBase.c_str();
-  filename << "." << myPID;
-  filename << ".exii";
-  vtkWriter->SetFileName(filename.str().c_str());  
-  vtkWriter->WriteOutBlockIdArrayOn();  
-  vtkWriter->WriteOutGlobalNodeIdArrayOn();  
-  vtkWriter->WriteOutGlobalElementIdArrayOn();
-  vtkWriter->WriteAllTimeStepsOn();  
+  filename << filenameBase.c_str() << ".e";
+  if (numProc > 1) {
+    filename << "." << numProc;
+    filename << "." << myPID;
+  }
+  filename.str().c_str();
+
+  // Default to storing and writing doubles
+  int CPU_word_size, IO_word_size;
+  CPU_word_size = IO_word_size = sizeof(double);
+
+  // Initialize exodus database; Overwrite any existing file with this name
+  file_handle = ex_create(filename.str().c_str(),EX_CLOBBER,&CPU_word_size,&IO_word_size);
+  TEST_FOR_EXCEPTION(file_handle<0, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII() -- Invalid output filename.");
+
+  // Initialize the database (assumes that Peridigm mothership vectors created and initialized)
+  int num_dimensions = 3;
+  int num_nodes = peridigm->x->Map().NumMyElements();
+  int num_elements = num_nodes;
+  int num_element_blocks = blocks->size();
+  int num_node_sets = 0;
+  int num_side_sets = 0;
+  // Initialize exodus file with parameters
+  int retval = ex_put_init(file_handle,"Peridigm", num_dimensions, num_nodes, num_elements, num_element_blocks, num_node_sets, num_side_sets);
+  TEST_FOR_EXCEPTION(retval<0, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII() -- Error opening output ExodusII database (ex_put_init()).");
+  if (retval > 0) std::cout << "PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII() -- Warning upon opening output ExodusII database (ex_put_init()). Warning code: " << retval << std::endl;
+
+  // Write nodal coordinate values
+  // Exodus requires pointer to x,y,z coordinates of nodes, but Peridigm stores this data using a blockmap, which interleaves the data 
+  // So, extract and copy the data to temporary storage that can be handed to the exodus api
+  double *coord_values;
+  peridigm->x->ExtractView( &coord_values );
+  int numMyElements = peridigm->x->Map().NumMyElements();
+  double *xcoord_values = new double[numMyElements];
+  double *ycoord_values = new double[numMyElements];
+  double *zcoord_values = new double[numMyElements];
+  for( int i=0 ; i<numMyElements ; i++ ) {
+    int firstPoint = peridigm->x->Map().FirstPointInElement(i);
+    xcoord_values[i] = coord_values[firstPoint];
+    ycoord_values[i] = coord_values[firstPoint+1];
+    zcoord_values[i] = coord_values[firstPoint+2];
+  }
+  retval = ex_put_coord(file_handle,xcoord_values,ycoord_values,zcoord_values);
+  TEST_FOR_EXCEPTION(retval<0, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII() -- Error opening output ExodusII database (ex_put_init()).");
+  if (retval > 0) std::cout << "PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII() -- Warning upon opening output ExodusII database (ex_put_init()). Warning code: " << retval << std::endl;
+
+  // Write nodal coordinate names to database
+  char *coord_names[3];
+  coord_names[0] = "X";
+  coord_names[1] = "Y";
+  coord_names[2] = "Z";
+  retval = ex_put_coord_names(file_handle,coord_names);
+  TEST_FOR_EXCEPTION(retval<0, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII() -- Error opening output ExodusII database.");
+  if (retval > 0) std::cout << "PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII() -- Warning upon opening output ExodusII database. Warning code: " << retval << std::endl;
+
+  // Write element block parameters
+  int *num_elem_in_block = new int[blocks->size()];
+  int *num_nodes_in_elem = new int[blocks->size()];
+  int *elem_block_ID     = new int[blocks->size()];
+  std::vector<PeridigmNS::Block>::iterator blockIt;
+  int i=0;
+  for(i=0, blockIt = blocks->begin(); blockIt != blocks->end(); blockIt++, i++) {
+    double *xptr;
+    Teuchos::RCP<Epetra_Vector> myX =  blockIt->getDataManager()->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE);
+    myX->ExtractView( &xptr );
+    // Use only the number of owned elements
+    num_elem_in_block[i] = (blockIt->getDataManager()->getOwnedScalarPointMap())->NumMyElements();
+    num_nodes_in_elem[i] = 1; // always using sphere elements
+    elem_block_ID[i]     = blockIt->getID();
+    retval = ex_put_elem_block(file_handle,elem_block_ID[i],"SPHERE",num_elem_in_block[i],num_nodes_in_elem[i],0);
+    TEST_FOR_EXCEPTION(retval<0, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII() -- Error opening output ExodusII database.");
+    if (retval > 0) std::cout << "PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII() -- Warning upon opening output ExodusII database. Warning code: " << retval << std::endl;
+  }
+
+  // Write element connectivity
+  for(i=0, blockIt = blocks->begin(); blockIt != blocks->end(); blockIt++, i++) {
+    int numMyElements = blockIt->getOwnedScalarPointMap()->NumMyElements();
+    int *connect = new int[numMyElements];
+    for (int j=0;j<numMyElements;j++) {
+      int GID = blockIt->getOwnedScalarPointMap()->GID(j);
+      connect[j] = peridigm->getOneDimensionalMap()->LID(GID)+1;
+    }
+    retval = ex_put_elem_conn(file_handle, elem_block_ID[i], connect);
+    TEST_FOR_EXCEPTION(retval<0, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII() -- Error opening output ExodusII database.");
+    if (retval > 0) std::cout << "PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII() -- Warning upon opening output ExodusII database. Warning code: " << retval << std::endl;
+    delete[] connect;
+  }
+
+  // Write global node number map (global node IDs)
+  int *node_map = new int[num_nodes];
+  for (i=0; i<num_nodes; i++)
+    node_map[i] = peridigm->getOneDimensionalMap()->GID(i)+1;
+  retval = ex_put_node_num_map(file_handle, node_map);
+  TEST_FOR_EXCEPTION(retval<0, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII() -- Error opening output ExodusII database.");
+  if (retval > 0) std::cout << "PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII() -- Warning upon opening output ExodusII database. Warning code: " << retval << std::endl;
+  retval = ex_put_elem_num_map(file_handle, node_map);
+  TEST_FOR_EXCEPTION(retval<0, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII() -- Error opening output ExodusII database.");
+  if (retval > 0) std::cout << "PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII() -- Warning upon opening output ExodusII database. Warning code: " << retval << std::endl;
+
+  // Write information records
+  // MLP: For now, just hardcode to displacement (x,y,z)
+  int num_nodal_vars = 3;
+  char *var_names[3];
+  var_names[0] = "DisplacementX";
+  var_names[1] = "DisplacementY";
+  var_names[2] = "DisplacementZ";
+  retval = ex_put_var_param(file_handle,"N",num_nodal_vars);
+  retval = ex_put_var_names(file_handle,"N",num_nodal_vars,var_names);
+
+  // Close file; re-open with call to write()
+  retval = ex_update(file_handle);
+//  retval = ex_close(file_handle);
+
+  // Clean up
+  delete[] xcoord_values; 
+  delete[] ycoord_values; 
+  delete[] zcoord_values;
+  delete[] num_elem_in_block;
+  delete[] num_nodes_in_elem;
+  delete[] node_map;
+  delete[] elem_block_ID;
 
 }
 
@@ -274,6 +366,9 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
   // Only write if frequency count match
   if (frequency<=0 || count%frequency!=0) return;
 
+  // increment exodus_count index
+  exodus_count = exodus_count + 1;
+
   // Call compute manager; Updated any computed quantities before write
   peridigm->computeManager->compute(blocks);
 
@@ -287,11 +382,14 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
     reInitGrids = true;
     rebalanceCount = blocks->begin()->getDataManager()->getRebalanceCount();
   }
-  // Be sure vector of grids sized correctly
-  if (blocks->size() != grids.size() ) {
-    grids.resize(blocks->size());
-    reInitGrids = true;
-  }
+
+  // MLP: What to do with Exodus database after rebalance? Exodus assumes that 
+  // the model is described by data which are static (do not change through time). This data
+  // includes nodal coordinates, element connectivity (node lists for each element), element
+  // attributes, and node sets and side sets (used to aid in applying loading conditions and
+  // boundary constraints).
+
+/*
   // Iterators over vector of grids and over blocks. Each vector is  same size by above line.
   std::vector<PeridigmNS::Block>::iterator blockIt;
   std::vector<vtkSmartPointer<vtkUnstructuredGrid> >::iterator gridIt;
@@ -305,9 +403,7 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
       (*gridIt) = PdVTK::getGrid(xptr,length);
     }
   }
-
-// MLP: Modify for only one writer
-// Just need to loop over all blocks
+*/
 
 //  if (blocks->size() == 1) // if only one block, don't write with block IDs
 //    this->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),grids.front(),vtkWriters.front(),current_time);
@@ -317,10 +413,34 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
 //      this->write(blockIt->getDataManager(),blockIt->getNeighborhoodData(),*gridIt,*writerIt,current_time,blockIt->getID());
 //  }
 
- //MLP: Now insert all grids into multiblock data structure, SetInput to writer, and call write.
-  vtkMultiBlockDataSet* mbds = vtkMultiBlockDataSet::New();
-  mbds->SetNumberOfBlocks(blocks->size());
+  // Write time value
+  int retval = ex_put_time(file_handle,exodus_count,&current_time);
+  TEST_FOR_EXCEPTION(retval<0, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII() -- Error opening output ExodusII database (ex_put_init()).");
+  if (retval > 0) std::cout << "PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII() -- Warning upon opening output ExodusII database (ex_put_init()). Warning code: " << retval << std::endl;
+ 
+  // MLP: Only displacement for block #1 right now.
+  //int ex_put_nodal_var (exoid, time_step, nodal_var_index,num_nodes, nodal_var_vals);
+  int num_nodes = peridigm->u->Map().NumMyElements();
 
+  int numMyElements = peridigm->x->Map().NumMyElements();
+  double *xdisp = new double[numMyElements];
+  double *ydisp = new double[numMyElements];
+  double *zdisp = new double[numMyElements];
+  double *disp_values;
+  peridigm->u->ExtractView( &disp_values );
+  for( int i=0 ; i<numMyElements ; i++ ) {
+    //int firstPoint = peridigm->u->Map().FirstPointInElement(i);
+    int firstPoint = 3*i;
+    xdisp[i] = disp_values[firstPoint];
+    ydisp[i] = disp_values[firstPoint+1];
+    zdisp[i] = disp_values[firstPoint+2];
+  }
+  retval = ex_put_nodal_var(file_handle, exodus_count, 1, num_nodes, xdisp);
+  retval = ex_put_nodal_var(file_handle, exodus_count, 2, num_nodes, ydisp);
+  retval = ex_put_nodal_var(file_handle, exodus_count, 3, num_nodes, zdisp);
+   
+
+/*
   for(blockIt = blocks->begin(), gridIt=grids.begin() ; blockIt != blocks->end() ; blockIt++, gridIt++) {
      // step #1: associate requested field data with each grid object
 
@@ -383,10 +503,12 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
      mbds->SetBlock(blockIt->getID(), grid);
 
   }
+*/
 
   // *********************
   // setup model meta data
   // *********************
+/*
   metadata = vtkSmartPointer<vtkModelMetadata>::New();
   metadata->SetTitle("Title");
   metadata->SetNumberOfNodeSets(0); 
@@ -465,9 +587,14 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
   vtkWriter->Write();
 
 exit(1);
+*/
+
+  // Flush write
+  retval = ex_update(file_handle);
 
 }
 
+/*
 void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP<PeridigmNS::DataManager> dataManager,
                                               Teuchos::RCP<const NeighborhoodData> neighborhoodData,
                                               vtkSmartPointer<vtkUnstructuredGrid> grid,
@@ -529,4 +656,5 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP<PeridigmNS::DataMana
   //vtkWriter->writeTimeStep(current_time,grid,block_id);
   vtkWriter->Write();
 }
+*/
 

@@ -47,12 +47,9 @@
 #define PERIDIGM_OUTPUTMANAGER_EXODUSII_HPP
 
 #include <Peridigm_OutputManager.hpp>
-// MLP
-//#include <mesh_output/vtk/PdVTK.h>
 
 #include <Teuchos_ParameterList.hpp>
 
-#include <vtkExodusIIWriter.h>
 
 // Forward declaration
 namespace PeridigmNS {
@@ -84,39 +81,20 @@ namespace PeridigmNS {
     //! Assignment operator.
     OutputManager_ExodusII& operator=( const OutputManager& OM );
 
-// MLP
-    //! Write single block of data to disk
-    void write(Teuchos::RCP<PeridigmNS::DataManager> dataManager,
-               Teuchos::RCP<const NeighborhoodData>, 
-               vtkSmartPointer<vtkUnstructuredGrid> grid,
-               vtkSmartPointer<vtkExodusIIWriter> vtkWriter,
-               double current_time, int block_id = -1);
-
     //! Valid Teuchos::ParameterList 
     Teuchos::ParameterList getValidParameterList();
-
-// MLP
-    //! Objects to write unstructured grid (one per block)
-//    std::vector< Teuchos::RCP<PdVTK::CollectionWriter> > vtkWriters;
-//      Teuchos::RCP<vtkExodusIIWriter> vtkWriter;
-      vtkSmartPointer<vtkExodusIIWriter> vtkWriter;
-//    std::vector< vtkSmartPointer<vtkExodusIIWriter> > vtkWriters;
-
-// MLP
-    //! vector of vtkUnstructuredGrids, one per block
-    std::vector< vtkSmartPointer<vtkUnstructuredGrid> > grids;
-
-    //! Object encapsulating metadata that appears ExodusII format but not contained within vtkUnstructuredGrid
-    vtkSmartPointer<vtkModelMetadata> metadata;
 
     //! Container for data array of processor ID number for each node on my proc
     Teuchos::RCP< std::vector<int> > proc_num;
 
-    //! True if more than one block
-    bool isMultiBlock; 
-
     //! Parent pointer
     PeridigmNS::Peridigm *peridigm;
+
+    //! Exodus file handle
+    int file_handle;
+
+    //! Integer timestep index for exodus timestamp. Differs from "count" var in parent class.
+    int exodus_count;
 
   };
   
