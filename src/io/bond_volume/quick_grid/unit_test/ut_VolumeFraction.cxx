@@ -211,13 +211,13 @@ void cube()
 	 * should have a volume that very closely matches the analytical value for a sphere
 	 */
 	FieldSpec neighVolSpec
-	(Field_ENUM::TYPE_UNDEFINED,Field_ENUM::POINT,Field_ENUM::SCALAR, Field_ENUM::CONSTANT,"neighVol");
+	(Field_ENUM::TYPE_UNDEFINED,Field_ENUM::ELEMENT,Field_ENUM::SCALAR, Field_ENUM::CONSTANT,"neighVol");
 
 	FieldSpec naiveNeighVolSpec
-	(Field_ENUM::TYPE_UNDEFINED,Field_ENUM::POINT,Field_ENUM::SCALAR,Field_ENUM::CONSTANT,"naiveNeighVol");
+	(Field_ENUM::TYPE_UNDEFINED,Field_ENUM::ELEMENT,Field_ENUM::SCALAR,Field_ENUM::CONSTANT,"naiveNeighVol");
 
 	FieldSpec quadratureCellVolSpec
-	(Field_ENUM::TYPE_UNDEFINED,Field_ENUM::POINT,Field_ENUM::SCALAR,Field_ENUM::CONSTANT,"quadratureCellVol");
+	(Field_ENUM::TYPE_UNDEFINED,Field_ENUM::ELEMENT,Field_ENUM::SCALAR,Field_ENUM::CONSTANT,"quadratureCellVol");
 
 	Field<double> neighVol(neighVolSpec,list.get_num_owned_points());
 	Field<double> naiveNeighVol(naiveNeighVolSpec,list.get_num_owned_points());

@@ -164,7 +164,6 @@ PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Te
     filename << "." << numProc;
     filename << "." << myPID;
   }
-  filename.str().c_str();
 
   // Default to storing and writing doubles
   int CPU_word_size, IO_word_size;
@@ -176,7 +175,7 @@ PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Te
 
   // Initialize the database (assumes that Peridigm mothership vectors created and initialized)
   int num_dimensions = 3;
-  int num_nodes = peridigm->x->Map().NumMyElements();
+  int num_nodes = peridigm->getOneDimensionalMap()->NumMyElements();
   int num_elements = num_nodes;
   int num_element_blocks = blocks->size();
   int num_node_sets = 0;
@@ -258,15 +257,96 @@ PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Te
   TEST_FOR_EXCEPTION(retval<0, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII() -- Error opening output ExodusII database.");
   if (retval > 0) std::cout << "PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII() -- Warning upon opening output ExodusII database. Warning code: " << retval << std::endl;
 
+  // Create internal mapping of requested output fields to an integer.
+  // The user requests output fields via strings, but Exodus wants an integer to index the output fields
+  int node_output_field_index = 1;
+  int element_output_field_index = 1;
+  Teuchos::ParameterList::ConstIterator i1;
+  // Loop over the material types in the materialOutputFields parameterlist
+  for (i1 = materialOutputFields->begin(); i1 != materialOutputFields->end(); ++i1) {
+    const Teuchos::ParameterEntry& val1 = materialOutputFields->entry(i1);
+    // For each material type, loop over requested output fields and hook up pointers
+    if (val1.isList()) { // each material type is a sublist
+      const Teuchos::ParameterList& sublist = Teuchos::getValue<Teuchos::ParameterList>(val1);
+      Teuchos::ParameterList::ConstIterator i2;
+      for (i2=sublist.begin(); i2 != sublist.end(); ++i2) {
+        const std::string& nm = sublist.name(i2);
+        // use field name to get reference to const fieldSpec
+        std::map<string, Field_NS::FieldSpec>::const_iterator i3;
+        i3 = Field_NS::FieldSpecMap::Map.find(nm); // Can't use operator[] on a const std::map
+        TEST_FOR_EXCEPT_MSG(i3 == Field_NS::FieldSpecMap::Map.end(), "Failed to find reference to fieldSpec!");
+        Field_NS::FieldSpec const &fs = i3->second;
+        if (fs.getLength() == Field_ENUM::SCALAR) {
+          if (fs.getRelation() == Field_ENUM::NODE) {
+            node_output_field_map.insert( std::pair<string,int>(nm,node_output_field_index) );
+            node_output_field_index = node_output_field_index + 1;
+          }
+          else if (fs.getRelation() == Field_ENUM::ELEMENT) {
+            element_output_field_map.insert( std::pair<string,int>(nm,element_output_field_index) );
+            element_output_field_index = element_output_field_index + 1;
+          }
+        }
+        if (fs.getLength() == Field_ENUM::VECTOR2D) {
+          string tmpnameX = nm+"X";
+          string tmpnameY = nm+"Y";
+          if (fs.getRelation() == Field_ENUM::NODE) {
+            node_output_field_map.insert( std::pair<string,int>(tmpnameX,node_output_field_index) );
+            node_output_field_index = node_output_field_index + 1;
+            node_output_field_map.insert( std::pair<string,int>(tmpnameY,node_output_field_index) );
+            node_output_field_index = node_output_field_index + 1;
+          }
+          else if (fs.getRelation() == Field_ENUM::ELEMENT) {
+            element_output_field_map.insert( std::pair<string,int>(tmpnameX,element_output_field_index) );
+            element_output_field_index = element_output_field_index + 1;
+            element_output_field_map.insert( std::pair<string,int>(tmpnameY,element_output_field_index) );
+            element_output_field_index = element_output_field_index + 1;
+          }
+        }
+        if (fs.getLength() == Field_ENUM::VECTOR3D) {
+          string tmpnameX = nm+"X";
+          string tmpnameY = nm+"Y";
+          string tmpnameZ = nm+"Z";
+          if (fs.getRelation() == Field_ENUM::NODE) {
+            node_output_field_map.insert( std::pair<string,int>(tmpnameX,node_output_field_index) );
+            node_output_field_index = node_output_field_index + 1;
+            node_output_field_map.insert( std::pair<string,int>(tmpnameY,node_output_field_index) );
+            node_output_field_index = node_output_field_index + 1;
+            node_output_field_map.insert( std::pair<string,int>(tmpnameZ,node_output_field_index) );
+            node_output_field_index = node_output_field_index + 1;
+          }
+          else if (fs.getRelation() == Field_ENUM::ELEMENT) {
+            element_output_field_map.insert( std::pair<string,int>(tmpnameX,element_output_field_index) );
+            element_output_field_index = element_output_field_index + 1;
+            element_output_field_map.insert( std::pair<string,int>(tmpnameY,element_output_field_index) );
+            element_output_field_index = element_output_field_index + 1;
+            element_output_field_map.insert( std::pair<string,int>(tmpnameZ,element_output_field_index) );
+            element_output_field_index = element_output_field_index + 1;
+          }
+        }
+      }
+    }
+  }
+
   // Write information records
-  // MLP: For now, just hardcode to displacement (x,y,z)
-  int num_nodal_vars = 3;
-  char *var_names[3];
-  var_names[0] = "DisplacementX";
-  var_names[1] = "DisplacementY";
-  var_names[2] = "DisplacementZ";
-  retval = ex_put_var_param(file_handle,"N",num_nodal_vars);
-  retval = ex_put_var_names(file_handle,"N",num_nodal_vars,var_names);
+
+  // Write node var info 
+  int num_node_vars = node_output_field_map.size();
+  char **node_var_names = new char*[num_node_vars];
+  for (i=0;i<num_node_vars;i++) node_var_names[i] = new char[MAX_STR_LENGTH+1]; // MAX_STR_LENGTH defined in ExodusII.h
+  std::map<string,int>::iterator it;
+  for ( it=node_output_field_map.begin() ; it != node_output_field_map.end(); it++ )
+    strcpy(node_var_names[(it->second)-1], it->first.c_str() );
+  retval = ex_put_var_param(file_handle,"N",num_node_vars);
+  retval = ex_put_var_names(file_handle,"N",num_node_vars,node_var_names);
+
+  // Write element var info 
+  int num_element_vars = element_output_field_map.size();
+  char **element_var_names = new char*[num_element_vars];
+  for (i=0;i<num_element_vars;i++) element_var_names[i] = new char[MAX_STR_LENGTH+1]; // MAX_STR_LENGTH defined in ExodusII.h
+  for ( it=element_output_field_map.begin() ; it != element_output_field_map.end(); it++ )
+    strcpy(element_var_names[(it->second)-1], it->first.c_str() );
+  retval = ex_put_var_param(file_handle,"E",num_element_vars);
+  retval = ex_put_var_names(file_handle,"E",num_element_vars,element_var_names);
 
   // Close file; re-open with call to write()
   retval = ex_update(file_handle);
@@ -280,6 +360,10 @@ PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Te
   delete[] num_nodes_in_elem;
   delete[] node_map;
   delete[] elem_block_ID;
+  for (i = num_node_vars; i>0; i--) delete[] node_var_names[i-1];
+  delete[] node_var_names;
+  for (i = num_element_vars; i>0; i--) delete[] element_var_names[i-1];
+  delete[] element_var_names;
 
 }
 
@@ -383,45 +467,163 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
     rebalanceCount = blocks->begin()->getDataManager()->getRebalanceCount();
   }
 
-  // MLP: What to do with Exodus database after rebalance? Exodus assumes that 
-  // the model is described by data which are static (do not change through time). This data
-  // includes nodal coordinates, element connectivity (node lists for each element), element
-  // attributes, and node sets and side sets (used to aid in applying loading conditions and
-  // boundary constraints).
-
-/*
-  // Iterators over vector of grids and over blocks. Each vector is  same size by above line.
-  std::vector<PeridigmNS::Block>::iterator blockIt;
-  std::vector<vtkSmartPointer<vtkUnstructuredGrid> >::iterator gridIt;
-  for(blockIt = blocks->begin(), gridIt=grids.begin() ; blockIt != blocks->end() ; blockIt++, gridIt++) {
-    if (gridIt->GetPointer() == NULL || reInitGrids) {
-      double *xptr;
-      Teuchos::RCP<Epetra_Vector> myX =  blockIt->getDataManager()->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE);
-      myX->ExtractView( &xptr );
-      // Use only the number of owned elements
-      int length = (blockIt->getDataManager()->getOwnedScalarPointMap())->NumMyElements();
-      (*gridIt) = PdVTK::getGrid(xptr,length);
-    }
-  }
-*/
-
-//  if (blocks->size() == 1) // if only one block, don't write with block IDs
-//    this->write(blocks->begin()->getDataManager(),blocks->begin()->getNeighborhoodData(),grids.front(),vtkWriters.front(),current_time);
-//  else { // there are many blocks; write output using block IDs
-//    std::vector< vtkSmartPointer<vtkExodusIIWriter>  >::iterator writerIt;
-//    for(blockIt = blocks->begin(), gridIt=grids.begin(), writerIt=vtkWriters.begin() ; blockIt != blocks->end() ; blockIt++, gridIt++, writerIt++)
-//      this->write(blockIt->getDataManager(),blockIt->getNeighborhoodData(),*gridIt,*writerIt,current_time,blockIt->getID());
-//  }
+  // MLP: Insert code here to re-initialize exodus database after rebalance 
 
   // Write time value
   int retval = ex_put_time(file_handle,exodus_count,&current_time);
   TEST_FOR_EXCEPTION(retval<0, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII() -- Error opening output ExodusII database (ex_put_init()).");
   if (retval > 0) std::cout << "PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII() -- Warning upon opening output ExodusII database (ex_put_init()). Warning code: " << retval << std::endl;
  
-  // MLP: Only displacement for block #1 right now.
-  //int ex_put_nodal_var (exoid, time_step, nodal_var_index,num_nodes, nodal_var_vals);
-  int num_nodes = peridigm->u->Map().NumMyElements();
+  int num_nodes = peridigm->getOneDimensionalMap()->NumMyElements();
 
+  // Allocate temporary storage for all mothership-like data
+  double *xptr = new double[num_nodes];
+  double *yptr = new double[num_nodes];
+  double *zptr = new double[num_nodes];
+
+  Teuchos::ParameterList::ConstIterator i1;
+  // Loop over the material types in the materialOutputFields parameterlist
+  for (i1 = materialOutputFields->begin(); i1 != materialOutputFields->end(); ++i1) {
+    const Teuchos::ParameterEntry& val1 = materialOutputFields->entry(i1);
+    // const std::string& name1 = materialOutputFields->name(i1);
+    // For each material type, loop over requested output fields and hook up pointers
+    if (val1.isList()) { // each material type is a sublist
+      const Teuchos::ParameterList& sublist = Teuchos::getValue<Teuchos::ParameterList>(val1);
+      Teuchos::ParameterList::ConstIterator i2;
+      for (i2=sublist.begin(); i2 != sublist.end(); ++i2) {
+        const std::string& nm = sublist.name(i2);
+        // use field name to get reference to const fieldSpec
+        std::map<string, Field_NS::FieldSpec>::const_iterator i3;
+        i3 = Field_NS::FieldSpecMap::Map.find(nm); // Can't use operator[] on a const std::map
+        TEST_FOR_EXCEPT_MSG(i3 == Field_NS::FieldSpecMap::Map.end(), "Failed to find reference to fieldSpec!");
+        Field_NS::FieldSpec const &fs = i3->second;
+        double *block_ptr; block_ptr = NULL;
+        // Exodus ignores element blocks when writing nodal variables
+        if (fs.getRelation() == Field_ENUM::NODE) {
+          // Loop over all blocks, copying data from each block into mothership-like vector
+          std::vector<PeridigmNS::Block>::iterator blockIt;
+          for(blockIt = blocks->begin(); blockIt != blocks->end() ; blockIt++) {
+            Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
+            Teuchos::RCP<Epetra_Vector> epetra_vector;
+            if (fs.get_temporal() != Field_ENUM::TWO_STEP) // If stateless, get STEP_NONE
+              epetra_vector = dataManager->getData(fs, Field_ENUM::STEP_NONE);
+            else // If stateful, get STEP_NP1
+              epetra_vector = dataManager->getData(fs, Field_ENUM::STEP_NP1);
+            int block_num_nodes = (blockIt->getDataManager()->getOwnedScalarPointMap())->NumMyElements();
+            epetra_vector->ExtractView(&block_ptr);
+            // switch on dimension of data
+            if (fs.getLength() == Field_ENUM::SCALAR) {
+              // loop over contents of block vector; fill mothership-like vector
+              for (int j=0;j<block_num_nodes; j++) {
+                int GID = blockIt->getOwnedVectorPointMap()->GID(j);
+                int msLID = peridigm->getOneDimensionalMap()->LID(GID);
+                xptr[msLID] = block_ptr[j];
+              }
+            }
+            else if (fs.getLength() == Field_ENUM::VECTOR2D) {
+              // Peridgm doesn't have any 2D maps. 2D output not supported.
+              TEST_FOR_EXCEPTION(true, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- 2D vector quantities not currently supported.");
+            }
+            else if (fs.getLength() == Field_ENUM::VECTOR3D) {
+              // loop over contents of block vector; fill mothership-like vector
+              for (int j=0;j<block_num_nodes; j++) {
+                int GID = blockIt->getOwnedVectorPointMap()->GID(j);
+                int msLID = peridigm->getThreeDimensionalMap()->LID(GID);
+                xptr[msLID] = block_ptr[3*j];
+                yptr[msLID] = block_ptr[3*j+1];
+                zptr[msLID] = block_ptr[3*j+2];
+              }
+            } // end switch on data dimension
+          } // end loop over blocks
+          // Mothership-like vectors filled now; pass data to exodus database (switch again on dimension of data)
+          if (fs.getLength() == Field_ENUM::SCALAR) {
+            retval = ex_put_nodal_var(file_handle, exodus_count, node_output_field_map[nm], num_nodes, xptr);
+          }
+          else if (fs.getLength() == Field_ENUM::VECTOR2D) {
+            // Peridgm doesn't have any 2D maps. 2D output not supported.
+            TEST_FOR_EXCEPTION(true, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- 2D vector quantities not currently supported.");
+          }
+          else if (fs.getLength() == Field_ENUM::VECTOR3D) {
+            // Writing all vector output as per-node data
+            string tmpnameX = nm+"X";
+            string tmpnameY = nm+"Y";
+            string tmpnameZ = nm+"Z";
+            retval = ex_put_nodal_var(file_handle, exodus_count, node_output_field_map[tmpnameX], num_nodes, xptr);
+            retval = ex_put_nodal_var(file_handle, exodus_count, node_output_field_map[tmpnameY], num_nodes, yptr);
+            retval = ex_put_nodal_var(file_handle, exodus_count, node_output_field_map[tmpnameZ], num_nodes, zptr);
+          }
+        } // end if per-node variable
+        // Exodus wants element data written individually for each element block
+        else if (fs.getRelation() == Field_ENUM::ELEMENT) {
+          // Loop over all blocks, passing data from each block to exodus database
+          std::vector<PeridigmNS::Block>::iterator blockIt;
+          for(blockIt = blocks->begin(); blockIt != blocks->end() ; blockIt++) {
+            if (fs == Field_NS::GID) { // Handle special case of ID (int type)
+              int block_num_nodes = (blockIt->getDataManager()->getOwnedScalarPointMap())->NumMyElements();
+              for (int j=0; j<block_num_nodes; j++)
+                xptr[j] = (double)((peridigm->getOneDimensionalMap()->GID(j))+1);
+              retval = ex_put_elem_var(file_handle, exodus_count, element_output_field_map[nm], blockIt->getID(), block_num_nodes, xptr);
+            }
+            else if (fs == Field_NS::PROC_NUM) { // Handle special case of Proc_Num (int type)
+              int block_num_nodes = (blockIt->getDataManager()->getOwnedScalarPointMap())->NumMyElements();
+              for (int j=0; j<block_num_nodes; j++)
+                xptr[j] = (double)myPID;
+              retval = ex_put_elem_var(file_handle, exodus_count, element_output_field_map[nm], blockIt->getID(), block_num_nodes, xptr);
+            }
+            else {
+              Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
+              Teuchos::RCP<Epetra_Vector> epetra_vector;
+              if (fs.get_temporal() != Field_ENUM::TWO_STEP) // If stateless, get STEP_NONE
+                epetra_vector = dataManager->getData(fs, Field_ENUM::STEP_NONE);
+              else // If stateful, get STEP_NP1
+                epetra_vector = dataManager->getData(fs, Field_ENUM::STEP_NP1);
+              int block_num_nodes = (blockIt->getDataManager()->getOwnedScalarPointMap())->NumMyElements();
+              epetra_vector->ExtractView(&block_ptr);
+              // switch on dimension of data
+              if (fs.getLength() == Field_ENUM::SCALAR) {
+                retval = ex_put_elem_var(file_handle, exodus_count, element_output_field_map[nm], blockIt->getID(), block_num_nodes, block_ptr);
+              }
+              else if (fs.getLength() == Field_ENUM::VECTOR2D) { 
+                // Peridgm doesn't have any 2D maps. 2D output not supported.
+                TEST_FOR_EXCEPTION(true, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- 2D vector quantities not currently supported.");
+              }
+              else if (fs.getLength() == Field_ENUM::VECTOR3D) {
+                // separate out contents of block vector into x,y,z components
+                for (int j=0;j<block_num_nodes; j++) {
+                  int GID = blockIt->getOwnedVectorPointMap()->GID(j);
+                  int msLID = peridigm->getThreeDimensionalMap()->LID(GID);
+                  xptr[msLID] = block_ptr[3*j];
+                  yptr[msLID] = block_ptr[3*j+1];
+                  zptr[msLID] = block_ptr[3*j+2];
+                }
+                string tmpnameX = nm+"X";
+                string tmpnameY = nm+"Y";
+                string tmpnameZ = nm+"Z";
+                retval = ex_put_nodal_var(file_handle, exodus_count, element_output_field_map[tmpnameX], block_num_nodes, xptr);
+                retval = ex_put_nodal_var(file_handle, exodus_count, element_output_field_map[tmpnameY], block_num_nodes, yptr);
+                retval = ex_put_nodal_var(file_handle, exodus_count, element_output_field_map[tmpnameZ], block_num_nodes, zptr);
+              } // end switch on data dimension
+            }
+          } // end loop over blocks
+        } // if per-element variable
+      }
+    }
+  }
+
+  delete[] xptr;
+  delete[] yptr;
+  delete[] zptr;
+
+  // Flush write
+  retval = ex_update(file_handle);
+
+}
+
+// Maybe use this code block later?
+// It's more efficient to pull data from the mothership vectors, if they
+// exist for the requested output data, rather than pulling from the
+// vectors in the block
+/*
   int numMyElements = peridigm->x->Map().NumMyElements();
   double *xdisp = new double[numMyElements];
   double *ydisp = new double[numMyElements];
@@ -438,7 +640,8 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
   retval = ex_put_nodal_var(file_handle, exodus_count, 1, num_nodes, xdisp);
   retval = ex_put_nodal_var(file_handle, exodus_count, 2, num_nodes, ydisp);
   retval = ex_put_nodal_var(file_handle, exodus_count, 3, num_nodes, zdisp);
-   
+*/
+
 
 /*
   for(blockIt = blocks->begin(), gridIt=grids.begin() ; blockIt != blocks->end() ; blockIt++, gridIt++) {
@@ -503,158 +706,5 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
      mbds->SetBlock(blockIt->getID(), grid);
 
   }
-*/
-
-  // *********************
-  // setup model meta data
-  // *********************
-/*
-  metadata = vtkSmartPointer<vtkModelMetadata>::New();
-  metadata->SetTitle("Title");
-  metadata->SetNumberOfNodeSets(0); 
-  metadata->SetNumberOfSideSets(0); 
-  metadata->SetNumberOfBlocks(blocks->size());
-
-  char **names = new char*[3];
-  for(int i=0;i<3;i++) { names[i] = new char[2]; };
-  names[0][0] = 'X'; names[0][1] = '\0';
-  names[1][0] = 'Y'; names[1][1] = '\0';
-  names[2][0] = 'Z'; names[2][1] = '\0';
-  metadata->SetCoordinateNames  (3, names);
-
-  // see vtkExodusIIWriter CreateBlockIDMetadata
-  int *blockIds = new int[blocks->size()];
-  char **blockNames = new char *[blocks->size()];
-  int *numElements = new int[blocks->size()];
-  int *numNodesPerElement = new int[blocks->size()];
-  int *numAttributes = new int[blocks->size()];
-
-  int i=0;
-  for(i=0, blockIt = blocks->begin(); blockIt != blocks->end() ; i++, blockIt++) { 
-    // Set block ID
-    blockIds[i] = blockIt->getID(); 
-    // Set block name
-    char *nm = new char[12];
-    strcpy(nm, "sphere"); // see vtkExodusIIWriter::GetCellTypeName(), VTK_VERTEX maps to "sphere"
-    blockNames[i] = nm;
-    // Set number of elements in block
-    Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
-    Teuchos::RCP<Epetra_Vector> myX = dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE);
-    const Epetra_BlockMap& xMap = myX->Map();
-    numElements[i] = xMap.NumMyElements();
-    // Set number of nodes per element (always 1)
-    numNodesPerElement[i] = 1;
-    // Set number of attributes per element
-    numAttributes[i] = 0;
-  }
-  metadata->SetBlockIds(blockIds);
-  metadata->SetBlockElementType(blockNames);
-  metadata->SetBlockNumberOfElements(numElements);
-  metadata->SetBlockNodesPerElement(numNodesPerElement);
-  metadata->SetBlockNumberOfAttributesPerElement(numAttributes);
-
-  // Set global variable names (none)
-  char **globalVariableNames = NULL;
-  metadata->SetGlobalVariableNames(0, globalVariableNames);
-
-  float *times = new float[11];
-  times[0] = 0.0; times[1] = 0.1; times[2] = 0.2; times[3] = 0.3;
-  times[4] = 0.4; times[5] = 0.5; times[6] = 0.6; times[7] = 0.7;
-  times[8] = 0.8; times[9] = 0.9; times[10] = 1.0;
-  metadata->SetTimeSteps(11, times);
-
-  static int timestep = 0;
-  timestep++;
-  metadata->SetTimeStepIndex(timestep);
-
-//  Need to embed cell array in unstructured grid data?
-//  metadata->SetBlockIdArrayName  ( const char *   ) [virtual] 
-
-  vtkWriter->SetModelMetadata(metadata);
-
-  // metadata->PrintGlobalInformation();
-
-  // you must SetBlockIds and SetBlockIdArrayName. Your vtkUnstructuredGrid must have a cell array giving the block ID for each cell.
-
-  // SetInput for writer as MBDS, then call write
-  //vtkWriter->SetInput(mbds);
-
-  vtkSmartPointer<vtkTrivialProducer> tp = vtkSmartPointer<vtkTrivialProducer>::New();
-  tp->SetOutput(mbds);
-  vtkWriter->SetInputConnection(tp->GetOutputPort());
-
-  vtkWriter->Update();
-  vtkWriter->Write();
-
-exit(1);
-*/
-
-  // Flush write
-  retval = ex_update(file_handle);
-
-}
-
-/*
-void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP<PeridigmNS::DataManager> dataManager,
-                                              Teuchos::RCP<const NeighborhoodData> neighborhoodData,
-                                              vtkSmartPointer<vtkUnstructuredGrid> grid,
-                                              vtkSmartPointer<vtkExodusIIWriter> vtkWriter,
-                                              double current_time, int block_id) {
-
-  return;
-
-  Teuchos::ParameterList::ConstIterator i1;
-  // Loop over the material types in the materialOutputFields parameterlist
-  for (i1 = materialOutputFields->begin(); i1 != materialOutputFields->end(); ++i1) {
-    const Teuchos::ParameterEntry& val1 = materialOutputFields->entry(i1);
-    // const std::string& name1 = materialOutputFields->name(i1);
-    // For each material type, loop over requested output fields and hook up pointers
-    if (val1.isList()) { // each material type is a sublist
-      const Teuchos::ParameterList& sublist = Teuchos::getValue<Teuchos::ParameterList>(val1);
-      Teuchos::ParameterList::ConstIterator i2;
-      for (i2=sublist.begin(); i2 != sublist.end(); ++i2) {
-        const std::string& nm = sublist.name(i2);
-        // use field name to get reference to const fieldSpec
-        std::map<string, Field_NS::FieldSpec>::const_iterator i3;
-        i3 = Field_NS::FieldSpecMap::Map.find(nm); // Can't use operator[] on a const std::map
-        TEST_FOR_EXCEPT_MSG(i3 == Field_NS::FieldSpecMap::Map.end(), "Failed to find reference to fieldSpec!");
-        Field_NS::FieldSpec const &fs = i3->second;
-        double *ptr; ptr = NULL;
-        if (fs == Field_NS::GID) { // Handle special case of ID (int type)
-          // Get map corresponding to x (COORD3D FieldSpec guaranteed to exist by Peridigm object)
-          Teuchos::RCP<Epetra_Vector> myX = dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE);
-          const Epetra_BlockMap& xMap = myX->Map();
-          // hook up pointer to data
-          PdVTK::writeField<int>(grid,Field_NS::GID,xMap.MyGlobalElements());
-        }
-         else if (fs == Field_NS::PROC_NUM) { // Handle special case of Proc_Num (int type)
-          // Get map corresponding to x (COORD3D FieldSpec guaranteed to exist by Peridigm object)
-          Teuchos::RCP<Epetra_Vector> myX =  dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE);
-          // Use only the number of owned elements
-          int length = (dataManager->getOwnedScalarPointMap())->NumMyElements();
-          // If the length is zero, this means there are no on-processor points for this block
-          if(length > 0)
-            proc_num->assign(length,myPID);
-          else
-            proc_num->assign(1,myPID); // Avoids access error in subsequent call to proc_num->at(0)
-          // hook up pointer to data
-          PdVTK::writeField<int>(grid,Field_NS::PROC_NUM,&(proc_num->at(0)));
-       }
-        else { // Handle all other cases (double type)
-          if (fs.get_temporal() != Field_ENUM::TWO_STEP) // If stateless, get STEP_NONE
-            dataManager->getData(fs, Field_ENUM::STEP_NONE)->ExtractView(&ptr);
-          else // If stateful, get STEP_NP1
-            dataManager->getData(fs, Field_ENUM::STEP_NP1)->ExtractView(&ptr);
-          // hook up pointer to data
-          PdVTK::writeField<double>(grid,fs,ptr);
-        }
-      }
-    }
-  }
-
-  // All pointers reset; now write data
-  //vtkWriter->writeTimeStep(current_time,grid,block_id);
-  vtkWriter->Write();
-}
 */
 
