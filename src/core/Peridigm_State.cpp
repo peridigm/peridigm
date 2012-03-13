@@ -56,7 +56,7 @@ void PeridigmNS::State::allocateScalarPointData(Teuchos::RCP< std::vector<Field_
   std::sort(sortedFieldSpecs.begin(), sortedFieldSpecs.end());
   scalarPointData = Teuchos::rcp(new Epetra_MultiVector(*map, sortedFieldSpecs.size()));
   for(unsigned int i=0 ; i<sortedFieldSpecs.size() ; ++i){
-    TEST_FOR_EXCEPT_MSG(sortedFieldSpecs[i].getRelation() != Field_ENUM::POINT, "PeridigmNS::State::allocateScalarPointData():  Invalid fieldSpec.\n");
+    TEST_FOR_EXCEPT_MSG(sortedFieldSpecs[i].getRelation() != Field_ENUM::ELEMENT, "PeridigmNS::State::allocateScalarPointData():  Invalid fieldSpec.\n");
     fieldSpecToDataMap[sortedFieldSpecs[i]] = Teuchos::rcp((*scalarPointData)(i), false);
   }
 }
@@ -67,7 +67,7 @@ void PeridigmNS::State::allocateVectorPointData(Teuchos::RCP< std::vector<Field_
   std::sort(sortedFieldSpecs.begin(), sortedFieldSpecs.end());
   vectorPointData = Teuchos::rcp(new Epetra_MultiVector(*map, sortedFieldSpecs.size()));
   for(unsigned int i=0 ; i<sortedFieldSpecs.size() ; ++i){
-    TEST_FOR_EXCEPT_MSG(sortedFieldSpecs[i].getRelation() != Field_ENUM::POINT, "PeridigmNS::State::allocateVectorPointData():  Invalid fieldSpec.\n");
+    TEST_FOR_EXCEPT_MSG(sortedFieldSpecs[i].getRelation() != Field_ENUM::NODE, "PeridigmNS::State::allocateVectorPointData():  Invalid fieldSpec.\n");
     fieldSpecToDataMap[sortedFieldSpecs[i]] = Teuchos::rcp((*vectorPointData)(i), false);
   }
 }

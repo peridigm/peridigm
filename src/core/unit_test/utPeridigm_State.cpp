@@ -450,7 +450,7 @@ void copyFrom()
   // allocate data for the field specs, which are taken from the initial state object
 
   // scalar point data
-  *relation = Field_ENUM::POINT;
+  *relation = Field_ENUM::ELEMENT;
   *length = Field_ENUM::SCALAR;
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > scalarPointFieldSpecs = state.getFieldSpecs(relation, length);
   tempState.allocateScalarPointData(scalarPointFieldSpecs, tempOverlapScalarPointMap);
@@ -459,7 +459,7 @@ void copyFrom()
   BOOST_CHECK( tempState.getScalarPointMultiVector()->Map().SameAs( *tempOverlapScalarPointMap ) );
 
   // vector point data
-  *relation = Field_ENUM::POINT;
+  *relation = Field_ENUM::NODE;
   *length = Field_ENUM::VECTOR3D;
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > vectorFieldSpecs = state.getFieldSpecs(relation, length);
   tempState.allocateVectorPointData(vectorFieldSpecs, tempOverlapVectorPointMap);

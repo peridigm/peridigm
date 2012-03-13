@@ -46,6 +46,8 @@
 #ifndef PERIDIGM_OUTPUTMANAGER_EXODUSII_HPP
 #define PERIDIGM_OUTPUTMANAGER_EXODUSII_HPP
 
+#include <map>
+
 #include <Peridigm_OutputManager.hpp>
 
 #include <Teuchos_ParameterList.hpp>
@@ -93,8 +95,13 @@ namespace PeridigmNS {
     //! Exodus file handle
     int file_handle;
 
-    //! Integer timestep index for exodus timestamp. Differs from "count" var in parent class.
+    //! Index of number of timesteps data actually written to exodus file
     int exodus_count;
+
+    //! Map from nodal output field name to integer. Exodus uses an integer (1..k)  to index the output fields
+    std::map <string, int> node_output_field_map;
+    //! Map from element field name to integer. Exodus uses an integer (1..k)  to index the output fields
+    std::map <string, int> element_output_field_map;
 
   };
   

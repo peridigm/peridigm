@@ -67,14 +67,14 @@ void PeridigmNS::DataManager::allocateData(Teuchos::RCP< std::vector<Field_NS::F
   for(unsigned int i=0; i<fieldSpecs->size() ; ++i){
     Field_NS::FieldSpec& spec = (*fieldSpecs)[i];
     // scalar point data
-    if(spec.getLength() == Field_ENUM::SCALAR && spec.getRelation() == Field_ENUM::POINT){
+    if(spec.getLength() == Field_ENUM::SCALAR && spec.getRelation() == Field_ENUM::ELEMENT){
       if(spec.get_temporal() == Field_ENUM::CONSTANT)
         statelessScalarPointFieldSpecs->push_back(spec);
       else
         statefulScalarPointFieldSpecs->push_back(spec);
     }
     // vector point data
-    else if(spec.getLength() == Field_ENUM::VECTOR3D && spec.getRelation() == Field_ENUM::POINT){
+    else if(spec.getLength() == Field_ENUM::VECTOR3D && spec.getRelation() == Field_ENUM::NODE){
       if(spec.get_temporal() == Field_ENUM::CONSTANT)
         statelessVectorPointFieldSpecs->push_back(spec);
       else
