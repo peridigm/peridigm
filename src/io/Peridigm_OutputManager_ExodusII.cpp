@@ -109,7 +109,7 @@ PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Te
 
   // Default to BINARY output
   outputFormat = params->get<string>("Output Format","BINARY"); 
-  TEST_FOR_EXCEPTION( (outputFormat != "ASCII") && (outputFormat != "BINARY"),  std::invalid_argument, "PeridigmNS::OutputManager_ExodusII:::OutputManager_ExodusII() -- Unknown output format. Must be ASCII or BINARY.");
+  TEST_FOR_EXCEPTION( outputFormat != "BINARY",  std::invalid_argument, "PeridigmNS::OutputManager_ExodusII:::OutputManager_ExodusII() -- Output format must be BINARY for ExodusII.");
 
   // Default to not write full neighborlist
   writeNeighborlist = params->get<bool>("Bond Family",false); 
@@ -338,15 +338,15 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
           // Loop over all blocks, passing data from each block to exodus database
           std::vector<PeridigmNS::Block>::iterator blockIt;
           for(blockIt = blocks->begin(); blockIt != blocks->end() ; blockIt++) {
+            int block_num_nodes = (blockIt->getDataManager()->getOwnedScalarPointMap())->NumMyElements();
+            if (block_num_nodes == 0) continue; // Don't write data for empty blocks
             if (fs == Field_NS::GID) { // Handle special case of ID (int type)
-              int block_num_nodes = (blockIt->getDataManager()->getOwnedScalarPointMap())->NumMyElements();
               for (int j=0; j<block_num_nodes; j++)
                 xptr[j] = (double)(((blockIt->getDataManager()->getOwnedScalarPointMap())->GID(j))+1);
               retval = ex_put_elem_var(file_handle, exodusCount, element_output_field_map[nm], blockIt->getID(), block_num_nodes, xptr);
               if (retval!= 0) reportExodusError(retval, "write", "ex_put_elem_var");
             }
             else if (fs == Field_NS::PROC_NUM) { // Handle special case of Proc_Num (int type)
-              int block_num_nodes = (blockIt->getDataManager()->getOwnedScalarPointMap())->NumMyElements();
               for (int j=0; j<block_num_nodes; j++)
                 xptr[j] = (double)myPID;
               retval = ex_put_elem_var(file_handle, exodusCount, element_output_field_map[nm], blockIt->getID(), block_num_nodes, xptr);
@@ -359,7 +359,6 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
                 epetra_vector = dataManager->getData(fs, Field_ENUM::STEP_NONE);
               else // If stateful, get STEP_NP1
                 epetra_vector = dataManager->getData(fs, Field_ENUM::STEP_NP1);
-              int block_num_nodes = (blockIt->getDataManager()->getOwnedScalarPointMap())->NumMyElements();
               epetra_vector->ExtractView(&block_ptr);
               // switch on dimension of data
               if (fs.getLength() == Field_ENUM::SCALAR) {
@@ -515,6 +514,7 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
   // Write element connectivity
   for(blockIt = blocks->begin(); blockIt != blocks->end(); blockIt++) {
     int numMyElements = blockIt->getOwnedScalarPointMap()->NumMyElements();
+    if (numMyElements == 0) continue; // don't insert connectivity info for empty blocks
     int *connect = new int[numMyElements];
     for (int j=0;j<numMyElements;j++) {
       int GID = blockIt->getOwnedScalarPointMap()->GID(j);
@@ -666,7 +666,7 @@ void PeridigmNS::OutputManager_ExodusII::reportExodusError(int errorCode, const 
     TEST_FOR_EXCEPTION(1, std::invalid_argument, ss.str());
   }  
   else {
-    if (numProc > 1) ss << "Error on PID #" << myPID << ": ";
+    if (numProc > 1) ss << "Warning on PID #" << myPID << ": ";
     ss << "PeridigmNS::OutputManager_ExodusII::" << methodName << "() -- Warning code: " << errorCode << " (" << exodusMethodName << ")";
     std::cout << ss.str() << std::endl;
   }
