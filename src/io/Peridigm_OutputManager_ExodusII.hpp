@@ -83,23 +83,36 @@ namespace PeridigmNS {
     //! Assignment operator.
     OutputManager_ExodusII& operator=( const OutputManager& OM );
 
+    //! Initialize a new exodus database
+    void initializeExodusDatabase(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks);
+
+    //! Error & Warning reporting tool for calls to ExodusII API
+    void reportExodusError(int errorCode, const char *methodName, const char *exodusMethodName);
+
     //! Valid Teuchos::ParameterList 
     Teuchos::ParameterList getValidParameterList();
 
-    //! Container for data array of processor ID number for each node on my proc
-    Teuchos::RCP< std::vector<int> > proc_num;
-
     //! Parent pointer
     PeridigmNS::Peridigm *peridigm;
+
+    // Filename of current exodus database (changes upon rebalance)
+    std::ostringstream filename;
 
     //! Exodus file handle
     int file_handle;
 
     //! Index of number of timesteps data actually written to exodus file
-    int exodus_count;
+    int exodusCount;
+
+    //! Index of number of times rebalance has occurred. A new exodus database must be written after every rebalance.
+    int rebalanceCount;
+
+    //! Word sizes for IO and CPU
+    int CPU_word_size, IO_word_size;
 
     //! Map from nodal output field name to integer. Exodus uses an integer (1..k)  to index the output fields
     std::map <string, int> node_output_field_map;
+
     //! Map from element field name to integer. Exodus uses an integer (1..k)  to index the output fields
     std::map <string, int> element_output_field_map;
 
