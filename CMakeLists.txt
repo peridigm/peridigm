@@ -91,6 +91,8 @@ MESSAGE("   Trilinos_TPL_LIBRARIES = ${Trilinos_TPL_LIBRARIES}")
 MESSAGE("   Trilinos_TPL_LIBRARY_DIRS = ${Trilinos_TPL_LIBRARY_DIRS}")
 MESSAGE("   Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
 MESSAGE("   Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
+# Hack for now until Trilinos exports cmake variable for binaries directory
+SET(Trilinos_BINARY_PATH ${Trilinos_LIBRARY_DIRS}/../bin)
 # verbose output
 # MESSAGE("   Trilinos_LIBRARIES = ${Trilinos_LIBRARIES}")
 # MESSAGE("   Trilinos_INCLUDE_DIRS = ${Trilinos_INCLUDE_DIRS}")
@@ -213,4 +215,6 @@ if (NOT ${buildInSource})
    set(SCRIPT_DIRS ${SCRIPT_DIRS}  -d scripts)
    execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/scripts/mirror.py -s ${CMAKE_SOURCE_DIR} -b ${CMAKE_BINARY_DIR} ${SCRIPT_DIRS} )
 endif (NOT ${buildInSource})
-
+# Set symbolic link to seacas tools "exodiff", "epu" in scripts dir
+execute_process(COMMAND ln -sf ${Trilinos_BINARY_PATH}/exodiff ${CMAKE_BINARY_DIR}/scripts)
+execute_process(COMMAND ln -sf ${Trilinos_BINARY_PATH}/epu ${CMAKE_BINARY_DIR}/scripts)
