@@ -226,8 +226,6 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
   // Only write if frequency count match
   if (frequency<=0 || (count-1)%frequency!=0) return;
 
-std::cout << "time =" << current_time << std::endl;
-
   // increment exodus_count index
   exodusCount = exodusCount + 1;
 
