@@ -107,6 +107,9 @@ namespace PeridigmNS {
     //! Index of number of times rebalance has occurred. A new exodus database must be written after every rebalance.
     int rebalanceCount;
 
+    //! Flag indicating if this is the first call to initializeExodusDatabase
+    bool initializeExodusDatabaseCalled;
+
     //! Word sizes for IO and CPU
     int CPU_word_size, IO_word_size;
 
