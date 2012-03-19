@@ -137,6 +137,9 @@ PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Te
 
   // Default to storing and writing doubles
   CPU_word_size = IO_word_size = sizeof(double);
+  
+  // Not called yet
+  initializeExodusDatabaseCalled = false;
 
   // Initialize the exodus database
   initializeExodusDatabase(blocks);
@@ -236,7 +239,7 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
   // Each block is always rebalanced at the same time, so each datamanager should always return the same
   // rebalance count. Hence, we keep only a single static int for the rebalance count. If the first block 
   // rebalanced since last write, then all of them did. Force reinit database.
-  if (rebalanceCount != blocks->begin()->getDataManager()->getRebalanceCount()) {
+  if ( (numProc > 1) && (rebalanceCount != blocks->begin()->getDataManager()->getRebalanceCount()) ) {
     rebalanceCount = blocks->begin()->getDataManager()->getRebalanceCount();
     initializeExodusDatabase(blocks);
   }
@@ -414,28 +417,31 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
    */
 
   // Follow convention of replacing spaces or . with underscore
-  {
-  int warningFlag = 0;
-  string outString;
-  outString.append("\n\n***WARNING***\n");
-  outString.append("PeridigmNS::OutputManager_ExodusII:::OutputManager_ExodusII() -- Avoid use of filenames containing '.' (period) and ' ' (space) with ExodusII.\n");
-  outString.append("Changing ");
-  outString.append(filenameBase);
-  outString.append(" to ");
-  for ( unsigned int i = 0; i < filenameBase.length(); i++) {
-    if (filenameBase[i] ==' ' || filenameBase[i]=='.')  {
-      filenameBase.replace(i,1,"_");
-      warningFlag = 1;
+  if (!initializeExodusDatabaseCalled) {
+    int warningFlag = 0;
+    string outString;
+    outString.append("\n\n***WARNING***\n");
+    outString.append("PeridigmNS::OutputManager_ExodusII:::OutputManager_ExodusII() -- Avoid use of filenames containing '.' (period) and ' ' (space) with ExodusII.\n");
+    outString.append("Changing ");
+    outString.append(filenameBase);
+    outString.append(" to ");
+    for ( unsigned int i = 0; i < filenameBase.length(); i++) {
+      if (filenameBase[i] ==' ' || filenameBase[i]=='.')  {
+        filenameBase.replace(i,1,"_");
+        warningFlag = 1;
+      }
     }
-  }
-  outString.append(filenameBase);
-  outString.append(".\n\n\n");
-  if (warningFlag) std::cout << outString;
+    outString.append(filenameBase);
+    outString.append(".\n\n\n");
+    if (warningFlag) std::cout << outString;
+    initializeExodusDatabaseCalled = true;
   }
   // Construct output filename
+  filename.str(std::string());
+  filename.clear();
   filename << filenameBase.c_str() << ".e";
   if (numProc > 1) {
-    if (peridigm->analysisHasRebalance)
+    if (peridigm->analysisHasRebalance || peridigm->analysisHasContact)
       filename << "-s" << setfill('0') << setw(5) << rebalanceCount;
     filename << "." << numProc;
     filename << "." << myPID;
