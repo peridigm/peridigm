@@ -64,7 +64,7 @@ PeridigmNS::BoundaryAndInitialConditionManager::BoundaryAndInitialConditionManag
     muParser.DefineFun(_T("rnd"), mu::Rnd, false);
   } 
   catch (mu::Parser::exception_type &e)
-    TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
 }
 
 void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<AbstractDiscretization> discretization)
@@ -77,7 +77,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Abs
 	size_t position = name.find("Node Set");
 	if(position != string::npos){
 	  stringstream ss(Teuchos::getValue<string>(it->second));
-      TEST_FOR_EXCEPT_MSG(nodeSets->find(name) != nodeSets->end(), "**** Duplicate node set found: " + name + "\n");
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(name) != nodeSets->end(), "**** Duplicate node set found: " + name + "\n");
 	  vector<int>& nodeList = (*nodeSets)[name];
 	  int nodeID;
 	  while(ss.good()){
@@ -91,7 +91,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Abs
   Teuchos::RCP< map< string, vector<int> > > discretizationNodeSets = discretization->getNodeSets();
   for(map< string, vector<int> >::iterator it=discretizationNodeSets->begin() ; it!=discretizationNodeSets->end() ; it++){
     string name = it->first;
-    TEST_FOR_EXCEPT_MSG(nodeSets->find(name) != nodeSets->end(), "**** Duplicate node set found: " + name + "\n");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(name) != nodeSets->end(), "**** Duplicate node set found: " + name + "\n");
     vector<int>& nodeList = it->second;
     (*nodeSets)[name] = nodeList;
   }
@@ -125,7 +125,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialDisplacements(T
         muParser.SetExpr(function);
       }
       catch (mu::Parser::exception_type &e)
-        TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
 
       if (nodeSet == "All") { // Apply initial position to all locally-owned nodes
         for(int localNodeID = 0; localNodeID < x->MyLength(); localNodeID++) {
@@ -136,12 +136,12 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialDisplacements(T
             (*u)[localNodeID*3 + coord] = muParser.Eval();
           }
           catch (mu::Parser::exception_type &e)
-          TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+          TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
         }
       }
       else { // Apply initial position to specific node set
         // apply initial displacement boundary conditions to locally-owned nodes
-        TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
         vector<int> & nodeList = (*nodeSets)[nodeSet];
         for(unsigned int i=0 ; i<nodeList.size() ; i++){
           int localNodeID = threeDimensionalMap.LID(nodeList[i]);
@@ -153,7 +153,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialDisplacements(T
               (*u)[localNodeID*3 + coord] = muParser.Eval();
             }
             catch (mu::Parser::exception_type &e)
-              TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+              TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
           }
         }
       }
@@ -187,7 +187,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialVelocities(Teuc
         muParser.SetExpr(function);
       }
       catch (mu::Parser::exception_type &e)
-        TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
 
       int coord = 0;
       if(coordinate == "y" || coordinate == "Y")
@@ -204,12 +204,12 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialVelocities(Teuc
             (*v)[localNodeID*3 + coord] = muParser.Eval();
           }
           catch (mu::Parser::exception_type &e)
-            TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+            TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
         }
       }
       else { // Apply initial velocity to specific node set
         // apply initial velocity boundary conditions to locally-owned nodes
-        TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
         vector<int> & nodeList = (*nodeSets)[nodeSet];
         for(unsigned int i=0 ; i<nodeList.size() ; i++){
           int localNodeID = threeDimensionalMap.LID(nodeList[i]);
@@ -221,7 +221,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialVelocities(Teuc
               (*v)[localNodeID*3 + coord] = muParser.Eval();
             }
             catch (mu::Parser::exception_type &e)
-              TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+              TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
           }
         }
       }
@@ -281,7 +281,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
         coord = 2;
 
       // apply kinematic boundary conditions to locally-owned nodes
-      TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
       vector<int> & nodeList = (*nodeSets)[nodeSet];
       for(unsigned int i=0 ; i<nodeList.size() ; i++){
 
@@ -321,7 +321,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
         coord = 2;
 
       // apply kinematic boundary conditions to locally-owned nodes
-      TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
       vector<int> & nodeList = (*nodeSets)[nodeSet];
       for(unsigned int i=0 ; i<nodeList.size() ; i++){
 
@@ -378,7 +378,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::setVectorValues(double time
         muParser.SetExpr(function);
       }
       catch (mu::Parser::exception_type &e)
-        TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
 
       int coord = 0;
       if(coordinate == "y" || coordinate == "Y")
@@ -387,7 +387,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::setVectorValues(double time
         coord = 2;
 
       // apply kinematic boundary conditions to locally-owned nodes
-      TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
       vector<int> & nodeList = (*nodeSets)[nodeSet];
       for(unsigned int i=0 ; i<nodeList.size() ; i++){
 
@@ -408,7 +408,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::setVectorValues(double time
               previousValue = muParser.Eval();
             }
             catch (mu::Parser::exception_type &e)
-              TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+              TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
           }
 
           double currentValue = 0.0;
@@ -417,7 +417,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::setVectorValues(double time
             currentValue = muParser.Eval();
           }
           catch (mu::Parser::exception_type &e)
-            TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+            TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
 
           (*vec)[localNodeID*3 + coord] = (currentValue - previousValue)*multiplier ;
         }

@@ -47,7 +47,7 @@
 
 #include "Peridigm_ViscoelasticStandardLinearSolid.hpp"
 #include "Peridigm_DamageModelFactory.hpp"
-#include <Teuchos_TestForException.hpp>
+#include <Teuchos_Assert.hpp>
 #include <Epetra_Vector.h>
 #include <Epetra_MultiVector.h>
 #include "ordinary_std_linear_visco_solid.h"

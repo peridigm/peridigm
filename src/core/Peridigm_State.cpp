@@ -47,7 +47,7 @@
 
 #include "Peridigm_State.hpp"
 #include <Epetra_Import.h>
-#include <Teuchos_TestForException.hpp>
+#include <Teuchos_Assert.hpp>
 #include <sstream>
 
 void PeridigmNS::State::allocateScalarPointData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
@@ -56,7 +56,7 @@ void PeridigmNS::State::allocateScalarPointData(Teuchos::RCP< std::vector<Field_
   std::sort(sortedFieldSpecs.begin(), sortedFieldSpecs.end());
   scalarPointData = Teuchos::rcp(new Epetra_MultiVector(*map, sortedFieldSpecs.size()));
   for(unsigned int i=0 ; i<sortedFieldSpecs.size() ; ++i){
-    TEST_FOR_EXCEPT_MSG(sortedFieldSpecs[i].getRelation() != Field_ENUM::ELEMENT, "PeridigmNS::State::allocateScalarPointData():  Invalid fieldSpec.\n");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(sortedFieldSpecs[i].getRelation() != Field_ENUM::ELEMENT, "PeridigmNS::State::allocateScalarPointData():  Invalid fieldSpec.\n");
     fieldSpecToDataMap[sortedFieldSpecs[i]] = Teuchos::rcp((*scalarPointData)(i), false);
   }
 }
@@ -67,7 +67,7 @@ void PeridigmNS::State::allocateVectorPointData(Teuchos::RCP< std::vector<Field_
   std::sort(sortedFieldSpecs.begin(), sortedFieldSpecs.end());
   vectorPointData = Teuchos::rcp(new Epetra_MultiVector(*map, sortedFieldSpecs.size()));
   for(unsigned int i=0 ; i<sortedFieldSpecs.size() ; ++i){
-    TEST_FOR_EXCEPT_MSG(sortedFieldSpecs[i].getRelation() != Field_ENUM::NODE, "PeridigmNS::State::allocateVectorPointData():  Invalid fieldSpec.\n");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(sortedFieldSpecs[i].getRelation() != Field_ENUM::NODE, "PeridigmNS::State::allocateVectorPointData():  Invalid fieldSpec.\n");
     fieldSpecToDataMap[sortedFieldSpecs[i]] = Teuchos::rcp((*vectorPointData)(i), false);
   }
 }
@@ -78,7 +78,7 @@ void PeridigmNS::State::allocateScalarBondData(Teuchos::RCP< std::vector<Field_N
   std::sort(sortedFieldSpecs.begin(), sortedFieldSpecs.end());
   scalarBondData = Teuchos::rcp(new Epetra_MultiVector(*map, sortedFieldSpecs.size()));
   for(unsigned int i=0 ; i<sortedFieldSpecs.size() ; ++i){
-    TEST_FOR_EXCEPT_MSG(sortedFieldSpecs[i].getRelation() != Field_ENUM::BOND, "PeridigmNS::State::allocateScalarBondData():  Invalid fieldSpec.\n");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(sortedFieldSpecs[i].getRelation() != Field_ENUM::BOND, "PeridigmNS::State::allocateScalarBondData():  Invalid fieldSpec.\n");
     fieldSpecToDataMap[sortedFieldSpecs[i]] = Teuchos::rcp((*scalarBondData)(i), false);
   }
 }
@@ -111,7 +111,7 @@ Teuchos::RCP<Epetra_Vector> PeridigmNS::State::getData(Field_NS::FieldSpec field
   if(!keyExists){
     std::stringstream ss;
     ss << fieldSpec;
-    TEST_FOR_EXCEPTION(!keyExists, Teuchos::RangeError, 
+    TEUCHOS_TEST_FOR_EXCEPTION(!keyExists, Teuchos::RangeError, 
                        "****Error in PeridigmNS::State::getData(), key does not exist: " + ss.str() + "\n");
   }
   return lb->second;
@@ -120,21 +120,21 @@ Teuchos::RCP<Epetra_Vector> PeridigmNS::State::getData(Field_NS::FieldSpec field
 void PeridigmNS::State::copyLocallyOwnedDataFromState(Teuchos::RCP<PeridigmNS::State> source)
 {
   // Make sure the source isn't a null ref-count pointer
-  TEST_FOR_EXCEPTION(source.is_null(), Teuchos::NullReferenceError,
+  TEUCHOS_TEST_FOR_EXCEPTION(source.is_null(), Teuchos::NullReferenceError,
                      "PeridigmNS::State::copyLocallyOwnedDataFromState() called with null ref-count pointer.\n");
 
   if(!scalarPointData.is_null()){
-    TEST_FOR_EXCEPTION(source->getScalarPointMultiVector().is_null(), Teuchos::NullReferenceError,
+    TEUCHOS_TEST_FOR_EXCEPTION(source->getScalarPointMultiVector().is_null(), Teuchos::NullReferenceError,
                        "PeridigmNS::State::copyLocallyOwnedDataFromState() called with incompatible State.\n");
     copyLocallyOwnedMultiVectorData( *(source->getScalarPointMultiVector()), *scalarPointData );
   }
   if(!vectorPointData.is_null()){
-    TEST_FOR_EXCEPTION(source->getVectorPointMultiVector().is_null(), Teuchos::NullReferenceError,
+    TEUCHOS_TEST_FOR_EXCEPTION(source->getVectorPointMultiVector().is_null(), Teuchos::NullReferenceError,
                        "PeridigmNS::State::copyLocallyOwnedDataFromState() called with incompatible State.\n");
     copyLocallyOwnedMultiVectorData( *(source->getVectorPointMultiVector()), *vectorPointData );
   }
   if(!scalarBondData.is_null()){
-    TEST_FOR_EXCEPTION(source->getScalarBondMultiVector().is_null(), Teuchos::NullReferenceError,
+    TEUCHOS_TEST_FOR_EXCEPTION(source->getScalarBondMultiVector().is_null(), Teuchos::NullReferenceError,
                        "PeridigmNS::State::copyLocallyOwnedDataFromState() called with incompatible State.\n");
     copyLocallyOwnedMultiVectorData( *(source->getScalarBondMultiVector()), *scalarBondData );
   }
@@ -142,7 +142,7 @@ void PeridigmNS::State::copyLocallyOwnedDataFromState(Teuchos::RCP<PeridigmNS::S
 
 void PeridigmNS::State::copyLocallyOwnedMultiVectorData(Epetra_MultiVector& source, Epetra_MultiVector& target)
 {
-  TEST_FOR_EXCEPTION(source.NumVectors() != target.NumVectors(), std::runtime_error,
+  TEUCHOS_TEST_FOR_EXCEPTION(source.NumVectors() != target.NumVectors(), std::runtime_error,
                      "PeridigmNS::State::copyLocallyOwnedMultiVectorData() called with incompatible MultiVectors.\n");
   int numVectors = target.NumVectors();
   const Epetra_BlockMap& sourceMap = source.Map();
@@ -153,9 +153,9 @@ void PeridigmNS::State::copyLocallyOwnedMultiVectorData(Epetra_MultiVector& sour
     for(int targetLID=0 ; targetLID<targetMap.NumMyElements() ; ++targetLID){
       int GID = targetMap.GID(targetLID);
       int sourceLID = sourceMap.LID(GID);
-      TEST_FOR_EXCEPTION(sourceLID == -1, std::range_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(sourceLID == -1, std::range_error,
                          "PeridigmNS::State::copyLocallyOwnedMultiVectorData() called with incompatible MultiVectors.\n");
-      TEST_FOR_EXCEPTION(sourceMap.ElementSize(sourceLID) != targetMap.ElementSize(targetLID), std::range_error,
+      TEUCHOS_TEST_FOR_EXCEPTION(sourceMap.ElementSize(sourceLID) != targetMap.ElementSize(targetLID), std::range_error,
                          "PeridigmNS::State::copyLocallyOwnedMultiVectorData() called with incompatible MultiVectors.\n");
       int elementSize = targetMap.ElementSize(targetLID);
       int sourceFirstPointInElement = sourceMap.FirstPointInElement(sourceLID);

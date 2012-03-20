@@ -88,20 +88,20 @@ void PeridigmNS::DataManager::allocateData(Teuchos::RCP< std::vector<Field_NS::F
         statefulScalarBondFieldSpecs->push_back(spec);
     }
     else{
-      TEST_FOR_EXCEPTION(true, Teuchos::RangeError, 
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::RangeError, 
                          "PeridigmNS::DataManager::allocateData, invalid FieldSpec!");
     }
   }
 
   // make sure maps exist before trying to create states
   if(statelessScalarPointFieldSpecs->size() + statefulScalarPointFieldSpecs->size() > 0)
-    TEST_FOR_EXCEPTION(overlapScalarPointMap == Teuchos::null, Teuchos::NullReferenceError, 
+    TEUCHOS_TEST_FOR_EXCEPTION(overlapScalarPointMap == Teuchos::null, Teuchos::NullReferenceError, 
                        "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate scalar data with no map (forget setMaps()?).");
   if(statelessVectorPointFieldSpecs->size() + statefulVectorPointFieldSpecs->size() > 0)
-    TEST_FOR_EXCEPTION(overlapVectorPointMap == Teuchos::null, Teuchos::NullReferenceError, 
+    TEUCHOS_TEST_FOR_EXCEPTION(overlapVectorPointMap == Teuchos::null, Teuchos::NullReferenceError, 
                        "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate vector data with no map (forget setMaps()?).");
   if(statelessScalarBondFieldSpecs->size() + statefulScalarBondFieldSpecs->size() > 0)
-    TEST_FOR_EXCEPTION(ownedScalarBondMap == Teuchos::null, Teuchos::NullReferenceError, 
+    TEUCHOS_TEST_FOR_EXCEPTION(ownedScalarBondMap == Teuchos::null, Teuchos::NullReferenceError, 
                        "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate bond data with no map (forget setMaps()?).");
 
   // create the states
@@ -154,7 +154,7 @@ void PeridigmNS::DataManager::scatterToGhosts()
     Teuchos::RCP<Epetra_MultiVector> overlapScalarPointMultiVector = state->getScalarPointMultiVector();
     if(!overlapScalarPointMultiVector.is_null()){
 
-      TEST_FOR_EXCEPTION(overlapScalarPointMap.is_null() || ownedScalarPointMap.is_null(), Teuchos::NullReferenceError,
+      TEUCHOS_TEST_FOR_EXCEPTION(overlapScalarPointMap.is_null() || ownedScalarPointMap.is_null(), Teuchos::NullReferenceError,
                          "Error in PeridigmNS::DataManager::scatterToGhosts(), inconsistent scalar maps.");
 
       // create an owned (non-overlap) multivector
@@ -181,7 +181,7 @@ void PeridigmNS::DataManager::scatterToGhosts()
     Teuchos::RCP<Epetra_MultiVector>  overlapVectorPointMultiVector = state->getVectorPointMultiVector();
     if(!overlapVectorPointMultiVector.is_null()){
 
-      TEST_FOR_EXCEPTION(overlapVectorPointMap.is_null() || ownedVectorPointMap.is_null(), Teuchos::NullReferenceError,
+      TEUCHOS_TEST_FOR_EXCEPTION(overlapVectorPointMap.is_null() || ownedVectorPointMap.is_null(), Teuchos::NullReferenceError,
                          "Error in PeridigmNS::DataManager::scatterToGhosts(), inconsistent vector maps.");
 
       // create an owned (non-overlap) multivector
@@ -227,19 +227,19 @@ void PeridigmNS::DataManager::rebalance(Teuchos::RCP<const Epetra_BlockMap> reba
   // importers
   Teuchos::RCP<const Epetra_Import> overlapScalarPointImporter;
   if(!overlapScalarPointMap.is_null() || !rebalancedOverlapScalarPointMap.is_null()){
-    TEST_FOR_EXCEPTION(overlapScalarPointMap.is_null() || rebalancedOverlapScalarPointMap.is_null(), Teuchos::NullReferenceError,
+    TEUCHOS_TEST_FOR_EXCEPTION(overlapScalarPointMap.is_null() || rebalancedOverlapScalarPointMap.is_null(), Teuchos::NullReferenceError,
                        "Error in PeridigmNS::DataManager::rebalance(), inconsistent scalar maps.");
     overlapScalarPointImporter = Teuchos::rcp(new Epetra_Import(*rebalancedOverlapScalarPointMap, *overlapScalarPointMap));
   }
   Teuchos::RCP<const Epetra_Import> overlapVectorPointImporter;
   if(!overlapVectorPointMap.is_null() || !rebalancedOverlapVectorPointMap.is_null()){
-    TEST_FOR_EXCEPTION(overlapVectorPointMap.is_null() || rebalancedOverlapVectorPointMap.is_null(), Teuchos::NullReferenceError, 
+    TEUCHOS_TEST_FOR_EXCEPTION(overlapVectorPointMap.is_null() || rebalancedOverlapVectorPointMap.is_null(), Teuchos::NullReferenceError, 
                        "Error in PeridigmNS::DataManager::rebalance(), inconsistent vector maps.");
     overlapVectorPointImporter = Teuchos::rcp(new Epetra_Import(*rebalancedOverlapVectorPointMap, *overlapVectorPointMap));
   }
   Teuchos::RCP<const Epetra_Import> ownedScalarBondImporter;
   if(!ownedScalarBondMap.is_null() || !rebalancedOwnedScalarBondMap.is_null()){
-    TEST_FOR_EXCEPTION(ownedScalarBondMap.is_null() || rebalancedOwnedScalarBondMap.is_null(), Teuchos::NullReferenceError, 
+    TEUCHOS_TEST_FOR_EXCEPTION(ownedScalarBondMap.is_null() || rebalancedOwnedScalarBondMap.is_null(), Teuchos::NullReferenceError, 
                        "Error in PeridigmNS::DataManager::rebalance(), inconsistent bond maps.");
     ownedScalarBondImporter = Teuchos::rcp(new Epetra_Import(*rebalancedOwnedScalarBondMap, *ownedScalarBondMap));
   }
@@ -305,27 +305,27 @@ void PeridigmNS::DataManager::rebalance(Teuchos::RCP<const Epetra_BlockMap> reba
 void PeridigmNS::DataManager::copyLocallyOwnedDataFromDataManager(PeridigmNS::DataManager& source)
 {
   if(!stateNONE.is_null()){
-    TEST_FOR_EXCEPTION(source.getStateNONE().is_null(), Teuchos::NullReferenceError, "PeridigmNS::State::copyLocallyOwnedDataFromDataManager() called with incompatible source and target.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION(source.getStateNONE().is_null(), Teuchos::NullReferenceError, "PeridigmNS::State::copyLocallyOwnedDataFromDataManager() called with incompatible source and target.\n");
     stateNONE->copyLocallyOwnedDataFromState(source.getStateNONE());
   }
   else{
-    TEST_FOR_EXCEPTION(!source.getStateNONE().is_null(), Teuchos::NullReferenceError, "PeridigmNS::State::copyLocallyOwnedDataFromDataManager() called with incompatible source and target.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION(!source.getStateNONE().is_null(), Teuchos::NullReferenceError, "PeridigmNS::State::copyLocallyOwnedDataFromDataManager() called with incompatible source and target.\n");
   }
 
   if(!stateN.is_null()){
-    TEST_FOR_EXCEPTION(source.getStateN().is_null(), Teuchos::NullReferenceError, "PeridigmNS::State::copyLocallyOwnedDataFromDataManager() called with incompatible source and target.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION(source.getStateN().is_null(), Teuchos::NullReferenceError, "PeridigmNS::State::copyLocallyOwnedDataFromDataManager() called with incompatible source and target.\n");
     stateN->copyLocallyOwnedDataFromState(source.getStateN());
   }
   else{
-    TEST_FOR_EXCEPTION(!source.getStateN().is_null(), Teuchos::NullReferenceError, "PeridigmNS::State::copyLocallyOwnedDataFromDataManager() called with incompatible source and target.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION(!source.getStateN().is_null(), Teuchos::NullReferenceError, "PeridigmNS::State::copyLocallyOwnedDataFromDataManager() called with incompatible source and target.\n");
   }
 
   if(!stateNP1.is_null()){
-    TEST_FOR_EXCEPTION(source.getStateNP1().is_null(), Teuchos::NullReferenceError, "PeridigmNS::State::copyLocallyOwnedDataFromDataManager() called with incompatible source and target.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION(source.getStateNP1().is_null(), Teuchos::NullReferenceError, "PeridigmNS::State::copyLocallyOwnedDataFromDataManager() called with incompatible source and target.\n");
     stateNP1->copyLocallyOwnedDataFromState(source.getStateNP1());
   }
   else{
-    TEST_FOR_EXCEPTION(!source.getStateNP1().is_null(), Teuchos::NullReferenceError, "PeridigmNS::State::copyLocallyOwnedDataFromDataManager() called with incompatible source and target.\n");
+    TEUCHOS_TEST_FOR_EXCEPTION(!source.getStateNP1().is_null(), Teuchos::NullReferenceError, "PeridigmNS::State::copyLocallyOwnedDataFromDataManager() called with incompatible source and target.\n");
   }
 }
 
@@ -342,7 +342,7 @@ bool PeridigmNS::DataManager::hasData(Field_NS::FieldSpec fieldSpec, Field_ENUM:
     hasData = stateNP1->hasData(fieldSpec);
   }
   else{
-    TEST_FOR_EXCEPTION(false, Teuchos::RangeError, 
+    TEUCHOS_TEST_FOR_EXCEPTION(false, Teuchos::RangeError, 
                        "PeridigmNS::DataManager::getData, invalid FieldStep!");
   }
   return hasData;
@@ -361,7 +361,7 @@ Teuchos::RCP<Epetra_Vector> PeridigmNS::DataManager::getData(Field_NS::FieldSpec
     data = stateNP1->getData(fieldSpec);
   }
   else{
-    TEST_FOR_EXCEPTION(false, Teuchos::RangeError, 
+    TEUCHOS_TEST_FOR_EXCEPTION(false, Teuchos::RangeError, 
                        "PeridigmNS::DataManager::getData, invalid FieldStep!");
   }
   return data;

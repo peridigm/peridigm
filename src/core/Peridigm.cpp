@@ -263,7 +263,7 @@ void PeridigmNS::Peridigm::instantiateMaterials() {
     Teuchos::RCP<const Teuchos::ParameterList> matParams = Teuchos::rcpFromRef(materialParams);
     materialModels->push_back( materialFactory.create(matParams) );
   }
-  TEST_FOR_EXCEPT_MSG(materialModels->size() == 0, "No material models created!");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(materialModels->size() == 0, "No material models created!");
 }
 
 void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscretization> peridigmDisc) {
@@ -343,7 +343,7 @@ void PeridigmNS::Peridigm::initializeNodeSets(Teuchos::RCP<Teuchos::ParameterLis
 	size_t position = name.find("Node Set");
 	if(position != string::npos){
 	  stringstream ss(Teuchos::getValue<string>(it->second));
-      TEST_FOR_EXCEPT_MSG(nodeSets->find(name) != nodeSets->end(), "**** Duplicate node set found: " + name + "\n");
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(name) != nodeSets->end(), "**** Duplicate node set found: " + name + "\n");
 	  vector<int>& nodeList = (*nodeSets)[name];
 	  int nodeID;
 	  while(ss.good()){
@@ -357,7 +357,7 @@ void PeridigmNS::Peridigm::initializeNodeSets(Teuchos::RCP<Teuchos::ParameterLis
   Teuchos::RCP< map< string, vector<int> > > discretizationNodeSets = peridigmDisc->getNodeSets();
   for(map< string, vector<int> >::iterator it=discretizationNodeSets->begin() ; it!=discretizationNodeSets->end() ; it++){
     string name = it->first;
-    TEST_FOR_EXCEPT_MSG(nodeSets->find(name) != nodeSets->end(), "**** Duplicate node set found: " + name + "\n");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(name) != nodeSets->end(), "**** Duplicate node set found: " + name + "\n");
     vector<int>& nodeList = it->second;
     (*nodeSets)[name] = nodeList;
   }
@@ -381,10 +381,10 @@ void PeridigmNS::Peridigm::initializeContact() {
     Teuchos::ParameterList & contactParams = problemParams->sublist("Contact");
     analysisHasContact = true;
     if(!contactParams.isParameter("Search Radius"))
-      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Contact parameter \"Search Radius\" not specified.");
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Contact parameter \"Search Radius\" not specified.");
     contactSearchRadius = contactParams.get<double>("Search Radius");
     if(!contactParams.isParameter("Search Frequency"))
-      TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Contact parameter \"Search Frequency\" not specified.");
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Contact parameter \"Search Frequency\" not specified.");
     contactRebalanceFrequency = contactParams.get<int>("Search Frequency");
   }
 
@@ -453,7 +453,7 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
   if (active) {
     // Make the default format "VTK_XML"
     string outputFormat = outputParams->get("Output File Type", "VTK_XML");
-    TEST_FOR_EXCEPTION( outputFormat != "VTK_XML" && outputFormat != "ExodusII",
+    TEUCHOS_TEST_FOR_EXCEPTION( outputFormat != "VTK_XML" && outputFormat != "ExodusII",
                         std::invalid_argument,
                         "PeridigmNS::Peridigm: \"Output File Type\" must be \"VTK_XML\" or \"ExodusII\".");
     if (outputFormat == "VTK_XML")
@@ -461,7 +461,7 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
     else if (outputFormat == "ExodusII")
        outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_ExodusII( outputParams, this, blocks ));
     else
-      TEST_FOR_EXCEPTION( true, std::invalid_argument,"PeridigmNS::Peridigm::initializeOutputManager: \"Output File Type\" must be \"VTK_XML\".");
+      TEUCHOS_TEST_FOR_EXCEPTION( true, std::invalid_argument,"PeridigmNS::Peridigm::initializeOutputManager: \"Output File Type\" must be \"VTK_XML\".");
 
     // Initialize current time in this parameterlist
     Teuchos::RCP<Teuchos::ParameterList> solverParams = Teuchos::rcp(&(peridigmParams->sublist("Solver")),false);
@@ -695,7 +695,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
     // Check for NaNs in force evaluation
     // We'd like to know now because a NaN will likely cause a difficult-to-unravel crash downstream.
     for(int i=0 ; i<force->MyLength() ; ++i)
-      TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*force)[i]), "**** NaN returned by force evaluation.\n");
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*force)[i]), "**** NaN returned by force evaluation.\n");
 
     if(analysisHasContact){
       // Copy contact force from the data manager to the mothership vector
@@ -710,7 +710,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
 
       // Check for NaNs in contact force evaluation
       for(int i=0 ; i<contactForce->MyLength() ; ++i)
-        TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*contactForce)[i]), "**** NaN returned by contact force evaluation.\n");
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*contactForce)[i]), "**** NaN returned by contact force evaluation.\n");
 
       // Add contact forces to forces
       force->Update(1.0, *contactForce, 1.0);
@@ -909,7 +909,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
           PeridigmNS::Timer::self().startTimer("Evaluate Jacobian");
           modelEvaluator->evalJacobian(workset);
           int err = tangent->GlobalAssemble();
-          TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::executeQuasiStatic(), GlobalAssemble() returned nonzero error code.\n");
+          TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::executeQuasiStatic(), GlobalAssemble() returned nonzero error code.\n");
           PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
           boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
           boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndPutOnesOnDiagonal(tangent);
@@ -1023,11 +1023,11 @@ void PeridigmNS::Peridigm::quasiStaticsSetPreconditioner(Belos::LinearProblem<do
   if (linearProblem.isHermitian()) { // assume matrix Hermitian; construct IC preconditioner
     Teuchos::RCP<Ifpack_Preconditioner> Prec = Teuchos::rcp( IFPFactory.Create("IC", &(*tangent), 0) );
     Teuchos::ParameterList ifpackList;
-    TEST_FOR_EXCEPT_MSG(Prec->SetParameters(ifpackList), 
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->SetParameters(ifpackList), 
   		      "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->SetParameters() returned nonzero error code.\n");
-    TEST_FOR_EXCEPT_MSG(Prec->Initialize(), 
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->Initialize(), 
 		      "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->Initialize() returned nonzero error code.\n");
-    TEST_FOR_EXCEPT_MSG(Prec->Compute(), 
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->Compute(), 
 		      "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->Compute() returned nonzero error code.\n");
     // Create the Belos preconditioned operator from the Ifpack preconditioner.
     // NOTE:  This is necessary because Belos expects an operator to apply the
@@ -1045,11 +1045,11 @@ void PeridigmNS::Peridigm::quasiStaticsSetPreconditioner(Belos::LinearProblem<do
     // the combine mode is on the following: "Add", "Zero", "Insert", "InsertAdd", "Average", "AbsMax"
     ifpackList.set("schwarz: combine mode", "Add");
     // sets the parameters
-    TEST_FOR_EXCEPT_MSG(Prec->SetParameters(ifpackList), 
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->SetParameters(ifpackList), 
   		      "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->SetParameters() returned nonzero error code.\n");
-    TEST_FOR_EXCEPT_MSG(Prec->Initialize(), 
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->Initialize(), 
 		      "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->Initialize() returned nonzero error code.\n");
-    TEST_FOR_EXCEPT_MSG(Prec->Compute(), 
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->Compute(), 
 		      "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->Compute() returned nonzero error code.\n");
     // Create the Belos preconditioned operator from the Ifpack preconditioner.
     // NOTE:  This is necessary because Belos expects an operator to apply the
@@ -1090,7 +1090,7 @@ Belos::ReturnType PeridigmNS::Peridigm::quasiStaticsSolveSystem(Teuchos::RCP<Epe
   lhs->PutScalar(0.0);
   linearProblem.setOperator(tangent);
   bool isSet = linearProblem.setProblem(lhs, residual);
-  TEST_FOR_EXCEPT_MSG(!isSet, "**** Belos::LinearProblem::setProblem() returned nonzero error code.\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!isSet, "**** Belos::LinearProblem::setProblem() returned nonzero error code.\n");
   try{
     isConverged = belosSolver->solve();
   }
@@ -1469,12 +1469,12 @@ void PeridigmNS::Peridigm::allocateJacobian() {
 
     // Allocate space in the global matrix
     int err = tangent->InsertGlobalValues(rowEntry->first, numRowNonzeros, (const double*)&zeros[0], (const int*)&indices[0]);
-    TEST_FOR_EXCEPT_MSG(err < 0, "**** PeridigmNS::Peridigm::allocateJacobian(), InsertGlobalValues() returned negative error code.\n");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(err < 0, "**** PeridigmNS::Peridigm::allocateJacobian(), InsertGlobalValues() returned negative error code.\n");
 
     rowEntry->second.clear();
   }
   int err = tangent->GlobalAssemble();
-  TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::allocateJacobian(), GlobalAssemble() returned nonzero error code.\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::allocateJacobian(), GlobalAssemble() returned nonzero error code.\n");
 
   // create the serial Jacobian
   overlapJacobian = Teuchos::rcp(new PeridigmNS::SerialMatrix(tangent, oneDimensionalOverlapMap));
@@ -1510,7 +1510,7 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
 
   // copy the internal force to the residual vector
   // note that due to restrictions on CrsMatrix, these vectors have different (but equivalent) maps
-  TEST_FOR_EXCEPT_MSG(residual->MyLength() != force->MyLength(), "**** PeridigmNS::Peridigm::computeQuasiStaticResidual() incompatible vector lengths!\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(residual->MyLength() != force->MyLength(), "**** PeridigmNS::Peridigm::computeQuasiStaticResidual() incompatible vector lengths!\n");
   for(int i=0 ; i<force->MyLength() ; ++i)
     (*residual)[i] = (*force)[i];
 
@@ -1541,7 +1541,7 @@ void PeridigmNS::Peridigm::computeImplicitJacobian(double beta) {
   PeridigmNS::Timer::self().startTimer("Evaluate Jacobian");
   modelEvaluator->evalJacobian(workset);
   int err = tangent->GlobalAssemble();
-  TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::computeImplicitJacobian(), GlobalAssemble() returned nonzero error code.\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::computeImplicitJacobian(), GlobalAssemble() returned nonzero error code.\n");
   PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
 
   // Code to symmeterize Jacobian
@@ -1847,7 +1847,7 @@ Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::Peridigm::createRebalance
   for(int i=0 ; i<rebalancedOneDimensionalMap->NumMyElements() ; ++i){
     int globalID = rebalancedOneDimensionalMap->GID(i);
     int localID = rebalancedOneDimensionalOverlapMap->LID(globalID);
-    TEST_FOR_EXCEPTION(localID == -1, Teuchos::RangeError, "Invalid index into rebalancedOneDimensionalOverlapMap");
+    TEUCHOS_TEST_FOR_EXCEPTION(localID == -1, Teuchos::RangeError, "Invalid index into rebalancedOneDimensionalOverlapMap");
     ownedIDs[i] = localID;
   }
   rebalancedNeighborhoodData->SetNeighborhoodListSize(rebalancedOneDimensionalMap->NumMyElements() + rebalancedBondMap->NumMyPoints());
@@ -1873,7 +1873,7 @@ Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::Peridigm::createRebalance
       for(int iN=0 ; iN<numNeighbors ; ++iN){
         int globalNeighborID = (int)( (*rebalancedNeighborGlobalIDs)[offset + iN] );
         int localNeighborID = rebalancedOneDimensionalOverlapMap->LID(globalNeighborID);
-        TEST_FOR_EXCEPTION(localNeighborID == -1, Teuchos::RangeError, "Invalid index into rebalancedOneDimensionalOverlapMap");
+        TEUCHOS_TEST_FOR_EXCEPTION(localNeighborID == -1, Teuchos::RangeError, "Invalid index into rebalancedOneDimensionalOverlapMap");
         neighborhoodList[neighborhoodIndex++] = localNeighborID;
       }
     }
@@ -2003,7 +2003,7 @@ Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::Peridigm::createRebalance
 	for(int i=0 ; i<rebalancedOneDimensionalMap->NumMyElements() ; ++i){
 		int globalID = rebalancedOneDimensionalMap->GID(i);
 		int localID = rebalancedOneDimensionalOverlapMap->LID(globalID);
-		TEST_FOR_EXCEPTION(localID == -1, Teuchos::RangeError, "Invalid index into rebalancedOneDimensionalOverlapMap");
+		TEUCHOS_TEST_FOR_EXCEPTION(localID == -1, Teuchos::RangeError, "Invalid index into rebalancedOneDimensionalOverlapMap");
 		ownedIDs[i] = localID;
 	}
 	// determine the neighborhood list size
@@ -2023,7 +2023,7 @@ Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::Peridigm::createRebalance
 		// get the global ID of this point and the global IDs of its neighbors
 		int globalID = rebalancedOneDimensionalMap->GID(iLID);
 		// require that this globalID be present as a key into contactNeighborGlobalIDs
-		TEST_FOR_EXCEPTION(contactNeighborGlobalIDs->count(globalID) == 0, Teuchos::RangeError, "Invalid index into contactNeighborGlobalIDs");
+		TEUCHOS_TEST_FOR_EXCEPTION(contactNeighborGlobalIDs->count(globalID) == 0, Teuchos::RangeError, "Invalid index into contactNeighborGlobalIDs");
 		const vector<int>& neighborGlobalIDs = (*contactNeighborGlobalIDs)[globalID];
 		// first entry in the neighborhoodlist is the number of neighbors
 		neighborhoodList[neighborhoodIndex++] = (int) neighborGlobalIDs.size();
