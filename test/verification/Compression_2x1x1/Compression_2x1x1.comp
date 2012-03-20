@@ -1,9 +1,22 @@
-<Tolerances>
-  <Tolerance variable="Displacement" value="1.0e-9"/>
-  <Tolerance variable="Velocity" value="1.0e-9"/>
-  <Tolerance variable="Force" value="1.0e-9"/>
-  <Tolerance variable="Force_Density" value="1.0e-9"/>
-  <Tolerance variable="Acceleration" value="1.0e-9"/>
-  <Tolerance variable="Weighted_Volume" value="1.0e-12"/>
-  <Tolerance variable="Dilatation" value="1.0e-12"/>
-</Tolerances>
+DEFAULT TOLERANCE absolute 1.0E-9
+COORDINATES absolute 1.0E-12
+TIME STEPS absolute 1.0E-14
+NODAL VARIABLES absolute 1.0E-12
+	DisplacementX   absolute 1.0E-9
+	DisplacementY   absolute 1.0E-9
+	DisplacementZ   absolute 1.0E-9
+	VelocityX       absolute 1.0E-9
+	VelocityY       absolute 1.0E-9
+	VelocityZ       absolute 1.0E-9
+	ForceX          absolute 1.0E-9
+	ForceY          absolute 1.0E-9
+	ForceZ          absolute 1.0E-9
+	Force_DensityX  absolute 1.0E-9
+	Force_DensityY  absolute 1.0E-9
+	Force_DensityZ  absolute 1.0E-9
+	AccelerationX   absolute 1.0E-9
+	AccelerationY   absolute 1.0E-9
+	AccelerationZ   absolute 1.0E-9
+ELEMENT VARIABLES absolute 1.E-12
+	Weighted_Volume absolute 1.0E-12
+	Dilatation      absolute 1.0E-12
