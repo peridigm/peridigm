@@ -1,11 +1,12 @@
 <ParameterList>
+
 <ParameterList name="Problem">
 	<Parameter name="Verbose" type="bool" value="false"/>
-        <ParameterList name="Discretization">
-                <Parameter name="Type" type="string" value="PdQuickGrid" />
+	<ParameterList name="Discretization">
+		<Parameter name="Type" type="string" value="PdQuickGrid" />
 		<Parameter name="Horizon" type="double" value="0.51"/>
-                <ParameterList name="TensorProduct3DMeshGenerator">
-	  		<Parameter name="Type" type="string" value="PdQuickGrid"/>
+		<ParameterList name="TensorProduct3DMeshGenerator">
+			<Parameter name="Type" type="string" value="PdQuickGrid"/>
 			<Parameter name="X Origin" type="double" value="0.0"/>
 			<Parameter name="Y Origin" type="double" value="0.0"/>
 			<Parameter name="Z Origin" type="double" value="0.0"/>
@@ -59,30 +60,33 @@
 		</ParameterList>
 	</ParameterList>
 </ParameterList>
+
 <ParameterList name="Solver">
 	<Parameter name="Verbose" type="bool" value="false"/>
 	<Parameter name="Initial Time" type="double" value="0.0"/>
 	<Parameter name="Final Time" type="double" value="0.00008"/>
 	<ParameterList name="Verlet">
- 	  <Parameter name="Fixed dt" type="double" value="1.0e-8"/>
+		<Parameter name="Fixed dt" type="double" value="1.0e-8"/>
 	</ParameterList>
-  </ParameterList>
-  <ParameterList name="Output">
-        <Parameter name="Output File Type" type="string" value="VTK_XML"/>
-        <Parameter name="Output Format" type="string" value="ASCII"/>
-        <Parameter name="Output Filename" type="string" value="BondBreakingInitialVelocity"/>
-        <Parameter name="Output Frequency" type="int" value="1000"/>
-        <Parameter name="Parallel Write" type="bool" value="true"/>
-        <ParameterList name="Material Output Fields">
-            <ParameterList name="Linear Elastic">
-                <Parameter name="Displacement" type="bool" value="true"/>
-                <Parameter name="Velocity" type="bool" value="true"/>
-                <Parameter name="ID" type="bool" value="true"/>
-                <Parameter name="Proc_Num" type="bool" value="true"/>
-                <Parameter name="Dilatation" type="bool" value="true"/>
-                <Parameter name="Weighted_Volume" type="bool" value="true"/>
-                <Parameter name="Damage" type="bool" value="true"/>
-            </ParameterList>
-        </ParameterList>
-  </ParameterList>
+</ParameterList>
+
+<ParameterList name="Output">
+	<Parameter name="Output File Type" type="string" value="ExodusII"/>
+	<Parameter name="Output Format" type="string" value="BINARY"/>
+	<Parameter name="Output Filename" type="string" value="BondBreakingInitialVelocity"/>
+	<Parameter name="Output Frequency" type="int" value="1000"/>
+	<Parameter name="Parallel Write" type="bool" value="true"/>
+	<ParameterList name="Material Output Fields">
+		<ParameterList name="Linear Elastic">
+			<Parameter name="Displacement" type="bool" value="true"/>
+			<Parameter name="Velocity" type="bool" value="true"/>
+			<Parameter name="ID" type="bool" value="true"/>
+			<Parameter name="Proc_Num" type="bool" value="true"/>
+			<Parameter name="Dilatation" type="bool" value="true"/>
+			<Parameter name="Weighted_Volume" type="bool" value="true"/>
+			<Parameter name="Damage" type="bool" value="true"/>
+		</ParameterList>
+	</ParameterList>
+</ParameterList>
+
 </ParameterList>
