@@ -29,19 +29,9 @@ if __name__ == "__main__":
     # remove old output files, if any
     # use regular expression module since differentiating
     # between gold files and old output files can be tricky
-    files_to_remove = []
+    files_to_remove = base_name + ".e"
     for file in os.listdir(os.getcwd()):
-        vals = re.split("\_t[0123456789]*\.vtu", file)
-        if len(vals) > 1:
-            vtu_basename = re.split("\.p[0123456789]*", vals[0])[0]
-            if vtu_basename == base_name:
-                files_to_remove.append(file)
-        vals = re.split("\_t[0123456789]*\.pvtu", file)
-        if len(vals) > 1:
-            pvtu_basename = re.split("\.p[0123456789]*", vals[0])[0]
-            if pvtu_basename == base_name:
-                files_to_remove.append(file)
-    for file in files_to_remove:
+      if file in files_to_remove:
         os.remove(file)
 
     # run Peridigm
@@ -52,10 +42,15 @@ if __name__ == "__main__":
         result = return_code
 
     # compare output files against gold files
-    command = ["../../../../scripts/vtkDiff.py", \
-                   base_name+".pvd", \
-                   base_name+"_gold.pvd", \
-                   "--toleranceFile", \
+    command = ["../../../../scripts/epu", "-p", "3", base_name]
+    p = Popen(command, stdout=logfile, stderr=logfile)
+    return_code = p.wait()
+    if return_code != 0:
+        result = return_code
+    command = ["../../../../scripts/exodiff", \
+                   base_name+".e", \
+                   "../"+base_name+"_gold.e", \
+                   "-f", \
                    "../"+base_name+".comp"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
