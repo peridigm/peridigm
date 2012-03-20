@@ -1,4 +1,5 @@
 <ParameterList>
+
 <ParameterList name="Problem">
 	<Parameter name="Verbose" type="bool" value="false"/>
 	<ParameterList name="Discretization">
@@ -32,16 +33,17 @@
 			<Parameter name="Type" type="string" value="Initial Velocity"/>
 			<Parameter name="Node Set" type="string" value="Node Set Bottom"/>
 			<Parameter name="Coordinate" type="string" value="z"/>
-			<Parameter name="Value" type="double" value="-200.0"/>
+			<Parameter name="Value" type="string" value="-200.0"/>
 		</ParameterList>
 		<ParameterList name="Initial Velocity Top">
 			<Parameter name="Type" type="string" value="Initial Velocity"/>
 			<Parameter name="Node Set" type="string" value="Node Set Top"/>
 			<Parameter name="Coordinate" type="string" value="z"/>
-			<Parameter name="Value" type="double" value="200.0"/>
+			<Parameter name="Value" type="string" value="200.0"/>
 		</ParameterList>
 	</ParameterList>
 </ParameterList>
+
 <ParameterList name="Solver">
 	<Parameter name="Verbose" type="bool" value="true"/>
 	<Parameter name="Initial Time" type="double" value="0.0"/>
@@ -50,9 +52,10 @@
 		<Parameter name="Fixed dt" type="double" value="1.0e-6"/>
 	</ParameterList>
 </ParameterList>
+
 <ParameterList name="Output">
-	<Parameter name="Output File Type" type="string" value="VTK_XML"/>
-	<Parameter name="Output Format" type="string" value="ASCII"/>
+	<Parameter name="Output File Type" type="string" value="ExodusII"/>
+	<Parameter name="Output Format" type="string" value="BINARY"/>
 	<Parameter name="Output Filename" type="string" value="ep_cube"/>
 	<Parameter name="Output Frequency" type="int" value="200"/>
 	<Parameter name="Parallel Write" type="bool" value="true"/>
@@ -61,11 +64,12 @@
 			<Parameter name="Displacement" type="bool" value="true"/>
 			<Parameter name="Velocity" type="bool" value="true"/>
 			<Parameter name="ID" type="bool" value="true"/>
-			<Parameter name="Proc Num" type="bool" value="true"/>
+			<Parameter name="Proc_Num" type="bool" value="true"/>
 			<Parameter name="Dilatation" type="bool" value="true"/>
-			<Parameter name="Force Density" type="bool" value="true"/>
+			<Parameter name="Force_Density" type="bool" value="true"/>
 			<Parameter name="Lambda" type="bool" value="true"/>
 		</ParameterList>
 	</ParameterList>
 </ParameterList>
+
 </ParameterList>
