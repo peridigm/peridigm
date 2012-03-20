@@ -9,7 +9,8 @@ variables,
 	continuous_design = 1
 #	True value for Bulk Modulus is 130.0e9
 #	Make initial guess away from that and let Dakota find it
-	cdv_initial_point	130.0e8
+#	cdv_initial_point	130.0e8
+	cdv_initial_point	130.0e9
 	cdv_descriptor		'BulkModulus'
 
 interface,
