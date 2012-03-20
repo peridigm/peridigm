@@ -68,15 +68,15 @@ void PeridigmNS::computePartialVolume(Teuchos::RCP<PeridigmNS::Block> block,
   int bondIndex = 0;
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
 	int nodeID = ownedIDs[iID];
-	TEST_FOR_EXCEPT_MSG(nodeID*3+2 >= vectorLength, "Invalid neighbor list / x vector\n");
+	TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeID*3+2 >= vectorLength, "Invalid neighbor list / x vector\n");
 	double nodeInitialX[3] = { x[nodeID*3],
 							   x[nodeID*3+1],
 							   x[nodeID*3+2] };
 	int numNeighbors = neighborhoodList[neighborhoodListIndex++];
 	for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
 	  int neighborLocalID = neighborhoodList[neighborhoodListIndex++];
-	  TEST_FOR_EXCEPT_MSG(neighborLocalID < 0, "Invalid neighbor list\n");
-	  TEST_FOR_EXCEPT_MSG(neighborLocalID*3+2 >= vectorLength, "Invalid neighbor list / initial x vector\n");
+	  TEUCHOS_TEST_FOR_EXCEPT_MSG(neighborLocalID < 0, "Invalid neighbor list\n");
+	  TEUCHOS_TEST_FOR_EXCEPT_MSG(neighborLocalID*3+2 >= vectorLength, "Invalid neighbor list / initial x vector\n");
       int neighborGlobalID = block->getOverlapScalarPointMap()->GID(neighborLocalID);
 
       Teuchos::RCP< std::vector<double> > exodusNodePositions =

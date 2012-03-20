@@ -56,7 +56,7 @@
 
 #include <Epetra_Comm.h>
 #include "Teuchos_StandardParameterEntryValidators.hpp"
-#include <Teuchos_TestForException.hpp>
+#include <Teuchos_Assert.hpp>
 
 #include "Peridigm.hpp"
 #include "Peridigm_OutputManager_ExodusII.hpp"
@@ -88,20 +88,20 @@ PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Te
   catch(Teuchos::Exceptions::InvalidParameterType &excpt)  {std::cout<<excpt.what(); isValid=false;}
   catch(Teuchos::Exceptions::InvalidParameterValue &excpt) {std::cout<<excpt.what(); isValid=false;}
   catch(...) {isValid=false;}
-  if (!isValid) TEST_FOR_EXCEPTION(1, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII:::OutputManager_ExodusII() -- Invalid parameter, type or value.");
+  if (!isValid) TEUCHOS_TEST_FOR_EXCEPTION(1, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII:::OutputManager_ExodusII() -- Invalid parameter, type or value.");
 
   try {
     numProc = params->INVALID_TEMPLATE_QUALIFIER get<int>("NumProc");
   }
   catch ( const std::exception& e) {
-    TEST_FOR_EXCEPTION(1, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII:::OutputManager_ExodusII() -- numProc not present.");
+    TEUCHOS_TEST_FOR_EXCEPTION(1, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII:::OutputManager_ExodusII() -- numProc not present.");
   }
 
   try {
     myPID = params->INVALID_TEMPLATE_QUALIFIER get<int>("MyPID");
   }
   catch ( const std::exception& e) {
-    TEST_FOR_EXCEPTION(1,  std::invalid_argument, "PeridigmNS::OutputManager_ExodusII:::OutputManager_ExodusII() -- MyPID not present.");
+    TEUCHOS_TEST_FOR_EXCEPTION(1,  std::invalid_argument, "PeridigmNS::OutputManager_ExodusII:::OutputManager_ExodusII() -- MyPID not present.");
   }
 
   // Default to no output
@@ -109,11 +109,11 @@ PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Te
 
   // Default to BINARY output
   outputFormat = params->get<string>("Output Format","BINARY"); 
-  TEST_FOR_EXCEPTION( outputFormat != "BINARY",  std::invalid_argument, "PeridigmNS::OutputManager_ExodusII:::OutputManager_ExodusII() -- Output format must be BINARY for ExodusII.");
+  TEUCHOS_TEST_FOR_EXCEPTION( outputFormat != "BINARY",  std::invalid_argument, "PeridigmNS::OutputManager_ExodusII:::OutputManager_ExodusII() -- Output format must be BINARY for ExodusII.");
 
   // Default to not write full neighborlist
   writeNeighborlist = params->get<bool>("Bond Family",false); 
-  TEST_FOR_EXCEPTION( (numProc != 1) && (writeNeighborlist),  std::invalid_argument, "PeridigmNS::OutputManager_ExodusII:::OutputManager_ExodusII() -- Parallel write of bond families not currently supported.");
+  TEUCHOS_TEST_FOR_EXCEPTION( (numProc != 1) && (writeNeighborlist),  std::invalid_argument, "PeridigmNS::OutputManager_ExodusII:::OutputManager_ExodusII() -- Parallel write of bond families not currently supported.");
 
   // Output filename base
   filenameBase = params->get<string>("Output Filename","dump"); 
@@ -274,7 +274,7 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
         // use field name to get reference to const fieldSpec
         std::map<string, Field_NS::FieldSpec>::const_iterator i3;
         i3 = Field_NS::FieldSpecMap::Map.find(nm); // Can't use operator[] on a const std::map
-        TEST_FOR_EXCEPT_MSG(i3 == Field_NS::FieldSpecMap::Map.end(), "Failed to find reference to fieldSpec!");
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(i3 == Field_NS::FieldSpecMap::Map.end(), "Failed to find reference to fieldSpec!");
         Field_NS::FieldSpec const &fs = i3->second;
         double *block_ptr; block_ptr = NULL;
         // Exodus ignores element blocks when writing nodal variables
@@ -301,7 +301,7 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
             }
             else if (fs.getLength() == Field_ENUM::VECTOR2D) {
               // Peridgm doesn't have any 2D maps. 2D output not supported.
-              TEST_FOR_EXCEPTION(true, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- 2D vector quantities not currently supported.");
+              TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- 2D vector quantities not currently supported.");
             }
             else if (fs.getLength() == Field_ENUM::VECTOR3D) {
               // loop over contents of block vector; fill mothership-like vector
@@ -321,7 +321,7 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
           }
           else if (fs.getLength() == Field_ENUM::VECTOR2D) {
             // Peridgm doesn't have any 2D maps. 2D output not supported.
-            TEST_FOR_EXCEPTION(true, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- 2D vector quantities not currently supported.");
+            TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- 2D vector quantities not currently supported.");
           }
           else if (fs.getLength() == Field_ENUM::VECTOR3D) {
             // Writing all vector output as per-node data
@@ -370,7 +370,7 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
               }
               else if (fs.getLength() == Field_ENUM::VECTOR2D) { 
                 // Peridgm doesn't have any 2D maps. 2D output not supported.
-                TEST_FOR_EXCEPTION(true, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- 2D vector quantities not currently supported.");
+                TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- 2D vector quantities not currently supported.");
               }
               else if (fs.getLength() == Field_ENUM::VECTOR3D) {
                 // separate out contents of block vector into x,y,z components
@@ -555,7 +555,7 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
         // use field name to get reference to const fieldSpec
         std::map<string, Field_NS::FieldSpec>::const_iterator i3;
         i3 = Field_NS::FieldSpecMap::Map.find(nm); // Can't use operator[] on a const std::map
-        TEST_FOR_EXCEPT_MSG(i3 == Field_NS::FieldSpecMap::Map.end(), "Failed to find reference to fieldSpec!");
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(i3 == Field_NS::FieldSpecMap::Map.end(), "Failed to find reference to fieldSpec!");
         Field_NS::FieldSpec const &fs = i3->second;
         if (fs.getLength() == Field_ENUM::SCALAR) {
           if (fs.getRelation() == Field_ENUM::NODE) {
@@ -667,7 +667,7 @@ void PeridigmNS::OutputManager_ExodusII::reportExodusError(int errorCode, const 
   if (errorCode < 0) { // error
     if (numProc > 1) ss << "Error on PID #" << myPID << ": ";
     ss << "PeridigmNS::OutputManager_ExodusII::" << methodName << "() -- Error code: " << errorCode << " (" << exodusMethodName << ")";
-    TEST_FOR_EXCEPTION(1, std::invalid_argument, ss.str());
+    TEUCHOS_TEST_FOR_EXCEPTION(1, std::invalid_argument, ss.str());
   }  
   else {
     if (numProc > 1) ss << "Warning on PID #" << myPID << ": ";
@@ -727,7 +727,7 @@ void PeridigmNS::OutputManager_ExodusII::reportExodusError(int errorCode, const 
            // use field name to get reference to const fieldSpec
            std::map<string, Field_NS::FieldSpec>::const_iterator i3;
            i3 = Field_NS::FieldSpecMap::Map.find(nm); // Can't use operator[] on a const std::map
-           TEST_FOR_EXCEPT_MSG(i3 == Field_NS::FieldSpecMap::Map.end(), "Failed to find reference to fieldSpec!");
+           TEUCHOS_TEST_FOR_EXCEPT_MSG(i3 == Field_NS::FieldSpecMap::Map.end(), "Failed to find reference to fieldSpec!");
            Field_NS::FieldSpec const &fs = i3->second;
            double *ptr; ptr = NULL;
            if (fs == Field_NS::GID) { // Handle special case of ID (int type)

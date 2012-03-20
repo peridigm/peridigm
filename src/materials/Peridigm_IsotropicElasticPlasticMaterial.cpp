@@ -47,7 +47,7 @@
 
 #include "Peridigm_IsotropicElasticPlasticMaterial.hpp"
 #include "Peridigm_DamageModelFactory.hpp"
-#include <Teuchos_TestForException.hpp>
+#include <Teuchos_Assert.hpp>
 #include <Epetra_SerialComm.h>
 #include <Epetra_Vector.h>
 #include <Sacado.hpp>

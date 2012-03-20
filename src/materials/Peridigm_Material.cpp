@@ -46,7 +46,7 @@
 //@HEADER
 
 #include "Peridigm_Material.hpp"
-#include <Teuchos_TestForException.hpp>
+#include <Teuchos_Assert.hpp>
 #include <Epetra_SerialDenseMatrix.h>
 #include <Epetra_SerialComm.h>
 #include <boost/math/special_functions/fpclassify.hpp>
@@ -240,7 +240,7 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     // Check for NaNs
     for(unsigned int row=0 ; row<indices.size() ; ++row){
       for(unsigned int col=0 ; col<indices.size() ; ++col){
-        TEST_FOR_EXCEPT_MSG(!boost::math::isfinite(scratchMatrix(row, col)), "**** NaN detected in finite-difference Jacobian.\n");
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite(scratchMatrix(row, col)), "**** NaN detected in finite-difference Jacobian.\n");
       }
     }
 
