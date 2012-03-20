@@ -1,3 +1,7 @@
-<Tolerances>
-  <Tolerance variable="Displacement" value="1.0e-6"/>
-</Tolerances>
+DEFAULT TOLERANCE absolute 1.0E-9
+COORDINATES absolute 1.0E-12
+TIME STEPS absolute 1.0E-14
+NODAL VARIABLES absolute 1.0E-12
+	DisplacementX   absolute 1.0E-6
+	DisplacementY   absolute 1.0E-6
+	DisplacementZ   absolute 1.0E-6

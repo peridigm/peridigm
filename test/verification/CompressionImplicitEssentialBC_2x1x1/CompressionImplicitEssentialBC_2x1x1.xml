@@ -1,4 +1,5 @@
 <ParameterList>
+
 <ParameterList name="Problem">
 	<Parameter name="Verbose" type="bool" value="false"/>
 	<ParameterList name="Discretization">
@@ -47,6 +48,7 @@
 		</ParameterList>
 	</ParameterList>
 </ParameterList>
+
 <ParameterList name="Solver">
 	<Parameter name="Verbose" type="bool" value="false"/>
 	<Parameter name="Initial Time" type="double" value="0.0"/>
@@ -59,9 +61,10 @@
 		<Parameter name="Maximum Solver Iterations" type="int" value="10"/>
 	</ParameterList>
 </ParameterList>
+
 <ParameterList name="Output">
-	<Parameter name="Output File Type" type="string" value="VTK_XML"/>
-	<Parameter name="Output Format" type="string" value="ASCII"/>
+	<Parameter name="Output File Type" type="string" value="ExodusII"/>
+	<Parameter name="Output Format" type="string" value="BINARY"/>
 	<Parameter name="Output Filename" type="string" value="CompressionImplicitEssentialBC_2x1x1"/>
 	<Parameter name="Output Frequency" type="int" value="1"/>
 	<Parameter name="Parallel Write" type="bool" value="true"/>
@@ -77,4 +80,5 @@
 		</ParameterList>
 	</ParameterList>
 </ParameterList>
+
 </ParameterList>
