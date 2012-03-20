@@ -1,4 +1,5 @@
 <ParameterList>
+
 <ParameterList name="Problem">
 	<Parameter name="Verbose" type="bool" value="false"/>
 	<ParameterList name="Discretization">
@@ -61,17 +62,19 @@
 		</ParameterList>
 	</ParameterList>
 </ParameterList>
+
 <ParameterList name="Solver">
 	<Parameter name="Verbose" type="bool" value="false"/>
 	<Parameter name="Initial Time" type="double" value="0.0"/>
 	<Parameter name="Final Time" type="double" value="0.00008"/>
 	<ParameterList name="Verlet">
-   	  <Parameter name="Fixed dt" type="double" value="1.0e-8"/>
+		<Parameter name="Fixed dt" type="double" value="1.0e-8"/>
 	</ParameterList>
 </ParameterList>
+
 <ParameterList name="Output">
-	<Parameter name="Output File Type" type="string" value="VTK_XML"/>
-	<Parameter name="Output Format" type="string" value="ASCII"/>
+	<Parameter name="Output File Type" type="string" value="ExodusII"/>
+	<Parameter name="Output Format" type="string" value="BINARY"/>
 	<Parameter name="Output Filename" type="string" value="BondBreakingInitialVelocity"/>
 	<Parameter name="Output Frequency" type="int" value="1000"/>
 	<Parameter name="Parallel Write" type="bool" value="true"/>
@@ -87,4 +90,5 @@
 		</ParameterList>
 	</ParameterList>
 </ParameterList>
+
 </ParameterList>
