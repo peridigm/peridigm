@@ -1,12 +1,13 @@
 <ParameterList>
-  <ParameterList name="Problem">
+
+<ParameterList name="Problem">
 	<Parameter name="Verbose" type="bool" value="false"/>
-        <ParameterList name="Discretization">
-          <Parameter name="Type" type="string" value="PdQuickGrid" />
-          <Parameter name="NeighborhoodType" type="string" value="Spherical"/>
- 	  <Parameter name="Horizon" type="double" value="1.0"/>          <!-- mm -->
-          <ParameterList name="TensorProduct3DMeshGenerator">
-	  		<Parameter name="Type" type="string" value="PdQuickGrid"/>
+	<ParameterList name="Discretization">
+		<Parameter name="Type" type="string" value="PdQuickGrid" />
+		<Parameter name="NeighborhoodType" type="string" value="Spherical"/>
+		<Parameter name="Horizon" type="double" value="1.0"/>          <!-- mm -->
+		<ParameterList name="TensorProduct3DMeshGenerator">
+			<Parameter name="Type" type="string" value="PdQuickGrid"/>
 			<Parameter name="X Origin" type="double" value="-2.0"/>        <!-- mm -->
 			<Parameter name="Y Origin" type="double" value="-0.5"/>        <!-- mm -->
 			<Parameter name="Z Origin" type="double" value="-0.5"/>        <!-- mm -->
@@ -18,61 +19,64 @@
 			<Parameter name="Number Points Z" type="int" value="1"/>
 		</ParameterList>
 	</ParameterList>
-    <ParameterList name="Material">
-      <ParameterList name="Linear Elastic">
-		<Parameter name="Density" type="double" value="7.8e-3"/>           <!-- g/mm^3 -->
-		<Parameter name="Bulk Modulus" type="double" value="130.0e3"/>     <!-- MPa -->
-		<Parameter name="Shear Modulus" type="double" value="78.0e3"/>     <!-- MPa -->
-	  </ParameterList>
+	<ParameterList name="Material">
+		<ParameterList name="Linear Elastic">
+			<Parameter name="Density" type="double" value="7.8e-3"/>           <!-- g/mm^3 -->
+			<Parameter name="Bulk Modulus" type="double" value="130.0e3"/>     <!-- MPa -->
+			<Parameter name="Shear Modulus" type="double" value="78.0e3"/>     <!-- MPa -->
+		</ParameterList>
 	</ParameterList>
-    <ParameterList name="Contact">
-      <Parameter name="Search Radius" type="double" value="5.0"/>          <!-- mm -->
-      <Parameter name="Search Frequency" type="int" value="100"/>
-      <ParameterList name="Short Range Force">
-        <Parameter name="Contact Radius" type="double" value="2.0"/>       <!-- mm -->
-        <Parameter name="Spring Constant" type="double" value="1950.0e3"/> <!-- MPa -->
-	  </ParameterList>
+	<ParameterList name="Contact">
+		<Parameter name="Search Radius" type="double" value="5.0"/>          <!-- mm -->
+		<Parameter name="Search Frequency" type="int" value="100"/>
+		<ParameterList name="Short Range Force">
+			<Parameter name="Contact Radius" type="double" value="2.0"/>       <!-- mm -->
+			<Parameter name="Spring Constant" type="double" value="1950.0e3"/> <!-- MPa -->
+		</ParameterList>
 	</ParameterList>
-    <ParameterList name="Boundary Conditions">
-	  <Parameter name="Min X Node Set" type="string" value="0"/>
-	  <Parameter name="Max X Node Set" type="string" value="1"/>
-      <ParameterList name="Initial Velocity Min X Face">
-        <Parameter name="Type" type="string" value="Initial Velocity"/>
-	    <Parameter name="Node Set" type="string" value="Min X Node Set"/>
-        <Parameter name="Coordinate" type="string" value="x"/>
-        <Parameter name="Value" type="string" value="1.0"/>                <!-- mm/ms -->
-	  </ParameterList>
-      <ParameterList name="Initial Velocity Max X Face">
-        <Parameter name="Type" type="string" value="Initial Velocity"/>
-	    <Parameter name="Node Set" type="string" value="Max X Node Set"/>
-        <Parameter name="Coordinate" type="string" value="x"/>
-        <Parameter name="Value" type="string" value="-1.0"/>               <!-- mm/ms -->
-	  </ParameterList>
-    </ParameterList>
-  </ParameterList>
-  <ParameterList name="Solver">
+	<ParameterList name="Boundary Conditions">
+		<Parameter name="Min X Node Set" type="string" value="0"/>
+		<Parameter name="Max X Node Set" type="string" value="1"/>
+		<ParameterList name="Initial Velocity Min X Face">
+			<Parameter name="Type" type="string" value="Initial Velocity"/>
+			<Parameter name="Node Set" type="string" value="Min X Node Set"/>
+			<Parameter name="Coordinate" type="string" value="x"/>
+			<Parameter name="Value" type="string" value="1.0"/>                <!-- mm/ms -->
+		</ParameterList>
+		<ParameterList name="Initial Velocity Max X Face">
+			<Parameter name="Type" type="string" value="Initial Velocity"/>
+			<Parameter name="Node Set" type="string" value="Max X Node Set"/>
+			<Parameter name="Coordinate" type="string" value="x"/>
+			<Parameter name="Value" type="string" value="-1.0"/>               <!-- mm/ms -->
+		</ParameterList>
+	</ParameterList>
+</ParameterList>
+
+<ParameterList name="Solver">
 	<Parameter name="Verbose" type="bool" value="false"/>
 	<Parameter name="Initial Time" type="double" value="0.0"/>               <!-- ms -->
 	<Parameter name="Final Time" type="double" value="4.150386640644e-5"/>   <!-- ms -->
 	<ParameterList name="Verlet">
- 	  <Parameter name="Fixed dt" type="double"   value="4.150386640644e-8"/> <!-- ms -->
+		<Parameter name="Fixed dt" type="double"   value="4.150386640644e-8"/> <!-- ms -->
 	</ParameterList>
-  </ParameterList>
-  <ParameterList name="Output">
-        <Parameter name="Output File Type" type="string" value="VTK_XML"/>
-        <Parameter name="Output Format" type="string" value="ASCII"/>
-        <Parameter name="Output Filename" type="string" value="Contact_2x1x1"/>
-        <Parameter name="Output Frequency" type="int" value="100"/>
-        <Parameter name="Parallel Write" type="bool" value="true"/>
-        <ParameterList name="Material Output Fields">
-            <ParameterList name="Linear Elastic">
-                <Parameter name="Displacement" type="bool" value="true"/>
-                <Parameter name="Velocity" type="bool" value="true"/>
-                <Parameter name="ID" type="bool" value="true"/>
-                <Parameter name="Proc_Num" type="bool" value="true"/>
-                <Parameter name="Dilatation" type="bool" value="true"/>
-                <Parameter name="Weighted_Volume" type="bool" value="true"/>
-            </ParameterList>
-        </ParameterList>
-  </ParameterList>
+</ParameterList>
+
+<ParameterList name="Output">
+	<Parameter name="Output File Type" type="string" value="ExodusII"/>
+	<Parameter name="Output Format" type="string" value="BINARY"/>
+	<Parameter name="Output Filename" type="string" value="Contact_2x1x1"/>
+	<Parameter name="Output Frequency" type="int" value="100"/>
+	<Parameter name="Parallel Write" type="bool" value="true"/>
+	<ParameterList name="Material Output Fields">
+		<ParameterList name="Linear Elastic">
+			<Parameter name="Displacement" type="bool" value="true"/>
+			<Parameter name="Velocity" type="bool" value="true"/>
+			<Parameter name="ID" type="bool" value="true"/>
+			<Parameter name="Proc_Num" type="bool" value="true"/>
+			<Parameter name="Dilatation" type="bool" value="true"/>
+			<Parameter name="Weighted_Volume" type="bool" value="true"/>
+		</ParameterList>
+	</ParameterList>
+</ParameterList>
+
 </ParameterList>

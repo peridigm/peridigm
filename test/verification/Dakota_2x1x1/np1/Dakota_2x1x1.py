@@ -32,26 +32,23 @@ if __name__ == "__main__":
     dakota_output = open("dakota_output.txt", 'w')
 
     # remove old output files, if any
-    # use regular expression module since differentiating
-    # between gold files and old output files can be tricky
-    files_to_remove = []
+    files_to_remove = base_name + ".e"
     for file in os.listdir(os.getcwd()):
-        vals = re.split("\_t[0123456789]*\.vtu", file)
-        if len(vals) > 1:
-            vtu_basename = re.split("\.p[0123456789]*", vals[0])[0]
-            if vtu_basename == base_name:
-                files_to_remove.append(file)
-        vals = re.split("\_t[0123456789]*\.pvtu", file)
-        if len(vals) > 1:
-            pvtu_basename = re.split("\.p[0123456789]*", vals[0])[0]
-            if pvtu_basename == base_name:
-                files_to_remove.append(file)
-    for file in files_to_remove:
+      if file in files_to_remove:
         os.remove(file)
 
     # Setup soft link to Peridigm executable so that simulation driver script can find it
     command = ["ln","-f","-s","../../../../src/Peridigm","."]
+    p = Popen(command, stdout=logfile, stderr=logfile)
+    return_code = p.wait()
+    if return_code != 0:
+        result = return_code
     command = ["ln","-f","-s","../../../../../src/Peridigm","./templatedir"]
+    p = Popen(command, stdout=logfile, stderr=logfile)
+    return_code = p.wait()
+    if return_code != 0:
+        result = return_code
+    command = ["ln","-f","-s","../../../../../scripts/exotxt","./templatedir"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:
