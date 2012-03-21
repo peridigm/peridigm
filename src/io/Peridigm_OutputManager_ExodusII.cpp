@@ -441,10 +441,16 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
   filename.clear();
   filename << filenameBase.c_str() << ".e";
   if (numProc > 1) {
+    // determine number of zeros to use when padding filenames
+    std::ostringstream tmpstr;
+    tmpstr << numProc;
+    int len = tmpstr.str().length();
     if (peridigm->analysisHasRebalance || peridigm->analysisHasContact)
       filename << "-s" << setfill('0') << setw(5) << rebalanceCount;
-    filename << "." << numProc;
-    filename << "." << myPID;
+    filename << ".";
+    filename << setfill('0') << setw(len) << numProc;
+    filename << ".";
+    filename << setfill('0') << setw(len) << myPID;
   }
 
   /*
