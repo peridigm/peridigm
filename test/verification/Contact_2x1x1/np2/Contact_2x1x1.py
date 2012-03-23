@@ -41,9 +41,9 @@ if __name__ == "__main__":
         result = return_code
 
     # First merge all distributed exodus databases for each time stamp
-    files_to_join = ["Contact_2x1x1-s00001", "Contact_2x1x1-s00002", "Contact_2x1x1-s00003", "Contact_2x1x1-s00004",
-                     "Contact_2x1x1-s00005", "Contact_2x1x1-s00006", "Contact_2x1x1-s00007", "Contact_2x1x1-s00008",
-                     "Contact_2x1x1-s00009", "Contact_2x1x1-s00010", "Contact_2x1x1-s00011"]
+    files_to_join = ["Contact_2x1x1-s1", "Contact_2x1x1-s2", "Contact_2x1x1-s3", "Contact_2x1x1-s4",
+                     "Contact_2x1x1-s5", "Contact_2x1x1-s6", "Contact_2x1x1-s7", "Contact_2x1x1-s8",
+                     "Contact_2x1x1-s9", "Contact_2x1x1-s10", "Contact_2x1x1-s11"]
     for file in files_to_join:
       command = ["../../../../scripts/epu", "-p", "2", file]
       p = Popen(command, stdout=logfile, stderr=logfile)
@@ -53,9 +53,9 @@ if __name__ == "__main__":
 
     # Now combine time series from all databaases
     command = ["../../../../scripts/conjoin", "-output", base_name+".e", 
-               "Contact_2x1x1-s00001.e", "Contact_2x1x1-s00002.e", "Contact_2x1x1-s00003.e", "Contact_2x1x1-s00004.e",
-               "Contact_2x1x1-s00005.e", "Contact_2x1x1-s00006.e", "Contact_2x1x1-s00007.e", "Contact_2x1x1-s00008.e",
-               "Contact_2x1x1-s00009.e", "Contact_2x1x1-s00010.e", "Contact_2x1x1-s00011.e"]
+               "Contact_2x1x1-s1.e", "Contact_2x1x1-s2.e", "Contact_2x1x1-s3.e", "Contact_2x1x1-s4.e",
+               "Contact_2x1x1-s5.e", "Contact_2x1x1-s6.e", "Contact_2x1x1-s7.e", "Contact_2x1x1-s8.e",
+               "Contact_2x1x1-s9.e", "Contact_2x1x1-s10.e", "Contact_2x1x1-s11.e"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:

@@ -451,7 +451,7 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
     tmpstr << numProc;
     int len = tmpstr.str().length();
     if (peridigm->analysisHasRebalance || peridigm->analysisHasContact)
-      filename << "-s" << setfill('0') << setw(5) << rebalanceCount;
+      filename << "-s" << rebalanceCount;
     filename << ".e";
     filename << ".";
     filename << setfill('0') << setw(len) << numProc;
