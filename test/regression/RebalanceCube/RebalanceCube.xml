@@ -56,8 +56,8 @@
 </ParameterList>
 
 <ParameterList name="Output">
-	<Parameter name="Output File Type" type="string" value="VTK_XML"/>
-	<Parameter name="Output Format" type="string" value="ASCII"/>
+	<Parameter name="Output File Type" type="string" value="ExodusII"/>
+	<Parameter name="Output Format" type="string" value="BINARY"/>
 	<Parameter name="Output Frequency" type="int" value="10"/>
 	<Parameter name="Output Filename" type="string" value="RebalanceCube"/>
 	<Parameter name="Parallel Write" type="bool" value="true"/>
