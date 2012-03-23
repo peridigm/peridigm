@@ -142,7 +142,7 @@ PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Te
   initializeExodusDatabaseCalled = false;
 
   // Initialize the exodus database
-  initializeExodusDatabase(blocks);
+  // initializeExodusDatabase(blocks);
 
 }
 
@@ -242,7 +242,11 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
   if ( (numProc > 1) && (rebalanceCount != blocks->begin()->getDataManager()->getRebalanceCount()) ) {
     rebalanceCount = blocks->begin()->getDataManager()->getRebalanceCount();
     initializeExodusDatabase(blocks);
+    exodusCount = 1;
   }
+
+  // If first call, intialize database
+  if (!initializeExodusDatabaseCalled) initializeExodusDatabase(blocks);
 
   // Open exodus database for writing
   float version;
@@ -436,22 +440,28 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
     if (warningFlag) std::cout << outString;
     initializeExodusDatabaseCalled = true;
   }
+
   // Construct output filename
   filename.str(std::string());
   filename.clear();
-  filename << filenameBase.c_str() << ".e";
   if (numProc > 1) {
+    filename << filenameBase.c_str();
     // determine number of zeros to use when padding filenames
     std::ostringstream tmpstr;
     tmpstr << numProc;
     int len = tmpstr.str().length();
     if (peridigm->analysisHasRebalance || peridigm->analysisHasContact)
       filename << "-s" << setfill('0') << setw(5) << rebalanceCount;
+    filename << ".e";
     filename << ".";
     filename << setfill('0') << setw(len) << numProc;
     filename << ".";
     filename << setfill('0') << setw(len) << myPID;
   }
+  else {
+    filename << filenameBase.c_str() << ".e";
+  }
+
 
   /*
    * Now, initialize ExodusII database
