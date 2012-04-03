@@ -5,8 +5,8 @@ import os
 import re
 from subprocess import Popen
 
-test_dir = "Compression_QS_CyclicLoading_3x2x2/np2"
-base_name = "Compression_QS_CyclicLoading_3x2x2"
+test_dir = "Bar_TwoBlocks_OneMaterial_QS/np2"
+base_name = "Bar"
 
 if __name__ == "__main__":
 
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     logfile = open(log_file_name, 'w')
 
     # remove old output files, if any
-    files_to_remove = base_name + ".e"
+    files_to_remove = [base_name + ".e", base_name + ".e.2.0", base_name + ".e.2.1"]
     for file in os.listdir(os.getcwd()):
       if file in files_to_remove:
         os.remove(file)
@@ -52,7 +52,11 @@ if __name__ == "__main__":
                    "-f", \
                    "../"+base_name+".comp"]
     p = Popen(command, stdout=logfile, stderr=logfile)
+
     return_code = p.wait()
+
+    print "CODE", return_code
+
     if return_code != 0:
         result = return_code
 
