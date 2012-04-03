@@ -67,17 +67,16 @@ class SerialMatrix {
 
 public:
 
-  SerialMatrix(Teuchos::RCP<Epetra_FECrsMatrix> epetraFECrsMatrix,
-               Teuchos::RCP<const Epetra_BlockMap> epetraOverlapMap);
+  SerialMatrix(Teuchos::RCP<Epetra_FECrsMatrix> epetraFECrsMatrix);
 
   //! Destructor.
   ~SerialMatrix(){}
 
-  //! Add data at given location, indexed by local ID (the block version of this function, addValues(), is prefered for efficiency)
-  void addValue(int row, int col, double value);
+  //! Add data at given location, indexed by global ID (the block version of this function, addValues(), is prefered for efficiency)
+  void addValue(int globalRow, int globalCol, double value);
 
-  //! Add block of data at given locations, indexed by local ID
-  void addValues(int numIndicies, const int* indicies, const double *const * values);
+  //! Add block of data at given locations, indexed by global ID
+  void addValues(int numIndicies, const int* globalIndices, const double *const * values);
 
   //! Set all entries to given scalar
   void putScalar(double value);
@@ -88,7 +87,6 @@ public:
 protected:
 
   Teuchos::RCP<Epetra_FECrsMatrix> FECrsMatrix;
-  Teuchos::RCP<const Epetra_BlockMap> overlapMap;
 
 private:
 

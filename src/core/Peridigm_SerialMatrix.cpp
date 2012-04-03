@@ -53,42 +53,36 @@
 
 using namespace std;
 
-PeridigmNS::SerialMatrix::SerialMatrix(Teuchos::RCP<Epetra_FECrsMatrix> epetraFECrsMatrix,
-                                       Teuchos::RCP<const Epetra_BlockMap> epetraOverlapMap)
-  : FECrsMatrix(epetraFECrsMatrix), overlapMap(epetraOverlapMap)
+PeridigmNS::SerialMatrix::SerialMatrix(Teuchos::RCP<Epetra_FECrsMatrix> epetraFECrsMatrix)
+  : FECrsMatrix(epetraFECrsMatrix)
 {
 }
 
-void PeridigmNS::SerialMatrix::addValue(int row, int col, double value)
+void PeridigmNS::SerialMatrix::addValue(int globalRow, int globalCol, double value)
 {
   // addValue sums into the underlying Epetra_FECrsMatrix one value at a time.
   // Useful for testing, but shockingly inefficient, addValues() is prefered.
 
   int numRows = 1;
-  int globalRowID = 3*overlapMap->GID(row/3) + row%3;
   int numCols = 1;
-  int globalColID = 3*overlapMap->GID(col/3) + col%3;
   double** data = new double*[1];
   data[0] = new double[1];
   data[0][0] = value;
 
-  int err = FECrsMatrix->SumIntoGlobalValues(numRows, &globalRowID, numCols, &globalColID, data);
+  int err = FECrsMatrix->SumIntoGlobalValues(numRows, &globalRow, numCols, &globalCol, data);
   TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::SerialMatrix::addValue(), SumIntoGlobalValues() returned nonzero error code.\n");
 
   delete[] data[0];
   delete[] data;
 }
 
-void PeridigmNS::SerialMatrix::addValues(int numIndices, const int* indices, const double *const * values)
+void PeridigmNS::SerialMatrix::addValues(int numIndices, const int* globalIndices, const double *const * values)
 {
-  vector<int> globalIndices(numIndices);
   vector<int> localRowIndices(numIndices);
   vector<int> localColIndices(numIndices);
   for(int i=0 ; i<numIndices ; ++i){
-    int globalIndex = 3*overlapMap->GID(indices[i]/3) + indices[i]%3;
-    globalIndices[i] = globalIndex;
-    localRowIndices[i] = FECrsMatrix->LRID(globalIndex);
-    int localColIndex = FECrsMatrix->LCID(globalIndex);
+    localRowIndices[i] = FECrsMatrix->LRID(globalIndices[i]);
+    int localColIndex = FECrsMatrix->LCID(globalIndices[i]);
     TEUCHOS_TEST_FOR_EXCEPT_MSG(localColIndex == -1, "Error in PeridigmNS::SerialMatrix::addValues(), bad column index.");
     localColIndices[i] = localColIndex;
   }

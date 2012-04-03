@@ -1124,7 +1124,7 @@ Belos::ReturnType PeridigmNS::Peridigm::quasiStaticsSolveSystem(Teuchos::RCP<Epe
 double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> residual,
 						    Teuchos::RCP<Epetra_Vector> lhs)
 {
-  *scratch = *deltaU;
+  Teuchos::RCP<Epetra_Vector> tempVector = Teuchos::rcp(new Epetra_Vector(*deltaU));
 
   double bestAlpha = 1.0;
   double bestResidual = 1.0e50;
@@ -1149,7 +1149,7 @@ double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> 
       
     double residualNorm = computeQuasiStaticResidual(residual);
 
-    *deltaU = *scratch;
+    *deltaU = *tempVector;
 
     if(residualNorm < bestResidual){
       bestAlpha = alpha;
@@ -1477,7 +1477,7 @@ void PeridigmNS::Peridigm::allocateJacobian() {
   TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::allocateJacobian(), GlobalAssemble() returned nonzero error code.\n");
 
   // create the serial Jacobian
-  overlapJacobian = Teuchos::rcp(new PeridigmNS::SerialMatrix(tangent, oneDimensionalOverlapMap));
+  overlapJacobian = Teuchos::rcp(new PeridigmNS::SerialMatrix(tangent));
   workset->jacobian = overlapJacobian;
 }
 
@@ -1504,9 +1504,14 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
 
   // Copy force from the data manager to the mothership vector
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-    blockIt->exportData(*force, Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
+  force->PutScalar(0.0);
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    scratch->PutScalar(0.0);
+    blockIt->exportData(*scratch, Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
+    force->Update(1.0, *scratch, 1.0);
+  }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+  scratch->PutScalar(0.0);
 
   // copy the internal force to the residual vector
   // note that due to restrictions on CrsMatrix, these vectors have different (but equivalent) maps
