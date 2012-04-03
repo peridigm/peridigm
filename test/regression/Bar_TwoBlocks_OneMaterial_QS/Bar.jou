@@ -12,7 +12,8 @@ webcut volume 2 with plane xplane offset {HORIZON-2.0} imprint merge
 volume all size {HORIZON/3.0}
 mesh volume all
 
-block 1 volume 1 2 3 4
+block 1 volume 2 4 # left
+block 2 volume 1 3 # right
 nodeset 1 volume 4 # left
 nodeset 2 volume 1 # right
 nodeset 3 curve 9  # left size z axis

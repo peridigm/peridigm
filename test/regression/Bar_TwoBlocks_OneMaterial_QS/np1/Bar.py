@@ -5,8 +5,8 @@ import os
 import re
 from subprocess import Popen
 
-test_dir = "Compression_QS_CyclicLoading_3x2x2/np2"
-base_name = "Compression_QS_CyclicLoading_3x2x2"
+test_dir = "Bar_TwoBlocks_OneMaterial_QS/np1"
+base_name = "Bar"
 
 if __name__ == "__main__":
 
@@ -33,24 +33,19 @@ if __name__ == "__main__":
         os.remove(file)
 
     # run Peridigm
-    command = ["mpiexec", "-np", "2", "../../../../src/Peridigm", "../"+base_name+".xml"]
+    command = ["../../../../src/Peridigm", "../"+base_name+".xml"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:
         result = return_code
 
     # compare output files against gold files
-    command = ["../../../../scripts/epu", "-p", "2", base_name]
-    p = Popen(command, stdout=logfile, stderr=logfile)
-    return_code = p.wait()
-    if return_code != 0:
-        result = return_code
-    command = ["../../../../scripts/exodiff", \
-                   "-stat", \
-                   base_name+".e", \
-                   "../"+base_name+"_gold.e", \
-                   "-f", \
-                   "../"+base_name+".comp"]
+        command = ["../../../../scripts/exodiff", \
+                       "-stat", \
+                       base_name+".e", \
+                       "../"+base_name+"_gold.e", \
+                       "-f", \
+                       "../"+base_name+".comp"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:
