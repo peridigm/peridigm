@@ -234,7 +234,7 @@ PeridigmNS::LinearElasticIsotropicMaterial::computeAutomaticDifferentiationJacob
     }
     sort(tempMyGlobalIDs.begin(), tempMyGlobalIDs.end());
     // Put the node at the center of the neighborhood at the beginning of the list.
-    tempMyGlobalIDs[0] = dataManager.getOverlapScalarPointMap()->GID(iID);
+    tempMyGlobalIDs[0] = dataManager.getOwnedScalarPointMap()->GID(iID);
 
     Epetra_SerialComm serialComm;
     Teuchos::RCP<Epetra_BlockMap> tempOneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(numEntries, numEntries, &tempMyGlobalIDs[0], 1, 0, serialComm));
@@ -265,14 +265,12 @@ PeridigmNS::LinearElasticIsotropicMaterial::computeAutomaticDifferentiationJacob
     if(scratchMatrix.Dimension() < numDof)
       scratchMatrix.Resize(numDof);
 
-    // Create a list of indices for the rows/columns in the scratch matrix.
-    // These indices correspond to the DataManager's three-dimensional overlap map.
-    vector<int> indices(numDof);
+    // Create a list of global indices for the rows/columns in the scratch matrix.
+    vector<int> globalIndices(numDof);
     for(int i=0 ; i<numEntries ; ++i){
       int globalID = tempOneDimensionalMap->GID(i);
-      int localID = dataManager.getOverlapScalarPointMap()->LID(globalID);
       for(int j=0 ; j<3 ; ++j)
-        indices[3*i+j] = 3*localID+j;
+        globalIndices[3*i+j] = 3*globalID+j;
     }
 
     // Extract pointers to the underlying data in the constitutiveData array.
@@ -318,7 +316,7 @@ PeridigmNS::LinearElasticIsotropicMaterial::computeAutomaticDifferentiationJacob
     }
 
     // Sum the values into the global tangent matrix (this is expensive).
-    jacobian.addValues((int)indices.size(), &indices[0], scratchMatrix.Data());
+    jacobian.addValues((int)globalIndices.size(), &globalIndices[0], scratchMatrix.Data());
 
     PeridigmNS::Timer::self().stopTimer("AD Jacobian Global Fill");
   }
