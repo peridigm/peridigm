@@ -21,40 +21,30 @@
 			<Parameter name="Coordinate" type="string" value="x"/>
 			<Parameter name="Value" type="string" value="-0.01*t"/>
 		</ParameterList>
-	</ParameterList>
-	<ParameterList name="Boundary Conditions">
 		<ParameterList name="Prescribed Displacement Right Side">
 			<Parameter name="Type" type="string" value="Prescribed Displacement"/>
 			<Parameter name="Node Set" type="string" value="nodelist_2"/>
 			<Parameter name="Coordinate" type="string" value="x"/>
 			<Parameter name="Value" type="string" value="0.01*t"/>
 		</ParameterList>
-	</ParameterList>
-	<ParameterList name="Boundary Conditions">
 		<ParameterList name="Prescribed Displacement Suppress Rigid Body Modes 1">
 			<Parameter name="Type" type="string" value="Prescribed Displacement"/>
 			<Parameter name="Node Set" type="string" value="nodelist_3"/>
 			<Parameter name="Coordinate" type="string" value="y"/>
 			<Parameter name="Value" type="string" value="0.0"/>
 		</ParameterList>
-	</ParameterList>
-	<ParameterList name="Boundary Conditions">
 		<ParameterList name="Prescribed Displacement Suppress Rigid Body Modes 2">
 			<Parameter name="Type" type="string" value="Prescribed Displacement"/>
 			<Parameter name="Node Set" type="string" value="nodelist_5"/>
 			<Parameter name="Coordinate" type="string" value="y"/>
 			<Parameter name="Value" type="string" value="0.0"/>
 		</ParameterList>
-	</ParameterList>
-	<ParameterList name="Boundary Conditions">
 		<ParameterList name="Prescribed Displacement Suppress Rigid Body Modes 3">
 			<Parameter name="Type" type="string" value="Prescribed Displacement"/>
 			<Parameter name="Node Set" type="string" value="nodelist_4"/>
 			<Parameter name="Coordinate" type="string" value="z"/>
 			<Parameter name="Value" type="string" value="0.0"/>
 		</ParameterList>
-	</ParameterList>
-	<ParameterList name="Boundary Conditions">
 		<ParameterList name="Prescribed Displacement Suppress Rigid Body Modes 4">
 			<Parameter name="Type" type="string" value="Prescribed Displacement"/>
 			<Parameter name="Node Set" type="string" value="nodelist_6"/>
