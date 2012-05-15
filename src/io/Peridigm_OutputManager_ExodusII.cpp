@@ -547,11 +547,23 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
 
   // Write global node number map (global node IDs)
   int *node_map = new int[num_nodes];
-  for (i=0; i<num_nodes; i++)
+  for (i=0; i<num_nodes; i++){
     node_map[i] = peridigm->getOneDimensionalMap()->GID(i)+1;
+  }
   retval = ex_put_node_num_map(file_handle, node_map);
   if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_node_num_map");
-  retval = ex_put_elem_num_map(file_handle, node_map);
+
+  // Write global element number map (global element IDs)
+  int *elem_map = new int[num_nodes];
+  int elem_map_index = 0;
+  for(std::vector<PeridigmNS::Block>::iterator blockIt = blocks->begin(); blockIt != blocks->end() ; blockIt++) {
+    Teuchos::RCP<const Epetra_BlockMap> map = blockIt->getOwnedScalarPointMap();
+    for(int i=0; i<map->NumMyElements() ; ++i){
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(elem_map_index >= num_nodes, "\nPeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(), Error processing element map!\n");
+      elem_map[elem_map_index++] = map->GID(i)+1;
+    }
+  }
+  retval = ex_put_elem_num_map(file_handle, elem_map);
   if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_elem_num_map");
 
   // Create internal mapping of requested output fields to an integer.
@@ -670,6 +682,7 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
   delete[] num_elem_in_block;
   delete[] num_nodes_in_elem;
   delete[] node_map;
+  delete[] elem_map;
   delete[] elem_block_ID;
   for (i = num_node_vars; i>0; i--) delete[] node_var_names[i-1];
   delete[] node_var_names;
