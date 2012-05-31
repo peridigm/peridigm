@@ -140,6 +140,49 @@ double computeWeightedVolume
 	return m;
 }
 
+void computeDeviatoricDilatation
+(
+		const double* xOverlap,
+		const double* yOverlap,
+		const double *mOwned,
+		const double* volumeOverlap,
+		const double* bondDamage,
+		const double* epd,
+		double* dilatationOwned,
+		const int* localNeighborList,
+		int numOwnedPoints
+)
+{
+	double OMEGA=1.0;
+	const double *xOwned = xOverlap;
+	const double *yOwned = yOverlap;
+	const double *m = mOwned;
+	const double *v = volumeOverlap;
+	double *theta = dilatationOwned;
+	double cellVolume;
+	const int *neighPtr = localNeighborList;
+	for(int p=0; p<numOwnedPoints;p++, xOwned+=3, yOwned+=3, m++, theta++){
+		int numNeigh = *neighPtr; neighPtr++;
+		const double *X = xOwned;
+		const double *Y = yOwned;
+		*theta = 0;
+		for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++,epd++){
+			int localId = *neighPtr;
+			cellVolume = v[localId];
+			const double *XP = &xOverlap[3*localId];
+			const double *YP = &yOverlap[3*localId];
+			double dx = XP[0]-X[0];
+			double dy = XP[1]-X[1];
+			double dz = XP[2]-X[2];
+			double zetaSqared = dx*dx+dy*dy+dz*dz;
+			double d = sqrt(zetaSqared);
+			double e = (*epd);
+			*theta += 3.0*OMEGA*(1.0-*bondDamage)*d*e*cellVolume/(*m);
+		}
+
+	}
+}
+
 void computeDilatation
 (
 		const double* xOverlap,
@@ -496,6 +539,7 @@ double computeWeightedVolume
  * NOTE: bondVolume is layed out like the neighborhood list; length
  * of bondVolume is numNeigh
  */
+
 double computeDilatation
 (
 		const int *neighPtr,
