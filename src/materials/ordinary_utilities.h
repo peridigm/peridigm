@@ -161,6 +161,19 @@ void computeDilatation
 		int numOwnedPoints
 );
 
+void computeDeviatoricDilatation
+(
+		const double* xOverlap,
+		const double* yOverlap,
+		const double *mOwned,
+		const double* volumeOverlap,
+		const double* bondDamage,
+		const double* epd,
+		double* dilatationOwned,
+		const int* localNeighborList,
+		int numOwnedPoints
+);
+
 template<typename ScalarT>
 void computeDilatationAD
 (

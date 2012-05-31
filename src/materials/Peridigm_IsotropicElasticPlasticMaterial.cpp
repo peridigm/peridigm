@@ -216,6 +216,19 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const double dt,
                                                                    m_shearModulus,
                                                                    m_horizon,
                                                                    m_yieldStress);
+  //Debuging code to look at the buildup of deviatoric contributions to the
+  //dilatation
+  //std::vector<double> deviatoricDilatation(dataManager.getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1)->MyLength());
+  //MATERIAL_EVALUATION::computeDeviatoricDilatation(x,yNP1,weightedVolume,volume,bondDamage,edpNP1,&deviatoricDilatation[0],neighborhoodList,numOwnedPoints);
+  //double mysum = 0.0;
+  //for (unsigned int i = 0; i < deviatoricDilatation.size(); i++){
+      //mysum += fabs(deviatoricDilatation[i]);
+      //if (fabs(deviatoricDilatation[i]) > 1.e-17){
+
+          //std::cout << "deviatoric dilatation is: " << deviatoricDilatation[i] << std::endl;
+      //}
+  //}
+  //std::cout << "Total deviatoric dilation is: " << mysum << " size " << deviatoricDilatation.size() << std::endl;
 }
 
 void

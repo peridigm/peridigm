@@ -47,6 +47,7 @@
 #include <cmath>
 #include <complex>
 #include <Sacado.hpp>
+#include <float.h>
 #include "ordinary_elastic_plastic.h"
 #include "ordinary_iso_hard_plastic.h"
 
@@ -69,17 +70,17 @@ double updateDeltaLambda
         double HARD_MODULUS
 )
 {   
-    double a  = 2./alpha + lambdaN + pointWiseYieldValue/HARD_MODULUS;
-    double b = (HARD_MODULUS + 2.*alpha*HARD_MODULUS*lambdaN + 2.*alpha*pointWiseYieldValue)/(pow(alpha,2.)*HARD_MODULUS);
-    double c = (2.*HARD_MODULUS*lambdaN + 2.*pointWiseYieldValue - pow(tdNorm,2.))/(2.*pow(alpha,2.)*HARD_MODULUS);
+    double a  = 2./alpha - lambdaN + pointWiseYieldValue/HARD_MODULUS;
+    double b = (HARD_MODULUS - 2.*alpha*HARD_MODULUS*lambdaN + 2.*alpha*pointWiseYieldValue)/(alpha*alpha*HARD_MODULUS);
+    double c = (-2.*HARD_MODULUS*lambdaN + 2.*pointWiseYieldValue - tdNorm*tdNorm)/(2.*alpha*alpha*HARD_MODULUS);
 
 
-    double Q = (pow(a,2.) - 3.*b)/9.;
-    double R = (2.*pow(a,3.) - 9.*a*b + 27.*c)/54.;
+    double Q = (a*a - 3.*b)/9.;
+    double R = (2.*a*a*a - 9.*a*b + 27.*c)/54.;
 
-    if ( pow(R,2.) < pow(Q,3.) )
+    if ( R*R < Q*Q*Q )
     {
-        double theta = acos( R/sqrt(pow(Q,3.)) );
+        double theta = acos( R/sqrt(Q*Q*Q));
 
         double root1 = -2.*sqrt(Q)*cos(theta/3.) - a/3.;
         double root2 = -2.*sqrt(Q)*cos(theta/3. + 2.*M_PI/3.) - a/3.;
@@ -88,12 +89,18 @@ double updateDeltaLambda
         //if (root1 > 0 || root2 > 0 || root3 > 0)
             //std::cout << "sol 1 " << root1  << " sol 2 " << root2  << " sol 3 " << root3 << std::endl;
 
-        double min = root1;
+        double min = DBL_MAX;
 
+        if ( root1 > 0.0 && std::abs(root1) < std::abs(min) )
+            min = root1;
         if ( root2 > 0.0 && std::abs(root2) < std::abs(min) )
             min = root2;
         if ( root3 > 0.0 && std::abs(root3) < std::abs(min) )
             min = root3;
+        if ( min == DBL_MAX ){
+            std::cout << "MAX_DOUBLE being returned for deltaLambda" << std::endl;
+            exit(1);
+        }
 
         //if (root1 > 0 || root2 > 0 || root3 > 0)
             //std::cout << "ans " << min << std::endl << std::endl; 
@@ -103,14 +110,19 @@ double updateDeltaLambda
     }
     else
     {
-        double A = -sign(R)*pow( abs(R) + sqrt(pow(R,2.) - pow(Q,3.)) ,1./3.);
-        double B = 0.;
+        double A = -sign(R)*pow( fabs(R) + sqrt(R*R - Q*Q*Q) ,1./3.);
+        if ( fabs(A) < 1e-50)
+            std::cout << "A is VERY small! A = " << A << std::endl;
+
+        double B = Q/A;
         
-        if ( A != 0.)
-            B = Q/A;
 
         //std::cout << "ans " << (A + B) - a/3.<< std::endl << std::endl; 
-        return ( A + B ) - a/3.;
+        double val = ( A + B ) - a/3.;
+        if (val < 0.)
+            return 0.;
+        else
+            return val;
     }
 
 }
@@ -209,14 +221,14 @@ void computeInternalForceIsotropicHardeningPlastic
 		 * Evaluate yield function
 		 */
         //double f = tdNorm * tdNorm / 2 - pointWiseYieldValue - HARD_MODULUS*((*lambdaN));
-        double f = tdNorm * tdNorm / 2 - pointWiseYieldValue - HARD_MODULUS*(deltaLambda + (*lambdaN));
+        //double f = tdNorm * tdNorm / (1. + alpha*deltaLambda)/ (1. + alpha*deltaLambda) / 2. - pointWiseYieldValue - HARD_MODULUS*(deltaLambda + (*lambdaN));
         //double f = tdNorm * tdNorm / 2 - pointWiseYieldValue;
 		bool elastic = true;
 
 //		std::cout << "Point id = " << p << std::endl;
 //		std::cout << "\tyieldStress/m^(4/5) = " << yieldStress/pow(weightedVol,4/5) << std::endl;
 //		std::cout << "\tYield Value = " << yieldValue << "; tdNorm * tdNorm / 2 = " << tdNorm * tdNorm / 2 << std::endl;
-		if(f>0){
+		if(deltaLambda>0){
 			/*
 			 * This step is incrementally plastic
 			 */
@@ -283,7 +295,7 @@ void computeInternalForceIsotropicHardeningPlastic
                 //if (localId == 1){
                     //std::cout << deltaLambda << std::endl;
                 //}
-                td = tdTrial / (1+alpha*deltaLambda);
+                td = tdTrial / (1.0+alpha*deltaLambda);
 
 				/*
 				 * Update deviatoric plastic deformation state
