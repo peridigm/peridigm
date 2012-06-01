@@ -1,4 +1,4 @@
-/*! \file Peridigm_Compute_Acceleration.hpp */
+/*! \file Peridigm_Compute_Linear_Momentum.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -14,7 +14,8 @@
 // met:
 //
 // 1. Redistributions of source code must retain the above copyright
-// notice, this list of conditions and the following disclaimer//
+// notice, this list of conditions and the following disclaimer.
+//
 // 2. Redistributions in binary form must reproduce the above copyright
 // notice, this list of conditions and the following disclaimer in the
 // documentation and/or other materials provided with the distribution.
@@ -44,14 +45,16 @@
 // ************************************************************************
 //@HEADER
 
+/*
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Acceleration,Compute_Acceleration,peridigm)
+ComputeClass(LinearMomentum,Compute_Linear_Momentum,peridigm)
 
 #else
+*/
 
-#ifndef PERIDIGM_COMPUTE_ACCELERATION_HPP
-#define PERIDIGM_COMPUTE_ACCELERATION_HPP
+#ifndef PERIDIGM_COMPUTE_LINEAR_MOMENTUM_HPP
+#define PERIDIGM_COMPUTE_LINEAR_MOMENTUM_HPP
 
 #include "Peridigm_Compute.hpp"
 #include "Peridigm_DataManager.hpp"
@@ -64,15 +67,15 @@ namespace PeridigmNS {
 namespace PeridigmNS {
 
   //! Class for filling acceleration vector
-  class Compute_Acceleration : public PeridigmNS::Compute {
+  class Compute_Linear_Momentum : public PeridigmNS::Compute {
 
   public:
 	
   //! Standard constructor.
-  Compute_Acceleration( PeridigmNS::Peridigm *peridigm_ );
+  Compute_Linear_Momentum( PeridigmNS::Peridigm *peridigm_ );
 
   //! Destructor.
-  ~Compute_Acceleration();
+  ~Compute_Linear_Momentum();
 
   //! Returns the fieldspecs computed by this class
   std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
@@ -91,5 +94,5 @@ namespace PeridigmNS {
   };
 }
 
-#endif // PERIDIGM_COMPUTE_ACCELERATION_HPP
-#endif // COMPUTE_CLASS
+#endif // PERIDIGM_COMPUTE_LINEAR_MOMENTUM_HPP
+//#endif // COMPUTE_CLASS
