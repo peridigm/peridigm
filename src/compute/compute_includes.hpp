@@ -1,4 +1,6 @@
 #include "./compute/Peridigm_Compute_Acceleration.hpp"
+#include "./compute/Peridigm_Compute_Angular_Momentum.hpp"
+#include "./compute/Peridigm_Compute_Linear_Momentum.hpp"
 #include "./compute/Peridigm_Compute_Contact_Force.hpp"
 #include "./compute/Peridigm_Compute_Force.hpp"
 #include "./compute/Peridigm_Compute_Radius.hpp"

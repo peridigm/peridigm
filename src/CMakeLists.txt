@@ -11,7 +11,7 @@ set(Peridigm_SOURCES
     ${COMPUTE_DIR}/compute_includes.hpp
     ${CONTACT_DIR}/Peridigm_ContactModelFactory.cpp
     ${CONTACT_DIR}/Peridigm_ShortRangeForceContactModel.cpp
-    ${CORE_DIR}/Peridigm_Main.cpp
+#    ${CORE_DIR}/Peridigm_Main.cpp
     ${CORE_DIR}/Peridigm_Factory.cpp
     ${CORE_DIR}/Peridigm.cpp
     ${CORE_DIR}/Peridigm_State.cpp
@@ -59,7 +59,7 @@ set(Peridigm_LINK_LIBRARIES
     ${PdMaterialUtilitiesLib}
 )
 
-add_executable(Peridigm ${Peridigm_SOURCES})
+add_executable(Peridigm ${CORE_DIR}/Peridigm_Main.cpp ${Peridigm_SOURCES})
 target_link_libraries(Peridigm ${Peridigm_LINK_LIBRARIES})
 
 #
