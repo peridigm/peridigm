@@ -1,4 +1,3 @@
-#
 #  Example of call to loadbal to create parallel input files:
 #
 #  loadbal -No_subdirectory -suffix_mesh g -suffix_spread g -p 2 tensile_test 2
