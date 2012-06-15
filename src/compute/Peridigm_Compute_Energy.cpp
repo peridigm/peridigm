@@ -113,7 +113,7 @@ int PeridigmNS::Compute_Energy::compute(const int numOwnedPoints,
 	// \todo Generalize this for multiple materials and add accessor function for Shear Modulus
 	// Get the material properties 
 	double density  = peridigm->getMaterialModels()->operator[](0)->Density();
-        double SM = 78.0e9; //peridigm->getMaterialModels()->operator[](0)->Shear_Modulus();
+        double SM = peridigm->getMaterialModels()->operator[](0)->ShearModulus();
         double BM = peridigm->getMaterialModels()->operator[](0)->BulkModulus();	
 
 	// Initialize energy values
