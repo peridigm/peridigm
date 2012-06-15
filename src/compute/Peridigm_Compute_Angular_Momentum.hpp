@@ -45,13 +45,17 @@
 // ************************************************************************
 //@HEADER
 
-/*
+
 #ifdef COMPUTE_CLASS
 
-ComputeClass(AngularMomentum,Compute_Angular_Momentum,peridigm)
+//ComputeClass(AngularMomentum,Compute_Angular_Momentum,peridigm)
+
+// This is a hack to force this compute class to be created.
+// What we really want is a way, in the input deck, to request output data that is not related to a material model.
+ComputeClass(Displacement,Compute_Angular_Momentum,peridigm)
 
 #else
-*/
+
 
 #ifndef PERIDIGM_COMPUTE_ANGULAR_MOMENTUM_HPP
 #define PERIDIGM_COMPUTE_ANGULAR_MOMENTUM_HPP
@@ -95,4 +99,4 @@ namespace PeridigmNS {
 }
 
 #endif // PERIDIGM_COMPUTE_ANGULAR_MOMENTUM_HPP
-//#endif // COMPUTE_CLASS
+#endif // COMPUTE_CLASS

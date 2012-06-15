@@ -76,8 +76,7 @@ Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel()
         #else
                 comm = Teuchos::rcp(new Epetra_SerialComm);
         #endif
-
-
+	
 	// set up parameter lists
  	// these data would normally be read from an input xml file
         Teuchos::RCP<Teuchos::ParameterList> peridigmParams = rcp(new Teuchos::ParameterList());
@@ -110,6 +109,13 @@ Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel()
         pdQuickGridParams.set("Number Points Y", 1);
         pdQuickGridParams.set("Number Points Z", 1);
 
+        // output parameters (to force instantiation of angular momentum compute class and data storage in DataManager)
+
+	Teuchos::ParameterList& outputParams = peridigmParams->sublist("Output");
+	Teuchos::ParameterList& materialOutputFields = outputParams.sublist("Material Output Fields");
+	Teuchos::ParameterList& linearElasticMaterialFields = materialOutputFields.sublist("Linear Elastic");
+	linearElasticMaterialFields.set("Displacement", true); // This is a hack, since there is currently no way to request non-material specific data in the intput deck!
+
 	// create the Peridigm object
 	Teuchos::RCP<PeridigmNS::Peridigm> peridigm = Teuchos::rcp(new PeridigmNS::Peridigm(comm, peridigmParams));
 
@@ -117,178 +123,82 @@ Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel()
 }
 
 
-//! Create dataManager object with manufactured data, then check data filled by Compute_Angular_Momentum class 
-Teuchos::RCP<PeridigmNS::DataManager> createDataManager(Teuchos::RCP<Teuchos::ParameterList> discretizationParams, Teuchos::RCP<PeridigmNS::Compute_Angular_Momentum> computeAngularMomentum) 
-{
-  	Teuchos::RCP<Epetra_Comm> comm;
-  	#ifdef HAVE_MPI
-    	  	comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
-  	#else
-    	  	comm = Teuchos::rcp(new Epetra_SerialComm);
-  	#endif
-
-  	// Initialize Discretization (initialize maps)
- 
- 	PeridigmNS::DiscretizationFactory discFactory(discretizationParams);
-  	Teuchos::RCP<PeridigmNS::AbstractDiscretization> peridigmDisc = discFactory.create(comm);
-
-  	// oneDimensionalMap
-   	Teuchos::RCP<const Epetra_BlockMap> oneDimensionalMap = peridigmDisc->getGlobalOwnedMap(1);
-
-  	// oneDimensionalOverlapMap (includes ghosts)
-  	Teuchos::RCP<const Epetra_BlockMap> oneDimensionalOverlapMap = peridigmDisc->getGlobalOverlapMap(1);
-
-  	// threeDimensionalMap
-  	Teuchos::RCP<const Epetra_BlockMap> threeDimensionalMap = peridigmDisc->getGlobalOwnedMap(3);
-
-  	// threeDimensionalOverlapMap (includes ghosts)
-  	Teuchos::RCP<const Epetra_BlockMap> threeDimensionalOverlapMap = peridigmDisc->getGlobalOverlapMap(3);
-
-  	// bondConstitutiveDataMap (non-overlapping map)
-  	Teuchos::RCP<const Epetra_BlockMap> bondMap = peridigmDisc->getGlobalBondMap();
-
-  	// Set the initial positions
-  	Teuchos::RCP<Epetra_Vector> x = peridigmDisc->getInitialX();
-
-  	// Create the importers
-  	Teuchos::RCP<const Epetra_Import> oneDimensionalMapToOneDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*oneDimensionalOverlapMap, *oneDimensionalMap));
-  	Teuchos::RCP<const Epetra_Import> threeDimensionalMapToThreeDimensionalOverlapMapImporter = Teuchos::rcp(new Epetra_Import(*threeDimensionalOverlapMap, *threeDimensionalMap));
-
-  	// get the neighborlist from the discretization
-   	Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData = peridigmDisc->getNeighborhoodData();
-
-  	// Step #3: Initialize data manager
-  	Teuchos::RCP<PeridigmNS::DataManager> dataManager = Teuchos::rcp(new PeridigmNS::DataManager);
-  	dataManager->setMaps(oneDimensionalMap, oneDimensionalOverlapMap, threeDimensionalMap, threeDimensionalOverlapMap, bondMap);
-
-  	// Create a master list of variable specs
-  	Teuchos::RCP< std::vector<Field_NS::FieldSpec> > variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
-
-  	// Fill list with specs utilized by Peridigm object
-  	variableSpecs->push_back(Field_NS::VOLUME);
-  	variableSpecs->push_back(Field_NS::COORD3D);
-  	variableSpecs->push_back(Field_NS::DISPL3D);
-  	variableSpecs->push_back(Field_NS::CURCOORD3D);
-  	variableSpecs->push_back(Field_NS::VELOC3D);
-  	variableSpecs->push_back(Field_NS::FORCE_DENSITY3D);
-  	variableSpecs->push_back(Field_NS::CONTACT_FORCE_DENSITY3D);
-
-  	// Don't add variable specs requested materials -- there are no material models used in this unit test
-
-  	// Now add the variable specs requested by the compute class
-  	std::vector<Field_NS::FieldSpec> computeSpecs = computeAngularMomentum->getFieldSpecs();
-  	for (unsigned int i=0; i < computeSpecs.size(); i++) 
-	{
-     		variableSpecs->push_back(computeSpecs[i]);
-	}
-
-  	// Remove duplicates
-  	std::unique(variableSpecs->begin(), variableSpecs->end());
-
-  	// Allocate data in the dataManager
-  	dataManager->allocateData(variableSpecs);
-
-  	// Fill the dataManager with data from the discretization
-  	dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->Import(*(peridigmDisc->getCellVolume()), *oneDimensionalMapToOneDimensionalOverlapMapImporter, Insert);
-  	dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-  	dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_N)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-  	dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-	dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_N)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-        dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1)->Import(*x, *threeDimensionalMapToThreeDimensionalOverlapMapImporter, Insert);
-
-
-  	return dataManager;
-
-}
-
 void FourPointTest() 
 {
-/*
-  	// set up parameter lists
-  	// these data would normally be read from an input xml file
-      	Teuchos::RCP<Teuchos::ParameterList> peridigmParams = rcp(new Teuchos::ParameterList());
-
-  	 problem parameters
-     	Teuchos::ParameterList& problemParams = peridigmParams->sublist("Problem");
-       	problemParams.set("Verbose", false);
-      
-    	 material parameters
-    	Teuchos::ParameterList& materialParams = problemParams.sublist("Material");
-    	Teuchos::ParameterList& linearElasticMaterialParams = materialParams.sublist("Linear Elastic");
-    	linearElasticMaterialParams.set("Density", 7800.0);
-    	linearElasticMaterialParams.set("Bulk Modulus", 130.0e9);
-    	linearElasticMaterialParams.set("Shear Modulus", 78.0e9);
-
-  	 Set up discretization parameterlist
-  	Teuchos::RCP<Teuchos::ParameterList> discretizationParams = rcp(new Teuchos::ParameterList("Discretization"));
-  	discretizationParams->set("Type", "PdQuickGrid");
-  	discretizationParams->set("Horizon", 5.0);
-  	 pdQuickGrid tensor product mesh generator parameters
-  	Teuchos::ParameterList& pdQuickGridParams = discretizationParams->sublist("TensorProduct3DMeshGenerator");
-  	pdQuickGridParams.set("Type", "PdQuickGrid");
-  	pdQuickGridParams.set("X Origin",  0.0);
-  	pdQuickGridParams.set("Y Origin",  0.0);
-  	pdQuickGridParams.set("Z Origin",  0.0);
-  	pdQuickGridParams.set("X Length",  6.0);
-  	pdQuickGridParams.set("Y Length",  1.0);
-  	pdQuickGridParams.set("Z Length",  1.0);
-  	pdQuickGridParams.set("Number Points X", 4);
-  	pdQuickGridParams.set("Number Points Y", 1);
-  	pdQuickGridParams.set("Number Points Z", 1);
-*/
-
 
 	Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createFourPointModel();
 
-
   	// Create Compute_Angular_Momentum object
-  	// hand in NULL for parent pointer since not used by compute class
   	Teuchos::RCP<PeridigmNS::Compute_Angular_Momentum> computeAngularMomentum = Teuchos::rcp(new PeridigmNS::Compute_Angular_Momentum(&(*peridigm)));
 
   	// Create the data manager
-  	//Teuchos::RCP<PeridigmNS::DataManager> dataManager = createDataManager(discretizationParams,computeAngularMomentum);
-        Teuchos::RCP<PeridigmNS::DataManager> dataManager = (*peridigm->getDataManagers())[0];
+	Teuchos::RCP<PeridigmNS::DataManager> dataManager = (*peridigm->getDataManagers())[0];
+	
+	// Create the neighborhood data
+	PeridigmNS::NeighborhoodData neighborhoodData = (*peridigm->getGlobalNeighborhoodData()); 
 
   	// Access the data we need
-        Teuchos::RCP<Epetra_Vector> velocity,  arm, volume;
-        velocity = dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1);
-        arm      = dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1);
-        volume   = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
+        Teuchos::RCP<Epetra_Vector> velocity, volume, angular_momentum;
+        velocity         = dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1);
+        volume           = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
+	angular_momentum = dataManager->getData(Field_NS::ANGULAR_MOMENTUM3D, Field_ENUM::STEP_NP1);	
+
+  	// Create the neighborhood structure
+  	const int numOwnedPoints = (neighborhoodData.NumOwnedPoints());
+  	const int* ownedIDs = (neighborhoodData.OwnedIDs());
+  	const int* neighborhoodList = (neighborhoodData.NeighborhoodList());
 
   	// Manufacture velocity data
   	double *velocity_values  = velocity->Values();
-  	int numElements = volume->Map().NumMyElements();
-  	for (int i=0;i<numElements;i++) 
+        int *myGIDs = velocity->Map().MyGlobalElements();
+  	int numElements = numOwnedPoints;
+	int numTotalElements = volume->Map().NumMyElements();
+  	for (int i=0;i<numTotalElements;i++) 
 	{
-    		velocity_values[3*i] = 3.0*i;
-    		velocity_values[3*i+1] = (3.0*i)+1.0;
-    		velocity_values[3*i+2] = (3.0*i)+2.0;
+		int ID = myGIDs[i];
+		velocity_values[3*i+0] = 3.0*ID;
+    		velocity_values[3*i+1] = (3.0*ID)+1.0;
+    		velocity_values[3*i+2] = (3.0*ID)+2.0;
 	}
-
-  	// Create an empty neighborhood structure
-  	// Valid neighborhood data is difficult to construct manually, and since Compute_Angular_Momentum does not use
-  	// this information anyway, just send in an empty neighborhood data
-  	const int numOwnedPoints = 0;
-  	const int* ownedIDs = 0;
-  	const int* neighborhoodList = 0;
 
   	// Call the compute class
 	int retval = computeAngularMomentum->compute(numOwnedPoints, ownedIDs, neighborhoodList, *dataManager);
   	BOOST_CHECK_EQUAL( retval, 0 );
 
-	/*
+	
   	// Now check that volumes and angular momentum is correct
   	double *volume_values = volume->Values();
-  	double *force_values  = force->Values();
+  	double *angular_momentum_values  = angular_momentum->Values();
   	for (int i=0;i<numElements;i++)
     		BOOST_CHECK_CLOSE(volume_values[i], 1.5, 1.0e-15);
   	for (int i=0;i<numElements;i++) 
 	{
-    		BOOST_CHECK_CLOSE(force_values[3*i],   1.5*(3.0*i),   1.0e-15);
-    		BOOST_CHECK_CLOSE(force_values[3*i+1], 1.5*((3.0*i)+1.0), 1.0e-15);
-    		BOOST_CHECK_CLOSE(force_values[3*i+2], 1.5*((3.0*i)+2.0), 1.0e-15);
+		int ID = myGIDs[i];
+		if (ID == 0)
+		{
+    			BOOST_CHECK_CLOSE(angular_momentum_values[3*i],   -5850.0, 1.0e-15);
+    			BOOST_CHECK_CLOSE(angular_momentum_values[3*i+1], 17550.0, 1.0e-15);
+    			BOOST_CHECK_CLOSE(angular_momentum_values[3*i+2], -8775.0, 1.0e-15);
+		}
+                if (ID == 1)
+                {
+                        BOOST_CHECK_CLOSE(angular_momentum_values[3*i],   -5850.0,  1.0e-15);
+                        BOOST_CHECK_CLOSE(angular_momentum_values[3*i+1], 114075.0, 1.0e-15);
+                        BOOST_CHECK_CLOSE(angular_momentum_values[3*i+2], -87750.0, 1.0e-15);
+                }
+                if (ID == 2)
+                {
+                        BOOST_CHECK_CLOSE(angular_momentum_values[3*i],   -5850.0,   1.0e-15);
+                        BOOST_CHECK_CLOSE(angular_momentum_values[3*i+1], 315900.0,  1.0e-15);
+                        BOOST_CHECK_CLOSE(angular_momentum_values[3*i+2], -272025.0, 1.0e-15);
+                }
+                if (ID == 3)
+                {
+                        BOOST_CHECK_CLOSE(angular_momentum_values[3*i],   -5850.0,   1.0e-15);
+                        BOOST_CHECK_CLOSE(angular_momentum_values[3*i+1], 623025.0,  1.0e-15);
+                        BOOST_CHECK_CLOSE(angular_momentum_values[3*i+2], -561600.0, 1.0e-15);
+                }
 	}
-	*/
 }
 
 
@@ -297,7 +207,7 @@ bool init_unit_test_suite()
   	// Add a suite for each processor in the test
  	bool success = true;
 
-	test_suite* proc = BOOST_TEST_SUITE("utPeridigm_Compute_Force");
+	test_suite* proc = BOOST_TEST_SUITE("utPeridigm_Compute_Angular_Momentum");
   	proc->add(BOOST_TEST_CASE(&FourPointTest));
   	framework::master_test_suite().add(proc);
 
@@ -325,7 +235,7 @@ int main (int argc, char* argv[])
 	}
 	else
 	{
-		std::cerr << "Unit test runtime ERROR: utPeridigm_Compute_Force only makes sense on 1 to 4 processors." << std::endl;
+		std::cerr << "Unit test runtime ERROR: utPeridigm_Compute_Angular_Momentum only makes sense on 1 to 4 processors." << std::endl;
 	}
   
 	#ifdef HAVE_MPI

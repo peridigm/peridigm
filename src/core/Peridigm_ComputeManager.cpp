@@ -95,7 +95,6 @@ PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList>
       }
     }
   }
-
 }
 
 Teuchos::ParameterList PeridigmNS::ComputeManager::getValidParameterList() {
