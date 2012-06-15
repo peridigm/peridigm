@@ -71,6 +71,9 @@ namespace PeridigmNS {
 	//! Returns the bulk modulus of the material.
 	virtual double BulkModulus() const { return m_bulkModulus; }
 
+        //! Returns the shear modulus of the material.
+        virtual double ShearModulus() const { return m_shearModulus; }
+                
 	//! Returns the horizon.
 	virtual double Horizon() const { return m_horizon; }
 

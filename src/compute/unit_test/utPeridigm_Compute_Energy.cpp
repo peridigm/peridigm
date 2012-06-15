@@ -194,8 +194,8 @@ void FourPointTest()
 		int ID = myGIDs[i];
                 double mass = density*volume_values[ID];
     		BOOST_CHECK_CLOSE(kinetic_energy_values[i],  0.5*mass*(pow((3.0*ID),2)+pow(((3.0*ID)+1.0),2)+pow(((3.0*ID)+2.0),2)), 1.0e-15);
-		BOOST_CHECK_CLOSE(strain_energy_values[i],   8.559e12, 1.0e10);
-		BOOST_CHECK_CLOSE(strain_energy_density_values[i], 5.706e12, 1.0e10);
+		BOOST_CHECK_CLOSE(strain_energy_values[i],   8.559e12, 0.01);
+		BOOST_CHECK_CLOSE(strain_energy_density_values[i], 5.706e12, 0.01);
 	}
 }
 
