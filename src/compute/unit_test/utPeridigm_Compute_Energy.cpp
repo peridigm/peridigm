@@ -112,11 +112,13 @@ Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel()
         pdQuickGridParams.set("Number Points Y", 1);
         pdQuickGridParams.set("Number Points Z", 1);
 
-        // output parameters (to force instantiation of angular momentum compute class and data storage in DataManager)
+        // output parameters (to force instantiation of energy compute classes and data storage in DataManager)
        	ParameterList& outputParams = peridigmParams->sublist("Output");
         ParameterList& materialOutputFields = outputParams.sublist("Material Output Fields");
         ParameterList& linearElasticMaterialFields = materialOutputFields.sublist("Linear Elastic");
-        linearElasticMaterialFields.set("Displacement", true); // This is a hack, since there is currently no way to request non-material specific data in the intput deck!
+        linearElasticMaterialFields.set("Kinetic_Energy", true);
+        linearElasticMaterialFields.set("Strain_Energy", true);
+        linearElasticMaterialFields.set("Strain_Energy_Density", true);
 
 	// create the Peridigm object
 	RCP<PeridigmNS::Peridigm> peridigm = Teuchos::rcp(new PeridigmNS::Peridigm(comm, peridigmParams));

@@ -48,12 +48,7 @@
 
 #ifdef COMPUTE_CLASS
 
-//ComputeClass(LinearMomentum,Compute_Linear_Momentum,peridigm)
-
-
-// This is a hack to force this compute class to be created.
-// What we really want is a way, in the input deck, to request output data that is not related to a material model.
-ComputeClass(Displacement,Compute_Linear_Momentum,peridigm)
+ComputeClass(Linear_Momentum,Compute_Linear_Momentum,peridigm)
 
 #else
 

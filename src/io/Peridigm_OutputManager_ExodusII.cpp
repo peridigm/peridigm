@@ -202,6 +202,12 @@ Teuchos::ParameterList PeridigmNS::OutputManager_ExodusII::getValidParameterList
     // ID and ProcNum can be determined from any *Petra vector, so list them as well
     matTypeSpecs.insert(matTypeSpecs.end(),Field_NS::GID);
     matTypeSpecs.insert(matTypeSpecs.end(),Field_NS::PROC_NUM);
+    // Energy and linear, angular momentum can also be output
+    matTypeSpecs.insert(matTypeSpecs.end(),Field_NS::KINETIC_ENERGY);
+    matTypeSpecs.insert(matTypeSpecs.end(),Field_NS::STRAIN_ENERGY);
+    matTypeSpecs.insert(matTypeSpecs.end(),Field_NS::STRAIN_ENERGY_DENSITY);
+    matTypeSpecs.insert(matTypeSpecs.end(),Field_NS::ANGULAR_MOMENTUM3D);
+    matTypeSpecs.insert(matTypeSpecs.end(),Field_NS::LINEAR_MOMENTUM3D);
     // Remove duplicates
     std::unique(matTypeSpecs.begin(), matTypeSpecs.end());
     // Sort for consistency

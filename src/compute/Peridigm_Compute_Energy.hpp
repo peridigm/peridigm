@@ -48,11 +48,9 @@
 
 #ifdef COMPUTE_CLASS
 
-//ComputeClass(AngularMomentum,Compute_Energy,peridigm)
-
-// This is a hack to force this compute class to be created.
-// What we really want is a way, in the input deck, to request output data that is not related to a material model.
-ComputeClass(Displacement,Compute_Energy,peridigm)
+ComputeClass(Kinetic_Energy,Compute_Energy,peridigm)
+ComputeClass(Strain_Energy,Compute_Energy,peridigm)
+ComputeClass(Strain_Energy_Density,Compute_Energy,peridigm)
 
 #else
 
