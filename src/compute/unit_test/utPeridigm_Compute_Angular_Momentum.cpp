@@ -113,7 +113,7 @@ Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel()
 	Teuchos::ParameterList& outputParams = peridigmParams->sublist("Output");
 	Teuchos::ParameterList& materialOutputFields = outputParams.sublist("Material Output Fields");
 	Teuchos::ParameterList& linearElasticMaterialFields = materialOutputFields.sublist("Linear Elastic");
-	linearElasticMaterialFields.set("Displacement", true); // This is a hack, since there is currently no way to request non-material specific data in the intput deck!
+	linearElasticMaterialFields.set("Angular_Momentum", true);
 
 	// create the Peridigm object
 	Teuchos::RCP<PeridigmNS::Peridigm> peridigm = Teuchos::rcp(new PeridigmNS::Peridigm(comm, peridigmParams));

@@ -60,8 +60,8 @@ PeridigmNS::Compute_Angular_Momentum::~Compute_Angular_Momentum(){}
 //! Returns the fieldspecs computed by this class
 std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Angular_Momentum::getFieldSpecs() const 
 {
-  	std::vector<Field_NS::FieldSpec> myFieldSpecs;
-  	myFieldSpecs.push_back(Field_NS::ANGULAR_MOMENTUM3D);
+	std::vector<Field_NS::FieldSpec> myFieldSpecs;
+	myFieldSpecs.push_back(Field_NS::ANGULAR_MOMENTUM3D);
 
 	// This is a hack.
 	// Ideally, we'd specify some global variable as the output variable, but Peridigm is not

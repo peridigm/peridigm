@@ -1,5 +1,5 @@
 /*! \file Peridigm.cpp
-10 *
+ *
  * File containing main class for Peridigm: A parallel, multi-physics,
  * peridynamics simulation code.
  */
@@ -451,8 +451,8 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
   }
 
   if (active) {
-    // Make the default format "VTK_XML"
-    string outputFormat = outputParams->get("Output File Type", "VTK_XML");
+    // Make the default format "ExodusII"
+    string outputFormat = outputParams->get("Output File Type", "ExodusII");
     TEUCHOS_TEST_FOR_EXCEPTION( outputFormat != "VTK_XML" && outputFormat != "ExodusII",
                         std::invalid_argument,
                         "PeridigmNS::Peridigm: \"Output File Type\" must be \"VTK_XML\" or \"ExodusII\".");
