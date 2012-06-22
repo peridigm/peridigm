@@ -129,15 +129,9 @@ void PeridigmNS::ComputeManager::initialize(Teuchos::RCP< std::vector<PeridigmNS
   //       Calling initialize on each block individually may not make sense.
 
   for(unsigned int i=0 ; i<computeObjects.size() ; ++i){
-    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-      Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
-      const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
-      const int* ownedIDs = neighborhoodData->OwnedIDs();
-      const int* neighborhoodList = neighborhoodData->NeighborhoodList();
-      Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
-      computeObjects[i]->initialize(numOwnedPoints, ownedIDs, neighborhoodList, *dataManager);
-    }
+     computeObjects[i]->initialize(blocks);
   }
+
 }
 
 void PeridigmNS::ComputeManager::compute(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks) {
@@ -145,13 +139,7 @@ void PeridigmNS::ComputeManager::compute(Teuchos::RCP< std::vector<PeridigmNS::B
   // \todo Identify what the desired behavior is for compute classes and multiple blocks!
 
   for(unsigned int i=0 ; i<computeObjects.size() ; ++i){
-    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-      Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
-      const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
-      const int* ownedIDs = neighborhoodData->OwnedIDs();
-      const int* neighborhoodList = neighborhoodData->NeighborhoodList();
-      Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
-      computeObjects[i]->compute(numOwnedPoints, ownedIDs, neighborhoodList, *dataManager);
-    }
+     computeObjects[i]->compute(blocks);
   }
+
 }

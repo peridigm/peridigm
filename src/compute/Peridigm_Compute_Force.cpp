@@ -65,37 +65,39 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Force::getFieldSpecs() cons
 }
 
 //! Fill the force vector
-int PeridigmNS::Compute_Force::compute(const int numOwnedPoints,
-                                       const int* ownedIDs,
-                                       const int* neighborhoodList,
-                                       PeridigmNS::DataManager& dataManager) const {
+int PeridigmNS::Compute_Force::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) const {
 
   int retval;
 
   Teuchos::RCP<Epetra_Vector> force, force_density, volume;
-  force_density = dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1);
-  force         = dataManager.getData(Field_NS::FORCE3D, Field_ENUM::STEP_NP1);
-  volume        = dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
+  std::vector<PeridigmNS::Block>::iterator blockIt;
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
 
-  // Sanity check
-  if ( (force_density->Map().NumMyElements() != volume->Map().NumMyElements()) ||  (force->Map().NumMyElements() != volume->Map().NumMyElements()) ) {
-    retval = 1;
-    return(retval);
-  }
+    force_density = dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1);
+    force         = dataManager->getData(Field_NS::FORCE3D, Field_ENUM::STEP_NP1);
+    volume        = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
 
-  *force = *force_density;
+    // Sanity check
+    if ( (force_density->Map().NumMyElements() != volume->Map().NumMyElements()) ||  (force->Map().NumMyElements() != volume->Map().NumMyElements()) ) {
+      retval = 1;
+      return(retval);
+    }
 
-  double *volume_values = volume->Values();
-  double *force_values  = force->Values();
+    *force = *force_density;
 
-  // volume is a scalar and force a vector, so maps are different; must do multiplication on per-element basis
-  int numElements = volume->Map().NumMyElements();
-  double vol;
-  for (int i=0;i<numElements;i++) {
-    vol = volume_values[i]; 
-    force_values[3*i] = vol*force_values[3*i];
-    force_values[3*i+1] = vol*force_values[3*i+1];
-    force_values[3*i+2] = vol*force_values[3*i+2];
+    double *volume_values = volume->Values();
+    double *force_values  = force->Values();
+
+    // volume is a scalar and force a vector, so maps are different; must do multiplication on per-element basis
+    int numElements = volume->Map().NumMyElements();
+    double vol;
+    for (int i=0;i<numElements;i++) {
+      vol = volume_values[i]; 
+      force_values[3*i] = vol*force_values[3*i];
+      force_values[3*i+1] = vol*force_values[3*i+1];
+      force_values[3*i+2] = vol*force_values[3*i+2];
+    }
   }
 
   return(0);

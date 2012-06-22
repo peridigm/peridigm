@@ -51,6 +51,7 @@
 #include <Teuchos_RCP.hpp>
 
 #include "Peridigm_DataManager.hpp"
+#include "Peridigm_Block.hpp"
 
 // Forward declaration
 namespace PeridigmNS {
@@ -74,17 +75,10 @@ namespace PeridigmNS {
   virtual std::vector<Field_NS::FieldSpec> getFieldSpecs() const = 0;
 
   //! Initialize the compute class
-  virtual void
-  initialize(const int numOwnedPoints,
-             const int* ownedIDs,
-             const int* neighborhoodList,
-             PeridigmNS::DataManager& dataManager) const {}
+  virtual void initialize( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const {};
 
   //! Perform computation
-  virtual int compute(const int numOwnedPoints,
-                      const int* ownedIDs,
-                      const int* neighborhoodList,
-                      PeridigmNS::DataManager& dataManager) const = 0;
+  virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const = 0;
 
   protected:
 

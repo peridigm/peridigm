@@ -60,41 +60,43 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Neighborhood_Volume::getFie
   return myFieldSpecs;
 }
 
-void PeridigmNS::Compute_Neighborhood_Volume::initialize(const int numOwnedPoints,
-                                                         const int* ownedIDs,
-                                                         const int* neighborhoodList,
-                                                         PeridigmNS::DataManager& dataManager) const {
+void PeridigmNS::Compute_Neighborhood_Volume::initialize( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) const {
 
-  double *volume, *neighborhoodVolume;
-  dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&volume);
-  dataManager.getData(Field_NS::NEIGHBORHOOD_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&neighborhoodVolume);
+  std::vector<PeridigmNS::Block>::iterator blockIt;
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
+    const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
+    const int* neighborhoodList = neighborhoodData->NeighborhoodList();
+    double *volume, *neighborhoodVolume;
+    dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&volume);
+    dataManager->getData(Field_NS::NEIGHBORHOOD_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&neighborhoodVolume);
 
-  double *partialVolume = 0;
-  if( dataManager.hasData(Field_NS::PARTIAL_VOLUME, Field_ENUM::STEP_NONE) )
-    dataManager.getData(Field_NS::PARTIAL_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&partialVolume);
+    double *partialVolume = 0;
+    if( dataManager->hasData(Field_NS::PARTIAL_VOLUME, Field_ENUM::STEP_NONE) )
+      dataManager->getData(Field_NS::PARTIAL_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&partialVolume);
 
-  int neighborhoodListIndex = 0;
-  int bondIndex = 0;
-  for(int iID=0 ; iID<numOwnedPoints ; ++iID){
-	int numNeighbors = neighborhoodList[neighborhoodListIndex++];
+    int neighborhoodListIndex = 0;
+    int bondIndex = 0;
+    for(int iID=0 ; iID<numOwnedPoints ; ++iID){
+      int numNeighbors = neighborhoodList[neighborhoodListIndex++];
 
-    // Assume that the cell's volume is within its neighborhood
-    neighborhoodVolume[iID] = volume[iID];
+      // Assume that the cell's volume is within its neighborhood
+      neighborhoodVolume[iID] = volume[iID];
 
-	for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
-	  int neighborID = neighborhoodList[neighborhoodListIndex++];
-      double neighborVolume = volume[neighborID];
-      double fraction = 1.0;
-      if(partialVolume != 0)
-        fraction = partialVolume[bondIndex++];
-      neighborhoodVolume[iID] += neighborVolume*fraction;
-	}
+      for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
+        int neighborID = neighborhoodList[neighborhoodListIndex++];
+        double neighborVolume = volume[neighborID];
+        double fraction = 1.0;
+        if(partialVolume != 0)
+          fraction = partialVolume[bondIndex++];
+        neighborhoodVolume[iID] += neighborVolume*fraction;
+      }
+    }
   }
+
 }
 
-int PeridigmNS::Compute_Neighborhood_Volume::compute(const int numOwnedPoints,
-                                                     const int* ownedIDs,
-                                                     const int* neighborhoodList,
-                                                     PeridigmNS::DataManager& dataManager) const {
+int PeridigmNS::Compute_Neighborhood_Volume::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) const {
   return 0;
 }

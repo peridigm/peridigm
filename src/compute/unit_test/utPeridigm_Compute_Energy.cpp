@@ -129,15 +129,10 @@ void FourPointTest()
 {
 	Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createFourPointModel();
 
-  	// Create Compute_Energy object
-  	Teuchos::RCP<PeridigmNS::Compute_Energy> computeEnergy = Teuchos::rcp(new PeridigmNS::Compute_Energy(&(*peridigm)));
-
-        // Create the neighborhood data
+        // Get the neighborhood data
         PeridigmNS::NeighborhoodData neighborhoodData = (*peridigm->getGlobalNeighborhoodData());
-
-  	// Create the data manager
+  	// Get the data manager
         Teuchos::RCP<PeridigmNS::DataManager> dataManager = (*peridigm->getDataManagers())[0];
-
   	// Access the data we need
         Teuchos::RCP<Epetra_Vector> velocity, volume, ref, coords, dilatation, kinetic_energy, strain_energy, strain_energy_density;
         velocity              = dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1);
@@ -148,12 +143,8 @@ void FourPointTest()
 	kinetic_energy        = dataManager->getData(Field_NS::KINETIC_ENERGY, Field_ENUM::STEP_NP1);
 	strain_energy         = dataManager->getData(Field_NS::STRAIN_ENERGY, Field_ENUM::STEP_NP1);
  	strain_energy_density = dataManager->getData(Field_NS::STRAIN_ENERGY_DENSITY, Field_ENUM::STEP_NP1);
- 
-
-        // Create the neighborhood structure
+        // Get the neighborhood structure
 	const int numOwnedPoints = (neighborhoodData.NumOwnedPoints());
-        const int* ownedIDs = (neighborhoodData.OwnedIDs());
-        const int* neighborhoodList = (neighborhoodData.NeighborhoodList());
 
 	// Manufacture velocity data
 	double *velocity_values  = velocity->Values();
@@ -175,8 +166,14 @@ void FourPointTest()
 		dilatation_values[i] = 9.369;
 	}
 
+  	// Create Compute_Energy object
+  	Teuchos::RCP<PeridigmNS::Compute_Energy> computeEnergy = Teuchos::rcp(new PeridigmNS::Compute_Energy(&(*peridigm)));
+
+	// Get the blocks
+	Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks = peridigm->getBlocks();
+
   	// Call the compute class
-	int retval = computeEnergy->compute(numOwnedPoints, ownedIDs, neighborhoodList, *dataManager);
+	int retval = computeEnergy->compute( blocks );
   	BOOST_CHECK_EQUAL( retval, 0 );
 
 	// \todo Generalize this for multiple materials

@@ -92,8 +92,6 @@ namespace PeridigmNS {
     //! Parent pointer
     PeridigmNS::Peridigm *peridigm;
 
-    //! Block iterator, for convenience
-    std::vector<PeridigmNS::Block>::iterator blockIt;
   };
   
 }

@@ -61,25 +61,25 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Radius::getFieldSpecs() con
   return myFieldSpecs;
 }
 
-void PeridigmNS::Compute_Radius::initialize(const int numOwnedPoints,
-					    const int* ownedIDs,
-					    const int* neighborhoodList,
-					    PeridigmNS::DataManager& dataManager) const {
+int PeridigmNS::Compute_Radius::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) const {
 
-  double *volume, *radius;
-  dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&volume);
-  dataManager.getData(Field_NS::RADIUS, Field_ENUM::STEP_NONE)->ExtractView(&radius);
+  Teuchos::RCP<Epetra_Vector> force, acceleration;
+  std::vector<PeridigmNS::Block>::iterator blockIt;
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
+    const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
 
-  double constant = 0.75/acos(-1.0);
-  double oneThird = 1.0/3.0;
+    double *volume, *radius;
+    dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&volume);
+    dataManager->getData(Field_NS::RADIUS, Field_ENUM::STEP_NONE)->ExtractView(&radius);
 
-  for(int iID=0 ; iID<numOwnedPoints ; ++iID)
-    radius[iID] = pow(constant*volume[iID], oneThird);
-}
+    double constant = 0.75/acos(-1.0);
+    double oneThird = 1.0/3.0;
 
-int PeridigmNS::Compute_Radius::compute(const int numOwnedPoints,
-                                                     const int* ownedIDs,
-                                                     const int* neighborhoodList,
-                                                     PeridigmNS::DataManager& dataManager) const {
-  return 0;
+    for(int iID=0 ; iID<numOwnedPoints ; ++iID)
+      radius[iID] = pow(constant*volume[iID], oneThird);
+  }
+
+  return(0);
 }

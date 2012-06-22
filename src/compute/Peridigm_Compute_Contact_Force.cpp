@@ -65,37 +65,40 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Contact_Force::getFieldSpec
 }
 
 //! Fill the contact force vector
-int PeridigmNS::Compute_Contact_Force::compute(const int numOwnedPoints,
-                                               const int* ownedIDs,
-                                               const int* neighborhoodList,
-                                               PeridigmNS::DataManager& dataManager) const {
+int PeridigmNS::Compute_Contact_Force::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) const {
 
   int retval;
 
   Teuchos::RCP<Epetra_Vector> contact_force, contact_force_density, volume;
-  contact_force_density = dataManager.getData(Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1);
-  contact_force         = dataManager.getData(Field_NS::CONTACT_FORCE3D, Field_ENUM::STEP_NP1);
-  volume                = dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
+  std::vector<PeridigmNS::Block>::iterator blockIt;
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
 
-  // Sanity check
-  if ( (contact_force_density->Map().NumMyElements() != volume->Map().NumMyElements()) ||  (contact_force->Map().NumMyElements() != volume->Map().NumMyElements()) ) {
-    retval = 1;
-    return(retval);
-  }
+    Teuchos::RCP<Epetra_Vector> contact_force, contact_force_density, volume;
+    contact_force_density = dataManager->getData(Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1);
+    contact_force         = dataManager->getData(Field_NS::CONTACT_FORCE3D, Field_ENUM::STEP_NP1);
+    volume                = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
 
-  *contact_force = *contact_force_density;
+    // Sanity check
+    if ( (contact_force_density->Map().NumMyElements() != volume->Map().NumMyElements()) ||  (contact_force->Map().NumMyElements() != volume->Map().NumMyElements()) ) {
+      retval = 1;
+      return(retval);
+    }
 
-  double *volume_values = volume->Values();
-  double *contact_force_values  = contact_force->Values();
+    *contact_force = *contact_force_density;
 
-  // volume is a scalar and force a vector, so maps are different; must do multiplication on per-element basis
-  int numElements = volume->Map().NumMyElements();
-  double vol;
-  for (int i=0;i<numElements;i++) {
-    vol = volume_values[i]; 
-    contact_force_values[3*i] = vol*contact_force_values[3*i];
-    contact_force_values[3*i+1] = vol*contact_force_values[3*i+1];
-    contact_force_values[3*i+2] = vol*contact_force_values[3*i+2];
+    double *volume_values = volume->Values();
+    double *contact_force_values  = contact_force->Values();
+
+    // volume is a scalar and force a vector, so maps are different; must do multiplication on per-element basis
+    int numElements = volume->Map().NumMyElements();
+    double vol;
+    for (int i=0;i<numElements;i++) {
+      vol = volume_values[i]; 
+      contact_force_values[3*i] = vol*contact_force_values[3*i];
+      contact_force_values[3*i+1] = vol*contact_force_values[3*i+1];
+      contact_force_values[3*i+2] = vol*contact_force_values[3*i+2];
+    }
   }
 
   return(0);

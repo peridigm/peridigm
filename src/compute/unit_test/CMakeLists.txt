@@ -1,11 +1,5 @@
 set(utPeridigm_Compute_Force_SOURCES
-   ${DISCRETIZATION_DIR}/Peridigm_AbstractDiscretization.cpp
-   ${DISCRETIZATION_DIR}/Peridigm_DiscretizationFactory.cpp
-   ${DISCRETIZATION_DIR}/Peridigm_PdQuickGridDiscretization.cpp
-   ${CORE_DIR}/Peridigm_DataManager.cpp
-   ${CORE_DIR}/Peridigm_State.cpp
-   ${CORE_DIR}/Peridigm_ComputeManager.cpp
-   ${COMPUTE_DIR}/compute_includes.hpp
+   ${Peridigm_SOURCES}
    ${computeSOURCES}
    ./utPeridigm_Compute_Force.cpp
 )

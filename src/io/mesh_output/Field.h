@@ -62,6 +62,8 @@ enum Relation {
   NODE=0,
   ELEMENT,
   BOND,
+  BLOCK,
+  GLOBAL,
   RELATION_UNDEFINED
 };
 
@@ -231,6 +233,11 @@ private:
  */
 
 /*
+ * GLOBAL SCALAR FieldSpecs (scalar fields defined over entire simulation)
+ */
+const Field_NS::FieldSpec GLOBAL_KINETIC_ENERGY(Field_ENUM::KINETIC_ENERGY,              Field_ENUM::GLOBAL, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Global_Kinetic_Energy");
+
+/*
  * ELEMENT SCALAR FieldSpecs (scalar fields defined over elements)
  */
 const Field_NS::FieldSpec VOLUME               (Field_ENUM::VOLUME,                      Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Volume");
@@ -282,6 +289,8 @@ struct FieldSpecMap {
 		std::map<string,FieldSpec> mymap;
                 // Undefined fieldspec
 		mymap[FIELDSPEC_UNDEFINED.getLabel()]          = FIELDSPEC_UNDEFINED;
+                // global scalar fieldspecs
+		mymap[GLOBAL_KINETIC_ENERGY.getLabel()]        = GLOBAL_KINETIC_ENERGY;
                 // point scalar fieldspecs
 		mymap[VOLUME.getLabel()]                       = VOLUME;
 		mymap[GID.getLabel()]                          = GID;
