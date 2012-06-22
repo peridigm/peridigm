@@ -54,7 +54,6 @@ ComputeClass(Acceleration,Compute_Acceleration,peridigm)
 #define PERIDIGM_COMPUTE_ACCELERATION_HPP
 
 #include "Peridigm_Compute.hpp"
-#include "Peridigm_DataManager.hpp"
 
 // Forward declaration
 namespace PeridigmNS {
@@ -78,10 +77,7 @@ namespace PeridigmNS {
   std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
 
   //! Perform computation
-  int compute(const int numOwnedPoints,
-              const int* ownedIDs,
-              const int* neighborhoodList,
-              PeridigmNS::DataManager& dataManager) const;
+  int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
 
   private:
 

@@ -76,69 +76,73 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Angular_Momentum::getFieldS
 
 
 //! Fill the angular momentum vector
-int PeridigmNS::Compute_Angular_Momentum::compute(const int numOwnedPoints,
-                                                  const int* ownedIDs,
-                                                  const int* neighborhoodList,
-                                                  PeridigmNS::DataManager& dataManager) const 
+int PeridigmNS::Compute_Angular_Momentum::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const
 {
-
 	int retval;
 
   	Teuchos::RCP<Epetra_Vector> velocity,  arm, volume, angular_momentum;
-  	velocity         = dataManager.getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1);
-  	arm              = dataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1);
-  	volume           = dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
-	angular_momentum = dataManager.getData(Field_NS::ANGULAR_MOMENTUM3D, Field_ENUM::STEP_NP1);
+	std::vector<PeridigmNS::Block>::iterator blockIt;
+	for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+		Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
+		Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
+		const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
+		const int* ownedIDs = neighborhoodData->OwnedIDs();
 
- 	// Sanity check
-   	if ( (velocity->Map().NumMyElements() != volume->Map().NumMyElements()) ||  (arm->Map().NumMyElements() != volume->Map().NumMyElements()) )
- 	{
-        	retval = 1;
-            	return(retval);
-	}
+  		velocity         = dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1);
+  		arm              = dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1);
+  		volume           = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
+		angular_momentum = dataManager->getData(Field_NS::ANGULAR_MOMENTUM3D, Field_ENUM::STEP_NP1);
+
+	 	// Sanity check
+  	 	if ( (velocity->Map().NumMyElements() != volume->Map().NumMyElements()) ||  (arm->Map().NumMyElements() != volume->Map().NumMyElements()) )
+	 	{
+      		  	retval = 1;
+ 	           	return(retval);
+		}
  	
-	// Collect values
-  	double *volume_values = volume->Values();
-  	double *velocity_values = velocity->Values();
-  	double *arm_values  = arm->Values();
-	double *angular_momentum_values = angular_momentum->Values();
+		// Collect values
+  		double *volume_values = volume->Values();
+  		double *velocity_values = velocity->Values();
+  		double *arm_values  = arm->Values();
+		double *angular_momentum_values = angular_momentum->Values();
 
-	// Initialize angular momentum values
-  	double angular_momentum_x,  angular_momentum_y, angular_momentum_z;
-  	angular_momentum_x = angular_momentum_y = angular_momentum_z = 0.0;
-
-	// \todo Generalize this for multiple materials
-	double density = peridigm->getMaterialModels()->operator[](0)->Density();
+		// Initialize angular momentum values
+  		double angular_momentum_x,  angular_momentum_y, angular_momentum_z;
+  		angular_momentum_x = angular_momentum_y = angular_momentum_z = 0.0;
+	
+		// \todo Generalize this for multiple materials
+		double density = peridigm->getMaterialModels()->operator[](0)->Density();
   	
-	// volume is a scalar and force a vector, so maps are different; must do multiplication on per-element basis
-  	int numElements = numOwnedPoints;
-  	double vol, mass;
-  	for (int i=0;i<numElements;i++) 
-  	{
-	  	int ID = ownedIDs[i];
-	  	vol = volume_values[ID];
-		mass = vol*density;
-	  	double v1 = velocity_values[3*ID];
-	  	double v2 = velocity_values[3*ID+1];
-	  	double v3 = velocity_values[3*ID+2];
-	  	double r1 = arm_values[3*ID];
-	  	double r2 = arm_values[3*ID+1];
-	  	double r3 = arm_values[3*ID+2];
-	  	angular_momentum_x = angular_momentum_x + mass*(v2*r3 - v3*r2);
-	  	angular_momentum_y = angular_momentum_y + mass*(v3*r1 - v1*r3); 
-	  	angular_momentum_z = angular_momentum_z + mass*(v1*r2 - v2*r1);
-		angular_momentum_values[3*ID] = mass*(v2*r3 - v3*r2);
-		angular_momentum_values[3*ID+1] = mass*(v3*r1 - v1*r3);
-		angular_momentum_values[3*ID+2] = mass*(v1*r2 - v2*r1);     
-  	}
+		// volume is a scalar and force a vector, so maps are different; must do multiplication on per-element basis
+  		int numElements = numOwnedPoints;
+  		double vol, mass;
+  		for (int i=0;i<numElements;i++) 
+  		{
+		  	int ID = ownedIDs[i];
+		  	vol = volume_values[ID];
+			mass = vol*density;
+		  	double v1 = velocity_values[3*ID];
+		  	double v2 = velocity_values[3*ID+1];
+		  	double v3 = velocity_values[3*ID+2];
+		  	double r1 = arm_values[3*ID];
+		  	double r2 = arm_values[3*ID+1];
+		  	double r3 = arm_values[3*ID+2];
+		  	angular_momentum_x = angular_momentum_x + mass*(v2*r3 - v3*r2);
+		  	angular_momentum_y = angular_momentum_y + mass*(v3*r1 - v1*r3); 
+		  	angular_momentum_z = angular_momentum_z + mass*(v1*r2 - v2*r1);
+			angular_momentum_values[3*ID] = mass*(v2*r3 - v3*r2);
+			angular_momentum_values[3*ID+1] = mass*(v3*r1 - v1*r3);
+			angular_momentum_values[3*ID+2] = mass*(v1*r2 - v2*r1);     
+  		}
 
-	// Update info across processors
-        std::vector<double> localAngularMomentum(3), globalAngularMomentum(3);
-	localAngularMomentum[0] = angular_momentum_x;
-	localAngularMomentum[1] = angular_momentum_y;
-	localAngularMomentum[2] = angular_momentum_z;
-
-	peridigm->getEpetraComm()->SumAll(&localAngularMomentum[0], &globalAngularMomentum[0], 3);
+		// Update info across processors
+	        std::vector<double> localAngularMomentum(3), globalAngularMomentum(3);
+		localAngularMomentum[0] = angular_momentum_x;
+		localAngularMomentum[1] = angular_momentum_y;
+		localAngularMomentum[2] = angular_momentum_z;
+	
+		peridigm->getEpetraComm()->SumAll(&localAngularMomentum[0], &globalAngularMomentum[0], 3);
+	}
 
 /*	
         if (peridigm->getEpetraComm()->MyPID() == 0) 

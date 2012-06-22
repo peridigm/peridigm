@@ -127,25 +127,17 @@ void FourPointTest()
 {
 	Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createFourPointModel();
 
-  	// Create Compute_Linear_Momentum object
-  	Teuchos::RCP<PeridigmNS::Compute_Linear_Momentum> computeLinearMomentum = Teuchos::rcp(new PeridigmNS::Compute_Linear_Momentum(&(*peridigm)));
-
-  	// Create the data manager
+  	// Get the data manager
         Teuchos::RCP<PeridigmNS::DataManager> dataManager = (*peridigm->getDataManagers())[0];
-
-        // Create the neighborhood data
+        // Get the neighborhood data
       	PeridigmNS::NeighborhoodData neighborhoodData = (*peridigm->getGlobalNeighborhoodData());
-  	
 	// Access the data we need
         Teuchos::RCP<Epetra_Vector> velocity, volume, linear_momentum;
         velocity        = dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1);
         volume          = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
 	linear_momentum = dataManager->getData(Field_NS::LINEAR_MOMENTUM3D, Field_ENUM::STEP_NP1); 
-		
-	// Create the neighborhood structure
+	// Get the neighborhood structure
         const int numOwnedPoints = (neighborhoodData.NumOwnedPoints());
-        const int* ownedIDs = (neighborhoodData.OwnedIDs());
-        const int* neighborhoodList = (neighborhoodData.NeighborhoodList());
 
   	// Manufacture velocity data
   	double *velocity_values  = velocity->Values();
@@ -160,10 +152,15 @@ void FourPointTest()
     		velocity_values[3*i+2] = (3.0*ID)+2.0;
 	}
 
+  	// Create Compute_Linear_Momentum object
+  	Teuchos::RCP<PeridigmNS::Compute_Linear_Momentum> computeLinearMomentum = Teuchos::rcp(new PeridigmNS::Compute_Linear_Momentum(&(*peridigm)));
+
+	// Get the blocks
+	Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks = peridigm->getBlocks();
+
   	// Call the compute class
-	int retval = computeLinearMomentum->compute(numOwnedPoints, ownedIDs, neighborhoodList, *dataManager);
+	int retval = computeLinearMomentum->compute(blocks);
   	BOOST_CHECK_EQUAL( retval, 0 );
-	
 	
 	// \todo Generalize this for multiple materials
 	double density = peridigm->getMaterialModels()->operator[](0)->Density();

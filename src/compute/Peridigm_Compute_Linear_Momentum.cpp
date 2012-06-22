@@ -70,68 +70,73 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Linear_Momentum::getFieldSp
 
 
 //! Fill the linear momentum vector
-int PeridigmNS::Compute_Linear_Momentum::compute(const int numOwnedPoints,
-                                                  const int* ownedIDs,
-                                                  const int* neighborhoodList,
-                                                  PeridigmNS::DataManager& dataManager) const 
+int PeridigmNS::Compute_Linear_Momentum::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const
 {
-
 	int retval;
 
   	Teuchos::RCP<Epetra_Vector> velocity, volume, linear_momentum;
-  	velocity        = dataManager.getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1);
-  	volume          = dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
-	linear_momentum = dataManager.getData(Field_NS::LINEAR_MOMENTUM3D, Field_ENUM::STEP_NP1);
+	std::vector<PeridigmNS::Block>::iterator blockIt;
+        for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+                Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
+		Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
+                const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
+		const int* ownedIDs = neighborhoodData->OwnedIDs();
+
+ 	 	velocity        = dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1);
+ 	 	volume          = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
+		linear_momentum = dataManager->getData(Field_NS::LINEAR_MOMENTUM3D, Field_ENUM::STEP_NP1);
 	
- 	// Sanity check
-    	if ( (velocity->Map().NumMyElements() != volume->Map().NumMyElements()) )
- 	{
-        	retval = 1;
-            	return(retval);
+	 	// Sanity check
+	    	if ( (velocity->Map().NumMyElements() != volume->Map().NumMyElements()) )
+	 	{
+	        	retval = 1;
+	            	return(retval);
+		}
+
+		*linear_momentum = *velocity;
+ 	
+		// Collect values
+	  	double *volume_values = volume->Values();
+	  	double *velocity_values = velocity->Values();
+		double *linear_momentum_values = linear_momentum->Values();	
+
+		// Initialize linear momentum values
+	  	double linear_momentum_x,  linear_momentum_y, linear_momentum_z;
+	  	linear_momentum_x = linear_momentum_y = linear_momentum_z = 0.0;
+
+	        // \todo Generalize this for multiple materials
+		double density = peridigm->getMaterialModels()->operator[](0)->Density();
+    
+	  	// volume is a scalar and force a vector, so maps are different; must do multiplication on per-element basis
+	        int numElements = numOwnedPoints;  	
+  		for (int i=0;i<numElements;i++) 
+  		{
+			int ID = ownedIDs[i];
+			double mass = density*volume_values[ID];
+			double v1 = velocity_values[3*ID];
+    			double v2 = velocity_values[3*ID+1];
+    			double v3 = velocity_values[3*ID+2];
+			linear_momentum_values[3*i] = mass*linear_momentum_values[3*i];
+			linear_momentum_values[3*i+1] = mass*linear_momentum_values[3*i+1];
+			linear_momentum_values[3*i+2] = mass*linear_momentum_values[3*i+2];
+	    		linear_momentum_x = linear_momentum_x + mass*v1;
+	   		linear_momentum_y = linear_momentum_y + mass*v2; 
+	    		linear_momentum_z = linear_momentum_z + mass*v3;
+	  	}
+
+		// Update info across processors
+	 	std::vector<double> localLinearMomentum(3), globalLinearMomentum(3);
+	        localLinearMomentum[0] = linear_momentum_x;
+	        localLinearMomentum[1] = linear_momentum_y;
+	        localLinearMomentum[2] = linear_momentum_z;
+
+		peridigm->getEpetraComm()->SumAll(&localLinearMomentum[0], &globalLinearMomentum[0], 3);
+
+	        globalLinearMomentum[0] = globalLinearMomentum[0];
+	        globalLinearMomentum[1] = globalLinearMomentum[1];
+	        globalLinearMomentum[2] = globalLinearMomentum[2];
 	}
 
-	*linear_momentum = *velocity;
- 	
-	// Collect values
-  	double *volume_values = volume->Values();
-  	double *velocity_values = velocity->Values();
-	double *linear_momentum_values = linear_momentum->Values();	
-
-	// Initialize linear momentum values
-  	double linear_momentum_x,  linear_momentum_y, linear_momentum_z;
-  	linear_momentum_x = linear_momentum_y = linear_momentum_z = 0.0;
-
-        // \todo Generalize this for multiple materials
-        double density = peridigm->getMaterialModels()->operator[](0)->Density();
-    
-  	// volume is a scalar and force a vector, so maps are different; must do multiplication on per-element basis
-        int numElements = numOwnedPoints;  	
-  	for (int i=0;i<numElements;i++) 
-  	{
-		int ID = ownedIDs[i];
-		double mass = density*volume_values[ID];
-		double v1 = velocity_values[3*ID];
-    		double v2 = velocity_values[3*ID+1];
-    		double v3 = velocity_values[3*ID+2];
-		linear_momentum_values[3*i] = mass*linear_momentum_values[3*i];
-		linear_momentum_values[3*i+1] = mass*linear_momentum_values[3*i+1];
-		linear_momentum_values[3*i+2] = mass*linear_momentum_values[3*i+2];
-    		linear_momentum_x = linear_momentum_x + mass*v1;
-   		linear_momentum_y = linear_momentum_y + mass*v2; 
-    		linear_momentum_z = linear_momentum_z + mass*v3;
-  	}
-
-	// Update info across processors
- 	std::vector<double> localLinearMomentum(3), globalLinearMomentum(3);
-        localLinearMomentum[0] = linear_momentum_x;
-        localLinearMomentum[1] = linear_momentum_y;
-        localLinearMomentum[2] = linear_momentum_z;
-
-	peridigm->getEpetraComm()->SumAll(&localLinearMomentum[0], &globalLinearMomentum[0], 3);
-
-        globalLinearMomentum[0] = globalLinearMomentum[0];
-        globalLinearMomentum[1] = globalLinearMomentum[1];
-        globalLinearMomentum[2] = globalLinearMomentum[2];
 /*
 	if (peridigm->getEpetraComm()->MyPID() == 0)
 	{
@@ -143,6 +148,6 @@ int PeridigmNS::Compute_Linear_Momentum::compute(const int numOwnedPoints,
 	}
 */
 
-	return(0);
+		return(0);
 
 }

@@ -60,53 +60,56 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Number_Of_Neighbors::getFie
   return myFieldSpecs;
 }
 
-void PeridigmNS::Compute_Number_Of_Neighbors::initialize(const int numOwnedPoints,
-                                                         const int* ownedIDs,
-                                                         const int* neighborhoodList,
-                                                         PeridigmNS::DataManager& dataManager) const {
-  double *numberOfNeighbors;
-  dataManager.getData(Field_NS::NUMBER_OF_NEIGHBORS, Field_ENUM::STEP_NONE)->ExtractView(&numberOfNeighbors);
+void PeridigmNS::Compute_Number_Of_Neighbors::initialize( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) const {
 
-  double *partialVolume = 0;
-  if( dataManager.hasData(Field_NS::PARTIAL_VOLUME, Field_ENUM::STEP_NONE) )
-    dataManager.getData(Field_NS::PARTIAL_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&partialVolume);
+  std::vector<PeridigmNS::Block>::iterator blockIt;
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
+    const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
+    const int* neighborhoodList = neighborhoodData->NeighborhoodList();
+    double *numberOfNeighbors;
+    dataManager->getData(Field_NS::NUMBER_OF_NEIGHBORS, Field_ENUM::STEP_NONE)->ExtractView(&numberOfNeighbors);
 
-  int neighborhoodListIndex = 0;
-  int bondIndex = 0;
-  for(int iID=0 ; iID<numOwnedPoints ; ++iID){
-	int numNeighbors = neighborhoodList[neighborhoodListIndex++];
+    double *partialVolume = 0;
+    if( dataManager->hasData(Field_NS::PARTIAL_VOLUME, Field_ENUM::STEP_NONE) )
+      dataManager->getData(Field_NS::PARTIAL_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&partialVolume);
 
-    if(partialVolume == 0){
+    int neighborhoodListIndex = 0;
+    int bondIndex = 0;
+    for(int iID=0 ; iID<numOwnedPoints ; ++iID){
+      int numNeighbors = neighborhoodList[neighborhoodListIndex++];
+
+      if(partialVolume == 0){
       
-      // The analysis does not utilized partial volumes,
-      // all neighbors are counted.
+        // The analysis does not utilize partial volumes,
+        // all neighbors are counted.
 
-      numberOfNeighbors[iID] = numNeighbors;
-    }
-    else {
-
-      // Partial volumes are present.
-
-      // Allow for the case in which an element is within the neighborhood list,
-      // but actually does not have any volume within the neighborhood.
-      // This may or may not be possible, depending on the details of the neighborhood
-      // search, which must extend beyond the neighborhood when partial volumes are
-      // considered.
-
-      numberOfNeighbors[iID] = 0;
-      for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
-        double fraction = partialVolume[bondIndex++];
-        if(fraction > 0.0)
-          numberOfNeighbors[iID] += 1;
+        numberOfNeighbors[iID] = numNeighbors;
       }
-	}
-    neighborhoodListIndex += numNeighbors;
+      else {
+
+        // Partial volumes are present.
+
+        // Allow for the case in which an element is within the neighborhood list,
+        // but actually does not have any volume within the neighborhood.
+        // This may or may not be possible, depending on the details of the neighborhood
+        // search, which must extend beyond the neighborhood when partial volumes are
+        // considered.
+
+        numberOfNeighbors[iID] = 0;
+        for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
+          double fraction = partialVolume[bondIndex++];
+          if(fraction > 0.0)
+            numberOfNeighbors[iID] += 1;
+        }
+      }
+      neighborhoodListIndex += numNeighbors;
+    }
   }
+
 }
 
-int PeridigmNS::Compute_Number_Of_Neighbors::compute(const int numOwnedPoints,
-                                                     const int* ownedIDs,
-                                                     const int* neighborhoodList,
-                                                     PeridigmNS::DataManager& dataManager) const {
+int PeridigmNS::Compute_Number_Of_Neighbors::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) const {
   return 0;
 }

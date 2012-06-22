@@ -186,7 +186,7 @@ protected:
   Teuchos::RCP<const Epetra_BlockMap> ownedScalarPointMap;
   //! One-dimensional overlap map for owned points and ghosts.
   Teuchos::RCP<const Epetra_BlockMap> overlapScalarPointMap;
-  //! Three-dimensional map for owned points.
+  // Three-dimensional map for owned points.
   Teuchos::RCP<const Epetra_BlockMap> ownedVectorPointMap;
   //! Three-dimensional overlap map for owned points and ghosts.
   Teuchos::RCP<const Epetra_BlockMap> overlapVectorPointMap;
