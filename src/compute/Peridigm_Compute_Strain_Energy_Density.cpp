@@ -1,4 +1,4 @@
-/*! \file Peridigm_Compute_Energy.cpp */
+/*! \file Peridigm_Compute_Strain_Energy_Density.cpp */
 
 //@HEADER
 // ************************************************************************
@@ -47,22 +47,20 @@
 
 #include <vector>
 
-#include "Peridigm_Compute_Energy.hpp"
+#include "Peridigm_Compute_Strain_Energy_Density.hpp"
 #include "../core/Peridigm.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Energy::Compute_Energy(PeridigmNS::Peridigm *peridigm_ ){peridigm = peridigm_;}
+PeridigmNS::Compute_Strain_Energy_Density::Compute_Strain_Energy_Density(PeridigmNS::Peridigm *peridigm_ ){peridigm = peridigm_;}
 
 //! Destructor.
-PeridigmNS::Compute_Energy::~Compute_Energy(){}
+PeridigmNS::Compute_Strain_Energy_Density::~Compute_Strain_Energy_Density(){}
 
 
 //! Returns the fieldspecs computed by this class
-std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Energy::getFieldSpecs() const 
+std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Strain_Energy_Density::getFieldSpecs() const 
 {
   	std::vector<Field_NS::FieldSpec> myFieldSpecs;
-  	myFieldSpecs.push_back(Field_NS::KINETIC_ENERGY);
-	myFieldSpecs.push_back(Field_NS::STRAIN_ENERGY);
 	myFieldSpecs.push_back(Field_NS::STRAIN_ENERGY_DENSITY);
 
 
@@ -72,12 +70,12 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Energy::getFieldSpecs() con
 
 
 //! Fill the energy vectors
-int PeridigmNS::Compute_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const
+int PeridigmNS::Compute_Strain_Energy_Density::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const
 {
 	int retval;
 
 
-	Teuchos::RCP<Epetra_Vector> velocity, volume, force, ref, coord, w_volume, dilatation, numNeighbors, neighborID, kinetic_energy, strain_energy, strain_energy_density;
+	Teuchos::RCP<Epetra_Vector> volume, force, ref, coord, w_volume, dilatation, numNeighbors, neighborID, strain_energy_density;
 	std::vector<PeridigmNS::Block>::iterator blockIt;
 	for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
 		Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
@@ -86,18 +84,15 @@ int PeridigmNS::Compute_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::B
 		const int* ownedIDs = neighborhoodData->OwnedIDs();
 		const int* neighborhoodList = neighborhoodData->NeighborhoodList();
 
-		velocity              = dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1);
 		volume                = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
 		ref                   = dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE);
 		coord                 = dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1);
 		w_volume              = dataManager->getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE);
 		dilatation            = dataManager->getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1);
-		kinetic_energy        = dataManager->getData(Field_NS::KINETIC_ENERGY, Field_ENUM::STEP_NP1);
-		strain_energy         = dataManager->getData(Field_NS::STRAIN_ENERGY, Field_ENUM::STEP_NP1);
 		strain_energy_density = dataManager->getData(Field_NS::STRAIN_ENERGY_DENSITY, Field_ENUM::STEP_NP1);
 	
 		// Sanity check
-		if (velocity->Map().NumMyElements() != volume->Map().NumMyElements() || velocity->Map().NumMyElements() != ref->Map().NumMyElements())
+		if (coord->Map().NumMyElements() != volume->Map().NumMyElements() || volume->Map().NumMyElements() != ref->Map().NumMyElements())
 		{
 			retval = 1;
 			return(retval);
@@ -105,24 +100,16 @@ int PeridigmNS::Compute_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::B
  	
 		// Collect values
 		double *volume_values = volume->Values();
-		double *velocity_values = velocity->Values();
 		double *ref_values = ref->Values();
 		double *coord_values = coord->Values();
 		double *w_volume_values = w_volume->Values();
 		double *dilatation_values = dilatation->Values();
-		double *kinetic_energy_values  = kinetic_energy->Values();
-		double *strain_energy_values  = strain_energy->Values();
 		double *strain_energy_density_values  = strain_energy_density->Values();
 	
 		// \todo Generalize this for multiple materials
 		// Get the material properties 
-		double density  = peridigm->getMaterialModels()->operator[](0)->Density();
 		double SM = peridigm->getMaterialModels()->operator[](0)->ShearModulus();
 		double BM = peridigm->getMaterialModels()->operator[](0)->BulkModulus();	
-
-		// Initialize energy values
-		double KE,  SE;
-		KE = SE = 0.0;
 
 		// Initialize strain energy density
 		double W = 0.0; 
@@ -143,9 +130,6 @@ int PeridigmNS::Compute_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::B
 			We = 0.0;
 			vol = volume_values[ID];
 			w_vol = w_volume_values[ID];
-			double v1 = velocity_values[3*ID];
-			double v2 = velocity_values[3*ID+1];
-			double v3 = velocity_values[3*ID+2];
 			for (int j=0; j<numNeighbors; j++)
 			{
 				int neighborID = neighborhoodList[neighborhoodListIndex++];
@@ -174,22 +158,13 @@ int PeridigmNS::Compute_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::B
 			// Update the strain energy density                
 			W = W + 0.5*BM*dilatation_values[ID]*dilatation_values[ID] + 0.5*(15.0*SM/w_vol)*We;		
 			strain_energy_density_values[i] = 0.5*BM*dilatation_values[ID]*dilatation_values[ID] + 0.5*(15.0*SM/w_vol)*We;		
-		
-			// Update the strain energy
-			strain_energy_values[i] = vol*strain_energy_density_values[i];
-			SE = SE + strain_energy_values[i];
-			// Update the global kinetic energy
-			KE = KE + 0.5*vol*density*(v1*v1 + v2*v2 + v3*v3);
-			kinetic_energy_values[i] = 0.5*vol*density*(v1*v1 + v2*v2 + v3*v3);	
 		}
 
 		// Update info across processors
-		double localKE, localSE, globalKE, globalSE;
-		localKE = KE;
-		localSE = SE;
+		double localW, globalW;
+		localW = W;
 
-		peridigm->getEpetraComm()->SumAll(&localKE, &globalKE, 1);
-		peridigm->getEpetraComm()->SumAll(&localSE, &globalSE, 1);
+		peridigm->getEpetraComm()->SumAll(&localW, &globalW, 1);
 
 /*
         if (peridigm->getEpetraComm()->MyPID() == 1)
