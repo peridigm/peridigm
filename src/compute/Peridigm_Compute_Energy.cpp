@@ -216,7 +216,7 @@ int PeridigmNS::Compute_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::B
 */
 
 		globalKE += globalBlockKE;
-		globalSE += globalBlockKE;
+		globalSE += globalBlockSE;
 //		globalSEDensity += globalBlockKE;
 
 

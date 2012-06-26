@@ -62,6 +62,7 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Linear_Momentum::getFieldSp
 {
   	std::vector<Field_NS::FieldSpec> myFieldSpecs;
     	myFieldSpecs.push_back(Field_NS::LINEAR_MOMENTUM3D);
+	myFieldSpecs.push_back(Field_NS::GLOBAL_LINEAR_MOMENTUM);	
 
       	return myFieldSpecs;
 }
@@ -74,9 +75,11 @@ int PeridigmNS::Compute_Linear_Momentum::compute( Teuchos::RCP< std::vector<Peri
 {
 	int retval;
 
+	double globalLM = 0.0;
   	Teuchos::RCP<Epetra_Vector> velocity, volume, linear_momentum;
 	std::vector<PeridigmNS::Block>::iterator blockIt;
-        for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+        for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+	{
                 Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
 		Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
                 const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
@@ -131,10 +134,11 @@ int PeridigmNS::Compute_Linear_Momentum::compute( Teuchos::RCP< std::vector<Peri
 	        localLinearMomentum[2] = linear_momentum_z;
 
 		peridigm->getEpetraComm()->SumAll(&localLinearMomentum[0], &globalLinearMomentum[0], 3);
-
+	
 	        globalLinearMomentum[0] = globalLinearMomentum[0];
 	        globalLinearMomentum[1] = globalLinearMomentum[1];
 	        globalLinearMomentum[2] = globalLinearMomentum[2];
+		globalLM += sqrt(globalLinearMomentum[0]*globalLinearMomentum[0] + globalLinearMomentum[1]*globalLinearMomentum[1] + globalLinearMomentum[2]*globalLinearMomentum[2]);
 	}
 
 /*
@@ -148,6 +152,10 @@ int PeridigmNS::Compute_Linear_Momentum::compute( Teuchos::RCP< std::vector<Peri
 	}
 */
 
-		return(0);
+	// Store global energy in block (block globals are static, so only need to assign data to first block)
+	blocks->begin()->getScalarData(Field_NS::GLOBAL_LINEAR_MOMENTUM) = globalLM;
+	
+	
+	return(0);
 
 }

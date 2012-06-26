@@ -61,7 +61,8 @@ PeridigmNS::Compute_Kinetic_Energy::~Compute_Kinetic_Energy(){}
 std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Kinetic_Energy::getFieldSpecs() const 
 {
   	std::vector<Field_NS::FieldSpec> myFieldSpecs;
-  	myFieldSpecs.push_back(Field_NS::KINETIC_ENERGY);
+  	myFieldSpecs.push_back(Field_NS::GLOBAL_KINETIC_ENERGY);
+	myFieldSpecs.push_back(Field_NS::KINETIC_ENERGY);
 
   	return myFieldSpecs;
 }
@@ -73,10 +74,11 @@ int PeridigmNS::Compute_Kinetic_Energy::compute( Teuchos::RCP< std::vector<Perid
 {
 	int retval;
 
-
+	double globalKE = 0.0;
 	Teuchos::RCP<Epetra_Vector> velocity, volume, force, numNeighbors, neighborID, kinetic_energy;
 	std::vector<PeridigmNS::Block>::iterator blockIt;
-	for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+	for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+	{
 		Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
 		Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
 		const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
@@ -122,38 +124,43 @@ int PeridigmNS::Compute_Kinetic_Energy::compute( Teuchos::RCP< std::vector<Perid
 			
 			// Update the global kinetic energy
 			KE = KE + 0.5*vol*density*(v1*v1 + v2*v2 + v3*v3);
+			//Store local kinetic energy
 			kinetic_energy_values[i] = 0.5*vol*density*(v1*v1 + v2*v2 + v3*v3);	
 		}
 
 		// Update info across processors
-		double localKE, globalKE;
+		double localKE, globalBlockKE;
 		localKE = KE;
 
-		peridigm->getEpetraComm()->SumAll(&localKE, &globalKE, 1);
+		peridigm->getEpetraComm()->SumAll(&localKE, &globalBlockKE, 1);
 
 /*
-        if (peridigm->getEpetraComm()->MyPID() == 1)
-        {
-		std::cout << std::endl;	
-		std::cout << "ref coords for node 0 = (" << ref_values[3*0] << ", " << ref_values[3*0+1] << ", " << ref_values[3*0+2] << ")" << "\n";
-		std::cout << "ref coords for node 1 = (" << ref_values[3*1] << ", " << ref_values[3*1+1] << ", " << ref_values[3*1+2] << ")" << "\n";
-		std::cout << "ref coords for node 2 = (" << ref_values[3*2] << ", " << ref_values[3*2+1] << ", " << ref_values[3*2+2] << ")" << "\n";
-		std::cout << "ref coords for node 3 = (" << ref_values[3*3] << ", " << ref_values[3*3+1] << ", " << ref_values[3*3+2] << ")" << "\n" << "\n";
-		std::cout << "cur coords for node 0 = (" << coord_values[3*0] << ", " << coord_values[3*0+1] << ", " << coord_values[3*0+2] << ")" << "\n";
-                std::cout << "cur coords for node 1 = (" << coord_values[3*1] << ", " << coord_values[3*1+1] << ", " << coord_values[3*1+2] << ")" << "\n";
-                std::cout << "cur coords for node 2 = (" << coord_values[3*2] << ", " << coord_values[3*2+1] << ", " << coord_values[3*2+2] << ")" << "\n";
-                std::cout << "cur coords for node 3 = (" << coord_values[3*3] << ", " << coord_values[3*3+1] << ", " << coord_values[3*3+2] << ")" << "\n" << "\n";
-                std::cout << "dilatation = (" << dilatation_values[0] << ", " << dilatation_values[1] << ", " << dilatation_values[2] << ", " << dilatation_values[3] << ")" << "\n" << "\n";
-		std::cout << "weighted volume = (" << w_volume_values[0] << ", " << w_volume_values[1] << ", " << w_volume_values[2] << ", " << w_volume_values[3] << ")" << "\n" << "\n";
+        	if (peridigm->getEpetraComm()->MyPID() == 1)
+        	{
+			std::cout << std::endl;	
+			std::cout << "ref coords for node 0 = (" << ref_values[3*0] << ", " << ref_values[3*0+1] << ", " << ref_values[3*0+2] << ")" << "\n";
+			std::cout << "ref coords for node 1 = (" << ref_values[3*1] << ", " << ref_values[3*1+1] << ", " << ref_values[3*1+2] << ")" << "\n";
+			std::cout << "ref coords for node 2 = (" << ref_values[3*2] << ", " << ref_values[3*2+1] << ", " << ref_values[3*2+2] << ")" << "\n";
+			std::cout << "ref coords for node 3 = (" << ref_values[3*3] << ", " << ref_values[3*3+1] << ", " << ref_values[3*3+2] << ")" << "\n" << "\n";
+			std::cout << "cur coords for node 0 = (" << coord_values[3*0] << ", " << coord_values[3*0+1] << ", " << coord_values[3*0+2] << ")" << "\n";
+                	std::cout << "cur coords for node 1 = (" << coord_values[3*1] << ", " << coord_values[3*1+1] << ", " << coord_values[3*1+2] << ")" << "\n";
+                	std::cout << "cur coords for node 2 = (" << coord_values[3*2] << ", " << coord_values[3*2+1] << ", " << coord_values[3*2+2] << ")" << "\n";
+                	std::cout << "cur coords for node 3 = (" << coord_values[3*3] << ", " << coord_values[3*3+1] << ", " << coord_values[3*3+2] << ")" << "\n" << "\n";
+                	std::cout << "dilatation = (" << dilatation_values[0] << ", " << dilatation_values[1] << ", " << dilatation_values[2] << ", " << dilatation_values[3] << ")" << "\n" << "\n";
+			std::cout << "weighted volume = (" << w_volume_values[0] << ", " << w_volume_values[1] << ", " << w_volume_values[2] << ", " << w_volume_values[3] << ")" << "\n" << "\n";
 
-		std::cout << "Hello!" << std::endl;
-		std::cout << std::endl;
-		std::cout << "Total Kinetic Energy  =  " << globalKE << std::endl; 
-        	std::cout << std::endl;
-        	std::cout << "Total Strain Energy  =  " << globalSE << std::endl;
-	}
+			std::cout << "Hello!" << std::endl;
+			std::cout << std::endl;
+			std::cout << "Total Kinetic Energy  =  " << globalKE << std::endl; 
+        		std::cout << std::endl;
+        		std::cout << "Total Strain Energy  =  " << globalSE << std::endl;
+		}
 */
+		globalKE += globalBlockKE;
 	}
+	
+	// Store global energy in block (block globals are static, so only need to assign data to first block)
+	blocks->begin()->getScalarData(Field_NS::GLOBAL_KINETIC_ENERGY) = globalKE;
 
 	return(0);
 
