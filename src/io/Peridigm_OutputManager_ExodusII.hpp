@@ -113,6 +113,9 @@ namespace PeridigmNS {
     //! Word sizes for IO and CPU
     int CPU_word_size, IO_word_size;
 
+    //! Map from global output field name to integer. Exodus uses an integer (1..k)  to index the output fields
+    std::map <string, int> global_output_field_map;
+
     //! Map from nodal output field name to integer. Exodus uses an integer (1..k)  to index the output fields
     std::map <string, int> node_output_field_map;
 

@@ -54,6 +54,7 @@
 #include <Epetra_Import.h>
 
 #include <string>
+#include <map>
 
 #include "Peridigm_NeighborhoodData.hpp"
 #include "Peridigm_DataManager.hpp"
@@ -180,6 +181,17 @@ namespace PeridigmNS {
       return dataManager->getData(fieldSpec, step);
     }
 
+    //! Method for accessing global scalar data
+    double& getScalarData(Field_NS::FieldSpec fieldSpec) {
+       map<string,double>::iterator it;
+       it=globalVariables.find(fieldSpec.getLabel());
+       if (it == globalVariables.end()) {
+         TEUCHOS_TEST_FOR_EXCEPT_MSG(it==globalVariables.end(), "\n**** Global FieldSpec not found!\n");
+       }
+       else 
+         return globalVariables[fieldSpec.getLabel()];
+    }
+
     /*! \brief Import data from the given source vector to the underlying target vector associated with the given field spec.
      *
      *  The intended use case is to import from a non-overlapped vector (i.e., no ghosts) to an overlap vector in
@@ -227,6 +239,9 @@ namespace PeridigmNS {
      */
     void initializeDataManager();
 
+    //! Initialize storage for global scalars
+    void initializeGlobalVariables();
+
     std::string blockName;
     int blockID;
 
@@ -267,6 +282,11 @@ namespace PeridigmNS {
 
     //! The contact model
     Teuchos::RCP<const PeridigmNS::ContactModel> contactModel;
+
+    //! Storage for global scalars and global vectors (per-node, per-element variables stored in datamanager)
+    //! Map is static because all block objects use the same values
+    static std::map<string,double> globalVariables;
+
   };
 }
 
