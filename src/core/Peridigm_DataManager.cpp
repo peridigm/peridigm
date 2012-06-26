@@ -87,6 +87,9 @@ void PeridigmNS::DataManager::allocateData(Teuchos::RCP< std::vector<Field_NS::F
       else
         statefulScalarBondFieldSpecs->push_back(spec);
     }
+    // ignore global data
+    else if (spec.getRelation() == Field_ENUM::GLOBAL)
+      continue;
     else{
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::RangeError, 
                          "PeridigmNS::DataManager::allocateData, invalid FieldSpec!");

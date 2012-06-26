@@ -270,6 +270,10 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
   double *yptr = new double[num_nodes];
   double *zptr = new double[num_nodes];
 
+  // allocate temporate storage for globals
+  int num_global_vars = global_output_field_map.size();
+  double *globals = new double[num_global_vars];
+
   Teuchos::ParameterList::ConstIterator i1;
   // Loop over the material types in the materialOutputFields parameterlist
   for (i1 = materialOutputFields->begin(); i1 != materialOutputFields->end(); ++i1) {
@@ -287,8 +291,45 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
         TEUCHOS_TEST_FOR_EXCEPT_MSG(i3 == Field_NS::FieldSpecMap::Map.end(), "Failed to find reference to fieldSpec!");
         Field_NS::FieldSpec const &fs = i3->second;
         double *block_ptr; block_ptr = NULL;
+        if (fs.getRelation() == Field_ENUM::GLOBAL) {
+          // global vars are static within a block, so only need to reference first block
+          for(int j=0; j<num_global_vars; j++) {
+            std::map<string, Field_NS::FieldSpec>::const_iterator i3;
+            if (fs.getLength() == Field_ENUM::SCALAR) {
+              i3 = Field_NS::FieldSpecMap::Map.find(nm); // Can't use operator[] on a const std::map
+              Field_NS::FieldSpec const &fs = i3->second;
+              globals[j] = blocks->begin()->getScalarData(fs);
+            }
+            else if (fs.getLength() == Field_ENUM::VECTOR2D) {
+              string tmpnameX = nm+"X";
+              string tmpnameY = nm+"Y";
+              i3 = Field_NS::FieldSpecMap::Map.find(tmpnameX); // Can't use operator[] on a const std::map
+              Field_NS::FieldSpec const &fsx = i3->second;
+              globals[j] = blocks->begin()->getScalarData(fsx);
+              i3 = Field_NS::FieldSpecMap::Map.find(tmpnameY); // Can't use operator[] on a const std::map
+              Field_NS::FieldSpec const &fsy = i3->second;
+              globals[j] = blocks->begin()->getScalarData(fsy);
+            }
+            else if (fs.getLength() == Field_ENUM::VECTOR3D) {
+              string tmpnameX = nm+"X";
+              string tmpnameY = nm+"Y";
+              string tmpnameZ = nm+"Z";
+              i3 = Field_NS::FieldSpecMap::Map.find(tmpnameX); // Can't use operator[] on a const std::map
+              Field_NS::FieldSpec const &fsx = i3->second;
+              globals[j] = blocks->begin()->getScalarData(fsx);
+              i3 = Field_NS::FieldSpecMap::Map.find(tmpnameY); // Can't use operator[] on a const std::map
+              Field_NS::FieldSpec const &fsy = i3->second;
+              globals[j] = blocks->begin()->getScalarData(fsy);
+              i3 = Field_NS::FieldSpecMap::Map.find(tmpnameZ); // Can't use operator[] on a const std::map
+              Field_NS::FieldSpec const &fsz = i3->second;
+              globals[j] = blocks->begin()->getScalarData(fsz);
+            }
+          }
+          retval = ex_put_glob_vars(file_handle, exodusCount, num_global_vars, globals);
+          if (retval!= 0) reportExodusError(retval, "write", "ex_put_glob_vars");
+        }
         // Exodus ignores element blocks when writing nodal variables
-        if (fs.getRelation() == Field_ENUM::NODE) {
+        else if (fs.getRelation() == Field_ENUM::NODE) {
           // Loop over all blocks, copying data from each block into mothership-like vector
           std::vector<PeridigmNS::Block>::iterator blockIt;
           for(blockIt = blocks->begin(); blockIt != blocks->end() ; blockIt++) {
@@ -408,6 +449,7 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
     }
   }
 
+  delete[] globals;
   delete[] xptr;
   delete[] yptr;
   delete[] zptr;
@@ -482,6 +524,7 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
   if (file_handle < 0) reportExodusError(file_handle, "OutputManager_ExodusII", "ex_create");
 
   // clear the maps
+  global_output_field_map.clear();
   element_output_field_map.clear();
   node_output_field_map.clear();
 
@@ -574,6 +617,7 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
 
   // Create internal mapping of requested output fields to an integer.
   // The user requests output fields via strings, but Exodus wants an integer to index the output fields
+  int global_output_field_index = 1;
   int node_output_field_index = 1;
   int element_output_field_index = 1;
   Teuchos::ParameterList::ConstIterator i1;
@@ -591,8 +635,13 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
         i3 = Field_NS::FieldSpecMap::Map.find(nm); // Can't use operator[] on a const std::map
         TEUCHOS_TEST_FOR_EXCEPT_MSG(i3 == Field_NS::FieldSpecMap::Map.end(), "Failed to find reference to fieldSpec!");
         Field_NS::FieldSpec const &fs = i3->second;
+// MLP: Resume here
         if (fs.getLength() == Field_ENUM::SCALAR) {
-          if (fs.getRelation() == Field_ENUM::NODE) {
+          if (fs.getRelation() == Field_ENUM::GLOBAL) {
+            global_output_field_map.insert( std::pair<string,int>(nm,global_output_field_index) );
+            global_output_field_index = global_output_field_index + 1;
+          }
+          else if (fs.getRelation() == Field_ENUM::NODE) {
             node_output_field_map.insert( std::pair<string,int>(nm,node_output_field_index) );
             node_output_field_index = node_output_field_index + 1;
           }
@@ -604,7 +653,13 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
         if (fs.getLength() == Field_ENUM::VECTOR2D) {
           string tmpnameX = nm+"X";
           string tmpnameY = nm+"Y";
-          if (fs.getRelation() == Field_ENUM::NODE) {
+          if (fs.getRelation() == Field_ENUM::GLOBAL) {
+            global_output_field_map.insert( std::pair<string,int>(tmpnameX,global_output_field_index) );
+            global_output_field_index = global_output_field_index + 1;
+            global_output_field_map.insert( std::pair<string,int>(tmpnameY,global_output_field_index) );
+            global_output_field_index = global_output_field_index + 1;
+          }
+          else if (fs.getRelation() == Field_ENUM::NODE) {
             node_output_field_map.insert( std::pair<string,int>(tmpnameX,node_output_field_index) );
             node_output_field_index = node_output_field_index + 1;
             node_output_field_map.insert( std::pair<string,int>(tmpnameY,node_output_field_index) );
@@ -621,6 +676,14 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
           string tmpnameX = nm+"X";
           string tmpnameY = nm+"Y";
           string tmpnameZ = nm+"Z";
+          if (fs.getRelation() == Field_ENUM::GLOBAL) {
+            global_output_field_map.insert( std::pair<string,int>(tmpnameX,global_output_field_index) );
+            global_output_field_index = global_output_field_index + 1;
+            global_output_field_map.insert( std::pair<string,int>(tmpnameY,global_output_field_index) );
+            global_output_field_index = global_output_field_index + 1;
+            global_output_field_map.insert( std::pair<string,int>(tmpnameZ,global_output_field_index) );
+            global_output_field_index = global_output_field_index + 1;
+          }
           if (fs.getRelation() == Field_ENUM::NODE) {
             node_output_field_map.insert( std::pair<string,int>(tmpnameX,node_output_field_index) );
             node_output_field_index = node_output_field_index + 1;
@@ -644,11 +707,21 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
 
   // Write information records
 
+  // Write global var info
+  int num_global_vars = global_output_field_map.size();
+  char **global_var_names = new char*[num_global_vars];
+  for (i=0;i<num_global_vars;i++) global_var_names[i] = new char[MAX_STR_LENGTH+1]; // MAX_STR_LENGTH defined in ExodusII.h
+  std::map<string,int>::iterator it;
+  for ( it=global_output_field_map.begin() ; it != global_output_field_map.end(); it++ )
+    strcpy(global_var_names[(it->second)-1], it->first.c_str() );
+  retval = ex_put_var_param(file_handle, "G", num_global_vars);
+  if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_var_param");
+  retval = ex_put_var_names (file_handle, "G", num_global_vars, global_var_names);
+
   // Write node var info 
   int num_node_vars = node_output_field_map.size();
   char **node_var_names = new char*[num_node_vars];
   for (i=0;i<num_node_vars;i++) node_var_names[i] = new char[MAX_STR_LENGTH+1]; // MAX_STR_LENGTH defined in ExodusII.h
-  std::map<string,int>::iterator it;
   for ( it=node_output_field_map.begin() ; it != node_output_field_map.end(); it++ )
     strcpy(node_var_names[(it->second)-1], it->first.c_str() );
   retval = ex_put_var_param(file_handle,"N",num_node_vars);
@@ -690,6 +763,8 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
   delete[] node_map;
   delete[] elem_map;
   delete[] elem_block_ID;
+  for (i = num_global_vars; i>0; i--) delete[] global_var_names[i-1];
+  delete[] global_var_names;
   for (i = num_node_vars; i>0; i--) delete[] node_var_names[i-1];
   delete[] node_var_names;
   for (i = num_element_vars; i>0; i--) delete[] element_var_names[i-1];

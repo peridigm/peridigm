@@ -49,6 +49,8 @@
 #include <vector>
 #include <set>
 
+map<string,double> PeridigmNS::Block::globalVariables;
+
 void PeridigmNS::Block::initialize(Teuchos::RCP<const Epetra_BlockMap> globalOwnedScalarPointMap,
                                    Teuchos::RCP<const Epetra_BlockMap> globalOverlapScalarPointMap,
                                    Teuchos::RCP<const Epetra_BlockMap> globalOwnedVectorPointMap,
@@ -70,6 +72,9 @@ void PeridigmNS::Block::initialize(Teuchos::RCP<const Epetra_BlockMap> globalOwn
                                                                       globalNeighborhoodData);
 
   initializeDataManager();
+
+  initializeGlobalVariables();
+
 }
 
 void PeridigmNS::Block::rebalance(Teuchos::RCP<const Epetra_BlockMap> rebalancedGlobalOwnedScalarPointMap,
@@ -382,3 +387,41 @@ void PeridigmNS::Block::initializeDataManager()
   dataManager->allocateData(specs);
 }
 
+void PeridigmNS::Block::initializeGlobalVariables()
+{
+  // Pick out the global variable field specs
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > specs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
+  // Specs passed in via setAuxiliaryFieldSpecs(), if any
+  specs->insert(specs->end(), auxiliaryFieldSpecs.begin(), auxiliaryFieldSpecs.end());
+  // Material model specs
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > materialModelSpecs = materialModel->VariableSpecs();
+  specs->insert(specs->end(), materialModelSpecs->begin(), materialModelSpecs->end());
+  // Contact model specs (if any)
+  if(!contactModel.is_null()){
+    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > contactModelSpecs = contactModel->VariableSpecs();
+    specs->insert(specs->end(), contactModelSpecs->begin(), contactModelSpecs->end());
+  }
+
+  for(std::vector<Field_NS::FieldSpec>::iterator it=specs->begin() ; it!=specs->end() ; ++it) {
+    if (it->getRelation() == Field_ENUM::GLOBAL) {
+      if (it->getLength() == Field_ENUM::SCALAR) {
+        globalVariables[it->getLabel()] = 0.0;
+      }
+      else if (it->getLength() == Field_ENUM::VECTOR2D) {
+        string tmpnameX = it->getLabel()+"X";
+        string tmpnameY = it->getLabel()+"Y";
+        globalVariables[tmpnameX] = 0.0;
+        globalVariables[tmpnameY] = 0.0;
+      }
+      else if (it->getLength() == Field_ENUM::VECTOR3D) {
+        string tmpnameX = it->getLabel()+"X";
+        string tmpnameY = it->getLabel()+"Y";
+        string tmpnameZ = it->getLabel()+"Z";
+        globalVariables[tmpnameX] = 0.0;
+        globalVariables[tmpnameY] = 0.0;
+        globalVariables[tmpnameZ] = 0.0;
+      }
+    }
+  }
+
+}

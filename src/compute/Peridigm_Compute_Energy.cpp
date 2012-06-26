@@ -61,10 +61,10 @@ PeridigmNS::Compute_Energy::~Compute_Energy(){}
 std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Energy::getFieldSpecs() const 
 {
   	std::vector<Field_NS::FieldSpec> myFieldSpecs;
+  	myFieldSpecs.push_back(Field_NS::GLOBAL_KINETIC_ENERGY);
   	myFieldSpecs.push_back(Field_NS::KINETIC_ENERGY);
 	myFieldSpecs.push_back(Field_NS::STRAIN_ENERGY);
 	myFieldSpecs.push_back(Field_NS::STRAIN_ENERGY_DENSITY);
-
 
   	return myFieldSpecs;
 }
@@ -76,7 +76,8 @@ int PeridigmNS::Compute_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::B
 {
 	int retval;
 
-
+        double globalKE, globalSE, globalSEDensity;
+        globalKE = globalSE = globalSEDensity = 0.0;
 	Teuchos::RCP<Epetra_Vector> velocity, volume, force, ref, coord, w_volume, dilatation, numNeighbors, neighborID, kinetic_energy, strain_energy, strain_energy_density;
 	std::vector<PeridigmNS::Block>::iterator blockIt;
 	for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
@@ -184,12 +185,12 @@ int PeridigmNS::Compute_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::B
 		}
 
 		// Update info across processors
-		double localKE, localSE, globalKE, globalSE;
+		double localKE, localSE, globalBlockKE, globalBlockSE;
 		localKE = KE;
 		localSE = SE;
 
-		peridigm->getEpetraComm()->SumAll(&localKE, &globalKE, 1);
-		peridigm->getEpetraComm()->SumAll(&localSE, &globalSE, 1);
+		peridigm->getEpetraComm()->SumAll(&localKE, &globalBlockKE, 1);
+		peridigm->getEpetraComm()->SumAll(&localSE, &globalBlockSE, 1);
 
 /*
         if (peridigm->getEpetraComm()->MyPID() == 1)
@@ -213,7 +214,16 @@ int PeridigmNS::Compute_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::B
         	std::cout << "Total Strain Energy  =  " << globalSE << std::endl;
 	}
 */
+
+		globalKE += globalBlockKE;
+		globalSE += globalBlockKE;
+//		globalSEDensity += globalBlockKE;
+
+
 	}
+
+        // Store global energy in block (block globals are static, so only need to assign data to first block)
+        blocks->begin()->getScalarData(Field_NS::GLOBAL_KINETIC_ENERGY) = globalKE;
 
 	return(0);
 
