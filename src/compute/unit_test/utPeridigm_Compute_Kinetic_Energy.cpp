@@ -134,21 +134,15 @@ void FourPointTest()
   	// Get the data manager
         Teuchos::RCP<PeridigmNS::DataManager> dataManager = (*peridigm->getDataManagers())[0];
   	// Access the data we need
-        Teuchos::RCP<Epetra_Vector> velocity, volume, ref, coords, dilatation, kinetic_energy;
+        Teuchos::RCP<Epetra_Vector> velocity, volume, kinetic_energy;
         velocity              = dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1);
 	volume                = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
-	ref                   = dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE);
-	coords                = dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1);
-	dilatation            = dataManager->getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1);
 	kinetic_energy        = dataManager->getData(Field_NS::KINETIC_ENERGY, Field_ENUM::STEP_NP1);
         // Get the neighborhood structure
 	const int numOwnedPoints = (neighborhoodData.NumOwnedPoints());
 
 	// Manufacture velocity data
 	double *velocity_values  = velocity->Values();
-	double *ref_values = ref->Values();
-	double *coords_values = coords->Values();
-	double *dilatation_values = dilatation->Values();
 	int *myGIDs = velocity->Map().MyGlobalElements();
         int numElements = numOwnedPoints;
 	int numTotalElements = volume->Map().NumMyElements();
@@ -176,13 +170,16 @@ void FourPointTest()
   	// Now check that volumes and energy is correct
   	double *volume_values = volume->Values();
   	double *kinetic_energy_values  = kinetic_energy->Values();
-  	for (int i=0;i<numElements;i++)
+  	double globalKE = blocks->begin()->getScalarData(Field_NS::GLOBAL_KINETIC_ENERGY);
+	BOOST_CHECK_CLOSE(globalKE, 2960100, 1.0e-15); 	// Check global scalar value
+	for (int i=0;i<numElements;i++)
     		BOOST_CHECK_CLOSE(volume_values[i], 1.5, 1.0e-15);
   	for (int i=0;i<numElements;i++) 
 	{
 		int ID = myGIDs[i];
                 double mass = density*volume_values[ID];
     		BOOST_CHECK_CLOSE(kinetic_energy_values[i],  0.5*mass*(pow((3.0*ID),2)+pow(((3.0*ID)+1.0),2)+pow(((3.0*ID)+2.0),2)), 1.0e-15);
+		BOOST_CHECK_CLOSE(globalKE, 2960100, 1.0e-15);
 	}
 }
 

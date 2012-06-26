@@ -172,7 +172,9 @@ void FourPointTest()
   	// Now check that volumes and energy is correct
   	double *volume_values = volume->Values();
 	double *strain_energy_density_values  = strain_energy_density->Values();
-  	for (int i=0;i<numElements;i++)
+	double globalSEDensity = blocks->begin()->getScalarData(Field_NS::GLOBAL_STRAIN_ENERGY_DENSITY);
+	BOOST_CHECK_CLOSE(globalSEDensity, 4*5.706e12, 0.01);	// Check global scalar value
+	for (int i=0;i<numElements;i++)
     		BOOST_CHECK_CLOSE(volume_values[i], 1.5, 1.0e-15);
   	for (int i=0;i<numElements;i++) 
 	{

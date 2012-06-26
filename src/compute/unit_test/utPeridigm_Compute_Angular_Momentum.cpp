@@ -165,6 +165,8 @@ void FourPointTest()
   	// Now check that volumes and angular momentum is correct
   	double *volume_values = volume->Values();
   	double *angular_momentum_values  = angular_momentum->Values();
+	double globalAM = blocks->begin()->getScalarData(Field_NS::GLOBAL_ANGULAR_MOMENTUM);
+	BOOST_CHECK_CLOSE(globalAM, 1418380.726, 1.0e-7);	// Check global scalar value
   	for (int i=0;i<numElements;i++)
     		BOOST_CHECK_CLOSE(volume_values[i], 1.5, 1.0e-15);
   	for (int i=0;i<numElements;i++) 

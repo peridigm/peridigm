@@ -62,6 +62,7 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Angular_Momentum::getFieldS
 {
 	std::vector<Field_NS::FieldSpec> myFieldSpecs;
 	myFieldSpecs.push_back(Field_NS::ANGULAR_MOMENTUM3D);
+	myFieldSpecs.push_back(Field_NS::GLOBAL_ANGULAR_MOMENTUM);	
 
 	// This is a hack.
 	// Ideally, we'd specify some global variable as the output variable, but Peridigm is not
@@ -80,6 +81,7 @@ int PeridigmNS::Compute_Angular_Momentum::compute( Teuchos::RCP< std::vector<Per
 {
 	int retval;
 
+	double globalAM = 0.0;
   	Teuchos::RCP<Epetra_Vector> velocity,  arm, volume, angular_momentum;
 	std::vector<PeridigmNS::Block>::iterator blockIt;
 	for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
@@ -142,6 +144,8 @@ int PeridigmNS::Compute_Angular_Momentum::compute( Teuchos::RCP< std::vector<Per
 		localAngularMomentum[2] = angular_momentum_z;
 	
 		peridigm->getEpetraComm()->SumAll(&localAngularMomentum[0], &globalAngularMomentum[0], 3);
+		
+		globalAM += sqrt(globalAngularMomentum[0]*globalAngularMomentum[0] + globalAngularMomentum[1]*globalAngularMomentum[1] + globalAngularMomentum[2]*globalAngularMomentum[2]);
 	}
 
 /*	
@@ -154,6 +158,9 @@ int PeridigmNS::Compute_Angular_Momentum::compute( Teuchos::RCP< std::vector<Per
 							  << ", " << globalAngularMomentum[2] << ")" << std::endl;
 	}
 */
+
+	// Store global energy in block (block globals are static, so only need to assign data to first block)
+	blocks->begin()->getScalarData(Field_NS::GLOBAL_ANGULAR_MOMENTUM) = globalAM;
 
 	return(0);
 
