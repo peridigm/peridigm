@@ -75,13 +75,16 @@ namespace PeridigmNS {
   Compute_Strain_Energy_Density( PeridigmNS::Peridigm *peridigm_ );
 
   //! Destructor.
-  ~Compute_Strain_Energy_Density();
+  virtual ~Compute_Strain_Energy_Density();
 
   //! Returns the fieldspecs computed by this class
-  std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
+  virtual std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
 
   //! Perform computation
-  int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
+  virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
+
+  //! Compute the strain energy density and optionally store the nodal values. 
+  int computeStrainEnergyDensity( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, bool storeLocal ) const ;
 
   private:
 

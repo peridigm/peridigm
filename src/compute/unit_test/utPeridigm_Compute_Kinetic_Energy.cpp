@@ -47,6 +47,8 @@
 
 #include <Peridigm_AbstractDiscretization.hpp>
 #include "../Peridigm_Compute_Kinetic_Energy.hpp"
+#include "../Peridigm_Compute_Local_Kinetic_Energy.hpp"
+#include "../Peridigm_Compute_Global_Kinetic_Energy.hpp"
 #include <Peridigm_DataManager.hpp>
 #include <Peridigm_DiscretizationFactory.hpp>
 
@@ -155,14 +157,18 @@ void FourPointTest()
 	}
 
   	// Create Compute_Energy object
-  	Teuchos::RCP<PeridigmNS::Compute_Kinetic_Energy> computeKineticEnergy = Teuchos::rcp(new PeridigmNS::Compute_Kinetic_Energy(&(*peridigm)));
+	//Teuchos::RCP<PeridigmNS::Compute_Kinetic_Energy> computeKineticEnergy = Teuchos::rcp(new PeridigmNS::Compute_Kinetic_Energy(&(*peridigm)));
+     	Teuchos::RCP<PeridigmNS::Compute_Local_Kinetic_Energy> computeLocalKineticEnergy = Teuchos::rcp(new PeridigmNS::Compute_Local_Kinetic_Energy(&(*peridigm)));
+	Teuchos::RCP<PeridigmNS::Compute_Global_Kinetic_Energy> computeGlobalKineticEnergy = Teuchos::rcp(new PeridigmNS::Compute_Global_Kinetic_Energy(&(*peridigm)));
 
 	// Get the blocks
 	Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks = peridigm->getBlocks();
 
-  	// Call the compute class
-	int retval = computeKineticEnergy->compute( blocks );
+  	// Call the compute classes
+	int retval = computeLocalKineticEnergy->compute( blocks );
   	BOOST_CHECK_EQUAL( retval, 0 );
+	int retval2 = computeGlobalKineticEnergy->compute( blocks );
+        BOOST_CHECK_EQUAL( retval2, 0 );
 
 	// \todo Generalize this for multiple materials
 	double density = peridigm->getMaterialModels()->operator[](0)->Density();

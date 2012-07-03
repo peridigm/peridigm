@@ -1,4 +1,4 @@
-/*! \file Peridigm_Compute_Strain_Energy.hpp */
+/*! \file Peridigm_Compute_Global_Strain_Energy.cpp */
 
 //@HEADER
 // ************************************************************************
@@ -39,60 +39,39 @@
 // Questions?
 // David J. Littlewood   djlittl@sandia.gov
 // John A. Mitchell      jamitch@sandia.gov
-// Michael L. Parks      mlparks@sandia.gov
+// Michael L. Parks      parks@sandia.gov
 // Stewart A. Silling    sasilli@sandia.gov
 //
 // ************************************************************************
 //@HEADER
 
+#include <vector>
 
-#ifdef COMPUTE_CLASS
+#include "Peridigm_Compute_Global_Strain_Energy.hpp"
+#include "../core/Peridigm.hpp"
 
-ComputeClass(Strain_Energy,Compute_Strain_Energy,peridigm)
+//! Standard constructor.
+PeridigmNS::Compute_Global_Strain_Energy::Compute_Global_Strain_Energy(PeridigmNS::Peridigm *peridigm_ )
+  : Compute_Strain_Energy(peridigm_)
+{peridigm = peridigm_;}
 
-#else
+//! Destructor.
+PeridigmNS::Compute_Global_Strain_Energy::~Compute_Global_Strain_Energy(){}
 
 
-#ifndef PERIDIGM_COMPUTE_STRAIN_ENERGY_HPP
-#define PERIDIGM_COMPUTE_STRAIN_ENERGY_HPP
-
-#include "Peridigm_Compute.hpp"
-#include "Peridigm_DataManager.hpp"
-
-// Forward declaration
-namespace PeridigmNS {
-  class Peridigm;
-}
-
-namespace PeridigmNS {
-
-  //! Class for filling acceleration vector
-  class Compute_Strain_Energy : public PeridigmNS::Compute {
-
-  public:
+//! Returns the fieldspecs computed by this class
+std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Global_Strain_Energy::getFieldSpecs() const 
+{
+  	std::vector<Field_NS::FieldSpec> myFieldSpecs;
+	myFieldSpecs.push_back(Field_NS::GLOBAL_STRAIN_ENERGY);
 	
-  //! Standard constructor.
-  Compute_Strain_Energy( PeridigmNS::Peridigm *peridigm_ );
-
-  //! Destructor.
-  virtual ~Compute_Strain_Energy();
-
-  //! Returns the fieldspecs computed by this class
-  virtual std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
-
-  //! Perform computation
-  virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
-
-  //! Compute the strain energy and optionally store the nodal values. 
-  int computeStrainEnergy( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, bool storeLocal ) const ;
-
-  private:
-
-  //! Parent pointer
-  PeridigmNS::Peridigm *peridigm;
-
-  };
+  	return myFieldSpecs;
 }
 
-#endif // PERIDIGM_COMPUTE_STRAIN_ENERGY_HPP
-#endif // COMPUTE_CLASS
+//! Compute the global strain energy                                                                                                                                                                                                                              
+int PeridigmNS::Compute_Global_Strain_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const
+{
+  	bool storeLocal = false;
+  	int result = computeStrainEnergy(blocks, storeLocal);
+  	return result;
+}

@@ -66,7 +66,7 @@ namespace PeridigmNS {
 
 namespace PeridigmNS {
 
-  //! Class for filling acceleration vector
+  //! Base class for calculating the kinetic energy
   class Compute_Kinetic_Energy : public PeridigmNS::Compute {
 
   public:
@@ -75,13 +75,17 @@ namespace PeridigmNS {
   Compute_Kinetic_Energy( PeridigmNS::Peridigm *peridigm_ );
 
   //! Destructor.
-  ~Compute_Kinetic_Energy();
+  virtual  ~Compute_Kinetic_Energy();
 
   //! Returns the fieldspecs computed by this class
-  std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
+  virtual std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
 
   //! Perform computation
-  int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
+  virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
+
+  //! Compute the kinetic energy and optionally store the nodal values. 
+  int computeKineticEnergy( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, bool storeLocal ) const ;
+
 
   private:
 

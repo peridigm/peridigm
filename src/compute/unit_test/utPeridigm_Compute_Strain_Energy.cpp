@@ -47,6 +47,8 @@
 
 #include <Peridigm_AbstractDiscretization.hpp>
 #include "../Peridigm_Compute_Strain_Energy.hpp"
+#include "../Peridigm_Compute_Local_Strain_Energy.hpp"
+#include "../Peridigm_Compute_Global_Strain_Energy.hpp"
 #include <Peridigm_DataManager.hpp>
 #include <Peridigm_DiscretizationFactory.hpp>
 
@@ -160,14 +162,18 @@ void FourPointTest()
 	}
 
   	// Create Compute_Energy object
-  	Teuchos::RCP<PeridigmNS::Compute_Strain_Energy> computeStrainEnergy = Teuchos::rcp(new PeridigmNS::Compute_Strain_Energy(&(*peridigm)));
+  	//Teuchos::RCP<PeridigmNS::Compute_Strain_Energy> computeStrainEnergy = Teuchos::rcp(new PeridigmNS::Compute_Strain_Energy(&(*peridigm)));
+	Teuchos::RCP<PeridigmNS::Compute_Local_Strain_Energy> computeLocalStrainEnergy = Teuchos::rcp(new PeridigmNS::Compute_Local_Strain_Energy(&(*peridigm)));
+	Teuchos::RCP<PeridigmNS::Compute_Global_Strain_Energy> computeGlobalStrainEnergy = Teuchos::rcp(new PeridigmNS::Compute_Global_Strain_Energy(&(*peridigm)));
 
 	// Get the blocks
 	Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks = peridigm->getBlocks();
 
   	// Call the compute class
-	int retval = computeStrainEnergy->compute( blocks );
+	int retval = computeLocalStrainEnergy->compute( blocks );
   	BOOST_CHECK_EQUAL( retval, 0 );
+	int retval2 = computeGlobalStrainEnergy->compute( blocks );
+        BOOST_CHECK_EQUAL( retval2, 0 );
 
   	// Now check that volumes and energy is correct
   	double *volume_values = volume->Values();

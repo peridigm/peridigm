@@ -61,19 +61,20 @@ PeridigmNS::Compute_Kinetic_Energy::~Compute_Kinetic_Energy(){}
 std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Kinetic_Energy::getFieldSpecs() const 
 {
   	std::vector<Field_NS::FieldSpec> myFieldSpecs;
-  	myFieldSpecs.push_back(Field_NS::GLOBAL_KINETIC_ENERGY);
-	myFieldSpecs.push_back(Field_NS::KINETIC_ENERGY);
 
   	return myFieldSpecs;
 }
 
-
-
-//! Fill the energy vectors
+//! Perform computation
 int PeridigmNS::Compute_Kinetic_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const
 {
-	int retval;
+	return 0;
+}
 
+int PeridigmNS::Compute_Kinetic_Energy::computeKineticEnergy( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, bool storeLocal ) const
+{ 
+	int retval;
+	
 	double globalKE = 0.0;
 	Teuchos::RCP<Epetra_Vector> velocity, volume, force, numNeighbors, neighborID, kinetic_energy;
 	std::vector<PeridigmNS::Block>::iterator blockIt;
@@ -87,7 +88,7 @@ int PeridigmNS::Compute_Kinetic_Energy::compute( Teuchos::RCP< std::vector<Perid
 		velocity              = dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1);
 		volume                = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
 		kinetic_energy        = dataManager->getData(Field_NS::KINETIC_ENERGY, Field_ENUM::STEP_NP1);
-	
+		
 		// Sanity check
 		if (velocity->Map().NumMyElements() != volume->Map().NumMyElements())
 		{
@@ -98,7 +99,7 @@ int PeridigmNS::Compute_Kinetic_Energy::compute( Teuchos::RCP< std::vector<Perid
 		// Collect values
 		double *volume_values = volume->Values();
 		double *velocity_values = velocity->Values();
-		double *kinetic_energy_values  = kinetic_energy->Values();
+		double *kinetic_energy_values = kinetic_energy->Values();
 	
 		// \todo Generalize this for multiple materials
 		// Get the material properties 
@@ -106,7 +107,8 @@ int PeridigmNS::Compute_Kinetic_Energy::compute( Teuchos::RCP< std::vector<Perid
 		//double SM = peridigm->getMaterialModels()->operator[](0)->ShearModulus();
 		//double BM = peridigm->getMaterialModels()->operator[](0)->BulkModulus();	
 
-		// Initialize kinetic energy value
+		
+		// Initialize global kinetic energy value
 		double KE = 0.0;
 
 		// volume is a scalar and force a vector, so maps are different; must do multiplication on per-element basis
@@ -122,45 +124,28 @@ int PeridigmNS::Compute_Kinetic_Energy::compute( Teuchos::RCP< std::vector<Perid
 			double v2 = velocity_values[3*ID+1];
 			double v3 = velocity_values[3*ID+2];
 			
-			// Update the global kinetic energy
-			KE = KE + 0.5*vol*density*(v1*v1 + v2*v2 + v3*v3);
-			//Store local kinetic energy
-			kinetic_energy_values[i] = 0.5*vol*density*(v1*v1 + v2*v2 + v3*v3);	
+			if (storeLocal)
+				kinetic_energy_values[i] = 0.5*vol*density*(v1*v1 + v2*v2 + v3*v3);	//Store local kinetic energy	
+			else
+                                KE = KE + 0.5*vol*density*(v1*v1 + v2*v2 + v3*v3);      // Update the global kinetic energy
+			
 		}
 
-		// Update info across processors
-		double localKE, globalBlockKE;
-		localKE = KE;
+		if (!storeLocal)
+		{
+			// Update info across processors
+			double localKE, globalBlockKE;
+			localKE = KE;
 
-		peridigm->getEpetraComm()->SumAll(&localKE, &globalBlockKE, 1);
+			peridigm->getEpetraComm()->SumAll(&localKE, &globalBlockKE, 1);
 
-/*
-        	if (peridigm->getEpetraComm()->MyPID() == 1)
-        	{
-			std::cout << std::endl;	
-			std::cout << "ref coords for node 0 = (" << ref_values[3*0] << ", " << ref_values[3*0+1] << ", " << ref_values[3*0+2] << ")" << "\n";
-			std::cout << "ref coords for node 1 = (" << ref_values[3*1] << ", " << ref_values[3*1+1] << ", " << ref_values[3*1+2] << ")" << "\n";
-			std::cout << "ref coords for node 2 = (" << ref_values[3*2] << ", " << ref_values[3*2+1] << ", " << ref_values[3*2+2] << ")" << "\n";
-			std::cout << "ref coords for node 3 = (" << ref_values[3*3] << ", " << ref_values[3*3+1] << ", " << ref_values[3*3+2] << ")" << "\n" << "\n";
-			std::cout << "cur coords for node 0 = (" << coord_values[3*0] << ", " << coord_values[3*0+1] << ", " << coord_values[3*0+2] << ")" << "\n";
-                	std::cout << "cur coords for node 1 = (" << coord_values[3*1] << ", " << coord_values[3*1+1] << ", " << coord_values[3*1+2] << ")" << "\n";
-                	std::cout << "cur coords for node 2 = (" << coord_values[3*2] << ", " << coord_values[3*2+1] << ", " << coord_values[3*2+2] << ")" << "\n";
-                	std::cout << "cur coords for node 3 = (" << coord_values[3*3] << ", " << coord_values[3*3+1] << ", " << coord_values[3*3+2] << ")" << "\n" << "\n";
-                	std::cout << "dilatation = (" << dilatation_values[0] << ", " << dilatation_values[1] << ", " << dilatation_values[2] << ", " << dilatation_values[3] << ")" << "\n" << "\n";
-			std::cout << "weighted volume = (" << w_volume_values[0] << ", " << w_volume_values[1] << ", " << w_volume_values[2] << ", " << w_volume_values[3] << ")" << "\n" << "\n";
-
-			std::cout << "Hello!" << std::endl;
-			std::cout << std::endl;
-			std::cout << "Total Kinetic Energy  =  " << globalKE << std::endl; 
-        		std::cout << std::endl;
-        		std::cout << "Total Strain Energy  =  " << globalSE << std::endl;
+			globalKE += globalBlockKE;
 		}
-*/
-		globalKE += globalBlockKE;
 	}
 	
 	// Store global energy in block (block globals are static, so only need to assign data to first block)
-	blocks->begin()->getScalarData(Field_NS::GLOBAL_KINETIC_ENERGY) = globalKE;
+	if (!storeLocal)
+		blocks->begin()->getScalarData(Field_NS::GLOBAL_KINETIC_ENERGY) = globalKE;
 
 	return(0);
 
