@@ -61,16 +61,20 @@ PeridigmNS::Compute_Strain_Energy_Density::~Compute_Strain_Energy_Density(){}
 std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Strain_Energy_Density::getFieldSpecs() const 
 {
   	std::vector<Field_NS::FieldSpec> myFieldSpecs;
-	myFieldSpecs.push_back(Field_NS::STRAIN_ENERGY_DENSITY);
-	myFieldSpecs.push_back(Field_NS::GLOBAL_STRAIN_ENERGY_DENSITY);
 
   	return myFieldSpecs;
+}
+
+//! Fill the energy vectors
+int PeridigmNS::Compute_Strain_Energy_Density::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const
+{
+        return 0;
 }
 
 
 
 //! Fill the energy vectors
-int PeridigmNS::Compute_Strain_Energy_Density::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const
+int PeridigmNS::Compute_Strain_Energy_Density::computeStrainEnergyDensity( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, bool storeLocal) const
 {
 	int retval;
 
@@ -156,44 +160,27 @@ int PeridigmNS::Compute_Strain_Energy_Density::compute( Teuchos::RCP< std::vecto
 				We = We + (1.0)*(e - dilatation_values[ID]*x/3)*vol2;
 			}
 			// Update the strain energy density                
-			W = W + 0.5*BM*dilatation_values[ID]*dilatation_values[ID] + 0.5*(15.0*SM/w_vol)*We;		
-			strain_energy_density_values[i] = 0.5*BM*dilatation_values[ID]*dilatation_values[ID] + 0.5*(15.0*SM/w_vol)*We;		
+			if (storeLocal)
+                                strain_energy_density_values[i] = 0.5*BM*dilatation_values[ID]*dilatation_values[ID] + 0.5*(15.0*SM/w_vol)*We;
+			else
+				W = W + 0.5*BM*dilatation_values[ID]*dilatation_values[ID] + 0.5*(15.0*SM/w_vol)*We;		
 		}
+		
+		if (!storeLocal)
+		{
+			// Update info across processors
+			double localW, globalBlockSEDensity;
+			localW = W;
 
-		// Update info across processors
-		double localW, globalBlockSEDensity;
-		localW = W;
+			peridigm->getEpetraComm()->SumAll(&localW, &globalBlockSEDensity, 1);
 
-		peridigm->getEpetraComm()->SumAll(&localW, &globalSEDensity, 1);
-
-/*
-        	if (peridigm->getEpetraComm()->MyPID() == 1)
-        	{
-			std::cout << std::endl;	
-			std::cout << "ref coords for node 0 = (" << ref_values[3*0] << ", " << ref_values[3*0+1] << ", " << ref_values[3*0+2] << ")" << "\n";
-			std::cout << "ref coords for node 1 = (" << ref_values[3*1] << ", " << ref_values[3*1+1] << ", " << ref_values[3*1+2] << ")" << "\n";
-			std::cout << "ref coords for node 2 = (" << ref_values[3*2] << ", " << ref_values[3*2+1] << ", " << ref_values[3*2+2] << ")" << "\n";
-			std::cout << "ref coords for node 3 = (" << ref_values[3*3] << ", " << ref_values[3*3+1] << ", " << ref_values[3*3+2] << ")" << "\n" << "\n";
-			std::cout << "cur coords for node 0 = (" << coord_values[3*0] << ", " << coord_values[3*0+1] << ", " << coord_values[3*0+2] << ")" << "\n";
-                	std::cout << "cur coords for node 1 = (" << coord_values[3*1] << ", " << coord_values[3*1+1] << ", " << coord_values[3*1+2] << ")" << "\n";
-                	std::cout << "cur coords for node 2 = (" << coord_values[3*2] << ", " << coord_values[3*2+1] << ", " << coord_values[3*2+2] << ")" << "\n";
-                	std::cout << "cur coords for node 3 = (" << coord_values[3*3] << ", " << coord_values[3*3+1] << ", " << coord_values[3*3+2] << ")" << "\n" << "\n";
-                	std::cout << "dilatation = (" << dilatation_values[0] << ", " << dilatation_values[1] << ", " << dilatation_values[2] << ", " << dilatation_values[3] << ")" << "\n" << "\n";
-			std::cout << "weighted volume = (" << w_volume_values[0] << ", " << w_volume_values[1] << ", " << w_volume_values[2] << ", " << w_volume_values[3] << ")" << "\n" << "\n";
-
-			std::cout << "Hello!" << std::endl;
-			std::cout << std::endl;
-			std::cout << "Total Kinetic Energy  =  " << globalKE << std::endl; 
-        		std::cout << std::endl;
-        		std::cout << "Total Strain Energy  =  " << globalSE << std::endl;
-		}	
-*/
-
-		globalSEDensity += globalBlockSEDensity;
+			globalSEDensity += globalBlockSEDensity;
+		}
 	}
 
 	// Store global energy in block (block globals are static, so only need to assign data to first block)
-	blocks->begin()->getScalarData(Field_NS::GLOBAL_STRAIN_ENERGY_DENSITY) = globalSEDensity;
+	if (!storeLocal)
+		blocks->begin()->getScalarData(Field_NS::GLOBAL_STRAIN_ENERGY_DENSITY) = globalSEDensity;
 
 	return(0);
 
