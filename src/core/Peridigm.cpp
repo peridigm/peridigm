@@ -158,24 +158,60 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   for(Teuchos::ParameterList::ConstIterator it = blockParams.begin() ; it != blockParams.end() ; it++){
     const string& name = it->first;
     Teuchos::ParameterList& params = blockParams.sublist(name);
-    string blockNames = params.get<string>("Block Names");
-// \todo Parse the list of block names to extract each space-deliminted string name
-// following line is a hack that assumes only one block name is in the list
-    std::string blockName = blockNames;
-    PeridigmNS::Block block(blockName, iBlock+1, params );
-    blocks->push_back(block);
-    iBlock++;
+    string blockNamesString = params.get<string>("Block Names");
+    // Parse space-delimited list of block names and instantiate a Block object for each
+    istringstream iss(blockNamesString);
+    vector<string> blockNames;
+    copy(istream_iterator<string>(iss),
+         istream_iterator<string>(),
+         back_inserter<vector<string> >(blockNames));
+    for(vector<string>::const_iterator it=blockNames.begin() ; it!=blockNames.end() ; ++it){
+      PeridigmNS::Block block(*it, iBlock+1, params);
+      blocks->push_back(block);
+      iBlock++;
+    }
   }
 
-  // \todo Check that the list of block names returned by the discretization is the same as user input deck.
-  // Throw error if mismatch.
-/*
-  std::vector<std::string> blockNames = peridigmDisc->getBlockNames();
-*/
+  // Ensure that there is a one-to-one match between the blocks in the mesh and 
+  // the blocks defined in the input deck
+  std::vector<std::string> discreticationBlockNames = peridigmDisc->getBlockNames();
+  bool blockError = false;
+  if(discreticationBlockNames.size() != blocks->size())
+    blockError = true;
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    string blockName = blockIt->getName();
+    std::vector<std::string>::iterator it = find(discreticationBlockNames.begin(), discreticationBlockNames.end(), blockName);
+    if(it == discreticationBlockNames.end())
+      blockError = true;
+  }
+  if(blockError == true){
+    string msg = "\n**** Error, blocks defined in mesh do not match blocks defined in input deck.";
+    msg += "\n**** List of block names in mesh:";
+    for(unsigned int i=0 ; i<discreticationBlockNames.size() ; ++i)
+      msg += "  " + discreticationBlockNames[i] + ",";
+    msg += "\b";
+    msg += "\n**** List of block names in input deck:";
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+      msg += "  " + blockIt->getName()  + ",";
+    msg += "\b\n\n";
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
+  }
 
   // Associate the material model with each block
-  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-    blockIt->setMaterialModel( materialModels[blockIt->getMaterialName()] );
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    string materialModelName = blockIt->getMaterialName();
+    std::map< std::string, Teuchos::RCP<const PeridigmNS::Material> >::iterator materialModelIt;
+    materialModelIt = materialModels.find(materialModelName);
+    if(materialModelIt == materialModels.end()){
+      string msg = "\n**** Error, invalid material model:  " + materialModelName;
+      msg += "\n**** The list of defined material models is:";
+      for(materialModelIt = materialModels.begin() ; materialModelIt != materialModels.end() ; ++ materialModelIt)
+        msg += "  " + materialModelIt->first + ",";
+      msg += "\b\n\n";
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
+    }
+    blockIt->setMaterialModel(materialModelIt->second);
+  }
 
   // Load the auxiliary field specs into the blocks (they will be
   // combined with material model and contact model specs when allocating

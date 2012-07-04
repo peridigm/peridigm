@@ -114,7 +114,7 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
 
   // there is only one block, give it a name and list all the elements
   // \todo THIS WILL NOT SCALE:  We want to load only the locally-owned elements, but there is foundational work required before this is possible.
-  string blockName = "Quick Grid";
+  string blockName = "block_1";
   (*elementBlocks)[blockName] = std::vector<int>( oneDimensionalMap->NumGlobalElements() );
   for(unsigned int i=0 ; i<(*elementBlocks)[blockName].size() ; ++i)
     (*elementBlocks)[blockName][i] = i;
