@@ -116,7 +116,7 @@ PeridigmNS::OutputManager_VTK_XML::OutputManager_VTK_XML(const Teuchos::RCP<Teuc
   filenameBase = params->get<string>("Output Filename","dump"); 
 
   // User-requested fields for output 
-  materialOutputFields = sublist(params, "Material Output Fields");
+  outputVariables = sublist(params, "Material Output Fields");
 
   // Initialize count (number of times write() has been called)
   // Initialize to -1 because first call to write() corresponds to timstep 0
@@ -201,9 +201,11 @@ Teuchos::ParameterList PeridigmNS::OutputManager_VTK_XML::getValidParameterList(
   Teuchos::ParameterList& matFields = validParameterList.sublist("Material Output Fields");
 
   // Now loop over all instantiated materials, filling material output fields sublist for each material type
-  for(unsigned int i=0; i<peridigm->materialModels->size() ; ++i){
+  std::map< std::string, Teuchos::RCP<const PeridigmNS::Material> > materialModels = peridigm->getMaterialModels();
+  for(std::map< std::string, Teuchos::RCP<const PeridigmNS::Material> >::iterator it = materialModels.begin() ; it != materialModels.end() ; ++it){
+    Teuchos::RCP<const PeridigmNS::Material> materialModel = it->second;
     // Get name of underlying material
-    string name = peridigm->materialModels->operator[](i)->Name();
+    string name = materialModel->Name();
     // Create sublist with that name
     Teuchos::ParameterList& matType = matFields.sublist(name);
     // Container to hold all the valid specs for this material type
@@ -218,7 +220,7 @@ Teuchos::ParameterList PeridigmNS::OutputManager_VTK_XML::getValidParameterList(
       if (computeSpecs[j].getRelation() != Field_ENUM::BOND)
         matTypeSpecs.insert(matTypeSpecs.end(),computeSpecs[j]);
     }
-    materialSpecs = peridigm->materialModels->operator[](i)->VariableSpecs();
+    materialSpecs = materialModel->VariableSpecs();
     for(unsigned int j=0; j<materialSpecs->size() ; ++j) {
       if (materialSpecs->operator[](j).getRelation() != Field_ENUM::BOND)
         matTypeSpecs.insert(matTypeSpecs.end(),materialSpecs->operator[](j));
@@ -353,10 +355,10 @@ void PeridigmNS::OutputManager_VTK_XML::write(Teuchos::RCP<PeridigmNS::DataManag
                                               double current_time, int block_id) {
 
   Teuchos::ParameterList::ConstIterator i1;
-  // Loop over the material types in the materialOutputFields parameterlist
-  for (i1 = materialOutputFields->begin(); i1 != materialOutputFields->end(); ++i1) {
-    const Teuchos::ParameterEntry& val1 = materialOutputFields->entry(i1);
-    // const std::string& name1 = materialOutputFields->name(i1);
+  // Loop over the material types in the outputVariables parameterlist
+  for (i1 = outputVariables->begin(); i1 != outputVariables->end(); ++i1) {
+    const Teuchos::ParameterEntry& val1 = outputVariables->entry(i1);
+    // const std::string& name1 = outputVariables->name(i1);
     // For each material type, loop over requested output fields and hook up pointers
     if (val1.isList()) { // each material type is a sublist
       const Teuchos::ParameterList& sublist = Teuchos::getValue<Teuchos::ParameterList>(val1);

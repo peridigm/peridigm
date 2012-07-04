@@ -107,8 +107,7 @@ int PeridigmNS::Compute_Linear_Momentum::compute( Teuchos::RCP< std::vector<Peri
 	  	double linear_momentum_x,  linear_momentum_y, linear_momentum_z;
 	  	linear_momentum_x = linear_momentum_y = linear_momentum_z = 0.0;
 
-	        // \todo Generalize this for multiple materials
-		double density = peridigm->getMaterialModels()->operator[](0)->Density();
+		double density = blockIt->getMaterialModel()->Density();
     
 	  	// volume is a scalar and force a vector, so maps are different; must do multiplication on per-element basis
 	        int numElements = numOwnedPoints;  	

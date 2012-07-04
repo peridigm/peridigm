@@ -217,15 +217,6 @@ namespace PeridigmNS {
     Teuchos::RCP<const PeridigmNS::NeighborhoodData> getGlobalContactNeighborhoodData() { return globalContactNeighborhoodData; }
     //@}
 
-    //! Accessor for DataManagers
-    // \todo Remove this function
-    Teuchos::RCP< std::vector< Teuchos::RCP<PeridigmNS::DataManager> > > getDataManagers() {
-      // \todo This will break for multiple blocks.
-      Teuchos::RCP< std::vector< Teuchos::RCP<PeridigmNS::DataManager> > > tempHack = Teuchos::rcp(new std::vector< Teuchos::RCP<PeridigmNS::DataManager> >());
-      tempHack->push_back( blocks->begin()->getDataManager() );
-      return tempHack;
-    }
-
     //! Accessor for vector of Blocks
     Teuchos::RCP< std::vector<PeridigmNS::Block> > getBlocks() { return blocks; }
 
@@ -235,11 +226,8 @@ namespace PeridigmNS {
     }
 
     //! Accessor for Material Models
-    Teuchos::RCP< std::vector< Teuchos::RCP<const PeridigmNS::Material> > > getMaterialModels() {
-      // \todo This will break for multiple blocks.
-      Teuchos::RCP< std::vector< Teuchos::RCP<const PeridigmNS::Material> > > tempHack = Teuchos::rcp(new std::vector< Teuchos::RCP<const PeridigmNS::Material> >());
-      tempHack->push_back( blocks->begin()->getMaterialModel() );
-      return tempHack;
+    std::map< std::string, Teuchos::RCP<const PeridigmNS::Material> > getMaterialModels() {
+      return materialModels;
     }
 
     //! Return list of field specs used by Peridigm object
@@ -294,7 +282,7 @@ namespace PeridigmNS {
     bool analysisHasPartialVolumes;
 
     //! Material models
-    Teuchos::RCP< std::vector< Teuchos::RCP<const PeridigmNS::Material> > > materialModels;
+    std::map< std::string, Teuchos::RCP<const PeridigmNS::Material> > materialModels;
 
     //! Boundary and initial condition manager
     Teuchos::RCP<PeridigmNS::BoundaryAndInitialConditionManager> boundaryAndInitialConditionManager;
@@ -355,6 +343,9 @@ namespace PeridigmNS {
 
     //! Global vector for cell volume 
     Teuchos::RCP<Epetra_Vector> volume;
+
+    //! Global vector for cell density
+    Teuchos::RCP<Epetra_Vector> density;
 
     //! Map for global tangent matrix (note, must be an Epetra_Map, not an Epetra_BlockMap)
     Teuchos::RCP<Epetra_Map> tangentMap;

@@ -66,7 +66,7 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Acceleration::getFieldSpecs
 
 //! Fill the acceleration vector
 int PeridigmNS::Compute_Acceleration::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) const {
-  int retval;
+  int retval(0);
 
   Teuchos::RCP<Epetra_Vector> force, acceleration;
   std::vector<PeridigmNS::Block>::iterator blockIt;
@@ -75,8 +75,7 @@ int PeridigmNS::Compute_Acceleration::compute( Teuchos::RCP< std::vector<Peridig
     force        = dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1);
     acceleration = dataManager->getData(Field_NS::ACCEL3D, Field_ENUM::STEP_NP1);
     *acceleration = *force;
-    // \todo Generalize this for multiple materials
-    double density = peridigm->getMaterialModels()->operator[](0)->Density();
+    double density = blockIt->getMaterialModel()->Density();
     // Report if any calls to Scale() failed.
     retval = retval || acceleration->Scale(1.0/density);
   }

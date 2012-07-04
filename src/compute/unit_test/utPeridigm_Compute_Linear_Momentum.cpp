@@ -128,7 +128,7 @@ void FourPointTest()
 	Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createFourPointModel();
 
   	// Get the data manager
-        Teuchos::RCP<PeridigmNS::DataManager> dataManager = (*peridigm->getDataManagers())[0];
+    Teuchos::RCP<PeridigmNS::DataManager> dataManager = peridigm->getBlocks()->begin()->getDataManager();
         // Get the neighborhood data
       	PeridigmNS::NeighborhoodData neighborhoodData = (*peridigm->getGlobalNeighborhoodData());
 	// Access the data we need
@@ -162,8 +162,7 @@ void FourPointTest()
 	int retval = computeLinearMomentum->compute(blocks);
   	BOOST_CHECK_EQUAL( retval, 0 );
 	
-	// \todo Generalize this for multiple materials
-	double density = peridigm->getMaterialModels()->operator[](0)->Density();
+	double density = peridigm->getBlocks()->begin()->getMaterialModel()->Density();
 
   	// Now check that volumes and linear momentum is correct
   	double *volume_values = volume->Values();

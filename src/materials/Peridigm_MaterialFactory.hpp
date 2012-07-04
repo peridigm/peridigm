@@ -67,7 +67,7 @@ namespace PeridigmNS {
     //! Destructor
     virtual ~MaterialFactory() {}
 
-    virtual Teuchos::RCP<Material> create(Teuchos::RCP<const Teuchos::ParameterList>& materialParams);
+    virtual Teuchos::RCP<Material> create(const Teuchos::ParameterList& materialParams);
 
   private:
 

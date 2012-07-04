@@ -69,6 +69,7 @@ enum Relation {
 
 enum Type {
   VOLUME=0,
+  DENSITY,
   GID,
   BLOCK_ID,
   PROC_NUM,
@@ -245,6 +246,7 @@ const Field_NS::FieldSpec GLOBAL_ANGULAR_MOMENTUM(Field_ENUM::ANGULAR_MOMENTUM, 
  * ELEMENT SCALAR FieldSpecs (scalar fields defined over elements)
  */
 const Field_NS::FieldSpec VOLUME               (Field_ENUM::VOLUME,                       Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Volume");
+const Field_NS::FieldSpec DENSITY              (Field_ENUM::DENSITY,                      Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Density");
 const Field_NS::FieldSpec GID                  (Field_ENUM::GID,                          Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "ID");
 const Field_NS::FieldSpec BLOCK_ID             (Field_ENUM::BLOCK_ID,                     Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "BLOCK_ID");
 const Field_NS::FieldSpec PROC_NUM             (Field_ENUM::PROC_NUM,                     Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Proc_Num");
@@ -301,6 +303,7 @@ struct FieldSpecMap {
 		mymap[GLOBAL_ANGULAR_MOMENTUM.getLabel()]       = GLOBAL_ANGULAR_MOMENTUM;
 		// point scalar fieldspecs
 		mymap[VOLUME.getLabel()]                       = VOLUME;
+		mymap[DENSITY.getLabel()]                      = DENSITY;
 		mymap[GID.getLabel()]                          = GID;
 		mymap[BLOCK_ID.getLabel()]                     = BLOCK_ID;
 		mymap[PROC_NUM.getLabel()]                     = PROC_NUM;

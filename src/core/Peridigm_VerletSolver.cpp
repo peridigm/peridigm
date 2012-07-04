@@ -69,7 +69,7 @@ EpetraExt::ModelEvaluator::OutArgs PeridigmNS::VerletSolver::createOutArgs() con
 
 void PeridigmNS::VerletSolver::evalModel( const InArgs& inArgs, const OutArgs& outArgs ) const{
 
-  bool verbose = appParams->sublist("Problem").get("Verbose", false);
+  bool verbose = appParams->get("Verbose", false);
 
   // Parse InArgs
 

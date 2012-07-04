@@ -63,37 +63,24 @@ PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList>
   // No input to validate; no computes requested
   if (params == Teuchos::null) return;
 
-  Teuchos::RCP<Teuchos::ParameterList> materialOutputFields; 
+  Teuchos::RCP<Teuchos::ParameterList> outputVariables; 
   // User-requested fields for output
-  if (params->isSublist("Material Output Fields"))
-    materialOutputFields = sublist(params, "Material Output Fields");
+  if (params->isSublist("Output Variables"))
+    outputVariables = sublist(params, "Output Variables");
   else 
     // No input to validate; no computes requested
     return;
 
-  Teuchos::ParameterList::ConstIterator i1;
-  // Loop over the material types in the materialOutputFields parameterlist
-  for (i1 = materialOutputFields->begin(); i1 != materialOutputFields->end(); ++i1) {
-    const Teuchos::ParameterEntry& val1 = materialOutputFields->entry(i1);
-    // const std::string& name1 = materialOutputFields->name(i1);
-    // For each material type, loop over requested output fields and hook up pointers
-    if (val1.isList()) { // each material type is a sublist
-      const Teuchos::ParameterList& sublist = Teuchos::getValue<Teuchos::ParameterList>(val1);
-      Teuchos::ParameterList::ConstIterator i2;
-      for (i2=sublist.begin(); i2 != sublist.end(); ++i2) {
-        const std::string& nm = sublist.name(i2);
-
-        #define COMPUTE_CLASS
-        #define ComputeClass(key, Class, Args) \
-        if (nm == #key) { \
-          compute = Teuchos::rcp( new PeridigmNS::Class(Args) ); \
-          computeObjects.push_back( Teuchos::rcp_implicit_cast<Compute>(compute) ); \
-        }
-        #include "compute/compute_includes.hpp"
-        #undef  COMPUTE_CLASS
-
+  for (Teuchos::ParameterList::ConstIterator it = outputVariables->begin(); it != outputVariables->end(); ++it) {
+    const std::string& name = it->first;
+    #define COMPUTE_CLASS
+      #define ComputeClass(key, Class, Args) \
+      if (name == #key) { \
+        compute = Teuchos::rcp( new PeridigmNS::Class(Args) ); \
+        computeObjects.push_back( Teuchos::rcp_implicit_cast<Compute>(compute) ); \
       }
-    }
+      #include "compute/compute_includes.hpp"
+      #undef  COMPUTE_CLASS
   }
 }
 

@@ -108,10 +108,9 @@ int PeridigmNS::Compute_Strain_Energy::computeStrainEnergy( Teuchos::RCP< std::v
 		double *dilatation_values = dilatation->Values();
 		double *strain_energy_values  = strain_energy->Values();
 	
-		// \todo Generalize this for multiple materials
 		// Get the material properties 
-		double SM = peridigm->getMaterialModels()->operator[](0)->ShearModulus();
-		double BM = peridigm->getMaterialModels()->operator[](0)->BulkModulus();	
+		double SM = blockIt->getMaterialModel()->ShearModulus();
+		double BM = blockIt->getMaterialModel()->BulkModulus();	
 
 		// Initialize energy values
 		double SE = 0.0;

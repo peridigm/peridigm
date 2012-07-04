@@ -73,19 +73,16 @@ Teuchos::RCP<PeridigmNS::Peridigm> createTwoPointModel()
   // these data would normally be read from an input xml file
   Teuchos::RCP<Teuchos::ParameterList> peridigmParams = rcp(new Teuchos::ParameterList());
 
-  // problem parameters
-  ParameterList& problemParams = peridigmParams->sublist("Problem");
-  problemParams.set("Verbose", false);
-
   // material parameters
-  ParameterList& materialParams = problemParams.sublist("Material");
-  ParameterList& linearElasticMaterialParams = materialParams.sublist("Linear Elastic");
+  ParameterList& materialParams = peridigmParams->sublist("Materials");
+  ParameterList& linearElasticMaterialParams = materialParams.sublist("My Linear Elastic Material");
+  linearElasticMaterialParams.set("Material Model", "Linear Elastic");
   linearElasticMaterialParams.set("Density", 7800.0);
   linearElasticMaterialParams.set("Bulk Modulus", 130.0e9);
   linearElasticMaterialParams.set("Shear Modulus", 78.0e9);
 
   // discretization parameters
-  ParameterList& discretizationParams = problemParams.sublist("Discretization");
+  ParameterList& discretizationParams = peridigmParams->sublist("Discretization");
   discretizationParams.set("Type", "PdQuickGrid");
   discretizationParams.set("Horizon", 2.1);
 
@@ -103,7 +100,7 @@ Teuchos::RCP<PeridigmNS::Peridigm> createTwoPointModel()
   pdQuickGridParams.set("Number Points Z", 1);
 
   // boundary conditions
-  ParameterList& bcParams = problemParams.sublist("Boundary Conditions");
+  ParameterList& bcParams = peridigmParams->sublist("Boundary Conditions");
   // node sets
   // these sets associate a name with a list of node ids, stored as a string
   // in this case there's only one node per set
@@ -121,6 +118,10 @@ Teuchos::RCP<PeridigmNS::Peridigm> createTwoPointModel()
   initialVelocityMaxXFace.set("Node Set", "Max X Node Set");
   initialVelocityMaxXFace.set("Coordinate", "x");
   initialVelocityMaxXFace.set("Value", "1.0");
+
+  // blocks
+
+  //ParameterList& blockParams = 
 
   // solver parameters
   ParameterList& solverParams = peridigmParams->sublist("Solver");

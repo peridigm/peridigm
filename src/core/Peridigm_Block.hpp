@@ -70,7 +70,7 @@ namespace PeridigmNS {
     Block() : blockName("Undefined"), blockID(-1) {}
 
     //! Constructor
-    Block(std::string blockName_, int blockID_) : blockName(blockName_), blockID(blockID_) {}
+    Block(std::string blockName_, int blockID_, Teuchos::ParameterList& blockParams_) : blockName(blockName_), blockID(blockID_), blockParams(blockParams_) {}
 
     //! Destructor
     ~Block(){}
@@ -157,9 +157,14 @@ namespace PeridigmNS {
       return blockID;
     }
 
-    //! Get the Name
+    //! Get the block name
     std::string getName(){
       return blockName;
+    }
+
+    //! Get the material name
+    std::string getMaterialName(){
+      return blockParams.get<string>("Material");
     }
 
     //! Initialize the material model
@@ -188,8 +193,7 @@ namespace PeridigmNS {
        if (it == globalVariables.end()) {
          TEUCHOS_TEST_FOR_EXCEPT_MSG(it==globalVariables.end(), "\n**** Global FieldSpec not found!\n");
        }
-       else 
-         return globalVariables[fieldSpec.getLabel()];
+       return globalVariables[fieldSpec.getLabel()];
     }
 
     /*! \brief Import data from the given source vector to the underlying target vector associated with the given field spec.
@@ -287,6 +291,8 @@ namespace PeridigmNS {
     //! Map is static because all block objects use the same values
     static std::map<string,double> globalVariables;
 
+    //! The blocks parameterlist sublist
+    Teuchos::ParameterList blockParams;
   };
 }
 

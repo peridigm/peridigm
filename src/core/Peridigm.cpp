@@ -112,7 +112,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // Read mesh from disk or generate using geometric primatives.
   Teuchos::RCP<Teuchos::ParameterList> discParams =
-    Teuchos::rcpFromRef( peridigmParams->sublist("Problem", true).sublist("Discretization", true) );
+    Teuchos::rcpFromRef( peridigmParams->sublist("Discretization", true) );
 
   // \todo When using partial volumes, the horizon should be increased by a value equal to the largest element dimension in the model (largest element diagonal for hexes).
   //       For an initial test, just double the horizon and hope for the best.
@@ -127,7 +127,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // Load node sets from input deck and/or input mesh file into nodeSets container
   Teuchos::RCP<Teuchos::ParameterList> bcParams =
-    Teuchos::rcpFromRef( peridigmParams->sublist("Problem", true).sublist("Boundary Conditions") );
+    Teuchos::rcpFromRef( peridigmParams->sublist("Boundary Conditions") );
   initializeNodeSets(bcParams, peridigmDisc);
 
   boundaryAndInitialConditionManager =
@@ -152,21 +152,30 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   fieldSpecs->insert(fieldSpecs->end(), computeSpecs.begin(), computeSpecs.end());
 
   // Instantiate the blocks
+  int iBlock = 0;
   blocks = Teuchos::rcp(new std::vector<PeridigmNS::Block>());
-  std::vector<std::string> blockNames = peridigmDisc->getBlockNames();
-  for(unsigned int iBlock=0 ; iBlock<blockNames.size() ; ++iBlock){
-    std::string blockName = blockNames[iBlock];
-    PeridigmNS::Block block(blockName, iBlock+1);
+  Teuchos::ParameterList& blockParams = peridigmParams->sublist("Blocks", true);
+  for(Teuchos::ParameterList::ConstIterator it = blockParams.begin() ; it != blockParams.end() ; it++){
+    const string& name = it->first;
+    Teuchos::ParameterList& params = blockParams.sublist(name);
+    string blockNames = params.get<string>("Block Names");
+// \todo Parse the list of block names to extract each space-deliminted string name
+// following line is a hack that assumes only one block name is in the list
+    std::string blockName = blockNames;
+    PeridigmNS::Block block(blockName, iBlock+1, params );
     blocks->push_back(block);
+    iBlock++;
   }
 
-  // Load the material models into the blocks
-  // \todo Hook up plumbing for multiple materials in the input deck, for now all blocks get the same material.
-  Teuchos::RCP<const Teuchos::ParameterList> materialParams =
-    Teuchos::rcpFromRef( peridigmParams->sublist("Problem", true).sublist("Material", true) );
-  MaterialFactory materialFactory;
+  // \todo Check that the list of block names returned by the discretization is the same as user input deck.
+  // Throw error if mismatch.
+/*
+  std::vector<std::string> blockNames = peridigmDisc->getBlockNames();
+*/
+
+  // Associate the material model with each block
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-    blockIt->setMaterialModel( materialFactory.create(materialParams) );
+    blockIt->setMaterialModel( materialModels[blockIt->getMaterialName()] );
 
   // Load the auxiliary field specs into the blocks (they will be
   // combined with material model and contact model specs when allocating
@@ -190,6 +199,17 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
     blockIt->importData(*(peridigmDisc->getInitialX()),   Field_NS::COORD3D,    Field_ENUM::STEP_NONE, Insert);
     blockIt->importData(*(peridigmDisc->getInitialX()),   Field_NS::CURCOORD3D, Field_ENUM::STEP_N,    Insert);
     blockIt->importData(*(peridigmDisc->getInitialX()),   Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1,  Insert);
+  }
+
+  // Set the density in the mothership vector
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    Teuchos::RCP<const Epetra_BlockMap> OwnedScalarPointMap = blockIt->getOwnedScalarPointMap();
+    double blockDensity = blockIt->getMaterialModel()->Density();
+    for(int i=0 ; i<OwnedScalarPointMap->NumMyElements() ; ++i){
+      int globalID = OwnedScalarPointMap->GID(i);
+      int mothershipLocalID = oneDimensionalMap->LID(globalID);
+      (*density)[mothershipLocalID] = blockDensity;
+    }
   }
 
   // compute partial volumes
@@ -236,34 +256,19 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 void PeridigmNS::Peridigm::instantiateMaterials() {
 
   // Extract problem parameters sublist
-  Teuchos::ParameterList& problemParams = peridigmParams->sublist("Problem", true);
-  Teuchos::ParameterList& materialParams = problemParams.sublist("Material", true);
+  Teuchos::ParameterList& materialParams = peridigmParams->sublist("Materials", true);
 
-  // Create a list of material names
-  vector<string> materialNames;
+  MaterialFactory materialFactory;
+
+  double horizon = peridigmParams->sublist("Discretization", true).get<double>("Horizon");
   for(Teuchos::ParameterList::ConstIterator it = materialParams.begin() ; it != materialParams.end() ; it++){
-    if(it->second.isList())
-      materialNames.push_back(it->first);
-  }
-
-  // If the material parameters do not include the horizon, add it
-  double horizon = problemParams.sublist("Discretization", true).get<double>("Horizon");
-  for(vector<string>::iterator it = materialNames.begin() ; it != materialNames.end() ; ++it){
     // Get the material parameters for a given material and add the horizon if necessary
-    Teuchos::ParameterList& matParams = materialParams.get<Teuchos::ParameterList>(*it);
+    Teuchos::ParameterList& matParams = materialParams.sublist(it->first);
     if(!matParams.isParameter("Horizon"))
        matParams.set("Horizon", horizon);
+    materialModels[it->first] = materialFactory.create(matParams) ;
   }
-
-  // Instantiate material objects
-  // \todo This will break for multiple material blocks.
-  MaterialFactory materialFactory;
-  materialModels = Teuchos::rcp(new std::vector< Teuchos::RCP<const PeridigmNS::Material> >()); 
-  for(Teuchos::ParameterList::ConstIterator it = materialParams.begin() ; it != materialParams.end() ; it++){
-    Teuchos::RCP<const Teuchos::ParameterList> matParams = Teuchos::rcpFromRef(materialParams);
-    materialModels->push_back( materialFactory.create(matParams) );
-  }
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(materialModels->size() == 0, "No material models created!");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(materialModels.size() == 0, "No material models created!");
 }
 
 void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscretization> peridigmDisc) {
@@ -287,13 +292,13 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
 
   // Create mothership vectors
 
-  oneDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*oneDimensionalMap, 2));
+  oneDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*oneDimensionalMap, 3));
   blockIDs = Teuchos::rcp((*oneDimensionalMothership)(0), false);        // block ID
   volume = Teuchos::rcp((*oneDimensionalMothership)(1), false);          // cell volume
+  density = Teuchos::rcp((*oneDimensionalMothership)(2), false);         // density
 
   // \todo Do not allocate space for the contact force nor deltaU if not needed.
   threeDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalMap, 9));
-  // Set ref-count pointers for each of the global vectors
   x = Teuchos::rcp((*threeDimensionalMothership)(0), false);             // initial positions
   u = Teuchos::rcp((*threeDimensionalMothership)(1), false);             // displacement
   y = Teuchos::rcp((*threeDimensionalMothership)(2), false);             // current positions
@@ -365,11 +370,8 @@ void PeridigmNS::Peridigm::initializeNodeSets(Teuchos::RCP<Teuchos::ParameterLis
 
 void PeridigmNS::Peridigm::initializeContact() {
 
-  // Extract problem parameters sublist
-  Teuchos::RCP<Teuchos::ParameterList> problemParams = Teuchos::rcp(&(peridigmParams->sublist("Problem")),false);
-
   // Extract discretization parameters sublist
-  Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::rcp(&(problemParams->sublist("Discretization")), false);
+  Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::rcp(&(peridigmParams->sublist("Discretization")), false);
 
   // Assume no contact
   analysisHasContact = false;
@@ -377,8 +379,8 @@ void PeridigmNS::Peridigm::initializeContact() {
   contactRebalanceFrequency = 0;
 
   // Set up global contact parameters for rebalance and proximity search
-  if(problemParams->isSublist("Contact")){
-    Teuchos::ParameterList & contactParams = problemParams->sublist("Contact");
+  if(peridigmParams->isSublist("Contact")){
+    Teuchos::ParameterList & contactParams = peridigmParams->sublist("Contact");
     analysisHasContact = true;
     if(!contactParams.isParameter("Search Radius"))
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Contact parameter \"Search Radius\" not specified.");
@@ -392,7 +394,7 @@ void PeridigmNS::Peridigm::initializeContact() {
   ContactModelFactory contactModelFactory;
   contactModels = Teuchos::rcp(new std::vector<Teuchos::RCP<const PeridigmNS::ContactModel> >);
   if(analysisHasContact){
-    Teuchos::ParameterList& contactParams = problemParams->sublist("Contact");
+    Teuchos::ParameterList& contactParams = peridigmParams->sublist("Contact");
     Teuchos::ParameterList::ConstIterator it;
     for(it = contactParams.begin() ; it != contactParams.end() ; it++){
       const string & name = it->first;
@@ -462,20 +464,10 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
        outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_ExodusII( outputParams, this, blocks ));
     else
       TEUCHOS_TEST_FOR_EXCEPTION( true, std::invalid_argument,"PeridigmNS::Peridigm::initializeOutputManager: \"Output File Type\" must be \"VTK_XML\".");
-
-    // Initialize current time in this parameterlist
-    Teuchos::RCP<Teuchos::ParameterList> solverParams = Teuchos::rcp(&(peridigmParams->sublist("Solver")),false);
-    //double timeInitial = solverParams->get("Initial Time", 0.0);
-    // Initial conditions to disk written by time integrators before taking first step
-    //this->synchDataManagers();
-    //outputManager->write(dataManager,neighborhoodData,timeInitial);
   }
   else { // no output requested
     outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_VTK_XML( outputParams, this, blocks ));
   }
-
-  //  verbose = problemParams->get("Verbose", false);
-
 }
 
 void PeridigmNS::Peridigm::execute() {
@@ -607,10 +599,8 @@ void PeridigmNS::Peridigm::executeExplicit() {
 
   // fill the acceleration vector
   (*a) = (*force);
-  // \todo Possibly move this functionality into ModelEvaluator.
-  // \todo This will break for multiple materials
-  double density = (*materialModels)[0]->Density();
-  a->Scale(1.0/density);
+  for(int i=0 ; i<a->MyLength() ; ++i)
+    (*a)[i] /= (*density)[i/3];
 
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
@@ -718,10 +708,8 @@ void PeridigmNS::Peridigm::executeExplicit() {
 
     // fill the acceleration vector
     (*a) = (*force);
-    // \todo Possibly move this functionality into ModelEvaluator.
-    // \todo This will break for multiple materials.
-    double density = (*materialModels)[0]->Density();
-    a->Scale(1.0/density);
+    for(int i=0 ; i<a->MyLength() ; ++i)
+      (*a)[i] /= (*density)[i/3];
 
     // V^{n+1}   = V^{n+1/2} + (dt/2)*A^{n+1}
     //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
@@ -1226,10 +1214,6 @@ void PeridigmNS::Peridigm::executeImplicit() {
   Teuchos::RCP<Epetra_Vector> u2 = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
   Teuchos::RCP<Epetra_Vector> v2 = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
 
-  // \todo Possibly move this functionality into ModelEvaluator.
-  // \todo Generalize this for multiple materials
-  double density = (*materialModels)[0]->Density();
-
   // \todo Put in mothership.
   Teuchos::RCP<Epetra_Vector> deltaU = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
 
@@ -1290,7 +1274,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
     // Note that due to restrictions to CrsMatrix, the residual has a different (but equivalent) map
     // than the force and acceleration
     for(int i=0 ; i<residual->MyLength() ; ++i)
-      (*residual)[i] = beta*dt2*( density*(*a)[i] - (*force)[i] );
+      (*residual)[i] = beta*dt2*( (*density)[i/3] * (*a)[i] - (*force)[i] );
 
     // Modify residual for kinematic BC
     boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
@@ -1365,7 +1349,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
       // Note that due to restrictions to CrsMatrix, the residual has a different (but equivalent) map
       // than the force and acceleration
       for(int i=0 ; i<residual->MyLength() ; ++i)
-        (*residual)[i] = beta*dt2*( density*(*a)[i] - (*force)[i] );
+        (*residual)[i] = beta*dt2*( (*density)[i/3] * (*a)[i] - (*force)[i] );
 
       // Modify residual for kinematic BC
       boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
@@ -1574,17 +1558,14 @@ void PeridigmNS::Peridigm::computeImplicitJacobian(double beta) {
     }
   }
 
-  // Now add in mass matrix contribution
-  // \todo Generalize this for multiple materials
-  double density = (*materialModels)[0]->Density();
-
   // tangent = M - beta*dt*dt*K
   tangent->Scale(-beta*dt2);
 
   Epetra_Vector diagonal1(tangent->RowMap());
   Epetra_Vector diagonal2(tangent->RowMap());
   tangent->ExtractDiagonalCopy(diagonal1);
-  diagonal2.PutScalar(density);
+  for(int i=0 ; i<diagonal2.MyLength() ; ++i)
+    diagonal2[i] = (*density)[i/3];
   diagonal1.Update(1.0, diagonal2, 1.0);
   tangent->ReplaceDiagonalValues(diagonal1);
 
@@ -1687,6 +1668,7 @@ void PeridigmNS::Peridigm::rebalance() {
   oneDimensionalMothership = rebalancedOneDimensionalMothership;
   blockIDs = Teuchos::rcp((*oneDimensionalMothership)(0), false);        // block ID
   volume = Teuchos::rcp((*oneDimensionalMothership)(1), false);          // cell volume
+  density = Teuchos::rcp((*oneDimensionalMothership)(2), false);         // density
 
   Teuchos::RCP<Epetra_MultiVector> rebalancedThreeDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*rebalancedThreeDimensionalMap, threeDimensionalMothership->NumVectors()));
   rebalancedThreeDimensionalMothership->Import(*threeDimensionalMothership, *threeDimensionalMapImporter, Insert);
