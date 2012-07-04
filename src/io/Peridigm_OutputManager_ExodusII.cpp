@@ -491,13 +491,14 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
   if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_coord");
 
   // Write nodal coordinate names to database
-  std::vector<char> coord_names_vec(3);
-  coord_names_vec[0] = 'X';
-  coord_names_vec[1] = 'Y';
-  coord_names_vec[2] = 'Z';
-  char* coord_names = &coord_names_vec[0];
-  retval = ex_put_coord_names(file_handle,&coord_names);
-
+  char coord_name_X = 'X';
+  char coord_name_Y = 'Y';
+  char coord_name_Z = 'Z';
+  std::vector<char*> coord_names_vec(3);
+  coord_names_vec[0] = &coord_name_X;
+  coord_names_vec[1] = &coord_name_Y;
+  coord_names_vec[2] = &coord_name_Z;
+  retval = ex_put_coord_names(file_handle,&coord_names_vec[0]);
   if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_coord_names");
 
   // Write element block parameters
