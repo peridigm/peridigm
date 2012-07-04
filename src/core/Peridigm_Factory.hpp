@@ -79,7 +79,7 @@ namespace PeridigmNS {
   private:
 
     //! Private function to set default problem parameter values in lieu of InArgs.
-    void setProblemParamDefaults(Teuchos::Ptr<Teuchos::ParameterList> peridigmParams_);
+    void setPeridigmParamDefaults(Teuchos::Ptr<Teuchos::ParameterList> peridigmParams_);
     
     //! Private function to set default solver parameter values in lieu of InArgs.
     void setSolverParamDefaults(Teuchos::Ptr<Teuchos::ParameterList> peridigmParams_);

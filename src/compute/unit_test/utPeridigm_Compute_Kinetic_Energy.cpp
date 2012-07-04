@@ -134,7 +134,7 @@ void FourPointTest()
         // Get the neighborhood data
         PeridigmNS::NeighborhoodData neighborhoodData = (*peridigm->getGlobalNeighborhoodData());
   	// Get the data manager
-        Teuchos::RCP<PeridigmNS::DataManager> dataManager = (*peridigm->getDataManagers())[0];
+        Teuchos::RCP<PeridigmNS::DataManager> dataManager = peridigm->getBlocks()->begin()->getDataManager();
   	// Access the data we need
         Teuchos::RCP<Epetra_Vector> velocity, volume, kinetic_energy;
         velocity              = dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1);
@@ -170,8 +170,7 @@ void FourPointTest()
 	int retval2 = computeGlobalKineticEnergy->compute( blocks );
         BOOST_CHECK_EQUAL( retval2, 0 );
 
-	// \todo Generalize this for multiple materials
-	double density = peridigm->getMaterialModels()->operator[](0)->Density();
+	double density = peridigm->getBlocks()->begin()->getMaterialModel()->Density();
 	
   	// Now check that volumes and energy is correct
   	double *volume_values = volume->Values();

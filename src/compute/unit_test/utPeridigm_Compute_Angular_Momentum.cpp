@@ -111,9 +111,8 @@ Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel()
         // output parameters (to force instantiation of angular momentum compute class and data storage in DataManager)
 
 	Teuchos::ParameterList& outputParams = peridigmParams->sublist("Output");
-	Teuchos::ParameterList& materialOutputFields = outputParams.sublist("Material Output Fields");
-	Teuchos::ParameterList& linearElasticMaterialFields = materialOutputFields.sublist("Linear Elastic");
-	linearElasticMaterialFields.set("Angular_Momentum", true);
+	Teuchos::ParameterList& outputFields = outputParams.sublist("Output Variables");
+	outputFields.set("Angular_Momentum", true);
 
 	// create the Peridigm object
 	Teuchos::RCP<PeridigmNS::Peridigm> peridigm = Teuchos::rcp(new PeridigmNS::Peridigm(comm, peridigmParams));
@@ -128,7 +127,7 @@ void FourPointTest()
 	Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createFourPointModel();
 
   	// Get the data manager
-	Teuchos::RCP<PeridigmNS::DataManager> dataManager = (*peridigm->getDataManagers())[0];
+	Teuchos::RCP<PeridigmNS::DataManager> dataManager = peridigm->getBlocks()->begin()->getDataManager();
 	// Get the neighborhood data
 	PeridigmNS::NeighborhoodData neighborhoodData = (*peridigm->getGlobalNeighborhoodData()); 
   	// Access the data we need

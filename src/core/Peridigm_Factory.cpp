@@ -67,7 +67,7 @@ Teuchos::RCP<PeridigmNS::Peridigm> PeridigmNS::PeridigmFactory::create(const std
 
   // Set application parameters to default values
   Teuchos::RCP<Teuchos::ParameterList> peridigmParams = rcp(new Teuchos::ParameterList());
-  setProblemParamDefaults(peridigmParams.ptr());
+  setPeridigmParamDefaults(peridigmParams.ptr());
   setSolverParamDefaults(peridigmParams.ptr());
 
   // Update parameters with data from xml file
@@ -78,12 +78,9 @@ Teuchos::RCP<PeridigmNS::Peridigm> PeridigmNS::PeridigmFactory::create(const std
 
 }
 
-void PeridigmNS::PeridigmFactory::setProblemParamDefaults(Teuchos::Ptr<Teuchos::ParameterList> peridigmParams_)
+void PeridigmNS::PeridigmFactory::setPeridigmParamDefaults(Teuchos::Ptr<Teuchos::ParameterList> peridigmParams_)
 {
-  Teuchos::ParameterList& problemParams = peridigmParams_->sublist("Problem");
-
-  // general settings
-  problemParams.set("Verbose", false);
+  peridigmParams_->set("Verbose", false);
 }
 
 void PeridigmNS::PeridigmFactory::setSolverParamDefaults(Teuchos::Ptr<Teuchos::ParameterList> peridigmParams_)

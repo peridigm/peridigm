@@ -101,11 +101,10 @@ int PeridigmNS::Compute_Kinetic_Energy::computeKineticEnergy( Teuchos::RCP< std:
 		double *velocity_values = velocity->Values();
 		double *kinetic_energy_values = kinetic_energy->Values();
 	
-		// \todo Generalize this for multiple materials
 		// Get the material properties 
-		double density  = peridigm->getMaterialModels()->operator[](0)->Density();
-		//double SM = peridigm->getMaterialModels()->operator[](0)->ShearModulus();
-		//double BM = peridigm->getMaterialModels()->operator[](0)->BulkModulus();	
+		double density  = blockIt->getMaterialModel()->Density();
+		//double SM = blockIt->getMaterialModel()->ShearModulus();
+		//double BM = blockIt->getMaterialModel()->BulkModulus();	
 
 		
 		// Initialize global kinetic energy value

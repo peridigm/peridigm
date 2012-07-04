@@ -115,11 +115,10 @@ int PeridigmNS::Compute_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::B
 		double *strain_energy_values  = strain_energy->Values();
 		double *strain_energy_density_values  = strain_energy_density->Values();
 	
-		// \todo Generalize this for multiple materials
 		// Get the material properties 
-		double density  = peridigm->getMaterialModels()->operator[](0)->Density();
-		double SM = peridigm->getMaterialModels()->operator[](0)->ShearModulus();
-		double BM = peridigm->getMaterialModels()->operator[](0)->BulkModulus();	
+		double density  = blockIt->getMaterialModel()->Density();
+		double SM = blockIt->getMaterialModel()->ShearModulus();
+		double BM = blockIt->getMaterialModel()->BulkModulus();	
 
 		// Initialize energy values
 		double KE,  SE;

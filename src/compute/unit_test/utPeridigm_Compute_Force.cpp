@@ -125,7 +125,8 @@ void FourPointTest() {
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createFourPointModel();
 
   // Get the data manager
-  Teuchos::RCP<PeridigmNS::DataManager> dataManager = (*peridigm->getDataManagers())[0];
+  Teuchos::RCP<PeridigmNS::DataManager> dataManager = peridigm->getBlocks()->begin()->getDataManager();
+
   // Access the data we need
   Teuchos::RCP<Epetra_Vector> force, force_density, volume;
   force_density = dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1);

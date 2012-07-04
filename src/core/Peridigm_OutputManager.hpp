@@ -94,7 +94,7 @@ namespace PeridigmNS {
     // Filename base
     string filenameBase;
     // Parameterlist of user-requested data for output
-    Teuchos::RCP<Teuchos::ParameterList> materialOutputFields;
+    Teuchos::RCP<Teuchos::ParameterList> outputVariables;
 
   private:
 

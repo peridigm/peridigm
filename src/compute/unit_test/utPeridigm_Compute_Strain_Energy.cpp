@@ -134,7 +134,7 @@ void FourPointTest()
         // Get the neighborhood data
         PeridigmNS::NeighborhoodData neighborhoodData = (*peridigm->getGlobalNeighborhoodData());
   	// Get the data manager
-        Teuchos::RCP<PeridigmNS::DataManager> dataManager = (*peridigm->getDataManagers())[0];
+        Teuchos::RCP<PeridigmNS::DataManager> dataManager = peridigm->getBlocks()->begin()->getDataManager();
   	// Access the data we need
         Teuchos::RCP<Epetra_Vector> volume, ref, coords, dilatation, strain_energy;
 	volume                = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);

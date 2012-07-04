@@ -112,8 +112,7 @@ int PeridigmNS::Compute_Angular_Momentum::compute( Teuchos::RCP< std::vector<Per
   		double angular_momentum_x,  angular_momentum_y, angular_momentum_z;
   		angular_momentum_x = angular_momentum_y = angular_momentum_z = 0.0;
 	
-		// \todo Generalize this for multiple materials
-		double density = peridigm->getMaterialModels()->operator[](0)->Density();
+		double density = blockIt->getMaterialModel()->Density();
   	
 		// volume is a scalar and force a vector, so maps are different; must do multiplication on per-element basis
   		int numElements = numOwnedPoints;

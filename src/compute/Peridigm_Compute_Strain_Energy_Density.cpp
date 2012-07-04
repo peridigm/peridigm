@@ -110,10 +110,9 @@ int PeridigmNS::Compute_Strain_Energy_Density::computeStrainEnergyDensity( Teuch
 		double *dilatation_values = dilatation->Values();
 		double *strain_energy_density_values  = strain_energy_density->Values();
 	
-		// \todo Generalize this for multiple materials
 		// Get the material properties 
-		double SM = peridigm->getMaterialModels()->operator[](0)->ShearModulus();
-		double BM = peridigm->getMaterialModels()->operator[](0)->BulkModulus();	
+		double SM = blockIt->getMaterialModel()->ShearModulus();
+		double BM = blockIt->getMaterialModel()->BulkModulus();	
 
 		// Initialize strain energy density
 		double W = 0.0; 
@@ -169,7 +168,7 @@ int PeridigmNS::Compute_Strain_Energy_Density::computeStrainEnergyDensity( Teuch
 		if (!storeLocal)
 		{
 			// Update info across processors
-			double localW, globalBlockSEDensity;
+			double localW, globalBlockSEDensity(0.0);
 			localW = W;
 
 			peridigm->getEpetraComm()->SumAll(&localW, &globalBlockSEDensity, 1);
