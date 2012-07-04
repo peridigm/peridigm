@@ -30,6 +30,7 @@ set(Peridigm_SOURCES
     ${DISCRETIZATION_DIR}/Peridigm_DiscretizationFactory.cpp
     ${DISCRETIZATION_DIR}/Peridigm_PdQuickGridDiscretization.cpp
     ${DISCRETIZATION_DIR}/Peridigm_PartialVolumeCalculator.cpp
+    ${DISCRETIZATION_DIR}/Peridigm_STKDiscretization.cpp
     ${IO_DIR}/Peridigm_OutputManager_VTK_XML.cpp
     ${IO_DIR}/Peridigm_OutputManager_ExodusII.cpp
     ${MATERIALS_DIR}/Peridigm_Material.cpp
@@ -42,9 +43,6 @@ set(Peridigm_SOURCES
     ${MATERIALS_DIR}/Peridigm_CriticalStretchDamageModel.cpp
     ${computeSOURCES}
 )
-if(PERIDIGM_STK)
-  set(Peridigm_SOURCES ${DISCRETIZATION_DIR}/Peridigm_STKDiscretization.cpp ${Peridigm_SOURCES})
-endif()
 
 set(Peridigm_LINK_LIBRARIES
     ${Trilinos_LIBRARIES}

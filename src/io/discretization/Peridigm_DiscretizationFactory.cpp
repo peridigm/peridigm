@@ -48,9 +48,7 @@
 #include <Teuchos_Assert.hpp>
 #include "Peridigm_DiscretizationFactory.hpp"
 #include "Peridigm_PdQuickGridDiscretization.hpp"
-#ifdef PERIDIGM_STK
 #include "Peridigm_STKDiscretization.hpp"
-#endif
 
 PeridigmNS::DiscretizationFactory::DiscretizationFactory(const Teuchos::RCP<Teuchos::ParameterList>& discParams_) :
   discParams(discParams_)
@@ -75,12 +73,7 @@ PeridigmNS::DiscretizationFactory::create(const Teuchos::RCP<const Epetra_Comm>&
 	discretization = Teuchos::rcp(new PeridigmNS::PdQuickGridDiscretization(epetra_comm, discParams));
   }
   else if(type == "Exodus"){
-#ifdef PERIDIGM_STK
 	discretization = Teuchos::rcp(new PeridigmNS::STKDiscretization(epetra_comm, discParams));
-#else
-    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
-		       "**** Exodus file support requires Netcdf and Trilinos STK package (rebuild with Netcdf and STK).\n");
-#endif
   }
   else{
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 

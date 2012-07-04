@@ -23,6 +23,7 @@ set(utPeridigm_SOURCES
     ${DISCRETIZATION_DIR}/Peridigm_DiscretizationFactory.cpp
     ${DISCRETIZATION_DIR}/Peridigm_PdQuickGridDiscretization.cpp
     ${DISCRETIZATION_DIR}/Peridigm_PartialVolumeCalculator.cpp
+    ${DISCRETIZATION_DIR}/Peridigm_STKDiscretization.cpp
     ${IO_DIR}/Peridigm_OutputManager_VTK_XML.cpp
     ${IO_DIR}/Peridigm_OutputManager_ExodusII.cpp
     ${MATERIALS_DIR}/Peridigm_Material.cpp
@@ -36,9 +37,6 @@ set(utPeridigm_SOURCES
     ${MESH_OUTPUT_DIR}/Field.cxx
     ${computeSOURCES}
 )
-if(PERIDIGM_STK)
-  set(utPeridigm_SOURCES ${DISCRETIZATION_DIR}/Peridigm_STKDiscretization.cpp ${utPeridigm_SOURCES})
-endif()
 
 add_executable(utPeridigm utPeridigm.cpp ${utPeridigm_SOURCES})
 target_link_libraries(utPeridigm ${Peridigm_LINK_LIBRARIES} ${Boost_LIBRARIES})

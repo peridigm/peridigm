@@ -52,7 +52,6 @@
 #include <Peridigm_DataManager.hpp>
 #include <Peridigm_DiscretizationFactory.hpp>
 
-
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
@@ -67,167 +66,159 @@
 #include <vector>
 #include "../../core/Peridigm.hpp"
 
-
 using namespace boost::unit_test;
 using namespace Teuchos;
 
+Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel() {
+  Teuchos::RCP<Epetra_Comm> comm;
+#ifdef HAVE_MPI
+  comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
+#else
+  comm = Teuchos::rcp(new Epetra_SerialComm);
+#endif
 
-Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel()
-{
-        Teuchos::RCP<Epetra_Comm> comm;
-        #ifdef HAVE_MPI
-                comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
-        #else
-                comm = Teuchos::rcp(new Epetra_SerialComm);
-        #endif
+  // set up parameter lists
+  // these data would normally be read from an input xml file
+  Teuchos::RCP<Teuchos::ParameterList> peridigmParams = rcp(new Teuchos::ParameterList());
 
+  // material parameters
+  Teuchos::ParameterList& materialParams = peridigmParams->sublist("Materials");
+  Teuchos::ParameterList& linearElasticMaterialParams = materialParams.sublist("My Linear Elastic Material");
+  linearElasticMaterialParams.set("Material Model", "Linear Elastic");
+  linearElasticMaterialParams.set("Density", 7800.0);
+  linearElasticMaterialParams.set("Bulk Modulus", 130.0e9);
+  linearElasticMaterialParams.set("Shear Modulus", 78.0e9);
 
-	// set up parameter lists
- 	// these data would normally be read from an input xml file
-        RCP<Teuchos::ParameterList> peridigmParams = rcp(new Teuchos::ParameterList());
+  // blocks
+  Teuchos::ParameterList& blockParams = peridigmParams->sublist("Blocks");
+  Teuchos::ParameterList& blockOneParams = blockParams.sublist("My Group of Blocks");
+  blockOneParams.set("Block Names", "block_1");
+  blockOneParams.set("Material", "My Linear Elastic Material");
 
-        // problem parameters
-        ParameterList& problemParams = peridigmParams->sublist("Problem");
-        problemParams.set("Verbose", false);
+  // Set up discretization parameterlist
+  Teuchos::ParameterList& discretizationParams = peridigmParams->sublist("Discretization");
+  discretizationParams.set("Type", "PdQuickGrid");
+  discretizationParams.set("Horizon", 5.0);
+  // pdQuickGrid tensor product mesh generator parameters
+  Teuchos::ParameterList& pdQuickGridParams = discretizationParams.sublist("TensorProduct3DMeshGenerator");
+  pdQuickGridParams.set("Type", "PdQuickGrid");
+  pdQuickGridParams.set("X Origin",  0.0);
+  pdQuickGridParams.set("Y Origin",  0.0);
+  pdQuickGridParams.set("Z Origin",  0.0);
+  pdQuickGridParams.set("X Length",  6.0);
+  pdQuickGridParams.set("Y Length",  1.0);
+  pdQuickGridParams.set("Z Length",  1.0);
+  pdQuickGridParams.set("Number Points X", 4);
+  pdQuickGridParams.set("Number Points Y", 1);
+  pdQuickGridParams.set("Number Points Z", 1);
 
-        // material parameters
-        ParameterList& materialParams = problemParams.sublist("Material");
-        ParameterList& linearElasticMaterialParams = materialParams.sublist("Linear Elastic");
-        linearElasticMaterialParams.set("Density", 7800.0);
-        linearElasticMaterialParams.set("Bulk Modulus", 130.0e9);
-        linearElasticMaterialParams.set("Shear Modulus", 78.0e9);
+  // output parameters (to force instantiation of data storage for compute classes in DataManager)
+  Teuchos::ParameterList& outputParams = peridigmParams->sublist("Output");
+  Teuchos::ParameterList& outputFields = outputParams.sublist("Output Variables");
+  outputFields.set("Strain_Energy", true);
 
-        // Set up discretization parameterlist
-        ParameterList& discretizationParams = problemParams.sublist("Discretization");
-        discretizationParams.set("Type", "PdQuickGrid");
-        discretizationParams.set("Horizon", 5.0);
-        // pdQuickGrid tensor product mesh generator parameters
-        ParameterList& pdQuickGridParams = discretizationParams.sublist("TensorProduct3DMeshGenerator");
-        pdQuickGridParams.set("Type", "PdQuickGrid");
-        pdQuickGridParams.set("X Origin",  0.0);
-        pdQuickGridParams.set("Y Origin",  0.0);
-        pdQuickGridParams.set("Z Origin",  0.0);
-        pdQuickGridParams.set("X Length",  6.0);
-        pdQuickGridParams.set("Y Length",  1.0);
-        pdQuickGridParams.set("Z Length",  1.0);
-        pdQuickGridParams.set("Number Points X", 4);
-        pdQuickGridParams.set("Number Points Y", 1);
-        pdQuickGridParams.set("Number Points Z", 1);
+  // create the Peridigm object
+  Teuchos::RCP<PeridigmNS::Peridigm> peridigm = Teuchos::rcp(new PeridigmNS::Peridigm(comm, peridigmParams));
 
-        // output parameters (to force instantiation of energy compute classes and data storage in DataManager)
-       	ParameterList& outputParams = peridigmParams->sublist("Output");
-        ParameterList& materialOutputFields = outputParams.sublist("Material Output Fields");
-        ParameterList& linearElasticMaterialFields = materialOutputFields.sublist("Linear Elastic");
-        linearElasticMaterialFields.set("Strain_Energy", true);
-
-	// create the Peridigm object
-	RCP<PeridigmNS::Peridigm> peridigm = Teuchos::rcp(new PeridigmNS::Peridigm(comm, peridigmParams));
-
-	return peridigm;
+  return peridigm;
 }
-
 
 void FourPointTest() 
 {
-	Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createFourPointModel();
+  Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createFourPointModel();
 
-        // Get the neighborhood data
-        PeridigmNS::NeighborhoodData neighborhoodData = (*peridigm->getGlobalNeighborhoodData());
-  	// Get the data manager
-        Teuchos::RCP<PeridigmNS::DataManager> dataManager = peridigm->getBlocks()->begin()->getDataManager();
-  	// Access the data we need
-        Teuchos::RCP<Epetra_Vector> volume, ref, coords, dilatation, strain_energy;
-	volume                = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
-	ref                   = dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE);
-	coords                = dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1);
-	dilatation            = dataManager->getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1);
-	strain_energy         = dataManager->getData(Field_NS::STRAIN_ENERGY, Field_ENUM::STEP_NP1);
-        // Get the neighborhood structure
-	const int numOwnedPoints = (neighborhoodData.NumOwnedPoints());
+  // Get the neighborhood data
+  PeridigmNS::NeighborhoodData neighborhoodData = (*peridigm->getGlobalNeighborhoodData());
+  // Get the data manager
+  Teuchos::RCP<PeridigmNS::DataManager> dataManager = peridigm->getBlocks()->begin()->getDataManager();
+  // Access the data we need
+  Teuchos::RCP<Epetra_Vector> volume, ref, coords, dilatation, strain_energy;
+  volume                = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
+  ref                   = dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE);
+  coords                = dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1);
+  dilatation            = dataManager->getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1);
+  strain_energy         = dataManager->getData(Field_NS::STRAIN_ENERGY, Field_ENUM::STEP_NP1);
+  // Get the neighborhood structure
+  const int numOwnedPoints = (neighborhoodData.NumOwnedPoints());
 
-	// Manufacture velocity data
-	double *ref_values = ref->Values();
-	double *coords_values = coords->Values();
-	double *dilatation_values = dilatation->Values();
-	int *myGIDs = ref->Map().MyGlobalElements();
-        int numElements = numOwnedPoints;
-	int numTotalElements = volume->Map().NumMyElements();
-	for (int i=0;i<numTotalElements;i++) 
-	{
-		int ID = myGIDs[i];
-		coords_values[3*i] = ref_values[3*i] + 3.0*ID;
-		coords_values[3*i+1] = ref_values[3*i+1] + 3.0*ID+1.0;
-		coords_values[3*i+2] = ref_values[3*i+2] + 3.0*ID+2.0;
-		dilatation_values[i] = 9.369;
-	}
+  // Manufacture velocity data
+  double *ref_values = ref->Values();
+  double *coords_values = coords->Values();
+  double *dilatation_values = dilatation->Values();
+  int *myGIDs = ref->Map().MyGlobalElements();
+  int numElements = numOwnedPoints;
+  int numTotalElements = volume->Map().NumMyElements();
+  for (int i=0;i<numTotalElements;i++) {
+    int ID = myGIDs[i];
+    coords_values[3*i] = ref_values[3*i] + 3.0*ID;
+    coords_values[3*i+1] = ref_values[3*i+1] + 3.0*ID+1.0;
+    coords_values[3*i+2] = ref_values[3*i+2] + 3.0*ID+2.0;
+    dilatation_values[i] = 9.369;
+  }
 
-  	// Create Compute_Energy object
-  	//Teuchos::RCP<PeridigmNS::Compute_Strain_Energy> computeStrainEnergy = Teuchos::rcp(new PeridigmNS::Compute_Strain_Energy(&(*peridigm)));
-	Teuchos::RCP<PeridigmNS::Compute_Local_Strain_Energy> computeLocalStrainEnergy = Teuchos::rcp(new PeridigmNS::Compute_Local_Strain_Energy(&(*peridigm)));
-	Teuchos::RCP<PeridigmNS::Compute_Global_Strain_Energy> computeGlobalStrainEnergy = Teuchos::rcp(new PeridigmNS::Compute_Global_Strain_Energy(&(*peridigm)));
+  // Create Compute_Energy object
+  //Teuchos::RCP<PeridigmNS::Compute_Strain_Energy> computeStrainEnergy = Teuchos::rcp(new PeridigmNS::Compute_Strain_Energy(&(*peridigm)));
+  Teuchos::RCP<PeridigmNS::Compute_Local_Strain_Energy> computeLocalStrainEnergy = Teuchos::rcp(new PeridigmNS::Compute_Local_Strain_Energy(&(*peridigm)));
+  Teuchos::RCP<PeridigmNS::Compute_Global_Strain_Energy> computeGlobalStrainEnergy = Teuchos::rcp(new PeridigmNS::Compute_Global_Strain_Energy(&(*peridigm)));
 
-	// Get the blocks
-	Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks = peridigm->getBlocks();
+  // Get the blocks
+  Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks = peridigm->getBlocks();
 
-  	// Call the compute class
-	int retval = computeLocalStrainEnergy->compute( blocks );
-  	BOOST_CHECK_EQUAL( retval, 0 );
-	int retval2 = computeGlobalStrainEnergy->compute( blocks );
-        BOOST_CHECK_EQUAL( retval2, 0 );
+  // Call the compute class
+  int retval = computeLocalStrainEnergy->compute( blocks );
+  BOOST_CHECK_EQUAL( retval, 0 );
+  int retval2 = computeGlobalStrainEnergy->compute( blocks );
+  BOOST_CHECK_EQUAL( retval2, 0 );
 
-  	// Now check that volumes and energy is correct
-  	double *volume_values = volume->Values();
-	double *strain_energy_values  = strain_energy->Values();
-  	double globalSE = blocks->begin()->getScalarData(Field_NS::GLOBAL_STRAIN_ENERGY);
-	BOOST_CHECK_CLOSE(globalSE, 4.0*8.559e12, 0.01);	// Check global scalar value
-	for (int i=0;i<numElements;i++)
-    		BOOST_CHECK_CLOSE(volume_values[i], 1.5, 1.0e-15);
-  	for (int i=0;i<numElements;i++) 
-	{
-		BOOST_CHECK_CLOSE(strain_energy_values[i],   8.559e12, 0.01);
-	}
+  // Now check that volumes and energy is correct
+  double *volume_values = volume->Values();
+  double *strain_energy_values  = strain_energy->Values();
+  double globalSE = blocks->begin()->getScalarData(Field_NS::GLOBAL_STRAIN_ENERGY);
+  BOOST_CHECK_CLOSE(globalSE, 4.0*8.559e12, 0.01);	// Check global scalar value
+  for (int i=0;i<numElements;i++)
+    BOOST_CHECK_CLOSE(volume_values[i], 1.5, 1.0e-15);
+  for (int i=0;i<numElements;i++) {
+    BOOST_CHECK_CLOSE(strain_energy_values[i],   8.559e12, 0.01);
+  }
 }
-
 
 bool init_unit_test_suite() 
 {
-  	// Add a suite for each processor in the test
- 	bool success = true;
+  // Add a suite for each processor in the test
+  bool success = true;
 
-	test_suite* proc = BOOST_TEST_SUITE("utPeridigm_Compute_Strain_Energy");
-  	proc->add(BOOST_TEST_CASE(&FourPointTest));
-  	framework::master_test_suite().add(proc);
+  test_suite* proc = BOOST_TEST_SUITE("utPeridigm_Compute_Strain_Energy");
+  proc->add(BOOST_TEST_CASE(&FourPointTest));
+  framework::master_test_suite().add(proc);
 
-  	return success;
+  return success;
 }
 
 bool init_unit_test() 
 {
-  	return init_unit_test_suite();
+  return init_unit_test_suite();
 }
 
 int main (int argc, char* argv[]) 
 {
-  	int numProcs = 1;
-	#ifdef HAVE_MPI
-  		MPI_Init(&argc,&argv);
-  		MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
-	#endif
+  int numProcs = 1;
+#ifdef HAVE_MPI
+  MPI_Init(&argc,&argv);
+  MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+#endif
 
-  	int returnCode = -1;
+  int returnCode = -1;
   
-  	if(numProcs >= 1 && numProcs <= 4)
-	{
-    		returnCode = unit_test_main(init_unit_test, argc, argv);
-	}
-	else
-	{
-		std::cerr << "Unit test runtime ERROR: utPeridigm_Compute_Strain_Energy only makes sense on 1 to 4 processors." << std::endl;
-	}
+  if(numProcs >= 1 && numProcs <= 4) {
+    returnCode = unit_test_main(init_unit_test, argc, argv);
+  }
+  else {
+    std::cerr << "Unit test runtime ERROR: utPeridigm_Compute_Strain_Energy only makes sense on 1 to 4 processors." << std::endl;
+  }
   
-	#ifdef HAVE_MPI
-  		MPI_Finalize();
-	#endif
+#ifdef HAVE_MPI
+  MPI_Finalize();
+#endif
   
-  	return returnCode;
+  return returnCode;
 }
