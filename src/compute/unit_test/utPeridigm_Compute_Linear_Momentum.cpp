@@ -50,7 +50,6 @@
 #include <Peridigm_DataManager.hpp>
 #include <Peridigm_DiscretizationFactory.hpp>
 
-
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
@@ -65,163 +64,155 @@
 #include <vector>
 #include "../../core/Peridigm.hpp"
 
-
 using namespace boost::unit_test;
 
-Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel()
-{
-        Teuchos::RCP<Epetra_Comm> comm;
-        #ifdef HAVE_MPI
-                comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
-        #else
-                comm = Teuchos::rcp(new Epetra_SerialComm);
-        #endif
+Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel() {
+  Teuchos::RCP<Epetra_Comm> comm;
+#ifdef HAVE_MPI
+  comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
+#else
+  comm = Teuchos::rcp(new Epetra_SerialComm);
+#endif
 
+  // set up parameter lists
+  // these data would normally be read from an input xml file
+  Teuchos::RCP<Teuchos::ParameterList> peridigmParams = rcp(new Teuchos::ParameterList());
 
-	// set up parameter lists
- 	// these data would normally be read from an input xml file
-        Teuchos::RCP<Teuchos::ParameterList> peridigmParams = rcp(new Teuchos::ParameterList());
+  // material parameters
+  Teuchos::ParameterList& materialParams = peridigmParams->sublist("Materials");
+  Teuchos::ParameterList& linearElasticMaterialParams = materialParams.sublist("My Linear Elastic Material");
+  linearElasticMaterialParams.set("Material Model", "Linear Elastic");
+  linearElasticMaterialParams.set("Density", 7800.0);
+  linearElasticMaterialParams.set("Bulk Modulus", 130.0e9);
+  linearElasticMaterialParams.set("Shear Modulus", 78.0e9);
 
-        // problem parameters
-        Teuchos::ParameterList& problemParams = peridigmParams->sublist("Problem");
-        problemParams.set("Verbose", false);
+  // blocks
+  Teuchos::ParameterList& blockParams = peridigmParams->sublist("Blocks");
+  Teuchos::ParameterList& blockOneParams = blockParams.sublist("My Group of Blocks");
+  blockOneParams.set("Block Names", "block_1");
+  blockOneParams.set("Material", "My Linear Elastic Material");
 
-        // material parameters
-        Teuchos::ParameterList& materialParams = problemParams.sublist("Material");
-        Teuchos::ParameterList& linearElasticMaterialParams = materialParams.sublist("Linear Elastic");
-        linearElasticMaterialParams.set("Density", 7800.0);
-        linearElasticMaterialParams.set("Bulk Modulus", 130.0e9);
-        linearElasticMaterialParams.set("Shear Modulus", 78.0e9);
+  // Set up discretization parameterlist
+  Teuchos::ParameterList& discretizationParams = peridigmParams->sublist("Discretization");
+  discretizationParams.set("Type", "PdQuickGrid");
+  discretizationParams.set("Horizon", 5.0);
+  // pdQuickGrid tensor product mesh generator parameters
+  Teuchos::ParameterList& pdQuickGridParams = discretizationParams.sublist("TensorProduct3DMeshGenerator");
+  pdQuickGridParams.set("Type", "PdQuickGrid");
+  pdQuickGridParams.set("X Origin",  0.0);
+  pdQuickGridParams.set("Y Origin",  0.0);
+  pdQuickGridParams.set("Z Origin",  0.0);
+  pdQuickGridParams.set("X Length",  6.0);
+  pdQuickGridParams.set("Y Length",  1.0);
+  pdQuickGridParams.set("Z Length",  1.0);
+  pdQuickGridParams.set("Number Points X", 4);
+  pdQuickGridParams.set("Number Points Y", 1);
+  pdQuickGridParams.set("Number Points Z", 1);
 
-        // Set up discretization parameterlist
-        Teuchos::ParameterList& discretizationParams = problemParams.sublist("Discretization");
-        discretizationParams.set("Type", "PdQuickGrid");
-        discretizationParams.set("Horizon", 5.0);
-        // pdQuickGrid tensor product mesh generator parameters
-        Teuchos::ParameterList& pdQuickGridParams = discretizationParams.sublist("TensorProduct3DMeshGenerator");
-        pdQuickGridParams.set("Type", "PdQuickGrid");
-        pdQuickGridParams.set("X Origin",  0.0);
-        pdQuickGridParams.set("Y Origin",  0.0);
-        pdQuickGridParams.set("Z Origin",  0.0);
-        pdQuickGridParams.set("X Length",  6.0);
-        pdQuickGridParams.set("Y Length",  1.0);
-        pdQuickGridParams.set("Z Length",  1.0);
-        pdQuickGridParams.set("Number Points X", 4);
-        pdQuickGridParams.set("Number Points Y", 1);
-        pdQuickGridParams.set("Number Points Z", 1);
+  // output parameters (to force instantiation of data storage for compute classes in DataManager)
+  Teuchos::ParameterList& outputParams = peridigmParams->sublist("Output");
+  Teuchos::ParameterList& outputFields = outputParams.sublist("Output Variables");
+  outputFields.set("Linear_Momentum", true);
 
-	// output parameters (to force instantiation of linear momentum compute class and data storage in DataManager)
-       	Teuchos::ParameterList& outputParams = peridigmParams->sublist("Output");
-        Teuchos::ParameterList& materialOutputFields = outputParams.sublist("Material Output Fields");
-        Teuchos::ParameterList& linearElasticMaterialFields = materialOutputFields.sublist("Linear Elastic");
-        linearElasticMaterialFields.set("Linear_Momentum", true);
+  // create the Peridigm object
+  Teuchos::RCP<PeridigmNS::Peridigm> peridigm = Teuchos::rcp(new PeridigmNS::Peridigm(comm, peridigmParams));
 
-	// create the Peridigm object
-	Teuchos::RCP<PeridigmNS::Peridigm> peridigm = Teuchos::rcp(new PeridigmNS::Peridigm(comm, peridigmParams));
-
-	return peridigm;
+  return peridigm;
 }
-
 
 void FourPointTest() 
 {
-	Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createFourPointModel();
+  Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createFourPointModel();
 
-  	// Get the data manager
-    Teuchos::RCP<PeridigmNS::DataManager> dataManager = peridigm->getBlocks()->begin()->getDataManager();
-        // Get the neighborhood data
-      	PeridigmNS::NeighborhoodData neighborhoodData = (*peridigm->getGlobalNeighborhoodData());
-	// Access the data we need
-        Teuchos::RCP<Epetra_Vector> velocity, volume, linear_momentum;
-        velocity        = dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1);
-        volume          = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
-	linear_momentum = dataManager->getData(Field_NS::LINEAR_MOMENTUM3D, Field_ENUM::STEP_NP1); 
-	// Get the neighborhood structure
-        const int numOwnedPoints = (neighborhoodData.NumOwnedPoints());
+  // Get the data manager
+  Teuchos::RCP<PeridigmNS::DataManager> dataManager = peridigm->getBlocks()->begin()->getDataManager();
+  // Get the neighborhood data
+  PeridigmNS::NeighborhoodData neighborhoodData = (*peridigm->getGlobalNeighborhoodData());
+  // Access the data we need
+  Teuchos::RCP<Epetra_Vector> velocity, volume, linear_momentum;
+  velocity        = dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1);
+  volume          = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
+  linear_momentum = dataManager->getData(Field_NS::LINEAR_MOMENTUM3D, Field_ENUM::STEP_NP1); 
+  // Get the neighborhood structure
+  const int numOwnedPoints = (neighborhoodData.NumOwnedPoints());
 
-  	// Manufacture velocity data
-  	double *velocity_values  = velocity->Values();
-	int *myGIDs = velocity->Map().MyGlobalElements();
-  	int numElements = numOwnedPoints;
-	int numTotalElements = volume->Map().NumMyElements();
-  	for (int i=0;i<numTotalElements;i++) 
-	{
-		int ID = myGIDs[i];
-    		velocity_values[3*i] = 3.0*ID;
-    		velocity_values[3*i+1] = (3.0*ID)+1.0;
-    		velocity_values[3*i+2] = (3.0*ID)+2.0;
-	}
+  // Manufacture velocity data
+  double *velocity_values  = velocity->Values();
+  int *myGIDs = velocity->Map().MyGlobalElements();
+  int numElements = numOwnedPoints;
+  int numTotalElements = volume->Map().NumMyElements();
+  for (int i=0;i<numTotalElements;i++) {
+    int ID = myGIDs[i];
+    velocity_values[3*i] = 3.0*ID;
+    velocity_values[3*i+1] = (3.0*ID)+1.0;
+    velocity_values[3*i+2] = (3.0*ID)+2.0;
+  }
 
-  	// Create Compute_Linear_Momentum object
-  	Teuchos::RCP<PeridigmNS::Compute_Linear_Momentum> computeLinearMomentum = Teuchos::rcp(new PeridigmNS::Compute_Linear_Momentum(&(*peridigm)));
+  // Create Compute_Linear_Momentum object
+  Teuchos::RCP<PeridigmNS::Compute_Linear_Momentum> computeLinearMomentum = Teuchos::rcp(new PeridigmNS::Compute_Linear_Momentum(&(*peridigm)));
 
-	// Get the blocks
-	Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks = peridigm->getBlocks();
+  // Get the blocks
+  Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks = peridigm->getBlocks();
 
-  	// Call the compute class
-	int retval = computeLinearMomentum->compute(blocks);
-  	BOOST_CHECK_EQUAL( retval, 0 );
+  // Call the compute class
+  int retval = computeLinearMomentum->compute(blocks);
+  BOOST_CHECK_EQUAL( retval, 0 );
 	
-	double density = peridigm->getBlocks()->begin()->getMaterialModel()->Density();
-
-  	// Now check that volumes and linear momentum is correct
-  	double *volume_values = volume->Values();
-  	double *linear_momentum_values  = linear_momentum->Values();
-	double globalLM = blocks->begin()->getScalarData(Field_NS::GLOBAL_LINEAR_MOMENTUM);
-  	BOOST_CHECK_CLOSE(globalLM, 450715.83, 0.00001);	// Check global scalar value
-	for (int i=0;i<numElements;i++)
-    		BOOST_CHECK_CLOSE(volume_values[i], 1.5, 1.0e-15);
-  	for (int i=0;i<numElements;i++) 
-	{
-		int ID = myGIDs[i];
-		double mass = density*volume_values[ID];
-    		BOOST_CHECK_CLOSE(linear_momentum_values[3*i],   mass*(3.0*ID),   1.0e-15);
-    		BOOST_CHECK_CLOSE(linear_momentum_values[3*i+1], mass*((3.0*ID)+1.0), 1.0e-15);
-    		BOOST_CHECK_CLOSE(linear_momentum_values[3*i+2], mass*((3.0*ID)+2.0), 1.0e-15);
-	}
-	
+  double density = peridigm->getBlocks()->begin()->getMaterialModel()->Density();
+  
+  // Now check that volumes and linear momentum is correct
+  double *volume_values = volume->Values();
+  double *linear_momentum_values  = linear_momentum->Values();
+  double globalLM = blocks->begin()->getScalarData(Field_NS::GLOBAL_LINEAR_MOMENTUM);
+  BOOST_CHECK_CLOSE(globalLM, 450715.83, 0.00001);	// Check global scalar value
+  for (int i=0;i<numElements;i++)
+    BOOST_CHECK_CLOSE(volume_values[i], 1.5, 1.0e-15);
+  for (int i=0;i<numElements;i++) {
+    int ID = myGIDs[i];
+    double mass = density*volume_values[ID];
+    BOOST_CHECK_CLOSE(linear_momentum_values[3*i],   mass*(3.0*ID),   1.0e-15);
+    BOOST_CHECK_CLOSE(linear_momentum_values[3*i+1], mass*((3.0*ID)+1.0), 1.0e-15);
+    BOOST_CHECK_CLOSE(linear_momentum_values[3*i+2], mass*((3.0*ID)+2.0), 1.0e-15);
+  }
 }
-
 
 bool init_unit_test_suite() 
 {
-  	// Add a suite for each processor in the test
- 	bool success = true;
+  // Add a suite for each processor in the test
+  bool success = true;
 
-	test_suite* proc = BOOST_TEST_SUITE("utPeridigm_Compute_Linear_Momentum");
-  	proc->add(BOOST_TEST_CASE(&FourPointTest));
-  	framework::master_test_suite().add(proc);
+  test_suite* proc = BOOST_TEST_SUITE("utPeridigm_Compute_Linear_Momentum");
+  proc->add(BOOST_TEST_CASE(&FourPointTest));
+  framework::master_test_suite().add(proc);
 
-  	return success;
+  return success;
 }
 
 bool init_unit_test() 
 {
-  	return init_unit_test_suite();
+  return init_unit_test_suite();
 }
 
 int main (int argc, char* argv[]) 
 {
-  	int numProcs = 1;
-	#ifdef HAVE_MPI
-  		MPI_Init(&argc,&argv);
-  		MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
-	#endif
+  int numProcs = 1;
+#ifdef HAVE_MPI
+  MPI_Init(&argc,&argv);
+  MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+#endif
 
-  	int returnCode = -1;
+  int returnCode = -1;
   
-  	if(numProcs >= 1 && numProcs <= 4)
-	{
-    		returnCode = unit_test_main(init_unit_test, argc, argv);
-	}
-	else
-	{
-		std::cerr << "Unit test runtime ERROR: utPeridigm_Compute_Linear_Momentum only makes sense on 1 to 4 processors." << std::endl;
-	}
+  if(numProcs >= 1 && numProcs <= 4) {
+    returnCode = unit_test_main(init_unit_test, argc, argv);
+  }
+  else {
+    std::cerr << "Unit test runtime ERROR: utPeridigm_Compute_Linear_Momentum only makes sense on 1 to 4 processors." << std::endl;
+  }
   
-	#ifdef HAVE_MPI
-  		MPI_Finalize();
-	#endif
+#ifdef HAVE_MPI
+  MPI_Finalize();
+#endif
   
-  	return returnCode;
+  return returnCode;
 }

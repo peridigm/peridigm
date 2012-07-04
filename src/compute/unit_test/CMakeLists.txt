@@ -51,30 +51,13 @@ set(utPeridigm_Compute_Strain_Energy_SOURCES
    ./utPeridigm_Compute_Strain_Energy.cpp
 )
 
-
-if(PERIDIGM_STK)
-   set(utPeridigm_Compute_Force_SOURCES ${DISCRETIZATION_DIR}/Peridigm_STKDiscretization.cpp ${utPeridigm_Compute_Force_SOURCES})
-endif()
-if(PERIDIGM_STK)
-   set(utPeridigm_Compute_Angular_Momentum_SOURCES ${DISCRETIZATION_DIR}/Peridigm_STKDiscretization.cpp ${utPeridigm_Compute_Angular_Momentum_SOURCES})
-endif()
-if(PERIDIGM_STK)
-   set(utPeridigm_Compute_Linear_Momentum_SOURCES ${DISCRETIZATION_DIR}/Peridigm_STKDiscretization.cpp ${utPeridigm_Compute_Linear_Momentum_SOURCES})
-endif()
-#if(PERIDIGM_STK)
-#   set(utPeridigm_Compute_Energy_SOURCES ${DISCRETIZATION_DIR}/Peridigm_STKDiscretization.cpp ${utPeridigm_Compute_Energy_SOURCES})
-#endif()
-if(PERIDIGM_STK)
-   set(utPeridigm_Compute_Kinetic_Energy_SOURCES ${DISCRETIZATION_DIR}/Peridigm_STKDiscretization.cpp ${utPeridigm_Compute_Kinetic_Energy_SOURCES})
-endif()
-if(PERIDIGM_STK)
-   set(utPeridigm_Compute_Strain_Energy_Density_SOURCES ${DISCRETIZATION_DIR}/Peridigm_STKDiscretization.cpp ${utPeridigm_Compute_Strain_Energy_Density_SOURCES})
-endif()
-if(PERIDIGM_STK)
-   set(utPeridigm_Compute_Strain_Energy_SOURCES ${DISCRETIZATION_DIR}/Peridigm_STKDiscretization.cpp ${utPeridigm_Compute_Strain_Energy_SOURCES})
-endif()
-
-
+set(utPeridigm_Compute_Force_SOURCES ${DISCRETIZATION_DIR}/Peridigm_STKDiscretization.cpp ${utPeridigm_Compute_Force_SOURCES})
+set(utPeridigm_Compute_Angular_Momentum_SOURCES ${DISCRETIZATION_DIR}/Peridigm_STKDiscretization.cpp ${utPeridigm_Compute_Angular_Momentum_SOURCES})
+set(utPeridigm_Compute_Linear_Momentum_SOURCES ${DISCRETIZATION_DIR}/Peridigm_STKDiscretization.cpp ${utPeridigm_Compute_Linear_Momentum_SOURCES})
+#set(utPeridigm_Compute_Energy_SOURCES ${DISCRETIZATION_DIR}/Peridigm_STKDiscretization.cpp ${utPeridigm_Compute_Energy_SOURCES})
+set(utPeridigm_Compute_Kinetic_Energy_SOURCES ${DISCRETIZATION_DIR}/Peridigm_STKDiscretization.cpp ${utPeridigm_Compute_Kinetic_Energy_SOURCES})
+set(utPeridigm_Compute_Strain_Energy_Density_SOURCES ${DISCRETIZATION_DIR}/Peridigm_STKDiscretization.cpp ${utPeridigm_Compute_Strain_Energy_Density_SOURCES})
+set(utPeridigm_Compute_Strain_Energy_SOURCES ${DISCRETIZATION_DIR}/Peridigm_STKDiscretization.cpp ${utPeridigm_Compute_Strain_Energy_SOURCES})
 
 add_executable(utPeridigm_Compute_Force ${utPeridigm_Compute_Force_SOURCES})
 target_link_libraries(utPeridigm_Compute_Force
@@ -112,25 +95,23 @@ target_link_libraries(utPeridigm_Compute_Strain_Energy
    ${Boost_LIBRARIES}
 )
 
+add_test (utPeridigm_Compute_Force python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_Compute_Force)
+add_test (utPeridigm_Compute_Force_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_Compute_Force)
 
+add_test (utPeridigm_Compute_Angular_Momentum python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_Compute_Angular_Momentum)
+add_test (utPeridigm_Compute_Angular_Momentum_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_Compute_Angular_Momentum)
 
-#add_test (utPeridigm_Compute_Force python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_Compute_Force)
-#add_test (utPeridigm_Compute_Force_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_Compute_Force)
+add_test (utPeridigm_Compute_Linear_Momentum python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_Compute_Linear_Momentum)
+add_test (utPeridigm_Compute_Linear_Momentum_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_Compute_Linear_Momentum)
 
-#add_test (utPeridigm_Compute_Angular_Momentum python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_Compute_Angular_Momentum)
-#add_test (utPeridigm_Compute_Angular_Momentum_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_Compute_Angular_Momentum)
+#add_test (utPeridigm_Compute_Energy python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_Compute_Energy)
+#add_test (utPeridigm_Compute_Energy_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_Compute_Energy)
 
-#add_test (utPeridigm_Compute_Linear_Momentum python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_Compute_Linear_Momentum)
-#add_test (utPeridigm_Compute_Linear_Momentum_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_Compute_Linear_Momentum)
+add_test (utPeridigm_Compute_Kinetic_Energy python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_Compute_Kinetic_Energy)
+add_test (utPeridigm_Compute_Kinetic_Energy_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_Compute_Kinetic_Energy)
 
-####add_test (utPeridigm_Compute_Energy python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_Compute_Energy)
-####add_test (utPeridigm_Compute_Energy_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_Compute_Energy)
+add_test (utPeridigm_Compute_Strain_Energy_Density python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_Compute_Strain_Energy_Density)
+add_test (utPeridigm_Compute_Strain_Energy_Density_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_Compute_Strain_Energy_Density)
 
-#add_test (utPeridigm_Compute_Kinetic_Energy python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_Compute_Kinetic_Energy)
-#add_test (utPeridigm_Compute_Kinetic_Energy_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_Compute_Kinetic_Energy)
-
-#add_test (utPeridigm_Compute_Strain_Energy_Density python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_Compute_Strain_Energy_Density)
-#add_test (utPeridigm_Compute_Strain_Energy_Density_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_Compute_Strain_Energy_Density)
-
-#add_test (utPeridigm_Compute_Strain_Energy python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_Compute_Strain_Energy)
-#add_test (utPeridigm_Compute_Strain_Energy_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_Compute_Strain_Energy)
+add_test (utPeridigm_Compute_Strain_Energy python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_Compute_Strain_Energy)
+add_test (utPeridigm_Compute_Strain_Energy_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_Compute_Strain_Energy)

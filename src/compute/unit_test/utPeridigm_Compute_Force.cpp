@@ -66,32 +66,34 @@
 
 using namespace boost::unit_test;
 
-
 Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel() {
   Teuchos::RCP<Epetra_Comm> comm;
-  #ifdef HAVE_MPI
-          comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
-  #else
-          comm = Teuchos::rcp(new Epetra_SerialComm);
-  #endif
+#ifdef HAVE_MPI
+  comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
+#else
+  comm = Teuchos::rcp(new Epetra_SerialComm);
+#endif
 
   // set up parameter lists
   // these data would normally be read from an input xml file
   Teuchos::RCP<Teuchos::ParameterList> peridigmParams = rcp(new Teuchos::ParameterList());
 
-  // problem parameters
-  Teuchos::ParameterList& problemParams = peridigmParams->sublist("Problem");
-  problemParams.set("Verbose", false);
-
   // material parameters
-  Teuchos::ParameterList& materialParams = problemParams.sublist("Material");
-  Teuchos::ParameterList& linearElasticMaterialParams = materialParams.sublist("Linear Elastic");
+  Teuchos::ParameterList& materialParams = peridigmParams->sublist("Materials");
+  Teuchos::ParameterList& linearElasticMaterialParams = materialParams.sublist("My Linear Elastic Material");
+  linearElasticMaterialParams.set("Material Model", "Linear Elastic");
   linearElasticMaterialParams.set("Density", 7800.0);
   linearElasticMaterialParams.set("Bulk Modulus", 130.0e9);
   linearElasticMaterialParams.set("Shear Modulus", 78.0e9);
 
+  // blocks
+  Teuchos::ParameterList& blockParams = peridigmParams->sublist("Blocks");
+  Teuchos::ParameterList& blockOneParams = blockParams.sublist("My Group of Blocks");
+  blockOneParams.set("Block Names", "block_1");
+  blockOneParams.set("Material", "My Linear Elastic Material");
+
   // Set up discretization parameterlist
-  Teuchos::ParameterList& discretizationParams = problemParams.sublist("Discretization");
+  Teuchos::ParameterList& discretizationParams = peridigmParams->sublist("Discretization");
   discretizationParams.set("Type", "PdQuickGrid");
   discretizationParams.set("Horizon", 5.0);
   // pdQuickGrid tensor product mesh generator parameters
@@ -108,11 +110,9 @@ Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel() {
   pdQuickGridParams.set("Number Points Z", 1);
 
   // output parameters (to force instantiation of data storage for compute classes in DataManager)
-
   Teuchos::ParameterList& outputParams = peridigmParams->sublist("Output");
-  Teuchos::ParameterList& materialOutputFields = outputParams.sublist("Material Output Fields");
-  Teuchos::ParameterList& linearElasticMaterialFields = materialOutputFields.sublist("Linear Elastic");
-  linearElasticMaterialFields.set("Force", true);
+  Teuchos::ParameterList& outputFields = outputParams.sublist("Output Variables");
+  outputFields.set("Force", true);
 
   // create the Peridigm object
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm = Teuchos::rcp(new PeridigmNS::Peridigm(comm, peridigmParams));
