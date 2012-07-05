@@ -166,37 +166,20 @@ Teuchos::ParameterList PeridigmNS::OutputManager_ExodusII::getValidParameterList
   // Create a vector of valid output variables (field specs)
   // Do not include bond data, since we can not output it
   std::vector<Field_NS::FieldSpec> validOutputSpecs;
-  // Get valid output fields from parent (Peridigm object)
-  std::vector<Field_NS::FieldSpec> peridigmSpecs = peridigm->getFieldSpecs();
-  for(unsigned int j=0; j<peridigmSpecs.size() ; ++j) {
-    if (peridigmSpecs[j].getRelation() != Field_ENUM::BOND)
-      validOutputSpecs.push_back(peridigmSpecs[j]);
+
+  // Get valid output fields from data manager
+  std::vector< PeridigmNS::Block >::iterator blockIter;
+  Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks = peridigm->getBlocks();
+  for(blockIter = blocks->begin(); blockIter != blocks->end(); blockIter++) {
+    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > blockSpecs = blockIter->getDataManager()->getFieldSpecs();
+    std::vector< Field_NS::FieldSpec >::iterator specIter;
+    for(specIter = blockSpecs->begin(); specIter != blockSpecs->end(); specIter++)
+      validOutputSpecs.push_back(*specIter);
   }
-  // Get valid output fields from compute manager
-  std::vector<Field_NS::FieldSpec> computeSpecs = peridigm->computeManager->getFieldSpecs();
-  for(unsigned int j=0; j<computeSpecs.size() ; ++j) {
-    if (computeSpecs[j].getRelation() != Field_ENUM::BOND)
-      validOutputSpecs.push_back(computeSpecs[j]);
-  }
-  // Get valid output fields from the instantiated material models
-  std::map< std::string, Teuchos::RCP<const PeridigmNS::Material> >::iterator it;
-  std::map< std::string, Teuchos::RCP<const PeridigmNS::Material> > materialModels = peridigm->getMaterialModels();
-  for(it = materialModels.begin() ; it != materialModels.end() ; ++it){
-    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > materialSpecs = it->second->VariableSpecs();
-    for(unsigned int j=0; j<materialSpecs->size() ; ++j) {
-      if (materialSpecs->operator[](j).getRelation() != Field_ENUM::BOND)
-        validOutputSpecs.push_back(materialSpecs->operator[](j));
-    }
-  }
+
   // Add in any remaining field specs that are known to be valid
   validOutputSpecs.push_back(Field_NS::GID);
   validOutputSpecs.push_back(Field_NS::PROC_NUM);
-  validOutputSpecs.push_back(Field_NS::KINETIC_ENERGY);
-  validOutputSpecs.push_back(Field_NS::STRAIN_ENERGY);
-  validOutputSpecs.push_back(Field_NS::STRAIN_ENERGY_DENSITY);
-  validOutputSpecs.push_back(Field_NS::ANGULAR_MOMENTUM3D);
-  validOutputSpecs.push_back(Field_NS::LINEAR_MOMENTUM3D);
-  validOutputSpecs.push_back(Field_NS::GLOBAL_LINEAR_MOMENTUM);
 
   // Remove duplicates and sort for consistency
   std::unique(validOutputSpecs.begin(), validOutputSpecs.end());
@@ -210,7 +193,6 @@ Teuchos::ParameterList PeridigmNS::OutputManager_ExodusII::getValidParameterList
 }
 
 PeridigmNS::OutputManager_ExodusII::~OutputManager_ExodusII() {
-
 }
 
 void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, double current_time) {
