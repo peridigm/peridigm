@@ -45,13 +45,13 @@
 // ************************************************************************
 //@HEADER
 
-
+/*
 #ifdef COMPUTE_CLASS
 
 ComputeClass(Strain_Energy_Density,Compute_Strain_Energy_Density,peridigm)
 
 #else
-
+*/
 
 #ifndef PERIDIGM_COMPUTE_STRAIN_ENERGY_DENSITY_HPP
 #define PERIDIGM_COMPUTE_STRAIN_ENERGY_DENSITY_HPP
@@ -95,4 +95,4 @@ namespace PeridigmNS {
 }
 
 #endif // PERIDIGM_COMPUTE_STRAIN_ENERGY_DENSITY_HPP
-#endif // COMPUTE_CLASS
+//#endif // COMPUTE_CLASS

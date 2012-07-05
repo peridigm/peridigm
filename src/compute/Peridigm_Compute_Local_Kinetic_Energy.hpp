@@ -78,7 +78,7 @@ namespace PeridigmNS {
   //! Destructor.
   ~Compute_Local_Kinetic_Energy();
 
-  //! Perform computation                                                                                                                                                                                                                                 
+  //! Perform computation
   int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
 
   //! Returns the fieldspecs computed by this class

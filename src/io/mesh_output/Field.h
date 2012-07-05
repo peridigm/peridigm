@@ -240,7 +240,7 @@ const Field_NS::FieldSpec GLOBAL_KINETIC_ENERGY(Field_ENUM::KINETIC_ENERGY,     
 const Field_NS::FieldSpec GLOBAL_STRAIN_ENERGY(Field_ENUM::STRAIN_ENERGY,                 Field_ENUM::GLOBAL, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Global_Strain_Energy");
 const Field_NS::FieldSpec GLOBAL_STRAIN_ENERGY_DENSITY(Field_ENUM::STRAIN_ENERGY_DENSITY, Field_ENUM::GLOBAL, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Global_Strain_Energy_Density");
 const Field_NS::FieldSpec GLOBAL_LINEAR_MOMENTUM(Field_ENUM::LINEAR_MOMENTUM,             Field_ENUM::GLOBAL, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Global_Linear_Momentum");
-const Field_NS::FieldSpec GLOBAL_ANGULAR_MOMENTUM(Field_ENUM::ANGULAR_MOMENTUM,             Field_ENUM::GLOBAL, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Global_Angular_Momentum");
+const Field_NS::FieldSpec GLOBAL_ANGULAR_MOMENTUM(Field_ENUM::ANGULAR_MOMENTUM,           Field_ENUM::GLOBAL, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Global_Angular_Momentum");
 
 /*
  * ELEMENT SCALAR FieldSpecs (scalar fields defined over elements)

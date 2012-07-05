@@ -46,7 +46,8 @@
 //@HEADER
 
 #include <Peridigm_AbstractDiscretization.hpp>
-#include "../Peridigm_Compute_Linear_Momentum.hpp"
+#include "../Peridigm_Compute_Local_Linear_Momentum.hpp"
+#include "../Peridigm_Compute_Global_Linear_Momentum.hpp"
 #include <Peridigm_DataManager.hpp>
 #include <Peridigm_DiscretizationFactory.hpp>
 
@@ -113,6 +114,7 @@ Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel() {
   Teuchos::ParameterList& outputParams = peridigmParams->sublist("Output");
   Teuchos::ParameterList& outputFields = outputParams.sublist("Output Variables");
   outputFields.set("Linear_Momentum", true);
+  outputFields.set("Global_Linear_Momentum", true);
 
   // create the Peridigm object
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm = Teuchos::rcp(new PeridigmNS::Peridigm(comm, peridigmParams));
@@ -149,14 +151,18 @@ void FourPointTest()
   }
 
   // Create Compute_Linear_Momentum object
-  Teuchos::RCP<PeridigmNS::Compute_Linear_Momentum> computeLinearMomentum = Teuchos::rcp(new PeridigmNS::Compute_Linear_Momentum(&(*peridigm)));
+  //Teuchos::RCP<PeridigmNS::Compute_Linear_Momentum> computeLinearMomentum = Teuchos::rcp(new PeridigmNS::Compute_Linear_Momentum(&(*peridigm)));
+  Teuchos::RCP<PeridigmNS::Compute_Local_Linear_Momentum> computeLocalLinearMomentum = Teuchos::rcp(new PeridigmNS::Compute_Local_Linear_Momentum(&(*peridigm)));
+  Teuchos::RCP<PeridigmNS::Compute_Global_Linear_Momentum> computeGlobalLinearMomentum = Teuchos::rcp(new PeridigmNS::Compute_Global_Linear_Momentum(&(*peridigm)));
 
   // Get the blocks
   Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks = peridigm->getBlocks();
 
   // Call the compute class
-  int retval = computeLinearMomentum->compute(blocks);
+  int retval = computeLocalLinearMomentum->compute(blocks);
   BOOST_CHECK_EQUAL( retval, 0 );
+  int retval2 = computeGlobalLinearMomentum->compute(blocks);
+  BOOST_CHECK_EQUAL( retval2, 0 );
 	
   double density = peridigm->getBlocks()->begin()->getMaterialModel()->Density();
   

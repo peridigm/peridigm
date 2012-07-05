@@ -48,7 +48,7 @@
 
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Kinetic_Energy,Compute_Local_Strain_Energy,peridigm)
+ComputeClass(Strain_Energy,Compute_Local_Strain_Energy,peridigm)
 
 #else
 

@@ -1,4 +1,4 @@
-/*! \file Peridigm_Compute_Kinetic_Energy.hpp */
+/*! \file Peridigm_Compute_Global_Angular_Momentum.cpp */
 
 //@HEADER
 // ************************************************************************
@@ -39,61 +39,46 @@
 // Questions?
 // David J. Littlewood   djlittl@sandia.gov
 // John A. Mitchell      jamitch@sandia.gov
-// Michael L. Parks      mlparks@sandia.gov
+// Michael L. Parks      parks@sandia.gov
 // Stewart A. Silling    sasilli@sandia.gov
 //
 // ************************************************************************
 //@HEADER
 
-/*
-#ifdef COMPUTE_CLASS
+#include <vector>
 
-ComputeClass(Kinetic_Energy,Compute_Kinetic_Energy,peridigm)
+#include "Peridigm_Compute_Global_Angular_Momentum.hpp"
+#include "../core/Peridigm.hpp"
 
-#else
-*/
+//! Standard constructor.
+PeridigmNS::Compute_Global_Angular_Momentum::Compute_Global_Angular_Momentum(PeridigmNS::Peridigm *peridigm_ ):Compute_Angular_Momentum(peridigm_){peridigm = peridigm_;}
 
-#ifndef PERIDIGM_COMPUTE_KINETIC_ENERGY_HPP
-#define PERIDIGM_COMPUTE_KINETIC_ENERGY_HPP
+//! Destructor.
+PeridigmNS::Compute_Global_Angular_Momentum::~Compute_Global_Angular_Momentum(){}
 
-#include "Peridigm_Compute.hpp"
-#include "Peridigm_DataManager.hpp"
 
-// Forward declaration
-namespace PeridigmNS {
-  class Peridigm;
+//! Returns the fieldspecs computed by this class
+std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Global_Angular_Momentum::getFieldSpecs() const 
+{
+  std::vector<Field_NS::FieldSpec> myFieldSpecs;
+  myFieldSpecs.push_back(Field_NS::GLOBAL_ANGULAR_MOMENTUM);
+
+  // This is a hack.
+  // Ideally, we'd specify some global variable as the output variable, but Peridigm is not
+  // currently capable of outputting a global variable.
+  // So, just associate this compute class with the general displacment field, that way this
+  // compute class will be called if "Displacement" is requested in the input deck.
+  //myFieldSpecs.push_back(Field_NS::DISPL3D);
+
+  return myFieldSpecs;
 }
 
-namespace PeridigmNS {
-
-  //! Base class for calculating the kinetic energy
-  class Compute_Kinetic_Energy : public PeridigmNS::Compute {
-
-  public:
-	
-  //! Standard constructor.
-  Compute_Kinetic_Energy( PeridigmNS::Peridigm *peridigm_ );
-
-  //! Destructor.
-  virtual  ~Compute_Kinetic_Energy();
-
-  //! Returns the fieldspecs computed by this class
-  virtual std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
-
-  //! Perform computation
-  virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
-
-  //! Compute the kinetic energy and optionally store the nodal values. 
-  int computeKineticEnergy( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, bool storeLocal ) const ;
 
 
-  private:
-
-  //! Parent pointer
-  PeridigmNS::Peridigm *peridigm;
-
-  };
+//! Compute the global angular momentum
+int PeridigmNS::Compute_Global_Angular_Momentum::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const
+{
+  bool storeLocal = false;
+  int result = computeAngularMomentum(blocks, storeLocal);
+  return result;
 }
-
-#endif // PERIDIGM_COMPUTE_KINETIC_ENERGY_HPP
-//#endif // COMPUTE_CLASS

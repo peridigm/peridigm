@@ -64,6 +64,8 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Local_Strain_Energy::getFie
 {
   	std::vector<Field_NS::FieldSpec> myFieldSpecs;
 	myFieldSpecs.push_back(Field_NS::STRAIN_ENERGY);
+
+std::cout << "Here:Local" << std::endl;
 	
   	return myFieldSpecs;
 }

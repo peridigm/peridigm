@@ -1,4 +1,4 @@
-/*! \file Peridigm_Compute_Kinetic_Energy.hpp */
+/*! \file Peridigm_Compute_Local_Linear_Momentum.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,18 +45,19 @@
 // ************************************************************************
 //@HEADER
 
-/*
+
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Kinetic_Energy,Compute_Kinetic_Energy,peridigm)
+ComputeClass(Linear_Momentum,Compute_Local_Linear_Momentum,peridigm)
 
 #else
-*/
 
-#ifndef PERIDIGM_COMPUTE_KINETIC_ENERGY_HPP
-#define PERIDIGM_COMPUTE_KINETIC_ENERGY_HPP
+
+#ifndef PERIDIGM_COMPUTE_LOCAL_LINEAR_MOMENTUM_HPP
+#define PERIDIGM_COMPUTE_LOCAL_LINEAR_MOMENTUM_HPP
 
 #include "Peridigm_Compute.hpp"
+#include "Peridigm_Compute_Linear_Momentum.hpp"
 #include "Peridigm_DataManager.hpp"
 
 // Forward declaration
@@ -66,26 +67,22 @@ namespace PeridigmNS {
 
 namespace PeridigmNS {
 
-  //! Base class for calculating the kinetic energy
-  class Compute_Kinetic_Energy : public PeridigmNS::Compute {
+  //! Class for filling acceleration vector
+  class Compute_Local_Linear_Momentum : public PeridigmNS::Compute_Linear_Momentum {
 
   public:
 	
   //! Standard constructor.
-  Compute_Kinetic_Energy( PeridigmNS::Peridigm *peridigm_ );
+  Compute_Local_Linear_Momentum( PeridigmNS::Peridigm *peridigm_ );
 
   //! Destructor.
-  virtual  ~Compute_Kinetic_Energy();
+  ~Compute_Local_Linear_Momentum();
 
   //! Returns the fieldspecs computed by this class
-  virtual std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
+  std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
 
   //! Perform computation
-  virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
-
-  //! Compute the kinetic energy and optionally store the nodal values. 
-  int computeKineticEnergy( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, bool storeLocal ) const ;
-
+  int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
 
   private:
 
@@ -95,5 +92,5 @@ namespace PeridigmNS {
   };
 }
 
-#endif // PERIDIGM_COMPUTE_KINETIC_ENERGY_HPP
-//#endif // COMPUTE_CLASS
+#endif // PERIDIGM_COMPUTE_LOCAL_LINEAR_MOMENTUM_HPP
+#endif // COMPUTE_CLASS
