@@ -145,14 +145,28 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
   string workingDirectory = "";
   Teuchos::RCP<const Epetra_MpiComm> mpiComm = Teuchos::rcp_dynamic_cast<const Epetra_MpiComm>(comm, true);
   metaData = Teuchos::rcp(new stk::mesh::fem::FEMMetaData);
+  // \todo Remove backwards compatibility after next Trilinos release
+  #if TRILINOS_MAJOR_MINOR_VERSION > 101002
+  meshData = Teuchos::rcp(new stk::io::MeshData);
+  #else
   meshData = Teuchos::rcp(new stk::io::util::MeshData);
+  #endif
   Ioss::Init::Initializer io;
+  // \todo Remove backwards compatibility after next Trilinos release
+  #if TRILINOS_MAJOR_MINOR_VERSION > 101002
+  stk::io::create_input_mesh(meshType,
+                             meshFileName,
+                             mpiComm->Comm(),
+                             *metaData,
+                             *meshData);
+  #else
   stk::io::util::create_input_mesh(meshType,
                                    meshFileName,
                                    workingDirectory,
                                    mpiComm->Comm(),
                                    *metaData,
                                    *meshData);
+  #endif
   
   int numberOfDimensions = metaData->spatial_dimension();
   TEUCHOS_TEST_FOR_EXCEPTION(numberOfDimensions != 3, std::invalid_argument, "Peridigm operates only on three-dimensional meshes.");
@@ -203,7 +217,12 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
   stk::mesh::BulkData bulkData(stk::mesh::fem::FEMMetaData::get_meta_data(*metaData), mpiComm->Comm());
 
   metaData->commit();
+  // \todo Remove backwards compatibility after next Trilinos release
+  #if TRILINOS_MAJOR_MINOR_VERSION > 101002
+  stk::io::populate_bulk_data(bulkData, *meshData);
+  #else
   stk::io::util::populate_bulk_data(bulkData, *meshData, "exodusii");
+  #endif
   bulkData.modification_end();
 
   stk::mesh::Field<double, stk::mesh::Cartesian>* coordinatesField = 
@@ -400,8 +419,14 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
     blockNumber++;
   }
 
+  // \todo Remove backwards compatibility after next Trilinos release
+  #if TRILINOS_MAJOR_MINOR_VERSION > 101002
+  // free the meshData
+  meshData = Teuchos::RCP<stk::io::MeshData>();
+  #else
   // free the meshData
   meshData = Teuchos::RCP<stk::io::util::MeshData>();
+  #endif
 
   // call the rebalance function on the current-configuration decomp
   decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
