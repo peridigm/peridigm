@@ -1,56 +1,63 @@
 <ParameterList>
 
-<ParameterList name="Problem">
-	<Parameter name="Verbose" type="bool" value="false"/>
-	<ParameterList name="Discretization">
-		<Parameter name="Type" type="string" value="Exodus" />
-		<Parameter name="Horizon" type="double" value="0.00601"/>
-		<Parameter name="Input Mesh File" type="string" value="WaveInBar.g"/>
-	</ParameterList>
-	<ParameterList name="Material">
-		<ParameterList name="Linear Elastic">
-			<Parameter name="Density" type="double" value="2200.0"/>        <!-- kg/m^3 -->
-			<Parameter name="Bulk Modulus" type="double" value="14.90e9"/>  <!-- Pa -->
-			<Parameter name="Shear Modulus" type="double" value="8.94e9"/>  <!-- Pa -->
-		</ParameterList>
-	</ParameterList>
-	<ParameterList name="Boundary Conditions">
-		<ParameterList name="Left Side Initial Velocity">
-			<Parameter name="Type" type="string" value="Initial Velocity"/>
-			<Parameter name="Node Set" type="string" value="nodelist_1"/>
-			<Parameter name="Coordinate" type="string" value="x"/>
-			<Parameter name="Value" type="string" value="-100.0"/>
-		</ParameterList>
-	</ParameterList>
-</ParameterList>
+  <Parameter name="Verbose" type="bool" value="false"/>
 
-<ParameterList name="Solver">
+  <ParameterList name="Discretization">
+	<Parameter name="Type" type="string" value="Exodus" />
+	<Parameter name="Horizon" type="double" value="0.00601"/>
+	<Parameter name="Input Mesh File" type="string" value="WaveInBar.g"/>
+  </ParameterList>
+
+  <ParameterList name="Materials">
+	<ParameterList name="My Linear Elastic Material">
+	  <Parameter name="Material Model" type="string" value="Linear Elastic"/>
+	  <Parameter name="Density" type="double" value="2200.0"/>        <!-- kg/m^3 -->
+	  <Parameter name="Bulk Modulus" type="double" value="14.90e9"/>  <!-- Pa -->
+	  <Parameter name="Shear Modulus" type="double" value="8.94e9"/>  <!-- Pa -->
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Blocks">
+	<ParameterList name="My Group of Blocks">
+	  <Parameter name="Block Names" type="string" value="block_1"/>
+	  <Parameter name="Material" type="string" value="My Linear Elastic Material"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Boundary Conditions">
+	<ParameterList name="Left Side Initial Velocity">
+	  <Parameter name="Type" type="string" value="Initial Velocity"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_1"/>
+	  <Parameter name="Coordinate" type="string" value="x"/>
+	  <Parameter name="Value" type="string" value="-100.0"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Solver">
 	<Parameter name="Verbose" type="bool" value="false"/>
 	<Parameter name="Initial Time" type="double" value="0.0"/>
 	<Parameter name="Final Time" type="double" value="0.00002"/> 
 	<ParameterList name="Verlet">
-		<Parameter name="Fixed dt" type="double" value="9.0659e-08"/>
+	  <Parameter name="Fixed dt" type="double" value="9.0659e-08"/>
 	</ParameterList>
-</ParameterList>
-
-<ParameterList name="Output">
+  </ParameterList>
+  
+  <ParameterList name="Output">
 	<Parameter name="Output File Type" type="string" value="ExodusII"/>
 	<Parameter name="Output Format" type="string" value="BINARY"/>
 	<Parameter name="Output Filename" type="string" value="WaveInBar"/>
 	<Parameter name="Output Frequency" type="int" value="20"/>
 	<Parameter name="Parallel Write" type="bool" value="true"/>
-	<ParameterList name="Material Output Fields">
-		<ParameterList name="Linear Elastic">
-			<Parameter name="Displacement" type="bool" value="true"/>
-			<Parameter name="Velocity" type="bool" value="true"/>
-			<Parameter name="ID" type="bool" value="true"/>
-			<Parameter name="Proc_Num" type="bool" value="true"/>
-			<Parameter name="Dilatation" type="bool" value="true"/>
-			<Parameter name="Force_Density" type="bool" value="true"/>
-			<Parameter name="Weighted_Volume" type="bool" value="true"/>
-			<Parameter name="Damage" type="bool" value="true"/>
-		</ParameterList>
+	<ParameterList name="Output Variables">
+	  <Parameter name="Displacement" type="bool" value="true"/>
+	  <Parameter name="Velocity" type="bool" value="true"/>
+	  <Parameter name="ID" type="bool" value="true"/>
+	  <Parameter name="Proc_Num" type="bool" value="true"/>
+	  <Parameter name="Dilatation" type="bool" value="true"/>
+	  <Parameter name="Force_Density" type="bool" value="true"/>
+	  <Parameter name="Weighted_Volume" type="bool" value="true"/>
+	  <Parameter name="Damage" type="bool" value="true"/>
 	</ParameterList>
-</ParameterList>
-
+  </ParameterList>
+  
 </ParameterList>
