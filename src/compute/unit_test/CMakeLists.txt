@@ -98,11 +98,11 @@ target_link_libraries(utPeridigm_Compute_Strain_Energy
 add_test (utPeridigm_Compute_Force python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_Compute_Force)
 add_test (utPeridigm_Compute_Force_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_Compute_Force)
 
-add_test (utPeridigm_Compute_Angular_Momentum python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_Compute_Angular_Momentum)
-add_test (utPeridigm_Compute_Angular_Momentum_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_Compute_Angular_Momentum)
+#add_test (utPeridigm_Compute_Angular_Momentum python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_Compute_Angular_Momentum)
+#add_test (utPeridigm_Compute_Angular_Momentum_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_Compute_Angular_Momentum)
 
-add_test (utPeridigm_Compute_Linear_Momentum python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_Compute_Linear_Momentum)
-add_test (utPeridigm_Compute_Linear_Momentum_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_Compute_Linear_Momentum)
+#add_test (utPeridigm_Compute_Linear_Momentum python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_Compute_Linear_Momentum)
+#add_test (utPeridigm_Compute_Linear_Momentum_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_Compute_Linear_Momentum)
 
 #add_test (utPeridigm_Compute_Energy python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_Compute_Energy)
 #add_test (utPeridigm_Compute_Energy_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_Compute_Energy)

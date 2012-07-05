@@ -60,92 +60,101 @@ PeridigmNS::Compute_Angular_Momentum::~Compute_Angular_Momentum(){}
 //! Returns the fieldspecs computed by this class
 std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Angular_Momentum::getFieldSpecs() const 
 {
-	std::vector<Field_NS::FieldSpec> myFieldSpecs;
-	myFieldSpecs.push_back(Field_NS::ANGULAR_MOMENTUM3D);
-	myFieldSpecs.push_back(Field_NS::GLOBAL_ANGULAR_MOMENTUM);	
+  std::vector<Field_NS::FieldSpec> myFieldSpecs;
 
-	// This is a hack.
-	// Ideally, we'd specify some global variable as the output variable, but Peridigm is not
-	// currently capable of outputting a global variable.
-	// So, just associate this compute class with the general displacment field, that way this
-	// compute class will be called if "Displacement" is requested in the input deck.
-	//myFieldSpecs.push_back(Field_NS::DISPL3D);
+  // This is a hack.
+  // Ideally, we'd specify some global variable as the output variable, but Peridigm is not
+  // currently capable of outputting a global variable.
+  // So, just associate this compute class with the general displacment field, that way this
+  // compute class will be called if "Displacement" is requested in the input deck.
+  //myFieldSpecs.push_back(Field_NS::DISPL3D);
 
-  	return myFieldSpecs;
+  return myFieldSpecs;
 }
 
-
-
-//! Fill the angular momentum vector
+//! Perform computation
 int PeridigmNS::Compute_Angular_Momentum::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const
 {
-	int retval;
+  return 0;
+}        
 
-	double globalAM = 0.0;
-  	Teuchos::RCP<Epetra_Vector> velocity,  arm, volume, angular_momentum;
-	std::vector<PeridigmNS::Block>::iterator blockIt;
-	for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-		Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
-		Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
-		const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
-		const int* ownedIDs = neighborhoodData->OwnedIDs();
+//! Fill the angular momentum vector
+int PeridigmNS::Compute_Angular_Momentum::computeAngularMomentum( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, bool storeLocal  ) const
+{
+  int retval;
 
-  		velocity         = dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1);
-  		arm              = dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1);
-  		volume           = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
-		angular_momentum = dataManager->getData(Field_NS::ANGULAR_MOMENTUM3D, Field_ENUM::STEP_NP1);
+  double globalAM = 0.0;
+  Teuchos::RCP<Epetra_Vector> velocity,  arm, volume, angular_momentum;
+  std::vector<PeridigmNS::Block>::iterator blockIt;
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+  {
+    Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
+    const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
+    const int* ownedIDs = neighborhoodData->OwnedIDs();
 
-	 	// Sanity check
-  	 	if ( (velocity->Map().NumMyElements() != volume->Map().NumMyElements()) ||  (arm->Map().NumMyElements() != volume->Map().NumMyElements()) )
-	 	{
-      		  	retval = 1;
- 	           	return(retval);
-		}
+    velocity         = dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1);
+    arm              = dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1);
+    volume           = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
+    angular_momentum = dataManager->getData(Field_NS::ANGULAR_MOMENTUM3D, Field_ENUM::STEP_NP1);
+
+    // Sanity check
+    if ( (velocity->Map().NumMyElements() != volume->Map().NumMyElements()) ||  (arm->Map().NumMyElements() != volume->Map().NumMyElements()) )
+    {
+      retval = 1;
+      return(retval);
+    }
  	
-		// Collect values
-  		double *volume_values = volume->Values();
-  		double *velocity_values = velocity->Values();
-  		double *arm_values  = arm->Values();
-		double *angular_momentum_values = angular_momentum->Values();
+    // Collect values
+    double *volume_values = volume->Values();
+    double *velocity_values = velocity->Values();
+    double *arm_values  = arm->Values();
+    double *angular_momentum_values = angular_momentum->Values();
 
-		// Initialize angular momentum values
-  		double angular_momentum_x,  angular_momentum_y, angular_momentum_z;
-  		angular_momentum_x = angular_momentum_y = angular_momentum_z = 0.0;
+    // Initialize angular momentum values
+    double angular_momentum_x,  angular_momentum_y, angular_momentum_z;
+    angular_momentum_x = angular_momentum_y = angular_momentum_z = 0.0;
 	
-		double density = blockIt->getMaterialModel()->Density();
+    double density = blockIt->getMaterialModel()->Density();
   	
-		// volume is a scalar and force a vector, so maps are different; must do multiplication on per-element basis
-  		int numElements = numOwnedPoints;
-  		double vol, mass;
-  		for (int i=0;i<numElements;i++) 
-  		{
-		  	int ID = ownedIDs[i];
-		  	vol = volume_values[ID];
-			mass = vol*density;
-		  	double v1 = velocity_values[3*ID];
-		  	double v2 = velocity_values[3*ID+1];
-		  	double v3 = velocity_values[3*ID+2];
-		  	double r1 = arm_values[3*ID];
-		  	double r2 = arm_values[3*ID+1];
-		  	double r3 = arm_values[3*ID+2];
-		  	angular_momentum_x = angular_momentum_x + mass*(v2*r3 - v3*r2);
-		  	angular_momentum_y = angular_momentum_y + mass*(v3*r1 - v1*r3); 
-		  	angular_momentum_z = angular_momentum_z + mass*(v1*r2 - v2*r1);
-			angular_momentum_values[3*ID] = mass*(v2*r3 - v3*r2);
-			angular_momentum_values[3*ID+1] = mass*(v3*r1 - v1*r3);
-			angular_momentum_values[3*ID+2] = mass*(v1*r2 - v2*r1);     
-  		}
-
-		// Update info across processors
-	        std::vector<double> localAngularMomentum(3), globalAngularMomentum(3);
-		localAngularMomentum[0] = angular_momentum_x;
-		localAngularMomentum[1] = angular_momentum_y;
-		localAngularMomentum[2] = angular_momentum_z;
+    // volume is a scalar and force a vector, so maps are different; must do multiplication on per-element basis
+    int numElements = numOwnedPoints;
+    double vol, mass;
+    for (int i=0;i<numElements;i++) 
+    {
+      int ID = ownedIDs[i];
+      vol = volume_values[ID];
+      mass = vol*density;
+      double v1 = velocity_values[3*ID];
+      double v2 = velocity_values[3*ID+1];
+      double v3 = velocity_values[3*ID+2];
+      double r1 = arm_values[3*ID];
+      double r2 = arm_values[3*ID+1];
+      double r3 = arm_values[3*ID+2];
+      angular_momentum_x = angular_momentum_x + mass*(v2*r3 - v3*r2);
+      angular_momentum_y = angular_momentum_y + mass*(v3*r1 - v1*r3); 
+      angular_momentum_z = angular_momentum_z + mass*(v1*r2 - v2*r1);
+      if (storeLocal)
+      {
+        angular_momentum_values[3*ID] = mass*(v2*r3 - v3*r2);
+        angular_momentum_values[3*ID+1] = mass*(v3*r1 - v1*r3);
+        angular_momentum_values[3*ID+2] = mass*(v1*r2 - v2*r1);     
+      }
+    }
+    
+    if (!storeLocal)
+    {
+      // Update info across processors
+      std::vector<double> localAngularMomentum(3), globalAngularMomentum(3);
+      localAngularMomentum[0] = angular_momentum_x;
+      localAngularMomentum[1] = angular_momentum_y;
+      localAngularMomentum[2] = angular_momentum_z;
 	
-		peridigm->getEpetraComm()->SumAll(&localAngularMomentum[0], &globalAngularMomentum[0], 3);
+      peridigm->getEpetraComm()->SumAll(&localAngularMomentum[0], &globalAngularMomentum[0], 3);
 		
-		globalAM += sqrt(globalAngularMomentum[0]*globalAngularMomentum[0] + globalAngularMomentum[1]*globalAngularMomentum[1] + globalAngularMomentum[2]*globalAngularMomentum[2]);
-	}
+      globalAM += sqrt(globalAngularMomentum[0]*globalAngularMomentum[0] + globalAngularMomentum[1]*globalAngularMomentum[1] + globalAngularMomentum[2]*globalAngularMomentum[2]);
+    }
+  }
 
 /*	
         if (peridigm->getEpetraComm()->MyPID() == 0) 
@@ -158,9 +167,10 @@ int PeridigmNS::Compute_Angular_Momentum::compute( Teuchos::RCP< std::vector<Per
 	}
 */
 
-	// Store global energy in block (block globals are static, so only need to assign data to first block)
-	blocks->begin()->getScalarData(Field_NS::GLOBAL_ANGULAR_MOMENTUM) = globalAM;
+  // Store global angular momentum in block (block globals are static, so only need to assign data to first block)
+  if (!storeLocal)  
+    blocks->begin()->getScalarData(Field_NS::GLOBAL_ANGULAR_MOMENTUM) = globalAM;
 
-	return(0);
+  return(0);
 
 }

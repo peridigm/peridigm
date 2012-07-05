@@ -196,6 +196,8 @@ Teuchos::ParameterList PeridigmNS::OutputManager_ExodusII::getValidParameterList
   validOutputSpecs.push_back(Field_NS::STRAIN_ENERGY_DENSITY);
   validOutputSpecs.push_back(Field_NS::ANGULAR_MOMENTUM3D);
   validOutputSpecs.push_back(Field_NS::LINEAR_MOMENTUM3D);
+  validOutputSpecs.push_back(Field_NS::GLOBAL_LINEAR_MOMENTUM);
+
   // Remove duplicates and sort for consistency
   std::unique(validOutputSpecs.begin(), validOutputSpecs.end());
   std::sort(validOutputSpecs.begin(), validOutputSpecs.end());
