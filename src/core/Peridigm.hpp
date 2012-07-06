@@ -288,7 +288,7 @@ namespace PeridigmNS {
     Teuchos::RCP<PeridigmNS::BoundaryAndInitialConditionManager> boundaryAndInitialConditionManager;
 
     //! Contact models
-    Teuchos::RCP< std::vector<Teuchos::RCP<const PeridigmNS::ContactModel> > > contactModels;
+    std::map< std::string, Teuchos::RCP<const PeridigmNS::ContactModel> > contactModels;
 
     //! Compute manager
     Teuchos::RCP<PeridigmNS::ComputeManager> computeManager;
