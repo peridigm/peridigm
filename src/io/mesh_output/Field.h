@@ -300,7 +300,7 @@ struct FieldSpecMap {
                 mymap[GLOBAL_STRAIN_ENERGY.getLabel()]         = GLOBAL_STRAIN_ENERGY;
 		mymap[GLOBAL_STRAIN_ENERGY_DENSITY.getLabel()] = GLOBAL_STRAIN_ENERGY_DENSITY;
 		mymap[GLOBAL_LINEAR_MOMENTUM.getLabel()]       = GLOBAL_LINEAR_MOMENTUM;
-		mymap[GLOBAL_ANGULAR_MOMENTUM.getLabel()]       = GLOBAL_ANGULAR_MOMENTUM;
+		mymap[GLOBAL_ANGULAR_MOMENTUM.getLabel()]      = GLOBAL_ANGULAR_MOMENTUM;
 		// point scalar fieldspecs
 		mymap[VOLUME.getLabel()]                       = VOLUME;
 		mymap[DENSITY.getLabel()]                      = DENSITY;

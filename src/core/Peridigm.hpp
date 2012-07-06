@@ -230,6 +230,9 @@ namespace PeridigmNS {
       return materialModels;
     }
 
+    //! Accessor for compute manager
+    Teuchos::RCP< PeridigmNS::ComputeManager > getComputeManager() { return computeManager; }
+
     //! Return list of field specs used by Peridigm object
     std::vector<Field_NS::FieldSpec> getFieldSpecs();
 

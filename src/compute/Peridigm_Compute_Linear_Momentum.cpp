@@ -122,7 +122,7 @@ int PeridigmNS::Compute_Linear_Momentum::computeLinearMomentum( Teuchos::RCP< st
       linear_momentum_values[3*i] = mass*linear_momentum_values[3*i];
       linear_momentum_values[3*i+1] = mass*linear_momentum_values[3*i+1];
       linear_momentum_values[3*i+2] = mass*linear_momentum_values[3*i+2];
-      if (storeLocal)
+      if (!storeLocal)
       {
         linear_momentum_x = linear_momentum_x + mass*v1;
         linear_momentum_y = linear_momentum_y + mass*v2;
@@ -139,10 +139,7 @@ int PeridigmNS::Compute_Linear_Momentum::computeLinearMomentum( Teuchos::RCP< st
       localLinearMomentum[2] = linear_momentum_z;
 
       peridigm->getEpetraComm()->SumAll(&localLinearMomentum[0], &globalLinearMomentum[0], 3);
-	
-      globalLinearMomentum[0] = globalLinearMomentum[0];
-      globalLinearMomentum[1] = globalLinearMomentum[1];
-      globalLinearMomentum[2] = globalLinearMomentum[2];
+
       globalLM += sqrt(globalLinearMomentum[0]*globalLinearMomentum[0] + globalLinearMomentum[1]*globalLinearMomentum[1] + globalLinearMomentum[2]*globalLinearMomentum[2]);
     }
   }
