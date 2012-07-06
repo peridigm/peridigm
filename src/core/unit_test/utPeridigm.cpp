@@ -73,14 +73,6 @@ Teuchos::RCP<PeridigmNS::Peridigm> createTwoPointModel()
   // these data would normally be read from an input xml file
   Teuchos::RCP<Teuchos::ParameterList> peridigmParams = rcp(new Teuchos::ParameterList());
 
-  // material parameters
-  ParameterList& materialParams = peridigmParams->sublist("Materials");
-  ParameterList& linearElasticMaterialParams = materialParams.sublist("My Linear Elastic Material");
-  linearElasticMaterialParams.set("Material Model", "Linear Elastic");
-  linearElasticMaterialParams.set("Density", 7800.0);
-  linearElasticMaterialParams.set("Bulk Modulus", 130.0e9);
-  linearElasticMaterialParams.set("Shear Modulus", 78.0e9);
-
   // discretization parameters
   ParameterList& discretizationParams = peridigmParams->sublist("Discretization");
   discretizationParams.set("Type", "PdQuickGrid");
@@ -98,6 +90,20 @@ Teuchos::RCP<PeridigmNS::Peridigm> createTwoPointModel()
   pdQuickGridParams.set("Number Points X", 2);
   pdQuickGridParams.set("Number Points Y", 1);
   pdQuickGridParams.set("Number Points Z", 1);
+
+  // material parameters
+  ParameterList& materialParams = peridigmParams->sublist("Materials");
+  ParameterList& linearElasticMaterialParams = materialParams.sublist("My Linear Elastic Material");
+  linearElasticMaterialParams.set("Material Model", "Linear Elastic");
+  linearElasticMaterialParams.set("Density", 7800.0);
+  linearElasticMaterialParams.set("Bulk Modulus", 130.0e9);
+  linearElasticMaterialParams.set("Shear Modulus", 78.0e9);
+
+  // block parameters
+  ParameterList& blockParams = peridigmParams->sublist("Blocks");
+  ParameterList& blockGroupParams = blockParams.sublist("My Group of Blocks");
+  blockGroupParams.set("Block Names", "block_1");
+  blockGroupParams.set("Material", "My Linear Elastic Material");
 
   // boundary conditions
   ParameterList& bcParams = peridigmParams->sublist("Boundary Conditions");
@@ -118,10 +124,6 @@ Teuchos::RCP<PeridigmNS::Peridigm> createTwoPointModel()
   initialVelocityMaxXFace.set("Node Set", "Max X Node Set");
   initialVelocityMaxXFace.set("Coordinate", "x");
   initialVelocityMaxXFace.set("Value", "1.0");
-
-  // blocks
-
-  //ParameterList& blockParams = 
 
   // solver parameters
   ParameterList& solverParams = peridigmParams->sublist("Solver");
@@ -150,19 +152,8 @@ Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel()
   // these data would normally be read from an input xml file
   Teuchos::RCP<Teuchos::ParameterList> peridigmParams = rcp(new Teuchos::ParameterList());
 
-  // problem parameters
-  ParameterList& problemParams = peridigmParams->sublist("Problem");
-  problemParams.set("Verbose", false);
-
-  // material parameters
-  ParameterList& materialParams = problemParams.sublist("Material");
-  ParameterList& linearElasticMaterialParams = materialParams.sublist("Linear Elastic");
-  linearElasticMaterialParams.set("Density", 7800.0);
-  linearElasticMaterialParams.set("Bulk Modulus", 130.0e9);
-  linearElasticMaterialParams.set("Shear Modulus", 78.0e9);
-
   // discretization parameters
-  ParameterList& discretizationParams = problemParams.sublist("Discretization");
+  ParameterList& discretizationParams = peridigmParams->sublist("Discretization");
   discretizationParams.set("Type", "PdQuickGrid");
   discretizationParams.set("Horizon", 2.1);
 
@@ -178,6 +169,20 @@ Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel()
   pdQuickGridParams.set("Number Points X", 2);
   pdQuickGridParams.set("Number Points Y", 2);
   pdQuickGridParams.set("Number Points Z", 2);
+
+  // material parameters
+  ParameterList& materialParams = peridigmParams->sublist("Materials");
+  ParameterList& linearElasticMaterialParams = materialParams.sublist("My Linear Elastic Material");
+  linearElasticMaterialParams.set("Material Model", "Linear Elastic");
+  linearElasticMaterialParams.set("Density", 7800.0);
+  linearElasticMaterialParams.set("Bulk Modulus", 130.0e9);
+  linearElasticMaterialParams.set("Shear Modulus", 78.0e9);
+
+  // block parameters
+  ParameterList& blockParams = peridigmParams->sublist("Blocks");
+  ParameterList& blockGroupParams = blockParams.sublist("My Group of Blocks");
+  blockGroupParams.set("Block Names", "block_1");
+  blockGroupParams.set("Material", "My Linear Elastic Material");
 
   // solver parameters
   ParameterList& solverParams = peridigmParams->sublist("Solver");
