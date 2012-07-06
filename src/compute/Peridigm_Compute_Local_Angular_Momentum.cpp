@@ -52,25 +52,17 @@
 
 //! Standard constructor.
 PeridigmNS::Compute_Local_Angular_Momentum::Compute_Local_Angular_Momentum(PeridigmNS::Peridigm *peridigm_ )
-  :Compute_Angular_Momentum(peridigm_)
-{peridigm = peridigm_;}
+  :Compute_Angular_Momentum(peridigm_) {
+  peridigm = peridigm_;
+}
 
 //! Destructor.
 PeridigmNS::Compute_Local_Angular_Momentum::~Compute_Local_Angular_Momentum(){}
 
-
 //! Returns the fieldspecs computed by this class
-std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Local_Angular_Momentum::getFieldSpecs() const 
-{
+std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Local_Angular_Momentum::getFieldSpecs() const {
   std::vector<Field_NS::FieldSpec> myFieldSpecs;
   myFieldSpecs.push_back(Field_NS::ANGULAR_MOMENTUM3D);
-
-  // This is a hack.
-  // Ideally, we'd specify some global variable as the output variable, but Peridigm is not
-  // currently capable of outputting a global variable.
-  // So, just associate this compute class with the general displacment field, that way this
-  // compute class will be called if "Displacement" is requested in the input deck.
-  //myFieldSpecs.push_back(Field_NS::DISPL3D);
 
   return myFieldSpecs;
 }
@@ -78,8 +70,7 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Local_Angular_Momentum::get
 
 
 //! Fill the angular momentum vector
-int PeridigmNS::Compute_Local_Angular_Momentum::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const
-{
+int PeridigmNS::Compute_Local_Angular_Momentum::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const {
   bool storeLocal = true;
   int result = computeAngularMomentum(blocks, storeLocal);
   return result;

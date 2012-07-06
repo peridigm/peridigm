@@ -63,13 +63,6 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Global_Angular_Momentum::ge
   std::vector<Field_NS::FieldSpec> myFieldSpecs;
   myFieldSpecs.push_back(Field_NS::GLOBAL_ANGULAR_MOMENTUM);
 
-  // This is a hack.
-  // Ideally, we'd specify some global variable as the output variable, but Peridigm is not
-  // currently capable of outputting a global variable.
-  // So, just associate this compute class with the general displacment field, that way this
-  // compute class will be called if "Displacement" is requested in the input deck.
-  //myFieldSpecs.push_back(Field_NS::DISPL3D);
-
   return myFieldSpecs;
 }
 

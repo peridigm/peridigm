@@ -122,8 +122,7 @@ Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel() {
   return peridigm;
 }
 
-void FourPointTest() 
-{
+void FourPointTest() {
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createFourPointModel();
 
   // Get the data manager
@@ -150,20 +149,12 @@ void FourPointTest()
     velocity_values[3*i+2] = (3.0*ID)+2.0;
   }
 
-  // Create Compute_Linear_Momentum object
-  //Teuchos::RCP<PeridigmNS::Compute_Linear_Momentum> computeLinearMomentum = Teuchos::rcp(new PeridigmNS::Compute_Linear_Momentum(&(*peridigm)));
-  Teuchos::RCP<PeridigmNS::Compute_Local_Linear_Momentum> computeLocalLinearMomentum = Teuchos::rcp(new PeridigmNS::Compute_Local_Linear_Momentum(&(*peridigm)));
-  Teuchos::RCP<PeridigmNS::Compute_Global_Linear_Momentum> computeGlobalLinearMomentum = Teuchos::rcp(new PeridigmNS::Compute_Global_Linear_Momentum(&(*peridigm)));
-
   // Get the blocks
   Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks = peridigm->getBlocks();
 
-  // Call the compute class
-  int retval = computeLocalLinearMomentum->compute(blocks);
-  BOOST_CHECK_EQUAL( retval, 0 );
-  int retval2 = computeGlobalLinearMomentum->compute(blocks);
-  BOOST_CHECK_EQUAL( retval2, 0 );
-	
+  // Fire the compute classes to fill the angular momentum data
+  peridigm->getComputeManager()->compute(blocks);
+
   double density = peridigm->getBlocks()->begin()->getMaterialModel()->Density();
   
   // Now check that volumes and linear momentum is correct

@@ -48,7 +48,7 @@
 /*
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Linear_Momentum,Compute_Linear_Momentum,peridigm)
+//ComputeClass(Linear_Momentum,Compute_Linear_Momentum,peridigm)
 
 #else
 */

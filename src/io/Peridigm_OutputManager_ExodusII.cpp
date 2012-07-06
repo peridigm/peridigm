@@ -157,7 +157,7 @@ Teuchos::ParameterList PeridigmNS::OutputManager_ExodusII::getValidParameterList
   Teuchos::ParameterList validParameterList("Output");
   setIntParameter("MyPID",0,"Process ID",&validParameterList,intParam);
   setIntParameter("NumProc",0,"Number of Process IDs",&validParameterList,intParam);
-  validParameterList.set("Output File Type","VTK_XML");
+  validParameterList.set("Output File Type","ExodusII");
   validParameterList.set("Output Filename","dump");
   Teuchos::setStringToIntegralParameter<int>("Output Format","BINARY","ASCII or BINARY",Teuchos::tuple<string>("ASCII","BINARY"),&validParameterList);
   setIntParameter("Output Frequency",-1,"Frequency of Output",&validParameterList,intParam);
