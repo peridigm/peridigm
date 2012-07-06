@@ -418,9 +418,9 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
       filename << "-s" << rebalanceCount;
     filename << ".e";
     filename << ".";
-    filename << setfill('0') << setw(len) << numProc;
+    filename << std::setfill('0') << std::setw(len) << numProc;
     filename << ".";
-    filename << setfill('0') << setw(len) << myPID;
+    filename << std::setfill('0') << std::setw(len) << myPID;
   }
   else {
     filename << filenameBase.c_str() << ".e";

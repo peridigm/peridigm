@@ -1,4 +1,4 @@
-/*! \file Peridigm_ComputeManager_VTK_XML.hpp */
+/*! \file Peridigm_ComputeManager.hpp */
 //@HEADER
 // ************************************************************************
 //
