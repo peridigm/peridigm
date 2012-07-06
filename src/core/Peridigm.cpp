@@ -271,6 +271,14 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   // Setup contact
   initializeContact();
 
+  // If there is a contact model, assign it to all blocks
+  // \todo Refactor contact!
+  if(analysisHasContact){
+    Teuchos::RCP<const PeridigmNS::ContactModel> contactModel = contactModels.begin()->second;
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+      blockIt->setContactModel(contactModel);
+  }
+
   // Initialize the workset
   initializeWorkset();
 
@@ -406,8 +414,8 @@ void PeridigmNS::Peridigm::initializeNodeSets(Teuchos::RCP<Teuchos::ParameterLis
 
 void PeridigmNS::Peridigm::initializeContact() {
 
-  // Extract discretization parameters sublist
-  Teuchos::RCP<Teuchos::ParameterList> discParams = Teuchos::rcp(&(peridigmParams->sublist("Discretization")), false);
+  // The horizon will be added to the contact model parameter list, if needed
+  double horizon = peridigmParams->sublist("Discretization", true).get<double>("Horizon");
 
   // Assume no contact
   analysisHasContact = false;
@@ -428,24 +436,24 @@ void PeridigmNS::Peridigm::initializeContact() {
 
   // Instantiate contact models
   ContactModelFactory contactModelFactory;
-  contactModels = Teuchos::rcp(new std::vector<Teuchos::RCP<const PeridigmNS::ContactModel> >);
   if(analysisHasContact){
-    Teuchos::ParameterList& contactParams = peridigmParams->sublist("Contact");
-    Teuchos::ParameterList::ConstIterator it;
-    for(it = contactParams.begin() ; it != contactParams.end() ; it++){
-      const string & name = it->first;
-      // assume that the sublist is a set of parameters for a contact model
-      if(contactParams.isSublist(name)){
-        Teuchos::ParameterList contactModelParams;
-        contactModelParams.set(name, contactParams.sublist(name));
-        // Add the horizon to the contact model parameters, if needed
-        if(!contactModelParams.sublist(name).isParameter("Horizon"))
-          contactModelParams.sublist(name).set("Horizon", discParams->get<double>("Horizon"));
+    Teuchos::ParameterList& contactModelParams = peridigmParams->sublist("Contact").sublist("Models");
+    for(Teuchos::ParameterList::ConstIterator it = contactModelParams.begin() ; it != contactModelParams.end() ; it++){
+      // Get the parameters for a given contact model and add the horizon if necessary
+      Teuchos::ParameterList& modelParams = contactModelParams.sublist(it->first);
+      if(!modelParams.isParameter("Horizon"))
+        modelParams.set("Horizon", horizon);
+      contactModels[it->first] = contactModelFactory.create(modelParams) ;
+    }
+  }
 
-        // \todo This will break for multiple material blocks, need scheme to associate blocks with contact models
-        for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-          blockIt->setContactModel( contactModelFactory.create(contactModelParams) );
-      }
+  // \todo Refactor contact to allow for specific contact models between specific sets of blocks
+  // Print errors/warnings to let users know contact is a work in progress
+  if(analysisHasContact){
+    TEUCHOS_TEST_FOR_EXCEPTION(contactModels.size() > 1, Teuchos::Exceptions::InvalidParameter, "\n**** Error, the current version of Peridigm supports only a single contact model in a given analysis.\n");
+    if(peridigmParams->sublist("Contact").isSublist("Interactions")){
+      if(peridigmComm->MyPID() == 0)
+        cout << "\n**** Warning, the current version of Peridigm does not support the specification of contact interactions, contact will be enabled for all elements.\n" << endl;
     }
   }
 }

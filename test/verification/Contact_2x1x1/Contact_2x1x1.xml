@@ -30,20 +30,29 @@
   </ParameterList>
 
   <ParameterList name="Blocks">
-        <ParameterList name="My Group of Blocks">
-          <Parameter name="Block Names" type="string" value="block_1"/>
-          <Parameter name="Material" type="string" value="My Linear Elastic Material"/>
-        </ParameterList>
+    <ParameterList name="My Group of Blocks">
+      <Parameter name="Block Names" type="string" value="block_1"/>
+      <Parameter name="Material" type="string" value="My Linear Elastic Material"/>
+    </ParameterList>
   </ParameterList>
 
-  <!-- NEEDS TO BE REFACTORED -->
   <ParameterList name="Contact">
 	<Parameter name="Search Radius" type="double" value="5.0"/>          <!-- mm -->
 	<Parameter name="Search Frequency" type="int" value="100"/>
-	<ParameterList name="Short Range Force">
-	  <Parameter name="Contact Radius" type="double" value="2.0"/>       <!-- mm -->
-	  <Parameter name="Spring Constant" type="double" value="1950.0e3"/> <!-- MPa -->
+    <ParameterList name="Models">
+	  <ParameterList name="My Contact Model">
+	    <Parameter name="Contact Model" type="string" value="Short Range Force"/>
+	    <Parameter name="Contact Radius" type="double" value="2.0"/>       <!-- mm -->
+	    <Parameter name="Spring Constant" type="double" value="1950.0e3"/> <!-- MPa -->
+	  </ParameterList>
 	</ParameterList>
+    <ParameterList name="Interactions">
+      <ParameterList name="Interaction 1 with 1">
+        <Parameter name="First Block" type="string" value="block_1"/>
+        <Parameter name="Second Block" type="string" value="block_1"/>
+	    <Parameter name="Contact Model" type="string" value="My Contact Model"/>
+	  </ParameterList>
+    </ParameterList>
   </ParameterList>
 
   <ParameterList name="Boundary Conditions">
