@@ -46,6 +46,7 @@ if __name__ == "__main__":
     if return_code != 0:
         result = return_code
     command = ["../../../../scripts/exodiff", \
+                   "-stat", \
                    base_name+".e", \
                    "../"+base_name+"_gold.e", \
                    "-f", \
