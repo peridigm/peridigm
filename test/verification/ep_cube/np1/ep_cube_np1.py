@@ -41,6 +41,7 @@ if __name__ == "__main__":
 
     # compare output files against gold files
     command = ["../../../../scripts/exodiff", \
+                   "-stat", \
                    base_name+".e", \
                    "../"+base_name+"_gold.e", \
                    "-f", \
