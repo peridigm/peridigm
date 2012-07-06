@@ -68,7 +68,7 @@
 #include "Peridigm_DataManager.hpp"
 #include "Peridigm_SerialMatrix.hpp"
 #include "Peridigm_OutputManager.hpp"
-#include "Peridigm_OutputManager_VTK_XML.hpp"
+#include "Peridigm_OutputManager_ExodusII.hpp"
 #include "Peridigm_ComputeManager.hpp"
 #include "Peridigm_BoundaryAndInitialConditionManager.hpp"
 #include "contact/Peridigm_ContactModel.hpp"
@@ -242,7 +242,6 @@ namespace PeridigmNS {
   private:
 
     //! Friend classes
-    friend class OutputManager_VTK_XML;
     friend class OutputManager_ExodusII;
 
     //! Parameterlist of entire input deck

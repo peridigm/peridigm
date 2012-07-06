@@ -1,4 +1,4 @@
-/*! \file Peridigm_OutputManager_VTK_XML.hpp */
+/*! \file Peridigm_OutputManager_ExodusII.hpp */
 //@HEADER
 // ************************************************************************
 //
