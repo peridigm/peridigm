@@ -78,6 +78,7 @@
 #include "Peridigm_RandomNumber.hpp"
 #include "Peridigm_Timer.hpp"
 #include "materials/Peridigm_MaterialFactory.hpp"
+#include "materials/Peridigm_DamageModelFactory.hpp"
 #include "contact/Peridigm_ContactModelFactory.hpp"
 #include "mesh_input/quick_grid/QuickGrid.h"
 #include "mesh_input/quick_grid/QuickGridData.h"
@@ -106,8 +107,12 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   // Seed random number generator for reproducable results
   seed_rand_num( 42 );
 
-  // Instantiate materials and associate them with the blocks
+  // Instantiate material models
   instantiateMaterials();
+
+  // Instantiate damage models
+  if(params->isSublist("Damage Models"))
+     instantiateDamageModels();
 
   // Read mesh from disk or generate using geometric primatives.
   Teuchos::RCP<Teuchos::ParameterList> discParams =
@@ -151,53 +156,12 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   fieldSpecs->insert(fieldSpecs->end(), computeSpecs.begin(), computeSpecs.end());
 
   // Instantiate the blocks
-  int iBlock = 0;
-  blocks = Teuchos::rcp(new std::vector<PeridigmNS::Block>());
-  Teuchos::ParameterList& blockParams = peridigmParams->sublist("Blocks", true);
-  for(Teuchos::ParameterList::ConstIterator it = blockParams.begin() ; it != blockParams.end() ; it++){
-    const string& name = it->first;
-    Teuchos::ParameterList& params = blockParams.sublist(name);
-    string blockNamesString = params.get<string>("Block Names");
-    // Parse space-delimited list of block names and instantiate a Block object for each
-    istringstream iss(blockNamesString);
-    vector<string> blockNames;
-    copy(istream_iterator<string>(iss),
-         istream_iterator<string>(),
-         back_inserter<vector<string> >(blockNames));
-    for(vector<string>::const_iterator it=blockNames.begin() ; it!=blockNames.end() ; ++it){
-      PeridigmNS::Block block(*it, iBlock+1, params);
-      blocks->push_back(block);
-      iBlock++;
-    }
-  }
+  initializeBlocks(peridigmDisc);
 
-  // Ensure that there is a one-to-one match between the blocks in the mesh and 
-  // the blocks defined in the input deck
-  std::vector<std::string> discreticationBlockNames = peridigmDisc->getBlockNames();
-  bool blockError = false;
-  if(discreticationBlockNames.size() != blocks->size())
-    blockError = true;
+  // Associate material models and damage models with blocks
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    string blockName = blockIt->getName();
-    std::vector<std::string>::iterator it = find(discreticationBlockNames.begin(), discreticationBlockNames.end(), blockName);
-    if(it == discreticationBlockNames.end())
-      blockError = true;
-  }
-  if(blockError == true){
-    string msg = "\n**** Error, blocks defined in mesh do not match blocks defined in input deck.";
-    msg += "\n**** List of block names in mesh:";
-    for(unsigned int i=0 ; i<discreticationBlockNames.size() ; ++i)
-      msg += "  " + discreticationBlockNames[i] + ",";
-    msg += "\b";
-    msg += "\n**** List of block names in input deck:";
-    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-      msg += "  " + blockIt->getName()  + ",";
-    msg += "\b\n\n";
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
-  }
 
-  // Associate the material model with each block
-  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    // Set the material model
     string materialModelName = blockIt->getMaterialName();
     std::map< std::string, Teuchos::RCP<const PeridigmNS::Material> >::iterator materialModelIt;
     materialModelIt = materialModels.find(materialModelName);
@@ -210,6 +174,22 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
       TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
     }
     blockIt->setMaterialModel(materialModelIt->second);
+
+    // set the damage model
+    string damageModelName = blockIt->getDamageModelName();
+    if(damageModelName != "None"){
+      std::map< std::string, Teuchos::RCP<const PeridigmNS::DamageModel> >::iterator damageModelIt;
+      damageModelIt = damageModels.find(damageModelName);
+      if(damageModelIt == damageModels.end()){
+        string msg = "\n**** Error, invalid damage model:  " + damageModelName;
+        msg += "\n**** The list of defined damage models is:";
+        for(damageModelIt = damageModels.begin() ; damageModelIt != damageModels.end() ; ++ damageModelIt)
+          msg += "  " + damageModelIt->first + ",";
+        msg += "\b\n\n";
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
+      }
+      blockIt->setDamageModel(damageModelIt->second);
+    }
   }
 
   // Load the auxiliary field specs into the blocks (they will be
@@ -259,10 +239,12 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   // apply initial displacements
   boundaryAndInitialConditionManager->applyInitialDisplacements(x, u, y);
 
-  // Initialize material models
+  // Initialize material models and damage models
   // Initialization functions require valid initial values, e.g. velocities and displacements.
-  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++) {
     blockIt->initializeMaterialModel();
+    blockIt->initializeDamageModel();
+  }
 
   // Initialize the compute classes
   computeManager->initialize(blocks);
@@ -297,12 +279,10 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 }
 
 void PeridigmNS::Peridigm::instantiateMaterials() {
-
-  // Extract problem parameters sublist
   Teuchos::ParameterList& materialParams = peridigmParams->sublist("Materials", true);
-
   MaterialFactory materialFactory;
 
+  // The horizon will be added to the material model parameters if it is not already present
   double horizon = peridigmParams->sublist("Discretization", true).get<double>("Horizon");
   for(Teuchos::ParameterList::ConstIterator it = materialParams.begin() ; it != materialParams.end() ; it++){
     // Get the material parameters for a given material and add the horizon if necessary
@@ -311,7 +291,17 @@ void PeridigmNS::Peridigm::instantiateMaterials() {
        matParams.set("Horizon", horizon);
     materialModels[it->first] = materialFactory.create(matParams) ;
   }
+
   TEUCHOS_TEST_FOR_EXCEPT_MSG(materialModels.size() == 0, "No material models created!");
+}
+
+void PeridigmNS::Peridigm::instantiateDamageModels() {
+  Teuchos::ParameterList& damageModelParams = peridigmParams->sublist("Damage Models", true);
+  DamageModelFactory damageModelFactory;
+  for(Teuchos::ParameterList::ConstIterator it = damageModelParams.begin() ; it != damageModelParams.end() ; it++){
+    Teuchos::ParameterList& damageParams = damageModelParams.sublist(it->first);
+    damageModels[it->first] = damageModelFactory.create(damageParams);
+  }
 }
 
 void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscretization> peridigmDisc) {
@@ -477,6 +467,53 @@ void PeridigmNS::Peridigm::instantiateComputeManager() {
 
   computeManager = Teuchos::rcp( new PeridigmNS::ComputeManager( outputParams, this  ) );
 
+}
+
+void PeridigmNS::Peridigm::initializeBlocks(Teuchos::RCP<AbstractDiscretization> disc) {
+  int iBlock = 0;
+  blocks = Teuchos::rcp(new std::vector<PeridigmNS::Block>());
+  Teuchos::ParameterList& blockParams = peridigmParams->sublist("Blocks", true);
+  for(Teuchos::ParameterList::ConstIterator it = blockParams.begin() ; it != blockParams.end() ; it++){
+    const string& name = it->first;
+    Teuchos::ParameterList& params = blockParams.sublist(name);
+    string blockNamesString = params.get<string>("Block Names");
+    // Parse space-delimited list of block names and instantiate a Block object for each
+    istringstream iss(blockNamesString);
+    vector<string> blockNames;
+    copy(istream_iterator<string>(iss),
+         istream_iterator<string>(),
+         back_inserter<vector<string> >(blockNames));
+    for(vector<string>::const_iterator it=blockNames.begin() ; it!=blockNames.end() ; ++it){
+      PeridigmNS::Block block(*it, iBlock+1, params);
+      blocks->push_back(block);
+      iBlock++;
+    }
+  }
+
+  // Ensure that there is a one-to-one match between the blocks in the mesh and 
+  // the blocks defined in the input deck
+  std::vector<std::string> discreticationBlockNames = disc->getBlockNames();
+  bool blockError = false;
+  if(discreticationBlockNames.size() != blocks->size())
+    blockError = true;
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    string blockName = blockIt->getName();
+    std::vector<std::string>::iterator it = find(discreticationBlockNames.begin(), discreticationBlockNames.end(), blockName);
+    if(it == discreticationBlockNames.end())
+      blockError = true;
+  }
+  if(blockError == true){
+    string msg = "\n**** Error, blocks defined in mesh do not match blocks defined in input deck.";
+    msg += "\n**** List of block names in mesh:";
+    for(unsigned int i=0 ; i<discreticationBlockNames.size() ; ++i)
+      msg += "  " + discreticationBlockNames[i] + ",";
+    msg += "\b";
+    msg += "\n**** List of block names in input deck:";
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+      msg += "  " + blockIt->getName()  + ",";
+    msg += "\b\n\n";
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
+  }
 }
 
 void PeridigmNS::Peridigm::initializeOutputManager() {

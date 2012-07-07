@@ -57,6 +57,7 @@ PeridigmNS::CriticalStretchDamageModel::CriticalStretchDamageModel(const Teuchos
 
   // set up vector of variable specs
   m_variableSpecs = Teuchos::rcp(new vector<Field_NS::FieldSpec>);
+  m_variableSpecs->push_back(Field_NS::DAMAGE);
   m_variableSpecs->push_back(Field_NS::BOND_DAMAGE);
 }
 
@@ -71,6 +72,22 @@ PeridigmNS::CriticalStretchDamageModel::initialize(const double dt,
                                                    const int* neighborhoodList,
                                                    PeridigmNS::DataManager& dataManager) const
 {
+  double *damage, *bondDamage;
+  dataManager.getData(Field_NS::DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&damage);
+  dataManager.getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
+
+  // Initialize damage to zero
+  int neighborhoodListIndex = 0;
+  int bondIndex = 0;
+  for(int iID=0 ; iID<numOwnedPoints ; ++iID){
+	int nodeID = ownedIDs[iID];
+    damage[nodeID] = 0.0;
+	int numNeighbors = neighborhoodList[neighborhoodListIndex++];
+    neighborhoodListIndex += numNeighbors;
+	for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
+      bondDamage[bondIndex++] = 0.0;
+	}
+  }
 }
 
 void
@@ -81,9 +98,10 @@ PeridigmNS::CriticalStretchDamageModel::computeDamage(const double dt,
                                                       PeridigmNS::DataManager& dataManager) const
 {
   int vectorLength = dataManager.getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->MyLength();
-  double *x, *y, *bondDamage;
+  double *x, *y, *damage, *bondDamage;
   dataManager.getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->ExtractView(&x);
   dataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->ExtractView(&y);
+  dataManager.getData(Field_NS::DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&damage);
   dataManager.getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
 
   // Update the bond damage
@@ -120,5 +138,23 @@ PeridigmNS::CriticalStretchDamageModel::computeDamage(const double dt,
       }
 	  bondIndex += 1;
 	}
+  }
+
+  //  Update the element damage (percent of bonds broken)
+  neighborhoodListIndex = 0;
+  bondIndex = 0;
+  for(int iID=0 ; iID<numOwnedPoints ; ++iID){
+	int nodeID = ownedIDs[iID];
+	int numNeighbors = neighborhoodList[neighborhoodListIndex++];
+    neighborhoodListIndex += numNeighbors;
+	double totalDamage = 0.0;
+	for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
+	  totalDamage += bondDamage[bondIndex++];
+	}
+	if(numNeighbors > 0)
+	  totalDamage /= numNeighbors;
+	else
+	  totalDamage = 0.0;
+ 	damage[nodeID] = totalDamage;
   }
 }

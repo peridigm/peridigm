@@ -27,10 +27,13 @@
 	  <Parameter name="Shear Modulus" type="double" value="60.0e9"/>
 	  <Parameter name="Yield Stress" type="double" value="0.0"/>
 	  <Parameter name="Test" type="string" value="run elastic"/>
-	  <ParameterList name="Damage Model">
-		<Parameter name="Type" type="string" value="Critical Stretch"/>
-		<Parameter name="Critical Stretch" type="double" value="0.02"/>
-	  </ParameterList>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Damage Models">
+	<ParameterList name="My Critical Stretch Damage Model">
+	  <Parameter name="Damage Model" type="string" value="Critical Stretch"/>
+      <Parameter name="Critical Stretch" type="double" value="0.02"/>
 	</ParameterList>
   </ParameterList>
 
@@ -38,6 +41,7 @@
 	<ParameterList name="My Group of Blocks">
 	  <Parameter name="Block Names" type="string" value="block_1"/>
 	  <Parameter name="Material" type="string" value="My Elastic Plastic Material"/>
+	  <Parameter name="Damage Model" type="string" value="My Critical Stretch Damage Model"/>
 	</ParameterList>
   </ParameterList>
 

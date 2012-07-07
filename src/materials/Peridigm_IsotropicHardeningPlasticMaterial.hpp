@@ -49,7 +49,6 @@
 #define PERIDIGM_ISOTROPICHARDENINGPLASTICMATERIAL_HPP_
 
 #include "Peridigm_Material.hpp"
-#include "Peridigm_DamageModel.hpp"
 
 namespace PeridigmNS {
 
@@ -133,10 +132,6 @@ namespace PeridigmNS {
 	double m_density;
 	double m_yieldStress;
 	double m_isoHard;
-
-    // damage model
-    Teuchos::RCP<DamageModel> m_damageModel;
-
   };
 }
 
