@@ -1,8 +1,6 @@
 add_executable(twoPoint_SLS_Relaxation
                ${MATERIALS_DIR}/Peridigm_Material.cpp
                ${MATERIALS_DIR}/Peridigm_ViscoelasticStandardLinearSolid.cpp
-               ${MATERIALS_DIR}/Peridigm_DamageModelFactory.cpp
-               ${MATERIALS_DIR}/Peridigm_CriticalStretchDamageModel.cpp
                ${CORE_DIR}/Peridigm_State.cpp
                ${CORE_DIR}/Peridigm_DataManager.cpp
                ${CORE_DIR}/Peridigm_SerialMatrix.cpp

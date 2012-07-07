@@ -18,8 +18,6 @@ add_executable(utPeridigm_LinearElasticIsotropicMaterial
                ${MESH_OUTPUT_DIR}/Field.cxx
                ${MATERIALS_DIR}/Peridigm_Material.cpp
                ${MATERIALS_DIR}/Peridigm_LinearElasticIsotropicMaterial.cpp
-               ${MATERIALS_DIR}/Peridigm_DamageModelFactory.cpp
-               ${MATERIALS_DIR}/Peridigm_CriticalStretchDamageModel.cpp
                ./utPeridigm_LinearElasticIsotropicMaterial.cpp
 )
 target_link_libraries(utPeridigm_LinearElasticIsotropicMaterial

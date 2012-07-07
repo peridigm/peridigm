@@ -26,13 +26,13 @@ set(utPeridigm_SOURCES
     ${DISCRETIZATION_DIR}/Peridigm_STKDiscretization.cpp
     ${IO_DIR}/Peridigm_OutputManager_ExodusII.cpp
     ${MATERIALS_DIR}/Peridigm_Material.cpp
-    ${MATERIALS_DIR}/Peridigm_CriticalStretchDamageModel.cpp
-    ${MATERIALS_DIR}/Peridigm_DamageModelFactory.cpp
     ${MATERIALS_DIR}/Peridigm_MaterialFactory.cpp
     ${MATERIALS_DIR}/Peridigm_LinearElasticIsotropicMaterial.cpp
     ${MATERIALS_DIR}/Peridigm_IsotropicElasticPlasticMaterial.cpp
     ${MATERIALS_DIR}/Peridigm_IsotropicHardeningPlasticMaterial.cpp
     ${MATERIALS_DIR}/Peridigm_ViscoelasticStandardLinearSolid.cpp
+    ${DAMAGE_DIR}/Peridigm_DamageModelFactory.cpp
+    ${DAMAGE_DIR}/Peridigm_CriticalStretchDamageModel.cpp
     ${MESH_OUTPUT_DIR}/Field.cxx
     ${computeSOURCES}
 )
