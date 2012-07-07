@@ -72,9 +72,8 @@
 #include "Peridigm_ComputeManager.hpp"
 #include "Peridigm_BoundaryAndInitialConditionManager.hpp"
 #include "materials/Peridigm_Material.hpp"
-#include "materials/Peridigm_DamageModel.hpp"
+#include "damage/Peridigm_DamageModel.hpp"
 #include "contact/Peridigm_ContactModel.hpp"
-// MLP
 #include "muParser/muParserDef.h"
 
 #include "mesh_input/quick_grid/QuickGridData.h"

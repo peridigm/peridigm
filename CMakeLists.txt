@@ -161,6 +161,7 @@ set(DISCRETIZATION_DIR ${CMAKE_SOURCE_DIR}/src/io/discretization)
 set(EVALUATORS_DIR     ${CMAKE_SOURCE_DIR}/src/evaluators)
 set(IO_DIR             ${CMAKE_SOURCE_DIR}/src/io)
 set(MATERIALS_DIR      ${CMAKE_SOURCE_DIR}/src/materials)
+set(DAMAGE_DIR         ${CMAKE_SOURCE_DIR}/src/damage)
 set(MESH_OUTPUT_DIR    ${CMAKE_SOURCE_DIR}/src/io/mesh_output)
 
 # link directories 

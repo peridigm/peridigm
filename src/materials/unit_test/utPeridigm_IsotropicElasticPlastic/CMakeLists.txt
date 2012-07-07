@@ -1,8 +1,6 @@
 add_executable(utPeridigm_IsotropicElasticPlasticMaterial
                ${MATERIALS_DIR}/Peridigm_Material.cpp
                ${MATERIALS_DIR}/Peridigm_IsotropicElasticPlasticMaterial.cpp
-               ${MATERIALS_DIR}/Peridigm_DamageModelFactory.cpp
-               ${MATERIALS_DIR}/Peridigm_CriticalStretchDamageModel.cpp
                ${CORE_DIR}/Peridigm_Timer.cpp
                ${CORE_DIR}/Peridigm_State.cpp
                ${CORE_DIR}/Peridigm_DataManager.cpp

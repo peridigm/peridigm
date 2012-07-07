@@ -59,7 +59,7 @@
 #include "Peridigm_NeighborhoodData.hpp"
 #include "Peridigm_DataManager.hpp"
 #include "materials/Peridigm_Material.hpp"
-#include "materials/Peridigm_DamageModel.hpp"
+#include "damage/Peridigm_DamageModel.hpp"
 #include "contact/Peridigm_ContactModel.hpp"
 
 namespace PeridigmNS {

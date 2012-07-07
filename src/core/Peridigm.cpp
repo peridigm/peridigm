@@ -78,7 +78,7 @@
 #include "Peridigm_RandomNumber.hpp"
 #include "Peridigm_Timer.hpp"
 #include "materials/Peridigm_MaterialFactory.hpp"
-#include "materials/Peridigm_DamageModelFactory.hpp"
+#include "damage/Peridigm_DamageModelFactory.hpp"
 #include "contact/Peridigm_ContactModelFactory.hpp"
 #include "mesh_input/quick_grid/QuickGrid.h"
 #include "mesh_input/quick_grid/QuickGridData.h"

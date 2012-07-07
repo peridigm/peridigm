@@ -8,8 +8,6 @@ add_executable(utPHAL_UpdateForceState
                ${CORE_DIR}/Peridigm_SerialMatrix.cpp
                ${MATERIALS_DIR}/Peridigm_Material.cpp
                ${MATERIALS_DIR}/Peridigm_LinearElasticIsotropicMaterial.cpp
-               ${MATERIALS_DIR}/Peridigm_DamageModelFactory.cpp
-               ${MATERIALS_DIR}/Peridigm_CriticalStretchDamageModel.cpp
                ${MESH_OUTPUT_DIR}/Field.cxx
                ./utPHAL_UpdateForceState.cpp)
 target_link_libraries(utPHAL_UpdateForceState
@@ -24,7 +22,6 @@ add_test (utPHAL_UpdateForceState python ${CMAKE_BINARY_DIR}/scripts/run_unit_te
 #               ${CORE_DIR}/PHAL_PeridigmTraits.cpp
 #               ${CORE_DIR}/PHAL_Dimension.cpp
 #               ${MATERIALS_DIR}/Peridigm_LinearElasticIsotropicMaterial.cpp
-#               ${MATERIALS_DIR}/Peridigm_CriticalStretchDamageModel.cpp
 #               ./utPHAL_UpdateForceState_MPI_np2.cpp)
 #target_link_libraries(utPHAL_UpdateForceState_MPI_np2
 #                      ${Trilinos_LIBRARIES}
@@ -45,8 +42,6 @@ add_executable(utPHAL_EvaluateForce
                ${MESH_OUTPUT_DIR}/Field.cxx
                ${MATERIALS_DIR}/Peridigm_Material.cpp
                ${MATERIALS_DIR}/Peridigm_LinearElasticIsotropicMaterial.cpp
-               ${MATERIALS_DIR}/Peridigm_DamageModelFactory.cpp
-               ${MATERIALS_DIR}/Peridigm_CriticalStretchDamageModel.cpp
                ./utPHAL_EvaluateForce.cpp
 )
 target_link_libraries(utPHAL_EvaluateForce
