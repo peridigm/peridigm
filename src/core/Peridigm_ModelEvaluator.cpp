@@ -108,6 +108,17 @@ PeridigmNS::ModelEvaluator::constructForceEvaluators()
   evaluatorsToBuild["EvaluateForce"] = p;
   }
 
+  { // Evaluate damage
+  RCP<ParameterList> p = rcp(new ParameterList);
+  int type = FactoryTraits<PHAL::PeridigmTraits>::id_evaluate_damage;
+  p->set<int>("Type", type); 
+  p->set<bool>("Verbose", verbose);
+
+  p->set< RCP<DataLayout> >("Dummy Data Layout", dummy);
+
+  evaluatorsToBuild["EvaluateDamage"] = p;
+  }
+
   // Contact
   if(hasContact){
     RCP<ParameterList> p = rcp(new ParameterList);

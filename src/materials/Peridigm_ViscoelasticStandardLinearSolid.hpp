@@ -49,7 +49,6 @@
 #define PERIDIGM_VISCOELASTICSTANDARDLINEARSOLID_HPP
 
 #include "Peridigm_Material.hpp"
-#include "Peridigm_DamageModel.hpp"
 
 namespace PeridigmNS {
 
@@ -115,9 +114,6 @@ namespace PeridigmNS {
 	double m_density;
 	double m_lambda_i;
 	double m_tau_b;
-
-    // damage model
-    Teuchos::RCP<DamageModel> m_damageModel;
   };
 }
 

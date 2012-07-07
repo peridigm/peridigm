@@ -58,8 +58,9 @@
 
 #include "Peridigm_NeighborhoodData.hpp"
 #include "Peridigm_DataManager.hpp"
-#include "contact/Peridigm_ContactModel.hpp"
 #include "materials/Peridigm_Material.hpp"
+#include "materials/Peridigm_DamageModel.hpp"
+#include "contact/Peridigm_ContactModel.hpp"
 
 namespace PeridigmNS {
 
@@ -107,6 +108,16 @@ namespace PeridigmNS {
     //! Set the material model
     void setMaterialModel(Teuchos::RCP<const PeridigmNS::Material> materialModel_){
       materialModel = materialModel_;
+    }
+
+    //! Get the damage model
+    Teuchos::RCP<const PeridigmNS::DamageModel> getDamageModel(){
+      return damageModel;
+    }
+
+    //! Set the damage model
+    void setDamageModel(Teuchos::RCP<const PeridigmNS::DamageModel> damageModel_){
+      damageModel = damageModel_;
     }
 
     //! Get the contact model
@@ -167,8 +178,16 @@ namespace PeridigmNS {
       return blockParams.get<string>("Material");
     }
 
+    //! Get the damage model name
+    std::string getDamageModelName(){
+      return blockParams.get<string>("Damage Model", "None");
+    }
+
     //! Initialize the material model
     void initializeMaterialModel(double timeStep = 1.0);
+
+    //! Initialize the damage model
+    void initializeDamageModel(double timeStep = 1.0);
 
     //! Get the number of points in the block (does not include ghosts)
     int numPoints() {
@@ -283,6 +302,9 @@ namespace PeridigmNS {
 
     //! The material model
     Teuchos::RCP<const PeridigmNS::Material> materialModel;
+
+    //! The damage model
+    Teuchos::RCP<const PeridigmNS::DamageModel> damageModel;
 
     //! The contact model
     Teuchos::RCP<const PeridigmNS::ContactModel> contactModel;

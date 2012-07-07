@@ -47,7 +47,6 @@
 
 #include "Peridigm_IsotropicHardeningPlasticMaterial.hpp"
 #include "Peridigm_IsotropicElasticPlasticMaterial.hpp"
-#include "Peridigm_DamageModelFactory.hpp"
 #include <Teuchos_Assert.hpp>
 #include <Epetra_SerialComm.h>
 #include <Epetra_Vector.h>
@@ -63,8 +62,7 @@ using namespace std;
 
 PeridigmNS::IsotropicHardeningPlasticMaterial::IsotropicHardeningPlasticMaterial(const Teuchos::ParameterList & params)
 :
-Material(params),
-m_damageModel()
+Material(params)
 {
   //! \todo Add meaningful asserts on material properties.
   m_bulkModulus = params.get<double>("Bulk Modulus");
@@ -91,16 +89,6 @@ m_damageModel()
   m_variableSpecs->push_back(Field_NS::LAMBDA);
   m_variableSpecs->push_back(Field_NS::BOND_DAMAGE);
   m_variableSpecs->push_back(Field_NS::DSF);
-
-  // Create the damage model, if any
-  if(params.isSublist("Damage Model")){
-    DamageModelFactory damageModelFactory;
-    m_damageModel = damageModelFactory.create( params.sublist("Damage Model") );
-    // Add damage model's variable specs to list of material model's variable specs
-    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > damageModelSpecs = m_damageModel->VariableSpecs();
-    for(unsigned int i=0 ; i<damageModelSpecs->size() ; ++i)
-      m_variableSpecs->push_back( (*damageModelSpecs)[i] );
-  }
 }
 
 PeridigmNS::IsotropicHardeningPlasticMaterial::~IsotropicHardeningPlasticMaterial()
@@ -145,33 +133,6 @@ PeridigmNS::IsotropicHardeningPlasticMaterial::updateConstitutiveData(const doub
   dataManager.getData(Field_NS::DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&damage);
   dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&weightedVolume);
   dataManager.getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
-
-  // Update the bond damage
-  if(!m_damageModel.is_null()){
-    m_damageModel->computeDamage(dt,
-                                 numOwnedPoints,
-                                 ownedIDs,
-                                 neighborhoodList,
-                                 dataManager);
-  }
-
-  //  Update the element damage (percent of bonds broken)
-  int neighborhoodListIndex = 0;
-  int bondIndex = 0;
-  for(int iID=0 ; iID<numOwnedPoints ; ++iID){
-    int nodeID = ownedIDs[iID];
-    int numNeighbors = neighborhoodList[neighborhoodListIndex++];
-    neighborhoodListIndex += numNeighbors;
-    double totalDamage = 0.0;
-    for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
-      totalDamage += bondDamage[bondIndex++];
-    }
-    if(numNeighbors > 0)
-      totalDamage /= numNeighbors;
-    else
-      totalDamage = 0.0;
-    damage[nodeID] = totalDamage;
-  }
 
   MATERIAL_EVALUATION::computeDilatation(x,y,weightedVolume,volume,bondDamage,dilatation,neighborhoodList,numOwnedPoints);
 }

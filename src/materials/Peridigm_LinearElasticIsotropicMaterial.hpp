@@ -49,7 +49,6 @@
 #define PERIDIGM_LINEARELASTICISOTROPICMATERIAL_HPP
 
 #include "Peridigm_Material.hpp"
-#include "Peridigm_DamageModel.hpp"
 
 namespace PeridigmNS {
 
@@ -178,9 +177,6 @@ namespace PeridigmNS {
 	double m_shearModulus;
 	double m_density;
     double m_horizon;
-
-    // damage model
-    Teuchos::RCP<DamageModel> m_damageModel;
   };
 }
 

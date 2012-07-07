@@ -1,4 +1,4 @@
-/*! \file PHAL_Dimension.cpp */
+/*! \file PHAL_EvaluateDamage.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -44,19 +44,38 @@
 //
 // ************************************************************************
 //@HEADER
-#include "PHAL_Dimension.hpp"
+#ifndef PHAL_EVALUATEDAMAGE_HPP
+#define PHAL_EVALUATEDAMAGE_HPP
 
-const char * Node::name() const 
-{ static const char n[] = "Node" ; return n ; }
-const Node & Node::tag() 
-{ static const Node myself ; return myself ; }
+#include <Phalanx_ConfigDefs.hpp>
+#include <Phalanx_Evaluator_WithBaseImpl.hpp>
+#include <Phalanx_Evaluator_Derived.hpp>
+#include <Phalanx_MDField.hpp>
+#include <vector>
 
-const char * Cell::name() const 
-{ static const char n[] = "Cell" ; return n ; }
-const Cell & Cell::tag() 
-{ static const Cell myself ; return myself ; }
+template<typename EvalT, typename Traits>
+class EvaluateDamage : public PHX::EvaluatorWithBaseImpl<Traits>,
+                       public PHX::EvaluatorDerived<EvalT, Traits>
+{
+  typedef typename EvalT::ScalarT ScalarT;
 
-const char * Dummy::name() const 
-{ static const char n[] = "Dummy" ; return n ; }
-const Dummy & Dummy::tag() 
-{ static const Dummy myself ; return myself ; }
+public:
+
+  EvaluateDamage(Teuchos::ParameterList& p);
+
+  void postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& vm);
+
+  void evaluateFields(typename Traits::EvalData d);
+
+private:
+ 
+  Teuchos::RCP<PHX::FieldTag> evaluate_force_field_tag;
+  bool m_verbose;
+
+  std::size_t m_num_pt;
+};
+
+#include "PHAL_EvaluateDamage_Def.hpp"
+
+#endif // PHAL_EVALUATEDAMAGE_HPP

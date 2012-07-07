@@ -71,8 +71,9 @@
 #include "Peridigm_OutputManager_ExodusII.hpp"
 #include "Peridigm_ComputeManager.hpp"
 #include "Peridigm_BoundaryAndInitialConditionManager.hpp"
-#include "contact/Peridigm_ContactModel.hpp"
 #include "materials/Peridigm_Material.hpp"
+#include "materials/Peridigm_DamageModel.hpp"
+#include "contact/Peridigm_ContactModel.hpp"
 // MLP
 #include "muParser/muParserDef.h"
 
@@ -91,8 +92,11 @@ namespace PeridigmNS {
     //! Destructor
     ~Peridigm(){};
 
-    //! Instantiate material objects
+    //! Instantiate material models
     void instantiateMaterials();
+
+    //! Instantiate damage models
+    void instantiateDamageModels();
 
     //! Initialize discretization and maps
     void initializeDiscretization(Teuchos::RCP<AbstractDiscretization> peridigmDisc);
@@ -112,6 +116,9 @@ namespace PeridigmNS {
 
     //! Initialize the output manager
     void initializeOutputManager();
+
+    //! Initialize blocks
+    void initializeBlocks(Teuchos::RCP<AbstractDiscretization> disc);
 
     //! Main routine to drive time integration
     void execute();
@@ -286,11 +293,14 @@ namespace PeridigmNS {
     //! Material models
     std::map< std::string, Teuchos::RCP<const PeridigmNS::Material> > materialModels;
 
-    //! Boundary and initial condition manager
-    Teuchos::RCP<PeridigmNS::BoundaryAndInitialConditionManager> boundaryAndInitialConditionManager;
+    //! Damage models
+    std::map< std::string, Teuchos::RCP<const PeridigmNS::DamageModel> > damageModels;
 
     //! Contact models
     std::map< std::string, Teuchos::RCP<const PeridigmNS::ContactModel> > contactModels;
+
+    //! Boundary and initial condition manager
+    Teuchos::RCP<PeridigmNS::BoundaryAndInitialConditionManager> boundaryAndInitialConditionManager;
 
     //! Compute manager
     Teuchos::RCP<PeridigmNS::ComputeManager> computeManager;

@@ -125,6 +125,23 @@ void PeridigmNS::Block::initializeMaterialModel(double timeStep)
                             *dataManager);
 }
 
+void PeridigmNS::Block::initializeDamageModel(double timeStep)
+{
+  if(damageModel.is_null())
+    return;
+
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(neighborhoodData.is_null(),
+                      "\n**** Neighborhood data must be set via Block::setNeighborhoodData() prior to calling Block::initializeDamageModel()\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(dataManager.is_null(),
+                      "\n**** DataManager must be initialized via Block::initializeDataManager() prior to calling Block::initializeDamageModel()\n");
+
+  damageModel->initialize(timeStep,
+                          neighborhoodData->NumOwnedPoints(),
+                          neighborhoodData->OwnedIDs(),
+                          neighborhoodData->NeighborhoodList(),
+                          *dataManager);
+}
+
 void PeridigmNS::Block::importData(const Epetra_Vector& source, Field_NS::FieldSpec spec, Field_ENUM::Step step, Epetra_CombineMode combineMode)
 {
   if(dataManager->hasData(spec, step)){
@@ -369,6 +386,11 @@ void PeridigmNS::Block::initializeDataManager()
   // Material model specs
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > materialModelSpecs = materialModel->VariableSpecs();
   specs->insert(specs->end(), materialModelSpecs->begin(), materialModelSpecs->end());
+  // Damage model specs (if any)
+  if(!damageModel.is_null()){
+    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > damageModelSpecs = damageModel->VariableSpecs();
+    specs->insert(specs->end(), damageModelSpecs->begin(), damageModelSpecs->end());
+  }
   // Contact model specs (if any)
   if(!contactModel.is_null()){
     Teuchos::RCP< std::vector<Field_NS::FieldSpec> > contactModelSpecs = contactModel->VariableSpecs();
