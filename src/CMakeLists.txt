@@ -40,6 +40,7 @@ add_library(PeridigmLib ${Peridigm_SOURCES})
 set(Peridigm_LIBRARY PeridigmLib)
 
 set(Peridigm_LINK_LIBRARIES
+    ${Peridigm_LIBRARY}
     ${Trilinos_LIBRARIES}
     ${PDNEIGH_LIBS}
     ${Zoltan_LIBRARY}
@@ -50,7 +51,6 @@ set(Peridigm_LINK_LIBRARIES
     ${MESH_OUTPUT_LIBS}
     ${REQUIRED_LIBS}
     ${PdMaterialUtilitiesLib}
-    ${Peridigm_LIBRARY}
 )
 
 add_executable(Peridigm ${CORE_DIR}/Peridigm_Main.cpp)
