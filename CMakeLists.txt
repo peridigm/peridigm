@@ -101,30 +101,20 @@ MESSAGE("")
 
 # Check for netcdf
 LIST(FIND Trilinos_TPL_LIST Netcdf Netcdf_Package_Index)
-IF(Netcdf_Package_Index GREATER -1)
-  MESSAGE("-- Found Netcdf")
-ELSE()
-  MESSAGE("Error:  Netcdf NOT found")
+IF(Netcdf_Package_Index LESS 0)
+  MESSAGE("\n\nError:  Netcdf NOT found.  Netcdf is a REQUIRED Trilinos TPL.\n\n")
 ENDIF()
 
 # For some unit tests, we want to link only to specfic libraries
-set(Epetra_LIBRARY epetra )
-set(Zoltan_LIBRARY zoltan )
+set(Epetra_LIBRARY epetra)
+set(Zoltan_LIBRARY zoltan)
 
 # other required libraries
 set(MESH_INPUT_LIBS QuickGrid)
-
-# other required libraries
 set(MESH_OUTPUT_LIBS PdVTK)
-
-# other required libraries
 set(PARSER_LIBS muParser)
-
-# load balancing and neighborhood creation
 set(PDNEIGH_LIBS PdNeigh)
 set(UTILITIES_LIBS Utilities)
-
-# other required libraries
 set(PdMaterialUtilitiesLib PdMaterialUtilities)
 
 # include for all directories
@@ -147,6 +137,7 @@ ${CMAKE_SOURCE_DIR}/src/io/pdneigh
 ${CMAKE_SOURCE_DIR}/src/contact
 ${CMAKE_SOURCE_DIR}/src/evaluators
 ${CMAKE_SOURCE_DIR}/src/materials
+${CMAKE_SOURCE_DIR}/src/damage
 )
 
 include_directories(${INCLUDE_DIRS})
@@ -169,7 +160,6 @@ set(LIB_DIRS
   ${VTK_LIBRARY_DIRS} 
   ${Boost_LIBRARY_DIRS})
 link_directories(${LIB_DIRS})
-
 
 set (REQUIRED_LIBS
   ${BlasLapack_Libraries}  
