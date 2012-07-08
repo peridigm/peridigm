@@ -10,17 +10,10 @@ if (NOT ${buildInSource})
    execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/scripts/mirror.py -s ${CMAKE_SOURCE_DIR} -b ${CMAKE_BINARY_DIR} ${UT_DIRS} )
 endif (NOT ${buildInSource})
 
-add_executable(utPeridigm_LinearElasticIsotropicMaterial
-               ${CORE_DIR}/Peridigm_Timer.cpp
-               ${CORE_DIR}/Peridigm_State.cpp
-               ${CORE_DIR}/Peridigm_DataManager.cpp
-               ${CORE_DIR}/Peridigm_SerialMatrix.cpp
-               ${MESH_OUTPUT_DIR}/Field.cxx
-               ${MATERIALS_DIR}/Peridigm_Material.cpp
-               ${MATERIALS_DIR}/Peridigm_LinearElasticIsotropicMaterial.cpp
-               ./utPeridigm_LinearElasticIsotropicMaterial.cpp
+add_executable(utPeridigm_LinearElasticIsotropicMaterial ./utPeridigm_LinearElasticIsotropicMaterial.cpp
 )
 target_link_libraries(utPeridigm_LinearElasticIsotropicMaterial
+  ${Peridigm_LIBRARY}
   ${Trilinos_LIBRARIES}
   ${MESH_OUTPUT_LIBS}
   ${PdMaterialUtilitiesLib}

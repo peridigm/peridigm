@@ -2,46 +2,42 @@
 # Main executable for Peridigm
 #
 
-# Glob the compute source files
+# Glob source files in subdirectories
 file (GLOB computeSOURCES 
   "${COMPUTE_DIR}/*.cpp"
+)
+file (GLOB contactSOURCES 
+  "${CONTACT_DIR}/*.cpp"
+)
+file (GLOB coreSOURCES 
+  "${CORE_DIR}/*.cpp"
+)
+file (GLOB discretizationSOURCES 
+  "${DISCRETIZATION_DIR}/*.cpp"
+)
+file (GLOB damageSOURCES 
+  "${DAMAGE_DIR}/*.cpp"
+)
+file (GLOB ioSOURCES 
+  "${IO_DIR}/*.cpp"
+)
+file (GLOB materialsSOURCES 
+  "${MATERIALS_DIR}/*.cpp"
 )
 
 set(Peridigm_SOURCES
     ${COMPUTE_DIR}/compute_includes.hpp
-    ${CONTACT_DIR}/Peridigm_ContactModelFactory.cpp
-    ${CONTACT_DIR}/Peridigm_ShortRangeForceContactModel.cpp
-#    ${CORE_DIR}/Peridigm_Main.cpp
-    ${CORE_DIR}/Peridigm_Factory.cpp
-    ${CORE_DIR}/Peridigm.cpp
-    ${CORE_DIR}/Peridigm_State.cpp
-    ${CORE_DIR}/Peridigm_DataManager.cpp
-    ${CORE_DIR}/Peridigm_SerialMatrix.cpp
-    ${CORE_DIR}/Peridigm_Block.cpp
-    ${CORE_DIR}/Peridigm_BoundaryAndInitialConditionManager.cpp
-    ${CORE_DIR}/Peridigm_CriticalTimeStep.cpp
-    ${CORE_DIR}/Peridigm_ModelEvaluator.cpp
-    ${CORE_DIR}/PHAL_Dimension.cpp
-    ${CORE_DIR}/PHAL_PeridigmTraits.cpp
-    ${CORE_DIR}/Peridigm_ComputeManager.cpp
-    ${CORE_DIR}/Peridigm_RandomNumber.cpp
-    ${CORE_DIR}/Peridigm_Timer.cpp
-    ${DISCRETIZATION_DIR}/Peridigm_AbstractDiscretization.cpp
-    ${DISCRETIZATION_DIR}/Peridigm_DiscretizationFactory.cpp
-    ${DISCRETIZATION_DIR}/Peridigm_PdQuickGridDiscretization.cpp
-    ${DISCRETIZATION_DIR}/Peridigm_PartialVolumeCalculator.cpp
-    ${DISCRETIZATION_DIR}/Peridigm_STKDiscretization.cpp
-    ${IO_DIR}/Peridigm_OutputManager_ExodusII.cpp
-    ${MATERIALS_DIR}/Peridigm_Material.cpp
-    ${MATERIALS_DIR}/Peridigm_MaterialFactory.cpp
-    ${MATERIALS_DIR}/Peridigm_LinearElasticIsotropicMaterial.cpp
-    ${MATERIALS_DIR}/Peridigm_IsotropicElasticPlasticMaterial.cpp
-    ${MATERIALS_DIR}/Peridigm_IsotropicHardeningPlasticMaterial.cpp
-    ${MATERIALS_DIR}/Peridigm_ViscoelasticStandardLinearSolid.cpp
-    ${DAMAGE_DIR}/Peridigm_DamageModelFactory.cpp
-    ${DAMAGE_DIR}/Peridigm_CriticalStretchDamageModel.cpp
     ${computeSOURCES}
+    ${contactSOURCES}
+    ${coreSOURCES}
+    ${discretizationSOURCES}
+    ${damageSOURCES}
+    ${ioSOURCES}
+    ${materialsSOURCES}
 )
+
+add_library(PeridigmLib ${Peridigm_SOURCES})
+set(Peridigm_LIBRARY PeridigmLib)
 
 set(Peridigm_LINK_LIBRARIES
     ${Trilinos_LIBRARIES}
@@ -54,9 +50,10 @@ set(Peridigm_LINK_LIBRARIES
     ${MESH_OUTPUT_LIBS}
     ${REQUIRED_LIBS}
     ${PdMaterialUtilitiesLib}
+    ${Peridigm_LIBRARY}
 )
 
-add_executable(Peridigm ${CORE_DIR}/Peridigm_Main.cpp ${Peridigm_SOURCES})
+add_executable(Peridigm ${CORE_DIR}/Peridigm_Main.cpp)
 target_link_libraries(Peridigm ${Peridigm_LINK_LIBRARIES})
 
 #
@@ -72,8 +69,9 @@ set_property(TARGET Peridigm
 # 
 # Add subdirectories
 #
+add_subdirectory (compute/)
 add_subdirectory (core/)
+add_subdirectory (evaluators/)
 add_subdirectory (io/)
 add_subdirectory (materials/)
-add_subdirectory (compute/)
 add_subdirectory (muParser/)
