@@ -116,6 +116,7 @@ Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel() {
   Teuchos::ParameterList& outputParams = peridigmParams->sublist("Output");
   Teuchos::ParameterList& outputFields = outputParams.sublist("Output Variables");
   outputFields.set("Strain_Energy_Density", true);
+  outputFields.set("Global_Strain_Energy_Density", true);
 
   // create the Peridigm object
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm = Teuchos::rcp(new PeridigmNS::Peridigm(comm, peridigmParams));
@@ -156,19 +157,11 @@ void FourPointTest()
     dilatation_values[i] = 9.369;
   }
 
-  // Create Compute_Energy object
-  //Teuchos::RCP<PeridigmNS::Compute_Strain_Energy_Density> computeStrainEnergyDensity = Teuchos::rcp(new PeridigmNS::Compute_Strain_Energy_Density(&(*peridigm)));
-  Teuchos::RCP<PeridigmNS::Compute_Local_Strain_Energy_Density> computeLocalStrainEnergyDensity = Teuchos::rcp(new PeridigmNS::Compute_Local_Strain_Energy_Density(&(*peridigm)));
-  Teuchos::RCP<PeridigmNS::Compute_Global_Strain_Energy_Density> computeGlobalStrainEnergyDensity = Teuchos::rcp(new PeridigmNS::Compute_Global_Strain_Energy_Density(&(*peridigm)));	
-  
   // Get the blocks
   Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks = peridigm->getBlocks();
 
-  // Call the compute class
-  int retval = computeLocalStrainEnergyDensity->compute( blocks );
-  BOOST_CHECK_EQUAL( retval, 0 );
-  int retval2 = computeGlobalStrainEnergyDensity->compute( blocks );
-  BOOST_CHECK_EQUAL( retval2, 0 );	
+  // Fire the compute classes to fill the linear momentum data
+  peridigm->getComputeManager()->compute(blocks);
 
   // Now check that volumes and energy is correct
   double *volume_values = volume->Values();
