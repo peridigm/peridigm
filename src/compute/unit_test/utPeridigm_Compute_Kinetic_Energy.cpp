@@ -116,6 +116,7 @@ Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel() {
   Teuchos::ParameterList& outputParams = peridigmParams->sublist("Output");
   Teuchos::ParameterList& outputFields = outputParams.sublist("Output Variables");
   outputFields.set("Kinetic_Energy", true);
+  outputFields.set("Global_Kinetic_Energy", true);
 
   // create the Peridigm object
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm = Teuchos::rcp(new PeridigmNS::Peridigm(comm, peridigmParams));
@@ -151,19 +152,11 @@ void FourPointTest()
     velocity_values[3*i+2] = (3.0*ID)+2.0;
   }
 
-  // Create Compute_Energy object
-  //Teuchos::RCP<PeridigmNS::Compute_Kinetic_Energy> computeKineticEnergy = Teuchos::rcp(new PeridigmNS::Compute_Kinetic_Energy(&(*peridigm)));
-  Teuchos::RCP<PeridigmNS::Compute_Local_Kinetic_Energy> computeLocalKineticEnergy = Teuchos::rcp(new PeridigmNS::Compute_Local_Kinetic_Energy(&(*peridigm)));
-  Teuchos::RCP<PeridigmNS::Compute_Global_Kinetic_Energy> computeGlobalKineticEnergy = Teuchos::rcp(new PeridigmNS::Compute_Global_Kinetic_Energy(&(*peridigm)));
-
   // Get the blocks
   Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks = peridigm->getBlocks();
 
-  // Call the compute classes
-  int retval = computeLocalKineticEnergy->compute( blocks );
-  BOOST_CHECK_EQUAL( retval, 0 );
-  int retval2 = computeGlobalKineticEnergy->compute( blocks );
-  BOOST_CHECK_EQUAL( retval2, 0 );
+  // Fire the compute classes to fill the kinetic energy data
+  peridigm->getComputeManager()->compute(blocks);  
 
   double density = peridigm->getBlocks()->begin()->getMaterialModel()->Density();
 	

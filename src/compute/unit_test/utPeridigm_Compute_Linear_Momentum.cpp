@@ -152,7 +152,7 @@ void FourPointTest() {
   // Get the blocks
   Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks = peridigm->getBlocks();
 
-  // Fire the compute classes to fill the angular momentum data
+  // Fire the compute classes to fill the linear momentum data
   peridigm->getComputeManager()->compute(blocks);
 
   double density = peridigm->getBlocks()->begin()->getMaterialModel()->Density();
