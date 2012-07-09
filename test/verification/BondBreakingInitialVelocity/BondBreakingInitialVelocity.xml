@@ -25,10 +25,6 @@
 	  <Parameter name="Density" type="double" value="7800.0"/>
 	  <Parameter name="Bulk Modulus" type="double" value="130.0e9"/>
 	  <Parameter name="Shear Modulus" type="double" value="60.0e9"/>
-	  <ParameterList name="Damage Model">
-		<Parameter name="Damage Model" type="string" value="Critical Stretch"/>
-		<Parameter name="Critical Stretch" type="double" value="0.0002"/>
-	  </ParameterList>
 	</ParameterList>
   </ParameterList>
 
