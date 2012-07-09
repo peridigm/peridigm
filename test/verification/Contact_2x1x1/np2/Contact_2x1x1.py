@@ -63,11 +63,11 @@ if __name__ == "__main__":
     
     # Now merged output file against gold file
     command = ["../../../../scripts/exodiff", \
-                  "-stat", \
-                   base_name+".e", \
-                   "../"+base_name+"_gold.e", \
+                   "-stat", \
                    "-f", \
-                   "../"+base_name+".comp"]
+                   "../"+base_name+".comp", \
+                   base_name+".e", \
+                   "../"+base_name+"_gold.e"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:
