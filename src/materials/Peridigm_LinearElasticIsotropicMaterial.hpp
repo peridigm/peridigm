@@ -177,6 +177,7 @@ namespace PeridigmNS {
 	double m_shearModulus;
 	double m_density;
     double m_horizon;
+    bool m_applyAutomaticDifferentiationJacobian;
   };
 }
 

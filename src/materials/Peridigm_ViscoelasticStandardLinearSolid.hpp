@@ -114,6 +114,7 @@ namespace PeridigmNS {
 	double m_density;
 	double m_lambda_i;
 	double m_tau_b;
+    bool m_applyAutomaticDifferentiationJacobian;
   };
 }
 

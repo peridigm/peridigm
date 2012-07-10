@@ -290,7 +290,7 @@ void runPureShear() {
 	Field<double> velField(velocitySpec,pdGridData.numPoints);
 	FieldSpec ySpec = CURCOORD3D;
 	Field<double> yField(ySpec,pdGridData.numPoints);
-	FieldSpec dsfSpec = DSF;
+	FieldSpec dsfSpec = SHEAR_CORRECTION_FACTOR;
 	Field<double> dsfField(dsfSpec,pdGridData.numPoints);
 	uOwnedField.set(0.0);
 	velField.set(0.0);

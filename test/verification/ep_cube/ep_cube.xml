@@ -24,6 +24,7 @@
 			<Parameter name="Bulk Modulus" type="double" value="67549.0"/>
 			<Parameter name="Shear Modulus" type="double" value="25902.2"/>
 			<Parameter name="Yield Stress" type="double" value="351.79"/>
+            <Parameter name="Apply Shear Correction Factor" type="bool" value="false"/>
 		</ParameterList>
 	</ParameterList>
 	<ParameterList name="Boundary Conditions">

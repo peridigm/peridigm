@@ -125,8 +125,6 @@ double computeWeightedVolume
 	double cellVolume;
 	const int *neighPtr = localNeighborList;
 	int numNeigh = *neighPtr; neighPtr++;
-//	std::cout << NAMESPACE <<"computeWeightedVolume\n";
-//	std::cout << "\tnumber of neighbors = " << numNeigh << std::endl;
 	for(int n=0;n<numNeigh;n++,neighPtr++){
 		int localId = *neighPtr;
 		cellVolume = volumeOverlap[localId];
@@ -444,34 +442,34 @@ void computeShearCorrectionFactor
 		const double *X = xOwned;
 		const double *Y = yOwned;
 		double m = *owned_weighted_volume;
-		double dsf, max_dsf;
+		double scf, max_scf;
 
 		mode = XY;
 		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
-		dsf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
-		max_dsf=dsf;
+		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
+		max_scf=scf;
 
 		mode = ZX;
 		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
-		dsf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
-		if(dsf>max_dsf) max_dsf = dsf;
+		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
+		if(scf>max_scf) max_scf = scf;
 
 		mode = YZ;
 		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
-		dsf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
-		if(dsf>max_dsf) max_dsf = dsf;
+		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
+		if(scf>max_scf) max_scf = scf;
 
 		/*
 		 * Better guard against division by zero
 		 *
 		 */
 		double tolerance(1.0e-15);
-		if(max_dsf/reference < tolerance)
-			max_dsf=1.0;
+		if(max_scf/reference < tolerance)
+			max_scf=1.0;
 		else
-			max_dsf = reference/max_dsf;
+			max_scf = reference/max_scf;
 
-		*scaleFactor = max_dsf;
+		*scaleFactor = max_scf;
 		neighPtr+=(numNeigh+1);
 	}
 

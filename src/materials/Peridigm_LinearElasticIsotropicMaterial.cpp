@@ -56,13 +56,18 @@
 using namespace std;
 
 PeridigmNS::LinearElasticIsotropicMaterial::LinearElasticIsotropicMaterial(const Teuchos::ParameterList& params)
-  : Material(params)
+  : Material(params),
+    m_applyAutomaticDifferentiationJacobian(true)
 {
   //! \todo Add meaningful asserts on material properties.
   m_bulkModulus = params.get<double>("Bulk Modulus");
   m_shearModulus = params.get<double>("Shear Modulus");
   m_density = params.get<double>("Density");
   m_horizon = params.get<double>("Horizon");
+  if(params.isParameter("Apply Automatic Differentiation Jacobian"))
+    m_applyAutomaticDifferentiationJacobian = params.get<bool>("Apply Automatic Differentiation Jacobian");
+
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(params.isParameter("Apply Shear Correction Factor"), "**** Error:  Shear Correction Factor not supported for Viscoelastic material.\n");
 
   // set up vector of variable specs
   m_variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
@@ -148,11 +153,14 @@ PeridigmNS::LinearElasticIsotropicMaterial::computeJacobian(const double dt,
                                                             PeridigmNS::DataManager& dataManager,
                                                             PeridigmNS::SerialMatrix& jacobian) const
 {
-  // Call the base class function, which computes the Jacobian by finite difference
-  //PeridigmNS::Material::computeJacobian(dt, numOwnedPoints, ownedIDs, neighborhoodList, dataManager, jacobian);
-
-  // Compute the Jacobian via automatic differentiation
-  computeAutomaticDifferentiationJacobian(dt, numOwnedPoints, ownedIDs, neighborhoodList, dataManager, jacobian);  
+  if(m_applyAutomaticDifferentiationJacobian){
+    // Compute the Jacobian via automatic differentiation
+    computeAutomaticDifferentiationJacobian(dt, numOwnedPoints, ownedIDs, neighborhoodList, dataManager, jacobian);  
+  }
+  else{
+    // Call the base class function, which computes the Jacobian by finite difference
+    PeridigmNS::Material::computeJacobian(dt, numOwnedPoints, ownedIDs, neighborhoodList, dataManager, jacobian);
+  }
 }
 
 
