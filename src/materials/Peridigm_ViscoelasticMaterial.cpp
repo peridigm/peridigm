@@ -45,12 +45,12 @@
 // ************************************************************************
 //@HEADER
 
-#include "Peridigm_ViscoelasticStandardLinearSolid.hpp"
+#include "Peridigm_ViscoelasticMaterial.hpp"
+#include "viscoelastic.h"
+#include "material_utilities.h"
 #include <Teuchos_Assert.hpp>
 #include <Epetra_Vector.h>
 #include <Epetra_MultiVector.h>
-#include "ordinary_std_linear_visco_solid.h"
-#include "ordinary_utilities.h"
 #include <limits>
 
 PeridigmNS::ViscoelasticStandardLinearSolid::ViscoelasticStandardLinearSolid(const Teuchos::ParameterList & params)

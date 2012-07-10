@@ -1,4 +1,4 @@
-/*! \file Peridigm_IsotropicHardeningPlasticMaterial.cpp */
+/*! \file Peridigm_IsotropicElasticPlasticMaterial.cpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,22 +45,20 @@
 // ************************************************************************
 //@HEADER
 
-#include "Peridigm_IsotropicHardeningPlasticMaterial.hpp"
-#include "Peridigm_IsotropicElasticPlasticMaterial.hpp"
+#include "Peridigm_ElasticPlasticMaterial.hpp"
+#include "Peridigm_Timer.hpp"
+#include "elastic_plastic.h"
+#include "material_utilities.h"
 #include <Teuchos_Assert.hpp>
 #include <Epetra_SerialComm.h>
 #include <Epetra_Vector.h>
 #include <Sacado.hpp>
-#include "ordinary_elastic_plastic.h"
-#include "ordinary_iso_hard_plastic.h"
-#include "ordinary_utilities.h"
-#include "Peridigm_Timer.hpp"
 #include <limits>
 #include <vector>
 
 using namespace std;
 
-PeridigmNS::IsotropicHardeningPlasticMaterial::IsotropicHardeningPlasticMaterial(const Teuchos::ParameterList & params)
+PeridigmNS::IsotropicElasticPlasticMaterial::IsotropicElasticPlasticMaterial(const Teuchos::ParameterList & params)
   : Material(params),
     m_applyShearCorrectionFactor(false),
     m_disablePlasticity(false),
@@ -72,7 +70,6 @@ PeridigmNS::IsotropicHardeningPlasticMaterial::IsotropicHardeningPlasticMaterial
   m_horizon = params.get<double>("Horizon");
   m_density = params.get<double>("Density");
   m_yieldStress = params.get<double>("Yield Stress");
-  m_hardeningModulus = params.get<double>("Hardening Modulus");
   if(params.isParameter("Apply Shear Correction Factor"))
     m_applyShearCorrectionFactor = params.get<bool>("Apply Shear Correction Factor");
   if(params.isParameter("Disable Plasticity"))
@@ -98,11 +95,11 @@ PeridigmNS::IsotropicHardeningPlasticMaterial::IsotropicHardeningPlasticMaterial
   m_variableSpecs->push_back(Field_NS::SHEAR_CORRECTION_FACTOR);
 }
 
-PeridigmNS::IsotropicHardeningPlasticMaterial::~IsotropicHardeningPlasticMaterial()
+PeridigmNS::IsotropicElasticPlasticMaterial::~IsotropicElasticPlasticMaterial()
 {
 }
 
-void PeridigmNS::IsotropicHardeningPlasticMaterial::initialize(const double dt,
+void PeridigmNS::IsotropicElasticPlasticMaterial::initialize(const double dt,
                                                              const int numOwnedPoints,
                                                              const int* ownedIDs,
                                                              const int* neighborhoodList,
@@ -117,18 +114,17 @@ void PeridigmNS::IsotropicHardeningPlasticMaterial::initialize(const double dt,
   
   MATERIAL_EVALUATION::computeWeightedVolume(xOverlap,cellVolumeOverlap,weightedVolume,numOwnedPoints,neighborhoodList);
 
-
   dataManager.getData(Field_NS::SHEAR_CORRECTION_FACTOR, Field_ENUM::STEP_NONE)->PutScalar(1.0);
   if(m_applyShearCorrectionFactor)
     MATERIAL_EVALUATION::computeShearCorrectionFactor(numOwnedPoints,xOverlap,yOverlapScratch,cellVolumeOverlap,weightedVolume,neighborhoodList,m_horizon,shearCorrectionFactor);
-  
+
   // \todo Move this to shear correction factor routine.
   for(double *scf=shearCorrectionFactor; scf!=shearCorrectionFactor+numOwnedPoints;scf++)
     *scf = 1.0/(*scf);
 }
 
 void
-PeridigmNS::IsotropicHardeningPlasticMaterial::updateConstitutiveData(const double dt,
+PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const double dt,
                                                                     const int numOwnedPoints,
                                                                     const int* ownedIDs,
                                                                     const int* neighborhoodList,
@@ -147,7 +143,7 @@ PeridigmNS::IsotropicHardeningPlasticMaterial::updateConstitutiveData(const doub
 }
 
 void
-PeridigmNS::IsotropicHardeningPlasticMaterial::computeForce(const double dt,
+PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const double dt,
                                                           const int numOwnedPoints,
                                                           const int* ownedIDs,
                                                           const int* neighborhoodList,
@@ -170,7 +166,7 @@ PeridigmNS::IsotropicHardeningPlasticMaterial::computeForce(const double dt,
   // Zero out the force
   dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->PutScalar(0.0);
 
-  MATERIAL_EVALUATION::computeInternalForceIsotropicHardeningPlastic(x,
+  MATERIAL_EVALUATION::computeInternalForceIsotropicElasticPlastic(x,
                                                                    yNP1,
                                                                    weightedVolume,
                                                                    volume,
@@ -187,12 +183,11 @@ PeridigmNS::IsotropicHardeningPlasticMaterial::computeForce(const double dt,
                                                                    m_bulkModulus,
                                                                    m_shearModulus,
                                                                    m_horizon,
-                                                                   m_yieldStress,
-                                                                   m_hardeningModulus);
+                                                                   m_yieldStress);
 }
 
 void
-PeridigmNS::IsotropicHardeningPlasticMaterial::computeJacobian(const double dt,
+PeridigmNS::IsotropicElasticPlasticMaterial::computeJacobian(const double dt,
                                                              const int numOwnedPoints,
                                                              const int* ownedIDs,
                                                              const int* neighborhoodList,
@@ -210,7 +205,7 @@ PeridigmNS::IsotropicHardeningPlasticMaterial::computeJacobian(const double dt,
 }
 
 void
-PeridigmNS::IsotropicHardeningPlasticMaterial::computeAutomaticDifferentiationJacobian(const double dt,
+PeridigmNS::IsotropicElasticPlasticMaterial::computeAutomaticDifferentiationJacobian(const double dt,
                                                                                      const int numOwnedPoints,
                                                                                      const int* ownedIDs,
                                                                                      const int* neighborhoodList,
@@ -228,7 +223,6 @@ PeridigmNS::IsotropicHardeningPlasticMaterial::computeAutomaticDifferentiationJa
   // Loop over all points.
   int neighborhoodListIndex = 0;
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
-
     // Create a temporary neighborhood consisting of a single point and its neighbors.
     // The temporary neighborhood is sorted by global ID to somewhat increase the chance
     // that the downstream Epetra_CrsMatrix::SumIntoMyValues() calls will be as efficient
@@ -316,7 +310,7 @@ PeridigmNS::IsotropicHardeningPlasticMaterial::computeAutomaticDifferentiationJa
 
     // Evaluate the constitutive model using the AD types
     MATERIAL_EVALUATION::computeDilatationAD(x,&y_AD[0],weightedVolume,cellVolume,bondDamage,&dilatation_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints);
-    MATERIAL_EVALUATION::computeInternalForceIsotropicHardeningPlasticAD(x,
+    MATERIAL_EVALUATION::computeInternalForceIsotropicElasticPlasticAD(x,
                                                                        &y_AD[0],
                                                                        weightedVolume,
                                                                        cellVolume,
@@ -333,8 +327,7 @@ PeridigmNS::IsotropicHardeningPlasticMaterial::computeAutomaticDifferentiationJa
                                                                        m_bulkModulus,
                                                                        m_shearModulus,
                                                                        m_horizon,
-                                                                       m_yieldStress,
-                                                                       m_hardeningModulus);
+                                                                       m_yieldStress);
 
     // Load derivative values into scratch matrix
     // Multiply by volume along the way to convert force density to force

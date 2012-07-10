@@ -48,7 +48,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
-#include "Peridigm_LinearElasticIsotropicMaterial.hpp"
+#include "Peridigm_ElasticMaterial.hpp"
 #include "Peridigm_SerialMatrix.hpp"
 #include <Epetra_SerialComm.h>
 

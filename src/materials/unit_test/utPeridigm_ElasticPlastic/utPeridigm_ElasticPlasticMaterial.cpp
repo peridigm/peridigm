@@ -48,14 +48,14 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
-#include "Peridigm_IsotropicElasticPlasticMaterial.hpp"
+#include "Peridigm_ElasticPlasticMaterial.hpp"
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_SerialComm.h>
 #include "mesh_input/quick_grid/QuickGrid.h"
 #include "mesh_output/Field.h"
 #include "utilities/Array.h"
-#include "ordinary_utilities.h"
-#include "ordinary_elastic_plastic.h"
+#include "material_utilities.h"
+#include "elastic_plastic.h"
 #include <math.h>
 
 #include <fstream>

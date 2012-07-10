@@ -59,7 +59,7 @@
 #include "mesh_output/Field.h"
 #include "mesh_input/quick_grid/QuickGrid.h"
 #include "bond_volume/quick_grid/calculators.h"
-#include "ordinary_utilities.h"
+#include "material_utilities.h"
 #include "pdneigh/NeighborhoodList.h"
 #include "pdneigh/PdZoltan.h"
 #include "pdneigh/BondFilter.h"

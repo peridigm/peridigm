@@ -4,10 +4,10 @@ add_subdirectory (unit_test)
 
 # PdMaterialUtilities library
 add_library(PdMaterialUtilities
-  ordinary_elastic.cxx
-  ordinary_elastic_plastic.cxx
-  ordinary_iso_hard_plastic.cxx
-  ordinary_std_linear_visco_solid.cxx
-  ordinary_utilities.cxx
+  elastic.cxx
+  elastic_plastic.cxx
+  elastic_plastic_hardening.cxx
+  viscoelastic.cxx
+  material_utilities.cxx
 )
 

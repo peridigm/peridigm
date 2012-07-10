@@ -48,8 +48,8 @@
 #include <complex>
 #include <Sacado.hpp>
 #include <float.h>
-#include "ordinary_elastic_plastic.h"
-#include "ordinary_iso_hard_plastic.h"
+#include "elastic_plastic.h"
+#include "elastic_plastic_hardening.h"
 
 namespace MATERIAL_EVALUATION {
 
