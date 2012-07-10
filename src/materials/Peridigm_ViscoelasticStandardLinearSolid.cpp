@@ -54,16 +54,19 @@
 #include <limits>
 
 PeridigmNS::ViscoelasticStandardLinearSolid::ViscoelasticStandardLinearSolid(const Teuchos::ParameterList & params)
-:
-Material(params)
+ : Material(params),
+   m_applyAutomaticDifferentiationJacobian(false)
 {
   //! \todo Add meaningful asserts on material properties.
   m_bulkModulus = params.get<double>("Bulk Modulus");
   m_shearModulus = params.get<double>("Shear Modulus");
   m_horizon = params.get<double>("Horizon");
   m_density = params.get<double>("Density");
-  m_lambda_i   = params.get<double>("lambda_i");
+  m_lambda_i = params.get<double>("lambda_i");
   m_tau_b = params.get<double>("tau b");
+
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(params.isParameter("Apply Automatic Differentiation Jacobian"), "**** Error:  Automatic Differentiation not supported for Viscoelastic material.\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(params.isParameter("Apply Shear Correction Factor"), "**** Error:  Shear Correction Factor not supported for Viscoelastic material.\n");
 
   // set up vector of variable specs
   m_variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);

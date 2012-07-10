@@ -59,8 +59,10 @@
 using namespace std;
 
 PeridigmNS::IsotropicElasticPlasticMaterial::IsotropicElasticPlasticMaterial(const Teuchos::ParameterList & params)
-:
-Material(params)
+  : Material(params),
+    m_applyShearCorrectionFactor(false),
+    m_disablePlasticity(false),
+    m_applyAutomaticDifferentiationJacobian(true)
 {
   //! \todo Add meaningful asserts on material properties.
   m_bulkModulus = params.get<double>("Bulk Modulus");
@@ -68,10 +70,15 @@ Material(params)
   m_horizon = params.get<double>("Horizon");
   m_density = params.get<double>("Density");
   m_yieldStress = params.get<double>("Yield Stress");
+  if(params.isParameter("Apply Shear Correction Factor"))
+    m_applyShearCorrectionFactor = params.get<bool>("Apply Shear Correction Factor");
+  if(params.isParameter("Disable Plasticity"))
+    m_disablePlasticity = params.get<bool>("Disable Plasticity");
+  if(params.isParameter("Apply Automatic Differentiation Jacobian"))
+    m_applyAutomaticDifferentiationJacobian = params.get<bool>("Apply Automatic Differentiation Jacobian");
 
-  // Set the yield stress to a very large value: this in effect makes the model run elastic -- useful for testing
-  if(params.isType<string>("Test"))
-    m_yieldStress = std::numeric_limits<double>::max( );
+  if(m_disablePlasticity)
+    m_yieldStress = std::numeric_limits<double>::max();
 
   // Set up vector of variable specs
   m_variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
@@ -85,7 +92,7 @@ Material(params)
   m_variableSpecs->push_back(Field_NS::DEVIATORIC_PLASTIC_EXTENSION);
   m_variableSpecs->push_back(Field_NS::LAMBDA);
   m_variableSpecs->push_back(Field_NS::BOND_DAMAGE);
-  m_variableSpecs->push_back(Field_NS::DSF);
+  m_variableSpecs->push_back(Field_NS::SHEAR_CORRECTION_FACTOR);
 }
 
 PeridigmNS::IsotropicElasticPlasticMaterial::~IsotropicElasticPlasticMaterial()
@@ -98,20 +105,22 @@ void PeridigmNS::IsotropicElasticPlasticMaterial::initialize(const double dt,
                                                              const int* neighborhoodList,
                                                              PeridigmNS::DataManager& dataManager) const
 {
-  // Extract pointers to the underlying data
-  double *xOverlap, *yOverlapScratch, *cellVolumeOverlap, *weightedVolume, *shear_correction_factor;
+  double *xOverlap, *yOverlapScratch, *cellVolumeOverlap, *weightedVolume, *shearCorrectionFactor;
   dataManager.getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->ExtractView(&xOverlap);
   dataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->ExtractView(&yOverlapScratch);
   dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&cellVolumeOverlap);
   dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&weightedVolume);
-  dataManager.getData(Field_NS::DSF, Field_ENUM::STEP_NONE)->ExtractView(&shear_correction_factor);
+  dataManager.getData(Field_NS::SHEAR_CORRECTION_FACTOR, Field_ENUM::STEP_NONE)->ExtractView(&shearCorrectionFactor);
   
   MATERIAL_EVALUATION::computeWeightedVolume(xOverlap,cellVolumeOverlap,weightedVolume,numOwnedPoints,neighborhoodList);
-  MATERIAL_EVALUATION::computeShearCorrectionFactor(numOwnedPoints,xOverlap,yOverlapScratch,cellVolumeOverlap,weightedVolume,neighborhoodList,m_horizon,shear_correction_factor);
-  
-  // Can override the shear correction factor here by simply setting it = 1.0
-  for(double *dsf=shear_correction_factor; dsf!=shear_correction_factor+numOwnedPoints;dsf++)
-    *dsf = 1.0/(*dsf);
+
+  dataManager.getData(Field_NS::SHEAR_CORRECTION_FACTOR, Field_ENUM::STEP_NONE)->PutScalar(1.0);
+  if(m_applyShearCorrectionFactor)
+    MATERIAL_EVALUATION::computeShearCorrectionFactor(numOwnedPoints,xOverlap,yOverlapScratch,cellVolumeOverlap,weightedVolume,neighborhoodList,m_horizon,shearCorrectionFactor);
+
+  // \todo Move this to shear correction factor routine.
+  for(double *scf=shearCorrectionFactor; scf!=shearCorrectionFactor+numOwnedPoints;scf++)
+    *scf = 1.0/(*scf);
 }
 
 void
@@ -121,7 +130,6 @@ PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const double
                                                                     const int* neighborhoodList,
                                                                     PeridigmNS::DataManager& dataManager) const
 {
-  // Extract pointers to the underlying data in the constitutiveData array
   double *x, *y, *volume, *dilatation, *damage, *weightedVolume, *bondDamage;
   dataManager.getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->ExtractView(&x);
   dataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->ExtractView(&y);
@@ -141,8 +149,7 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const double dt,
                                                           const int* neighborhoodList,
                                                           PeridigmNS::DataManager& dataManager) const
 {
-  // Extract pointers to the underlying data in the constitutiveData array
-  double *x, *yNP1, *volume, *dilatation, *weightedVolume, *bondDamage, *edpN, *edpNP1, *lambdaN, *lambdaNP1, *force, *ownedDSF;
+  double *x, *yNP1, *volume, *dilatation, *weightedVolume, *bondDamage, *edpN, *edpNP1, *lambdaN, *lambdaNP1, *force, *ownedShearCorrectionFactor;
   dataManager.getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->ExtractView(&x);
   dataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->ExtractView(&yNP1);
   dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&volume);
@@ -154,7 +161,7 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const double dt,
   dataManager.getData(Field_NS::LAMBDA, Field_ENUM::STEP_N)->ExtractView(&lambdaN);
   dataManager.getData(Field_NS::LAMBDA, Field_ENUM::STEP_NP1)->ExtractView(&lambdaNP1);
   dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->ExtractView(&force);
-  dataManager.getData(Field_NS::DSF, Field_ENUM::STEP_NONE)->ExtractView(&ownedDSF);
+  dataManager.getData(Field_NS::SHEAR_CORRECTION_FACTOR, Field_ENUM::STEP_NONE)->ExtractView(&ownedShearCorrectionFactor);
 
   // Zero out the force
   dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->PutScalar(0.0);
@@ -165,7 +172,7 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const double dt,
                                                                    volume,
                                                                    dilatation,
                                                                    bondDamage,
-                                                                   ownedDSF,
+                                                                   ownedShearCorrectionFactor,
                                                                    edpN,
                                                                    edpNP1,
                                                                    lambdaN,
@@ -177,19 +184,6 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const double dt,
                                                                    m_shearModulus,
                                                                    m_horizon,
                                                                    m_yieldStress);
-  //Debuging code to look at the buildup of deviatoric contributions to the
-  //dilatation
-  //std::vector<double> deviatoricDilatation(dataManager.getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1)->MyLength());
-  //MATERIAL_EVALUATION::computeDeviatoricDilatation(x,yNP1,weightedVolume,volume,bondDamage,edpNP1,&deviatoricDilatation[0],neighborhoodList,numOwnedPoints);
-  //double mysum = 0.0;
-  //for (unsigned int i = 0; i < deviatoricDilatation.size(); i++){
-      //mysum += fabs(deviatoricDilatation[i]);
-      //if (fabs(deviatoricDilatation[i]) > 1.e-17){
-
-          //std::cout << "deviatoric dilatation is: " << deviatoricDilatation[i] << std::endl;
-      //}
-  //}
-  //std::cout << "Total deviatoric dilation is: " << mysum << " size " << deviatoricDilatation.size() << std::endl;
 }
 
 void
@@ -200,11 +194,14 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeJacobian(const double dt,
                                                              PeridigmNS::DataManager& dataManager,
                                                              PeridigmNS::SerialMatrix& jacobian) const
 {
-  // Call the base class function, which computes the Jacobian by finite difference
-  //PeridigmNS::Material::computeJacobian(dt, numOwnedPoints, ownedIDs, neighborhoodList, dataManager, jacobian);
-
-  // Compute the Jacobian via automatic differentiation
-  computeAutomaticDifferentiationJacobian(dt, numOwnedPoints, ownedIDs, neighborhoodList, dataManager, jacobian);  
+  if(m_applyAutomaticDifferentiationJacobian){
+    // Compute the Jacobian via automatic differentiation
+    computeAutomaticDifferentiationJacobian(dt, numOwnedPoints, ownedIDs, neighborhoodList, dataManager, jacobian);  
+  }
+  else{
+    // Call the base class function, which computes the Jacobian by finite difference
+    PeridigmNS::Material::computeJacobian(dt, numOwnedPoints, ownedIDs, neighborhoodList, dataManager, jacobian);
+  }
 }
 
 void
@@ -215,6 +212,8 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeAutomaticDifferentiationJaco
                                                                                      PeridigmNS::DataManager& dataManager,
                                                                                      PeridigmNS::SerialMatrix& jacobian) const
 {
+  PeridigmNS::Timer::self().startTimer("Automatic Differentiation Jacobian");
+
   // Compute contributions to the tangent matrix on an element-by-element basis
 
   // To reduce memory re-allocation, use static variable to store Fad types for
@@ -224,9 +223,6 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeAutomaticDifferentiationJaco
   // Loop over all points.
   int neighborhoodListIndex = 0;
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
-
-    PeridigmNS::Timer::self().startTimer("AD Jacobian General Set Up");
-
     // Create a temporary neighborhood consisting of a single point and its neighbors.
     // The temporary neighborhood is sorted by global ID to somewhat increase the chance
     // that the downstream Epetra_CrsMatrix::SumIntoMyValues() calls will be as efficient
@@ -286,7 +282,7 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeAutomaticDifferentiationJaco
     }
 
     // Extract pointers to the underlying data in the constitutiveData array.
-    double *x, *y, *cellVolume, *weightedVolume, *damage, *bondDamage, *edpN, *lambdaN, *ownedDSF;
+    double *x, *y, *cellVolume, *weightedVolume, *damage, *bondDamage, *edpN, *lambdaN, *ownedShearCorrectionFactor;
     tempDataManager.getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->ExtractView(&x);
     tempDataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->ExtractView(&y);
     tempDataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&cellVolume);
@@ -295,10 +291,7 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeAutomaticDifferentiationJaco
     tempDataManager.getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
     tempDataManager.getData(Field_NS::DEVIATORIC_PLASTIC_EXTENSION, Field_ENUM::STEP_N)->ExtractView(&edpN);
     tempDataManager.getData(Field_NS::LAMBDA, Field_ENUM::STEP_N)->ExtractView(&lambdaN);
-    tempDataManager.getData(Field_NS::DSF, Field_ENUM::STEP_NONE)->ExtractView(&ownedDSF);
-
-    PeridigmNS::Timer::self().stopTimer("AD Jacobian General Set Up");
-    PeridigmNS::Timer::self().startTimer("AD Jacobian FAD Set Up");
+    tempDataManager.getData(Field_NS::SHEAR_CORRECTION_FACTOR, Field_ENUM::STEP_NONE)->ExtractView(&ownedShearCorrectionFactor);
 
     // Create arrays of Fad objects for the current coordinates, dilatation, and force density
     // Modify the existing vector of Fad objects for the current coordinates
@@ -315,9 +308,6 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeAutomaticDifferentiationJaco
     vector<Sacado::Fad::DFad<double> > edpNP1(numBonds);
     vector<Sacado::Fad::DFad<double> > force_AD(numDof);
 
-    PeridigmNS::Timer::self().stopTimer("AD Jacobian FAD Set Up");
-    PeridigmNS::Timer::self().startTimer("AD Jacobian Constitutive Model");
-
     // Evaluate the constitutive model using the AD types
     MATERIAL_EVALUATION::computeDilatationAD(x,&y_AD[0],weightedVolume,cellVolume,bondDamage,&dilatation_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints);
     MATERIAL_EVALUATION::computeInternalForceIsotropicElasticPlasticAD(x,
@@ -326,7 +316,7 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeAutomaticDifferentiationJaco
                                                                        cellVolume,
                                                                        &dilatation_AD[0],
                                                                        bondDamage,
-                                                                       ownedDSF,
+                                                                       ownedShearCorrectionFactor,
                                                                        edpN,
                                                                        &edpNP1[0],
                                                                        lambdaN,
@@ -339,9 +329,6 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeAutomaticDifferentiationJaco
                                                                        m_horizon,
                                                                        m_yieldStress);
 
-    PeridigmNS::Timer::self().stopTimer("AD Jacobian Constitutive Model");
-    PeridigmNS::Timer::self().startTimer("AD Jacobian Global Fill");
-
     // Load derivative values into scratch matrix
     // Multiply by volume along the way to convert force density to force
     for(int row=0 ; row<numDof ; ++row){
@@ -352,8 +339,8 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeAutomaticDifferentiationJaco
 
     // Sum the values into the global tangent matrix (this is expensive).
     jacobian.addValues((int)globalIndices.size(), &globalIndices[0], scratchMatrix.Data());
-
-    PeridigmNS::Timer::self().stopTimer("AD Jacobian Global Fill");
   }
+
+  PeridigmNS::Timer::self().stopTimer("Automatic Differentiation Jacobian");
 }
 

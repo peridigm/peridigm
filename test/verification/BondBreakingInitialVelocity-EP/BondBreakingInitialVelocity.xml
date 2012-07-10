@@ -26,7 +26,8 @@
 	  <Parameter name="Bulk Modulus" type="double" value="130.0e9"/>
 	  <Parameter name="Shear Modulus" type="double" value="60.0e9"/>
 	  <Parameter name="Yield Stress" type="double" value="0.0"/>
-	  <Parameter name="Test" type="string" value="run elastic"/>
+	  <Parameter name="Disable Plasticity" type="bool" value="true"/>
+      <Parameter name="Apply Shear Correction Factor" type="bool" value="true"/>
 	</ParameterList>
   </ParameterList>
 

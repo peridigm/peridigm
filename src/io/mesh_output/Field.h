@@ -84,7 +84,7 @@ enum Type {
   E_DB,
   PLASTIC_CONSISTENCY,
   NORM_DEVIATORIC_FORCE_STATE,
-  DSF,
+  SHEAR_CORRECTION_FACTOR,
   NUM_NEIGHBORS,
   COORDINATES,
   DISPLACEMENT,
@@ -245,26 +245,26 @@ const Field_NS::FieldSpec GLOBAL_ANGULAR_MOMENTUM(Field_ENUM::ANGULAR_MOMENTUM, 
 /*
  * ELEMENT SCALAR FieldSpecs (scalar fields defined over elements)
  */
-const Field_NS::FieldSpec VOLUME               (Field_ENUM::VOLUME,                       Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Volume");
-const Field_NS::FieldSpec DENSITY              (Field_ENUM::DENSITY,                      Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Density");
-const Field_NS::FieldSpec GID                  (Field_ENUM::GID,                          Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "ID");
-const Field_NS::FieldSpec BLOCK_ID             (Field_ENUM::BLOCK_ID,                     Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "BLOCK_ID");
-const Field_NS::FieldSpec PROC_NUM             (Field_ENUM::PROC_NUM,                     Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Proc_Num");
-const Field_NS::FieldSpec WEIGHTED_VOLUME      (Field_ENUM::WEIGHTED_VOLUME,              Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Weighted_Volume");
-const Field_NS::FieldSpec RADIUS               (Field_ENUM::RADIUS,                       Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Radius");
-const Field_NS::FieldSpec NEIGHBORHOOD_VOLUME  (Field_ENUM::NEIGHBORHOOD_VOLUME,          Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Neighborhood_Volume");
-const Field_NS::FieldSpec NUMBER_OF_NEIGHBORS  (Field_ENUM::NUMBER_OF_NEIGHBORS,          Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Number_Of_Neighbors");
-const Field_NS::FieldSpec CRITICAL_TIME_STEP   (Field_ENUM::CRITICAL_TIME_STEP,           Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Critical_Time_Step");
-const Field_NS::FieldSpec DILATATION           (Field_ENUM::DILATATION,                   Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Dilatation");
-const Field_NS::FieldSpec NUM_NEIGHBORS        (Field_ENUM::NUM_NEIGHBORS,                Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Num_Neighbors");
-const Field_NS::FieldSpec LAMBDA               (Field_ENUM::PLASTIC_CONSISTENCY,          Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Lambda");
-const Field_NS::FieldSpec NORM_TD              (Field_ENUM::NORM_DEVIATORIC_FORCE_STATE,  Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::SCRATCH,  "Norm_td");
-const Field_NS::FieldSpec DSF                  (Field_ENUM::DSF,                          Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "DSF");
-const Field_NS::FieldSpec BC_MASK              (Field_ENUM::BC_MASK,                      Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "BC_MASK");
-const Field_NS::FieldSpec DAMAGE               (Field_ENUM::DAMAGE,                       Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Damage");
-const Field_NS::FieldSpec KINETIC_ENERGY       (Field_ENUM::KINETIC_ENERGY,               Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Kinetic_Energy");
-const Field_NS::FieldSpec STRAIN_ENERGY        (Field_ENUM::STRAIN_ENERGY,                Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Strain_Energy");
-const Field_NS::FieldSpec STRAIN_ENERGY_DENSITY(Field_ENUM::STRAIN_ENERGY_DENSITY,        Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Strain_Energy_Density");
+const Field_NS::FieldSpec VOLUME                  (Field_ENUM::VOLUME,                       Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Volume");
+const Field_NS::FieldSpec DENSITY                 (Field_ENUM::DENSITY,                      Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Density");
+const Field_NS::FieldSpec GID                     (Field_ENUM::GID,                          Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "ID");
+const Field_NS::FieldSpec BLOCK_ID                (Field_ENUM::BLOCK_ID,                     Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "BLOCK_ID");
+const Field_NS::FieldSpec PROC_NUM                (Field_ENUM::PROC_NUM,                     Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Proc_Num");
+const Field_NS::FieldSpec WEIGHTED_VOLUME         (Field_ENUM::WEIGHTED_VOLUME,              Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Weighted_Volume");
+const Field_NS::FieldSpec RADIUS                  (Field_ENUM::RADIUS,                       Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Radius");
+const Field_NS::FieldSpec NEIGHBORHOOD_VOLUME     (Field_ENUM::NEIGHBORHOOD_VOLUME,          Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Neighborhood_Volume");
+const Field_NS::FieldSpec NUMBER_OF_NEIGHBORS     (Field_ENUM::NUMBER_OF_NEIGHBORS,          Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Number_Of_Neighbors");
+const Field_NS::FieldSpec CRITICAL_TIME_STEP      (Field_ENUM::CRITICAL_TIME_STEP,           Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Critical_Time_Step");
+const Field_NS::FieldSpec DILATATION              (Field_ENUM::DILATATION,                   Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Dilatation");
+const Field_NS::FieldSpec NUM_NEIGHBORS           (Field_ENUM::NUM_NEIGHBORS,                Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Num_Neighbors");
+const Field_NS::FieldSpec LAMBDA                  (Field_ENUM::PLASTIC_CONSISTENCY,          Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Lambda");
+const Field_NS::FieldSpec NORM_TD                 (Field_ENUM::NORM_DEVIATORIC_FORCE_STATE,  Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::SCRATCH,  "Norm_td");
+const Field_NS::FieldSpec SHEAR_CORRECTION_FACTOR (Field_ENUM::SHEAR_CORRECTION_FACTOR,   Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "SHEAR_CORRECTION_FACTOR");
+const Field_NS::FieldSpec BC_MASK                 (Field_ENUM::BC_MASK,                      Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "BC_MASK");
+const Field_NS::FieldSpec DAMAGE                  (Field_ENUM::DAMAGE,                       Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Damage");
+const Field_NS::FieldSpec KINETIC_ENERGY          (Field_ENUM::KINETIC_ENERGY,               Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Kinetic_Energy");
+const Field_NS::FieldSpec STRAIN_ENERGY           (Field_ENUM::STRAIN_ENERGY,                Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Strain_Energy");
+const Field_NS::FieldSpec STRAIN_ENERGY_DENSITY   (Field_ENUM::STRAIN_ENERGY_DENSITY,        Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Strain_Energy_Density");
 
 /*
  * NODAL VECTOR3D FieldSpecs (vector fields defined at nodes)
@@ -316,7 +316,7 @@ struct FieldSpecMap {
 		mymap[NUM_NEIGHBORS.getLabel()]                = NUM_NEIGHBORS;
 		mymap[LAMBDA.getLabel()]                       = LAMBDA;
 		mymap[NORM_TD.getLabel()]                      = NORM_TD;
-		mymap[DSF.getLabel()]                          = DSF;
+		mymap[SHEAR_CORRECTION_FACTOR.getLabel()]      = SHEAR_CORRECTION_FACTOR;
 		mymap[BC_MASK.getLabel()]                      = BC_MASK;
 		mymap[DAMAGE.getLabel()]                       = DAMAGE;
 		mymap[KINETIC_ENERGY.getLabel()]               = KINETIC_ENERGY;

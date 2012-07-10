@@ -131,7 +131,10 @@ namespace PeridigmNS {
 	double m_horizon;
 	double m_density;
 	double m_yieldStress;
-	double m_isoHard;
+	double m_hardeningModulus;
+    bool m_applyShearCorrectionFactor;
+    bool m_disablePlasticity;
+    bool m_applyAutomaticDifferentiationJacobian;
   };
 }
 

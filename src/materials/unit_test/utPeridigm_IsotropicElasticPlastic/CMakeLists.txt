@@ -1,13 +1,8 @@
 add_executable(utPeridigm_IsotropicElasticPlasticMaterial
-               ${MATERIALS_DIR}/Peridigm_Material.cpp
-               ${MATERIALS_DIR}/Peridigm_IsotropicElasticPlasticMaterial.cpp
-               ${CORE_DIR}/Peridigm_Timer.cpp
-               ${CORE_DIR}/Peridigm_State.cpp
-               ${CORE_DIR}/Peridigm_DataManager.cpp
-               ${CORE_DIR}/Peridigm_SerialMatrix.cpp
                ./utPeridigm_IsotropicElasticPlasticMaterial.cpp)
 
 target_link_libraries(utPeridigm_IsotropicElasticPlasticMaterial
+  ${Peridigm_LIBRARY}
   ${Trilinos_LIBRARIES}
   QuickGrid 
   PdNeigh 

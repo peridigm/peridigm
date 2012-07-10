@@ -138,7 +138,7 @@ void computeInternalForceIsotropicElasticPlastic
 		const double* volumeOverlap,
 		const double* dilatationOwned,
 		const double* bondDamage,
-		const double* dsfOwned,
+		const double* scfOwned,
 		const double* deviatoricPlasticExtensionStateN,
 		double* deviatoricPlasticExtensionStateNp1,
 		const double* lambdaN,
@@ -182,13 +182,13 @@ void computeInternalForceIsotropicElasticPlastic
 
 	const int *neighPtr = localNeighborList;
 	double cellVolume, alpha, dx, dy, dz, zeta, dY, t, ti, td, ed, edpN, tdTrial;
-	for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yOwned +=3, fOwned+=3, m++, theta++, lambdaN++, lambdaNP1++, dsfOwned++){
+	for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yOwned +=3, fOwned+=3, m++, theta++, lambdaN++, lambdaNP1++, scfOwned++){
 
 		int numNeigh = *neighPtr; neighPtr++;
 		const double *X = xOwned;
 		const double *Y = yOwned;
 		double weightedVol = *m;
-		alpha = *dsfOwned * 15.0*MU/weightedVol;
+		alpha = *scfOwned * 15.0*MU/weightedVol;
 		double selfCellVolume = v[p];
 		double c = 3 * K * (*theta) * OMEGA / weightedVol;
 		double deltaLambda=0.0;
@@ -202,7 +202,7 @@ void computeInternalForceIsotropicElasticPlastic
 		/*
 		 * Evaluate yield function
 		 */
-		double pointWiseYieldValue = *dsfOwned * (*dsfOwned) * yieldValue;
+		double pointWiseYieldValue = *scfOwned * (*scfOwned) * yieldValue;
 		double f = tdNorm * tdNorm / 2 - pointWiseYieldValue;
 		bool elastic = true;
 
@@ -398,7 +398,7 @@ void computeInternalForceIsotropicElasticPlasticAD
 		const double* volumeOverlap,
 		const ScalarT* dilatationOwned,
 		const double* bondDamage,
-		const double* dsfOwned,
+		const double* scfOwned,
 		const double* deviatoricPlasticExtensionStateN,
 		ScalarT* deviatoricPlasticExtensionStateNp1,
 		const double* lambdaN,
@@ -443,13 +443,13 @@ void computeInternalForceIsotropicElasticPlasticAD
 	const int *neighPtr = localNeighborList;
 	double cellVolume, alpha, dx_X, dy_X, dz_X, zeta, edpN;
     ScalarT dx_Y, dy_Y, dz_Y, dY, ed, tdTrial, t, ti, td;
-	for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yOwned +=3, fOwned+=3, m++, theta++, lambdaN++, lambdaNP1++, dsfOwned++){
+	for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yOwned +=3, fOwned+=3, m++, theta++, lambdaN++, lambdaNP1++, scfOwned++){
 
 		int numNeigh = *neighPtr; neighPtr++;
 		const double *X = xOwned;
 		const ScalarT *Y = yOwned;
 		double weightedVol = *m;
-		alpha = *dsfOwned * 15.0*MU/weightedVol;
+		alpha = *scfOwned * 15.0*MU/weightedVol;
 		double selfCellVolume = v[p];
 		ScalarT c = 3 * K * (*theta) * OMEGA / weightedVol;
 		ScalarT deltaLambda=0.0;
@@ -463,7 +463,7 @@ void computeInternalForceIsotropicElasticPlasticAD
 		/*
 		 * Evaluate yield function
 		 */
-		double pointWiseYieldValue = *dsfOwned * (*dsfOwned) * yieldValue;
+		double pointWiseYieldValue = *scfOwned * (*scfOwned) * yieldValue;
 		ScalarT f = tdNorm * tdNorm / 2 - pointWiseYieldValue;
 		bool elastic = true;
 
@@ -594,7 +594,7 @@ template void computeInternalForceIsotropicElasticPlasticAD<double>
 		const double* volumeOverlap,
 		const double* dilatationOwned,
 		const double* bondDamage,
-		const double* dsfOwned,
+		const double* scfOwned,
 		const double* deviatoricPlasticExtensionStateN,
 		double* deviatoricPlasticExtensionStateNp1,
 		const double* lambdaN,
@@ -634,7 +634,7 @@ template void computeInternalForceIsotropicElasticPlasticAD<Sacado::Fad::DFad<do
 		const double* volumeOverlap,
 		const Sacado::Fad::DFad<double>* dilatationOwned,
 		const double* bondDamage,
-		const double* dsfOwned,
+		const double* scfOwned,
 		const double* deviatoricPlasticExtensionStateN,
 		Sacado::Fad::DFad<double>* deviatoricPlasticExtensionStateNp1,
 		const double* lambdaN,

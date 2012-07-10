@@ -1,12 +1,8 @@
 add_executable(twoPoint_SLS_Relaxation
-               ${MATERIALS_DIR}/Peridigm_Material.cpp
-               ${MATERIALS_DIR}/Peridigm_ViscoelasticStandardLinearSolid.cpp
-               ${CORE_DIR}/Peridigm_State.cpp
-               ${CORE_DIR}/Peridigm_DataManager.cpp
-               ${CORE_DIR}/Peridigm_SerialMatrix.cpp
                ./twoPoint_SLS_Relaxation.cpp)
 
 target_link_libraries(twoPoint_SLS_Relaxation
+  ${Peridigm_LIBRARY}
   ${Trilinos_LIBRARIES}
   QuickGrid 
   PdNeigh 

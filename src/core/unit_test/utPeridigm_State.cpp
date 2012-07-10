@@ -109,7 +109,7 @@ PeridigmNS::State createTwoPointProblem()
   scalarPointFieldSpecs->push_back(Field_NS::NUM_NEIGHBORS);
   scalarPointFieldSpecs->push_back(Field_NS::LAMBDA);
   scalarPointFieldSpecs->push_back(Field_NS::NORM_TD);
-  scalarPointFieldSpecs->push_back(Field_NS::DSF);
+  scalarPointFieldSpecs->push_back(Field_NS::SHEAR_CORRECTION_FACTOR);
   scalarPointFieldSpecs->push_back(Field_NS::BC_MASK);
   state.allocateScalarPointData(scalarPointFieldSpecs, overlapScalarPointMap);
   BOOST_CHECK_EQUAL( state.getScalarPointMultiVector()->NumVectors(), (int)scalarPointFieldSpecs->size() );
@@ -243,7 +243,7 @@ PeridigmNS::State createThreePointProblem()
   scalarPointFieldSpecs->push_back(Field_NS::NUM_NEIGHBORS);
   scalarPointFieldSpecs->push_back(Field_NS::LAMBDA);
   scalarPointFieldSpecs->push_back(Field_NS::NORM_TD);
-  scalarPointFieldSpecs->push_back(Field_NS::DSF);
+  scalarPointFieldSpecs->push_back(Field_NS::SHEAR_CORRECTION_FACTOR);
   scalarPointFieldSpecs->push_back(Field_NS::BC_MASK);
   state.allocateScalarPointData(scalarPointFieldSpecs, overlapScalarPointMap);
   BOOST_CHECK_EQUAL( state.getScalarPointMultiVector()->NumVectors(), (int)scalarPointFieldSpecs->size() );

@@ -105,7 +105,7 @@ void probe_shear
 		double m_code
 );
 
-void dsf_probe(const std::string& json_filename);
+void scf_probe(const std::string& json_filename);
 
 void set_static_data(const std::string& json_filename)
 {
@@ -192,49 +192,49 @@ QUICKGRID::QuickGridData getGrid(const string& _json_filename) {
 void ut_naiveQuadratureConvergenceStudy_n3() {
 	std::string file = "./input_files/ut_bondVolumeConvergenceStudy_n=3.json";
 	set_static_data(file);
-	dsf_probe(file);
+	scf_probe(file);
 }
 
 void ut_naiveQuadratureConvergenceStudy_n5() {
 	std::string file = "./input_files/ut_bondVolumeConvergenceStudy_n=5.json";
 	set_static_data(file);
-	dsf_probe(file);
+	scf_probe(file);
 }
 
 void ut_naiveQuadratureConvergenceStudy_n7() {
 	std::string file = "./input_files/ut_bondVolumeConvergenceStudy_n=7.json";
 	set_static_data(file);
-	dsf_probe(file);
+	scf_probe(file);
 }
 
 void ut_naiveQuadratureConvergenceStudy_n9() {
 	std::string file = "./input_files/ut_bondVolumeConvergenceStudy_n=9.json";
 	set_static_data(file);
-	dsf_probe(file);
+	scf_probe(file);
 }
 
 void ut_naiveQuadratureConvergenceStudy_n11() {
 	std::string file = "./input_files/ut_bondVolumeConvergenceStudy_n=11.json";
 	set_static_data(file);
-	dsf_probe(file);
+	scf_probe(file);
 }
 
 void ut_naiveQuadratureConvergenceStudy_n13() {
 	std::string file = "./input_files/ut_bondVolumeConvergenceStudy_n=13.json";
 	set_static_data(file);
-	dsf_probe(file);
+	scf_probe(file);
 }
 
 void ut_naiveQuadratureConvergenceStudy_n17() {
 	std::string file = "./input_files/ut_bondVolumeConvergenceStudy_n=17.json";
 	set_static_data(file);
-	dsf_probe(file);
+	scf_probe(file);
 }
 
 void ut_naiveQuadratureConvergenceStudy_n33() {
 	std::string file = "./input_files/ut_bondVolumeConvergenceStudy_n=33.json";
 	set_static_data(file);
-	dsf_probe(file);
+	scf_probe(file);
 }
 
 
@@ -244,7 +244,7 @@ void ut_naiveQuadratureConvergenceStudy_n33() {
  * "x < 0.5 ? 1.0 : -4.0*x*x + 4.0*x"
  */
 
-void dsf_probe(const std::string& json_filename) {
+void scf_probe(const std::string& json_filename) {
 
 	QUICKGRID::QuickGridData gridData = getGrid(json_filename);
 
@@ -277,7 +277,7 @@ void dsf_probe(const std::string& json_filename) {
 	size_t jc = ic;
 	size_t kc = ic;
 	size_t gId = nx * ny * kc + nx * jc + ic;
-//	std::cout << "ut_dsf::center cell gID = " << gId << std::endl;
+//	std::cout << "ut_scf::center cell gID = " << gId << std::endl;
 
 	/**
 	 * WARNING: note following ASSUMPTION -- gId == local id
@@ -285,7 +285,7 @@ void dsf_probe(const std::string& json_filename) {
 	 * and gId are not the same in parallel.
 	 */
 	size_t num_neigh = list.get_num_neigh(gId);
-//	std::cout << "ut_dsf::center cell num_neigh = " << num_neigh << std::endl;
+//	std::cout << "ut_scf::center cell num_neigh = " << num_neigh << std::endl;
 	Array<int> neighborhoodPtr(1+num_neigh);
 	{
 		/*
@@ -303,9 +303,9 @@ void dsf_probe(const std::string& json_filename) {
 	/*
 	 * expectation is that cell center is at origin
 	 */
-//	std::cout << "ut_dsf::cell center coordinate X = " << *(xPtr.get()+3*gId) << std::endl;
-//	std::cout << "ut_dsf::cell center coordinate Y = " << *(xPtr.get()+3*gId + 1) << std::endl;
-//	std::cout << "ut_dsf::cell center coordinate Z = " << *(xPtr.get()+3*gId + 2) << std::endl;
+//	std::cout << "ut_scf::cell center coordinate X = " << *(xPtr.get()+3*gId) << std::endl;
+//	std::cout << "ut_scf::cell center coordinate Y = " << *(xPtr.get()+3*gId + 1) << std::endl;
+//	std::cout << "ut_scf::cell center coordinate Z = " << *(xPtr.get()+3*gId + 2) << std::endl;
 	BOOST_CHECK_SMALL(xPtr[3*gId+0],1.0e-15);
 	BOOST_CHECK_SMALL(xPtr[3*gId+1],1.0e-15);
 	BOOST_CHECK_SMALL(xPtr[3*gId+2],1.0e-15);
@@ -324,9 +324,9 @@ void dsf_probe(const std::string& json_filename) {
 	double rel_diff = std::abs(m_analytical-m_code)/m_analytical;
 	std::cout << std::scientific;
 	std::cout.precision(3);
-	std::cout << "ut_dsf::analytical value for weighted volume on sphere = " << m_analytical << std::endl;
-	std::cout << "ut_dsf::code computed weighted volume on sphere = " << m_code << std::endl;
-	std::cout << "ut_dsf::% relative error weighted volume = " << 100*rel_diff << std::endl;
+	std::cout << "ut_scf::analytical value for weighted volume on sphere = " << m_analytical << std::endl;
+	std::cout << "ut_scf::code computed weighted volume on sphere = " << m_code << std::endl;
+	std::cout << "ut_scf::% relative error weighted volume = " << 100*rel_diff << std::endl;
 
 	double gamma = 1.0e-6;
 	Array<double> yPtr(3*list.get_num_owned_points());
@@ -386,13 +386,13 @@ void probe_shear
 	 */
 	double reference = 4.0 * M_PI * gamma * gamma * pow(horizon,5) / 75.0;
 	double ed2 = MATERIAL_EVALUATION::compute_norm_2_deviatoric_extension(neighborhoodPtr.get(),X.get(),xPtr.get(),Y.get(),yPtr.get(),cellVolume.get(),m_code);
-	double dsf = reference/ed2;
+	double scf = reference/ed2;
 	double ed_err = fabs(reference-ed2)/reference;
-	std::cout << "ut_dsf::probe_shear MODE = " << mode << std::endl;
-	std::cout << "ut_dsf::ed^2 = " << reference << std::endl;
+	std::cout << "ut_scf::probe_shear MODE = " << mode << std::endl;
+	std::cout << "ut_scf::ed^2 = " << reference << std::endl;
 	cout.precision(2);
-	std::cout << std::scientific << "ut_dsf::probe_shear computed % ed_err in pure shear = " << 100*ed_err << std::endl;
-	std::cout << "ut_dsf::probe_shear computed dsf in pure shear = " << dsf << std::endl;
+	std::cout << std::scientific << "ut_scf::probe_shear computed % ed_err in pure shear = " << 100*ed_err << std::endl;
+	std::cout << "ut_scf::probe_shear computed scf in pure shear = " << scf << std::endl;
 
 	std::stringstream table_1_out;
 	table_1_out << nx << " & ";
@@ -400,7 +400,7 @@ void probe_shear
 	table_1_out << m_err*100 << "\\% & ";
 	table_1_out << ed_err*100 << "\\% & ";
 	table_1_out.precision(3);
-	table_1_out << dsf << " \\\\ \n";
+	table_1_out << scf << " \\\\ \n";
 
 	/*
 	 * write latex table
