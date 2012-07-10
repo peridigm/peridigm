@@ -86,17 +86,6 @@ PeridigmNS::ModelEvaluator::constructForceEvaluators()
   //! \todo Determine how the field manager's data layout scheme works and set it up properly.
   RCP<DataLayout> dummy = rcp(new MDALayout<Dummy>(0));
 
-  { // Update force state
-  RCP<ParameterList> p = rcp(new ParameterList);
-  int type = FactoryTraits<PHAL::PeridigmTraits>::id_update_force_state;
-  p->set<int>("Type", type); 
-  p->set<bool>("Verbose", verbose);
-
-  p->set< RCP<DataLayout> >("Dummy Data Layout", dummy);
-
-  evaluatorsToBuild["UpdateForceState"] = p;
-  }
-
   { // Evaluate force
   RCP<ParameterList> p = rcp(new ParameterList);
   int type = FactoryTraits<PHAL::PeridigmTraits>::id_evaluate_force;

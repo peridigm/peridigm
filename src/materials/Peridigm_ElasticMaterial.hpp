@@ -1,4 +1,4 @@
-//! \file Peridigm_LinearElasticIsotropicMaterial.hpp
+//! \file Peridigm_ElasticMaterial.hpp
 
 //@HEADER
 // ************************************************************************
@@ -45,8 +45,8 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_LINEARELASTICISOTROPICMATERIAL_HPP
-#define PERIDIGM_LINEARELASTICISOTROPICMATERIAL_HPP
+#ifndef PERIDIGM_ELASTICMATERIAL_HPP
+#define PERIDIGM_ELASTICMATERIAL_HPP
 
 #include "Peridigm_Material.hpp"
 
@@ -92,17 +92,17 @@ namespace PeridigmNS {
    * \f$ \underline{e}_{d} \f$:  Deviatoric part of the extension. \f$ \underline{e}^{d} = 
    *    \underline{e} - \underline{e}^{i} \f$.
    */
-  class LinearElasticIsotropicMaterial : public Material{
+  class ElasticMaterial : public Material{
   public:
 
 	//! Constructor.
-	  LinearElasticIsotropicMaterial(const Teuchos::ParameterList & params);
+    ElasticMaterial(const Teuchos::ParameterList & params);
 
 	//! Destructor.
-	virtual ~LinearElasticIsotropicMaterial();
+	virtual ~ElasticMaterial();
 
 	//! Return name of material type
-	virtual string Name() const { return("Linear Elastic"); }
+	virtual string Name() const { return("Elastic"); }
 
 	//! Returns the density of the material.
 	virtual double Density() const { return m_density; }
@@ -111,7 +111,7 @@ namespace PeridigmNS {
 	virtual double BulkModulus() const { return m_bulkModulus; }
 
 	//! Returns the shear modulus of the material.
-        virtual double ShearModulus() const { return m_shearModulus; }
+    virtual double ShearModulus() const { return m_shearModulus; }
 
 	//! Returns the horizon.
 	virtual double Horizon() const { return m_horizon; }
@@ -127,15 +127,7 @@ namespace PeridigmNS {
                const int* neighborhoodList,
                PeridigmNS::DataManager& dataManager) const;
 
-	//! Computes the dilatation.
-	virtual void
-	updateConstitutiveData(const double dt,
-						   const int numOwnedPoints,
-						   const int* ownedIDs,
-						   const int* neighborhoodList,
-                           PeridigmNS::DataManager& dataManager) const;
-
-	//! Evaluate the forces on the cells.
+	//! Evaluate the internal force.
 	virtual void
 	computeForce(const double dt,
 				 const int numOwnedPoints,
@@ -143,7 +135,7 @@ namespace PeridigmNS {
 				 const int* neighborhoodList,
                  PeridigmNS::DataManager& dataManager) const;
 
-	//! Evaluate the jacobian
+	//! Evaluate the jacobian.
 	virtual void
 	computeJacobian(const double dt,
                     const int numOwnedPoints,
@@ -152,7 +144,7 @@ namespace PeridigmNS {
                     PeridigmNS::DataManager& dataManager,
                     PeridigmNS::SerialMatrix& jacobian) const;
 
-	//! Evaluate the jacobian via automatic differentiation
+	//! Evaluate the jacobian via automatic differentiation.
 	virtual void
 	computeAutomaticDifferentiationJacobian(const double dt,
                                             const int numOwnedPoints,
@@ -181,4 +173,4 @@ namespace PeridigmNS {
   };
 }
 
-#endif // PERIDIGM_LINEARELASTICISOTROPICMATERIAL_HPP
+#endif // PERIDIGM_ELASTICMATERIAL_HPP

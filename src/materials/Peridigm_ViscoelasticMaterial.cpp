@@ -1,4 +1,4 @@
-/*! \file Peridigm_ViscoelasticStandardLinearSolid.cpp */
+/*! \file Peridigm_ViscoelasticMaterial.cpp */
 
 //@HEADER
 // ************************************************************************
@@ -53,7 +53,7 @@
 #include <Epetra_MultiVector.h>
 #include <limits>
 
-PeridigmNS::ViscoelasticStandardLinearSolid::ViscoelasticStandardLinearSolid(const Teuchos::ParameterList & params)
+PeridigmNS::ViscoelasticMaterial::ViscoelasticMaterial(const Teuchos::ParameterList & params)
  : Material(params),
    m_applyAutomaticDifferentiationJacobian(false)
 {
@@ -65,8 +65,8 @@ PeridigmNS::ViscoelasticStandardLinearSolid::ViscoelasticStandardLinearSolid(con
   m_lambda_i = params.get<double>("lambda_i");
   m_tau_b = params.get<double>("tau b");
 
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(params.isParameter("Apply Automatic Differentiation Jacobian"), "**** Error:  Automatic Differentiation not supported for Viscoelastic material.\n");
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(params.isParameter("Apply Shear Correction Factor"), "**** Error:  Shear Correction Factor not supported for Viscoelastic material.\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(params.isParameter("Apply Automatic Differentiation Jacobian"), "**** Error:  Automatic Differentiation is not supported for the Viscoelastic material.\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(params.isParameter("Apply Shear Correction Factor"), "**** Error:  Shear Correction Factor is not supported for the Viscoelastic material.\n");
 
   // set up vector of variable specs
   m_variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
@@ -81,17 +81,16 @@ PeridigmNS::ViscoelasticStandardLinearSolid::ViscoelasticStandardLinearSolid(con
   m_variableSpecs->push_back(Field_NS::DEVIATORIC_BACK_EXTENSION);
 }
 
-PeridigmNS::ViscoelasticStandardLinearSolid::~ViscoelasticStandardLinearSolid()
+PeridigmNS::ViscoelasticMaterial::~ViscoelasticMaterial()
 {
 }
 
-void PeridigmNS::ViscoelasticStandardLinearSolid::initialize(const double dt,
-                                                             const int numOwnedPoints,
-                                                             const int* ownedIDs,
-                                                             const int* neighborhoodList,
-                                                             PeridigmNS::DataManager& dataManager) const
+void PeridigmNS::ViscoelasticMaterial::initialize(const double dt,
+                                                  const int numOwnedPoints,
+                                                  const int* ownedIDs,
+                                                  const int* neighborhoodList,
+                                                  PeridigmNS::DataManager& dataManager) const
 {
-  // Extract pointers to the underlying data
   double *xOverlap, *cellVolumeOverlap, *weightedVolume;
   dataManager.getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->ExtractView(&xOverlap);
   dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&cellVolumeOverlap);
@@ -101,33 +100,12 @@ void PeridigmNS::ViscoelasticStandardLinearSolid::initialize(const double dt,
 }
 
 void
-PeridigmNS::ViscoelasticStandardLinearSolid::updateConstitutiveData(const double dt,
-                                                                    const int numOwnedPoints,
-                                                                    const int* ownedIDs,
-                                                                    const int* neighborhoodList,
-                                                                    PeridigmNS::DataManager& dataManager) const
-{
-  // Extract pointers to the underlying data in the constitutiveData array
-  double *x, *yNP1, *volume, *dilatation, *damage, *weightedVolume, *bondDamage;
-  dataManager.getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->ExtractView(&x);
-  dataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->ExtractView(&yNP1);
-  dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&volume);
-  dataManager.getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1)->ExtractView(&dilatation);
-  dataManager.getData(Field_NS::DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&damage);
-  dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&weightedVolume);
-  dataManager.getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
-
-  MATERIAL_EVALUATION::computeDilatation(x,yNP1,weightedVolume,volume,bondDamage,dilatation,neighborhoodList,numOwnedPoints);
-}
-
-void
-PeridigmNS::ViscoelasticStandardLinearSolid::computeForce(const double dt,
+PeridigmNS::ViscoelasticMaterial::computeForce(const double dt,
                                                           const int numOwnedPoints,
                                                           const int* ownedIDs,
                                                           const int* neighborhoodList,
                                                           PeridigmNS::DataManager& dataManager) const
 {
-  // Extract pointers to the underlying data in the constitutiveData array
   double *x, *yN, *yNP1, *volume, *dilatationN, *dilatationNp1, *weightedVolume, *bondDamage, *edbN, *edbNP1,  *force;
   dataManager.getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->ExtractView(&x);
   dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&volume);
@@ -141,9 +119,9 @@ PeridigmNS::ViscoelasticStandardLinearSolid::computeForce(const double dt,
   dataManager.getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
   dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->ExtractView(&force);
 
-  // Zero out the force
   dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->PutScalar(0.0);
 
+  MATERIAL_EVALUATION::computeDilatation(x,yNP1,weightedVolume,volume,bondDamage,dilatationNp1,neighborhoodList,numOwnedPoints);
   MATERIAL_EVALUATION::computeInternalForceViscoelasticStandardLinearSolid(dt,
                                                                            x,
                                                                            yN,

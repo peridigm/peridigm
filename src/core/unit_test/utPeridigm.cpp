@@ -93,8 +93,8 @@ Teuchos::RCP<PeridigmNS::Peridigm> createTwoPointModel()
 
   // material parameters
   ParameterList& materialParams = peridigmParams->sublist("Materials");
-  ParameterList& linearElasticMaterialParams = materialParams.sublist("My Linear Elastic Material");
-  linearElasticMaterialParams.set("Material Model", "Linear Elastic");
+  ParameterList& linearElasticMaterialParams = materialParams.sublist("My Elastic Material");
+  linearElasticMaterialParams.set("Material Model", "Elastic");
   linearElasticMaterialParams.set("Density", 7800.0);
   linearElasticMaterialParams.set("Bulk Modulus", 130.0e9);
   linearElasticMaterialParams.set("Shear Modulus", 78.0e9);
@@ -103,7 +103,7 @@ Teuchos::RCP<PeridigmNS::Peridigm> createTwoPointModel()
   ParameterList& blockParams = peridigmParams->sublist("Blocks");
   ParameterList& blockGroupParams = blockParams.sublist("My Group of Blocks");
   blockGroupParams.set("Block Names", "block_1");
-  blockGroupParams.set("Material", "My Linear Elastic Material");
+  blockGroupParams.set("Material", "My Elastic Material");
 
   // boundary conditions
   ParameterList& bcParams = peridigmParams->sublist("Boundary Conditions");
@@ -172,8 +172,8 @@ Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel()
 
   // material parameters
   ParameterList& materialParams = peridigmParams->sublist("Materials");
-  ParameterList& linearElasticMaterialParams = materialParams.sublist("My Linear Elastic Material");
-  linearElasticMaterialParams.set("Material Model", "Linear Elastic");
+  ParameterList& linearElasticMaterialParams = materialParams.sublist("My Elastic Material");
+  linearElasticMaterialParams.set("Material Model", "Elastic");
   linearElasticMaterialParams.set("Density", 7800.0);
   linearElasticMaterialParams.set("Bulk Modulus", 130.0e9);
   linearElasticMaterialParams.set("Shear Modulus", 78.0e9);
@@ -182,7 +182,7 @@ Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel()
   ParameterList& blockParams = peridigmParams->sublist("Blocks");
   ParameterList& blockGroupParams = blockParams.sublist("My Group of Blocks");
   blockGroupParams.set("Block Names", "block_1");
-  blockGroupParams.set("Material", "My Linear Elastic Material");
+  blockGroupParams.set("Material", "My Elastic Material");
 
   // solver parameters
   ParameterList& solverParams = peridigmParams->sublist("Solver");

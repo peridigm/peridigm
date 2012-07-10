@@ -1,4 +1,4 @@
-/*! \file Peridigm_IsotropicElasticPlasticMaterial.cpp */
+/*! \file Peridigm_ElasticPlasticMaterial.cpp */
 
 //@HEADER
 // ************************************************************************
@@ -58,7 +58,7 @@
 
 using namespace std;
 
-PeridigmNS::IsotropicElasticPlasticMaterial::IsotropicElasticPlasticMaterial(const Teuchos::ParameterList & params)
+PeridigmNS::ElasticPlasticMaterial::ElasticPlasticMaterial(const Teuchos::ParameterList & params)
   : Material(params),
     m_applyShearCorrectionFactor(false),
     m_disablePlasticity(false),
@@ -95,15 +95,15 @@ PeridigmNS::IsotropicElasticPlasticMaterial::IsotropicElasticPlasticMaterial(con
   m_variableSpecs->push_back(Field_NS::SHEAR_CORRECTION_FACTOR);
 }
 
-PeridigmNS::IsotropicElasticPlasticMaterial::~IsotropicElasticPlasticMaterial()
+PeridigmNS::ElasticPlasticMaterial::~ElasticPlasticMaterial()
 {
 }
 
-void PeridigmNS::IsotropicElasticPlasticMaterial::initialize(const double dt,
-                                                             const int numOwnedPoints,
-                                                             const int* ownedIDs,
-                                                             const int* neighborhoodList,
-                                                             PeridigmNS::DataManager& dataManager) const
+void PeridigmNS::ElasticPlasticMaterial::initialize(const double dt,
+                                                    const int numOwnedPoints,
+                                                    const int* ownedIDs,
+                                                    const int* neighborhoodList,
+                                                    PeridigmNS::DataManager& dataManager) const
 {
   double *xOverlap, *yOverlapScratch, *cellVolumeOverlap, *weightedVolume, *shearCorrectionFactor;
   dataManager.getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->ExtractView(&xOverlap);
@@ -124,34 +124,15 @@ void PeridigmNS::IsotropicElasticPlasticMaterial::initialize(const double dt,
 }
 
 void
-PeridigmNS::IsotropicElasticPlasticMaterial::updateConstitutiveData(const double dt,
-                                                                    const int numOwnedPoints,
-                                                                    const int* ownedIDs,
-                                                                    const int* neighborhoodList,
-                                                                    PeridigmNS::DataManager& dataManager) const
+PeridigmNS::ElasticPlasticMaterial::computeForce(const double dt,
+                                                 const int numOwnedPoints,
+                                                 const int* ownedIDs,
+                                                 const int* neighborhoodList,
+                                                 PeridigmNS::DataManager& dataManager) const
 {
-  double *x, *y, *volume, *dilatation, *damage, *weightedVolume, *bondDamage;
+  double *x, *y, *volume, *dilatation, *weightedVolume, *bondDamage, *edpN, *edpNP1, *lambdaN, *lambdaNP1, *force, *ownedShearCorrectionFactor;
   dataManager.getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->ExtractView(&x);
   dataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->ExtractView(&y);
-  dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&volume);
-  dataManager.getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1)->ExtractView(&dilatation);
-  dataManager.getData(Field_NS::DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&damage);
-  dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&weightedVolume);
-  dataManager.getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
-
-  MATERIAL_EVALUATION::computeDilatation(x,y,weightedVolume,volume,bondDamage,dilatation,neighborhoodList,numOwnedPoints);
-}
-
-void
-PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const double dt,
-                                                          const int numOwnedPoints,
-                                                          const int* ownedIDs,
-                                                          const int* neighborhoodList,
-                                                          PeridigmNS::DataManager& dataManager) const
-{
-  double *x, *yNP1, *volume, *dilatation, *weightedVolume, *bondDamage, *edpN, *edpNP1, *lambdaN, *lambdaNP1, *force, *ownedShearCorrectionFactor;
-  dataManager.getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->ExtractView(&x);
-  dataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->ExtractView(&yNP1);
   dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&volume);
   dataManager.getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1)->ExtractView(&dilatation);
   dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&weightedVolume);
@@ -166,8 +147,9 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const double dt,
   // Zero out the force
   dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->PutScalar(0.0);
 
+  MATERIAL_EVALUATION::computeDilatation(x,y,weightedVolume,volume,bondDamage,dilatation,neighborhoodList,numOwnedPoints);
   MATERIAL_EVALUATION::computeInternalForceIsotropicElasticPlastic(x,
-                                                                   yNP1,
+                                                                   y,
                                                                    weightedVolume,
                                                                    volume,
                                                                    dilatation,
@@ -187,12 +169,12 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeForce(const double dt,
 }
 
 void
-PeridigmNS::IsotropicElasticPlasticMaterial::computeJacobian(const double dt,
-                                                             const int numOwnedPoints,
-                                                             const int* ownedIDs,
-                                                             const int* neighborhoodList,
-                                                             PeridigmNS::DataManager& dataManager,
-                                                             PeridigmNS::SerialMatrix& jacobian) const
+PeridigmNS::ElasticPlasticMaterial::computeJacobian(const double dt,
+                                                    const int numOwnedPoints,
+                                                    const int* ownedIDs,
+                                                    const int* neighborhoodList,
+                                                    PeridigmNS::DataManager& dataManager,
+                                                    PeridigmNS::SerialMatrix& jacobian) const
 {
   if(m_applyAutomaticDifferentiationJacobian){
     // Compute the Jacobian via automatic differentiation
@@ -205,12 +187,12 @@ PeridigmNS::IsotropicElasticPlasticMaterial::computeJacobian(const double dt,
 }
 
 void
-PeridigmNS::IsotropicElasticPlasticMaterial::computeAutomaticDifferentiationJacobian(const double dt,
-                                                                                     const int numOwnedPoints,
-                                                                                     const int* ownedIDs,
-                                                                                     const int* neighborhoodList,
-                                                                                     PeridigmNS::DataManager& dataManager,
-                                                                                     PeridigmNS::SerialMatrix& jacobian) const
+PeridigmNS::ElasticPlasticMaterial::computeAutomaticDifferentiationJacobian(const double dt,
+                                                                            const int numOwnedPoints,
+                                                                            const int* ownedIDs,
+                                                                            const int* neighborhoodList,
+                                                                            PeridigmNS::DataManager& dataManager,
+                                                                            PeridigmNS::SerialMatrix& jacobian) const
 {
   PeridigmNS::Timer::self().startTimer("Automatic Differentiation Jacobian");
 

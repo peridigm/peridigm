@@ -83,9 +83,7 @@ void testInitialize()
 
   // assert the vector of fields that the evaluator is dependent upon
   const std::vector<Teuchos::RCP< PHX::FieldTag > > & dependentFields = evaluator.dependentFields();
-  BOOST_CHECK(dependentFields.size() == 1);
-  BOOST_CHECK(dependentFields[0]->name() == "UpdateForceState");
-  BOOST_CHECK(dependentFields[0]->dataLayout() == *dummy);
+  BOOST_CHECK(dependentFields.size() == 0);
 }
 
 void testTwoPts()
@@ -188,8 +186,7 @@ void testTwoPts()
   y[3] = 2.0; y[4] = 0.0; y[5] = 0.0;
   block.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->PutScalar(1.0);
 
-  // fill in constitutive data directly, as opposed to calling initializeMaterialModel() or
-  // the UpdateForceState evaluator
+  // fill in constitutive data directly
 
   // weighted volume
   Epetra_Vector& weightedVolume = *block.getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE);
@@ -239,7 +236,7 @@ bool init_unit_test_suite()
 	// Add a suite for each processor in the test
 	bool success = true;
 
-	test_suite* proc = BOOST_TEST_SUITE("utPHAL_UpdateForceState");
+	test_suite* proc = BOOST_TEST_SUITE("utPHAL_EvaluateForce");
 	proc->add(BOOST_TEST_CASE(&testInitialize));
   	proc->add(BOOST_TEST_CASE(&testTwoPts));
 	framework::master_test_suite().add(proc);

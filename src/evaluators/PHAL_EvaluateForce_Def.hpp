@@ -61,10 +61,6 @@ EvaluateForce<EvalT, Traits>::EvaluateForce(Teuchos::ParameterList& p) :
 	Teuchos::rcp(new PHX::Tag<ScalarT>("EvaluateDamage", p.get< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout")));
   this->addDependentField(*evaluate_damage_field_tag);
 
-  Teuchos::RCP<PHX::FieldTag> update_force_state_data_field_tag = 
-	Teuchos::rcp(new PHX::Tag<ScalarT>("UpdateForceState", p.get< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout")));
-  this->addDependentField(*update_force_state_data_field_tag);
-
   evaluate_force_field_tag = 
     Teuchos::rcp(new PHX::Tag<ScalarT>("EvaluateForce",p.get< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout")));
 

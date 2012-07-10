@@ -57,9 +57,6 @@ EvaluateJacobian<EvalT, Traits>::EvaluateJacobian(Teuchos::ParameterList& p) :
   if(p.isParameter("Verbose"))
 	 m_verbose = p.get<bool>("Verbose");
 
-  Teuchos::RCP<PHX::FieldTag> update_jacobian_state_data_field_tag = 
-	Teuchos::rcp(new PHX::Tag<ScalarT>("UpdateJacobianState", p.get< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout")));
-
   evaluate_jacobian_field_tag = 
     Teuchos::rcp(new PHX::Tag<ScalarT>("EvaluateJacobian",p.get< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout")));
 

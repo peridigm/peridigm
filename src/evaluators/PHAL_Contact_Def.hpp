@@ -57,11 +57,6 @@ Contact<EvalT, Traits>::Contact(Teuchos::ParameterList& p) :
   if(p.isParameter("Verbose"))
 	 m_verbose = p.get<bool>("Verbose");
 
-  Teuchos::RCP<PHX::FieldTag> update_force_state_data_field_tag = 
-	Teuchos::rcp(new PHX::Tag<ScalarT>("UpdateForceState", p.get< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout")));
-
-  this->addDependentField(*update_force_state_data_field_tag);
-
   contact_field_tag = 
     Teuchos::rcp(new PHX::Tag<ScalarT>("Contact",p.get< Teuchos::RCP<PHX::DataLayout> >("Dummy Data Layout")));
 
