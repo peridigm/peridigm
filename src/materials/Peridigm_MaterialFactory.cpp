@@ -58,18 +58,18 @@ PeridigmNS::MaterialFactory::create(const Teuchos::ParameterList& materialParams
   string materialModelName = materialParams.get<string>("Material Model");
 
   Teuchos::RCP<PeridigmNS::Material> materialModel;
-  if (materialModelName == "Linear Elastic")
-    materialModel = Teuchos::rcp( new LinearElasticIsotropicMaterial(materialParams) );
+  if (materialModelName == "Elastic")
+    materialModel = Teuchos::rcp( new ElasticMaterial(materialParams) );
   else if (materialModelName == "Elastic Plastic")
-    materialModel = Teuchos::rcp( new IsotropicElasticPlasticMaterial(materialParams) );
-  else if (materialModelName == "Isotropic Hardening Plastic")
-    materialModel = Teuchos::rcp( new IsotropicHardeningPlasticMaterial(materialParams) );
-  else if (materialModelName == "Viscoelastic Standard Linear Solid")
-    materialModel = Teuchos::rcp( new ViscoelasticStandardLinearSolid(materialParams) );
+    materialModel = Teuchos::rcp( new ElasticPlasticMaterial(materialParams) );
+  else if (materialModelName == "Elastic Plastic Hardening")
+    materialModel = Teuchos::rcp( new ElasticPlasticHardeningMaterial(materialParams) );
+  else if (materialModelName == "Viscoelastic")
+    materialModel = Teuchos::rcp( new ViscoelasticMaterial(materialParams) );
   else {
     string invalidMaterial("\n**** Unrecognized material model: ");
     invalidMaterial += materialModelName;
-    invalidMaterial += ", must be \"Linear Elastic\" or \"Elastic Plastic\" or \"Isotropic Hardening Plastic\" or \"Viscoelastic Standard Linear Solid\".\n";
+    invalidMaterial += ", must be \"Elastic\" or \"Elastic Plastic\" or \"Elastic Plastic Hardening\" or \"Viscoelastic\".\n";
     TEUCHOS_TEST_FOR_EXCEPT_MSG(true, invalidMaterial);
   }
   

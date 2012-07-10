@@ -1,4 +1,4 @@
-/*! \file utPeridigm_LinearElasticIsotropicMaterial.cpp */
+/*! \file utPeridigm_ElasticMaterial.cpp */
 
 //@HEADER
 // ************************************************************************
@@ -65,7 +65,7 @@ void testStateVariableAccessors()
   params.set("Bulk Modulus", 130.0e9);
   params.set("Shear Modulus", 78.0e9);
   params.set("Horizon", 10.0);
-  LinearElasticIsotropicMaterial mat(params);
+  ElasticMaterial mat(params);
 
   // \todo check field specs
 }
@@ -79,7 +79,7 @@ void testTwoPts()
   params.set("Bulk Modulus", 130.0e9);
   params.set("Shear Modulus", 78.0e9);
   params.set("Horizon", 10.0);
-  LinearElasticIsotropicMaterial mat(params);
+  ElasticMaterial mat(params);
 
   // arguments for calls to material model
   Epetra_SerialComm comm;
@@ -131,11 +131,11 @@ void testTwoPts()
                  neighborhoodList,
                  dataManager);
 
-  mat.updateConstitutiveData(dt, 
-							 numOwnedPoints,
-							 ownedIDs,
-							 neighborhoodList,
-                             dataManager);
+  mat.computeForce(dt, 
+				   numOwnedPoints,
+				   ownedIDs,
+				   neighborhoodList,
+                   dataManager);
 
   double currentPositionX1 = y[0];
   BOOST_CHECK_SMALL(currentPositionX1, 1.0e-14);
@@ -159,12 +159,6 @@ void testTwoPts()
   BOOST_CHECK_SMALL(bondDamage[0], 1.0e-15);
   BOOST_CHECK_SMALL(bondDamage[1], 1.0e-15);
 
-  mat.computeForce(dt, 
-				   numOwnedPoints,
-				   ownedIDs,
-				   neighborhoodList,
-                   dataManager);
-
   Epetra_Vector& force = *dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1);
   BOOST_CHECK_CLOSE(force[0], 2.34e+12, 1.0e-2);
   BOOST_CHECK_SMALL(force[1], 1.0e-14);
@@ -186,7 +180,7 @@ void testEightPts()
   params.set("Bulk Modulus", 130.0e9);
   params.set("Shear Modulus", 78.0e9);
   params.set("Horizon", 10.0);
-  LinearElasticIsotropicMaterial mat(params);
+  ElasticMaterial mat(params);
 
   // arguments for calls to material model
   Epetra_SerialComm comm;
@@ -265,11 +259,11 @@ void testEightPts()
                  neighborhoodList,
                  dataManager);
 
-  mat.updateConstitutiveData(dt, 
-							 numOwnedPoints,
-							 ownedIDs,
-							 neighborhoodList,
-                             dataManager);
+  mat.computeForce(dt, 
+				   numOwnedPoints,
+				   ownedIDs,
+				   neighborhoodList,
+                   dataManager);
 
   double currentPosition;
   currentPosition = y[0];
@@ -335,12 +329,6 @@ void testEightPts()
   for(int i=0 ; i<bondDamage.MyLength() ; ++i){
       BOOST_CHECK_SMALL(bondDamage[i], 1.0e-15);
   }
-
-  mat.computeForce(dt, 
-				   numOwnedPoints,
-				   ownedIDs,
-				   neighborhoodList,
-                   dataManager);
 
   // all the cells experience the same force magnitude, but
   // it is applied in different directions
@@ -450,7 +438,7 @@ void testThreePts()
   params.set("Bulk Modulus", 130.0e9);
   params.set("Shear Modulus", 78.0e9);
   params.set("Horizon", 10.0);
-  LinearElasticIsotropicMaterial mat(params);
+  ElasticMaterial mat(params);
 
   // arguments for calls to material model
   Epetra_SerialComm comm;
@@ -519,11 +507,11 @@ void testThreePts()
                  neighborhoodList,
                  dataManager);
 
-  mat.updateConstitutiveData(dt, 
-							 numOwnedPoints,
-							 ownedIDs,
-							 neighborhoodList,
-                             dataManager);
+  mat.computeForce(dt, 
+				   numOwnedPoints,
+				   ownedIDs,
+				   neighborhoodList,
+                   dataManager);
 
   double currentPosition;
   currentPosition = y[0];
@@ -561,12 +549,6 @@ void testThreePts()
   for(int i=0 ; i<bondDamage.MyLength() ; ++i){
       BOOST_CHECK_SMALL(bondDamage[i], 1.0e-15);
   }
-
-  mat.computeForce(dt, 
-				   numOwnedPoints,
-				   ownedIDs,
-				   neighborhoodList,
-                   dataManager);
 
   Epetra_Vector& force = *dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1);
 
@@ -657,7 +639,7 @@ void twoPointProbeJacobian()
   params.set("Bulk Modulus", 130.0e9);
   params.set("Shear Modulus", 78.0e9);
   params.set("Horizon", 10.0);
-  LinearElasticIsotropicMaterial mat(params);
+  ElasticMaterial mat(params);
 
   // arguments for calls to material model
   Epetra_SerialComm comm;
@@ -731,7 +713,7 @@ void twoPointProbeJacobianJAM()
   params.set("Bulk Modulus", 130000.0);
   params.set("Shear Modulus", 78000.0);
   params.set("Horizon", 10.0);
-  LinearElasticIsotropicMaterial mat(params);
+  ElasticMaterial mat(params);
 
   // arguments for calls to material model
   Epetra_SerialComm comm;
@@ -801,7 +783,7 @@ bool init_unit_test_suite()
   // Add a suite for each processor in the test
   bool success = true;
 
-  test_suite* proc = BOOST_TEST_SUITE("utPeridigm_LinearElasticIsotropicMaterial");
+  test_suite* proc = BOOST_TEST_SUITE("utPeridigm_ElasticMaterial");
   proc->add(BOOST_TEST_CASE(&testStateVariableAccessors));
   proc->add(BOOST_TEST_CASE(&testTwoPts));
   proc->add(BOOST_TEST_CASE(&testEightPts));

@@ -83,8 +83,8 @@ Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel() {
 
   // material parameters
   Teuchos::ParameterList& materialParams = peridigmParams->sublist("Materials");
-  Teuchos::ParameterList& linearElasticMaterialParams = materialParams.sublist("My Linear Elastic Material");
-  linearElasticMaterialParams.set("Material Model", "Linear Elastic");
+  Teuchos::ParameterList& linearElasticMaterialParams = materialParams.sublist("My Elastic Material");
+  linearElasticMaterialParams.set("Material Model", "Elastic");
   linearElasticMaterialParams.set("Density", 7800.0);
   linearElasticMaterialParams.set("Bulk Modulus", 130.0e9);
   linearElasticMaterialParams.set("Shear Modulus", 78.0e9);
@@ -93,7 +93,7 @@ Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel() {
   Teuchos::ParameterList& blockParams = peridigmParams->sublist("Blocks");
   Teuchos::ParameterList& blockOneParams = blockParams.sublist("My Group of Blocks");
   blockOneParams.set("Block Names", "block_1");
-  blockOneParams.set("Material", "My Linear Elastic Material");
+  blockOneParams.set("Material", "My Elastic Material");
 
   // Set up discretization parameterlist
   Teuchos::ParameterList& discretizationParams = peridigmParams->sublist("Discretization");

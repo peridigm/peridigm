@@ -47,7 +47,6 @@
 #define PHAL_FACTORY_TRAITS_HPP
 
 // User Defined Evaluator Types
-#include "PHAL_UpdateForceState.hpp"
 #include "PHAL_EvaluateForce.hpp"
 #include "PHAL_EvaluateDamage.hpp"
 #include "PHAL_Contact.hpp"
@@ -63,14 +62,12 @@
 template<typename Traits>
 struct FactoryTraits {
   
-  static const int id_update_force_state        = 0;
-  static const int id_evaluate_force            = 1;
-  static const int id_evaluate_damage           = 2;
-  static const int id_contact                   = 3;
-  static const int id_evaluate_jacobian         = 4;
+  static const int id_evaluate_force            = 0;
+  static const int id_evaluate_damage           = 1;
+  static const int id_contact                   = 2;
+  static const int id_evaluate_jacobian         = 3;
 
-  typedef boost::mpl::vector< UpdateForceState<_,Traits>,
-							  EvaluateForce<_,Traits>,
+  typedef boost::mpl::vector< EvaluateForce<_,Traits>,
 							  EvaluateDamage<_,Traits>,
 							  Contact<_,Traits>,
                               EvaluateJacobian<_,Traits>

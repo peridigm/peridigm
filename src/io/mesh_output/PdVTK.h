@@ -115,8 +115,8 @@ public:
         int getIndex() {return (times.size() - 1);}
         deque<double> getTimes() {return times;}
 private:
-	deque<double> times;
 	const char* fileName;
+	deque<double> times;
 	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer;
 };
 

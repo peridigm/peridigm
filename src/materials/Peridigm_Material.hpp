@@ -96,15 +96,7 @@ namespace PeridigmNS {
                const int* neighborhoodList,
                PeridigmNS::DataManager& dataManager) const {}
 
-	//! Update the constitutive data based on the current configuration.
-	virtual void
-	updateConstitutiveData(const double dt,
-						   const int numOwnedPoints,
-						   const int* ownedIDs,
-						   const int* neighborhoodList,
-                           PeridigmNS::DataManager& dataManager) const = 0;
-
-	//! Evaluate the forces on the cells
+	//! Evaluate the internal force.
 	virtual void
 	computeForce(const double dt,
 				 const int numOwnedPoints,
@@ -112,7 +104,7 @@ namespace PeridigmNS {
 				 const int* neighborhoodList,
                  PeridigmNS::DataManager& dataManager) const = 0;
 
-	//! Evaluate the jacobian
+	//! Evaluate the jacobian.
 	virtual void
 	computeJacobian(const double dt,
                     const int numOwnedPoints,

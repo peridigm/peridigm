@@ -193,7 +193,7 @@ Teuchos::ParameterList getParamList()
 	params.set("Shear Modulus", mu);
 	params.set("Horizon", horizon);
 	params.set("Yield Stress",Y);
-	IsotropicElasticPlasticMaterial mat(params);
+	ElasticPlasticMaterial mat(params);
 
     // \todo check field specs
 
@@ -258,7 +258,7 @@ QUICKGRID::QuickGridData getTwoPointGridData(){
 
 void runPureShear() {
 	Teuchos::ParameterList paramList = getParamList();
-	IsotropicElasticPlasticMaterial mat(paramList);
+	ElasticPlasticMaterial mat(paramList);
 	QUICKGRID::QuickGridData pdGridData = getTwoPointGridData();
 	int numPoints = pdGridData.numPoints;
 	BOOST_CHECK(2 == numPoints);
@@ -448,7 +448,7 @@ bool init_unit_test_suite()
   // Add a suite for each processor in the test
   bool success = true;
 
-  test_suite* proc = BOOST_TEST_SUITE("utPeridigm_IsotropicElasticPlasticMaterial");
+  test_suite* proc = BOOST_TEST_SUITE("utPeridigm_ElasticPlasticMaterial");
   proc->add(BOOST_TEST_CASE(&runPureShear));
   framework::master_test_suite().add(proc);
 

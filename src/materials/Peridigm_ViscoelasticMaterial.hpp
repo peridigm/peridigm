@@ -1,4 +1,4 @@
-/*! \file Peridigm_ViscoelasticStandardLinearSolid.hpp */
+/*! \file Peridigm_ViscoelasticMaterial.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,24 +45,24 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_VISCOELASTICSTANDARDLINEARSOLID_HPP
-#define PERIDIGM_VISCOELASTICSTANDARDLINEARSOLID_HPP
+#ifndef PERIDIGM_VISCOELASTICMATERIAL_HPP
+#define PERIDIGM_VISCOELASTICMATERIAL_HPP
 
 #include "Peridigm_Material.hpp"
 
 namespace PeridigmNS {
 
-  class ViscoelasticStandardLinearSolid : public Material {
+  class ViscoelasticMaterial : public Material {
   public:
 
 	//! Constructor.
-	  ViscoelasticStandardLinearSolid(const Teuchos::ParameterList & params);
+	  ViscoelasticMaterial(const Teuchos::ParameterList & params);
 
 	//! Destructor.
-	virtual ~ViscoelasticStandardLinearSolid();
+	virtual ~ViscoelasticMaterial();
 
 	//! Return name of material type
-	virtual string Name() const {return("Viscoelastic Standard Linear Solid");}
+	virtual string Name() const {return("Viscoelastic");}
 
 	//! Returns the density of the material.
 	virtual double Density() const { return m_density; }
@@ -87,15 +87,7 @@ namespace PeridigmNS {
                const int* neighborhoodList,
                PeridigmNS::DataManager& dataManager) const;
 
-	//! Computes the dilatation.
-	virtual void
-	updateConstitutiveData(const double dt,
-						   const int numOwnedPoints,
-						   const int* ownedIDs,
-						   const int* neighborhoodList,
-                           PeridigmNS::DataManager& dataManager) const;
-
-	//! Evaluate the forces on the cells.
+	//! Evaluate the internal force.
 	virtual void
 	computeForce(const double dt,
 				 const int numOwnedPoints,
@@ -118,7 +110,7 @@ namespace PeridigmNS {
   };
 }
 
-#endif /* PERIDIGM_VISCOELASTICSTANDARDLINEARSOLID_HPP */
+#endif /* PERIDIGM_VISCOELASTICMATERIAL_HPP */
 
 
 

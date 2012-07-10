@@ -1,4 +1,4 @@
-/*! \file Peridigm_IsotropicHardeningPlasticMaterial.cpp */
+/*! \file Peridigm_ElasticPlasticHardeningMaterial.cpp */
 
 //@HEADER
 // ************************************************************************
@@ -60,7 +60,7 @@
 
 using namespace std;
 
-PeridigmNS::IsotropicHardeningPlasticMaterial::IsotropicHardeningPlasticMaterial(const Teuchos::ParameterList & params)
+PeridigmNS::ElasticPlasticHardeningMaterial::ElasticPlasticHardeningMaterial(const Teuchos::ParameterList & params)
   : Material(params),
     m_applyShearCorrectionFactor(false),
     m_disablePlasticity(false),
@@ -98,11 +98,11 @@ PeridigmNS::IsotropicHardeningPlasticMaterial::IsotropicHardeningPlasticMaterial
   m_variableSpecs->push_back(Field_NS::SHEAR_CORRECTION_FACTOR);
 }
 
-PeridigmNS::IsotropicHardeningPlasticMaterial::~IsotropicHardeningPlasticMaterial()
+PeridigmNS::ElasticPlasticHardeningMaterial::~ElasticPlasticHardeningMaterial()
 {
 }
 
-void PeridigmNS::IsotropicHardeningPlasticMaterial::initialize(const double dt,
+void PeridigmNS::ElasticPlasticHardeningMaterial::initialize(const double dt,
                                                              const int numOwnedPoints,
                                                              const int* ownedIDs,
                                                              const int* neighborhoodList,
@@ -128,34 +128,15 @@ void PeridigmNS::IsotropicHardeningPlasticMaterial::initialize(const double dt,
 }
 
 void
-PeridigmNS::IsotropicHardeningPlasticMaterial::updateConstitutiveData(const double dt,
-                                                                    const int numOwnedPoints,
-                                                                    const int* ownedIDs,
-                                                                    const int* neighborhoodList,
-                                                                    PeridigmNS::DataManager& dataManager) const
-{
-  double *x, *y, *volume, *dilatation, *damage, *weightedVolume, *bondDamage;
-  dataManager.getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->ExtractView(&x);
-  dataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->ExtractView(&y);
-  dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&volume);
-  dataManager.getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1)->ExtractView(&dilatation);
-  dataManager.getData(Field_NS::DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&damage);
-  dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&weightedVolume);
-  dataManager.getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
-
-  MATERIAL_EVALUATION::computeDilatation(x,y,weightedVolume,volume,bondDamage,dilatation,neighborhoodList,numOwnedPoints);
-}
-
-void
-PeridigmNS::IsotropicHardeningPlasticMaterial::computeForce(const double dt,
+PeridigmNS::ElasticPlasticHardeningMaterial::computeForce(const double dt,
                                                           const int numOwnedPoints,
                                                           const int* ownedIDs,
                                                           const int* neighborhoodList,
                                                           PeridigmNS::DataManager& dataManager) const
 {
-  double *x, *yNP1, *volume, *dilatation, *weightedVolume, *bondDamage, *edpN, *edpNP1, *lambdaN, *lambdaNP1, *force, *ownedShearCorrectionFactor;
+  double *x, *y, *volume, *dilatation, *weightedVolume, *bondDamage, *edpN, *edpNP1, *lambdaN, *lambdaNP1, *force, *ownedShearCorrectionFactor;
   dataManager.getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->ExtractView(&x);
-  dataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->ExtractView(&yNP1);
+  dataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->ExtractView(&y);
   dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&volume);
   dataManager.getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1)->ExtractView(&dilatation);
   dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&weightedVolume);
@@ -170,29 +151,30 @@ PeridigmNS::IsotropicHardeningPlasticMaterial::computeForce(const double dt,
   // Zero out the force
   dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->PutScalar(0.0);
 
+  MATERIAL_EVALUATION::computeDilatation(x,y,weightedVolume,volume,bondDamage,dilatation,neighborhoodList,numOwnedPoints);
   MATERIAL_EVALUATION::computeInternalForceIsotropicHardeningPlastic(x,
-                                                                   yNP1,
-                                                                   weightedVolume,
-                                                                   volume,
-                                                                   dilatation,
-                                                                   bondDamage,
-                                                                   ownedShearCorrectionFactor,
-                                                                   edpN,
-                                                                   edpNP1,
-                                                                   lambdaN,
-                                                                   lambdaNP1,
-                                                                   force,
-                                                                   neighborhoodList,
-                                                                   numOwnedPoints,
-                                                                   m_bulkModulus,
-                                                                   m_shearModulus,
-                                                                   m_horizon,
-                                                                   m_yieldStress,
-                                                                   m_hardeningModulus);
+                                                                     y,
+                                                                     weightedVolume,
+                                                                     volume,
+                                                                     dilatation,
+                                                                     bondDamage,
+                                                                     ownedShearCorrectionFactor,
+                                                                     edpN,
+                                                                     edpNP1,
+                                                                     lambdaN,
+                                                                     lambdaNP1,
+                                                                     force,
+                                                                     neighborhoodList,
+                                                                     numOwnedPoints,
+                                                                     m_bulkModulus,
+                                                                     m_shearModulus,
+                                                                     m_horizon,
+                                                                     m_yieldStress,
+                                                                     m_hardeningModulus);
 }
 
 void
-PeridigmNS::IsotropicHardeningPlasticMaterial::computeJacobian(const double dt,
+PeridigmNS::ElasticPlasticHardeningMaterial::computeJacobian(const double dt,
                                                              const int numOwnedPoints,
                                                              const int* ownedIDs,
                                                              const int* neighborhoodList,
@@ -210,7 +192,7 @@ PeridigmNS::IsotropicHardeningPlasticMaterial::computeJacobian(const double dt,
 }
 
 void
-PeridigmNS::IsotropicHardeningPlasticMaterial::computeAutomaticDifferentiationJacobian(const double dt,
+PeridigmNS::ElasticPlasticHardeningMaterial::computeAutomaticDifferentiationJacobian(const double dt,
                                                                                      const int numOwnedPoints,
                                                                                      const int* ownedIDs,
                                                                                      const int* neighborhoodList,
@@ -317,24 +299,24 @@ PeridigmNS::IsotropicHardeningPlasticMaterial::computeAutomaticDifferentiationJa
     // Evaluate the constitutive model using the AD types
     MATERIAL_EVALUATION::computeDilatationAD(x,&y_AD[0],weightedVolume,cellVolume,bondDamage,&dilatation_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints);
     MATERIAL_EVALUATION::computeInternalForceIsotropicHardeningPlasticAD(x,
-                                                                       &y_AD[0],
-                                                                       weightedVolume,
-                                                                       cellVolume,
-                                                                       &dilatation_AD[0],
-                                                                       bondDamage,
-                                                                       ownedShearCorrectionFactor,
-                                                                       edpN,
-                                                                       &edpNP1[0],
-                                                                       lambdaN,
-                                                                       &lambdaNP1_AD[0],
-                                                                       &force_AD[0],
-                                                                       &tempNeighborhoodList[0],
-                                                                       tempNumOwnedPoints,
-                                                                       m_bulkModulus,
-                                                                       m_shearModulus,
-                                                                       m_horizon,
-                                                                       m_yieldStress,
-                                                                       m_hardeningModulus);
+                                                                         &y_AD[0],
+                                                                         weightedVolume,
+                                                                         cellVolume,
+                                                                         &dilatation_AD[0],
+                                                                         bondDamage,
+                                                                         ownedShearCorrectionFactor,
+                                                                         edpN,
+                                                                         &edpNP1[0],
+                                                                         lambdaN,
+                                                                         &lambdaNP1_AD[0],
+                                                                         &force_AD[0],
+                                                                         &tempNeighborhoodList[0],
+                                                                         tempNumOwnedPoints,
+                                                                         m_bulkModulus,
+                                                                         m_shearModulus,
+                                                                         m_horizon,
+                                                                         m_yieldStress,
+                                                                         m_hardeningModulus);
 
     // Load derivative values into scratch matrix
     // Multiply by volume along the way to convert force density to force

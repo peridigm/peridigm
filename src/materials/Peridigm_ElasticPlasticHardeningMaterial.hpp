@@ -1,4 +1,4 @@
-/*! \file Peridigm_IsotropicHardeningPlasticMaterial.hpp */
+/*! \file Peridigm_ElasticPlasticHardeningMaterial.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,24 +45,24 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_ISOTROPICHARDENINGPLASTICMATERIAL_HPP_
-#define PERIDIGM_ISOTROPICHARDENINGPLASTICMATERIAL_HPP_
+#ifndef PERIDIGM_ELASTICPLASTICHARDENINGMATERIAL_HPP
+#define PERIDIGM_ELASTICPLASTICHARDENINGMATERIAL_HPP
 
 #include "Peridigm_Material.hpp"
 
 namespace PeridigmNS {
 
-  class IsotropicHardeningPlasticMaterial : public Material {
+  class ElasticPlasticHardeningMaterial : public Material {
   public:
 
 	//! Constructor.
-	IsotropicHardeningPlasticMaterial(const Teuchos::ParameterList & params);
+	ElasticPlasticHardeningMaterial(const Teuchos::ParameterList & params);
 
 	//! Destructor.
-	virtual ~IsotropicHardeningPlasticMaterial();
+	virtual ~ElasticPlasticHardeningMaterial();
 
 	//! Return name of material type
-	virtual string Name() const {return("Isotropic Hardening Plastic");}
+	virtual string Name() const {return("Elastic Plastic Hardening");}
 
 	//! Returns the density of the material.
 	virtual double Density() const { return m_density; }
@@ -87,15 +87,7 @@ namespace PeridigmNS {
                const int* neighborhoodList,
                PeridigmNS::DataManager& dataManager) const;
 
-	//! Computes the dilatation.
-	virtual void
-	updateConstitutiveData(const double dt,
-						   const int numOwnedPoints,
-						   const int* ownedIDs,
-						   const int* neighborhoodList,
-                           PeridigmNS::DataManager& dataManager) const;
-
-	//! Evaluate the forces on the cells.
+	//! Evaluate the internal force.
 	virtual void
 	computeForce(const double dt,
 				 const int numOwnedPoints,
@@ -103,7 +95,7 @@ namespace PeridigmNS {
 				 const int* neighborhoodList,
                  PeridigmNS::DataManager& dataManager) const;
 
-	//! Evaluate the jacobian
+	//! Evaluate the jacobian.
 	virtual void
 	computeJacobian(const double dt,
                     const int numOwnedPoints,
@@ -112,7 +104,7 @@ namespace PeridigmNS {
                     PeridigmNS::DataManager& dataManager,
                     PeridigmNS::SerialMatrix& jacobian) const;
 
-	//! Evaluate the jacobian via automatic differentiation
+	//! Evaluate the jacobian via automatic differentiation.
     virtual void
     computeAutomaticDifferentiationJacobian(const double dt,
                                             const int numOwnedPoints,
@@ -140,4 +132,4 @@ namespace PeridigmNS {
 
 
 
-#endif /* PERIDIGM_ISOTROPICHARDENINGPLASTICMATERIAL_HPP_ */
+#endif /* PERIDIGM_ELASTICPLASTICHARDENINGMATERIAL_HPP */

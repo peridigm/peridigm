@@ -7,8 +7,8 @@
   </ParameterList>
 	
   <ParameterList name="Materials">
-	<ParameterList name="My Linear Elastic Material">
-	  <Parameter name="Material Model" type="string" value="Linear Elastic"/>
+	<ParameterList name="My Elastic Material">
+	  <Parameter name="Material Model" type="string" value="Elastic"/>
 	  <Parameter name="Density" type="double" value="8.0e-9"/>        <!-- tonne/mm^3 -->
 	  <Parameter name="Bulk Modulus" type="double" value="1.515e5"/>  <!-- MPa -->
 	  <Parameter name="Shear Modulus" type="double" value="7.813e4"/> <!-- MPa -->
@@ -18,7 +18,7 @@
   <ParameterList name="Blocks">
 	<ParameterList name="My Group">
 	  <Parameter name="Block Names" type="string" value="block_1 block_2"/>
-	  <Parameter name="Material" type="string" value="My Linear Elastic Material"/>
+	  <Parameter name="Material" type="string" value="My Elastic Material"/>
 	</ParameterList>
   </ParameterList>
 

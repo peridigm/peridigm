@@ -175,7 +175,6 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
 
     if(finiteDifferenceScheme == FORWARD_DIFFERENCE){
       // Compute and store the unperturbed force.
-      updateConstitutiveData(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
       computeForce(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
       for(int i=0 ; i<forceVector->MyLength() ; ++i)
         tempForce[i] = force[i];
@@ -199,7 +198,6 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
         if(finiteDifferenceScheme == CENTRAL_DIFFERENCE){
           // Compute and store the negatively perturbed force.
           y[3*perturbID+dof] -= epsilon;
-          updateConstitutiveData(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
           computeForce(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
           y[3*perturbID+dof] = oldY;
           for(int i=0 ; i<forceVector->MyLength() ; ++i)
@@ -208,7 +206,6 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
 
         // Compute the positively perturbed force.
         y[3*perturbID+dof] += epsilon;
-        updateConstitutiveData(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
         computeForce(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
         y[3*perturbID+dof] = oldY;
 

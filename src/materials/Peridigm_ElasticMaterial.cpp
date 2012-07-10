@@ -1,4 +1,4 @@
-/*! \file Peridigm_LinearElasticIsotropicMaterial.cpp */
+/*! \file Peridigm_ElasticMaterial.cpp */
 
 //@HEADER
 // ************************************************************************
@@ -55,7 +55,7 @@
 
 using namespace std;
 
-PeridigmNS::LinearElasticIsotropicMaterial::LinearElasticIsotropicMaterial(const Teuchos::ParameterList& params)
+PeridigmNS::ElasticMaterial::ElasticMaterial(const Teuchos::ParameterList& params)
   : Material(params),
     m_applyAutomaticDifferentiationJacobian(true)
 {
@@ -67,7 +67,7 @@ PeridigmNS::LinearElasticIsotropicMaterial::LinearElasticIsotropicMaterial(const
   if(params.isParameter("Apply Automatic Differentiation Jacobian"))
     m_applyAutomaticDifferentiationJacobian = params.get<bool>("Apply Automatic Differentiation Jacobian");
 
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(params.isParameter("Apply Shear Correction Factor"), "**** Error:  Shear Correction Factor not supported for Viscoelastic material.\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(params.isParameter("Apply Shear Correction Factor"), "**** Error:  Shear Correction Factor is not supported for the Elastic material.\n");
 
   // set up vector of variable specs
   m_variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
@@ -81,16 +81,16 @@ PeridigmNS::LinearElasticIsotropicMaterial::LinearElasticIsotropicMaterial(const
   m_variableSpecs->push_back(Field_NS::BOND_DAMAGE);
 }
 
-PeridigmNS::LinearElasticIsotropicMaterial::~LinearElasticIsotropicMaterial()
+PeridigmNS::ElasticMaterial::~ElasticMaterial()
 {
 }
 
 void
-PeridigmNS::LinearElasticIsotropicMaterial::initialize(const double dt,
-                                                       const int numOwnedPoints,
-                                                       const int* ownedIDs,
-                                                       const int* neighborhoodList,
-                                                       PeridigmNS::DataManager& dataManager) const
+PeridigmNS::ElasticMaterial::initialize(const double dt,
+                                        const int numOwnedPoints,
+                                        const int* ownedIDs,
+                                        const int* neighborhoodList,
+                                        PeridigmNS::DataManager& dataManager) const
 {
   // Extract pointers to the underlying data in the constitutiveData array
   double *x, *cellVolume, *weightedVolume;
@@ -102,31 +102,11 @@ PeridigmNS::LinearElasticIsotropicMaterial::initialize(const double dt,
 }
 
 void
-PeridigmNS::LinearElasticIsotropicMaterial::updateConstitutiveData(const double dt,
-                                                                   const int numOwnedPoints,
-                                                                   const int* ownedIDs,
-                                                                   const int* neighborhoodList,
-                                                                   PeridigmNS::DataManager& dataManager) const
-{
-  // Extract pointers to the underlying data in the constitutiveData array
-  double *x, *y, *cellVolume, *weightedVolume, *dilatation, *damage, *bondDamage;
-  dataManager.getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->ExtractView(&x);
-  dataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->ExtractView(&y);
-  dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&cellVolume);
-  dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&weightedVolume);
-  dataManager.getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1)->ExtractView(&dilatation);
-  dataManager.getData(Field_NS::DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&damage);
-  dataManager.getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
-
-  MATERIAL_EVALUATION::computeDilatationAD(x,y,weightedVolume,cellVolume,bondDamage,dilatation,neighborhoodList,numOwnedPoints);
-}
-
-void
-PeridigmNS::LinearElasticIsotropicMaterial::computeForce(const double dt,
-                                                         const int numOwnedPoints,
-                                                         const int* ownedIDs,
-                                                         const int* neighborhoodList,
-                                                         PeridigmNS::DataManager& dataManager) const
+PeridigmNS::ElasticMaterial::computeForce(const double dt,
+                                          const int numOwnedPoints,
+                                          const int* ownedIDs,
+                                          const int* neighborhoodList,
+                                          PeridigmNS::DataManager& dataManager) const
 {
   // Zero out the forces
   dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->PutScalar(0.0);
@@ -142,16 +122,17 @@ PeridigmNS::LinearElasticIsotropicMaterial::computeForce(const double dt,
   dataManager.getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
   dataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->ExtractView(&force);
 
+  MATERIAL_EVALUATION::computeDilatationAD(x,y,weightedVolume,cellVolume,bondDamage,dilatation,neighborhoodList,numOwnedPoints);
   MATERIAL_EVALUATION::computeInternalForceLinearElasticAD(x,y,weightedVolume,cellVolume,dilatation,bondDamage,force,neighborhoodList,numOwnedPoints,m_bulkModulus,m_shearModulus);
 }
 
 void
-PeridigmNS::LinearElasticIsotropicMaterial::computeJacobian(const double dt,
-                                                            const int numOwnedPoints,
-                                                            const int* ownedIDs,
-                                                            const int* neighborhoodList,
-                                                            PeridigmNS::DataManager& dataManager,
-                                                            PeridigmNS::SerialMatrix& jacobian) const
+PeridigmNS::ElasticMaterial::computeJacobian(const double dt,
+                                             const int numOwnedPoints,
+                                             const int* ownedIDs,
+                                             const int* neighborhoodList,
+                                             PeridigmNS::DataManager& dataManager,
+                                             PeridigmNS::SerialMatrix& jacobian) const
 {
   if(m_applyAutomaticDifferentiationJacobian){
     // Compute the Jacobian via automatic differentiation
@@ -165,12 +146,12 @@ PeridigmNS::LinearElasticIsotropicMaterial::computeJacobian(const double dt,
 
 
 void
-PeridigmNS::LinearElasticIsotropicMaterial::computeAutomaticDifferentiationJacobian(const double dt,
-                                                                                    const int numOwnedPoints,
-                                                                                    const int* ownedIDs,
-                                                                                    const int* neighborhoodList,
-                                                                                    PeridigmNS::DataManager& dataManager,
-                                                                                    PeridigmNS::SerialMatrix& jacobian) const
+PeridigmNS::ElasticMaterial::computeAutomaticDifferentiationJacobian(const double dt,
+                                                                     const int numOwnedPoints,
+                                                                     const int* ownedIDs,
+                                                                     const int* neighborhoodList,
+                                                                     PeridigmNS::DataManager& dataManager,
+                                                                     PeridigmNS::SerialMatrix& jacobian) const
 {
   // Compute contributions to the tangent matrix on an element-by-element basis
 
