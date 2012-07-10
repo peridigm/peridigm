@@ -46,8 +46,8 @@
 //@HEADER
 
 #include <cmath>
-#include "ordinary_std_linear_visco_solid.h"
 #include <iostream>
+#include "viscoelastic.h"
 using std::cout;
 using std::endl;
 namespace MATERIAL_EVALUATION {

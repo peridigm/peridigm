@@ -48,15 +48,15 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
-#include "Peridigm_ViscoelasticStandardLinearSolid.hpp"
+#include "Peridigm_ViscoelasticMaterial.hpp"
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_SerialComm.h>
 #include "mesh_input/quick_grid/QuickGrid.h"
 #include "mesh_output/Field.h"
 #include "utilities/Array.h"
-#include "ordinary_utilities.h"
-#include "ordinary_elastic.h"
-#include "ordinary_std_linear_visco_solid.h"
+#include "material_utilities.h"
+#include "elastic.h"
+#include "viscoelastic.h"
 #include <math.h>
 
 #include <fstream>

@@ -45,13 +45,13 @@
 // ************************************************************************
 //@HEADER
 
-#include "Peridigm_LinearElasticIsotropicMaterial.hpp"
+#include "Peridigm_ElasticMaterial.hpp"
+#include "Peridigm_Timer.hpp"
+#include "elastic.h"
+#include "material_utilities.h"
 #include <Teuchos_Assert.hpp>
 #include <Epetra_SerialComm.h>
 #include <Sacado.hpp>
-#include "ordinary_elastic.h"
-#include "ordinary_utilities.h"
-#include "Peridigm_Timer.hpp"
 
 using namespace std;
 

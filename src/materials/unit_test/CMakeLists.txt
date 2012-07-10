@@ -1,18 +1,18 @@
 add_subdirectory (twoPoint_SLS_Relaxation/)
-add_subdirectory (utPeridigm_IsotropicElasticPlastic/)
+add_subdirectory (utPeridigm_ElasticPlastic/)
 
 # Create symbolic links to files in directories specified.  By default it recurses directories
 # Can exclude files with flag -e <filename>
 string (COMPARE EQUAL ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} buildInSource)
 if (NOT ${buildInSource})
    set(UT_DIRS ${UT_DIRS}  -d src/materials/unit_test/twoPoint_SLS_Relaxation)
-   set(UT_DIRS ${UT_DIRS}  -d src/materials/unit_test/utPeridigm_IsotropicElasticPlastic)
+   set(UT_DIRS ${UT_DIRS}  -d src/materials/unit_test/utPeridigm_ElasticPlastic)
    execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/scripts/mirror.py -s ${CMAKE_SOURCE_DIR} -b ${CMAKE_BINARY_DIR} ${UT_DIRS} )
 endif (NOT ${buildInSource})
 
-add_executable(utPeridigm_LinearElasticIsotropicMaterial ./utPeridigm_LinearElasticIsotropicMaterial.cpp
+add_executable(utPeridigm_ElasticMaterial ./utPeridigm_ElasticMaterial.cpp
 )
-target_link_libraries(utPeridigm_LinearElasticIsotropicMaterial
+target_link_libraries(utPeridigm_ElasticMaterial
   ${Peridigm_LIBRARY}
   ${Trilinos_LIBRARIES}
   ${MESH_OUTPUT_LIBS}
@@ -20,4 +20,4 @@ target_link_libraries(utPeridigm_LinearElasticIsotropicMaterial
   ${REQUIRED_LIBS}
   ${Boost_LIBRARIES}
 )
-add_test (utPeridigm_LinearElasticIsotropicMaterial python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_LinearElasticIsotropicMaterial)
+add_test (utPeridigm_ElasticMaterial python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_ElasticMaterial)

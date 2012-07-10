@@ -46,8 +46,7 @@
 // ************************************************************************
 //@HEADER
 
-#include "ordinary_utilities.h"
-//#include "bond_volume_calculator.h"
+#include "material_utilities.h"
 #include <cmath>
 
 #include <Sacado.hpp>
@@ -162,13 +161,13 @@ void computeDeviatoricDilatation
 	for(int p=0; p<numOwnedPoints;p++, xOwned+=3, yOwned+=3, m++, theta++){
 		int numNeigh = *neighPtr; neighPtr++;
 		const double *X = xOwned;
-		const double *Y = yOwned;
+		//const double *Y = yOwned;
 		*theta = 0;
 		for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++,epd++){
 			int localId = *neighPtr;
 			cellVolume = v[localId];
 			const double *XP = &xOverlap[3*localId];
-			const double *YP = &yOverlap[3*localId];
+			//const double *YP = &yOverlap[3*localId];
 			double dx = XP[0]-X[0];
 			double dy = XP[1]-X[1];
 			double dz = XP[2]-X[2];

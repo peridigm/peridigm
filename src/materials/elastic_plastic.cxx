@@ -46,7 +46,7 @@
 //@HEADER
 #include <cmath>
 #include <Sacado.hpp>
-#include "ordinary_elastic_plastic.h"
+#include "elastic_plastic.h"
 
 namespace MATERIAL_EVALUATION {
 

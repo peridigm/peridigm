@@ -47,10 +47,10 @@
 
 #include <Teuchos_Assert.hpp>
 #include "Peridigm_MaterialFactory.hpp"
-#include "Peridigm_LinearElasticIsotropicMaterial.hpp"
-#include "Peridigm_IsotropicElasticPlasticMaterial.hpp"
-#include "Peridigm_IsotropicHardeningPlasticMaterial.hpp"
-#include "Peridigm_ViscoelasticStandardLinearSolid.hpp"
+#include "Peridigm_ElasticMaterial.hpp"
+#include "Peridigm_ElasticPlasticMaterial.hpp"
+#include "Peridigm_ElasticPlasticHardeningMaterial.hpp"
+#include "Peridigm_ViscoelasticMaterial.hpp"
 
 Teuchos::RCP<PeridigmNS::Material>
 PeridigmNS::MaterialFactory::create(const Teuchos::ParameterList& materialParams)
