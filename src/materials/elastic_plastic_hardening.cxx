@@ -110,8 +110,8 @@ double updateDeltaLambda
     }
     else
     {
-        double A = -sign(R)*pow( fabs(R) + sqrt(R*R - Q*Q*Q) ,1./3.);
-        if ( fabs(A) < 1e-50)
+        double A = -sign(R)*pow( std::abs(R) + sqrt(R*R - Q*Q*Q) ,1./3.);
+        if ( std::abs(A) < 1e-50)
             std::cout << "A is VERY small! A = " << A << std::endl;
 
         double B = Q/A;
@@ -583,7 +583,7 @@ ScalarT updateDeltaLambdaAD
     }
     else
     {
-        ScalarT A = -signAD(R)*pow( abs(R) + sqrt(pow(R,2.) - pow(Q,3.)) ,1./3.);
+        ScalarT A = -signAD(R)*pow( std::abs(R) + sqrt(pow(R,2.) - pow(Q,3.)) ,1./3.);
         ScalarT B = 0.;
         
         if ( A != 0.)
