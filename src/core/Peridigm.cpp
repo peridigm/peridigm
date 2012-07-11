@@ -916,7 +916,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
       step++;
       if(loadStepReductionFactor > 0)
         loadStepReductionFactor--;
-      numRemainingSubsteps = pow(2.0, loadStepReductionFactor);
+      numRemainingSubsteps = pow(2, loadStepReductionFactor);
     }
 
     double timeIncrement = nominalTimeIncrement / pow(2.0, loadStepReductionFactor);

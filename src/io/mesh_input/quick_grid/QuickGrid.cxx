@@ -739,7 +739,7 @@ H(3,Horizon(0,0))
 
 	// theta direction -- ultimately this will be a 'wedge'
 	// number of slave cells on one side of master along theta dir
-	size_t nt = 2.0 * horizonRadius * nr / ringSpec.getRingThickness();
+	size_t nt = (size_t)( 2.0 * horizonRadius * nr / ringSpec.getRingThickness() );
 	// Total number of cells along theta
 	//   master + 2 * nt
 	// By construction, nt is 'odd'
@@ -759,7 +759,7 @@ H(3,Horizon(0,0))
 	// cylinder axis -- z direction
 	// set number of cells along axis so that dz~dr
 	double dz=dr;
-	size_t nz=cylinder_length/dz;
+	size_t nz= (size_t)( cylinder_length/dz );
 	if(0==nz) nz+=1;
 	Vector3D center = rSpec.getCenter();
 	dz=cylinder_length/nz;
