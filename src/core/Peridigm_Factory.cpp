@@ -71,7 +71,8 @@ Teuchos::RCP<PeridigmNS::Peridigm> PeridigmNS::PeridigmFactory::create(const std
   setSolverParamDefaults(peridigmParams.ptr());
 
   // Update parameters with data from xml file
-  Teuchos::updateParametersFromXmlFile(inputFile, peridigmParams.get());
+  Teuchos::Ptr<Teuchos::ParameterList> peridigmParamsPtr(peridigmParams.get());
+  Teuchos::updateParametersFromXmlFile(inputFile, peridigmParamsPtr);
 
   // Create new Peridigm object
   return rcp(new PeridigmNS::Peridigm(comm, peridigmParams));
