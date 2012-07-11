@@ -17,6 +17,8 @@ add_test (Bar_TwoBlocks_OneMaterial_QS_np1 python ./Bar_TwoBlocks_OneMaterial_QS
 add_test (Bar_TwoBlocks_OneMaterial_QS_np2 python ./Bar_TwoBlocks_OneMaterial_QS/np2/Bar.py)
 add_test (Bar_TwoBlocks_TwoMaterial_QS_np1 python ./Bar_TwoBlocks_TwoMaterial_QS/np1/Bar.py)
 add_test (Bar_TwoBlocks_TwoMaterial_QS_np2 python ./Bar_TwoBlocks_TwoMaterial_QS/np2/Bar.py)
+add_test (Bar_TwoBlocks_TwoDifferentMaterial_QS_np1 python ./Bar_TwoBlocks_TwoDifferentMaterial_QS/np1/Bar.py)
+add_test (Bar_TwoBlocks_TwoDifferentMaterial_QS_np2 python ./Bar_TwoBlocks_TwoDifferentMaterial_QS/np2/Bar.py)
 
 add_custom_target( rtest
    COMMAND ctest

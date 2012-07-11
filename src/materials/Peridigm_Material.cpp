@@ -46,7 +46,6 @@
 //@HEADER
 
 #include "Peridigm_Material.hpp"
-#include "Peridigm_Timer.hpp"
 #include <Teuchos_Assert.hpp>
 #include <Epetra_SerialDenseMatrix.h>
 #include <Epetra_SerialComm.h>
@@ -95,8 +94,6 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
   //
   // Central difference:
   // dF_0x/dx_0 = ( F_0x(positive perturbed x_0) - F_0x(negative perturbed x_0) ) / ( 2.0*epsilon )
-
-  PeridigmNS::Timer::self().startTimer("Finite Difference Jacobian");
 
   //double epsilon = 1.0e-6*0.0015748; // \todo Instead, use 1.0e-6 * smallest_radius_in_model
   double epsilon = 1.0e-6*0.0007874/2*4*1000; 
@@ -245,8 +242,6 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     // Sum the values into the global tangent matrix (this is expensive).
     jacobian.addValues((int)globalIndices.size(), &globalIndices[0], scratchMatrix.Data());
   }
-
-  PeridigmNS::Timer::self().stopTimer("Finite Difference Jacobian");
 }
 
 void PeridigmNS::Material::computeApproximateDeformationGradient(const double dt,
