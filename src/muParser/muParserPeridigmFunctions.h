@@ -1,3 +1,5 @@
+#pragma GCC system_header
+
 #ifndef MU_PARSER_PERIDIGM_FUNCTIONS_H
 #define MU_PARSER_PERIDIGM_FUNCTIONS_H
 
