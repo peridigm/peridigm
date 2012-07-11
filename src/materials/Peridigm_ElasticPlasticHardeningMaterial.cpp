@@ -47,7 +47,6 @@
 
 #include "Peridigm_ElasticPlasticMaterial.hpp"
 #include "Peridigm_ElasticPlasticHardeningMaterial.hpp"
-#include "Peridigm_Timer.hpp"
 #include "elastic_plastic.h"
 #include "elastic_plastic_hardening.h"
 #include "material_utilities.h"
@@ -199,8 +198,6 @@ PeridigmNS::ElasticPlasticHardeningMaterial::computeAutomaticDifferentiationJaco
                                                                                      PeridigmNS::DataManager& dataManager,
                                                                                      PeridigmNS::SerialMatrix& jacobian) const
 {
-  PeridigmNS::Timer::self().startTimer("Automatic Differentiation Jacobian");
-
   // Compute contributions to the tangent matrix on an element-by-element basis
 
   // To reduce memory re-allocation, use static variable to store Fad types for
@@ -329,7 +326,5 @@ PeridigmNS::ElasticPlasticHardeningMaterial::computeAutomaticDifferentiationJaco
     // Sum the values into the global tangent matrix (this is expensive).
     jacobian.addValues((int)globalIndices.size(), &globalIndices[0], scratchMatrix.Data());
   }
-
-  PeridigmNS::Timer::self().stopTimer("Automatic Differentiation Jacobian");
 }
 

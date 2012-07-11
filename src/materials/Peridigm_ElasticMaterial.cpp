@@ -46,7 +46,6 @@
 //@HEADER
 
 #include "Peridigm_ElasticMaterial.hpp"
-#include "Peridigm_Timer.hpp"
 #include "elastic.h"
 #include "material_utilities.h"
 #include <Teuchos_Assert.hpp>
@@ -163,8 +162,6 @@ PeridigmNS::ElasticMaterial::computeAutomaticDifferentiationJacobian(const doubl
   int neighborhoodListIndex = 0;
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
 
-    PeridigmNS::Timer::self().startTimer("AD Jacobian General Set Up");
-
     // Create a temporary neighborhood consisting of a single point and its neighbors.
     // The temporary neighborhood is sorted by global ID to somewhat increase the chance
     // that the downstream Epetra_CrsMatrix::SumIntoMyValues() calls will be as efficient
@@ -232,9 +229,6 @@ PeridigmNS::ElasticMaterial::computeAutomaticDifferentiationJacobian(const doubl
     tempDataManager.getData(Field_NS::DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&damage);
     tempDataManager.getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
 
-    PeridigmNS::Timer::self().stopTimer("AD Jacobian General Set Up");
-    PeridigmNS::Timer::self().startTimer("AD Jacobian FAD Set Up");
-
     // Create arrays of Fad objects for the current coordinates, dilatation, and force density
     // Modify the existing vector of Fad objects for the current coordinates
     if((int)y_AD.size() < numDof)
@@ -247,15 +241,9 @@ PeridigmNS::ElasticMaterial::computeAutomaticDifferentiationJacobian(const doubl
     vector<Sacado::Fad::DFad<double> > dilatation_AD(numEntries);
     vector<Sacado::Fad::DFad<double> > force_AD(numDof);
 
-    PeridigmNS::Timer::self().stopTimer("AD Jacobian FAD Set Up");
-    PeridigmNS::Timer::self().startTimer("AD Jacobian Constitutive Model");
-
     // Evaluate the constitutive model using the AD types
     MATERIAL_EVALUATION::computeDilatationAD(x,&y_AD[0],weightedVolume,cellVolume,bondDamage,&dilatation_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints);
     MATERIAL_EVALUATION::computeInternalForceLinearElasticAD(x,&y_AD[0],weightedVolume,cellVolume,&dilatation_AD[0],bondDamage,&force_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints,m_bulkModulus,m_shearModulus);
-
-    PeridigmNS::Timer::self().stopTimer("AD Jacobian Constitutive Model");
-    PeridigmNS::Timer::self().startTimer("AD Jacobian Global Fill");
 
     // Load derivative values into scratch matrix
     // Multiply by volume along the way to convert force density to force
@@ -267,7 +255,5 @@ PeridigmNS::ElasticMaterial::computeAutomaticDifferentiationJacobian(const doubl
 
     // Sum the values into the global tangent matrix (this is expensive).
     jacobian.addValues((int)globalIndices.size(), &globalIndices[0], scratchMatrix.Data());
-
-    PeridigmNS::Timer::self().stopTimer("AD Jacobian Global Fill");
   }
 }

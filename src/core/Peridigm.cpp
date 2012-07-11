@@ -647,9 +647,9 @@ void PeridigmNS::Peridigm::executeExplicit() {
   // \todo The velocity copied into the DataManager is actually the midstep velocity, not the NP1 velocity; this can be fixed by creating a midstep velocity field in the DataManager and setting the NP1 value as invalid.
 
   // Evaluate force in initial configuration for use in first timestep
-  PeridigmNS::Timer::self().startTimer("Model Evaluator");
+  PeridigmNS::Timer::self().startTimer("Internal Force");
   modelEvaluator->evalModel(workset);
-  PeridigmNS::Timer::self().stopTimer("Model Evaluator");
+  PeridigmNS::Timer::self().stopTimer("Internal Force");
 
   // Copy force from the data manager to the mothership vector
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
@@ -746,9 +746,9 @@ void PeridigmNS::Peridigm::executeExplicit() {
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
     // Update forces based on new positions
-    PeridigmNS::Timer::self().startTimer("Model Evaluator");
+    PeridigmNS::Timer::self().startTimer("Internal Force");
     modelEvaluator->evalModel(workset);
-    PeridigmNS::Timer::self().stopTimer("Model Evaluator");
+    PeridigmNS::Timer::self().stopTimer("Internal Force");
 
     // Copy force from the data manager to the mothership vector
     PeridigmNS::Timer::self().startTimer("Gather/Scatter");
@@ -1337,9 +1337,9 @@ void PeridigmNS::Peridigm::executeImplicit() {
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
     // Update forces based on new positions
-    PeridigmNS::Timer::self().startTimer("Model Evaluator");
+    PeridigmNS::Timer::self().startTimer("Internal Force");
     modelEvaluator->evalModel(workset);
-    PeridigmNS::Timer::self().stopTimer("Model Evaluator");
+    PeridigmNS::Timer::self().stopTimer("Internal Force");
 
     // Copy force from the data manager to the mothership vector
     PeridigmNS::Timer::self().startTimer("Gather/Scatter");
@@ -1412,9 +1412,9 @@ void PeridigmNS::Peridigm::executeImplicit() {
       PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
       // Update forces based on new positions
-      PeridigmNS::Timer::self().startTimer("Model Evaluator");
+      PeridigmNS::Timer::self().startTimer("Internal Force");
       modelEvaluator->evalModel(workset);
-      PeridigmNS::Timer::self().stopTimer("Model Evaluator");
+      PeridigmNS::Timer::self().stopTimer("Internal Force");
 
       // Copy force from the data manager to the mothership vector
       PeridigmNS::Timer::self().startTimer("Gather/Scatter");
@@ -1560,9 +1560,9 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
   // Update forces based on new positions
-  PeridigmNS::Timer::self().startTimer("Model Evaluator");
+  PeridigmNS::Timer::self().startTimer("Internal Force");
   modelEvaluator->evalModel(workset);
-  PeridigmNS::Timer::self().stopTimer("Model Evaluator");
+  PeridigmNS::Timer::self().stopTimer("Internal Force");
 
   // Copy force from the data manager to the mothership vector
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
