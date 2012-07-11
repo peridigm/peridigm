@@ -1,0 +1,106 @@
+<ParameterList>
+
+  <ParameterList name="Discretization">
+	<Parameter name="Type" type="string" value="Exodus" />
+	<Parameter name="Horizon" type="double" value="0.5"/>
+	<Parameter name="Input Mesh File" type="string" value="Bar.g"/>
+  </ParameterList>
+
+  <ParameterList name="Materials">
+	<ParameterList name="LeftMaterial">
+	  <Parameter name="Material Model" type="string" value="Elastic"/>
+	  <Parameter name="Density" type="double" value="8.0e-9"/>        <!-- tonne/mm^3 -->
+	  <Parameter name="Bulk Modulus" type="double" value="1.515e5"/>  <!-- MPa -->
+	  <Parameter name="Shear Modulus" type="double" value="7.813e4"/> <!-- MPa -->
+	</ParameterList>
+	<ParameterList name="RightMaterial">
+	  <Parameter name="Material Model" type="string" value="Elastic Plastic"/>
+	  <Parameter name="Density" type="double" value="8.0e-9"/>        <!-- tonne/mm^3 -->
+	  <Parameter name="Bulk Modulus" type="double" value="1.515e5"/>  <!-- MPa -->
+	  <Parameter name="Shear Modulus" type="double" value="7.813e4"/> <!-- MPa -->
+	  <Parameter name="Yield Stress" type="double" value="1.0e5"/>
+      <Parameter name="Disable Plasticity" type="bool" value="true"/>
+	  <Parameter name="Apply Shear Correction Factor" type="bool" value="false"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Blocks">
+	<ParameterList name="MyGroup1">
+	  <Parameter name="Block Names" type="string" value="block_1"/>
+	  <Parameter name="Material" type="string" value="LeftMaterial"/>
+	</ParameterList>
+	<ParameterList name="MyGroup2">
+	  <Parameter name="Block Names" type="string" value="block_2"/>
+	  <Parameter name="Material" type="string" value="RightMaterial"/>
+	</ParameterList>
+  </ParameterList>
+  
+  <ParameterList name="Boundary Conditions">
+	<ParameterList name="Prescribed Displacement Left Side">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_1"/>
+	  <Parameter name="Coordinate" type="string" value="x"/>
+	  <Parameter name="Value" type="string" value="-0.01*t"/>
+	</ParameterList>
+	<ParameterList name="Prescribed Displacement Right Side">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_2"/>
+	  <Parameter name="Coordinate" type="string" value="x"/>
+	  <Parameter name="Value" type="string" value="0.01*t"/>
+	</ParameterList>
+	<ParameterList name="Prescribed Displacement Suppress Rigid Body Modes 1">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_3"/>
+	  <Parameter name="Coordinate" type="string" value="y"/>
+	  <Parameter name="Value" type="string" value="0.0"/>
+	</ParameterList>
+	<ParameterList name="Prescribed Displacement Suppress Rigid Body Modes 2">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_5"/>
+	  <Parameter name="Coordinate" type="string" value="y"/>
+	  <Parameter name="Value" type="string" value="0.0"/>
+	</ParameterList>
+	<ParameterList name="Prescribed Displacement Suppress Rigid Body Modes 3">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_4"/>
+	  <Parameter name="Coordinate" type="string" value="z"/>
+	  <Parameter name="Value" type="string" value="0.0"/>
+	</ParameterList>
+	<ParameterList name="Prescribed Displacement Suppress Rigid Body Modes 4">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_6"/>
+	  <Parameter name="Coordinate" type="string" value="z"/>
+	  <Parameter name="Value" type="string" value="0.0"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Solver">
+	<Parameter name="Verbose" type="bool" value="false"/>
+	<Parameter name="Initial Time" type="double" value="0.0"/>
+	<Parameter name="Final Time" type="double" value="2.0"/> 
+	<ParameterList name="QuasiStatic">
+	  <Parameter name="Number of Load Steps" type="int" value="2"/>
+	  <Parameter name="Absolute Tolerance" type="double" value="1.0e-2"/>
+	  <Parameter name="Maximum Solver Iterations" type="int" value="10"/>
+	</ParameterList>
+  </ParameterList>
+  
+  <ParameterList name="Output">
+    <Parameter name="Output File Type" type="string" value="ExodusII"/>
+    <Parameter name="Output Format" type="string" value="BINARY"/>
+    <Parameter name="Output Filename" type="string" value="Bar"/>
+    <Parameter name="Output Frequency" type="int" value="1"/>
+    <Parameter name="Parallel Write" type="bool" value="true"/>
+    <ParameterList name="Output Variables">
+	  <Parameter name="Displacement" type="bool" value="true"/>
+	  <Parameter name="Velocity" type="bool" value="true"/>
+	  <Parameter name="Force_Density" type="bool" value="true"/>
+	  <Parameter name="ID" type="bool" value="true"/>
+	  <Parameter name="Proc_Num" type="bool" value="true"/>
+	  <Parameter name="Dilatation" type="bool" value="true"/>
+	  <Parameter name="Weighted_Volume" type="bool" value="true"/>
+<!--	  <Parameter name="Lambda" type="bool" value="true"/> -->
+    </ParameterList>
+  </ParameterList>
+
+</ParameterList>
