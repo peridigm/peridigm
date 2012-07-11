@@ -5,22 +5,23 @@
   <ParameterList name="Discretization">
 	<Parameter name="Type" type="string" value="Exodus" />
 	<Parameter name="Horizon" type="double" value="0.008"/>
-	<Parameter name="Input Mesh File" type="string" value="disk_impact.g"/>
+	<Parameter name="Input Mesh File" type="string" value="disk_impact-EP.g"/>
   </ParameterList>
 	
   <ParameterList name="Materials">
-	<ParameterList name="My Material">
-	  <Parameter name="Material Model" type="string" value="Elastic"/>
+	<ParameterList name="My Elastic Plastic Material">
+	  <Parameter name="Material Model" type="string" value="Elastic Plastic"/>
 	  <Parameter name="Density" type="double" value="2200.0"/>        <!-- kg/m^3 -->
 	  <Parameter name="Bulk Modulus" type="double" value="14.90e9"/>  <!-- Pa -->
 	  <Parameter name="Shear Modulus" type="double" value="8.94e9"/>  <!-- Pa -->
-	</ParameterList>
+	  <Parameter name="Yield Stress" type="double" value="70.00e6"/>  <!-- Pa -->
+  	</ParameterList>
   </ParameterList>
 	
   <ParameterList name="Blocks">
   	<ParameterList name="My Block">
   	  <Parameter name="Block Names" type="string" value="block_1"/>
-  	  <Parameter name="Material" type="string" value="My Material"/>
+  	  <Parameter name="Material" type="string" value="My Elastic Plastic Material"/>
   	</ParameterList>
   </ParameterList>  
 
@@ -55,7 +56,7 @@
   <ParameterList name="Solver">
   	<Parameter name="Verbose" type="bool" value="false"/>
 	<Parameter name="Initial Time" type="double" value="0.0"/>
-	<Parameter name="Final Time" type="double" value="0.0008"/> 
+	<Parameter name="Final Time" type="double" value="0.001"/> 
 	<ParameterList name="Verlet">
 	  <Parameter name="Fixed dt" type="double" value="9.0659e-08"/>
    	</ParameterList>
@@ -64,7 +65,7 @@
   <ParameterList name="Output">
   	<Parameter name="Output File Type" type="string" value="ExodusII"/>
 	<Parameter name="Output Format" type="string" value="BINARY"/>
-	<Parameter name="Output Filename" type="string" value="disk_impact"/>
+	<Parameter name="Output Filename" type="string" value="disk_impact-EP"/>
 	<Parameter name="Output Frequency" type="int" value="350"/>
 	<Parameter name="Parallel Write" type="bool" value="true"/>
 	<ParameterList name="Output Variables">
