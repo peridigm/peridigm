@@ -205,6 +205,14 @@ namespace PeridigmNS {
       return dataManager->getData(fieldSpec, step);
     }
 
+    //! Method for querying the DataManager for the presence of a field spec.
+    bool hasData(Field_NS::FieldSpec fieldSpec, Field_ENUM::Step step){
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(
+        dataManager.is_null(),
+        "\n**** DataManager must be initialized via Block::initializeDataManager() prior to calling Block::hasData()\n");
+      return dataManager->hasData(fieldSpec, step);
+    }
+
     //! Method for accessing global scalar data
     double& getScalarData(Field_NS::FieldSpec fieldSpec) {
        map<string,double>::iterator it;

@@ -274,10 +274,10 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
       for(blockIt = blocks->begin(); blockIt != blocks->end() ; blockIt++) {
         Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
         Teuchos::RCP<Epetra_Vector> epetra_vector;
-        if (spec.get_temporal() != Field_ENUM::TWO_STEP) // If stateless, get STEP_NONE
-          epetra_vector = dataManager->getData(spec, Field_ENUM::STEP_NONE);
-        else // If stateful, get STEP_NP1
-          epetra_vector = dataManager->getData(spec, Field_ENUM::STEP_NP1);
+        Field_ENUM::Step step = Field_ENUM::STEP_NONE;
+        if(spec.get_temporal() == Field_ENUM::TWO_STEP)
+          step = Field_ENUM::STEP_NP1;
+        epetra_vector = dataManager->getData(spec, step);
         int block_num_nodes = (blockIt->getDataManager()->getOwnedScalarPointMap())->NumMyElements();
         epetra_vector->ExtractView(&block_ptr);
         // switch on dimension of data
@@ -348,24 +348,26 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
         else {
           Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
           Teuchos::RCP<Epetra_Vector> epetra_vector;
-          if (spec.get_temporal() != Field_ENUM::TWO_STEP) // If stateless, get STEP_NONE
-            epetra_vector = dataManager->getData(spec, Field_ENUM::STEP_NONE);
-          else // If stateful, get STEP_NP1
-            epetra_vector = dataManager->getData(spec, Field_ENUM::STEP_NP1);
-          epetra_vector->ExtractView(&block_ptr);
-          // switch on dimension of data
-          if (spec.getLength() == Field_ENUM::SCALAR) {
-            retval = ex_put_elem_var(file_handle, exodusCount, element_output_field_map[name], blockIt->getID(), block_num_nodes, block_ptr);
-            if (retval!= 0) reportExodusError(retval, "write", "ex_put_elem_var");
+          Field_ENUM::Step step = Field_ENUM::STEP_NONE;
+          if(spec.get_temporal() == Field_ENUM::TWO_STEP)
+            step = Field_ENUM::STEP_NP1;
+          if( dataManager->hasData(spec, step) ) {
+            epetra_vector = dataManager->getData(spec, step);
+            epetra_vector->ExtractView(&block_ptr);
+            // switch on dimension of data
+            if (spec.getLength() == Field_ENUM::SCALAR) {
+              retval = ex_put_elem_var(file_handle, exodusCount, element_output_field_map[name], blockIt->getID(), block_num_nodes, block_ptr);
+              if (retval!= 0) reportExodusError(retval, "write", "ex_put_elem_var");
+            }
+            else if (spec.getLength() == Field_ENUM::VECTOR2D) { 
+              // Peridgm doesn't have any 2D maps. 2D output not supported.
+              TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- elementwise 2D vector quantities not currently supported.");
+            }
+            else if (spec.getLength() == Field_ENUM::VECTOR3D) {
+              // no 3D vector element data currently implemented in Peridgm.
+              TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- elementwise 3D vector quantities not currently supported.");
+            } // end switch on data dimension
           }
-          else if (spec.getLength() == Field_ENUM::VECTOR2D) { 
-            // Peridgm doesn't have any 2D maps. 2D output not supported.
-            TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- elementwise 2D vector quantities not currently supported.");
-          }
-          else if (spec.getLength() == Field_ENUM::VECTOR3D) {
-            // no 3D vector element data currently implemented in Peridgm.
-            TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- elementwise 3D vector quantities not currently supported.");
-          } // end switch on data dimension
         }
       } // end loop over blocks
     } // if per-element variable
@@ -652,7 +654,7 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
   if(num_element_vars > 0){
     element_var_names = new char*[num_element_vars];
     for (i=0;i<num_element_vars;i++) element_var_names[i] = new char[MAX_STR_LENGTH+1]; // MAX_STR_LENGTH defined in ExodusII.h
-    for ( std::map<string,int>::iterator it=element_output_field_map.begin() ; it != element_output_field_map.end(); it++ )
+    for (std::map<string,int>::iterator it=element_output_field_map.begin() ; it != element_output_field_map.end(); it++)
       strcpy(element_var_names[(it->second)-1], it->first.c_str() );
     retval = ex_put_var_param(file_handle,"E",num_element_vars);
     if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_var_param");
@@ -662,10 +664,27 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
 
   // Write element truth table
   std::vector<int> truthTableVec(blocks->size() * num_element_vars);
+  int truthTableIndex = 0;
+  for(blockIt = blocks->begin(); blockIt != blocks->end(); blockIt++){
+    for(Teuchos::ParameterList::ConstIterator outputVariableIt = outputVariables->begin(); outputVariableIt != outputVariables->end(); ++outputVariableIt){
+      const std::string& variableName = outputVariableIt->first;
+      std::map<string, Field_NS::FieldSpec>::const_iterator specIt = Field_NS::FieldSpecMap::Map.find(variableName);
+      const Field_NS::FieldSpec& spec = specIt->second;
+      if(spec.getRelation() == Field_ENUM::ELEMENT){
+        Field_ENUM::Step step = Field_ENUM::STEP_NONE;
+        if(spec.get_temporal() == Field_ENUM::TWO_STEP)
+          step = Field_ENUM::STEP_NP1;
+        int truthTableValue = 0;
+        if(blockIt->hasData(spec, step))
+          truthTableValue = 1;
+        // Global ID and processor number are special cases
+        if(spec == Field_NS::GID || spec == Field_NS::PROC_NUM)
+          truthTableValue = 1;
+        truthTableVec[truthTableIndex++] = truthTableValue;
+      }
+    }
+  }
   int *truthTable = &truthTableVec[0];
-  for(i=0, blockIt = blocks->begin(); blockIt != blocks->end(); blockIt++)
-    for (int j=0; j<num_element_vars; j++)
-      truthTable[i++] = 1;
   retval = ex_put_elem_var_tab (file_handle, blocks->size(), num_element_vars, truthTable);
   if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_var_tab");
 
