@@ -99,7 +99,7 @@
 	  <Parameter name="Proc_Num" type="bool" value="true"/>
 	  <Parameter name="Dilatation" type="bool" value="true"/>
 	  <Parameter name="Weighted_Volume" type="bool" value="true"/>
-<!--	  <Parameter name="Lambda" type="bool" value="true"/> -->
+      <Parameter name="Lambda" type="bool" value="true"/>
     </ParameterList>
   </ParameterList>
 
