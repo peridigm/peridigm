@@ -61,7 +61,6 @@ PeridigmNS::Compute_Strain_Energy::~Compute_Strain_Energy(){}
 std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Strain_Energy::getFieldSpecs() const 
 {
   std::vector<Field_NS::FieldSpec> myFieldSpecs;
-  std::cout << "Here: Parent" << std::endl;	
   return myFieldSpecs;
 }
 

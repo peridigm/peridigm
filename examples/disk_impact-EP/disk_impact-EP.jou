@@ -1,9 +1,9 @@
 #
 #  Example of call to loadbal to create parallel input files:
 #
-#  loadbal -No_subdirectory -suffix_mesh g -suffix_spread g -p 2 disk_failure 2
+#  loadbal -No_subdirectory -suffix_mesh g -suffix_spread g -p 2 disk_impact 2
 # 
-#  ./disk_failure.spd
+#  ./disk_impact.spd
 #
 
 
@@ -25,14 +25,8 @@ block all element type hex8
 volume all size 0.002
 mesh volume 3 4
 #
-block 1 volume 3
-block 2 volume 4
+block 1 volume 3 4
 #
 nodeset 1 volume 4
 #
-refine volume 3 4 numsplit 1 bias 1 depth 1 smooth
-#
-#refine volume 3 4 numsplit 1 bias 1 depth 1 smooth
-#
-export genesis 'disk_failure.g' overwrite
-
+export genesis 'disk_impact.g' overwrite
