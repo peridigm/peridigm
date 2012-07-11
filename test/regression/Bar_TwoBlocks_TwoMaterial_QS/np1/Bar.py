@@ -40,7 +40,7 @@ if __name__ == "__main__":
         result = return_code
 
     # compare output files against gold files
-        command = ["../../../../scripts/exodiff", \
+    command = ["../../../../scripts/exodiff", \
                    "-stat", \
                    "-f", \
                    "../"+base_name+".comp", \

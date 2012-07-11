@@ -5,7 +5,7 @@ import os
 import re
 from subprocess import Popen
 
-test_dir = "Bar_TwoBlocks_OneMaterial_QS/np1"
+test_dir = "Bar_TwoBlocks_TwoDifferentMaterial_QS/np3"
 base_name = "Bar"
 
 if __name__ == "__main__":
@@ -27,27 +27,36 @@ if __name__ == "__main__":
     logfile = open(log_file_name, 'w')
 
     # remove old output files, if any
-    files_to_remove = base_name + ".e"
+    files_to_remove = [base_name + ".e", base_name + ".e.3.0", base_name + ".e.3.1", base_name + ".e.3.2"]
     for file in os.listdir(os.getcwd()):
       if file in files_to_remove:
         os.remove(file)
 
     # run Peridigm
-    command = ["../../../../src/Peridigm", "../"+base_name+".xml"]
+    command = ["mpiexec", "-np", "3", "../../../../src/Peridigm", "../"+base_name+".xml"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:
         result = return_code
 
     # compare output files against gold files
-    command = ["../../../../scripts/exodiff", \
-                   "-stat", \
-                   "-f", \
-                   "../"+base_name+".comp", \
-                   base_name+".e", \
-                   "../"+base_name+"_gold.e"]
+    command = ["../../../../scripts/epu", "-p", "3", base_name]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
+    if return_code != 0:
+        result = return_code
+    command = ["../../../../scripts/exodiff", \
+               "-stat", \
+               "-f", \
+               "../"+base_name+".comp", \
+               base_name+".e", \
+               "../"+base_name+"_gold.e"]
+    p = Popen(command, stdout=logfile, stderr=logfile)
+
+    return_code = p.wait()
+
+    print "CODE", return_code
+
     if return_code != 0:
         result = return_code
 
