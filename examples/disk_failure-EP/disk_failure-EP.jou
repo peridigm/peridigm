@@ -34,5 +34,5 @@ block 2 volume 4
 #
 nodeset 1 volume 4
 #
-export genesis 'disk_failure.g' overwrite
+export genesis 'disk_failure-EP.g' overwrite
 
