@@ -5,15 +5,16 @@
   <ParameterList name="Discretization">
 	<Parameter name="Type" type="string" value="Exodus" />
 	<Parameter name="Horizon" type="double" value="0.008"/>
-	<Parameter name="Input Mesh File" type="string" value="disk_failure.g"/>
+	<Parameter name="Input Mesh File" type="string" value="disk_failure-EP.g"/>
   </ParameterList>
 	
   <ParameterList name="Materials">
 	<ParameterList name="Disk">
-	  <Parameter name="Material Model" type="string" value="Elastic"/>
+	  <Parameter name="Material Model" type="string" value="Elastic Plastic"/>
 	  <Parameter name="Density" type="double" value="2200.0"/>        <!-- kg/m^3 -->
 	  <Parameter name="Bulk Modulus" type="double" value="14.90e9"/>  <!-- Pa -->
 	  <Parameter name="Shear Modulus" type="double" value="8.94e9"/>  <!-- Pa -->
+	  <Parameter name="Yield Stress" type="double" value="70.00e6"/>  <!-- Pa -->
 	</ParameterList>
 	<ParameterList name="Ball">
 	  <Parameter name="Material Model" type="string" value="Elastic"/>
@@ -82,7 +83,7 @@
   <ParameterList name="Output">
   	<Parameter name="Output File Type" type="string" value="ExodusII"/>
 	<Parameter name="Output Format" type="string" value="BINARY"/>
-	<Parameter name="Output Filename" type="string" value="disk_failure"/>
+	<Parameter name="Output Filename" type="string" value="disk_failure-EP"/>
 	<Parameter name="Output Frequency" type="int" value="350"/>
 	<Parameter name="Parallel Write" type="bool" value="true"/>
 	<ParameterList name="Output Variables">
