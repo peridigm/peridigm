@@ -40,7 +40,7 @@ void PeridigmNS::Timer::printTimingData(ostream &out){
   for(unsigned int i=0 ; i<names.size() ; ++i)
     if(names[i].size() > nameLength) nameLength = names[i].size();
 
-  int indent = 17;
+  int indent = 15;
   int nProc = teuchosComm->getSize();
 
   if(nProc > 1 && teuchosComm->getRank() == 0){
@@ -52,7 +52,6 @@ void PeridigmNS::Timer::printTimingData(ostream &out){
     out << endl;
     out.precision(2);
     for(unsigned int i=0 ; i<names.size() ; ++i){
-      out.precision(5);
       out << "  ";
       out.width(nameLength + 2); out << left << names[i];
       out.width(indent); out << right << minTimes[i];
@@ -66,7 +65,6 @@ void PeridigmNS::Timer::printTimingData(ostream &out){
     out << "Wallclock Time (seconds):" << endl;
     out.precision(2);
     for(unsigned int i=0 ; i<names.size() ; ++i){
-      out.precision(5);
       out << "  ";
       out.width(nameLength + 2); out << left << names[i];
       out.width(indent); out << right << minTimes[i];
