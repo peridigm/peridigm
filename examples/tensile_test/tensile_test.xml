@@ -13,7 +13,7 @@
 	<Parameter name="Input Mesh File" type="string" value="tensile_test.g"/>
   </ParameterList>
 	
-  <ParameterList name="Material">
+  <ParameterList name="Materials">
 	<ParameterList name="My Material">
 	  <Parameter name="Material Model" type="string" value="Elastic"/>
 	  <Parameter name="Density" type="double" value="7800.0"/>

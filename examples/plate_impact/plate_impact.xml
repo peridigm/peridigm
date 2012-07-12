@@ -5,21 +5,21 @@
   <ParameterList name="Discretization">
 	<Parameter name="Type" type="string" value="Exodus" />
 	<Parameter name="Horizon" type="double" value="0.008"/>
-	<Parameter name="Input Mesh File" type="string" value="disk_failure.g"/>
+	<Parameter name="Input Mesh File" type="string" value="plate_impact.g"/>
   </ParameterList>
 	
   <ParameterList name="Materials">
-	<ParameterList name="Disk">
+	<ParameterList name="Plate">
 	  <Parameter name="Material Model" type="string" value="Elastic"/>
-	  <Parameter name="Density" type="double" value="2200.0"/>        <!-- kg/m^3 -->
-	  <Parameter name="Bulk Modulus" type="double" value="14.90e9"/>  <!-- Pa -->
-	  <Parameter name="Shear Modulus" type="double" value="8.94e9"/>  <!-- Pa -->
+	  <Parameter name="Density" type="double" value="7700.0"/>        <!-- kg/m^3 -->
+	  <Parameter name="Bulk Modulus" type="double" value="160.00"/>  <!-- Pa -->
+	  <Parameter name="Shear Modulus" type="double" value="79.30"/>  <!-- Pa -->
 	</ParameterList>
-	<ParameterList name="Ball">
+	<ParameterList name="Particle">
 	  <Parameter name="Material Model" type="string" value="Elastic"/>
-	  <Parameter name="Density" type="double" value="7700.0"/>         <!-- kg/m^3 -->
-          <Parameter name="Bulk Modulus" type="double" value="160.00e9"/>  <!-- Pa -->
-          <Parameter name="Shear Modulus" type="double" value="79.30e9"/>  <!-- Pa -->
+	  <Parameter name="Density" type="double" value="2200.0"/>         <!-- kg/m^3 -->
+          <Parameter name="Bulk Modulus" type="double" value="14.90e9"/>  <!-- Pa -->
+          <Parameter name="Shear Modulus" type="double" value="8.94e9"/>  <!-- Pa -->
         </ParameterList>
   </ParameterList>
 
@@ -31,14 +31,14 @@
   </ParameterList>
 	
   <ParameterList name="Blocks">
-  	<ParameterList name="Disk">
+  	<ParameterList name="Plate">
   	  <Parameter name="Block Names" type="string" value="block_1"/>
-  	  <Parameter name="Material" type="string" value="Disk"/>
-  	  <Parameter name="Damage Model" type="string" value="My Critical Stretch Damage Model"/>
+  	  <Parameter name="Material" type="string" value="Plate"/>
   	</ParameterList>
-  	<ParameterList name="Ball">
+  	<ParameterList name="Particle">
           <Parameter name="Block Names" type="string" value="block_2"/>
-          <Parameter name="Material" type="string" value="Ball"/>
+          <Parameter name="Material" type="string" value="Particle"/>
+          <Parameter name="Damage Model" type="string" value="My Critical Stretch Damage Model"/>
         </ParameterList>
   </ParameterList>  
 
@@ -54,19 +54,19 @@
   	</ParameterList>
   	<ParameterList name="Interactions">
   	  <ParameterList name="Interaction Disk with Ball">
-  	    <Parameter name="First Block" type="string" value="Disk"/>
-  	    <Parameter name="Second Block" type="string" value="Ball"/>
+  	    <Parameter name="First Block" type="string" value="Plate"/>
+  	    <Parameter name="Second Block" type="string" value="Particle"/>
   	    <Parameter name="Contact Model" type="string" value="My Contact Model"/>
   	  </ParameterList>
   	</ParameterList>
   </ParameterList>
 	
   <ParameterList name="Boundary Conditions">
-  	<ParameterList name="Sphere Initial Velocity">
+  	<ParameterList name="Plate Initial Velocity">
 	  <Parameter name="Type" type="string" value="Initial Velocity"/>
 	  <Parameter name="Node Set" type="string" value="nodelist_1"/>
 	  <Parameter name="Coordinate" type="string" value="z"/>
-	  <Parameter name="Value" type="string" value="-100.0"/>
+	  <Parameter name="Value" type="string" value="100.0"/>
 	</ParameterList>
   </ParameterList>
 
@@ -82,7 +82,7 @@
   <ParameterList name="Output">
   	<Parameter name="Output File Type" type="string" value="ExodusII"/>
 	<Parameter name="Output Format" type="string" value="BINARY"/>
-	<Parameter name="Output Filename" type="string" value="disk_failure"/>
+	<Parameter name="Output Filename" type="string" value="plate_impact"/>
 	<Parameter name="Output Frequency" type="int" value="350"/>
 	<Parameter name="Parallel Write" type="bool" value="true"/>
 	<ParameterList name="Output Variables">
@@ -98,6 +98,10 @@
 	  <Parameter name="Strain_Energy" type="bool" value="true"/>
 	  <Parameter name="Linear_Momentum" type="bool" value="true"/>
 	  <Parameter name="Angular_Momentum" type="bool" value="true"/>
+	  <Parameter name="Global_Kinetic_Energy" type="bool" value="true"/>
+	  <Parameter name="Global_Strain_Energy" type="bool" value="true"/>
+	  <Parameter name="Global_Linear_Momentum" type="bool" value="true"/>
+	  <Parameter name="Global_Angular_Momentum" type="bool" value="true"/>
 	</ParameterList>
   </ParameterList>
 

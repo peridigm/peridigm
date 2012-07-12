@@ -1,0 +1,33 @@
+## /home/choffar/apps/bin/clarox
+## Cubit Version 13.2
+## Cubit Build 48084
+## Revised 2012-05-14 14:33:46 -0600 (Mon, 14 May 2012)
+## Running 05/25/2012 10:48:45 AM
+## Command Options:
+## -warning = On
+## -information = On
+brick x 0.1 y 0.1 z 0.01
+#
+create sphere radius 0.01
+#
+move volume 2 location 0 0 0.02 include_merged
+#
+volume 1 size auto factor 4
+#
+mesh volume 1
+#
+volume 2 scheme sphere graded_interval 5 az_interval 10 bias 1 fraction 0.5
+#
+mesh volume 2
+#
+refine volume 2 numsplit 1 bias 1 depth 1 smooth
+#
+block 1 volume 1
+#
+block 2 volume 2
+#
+nodeset 1 volume 1
+#
+nodeset 2 volume 2
+#
+export genesis 'plate_impact.g' overwrite
