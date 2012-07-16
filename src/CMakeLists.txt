@@ -51,6 +51,7 @@ set(Peridigm_LINK_LIBRARIES
     ${MESH_OUTPUT_LIBS}
     ${REQUIRED_LIBS}
     ${PdMaterialUtilitiesLib}
+    ${Boost_LIBRARIES}
 )
 
 add_executable(Peridigm ${CORE_DIR}/Peridigm_Main.cpp)
