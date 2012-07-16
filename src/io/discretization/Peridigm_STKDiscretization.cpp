@@ -74,13 +74,17 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   numBonds(0),
   myPID(epetra_comm->MyPID()),
   numPID(epetra_comm->NumProc()),
+  bondFilterCommand("None"),
   comm(epetra_comm)
 {
   TEUCHOS_TEST_FOR_EXCEPT_MSG(params->get<string>("Type") != "Exodus", "Invalid Type in STKDiscretization");
 
   horizon = params->get<double>("Horizon");
   searchHorizon = params->get<double>("Search Horizon");
+  if(params->isParameter("Omit Bonds Between Blocks"))
+    bondFilterCommand = params->get<string>("Omit Bonds Between Blocks");
   string meshFileName = params->get<string>("Input Mesh File");
+
   QUICKGRID::Data decomp = getDecomp(meshFileName, searchHorizon);
 
   // \todo Refactor; the createMaps() call is currently inside getDecomp() due to order-of-operations issues with tracking element blocks.
@@ -97,10 +101,10 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   int* oneDimensionalMapGlobalElements = oneDimensionalMap->MyGlobalElements();
   int* myGlobalElements = new int[numMyElementsUpperBound];
   int* elementSizeList = new int[numMyElementsUpperBound];
-  int* neighborhood = decomp.neighborhood.get();
+  int* const neighborhood = neighborhoodData->NeighborhoodList();
   int neighborhoodIndex = 0;
   int numPointsWithZeroNeighbors = 0;
-  for(size_t i=0 ; i<decomp.numPoints ; ++i){
+  for(int i=0 ; i<neighborhoodData->NumOwnedPoints() ; ++i){
     int numNeighbors = neighborhood[neighborhoodIndex];
     if(numNeighbors > 0){
       numMyElements++;
@@ -493,6 +497,80 @@ PeridigmNS::STKDiscretization::createNeighborhoodData(const QUICKGRID::Data& dec
    memcpy(neighborhoodData->NeighborhoodList(),
  		 AbstractDiscretization::getLocalNeighborList(decomp, *oneDimensionalOverlapMap).get(),
  		 decomp.sizeNeighborhoodList*sizeof(int));
+   neighborhoodData = filterBonds(neighborhoodData);
+}
+
+Teuchos::RCP<PeridigmNS::NeighborhoodData>
+PeridigmNS::STKDiscretization::filterBonds(Teuchos::RCP<PeridigmNS::NeighborhoodData> unfilteredNeighborhoodData)
+{
+  // Set up a block bonding matrix, which defines whether or not bonds should be formed across blocks
+  int numBlocks = getNumBlocks();
+  std::vector< std::vector<bool> > blockBondingMatrix(numBlocks);
+  for(int i=0 ; i<numBlocks ; ++i){
+    blockBondingMatrix[i].resize(numBlocks, true);
+  }
+
+  if(bondFilterCommand == "None"){
+    // All blocks are bonded, the blockBondingMatrix is unchanged
+    return unfilteredNeighborhoodData;
+  }
+  else if(bondFilterCommand == "All"){
+    // No blocks are bonded, the blockBondingMatrix is the identity matrix
+    for(int i=0 ; i<numBlocks ; ++i){
+      for(int j=0 ; j<numBlocks ; ++j){
+        if(i != j)
+          blockBondingMatrix[i][j] = false;
+      }
+    }
+  }
+  else{
+    string msg = "**** Error, unrecognized value for \"Omit Bonds Between Blocks\":  ";
+    msg += bondFilterCommand + "\n";
+    msg += "**** Valid options are:  All, None\n";
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
+  }
+
+  // Create an overlap vector containing the block IDs of each cell
+  Teuchos::RCP<const Epetra_BlockMap> ownedMap = getGlobalOwnedMap(1);
+  Teuchos::RCP<const Epetra_BlockMap> overlapMap = getGlobalOverlapMap(1);
+  Epetra_Vector blockIDs(*overlapMap);
+  Epetra_Import importer(*overlapMap, *ownedMap);
+  Teuchos::RCP<Epetra_Vector> ownedBlockIDs = getBlockID();
+  blockIDs.Import(*ownedBlockIDs, importer, Insert);
+
+  // Apply the block bonding matrix and create a new NeighborhoodData
+  Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
+  neighborhoodData->SetNumOwned(unfilteredNeighborhoodData->NumOwnedPoints());
+  memcpy(neighborhoodData->OwnedIDs(), unfilteredNeighborhoodData->OwnedIDs(), neighborhoodData->NumOwnedPoints()*sizeof(int));
+  vector<int> neighborhoodListVec;
+  neighborhoodListVec.reserve(unfilteredNeighborhoodData->NeighborhoodListSize());
+  int* const neighborhoodPtr = neighborhoodData->NeighborhoodPtr();
+
+  int numOwnedPoints = neighborhoodData->NumOwnedPoints();
+  int* const unfilteredNeighborhoodList = unfilteredNeighborhoodData->NeighborhoodList();
+  int unfilteredNeighborhoodListIndex(0);
+  for(int iID=0 ; iID<numOwnedPoints ; ++iID){
+    int blockID = blockIDs[iID];
+	int numUnfilteredNeighbors = unfilteredNeighborhoodList[unfilteredNeighborhoodListIndex++];
+    unsigned int numNeighborsIndex = neighborhoodListVec.size();
+    neighborhoodListVec.push_back(-1); // placeholder for number of neighbors
+    int numNeighbors = 0;
+	for(int iNID=0 ; iNID<numUnfilteredNeighbors ; ++iNID){
+      int unfilteredNeighborID = unfilteredNeighborhoodList[unfilteredNeighborhoodListIndex++];
+      int unfilteredNeighborBlockID = blockIDs[unfilteredNeighborID];
+      if(blockBondingMatrix[blockID-1][unfilteredNeighborBlockID-1] == true){
+        neighborhoodListVec.push_back(unfilteredNeighborID);
+        numNeighbors += 1;
+      }
+    }
+    neighborhoodListVec[numNeighborsIndex] = numNeighbors;
+    neighborhoodPtr[iID] = numNeighborsIndex;
+  }
+
+  neighborhoodData->SetNeighborhoodListSize(neighborhoodListVec.size());
+  memcpy(neighborhoodData->NeighborhoodList(), &neighborhoodListVec[0], neighborhoodListVec.size()*sizeof(int));
+
+  return neighborhoodData;
 }
 
 Teuchos::RCP<const Epetra_BlockMap>

@@ -145,6 +145,9 @@ namespace PeridigmNS {
     //! Create NeighborhoodData
     void createNeighborhoodData(const QUICKGRID::Data& decomp);
 
+    //! Filter bonds from neighborhood list
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> filterBonds(Teuchos::RCP<PeridigmNS::NeighborhoodData> unfilteredNeighborhoodData);
+
     //! Compute the scalar triple product
     double scalarTripleProduct(std::vector<double>& a,
                                std::vector<double>& b,
@@ -204,6 +207,9 @@ namespace PeridigmNS {
 
     //! Number of Processors
     unsigned int numPID;
+
+    //! Discretization parameter controling the formation of bonds
+    string bondFilterCommand;
 
     //! Mesh meta data
     Teuchos::RCP<stk::mesh::fem::FEMMetaData> metaData;
