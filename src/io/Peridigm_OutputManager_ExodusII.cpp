@@ -134,6 +134,9 @@ PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Te
   // Rebalance count 
   rebalanceCount = 0;
 
+  // Number of times new Exodus database written
+  newDatabaseCount = 0;
+
   // Default to storing and writing doubles
   CPU_word_size = IO_word_size = sizeof(double);
   
@@ -416,8 +419,10 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
     std::ostringstream tmpstr;
     tmpstr << numProc;
     int len = tmpstr.str().length();
-    if (peridigm->analysisHasRebalance || peridigm->analysisHasContact)
-      filename << "-s" << rebalanceCount;
+    if (peridigm->analysisHasRebalance || peridigm->analysisHasContact) {
+      newDatabaseCount = newDatabaseCount + 1;
+      filename << "-s" << newDatabaseCount;
+    }
     filename << ".e";
     filename << ".";
     filename << std::setfill('0') << std::setw(len) << numProc;

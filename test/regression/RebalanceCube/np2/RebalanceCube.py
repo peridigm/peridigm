@@ -41,7 +41,7 @@ if __name__ == "__main__":
         result = return_code
 
     # First merge all distributed exodus databases for each time stamp
-    files_to_join = ["RebalanceCube-s0", "RebalanceCube-s1", "RebalanceCube-s2", "RebalanceCube-s3"]
+    files_to_join = ["RebalanceCube-s1", "RebalanceCube-s2", "RebalanceCube-s3", "RebalanceCube-s4"]
     for file in files_to_join:
       command = ["../../../../scripts/epu", "-p", "2", file]
       p = Popen(command, stdout=logfile, stderr=logfile)
@@ -51,7 +51,7 @@ if __name__ == "__main__":
 
     # Now combine time series from all databaases
     command = ["../../../../scripts/conjoin", "-output", base_name+".e",
-               "RebalanceCube-s0.e", "RebalanceCube-s1.e", "RebalanceCube-s2.e", "RebalanceCube-s3.e"]
+               "RebalanceCube-s1.e", "RebalanceCube-s2.e", "RebalanceCube-s3.e", "RebalanceCube-s4.e"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:

@@ -107,6 +107,9 @@ namespace PeridigmNS {
     //! Index of number of times rebalance has occurred. A new exodus database must be written after every rebalance.
     int rebalanceCount;
 
+    //! Index of number of times new exodus database has been created. (Is usually different than rebalanceCount)
+    int newDatabaseCount;
+
     //! Flag indicating if this is the first call to initializeExodusDatabase
     bool initializeExodusDatabaseCalled;
 
