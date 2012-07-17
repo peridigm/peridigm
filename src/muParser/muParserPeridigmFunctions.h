@@ -9,7 +9,8 @@
 namespace mu {
   static value_type Rnd(value_type magnitude) {
     value_type tmp;
-    value_type maxval = std::numeric_limits<value_type>::max();
+//    value_type maxval = std::numeric_limits<value_type>::max();
+    value_type maxval = RAND_MAX;
     tmp = (2.0*( (value_type)PeridigmNS::rand_num() / (value_type)maxval )) - 1.0;
     return ( magnitude*tmp );
   }
