@@ -806,6 +806,18 @@ void PeridigmNS::Peridigm::executeExplicit() {
   *out << "\n\n";
 }
 
+bool PeridigmNS::Peridigm::computeF(const Epetra_Vector& x, Epetra_Vector& FVec, FillType fillType) {
+  return true;
+}
+
+bool PeridigmNS::Peridigm::computeJacobian(const Epetra_Vector& x, Epetra_Operator& Jac) {
+  return true;
+}
+
+bool PeridigmNS::Peridigm::computePreconditioner(const Epetra_Vector& x, Epetra_Operator& Prec, Teuchos::ParameterList* precParams) {
+  return true;
+}
+
 void PeridigmNS::Peridigm::executeQuasiStatic() {
 
   // Allocate memory for non-zeros in global tangent and lock in the structure
