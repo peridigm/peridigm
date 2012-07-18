@@ -67,6 +67,9 @@
 #include <Ifpack_IC.h>
 #include <Teuchos_VerboseObject.hpp>
 
+#include "NOX.H"
+#include "NOX_Epetra.H"
+
 #include "Peridigm.hpp"
 #include "Peridigm_DiscretizationFactory.hpp"
 #include "Peridigm_PdQuickGridDiscretization.hpp"
@@ -86,6 +89,7 @@
 #include "pdneigh/NeighborhoodList.h"
 #include "muParser/muParser.h"
 #include "muParser/muParserPeridigmFunctions.h"
+
 
 using namespace std;
 
@@ -559,6 +563,8 @@ void PeridigmNS::Peridigm::execute() {
   // allowable implicit time integration schemes:  Implicit, QuasiStatic
   else if(solverParams->isSublist("QuasiStatic"))    
     executeQuasiStatic();
+  else if(solverParams->isSublist("NOXQuasiStatic"))    
+    executeNOXQuasiStatic();
   else if(solverParams->isSublist("Implicit"))    
     executeImplicit();
 }
@@ -816,6 +822,143 @@ bool PeridigmNS::Peridigm::computeJacobian(const Epetra_Vector& x, Epetra_Operat
 
 bool PeridigmNS::Peridigm::computePreconditioner(const Epetra_Vector& x, Epetra_Operator& Prec, Teuchos::ParameterList* precParams) {
   return true;
+}
+
+void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
+
+  // Allocate memory for non-zeros in global tangent and lock in the structure
+  if(peridigmComm->MyPID() == 0){
+    cout << "Allocating global tangent matrix...";
+    cout.flush();
+  }
+  PeridigmNS::Timer::self().startTimer("Allocate Global Tangent");
+  allocateJacobian();
+  PeridigmNS::Timer::self().stopTimer("Allocate Global Tangent");
+  if(peridigmComm->MyPID() == 0){
+    cout << "\b\b\b:  " << endl;
+    cout << "  number of rows = " << tangent->NumGlobalRows() << endl;
+    cout << "  number of nonzeros = " << tangent->NumGlobalNonzeros() << "\n" << endl;
+  }
+
+  // Create vectors that are specific to NOX quasi-statics.
+  Teuchos::RCP<Epetra_Vector> soln = Teuchos::rcp(new Epetra_Vector(tangent->Map()));
+  Teuchos::RCP<NOX::Epetra::Vector> noxSoln = Teuchos::rcp(new NOX::Epetra::Vector(soln,
+                                                         NOX::Epetra::Vector::CreateView));
+
+  // Set the initial guess
+  soln->PutScalar(0.0);
+
+  Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
+  workset->timeStep = timeStep;
+
+  Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
+  Teuchos::RCP<Teuchos::ParameterList> nlParams = sublist(solverParams, "NOXQuasiStatic", true);
+  double timeInitial = solverParams->get("Initial Time", 0.0);
+  double timeFinal = solverParams->get("Final Time", 1.0);
+  timeCurrent = timeInitial;
+  int numLoadSteps = nlParams->get("Number of Load Steps", 10);
+
+  // Pointer index into sub-vectors for use with BLAS
+  double *xptr, *uptr, *yptr, *vptr, *aptr;
+  x->ExtractView( &xptr );
+  u->ExtractView( &uptr );
+  y->ExtractView( &yptr );
+  v->ExtractView( &vptr );
+  a->ExtractView( &aptr );
+
+  // Initialize velocity to zero
+  v->PutScalar(0.0);
+
+  // Write initial configuration to disk
+  PeridigmNS::Timer::self().startTimer("Output");
+  this->synchDataManagers();
+  outputManager->write(blocks, timeCurrent);
+  PeridigmNS::Timer::self().stopTimer("Output");
+
+  double timeCurrent = timeInitial;
+  double timePrevious = timeInitial;
+  double nominalTimeIncrement = (timeFinal-timeInitial)/double(numLoadSteps);
+
+  int step = 0;
+
+  while(step < numLoadSteps){
+
+    double timeIncrement = nominalTimeIncrement;
+    timeCurrent = timePrevious + timeIncrement;
+    *timeStep = timeIncrement;
+
+    // Update nodal positions for nodes with kinematic B.C.
+    deltaU->PutScalar(0.0);
+    boundaryAndInitialConditionManager->applyKinematicBC_SetDisplacementIncrement(timeCurrent, timePrevious, x, deltaU);
+
+    // Set the current position
+    // \todo We probably want to rework this so that the material models get valid x, u, and y values.
+    // Currently the u values are from the previous load step (and if we update u here we'll be unable
+    // to properly undo a time step, which we'll need to adaptive time stepping).
+    for(int i=0 ; i<y->MyLength() ; ++i)
+      (*y)[i] = (*x)[i] + (*u)[i] + (*deltaU)[i];
+
+    // compute the residual
+
+      
+
+    // Compute the tangent
+    //if( !dampedNewton || (solverIteration-numPureNewtonSteps-1)%dampedNewtonNumStepsBetweenTangentUpdates==0 ){
+      //tangent->PutScalar(0.0);
+      //PeridigmNS::Timer::self().startTimer("Evaluate Jacobian");
+      //modelEvaluator->evalJacobian(workset);
+      //int err = tangent->GlobalAssemble();
+      //TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::executeQuasiStatic(), GlobalAssemble() returned nonzero error code.\n");
+      //PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
+      //boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
+      //boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndPutOnesOnDiagonal(tangent);
+      //tangent->Scale(-1.0);
+      //if(dampedNewton)
+        //quasiStaticsDampTangent(dampedNewtonDiagonalScaleFactor, dampedNewtonDiagonalShiftFactor);
+      //if(usePreconditioner)
+        //quasiStaticsSetPreconditioner(linearProblem);
+    //}
+	
+      
+      //if(isConverged == Belos::Converged){
+
+        //// Zero out the entries corresponding to the kinematic boundary conditions
+        //// The solver should have returned zeros, but there may be small errors.
+        //boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(lhs);
+
+
+        //// Apply increment to nodal positions
+        //for(int i=0 ; i<y->MyLength() ; ++i)
+          //(*deltaU)[i] += alpha*(*lhs)[i];
+        //for(int i=0 ; i<y->MyLength() ; ++i)
+          //(*y)[i] = (*x)[i] + (*u)[i] + (*deltaU)[i];
+      
+
+        //solverIteration++;
+      //}
+
+
+    // Store the velocity
+    for(int i=0 ; i<v->MyLength() ; ++i)
+        (*v)[i] = (*deltaU)[i]/nominalTimeIncrement;
+
+    // Add the converged displacement increment to the displacement
+    for(int i=0 ; i<u->MyLength() ; ++i)
+      (*u)[i] += (*deltaU)[i];
+
+      // Write output for completed load step
+    PeridigmNS::Timer::self().startTimer("Output");
+    this->synchDataManagers();
+    outputManager->write(blocks, timeCurrent);
+    PeridigmNS::Timer::self().stopTimer("Output");
+
+    // swap state N and state NP1
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+        blockIt->updateState();
+  }
+
+    if(peridigmComm->MyPID() == 0)
+      cout << endl;
 }
 
 void PeridigmNS::Peridigm::executeQuasiStatic() {

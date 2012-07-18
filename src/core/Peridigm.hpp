@@ -140,6 +140,9 @@ namespace PeridigmNS {
     //! Main routine to drive problem solution for quasistatics
     void executeQuasiStatic();
 
+    //! Main routine to drive problem solution for quasistatics using NOX
+    void executeNOXQuasiStatic(); 
+
     //! Set the preconditioner for the global linear system
     void quasiStaticsSetPreconditioner(Belos::LinearProblem<double,Epetra_MultiVector,Epetra_Operator>& linearProblem);
 
