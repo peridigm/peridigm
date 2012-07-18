@@ -61,6 +61,9 @@
 #include <BelosBlockCGSolMgr.hpp>
 #include <BelosBlockGmresSolMgr.hpp>
 #include <BelosEpetraAdapter.hpp>
+#include <NOX_Epetra_Interface_Required.H>
+#include <NOX_Epetra_Interface_Jacobian.H>
+#include <NOX_Epetra_Interface_Preconditioner.H>
 
 #include "Peridigm_Block.hpp"
 #include "Peridigm_AbstractDiscretization.hpp"
@@ -80,7 +83,7 @@
 
 namespace PeridigmNS {
 
-  class Peridigm {
+  class Peridigm : public NOX::Epetra::Interface::Required, public NOX::Epetra::Interface::Jacobian, public NOX::Epetra::Interface::Preconditioner {
 
   public:
 
@@ -121,6 +124,15 @@ namespace PeridigmNS {
 
     //! Main routine to drive time integration
     void execute();
+
+    //! Compute the residual vector (pure virtual method in NOX::Epetra::Interface::Required).
+    bool computeF(const Epetra_Vector& x, Epetra_Vector& FVec, FillType fillType = Residual);
+
+    //! Compute the Jacobian (pure virtual method in NOX::Epetra::Interface::Jacobian).
+    bool computeJacobian(const Epetra_Vector& x, Epetra_Operator& Jac);
+
+    //! Compute the preconditioner (pure virtual method in NOX::Epetra::Interface::Preconditioner).
+    bool computePreconditioner(const Epetra_Vector& x, Epetra_Operator& Prec, Teuchos::ParameterList* precParams = 0);
 
     //! Main routine to drive problem solution with explicit time integration
     void executeExplicit();
