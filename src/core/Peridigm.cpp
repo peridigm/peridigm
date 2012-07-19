@@ -851,13 +851,6 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   workset->timeStep = timeStep;
 
-  Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
-  Teuchos::RCP<Teuchos::ParameterList> nlParams = sublist(solverParams, "NOXQuasiStatic", true);
-  double timeInitial = solverParams->get("Initial Time", 0.0);
-  double timeFinal = solverParams->get("Final Time", 1.0);
-  timeCurrent = timeInitial;
-  int numLoadSteps = nlParams->get("Number of Load Steps", 10);
-
   // Pointer index into sub-vectors for use with BLAS
   double *xptr, *uptr, *yptr, *vptr, *aptr;
   x->ExtractView( &xptr );
@@ -868,7 +861,73 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
 
   // Initialize velocity to zero
   v->PutScalar(0.0);
+ 
+  // Set up parameters lists
+  Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
+  Teuchos::RCP<Teuchos::ParameterList> implicitParams= sublist(solverParams, "NOXQuasiStatic", true);
+  double timeInitial = solverParams->get("Initial Time", 0.0);
+  double timeFinal = solverParams->get("Final Time", 1.0);
+  timeCurrent = timeInitial;
+  int numLoadSteps = implicitParams->get("Number of Load Steps", 10);
 
+  // Create a parameter list for the nonlinear solver
+  Teuchos::RCP<Teuchos::ParameterList> nlParamsPtr = Teuchos::rcp(new Teuchos::ParameterList);
+  Teuchos::ParameterList& nlParams = *(nlParamsPtr.get());
+  
+  // Set the nonlinear solver method
+  nlParams.set("Nonlinear Solver", "Line Search Based");
+  
+  // Set the printing parameters in the "Printing"
+  Teuchos::ParameterList& printParams = nlParams.sublist("Printing");
+  printParams.set("Output Precision",3);
+  printParams.set("Output Processor",0);
+  bool verbose = false;
+  if (verbose)
+   printParams.set("Output Information",
+       NOX::Utils::OuterIteration +
+       NOX::Utils::OuterIterationStatusTest +
+       NOX::Utils::InnerIteration +
+       NOX::Utils::LinearSolverDetails +
+       NOX::Utils::Parameters +
+       NOX::Utils::Details +
+       NOX::Utils::Warning +
+       NOX::Utils::Debug +
+       NOX::Utils::TestDetails +
+       NOX::Utils::Error);
+  else
+    printParams.set("Output Information", NOX::Utils::Error +
+       NOX::Utils::TestDetails);
+  
+  // Create a print class for controlling output below 
+  NOX::Utils printing(printParams);
+
+  // Sublist for line search
+  Teuchos::ParameterList& searchParams = nlParams.sublist("Line Search");
+  searchParams.set("Method", "NonlinearCG"); // "Full Step" can also work well sometimes
+  
+  // Sublist for direction
+  Teuchos::ParameterList& dirParams = nlParams.sublist("Direction");
+  dirParams.set("Method", "NonlinearCG");
+  Teuchos::ParameterList& nonlinearcg = dirParams.sublist("Nonlinear CG");
+  nonlinearcg.set("Restart Frequency", 100);
+  nonlinearcg.set("Precondition", "On");
+  nonlinearcg.set("Orthogonalize", "Fletcher-Reeves"); // or "Polak-Ribiere"
+
+  
+  // Sublist for linear solver for the Newton method
+  Teuchos::ParameterList& lsParams = nonlinearcg.sublist("Linear Solver");
+  lsParams.set("Aztec Solver", "GMRES");
+  //lsParams.set("Preconditioner Operator", "Use Jacobian");
+  lsParams.set("Preconditioner", "AztecOO");
+  lsParams.set("AztecOO Preconditioner Iterations", 15);
+  lsParams.set("Preconditioner Reuse Policy", "Recompute");
+    
+  // Let's force all status tests to do a full check
+  nlParams.sublist("Solver Options").set("Status Test Check Type", "Complete");
+    
+  // 1. User supplied (Epetra_RowMatrix)
+  // Teuchos::RCP<Epetra_RowMatrix> Analytic = interface->getJacobian();
+  
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
   this->synchDataManagers();
