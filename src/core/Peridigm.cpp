@@ -817,7 +817,19 @@ bool PeridigmNS::Peridigm::computeF(const Epetra_Vector& x, Epetra_Vector& FVec,
 }
 
 bool PeridigmNS::Peridigm::computeJacobian(const Epetra_Vector& x, Epetra_Operator& Jac) {
+
+  //Compute the tangent
+  tangent->PutScalar(0.0);
+  PeridigmNS::Timer::self().startTimer("Evaluate Jacobian");
+  modelEvaluator->evalJacobian(workset);
+  int err = tangent->GlobalAssemble();
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::executeNOXQuasiStatic(), GlobalAssemble() returned nonzero error code.\n");
+  PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
+  //boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
+  boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndPutOnesOnDiagonal(tangent);
+  tangent->Scale(-1.0);
   return true;
+  
 }
 
 bool PeridigmNS::Peridigm::computePreconditioner(const Epetra_Vector& x, Epetra_Operator& Prec, Teuchos::ParameterList* precParams) {
