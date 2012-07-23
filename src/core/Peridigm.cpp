@@ -836,7 +836,98 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
         const Epetra_Vector* soln,
         Epetra_Vector* tmp_rhs,
         Epetra_RowMatrix* tmp_matrix)
-        { return true; }
+{
+  //Determine what to fill (F or Jacobian)
+  bool fillF = false;
+  bool fillMatrix = false;
+  if (tmp_rhs != 0) {
+    fillF = true;
+  }
+  else {
+    fillMatrix = true;
+  }
+
+  
+  // "flag" can be used to determine how accurate your fill of F should be 
+  // depending on why we are calling evaluate (Could be using computeF to 
+  // populate a Jacobian or Preconditioner).
+  if (flag == NOX::Epetra::Interface::Required::Residual) {
+  // Do nothing for now
+  }
+  else if (flag == NOX::Epetra::Interface::Required::Jac) {
+  // Do nothing for now
+  }
+  else if (flag == NOX::Epetra::Interface::Required::Prec) {
+  // Do nothing for now
+  }
+  else if (flag == NOX::Epetra::Interface::Required::User) {
+  // Do nothing for now
+  }
+
+  // copy the solution vector passed in by NOX to u 
+  for(int i=0 ; i < u->MyLength() ; ++i)
+    (*u)[i] = (*soln)[i];
+
+  // Copy data from mothership vectors to overlap vectors in data manager
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    blockIt->importData(*u, Field_NS::DISPL3D,    Field_ENUM::STEP_NP1, Insert);
+    blockIt->importData(*y, Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1, Insert);
+    blockIt->importData(*v, Field_NS::VELOC3D,    Field_ENUM::STEP_NP1, Insert);
+  }
+
+  if(fillF){
+    // Update forces based on new positions
+    modelEvaluator->evalModel(workset);
+
+    // Copy force from the data manager to the mothership vector
+    force->PutScalar(0.0);
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+      scratch->PutScalar(0.0);
+      blockIt->exportData(*scratch, Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
+      force->Update(1.0, *scratch, 1.0);
+    }
+    scratch->PutScalar(0.0);
+      
+    // Create residual vector
+    Teuchos::RCP<Epetra_Vector> residual = Teuchos::rcp(new Epetra_Vector(tangent->Map()));
+
+    // copy the internal force to the residual vector
+    // note that due to restrictions on CrsMatrix, these vectors have different (but equivalent) maps
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(residual->MyLength() != force->MyLength(), "**** PeridigmNS::Peridigm::evaluateNOX() incompatible vector lengths!\n");
+    for(int i=0 ; i < force->MyLength() ; ++i)
+      (*residual)[i] = (*force)[i];
+
+    // convert force density to force
+    for(int i=0 ; i < residual->MyLength() ; ++i)
+      (*residual)[i] *= (*volume)[i/3];
+
+    // zero out the rows corresponding to kinematic boundary conditions
+    boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
+      
+    // copy back to tmp_rhs 
+    for(int i=0 ; i < tmp_rhs->MyLength() ; ++i)
+      (*tmp_rhs)[i] = (*residual)[i];
+  }
+
+  // Compute the tangent if requested
+  if( fillMatrix ){
+    tangent->PutScalar(0.0);
+      
+    modelEvaluator->evalJacobian(workset);
+     
+    int err = tangent->GlobalAssemble();
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::evaluateNOX(), GlobalAssemble() returned nonzero error code.\n");
+
+    boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndPutOnesOnDiagonal(tangent);
+    tangent->Scale(-1.0);
+  }
+
+  return true;
+}
+
+Teuchos::RCP<Epetra_CrsMatrix> PeridigmNS::Peridigm::getJacobian() {
+    return tangent;
+}
 
 void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
 
