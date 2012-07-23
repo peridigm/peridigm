@@ -1028,32 +1028,9 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
   lsParams.set("AztecOO Preconditioner Iterations", 15);
   lsParams.set("Preconditioner Reuse Policy", "Recompute");
     
-  // Let's force all status tests to do a full check
+  // Force all status tests to do a full check
   nlParams.sublist("Solver Options").set("Status Test Check Type", "Complete");
     
-  // Construct the NOX linear system
-  Teuchos::RCP<NOX::Epetra::Interface::Required> noxInterfaceRequired = Teuchos::RCP<NOX::Epetra::Interface::Required>(this, false);
-  Teuchos::RCP<NOX::Epetra::Interface::Jacobian> noxInterfaceJacobian = Teuchos::RCP<NOX::Epetra::Interface::Jacobian>(this, false);
-  Teuchos::RCP<Epetra_RowMatrix> noxJacobian = getJacobian();
-  const NOX::Epetra::Vector& noxCloneVector = *soln;
-  Teuchos::RCP<NOX::Epetra::LinearSystemAztecOO> linSys = 
-      Teuchos::rcp(new NOX::Epetra::LinearSystemAztecOO(printParams, lsParams, 
-                               noxInterfaceRequired, 
-                               noxInterfaceJacobian, 
-                               noxJacobian, noxCloneVector));
-
-  //Create the Group
-  NOX::Epetra::Vector initialGuess(soln, NOX::Epetra::Vector::CreateView);
-  Teuchos::RCP<NOX::Epetra::Group> grpPtr = Teuchos::rcp(new NOX::Epetra::Group(printParams, noxInterfaceRequired, initialGuess, linSys));
-    
-  // Create the convergence tests
-  Teuchos::RCP<NOX::StatusTest::NormF>absresid = Teuchos::rcp(new NOX::StatusTest::NormF(1.0e-8));
-  Teuchos::RCP<NOX::StatusTest::MaxIters>maxiters = Teuchos::rcp(new NOX::StatusTest::MaxIters(20));
-  Teuchos::RCP<NOX::StatusTest::FiniteValue> fv = Teuchos::rcp(new NOX::StatusTest::FiniteValue);
-  Teuchos::RCP<NOX::StatusTest::Combo> combo = Teuchos::rcp(new NOX::StatusTest::Combo(NOX::StatusTest::Combo::OR));
-  combo->addStatusTest(fv);
-  combo->addStatusTest(absresid);
-  combo->addStatusTest(maxiters);
  
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
@@ -1068,14 +1045,43 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
   int step = 0;
 
   while(step < numLoadSteps){
-
+ 
+    timePrevious = timeCurrent;
     double timeIncrement = nominalTimeIncrement;
     timeCurrent = timePrevious + timeIncrement;
     *timeStep = timeIncrement;
+    
+    // Print the load step to screen
+    if(peridigmComm->MyPID() == 0)
+      cout << "Load step " << step << ", current time = " << timePrevious << ", time increment = " << timeIncrement << endl;
 
     // Update nodal positions for nodes with kinematic B.C.
     soln->PutScalar(0.0);
     boundaryAndInitialConditionManager->applyKinematicBC_SetDisplacementIncrement(timeCurrent, timePrevious, x, soln);
+
+    // Construct the NOX linear system
+    Teuchos::RCP<NOX::Epetra::Interface::Required> noxInterfaceRequired = Teuchos::RCP<NOX::Epetra::Interface::Required>(this, false);
+    Teuchos::RCP<NOX::Epetra::Interface::Jacobian> noxInterfaceJacobian = Teuchos::RCP<NOX::Epetra::Interface::Jacobian>(this, false);
+    Teuchos::RCP<Epetra_RowMatrix> noxJacobian = getJacobian();
+    const NOX::Epetra::Vector& noxCloneVector = *soln;
+    Teuchos::RCP<NOX::Epetra::LinearSystemAztecOO> linSys = 
+    Teuchos::rcp(new NOX::Epetra::LinearSystemAztecOO(printParams, lsParams, 
+                               noxInterfaceRequired, 
+                               noxInterfaceJacobian, 
+                               noxJacobian, noxCloneVector));
+
+    //Create the Group
+    NOX::Epetra::Vector initialGuess(soln, NOX::Epetra::Vector::CreateView);
+    Teuchos::RCP<NOX::Epetra::Group> grpPtr = Teuchos::rcp(new NOX::Epetra::Group(printParams, noxInterfaceRequired, initialGuess, linSys));
+    
+    // Create the convergence tests
+    Teuchos::RCP<NOX::StatusTest::NormF>absresid = Teuchos::rcp(new NOX::StatusTest::NormF(1.0e-8));
+    Teuchos::RCP<NOX::StatusTest::MaxIters>maxiters = Teuchos::rcp(new NOX::StatusTest::MaxIters(20));
+    Teuchos::RCP<NOX::StatusTest::FiniteValue> fv = Teuchos::rcp(new NOX::StatusTest::FiniteValue);
+    Teuchos::RCP<NOX::StatusTest::Combo> combo = Teuchos::rcp(new NOX::StatusTest::Combo(NOX::StatusTest::Combo::OR));
+    combo->addStatusTest(fv);
+    combo->addStatusTest(absresid);
+    combo->addStatusTest(maxiters);
 
     // Create the solver and solve
     Teuchos::RCP<NOX::Solver::Generic> solver = NOX::Solver::buildSolver(grpPtr, combo, nlParamsPtr);
@@ -1085,6 +1091,13 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
     const NOX::Epetra::Group& finalGroup = dynamic_cast<const NOX::Epetra::Group&>(solver->getSolutionGroup());
     const Epetra_Vector& finalSolution = (dynamic_cast<const NOX::Epetra::Vector&>(finalGroup.getX())).getEpetraVector();
                      
+    // Output the parameter list
+    //if (printing.isPrintType(NOX::Utils::Parameters)) {
+    printing.out() << endl << "Final NOX Parameters" << endl << "****************" << endl;
+    solver->getList().print(printing.out());
+    printing.out() << endl;
+    //}
+    
 
     // Store the velocity
     for(int i=0 ; i<v->MyLength() ; ++i)
@@ -1103,10 +1116,13 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
     // swap state N and state NP1
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
         blockIt->updateState();
+
+    step++;
   }
 
     if(peridigmComm->MyPID() == 0)
       cout << endl;
+
 }
 
 void PeridigmNS::Peridigm::executeQuasiStatic() {
