@@ -865,8 +865,10 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
   }
 
   // copy the solution vector passed in by NOX to u 
-  for(int i=0 ; i < u->MyLength() ; ++i)
+  for(int i=0 ; i < u->MyLength() ; ++i){
     (*u)[i] = (*soln)[i];
+    (*y)[i] = (*x)[i] + (*u)[i];
+  }
 
   // Copy data from mothership vectors to overlap vectors in data manager
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
