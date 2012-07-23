@@ -812,29 +812,31 @@ void PeridigmNS::Peridigm::executeExplicit() {
   *out << "\n\n";
 }
 
-bool PeridigmNS::Peridigm::computeF(const Epetra_Vector& x, Epetra_Vector& FVec, FillType fillType) {
-  return true;
+bool PeridigmNS::Peridigm::computeF(const Epetra_Vector& x, Epetra_Vector& FVec, NOX::Epetra::Interface::Required::FillType fillType) {
+  
+  return evaluateNOX(fillType, &x, &FVec, 0);
 }
 
 bool PeridigmNS::Peridigm::computeJacobian(const Epetra_Vector& x, Epetra_Operator& Jac) {
 
-  //Compute the tangent
-  tangent->PutScalar(0.0);
-  PeridigmNS::Timer::self().startTimer("Evaluate Jacobian");
-  modelEvaluator->evalJacobian(workset);
-  int err = tangent->GlobalAssemble();
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::executeNOXQuasiStatic(), GlobalAssemble() returned nonzero error code.\n");
-  PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
-  //boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
-  boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndPutOnesOnDiagonal(tangent);
-  tangent->Scale(-1.0);
-  return true;
+  return evaluateNOX(NOX::Epetra::Interface::Required::Jac, &x, 0, 0);
+
   
 }
 
 bool PeridigmNS::Peridigm::computePreconditioner(const Epetra_Vector& x, Epetra_Operator& Prec, Teuchos::ParameterList* precParams) {
-  return true;
+
+  cout << "ERROR: Peridigm::preconditionVector() - "
+       << "Use Explicit Jacobian only for NOX interface!" << endl;
+  throw "Interface Error";
 }
+
+// Matrix and Residual Fills
+bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillType flag, 
+        const Epetra_Vector* soln,
+        Epetra_Vector* tmp_rhs,
+        Epetra_RowMatrix* tmp_matrix)
+        { return true; }
 
 void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
 
