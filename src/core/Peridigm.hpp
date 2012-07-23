@@ -133,8 +133,10 @@ namespace PeridigmNS {
 
     //! Compute the preconditioner (pure virtual method in NOX::Epetra::Interface::Preconditioner).
     bool computePreconditioner(const Epetra_Vector& x, Epetra_Operator& Prec, Teuchos::ParameterList* precParams = 0);
+    
+    //! Residual and Jacobian matrix fills for NOX interface
+    virtual bool evaluateNOX(FillType f, const Epetra_Vector *solnVector, Epetra_Vector *rhsVector, Epetra_RowMatrix *matrix);
 
-    //! Main routine to drive problem solution with explicit time integration
     void executeExplicit();
 
     //! Main routine to drive problem solution for quasistatics
