@@ -864,10 +864,9 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
   // Do nothing for now
   }
 
-  // copy the solution vector passed in by NOX to u 
+  // copy the solution vector passed in by NOX to update the deformation 
   for(int i=0 ; i < u->MyLength() ; ++i){
-    (*u)[i] = (*soln)[i];
-    (*y)[i] = (*x)[i] + (*u)[i];
+    (*y)[i] = (*x)[i] + (*u)[i] + (*soln)[i];
   }
 
   // Copy data from mothership vectors to overlap vectors in data manager
@@ -1037,8 +1036,25 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
   Teuchos::RCP<NOX::Epetra::Interface::Jacobian> noxInterfaceJacobian = Teuchos::RCP<NOX::Epetra::Interface::Jacobian>(this, false);
   Teuchos::RCP<Epetra_RowMatrix> noxJacobian = getJacobian();
   const NOX::Epetra::Vector& noxCloneVector = *soln;
-  NOX::Epetra::LinearSystemAztecOO(printParams, lsParams, noxInterfaceRequired, noxInterfaceJacobian, noxJacobian, noxCloneVector);
-  
+  Teuchos::RCP<NOX::Epetra::LinearSystemAztecOO> linSys = 
+      Teuchos::rcp(new NOX::Epetra::LinearSystemAztecOO(printParams, lsParams, 
+                               noxInterfaceRequired, 
+                               noxInterfaceJacobian, 
+                               noxJacobian, noxCloneVector));
+
+  //Create the Group
+  NOX::Epetra::Vector initialGuess(soln, NOX::Epetra::Vector::CreateView);
+  Teuchos::RCP<NOX::Epetra::Group> grpPtr = Teuchos::rcp(new NOX::Epetra::Group(printParams, noxInterfaceRequired, initialGuess, linSys));
+    
+  // Create the convergence tests
+  Teuchos::RCP<NOX::StatusTest::NormF>absresid = Teuchos::rcp(new NOX::StatusTest::NormF(1.0e-8));
+  Teuchos::RCP<NOX::StatusTest::MaxIters>maxiters = Teuchos::rcp(new NOX::StatusTest::MaxIters(20));
+  Teuchos::RCP<NOX::StatusTest::FiniteValue> fv = Teuchos::rcp(new NOX::StatusTest::FiniteValue);
+  Teuchos::RCP<NOX::StatusTest::Combo> combo = Teuchos::rcp(new NOX::StatusTest::Combo(NOX::StatusTest::Combo::OR));
+  combo->addStatusTest(fv);
+  combo->addStatusTest(absresid);
+  combo->addStatusTest(maxiters);
+ 
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
   this->synchDataManagers();
@@ -1058,65 +1074,27 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
     *timeStep = timeIncrement;
 
     // Update nodal positions for nodes with kinematic B.C.
-    deltaU->PutScalar(0.0);
-    boundaryAndInitialConditionManager->applyKinematicBC_SetDisplacementIncrement(timeCurrent, timePrevious, x, deltaU);
+    soln->PutScalar(0.0);
+    boundaryAndInitialConditionManager->applyKinematicBC_SetDisplacementIncrement(timeCurrent, timePrevious, x, soln);
 
-    // Set the current position
-    // \todo We probably want to rework this so that the material models get valid x, u, and y values.
-    // Currently the u values are from the previous load step (and if we update u here we'll be unable
-    // to properly undo a time step, which we'll need to adaptive time stepping).
-    for(int i=0 ; i<y->MyLength() ; ++i)
-      (*y)[i] = (*x)[i] + (*u)[i] + (*deltaU)[i];
-
-    // compute the residual
-
-      
-
-    // Compute the tangent
-    //if( !dampedNewton || (solverIteration-numPureNewtonSteps-1)%dampedNewtonNumStepsBetweenTangentUpdates==0 ){
-      //tangent->PutScalar(0.0);
-      //PeridigmNS::Timer::self().startTimer("Evaluate Jacobian");
-      //modelEvaluator->evalJacobian(workset);
-      //int err = tangent->GlobalAssemble();
-      //TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::executeQuasiStatic(), GlobalAssemble() returned nonzero error code.\n");
-      //PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
-      //boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
-      //boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndPutOnesOnDiagonal(tangent);
-      //tangent->Scale(-1.0);
-      //if(dampedNewton)
-        //quasiStaticsDampTangent(dampedNewtonDiagonalScaleFactor, dampedNewtonDiagonalShiftFactor);
-      //if(usePreconditioner)
-        //quasiStaticsSetPreconditioner(linearProblem);
-    //}
-	
-      
-      //if(isConverged == Belos::Converged){
-
-        //// Zero out the entries corresponding to the kinematic boundary conditions
-        //// The solver should have returned zeros, but there may be small errors.
-        //boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(lhs);
-
-
-        //// Apply increment to nodal positions
-        //for(int i=0 ; i<y->MyLength() ; ++i)
-          //(*deltaU)[i] += alpha*(*lhs)[i];
-        //for(int i=0 ; i<y->MyLength() ; ++i)
-          //(*y)[i] = (*x)[i] + (*u)[i] + (*deltaU)[i];
-      
-
-        //solverIteration++;
-      //}
-
+    // Create the solver and solve
+    Teuchos::RCP<NOX::Solver::Generic> solver = NOX::Solver::buildSolver(grpPtr, combo, nlParamsPtr);
+    NOX::StatusTest::StatusType solvStatus = solver->solve();
+    
+    // Get the Epetra_Vector with the final solution from the solver
+    const NOX::Epetra::Group& finalGroup = dynamic_cast<const NOX::Epetra::Group&>(solver->getSolutionGroup());
+    const Epetra_Vector& finalSolution = (dynamic_cast<const NOX::Epetra::Vector&>(finalGroup.getX())).getEpetraVector();
+                     
 
     // Store the velocity
     for(int i=0 ; i<v->MyLength() ; ++i)
-        (*v)[i] = (*deltaU)[i]/nominalTimeIncrement;
+        (*v)[i] = finalSolution[i]/nominalTimeIncrement;
 
     // Add the converged displacement increment to the displacement
     for(int i=0 ; i<u->MyLength() ; ++i)
-      (*u)[i] += (*deltaU)[i];
+      (*u)[i] += finalSolution[i];
 
-      // Write output for completed load step
+    // Write output for completed load step
     PeridigmNS::Timer::self().startTimer("Output");
     this->synchDataManagers();
     outputManager->write(blocks, timeCurrent);
