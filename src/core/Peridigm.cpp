@@ -1032,8 +1032,16 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
   // Let's force all status tests to do a full check
   nlParams.sublist("Solver Options").set("Status Test Check Type", "Complete");
     
-  // 1. User supplied (Epetra_RowMatrix)
-  // Teuchos::RCP<Epetra_RowMatrix> Analytic = interface->getJacobian();
+  // User supplied Jacobian (Epetra_RowMatrix)
+  Teuchos::RCP<Epetra_RowMatrix> ADJac = getJacobian();
+  
+  // Create the linear system
+  //Teuchos::RCP<NOX::Epetra::Interface::Required>  iReq = 
+      //dynamic_cast<NOX::Epetra::Interface::Required>(this);
+  //Teuchos::RCP<NOX::Epetra::Interface::Jacobian>  iJac= 
+      //dynamic_cast<NOX::Epetra::Interface::Jacobian>(this);
+  //Teuchos::rcp( new NOX::Epetra::LinearSystemAztecOO(printParams,lsParams,
+                        //this, iJac, ADJac,*soln));
   
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
