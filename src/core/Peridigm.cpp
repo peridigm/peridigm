@@ -1032,16 +1032,12 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
   // Let's force all status tests to do a full check
   nlParams.sublist("Solver Options").set("Status Test Check Type", "Complete");
     
-  // User supplied Jacobian (Epetra_RowMatrix)
-  Teuchos::RCP<Epetra_RowMatrix> ADJac = getJacobian();
-  
-  // Create the linear system
-  //Teuchos::RCP<NOX::Epetra::Interface::Required>  iReq = 
-      //dynamic_cast<NOX::Epetra::Interface::Required>(this);
-  //Teuchos::RCP<NOX::Epetra::Interface::Jacobian>  iJac= 
-      //dynamic_cast<NOX::Epetra::Interface::Jacobian>(this);
-  //Teuchos::rcp( new NOX::Epetra::LinearSystemAztecOO(printParams,lsParams,
-                        //this, iJac, ADJac,*soln));
+  // Construct the NOX linear system
+  Teuchos::RCP<NOX::Epetra::Interface::Required> noxInterfaceRequired = Teuchos::RCP<NOX::Epetra::Interface::Required>(this, false);
+  Teuchos::RCP<NOX::Epetra::Interface::Jacobian> noxInterfaceJacobian = Teuchos::RCP<NOX::Epetra::Interface::Jacobian>(this, false);
+  Teuchos::RCP<Epetra_RowMatrix> noxJacobian = getJacobian();
+  const NOX::Epetra::Vector& noxCloneVector = *soln;
+  NOX::Epetra::LinearSystemAztecOO(printParams, lsParams, noxInterfaceRequired, noxInterfaceJacobian, noxJacobian, noxCloneVector);
   
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
