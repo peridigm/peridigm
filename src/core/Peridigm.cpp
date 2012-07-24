@@ -975,14 +975,12 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
   int numLoadSteps = implicitParams->get("Number of Load Steps", 10);
 
   // Create a parameter list for the nonlinear solver
-  Teuchos::RCP<Teuchos::ParameterList> nlParamsPtr = Teuchos::rcp(new Teuchos::ParameterList);
-  Teuchos::ParameterList& nlParams = *(nlParamsPtr.get());
-  
+  Teuchos::RCP<Teuchos::ParameterList> nlParams = Teuchos::rcp(new Teuchos::ParameterList);
   // Set the nonlinear solver method
-  nlParams.set("Nonlinear Solver", "Line Search Based");
+  nlParams->set("Nonlinear Solver", "Line Search Based");
   
   // Set the printing parameters in the "Printing"
-  Teuchos::ParameterList& printParams = nlParams.sublist("Printing");
+  Teuchos::ParameterList& printParams = nlParams->sublist("Printing");
   printParams.set("Output Precision",3);
   printParams.set("Output Processor",0);
   bool verbose = false;
@@ -1006,11 +1004,11 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
   NOX::Utils printing(printParams);
 
   // Sublist for line search
-  Teuchos::ParameterList& searchParams = nlParams.sublist("Line Search");
+  Teuchos::ParameterList& searchParams = nlParams->sublist("Line Search");
   searchParams.set("Method", "NonlinearCG"); // "Full Step" can also work well sometimes
   
   // Sublist for direction
-  Teuchos::ParameterList& dirParams = nlParams.sublist("Direction");
+  Teuchos::ParameterList& dirParams = nlParams->sublist("Direction");
   dirParams.set("Method", "NonlinearCG");
   Teuchos::ParameterList& nonlinearcg = dirParams.sublist("Nonlinear CG");
   nonlinearcg.set("Restart Frequency", 100);
@@ -1027,7 +1025,7 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
   lsParams.set("Preconditioner Reuse Policy", "Recompute");
     
   // Force all status tests to do a full check
-  nlParams.sublist("Solver Options").set("Status Test Check Type", "Complete");
+  nlParams->sublist("Solver Options").set("Status Test Check Type", "Complete");
     
  
   // Write initial configuration to disk
@@ -1055,7 +1053,18 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
 
     // Update nodal positions for nodes with kinematic B.C.
     soln->PutScalar(0.0);
-    boundaryAndInitialConditionManager->applyKinematicBC_SetDisplacementIncrement(timeCurrent, timePrevious, x, soln);
+
+    // Apply the displacement increment
+    // Note that the soln vector was created to be compatible with the tangent matrix, and hence needed to be
+    // constructed with an Epetra_Map.  The mothership vectors were constructed with an Epetra_BlockMap, and it's
+    // this map that the boundary and intial condition manager expects.  So, copy the soln vector into the deltaU
+    // vector, apply the B.C. to deltaU, and then copy the values back to soln.
+    deltaU->PutScalar(0.0);
+    for(int i=0 ; i<deltaU->MyLength() ; ++i)
+      (*deltaU)[i] = (*soln)[i];
+    boundaryAndInitialConditionManager->applyKinematicBC_SetDisplacementIncrement(timeCurrent, timePrevious, x, deltaU);
+    for(int i=0 ; i<deltaU->MyLength() ; ++i)
+      (*soln)[i] = (*deltaU)[i];
 
     // Construct the NOX linear system
     Teuchos::RCP<NOX::Epetra::Interface::Required> noxInterfaceRequired = Teuchos::RCP<NOX::Epetra::Interface::Required>(this, false);
@@ -1082,13 +1091,13 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
     combo->addStatusTest(maxiters);
 
     // Create the solver and solve
-    Teuchos::RCP<NOX::Solver::Generic> solver = NOX::Solver::buildSolver(grpPtr, combo, nlParamsPtr);
+    Teuchos::RCP<NOX::Solver::Generic> solver = NOX::Solver::buildSolver(grpPtr, combo, nlParams);
     NOX::StatusTest::StatusType solvStatus = solver->solve();
     
     // Get the Epetra_Vector with the final solution from the solver
-    const NOX::Epetra::Group& finalGroup = dynamic_cast<const NOX::Epetra::Group&>(solver->getSolutionGroup());
-    const Epetra_Vector& finalSolution = (dynamic_cast<const NOX::Epetra::Vector&>(finalGroup.getX())).getEpetraVector();
-                     
+    const Epetra_Vector& finalSolution = 
+      dynamic_cast<const NOX::Epetra::Vector&>(solver->getSolutionGroup().getX()).getEpetraVector();
+ 
     // Output the parameter list
     //if (printing.isPrintType(NOX::Utils::Parameters)) {
     printing.out() << endl << "Final NOX Parameters" << endl << "****************" << endl;
@@ -1933,7 +1942,7 @@ void PeridigmNS::Peridigm::computeImplicitJacobian(double beta) {
   // First, construct transpose
   bool makeDataContiguous = true;
   EpetraExt::RowMatrix_Transpose transposer( makeDataContiguous );
-  Epetra_CrsMatrix & transTangent = dynamic_cast<Epetra_CrsMatrix&>(transposer(*tangent));
+  Epetra_CrsMatrix& transTangent = dynamic_cast<Epetra_CrsMatrix&>(transposer(*tangent));
 
   // Now loop over all owned rows and average entries of both
   int numRows      = tangent->NumMyRows();
