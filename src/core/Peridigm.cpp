@@ -870,17 +870,22 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
   }
 
   // Copy data from mothership vectors to overlap vectors in data manager
+  PeridigmNS::Timer::self().startTimer("Gather/Scatter");
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
     blockIt->importData(*u, Field_NS::DISPL3D,    Field_ENUM::STEP_NP1, Insert);
     blockIt->importData(*y, Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1, Insert);
     blockIt->importData(*v, Field_NS::VELOC3D,    Field_ENUM::STEP_NP1, Insert);
-  }
+  } 
+  PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
   if(fillF){
     // Update forces based on new positions
+    PeridigmNS::Timer::self().startTimer("Internal Force");
     modelEvaluator->evalModel(workset);
+    PeridigmNS::Timer::self().stopTimer("Internal Force");
 
     // Copy force from the data manager to the mothership vector
+    PeridigmNS::Timer::self().startTimer("Gather/Scatter");
     force->PutScalar(0.0);
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
       scratch->PutScalar(0.0);
@@ -888,6 +893,7 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
       force->Update(1.0, *scratch, 1.0);
     }
     scratch->PutScalar(0.0);
+    PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
       
     // Create residual vector
     Teuchos::RCP<Epetra_Vector> residual = Teuchos::rcp(new Epetra_Vector(tangent->Map()));
@@ -913,12 +919,11 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
   // Compute the tangent if requested
   if( fillMatrix ){
     tangent->PutScalar(0.0);
-      
+    PeridigmNS::Timer::self().startTimer("Evaluate Jacobian");
     modelEvaluator->evalJacobian(workset);
-     
     int err = tangent->GlobalAssemble();
     TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::evaluateNOX(), GlobalAssemble() returned nonzero error code.\n");
-
+    PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
     boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndPutOnesOnDiagonal(tangent);
     tangent->Scale(-1.0);
   }
@@ -953,20 +958,13 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
 
   // Set the initial guess
   soln->PutScalar(0.0);
-
-  Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
-  workset->timeStep = timeStep;
-
-  // Pointer index into sub-vectors for use with BLAS
-  double *xptr, *uptr, *yptr, *vptr, *aptr;
-  x->ExtractView( &xptr );
-  u->ExtractView( &uptr );
-  y->ExtractView( &yptr );
-  v->ExtractView( &vptr );
-  a->ExtractView( &aptr );
-
+  
   // Initialize velocity to zero
   v->PutScalar(0.0);
+  
+  // Set the timestep
+  Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
+  workset->timeStep = timeStep;
  
   // Set up parameters lists
   Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
