@@ -1015,15 +1015,16 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
   Teuchos::ParameterList& dirParams = nlParams->sublist("Direction");
   dirParams.set("Method", "NonlinearCG");
   Teuchos::ParameterList& nonlinearcg = dirParams.sublist("Nonlinear CG");
-  nonlinearcg.set("Restart Frequency", 100);
+  nonlinearcg.set("Restart Frequency", 10);
   nonlinearcg.set("Precondition", "On");
   nonlinearcg.set("Orthogonalize", "Fletcher-Reeves"); // or "Polak-Ribiere"
+  //nonlinearcg.set("Orthogonalize", "Polak-Ribiere"); // or "Fletcher-Reeves"
 
   
   // Sublist for linear solver for the Newton method
   Teuchos::ParameterList& lsParams = nonlinearcg.sublist("Linear Solver");
   lsParams.set("Aztec Solver", "GMRES");
-  //lsParams.set("Preconditioner Operator", "Use Jacobian");
+  lsParams.set("Preconditioner Operator", "Use Jacobian");
   lsParams.set("Preconditioner", "AztecOO");
   lsParams.set("AztecOO Preconditioner Iterations", 15);
   lsParams.set("Preconditioner Reuse Policy", "Recompute");
@@ -1086,8 +1087,8 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
     Teuchos::RCP<NOX::Epetra::Group> grpPtr = Teuchos::rcp(new NOX::Epetra::Group(printParams, noxInterfaceRequired, initialGuess, linSys));
     
     // Create the convergence tests
-    Teuchos::RCP<NOX::StatusTest::NormF>absresid = Teuchos::rcp(new NOX::StatusTest::NormF(1.0e-8));
-    Teuchos::RCP<NOX::StatusTest::MaxIters>maxiters = Teuchos::rcp(new NOX::StatusTest::MaxIters(20));
+    Teuchos::RCP<NOX::StatusTest::NormF>absresid = Teuchos::rcp(new NOX::StatusTest::NormF(1.0e-3));
+    Teuchos::RCP<NOX::StatusTest::MaxIters>maxiters = Teuchos::rcp(new NOX::StatusTest::MaxIters(40));
     Teuchos::RCP<NOX::StatusTest::FiniteValue> fv = Teuchos::rcp(new NOX::StatusTest::FiniteValue);
     Teuchos::RCP<NOX::StatusTest::Combo> combo = Teuchos::rcp(new NOX::StatusTest::Combo(NOX::StatusTest::Combo::OR));
     combo->addStatusTest(fv);

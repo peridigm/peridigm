@@ -49,16 +49,19 @@
 #include <Shards_Array.hpp>
 
 struct Node : public shards::ArrayDimTag {
+  Node(){};
   const char * name() const ;
   static const Node& tag();
 };
 
 struct Cell : public shards::ArrayDimTag {
+  Cell(){};
   const char * name() const ;
   static const Cell& tag();
 };
 
 struct Dummy : public shards::ArrayDimTag {
+  Dummy(){};
   const char * name() const ;
   static const Dummy& tag();
 };
