@@ -474,7 +474,6 @@ void PeridigmNS::Peridigm::instantiateComputeManager() {
 }
 
 void PeridigmNS::Peridigm::initializeBlocks(Teuchos::RCP<AbstractDiscretization> disc) {
-  int iBlock = 0;
   blocks = Teuchos::rcp(new std::vector<PeridigmNS::Block>());
   Teuchos::ParameterList& blockParams = peridigmParams->sublist("Blocks", true);
   for(Teuchos::ParameterList::ConstIterator it = blockParams.begin() ; it != blockParams.end() ; it++){
@@ -488,9 +487,14 @@ void PeridigmNS::Peridigm::initializeBlocks(Teuchos::RCP<AbstractDiscretization>
          istream_iterator<string>(),
          back_inserter<vector<string> >(blockNames));
     for(vector<string>::const_iterator it=blockNames.begin() ; it!=blockNames.end() ; ++it){
-      PeridigmNS::Block block(*it, iBlock+1, params);
+      // Assume that the block names are "block_" + the block ID
+      size_t loc = it->find_last_of('_');
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(loc == string::npos, "\n**** Parse error, invalid block name.\n");
+      stringstream blockIDSS(it->substr(loc+1, it->size()));
+      int blockID;
+      blockIDSS >> blockID;
+      PeridigmNS::Block block(*it, blockID, params);
       blocks->push_back(block);
-      iBlock++;
     }
   }
 
