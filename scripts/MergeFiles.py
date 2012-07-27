@@ -53,7 +53,7 @@ if __name__ == "__main__":
     # Remove duplicates
     files_to_join = list(set(files_to_join))
     files_to_join.sort()
-    
+
     # First merge all distributed exodus databases for each time stamp
     for file in files_to_join:
       command = [path+"epu", "-p", num_proc, file]
@@ -62,20 +62,22 @@ if __name__ == "__main__":
       if return_code != 0:
           result = return_code
 
-    # Add .e to list of files for conjoin
-    files_to_conjoin = []
-    for file in files_to_join:
-      newfile = file + ".e"
-      files_to_conjoin.append(newfile)
-    sort_nicely(files_to_conjoin)
-
-    # Now combine time series from all databases
-    command = [path+"conjoin", "-output", base_name+".e"]
-    for file in files_to_conjoin:
-       command.append(file)
-    p = Popen(command, stdout=logfile, stderr=logfile)
-    return_code = p.wait()
-    if return_code != 0:
+    # Check for any "-s" files
+    check = glob.glob('*-s*')
+    if len(check) != 0:
+      # Add .e to list of files for conjoin
+      files_to_conjoin = []
+      for file in files_to_join:
+        newfile = file + ".e"
+        files_to_conjoin.append(newfile)
+      sort_nicely(files_to_conjoin)
+      # Now combine time series from all databases
+      command = [path+"conjoin", "-output", base_name+".e"]
+      for file in files_to_conjoin:
+        command.append(file)
+      p = Popen(command, stdout=logfile, stderr=logfile)
+      return_code = p.wait()
+      if return_code != 0:
         result = return_code
     
     sys.exit(result)
