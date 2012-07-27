@@ -65,7 +65,7 @@ find_library(Lapack_LIBRARY
    NAMES lapack  
    PATHS ${LAPACK_LIBRARY_DIRS}  
 )  
-set(BlasLapack_Libraries blas lapack)  
+set(BlasLapack_Libraries ${blas} ${lapack})  
 
 #
 # DAKOTA configuration
