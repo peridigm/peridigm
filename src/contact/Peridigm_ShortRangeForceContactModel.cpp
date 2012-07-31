@@ -87,7 +87,7 @@ PeridigmNS::ShortRangeForceContactModel::computeForce(const double dt,
 
   int neighborhoodListIndex = 0;
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
-	int numNeighbors = contactNeighborhoodList[neighborhoodListIndex++];
+    int numNeighbors = contactNeighborhoodList[neighborhoodListIndex++];
     if(numNeighbors > 0){
       int nodeID = ownedIDs[iID];
       double nodeCurrentX[3] = { y[nodeID*3],
@@ -114,6 +114,6 @@ PeridigmNS::ShortRangeForceContactModel::computeForce(const double dt,
           contactForce[neighborID*3+2] += temp*nodeVolume*(y[neighborID*3+2] - nodeCurrentX[2])/currentDistance;
         }
       }
-	}
+    }
   }
 }
