@@ -977,16 +977,24 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
   double timeFinal = solverParams->get("Final Time", 1.0);
   timeCurrent = timeInitial;
   int numLoadSteps = implicitParams->get("Number of Load Steps", 10);
+  int maxnumiterations = implicitParams->get("Max Solver Iterations", 20);
 
   // Create a parameter list for the nonlinear solver
   Teuchos::RCP<Teuchos::ParameterList> nlParams = Teuchos::rcp(new Teuchos::ParameterList);
   // Set the nonlinear solver method
-  nlParams->set("Nonlinear Solver", "Line Search Based");
-  
+  string nonLinearSolver = implicitParams->get("Nonlinear Solver","Line Search Based");
+  int printing_outputprecision = (implicitParams->sublist("Printing")).get("Output Precision",3);
+  int printing_outputprocessor = (implicitParams->sublist("Printing")).get("Output Processor",0);
+  string linesearch_method = (implicitParams->sublist("Line Search")).get("Method","NonlinearCG"); // "Full Step" can also work well sometimes
+  string direction_method = (implicitParams->sublist("Direction")).get("Method","NonlinearCG");
+  string solveroptions_checktype = (implicitParams->sublist("Solver Options")).get("Status Test Check Type","Complete");  
+
+  nlParams->set("Nonlinear Solver", nonLinearSolver);
+
   // Set the printing parameters in the "Printing"
   Teuchos::ParameterList& printParams = nlParams->sublist("Printing");
-  printParams.set("Output Precision",3);
-  printParams.set("Output Processor",0);
+  printParams.set("Output Precision",printing_outputprecision);
+  printParams.set("Output Processor",printing_outputprocessor);
   bool verbose = false;
   if (verbose)
    printParams.set("Output Information",
@@ -1009,30 +1017,113 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
 
   // Sublist for line search
   Teuchos::ParameterList& searchParams = nlParams->sublist("Line Search");
-  searchParams.set("Method", "NonlinearCG"); // "Full Step" can also work well sometimes
+  searchParams.set("Method", linesearch_method); 
+
+  if (linesearch_method == "More'-Thuente"){
+      Teuchos::ParameterList& morethuente = searchParams.sublist("More'-Thuente");
+      
+      double lineSearch_MoreThuente_SufficientDecrease =
+          ((implicitParams->sublist("Line Search")).sublist("More'-Thuente")).get("Sufficient Decrease",1E-4);
   
+      double lineSearch_MoreThuente_CurvatureCondition =
+          ((implicitParams->sublist("Line Search")).sublist("More'-Thuente")).get("Curvature Condition",0.9999);
+  
+      double lineSearch_MoreThuente_IntervalWidth =
+          ((implicitParams->sublist("Line Search")).sublist("More'-Thuente")).get("Interval Width",1E-15);
+  
+      double lineSearch_MoreThuente_MinimumStep =
+          ((implicitParams->sublist("Line Search")).sublist("More'-Thuente")).get("Minimum Step",1E-15);
+  
+      double lineSearch_MoreThuente_MaximumStep =
+          ((implicitParams->sublist("Line Search")).sublist("More'-Thuente")).get("Maximum Step",1E5);
+  
+      int lineSearch_MoreThuente_MaxIters =
+          ((implicitParams->sublist("Line Search")).sublist("More'-Thuente")).get("Max Iters",30);
+  
+      double lineSearch_MoreThuente_DefaultStep =
+          ((implicitParams->sublist("Line Search")).sublist("More'-Thuente")).get("Default Step",1E-2);
+
+      morethuente.set("Sufficient Decrease",lineSearch_MoreThuente_SufficientDecrease);
+      morethuente.set("Curvature Condition",lineSearch_MoreThuente_CurvatureCondition);
+      morethuente.set("Interval Width",lineSearch_MoreThuente_IntervalWidth);
+      morethuente.set("Minimum Step",lineSearch_MoreThuente_MinimumStep);
+      morethuente.set("Maximum Step",lineSearch_MoreThuente_MaximumStep);
+      morethuente.set("Max Iters",lineSearch_MoreThuente_MaxIters);
+      morethuente.set("Default Step",lineSearch_MoreThuente_DefaultStep);
+  
+  }
+
   // Sublist for direction
   Teuchos::ParameterList& dirParams = nlParams->sublist("Direction");
-  dirParams.set("Method", "NonlinearCG");
-  Teuchos::ParameterList& nonlinearcg = dirParams.sublist("Nonlinear CG");
-  nonlinearcg.set("Restart Frequency", 10);
-  nonlinearcg.set("Precondition", "On");
-  nonlinearcg.set("Orthogonalize", "Fletcher-Reeves"); // or "Polak-Ribiere"
-  //nonlinearcg.set("Orthogonalize", "Polak-Ribiere"); // or "Fletcher-Reeves"
 
-  
+
+  dirParams.set("Method", direction_method);
+  Teuchos::ParameterList& nonlinearcg = dirParams.sublist("Nonlinear CG");
+  cout << "Load nonlinear CG parameters" << endl;
+  int direction_nonlinearcg_restartfrequency = 
+      ((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).get("Restart Frequency",100);
+
+  string direction_nonlinearcg_precondition = 
+      ((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).get("Precondition","On");
+
+  string direction_nonlinearcg_orthogonalize = 
+      ((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).get("Orthogonalize","Fletcher-Reeves");// or "Polak-Ribiere"
+
+  nonlinearcg.set("Restart Frequency", direction_nonlinearcg_restartfrequency);
+  nonlinearcg.set("Precondition",direction_nonlinearcg_precondition);
+  nonlinearcg.set("Orthogonalize", direction_nonlinearcg_orthogonalize); // or "Polak-Ribiere"
+
+  string direction_linearsolver_aztecsolver = 
+      (((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).sublist("Linear Solver")).get("Aztec Solver", "GMRES");
+
+  string direction_linearsolver_preconditioner = 
+      (((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).sublist("Linear Solver")).get("Preconditioner", "AztecOO");
+
+  int direction_linearsolver_preconditioneriterations = 
+      (((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).sublist("Linear Solver")).get("AztecOO Preconditioner Iterations", 16);
+
+  int direction_linearsolver_maxiterations = 
+      (((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).sublist("Linear Solver")).get("Max Iterations", 401);
+
+  string direction_linearsolver_preconditioneroperator = 
+      (((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).sublist("Linear Solver")).get("Preconditioner Operator", "Use Jacobian");
+
+  string direction_linearsolver_preconditionerpolicy = 
+      (((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).sublist("Linear Solver")).get("Preconditioner Reuse Policy", "Recompute");
+
+  string direction_linearsolver_aztecpreconditioner = 
+      (((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).sublist("Linear Solver")).get("Aztec Preconditioner", "ilu");
+
+  string direction_linearsolver_RCMreordering = 
+      (((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).sublist("Linear Solver")).get("RCM Reordering", "Disabled");
+
+  int direction_linearsolver_krylovsize = 
+      (((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).sublist("Linear Solver")).get("Size of Krylov Subspace", 301);
+
+  int direction_linearsolver_maxpreconage = 
+      (((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).sublist("Linear Solver")).get("Max Age of Prec", 1);
+
+
   // Sublist for linear solver for the Newton method
   Teuchos::ParameterList& lsParams = nonlinearcg.sublist("Linear Solver");
-  lsParams.set("Aztec Solver", "GMRES");
-  lsParams.set("Preconditioner Operator", "Use Jacobian");
-  lsParams.set("Preconditioner", "AztecOO");
-  lsParams.set("AztecOO Preconditioner Iterations", 15);
-  lsParams.set("Preconditioner Reuse Policy", "Recompute");
-    
+  lsParams.set("Aztec Solver", direction_linearsolver_aztecsolver);
+  lsParams.set("Preconditioner Operator", direction_linearsolver_preconditioneroperator);
+  lsParams.set("Preconditioner", direction_linearsolver_preconditioner);
+  lsParams.set("AztecOO Preconditioner Iterations", direction_linearsolver_preconditioneriterations);
+  lsParams.set("Max Iterations", direction_linearsolver_maxiterations);
+  lsParams.set("Preconditioner Reuse Policy", direction_linearsolver_preconditionerpolicy);
+  lsParams.set("Size of Krylov Subspace", direction_linearsolver_krylovsize);
+  lsParams.set("Aztec Preconditioner", direction_linearsolver_aztecpreconditioner);
+  lsParams.set("Max Age of Prec", direction_linearsolver_maxpreconage);
+  lsParams.set("RCM Reordering", direction_linearsolver_RCMreordering);
+
+
+
+
   // Force all status tests to do a full check
-  nlParams->sublist("Solver Options").set("Status Test Check Type", "Complete");
-    
- 
+  nlParams->sublist("Solver Options").set("Status Test Check Type", solveroptions_checktype);
+
+
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
   this->synchDataManagers();
@@ -1088,7 +1179,7 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
     
     // Create the convergence tests
     Teuchos::RCP<NOX::StatusTest::NormF>absresid = Teuchos::rcp(new NOX::StatusTest::NormF(1.0e-3));
-    Teuchos::RCP<NOX::StatusTest::MaxIters>maxiters = Teuchos::rcp(new NOX::StatusTest::MaxIters(40));
+    Teuchos::RCP<NOX::StatusTest::MaxIters>maxiters = Teuchos::rcp(new NOX::StatusTest::MaxIters(maxnumiterations));
     Teuchos::RCP<NOX::StatusTest::FiniteValue> fv = Teuchos::rcp(new NOX::StatusTest::FiniteValue);
     Teuchos::RCP<NOX::StatusTest::Combo> combo = Teuchos::rcp(new NOX::StatusTest::Combo(NOX::StatusTest::Combo::OR));
     combo->addStatusTest(fv);

@@ -68,11 +68,62 @@
   </ParameterList>
 
   <ParameterList name="Solver">
-	<Parameter name="Verbose" type="bool" value="false"/>
+  	<Parameter name="Verbose" type="bool" value="true"/>
 	<Parameter name="Initial Time" type="double" value="0.0"/>
-	<Parameter name="Final Time" type="double" value="0.00005"/> 
-	<ParameterList name="NOXQuasiStatic">
-	  <Parameter name="Number of Load Steps" type="int" value="20"/>
+	<Parameter name="Final Time" type="double" value="5.0e-5"/> 
+    <ParameterList name="NOXQuasiStatic">
+        <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
+        <Parameter name="Number of Load Steps" type="int" value="20"/>
+        <Parameter name="Max Solver Iterations" type="int" value="50"/>
+        <ParameterList name="Printing">
+            <Parameter name="Output Precision" type="int" value="20"/>
+            <Parameter name="Output Processor" type="int" value="0"/>
+        </ParameterList>
+        <ParameterList name="Line Search">
+            <Parameter name="Method" type="string" value="NonlinearCG"/>
+            <ParameterList name="More'-Thuente">
+                <Parameter name="Sufficient Decrease" type="double" value="1E-4"/>
+                <Parameter name="Curvature Condition" type="double" value=".1"/>
+                <Parameter name="Interval Width" type="double" value="1E-20"/>
+                <Parameter name="Minimum Step" type="double" value="1E-20"/>
+                <Parameter name="Maximum Step" type="double" value="1.0"/>
+                <Parameter name="Max Iters" type="int" value="1000"/>
+                <Parameter name="Default Step" type="double" value="1E-10"/>
+            </ParameterList>
+        </ParameterList>
+        <ParameterList name="Direction">
+            <Parameter name="Method" type="string" value="NonlinearCG"/>
+            <ParameterList name="Nonlinear CG">
+                <Parameter name="Restart Frequency" type="int" value="15"/>
+                <Parameter name="Precondition" type="string" value="On"/>
+                <Parameter name="Orthogonalize" type="string" value="Fletcher-Reeves"/>
+                <ParameterList name="Linear Solver">
+                    <Parameter name="Aztec Solver" type="string" value="GMRES"/>
+                    <Parameter name="Preconditioner" type="string" value="AztecOO"/>
+                    <Parameter name="AztecOO Preconditioner Iterations" type="int" value="15"/>
+                    <Parameter name="Max Iterations" type="int" value="40"/>
+                    <Parameter name="Preconditioner Reuse Policy" type="string" value="Recompute"/>
+                    <Parameter name="Preconditioner Operator" type="string" value="Use Jacobian"/>
+                    <Parameter name="Zero Initial Guess" type="bool" value="0"/>
+                    <Parameter name="Compute Scaling Manually" type="bool" value="1"/>
+                    <Parameter name="Output Solver Details" type="bool" value="1"/>
+                    <Parameter name="Throw Error on Prec Failure" type="bool" value="1"/>
+                    <Parameter name="Aztec Preconditioner" type="string" value="Jacobi"/>
+                    <Parameter name="Overlap" type="bool" value="0"/>
+                    <Parameter name="Graph Fill" type="bool" value="0"/>
+                    <Parameter name="RCM Reordering" type="string" value="Enabled"/>
+                    <Parameter name="Orthogonalization" type="string" value="Classical"/>
+                    <Parameter name="Size of Krylov Subspace" type="int" value="300"/>
+                    <Parameter name="Convergence Test" type="string" value="r0"/>
+                    <Parameter name="Output Frequency" type="int" value="0"/>
+                    <Parameter name="Max Age Of Prec" type="int" value="1"/>
+                </ParameterList>
+            </ParameterList>
+        </ParameterList>
+        <ParameterList name="Solver Options">
+            <Parameter name="Status Test Check Type" type="string" value="Complete"/>
+        </ParameterList>
+
 	</ParameterList>
   </ParameterList>
 
