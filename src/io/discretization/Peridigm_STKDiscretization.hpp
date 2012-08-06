@@ -193,9 +193,6 @@ namespace PeridigmNS {
     //! Vector containing element connectivity in the initial hex/tet mesh
     std::map< int, std::vector<int> > exodusMeshElementConnectivity;
 
-    //! Map between block name (from Exodus file) and block number (Peridigm numbering)
-    std::map<std::string, int> blockNameToBlockNumberMap;
-
     //! Struct containing neighborhoods for owned nodes.
     Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData;
 

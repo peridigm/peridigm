@@ -410,17 +410,21 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
   double* tempBlockIDPtr;
   tempBlockID.ExtractView(&tempBlockIDPtr);
   std::map< std::string, std::vector<int> >::const_iterator it;
-  int blockNumber = 1;
   for(it = elementBlocks->begin() ; it != elementBlocks->end() ; it++){
     const std::string& blockName = it->first;
+
+    size_t loc = blockName.find_last_of('_');
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(loc == string::npos, "\n**** Parse error, invalid block name.\n");
+    stringstream blockIDSS(blockName.substr(loc+1, blockName.size()));
+    int blockID;
+    blockIDSS >> blockID;
+
     const std::vector<int>& elementIDs = it->second;
-    blockNameToBlockNumberMap[blockName] = blockNumber;
     for(unsigned int i=0 ; i<elementIDs.size() ; ++i){
       int globalID = elementIDs[i];
       int localID = tempOneDimensionalMap.LID(globalID);
-      tempBlockIDPtr[localID] = blockNumber;
+      tempBlockIDPtr[localID] = blockID;
     }
-    blockNumber++;
   }
 
   // \todo Remove backwards compatibility after next Trilinos release
