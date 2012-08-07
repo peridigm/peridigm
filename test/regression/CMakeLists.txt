@@ -25,6 +25,7 @@ add_test (Bar_TwoBlocks_TwoDifferentMaterial_QS_np3 python ./Bar_TwoBlocks_TwoDi
 add_test (Bar_TwoDisconnectedPieces_QS_np1 python ./Bar_TwoDisconnectedPieces_QS/np1/Bar.py)
 add_test (Bar_TwoDisconnectedPieces_QS_np2 python ./Bar_TwoDisconnectedPieces_QS/np2/Bar.py)
 add_test (Bar_TwoDisconnectedPieces_QS_np3 python ./Bar_TwoDisconnectedPieces_QS/np3/Bar.py)
+add_test (NodalVariableOutput_np1 python ./NodalVariableOutput/np1/NodalVariableOutput.py)
 
 add_custom_target( rtest
    COMMAND ctest

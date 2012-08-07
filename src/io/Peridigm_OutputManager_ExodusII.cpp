@@ -667,31 +667,33 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
     if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_var_names");
   }
 
-  // Write element truth table
-  std::vector<int> truthTableVec(blocks->size() * num_element_vars);
-  int truthTableIndex = 0;
-  for(blockIt = blocks->begin(); blockIt != blocks->end(); blockIt++){
-    for(Teuchos::ParameterList::ConstIterator outputVariableIt = outputVariables->begin(); outputVariableIt != outputVariables->end(); ++outputVariableIt){
-      const std::string& variableName = outputVariableIt->first;
-      std::map<string, Field_NS::FieldSpec>::const_iterator specIt = Field_NS::FieldSpecMap::Map.find(variableName);
-      const Field_NS::FieldSpec& spec = specIt->second;
-      if(spec.getRelation() == Field_ENUM::ELEMENT){
-        Field_ENUM::Step step = Field_ENUM::STEP_NONE;
-        if(spec.get_temporal() == Field_ENUM::TWO_STEP)
-          step = Field_ENUM::STEP_NP1;
-        int truthTableValue = 0;
-        if(blockIt->hasData(spec, step))
-          truthTableValue = 1;
-        // Global ID and processor number are special cases
-        if(spec == Field_NS::GID || spec == Field_NS::PROC_NUM)
-          truthTableValue = 1;
-        truthTableVec[truthTableIndex++] = truthTableValue;
+  // Write element truth table (only if at least one element variable if defined)
+  if (num_element_vars > 0) {
+    std::vector<int> truthTableVec(blocks->size() * num_element_vars);
+    int truthTableIndex = 0;
+    for(blockIt = blocks->begin(); blockIt != blocks->end(); blockIt++){
+      for(Teuchos::ParameterList::ConstIterator outputVariableIt = outputVariables->begin(); outputVariableIt != outputVariables->end(); ++outputVariableIt){
+        const std::string& variableName = outputVariableIt->first;
+        std::map<string, Field_NS::FieldSpec>::const_iterator specIt = Field_NS::FieldSpecMap::Map.find(variableName);
+        const Field_NS::FieldSpec& spec = specIt->second;
+        if(spec.getRelation() == Field_ENUM::ELEMENT){
+          Field_ENUM::Step step = Field_ENUM::STEP_NONE;
+          if(spec.get_temporal() == Field_ENUM::TWO_STEP)
+            step = Field_ENUM::STEP_NP1;
+          int truthTableValue = 0;
+          if(blockIt->hasData(spec, step))
+            truthTableValue = 1;
+          // Global ID and processor number are special cases
+          if(spec == Field_NS::GID || spec == Field_NS::PROC_NUM)
+            truthTableValue = 1;
+          truthTableVec[truthTableIndex++] = truthTableValue;
+        }
       }
     }
+    int *truthTable = &truthTableVec[0];
+    retval = ex_put_elem_var_tab (file_handle, blocks->size(), num_element_vars, truthTable);
+    if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_var_tab");
   }
-  int *truthTable = &truthTableVec[0];
-  retval = ex_put_elem_var_tab (file_handle, blocks->size(), num_element_vars, truthTable);
-  if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_var_tab");
 
   // Close file; re-open with call to write()
   retval = ex_update(file_handle);
