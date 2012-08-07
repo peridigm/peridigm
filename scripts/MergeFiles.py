@@ -80,4 +80,8 @@ if __name__ == "__main__":
       if return_code != 0:
         result = return_code
     
+      # If error print message to screen
+      if result != 0:
+        print "\n Error when merging files! Check .log file for error details.\n"
+
     sys.exit(result)
