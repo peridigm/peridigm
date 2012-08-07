@@ -1,0 +1,8 @@
+/*! \file
+ \brief Test case involving output of only nodal variables (no per-element or global variables)
+
+Notes: This test case is based upon the Compression_2x1x1 verification test, and outputs only nodal variables. 
+       The purpose of the test is to ensure that the code runs correctly even when no element variables are output.
+
+*/
+
