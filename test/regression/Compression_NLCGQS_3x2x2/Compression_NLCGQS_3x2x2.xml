@@ -74,25 +74,39 @@
     <ParameterList name="NOXQuasiStatic">
         <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
         <Parameter name="Number of Load Steps" type="int" value="20"/>
-        <Parameter name="Max Solver Iterations" type="int" value="50"/>
+        <Parameter name="Max Solver Iterations" type="int" value="100"/>
         <ParameterList name="Printing">
             <Parameter name="Output Precision" type="int" value="20"/>
             <Parameter name="Output Processor" type="int" value="0"/>
         </ParameterList>
         <ParameterList name="Line Search">
-            <Parameter name="Method" type="string" value="NonlinearCG"/>
+            <Parameter name="Method" type="string" value="More'-Thuente"/>
             <ParameterList name="More'-Thuente">
-                <Parameter name="Sufficient Decrease" type="double" value="1E-4"/>
-                <Parameter name="Curvature Condition" type="double" value=".1"/>
-                <Parameter name="Interval Width" type="double" value="1E-20"/>
-                <Parameter name="Minimum Step" type="double" value="1E-20"/>
+                <Parameter name="Sufficient Decrease Condition" type="string" value="Armijo-Goldstein"/>
+                <Parameter name="Sufficient Decrease" type="double" value="1E-04"/>
+                <Parameter name="Curvature Condition" type="double" value=".9999"/>
+                <Parameter name="Interval Width" type="double" value="1E-12"/>
+                <Parameter name="Minimum Step" type="double" value="1E-2"/>
                 <Parameter name="Maximum Step" type="double" value="1.0"/>
-                <Parameter name="Max Iters" type="int" value="1000"/>
-                <Parameter name="Default Step" type="double" value="1E-10"/>
+                <Parameter name="Max Iters" type="int" value="15"/>
+                <Parameter name="Default Step" type="double" value="1E-1"/>
+                <Parameter name="Recovery Step Type" type="string" value="Last Computed Step"/>
             </ParameterList>
         </ParameterList>
         <ParameterList name="Direction">
             <Parameter name="Method" type="string" value="NonlinearCG"/>
+            <ParameterList name="Newton">
+                <Parameter name="Forcing Term Method" type="string" value="Type 1"/>
+                <Parameter name="Forcing Term Initial Tolerance" type="double" value="1.0e-5"/>
+                <Parameter name="Forcing Term Minimum Tolerance" type="double" value="1.0e-9"/>
+                <Parameter name="Forcing Term Maximum Tolerance" type="double" value="1.0e-6"/>
+                <Parameter name="Forcing Term Alpha" type="double" value="1.5"/>
+                <Parameter name="Forcing Term Gamma" type="double" value="0.9"/>
+                <Parameter name="Rescue Bad Newton Solve" type="bool" value="1"/>
+                <ParameterList name="Linear Solver">
+                    <Parameter name="Tolerance" type="double" value="1e-15"/>
+                </ParameterList>
+            </ParameterList>
             <ParameterList name="Nonlinear CG">
                 <Parameter name="Restart Frequency" type="int" value="15"/>
                 <Parameter name="Precondition" type="string" value="On"/>
