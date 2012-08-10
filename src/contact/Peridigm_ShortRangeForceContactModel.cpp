@@ -168,12 +168,18 @@ PeridigmNS::ShortRangeForceContactModel::computeForce(const double dt,
                                                   neighborNormalForce[2]*neighborNormalForce[2]);
             
             // calculate the friction forces
-            double currentFrictionForce[3] = { -m_frictionCoefficient*normCurrentNormalForce*nodeCurrentVrel[0]/normCurrentVrel,
-                                               -m_frictionCoefficient*normCurrentNormalForce*nodeCurrentVrel[1]/normCurrentVrel,
-                                               -m_frictionCoefficient*normCurrentNormalForce*nodeCurrentVrel[2]/normCurrentVrel };
-            double neighborFrictionForce[3] = { -m_frictionCoefficient*normNeighborNormalForce*nodeNeighborVrel[0]/normNeighborVrel,
-                                                -m_frictionCoefficient*normNeighborNormalForce*nodeNeighborVrel[1]/normNeighborVrel,
-                                                -m_frictionCoefficient*normNeighborNormalForce*nodeNeighborVrel[2]/normNeighborVrel };
+            double currentFrictionForce[3] = {0,0,0};
+            double neighborFrictionForce[3] = {0,0,0};
+            if (normCurrentVrel != 0.0) {
+              currentFrictionForce[0] = -m_frictionCoefficient*normCurrentNormalForce*nodeCurrentVrel[0]/normCurrentVrel;
+              currentFrictionForce[1] = -m_frictionCoefficient*normCurrentNormalForce*nodeCurrentVrel[1]/normCurrentVrel;
+              currentFrictionForce[2] = -m_frictionCoefficient*normCurrentNormalForce*nodeCurrentVrel[2]/normCurrentVrel;
+            }
+            if (normNeighborVrel != 0.0) {
+              neighborFrictionForce[0] = -m_frictionCoefficient*normNeighborNormalForce*nodeNeighborVrel[0]/normNeighborVrel;
+              neighborFrictionForce[1] = -m_frictionCoefficient*normNeighborNormalForce*nodeNeighborVrel[1]/normNeighborVrel;
+              neighborFrictionForce[2] = -m_frictionCoefficient*normNeighborNormalForce*nodeNeighborVrel[2]/normNeighborVrel;
+            }
 
             // compute total contributions to force density
             contactForce[nodeID*3]       += currentNormalForce[0] + currentFrictionForce[0];
