@@ -434,6 +434,8 @@ void PeridigmNS::Peridigm::initializeContact() {
     for(Teuchos::ParameterList::ConstIterator it = contactModelParams.begin() ; it != contactModelParams.end() ; it++){
       // Get the parameters for a given contact model and add the horizon if necessary
       Teuchos::ParameterList& modelParams = contactModelParams.sublist(it->first);
+      if(!modelParams.isParameter("Friction Coefficient"))
+        modelParams.set("Friction Coefficient", 0.0);
       if(!modelParams.isParameter("Horizon"))
         modelParams.set("Horizon", horizon);
       contactModels[it->first] = contactModelFactory.create(modelParams) ;

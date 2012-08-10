@@ -56,7 +56,7 @@ namespace PeridigmNS {
   public:
 
 	//! Constructor.
-    ShortRangeForceContactModel(const Teuchos::ParameterList & params);
+        ShortRangeForceContactModel(const Teuchos::ParameterList & params);
 
 	//! Destructor.
 	virtual ~ShortRangeForceContactModel();
@@ -65,23 +65,24 @@ namespace PeridigmNS {
 	virtual string Name() const { return("Short-Range Force"); }
 
 
-    //! Returns a vector of field specs that specify the variables associated with the contact model
-    virtual Teuchos::RCP< std::vector<Field_NS::FieldSpec> > VariableSpecs() const
-    {
-      Teuchos::RCP< std::vector<Field_NS::FieldSpec> > variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
-      variableSpecs->push_back(Field_NS::VOLUME);
-      variableSpecs->push_back(Field_NS::CURCOORD3D);
-      variableSpecs->push_back(Field_NS::CONTACT_FORCE_DENSITY3D);
-      return variableSpecs;
-    }
+        //! Returns a vector of field specs that specify the variables associated with the contact model
+    	virtual Teuchos::RCP< std::vector<Field_NS::FieldSpec> > VariableSpecs() const
+    	{
+      	  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
+      	  variableSpecs->push_back(Field_NS::VOLUME);
+      	  variableSpecs->push_back(Field_NS::CURCOORD3D);
+          variableSpecs->push_back(Field_NS::VELOC3D);
+      	  variableSpecs->push_back(Field_NS::CONTACT_FORCE_DENSITY3D);
+      	  return variableSpecs;
+    	}
 
 	//! Evaluate the forces on the cells.
 	virtual void
 	computeForce(const double dt,
-				 const int numOwnedPoints,
-				 const int* ownedIDs,
-				 const int* contactNeighborhoodList,
-                 PeridigmNS::DataManager& dataManager) const;
+		     const int numOwnedPoints,
+		     const int* ownedIDs,
+		     const int* contactNeighborhoodList,
+                     PeridigmNS::DataManager& dataManager) const;
 
   protected:
 	
@@ -94,8 +95,9 @@ namespace PeridigmNS {
 
 	// model parameters
 	double m_contactRadius;
+	double m_frictionCoefficient;
 	double m_springConstant;
-    double m_horizon;
+        double m_horizon;
   };
 }
 

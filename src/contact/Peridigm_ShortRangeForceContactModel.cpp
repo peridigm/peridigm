@@ -52,6 +52,7 @@ PeridigmNS::ShortRangeForceContactModel::ShortRangeForceContactModel(const Teuch
   : ContactModel(params),
     m_contactRadius(0.0),
     m_springConstant(0.0),
+    m_frictionCoefficient(0.0),
     m_horizon(0.0)
 {
   //! \todo Add meaningful asserts on material properties.
@@ -61,6 +62,9 @@ PeridigmNS::ShortRangeForceContactModel::ShortRangeForceContactModel(const Teuch
   if(!params.isParameter("Spring Constant"))
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Short range force contact parameter \"Spring Constant\" not specified.");
   m_springConstant = params.get<double>("Spring Constant");
+  if(!params.isParameter("Friction Coefficient"))
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Short range force contact parameter \"Friction Coefficient\" not specified.");
+  m_frictionCoefficient = params.get<double>("Friction Coefficient");
   if(!params.isParameter("Horizon"))
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Short range force contact parameter \"Horizon\" not specified.");
   m_horizon = params.get<double>("Horizon");
@@ -80,9 +84,10 @@ PeridigmNS::ShortRangeForceContactModel::computeForce(const double dt,
   // Zero out the forces
   dataManager.getData(Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->PutScalar(0.0);
 
-  double *cellVolume, *y, *contactForce;
+  double *cellVolume, *y, *contactForce, *velocity;
   dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&cellVolume);
   dataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->ExtractView(&y);
+  dataManager.getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1)->ExtractView(&velocity);
   dataManager.getData(Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->ExtractView(&contactForce);
 
   int neighborhoodListIndex = 0;
@@ -93,6 +98,9 @@ PeridigmNS::ShortRangeForceContactModel::computeForce(const double dt,
       double nodeCurrentX[3] = { y[nodeID*3],
                                  y[nodeID*3+1],
                                  y[nodeID*3+2] };
+      double nodeCurrentV[3] = { velocity[nodeID*3],
+                                 velocity[nodeID*3+1],
+                                 velocity[nodeID*3+2] };
       double nodeVolume = cellVolume[nodeID];
       for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
         int neighborID = contactNeighborhoodList[neighborhoodListIndex++];
@@ -101,17 +109,89 @@ PeridigmNS::ShortRangeForceContactModel::computeForce(const double dt,
           distance(nodeCurrentX[0], nodeCurrentX[1], nodeCurrentX[2],
                    y[neighborID*3], y[neighborID*3+1], y[neighborID*3+2]);
         if(currentDistance < m_contactRadius){
-          double c = 9.0*m_springConstant/(3.1415*m_horizon*m_horizon*m_horizon*m_horizon);
+          double c = 9.0*m_springConstant/(3.1415*m_horizon*m_horizon*m_horizon*m_horizon);	// half value (of 18) due to force being applied to both nodes
           double temp = c*(m_contactRadius - currentDistance)/m_horizon;
           double neighborVolume = cellVolume[neighborID];
+          
+          if (m_frictionCoefficient != 0.0){
+            // calculate the perpendicular velocity of the current node wrt the vector between the nodes 
+            double l[3] = { y[neighborID*3] - nodeCurrentX[0], 
+                            y[neighborID*3+1] - nodeCurrentX[1], 
+                            y[neighborID*3+2] - nodeCurrentX[2] };
+            double normal[3] = { l[0]/currentDistance,
+                                 l[1]/currentDistance,
+                                 l[2]/currentDistance };
+            double currentDotNormal = nodeCurrentV[0]*normal[0] + 
+                                      nodeCurrentV[1]*normal[1] + 
+                                      nodeCurrentV[2]*normal[2];
+            double currentDotNeighbor = velocity[neighborID*3]*normal[0] + 
+                                        velocity[neighborID*3+1]*normal[1] + 
+                                        velocity[neighborID*3+2]*normal[2]; 
+            double nodeCurrentVperp[3] = { nodeCurrentV[0] - currentDotNormal*normal[0],
+                                           nodeCurrentV[1] - currentDotNormal*normal[1],
+                                           nodeCurrentV[2] - currentDotNormal*normal[2] };           
+            double nodeNeighborVperp[3] = { velocity[neighborID*3] - currentDotNormal*normal[0],
+                                            velocity[neighborID*3+1] - currentDotNormal*normal[1],
+                                            velocity[neighborID*3+2] - currentDotNormal*normal[2] };
 
-          // compute contributions to force density
+            // calculate frame of reference for the perpendicular velocities
+            double Vcm[3] = { 0.5*(nodeCurrentVperp[0] + nodeNeighborVperp[0]),
+                              0.5*(nodeCurrentVperp[1] + nodeNeighborVperp[1]),
+                              0.5*(nodeCurrentVperp[2] + nodeNeighborVperp[2]) };
+          
+            // calculate the relative velocity of the current node wrt the neighboring node and vice versa
+            double nodeCurrentVrel[3] = { nodeCurrentVperp[0] - Vcm[0],
+                                          nodeCurrentVperp[1] - Vcm[1],
+                                          nodeCurrentVperp[2] - Vcm[2] };
+            double nodeNeighborVrel[3] = { nodeNeighborVperp[0] - Vcm[0],
+                                           nodeNeighborVperp[1] - Vcm[1],
+                                           nodeNeighborVperp[2] - Vcm[2] };
+            double normCurrentVrel = sqrt(nodeCurrentVrel[0]*nodeCurrentVrel[0] + 
+                                          nodeCurrentVrel[1]*nodeCurrentVrel[1] + 
+                                          nodeCurrentVrel[2]*nodeCurrentVrel[2]); 
+            double normNeighborVrel = sqrt(nodeNeighborVrel[0]*nodeNeighborVrel[0] + 
+                                           nodeNeighborVrel[1]*nodeNeighborVrel[1] + 
+                                           nodeNeighborVrel[2]*nodeNeighborVrel[2]);         
+            
+            // calculate the normal forces
+            double currentNormalForce[3] = { -(temp*neighborVolume*(y[neighborID*3]   - nodeCurrentX[0])/currentDistance),
+                                             -(temp*neighborVolume*(y[neighborID*3+1] - nodeCurrentX[1])/currentDistance),
+                                             -(temp*neighborVolume*(y[neighborID*3+2] - nodeCurrentX[2])/currentDistance) };
+            double neighborNormalForce[3] = { (temp*nodeVolume*(y[neighborID*3]   - nodeCurrentX[0])/currentDistance),
+                                              (temp*nodeVolume*(y[neighborID*3+1] - nodeCurrentX[1])/currentDistance),
+                                              (temp*nodeVolume*(y[neighborID*3+2] - nodeCurrentX[2])/currentDistance) };
+            double normCurrentNormalForce = sqrt(currentNormalForce[0]*currentNormalForce[0] + 
+                                                 currentNormalForce[1]*currentNormalForce[1] + 
+                                                 currentNormalForce[2]*currentNormalForce[2]);
+            double normNeighborNormalForce = sqrt(neighborNormalForce[0]*neighborNormalForce[0] + 
+                                                  neighborNormalForce[1]*neighborNormalForce[1] + 
+                                                  neighborNormalForce[2]*neighborNormalForce[2]);
+            
+            // calculate the friction forces
+            double currentFrictionForce[3] = { -m_frictionCoefficient*normCurrentNormalForce*nodeCurrentVrel[0]/normCurrentVrel,
+                                               -m_frictionCoefficient*normCurrentNormalForce*nodeCurrentVrel[1]/normCurrentVrel,
+                                               -m_frictionCoefficient*normCurrentNormalForce*nodeCurrentVrel[2]/normCurrentVrel };
+            double neighborFrictionForce[3] = { -m_frictionCoefficient*normNeighborNormalForce*nodeNeighborVrel[0]/normNeighborVrel,
+                                                -m_frictionCoefficient*normNeighborNormalForce*nodeNeighborVrel[1]/normNeighborVrel,
+                                                -m_frictionCoefficient*normNeighborNormalForce*nodeNeighborVrel[2]/normNeighborVrel };
+
+            // compute total contributions to force density
+            contactForce[nodeID*3]       += currentNormalForce[0] + currentFrictionForce[0];
+            contactForce[nodeID*3+1]     += currentNormalForce[1] + currentFrictionForce[1];
+            contactForce[nodeID*3+2]     += currentNormalForce[2] + currentFrictionForce[2];
+            contactForce[neighborID*3]   += neighborNormalForce[0] + neighborFrictionForce[0];
+            contactForce[neighborID*3+1] += neighborNormalForce[1] + neighborFrictionForce[1];
+            contactForce[neighborID*3+2] += neighborNormalForce[2] + neighborFrictionForce[2];
+          }
+          else {          
+          // compute contributions to force density (Normal Force Only)
           contactForce[nodeID*3]       -= temp*neighborVolume*(y[neighborID*3]   - nodeCurrentX[0])/currentDistance;
           contactForce[nodeID*3+1]     -= temp*neighborVolume*(y[neighborID*3+1] - nodeCurrentX[1])/currentDistance;
           contactForce[nodeID*3+2]     -= temp*neighborVolume*(y[neighborID*3+2] - nodeCurrentX[2])/currentDistance;
           contactForce[neighborID*3]   += temp*nodeVolume*(y[neighborID*3]   - nodeCurrentX[0])/currentDistance;
           contactForce[neighborID*3+1] += temp*nodeVolume*(y[neighborID*3+1] - nodeCurrentX[1])/currentDistance;
           contactForce[neighborID*3+2] += temp*nodeVolume*(y[neighborID*3+2] - nodeCurrentX[2])/currentDistance;
+          }
         }
       }
     }
