@@ -156,10 +156,18 @@ int PeridigmNS::Compute_Strain_Energy::computeStrainEnergy( Teuchos::RCP< std::v
 	We = We + (1.0)*(e - dilatation_values[ID]*x/3)*vol2;
       }
       // Update the strain energy
-      if (storeLocal)
-        strain_energy_values[i] = vol*( 0.5*BM*dilatation_values[ID]*dilatation_values[ID] + 0.5*(15.0*SM/w_vol)*We);
-      else
-        SE = SE + vol*( 0.5*BM*dilatation_values[ID]*dilatation_values[ID] + 0.5*(15.0*SM/w_vol)*We);
+      if (numNeighbors == 0) {
+        if (storeLocal)
+          strain_energy_values[i] = 0.0;
+        else
+          SE = SE + 0.0;
+      }
+      else {
+        if (storeLocal)
+          strain_energy_values[i] = vol*( 0.5*BM*dilatation_values[ID]*dilatation_values[ID] + 0.5*(15.0*SM/w_vol)*We);
+        else
+          SE = SE + vol*( 0.5*BM*dilatation_values[ID]*dilatation_values[ID] + 0.5*(15.0*SM/w_vol)*We);
+      }
     }
 
     if (!storeLocal)
