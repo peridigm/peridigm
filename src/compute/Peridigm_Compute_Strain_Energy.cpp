@@ -153,7 +153,9 @@ int PeridigmNS::Compute_Strain_Energy::computeStrainEnergy( Teuchos::RCP< std::v
         double e = y-x;
         // \todo Generalize for different influence functions
         // Update the local strain energy density
-	We = We + (1.0)*(e - dilatation_values[ID]*x/3)*vol2;
+        double e_d = e - dilatation_values[ID]*x/3;
+        // 1.0 is place holder for influence function
+	We = We + (1.0)*e_d*e_d*vol2;		
       }
       // Update the strain energy
       if (numNeighbors == 0) {
