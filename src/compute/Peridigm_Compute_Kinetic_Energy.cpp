@@ -87,7 +87,8 @@ int PeridigmNS::Compute_Kinetic_Energy::computeKineticEnergy( Teuchos::RCP< std:
 
 		velocity              = dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1);
 		volume                = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
-		kinetic_energy        = dataManager->getData(Field_NS::KINETIC_ENERGY, Field_ENUM::STEP_NP1);
+		if (storeLocal)
+                	kinetic_energy = dataManager->getData(Field_NS::KINETIC_ENERGY, Field_ENUM::STEP_NP1);
 		
 		// Sanity check
 		if (velocity->Map().NumMyElements() != volume->Map().NumMyElements())
@@ -99,8 +100,10 @@ int PeridigmNS::Compute_Kinetic_Energy::computeKineticEnergy( Teuchos::RCP< std:
 		// Collect values
 		double *volume_values = volume->Values();
 		double *velocity_values = velocity->Values();
-		double *kinetic_energy_values = kinetic_energy->Values();
-	
+		double *kinetic_energy_values;
+	        if (storeLocal)
+                	kinetic_energy_values = kinetic_energy->Values();
+                 
 		// Get the material properties 
 		double density  = blockIt->getMaterialModel()->Density();
 		//double SM = blockIt->getMaterialModel()->ShearModulus();

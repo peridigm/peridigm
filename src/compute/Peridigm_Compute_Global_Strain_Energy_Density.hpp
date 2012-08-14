@@ -48,7 +48,7 @@
 
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Strain_Energy_Density,Compute_Global_Strain_Energy_Density,peridigm)
+ComputeClass(Global_Strain_Energy_Density,Compute_Global_Strain_Energy_Density,peridigm)
 
 #else
 

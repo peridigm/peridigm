@@ -90,7 +90,8 @@ int PeridigmNS::Compute_Strain_Energy::computeStrainEnergy( Teuchos::RCP< std::v
     coord                 = dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1);
     w_volume              = dataManager->getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE);
     dilatation            = dataManager->getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1);
-    strain_energy         = dataManager->getData(Field_NS::STRAIN_ENERGY, Field_ENUM::STEP_NP1);
+    if (storeLocal)
+      strain_energy = dataManager->getData(Field_NS::STRAIN_ENERGY, Field_ENUM::STEP_NP1);
 	
     // Sanity check
     if (ref->Map().NumMyElements() != volume->Map().NumMyElements() || coord->Map().NumMyElements() != ref->Map().NumMyElements())
@@ -105,8 +106,10 @@ int PeridigmNS::Compute_Strain_Energy::computeStrainEnergy( Teuchos::RCP< std::v
     double *coord_values = coord->Values();
     double *w_volume_values = w_volume->Values();
     double *dilatation_values = dilatation->Values();
-    double *strain_energy_values  = strain_energy->Values();
-	
+    double *strain_energy_values;
+    if (storeLocal)
+      strain_energy_values  = strain_energy->Values();  
+ 	
     // Get the material properties 
     double SM = blockIt->getMaterialModel()->ShearModulus();
     double BM = blockIt->getMaterialModel()->BulkModulus();	

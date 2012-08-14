@@ -48,7 +48,7 @@
 
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Kinetic_Energy,Compute_Global_Kinetic_Energy,peridigm)
+ComputeClass(Global_Kinetic_Energy,Compute_Global_Kinetic_Energy,peridigm)
 
 #else
 
