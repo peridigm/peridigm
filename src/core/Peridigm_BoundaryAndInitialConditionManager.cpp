@@ -259,6 +259,41 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_SetDisplac
   setVectorValues(timeCurrent, timePrevious, x, vec, setIncrement, multiplier);
 }
 
+void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_ComputeReactions(Teuchos::RCP<const Epetra_Vector> force,
+                                                                                       Teuchos::RCP<Epetra_Vector> reaction)
+{
+  reaction->PutScalar(0.0);
+  const Epetra_BlockMap& oneDimensionalMap = force->Map();
+
+  // loop over kinematic boundary conditions
+  Teuchos::ParameterList::ConstIterator it;
+  for(it = params.begin() ; it != params.end() ; it++){
+    const string & name = it->first;
+    size_t position = name.find("Prescribed Displacement");
+    if(position != string::npos){
+      Teuchos::ParameterList & boundaryConditionParams = Teuchos::getValue<Teuchos::ParameterList>(it->second);
+      string nodeSet = boundaryConditionParams.get<string>("Node Set");
+      string type = boundaryConditionParams.get<string>("Type");
+      string coordinate = boundaryConditionParams.get<string>("Coordinate");
+
+      int coord = 0;
+      if(coordinate == "y" || coordinate == "Y")
+        coord = 1;
+      if(coordinate == "z" || coordinate == "Z")
+        coord = 2;
+
+      // apply kinematic boundary conditions to locally-owned nodes
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
+      vector<int> & nodeList = (*nodeSets)[nodeSet];
+      for(unsigned int i=0 ; i<nodeList.size() ; i++){
+        int localNodeID = oneDimensionalMap.LID(nodeList[i]);
+        if(!force.is_null() && localNodeID != -1)
+          (*reaction)[localNodeID + coord] = (*force)[localNodeID + coord];
+      }
+    }
+  }
+}
+
 void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZeros(Teuchos::RCP<Epetra_Vector> vec)
 {
   const Epetra_BlockMap& oneDimensionalMap = vec->Map();

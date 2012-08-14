@@ -1316,6 +1316,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
   // with the Epetra_BlockMap used for the mothership multivector.
   Teuchos::RCP<Epetra_Vector> residual = Teuchos::rcp(new Epetra_Vector(tangent->Map()));
   Teuchos::RCP<Epetra_Vector> lhs = Teuchos::rcp(new Epetra_Vector(tangent->Map()));
+  Teuchos::RCP<Epetra_Vector> reaction = Teuchos::rcp(new Epetra_Vector(force->Map()));
 
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   workset->timeStep = timeStep;
@@ -1326,10 +1327,17 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
   double timeFinal = solverParams->get("Final Time", 1.0);
   timeCurrent = timeInitial;
   int numLoadSteps = implicitParams->get("Number of Load Steps", 10);
-  double absoluteTolerance = implicitParams->get("Absolute Tolerance", 1.0e-6);
   int maxSolverIterations = implicitParams->get("Maximum Solver Iterations", 10);
   double dampedNewtonDiagonalScaleFactor = implicitParams->get("Damped Newton Diagonal Scale Factor", 1.0001);
   double dampedNewtonDiagonalShiftFactor = implicitParams->get("Damped Newton Diagonal Shift Factor", 0.00001);
+
+  // Determine tolerance
+  double tolerance = implicitParams->get("Relative Tolerance", 1.0e-6);
+  bool useAbsoluteTolerance = false;
+  if(implicitParams->isParameter("Absolute Tolerance")){
+    useAbsoluteTolerance = true;
+    tolerance = implicitParams->get<double>("Absolute Tolerance");
+  }
 
   // Pointer index into sub-vectors for use with BLAS
   double *xptr, *uptr, *yptr, *vptr, *aptr;
@@ -1412,12 +1420,6 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
     timeCurrent = timePrevious + timeIncrement;
     *timeStep = timeIncrement;
 
-    if(loadStepReductionFactor == 0 && peridigmComm->MyPID() == 0)
-      cout << "Load step " << step << ", current time = " << timePrevious << ", time increment = " << timeIncrement << endl;
-    else if(peridigmComm->MyPID() == 0)
-      cout << "Load step " << step << ", current time = " << timePrevious << ", " << timeCurrent << ", time increment = " << timeIncrement << 
-        " (nominal step reduced by a factor of " << pow(2.0, loadStepReductionFactor) << ")" << endl;
-
     // Update nodal positions for nodes with kinematic B.C.
     deltaU->PutScalar(0.0);
     boundaryAndInitialConditionManager->applyKinematicBC_SetDisplacementIncrement(timeCurrent, timePrevious, x, deltaU);
@@ -1432,12 +1434,31 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
     // compute the residual
     double residualNorm = computeQuasiStaticResidual(residual);
 
+    double toleranceMultiplier = 1.0;
+    if(!useAbsoluteTolerance){
+      // compute the vector of reactions, i.e., the forces corresponding to degrees of freedom for which kinematic B.C. are applied
+      boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(force, reaction);
+      // convert force density to force
+      for(int i=0 ; i<reaction->MyLength() ; ++i)
+        (*reaction)[i] *= (*volume)[i/3];
+      double reactionNorm2;
+      reaction->Norm2(&reactionNorm2);
+      toleranceMultiplier = reactionNorm2;
+    }
+
+    if(loadStepReductionFactor == 0 && peridigmComm->MyPID() == 0)
+      cout << "Load step " << step << ", current time = " << timePrevious << ", time increment = " << timeIncrement <<
+        ", convergence criterion = " << tolerance*toleranceMultiplier << endl;
+    else if(peridigmComm->MyPID() == 0)
+      cout << "Load step " << step << ", current time = " << timePrevious << ", " << timeCurrent << ", time increment = " << timeIncrement << 
+        ", convergence criterion = " << tolerance*toleranceMultiplier << " (nominal step reduced by a factor of " << pow(2.0, loadStepReductionFactor) << ")" << endl;
+
     int solverIteration = 1;
     bool dampedNewton = false;
     bool usePreconditioner = true;
     int numPureNewtonSteps = 8;
     int dampedNewtonNumStepsBetweenTangentUpdates = 8;
-    while(residualNorm > absoluteTolerance && solverIteration <= maxSolverIterations){
+    while(residualNorm > tolerance*toleranceMultiplier && solverIteration <= maxSolverIterations){
 
       if(peridigmComm->MyPID() == 0)
         cout << "  residual = " << residualNorm << endl;
@@ -1529,7 +1550,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
     // is within a reasonable tolerance, then just accept the solution and forge ahead.
     // If not, abort the analysis.
     if(reduceLoadStep && loadStepReductionFactor >= maxLoadStepReductionFactor){
-      if(residualNorm < 100.0*absoluteTolerance){
+      if(residualNorm < 100.0*tolerance*toleranceMultiplier){
         reduceLoadStep = false;
         if(peridigmComm->MyPID() == 0)
           cout << "\nWarning:  Maximum allowable load step reductions has been reached, accepting current solution and progressing to next load step...\n" << endl;

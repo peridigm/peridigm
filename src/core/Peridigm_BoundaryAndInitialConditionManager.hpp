@@ -139,6 +139,9 @@ namespace PeridigmNS {
                                                    Teuchos::RCP<const Epetra_Vector> x,
                                                    Teuchos::RCP<Epetra_Vector> vec);
 
+    //! Copies entries corresponding to kinematic boundary contitions into the vector of reaction forces.
+    void applyKinematicBC_ComputeReactions(Teuchos::RCP<const Epetra_Vector> force, Teuchos::RCP<Epetra_Vector> reaction);
+
     //! Set rows corresponding to kinematic boundary conditions to zero.
     void applyKinematicBC_InsertZeros(Teuchos::RCP<Epetra_Vector> vec);
 
