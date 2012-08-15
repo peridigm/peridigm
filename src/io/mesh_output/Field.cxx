@@ -44,6 +44,7 @@
 //@HEADER
 
 #include "Field.h"
+#include <fstream>
 
 namespace Field_NS {
 
