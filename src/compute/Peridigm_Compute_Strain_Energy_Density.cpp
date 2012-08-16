@@ -93,7 +93,8 @@ int PeridigmNS::Compute_Strain_Energy_Density::computeStrainEnergyDensity( Teuch
 		coord                 = dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1);
 		w_volume              = dataManager->getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE);
 		dilatation            = dataManager->getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1);
-		strain_energy_density = dataManager->getData(Field_NS::STRAIN_ENERGY_DENSITY, Field_ENUM::STEP_NP1);
+                if (storeLocal)
+                	strain_energy_density = dataManager->getData(Field_NS::STRAIN_ENERGY_DENSITY, Field_ENUM::STEP_NP1);
 	
 		// Sanity check
 		if (coord->Map().NumMyElements() != volume->Map().NumMyElements() || volume->Map().NumMyElements() != ref->Map().NumMyElements())
@@ -108,7 +109,9 @@ int PeridigmNS::Compute_Strain_Energy_Density::computeStrainEnergyDensity( Teuch
 		double *coord_values = coord->Values();
 		double *w_volume_values = w_volume->Values();
 		double *dilatation_values = dilatation->Values();
-		double *strain_energy_density_values  = strain_energy_density->Values();
+		double *strain_energy_density_values;
+		if (storeLocal)
+			strain_energy_density_values = strain_energy_density->Values();
 	
 		// Get the material properties 
 		double SM = blockIt->getMaterialModel()->ShearModulus();
@@ -156,13 +159,23 @@ int PeridigmNS::Compute_Strain_Energy_Density::computeStrainEnergyDensity( Teuch
 				double e = y-x;
 				// \todo Generalize for different influence functions
 				// Update the local strain energy density
-				We = We + (1.0)*(e - dilatation_values[ID]*x/3)*vol2;
+				double e_d = e - dilatation_values[ID]*x/3;
+				// 1.0 is place holder fro influence function
+				We = We + (1.0)*e_d*e_d*vol2;
 			}
 			// Update the strain energy density                
+			if (numNeighbors == 0) {
+        			if (storeLocal)
+          				strain_energy_density_values[i] = 0.0;
+        			else
+          				W = W + 0.0;
+      			}
+			else {	
 			if (storeLocal)
                                 strain_energy_density_values[i] = 0.5*BM*dilatation_values[ID]*dilatation_values[ID] + 0.5*(15.0*SM/w_vol)*We;
 			else
-				W = W + 0.5*BM*dilatation_values[ID]*dilatation_values[ID] + 0.5*(15.0*SM/w_vol)*We;		
+				W = W + 0.5*BM*dilatation_values[ID]*dilatation_values[ID] + 0.5*(15.0*SM/w_vol)*We;
+			}
 		}
 		
 		if (!storeLocal)

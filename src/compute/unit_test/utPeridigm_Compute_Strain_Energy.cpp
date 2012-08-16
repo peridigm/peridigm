@@ -142,7 +142,7 @@ void FourPointTest()
   // Get the neighborhood structure
   const int numOwnedPoints = (neighborhoodData.NumOwnedPoints());
 
-  // Manufacture velocity data
+  // Manufacture displacement data
   double *ref_values = ref->Values();
   double *coords_values = coords->Values();
   double *dilatation_values = dilatation->Values();
@@ -151,10 +151,16 @@ void FourPointTest()
   int numTotalElements = volume->Map().NumMyElements();
   for (int i=0;i<numTotalElements;i++) {
     int ID = myGIDs[i];
-    coords_values[3*i] = ref_values[3*i] + 3.0*ID;
-    coords_values[3*i+1] = ref_values[3*i+1] + 3.0*ID+1.0;
-    coords_values[3*i+2] = ref_values[3*i+2] + 3.0*ID+2.0;
-    dilatation_values[i] = 9.369;
+    if (ID == 0)
+      dilatation_values[i] = 4.3286e-2;
+    else if (ID == 1) {
+      coords_values[3*i+1] = ref_values[3*i+1] + 1.0;
+      dilatation_values[i] = 0.310;
+    }
+    else if (ID == 2)
+      dilatation_values[i] = 0.101;
+    else if (ID == 3)
+      dilatation_values[i] = 4.628571e-2;
   }
 
   // Get the blocks
@@ -167,11 +173,19 @@ void FourPointTest()
   double *volume_values = volume->Values();
   double *strain_energy_values  = strain_energy->Values();
   double globalSE = blocks->begin()->getScalarData(Field_NS::GLOBAL_STRAIN_ENERGY);
-  BOOST_CHECK_CLOSE(globalSE, 4.0*8.559e12, 0.01);	// Check global scalar value
+  BOOST_CHECK_CLOSE(globalSE, 2.289723e10, 0.3);	// Check global scalar value
   for (int i=0;i<numElements;i++)
     BOOST_CHECK_CLOSE(volume_values[i], 1.5, 1.0e-15);
   for (int i=0;i<numElements;i++) {
-    BOOST_CHECK_CLOSE(strain_energy_values[i],   8.559e12, 0.01);
+    int ID = myGIDs[i];
+    if (ID == 0)
+      BOOST_CHECK_CLOSE(strain_energy_values[i],   2.5575e9, 0.3);
+    else if (ID == 1)
+      BOOST_CHECK_CLOSE(strain_energy_values[i],   1.3641e10, 0.3);
+    else if (ID == 2)
+      BOOST_CHECK_CLOSE(strain_energy_values[i],   5.9676e9, 0.3);
+    else if (ID == 3)
+      BOOST_CHECK_CLOSE(strain_energy_values[i],   7.3108e8, 0.3);
   }
 }
 
