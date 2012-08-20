@@ -75,12 +75,13 @@
         <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
         <Parameter name="Number of Load Steps" type="int" value="20"/>
         <Parameter name="Max Solver Iterations" type="int" value="100"/>
+        <Parameter name="Relative Tolerance" type="double" value="1e-12"/>
         <ParameterList name="Printing">
             <Parameter name="Output Precision" type="int" value="20"/>
             <Parameter name="Output Processor" type="int" value="0"/>
         </ParameterList>
         <ParameterList name="Line Search">
-            <Parameter name="Method" type="string" value="More'-Thuente"/>
+            <Parameter name="Method" type="string" value="NonlinearCG"/>
             <ParameterList name="More'-Thuente">
                 <Parameter name="Sufficient Decrease Condition" type="string" value="Armijo-Goldstein"/>
                 <Parameter name="Sufficient Decrease" type="double" value="1E-04"/>
