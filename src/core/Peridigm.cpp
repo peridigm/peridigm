@@ -16,7 +16,7 @@
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are
-// met:
+// met
 //
 // 1. Redistributions of source code must retain the above copyright
 // notice, this list of conditions and the following disclaimer.
@@ -981,6 +981,15 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
   timeCurrent = timeInitial;
   int numLoadSteps = implicitParams->get("Number of Load Steps", 10);
   int maxnumiterations = implicitParams->get("Max Solver Iterations", 20);
+  
+    // Determine tolerance
+  double tolerance = implicitParams->get("Relative Tolerance", 1.0e-6);
+  bool useAbsoluteTolerance = false;
+  if(implicitParams->isParameter("Absolute Tolerance")){
+    useAbsoluteTolerance = true;
+    tolerance = implicitParams->get<double>("Absolute Tolerance");
+  }
+
 
   // Create a parameter list for the nonlinear solver
   Teuchos::RCP<Teuchos::ParameterList> nlParams = Teuchos::rcp(new Teuchos::ParameterList);
@@ -1210,10 +1219,6 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
     timeCurrent = timePrevious + timeIncrement;
     *timeStep = timeIncrement;
     
-    // Print the load step to screen
-    if(peridigmComm->MyPID() == 0)
-      cout << "Load step " << step << ", current time = " << timePrevious << ", time increment = " << timeIncrement << endl;
-
     // Update nodal positions for nodes with kinematic B.C.
     soln->PutScalar(0.0);
 
@@ -1224,10 +1229,32 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
     // vector, apply the B.C. to deltaU, and then copy the values back to soln.
     deltaU->PutScalar(0.0);
     for(int i=0 ; i<deltaU->MyLength() ; ++i)
-      (*deltaU)[i] = (*soln)[i];
+        (*deltaU)[i] = (*soln)[i];
     boundaryAndInitialConditionManager->applyKinematicBC_SetDisplacementIncrement(timeCurrent, timePrevious, x, deltaU);
     for(int i=0 ; i<deltaU->MyLength() ; ++i)
-      (*soln)[i] = (*deltaU)[i];
+        (*soln)[i] = (*deltaU)[i];
+
+    double residualNorm;
+    double toleranceMultiplier = 1.0;
+    if(!useAbsoluteTolerance){
+        // compute the vector of reactions, i.e., the forces corresponding to degrees of freedom for which kinematic B.C. are applied
+        Teuchos::RCP<Epetra_Vector> residual = Teuchos::rcp(new Epetra_Vector(tangent->Map()));
+        Teuchos::RCP<Epetra_Vector> reaction = Teuchos::rcp(new Epetra_Vector(force->Map()));
+        residualNorm = computeQuasiStaticResidual(residual);
+        boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(force, reaction);
+        // convert force density to force
+        for(int i=0 ; i<reaction->MyLength() ; ++i)
+            (*reaction)[i] *= (*volume)[i/3];
+        double reactionNorm2;
+        reaction->Norm2(&reactionNorm2);
+        toleranceMultiplier = reactionNorm2;
+        residualTolerance = tolerance*toleranceMultiplier;
+    }
+
+    // Print the load step to screen
+    if(peridigmComm->MyPID() == 0)
+        cout << "Load step " << step << ", current time = " << timePrevious << ", " << timeCurrent << ", time increment = " << timeIncrement << 
+            ", convergence criterion = " << tolerance*toleranceMultiplier << endl;
 
     // Construct the NOX linear system
     Teuchos::RCP<NOX::Epetra::Interface::Required> noxInterfaceRequired = Teuchos::RCP<NOX::Epetra::Interface::Required>(this, false);
@@ -1235,15 +1262,15 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
     Teuchos::RCP<Epetra_RowMatrix> noxJacobian = getJacobian();
     const NOX::Epetra::Vector& noxCloneVector = *soln;
     Teuchos::RCP<NOX::Epetra::LinearSystemAztecOO> linSys = 
-    Teuchos::rcp(new NOX::Epetra::LinearSystemAztecOO(printParams, lsParams, 
-                               noxInterfaceRequired, 
-                               noxInterfaceJacobian, 
-                               noxJacobian, noxCloneVector));
+        Teuchos::rcp(new NOX::Epetra::LinearSystemAztecOO(printParams, lsParams, 
+                    noxInterfaceRequired, 
+                    noxInterfaceJacobian, 
+                    noxJacobian, noxCloneVector));
 
     //Create the Group
     NOX::Epetra::Vector initialGuess(soln, NOX::Epetra::Vector::CreateView);
     Teuchos::RCP<NOX::Epetra::Group> grpPtr = Teuchos::rcp(new NOX::Epetra::Group(printParams, noxInterfaceRequired, initialGuess, linSys));
-    
+
     // Create the convergence tests
     Teuchos::RCP<NOX::StatusTest::NormF>absresid = Teuchos::rcp(new NOX::StatusTest::NormF(residualTolerance));
     Teuchos::RCP<NOX::StatusTest::MaxIters>maxiters = Teuchos::rcp(new NOX::StatusTest::MaxIters(maxnumiterations));
