@@ -930,7 +930,7 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
     int err = tangent->GlobalAssemble();
     TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::evaluateNOX(), GlobalAssemble() returned nonzero error code.\n");
     PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
-    boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndPutOnesOnDiagonal(tangent);
+    boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndSetDiagonal(tangent);
     //tangent->Scale(-1.0);
   }
 
@@ -1515,7 +1515,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
           TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::executeQuasiStatic(), GlobalAssemble() returned nonzero error code.\n");
           PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
           boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
-          boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndPutOnesOnDiagonal(tangent);
+          boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndSetDiagonal(tangent);
           tangent->Scale(-1.0);
           if(dampedNewton)
             quasiStaticsDampTangent(dampedNewtonDiagonalScaleFactor, dampedNewtonDiagonalShiftFactor);
@@ -1907,7 +1907,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
       computeImplicitJacobian(beta);
 
       // Modify Jacobian for kinematic BC
-      boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndPutOnesOnDiagonal(tangent);
+      boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndSetDiagonal(tangent);
 
       // Want to solve J*deltaU = -residual
       residual->Scale(-1.0);

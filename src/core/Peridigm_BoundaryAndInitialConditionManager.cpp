@@ -330,8 +330,16 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
   }
 }
 
-void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZerosAndPutOnesOnDiagonal(Teuchos::RCP<Epetra_FECrsMatrix> mat)
+void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZerosAndSetDiagonal(Teuchos::RCP<Epetra_FECrsMatrix> mat)
 {
+  // determine the L2 norm of the diagonal
+  // this will be used to scale the diagonal entry for kinematic B.C.s
+  Epetra_Vector diagonal(mat->Map());
+  mat->ExtractDiagonalCopy(diagonal);
+  double diagonalNorm2;
+  diagonal.Norm2(&diagonalNorm2);
+  double diagonalEntry = -1.0*diagonalNorm2;
+
   // create data structures for inserting ones and zeros into jacobian
   vector<double> jacobianRow(mat->NumMyCols(), 0.0);
   vector<int> jacobianIndices(mat->NumMyCols());
@@ -374,7 +382,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
 
         // zero out the row and put a 1.0 on the diagonal
         if(localRowID != -1){
-          jacobianRow[localColID] = 1.0;
+          jacobianRow[localColID] = diagonalEntry;
           // From Epetra_CrsMatrix documentation:
           // If a value is not already present for the specified location in the matrix, the
           // input value will be ignored and a positive warning code will be returned.

@@ -146,7 +146,7 @@ namespace PeridigmNS {
     void applyKinematicBC_InsertZeros(Teuchos::RCP<Epetra_Vector> vec);
 
     //! Set rows and columns corresponding to kinematic boundary conditions to zero and put 1.0 on the diagonal.
-    void applyKinematicBC_InsertZerosAndPutOnesOnDiagonal(Teuchos::RCP<Epetra_FECrsMatrix> mat);
+    void applyKinematicBC_InsertZerosAndSetDiagonal(Teuchos::RCP<Epetra_FECrsMatrix> mat);
 
   protected:
 
