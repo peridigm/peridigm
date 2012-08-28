@@ -111,13 +111,6 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   // Seed random number generator for reproducable results
   seed_rand_num( 42 );
 
-  // Instantiate material models
-  instantiateMaterials();
-
-  // Instantiate damage models
-  if(params->isSublist("Damage Models"))
-     instantiateDamageModels();
-
   // Read mesh from disk or generate using geometric primatives.
   Teuchos::RCP<Teuchos::ParameterList> discParams =
     Teuchos::rcpFromRef( peridigmParams->sublist("Discretization", true) );
@@ -133,6 +126,12 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   Teuchos::RCP<AbstractDiscretization> peridigmDisc = discFactory.create(peridigmComm);
   initializeDiscretization(peridigmDisc);
 
+  // If the user did not provide a finite-difference probe length, use a fraction of the minimum element radius
+  double minElementRadius = peridigmDisc->getMinElementRadius();
+  Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver");
+  if(!solverParams->isParameter("Finite Difference Probe Length"))
+    solverParams->set("Finite Difference Probe Length", 1.0e-6*minElementRadius);
+
   // Load node sets from input deck and/or input mesh file into nodeSets container
   Teuchos::RCP<Teuchos::ParameterList> bcParams =
     Teuchos::rcpFromRef( peridigmParams->sublist("Boundary Conditions") );
@@ -142,6 +141,13 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
     Teuchos::RCP<BoundaryAndInitialConditionManager>(new BoundaryAndInitialConditionManager(*bcParams));
 
   boundaryAndInitialConditionManager->initialize(peridigmDisc);
+
+  // Instantiate material models
+  instantiateMaterials();
+
+  // Instantiate damage models
+  if(params->isSublist("Damage Models"))
+     instantiateDamageModels();
 
   // The PeridigmNS::DataManager contained in each PeridigmNS::Block allocates space for field data.
   // Keep track of the data storage required by Peridigm and the ComputeManager and pass the associated
@@ -286,13 +292,16 @@ void PeridigmNS::Peridigm::instantiateMaterials() {
   Teuchos::ParameterList& materialParams = peridigmParams->sublist("Materials", true);
   MaterialFactory materialFactory;
 
-  // The horizon will be added to the material model parameters if it is not already present
+  // The horizon and the finite-difference probe length will be added to the material model parameters if not already present
   double horizon = peridigmParams->sublist("Discretization", true).get<double>("Horizon");
+  double finiteDifferenceProbeLength = peridigmParams->sublist("Solver", true).get<double>("Finite Difference Probe Length");
   for(Teuchos::ParameterList::ConstIterator it = materialParams.begin() ; it != materialParams.end() ; it++){
     // Get the material parameters for a given material and add the horizon if necessary
     Teuchos::ParameterList& matParams = materialParams.sublist(it->first);
     if(!matParams.isParameter("Horizon"))
        matParams.set("Horizon", horizon);
+    if(!matParams.isParameter("Finite Difference Probe Length"))
+      matParams.set("Finite Difference Probe Length", finiteDifferenceProbeLength);
     materialModels[it->first] = materialFactory.create(matParams) ;
   }
 
@@ -1349,6 +1358,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
   workset->timeStep = timeStep;
 
   Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
+  bool solverVerbose = solverParams->get("Verbose", false);
   Teuchos::RCP<Teuchos::ParameterList> implicitParams = sublist(solverParams, "QuasiStatic", true);
   double timeInitial = solverParams->get("Initial Time", 0.0);
   double timeFinal = solverParams->get("Final Time", 1.0);
@@ -1415,7 +1425,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
 
   int step = 0;
   int loadStepReductionFactor = 0;
-  int maxLoadStepReductionFactor = 2;
+  int maxLoadStepReductionFactor = 0;
   bool reduceLoadStep = false;
   int numRemainingSubsteps = 1;
   Belos::ReturnType isConverged;
@@ -1484,12 +1494,23 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
     bool dampedNewton = false;
     bool usePreconditioner = true;
     int numPureNewtonSteps = 8;
+    int numPreconditionerSteps = 24;
     int dampedNewtonNumStepsBetweenTangentUpdates = 8;
+    double alpha = 0.0;
     while(residualNorm > tolerance*toleranceMultiplier && solverIteration <= maxSolverIterations){
 
-      if(peridigmComm->MyPID() == 0)
-        cout << "  residual = " << residualNorm << endl;
-      
+      if(!solverVerbose){
+	if(peridigmComm->MyPID() == 0)
+	  cout << "  iteration " << solverIteration << ": residual = " << residualNorm << endl;
+      }
+      else{
+	double residualL2, residualInf;
+	residual->Norm2(&residualL2);
+	residual->NormInf(&residualInf);
+	if(peridigmComm->MyPID() == 0)
+	  cout << "  iteration " << solverIteration << ": residual = " << residualNorm << ", residual L2 = " << residualL2 << ", residual inf = " << residualInf << ", alpha = " << alpha << endl;
+      }
+
       // On the first iteration, use a predictor based on the velocity from the previous load step
       if(solverIteration == 1 && step > 1){
         for(int i=0 ; i<lhs->MyLength() ; ++i)
@@ -1504,6 +1525,13 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
           if(peridigmComm->MyPID() == 0)
             cout << "  --switching nonlinear solver to damped Newton--" << endl;
           dampedNewton = true;
+        }
+
+        // If we reach the specified maximum number of iterations of the nonlinear solver, disable the preconditioner
+        if(solverIteration > numPreconditionerSteps && usePreconditioner){
+          if(peridigmComm->MyPID() == 0)
+            cout << "  --disabling preconditioner--" << endl;
+          usePreconditioner = false;
         }
 
         // Compute the tangent
@@ -1521,7 +1549,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
             quasiStaticsDampTangent(dampedNewtonDiagonalScaleFactor, dampedNewtonDiagonalShiftFactor);
           if(usePreconditioner)
             quasiStaticsSetPreconditioner(linearProblem);
-        }
+	}
 	
         // Solve linear system
         isConverged = quasiStaticsSolveSystem(residual, lhs, linearProblem, belosSolver);
@@ -1545,7 +1573,9 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
         // The solver should have returned zeros, but there may be small errors.
         boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(lhs);
 
-        double alpha = quasiStaticsLineSearch(residual, lhs);
+	PeridigmNS::Timer::self().startTimer("Line Search");
+        alpha = quasiStaticsLineSearch(residual, lhs);
+	PeridigmNS::Timer::self().stopTimer("Line Search");
 
         // Apply increment to nodal positions
         for(int i=0 ; i<y->MyLength() ; ++i)
@@ -1590,8 +1620,18 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
     }
 
     if(!reduceLoadStep){
-      if(peridigmComm->MyPID() == 0)
-        cout << "  residual = " << residualNorm << endl;      
+
+      if(!solverVerbose){
+	if(peridigmComm->MyPID() == 0)
+	  cout << "  iteration " << solverIteration << ": residual = " << residualNorm << endl;
+      }
+      else{
+	double residualL2, residualInf;
+	residual->Norm2(&residualL2);
+	residual->NormInf(&residualInf);
+	if(peridigmComm->MyPID() == 0)
+	  cout << "  iteration " << solverIteration << ": residual = " << residualNorm << ", residual L2 = " << residualL2 << ", residual inf = " << residualInf << ", alpha = " << alpha << endl;
+      }
 
       // Store the velocity
       for(int i=0 ; i<v->MyLength() ; ++i)
@@ -1727,11 +1767,13 @@ Belos::ReturnType PeridigmNS::Peridigm::quasiStaticsSolveSystem(Teuchos::RCP<Epe
 double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> residual,
 						    Teuchos::RCP<Epetra_Vector> lhs)
 {
+  bool solverVerbose = sublist(peridigmParams, "Solver", true)->get("Verbose", false);
+
   Teuchos::RCP<Epetra_Vector> tempVector = Teuchos::rcp(new Epetra_Vector(*deltaU));
 
   double bestAlpha = 1.0;
   double bestResidual = 1.0e50;
-  int numEvaluations = 55;
+  double minAllowableAlpha = 0.002;
 
   double *lhsPtr, *residualPtr, *deltaUPtr, *xPtr, *yPtr, *uPtr;
   lhs->ExtractView(&lhsPtr);
@@ -1741,15 +1783,41 @@ double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> 
   y->ExtractView(&yPtr);
   u->ExtractView(&uPtr);
 
-  for(int i=0 ; i<numEvaluations+1 ; ++i){
+  vector<double> candidateAlphas;
 
-    double alpha = 1.1*i/(double)numEvaluations;
+  // numerous brute-force guesses for alpha
+  for(int i=0 ; i<150 ; ++i)
+    candidateAlphas.push_back(0.00002*i);
+  for(int i=0 ; i<97 ; ++i)
+    candidateAlphas.push_back(0.001*i+0.003);
+  for(int i=0 ; i<19 ; ++i)
+    candidateAlphas.push_back(0.05*i+0.1);
+  
+  // a more systematic guess for alpha
+  computeQuasiStaticResidual(residual);
+  double epsilon = 1.0e-4;
+  for(int i=0 ; i<y->MyLength() ; ++i)
+    deltaUPtr[i] += epsilon*lhsPtr[i];
+  for(int i=0 ; i<y->MyLength() ; ++i)
+    yPtr[i] = xPtr[i] + uPtr[i] + deltaUPtr[i];
+  Teuchos::RCP<Epetra_Vector> perturbedResidual = Teuchos::rcp(new Epetra_Vector(*residual));
+  computeQuasiStaticResidual(perturbedResidual);
+  double SR, SPerturbedR;
+  lhs->Dot(*residual, &SR);
+  lhs->Dot(*perturbedResidual, &SPerturbedR);
+  double tempAlpha = -1.0*epsilon*SR/(SPerturbedR - SR);
+  if(tempAlpha > -0.1 && tempAlpha < 10.0)
+    candidateAlphas.push_back(tempAlpha);
+
+  for(unsigned int i=0 ; i<candidateAlphas.size(); ++i){
+
+    double alpha = candidateAlphas[i];
 
     for(int i=0 ; i<y->MyLength() ; ++i)
       deltaUPtr[i] += alpha*lhsPtr[i];
     for(int i=0 ; i<y->MyLength() ; ++i)
       yPtr[i] = xPtr[i] + uPtr[i] + deltaUPtr[i];
-      
+
     double residualNorm = computeQuasiStaticResidual(residual);
 
     *deltaU = *tempVector;
@@ -1758,6 +1826,12 @@ double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> 
       bestAlpha = alpha;
       bestResidual = residualNorm;
     }
+  }
+
+  if(bestAlpha < minAllowableAlpha){
+    if(peridigmComm->MyPID() == 0)
+      cout << "  --line search returned alpha = " << bestAlpha << ", overriding with alpha = " << minAllowableAlpha << "--" << endl;
+    bestAlpha = minAllowableAlpha;
   }
 
   return bestAlpha;
@@ -1869,7 +1943,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
       blockIt->importData(*u, Field_NS::DISPL3D,    Field_ENUM::STEP_NP1, Insert);
       blockIt->importData(*y, Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1, Insert);
       blockIt->importData(*v, Field_NS::VELOC3D,    Field_ENUM::STEP_NP1, Insert);
-      blockIt->importData(*v, Field_NS::ACCEL3D,    Field_ENUM::STEP_NP1, Insert);
+      blockIt->importData(*a, Field_NS::ACCEL3D,    Field_ENUM::STEP_NP1, Insert);
     }
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -1944,7 +2018,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
         blockIt->importData(*u, Field_NS::DISPL3D,    Field_ENUM::STEP_NP1, Insert);
         blockIt->importData(*y, Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1, Insert);
         blockIt->importData(*v, Field_NS::VELOC3D,    Field_ENUM::STEP_NP1, Insert);
-        blockIt->importData(*v, Field_NS::ACCEL3D,    Field_ENUM::STEP_NP1, Insert);
+        blockIt->importData(*a, Field_NS::ACCEL3D,    Field_ENUM::STEP_NP1, Insert);
       }
       PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 

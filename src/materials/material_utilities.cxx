@@ -220,13 +220,9 @@ void computeDilatation
 			double dY = dx*dx+dy*dy+dz*dz;
 			double d = sqrt(zetaSqared);
 			double e = sqrt(dY)-d;
-
-// 			if(d/sqrt(dY) < 0.01)
-// 			  std::cout << "BOND LENGTH = " << sqrt(dY) << " FOR BOND OF ORIGINAL LENGTH " << d << " IN computeDilitation()" << std::endl;
-
 			*theta += 3.0*OMEGA*(1.0-*bondDamage)*d*e*cellVolume/(*m);
 		}
-
+		
 	}
 }
 

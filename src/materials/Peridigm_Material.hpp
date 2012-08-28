@@ -53,6 +53,7 @@
 #include <Epetra_Vector.h>
 #include <Epetra_Map.h>
 #include <vector>
+#include <float.h>
 #include "Peridigm_DataManager.hpp"
 #include "Peridigm_SerialMatrix.hpp"
 #include "Peridigm_ScratchMatrix.hpp"
@@ -65,7 +66,10 @@ namespace PeridigmNS {
   public:
 
 	//! Standard constructor.
-	Material(const Teuchos::ParameterList & params){}
+        Material(const Teuchos::ParameterList & params) : m_finiteDifferenceProbeLength(DBL_MAX) {
+	  if(params.isParameter("Finite Difference Probe Length"))
+	     m_finiteDifferenceProbeLength = params.get<double>("Finite Difference Probe Length");
+	}
 
 	//! Destructor.
 	virtual ~Material(){}
@@ -137,6 +141,9 @@ namespace PeridigmNS {
 
     //! Scratch matrix.
     mutable ScratchMatrix scratchMatrix;
+
+    //! Finite-difference probe length
+    double m_finiteDifferenceProbeLength;
 
   private:
 

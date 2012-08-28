@@ -81,7 +81,7 @@
 	<Parameter name="Final Time" type="double" value="2.0"/> 
 	<ParameterList name="QuasiStatic">
 	  <Parameter name="Number of Load Steps" type="int" value="2"/>
-	  <Parameter name="Absolute Tolerance" type="double" value="1.0e-2"/>
+	  <Parameter name="Absolute Tolerance" type="double" value="1.0e-8"/>
 	  <Parameter name="Maximum Solver Iterations" type="int" value="10"/>
 	</ParameterList>
   </ParameterList>
