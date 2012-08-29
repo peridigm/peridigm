@@ -1771,10 +1771,6 @@ double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> 
 
   Teuchos::RCP<Epetra_Vector> tempVector = Teuchos::rcp(new Epetra_Vector(*deltaU));
 
-  double bestAlpha = 1.0;
-  double bestResidual = 1.0e50;
-  double minAllowableAlpha = 0.002;
-
   double *lhsPtr, *residualPtr, *deltaUPtr, *xPtr, *yPtr, *uPtr;
   lhs->ExtractView(&lhsPtr);
   residual->ExtractView(&residualPtr);
@@ -1783,18 +1779,18 @@ double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> 
   y->ExtractView(&yPtr);
   u->ExtractView(&uPtr);
 
+  // compute the current residual
+  double unperturbedResidualNorm = computeQuasiStaticResidual(residual);
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite(unperturbedResidualNorm), "**** NaN detected in residual calculation in quasiStaticsLineSearch().\n");
+  if(unperturbedResidualNorm == 0.0)
+    return 0.0;
+
+  double bestAlpha = 1.0;
+  double bestResidual = 1.0e50;
+
   vector<double> candidateAlphas;
 
-  // numerous brute-force guesses for alpha
-  for(int i=0 ; i<150 ; ++i)
-    candidateAlphas.push_back(0.00002*i);
-  for(int i=0 ; i<97 ; ++i)
-    candidateAlphas.push_back(0.001*i+0.003);
-  for(int i=0 ; i<19 ; ++i)
-    candidateAlphas.push_back(0.05*i+0.1);
-  
-  // a more systematic guess for alpha
-  computeQuasiStaticResidual(residual);
+  // a systematic guess for alpha
   double epsilon = 1.0e-4;
   for(int i=0 ; i<y->MyLength() ; ++i)
     deltaUPtr[i] += epsilon*lhsPtr[i];
@@ -1809,30 +1805,97 @@ double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> 
   if(tempAlpha > -0.1 && tempAlpha < 10.0)
     candidateAlphas.push_back(tempAlpha);
 
+  // include 10 equally-spaced guessses
+  for(int i=0 ; i<10 ; ++i)
+    candidateAlphas.push_back(0.1*(i+1));
+  
+  // compute the residual for each candidate alpha
   for(unsigned int i=0 ; i<candidateAlphas.size(); ++i){
-
     double alpha = candidateAlphas[i];
-
     for(int i=0 ; i<y->MyLength() ; ++i)
       deltaUPtr[i] += alpha*lhsPtr[i];
     for(int i=0 ; i<y->MyLength() ; ++i)
       yPtr[i] = xPtr[i] + uPtr[i] + deltaUPtr[i];
-
     double residualNorm = computeQuasiStaticResidual(residual);
-
     *deltaU = *tempVector;
-
-    if(residualNorm < bestResidual){
+    if(boost::math::isfinite(residualNorm) && residualNorm < bestResidual){
       bestAlpha = alpha;
       bestResidual = residualNorm;
     }
   }
 
-  if(bestAlpha < minAllowableAlpha){
-    if(peridigmComm->MyPID() == 0)
-      cout << "  --line search returned alpha = " << bestAlpha << ", overriding with alpha = " << minAllowableAlpha << "--" << endl;
-    bestAlpha = minAllowableAlpha;
+  // if the residual is reduced by 2%, then call it quits
+  double percentReduced = (unperturbedResidualNorm - bestResidual)/unperturbedResidualNorm;
+  if(percentReduced > 0.02)
+    return bestAlpha;
+
+  // if the residual has not been reduced by 2%, try additional brute-force searches
+
+  // numerous brute-force guesses for alpha
+  candidateAlphas.clear();
+  for(int i=0 ; i<25 ; ++i)
+    candidateAlphas.push_back(0.002*(i+1));
+  for(int i=0 ; i<15 ; ++i)
+    candidateAlphas.push_back(0.01*(i+1)+0.05);
+  for(int i=0 ; i<6 ; ++i)
+    candidateAlphas.push_back(0.05*(i+1)+0.2);
+  candidateAlphas.push_back(0.75);
+  candidateAlphas.push_back(1.0);
+  candidateAlphas.push_back(1.5);
+  candidateAlphas.push_back(2.0);
+  candidateAlphas.push_back(5.0);
+  candidateAlphas.push_back(10.0);
+
+  // for alphas that increase the residual, track the percent increases,
+  // if no alpha can reduce the residual one of these alphas will be
+  // chosen in attempt to bump the solver out of a local minimum
+
+  vector< pair<double,double> > residualData;
+
+  // compute the residual for each candidate alpha
+  for(unsigned int i=0 ; i<candidateAlphas.size(); ++i){
+    double alpha = candidateAlphas[i];
+    for(int i=0 ; i<y->MyLength() ; ++i)
+      deltaUPtr[i] += alpha*lhsPtr[i];
+    for(int i=0 ; i<y->MyLength() ; ++i)
+      yPtr[i] = xPtr[i] + uPtr[i] + deltaUPtr[i];
+    double residualNorm = computeQuasiStaticResidual(residual);
+    *deltaU = *tempVector;
+    if(boost::math::isfinite(residualNorm)){
+      if(residualNorm < bestResidual){
+	bestAlpha = alpha;
+	bestResidual = residualNorm;
+      }
+      else if(residualNorm > unperturbedResidualNorm){
+	double percentIncreased = (residualNorm - unperturbedResidualNorm)/unperturbedResidualNorm;
+	residualData.push_back( pair<double,double>(alpha, percentIncreased) );
+      }
+    }
   }
+
+  // if the residual can be reduced by 0.01%, call it quits
+  percentReduced = (unperturbedResidualNorm - bestResidual)/unperturbedResidualNorm;
+  if(percentReduced > 0.0001)
+    return bestAlpha;  
+
+  // if the residual cannot be effectively reduced, try to bounce the solver out of a local
+  // minimum by increasing the residual by 10%
+  double targetIncrease = 0.1;
+  if(peridigmComm->MyPID() == 0)
+    cout << "  --line search unable to reduce residual, attempting to increase residual by 10% in hopes of escaping local minimum--" << endl;
+  double bestResult = 1.0e50;
+  double bestIncrease = 1.0e50;
+  for(unsigned int i=0 ; i<residualData.size() ; ++i){
+    double alpha = residualData[i].first;
+    double percentIncrease = residualData[i].second;
+    if( fabs(percentIncrease - targetIncrease) < bestResult ){
+      bestAlpha = alpha;
+      bestIncrease = percentIncrease;
+      bestResult = fabs(percentIncrease - targetIncrease);
+    }
+  }
+  if(peridigmComm->MyPID() == 0)
+    cout << "  --selecting alpha = " << bestAlpha << ", increasing residual by " << bestIncrease << "--" << endl;
 
   return bestAlpha;
 }
