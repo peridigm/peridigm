@@ -1360,10 +1360,6 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
   Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
   bool solverVerbose = solverParams->get("Verbose", false);
   Teuchos::RCP<Teuchos::ParameterList> implicitParams = sublist(solverParams, "QuasiStatic", true);
-  double timeInitial = solverParams->get("Initial Time", 0.0);
-  double timeFinal = solverParams->get("Final Time", 1.0);
-  timeCurrent = timeInitial;
-  int numLoadSteps = implicitParams->get("Number of Load Steps", 10);
   int maxSolverIterations = implicitParams->get("Maximum Solver Iterations", 10);
   double dampedNewtonDiagonalScaleFactor = implicitParams->get("Damped Newton Diagonal Scale Factor", 1.0001);
   double dampedNewtonDiagonalShiftFactor = implicitParams->get("Damped Newton Diagonal Shift Factor", 0.00001);
@@ -1389,8 +1385,9 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
 
   // Data for Belos linear solver object
   Belos::LinearProblem<double,Epetra_MultiVector,Epetra_Operator> linearProblem;
-  Teuchos::ParameterList belosList;
   string linearSolver =  implicitParams->get("Belos Linear Solver", "BlockCG");
+  Belos::ReturnType isConverged;
+  Teuchos::ParameterList belosList;
   belosList.set( "Block Size", 1 );  // Use single-vector iteration
   belosList.set( "Maximum Iterations", implicitParams->get("Belos Maximum Iterations", tangent->NumGlobalRows()) ); // Maximum number of iterations allowed
   belosList.set( "Convergence Tolerance", implicitParams->get("Belos Relative Tolerance", 1.0e-4) ); // Relative convergence tolerance requested
@@ -1413,48 +1410,43 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
     belosSolver = Teuchos::rcp( new Belos::BlockCGSolMgr<double,Epetra_MultiVector,Epetra_Operator>(Teuchos::rcp(&linearProblem,false), Teuchos::rcp(&belosList,false)) );
   }
 
+  // Create list of time steps
+  
+  // Case 1:  User provided initial time, final time, and number of load steps
+  vector<double> timeSteps;
+  if( solverParams->isParameter("Final Time") && implicitParams->isParameter("Number of Load Steps") ){
+    double timeInitial = solverParams->get("Initial Time", 0.0);
+    double timeFinal = solverParams->get<double>("Final Time");
+    int numLoadSteps = implicitParams->get<int>("Number of Load Steps");
+    timeSteps.push_back(timeInitial);
+    for(int i=0 ; i<numLoadSteps ; ++i)
+      timeSteps.push_back(timeInitial + (i+1)*(timeFinal-timeInitial)/numLoadSteps);
+  }
+  // Case 2:  User provided a list of time steps
+  else if( implicitParams->isParameter("Time Steps") ){
+    string timeStepString = implicitParams->get<string>("Time Steps");
+    istringstream iss(timeStepString);
+    copy(istream_iterator<double>(iss),
+	 istream_iterator<double>(),
+	 back_inserter<vector<double> >(timeSteps));
+  }
+  else{
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n****Error: No valid time step data provided.\n");
+  }
+
+  timeCurrent = timeSteps[0];
+
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
   this->synchDataManagers();
   outputManager->write(blocks, timeCurrent);
   PeridigmNS::Timer::self().stopTimer("Output");
 
-  double timeCurrent = timeInitial;
-  double timePrevious = timeInitial;
-  double nominalTimeIncrement = (timeFinal-timeInitial)/double(numLoadSteps);
+  for(int step=1 ; step<(int)timeSteps.size() ; step++){
 
-  int step = 0;
-  int loadStepReductionFactor = 0;
-  int maxLoadStepReductionFactor = 0;
-  bool reduceLoadStep = false;
-  int numRemainingSubsteps = 1;
-  Belos::ReturnType isConverged;
-
-  while(step < numLoadSteps){
-
-    // \todo Make sure floating-point errors don't get introduced into timeCurrent when employing adaptive time stepping.
-
-    if(!reduceLoadStep){
-      // Previous solve converged, no need to reduce load step, just forge ahead
-      numRemainingSubsteps--;
-      timePrevious = timeCurrent;
-    }
-    else{
-      // Previous solve did not converge, reduce the load step
-      loadStepReductionFactor++;
-      numRemainingSubsteps *= 2;
-    }
-    reduceLoadStep = false;
-
-    if(numRemainingSubsteps == 0){
-      step++;
-      if(loadStepReductionFactor > 0)
-        loadStepReductionFactor--;
-      numRemainingSubsteps = (int)(pow(2.0, loadStepReductionFactor));
-    }
-
-    double timeIncrement = nominalTimeIncrement / pow(2.0, loadStepReductionFactor);
-    timeCurrent = timePrevious + timeIncrement;
+    double timePrevious = timeCurrent;
+    timeCurrent = timeSteps[step];
+    double timeIncrement = timeCurrent - timePrevious;
     *timeStep = timeIncrement;
 
     // Update nodal positions for nodes with kinematic B.C.
@@ -1483,12 +1475,9 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
       toleranceMultiplier = reactionNorm2;
     }
 
-    if(loadStepReductionFactor == 0 && peridigmComm->MyPID() == 0)
-      cout << "Load step " << step << ", current time = " << timePrevious << ", time increment = " << timeIncrement <<
+    if(peridigmComm->MyPID() == 0)
+      cout << "Load step " << step << ", initial time = " << timePrevious << ", final time = " << timeCurrent <<
         ", convergence criterion = " << tolerance*toleranceMultiplier << endl;
-    else if(peridigmComm->MyPID() == 0)
-      cout << "Load step " << step << ", current time = " << timePrevious << ", " << timeCurrent << ", time increment = " << timeIncrement << 
-        ", convergence criterion = " << tolerance*toleranceMultiplier << " (nominal step reduced by a factor of " << pow(2.0, loadStepReductionFactor) << ")" << endl;
 
     int solverIteration = 1;
     bool dampedNewton = false;
@@ -1590,73 +1579,67 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
       }
       else{
         if(peridigmComm->MyPID() == 0)
-          cout << "\nWarning:  Belos linear solver failed to converge, reducing load step..." << endl;
+          cout << "\nError:  Belos linear solver failed to converge." << endl;
         residualNorm = 1.0e50;
-        reduceLoadStep = true;
         break;
       }
-    }
+    } // end loop of nonlinear iterations
 
-    if(solverIteration >= maxSolverIterations){
-      if(peridigmComm->MyPID() == 0)
-        cout << "\nWarning:  Nonlinear solver failed to converge, reducing load step..." << endl;
-      reduceLoadStep = true;
-    }
+    if(solverIteration >= maxSolverIterations && peridigmComm->MyPID() == 0)
+      cout << "\nWarning:  Nonlinear solver failed to converge in maximum allowable iterations." << endl;
 
     // If the maximum allowable number of load step reductions has been reached and the residual
     // is within a reasonable tolerance, then just accept the solution and forge ahead.
     // If not, abort the analysis.
-    if(reduceLoadStep && loadStepReductionFactor >= maxLoadStepReductionFactor){
+    if(residualNorm > tolerance*toleranceMultiplier){
       if(residualNorm < 100.0*tolerance*toleranceMultiplier){
-        reduceLoadStep = false;
-        if(peridigmComm->MyPID() == 0)
-          cout << "\nWarning:  Maximum allowable load step reductions has been reached, accepting current solution and progressing to next load step...\n" << endl;
+	if(peridigmComm->MyPID() == 0)
+	  cout << "\nWarning:  Accepting current solution and progressing to next load step.\n" << endl;
       }
       else{
-        if(peridigmComm->MyPID() == 0)
-          cout << "\nError:  Maximum allowable load step reductions has been reached, aborting analysis...\n" << endl;
-        break;
+	if(peridigmComm->MyPID() == 0)
+	  cout << "\nError:  Aborting analysis.\n" << endl;
+	break;
       }
     }
 
-    if(!reduceLoadStep){
+    // The load step is complete
+    // Update internal data and move on to the next load step
 
-      if(!solverVerbose){
-	if(peridigmComm->MyPID() == 0)
-	  cout << "  iteration " << solverIteration << ": residual = " << residualNorm << endl;
-      }
-      else{
-	double residualL2, residualInf;
-	residual->Norm2(&residualL2);
-	residual->NormInf(&residualInf);
-	if(peridigmComm->MyPID() == 0)
-	  cout << "  iteration " << solverIteration << ": residual = " << residualNorm << ", residual L2 = " << residualL2 << ", residual inf = " << residualInf << ", alpha = " << alpha << endl;
-      }
-
-      // Store the velocity
-      for(int i=0 ; i<v->MyLength() ; ++i)
-        (*v)[i] = (*deltaU)[i]/nominalTimeIncrement;
-
-      // Add the converged displacement increment to the displacement
-      for(int i=0 ; i<u->MyLength() ; ++i)
-        (*u)[i] += (*deltaU)[i];
-
-      // Write output for completed load step
-      if(numRemainingSubsteps == 1){
-        PeridigmNS::Timer::self().startTimer("Output");
-        this->synchDataManagers();
-        outputManager->write(blocks, timeCurrent);
-        PeridigmNS::Timer::self().stopTimer("Output");
-      }
-
-      // swap state N and state NP1
-      for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-        blockIt->updateState();
+    if(!solverVerbose){
+      if(peridigmComm->MyPID() == 0)
+	cout << "  iteration " << solverIteration << ": residual = " << residualNorm << "\n" << endl;
+    }
+    else{
+      double residualL2, residualInf;
+      residual->Norm2(&residualL2);
+      residual->NormInf(&residualInf);
+      if(peridigmComm->MyPID() == 0)
+	cout << "  iteration " << solverIteration << ": residual = " << residualNorm << ", residual L2 = " << residualL2 << ", residual inf = " << residualInf << ", alpha = " << alpha << "\n" << endl;
     }
 
-    if(peridigmComm->MyPID() == 0)
-      cout << endl;
-  }
+    // Store the velocity
+    for(int i=0 ; i<v->MyLength() ; ++i)
+      (*v)[i] = (*deltaU)[i]/timeIncrement;
+
+    // Add the converged displacement increment to the displacement
+    for(int i=0 ; i<u->MyLength() ; ++i)
+      (*u)[i] += (*deltaU)[i];
+
+    // Write output for completed load step
+    PeridigmNS::Timer::self().startTimer("Output");
+    this->synchDataManagers();
+    outputManager->write(blocks, timeCurrent);
+    PeridigmNS::Timer::self().stopTimer("Output");
+
+    // swap state N and state NP1
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+      blockIt->updateState();
+
+  } // end loop over load steps
+
+  if(peridigmComm->MyPID() == 0)
+    cout << endl;
 }
 
 void PeridigmNS::Peridigm::quasiStaticsSetPreconditioner(Belos::LinearProblem<double,Epetra_MultiVector,Epetra_Operator>& linearProblem) {
@@ -1805,9 +1788,13 @@ double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> 
   if(tempAlpha > -0.1 && tempAlpha < 10.0)
     candidateAlphas.push_back(tempAlpha);
 
-  // include 10 equally-spaced guessses
-  for(int i=0 ; i<10 ; ++i)
-    candidateAlphas.push_back(0.1*(i+1));
+  // include a few brute-force gueses
+  candidateAlphas.push_back(0.1);
+  candidateAlphas.push_back(0.2);
+  candidateAlphas.push_back(0.3);
+  candidateAlphas.push_back(0.5);
+  candidateAlphas.push_back(0.75);
+  candidateAlphas.push_back(1.0);
   
   // compute the residual for each candidate alpha
   for(unsigned int i=0 ; i<candidateAlphas.size(); ++i){
