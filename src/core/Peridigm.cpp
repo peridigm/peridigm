@@ -1481,7 +1481,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
 
     int solverIteration = 1;
     bool dampedNewton = false;
-    bool usePreconditioner = true;
+    bool usePreconditioner = false;
     int numPureNewtonSteps = 8;
     int numPreconditionerSteps = 24;
     int dampedNewtonNumStepsBetweenTangentUpdates = 8;
