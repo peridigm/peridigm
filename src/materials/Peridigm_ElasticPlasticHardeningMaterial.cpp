@@ -63,7 +63,7 @@ PeridigmNS::ElasticPlasticHardeningMaterial::ElasticPlasticHardeningMaterial(con
   : Material(params),
     m_applyShearCorrectionFactor(false),
     m_disablePlasticity(false),
-    m_applyAutomaticDifferentiationJacobian(true)
+    m_applyAutomaticDifferentiationJacobian(false)
 {
   //! \todo Add meaningful asserts on material properties.
   m_bulkModulus = params.get<double>("Bulk Modulus");

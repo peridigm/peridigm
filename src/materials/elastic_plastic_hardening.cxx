@@ -45,11 +45,11 @@
 // ************************************************************************
 //@HEADER
 #include <cmath>
-#include <complex>
 #include <Sacado.hpp>
 #include <float.h>
 #include "elastic_plastic.h"
 #include "elastic_plastic_hardening.h"
+#include <complex>
 
 namespace MATERIAL_EVALUATION {
 
@@ -70,60 +70,105 @@ double updateDeltaLambda
         double HARD_MODULUS
 )
 {   
-    double a  = 2./alpha - lambdaN + pointWiseYieldValue/HARD_MODULUS;
-    double b = (HARD_MODULUS - 2.*alpha*HARD_MODULUS*lambdaN + 2.*alpha*pointWiseYieldValue)/(alpha*alpha*HARD_MODULUS);
-    double c = (-2.*HARD_MODULUS*lambdaN + 2.*pointWiseYieldValue - tdNorm*tdNorm)/(2.*alpha*alpha*HARD_MODULUS);
+    //double a  = 2./alpha - lambdaN + pointWiseYieldValue/HARD_MODULUS;
+    //double b = (HARD_MODULUS - 2.*alpha*HARD_MODULUS*lambdaN + 2.*alpha*pointWiseYieldValue)/(alpha*alpha*HARD_MODULUS);
+    //double c = (-2.*HARD_MODULUS*lambdaN + 2.*pointWiseYieldValue - tdNorm*tdNorm)/(2.*alpha*alpha*HARD_MODULUS);
 
 
-    double Q = (a*a - 3.*b)/9.;
-    double R = (2.*a*a*a - 9.*a*b + 27.*c)/54.;
+    //double Q = (a*a - 3.*b)/9.;
+    //double R = (2.*a*a*a - 9.*a*b + 27.*c)/54.;
 
-    if ( R*R < Q*Q*Q )
-    {
-        double theta = acos( R/sqrt(Q*Q*Q));
+    //if ( R*R < Q*Q*Q )
+    //{
+        //double theta = acos( R/sqrt(Q*Q*Q));
 
-        double root1 = -2.*sqrt(Q)*cos(theta/3.) - a/3.;
-        double root2 = -2.*sqrt(Q)*cos(theta/3. + 2.*M_PI/3.) - a/3.;
-        double root3 = -2.*sqrt(Q)*cos(theta/3. - 2.*M_PI/3.) - a/3.;
+        //double root1 = -2.*sqrt(Q)*cos(theta/3.) - a/3.;
+        //double root2 = -2.*sqrt(Q)*cos(theta/3. + 2.*M_PI/3.) - a/3.;
+        //double root3 = -2.*sqrt(Q)*cos(theta/3. - 2.*M_PI/3.) - a/3.;
         
-        //if (root1 > 0 || root2 > 0 || root3 > 0)
-            //std::cout << "sol 1 " << root1  << " sol 2 " << root2  << " sol 3 " << root3 << std::endl;
+        ////if (root1 > 0 || root2 > 0 || root3 > 0)
+            ////std::cout << "sol 1 " << root1  << " sol 2 " << root2  << " sol 3 " << root3 << std::endl;
 
-        double min = DBL_MAX;
+        //double min = DBL_MAX;
 
-        if ( root1 > 0.0 && std::abs(root1) < std::abs(min) )
-            min = root1;
-        if ( root2 > 0.0 && std::abs(root2) < std::abs(min) )
-            min = root2;
-        if ( root3 > 0.0 && std::abs(root3) < std::abs(min) )
-            min = root3;
-        if ( min == DBL_MAX ){
-            std::cout << "MAX_DOUBLE being returned for deltaLambda" << std::endl;
-            exit(1);
-        }
+        //if ( root1 > 0.0 && std::abs(root1) < std::abs(min) )
+            //min = root1;
+        //if ( root2 > 0.0 && std::abs(root2) < std::abs(min) )
+            //min = root2;
+        //if ( root3 > 0.0 && std::abs(root3) < std::abs(min) )
+            //min = root3;
+        //if ( min == DBL_MAX ){
+            //std::cout << "MAX_DOUBLE being returned for deltaLambda" << std::endl;
+            //exit(1);
+        //}
 
-        //if (root1 > 0 || root2 > 0 || root3 > 0)
-            //std::cout << "ans " << min << std::endl << std::endl; 
+        ////if (root1 > 0 || root2 > 0 || root3 > 0)
+            ////std::cout << "ans " << min << std::endl << std::endl; 
         
-        return min;
+        //return min;
     
-    }
-    else
-    {
-        double A = -sign(R)*pow( std::abs(R) + sqrt(R*R - Q*Q*Q) ,1./3.);
-        if ( std::abs(A) < 1e-50)
-            std::cout << "A is VERY small! A = " << A << std::endl;
+    //}
+    //else
+    //{
+        //double A = -sign(R)*pow( std::abs(R) + sqrt(R*R - Q*Q*Q) ,1./3.);
+        //if ( std::abs(A) < 1e-50)
+            //std::cout << "A is VERY small! A = " << A << std::endl;
 
-        double B = Q/A;
+        //double B = Q/A;
         
 
-        //std::cout << "ans " << (A + B) - a/3.<< std::endl << std::endl; 
-        double val = ( A + B ) - a/3.;
-        if (val < 0.)
-            return 0.;
-        else
-            return val;
-    }
+        ////std::cout << "ans " << (A + B) - a/3.<< std::endl << std::endl; 
+        //double val = ( A + B ) - a/3.;
+        //if (val < 0.)
+            //return 0.;
+        //else
+            //return val;
+    //}
+    std::complex<double> a = std::complex<double>(-alpha*alpha*HARD_MODULUS,0.);
+    std::complex<double> b = std::complex<double>(-2.*alpha*HARD_MODULUS- alpha*alpha*HARD_MODULUS*lambdaN 
+             -alpha*alpha*pointWiseYieldValue,0.);
+    std::complex<double> c = std::complex<double>(-HARD_MODULUS - 2.*alpha*HARD_MODULUS*lambdaN - 2.*alpha*pointWiseYieldValue,0.);
+    std::complex<double> d = std::complex<double>(-HARD_MODULUS*lambdaN - pointWiseYieldValue + tdNorm*tdNorm/2.,0.);
+
+    std::complex<double> I = std::complex<double>(0.,1.);
+
+    std::complex<double> discrim = 18.*a*b*c*d - 4.*b*b*b*d + b*b*c*c - 4.*a*c*c*c - 27.*a*a*d*d;
+    
+    std::complex<double> root1 = -b/3./a - pow(0.5*(2.*b*b*b -9.*a*b*c + 27.*a*a*d +
+                    pow(-27.*a*a*discrim,0.5)),1./3.)/3./a
+                            - pow(0.5*(2.*b*b*b -9.*a*b*c + 27.*a*a*d -
+                    pow(-27.*a*a*discrim,0.5)),1./3.)/3./a;
+   
+    std::complex<double> root2 = -b/3./a + pow(0.5*(2.*b*b*b -9.*a*b*c + 27.*a*a*d +
+                    pow(-27.*a*a*discrim,0.5)),1./3.)/6./a*(1. + I*pow(3.,0.5))
+                            + pow(0.5*(2.*b*b*b -9.*a*b*c + 27.*a*a*d -
+                    pow(-27.*a*a*discrim,0.5)),1./3.)/6./a*(1. - I*pow(3.,0.5));
+    
+    std::complex<double> root3 = -b/3./a + pow(0.5*(2.*b*b*b -9.*a*b*c + 27.*a*a*d +
+                    pow(-27.*a*a*discrim,0.5)),1./3.)/6./a*(1. - I*pow(3.,0.5))
+                            + pow(0.5*(2.*b*b*b -9.*a*b*c + 27.*a*a*d -
+                    pow(-27.*a*a*discrim,0.5)),1./3.)/6./a*(1. + I*pow(3.,0.5));
+
+    //std::cout << "Root 1 = " << root1 << " Root 2 = " << root2 << " Root 3 = " << root3 << std::endl;
+
+    double min = DBL_MAX;
+
+    if ( root1.imag() < 1.e-50 && root1.real() > 0.0 && std::abs(root1.real()) < std::abs(min) ){
+        min = root1.real();
+        //std::cout << "Min (root1) = " << min << std::endl;
+        }
+    if ( root2.imag() < 1.e-50 && root2.real() > 0.0 && std::abs(root2.real()) < std::abs(min) )
+        min = root2.real();
+    if ( root3.imag() < 1.e-50 && root3.real() > 0.0 && std::abs(root3.real()) < std::abs(min) )
+        min = root3.real();
+    if (min == DBL_MAX){
+        min = 0.0;
+        //std::cout << "Min (else) = " << min << std::endl;
+        };
+
+    //std::cout << min << std::endl;
+    
+    return min;
 
 }
     
@@ -425,14 +470,14 @@ void computeInternalForceIsotropicHardeningPlasticAD
         }
 
 
-        ScalarT f = tdNorm * tdNorm / 2 - pointWiseYieldValue - HARD_MODULUS*(deltaLambda + (*lambdaN));
+        //ScalarT f = tdNorm * tdNorm / 2 - pointWiseYieldValue - HARD_MODULUS*(deltaLambda + (*lambdaN));
 		//ScalarT f = tdNorm * tdNorm / 2 - pointWiseYieldValue;
 		bool elastic = true;
 
 //		std::cout << "Point id = " << p << std::endl;
 //		std::cout << "\tyieldStress/m^(4/5) = " << yieldStress/pow(weightedVol,4/5) << std::endl;
 //		std::cout << "\tYield Value = " << yieldValue << "; tdNorm * tdNorm / 2 = " << tdNorm * tdNorm / 2 << std::endl;
-		if(f>0){
+		if(deltaLambda>0){
 			/*
 			 * This step is incrementally plastic
 			 */
@@ -551,15 +596,17 @@ ScalarT updateDeltaLambdaAD
 )
 {   
     double  a  = 2./alpha + lambdaN + pointWiseYieldValue/HARD_MODULUS;
-    double  b = (HARD_MODULUS + 2.*alpha*HARD_MODULUS*lambdaN + 2.*alpha*pointWiseYieldValue)/(pow(alpha,2.)*HARD_MODULUS);
-    ScalarT c = (2.*HARD_MODULUS*lambdaN + 2.*pointWiseYieldValue - pow(tdNorm,2.))/(2.*pow(alpha,2.)*HARD_MODULUS);
+    double  b = (HARD_MODULUS + 2.*alpha*HARD_MODULUS*lambdaN + 2.*alpha*pointWiseYieldValue)/(alpha*alpha*HARD_MODULUS);
+    ScalarT c = (2.*HARD_MODULUS*lambdaN + 2.*pointWiseYieldValue - tdNorm*tdNorm)/(2.*alpha*alpha*HARD_MODULUS);
+    
+    double  Q = (a*a - 3.*b)/9.;
+    ScalarT R = (2.*a*a*a - 9.*a*b + 27.*c)/54.;
+    
+    //std::cout << "a1 = " << 2./alpha << " a3 = " << pointWiseYieldValue/HARD_MODULUS << std::endl;
 
-    double  Q = (pow(a,2.) - 3.*b)/9.;
-    ScalarT R = (2.*pow(a,3.) - 9.*a*b + 27.*c)/54.;
-
-    if ( pow(R,2.) < pow(Q,3.) )
+    if ( R*R < Q*Q*Q )
     {
-        ScalarT theta = acos( R/sqrt(pow(Q,3.)) );
+        ScalarT theta = acos( R/sqrt(Q*Q*Q));
 
         ScalarT root1 = -2.*sqrt(Q)*cos(theta/3.) - a/3.;
         ScalarT root2 = -2.*sqrt(Q)*cos(theta/3. + 2.*M_PI/3.) - a/3.;
@@ -568,12 +615,19 @@ ScalarT updateDeltaLambdaAD
         //if (root1 > 0 || root2 > 0 || root3 > 0)
             //std::cout << "sol 1 " << root1  << " sol 2 " << root2  << " sol 3 " << root3 << std::endl;
 
-        ScalarT min = root1;
+        ScalarT min = DBL_MAX;
 
+        if ( root1 > 0.0 && std::abs(root1) < std::abs(min) )
+            min = root1;
         if ( root2 > 0.0 && std::abs(root2) < std::abs(min) )
             min = root2;
         if ( root3 > 0.0 && std::abs(root3) < std::abs(min) )
             min = root3;
+        if ( min == DBL_MAX ){
+            //std::cout << "MAX_DOUBLE being returned for deltaLambda" << std::endl;
+            //exit(1);
+            min = 0.0;
+        }
 
         //if (root1 > 0 || root2 > 0 || root3 > 0)
             //std::cout << "ans " << min << std::endl << std::endl; 
@@ -583,14 +637,20 @@ ScalarT updateDeltaLambdaAD
     }
     else
     {
-        ScalarT A = -signAD(R)*pow( std::abs(R) + sqrt(pow(R,2.) - pow(Q,3.)) ,1./3.);
-        ScalarT B = 0.;
+        ScalarT A = -signAD(R)*pow( std::abs(R) + sqrt(R*R - Q*Q*Q) ,1./3.);
+        if ( std::abs(A) < 1e-50)
+            std::cout << "A is VERY small! A = " << A << std::endl;
         
-        if ( A != 0.)
-            B = Q/A;
+        ScalarT B = Q/A;
+        
 
         //std::cout << "ans " << (A + B) - a/3.<< std::endl << std::endl; 
-        return ( A + B ) - a/3.;
+        ScalarT val = ( A + B ) - a/3.;
+        if (val < 0.)
+            return 0.;
+        else
+            //std::cout << "ans2 " << val << std::endl;
+            return val;
     }
 
 }
