@@ -924,6 +924,14 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
     // copy back to tmp_rhs 
     for(int i=0 ; i < tmp_rhs->MyLength() ; ++i)
       (*tmp_rhs)[i] = (*residual)[i];
+
+    // DEBUGGING
+//     double residualL2, residualInf;
+//     residual->Norm2(&residualL2);
+//     residual->NormInf(&residualInf);
+//     if(peridigmComm->MyPID() == 0)
+//       cout << "  residual L2 norm = " << residualL2 << ", residual infinity norm = " << residualInf << endl;
+    // END DEBUGGING
   }
 
   // Compute the tangent if requested
@@ -957,8 +965,7 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
   allocateJacobian();
   PeridigmNS::Timer::self().stopTimer("Allocate Global Tangent");
   if(peridigmComm->MyPID() == 0){
-    cout << "\b\b\b:  " << endl;
-    cout << "  number of rows = " << tangent->NumGlobalRows() << endl;
+    cout << "\n  number of rows = " << tangent->NumGlobalRows() << endl;
     cout << "  number of nonzeros = " << tangent->NumGlobalNonzeros() << "\n" << endl;
   }
 
@@ -1243,7 +1250,12 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
   if(implicitParams->sublist("Direction").sublist("Nonlinear CG").isParameter("Update Jacobian"))
     m_noxTriggerJacobianUpdate = implicitParams->sublist("Direction").sublist("Nonlinear CG").get<int>("Update Jacobian");
 
+  Epetra_Time loadStepCPUTime(*peridigmComm);
+  double cummulativeLoadStepCPUTime = 0.0;
+
   for(int step=1 ; step<(int)timeSteps.size() ; step++){
+
+    loadStepCPUTime.ResetStartTime();
 
     double timePrevious = timeCurrent;
     timeCurrent = timeSteps[step];
@@ -1349,8 +1361,14 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
       double residualL2Norm = -1.0;
       if(solver->getList().sublist("Output").isParameter("2-Norm of Residual"))
 	residualL2Norm = solver->getList().sublist("Output").get<double>("2-Norm of Residual");
-      cout << "  number of iterations = " << numIterations << ", residual L-2 norm = " << residualL2Norm << "\n" << endl;
+      cout << "  number of iterations = " << numIterations << ", residual L-2 norm = " << residualL2Norm << endl;
     }
+
+    // Print load step timing information
+    double CPUTime = loadStepCPUTime.ElapsedTime();
+    cummulativeLoadStepCPUTime += CPUTime;
+    if(peridigmComm->MyPID() == 0)
+      cout << setprecision(2) << "  cpu time for load step = " << CPUTime << " sec., cummulative cpu time = " << cummulativeLoadStepCPUTime << " sec.\n" << endl;
 
     // Store the velocity
     v->PutScalar(0.0);
@@ -1391,8 +1409,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
   allocateJacobian();
   PeridigmNS::Timer::self().stopTimer("Allocate Global Tangent");
   if(peridigmComm->MyPID() == 0){
-    cout << "\b\b\b:  " << endl;
-    cout << "  number of rows = " << tangent->NumGlobalRows() << endl;
+    cout << "\n  number of rows = " << tangent->NumGlobalRows() << endl;
     cout << "  number of nonzeros = " << tangent->NumGlobalNonzeros() << "\n" << endl;
   }
 
@@ -1491,7 +1508,12 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
   outputManager->write(blocks, timeCurrent);
   PeridigmNS::Timer::self().stopTimer("Output");
 
+  Epetra_Time loadStepCPUTime(*peridigmComm);
+  double cummulativeLoadStepCPUTime = 0.0;
+
   for(int step=1 ; step<(int)timeSteps.size() ; step++){
+
+    loadStepCPUTime.ResetStartTime();
 
     double timePrevious = timeCurrent;
     timeCurrent = timeSteps[step];
@@ -1657,15 +1679,21 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
 
     if(!solverVerbose){
       if(peridigmComm->MyPID() == 0)
-	cout << "  iteration " << solverIteration << ": residual = " << residualNorm << "\n" << endl;
+	cout << "  iteration " << solverIteration << ": residual = " << residualNorm << endl;
     }
     else{
       double residualL2, residualInf;
       residual->Norm2(&residualL2);
       residual->NormInf(&residualInf);
       if(peridigmComm->MyPID() == 0)
-	cout << "  iteration " << solverIteration << ": residual = " << residualNorm << ", residual L2 = " << residualL2 << ", residual inf = " << residualInf << ", alpha = " << alpha << "\n" << endl;
+	cout << "  iteration " << solverIteration << ": residual = " << residualNorm << ", residual L2 = " << residualL2 << ", residual inf = " << residualInf << ", alpha = " << alpha << endl;
     }
+
+    // Print load step timing information
+    double CPUTime = loadStepCPUTime.ElapsedTime();
+    cummulativeLoadStepCPUTime += CPUTime;
+    if(peridigmComm->MyPID() == 0)
+      cout << setprecision(2) << "  cpu time for load step = " << CPUTime << " sec., cummulative cpu time = " << cummulativeLoadStepCPUTime << " sec.\n" << endl;
 
     // Store the velocity
     for(int i=0 ; i<v->MyLength() ; ++i)
@@ -1945,8 +1973,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
   allocateJacobian();
   PeridigmNS::Timer::self().stopTimer("Allocate Global Tangent");
   if(peridigmComm->MyPID() == 0){
-    cout << "\b\b\b:  " << endl;
-    cout << "  number of rows = " << tangent->NumGlobalRows() << endl;
+    cout << "\n  number of rows = " << tangent->NumGlobalRows() << endl;
     cout << "  number of nonzeros = " << tangent->NumGlobalNonzeros() << "\n" << endl;
   }
 
