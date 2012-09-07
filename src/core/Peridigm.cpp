@@ -924,12 +924,6 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
     // copy back to tmp_rhs 
     for(int i=0 ; i < tmp_rhs->MyLength() ; ++i)
       (*tmp_rhs)[i] = (*residual)[i];
-
-    // DEBUGGING
-//     double residualNorm2;
-//     residual->Norm2(&residualNorm2);
-//     cout << "RESIDUAL = " << residualNorm2 << endl;
-    // END DEBUGGING
   }
 
   // Compute the tangent if requested
@@ -992,9 +986,8 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
   Teuchos::RCP<Teuchos::ParameterList> implicitParams= sublist(solverParams, "NOXQuasiStatic", true);
   double timeInitial = solverParams->get("Initial Time", 0.0);
   double timeFinal = solverParams->get("Final Time", 1.0);
-  double residualTolerance = solverParams->get("Residual Tolerance", 1E-3);
   timeCurrent = timeInitial;
-  int numLoadSteps = implicitParams->get("Number of Load Steps", 10);
+//   int numLoadSteps = implicitParams->get("Number of Load Steps", 10);
   int maxnumiterations = implicitParams->get("Max Solver Iterations", 20);
   
     // Determine tolerance
@@ -1214,6 +1207,31 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
   // Force all status tests to do a full check
   nlParams->sublist("Solver Options").set("Status Test Check Type", solveroptions_checktype);
 
+  // Create list of time steps
+  
+  // Case 1:  User provided initial time, final time, and number of load steps
+  vector<double> timeSteps;
+  if( solverParams->isParameter("Final Time") && implicitParams->isParameter("Number of Load Steps") ){
+    double timeInitial = solverParams->get("Initial Time", 0.0);
+    double timeFinal = solverParams->get<double>("Final Time");
+    int numLoadSteps = implicitParams->get<int>("Number of Load Steps");
+    timeSteps.push_back(timeInitial);
+    for(int i=0 ; i<numLoadSteps ; ++i)
+      timeSteps.push_back(timeInitial + (i+1)*(timeFinal-timeInitial)/numLoadSteps);
+  }
+  // Case 2:  User provided a list of time steps
+  else if( implicitParams->isParameter("Time Steps") ){
+    string timeStepString = implicitParams->get<string>("Time Steps");
+    istringstream iss(timeStepString);
+    copy(istream_iterator<double>(iss),
+	 istream_iterator<double>(),
+	 back_inserter<vector<double> >(timeSteps));
+  }
+  else{
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n****Error: No valid time step data provided.\n");
+  }
+
+  timeCurrent = timeSteps[0];
 
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
@@ -1221,21 +1239,17 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
   outputManager->write(blocks, timeCurrent);
   PeridigmNS::Timer::self().stopTimer("Output");
 
-  double timeCurrent = timeInitial;
-  double timePrevious = timeInitial;
-  double nominalTimeIncrement = (timeFinal-timeInitial)/double(numLoadSteps);
-
   m_noxTriggerJacobianUpdate = 1;
   if(implicitParams->sublist("Direction").sublist("Nonlinear CG").isParameter("Update Jacobian"))
     m_noxTriggerJacobianUpdate = implicitParams->sublist("Direction").sublist("Nonlinear CG").get<int>("Update Jacobian");
 
-  int step = 0;
-  while(step < numLoadSteps){
- 
-    timePrevious = timeCurrent;
-    double timeIncrement = nominalTimeIncrement;
-    timeCurrent = timePrevious + timeIncrement;
+  for(int step=1 ; step<(int)timeSteps.size() ; step++){
+
+    double timePrevious = timeCurrent;
+    timeCurrent = timeSteps[step];
+    double timeIncrement = timeCurrent - timePrevious;
     *timeStep = timeIncrement;
+ 
     m_noxJacobianUpdateCounter = 0;
     
     soln->PutScalar(0.0);
@@ -1252,25 +1266,25 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
     // this map that the boundary and intial condition manager expects.  So, make sure that the boundary and initial
     // condition manager gets the right type of vector.
     boundaryAndInitialConditionManager->applyKinematicBC_SetDisplacementIncrement(timeCurrent, timePrevious, x, deltaU);
-    // Perform line search on this guess
-    for(int i=0 ; i<y->MyLength() ; ++i)
-      (*y)[i] = (*x)[i] + (*u)[i] + (*deltaU)[i];
-    double alpha = quasiStaticsLineSearch(residual, initialGuess);
-    initialGuess->Scale(alpha);
-
+    if(step > 1){
+      // Perform line search on this guess
+      for(int i=0 ; i<y->MyLength() ; ++i)
+	(*y)[i] = (*x)[i] + (*u)[i] + (*deltaU)[i];
+      double alpha = quasiStaticsLineSearch(residual, initialGuess);
+      initialGuess->Scale(alpha);
+    }
 
     for(int i=0 ; i<u->MyLength() ; ++i)
       (*u)[i] += (*deltaU)[i];
 
     *soln = *initialGuess;
 
-    double residualNorm;
     double toleranceMultiplier = 1.0;
     if(!useAbsoluteTolerance){
       // compute the vector of reactions, i.e., the forces corresponding to degrees of freedom for which kinematic B.C. are applied
       for(int i=0 ; i<y->MyLength() ; ++i)
 	(*y)[i] = (*x)[i] + (*u)[i];
-      residualNorm = computeQuasiStaticResidual(residual);
+      double residualNorm = computeQuasiStaticResidual(residual);
       boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(force, reaction);
       // convert force density to force
       for(int i=0 ; i<reaction->MyLength() ; ++i)
@@ -1278,16 +1292,13 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
       double reactionNorm2;
       reaction->Norm2(&reactionNorm2);
       toleranceMultiplier = reactionNorm2;
-      residualTolerance = tolerance*toleranceMultiplier;
-      // DEBUGGING
-//       cout << "REACTION DUE TO APPLICATION OF BC INCREMENT = " << reactionNorm2 << endl;
-      // END DEBUGGING
     }
+    double residualTolerance = tolerance*toleranceMultiplier;
 
     // Print the load step to screen
     if(peridigmComm->MyPID() == 0)
-        cout << "Load step " << step << ", current time = " << timePrevious << ", " << timeCurrent << ", time increment = " << timeIncrement << 
-            ", convergence criterion = " << tolerance*toleranceMultiplier << endl;
+      cout << "Load step " << step << ", initial time = " << timePrevious << ", final time = " << timeCurrent <<
+        ", convergence criterion = " << residualTolerance << endl;
 
     // Construct the NOX linear system
     Teuchos::RCP<NOX::Epetra::Interface::Required> noxInterfaceRequired = Teuchos::RCP<NOX::Epetra::Interface::Required>(this, false);
@@ -1305,8 +1316,12 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
     Teuchos::RCP<NOX::Epetra::Group> grpPtr = Teuchos::rcp(new NOX::Epetra::Group(printParams, noxInterfaceRequired, noxInitialGuess, linSys));
 
     // Create the convergence tests
-    Teuchos::RCP<NOX::StatusTest::NormF>absresid = Teuchos::rcp(new NOX::StatusTest::NormF(residualTolerance));
-    Teuchos::RCP<NOX::StatusTest::MaxIters>maxiters = Teuchos::rcp(new NOX::StatusTest::MaxIters(maxnumiterations));
+    //NOX::Abstract::Vector::NormType normType = NOX::Abstract::Vector::NormType::TwoNorm; // OneNorm, TwoNorm, MaxNorm
+    //NOX::StatusTest::ToleranceType toleranceType = NOX::StatusTest::Absolute;
+    NOX::StatusTest::NormF::ScaleType scaleType = NOX::StatusTest::NormF::Unscaled;
+    // The following constructor defaults NormType to TwoNorm and ToleranceType to Absolute
+    Teuchos::RCP<NOX::StatusTest::NormF> absresid = Teuchos::rcp(new NOX::StatusTest::NormF(residualTolerance, scaleType));
+    Teuchos::RCP<NOX::StatusTest::MaxIters> maxiters = Teuchos::rcp(new NOX::StatusTest::MaxIters(maxnumiterations));
     Teuchos::RCP<NOX::StatusTest::FiniteValue> fv = Teuchos::rcp(new NOX::StatusTest::FiniteValue);
     Teuchos::RCP<NOX::StatusTest::Combo> combo = Teuchos::rcp(new NOX::StatusTest::Combo(NOX::StatusTest::Combo::OR));
     combo->addStatusTest(fv);
@@ -1323,18 +1338,26 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
  
     // Output the parameter list
     //if (printing.isPrintType(NOX::Utils::Parameters)) {
-    printing.out() << endl << "Final NOX Parameters" << endl << "****************" << endl;
-    solver->getList().print(printing.out());
-    printing.out() << endl;
+//     printing.out() << endl << "Final NOX Parameters" << endl << "****************" << endl;
+//     solver->getList().print(printing.out());
+//     printing.out() << endl;
     //}
-    
+    if(peridigmComm->MyPID() == 0){
+      int numIterations = -1;
+      if(solver->getList().sublist("Output").isParameter("Nonlinear Iterations"))
+	numIterations = solver->getList().sublist("Output").get<int>("Nonlinear Iterations");
+      double residualL2Norm = -1.0;
+      if(solver->getList().sublist("Output").isParameter("2-Norm of Residual"))
+	residualL2Norm = solver->getList().sublist("Output").get<double>("2-Norm of Residual");
+      cout << "  number of iterations = " << numIterations << ", residual L-2 norm = " << residualL2Norm << "\n" << endl;
+    }
 
     // Store the velocity
     v->PutScalar(0.0);
     boundaryAndInitialConditionManager->applyKinematicBC_SetDisplacementIncrement(timeCurrent, timePrevious, x, v);
     for(int i=0 ; i<v->MyLength() ; ++i){
       (*v)[i] += finalSolution[i];
-      (*v)[i] /= nominalTimeIncrement;
+      (*v)[i] /= timeIncrement;
     }
 
     // Add the converged displacement increment to the displacement
@@ -1350,8 +1373,6 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
     // swap state N and state NP1
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
         blockIt->updateState();
-
-    step++;
   }
 
     if(peridigmComm->MyPID() == 0)
