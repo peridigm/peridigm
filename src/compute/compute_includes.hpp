@@ -20,4 +20,5 @@
 #include "./compute/Peridigm_Compute_Radius.hpp"
 #include "./compute/Peridigm_Compute_Number_Of_Neighbors.hpp"
 #include "./compute/Peridigm_Compute_Neighborhood_Volume.hpp"
+#include "./compute/Peridigm_Compute_Dogbone_Results.hpp"
 #include "./compute/Peridigm_Compute.hpp"
