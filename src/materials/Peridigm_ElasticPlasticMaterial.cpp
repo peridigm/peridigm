@@ -59,7 +59,7 @@ using namespace std;
 
 PeridigmNS::ElasticPlasticMaterial::ElasticPlasticMaterial(const Teuchos::ParameterList & params)
   : Material(params),
-    m_applyShearCorrectionFactor(false),
+    m_applyShearCorrectionFactor(true),
     m_disablePlasticity(false),
     m_applyAutomaticDifferentiationJacobian(true)
 {
