@@ -102,6 +102,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialDisplacements(T
                                                                                Teuchos::RCP<Epetra_Vector> y)
 {
   const Epetra_BlockMap& threeDimensionalMap = x->Map();
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(threeDimensionalMap.ElementSize() != 3, "**** applyInitialDisplacements() must be called with map having element size = 3.\n");
 
   // apply the initial conditions
   Teuchos::ParameterList::ConstIterator it;
@@ -168,6 +169,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialVelocities(Teuc
                                                                             Teuchos::RCP<Epetra_Vector> v)
 {
   const Epetra_BlockMap& threeDimensionalMap = v->Map();
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(threeDimensionalMap.ElementSize() != 3, "**** applyInitialVelocities() must be called with map having element size = 3.\n");
 
   // apply the initial conditions
   Teuchos::ParameterList::ConstIterator it;
@@ -263,7 +265,8 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_ComputeRea
                                                                                        Teuchos::RCP<Epetra_Vector> reaction)
 {
   reaction->PutScalar(0.0);
-  const Epetra_BlockMap& oneDimensionalMap = force->Map();
+  const Epetra_BlockMap& threeDimensionalMap = force->Map();
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(threeDimensionalMap.ElementSize() != 3, "**** applyKinematicBC_ComputeReactions() must be called with map having element size = 3.\n");
 
   // loop over kinematic boundary conditions
   Teuchos::ParameterList::ConstIterator it;
@@ -286,9 +289,9 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_ComputeRea
       TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
       vector<int> & nodeList = (*nodeSets)[nodeSet];
       for(unsigned int i=0 ; i<nodeList.size() ; i++){
-        int localNodeID = oneDimensionalMap.LID(nodeList[i]);
+        int localNodeID = threeDimensionalMap.LID(nodeList[i]);
         if(!force.is_null() && localNodeID != -1)
-          (*reaction)[localNodeID + coord] = (*force)[localNodeID + coord];
+          (*reaction)[3*localNodeID + coord] = (*force)[3*localNodeID + coord];
       }
     }
   }
@@ -297,6 +300,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_ComputeRea
 void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZeros(Teuchos::RCP<Epetra_Vector> vec)
 {
   const Epetra_BlockMap& oneDimensionalMap = vec->Map();
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(oneDimensionalMap.ElementSize() != 1, "**** applyKinematicBC_InsertZeros() must be called with map having element size = 1.\n");
 
   // loop over kinematic boundary conditions
   Teuchos::ParameterList::ConstIterator it;
@@ -404,6 +408,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::setVectorValues(double time
                                                                      double multiplier)
 {
   const Epetra_BlockMap& threeDimensionalMap = vec->Map();
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(threeDimensionalMap.ElementSize() != 3, "**** setVectorValues() must be called with map having element size = 3.\n");
 
   // apply the kinematic boundary conditions
   Teuchos::ParameterList::ConstIterator it;

@@ -131,6 +131,12 @@ namespace PeridigmNS {
     //! Compute the Jacobian (pure virtual method in NOX::Epetra::Interface::Jacobian).
     bool computeJacobian(const Epetra_Vector& x, Epetra_Operator& Jac);
 
+    //! Number of nonlinear iterations between Jacobian updates for NOX Nonlinear CG solves.
+    int m_noxTriggerJacobianUpdate;
+
+    //! Counter for updating the Jacobian for NOX Nonlinear CG solves.
+    int m_noxJacobianUpdateCounter;
+
     //! Compute the preconditioner (pure virtual method in NOX::Epetra::Interface::Preconditioner).
     bool computePreconditioner(const Epetra_Vector& x, Epetra_Operator& Prec, Teuchos::ParameterList* precParams = 0);
 

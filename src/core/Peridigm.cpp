@@ -855,28 +855,23 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
   //Determine what to fill (F or Jacobian)
   bool fillF = false;
   bool fillMatrix = false;
-  if (tmp_rhs != 0) {
-    fillF = true;
-  }
-  else {
-    fillMatrix = true;
-  }
-
   
   // "flag" can be used to determine how accurate your fill of F should be 
   // depending on why we are calling evaluate (Could be using computeF to 
   // populate a Jacobian or Preconditioner).
   if (flag == NOX::Epetra::Interface::Required::Residual) {
-  // Do nothing for now
+    fillF = true;
   }
   else if (flag == NOX::Epetra::Interface::Required::Jac) {
-  // Do nothing for now
+    fillMatrix = true;
   }
   else if (flag == NOX::Epetra::Interface::Required::Prec) {
-  // Do nothing for now
+    // Do nothing for now
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "flag = Prec");
   }
   else if (flag == NOX::Epetra::Interface::Required::User) {
-  // Do nothing for now
+    // Do nothing for now
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "flag = User");
   }
 
   // copy the solution vector passed in by NOX to update the deformation 
@@ -929,10 +924,16 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
     // copy back to tmp_rhs 
     for(int i=0 ; i < tmp_rhs->MyLength() ; ++i)
       (*tmp_rhs)[i] = (*residual)[i];
+
+    // DEBUGGING
+//     double residualNorm2;
+//     residual->Norm2(&residualNorm2);
+//     cout << "RESIDUAL = " << residualNorm2 << endl;
+    // END DEBUGGING
   }
 
   // Compute the tangent if requested
-  if( fillMatrix ){
+  if( fillMatrix && m_noxJacobianUpdateCounter%m_noxTriggerJacobianUpdate == 0 ){
     tangent->PutScalar(0.0);
     PeridigmNS::Timer::self().startTimer("Evaluate Jacobian");
     modelEvaluator->evalJacobian(workset);
@@ -940,8 +941,9 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
     TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::evaluateNOX(), GlobalAssemble() returned nonzero error code.\n");
     PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
     boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndSetDiagonal(tangent);
-    //tangent->Scale(-1.0);
   }
+  if( fillMatrix )
+    m_noxJacobianUpdateCounter += 1;
 
   return true;
 }
@@ -966,13 +968,17 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
     cout << "  number of nonzeros = " << tangent->NumGlobalNonzeros() << "\n" << endl;
   }
 
+  Teuchos::RCP<Epetra_Vector> residual = Teuchos::rcp(new Epetra_Vector(tangent->Map()));
+  Teuchos::RCP<Epetra_Vector> reaction = Teuchos::rcp(new Epetra_Vector(force->Map()));
+
   // Create vectors that are specific to NOX quasi-statics.
   Teuchos::RCP<Epetra_Vector> soln = Teuchos::rcp(new Epetra_Vector(tangent->Map()));
-  Teuchos::RCP<NOX::Epetra::Vector> noxSoln = Teuchos::rcp(new NOX::Epetra::Vector(soln,
-                                                         NOX::Epetra::Vector::CreateView));
-
-  // Set the initial guess
+  Teuchos::RCP<NOX::Epetra::Vector> noxSoln = Teuchos::rcp(new NOX::Epetra::Vector(soln, NOX::Epetra::Vector::CreateView));
   soln->PutScalar(0.0);
+
+  Teuchos::RCP<Epetra_Vector> initialGuess = Teuchos::rcp(new Epetra_Vector(tangent->Map()));
+  Teuchos::RCP<NOX::Epetra::Vector> noxInitialGuess = Teuchos::rcp(new NOX::Epetra::Vector(initialGuess, NOX::Epetra::Vector::CreateView));
+  initialGuess->PutScalar(0.0);
   
   // Initialize velocity to zero
   v->PutScalar(0.0);
@@ -1088,7 +1094,7 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
   }
   else {
       //cout << "Line Search Method not recognized, defaulting to Nonlinear CG linesearch method" << endl;
-      searchParams.set("Method", "Nonlinear CG"); 
+      searchParams.set("Method", "NonlinearCG"); 
   }
 
   // Sublist for direction
@@ -1219,45 +1225,63 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
   double timePrevious = timeInitial;
   double nominalTimeIncrement = (timeFinal-timeInitial)/double(numLoadSteps);
 
-  int step = 0;
+  m_noxTriggerJacobianUpdate = 1;
+  if(implicitParams->sublist("Direction").sublist("Nonlinear CG").isParameter("Update Jacobian"))
+    m_noxTriggerJacobianUpdate = implicitParams->sublist("Direction").sublist("Nonlinear CG").get<int>("Update Jacobian");
 
+  int step = 0;
   while(step < numLoadSteps){
  
     timePrevious = timeCurrent;
     double timeIncrement = nominalTimeIncrement;
     timeCurrent = timePrevious + timeIncrement;
     *timeStep = timeIncrement;
+    m_noxJacobianUpdateCounter = 0;
     
-    // Update nodal positions for nodes with kinematic B.C.
     soln->PutScalar(0.0);
+    deltaU->PutScalar(0.0);
+
+    // Use a predictor based on the velocity from the previous load step
+    for(int i=0 ; i<initialGuess->MyLength() ; ++i)
+      (*initialGuess)[i] = (*v)[i]*timeIncrement;
+    boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(initialGuess);
 
     // Apply the displacement increment
     // Note that the soln vector was created to be compatible with the tangent matrix, and hence needed to be
     // constructed with an Epetra_Map.  The mothership vectors were constructed with an Epetra_BlockMap, and it's
-    // this map that the boundary and intial condition manager expects.  So, copy the soln vector into the deltaU
-    // vector, apply the B.C. to deltaU, and then copy the values back to soln.
-    deltaU->PutScalar(0.0);
-    for(int i=0 ; i<deltaU->MyLength() ; ++i)
-        (*deltaU)[i] = (*soln)[i];
+    // this map that the boundary and intial condition manager expects.  So, make sure that the boundary and initial
+    // condition manager gets the right type of vector.
     boundaryAndInitialConditionManager->applyKinematicBC_SetDisplacementIncrement(timeCurrent, timePrevious, x, deltaU);
-    for(int i=0 ; i<deltaU->MyLength() ; ++i)
-        (*soln)[i] = (*deltaU)[i];
+    // Perform line search on this guess
+    for(int i=0 ; i<y->MyLength() ; ++i)
+      (*y)[i] = (*x)[i] + (*u)[i] + (*deltaU)[i];
+    double alpha = quasiStaticsLineSearch(residual, initialGuess);
+    initialGuess->Scale(alpha);
+
+
+    for(int i=0 ; i<u->MyLength() ; ++i)
+      (*u)[i] += (*deltaU)[i];
+
+    *soln = *initialGuess;
 
     double residualNorm;
     double toleranceMultiplier = 1.0;
     if(!useAbsoluteTolerance){
-        // compute the vector of reactions, i.e., the forces corresponding to degrees of freedom for which kinematic B.C. are applied
-        Teuchos::RCP<Epetra_Vector> residual = Teuchos::rcp(new Epetra_Vector(tangent->Map()));
-        Teuchos::RCP<Epetra_Vector> reaction = Teuchos::rcp(new Epetra_Vector(force->Map()));
-        residualNorm = computeQuasiStaticResidual(residual);
-        boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(force, reaction);
-        // convert force density to force
-        for(int i=0 ; i<reaction->MyLength() ; ++i)
-            (*reaction)[i] *= (*volume)[i/3];
-        double reactionNorm2;
-        reaction->Norm2(&reactionNorm2);
-        toleranceMultiplier = reactionNorm2;
-        residualTolerance = tolerance*toleranceMultiplier;
+      // compute the vector of reactions, i.e., the forces corresponding to degrees of freedom for which kinematic B.C. are applied
+      for(int i=0 ; i<y->MyLength() ; ++i)
+	(*y)[i] = (*x)[i] + (*u)[i];
+      residualNorm = computeQuasiStaticResidual(residual);
+      boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(force, reaction);
+      // convert force density to force
+      for(int i=0 ; i<reaction->MyLength() ; ++i)
+	(*reaction)[i] *= (*volume)[i/3];
+      double reactionNorm2;
+      reaction->Norm2(&reactionNorm2);
+      toleranceMultiplier = reactionNorm2;
+      residualTolerance = tolerance*toleranceMultiplier;
+      // DEBUGGING
+//       cout << "REACTION DUE TO APPLICATION OF BC INCREMENT = " << reactionNorm2 << endl;
+      // END DEBUGGING
     }
 
     // Print the load step to screen
@@ -1277,8 +1301,8 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
                     noxJacobian, noxCloneVector));
 
     //Create the Group
-    NOX::Epetra::Vector initialGuess(soln, NOX::Epetra::Vector::CreateView);
-    Teuchos::RCP<NOX::Epetra::Group> grpPtr = Teuchos::rcp(new NOX::Epetra::Group(printParams, noxInterfaceRequired, initialGuess, linSys));
+    NOX::Epetra::Vector noxInitialGuess(soln, NOX::Epetra::Vector::CreateView);
+    Teuchos::RCP<NOX::Epetra::Group> grpPtr = Teuchos::rcp(new NOX::Epetra::Group(printParams, noxInterfaceRequired, noxInitialGuess, linSys));
 
     // Create the convergence tests
     Teuchos::RCP<NOX::StatusTest::NormF>absresid = Teuchos::rcp(new NOX::StatusTest::NormF(residualTolerance));
@@ -1306,8 +1330,12 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
     
 
     // Store the velocity
-    for(int i=0 ; i<v->MyLength() ; ++i)
-        (*v)[i] = finalSolution[i]/nominalTimeIncrement;
+    v->PutScalar(0.0);
+    boundaryAndInitialConditionManager->applyKinematicBC_SetDisplacementIncrement(timeCurrent, timePrevious, x, v);
+    for(int i=0 ; i<v->MyLength() ; ++i){
+      (*v)[i] += finalSolution[i];
+      (*v)[i] /= nominalTimeIncrement;
+    }
 
     // Add the converged displacement increment to the displacement
     for(int i=0 ; i<u->MyLength() ; ++i)
@@ -1481,7 +1509,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
 
     int solverIteration = 1;
     bool dampedNewton = false;
-    bool usePreconditioner = false;
+    bool usePreconditioner = true;
     int numPureNewtonSteps = 8;
     int numPreconditionerSteps = 24;
     int dampedNewtonNumStepsBetweenTangentUpdates = 8;
