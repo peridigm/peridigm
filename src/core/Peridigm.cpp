@@ -67,9 +67,6 @@
 #include <Ifpack_IC.h>
 #include <Teuchos_VerboseObject.hpp>
 
-#include "NOX.H"
-#include "NOX_Epetra.H"
-
 #include "Peridigm.hpp"
 #include "Peridigm_DiscretizationFactory.hpp"
 #include "Peridigm_PdQuickGridDiscretization.hpp"
@@ -828,25 +825,18 @@ void PeridigmNS::Peridigm::executeExplicit() {
 }
 
 bool PeridigmNS::Peridigm::computeF(const Epetra_Vector& x, Epetra_Vector& FVec, NOX::Epetra::Interface::Required::FillType fillType) {
-  
   return evaluateNOX(fillType, &x, &FVec, 0);
 }
 
 bool PeridigmNS::Peridigm::computeJacobian(const Epetra_Vector& x, Epetra_Operator& Jac) {
-
   return evaluateNOX(NOX::Epetra::Interface::Required::Jac, &x, 0, 0);
-
-  
 }
 
 bool PeridigmNS::Peridigm::computePreconditioner(const Epetra_Vector& x, Epetra_Operator& Prec, Teuchos::ParameterList* precParams) {
-
-  cout << "ERROR: Peridigm::preconditionVector() - "
-       << "Use Explicit Jacobian only for NOX interface!" << endl;
+  cout << "ERROR: Peridigm::preconditionVector() - Use Explicit Jacobian only for NOX interface!" << endl;
   throw "Interface Error";
 }
 
-// Matrix and Residual Fills
 bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillType flag, 
         const Epetra_Vector* soln,
         Epetra_Vector* tmp_rhs,
@@ -924,14 +914,6 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
     // copy back to tmp_rhs 
     for(int i=0 ; i < tmp_rhs->MyLength() ; ++i)
       (*tmp_rhs)[i] = (*residual)[i];
-
-    // DEBUGGING
-//     double residualL2, residualInf;
-//     residual->Norm2(&residualL2);
-//     residual->NormInf(&residualInf);
-//     if(peridigmComm->MyPID() == 0)
-//       cout << "  residual L2 norm = " << residualL2 << ", residual infinity norm = " << residualInf << endl;
-    // END DEBUGGING
   }
 
   // Compute the tangent if requested
@@ -948,6 +930,33 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
     m_noxJacobianUpdateCounter += 1;
 
   return true;
+}
+
+void PeridigmNS::Peridigm::jacobianDiagnostics(Teuchos::RCP<NOX::Epetra::Group> noxGroup){
+
+  // condition number
+  NOX::Abstract::Group::ReturnType returnValue = NOX::Abstract::Group::Ok;
+  if(!noxGroup->isJacobian())
+    returnValue = noxGroup->computeJacobian();
+  if(returnValue == NOX::Abstract::Group::Ok && !noxGroup->isConditionNumber()){
+    int conditionNumberMaxIters = 500;
+    int conditionNumberTolerance = 1.0e-6;
+    int conditionNumberKrylovSubspaceSize = 100;
+    int conditionNumberPrintOutput = false;
+    returnValue = noxGroup->computeJacobianConditionNumber(conditionNumberMaxIters,
+                                                           conditionNumberTolerance,
+                                                           conditionNumberKrylovSubspaceSize,
+                                                           conditionNumberPrintOutput);
+  }
+  if(returnValue == NOX::Abstract::Group::Ok){
+    double conditionNumber = noxGroup->getJacobianConditionNumber();
+    if(peridigmComm->MyPID() == 0)
+      cout << "  Jacobian diagonsitics:  condition number = " << conditionNumber << endl;
+  }
+  else{
+    if(peridigmComm->MyPID() == 0)
+      cout << "  Jacobian diagonsitics:  condition number calculation failed!" << endl;
+  }
 }
 
 Teuchos::RCP<Epetra_CrsMatrix> PeridigmNS::Peridigm::getJacobian() {
@@ -984,251 +993,63 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
   // Initialize velocity to zero
   v->PutScalar(0.0);
   
-  // Set the timestep
+  // Create a placeholder for the timestep within the workset that is passed to the model evaluator
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   workset->timeStep = timeStep;
  
-  // Set up parameters lists
+  // "Solver" parameter list
   Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
-  Teuchos::RCP<Teuchos::ParameterList> implicitParams= sublist(solverParams, "NOXQuasiStatic", true);
-  double timeInitial = solverParams->get("Initial Time", 0.0);
-  double timeFinal = solverParams->get("Final Time", 1.0);
-  timeCurrent = timeInitial;
-//   int numLoadSteps = implicitParams->get("Number of Load Steps", 10);
-  int maxnumiterations = implicitParams->get("Max Solver Iterations", 20);
+  bool performJacobianDiagnostics = solverParams->get("Jacobian Diagnostics", false);
+
+  // "NOXQuasiStatic" parameter list
+  Teuchos::RCP<Teuchos::ParameterList> noxQuasiStaticParams = sublist(solverParams, "NOXQuasiStatic", true);
+  bool noxVerbose = noxQuasiStaticParams->get("Verbose", false);
+  int maxIterations = noxQuasiStaticParams->get("Max Solver Iterations", 50);
   
-    // Determine tolerance
-  double tolerance = implicitParams->get("Relative Tolerance", 1.0e-6);
+  // Determine tolerance, either "Relative Tolerance" or "Absolute Tolerance"
+  // If none is provided, default to relative tolerance of 1.0e-6
+  double tolerance = noxQuasiStaticParams->get("Relative Tolerance", 1.0e-6);
   bool useAbsoluteTolerance = false;
-  if(implicitParams->isParameter("Absolute Tolerance")){
+  if(noxQuasiStaticParams->isParameter("Absolute Tolerance")){
     useAbsoluteTolerance = true;
-    tolerance = implicitParams->get<double>("Absolute Tolerance");
+    tolerance = noxQuasiStaticParams->get<double>("Absolute Tolerance");
   }
 
-
-  // Create a parameter list for the nonlinear solver
-  Teuchos::RCP<Teuchos::ParameterList> nlParams = Teuchos::rcp(new Teuchos::ParameterList);
-  // Set the nonlinear solver method
-  string nonLinearSolver = implicitParams->get("Nonlinear Solver","Line Search Based");
-  int printing_outputprecision = (implicitParams->sublist("Printing")).get("Output Precision",3);
-  int printing_outputprocessor = (implicitParams->sublist("Printing")).get("Output Processor",0);
-  string linesearch_method = (implicitParams->sublist("Line Search")).get("Method","NonlinearCG"); // "Full Step" can also work well sometimes
-  string direction_method = (implicitParams->sublist("Direction")).get("Method","NonlinearCG");
-  string solveroptions_checktype = (implicitParams->sublist("Solver Options")).get("Status Test Check Type","Complete");  
-
-  nlParams->set("Nonlinear Solver", nonLinearSolver);
-
-  // Set the printing parameters in the "Printing"
-  Teuchos::ParameterList& printParams = nlParams->sublist("Printing");
-  printParams.set("Output Precision",printing_outputprecision);
-  printParams.set("Output Processor",printing_outputprocessor);
-  bool verbose = false;
-  if (verbose)
-   printParams.set("Output Information",
-       NOX::Utils::OuterIteration +
-       NOX::Utils::OuterIterationStatusTest +
-       NOX::Utils::InnerIteration +
-       NOX::Utils::LinearSolverDetails +
-       NOX::Utils::Parameters +
-       NOX::Utils::Details +
-       NOX::Utils::Warning +
-       NOX::Utils::Debug +
-       NOX::Utils::TestDetails +
-       NOX::Utils::Error);
+  // Parameters for printing output to the screen
+  Teuchos::ParameterList& printParams = noxQuasiStaticParams->sublist("Printing");
+  if (noxVerbose)
+    printParams.set("Output Information",
+                    NOX::Utils::OuterIteration +
+                    NOX::Utils::OuterIterationStatusTest +
+                    NOX::Utils::InnerIteration +
+                    NOX::Utils::LinearSolverDetails +
+                    NOX::Utils::Parameters +
+                    NOX::Utils::Details +
+                    NOX::Utils::Warning +
+                    NOX::Utils::Debug +
+                    NOX::Utils::TestDetails +
+                    NOX::Utils::Error);
   else
     printParams.set("Output Information", NOX::Utils::Error +
-       NOX::Utils::TestDetails);
+                    NOX::Utils::TestDetails);
   
   // Create a print class for controlling output below 
-  NOX::Utils printing(printParams);
-
-  // Sublist for line search
-  Teuchos::ParameterList& searchParams = nlParams->sublist("Line Search");
-  searchParams.set("Method", linesearch_method); 
-
-  if (linesearch_method == "NonlinearCG"){
-      //cout << "NonlinearCG linesearch has no parameters" << endl;
-      //Nonlinear CG linesearch method has no parameters
-  }
-  else if (linesearch_method == "More'-Thuente"){
-      //cout << "MoreThuente linesearch parameters" << endl;
-      Teuchos::ParameterList& morethuente = searchParams.sublist("More'-Thuente");
-
-      string lineSearch_MoreThuente_SufficientDecreaseCondition =
-          ((implicitParams->sublist("Line Search")).sublist("More'-Thuente")).get("Sufficient Decrease Condition","Armijo-Goldstein");
-
-      double lineSearch_MoreThuente_SufficientDecrease =
-          ((implicitParams->sublist("Line Search")).sublist("More'-Thuente")).get("Sufficient Decrease",1E-4);
-
-      double lineSearch_MoreThuente_CurvatureCondition =
-          ((implicitParams->sublist("Line Search")).sublist("More'-Thuente")).get("Curvature Condition",0.9999);
-
-      double lineSearch_MoreThuente_IntervalWidth =
-          ((implicitParams->sublist("Line Search")).sublist("More'-Thuente")).get("Interval Width",1E-15);
-
-      double lineSearch_MoreThuente_MinimumStep =
-          ((implicitParams->sublist("Line Search")).sublist("More'-Thuente")).get("Minimum Step",1E-15);
-
-      double lineSearch_MoreThuente_MaximumStep =
-          ((implicitParams->sublist("Line Search")).sublist("More'-Thuente")).get("Maximum Step",1E5);
-
-      int lineSearch_MoreThuente_MaxIters =
-          ((implicitParams->sublist("Line Search")).sublist("More'-Thuente")).get("Max Iters",30);
-
-      double lineSearch_MoreThuente_DefaultStep =
-          ((implicitParams->sublist("Line Search")).sublist("More'-Thuente")).get("Default Step",1E-2);
-
-      string lineSearch_MoreThuente_RecoveryStepType =
-          ((implicitParams->sublist("Line Search")).sublist("More'-Thuente")).get("Recovery Step Type","Constant");
-
-      morethuente.set("Sufficient Decrease Condition",lineSearch_MoreThuente_SufficientDecreaseCondition);
-      morethuente.set("Sufficient Decrease",lineSearch_MoreThuente_SufficientDecrease);
-      morethuente.set("Curvature Condition",lineSearch_MoreThuente_CurvatureCondition);
-      morethuente.set("Interval Width",lineSearch_MoreThuente_IntervalWidth);
-      morethuente.set("Minimum Step",lineSearch_MoreThuente_MinimumStep);
-      morethuente.set("Maximum Step",lineSearch_MoreThuente_MaximumStep);
-      morethuente.set("Max Iters",lineSearch_MoreThuente_MaxIters);
-      morethuente.set("Default Step",lineSearch_MoreThuente_DefaultStep);
-      morethuente.set("Recovery Step Type",lineSearch_MoreThuente_RecoveryStepType);
-
-  }
-  else {
-      //cout << "Line Search Method not recognized, defaulting to Nonlinear CG linesearch method" << endl;
-      searchParams.set("Method", "NonlinearCG"); 
-  }
-
-  // Sublist for direction
-  Teuchos::ParameterList& dirParams = nlParams->sublist("Direction");
-
-
-  Teuchos::ParameterList& nonlinearcg = dirParams.sublist("Nonlinear CG");
-  Teuchos::ParameterList& lsParams = nonlinearcg.sublist("Linear Solver");  
-  //Teuchos::ParameterList lsParams = Teuchos::rcp(new Teuchos::ParameterList);
-  dirParams.set("Method", direction_method);
-
-  if (direction_method == "Newton"){
-      //cout << "Newton direction parameters" << endl;
-
-      Teuchos::ParameterList& newtonParams = dirParams.sublist("Newton");
-
-      string direction_newton_ForcingMethod = 
-          ((implicitParams->sublist("Direction")).sublist("Newton")).get("Forcing Term Method","Constant");
-
-      double direction_newton_ForcingInitialTolerance = 
-          ((implicitParams->sublist("Direction")).sublist("Newton")).get("Forcing Term Initial Tolerance",0.1);
-
-      double direction_newton_ForcingMinimumTolerance = 
-          ((implicitParams->sublist("Direction")).sublist("Newton")).get("Forcing Term Minimum Tolerance",1.0e-6);
-
-      double direction_newton_ForcingMaximumTolerance = 
-          ((implicitParams->sublist("Direction")).sublist("Newton")).get("Forcing Term Maximum Tolerance",0.01);
-
-      double direction_newton_ForcingAlpha = 
-          ((implicitParams->sublist("Direction")).sublist("Newton")).get("Forcing Term Alpha",1.5);
-
-      double direction_newton_ForcingGamma = 
-          ((implicitParams->sublist("Direction")).sublist("Newton")).get("Forcing Term Gamma",0.9);
-
-      //bool direction_newton_RescueBadSolve = 
-      //    ((implicitParams->sublist("Direction")).sublist("Newton")).get("Rescue Bad Newton Solve",1);
-
-      newtonParams.set("Forcing Term Method",direction_newton_ForcingMethod);
-      newtonParams.set("Forcing Term Initial Tolerance",direction_newton_ForcingInitialTolerance);
-      newtonParams.set("Forcing Term Minimum Tolerance",direction_newton_ForcingMinimumTolerance);
-      newtonParams.set("Forcing Term Maximum Tolerance",direction_newton_ForcingMaximumTolerance);
-      newtonParams.set("Forcing Term Alpha",direction_newton_ForcingAlpha);
-      newtonParams.set("Forcing Term Gamma",direction_newton_ForcingGamma);
-      //newtonParams.set("Rescue Bad Newton Solve",direction_newton_RescueBadSolve);
-
-
-      double direction_newton_Linsolver_Tolerance = 
-          (((implicitParams->sublist("Direction")).sublist("Newton")).sublist("Linear Solver")).get("Tolerance", 1e-9);
-
-      lsParams = newtonParams.sublist("Linear Solver");
-      lsParams.set("Tolerance",direction_newton_Linsolver_Tolerance);
-
-  }
-  else {
-      //cout << "NonlinearCG direction parameters" << endl;
-
-
-      int direction_nonlinearcg_restartfrequency = 
-          ((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).get("Restart Frequency",100);
-
-      string direction_nonlinearcg_precondition = 
-          ((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).get("Precondition","On");
-
-      string direction_nonlinearcg_orthogonalize = 
-          ((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).get("Orthogonalize","Fletcher-Reeves");// or "Polak-Ribiere"
-
-      nonlinearcg.set("Restart Frequency", direction_nonlinearcg_restartfrequency);
-      nonlinearcg.set("Precondition",direction_nonlinearcg_precondition);
-      nonlinearcg.set("Orthogonalize", direction_nonlinearcg_orthogonalize); // or "Polak-Ribiere"
-
-      string direction_linearsolver_aztecsolver = 
-          (((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).sublist("Linear Solver")).get("Aztec Solver", "GMRES");
-
-      string direction_linearsolver_preconditioner = 
-          (((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).sublist("Linear Solver")).get("Preconditioner", "AztecOO");
-
-      int direction_linearsolver_preconditioneriterations = 
-          (((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).sublist("Linear Solver")).get("AztecOO Preconditioner Iterations", 16);
-
-      int direction_linearsolver_maxiterations = 
-          (((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).sublist("Linear Solver")).get("Max Iterations", 401);
-
-      string direction_linearsolver_preconditioneroperator = 
-          (((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).sublist("Linear Solver")).get("Preconditioner Operator", "Use Jacobian");
-
-      string direction_linearsolver_preconditionerpolicy = 
-          (((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).sublist("Linear Solver")).get("Preconditioner Reuse Policy", "Recompute");
-
-      string direction_linearsolver_aztecpreconditioner = 
-          (((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).sublist("Linear Solver")).get("Aztec Preconditioner", "ilu");
-
-      string direction_linearsolver_RCMreordering = 
-          (((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).sublist("Linear Solver")).get("RCM Reordering", "Disabled");
-
-      int direction_linearsolver_krylovsize = 
-          (((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).sublist("Linear Solver")).get("Size of Krylov Subspace", 301);
-
-      int direction_linearsolver_maxpreconage = 
-          (((implicitParams->sublist("Direction")).sublist("Nonlinear CG")).sublist("Linear Solver")).get("Max Age of Prec", 1);
-
-
-      // Sublist for linear solver for the Newton method
-      lsParams.set("Aztec Solver", direction_linearsolver_aztecsolver);
-      lsParams.set("Preconditioner Operator", direction_linearsolver_preconditioneroperator);
-      lsParams.set("Preconditioner", direction_linearsolver_preconditioner);
-      lsParams.set("AztecOO Preconditioner Iterations", direction_linearsolver_preconditioneriterations);
-      lsParams.set("Max Iterations", direction_linearsolver_maxiterations);
-      lsParams.set("Preconditioner Reuse Policy", direction_linearsolver_preconditionerpolicy);
-      lsParams.set("Size of Krylov Subspace", direction_linearsolver_krylovsize);
-      lsParams.set("Aztec Preconditioner", direction_linearsolver_aztecpreconditioner);
-      lsParams.set("Max Age of Prec", direction_linearsolver_maxpreconage);
-      lsParams.set("RCM Reordering", direction_linearsolver_RCMreordering);
-  }
-
-
-  
-  // Force all status tests to do a full check
-  nlParams->sublist("Solver Options").set("Status Test Check Type", solveroptions_checktype);
+  NOX::Utils noxPrinting(printParams);
 
   // Create list of time steps
-  
   // Case 1:  User provided initial time, final time, and number of load steps
   vector<double> timeSteps;
-  if( solverParams->isParameter("Final Time") && implicitParams->isParameter("Number of Load Steps") ){
+  if( solverParams->isParameter("Final Time") && noxQuasiStaticParams->isParameter("Number of Load Steps") ){
     double timeInitial = solverParams->get("Initial Time", 0.0);
     double timeFinal = solverParams->get<double>("Final Time");
-    int numLoadSteps = implicitParams->get<int>("Number of Load Steps");
+    int numLoadSteps = noxQuasiStaticParams->get<int>("Number of Load Steps");
     timeSteps.push_back(timeInitial);
     for(int i=0 ; i<numLoadSteps ; ++i)
       timeSteps.push_back(timeInitial + (i+1)*(timeFinal-timeInitial)/numLoadSteps);
   }
   // Case 2:  User provided a list of time steps
-  else if( implicitParams->isParameter("Time Steps") ){
-    string timeStepString = implicitParams->get<string>("Time Steps");
+  else if( noxQuasiStaticParams->isParameter("Time Steps") ){
+    string timeStepString = noxQuasiStaticParams->get<string>("Time Steps");
     istringstream iss(timeStepString);
     copy(istream_iterator<double>(iss),
 	 istream_iterator<double>(),
@@ -1237,7 +1058,6 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
   else{
     TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n****Error: No valid time step data provided.\n");
   }
-
   timeCurrent = timeSteps[0];
 
   // Write initial configuration to disk
@@ -1246,9 +1066,12 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
   outputManager->write(blocks, timeCurrent);
   PeridigmNS::Timer::self().stopTimer("Output");
 
+  // Functionality for updating the Jacobian at a user-specified interval
+  // This does not appear to be available for nonlinear CG in NOX, but it's important for peridynamics, so
+  // we'll handle it directly within Peridigm
   m_noxTriggerJacobianUpdate = 1;
-  if(implicitParams->sublist("Direction").sublist("Nonlinear CG").isParameter("Update Jacobian"))
-    m_noxTriggerJacobianUpdate = implicitParams->sublist("Direction").sublist("Nonlinear CG").get<int>("Update Jacobian");
+  if(noxQuasiStaticParams->sublist("Direction").sublist("Nonlinear CG").isParameter("Update Jacobian"))
+    m_noxTriggerJacobianUpdate = noxQuasiStaticParams->sublist("Direction").sublist("Nonlinear CG").get<int>("Update Jacobian");
 
   Epetra_Time loadStepCPUTime(*peridigmComm);
   double cummulativeLoadStepCPUTime = 0.0;
@@ -1281,7 +1104,7 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
     if(step > 1){
       // Perform line search on this guess
       for(int i=0 ; i<y->MyLength() ; ++i)
-	(*y)[i] = (*x)[i] + (*u)[i] + (*deltaU)[i];
+        (*y)[i] = (*x)[i] + (*u)[i] + (*deltaU)[i];
       double alpha = quasiStaticsLineSearch(residual, initialGuess);
       initialGuess->Scale(alpha);
     }
@@ -1295,12 +1118,12 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
     if(!useAbsoluteTolerance){
       // compute the vector of reactions, i.e., the forces corresponding to degrees of freedom for which kinematic B.C. are applied
       for(int i=0 ; i<y->MyLength() ; ++i)
-	(*y)[i] = (*x)[i] + (*u)[i];
-      double residualNorm = computeQuasiStaticResidual(residual);
+        (*y)[i] = (*x)[i] + (*u)[i];
+      computeQuasiStaticResidual(residual);
       boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(force, reaction);
       // convert force density to force
       for(int i=0 ; i<reaction->MyLength() ; ++i)
-	(*reaction)[i] *= (*volume)[i/3];
+        (*reaction)[i] *= (*volume)[i/3];
       double reactionNorm2;
       reaction->Norm2(&reactionNorm2);
       toleranceMultiplier = reactionNorm2;
@@ -1312,20 +1135,31 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
       cout << "Load step " << step << ", initial time = " << timePrevious << ", final time = " << timeCurrent <<
         ", convergence criterion = " << residualTolerance << endl;
 
+    // Get the linear solver parameters from the proper sublist
+    // \todo Handle all allowable "Direction" settings
+    Teuchos::RCP<Teuchos::ParameterList> linearSystemParams = Teuchos::rcp(new Teuchos::ParameterList);
+    string directionMethod = noxQuasiStaticParams->sublist("Direction").get<string>("Method");
+    if(directionMethod == "Newton")
+      linearSystemParams = Teuchos::rcpFromRef( noxQuasiStaticParams->sublist("Direction").sublist("Newton").sublist("Linear Solver") );
+    else if(directionMethod == "NonlinearCG")
+      linearSystemParams = Teuchos::rcpFromRef( noxQuasiStaticParams->sublist("Direction").sublist("Nonlinear CG").sublist("Linear Solver") );
+
     // Construct the NOX linear system
     Teuchos::RCP<NOX::Epetra::Interface::Required> noxInterfaceRequired = Teuchos::RCP<NOX::Epetra::Interface::Required>(this, false);
     Teuchos::RCP<NOX::Epetra::Interface::Jacobian> noxInterfaceJacobian = Teuchos::RCP<NOX::Epetra::Interface::Jacobian>(this, false);
     Teuchos::RCP<Epetra_RowMatrix> noxJacobian = getJacobian();
     const NOX::Epetra::Vector& noxCloneVector = *soln;
     Teuchos::RCP<NOX::Epetra::LinearSystemAztecOO> linSys = 
-        Teuchos::rcp(new NOX::Epetra::LinearSystemAztecOO(printParams, lsParams, 
-                    noxInterfaceRequired, 
-                    noxInterfaceJacobian, 
-                    noxJacobian, noxCloneVector));
+      Teuchos::rcp(new NOX::Epetra::LinearSystemAztecOO(printParams,
+                                                        *linearSystemParams,
+                                                        noxInterfaceRequired, 
+                                                        noxInterfaceJacobian, 
+                                                        noxJacobian,
+                                                        noxCloneVector));
 
-    //Create the Group
+    // Create the Group
     NOX::Epetra::Vector noxInitialGuess(soln, NOX::Epetra::Vector::CreateView);
-    Teuchos::RCP<NOX::Epetra::Group> grpPtr = Teuchos::rcp(new NOX::Epetra::Group(printParams, noxInterfaceRequired, noxInitialGuess, linSys));
+    Teuchos::RCP<NOX::Epetra::Group> noxGroup = Teuchos::rcp(new NOX::Epetra::Group(printParams, noxInterfaceRequired, noxInitialGuess, linSys));
 
     // Create the convergence tests
     //NOX::Abstract::Vector::NormType normType = NOX::Abstract::Vector::NormType::TwoNorm; // OneNorm, TwoNorm, MaxNorm
@@ -1333,7 +1167,7 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
     NOX::StatusTest::NormF::ScaleType scaleType = NOX::StatusTest::NormF::Unscaled;
     // The following constructor defaults NormType to TwoNorm and ToleranceType to Absolute
     Teuchos::RCP<NOX::StatusTest::NormF> absresid = Teuchos::rcp(new NOX::StatusTest::NormF(residualTolerance, scaleType));
-    Teuchos::RCP<NOX::StatusTest::MaxIters> maxiters = Teuchos::rcp(new NOX::StatusTest::MaxIters(maxnumiterations));
+    Teuchos::RCP<NOX::StatusTest::MaxIters> maxiters = Teuchos::rcp(new NOX::StatusTest::MaxIters(maxIterations));
     Teuchos::RCP<NOX::StatusTest::FiniteValue> fv = Teuchos::rcp(new NOX::StatusTest::FiniteValue);
     Teuchos::RCP<NOX::StatusTest::Combo> combo = Teuchos::rcp(new NOX::StatusTest::Combo(NOX::StatusTest::Combo::OR));
     combo->addStatusTest(fv);
@@ -1341,9 +1175,25 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
     combo->addStatusTest(maxiters);
 
     // Create the solver and solve
-    Teuchos::RCP<NOX::Solver::Generic> solver = NOX::Solver::buildSolver(grpPtr, combo, nlParams);
-    NOX::StatusTest::StatusType solvStatus = solver->solve();
-    
+    Teuchos::RCP<NOX::Solver::Generic> solver = NOX::Solver::buildSolver(noxGroup, combo, noxQuasiStaticParams);
+    NOX::StatusTest::StatusType noxSolverStatus = NOX::StatusTest::Unevaluated;
+    int solverIteration = 1;
+    while(noxSolverStatus != NOX::StatusTest::Converged && noxSolverStatus != NOX::StatusTest::Failed){
+      
+      // carry out nonlinear iteration
+      noxSolverStatus = solver->step();
+
+      // print results to screen
+      if(performJacobianDiagnostics)
+        jacobianDiagnostics(noxGroup);
+      double errorNorm = solver->getSolutionGroupPtr()->getFPtr()->norm();
+      if(peridigmComm->MyPID() == 0)
+        cout << "  iteration " << solverIteration << ": residual L2 norm = " << errorNorm << endl;
+
+      solverIteration += 1;
+    }
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(noxSolverStatus != NOX::StatusTest::Converged, "\n****Error:  NOX solver failed to solve system.\n");
+
     // Get the Epetra_Vector with the final solution from the solver
     const Epetra_Vector& finalSolution = 
       dynamic_cast<const NOX::Epetra::Vector&>(solver->getSolutionGroup().getX()).getEpetraVector();
@@ -1354,15 +1204,6 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
 //     solver->getList().print(printing.out());
 //     printing.out() << endl;
     //}
-    if(peridigmComm->MyPID() == 0){
-      int numIterations = -1;
-      if(solver->getList().sublist("Output").isParameter("Nonlinear Iterations"))
-	numIterations = solver->getList().sublist("Output").get<int>("Nonlinear Iterations");
-      double residualL2Norm = -1.0;
-      if(solver->getList().sublist("Output").isParameter("2-Norm of Residual"))
-	residualL2Norm = solver->getList().sublist("Output").get<double>("2-Norm of Residual");
-      cout << "  number of iterations = " << numIterations << ", residual L-2 norm = " << residualL2Norm << endl;
-    }
 
     // Print load step timing information
     double CPUTime = loadStepCPUTime.ElapsedTime();
@@ -1392,10 +1233,8 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
         blockIt->updateState();
   }
-
-    if(peridigmComm->MyPID() == 0)
-      cout << endl;
-
+  if(peridigmComm->MyPID() == 0)
+    cout << endl;
 }
 
 void PeridigmNS::Peridigm::executeQuasiStatic() {
@@ -1425,17 +1264,17 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
 
   Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
   bool solverVerbose = solverParams->get("Verbose", false);
-  Teuchos::RCP<Teuchos::ParameterList> implicitParams = sublist(solverParams, "QuasiStatic", true);
-  int maxSolverIterations = implicitParams->get("Maximum Solver Iterations", 10);
-  double dampedNewtonDiagonalScaleFactor = implicitParams->get("Damped Newton Diagonal Scale Factor", 1.0001);
-  double dampedNewtonDiagonalShiftFactor = implicitParams->get("Damped Newton Diagonal Shift Factor", 0.00001);
+  Teuchos::RCP<Teuchos::ParameterList> quasiStaticParams = sublist(solverParams, "QuasiStatic", true);
+  int maxSolverIterations = quasiStaticParams->get("Maximum Solver Iterations", 10);
+  double dampedNewtonDiagonalScaleFactor = quasiStaticParams->get("Damped Newton Diagonal Scale Factor", 1.0001);
+  double dampedNewtonDiagonalShiftFactor = quasiStaticParams->get("Damped Newton Diagonal Shift Factor", 0.00001);
 
   // Determine tolerance
-  double tolerance = implicitParams->get("Relative Tolerance", 1.0e-6);
+  double tolerance = quasiStaticParams->get("Relative Tolerance", 1.0e-6);
   bool useAbsoluteTolerance = false;
-  if(implicitParams->isParameter("Absolute Tolerance")){
+  if(quasiStaticParams->isParameter("Absolute Tolerance")){
     useAbsoluteTolerance = true;
-    tolerance = implicitParams->get<double>("Absolute Tolerance");
+    tolerance = quasiStaticParams->get<double>("Absolute Tolerance");
   }
 
   // Pointer index into sub-vectors for use with BLAS
@@ -1451,15 +1290,15 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
 
   // Data for Belos linear solver object
   Belos::LinearProblem<double,Epetra_MultiVector,Epetra_Operator> linearProblem;
-  string linearSolver =  implicitParams->get("Belos Linear Solver", "BlockCG");
+  string linearSolver =  quasiStaticParams->get("Belos Linear Solver", "BlockCG");
   Belos::ReturnType isConverged;
   Teuchos::ParameterList belosList;
   belosList.set( "Block Size", 1 );  // Use single-vector iteration
-  belosList.set( "Maximum Iterations", implicitParams->get("Belos Maximum Iterations", tangent->NumGlobalRows()) ); // Maximum number of iterations allowed
-  belosList.set( "Convergence Tolerance", implicitParams->get("Belos Relative Tolerance", 1.0e-4) ); // Relative convergence tolerance requested
+  belosList.set( "Maximum Iterations", quasiStaticParams->get("Belos Maximum Iterations", tangent->NumGlobalRows()) ); // Maximum number of iterations allowed
+  belosList.set( "Convergence Tolerance", quasiStaticParams->get("Belos Relative Tolerance", 1.0e-4) ); // Relative convergence tolerance requested
   belosList.set( "Output Frequency", -1 );
   int verbosity = Belos::Errors + Belos::Warnings;
-  if( implicitParams->get("Belos Print Status", false) == true ){
+  if( quasiStaticParams->get("Belos Print Status", false) == true ){
     verbosity += Belos::StatusTestDetails;
     belosList.set( "Output Frequency", 1 );
   }
@@ -1480,17 +1319,17 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
   
   // Case 1:  User provided initial time, final time, and number of load steps
   vector<double> timeSteps;
-  if( solverParams->isParameter("Final Time") && implicitParams->isParameter("Number of Load Steps") ){
+  if( solverParams->isParameter("Final Time") && quasiStaticParams->isParameter("Number of Load Steps") ){
     double timeInitial = solverParams->get("Initial Time", 0.0);
     double timeFinal = solverParams->get<double>("Final Time");
-    int numLoadSteps = implicitParams->get<int>("Number of Load Steps");
+    int numLoadSteps = quasiStaticParams->get<int>("Number of Load Steps");
     timeSteps.push_back(timeInitial);
     for(int i=0 ; i<numLoadSteps ; ++i)
       timeSteps.push_back(timeInitial + (i+1)*(timeFinal-timeInitial)/numLoadSteps);
   }
   // Case 2:  User provided a list of time steps
-  else if( implicitParams->isParameter("Time Steps") ){
-    string timeStepString = implicitParams->get<string>("Time Steps");
+  else if( quasiStaticParams->isParameter("Time Steps") ){
+    string timeStepString = quasiStaticParams->get<string>("Time Steps");
     istringstream iss(timeStepString);
     copy(istream_iterator<double>(iss),
 	 istream_iterator<double>(),
@@ -1560,15 +1399,15 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
     while(residualNorm > tolerance*toleranceMultiplier && solverIteration <= maxSolverIterations){
 
       if(!solverVerbose){
-	if(peridigmComm->MyPID() == 0)
-	  cout << "  iteration " << solverIteration << ": residual = " << residualNorm << endl;
+        if(peridigmComm->MyPID() == 0)
+          cout << "  iteration " << solverIteration << ": residual = " << residualNorm << endl;
       }
       else{
-	double residualL2, residualInf;
-	residual->Norm2(&residualL2);
-	residual->NormInf(&residualInf);
-	if(peridigmComm->MyPID() == 0)
-	  cout << "  iteration " << solverIteration << ": residual = " << residualNorm << ", residual L2 = " << residualL2 << ", residual inf = " << residualInf << ", alpha = " << alpha << endl;
+        double residualL2, residualInf;
+        residual->Norm2(&residualL2);
+        residual->NormInf(&residualInf);
+        if(peridigmComm->MyPID() == 0)
+          cout << "  iteration " << solverIteration << ": residual = " << residualNorm << ", residual L2 = " << residualL2 << ", residual inf = " << residualInf << ", alpha = " << alpha << endl;
       }
 
       // On the first iteration, use a predictor based on the velocity from the previous load step
@@ -1827,8 +1666,6 @@ Belos::ReturnType PeridigmNS::Peridigm::quasiStaticsSolveSystem(Teuchos::RCP<Epe
 double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> residual,
 						    Teuchos::RCP<Epetra_Vector> lhs)
 {
-  bool solverVerbose = sublist(peridigmParams, "Solver", true)->get("Verbose", false);
-
   Teuchos::RCP<Epetra_Vector> tempVector = Teuchos::rcp(new Epetra_Vector(*deltaU));
 
   double *lhsPtr, *residualPtr, *deltaUPtr, *xPtr, *yPtr, *uPtr;
@@ -1989,15 +1826,15 @@ void PeridigmNS::Peridigm::executeImplicit() {
   workset->timeStep = timeStep;
 
   Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
-  Teuchos::RCP<Teuchos::ParameterList> implicitParams = sublist(solverParams, "Implicit", true);
+  Teuchos::RCP<Teuchos::ParameterList> quasiStaticParams = sublist(solverParams, "Implicit", true);
   double timeInitial = solverParams->get("Initial Time", 0.0);
   double timeFinal = solverParams->get("Final Time", 1.0);
   timeCurrent = timeInitial;
-  double absoluteTolerance       = implicitParams->get("Absolute Tolerance", 1.0e-6);
-  int maxSolverIterations        = implicitParams->get("Maximum Solver Iterations", 10);
-  double dt                      = implicitParams->get("Fixed dt", 1.0);
-  double beta                    = implicitParams->get("Beta", 0.25);
-  double gamma                   = implicitParams->get("Gamma", 0.50);
+  double absoluteTolerance       = quasiStaticParams->get("Absolute Tolerance", 1.0e-6);
+  int maxSolverIterations        = quasiStaticParams->get("Maximum Solver Iterations", 10);
+  double dt                      = quasiStaticParams->get("Fixed dt", 1.0);
+  double beta                    = quasiStaticParams->get("Beta", 0.25);
+  double gamma                   = quasiStaticParams->get("Gamma", 0.50);
   *timeStep = dt;
   double dt2 = dt*dt;
   int nsteps = (int)floor((timeFinal-timeInitial)/dt);

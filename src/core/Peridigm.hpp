@@ -61,6 +61,8 @@
 #include <BelosBlockCGSolMgr.hpp>
 #include <BelosBlockGmresSolMgr.hpp>
 #include <BelosEpetraAdapter.hpp>
+#include <NOX.H>
+#include <NOX_Epetra.H>
 #include <NOX_Epetra_Interface_Required.H>
 #include <NOX_Epetra_Interface_Jacobian.H>
 #include <NOX_Epetra_Interface_Preconditioner.H>
@@ -146,6 +148,9 @@ namespace PeridigmNS {
     
     //! Residual and Jacobian matrix fills for NOX interface
     virtual bool evaluateNOX(FillType f, const Epetra_Vector *solnVector, Epetra_Vector *rhsVector, Epetra_RowMatrix *matrix);
+
+    //! Perform diagnostics on Jacobian and print results to screen.
+    void jacobianDiagnostics(Teuchos::RCP<NOX::Epetra::Group> noxGroup);
 
     void executeExplicit();
 
