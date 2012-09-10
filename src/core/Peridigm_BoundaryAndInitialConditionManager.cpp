@@ -340,9 +340,9 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
   // this will be used to scale the diagonal entry for kinematic B.C.s
   Epetra_Vector diagonal(mat->Map());
   mat->ExtractDiagonalCopy(diagonal);
-  double diagonalNorm2;
-  diagonal.Norm2(&diagonalNorm2);
-  double diagonalEntry = -1.0*diagonalNorm2;
+  double diagonalNorm1;
+  diagonal.Norm1(&diagonalNorm1);
+  double diagonalEntry = -1.0*diagonalNorm1/diagonal.GlobalLength();
 
   // create data structures for inserting ones and zeros into jacobian
   vector<double> jacobianRow(mat->NumMyCols(), 0.0);
