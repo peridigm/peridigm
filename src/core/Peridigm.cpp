@@ -63,6 +63,7 @@
 #include <EpetraExt_MultiVectorOut.h>
 #include <EpetraExt_RowMatrixOut.h>
 #include <EpetraExt_Transpose_RowMatrix.h>
+#include <Epetra_RowMatrixTransposer.h>
 #include <Ifpack.h>
 #include <Ifpack_IC.h>
 #include <Teuchos_VerboseObject.hpp>
@@ -934,13 +935,56 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
 
 void PeridigmNS::Peridigm::jacobianDiagnostics(Teuchos::RCP<NOX::Epetra::Group> noxGroup){
 
-  // condition number
+  stringstream ss;
+  ss << "  Jacobian diagonsitics:";
+
   NOX::Abstract::Group::ReturnType returnValue = NOX::Abstract::Group::Ok;
   if(!noxGroup->isJacobian())
     returnValue = noxGroup->computeJacobian();
-  if(returnValue == NOX::Abstract::Group::Ok && !noxGroup->isConditionNumber()){
-    int conditionNumberMaxIters = 500;
-    int conditionNumberTolerance = 1.0e-6;
+  if(returnValue != NOX::Abstract::Group::Ok){
+    ss << "  failed to access jacobian";
+    if(peridigmComm->MyPID() == 0)
+      cout << ss.str() << endl;
+    return;
+  }
+
+  // Diagnostic #1, check for symmetry
+
+  // Construct transpose
+  Teuchos::RCP<Epetra_Operator> jacobianOperator = noxGroup->getLinearSystem()->getJacobianOperator();
+  Epetra_CrsMatrix* jacobian = dynamic_cast<Epetra_CrsMatrix*>(jacobianOperator.get());
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(jacobian == NULL, "\n****Error: jacobianDiagnostics() failed to convert jacobian to Epetra_CrsMatrix.\n");  
+  Epetra_CrsMatrix jacobianTranspose(*jacobian);
+  Epetra_CrsMatrix* jacobianTransposePtr = &jacobianTranspose;
+  Epetra_RowMatrixTransposer jacobianTransposer(jacobian);
+  bool makeDataContiguous = false;
+  int returnCode = jacobianTransposer.CreateTranspose(makeDataContiguous, jacobianTransposePtr);
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(returnCode != 0, "\n****Error: jacobianDiagnostics() failed to transpose jacobian.\n");  
+
+  // Replace entries in transpose with 0.5*(J - J^T)
+  int numRows = jacobian->NumMyRows();
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(numRows != jacobianTranspose.NumMyRows(), "\n****Error: jacobianDiagnostics() incompatible matrices.\n");
+  int numEntries, numEntriesTranspose;
+  double *values, *valuesTranspose;
+  int *indices, *indicesTranspose;
+  for(int i=0; i<numRows; i++){
+    jacobian->ExtractMyRowView(i, numEntries, values, indices);
+    jacobianTranspose.ExtractMyRowView(i, numEntriesTranspose, valuesTranspose, indicesTranspose);
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(numEntries != numEntriesTranspose, "\n****Error: jacobianDiagnostics() incompatible matrices.\n");
+    for (int j=0; j<numEntries; j++){
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(indices[j] != indicesTranspose[j], "\n****Error: jacobianDiagnostics() incompatible matrices.\n");
+      valuesTranspose[j] = fabs(0.5*(values[j]-valuesTranspose[j]));
+    }
+  }
+  double normFrobenius = jacobian->NormFrobenius();
+  double asymmetricNormFrobenius = jacobianTranspose.NormFrobenius();
+  ss << "  asymmetric Frobenius norm = " << asymmetricNormFrobenius << " (symmetric Frobenius norm = " << normFrobenius << ")";
+
+  // Diagnostic #2, check condition number
+
+  if(!noxGroup->isConditionNumber()){
+    int conditionNumberMaxIters = 10000;
+    int conditionNumberTolerance = 1.0e3;
     int conditionNumberKrylovSubspaceSize = 100;
     int conditionNumberPrintOutput = false;
     returnValue = noxGroup->computeJacobianConditionNumber(conditionNumberMaxIters,
@@ -950,13 +994,14 @@ void PeridigmNS::Peridigm::jacobianDiagnostics(Teuchos::RCP<NOX::Epetra::Group> 
   }
   if(returnValue == NOX::Abstract::Group::Ok){
     double conditionNumber = noxGroup->getJacobianConditionNumber();
-    if(peridigmComm->MyPID() == 0)
-      cout << "  Jacobian diagonsitics:  condition number = " << conditionNumber << endl;
+    ss << ", condition number = " << conditionNumber;
   }
   else{
-    if(peridigmComm->MyPID() == 0)
-      cout << "  Jacobian diagonsitics:  condition number calculation failed!" << endl;
+    ss << ", condition number calculation failed";
   }
+
+  if(peridigmComm->MyPID() == 0)
+    cout << ss.str() << endl;
 }
 
 Teuchos::RCP<Epetra_CrsMatrix> PeridigmNS::Peridigm::getJacobian() {
