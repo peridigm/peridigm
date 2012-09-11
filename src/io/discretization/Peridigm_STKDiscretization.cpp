@@ -137,6 +137,11 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
     if(radius < minElementRadius)
       minElementRadius = radius;
   }
+  vector<double> localMin(1);
+  vector<double> globalMin(1);
+  localMin[0] = minElementRadius;
+  epetra_comm->MinAll(&localMin[0], &globalMin[0], 1);
+  minElementRadius = globalMin[0];
 }
 
 PeridigmNS::STKDiscretization::~STKDiscretization() {}

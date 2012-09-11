@@ -99,14 +99,6 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
   TEUCHOS_TEST_FOR_EXCEPT_MSG(m_finiteDifferenceProbeLength == DBL_MAX, "**** Finite-difference Jacobian requires that the \"Finite Difference Probe Length\" parameter be set.\n");
   double epsilon = m_finiteDifferenceProbeLength;
 
-  // DEBUGGING
-  static bool debugPrintStatement = false;
-  if(!debugPrintStatement){
-    std::cout << "\nDEBUG MESSAGE: using finite difference jacobian with probe length = " << epsilon << "\n" << std::endl;
-    debugPrintStatement = true;
-  }
-  // END DEBUGGING
-
   // Loop over all points.
   int neighborhoodListIndex = 0;
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){

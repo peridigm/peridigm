@@ -48,7 +48,7 @@
 
 #include "material_utilities.h"
 #include <cmath>
-
+#include <vector>
 #include <Sacado.hpp>
 
 namespace MATERIAL_EVALUATION {
@@ -420,6 +420,7 @@ double compute_norm_2_deviatoric_extension
 void computeShearCorrectionFactor
 (
 		int numOwnedPoints,
+                int lengthYOverlap,
 		const double *xOverlap,
 		double *yOverlap_scratch_required_work_space,
 		const double *volumeOverlap,
@@ -428,6 +429,9 @@ void computeShearCorrectionFactor
 		double horizon,
 		double *shearCorrectionFactorOwned
 ){
+        std::vector<double> yOverlapStored(lengthYOverlap);
+	for(int i=0 ; i<lengthYOverlap ; ++i)
+	  yOverlapStored[i] = yOverlap_scratch_required_work_space[i];
 	double gamma=1.0e-6;
 	double reference = 4.0 * M_PI * gamma * gamma * pow(horizon,5) / 75.0;
 	const int *neighPtr = localNeighborList;
@@ -447,16 +451,22 @@ void computeShearCorrectionFactor
 		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
 		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
 		max_scf=scf;
+		for(int i=0 ; i<lengthYOverlap ; ++i)
+		  yOverlap_scratch_required_work_space[i] = yOverlapStored[i];
 
 		mode = ZX;
 		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
 		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
 		if(scf>max_scf) max_scf = scf;
+		for(int i=0 ; i<lengthYOverlap ; ++i)
+		  yOverlap_scratch_required_work_space[i] = yOverlapStored[i];
 
 		mode = YZ;
 		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
 		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
 		if(scf>max_scf) max_scf = scf;
+		for(int i=0 ; i<lengthYOverlap ; ++i)
+		  yOverlap_scratch_required_work_space[i] = yOverlapStored[i];
 
 		/*
 		 * Better guard against division by zero

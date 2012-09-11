@@ -127,6 +127,7 @@ double compute_norm_2_deviatoric_extension
 void computeShearCorrectionFactor
 (
 		int numOwnedPoints,
+		int lengthYOverlap,
 		const double *xOverlap,
 		double *yOverlap_scratch_required_work_space,
 		const double *volumeOverlap,

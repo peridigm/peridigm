@@ -118,8 +118,9 @@ void PeridigmNS::ElasticPlasticHardeningMaterial::initialize(const double dt,
 
 
   dataManager.getData(Field_NS::SHEAR_CORRECTION_FACTOR, Field_ENUM::STEP_NONE)->PutScalar(1.0);
+  int lengthYOverlap = dataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->MyLength();
   if(m_applyShearCorrectionFactor)
-    MATERIAL_EVALUATION::computeShearCorrectionFactor(numOwnedPoints,xOverlap,yOverlapScratch,cellVolumeOverlap,weightedVolume,neighborhoodList,m_horizon,shearCorrectionFactor);
+    MATERIAL_EVALUATION::computeShearCorrectionFactor(numOwnedPoints,lengthYOverlap,xOverlap,yOverlapScratch,cellVolumeOverlap,weightedVolume,neighborhoodList,m_horizon,shearCorrectionFactor);
   
   // \todo Move this to shear correction factor routine.
   for(double *scf=shearCorrectionFactor; scf!=shearCorrectionFactor+numOwnedPoints;scf++)
