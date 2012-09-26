@@ -158,17 +158,16 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     double* tempForce;
     tempForceVector->ExtractView(&tempForce);
 
-    // \todo Use RCP, construct only if necessary.
-    //Teuchos::RCP<Epetra_Vector> coordStepN
-    Epetra_Vector coordStepN(*tempDataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_N));
-    Epetra_Vector coordStepNP1(*tempDataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1));
-    Epetra_Vector stepIncrement(coordStepN.Map());
+    Teuchos::RCP<Epetra_Vector> coordStepNP1;
     if(finiteDifferenceScheme == CONSISTENT_FORWARD_DIFFERENCE){
+      coordStepNP1 = Teuchos::rcp(new Epetra_Vector(*tempDataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)));
+      double *yN;
+      tempDataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_N)->ExtractView(&yN);
       // Set the coordinates at step NP1 to be the coordinates at step N
-      for(int i=0 ; i<coordStepN.MyLength() ; ++i)
-        y[i] = coordStepN[i];
+      for(int i=0 ; i<coordStepNP1->MyLength() ; ++i)
+        y[i] = yN[i];
     }
-
+    
     // Use the scratchMatrix as sub-matrix for storing tangent values prior to loading them into the global tangent matrix.
     // Resize scratchMatrix if necessary
     if(scratchMatrix.Dimension() < 3*(numNeighbors+1))
@@ -216,8 +215,7 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
         // Compute the positively perturbed force.
         double perturbation = epsilon;
         if(finiteDifferenceScheme == CONSISTENT_FORWARD_DIFFERENCE)
-          for(int i=0 ; i<coordStepNP1.MyLength() ; ++i)
-            perturbation += coordStepNP1[i] - coordStepN[i];
+          perturbation += (*coordStepNP1)[3*perturbID+dof] - y[3*perturbID+dof];
 
         y[3*perturbID+dof] += perturbation;
         computeForce(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
