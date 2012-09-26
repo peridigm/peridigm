@@ -214,8 +214,17 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
 
         // Compute the positively perturbed force.
         double perturbation = epsilon;
-        if(finiteDifferenceScheme == CONSISTENT_FORWARD_DIFFERENCE)
-          perturbation += (*coordStepNP1)[3*perturbID+dof] - y[3*perturbID+dof];
+        double signPerturbation = 1.0;
+        if(finiteDifferenceScheme == CONSISTENT_FORWARD_DIFFERENCE){
+          perturbation = (*coordStepNP1)[3*perturbID+dof] - y[3*perturbID+dof];
+          if(perturbation < 0.0){
+            signPerturbation = -1.0;
+            perturbation -= epsilon;
+          }
+          else{
+            perturbation += epsilon;
+          }
+        }
 
         y[3*perturbID+dof] += perturbation;
         computeForce(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
@@ -230,7 +239,7 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
             forceID = 0;
 
           for(int d=0 ; d<3 ; ++d){
-            double value = ( force[3*forceID+d] - tempForce[3*forceID+d] ) / perturbation;
+            double value = ( force[3*forceID+d] - tempForce[3*forceID+d] ) / (signPerturbation*perturbation);
             if(finiteDifferenceScheme == CENTRAL_DIFFERENCE)
               value *= 0.5;
             scratchMatrix(3*forceID+d, 3*perturbID+dof) = value;
