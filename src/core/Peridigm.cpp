@@ -474,6 +474,8 @@ void PeridigmNS::Peridigm::instantiateComputeManager() {
 
   Teuchos::RCP<Teuchos::ParameterList> outputParams;
 
+// MLP
+// Generalize to union of fields requested by all output managers
   if (peridigmParams->isSublist("Output")) {
     outputParams  = Teuchos::rcp(&(peridigmParams->sublist("Output")),false);
   }
@@ -535,34 +537,41 @@ void PeridigmNS::Peridigm::initializeBlocks(Teuchos::RCP<AbstractDiscretization>
 
 void PeridigmNS::Peridigm::initializeOutputManager() {
 
-  bool active = false;
+  // Create empty container for output managers
+  outputManager = Teuchos::rcp(new PeridigmNS::OutputManagerContainer() );
+
   Teuchos::RCP<Teuchos::ParameterList> outputParams;
 
-  if (peridigmParams->isSublist("Output")) {
-    active = true;
-    // Get reference to existing sublit
-    Teuchos::ParameterList& masterList = peridigmParams->sublist("Output");
-    // Make copy of master list
-    outputParams  = Teuchos::rcp( new Teuchos::ParameterList(masterList) );
-    // Add proc id data to copied list
-    outputParams->set("NumProc", (int)(peridigmComm->NumProc()));
-    outputParams->set("MyPID", (int)(peridigmComm->MyPID()));
+  // Loop over high level parameter list entries to find all output lists
+  for (Teuchos::ParameterList::ConstIterator it = peridigmParams->begin(); it != peridigmParams->end(); ++it) {
+    // See if name of parameterlist entry contains "Output".
+    const std::string output("Output");
+    const std::string name(it->first);
+    size_t found = name.find(output);
+    if (found!=std::string::npos) {
+      // Make copy of list
+      try{
+        outputParams = Teuchos::rcp( new Teuchos::ParameterList( peridigmParams->sublist(name,true) ) );
+      }
+      catch(const std::exception &e){
+        string msg = "Peridigm::initializeOutputManager: ";
+        msg+= name;
+        msg+= " is not a Teuchos::ParameterList sublist.";
+        TEUCHOS_TEST_FOR_EXCEPT_MSG( true, msg );
+      }
+      // Add proc id data to copied list
+      outputParams->set("NumProc", (int)(peridigmComm->NumProc()));
+      outputParams->set("MyPID", (int)(peridigmComm->MyPID()));
+      // Make the default format "ExodusII"
+      string outputFormat = outputParams->get("Output File Type", "ExodusII");
+      TEUCHOS_TEST_FOR_EXCEPTION( outputFormat != "ExodusII",
+                                  std::invalid_argument,
+                                  "PeridigmNS::Peridigm: \"Output File Type\" must be \"ExodusII\".");
+      if (outputFormat == "ExodusII")
+        outputManager->add( Teuchos::rcp(new PeridigmNS::OutputManager_ExodusII( outputParams, this, blocks ) ) );
+    }
   }
 
-  if (active) {
-    // Make the default format "ExodusII"
-    string outputFormat = outputParams->get("Output File Type", "ExodusII");
-    TEUCHOS_TEST_FOR_EXCEPTION( outputFormat != "ExodusII",
-                        std::invalid_argument,
-                        "PeridigmNS::Peridigm: \"Output File Type\" must be \"ExodusII\".");
-    if (outputFormat == "ExodusII")
-       outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_ExodusII( outputParams, this, blocks ));
-    else
-      TEUCHOS_TEST_FOR_EXCEPTION( true, std::invalid_argument,"PeridigmNS::Peridigm::initializeOutputManager: \"Output File Type\" must be \"ExodusII\".");
-  }
-  else { // no output requested
-    outputManager = Teuchos::rcp(new PeridigmNS::OutputManager_ExodusII( outputParams, this, blocks ));
-  }
 }
 
 void PeridigmNS::Peridigm::execute() {

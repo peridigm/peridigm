@@ -72,8 +72,7 @@
 #include "Peridigm_ModelEvaluator.hpp"
 #include "Peridigm_DataManager.hpp"
 #include "Peridigm_SerialMatrix.hpp"
-#include "Peridigm_OutputManager.hpp"
-#include "Peridigm_OutputManager_ExodusII.hpp"
+#include "Peridigm_OutputManagerContainer.hpp"
 #include "Peridigm_ComputeManager.hpp"
 #include "Peridigm_BoundaryAndInitialConditionManager.hpp"
 #include "materials/Peridigm_Material.hpp"
@@ -409,7 +408,7 @@ namespace PeridigmNS {
     Teuchos::RCP<PeridigmNS::ModelEvaluator> modelEvaluator;
 
     //! The peridigm output manager
-    Teuchos::RCP<PeridigmNS::OutputManager> outputManager;
+    Teuchos::RCP<PeridigmNS::OutputManagerContainer> outputManager;
 
     //! BLAS for local-only vector updates (BLAS-1)
     Epetra_BLAS blas;
