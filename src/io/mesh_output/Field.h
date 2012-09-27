@@ -87,6 +87,7 @@ enum Type {
   SHEAR_CORRECTION_FACTOR,
   NUM_NEIGHBORS,
   COORDINATES,
+  TANGENT_REFERENCE_COORDINATES,
   DISPLACEMENT,
   CURRENT_COORDINATES,
   VELOCITY,
@@ -270,6 +271,7 @@ const Field_NS::FieldSpec STRAIN_ENERGY_DENSITY   (Field_ENUM::STRAIN_ENERGY_DEN
  * NODAL VECTOR3D FieldSpecs (vector fields defined at nodes)
  */
 const Field_NS::FieldSpec COORD3D                (Field_ENUM::COORDINATES,           Field_ENUM::NODE, Field_ENUM::VECTOR3D, Field_ENUM::CONSTANT, "Coordinates");
+const Field_NS::FieldSpec TANGENT_REFERENCE_COORDINATES  (Field_ENUM::TANGENT_REFERENCE_COORDINATES,           Field_ENUM::NODE, Field_ENUM::VECTOR3D, Field_ENUM::CONSTANT, "Tangent Reference Coordinates");
 const Field_NS::FieldSpec DISPL3D                (Field_ENUM::DISPLACEMENT,          Field_ENUM::NODE, Field_ENUM::VECTOR3D, Field_ENUM::TWO_STEP, "Displacement");
 const Field_NS::FieldSpec CURCOORD3D             (Field_ENUM::CURRENT_COORDINATES,   Field_ENUM::NODE, Field_ENUM::VECTOR3D, Field_ENUM::TWO_STEP, "Current_Coordinates");
 const Field_NS::FieldSpec VELOC3D                (Field_ENUM::VELOCITY,              Field_ENUM::NODE, Field_ENUM::VECTOR3D, Field_ENUM::TWO_STEP, "Velocity");
@@ -324,6 +326,7 @@ struct FieldSpecMap {
 		mymap[STRAIN_ENERGY_DENSITY.getLabel()]        = STRAIN_ENERGY_DENSITY;
                 // point vector fieldspecs
 		mymap[COORD3D.getLabel()]                      = COORD3D;
+		mymap[TANGENT_REFERENCE_COORDINATES.getLabel()]                      = TANGENT_REFERENCE_COORDINATES;
 		mymap[DISPL3D.getLabel()]                      = DISPL3D;
 		mymap[CURCOORD3D.getLabel()]                   = CURCOORD3D;
 		mymap[VELOC3D.getLabel()]                      = VELOC3D;
