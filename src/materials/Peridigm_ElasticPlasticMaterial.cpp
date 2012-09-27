@@ -92,6 +92,9 @@ PeridigmNS::ElasticPlasticMaterial::ElasticPlasticMaterial(const Teuchos::Parame
   m_variableSpecs->push_back(Field_NS::LAMBDA);
   m_variableSpecs->push_back(Field_NS::BOND_DAMAGE);
   m_variableSpecs->push_back(Field_NS::SHEAR_CORRECTION_FACTOR);
+
+  // \todo Make conditional
+  m_variableSpecs->push_back(Field_NS::TANGENT_REFERENCE_COORDINATES);
 }
 
 PeridigmNS::ElasticPlasticMaterial::~ElasticPlasticMaterial()
