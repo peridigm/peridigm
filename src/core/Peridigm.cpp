@@ -472,15 +472,38 @@ void PeridigmNS::Peridigm::initializeWorkset() {
 
 void PeridigmNS::Peridigm::instantiateComputeManager() {
 
-  Teuchos::RCP<Teuchos::ParameterList> outputParams;
+  Teuchos::RCP<Teuchos::ParameterList> computeParams = Teuchos::rcp( new Teuchos::ParameterList("Output") );
+  Teuchos::ParameterList& outputVariables  = computeParams->sublist("Output Variables");
 
-// MLP
-// Generalize to union of fields requested by all output managers
-  if (peridigmParams->isSublist("Output")) {
-    outputParams  = Teuchos::rcp(&(peridigmParams->sublist("Output")),false);
+  // Loop over high level parameter list entries to find all output lists
+  for (Teuchos::ParameterList::ConstIterator it = peridigmParams->begin(); it != peridigmParams->end(); ++it) {
+    // See if name of parameterlist entry contains "Output".
+    const std::string output("Output");
+    const std::string name(it->first);
+    size_t found = name.find(output);
+    Teuchos::RCP<Teuchos::ParameterList> outputParams;
+    if (found!=std::string::npos) {
+      // Make copy of list
+      try{
+        outputParams = Teuchos::rcp( new Teuchos::ParameterList( peridigmParams->sublist(name,true) ) );
+      }
+      catch(const std::exception &e){
+        string msg = "Peridigm::instantiateComputeManager: ";
+        msg+= name;
+        msg+= " is not a Teuchos::ParameterList sublist.";
+        TEUCHOS_TEST_FOR_EXCEPT_MSG( true, msg );
+      }
+      // Create union of all requested output fields
+      Teuchos::ParameterList outputVariables2 = outputParams->sublist("Output Variables");
+      for(Teuchos::ParameterList::ConstIterator it = outputVariables2.begin() ; it != outputVariables2.end() ; it++){
+        if (!outputVariables.isParameter(it->first)) {
+          outputVariables.setEntry(it->first,it->second);
+        }
+      }
+    }
   }
 
-  computeManager = Teuchos::rcp( new PeridigmNS::ComputeManager( outputParams, this  ) );
+  computeManager = Teuchos::rcp( new PeridigmNS::ComputeManager( computeParams, this  ) );
 
 }
 
