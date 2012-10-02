@@ -1,0 +1,8 @@
+/*! \file
+ \brief Test case involving multiple outptu files.
+
+Notes: This test case deonstrates use of multiple output files. A common use case involves making one output file 
+       record infrequent but complete snapshots of simulation while having the other file record frequent snapshots
+       recording only a few scalars. 
+*/
+
