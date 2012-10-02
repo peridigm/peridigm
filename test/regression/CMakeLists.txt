@@ -26,6 +26,8 @@ add_test (Bar_TwoDisconnectedPieces_QS_np1 python ./Bar_TwoDisconnectedPieces_QS
 add_test (Bar_TwoDisconnectedPieces_QS_np2 python ./Bar_TwoDisconnectedPieces_QS/np2/Bar.py)
 add_test (Bar_TwoDisconnectedPieces_QS_np3 python ./Bar_TwoDisconnectedPieces_QS/np3/Bar.py)
 add_test (NodalVariableOutput_np1 python ./NodalVariableOutput/np1/NodalVariableOutput.py)
+add_test (MultipleOutputFiles_np1 python ./MultipleOutputFiles/np1/MultipleOutputFiles.py)
+add_test (MultipleOutputFiles_np2 python ./MultipleOutputFiles/np2/MultipleOutputFiles.py)
 
 add_custom_target( rtest
    COMMAND ctest
