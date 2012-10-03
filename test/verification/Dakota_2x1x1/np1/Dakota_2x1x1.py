@@ -70,11 +70,25 @@ if __name__ == "__main__":
         result = return_code
 
     # compare output files against gold files
-    command = ["diff "+base_name+".dat "+"../"+base_name+"_gold.dat"]
-    p = Popen(command, stdout=logfile, stderr=logfile, shell=True)
-    return_code = p.wait()
-    if return_code != 0:
-        result = return_code
+    filename1 = "../"+base_name+"_gold.dat"
+    filename2 = base_name+".dat"
+    f1 = open(filename1, 'r')
+    f2 = open(filename2, 'r')
+    str1 = f1.readline()
+    str2 = f2.readline()
+    f1.close()
+    f2.close()
+    val1 = float(str1)
+    val2 = float(str2)
+    diff = abs((val1 - val2) / val1)
+    print "diff = "+str(diff)
+    if diff > 1e-16:
+       result = -1
+    #command = ["diff "+base_name+".dat "+"../"+base_name+"_gold.dat"]
+    #p = Popen(command, stdout=logfile, stderr=logfile, shell=True)
+    #return_code = p.wait()
+    #if return_code != 0:
+    #    result = return_code
 
     dakota_output.close()
     logfile.close()
