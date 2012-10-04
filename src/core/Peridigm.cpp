@@ -508,7 +508,16 @@ void PeridigmNS::Peridigm::instantiateComputeManager() {
 }
 
 void PeridigmNS::Peridigm::initializeBlocks(Teuchos::RCP<AbstractDiscretization> disc) {
+
+  // Did user specify default blocks?
+  bool defaultBlocks = false;
+  // Parameterlist for default blocks
+  Teuchos::ParameterList defaultBlockParams;
+
+  // Create vector of blocks
   blocks = Teuchos::rcp(new std::vector<PeridigmNS::Block>());
+
+  // Loop over each entry in "Blocks" section of input deck. 
   Teuchos::ParameterList& blockParams = peridigmParams->sublist("Blocks", true);
   for(Teuchos::ParameterList::ConstIterator it = blockParams.begin() ; it != blockParams.end() ; it++){
     const string& name = it->first;
@@ -521,6 +530,12 @@ void PeridigmNS::Peridigm::initializeBlocks(Teuchos::RCP<AbstractDiscretization>
          istream_iterator<string>(),
          back_inserter<vector<string> >(blockNames));
     for(vector<string>::const_iterator it=blockNames.begin() ; it!=blockNames.end() ; ++it){
+      // If "default" block encountered, record parameterlist and continue on
+      if ( (*it) == "Default" || (*it) == "default" ) {
+        defaultBlockParams = params;
+        defaultBlocks = true;
+        continue;
+      }
       // Assume that the block names are "block_" + the block ID
       size_t loc = it->find_last_of('_');
       TEUCHOS_TEST_FOR_EXCEPT_MSG(loc == string::npos, "\n**** Parse error, invalid block name.\n");
@@ -532,8 +547,31 @@ void PeridigmNS::Peridigm::initializeBlocks(Teuchos::RCP<AbstractDiscretization>
     }
   }
 
-  // Ensure that there is a one-to-one match between the blocks in the mesh and 
-  // the blocks defined in the input deck
+  // Add in all default blocks
+  if (defaultBlocks) {
+    std::vector<std::string> discretizationBlockNames = disc->getBlockNames();
+    for(vector<string>::const_iterator it=discretizationBlockNames.begin() ; it!=discretizationBlockNames.end() ; ++it){
+      bool blockMatch = false;
+      for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+        // if name match, break
+        if ((*it) == blockIt->getName()) {
+          blockMatch = true;
+          break;
+        }
+      }
+      if (!blockMatch) { // Create new block. Assume block name are "block_" + block ID
+        size_t loc = it->find_last_of('_');
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(loc == string::npos, "\n**** Parse error, invalid block name in discretization object.\n");
+        stringstream blockIDSS(it->substr(loc+1, it->size()));
+        int blockID;
+        blockIDSS >> blockID;
+        PeridigmNS::Block block(*it, blockID, defaultBlockParams);
+        blocks->push_back(block);
+      }
+    }
+  }
+
+  // Ensure that there is a one-to-one match between instantiated blocks and blocks defined in the discretization object
   std::vector<std::string> discreticationBlockNames = disc->getBlockNames();
   bool blockError = false;
   if(discreticationBlockNames.size() != blocks->size())
@@ -556,6 +594,7 @@ void PeridigmNS::Peridigm::initializeBlocks(Teuchos::RCP<AbstractDiscretization>
     msg += "\b\n\n";
     TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
   }
+
 }
 
 void PeridigmNS::Peridigm::initializeOutputManager() {
