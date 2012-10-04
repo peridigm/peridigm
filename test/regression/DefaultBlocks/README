@@ -1,0 +1,8 @@
+/*! \file
+ \brief Test case involving use of the "default" keyword in the blocks section.
+
+Notes: This test case deonstrates use of default blocks. A common use case involves having a small number of blocks
+       be one material type, with a large number of remaining blocks all be of the same type. One can use the "default"
+       keyword for these blocks rather than having to list them all explicitly by name.
+*/
+
