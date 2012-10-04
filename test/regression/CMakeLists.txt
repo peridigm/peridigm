@@ -28,6 +28,8 @@ add_test (Bar_TwoDisconnectedPieces_QS_np3 python ./Bar_TwoDisconnectedPieces_QS
 add_test (NodalVariableOutput_np1 python ./NodalVariableOutput/np1/NodalVariableOutput.py)
 add_test (MultipleOutputFiles_np1 python ./MultipleOutputFiles/np1/MultipleOutputFiles.py)
 add_test (MultipleOutputFiles_np2 python ./MultipleOutputFiles/np2/MultipleOutputFiles.py)
+add_test (DefaultBlocks_np1 python ./DefaultBlocks/np1/DefaultBlocks.py)
+add_test (DefaultBlocks_np4 python ./DefaultBlocks/np4/DefaultBlocks.py)
 
 add_custom_target( rtest
    COMMAND ctest
