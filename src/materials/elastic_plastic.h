@@ -98,7 +98,9 @@ void computeInternalForceIsotropicElasticPlastic
 		double BULK_MODULUS,
 		double SHEAR_MODULUS,
 		double HORIZON,
-		double yieldStress
+		double yieldStress,
+		bool isPlanarProblem,
+		double thickness
 );
 
 /**
@@ -152,7 +154,9 @@ void computeInternalForceIsotropicElasticPlasticAD
 		double BULK_MODULUS,
 		double SHEAR_MODULUS,
 		double HORIZON,
-		double yieldStress
+		double yieldStress,
+		bool isPlanarProblem,
+		double thickness
 );
 
 }

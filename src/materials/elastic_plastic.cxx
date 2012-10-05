@@ -149,7 +149,9 @@ void computeInternalForceIsotropicElasticPlastic
 		double BULK_MODULUS,
 		double SHEAR_MODULUS,
 		double HORIZON,
-		double yieldStress
+		double yieldStress,
+		bool isPlanarProblem,
+		double thickness
 )
 {
 
@@ -160,17 +162,13 @@ void computeInternalForceIsotropicElasticPlastic
 	double MU = SHEAR_MODULUS;
 	double OMEGA=1.0;
 	double DELTA=HORIZON;
+	double THICKNESS=thickness;
 	/*
-	 * 3d variety of yield value (uniaxial)
+	 * 2d or 3d variety of yield value (uniaxial stress)
 	 */
-	double yieldValue = 25.0 * yieldStress * yieldStress / 8 / M_PI / pow(DELTA,5);
-	/*
-	 * Planar variety of yield value
-	 */
-//		double THICKNESS=1.0;
-//		double yieldValue = 225.0 * yieldStress * yieldStress / 8 / M_PI / THICKNESS / pow(DELTA,4);
-//		double yieldValue = 0.5 * pow(15*yieldStress/weightedVol,2) * M_PI * THICKNESS * pow(DELTA,4) / 16.0;
-
+    double yieldValue = 25.0 * yieldStress * yieldStress / 8 / M_PI / pow(DELTA,5);
+	if(isPlanarProblem)
+    	double yieldValue = 225.0 / 3. * yieldStress * yieldStress / 8 / M_PI / THICKNESS / pow(DELTA,4);
 
 
 	const double *xOwned = xOverlap;
@@ -409,7 +407,9 @@ void computeInternalForceIsotropicElasticPlasticAD
 		double BULK_MODULUS,
 		double SHEAR_MODULUS,
 		double HORIZON,
-		double yieldStress
+		double yieldStress,
+		bool isPlanarProblem,
+		double thickness
 )
 {
 
@@ -420,17 +420,13 @@ void computeInternalForceIsotropicElasticPlasticAD
 	double MU = SHEAR_MODULUS;
 	double OMEGA=1.0;
 	double DELTA=HORIZON;
+	double THICKNESS=thickness;
 	/*
-	 * 3d variety of yield value (uniaxial stress)
+	 * 2d or 3d variety of yield value (uniaxial stress)
 	 */
-	double yieldValue = 25.0 * yieldStress * yieldStress / 8 / M_PI / pow(DELTA,5);
-	/*
-	 * Planar variety of yield value
-	 */
-//		double THICKNESS=1.0;
-//		double yieldValue = 225.0 * yieldStress * yieldStress / 8 / M_PI / THICKNESS / pow(DELTA,4);
-//		double yieldValue = 0.5 * pow(15*yieldStress/weightedVol,2) * M_PI * THICKNESS * pow(DELTA,4) / 16.0;
-
+    double yieldValue = 25.0 * yieldStress * yieldStress / 8 / M_PI / pow(DELTA,5);
+	if(isPlanarProblem)
+    	double yieldValue = 225.0 / 3. * yieldStress * yieldStress / 8 / M_PI / THICKNESS / pow(DELTA,4);
 
 
 	const double *xOwned = xOverlap;
@@ -605,7 +601,9 @@ template void computeInternalForceIsotropicElasticPlasticAD<double>
 		double BULK_MODULUS,
 		double SHEAR_MODULUS,
 		double HORIZON,
-		double yieldStress
+		double yieldStress,
+		bool isPlanarProblem,
+		double thickness
 );
 
 /** Explicit template instantiation for Sacado::Fad::DFad<double>. */
@@ -645,7 +643,9 @@ template void computeInternalForceIsotropicElasticPlasticAD<Sacado::Fad::DFad<do
 		double BULK_MODULUS,
 		double SHEAR_MODULUS,
 		double HORIZON,
-		double yieldStress
+		double yieldStress,
+		bool isPlanarProblem,
+		double thickness
 );
 
 }
