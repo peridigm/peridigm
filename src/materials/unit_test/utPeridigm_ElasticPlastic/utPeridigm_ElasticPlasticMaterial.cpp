@@ -401,10 +401,14 @@ void runPureShear() {
 				updateGeometry(x,u,v,y,numPoints*3,dt);
 			}
 
+			// Dummy arguments for planar case
+			bool isPlanarProblem = false;
+	        double thickness = 0.0;
+
 			/*
 			 * Do not compute dilatation -- just set it to zero
 			 */
-			computeInternalForceIsotropicElasticPlastic(x,y,m,vol,theta,bondState,dsfOwned,edpN,edpNP1,lambdaN,lambdaNP1,f,neigh,numPoints,K,MU,DELTA,Y);
+			computeInternalForceIsotropicElasticPlastic(x,y,m,vol,theta,bondState,dsfOwned,edpN,edpNP1,lambdaN,lambdaNP1,f,neigh,numPoints,K,MU,DELTA,Y,isPlanarProblem,thickness);
 
 
 			/*

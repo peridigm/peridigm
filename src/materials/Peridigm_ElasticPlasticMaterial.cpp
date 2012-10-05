@@ -61,7 +61,8 @@ PeridigmNS::ElasticPlasticMaterial::ElasticPlasticMaterial(const Teuchos::Parame
   : Material(params),
     m_applyShearCorrectionFactor(true),
     m_disablePlasticity(false),
-    m_applyAutomaticDifferentiationJacobian(true)
+    m_applyAutomaticDifferentiationJacobian(true),
+    m_isPlanarProblem(false)
 {
   //! \todo Add meaningful asserts on material properties.
   m_bulkModulus = params.get<double>("Bulk Modulus");
@@ -75,9 +76,15 @@ PeridigmNS::ElasticPlasticMaterial::ElasticPlasticMaterial(const Teuchos::Parame
     m_disablePlasticity = params.get<bool>("Disable Plasticity");
   if(params.isParameter("Apply Automatic Differentiation Jacobian"))
     m_applyAutomaticDifferentiationJacobian = params.get<bool>("Apply Automatic Differentiation Jacobian");
+  if(params.isParameter("Planar Problem")){
+    m_isPlanarProblem= params.get<bool>("Planar Problem");
+    m_thickness= params.get<double>("Thickness");
+  }
 
   if(m_disablePlasticity)
     m_yieldStress = std::numeric_limits<double>::max();
+  if(!m_isPlanarProblem)
+    m_thickness = std::numeric_limits<double>::max();
 
   // Set up vector of variable specs
   m_variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
@@ -168,7 +175,9 @@ PeridigmNS::ElasticPlasticMaterial::computeForce(const double dt,
                                                                    m_bulkModulus,
                                                                    m_shearModulus,
                                                                    m_horizon,
-                                                                   m_yieldStress);
+                                                                   m_yieldStress,
+                                                                   m_isPlanarProblem,
+                                                                   m_thickness);
 }
 
 void
@@ -310,7 +319,9 @@ PeridigmNS::ElasticPlasticMaterial::computeAutomaticDifferentiationJacobian(cons
                                                                        m_bulkModulus,
                                                                        m_shearModulus,
                                                                        m_horizon,
-                                                                       m_yieldStress);
+																	   m_yieldStress,
+																	   m_isPlanarProblem,
+																	   m_thickness);
 
     // Load derivative values into scratch matrix
     // Multiply by volume along the way to convert force density to force
