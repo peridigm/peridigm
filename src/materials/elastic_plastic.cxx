@@ -161,9 +161,9 @@ void computeInternalForceIsotropicElasticPlastic
 	double OMEGA=1.0;
 	double DELTA=HORIZON;
 	/*
-	 * 3d variety of yield value
+	 * 3d variety of yield value (uniaxial)
 	 */
-	double yieldValue = 75.0 * yieldStress * yieldStress / 8 / M_PI / pow(DELTA,5);
+	double yieldValue = 25.0 * yieldStress * yieldStress / 8 / M_PI / pow(DELTA,5);
 	/*
 	 * Planar variety of yield value
 	 */
