@@ -13,5 +13,6 @@
  * <li> John Mitchell jamitch@sandia.gov
  * <li> Michael Parks mlparks@sandia.gov
  * <li> Stewart Silling sasilli@sandia.gov
+ * <li> John Foster john.foster@utsa.edu
  * </ul>
  */

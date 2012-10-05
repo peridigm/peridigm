@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
     # First merge all distributed exodus databases for each time stamp
     for file in files_to_join:
-      command = [path+"epu", "-p", num_proc, file]
+      command = ["epu", "-p", num_proc, file]
       p = Popen(command, stdout=logfile, stderr=logfile)
       return_code = p.wait()
       if return_code != 0:
@@ -72,7 +72,7 @@ if __name__ == "__main__":
         files_to_conjoin.append(newfile)
       sort_nicely(files_to_conjoin)
       # Now combine time series from all databases
-      command = [path+"conjoin", "-output", base_name+".e"]
+      command = ["conjoin", "-output", base_name+".e"]
       for file in files_to_conjoin:
         command.append(file)
       p = Popen(command, stdout=logfile, stderr=logfile)
