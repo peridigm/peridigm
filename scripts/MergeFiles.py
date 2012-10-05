@@ -6,11 +6,30 @@ import re
 import glob
 from subprocess import Popen
 
+# Sort the given list in the way that humans expect.
 def sort_nicely( l ):
-  # Sort the given list in the way that humans expect.
   convert = lambda text: int(text) if text.isdigit() else text
   alphanum_key = lambda key: [ convert(c) for c in re.split('([0-9]+)', key) ]
   l.sort( key=alphanum_key )
+
+# Determine if file is an executable
+def is_exe(fpath):
+  return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+# Determine if executable in path
+def which(program): 
+  # Determine if executable in path
+  fpath, fname = os.path.split(program)
+  if fpath:
+    if is_exe(program):
+      return program
+  else:
+    for path in os.environ["PATH"].split(os.pathsep):
+      exe_file = os.path.join(path, program)
+      if is_exe(exe_file):
+        return exe_file
+  return None 
+
 
 if __name__ == "__main__":
 
@@ -56,7 +75,13 @@ if __name__ == "__main__":
 
     # First merge all distributed exodus databases for each time stamp
     for file in files_to_join:
-      command = [path+"epu", "-p", num_proc, file]
+      if is_exe(path+"epu"):
+        command = [path+"epu", "-p", num_proc, file]
+      elif which("epu") != None:
+        command = ["epu", "-p", num_proc, file]
+      else:
+        print "Error: epu not found! Please execute this script from 'scripts' in your Peridigm build directory or put 'epu' in your path. 'epu' can be found in your Trilinos install 'bin' directory."
+        sys.exit(-1)
       p = Popen(command, stdout=logfile, stderr=logfile)
       return_code = p.wait()
       if return_code != 0:
@@ -72,7 +97,13 @@ if __name__ == "__main__":
         files_to_conjoin.append(newfile)
       sort_nicely(files_to_conjoin)
       # Now combine time series from all databases
-      command = [path+"conjoin", "-output", base_name+".e"]
+      if is_exe(path+"conjoin"):
+        command = [path+"conjoin", "-output", base_name+".e"]
+      elif which("conjoin") != None:
+        command = ["conjoin", "-output", base_name+".e"]
+      else:
+        print "Error: conjoin not found! Please execute this script from 'scripts' in your Peridigm build directory or put 'conjoin' in your path. 'conjoin' can be found in your Trilinos install 'bin' directory."
+        sys.exit(-1)
       for file in files_to_conjoin:
         command.append(file)
       p = Popen(command, stdout=logfile, stderr=logfile)
