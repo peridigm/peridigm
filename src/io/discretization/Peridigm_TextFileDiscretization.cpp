@@ -154,36 +154,44 @@ QUICKGRID::Data PeridigmNS::TextFileDiscretization::getDecomp(const string& text
   vector<double> volumes;
   vector<int> blockIds;
 
-  ifstream inFile(textFileName.c_str());
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(!inFile.is_open(), "**** Error opening discretization text file.\n");
-  while(inFile.good()){
-    string str;
-    getline(inFile, str);
-    boost::trim(str);
-    // Ignore comment lines, otherwise parse
-    if( !(str[0] == '#' || str[0] == '/' || str[0] == '*' || str.size() == 0) ){
-      istringstream iss(str);
-      vector<double> data;
-      copy(istream_iterator<double>(iss),
-           istream_iterator<double>(),
-           back_inserter<vector<double> >(data));
-      // Check for obvious problems with the data
-      if(data.size() != 5){
-        string msg = "\n**** Error parsing text file, invalid line: " + str + "\n";
-        TEUCHOS_TEST_FOR_EXCEPT_MSG(data.size() != 5, msg);
+  // Read the text file on the root processor
+  if(myPID == 0){
+    ifstream inFile(textFileName.c_str());
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!inFile.is_open(), "**** Error opening discretization text file.\n");
+    while(inFile.good()){
+      string str;
+      getline(inFile, str);
+      boost::trim(str);
+      // Ignore comment lines, otherwise parse
+      if( !(str[0] == '#' || str[0] == '/' || str[0] == '*' || str.size() == 0) ){
+        istringstream iss(str);
+        vector<double> data;
+        copy(istream_iterator<double>(iss),
+             istream_iterator<double>(),
+             back_inserter<vector<double> >(data));
+        // Check for obvious problems with the data
+        if(data.size() != 5){
+          string msg = "\n**** Error parsing text file, invalid line: " + str + "\n";
+          TEUCHOS_TEST_FOR_EXCEPT_MSG(data.size() != 5, msg);
+        }
+        // Store the coordinates, block id, and volumes
+        coordinates.push_back(data[0]);
+        coordinates.push_back(data[1]);
+        coordinates.push_back(data[2]);
+        blockIds.push_back(static_cast<int>(data[3]));
+        volumes.push_back(data[4]);
       }
-      // Store the coordinates, block id, and volumes
-      coordinates.push_back(data[0]);
-      coordinates.push_back(data[1]);
-      coordinates.push_back(data[2]);
-      blockIds.push_back(static_cast<int>(data[3]));
-      volumes.push_back(data[4]);
     }
+    inFile.close();
   }
-  inFile.close();
 
   int numElements = static_cast<int>(blockIds.size());
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(numElements < 1, "**** Error reading discretization text file, no data found.\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(myPID == 0 && numElements < 1, "**** Error reading discretization text file, no data found.\n");
+
+  // Broadcast necessary data from root processor
+  Teuchos::RCP<const Teuchos::Comm<int> > teuchosComm = Teuchos::createMpiComm<int>(Teuchos::opaqueWrapper<MPI_Comm>(MPI_COMM_WORLD));
+  int numGlobalElements;
+  reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, int(1), &numElements, &numGlobalElements);
 
   // Create list of global ids
   vector<int> globalIds(numElements);
@@ -191,10 +199,9 @@ QUICKGRID::Data PeridigmNS::TextFileDiscretization::getDecomp(const string& text
     globalIds[i] = i;
 
   // Copy data into a decomp object
-  int myNumElements = numElements;
   int dimension = 3;
-  QUICKGRID::Data decomp = QUICKGRID::allocatePdGridData(myNumElements, dimension);
-  decomp.globalNumPoints = myNumElements;
+  QUICKGRID::Data decomp = QUICKGRID::allocatePdGridData(numElements, dimension);
+  decomp.globalNumPoints = numGlobalElements;
   memcpy(decomp.myGlobalIDs.get(), &globalIds[0], numElements*sizeof(int)); 
   memcpy(decomp.cellVolume.get(), &volumes[0], numElements*sizeof(double)); 
   memcpy(decomp.myX.get(), &coordinates[0], 3*numElements*sizeof(double));
