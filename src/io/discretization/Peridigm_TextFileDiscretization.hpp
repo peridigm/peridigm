@@ -1,4 +1,4 @@
-/*! \file Peridigm_PdQuickGridDiscretization.hpp */
+/*! \file Peridigm_TextFileDiscretization.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,31 +45,27 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_PDQUICKGRIDDISCRETIZATION_HPP
-#define PERIDIGM_PDQUICKGRIDDISCRETIZATION_HPP
+#ifndef PERIDIGM_TEXTFILEDISCRETIZATION_HPP
+#define PERIDIGM_TEXTFILEDISCRETIZATION_HPP
 
+#include "Peridigm_AbstractDiscretization.hpp"
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_Comm.h>
-#include "Peridigm_AbstractDiscretization.hpp"
 #include "mesh_input/quick_grid/QuickGridData.h"
 
 namespace PeridigmNS {
 
-  //! Discretization class that creates discretizations using PdQuickGrid.
-  class PdQuickGridDiscretization : public PeridigmNS::AbstractDiscretization {
+  //! Discretization class that creates discretization from a text file containing node locations, volumes, and block ids.
+  class TextFileDiscretization : public PeridigmNS::AbstractDiscretization {
 
   public:
 
     //! Constructor
-    PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetraComm,
-                              const Teuchos::RCP<Teuchos::ParameterList>& params);
-
-    //! Constructor
-    PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetraComm,
-                              const Teuchos::RCP<const QUICKGRID::Data>& decomp);
+    TextFileDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetraComm,
+                           const Teuchos::RCP<Teuchos::ParameterList>& params);
 
     //! Destructor
-    virtual ~PdQuickGridDiscretization();
+    virtual ~TextFileDiscretization();
 
     //! Return d-dimensional map
     virtual Teuchos::RCP<const Epetra_BlockMap> getGlobalOwnedMap(int d) const;
@@ -107,15 +103,21 @@ namespace PeridigmNS {
   private:
 
     //! Private to prohibit copying
-    PdQuickGridDiscretization(const PdQuickGridDiscretization&);
+    TextFileDiscretization(const TextFileDiscretization&);
 
     //! Private to prohibit copying
-    PdQuickGridDiscretization& operator=(const PdQuickGridDiscretization&);
+    TextFileDiscretization& operator=(const TextFileDiscretization&);
 
-    //! Returns the discretization object, switches on types of PdQuickGrids.
-    QUICKGRID::Data getDiscretization(const Teuchos::RCP<Teuchos::ParameterList>& param);
+    //! Creates a discretization object based on data read from a text file.
+    QUICKGRID::Data getDecomp(const std::string& textFileName,
+                              double horizon);
 
   protected:
+
+    template<class T>
+    struct NonDeleter{
+      void operator()(T* d) {}
+    };
 
     //! Create maps
     void createMaps(const QUICKGRID::Data& decomp);
@@ -125,6 +127,20 @@ namespace PeridigmNS {
 
     //! Create NeighborhoodData
     void createNeighborhoodData(const QUICKGRID::Data& decomp);
+
+    //! Filter bonds from neighborhood list
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> filterBonds(Teuchos::RCP<PeridigmNS::NeighborhoodData> unfilteredNeighborhoodData);
+
+//     //! Compute the scalar triple product
+//     double scalarTripleProduct(std::vector<double>& a,
+//                                std::vector<double>& b,
+//                                std::vector<double>& c) const;
+
+//     //! Compute the volume of a hexahedron element
+//     double hexVolume(std::vector<double*>& nodeCoordinates) const;
+
+//     //! Compute the maximum length dimension for a hexahedron element
+//     double hexMaxElementDimension(std::vector<double*>& nodeCoordinates) const;
 
     //! Maps
     Teuchos::RCP<Epetra_BlockMap> oneDimensionalMap;
@@ -141,6 +157,9 @@ namespace PeridigmNS {
 
     //! Maximum element dimension
     double maxElementDimension;
+
+    //! Search horizon, which may be larger than the horizon if partial volumes are used
+    double searchHorizon;
 
     //! Vector containing initial positions
     Teuchos::RCP<Epetra_Vector> initialX;
@@ -163,9 +182,12 @@ namespace PeridigmNS {
     //! Number of Processors
     unsigned int numPID;
 
+    //! Discretization parameter controling the formation of bonds
+    string bondFilterCommand;
+
     //! Epetra communicator
     Teuchos::RCP<const Epetra_Comm> comm;
   };
 }
 
-#endif // PERIDIGM_PDQUICKGRIDDISCRETIZATION_HPP
+#endif // PERIDIGM_TEXTFILEDISCRETIZATION_HPP

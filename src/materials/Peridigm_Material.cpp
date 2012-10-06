@@ -61,7 +61,7 @@ void PeridigmNS::Material::computeJacobian(const double dt,
                                            PeridigmNS::SerialMatrix& jacobian) const
 {
   // Compute a finite-difference Jacobian using either FORWARD_DIFFERENCE or CENTRAL_DIFFERENCE
-  computeFiniteDifferenceJacobian(dt, numOwnedPoints, ownedIDs, neighborhoodList, dataManager, jacobian, CONSISTENT_FORWARD_DIFFERENCE);
+  computeFiniteDifferenceJacobian(dt, numOwnedPoints, ownedIDs, neighborhoodList, dataManager, jacobian, CENTRAL_DIFFERENCE);
 }
 
 void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
