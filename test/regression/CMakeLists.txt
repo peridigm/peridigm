@@ -10,6 +10,7 @@ add_test (Compression_QS_CyclicLoading_3x2x2_np2 python ./Compression_QS_CyclicL
 add_test (Compression_QS_3x2x2_Exodus_np1 python ./Compression_QS_3x2x2_Exodus/np1/Compression_QS_3x2x2_Exodus.py)
 add_test (Compression_QS_3x2x2_Exodus_np2 python ./Compression_QS_3x2x2_Exodus/np2/Compression_QS_3x2x2_Exodus.py)
 add_test (Compression_QS_3x2x2_TextFile_np1 python ./Compression_QS_3x2x2_TextFile/np1/Compression_QS_3x2x2_TextFile.py)
+add_test (Compression_QS_3x2x2_TextFile_np3 python ./Compression_QS_3x2x2_TextFile/np3/Compression_QS_3x2x2_TextFile.py)
 add_test (WaveInBar_np1 python ./WaveInBar/np1/WaveInBar.py)
 add_test (WaveInBar_np3 python ./WaveInBar/np3/WaveInBar.py)
 add_test (WaveInBar_MultiBlock_np1 python ./WaveInBar_MultiBlock/np1/WaveInBar_MultiBlock.py)
