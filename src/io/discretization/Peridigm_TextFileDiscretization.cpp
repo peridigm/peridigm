@@ -346,14 +346,14 @@ PeridigmNS::TextFileDiscretization::filterBonds(Teuchos::RCP<PeridigmNS::Neighbo
   int* const unfilteredNeighborhoodList = unfilteredNeighborhoodData->NeighborhoodList();
   int unfilteredNeighborhoodListIndex(0);
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
-    int blockID = blockIDs[iID];
+    int blockID = static_cast<int>(blockIDs[iID]);
 	int numUnfilteredNeighbors = unfilteredNeighborhoodList[unfilteredNeighborhoodListIndex++];
     unsigned int numNeighborsIndex = neighborhoodListVec.size();
     neighborhoodListVec.push_back(-1); // placeholder for number of neighbors
     int numNeighbors = 0;
 	for(int iNID=0 ; iNID<numUnfilteredNeighbors ; ++iNID){
       int unfilteredNeighborID = unfilteredNeighborhoodList[unfilteredNeighborhoodListIndex++];
-      int unfilteredNeighborBlockID = blockIDs[unfilteredNeighborID];
+      int unfilteredNeighborBlockID = static_cast<int>(blockIDs[unfilteredNeighborID]);
       if(blockBondingMatrix[blockID-1][unfilteredNeighborBlockID-1] == true){
         neighborhoodListVec.push_back(unfilteredNeighborID);
         numNeighbors += 1;
