@@ -47,8 +47,10 @@
 
 #include <Teuchos_Assert.hpp>
 #include "Peridigm_DiscretizationFactory.hpp"
-#include "Peridigm_PdQuickGridDiscretization.hpp"
 #include "Peridigm_STKDiscretization.hpp"
+#include "Peridigm_TextFileDiscretization.hpp"
+#include "Peridigm_PdQuickGridDiscretization.hpp"
+
 
 PeridigmNS::DiscretizationFactory::DiscretizationFactory(const Teuchos::RCP<Teuchos::ParameterList>& discParams_) :
   discParams(discParams_)
@@ -69,15 +71,18 @@ PeridigmNS::DiscretizationFactory::create(const Teuchos::RCP<const Epetra_Comm>&
 
   string type = discParams->get<string>("Type");
 
-  if(type == "PdQuickGrid"){
-	discretization = Teuchos::rcp(new PeridigmNS::PdQuickGridDiscretization(epetra_comm, discParams));
-  }
-  else if(type == "Exodus"){
+  if(type == "Exodus"){
 	discretization = Teuchos::rcp(new PeridigmNS::STKDiscretization(epetra_comm, discParams));
+  }
+  else if(type == "Text File"){
+	discretization = Teuchos::rcp(new PeridigmNS::TextFileDiscretization(epetra_comm, discParams));
+  }
+  else if(type == "PdQuickGrid"){
+	discretization = Teuchos::rcp(new PeridigmNS::PdQuickGridDiscretization(epetra_comm, discParams));
   }
   else{
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
-		       "**** Invalid discretization type.  Valid types are \"Exodus\" and \"PdQuickGrid\".\n");
+		       "**** Invalid discretization type.  Valid types are \"Exodus\", \"Text File\", and \"PdQuickGrid\".\n");
   }
  
   return discretization;
