@@ -52,7 +52,7 @@ if (VTK_FOUND)
 else ()
   message ("\nVTK NOT FOUND!  (Try defining VTK_DIR)\n")
 endif ()
-set( VTK_LIBS vtkIO vtkGraphics vtkParallel )
+set( VTK_LIBS vtkIO )
 
 #
 # Blas and Lapack Libraries  
