@@ -237,6 +237,11 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
   stk::mesh::Field<double, stk::mesh::Cartesian>* coordinatesField = 
     metaData->get_field< stk::mesh::Field<double, stk::mesh::Cartesian> >("coordinates");
 
+  // The volume field is present only for sphere meshes
+  // volumeField will be a null pointer for tet or hex meshes
+  stk::mesh::Field<double, stk::mesh::Cartesian>* volumeField = 
+    metaData->get_field< stk::mesh::Field<double, stk::mesh::Cartesian> >("volume");
+
   // Create a selector to select everything in the universal part that is either locally owned or globally shared
   stk::mesh::Selector selector = 
     stk::mesh::Selector( metaData->universal_part() ) & ( stk::mesh::Selector( metaData->locally_owned_part() ) | stk::mesh::Selector( metaData->globally_shared_part() ) );
@@ -303,7 +308,15 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
     centroids[iElem*3] /= nodeRelations.size();
     centroids[iElem*3+1] /= nodeRelations.size();
     centroids[iElem*3+2] /= nodeRelations.size();
-    volumes[iElem] = hexVolume(nodeCoordinates);
+    if(nodeRelations.size() == 1){
+      double* exodusVolume = stk::mesh::field_data(*volumeField, *elements[iElem]);
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(exodusVolume == NULL, "**** Volume attribute not found for sphere element.\n");
+      volumes[iElem] = exodusVolume[0];
+    }
+    else if(nodeRelations.size() == 8)
+      volumes[iElem] = hexVolume(nodeCoordinates);
+    else
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeRelations.size() != 1 && nodeRelations.size() != 8, "**** Invalid element topology.\n");
     globalIds[iElem] = elements[iElem]->identifier() - 1; 
   }
 
