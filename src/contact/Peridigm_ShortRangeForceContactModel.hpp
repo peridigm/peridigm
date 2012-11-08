@@ -95,9 +95,9 @@ namespace PeridigmNS {
 
 	// model parameters
 	double m_contactRadius;
-	double m_frictionCoefficient;
 	double m_springConstant;
-        double m_horizon;
+	double m_frictionCoefficient;
+    double m_horizon;
   };
 }
 

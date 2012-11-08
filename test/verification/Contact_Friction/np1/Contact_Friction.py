@@ -5,8 +5,8 @@ import os
 import re
 from subprocess import Popen
 
-test_dir = "Contact_2x1x1/np1"
-base_name = "Contact_2x1x1"
+test_dir = "Contact_Friction/np1"
+base_name = "Contact_Friction"
 
 if __name__ == "__main__":
 
