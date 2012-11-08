@@ -46,7 +46,6 @@
 //@HEADER
 
 #include "Peridigm_CriticalStretchDamageModel.hpp"
-#include <Teuchos_Assert.hpp>
 
 using namespace std;
 
@@ -97,64 +96,64 @@ PeridigmNS::CriticalStretchDamageModel::computeDamage(const double dt,
                                                       const int* neighborhoodList,
                                                       PeridigmNS::DataManager& dataManager) const
 {
-  int vectorLength = dataManager.getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->MyLength();
   double *x, *y, *damage, *bondDamage;
   dataManager.getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->ExtractView(&x);
   dataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->ExtractView(&y);
   dataManager.getData(Field_NS::DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&damage);
   dataManager.getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
 
+  double trialDamage(0.0);
+  int neighborhoodListIndex(0), bondIndex(0);
+  int nodeId, numNeighbors, neighborID, iID, iNID;
+  double nodeInitialX[3], nodeCurrentX[3], initialDistance, currentDistance, relativeExtension, totalDamage;
+
   // Update the bond damage
   // Break bonds if the extension is greater than the critical extension
-  double trialDamage = 0.0;
-  int neighborhoodListIndex = 0;
-  int bondIndex = 0;
-  for(int iID=0 ; iID<numOwnedPoints ; ++iID){
-	int nodeID = ownedIDs[iID];
-	TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeID*3+2 >= vectorLength, "Invalid neighbor list / x vector\n");
-	double nodeInitialX[3] = { x[nodeID*3],
-							   x[nodeID*3+1],
-							   x[nodeID*3+2] };
-	double nodeCurrentX[3] = { y[nodeID*3],
-							   y[nodeID*3+1],
-							   y[nodeID*3+2] };
-	int numNeighbors = neighborhoodList[neighborhoodListIndex++];
-	for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
-	  int neighborID = neighborhoodList[neighborhoodListIndex++];
-	  TEUCHOS_TEST_FOR_EXCEPT_MSG(neighborID < 0, "Invalid neighbor list\n");
-	  TEUCHOS_TEST_FOR_EXCEPT_MSG(neighborID*3+2 >= vectorLength, "Invalid neighbor list / initial x vector\n");
-	  double initialDistance = 
-		distance(nodeInitialX[0], nodeInitialX[1], nodeInitialX[2],
-				 x[neighborID*3], x[neighborID*3+1], x[neighborID*3+2]);
-	  double currentDistance = 
-		distance(nodeCurrentX[0], nodeCurrentX[1], nodeCurrentX[2],
-				 y[neighborID*3], y[neighborID*3+1], y[neighborID*3+2]);
-	  double relativeExtension = (currentDistance - initialDistance)/initialDistance;
-	  trialDamage = 0.0;
-	  if(relativeExtension > m_criticalStretch)
-		trialDamage = 1.0;
-	  if(trialDamage > bondDamage[bondIndex]){
-		bondDamage[bondIndex] = trialDamage;
+
+  for(iID=0 ; iID<numOwnedPoints ; ++iID){
+	nodeId = ownedIDs[iID];
+	nodeInitialX[0] = x[nodeId*3];
+    nodeInitialX[1] = x[nodeId*3+1];
+    nodeInitialX[2] = x[nodeId*3+2];
+	nodeCurrentX[0] = y[nodeId*3];
+	nodeCurrentX[1] = y[nodeId*3+1];
+	nodeCurrentX[2] = y[nodeId*3+2];
+	numNeighbors = neighborhoodList[neighborhoodListIndex++];
+	for(iNID=0 ; iNID<numNeighbors ; ++iNID){
+	  neighborID = neighborhoodList[neighborhoodListIndex++];
+      initialDistance = 
+        distance(nodeInitialX[0], nodeInitialX[1], nodeInitialX[2],
+                 x[neighborID*3], x[neighborID*3+1], x[neighborID*3+2]);
+      currentDistance = 
+        distance(nodeCurrentX[0], nodeCurrentX[1], nodeCurrentX[2],
+                 y[neighborID*3], y[neighborID*3+1], y[neighborID*3+2]);
+      relativeExtension = (currentDistance - initialDistance)/initialDistance;
+      trialDamage = 0.0;
+      if(relativeExtension > m_criticalStretch)
+        trialDamage = 1.0;
+      if(trialDamage > bondDamage[bondIndex]){
+        bondDamage[bondIndex] = trialDamage;
       }
-	  bondIndex += 1;
-	}
+      bondIndex += 1;
+    }
   }
 
   //  Update the element damage (percent of bonds broken)
+
   neighborhoodListIndex = 0;
   bondIndex = 0;
-  for(int iID=0 ; iID<numOwnedPoints ; ++iID){
-	int nodeID = ownedIDs[iID];
-	int numNeighbors = neighborhoodList[neighborhoodListIndex++];
+  for(iID=0 ; iID<numOwnedPoints ; ++iID){
+	nodeId = ownedIDs[iID];
+	numNeighbors = neighborhoodList[neighborhoodListIndex++];
     neighborhoodListIndex += numNeighbors;
-	double totalDamage = 0.0;
-	for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
+	totalDamage = 0.0;
+	for(iNID=0 ; iNID<numNeighbors ; ++iNID){
 	  totalDamage += bondDamage[bondIndex++];
 	}
 	if(numNeighbors > 0)
 	  totalDamage /= numNeighbors;
 	else
 	  totalDamage = 0.0;
- 	damage[nodeID] = totalDamage;
+ 	damage[nodeId] = totalDamage;
   }
 }

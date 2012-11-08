@@ -218,6 +218,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // Load initial data into the blocks
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    blockIt->importData(*(peridigmDisc->getBlockID()),    Field_NS::BLOCK_ID,   Field_ENUM::STEP_NONE, Insert);
     blockIt->importData(*(peridigmDisc->getCellVolume()), Field_NS::VOLUME,     Field_ENUM::STEP_NONE, Insert);
     blockIt->importData(*(peridigmDisc->getInitialX()),   Field_NS::COORD3D,    Field_ENUM::STEP_NONE, Insert);
     blockIt->importData(*(peridigmDisc->getInitialX()),   Field_NS::CURCOORD3D, Field_ENUM::STEP_N,    Insert);
@@ -2351,10 +2352,10 @@ void PeridigmNS::Peridigm::computeImplicitJacobian(double beta) {
 }
 
 void PeridigmNS::Peridigm::synchDataManagers() {
-  // Need to ensure these primal fields are synchronized: VOLUME, COORD3D, DISPL3D, CURCOORD3D, VELOC3D, FORCE_DENSITY3D, CONTACT_FORCE_DENSITY_3D
+  // Need to ensure these primal fields are synchronized: VOLUME, BLOCK_ID, COORD3D, DISPL3D, CURCOORD3D, VELOC3D, FORCE_DENSITY3D, CONTACT_FORCE_DENSITY_3D
 
   // Copy data from mothership vectors to overlap vectors in blocks
-  // VOLUME is synched during creation and rebalance, and otherwise never changes
+  // VOLUME and BLOCK_ID are synched during creation and rebalance, and otherwise never changes
   // COORD3D is synched during creation and rebalance, and otherwise never changes
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
@@ -2483,8 +2484,10 @@ void PeridigmNS::Peridigm::rebalance() {
   // could be resolved if contact were refactored to be totally separate from the material
   // models (i.e., give contact its own mothership vectors and data managers, and rebalance
   // only these objects when executing a contact search).
-  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
     blockIt->importData(*volume, Field_NS::VOLUME, Field_ENUM::STEP_NONE, Insert);
+    blockIt->importData(*blockIDs, Field_NS::BLOCK_ID, Field_ENUM::STEP_NONE, Insert);
+  }
 
   // set all the pointers to the new maps
   oneDimensionalMap = rebalancedOneDimensionalMap;
