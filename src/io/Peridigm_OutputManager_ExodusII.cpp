@@ -283,9 +283,9 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
       for(blockIt = blocks->begin(); blockIt != blocks->end() ; blockIt++) {
         Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
         Teuchos::RCP<Epetra_Vector> epetra_vector;
-        Field_ENUM::Step step = Field_ENUM::STEP_NONE;
+        PeridigmField::Step step = PeridigmField::STEP_NONE;
         if(spec.get_temporal() == Field_ENUM::TWO_STEP)
-          step = Field_ENUM::STEP_NP1;
+          step = PeridigmField::STEP_NP1;
         epetra_vector = dataManager->getData(fieldId, step);
         int block_num_nodes = (blockIt->getDataManager()->getOwnedScalarPointMap())->NumMyElements();
         epetra_vector->ExtractView(&block_ptr);
@@ -357,9 +357,9 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
         else {
           Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
           Teuchos::RCP<Epetra_Vector> epetra_vector;
-          Field_ENUM::Step step = Field_ENUM::STEP_NONE;
+          PeridigmField::Step step = PeridigmField::STEP_NONE;
           if(spec.get_temporal() == Field_ENUM::TWO_STEP)
-            step = Field_ENUM::STEP_NP1;
+            step = PeridigmField::STEP_NP1;
           if( dataManager->hasData(fieldId, step) ) {
             epetra_vector = dataManager->getData(fieldId, step);
             epetra_vector->ExtractView(&block_ptr);
@@ -687,9 +687,9 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
         int fieldId = PeridigmNS::FieldManager::self().getFieldId(variableName);
 
         if(spec.getRelation() == Field_ENUM::ELEMENT){
-          Field_ENUM::Step step = Field_ENUM::STEP_NONE;
+          PeridigmField::Step step = PeridigmField::STEP_NONE;
           if(spec.get_temporal() == Field_ENUM::TWO_STEP)
-            step = Field_ENUM::STEP_NP1;
+            step = PeridigmField::STEP_NP1;
           int truthTableValue = 0;
           if(blockIt->hasData(fieldId, step))
             truthTableValue = 1;

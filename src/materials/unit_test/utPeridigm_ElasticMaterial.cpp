@@ -123,9 +123,9 @@ void testTwoPts()
   int bondDamageFieldId = fieldManager.getFieldId("Bond_Damage");
   int forceDensityFieldId = fieldManager.getFieldId("Force_Density");
 
-  Epetra_Vector& x = *dataManager.getData(modelCoordinatesFieldId, Field_ENUM::STEP_NONE);
-  Epetra_Vector& y = *dataManager.getData(coordinatesFieldId, Field_ENUM::STEP_NP1);
-  Epetra_Vector& cellVolume = *dataManager.getData(volumeFieldId, Field_ENUM::STEP_NONE);
+  Epetra_Vector& x = *dataManager.getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE);
+  Epetra_Vector& y = *dataManager.getData(coordinatesFieldId, PeridigmField::STEP_NP1);
+  Epetra_Vector& cellVolume = *dataManager.getData(volumeFieldId, PeridigmField::STEP_NONE);
 
   x[0] = 0.0; x[1] = 0.0; x[2] = 0.0;
   x[3] = 1.0; x[4] = 0.0; x[5] = 0.0;
@@ -159,17 +159,17 @@ void testTwoPts()
   BOOST_CHECK_SMALL(currentPositionY2, 1.0e-14);
   double currentPositionZ2 = y[5];
   BOOST_CHECK_SMALL(currentPositionZ2, 1.0e-14);
-  Epetra_Vector& weightedVolume = *dataManager.getData(weightedVolumeFieldId, Field_ENUM::STEP_NONE);
+  Epetra_Vector& weightedVolume = *dataManager.getData(weightedVolumeFieldId, PeridigmField::STEP_NONE);
   BOOST_CHECK_CLOSE(weightedVolume[0], 1.0, 1.0e-15);
   BOOST_CHECK_CLOSE(weightedVolume[1], 1.0, 1.0e-15);
-  Epetra_Vector& dilatation = *dataManager.getData(dilatationFieldId, Field_ENUM::STEP_NP1);
+  Epetra_Vector& dilatation = *dataManager.getData(dilatationFieldId, PeridigmField::STEP_NP1);
   BOOST_CHECK_CLOSE(dilatation[0], 3.0, 1.0e-15);
   BOOST_CHECK_CLOSE(dilatation[1], 3.0, 1.0e-15);
-  Epetra_Vector& bondDamage = *dataManager.getData(bondDamageFieldId, Field_ENUM::STEP_NP1);
+  Epetra_Vector& bondDamage = *dataManager.getData(bondDamageFieldId, PeridigmField::STEP_NP1);
   BOOST_CHECK_SMALL(bondDamage[0], 1.0e-15);
   BOOST_CHECK_SMALL(bondDamage[1], 1.0e-15);
 
-  Epetra_Vector& force = *dataManager.getData(forceDensityFieldId, Field_ENUM::STEP_NP1);
+  Epetra_Vector& force = *dataManager.getData(forceDensityFieldId, PeridigmField::STEP_NP1);
   BOOST_CHECK_CLOSE(force[0], 2.34e+12, 1.0e-2);
   BOOST_CHECK_SMALL(force[1], 1.0e-14);
   BOOST_CHECK_SMALL(force[2], 1.0e-14);
@@ -243,9 +243,9 @@ void testEightPts()
   int bondDamageFieldId = fieldManager.getFieldId("Bond_Damage");
   int forceDensityFieldId = fieldManager.getFieldId("Force_Density");
 
-  Epetra_Vector& x = *dataManager.getData(modelCoordinatesFieldId, Field_ENUM::STEP_NONE);
-  Epetra_Vector& y = *dataManager.getData(coordinatesFieldId, Field_ENUM::STEP_NP1);
-  Epetra_Vector& cellVolume = *dataManager.getData(volumeFieldId, Field_ENUM::STEP_NONE);
+  Epetra_Vector& x = *dataManager.getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE);
+  Epetra_Vector& y = *dataManager.getData(coordinatesFieldId, PeridigmField::STEP_NP1);
+  Epetra_Vector& cellVolume = *dataManager.getData(volumeFieldId, PeridigmField::STEP_NONE);
 
   // initial positions
   x[0]  = 0.0; x[1]  = 0.0; x[2]  = 0.0;
@@ -336,9 +336,9 @@ void testEightPts()
 
   // the weighted volumes and dilatations are the
   // same for all points in this test problem
-  Epetra_Vector& weightedVolume = *dataManager.getData(weightedVolumeFieldId, Field_ENUM::STEP_NONE);
-  Epetra_Vector& dilatation = *dataManager.getData(dilatationFieldId, Field_ENUM::STEP_NP1);
-  Epetra_Vector& bondDamage = *dataManager.getData(bondDamageFieldId, Field_ENUM::STEP_NP1);
+  Epetra_Vector& weightedVolume = *dataManager.getData(weightedVolumeFieldId, PeridigmField::STEP_NONE);
+  Epetra_Vector& dilatation = *dataManager.getData(dilatationFieldId, PeridigmField::STEP_NP1);
+  Epetra_Vector& bondDamage = *dataManager.getData(bondDamageFieldId, PeridigmField::STEP_NP1);
   for(int i=0; i<8; ++i){
 	BOOST_CHECK_CLOSE(weightedVolume[i], 12.0, 1.0e-12);
 	BOOST_CHECK_CLOSE(dilatation[i], -0.01991593994643333, 1.0e-12);
@@ -399,7 +399,7 @@ void testEightPts()
   unit_vec[0] = 1.0/vec_mag; unit_vec[1] = 1.0/vec_mag; unit_vec[2] = 0.98/vec_mag;
   f[0] += 2.0*unit_vec[0]*t; f[1] += 2.0*unit_vec[1]*t; f[2] += 2.0*unit_vec[2]*t;
 
-  Epetra_Vector& force = *dataManager.getData(forceDensityFieldId, Field_ENUM::STEP_NP1);
+  Epetra_Vector& force = *dataManager.getData(forceDensityFieldId, PeridigmField::STEP_NP1);
 
   // assert the net force on cell 0
   BOOST_CHECK_CLOSE(force[0], f[0], 1.0e-11);
@@ -510,9 +510,9 @@ void testThreePts()
   int bondDamageFieldId = fieldManager.getFieldId("Bond_Damage");
   int forceDensityFieldId = fieldManager.getFieldId("Force_Density");
 
-  Epetra_Vector& x = *dataManager.getData(modelCoordinatesFieldId, Field_ENUM::STEP_NONE);
-  Epetra_Vector& y = *dataManager.getData(coordinatesFieldId, Field_ENUM::STEP_NP1);
-  Epetra_Vector& cellVolume = *dataManager.getData(volumeFieldId, Field_ENUM::STEP_NONE);
+  Epetra_Vector& x = *dataManager.getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE);
+  Epetra_Vector& y = *dataManager.getData(coordinatesFieldId, PeridigmField::STEP_NP1);
+  Epetra_Vector& cellVolume = *dataManager.getData(volumeFieldId, PeridigmField::STEP_NONE);
 
   // initial positions
   x[0] =  1.1; x[1] = 2.6;  x[2] = -0.1;
@@ -563,9 +563,9 @@ void testThreePts()
 
   // check the weighted volume and dilatation
   // against hand calculations
-  Epetra_Vector& weightedVolume = *dataManager.getData(weightedVolumeFieldId, Field_ENUM::STEP_NONE);
-  Epetra_Vector& dilatation = *dataManager.getData(dilatationFieldId, Field_ENUM::STEP_NP1);
-  Epetra_Vector& bondDamage = *dataManager.getData(bondDamageFieldId, Field_ENUM::STEP_NP1);
+  Epetra_Vector& weightedVolume = *dataManager.getData(weightedVolumeFieldId, PeridigmField::STEP_NONE);
+  Epetra_Vector& dilatation = *dataManager.getData(dilatationFieldId, PeridigmField::STEP_NP1);
+  Epetra_Vector& bondDamage = *dataManager.getData(bondDamageFieldId, PeridigmField::STEP_NP1);
   BOOST_CHECK_CLOSE(weightedVolume[0], 23.016479999999931, 1.0e-12);
   BOOST_CHECK_CLOSE(dilatation[0], -0.114127034572639, 1.0e-11);
   BOOST_CHECK_CLOSE(weightedVolume[1],18.64767999999997, 1.0e-12);
@@ -578,7 +578,7 @@ void testThreePts()
       BOOST_CHECK_SMALL(bondDamage[i], 1.0e-15);
   }
 
-  Epetra_Vector& force = *dataManager.getData(forceDensityFieldId, Field_ENUM::STEP_NP1);
+  Epetra_Vector& force = *dataManager.getData(forceDensityFieldId, PeridigmField::STEP_NP1);
 
   // check the net forces against hand calculations
   double ref_soln_x, ref_soln_y, ref_soln_z;
@@ -703,9 +703,9 @@ void twoPointProbeJacobian()
   // create the Jacobian
 //   PeridigmNS::SerialMatrix jacobian(2*3);
 
-//   Epetra_Vector& x = *dataManager.getData(modelCoordinatesFieldId, Field_ENUM::STEP_NONE);
-//   Epetra_Vector& y = *dataManager.getData(coordinatesFieldId, Field_ENUM::STEP_NP1);
-//   Epetra_Vector& cellVolume = *dataManager.getData(volumeFieldId, Field_ENUM::STEP_NONE);
+//   Epetra_Vector& x = *dataManager.getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE);
+//   Epetra_Vector& y = *dataManager.getData(coordinatesFieldId, PeridigmField::STEP_NP1);
+//   Epetra_Vector& cellVolume = *dataManager.getData(volumeFieldId, PeridigmField::STEP_NONE);
 
 //   x[0] = 0.0; x[1] = 0.0; x[2] = 0.0;
 //   x[3] = 1.0; x[4] = 0.0; x[5] = 0.0;
@@ -777,9 +777,9 @@ void twoPointProbeJacobianJAM()
   // create the Jacobian
 //   PeridigmNS::SerialMatrix jacobian(2*3);
 
-//   Epetra_Vector& x = *dataManager.getData(modelCoordinatesFieldId, Field_ENUM::STEP_NONE);
-//   Epetra_Vector& y = *dataManager.getData(coordinatesFieldId, Field_ENUM::STEP_NP1);
-//   Epetra_Vector& cellVolume = *dataManager.getData(volumeFieldId, Field_ENUM::STEP_NONE);
+//   Epetra_Vector& x = *dataManager.getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE);
+//   Epetra_Vector& y = *dataManager.getData(coordinatesFieldId, PeridigmField::STEP_NP1);
+//   Epetra_Vector& cellVolume = *dataManager.getData(volumeFieldId, PeridigmField::STEP_NONE);
 
 //   x[0] = 0.0; x[1] = 0.0; x[2] = 0.0;
 //   x[3] = 0.5; x[4] = 0.0; x[5] = 0.0;

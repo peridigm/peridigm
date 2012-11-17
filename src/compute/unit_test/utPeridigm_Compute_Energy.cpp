@@ -135,14 +135,14 @@ void FourPointTest()
   Teuchos::RCP<PeridigmNS::DataManager> dataManager = (*peridigm->getDataManagers())[0];
   // Access the data we need
   Teuchos::RCP<Epetra_Vector> velocity, volume, ref, coords, dilatation, kinetic_energy, strain_energy, strain_energy_density;
-  velocity              = dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1);
-  volume                = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
-  ref                   = dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE);
-  coords                = dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1);
-  dilatation            = dataManager->getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1);
-  kinetic_energy        = dataManager->getData(Field_NS::KINETIC_ENERGY, Field_ENUM::STEP_NP1);
-  strain_energy         = dataManager->getData(Field_NS::STRAIN_ENERGY, Field_ENUM::STEP_NP1);
-  strain_energy_density = dataManager->getData(Field_NS::STRAIN_ENERGY_DENSITY, Field_ENUM::STEP_NP1);
+  velocity              = dataManager->getData(Field_NS::VELOC3D, PeridigmField::STEP_NP1);
+  volume                = dataManager->getData(Field_NS::VOLUME, PeridigmField::STEP_NONE);
+  ref                   = dataManager->getData(Field_NS::COORD3D, PeridigmField::STEP_NONE);
+  coords                = dataManager->getData(Field_NS::CURCOORD3D, PeridigmField::STEP_NP1);
+  dilatation            = dataManager->getData(Field_NS::DILATATION, PeridigmField::STEP_NP1);
+  kinetic_energy        = dataManager->getData(Field_NS::KINETIC_ENERGY, PeridigmField::STEP_NP1);
+  strain_energy         = dataManager->getData(Field_NS::STRAIN_ENERGY, PeridigmField::STEP_NP1);
+  strain_energy_density = dataManager->getData(Field_NS::STRAIN_ENERGY_DENSITY, PeridigmField::STEP_NP1);
   // Get the neighborhood structure
   const int numOwnedPoints = (neighborhoodData.NumOwnedPoints());
 

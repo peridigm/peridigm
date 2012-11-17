@@ -66,8 +66,9 @@
 #include "Peridigm_Field.hpp"
 
 using namespace boost::unit_test;
+using namespace PeridigmNS;
 
-Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel() {
+Teuchos::RCP<Peridigm> createFourPointModel() {
   Teuchos::RCP<Epetra_Comm> comm;
 #ifdef HAVE_MPI
   comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
@@ -116,22 +117,22 @@ Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel() {
   outputFields.set("Force", true);
 
   // create the Peridigm object
-  Teuchos::RCP<PeridigmNS::Peridigm> peridigm = Teuchos::rcp(new PeridigmNS::Peridigm(comm, peridigmParams));
+  Teuchos::RCP<Peridigm> peridigm = Teuchos::rcp(new Peridigm(comm, peridigmParams));
 
   return peridigm;
 }
 
 void FourPointTest() {
 
-  Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createFourPointModel();
+  Teuchos::RCP<Peridigm> peridigm = createFourPointModel();
 
-  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  FieldManager& fieldManager = FieldManager::self();
 
   // Access the data we need
   Teuchos::RCP<Epetra_Vector> force, force_density, volume;
-  force_density = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Force_Density"), Field_ENUM::STEP_NP1);
-  force         = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Force"), Field_ENUM::STEP_NP1);
-  volume        = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Volume"), Field_ENUM::STEP_NONE);
+  force_density = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Force_Density"), PeridigmField::STEP_NP1);
+  force         = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Force"), PeridigmField::STEP_NP1);
+  volume        = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Volume"), PeridigmField::STEP_NONE);
 
   // Manufacture force density data
   double *force_density_values  = force_density->Values();
@@ -143,10 +144,10 @@ void FourPointTest() {
   }
 
   // Create Compute_Force object
-  Teuchos::RCP<PeridigmNS::Compute_Force> computeForce = Teuchos::rcp(new PeridigmNS::Compute_Force( &(*peridigm) ) );
+  Teuchos::RCP<Compute_Force> computeForce = Teuchos::rcp(new Compute_Force( &(*peridigm) ) );
 
   // Get the blocks
-  Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks = peridigm->getBlocks();
+  Teuchos::RCP< std::vector<Block> > blocks = peridigm->getBlocks();
 
   // Call the compute class
   int retval = computeForce->compute( blocks );

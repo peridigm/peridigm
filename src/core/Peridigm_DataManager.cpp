@@ -333,7 +333,7 @@ void PeridigmNS::DataManager::copyLocallyOwnedDataFromDataManager(PeridigmNS::Da
   }
 }
 
-bool PeridigmNS::DataManager::hasData(int fieldId, Field_ENUM::Step step)
+bool PeridigmNS::DataManager::hasData(int fieldId, PeridigmField::Step step)
 {
   PeridigmNS::FieldSpec peridigmSpec = PeridigmNS::FieldManager::self().getFieldSpec(fieldId);
 
@@ -349,13 +349,13 @@ bool PeridigmNS::DataManager::hasData(int fieldId, Field_ENUM::Step step)
   // end temporary work-around
 
   bool hasData = false;
-  if(step == Field_ENUM::STEP_NONE){
+  if(step == PeridigmField::STEP_NONE){
     hasData = stateNONE->hasData(spec);
   }
-  else if(step == Field_ENUM::STEP_N){
+  else if(step == PeridigmField::STEP_N){
     hasData = stateN->hasData(spec);
   }
-  else if(step == Field_ENUM::STEP_NP1){
+  else if(step == PeridigmField::STEP_NP1){
     hasData = stateNP1->hasData(spec);
   }
   else{
@@ -366,16 +366,16 @@ bool PeridigmNS::DataManager::hasData(int fieldId, Field_ENUM::Step step)
 }
 
 // \todo This is obsolete.
-Teuchos::RCP<Epetra_Vector> PeridigmNS::DataManager::getDataOBSOLETE(Field_NS::FieldSpec fieldSpec, Field_ENUM::Step step)
+Teuchos::RCP<Epetra_Vector> PeridigmNS::DataManager::getDataOBSOLETE(Field_NS::FieldSpec fieldSpec, PeridigmField::Step step)
 {
   Teuchos::RCP<Epetra_Vector> data;
-  if(step == Field_ENUM::STEP_NONE){
+  if(step == PeridigmField::STEP_NONE){
     data = stateNONE->getData(fieldSpec);
   }
-  else if(step == Field_ENUM::STEP_N){
+  else if(step == PeridigmField::STEP_N){
     data = stateN->getData(fieldSpec);
   }
-  else if(step == Field_ENUM::STEP_NP1){
+  else if(step == PeridigmField::STEP_NP1){
     data = stateNP1->getData(fieldSpec);
   }
   else{
@@ -385,7 +385,7 @@ Teuchos::RCP<Epetra_Vector> PeridigmNS::DataManager::getDataOBSOLETE(Field_NS::F
   return data;
 }
 
-Teuchos::RCP<Epetra_Vector> PeridigmNS::DataManager::getData(int fieldId, Field_ENUM::Step step)
+Teuchos::RCP<Epetra_Vector> PeridigmNS::DataManager::getData(int fieldId, PeridigmField::Step step)
 {
   PeridigmNS::FieldSpec peridigmSpec = PeridigmNS::FieldManager::self().getFieldSpec(fieldId);
 

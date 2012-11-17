@@ -96,13 +96,13 @@ int PeridigmNS::Compute_Strain_Energy::computeStrainEnergy( Teuchos::RCP< std::v
     const int* ownedIDs = neighborhoodData->OwnedIDs();
     const int* neighborhoodList = neighborhoodData->NeighborhoodList();
 
-    volume                = blockIt->getData(volumeFieldId, Field_ENUM::STEP_NONE);
-    ref                   = blockIt->getData(modelCoordinatesFieldId, Field_ENUM::STEP_NONE);
-    coord                 = blockIt->getData(coordinatesFieldId, Field_ENUM::STEP_NP1);
-    w_volume              = blockIt->getData(weightedVolumeFieldId, Field_ENUM::STEP_NONE);
-    dilatation            = blockIt->getData(dilatationFieldId, Field_ENUM::STEP_NP1);
+    volume                = blockIt->getData(volumeFieldId, PeridigmField::STEP_NONE);
+    ref                   = blockIt->getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE);
+    coord                 = blockIt->getData(coordinatesFieldId, PeridigmField::STEP_NP1);
+    w_volume              = blockIt->getData(weightedVolumeFieldId, PeridigmField::STEP_NONE);
+    dilatation            = blockIt->getData(dilatationFieldId, PeridigmField::STEP_NP1);
     if (storeLocal)
-      strain_energy = blockIt->getData(strainEnergyFieldId, Field_ENUM::STEP_NP1);
+      strain_energy = blockIt->getData(strainEnergyFieldId, PeridigmField::STEP_NP1);
 	
     // Sanity check
     if (ref->Map().NumMyElements() != volume->Map().NumMyElements() || coord->Map().NumMyElements() != ref->Map().NumMyElements())

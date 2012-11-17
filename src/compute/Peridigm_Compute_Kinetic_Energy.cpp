@@ -93,10 +93,10 @@ int PeridigmNS::Compute_Kinetic_Energy::computeKineticEnergy( Teuchos::RCP< std:
 		const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
 		const int* ownedIDs = neighborhoodData->OwnedIDs();
 
-		volume                = blockIt->getData(volumeFieldId, Field_ENUM::STEP_NONE);
-		velocity              = blockIt->getData(velocityFieldId, Field_ENUM::STEP_NP1);
+		volume                = blockIt->getData(volumeFieldId, PeridigmField::STEP_NONE);
+		velocity              = blockIt->getData(velocityFieldId, PeridigmField::STEP_NP1);
 		if (storeLocal)
-          kinetic_energy = blockIt->getData(kineticEnergyFieldId, Field_ENUM::STEP_NP1);
+          kinetic_energy = blockIt->getData(kineticEnergyFieldId, PeridigmField::STEP_NP1);
 		
 		// Sanity check
 		if (velocity->Map().NumMyElements() != volume->Map().NumMyElements())

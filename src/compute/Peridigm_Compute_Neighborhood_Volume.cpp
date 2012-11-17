@@ -76,12 +76,12 @@ void PeridigmNS::Compute_Neighborhood_Volume::initialize( Teuchos::RCP< std::vec
     const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
     const int* neighborhoodList = neighborhoodData->NeighborhoodList();
     double *volume, *neighborhoodVolume;
-    blockIt->getData(volumeFieldId, Field_ENUM::STEP_NONE)->ExtractView(&volume);
-    blockIt->getData(neighborhoodVolumeFieldId, Field_ENUM::STEP_NONE)->ExtractView(&neighborhoodVolume);
+    blockIt->getData(volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&volume);
+    blockIt->getData(neighborhoodVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborhoodVolume);
 
     double *partialVolume = 0;
-    if( blockIt->hasData(partialVolumeFieldId, Field_ENUM::STEP_NONE) )
-      blockIt->getData(partialVolumeFieldId, Field_ENUM::STEP_NONE)->ExtractView(&partialVolume);
+    if( blockIt->hasData(partialVolumeFieldId, PeridigmField::STEP_NONE) )
+      blockIt->getData(partialVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&partialVolume);
 
     int neighborhoodListIndex = 0;
     int bondIndex = 0;

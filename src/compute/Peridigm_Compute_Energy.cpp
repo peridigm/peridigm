@@ -96,15 +96,15 @@ int PeridigmNS::Compute_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::B
     const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
     const int* ownedIDs = neighborhoodData->OwnedIDs();
     const int* neighborhoodList = neighborhoodData->NeighborhoodList();
-    volume                = blockIt->getData(volumeFieldId, Field_ENUM::STEP_NONE);
-    ref                   = blockIt->getData(modelCoordinatesFieldId, Field_ENUM::STEP_NONE);
-    coord                 = blockIt->getData(coordinatesFieldId, Field_ENUM::STEP_NP1);
-    velocity              = blockIt->getData(velocityFieldId, Field_ENUM::STEP_NP1);
-    w_volume              = blockIt->getData(weightedVolumeFieldId, Field_ENUM::STEP_NONE);
-    dilatation            = blockIt->getData(dilatationFieldId, Field_ENUM::STEP_NP1);
-    kinetic_energy        = blockIt->getData(kineticEnergyFieldId, Field_ENUM::STEP_NP1);
-    strain_energy_density = blockIt->getData(strainEnergyDensityFieldId, Field_ENUM::STEP_NP1);
-    strain_energy         = blockIt->getData(strainEnergyFieldId, Field_ENUM::STEP_NP1);
+    volume                = blockIt->getData(volumeFieldId, PeridigmField::STEP_NONE);
+    ref                   = blockIt->getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE);
+    coord                 = blockIt->getData(coordinatesFieldId, PeridigmField::STEP_NP1);
+    velocity              = blockIt->getData(velocityFieldId, PeridigmField::STEP_NP1);
+    w_volume              = blockIt->getData(weightedVolumeFieldId, PeridigmField::STEP_NONE);
+    dilatation            = blockIt->getData(dilatationFieldId, PeridigmField::STEP_NP1);
+    kinetic_energy        = blockIt->getData(kineticEnergyFieldId, PeridigmField::STEP_NP1);
+    strain_energy_density = blockIt->getData(strainEnergyDensityFieldId, PeridigmField::STEP_NP1);
+    strain_energy         = blockIt->getData(strainEnergyFieldId, PeridigmField::STEP_NP1);
 	
     // Sanity check
     if (velocity->Map().NumMyElements() != volume->Map().NumMyElements() || velocity->Map().NumMyElements() != ref->Map().NumMyElements())

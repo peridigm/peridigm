@@ -77,8 +77,8 @@ int PeridigmNS::Compute_Radius::compute( Teuchos::RCP< std::vector<PeridigmNS::B
     const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
 
     double *volume, *radius;
-    blockIt->getData(volumeFieldId, Field_ENUM::STEP_NONE)->ExtractView(&volume);
-    blockIt->getData(radiusFieldId, Field_ENUM::STEP_NONE)->ExtractView(&radius);
+    blockIt->getData(volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&volume);
+    blockIt->getData(radiusFieldId, PeridigmField::STEP_NONE)->ExtractView(&radius);
 
     double constant = 0.75/acos(-1.0);
     double oneThird = 1.0/3.0;

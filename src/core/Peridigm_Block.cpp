@@ -142,7 +142,7 @@ void PeridigmNS::Block::initializeDamageModel(double timeStep)
                           *dataManager);
 }
 
-void PeridigmNS::Block::importData(const Epetra_Vector& source, int fieldId, Field_ENUM::Step step, Epetra_CombineMode combineMode)
+void PeridigmNS::Block::importData(const Epetra_Vector& source, int fieldId, PeridigmField::Step step, Epetra_CombineMode combineMode)
 {
   if(dataManager->hasData(fieldId, step)){
 
@@ -162,7 +162,7 @@ void PeridigmNS::Block::importData(const Epetra_Vector& source, int fieldId, Fie
   }
 }
 
-void PeridigmNS::Block::exportData(Epetra_Vector& target, int fieldId, Field_ENUM::Step step, Epetra_CombineMode combineMode)
+void PeridigmNS::Block::exportData(Epetra_Vector& target, int fieldId, PeridigmField::Step step, Epetra_CombineMode combineMode)
 {
   if(dataManager->hasData(fieldId, step)){
 
@@ -428,12 +428,6 @@ void PeridigmNS::Block::initializeGlobalVariables()
     if (it->getRelation() == Field_ENUM::GLOBAL) {
       if (it->getLength() == Field_ENUM::SCALAR) {
         globalVariables[it->getLabel()] = 0.0;
-      }
-      else if (it->getLength() == Field_ENUM::VECTOR2D) {
-        string tmpnameX = it->getLabel()+"X";
-        string tmpnameY = it->getLabel()+"Y";
-        globalVariables[tmpnameX] = 0.0;
-        globalVariables[tmpnameY] = 0.0;
       }
       else if (it->getLength() == Field_ENUM::VECTOR3D) {
         string tmpnameX = it->getLabel()+"X";

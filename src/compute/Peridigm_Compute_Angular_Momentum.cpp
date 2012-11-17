@@ -102,10 +102,10 @@ int PeridigmNS::Compute_Angular_Momentum::computeAngularMomentum( Teuchos::RCP< 
     const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
     const int* ownedIDs = neighborhoodData->OwnedIDs();
 
-    volume           = blockIt->getData(volumeFieldId, Field_ENUM::STEP_NONE);
-    arm              = blockIt->getData(coordinatesFieldId, Field_ENUM::STEP_NP1);
-    velocity         = blockIt->getData(velocityFieldId, Field_ENUM::STEP_NP1);
-    angular_momentum = blockIt->getData(angularMomentumFieldId, Field_ENUM::STEP_NP1);
+    volume           = blockIt->getData(volumeFieldId, PeridigmField::STEP_NONE);
+    arm              = blockIt->getData(coordinatesFieldId, PeridigmField::STEP_NP1);
+    velocity         = blockIt->getData(velocityFieldId, PeridigmField::STEP_NP1);
+    angular_momentum = blockIt->getData(angularMomentumFieldId, PeridigmField::STEP_NP1);
 
     // Sanity check
     if ( (velocity->Map().NumMyElements() != volume->Map().NumMyElements()) ||  (arm->Map().NumMyElements() != volume->Map().NumMyElements()) )

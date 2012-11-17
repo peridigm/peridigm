@@ -79,8 +79,8 @@ PeridigmNS::CriticalStretchDamageModel::initialize(const double dt,
                                                    PeridigmNS::DataManager& dataManager) const
 {
   double *damage, *bondDamage;
-  dataManager.getData(m_damageFieldId, Field_ENUM::STEP_NP1)->ExtractView(&damage);
-  dataManager.getData(m_bondDamageFieldId, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
+  dataManager.getData(m_damageFieldId, PeridigmField::STEP_NP1)->ExtractView(&damage);
+  dataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_NP1)->ExtractView(&bondDamage);
 
   // Initialize damage to zero
   int neighborhoodListIndex = 0;
@@ -104,10 +104,10 @@ PeridigmNS::CriticalStretchDamageModel::computeDamage(const double dt,
                                                       PeridigmNS::DataManager& dataManager) const
 {
   double *x, *y, *damage, *bondDamage;
-  dataManager.getData(m_modelCoordinatesFieldId, Field_ENUM::STEP_NONE)->ExtractView(&x);
-  dataManager.getData(m_coordinatesFieldId, Field_ENUM::STEP_NP1)->ExtractView(&y);
-  dataManager.getData(m_damageFieldId, Field_ENUM::STEP_NP1)->ExtractView(&damage);
-  dataManager.getData(m_bondDamageFieldId, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
+  dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
+  dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&y);
+  dataManager.getData(m_damageFieldId, PeridigmField::STEP_NP1)->ExtractView(&damage);
+  dataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_NP1)->ExtractView(&bondDamage);
 
   double trialDamage(0.0);
   int neighborhoodListIndex(0), bondIndex(0);
