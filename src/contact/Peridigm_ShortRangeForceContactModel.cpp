@@ -93,13 +93,13 @@ PeridigmNS::ShortRangeForceContactModel::computeForce(const double dt,
                                                       PeridigmNS::DataManager& dataManager) const
 {
   // Zero out the forces
-  dataManager.getData(m_contactForceDensityFieldId, Field_ENUM::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_contactForceDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
 
   double *cellVolume, *y, *contactForce, *velocity;
-  dataManager.getData(m_volumeFieldId, Field_ENUM::STEP_NONE)->ExtractView(&cellVolume);
-  dataManager.getData(m_coordinatesFieldId, Field_ENUM::STEP_NP1)->ExtractView(&y);
-  dataManager.getData(m_velocityFieldId, Field_ENUM::STEP_NP1)->ExtractView(&velocity);
-  dataManager.getData(m_contactForceDensityFieldId, Field_ENUM::STEP_NP1)->ExtractView(&contactForce);
+  dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&cellVolume);
+  dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&y);
+  dataManager.getData(m_velocityFieldId, PeridigmField::STEP_NP1)->ExtractView(&velocity);
+  dataManager.getData(m_contactForceDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&contactForce);
 
   int neighborhoodListIndex(0), numNeighbors, nodeID, neighborID, iID, iNID;
   double nodeCurrentX[3], nodeCurrentV[3], nodeVolume, currentDistance, c, temp, neighborVolume;

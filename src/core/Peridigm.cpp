@@ -246,11 +246,11 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // Load initial data into the blocks
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    blockIt->importData(*(peridigmDisc->getBlockID()),    blockIdFieldId,          Field_ENUM::STEP_NONE, Insert);
-    blockIt->importData(*(peridigmDisc->getCellVolume()), volumeFieldId,           Field_ENUM::STEP_NONE, Insert);
-    blockIt->importData(*(peridigmDisc->getInitialX()),   modelCoordinatesFieldId, Field_ENUM::STEP_NONE, Insert);
-    blockIt->importData(*(peridigmDisc->getInitialX()),   coordinatesFieldId,      Field_ENUM::STEP_N,    Insert);
-    blockIt->importData(*(peridigmDisc->getInitialX()),   coordinatesFieldId,      Field_ENUM::STEP_NP1,  Insert);
+    blockIt->importData(*(peridigmDisc->getBlockID()),    blockIdFieldId,          PeridigmField::STEP_NONE, Insert);
+    blockIt->importData(*(peridigmDisc->getCellVolume()), volumeFieldId,           PeridigmField::STEP_NONE, Insert);
+    blockIt->importData(*(peridigmDisc->getInitialX()),   modelCoordinatesFieldId, PeridigmField::STEP_NONE, Insert);
+    blockIt->importData(*(peridigmDisc->getInitialX()),   coordinatesFieldId,      PeridigmField::STEP_N,    Insert);
+    blockIt->importData(*(peridigmDisc->getInitialX()),   coordinatesFieldId,      PeridigmField::STEP_NP1,  Insert);
   }
 
   // Set the density in the mothership vector
@@ -757,9 +757,9 @@ void PeridigmNS::Peridigm::executeExplicit() {
   // Copy data from mothership vectors to overlap vectors in data manager
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    blockIt->importData(*u, displacementFieldId, Field_ENUM::STEP_NP1, Insert);
-    blockIt->importData(*y, coordinatesFieldId,   Field_ENUM::STEP_NP1, Insert);
-    blockIt->importData(*v, velocityFieldId,     Field_ENUM::STEP_NP1, Insert);
+    blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(*y, coordinatesFieldId,   PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(*v, velocityFieldId,     PeridigmField::STEP_NP1, Insert);
   }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -775,7 +775,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
   force->PutScalar(0.0);
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
     scratch->PutScalar(0.0);
-    blockIt->exportData(*scratch, forceDensityFieldId, Field_ENUM::STEP_NP1, Add);
+    blockIt->exportData(*scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
     force->Update(1.0, *scratch, 1.0);
   }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
@@ -786,7 +786,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
     contactForce->PutScalar(0.0);
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
       scratch->PutScalar(0.0);
-      blockIt->exportData(*scratch, contactForceDensityFieldId, Field_ENUM::STEP_NP1, Add);
+      blockIt->exportData(*scratch, contactForceDensityFieldId, PeridigmField::STEP_NP1, Add);
       contactForce->Update(1.0, *scratch, 1.0);
     }
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
@@ -858,9 +858,9 @@ void PeridigmNS::Peridigm::executeExplicit() {
     // Copy data from mothership vectors to overlap vectors in data manager
     PeridigmNS::Timer::self().startTimer("Gather/Scatter");
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-      blockIt->importData(*u, displacementFieldId, Field_ENUM::STEP_NP1, Insert);
-      blockIt->importData(*y, coordinatesFieldId,   Field_ENUM::STEP_NP1, Insert);
-      blockIt->importData(*v, velocityFieldId,     Field_ENUM::STEP_NP1, Insert);
+      blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(*y, coordinatesFieldId,   PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(*v, velocityFieldId,     PeridigmField::STEP_NP1, Insert);
     }
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -874,7 +874,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
     force->PutScalar(0.0);
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
       scratch->PutScalar(0.0);
-      blockIt->exportData(*scratch, forceDensityFieldId, Field_ENUM::STEP_NP1, Add);
+      blockIt->exportData(*scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
       force->Update(1.0, *scratch, 1.0);
     }
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");    
@@ -890,7 +890,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
       contactForce->PutScalar(0.0);
       for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
         scratch->PutScalar(0.0);
-        blockIt->exportData(*scratch, contactForceDensityFieldId, Field_ENUM::STEP_NP1, Add);
+        blockIt->exportData(*scratch, contactForceDensityFieldId, PeridigmField::STEP_NP1, Add);
         contactForce->Update(1.0, *scratch, 1.0);
       }
       PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
@@ -973,9 +973,9 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
   // Copy data from mothership vectors to overlap vectors in data manager
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    blockIt->importData(*u, displacementFieldId, Field_ENUM::STEP_NP1, Insert);
-    blockIt->importData(*y, coordinatesFieldId,   Field_ENUM::STEP_NP1, Insert);
-    blockIt->importData(*v, velocityFieldId,     Field_ENUM::STEP_NP1, Insert);
+    blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(*y, coordinatesFieldId,   PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(*v, velocityFieldId,     PeridigmField::STEP_NP1, Insert);
   } 
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -990,7 +990,7 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
     force->PutScalar(0.0);
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
       scratch->PutScalar(0.0);
-      blockIt->exportData(*scratch, forceDensityFieldId, Field_ENUM::STEP_NP1, Add);
+      blockIt->exportData(*scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
       force->Update(1.0, *scratch, 1.0);
     }
     scratch->PutScalar(0.0);
@@ -1585,7 +1585,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
           if( solverIteration<7 || solverIteration%10==0 ){
             PeridigmNS::Timer::self().startTimer("Gather/Scatter");
             for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-              blockIt->importData(*y, tangentReferenceCoordinatesFieldId, Field_ENUM::STEP_NONE, Insert);
+              blockIt->importData(*y, tangentReferenceCoordinatesFieldId, PeridigmField::STEP_NONE, Insert);
             PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
           }
           else{
@@ -2059,10 +2059,10 @@ void PeridigmNS::Peridigm::executeImplicit() {
     // Copy data from mothership vectors to overlap vectors in data manager
     PeridigmNS::Timer::self().startTimer("Gather/Scatter");
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-      blockIt->importData(*u, displacementFieldId,    Field_ENUM::STEP_NP1, Insert);
-      blockIt->importData(*y, coordinatesFieldId, Field_ENUM::STEP_NP1, Insert);
-      blockIt->importData(*v, velocityFieldId,    Field_ENUM::STEP_NP1, Insert);
-      blockIt->importData(*a, accelerationFieldId,    Field_ENUM::STEP_NP1, Insert);
+      blockIt->importData(*u, displacementFieldId,    PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(*v, velocityFieldId,    PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(*a, accelerationFieldId,    PeridigmField::STEP_NP1, Insert);
     }
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -2074,7 +2074,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
     // Copy force from the data manager to the mothership vector
     PeridigmNS::Timer::self().startTimer("Gather/Scatter");
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-      blockIt->exportData(*force, forceDensityFieldId, Field_ENUM::STEP_NP1, Add);
+      blockIt->exportData(*force, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
     // Compute the residual
@@ -2134,10 +2134,10 @@ void PeridigmNS::Peridigm::executeImplicit() {
       // Copy data from mothership vectors to overlap vectors in data manager
       PeridigmNS::Timer::self().startTimer("Gather/Scatter");
       for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-        blockIt->importData(*u, displacementFieldId, Field_ENUM::STEP_NP1, Insert);
-        blockIt->importData(*y, coordinatesFieldId,  Field_ENUM::STEP_NP1, Insert);
-        blockIt->importData(*v, velocityFieldId,     Field_ENUM::STEP_NP1, Insert);
-        blockIt->importData(*a, accelerationFieldId, Field_ENUM::STEP_NP1, Insert);
+        blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(*y, coordinatesFieldId,  PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(*v, velocityFieldId,     PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(*a, accelerationFieldId, PeridigmField::STEP_NP1, Insert);
       }
       PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -2149,7 +2149,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
       // Copy force from the data manager to the mothership vector
       PeridigmNS::Timer::self().startTimer("Gather/Scatter");
       for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-        blockIt->exportData(*force, forceDensityFieldId, Field_ENUM::STEP_NP1, Add);
+        blockIt->exportData(*force, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
       PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
       // Compute residual vector and its norm
@@ -2283,9 +2283,9 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
   // Copy data from mothership vectors to overlap vectors in data manager
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    blockIt->importData(*u, displacementFieldId,    Field_ENUM::STEP_NP1, Insert);
-    blockIt->importData(*y, coordinatesFieldId, Field_ENUM::STEP_NP1, Insert);
-    blockIt->importData(*v, velocityFieldId,    Field_ENUM::STEP_NP1, Insert);
+    blockIt->importData(*u, displacementFieldId,    PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(*v, velocityFieldId,    PeridigmField::STEP_NP1, Insert);
   }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -2299,7 +2299,7 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
   force->PutScalar(0.0);
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
     scratch->PutScalar(0.0);
-    blockIt->exportData(*scratch, forceDensityFieldId, Field_ENUM::STEP_NP1, Add);
+    blockIt->exportData(*scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
     force->Update(1.0, *scratch, 1.0);
   }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
@@ -2387,11 +2387,11 @@ void PeridigmNS::Peridigm::synchDataManagers() {
   // COORD3D is synched during creation and rebalance, and otherwise never changes
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    blockIt->importData(*u, displacementFieldId, Field_ENUM::STEP_NP1, Insert);
-    blockIt->importData(*y, coordinatesFieldId, Field_ENUM::STEP_NP1, Insert);
-    blockIt->importData(*v, velocityFieldId, Field_ENUM::STEP_NP1, Insert);
-    blockIt->importData(*force, forceDensityFieldId, Field_ENUM::STEP_NP1, Insert);
-    blockIt->importData(*contactForce, contactForceDensityFieldId, Field_ENUM::STEP_NP1, Insert);
+    blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(*force, forceDensityFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(*contactForce, contactForceDensityFieldId, PeridigmField::STEP_NP1, Insert);
   }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 }
@@ -2513,8 +2513,8 @@ void PeridigmNS::Peridigm::rebalance() {
   // models (i.e., give contact its own mothership vectors and data managers, and rebalance
   // only these objects when executing a contact search).
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    blockIt->importData(*volume, volumeFieldId, Field_ENUM::STEP_NONE, Insert);
-    blockIt->importData(*blockIDs, blockIdFieldId, Field_ENUM::STEP_NONE, Insert);
+    blockIt->importData(*volume, volumeFieldId, PeridigmField::STEP_NONE, Insert);
+    blockIt->importData(*blockIDs, blockIdFieldId, PeridigmField::STEP_NONE, Insert);
   }
 
   // set all the pointers to the new maps

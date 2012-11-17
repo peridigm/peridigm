@@ -62,7 +62,6 @@
 
 using namespace boost::unit_test;
 using namespace std;
-using namespace PeridigmNS;
 using namespace MATERIAL_EVALUATION;
 using std::tr1::shared_ptr;
 using namespace Field_NS;
@@ -193,7 +192,7 @@ Teuchos::ParameterList getParamList()
 	params.set("Shear Modulus", mu);
 	params.set("Horizon", horizon);
 	params.set("Yield Stress",Y);
-	ElasticPlasticMaterial mat(params);
+	PeridigmNS::ElasticPlasticMaterial mat(params);
 
     // \todo check field specs
 
@@ -258,7 +257,7 @@ QUICKGRID::QuickGridData getTwoPointGridData(){
 
 void runPureShear() {
 	Teuchos::ParameterList paramList = getParamList();
-	ElasticPlasticMaterial mat(paramList);
+	PeridigmNS::ElasticPlasticMaterial mat(paramList);
 	QUICKGRID::QuickGridData pdGridData = getTwoPointGridData();
 	int numPoints = pdGridData.numPoints;
 	BOOST_CHECK(2 == numPoints);

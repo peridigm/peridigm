@@ -82,9 +82,9 @@ int PeridigmNS::Compute_Contact_Force::compute( Teuchos::RCP< std::vector<Peridi
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
 
     Teuchos::RCP<Epetra_Vector> contact_force, contact_force_density, volume;
-    volume                = blockIt->getData(volumeFieldId, Field_ENUM::STEP_NONE);
-    contact_force_density = blockIt->getData(contactForceDensityFieldId, Field_ENUM::STEP_NP1);
-    contact_force         = blockIt->getData(contactForceFieldId, Field_ENUM::STEP_NP1);
+    volume                = blockIt->getData(volumeFieldId, PeridigmField::STEP_NONE);
+    contact_force_density = blockIt->getData(contactForceDensityFieldId, PeridigmField::STEP_NP1);
+    contact_force         = blockIt->getData(contactForceFieldId, PeridigmField::STEP_NP1);
 
     // Sanity check
     if ( (contact_force_density->Map().NumMyElements() != volume->Map().NumMyElements()) ||  (contact_force->Map().NumMyElements() != volume->Map().NumMyElements()) ) {

@@ -81,9 +81,9 @@ int PeridigmNS::Compute_Force::compute( Teuchos::RCP< std::vector<PeridigmNS::Bl
   std::vector<PeridigmNS::Block>::iterator blockIt;
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
 
-    volume        = blockIt->getData(volumeFieldId, Field_ENUM::STEP_NONE);
-    force_density = blockIt->getData(forceDensityFieldId, Field_ENUM::STEP_NP1);
-    force         = blockIt->getData(forceFieldId, Field_ENUM::STEP_NP1);
+    volume        = blockIt->getData(volumeFieldId, PeridigmField::STEP_NONE);
+    force_density = blockIt->getData(forceDensityFieldId, PeridigmField::STEP_NP1);
+    force         = blockIt->getData(forceFieldId, PeridigmField::STEP_NP1);
 
     // Sanity check
     if ( (force_density->Map().NumMyElements() != volume->Map().NumMyElements()) ||  (force->Map().NumMyElements() != volume->Map().NumMyElements()) ) {

@@ -242,23 +242,23 @@ void rebalanceTwoPointModel()
   Epetra_Vector initialV(*peridigm->getV());
   Epetra_Vector initialA(*peridigm->getA());
   Epetra_Vector initialForce(*peridigm->getForce());
-  Epetra_Vector volume( *peridigm->getBlock(0)->getData(volumeFieldId, Field_ENUM::STEP_NONE) );
-  Epetra_Vector coord3d( *peridigm->getBlock(0)->getData(modelCoordinatesFieldId, Field_ENUM::STEP_NONE) );
-  Epetra_Vector weightedVolume( *peridigm->getBlock(0)->getData(weightedVolumeFieldId, Field_ENUM::STEP_NONE) );
-  Epetra_Vector displ3dN( *peridigm->getBlock(0)->getData(displacementFieldId, Field_ENUM::STEP_N) );
-  Epetra_Vector displ3dNP1( *peridigm->getBlock(0)->getData(displacementFieldId, Field_ENUM::STEP_NP1) );
-  Epetra_Vector curcoord3dN( *peridigm->getBlock(0)->getData(coordinatesFieldId, Field_ENUM::STEP_N) );
-  Epetra_Vector curcoord3dNP1( *peridigm->getBlock(0)->getData(coordinatesFieldId, Field_ENUM::STEP_NP1) );
-  Epetra_Vector veloc3dN( *peridigm->getBlock(0)->getData(velocityFieldId, Field_ENUM::STEP_N) );
-  Epetra_Vector veloc3dNP1( *peridigm->getBlock(0)->getData(velocityFieldId, Field_ENUM::STEP_NP1) );
-  Epetra_Vector force3dN( *peridigm->getBlock(0)->getData(forceDensityFieldId, Field_ENUM::STEP_N) );
-  Epetra_Vector force3dNP1( *peridigm->getBlock(0)->getData(forceDensityFieldId, Field_ENUM::STEP_NP1) );
-  Epetra_Vector dilatationN( *peridigm->getBlock(0)->getData(dilatationFieldId, Field_ENUM::STEP_N) );
-  Epetra_Vector dilatationNP1( *peridigm->getBlock(0)->getData(dilatationFieldId, Field_ENUM::STEP_NP1) );
-  Epetra_Vector damageN( *peridigm->getBlock(0)->getData(damageFieldId, Field_ENUM::STEP_N) );
-  Epetra_Vector damageNP1( *peridigm->getBlock(0)->getData(damageFieldId, Field_ENUM::STEP_NP1) );
-  Epetra_Vector bondDamageN( *peridigm->getBlock(0)->getData(bondDamageFieldId, Field_ENUM::STEP_N) );
-  Epetra_Vector bondDamageNP1( *peridigm->getBlock(0)->getData(bondDamageFieldId, Field_ENUM::STEP_NP1) );
+  Epetra_Vector volume( *peridigm->getBlock(0)->getData(volumeFieldId, PeridigmField::STEP_NONE) );
+  Epetra_Vector coord3d( *peridigm->getBlock(0)->getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE) );
+  Epetra_Vector weightedVolume( *peridigm->getBlock(0)->getData(weightedVolumeFieldId, PeridigmField::STEP_NONE) );
+  Epetra_Vector displ3dN( *peridigm->getBlock(0)->getData(displacementFieldId, PeridigmField::STEP_N) );
+  Epetra_Vector displ3dNP1( *peridigm->getBlock(0)->getData(displacementFieldId, PeridigmField::STEP_NP1) );
+  Epetra_Vector curcoord3dN( *peridigm->getBlock(0)->getData(coordinatesFieldId, PeridigmField::STEP_N) );
+  Epetra_Vector curcoord3dNP1( *peridigm->getBlock(0)->getData(coordinatesFieldId, PeridigmField::STEP_NP1) );
+  Epetra_Vector veloc3dN( *peridigm->getBlock(0)->getData(velocityFieldId, PeridigmField::STEP_N) );
+  Epetra_Vector veloc3dNP1( *peridigm->getBlock(0)->getData(velocityFieldId, PeridigmField::STEP_NP1) );
+  Epetra_Vector force3dN( *peridigm->getBlock(0)->getData(forceDensityFieldId, PeridigmField::STEP_N) );
+  Epetra_Vector force3dNP1( *peridigm->getBlock(0)->getData(forceDensityFieldId, PeridigmField::STEP_NP1) );
+  Epetra_Vector dilatationN( *peridigm->getBlock(0)->getData(dilatationFieldId, PeridigmField::STEP_N) );
+  Epetra_Vector dilatationNP1( *peridigm->getBlock(0)->getData(dilatationFieldId, PeridigmField::STEP_NP1) );
+  Epetra_Vector damageN( *peridigm->getBlock(0)->getData(damageFieldId, PeridigmField::STEP_N) );
+  Epetra_Vector damageNP1( *peridigm->getBlock(0)->getData(damageFieldId, PeridigmField::STEP_NP1) );
+  Epetra_Vector bondDamageN( *peridigm->getBlock(0)->getData(bondDamageFieldId, PeridigmField::STEP_N) );
+  Epetra_Vector bondDamageNP1( *peridigm->getBlock(0)->getData(bondDamageFieldId, PeridigmField::STEP_NP1) );
   PeridigmNS::NeighborhoodData neighborhoodData(*peridigm->getGlobalNeighborhoodData() );
   //PeridigmNS::NeighborhoodData contactNeighborhoodData(*peridigm->getContactNeighborhoodData());
 
@@ -283,23 +283,23 @@ void rebalanceTwoPointModel()
   // check field data
   Teuchos::RCP<PeridigmNS::Block> block = peridigm->getBlock(0);
   for(int i=0 ; i<block->numPoints() ; ++i){
-    BOOST_CHECK_CLOSE(volume[i], (*block->getData(volumeFieldId, Field_ENUM::STEP_NONE))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(coord3d[i], (*block->getData(modelCoordinatesFieldId, Field_ENUM::STEP_NONE))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(weightedVolume[i], (*block->getData(weightedVolumeFieldId, Field_ENUM::STEP_NONE))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(displ3dN[i], (*block->getData(displacementFieldId, Field_ENUM::STEP_N))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(displ3dNP1[i], (*block->getData(displacementFieldId, Field_ENUM::STEP_NP1))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(curcoord3dN[i], (*block->getData(coordinatesFieldId, Field_ENUM::STEP_N))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(curcoord3dNP1[i], (*block->getData(coordinatesFieldId, Field_ENUM::STEP_NP1))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(veloc3dN[i], (*block->getData(velocityFieldId, Field_ENUM::STEP_N))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(veloc3dNP1[i], (*block->getData(velocityFieldId, Field_ENUM::STEP_NP1))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(force3dN[i], (*block->getData(forceDensityFieldId, Field_ENUM::STEP_N))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(force3dNP1[i], (*block->getData(forceDensityFieldId, Field_ENUM::STEP_NP1))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(dilatationN[i], (*block->getData(dilatationFieldId, Field_ENUM::STEP_N))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(dilatationNP1[i], (*block->getData(dilatationFieldId, Field_ENUM::STEP_NP1))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(damageN[i], (*block->getData(damageFieldId, Field_ENUM::STEP_N))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(damageNP1[i], (*block->getData(damageFieldId, Field_ENUM::STEP_NP1))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(bondDamageN[i], (*block->getData(bondDamageFieldId, Field_ENUM::STEP_N))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(bondDamageNP1[i], (*block->getData(bondDamageFieldId, Field_ENUM::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(volume[i], (*block->getData(volumeFieldId, PeridigmField::STEP_NONE))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(coord3d[i], (*block->getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(weightedVolume[i], (*block->getData(weightedVolumeFieldId, PeridigmField::STEP_NONE))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(displ3dN[i], (*block->getData(displacementFieldId, PeridigmField::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(displ3dNP1[i], (*block->getData(displacementFieldId, PeridigmField::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(curcoord3dN[i], (*block->getData(coordinatesFieldId, PeridigmField::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(curcoord3dNP1[i], (*block->getData(coordinatesFieldId, PeridigmField::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(veloc3dN[i], (*block->getData(velocityFieldId, PeridigmField::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(veloc3dNP1[i], (*block->getData(velocityFieldId, PeridigmField::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(force3dN[i], (*block->getData(forceDensityFieldId, PeridigmField::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(force3dNP1[i], (*block->getData(forceDensityFieldId, PeridigmField::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(dilatationN[i], (*block->getData(dilatationFieldId, PeridigmField::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(dilatationNP1[i], (*block->getData(dilatationFieldId, PeridigmField::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(damageN[i], (*block->getData(damageFieldId, PeridigmField::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(damageNP1[i], (*block->getData(damageFieldId, PeridigmField::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(bondDamageN[i], (*block->getData(bondDamageFieldId, PeridigmField::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(bondDamageNP1[i], (*block->getData(bondDamageFieldId, PeridigmField::STEP_NP1))[i], 1.0e-15);
   }
   // check neighborhood data
   BOOST_CHECK_EQUAL(neighborhoodData.NumOwnedPoints(), peridigm->getGlobalNeighborhoodData()->NumOwnedPoints());
@@ -345,23 +345,23 @@ void rebalanceEightPointModel()
   Epetra_Vector initialV(*peridigm->getV());
   Epetra_Vector initialA(*peridigm->getA());
   Epetra_Vector initialForce(*peridigm->getForce());
-  Epetra_Vector volume( *peridigm->getBlock(0)->getData(volumeFieldId, Field_ENUM::STEP_NONE) );
-  Epetra_Vector coord3d( *peridigm->getBlock(0)->getData(modelCoordinatesFieldId, Field_ENUM::STEP_NONE) );
-  Epetra_Vector weightedVolume( *peridigm->getBlock(0)->getData(weightedVolumeFieldId, Field_ENUM::STEP_NONE) );
-  Epetra_Vector displ3dN( *peridigm->getBlock(0)->getData(displacementFieldId, Field_ENUM::STEP_N) );
-  Epetra_Vector displ3dNP1( *peridigm->getBlock(0)->getData(displacementFieldId, Field_ENUM::STEP_NP1) );
-  Epetra_Vector curcoord3dN( *peridigm->getBlock(0)->getData(coordinatesFieldId, Field_ENUM::STEP_N) );
-  Epetra_Vector curcoord3dNP1( *peridigm->getBlock(0)->getData(coordinatesFieldId, Field_ENUM::STEP_NP1) );
-  Epetra_Vector veloc3dN( *peridigm->getBlock(0)->getData(velocityFieldId, Field_ENUM::STEP_N) );
-  Epetra_Vector veloc3dNP1( *peridigm->getBlock(0)->getData(velocityFieldId, Field_ENUM::STEP_NP1) );
-  Epetra_Vector force3dN( *peridigm->getBlock(0)->getData(forceDensityFieldId, Field_ENUM::STEP_N) );
-  Epetra_Vector force3dNP1( *peridigm->getBlock(0)->getData(forceDensityFieldId, Field_ENUM::STEP_NP1) );
-  Epetra_Vector dilatationN( *peridigm->getBlock(0)->getData(dilatationFieldId, Field_ENUM::STEP_N) );
-  Epetra_Vector dilatationNP1( *peridigm->getBlock(0)->getData(dilatationFieldId, Field_ENUM::STEP_NP1) );
-  Epetra_Vector damageN( *peridigm->getBlock(0)->getData(damageFieldId, Field_ENUM::STEP_N) );
-  Epetra_Vector damageNP1( *peridigm->getBlock(0)->getData(damageFieldId, Field_ENUM::STEP_NP1) );
-  Epetra_Vector bondDamageN( *peridigm->getBlock(0)->getData(bondDamageFieldId, Field_ENUM::STEP_N) );
-  Epetra_Vector bondDamageNP1( *peridigm->getBlock(0)->getData(bondDamageFieldId, Field_ENUM::STEP_NP1) );
+  Epetra_Vector volume( *peridigm->getBlock(0)->getData(volumeFieldId, PeridigmField::STEP_NONE) );
+  Epetra_Vector coord3d( *peridigm->getBlock(0)->getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE) );
+  Epetra_Vector weightedVolume( *peridigm->getBlock(0)->getData(weightedVolumeFieldId, PeridigmField::STEP_NONE) );
+  Epetra_Vector displ3dN( *peridigm->getBlock(0)->getData(displacementFieldId, PeridigmField::STEP_N) );
+  Epetra_Vector displ3dNP1( *peridigm->getBlock(0)->getData(displacementFieldId, PeridigmField::STEP_NP1) );
+  Epetra_Vector curcoord3dN( *peridigm->getBlock(0)->getData(coordinatesFieldId, PeridigmField::STEP_N) );
+  Epetra_Vector curcoord3dNP1( *peridigm->getBlock(0)->getData(coordinatesFieldId, PeridigmField::STEP_NP1) );
+  Epetra_Vector veloc3dN( *peridigm->getBlock(0)->getData(velocityFieldId, PeridigmField::STEP_N) );
+  Epetra_Vector veloc3dNP1( *peridigm->getBlock(0)->getData(velocityFieldId, PeridigmField::STEP_NP1) );
+  Epetra_Vector force3dN( *peridigm->getBlock(0)->getData(forceDensityFieldId, PeridigmField::STEP_N) );
+  Epetra_Vector force3dNP1( *peridigm->getBlock(0)->getData(forceDensityFieldId, PeridigmField::STEP_NP1) );
+  Epetra_Vector dilatationN( *peridigm->getBlock(0)->getData(dilatationFieldId, PeridigmField::STEP_N) );
+  Epetra_Vector dilatationNP1( *peridigm->getBlock(0)->getData(dilatationFieldId, PeridigmField::STEP_NP1) );
+  Epetra_Vector damageN( *peridigm->getBlock(0)->getData(damageFieldId, PeridigmField::STEP_N) );
+  Epetra_Vector damageNP1( *peridigm->getBlock(0)->getData(damageFieldId, PeridigmField::STEP_NP1) );
+  Epetra_Vector bondDamageN( *peridigm->getBlock(0)->getData(bondDamageFieldId, PeridigmField::STEP_N) );
+  Epetra_Vector bondDamageNP1( *peridigm->getBlock(0)->getData(bondDamageFieldId, PeridigmField::STEP_NP1) );
   PeridigmNS::NeighborhoodData neighborhoodData(*peridigm->getGlobalNeighborhoodData() );
   //PeridigmNS::NeighborhoodData contactNeighborhoodData(*peridigm->getContactNeighborhoodData());
 
@@ -386,23 +386,23 @@ void rebalanceEightPointModel()
   // check field data
   Teuchos::RCP<PeridigmNS::Block> block = peridigm->getBlock(0);
   for(int i=0 ; i<block->numPoints() ; ++i){
-    BOOST_CHECK_CLOSE(volume[i], (*block->getData(volumeFieldId, Field_ENUM::STEP_NONE))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(coord3d[i], (*block->getData(modelCoordinatesFieldId, Field_ENUM::STEP_NONE))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(weightedVolume[i], (*block->getData(weightedVolumeFieldId, Field_ENUM::STEP_NONE))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(displ3dN[i], (*block->getData(displacementFieldId, Field_ENUM::STEP_N))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(displ3dNP1[i], (*block->getData(displacementFieldId, Field_ENUM::STEP_NP1))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(curcoord3dN[i], (*block->getData(coordinatesFieldId, Field_ENUM::STEP_N))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(curcoord3dNP1[i], (*block->getData(coordinatesFieldId, Field_ENUM::STEP_NP1))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(veloc3dN[i], (*block->getData(velocityFieldId, Field_ENUM::STEP_N))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(veloc3dNP1[i], (*block->getData(velocityFieldId, Field_ENUM::STEP_NP1))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(force3dN[i], (*block->getData(forceDensityFieldId, Field_ENUM::STEP_N))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(force3dNP1[i], (*block->getData(forceDensityFieldId, Field_ENUM::STEP_NP1))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(dilatationN[i], (*block->getData(dilatationFieldId, Field_ENUM::STEP_N))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(dilatationNP1[i], (*block->getData(dilatationFieldId, Field_ENUM::STEP_NP1))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(damageN[i], (*block->getData(damageFieldId, Field_ENUM::STEP_N))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(damageNP1[i], (*block->getData(damageFieldId, Field_ENUM::STEP_NP1))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(bondDamageN[i], (*block->getData(bondDamageFieldId, Field_ENUM::STEP_N))[i], 1.0e-15);
-    BOOST_CHECK_CLOSE(bondDamageNP1[i], (*block->getData(bondDamageFieldId, Field_ENUM::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(volume[i], (*block->getData(volumeFieldId, PeridigmField::STEP_NONE))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(coord3d[i], (*block->getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(weightedVolume[i], (*block->getData(weightedVolumeFieldId, PeridigmField::STEP_NONE))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(displ3dN[i], (*block->getData(displacementFieldId, PeridigmField::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(displ3dNP1[i], (*block->getData(displacementFieldId, PeridigmField::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(curcoord3dN[i], (*block->getData(coordinatesFieldId, PeridigmField::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(curcoord3dNP1[i], (*block->getData(coordinatesFieldId, PeridigmField::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(veloc3dN[i], (*block->getData(velocityFieldId, PeridigmField::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(veloc3dNP1[i], (*block->getData(velocityFieldId, PeridigmField::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(force3dN[i], (*block->getData(forceDensityFieldId, PeridigmField::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(force3dNP1[i], (*block->getData(forceDensityFieldId, PeridigmField::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(dilatationN[i], (*block->getData(dilatationFieldId, PeridigmField::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(dilatationNP1[i], (*block->getData(dilatationFieldId, PeridigmField::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(damageN[i], (*block->getData(damageFieldId, PeridigmField::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(damageNP1[i], (*block->getData(damageFieldId, PeridigmField::STEP_NP1))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(bondDamageN[i], (*block->getData(bondDamageFieldId, PeridigmField::STEP_N))[i], 1.0e-15);
+    BOOST_CHECK_CLOSE(bondDamageNP1[i], (*block->getData(bondDamageFieldId, PeridigmField::STEP_NP1))[i], 1.0e-15);
   }
   // check neighborhood data
   BOOST_CHECK_EQUAL(neighborhoodData.NumOwnedPoints(), peridigm->getGlobalNeighborhoodData()->NumOwnedPoints());
@@ -486,8 +486,8 @@ void rebalanceEightPointModelSwitchCorners()
   // this will allow bond data rebalance to be checked
   // \todo The following is a great illustration of why the neighborhood data structure needs work...
   Teuchos::RCP<PeridigmNS::Block> block = peridigm->getBlock(0);
-  Teuchos::RCP<Epetra_Vector> bondDamageN = block->getData(bondDamageFieldId, Field_ENUM::STEP_N);
-  Teuchos::RCP<Epetra_Vector> bondDamageNP1 = block->getData(bondDamageFieldId, Field_ENUM::STEP_NP1);
+  Teuchos::RCP<Epetra_Vector> bondDamageN = block->getData(bondDamageFieldId, PeridigmField::STEP_N);
+  Teuchos::RCP<Epetra_Vector> bondDamageNP1 = block->getData(bondDamageFieldId, PeridigmField::STEP_NP1);
   if(rank == 0){
     // break the second bond for the point with global ID 2
     Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData = peridigm->getGlobalNeighborhoodData();
@@ -603,9 +603,9 @@ void rebalanceEightPointModelSwitchCorners()
   // check field data
   if(rank == 0){
     // length of the overlap vectors should be 8*3 = 24, all the off-processor points are ghosted
-    BOOST_CHECK_EQUAL(block->getData(modelCoordinatesFieldId, Field_ENUM::STEP_NONE)->MyLength(), 24);
+    BOOST_CHECK_EQUAL(block->getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE)->MyLength(), 24);
     double* coord3d;
-    block->getData(modelCoordinatesFieldId, Field_ENUM::STEP_NONE)->ExtractView(&coord3d);
+    block->getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&coord3d);
     // global ID 0
     BOOST_CHECK_CLOSE(coord3d[0], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[1], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[2], -1.0, 1.0e-15);
     // global ID 4
@@ -625,9 +625,9 @@ void rebalanceEightPointModelSwitchCorners()
   }
   else if(rank == 1){
     // length of the overlap vectors should be 8*3 = 24, all the off-processor points are ghosted
-    BOOST_CHECK_EQUAL(block->getData(modelCoordinatesFieldId, Field_ENUM::STEP_NONE)->MyLength(), 24);
+    BOOST_CHECK_EQUAL(block->getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE)->MyLength(), 24);
     double* coord3d;
-    block->getData(modelCoordinatesFieldId, Field_ENUM::STEP_NONE)->ExtractView(&coord3d);
+    block->getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&coord3d);
     // global ID 5
     BOOST_CHECK_CLOSE(coord3d[0], 1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[1], -1.0, 1.0e-15); BOOST_CHECK_CLOSE(coord3d[2], 1.0, 1.0e-15);
     // global ID 1
@@ -647,8 +647,8 @@ void rebalanceEightPointModelSwitchCorners()
   }
 
   // check BOND_DAMAGE
-  bondDamageN = block->getData(bondDamageFieldId, Field_ENUM::STEP_N);
-  bondDamageNP1 = block->getData(bondDamageFieldId, Field_ENUM::STEP_NP1);
+  bondDamageN = block->getData(bondDamageFieldId, PeridigmField::STEP_N);
+  bondDamageNP1 = block->getData(bondDamageFieldId, PeridigmField::STEP_NP1);
   if(rank == 0){
     // all bonds should be intact except for the seventh bond for the point with global ID 7.
     Teuchos::RCP<const PeridigmNS::NeighborhoodData> neighborhoodData = peridigm->getGlobalNeighborhoodData();

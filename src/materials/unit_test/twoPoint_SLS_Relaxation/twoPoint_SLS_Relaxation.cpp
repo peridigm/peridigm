@@ -63,11 +63,9 @@
 
 using namespace boost::unit_test;
 using namespace std;
-using namespace PeridigmNS;
 using namespace MATERIAL_EVALUATION;
 using std::tr1::shared_ptr;
 using namespace Field_NS;
-
 
 /*
  * Young's Modulus (MPa)
@@ -138,7 +136,7 @@ Teuchos::ParameterList getParamList(double lambda)
 	params.set("Horizon", horizon);
 	params.set("lambda_i",lambda_i);
 	params.set("tau b",tau_b);
-	ViscoelasticMaterial mat(params);
+	PeridigmNS::ViscoelasticMaterial mat(params);
 
     // \todo check field specs
 
@@ -428,7 +426,7 @@ void case_1() {
 	 */
 	double scale=0.01;
 	Teuchos::ParameterList paramList = getParamList(scale);
-	ViscoelasticMaterial mat(paramList);
+	PeridigmNS::ViscoelasticMaterial mat(paramList);
 	double f=runPureShear(paramList,"twoPoint_SLS_Elastic.dat");
 	/*
 	 * Last value computed: tests time integrator against exact value
@@ -454,7 +452,7 @@ void case_1() {
 void case_2() {
 	double scale=.5;
 	Teuchos::ParameterList paramList = getParamList(scale);
-	ViscoelasticMaterial mat(paramList);
+	PeridigmNS::ViscoelasticMaterial mat(paramList);
 	double f=runPureShear(paramList,"twoPoint_SLS_Relaxation.dat");
 	/*
 	 * Last value computed: tests time integrator against exact value
@@ -479,7 +477,7 @@ void case_2() {
 void case_3() {
 	double scale=0.99;
 	Teuchos::ParameterList paramList = getParamList(scale);
-	ViscoelasticMaterial mat(paramList);
+	PeridigmNS::ViscoelasticMaterial mat(paramList);
 	double f=runPureShear(paramList,"twoPoint_Maxwell_Relaxation.dat");
 	/*
 	 * Last value computed: tests time integrator against exact value

@@ -62,8 +62,8 @@ double PeridigmNS::ComputeCriticalTimeStep(const Epetra_Comm& comm, PeridigmNS::
 
   double *cellVolume, *x;
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
-  block.getData(fieldManager.getFieldId("Volume"), Field_ENUM::STEP_NONE)->ExtractView(&cellVolume);
-  block.getData(fieldManager.getFieldId("Model_Coordinates"), Field_ENUM::STEP_NONE)->ExtractView(&x);
+  block.getData(fieldManager.getFieldId("Volume"), PeridigmField::STEP_NONE)->ExtractView(&cellVolume);
+  block.getData(fieldManager.getFieldId("Model_Coordinates"), PeridigmField::STEP_NONE)->ExtractView(&x);
 
   double springConstant = 18.0*bulkModulus/(3.14159265*horizon*horizon*horizon*horizon);
   double minCriticalTimeStep = 1.0e50;

@@ -92,9 +92,9 @@ int PeridigmNS::Compute_Linear_Momentum::computeLinearMomentum( Teuchos::RCP< st
     const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
     const int* ownedIDs = neighborhoodData->OwnedIDs();
 
-    volume          = blockIt->getData(volumeFieldId, Field_ENUM::STEP_NONE);
-    velocity        = blockIt->getData(velocityFieldId, Field_ENUM::STEP_NP1);
-    linear_momentum = blockIt->getData(linearMomentumFieldId, Field_ENUM::STEP_NP1);
+    volume          = blockIt->getData(volumeFieldId, PeridigmField::STEP_NONE);
+    velocity        = blockIt->getData(velocityFieldId, PeridigmField::STEP_NP1);
+    linear_momentum = blockIt->getData(linearMomentumFieldId, PeridigmField::STEP_NP1);
 	
     // Sanity check
     if ( (velocity->Map().NumMyElements() != volume->Map().NumMyElements()) )

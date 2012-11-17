@@ -156,13 +156,13 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
 
     // Extract pointers to the underlying data in the constitutiveData array.
     double *volume, *yReference, *y, *force;
-    tempDataManager.getData(volumeFId, Field_ENUM::STEP_NONE)->ExtractView(&volume);
-    tempDataManager.getData(tangentReferenceCoordinatesFId, Field_ENUM::STEP_NONE)->ExtractView(&yReference);
-    tempDataManager.getData(coordinatesFId, Field_ENUM::STEP_NP1)->ExtractView(&y);
-    tempDataManager.getData(forceDensityFId, Field_ENUM::STEP_NP1)->ExtractView(&force);
+    tempDataManager.getData(volumeFId, PeridigmField::STEP_NONE)->ExtractView(&volume);
+    tempDataManager.getData(tangentReferenceCoordinatesFId, PeridigmField::STEP_NONE)->ExtractView(&yReference);
+    tempDataManager.getData(coordinatesFId, PeridigmField::STEP_NP1)->ExtractView(&y);
+    tempDataManager.getData(forceDensityFId, PeridigmField::STEP_NP1)->ExtractView(&force);
 
     // Create a temporary vector for storing force
-    Teuchos::RCP<Epetra_Vector> forceVector = tempDataManager.getData(forceDensityFId, Field_ENUM::STEP_NP1);
+    Teuchos::RCP<Epetra_Vector> forceVector = tempDataManager.getData(forceDensityFId, PeridigmField::STEP_NP1);
     Teuchos::RCP<Epetra_Vector> tempForceVector = Teuchos::rcp(new Epetra_Vector(*forceVector));
     double* tempForce;
     tempForceVector->ExtractView(&tempForce);
@@ -170,7 +170,7 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     Teuchos::RCP<Epetra_Vector> coordStepNP1;
     if(finiteDifferenceScheme == CONSISTENT_FORWARD_DIFFERENCE){
       // Store the current coordinates in a scratch vector
-      coordStepNP1 = Teuchos::rcp(new Epetra_Vector(*tempDataManager.getData(coordinatesFId, Field_ENUM::STEP_NP1)));
+      coordStepNP1 = Teuchos::rcp(new Epetra_Vector(*tempDataManager.getData(coordinatesFId, PeridigmField::STEP_NP1)));
       // Set the coordinates to the tangent reference coordinates
       for(int i=0 ; i<coordStepNP1->MyLength() ; ++i)
         y[i] = yReference[i];
@@ -289,12 +289,12 @@ void PeridigmNS::Material::computeApproximateDeformationGradient(const double dt
 
   // Extract pointers to the underlying data
   double *volume, *x, *y, *weightedVolume, *bondDamage;
-  dataManager.getData(volumeFId, Field_ENUM::STEP_NONE)->ExtractView(&volume);
-  dataManager.getData(modelCoordinatesFId, Field_ENUM::STEP_NONE)->ExtractView(&x);
-  dataManager.getData(coordinatesFId, Field_ENUM::STEP_NP1)->ExtractView(&y);
+  dataManager.getData(volumeFId, PeridigmField::STEP_NONE)->ExtractView(&volume);
+  dataManager.getData(modelCoordinatesFId, PeridigmField::STEP_NONE)->ExtractView(&x);
+  dataManager.getData(coordinatesFId, PeridigmField::STEP_NP1)->ExtractView(&y);
 
-  dataManager.getData(weightedVolumeFId, Field_ENUM::STEP_NONE)->ExtractView(&weightedVolume);
-  dataManager.getData(bondDamageFId, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
+  dataManager.getData(weightedVolumeFId, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
+  dataManager.getData(bondDamageFId, PeridigmField::STEP_NP1)->ExtractView(&bondDamage);
 
   double X[3], Y[3];
   double shapeTensor[3][3];

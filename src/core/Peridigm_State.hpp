@@ -51,6 +51,7 @@
 #include <Teuchos_RCP.hpp>
 #include <Epetra_Vector.h>
 
+#include "Peridigm_Field.hpp"
 #include "mesh_output/Field.h"
 
 namespace PeridigmNS {
@@ -105,7 +106,7 @@ public:
 
   //! Returns the list of field specs of the given relation (POINT, BOND) and length (SCALAR, VECTOR3D); if no argument is given, returns complete list of field specs.
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > getFieldSpecs(Teuchos::RCP<Field_ENUM::Relation> relation = Teuchos::RCP<Field_ENUM::Relation>(),
-		                                                         Teuchos::RCP<Field_ENUM::Length> length = Teuchos::RCP<Field_ENUM::Length>());
+								 Teuchos::RCP<Field_ENUM::Length> length = Teuchos::RCP<Field_ENUM::Length>());
 
   //! Query the existence of a fieldSpec.
   bool hasData(Field_NS::FieldSpec fieldSpec);

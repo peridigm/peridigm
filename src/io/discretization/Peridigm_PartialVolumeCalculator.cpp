@@ -57,10 +57,10 @@ void PeridigmNS::computePartialVolume(Teuchos::RCP<PeridigmNS::Block> block,
   int modelCoordinatesFieldId = fieldManager.getFieldId("Model_Coordinates");
   int partialVolumeFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::BOND, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::CONSTANT, "Partial_Volume");
   double *x, *partialVolume;
-  block->getData(modelCoordinatesFieldId, Field_ENUM::STEP_NONE)->ExtractView(&x);
-  block->getData(partialVolumeFieldId, Field_ENUM::STEP_NONE)->ExtractView(&partialVolume);
+  block->getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
+  block->getData(partialVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&partialVolume);
 
-  int vectorLength = block->getData(modelCoordinatesFieldId, Field_ENUM::STEP_NONE)->MyLength();
+  int vectorLength = block->getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE)->MyLength();
 
   Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = block->getNeighborhoodData();
   const int numOwnedPoints = neighborhoodData->NumOwnedPoints();

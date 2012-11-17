@@ -84,7 +84,7 @@ void PeridigmNS::State::allocateScalarBondData(Teuchos::RCP< std::vector<Field_N
 }
 
 Teuchos::RCP< std::vector<Field_NS::FieldSpec> > PeridigmNS::State::getFieldSpecs(Teuchos::RCP<Field_ENUM::Relation> relation,
-				                                                                  Teuchos::RCP<Field_ENUM::Length> length)
+										  Teuchos::RCP<Field_ENUM::Length> length)
 {
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
   std::map< Field_NS::FieldSpec, Teuchos::RCP<Epetra_Vector> >::const_iterator it;

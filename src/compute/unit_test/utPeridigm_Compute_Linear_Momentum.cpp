@@ -67,8 +67,9 @@
 #include "Peridigm_Field.hpp"
 
 using namespace boost::unit_test;
+using namespace PeridigmNS;
 
-Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel() {
+Teuchos::RCP<Peridigm> createFourPointModel() {
   Teuchos::RCP<Epetra_Comm> comm;
 #ifdef HAVE_MPI
   comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
@@ -118,23 +119,23 @@ Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel() {
   outputFields.set("Global_Linear_Momentum", true);
 
   // create the Peridigm object
-  Teuchos::RCP<PeridigmNS::Peridigm> peridigm = Teuchos::rcp(new PeridigmNS::Peridigm(comm, peridigmParams));
+  Teuchos::RCP<Peridigm> peridigm = Teuchos::rcp(new Peridigm(comm, peridigmParams));
 
   return peridigm;
 }
 
 void FourPointTest() {
-  Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createFourPointModel();
+  Teuchos::RCP<Peridigm> peridigm = createFourPointModel();
 
-  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  FieldManager& fieldManager = FieldManager::self();
 
   // Get the neighborhood data
-  PeridigmNS::NeighborhoodData neighborhoodData = (*peridigm->getGlobalNeighborhoodData());
+  NeighborhoodData neighborhoodData = (*peridigm->getGlobalNeighborhoodData());
   // Access the data we need
   Teuchos::RCP<Epetra_Vector> velocity, volume, linear_momentum;
-  velocity        = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Velocity"), Field_ENUM::STEP_NP1);
-  volume          = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Volume"), Field_ENUM::STEP_NONE);
-  linear_momentum = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Linear_Momentum"), Field_ENUM::STEP_NP1);
+  velocity        = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Velocity"), PeridigmField::STEP_NP1);
+  volume          = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Volume"), PeridigmField::STEP_NONE);
+  linear_momentum = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Linear_Momentum"), PeridigmField::STEP_NP1);
   // Get the neighborhood structure
   const int numOwnedPoints = (neighborhoodData.NumOwnedPoints());
 
@@ -151,7 +152,7 @@ void FourPointTest() {
   }
 
   // Get the blocks
-  Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks = peridigm->getBlocks();
+  Teuchos::RCP< std::vector<Block> > blocks = peridigm->getBlocks();
 
   // Fire the compute classes to fill the linear momentum data
   peridigm->getComputeManager()->compute(blocks);
