@@ -67,7 +67,7 @@
 	<Parameter name="Parallel Write" type="bool" value="true"/>
 	<ParameterList name="Output Variables">
           <Parameter name="Volume" type="bool" value="true"/>
-          <Parameter name="ID" type="bool" value="true"/>
+          <Parameter name="Element_Id" type="bool" value="true"/>
           <Parameter name="Proc_Num" type="bool" value="true"/>
           <Parameter name="Dilatation" type="bool" value="true"/>
           <Parameter name="Weighted_Volume" type="bool" value="true"/>
