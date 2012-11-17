@@ -61,7 +61,7 @@ namespace PeridigmNS {
  * of point data, DataManger has notions of owned points and ghosted points, allowing force calcuations access
  * to off-processor points that are within the neighborhood of one or more owned points.
  * Data is accessed via the getData function, which provides access to the Epetra_Vector corresponding to
- * the given FieldSpec and FieldStep.
+ * the given FieldId and FieldStep.
  */
 class DataManager {
 
@@ -99,7 +99,7 @@ public:
     ownedScalarBondMap = ownedScalarBondMap_;
   }
 
-  //! Instantiates State objects corresponding to the given list of FieldSpecs. 
+  //! Instantiates State objects corresponding to the given list of FieldIds. 
   void allocateData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > specs);
 
   //! For each point, copies data from the processor that owns the point to processors that have ghosted copies.
@@ -144,10 +144,13 @@ public:
   void copyLocallyOwnedDataFromDataManager(PeridigmNS::DataManager& source);
 
   //! Query the existence of a particular fieldSpec at a particular step.
-  bool hasData(Field_NS::FieldSpec fieldSpec, Field_ENUM::Step step);
+  bool hasData(int fieldId, Field_ENUM::Step step);
+
+  //! Provides access to the Epetra_Vector specified by the given FieldId and FieldStep.
+  Teuchos::RCP<Epetra_Vector> getDataOBSOLETE(Field_NS::FieldSpec fieldSpec, Field_ENUM::Step step);
 
   //! Provides access to the Epetra_Vector specified by the given FieldSped and FieldStep.
-  Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec, Field_ENUM::Step step);
+  Teuchos::RCP<Epetra_Vector> getData(int fieldId, Field_ENUM::Step step);
 
   //! Returns the complete list of field specs.
   Teuchos::RCP< std::vector<Field_NS::FieldSpec> > getFieldSpecs() { return fieldSpecs; }

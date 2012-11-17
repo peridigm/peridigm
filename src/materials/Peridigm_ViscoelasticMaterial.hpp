@@ -107,6 +107,17 @@ namespace PeridigmNS {
 	double m_lambda_i;
 	double m_tau_b;
     bool m_applyAutomaticDifferentiationJacobian;
+
+    // field ids for all relevant data
+    int volumeFieldId;
+    int damageFieldId;
+    int weightedVolumeFieldId;
+    int dilatationFieldId;
+    int modelCoordinatesFieldId;
+    int coordinatesFieldId;
+    int forceDensityFieldId;
+    int bondDamageFieldId;
+    int deviatoricBackExtensionFieldId;
   };
 }
 

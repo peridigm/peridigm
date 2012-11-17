@@ -45,31 +45,31 @@
 // ************************************************************************
 //@HEADER
 
-#include "Peridigm_FieldSpec.hpp"
+#include "Peridigm_Field.hpp"
 #include <Teuchos_Assert.hpp>
 #include <algorithm>
 
 using namespace std;
 
-const PeridigmNS::FieldSpecManager& PeridigmNS::FieldSpecManager::self() {
-  static const FieldSpecManager fieldSpecManager;
-  return fieldSpecManager;
+PeridigmNS::FieldManager& PeridigmNS::FieldManager::self() {
+  static FieldManager fieldManager;
+  return fieldManager;
 }
 
-int PeridigmNS::FieldSpecManager::getFieldSpecID(PeridigmField::Relation relation_,
-                                                 PeridigmField::Length length_,
-                                                 PeridigmField::Temporal temporal_,
-                                                 std::string label_)
+int PeridigmNS::FieldManager::getFieldId(PeridigmField::Relation relation_,
+                                         PeridigmField::Length length_,
+                                         PeridigmField::Temporal temporal_,
+                                         std::string label_)
 {
   // Begin with a check for an exact match
   for(vector<FieldSpec>::iterator it = fieldSpecs.begin() ; it != fieldSpecs.end() ; ++it){
 
-    // If everything matches, return the spec id
+    // If everything matches, return the field id
     if(relation_ == it->relation && length_ == it->length && temporal_ == it->temporal && label_ == it->label)
       return it->id;
   }
 
-  // Check for specs that do not match but are suspiciously similar
+  // Check for fields that do not match but are suspiciously similar
   for(vector<FieldSpec>::iterator it = fieldSpecs.begin() ; it != fieldSpecs.end() ; ++it){
 
     // Check for labels that match or differ only by case
@@ -79,17 +79,17 @@ int PeridigmNS::FieldSpecManager::getFieldSpecID(PeridigmField::Relation relatio
     transform(lcLabel.begin(), lcLabel.end(), lcLabel.begin(), ::tolower);
     if(lcLabel_ == lcLabel){
       stringstream ss;
-      ss << "\n**** Error:  getFieldSpecId() found suspiciously similar field specs.\n";
+      ss << "\n**** Error:  getFieldId() found suspiciously similar field specifications.\n";
       ss << "\n****         Requested spec:\n";
-      ss << "\n****           relation: " << relation_ + "\n";
-      ss << "\n****           length:   " << length_ + "\n";
-      ss << "\n****           temporal: " << temporal_ + "\n";
-      ss << "\n****           label:    " << label_ + "\n";
+      ss << "\n****           relation: " << relation_;
+      ss << "\n****           length:   " << length_;
+      ss << "\n****           temporal: " << temporal_;
+      ss << "\n****           label:    " << label_;
       ss << "\n****         Close match:\n";
-      ss << "\n****           relation: " << it->relation + "\n";
-      ss << "\n****           length:   " << it->length + "\n";
-      ss << "\n****           temporal: " << it->temporal + "\n";
-      ss << "\n****           label:    " << it->label + "\n";
+      ss << "\n****           relation: " << it->relation;
+      ss << "\n****           length:   " << it->length;
+      ss << "\n****           temporal: " << it->temporal;
+      ss << "\n****           label:    " << it->label;
       TEUCHOS_TEST_FOR_EXCEPT_MSG(lcLabel_ == lcLabel, ss.str());
     }
   }
@@ -102,15 +102,31 @@ int PeridigmNS::FieldSpecManager::getFieldSpecID(PeridigmField::Relation relatio
   return id;
 }
 
-bool PeridigmNS::FieldSpecManager::hasFieldSpec(std::string label)
+bool PeridigmNS::FieldManager::hasField(std::string label)
 {
   if(labelToIdMap.find(label) == labelToIdMap.end())
     return false;
   return true;
 }
 
-int PeridigmNS::FieldSpecManager::getFieldSpecID(std::string label)
+int PeridigmNS::FieldManager::getFieldId(std::string label)
 {
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(labelToIdMap.find(label) == labelToIdMap.end(), "\n**** Error:  getFieldSpecID(), label not found.\n");
-  return labelToIdMap[label];
+  map<string, int>::iterator it = labelToIdMap.find(label);
+  if(it == labelToIdMap.end()){
+    string msg = "\n**** Error:  getFieldId(), label not found:  " + label + "\n";
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(it == labelToIdMap.end(), msg);
+  }
+  return it->second;
+}
+
+PeridigmNS::FieldSpec PeridigmNS::FieldManager::getFieldSpec(int fieldId)
+{
+  unsigned int id = static_cast<unsigned int>(fieldId);
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(id < 0 || id >= fieldSpecs.size(), "\n**** Error:  getFieldSpec(), ID not found.\n");
+  return fieldSpecs[id];
+}
+
+std::ostream& operator<<(std::ostream& os, const PeridigmNS::FieldSpec& fieldSpec){
+  os << fieldSpec.getLabel();
+  return os;
 }

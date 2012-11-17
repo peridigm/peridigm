@@ -46,6 +46,7 @@
 //@HEADER
 
 #include "Peridigm_ShortRangeForceContactModel.hpp"
+#include "Peridigm_Field.hpp"
 #include <Teuchos_Assert.hpp>
 
 PeridigmNS::ShortRangeForceContactModel::ShortRangeForceContactModel(const Teuchos::ParameterList& params)
@@ -53,7 +54,11 @@ PeridigmNS::ShortRangeForceContactModel::ShortRangeForceContactModel(const Teuch
     m_contactRadius(0.0),
     m_springConstant(0.0),
     m_frictionCoefficient(0.0),
-    m_horizon(0.0)
+    m_horizon(0.0),
+    m_volumeFieldId(-1),
+    m_coordinatesFieldId(-1),
+    m_velocityFieldId(-1),
+    m_contactForceDensityFieldId(-1)
 {
   //! \todo Add meaningful asserts on material properties.
   if(!params.isParameter("Contact Radius"))
@@ -68,6 +73,12 @@ PeridigmNS::ShortRangeForceContactModel::ShortRangeForceContactModel(const Teuch
   if(!params.isParameter("Horizon"))
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Short range force contact parameter \"Horizon\" not specified.");
   m_horizon = params.get<double>("Horizon");
+
+  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  m_volumeFieldId = fieldManager.getFieldId("Volume");
+  m_coordinatesFieldId = fieldManager.getFieldId("Coordinates");
+  m_velocityFieldId = fieldManager.getFieldId("Velocity");
+  m_contactForceDensityFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::NODE, PeridigmNS::PeridigmField::VECTOR, PeridigmNS::PeridigmField::TWO_STEP, "Contact_Force_Density");
 }
 
 PeridigmNS::ShortRangeForceContactModel::~ShortRangeForceContactModel()
@@ -82,13 +93,13 @@ PeridigmNS::ShortRangeForceContactModel::computeForce(const double dt,
                                                       PeridigmNS::DataManager& dataManager) const
 {
   // Zero out the forces
-  dataManager.getData(Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_contactForceDensityFieldId, Field_ENUM::STEP_NP1)->PutScalar(0.0);
 
   double *cellVolume, *y, *contactForce, *velocity;
-  dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&cellVolume);
-  dataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->ExtractView(&y);
-  dataManager.getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1)->ExtractView(&velocity);
-  dataManager.getData(Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->ExtractView(&contactForce);
+  dataManager.getData(m_volumeFieldId, Field_ENUM::STEP_NONE)->ExtractView(&cellVolume);
+  dataManager.getData(m_coordinatesFieldId, Field_ENUM::STEP_NP1)->ExtractView(&y);
+  dataManager.getData(m_velocityFieldId, Field_ENUM::STEP_NP1)->ExtractView(&velocity);
+  dataManager.getData(m_contactForceDensityFieldId, Field_ENUM::STEP_NP1)->ExtractView(&contactForce);
 
   int neighborhoodListIndex(0), numNeighbors, nodeID, neighborID, iID, iNID;
   double nodeCurrentX[3], nodeCurrentV[3], nodeVolume, currentDistance, c, temp, neighborVolume;

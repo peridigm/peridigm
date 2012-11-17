@@ -64,6 +64,7 @@
 #endif
 #include <vector>
 #include "../../core/Peridigm.hpp"
+#include "Peridigm_Field.hpp"
 
 using namespace boost::unit_test;
 
@@ -115,6 +116,7 @@ Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel() {
   Teuchos::ParameterList& outputFields = outputParams.sublist("Output Variables");
   outputFields.set("Angular_Momentum", true);
   outputFields.set("Global_Angular_Momentum", true);
+
   // create the Peridigm object
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm = Teuchos::rcp(new PeridigmNS::Peridigm(comm, peridigmParams));
 
@@ -125,15 +127,15 @@ void FourPointTest()
 {
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createFourPointModel();
 
-  // Get the data manager
-  Teuchos::RCP<PeridigmNS::DataManager> dataManager = peridigm->getBlocks()->begin()->getDataManager();
+  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+
   // Get the neighborhood data
   PeridigmNS::NeighborhoodData neighborhoodData = (*peridigm->getGlobalNeighborhoodData()); 
   // Access the data we need
   Teuchos::RCP<Epetra_Vector> velocity, volume, angular_momentum;
-  velocity         = dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1);
-  volume           = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
-  angular_momentum = dataManager->getData(Field_NS::ANGULAR_MOMENTUM3D, Field_ENUM::STEP_NP1);	
+  velocity         = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Velocity"), Field_ENUM::STEP_NP1);
+  volume           = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Volume"), Field_ENUM::STEP_NONE);
+  angular_momentum = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Angular_Momentum"), Field_ENUM::STEP_NP1);	
   // Get the neighborhood structure
   const int numOwnedPoints = (neighborhoodData.NumOwnedPoints());
 

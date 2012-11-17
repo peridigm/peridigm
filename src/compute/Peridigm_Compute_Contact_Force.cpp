@@ -48,10 +48,18 @@
 #include <vector>
 
 #include "Peridigm_Compute_Contact_Force.hpp"
+#include "Peridigm_Field.hpp"
 #include "../core/Peridigm.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Contact_Force::Compute_Contact_Force(PeridigmNS::Peridigm *peridigm_ ){peridigm = peridigm_;}
+PeridigmNS::Compute_Contact_Force::Compute_Contact_Force(PeridigmNS::Peridigm *peridigm_ )
+  : peridigm(peridigm_), volumeFieldId(-1), contactForceDensityFieldId(-1), contactForceFieldId(-1)
+{
+  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  volumeFieldId = fieldManager.getFieldId("Volume");
+  contactForceDensityFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::NODE, PeridigmNS::PeridigmField::VECTOR, PeridigmNS::PeridigmField::TWO_STEP, "Contact_Force_Density");
+  contactForceFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::NODE, PeridigmNS::PeridigmField::VECTOR, PeridigmNS::PeridigmField::TWO_STEP, "Contact_Force");
+}
 
 //! Destructor.
 PeridigmNS::Compute_Contact_Force::~Compute_Contact_Force(){}
@@ -69,15 +77,14 @@ int PeridigmNS::Compute_Contact_Force::compute( Teuchos::RCP< std::vector<Peridi
 
   int retval;
 
-  Teuchos::RCP<Epetra_Vector> contact_force, contact_force_density, volume;
+  Teuchos::RCP<Epetra_Vector> volume, contact_force_density, contact_force;
   std::vector<PeridigmNS::Block>::iterator blockIt;
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
 
     Teuchos::RCP<Epetra_Vector> contact_force, contact_force_density, volume;
-    contact_force_density = dataManager->getData(Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1);
-    contact_force         = dataManager->getData(Field_NS::CONTACT_FORCE3D, Field_ENUM::STEP_NP1);
-    volume                = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
+    volume                = blockIt->getData(volumeFieldId, Field_ENUM::STEP_NONE);
+    contact_force_density = blockIt->getData(contactForceDensityFieldId, Field_ENUM::STEP_NP1);
+    contact_force         = blockIt->getData(contactForceFieldId, Field_ENUM::STEP_NP1);
 
     // Sanity check
     if ( (contact_force_density->Map().NumMyElements() != volume->Map().NumMyElements()) ||  (contact_force->Map().NumMyElements() != volume->Map().NumMyElements()) ) {

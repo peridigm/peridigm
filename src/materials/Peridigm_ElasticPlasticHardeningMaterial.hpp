@@ -127,6 +127,20 @@ namespace PeridigmNS {
     bool m_applyShearCorrectionFactor;
     bool m_disablePlasticity;
     bool m_applyAutomaticDifferentiationJacobian;
+
+
+    // field spec ids for all relevant data
+    int volumeFieldId;
+    int damageFieldId;
+    int weightedVolumeFieldId;
+    int dilatationFieldId;
+    int modelCoordinatesFieldId;
+    int coordinatesFieldId;
+    int forceDensityFieldId;
+    int bondDamageFieldId;
+    int deviatoricPlasticExtensionFieldId;
+    int lambdaFieldId;
+    int surfaceCorrectionFactorFieldId;
   };
 }
 

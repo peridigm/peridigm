@@ -48,16 +48,26 @@
 #include <vector>
 
 #include "Peridigm_Compute_Angular_Momentum.hpp"
+#include "Peridigm_Field.hpp"
 #include "../core/Peridigm.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Angular_Momentum::Compute_Angular_Momentum(PeridigmNS::Peridigm *peridigm_ ){peridigm = peridigm_;}
+PeridigmNS::Compute_Angular_Momentum::Compute_Angular_Momentum(PeridigmNS::Peridigm *peridigm_ )
+  : peridigm(peridigm_), volumeFieldId(-1), coordinatesFieldId(-1), velocityFieldId(-1), angularMomentumFieldId(-1)
+{
+  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  volumeFieldId = fieldManager.getFieldId("Volume");
+  coordinatesFieldId = fieldManager.getFieldId("Coordinates");
+  velocityFieldId = fieldManager.getFieldId("Velocity");
+  angularMomentumFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::NODE, PeridigmNS::PeridigmField::VECTOR, PeridigmNS::PeridigmField::TWO_STEP, "Angular_Momentum");
+  globalAngularMomentumFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::GLOBAL, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::CONSTANT, "Global_Angular_Momentum");
+}
 
 //! Destructor.
 PeridigmNS::Compute_Angular_Momentum::~Compute_Angular_Momentum(){}
 
 
-//! Returns the fieldspecs computed by this class
+//! Returns the fieldspecs computed by this class OBSOLETE
 std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Angular_Momentum::getFieldSpecs() const 
 {
   std::vector<Field_NS::FieldSpec> myFieldSpecs;
@@ -88,15 +98,14 @@ int PeridigmNS::Compute_Angular_Momentum::computeAngularMomentum( Teuchos::RCP< 
   std::vector<PeridigmNS::Block>::iterator blockIt;
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
   {
-    Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
     Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
     const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
     const int* ownedIDs = neighborhoodData->OwnedIDs();
 
-    velocity         = dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1);
-    arm              = dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1);
-    volume           = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
-    angular_momentum = dataManager->getData(Field_NS::ANGULAR_MOMENTUM3D, Field_ENUM::STEP_NP1);
+    volume           = blockIt->getData(volumeFieldId, Field_ENUM::STEP_NONE);
+    arm              = blockIt->getData(coordinatesFieldId, Field_ENUM::STEP_NP1);
+    velocity         = blockIt->getData(velocityFieldId, Field_ENUM::STEP_NP1);
+    angular_momentum = blockIt->getData(angularMomentumFieldId, Field_ENUM::STEP_NP1);
 
     // Sanity check
     if ( (velocity->Map().NumMyElements() != volume->Map().NumMyElements()) ||  (arm->Map().NumMyElements() != volume->Map().NumMyElements()) )
@@ -155,17 +164,6 @@ int PeridigmNS::Compute_Angular_Momentum::computeAngularMomentum( Teuchos::RCP< 
       globalAM += sqrt(globalAngularMomentum[0]*globalAngularMomentum[0] + globalAngularMomentum[1]*globalAngularMomentum[1] + globalAngularMomentum[2]*globalAngularMomentum[2]);
     }
   }
-
-/*	
-        if (peridigm->getEpetraComm()->MyPID() == 0) 
-	{
-		std::cout << "Hello!" << std::endl;
-		std::cout << std::endl;
-		std::cout << "Total Angular Momentum =  " << "("  << globalAngularMomentum[0]
-							  << ", " << globalAngularMomentum[1]
-							  << ", " << globalAngularMomentum[2] << ")" << std::endl;
-	}
-*/
 
   // Store global angular momentum in block (block globals are static, so only need to assign data to first block)
   if (!storeLocal)  

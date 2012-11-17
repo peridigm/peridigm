@@ -46,16 +46,21 @@
 //@HEADER
 
 #include "Peridigm_PartialVolumeCalculator.hpp"
+#include "Peridigm_Field.hpp"
 using namespace std;
 
 void PeridigmNS::computePartialVolume(Teuchos::RCP<PeridigmNS::Block> block,
                                       Teuchos::RCP<PeridigmNS::AbstractDiscretization> discretization)
 {
-  double *x, *partialVolume;
-  block->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->ExtractView(&x);
-  block->getData(Field_NS::PARTIAL_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&partialVolume);
 
-  int vectorLength = block->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->MyLength();
+  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  int modelCoordinatesFieldId = fieldManager.getFieldId("Model_Coordinates");
+  int partialVolumeFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::BOND, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::CONSTANT, "Partial_Volume");
+  double *x, *partialVolume;
+  block->getData(modelCoordinatesFieldId, Field_ENUM::STEP_NONE)->ExtractView(&x);
+  block->getData(partialVolumeFieldId, Field_ENUM::STEP_NONE)->ExtractView(&partialVolume);
+
+  int vectorLength = block->getData(modelCoordinatesFieldId, Field_ENUM::STEP_NONE)->MyLength();
 
   Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = block->getNeighborhoodData();
   const int numOwnedPoints = neighborhoodData->NumOwnedPoints();

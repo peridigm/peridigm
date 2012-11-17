@@ -59,6 +59,7 @@
 
 #include "Peridigm.hpp"
 #include "Peridigm_OutputManager_ExodusII.hpp"
+#include "Peridigm_Field.hpp"
 #include "mesh_output/Field.h"
 
 PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Teuchos::ParameterList>& params, 
@@ -145,6 +146,9 @@ PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Te
   // Initialize the exodus database
   // initializeExodusDatabase(blocks);
 
+  // Create field IDs as necessary
+  PeridigmNS::FieldManager::self().getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::CONSTANT, "ID");
+  PeridigmNS::FieldManager::self().getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::CONSTANT, "Proc_Num");
 }
 
 Teuchos::ParameterList PeridigmNS::OutputManager_ExodusII::getValidParameterList() {
@@ -253,6 +257,26 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
     const std::string& name = it->first;
     // use field name to get reference to const fieldSpec
     std::map<string, Field_NS::FieldSpec>::const_iterator specIt = Field_NS::FieldSpecMap::Map.find(name);
+
+    // \todo Elliminate the use of Field_NS::FieldSpec in favor of new PeridigmNS::FieldManager
+    // hackage to get around renaming process
+    string label = name;
+    if(label == "Coordinates")
+      label = "Current_Coordinates";
+    if(label == "Model_Coordinates")
+      label = "Coordinates";
+    if(label == "Bond_Damage")
+      label = "Bond Damage";
+    if(label == "Surface_Correction_Factor")
+      label = "SHEAR_CORRECTION_FACTOR";
+    if(label == "Block_Id")
+      label = "BLOCK_ID";
+    if(label == "Partial_Volume")
+      label = "Partial Volume";
+    // end hackage
+
+    int fieldId = PeridigmNS::FieldManager::self().getFieldId(label); 
+
     TEUCHOS_TEST_FOR_EXCEPT_MSG(specIt == Field_NS::FieldSpecMap::Map.end(), "Failed to find reference to fieldSpec!");
     Field_NS::FieldSpec const &spec = specIt->second;
     double *block_ptr = NULL;
@@ -279,7 +303,7 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
         Field_ENUM::Step step = Field_ENUM::STEP_NONE;
         if(spec.get_temporal() == Field_ENUM::TWO_STEP)
           step = Field_ENUM::STEP_NP1;
-        epetra_vector = dataManager->getData(spec, step);
+        epetra_vector = dataManager->getData(fieldId, step);
         int block_num_nodes = (blockIt->getDataManager()->getOwnedScalarPointMap())->NumMyElements();
         epetra_vector->ExtractView(&block_ptr);
         // switch on dimension of data
@@ -353,8 +377,8 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
           Field_ENUM::Step step = Field_ENUM::STEP_NONE;
           if(spec.get_temporal() == Field_ENUM::TWO_STEP)
             step = Field_ENUM::STEP_NP1;
-          if( dataManager->hasData(spec, step) ) {
-            epetra_vector = dataManager->getData(spec, step);
+          if( dataManager->hasData(fieldId, step) ) {
+            epetra_vector = dataManager->getData(fieldId, step);
             epetra_vector->ExtractView(&block_ptr);
             // switch on dimension of data
             if (spec.getLength() == Field_ENUM::SCALAR) {
@@ -675,12 +699,31 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
         const std::string& variableName = outputVariableIt->first;
         std::map<string, Field_NS::FieldSpec>::const_iterator specIt = Field_NS::FieldSpecMap::Map.find(variableName);
         const Field_NS::FieldSpec& spec = specIt->second;
+
+        // \todo Elliminate the use of Field_NS::FieldSpec in favor of new PeridigmNS::FieldManager
+    // hackage to get around renaming process
+    string label = variableName;
+    if(label == "Coordinates")
+      label = "Current_Coordinates";
+    if(label == "Model_Coordinates")
+      label = "Coordinates";
+    if(label == "Bond_Damage")
+      label = "Bond Damage";
+    if(label == "Surface_Correction_Factor")
+      label = "SHEAR_CORRECTION_FACTOR";
+    if(label == "Block_Id")
+      label = "BLOCK_ID";
+    if(label == "Partial_Volume")
+      label = "Partial Volume";
+    // end hackage
+        int fieldId = PeridigmNS::FieldManager::self().getFieldId(label);
+
         if(spec.getRelation() == Field_ENUM::ELEMENT){
           Field_ENUM::Step step = Field_ENUM::STEP_NONE;
           if(spec.get_temporal() == Field_ENUM::TWO_STEP)
             step = Field_ENUM::STEP_NP1;
           int truthTableValue = 0;
-          if(blockIt->hasData(spec, step))
+          if(blockIt->hasData(fieldId, step))
             truthTableValue = 1;
           // Global ID and processor number are special cases
           if(spec == Field_NS::GID || spec == Field_NS::PROC_NUM)

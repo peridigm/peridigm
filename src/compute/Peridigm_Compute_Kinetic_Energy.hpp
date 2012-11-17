@@ -71,27 +71,31 @@ namespace PeridigmNS {
 
   public:
 	
-  //! Standard constructor.
-  Compute_Kinetic_Energy( PeridigmNS::Peridigm *peridigm_ );
+    //! Standard constructor.
+    Compute_Kinetic_Energy( PeridigmNS::Peridigm *peridigm_ );
 
-  //! Destructor.
-  virtual  ~Compute_Kinetic_Energy();
+    //! Destructor.
+    virtual  ~Compute_Kinetic_Energy();
 
-  //! Returns the fieldspecs computed by this class
-  virtual std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
+    //! Returns the fieldspecs computed by this class
+    virtual std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
 
-  //! Perform computation
-  virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
+    //! Perform computation
+    virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
 
-  //! Compute the kinetic energy and optionally store the nodal values. 
-  int computeKineticEnergy( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, bool storeLocal ) const ;
-
+    //! Compute the kinetic energy and optionally store the nodal values. 
+    int computeKineticEnergy( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, bool storeLocal ) const ;
 
   private:
 
-  //! Parent pointer
-  PeridigmNS::Peridigm *peridigm;
+    //! Parent pointer
+    PeridigmNS::Peridigm *peridigm;
 
+    // field ids for all relevant data
+    int volumeFieldId;
+    int velocityFieldId;
+    int kineticEnergyFieldId;
+    int globalKineticEnergyFieldId;
   };
 }
 

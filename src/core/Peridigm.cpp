@@ -69,6 +69,7 @@
 #include <Teuchos_VerboseObject.hpp>
 
 #include "Peridigm.hpp"
+#include "Peridigm_Field.hpp"
 #include "Peridigm_DiscretizationFactory.hpp"
 #include "Peridigm_PdQuickGridDiscretization.hpp"
 #include "Peridigm_PartialVolumeCalculator.hpp"
@@ -99,7 +100,18 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
     analysisHasContact(false),
     contactRebalanceFrequency(0),
     contactSearchRadius(0.0),
-    analysisHasPartialVolumes(false)
+    analysisHasPartialVolumes(false),
+    blockIdFieldId(-1),
+    volumeFieldId(-1),
+    modelCoordinatesFieldId(-1),
+    coordinatesFieldId(-1),
+    displacementFieldId(-1),
+    velocityFieldId(-1),
+    accelerationFieldId(-1),
+    forceDensityFieldId(-1),
+    contactForceDensityFieldId(-1),
+    partialVolumeFieldId(-1),
+    tangentReferenceCoordinatesFieldId(-1)
 {
   peridigmComm = comm;
   peridigmParams = params;
@@ -146,6 +158,22 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   // Instantiate damage models
   if(params->isSublist("Damage Models"))
      instantiateDamageModels();
+
+  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  blockIdFieldId                     = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Block_Id");
+  volumeFieldId                      = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Volume");
+  modelCoordinatesFieldId            = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::CONSTANT, "Model_Coordinates");
+  coordinatesFieldId                 = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Coordinates");
+  displacementFieldId                = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Displacement");
+  velocityFieldId                    = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Velocity");
+  accelerationFieldId                = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Acceleration");
+  forceDensityFieldId                = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force_Density");
+  contactForceDensityFieldId         = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Contact_Force_Density");
+  partialVolumeFieldId               = fieldManager.getFieldId(PeridigmField::BOND,    PeridigmField::SCALAR, PeridigmField::CONSTANT, "Partial_Volume");
+  tangentReferenceCoordinatesFieldId = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::CONSTANT, "Tangent_Reference_Coordinates");
+
+  if(analysisHasPartialVolumes)
+    contactForceDensityFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Partial_Volume");
 
   // The PeridigmNS::DataManager contained in each PeridigmNS::Block allocates space for field data.
   // Keep track of the data storage required by Peridigm and the ComputeManager and pass the associated
@@ -218,11 +246,11 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // Load initial data into the blocks
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    blockIt->importData(*(peridigmDisc->getBlockID()),    Field_NS::BLOCK_ID,   Field_ENUM::STEP_NONE, Insert);
-    blockIt->importData(*(peridigmDisc->getCellVolume()), Field_NS::VOLUME,     Field_ENUM::STEP_NONE, Insert);
-    blockIt->importData(*(peridigmDisc->getInitialX()),   Field_NS::COORD3D,    Field_ENUM::STEP_NONE, Insert);
-    blockIt->importData(*(peridigmDisc->getInitialX()),   Field_NS::CURCOORD3D, Field_ENUM::STEP_N,    Insert);
-    blockIt->importData(*(peridigmDisc->getInitialX()),   Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1,  Insert);
+    blockIt->importData(*(peridigmDisc->getBlockID()),    blockIdFieldId,          Field_ENUM::STEP_NONE, Insert);
+    blockIt->importData(*(peridigmDisc->getCellVolume()), volumeFieldId,           Field_ENUM::STEP_NONE, Insert);
+    blockIt->importData(*(peridigmDisc->getInitialX()),   modelCoordinatesFieldId, Field_ENUM::STEP_NONE, Insert);
+    blockIt->importData(*(peridigmDisc->getInitialX()),   coordinatesFieldId,      Field_ENUM::STEP_N,    Insert);
+    blockIt->importData(*(peridigmDisc->getInitialX()),   coordinatesFieldId,      Field_ENUM::STEP_NP1,  Insert);
   }
 
   // Set the density in the mothership vector
@@ -729,9 +757,9 @@ void PeridigmNS::Peridigm::executeExplicit() {
   // Copy data from mothership vectors to overlap vectors in data manager
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    blockIt->importData(*u, Field_NS::DISPL3D,    Field_ENUM::STEP_NP1, Insert);
-    blockIt->importData(*y, Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1, Insert);
-    blockIt->importData(*v, Field_NS::VELOC3D,    Field_ENUM::STEP_NP1, Insert);
+    blockIt->importData(*u, displacementFieldId, Field_ENUM::STEP_NP1, Insert);
+    blockIt->importData(*y, coordinatesFieldId,   Field_ENUM::STEP_NP1, Insert);
+    blockIt->importData(*v, velocityFieldId,     Field_ENUM::STEP_NP1, Insert);
   }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -747,7 +775,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
   force->PutScalar(0.0);
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
     scratch->PutScalar(0.0);
-    blockIt->exportData(*scratch, Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
+    blockIt->exportData(*scratch, forceDensityFieldId, Field_ENUM::STEP_NP1, Add);
     force->Update(1.0, *scratch, 1.0);
   }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
@@ -758,7 +786,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
     contactForce->PutScalar(0.0);
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
       scratch->PutScalar(0.0);
-      blockIt->exportData(*scratch, Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
+      blockIt->exportData(*scratch, contactForceDensityFieldId, Field_ENUM::STEP_NP1, Add);
       contactForce->Update(1.0, *scratch, 1.0);
     }
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
@@ -830,9 +858,9 @@ void PeridigmNS::Peridigm::executeExplicit() {
     // Copy data from mothership vectors to overlap vectors in data manager
     PeridigmNS::Timer::self().startTimer("Gather/Scatter");
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-      blockIt->importData(*u, Field_NS::DISPL3D,    Field_ENUM::STEP_NP1, Insert);
-      blockIt->importData(*y, Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1, Insert);
-      blockIt->importData(*v, Field_NS::VELOC3D,    Field_ENUM::STEP_NP1, Insert);
+      blockIt->importData(*u, displacementFieldId, Field_ENUM::STEP_NP1, Insert);
+      blockIt->importData(*y, coordinatesFieldId,   Field_ENUM::STEP_NP1, Insert);
+      blockIt->importData(*v, velocityFieldId,     Field_ENUM::STEP_NP1, Insert);
     }
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -846,7 +874,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
     force->PutScalar(0.0);
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
       scratch->PutScalar(0.0);
-      blockIt->exportData(*scratch, Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
+      blockIt->exportData(*scratch, forceDensityFieldId, Field_ENUM::STEP_NP1, Add);
       force->Update(1.0, *scratch, 1.0);
     }
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");    
@@ -862,7 +890,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
       contactForce->PutScalar(0.0);
       for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
         scratch->PutScalar(0.0);
-        blockIt->exportData(*scratch, Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
+        blockIt->exportData(*scratch, contactForceDensityFieldId, Field_ENUM::STEP_NP1, Add);
         contactForce->Update(1.0, *scratch, 1.0);
       }
       PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
@@ -945,9 +973,9 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
   // Copy data from mothership vectors to overlap vectors in data manager
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    blockIt->importData(*u, Field_NS::DISPL3D,    Field_ENUM::STEP_NP1, Insert);
-    blockIt->importData(*y, Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1, Insert);
-    blockIt->importData(*v, Field_NS::VELOC3D,    Field_ENUM::STEP_NP1, Insert);
+    blockIt->importData(*u, displacementFieldId, Field_ENUM::STEP_NP1, Insert);
+    blockIt->importData(*y, coordinatesFieldId,   Field_ENUM::STEP_NP1, Insert);
+    blockIt->importData(*v, velocityFieldId,     Field_ENUM::STEP_NP1, Insert);
   } 
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -962,7 +990,7 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
     force->PutScalar(0.0);
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
       scratch->PutScalar(0.0);
-      blockIt->exportData(*scratch, Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
+      blockIt->exportData(*scratch, forceDensityFieldId, Field_ENUM::STEP_NP1, Add);
       force->Update(1.0, *scratch, 1.0);
     }
     scratch->PutScalar(0.0);
@@ -1557,7 +1585,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
           if( solverIteration<7 || solverIteration%10==0 ){
             PeridigmNS::Timer::self().startTimer("Gather/Scatter");
             for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-              blockIt->importData(*y, Field_NS::TANGENT_REFERENCE_COORDINATES, Field_ENUM::STEP_NONE, Insert);
+              blockIt->importData(*y, tangentReferenceCoordinatesFieldId, Field_ENUM::STEP_NONE, Insert);
             PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
           }
           else{
@@ -2031,10 +2059,10 @@ void PeridigmNS::Peridigm::executeImplicit() {
     // Copy data from mothership vectors to overlap vectors in data manager
     PeridigmNS::Timer::self().startTimer("Gather/Scatter");
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-      blockIt->importData(*u, Field_NS::DISPL3D,    Field_ENUM::STEP_NP1, Insert);
-      blockIt->importData(*y, Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1, Insert);
-      blockIt->importData(*v, Field_NS::VELOC3D,    Field_ENUM::STEP_NP1, Insert);
-      blockIt->importData(*a, Field_NS::ACCEL3D,    Field_ENUM::STEP_NP1, Insert);
+      blockIt->importData(*u, displacementFieldId,    Field_ENUM::STEP_NP1, Insert);
+      blockIt->importData(*y, coordinatesFieldId, Field_ENUM::STEP_NP1, Insert);
+      blockIt->importData(*v, velocityFieldId,    Field_ENUM::STEP_NP1, Insert);
+      blockIt->importData(*a, accelerationFieldId,    Field_ENUM::STEP_NP1, Insert);
     }
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -2046,7 +2074,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
     // Copy force from the data manager to the mothership vector
     PeridigmNS::Timer::self().startTimer("Gather/Scatter");
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-      blockIt->exportData(*force, Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
+      blockIt->exportData(*force, forceDensityFieldId, Field_ENUM::STEP_NP1, Add);
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
     // Compute the residual
@@ -2106,10 +2134,10 @@ void PeridigmNS::Peridigm::executeImplicit() {
       // Copy data from mothership vectors to overlap vectors in data manager
       PeridigmNS::Timer::self().startTimer("Gather/Scatter");
       for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-        blockIt->importData(*u, Field_NS::DISPL3D,    Field_ENUM::STEP_NP1, Insert);
-        blockIt->importData(*y, Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1, Insert);
-        blockIt->importData(*v, Field_NS::VELOC3D,    Field_ENUM::STEP_NP1, Insert);
-        blockIt->importData(*a, Field_NS::ACCEL3D,    Field_ENUM::STEP_NP1, Insert);
+        blockIt->importData(*u, displacementFieldId, Field_ENUM::STEP_NP1, Insert);
+        blockIt->importData(*y, coordinatesFieldId,  Field_ENUM::STEP_NP1, Insert);
+        blockIt->importData(*v, velocityFieldId,     Field_ENUM::STEP_NP1, Insert);
+        blockIt->importData(*a, accelerationFieldId, Field_ENUM::STEP_NP1, Insert);
       }
       PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -2121,7 +2149,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
       // Copy force from the data manager to the mothership vector
       PeridigmNS::Timer::self().startTimer("Gather/Scatter");
       for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-        blockIt->exportData(*force, Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
+        blockIt->exportData(*force, forceDensityFieldId, Field_ENUM::STEP_NP1, Add);
       PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
       // Compute residual vector and its norm
@@ -2255,9 +2283,9 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
   // Copy data from mothership vectors to overlap vectors in data manager
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    blockIt->importData(*u, Field_NS::DISPL3D,    Field_ENUM::STEP_NP1, Insert);
-    blockIt->importData(*y, Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1, Insert);
-    blockIt->importData(*v, Field_NS::VELOC3D,    Field_ENUM::STEP_NP1, Insert);
+    blockIt->importData(*u, displacementFieldId,    Field_ENUM::STEP_NP1, Insert);
+    blockIt->importData(*y, coordinatesFieldId, Field_ENUM::STEP_NP1, Insert);
+    blockIt->importData(*v, velocityFieldId,    Field_ENUM::STEP_NP1, Insert);
   }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -2271,7 +2299,7 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
   force->PutScalar(0.0);
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
     scratch->PutScalar(0.0);
-    blockIt->exportData(*scratch, Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Add);
+    blockIt->exportData(*scratch, forceDensityFieldId, Field_ENUM::STEP_NP1, Add);
     force->Update(1.0, *scratch, 1.0);
   }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
@@ -2359,11 +2387,11 @@ void PeridigmNS::Peridigm::synchDataManagers() {
   // COORD3D is synched during creation and rebalance, and otherwise never changes
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    blockIt->importData(*u, Field_NS::DISPL3D, Field_ENUM::STEP_NP1, Insert);
-    blockIt->importData(*y, Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1, Insert);
-    blockIt->importData(*v, Field_NS::VELOC3D, Field_ENUM::STEP_NP1, Insert);
-    blockIt->importData(*force, Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Insert);
-    blockIt->importData(*contactForce, Field_NS::CONTACT_FORCE_DENSITY3D, Field_ENUM::STEP_NP1, Insert);
+    blockIt->importData(*u, displacementFieldId, Field_ENUM::STEP_NP1, Insert);
+    blockIt->importData(*y, coordinatesFieldId, Field_ENUM::STEP_NP1, Insert);
+    blockIt->importData(*v, velocityFieldId, Field_ENUM::STEP_NP1, Insert);
+    blockIt->importData(*force, forceDensityFieldId, Field_ENUM::STEP_NP1, Insert);
+    blockIt->importData(*contactForce, contactForceDensityFieldId, Field_ENUM::STEP_NP1, Insert);
   }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 }
@@ -2485,8 +2513,8 @@ void PeridigmNS::Peridigm::rebalance() {
   // models (i.e., give contact its own mothership vectors and data managers, and rebalance
   // only these objects when executing a contact search).
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    blockIt->importData(*volume, Field_NS::VOLUME, Field_ENUM::STEP_NONE, Insert);
-    blockIt->importData(*blockIDs, Field_NS::BLOCK_ID, Field_ENUM::STEP_NONE, Insert);
+    blockIt->importData(*volume, volumeFieldId, Field_ENUM::STEP_NONE, Insert);
+    blockIt->importData(*blockIDs, blockIdFieldId, Field_ENUM::STEP_NONE, Insert);
   }
 
   // set all the pointers to the new maps

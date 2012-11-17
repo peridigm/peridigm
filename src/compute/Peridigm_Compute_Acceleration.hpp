@@ -67,23 +67,26 @@ namespace PeridigmNS {
 
   public:
 	
-  //! Standard constructor.
-  Compute_Acceleration( PeridigmNS::Peridigm *peridigm_ );
+    //! Standard constructor.
+    Compute_Acceleration( PeridigmNS::Peridigm *peridigm_ );
+    
+    //! Destructor.
+    ~Compute_Acceleration();
 
-  //! Destructor.
-  ~Compute_Acceleration();
+    //! Returns the fieldspecs computed by this class OBSOLETE
+    std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
 
-  //! Returns the fieldspecs computed by this class
-  std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
-
-  //! Perform computation
-  int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
+    //! Perform computation
+    int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
 
   private:
 
-  //! Parent pointer
-  PeridigmNS::Peridigm *peridigm;
+    //! Parent pointer
+    PeridigmNS::Peridigm *peridigm;
 
+    // field ids for all relevant data
+    int forceDensityFieldId;
+    int accelerationFieldId;
   };
 }
 

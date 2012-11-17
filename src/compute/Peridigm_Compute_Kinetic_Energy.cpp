@@ -48,10 +48,19 @@
 #include <vector>
 
 #include "Peridigm_Compute_Kinetic_Energy.hpp"
+#include "Peridigm_Field.hpp"
 #include "../core/Peridigm.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Kinetic_Energy::Compute_Kinetic_Energy(PeridigmNS::Peridigm *peridigm_ ){peridigm = peridigm_;}
+PeridigmNS::Compute_Kinetic_Energy::Compute_Kinetic_Energy(PeridigmNS::Peridigm *peridigm_ )
+  : peridigm(peridigm_), volumeFieldId(-1), velocityFieldId(-1), kineticEnergyFieldId(-1)
+{
+  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  volumeFieldId = fieldManager.getFieldId("Volume");
+  velocityFieldId = fieldManager.getFieldId("Velocity");
+  kineticEnergyFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::TWO_STEP, "Kinetic_Energy");
+  globalKineticEnergyFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::GLOBAL, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::TWO_STEP, "Global_Kinetic_Energy");
+}
 
 //! Destructor.
 PeridigmNS::Compute_Kinetic_Energy::~Compute_Kinetic_Energy(){}
@@ -80,15 +89,14 @@ int PeridigmNS::Compute_Kinetic_Energy::computeKineticEnergy( Teuchos::RCP< std:
 	std::vector<PeridigmNS::Block>::iterator blockIt;
 	for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
 	{
-		Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
 		Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
 		const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
 		const int* ownedIDs = neighborhoodData->OwnedIDs();
 
-		velocity              = dataManager->getData(Field_NS::VELOC3D, Field_ENUM::STEP_NP1);
-		volume                = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
+		volume                = blockIt->getData(volumeFieldId, Field_ENUM::STEP_NONE);
+		velocity              = blockIt->getData(velocityFieldId, Field_ENUM::STEP_NP1);
 		if (storeLocal)
-                	kinetic_energy = dataManager->getData(Field_NS::KINETIC_ENERGY, Field_ENUM::STEP_NP1);
+          kinetic_energy = blockIt->getData(kineticEnergyFieldId, Field_ENUM::STEP_NP1);
 		
 		// Sanity check
 		if (velocity->Map().NumMyElements() != volume->Map().NumMyElements())

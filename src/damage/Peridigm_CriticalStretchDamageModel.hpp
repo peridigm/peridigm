@@ -101,6 +101,12 @@ namespace PeridigmNS {
     Teuchos::RCP< std::vector<Field_NS::FieldSpec> > m_variableSpecs;
 
     double m_criticalStretch;
+
+    // field ids for all relevant data
+    int m_modelCoordinatesFieldId;
+    int m_coordinatesFieldId;
+    int m_damageFieldId;
+    int m_bondDamageFieldId;
   };
 
 }

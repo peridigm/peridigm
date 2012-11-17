@@ -105,7 +105,8 @@ enum Type {
   LINEAR_MOMENTUM,
   KINETIC_ENERGY,
   STRAIN_ENERGY,
-  STRAIN_ENERGY_DENSITY	
+  STRAIN_ENERGY_DENSITY,
+  INTERFACE_PROXIMITY
 };
 
 enum Length {
@@ -266,6 +267,7 @@ const Field_NS::FieldSpec DAMAGE                  (Field_ENUM::DAMAGE,          
 const Field_NS::FieldSpec KINETIC_ENERGY          (Field_ENUM::KINETIC_ENERGY,               Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Kinetic_Energy");
 const Field_NS::FieldSpec STRAIN_ENERGY           (Field_ENUM::STRAIN_ENERGY,                Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Strain_Energy");
 const Field_NS::FieldSpec STRAIN_ENERGY_DENSITY   (Field_ENUM::STRAIN_ENERGY_DENSITY,        Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Strain_Energy_Density");
+const Field_NS::FieldSpec INTERFACE_PROXIMITY     (Field_ENUM::INTERFACE_PROXIMITY,          Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Interface_Proximity");
 
 /*
  * NODAL VECTOR3D FieldSpecs (vector fields defined at nodes)
@@ -285,7 +287,7 @@ const Field_NS::FieldSpec ANGULAR_MOMENTUM3D     (Field_ENUM::ANGULAR_MOMENTUM, 
 const Field_NS::FieldSpec LINEAR_MOMENTUM3D      (Field_ENUM::LINEAR_MOMENTUM,       Field_ENUM::NODE, Field_ENUM::VECTOR3D, Field_ENUM::TWO_STEP, "Linear_Momentum");
 
 /*
- * BOND SCALAR FieldSpecs
+ * BOND SCALAR FieldSpesc
  */
 const Field_NS::FieldSpec BOND_DAMAGE                 (Field_ENUM::BOND_DAMAGE,    Field_ENUM::BOND, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Bond Damage");
 const Field_NS::FieldSpec PARTIAL_VOLUME              (Field_ENUM::PARTIAL_VOLUME, Field_ENUM::BOND, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Partial Volume");
@@ -324,6 +326,7 @@ struct FieldSpecMap {
 		mymap[KINETIC_ENERGY.getLabel()]               = KINETIC_ENERGY;
 		mymap[STRAIN_ENERGY.getLabel()]                = STRAIN_ENERGY;
 		mymap[STRAIN_ENERGY_DENSITY.getLabel()]        = STRAIN_ENERGY_DENSITY;
+		mymap[INTERFACE_PROXIMITY.getLabel()]          = INTERFACE_PROXIMITY;
                 // point vector fieldspecs
 		mymap[COORD3D.getLabel()]                      = COORD3D;
 		mymap[TANGENT_REFERENCE_COORDINATES.getLabel()]                      = TANGENT_REFERENCE_COORDINATES;

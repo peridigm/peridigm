@@ -48,14 +48,25 @@
 #include <vector>
 
 #include "Peridigm_Compute_Strain_Energy_Density.hpp"
+#include "Peridigm_Field.hpp"
 #include "../core/Peridigm.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Strain_Energy_Density::Compute_Strain_Energy_Density(PeridigmNS::Peridigm *peridigm_ ){peridigm = peridigm_;}
+PeridigmNS::Compute_Strain_Energy_Density::Compute_Strain_Energy_Density(PeridigmNS::Peridigm *peridigm_ )
+  : peridigm(peridigm_), volumeFieldId(-1), modelCoordinatesFieldId(-1), coordinatesFieldId(-1),
+    weightedVolumeFieldId(-1), dilatationFieldId(-1), strainEnergyDensityFieldId(-1)
+{
+  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  volumeFieldId = fieldManager.getFieldId("Volume");
+  modelCoordinatesFieldId = fieldManager.getFieldId("Model_Coordinates");
+  coordinatesFieldId = fieldManager.getFieldId("Coordinates");
+  weightedVolumeFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::CONSTANT, "Weighted_Volume");
+  dilatationFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::TWO_STEP, "Dilatation");
+  strainEnergyDensityFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::TWO_STEP, "Strain_Energy_Density");
+}
 
 //! Destructor.
 PeridigmNS::Compute_Strain_Energy_Density::~Compute_Strain_Energy_Density(){}
-
 
 //! Returns the fieldspecs computed by this class
 std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Strain_Energy_Density::getFieldSpecs() const 
@@ -82,19 +93,18 @@ int PeridigmNS::Compute_Strain_Energy_Density::computeStrainEnergyDensity( Teuch
 	Teuchos::RCP<Epetra_Vector> volume, force, ref, coord, w_volume, dilatation, numNeighbors, neighborID, strain_energy_density;
 	std::vector<PeridigmNS::Block>::iterator blockIt;
 	for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-		Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
 		Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
 		const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
 		const int* ownedIDs = neighborhoodData->OwnedIDs();
 		const int* neighborhoodList = neighborhoodData->NeighborhoodList();
 
-		volume                = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
-		ref                   = dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE);
-		coord                 = dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1);
-		w_volume              = dataManager->getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE);
-		dilatation            = dataManager->getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1);
+		volume                = blockIt->getData(volumeFieldId, Field_ENUM::STEP_NONE);
+		ref                   = blockIt->getData(modelCoordinatesFieldId, Field_ENUM::STEP_NONE);
+		coord                 = blockIt->getData(coordinatesFieldId, Field_ENUM::STEP_NP1);
+		w_volume              = blockIt->getData(weightedVolumeFieldId, Field_ENUM::STEP_NONE);
+		dilatation            = blockIt->getData(dilatationFieldId, Field_ENUM::STEP_NP1);
                 if (storeLocal)
-                	strain_energy_density = dataManager->getData(Field_NS::STRAIN_ENERGY_DENSITY, Field_ENUM::STEP_NP1);
+                	strain_energy_density = blockIt->getData(strainEnergyDensityFieldId, Field_ENUM::STEP_NP1);
 	
 		// Sanity check
 		if (coord->Map().NumMyElements() != volume->Map().NumMyElements() || volume->Map().NumMyElements() != ref->Map().NumMyElements())

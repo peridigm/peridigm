@@ -198,19 +198,19 @@ namespace PeridigmNS {
     }
 
     //! Method for accessing data from the DataManager.
-    Teuchos::RCP<Epetra_Vector> getData(Field_NS::FieldSpec fieldSpec, Field_ENUM::Step step){
+    Teuchos::RCP<Epetra_Vector> getData(int fieldId, Field_ENUM::Step step){
       TEUCHOS_TEST_FOR_EXCEPT_MSG(
         dataManager.is_null(),
         "\n**** DataManager must be initialized via Block::initializeDataManager() prior to calling Block::getData()\n");
-      return dataManager->getData(fieldSpec, step);
+      return dataManager->getData(fieldId, step);
     }
 
     //! Method for querying the DataManager for the presence of a field spec.
-    bool hasData(Field_NS::FieldSpec fieldSpec, Field_ENUM::Step step){
+    bool hasData(int fieldId, Field_ENUM::Step step){
       TEUCHOS_TEST_FOR_EXCEPT_MSG(
         dataManager.is_null(),
         "\n**** DataManager must be initialized via Block::initializeDataManager() prior to calling Block::hasData()\n");
-      return dataManager->hasData(fieldSpec, step);
+      return dataManager->hasData(fieldId, step);
     }
 
     //! Method for accessing global scalar data
@@ -229,7 +229,7 @@ namespace PeridigmNS {
      *  the Block's DataManager.  Note that if the Block does not have space allocated for the given spec and step,
      *  then by design the function is a no-op.
      */
-    void importData(const Epetra_Vector& source, Field_NS::FieldSpec spec, Field_ENUM::Step step, Epetra_CombineMode combineMode);
+    void importData(const Epetra_Vector& source, int fieldId, Field_ENUM::Step step, Epetra_CombineMode combineMode);
 
     /*! \brief Export data from the underlying source vector associated with the given field spec to the given target vector.
      *
@@ -237,7 +237,7 @@ namespace PeridigmNS {
      *  (global) vector.  Note that if the Block does not have space allocated for the given spec and step, then by design
      *  the function is a no-op.
      */
-    void exportData(Epetra_Vector& target, Field_NS::FieldSpec spec, Field_ENUM::Step step, Epetra_CombineMode combineMode);
+    void exportData(Epetra_Vector& target, int fieldId, Field_ENUM::Step step, Epetra_CombineMode combineMode);
 
     //! Swaps STATE_N and STATE_NP1.
     void updateState(){ dataManager->updateState(); }

@@ -45,13 +45,11 @@
 // ************************************************************************
 //@HEADER
 
-/*
 #ifdef COMPUTE_CLASS
 
-//ComputeClass(Angular_Momentum,Compute_Angular_Momentum,peridigm)
+ComputeClass(Angular_Momentum,Compute_Angular_Momentum,peridigm)
 
 #else
-*/
 
 #ifndef PERIDIGM_COMPUTE_ANGULAR_MOMENTUM_HPP
 #define PERIDIGM_COMPUTE_ANGULAR_MOMENTUM_HPP
@@ -70,28 +68,34 @@ namespace PeridigmNS {
 
   public:
 	
-  //! Standard constructor.
-  Compute_Angular_Momentum( PeridigmNS::Peridigm *peridigm_ );
+    //! Standard constructor.
+    Compute_Angular_Momentum( PeridigmNS::Peridigm *peridigm_ );
 
-  //! Destructor.
-  virtual ~Compute_Angular_Momentum();
+    //! Destructor.
+    virtual ~Compute_Angular_Momentum();
 
-  //! Returns the fieldspecs computed by this class
-  virtual std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
+    //! Returns the fieldspecs computed by this class OBSOLETE
+    virtual std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
 
-  //! Perform computation
-  virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
+    //! Perform computation
+    virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
 
-  //! Compute the angular momentum and optionally store the nodal values. 
-  int computeAngularMomentum( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, bool storeLocal ) const ;
+    //! Compute the angular momentum and optionally store the nodal values. 
+    int computeAngularMomentum( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, bool storeLocal ) const ;
   
   private:
 
-  //! Parent pointer
-  PeridigmNS::Peridigm *peridigm;
+    //! Parent pointer
+    PeridigmNS::Peridigm *peridigm;
 
+    // field ids for all relevant data
+    int volumeFieldId;
+    int coordinatesFieldId;
+    int velocityFieldId;
+    int angularMomentumFieldId;
+    int globalAngularMomentumFieldId;
   };
 }
 
 #endif // PERIDIGM_COMPUTE_ANGULAR_MOMENTUM_HPP
-//#endif // COMPUTE_CLASS
+#endif // COMPUTE_CLASS

@@ -48,6 +48,7 @@
 #include <Teuchos_Exceptions.hpp>
 #include <Epetra_Import.h>
 #include "Peridigm_DataManager.hpp"
+#include "Peridigm_Field.hpp"
 
 void PeridigmNS::DataManager::allocateData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > specs)
 {
@@ -332,17 +333,46 @@ void PeridigmNS::DataManager::copyLocallyOwnedDataFromDataManager(PeridigmNS::Da
   }
 }
 
-bool PeridigmNS::DataManager::hasData(Field_NS::FieldSpec fieldSpec, Field_ENUM::Step step)
+bool PeridigmNS::DataManager::hasData(int fieldId, Field_ENUM::Step step)
 {
+  PeridigmNS::FieldSpec peridigmSpec = PeridigmNS::FieldManager::self().getFieldSpec(fieldId);
+  // get equivalent old-style spec
+  string label = peridigmSpec.getLabel();
+
+  // hackage to get around renaming process
+  if(label == "Coordinates")
+    label = "Current_Coordinates";
+  if(label == "Model_Coordinates")
+    label = "Coordinates";
+  if(label == "Bond_Damage")
+    label = "Bond Damage";
+  if(label == "Surface_Correction_Factor")
+    label = "SHEAR_CORRECTION_FACTOR";
+  if(label == "Block_Id")
+    label = "BLOCK_ID";
+  if(label == "ID")
+    label == "Element_Id";
+  if(label == "Partial_Volume")
+    label = "Partial Volume";
+  if(label == "Tangent_Reference_Coordinates")
+    label = "Tangent Reference Coordinates";
+  std::map<string, Field_NS::FieldSpec>::const_iterator specIt = Field_NS::FieldSpecMap::Map.find(label);
+  if(specIt == Field_NS::FieldSpecMap::Map.end()){
+    cout << "DEBUGGING " << label << endl;
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(specIt == Field_NS::FieldSpecMap::Map.end(), "Failed to find reference to fieldSpec!");
+  }
+  Field_NS::FieldSpec const &spec = specIt->second;
+  // end hackage
+
   bool hasData = false;
   if(step == Field_ENUM::STEP_NONE){
-    hasData = stateNONE->hasData(fieldSpec);
+    hasData = stateNONE->hasData(spec);
   }
   else if(step == Field_ENUM::STEP_N){
-    hasData = stateN->hasData(fieldSpec);
+    hasData = stateN->hasData(spec);
   }
   else if(step == Field_ENUM::STEP_NP1){
-    hasData = stateNP1->hasData(fieldSpec);
+    hasData = stateNP1->hasData(spec);
   }
   else{
     TEUCHOS_TEST_FOR_EXCEPTION(false, Teuchos::RangeError, 
@@ -351,7 +381,8 @@ bool PeridigmNS::DataManager::hasData(Field_NS::FieldSpec fieldSpec, Field_ENUM:
   return hasData;
 }
 
-Teuchos::RCP<Epetra_Vector> PeridigmNS::DataManager::getData(Field_NS::FieldSpec fieldSpec, Field_ENUM::Step step)
+// \todo This is obsolete.
+Teuchos::RCP<Epetra_Vector> PeridigmNS::DataManager::getDataOBSOLETE(Field_NS::FieldSpec fieldSpec, Field_ENUM::Step step)
 {
   Teuchos::RCP<Epetra_Vector> data;
   if(step == Field_ENUM::STEP_NONE){
@@ -368,4 +399,39 @@ Teuchos::RCP<Epetra_Vector> PeridigmNS::DataManager::getData(Field_NS::FieldSpec
                        "PeridigmNS::DataManager::getData, invalid FieldStep!");
   }
   return data;
+}
+
+Teuchos::RCP<Epetra_Vector> PeridigmNS::DataManager::getData(int fieldId, Field_ENUM::Step step)
+{
+  PeridigmNS::FieldSpec peridigmSpec = PeridigmNS::FieldManager::self().getFieldSpec(fieldId);
+
+  // get equivalent old-style spec
+  string label = peridigmSpec.getLabel();
+
+  // hackage to get around renaming process
+  if(label == "Coordinates")
+    label = "Current_Coordinates";
+  if(label == "Model_Coordinates")
+    label = "Coordinates";
+  if(label == "Bond_Damage")
+    label = "Bond Damage";
+  if(label == "Surface_Correction_Factor")
+    label = "SHEAR_CORRECTION_FACTOR";
+  if(label == "Block_Id")
+    label = "BLOCK_ID";
+  if(label == "ID")
+    label == "Element_Id";
+  if(label == "Partial_Volume")
+    label = "Partial Volume";
+  if(label == "Tangent_Reference_Coordinates")
+    label = "Tangent Reference Coordinates";
+  std::map<string, Field_NS::FieldSpec>::const_iterator specIt = Field_NS::FieldSpecMap::Map.find(label);
+  if(specIt == Field_NS::FieldSpecMap::Map.end()){
+    cout << "DEBUGGING " << label << endl;
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(specIt == Field_NS::FieldSpecMap::Map.end(), "Failed to find reference to fieldSpec!");
+  }
+  Field_NS::FieldSpec const &spec = specIt->second;
+  // end hackage
+
+  return getDataOBSOLETE(spec, step);
 }

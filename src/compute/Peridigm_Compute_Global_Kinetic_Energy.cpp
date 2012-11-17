@@ -51,7 +51,8 @@
 #include "../core/Peridigm.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Global_Kinetic_Energy::Compute_Global_Kinetic_Energy(PeridigmNS::Peridigm *peridigm_ ):Compute_Kinetic_Energy(peridigm_){peridigm = peridigm_;}
+PeridigmNS::Compute_Global_Kinetic_Energy::Compute_Global_Kinetic_Energy(PeridigmNS::Peridigm *peridigm_ )
+  :  Compute_Kinetic_Energy(peridigm_), peridigm(peridigm_) {}
 
 //! Destructor.
 PeridigmNS::Compute_Global_Kinetic_Energy::~Compute_Global_Kinetic_Energy(){}

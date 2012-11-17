@@ -63,6 +63,7 @@
 #endif
 #include <vector>
 #include "../../core/Peridigm.hpp"
+#include "Peridigm_Field.hpp"
 
 using namespace boost::unit_test;
 
@@ -124,14 +125,13 @@ void FourPointTest() {
 
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createFourPointModel();
 
-  // Get the data manager
-  Teuchos::RCP<PeridigmNS::DataManager> dataManager = peridigm->getBlocks()->begin()->getDataManager();
+  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
 
   // Access the data we need
   Teuchos::RCP<Epetra_Vector> force, force_density, volume;
-  force_density = dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1);
-  force         = dataManager->getData(Field_NS::FORCE3D, Field_ENUM::STEP_NP1);
-  volume        = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
+  force_density = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Force_Density"), Field_ENUM::STEP_NP1);
+  force         = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Force"), Field_ENUM::STEP_NP1);
+  volume        = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Volume"), Field_ENUM::STEP_NONE);
 
   // Manufacture force density data
   double *force_density_values  = force_density->Values();
