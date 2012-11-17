@@ -249,8 +249,8 @@ const Field_NS::FieldSpec GLOBAL_ANGULAR_MOMENTUM(Field_ENUM::ANGULAR_MOMENTUM, 
  */
 const Field_NS::FieldSpec VOLUME                  (Field_ENUM::VOLUME,                       Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Volume");
 const Field_NS::FieldSpec DENSITY                 (Field_ENUM::DENSITY,                      Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Density");
-const Field_NS::FieldSpec GID                     (Field_ENUM::GID,                          Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "ID");
-const Field_NS::FieldSpec BLOCK_ID                (Field_ENUM::BLOCK_ID,                     Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "BLOCK_ID");
+const Field_NS::FieldSpec GID                     (Field_ENUM::GID,                          Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Element_Id");
+const Field_NS::FieldSpec BLOCK_ID                (Field_ENUM::BLOCK_ID,                     Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Block_Id");
 const Field_NS::FieldSpec PROC_NUM                (Field_ENUM::PROC_NUM,                     Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Proc_Num");
 const Field_NS::FieldSpec WEIGHTED_VOLUME         (Field_ENUM::WEIGHTED_VOLUME,              Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Weighted_Volume");
 const Field_NS::FieldSpec RADIUS                  (Field_ENUM::RADIUS,                       Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Radius");
@@ -261,7 +261,7 @@ const Field_NS::FieldSpec DILATATION              (Field_ENUM::DILATATION,      
 const Field_NS::FieldSpec NUM_NEIGHBORS           (Field_ENUM::NUM_NEIGHBORS,                Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Num_Neighbors");
 const Field_NS::FieldSpec LAMBDA                  (Field_ENUM::PLASTIC_CONSISTENCY,          Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Lambda");
 const Field_NS::FieldSpec NORM_TD                 (Field_ENUM::NORM_DEVIATORIC_FORCE_STATE,  Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::SCRATCH,  "Norm_td");
-const Field_NS::FieldSpec SHEAR_CORRECTION_FACTOR (Field_ENUM::SHEAR_CORRECTION_FACTOR,      Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "SHEAR_CORRECTION_FACTOR");
+const Field_NS::FieldSpec SHEAR_CORRECTION_FACTOR (Field_ENUM::SHEAR_CORRECTION_FACTOR,      Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Surface_Correction_Factor");
 const Field_NS::FieldSpec BC_MASK                 (Field_ENUM::BC_MASK,                      Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "BC_MASK");
 const Field_NS::FieldSpec DAMAGE                  (Field_ENUM::DAMAGE,                       Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Damage");
 const Field_NS::FieldSpec KINETIC_ENERGY          (Field_ENUM::KINETIC_ENERGY,               Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Kinetic_Energy");
@@ -272,10 +272,10 @@ const Field_NS::FieldSpec INTERFACE_PROXIMITY     (Field_ENUM::INTERFACE_PROXIMI
 /*
  * NODAL VECTOR3D FieldSpecs (vector fields defined at nodes)
  */
-const Field_NS::FieldSpec COORD3D                (Field_ENUM::COORDINATES,           Field_ENUM::NODE, Field_ENUM::VECTOR3D, Field_ENUM::CONSTANT, "Coordinates");
-const Field_NS::FieldSpec TANGENT_REFERENCE_COORDINATES  (Field_ENUM::TANGENT_REFERENCE_COORDINATES,           Field_ENUM::NODE, Field_ENUM::VECTOR3D, Field_ENUM::CONSTANT, "Tangent Reference Coordinates");
+const Field_NS::FieldSpec COORD3D                (Field_ENUM::COORDINATES,           Field_ENUM::NODE, Field_ENUM::VECTOR3D, Field_ENUM::CONSTANT, "Model_Coordinates");
+const Field_NS::FieldSpec TANGENT_REFERENCE_COORDINATES  (Field_ENUM::TANGENT_REFERENCE_COORDINATES,           Field_ENUM::NODE, Field_ENUM::VECTOR3D, Field_ENUM::CONSTANT, "Tangent_Reference_Coordinates");
 const Field_NS::FieldSpec DISPL3D                (Field_ENUM::DISPLACEMENT,          Field_ENUM::NODE, Field_ENUM::VECTOR3D, Field_ENUM::TWO_STEP, "Displacement");
-const Field_NS::FieldSpec CURCOORD3D             (Field_ENUM::CURRENT_COORDINATES,   Field_ENUM::NODE, Field_ENUM::VECTOR3D, Field_ENUM::TWO_STEP, "Current_Coordinates");
+const Field_NS::FieldSpec CURCOORD3D             (Field_ENUM::CURRENT_COORDINATES,   Field_ENUM::NODE, Field_ENUM::VECTOR3D, Field_ENUM::TWO_STEP, "Coordinates");
 const Field_NS::FieldSpec VELOC3D                (Field_ENUM::VELOCITY,              Field_ENUM::NODE, Field_ENUM::VECTOR3D, Field_ENUM::TWO_STEP, "Velocity");
 const Field_NS::FieldSpec ACCEL3D                (Field_ENUM::ACCELERATION,          Field_ENUM::NODE, Field_ENUM::VECTOR3D, Field_ENUM::TWO_STEP, "Acceleration");
 const Field_NS::FieldSpec FORCE3D                (Field_ENUM::FORCE,                 Field_ENUM::NODE, Field_ENUM::VECTOR3D, Field_ENUM::TWO_STEP, "Force");
@@ -289,8 +289,8 @@ const Field_NS::FieldSpec LINEAR_MOMENTUM3D      (Field_ENUM::LINEAR_MOMENTUM,  
 /*
  * BOND SCALAR FieldSpesc
  */
-const Field_NS::FieldSpec BOND_DAMAGE                 (Field_ENUM::BOND_DAMAGE,    Field_ENUM::BOND, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Bond Damage");
-const Field_NS::FieldSpec PARTIAL_VOLUME              (Field_ENUM::PARTIAL_VOLUME, Field_ENUM::BOND, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Partial Volume");
+const Field_NS::FieldSpec BOND_DAMAGE                 (Field_ENUM::BOND_DAMAGE,    Field_ENUM::BOND, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Bond_Damage");
+const Field_NS::FieldSpec PARTIAL_VOLUME              (Field_ENUM::PARTIAL_VOLUME, Field_ENUM::BOND, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Partial_Volume");
 const Field_NS::FieldSpec DEVIATORIC_PLASTIC_EXTENSION(Field_ENUM::E_DP,           Field_ENUM::BOND, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Deviatoric_Plastic_Extension");
 const Field_NS::FieldSpec DEVIATORIC_BACK_EXTENSION   (Field_ENUM::E_DB,           Field_ENUM::BOND, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Deviatoric_Back_Extension");
 

@@ -147,7 +147,7 @@ PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Te
   // initializeExodusDatabase(blocks);
 
   // Create field IDs as necessary
-  PeridigmNS::FieldManager::self().getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::CONSTANT, "ID");
+  PeridigmNS::FieldManager::self().getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::CONSTANT, "Element_Id");
   PeridigmNS::FieldManager::self().getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::CONSTANT, "Proc_Num");
 }
 
@@ -261,18 +261,18 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
     // \todo Elliminate the use of Field_NS::FieldSpec in favor of new PeridigmNS::FieldManager
     // hackage to get around renaming process
     string label = name;
-    if(label == "Coordinates")
-      label = "Current_Coordinates";
-    if(label == "Model_Coordinates")
-      label = "Coordinates";
-    if(label == "Bond_Damage")
-      label = "Bond Damage";
-    if(label == "Surface_Correction_Factor")
-      label = "SHEAR_CORRECTION_FACTOR";
-    if(label == "Block_Id")
-      label = "BLOCK_ID";
-    if(label == "Partial_Volume")
-      label = "Partial Volume";
+    // if(label == "Coordinates")
+    //   label = "Current_Coordinates";
+    // if(label == "Model_Coordinates")
+    //   label = "Coordinates";
+    // if(label == "Bond_Damage")
+    //   label = "Bond Damage";
+    // if(label == "Surface_Correction_Factor")
+    //   label = "SHEAR_CORRECTION_FACTOR";
+    // if(label == "Block_Id")
+    //   label = "BLOCK_ID";
+    // if(label == "Partial_Volume")
+    //   label = "Partial Volume";
     // end hackage
 
     int fieldId = PeridigmNS::FieldManager::self().getFieldId(label); 
@@ -703,18 +703,18 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
         // \todo Elliminate the use of Field_NS::FieldSpec in favor of new PeridigmNS::FieldManager
     // hackage to get around renaming process
     string label = variableName;
-    if(label == "Coordinates")
-      label = "Current_Coordinates";
-    if(label == "Model_Coordinates")
-      label = "Coordinates";
-    if(label == "Bond_Damage")
-      label = "Bond Damage";
-    if(label == "Surface_Correction_Factor")
-      label = "SHEAR_CORRECTION_FACTOR";
-    if(label == "Block_Id")
-      label = "BLOCK_ID";
-    if(label == "Partial_Volume")
-      label = "Partial Volume";
+    // if(label == "Coordinates")
+    //   label = "Current_Coordinates";
+    // if(label == "Model_Coordinates")
+    //   label = "Coordinates";
+    // if(label == "Bond_Damage")
+    //   label = "Bond Damage";
+    // if(label == "Surface_Correction_Factor")
+    //   label = "SHEAR_CORRECTION_FACTOR";
+    // if(label == "Block_Id")
+    //   label = "BLOCK_ID";
+    // if(label == "Partial_Volume")
+    //   label = "Partial Volume";
     // end hackage
         int fieldId = PeridigmNS::FieldManager::self().getFieldId(label);
 

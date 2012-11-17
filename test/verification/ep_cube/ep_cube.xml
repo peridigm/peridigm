@@ -64,7 +64,7 @@
 		<ParameterList name="Elastic Plastic">
 			<Parameter name="Displacement" type="bool" value="true"/>
 			<Parameter name="Velocity" type="bool" value="true"/>
-			<Parameter name="ID" type="bool" value="true"/>
+			<Parameter name="Element_Id" type="bool" value="true"/>
 			<Parameter name="Proc_Num" type="bool" value="true"/>
 			<Parameter name="Dilatation" type="bool" value="true"/>
 			<Parameter name="Force_Density" type="bool" value="true"/>

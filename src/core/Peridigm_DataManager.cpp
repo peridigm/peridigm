@@ -340,22 +340,22 @@ bool PeridigmNS::DataManager::hasData(int fieldId, Field_ENUM::Step step)
   string label = peridigmSpec.getLabel();
 
   // hackage to get around renaming process
-  if(label == "Coordinates")
-    label = "Current_Coordinates";
-  if(label == "Model_Coordinates")
-    label = "Coordinates";
-  if(label == "Bond_Damage")
-    label = "Bond Damage";
-  if(label == "Surface_Correction_Factor")
-    label = "SHEAR_CORRECTION_FACTOR";
-  if(label == "Block_Id")
-    label = "BLOCK_ID";
-  if(label == "ID")
-    label == "Element_Id";
-  if(label == "Partial_Volume")
-    label = "Partial Volume";
-  if(label == "Tangent_Reference_Coordinates")
-    label = "Tangent Reference Coordinates";
+  // if(label == "Coordinates")
+  //   label = "Current_Coordinates";
+  // if(label == "Model_Coordinates")
+  //   label = "Coordinates";
+  // if(label == "Bond_Damage")
+  //   label = "Bond Damage";
+  // if(label == "Surface_Correction_Factor")
+  //   label = "SHEAR_CORRECTION_FACTOR";
+  // if(label == "Block_Id")
+  //   label = "BLOCK_ID";
+  // if(label == "ID")
+  //   label == "Element_Id";
+  // if(label == "Partial_Volume")
+  //   label = "Partial Volume";
+  // if(label == "Tangent_Reference_Coordinates")
+  //   label = "Tangent Reference Coordinates";
   std::map<string, Field_NS::FieldSpec>::const_iterator specIt = Field_NS::FieldSpecMap::Map.find(label);
   if(specIt == Field_NS::FieldSpecMap::Map.end()){
     cout << "DEBUGGING " << label << endl;
@@ -409,22 +409,22 @@ Teuchos::RCP<Epetra_Vector> PeridigmNS::DataManager::getData(int fieldId, Field_
   string label = peridigmSpec.getLabel();
 
   // hackage to get around renaming process
-  if(label == "Coordinates")
-    label = "Current_Coordinates";
-  if(label == "Model_Coordinates")
-    label = "Coordinates";
-  if(label == "Bond_Damage")
-    label = "Bond Damage";
-  if(label == "Surface_Correction_Factor")
-    label = "SHEAR_CORRECTION_FACTOR";
-  if(label == "Block_Id")
-    label = "BLOCK_ID";
-  if(label == "ID")
-    label == "Element_Id";
-  if(label == "Partial_Volume")
-    label = "Partial Volume";
-  if(label == "Tangent_Reference_Coordinates")
-    label = "Tangent Reference Coordinates";
+  // if(label == "Coordinates")
+  //   label = "Current_Coordinates";
+  // if(label == "Model_Coordinates")
+  //   label = "Coordinates";
+  // if(label == "Bond_Damage")
+  //   label = "Bond Damage";
+  // if(label == "Surface_Correction_Factor")
+  //   label = "SHEAR_CORRECTION_FACTOR";
+  // if(label == "Block_Id")
+  //   label = "BLOCK_ID";
+  // if(label == "ID")
+  //   label == "Element_Id";
+  // if(label == "Partial_Volume")
+  //   label = "Partial Volume";
+  // if(label == "Tangent_Reference_Coordinates")
+  //   label = "Tangent Reference Coordinates";
   std::map<string, Field_NS::FieldSpec>::const_iterator specIt = Field_NS::FieldSpecMap::Map.find(label);
   if(specIt == Field_NS::FieldSpecMap::Map.end()){
     cout << "DEBUGGING " << label << endl;
