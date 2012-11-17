@@ -255,27 +255,10 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
 
   for (Teuchos::ParameterList::ConstIterator it = outputVariables->begin(); it != outputVariables->end(); ++it) {
     const std::string& name = it->first;
-    // use field name to get reference to const fieldSpec
+
+    // \todo Both the old Field_NS::FieldSpec and the new PeridigmNS::FieldManager are in use temporarily, Field_NS::FieldSpec will be elliminated.
     std::map<string, Field_NS::FieldSpec>::const_iterator specIt = Field_NS::FieldSpecMap::Map.find(name);
-
-    // \todo Elliminate the use of Field_NS::FieldSpec in favor of new PeridigmNS::FieldManager
-    // hackage to get around renaming process
-    string label = name;
-    // if(label == "Coordinates")
-    //   label = "Current_Coordinates";
-    // if(label == "Model_Coordinates")
-    //   label = "Coordinates";
-    // if(label == "Bond_Damage")
-    //   label = "Bond Damage";
-    // if(label == "Surface_Correction_Factor")
-    //   label = "SHEAR_CORRECTION_FACTOR";
-    // if(label == "Block_Id")
-    //   label = "BLOCK_ID";
-    // if(label == "Partial_Volume")
-    //   label = "Partial Volume";
-    // end hackage
-
-    int fieldId = PeridigmNS::FieldManager::self().getFieldId(label); 
+    int fieldId = PeridigmNS::FieldManager::self().getFieldId(name); 
 
     TEUCHOS_TEST_FOR_EXCEPT_MSG(specIt == Field_NS::FieldSpecMap::Map.end(), "Failed to find reference to fieldSpec!");
     Field_NS::FieldSpec const &spec = specIt->second;
@@ -698,25 +681,10 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
       for(Teuchos::ParameterList::ConstIterator outputVariableIt = outputVariables->begin(); outputVariableIt != outputVariables->end(); ++outputVariableIt){
         const std::string& variableName = outputVariableIt->first;
         std::map<string, Field_NS::FieldSpec>::const_iterator specIt = Field_NS::FieldSpecMap::Map.find(variableName);
-        const Field_NS::FieldSpec& spec = specIt->second;
 
-        // \todo Elliminate the use of Field_NS::FieldSpec in favor of new PeridigmNS::FieldManager
-    // hackage to get around renaming process
-    string label = variableName;
-    // if(label == "Coordinates")
-    //   label = "Current_Coordinates";
-    // if(label == "Model_Coordinates")
-    //   label = "Coordinates";
-    // if(label == "Bond_Damage")
-    //   label = "Bond Damage";
-    // if(label == "Surface_Correction_Factor")
-    //   label = "SHEAR_CORRECTION_FACTOR";
-    // if(label == "Block_Id")
-    //   label = "BLOCK_ID";
-    // if(label == "Partial_Volume")
-    //   label = "Partial Volume";
-    // end hackage
-        int fieldId = PeridigmNS::FieldManager::self().getFieldId(label);
+        // \todo Both the old Field_NS::FieldSpec and the new PeridigmNS::FieldManager are in use temporarily, Field_NS::FieldSpec will be elliminated.
+        const Field_NS::FieldSpec& spec = specIt->second;
+        int fieldId = PeridigmNS::FieldManager::self().getFieldId(variableName);
 
         if(spec.getRelation() == Field_ENUM::ELEMENT){
           Field_ENUM::Step step = Field_ENUM::STEP_NONE;
