@@ -124,10 +124,24 @@ namespace PeridigmNS {
 	double m_density;
 	double m_yieldStress;
 	double m_thickness;
-    bool m_applyShearCorrectionFactor;
+    bool m_applySurfaceCorrectionFactor;
     bool m_disablePlasticity;
     bool m_applyAutomaticDifferentiationJacobian;
     bool m_isPlanarProblem;
+
+    // field ids for all relevant data
+    int volumeFieldId;
+    int damageFieldId;
+    int weightedVolumeFieldId;
+    int dilatationFieldId;
+    int modelCoordinatesFieldId;
+    int coordinatesFieldId;
+    int forceDensityFieldId;
+    int bondDamageFieldId;
+    int deviatoricPlasticExtensionFieldId;
+    int lambdaFieldId;
+    int surfaceCorrectionFactorFieldId;
+    int tangentReferenceCoordinatesFieldId;
   };
 }
 

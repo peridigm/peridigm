@@ -71,26 +71,34 @@ namespace PeridigmNS {
 
   public:
 	
-  //! Standard constructor.
-  Compute_Strain_Energy( PeridigmNS::Peridigm *peridigm_ );
+    // !Standard constructor.
+    Compute_Strain_Energy( PeridigmNS::Peridigm *peridigm_ );
 
-  //! Destructor.
-  virtual ~Compute_Strain_Energy();
+    //! Destructor.
+    virtual ~Compute_Strain_Energy();
 
-  //! Returns the fieldspecs computed by this class
-  virtual std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
+    //! Returns the fieldspecs computed by this class
+    virtual std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
 
-  //! Perform computation
-  virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
+    //! Perform computation
+    virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
 
-  //! Compute the strain energy and optionally store the nodal values. 
-  int computeStrainEnergy( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, bool storeLocal ) const ;
+    //! Compute the strain energy and optionally store the nodal values. 
+    int computeStrainEnergy( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, bool storeLocal ) const ;
 
   private:
 
-  //! Parent pointer
-  PeridigmNS::Peridigm *peridigm;
+    //! Parent pointer
+    PeridigmNS::Peridigm *peridigm;
 
+    // field ids for all relevant data
+    int volumeFieldId;
+    int modelCoordinatesFieldId;
+    int coordinatesFieldId;
+    int weightedVolumeFieldId;
+    int dilatationFieldId;
+    int strainEnergyFieldId;
+    int globalStrainEnergyFieldId;
   };
 }
 

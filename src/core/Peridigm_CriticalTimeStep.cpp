@@ -46,6 +46,7 @@
 //@HEADER
 
 #include "Peridigm_CriticalTimeStep.hpp"
+#include "Peridigm_Field.hpp"
 
 double PeridigmNS::ComputeCriticalTimeStep(const Epetra_Comm& comm, PeridigmNS::Block& block){
 
@@ -53,7 +54,6 @@ double PeridigmNS::ComputeCriticalTimeStep(const Epetra_Comm& comm, PeridigmNS::
   const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
   const int* ownedIDs = neighborhoodData->OwnedIDs();
   const int* neighborhoodList = neighborhoodData->NeighborhoodList();
-  Teuchos::RCP<PeridigmNS::DataManager> dataManager = block.getDataManager();
   Teuchos::RCP<const PeridigmNS::Material> materialModel = block.getMaterialModel();
 
   double density = materialModel()->Density();
@@ -61,8 +61,9 @@ double PeridigmNS::ComputeCriticalTimeStep(const Epetra_Comm& comm, PeridigmNS::
   double horizon = materialModel()->Horizon();
 
   double *cellVolume, *x;
-  dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&cellVolume);
-  dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->ExtractView(&x);
+  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  block.getData(fieldManager.getFieldId("Volume"), Field_ENUM::STEP_NONE)->ExtractView(&cellVolume);
+  block.getData(fieldManager.getFieldId("Model_Coordinates"), Field_ENUM::STEP_NONE)->ExtractView(&x);
 
   double springConstant = 18.0*bulkModulus/(3.14159265*horizon*horizon*horizon*horizon);
   double minCriticalTimeStep = 1.0e50;

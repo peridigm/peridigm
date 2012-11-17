@@ -98,6 +98,12 @@ namespace PeridigmNS {
 	double m_springConstant;
 	double m_frictionCoefficient;
     double m_horizon;
+
+    // field ids for all relevant data
+    int m_volumeFieldId;
+    int m_coordinatesFieldId;
+    int m_velocityFieldId;
+    int m_contactForceDensityFieldId;
   };
 }
 

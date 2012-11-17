@@ -52,9 +52,7 @@
 
 //! Standard constructor.
 PeridigmNS::Compute_Global_Linear_Momentum::Compute_Global_Linear_Momentum(PeridigmNS::Peridigm *peridigm_ )
-  :Compute_Linear_Momentum(peridigm_) { 
-  peridigm = peridigm_;
-}
+  : Compute_Linear_Momentum(peridigm_), peridigm(peridigm_) {}
 
 //! Destructor.
 PeridigmNS::Compute_Global_Linear_Momentum::~Compute_Global_Linear_Momentum(){}

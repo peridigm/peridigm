@@ -48,10 +48,17 @@
 #include <vector>
 
 #include "Peridigm_Compute_Radius.hpp"
+#include "Peridigm_Field.hpp"
 #include "../core/Peridigm.hpp"
 #include <cmath>
 
-PeridigmNS::Compute_Radius::Compute_Radius(PeridigmNS::Peridigm *peridigm_ ){peridigm = peridigm_;}
+PeridigmNS::Compute_Radius::Compute_Radius(PeridigmNS::Peridigm *peridigm_) 
+  : peridigm(peridigm_), volumeFieldId(-1), radiusFieldId(-1)
+{
+  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  volumeFieldId = fieldManager.getFieldId("Volume");
+  radiusFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::CONSTANT, "Radius");
+}
 
 PeridigmNS::Compute_Radius::~Compute_Radius(){}
 
@@ -66,13 +73,12 @@ int PeridigmNS::Compute_Radius::compute( Teuchos::RCP< std::vector<PeridigmNS::B
   Teuchos::RCP<Epetra_Vector> force, acceleration;
   std::vector<PeridigmNS::Block>::iterator blockIt;
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
     Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
     const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
 
     double *volume, *radius;
-    dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&volume);
-    dataManager->getData(Field_NS::RADIUS, Field_ENUM::STEP_NONE)->ExtractView(&radius);
+    blockIt->getData(volumeFieldId, Field_ENUM::STEP_NONE)->ExtractView(&volume);
+    blockIt->getData(radiusFieldId, Field_ENUM::STEP_NONE)->ExtractView(&radius);
 
     double constant = 0.75/acos(-1.0);
     double oneThird = 1.0/3.0;

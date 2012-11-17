@@ -413,6 +413,18 @@ namespace PeridigmNS {
     //! BLAS for local-only vector updates (BLAS-1)
     Epetra_BLAS blas;
 
+    // field ids for all relevant data
+    int blockIdFieldId;
+    int volumeFieldId;
+    int modelCoordinatesFieldId;
+    int coordinatesFieldId;
+    int displacementFieldId;
+    int velocityFieldId;
+    int accelerationFieldId;
+    int forceDensityFieldId;
+    int contactForceDensityFieldId;
+    int partialVolumeFieldId;
+    int tangentReferenceCoordinatesFieldId;
   };
 }
 

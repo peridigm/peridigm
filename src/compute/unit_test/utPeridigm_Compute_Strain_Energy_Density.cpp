@@ -65,6 +65,7 @@
 #endif
 #include <vector>
 #include "../../core/Peridigm.hpp"
+#include "Peridigm_Field.hpp"
 
 using namespace boost::unit_test;
 using namespace Teuchos;
@@ -128,17 +129,17 @@ void FourPointTest()
 {
   Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createFourPointModel();
 
+  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+
   // Get the neighborhood data
   PeridigmNS::NeighborhoodData neighborhoodData = (*peridigm->getGlobalNeighborhoodData());
-  // Get the data manager
-  Teuchos::RCP<PeridigmNS::DataManager> dataManager = peridigm->getBlocks()->begin()->getDataManager();
   // Access the data we need
   Teuchos::RCP<Epetra_Vector> volume, ref, coords, dilatation, strain_energy_density;
-  volume                = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
-  ref                   = dataManager->getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE);
-  coords                = dataManager->getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1);
-  dilatation            = dataManager->getData(Field_NS::DILATATION, Field_ENUM::STEP_NP1);
-  strain_energy_density = dataManager->getData(Field_NS::STRAIN_ENERGY_DENSITY, Field_ENUM::STEP_NP1);
+  volume                = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Volume"), Field_ENUM::STEP_NONE);
+  ref                   = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Model_Coordinates"), Field_ENUM::STEP_NONE);
+  coords                = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Coordinates"), Field_ENUM::STEP_NP1);
+  dilatation            = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Dilatation"), Field_ENUM::STEP_NP1);
+  strain_energy_density = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Strain_Energy_Density"), Field_ENUM::STEP_NP1);
   // Get the neighborhood structure
   const int numOwnedPoints = (neighborhoodData.NumOwnedPoints());
 

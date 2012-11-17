@@ -46,6 +46,7 @@
 //@HEADER
 
 #include "Peridigm_Material.hpp"
+#include "Peridigm_Field.hpp"
 #include <Teuchos_Assert.hpp>
 #include <Epetra_SerialDenseMatrix.h>
 #include <Epetra_SerialComm.h>
@@ -99,6 +100,13 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
   TEUCHOS_TEST_FOR_EXCEPT_MSG(m_finiteDifferenceProbeLength == DBL_MAX, "**** Finite-difference Jacobian requires that the \"Finite Difference Probe Length\" parameter be set.\n");
   double epsilon = m_finiteDifferenceProbeLength;
 
+  // Get field ids for all relevant data
+  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  int volumeFId = fieldManager.getFieldId("Volume");
+  int coordinatesFId = fieldManager.getFieldId("Coordinates");
+  int tangentReferenceCoordinatesFId = fieldManager.getFieldId("Tangent_Reference_Coordinates");
+  int forceDensityFId = fieldManager.getFieldId("Force_Density");
+
   // Loop over all points.
   int neighborhoodListIndex = 0;
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
@@ -148,13 +156,13 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
 
     // Extract pointers to the underlying data in the constitutiveData array.
     double *volume, *yReference, *y, *force;
-    tempDataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&volume);
-    tempDataManager.getData(Field_NS::TANGENT_REFERENCE_COORDINATES, Field_ENUM::STEP_NONE)->ExtractView(&yReference);
-    tempDataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->ExtractView(&y);
-    tempDataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1)->ExtractView(&force);
+    tempDataManager.getData(volumeFId, Field_ENUM::STEP_NONE)->ExtractView(&volume);
+    tempDataManager.getData(tangentReferenceCoordinatesFId, Field_ENUM::STEP_NONE)->ExtractView(&yReference);
+    tempDataManager.getData(coordinatesFId, Field_ENUM::STEP_NP1)->ExtractView(&y);
+    tempDataManager.getData(forceDensityFId, Field_ENUM::STEP_NP1)->ExtractView(&force);
 
     // Create a temporary vector for storing force
-    Teuchos::RCP<Epetra_Vector> forceVector = tempDataManager.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1);
+    Teuchos::RCP<Epetra_Vector> forceVector = tempDataManager.getData(forceDensityFId, Field_ENUM::STEP_NP1);
     Teuchos::RCP<Epetra_Vector> tempForceVector = Teuchos::rcp(new Epetra_Vector(*forceVector));
     double* tempForce;
     tempForceVector->ExtractView(&tempForce);
@@ -162,7 +170,7 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     Teuchos::RCP<Epetra_Vector> coordStepNP1;
     if(finiteDifferenceScheme == CONSISTENT_FORWARD_DIFFERENCE){
       // Store the current coordinates in a scratch vector
-      coordStepNP1 = Teuchos::rcp(new Epetra_Vector(*tempDataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)));
+      coordStepNP1 = Teuchos::rcp(new Epetra_Vector(*tempDataManager.getData(coordinatesFId, Field_ENUM::STEP_NP1)));
       // Set the coordinates to the tangent reference coordinates
       for(int i=0 ; i<coordStepNP1->MyLength() ; ++i)
         y[i] = yReference[i];
@@ -270,13 +278,23 @@ void PeridigmNS::Material::computeApproximateDeformationGradient(const double dt
                                                                  const int* neighborhoodList,
                                                                  PeridigmNS::DataManager& dataManager) const
 {
+
+  // Get field ids for all relevant data
+  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  int volumeFId = fieldManager.getFieldId("Volume");
+  int modelCoordinatesFId = fieldManager.getFieldId("Model_Coordinates");
+  int coordinatesFId = fieldManager.getFieldId("Coordinates");
+  int weightedVolumeFId = fieldManager.getFieldId("WeightedVolume");
+  int bondDamageFId = fieldManager.getFieldId("Bond_Damage");
+
   // Extract pointers to the underlying data
-  double *x, *y, *volume, *weightedVolume, *bondDamage;
-  dataManager.getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->ExtractView(&x);
-  dataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->ExtractView(&y);
-  dataManager.getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&volume);
-  dataManager.getData(Field_NS::WEIGHTED_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&weightedVolume);
-  dataManager.getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
+  double *volume, *x, *y, *weightedVolume, *bondDamage;
+  dataManager.getData(volumeFId, Field_ENUM::STEP_NONE)->ExtractView(&volume);
+  dataManager.getData(modelCoordinatesFId, Field_ENUM::STEP_NONE)->ExtractView(&x);
+  dataManager.getData(coordinatesFId, Field_ENUM::STEP_NP1)->ExtractView(&y);
+
+  dataManager.getData(weightedVolumeFId, Field_ENUM::STEP_NONE)->ExtractView(&weightedVolume);
+  dataManager.getData(bondDamageFId, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
 
   double X[3], Y[3];
   double shapeTensor[3][3];

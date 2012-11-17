@@ -45,8 +45,8 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_FIELDSPEC_HPP
-#define PERIDIGM_FIELDSPEC_HPP
+#ifndef PERIDIGM_FIELD_HPP
+#define PERIDIGM_FIELD_HPP
 
 #include <string>
 #include <sstream>
@@ -112,7 +112,7 @@ public:
 
   const PeridigmField::Relation getRelation() const { return relation; }
   const PeridigmField::Length getLength() const { return length; }
-  const PeridigmField::Temporal get_temporal() const { return temporal; }
+  const PeridigmField::Temporal getTemporal() const { return temporal; }
   const std::string getLabel() const { return label; }
 
   PeridigmField::Relation relation;
@@ -125,25 +125,27 @@ public:
   ~FieldSpec(){}
 };
 
-class FieldSpecManager {
+class FieldManager {
 
 public:
 
   //! Singleton.
-  static const FieldSpecManager & self();
+  static FieldManager & self();
 
-  int getFieldSpecID(PeridigmField::Relation relation_,
-                     PeridigmField::Length length_,
-                     PeridigmField::Temporal temporal_,
-                     std::string label_) ;
+  int getFieldId(PeridigmField::Relation relation_,
+                 PeridigmField::Length length_,
+                 PeridigmField::Temporal temporal_,
+                 std::string label_) ;
 
-  bool hasFieldSpec(std::string label);
+  bool hasField(std::string label);
 
-  int getFieldSpecID(std::string label);
+  int getFieldId(std::string label);
+
+  FieldSpec getFieldSpec(int fieldId);
 
   std::vector<FieldSpec> getFieldSpecs() { return fieldSpecs; }
 
-  std::vector<std::string> getFieldSpecLabels() {
+  std::vector<std::string> getFieldLabels() {
     std::vector<std::string> labels;
     for(std::vector<FieldSpec>::const_iterator it = fieldSpecs.begin() ; it != fieldSpecs.end() ; it++)
       labels.push_back(it->label);
@@ -152,7 +154,7 @@ public:
 
   void printFieldSpecs(std::ostream& os) {
     std::stringstream ss;
-    ss << "Field specs:";
+    ss << "Field specifications:";
     for(std::vector<FieldSpec>::const_iterator it = fieldSpecs.begin() ; it != fieldSpecs.end() ; it++){
       ss << "\n";
       ss << "\n  Label:    " << it->label;
@@ -164,9 +166,9 @@ public:
     os << ss.str() << std::endl;
   }
 
-  void printFieldSpecLabels(std::ostream& os) {
-    std::vector<std::string> labels = getFieldSpecLabels();
-    std::string msg("\nField spec labels:");
+  void printFieldLabels(std::ostream& os) {
+    std::vector<std::string> labels = getFieldLabels();
+    std::string msg("\nField labels:");
     for(unsigned int i=0 ; i<labels.size() ; ++i)
       msg += "\n  " + labels[i];
     os << msg << "\n" << std::endl;
@@ -175,24 +177,21 @@ public:
 private:
 
   //! Constructor, private to prevent use (singleton class).
-  FieldSpecManager(){}
+  FieldManager(){}
 
   //! Private and unimplemented to prevent use
-  FieldSpecManager( const FieldSpecManager & );
+  FieldManager( const FieldManager & );
 
   //! Private and unimplemented to prevent use
-  FieldSpecManager & operator= ( const FieldSpecManager & );
+  FieldManager & operator= ( const FieldManager & );
 
   std::vector<FieldSpec> fieldSpecs;
 
   std::map<std::string, int> labelToIdMap;
 };
 
-std::ostream& operator<<(std::ostream& os, const FieldSpec& fieldSpec){
-  os << fieldSpec.getLabel();
-  return os;
-}
+std::ostream& operator<<(std::ostream& os, const FieldSpec& fieldSpec);
 
 }
 
-#endif // PERIDIGM_FIELDSPEC_HPP
+#endif // PERIDIGM_FIELD_HPP

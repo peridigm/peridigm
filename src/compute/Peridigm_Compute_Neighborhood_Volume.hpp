@@ -69,27 +69,30 @@ namespace PeridigmNS {
 
   public:
 	
-  //! Standard constructor.
-  Compute_Neighborhood_Volume( PeridigmNS::Peridigm *peridigm_ );
+    //! Standard constructor.
+    Compute_Neighborhood_Volume( PeridigmNS::Peridigm *peridigm_ );
 
-  //! Destructor.
-  ~Compute_Neighborhood_Volume();
+    //! Destructor.
+    ~Compute_Neighborhood_Volume();
 
-  //! Returns the fieldspecs computed by this class
-  std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
+    //! Returns the fieldspecs computed by this class
+    std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
 
-  //! Initialize the compute class
-  void initialize( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
+    //! Initialize the compute class
+    void initialize( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
 
-  //! Perform computation
-  int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
-
+    //! Perform computation
+    int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
 
   private:
 
-  //! Parent pointer
-  PeridigmNS::Peridigm *peridigm;
+    //! Parent pointer
+    PeridigmNS::Peridigm *peridigm;
 
+    // field ids for all relevant data
+    int volumeFieldId;
+    int partialVolumeFieldId;
+    int neighborhoodVolumeFieldId;
   };
 }
 

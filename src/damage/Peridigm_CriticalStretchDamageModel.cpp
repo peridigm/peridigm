@@ -46,13 +46,20 @@
 //@HEADER
 
 #include "Peridigm_CriticalStretchDamageModel.hpp"
+#include "Peridigm_Field.hpp"
 
 using namespace std;
 
 PeridigmNS::CriticalStretchDamageModel::CriticalStretchDamageModel(const Teuchos::ParameterList& params)
-  : DamageModel(params)
+  : DamageModel(params), m_modelCoordinatesFieldId(-1), m_coordinatesFieldId(-1), m_damageFieldId(-1), m_bondDamageFieldId(-1)
 {
   m_criticalStretch = params.get<double>("Critical Stretch");
+
+  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  m_modelCoordinatesFieldId = fieldManager.getFieldId("Model_Coordinates");
+  m_coordinatesFieldId = fieldManager.getFieldId("Coordinates");
+  m_damageFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::TWO_STEP, "Damage");
+  m_bondDamageFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::BOND, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::TWO_STEP, "Bond_Damage");
 
   // set up vector of variable specs
   m_variableSpecs = Teuchos::rcp(new vector<Field_NS::FieldSpec>);
@@ -72,8 +79,8 @@ PeridigmNS::CriticalStretchDamageModel::initialize(const double dt,
                                                    PeridigmNS::DataManager& dataManager) const
 {
   double *damage, *bondDamage;
-  dataManager.getData(Field_NS::DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&damage);
-  dataManager.getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
+  dataManager.getData(m_damageFieldId, Field_ENUM::STEP_NP1)->ExtractView(&damage);
+  dataManager.getData(m_bondDamageFieldId, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
 
   // Initialize damage to zero
   int neighborhoodListIndex = 0;
@@ -97,10 +104,10 @@ PeridigmNS::CriticalStretchDamageModel::computeDamage(const double dt,
                                                       PeridigmNS::DataManager& dataManager) const
 {
   double *x, *y, *damage, *bondDamage;
-  dataManager.getData(Field_NS::COORD3D, Field_ENUM::STEP_NONE)->ExtractView(&x);
-  dataManager.getData(Field_NS::CURCOORD3D, Field_ENUM::STEP_NP1)->ExtractView(&y);
-  dataManager.getData(Field_NS::DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&damage);
-  dataManager.getData(Field_NS::BOND_DAMAGE, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
+  dataManager.getData(m_modelCoordinatesFieldId, Field_ENUM::STEP_NONE)->ExtractView(&x);
+  dataManager.getData(m_coordinatesFieldId, Field_ENUM::STEP_NP1)->ExtractView(&y);
+  dataManager.getData(m_damageFieldId, Field_ENUM::STEP_NP1)->ExtractView(&damage);
+  dataManager.getData(m_bondDamageFieldId, Field_ENUM::STEP_NP1)->ExtractView(&bondDamage);
 
   double trialDamage(0.0);
   int neighborhoodListIndex(0), bondIndex(0);

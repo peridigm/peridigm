@@ -49,8 +49,6 @@
 #define PERIDIGM_COMPUTE_HPP
 
 #include <Teuchos_RCP.hpp>
-
-#include "Peridigm_DataManager.hpp"
 #include "Peridigm_Block.hpp"
 
 // Forward declaration
@@ -71,7 +69,7 @@ namespace PeridigmNS {
   //! Destructor.
   virtual ~Compute(){}
 
-  //! Returns the fieldspecs computed by this class
+  //! Returns the fieldspecs computed by this class OBSOLETE
   virtual std::vector<Field_NS::FieldSpec> getFieldSpecs() const = 0;
 
   //! Initialize the compute class

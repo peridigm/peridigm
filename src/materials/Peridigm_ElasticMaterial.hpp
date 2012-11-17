@@ -170,6 +170,16 @@ namespace PeridigmNS {
 	double m_density;
     double m_horizon;
     bool m_applyAutomaticDifferentiationJacobian;
+
+    // field spec ids for all relevant data
+    int volumeFieldId;
+    int damageFieldId;
+    int weightedVolumeFieldId;
+    int dilatationFieldId;
+    int modelCoordinatesFieldId;
+    int coordinatesFieldId;
+    int forceDensityFieldId;
+    int bondDamageFieldId;
   };
 }
 

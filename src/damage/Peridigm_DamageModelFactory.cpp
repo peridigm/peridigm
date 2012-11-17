@@ -58,7 +58,6 @@ PeridigmNS::DamageModelFactory::create(const Teuchos::ParameterList& damageModel
 
   if(damageModelName == "Critical Stretch")
     damageModel = Teuchos::rcp( new CriticalStretchDamageModel(damageModelParams) );
-
   else {
     string invalidDamageModel("\n**** Unrecognized damage model type: ");
     invalidDamageModel += damageModelName;

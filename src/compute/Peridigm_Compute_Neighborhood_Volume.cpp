@@ -48,9 +48,17 @@
 #include <vector>
 
 #include "Peridigm_Compute_Neighborhood_Volume.hpp"
+#include "Peridigm_Field.hpp"
 #include "../core/Peridigm.hpp"
 
-PeridigmNS::Compute_Neighborhood_Volume::Compute_Neighborhood_Volume(PeridigmNS::Peridigm *peridigm_ ){peridigm = peridigm_;}
+PeridigmNS::Compute_Neighborhood_Volume::Compute_Neighborhood_Volume(PeridigmNS::Peridigm *peridigm_ )
+  : peridigm(peridigm_), volumeFieldId(-1), partialVolumeFieldId(-1), neighborhoodVolumeFieldId(-1)
+{
+  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  volumeFieldId = fieldManager.getFieldId("Volume");
+  partialVolumeFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::BOND, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::CONSTANT, "Partial_Volume");
+  neighborhoodVolumeFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::CONSTANT, "Neighborhood_Volume");
+}
 
 PeridigmNS::Compute_Neighborhood_Volume::~Compute_Neighborhood_Volume(){}
 
@@ -64,17 +72,16 @@ void PeridigmNS::Compute_Neighborhood_Volume::initialize( Teuchos::RCP< std::vec
 
   std::vector<PeridigmNS::Block>::iterator blockIt;
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
     Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
     const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
     const int* neighborhoodList = neighborhoodData->NeighborhoodList();
     double *volume, *neighborhoodVolume;
-    dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&volume);
-    dataManager->getData(Field_NS::NEIGHBORHOOD_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&neighborhoodVolume);
+    blockIt->getData(volumeFieldId, Field_ENUM::STEP_NONE)->ExtractView(&volume);
+    blockIt->getData(neighborhoodVolumeFieldId, Field_ENUM::STEP_NONE)->ExtractView(&neighborhoodVolume);
 
     double *partialVolume = 0;
-    if( dataManager->hasData(Field_NS::PARTIAL_VOLUME, Field_ENUM::STEP_NONE) )
-      dataManager->getData(Field_NS::PARTIAL_VOLUME, Field_ENUM::STEP_NONE)->ExtractView(&partialVolume);
+    if( blockIt->hasData(partialVolumeFieldId, Field_ENUM::STEP_NONE) )
+      blockIt->getData(partialVolumeFieldId, Field_ENUM::STEP_NONE)->ExtractView(&partialVolume);
 
     int neighborhoodListIndex = 0;
     int bondIndex = 0;

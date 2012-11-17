@@ -48,10 +48,18 @@
 #include <vector>
 
 #include "Peridigm_Compute_Force.hpp"
+#include "Peridigm_Field.hpp"
 #include "../core/Peridigm.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Force::Compute_Force(PeridigmNS::Peridigm *peridigm_ ){peridigm = peridigm_;}
+PeridigmNS::Compute_Force::Compute_Force(PeridigmNS::Peridigm *peridigm_ )
+  : peridigm(peridigm_), volumeFieldId(-1), forceDensityFieldId(-1), forceFieldId(-1)
+{
+  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  volumeFieldId = fieldManager.getFieldId("Volume");
+  forceDensityFieldId = fieldManager.getFieldId("Force_Density");
+  forceFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::NODE, PeridigmNS::PeridigmField::VECTOR, PeridigmNS::PeridigmField::TWO_STEP, "Force");
+}
 
 //! Destructor.
 PeridigmNS::Compute_Force::~Compute_Force(){}
@@ -72,11 +80,10 @@ int PeridigmNS::Compute_Force::compute( Teuchos::RCP< std::vector<PeridigmNS::Bl
   Teuchos::RCP<Epetra_Vector> force, force_density, volume;
   std::vector<PeridigmNS::Block>::iterator blockIt;
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
 
-    force_density = dataManager->getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1);
-    force         = dataManager->getData(Field_NS::FORCE3D, Field_ENUM::STEP_NP1);
-    volume        = dataManager->getData(Field_NS::VOLUME, Field_ENUM::STEP_NONE);
+    volume        = blockIt->getData(volumeFieldId, Field_ENUM::STEP_NONE);
+    force_density = blockIt->getData(forceDensityFieldId, Field_ENUM::STEP_NP1);
+    force         = blockIt->getData(forceFieldId, Field_ENUM::STEP_NP1);
 
     // Sanity check
     if ( (force_density->Map().NumMyElements() != volume->Map().NumMyElements()) ||  (force->Map().NumMyElements() != volume->Map().NumMyElements()) ) {
