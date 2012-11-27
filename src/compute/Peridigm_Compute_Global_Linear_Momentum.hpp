@@ -48,7 +48,7 @@
 
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Global_Linear_Momentum,Compute_Global_Linear_Momentum,peridigm)
+ComputeClass(Global_Linear_Momentum,Compute_Global_Linear_Momentum)
 
 #else
 
@@ -58,12 +58,6 @@ ComputeClass(Global_Linear_Momentum,Compute_Global_Linear_Momentum,peridigm)
 
 #include "Peridigm_Compute.hpp"
 #include "Peridigm_Compute_Linear_Momentum.hpp"
-#include "Peridigm_DataManager.hpp"
-
-// Forward declaration
-namespace PeridigmNS {
-  class Peridigm;
-}
 
 namespace PeridigmNS {
 
@@ -73,7 +67,7 @@ namespace PeridigmNS {
   public:
 	
   //! Standard constructor.
-  Compute_Global_Linear_Momentum( PeridigmNS::Peridigm *peridigm_ );
+    Compute_Global_Linear_Momentum( Teuchos::RCP<const Epetra_Comm> epetraComm_ );
 
   //! Destructor.
   ~Compute_Global_Linear_Momentum();
@@ -83,12 +77,6 @@ namespace PeridigmNS {
 
   //! Perform computation
   int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
-
-  private:
-
-  //! Parent pointer
-  PeridigmNS::Peridigm *peridigm;
-
   };
 }
 

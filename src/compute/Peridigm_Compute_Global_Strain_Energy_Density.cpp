@@ -48,16 +48,14 @@
 #include <vector>
 
 #include "Peridigm_Compute_Global_Strain_Energy_Density.hpp"
-#include "../core/Peridigm.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Global_Strain_Energy_Density::Compute_Global_Strain_Energy_Density(PeridigmNS::Peridigm *peridigm_ )
-  : Compute_Strain_Energy_Density(peridigm_)
-{peridigm = peridigm_;}
+PeridigmNS::Compute_Global_Strain_Energy_Density::Compute_Global_Strain_Energy_Density(Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute_Strain_Energy_Density(epetraComm_)
+{}
 
 //! Destructor.
 PeridigmNS::Compute_Global_Strain_Energy_Density::~Compute_Global_Strain_Energy_Density(){}
-
 
 //! Returns the fieldspecs computed by this class
 std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Global_Strain_Energy_Density::getFieldSpecs() const 
@@ -68,7 +66,7 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Global_Strain_Energy_Densit
   	return myFieldSpecs;
 }
 
-//! Compute the global strain energy density                                                                                                                                                                                                                              
+//! Compute the global strain energy density
 int PeridigmNS::Compute_Global_Strain_Energy_Density::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const
 {
   	bool storeLocal = false;

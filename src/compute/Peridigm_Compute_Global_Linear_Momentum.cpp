@@ -48,11 +48,11 @@
 #include <vector>
 
 #include "Peridigm_Compute_Global_Linear_Momentum.hpp"
-#include "../core/Peridigm.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Global_Linear_Momentum::Compute_Global_Linear_Momentum(PeridigmNS::Peridigm *peridigm_ )
-  : Compute_Linear_Momentum(peridigm_), peridigm(peridigm_) {}
+PeridigmNS::Compute_Global_Linear_Momentum::Compute_Global_Linear_Momentum(Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute_Linear_Momentum(epetraComm_)
+{}
 
 //! Destructor.
 PeridigmNS::Compute_Global_Linear_Momentum::~Compute_Global_Linear_Momentum(){}
@@ -64,8 +64,6 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Global_Linear_Momentum::get
 
   return myFieldSpecs;
 }
-
-
 
 //! Calculate the global linear momentum
 int PeridigmNS::Compute_Global_Linear_Momentum::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const

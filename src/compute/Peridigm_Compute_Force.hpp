@@ -47,7 +47,7 @@
 
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Force,Compute_Force,peridigm)
+ComputeClass(Force,Compute_Force)
 
 #else
 
@@ -55,12 +55,6 @@ ComputeClass(Force,Compute_Force,peridigm)
 #define PERIDIGM_COMPUTE_FORCE_HPP
 
 #include "Peridigm_Compute.hpp"
-#include "Peridigm_DataManager.hpp"
-
-// Forward declaration
-namespace PeridigmNS {
-  class Peridigm;
-}
 
 namespace PeridigmNS {
 
@@ -69,8 +63,8 @@ namespace PeridigmNS {
 
   public:
 	
-    //! Standard constructor.
-    Compute_Force( PeridigmNS::Peridigm *peridigm_ );
+    //! Constructor.
+    Compute_Force( Teuchos::RCP<const Epetra_Comm> epetraComm_ );
 
     //! Destructor.
     ~Compute_Force();
@@ -82,9 +76,6 @@ namespace PeridigmNS {
     int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
 
   private:
-
-    //! Parent pointer
-    PeridigmNS::Peridigm *peridigm;
 
     // field ids for all relevant data
     int volumeFieldId;

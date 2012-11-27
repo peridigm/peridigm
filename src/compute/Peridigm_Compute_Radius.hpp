@@ -47,7 +47,7 @@
 
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Radius,Compute_Radius,peridigm)
+ComputeClass(Radius,Compute_Radius)
 
 #else
 
@@ -55,12 +55,6 @@ ComputeClass(Radius,Compute_Radius,peridigm)
 #define PERIDIGM_COMPUTE_RADIUS_HPP
 
 #include "Peridigm_Compute.hpp"
-#include "Peridigm_DataManager.hpp"
-
-// Forward declaration
-namespace PeridigmNS {
-  class Peridigm;
-}
 
 namespace PeridigmNS {
 
@@ -70,7 +64,7 @@ namespace PeridigmNS {
   public:
 	
     //! Standard constructor.
-    Compute_Radius( PeridigmNS::Peridigm *peridigm_ );
+    Compute_Radius( Teuchos::RCP<const Epetra_Comm> epetraComm_ );
 
     //! Destructor.
     ~Compute_Radius();
@@ -82,9 +76,6 @@ namespace PeridigmNS {
     int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
 
   private:
-
-    //! Parent pointer
-    PeridigmNS::Peridigm *peridigm;
 
     // field ids for all relevant data
     int volumeFieldId;

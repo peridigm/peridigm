@@ -61,7 +61,7 @@ namespace PeridigmNS {
   public:
     
     //! Basic constructor.
-    ComputeManager( Teuchos::RCP<Teuchos::ParameterList>& params, PeridigmNS::Peridigm *peridigm_ );
+    ComputeManager( Teuchos::RCP<Teuchos::ParameterList>& params, Teuchos::RCP<const Epetra_Comm>& epetraComm );
     
     //! Return list of field specs that the compute manager is handling
     std::vector<Field_NS::FieldSpec> getFieldSpecs();
@@ -88,12 +88,7 @@ namespace PeridigmNS {
     
     //! Individual compute objects
     std::vector< Teuchos::RCP<const PeridigmNS::Compute> > computeObjects;
-
-    //! Parent pointer
-    PeridigmNS::Peridigm *peridigm;
-
-  };
-  
+  };  
 }
  
 #endif //PERIDIGM_COMPUTEMANAGER_HPP

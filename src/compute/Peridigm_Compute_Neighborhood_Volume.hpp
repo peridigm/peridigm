@@ -47,7 +47,7 @@
 
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Neighborhood_Volume,Compute_Neighborhood_Volume,peridigm)
+ComputeClass(Neighborhood_Volume,Compute_Neighborhood_Volume)
 
 #else
 
@@ -55,12 +55,6 @@ ComputeClass(Neighborhood_Volume,Compute_Neighborhood_Volume,peridigm)
 #define PERIDIGM_COMPUTE_NEIGHBORHOOD_VOLUME_HPP
 
 #include "Peridigm_Compute.hpp"
-#include "Peridigm_DataManager.hpp"
-
-// Forward declaration
-namespace PeridigmNS {
-  class Peridigm;
-}
 
 namespace PeridigmNS {
 
@@ -70,7 +64,7 @@ namespace PeridigmNS {
   public:
 	
     //! Standard constructor.
-    Compute_Neighborhood_Volume( PeridigmNS::Peridigm *peridigm_ );
+    Compute_Neighborhood_Volume( Teuchos::RCP<const Epetra_Comm> epetraComm_ );
 
     //! Destructor.
     ~Compute_Neighborhood_Volume();
@@ -85,9 +79,6 @@ namespace PeridigmNS {
     int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
 
   private:
-
-    //! Parent pointer
-    PeridigmNS::Peridigm *peridigm;
 
     // field ids for all relevant data
     int volumeFieldId;

@@ -50,15 +50,11 @@
 
 #include "Peridigm_ComputeManager.hpp"
 #include "compute/compute_includes.hpp"
-#include "Peridigm_DataManager.hpp"
 #include "mesh_output/Field.h"
 
-PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList>& params, PeridigmNS::Peridigm *peridigm_ ) {
+PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList>& params, Teuchos::RCP<const Epetra_Comm>& epetraComm ) {
 
   Teuchos::RCP<Compute> compute;
-
-  // Hook up parent pointer
-  peridigm = peridigm_;
 
   // No input to validate; no computes requested
   if (params == Teuchos::null) return;
@@ -74,9 +70,9 @@ PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList>
   for (Teuchos::ParameterList::ConstIterator it = outputVariables->begin(); it != outputVariables->end(); ++it) {
     const std::string& name = it->first;
     #define COMPUTE_CLASS
-      #define ComputeClass(key, Class, Args) \
+      #define ComputeClass(key, Class) \
       if (name == #key) { \
-        compute = Teuchos::rcp( new PeridigmNS::Class(Args) ); \
+        compute = Teuchos::rcp( new PeridigmNS::Class(epetraComm) ); \
         computeObjects.push_back( Teuchos::rcp_implicit_cast<Compute>(compute) ); \
       }
       #include "compute/compute_includes.hpp"

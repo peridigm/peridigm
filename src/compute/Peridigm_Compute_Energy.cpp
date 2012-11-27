@@ -49,23 +49,22 @@
 
 #include "Peridigm_Compute_Energy.hpp"
 #include "Peridigm_Field.hpp"
-#include "../core/Peridigm.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Energy::Compute_Energy(PeridigmNS::Peridigm *peridigm_ )
-  : peridigm(peridigm_), volumeFieldId(-1), modelCoordinatesFieldId(-1), coordinatesFieldId(-1), velocityFieldId(-1),
+PeridigmNS::Compute_Energy::Compute_Energy(Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute(epetraComm_), volumeFieldId(-1), modelCoordinatesFieldId(-1), coordinatesFieldId(-1), velocityFieldId(-1),
     weightedVolumeFieldId(-1), dilatationFieldId(-1), kineticEnergyFieldId(-1), strainEnergyDensityFieldId(-1), strainEnergyFieldId(-1)
 {
-  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  FieldManager& fieldManager = FieldManager::self();
   volumeFieldId = fieldManager.getFieldId("Volume");
   modelCoordinatesFieldId = fieldManager.getFieldId("Model_Coordinates");
   coordinatesFieldId = fieldManager.getFieldId("Coordinates");
   velocityFieldId = fieldManager.getFieldId("Velocity");
-  weightedVolumeFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::CONSTANT, "Weighted_Volume");
-  dilatationFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::TWO_STEP, "Dilatation");
-  kineticEnergyFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::GLOBAL, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::CONSTANT, "Global_Kinetic_Energy");
-  strainEnergyDensityFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::GLOBAL, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::CONSTANT, "Global_Strain_Energy_Density");
-  strainEnergyFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::GLOBAL, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::CONSTANT, "Global_Strain_Energy");
+  weightedVolumeFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Weighted_Volume");
+  dilatationFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Dilatation");
+  kineticEnergyFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Global_Kinetic_Energy");
+  strainEnergyDensityFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Global_Strain_Energy_Density");
+  strainEnergyFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Global_Strain_Energy");
 }
 
 //! Destructor.
@@ -90,9 +89,9 @@ int PeridigmNS::Compute_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::B
   double globalKE, globalSE, globalSEDensity;
   globalKE = globalSE = globalSEDensity = 0.0;
   Teuchos::RCP<Epetra_Vector> velocity, volume, force, ref, coord, w_volume, dilatation, numNeighbors, neighborID, kinetic_energy, strain_energy, strain_energy_density;
-  std::vector<PeridigmNS::Block>::iterator blockIt;
+  std::vector<Block>::iterator blockIt;
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
+    Teuchos::RCP<NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
     const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
     const int* ownedIDs = neighborhoodData->OwnedIDs();
     const int* neighborhoodList = neighborhoodData->NeighborhoodList();
@@ -197,8 +196,8 @@ int PeridigmNS::Compute_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::B
     localKE = KE;
     localSE = SE;
     
-    peridigm->getEpetraComm()->SumAll(&localKE, &globalBlockKE, 1);
-    peridigm->getEpetraComm()->SumAll(&localSE, &globalBlockSE, 1);
+    epetraComm->SumAll(&localKE, &globalBlockKE, 1);
+    epetraComm->SumAll(&localSE, &globalBlockSE, 1);
 
     globalKE += globalBlockKE;
     globalSE += globalBlockSE;

@@ -48,15 +48,14 @@
 #include <vector>
 
 #include "Peridigm_Compute_Global_Kinetic_Energy.hpp"
-#include "../core/Peridigm.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Global_Kinetic_Energy::Compute_Global_Kinetic_Energy(PeridigmNS::Peridigm *peridigm_ )
-  :  Compute_Kinetic_Energy(peridigm_), peridigm(peridigm_) {}
+PeridigmNS::Compute_Global_Kinetic_Energy::Compute_Global_Kinetic_Energy(Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute_Kinetic_Energy(epetraComm_)
+{}
 
 //! Destructor.
 PeridigmNS::Compute_Global_Kinetic_Energy::~Compute_Global_Kinetic_Energy(){}
-
 
 //! Returns the fieldspecs computed by this class
 std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Global_Kinetic_Energy::getFieldSpecs() const 
@@ -67,7 +66,7 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Global_Kinetic_Energy::getF
   	return myFieldSpecs;
 }
 
-//! Compute the global kinetic energy                                                                                                                                                                                                                              
+//! Compute the global kinetic energy
 int PeridigmNS::Compute_Global_Kinetic_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const
 {
   	bool storeLocal = false;

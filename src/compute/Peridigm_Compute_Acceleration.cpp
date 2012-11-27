@@ -49,15 +49,14 @@
 
 #include "Peridigm_Compute_Acceleration.hpp"
 #include "Peridigm_Field.hpp"
-#include "../core/Peridigm.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Acceleration::Compute_Acceleration(PeridigmNS::Peridigm *peridigm_ )
-  : peridigm(peridigm_), forceDensityFieldId(-1), accelerationFieldId(-1)
+PeridigmNS::Compute_Acceleration::Compute_Acceleration(Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute(epetraComm_), forceDensityFieldId(-1), accelerationFieldId(-1)
 {
-  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  FieldManager& fieldManager = FieldManager::self();
   forceDensityFieldId = fieldManager.getFieldId("Force_Density");
-  accelerationFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::NODE,    PeridigmNS::PeridigmField::VECTOR, PeridigmNS::PeridigmField::TWO_STEP, "Acceleration");
+  accelerationFieldId = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Acceleration");
 }
 
 //! Destructor.
@@ -72,11 +71,11 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Acceleration::getFieldSpecs
 }
 
 //! Fill the acceleration vector
-int PeridigmNS::Compute_Acceleration::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) const {
+int PeridigmNS::Compute_Acceleration::compute( Teuchos::RCP< std::vector<Block> > blocks ) const {
   int retval(0);
 
   Teuchos::RCP<Epetra_Vector> force, acceleration;
-  std::vector<PeridigmNS::Block>::iterator blockIt;
+  std::vector<Block>::iterator blockIt;
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
     force        = blockIt->getData(forceDensityFieldId, PeridigmField::STEP_NP1);
     acceleration = blockIt->getData(accelerationFieldId, PeridigmField::STEP_NP1);
