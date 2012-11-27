@@ -48,9 +48,9 @@
 
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Kinetic_Energy,Compute_Energy,peridigm)
-ComputeClass(Strain_Energy,Compute_Energy,peridigm)
-ComputeClass(Strain_Energy_Density,Compute_Energy,peridigm)
+ComputeClass(Kinetic_Energy,Compute_Energy)
+ComputeClass(Strain_Energy,Compute_Energy)
+ComputeClass(Strain_Energy_Density,Compute_Energy)
 
 #else
 
@@ -59,12 +59,6 @@ ComputeClass(Strain_Energy_Density,Compute_Energy,peridigm)
 #define PERIDIGM_COMPUTE_ENERGY_HPP
 
 #include "Peridigm_Compute.hpp"
-#include "Peridigm_DataManager.hpp"
-
-// Forward declaration
-namespace PeridigmNS {
-  class Peridigm;
-}
 
 namespace PeridigmNS {
 
@@ -74,7 +68,7 @@ namespace PeridigmNS {
   public:
 	
     //! Standard constructor.
-    Compute_Energy( PeridigmNS::Peridigm *peridigm_ );
+    Compute_Energy( Teuchos::RCP<const Epetra_Comm> epetraComm_ );
 
     //! Destructor.
     ~Compute_Energy();
@@ -86,9 +80,6 @@ namespace PeridigmNS {
     int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
 
   private:
-
-    //! Parent pointer
-    PeridigmNS::Peridigm *peridigm;
 
     // field ids for all relevant data
     int volumeFieldId;

@@ -48,7 +48,7 @@
 
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Linear_Momentum,Compute_Local_Linear_Momentum,peridigm)
+ComputeClass(Linear_Momentum,Compute_Local_Linear_Momentum)
 
 #else
 
@@ -58,12 +58,6 @@ ComputeClass(Linear_Momentum,Compute_Local_Linear_Momentum,peridigm)
 
 #include "Peridigm_Compute.hpp"
 #include "Peridigm_Compute_Linear_Momentum.hpp"
-#include "Peridigm_DataManager.hpp"
-
-// Forward declaration
-namespace PeridigmNS {
-  class Peridigm;
-}
 
 namespace PeridigmNS {
 
@@ -72,23 +66,17 @@ namespace PeridigmNS {
 
   public:
 	
-  //! Standard constructor.
-  Compute_Local_Linear_Momentum( PeridigmNS::Peridigm *peridigm_ );
+    //! Standard constructor.
+    Compute_Local_Linear_Momentum(Teuchos::RCP<const Epetra_Comm> epetraComm_ );
 
-  //! Destructor.
-  ~Compute_Local_Linear_Momentum();
+    //! Destructor.
+    ~Compute_Local_Linear_Momentum();
 
-  //! Returns the fieldspecs computed by this class
-  std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
+    //! Returns the fieldspecs computed by this class
+    std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
 
-  //! Perform computation
-  int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
-
-  private:
-
-  //! Parent pointer
-  PeridigmNS::Peridigm *peridigm;
-
+    //! Perform computation
+    int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
   };
 }
 

@@ -48,7 +48,7 @@
 
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Strain_Energy_Density,Compute_Local_Strain_Energy_Density,peridigm)
+ComputeClass(Strain_Energy_Density,Compute_Local_Strain_Energy_Density)
 
 #else
 
@@ -58,12 +58,6 @@ ComputeClass(Strain_Energy_Density,Compute_Local_Strain_Energy_Density,peridigm)
 
 #include "Peridigm_Compute.hpp"
 #include "Peridigm_Compute_Strain_Energy_Density.hpp"
-#include "Peridigm_DataManager.hpp"
-
-// Forward declaration
-namespace PeridigmNS {
-  class Peridigm;
-}
 
 namespace PeridigmNS {
 
@@ -73,22 +67,16 @@ namespace PeridigmNS {
   public:
 	
   //! Standard constructor.
-  Compute_Local_Strain_Energy_Density( PeridigmNS::Peridigm *peridigm_ );
+    Compute_Local_Strain_Energy_Density( Teuchos::RCP<const Epetra_Comm> epetraComm_ );
 
   //! Destructor.
   ~Compute_Local_Strain_Energy_Density();
 
-  //! Perform computation                                                                                                                                                                                                                                 
+  //! Perform computation
   int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
 
   //! Returns the fieldspecs computed by this class
   std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
-
-  private:
-
-  //! Parent pointer
-  PeridigmNS::Peridigm *peridigm;
-
   };
 }
 

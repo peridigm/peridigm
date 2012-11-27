@@ -48,7 +48,7 @@
 
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Global_Angular_Momentum,Compute_Global_Angular_Momentum,peridigm)
+ComputeClass(Global_Angular_Momentum,Compute_Global_Angular_Momentum)
 
 #else
 
@@ -58,12 +58,6 @@ ComputeClass(Global_Angular_Momentum,Compute_Global_Angular_Momentum,peridigm)
 
 #include "Peridigm_Compute.hpp"
 #include "Peridigm_Compute_Angular_Momentum.hpp"
-#include "Peridigm_DataManager.hpp"
-
-// Forward declaration
-namespace PeridigmNS {
-  class Peridigm;
-}
 
 namespace PeridigmNS {
 
@@ -72,8 +66,8 @@ namespace PeridigmNS {
 
   public:
 	
-  //! Standard constructor.
-  Compute_Global_Angular_Momentum( PeridigmNS::Peridigm *peridigm_ );
+  //! Constructor.
+    Compute_Global_Angular_Momentum( Teuchos::RCP<const Epetra_Comm> epetraComm_ );
 
   //! Destructor.
   ~Compute_Global_Angular_Momentum();
@@ -83,12 +77,6 @@ namespace PeridigmNS {
 
   //! Perform computation
   int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
-
-  private:
-
-  //! Parent pointer
-  PeridigmNS::Peridigm *peridigm;
-
   };
 }
 

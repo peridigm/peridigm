@@ -45,24 +45,16 @@
 // ************************************************************************
 //@HEADER
 
-/*
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Strain_Energy,Compute_Strain_Energy,peridigm)
+ComputeClass(Strain_Energy,Compute_Strain_Energy)
 
 #else
-*/
 
 #ifndef PERIDIGM_COMPUTE_STRAIN_ENERGY_HPP
 #define PERIDIGM_COMPUTE_STRAIN_ENERGY_HPP
 
 #include "Peridigm_Compute.hpp"
-#include "Peridigm_DataManager.hpp"
-
-// Forward declaration
-namespace PeridigmNS {
-  class Peridigm;
-}
 
 namespace PeridigmNS {
 
@@ -72,7 +64,7 @@ namespace PeridigmNS {
   public:
 	
     // !Standard constructor.
-    Compute_Strain_Energy( PeridigmNS::Peridigm *peridigm_ );
+    Compute_Strain_Energy( Teuchos::RCP<const Epetra_Comm> epetraComm_ );
 
     //! Destructor.
     virtual ~Compute_Strain_Energy();
@@ -88,9 +80,6 @@ namespace PeridigmNS {
 
   private:
 
-    //! Parent pointer
-    PeridigmNS::Peridigm *peridigm;
-
     // field ids for all relevant data
     int volumeFieldId;
     int modelCoordinatesFieldId;
@@ -103,4 +92,4 @@ namespace PeridigmNS {
 }
 
 #endif // PERIDIGM_COMPUTE_STRAIN_ENERGY_HPP
-//#endif // COMPUTE_CLASS
+#endif // COMPUTE_CLASS

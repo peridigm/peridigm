@@ -47,7 +47,7 @@
 
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Angular_Momentum,Compute_Angular_Momentum,peridigm)
+ComputeClass(Angular_Momentum,Compute_Angular_Momentum)
 
 #else
 
@@ -56,11 +56,6 @@ ComputeClass(Angular_Momentum,Compute_Angular_Momentum,peridigm)
 
 #include "Peridigm_Compute.hpp"
 
-// Forward declaration
-namespace PeridigmNS {
-  class Peridigm;
-}
-
 namespace PeridigmNS {
 
   //! Class for filling acceleration vector
@@ -68,8 +63,8 @@ namespace PeridigmNS {
 
   public:
 	
-    //! Standard constructor.
-    Compute_Angular_Momentum( PeridigmNS::Peridigm *peridigm_ );
+    //! Constructor.
+    Compute_Angular_Momentum(Teuchos::RCP<const Epetra_Comm> epetraComm_);
 
     //! Destructor.
     virtual ~Compute_Angular_Momentum();
@@ -84,9 +79,6 @@ namespace PeridigmNS {
     int computeAngularMomentum( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, bool storeLocal ) const ;
   
   private:
-
-    //! Parent pointer
-    PeridigmNS::Peridigm *peridigm;
 
     // field ids for all relevant data
     int volumeFieldId;

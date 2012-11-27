@@ -48,16 +48,14 @@
 #include <vector>
 
 #include "Peridigm_Compute_Local_Strain_Energy.hpp"
-#include "../core/Peridigm.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Local_Strain_Energy::Compute_Local_Strain_Energy(PeridigmNS::Peridigm *peridigm_ )
-  : Compute_Strain_Energy(peridigm_)
-{peridigm = peridigm_;}
+PeridigmNS::Compute_Local_Strain_Energy::Compute_Local_Strain_Energy(Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute_Strain_Energy(epetraComm_)
+{}
 
 //! Destructor.
 PeridigmNS::Compute_Local_Strain_Energy::~Compute_Local_Strain_Energy(){}
-
 
 //! Returns the fieldspecs computed by this class
 std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Local_Strain_Energy::getFieldSpecs() const 
@@ -68,7 +66,7 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Local_Strain_Energy::getFie
   	return myFieldSpecs;
 }
 
-//! Fill the strain energy vectors                                                                                                                                                                                                                               
+//! Fill the strain energy vectors
 int PeridigmNS::Compute_Local_Strain_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const
 {
   	bool storeLocal = true;

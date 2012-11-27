@@ -49,23 +49,21 @@
 
 #include "Peridigm_Compute_Angular_Momentum.hpp"
 #include "Peridigm_Field.hpp"
-#include "../core/Peridigm.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Angular_Momentum::Compute_Angular_Momentum(PeridigmNS::Peridigm *peridigm_ )
-  : peridigm(peridigm_), volumeFieldId(-1), coordinatesFieldId(-1), velocityFieldId(-1), angularMomentumFieldId(-1)
+PeridigmNS::Compute_Angular_Momentum::Compute_Angular_Momentum(Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute(epetraComm_), volumeFieldId(-1), coordinatesFieldId(-1), velocityFieldId(-1), angularMomentumFieldId(-1)
 {
-  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  FieldManager& fieldManager = FieldManager::self();
   volumeFieldId = fieldManager.getFieldId("Volume");
   coordinatesFieldId = fieldManager.getFieldId("Coordinates");
   velocityFieldId = fieldManager.getFieldId("Velocity");
-  angularMomentumFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::NODE, PeridigmNS::PeridigmField::VECTOR, PeridigmNS::PeridigmField::TWO_STEP, "Angular_Momentum");
-  globalAngularMomentumFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::GLOBAL, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::CONSTANT, "Global_Angular_Momentum");
+  angularMomentumFieldId = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Angular_Momentum");
+  globalAngularMomentumFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Global_Angular_Momentum");
 }
 
 //! Destructor.
 PeridigmNS::Compute_Angular_Momentum::~Compute_Angular_Momentum(){}
-
 
 //! Returns the fieldspecs computed by this class OBSOLETE
 std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Angular_Momentum::getFieldSpecs() const 
@@ -95,10 +93,10 @@ int PeridigmNS::Compute_Angular_Momentum::computeAngularMomentum( Teuchos::RCP< 
 
   double globalAM = 0.0;
   Teuchos::RCP<Epetra_Vector> velocity,  arm, volume, angular_momentum;
-  std::vector<PeridigmNS::Block>::iterator blockIt;
+  std::vector<Block>::iterator blockIt;
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
   {
-    Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
+    Teuchos::RCP<NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
     const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
     const int* ownedIDs = neighborhoodData->OwnedIDs();
 
@@ -159,7 +157,7 @@ int PeridigmNS::Compute_Angular_Momentum::computeAngularMomentum( Teuchos::RCP< 
       localAngularMomentum[1] = angular_momentum_y;
       localAngularMomentum[2] = angular_momentum_z;
 	
-      peridigm->getEpetraComm()->SumAll(&localAngularMomentum[0], &globalAngularMomentum[0], 3);
+      epetraComm->SumAll(&localAngularMomentum[0], &globalAngularMomentum[0], 3);
 		
       globalAM += sqrt(globalAngularMomentum[0]*globalAngularMomentum[0] + globalAngularMomentum[1]*globalAngularMomentum[1] + globalAngularMomentum[2]*globalAngularMomentum[2]);
     }

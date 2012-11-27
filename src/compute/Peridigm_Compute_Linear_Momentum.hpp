@@ -47,7 +47,7 @@
 
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Linear_Momentum,Compute_Linear_Momentum,peridigm)
+ComputeClass(Linear_Momentum,Compute_Linear_Momentum)
 
 #else
 
@@ -55,11 +55,6 @@ ComputeClass(Linear_Momentum,Compute_Linear_Momentum,peridigm)
 #define PERIDIGM_COMPUTE_LINEAR_MOMENTUM_HPP
 
 #include "Peridigm_Compute.hpp"
-
-// Forward declaration
-namespace PeridigmNS {
-  class Peridigm;
-}
 
 namespace PeridigmNS {
 
@@ -69,7 +64,7 @@ namespace PeridigmNS {
   public:
 	
     //! Standard constructor.
-    Compute_Linear_Momentum( PeridigmNS::Peridigm *peridigm_ );
+    Compute_Linear_Momentum( Teuchos::RCP<const Epetra_Comm> epetraComm_ );
 
     //! Destructor.
     virtual ~Compute_Linear_Momentum();
@@ -84,9 +79,6 @@ namespace PeridigmNS {
     int computeLinearMomentum( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, bool storeLocal ) const ;
 
   private:
-
-    //! Parent pointer
-    PeridigmNS::Peridigm *peridigm;
 
     // field ids for all relevant data
     int volumeFieldId;

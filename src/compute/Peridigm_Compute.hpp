@@ -49,12 +49,8 @@
 #define PERIDIGM_COMPUTE_HPP
 
 #include <Teuchos_RCP.hpp>
+#include <Epetra_Comm.h>
 #include "Peridigm_Block.hpp"
-
-// Forward declaration
-namespace PeridigmNS {
-  class Peridigm;
-}
 
 namespace PeridigmNS {
 
@@ -63,29 +59,35 @@ namespace PeridigmNS {
 
   public:
 	
-  //! Default constructor.
-  Compute(){}
+    //! Constructor.
+    Compute(Teuchos::RCP<const Epetra_Comm> epetraComm_) : epetraComm(epetraComm_) {}
 
-  //! Destructor.
-  virtual ~Compute(){}
+    //! Destructor.
+    virtual ~Compute(){}
 
-  //! Returns the fieldspecs computed by this class OBSOLETE
-  virtual std::vector<Field_NS::FieldSpec> getFieldSpecs() const = 0;
+    //! Returns the fieldspecs computed by this class OBSOLETE
+    virtual std::vector<Field_NS::FieldSpec> getFieldSpecs() const = 0;
 
-  //! Initialize the compute class
-  virtual void initialize( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const {};
+    //! Initialize the compute class
+    virtual void initialize( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const {};
 
-  //! Perform computation
-  virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const = 0;
+    //! Perform computation
+    virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const = 0;
 
   protected:
 
-  //! Copy constructor.
-  Compute( const Compute& C );
+    //! Copy constructor.
+    Compute( const Compute& C );
 
-  //! Assignment operator.
-  Compute& operator=( const Compute& C );
+    //! Assignment operator.
+    Compute& operator=( const Compute& C );
 
+    Teuchos::RCP<const Epetra_Comm> epetraComm;
+
+  private:
+
+    //! Prohibit use of the default constructor.
+    Compute(){}
   };
 }
 

@@ -48,22 +48,15 @@
 
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Global_Kinetic_Energy,Compute_Global_Kinetic_Energy,peridigm)
+ComputeClass(Global_Kinetic_Energy,Compute_Global_Kinetic_Energy)
 
 #else
-
 
 #ifndef PERIDIGM_COMPUTE_GLOBAL_KINETIC_ENERGY_HPP
 #define PERIDIGM_COMPUTE_GLOBAL_KINETIC_ENERGY_HPP
 
 #include "Peridigm_Compute.hpp"
 #include "Peridigm_Compute_Kinetic_Energy.hpp"
-#include "Peridigm_DataManager.hpp"
-
-// Forward declaration
-namespace PeridigmNS {
-  class Peridigm;
-}
 
 namespace PeridigmNS {
 
@@ -72,23 +65,17 @@ namespace PeridigmNS {
 
   public:
 	
-  //! Standard constructor.
-  Compute_Global_Kinetic_Energy( PeridigmNS::Peridigm *peridigm_ );
+    //! Constructor.
+    Compute_Global_Kinetic_Energy( Teuchos::RCP<const Epetra_Comm> epetraComm_ );
 
-  //! Destructor.
-  ~Compute_Global_Kinetic_Energy();
+    //! Destructor.
+    ~Compute_Global_Kinetic_Energy();
 
-  //! Perform computation                                                                                                                                                                                                                                 
-  virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
+    //! Perform computation
+    virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
 
-  //! Returns the fieldspecs computed by this class
-  std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
-
-  private:
-
-  //! Parent pointer
-  PeridigmNS::Peridigm *peridigm;
-
+    //! Returns the fieldspecs computed by this class
+    std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
   };
 }
 

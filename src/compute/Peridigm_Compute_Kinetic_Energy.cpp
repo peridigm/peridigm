@@ -49,22 +49,20 @@
 
 #include "Peridigm_Compute_Kinetic_Energy.hpp"
 #include "Peridigm_Field.hpp"
-#include "../core/Peridigm.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Kinetic_Energy::Compute_Kinetic_Energy(PeridigmNS::Peridigm *peridigm_ )
-  : peridigm(peridigm_), volumeFieldId(-1), velocityFieldId(-1), kineticEnergyFieldId(-1)
+PeridigmNS::Compute_Kinetic_Energy::Compute_Kinetic_Energy(Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute(epetraComm_), volumeFieldId(-1), velocityFieldId(-1), kineticEnergyFieldId(-1)
 {
-  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  FieldManager& fieldManager = FieldManager::self();
   volumeFieldId = fieldManager.getFieldId("Volume");
   velocityFieldId = fieldManager.getFieldId("Velocity");
-  kineticEnergyFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::TWO_STEP, "Kinetic_Energy");
-  globalKineticEnergyFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::GLOBAL, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::TWO_STEP, "Global_Kinetic_Energy");
+  kineticEnergyFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Kinetic_Energy");
+  globalKineticEnergyFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Global_Kinetic_Energy");
 }
 
 //! Destructor.
 PeridigmNS::Compute_Kinetic_Energy::~Compute_Kinetic_Energy(){}
-
 
 //! Returns the fieldspecs computed by this class
 std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Kinetic_Energy::getFieldSpecs() const 
@@ -86,10 +84,10 @@ int PeridigmNS::Compute_Kinetic_Energy::computeKineticEnergy( Teuchos::RCP< std:
 	
 	double globalKE = 0.0;
 	Teuchos::RCP<Epetra_Vector> velocity, volume, force, numNeighbors, neighborID, kinetic_energy;
-	std::vector<PeridigmNS::Block>::iterator blockIt;
+	std::vector<Block>::iterator blockIt;
 	for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
 	{
-		Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
+		Teuchos::RCP<NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
 		const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
 		const int* ownedIDs = neighborhoodData->OwnedIDs();
 
@@ -147,7 +145,7 @@ int PeridigmNS::Compute_Kinetic_Energy::computeKineticEnergy( Teuchos::RCP< std:
 			double localKE, globalBlockKE;
 			localKE = KE;
 
-			peridigm->getEpetraComm()->SumAll(&localKE, &globalBlockKE, 1);
+			epetraComm->SumAll(&localKE, &globalBlockKE, 1);
 
 			globalKE += globalBlockKE;
 		}

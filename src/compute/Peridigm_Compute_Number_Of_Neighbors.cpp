@@ -49,14 +49,13 @@
 
 #include "Peridigm_Compute_Number_Of_Neighbors.hpp"
 #include "Peridigm_Field.hpp"
-#include "../core/Peridigm.hpp"
 
-PeridigmNS::Compute_Number_Of_Neighbors::Compute_Number_Of_Neighbors(PeridigmNS::Peridigm *peridigm_ )
-  : peridigm(peridigm), partialVolumeFieldId(-1), numberOfNeighborsFieldId(-1)
+PeridigmNS::Compute_Number_Of_Neighbors::Compute_Number_Of_Neighbors(Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute(epetraComm_), partialVolumeFieldId(-1), numberOfNeighborsFieldId(-1)
 {
-  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
-  partialVolumeFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::BOND, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::CONSTANT, "Partial_Volume");
-  numberOfNeighborsFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::CONSTANT, "Number_Of_Neighbors");
+  FieldManager& fieldManager = FieldManager::self();
+  partialVolumeFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Partial_Volume");
+  numberOfNeighborsFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Number_Of_Neighbors");
 }
 
 PeridigmNS::Compute_Number_Of_Neighbors::~Compute_Number_Of_Neighbors(){}
@@ -113,7 +112,6 @@ void PeridigmNS::Compute_Number_Of_Neighbors::initialize( Teuchos::RCP< std::vec
       neighborhoodListIndex += numNeighbors;
     }
   }
-
 }
 
 int PeridigmNS::Compute_Number_Of_Neighbors::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) const {

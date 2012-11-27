@@ -47,7 +47,7 @@
 
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Number_Of_Neighbors,Compute_Number_Of_Neighbors,peridigm)
+ComputeClass(Number_Of_Neighbors,Compute_Number_Of_Neighbors)
 
 #else
 
@@ -55,11 +55,6 @@ ComputeClass(Number_Of_Neighbors,Compute_Number_Of_Neighbors,peridigm)
 #define PERIDIGM_COMPUTE_NUMBER_OF_NEIGHBORS_HPP
 
 #include "Peridigm_Compute.hpp"
-
-// Forward declaration
-namespace PeridigmNS {
-  class Peridigm;
-}
 
 namespace PeridigmNS {
 
@@ -69,7 +64,7 @@ namespace PeridigmNS {
   public:
 	
     //! Standard constructor.
-    Compute_Number_Of_Neighbors( PeridigmNS::Peridigm *peridigm_ );
+    Compute_Number_Of_Neighbors( Teuchos::RCP<const Epetra_Comm> epetraComm_ );
 
     //! Destructor.
     ~Compute_Number_Of_Neighbors();
@@ -78,15 +73,12 @@ namespace PeridigmNS {
     std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
 
     //! Initialize the compute class
-    virtual void initialize( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
+    virtual void initialize( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) const;
 
     //! Perform computation
-    virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
+    virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) const;
 
   private:
-
-    //! Parent pointer
-    PeridigmNS::Peridigm *peridigm;
 
     // field ids for all relevant data
     int partialVolumeFieldId;

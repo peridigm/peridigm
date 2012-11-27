@@ -49,20 +49,19 @@
 
 #include "Peridigm_Compute_Strain_Energy_Density.hpp"
 #include "Peridigm_Field.hpp"
-#include "../core/Peridigm.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Strain_Energy_Density::Compute_Strain_Energy_Density(PeridigmNS::Peridigm *peridigm_ )
-  : peridigm(peridigm_), volumeFieldId(-1), modelCoordinatesFieldId(-1), coordinatesFieldId(-1),
+PeridigmNS::Compute_Strain_Energy_Density::Compute_Strain_Energy_Density(Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute(epetraComm_), volumeFieldId(-1), modelCoordinatesFieldId(-1), coordinatesFieldId(-1),
     weightedVolumeFieldId(-1), dilatationFieldId(-1), strainEnergyDensityFieldId(-1)
 {
-  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  FieldManager& fieldManager = FieldManager::self();
   volumeFieldId = fieldManager.getFieldId("Volume");
   modelCoordinatesFieldId = fieldManager.getFieldId("Model_Coordinates");
   coordinatesFieldId = fieldManager.getFieldId("Coordinates");
-  weightedVolumeFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::CONSTANT, "Weighted_Volume");
-  dilatationFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::TWO_STEP, "Dilatation");
-  strainEnergyDensityFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::TWO_STEP, "Strain_Energy_Density");
+  weightedVolumeFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Weighted_Volume");
+  dilatationFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Dilatation");
+  strainEnergyDensityFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Strain_Energy_Density");
 }
 
 //! Destructor.
@@ -82,8 +81,6 @@ int PeridigmNS::Compute_Strain_Energy_Density::compute( Teuchos::RCP< std::vecto
         return 0;
 }
 
-
-
 //! Fill the energy vectors
 int PeridigmNS::Compute_Strain_Energy_Density::computeStrainEnergyDensity( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, bool storeLocal) const
 {
@@ -91,9 +88,9 @@ int PeridigmNS::Compute_Strain_Energy_Density::computeStrainEnergyDensity( Teuch
 
 	double globalSEDensity = 0.0;
 	Teuchos::RCP<Epetra_Vector> volume, force, ref, coord, w_volume, dilatation, numNeighbors, neighborID, strain_energy_density;
-	std::vector<PeridigmNS::Block>::iterator blockIt;
+	std::vector<Block>::iterator blockIt;
 	for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-		Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
+		Teuchos::RCP<NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
 		const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
 		const int* ownedIDs = neighborhoodData->OwnedIDs();
 		const int* neighborhoodList = neighborhoodData->NeighborhoodList();
@@ -194,7 +191,7 @@ int PeridigmNS::Compute_Strain_Energy_Density::computeStrainEnergyDensity( Teuch
 			double localW, globalBlockSEDensity(0.0);
 			localW = W;
 
-			peridigm->getEpetraComm()->SumAll(&localW, &globalBlockSEDensity, 1);
+			epetraComm->SumAll(&localW, &globalBlockSEDensity, 1);
 
 			globalSEDensity += globalBlockSEDensity;
 		}

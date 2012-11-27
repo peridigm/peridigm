@@ -45,17 +45,15 @@
 // ************************************************************************
 //@HEADER
 
-#include <vector>
-
 #include "Peridigm_Compute_Global_Angular_Momentum.hpp"
-#include "../core/Peridigm.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Global_Angular_Momentum::Compute_Global_Angular_Momentum(PeridigmNS::Peridigm *peridigm_ ):Compute_Angular_Momentum(peridigm_){peridigm = peridigm_;}
+PeridigmNS::Compute_Global_Angular_Momentum::Compute_Global_Angular_Momentum(Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute_Angular_Momentum(epetraComm_)
+{}
 
 //! Destructor.
 PeridigmNS::Compute_Global_Angular_Momentum::~Compute_Global_Angular_Momentum(){}
-
 
 //! Returns the fieldspecs computed by this class
 std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Global_Angular_Momentum::getFieldSpecs() const 
@@ -65,8 +63,6 @@ std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Global_Angular_Momentum::ge
 
   return myFieldSpecs;
 }
-
-
 
 //! Compute the global angular momentum
 int PeridigmNS::Compute_Global_Angular_Momentum::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const

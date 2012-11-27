@@ -49,16 +49,15 @@
 
 #include "Peridigm_Compute_Linear_Momentum.hpp"
 #include "Peridigm_Field.hpp"
-#include "../core/Peridigm.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Linear_Momentum::Compute_Linear_Momentum(PeridigmNS::Peridigm *peridigm_ )
-  : peridigm(peridigm_), volumeFieldId(-1), velocityFieldId(-1), linearMomentumFieldId(-1)
+PeridigmNS::Compute_Linear_Momentum::Compute_Linear_Momentum(Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute(epetraComm_), volumeFieldId(-1), velocityFieldId(-1), linearMomentumFieldId(-1)
 {
-  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  FieldManager& fieldManager = FieldManager::self();
   volumeFieldId = fieldManager.getFieldId("Volume");
   velocityFieldId = fieldManager.getFieldId("Velocity");
-  linearMomentumFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::NODE, PeridigmNS::PeridigmField::VECTOR, PeridigmNS::PeridigmField::TWO_STEP, "Linear_Momentum");
+  linearMomentumFieldId = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Linear_Momentum");
 }
 
 //! Destructor.
@@ -85,10 +84,10 @@ int PeridigmNS::Compute_Linear_Momentum::computeLinearMomentum( Teuchos::RCP< st
 
   double globalLM = 0.0;
   Teuchos::RCP<Epetra_Vector> velocity, volume, linear_momentum;
-  std::vector<PeridigmNS::Block>::iterator blockIt;
+  std::vector<Block>::iterator blockIt;
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
   {
-    Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
+    Teuchos::RCP<NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
     const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
     const int* ownedIDs = neighborhoodData->OwnedIDs();
 
@@ -144,14 +143,14 @@ int PeridigmNS::Compute_Linear_Momentum::computeLinearMomentum( Teuchos::RCP< st
       localLinearMomentum[1] = linear_momentum_y;
       localLinearMomentum[2] = linear_momentum_z;
 
-      peridigm->getEpetraComm()->SumAll(&localLinearMomentum[0], &globalLinearMomentum[0], 3);
+      epetraComm->SumAll(&localLinearMomentum[0], &globalLinearMomentum[0], 3);
 
       globalLM += sqrt(globalLinearMomentum[0]*globalLinearMomentum[0] + globalLinearMomentum[1]*globalLinearMomentum[1] + globalLinearMomentum[2]*globalLinearMomentum[2]);
     }
   }
 
 /*
-	if (peridigm->getEpetraComm()->MyPID() == 0)
+	if (epetraComm->MyPID() == 0)
 	{
 	std::cout << "Hello!" << std::endl;
 

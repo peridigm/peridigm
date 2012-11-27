@@ -49,16 +49,15 @@
 
 #include "Peridigm_Compute_Contact_Force.hpp"
 #include "Peridigm_Field.hpp"
-#include "../core/Peridigm.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Contact_Force::Compute_Contact_Force(PeridigmNS::Peridigm *peridigm_ )
-  : peridigm(peridigm_), volumeFieldId(-1), contactForceDensityFieldId(-1), contactForceFieldId(-1)
+PeridigmNS::Compute_Contact_Force::Compute_Contact_Force(Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute(epetraComm_), volumeFieldId(-1), contactForceDensityFieldId(-1), contactForceFieldId(-1)
 {
-  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  FieldManager& fieldManager = FieldManager::self();
   volumeFieldId = fieldManager.getFieldId("Volume");
-  contactForceDensityFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::NODE, PeridigmNS::PeridigmField::VECTOR, PeridigmNS::PeridigmField::TWO_STEP, "Contact_Force_Density");
-  contactForceFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::NODE, PeridigmNS::PeridigmField::VECTOR, PeridigmNS::PeridigmField::TWO_STEP, "Contact_Force");
+  contactForceDensityFieldId = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Contact_Force_Density");
+  contactForceFieldId = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Contact_Force");
 }
 
 //! Destructor.
@@ -78,7 +77,7 @@ int PeridigmNS::Compute_Contact_Force::compute( Teuchos::RCP< std::vector<Peridi
   int retval;
 
   Teuchos::RCP<Epetra_Vector> volume, contact_force_density, contact_force;
-  std::vector<PeridigmNS::Block>::iterator blockIt;
+  std::vector<Block>::iterator blockIt;
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
 
     Teuchos::RCP<Epetra_Vector> contact_force, contact_force_density, volume;

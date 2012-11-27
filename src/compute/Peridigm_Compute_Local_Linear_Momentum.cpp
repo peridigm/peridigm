@@ -48,16 +48,14 @@
 #include <vector>
 
 #include "Peridigm_Compute_Local_Linear_Momentum.hpp"
-#include "../core/Peridigm.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Local_Linear_Momentum::Compute_Local_Linear_Momentum(PeridigmNS::Peridigm *peridigm_ )
-  :Compute_Linear_Momentum(peridigm_)
-{peridigm = peridigm_;}
+PeridigmNS::Compute_Local_Linear_Momentum::Compute_Local_Linear_Momentum(Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute_Linear_Momentum(epetraComm_)
+{}
 
 //! Destructor.
 PeridigmNS::Compute_Local_Linear_Momentum::~Compute_Local_Linear_Momentum(){}
-
 
 //! Returns the fieldspecs computed by this class
 std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Local_Linear_Momentum::getFieldSpecs() const 

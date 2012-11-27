@@ -46,7 +46,7 @@
 
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Acceleration,Compute_Acceleration,peridigm)
+ComputeClass(Acceleration,Compute_Acceleration)
 
 #else
 
@@ -54,11 +54,6 @@ ComputeClass(Acceleration,Compute_Acceleration,peridigm)
 #define PERIDIGM_COMPUTE_ACCELERATION_HPP
 
 #include "Peridigm_Compute.hpp"
-
-// Forward declaration
-namespace PeridigmNS {
-  class Peridigm;
-}
 
 namespace PeridigmNS {
 
@@ -68,7 +63,7 @@ namespace PeridigmNS {
   public:
 	
     //! Standard constructor.
-    Compute_Acceleration( PeridigmNS::Peridigm *peridigm_ );
+    Compute_Acceleration(Teuchos::RCP<const Epetra_Comm> epetraComm_);
     
     //! Destructor.
     ~Compute_Acceleration();
@@ -80,9 +75,6 @@ namespace PeridigmNS {
     int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
 
   private:
-
-    //! Parent pointer
-    PeridigmNS::Peridigm *peridigm;
 
     // field ids for all relevant data
     int forceDensityFieldId;
