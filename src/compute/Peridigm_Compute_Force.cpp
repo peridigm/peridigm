@@ -52,24 +52,19 @@
 
 //! Standard constructor.
 PeridigmNS::Compute_Force::Compute_Force(Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute(epetraComm_), volumeFieldId(-1), forceDensityFieldId(-1), forceFieldId(-1)
+  : Compute(epetraComm_), m_volumeFieldId(-1), m_forceDensityFieldId(-1), m_forceFieldId(-1)
 {
   FieldManager& fieldManager = FieldManager::self();
-  volumeFieldId = fieldManager.getFieldId("Volume");
-  forceDensityFieldId = fieldManager.getFieldId("Force_Density");
-  forceFieldId = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force");
+  m_volumeFieldId = fieldManager.getFieldId("Volume");
+  m_forceDensityFieldId = fieldManager.getFieldId("Force_Density");
+  m_forceFieldId = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force");
+  m_fieldIds.push_back(m_volumeFieldId);
+  m_fieldIds.push_back(m_forceDensityFieldId);
+  m_fieldIds.push_back(m_forceFieldId);
 }
 
 //! Destructor.
 PeridigmNS::Compute_Force::~Compute_Force(){}
-
-//! Returns the fieldspecs computed by this class
-std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Force::getFieldSpecs() const {
-  std::vector<Field_NS::FieldSpec> myFieldSpecs;
-  myFieldSpecs.push_back(Field_NS::FORCE3D);
-
-  return myFieldSpecs;
-}
 
 //! Fill the force vector
 int PeridigmNS::Compute_Force::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) const {
@@ -80,9 +75,9 @@ int PeridigmNS::Compute_Force::compute( Teuchos::RCP< std::vector<PeridigmNS::Bl
   std::vector<PeridigmNS::Block>::iterator blockIt;
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
 
-    volume        = blockIt->getData(volumeFieldId, PeridigmField::STEP_NONE);
-    force_density = blockIt->getData(forceDensityFieldId, PeridigmField::STEP_NP1);
-    force         = blockIt->getData(forceFieldId, PeridigmField::STEP_NP1);
+    volume        = blockIt->getData(m_volumeFieldId, PeridigmField::STEP_NONE);
+    force_density = blockIt->getData(m_forceDensityFieldId, PeridigmField::STEP_NP1);
+    force         = blockIt->getData(m_forceFieldId, PeridigmField::STEP_NP1);
 
     // Sanity check
     if ( (force_density->Map().NumMyElements() != volume->Map().NumMyElements()) ||  (force->Map().NumMyElements() != volume->Map().NumMyElements()) ) {

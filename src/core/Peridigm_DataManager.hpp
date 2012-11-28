@@ -99,8 +99,8 @@ public:
     ownedScalarBondMap = ownedScalarBondMap_;
   }
 
-  //! Instantiates State objects corresponding to the given list of FieldIds. 
-  void allocateData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > specs);
+  //! Instantiates State objects corresponding to the given list of field Ids. 
+  void allocateData(std::vector<int> fieldIds);
 
   //! For each point, copies data from the processor that owns the point to processors that have ghosted copies.
   void scatterToGhosts();
@@ -143,17 +143,27 @@ public:
    */
   void copyLocallyOwnedDataFromDataManager(PeridigmNS::DataManager& source);
 
-  //! Query the existence of a particular fieldSpec at a particular step.
+  //! Query the existence of a particular field Id at a particular step.
   bool hasData(int fieldId, PeridigmField::Step step);
 
-  //! Provides access to the Epetra_Vector specified by the given FieldId and FieldStep.
+  //! Provides access to the Epetra_Vector specified by the given field Id and step.
   Teuchos::RCP<Epetra_Vector> getDataOBSOLETE(Field_NS::FieldSpec fieldSpec, PeridigmField::Step step);
 
-  //! Provides access to the Epetra_Vector specified by the given FieldSped and FieldStep.
+  //! Provides access to the Epetra_Vector specified by the given field Id and step.
   Teuchos::RCP<Epetra_Vector> getData(int fieldId, PeridigmField::Step step);
 
-  //! Returns the complete list of field specs.
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > getFieldSpecs() { return fieldSpecs; }
+  //! Returns the complete list of field ids. OBSOLETE
+  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > getFieldSpes() { return fieldSpecs; }
+
+  //! Returns the complete list of field ids.
+#include "Peridigm_Field.hpp"
+  std::vector<int> getFieldIds() { 
+    std::vector<int> fieldIds;
+    PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+    for(unsigned int i=0 ; i<fieldSpecs->size() ; ++i)
+      fieldIds.push_back(fieldManager.getFieldId( (*fieldSpecs)[i].getLabel() ));
+    return fieldIds;
+  }
 
   //! Swaps StateN and StateNP1; stateNONE is unaffected.
   void updateState(){

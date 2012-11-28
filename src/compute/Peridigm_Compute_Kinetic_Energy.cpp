@@ -52,25 +52,21 @@
 
 //! Standard constructor.
 PeridigmNS::Compute_Kinetic_Energy::Compute_Kinetic_Energy(Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute(epetraComm_), volumeFieldId(-1), velocityFieldId(-1), kineticEnergyFieldId(-1)
+  : Compute(epetraComm_), m_volumeFieldId(-1), m_velocityFieldId(-1), m_kineticEnergyFieldId(-1)
 {
   FieldManager& fieldManager = FieldManager::self();
-  volumeFieldId = fieldManager.getFieldId("Volume");
-  velocityFieldId = fieldManager.getFieldId("Velocity");
-  kineticEnergyFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Kinetic_Energy");
-  globalKineticEnergyFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Global_Kinetic_Energy");
+  m_volumeFieldId = fieldManager.getFieldId("Volume");
+  m_velocityFieldId = fieldManager.getFieldId("Velocity");
+  m_kineticEnergyFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Kinetic_Energy");
+  m_globalKineticEnergyFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Global_Kinetic_Energy");
+  m_fieldIds.push_back(m_volumeFieldId);
+  m_fieldIds.push_back(m_velocityFieldId);
+  m_fieldIds.push_back(m_kineticEnergyFieldId);
+  m_fieldIds.push_back(m_globalKineticEnergyFieldId);
 }
 
 //! Destructor.
 PeridigmNS::Compute_Kinetic_Energy::~Compute_Kinetic_Energy(){}
-
-//! Returns the fieldspecs computed by this class
-std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Kinetic_Energy::getFieldSpecs() const 
-{
-  	std::vector<Field_NS::FieldSpec> myFieldSpecs;
-
-  	return myFieldSpecs;
-}
 
 //! Perform computation
 int PeridigmNS::Compute_Kinetic_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const
@@ -91,10 +87,10 @@ int PeridigmNS::Compute_Kinetic_Energy::computeKineticEnergy( Teuchos::RCP< std:
 		const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
 		const int* ownedIDs = neighborhoodData->OwnedIDs();
 
-		volume                = blockIt->getData(volumeFieldId, PeridigmField::STEP_NONE);
-		velocity              = blockIt->getData(velocityFieldId, PeridigmField::STEP_NP1);
+		volume                = blockIt->getData(m_volumeFieldId, PeridigmField::STEP_NONE);
+		velocity              = blockIt->getData(m_velocityFieldId, PeridigmField::STEP_NP1);
 		if (storeLocal)
-          kinetic_energy = blockIt->getData(kineticEnergyFieldId, PeridigmField::STEP_NP1);
+          kinetic_energy = blockIt->getData(m_kineticEnergyFieldId, PeridigmField::STEP_NP1);
 		
 		// Sanity check
 		if (velocity->Map().NumMyElements() != volume->Map().NumMyElements())
@@ -153,7 +149,7 @@ int PeridigmNS::Compute_Kinetic_Energy::computeKineticEnergy( Teuchos::RCP< std:
 	
 	// Store global energy in block (block globals are static, so only need to assign data to first block)
 	if (!storeLocal)
-		blocks->begin()->getScalarData(Field_NS::GLOBAL_KINETIC_ENERGY) = globalKE;
+		blocks->begin()->getGlobalData(m_globalKineticEnergyFieldId) = globalKE;
 
 	return(0);
 

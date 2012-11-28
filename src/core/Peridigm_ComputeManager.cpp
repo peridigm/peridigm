@@ -76,7 +76,7 @@ PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList>
         computeObjects.push_back( Teuchos::rcp_implicit_cast<Compute>(compute) ); \
       }
       #include "compute/compute_includes.hpp"
-      #undef  COMPUTE_CLASS
+    #undef  COMPUTE_CLASS
   }
 }
 
@@ -85,22 +85,23 @@ Teuchos::ParameterList PeridigmNS::ComputeManager::getValidParameterList() {
   return validParameterList;
 }
 
-std::vector<Field_NS::FieldSpec> PeridigmNS::ComputeManager::getFieldSpecs() {
+std::vector<int> PeridigmNS::ComputeManager::FieldIds() const {
 
-  std::vector<Field_NS::FieldSpec> myFieldSpecs;
+  std::vector<int> myFieldIds;
 
-  // Loop over all compute objects, collect the field specs they compute
+  // Loop over all compute objects, collect the field ids they compute
   for (unsigned int i=0; i < computeObjects.size(); i++) {
     Teuchos::RCP<const PeridigmNS::Compute> compute = computeObjects[i];
-    std::vector<Field_NS::FieldSpec> computeFieldSpecs = compute->getFieldSpecs();
-    myFieldSpecs.insert(myFieldSpecs.end(), computeFieldSpecs.begin(), computeFieldSpecs.end());
+    std::vector<int> computeFieldIds = compute->FieldIds();
+    myFieldIds.insert(myFieldIds.end(), computeFieldIds.begin(), computeFieldIds.end());
   }
 
   // remove duplicates
-  std::sort(myFieldSpecs.begin(), myFieldSpecs.end());
-  std::unique(myFieldSpecs.begin(), myFieldSpecs.end());
+  std::sort(myFieldIds.begin(), myFieldIds.end());
+  std::vector<int>::iterator newEnd = std::unique(myFieldIds.begin(), myFieldIds.end());
+  myFieldIds.erase(newEnd, myFieldIds.end());
 
-  return myFieldSpecs;
+  return myFieldIds;
 }
 
 PeridigmNS::ComputeManager::~ComputeManager() {

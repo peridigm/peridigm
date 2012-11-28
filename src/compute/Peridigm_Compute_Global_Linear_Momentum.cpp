@@ -51,19 +51,11 @@
 
 //! Standard constructor.
 PeridigmNS::Compute_Global_Linear_Momentum::Compute_Global_Linear_Momentum(Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute_Linear_Momentum(epetraComm_)
+  : Compute_Linear_Momentum(epetraComm_), m_globalLinearMomentumFieldId(-1)
 {}
 
 //! Destructor.
 PeridigmNS::Compute_Global_Linear_Momentum::~Compute_Global_Linear_Momentum(){}
-
-//! Returns the fieldspecs computed by this class
-std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Global_Linear_Momentum::getFieldSpecs() const {
-  std::vector<Field_NS::FieldSpec> myFieldSpecs;
-  myFieldSpecs.push_back(Field_NS::GLOBAL_LINEAR_MOMENTUM);
-
-  return myFieldSpecs;
-}
 
 //! Calculate the global linear momentum
 int PeridigmNS::Compute_Global_Linear_Momentum::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const

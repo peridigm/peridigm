@@ -58,8 +58,8 @@ using namespace std;
 PeridigmNS::ElasticMaterial::ElasticMaterial(const Teuchos::ParameterList& params)
   : Material(params),
     m_applyAutomaticDifferentiationJacobian(true),
-    volumeFieldId(-1), damageFieldId(-1), weightedVolumeFieldId(-1), dilatationFieldId(-1), modelCoordinatesFieldId(-1),
-    coordinatesFieldId(-1), forceDensityFieldId(-1), bondDamageFieldId(-1)
+    m_volumeFieldId(-1), m_damageFieldId(-1), m_weightedVolumeFieldId(-1), m_dilatationFieldId(-1), m_modelCoordinatesFieldId(-1),
+    m_coordinatesFieldId(-1), m_forceDensityFieldId(-1), m_bondDamageFieldId(-1)
 {
   //! \todo Add meaningful asserts on material properties.
   m_bulkModulus = params.get<double>("Bulk Modulus");
@@ -72,27 +72,23 @@ PeridigmNS::ElasticMaterial::ElasticMaterial(const Teuchos::ParameterList& param
   TEUCHOS_TEST_FOR_EXCEPT_MSG(params.isParameter("Apply Shear Correction Factor"), "**** Error:  Shear Correction Factor is not supported for the Elastic material.\n");
 
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
-  volumeFieldId           = fieldManager.getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::CONSTANT, "Volume");
-  damageFieldId           = fieldManager.getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::TWO_STEP, "Damage");
-  weightedVolumeFieldId   = fieldManager.getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::CONSTANT, "Weighted_Volume");
-  dilatationFieldId       = fieldManager.getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::TWO_STEP, "Dilatation");
-  modelCoordinatesFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::NODE,    PeridigmNS::PeridigmField::VECTOR, PeridigmNS::PeridigmField::CONSTANT, "Model_Coordinates");
-  coordinatesFieldId      = fieldManager.getFieldId(PeridigmNS::PeridigmField::NODE,    PeridigmNS::PeridigmField::VECTOR, PeridigmNS::PeridigmField::TWO_STEP, "Coordinates");
-  forceDensityFieldId     = fieldManager.getFieldId(PeridigmNS::PeridigmField::NODE,    PeridigmNS::PeridigmField::VECTOR, PeridigmNS::PeridigmField::TWO_STEP, "Force_Density");
-  bondDamageFieldId       = fieldManager.getFieldId(PeridigmNS::PeridigmField::BOND,    PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::TWO_STEP, "Bond_Damage");
+  m_volumeFieldId           = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Volume");
+  m_damageFieldId           = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Damage");
+  m_weightedVolumeFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Weighted_Volume");
+  m_dilatationFieldId       = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Dilatation");
+  m_modelCoordinatesFieldId = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::CONSTANT, "Model_Coordinates");
+  m_coordinatesFieldId      = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Coordinates");
+  m_forceDensityFieldId     = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force_Density");
+  m_bondDamageFieldId       = fieldManager.getFieldId(PeridigmField::BOND,    PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Bond_Damage");
 
-  // set up vector of variable specs
-  // \todo Remove old field specs.
-  m_variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
-  m_variableSpecs->push_back(Field_NS::VOLUME);
-  m_variableSpecs->push_back(Field_NS::DAMAGE);
-  m_variableSpecs->push_back(Field_NS::WEIGHTED_VOLUME);
-  m_variableSpecs->push_back(Field_NS::DILATATION);
-  m_variableSpecs->push_back(Field_NS::COORD3D);
-  m_variableSpecs->push_back(Field_NS::CURCOORD3D);
-  m_variableSpecs->push_back(Field_NS::FORCE_DENSITY3D);
-  m_variableSpecs->push_back(Field_NS::BOND_DAMAGE);
-
+  m_fieldIds.push_back(m_volumeFieldId);
+  m_fieldIds.push_back(m_damageFieldId);
+  m_fieldIds.push_back(m_weightedVolumeFieldId);
+  m_fieldIds.push_back(m_dilatationFieldId);
+  m_fieldIds.push_back(m_modelCoordinatesFieldId);
+  m_fieldIds.push_back(m_coordinatesFieldId);
+  m_fieldIds.push_back(m_forceDensityFieldId);
+  m_fieldIds.push_back(m_bondDamageFieldId);
 }
 
 PeridigmNS::ElasticMaterial::~ElasticMaterial()
@@ -108,9 +104,9 @@ PeridigmNS::ElasticMaterial::initialize(const double dt,
 {
   // Extract pointers to the underlying data in the constitutiveData array
   double *x, *cellVolume, *weightedVolume;
-  dataManager.getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
-  dataManager.getData(volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&cellVolume);
-  dataManager.getData(weightedVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
+  dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
+  dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&cellVolume);
+  dataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
 
   MATERIAL_EVALUATION::computeWeightedVolume(x,cellVolume,weightedVolume,numOwnedPoints,neighborhoodList);
 }
@@ -123,27 +119,19 @@ PeridigmNS::ElasticMaterial::computeForce(const double dt,
                                           PeridigmNS::DataManager& dataManager) const
 {
   // Zero out the forces
-  dataManager.getData(forceDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
 
   // Extract pointers to the underlying data
   double *x, *y, *cellVolume, *weightedVolume, *dilatation, *damage, *bondDamage, *force;
-  // dataManager.getData(Field_NS::COORD3D, PeridigmField::STEP_NONE)->ExtractView(&x);
-  // dataManager.getData(Field_NS::CURCOORD3D, PeridigmField::STEP_NP1)->ExtractView(&y);
-  // dataManager.getData(Field_NS::VOLUME, PeridigmField::STEP_NONE)->ExtractView(&cellVolume);
-  // dataManager.getData(Field_NS::WEIGHTED_VOLUME, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
-  // dataManager.getData(Field_NS::DILATATION, PeridigmField::STEP_NP1)->ExtractView(&dilatation);
-  // dataManager.getData(Field_NS::DAMAGE, PeridigmField::STEP_NP1)->ExtractView(&damage);
-  // dataManager.getData(Field_NS::BOND_DAMAGE, PeridigmField::STEP_NP1)->ExtractView(&bondDamage);
-  // dataManager.getData(Field_NS::FORCE_DENSITY3D, PeridigmField::STEP_NP1)->ExtractView(&force);
 
-  dataManager.getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
-  dataManager.getData(coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&y);
-  dataManager.getData(volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&cellVolume);
-  dataManager.getData(weightedVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
-  dataManager.getData(dilatationFieldId, PeridigmField::STEP_NP1)->ExtractView(&dilatation);
-  dataManager.getData(damageFieldId, PeridigmField::STEP_NP1)->ExtractView(&damage);
-  dataManager.getData(bondDamageFieldId, PeridigmField::STEP_NP1)->ExtractView(&bondDamage);
-  dataManager.getData(forceDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&force);
+  dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
+  dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&y);
+  dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&cellVolume);
+  dataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
+  dataManager.getData(m_dilatationFieldId, PeridigmField::STEP_NP1)->ExtractView(&dilatation);
+  dataManager.getData(m_damageFieldId, PeridigmField::STEP_NP1)->ExtractView(&damage);
+  dataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_NP1)->ExtractView(&bondDamage);
+  dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&force);
 
   MATERIAL_EVALUATION::computeDilatationAD(x,y,weightedVolume,cellVolume,bondDamage,dilatation,neighborhoodList,numOwnedPoints);
   MATERIAL_EVALUATION::computeInternalForceLinearElasticAD(x,y,weightedVolume,cellVolume,dilatation,bondDamage,force,neighborhoodList,numOwnedPoints,m_bulkModulus,m_shearModulus);
@@ -221,8 +209,8 @@ PeridigmNS::ElasticMaterial::computeAutomaticDifferentiationJacobian(const doubl
                             tempBondMap);
 
     // The temporary data manager will have the same field specs and data as the real data manager.
-    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs = dataManager.getFieldSpecs();
-    tempDataManager.allocateData(fieldSpecs);
+    vector<int> fieldIds = dataManager.getFieldIds();
+    tempDataManager.allocateData(fieldIds);
     tempDataManager.copyLocallyOwnedDataFromDataManager(dataManager);
 
     // Set up numOwnedPoints and ownedIDs.
@@ -246,19 +234,12 @@ PeridigmNS::ElasticMaterial::computeAutomaticDifferentiationJacobian(const doubl
 
     // Extract pointers to the underlying data in the constitutiveData array.
     double *x, *y, *cellVolume, *weightedVolume, *damage, *bondDamage;
-    // tempDataManager.getData(Field_NS::COORD3D, PeridigmField::STEP_NONE)->ExtractView(&x);
-    // tempDataManager.getData(Field_NS::CURCOORD3D, PeridigmField::STEP_NP1)->ExtractView(&y);
-    // tempDataManager.getData(Field_NS::VOLUME, PeridigmField::STEP_NONE)->ExtractView(&cellVolume);
-    // tempDataManager.getData(Field_NS::WEIGHTED_VOLUME, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
-    // tempDataManager.getData(Field_NS::DAMAGE, PeridigmField::STEP_NP1)->ExtractView(&damage);
-    // tempDataManager.getData(Field_NS::BOND_DAMAGE, PeridigmField::STEP_NP1)->ExtractView(&bondDamage);
-
-    tempDataManager.getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
-    tempDataManager.getData(coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&y);
-    tempDataManager.getData(volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&cellVolume);
-    tempDataManager.getData(weightedVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
-    tempDataManager.getData(damageFieldId, PeridigmField::STEP_NP1)->ExtractView(&damage);
-    tempDataManager.getData(bondDamageFieldId, PeridigmField::STEP_NP1)->ExtractView(&bondDamage);
+    tempDataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
+    tempDataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&y);
+    tempDataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&cellVolume);
+    tempDataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
+    tempDataManager.getData(m_damageFieldId, PeridigmField::STEP_NP1)->ExtractView(&damage);
+    tempDataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_NP1)->ExtractView(&bondDamage);
 
     // Create arrays of Fad objects for the current coordinates, dilatation, and force density
     // Modify the existing vector of Fad objects for the current coordinates

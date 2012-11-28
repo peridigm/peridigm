@@ -57,15 +57,6 @@ PeridigmNS::Compute_Local_Strain_Energy_Density::Compute_Local_Strain_Energy_Den
 //! Destructor.
 PeridigmNS::Compute_Local_Strain_Energy_Density::~Compute_Local_Strain_Energy_Density(){}
 
-//! Returns the fieldspecs computed by this class
-std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Local_Strain_Energy_Density::getFieldSpecs() const 
-{
-  	std::vector<Field_NS::FieldSpec> myFieldSpecs;
-	myFieldSpecs.push_back(Field_NS::STRAIN_ENERGY_DENSITY);
-	
-  	return myFieldSpecs;
-}
-
 //! Fill the strain energy density vectors
 int PeridigmNS::Compute_Local_Strain_Energy_Density::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const
 {

@@ -60,11 +60,10 @@ PeridigmNS::CriticalStretchDamageModel::CriticalStretchDamageModel(const Teuchos
   m_coordinatesFieldId = fieldManager.getFieldId("Coordinates");
   m_damageFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::TWO_STEP, "Damage");
   m_bondDamageFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::BOND, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::TWO_STEP, "Bond_Damage");
-
-  // set up vector of variable specs
-  m_variableSpecs = Teuchos::rcp(new vector<Field_NS::FieldSpec>);
-  m_variableSpecs->push_back(Field_NS::DAMAGE);
-  m_variableSpecs->push_back(Field_NS::BOND_DAMAGE);
+  m_fieldIds.push_back(m_modelCoordinatesFieldId);
+  m_fieldIds.push_back(m_coordinatesFieldId);
+  m_fieldIds.push_back(m_damageFieldId);
+  m_fieldIds.push_back(m_bondDamageFieldId);
 }
 
 PeridigmNS::CriticalStretchDamageModel::~CriticalStretchDamageModel()

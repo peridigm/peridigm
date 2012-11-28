@@ -60,7 +60,7 @@ PeridigmNS::ShortRangeForceContactModel::ShortRangeForceContactModel(const Teuch
     m_velocityFieldId(-1),
     m_contactForceDensityFieldId(-1)
 {
-  //! \todo Add meaningful asserts on material properties.
+  //! \todo Add meaningful asserts on parameters.
   if(!params.isParameter("Contact Radius"))
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Short range force contact parameter \"Contact Radius\" not specified.");
   m_contactRadius = params.get<double>("Contact Radius");
@@ -78,7 +78,11 @@ PeridigmNS::ShortRangeForceContactModel::ShortRangeForceContactModel(const Teuch
   m_volumeFieldId = fieldManager.getFieldId("Volume");
   m_coordinatesFieldId = fieldManager.getFieldId("Coordinates");
   m_velocityFieldId = fieldManager.getFieldId("Velocity");
-  m_contactForceDensityFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::NODE, PeridigmNS::PeridigmField::VECTOR, PeridigmNS::PeridigmField::TWO_STEP, "Contact_Force_Density");
+  m_contactForceDensityFieldId = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Contact_Force_Density");
+  m_fieldIds.push_back(m_volumeFieldId);
+  m_fieldIds.push_back(m_coordinatesFieldId);
+  m_fieldIds.push_back(m_velocityFieldId);
+  m_fieldIds.push_back(m_contactForceDensityFieldId);
 }
 
 PeridigmNS::ShortRangeForceContactModel::~ShortRangeForceContactModel()

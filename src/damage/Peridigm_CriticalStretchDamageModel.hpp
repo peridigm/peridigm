@@ -67,11 +67,11 @@ namespace PeridigmNS {
 	//! Destructor.
 	virtual ~CriticalStretchDamageModel();
 
-	//! Return name of material type
+	//! Return name of the model.
 	virtual string Name() const { return("Critical Stretch"); }
 
-    //! Returns a vector of field specs that specify the variables associated with the damage model
-    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > VariableSpecs() const { return m_variableSpecs; }
+    //! Returns a vector of field IDs corresponding to the variables associated with the model.
+    virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
 	//! Initialize the damage model.
 	virtual void
@@ -103,6 +103,7 @@ namespace PeridigmNS {
     double m_criticalStretch;
 
     // field ids for all relevant data
+    std::vector<int> m_fieldIds;
     int m_modelCoordinatesFieldId;
     int m_coordinatesFieldId;
     int m_damageFieldId;

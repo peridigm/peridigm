@@ -66,9 +66,9 @@ namespace PeridigmNS {
   public:
 
 	//! Standard constructor.
-        Material(const Teuchos::ParameterList & params) : m_finiteDifferenceProbeLength(DBL_MAX) {
+    Material(const Teuchos::ParameterList & params) : m_finiteDifferenceProbeLength(DBL_MAX) {
 	  if(params.isParameter("Finite Difference Probe Length"))
-	     m_finiteDifferenceProbeLength = params.get<double>("Finite Difference Probe Length");
+        m_finiteDifferenceProbeLength = params.get<double>("Finite Difference Probe Length");
 	}
 
 	//! Destructor.
@@ -89,8 +89,8 @@ namespace PeridigmNS {
 	//! Returns the horizon.
 	virtual double Horizon() const = 0;
 
-    //! Returns a vector of field specs that specify the variables associated with the material
-    virtual Teuchos::RCP< std::vector<Field_NS::FieldSpec> > VariableSpecs() const = 0;
+    //! Returns a vector of field IDs corresponding to the variables associated with the material.
+    virtual std::vector<int> FieldIds() const = 0;
 
 	//! Initialize the material model.
 	virtual void

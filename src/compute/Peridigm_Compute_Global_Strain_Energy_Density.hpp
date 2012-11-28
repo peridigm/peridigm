@@ -72,12 +72,18 @@ namespace PeridigmNS {
     //! Destructor.
     ~Compute_Global_Strain_Energy_Density();
 
+    //! Returns a vector of field IDs corresponding to the variables associated with the compute class.
+    virtual std::vector<int> FieldIds() const { return m_fieldIds; }
+
     //! Perform computation
     int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
 
-    //! Returns the fieldspecs computed by this class
-    std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
-  };
+  private:
+
+    // field ids for all relevant data
+    std::vector<int> m_fieldIds;
+    int m_globalStrainEnergyDensityFieldId; 
+ };
 }
 
 #endif // PERIDIGM_COMPUTE_GLOBAL_STRAIN_ENERGY_DENSITY_HPP

@@ -61,28 +61,19 @@ namespace PeridigmNS {
 	//! Destructor.
 	virtual ~ShortRangeForceContactModel();
 
-	//! Return name of material type
+	//! Return name of the model.
 	virtual string Name() const { return("Short-Range Force"); }
 
-
-        //! Returns a vector of field specs that specify the variables associated with the contact model
-    	virtual Teuchos::RCP< std::vector<Field_NS::FieldSpec> > VariableSpecs() const
-    	{
-      	  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > variableSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
-      	  variableSpecs->push_back(Field_NS::VOLUME);
-      	  variableSpecs->push_back(Field_NS::CURCOORD3D);
-          variableSpecs->push_back(Field_NS::VELOC3D);
-      	  variableSpecs->push_back(Field_NS::CONTACT_FORCE_DENSITY3D);
-      	  return variableSpecs;
-    	}
+    //! Returns a vector of field IDs corresponding to the variables associated with the model.
+    virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
 	//! Evaluate the forces on the cells.
 	virtual void
 	computeForce(const double dt,
-		     const int numOwnedPoints,
-		     const int* ownedIDs,
-		     const int* contactNeighborhoodList,
-                     PeridigmNS::DataManager& dataManager) const;
+                 const int numOwnedPoints,
+                 const int* ownedIDs,
+                 const int* contactNeighborhoodList,
+                 PeridigmNS::DataManager& dataManager) const;
 
   protected:
 	
@@ -100,6 +91,7 @@ namespace PeridigmNS {
     double m_horizon;
 
     // field ids for all relevant data
+    std::vector<int> m_fieldIds;
     int m_volumeFieldId;
     int m_coordinatesFieldId;
     int m_velocityFieldId;

@@ -51,20 +51,11 @@
 
 //! Standard constructor.
 PeridigmNS::Compute_Global_Strain_Energy::Compute_Global_Strain_Energy(Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute_Strain_Energy(epetraComm_)
+  : Compute_Strain_Energy(epetraComm_), m_globalStrainEnergyFieldId(-1)
 {}
 
 //! Destructor.
 PeridigmNS::Compute_Global_Strain_Energy::~Compute_Global_Strain_Energy(){}
-
-//! Returns the fieldspecs computed by this class
-std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Global_Strain_Energy::getFieldSpecs() const 
-{
-  	std::vector<Field_NS::FieldSpec> myFieldSpecs;
-	myFieldSpecs.push_back(Field_NS::GLOBAL_STRAIN_ENERGY);
-	
-  	return myFieldSpecs;
-}
 
 //! Compute the global strain energy
 int PeridigmNS::Compute_Global_Strain_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const

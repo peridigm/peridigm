@@ -69,8 +69,8 @@ namespace PeridigmNS {
     //! Destructor.
     ~Compute_Number_Of_Neighbors();
 
-    //! Returns the fieldspecs computed by this class
-    std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
+    //! Returns a vector of field IDs corresponding to the variables associated with the compute class.
+    virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
     //! Initialize the compute class
     virtual void initialize( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) const;
@@ -81,8 +81,9 @@ namespace PeridigmNS {
   private:
 
     // field ids for all relevant data
-    int partialVolumeFieldId;
-    int numberOfNeighborsFieldId;
+    std::vector<int> m_fieldIds;
+    int m_partialVolumeFieldId;
+    int m_numberOfNeighborsFieldId;
   };
 }
 

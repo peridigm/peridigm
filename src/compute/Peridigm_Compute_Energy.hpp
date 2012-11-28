@@ -73,8 +73,8 @@ namespace PeridigmNS {
     //! Destructor.
     ~Compute_Energy();
 
-    //! Returns the fieldspecs computed by this class
-    std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
+    //! Returns a vector of field IDs corresponding to the variables associated with the compute class.
+    virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
     //! Perform computation
     int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
@@ -82,15 +82,16 @@ namespace PeridigmNS {
   private:
 
     // field ids for all relevant data
-    int volumeFieldId;
-    int modelCoordinatesFieldId;
-    int coordinatesFieldId;
-    int velocityFieldId;
-    int weightedVolumeFieldId;
-    int dilatationFieldId;
-    int kineticEnergyFieldId;
-    int strainEnergyDensityFieldId;
-    int strainEnergyFieldId;
+    std::vector<int> m_fieldIds;
+    int m_volumeFieldId;
+    int m_modelCoordinatesFieldId;
+    int m_coordinatesFieldId;
+    int m_velocityFieldId;
+    int m_weightedVolumeFieldId;
+    int m_dilatationFieldId;
+    int m_globalKineticEnergyFieldId;
+    int m_globalStrainEnergyDensityFieldId;
+    int m_globalStrainEnergyFieldId;
   };
 }
 

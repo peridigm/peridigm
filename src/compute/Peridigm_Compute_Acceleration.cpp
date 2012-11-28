@@ -52,23 +52,17 @@
 
 //! Standard constructor.
 PeridigmNS::Compute_Acceleration::Compute_Acceleration(Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute(epetraComm_), forceDensityFieldId(-1), accelerationFieldId(-1)
+  : Compute(epetraComm_), m_forceDensityFieldId(-1), m_accelerationFieldId(-1)
 {
   FieldManager& fieldManager = FieldManager::self();
-  forceDensityFieldId = fieldManager.getFieldId("Force_Density");
-  accelerationFieldId = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Acceleration");
+  m_forceDensityFieldId = fieldManager.getFieldId("Force_Density");
+  m_accelerationFieldId = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Acceleration");
+  m_fieldIds.push_back(m_forceDensityFieldId);
+  m_fieldIds.push_back(m_accelerationFieldId);
 }
 
 //! Destructor.
 PeridigmNS::Compute_Acceleration::~Compute_Acceleration(){}
-
-//! Returns the fieldspecs computed by this class OBSOLETE
-std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Acceleration::getFieldSpecs() const {
-  std::vector<Field_NS::FieldSpec> myFieldSpecs;
-  myFieldSpecs.push_back(Field_NS::ACCEL3D);
-
-  return myFieldSpecs;
-}
 
 //! Fill the acceleration vector
 int PeridigmNS::Compute_Acceleration::compute( Teuchos::RCP< std::vector<Block> > blocks ) const {
@@ -77,8 +71,8 @@ int PeridigmNS::Compute_Acceleration::compute( Teuchos::RCP< std::vector<Block> 
   Teuchos::RCP<Epetra_Vector> force, acceleration;
   std::vector<Block>::iterator blockIt;
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    force        = blockIt->getData(forceDensityFieldId, PeridigmField::STEP_NP1);
-    acceleration = blockIt->getData(accelerationFieldId, PeridigmField::STEP_NP1);
+    force        = blockIt->getData(m_forceDensityFieldId, PeridigmField::STEP_NP1);
+    acceleration = blockIt->getData(m_accelerationFieldId, PeridigmField::STEP_NP1);
     *acceleration = *force;
     double density = blockIt->getMaterialModel()->Density();
     // Report if any calls to Scale() failed.

@@ -165,7 +165,7 @@ void FourPointTest()
   // Now check that volumes and energy is correct
   double *volume_values = volume->Values();
   double *kinetic_energy_values  = kinetic_energy->Values();
-  double globalKE = blocks->begin()->getScalarData(Field_NS::GLOBAL_KINETIC_ENERGY);
+  double globalKE = blocks->begin()->getGlobalData( fieldManager.getFieldId("Global_Kinetic_Energy") );
   BOOST_CHECK_CLOSE(globalKE, 2960100, 1.0e-15); 	// Check global scalar value
   for (int i=0;i<numElements;i++)
     BOOST_CHECK_CLOSE(volume_values[i], 1.5, 1.0e-15);

@@ -52,33 +52,24 @@
 
 //! Standard constructor.
 PeridigmNS::Compute_Angular_Momentum::Compute_Angular_Momentum(Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute(epetraComm_), volumeFieldId(-1), coordinatesFieldId(-1), velocityFieldId(-1), angularMomentumFieldId(-1)
+  : Compute(epetraComm_), m_volumeFieldId(-1), m_coordinatesFieldId(-1), m_velocityFieldId(-1),
+    m_angularMomentumFieldId(-1), m_globalAngularMomentumFieldId(-1)
 {
   FieldManager& fieldManager = FieldManager::self();
-  volumeFieldId = fieldManager.getFieldId("Volume");
-  coordinatesFieldId = fieldManager.getFieldId("Coordinates");
-  velocityFieldId = fieldManager.getFieldId("Velocity");
-  angularMomentumFieldId = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Angular_Momentum");
-  globalAngularMomentumFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Global_Angular_Momentum");
+  m_volumeFieldId = fieldManager.getFieldId("Volume");
+  m_coordinatesFieldId = fieldManager.getFieldId("Coordinates");
+  m_velocityFieldId = fieldManager.getFieldId("Velocity");
+  m_angularMomentumFieldId = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Angular_Momentum");
+  m_globalAngularMomentumFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Global_Angular_Momentum");
+  m_fieldIds.push_back(m_volumeFieldId);
+  m_fieldIds.push_back(m_coordinatesFieldId);
+  m_fieldIds.push_back(m_velocityFieldId);
+  m_fieldIds.push_back(m_angularMomentumFieldId);
+  m_fieldIds.push_back(m_globalAngularMomentumFieldId);
 }
 
 //! Destructor.
 PeridigmNS::Compute_Angular_Momentum::~Compute_Angular_Momentum(){}
-
-//! Returns the fieldspecs computed by this class OBSOLETE
-std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Angular_Momentum::getFieldSpecs() const 
-{
-  std::vector<Field_NS::FieldSpec> myFieldSpecs;
-
-  // This is a hack.
-  // Ideally, we'd specify some global variable as the output variable, but Peridigm is not
-  // currently capable of outputting a global variable.
-  // So, just associate this compute class with the general displacment field, that way this
-  // compute class will be called if "Displacement" is requested in the input deck.
-  //myFieldSpecs.push_back(Field_NS::DISPL3D);
-
-  return myFieldSpecs;
-}
 
 //! Perform computation
 int PeridigmNS::Compute_Angular_Momentum::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const
@@ -100,10 +91,10 @@ int PeridigmNS::Compute_Angular_Momentum::computeAngularMomentum( Teuchos::RCP< 
     const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
     const int* ownedIDs = neighborhoodData->OwnedIDs();
 
-    volume           = blockIt->getData(volumeFieldId, PeridigmField::STEP_NONE);
-    arm              = blockIt->getData(coordinatesFieldId, PeridigmField::STEP_NP1);
-    velocity         = blockIt->getData(velocityFieldId, PeridigmField::STEP_NP1);
-    angular_momentum = blockIt->getData(angularMomentumFieldId, PeridigmField::STEP_NP1);
+    volume           = blockIt->getData(m_volumeFieldId, PeridigmField::STEP_NONE);
+    arm              = blockIt->getData(m_coordinatesFieldId, PeridigmField::STEP_NP1);
+    velocity         = blockIt->getData(m_velocityFieldId, PeridigmField::STEP_NP1);
+    angular_momentum = blockIt->getData(m_angularMomentumFieldId, PeridigmField::STEP_NP1);
 
     // Sanity check
     if ( (velocity->Map().NumMyElements() != volume->Map().NumMyElements()) ||  (arm->Map().NumMyElements() != volume->Map().NumMyElements()) )
@@ -165,7 +156,7 @@ int PeridigmNS::Compute_Angular_Momentum::computeAngularMomentum( Teuchos::RCP< 
 
   // Store global angular momentum in block (block globals are static, so only need to assign data to first block)
   if (!storeLocal)  
-    blocks->begin()->getScalarData(Field_NS::GLOBAL_ANGULAR_MOMENTUM) = globalAM;
+    blocks->begin()->getGlobalData(m_globalAngularMomentumFieldId) = globalAM;
 
   return(0);
 

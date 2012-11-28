@@ -57,15 +57,6 @@ PeridigmNS::Compute_Local_Linear_Momentum::Compute_Local_Linear_Momentum(Teuchos
 //! Destructor.
 PeridigmNS::Compute_Local_Linear_Momentum::~Compute_Local_Linear_Momentum(){}
 
-//! Returns the fieldspecs computed by this class
-std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Local_Linear_Momentum::getFieldSpecs() const 
-{
-  std::vector<Field_NS::FieldSpec> myFieldSpecs;
-  myFieldSpecs.push_back(Field_NS::LINEAR_MOMENTUM3D);
-
-  return myFieldSpecs;
-}
-
 //! Fill the linear momentum vector
 int PeridigmNS::Compute_Local_Linear_Momentum::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const
 {

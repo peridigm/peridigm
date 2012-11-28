@@ -87,7 +87,10 @@ PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Te
   catch(Teuchos::Exceptions::InvalidParameterType &excpt)  {std::cout<<excpt.what(); isValid=false;}
   catch(Teuchos::Exceptions::InvalidParameterValue &excpt) {std::cout<<excpt.what(); isValid=false;}
   catch(...) {isValid=false;}
-  if (!isValid) TEUCHOS_TEST_FOR_EXCEPTION(1, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII:::OutputManager_ExodusII() -- Invalid parameter, type or value.");
+  if (!isValid){
+    std::cout.flush();
+    TEUCHOS_TEST_FOR_EXCEPTION(1, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII:::OutputManager_ExodusII() -- Invalid parameter, type or value.");
+  }
 
   try {
     numProc = params->INVALID_TEMPLATE_QUALIFIER get<int>("NumProc");
@@ -145,10 +148,6 @@ PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Te
 
   // Initialize the exodus database
   // initializeExodusDatabase(blocks);
-
-  // Create field IDs as necessary
-  PeridigmNS::FieldManager::self().getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::CONSTANT, "Element_Id");
-  PeridigmNS::FieldManager::self().getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::CONSTANT, "Proc_Num");
 }
 
 Teuchos::ParameterList PeridigmNS::OutputManager_ExodusII::getValidParameterList() {
@@ -169,31 +168,29 @@ Teuchos::ParameterList PeridigmNS::OutputManager_ExodusII::getValidParameterList
   setIntParameter("Output Frequency",-1,"Frequency of Output",&validParameterList,intParam);
   validParameterList.set("Parallel Write",true);
 
-  // Create a vector of valid output variables (field specs)
+  // Create a vector of valid output variables
   // Do not include bond data, since we can not output it
-  std::vector<Field_NS::FieldSpec> validOutputSpecs;
-
-  // Get valid output fields from data manager
-  std::vector< PeridigmNS::Block >::iterator blockIter;
-  Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks = peridigm->getBlocks();
-  for(blockIter = blocks->begin(); blockIter != blocks->end(); blockIter++) {
-    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > blockSpecs = blockIter->getDataManager()->getFieldSpecs();
-    std::vector< Field_NS::FieldSpec >::iterator specIter;
-    for(specIter = blockSpecs->begin(); specIter != blockSpecs->end(); specIter++)
-      validOutputSpecs.push_back(*specIter);
+  std::vector<PeridigmNS::FieldSpec> validOutputFieldSpecs;
+  FieldManager& fieldManager = FieldManager::self();
+  std::vector<PeridigmNS::FieldSpec> allFieldSpecs = fieldManager.getFieldSpecs();
+  for(std::vector<PeridigmNS::FieldSpec>::iterator it = allFieldSpecs.begin() ; it != allFieldSpecs.end() ; it++){
+    if(it->getRelation() != PeridigmField::BOND)
+      validOutputFieldSpecs.push_back(*it);
   }
 
   // Add in any remaining field specs that are known to be valid
-  validOutputSpecs.push_back(Field_NS::GID);
-  validOutputSpecs.push_back(Field_NS::PROC_NUM);
+  validOutputFieldSpecs.push_back(fieldManager.getFieldSpec("Element_Id"));
+  validOutputFieldSpecs.push_back(fieldManager.getFieldSpec("Proc_Num"));
 
-  // Remove duplicates and sort for consistency
-  std::unique(validOutputSpecs.begin(), validOutputSpecs.end());
-  std::sort(validOutputSpecs.begin(), validOutputSpecs.end());
+  // Sort and remove duplicates for consistency
+  std::sort(validOutputFieldSpecs.begin(), validOutputFieldSpecs.end());
+  std::vector<PeridigmNS::FieldSpec>::iterator newEnd = std::unique(validOutputFieldSpecs.begin(), validOutputFieldSpecs.end());
+  validOutputFieldSpecs.erase(newEnd, validOutputFieldSpecs.end());
+
   // Convert the vector into a ParameterList and append it to validParametersList
   Teuchos::ParameterList& validOutputVariablesParameterList = validParameterList.sublist("Output Variables");
-  for(unsigned int i=0 ; i<validOutputSpecs.size() ; ++i)
-    validOutputVariablesParameterList.set(validOutputSpecs[i].getLabel(), false);
+  for(unsigned int i=0 ; i<validOutputFieldSpecs.size() ; ++i)
+    validOutputVariablesParameterList.set(validOutputFieldSpecs[i].getLabel(), false);
 
   return validParameterList;
 }
@@ -268,7 +265,7 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
       std::map<string, Field_NS::FieldSpec>::const_iterator i3;
       if (spec.getLength() == Field_ENUM::SCALAR) {
         TEUCHOS_TEST_FOR_EXCEPTION(globalsIndex >= globals_vec.size(), std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- error writing global variable.");
-        globals[globalsIndex++] = blocks->begin()->getScalarData(spec);
+        globals[globalsIndex++] = blocks->begin()->getGlobalData(fieldId);
       }
       else {
         TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- unsupported global type (must be 1D).");

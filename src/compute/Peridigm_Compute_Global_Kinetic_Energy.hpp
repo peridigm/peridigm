@@ -74,8 +74,14 @@ namespace PeridigmNS {
     //! Perform computation
     virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
 
-    //! Returns the fieldspecs computed by this class
-    std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
+    //! Returns a vector of field IDs corresponding to the variables associated with the compute class.
+    virtual std::vector<int> FieldIds() const { return m_fieldIds; }
+
+  private:
+
+    // field ids for all relevant data
+    std::vector<int> m_fieldIds;
+    int m_globalKineticEnergyFieldId;
   };
 }
 

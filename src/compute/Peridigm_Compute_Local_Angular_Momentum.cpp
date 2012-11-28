@@ -57,14 +57,6 @@ PeridigmNS::Compute_Local_Angular_Momentum::Compute_Local_Angular_Momentum(Teuch
 //! Destructor.
 PeridigmNS::Compute_Local_Angular_Momentum::~Compute_Local_Angular_Momentum(){}
 
-//! Returns the fieldspecs computed by this class
-std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Local_Angular_Momentum::getFieldSpecs() const {
-  std::vector<Field_NS::FieldSpec> myFieldSpecs;
-  myFieldSpecs.push_back(Field_NS::ANGULAR_MOMENTUM3D);
-
-  return myFieldSpecs;
-}
-
 //! Fill the angular momentum vector
 int PeridigmNS::Compute_Local_Angular_Momentum::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const {
   bool storeLocal = true;

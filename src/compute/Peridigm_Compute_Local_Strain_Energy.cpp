@@ -57,15 +57,6 @@ PeridigmNS::Compute_Local_Strain_Energy::Compute_Local_Strain_Energy(Teuchos::RC
 //! Destructor.
 PeridigmNS::Compute_Local_Strain_Energy::~Compute_Local_Strain_Energy(){}
 
-//! Returns the fieldspecs computed by this class
-std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Local_Strain_Energy::getFieldSpecs() const 
-{
-  	std::vector<Field_NS::FieldSpec> myFieldSpecs;
-	myFieldSpecs.push_back(Field_NS::STRAIN_ENERGY);
-
-  	return myFieldSpecs;
-}
-
 //! Fill the strain energy vectors
 int PeridigmNS::Compute_Local_Strain_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const
 {

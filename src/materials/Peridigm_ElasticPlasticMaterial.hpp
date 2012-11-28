@@ -62,7 +62,7 @@ namespace PeridigmNS {
 	virtual ~ElasticPlasticMaterial();
 
 	//! Return name of material type
-	virtual string Name() const {return("Elastic Plastic");}
+	virtual string Name() const { return("Elastic Plastic"); }
 
 	//! Returns the density of the material.
 	virtual double Density() const { return m_density; }
@@ -76,8 +76,8 @@ namespace PeridigmNS {
 	//! Returns the horizon.
 	virtual double Horizon() const { return m_horizon; }
 
-    //! Returns a vector of field specs that specify the variables associated with the material
-    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > VariableSpecs() const { return m_variableSpecs; }
+    //! Returns a vector of field IDs corresponding to the variables associated with the material.
+    virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
 	//! Initialized data containers and computes weighted volume.
 	virtual void
@@ -115,8 +115,6 @@ namespace PeridigmNS {
 
   protected:
 
-    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > m_variableSpecs;
-
 	// material parameters
 	double m_bulkModulus;
 	double m_shearModulus;
@@ -130,18 +128,19 @@ namespace PeridigmNS {
     bool m_isPlanarProblem;
 
     // field ids for all relevant data
-    int volumeFieldId;
-    int damageFieldId;
-    int weightedVolumeFieldId;
-    int dilatationFieldId;
-    int modelCoordinatesFieldId;
-    int coordinatesFieldId;
-    int forceDensityFieldId;
-    int bondDamageFieldId;
-    int deviatoricPlasticExtensionFieldId;
-    int lambdaFieldId;
-    int surfaceCorrectionFactorFieldId;
-    int tangentReferenceCoordinatesFieldId;
+    std::vector<int> m_fieldIds;
+    int m_volumeFieldId;
+    int m_damageFieldId;
+    int m_weightedVolumeFieldId;
+    int m_dilatationFieldId;
+    int m_modelCoordinatesFieldId;
+    int m_coordinatesFieldId;
+    int m_forceDensityFieldId;
+    int m_bondDamageFieldId;
+    int m_deviatoricPlasticExtensionFieldId;
+    int m_lambdaFieldId;
+    int m_surfaceCorrectionFactorFieldId;
+    int m_tangentReferenceCoordinatesFieldId;
   };
 }
 

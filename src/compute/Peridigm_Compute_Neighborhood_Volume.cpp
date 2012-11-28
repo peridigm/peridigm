@@ -51,21 +51,18 @@
 #include "Peridigm_Field.hpp"
 
 PeridigmNS::Compute_Neighborhood_Volume::Compute_Neighborhood_Volume(Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute(epetraComm_), volumeFieldId(-1), partialVolumeFieldId(-1), neighborhoodVolumeFieldId(-1)
+  : Compute(epetraComm_), m_volumeFieldId(-1), m_partialVolumeFieldId(-1), m_neighborhoodVolumeFieldId(-1)
 {
   FieldManager& fieldManager = FieldManager::self();
-  volumeFieldId = fieldManager.getFieldId("Volume");
-  partialVolumeFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Partial_Volume");
-  neighborhoodVolumeFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Neighborhood_Volume");
+  m_volumeFieldId = fieldManager.getFieldId("Volume");
+  m_partialVolumeFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Partial_Volume");
+  m_neighborhoodVolumeFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Neighborhood_Volume");
+  m_fieldIds.push_back(m_volumeFieldId);
+  m_fieldIds.push_back(m_partialVolumeFieldId);
+  m_fieldIds.push_back(m_neighborhoodVolumeFieldId);
 }
 
 PeridigmNS::Compute_Neighborhood_Volume::~Compute_Neighborhood_Volume(){}
-
-std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Neighborhood_Volume::getFieldSpecs() const {
-  std::vector<Field_NS::FieldSpec> myFieldSpecs;
-  myFieldSpecs.push_back(Field_NS::NEIGHBORHOOD_VOLUME);
-  return myFieldSpecs;
-}
 
 void PeridigmNS::Compute_Neighborhood_Volume::initialize( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) const {
 
@@ -75,12 +72,12 @@ void PeridigmNS::Compute_Neighborhood_Volume::initialize( Teuchos::RCP< std::vec
     const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
     const int* neighborhoodList = neighborhoodData->NeighborhoodList();
     double *volume, *neighborhoodVolume;
-    blockIt->getData(volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&volume);
-    blockIt->getData(neighborhoodVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborhoodVolume);
+    blockIt->getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&volume);
+    blockIt->getData(m_neighborhoodVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborhoodVolume);
 
     double *partialVolume = 0;
-    if( blockIt->hasData(partialVolumeFieldId, PeridigmField::STEP_NONE) )
-      blockIt->getData(partialVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&partialVolume);
+    if( blockIt->hasData(m_partialVolumeFieldId, PeridigmField::STEP_NONE) )
+      blockIt->getData(m_partialVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&partialVolume);
 
     int neighborhoodListIndex = 0;
     int bondIndex = 0;

@@ -126,6 +126,11 @@ PeridigmNS::FieldSpec PeridigmNS::FieldManager::getFieldSpec(int fieldId)
   return fieldSpecs[id];
 }
 
+PeridigmNS::FieldSpec PeridigmNS::FieldManager::getFieldSpec(string label)
+{
+  return getFieldSpec( getFieldId(label) );
+}
+
 std::ostream& operator<<(std::ostream& os, const PeridigmNS::FieldSpec& fieldSpec){
   os << fieldSpec.getLabel();
   return os;
