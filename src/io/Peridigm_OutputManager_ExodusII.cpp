@@ -60,7 +60,6 @@
 #include "Peridigm.hpp"
 #include "Peridigm_OutputManager_ExodusII.hpp"
 #include "Peridigm_Field.hpp"
-#include "mesh_output/Field.h"
 
 PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Teuchos::ParameterList>& params, 
                                                            PeridigmNS::Peridigm *peridigm_,
@@ -179,8 +178,10 @@ Teuchos::ParameterList PeridigmNS::OutputManager_ExodusII::getValidParameterList
   }
 
   // Add in any remaining field specs that are known to be valid
-  validOutputFieldSpecs.push_back(fieldManager.getFieldSpec("Element_Id"));
-  validOutputFieldSpecs.push_back(fieldManager.getFieldSpec("Proc_Num"));
+  procNumFieldId = fieldManager.getFieldId("Proc_Num");
+  elementIdFieldId = fieldManager.getFieldId("Element_Id");
+  validOutputFieldSpecs.push_back(fieldManager.getFieldSpec(procNumFieldId));
+  validOutputFieldSpecs.push_back(fieldManager.getFieldSpec(elementIdFieldId));
 
   // Sort and remove duplicates for consistency
   std::sort(validOutputFieldSpecs.begin(), validOutputFieldSpecs.end());
@@ -251,43 +252,37 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
   unsigned int globalsIndex = 0;
 
   for (Teuchos::ParameterList::ConstIterator it = outputVariables->begin(); it != outputVariables->end(); ++it) {
-    const std::string& name = it->first;
 
-    // \todo Both the old Field_NS::FieldSpec and the new PeridigmNS::FieldManager are in use temporarily, Field_NS::FieldSpec will be elliminated.
-    std::map<string, Field_NS::FieldSpec>::const_iterator specIt = Field_NS::FieldSpecMap::Map.find(name);
-    int fieldId = PeridigmNS::FieldManager::self().getFieldId(name); 
+    string name = it->first;
+    PeridigmNS::FieldSpec spec = PeridigmNS::FieldManager::self().getFieldSpec(name);
 
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(specIt == Field_NS::FieldSpecMap::Map.end(), "Failed to find reference to fieldSpec!");
-    Field_NS::FieldSpec const &spec = specIt->second;
     double *block_ptr = NULL;
-    if (spec.getRelation() == Field_ENUM::GLOBAL) {
+    if (spec.getRelation() == PeridigmField::GLOBAL) {
       // global vars are static within a block, so only need to reference first block
-      std::map<string, Field_NS::FieldSpec>::const_iterator i3;
-      if (spec.getLength() == Field_ENUM::SCALAR) {
+      if (spec.getLength() == PeridigmField::SCALAR) {
         TEUCHOS_TEST_FOR_EXCEPTION(globalsIndex >= globals_vec.size(), std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- error writing global variable.");
-        globals[globalsIndex++] = blocks->begin()->getGlobalData(fieldId);
+        globals[globalsIndex++] = blocks->begin()->getGlobalData(spec.getId());
       }
       else {
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- unsupported global type (must be 1D).");
+        TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- unsupported global type (must be scalar).");
       }
       retval = ex_put_glob_vars(file_handle, exodusCount, num_global_vars, globals);
       if (retval!= 0) reportExodusError(retval, "write", "ex_put_glob_vars");
     }
     // Exodus ignores element blocks when writing nodal variables
-    else if (spec.getRelation() == Field_ENUM::NODE) {
+    else if (spec.getRelation() == PeridigmField::NODE) {
       // Loop over all blocks, copying data from each block into mothership-like vector
       std::vector<PeridigmNS::Block>::iterator blockIt;
       for(blockIt = blocks->begin(); blockIt != blocks->end() ; blockIt++) {
-        Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
         Teuchos::RCP<Epetra_Vector> epetra_vector;
         PeridigmField::Step step = PeridigmField::STEP_NONE;
-        if(spec.get_temporal() == Field_ENUM::TWO_STEP)
+        if(spec.getTemporal() == PeridigmField::TWO_STEP)
           step = PeridigmField::STEP_NP1;
-        epetra_vector = dataManager->getData(fieldId, step);
+        epetra_vector = blockIt->getData(spec.getId(), step);
         int block_num_nodes = (blockIt->getDataManager()->getOwnedScalarPointMap())->NumMyElements();
         epetra_vector->ExtractView(&block_ptr);
         // switch on dimension of data
-        if (spec.getLength() == Field_ENUM::SCALAR) {
+        if (spec.getLength() == PeridigmField::SCALAR) {
           // loop over contents of block vector; fill mothership-like vector
           for (int j=0;j<block_num_nodes; j++) {
             int GID = blockIt->getOwnedVectorPointMap()->GID(j);
@@ -295,11 +290,7 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
             xptr[msLID] = block_ptr[j];
           }
         }
-        else if (spec.getLength() == Field_ENUM::VECTOR2D) {
-          // Peridgm doesn't have any 2D maps. 2D output not supported.
-          TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- 2D vector quantities not currently supported.");
-        }
-        else if (spec.getLength() == Field_ENUM::VECTOR3D) {
+        else if (spec.getLength() == PeridigmField::VECTOR) {
           // loop over contents of block vector; fill mothership-like vector
           for (int j=0;j<block_num_nodes; j++) {
             int GID = blockIt->getOwnedVectorPointMap()->GID(j);
@@ -311,15 +302,11 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
         } // end switch on data dimension
       } // end loop over blocks
       // Mothership-like vectors filled now; pass data to exodus database (switch again on dimension of data)
-      if (spec.getLength() == Field_ENUM::SCALAR) {
+      if (spec.getLength() == PeridigmField::SCALAR) {
         retval = ex_put_nodal_var(file_handle, exodusCount, node_output_field_map[name], num_nodes, xptr);
         if (retval!= 0) reportExodusError(retval, "write", "ex_put_nodal_var");
       }
-      else if (spec.getLength() == Field_ENUM::VECTOR2D) {
-        // Peridgm doesn't have any 2D maps. 2D output not supported.
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- 2D vector quantities not currently supported.");
-      }
-      else if (spec.getLength() == Field_ENUM::VECTOR3D) {
+      else if (spec.getLength() == PeridigmField::VECTOR) {
         // Writing all vector output as per-node data
         string tmpnameX = name+"X";
         string tmpnameY = name+"Y";
@@ -333,43 +320,38 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
       }
     } // end if per-node variable
     // Exodus wants element data written individually for each element block
-    else if (spec.getRelation() == Field_ENUM::ELEMENT) {
+    else if (spec.getRelation() == PeridigmField::ELEMENT) {
       // Loop over all blocks, passing data from each block to exodus database
       std::vector<PeridigmNS::Block>::iterator blockIt;
       for(blockIt = blocks->begin(); blockIt != blocks->end() ; blockIt++) {
         int block_num_nodes = (blockIt->getDataManager()->getOwnedScalarPointMap())->NumMyElements();
         if (block_num_nodes == 0) continue; // Don't write data for empty blocks
-        if (spec == Field_NS::GID) { // Handle special case of ID (int type)
+        if (spec.getId() == elementIdFieldId) { // Handle special case of ID (int type)
           for (int j=0; j<block_num_nodes; j++)
             xptr[j] = (double)(((blockIt->getDataManager()->getOwnedScalarPointMap())->GID(j))+1);
           retval = ex_put_elem_var(file_handle, exodusCount, element_output_field_map[name], blockIt->getID(), block_num_nodes, xptr);
           if (retval!= 0) reportExodusError(retval, "write", "ex_put_elem_var");
         }
-        else if (spec == Field_NS::PROC_NUM) { // Handle special case of Proc_Num (int type)
+        else if (spec.getId() == procNumFieldId) { // Handle special case of Proc_Num (int type)
           for (int j=0; j<block_num_nodes; j++)
             xptr[j] = (double)myPID;
           retval = ex_put_elem_var(file_handle, exodusCount, element_output_field_map[name], blockIt->getID(), block_num_nodes, xptr);
           if (retval!= 0) reportExodusError(retval, "write", "ex_put_elem_var");
         }
         else {
-          Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
           Teuchos::RCP<Epetra_Vector> epetra_vector;
           PeridigmField::Step step = PeridigmField::STEP_NONE;
-          if(spec.get_temporal() == Field_ENUM::TWO_STEP)
+          if(spec.getTemporal() == PeridigmField::TWO_STEP)
             step = PeridigmField::STEP_NP1;
-          if( dataManager->hasData(fieldId, step) ) {
-            epetra_vector = dataManager->getData(fieldId, step);
+          if( blockIt->hasData(spec.getId(), step) ) {
+            epetra_vector = blockIt->getData(spec.getId(), step);
             epetra_vector->ExtractView(&block_ptr);
             // switch on dimension of data
-            if (spec.getLength() == Field_ENUM::SCALAR) {
+            if (spec.getLength() == PeridigmField::SCALAR) {
               retval = ex_put_elem_var(file_handle, exodusCount, element_output_field_map[name], blockIt->getID(), block_num_nodes, block_ptr);
               if (retval!= 0) reportExodusError(retval, "write", "ex_put_elem_var");
             }
-            else if (spec.getLength() == Field_ENUM::VECTOR2D) { 
-              // Peridgm doesn't have any 2D maps. 2D output not supported.
-              TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- elementwise 2D vector quantities not currently supported.");
-            }
-            else if (spec.getLength() == Field_ENUM::VECTOR3D) {
+            else if (spec.getLength() == PeridigmField::VECTOR) {
               // no 3D vector element data currently implemented in Peridgm.
               TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- elementwise 3D vector quantities not currently supported.");
             } // end switch on data dimension
@@ -554,52 +536,27 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
   int node_output_field_index = 1;
   int element_output_field_index = 1;
   for (Teuchos::ParameterList::ConstIterator it = outputVariables->begin(); it != outputVariables->end(); ++it) {
-    const std::string& name = it->first;
-    // use field name to get reference to const fieldSpec
-    std::map<string, Field_NS::FieldSpec>::const_iterator specIt = Field_NS::FieldSpecMap::Map.find(name);
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(specIt == Field_NS::FieldSpecMap::Map.end(), "Failed to find reference to fieldSpec!");
-    Field_NS::FieldSpec const &spec = specIt->second;
-    if (spec.getLength() == Field_ENUM::SCALAR) {
-      if (spec.getRelation() == Field_ENUM::GLOBAL) {
+    string name = it->first;
+    PeridigmNS::FieldSpec spec = PeridigmNS::FieldManager::self().getFieldSpec(name);
+    if (spec.getLength() == PeridigmField::SCALAR) {
+      if (spec.getRelation() == PeridigmField::GLOBAL) {
         global_output_field_map.insert( std::pair<string,int>(name,global_output_field_index) );
         global_output_field_index = global_output_field_index + 1;
       }
-      else if (spec.getRelation() == Field_ENUM::NODE) {
+      else if (spec.getRelation() == PeridigmField::NODE) {
         node_output_field_map.insert( std::pair<string,int>(name,node_output_field_index) );
         node_output_field_index = node_output_field_index + 1;
       }
-      else if (spec.getRelation() == Field_ENUM::ELEMENT) {
+      else if (spec.getRelation() == PeridigmField::ELEMENT) {
         element_output_field_map.insert( std::pair<string,int>(name,element_output_field_index) );
         element_output_field_index = element_output_field_index + 1;
       }
     }
-    if (spec.getLength() == Field_ENUM::VECTOR2D) {
-      string tmpnameX = name+"X";
-      string tmpnameY = name+"Y";
-      if (spec.getRelation() == Field_ENUM::GLOBAL) {
-        global_output_field_map.insert( std::pair<string,int>(tmpnameX,global_output_field_index) );
-        global_output_field_index = global_output_field_index + 1;
-        global_output_field_map.insert( std::pair<string,int>(tmpnameY,global_output_field_index) );
-        global_output_field_index = global_output_field_index + 1;
-      }
-      else if (spec.getRelation() == Field_ENUM::NODE) {
-        node_output_field_map.insert( std::pair<string,int>(tmpnameX,node_output_field_index) );
-        node_output_field_index = node_output_field_index + 1;
-        node_output_field_map.insert( std::pair<string,int>(tmpnameY,node_output_field_index) );
-        node_output_field_index = node_output_field_index + 1;
-      }
-      else if (spec.getRelation() == Field_ENUM::ELEMENT) {
-        element_output_field_map.insert( std::pair<string,int>(tmpnameX,element_output_field_index) );
-        element_output_field_index = element_output_field_index + 1;
-        element_output_field_map.insert( std::pair<string,int>(tmpnameY,element_output_field_index) );
-        element_output_field_index = element_output_field_index + 1;
-      }
-    }
-    if (spec.getLength() == Field_ENUM::VECTOR3D) {
+    if (spec.getLength() == PeridigmField::VECTOR) {
       string tmpnameX = name+"X";
       string tmpnameY = name+"Y";
       string tmpnameZ = name+"Z";
-      if (spec.getRelation() == Field_ENUM::GLOBAL) {
+      if (spec.getRelation() == PeridigmField::GLOBAL) {
         global_output_field_map.insert( std::pair<string,int>(tmpnameX,global_output_field_index) );
         global_output_field_index = global_output_field_index + 1;
         global_output_field_map.insert( std::pair<string,int>(tmpnameY,global_output_field_index) );
@@ -607,7 +564,7 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
         global_output_field_map.insert( std::pair<string,int>(tmpnameZ,global_output_field_index) );
         global_output_field_index = global_output_field_index + 1;
       }
-      if (spec.getRelation() == Field_ENUM::NODE) {
+      if (spec.getRelation() == PeridigmField::NODE) {
         node_output_field_map.insert( std::pair<string,int>(tmpnameX,node_output_field_index) );
         node_output_field_index = node_output_field_index + 1;
         node_output_field_map.insert( std::pair<string,int>(tmpnameY,node_output_field_index) );
@@ -615,7 +572,7 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
         node_output_field_map.insert( std::pair<string,int>(tmpnameZ,node_output_field_index) );
         node_output_field_index = node_output_field_index + 1;
       }
-      else if (spec.getRelation() == Field_ENUM::ELEMENT) {
+      else if (spec.getRelation() == PeridigmField::ELEMENT) {
         element_output_field_map.insert( std::pair<string,int>(tmpnameX,element_output_field_index) );
         element_output_field_index = element_output_field_index + 1;
         element_output_field_map.insert( std::pair<string,int>(tmpnameY,element_output_field_index) );
@@ -676,22 +633,17 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
     int truthTableIndex = 0;
     for(blockIt = blocks->begin(); blockIt != blocks->end(); blockIt++){
       for(Teuchos::ParameterList::ConstIterator outputVariableIt = outputVariables->begin(); outputVariableIt != outputVariables->end(); ++outputVariableIt){
-        const std::string& variableName = outputVariableIt->first;
-        std::map<string, Field_NS::FieldSpec>::const_iterator specIt = Field_NS::FieldSpecMap::Map.find(variableName);
-
-        // \todo Both the old Field_NS::FieldSpec and the new PeridigmNS::FieldManager are in use temporarily, Field_NS::FieldSpec will be elliminated.
-        const Field_NS::FieldSpec& spec = specIt->second;
-        int fieldId = PeridigmNS::FieldManager::self().getFieldId(variableName);
-
-        if(spec.getRelation() == Field_ENUM::ELEMENT){
+        string name = outputVariableIt->first;
+        PeridigmNS::FieldSpec spec = PeridigmNS::FieldManager::self().getFieldSpec(name);
+        if(spec.getRelation() == PeridigmField::ELEMENT){
           PeridigmField::Step step = PeridigmField::STEP_NONE;
-          if(spec.get_temporal() == Field_ENUM::TWO_STEP)
+          if(spec.getTemporal() == PeridigmField::TWO_STEP)
             step = PeridigmField::STEP_NP1;
           int truthTableValue = 0;
-          if(blockIt->hasData(fieldId, step))
+          if(blockIt->hasData(spec.getId(), step))
             truthTableValue = 1;
           // Global ID and processor number are special cases
-          if(spec == Field_NS::GID || spec == Field_NS::PROC_NUM)
+          if(spec.getId() == elementIdFieldId || spec.getId() == procNumFieldId)
             truthTableValue = 1;
           truthTableVec[truthTableIndex++] = truthTableValue;
         }
