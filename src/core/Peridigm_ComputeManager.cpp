@@ -50,7 +50,6 @@
 
 #include "Peridigm_ComputeManager.hpp"
 #include "compute/compute_includes.hpp"
-#include "mesh_output/Field.h"
 
 PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList>& params, Teuchos::RCP<const Epetra_Comm>& epetraComm ) {
 

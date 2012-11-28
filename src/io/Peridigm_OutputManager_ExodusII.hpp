@@ -124,6 +124,11 @@ namespace PeridigmNS {
     //! Map from element field name to integer. Exodus uses an integer (1..k)  to index the output fields
     std::map <string, int> element_output_field_map;
 
+    //! Field id for processor id.
+    int procNumFieldId;
+
+    //! Field id for element id.
+    int elementIdFieldId;
   };
   
 }
