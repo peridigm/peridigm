@@ -40,6 +40,7 @@ add_library(PeridigmLib ${Peridigm_SOURCES})
 set(Peridigm_LIBRARY PeridigmLib)
 
 set(Peridigm_LINK_LIBRARIES
+    ${LCM_LIBRARY}
     ${Peridigm_LIBRARY}
     ${Trilinos_LIBRARIES}
     ${PDNEIGH_LIBS}
