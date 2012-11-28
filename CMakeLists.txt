@@ -76,6 +76,38 @@ option (USE_DAKOTA
 )
 
 #
+# Optional dependency on Laboratory for Computational Mechanics (LCM)
+#
+IF(USE_LCM)
+  MESSAGE("-- LCM is enabled, compiling with -DPERIDIGM_LCM")
+  ADD_DEFINITIONS(-DPERIDIGM_LCM)
+  SET(PERIDIGM_LCM TRUE)
+  IF(NOT LCM_INCLUDE_DIR)
+    MESSAGE("\nError:  LCM_INCLUDE_DIR not defined\n")
+  ELSE()
+    MESSAGE("-- LCM_INCLUDE_DIR ${LCM_INCLUDE_DIR}")
+  ENDIF()
+  IF(NOT LCM_LIBRARY_DIR)
+    MESSAGE("\nError:  LCM_LIBRARY_DIR not defined\n")
+  ELSE()
+    MESSAGE("-- LCM_LIBRARY_DIR ${LCM_LIBRARY_DIR}")
+  ENDIF()
+  MESSAGE("")
+ELSE()
+  MESSAGE("-- LCM is NOT enabled.\n")
+  SET(PERIDIGM_LCM FALSE)
+ENDIF()
+
+IF(PERIDIGM_LCM)
+  include_directories (${LCM_INCLUDE_DIR} ${LCM_INCLUDE_DIR}/../ ${LCM_INCLUDE_DIR}/../problems)
+  link_directories (${LCM_LIBRARY_DIR})
+  set(LCM_LIBRARY albanyLib)
+ELSE()
+  set(LCM_LIBRARY )
+ENDIF()
+
+
+#
 # Trilinos configuration
 #
 set(TRILINOS_DIR CACHE PATH "Path to Trilinos directory")

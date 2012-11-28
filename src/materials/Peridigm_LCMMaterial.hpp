@@ -1,4 +1,4 @@
-/*! \file Peridigm_MaterialFactory.hpp */
+//! \file Peridigm_LCMMaterial.hpp
 
 //@HEADER
 // ************************************************************************
@@ -45,36 +45,74 @@
 // ************************************************************************
 //@HEADER
 
-#include <Teuchos_Assert.hpp>
-#include "Peridigm_MaterialFactory.hpp"
-#include "Peridigm_ElasticMaterial.hpp"
-#include "Peridigm_ElasticPlasticMaterial.hpp"
-#include "Peridigm_ElasticPlasticHardeningMaterial.hpp"
-#include "Peridigm_ViscoelasticMaterial.hpp"
-#include "Peridigm_LCMMaterial.hpp"
+#ifndef PERIDIGM_LCMMATERIAL_HPP
+#define PERIDIGM_LCMMATERIAL_HPP
 
-Teuchos::RCP<PeridigmNS::Material>
-PeridigmNS::MaterialFactory::create(const Teuchos::ParameterList& materialParams)
-{
-  string materialModelName = materialParams.get<string>("Material Model");
+#include "Peridigm_Material.hpp"
 
-  Teuchos::RCP<PeridigmNS::Material> materialModel;
-  if (materialModelName == "Elastic")
-    materialModel = Teuchos::rcp( new ElasticMaterial(materialParams) );
-  else if (materialModelName == "Elastic Plastic")
-    materialModel = Teuchos::rcp( new ElasticPlasticMaterial(materialParams) );
-  else if (materialModelName == "Elastic Plastic Hardening")
-    materialModel = Teuchos::rcp( new ElasticPlasticHardeningMaterial(materialParams) );
-  else if (materialModelName == "Viscoelastic")
-    materialModel = Teuchos::rcp( new ViscoelasticMaterial(materialParams) );
-  else if (materialModelName == "LCM")
-    materialModel = Teuchos::rcp( new LCMMaterial(materialParams) );
-  else {
-    string invalidMaterial("\n**** Unrecognized material model: ");
-    invalidMaterial += materialModelName;
-    invalidMaterial += ", must be \"Elastic\" or \"Elastic Plastic\" or \"Elastic Plastic Hardening\" or \"Viscoelastic\" or \"LCM\".\n";
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, invalidMaterial);
-  }
-  
-  return materialModel;
+namespace PeridigmNS {
+
+  //! Nonordinary state-based interface to classical material models in the Laboratory for Computational Mechanics (LCM).
+  class LCMMaterial : public Material{
+  public:
+
+	//! Constructor.
+    LCMMaterial(const Teuchos::ParameterList & params);
+
+	//! Destructor.
+	virtual ~LCMMaterial();
+
+	//! Return name of material type
+	virtual string Name() const { return("LCM"); }
+
+	//! Returns the density of the material.
+	virtual double Density() const { return m_density; }
+
+	//! Returns the bulk modulus of the material.
+	virtual double BulkModulus() const { return m_bulkModulus; }
+
+	//! Returns the shear modulus of the material.
+    virtual double ShearModulus() const { return m_shearModulus; }
+
+	//! Returns the horizon.
+	virtual double Horizon() const { return m_horizon; }
+
+    //! Returns a vector of field IDs corresponding to the variables associated with the material.
+    virtual std::vector<int> FieldIds() const { return m_fieldIds; }
+
+	//! Initialized data containers and computes weighted volume.
+	virtual void
+	initialize(const double dt,
+               const int numOwnedPoints,
+               const int* ownedIDs,
+               const int* neighborhoodList,
+               PeridigmNS::DataManager& dataManager) const;
+
+	//! Evaluate the internal force.
+	virtual void
+	computeForce(const double dt,
+				 const int numOwnedPoints,
+				 const int* ownedIDs,
+				 const int* neighborhoodList,
+                 PeridigmNS::DataManager& dataManager) const;
+
+  protected:
+
+	// material parameters
+	double m_bulkModulus;
+	double m_shearModulus;
+	double m_density;
+    double m_horizon;
+
+    // field spec ids for all relevant data
+    std::vector<int> m_fieldIds;
+    int m_volumeFieldId;
+    int m_damageFieldId;
+    int m_modelCoordinatesFieldId;
+    int m_coordinatesFieldId;
+    int m_forceDensityFieldId;
+    int m_bondDamageFieldId;
+  };
 }
+
+#endif // PERIDIGM_LCMMATERIAL_HPP
