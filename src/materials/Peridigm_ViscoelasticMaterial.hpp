@@ -97,8 +97,6 @@ namespace PeridigmNS {
 
   protected:
 
-    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > m_variableSpecs;
-
 	// material parameters
 	double m_bulkModulus;
 	double m_shearModulus;

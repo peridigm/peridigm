@@ -60,6 +60,7 @@
 using namespace boost::unit_test;
 using namespace Teuchos;
 using namespace PeridigmNS;
+using namespace std;
 
 //! Create a two-point problem for testing.
 PeridigmNS::State createTwoPointProblem()
@@ -98,48 +99,44 @@ PeridigmNS::State createTwoPointProblem()
   // create a state object
   State state;
 
+  FieldManager& fm = FieldManager::self();
+
   // create a list of scalar field specs and allocate the data
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > scalarPointFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
-  scalarPointFieldSpecs->push_back(Field_NS::VOLUME);
-  scalarPointFieldSpecs->push_back(Field_NS::DAMAGE);
-  scalarPointFieldSpecs->push_back(Field_NS::GID);
-  scalarPointFieldSpecs->push_back(Field_NS::PROC_NUM);
-  scalarPointFieldSpecs->push_back(Field_NS::WEIGHTED_VOLUME);
-  scalarPointFieldSpecs->push_back(Field_NS::DILATATION);
-  scalarPointFieldSpecs->push_back(Field_NS::NUM_NEIGHBORS);
-  scalarPointFieldSpecs->push_back(Field_NS::LAMBDA);
-  scalarPointFieldSpecs->push_back(Field_NS::NORM_TD);
-  scalarPointFieldSpecs->push_back(Field_NS::SHEAR_CORRECTION_FACTOR);
-  scalarPointFieldSpecs->push_back(Field_NS::BC_MASK);
-  state.allocateScalarPointData(scalarPointFieldSpecs, overlapScalarPointMap);
-  BOOST_CHECK_EQUAL( state.getScalarPointMultiVector()->NumVectors(), (int)scalarPointFieldSpecs->size() );
+  vector<int> scalarPointFieldIds;
+  scalarPointFieldIds.push_back( fm.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Volume") );
+  scalarPointFieldIds.push_back( fm.getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::TWO_STEP, "Damage") );
+  scalarPointFieldIds.push_back( fm.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Element_Id") );
+  scalarPointFieldIds.push_back( fm.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Proc_Num") );
+  scalarPointFieldIds.push_back( fm.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Weighted_Volume") );
+  scalarPointFieldIds.push_back( fm.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Dilatation") );
+  scalarPointFieldIds.push_back( fm.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Number_Of_Neighbors") );
+  scalarPointFieldIds.push_back( fm.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Lambda") );
+  scalarPointFieldIds.push_back( fm.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Surface_Correction_Factor") );
+  state.allocateScalarPointData(scalarPointFieldIds, overlapScalarPointMap);
+  BOOST_CHECK_EQUAL( state.getScalarPointMultiVector()->NumVectors(), (int)scalarPointFieldIds.size() );
   BOOST_CHECK_EQUAL( state.getScalarPointMultiVector()->MyLength(), overlapScalarPointMap->NumMyPoints() );
   BOOST_CHECK( state.getScalarPointMultiVector()->Map().SameAs( *overlapScalarPointMap ) );
 
   // create a list of vector field specs and allocate the data
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > vectorFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
-  vectorFieldSpecs->push_back(Field_NS::COORD3D);
-  vectorFieldSpecs->push_back(Field_NS::DISPL3D);
-  vectorFieldSpecs->push_back(Field_NS::CURCOORD3D);
-  vectorFieldSpecs->push_back(Field_NS::VELOC3D);
-  vectorFieldSpecs->push_back(Field_NS::ACCEL3D);
-  vectorFieldSpecs->push_back(Field_NS::FORCE3D);
-  vectorFieldSpecs->push_back(Field_NS::FORCE_DENSITY3D);
-  vectorFieldSpecs->push_back(Field_NS::CONTACT_FORCE3D);
-  vectorFieldSpecs->push_back(Field_NS::CONTACT_FORCE_DENSITY3D);
-  vectorFieldSpecs->push_back(Field_NS::RESID3D);
-  state.allocateVectorPointData(vectorFieldSpecs, overlapVectorPointMap);
-  BOOST_CHECK_EQUAL( state.getVectorPointMultiVector()->NumVectors(), (int)vectorFieldSpecs->size() );
+  vector<int> vectorPointFieldIds;
+  vectorPointFieldIds.push_back( fm.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::CONSTANT, "Model_Coordinates") );
+  vectorPointFieldIds.push_back( fm.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Coordinates") );
+  vectorPointFieldIds.push_back( fm.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Displacement") );
+  vectorPointFieldIds.push_back( fm.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Velocity") );
+  vectorPointFieldIds.push_back( fm.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Acceleration") );
+  vectorPointFieldIds.push_back( fm.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force_Density") );
+  vectorPointFieldIds.push_back( fm.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Contact_Force_Density") );
+  state.allocateVectorPointData(vectorPointFieldIds, overlapVectorPointMap);
+  BOOST_CHECK_EQUAL( state.getVectorPointMultiVector()->NumVectors(), (int)vectorPointFieldIds.size() );
   BOOST_CHECK_EQUAL( state.getVectorPointMultiVector()->MyLength(), overlapVectorPointMap->NumMyPoints() );
   BOOST_CHECK( state.getVectorPointMultiVector()->Map().SameAs( *overlapVectorPointMap ) );
 
   // create a list of bond field specs and allocate the data
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > bondFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
-  bondFieldSpecs->push_back(Field_NS::BOND_DAMAGE);
-  bondFieldSpecs->push_back(Field_NS::DEVIATORIC_PLASTIC_EXTENSION);
-  bondFieldSpecs->push_back(Field_NS::DEVIATORIC_BACK_EXTENSION);
-  state.allocateScalarBondData(bondFieldSpecs, ownedScalarBondMap);
-  BOOST_CHECK_EQUAL( state.getScalarBondMultiVector()->NumVectors(), (int)bondFieldSpecs->size() );
+  vector<int> bondFieldIds;
+  bondFieldIds.push_back( fm.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Bond_Damage") );
+  bondFieldIds.push_back( fm.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Deviatoric_Plastic_Extension") );
+  state.allocateScalarBondData(bondFieldIds, ownedScalarBondMap);
+  BOOST_CHECK_EQUAL( state.getScalarBondMultiVector()->NumVectors(), (int)bondFieldIds.size() );
   BOOST_CHECK_EQUAL( state.getScalarBondMultiVector()->MyLength(), ownedScalarBondMap->NumMyPoints() );
   BOOST_CHECK( state.getScalarBondMultiVector()->Map().SameAs( *ownedScalarBondMap ) );
 
@@ -232,48 +229,44 @@ PeridigmNS::State createThreePointProblem()
 
   PeridigmNS::State state;
 
+  FieldManager& fm = FieldManager::self();
+
   // create a list of scalar field specs and allocate the data
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > scalarPointFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
-  scalarPointFieldSpecs->push_back(Field_NS::VOLUME);
-  scalarPointFieldSpecs->push_back(Field_NS::DAMAGE);
-  scalarPointFieldSpecs->push_back(Field_NS::GID);
-  scalarPointFieldSpecs->push_back(Field_NS::PROC_NUM);
-  scalarPointFieldSpecs->push_back(Field_NS::WEIGHTED_VOLUME);
-  scalarPointFieldSpecs->push_back(Field_NS::DILATATION);
-  scalarPointFieldSpecs->push_back(Field_NS::NUM_NEIGHBORS);
-  scalarPointFieldSpecs->push_back(Field_NS::LAMBDA);
-  scalarPointFieldSpecs->push_back(Field_NS::NORM_TD);
-  scalarPointFieldSpecs->push_back(Field_NS::SHEAR_CORRECTION_FACTOR);
-  scalarPointFieldSpecs->push_back(Field_NS::BC_MASK);
-  state.allocateScalarPointData(scalarPointFieldSpecs, overlapScalarPointMap);
-  BOOST_CHECK_EQUAL( state.getScalarPointMultiVector()->NumVectors(), (int)scalarPointFieldSpecs->size() );
+  vector<int> scalarPointFieldIds;
+  scalarPointFieldIds.push_back( fm.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Volume") );
+  scalarPointFieldIds.push_back( fm.getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::TWO_STEP, "Damage") );
+  scalarPointFieldIds.push_back( fm.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Element_Id") );
+  scalarPointFieldIds.push_back( fm.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Proc_Num") );
+  scalarPointFieldIds.push_back( fm.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Weighted_Volume") );
+  scalarPointFieldIds.push_back( fm.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Dilatation") );
+  scalarPointFieldIds.push_back( fm.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Number_Of_Neighbors") );
+  scalarPointFieldIds.push_back( fm.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Lambda") );
+  scalarPointFieldIds.push_back( fm.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Surface_Correction_Factor") );
+  state.allocateScalarPointData(scalarPointFieldIds, overlapScalarPointMap);
+  BOOST_CHECK_EQUAL( state.getScalarPointMultiVector()->NumVectors(), (int)scalarPointFieldIds.size() );
   BOOST_CHECK_EQUAL( state.getScalarPointMultiVector()->MyLength(), overlapScalarPointMap->NumMyPoints() );
   BOOST_CHECK( state.getScalarPointMultiVector()->Map().SameAs( *overlapScalarPointMap ) );
 
   // create a list of vector field specs and allocate the data
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > vectorFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
-  vectorFieldSpecs->push_back(Field_NS::COORD3D);
-  vectorFieldSpecs->push_back(Field_NS::DISPL3D);
-  vectorFieldSpecs->push_back(Field_NS::CURCOORD3D);
-  vectorFieldSpecs->push_back(Field_NS::VELOC3D);
-  vectorFieldSpecs->push_back(Field_NS::ACCEL3D);
-  vectorFieldSpecs->push_back(Field_NS::FORCE3D);
-  vectorFieldSpecs->push_back(Field_NS::FORCE_DENSITY3D);
-  vectorFieldSpecs->push_back(Field_NS::CONTACT_FORCE3D);
-  vectorFieldSpecs->push_back(Field_NS::CONTACT_FORCE_DENSITY3D);
-  vectorFieldSpecs->push_back(Field_NS::RESID3D);
-  state.allocateVectorPointData(vectorFieldSpecs, overlapVectorPointMap);
-  BOOST_CHECK_EQUAL( state.getVectorPointMultiVector()->NumVectors(), (int)vectorFieldSpecs->size() );
+  vector<int> vectorPointFieldIds;
+  vectorPointFieldIds.push_back( fm.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::CONSTANT, "Model_Coordinates") );
+  vectorPointFieldIds.push_back( fm.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Coordinates") );
+  vectorPointFieldIds.push_back( fm.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Displacement") );
+  vectorPointFieldIds.push_back( fm.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Velocity") );
+  vectorPointFieldIds.push_back( fm.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Acceleration") );
+  vectorPointFieldIds.push_back( fm.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force_Density") );
+  vectorPointFieldIds.push_back( fm.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Contact_Force_Density") );
+  state.allocateVectorPointData(vectorPointFieldIds, overlapVectorPointMap);
+  BOOST_CHECK_EQUAL( state.getVectorPointMultiVector()->NumVectors(), (int)vectorPointFieldIds.size() );
   BOOST_CHECK_EQUAL( state.getVectorPointMultiVector()->MyLength(), overlapVectorPointMap->NumMyPoints() );
   BOOST_CHECK( state.getVectorPointMultiVector()->Map().SameAs( *overlapVectorPointMap ) );
 
   // create a list of bond field specs and allocate the data
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > bondFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
-  bondFieldSpecs->push_back(Field_NS::BOND_DAMAGE);
-  bondFieldSpecs->push_back(Field_NS::DEVIATORIC_PLASTIC_EXTENSION);
-  bondFieldSpecs->push_back(Field_NS::DEVIATORIC_BACK_EXTENSION);
-  state.allocateScalarBondData(bondFieldSpecs, ownedScalarBondMap);
-  BOOST_CHECK_EQUAL( state.getScalarBondMultiVector()->NumVectors(), (int)bondFieldSpecs->size() );
+  vector<int> bondFieldIds;
+  bondFieldIds.push_back( fm.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Bond_Damage") );
+  bondFieldIds.push_back( fm.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Deviatoric_Plastic_Extension") );
+  state.allocateScalarBondData(bondFieldIds, ownedScalarBondMap);
+  BOOST_CHECK_EQUAL( state.getScalarBondMultiVector()->NumVectors(), (int)bondFieldIds.size() );
   BOOST_CHECK_EQUAL( state.getScalarBondMultiVector()->MyLength(), ownedScalarBondMap->NumMyPoints() );
   BOOST_CHECK( state.getScalarBondMultiVector()->Map().SameAs( *ownedScalarBondMap ) );
 
@@ -285,26 +278,32 @@ void twoPointProblem()
 {
   PeridigmNS::State state = createTwoPointProblem();
 
+  FieldManager& fm = FieldManager::self();
+  int coordinatesFieldId = fm.getFieldId("Coordinates");
+  int elementIdFieldId = fm.getFieldId("Element_Id");
+  int forceDensityFieldId = fm.getFieldId("Force_Density");
+  int damageFieldId = fm.getFieldId("Damage");
+
   // check initialization of data to zero
-  Teuchos::RCP<Epetra_Vector> coordinates = state.getData(Field_NS::COORD3D);
+  Teuchos::RCP<Epetra_Vector> coordinates = state.getData(coordinatesFieldId);
   for(int i=0 ; i<coordinates->MyLength() ; ++i)
     BOOST_CHECK_EQUAL( (*coordinates)[i], 0.0 );
 
   // set some data
   {
     // scalar data
-    Epetra_Vector& ids = *(state.getData(Field_NS::GID));
+    Epetra_Vector& ids = *(state.getData(elementIdFieldId));
     for(int i=0 ; i<ids.MyLength() ; ++i)
       ids[i] = i;
     // vector data
-    Epetra_Vector& force = *(state.getData(Field_NS::FORCE3D));
+    Epetra_Vector& force = *(state.getData(forceDensityFieldId));
     for(int i=0 ; i<force.Map().NumMyElements() ; ++i){
       force[i*3] = i*3;
       force[i*3+1] = i*3+1;
       force[i*3+2] = i*3+2;
     }
     // bond data
-    Epetra_Vector& bondDamage = *(state.getData(Field_NS::DAMAGE));
+    Epetra_Vector& bondDamage = *(state.getData(damageFieldId));
     for(int i=0 ; i<bondDamage.Map().NumMyElements() ; ++i){
       int firstPointInElement = bondDamage.Map().FirstPointInElement(i);
       for(int j=0 ; j<bondDamage.Map().ElementSize(i); ++j)
@@ -315,18 +314,18 @@ void twoPointProblem()
   // check the data
   {
     // scalar data
-    Epetra_Vector& ids = *(state.getData(Field_NS::GID));
+    Epetra_Vector& ids = *(state.getData(elementIdFieldId));
     for(int i=0 ; i<ids.MyLength() ; ++i)
       BOOST_CHECK_CLOSE(ids[i], (double)(i), 1.0e-14);
     // vector data
-    Epetra_Vector& force = *(state.getData(Field_NS::FORCE3D));
+    Epetra_Vector& force = *(state.getData(forceDensityFieldId));
     for(int i=0 ; i<force.Map().NumMyElements() ; ++i){
       BOOST_CHECK_CLOSE(force[i*3], (double)(i*3), 1.0e-14);
       BOOST_CHECK_CLOSE(force[i*3+1], (double)(i*3+1), 1.0e-14);
       BOOST_CHECK_CLOSE(force[i*3+2], (double)(i*3+2), 1.0e-14);
     }
     // bond data
-    Epetra_Vector& bondDamage = *(state.getData(Field_NS::DAMAGE));
+    Epetra_Vector& bondDamage = *(state.getData(damageFieldId));
     for(int i=0 ; i<bondDamage.Map().NumMyElements() ; ++i){
       int firstPointInElement = bondDamage.Map().FirstPointInElement(i);
       for(int j=0 ; j<bondDamage.Map().ElementSize(i); ++j)
@@ -340,26 +339,32 @@ void threePointProblem()
 {
   PeridigmNS::State state = createThreePointProblem();
 
+  FieldManager& fm = FieldManager::self();
+  int coordinatesFieldId = fm.getFieldId("Coordinates");
+  int elementIdFieldId = fm.getFieldId("Element_Id");
+  int forceDensityFieldId = fm.getFieldId("Force_Density");
+  int damageFieldId = fm.getFieldId("Damage");
+
   // check initialization of data to zero
-  Teuchos::RCP<Epetra_Vector> coordinates = state.getData(Field_NS::COORD3D);
+  Teuchos::RCP<Epetra_Vector> coordinates = state.getData(coordinatesFieldId);
   for(int i=0 ; i<coordinates->MyLength() ; ++i)
     BOOST_CHECK_EQUAL( (*coordinates)[i], 0.0 );
 
   // set some data
   {
     // scalar data
-    Epetra_Vector& ids = *(state.getData(Field_NS::GID));
+    Epetra_Vector& ids = *(state.getData(elementIdFieldId));
     for(int i=0 ; i<ids.MyLength() ; ++i)
       ids[i] = i;
     // vector data
-    Epetra_Vector& force = *(state.getData(Field_NS::FORCE3D));
+    Epetra_Vector& force = *(state.getData(forceDensityFieldId));
     for(int i=0 ; i<force.Map().NumMyElements() ; ++i){
       force[i*3] = i*3;
       force[i*3+1] = i*3+1;
       force[i*3+2] = i*3+2;
     }
     // bond data
-    Epetra_Vector& bondDamage = *(state.getData(Field_NS::DAMAGE));
+    Epetra_Vector& bondDamage = *(state.getData(damageFieldId));
     for(int i=0 ; i<bondDamage.Map().NumMyElements() ; ++i){
       int firstPointInElement = bondDamage.Map().FirstPointInElement(i);
       for(int j=0 ; j<bondDamage.Map().ElementSize(i); ++j)
@@ -370,18 +375,18 @@ void threePointProblem()
   // check the data
   {
     // scalar data
-    Epetra_Vector& ids = *(state.getData(Field_NS::GID));
+    Epetra_Vector& ids = *(state.getData(elementIdFieldId));
     for(int i=0 ; i<ids.MyLength() ; ++i)
       BOOST_CHECK_CLOSE(ids[i], (double)(i), 1.0e-14);
     // vector data
-    Epetra_Vector& force = *(state.getData(Field_NS::FORCE3D));
+    Epetra_Vector& force = *(state.getData(forceDensityFieldId));
     for(int i=0 ; i<force.Map().NumMyElements() ; ++i){
       BOOST_CHECK_CLOSE(force[i*3], (double)(i*3), 1.0e-14);
       BOOST_CHECK_CLOSE(force[i*3+1], (double)(i*3+1), 1.0e-14);
       BOOST_CHECK_CLOSE(force[i*3+2], (double)(i*3+2), 1.0e-14);
     }
     // bond data
-    Epetra_Vector& bondDamage = *(state.getData(Field_NS::DAMAGE));
+    Epetra_Vector& bondDamage = *(state.getData(damageFieldId));
     for(int i=0 ; i<bondDamage.Map().NumMyElements() ; ++i){
       int firstPointInElement = bondDamage.Map().FirstPointInElement(i);
       for(int j=0 ; j<bondDamage.Map().ElementSize(i); ++j)
@@ -395,21 +400,26 @@ void copyFrom()
 {
   PeridigmNS::State state = createThreePointProblem();
 
+  FieldManager& fm = FieldManager::self();
+  int elementIdFieldId = fm.getFieldId("Element_Id");
+  int forceDensityFieldId = fm.getFieldId("Force_Density");
+  int damageFieldId = fm.getFieldId("Damage");
+
   // set some data
   {
     // scalar data
-    Epetra_Vector& ids = *(state.getData(Field_NS::GID));
+    Epetra_Vector& ids = *(state.getData(elementIdFieldId));
     for(int i=0 ; i<ids.MyLength() ; ++i)
       ids[i] = i;
     // vector data
-    Epetra_Vector& force = *(state.getData(Field_NS::FORCE3D));
+    Epetra_Vector& force = *(state.getData(forceDensityFieldId));
     for(int i=0 ; i<force.Map().NumMyElements() ; ++i){
       force[i*3] = i*3;
       force[i*3+1] = i*3+1;
       force[i*3+2] = i*3+2;
     }
     // bond data
-    Epetra_Vector& bondDamage = *(state.getData(Field_NS::DAMAGE));
+    Epetra_Vector& bondDamage = *(state.getData(damageFieldId));
     for(int i=0 ; i<bondDamage.Map().NumMyElements() ; ++i){
       int firstPointInElement = bondDamage.Map().FirstPointInElement(i);
       for(int j=0 ; j<bondDamage.Map().ElementSize(i); ++j){
@@ -444,34 +454,34 @@ void copyFrom()
 
   PeridigmNS::State tempState;
   
-  Teuchos::RCP<Field_ENUM::Relation> relation = Teuchos::rcp(new Field_ENUM::Relation);
-  Teuchos::RCP<Field_ENUM::Length> length = Teuchos::rcp(new Field_ENUM::Length);
+  PeridigmField::Relation relation;
+  PeridigmField::Length length;
 
   // allocate data for the field specs, which are taken from the initial state object
 
   // scalar point data
-  *relation = Field_ENUM::ELEMENT;
-  *length = Field_ENUM::SCALAR;
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > scalarPointFieldSpecs = state.getFieldSpecs(relation, length);
-  tempState.allocateScalarPointData(scalarPointFieldSpecs, tempOverlapScalarPointMap);
+  relation = PeridigmField::ELEMENT;
+  length = PeridigmField::SCALAR;
+  vector<int> scalarPointFieldIds = state.getFieldIds(relation, length);
+  tempState.allocateScalarPointData(scalarPointFieldIds, tempOverlapScalarPointMap);
   BOOST_CHECK_EQUAL( tempState.getScalarPointMultiVector()->NumVectors(), state.getScalarPointMultiVector()->NumVectors());
   BOOST_CHECK_EQUAL( tempState.getScalarPointMultiVector()->MyLength(), tempOverlapScalarPointMap->NumMyPoints() );
   BOOST_CHECK( tempState.getScalarPointMultiVector()->Map().SameAs( *tempOverlapScalarPointMap ) );
 
   // vector point data
-  *relation = Field_ENUM::NODE;
-  *length = Field_ENUM::VECTOR3D;
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > vectorFieldSpecs = state.getFieldSpecs(relation, length);
-  tempState.allocateVectorPointData(vectorFieldSpecs, tempOverlapVectorPointMap);
+  relation = PeridigmField::NODE;
+  length = PeridigmField::VECTOR;
+  vector<int> vectorFieldIds = state.getFieldIds(relation, length);
+  tempState.allocateVectorPointData(vectorFieldIds, tempOverlapVectorPointMap);
   BOOST_CHECK_EQUAL( tempState.getVectorPointMultiVector()->NumVectors(), state.getVectorPointMultiVector()->NumVectors());
   BOOST_CHECK_EQUAL( tempState.getVectorPointMultiVector()->MyLength(), tempOverlapVectorPointMap->NumMyPoints() );
   BOOST_CHECK( tempState.getVectorPointMultiVector()->Map().SameAs( *tempOverlapVectorPointMap ) );
 
   // scalar bond data
-  *relation = Field_ENUM::BOND;
-  *length = Field_ENUM::SCALAR;
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > bondFieldSpecs = state.getFieldSpecs(relation, length);
-  tempState.allocateScalarBondData(bondFieldSpecs, tempOwnedScalarBondMap);
+  relation = PeridigmField::BOND;
+  length = PeridigmField::SCALAR;
+  vector<int> bondFieldIds = state.getFieldIds(relation, length);
+  tempState.allocateScalarBondData(bondFieldIds, tempOwnedScalarBondMap);
   BOOST_CHECK_EQUAL( tempState.getScalarBondMultiVector()->NumVectors(), state.getScalarBondMultiVector()->NumVectors());
   BOOST_CHECK_EQUAL( tempState.getScalarBondMultiVector()->MyLength(), tempOwnedScalarBondMap->NumMyPoints() );
   BOOST_CHECK( tempState.getScalarBondMultiVector()->Map().SameAs( *tempOwnedScalarBondMap ) );
@@ -480,10 +490,10 @@ void copyFrom()
   tempState.copyLocallyOwnedDataFromState(Teuchos::RCP<PeridigmNS::State>(&state, false));
 
   // check the data
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > tempFieldSpecs = tempState.getFieldSpecs();
-  for(unsigned int iSpec=0 ; iSpec<tempFieldSpecs->size() ; ++iSpec){
-    Teuchos::RCP<Epetra_Vector> data = state.getData( (*tempFieldSpecs)[iSpec] );
-    Teuchos::RCP<Epetra_Vector> tempData = tempState.getData( (*tempFieldSpecs)[iSpec] );
+  vector<int> tempFieldIds = tempState.getFieldIds();
+  for(unsigned int iId=0 ; iId<tempFieldIds.size() ; ++iId){
+    Teuchos::RCP<Epetra_Vector> data = state.getData( tempFieldIds[iId] );
+    Teuchos::RCP<Epetra_Vector> tempData = tempState.getData( tempFieldIds[iId] );
     for(int iLID=0 ; iLID<tempData->Map().NumMyElements() ; ++iLID){
       int globalID = tempData->Map().GID(iLID);
       BOOST_CHECK(globalID != -1);

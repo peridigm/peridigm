@@ -46,73 +46,69 @@
 //@HEADER
 
 #include "Peridigm_State.hpp"
+#include "Peridigm_Field.hpp"
 #include <Epetra_Import.h>
 #include <Teuchos_Assert.hpp>
 #include <sstream>
 
-void PeridigmNS::State::allocateScalarPointData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
+using namespace std;
+
+void PeridigmNS::State::allocateScalarPointData(vector<int> fieldIds, Teuchos::RCP<const Epetra_BlockMap> map)
 {
-  std::vector<Field_NS::FieldSpec> sortedFieldSpecs(*fieldSpecs);
-  std::sort(sortedFieldSpecs.begin(), sortedFieldSpecs.end());
-  scalarPointData = Teuchos::rcp(new Epetra_MultiVector(*map, sortedFieldSpecs.size()));
-  for(unsigned int i=0 ; i<sortedFieldSpecs.size() ; ++i){
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(sortedFieldSpecs[i].getRelation() != Field_ENUM::ELEMENT, "PeridigmNS::State::allocateScalarPointData():  Invalid fieldSpec.\n");
-    fieldSpecToDataMap[sortedFieldSpecs[i]] = Teuchos::rcp((*scalarPointData)(i), false);
-  }
+  std::sort(fieldIds.begin(), fieldIds.end());
+  scalarPointData = Teuchos::rcp(new Epetra_MultiVector(*map, fieldIds.size()));
+  for(unsigned int i=0 ; i<fieldIds.size() ; ++i)
+    fieldIdToDataMap[fieldIds[i]] = Teuchos::rcp((*scalarPointData)(i), false);
 }
 
-void PeridigmNS::State::allocateVectorPointData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
+void PeridigmNS::State::allocateVectorPointData(vector<int> fieldIds, Teuchos::RCP<const Epetra_BlockMap> map)
 {
-  std::vector<Field_NS::FieldSpec> sortedFieldSpecs(*fieldSpecs);
-  std::sort(sortedFieldSpecs.begin(), sortedFieldSpecs.end());
-  vectorPointData = Teuchos::rcp(new Epetra_MultiVector(*map, sortedFieldSpecs.size()));
-  for(unsigned int i=0 ; i<sortedFieldSpecs.size() ; ++i){
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(sortedFieldSpecs[i].getRelation() != Field_ENUM::NODE, "PeridigmNS::State::allocateVectorPointData():  Invalid fieldSpec.\n");
-    fieldSpecToDataMap[sortedFieldSpecs[i]] = Teuchos::rcp((*vectorPointData)(i), false);
-  }
+  std::sort(fieldIds.begin(), fieldIds.end());
+  vectorPointData = Teuchos::rcp(new Epetra_MultiVector(*map, fieldIds.size()));
+  for(unsigned int i=0 ; i<fieldIds.size() ; ++i)
+    fieldIdToDataMap[fieldIds[i]] = Teuchos::rcp((*vectorPointData)(i), false);
 }
 
-void PeridigmNS::State::allocateScalarBondData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs, Teuchos::RCP<const Epetra_BlockMap> map)
+void PeridigmNS::State::allocateScalarBondData(vector<int> fieldIds, Teuchos::RCP<const Epetra_BlockMap> map)
 {
-  std::vector<Field_NS::FieldSpec> sortedFieldSpecs(*fieldSpecs);
-  std::sort(sortedFieldSpecs.begin(), sortedFieldSpecs.end());
-  scalarBondData = Teuchos::rcp(new Epetra_MultiVector(*map, sortedFieldSpecs.size()));
-  for(unsigned int i=0 ; i<sortedFieldSpecs.size() ; ++i){
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(sortedFieldSpecs[i].getRelation() != Field_ENUM::BOND, "PeridigmNS::State::allocateScalarBondData():  Invalid fieldSpec.\n");
-    fieldSpecToDataMap[sortedFieldSpecs[i]] = Teuchos::rcp((*scalarBondData)(i), false);
-  }
+  std::sort(fieldIds.begin(), fieldIds.end());
+  scalarBondData = Teuchos::rcp(new Epetra_MultiVector(*map, fieldIds.size()));
+  for(unsigned int i=0 ; i<fieldIds.size() ; ++i)
+    fieldIdToDataMap[fieldIds[i]] = Teuchos::rcp((*scalarBondData)(i), false);
 }
 
-Teuchos::RCP< std::vector<Field_NS::FieldSpec> > PeridigmNS::State::getFieldSpecs(Teuchos::RCP<Field_ENUM::Relation> relation,
-										  Teuchos::RCP<Field_ENUM::Length> length)
+vector<int> PeridigmNS::State::getFieldIds(PeridigmField::Relation relation,
+										   PeridigmField::Length length)
 {
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
-  std::map< Field_NS::FieldSpec, Teuchos::RCP<Epetra_Vector> >::const_iterator it;
-  for(it = fieldSpecToDataMap.begin() ; it != fieldSpecToDataMap.end() ; ++it){
-    if((length.is_null() && relation.is_null()) || (it->first.getLength() == *length && it->first.getRelation() == *relation))
-      fieldSpecs->push_back(it->first);
+  vector<int> fieldIds;
+  FieldManager& fieldManager = FieldManager::self();
+  std::map< int, Teuchos::RCP<Epetra_Vector> >::const_iterator it;
+  for(it = fieldIdToDataMap.begin() ; it != fieldIdToDataMap.end() ; ++it){
+    PeridigmNS::FieldSpec spec = fieldManager.getFieldSpec(it->first);
+    if(spec.getLength() == length && spec.getRelation() == relation)
+      fieldIds.push_back(it->first);
   }
-  return fieldSpecs;
+  return fieldIds;
 }
 
-bool PeridigmNS::State::hasData(Field_NS::FieldSpec fieldSpec)
+bool PeridigmNS::State::hasData(int fieldId)
 {
-  std::map< Field_NS::FieldSpec, Teuchos::RCP<Epetra_Vector> >::iterator lb = fieldSpecToDataMap.lower_bound(fieldSpec);
-  bool keyExists = ( lb != fieldSpecToDataMap.end() && !(fieldSpecToDataMap.key_comp()(fieldSpec, lb->first)) );
+  std::map< int, Teuchos::RCP<Epetra_Vector> >::iterator lb = fieldIdToDataMap.lower_bound(fieldId);
+  bool keyExists = ( lb != fieldIdToDataMap.end() && !(fieldIdToDataMap.key_comp()(fieldId, lb->first)) );
   return keyExists;
 }
 
-Teuchos::RCP<Epetra_Vector> PeridigmNS::State::getData(Field_NS::FieldSpec fieldSpec)
+Teuchos::RCP<Epetra_Vector> PeridigmNS::State::getData(int fieldId)
 {
   // search for the data
-  std::map< Field_NS::FieldSpec, Teuchos::RCP<Epetra_Vector> >::iterator lb = fieldSpecToDataMap.lower_bound(fieldSpec);
+  std::map< int, Teuchos::RCP<Epetra_Vector> >::iterator lb = fieldIdToDataMap.lower_bound(fieldId);
   // if the key does not exist, throw an exception
-  bool keyExists = ( lb != fieldSpecToDataMap.end() && !(fieldSpecToDataMap.key_comp()(fieldSpec, lb->first)) );
+  bool keyExists = ( lb != fieldIdToDataMap.end() && !(fieldIdToDataMap.key_comp()(fieldId, lb->first)) );
   if(!keyExists){
     std::stringstream ss;
-    ss << fieldSpec;
+    ss << fieldId;
     TEUCHOS_TEST_FOR_EXCEPTION(!keyExists, Teuchos::RangeError, 
-                       "****Error in PeridigmNS::State::getData(), key does not exist: " + ss.str() + "\n");
+                       "****Error in PeridigmNS::State::getData(), field id does not exist: " + ss.str() + "\n");
   }
   return lb->second;
 }

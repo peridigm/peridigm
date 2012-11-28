@@ -50,6 +50,8 @@
 #include <vector>
 #include <set>
 
+using namespace std;
+
 map<int, double> PeridigmNS::Block::globalData;
 
 void PeridigmNS::Block::initialize(Teuchos::RCP<const Epetra_BlockMap> globalOwnedScalarPointMap,
@@ -196,11 +198,11 @@ void PeridigmNS::Block::createMapsFromGlobalMaps(Teuchos::RCP<const Epetra_Block
 
   // Create a list of all the on-processor elements that are part of this block
 
-  std::vector<int> IDs;
+  vector<int> IDs;
   IDs.reserve(globalOverlapScalarPointMap->NumMyElements()); // upper bound
-  std::vector<int> bondIDs;
+  vector<int> bondIDs;
   bondIDs.reserve(globalOverlapScalarPointMap->NumMyElements());
-  std::vector<int> bondElementSize;
+  vector<int> bondElementSize;
   bondElementSize.reserve(globalOwnedScalarPointMap->NumMyElements());
 
   for(int iLID=0 ; iLID<globalOwnedScalarPointMap->NumMyElements() ; ++iLID){
@@ -250,7 +252,7 @@ void PeridigmNS::Block::createMapsFromGlobalMaps(Teuchos::RCP<const Epetra_Block
     Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, elementSizeList, indexBase, globalOwnedScalarPointMap->Comm()));
 
   // Create a list of nodes that need to be ghosted (both across material boundaries and across processor boundaries)
-  std::set<int> ghosts;
+  set<int> ghosts;
 
   // Check the neighborhood list for things that need to be ghosted
   int* const globalNeighborhoodList = globalNeighborhoodData->NeighborhoodList();
@@ -287,11 +289,11 @@ void PeridigmNS::Block::createMapsFromGlobalMaps(Teuchos::RCP<const Epetra_Block
     ghosts.erase(IDs[i]);
 
   // Copy IDs, this is the owned global ID list
-  std::vector<int> ownedIDs(IDs.begin(), IDs.end());
+  vector<int> ownedIDs(IDs.begin(), IDs.end());
 
   // Append ghosts to IDs
   // This creates the overlap global ID list
-  for(std::set<int>::iterator it=ghosts.begin() ; it!=ghosts.end() ; ++it)
+  for(set<int>::iterator it=ghosts.begin() ; it!=ghosts.end() ; ++it)
     IDs.push_back(*it);
 
   // Create the overlap scalar point map and the overlap vector point map
@@ -319,9 +321,9 @@ Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::Block::createNeighborhood
   int numOwnedPoints = ownedScalarPointMap->NumMyElements();
   int* ownedPointGlobalIDs = ownedScalarPointMap->MyGlobalElements();
 
-  std::vector<int> ownedIDs(numOwnedPoints);
-  std::vector<int> neighborhoodList;
-  std::vector<int> neighborhoodPtr(numOwnedPoints);
+  vector<int> ownedIDs(numOwnedPoints);
+  vector<int> neighborhoodList;
+  vector<int> neighborhoodPtr(numOwnedPoints);
 
   int* const globalNeighborhoodList = globalNeighborhoodData->NeighborhoodList();
   int* const globalNeighborhoodPtr = globalNeighborhoodData->NeighborhoodPtr();
@@ -380,20 +382,20 @@ void PeridigmNS::Block::initializeDataManager()
                               "\n**** Maps must be set prior to calling Block::initializeDataManager()\n");
   
   // Collect all the required field Ids
-  std::vector<int> fieldIds;
+  vector<int> fieldIds;
   // Ids passed in via setAuxiliaryFieldIds(), if any
   fieldIds.insert(fieldIds.end(), auxiliaryFieldIds.begin(), auxiliaryFieldIds.end());
   // Material model field Ids
-  std::vector<int> materialModelFieldIds = materialModel->FieldIds();
+  vector<int> materialModelFieldIds = materialModel->FieldIds();
   fieldIds.insert(fieldIds.end(), materialModelFieldIds.begin(), materialModelFieldIds.end());
   // Damage model field Ids (if any)
   if(!damageModel.is_null()){
-    std::vector<int> damageModelFieldIds = damageModel->FieldIds();
+    vector<int> damageModelFieldIds = damageModel->FieldIds();
     fieldIds.insert(fieldIds.end(), damageModelFieldIds.begin(), damageModelFieldIds.end());
   }
   // Contact model fieldIds (if any)
   if(!contactModel.is_null()){
-    std::vector<int> contactModelFieldIds = contactModel->FieldIds();
+    vector<int> contactModelFieldIds = contactModel->FieldIds();
     fieldIds.insert(fieldIds.end(), contactModelFieldIds.begin(), contactModelFieldIds.end());
   }
   
@@ -407,7 +409,7 @@ void PeridigmNS::Block::initializeDataManager()
   
   // remove duplicates
   sort(fieldIds.begin(), fieldIds.end());
-  std::vector<int>::iterator newEnd = unique(fieldIds.begin(), fieldIds.end());
+  vector<int>::iterator newEnd = unique(fieldIds.begin(), fieldIds.end());
   fieldIds.erase(newEnd, fieldIds.end());
 
   // Allocate data in the data manager
@@ -417,10 +419,10 @@ void PeridigmNS::Block::initializeDataManager()
 void PeridigmNS::Block::initializeGlobalData()
 {
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
-  std::vector<PeridigmNS::FieldSpec> globalFieldSpecs = fieldManager.getGlobalFieldSpecs();
+  vector<PeridigmNS::FieldSpec> globalFieldSpecs = fieldManager.getGlobalFieldSpecs();
   int fieldId = -1;
 
-  for(std::vector<PeridigmNS::FieldSpec>::iterator it = globalFieldSpecs.begin() ; it != globalFieldSpecs.end() ; it++){
+  for(vector<PeridigmNS::FieldSpec>::iterator it = globalFieldSpecs.begin() ; it != globalFieldSpecs.end() ; it++){
 
     if (it->getLength() == PeridigmField::SCALAR) {
       fieldId = fieldManager.getFieldId(it->getLabel());
