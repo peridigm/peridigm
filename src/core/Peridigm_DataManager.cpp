@@ -50,103 +50,89 @@
 #include "Peridigm_DataManager.hpp"
 #include "Peridigm_Field.hpp"
 
-void PeridigmNS::DataManager::allocateData(std::vector<int> fieldIds)
+using namespace std;
+
+void PeridigmNS::DataManager::allocateData(vector<int> fieldIds)
 {
-  fieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
-
-  // temporary work-around: get equivalent old-style spec
-  // \todo Remove this.
-  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
-  for(unsigned int i=0 ; i<fieldIds.size() ; ++i){
-    string label = fieldManager.getFieldSpec(fieldIds[i]).getLabel();
-    std::map<string, Field_NS::FieldSpec>::const_iterator specIt = Field_NS::FieldSpecMap::Map.find(label);
-    if(specIt == Field_NS::FieldSpecMap::Map.end()){
-      cout << "DEBUGGING " << label << endl;
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(specIt == Field_NS::FieldSpecMap::Map.end(), "Failed to find reference to fieldSpec!");
-    }
-    Field_NS::FieldSpec const &spec = specIt->second;
-    fieldSpecs->push_back(spec);
-  }
-  // end temporary work-around
-
   // remove duplicates
-  sort(fieldSpecs->begin(), fieldSpecs->end());
-  std::vector<Field_NS::FieldSpec>::iterator newEnd = unique(fieldSpecs->begin(), fieldSpecs->end());
-  fieldSpecs->erase(newEnd, fieldSpecs->end());
+  sort(fieldIds.begin(), fieldIds.end());
+  vector<int>::iterator newEnd = unique(fieldIds.begin(), fieldIds.end());
+  fieldIds.erase(newEnd, fieldIds.end());
 
-  statelessScalarPointFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
-  statelessVectorPointFieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
-  statelessScalarBondFieldSpecs  = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
-  statefulScalarPointFieldSpecs  = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
-  statefulVectorPointFieldSpecs  = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
-  statefulScalarBondFieldSpecs   = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
-  for(unsigned int i=0; i<fieldSpecs->size() ; ++i){
-    Field_NS::FieldSpec& spec = (*fieldSpecs)[i];
+  FieldManager& fieldManager = FieldManager::self();
+
+  for(unsigned int i=0; i<fieldIds.size() ; ++i){
+
+    int fieldId = fieldIds[i];
+    PeridigmNS::FieldSpec spec = fieldManager.getFieldSpec(fieldId);
+
     // scalar point data
-    if(spec.getLength() == Field_ENUM::SCALAR && spec.getRelation() == Field_ENUM::ELEMENT){
-      if(spec.get_temporal() == Field_ENUM::CONSTANT)
-        statelessScalarPointFieldSpecs->push_back(spec);
+    if(spec.getLength() == PeridigmField::SCALAR && spec.getRelation() == PeridigmField::ELEMENT){
+      if(spec.getTemporal() == PeridigmField::CONSTANT)
+        statelessScalarPointFieldIds.push_back(fieldId);
       else
-        statefulScalarPointFieldSpecs->push_back(spec);
+        statefulScalarPointFieldIds.push_back(fieldId);
     }
     // vector point data
-    else if(spec.getLength() == Field_ENUM::VECTOR3D && spec.getRelation() == Field_ENUM::NODE){
-      if(spec.get_temporal() == Field_ENUM::CONSTANT)
-        statelessVectorPointFieldSpecs->push_back(spec);
+    else if(spec.getLength() == PeridigmField::VECTOR && spec.getRelation() == PeridigmField::NODE){
+      if(spec.getTemporal() == PeridigmField::CONSTANT)
+        statelessVectorPointFieldIds.push_back(fieldId);
       else
-        statefulVectorPointFieldSpecs->push_back(spec);
+        statefulVectorPointFieldIds.push_back(fieldId);
     }
     // scalar bond data
-    else if(spec.getLength() == Field_ENUM::SCALAR && spec.getRelation() == Field_ENUM::BOND){
-      if(spec.get_temporal() == Field_ENUM::CONSTANT)
-        statelessScalarBondFieldSpecs->push_back(spec);
+    else if(spec.getLength() == PeridigmField::SCALAR && spec.getRelation() == PeridigmField::BOND){
+      if(spec.getTemporal() == PeridigmField::CONSTANT)
+        statelessScalarBondFieldIds.push_back(fieldId);
       else
-        statefulScalarBondFieldSpecs->push_back(spec);
+        statefulScalarBondFieldIds.push_back(fieldId);
     }
     // ignore global data
-    else if (spec.getRelation() == Field_ENUM::GLOBAL)
+    else if (spec.getRelation() == PeridigmField::GLOBAL)
       continue;
     else{
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::RangeError, 
-                         "PeridigmNS::DataManager::allocateData, invalid FieldSpec!");
+                                 "PeridigmNS::DataManager::allocateData, invalid FieldSpec!");
     }
+
+    allFieldIds.push_back(fieldId);
   }
 
   // make sure maps exist before trying to create states
-  if(statelessScalarPointFieldSpecs->size() + statefulScalarPointFieldSpecs->size() > 0)
+  if(statelessScalarPointFieldIds.size() + statefulScalarPointFieldIds.size() > 0)
     TEUCHOS_TEST_FOR_EXCEPTION(overlapScalarPointMap == Teuchos::null, Teuchos::NullReferenceError, 
                        "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate scalar data with no map (forget setMaps()?).");
-  if(statelessVectorPointFieldSpecs->size() + statefulVectorPointFieldSpecs->size() > 0)
+  if(statelessVectorPointFieldIds.size() + statefulVectorPointFieldIds.size() > 0)
     TEUCHOS_TEST_FOR_EXCEPTION(overlapVectorPointMap == Teuchos::null, Teuchos::NullReferenceError, 
                        "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate vector data with no map (forget setMaps()?).");
-  if(statelessScalarBondFieldSpecs->size() + statefulScalarBondFieldSpecs->size() > 0)
+  if(statelessScalarBondFieldIds.size() + statefulScalarBondFieldIds.size() > 0)
     TEUCHOS_TEST_FOR_EXCEPTION(ownedScalarBondMap == Teuchos::null, Teuchos::NullReferenceError, 
                        "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate bond data with no map (forget setMaps()?).");
 
   // create the states
-  if(statelessScalarPointFieldSpecs->size() + statelessVectorPointFieldSpecs->size() + statelessScalarBondFieldSpecs->size() > 0){
+  if(statelessScalarPointFieldIds.size() + statelessVectorPointFieldIds.size() + statelessScalarBondFieldIds.size() > 0){
     stateNONE = Teuchos::rcp(new State);
-    if(statelessScalarPointFieldSpecs->size() > 0)
-      stateNONE->allocateScalarPointData(statelessScalarPointFieldSpecs, overlapScalarPointMap);
-    if(statelessVectorPointFieldSpecs->size() > 0)
-      stateNONE->allocateVectorPointData(statelessVectorPointFieldSpecs, overlapVectorPointMap);
-    if(statelessScalarBondFieldSpecs->size() > 0)
-      stateNONE->allocateScalarBondData(statelessScalarBondFieldSpecs, ownedScalarBondMap);
+    if(statelessScalarPointFieldIds.size() > 0)
+      stateNONE->allocateScalarPointData(statelessScalarPointFieldIds, overlapScalarPointMap);
+    if(statelessVectorPointFieldIds.size() > 0)
+      stateNONE->allocateVectorPointData(statelessVectorPointFieldIds, overlapVectorPointMap);
+    if(statelessScalarBondFieldIds.size() > 0)
+      stateNONE->allocateScalarBondData(statelessScalarBondFieldIds, ownedScalarBondMap);
   }
-  if(statefulScalarPointFieldSpecs->size() + statefulVectorPointFieldSpecs->size() + statefulScalarBondFieldSpecs->size() > 0){
+  if(statefulScalarPointFieldIds.size() + statefulVectorPointFieldIds.size() + statefulScalarBondFieldIds.size() > 0){
     stateN = Teuchos::rcp(new State);
     stateNP1 = Teuchos::rcp(new State);
-    if(statefulScalarPointFieldSpecs->size() > 0){
-      stateN->allocateScalarPointData(statefulScalarPointFieldSpecs, overlapScalarPointMap);
-      stateNP1->allocateScalarPointData(statefulScalarPointFieldSpecs, overlapScalarPointMap);
+    if(statefulScalarPointFieldIds.size() > 0){
+      stateN->allocateScalarPointData(statefulScalarPointFieldIds, overlapScalarPointMap);
+      stateNP1->allocateScalarPointData(statefulScalarPointFieldIds, overlapScalarPointMap);
     }
-    if(statefulVectorPointFieldSpecs->size() > 0){
-      stateN->allocateVectorPointData(statefulVectorPointFieldSpecs, overlapVectorPointMap);
-      stateNP1->allocateVectorPointData(statefulVectorPointFieldSpecs, overlapVectorPointMap);
+    if(statefulVectorPointFieldIds.size() > 0){
+      stateN->allocateVectorPointData(statefulVectorPointFieldIds, overlapVectorPointMap);
+      stateNP1->allocateVectorPointData(statefulVectorPointFieldIds, overlapVectorPointMap);
     }   
-    if(statefulScalarBondFieldSpecs->size() > 0){
-      stateN->allocateScalarBondData(statefulScalarBondFieldSpecs, ownedScalarBondMap);
-      stateNP1->allocateScalarBondData(statefulScalarBondFieldSpecs, ownedScalarBondMap);
+    if(statefulScalarBondFieldIds.size() > 0){
+      stateN->allocateScalarBondData(statefulScalarBondFieldIds, ownedScalarBondMap);
+      stateNP1->allocateScalarBondData(statefulScalarBondFieldIds, ownedScalarBondMap);
     }
   }
 }
@@ -264,50 +250,50 @@ void PeridigmNS::DataManager::rebalance(Teuchos::RCP<const Epetra_BlockMap> reba
   }
     
   // state NONE
-  if(statelessScalarPointFieldSpecs->size() + statelessVectorPointFieldSpecs->size() + statelessScalarBondFieldSpecs->size() > 0){
+  if(statelessScalarPointFieldIds.size() + statelessVectorPointFieldIds.size() + statelessScalarBondFieldIds.size() > 0){
     Teuchos::RCP<State> rebalancedStateNONE = Teuchos::rcp(new State);
-    if(statelessScalarPointFieldSpecs->size() > 0){
-      rebalancedStateNONE->allocateScalarPointData(statelessScalarPointFieldSpecs, rebalancedOverlapScalarPointMap);
+    if(statelessScalarPointFieldIds.size() > 0){
+      rebalancedStateNONE->allocateScalarPointData(statelessScalarPointFieldIds, rebalancedOverlapScalarPointMap);
       rebalancedStateNONE->getScalarPointMultiVector()->Import(*stateNONE->getScalarPointMultiVector(), *overlapScalarPointImporter, Insert);
     }
-    if(statelessVectorPointFieldSpecs->size() > 0){
-      rebalancedStateNONE->allocateVectorPointData(statelessVectorPointFieldSpecs, rebalancedOverlapVectorPointMap);
+    if(statelessVectorPointFieldIds.size() > 0){
+      rebalancedStateNONE->allocateVectorPointData(statelessVectorPointFieldIds, rebalancedOverlapVectorPointMap);
       rebalancedStateNONE->getVectorPointMultiVector()->Import(*stateNONE->getVectorPointMultiVector(), *overlapVectorPointImporter, Insert);
     }
-    if(statelessScalarBondFieldSpecs->size() > 0){
-      rebalancedStateNONE->allocateScalarBondData(statelessScalarBondFieldSpecs, rebalancedOwnedScalarBondMap);
+    if(statelessScalarBondFieldIds.size() > 0){
+      rebalancedStateNONE->allocateScalarBondData(statelessScalarBondFieldIds, rebalancedOwnedScalarBondMap);
       rebalancedStateNONE->getScalarBondMultiVector()->Import(*stateNONE->getScalarBondMultiVector(), *ownedScalarBondImporter, Insert);
     }
     stateNONE = rebalancedStateNONE;
   }
 
   // states N and NP1
-  if(statefulScalarPointFieldSpecs->size() + statefulVectorPointFieldSpecs->size() + statefulScalarBondFieldSpecs->size() > 0){
+  if(statefulScalarPointFieldIds.size() + statefulVectorPointFieldIds.size() + statefulScalarBondFieldIds.size() > 0){
     Teuchos::RCP<State> rebalancedStateN = Teuchos::rcp(new State);
-    if(statefulScalarPointFieldSpecs->size() > 0){
-      rebalancedStateN->allocateScalarPointData(statefulScalarPointFieldSpecs, rebalancedOverlapScalarPointMap);
+    if(statefulScalarPointFieldIds.size() > 0){
+      rebalancedStateN->allocateScalarPointData(statefulScalarPointFieldIds, rebalancedOverlapScalarPointMap);
       rebalancedStateN->getScalarPointMultiVector()->Import(*stateN->getScalarPointMultiVector(), *overlapScalarPointImporter, Insert);
     }
-    if(statefulVectorPointFieldSpecs->size() > 0){
-      rebalancedStateN->allocateVectorPointData(statefulVectorPointFieldSpecs, rebalancedOverlapVectorPointMap);
+    if(statefulVectorPointFieldIds.size() > 0){
+      rebalancedStateN->allocateVectorPointData(statefulVectorPointFieldIds, rebalancedOverlapVectorPointMap);
       rebalancedStateN->getVectorPointMultiVector()->Import(*stateN->getVectorPointMultiVector(), *overlapVectorPointImporter, Insert);
     }
-    if(statefulScalarBondFieldSpecs->size() > 0){
-      rebalancedStateN->allocateScalarBondData(statefulScalarBondFieldSpecs, rebalancedOwnedScalarBondMap);
+    if(statefulScalarBondFieldIds.size() > 0){
+      rebalancedStateN->allocateScalarBondData(statefulScalarBondFieldIds, rebalancedOwnedScalarBondMap);
       rebalancedStateN->getScalarBondMultiVector()->Import(*stateN->getScalarBondMultiVector(), *ownedScalarBondImporter, Insert);
     }
     stateN = rebalancedStateN;
     Teuchos::RCP<State> rebalancedStateNP1 = Teuchos::rcp(new State);
-    if(statefulScalarPointFieldSpecs->size() > 0){
-      rebalancedStateNP1->allocateScalarPointData(statefulScalarPointFieldSpecs, rebalancedOverlapScalarPointMap);
+    if(statefulScalarPointFieldIds.size() > 0){
+      rebalancedStateNP1->allocateScalarPointData(statefulScalarPointFieldIds, rebalancedOverlapScalarPointMap);
       rebalancedStateNP1->getScalarPointMultiVector()->Import(*stateNP1->getScalarPointMultiVector(), *overlapScalarPointImporter, Insert);
     }
-    if(statefulVectorPointFieldSpecs->size() > 0){
-      rebalancedStateNP1->allocateVectorPointData(statefulVectorPointFieldSpecs, rebalancedOverlapVectorPointMap);
+    if(statefulVectorPointFieldIds.size() > 0){
+      rebalancedStateNP1->allocateVectorPointData(statefulVectorPointFieldIds, rebalancedOverlapVectorPointMap);
       rebalancedStateNP1->getVectorPointMultiVector()->Import(*stateNP1->getVectorPointMultiVector(), *overlapVectorPointImporter, Insert);
     }
-    if(statefulScalarBondFieldSpecs->size() > 0){
-      rebalancedStateNP1->allocateScalarBondData(statefulScalarBondFieldSpecs, rebalancedOwnedScalarBondMap);
+    if(statefulScalarBondFieldIds.size() > 0){
+      rebalancedStateNP1->allocateScalarBondData(statefulScalarBondFieldIds, rebalancedOwnedScalarBondMap);
       rebalancedStateNP1->getScalarBondMultiVector()->Import(*stateNP1->getScalarBondMultiVector(), *ownedScalarBondImporter, Insert);
     }
     stateNP1 = rebalancedStateNP1;
@@ -350,72 +336,38 @@ void PeridigmNS::DataManager::copyLocallyOwnedDataFromDataManager(PeridigmNS::Da
 
 bool PeridigmNS::DataManager::hasData(int fieldId, PeridigmField::Step step)
 {
-  PeridigmNS::FieldSpec peridigmSpec = PeridigmNS::FieldManager::self().getFieldSpec(fieldId);
-
-  // temporary work-around: get equivalent old-style spec
-  // \todo Remove this.
-  string label = peridigmSpec.getLabel();
-  std::map<string, Field_NS::FieldSpec>::const_iterator specIt = Field_NS::FieldSpecMap::Map.find(label);
-  if(specIt == Field_NS::FieldSpecMap::Map.end()){
-    cout << "DEBUGGING " << label << endl;
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(specIt == Field_NS::FieldSpecMap::Map.end(), "Failed to find reference to fieldSpec!");
-  }
-  Field_NS::FieldSpec const &spec = specIt->second;
-  // end temporary work-around
-
   bool hasData = false;
   if(step == PeridigmField::STEP_NONE){
-    hasData = stateNONE->hasData(spec);
+    hasData = stateNONE->hasData(fieldId);
   }
   else if(step == PeridigmField::STEP_N){
-    hasData = stateN->hasData(spec);
+    hasData = stateN->hasData(fieldId);
   }
   else if(step == PeridigmField::STEP_NP1){
-    hasData = stateNP1->hasData(spec);
+    hasData = stateNP1->hasData(fieldId);
   }
   else{
     TEUCHOS_TEST_FOR_EXCEPTION(false, Teuchos::RangeError, 
-                       "PeridigmNS::DataManager::getData, invalid FieldStep!");
+                       "PeridigmNS::DataManager::getData, invalid fieldId and step!");
   }
   return hasData;
 }
 
-// \todo This is obsolete.
-Teuchos::RCP<Epetra_Vector> PeridigmNS::DataManager::getDataOBSOLETE(Field_NS::FieldSpec fieldSpec, PeridigmField::Step step)
+Teuchos::RCP<Epetra_Vector> PeridigmNS::DataManager::getData(int fieldId, PeridigmField::Step step)
 {
   Teuchos::RCP<Epetra_Vector> data;
   if(step == PeridigmField::STEP_NONE){
-    data = stateNONE->getData(fieldSpec);
+    data = stateNONE->getData(fieldId);
   }
   else if(step == PeridigmField::STEP_N){
-    data = stateN->getData(fieldSpec);
+    data = stateN->getData(fieldId);
   }
   else if(step == PeridigmField::STEP_NP1){
-    data = stateNP1->getData(fieldSpec);
+    data = stateNP1->getData(fieldId);
   }
   else{
     TEUCHOS_TEST_FOR_EXCEPTION(false, Teuchos::RangeError, 
-                       "PeridigmNS::DataManager::getData, invalid FieldStep!");
+                       "PeridigmNS::DataManager::getData, invalid fieldId and step!");
   }
   return data;
-}
-
-Teuchos::RCP<Epetra_Vector> PeridigmNS::DataManager::getData(int fieldId, PeridigmField::Step step)
-{
-  PeridigmNS::FieldSpec peridigmSpec = PeridigmNS::FieldManager::self().getFieldSpec(fieldId);
-
-  // get equivalent old-style spec
-  string label = peridigmSpec.getLabel();
-
-  // temporary work-around: get equivalent old-style spec
-  // \todo Remove this.
-  std::map<string, Field_NS::FieldSpec>::const_iterator specIt = Field_NS::FieldSpecMap::Map.find(label);
-  if(specIt == Field_NS::FieldSpecMap::Map.end()){
-    cout << "DEBUGGING " << label << endl;
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(specIt == Field_NS::FieldSpecMap::Map.end(), "Failed to find reference to fieldSpec!");
-  }
-  Field_NS::FieldSpec const &spec = specIt->second;
-  // end temporary work-around
-
-  return getDataOBSOLETE(spec, step);
 }

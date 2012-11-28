@@ -98,8 +98,6 @@ namespace PeridigmNS {
 	  return ( sqrt( (a1-b1)*(a1-b1) + (a2-b2)*(a2-b2) + (a3-b3)*(a3-b3) ) );
 	}
 
-    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > m_variableSpecs;
-
     double m_criticalStretch;
 
     // field ids for all relevant data

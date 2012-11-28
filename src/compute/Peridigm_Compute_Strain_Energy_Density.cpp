@@ -130,7 +130,7 @@ int PeridigmNS::Compute_Strain_Energy_Density::computeStrainEnergyDensity( Teuch
 		// volume is a scalar and force a vector, so maps are different; must do multiplication on per-element basis
 		int numElements = numOwnedPoints;
 
-		double vol, vol2, w_vol;
+		double vol2, w_vol;
 
 		// Initialize local strain energy density
 		double We;
@@ -141,7 +141,7 @@ int PeridigmNS::Compute_Strain_Energy_Density::computeStrainEnergyDensity( Teuch
 			int numNeighbors = neighborhoodList[neighborhoodListIndex++];
 			int ID = ownedIDs[i];
 			We = 0.0;
-			vol = volume_values[ID];
+			//vol = volume_values[ID];
 			w_vol = w_volume_values[ID];
 			for (int j=0; j<numNeighbors; j++)
 			{

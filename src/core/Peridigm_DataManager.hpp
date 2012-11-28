@@ -48,20 +48,19 @@
 #ifndef PERIDIGM_DATAMANAGER_HPP
 #define PERIDIGM_DATAMANAGER_HPP
 
-#include "mesh_output/Field.h"
 #include "Peridigm_State.hpp"
 
 namespace PeridigmNS {
 
 /*! \brief A lean, mean, data managing machine.
  *
- * DataManager is a container class for managing the data required for peridynamic force evaluations. 
+ * DataManager is a container class for managing the data required for peridynamic simulations.
  * Data is stored in State objects which may be either stateless (STATE_NONE) or stateful (STATE_N, STATE_NP1).
  * Three types of data are supported:  scalar point data, vector point data, and scalar bond data.  In the case
  * of point data, DataManger has notions of owned points and ghosted points, allowing force calcuations access
  * to off-processor points that are within the neighborhood of one or more owned points.
  * Data is accessed via the getData function, which provides access to the Epetra_Vector corresponding to
- * the given FieldId and FieldStep.
+ * the given field id and step (STATE_NONE, STATE_N, or STATE_NP1).
  */
 class DataManager {
 
@@ -147,23 +146,10 @@ public:
   bool hasData(int fieldId, PeridigmField::Step step);
 
   //! Provides access to the Epetra_Vector specified by the given field Id and step.
-  Teuchos::RCP<Epetra_Vector> getDataOBSOLETE(Field_NS::FieldSpec fieldSpec, PeridigmField::Step step);
-
-  //! Provides access to the Epetra_Vector specified by the given field Id and step.
   Teuchos::RCP<Epetra_Vector> getData(int fieldId, PeridigmField::Step step);
 
-  //! Returns the complete list of field ids. OBSOLETE
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > getFieldSpes() { return fieldSpecs; }
-
   //! Returns the complete list of field ids.
-#include "Peridigm_Field.hpp"
-  std::vector<int> getFieldIds() { 
-    std::vector<int> fieldIds;
-    PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
-    for(unsigned int i=0 ; i<fieldSpecs->size() ; ++i)
-      fieldIds.push_back(fieldManager.getFieldId( (*fieldSpecs)[i].getLabel() ));
-    return fieldIds;
-  }
+  std::vector<int> getFieldIds() { return allFieldIds; }
 
   //! Swaps StateN and StateNP1; stateNONE is unaffected.
   void updateState(){
@@ -175,22 +161,22 @@ protected:
   //! Number of times rebalance has been called.
   int rebalanceCount;
 
-  //! @name Field specifications
+  //! @name Field ids
   //@{
-  //! Complete list of field specs.
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs;
+  //! Complete list of field ids.
+  std::vector<int> allFieldIds;
   //! Field specs for stateless scalar point data.
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statelessScalarPointFieldSpecs;
+  std::vector<int> statelessScalarPointFieldIds;
   //! Field specs for stateless vector point data.
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statelessVectorPointFieldSpecs;
+  std::vector<int> statelessVectorPointFieldIds;
   //! Field specs for stateless scalar bond data.
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statelessScalarBondFieldSpecs;
+  std::vector<int> statelessScalarBondFieldIds;
   //! Field specs for stateful scalar point data.
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statefulScalarPointFieldSpecs;
+  std::vector<int> statefulScalarPointFieldIds;
   //! Field specs for stateful vector point data.
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statefulVectorPointFieldSpecs;
+  std::vector<int> statefulVectorPointFieldIds;
   //! Field specs for stateful scalar bond data.
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > statefulScalarBondFieldSpecs;
+  std::vector<int> statefulScalarBondFieldIds;
   //@}
 
   //! @name Maps

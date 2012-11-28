@@ -2543,7 +2543,7 @@ QUICKGRID::Data PeridigmNS::Peridigm::currentConfigurationDecomp() {
   decomp.globalNumPoints = oneDimensionalMap->NumGlobalElements();
 
   // fill myGlobalIDs
-  Array<int> myGlobalIDs(myNumElements);
+  UTILITIES::Array<int> myGlobalIDs(myNumElements);
   int* myGlobalIDsPtr = myGlobalIDs.get();
   int* gIDs = oneDimensionalMap->MyGlobalElements();
   memcpy(myGlobalIDsPtr, gIDs, myNumElements*sizeof(int));
@@ -2551,7 +2551,7 @@ QUICKGRID::Data PeridigmNS::Peridigm::currentConfigurationDecomp() {
 
   // fill myX
   // use current positions for x
-  Array<double> myX(myNumElements*dimension);
+  UTILITIES::Array<double> myX(myNumElements*dimension);
   double* myXPtr = myX.get();
   double* yPtr;
   y->ExtractView(&yPtr);
@@ -2559,7 +2559,7 @@ QUICKGRID::Data PeridigmNS::Peridigm::currentConfigurationDecomp() {
   decomp.myX = myX.get_shared_ptr();
 
   // fill cellVolume
-  Array<double> cellVolume(myNumElements);
+  UTILITIES::Array<double> cellVolume(myNumElements);
   double* cellVolumePtr = cellVolume.get();
   double* volumePtr;
   volume->ExtractView(&volumePtr);

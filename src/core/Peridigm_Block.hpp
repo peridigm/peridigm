@@ -219,10 +219,10 @@ namespace PeridigmNS {
 
     //! Method for querying global scalar data
     bool hasGlobalData(int fieldId) {
-       map<int, double>::iterator it = globalData.find(fieldId);
-       if(it == globalData.end())
-         return false;
-       return true;
+      std::map<int, double>::iterator it = globalData.find(fieldId);
+      if(it == globalData.end())
+        return false;
+      return true;
     }
 
     //! Method for accessing global scalar data
