@@ -65,8 +65,8 @@ namespace PeridigmNS {
     //! Destructor.
     virtual ~Compute(){}
 
-    //! Returns the fieldspecs computed by this class OBSOLETE
-    virtual std::vector<Field_NS::FieldSpec> getFieldSpecs() const = 0;
+    //! Returns a vector of field IDs corresponding to the variables associated with the compute class.
+    virtual std::vector<int> FieldIds() const = 0;
 
     //! Initialize the compute class
     virtual void initialize( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const {};

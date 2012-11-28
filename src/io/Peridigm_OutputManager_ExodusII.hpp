@@ -52,7 +52,6 @@
 
 #include <Teuchos_ParameterList.hpp>
 
-
 // Forward declaration
 namespace PeridigmNS {
   class Peridigm; 

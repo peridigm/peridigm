@@ -52,7 +52,6 @@ ComputeClass(Global_Strain_Energy,Compute_Global_Strain_Energy)
 
 #else
 
-
 #ifndef PERIDIGM_COMPUTE_GLOBAL_STRAIN_ENERGY_HPP
 #define PERIDIGM_COMPUTE_GLOBAL_STRAIN_ENERGY_HPP
 
@@ -72,11 +71,17 @@ namespace PeridigmNS {
     //! Destructor.
     ~Compute_Global_Strain_Energy();
 
+    //! Returns a vector of field IDs corresponding to the variables associated with the compute class.
+    virtual std::vector<int> FieldIds() const { return m_fieldIds; }
+
     //! Perform computation
     virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
 
-    //! Returns the fieldspecs computed by this class
-    std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
+  private:
+
+    // field ids for all relevant data
+    std::vector<int> m_fieldIds;
+    int m_globalStrainEnergyFieldId;
   };
 }
 

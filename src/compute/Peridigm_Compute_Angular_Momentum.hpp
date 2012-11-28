@@ -69,8 +69,8 @@ namespace PeridigmNS {
     //! Destructor.
     virtual ~Compute_Angular_Momentum();
 
-    //! Returns the fieldspecs computed by this class OBSOLETE
-    virtual std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
+    //! Returns a vector of field IDs corresponding to the variables associated with the compute class.
+    virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
     //! Perform computation
     virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
@@ -81,11 +81,12 @@ namespace PeridigmNS {
   private:
 
     // field ids for all relevant data
-    int volumeFieldId;
-    int coordinatesFieldId;
-    int velocityFieldId;
-    int angularMomentumFieldId;
-    int globalAngularMomentumFieldId;
+    std::vector<int> m_fieldIds;
+    int m_volumeFieldId;
+    int m_coordinatesFieldId;
+    int m_velocityFieldId;
+    int m_angularMomentumFieldId;
+    int m_globalAngularMomentumFieldId;
   };
 }
 

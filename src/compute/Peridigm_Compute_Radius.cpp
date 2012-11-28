@@ -52,20 +52,16 @@
 #include <cmath>
 
 PeridigmNS::Compute_Radius::Compute_Radius(Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute(epetraComm_), volumeFieldId(-1), radiusFieldId(-1)
+  : Compute(epetraComm_), m_volumeFieldId(-1), m_radiusFieldId(-1)
 {
   FieldManager& fieldManager = FieldManager::self();
-  volumeFieldId = fieldManager.getFieldId("Volume");
-  radiusFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Radius");
+  m_volumeFieldId = fieldManager.getFieldId("Volume");
+  m_radiusFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Radius");
+  m_fieldIds.push_back(m_volumeFieldId);
+  m_fieldIds.push_back(m_radiusFieldId);
 }
 
 PeridigmNS::Compute_Radius::~Compute_Radius(){}
-
-std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Radius::getFieldSpecs() const {
-  std::vector<Field_NS::FieldSpec> myFieldSpecs;
-  myFieldSpecs.push_back(Field_NS::RADIUS);
-  return myFieldSpecs;
-}
 
 int PeridigmNS::Compute_Radius::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) const {
 
@@ -76,8 +72,8 @@ int PeridigmNS::Compute_Radius::compute( Teuchos::RCP< std::vector<PeridigmNS::B
     const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
 
     double *volume, *radius;
-    blockIt->getData(volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&volume);
-    blockIt->getData(radiusFieldId, PeridigmField::STEP_NONE)->ExtractView(&radius);
+    blockIt->getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&volume);
+    blockIt->getData(m_radiusFieldId, PeridigmField::STEP_NONE)->ExtractView(&radius);
 
     double constant = 0.75/acos(-1.0);
     double oneThird = 1.0/3.0;

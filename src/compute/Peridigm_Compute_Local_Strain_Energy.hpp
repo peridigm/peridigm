@@ -71,11 +71,11 @@ namespace PeridigmNS {
     //! Destructor.
     ~Compute_Local_Strain_Energy();
 
+    //! Returns a vector of field IDs corresponding to the variables associated with the compute class.
+    virtual std::vector<int> FieldIds() const { return Compute_Strain_Energy::FieldIds(); }
+
     //! Perform computation
     int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
-
-    //! Returns the fieldspecs computed by this class
-    std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
   };
 }
 

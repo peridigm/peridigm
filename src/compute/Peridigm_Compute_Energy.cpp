@@ -52,35 +52,32 @@
 
 //! Standard constructor.
 PeridigmNS::Compute_Energy::Compute_Energy(Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute(epetraComm_), volumeFieldId(-1), modelCoordinatesFieldId(-1), coordinatesFieldId(-1), velocityFieldId(-1),
-    weightedVolumeFieldId(-1), dilatationFieldId(-1), kineticEnergyFieldId(-1), strainEnergyDensityFieldId(-1), strainEnergyFieldId(-1)
+  : Compute(epetraComm_), m_volumeFieldId(-1), m_modelCoordinatesFieldId(-1), m_coordinatesFieldId(-1), m_velocityFieldId(-1),
+    m_weightedVolumeFieldId(-1), m_dilatationFieldId(-1), m_globalKineticEnergyFieldId(-1), m_globalStrainEnergyDensityFieldId(-1), m_globalStrainEnergyFieldId(-1)
 {
   FieldManager& fieldManager = FieldManager::self();
-  volumeFieldId = fieldManager.getFieldId("Volume");
-  modelCoordinatesFieldId = fieldManager.getFieldId("Model_Coordinates");
-  coordinatesFieldId = fieldManager.getFieldId("Coordinates");
-  velocityFieldId = fieldManager.getFieldId("Velocity");
-  weightedVolumeFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Weighted_Volume");
-  dilatationFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Dilatation");
-  kineticEnergyFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Global_Kinetic_Energy");
-  strainEnergyDensityFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Global_Strain_Energy_Density");
-  strainEnergyFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Global_Strain_Energy");
+  m_volumeFieldId = fieldManager.getFieldId("Volume");
+  m_modelCoordinatesFieldId = fieldManager.getFieldId("Model_Coordinates");
+  m_coordinatesFieldId = fieldManager.getFieldId("Coordinates");
+  m_velocityFieldId = fieldManager.getFieldId("Velocity");
+  m_weightedVolumeFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Weighted_Volume");
+  m_dilatationFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Dilatation");
+  m_globalKineticEnergyFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Global_Kinetic_Energy");
+  m_globalStrainEnergyDensityFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Global_Strain_Energy_Density");
+  m_globalStrainEnergyFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Global_Strain_Energy");
+  m_fieldIds.push_back(m_volumeFieldId);
+  m_fieldIds.push_back(m_modelCoordinatesFieldId);
+  m_fieldIds.push_back(m_coordinatesFieldId);
+  m_fieldIds.push_back(m_velocityFieldId);
+  m_fieldIds.push_back(m_weightedVolumeFieldId);
+  m_fieldIds.push_back(m_dilatationFieldId);
+  m_fieldIds.push_back(m_globalKineticEnergyFieldId);
+  m_fieldIds.push_back(m_globalStrainEnergyDensityFieldId);
+  m_fieldIds.push_back(m_globalStrainEnergyFieldId);
 }
 
 //! Destructor.
 PeridigmNS::Compute_Energy::~Compute_Energy(){}
-
-//! Returns the fieldspecs computed by this class
-std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Energy::getFieldSpecs() const 
-{
-  	std::vector<Field_NS::FieldSpec> myFieldSpecs;
-  	myFieldSpecs.push_back(Field_NS::GLOBAL_KINETIC_ENERGY);
-  	myFieldSpecs.push_back(Field_NS::KINETIC_ENERGY);
-	myFieldSpecs.push_back(Field_NS::STRAIN_ENERGY);
-	myFieldSpecs.push_back(Field_NS::STRAIN_ENERGY_DENSITY);
-
-  	return myFieldSpecs;
-}
 
 //! Fill the energy vectors
 int PeridigmNS::Compute_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const
@@ -95,15 +92,15 @@ int PeridigmNS::Compute_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::B
     const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
     const int* ownedIDs = neighborhoodData->OwnedIDs();
     const int* neighborhoodList = neighborhoodData->NeighborhoodList();
-    volume                = blockIt->getData(volumeFieldId, PeridigmField::STEP_NONE);
-    ref                   = blockIt->getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE);
-    coord                 = blockIt->getData(coordinatesFieldId, PeridigmField::STEP_NP1);
-    velocity              = blockIt->getData(velocityFieldId, PeridigmField::STEP_NP1);
-    w_volume              = blockIt->getData(weightedVolumeFieldId, PeridigmField::STEP_NONE);
-    dilatation            = blockIt->getData(dilatationFieldId, PeridigmField::STEP_NP1);
-    kinetic_energy        = blockIt->getData(kineticEnergyFieldId, PeridigmField::STEP_NP1);
-    strain_energy_density = blockIt->getData(strainEnergyDensityFieldId, PeridigmField::STEP_NP1);
-    strain_energy         = blockIt->getData(strainEnergyFieldId, PeridigmField::STEP_NP1);
+    volume                = blockIt->getData(m_volumeFieldId, PeridigmField::STEP_NONE);
+    ref                   = blockIt->getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE);
+    coord                 = blockIt->getData(m_coordinatesFieldId, PeridigmField::STEP_NP1);
+    velocity              = blockIt->getData(m_velocityFieldId, PeridigmField::STEP_NP1);
+    w_volume              = blockIt->getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE);
+    dilatation            = blockIt->getData(m_dilatationFieldId, PeridigmField::STEP_NP1);
+    kinetic_energy        = blockIt->getData(m_globalKineticEnergyFieldId, PeridigmField::STEP_NP1);
+    strain_energy_density = blockIt->getData(m_globalStrainEnergyDensityFieldId, PeridigmField::STEP_NP1);
+    strain_energy         = blockIt->getData(m_globalStrainEnergyFieldId, PeridigmField::STEP_NP1);
 	
     // Sanity check
     if (velocity->Map().NumMyElements() != volume->Map().NumMyElements() || velocity->Map().NumMyElements() != ref->Map().NumMyElements())
@@ -205,7 +202,7 @@ int PeridigmNS::Compute_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::B
 	}
 
   // Store global energy in block (block globals are static, so only need to assign data to first block)
-  blocks->begin()->getScalarData(Field_NS::GLOBAL_KINETIC_ENERGY) = globalKE;
+  blocks->begin()->getGlobalData(m_globalKineticEnergyFieldId) = globalKE;
 
   return(0);
 }

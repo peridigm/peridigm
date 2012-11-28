@@ -67,11 +67,11 @@ namespace PeridigmNS {
 	//! Destructor.
 	virtual ~DamageModel(){}
 
-	//! Return name of material type
+	//! Return name of the model.
 	virtual string Name() const = 0;
 
-    //! Returns a vector of field specs that specify the variables associated with the damage model
-    virtual Teuchos::RCP< std::vector<Field_NS::FieldSpec> > VariableSpecs() const = 0;
+    //! Returns a vector of field IDs corresponding to the variables associated with the model.
+    virtual std::vector<int> FieldIds() const = 0;
 
 	//! Initialize the damage model.
 	virtual void

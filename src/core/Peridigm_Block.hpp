@@ -53,6 +53,7 @@
 #include <Epetra_Vector.h>
 #include <Epetra_Import.h>
 
+#include <vector>
 #include <string>
 #include <map>
 
@@ -71,7 +72,8 @@ namespace PeridigmNS {
     Block() : blockName("Undefined"), blockID(-1) {}
 
     //! Constructor
-    Block(std::string blockName_, int blockID_, Teuchos::ParameterList& blockParams_) : blockName(blockName_), blockID(blockID_), blockParams(blockParams_) {}
+    Block(std::string blockName_, int blockID_, Teuchos::ParameterList& blockParams_)
+      : blockName(blockName_), blockID(blockID_), blockParams(blockParams_) {}
 
     //! Destructor
     ~Block(){}
@@ -153,9 +155,9 @@ namespace PeridigmNS {
                    Teuchos::RCP<const PeridigmNS::NeighborhoodData> rebalancedGlobalNeighborhoodData,
                    Teuchos::RCP<const PeridigmNS::NeighborhoodData> rebalancedGlobalContactNeighborhoodData);
 
-    //! Stores a list of field specs that will be added to this block's DataManager.
-    void setAuxiliaryFieldSpecs(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs){
-      auxiliaryFieldSpecs = *fieldSpecs;
+    //! Stores a list of field ids that will be added to this block's DataManager.
+    void setAuxiliaryFieldIds(std::vector<int> fieldIds){
+      auxiliaryFieldIds = fieldIds;
     }
 
     //! Get the DataManager.
@@ -210,17 +212,26 @@ namespace PeridigmNS {
       TEUCHOS_TEST_FOR_EXCEPT_MSG(
         dataManager.is_null(),
         "\n**** DataManager must be initialized via Block::initializeDataManager() prior to calling Block::hasData()\n");
+      if( hasGlobalData(fieldId) )
+        return true;
       return dataManager->hasData(fieldId, step);
     }
 
+    //! Method for querying global scalar data
+    bool hasGlobalData(int fieldId) {
+       map<int, double>::iterator it = globalData.find(fieldId);
+       if(it == globalData.end())
+         return false;
+       return true;
+    }
+
     //! Method for accessing global scalar data
-    double& getScalarData(Field_NS::FieldSpec fieldSpec) {
-       map<string,double>::iterator it;
-       it=globalVariables.find(fieldSpec.getLabel());
-       if (it == globalVariables.end()) {
-         TEUCHOS_TEST_FOR_EXCEPT_MSG(it==globalVariables.end(), "\n**** Global FieldSpec not found!\n");
-       }
-       return globalVariables[fieldSpec.getLabel()];
+    double& getGlobalData(int fieldId) {
+
+      if( !hasGlobalData(fieldId) )
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(!hasGlobalData(fieldId), "\n**** Global field Id not found!\n");
+
+      return globalData[fieldId];
     }
 
     /*! \brief Import data from the given source vector to the underlying target vector associated with the given field spec.
@@ -266,12 +277,12 @@ namespace PeridigmNS {
     /*! \brief Initialize the data manager.
      *
      *  The DataManager will include all the field specs requested by the material model and
-     *  the contact model, as well as those provided by setAuxiliaryFieldSpecs().
+     *  the contact model, as well as those provided by setAuxiliaryFieldIds().
      */
     void initializeDataManager();
 
     //! Initialize storage for global scalars
-    void initializeGlobalVariables();
+    void initializeGlobalData();
 
     std::string blockName;
     int blockID;
@@ -303,7 +314,7 @@ namespace PeridigmNS {
     Teuchos::RCP<PeridigmNS::NeighborhoodData> contactNeighborhoodData;
 
     //! List of auxiliary field specs
-    std::vector<Field_NS::FieldSpec> auxiliaryFieldSpecs;
+    std::vector<int> auxiliaryFieldIds;
 
     //! The DataManager
     Teuchos::RCP<PeridigmNS::DataManager> dataManager;
@@ -317,9 +328,9 @@ namespace PeridigmNS {
     //! The contact model
     Teuchos::RCP<const PeridigmNS::ContactModel> contactModel;
 
-    //! Storage for global scalars and global vectors (per-node, per-element variables stored in datamanager)
+    //! Storage for global scalar data.
     //! Map is static because all block objects use the same values
-    static std::map<string,double> globalVariables;
+    static std::map<int, double> globalData;
 
     //! The blocks parameterlist sublist
     Teuchos::ParameterList blockParams;

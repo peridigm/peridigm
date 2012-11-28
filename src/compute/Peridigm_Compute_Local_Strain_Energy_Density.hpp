@@ -66,17 +66,17 @@ namespace PeridigmNS {
 
   public:
 	
-  //! Standard constructor.
+    //! Standard constructor.
     Compute_Local_Strain_Energy_Density( Teuchos::RCP<const Epetra_Comm> epetraComm_ );
 
-  //! Destructor.
-  ~Compute_Local_Strain_Energy_Density();
+    //! Destructor.
+    ~Compute_Local_Strain_Energy_Density();
 
-  //! Perform computation
-  int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
+    //! Returns a vector of field IDs corresponding to the variables associated with the compute class.
+    virtual std::vector<int> FieldIds() const { return Compute_Strain_Energy_Density::FieldIds(); }
 
-  //! Returns the fieldspecs computed by this class
-  std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
+    //! Perform computation
+    int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
   };
 }
 

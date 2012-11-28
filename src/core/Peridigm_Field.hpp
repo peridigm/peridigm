@@ -1,4 +1,4 @@
-/*! \file Peridigm_FieldSpec.hpp */
+/*! \file Peridigm_Field.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -143,6 +143,8 @@ public:
 
   FieldSpec getFieldSpec(int fieldId);
 
+  FieldSpec getFieldSpec(std::string label);
+
   std::vector<FieldSpec> getFieldSpecs() { return fieldSpecs; }
 
   std::vector<std::string> getFieldLabels() {
@@ -150,6 +152,15 @@ public:
     for(std::vector<FieldSpec>::const_iterator it = fieldSpecs.begin() ; it != fieldSpecs.end() ; it++)
       labels.push_back(it->label);
     return labels;
+  }
+
+  std::vector<FieldSpec> getGlobalFieldSpecs() {
+    std::vector<FieldSpec> specs;
+    for(std::vector<FieldSpec>::const_iterator it = fieldSpecs.begin() ; it != fieldSpecs.end() ; it++){
+      if(it->getRelation() == PeridigmField::GLOBAL)
+        specs.push_back(*it);
+    }
+    return specs;
   }
 
   void printFieldSpecs(std::ostream& os) {

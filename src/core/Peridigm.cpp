@@ -169,27 +169,19 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   accelerationFieldId                = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Acceleration");
   forceDensityFieldId                = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force_Density");
   contactForceDensityFieldId         = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Contact_Force_Density");
-  partialVolumeFieldId               = fieldManager.getFieldId(PeridigmField::BOND,    PeridigmField::SCALAR, PeridigmField::CONSTANT, "Partial_Volume");
   tangentReferenceCoordinatesFieldId = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::CONSTANT, "Tangent_Reference_Coordinates");
+  if(analysisHasPartialVolumes)
+    partialVolumeFieldId             = fieldManager.getFieldId(PeridigmField::BOND,    PeridigmField::SCALAR, PeridigmField::CONSTANT, "Partial_Volume");
+
+  // Create field ids that may be required for output
+  fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Element_Id");
+  fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Proc_Num");
 
   if(analysisHasPartialVolumes)
     contactForceDensityFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Partial_Volume");
 
-  // The PeridigmNS::DataManager contained in each PeridigmNS::Block allocates space for field data.
-  // Keep track of the data storage required by Peridigm and the ComputeManager and pass the associated
-  // field specs when calling Block::initializeDataManager().
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
-
-  // Load the Peridigm specs into fieldSpecs
-  std::vector<Field_NS::FieldSpec> peridigmSpecs = this->getFieldSpecs();
-  fieldSpecs->insert(fieldSpecs->end(), peridigmSpecs.begin(), peridigmSpecs.end());
-
   // Instantiate compute manager
   instantiateComputeManager();
-
-  // Load the compute manager's field specs into fieldSpecs
-  std::vector<Field_NS::FieldSpec> computeSpecs = computeManager->getFieldSpecs();
-  fieldSpecs->insert(fieldSpecs->end(), computeSpecs.begin(), computeSpecs.end());
 
   // Instantiate the blocks
   initializeBlocks(peridigmDisc);
@@ -228,11 +220,35 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
     }
   }
 
-  // Load the auxiliary field specs into the blocks (they will be
-  // combined with material model and contact model specs when allocating
+  // Setup contact
+  initializeContact();
+
+  // If there is a contact model, assign it to all blocks
+  // \todo Refactor contact!
+  if(analysisHasContact){
+    Teuchos::RCP<const PeridigmNS::ContactModel> contactModel = contactModels.begin()->second;
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+      blockIt->setContactModel(contactModel);
+  }
+
+  // Load the auxiliary field ids into the blocks (they will be
+  // combined with material model and contact model ids when allocating
   // space in the Block's DataManager)
+  vector<int> auxiliaryFieldIds;
+
+  // Force the allocation of space in all blocks for the following field data
+  // \todo Replace this with a query to the requested output fields, which is why we're forcing this allocation.
+  auxiliaryFieldIds.push_back(modelCoordinatesFieldId);
+  auxiliaryFieldIds.push_back(coordinatesFieldId);
+  auxiliaryFieldIds.push_back(displacementFieldId);
+  auxiliaryFieldIds.push_back(velocityFieldId);
+
+  // Add fields from compute classes to auxiliary field vector
+  vector<int> computeManagerFieldIds = computeManager->FieldIds();
+  auxiliaryFieldIds.insert(auxiliaryFieldIds.end(), computeManagerFieldIds.begin(), computeManagerFieldIds.end());
+
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-    blockIt->setAuxiliaryFieldSpecs(fieldSpecs);    
+    blockIt->setAuxiliaryFieldIds(auxiliaryFieldIds);
 
   // Initialize the blocks (creates maps, neighborhoods, DataManager)
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
@@ -285,17 +301,6 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // Initialize the compute classes
   computeManager->initialize(blocks);
-
-  // Setup contact
-  initializeContact();
-
-  // If there is a contact model, assign it to all blocks
-  // \todo Refactor contact!
-  if(analysisHasContact){
-    Teuchos::RCP<const PeridigmNS::ContactModel> contactModel = contactModels.begin()->second;
-    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-      blockIt->setContactModel(contactModel);
-  }
 
   // Initialize the workset
   initializeWorkset();
@@ -758,8 +763,8 @@ void PeridigmNS::Peridigm::executeExplicit() {
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
     blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
-    blockIt->importData(*y, coordinatesFieldId,   PeridigmField::STEP_NP1, Insert);
-    blockIt->importData(*v, velocityFieldId,     PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
   }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -859,8 +864,8 @@ void PeridigmNS::Peridigm::executeExplicit() {
     PeridigmNS::Timer::self().startTimer("Gather/Scatter");
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
       blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
-      blockIt->importData(*y, coordinatesFieldId,   PeridigmField::STEP_NP1, Insert);
-      blockIt->importData(*v, velocityFieldId,     PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
     }
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -974,8 +979,8 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
     blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
-    blockIt->importData(*y, coordinatesFieldId,   PeridigmField::STEP_NP1, Insert);
-    blockIt->importData(*v, velocityFieldId,     PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
   } 
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -2059,10 +2064,10 @@ void PeridigmNS::Peridigm::executeImplicit() {
     // Copy data from mothership vectors to overlap vectors in data manager
     PeridigmNS::Timer::self().startTimer("Gather/Scatter");
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-      blockIt->importData(*u, displacementFieldId,    PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
       blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
-      blockIt->importData(*v, velocityFieldId,    PeridigmField::STEP_NP1, Insert);
-      blockIt->importData(*a, accelerationFieldId,    PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(*a, accelerationFieldId, PeridigmField::STEP_NP1, Insert);
     }
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -2135,8 +2140,8 @@ void PeridigmNS::Peridigm::executeImplicit() {
       PeridigmNS::Timer::self().startTimer("Gather/Scatter");
       for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
         blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
-        blockIt->importData(*y, coordinatesFieldId,  PeridigmField::STEP_NP1, Insert);
-        blockIt->importData(*v, velocityFieldId,     PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
         blockIt->importData(*a, accelerationFieldId, PeridigmField::STEP_NP1, Insert);
       }
       PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
@@ -2283,9 +2288,9 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
   // Copy data from mothership vectors to overlap vectors in data manager
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    blockIt->importData(*u, displacementFieldId,    PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
-    blockIt->importData(*v, velocityFieldId,    PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
   }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -2680,25 +2685,6 @@ Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::Peridigm::createRebalance
   }
 
   return rebalancedNeighborhoodData;
-}
-
-std::vector<Field_NS::FieldSpec> PeridigmNS::Peridigm::getFieldSpecs() {
-
-  // FieldSpecs used by Peridigm class
-  std::vector<Field_NS::FieldSpec> mySpecs;
-
-  mySpecs.push_back(Field_NS::VOLUME);
-  mySpecs.push_back(Field_NS::COORD3D);
-  mySpecs.push_back(Field_NS::DISPL3D);
-  mySpecs.push_back(Field_NS::CURCOORD3D);
-  mySpecs.push_back(Field_NS::VELOC3D);
-  mySpecs.push_back(Field_NS::FORCE_DENSITY3D);
-  mySpecs.push_back(Field_NS::CONTACT_FORCE_DENSITY3D);
-
-  if(analysisHasPartialVolumes)
-    mySpecs.push_back(Field_NS::PARTIAL_VOLUME);
-
-  return mySpecs;
 }
 
 void PeridigmNS::Peridigm::displayProgress(string title, double percentComplete){

@@ -50,10 +50,25 @@
 #include "Peridigm_DataManager.hpp"
 #include "Peridigm_Field.hpp"
 
-void PeridigmNS::DataManager::allocateData(Teuchos::RCP< std::vector<Field_NS::FieldSpec> > specs)
+void PeridigmNS::DataManager::allocateData(std::vector<int> fieldIds)
 {
-  fieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>(*specs));
- 
+  fieldSpecs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>());
+
+  // temporary work-around: get equivalent old-style spec
+  // \todo Remove this.
+  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  for(unsigned int i=0 ; i<fieldIds.size() ; ++i){
+    string label = fieldManager.getFieldSpec(fieldIds[i]).getLabel();
+    std::map<string, Field_NS::FieldSpec>::const_iterator specIt = Field_NS::FieldSpecMap::Map.find(label);
+    if(specIt == Field_NS::FieldSpecMap::Map.end()){
+      cout << "DEBUGGING " << label << endl;
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(specIt == Field_NS::FieldSpecMap::Map.end(), "Failed to find reference to fieldSpec!");
+    }
+    Field_NS::FieldSpec const &spec = specIt->second;
+    fieldSpecs->push_back(spec);
+  }
+  // end temporary work-around
+
   // remove duplicates
   sort(fieldSpecs->begin(), fieldSpecs->end());
   std::vector<Field_NS::FieldSpec>::iterator newEnd = unique(fieldSpecs->begin(), fieldSpecs->end());

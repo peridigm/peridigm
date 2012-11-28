@@ -57,15 +57,6 @@ PeridigmNS::Compute_Local_Kinetic_Energy::Compute_Local_Kinetic_Energy(Teuchos::
 //! Destructor.
 PeridigmNS::Compute_Local_Kinetic_Energy::~Compute_Local_Kinetic_Energy(){}
 
-//! Returns the fieldspecs computed by this class
-std::vector<Field_NS::FieldSpec> PeridigmNS::Compute_Local_Kinetic_Energy::getFieldSpecs() const 
-{
-  	std::vector<Field_NS::FieldSpec> myFieldSpecs;
-	myFieldSpecs.push_back(Field_NS::KINETIC_ENERGY);
-	
-  	return myFieldSpecs;
-}
-
 //! Fill the kinetic energy vectors
 int PeridigmNS::Compute_Local_Kinetic_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const
 {

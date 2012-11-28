@@ -112,7 +112,7 @@ void testTwoPts()
                       Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&bondMap, false));
-  dataManager.allocateData(mat.VariableSpecs());
+  dataManager.allocateData(mat.FieldIds());
 
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   int modelCoordinatesFieldId = fieldManager.getFieldId("Model_Coordinates");
@@ -232,7 +232,7 @@ void testEightPts()
                       Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&bondMap, false));
-  dataManager.allocateData(mat.VariableSpecs());
+  dataManager.allocateData(mat.FieldIds());
  
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   int modelCoordinatesFieldId = fieldManager.getFieldId("Model_Coordinates");
@@ -499,7 +499,7 @@ void testThreePts()
                       Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&bondMap, false));
-  dataManager.allocateData(mat.VariableSpecs());
+  dataManager.allocateData(mat.FieldIds());
 
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   int modelCoordinatesFieldId = fieldManager.getFieldId("Model_Coordinates");
@@ -698,7 +698,7 @@ void twoPointProbeJacobian()
                       Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&bondMap, false));
-  dataManager.allocateData(mat.VariableSpecs());
+  dataManager.allocateData(mat.FieldIds());
 
   // create the Jacobian
 //   PeridigmNS::SerialMatrix jacobian(2*3);
@@ -772,7 +772,7 @@ void twoPointProbeJacobianJAM()
                       Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&unknownMap, false),
                       Teuchos::rcp(&bondMap, false));
-  dataManager.allocateData(mat.VariableSpecs());
+  dataManager.allocateData(mat.FieldIds());
 
   // create the Jacobian
 //   PeridigmNS::SerialMatrix jacobian(2*3);

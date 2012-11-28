@@ -52,7 +52,6 @@ ComputeClass(Angular_Momentum,Compute_Local_Angular_Momentum)
 
 #else
 
-
 #ifndef PERIDIGM_COMPUTE_LOCAL_ANGULAR_MOMENTUM_HPP
 #define PERIDIGM_COMPUTE_LOCAL_ANGULAR_MOMENTUM_HPP
 
@@ -66,17 +65,17 @@ namespace PeridigmNS {
 
   public:
 	
-  //! Standard constructor.
+    //! Standard constructor.
     Compute_Local_Angular_Momentum( Teuchos::RCP<const Epetra_Comm> epetraComm_ );
 
-  //! Destructor.
-  ~Compute_Local_Angular_Momentum();
+    //! Destructor.
+    ~Compute_Local_Angular_Momentum();
 
-  //! Returns the fieldspecs computed by this class
-  std::vector<Field_NS::FieldSpec> getFieldSpecs() const;
+    //! Returns a vector of field IDs corresponding to the variables associated with the compute class.
+    virtual std::vector<int> FieldIds() const { return Compute_Angular_Momentum::FieldIds(); }
 
-  //! Perform computation
-  int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
+    //! Perform computation
+    int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
   };
 }
 

@@ -46,10 +46,11 @@
 //@HEADER
 
 #include "Peridigm_Block.hpp"
+#include "Peridigm_Field.hpp"
 #include <vector>
 #include <set>
 
-map<string,double> PeridigmNS::Block::globalVariables;
+map<int, double> PeridigmNS::Block::globalData;
 
 void PeridigmNS::Block::initialize(Teuchos::RCP<const Epetra_BlockMap> globalOwnedScalarPointMap,
                                    Teuchos::RCP<const Epetra_BlockMap> globalOverlapScalarPointMap,
@@ -73,8 +74,7 @@ void PeridigmNS::Block::initialize(Teuchos::RCP<const Epetra_BlockMap> globalOwn
 
   initializeDataManager();
 
-  initializeGlobalVariables();
-
+  initializeGlobalData();
 }
 
 void PeridigmNS::Block::rebalance(Teuchos::RCP<const Epetra_BlockMap> rebalancedGlobalOwnedScalarPointMap,
@@ -373,28 +373,28 @@ void PeridigmNS::Block::initializeDataManager()
   // Note that not all the maps are strictly required, so these conditions could be relaxed somewhat.
   TEUCHOS_TEST_FOR_EXCEPT_MSG(materialModel.is_null(), "\n**** Material model must be set via Block::setMaterialModel() prior to calling Block::initializeDataManager()\n");
   TEUCHOS_TEST_FOR_EXCEPT_MSG(ownedScalarPointMap.is_null() ||
-                      ownedVectorPointMap.is_null() ||
-                      overlapScalarPointMap.is_null() ||
-                      overlapVectorPointMap.is_null() ||
-                      ownedScalarBondMap.is_null(),
-                      "\n**** Maps must be set prior to calling Block::initializeDataManager()\n");
+                              ownedVectorPointMap.is_null() ||
+                              overlapScalarPointMap.is_null() ||
+                              overlapVectorPointMap.is_null() ||
+                              ownedScalarBondMap.is_null(),
+                              "\n**** Maps must be set prior to calling Block::initializeDataManager()\n");
   
-  // Collect all the required field specs
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > specs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
-  // Specs passed in via setAuxiliaryFieldSpecs(), if any
-  specs->insert(specs->end(), auxiliaryFieldSpecs.begin(), auxiliaryFieldSpecs.end());
-  // Material model specs
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > materialModelSpecs = materialModel->VariableSpecs();
-  specs->insert(specs->end(), materialModelSpecs->begin(), materialModelSpecs->end());
-  // Damage model specs (if any)
+  // Collect all the required field Ids
+  std::vector<int> fieldIds;
+  // Ids passed in via setAuxiliaryFieldIds(), if any
+  fieldIds.insert(fieldIds.end(), auxiliaryFieldIds.begin(), auxiliaryFieldIds.end());
+  // Material model field Ids
+  std::vector<int> materialModelFieldIds = materialModel->FieldIds();
+  fieldIds.insert(fieldIds.end(), materialModelFieldIds.begin(), materialModelFieldIds.end());
+  // Damage model field Ids (if any)
   if(!damageModel.is_null()){
-    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > damageModelSpecs = damageModel->VariableSpecs();
-    specs->insert(specs->end(), damageModelSpecs->begin(), damageModelSpecs->end());
+    std::vector<int> damageModelFieldIds = damageModel->FieldIds();
+    fieldIds.insert(fieldIds.end(), damageModelFieldIds.begin(), damageModelFieldIds.end());
   }
-  // Contact model specs (if any)
+  // Contact model fieldIds (if any)
   if(!contactModel.is_null()){
-    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > contactModelSpecs = contactModel->VariableSpecs();
-    specs->insert(specs->end(), contactModelSpecs->begin(), contactModelSpecs->end());
+    std::vector<int> contactModelFieldIds = contactModel->FieldIds();
+    fieldIds.insert(fieldIds.end(), contactModelFieldIds.begin(), contactModelFieldIds.end());
   }
   
   dataManager = Teuchos::rcp(new PeridigmNS::DataManager);
@@ -405,39 +405,38 @@ void PeridigmNS::Block::initializeDataManager()
                        overlapVectorPointMap,
                        ownedScalarBondMap);
   
+  // remove duplicates
+  sort(fieldIds.begin(), fieldIds.end());
+  std::vector<int>::iterator newEnd = unique(fieldIds.begin(), fieldIds.end());
+  fieldIds.erase(newEnd, fieldIds.end());
+
   // Allocate data in the data manager
-  dataManager->allocateData(specs);
+  dataManager->allocateData(fieldIds);
 }
 
-void PeridigmNS::Block::initializeGlobalVariables()
+void PeridigmNS::Block::initializeGlobalData()
 {
-  // Pick out the global variable field specs
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > specs = Teuchos::rcp(new std::vector<Field_NS::FieldSpec>);
-  // Specs passed in via setAuxiliaryFieldSpecs(), if any
-  specs->insert(specs->end(), auxiliaryFieldSpecs.begin(), auxiliaryFieldSpecs.end());
-  // Material model specs
-  Teuchos::RCP< std::vector<Field_NS::FieldSpec> > materialModelSpecs = materialModel->VariableSpecs();
-  specs->insert(specs->end(), materialModelSpecs->begin(), materialModelSpecs->end());
-  // Contact model specs (if any)
-  if(!contactModel.is_null()){
-    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > contactModelSpecs = contactModel->VariableSpecs();
-    specs->insert(specs->end(), contactModelSpecs->begin(), contactModelSpecs->end());
-  }
+  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  std::vector<PeridigmNS::FieldSpec> globalFieldSpecs = fieldManager.getGlobalFieldSpecs();
+  int fieldId = -1;
 
-  for(std::vector<Field_NS::FieldSpec>::iterator it=specs->begin() ; it!=specs->end() ; ++it) {
-    if (it->getRelation() == Field_ENUM::GLOBAL) {
-      if (it->getLength() == Field_ENUM::SCALAR) {
-        globalVariables[it->getLabel()] = 0.0;
-      }
-      else if (it->getLength() == Field_ENUM::VECTOR3D) {
-        string tmpnameX = it->getLabel()+"X";
-        string tmpnameY = it->getLabel()+"Y";
-        string tmpnameZ = it->getLabel()+"Z";
-        globalVariables[tmpnameX] = 0.0;
-        globalVariables[tmpnameY] = 0.0;
-        globalVariables[tmpnameZ] = 0.0;
-      }
+  for(std::vector<PeridigmNS::FieldSpec>::iterator it = globalFieldSpecs.begin() ; it != globalFieldSpecs.end() ; it++){
+
+    if (it->getLength() == PeridigmField::SCALAR) {
+      fieldId = fieldManager.getFieldId(it->getLabel());
+      globalData[fieldId] = 0.0;
     }
-  }
+    else if (it->getLength() == PeridigmField::VECTOR) {
+      fieldId = fieldManager.getFieldId(it->getLabel() + "X");
+      globalData[fieldId] = 0.0;
+      fieldId = fieldManager.getFieldId(it->getLabel() + "Y");
+      globalData[fieldId] = 0.0;
+      fieldId = fieldManager.getFieldId(it->getLabel() + "Z");
+      globalData[fieldId] = 0.0;
+    }
+    else{
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n**** Invalid global field spec, only SCALAR and VECTOR data are allowed.");
+    }
 
+  }
 }

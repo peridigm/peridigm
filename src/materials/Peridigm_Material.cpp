@@ -143,9 +143,9 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
                             tempThreeDimensionalMap,
                             tempBondMap);
 
-    // The temporary data manager will have the same field specs and data as the real data manager.
-    Teuchos::RCP< std::vector<Field_NS::FieldSpec> > fieldSpecs = dataManager.getFieldSpecs();
-    tempDataManager.allocateData(fieldSpecs);
+    // The temporary data manager will have the same fields and data as the real data manager.
+    vector<int> fieldIds = dataManager.getFieldIds();
+    tempDataManager.allocateData(fieldIds);
     tempDataManager.copyLocallyOwnedDataFromDataManager(dataManager);
 
     // Set up numOwnedPoints and ownedIDs.
