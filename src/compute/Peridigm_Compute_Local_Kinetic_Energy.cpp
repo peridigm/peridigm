@@ -50,8 +50,9 @@
 #include "Peridigm_Compute_Local_Kinetic_Energy.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Local_Kinetic_Energy::Compute_Local_Kinetic_Energy(Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute_Kinetic_Energy(epetraComm_)
+PeridigmNS::Compute_Local_Kinetic_Energy::Compute_Local_Kinetic_Energy(Teuchos::RCP<const Teuchos::ParameterList> params,
+                                                                       Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute_Kinetic_Energy(params, epetraComm_)
 {}
 
 //! Destructor.

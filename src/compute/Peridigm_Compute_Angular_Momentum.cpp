@@ -51,8 +51,9 @@
 #include "Peridigm_Field.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Angular_Momentum::Compute_Angular_Momentum(Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute(epetraComm_), m_volumeFieldId(-1), m_coordinatesFieldId(-1), m_velocityFieldId(-1),
+PeridigmNS::Compute_Angular_Momentum::Compute_Angular_Momentum(Teuchos::RCP<const Teuchos::ParameterList> params,
+                                                               Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute(params, epetraComm_), m_volumeFieldId(-1), m_coordinatesFieldId(-1), m_velocityFieldId(-1),
     m_angularMomentumFieldId(-1), m_globalAngularMomentumFieldId(-1)
 {
   FieldManager& fieldManager = FieldManager::self();

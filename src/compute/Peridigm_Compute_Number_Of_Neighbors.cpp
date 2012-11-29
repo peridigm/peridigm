@@ -50,8 +50,9 @@
 #include "Peridigm_Compute_Number_Of_Neighbors.hpp"
 #include "Peridigm_Field.hpp"
 
-PeridigmNS::Compute_Number_Of_Neighbors::Compute_Number_Of_Neighbors(Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute(epetraComm_), m_partialVolumeFieldId(-1), m_numberOfNeighborsFieldId(-1)
+PeridigmNS::Compute_Number_Of_Neighbors::Compute_Number_Of_Neighbors(Teuchos::RCP<const Teuchos::ParameterList> params,
+                                                                     Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute(params, epetraComm_), m_partialVolumeFieldId(-1), m_numberOfNeighborsFieldId(-1)
 {
   FieldManager& fieldManager = FieldManager::self();
   m_numberOfNeighborsFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Number_Of_Neighbors");

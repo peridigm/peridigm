@@ -67,7 +67,8 @@ namespace PeridigmNS {
   public:
 	
     //! Standard constructor.
-    Compute_Local_Strain_Energy_Density( Teuchos::RCP<const Epetra_Comm> epetraComm_ );
+    Compute_Local_Strain_Energy_Density( Teuchos::RCP<const Teuchos::ParameterList> params,
+                                         Teuchos::RCP<const Epetra_Comm> epetraComm_ );
 
     //! Destructor.
     ~Compute_Local_Strain_Energy_Density();

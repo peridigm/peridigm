@@ -51,8 +51,9 @@
 #include "Peridigm_Field.hpp"
 #include <cmath>
 
-PeridigmNS::Compute_Radius::Compute_Radius(Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute(epetraComm_), m_volumeFieldId(-1), m_radiusFieldId(-1)
+PeridigmNS::Compute_Radius::Compute_Radius(Teuchos::RCP<const Teuchos::ParameterList> params,
+                                           Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute(params, epetraComm_), m_volumeFieldId(-1), m_radiusFieldId(-1)
 {
   FieldManager& fieldManager = FieldManager::self();
   m_volumeFieldId = fieldManager.getFieldId("Volume");

@@ -51,8 +51,9 @@
 #include "Peridigm_Field.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Linear_Momentum::Compute_Linear_Momentum(Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute(epetraComm_), m_volumeFieldId(-1), m_velocityFieldId(-1),
+PeridigmNS::Compute_Linear_Momentum::Compute_Linear_Momentum(Teuchos::RCP<const Teuchos::ParameterList> params,
+                                                             Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute(params, epetraComm_), m_volumeFieldId(-1), m_velocityFieldId(-1),
     m_linearMomentumFieldId(-1), m_globalLinearMomentumFieldId(-1)
 {
   FieldManager& fieldManager = FieldManager::self();
@@ -147,7 +148,7 @@ int PeridigmNS::Compute_Linear_Momentum::computeLinearMomentum( Teuchos::RCP< st
   }
 
 /*
-	if (epetraComm->MyPID() == 0)
+	if ((params, epetraComm)->MyPID() == 0)
 	{
 	std::cout << "Hello!" << std::endl;
 

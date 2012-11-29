@@ -144,7 +144,8 @@ void FourPointTest() {
   }
 
   // Create Compute_Force object
-  Teuchos::RCP<Compute_Force> computeForce = Teuchos::rcp(new Compute_Force( peridigm->getEpetraComm() ));
+  Teuchos::RCP<Teuchos::ParameterList> params;
+  Teuchos::RCP<Compute_Force> computeForce = Teuchos::rcp(new Compute_Force( params, peridigm->getEpetraComm() ));
 
   // Get the blocks
   Teuchos::RCP< std::vector<Block> > blocks = peridigm->getBlocks();

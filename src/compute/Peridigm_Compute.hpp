@@ -60,7 +60,9 @@ namespace PeridigmNS {
   public:
 	
     //! Constructor.
-    Compute(Teuchos::RCP<const Epetra_Comm> epetraComm_) : epetraComm(epetraComm_) {}
+    Compute( Teuchos::RCP<const Teuchos::ParameterList> params,
+             Teuchos::RCP<const Epetra_Comm> epetraComm_ )
+      : epetraComm(epetraComm_) {}
 
     //! Destructor.
     virtual ~Compute(){}

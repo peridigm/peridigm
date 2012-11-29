@@ -61,7 +61,7 @@ namespace PeridigmNS {
   public:
     
     //! Basic constructor.
-    ComputeManager( Teuchos::RCP<Teuchos::ParameterList>& params, Teuchos::RCP<const Epetra_Comm>& epetraComm );
+    ComputeManager( Teuchos::RCP<Teuchos::ParameterList> params, Teuchos::RCP<const Epetra_Comm> epetraComm );
     
     //! Return list of field specs that the compute manager is handling
     virtual std::vector<int> FieldIds() const;

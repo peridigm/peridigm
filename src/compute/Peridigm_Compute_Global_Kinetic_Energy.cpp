@@ -50,8 +50,9 @@
 #include "Peridigm_Compute_Global_Kinetic_Energy.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Global_Kinetic_Energy::Compute_Global_Kinetic_Energy(Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute_Kinetic_Energy(epetraComm_), m_globalKineticEnergyFieldId(-1)
+PeridigmNS::Compute_Global_Kinetic_Energy::Compute_Global_Kinetic_Energy(Teuchos::RCP<const Teuchos::ParameterList> params,
+                                                                         Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute_Kinetic_Energy(params, epetraComm_), m_globalKineticEnergyFieldId(-1)
 {}
 
 //! Destructor.
