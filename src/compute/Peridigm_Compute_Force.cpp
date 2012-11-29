@@ -51,8 +51,9 @@
 #include "Peridigm_Field.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Force::Compute_Force(Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute(epetraComm_), m_volumeFieldId(-1), m_forceDensityFieldId(-1), m_forceFieldId(-1)
+PeridigmNS::Compute_Force::Compute_Force(Teuchos::RCP<const Teuchos::ParameterList> params,
+                                         Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute(params, epetraComm_), m_volumeFieldId(-1), m_forceDensityFieldId(-1), m_forceFieldId(-1)
 {
   FieldManager& fieldManager = FieldManager::self();
   m_volumeFieldId = fieldManager.getFieldId("Volume");

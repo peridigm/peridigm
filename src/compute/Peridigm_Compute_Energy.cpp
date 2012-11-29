@@ -51,8 +51,9 @@
 #include "Peridigm_Field.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Energy::Compute_Energy(Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute(epetraComm_), m_volumeFieldId(-1), m_modelCoordinatesFieldId(-1), m_coordinatesFieldId(-1), m_velocityFieldId(-1),
+PeridigmNS::Compute_Energy::Compute_Energy(Teuchos::RCP<const Teuchos::ParameterList> params,
+                                           Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute(params, epetraComm_), m_volumeFieldId(-1), m_modelCoordinatesFieldId(-1), m_coordinatesFieldId(-1), m_velocityFieldId(-1),
     m_weightedVolumeFieldId(-1), m_dilatationFieldId(-1), m_globalKineticEnergyFieldId(-1), m_globalStrainEnergyDensityFieldId(-1), m_globalStrainEnergyFieldId(-1)
 {
   FieldManager& fieldManager = FieldManager::self();

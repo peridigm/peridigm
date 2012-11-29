@@ -64,7 +64,8 @@ namespace PeridigmNS {
   public:
 	
     //! Constructor.
-    Compute_Angular_Momentum(Teuchos::RCP<const Epetra_Comm> epetraComm_);
+    Compute_Angular_Momentum(Teuchos::RCP<const Teuchos::ParameterList> params,
+                             Teuchos::RCP<const Epetra_Comm> epetraComm_);
 
     //! Destructor.
     virtual ~Compute_Angular_Momentum();

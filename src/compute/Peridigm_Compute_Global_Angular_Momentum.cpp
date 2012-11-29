@@ -48,8 +48,9 @@
 #include "Peridigm_Compute_Global_Angular_Momentum.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Global_Angular_Momentum::Compute_Global_Angular_Momentum(Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute_Angular_Momentum(epetraComm_), m_globalAngularMomentumFieldId(-1)
+PeridigmNS::Compute_Global_Angular_Momentum::Compute_Global_Angular_Momentum(Teuchos::RCP<const Teuchos::ParameterList> params,
+                                                                             Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute_Angular_Momentum(params, epetraComm_), m_globalAngularMomentumFieldId(-1)
 {}
 
 //! Destructor.

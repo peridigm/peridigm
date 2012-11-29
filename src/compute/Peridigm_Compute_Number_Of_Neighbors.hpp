@@ -64,7 +64,8 @@ namespace PeridigmNS {
   public:
 	
     //! Standard constructor.
-    Compute_Number_Of_Neighbors( Teuchos::RCP<const Epetra_Comm> epetraComm_ );
+    Compute_Number_Of_Neighbors( Teuchos::RCP<const Teuchos::ParameterList> params,
+                                 Teuchos::RCP<const Epetra_Comm> epetraComm_ );
 
     //! Destructor.
     ~Compute_Number_Of_Neighbors();

@@ -50,8 +50,9 @@
 #include "Peridigm_Compute_Local_Angular_Momentum.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Local_Angular_Momentum::Compute_Local_Angular_Momentum(Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute_Angular_Momentum(epetraComm_)
+PeridigmNS::Compute_Local_Angular_Momentum::Compute_Local_Angular_Momentum(Teuchos::RCP<const Teuchos::ParameterList> params,
+                                                                           Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute_Angular_Momentum(params, epetraComm_)
 {}
 
 //! Destructor.

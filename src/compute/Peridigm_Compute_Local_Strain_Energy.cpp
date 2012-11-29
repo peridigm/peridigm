@@ -50,8 +50,9 @@
 #include "Peridigm_Compute_Local_Strain_Energy.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Local_Strain_Energy::Compute_Local_Strain_Energy(Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute_Strain_Energy(epetraComm_)
+PeridigmNS::Compute_Local_Strain_Energy::Compute_Local_Strain_Energy(Teuchos::RCP<const Teuchos::ParameterList> params,
+                                                                     Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute_Strain_Energy(params, epetraComm_)
 {}
 
 //! Destructor.

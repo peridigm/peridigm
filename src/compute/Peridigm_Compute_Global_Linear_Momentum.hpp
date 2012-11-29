@@ -67,7 +67,8 @@ namespace PeridigmNS {
   public:
 	
     //! Standard constructor.
-    Compute_Global_Linear_Momentum( Teuchos::RCP<const Epetra_Comm> epetraComm_ );
+    Compute_Global_Linear_Momentum( Teuchos::RCP<const Teuchos::ParameterList> params,
+                                    Teuchos::RCP<const Epetra_Comm> epetraComm_ );
 
     //! Destructor.
     ~Compute_Global_Linear_Momentum();

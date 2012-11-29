@@ -50,8 +50,9 @@
 #include "Peridigm_Compute_Global_Strain_Energy.hpp"
 
 //! Standard constructor.
-PeridigmNS::Compute_Global_Strain_Energy::Compute_Global_Strain_Energy(Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute_Strain_Energy(epetraComm_), m_globalStrainEnergyFieldId(-1)
+PeridigmNS::Compute_Global_Strain_Energy::Compute_Global_Strain_Energy(Teuchos::RCP<const Teuchos::ParameterList> params,
+                                                                       Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute_Strain_Energy(params, epetraComm_), m_globalStrainEnergyFieldId(-1)
 {}
 
 //! Destructor.

@@ -63,7 +63,8 @@ namespace PeridigmNS {
   public:
 	
     //! Standard constructor.
-    Compute_Acceleration(Teuchos::RCP<const Epetra_Comm> epetraComm_);
+    Compute_Acceleration(Teuchos::RCP<const Teuchos::ParameterList> params,
+                         Teuchos::RCP<const Epetra_Comm> epetraComm_);
     
     //! Destructor.
     ~Compute_Acceleration();
