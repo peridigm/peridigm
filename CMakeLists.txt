@@ -99,7 +99,15 @@ ELSE()
 ENDIF()
 
 IF(PERIDIGM_LCM)
-  include_directories (${LCM_INCLUDE_DIR} ${LCM_INCLUDE_DIR}/../ ${LCM_INCLUDE_DIR}/../problems)
+  include_directories (
+    ${LCM_INCLUDE_DIR}
+    ${LCM_INCLUDE_DIR}/stk
+    ${LCM_INCLUDE_DIR}/evaluators
+    ${LCM_INCLUDE_DIR}/problems
+    ${LCM_INCLUDE_DIR}/LCM/evaluators
+    ${LCM_INCLUDE_DIR}/LCM/problems
+    ${LCM_INCLUDE_DIR}/LCM/utils
+  )
   link_directories (${LCM_LIBRARY_DIR})
   set(LCM_LIBRARY albanyLib)
 ELSE()

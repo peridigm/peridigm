@@ -49,8 +49,30 @@
 #include "Peridigm_Field.hpp"
 #include <Teuchos_Assert.hpp>
 
-#ifdef LCM
-#include "evaluators/Neohookean.hpp"
+#ifdef PERIDIGM_LCM
+
+#include "Teuchos_GlobalMPISession.hpp"
+#include "Teuchos_CommandLineProcessor.hpp"
+#include "Teuchos_RCP.hpp"
+#include "Teuchos_ParameterList.hpp"
+#include "Teuchos_TestForException.hpp"
+//#include "QCAD_MaterialDatabase.hpp"
+#include "Phalanx.hpp"
+
+#include "PHAL_AlbanyTraits.hpp"
+#include "PHAL_SaveStateField.hpp"
+#include "Albany_Utils.hpp"
+#include "Albany_StateManager.hpp"
+#include "Albany_TmplSTKMeshStruct.hpp"
+#include "Albany_STKDiscretization.hpp"
+#include "Albany_Layouts.hpp"
+
+#include "LCM/evaluators/SetField.hpp"
+#include "LCM/evaluators/Neohookean.hpp"
+#include "LCM/evaluators/J2Stress.hpp"
+
+#include "Tensor.h"
+
 #endif
 
 using namespace std;
@@ -90,19 +112,55 @@ PeridigmNS::LCMMaterial::~LCMMaterial()
 
 void
 PeridigmNS::LCMMaterial::initialize(const double dt,
-                                        const int numOwnedPoints,
-                                        const int* ownedIDs,
-                                        const int* neighborhoodList,
-                                        PeridigmNS::DataManager& dataManager) const
+                                      const int numOwnedPoints,
+                                      const int* ownedIDs,
+                                      const int* neighborhoodList,
+                                      PeridigmNS::DataManager& dataManager) const
 {
+#ifdef PERIDIGM_LCM
+
+  typedef PHX::MDField<PHAL::AlbanyTraits::Residual::ScalarT>::size_type size_type;
+  typedef PHAL::AlbanyTraits::Residual Residual;
+  typedef PHAL::AlbanyTraits::Residual::ScalarT ScalarT;
+  typedef PHAL::AlbanyTraits Traits;
+
+  // Set up the data layout
+  const int worksetSize = 1;
+  const int numQPts = 1;
+  const int numDim = 3;
+  const int numVertices = 1;
+  const int numNodes = 1;
+  const Teuchos::RCP<Albany::Layouts> dl =
+    Teuchos::rcp(new Albany::Layouts(worksetSize,numVertices,numNodes,numQPts,numDim));
+
+  // Instantiate the required evaluators with EvalT = PHAL::AlbanyTraits::Residual and Traits = PHAL::AlbanyTraits
+
+  //---------------------------------------------------------------------------
+  // Deformation gradient
+  Teuchos::ArrayRCP<ScalarT> defgrad(9);
+  for (int i(0); i < 9; ++i)
+    defgrad[i]  = 0.0;
+  defgrad[0] = 1.0;
+  defgrad[4] = 1.0;
+  defgrad[8] = 1.0;
+  // SetField evaluator, which will be used to manually assign a value to the defgrad field
+  Teuchos::ParameterList setDefGradP("SetFieldDefGrad");
+  setDefGradP.set<string>("Evaluated Field Name", "F");
+  setDefGradP.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_tensor);
+  setDefGradP.set< Teuchos::ArrayRCP<ScalarT> >("Field Values", defgrad);
+  // Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldDefGrad =
+  //   Teuchos::rcp(new LCM::SetField<Residual, Traits>(setDefGradP));
+
+
+#endif
 }
 
 void
 PeridigmNS::LCMMaterial::computeForce(const double dt,
-                                          const int numOwnedPoints,
-                                          const int* ownedIDs,
-                                          const int* neighborhoodList,
-                                          PeridigmNS::DataManager& dataManager) const
+                                        const int numOwnedPoints,
+                                        const int* ownedIDs,
+                                        const int* neighborhoodList,
+                                        PeridigmNS::DataManager& dataManager) const
 {
   // Zero out the forces
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
