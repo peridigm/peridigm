@@ -210,9 +210,6 @@ PeridigmNS::ElasticMaterial::computeAutomaticDifferentiationJacobian(const doubl
 
     // The temporary data manager will have the same field specs and data as the real data manager.
     vector<int> fieldIds = dataManager.getFieldIds();
-
-    cout << "DEBUGGING fieldIds.size() " << fieldIds.size() << endl;
-
     tempDataManager.allocateData(fieldIds);
     tempDataManager.copyLocallyOwnedDataFromDataManager(dataManager);
 

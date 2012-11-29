@@ -51,6 +51,8 @@
 #include "Peridigm_ComputeManager.hpp"
 #include "compute/compute_includes.hpp"
 
+using namespace std;
+
 PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList> params, Teuchos::RCP<const Epetra_Comm> epetraComm ) {
 
   Teuchos::RCP<Compute> compute;
@@ -58,21 +60,47 @@ PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList>
   // No input to validate; no computes requested
   if (params == Teuchos::null) return;
 
-  Teuchos::RCP<Teuchos::ParameterList> outputVariables; 
-  // User-requested fields for output
-  if (params->isSublist("Output Variables"))
-    outputVariables = sublist(params, "Output Variables");
-  else 
-    // No input to validate; no computes requested
-    return;
+  vector< pair<string, Teuchos::RCP<Teuchos::ParameterList> > > computeClassesToBuild;
+  vector<string> alreadyBuilt;
 
-  for (Teuchos::ParameterList::ConstIterator it = outputVariables->begin(); it != outputVariables->end(); ++it) {
-    const std::string& name = it->first;
-    Teuchos::RCP<Teuchos::ParameterList> computeClassParameters;
+  // Create compute classes based on user-supplied compute class parameters
+  if (params->isSublist("Compute Class Parameters")) {
+    Teuchos::RCP<Teuchos::ParameterList> computeClassParameters = sublist(params, "Compute Class Parameters");
+    for (Teuchos::ParameterList::ConstIterator it = computeClassParameters->begin(); it != computeClassParameters->end(); ++it) {
+      string parameterListName = it->first;
+      Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcpFromRef( computeClassParameters->sublist(parameterListName) );
+      string name = params->get<string>("Compute Class");
+      pair<string, Teuchos::RCP<Teuchos::ParameterList> > nameAndParamsPair(name, params);
+      computeClassesToBuild.push_back(nameAndParamsPair);
+      alreadyBuilt.push_back(name);
+    }
+  }
+
+  // Create compute classes based on requested output variables
+  if (params->isSublist("Output Variables")) {
+    Teuchos::RCP<Teuchos::ParameterList> outputVariables = sublist(params, "Output Variables");
+    for (Teuchos::ParameterList::ConstIterator it = outputVariables->begin(); it != outputVariables->end(); ++it) {
+      const string& name = it->first;
+      // Add the class to the list only if it isn't already there
+      // Multiple instances of a compute class are allowed only in the case of user-supplied compute class parameters
+      if( find(alreadyBuilt.begin(), alreadyBuilt.end(), name) == alreadyBuilt.end() ){
+        Teuchos::RCP<Teuchos::ParameterList> nullRcp;
+        pair<string, Teuchos::RCP<Teuchos::ParameterList> > nameAndParamsPair(name, nullRcp);
+        computeClassesToBuild.push_back(nameAndParamsPair);
+        alreadyBuilt.push_back(name);
+      }
+    }
+  }
+
+  // Instantiate the compute classes
+  vector< pair<string, Teuchos::RCP<Teuchos::ParameterList> > >::iterator it;
+  for (it = computeClassesToBuild.begin() ; it != computeClassesToBuild.end() ; it++) {
+    string name = it->first;
+    Teuchos::RCP<Teuchos::ParameterList> params = it->second;
     #define COMPUTE_CLASS
       #define ComputeClass(key, Class) \
       if (name == #key) { \
-        compute = Teuchos::rcp( new PeridigmNS::Class(computeClassParameters, epetraComm) ); \
+        compute = Teuchos::rcp( new PeridigmNS::Class(params, epetraComm) ); \
         computeObjects.push_back( Teuchos::rcp_implicit_cast<Compute>(compute) ); \
       }
       #include "compute/compute_includes.hpp"
@@ -85,20 +113,20 @@ Teuchos::ParameterList PeridigmNS::ComputeManager::getValidParameterList() {
   return validParameterList;
 }
 
-std::vector<int> PeridigmNS::ComputeManager::FieldIds() const {
+vector<int> PeridigmNS::ComputeManager::FieldIds() const {
 
-  std::vector<int> myFieldIds;
+  vector<int> myFieldIds;
 
   // Loop over all compute objects, collect the field ids they compute
   for (unsigned int i=0; i < computeObjects.size(); i++) {
     Teuchos::RCP<const PeridigmNS::Compute> compute = computeObjects[i];
-    std::vector<int> computeFieldIds = compute->FieldIds();
+    vector<int> computeFieldIds = compute->FieldIds();
     myFieldIds.insert(myFieldIds.end(), computeFieldIds.begin(), computeFieldIds.end());
   }
 
   // remove duplicates
-  std::sort(myFieldIds.begin(), myFieldIds.end());
-  std::vector<int>::iterator newEnd = std::unique(myFieldIds.begin(), myFieldIds.end());
+  sort(myFieldIds.begin(), myFieldIds.end());
+  vector<int>::iterator newEnd = unique(myFieldIds.begin(), myFieldIds.end());
   myFieldIds.erase(newEnd, myFieldIds.end());
 
   return myFieldIds;
@@ -107,7 +135,7 @@ std::vector<int> PeridigmNS::ComputeManager::FieldIds() const {
 PeridigmNS::ComputeManager::~ComputeManager() {
 }
 
-void PeridigmNS::ComputeManager::initialize(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks) {
+void PeridigmNS::ComputeManager::initialize(Teuchos::RCP< vector<PeridigmNS::Block> > blocks) {
 
   // \todo Identify what the desired behavior is for compute classes and multiple blocks!
   //       Calling initialize on each block individually may not make sense.
@@ -118,7 +146,7 @@ void PeridigmNS::ComputeManager::initialize(Teuchos::RCP< std::vector<PeridigmNS
 
 }
 
-void PeridigmNS::ComputeManager::compute(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks) {
+void PeridigmNS::ComputeManager::compute(Teuchos::RCP< vector<PeridigmNS::Block> > blocks) {
 
   // \todo Identify what the desired behavior is for compute classes and multiple blocks!
 
