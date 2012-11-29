@@ -506,8 +506,12 @@ void PeridigmNS::Peridigm::initializeWorkset() {
 
 void PeridigmNS::Peridigm::instantiateComputeManager() {
 
-  Teuchos::RCP<Teuchos::ParameterList> computeParams = Teuchos::rcp( new Teuchos::ParameterList("Output") );
+  Teuchos::RCP<Teuchos::ParameterList> computeParams = Teuchos::rcp( new Teuchos::ParameterList("Compute Manager") );
   Teuchos::ParameterList& outputVariables  = computeParams->sublist("Output Variables");
+
+  // If the user has provided a "Compute Class Parameters" ParameterList, add it to computeParams
+  if(peridigmParams->isSublist("Compute Class Parameters"))
+    computeParams->sublist("Compute Class Parameters") = peridigmParams->sublist("Compute Class Parameters");
 
   // Loop over high level parameter list entries to find all output lists
   for (Teuchos::ParameterList::ConstIterator it = peridigmParams->begin(); it != peridigmParams->end(); ++it) {
