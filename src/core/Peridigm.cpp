@@ -160,6 +160,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
      instantiateDamageModels();
 
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  elementIdFieldId                   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Element_Id");
   blockIdFieldId                     = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Block_Id");
   volumeFieldId                      = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Volume");
   modelCoordinatesFieldId            = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::CONSTANT, "Model_Coordinates");
@@ -174,7 +175,6 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
     partialVolumeFieldId             = fieldManager.getFieldId(PeridigmField::BOND,    PeridigmField::SCALAR, PeridigmField::CONSTANT, "Partial_Volume");
 
   // Create field ids that may be required for output
-  fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Element_Id");
   fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Proc_Num");
 
   if(analysisHasPartialVolumes)
@@ -260,6 +260,11 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
                         blockIDs,
                         globalNeighborhoodData);
 
+  // Create a temporary vector for storing the global element ids
+  Epetra_Vector elementIds(*(peridigmDisc->getCellVolume()));
+  for(int i=0 ; i<elementIds.MyLength() ; ++i)
+    elementIds[i] = elementIds.Map().GID(i);
+
   // Load initial data into the blocks
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
     blockIt->importData(*(peridigmDisc->getBlockID()),    blockIdFieldId,          PeridigmField::STEP_NONE, Insert);
@@ -267,6 +272,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
     blockIt->importData(*(peridigmDisc->getInitialX()),   modelCoordinatesFieldId, PeridigmField::STEP_NONE, Insert);
     blockIt->importData(*(peridigmDisc->getInitialX()),   coordinatesFieldId,      PeridigmField::STEP_N,    Insert);
     blockIt->importData(*(peridigmDisc->getInitialX()),   coordinatesFieldId,      PeridigmField::STEP_NP1,  Insert);
+    blockIt->importData(elementIds,                       elementIdFieldId,        PeridigmField::STEP_NONE, Insert);
   }
 
   // Set the density in the mothership vector
@@ -542,7 +548,6 @@ void PeridigmNS::Peridigm::instantiateComputeManager() {
   }
 
   computeManager = Teuchos::rcp( new PeridigmNS::ComputeManager( computeParams, peridigmComm  ) );
-
 }
 
 void PeridigmNS::Peridigm::initializeBlocks(Teuchos::RCP<AbstractDiscretization> disc) {
