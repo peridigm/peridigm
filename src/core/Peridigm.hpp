@@ -411,6 +411,7 @@ namespace PeridigmNS {
     Epetra_BLAS blas;
 
     // field ids for all relevant data
+    int elementIdFieldId;
     int blockIdFieldId;
     int volumeFieldId;
     int modelCoordinatesFieldId;

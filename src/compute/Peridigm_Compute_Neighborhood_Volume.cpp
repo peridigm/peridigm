@@ -65,7 +65,7 @@ PeridigmNS::Compute_Neighborhood_Volume::Compute_Neighborhood_Volume(Teuchos::RC
 
 PeridigmNS::Compute_Neighborhood_Volume::~Compute_Neighborhood_Volume(){}
 
-void PeridigmNS::Compute_Neighborhood_Volume::initialize( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) const {
+void PeridigmNS::Compute_Neighborhood_Volume::initialize( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) {
 
   std::vector<Block>::iterator blockIt;
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){

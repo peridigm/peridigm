@@ -1,4 +1,4 @@
-/*! \file Peridigm_Compute_Radius.hpp */
+/*! \file Peridigm_Compute_Nearest_Point_Data.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -47,46 +47,63 @@
 
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Radius,Compute_Radius)
+ComputeClass(Nearest_Point_Data,Compute_Nearest_Point_Data)
 
 #else
 
-#ifndef PERIDIGM_COMPUTE_RADIUS_HPP
-#define PERIDIGM_COMPUTE_RADIUS_HPP
+#ifndef PERIDIGM_COMPUTE_NEAREST_POINT_DATA_HPP
+#define PERIDIGM_COMPUTE_NEAREST_POINT_DATA_HPP
 
 #include "Peridigm_Compute.hpp"
 
 namespace PeridigmNS {
 
-  //! Class for filling acceleration vector
-  class Compute_Radius : public PeridigmNS::Compute {
+  //! Class for tracking the data at a specified point in space
+  class Compute_Nearest_Point_Data : public PeridigmNS::Compute {
 
   public:
 	
     //! Standard constructor.
-    Compute_Radius( Teuchos::RCP<const Teuchos::ParameterList> params,
-                    Teuchos::RCP<const Epetra_Comm> epetraComm_ );
+    Compute_Nearest_Point_Data( Teuchos::RCP<const Teuchos::ParameterList> params,
+                                Teuchos::RCP<const Epetra_Comm> epetraComm_ );
 
     //! Destructor.
-    ~Compute_Radius();
-    
+    ~Compute_Nearest_Point_Data();
+
     //! Returns a vector of field IDs corresponding to the variables associated with the compute class.
     virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
     //! Initialize the compute class
-    virtual void initialize( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  );
+    virtual void initialize( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks );
 
     //! Perform computation
-    int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
+    virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) const;
 
   private:
 
-    // field ids for all relevant data
+    //! Position where data is to be tracked
+    double m_positionX;
+    double m_positionY;
+    double m_positionZ;
+    double m_elementId;
+
+    //! Name of variable to be tracked
+    std::string m_variable;
+
+    //! Label for output variable
+    std::string m_outputLabel;
+
+    //! Verbosity flag
+    bool m_verbose;
+
+    //! Field ids for all relevant data
     std::vector<int> m_fieldIds;
-    int m_volumeFieldId;
-    int m_radiusFieldId;
+    int m_elementIdFieldId;
+    int m_modelCoordinatesFieldId;
+    int m_variableFieldId;
+    int m_outputFieldId;
   };
 }
 
-#endif // PERIDIGM_COMPUTE_RADIUS_HPP
+#endif // PERIDIGM_COMPUTE_NEAREST_POINT_DATA_HPP
 #endif // COMPUTE_CLASS

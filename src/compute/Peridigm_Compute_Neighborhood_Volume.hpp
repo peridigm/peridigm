@@ -74,7 +74,7 @@ namespace PeridigmNS {
     virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
     //! Initialize the compute class
-    void initialize( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
+    void initialize( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  );
 
     //! Perform computation
     int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;

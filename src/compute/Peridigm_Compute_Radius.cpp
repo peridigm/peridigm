@@ -64,7 +64,7 @@ PeridigmNS::Compute_Radius::Compute_Radius(Teuchos::RCP<const Teuchos::Parameter
 
 PeridigmNS::Compute_Radius::~Compute_Radius(){}
 
-int PeridigmNS::Compute_Radius::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) const {
+void PeridigmNS::Compute_Radius::initialize( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) {
 
   Teuchos::RCP<Epetra_Vector> force, acceleration;
   std::vector<Block>::iterator blockIt;
@@ -82,6 +82,8 @@ int PeridigmNS::Compute_Radius::compute( Teuchos::RCP< std::vector<PeridigmNS::B
     for(int iID=0 ; iID<numOwnedPoints ; ++iID)
       radius[iID] = pow(constant*volume[iID], oneThird);
   }
+}
 
+int PeridigmNS::Compute_Radius::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) const {
   return(0);
 }

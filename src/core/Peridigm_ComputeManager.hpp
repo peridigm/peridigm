@@ -87,7 +87,7 @@ namespace PeridigmNS {
     Teuchos::ParameterList getValidParameterList();
     
     //! Individual compute objects
-    std::vector< Teuchos::RCP<const PeridigmNS::Compute> > computeObjects;
+    std::vector< Teuchos::RCP<PeridigmNS::Compute> > computeObjects;
   };  
 }
  
