@@ -85,10 +85,13 @@ namespace PeridigmNS {
     double m_positionX;
     double m_positionY;
     double m_positionZ;
-    double m_elementId;
 
     //! Name of variable to be tracked
     std::string m_variable;
+    int m_variableLength;
+    bool m_variableIsStated;
+    int m_elementId;
+    int m_blockId;
 
     //! Label for output variable
     std::string m_outputLabel;

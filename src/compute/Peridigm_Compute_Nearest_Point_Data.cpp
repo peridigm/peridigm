@@ -55,8 +55,8 @@ using namespace std;
 //! Standard constructor.
 PeridigmNS::Compute_Nearest_Point_Data::Compute_Nearest_Point_Data(Teuchos::RCP<const Teuchos::ParameterList> params,
                                                                    Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute(params, epetraComm_), m_verbose(false), m_elementIdFieldId(-1), m_modelCoordinatesFieldId(-1),
-    m_variableFieldId(-1), m_outputFieldId(-1)
+  : Compute(params, epetraComm_), m_elementId(-1.0), m_blockId(-1), m_verbose(false), m_elementIdFieldId(-1),
+    m_modelCoordinatesFieldId(-1), m_variableFieldId(-1), m_outputFieldId(-1)
 {
   m_positionX = params->get<double>("X");
   m_positionY = params->get<double>("Y");
@@ -76,6 +76,19 @@ PeridigmNS::Compute_Nearest_Point_Data::Compute_Nearest_Point_Data(Teuchos::RCP<
   m_fieldIds.push_back(m_modelCoordinatesFieldId);
   m_fieldIds.push_back(m_variableFieldId);
   m_fieldIds.push_back(m_outputFieldId);
+
+  PeridigmField::Length length = fieldManager.getFieldSpec(m_variableFieldId).getLength();
+  if(length == PeridigmField::SCALAR)
+    m_variableLength = 1;
+  else if(length == PeridigmField::VECTOR)
+    m_variableLength = 3;
+  else
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error:  Nearest_Point_Data compute class can be called only for SCALAR or VECTOR data.\n");
+
+  PeridigmField::Temporal temporal = fieldManager.getFieldSpec(m_variableFieldId).getTemporal();
+  m_variableIsStated = false;
+  if(temporal == PeridigmField::TWO_STEP)
+    m_variableIsStated = true;
 }
 
 //! Destructor.
@@ -85,69 +98,127 @@ void PeridigmNS::Compute_Nearest_Point_Data::initialize( Teuchos::RCP< std::vect
 
   // Find the node that is closest to the specified location
   double minDistanceSquared = DBL_MAX;
-  double actualX, actualY, actualZ;
+  m_elementId = INT_MAX;
+
+  // Keep track of any ties that are found
+  bool foundTies(false);
 
   for(std::vector<Block>::iterator blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-
-    Teuchos::RCP<NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
-    const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
 
     double *x, *id;
     blockIt->getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
     blockIt->getData(m_elementIdFieldId, PeridigmField::STEP_NONE)->ExtractView(&id);
 
     double distanceSquared;
+    int numOwnedPoints = blockIt->getNeighborhoodData()->NumOwnedPoints();
+
     for(int iID=0 ; iID<numOwnedPoints ; ++iID){
       distanceSquared = (x[3*iID] - m_positionX)*(x[3*iID] - m_positionX) 
         + (x[3*iID+1] - m_positionY)*(x[3*iID+1] - m_positionY) 
         + (x[3*iID+2] - m_positionZ)*(x[3*iID+2] - m_positionZ);
-      if(distanceSquared < minDistanceSquared){
-        m_elementId = id[iID];
-        actualX = x[3*iID];
-        actualY = x[3*iID+1];
-        actualZ = x[3*iID+2];
-        minDistanceSquared = distanceSquared;
+      if(distanceSquared <= minDistanceSquared){
+        int globalId = static_cast<int>(id[iID]);
+        // If there are ties, choose the element with the lowest global id.
+        if(distanceSquared == minDistanceSquared)
+          foundTies = true;
+        else
+          foundTies = false;
+        if(distanceSquared < minDistanceSquared || globalId < m_elementId){
+          m_elementId = globalId;
+          minDistanceSquared = distanceSquared;
+        }
       }
     }
   }
 
-  // \todo Parallelize.
-//   // reduction operation for parallel computations
+  // Parallel communication to find closest point across all processors.
+  vector<double> localMinDistanceSquared(1), globalMinDistanceSquared(1);
+  localMinDistanceSquared[0] = minDistanceSquared;
+  epetraComm()->MinAll(&localMinDistanceSquared[0], &globalMinDistanceSquared[0], 1);
+  if(minDistanceSquared != globalMinDistanceSquared[0])
+    m_elementId = INT_MAX;
 
-//   vector<int> localIntValues(2), globalIntValues(2);
-//   vector<double> localDoubleValues(4), globalDoubleValues(4);
+  // If there are ties, choose the element with the lowest global id.
+  vector<int> localData(1), globalData(1);
+  localData[0] = m_elementId;
+  epetraComm()->MinAll(&localData[0], &globalData[0], 1);
+  m_elementId = globalData[0];
+  epetraComm()->SumAll(&localData[0], &globalData[0], 1);
+  if(globalData[0] != m_elementId)
+    foundTies = true;
 
-//   localIntValues[0] = countTop;
-//   localIntValues[1] = countBottom;
-//   localDoubleValues[0] = displacementTop;
-//   localDoubleValues[1] = forceTop;
-//   localDoubleValues[2] = displacementBottom;
-//   localDoubleValues[3] = forceBottom;
+  // To make tracking more efficient, determine which block has the element.
+  localData[0] = 0;
+  for(std::vector<Block>::iterator blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    if(blockIt->getOwnedScalarPointMap()->LID(m_elementId) != -1)
+      localData[0] = blockIt->getID();
+  }
+  epetraComm()->SumAll(&localData[0], &globalData[0], 1);
+  m_blockId = globalData[0];
 
-//   epetraComm()->SumAll(&localIntValues[0], &globalIntValues[0], 2);
-//   epetraComm()->SumAll(&localDoubleValues[0], &globalDoubleValues[0], 4);
+  // If ties were found, print a warning
+  localData[0] = static_cast<int>(foundTies);
+  epetraComm()->SumAll(&localData[0], &globalData[0], 1);
+  if(globalData[0] > 0 && epetraComm->MyPID() == 0){
+    cout << "**** Warning:  The Nearest_Neighbor_Data compute class found multiple nearest neighbors." << endl;
+    cout << "****           The element with the smallest global ID will be selected for tracking.\n" << endl;
+  }
 
-//   countTop = globalIntValues[0];
-//   countBottom = globalIntValues[0];
-//   displacementTop = globalDoubleValues[0];
-//   forceTop = globalDoubleValues[1];
-//   displacementBottom = globalDoubleValues[2];
-//   forceBottom = globalDoubleValues[3];
+  // If verbose flag is set, write output to screen
+  if(m_verbose){
+    
+    // Find the coordinates of the element that will be tracked
+    vector<double> localValues(3), globalValues(3);
+    for(int i=0 ; i<3 ; ++i)
+      localValues[0] = 0.0;
+    for(std::vector<Block>::iterator blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+      int localId = blockIt->getOwnedScalarPointMap()->LID(m_elementId);
+      if(localId != -1){
+        Teuchos::RCP<Epetra_Vector> modelCoordinates = blockIt->getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE);
+        localValues[0] = (*modelCoordinates)[3*localId];
+        localValues[1] = (*modelCoordinates)[3*localId+1];
+        localValues[2] = (*modelCoordinates)[3*localId+2];
+      }
+    }
+    epetraComm()->SumAll(&localValues[0], &globalValues[0], 3);
 
-  if(m_verbose && epetraComm->MyPID() == 0){
-    stringstream ss;
-    ss << "Nearest Point Data Compute Class:" << endl;
-    ss << "  Requested variable: " << m_variable << endl;
-    ss << "  Requested location: " << m_positionX << ", " << m_positionY << ", " << m_positionZ << endl;
-    ss << "  Closest Element Id: " << m_elementId << endl;
-    ss << "  Closest Element Position: " << actualX << ", " << actualY << ", " << actualZ << endl;
-    cout << ss.str() << endl;
+    // Write to the root processor
+    if(epetraComm->MyPID() == 0){
+      stringstream ss;
+      ss << "Nearest Point Data Compute Class:" << endl;
+      ss << "  Requested variable: " << m_variable << endl;
+      ss << "  Requested location: " << m_positionX << ", " << m_positionY << ", " << m_positionZ << endl;
+      ss << "  Closest Element Id: " << m_elementId << endl;
+      ss << "  Closest Element Position: " << globalValues[0] << ", " << globalValues[1] << ", " << globalValues[2] << endl;
+      cout << ss.str() << endl;
+    }
   }
 }
 
 int PeridigmNS::Compute_Nearest_Point_Data::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) const {
 
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "Error:  The Nearest_Point_Data compute class is a work in progress.\n");
+  PeridigmField::Step step = PeridigmField::STEP_NONE;
+  if(m_variableIsStated)
+    step = PeridigmField::STEP_NP1;
+  
+  vector<double> localData(1);
+  localData[0] = 0.0;
+
+  for(std::vector<Block>::iterator blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    if(blockIt->getID() == m_blockId){
+      int localId = blockIt->getOwnedScalarPointMap()->LID(m_elementId);
+      if(localId != -1){
+        Teuchos::RCP<Epetra_Vector> data = blockIt->getData(m_variableFieldId, step);
+        localData[0] = (*data)[m_variableLength*localId];
+      }
+    }
+  }
+
+  vector<double> globalData(1);
+  epetraComm()->SumAll(&localData[0], &globalData[0], 1);
+
+  double& outputData = blocks->begin()->getGlobalData(m_outputFieldId);
+  outputData = globalData[0];
 
   return 0;
 }
