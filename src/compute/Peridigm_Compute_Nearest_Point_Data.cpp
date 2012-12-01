@@ -56,7 +56,8 @@ using namespace std;
 PeridigmNS::Compute_Nearest_Point_Data::Compute_Nearest_Point_Data(Teuchos::RCP<const Teuchos::ParameterList> params,
                                                                    Teuchos::RCP<const Epetra_Comm> epetraComm_)
   : Compute(params, epetraComm_), m_elementId(-1.0), m_blockId(-1), m_verbose(false), m_elementIdFieldId(-1),
-    m_modelCoordinatesFieldId(-1), m_variableFieldId(-1), m_outputFieldId(-1)
+    m_modelCoordinatesFieldId(-1), m_variableFieldId(-1), m_outputFieldId(-1), m_outputXFieldId(-1),
+    m_outputYFieldId(-1), m_outputZFieldId(-1)
 {
   m_positionX = params->get<double>("X");
   m_positionY = params->get<double>("Y");
@@ -71,11 +72,9 @@ PeridigmNS::Compute_Nearest_Point_Data::Compute_Nearest_Point_Data(Teuchos::RCP<
   m_elementIdFieldId = fieldManager.getFieldId("Element_Id");
   m_modelCoordinatesFieldId = fieldManager.getFieldId("Model_Coordinates");
   m_variableFieldId = fieldManager.getFieldId(m_variable);
-  m_outputFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, m_outputLabel);
   m_fieldIds.push_back(m_elementIdFieldId);
   m_fieldIds.push_back(m_modelCoordinatesFieldId);
   m_fieldIds.push_back(m_variableFieldId);
-  m_fieldIds.push_back(m_outputFieldId);
 
   PeridigmField::Length length = fieldManager.getFieldSpec(m_variableFieldId).getLength();
   if(length == PeridigmField::SCALAR)
@@ -84,6 +83,19 @@ PeridigmNS::Compute_Nearest_Point_Data::Compute_Nearest_Point_Data(Teuchos::RCP<
     m_variableLength = 3;
   else
     TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error:  Nearest_Point_Data compute class can be called only for SCALAR or VECTOR data.\n");
+
+  if(m_variableLength == 1){
+    m_outputFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, m_outputLabel);
+    m_fieldIds.push_back(m_outputFieldId);
+  }
+  else if(m_variableLength == 3){
+    m_outputXFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, m_outputLabel+"_X");
+    m_outputYFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, m_outputLabel+"_Y");
+    m_outputZFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, m_outputLabel+"_Z");
+    m_fieldIds.push_back(m_outputXFieldId);
+    m_fieldIds.push_back(m_outputYFieldId);
+    m_fieldIds.push_back(m_outputZFieldId);
+  }
 
   PeridigmField::Temporal temporal = fieldManager.getFieldSpec(m_variableFieldId).getTemporal();
   m_variableIsStated = false;
@@ -143,8 +155,7 @@ void PeridigmNS::Compute_Nearest_Point_Data::initialize( Teuchos::RCP< std::vect
   localData[0] = m_elementId;
   epetraComm()->MinAll(&localData[0], &globalData[0], 1);
   m_elementId = globalData[0];
-  epetraComm()->SumAll(&localData[0], &globalData[0], 1);
-  if(globalData[0] != m_elementId)
+  if(localData[0] != INT_MAX && localData[0] != m_elementId)
     foundTies = true;
 
   // To make tracking more efficient, determine which block has the element.
@@ -201,7 +212,7 @@ int PeridigmNS::Compute_Nearest_Point_Data::compute( Teuchos::RCP< std::vector<P
   if(m_variableIsStated)
     step = PeridigmField::STEP_NP1;
   
-  vector<double> localData(1);
+  vector<double> localData(3), globalData(3);
   localData[0] = 0.0;
 
   for(std::vector<Block>::iterator blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
@@ -209,16 +220,32 @@ int PeridigmNS::Compute_Nearest_Point_Data::compute( Teuchos::RCP< std::vector<P
       int localId = blockIt->getOwnedScalarPointMap()->LID(m_elementId);
       if(localId != -1){
         Teuchos::RCP<Epetra_Vector> data = blockIt->getData(m_variableFieldId, step);
-        localData[0] = (*data)[m_variableLength*localId];
+        if(m_variableLength == 1){
+          localData[0] = (*data)[localId];
+        }
+        else if(m_variableLength == 3){
+          localData[0] = (*data)[3*localId];
+          localData[1] = (*data)[3*localId+1];
+          localData[2] = (*data)[3*localId+2];
+        }
       }
     }
   }
 
-  vector<double> globalData(1);
-  epetraComm()->SumAll(&localData[0], &globalData[0], 1);
-
-  double& outputData = blocks->begin()->getGlobalData(m_outputFieldId);
-  outputData = globalData[0];
+  if(m_variableLength == 1){
+    epetraComm()->SumAll(&localData[0], &globalData[0], 1);
+    double& outputData = blocks->begin()->getGlobalData(m_outputFieldId);
+    outputData = globalData[0];
+  }
+  else if(m_variableLength == 3){
+    epetraComm()->SumAll(&localData[0], &globalData[0], 3);
+    double& outputDataX = blocks->begin()->getGlobalData(m_outputXFieldId);
+    outputDataX = globalData[0];
+    double& outputDataY = blocks->begin()->getGlobalData(m_outputYFieldId);
+    outputDataY = globalData[1];
+    double& outputDataZ = blocks->begin()->getGlobalData(m_outputZFieldId);
+    outputDataZ = globalData[2];
+  }
 
   return 0;
 }
