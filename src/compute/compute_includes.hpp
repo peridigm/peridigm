@@ -21,4 +21,5 @@
 #include "./compute/Peridigm_Compute_Number_Of_Neighbors.hpp"
 #include "./compute/Peridigm_Compute_Neighborhood_Volume.hpp"
 #include "./compute/Peridigm_Compute_Nearest_Point_Data.hpp"
+#include "./compute/Peridigm_Compute_Block_Data.hpp"
 #include "./compute/Peridigm_Compute.hpp"

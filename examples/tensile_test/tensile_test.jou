@@ -9,25 +9,22 @@
 #  decomp -p 2 tensile_test.g
 #
 
-#{Units("si")}
+#{Units("cgs")}
 
-#{TOL1=0~in}
-#{TOL3=0~in}
-#{TOL5=0~in}
-#{TOL10=0~in}
+#{HOLE_RADIUS=0.125~in}
+#{HOLE_CENTER=0.28~in}
+#{GRIP_WIDTH=0.5~in}
+#{GRIP_RADIUS=0.25~in}
+#{LENGTH=4.00~in}
+#{GAUGE_WIDTH=0.25~in}
+#{GAUGE_LENGTH=1.5~in}
+#{THICKNESS=0.124~in}
+#{SLOT_CENTER=0.2425~in}
+#{SLOT_RADIUS=0.0625~in}
 
-#{HOLE_RADIUS=0.125~in + TOL3}
-#{HOLE_CENTER=0.28~in + TOL3}
-#{GRIP_WIDTH=0.5~in + TOL5}
-#{GRIP_RADIUS=0.25~in + TOL10}
-#{LENGTH=4.00~in + TOL5}
-#{GAUGE_WIDTH=0.25~in + TOL1}
-#{GAUGE_LENGTH=1.5~in + TOL3}
-#{THICKNESS=0.124~in + TOL1}
-#{SLOT_CENTER=0.2425~in + TOL3}
-#{SLOT_RADIUS=0.0625~in + TOL3}
-
-#{NUM_ELEM_THROUGH_THICKNESS=2}
+#{NUM_ELEM_THROUGH_THICKNESS=3}
+#{ELEMENT_SIZE=THICKNESS/NUM_ELEM_THROUGH_THICKNESS}
+#{HORIZON=3.0*ELEMENT_SIZE}
 
 #Build geometry
 create vertex 0 0 {THICKNESS/2}
@@ -43,14 +40,13 @@ delete vertex 5
 
 create vertex {GAUGE_WIDTH/2 + GRIP_RADIUS} {-LENGTH/2} {THICKNESS/2}
 create vertex 0 {-LENGTH/2} {THICKNESS/2}
-create vertex 0 {-LENGTH/2} {THICKNESS/2}
 create curve vertex 6 vertex 8
 create curve vertex 8 vertex 9
-create curve vertex 10 vertex 1
+create curve vertex 9 vertex 1
 
 create surface curve all
 
-sweep surface all vector 0 0 1 distance {THICKNESS}
+sweep surface all vector 0 0 -1 distance {THICKNESS}
 volume all copy reflect x
 volume all copy reflect y
 unite volume all
@@ -61,10 +57,10 @@ webcut volume 1 with plane xplane offset {-GRIP_WIDTH/2} noimprint nomerge
 
 delete volume 2 to 5
 
-volume 1 size {THICKNESS/NUM_ELEM_THROUGH_THICKNESS}
+volume 1 size {ELEMENT_SIZE}
 
-webcut volume 1 with plane yplane offset {-LENGTH/2 + 3*THICKNESS/NUM_ELEM_THROUGH_THICKNESS} noimprint nomerge 
-webcut volume 6 with plane yplane offset {LENGTH/2 - 3*THICKNESS/NUM_ELEM_THROUGH_THICKNESS} noimprint nomerge 
+webcut volume 1 with plane yplane offset {-LENGTH/2 + HORIZON} noimprint nomerge 
+webcut volume 6 with plane yplane offset {LENGTH/2 - HORIZON} noimprint nomerge 
 
 mesh volume all
 
@@ -73,6 +69,8 @@ nodeset 2 volume 7
 nodeset 3 curve 72
 nodeset 4 curve 80
 
-block 1 volume 1 6 7
+block 1 volume 1
+block 2 volume 6
+block 3 volume 7
 
 export genesis 'tensile_test.g' overwrite
