@@ -72,9 +72,9 @@
   <ParameterList name="Solver">
   	<Parameter name="Verbose" type="bool" value="false"/>
 	<Parameter name="Initial Time" type="double" value="0.0"/>
-	<Parameter name="Final Time" type="double" value="0.3"/> 
+	<Parameter name="Final Time" type="double" value="1.0"/> 
 	<ParameterList name="QuasiStatic">
-	  <Parameter name="Number of Load Steps" type="int" value="3"/>
+	  <Parameter name="Number of Load Steps" type="int" value="10"/>
 	  <Parameter name="Absolute Tolerance" type="double" value="1.0"/>
 	  <Parameter name="Maximum Solver Iterations" type="int" value="10"/>
 	</ParameterList>
@@ -150,12 +150,12 @@
 	  <Parameter name="Force_Density" type="bool" value="true"/>
 	  <Parameter name="Force" type="bool" value="true"/>
 	  <Parameter name="Volume" type="bool" value="true"/>
-	  <Parameter name="Gage_Top_Initial_Position_Y" type="bool" value="true"/>
-	  <Parameter name="Gage_Bottom_Initial_Position_Y" type="bool" value="true"/>
-	  <Parameter name="Gage_Top_Displacement_Y" type="bool" value="true"/>
-	  <Parameter name="Gage_Bottom_Displacement_Y" type="bool" value="true"/>
-	  <Parameter name="Top_Reaction_Force_Y" type="bool" value="true"/>
-	  <Parameter name="Bottom_Reaction_Force_Y" type="bool" value="true"/>
+	  <Parameter name="Gage_Top_Initial_Position" type="bool" value="true"/>
+	  <Parameter name="Gage_Bottom_Initial_Position" type="bool" value="true"/>
+	  <Parameter name="Gage_Top_Displacement" type="bool" value="true"/>
+	  <Parameter name="Gage_Bottom_Displacement" type="bool" value="true"/>
+	  <Parameter name="Top_Reaction_Force" type="bool" value="true"/>
+	  <Parameter name="Bottom_Reaction_Force" type="bool" value="true"/>
 	</ParameterList>
   </ParameterList>
 
