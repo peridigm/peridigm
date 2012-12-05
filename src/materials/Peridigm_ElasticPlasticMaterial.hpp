@@ -140,7 +140,6 @@ namespace PeridigmNS {
     int m_deviatoricPlasticExtensionFieldId;
     int m_lambdaFieldId;
     int m_surfaceCorrectionFactorFieldId;
-    int m_tangentReferenceCoordinatesFieldId;
   };
 }
 

@@ -66,7 +66,7 @@ PeridigmNS::ElasticPlasticMaterial::ElasticPlasticMaterial(const Teuchos::Parame
     m_isPlanarProblem(false),
     m_volumeFieldId(-1), m_damageFieldId(-1), m_weightedVolumeFieldId(-1), m_dilatationFieldId(-1), m_modelCoordinatesFieldId(-1),
     m_coordinatesFieldId(-1), m_forceDensityFieldId(-1), m_bondDamageFieldId(-1), m_deviatoricPlasticExtensionFieldId(-1),
-    m_lambdaFieldId(-1), m_surfaceCorrectionFactorFieldId(-1), m_tangentReferenceCoordinatesFieldId(-1)
+    m_lambdaFieldId(-1), m_surfaceCorrectionFactorFieldId(-1)
 {
   //! \todo Add meaningful asserts on material properties.
   m_bulkModulus = params.get<double>("Bulk Modulus");
@@ -102,7 +102,6 @@ PeridigmNS::ElasticPlasticMaterial::ElasticPlasticMaterial(const Teuchos::Parame
   m_deviatoricPlasticExtensionFieldId  = fieldManager.getFieldId(PeridigmField::BOND,    PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Deviatoric_Plastic_Extension");
   m_lambdaFieldId                      = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Lambda");
   m_surfaceCorrectionFactorFieldId     = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Surface_Correction_Factor");
-  m_tangentReferenceCoordinatesFieldId = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::CONSTANT, "Tangent_Reference_Coordinates");
 
   m_fieldIds.push_back(m_volumeFieldId);
   m_fieldIds.push_back(m_damageFieldId);
@@ -115,7 +114,6 @@ PeridigmNS::ElasticPlasticMaterial::ElasticPlasticMaterial(const Teuchos::Parame
   m_fieldIds.push_back(m_deviatoricPlasticExtensionFieldId);
   m_fieldIds.push_back(m_lambdaFieldId);
   m_fieldIds.push_back(m_surfaceCorrectionFactorFieldId);
-  m_fieldIds.push_back(m_tangentReferenceCoordinatesFieldId);
 }
 
 PeridigmNS::ElasticPlasticMaterial::~ElasticPlasticMaterial()

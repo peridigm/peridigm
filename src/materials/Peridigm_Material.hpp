@@ -117,7 +117,7 @@ namespace PeridigmNS {
                     PeridigmNS::DataManager& dataManager,
                     PeridigmNS::SerialMatrix& jacobian) const;
 
-    enum FiniteDifferenceScheme { FORWARD_DIFFERENCE=0, CENTRAL_DIFFERENCE=1, CONSISTENT_FORWARD_DIFFERENCE=2 };
+    enum FiniteDifferenceScheme { FORWARD_DIFFERENCE=0, CENTRAL_DIFFERENCE=1 };
 
   protected:
 

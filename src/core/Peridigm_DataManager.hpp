@@ -184,20 +184,12 @@ protected:
   std::vector<int> allFieldIds;
   //! Complete list of global field ids.
   static std::vector<int> allGlobalFieldIds;
-  //! Field specs for stateless scalar global data.
-  static std::vector<int> statelessScalarGlobalFieldIds;
-  //! Field specs for stateless vector global data.
-  static std::vector<int> statelessVectorGlobalFieldIds;
   //! Field specs for stateless scalar point data.
   std::vector<int> statelessScalarPointFieldIds;
   //! Field specs for stateless vector point data.
   std::vector<int> statelessVectorPointFieldIds;
   //! Field specs for stateless scalar bond data.
   std::vector<int> statelessScalarBondFieldIds;
-  //! Field specs for stateful scalar global data.
-  static std::vector<int> statefulScalarGlobalFieldIds;
-  //! Field specs for stateful vector global data.
-  static std::vector<int> statefulVectorGlobalFieldIds;
   //! Field specs for stateful scalar point data.
   std::vector<int> statefulScalarPointFieldIds;
   //! Field specs for stateful vector point data.

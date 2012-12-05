@@ -422,7 +422,6 @@ namespace PeridigmNS {
     int forceDensityFieldId;
     int contactForceDensityFieldId;
     int partialVolumeFieldId;
-    int tangentReferenceCoordinatesFieldId;
   };
 }
 

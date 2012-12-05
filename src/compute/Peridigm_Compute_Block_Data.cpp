@@ -93,6 +93,7 @@ PeridigmNS::Compute_Block_Data::Compute_Block_Data(Teuchos::RCP<const Teuchos::P
     m_outputFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, m_outputLabel);
   else if(m_variableLength == 3)
     m_outputFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::VECTOR, PeridigmField::CONSTANT, m_outputLabel);
+
   m_fieldIds.push_back(m_outputFieldId);
 
   PeridigmField::Temporal temporal = fieldManager.getFieldSpec(m_variableFieldId).getTemporal();
@@ -151,9 +152,9 @@ int PeridigmNS::Compute_Block_Data::compute( Teuchos::RCP< std::vector<PeridigmN
           else if(m_variableLength == 3){
             if(data[3*i] < localData[0])
               localData[0] = data[3*i];
-            if(data[3*i] < localData[0])
+            if(data[3*i+1] < localData[1])
               localData[1] = data[3*i+1];
-            if(data[3*i] < localData[0])
+            if(data[3*i+2] < localData[2])
               localData[2] = data[3*i+2];
           }
         }
@@ -167,9 +168,9 @@ int PeridigmNS::Compute_Block_Data::compute( Teuchos::RCP< std::vector<PeridigmN
           else if(m_variableLength == 3){
             if(data[3*i] > localData[0])
               localData[0] = data[3*i];
-            if(data[3*i] > localData[0])
+            if(data[3*i+1] > localData[1])
               localData[1] = data[3*i+1];
-            if(data[3*i] > localData[0])
+            if(data[3*i+2] > localData[2])
               localData[2] = data[3*i+2];
           }
         }
