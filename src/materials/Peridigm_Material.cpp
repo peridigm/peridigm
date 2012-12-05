@@ -104,7 +104,6 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   int volumeFId = fieldManager.getFieldId("Volume");
   int coordinatesFId = fieldManager.getFieldId("Coordinates");
-  int tangentReferenceCoordinatesFId = fieldManager.getFieldId("Tangent_Reference_Coordinates");
   int forceDensityFId = fieldManager.getFieldId("Force_Density");
 
   // Loop over all points.
@@ -155,9 +154,8 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     tempOwnedIDs[0] = 0;
 
     // Extract pointers to the underlying data in the constitutiveData array.
-    double *volume, *yReference, *y, *force;
+    double *volume, *y, *force;
     tempDataManager.getData(volumeFId, PeridigmField::STEP_NONE)->ExtractView(&volume);
-    tempDataManager.getData(tangentReferenceCoordinatesFId, PeridigmField::STEP_NONE)->ExtractView(&yReference);
     tempDataManager.getData(coordinatesFId, PeridigmField::STEP_NP1)->ExtractView(&y);
     tempDataManager.getData(forceDensityFId, PeridigmField::STEP_NP1)->ExtractView(&force);
 
@@ -167,15 +165,6 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     double* tempForce;
     tempForceVector->ExtractView(&tempForce);
 
-    Teuchos::RCP<Epetra_Vector> coordStepNP1;
-    if(finiteDifferenceScheme == CONSISTENT_FORWARD_DIFFERENCE){
-      // Store the current coordinates in a scratch vector
-      coordStepNP1 = Teuchos::rcp(new Epetra_Vector(*tempDataManager.getData(coordinatesFId, PeridigmField::STEP_NP1)));
-      // Set the coordinates to the tangent reference coordinates
-      for(int i=0 ; i<coordStepNP1->MyLength() ; ++i)
-        y[i] = yReference[i];
-    }
-    
     // Use the scratchMatrix as sub-matrix for storing tangent values prior to loading them into the global tangent matrix.
     // Resize scratchMatrix if necessary
     if(scratchMatrix.Dimension() < 3*(numNeighbors+1))
@@ -189,7 +178,7 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
         globalIndices[3*i+j] = 3*globalID+j;
     }
 
-    if(finiteDifferenceScheme == FORWARD_DIFFERENCE || finiteDifferenceScheme == CONSISTENT_FORWARD_DIFFERENCE){
+    if(finiteDifferenceScheme == FORWARD_DIFFERENCE){
       // Compute and store the unperturbed force.
       computeForce(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
       for(int i=0 ; i<forceVector->MyLength() ; ++i)
@@ -220,17 +209,9 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
             tempForce[i] = force[i];
         }
 
-        // Compute the positively perturbed force.
-        double perturbation = epsilon;
-        if(finiteDifferenceScheme == CONSISTENT_FORWARD_DIFFERENCE){
-          perturbation = (*coordStepNP1)[3*perturbID+dof] - y[3*perturbID+dof];
-          if(perturbation < 0.0)
-            perturbation -= epsilon;
-          else
-            perturbation += epsilon;
-        }
 
-        y[3*perturbID+dof] += perturbation;
+	// Compute the purturbed force
+        y[3*perturbID+dof] += epsilon;
         computeForce(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
         y[3*perturbID+dof] = oldY;
 
@@ -243,7 +224,7 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
             forceID = 0;
 
           for(int d=0 ; d<3 ; ++d){
-            double value = ( force[3*forceID+d] - tempForce[3*forceID+d] ) / perturbation;
+            double value = ( force[3*forceID+d] - tempForce[3*forceID+d] ) / epsilon;
             if(finiteDifferenceScheme == CENTRAL_DIFFERENCE)
               value *= 0.5;
             scratchMatrix(3*forceID+d, 3*perturbID+dof) = value;

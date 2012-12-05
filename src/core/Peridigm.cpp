@@ -110,8 +110,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
     accelerationFieldId(-1),
     forceDensityFieldId(-1),
     contactForceDensityFieldId(-1),
-    partialVolumeFieldId(-1),
-    tangentReferenceCoordinatesFieldId(-1)
+    partialVolumeFieldId(-1)
 {
   peridigmComm = comm;
   peridigmParams = params;
@@ -170,7 +169,6 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   accelerationFieldId                = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Acceleration");
   forceDensityFieldId                = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force_Density");
   contactForceDensityFieldId         = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Contact_Force_Density");
-  tangentReferenceCoordinatesFieldId = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::CONSTANT, "Tangent_Reference_Coordinates");
   if(analysisHasPartialVolumes)
     partialVolumeFieldId             = fieldManager.getFieldId(PeridigmField::BOND,    PeridigmField::SCALAR, PeridigmField::CONSTANT, "Partial_Volume");
 
@@ -1594,17 +1592,6 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
         // Compute the tangent
         if( !dampedNewton || (solverIteration-numPureNewtonSteps-1)%dampedNewtonNumStepsBetweenTangentUpdates==0 ){
           tangent->PutScalar(0.0);
-          // Set the coordinates at which the tangent will be evaluated
-          if( solverIteration<7 || solverIteration%10==0 ){
-            PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-            for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-              blockIt->importData(*y, tangentReferenceCoordinatesFieldId, PeridigmField::STEP_NONE, Insert);
-            PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
-          }
-          else{
-            if(peridigmComm->MyPID() == 0)
-              cout << "DEBUGGING MESSAGE:  RETAINING TANGENT REFERENCE COORDINATES" << endl;
-          }
           PeridigmNS::Timer::self().startTimer("Evaluate Jacobian");
           modelEvaluator->evalJacobian(workset);
           int err = tangent->GlobalAssemble();

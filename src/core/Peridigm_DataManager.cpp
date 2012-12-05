@@ -54,10 +54,6 @@
 using namespace std;
 
 std::vector<int> PeridigmNS::DataManager::allGlobalFieldIds;
-std::vector<int> PeridigmNS::DataManager::statelessScalarGlobalFieldIds;
-std::vector<int> PeridigmNS::DataManager::statelessVectorGlobalFieldIds;
-std::vector<int> PeridigmNS::DataManager::statefulScalarGlobalFieldIds;
-std::vector<int> PeridigmNS::DataManager::statefulVectorGlobalFieldIds;
 Teuchos::RCP<const Epetra_BlockMap> PeridigmNS::DataManager::scalarGlobalMap;
 Teuchos::RCP<const Epetra_BlockMap> PeridigmNS::DataManager::vectorGlobalMap;
 std::map< std::pair<int, PeridigmNS::PeridigmField::Step>, Teuchos::RCP<Epetra_Vector> > PeridigmNS::DataManager::fieldIdAndStepToGlobalData;
@@ -74,6 +70,12 @@ void PeridigmNS::DataManager::allocateData(vector<int> fieldIds)
   sort(fieldIds.begin(), fieldIds.end());
   vector<int>::iterator newEnd = unique(fieldIds.begin(), fieldIds.end());
   fieldIds.erase(newEnd, fieldIds.end());
+
+  // temp vectors for global data bookkeeping
+  vector<int> statelessScalarGlobalFieldIds;
+  vector<int> statelessVectorGlobalFieldIds;
+  vector<int> statefulScalarGlobalFieldIds;
+  vector<int> statefulVectorGlobalFieldIds;
 
   for(unsigned int i=0; i<fieldIds.size() ; ++i){
 
@@ -124,6 +126,8 @@ void PeridigmNS::DataManager::allocateData(vector<int> fieldIds)
       else
         TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::RangeError, 
                                    "PeridigmNS::DataManager::allocateData, invalid FieldSpec!");
+
+      allFieldIds.push_back(fieldId);
     }
     // Element and node data
     else if(spec.getRelation() == PeridigmField::NODE || spec.getRelation() == PeridigmField::ELEMENT){
@@ -143,10 +147,13 @@ void PeridigmNS::DataManager::allocateData(vector<int> fieldIds)
       else
         TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::RangeError, 
                                    "PeridigmNS::DataManager::allocateData, invalid FieldSpec!");
-    }
 
-    allFieldIds.push_back(fieldId);
+      allFieldIds.push_back(fieldId);
+    }
   }
+
+  // add global field ids into list of all field ids
+  allFieldIds.insert(allFieldIds.end(), allGlobalFieldIds.begin(), allGlobalFieldIds.end());
 
   // make sure maps exist before trying to create states
   if(statelessScalarPointFieldIds.size() + statefulScalarPointFieldIds.size() > 0)
