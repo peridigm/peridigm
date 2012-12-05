@@ -47,6 +47,7 @@
 
 #include <Teuchos_Exceptions.hpp>
 #include <Epetra_Import.h>
+#include <Epetra_Comm.h>
 #include "Peridigm_DataManager.hpp"
 #include "Peridigm_Field.hpp"
 
@@ -162,18 +163,17 @@ void PeridigmNS::DataManager::allocateData(vector<int> fieldIds)
   if(statelessScalarGlobalFieldIds.size() + statefulScalarGlobalFieldIds.size() + statelessVectorGlobalFieldIds.size() + statefulVectorGlobalFieldIds.size()> 0){
 
     // obtain a comm object for use in creating the Epetra_BlockMaps
-    Teuchos::RCP<const Epetra_Comm> comm;
+    Epetra_Comm* comm;
     if(!ownedScalarPointMap.is_null())
-      comm = Teuchos::rcpFromRef(ownedScalarPointMap->Comm());
+      comm = ownedScalarPointMap->Comm().Clone();
     else if(!overlapScalarPointMap.is_null())
-      comm = Teuchos::rcpFromRef(overlapScalarPointMap->Comm());
+      comm = overlapScalarPointMap->Comm().Clone();
     else if(!ownedVectorPointMap.is_null())
-      comm = Teuchos::rcpFromRef(ownedVectorPointMap->Comm());
+      comm = ownedVectorPointMap->Comm().Clone();
     else if(!overlapVectorPointMap.is_null())
-      comm = Teuchos::rcpFromRef(overlapVectorPointMap->Comm());
+      comm = overlapVectorPointMap->Comm().Clone();
     else if(!ownedScalarBondMap.is_null())
-      comm = Teuchos::rcpFromRef(ownedScalarBondMap->Comm());
-    else
+      comm = ownedScalarBondMap->Comm().Clone();
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::NullReferenceError, 
                                  "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate global data with no comm object (forget setMaps()?).");
     
