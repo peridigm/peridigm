@@ -138,7 +138,7 @@ void FourPointTest()
   Teuchos::RCP<Epetra_Vector> velocity, volume, kinetic_energy;
   velocity       = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Velocity"), PeridigmField::STEP_NP1);
   volume         = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Volume"), PeridigmField::STEP_NONE);
-  kinetic_energy = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Kinetic_Energy"), PeridigmField::STEP_NP1);
+  kinetic_energy = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Kinetic_Energy"), PeridigmField::STEP_NONE);
   // Get the neighborhood structure
   const int numOwnedPoints = (neighborhoodData.NumOwnedPoints());
 
@@ -165,7 +165,8 @@ void FourPointTest()
   // Now check that volumes and energy is correct
   double *volume_values = volume->Values();
   double *kinetic_energy_values  = kinetic_energy->Values();
-  double globalKE = blocks->begin()->getGlobalData( fieldManager.getFieldId("Global_Kinetic_Energy") );
+  Teuchos::RCP<Epetra_Vector> data = blocks->begin()->getData( fieldManager.getFieldId("Global_Kinetic_Energy"), PeridigmField::STEP_NONE );
+  double globalKE = (*data)[0];
   BOOST_CHECK_CLOSE(globalKE, 2960100, 1.0e-15); 	// Check global scalar value
   for (int i=0;i<numElements;i++)
     BOOST_CHECK_CLOSE(volume_values[i], 1.5, 1.0e-15);

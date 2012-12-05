@@ -52,8 +52,6 @@
 
 using namespace std;
 
-map<int, double> PeridigmNS::Block::globalData;
-
 void PeridigmNS::Block::initialize(Teuchos::RCP<const Epetra_BlockMap> globalOwnedScalarPointMap,
                                    Teuchos::RCP<const Epetra_BlockMap> globalOverlapScalarPointMap,
                                    Teuchos::RCP<const Epetra_BlockMap> globalOwnedVectorPointMap,
@@ -75,8 +73,6 @@ void PeridigmNS::Block::initialize(Teuchos::RCP<const Epetra_BlockMap> globalOwn
                                                                       globalNeighborhoodData);
 
   initializeDataManager();
-
-  initializeGlobalData();
 }
 
 void PeridigmNS::Block::rebalance(Teuchos::RCP<const Epetra_BlockMap> rebalancedGlobalOwnedScalarPointMap,
@@ -414,31 +410,4 @@ void PeridigmNS::Block::initializeDataManager()
 
   // Allocate data in the data manager
   dataManager->allocateData(fieldIds);
-}
-
-void PeridigmNS::Block::initializeGlobalData()
-{
-  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
-  vector<PeridigmNS::FieldSpec> globalFieldSpecs = fieldManager.getGlobalFieldSpecs();
-  int fieldId = -1;
-
-  for(vector<PeridigmNS::FieldSpec>::iterator it = globalFieldSpecs.begin() ; it != globalFieldSpecs.end() ; it++){
-
-    if (it->getLength() == PeridigmField::SCALAR) {
-      fieldId = fieldManager.getFieldId(it->getLabel());
-      globalData[fieldId] = 0.0;
-    }
-    else if (it->getLength() == PeridigmField::VECTOR) {
-      fieldId = fieldManager.getFieldId(it->getLabel() + "X");
-      globalData[fieldId] = 0.0;
-      fieldId = fieldManager.getFieldId(it->getLabel() + "Y");
-      globalData[fieldId] = 0.0;
-      fieldId = fieldManager.getFieldId(it->getLabel() + "Z");
-      globalData[fieldId] = 0.0;
-    }
-    else{
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n**** Invalid global field spec, only SCALAR and VECTOR data are allowed.");
-    }
-
-  }
 }

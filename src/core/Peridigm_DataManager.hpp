@@ -67,10 +67,10 @@ class DataManager {
 public:
   
   //! Constructor.
-  DataManager() : rebalanceCount(0) {}
+  DataManager() : fieldManager(FieldManager::self()), rebalanceCount(0) {}
 
   //! Copy constructor.
-  DataManager(const DataManager& dataManager){}
+  DataManager(const DataManager& dataManager) : fieldManager(FieldManager::self()) {}
 
   //! Destructor.
   ~DataManager(){}
@@ -153,10 +153,27 @@ public:
 
   //! Swaps StateN and StateNP1; stateNONE is unaffected.
   void updateState(){
+
+    // Need to perform copy on global data
+    // Swapping pointers will create problems because these quantities are static
+    // and it is probably that multiple instances will call this function, leading
+    // to a toggle-back-and-forth situation
+    for(unsigned int i=0 ; i<scalarGlobalDataStateN.size() ; ++i)
+      (*(scalarGlobalDataStateN[i]))[0] = (*(scalarGlobalDataStateNP1[i]))[0];
+    for(unsigned int i=0 ; i<vectorGlobalDataStateN.size() ; ++i){
+      (*(vectorGlobalDataStateN[i]))[0] = (*(vectorGlobalDataStateNP1[i]))[0];
+      (*(vectorGlobalDataStateN[i]))[1] = (*(vectorGlobalDataStateNP1[i]))[1];
+      (*(vectorGlobalDataStateN[i]))[2] = (*(vectorGlobalDataStateNP1[i]))[2];
+    }
+
+    // Swap pointers for all other state data
     stateN.swap(stateNP1);
   }
 
 protected:
+
+  //! Field manager 
+  FieldManager& fieldManager;
 
   //! Number of times rebalance has been called.
   int rebalanceCount;
@@ -165,12 +182,22 @@ protected:
   //@{
   //! Complete list of field ids.
   std::vector<int> allFieldIds;
+  //! Complete list of global field ids.
+  static std::vector<int> allGlobalFieldIds;
+  //! Field specs for stateless scalar global data.
+  static std::vector<int> statelessScalarGlobalFieldIds;
+  //! Field specs for stateless vector global data.
+  static std::vector<int> statelessVectorGlobalFieldIds;
   //! Field specs for stateless scalar point data.
   std::vector<int> statelessScalarPointFieldIds;
   //! Field specs for stateless vector point data.
   std::vector<int> statelessVectorPointFieldIds;
   //! Field specs for stateless scalar bond data.
   std::vector<int> statelessScalarBondFieldIds;
+  //! Field specs for stateful scalar global data.
+  static std::vector<int> statefulScalarGlobalFieldIds;
+  //! Field specs for stateful vector global data.
+  static std::vector<int> statefulVectorGlobalFieldIds;
   //! Field specs for stateful scalar point data.
   std::vector<int> statefulScalarPointFieldIds;
   //! Field specs for stateful vector point data.
@@ -181,16 +208,38 @@ protected:
 
   //! @name Maps
   //@{
+  //! One-dimensional map for global data.
+  static Teuchos::RCP<const Epetra_BlockMap> scalarGlobalMap;
   //! One-dimensional map for owned points.
   Teuchos::RCP<const Epetra_BlockMap> ownedScalarPointMap;
   //! One-dimensional overlap map for owned points and ghosts.
   Teuchos::RCP<const Epetra_BlockMap> overlapScalarPointMap;
+  // Three-dimensional map for global data.
+  static Teuchos::RCP<const Epetra_BlockMap> vectorGlobalMap;
   // Three-dimensional map for owned points.
   Teuchos::RCP<const Epetra_BlockMap> ownedVectorPointMap;
   //! Three-dimensional overlap map for owned points and ghosts.
   Teuchos::RCP<const Epetra_BlockMap> overlapVectorPointMap;
   //! Bond map for owned points; the map contains one element for each owned point, the element length is equal to the number of bonds for that point.
   Teuchos::RCP<const Epetra_BlockMap> ownedScalarBondMap;
+  //@}
+
+  //! @name Global data
+  //@{
+  //! Map between field ids and data
+  static std::map< std::pair<int, PeridigmField::Step>, Teuchos::RCP<Epetra_Vector> > fieldIdAndStepToGlobalData;
+  //! Data storage for global scalar data at state N.
+  static std::vector<Teuchos::RCP<Epetra_Vector> > scalarGlobalDataStateN;
+  //! Data storage for global scalar data at state N plus 1.
+  static std::vector<Teuchos::RCP<Epetra_Vector> > scalarGlobalDataStateNP1;
+  //! Data storage for global scalar data at state NONE (stateless data).
+  static std::vector<Teuchos::RCP<Epetra_Vector> > scalarGlobalDataStateNONE;
+  //! Data storage for global vector data at state N.
+  static std::vector<Teuchos::RCP<Epetra_Vector> > vectorGlobalDataStateN;
+  //! Data storage for global vector data at state N plus 1.
+  static std::vector<Teuchos::RCP<Epetra_Vector> > vectorGlobalDataStateNP1;
+  //! Data storage for global vector data at state NONE (stateless data).
+  static std::vector<Teuchos::RCP<Epetra_Vector> > vectorGlobalDataStateNONE;
   //@}
 
   //! @name State objects

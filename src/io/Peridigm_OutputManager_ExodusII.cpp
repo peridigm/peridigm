@@ -261,10 +261,23 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
       // global vars are static within a block, so only need to reference first block
       if (spec.getLength() == PeridigmField::SCALAR) {
         TEUCHOS_TEST_FOR_EXCEPTION(globalsIndex >= globals_vec.size(), std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- error writing global variable.");
-        globals[globalsIndex++] = blocks->begin()->getGlobalData(spec.getId());
+        if (spec.getTemporal() == PeridigmField::CONSTANT)
+          globals[globalsIndex++] = (*(blocks->begin()->getData(spec.getId(), PeridigmField::STEP_NONE)))[0];
+        else
+          globals[globalsIndex++] = (*(blocks->begin()->getData(spec.getId(), PeridigmField::STEP_NP1)))[0];
+      }
+      else if (spec.getLength() == PeridigmField::VECTOR) {
+
+        // TODO: NEED TO EXPAND THIS FOR VECTOR QUANTITIES
+
+        TEUCHOS_TEST_FOR_EXCEPTION(globalsIndex >= globals_vec.size(), std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- error writing global variable.");
+        if (spec.getTemporal() == PeridigmField::CONSTANT)
+          globals[globalsIndex++] = (*(blocks->begin()->getData(spec.getId(), PeridigmField::STEP_NONE)))[0];
+        else
+          globals[globalsIndex++] = (*(blocks->begin()->getData(spec.getId(), PeridigmField::STEP_NP1)))[0];
       }
       else {
-        TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- unsupported global type (must be scalar).");
+        TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- unsupported global type (must be scalar or vector).");
       }
       retval = ex_put_glob_vars(file_handle, exodusCount, num_global_vars, globals);
       if (retval!= 0) reportExodusError(retval, "write", "ex_put_glob_vars");

@@ -98,7 +98,11 @@ int PeridigmNS::FieldManager::getFieldId(PeridigmField::Relation relation_,
   int id = fieldSpecs.size();
   fieldSpecs.push_back( FieldSpec(relation_, length_, temporal_, label_, id) );
   labelToIdMap[label_] = id;
-  
+  if(relation_ == PeridigmField::GLOBAL)
+    specIsGlobal.push_back(true);
+  else
+    specIsGlobal.push_back(false);
+
   return id;
 }
 
@@ -131,7 +135,53 @@ PeridigmNS::FieldSpec PeridigmNS::FieldManager::getFieldSpec(string label)
   return getFieldSpec( getFieldId(label) );
 }
 
+std::ostream& operator<<(std::ostream& os, const PeridigmNS::PeridigmField::Relation& relation){
+  if(relation == PeridigmNS::PeridigmField::UNDEFINED_RELATION)
+    os << "UNDEFINED_RELATION";
+  else if(relation == PeridigmNS::PeridigmField::NODE)
+    os << "NODE";
+  else if(relation == PeridigmNS::PeridigmField::ELEMENT)
+    os << "ELEMENT";
+  else if(relation == PeridigmNS::PeridigmField::BOND)
+    os << "BOND";
+  else if(relation == PeridigmNS::PeridigmField::GLOBAL)
+    os << "GLOBAL";
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const PeridigmNS::PeridigmField::Length& length){
+  if(length == PeridigmNS::PeridigmField::UNDEFINED_LENGTH)
+    os << "UNDEFINED_LENGTH";
+  else if(length == PeridigmNS::PeridigmField::SCALAR)
+    os << "SCALAR";
+  else if(length == PeridigmNS::PeridigmField::VECTOR)
+    os << "VECTOR";
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const PeridigmNS::PeridigmField::Temporal& temporal){
+  if(temporal == PeridigmNS::PeridigmField::UNDEFINED_TEMPORAL)
+    os << "UNDEFINED_TEMPORAL";
+  else if(temporal == PeridigmNS::PeridigmField::CONSTANT)
+    os << "CONSTANT";
+  else if(temporal == PeridigmNS::PeridigmField::TWO_STEP)
+    os << "TWO_STEP";
+  return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const PeridigmNS::PeridigmField::Step& step){
+  if(step == PeridigmNS::PeridigmField::UNDEFINED_STEP)
+    os << "UNDEFINED_STEP";
+  else if(step == PeridigmNS::PeridigmField::STEP_NONE)
+    os << "STEP_NONE";
+  else if(step == PeridigmNS::PeridigmField::STEP_N)
+    os << "STEP_N";
+  else if(step == PeridigmNS::PeridigmField::STEP_NP1)
+    os << "STEP_NP1";
+  return os;
+}
+
 std::ostream& operator<<(std::ostream& os, const PeridigmNS::FieldSpec& fieldSpec){
-  os << fieldSpec.getLabel();
+  os << fieldSpec.getLabel() << " (" << fieldSpec.getRelation() << ", " << fieldSpec.getLength() << ", " << fieldSpec.getTemporal() << ")";
   return os;
 }

@@ -212,26 +212,7 @@ namespace PeridigmNS {
       TEUCHOS_TEST_FOR_EXCEPT_MSG(
         dataManager.is_null(),
         "\n**** DataManager must be initialized via Block::initializeDataManager() prior to calling Block::hasData()\n");
-      if( hasGlobalData(fieldId) )
-        return true;
       return dataManager->hasData(fieldId, step);
-    }
-
-    //! Method for querying global scalar data
-    bool hasGlobalData(int fieldId) {
-      std::map<int, double>::iterator it = globalData.find(fieldId);
-      if(it == globalData.end())
-        return false;
-      return true;
-    }
-
-    //! Method for accessing global scalar data
-    double& getGlobalData(int fieldId) {
-
-      if( !hasGlobalData(fieldId) )
-        TEUCHOS_TEST_FOR_EXCEPT_MSG(!hasGlobalData(fieldId), "\n**** Global field Id not found!\n");
-
-      return globalData[fieldId];
     }
 
     /*! \brief Import data from the given source vector to the underlying target vector associated with the given field spec.
@@ -281,9 +262,6 @@ namespace PeridigmNS {
      */
     void initializeDataManager();
 
-    //! Initialize storage for global scalars
-    void initializeGlobalData();
-
     std::string blockName;
     int blockID;
 
@@ -327,10 +305,6 @@ namespace PeridigmNS {
 
     //! The contact model
     Teuchos::RCP<const PeridigmNS::ContactModel> contactModel;
-
-    //! Storage for global scalar data.
-    //! Map is static because all block objects use the same values
-    static std::map<int, double> globalData;
 
     //! The blocks parameterlist sublist
     Teuchos::ParameterList blockParams;

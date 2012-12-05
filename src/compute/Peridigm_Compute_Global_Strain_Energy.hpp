@@ -73,16 +73,10 @@ namespace PeridigmNS {
     ~Compute_Global_Strain_Energy();
 
     //! Returns a vector of field IDs corresponding to the variables associated with the compute class.
-    virtual std::vector<int> FieldIds() const { return m_fieldIds; }
+    virtual std::vector<int> FieldIds() const { return Compute_Strain_Energy::FieldIds(); }
 
     //! Perform computation
     virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
-
-  private:
-
-    // field ids for all relevant data
-    std::vector<int> m_fieldIds;
-    int m_globalStrainEnergyFieldId;
   };
 }
 

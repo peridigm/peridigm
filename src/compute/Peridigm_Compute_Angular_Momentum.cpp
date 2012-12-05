@@ -60,7 +60,7 @@ PeridigmNS::Compute_Angular_Momentum::Compute_Angular_Momentum(Teuchos::RCP<cons
   m_volumeFieldId = fieldManager.getFieldId("Volume");
   m_coordinatesFieldId = fieldManager.getFieldId("Coordinates");
   m_velocityFieldId = fieldManager.getFieldId("Velocity");
-  m_angularMomentumFieldId = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Angular_Momentum");
+  m_angularMomentumFieldId = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::CONSTANT, "Angular_Momentum");
   m_globalAngularMomentumFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Global_Angular_Momentum");
   m_fieldIds.push_back(m_volumeFieldId);
   m_fieldIds.push_back(m_coordinatesFieldId);
@@ -95,7 +95,7 @@ int PeridigmNS::Compute_Angular_Momentum::computeAngularMomentum( Teuchos::RCP< 
     volume           = blockIt->getData(m_volumeFieldId, PeridigmField::STEP_NONE);
     arm              = blockIt->getData(m_coordinatesFieldId, PeridigmField::STEP_NP1);
     velocity         = blockIt->getData(m_velocityFieldId, PeridigmField::STEP_NP1);
-    angular_momentum = blockIt->getData(m_angularMomentumFieldId, PeridigmField::STEP_NP1);
+    angular_momentum = blockIt->getData(m_angularMomentumFieldId, PeridigmField::STEP_NONE);
 
     // Sanity check
     if ( (velocity->Map().NumMyElements() != volume->Map().NumMyElements()) ||  (arm->Map().NumMyElements() != volume->Map().NumMyElements()) )
@@ -155,9 +155,9 @@ int PeridigmNS::Compute_Angular_Momentum::computeAngularMomentum( Teuchos::RCP< 
     }
   }
 
-  // Store global angular momentum in block (block globals are static, so only need to assign data to first block)
+  // Store global angular momentum
   if (!storeLocal)  
-    blocks->begin()->getGlobalData(m_globalAngularMomentumFieldId) = globalAM;
+    (*(blocks->begin()->getData(m_globalAngularMomentumFieldId, PeridigmField::STEP_NONE)))[0] = globalAM;
 
   return(0);
 
