@@ -52,6 +52,21 @@
 
 using namespace std;
 
+std::vector<int> PeridigmNS::DataManager::allGlobalFieldIds;
+std::vector<int> PeridigmNS::DataManager::statelessScalarGlobalFieldIds;
+std::vector<int> PeridigmNS::DataManager::statelessVectorGlobalFieldIds;
+std::vector<int> PeridigmNS::DataManager::statefulScalarGlobalFieldIds;
+std::vector<int> PeridigmNS::DataManager::statefulVectorGlobalFieldIds;
+Teuchos::RCP<const Epetra_BlockMap> PeridigmNS::DataManager::scalarGlobalMap;
+Teuchos::RCP<const Epetra_BlockMap> PeridigmNS::DataManager::vectorGlobalMap;
+std::map< std::pair<int, PeridigmNS::PeridigmField::Step>, Teuchos::RCP<Epetra_Vector> > PeridigmNS::DataManager::fieldIdAndStepToGlobalData;
+std::vector< Teuchos::RCP<Epetra_Vector> > PeridigmNS::DataManager::scalarGlobalDataStateN;
+std::vector< Teuchos::RCP<Epetra_Vector> > PeridigmNS::DataManager::scalarGlobalDataStateNP1;
+std::vector< Teuchos::RCP<Epetra_Vector> > PeridigmNS::DataManager::scalarGlobalDataStateNONE;
+std::vector< Teuchos::RCP<Epetra_Vector> > PeridigmNS::DataManager::vectorGlobalDataStateN;
+std::vector< Teuchos::RCP<Epetra_Vector> > PeridigmNS::DataManager::vectorGlobalDataStateNP1;
+std::vector< Teuchos::RCP<Epetra_Vector> > PeridigmNS::DataManager::vectorGlobalDataStateNONE;
+
 void PeridigmNS::DataManager::allocateData(vector<int> fieldIds)
 {
   // remove duplicates
@@ -59,40 +74,74 @@ void PeridigmNS::DataManager::allocateData(vector<int> fieldIds)
   vector<int>::iterator newEnd = unique(fieldIds.begin(), fieldIds.end());
   fieldIds.erase(newEnd, fieldIds.end());
 
-  FieldManager& fieldManager = FieldManager::self();
-
   for(unsigned int i=0; i<fieldIds.size() ; ++i){
 
     int fieldId = fieldIds[i];
     PeridigmNS::FieldSpec spec = fieldManager.getFieldSpec(fieldId);
+    PeridigmField::Relation relation = spec.getRelation();
+    PeridigmField::Length length = spec.getLength();
+    PeridigmField::Temporal temporal = spec.getTemporal();
 
-    // scalar point data
-    if(spec.getLength() == PeridigmField::SCALAR && spec.getRelation() == PeridigmField::ELEMENT){
-      if(spec.getTemporal() == PeridigmField::CONSTANT)
-        statelessScalarPointFieldIds.push_back(fieldId);
-      else
-        statefulScalarPointFieldIds.push_back(fieldId);
+    // Global data
+    if(relation == PeridigmField::GLOBAL){
+
+      // Allocate global data only if it hasn't already been allocated
+      if( find(allGlobalFieldIds.begin(), allGlobalFieldIds.end(), fieldId) == allGlobalFieldIds.end() ){
+
+        if(length == PeridigmField::SCALAR && temporal == PeridigmField::CONSTANT)
+          statelessScalarGlobalFieldIds.push_back(fieldId);
+
+        else if(length == PeridigmField::SCALAR && temporal == PeridigmField::TWO_STEP)
+          statefulScalarGlobalFieldIds.push_back(fieldId);
+
+        else if(length == PeridigmField::VECTOR && temporal == PeridigmField::CONSTANT)
+          statelessVectorGlobalFieldIds.push_back(fieldId);
+
+        else if(length == PeridigmField::VECTOR && temporal == PeridigmField::TWO_STEP)
+          statefulVectorGlobalFieldIds.push_back(fieldId);
+
+        else
+          TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::RangeError, 
+                                     "PeridigmNS::DataManager::allocateData, invalid FieldSpec!");
+
+        allGlobalFieldIds.push_back(fieldId);
+      }
     }
-    // vector point data
-    else if(spec.getLength() == PeridigmField::VECTOR && spec.getRelation() == PeridigmField::NODE){
-      if(spec.getTemporal() == PeridigmField::CONSTANT)
-        statelessVectorPointFieldIds.push_back(fieldId);
-      else
-        statefulVectorPointFieldIds.push_back(fieldId);
-    }
-    // scalar bond data
-    else if(spec.getLength() == PeridigmField::SCALAR && spec.getRelation() == PeridigmField::BOND){
-      if(spec.getTemporal() == PeridigmField::CONSTANT)
+    // Bond data
+    else if(spec.getRelation() == PeridigmField::BOND){
+
+      // Vector bond data is not supported
+      TEUCHOS_TEST_FOR_EXCEPTION(length != PeridigmField::SCALAR, Teuchos::RangeError, 
+                                 "PeridigmNS::DataManager::allocateData, invalid FieldSpec, BOND data must be SCALAR!");
+
+      if(temporal == PeridigmField::CONSTANT)
         statelessScalarBondFieldIds.push_back(fieldId);
-      else
+
+      else if(temporal == PeridigmField::TWO_STEP)
         statefulScalarBondFieldIds.push_back(fieldId);
+
+      else
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::RangeError, 
+                                   "PeridigmNS::DataManager::allocateData, invalid FieldSpec!");
     }
-    // ignore global data
-    else if (spec.getRelation() == PeridigmField::GLOBAL)
-      continue;
-    else{
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::RangeError, 
-                                 "PeridigmNS::DataManager::allocateData, invalid FieldSpec!");
+    // Element and node data
+    else if(spec.getRelation() == PeridigmField::NODE || spec.getRelation() == PeridigmField::ELEMENT){
+
+      if(length == PeridigmField::SCALAR && temporal == PeridigmField::CONSTANT)
+        statelessScalarPointFieldIds.push_back(fieldId);
+
+      else if(length == PeridigmField::SCALAR && temporal == PeridigmField::TWO_STEP)
+        statefulScalarPointFieldIds.push_back(fieldId);
+
+      else if(length == PeridigmField::VECTOR && temporal == PeridigmField::CONSTANT)
+        statelessVectorPointFieldIds.push_back(fieldId);
+
+      else if(length == PeridigmField::VECTOR && temporal == PeridigmField::TWO_STEP)
+        statefulVectorPointFieldIds.push_back(fieldId);
+
+      else
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::RangeError, 
+                                   "PeridigmNS::DataManager::allocateData, invalid FieldSpec!");
     }
 
     allFieldIds.push_back(fieldId);
@@ -108,6 +157,65 @@ void PeridigmNS::DataManager::allocateData(vector<int> fieldIds)
   if(statelessScalarBondFieldIds.size() + statefulScalarBondFieldIds.size() > 0)
     TEUCHOS_TEST_FOR_EXCEPTION(ownedScalarBondMap == Teuchos::null, Teuchos::NullReferenceError, 
                        "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate bond data with no map (forget setMaps()?).");
+
+  // create the global data (these are static members of DataManager)
+  if(statelessScalarGlobalFieldIds.size() + statefulScalarGlobalFieldIds.size() + statelessVectorGlobalFieldIds.size() + statefulVectorGlobalFieldIds.size()> 0){
+
+    // obtain a comm object for use in creating the Epetra_BlockMaps
+    Teuchos::RCP<const Epetra_Comm> comm;
+    if(!ownedScalarPointMap.is_null())
+      comm = Teuchos::rcpFromRef(ownedScalarPointMap->Comm());
+    else if(!overlapScalarPointMap.is_null())
+      comm = Teuchos::rcpFromRef(overlapScalarPointMap->Comm());
+    else if(!ownedVectorPointMap.is_null())
+      comm = Teuchos::rcpFromRef(ownedVectorPointMap->Comm());
+    else if(!overlapVectorPointMap.is_null())
+      comm = Teuchos::rcpFromRef(overlapVectorPointMap->Comm());
+    else if(!ownedScalarBondMap.is_null())
+      comm = Teuchos::rcpFromRef(ownedScalarBondMap->Comm());
+    else
+      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::NullReferenceError, 
+                                 "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate global data with no comm object (forget setMaps()?).");
+    
+    // create the maps for global data, if needed
+    if(scalarGlobalMap.is_null()){
+      int numGlobalElements = 1;
+      int numMyElements = 1;
+      vector<int> myGlobalElements(1);
+      myGlobalElements[0] = 0;
+      int elementSize = 1;
+      int indexBase = 0;
+      scalarGlobalMap = Teuchos::RCP<Epetra_BlockMap>(new Epetra_BlockMap(numGlobalElements, numMyElements, &myGlobalElements[0], elementSize, indexBase, *comm));
+      elementSize = 3;
+      vectorGlobalMap = Teuchos::RCP<Epetra_BlockMap>(new Epetra_BlockMap(numGlobalElements, numMyElements, &myGlobalElements[0], elementSize, indexBase, *comm));
+    }
+
+    // Allocate global data and set up the FieldId-to-Epetra_Vector map
+    for(unsigned int i=0 ; i<statelessScalarGlobalFieldIds.size() ; ++i){
+      int index = scalarGlobalDataStateNONE.size();
+      scalarGlobalDataStateNONE.push_back( Teuchos::RCP<Epetra_Vector>(new Epetra_Vector(*scalarGlobalMap)) );
+      fieldIdAndStepToGlobalData[ pair<int, PeridigmField::Step>(statelessScalarGlobalFieldIds[i], PeridigmField::STEP_NONE) ] = scalarGlobalDataStateNONE[index];
+    }
+    for(unsigned int i=0 ; i<statefulScalarGlobalFieldIds.size() ; ++i){
+      int index = scalarGlobalDataStateN.size();
+      scalarGlobalDataStateN.push_back( Teuchos::RCP<Epetra_Vector>(new Epetra_Vector(*scalarGlobalMap)) );
+      fieldIdAndStepToGlobalData[ pair<int, PeridigmField::Step>(statefulScalarGlobalFieldIds[i], PeridigmField::STEP_N) ] = scalarGlobalDataStateN[index];
+      scalarGlobalDataStateNP1.push_back( Teuchos::RCP<Epetra_Vector>(new Epetra_Vector(*scalarGlobalMap)) );
+      fieldIdAndStepToGlobalData[ pair<int, PeridigmField::Step>(statefulScalarGlobalFieldIds[i], PeridigmField::STEP_NP1) ] = scalarGlobalDataStateNP1[index];
+    }
+    for(unsigned int i=0 ; i<statelessVectorGlobalFieldIds.size() ; ++i){
+      int index = vectorGlobalDataStateNONE.size();
+      vectorGlobalDataStateNONE.push_back( Teuchos::RCP<Epetra_Vector>(new Epetra_Vector(*vectorGlobalMap)) );
+      fieldIdAndStepToGlobalData[ pair<int, PeridigmField::Step>(statelessVectorGlobalFieldIds[i], PeridigmField::STEP_NONE) ] = vectorGlobalDataStateNONE[index];
+    }
+    for(unsigned int i=0 ; i<statefulVectorGlobalFieldIds.size() ; ++i){
+      int index = vectorGlobalDataStateN.size();
+      vectorGlobalDataStateN.push_back( Teuchos::RCP<Epetra_Vector>(new Epetra_Vector(*vectorGlobalMap)) );
+      fieldIdAndStepToGlobalData[ pair<int, PeridigmField::Step>(statefulVectorGlobalFieldIds[i], PeridigmField::STEP_N) ] = vectorGlobalDataStateN[index];
+      vectorGlobalDataStateNP1.push_back( Teuchos::RCP<Epetra_Vector>(new Epetra_Vector(*vectorGlobalMap)) );
+      fieldIdAndStepToGlobalData[ pair<int, PeridigmField::Step>(statefulVectorGlobalFieldIds[i], PeridigmField::STEP_NP1) ] = vectorGlobalDataStateNP1[index];
+    }
+  }
 
   // create the states
   if(statelessScalarPointFieldIds.size() + statelessVectorPointFieldIds.size() + statelessScalarBondFieldIds.size() > 0){
@@ -211,7 +319,7 @@ void PeridigmNS::DataManager::scatterToGhosts()
       overlapVectorPointMultiVector->Import(*ownedVectorPointMultiVector, *importer, Insert);
     }
 
-    // note: bond data is not ghosted, so there's no need to scatter to ghosts.
+    // note: global data and bond data are not ghosted, so there's no need to scatter to ghosts.
   }
 }
 
@@ -337,6 +445,8 @@ void PeridigmNS::DataManager::copyLocallyOwnedDataFromDataManager(PeridigmNS::Da
 bool PeridigmNS::DataManager::hasData(int fieldId, PeridigmField::Step step)
 {
   bool hasData = false;
+
+  // Check for data in State objects
   if(step == PeridigmField::STEP_NONE){
     hasData = stateNONE->hasData(fieldId);
   }
@@ -350,24 +460,46 @@ bool PeridigmNS::DataManager::hasData(int fieldId, PeridigmField::Step step)
     TEUCHOS_TEST_FOR_EXCEPTION(false, Teuchos::RangeError, 
                        "PeridigmNS::DataManager::getData, invalid fieldId and step!");
   }
+
+  // Check for data in global data
+  if(!hasData){
+    if( fieldIdAndStepToGlobalData.find( pair<int, PeridigmField::Step>(fieldId, step) ) != fieldIdAndStepToGlobalData.end() )
+      hasData = true;
+  }
+
   return hasData;
 }
 
 Teuchos::RCP<Epetra_Vector> PeridigmNS::DataManager::getData(int fieldId, PeridigmField::Step step)
 {
   Teuchos::RCP<Epetra_Vector> data;
-  if(step == PeridigmField::STEP_NONE){
-    data = stateNONE->getData(fieldId);
-  }
-  else if(step == PeridigmField::STEP_N){
-    data = stateN->getData(fieldId);
-  }
-  else if(step == PeridigmField::STEP_NP1){
-    data = stateNP1->getData(fieldId);
+
+  if( fieldManager.isGlobalSpec(fieldId) ){
+    data = fieldIdAndStepToGlobalData[ pair<int, PeridigmField::Step>(fieldId, step) ];
   }
   else{
-    TEUCHOS_TEST_FOR_EXCEPTION(false, Teuchos::RangeError, 
-                       "PeridigmNS::DataManager::getData, invalid fieldId and step!");
+    if(step == PeridigmField::STEP_NONE){
+      data = stateNONE->getData(fieldId);
+    }
+    else if(step == PeridigmField::STEP_N){
+      data = stateN->getData(fieldId);
+    }
+    else if(step == PeridigmField::STEP_NP1){
+      data = stateNP1->getData(fieldId);
+    }
+    else{
+      TEUCHOS_TEST_FOR_EXCEPTION(false, Teuchos::RangeError, 
+                                 "PeridigmNS::DataManager::getData, invalid fieldId and step!");
+    }
   }
+
+  if(data.is_null()){
+    stringstream ss;
+    ss << "**** Error, PeridigmNS::DataManager::getData(), fieldId and Step not found!\n";
+    ss << "**** Spec: " << fieldManager.getFieldSpec(fieldId) << "\n";
+    ss << "**** Step: " << step << "\n";
+    TEUCHOS_TEST_FOR_EXCEPTION(data.is_null(), Teuchos::RangeError, ss.str());
+  }
+
   return data;
 }

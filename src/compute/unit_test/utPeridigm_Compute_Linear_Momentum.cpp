@@ -135,7 +135,7 @@ void FourPointTest() {
   Teuchos::RCP<Epetra_Vector> velocity, volume, linear_momentum;
   velocity        = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Velocity"), PeridigmField::STEP_NP1);
   volume          = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Volume"), PeridigmField::STEP_NONE);
-  linear_momentum = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Linear_Momentum"), PeridigmField::STEP_NP1);
+  linear_momentum = peridigm->getBlocks()->begin()->getData(fieldManager.getFieldId("Linear_Momentum"), PeridigmField::STEP_NONE);
   // Get the neighborhood structure
   const int numOwnedPoints = (neighborhoodData.NumOwnedPoints());
 
@@ -162,7 +162,8 @@ void FourPointTest() {
   // Now check that volumes and linear momentum is correct
   double *volume_values = volume->Values();
   double *linear_momentum_values  = linear_momentum->Values();
-  double globalLM = blocks->begin()->getGlobalData( fieldManager.getFieldId("Global_Linear_Momentum") );
+  Teuchos::RCP<Epetra_Vector> data = blocks->begin()->getData( fieldManager.getFieldId("Global_Linear_Momentum"), PeridigmField::STEP_NONE );
+  double globalLM = (*data)[0];
   BOOST_CHECK_CLOSE(globalLM, 450715.83, 0.00001);	// Check global scalar value
   for (int i=0;i<numElements;i++)
     BOOST_CHECK_CLOSE(volume_values[i], 1.5, 1.0e-15);

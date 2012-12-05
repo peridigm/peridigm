@@ -58,8 +58,8 @@ PeridigmNS::Compute_Kinetic_Energy::Compute_Kinetic_Energy(Teuchos::RCP<const Te
   FieldManager& fieldManager = FieldManager::self();
   m_volumeFieldId = fieldManager.getFieldId("Volume");
   m_velocityFieldId = fieldManager.getFieldId("Velocity");
-  m_kineticEnergyFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Kinetic_Energy");
-  m_globalKineticEnergyFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Global_Kinetic_Energy");
+  m_kineticEnergyFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Kinetic_Energy");
+  m_globalKineticEnergyFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Global_Kinetic_Energy");
   m_fieldIds.push_back(m_volumeFieldId);
   m_fieldIds.push_back(m_velocityFieldId);
   m_fieldIds.push_back(m_kineticEnergyFieldId);
@@ -91,7 +91,7 @@ int PeridigmNS::Compute_Kinetic_Energy::computeKineticEnergy( Teuchos::RCP< std:
 		volume                = blockIt->getData(m_volumeFieldId, PeridigmField::STEP_NONE);
 		velocity              = blockIt->getData(m_velocityFieldId, PeridigmField::STEP_NP1);
 		if (storeLocal)
-          kinetic_energy = blockIt->getData(m_kineticEnergyFieldId, PeridigmField::STEP_NP1);
+          kinetic_energy = blockIt->getData(m_kineticEnergyFieldId, PeridigmField::STEP_NONE);
 		
 		// Sanity check
 		if (velocity->Map().NumMyElements() != volume->Map().NumMyElements())
@@ -149,8 +149,10 @@ int PeridigmNS::Compute_Kinetic_Energy::computeKineticEnergy( Teuchos::RCP< std:
 	}
 	
 	// Store global energy in block (block globals are static, so only need to assign data to first block)
-	if (!storeLocal)
-		blocks->begin()->getGlobalData(m_globalKineticEnergyFieldId) = globalKE;
+	if (!storeLocal){
+      Teuchos::RCP<Epetra_Vector> data = blocks->begin()->getData(m_globalKineticEnergyFieldId, PeridigmField::STEP_NONE);
+      (*data)[0] = globalKE;
+    }
 
 	return(0);
 

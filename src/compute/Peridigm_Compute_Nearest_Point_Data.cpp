@@ -56,8 +56,7 @@ using namespace std;
 PeridigmNS::Compute_Nearest_Point_Data::Compute_Nearest_Point_Data(Teuchos::RCP<const Teuchos::ParameterList> params,
                                                                    Teuchos::RCP<const Epetra_Comm> epetraComm_)
   : Compute(params, epetraComm_), m_elementId(-1.0), m_blockId(-1), m_verbose(false), m_elementIdFieldId(-1),
-    m_modelCoordinatesFieldId(-1), m_variableFieldId(-1), m_outputFieldId(-1), m_outputXFieldId(-1),
-    m_outputYFieldId(-1), m_outputZFieldId(-1)
+    m_modelCoordinatesFieldId(-1), m_variableFieldId(-1), m_outputFieldId(-1)
 {
   m_positionX = params->get<double>("X");
   m_positionY = params->get<double>("Y");
@@ -84,18 +83,11 @@ PeridigmNS::Compute_Nearest_Point_Data::Compute_Nearest_Point_Data(Teuchos::RCP<
   else
     TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error:  Nearest_Point_Data compute class can be called only for SCALAR or VECTOR data.\n");
 
-  if(m_variableLength == 1){
+  if(m_variableLength == 1)
     m_outputFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, m_outputLabel);
-    m_fieldIds.push_back(m_outputFieldId);
-  }
-  else if(m_variableLength == 3){
-    m_outputXFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, m_outputLabel+"_X");
-    m_outputYFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, m_outputLabel+"_Y");
-    m_outputZFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, m_outputLabel+"_Z");
-    m_fieldIds.push_back(m_outputXFieldId);
-    m_fieldIds.push_back(m_outputYFieldId);
-    m_fieldIds.push_back(m_outputZFieldId);
-  }
+  else if(m_variableLength == 3)
+    m_outputFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::VECTOR, PeridigmField::CONSTANT, m_outputLabel);
+  m_fieldIds.push_back(m_outputFieldId);
 
   PeridigmField::Temporal temporal = fieldManager.getFieldSpec(m_variableFieldId).getTemporal();
   m_variableIsStated = false;
@@ -232,19 +224,16 @@ int PeridigmNS::Compute_Nearest_Point_Data::compute( Teuchos::RCP< std::vector<P
     }
   }
 
+  Teuchos::RCP<Epetra_Vector> outputData = blocks->begin()->getData(m_outputFieldId, PeridigmField::STEP_NONE);
   if(m_variableLength == 1){
     epetraComm()->SumAll(&localData[0], &globalData[0], 1);
-    double& outputData = blocks->begin()->getGlobalData(m_outputFieldId);
-    outputData = globalData[0];
+    (*outputData)[0] = globalData[0];
   }
   else if(m_variableLength == 3){
     epetraComm()->SumAll(&localData[0], &globalData[0], 3);
-    double& outputDataX = blocks->begin()->getGlobalData(m_outputXFieldId);
-    outputDataX = globalData[0];
-    double& outputDataY = blocks->begin()->getGlobalData(m_outputYFieldId);
-    outputDataY = globalData[1];
-    double& outputDataZ = blocks->begin()->getGlobalData(m_outputZFieldId);
-    outputDataZ = globalData[2];
+    (*outputData)[0] = globalData[0];
+    (*outputData)[1] = globalData[1];
+    (*outputData)[2] = globalData[2];
   }
 
   return 0;

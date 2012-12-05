@@ -59,11 +59,12 @@ PeridigmNS::Compute_Linear_Momentum::Compute_Linear_Momentum(Teuchos::RCP<const 
   FieldManager& fieldManager = FieldManager::self();
   m_volumeFieldId = fieldManager.getFieldId("Volume");
   m_velocityFieldId = fieldManager.getFieldId("Velocity");
-  m_linearMomentumFieldId = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Linear_Momentum");
+  m_linearMomentumFieldId = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::CONSTANT, "Linear_Momentum");
   m_globalLinearMomentumFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Global_Linear_Momentum");
   m_fieldIds.push_back(m_volumeFieldId);
   m_fieldIds.push_back(m_velocityFieldId);
   m_fieldIds.push_back(m_linearMomentumFieldId);
+  m_fieldIds.push_back(m_globalLinearMomentumFieldId);
 }
 
 //! Destructor.
@@ -91,7 +92,7 @@ int PeridigmNS::Compute_Linear_Momentum::computeLinearMomentum( Teuchos::RCP< st
 
     volume          = blockIt->getData(m_volumeFieldId, PeridigmField::STEP_NONE);
     velocity        = blockIt->getData(m_velocityFieldId, PeridigmField::STEP_NP1);
-    linear_momentum = blockIt->getData(m_linearMomentumFieldId, PeridigmField::STEP_NP1);
+    linear_momentum = blockIt->getData(m_linearMomentumFieldId, PeridigmField::STEP_NONE);
 	
     // Sanity check
     if ( (velocity->Map().NumMyElements() != volume->Map().NumMyElements()) )
@@ -159,9 +160,11 @@ int PeridigmNS::Compute_Linear_Momentum::computeLinearMomentum( Teuchos::RCP< st
 */
 
   // Store global energy in block (block globals are static, so only need to assign data to first block)
-  if (!storeLocal)
-    blocks->begin()->getGlobalData(m_globalLinearMomentumFieldId) = globalLM;
-	
+  if (!storeLocal){
+    Teuchos::RCP<Epetra_Vector> data = blocks->begin()->getData(m_globalLinearMomentumFieldId, PeridigmField::STEP_NONE);
+    (*data)[0] = globalLM;
+  }
+
   return(0);
 
 }

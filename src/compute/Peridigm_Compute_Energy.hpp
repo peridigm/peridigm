@@ -54,7 +54,6 @@ ComputeClass(Strain_Energy_Density,Compute_Energy)
 
 #else
 
-
 #ifndef PERIDIGM_COMPUTE_ENERGY_HPP
 #define PERIDIGM_COMPUTE_ENERGY_HPP
 
@@ -90,8 +89,10 @@ namespace PeridigmNS {
     int m_velocityFieldId;
     int m_weightedVolumeFieldId;
     int m_dilatationFieldId;
+    int m_kineticEnergyFieldId;
+    int m_strainEnergyDensityFieldId;
+    int m_strainEnergyFieldId;
     int m_globalKineticEnergyFieldId;
-    int m_globalStrainEnergyDensityFieldId;
     int m_globalStrainEnergyFieldId;
   };
 }

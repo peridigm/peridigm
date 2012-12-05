@@ -546,7 +546,6 @@ void PeridigmNS::Peridigm::instantiateComputeManager() {
       }
     }
   }
-
   computeManager = Teuchos::rcp( new PeridigmNS::ComputeManager( computeParams, peridigmComm  ) );
 }
 

@@ -148,6 +148,8 @@ public:
 
   std::vector<FieldSpec> getFieldSpecs() { return fieldSpecs; }
 
+  bool isGlobalSpec(int fieldId) { return specIsGlobal[fieldId]; }
+
   std::vector<std::string> getFieldLabels() {
     std::vector<std::string> labels;
     for(std::vector<FieldSpec>::const_iterator it = fieldSpecs.begin() ; it != fieldSpecs.end() ; it++)
@@ -200,10 +202,20 @@ private:
   std::vector<FieldSpec> fieldSpecs;
 
   std::map<std::string, int> labelToIdMap;
+
+  std::vector<bool> specIsGlobal;
 };
 
-std::ostream& operator<<(std::ostream& os, const FieldSpec& fieldSpec);
-
 }
+
+std::ostream& operator<<(std::ostream& os, const PeridigmNS::PeridigmField::Relation& step);
+
+std::ostream& operator<<(std::ostream& os, const PeridigmNS::PeridigmField::Length& step);
+
+std::ostream& operator<<(std::ostream& os, const PeridigmNS::PeridigmField::Temporal& step);
+
+std::ostream& operator<<(std::ostream& os, const PeridigmNS::PeridigmField::Step& step);
+
+std::ostream& operator<<(std::ostream& os, const PeridigmNS::FieldSpec& fieldSpec);
 
 #endif // PERIDIGM_FIELD_HPP

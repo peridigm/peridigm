@@ -104,13 +104,10 @@ Teuchos::RCP<Epetra_Vector> PeridigmNS::State::getData(int fieldId)
   std::map< int, Teuchos::RCP<Epetra_Vector> >::iterator lb = fieldIdToDataMap.lower_bound(fieldId);
   // if the key does not exist, throw an exception
   bool keyExists = ( lb != fieldIdToDataMap.end() && !(fieldIdToDataMap.key_comp()(fieldId, lb->first)) );
-  if(!keyExists){
-    std::stringstream ss;
-    ss << fieldId;
-    TEUCHOS_TEST_FOR_EXCEPTION(!keyExists, Teuchos::RangeError, 
-                       "****Error in PeridigmNS::State::getData(), field id does not exist: " + ss.str() + "\n");
-  }
-  return lb->second;
+  if(keyExists)
+    return lb->second;
+  else
+    return Teuchos::RCP<Epetra_Vector>();
 }
 
 void PeridigmNS::State::copyLocallyOwnedDataFromState(Teuchos::RCP<PeridigmNS::State> source)

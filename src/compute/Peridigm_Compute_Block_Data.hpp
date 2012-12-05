@@ -102,9 +102,6 @@ namespace PeridigmNS {
     std::vector<int> m_fieldIds;
     int m_variableFieldId;
     int m_outputFieldId;
-    int m_outputXFieldId;
-    int m_outputYFieldId;
-    int m_outputZFieldId;
   };
 }
 

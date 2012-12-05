@@ -140,7 +140,7 @@ void FourPointTest()
   ref           = peridigm->getBlock(0)->getData(fieldManager.getFieldId("Model_Coordinates"), PeridigmField::STEP_NONE);
   coords        = peridigm->getBlock(0)->getData(fieldManager.getFieldId("Coordinates"), PeridigmField::STEP_NP1);
   dilatation    = peridigm->getBlock(0)->getData(fieldManager.getFieldId("Dilatation"), PeridigmField::STEP_NP1);
-  strain_energy = peridigm->getBlock(0)->getData(fieldManager.getFieldId("Strain_Energy"), PeridigmField::STEP_NP1);
+  strain_energy = peridigm->getBlock(0)->getData(fieldManager.getFieldId("Strain_Energy"), PeridigmField::STEP_NONE);
   // Get the neighborhood structure
   const int numOwnedPoints = (neighborhoodData.NumOwnedPoints());
 
@@ -174,7 +174,8 @@ void FourPointTest()
   // Now check that volumes and energy is correct
   double *volume_values = volume->Values();
   double *strain_energy_values  = strain_energy->Values();
-  double globalSE = blocks->begin()->getGlobalData( fieldManager.getFieldId("Global_Strain_Energy") );
+  Teuchos::RCP<Epetra_Vector> data = blocks->begin()->getData( fieldManager.getFieldId("Global_Strain_Energy"), PeridigmField::STEP_NONE );
+  double globalSE = (*data)[0];
   BOOST_CHECK_CLOSE(globalSE, 2.289723e10, 0.3);	// Check global scalar value
   for (int i=0;i<numElements;i++)
     BOOST_CHECK_CLOSE(volume_values[i], 1.5, 1.0e-15);

@@ -62,7 +62,7 @@ PeridigmNS::Compute_Strain_Energy::Compute_Strain_Energy(Teuchos::RCP<const Teuc
   m_coordinatesFieldId = fieldManager.getFieldId("Coordinates");
   m_weightedVolumeFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Weighted_Volume");
   m_dilatationFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Dilatation");
-  m_strainEnergyFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Strain_Energy");
+  m_strainEnergyFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Strain_Energy");
   m_globalStrainEnergyFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Global_Strain_Energy");
   m_fieldIds.push_back(m_volumeFieldId);
   m_fieldIds.push_back(m_modelCoordinatesFieldId);
@@ -102,7 +102,7 @@ int PeridigmNS::Compute_Strain_Energy::computeStrainEnergy( Teuchos::RCP< std::v
     w_volume              = blockIt->getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE);
     dilatation            = blockIt->getData(m_dilatationFieldId, PeridigmField::STEP_NP1);
     if (storeLocal)
-      strain_energy = blockIt->getData(m_strainEnergyFieldId, PeridigmField::STEP_NP1);
+      strain_energy = blockIt->getData(m_strainEnergyFieldId, PeridigmField::STEP_NONE);
 	
     // Sanity check
     if (ref->Map().NumMyElements() != volume->Map().NumMyElements() || coord->Map().NumMyElements() != ref->Map().NumMyElements())
@@ -199,8 +199,10 @@ int PeridigmNS::Compute_Strain_Energy::computeStrainEnergy( Teuchos::RCP< std::v
   }
 
   // Store global energy in block (block globals are static, so only need to assign data to first block)
-  if (!storeLocal)
-    blocks->begin()->getGlobalData(m_globalStrainEnergyFieldId) = globalSE;
+  if (!storeLocal){
+    Teuchos::RCP<Epetra_Vector> data = blocks->begin()->getData(m_globalStrainEnergyFieldId, PeridigmField::STEP_NONE);
+    (*data)[0] = globalSE;
+  }
 
   return(0);
 

@@ -50,7 +50,7 @@
 //! Standard constructor.
 PeridigmNS::Compute_Global_Angular_Momentum::Compute_Global_Angular_Momentum(Teuchos::RCP<const Teuchos::ParameterList> params,
                                                                              Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute_Angular_Momentum(params, epetraComm_), m_globalAngularMomentumFieldId(-1)
+  : Compute_Angular_Momentum(params, epetraComm_)
 {}
 
 //! Destructor.

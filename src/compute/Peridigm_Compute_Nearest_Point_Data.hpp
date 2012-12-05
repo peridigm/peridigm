@@ -105,9 +105,6 @@ namespace PeridigmNS {
     int m_modelCoordinatesFieldId;
     int m_variableFieldId;
     int m_outputFieldId;
-    int m_outputXFieldId;
-    int m_outputYFieldId;
-    int m_outputZFieldId;
   };
 }
 
