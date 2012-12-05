@@ -174,8 +174,9 @@ void PeridigmNS::DataManager::allocateData(vector<int> fieldIds)
       comm = overlapVectorPointMap->Comm().Clone();
     else if(!ownedScalarBondMap.is_null())
       comm = ownedScalarBondMap->Comm().Clone();
+    else
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::NullReferenceError, 
-                                 "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate global data with no comm object (forget setMaps()?).");
+				 "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate global data with no comm object (forget setMaps()?).");
     
     // create the maps for global data, if needed
     if(scalarGlobalMap.is_null()){
