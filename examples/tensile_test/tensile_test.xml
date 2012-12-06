@@ -123,14 +123,14 @@
        <Parameter name="Compute Class" type="string" value="Block_Data"/>
        <Parameter name="Calculation Type" type="string" value="Sum"/>
        <Parameter name="Block" type="string" value="block_3"/>
-       <Parameter name="Variable" type="string" value="Force_Density"/>
+       <Parameter name="Variable" type="string" value="Force"/>
        <Parameter name="Output Label" type="string" value="Top_Reaction_Force"/>
 	</ParameterList>
 	<ParameterList name="Bottom Reaction Force">
        <Parameter name="Compute Class" type="string" value="Block_Data"/>
        <Parameter name="Calculation Type" type="string" value="Sum"/>
        <Parameter name="Block" type="string" value="block_1"/>
-       <Parameter name="Variable" type="string" value="Force_Density"/>
+       <Parameter name="Variable" type="string" value="Force"/>
        <Parameter name="Output Label" type="string" value="Bottom_Reaction_Force"/>
 	</ParameterList>
   </ParameterList>
