@@ -60,8 +60,33 @@ PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList>
   // No input to validate; no computes requested
   if (params == Teuchos::null) return;
 
+  // Create a list of the compute classes that will be built based on user-supplied compute class parameters.
+  // If the name of one of these compute classes appears in both the compute class parameters ParameterList and
+  // the output variables ParameterList, we want to only instantiate one object and we want to use the compute
+  // class parameters (as opposed to an empty parameter list, which is what is done when creating compute objects
+  // based on the output variables ParameterList).
+  vector<string> computeClassParameterNames;
+  if (params->isSublist("Compute Class Parameters")) {
+    Teuchos::RCP<Teuchos::ParameterList> computeClassParameters = sublist(params, "Compute Class Parameters");
+    for (Teuchos::ParameterList::ConstIterator it = computeClassParameters->begin(); it != computeClassParameters->end(); ++it) {
+      computeClassParameterNames.push_back(it->first);
+    }
+  }
+
   vector< pair<string, Teuchos::RCP<Teuchos::ParameterList> > > computeClassesToBuild;
-  vector<string> alreadyBuilt;
+
+  // Create compute classes based on requested output variables
+  if (params->isSublist("Output Variables")) {
+    Teuchos::RCP<Teuchos::ParameterList> outputVariables = sublist(params, "Output Variables");
+    for (Teuchos::ParameterList::ConstIterator it = outputVariables->begin(); it != outputVariables->end(); ++it) {
+      const string& name = it->first;
+      if( find(computeClassParameterNames.begin(), computeClassParameterNames.end(), name) == computeClassParameterNames.end() ){
+        Teuchos::RCP<Teuchos::ParameterList> nullRcp;
+        pair<string, Teuchos::RCP<Teuchos::ParameterList> > nameAndParamsPair(name, nullRcp);
+        computeClassesToBuild.push_back(nameAndParamsPair);
+      }
+    }
+  }
 
   // Create compute classes based on user-supplied compute class parameters
   if (params->isSublist("Compute Class Parameters")) {
@@ -72,23 +97,6 @@ PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList>
       string name = params->get<string>("Compute Class");
       pair<string, Teuchos::RCP<Teuchos::ParameterList> > nameAndParamsPair(name, params);
       computeClassesToBuild.push_back(nameAndParamsPair);
-      alreadyBuilt.push_back(name);
-    }
-  }
-
-  // Create compute classes based on requested output variables
-  if (params->isSublist("Output Variables")) {
-    Teuchos::RCP<Teuchos::ParameterList> outputVariables = sublist(params, "Output Variables");
-    for (Teuchos::ParameterList::ConstIterator it = outputVariables->begin(); it != outputVariables->end(); ++it) {
-      const string& name = it->first;
-      // Add the class to the list only if it isn't already there
-      // Multiple instances of a compute class are allowed only in the case of user-supplied compute class parameters
-      if( find(alreadyBuilt.begin(), alreadyBuilt.end(), name) == alreadyBuilt.end() ){
-        Teuchos::RCP<Teuchos::ParameterList> nullRcp;
-        pair<string, Teuchos::RCP<Teuchos::ParameterList> > nameAndParamsPair(name, nullRcp);
-        computeClassesToBuild.push_back(nameAndParamsPair);
-        alreadyBuilt.push_back(name);
-      }
     }
   }
 
