@@ -27,9 +27,9 @@
   <ParameterList name="Materials">
 	<ParameterList name="My Material">
 	  <Parameter name="Material Model" type="string" value="Elastic"/>
-	  <Parameter name="Density" type="double" value="7.8"/>
-	  <Parameter name="Bulk Modulus" type="double" value="1.3e12"/>
-	  <Parameter name="Shear Modulus" type="double" value="7.0e11"/>
+	  <Parameter name="Density" type="double" value="8.0"/>
+	  <Parameter name="Bulk Modulus" type="double" value="1.500e12"/>
+	  <Parameter name="Shear Modulus" type="double" value="6.923e11"/>
 	</ParameterList>
   </ParameterList>
 
@@ -65,7 +65,7 @@
 	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
 	  <Parameter name="Node Set" type="string" value="nodelist_2"/>
 	  <Parameter name="Coordinate" type="string" value="y"/>
-	  <Parameter name="Value" type="string" value="0.0508*t"/>
+	  <Parameter name="Value" type="string" value="0.1016*t"/>
 	</ParameterList>
   </ParameterList>
 
@@ -74,7 +74,7 @@
 	<Parameter name="Initial Time" type="double" value="0.0"/>
 	<Parameter name="Final Time" type="double" value="1.0"/> 
 	<ParameterList name="QuasiStatic">
-	  <Parameter name="Number of Load Steps" type="int" value="10"/>
+	  <Parameter name="Number of Load Steps" type="int" value="4"/>
 	  <Parameter name="Absolute Tolerance" type="double" value="1.0"/>
 	  <Parameter name="Maximum Solver Iterations" type="int" value="10"/>
 	</ParameterList>
