@@ -18,7 +18,8 @@
        acceleration  cm/s^2
 
      List of horizons for a few different element sizes
-     Horizon size = 3.015 * element_size)
+     Thickness of sample is 0.124 inches = 0.314 centimeters
+     Horizon size = 3.015 * element_size
        2 elem through thickness use 0.4748
        3 elem through thickness use 0.3165
        5 elem through thickness use 0.1900
