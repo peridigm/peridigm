@@ -1,26 +1,37 @@
-<ParameterList>
+<!--
+     Description
+       Simulation of a simple tensile test on a dogbone specimen.
+       Quasi-static simulation with applied displacement boundary
+       conditions corresponding to 1% strain.  The material is
+       stainless steel.  Reactions at the end of the specimen and
+       displacements at two points corresponding to a 1-inch
+       strain gage are recorded.
 
-<!-- Units are CGS
-     mass          g
-     length        cm
-     time          s
-     density       g/cm^3
-     force         dyne
-     pressure      dyne/cm^2
-     velocity      cm/s
-     acceleration  cm/s^2
+     Units are CGS
+       mass          g
+       length        cm
+       time          s
+       density       g/cm^3
+       force         dyne
+       pressure      dyne/cm^2
+       velocity      cm/s
+       acceleration  cm/s^2
+
+     List of horizons for a few different element sizes
+     Horizon size = 3.015 * element_size)
+       2 elem through thickness use 0.4748
+       3 elem through thickness use 0.3165
+       5 elem through thickness use 0.1900
+       7 elem through thickness use 0.1357
+       9 elem through thickness use 0.1055
 -->
 
+<ParameterList>
 <Parameter name="Verbose" type="bool" value="false"/>
 
   <ParameterList name="Discretization">
   	<Parameter name="Type" type="string" value="Exodus" />
-	<!--  Thickness: 0.124 inches = 0.314 meters
-		Horizon sizes: 
-		2 elem through thickness use 0.49
-		3 elem through thickness use 0.35
-		5 elem through thickness use 0.19 -->
-	<Parameter name="Horizon" type="double" value="0.35"/>
+	<Parameter name="Horizon" type="double" value="0.1900"/>
 	<Parameter name="Input Mesh File" type="string" value="tensile_test.g"/>
   </ParameterList>
 	
@@ -41,31 +52,43 @@
   </ParameterList>
 	
   <ParameterList name="Boundary Conditions">
-  	<!-- Fix the bottom of the specimen -->
-	<ParameterList name="Prescribed Displacement Fix Bottom In Y">
+	<!-- Pull to 1% strain -->
+	<ParameterList name="Prescribed Displacement Bottom">
 	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
 	  <Parameter name="Node Set" type="string" value="nodelist_1"/>
 	  <Parameter name="Coordinate" type="string" value="y"/>
-	  <Parameter name="Value" type="string" value="0.0"/>
+	  <Parameter name="Value" type="string" value="y*0.01*t"/>
 	</ParameterList>
-	<ParameterList name="Prescribed Displacement Fix Rigid Body Motion In X">
+	<ParameterList name="Prescribed Displacement Top">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_2"/>
+	  <Parameter name="Coordinate" type="string" value="y"/>
+	  <Parameter name="Value" type="string" value="y*0.01*t"/>
+	</ParameterList>
+  	<!-- Elliminate rigid body modes -->
+	<ParameterList name="Prescribed Displacement Fix Bottom Rigid Body Motion In X">
 	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
 	  <Parameter name="Node Set" type="string" value="nodelist_3"/>
 	  <Parameter name="Coordinate" type="string" value="x"/>
 	  <Parameter name="Value" type="string" value="0.0"/>
 	</ParameterList>
-	<ParameterList name="Prescribed Displacement Fix Rigid Body Motion In Y">
+	<ParameterList name="Prescribed Displacement Fix Bottom Rigid Body Motion In Z">
 	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
 	  <Parameter name="Node Set" type="string" value="nodelist_4"/>
 	  <Parameter name="Coordinate" type="string" value="z"/>
 	  <Parameter name="Value" type="string" value="0.0"/>
 	</ParameterList>
-	<!-- Pull the top to 1% strain -->
-	<ParameterList name="Prescribed Displacement Top">
+	<ParameterList name="Prescribed Displacement Fix Top Rigid Body Motion In X">
 	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
-	  <Parameter name="Node Set" type="string" value="nodelist_2"/>
-	  <Parameter name="Coordinate" type="string" value="y"/>
-	  <Parameter name="Value" type="string" value="0.1016*t"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_5"/>
+	  <Parameter name="Coordinate" type="string" value="x"/>
+	  <Parameter name="Value" type="string" value="0.0"/>
+	</ParameterList>
+	<ParameterList name="Prescribed Displacement Fix Top Rigid Body Motion In Z">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_6"/>
+	  <Parameter name="Coordinate" type="string" value="z"/>
+	  <Parameter name="Value" type="string" value="0.0"/>
 	</ParameterList>
   </ParameterList>
 
