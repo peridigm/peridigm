@@ -22,7 +22,7 @@
 #{SLOT_CENTER=0.2425~in}
 #{SLOT_RADIUS=0.0625~in}
 
-#{NUM_ELEM_THROUGH_THICKNESS=3}
+#{NUM_ELEM_THROUGH_THICKNESS=5}
 #{ELEMENT_SIZE=THICKNESS/NUM_ELEM_THROUGH_THICKNESS}
 #{HORIZON=3.0*ELEMENT_SIZE}
 
@@ -59,15 +59,17 @@ delete volume 2 to 5
 
 volume 1 size {ELEMENT_SIZE}
 
-webcut volume 1 with plane yplane offset {-LENGTH/2 + HORIZON} noimprint nomerge 
-webcut volume 6 with plane yplane offset {LENGTH/2 - HORIZON} noimprint nomerge 
+webcut volume 1 with plane yplane offset {-LENGTH/2 + 2.0*HORIZON} noimprint nomerge 
+webcut volume 6 with plane yplane offset {LENGTH/2 - 2.0*HORIZON} noimprint nomerge 
 
 mesh volume all
 
-nodeset 1 volume 1
-nodeset 2 volume 7
-nodeset 3 curve 72
-nodeset 4 curve 80
+nodeset 1 volume 1 # bottom end              apply linear displacement field in y
+nodeset 2 volume 7 # top end                 apply linear displacement field in y
+nodeset 3 curve 74 # z-axis edge on bottom   constrain in x
+nodeset 4 curve 77 # x-axis edge on bottom   constrain in z
+nodeset 5 curve 72 # z-axis edge on top      constrain in x
+nodeset 6 curve 79 # x-axis edge on top      constrain in z
 
 block 1 volume 1
 block 2 volume 6
