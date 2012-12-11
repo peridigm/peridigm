@@ -48,7 +48,7 @@
 #ifndef PERIDIGM_TEXTFILEDISCRETIZATION_HPP
 #define PERIDIGM_TEXTFILEDISCRETIZATION_HPP
 
-#include "Peridigm_AbstractDiscretization.hpp"
+#include "Peridigm_Discretization.hpp"
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_Comm.h>
 #include "mesh_input/quick_grid/QuickGridData.h"
@@ -56,7 +56,7 @@
 namespace PeridigmNS {
 
   //! Discretization class that creates discretization from a text file containing node locations, volumes, and block ids.
-  class TextFileDiscretization : public PeridigmNS::AbstractDiscretization {
+  class TextFileDiscretization : public PeridigmNS::Discretization {
 
   public:
 

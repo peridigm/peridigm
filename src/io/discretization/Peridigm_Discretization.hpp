@@ -1,4 +1,4 @@
-/*! \file Peridigm_AbstractDiscretization.hpp */
+/*! \file Peridigm_Discretization.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,8 +45,8 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_ABSTRACTDISCRETIZATION_HPP
-#define PERIDIGM_ABSTRACTDISCRETIZATION_HPP
+#ifndef PERIDIGM_DISCRETIZATION_HPP
+#define PERIDIGM_DISCRETIZATION_HPP
 
 #include <Teuchos_RCP.hpp>
 #include <Epetra_Map.h>
@@ -57,17 +57,17 @@
 
 namespace PeridigmNS {
 
-  class AbstractDiscretization {
+  class Discretization {
   public:
 
     //! Constructor
-    AbstractDiscretization() :
+    Discretization() :
       elementBlocks(Teuchos::rcp(new std::map< std::string, std::vector<int> >())),
       nodeSets(Teuchos::rcp(new std::map< std::string, std::vector<int> >()))
     {}
 
     //! Destructor
-    virtual ~AbstractDiscretization() {}
+    virtual ~Discretization() {}
 
     //! Return the number of element blocks
     int getNumBlocks() { return (int)elementBlocks->size(); }
@@ -159,12 +159,12 @@ namespace PeridigmNS {
   private:
 
     //! Private to prohibit copying.
-    AbstractDiscretization(const AbstractDiscretization&);
+    Discretization(const Discretization&);
 
     //! Private to prohibit copying.
-    AbstractDiscretization& operator=(const AbstractDiscretization&);
+    Discretization& operator=(const Discretization&);
   };
 
 }
 
-#endif // PERIDIGM_ABSTRACTDISCRETIZATION_HPP
+#endif // PERIDIGM_DISCRETIZATION_HPP

@@ -260,22 +260,22 @@ PeridigmNS::TextFileDiscretization::createMaps(const QUICKGRID::Data& decomp)
   // oneDimensionalMap
   // used for global IDs and scalar data
   dimension = 1;
-  oneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(AbstractDiscretization::getOwnedMap(*comm, decomp, dimension)));
+  oneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(Discretization::getOwnedMap(*comm, decomp, dimension)));
 
   // oneDimensionalOverlapMap
   // used for global IDs and scalar data, includes ghosts
   dimension = 1;
-  oneDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(AbstractDiscretization::getOverlapMap(*comm, decomp, dimension)));
+  oneDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(Discretization::getOverlapMap(*comm, decomp, dimension)));
 
   // threeDimensionalMap
   // used for R3 vector data, e.g., u, v, etc.
   dimension = 3;
-  threeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(AbstractDiscretization::getOwnedMap(*comm, decomp, dimension)));
+  threeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(Discretization::getOwnedMap(*comm, decomp, dimension)));
 
   // threeDimensionalOverlapMap
   // used for R3 vector data, e.g., u, v, etc.,  includes ghosts
   dimension = 3;
-  threeDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(AbstractDiscretization::getOverlapMap(*comm, decomp, dimension)));
+  threeDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(Discretization::getOverlapMap(*comm, decomp, dimension)));
 }
 
 void
@@ -284,14 +284,14 @@ PeridigmNS::TextFileDiscretization::createNeighborhoodData(const QUICKGRID::Data
    neighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
    neighborhoodData->SetNumOwned(decomp.numPoints);
    memcpy(neighborhoodData->OwnedIDs(), 
- 		 AbstractDiscretization::getLocalOwnedIds(decomp, *oneDimensionalOverlapMap).get(),
+ 		 Discretization::getLocalOwnedIds(decomp, *oneDimensionalOverlapMap).get(),
  		 decomp.numPoints*sizeof(int));
    memcpy(neighborhoodData->NeighborhoodPtr(), 
  		 decomp.neighborhoodPtr.get(),
  		 decomp.numPoints*sizeof(int));
    neighborhoodData->SetNeighborhoodListSize(decomp.sizeNeighborhoodList);
    memcpy(neighborhoodData->NeighborhoodList(),
- 		 AbstractDiscretization::getLocalNeighborList(decomp, *oneDimensionalOverlapMap).get(),
+ 		 Discretization::getLocalNeighborList(decomp, *oneDimensionalOverlapMap).get(),
  		 decomp.sizeNeighborhoodList*sizeof(int));
    neighborhoodData = filterBonds(neighborhoodData);
 }

@@ -51,13 +51,13 @@
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_RCP.hpp>
 #include <Epetra_Comm.h>
-#include "Peridigm_AbstractDiscretization.hpp"
+#include "Peridigm_Discretization.hpp"
 #include "mesh_input/quick_grid/QuickGridData.h"
 
 namespace PeridigmNS {
 
   /*!
-   * \brief A factory class to instantiate AbstractDiscretization objects
+   * \brief A factory class to instantiate Discretization objects
    */
   class DiscretizationFactory {
   public:
@@ -68,10 +68,10 @@ namespace PeridigmNS {
     //! Destructor
     virtual ~DiscretizationFactory() {}
 
-    virtual Teuchos::RCP<AbstractDiscretization> 
+    virtual Teuchos::RCP<Discretization> 
     create(const Teuchos::RCP<const Epetra_Comm>& epetra_comm);
 
-    virtual Teuchos::RCP<AbstractDiscretization> 
+    virtual Teuchos::RCP<Discretization> 
     create(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
            const Teuchos::RCP<const QUICKGRID::Data>& decomp);
 

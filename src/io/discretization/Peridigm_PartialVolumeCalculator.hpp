@@ -49,14 +49,14 @@
 #define PERIDIGM_PARTIALVOLUMECALCULATOR_HPP
 
 #include "Peridigm_Block.hpp"
-#include "Peridigm_AbstractDiscretization.hpp"
+#include "Peridigm_Discretization.hpp"
 #include <vector>
 
 namespace PeridigmNS {
 
   //! Computes the partial volumes for all neighbors of all elements in the given block.
   void computePartialVolume(Teuchos::RCP<PeridigmNS::Block> block,
-                            Teuchos::RCP<PeridigmNS::AbstractDiscretization> discretization);
+                            Teuchos::RCP<PeridigmNS::Discretization> discretization);
 
   //! Computes the volume of the given neighbor that falls within the neighborhood of the given point.
   double computePartialVolume(const double* const pt,

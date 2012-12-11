@@ -61,7 +61,7 @@
 #include <stk_io/util/UseCase_mesh.hpp>
 #endif
 
-#include "Peridigm_AbstractDiscretization.hpp"
+#include "Peridigm_Discretization.hpp"
 #include "mesh_input/quick_grid/QuickGridData.h"
 
 #include <vector>
@@ -70,7 +70,7 @@
 namespace PeridigmNS {
 
   //! Discretization class that creates discretizations using STK (reads Exodus II mesh files).
-  class STKDiscretization : public PeridigmNS::AbstractDiscretization {
+  class STKDiscretization : public PeridigmNS::Discretization {
 
   public:
 

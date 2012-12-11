@@ -45,7 +45,7 @@
 // ************************************************************************
 //@HEADER
 
-#include <Peridigm_AbstractDiscretization.hpp>
+#include <Peridigm_Discretization.hpp>
 #include "../Peridigm_Compute_Strain_Energy_Density.hpp"
 #include "../Peridigm_Compute_Local_Strain_Energy_Density.hpp"
 #include "../Peridigm_Compute_Global_Strain_Energy_Density.hpp"

@@ -45,7 +45,7 @@
 // ************************************************************************
 //@HEADER
 
-#include <Peridigm_AbstractDiscretization.hpp>
+#include <Peridigm_Discretization.hpp>
 #include "../Peridigm_Compute_Force.hpp"
 #include <Peridigm_DataManager.hpp>
 #include <Peridigm_DiscretizationFactory.hpp>

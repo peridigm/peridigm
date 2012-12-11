@@ -132,7 +132,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
     discParams->set("Search Horizon", discParams->get<double>("Horizon"));
 
   DiscretizationFactory discFactory(discParams);
-  Teuchos::RCP<AbstractDiscretization> peridigmDisc = discFactory.create(peridigmComm);
+  Teuchos::RCP<Discretization> peridigmDisc = discFactory.create(peridigmComm);
   initializeDiscretization(peridigmDisc);
 
   // If the user did not provide a finite-difference probe length, use a fraction of the minimum element radius
@@ -353,7 +353,7 @@ void PeridigmNS::Peridigm::instantiateDamageModels() {
   }
 }
 
-void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscretization> peridigmDisc) {
+void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization> peridigmDisc) {
 
   // oneDimensionalMap
   // used for cell volumes and scalar constitutive data
@@ -420,7 +420,7 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<AbstractDiscret
 }
 
 void PeridigmNS::Peridigm::initializeNodeSets(Teuchos::RCP<Teuchos::ParameterList>& bcParams,
-                                              Teuchos::RCP<AbstractDiscretization> peridigmDisc) {
+                                              Teuchos::RCP<Discretization> peridigmDisc) {
 
   nodeSets = Teuchos::rcp(new map< string, vector<int> >());
 
@@ -547,7 +547,7 @@ void PeridigmNS::Peridigm::instantiateComputeManager() {
   computeManager = Teuchos::rcp( new PeridigmNS::ComputeManager( computeParams, peridigmComm  ) );
 }
 
-void PeridigmNS::Peridigm::initializeBlocks(Teuchos::RCP<AbstractDiscretization> disc) {
+void PeridigmNS::Peridigm::initializeBlocks(Teuchos::RCP<Discretization> disc) {
 
   // Did user specify default blocks?
   bool defaultBlocks = false;
