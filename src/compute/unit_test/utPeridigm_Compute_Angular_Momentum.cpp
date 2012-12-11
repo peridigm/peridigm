@@ -45,7 +45,7 @@
 // ************************************************************************
 //@HEADER
 
-#include <Peridigm_AbstractDiscretization.hpp>
+#include <Peridigm_Discretization.hpp>
 #include "../Peridigm_Compute_Local_Angular_Momentum.hpp"
 #include "../Peridigm_Compute_Global_Angular_Momentum.hpp"
 #include <Peridigm_DataManager.hpp>

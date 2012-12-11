@@ -1,4 +1,4 @@
-/*! \file Peridigm_AbstractDiscretization.cpp */
+/*! \file Peridigm_Discretization.cpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,12 +45,12 @@
 // ************************************************************************
 //@HEADER
 
-#include "Peridigm_AbstractDiscretization.hpp"
+#include "Peridigm_Discretization.hpp"
 
 using namespace std;
 using tr1::shared_ptr;
 
-Epetra_BlockMap PeridigmNS::AbstractDiscretization::getOverlap(int ndf, int numShared, int*shared, int numOwned,const  int* owned, const Epetra_Comm& comm){
+Epetra_BlockMap PeridigmNS::Discretization::getOverlap(int ndf, int numShared, int*shared, int numOwned,const  int* owned, const Epetra_Comm& comm){
 
 	int numPoints = numShared+numOwned;
 	UTILITIES::Array<int> ids(numPoints);
@@ -66,7 +66,7 @@ Epetra_BlockMap PeridigmNS::AbstractDiscretization::getOverlap(int ndf, int numS
 
 }
 
-UTILITIES::Array<int> PeridigmNS::AbstractDiscretization::getSharedGlobalIds(const QUICKGRID::Data& gridData){
+UTILITIES::Array<int> PeridigmNS::Discretization::getSharedGlobalIds(const QUICKGRID::Data& gridData){
 	std::set<int> ownedIds(gridData.myGlobalIDs.get(),gridData.myGlobalIDs.get()+gridData.numPoints);
 	std::set<int> shared;
 	int *neighPtr = gridData.neighborhoodPtr.get();
@@ -99,7 +99,7 @@ UTILITIES::Array<int> PeridigmNS::AbstractDiscretization::getSharedGlobalIds(con
 	return sharedGlobalIds;
 }
 
-shared_ptr<int> PeridigmNS::AbstractDiscretization::getLocalOwnedIds(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap){
+shared_ptr<int> PeridigmNS::Discretization::getLocalOwnedIds(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap){
 	UTILITIES::Array<int> localIds(gridData.numPoints);
 	int *lIds = localIds.get();
 	int *end = localIds.get()+gridData.numPoints;
@@ -109,7 +109,7 @@ shared_ptr<int> PeridigmNS::AbstractDiscretization::getLocalOwnedIds(const QUICK
 	return localIds.get_shared_ptr();
 }
 
-shared_ptr<int> PeridigmNS::AbstractDiscretization::getLocalNeighborList(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap){
+shared_ptr<int> PeridigmNS::Discretization::getLocalNeighborList(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap){
 	UTILITIES::Array<int> localNeighborList(gridData.sizeNeighborhoodList);
 	int *localNeig = localNeighborList.get();
 	int *neighPtr = gridData.neighborhoodPtr.get();
@@ -127,7 +127,7 @@ shared_ptr<int> PeridigmNS::AbstractDiscretization::getLocalNeighborList(const Q
 	return localNeighborList.get_shared_ptr();
 }
 
-Epetra_BlockMap PeridigmNS::AbstractDiscretization::getOwnedMap(const Epetra_Comm& comm,const QUICKGRID::Data& gridData, int ndf) {
+Epetra_BlockMap PeridigmNS::Discretization::getOwnedMap(const Epetra_Comm& comm,const QUICKGRID::Data& gridData, int ndf) {
 	int numShared=0;
 	int *sharedPtr=NULL;
 	int numOwned = gridData.numPoints;
@@ -135,7 +135,7 @@ Epetra_BlockMap PeridigmNS::AbstractDiscretization::getOwnedMap(const Epetra_Com
 	return getOverlap(ndf, numShared,sharedPtr,numOwned,ownedPtr,comm);
 }
 
-Epetra_BlockMap PeridigmNS::AbstractDiscretization::getOverlapMap(const Epetra_Comm& comm,const QUICKGRID::Data& gridData, int ndf) {
+Epetra_BlockMap PeridigmNS::Discretization::getOverlapMap(const Epetra_Comm& comm,const QUICKGRID::Data& gridData, int ndf) {
 	UTILITIES::Array<int> sharedGIDS = getSharedGlobalIds(gridData);
 	std::tr1::shared_ptr<int> sharedPtr = sharedGIDS.get_shared_ptr();
 	int numShared = sharedGIDS.get_size();

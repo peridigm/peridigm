@@ -8,7 +8,7 @@ if (NOT ${buildInSource})
 endif (NOT ${buildInSource})
 
 add_executable(utPeridigm_PdQuickGridDiscretization
-               ${DISCRETIZATION_DIR}/Peridigm_AbstractDiscretization.cpp
+               ${DISCRETIZATION_DIR}/Peridigm_Discretization.cpp
                ${DISCRETIZATION_DIR}/Peridigm_PdQuickGridDiscretization.cpp
                ./utPeridigm_PdQuickGridDiscretization.cpp)
 target_link_libraries(utPeridigm_PdQuickGridDiscretization
@@ -24,7 +24,7 @@ target_link_libraries(utPeridigm_PdQuickGridDiscretization
 add_test (utPeridigm_PdQuickGridDiscretization python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_PdQuickGridDiscretization)
 
 add_executable(utPeridigm_PdQuickGridDiscretization_MPI_np2
-               ${DISCRETIZATION_DIR}/Peridigm_AbstractDiscretization.cpp
+               ${DISCRETIZATION_DIR}/Peridigm_Discretization.cpp
                ${DISCRETIZATION_DIR}/Peridigm_PdQuickGridDiscretization.cpp
                ./utPeridigm_PdQuickGridDiscretization_MPI_np2.cpp)
 target_link_libraries(utPeridigm_PdQuickGridDiscretization_MPI_np2
@@ -40,7 +40,7 @@ target_link_libraries(utPeridigm_PdQuickGridDiscretization_MPI_np2
 add_test (utPeridigm_PdQuickGridDiscretization_MPI_np2  python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_PdQuickGridDiscretization_MPI_np2)
 
 add_executable(utPeridigm_STKDiscretization
-               ${DISCRETIZATION_DIR}/Peridigm_AbstractDiscretization.cpp
+               ${DISCRETIZATION_DIR}/Peridigm_Discretization.cpp
                ${DISCRETIZATION_DIR}/Peridigm_STKDiscretization.cpp
                ./utPeridigm_STKDiscretization.cpp)
 target_link_libraries(utPeridigm_STKDiscretization

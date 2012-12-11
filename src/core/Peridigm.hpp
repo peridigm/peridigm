@@ -68,7 +68,7 @@
 #include <NOX_Epetra_Interface_Preconditioner.H>
 
 #include "Peridigm_Block.hpp"
-#include "Peridigm_AbstractDiscretization.hpp"
+#include "Peridigm_Discretization.hpp"
 #include "Peridigm_ModelEvaluator.hpp"
 #include "Peridigm_DataManager.hpp"
 #include "Peridigm_SerialMatrix.hpp"
@@ -102,11 +102,11 @@ namespace PeridigmNS {
     void instantiateDamageModels();
 
     //! Initialize discretization and maps
-    void initializeDiscretization(Teuchos::RCP<AbstractDiscretization> peridigmDisc);
+    void initializeDiscretization(Teuchos::RCP<Discretization> peridigmDisc);
 
     //! Load node sets from input deck and/or input mesh into nodeSets container
     void initializeNodeSets(Teuchos::RCP<Teuchos::ParameterList>& bcParams,
-                            Teuchos::RCP<AbstractDiscretization> peridigmDisc);
+                            Teuchos::RCP<Discretization> peridigmDisc);
 
     //! Initialize contact
     void initializeContact();
@@ -121,7 +121,7 @@ namespace PeridigmNS {
     void initializeOutputManager();
 
     //! Initialize blocks
-    void initializeBlocks(Teuchos::RCP<AbstractDiscretization> disc);
+    void initializeBlocks(Teuchos::RCP<Discretization> disc);
 
     //! Main routine to drive time integration
     void execute();

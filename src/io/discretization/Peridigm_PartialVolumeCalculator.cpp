@@ -50,7 +50,7 @@
 using namespace std;
 
 void PeridigmNS::computePartialVolume(Teuchos::RCP<PeridigmNS::Block> block,
-                                      Teuchos::RCP<PeridigmNS::AbstractDiscretization> discretization)
+                                      Teuchos::RCP<PeridigmNS::Discretization> discretization)
 {
 
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();

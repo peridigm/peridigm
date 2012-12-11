@@ -55,7 +55,7 @@
 #include "muParser/muParserDef.h" // \todo Is this required?
 #include "muParser/muParser.h"
 
-#include "Peridigm_AbstractDiscretization.hpp"
+#include "Peridigm_Discretization.hpp"
 
 namespace PeridigmNS {
 
@@ -105,7 +105,7 @@ namespace PeridigmNS {
     ~BoundaryAndInitialConditionManager(){}
 
     //! Initialize node sets, etc.
-    void initialize(Teuchos::RCP<AbstractDiscretization> discretization);
+    void initialize(Teuchos::RCP<Discretization> discretization);
 
     //! Apply initial displacements.
     void applyInitialDisplacements(Teuchos::RCP<Epetra_Vector> x,

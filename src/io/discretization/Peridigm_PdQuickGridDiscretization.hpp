@@ -50,13 +50,13 @@
 
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_Comm.h>
-#include "Peridigm_AbstractDiscretization.hpp"
+#include "Peridigm_Discretization.hpp"
 #include "mesh_input/quick_grid/QuickGridData.h"
 
 namespace PeridigmNS {
 
   //! Discretization class that creates discretizations using PdQuickGrid.
-  class PdQuickGridDiscretization : public PeridigmNS::AbstractDiscretization {
+  class PdQuickGridDiscretization : public PeridigmNS::Discretization {
 
   public:
 

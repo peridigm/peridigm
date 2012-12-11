@@ -67,7 +67,7 @@ PeridigmNS::BoundaryAndInitialConditionManager::BoundaryAndInitialConditionManag
     TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
 }
 
-void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<AbstractDiscretization> discretization)
+void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Discretization> discretization)
 {
   nodeSets = Teuchos::rcp(new map< string, vector<int> >());
 

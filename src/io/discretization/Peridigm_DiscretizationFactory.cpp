@@ -64,10 +64,10 @@ PeridigmNS::DiscretizationFactory::DiscretizationFactory(const Teuchos::RCP<Teuc
 
 }
 
-Teuchos::RCP<PeridigmNS::AbstractDiscretization>
+Teuchos::RCP<PeridigmNS::Discretization>
 PeridigmNS::DiscretizationFactory::create(const Teuchos::RCP<const Epetra_Comm>& epetra_comm)
 {
-  Teuchos::RCP<PeridigmNS::AbstractDiscretization> discretization;
+  Teuchos::RCP<PeridigmNS::Discretization> discretization;
 
   string type = discParams->get<string>("Type");
 
@@ -88,11 +88,11 @@ PeridigmNS::DiscretizationFactory::create(const Teuchos::RCP<const Epetra_Comm>&
   return discretization;
 }
 
-Teuchos::RCP<PeridigmNS::AbstractDiscretization>
+Teuchos::RCP<PeridigmNS::Discretization>
 PeridigmNS::DiscretizationFactory::create(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                                           const Teuchos::RCP<const QUICKGRID::QuickGridData>& decomp)
 {
-  Teuchos::RCP<PeridigmNS::AbstractDiscretization> discretization;
+  Teuchos::RCP<PeridigmNS::Discretization> discretization;
 
   string type = discParams->get<string>("Type");
 
