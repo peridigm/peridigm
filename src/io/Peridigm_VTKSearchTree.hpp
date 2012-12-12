@@ -1,4 +1,4 @@
-/*! \file Peridigm_SearchTree.hpp */
+/*! \file Peridigm_VTKSearchTree.hpp */
 //@HEADER
 // ************************************************************************
 //
@@ -43,26 +43,30 @@
 //
 // ************************************************************************
 //@HEADER
-#ifndef PERIDIGM_SEARCHTREE_HPP
-#define PERIDIGM_SEARCHTREE_HPP
+#ifndef PERIDIGM_VTKSEARCHTREE_HPP
+#define PERIDIGM_VTKSEARCHTREE_HPP
 
-#include <vector>
+#include "Peridigm_SearchTree.hpp"
+#include <vtkSmartPointer.h>
+#include <vtkCellArray.h>
+#include <vtkUnstructuredGrid.h>
+#include <vtkKdTreePointLocator.h>
 
 namespace PeridigmNS {
 
-  class SearchTree {
+  class VTKSearchTree : public SearchTree {
 
   public:
-
+    
     /** \brief Constructor.
      *
      *  \param numPoint     The number of points within the tree.
      *  \param coordinates  The coordinates of all the points in the tree, stored as (X0, Y0, Z0, X1, Y1, Z1, ..., XN, YN, ZN).
      **/
-    SearchTree(int numPoints, const double* coordinates);
+    VTKSearchTree(int numPoints, double* coordinates);
 
     //! Destructor.
-    virtual ~SearchTree(){}
+    virtual ~VTKSearchTree();
 
     /** \brief Finds the set of points within a given radius of a given point.
      *
@@ -76,14 +80,21 @@ namespace PeridigmNS {
      *
      *  For efficiency, the neighborList argument should be sized to approximately the size of the final neighbor list.
      **/
-    virtual void FindPointsWithinRadius(const double* point, double searchRadius, std::vector<int>& neighborList) = 0;
+    virtual void FindPointsWithinRadius(const double* point, double searchRadius, std::vector<int>& neighborList);
 
   private:
 
-    //! Default constructor is private to prevent use
-    SearchTree(){}
+    vtkSmartPointer<vtkCellArray> getCellArray(vtkIdType numCells);
+
+    vtkSmartPointer<vtkUnstructuredGrid> getGrid(double *points, int numPoints);
+
+    vtkSmartPointer<vtkUnstructuredGrid> getGrid(const vtkSmartPointer<vtkPoints>& points, const vtkSmartPointer<vtkCellArray>& cells, VTKCellType type=VTK_VERTEX);
+
+    vtkKdTreePointLocator* kdTree;
   };
 
 }
 
-#endif // PERIDIGM_SEARCHTREE_HPP
+#endif // PERIDIGM_VTKSEARCHTREE_HPP
+
+
