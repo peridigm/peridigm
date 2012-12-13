@@ -86,13 +86,15 @@ namespace PeridigmNS {
 
     vtkSmartPointer<vtkCellArray> getCellArray(vtkIdType numCells);
 
-    vtkSmartPointer<vtkUnstructuredGrid> getGrid(double *points, int numPoints);
+    vtkSmartPointer<vtkUnstructuredGrid> getGrid(double *points,
+                                                 int numPoints);
 
-    vtkSmartPointer<vtkUnstructuredGrid> getGrid(const vtkSmartPointer<vtkPoints>& points, const vtkSmartPointer<vtkCellArray>& cells, VTKCellType type=VTK_VERTEX);
+    vtkSmartPointer<vtkUnstructuredGrid> getGrid(const vtkSmartPointer<vtkPoints>& points,
+                                                 const vtkSmartPointer<vtkCellArray>& cells,
+                                                 VTKCellType type=VTK_VERTEX);
 
     vtkKdTreePointLocator* kdTree;
   };
-
 }
 
 #endif // PERIDIGM_VTKSEARCHTREE_HPP

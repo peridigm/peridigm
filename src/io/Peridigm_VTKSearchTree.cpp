@@ -53,7 +53,7 @@ using namespace std;
 PeridigmNS::VTKSearchTree::VTKSearchTree(int numPoints, double* coordinates) : SearchTree(numPoints, coordinates)
 {
   vtkSmartPointer<vtkUnstructuredGrid> overlapGrid = getGrid(coordinates, numPoints);
-  vtkKdTreePointLocator* kdTree = vtkKdTreePointLocator::New();
+  kdTree = vtkKdTreePointLocator::New();
   kdTree->SetDataSet(overlapGrid);
 }
 

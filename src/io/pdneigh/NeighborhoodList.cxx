@@ -58,6 +58,8 @@
 #include "Epetra_Comm.h"
 #include "Epetra_Distributor.h"
 
+#include "Peridigm_VTKSearchTree.hpp"
+
 #include <stdexcept>
 
 namespace PDNEIGH {
@@ -581,6 +583,8 @@ void NeighborhoodList::buildNeighborhoodList
 	vtkKdTreePointLocator* kdTree = vtkKdTreePointLocator::New();
 	kdTree->SetDataSet(overlapGrid);
 
+    //PeridigmNS::SearchTree* searchTree = new PeridigmNS::VTKSearchTree(numOverlapPoints, xOverlapPtr.get());
+
 	/*
 	 * this is used by bond filters
 	 */
@@ -692,8 +696,8 @@ void NeighborhoodList::buildNeighborhoodList
 		}
 	}
 
+    //delete searchTree;
 	kdTree->Delete();
-
 }
 
 }
