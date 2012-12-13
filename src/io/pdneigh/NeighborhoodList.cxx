@@ -657,7 +657,14 @@ void NeighborhoodList::buildNeighborhoodList
 			 */
 			kdTree->FindPointsWithinRadius(horizon, x, kdTreeList);
 			bool *bondFlags = markForExclusion.get();
-			filter_ptr->filterBonds(kdTreeList, x, p, xOverlap, bondFlags);
+
+            // TEMPORARY HACK, CONVERT kdTreeList to std::vector<int>
+            std::vector<int> treeList(kdTreeList->GetNumberOfIds());
+			for(int n=0;n<kdTreeList->GetNumberOfIds();n++)
+              treeList[n] = kdTreeList->GetId(n);
+            // END TEMPORARY HACK
+
+			filter_ptr->filterBonds(treeList, x, p, xOverlap, bondFlags);
 
 			/*
 			 * Determine number of neighbors from flags

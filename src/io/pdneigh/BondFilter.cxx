@@ -78,10 +78,10 @@ bool FinitePlane::bondIntersect(double x[3], double tolerance) {
 }
 
 
-void BondFilterDefault::filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool *bondFlags) {
+void BondFilterDefault::filterBonds(std::vector<int>& treeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool *bondFlags) {
 
 	bool *flagIter = bondFlags;
-	for(int n=0;n<kdTreeList->GetNumberOfIds();n++,flagIter++){
+	for(unsigned int n=0;n<treeList.size();n++,flagIter++){
 		/*
 		 * All bonds are innocent until proven guilty
 		 */
@@ -92,7 +92,7 @@ void BondFilterDefault::filterBonds(vtkIdList* kdTreeList, const double *pt, con
 		 */
 		if(includeSelf) continue;
 
-		size_t uid = kdTreeList->GetId(n);
+		size_t uid = treeList[n];
 		if(ptLocalId==uid) *flagIter=1;
 	}
 
@@ -102,7 +102,7 @@ shared_ptr<BondFilter> BondFilterDefault::clone(bool withSelf) {
 	return shared_ptr<BondFilterDefault>(new BondFilterDefault(withSelf));
 }
 
-void FinitePlaneFilter::filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool *bondFlags) {
+void FinitePlaneFilter::filterBonds(std::vector<int>& treeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool *bondFlags) {
 
 	/*
 	 * Create bond points
@@ -111,11 +111,11 @@ void FinitePlaneFilter::filterBonds(vtkIdList* kdTreeList, const double *pt, con
 	const double *p1;
 	double x[3], t;
 	bool *flagIter = bondFlags;
-	for(int p=0;p<kdTreeList->GetNumberOfIds();p++,flagIter++){
+	for(unsigned int p=0;p<treeList.size();p++,flagIter++){
 		/*
 		 * Local id of point within neighborhood
 		 */
-		size_t uid = kdTreeList->GetId(p);
+      size_t uid = treeList[p];
 		/*
 		 * All bonds are innocent until proven guilty
 		 */
