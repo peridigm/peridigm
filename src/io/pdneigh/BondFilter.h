@@ -45,10 +45,10 @@
 
 #ifndef BONDFILTER_H_
 #define BONDFILTER_H_
-#include "vtkIdList.h"
 #include <cstddef>
 #include <utility>
 #include <stdexcept>
+#include <vector>
 #include <string>
 #include "utilities/MemoryInclude.h"
 #include "utilities/Vector3D.h"
@@ -106,7 +106,7 @@ public:
 	 * single scalar flag can be associated with every point in the neighborhood of 'pt';
 	 * bonds are included by default, ie flag=0; if a point is excluded then flag =1 is set
 	 */
-	virtual void filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool* bondFlags) = 0;
+	virtual void filterBonds(std::vector<int>& treeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool* bondFlags) = 0;
 	virtual shared_ptr<BondFilter> clone(bool withSelf) = 0;
 protected:
 	bool includeSelf;
@@ -117,7 +117,7 @@ class BondFilterDefault : public BondFilter {
 public:
 	BondFilterDefault(bool withSelf=false) : BondFilter(withSelf) {}
 	virtual ~BondFilterDefault() {}
-	virtual void filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool* markForExclusion);
+	virtual void filterBonds(std::vector<int>& treeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool* markForExclusion);
 	virtual shared_ptr<BondFilter> clone(bool withSelf=true);
 };
 
@@ -133,7 +133,7 @@ public:
 	FinitePlaneFilter(const FinitePlane& plane, double tolerance) : BondFilter(false), tolerance(tolerance), plane(plane) {}
 	FinitePlaneFilter(const FinitePlane& plane, bool withSelf, double tolerance) : BondFilter(withSelf), tolerance(tolerance), plane(plane) {}
 	virtual ~FinitePlaneFilter() {}
-	virtual void filterBonds(vtkIdList* kdTreeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool* markForExclusion);
+	virtual void filterBonds(std::vector<int>& treeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool* markForExclusion);
 	virtual shared_ptr<BondFilter> clone(bool withSelf=true);
 private:
 	double tolerance;
