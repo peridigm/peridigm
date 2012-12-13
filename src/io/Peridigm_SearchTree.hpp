@@ -59,7 +59,7 @@ namespace PeridigmNS {
      *  \param numPoint     The number of points within the tree.
      *  \param coordinates  The coordinates of all the points in the tree, stored as (X0, Y0, Z0, X1, Y1, Z1, ..., XN, YN, ZN).
      **/
-    SearchTree(int numPoints, const double* coordinates);
+    SearchTree(int numPoints, const double* coordinates) {}
 
     //! Destructor.
     virtual ~SearchTree(){}
