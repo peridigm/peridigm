@@ -45,11 +45,6 @@
 
 #include "NeighborhoodList.h"
 
-#include "PdVTK.h"
-#include "vtkIdList.h"
-#include "vtkKdTree.h"
-#include "vtkKdTreePointLocator.h"
-
 #include "Sortable.h"
 #include "Array.h"
 #include "Vector3D.h"
@@ -423,6 +418,8 @@ void NeighborhoodList::createAndAddNeighborhood(){
 		 * Create "communication" plan
 		 */
 		error = Zoltan_Comm_Create(&plan,nSend,sendProcsPtr,MPI_COMM_WORLD,COMM_CREATE,&nReceive);
+        if(error)
+          throw std::runtime_error("****Error in NeighborhoodList::createAndAddNeighborhood(), Zoltan_Comm_Create() returned a nonzero error code.");
 	}
 
 
@@ -579,11 +576,7 @@ void NeighborhoodList::buildNeighborhoodList
 	/*
 	 * Create KdTree
 	 */
-	vtkSmartPointer<vtkUnstructuredGrid> overlapGrid = PdVTK::getGrid(xOverlapPtr,numOverlapPoints);
-	vtkKdTreePointLocator* kdTree = vtkKdTreePointLocator::New();
-	kdTree->SetDataSet(overlapGrid);
-
-    //PeridigmNS::SearchTree* searchTree = new PeridigmNS::VTKSearchTree(numOverlapPoints, xOverlapPtr.get());
+    PeridigmNS::SearchTree* searchTree = new PeridigmNS::VTKSearchTree(numOverlapPoints, xOverlapPtr.get());
 
 	/*
 	 * this is used by bond filters
@@ -601,13 +594,13 @@ void NeighborhoodList::buildNeighborhoodList
 		size_t localId=0;
 		for(;x!=x_end;x+=3, localId++){
 
-			vtkIdList* kdTreeList = vtkIdList::New();
+            std::vector<int> treeList;
 			/*
 			 * Note that list returned includes this point *
 			 */
-			kdTree->FindPointsWithinRadius(horizon, x, kdTreeList);
+			searchTree->FindPointsWithinRadius(x, horizon, treeList);
 
-			if(0==kdTreeList->GetNumberOfIds()){
+			if(0==treeList.size()){
 				/*
 				 * Houston, we have a problem
 				 */
@@ -621,17 +614,16 @@ void NeighborhoodList::buildNeighborhoodList
 				throw std::runtime_error(message);
 			}
 
-			size_t ptListSize = kdTreeList->GetNumberOfIds()+1;
+			size_t ptListSize = treeList.size()+1;
 			sizeList += ptListSize;
 
 			/*
 			 * Determine maximum possible number of neighbors over all points
 			 */
 			{
-				size_t numIds = kdTreeList->GetNumberOfIds();
+                size_t numIds = treeList.size();
 				if(numIds>max) max=numIds;
 			}
-			kdTreeList->Delete();
 		}
 	}
 	/*
@@ -651,19 +643,12 @@ void NeighborhoodList::buildNeighborhoodList
 		double *x = owned_x.get();
 		for(size_t p=0;p<num_owned_points;p++,x+=3,ptr++){
 			*ptr = neighPtr;
-			vtkIdList* kdTreeList = vtkIdList::New();
+            std::vector<int> treeList;
 			/*
 			 * Note that list returned includes this point * but at start of list
 			 */
-			kdTree->FindPointsWithinRadius(horizon, x, kdTreeList);
+			searchTree->FindPointsWithinRadius(x, horizon, treeList);
 			bool *bondFlags = markForExclusion.get();
-
-            // TEMPORARY HACK, CONVERT kdTreeList to std::vector<int>
-            std::vector<int> treeList(kdTreeList->GetNumberOfIds());
-			for(int n=0;n<kdTreeList->GetNumberOfIds();n++)
-              treeList[n] = kdTreeList->GetId(n);
-            // END TEMPORARY HACK
-
 			filter_ptr->filterBonds(treeList, x, p, xOverlap, bondFlags);
 
 			/*
@@ -680,9 +665,9 @@ void NeighborhoodList::buildNeighborhoodList
 			 * Loop over flags and save neighbors as appropriate; also accumulate number of neighbors
 			 */
 			size_t numNeigh=0;
-			for(int n=0;n<kdTreeList->GetNumberOfIds();n++,bondFlags++){
+			for(unsigned int n=0;n<treeList.size();n++,bondFlags++){
 				if(1==*bondFlags) continue;
-				int uid = kdTreeList->GetId(n);
+				int uid = treeList[n];
 				*list = uid;
 				list++;
 				numNeigh++;
@@ -699,12 +684,10 @@ void NeighborhoodList::buildNeighborhoodList
 			/*
 			 * Delete list
 			 */
-			kdTreeList->Delete();
 		}
 	}
 
-    //delete searchTree;
-	kdTree->Delete();
+	delete searchTree;
 }
 
 }
