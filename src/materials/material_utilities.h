@@ -84,7 +84,8 @@ void computeWeightedVolume
 		const double* volumeOverlap,
 		double *mOwned,
 		int myNumPoints,
-		const int* localNeighborList
+		const int* localNeighborList,
+        double horizon
 );
 
 
@@ -147,7 +148,13 @@ double computeWeightedVolume
 		const double *X,
 		const double *xOverlap,
 		const double* volumeOverlap,
-		const int* localNeighborList
+		const int* localNeighborList,
+        double horizon
+);
+
+double scalarInfluenceFunction(
+        double zeta, 
+        double horizon
 );
 
 void computeDilatation
@@ -159,7 +166,8 @@ void computeDilatation
 		const double* bondDamage,
 		double* dilatationOwned,
 		const int* localNeighborList,
-		int numOwnedPoints
+		int numOwnedPoints,
+        double horizon
 );
 
 void computeDeviatoricDilatation
@@ -172,7 +180,8 @@ void computeDeviatoricDilatation
 		const double* epd,
 		double* dilatationOwned,
 		const int* localNeighborList,
-		int numOwnedPoints
+		int numOwnedPoints,
+        double horizon
 );
 
 template<typename ScalarT>
@@ -185,7 +194,8 @@ void computeDilatationAD
 		const double* bondDamage,
 		ScalarT* dilatationOwned,
 		const int* localNeighborList,
-		int numOwnedPoints
+		int numOwnedPoints,
+        double horizon
  );
 
 namespace WITH_BOND_VOLUME {

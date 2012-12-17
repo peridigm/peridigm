@@ -228,6 +228,7 @@ double runPureShear(Teuchos::ParameterList& paramList, std::string output_file_n
 	 */
 	double K = paramList.get<double>("Bulk Modulus");
 	double MU = paramList.get<double>("Shear Modulus");
+	double horizon = paramList.get<double>("Horizon");
 	double lambda_i = paramList.get<double>("lambda_i");
 	double tau_b = paramList.get<double>("tau b");
 
@@ -264,7 +265,7 @@ double runPureShear(Teuchos::ParameterList& paramList, std::string output_file_n
 	 */
 	UTILITIES::Array<double> mPtr(numOwnedPoints);
 	mPtr.set(0.0);
-	MATERIAL_EVALUATION::computeWeightedVolume(pdGridData.myX.get(),pdGridData.cellVolume.get(),mPtr.get(),numOwnedPoints,pdGridData.neighborhood.get());
+	MATERIAL_EVALUATION::computeWeightedVolume(pdGridData.myX.get(),pdGridData.cellVolume.get(),mPtr.get(),numOwnedPoints,pdGridData.neighborhood.get(),horizon);
 
 	/*
 	 * Dilatation: intialize to zero
@@ -325,7 +326,8 @@ double runPureShear(Teuchos::ParameterList& paramList, std::string output_file_n
 			localNeighborList,
 			numOwnedPoints,
 			K,
-			MU
+			MU,
+            horizon
 	);
 
 	double t=t_start;

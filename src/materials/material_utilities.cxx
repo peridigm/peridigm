@@ -112,12 +112,25 @@ void set_pure_shear
 
 }
 
+// Simple influence function and placeholder for longer term more sophisticated
+// influence function
+double scalarInfluenceFunction
+(
+        double zeta, 
+        double horizon
+)
+{
+    //return 1.0 - zeta/horizon;
+    return 1.0; 
+}
+
 double computeWeightedVolume
 (
 		const double *X,
 		const double *xOverlap,
 		const double* volumeOverlap,
-		const int* localNeighborList
+		const int* localNeighborList,
+        double horizon
 ){
 
 	double m=0.0;
@@ -131,7 +144,10 @@ double computeWeightedVolume
 		double dx = XP[0]-X[0];
 		double dy = XP[1]-X[1];
 		double dz = XP[2]-X[2];
-		m+=(dx*dx+dy*dy+dz*dz)*cellVolume;
+		double zetaSquared = dx*dx+dy*dy+dz*dz;
+		double d = sqrt(zetaSquared);
+        double omega = scalarInfluenceFunction(d,horizon);
+		m+=omega*(zetaSquared)*cellVolume;
 	}
 
 	return m;
@@ -147,10 +163,10 @@ void computeDeviatoricDilatation
 		const double* epd,
 		double* dilatationOwned,
 		const int* localNeighborList,
-		int numOwnedPoints
+		int numOwnedPoints,
+        double horizon
 )
 {
-	double OMEGA=1.0;
 	const double *xOwned = xOverlap;
 	const double *yOwned = yOverlap;
 	const double *m = mOwned;
@@ -171,10 +187,11 @@ void computeDeviatoricDilatation
 			double dx = XP[0]-X[0];
 			double dy = XP[1]-X[1];
 			double dz = XP[2]-X[2];
-			double zetaSqared = dx*dx+dy*dy+dz*dz;
-			double d = sqrt(zetaSqared);
+			double zetaSquared = dx*dx+dy*dy+dz*dz;
+			double d = sqrt(zetaSquared);
+            double omega = scalarInfluenceFunction(d,horizon);
 			double e = (*epd);
-			*theta += 3.0*OMEGA*(1.0-*bondDamage)*d*e*cellVolume/(*m);
+			*theta += 3.0*omega*(1.0-*bondDamage)*d*e*cellVolume/(*m);
 		}
 
 	}
@@ -189,10 +206,10 @@ void computeDilatation
 		const double* bondDamage,
 		double* dilatationOwned,
 		const int* localNeighborList,
-		int numOwnedPoints
+		int numOwnedPoints,
+        double horizon
 )
 {
-	double OMEGA=1.0;
 	const double *xOwned = xOverlap;
 	const double *yOwned = yOverlap;
 	const double *m = mOwned;
@@ -213,14 +230,15 @@ void computeDilatation
 			double dx = XP[0]-X[0];
 			double dy = XP[1]-X[1];
 			double dz = XP[2]-X[2];
-			double zetaSqared = dx*dx+dy*dy+dz*dz;
+			double zetaSquared = dx*dx+dy*dy+dz*dz;
 			dx = YP[0]-Y[0];
 			dy = YP[1]-Y[1];
 			dz = YP[2]-Y[2];
 			double dY = dx*dx+dy*dy+dz*dz;
-			double d = sqrt(zetaSqared);
+			double d = sqrt(zetaSquared);
 			double e = sqrt(dY)-d;
-			*theta += 3.0*OMEGA*(1.0-*bondDamage)*d*e*cellVolume/(*m);
+            double omega = scalarInfluenceFunction(d,horizon);
+			*theta += 3.0*omega*(1.0-*bondDamage)*d*e*cellVolume/(*m);
 		}
 		
 	}
@@ -236,10 +254,10 @@ void computeDilatationAD
 		const double* bondDamage,
 		ScalarT* dilatationOwned,
 		const int* localNeighborList,
-		int numOwnedPoints
+		int numOwnedPoints,
+        double horizon
 )
 {
-	double OMEGA=1.0;
 	const double *xOwned = xOverlap;
 	const ScalarT *yOwned = yOverlap;
 	const double *m = mOwned;
@@ -260,18 +278,20 @@ void computeDilatationAD
 			double X_dx = XP[0]-X[0];
 			double X_dy = XP[1]-X[1];
 			double X_dz = XP[2]-X[2];
-			double zetaSqared = X_dx*X_dx+X_dy*X_dy+X_dz*X_dz;
+			double zetaSquared = X_dx*X_dx+X_dy*X_dy+X_dz*X_dz;
 			ScalarT Y_dx = YP[0]-Y[0];
 			ScalarT Y_dy = YP[1]-Y[1];
 			ScalarT Y_dz = YP[2]-Y[2];
 			ScalarT dY = Y_dx*Y_dx+Y_dy*Y_dy+Y_dz*Y_dz;
-			double d = sqrt(zetaSqared);
+			double d = sqrt(zetaSquared);
 			ScalarT e = sqrt(dY)-d;
-			*theta += 3.0*OMEGA*(1.0-*bondDamage)*d*e*cellVolume/(*m);
+            double omega = scalarInfluenceFunction(d,horizon);
+			*theta += 3.0*omega*(1.0-*bondDamage)*d*e*cellVolume/(*m);
 		}
 
 	}
 }
+
 
 /** Explicit template instantiation for double. */
 template
@@ -284,7 +304,8 @@ void computeDilatationAD<double>
 		const double* bondDamage,
 		double* dilatationOwned,
 		const int* localNeighborList,
-		int numOwnedPoints
+		int numOwnedPoints,
+        double horizon
  );
 
 
@@ -299,7 +320,8 @@ void computeDilatationAD<Sacado::Fad::DFad<double> >
 		const double* bondDamage,
 		Sacado::Fad::DFad<double>* dilatationOwned,
 		const int* localNeighborList,
-		int numOwnedPoints
+		int numOwnedPoints,
+        double horizon
  );
 
 /**
@@ -318,7 +340,6 @@ double computeDilatation
 		double weightedVolume
 )
 {
-	double OMEGA=1.0;
 	double bondDamage=0.0;
 	const double *v = volumeOverlap;
 	double m = weightedVolume;
@@ -333,14 +354,15 @@ double computeDilatation
 		double dx = XP[0]-X[0];
 		double dy = XP[1]-X[1];
 		double dz = XP[2]-X[2];
-		double zetaSqared = dx*dx+dy*dy+dz*dz;
+		double zetaSquared = dx*dx+dy*dy+dz*dz;
 
 		const double *YP = &yOverlap[3*localId];
 		dx = YP[0]-Y[0];
 		dy = YP[1]-Y[1];
 		dz = YP[2]-Y[2];
 		double dY = dx*dx+dy*dy+dz*dz;
-		double d = sqrt(zetaSqared);
+		double d = sqrt(zetaSquared);
+        double OMEGA = 1.0;
 		double e = sqrt(dY)-d;
 		theta += 3.0*OMEGA*(1.0-bondDamage)*d*e*cellVolume/m;
 
@@ -490,7 +512,8 @@ void computeWeightedVolume
 		const double* volumeOverlap,
 		double *mOwned,
 		int myNumPoints,
-		const int* localNeighborList
+		const int* localNeighborList,
+        double horizon
 ){
 	double *m = mOwned;
 	const double *xOwned = xOverlap;
@@ -498,7 +521,7 @@ void computeWeightedVolume
 	for(int p=0;p<myNumPoints;p++, xOwned+=3, m++){
 		int numNeigh = *neighPtr;
 		const double *X = xOwned;
-		*m=MATERIAL_EVALUATION::computeWeightedVolume(X,xOverlap,volumeOverlap,neighPtr);
+		*m=MATERIAL_EVALUATION::computeWeightedVolume(X,xOverlap,volumeOverlap,neighPtr,horizon);
 		neighPtr+=(numNeigh+1);
 	}
 }
@@ -518,6 +541,7 @@ double computeWeightedVolume
 		const double *xOverlap,
 		const double* bondVolume,
 		const int* localNeighborList
+       
 ){
 
 	double m=0.0;
@@ -532,7 +556,10 @@ double computeWeightedVolume
 		double dx = XP[0]-X[0];
 		double dy = XP[1]-X[1];
 		double dz = XP[2]-X[2];
-		m+=(dx*dx+dy*dy+dz*dz)*(*bond_volume);
+        double zetaSquared = dx*dx+dy*dy+dz*dz;
+        double d = sqrt(zetaSquared);
+        double OMEGA = 1.0;
+		m+=OMEGA*(zetaSquared)*(*bond_volume);
 	}
 
 	return m;
@@ -558,7 +585,6 @@ double computeDilatation
 		double weightedVolume
 )
 {
-	double OMEGA=1.0;
 	double bondDamage=0.0;
 	double m = weightedVolume;
 	double theta = 0.0;
@@ -571,14 +597,16 @@ double computeDilatation
 		double dx = XP[0]-X[0];
 		double dy = XP[1]-X[1];
 		double dz = XP[2]-X[2];
-		double zetaSqared = dx*dx+dy*dy+dz*dz;
+		double zetaSquared = dx*dx+dy*dy+dz*dz;
 
 		const double *YP = &yOverlap[3*localId];
 		dx = YP[0]-Y[0];
 		dy = YP[1]-Y[1];
 		dz = YP[2]-Y[2];
 		double dY = dx*dx+dy*dy+dz*dz;
-		double d = sqrt(zetaSqared);
+		double d = sqrt(zetaSquared);
+        //double omega = scalarInfluenceFunction(d,horizon);
+        double OMEGA = 1.0;
 		double e = sqrt(dY)-d;
 		theta += 3.0*OMEGA*(1.0-bondDamage)*d*e*(*bondVolume)/m;
 

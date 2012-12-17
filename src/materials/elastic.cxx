@@ -48,6 +48,7 @@
 #include <cmath>
 #include <Sacado.hpp>
 #include "elastic.h"
+#include "material_utilities.h"
 
 namespace MATERIAL_EVALUATION {
 
@@ -64,7 +65,8 @@ void computeInternalForceLinearElastic
 		const int*  localNeighborList,
 		int numOwnedPoints,
 		double BULK_MODULUS,
-		double SHEAR_MODULUS
+		double SHEAR_MODULUS,
+        double horizon
 )
 {
 
@@ -73,7 +75,6 @@ void computeInternalForceLinearElastic
 	 */
 	double K = BULK_MODULUS;
 	double MU = SHEAR_MODULUS;
-	double OMEGA=1.0;
 
 	const double *xOwned = xOverlap;
 	const double *yOwned = yOverlap;
@@ -91,7 +92,6 @@ void computeInternalForceLinearElastic
 		const double *Y = yOwned;
 		alpha = 15.0*MU/(*m);
 		double selfCellVolume = v[p];
-		double c1 = OMEGA*(*theta)*(9.0*K-15.0*MU)/(3.0*(*m));
 		for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++){
 			int localId = *neighPtr;
 			cellVolume = v[localId];
@@ -105,7 +105,9 @@ void computeInternalForceLinearElastic
 			dy = YP[1]-Y[1];
 			dz = YP[2]-Y[2];
 			dY = sqrt(dx*dx+dy*dy+dz*dz);
-			t = (1.0-*bondDamage)*(c1 * zeta + (1.0-*bondDamage) * OMEGA * alpha * (dY - zeta));
+            double omega = scalarInfluenceFunction(zeta,horizon);
+		    double c1 = omega*(*theta)*(9.0*K-15.0*MU)/(3.0*(*m));
+			t = (1.0-*bondDamage)*(c1 * zeta + (1.0-*bondDamage) * omega * alpha * (dY - zeta));
 			double fx = t * dx / dY;
 			double fy = t * dy / dY;
 			double fz = t * dz / dY;
@@ -134,7 +136,8 @@ void computeInternalForceLinearElasticAD
 		const int*  localNeighborList,
 		int numOwnedPoints,
 		double BULK_MODULUS,
-		double SHEAR_MODULUS
+		double SHEAR_MODULUS,
+        double horizon
 )
 {
 
@@ -143,7 +146,6 @@ void computeInternalForceLinearElasticAD
 	 */
 	double K = BULK_MODULUS;
 	double MU = SHEAR_MODULUS;
-	double OMEGA=1.0;
 
 	const double *xOwned = xOverlap;
 	const ScalarT *yOwned = yOverlap;
@@ -162,7 +164,6 @@ void computeInternalForceLinearElasticAD
 		const ScalarT *Y = yOwned;
 		alpha = 15.0*MU/(*m);
 		double selfCellVolume = v[p];
-		ScalarT c1 = OMEGA*(*theta)*(9.0*K-15.0*MU)/(3.0*(*m));
 		for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++){
 			int localId = *neighPtr;
 			cellVolume = v[localId];
@@ -176,7 +177,9 @@ void computeInternalForceLinearElasticAD
 			Y_dy = YP[1]-Y[1];
 			Y_dz = YP[2]-Y[2];
 			dY = sqrt(Y_dx*Y_dx+Y_dy*Y_dy+Y_dz*Y_dz);
-			t = (1.0-*bondDamage)*(c1 * zeta + (1.0-*bondDamage) * OMEGA * alpha * (dY - zeta));
+            double omega = scalarInfluenceFunction(zeta,horizon);
+		    ScalarT c1 = omega*(*theta)*(9.0*K-15.0*MU)/(3.0*(*m));
+			t = (1.0-*bondDamage)*(c1 * zeta + (1.0-*bondDamage) * omega * alpha * (dY - zeta));
 			fx = t * Y_dx / dY;
 			fy = t * Y_dy / dY;
 			fz = t * Y_dz / dY;
@@ -205,7 +208,9 @@ template void computeInternalForceLinearElasticAD<double>
 		const int*  localNeighborList,
 		int numOwnedPoints,
 		double BULK_MODULUS,
-		double SHEAR_MODULUS
+		double SHEAR_MODULUS,
+        double horizon
+
  );
 
 /** Explicit template instantiation for Sacado::Fad::DFad<double>. */
@@ -221,7 +226,8 @@ template void computeInternalForceLinearElasticAD<Sacado::Fad::DFad<double> >
 		const int*  localNeighborList,
 		int numOwnedPoints,
 		double BULK_MODULUS,
-		double SHEAR_MODULUS
+		double SHEAR_MODULUS,
+        double horizon
 );
 
 }

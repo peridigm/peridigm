@@ -320,7 +320,7 @@ void scf_probe(const std::string& json_filename) {
 
 	Array<double> cellVolume(gridData.numPoints,gridData.cellVolume);
 	double m_analytical = 4.0 * M_PI * pow(horizon,5) / 5.0;
-	double m_code = MATERIAL_EVALUATION::computeWeightedVolume(X.get(),xPtr.get(),cellVolume.get(),neighborhoodPtr.get());
+	double m_code = MATERIAL_EVALUATION::computeWeightedVolume(X.get(),xPtr.get(),cellVolume.get(),neighborhoodPtr.get(),horizon);
 	double rel_diff = std::abs(m_analytical-m_code)/m_analytical;
 	std::cout << std::scientific;
 	std::cout.precision(3);
