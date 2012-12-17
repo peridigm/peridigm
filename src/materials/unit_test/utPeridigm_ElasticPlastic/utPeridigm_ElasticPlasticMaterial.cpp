@@ -305,7 +305,7 @@ void runPureShear() {
 	 */
 	UTILITIES::Array<double> mPtr(numPoints);
 	mPtr.set(0.0);
-	MATERIAL_EVALUATION::computeWeightedVolume(pdGridData.myX.get(),pdGridData.cellVolume.get(),mPtr.get(),numPoints,pdGridData.neighborhood.get());
+	MATERIAL_EVALUATION::computeWeightedVolume(pdGridData.myX.get(),pdGridData.cellVolume.get(),mPtr.get(),numPoints,pdGridData.neighborhood.get(),horizon);
 
 	/*
 	 * Dilatation

@@ -62,7 +62,8 @@ void computeInternalForceLinearElastic
 		const int*  localNeighborList,
 		int numOwnedPoints,
 		double BULK_MODULUS,
-		double SHEAR_MODULUS
+		double SHEAR_MODULUS,
+        double horizon
 );
 
 template<typename ScalarT>
@@ -78,7 +79,8 @@ void computeInternalForceLinearElasticAD
 		const int*  localNeighborList,
 		int numOwnedPoints,
 		double BULK_MODULUS,
-		double SHEAR_MODULUS
+		double SHEAR_MODULUS,
+        double horizon
 );
 
 }
