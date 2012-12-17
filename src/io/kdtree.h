@@ -94,10 +94,10 @@ struct span_axis {
 template<class value_type>
 class point {
 public:
-	inline point() : p({0,0,0}) {}
-	inline point(value_type value) : p({value,value,value})  {}
-	inline point(value_type a, value_type b, value_type c) : p({a,b,c})  {}
-	inline point(const value_type q[3]) : p({q[0],q[1],q[2]})  {}
+      inline point() { p[0] = 0; p[1] = 0; p[2] = 0; }
+      inline point(value_type value) { p[0] = value; p[1] = value; p[2] = value; }
+      inline point(value_type a, value_type b, value_type c) { p[0] = a ; p[1] = b ; p[2] = c; }
+      inline point(const value_type q[3]) { p[0] = q[0] ; p[1] = q[1] ; p[2] = q[2]; }
 //	inline point& operator=(const point&) = default;
 //	inline point(const point&) = default;
 
@@ -132,7 +132,7 @@ public:
 
 
 private:
-	const value_type p[3];
+	value_type p[3];
 };
 
 
@@ -582,7 +582,7 @@ public:
 		rectangular_range<value_type> H(p,h/2.0);
 
 		ordinal_type *s=scratch.get();
-		for(ordinal_type i=0;i<neighbors.size();i++){
+		for(ordinal_type i=0;i<static_cast<ordinal_type>(neighbors.size());i++){
 			ordinal_type j=neighbors[i];
 
 			point<value_type> q= points.get_point(j);
@@ -750,7 +750,8 @@ private:
 		/*
 		 * Left
 		 */
-		rectangular_range<value_type> r_left=r.left({n->axis,n->cut});
+		span_axis<value_type> sa = {n->axis, n->cut};
+		rectangular_range<value_type> r_left=r.left(sa);
 		if (R.contains(r_left)){
 			/*
 			 * R contains all points below 'n'
@@ -772,7 +773,7 @@ private:
 		/*
 		 * Right
 		 */
-		rectangular_range<value_type> r_right=r.right({n->axis,n->cut});
+		rectangular_range<value_type> r_right=r.right(sa);
 		if (R.contains(r_right)){
 			/*
 			 * R contains all points below 'n'
