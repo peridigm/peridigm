@@ -47,7 +47,9 @@
 #include "Peridigm_JAMSearchTree.hpp"
 #include <stdexcept>
 
-PeridigmNS::JAMSearchTree::JAMSearchTree(int numPoints, double* coordinates) : SearchTree(numPoints, coordinates)
+
+PeridigmNS::JAMSearchTree::JAMSearchTree(int numPoints, double* coordinates) : SearchTree(numPoints, coordinates),
+tree(femanica::kdtree<double,int>::get_tree(coordinates,numPoints))
 {
 }
 
@@ -57,5 +59,5 @@ PeridigmNS::JAMSearchTree::~JAMSearchTree()
 
 void PeridigmNS::JAMSearchTree::FindPointsWithinRadius(const double* point, double searchRadius, std::vector<int>& neighborList)
 {
-  throw std::runtime_error("****Error, JAMSearchTree is a work in progress.\n");
+	tree.all_neighbors_within_radius(point,searchRadius,neighborList);
 }
