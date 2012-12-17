@@ -47,6 +47,7 @@
 #define PERIDIGM_JAMSEARCHTREE_HPP
 
 #include "Peridigm_SearchTree.hpp"
+#include "kdtree.h"
 
 namespace PeridigmNS {
 
@@ -77,7 +78,9 @@ namespace PeridigmNS {
      *  For efficiency, the neighborList argument should be sized to approximately the size of the final neighbor list.
      **/
     virtual void FindPointsWithinRadius(const double* point, double searchRadius, std::vector<int>& neighborList);
+    femanica::kdtree<double,int> tree;
   };
+
 }
 
 #endif // PERIDIGM_JAMSEARCHTREE_HPP
