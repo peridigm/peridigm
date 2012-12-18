@@ -2,7 +2,7 @@
 
   <ParameterList name="Discretization">
 	<Parameter name="Type" type="string" value="Exodus" />
-	<Parameter name="Horizon" type="double" value="0.5075"/>
+	<Parameter name="Horizon" type="double" value="0.5025"/>
 	<Parameter name="Input Mesh File" type="string" value="Bar.g"/>
     <Parameter name="Omit Bonds Between Blocks" type="string" value="All" />
   </ParameterList>
@@ -101,6 +101,7 @@
 	  <Parameter name="Dilatation" type="bool" value="true"/>
 	  <Parameter name="Weighted_Volume" type="bool" value="true"/>
       <Parameter name="Lambda" type="bool" value="true"/>
+      <Parameter name="Number_Of_Neighbors" type="bool" value="true"/>
       <Parameter name="Number_Of_Neighbors" type="bool" value="true"/>
     </ParameterList>
   </ParameterList>

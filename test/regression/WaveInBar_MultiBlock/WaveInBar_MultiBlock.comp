@@ -12,5 +12,6 @@ NODAL VARIABLES absolute 1.0E-12
 	Force_DensityY  absolute 5.0
 	Force_DensityZ  absolute 5.0
 ELEMENT VARIABLES absolute 1.E-12
-	Weighted_Volume absolute 1.0E-15
-	Dilatation      absolute 5.0E-13
+	Weighted_Volume      absolute 1.0E-15
+	Dilatation           absolute 5.0E-13
+	Number_Of_Neighbors  absolute 5.0E-10

@@ -57,6 +57,7 @@
 	  <Parameter name="Force_Density" type="bool" value="true"/>
 	  <Parameter name="Weighted_Volume" type="bool" value="true"/>
 	  <Parameter name="Damage" type="bool" value="true"/>
+      <Parameter name="Number_Of_Neighbors" type="bool" value="true"/>
 	</ParameterList>
   </ParameterList>
 
