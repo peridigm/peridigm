@@ -424,7 +424,7 @@ void probe_shear
 	file_stream.open("ut_bondVolumeConvergenceStudy.dat",ios::app|ios::out);
 	file_stream << nx << " ";
 	file_stream << std::scientific;
-	file_stream.precision(15);
+	file_stream.precision(12);
 	file_stream << 2.0*horizon/nx << " ";
 	file_stream << m_code << " ";
 	file_stream << ed2 << "\n";
