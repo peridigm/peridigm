@@ -652,6 +652,9 @@ void NeighborhoodList::buildNeighborhoodList
 			 * Note that list returned includes this point * but at start of list
 			 */
 			searchTree->FindPointsWithinRadius(x, horizon, treeList);
+
+			//sort(treeList.begin(), treeList.end());
+
 			bool *bondFlags = markForExclusion.get();
 			filter_ptr->filterBonds(treeList, x, p, xOverlap, bondFlags);
 
