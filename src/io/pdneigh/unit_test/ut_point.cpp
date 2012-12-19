@@ -49,10 +49,9 @@
 #include <boost/test/parameterized_test.hpp>
 #include <cstddef>
 #include <cstdlib>
-#include "kdtree.h"
 #include <iostream>
 #include <float.h>
-
+#include "../../kdtree.h"
 
 using femanica::point;
 using femanica::rectangular_range;
