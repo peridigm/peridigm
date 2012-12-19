@@ -81,3 +81,7 @@ add_test (ut_point python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./ut_poin
 add_executable(ut_kdtree_rectangular_search ut_kdtree_rectangular_search.cpp)
 target_link_libraries(ut_kdtree_rectangular_search ${UT_REQUIRED_LIBS})
 add_test (ut_kdtree_rectangular_search python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./ut_kdtree_rectangular_search)
+
+add_executable(ut_kdtree_spherical_search ut_kdtree_spherical_search.cpp)
+target_link_libraries(ut_kdtree_spherical_search ${UT_REQUIRED_LIBS})
+add_test (ut_kdtree_spherical_search python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./ut_kdtree_spherical_search)
