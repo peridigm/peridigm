@@ -115,7 +115,8 @@ namespace PeridigmNS {
 
   private:
     struct Zoltan_Struct *zoltan;
-    int *part;
+    int *partToCoordIdx;
+    int *searchParts;
   };
 }
 
