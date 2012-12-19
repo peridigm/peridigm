@@ -46,14 +46,153 @@
 
 #include "Peridigm_ZoltanSearchTree.hpp"
 #include <stdexcept>
+#include <stdlib.h>
 
-PeridigmNS::ZoltanSearchTree::ZoltanSearchTree(int numPoints, double* coordinates) : SearchTree(numPoints, coordinates)
+
+PeridigmNS::ZoltanSearchTree::ZoltanSearchTree(int numPoints, double* coordinates) : SearchTree(numPoints, coordinates),
+	callbackdata(numPoints,coordinates),zoltan(0),part(0)
 {
+
+
+
+	zoltan = Zoltan_Create(MPI_COMM_SELF);
+	/*
+	 * query function returns the number of objects that are currently assigned to the processor
+	 */
+	Zoltan_Set_Num_Obj_Fn(zoltan, &get_num_points, &callbackdata);
+
+	/*
+	 * query function fills two (three if weights are used) arrays with information about the objects
+	 * currently assigned to the processor. Both arrays are allocated (and subsequently freed) by Zoltan;
+	 * their size is determined by a call to a ZOLTAN_NUM_OBJ_FN query function to get the array size.
+	 */
+	Zoltan_Set_Obj_List_Fn(zoltan, &get_point_ids, &callbackdata);
+
+	/*
+	 * query function returns the number of values needed to express the geometry of an object.
+	 * For example, for a two-dimensional mesh-based application, (x,y) coordinates are needed
+	 * to describe an object's geometry; thus the ZOLTAN_NUM_GEOM_FN query function should return
+	 * the value of two. For a similar three-dimensional application, the return value should be three.
+	 */
+	Zoltan_Set_Num_Geom_Fn(zoltan, &get_dimension, NULL);
+
+	/*
+	 * query function returns a vector of geometry values for a list of given objects. The geometry
+	 * vector is allocated by Zoltan to be of size num_obj * num_dim.
+	 */
+
+	Zoltan_Set_Geom_Multi_Fn(zoltan, &get_point_coordinates, &callbackdata);
+
+	/*
+	 * setting method
+	 */
+	Zoltan_Set_Param(zoltan,"lb_method","rcb");
+
+	/*
+	 * keep cuts
+	 */
+	Zoltan_Set_Param(zoltan,"keep_cuts","1");
+
+	Zoltan_Set_Param(zoltan,"return_lists","part");
+	Zoltan_Set_Param(zoltan, "num_lid_entries", "0");
+
+	int numimp = -1, numexp = -1;
+	int numgid = 1, numlid = 0;
+	ZOLTAN_ID_PTR impgid=NULL, implid=NULL;
+	ZOLTAN_ID_PTR gid=NULL, lid=NULL;
+	int *imppart = NULL, *impproc = NULL;
+	int *proc = NULL;
+
+
+	int changes;
+
+	int ierr = Zoltan_LB_Partition(zoltan, &changes, &numgid, &numlid,
+			&numimp, &impgid, &implid, &imppart, &impproc,
+			&numexp, &gid, &lid, &proc, &part);
+
+	free(gid);
+	free(proc);
 }
 
-PeridigmNS::ZoltanSearchTree::~ZoltanSearchTree()
-{
+
+PeridigmNS::ZoltanSearchTree::~ZoltanSearchTree() {
+	Zoltan_Destroy(&zoltan);
 }
+
+/*
+ * callback for num_objects
+ */
+int PeridigmNS::
+ZoltanSearchTree::get_num_points(void *data,int *ierr)
+{
+	*ierr=ZOLTAN_OK;
+	callback_data *gridData = (callback_data *)data;
+	return gridData->num_points;
+}
+
+/*
+ * callback for dimension
+ */
+int PeridigmNS::
+ZoltanSearchTree::get_dimension(void *unused, int *ierr)
+{
+	*ierr=ZOLTAN_OK;
+	return 3;
+}
+
+/*
+ * callback for point ids
+ */
+void PeridigmNS::ZoltanSearchTree::get_point_ids(
+		void *data,
+		int numGids,
+		int numLids,
+		ZOLTAN_ID_PTR zoltanGlobalIds,
+		ZOLTAN_ID_PTR zoltanLocalIds,
+		int numWeights,
+		float *objectWts,
+		int *ierr
+){
+	*ierr=ZOLTAN_OK;
+	callback_data *gridData = (callback_data *)data;
+
+	/*
+	 * get local ids
+	 */
+	for(int i=0;i<gridData->num_points;i++){
+		zoltanGlobalIds[i]=i;
+	}
+
+}
+
+/*
+ * get point coordinates
+ */
+void PeridigmNS::ZoltanSearchTree::get_point_coordinates(
+		void *data,
+		int numGids,
+		int numLids,
+		int numPoints,
+		ZOLTAN_ID_PTR zoltanGlobalIds,
+		ZOLTAN_ID_PTR zoltanLocalIds,
+		int dimension,
+		double *zoltan_gridData,
+		int *ierr
+		){
+	/*
+	 * point coordinates
+	 */
+	*ierr=ZOLTAN_OK;
+	callback_data *gridData = (callback_data *)data;
+
+	double *y=gridData->x;
+	for(int i=0;i<gridData->num_points*3;i++){
+		zoltan_gridData[i]=y[i];
+	}
+
+}
+
+
 
 void PeridigmNS::ZoltanSearchTree::FindPointsWithinRadius(const double* point, double searchRadius, std::vector<int>& neighborList)
 {
