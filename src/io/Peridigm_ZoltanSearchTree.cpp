@@ -50,7 +50,9 @@
 
 
 PeridigmNS::ZoltanSearchTree::ZoltanSearchTree(int numPoints, double* coordinates) : SearchTree(numPoints, coordinates),
-	callbackdata(numPoints,coordinates),zoltan(0),part(0)
+	callbackdata(numPoints,coordinates),zoltan(0),
+	partToCoordIdx(new int[numPoints]),
+	searchParts(new int[numPoints])
 {
 
 
@@ -95,28 +97,36 @@ PeridigmNS::ZoltanSearchTree::ZoltanSearchTree(int numPoints, double* coordinate
 
 	Zoltan_Set_Param(zoltan,"return_lists","part");
 	Zoltan_Set_Param(zoltan, "num_lid_entries", "0");
+	char s[11];
+	sprintf(s,"%d",numPoints);
+	Zoltan_Set_Param(zoltan, "num_global_parts", s);
 
 	int numimp = -1, numexp = -1;
 	int numgid = 1, numlid = 0;
 	ZOLTAN_ID_PTR impgid=NULL, implid=NULL;
 	ZOLTAN_ID_PTR gid=NULL, lid=NULL;
 	int *imppart = NULL, *impproc = NULL;
-	int *proc = NULL;
+	int *procs = NULL, *parts=NULL;
 
 
 	int changes;
 
 	int ierr = Zoltan_LB_Partition(zoltan, &changes, &numgid, &numlid,
 			&numimp, &impgid, &implid, &imppart, &impproc,
-			&numexp, &gid, &lid, &proc, &part);
+			&numexp, &gid, &lid, &procs, &parts);
 
-	free(gid);
-	free(proc);
+	for (int I = 0; I < numPoints; I++)
+	    partToCoordIdx[parts[I]] = I;
+
+	Zoltan_LB_Free_Part(&impgid, &implid, &impproc, &imppart);
+	Zoltan_LB_Free_Part(&gid, &lid, &procs, &parts);
 }
 
 
 PeridigmNS::ZoltanSearchTree::~ZoltanSearchTree() {
 	Zoltan_Destroy(&zoltan);
+	delete [] partToCoordIdx;
+	delete [] searchParts;
 }
 
 /*
@@ -196,5 +206,35 @@ void PeridigmNS::ZoltanSearchTree::get_point_coordinates(
 
 void PeridigmNS::ZoltanSearchTree::FindPointsWithinRadius(const double* point, double searchRadius, std::vector<int>& neighborList)
 {
-  throw std::runtime_error("****Error, ZoltanSearchTree is a work in progress.\n");
+
+	/*
+	 * local search and therefore number of search procs = 1
+	 */
+	int searchProcs,numSearchProcs,numSearchParts;
+	Zoltan_LB_Box_PP_Assign (
+			zoltan,
+			*point-searchRadius,
+			*(point+1)-searchRadius,
+			*(point+2)-searchRadius,
+			*point+searchRadius,
+			*(point+1)+searchRadius,
+			*(point+2)+searchRadius,
+			&searchProcs,
+			&numSearchProcs,
+			searchParts,
+			&numSearchParts);
+	/*
+	 * filter box search to radius
+	 */
+	double R2=searchRadius*searchRadius;
+	double *X=callbackdata.x;
+	for(int p=0;p<numSearchParts;p++){
+		int idx=partToCoordIdx[searchParts[p]];
+		double xi=X[idx*3];double yi=X[idx*3+1];double zi=X[idx*3+2];
+		double dx=(xi-point[0]);
+		double dy=(yi-point[1]);
+		double dz=(zi-point[2]);
+		if(dx*dx+dy*dy+dz*dz <=R2)
+			neighborList.push_back(idx);
+	}
 }
