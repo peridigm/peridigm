@@ -47,6 +47,7 @@
 #define PERIDIGM_ZOLTANSEARCHTREE_HPP
 
 #include "Peridigm_SearchTree.hpp"
+#include "zoltan.h"
 
 namespace PeridigmNS {
 
@@ -54,6 +55,34 @@ namespace PeridigmNS {
 
   public:
     
+	  /*
+	   * zoltan callbacks
+	   */
+
+	static int get_num_points(void *data,int *ierr);
+	static int get_dimension(void *unused, int *ierr);
+	static void get_point_ids(
+			void *data,
+			int numGids,
+			int numLids,
+			ZOLTAN_ID_PTR zoltanGlobalIds,
+			ZOLTAN_ID_PTR zoltanLocalIds,
+			int numWeights,
+			float *objectWts,
+			int *ierr
+	);
+	static void get_point_coordinates(
+			void *data,
+			int numGids,
+			int numLids,
+			int numPoints,
+			ZOLTAN_ID_PTR zoltanGlobalIds,
+			ZOLTAN_ID_PTR zoltanLocalIds,
+			int dimension,
+			double *zoltan_gridData,
+			int *ierr
+			);
+
     /** \brief Constructor.
      *
      *  \param numPoint     The number of points within the tree.
@@ -77,6 +106,16 @@ namespace PeridigmNS {
      *  For efficiency, the neighborList argument should be sized to approximately the size of the final neighbor list.
      **/
     virtual void FindPointsWithinRadius(const double* point, double searchRadius, std::vector<int>& neighborList);
+
+    struct callback_data {
+    	callback_data(int n,double*y): num_points(n), x(y){}
+    	int num_points;
+    	double* x;
+    } callbackdata;
+
+  private:
+    struct Zoltan_Struct *zoltan;
+    int *part;
   };
 }
 
