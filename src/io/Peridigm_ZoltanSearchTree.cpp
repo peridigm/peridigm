@@ -47,6 +47,7 @@
 #include "Peridigm_ZoltanSearchTree.hpp"
 #include <stdexcept>
 #include <stdlib.h>
+#include <stdio.h>
 
 
 PeridigmNS::ZoltanSearchTree::ZoltanSearchTree(int numPoints, double* coordinates) : SearchTree(numPoints, coordinates),
