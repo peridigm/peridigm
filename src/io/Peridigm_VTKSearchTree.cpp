@@ -45,6 +45,9 @@
 //@HEADER
 
 #include "Peridigm_VTKSearchTree.hpp"
+
+#ifdef PERIDIGM_VTK
+
 #include <vtkDoubleArray.h>
 #include <vtkIdList.h>
 
@@ -129,3 +132,18 @@ vtkSmartPointer<vtkUnstructuredGrid> PeridigmNS::VTKSearchTree::getGrid(const vt
 
   return grid;
 }
+
+#else // if PERIGIGM_VTK is not defined, create no-op class that throw exception if used
+
+#include <Teuchos_Assert.hpp>
+
+PeridigmNS::VTKSearchTree::VTKSearchTree(int numPoints, double* coordinates) : SearchTree(numPoints, coordinates) {}
+
+PeridigmNS::VTKSearchTree::~VTKSearchTree() {}
+
+void PeridigmNS::VTKSearchTree::FindPointsWithinRadius(const double* point, double searchRadius, std::vector<int>& neighborList)
+{
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** VTKSearchTree is not currently enabled, rebuild with -D ENABLE_VTK=TRUE.\n");
+}
+
+#endif

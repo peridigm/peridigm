@@ -44,7 +44,8 @@
 //@HEADER
 
 #include "BondFilter.h"
-#include "vtkPlane.h"
+#include <cmath>
+#include <float.h>
 
 using UTILITIES::Vector3D;
 static UTILITIES::Dot dot;
@@ -57,11 +58,36 @@ FinitePlane::FinitePlane(double normal[3], double lowerLeftCorner[3], double bot
 : n(normal), r0(lowerLeftCorner), ub(bottom_UnitVector), ua(cross(ub,n)), a(lengthA), b(lengthBottom)
 {}
 
-
 int FinitePlane::bondIntersectInfinitePlane(const double *p0, const double *p1, double&t, double x[3]) {
-	double *non_const_p0=const_cast<double*>(p0);
-	double *non_const_p1=const_cast<double*>(p1);
-	return vtkPlane::IntersectWithLine(non_const_p0,non_const_p1,n.get(),r0.get(),t,x);
+
+  double numerator   = (r0[0] - p0[0]) * n[0] + (r0[1] - p0[1]) * n[1] + (r0[2] - p0[2]) * n[2];
+  double denominator = (p1[0] - p0[0]) * n[0] + (p1[1] - p0[1]) * n[1] + (p1[2] - p0[2]) * n[2];
+
+  double tolerance = 1.0e-14;
+
+  if(std::abs(denominator) < tolerance){
+    // line is parallel to plane
+    // it may or may not lie on the plane
+    // if it does lie on the plane, then the numerator will be zero
+    // in either case, this function will return "no intersection"
+    t = DBL_MAX;
+  }
+  else{
+    // the line intersects the plane
+    t = numerator/denominator;
+  }
+
+  // determine if the line segment intersects the plane
+  int intersection = 0;
+  if(t >= 0.0 && t <= 1.0)
+    intersection = 1;
+
+  // intersection point
+  x[0] = p0[0] + t * (p1[0] - p0[0]);
+  x[1] = p0[1] + t * (p1[1] - p0[1]);
+  x[2] = p0[2] + t * (p1[2] - p0[2]);
+
+  return intersection;
 }
 
 bool FinitePlane::bondIntersect(double x[3], double tolerance) {

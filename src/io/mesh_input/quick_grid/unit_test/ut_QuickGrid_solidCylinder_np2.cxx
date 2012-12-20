@@ -47,18 +47,21 @@
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
-#include "vtkXMLStructuredGridWriter.h"
-#include "vtkXMLStructuredGridReader.h"
-#include "vtkXMLUnstructuredGridWriter.h"
-#include "vtkXMLUnstructuredGridReader.h"
-#include "vtkSmartPointer.h"
-#include "vtkStructuredGrid.h"
-#include "vtkIdList.h"
-#include "vtkKdTree.h"
-#include "vtkKdTreePointLocator.h"
+#ifdef PERIDIGM_VTK
+// note, many of these appear to be redundant, they are include in PdVTK.h
+  #include "vtkXMLStructuredGridWriter.h"
+  #include "vtkXMLStructuredGridReader.h"
+  #include "vtkXMLUnstructuredGridWriter.h"
+  #include "vtkXMLUnstructuredGridReader.h"
+  #include "vtkSmartPointer.h"
+  #include "vtkStructuredGrid.h"
+  #include "vtkIdList.h"
+  #include "vtkKdTree.h"
+  #include "vtkKdTreePointLocator.h"
+  #include "PdVTK.h"
+#endif
 #include "../QuickGrid.h"
 #include "../QuickGridData.h"
-#include "PdVTK.h"
 #include "Field.h"
 #include "PdZoltan.h"
 #include "PdutMpiFixture.h"
@@ -101,13 +104,14 @@ void runTest() {
 	/*
 	 * Write problem set up parameters to file
 	 */
+#ifdef PERIDIGM_VTK
 	int numPoints = decomp.numPoints;
 	Field_NS::Field<double> volField(Field_NS::VOLUME,numPoints);
 	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(decomp.myX,numPoints);
 	PdVTK::writeField<double>(grid,volField);
 	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("solidCylinderMesh.pvtu", numProcs, myRank);
 	PdVTK::write(writer,grid);
-
+#endif
 }
 
 bool init_unit_test_suite()

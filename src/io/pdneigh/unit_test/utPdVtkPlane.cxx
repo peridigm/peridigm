@@ -47,14 +47,17 @@
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
-#include "vtkPlane.h"
-#include "vtkSmartPointer.h"
 #include <iostream>
 #include <functional>
 #include <valarray>
 #include <set>
 #include "Vector3D.h"
 #include "../BondFilter.h"
+
+#ifdef PERIDIGM_VTK
+  #include "vtkPlane.h"
+  #include "vtkSmartPointer.h"
+#endif
 
 using UTILITIES::Vector3D;
 using UTILITIES::Dot;
@@ -123,6 +126,7 @@ void simplePlaneCase_1(){
 	double p1[3]; p1[0] =  .5; p1[1] = .5; p1[2] = .5;
 	double p0[3]; p0[0] = -.5; p0[1] = .5; p0[2] = .5;
 
+#ifdef PERIDIGM_VTK
 	/*
 	 * Create plane and set values
 	 */
@@ -167,7 +171,7 @@ void simplePlaneCase_1(){
 	// if(alpha <= a &&  beta<= b) then bond intersects input plane OTHERWISE NOT
 	BOOST_CHECK(0.5==alpha);
 	BOOST_CHECK(0.5==beta);
-
+#endif
 }
 
 void simplePlaneCase_2(){
