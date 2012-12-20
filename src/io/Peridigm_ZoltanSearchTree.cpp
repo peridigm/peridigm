@@ -59,6 +59,8 @@ PeridigmNS::ZoltanSearchTree::ZoltanSearchTree(int numPoints, double* coordinate
 
 
 	zoltan = Zoltan_Create(MPI_COMM_SELF);
+    Zoltan_Set_Param(zoltan, "debug_level", "0");
+    Zoltan_Set_Param(zoltan, "rcb_output_level", "0");
 	/*
 	 * query function returns the number of objects that are currently assigned to the processor
 	 */
