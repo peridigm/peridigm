@@ -47,10 +47,13 @@
 #define PERIDIGM_VTKSEARCHTREE_HPP
 
 #include "Peridigm_SearchTree.hpp"
-#include <vtkSmartPointer.h>
-#include <vtkCellArray.h>
-#include <vtkUnstructuredGrid.h>
-#include <vtkKdTreePointLocator.h>
+
+#ifdef PERIDIGM_VTK
+  #include <vtkSmartPointer.h>
+  #include <vtkCellArray.h>
+  #include <vtkUnstructuredGrid.h>
+  #include <vtkKdTreePointLocator.h>
+#endif
 
 namespace PeridigmNS {
 
@@ -84,6 +87,7 @@ namespace PeridigmNS {
 
   private:
 
+#ifdef PERIDIGM_VTK
     vtkSmartPointer<vtkCellArray> getCellArray(vtkIdType numCells);
 
     vtkSmartPointer<vtkUnstructuredGrid> getGrid(double *points,
@@ -94,6 +98,7 @@ namespace PeridigmNS {
                                                  VTKCellType type=VTK_VERTEX);
 
     vtkKdTreePointLocator* kdTree;
+#endif
   };
 }
 

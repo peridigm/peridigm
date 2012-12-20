@@ -54,8 +54,6 @@
 #include <fstream>
 #include <sstream>
 
-
-#include "mesh_output/PdVTK.h"
 #include "mesh_output/Field.h"
 #include "mesh_input/quick_grid/QuickGrid.h"
 #include "bond_volume/quick_grid/calculators.h"
@@ -76,12 +74,9 @@
 using namespace boost::unit_test;
 using std::size_t;
 using std::tr1::shared_ptr;
-using namespace PdVTK;
 using UTILITIES::Array;
 using UTILITIES::Vector3D;
 using std::pair;
-
-
 
 static int nx;
 static int ny;
@@ -157,7 +152,7 @@ void write_table_1_header(const std::string& output_tex_table){
 
 
 	std::ofstream file_stream;
-	file_stream.open(output_tex_table.c_str(),ios::app|ios::out);
+	file_stream.open(output_tex_table.c_str(),std::ios::app|std::ios::out);
 
 	file_stream << table_out.str();
 	file_stream.close();
@@ -171,7 +166,7 @@ void close_table_1(const std::string& output_tex_table) {
 	table_out << "\\end{tabular}" << "\n";
 	table_out << "\\end{table}" << "\n";
 	std::ofstream file_stream;
-	file_stream.open(output_tex_table.c_str(),ios::app|ios::out);
+	file_stream.open(output_tex_table.c_str(),std::ios::app|std::ios::out);
 	file_stream << table_out.str();
 	file_stream.close();
 }
@@ -414,14 +409,14 @@ void probe_shear
 	table_1_out << scf << " \\\\ \n";
 
 	std::ofstream file_stream;
-	file_stream.open("table_1.tex",ios::app|ios::out);
+	file_stream.open("table_1.tex",std::ios::app|std::ios::out);
 	file_stream << table_1_out.str();
 	file_stream.close();
 
 	/*
 	 * write raw data
 	 */
-	file_stream.open("ut_bondVolumeConvergenceStudy.dat",ios::app|ios::out);
+	file_stream.open("ut_bondVolumeConvergenceStudy.dat",std::ios::app|std::ios::out);
 	file_stream << nx << " ";
 	file_stream << std::scientific;
 	file_stream.precision(12);

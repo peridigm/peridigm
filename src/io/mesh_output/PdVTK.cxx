@@ -43,6 +43,8 @@
 // ************************************************************************
 //@HEADER
 
+#ifdef PERIDIGM_VTK
+
 #include "PdVTK.h"
 #include "Vector3D.h"
 #include "vtkXMLUnstructuredGridWriter.h"
@@ -381,3 +383,5 @@ double compute_hex8_volume(vtkPoints* points){
 
 
 } // PdVTK
+
+#endif // PERIDIGM_VTK

@@ -229,6 +229,7 @@ void cube()
 	/*
 	 * Output mesh
 	 */
+#ifdef PERIDIGM_VTK
 	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(gridData.myX,gridData.numPoints);
 	Field<int> fieldRank(Field_NS::PROC_NUM,gridData.numPoints);
 	fieldRank.set(myRank);
@@ -239,7 +240,7 @@ void cube()
 	PdVTK::writeField(grid,cellVol);
 	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("ut_VolumeFraction.pvtu", numProcs, myRank);
 	PdVTK::write(writer,grid);
-
+#endif
 }
 
 

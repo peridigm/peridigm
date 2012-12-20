@@ -74,11 +74,9 @@
 #include "Epetra_SerialComm.h"
 #endif
 
-
 #include <iostream>
 #include <cmath>
 using namespace Pdut;
-
 
 using namespace QUICKGRID;
 using UTILITIES::Vector3D;
@@ -241,6 +239,7 @@ void sphere()
 	/*
 	 * Output mesh
 	 */
+#ifdef PERIDIGM_VTK
 	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(gridData.myX,gridData.numPoints);
 	Field<int> fieldRank(Field_NS::PROC_NUM,gridData.numPoints);
 	fieldRank.set(myRank);
@@ -251,7 +250,7 @@ void sphere()
 	PdVTK::writeField(grid,cellVol);
 	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("ut_ringCellVolumeFraction.pvtu", numProcs, myRank);
 	PdVTK::write(writer,grid);
-
+#endif
 }
 
 

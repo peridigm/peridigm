@@ -43,6 +43,8 @@
 // ************************************************************************
 //@HEADER
 
+#ifdef PERIDIGM_VTK
+
 #ifndef PDVTK_H_
 #define PDVTK_H_
 #include "vtkUnstructuredGrid.h"
@@ -172,3 +174,5 @@ void writeField(vtkSmartPointer<vtkUnstructuredGrid>& g, const Field_NS::FieldSp
 } // PdVTK
 
 #endif /* PDVTK_H_ */
+
+#endif // PERIDIGM_VTK

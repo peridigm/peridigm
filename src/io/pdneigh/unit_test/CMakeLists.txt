@@ -50,9 +50,11 @@ add_executable(ut_QuickGrid_loadBal_np8_4x4x4 ut_QuickGrid_loadBal_np8_4x4x4.cxx
 target_link_libraries(ut_QuickGrid_loadBal_np8_4x4x4  PdNeigh QuickGrid Utilities ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 add_test (ut_QuickGrid_loadBal_np8_4x4x4 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 8 ./ut_QuickGrid_loadBal_np8_4x4x4)
 
-add_executable(utPdVtkKdTree utPdVtkKdTree.cxx)
-target_link_libraries(utPdVtkKdTree  QuickGrid PdVTK Utilities ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
-add_test (utPdVtkKdTree python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPdVtkKdTree)
+if(USE_VTK)
+  add_executable(utPdVtkKdTree utPdVtkKdTree.cxx)
+  target_link_libraries(utPdVtkKdTree  QuickGrid PdVTK Utilities ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
+  add_test (utPdVtkKdTree python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPdVtkKdTree)
+endif()
 
 add_executable(utPdVtkPlane utPdVtkPlane.cxx)
 target_link_libraries(utPdVtkPlane  PdNeigh Utilities ${VTK_LIBS} ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})

@@ -40,19 +40,34 @@ endif ()
 # VTK configuration
 # Questions? See http://www.cmake.org/cmake/help/cmake2.6docs.html#module:FindVTK
 #
-find_package (VTK ${VTK_VERSION} NAMES VTK PATHS ${VTK_ROOT})
-if (VTK_FOUND)
-  message ("\nVTK installation:")
-  message ("   Version: ${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}")
-  message ("   Include Directories: ${VTK_INCLUDE_DIRS}")
-  message ("   Library Directory: ${VTK_LIBRARY_DIRS}")
-  message ("   VTK Kits: ${VTK_KITS}")
-  message ("   VTK_USE_FILE: ${VTK_USE_FILE}\n")
-  include (${VTK_USE_FILE})
-else ()
-  message ("\nVTK NOT FOUND!  (Try defining VTK_DIR)\n")
-endif ()
-set( VTK_LIBS vtkIO )
+option (USE_VTK
+   "Enable tests and functionality that depend on a VTK installation." 
+   OFF
+)
+if(USE_VTK)
+  MESSAGE("-- VTK is enabled, compiling with -DPERIDIGM_VTK")
+  ADD_DEFINITIONS(-DPERIDIGM_VTK)
+  SET(PERIDIGM_VTK TRUE)
+  find_package (VTK ${VTK_VERSION} NAMES VTK PATHS ${VTK_ROOT})
+  if (VTK_FOUND)
+    message ("\nVTK installation:")
+    message ("   Version: ${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}")
+    message ("   Include Directories: ${VTK_INCLUDE_DIRS}")
+    message ("   Library Directory: ${VTK_LIBRARY_DIRS}")
+    message ("   VTK Kits: ${VTK_KITS}")
+    message ("   VTK_USE_FILE: ${VTK_USE_FILE}\n")
+    include (${VTK_USE_FILE})
+  else ()
+    message ("\nVTK NOT FOUND!  (Try defining VTK_DIR)\n")
+  endif ()
+  set( VTK_LIBS vtkIO )
+ELSE()
+  MESSAGE("-- VTK is NOT enabled.\n")
+  SET(PERIDIGM_VTK FALSE)
+  set( VTK_INCLUDE_DIRS )
+  set( VTK_LIBRARY_DIRS )
+  set( VTK_LIBS )
+ENDIF()
 
 #
 # Blas and Lapack Libraries  

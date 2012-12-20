@@ -47,12 +47,6 @@
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
 #include <boost/test/parameterized_test.hpp>
-#include "vtkXMLStructuredGridWriter.h"
-#include "vtkXMLStructuredGridReader.h"
-#include "vtkXMLUnstructuredGridWriter.h"
-#include "vtkXMLUnstructuredGridReader.h"
-#include "vtkSmartPointer.h"
-#include "vtkStructuredGrid.h"
 #include "Vector3D.h"
 #include "Array.h"
 #include "../QuickGrid.h"
