@@ -85,6 +85,9 @@ namespace PeridigmNS {
     //! Initialize a new exodus database
     void initializeExodusDatabase(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks);
 
+    //! Initialize a new exodus database that contains only global data
+    void initializeExodusDatabaseWithOnlyGlobalData(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks);
+
     //! Error & Warning reporting tool for calls to ExodusII API
     void reportExodusError(int errorCode, const char *methodName, const char *exodusMethodName);
 
@@ -114,6 +117,9 @@ namespace PeridigmNS {
 
     //! Word sizes for IO and CPU
     int CPU_word_size, IO_word_size;
+
+    //! Flag indicating Exodus databases that contain only global data
+    bool globalDataOnly;
 
     //! Map from global output field name to integer. Exodus uses an integer (1..k)  to index the output fields
     std::map <string, int> global_output_field_map;

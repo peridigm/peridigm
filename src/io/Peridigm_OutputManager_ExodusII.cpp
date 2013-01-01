@@ -63,12 +63,11 @@
 
 PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Teuchos::ParameterList>& params, 
                                                            PeridigmNS::Peridigm *peridigm_,
-                                                           Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks) {
- 
-  // Assign parent pointer
-  peridigm = peridigm_;
- 
+                                                           Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks) 
+  : peridigm(peridigm_) {
+  
   // No input to validate; no output requested
+  iWrite = true;
   if (params == Teuchos::null) {
     iWrite = false;
     return;
@@ -122,6 +121,15 @@ PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Te
   // User-requested fields for output 
   outputVariables = sublist(params, "Output Variables");
 
+  // Determine if the database will contain only global data
+  globalDataOnly = true;
+  for (Teuchos::ParameterList::ConstIterator it = outputVariables->begin(); it != outputVariables->end(); ++it) {
+    string name = it->first;
+    PeridigmNS::FieldSpec spec = PeridigmNS::FieldManager::self().getFieldSpec(name);
+    if (spec.getRelation() != PeridigmField::GLOBAL)
+      globalDataOnly = false;
+  }
+
   // Initialize count (number of times write() has been called)
   // Initialize exodusCount (number of timesteps data actually written to exodus file)
   // Initialize to 0 because first call to write() corresponds to timestep 1
@@ -129,9 +137,6 @@ PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Te
 
   // Sentinal value for file handle
   file_handle = -1;
-
-  // With ExodusII every object writes
-  iWrite = true;
 
   // Rebalance count 
   rebalanceCount = 0;
@@ -215,18 +220,29 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
   // Call compute manager; Updated any computed quantities before write
   peridigm->computeManager->compute(blocks);
 
+  // If the database contains only global data, then it will be output only by the root processor
+  if (globalDataOnly && myPID != 0)
+    return;
+
   // Initialize new exodus database if needed
   // Each block is always rebalanced at the same time, so each datamanager should always return the same
   // rebalance count. Hence, we keep only a single static int for the rebalance count. If the first block 
   // rebalanced since last write, then all of them did. Force reinit database.
   if ( (numProc > 1) && (rebalanceCount != blocks->begin()->getDataManager()->getRebalanceCount()) ) {
     rebalanceCount = blocks->begin()->getDataManager()->getRebalanceCount();
-    initializeExodusDatabase(blocks);
+    // Rebalance does not affect databases containing only global data
+    if(!globalDataOnly)
+      initializeExodusDatabase(blocks);
     exodusCount = 1;
   }
 
   // If first call, intialize database
-  if (!initializeExodusDatabaseCalled) initializeExodusDatabase(blocks);
+  if (!initializeExodusDatabaseCalled) {
+    if(globalDataOnly)
+      initializeExodusDatabaseWithOnlyGlobalData(blocks);
+    else
+      initializeExodusDatabase(blocks);
+  }
 
   // Open exodus database for writing
   float version;
@@ -236,8 +252,10 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
   // Write time value
   int retval = ex_put_time(file_handle,exodusCount,&current_time);
   if (retval!= 0) reportExodusError(retval, "write", "ex_put_time");
- 
-  int num_nodes = peridigm->getOneDimensionalMap()->NumMyElements();
+
+  int num_nodes(1);
+  if(!globalDataOnly)
+    num_nodes = peridigm->getOneDimensionalMap()->NumMyElements();
 
   // Allocate temporary storage for all mothership-like data
   std::vector<double> x_vec(num_nodes), y_vec(num_nodes), z_vec(num_nodes);
@@ -387,7 +405,7 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
 void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks) {
 
   /*
-   * First, determine name of output file
+   * Determine name of output file
    */
 
   // Follow convention of replacing spaces or . with underscore
@@ -483,14 +501,8 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
   if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_coord");
 
   // Write nodal coordinate names to database
-  char coord_name_X = 'X';
-  char coord_name_Y = 'Y';
-  char coord_name_Z = 'Z';
-  std::vector<char*> coord_names_vec(3);
-  coord_names_vec[0] = &coord_name_X;
-  coord_names_vec[1] = &coord_name_Y;
-  coord_names_vec[2] = &coord_name_Z;
-  retval = ex_put_coord_names(file_handle,&coord_names_vec[0]);
+  const char *coord_names[3] = {"x", "y", "z"};
+  retval = ex_put_coord_names(file_handle,const_cast<char**>(coord_names));
   if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_coord_names");
 
   // Write element block parameters
@@ -691,6 +703,151 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
   }
 }
 
+void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabaseWithOnlyGlobalData(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks) {
+
+  /*
+   * Determine name of output file
+   */
+
+  // Follow convention of replacing spaces or . with underscore
+  if (!initializeExodusDatabaseCalled) {
+    int warningFlag = 0;
+    string outString;
+    outString.append("\n\n***WARNING***\n");
+    outString.append("PeridigmNS::OutputManager_ExodusII:::OutputManager_ExodusII() -- Avoid use of filenames containing '.' (period) and ' ' (space) with ExodusII.\n");
+    outString.append("Changing ");
+    outString.append(filenameBase);
+    outString.append(" to ");
+    for ( unsigned int i = 0; i < filenameBase.length(); i++) {
+      if (filenameBase[i] ==' ' || filenameBase[i]=='.')  {
+        filenameBase.replace(i,1,"_");
+        warningFlag = 1;
+      }
+    }
+    outString.append(filenameBase);
+    outString.append(".\n\n\n");
+    if (warningFlag) std::cout << outString;
+    initializeExodusDatabaseCalled = true;
+  }
+
+  // Construct output filename
+  filename.str(std::string());
+  filename.clear();
+  filename << filenameBase.c_str() << ".h";
+
+  /*
+   * Now, initialize ExodusII database
+   */
+
+  // Default to storing and writing doubles
+  int CPU_word_size, IO_word_size;
+  CPU_word_size = IO_word_size = sizeof(double);
+
+  // Initialize exodus database; Overwrite any existing file with this name
+  file_handle = ex_create(filename.str().c_str(),EX_CLOBBER,&CPU_word_size,&IO_word_size);
+  if (file_handle < 0) reportExodusError(file_handle, "OutputManager_ExodusII", "ex_create");
+
+  // clear the maps
+  global_output_field_map.clear();
+  element_output_field_map.clear();
+  node_output_field_map.clear();
+
+  // Initialize the database
+  int num_dimensions = 3;
+  int num_nodes = 1;
+  int num_elements = 1;
+  int num_element_blocks = 1;
+  int num_node_sets = 0;
+  int num_side_sets = 0;
+  // Initialize exodus file with parameters
+  int retval = ex_put_init(file_handle,"Peridigm", num_dimensions, num_nodes, num_elements, num_element_blocks, num_node_sets, num_side_sets);
+  if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_init");
+
+  // Write dummy nodal coordinate values
+  double xcoord_values(0.0);
+  double ycoord_values(0.0);
+  double zcoord_values(0.0);
+  retval = ex_put_coord(file_handle,&xcoord_values,&ycoord_values,&zcoord_values);
+  if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_coord");
+
+  // Write nodal coordinate names to database
+  const char *coord_names[3] = {"x", "y", "z"};
+  retval = ex_put_coord_names(file_handle,const_cast<char**>(coord_names));
+  if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_coord_names");
+
+  // Write element block parameters
+  int num_elem_in_block(1);
+  int num_nodes_in_elem(1);
+  int elem_block_ID(1);
+  retval = ex_put_elem_block(file_handle,elem_block_ID,"SPHERE",num_elem_in_block,num_nodes_in_elem,0);
+  if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_elem_block");
+
+  // Write element connectivity
+  int connect(1);
+  retval = ex_put_elem_conn(file_handle, elem_block_ID, &connect);
+  if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_elem_conn");
+
+  // Write global node number map (global node IDs)
+  int node_map(1);
+  retval = ex_put_node_num_map(file_handle, &node_map);
+  if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_node_num_map");
+
+  // Write global element number map (global element IDs)
+  int elem_map(1);
+  retval = ex_put_elem_num_map(file_handle, &elem_map);
+  if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_elem_num_map");
+
+  // Create internal mapping of requested output fields to an integer.
+  // The user requests output fields via strings, but Exodus wants an integer to index the output fields
+  int global_output_field_index = 1;
+  for (Teuchos::ParameterList::ConstIterator it = outputVariables->begin(); it != outputVariables->end(); ++it) {
+    string name = it->first;
+    PeridigmNS::FieldSpec spec = PeridigmNS::FieldManager::self().getFieldSpec(name);
+    if (spec.getLength() == PeridigmField::SCALAR) {
+      global_output_field_map.insert( std::pair<string,int>(name,global_output_field_index) );
+      global_output_field_index = global_output_field_index + 1;
+    }
+    if (spec.getLength() == PeridigmField::VECTOR) {
+      string tmpnameX = name+"X";
+      string tmpnameY = name+"Y";
+      string tmpnameZ = name+"Z";
+      global_output_field_map.insert( std::pair<string,int>(tmpnameX,global_output_field_index) );
+      global_output_field_index = global_output_field_index + 1;
+      global_output_field_map.insert( std::pair<string,int>(tmpnameY,global_output_field_index) );
+      global_output_field_index = global_output_field_index + 1;
+      global_output_field_map.insert( std::pair<string,int>(tmpnameZ,global_output_field_index) );
+      global_output_field_index = global_output_field_index + 1;
+    }
+  }
+
+  // Write information records
+
+  // Write global var info
+  int num_global_vars = global_output_field_map.size();
+  char **global_var_names = NULL;
+  if(num_global_vars > 0){
+    char **global_var_names = new char*[num_global_vars];
+    for (int i=0;i<num_global_vars;i++) global_var_names[i] = new char[MAX_STR_LENGTH+1]; // MAX_STR_LENGTH defined in ExodusII.h
+    for( std::map<string,int>::iterator it=global_output_field_map.begin() ; it != global_output_field_map.end(); it++ )
+      strcpy(global_var_names[(it->second)-1], it->first.c_str() );
+    retval = ex_put_var_param(file_handle, "G", num_global_vars);
+    if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_var_param");
+    retval = ex_put_var_names (file_handle, "G", num_global_vars, global_var_names);
+    if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_var_param");
+  }
+
+  // Close file; re-open with call to write()
+  retval = ex_update(file_handle);
+  if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_update");
+  retval = ex_close(file_handle);
+  if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_close");
+
+  // Clean up
+  if(global_var_names != NULL){
+    for (int i = num_global_vars; i>0; i--) delete[] global_var_names[i-1];
+    delete[] global_var_names;
+  }
+}
 
 void PeridigmNS::OutputManager_ExodusII::reportExodusError(int errorCode, const char *methodName, const char*exodusMethodName) {
   std::stringstream ss;
