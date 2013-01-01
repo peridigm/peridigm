@@ -27,7 +27,7 @@ if __name__ == "__main__":
     logfile = open(log_file_name, 'w')
 
     # remove old output files, if any
-    files_to_remove = [base_name + "1" + ".e", base_name + "2" + ".e"]
+    files_to_remove = [base_name + "1" + ".e.2.0", base_name + "1" + ".e.2.1", base_name + "2" + ".h"]
     for file in os.listdir(os.getcwd()):
       if file in files_to_remove:
         os.remove(file)
@@ -56,17 +56,12 @@ if __name__ == "__main__":
     if return_code != 0:
       result = return_code
 
-    command = ["../../../../scripts/MergeFiles.py", base_name+"2", "2"]
-    p = Popen(command, stdout=logfile, stderr=logfile)
-    return_code = p.wait()
-    if return_code != 0:
-        result = return_code
     command = ["../../../../scripts/exodiff", \
                "-stat", \
                "-f", \
                "../"+base_name+"2"+".comp", \
-               base_name+"2"+".e", \
-               "../"+base_name+"2"+"_gold.e"]
+               base_name+"2"+".h", \
+               "../"+base_name+"2"+"_gold.h"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:
