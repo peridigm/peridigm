@@ -1,0 +1,2 @@
+blot elastic_disk_impact.h -input disk_impact.blot met
+gnuplot elastic_disk_impact.plotgen

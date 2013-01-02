@@ -1,3 +1,20 @@
+<!--
+     Description
+       Simulation of an elastic sphere impacting a brittle elastic disk.
+       A critical stretch bond failure law is applied to the disk.
+
+     Units are SI
+       mass          kg
+       length        m
+       time          s
+       density       kg/m^3
+       force         N
+       pressure      Pa
+       velocity      m/s
+       acceleration  m/s^2
+       energy        J
+-->
+
 <ParameterList>
 
   <Parameter name="Verbose" type="bool" value="false"/>

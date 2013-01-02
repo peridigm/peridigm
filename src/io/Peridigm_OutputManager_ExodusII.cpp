@@ -231,9 +231,10 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
   if ( (numProc > 1) && (rebalanceCount != blocks->begin()->getDataManager()->getRebalanceCount()) ) {
     rebalanceCount = blocks->begin()->getDataManager()->getRebalanceCount();
     // Rebalance does not affect databases containing only global data
-    if(!globalDataOnly)
+    if(!globalDataOnly){
       initializeExodusDatabase(blocks);
-    exodusCount = 1;
+      exodusCount = 1;
+    }
   }
 
   // If first call, intialize database
@@ -243,6 +244,10 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
     else
       initializeExodusDatabase(blocks);
   }
+
+  // DEBUGGING
+  std::cout << "PID " << myPID << " writing to " << filename.str() << " with current time " << current_time << std::endl;
+  // end DEBUGGING
 
   // Open exodus database for writing
   float version;
