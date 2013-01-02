@@ -156,8 +156,14 @@ namespace PeridigmNS {
     //! Compute the volume of a hexahedron element
     double hexVolume(std::vector<double*>& nodeCoordinates) const;
 
+    //! Compute the volume of a tetrahedron element
+    double tetVolume(std::vector<double*>& nodeCoordinates) const;
+
     //! Compute the maximum length dimension for a hexahedron element
     double hexMaxElementDimension(std::vector<double*>& nodeCoordinates) const;
+
+    //! Compute the maximum length dimension for a tetrahedron element
+    double tetMaxElementDimension(std::vector<double*>& nodeCoordinates) const;
 
     //! Maps
     Teuchos::RCP<Epetra_BlockMap> oneDimensionalMap;
