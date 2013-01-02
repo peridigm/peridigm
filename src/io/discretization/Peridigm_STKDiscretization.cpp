@@ -313,6 +313,8 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
       TEUCHOS_TEST_FOR_EXCEPT_MSG(exodusVolume == NULL, "**** Volume attribute not found for sphere element.\n");
       volumes[iElem] = exodusVolume[0];
     }
+    else if(nodeRelations.size() == 4)
+      volumes[iElem] = tetVolume(nodeCoordinates);
     else if(nodeRelations.size() == 8)
       volumes[iElem] = hexVolume(nodeCoordinates);
     else
@@ -716,6 +718,23 @@ double PeridigmNS::STKDiscretization::hexVolume(std::vector<double*>& nodeCoordi
   return (v1+v2+v3)/12.0;
 }
 
+double PeridigmNS::STKDiscretization::tetVolume(std::vector<double*>& nodeCoordinates) const
+{
+  // Change the coordinate system such that the first point is at the origin.
+  // The other three points are labeled a, b, and c.
+  std::vector<double> a(3), b(3), c(3);
+  for(int dof=0 ; dof<3 ; ++dof){
+    a[dof] = nodeCoordinates[1][dof] - nodeCoordinates[0][dof];
+    b[dof] = nodeCoordinates[2][dof] - nodeCoordinates[0][dof];
+    c[dof] = nodeCoordinates[3][dof] - nodeCoordinates[0][dof];
+  }
+
+  // The volume is then | a . (b x c) | / 6
+  double volume = scalarTripleProduct(a, b, c) / 6.0;
+
+  return volume;
+}
+
 double PeridigmNS::STKDiscretization::hexMaxElementDimension(std::vector<double*>& nodeCoordinates) const
 {
   double maxDimension = 0.0;
@@ -758,6 +777,62 @@ double PeridigmNS::STKDiscretization::hexMaxElementDimension(std::vector<double*
   diagonal = sqrt(dx*dx + dy*dy + dz*dz);
   if(diagonal > maxDimension)
     maxDimension = diagonal;
+
+  return maxDimension;
+}
+
+double PeridigmNS::STKDiscretization::tetMaxElementDimension(std::vector<double*>& nodeCoordinates) const
+{
+  double maxDimension = 0.0;
+  double dx, dy, dz, edgeLength;
+
+  // Exodus nodes 1 2
+  dx = nodeCoordinates[0][0] - nodeCoordinates[1][0];
+  dy = nodeCoordinates[0][1] - nodeCoordinates[1][1];
+  dz = nodeCoordinates[0][2] - nodeCoordinates[1][2];
+  edgeLength = sqrt(dx*dx + dy*dy + dz*dz);
+  if(edgeLength > maxDimension)
+    maxDimension = edgeLength;
+
+  // Exodus nodes 1 3
+  dx = nodeCoordinates[0][0] - nodeCoordinates[2][0];
+  dy = nodeCoordinates[0][1] - nodeCoordinates[2][1];
+  dz = nodeCoordinates[0][2] - nodeCoordinates[2][2];
+  edgeLength = sqrt(dx*dx + dy*dy + dz*dz);
+  if(edgeLength > maxDimension)
+    maxDimension = edgeLength;
+
+  // Exodus nodes 1 4
+  dx = nodeCoordinates[0][0] - nodeCoordinates[3][0];
+  dy = nodeCoordinates[0][1] - nodeCoordinates[3][1];
+  dz = nodeCoordinates[0][2] - nodeCoordinates[3][2];
+  edgeLength = sqrt(dx*dx + dy*dy + dz*dz);
+  if(edgeLength > maxDimension)
+    maxDimension = edgeLength;
+
+  // Exodus nodes 2 3
+  dx = nodeCoordinates[1][0] - nodeCoordinates[2][0];
+  dy = nodeCoordinates[1][1] - nodeCoordinates[2][1];
+  dz = nodeCoordinates[1][2] - nodeCoordinates[2][2];
+  edgeLength = sqrt(dx*dx + dy*dy + dz*dz);
+  if(edgeLength > maxDimension)
+    maxDimension = edgeLength;
+
+  // Exodus nodes 2 4
+  dx = nodeCoordinates[1][0] - nodeCoordinates[3][0];
+  dy = nodeCoordinates[1][1] - nodeCoordinates[3][1];
+  dz = nodeCoordinates[1][2] - nodeCoordinates[3][2];
+  edgeLength = sqrt(dx*dx + dy*dy + dz*dz);
+  if(edgeLength > maxDimension)
+    maxDimension = edgeLength;
+
+  // Exodus nodes 3 4
+  dx = nodeCoordinates[2][0] - nodeCoordinates[3][0];
+  dy = nodeCoordinates[2][1] - nodeCoordinates[3][1];
+  dz = nodeCoordinates[2][2] - nodeCoordinates[3][2];
+  edgeLength = sqrt(dx*dx + dy*dy + dz*dz);
+  if(edgeLength > maxDimension)
+    maxDimension = edgeLength;
 
   return maxDimension;
 }
