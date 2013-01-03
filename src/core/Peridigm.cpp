@@ -70,6 +70,7 @@
 
 #include "Peridigm.hpp"
 #include "Peridigm_Field.hpp"
+#include "Peridigm_InfluenceFunction.hpp"
 #include "Peridigm_DiscretizationFactory.hpp"
 #include "Peridigm_PdQuickGridDiscretization.hpp"
 #include "Peridigm_PartialVolumeCalculator.hpp"
@@ -119,6 +120,10 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // Seed random number generator for reproducable results
   seed_rand_num( 42 );
+
+  // Initialize the influence function
+  string influenceFunctionString = peridigmParams->sublist("Discretization").get<string>("Influence Function", "One");
+  PeridigmNS::InfluenceFunction::self().setInfluenceFunction( influenceFunctionString );
 
   // Read mesh from disk or generate using geometric primatives.
   Teuchos::RCP<Teuchos::ParameterList> discParams =

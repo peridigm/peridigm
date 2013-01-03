@@ -47,6 +47,7 @@
 //@HEADER
 
 #include "material_utilities.h"
+#include "Peridigm_InfluenceFunction.hpp"
 #include <cmath>
 #include <vector>
 #include <Sacado.hpp>
@@ -112,16 +113,17 @@ void set_pure_shear
 
 }
 
-// Simple influence function and placeholder for longer term more sophisticated
-// influence function
 double scalarInfluenceFunction
 (
         double zeta, 
         double horizon
 )
 {
-    //return 1.0 - zeta/horizon;
-    return 1.0; 
+  static PeridigmNS::InfluenceFunction::functionPointer influenceFunction = NULL;
+  if(!influenceFunction)
+    influenceFunction = PeridigmNS::InfluenceFunction::self().getInfluenceFunction();
+
+  return influenceFunction(zeta, horizon);
 }
 
 double computeWeightedVolume
