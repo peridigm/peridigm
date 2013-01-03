@@ -55,6 +55,9 @@ namespace PeridigmNS{
 
 namespace PeridigmInfluenceFunction{
 
+// Built-in influence functions should be implemented here
+// and associated with a string in setInfluenceFunction(), below.
+
 static double one(double zeta, double horizon){ return 1.0; }
 
 }
@@ -72,6 +75,7 @@ public:
     return influenceFunction;
   }
 
+  //! Sets the influence function based on the provided string.
   void setInfluenceFunction(std::string influenceFunctionString) {
     if(influenceFunctionString == "One"){
       m_influenceFunction = &PeridigmInfluenceFunction::one;
@@ -81,6 +85,7 @@ public:
     }
   }
 
+  //! Returns a function pointer to the influence function.
   functionPointer getInfluenceFunction() {
     TEUCHOS_TEST_FOR_EXCEPT_MSG(m_influenceFunction == NULL,
                                 "**** Error:  InfluenceFunction::getInfluenceFunction() called prior to calling InfluenceFunction::setInfluenceFunction().\n")
