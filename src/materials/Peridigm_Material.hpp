@@ -117,6 +117,14 @@ namespace PeridigmNS {
                     PeridigmNS::DataManager& dataManager,
                     PeridigmNS::SerialMatrix& jacobian) const;
 
+	//! Compute strain energy.
+	virtual void
+	computeStrainEnergy(const double dt,
+                        const int numOwnedPoints,
+                        const int* ownedIDs,
+                        const int* neighborhoodList,
+                        PeridigmNS::DataManager& dataManager) const {}
+
     enum FiniteDifferenceScheme { FORWARD_DIFFERENCE=0, CENTRAL_DIFFERENCE=1 };
 
   protected:
