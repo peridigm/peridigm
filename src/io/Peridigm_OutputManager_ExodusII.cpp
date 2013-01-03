@@ -245,10 +245,6 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
       initializeExodusDatabase(blocks);
   }
 
-  // DEBUGGING
-  std::cout << "PID " << myPID << " writing to " << filename.str() << " with current time " << current_time << std::endl;
-  // end DEBUGGING
-
   // Open exodus database for writing
   float version;
   file_handle = ex_open(filename.str().c_str(), EX_WRITE, &CPU_word_size,&IO_word_size, &version);

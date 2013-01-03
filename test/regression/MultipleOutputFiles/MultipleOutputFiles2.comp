@@ -2,4 +2,3 @@ DEFAULT TOLERANCE absolute 1.0E-9
 TIME STEPS absolute 1.0E-14
 GLOBAL VARIABLES absolute 1.0E-12
 	Global_Kinetic_Energy  absolute 1.0E-9
-	Global_Strain_Energy  absolute 1.0E-9
