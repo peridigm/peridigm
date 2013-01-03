@@ -51,14 +51,22 @@
 #include <Teuchos_Assert.hpp>
 #include <string>
 
-namespace PeridigmNS{
+namespace PeridigmNS {
 
-namespace PeridigmInfluenceFunction{
+namespace PeridigmInfluenceFunction {
 
 // Built-in influence functions should be implemented here
 // and associated with a string in setInfluenceFunction(), below.
 
-static double one(double zeta, double horizon){ return 1.0; }
+static double one(double zeta, double horizon){
+  return 1.0;
+}
+
+static double parabolicDecay(double zeta, double horizon){
+  double scaledDistance = zeta/horizon;
+  double value = scaledDistance < 0.5 ? 1.0 : -4.0*scaledDistance*scaledDistance + 4.0*scaledDistance;
+  return value;
+}
 
 }
 
@@ -80,8 +88,11 @@ public:
     if(influenceFunctionString == "One"){
       m_influenceFunction = &PeridigmInfluenceFunction::one;
     }
+    else if(influenceFunctionString == "Parabolic Decay"){
+      m_influenceFunction = &PeridigmInfluenceFunction::parabolicDecay;
+    }
     else{
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error:  InfluenceFunction::setInfluenceFunction(), invalid influence function, must be \"One\"\n");
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error:  InfluenceFunction::setInfluenceFunction(), invalid influence function, must be \"One\" or \"Parabolic Decay\"\n");
     }
   }
 
