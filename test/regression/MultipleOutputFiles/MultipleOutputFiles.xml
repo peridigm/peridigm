@@ -80,7 +80,6 @@
 	<Parameter name="Parallel Write" type="bool" value="true"/>
 	<ParameterList name="Output Variables">
           <Parameter name="Global_Kinetic_Energy" type="bool" value="true"/>
-          <Parameter name="Global_Strain_Energy" type="bool" value="true"/>
 	</ParameterList>
   </ParameterList>
 
