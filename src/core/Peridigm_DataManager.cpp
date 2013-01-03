@@ -170,20 +170,7 @@ void PeridigmNS::DataManager::allocateData(vector<int> fieldIds)
   if(statelessScalarGlobalFieldIds.size() + statefulScalarGlobalFieldIds.size() + statelessVectorGlobalFieldIds.size() + statefulVectorGlobalFieldIds.size()> 0){
 
     // obtain a comm object for use in creating the Epetra_BlockMaps
-    Epetra_Comm* comm;
-    if(!ownedScalarPointMap.is_null())
-      comm = ownedScalarPointMap->Comm().Clone();
-    else if(!overlapScalarPointMap.is_null())
-      comm = overlapScalarPointMap->Comm().Clone();
-    else if(!ownedVectorPointMap.is_null())
-      comm = ownedVectorPointMap->Comm().Clone();
-    else if(!overlapVectorPointMap.is_null())
-      comm = overlapVectorPointMap->Comm().Clone();
-    else if(!ownedScalarBondMap.is_null())
-      comm = ownedScalarBondMap->Comm().Clone();
-    else
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::NullReferenceError, 
-				 "Error in PeridigmNS::DataManager::allocateData(), attempting to allocate global data with no comm object (forget setMaps()?).");
+    Teuchos::RCP<const Epetra_Comm> comm = getEpetraComm();
     
     // create the maps for global data, if needed
     if(scalarGlobalMap.is_null()){
@@ -421,6 +408,25 @@ void PeridigmNS::DataManager::rebalance(Teuchos::RCP<const Epetra_BlockMap> reba
   ownedVectorPointMap = rebalancedOwnedVectorPointMap;
   overlapVectorPointMap = rebalancedOverlapVectorPointMap;
   ownedScalarBondMap = rebalancedOwnedScalarBondMap;
+}
+
+Teuchos::RCP<const Epetra_Comm> PeridigmNS::DataManager::getEpetraComm()
+{
+  Teuchos::RCP<const Epetra_Comm> comm;
+  if(!ownedScalarPointMap.is_null())
+    comm = Teuchos::rcpFromRef(ownedScalarPointMap->Comm());
+  else if(!overlapScalarPointMap.is_null())
+    comm = Teuchos::rcpFromRef(overlapScalarPointMap->Comm());
+  else if(!ownedVectorPointMap.is_null())
+    comm = Teuchos::rcpFromRef(ownedVectorPointMap->Comm());
+  else if(!overlapVectorPointMap.is_null())
+    comm = Teuchos::rcpFromRef(overlapVectorPointMap->Comm());
+  else if(!ownedScalarBondMap.is_null())
+    comm = Teuchos::rcpFromRef(ownedScalarBondMap->Comm());
+  else
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::NullReferenceError, 
+                               "Error in PeridigmNS::DataManager::getEpetraComm(), no comm object available (forget setMaps()?).");
+  return comm;
 }
 
 void PeridigmNS::DataManager::copyLocallyOwnedDataFromDataManager(PeridigmNS::DataManager& source)

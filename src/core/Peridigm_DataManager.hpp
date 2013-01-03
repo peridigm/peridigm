@@ -114,6 +114,9 @@ public:
   //! Returns the number of times rebalance has been called.
   int getRebalanceCount(){ return rebalanceCount; }
 
+  //! Returns RCP to Epetra_Comm object
+  Teuchos::RCP<const Epetra_Comm> getEpetraComm();
+
   //! Returns RCP to owned scalar map
   Teuchos::RCP<const Epetra_BlockMap> getOwnedScalarPointMap(){ return ownedScalarPointMap; }
 

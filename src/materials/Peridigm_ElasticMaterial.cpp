@@ -139,6 +139,64 @@ PeridigmNS::ElasticMaterial::computeForce(const double dt,
 }
 
 void
+PeridigmNS::ElasticMaterial::computeStrainEnergy(const double dt,
+                                                 const int numOwnedPoints,
+                                                 const int* ownedIDs,
+                                                 const int* neighborhoodList,
+                                                 PeridigmNS::DataManager& dataManager) const
+{
+  // This function is intended to be called from a compute class.
+  // The compute class should have already created the Strain_Energy field id.
+  int strainEnergyFieldId = PeridigmNS::FieldManager::self().getFieldId("Strain_Energy");
+
+  // Placeholder for influence function
+  double omega = 1.0;
+
+  double *x, *y, *cellVolume, *weightedVolume, *dilatation, *strainEnergy, *bondDamage;
+  dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
+  dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&y);
+  dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&cellVolume);
+  dataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
+  dataManager.getData(m_dilatationFieldId, PeridigmField::STEP_NP1)->ExtractView(&dilatation);
+  dataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_NP1)->ExtractView(&bondDamage);
+  dataManager.getData(strainEnergyFieldId, PeridigmField::STEP_NP1)->ExtractView(&strainEnergy);
+
+  int iID, iNID, numNeighbors, nodeId, neighborId;
+  double nodeInitialX[3], nodeCurrentX[3];
+  double initialDistance, currentDistance, deviatoricExtension, neighborBondDamage, nodeDilatation, temp;
+
+  int neighborhoodListIndex(0), bondIndex(0);
+  for(iID=0 ; iID<numOwnedPoints ; ++iID){
+
+	nodeId = ownedIDs[iID];
+	nodeInitialX[0] = x[nodeId*3];
+    nodeInitialX[1] = x[nodeId*3+1];
+    nodeInitialX[2] = x[nodeId*3+2];
+	nodeCurrentX[0] = y[nodeId*3];
+	nodeCurrentX[1] = y[nodeId*3+1];
+	nodeCurrentX[2] = y[nodeId*3+2];
+    nodeDilatation = dilatation[nodeId];
+    temp = 0.0;
+
+    numNeighbors = neighborhoodList[neighborhoodListIndex++];
+    for(iNID=0 ; iNID<numNeighbors ; ++iNID){
+      neighborId = neighborhoodList[neighborhoodListIndex++];
+      neighborBondDamage = bondDamage[bondIndex++];
+      initialDistance = 
+        distance(nodeInitialX[0], nodeInitialX[1], nodeInitialX[2],
+                 x[neighborId*3], x[neighborId*3+1], x[neighborId*3+2]);
+      currentDistance = 
+        distance(nodeCurrentX[0], nodeCurrentX[1], nodeCurrentX[2],
+                 y[neighborId*3], y[neighborId*3+1], y[neighborId*3+2]);
+      deviatoricExtension = (currentDistance - initialDistance) - nodeDilatation*initialDistance/3.0;
+      temp += neighborBondDamage*omega*deviatoricExtension*deviatoricExtension*cellVolume[neighborId];
+    }
+
+    strainEnergy[nodeId] = cellVolume[nodeId]*( 0.5*m_bulkModulus*nodeDilatation*nodeDilatation + 0.5*(15.0*m_shearModulus/weightedVolume[nodeId])*temp);    
+  }
+}
+
+void
 PeridigmNS::ElasticMaterial::computeJacobian(const double dt,
                                              const int numOwnedPoints,
                                              const int* ownedIDs,

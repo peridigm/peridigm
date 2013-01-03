@@ -96,7 +96,6 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
   // Central difference:
   // dF_0x/dx_0 = ( F_0x(positive perturbed x_0) - F_0x(negative perturbed x_0) ) / ( 2.0*epsilon )
 
-
   TEUCHOS_TEST_FOR_EXCEPT_MSG(m_finiteDifferenceProbeLength == DBL_MAX, "**** Finite-difference Jacobian requires that the \"Finite Difference Probe Length\" parameter be set.\n");
   double epsilon = m_finiteDifferenceProbeLength;
 
