@@ -9,7 +9,8 @@ target_link_libraries(utPeridigm_ElasticPlasticMaterial
   PdVTK 
   Utilities 
   PdMaterialUtilities 
-  ${VTK_LIBS} 
+  ${VTK_LIBS}
+  ${PARSER_LIBS}
   ${UT_REQUIRED_LIBS}
   ${TRILINOS_LIBS} 
 )
