@@ -17,6 +17,7 @@ target_link_libraries(utPeridigm_ElasticMaterial
   ${Trilinos_LIBRARIES}
   ${MESH_OUTPUT_LIBS}
   ${PdMaterialUtilitiesLib}
+  ${PARSER_LIBS}
   ${REQUIRED_LIBS}
   ${Boost_LIBRARIES}
 )

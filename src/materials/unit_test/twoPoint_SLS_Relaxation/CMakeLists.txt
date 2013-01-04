@@ -10,6 +10,7 @@ target_link_libraries(twoPoint_SLS_Relaxation
   Utilities 
   PdMaterialUtilities 
   ${VTK_LIBS} 
+  ${PARSER_LIBS}
   ${UT_REQUIRED_LIBS}
   ${TRILINOS_LIBS} 
 )
