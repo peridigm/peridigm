@@ -48,6 +48,9 @@
 #ifndef PERIDIGM_INFLUENCEFUNCTION_HPP
 #define PERIDIGM_INFLUENCEFUNCTION_HPP
 
+
+#include "muParser/muParserDef.h"
+#include "muParser/muParser.h"
 #include <Teuchos_Assert.hpp>
 #include <string>
 
@@ -56,7 +59,7 @@ namespace PeridigmNS {
 namespace PeridigmInfluenceFunction {
 
 // Built-in influence functions should be implemented here
-// and associated with a string in setInfluenceFunction(), below.
+// and associated with a string in InfluenceFunction::setInfluenceFunction(), below.
 
 static double one(double zeta, double horizon){
   return 1.0;
@@ -78,13 +81,11 @@ public:
   typedef double (*functionPointer)(double, double);
 
   //! Singleton.
-  static InfluenceFunction & self() {
-    static InfluenceFunction influenceFunction;
-    return influenceFunction;
-  }
+  static InfluenceFunction & self();
 
   //! Sets the influence function based on the provided string.
   void setInfluenceFunction(std::string influenceFunctionString) {
+
     if(influenceFunctionString == "One"){
       m_influenceFunction = &PeridigmInfluenceFunction::one;
     }
@@ -92,7 +93,17 @@ public:
       m_influenceFunction = &PeridigmInfluenceFunction::parabolicDecay;
     }
     else{
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error:  InfluenceFunction::setInfluenceFunction(), invalid influence function, must be \"One\" or \"Parabolic Decay\"\n");
+    
+      // Assume that unrecognized strings are user-defined influence functions.
+      try{
+        muParser.SetExpr(influenceFunctionString);
+      }
+      catch (mu::Parser::exception_type &e){
+        //TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error:  InfluenceFunction::setInfluenceFunction(), invalid influence function\n");
+      }
+      m_influenceFunction = &userDefinedInfluenceFunction;
+    
     }
   }
 
@@ -103,18 +114,28 @@ public:
     return m_influenceFunction;
   }
 
+  //! Function for evaluating user-defined influence functions
+  static double userDefinedInfluenceFunction(double zeta, double horizon);
+
 private:
 
   //! Constructor, private to prevent use (singleton class).
-  InfluenceFunction() : m_influenceFunction(NULL) {
-    setInfluenceFunction("One");
-  }
+  InfluenceFunction();
 
   //! Private and unimplemented to prevent use
   InfluenceFunction( const InfluenceFunction & );
 
   //! Private and unimplemented to prevent use
   InfluenceFunction & operator= ( const InfluenceFunction & );
+
+  //! @name Variables for user-defined influence functions.
+  //@{ 
+  static double muParserZeta;
+  static double muParserHorizon;
+  //@}
+
+  //! Function parser for user-defined influence functions.
+  static mu::Parser muParser;
 
   //! Function pointer to the influence function with the signature:  double function(double zeta, double horizon).
   functionPointer m_influenceFunction;
