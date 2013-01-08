@@ -9,3 +9,6 @@ add_subdirectory (mesh_input)
 add_subdirectory (mesh_output)
 add_subdirectory (pdneigh)
 add_subdirectory (utilities)
+
+# unit test directory
+add_subdirectory (unit_test)
