@@ -52,6 +52,8 @@
 #include "Peridigm_ZoltanSearchTree.hpp"
 #include <Epetra_SerialComm.h>
 #include <vector>
+#include <sstream>
+#include <fstream>
 
 using namespace boost::unit_test;
 using namespace std;
@@ -100,6 +102,13 @@ void testEightPointMesh(vector<double>& mesh, PeridigmNS::SearchTree* searchTree
   BOOST_CHECK_EQUAL(neighborList[1], 1);
   BOOST_CHECK_EQUAL(neighborList[2], 2);
   BOOST_CHECK_EQUAL(neighborList[3], 4);
+
+  // This search should find no neighbors
+  neighborList.clear();
+  searchPointIndex = 0;
+  searchRadius = 0.015;
+  searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
+  BOOST_CHECK_EQUAL(static_cast<int>(neighborList.size()), 1);
 }
 
 //! Zoltan eight-point test
@@ -122,6 +131,72 @@ void testJAMEightPointMesh()
   delete searchTree;
 }
 
+//! Read a mesh from a text file
+void readMeshFromTextFile(vector<double>& mesh, string fileName)
+{
+  ifstream inFile(fileName.c_str());
+  if(!inFile.is_open())
+    cout << "\n**** Warning:  This test can only be run from the directory where it resides (otherwise it won't find the input files) ****\n" << endl;
+  BOOST_CHECK_EQUAL(inFile.is_open(), true);
+  while(inFile.good()){
+    string str;
+    getline(inFile, str);
+    // Ignore comment lines, otherwise parse
+    if( !(str[0] == '#' || str[0] == '/' || str[0] == '*' || str.size() == 0) ){
+      istringstream iss(str);
+      vector<double> data;
+      copy(istream_iterator<double>(iss),
+           istream_iterator<double>(),
+           back_inserter<vector<double> >(data));
+      // Check for obvious problems with the data
+      BOOST_CHECK_EQUAL(static_cast<int>(data.size()), 5);
+      // Store the coordinates
+      mesh.push_back(data[0]);
+      mesh.push_back(data[1]);
+      mesh.push_back(data[2]);
+    }
+  }
+  inFile.close();
+}
+
+//! Tests the search tree associated with the equally-spaced 1000-point cube mesh
+void testEquallySpacedCubeMesh(vector<double>& mesh, PeridigmNS::SearchTree* searchTree)
+{
+  double* meshPtr = &mesh[0];
+  vector<int> neighborList;
+  int searchPointIndex, degreesOfFreedom(3);
+  double searchRadius;
+
+  // This search should find three other points
+  neighborList.clear();
+  searchPointIndex = 0;
+  searchRadius = 1.015;
+  searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
+  BOOST_CHECK_EQUAL(static_cast<int>(neighborList.size()), 4); 
+}
+
+//! Zoltan 1000-point test
+void testZoltanEquallySpacedCubeMesh1000()
+{
+  vector<double> mesh;
+  string fileName("./input_files/cube_1000.txt");
+  readMeshFromTextFile(mesh, fileName);
+  PeridigmNS::SearchTree* searchTree = new PeridigmNS::ZoltanSearchTree(static_cast<int>(mesh.size()/3), &mesh[0]);
+  testEquallySpacedCubeMesh(mesh, searchTree);
+  delete searchTree;
+}
+
+//! JAM 1000-point test
+void testJAMEquallySpacedCubeMesh1000()
+{
+  vector<double> mesh;
+  string fileName("./input_files/cube_1000.txt");
+  readMeshFromTextFile(mesh, fileName);
+  PeridigmNS::SearchTree* searchTree = new PeridigmNS::JAMSearchTree(static_cast<int>(mesh.size()/3), &mesh[0]);
+  testEquallySpacedCubeMesh(mesh, searchTree);
+  delete searchTree;
+}
+
 bool init_unit_test_suite()
 {
   // Add a suite for each processor in the test
@@ -130,6 +205,8 @@ bool init_unit_test_suite()
   test_suite* proc = BOOST_TEST_SUITE("utPeridigm_SearchTree");
   proc->add(BOOST_TEST_CASE(&testZoltanEightPointMesh));
   proc->add(BOOST_TEST_CASE(&testJAMEightPointMesh));
+  proc->add(BOOST_TEST_CASE(&testZoltanEquallySpacedCubeMesh1000));
+  proc->add(BOOST_TEST_CASE(&testJAMEquallySpacedCubeMesh1000));
   framework::master_test_suite().add(proc);
 
   return success;
