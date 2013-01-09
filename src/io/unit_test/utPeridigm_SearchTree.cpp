@@ -45,6 +45,8 @@
 // ************************************************************************
 //@HEADER
 
+#define PERFORMANCE_TESTS 0
+
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
@@ -172,7 +174,17 @@ void testEquallySpacedCubeMesh(vector<double>& mesh, PeridigmNS::SearchTree* sea
   searchPointIndex = 0;
   searchRadius = 1.015;
   searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
-  BOOST_CHECK_EQUAL(static_cast<int>(neighborList.size()), 4); 
+  BOOST_CHECK_EQUAL(static_cast<int>(neighborList.size()), 4);
+
+#ifdef PERFORMANCE_TESTS
+  // Perform a neighbor search for all points
+  for(unsigned int i=0 ; i<mesh.size()/3 ; i++){
+    neighborList.clear();
+    searchPointIndex = i;
+    searchRadius = 3.015;
+    searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
+  }
+#endif
 }
 
 //! Zoltan 1000-point test
