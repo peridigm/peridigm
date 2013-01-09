@@ -61,6 +61,10 @@ using namespace boost::unit_test;
 using namespace std;
 using namespace PeridigmNS;
 
+// Flag for performance test modes
+static bool JAMPerformanceMode(false);
+static bool ZoltanPerformanceMode(false);
+
 //! Generate simple eight-point cube mesh
 void eightPointMesh(vector<double>& mesh)
 {
@@ -162,7 +166,7 @@ void readMeshFromTextFile(vector<double>& mesh, string fileName)
 }
 
 //! Tests the search tree associated with the equally-spaced 1000-point cube mesh
-void testEquallySpacedCubeMesh(vector<double>& mesh, PeridigmNS::SearchTree* searchTree)
+void testEquallySpacedCubeMesh1000(vector<double>& mesh, PeridigmNS::SearchTree* searchTree)
 {
   double* meshPtr = &mesh[0];
   vector<int> neighborList;
@@ -175,16 +179,6 @@ void testEquallySpacedCubeMesh(vector<double>& mesh, PeridigmNS::SearchTree* sea
   searchRadius = 1.015;
   searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
   BOOST_CHECK_EQUAL(static_cast<int>(neighborList.size()), 4);
-
-#ifdef PERFORMANCE_TESTS
-  // Perform a neighbor search for all points
-  for(unsigned int i=0 ; i<mesh.size()/3 ; i++){
-    neighborList.clear();
-    searchPointIndex = i;
-    searchRadius = 3.015;
-    searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
-  }
-#endif
 }
 
 //! Zoltan 1000-point test
@@ -194,7 +188,7 @@ void testZoltanEquallySpacedCubeMesh1000()
   string fileName("./input_files/cube_1000.txt");
   readMeshFromTextFile(mesh, fileName);
   PeridigmNS::SearchTree* searchTree = new PeridigmNS::ZoltanSearchTree(static_cast<int>(mesh.size()/3), &mesh[0]);
-  testEquallySpacedCubeMesh(mesh, searchTree);
+  testEquallySpacedCubeMesh1000(mesh, searchTree);
   delete searchTree;
 }
 
@@ -205,7 +199,135 @@ void testJAMEquallySpacedCubeMesh1000()
   string fileName("./input_files/cube_1000.txt");
   readMeshFromTextFile(mesh, fileName);
   PeridigmNS::SearchTree* searchTree = new PeridigmNS::JAMSearchTree(static_cast<int>(mesh.size()/3), &mesh[0]);
-  testEquallySpacedCubeMesh(mesh, searchTree);
+  testEquallySpacedCubeMesh1000(mesh, searchTree);
+  delete searchTree;
+}
+
+//! Zoltan performance test
+void testZoltanPerformance()
+{
+  vector<int> neighborList;
+  int searchPointIndex, degreesOfFreedom(3);
+  double searchRadius;
+  vector<double> mesh;
+  string fileName;
+  double* meshPtr;
+  PeridigmNS::SearchTree* searchTree;
+  unsigned int totalBonds;
+
+  // Create a 1000-point discretization and find the neighbors of all the points
+  mesh.clear();
+  fileName = "./input_files/cube_1000.txt";
+  readMeshFromTextFile(mesh, fileName);
+  meshPtr = &mesh[0];
+  searchTree = new PeridigmNS::ZoltanSearchTree(static_cast<int>(mesh.size()/3), meshPtr);
+  totalBonds = 0;
+  for(unsigned int i=0 ; i<mesh.size()/3 ; i++){
+    neighborList.clear();
+    searchPointIndex = i;
+    searchRadius = 1.0*3.015;
+    searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
+    totalBonds += neighborList.size() - 1;
+  }
+  BOOST_CHECK_EQUAL(totalBonds, static_cast<unsigned int>(84288));
+  delete searchTree;
+
+  // Create a 8000-point discretization and find the neighbors of all the points
+  mesh.clear();
+  fileName = "./input_files/cube_8000.txt";
+  readMeshFromTextFile(mesh, fileName);
+  meshPtr = &mesh[0];
+  searchTree = new PeridigmNS::ZoltanSearchTree(static_cast<int>(mesh.size()/3), meshPtr);
+  totalBonds = 0;
+  for(unsigned int i=0 ; i<mesh.size()/3 ; i++){
+    neighborList.clear();
+    searchPointIndex = i;
+    searchRadius = 0.5*3.015;
+    searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
+    totalBonds += neighborList.size() - 1;
+  }
+  BOOST_CHECK_EQUAL(totalBonds, static_cast<unsigned int>(816728));
+  delete searchTree;
+
+  // Create a 27000-point discretization and find the neighbors of all the points
+  mesh.clear();
+  fileName = "./input_files/cube_27000.txt";
+  readMeshFromTextFile(mesh, fileName);
+  meshPtr = &mesh[0];
+  searchTree = new PeridigmNS::ZoltanSearchTree(static_cast<int>(mesh.size()/3), meshPtr);
+  totalBonds = 0;
+  for(unsigned int i=0 ; i<mesh.size()/3 ; i++){
+    neighborList.clear();
+    searchPointIndex = i;
+    searchRadius = (1.0/3.0)*3.015;
+    searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
+    totalBonds += neighborList.size() - 1;
+  }
+  BOOST_CHECK_EQUAL(totalBonds, static_cast<unsigned int>(2929168));
+  delete searchTree;
+}
+
+//! JAM performance test
+void testJAMPerformance()
+{
+  vector<int> neighborList;
+  int searchPointIndex, degreesOfFreedom(3);
+  double searchRadius;
+  vector<double> mesh;
+  string fileName;
+  double* meshPtr;
+  PeridigmNS::SearchTree* searchTree;
+  unsigned int totalBonds;
+
+  // Create a 1000-point discretization and find the neighbors of all the points
+  mesh.clear();
+  fileName = "./input_files/cube_1000.txt";
+  readMeshFromTextFile(mesh, fileName);
+  meshPtr = &mesh[0];
+  searchTree = new PeridigmNS::JAMSearchTree(static_cast<int>(mesh.size()/3), meshPtr);
+  totalBonds = 0;
+  for(unsigned int i=0 ; i<mesh.size()/3 ; i++){
+    neighborList.clear();
+    searchPointIndex = i;
+    searchRadius = 1.0*3.015;
+    searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
+    totalBonds += neighborList.size() - 1;
+  }
+  BOOST_CHECK_EQUAL(totalBonds, static_cast<unsigned int>(84288));
+  delete searchTree;
+
+  // Create a 8000-point discretization and find the neighbors of all the points
+  mesh.clear();
+  fileName = "./input_files/cube_8000.txt";
+  readMeshFromTextFile(mesh, fileName);
+  meshPtr = &mesh[0];
+  searchTree = new PeridigmNS::JAMSearchTree(static_cast<int>(mesh.size()/3), meshPtr);
+  totalBonds = 0;
+  for(unsigned int i=0 ; i<mesh.size()/3 ; i++){
+    neighborList.clear();
+    searchPointIndex = i;
+    searchRadius = 0.5*3.015;
+    searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
+    totalBonds += neighborList.size() - 1;
+  }
+  BOOST_CHECK_EQUAL(totalBonds, static_cast<unsigned int>(816728));
+  delete searchTree;
+
+  // Create a 27000-point discretization and find the neighbors of all the points
+  mesh.clear();
+  fileName = "./input_files/cube_27000.txt";
+  readMeshFromTextFile(mesh, fileName);
+  meshPtr = &mesh[0];
+  searchTree = new PeridigmNS::JAMSearchTree(static_cast<int>(mesh.size()/3), meshPtr);
+  totalBonds = 0;
+  for(unsigned int i=0 ; i<mesh.size()/3 ; i++){
+    neighborList.clear();
+    searchPointIndex = i;
+    searchRadius = (1.0/3.0)*3.015;
+    searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
+    totalBonds += neighborList.size() - 1;
+  }
+  BOOST_CHECK_EQUAL(totalBonds, static_cast<unsigned int>(2929168));
   delete searchTree;
 }
 
@@ -215,10 +337,20 @@ bool init_unit_test_suite()
   bool success = true;
 
   test_suite* proc = BOOST_TEST_SUITE("utPeridigm_SearchTree");
-  proc->add(BOOST_TEST_CASE(&testZoltanEightPointMesh));
-  proc->add(BOOST_TEST_CASE(&testJAMEightPointMesh));
-  proc->add(BOOST_TEST_CASE(&testZoltanEquallySpacedCubeMesh1000));
-  proc->add(BOOST_TEST_CASE(&testJAMEquallySpacedCubeMesh1000));
+
+  if(!JAMPerformanceMode && !ZoltanPerformanceMode){
+    proc->add(BOOST_TEST_CASE(&testZoltanEightPointMesh));
+    proc->add(BOOST_TEST_CASE(&testJAMEightPointMesh));
+    proc->add(BOOST_TEST_CASE(&testZoltanEquallySpacedCubeMesh1000));
+    proc->add(BOOST_TEST_CASE(&testJAMEquallySpacedCubeMesh1000));
+  }
+  if(JAMPerformanceMode){
+    proc->add(BOOST_TEST_CASE(&testJAMPerformance));
+  }
+  if(ZoltanPerformanceMode){
+    proc->add(BOOST_TEST_CASE(&testZoltanPerformance));
+  }
+
   framework::master_test_suite().add(proc);
 
   return success;
@@ -241,8 +373,25 @@ int main
   MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 #endif
 
+  // Determine if the test is being run in performance mode
+  if(argc > 1){
+    for(int i=0 ; i<argc-1 ; ++i){
+      string argument(argv[i+1]);
+      if( argument.find("jam") != string::npos )
+        JAMPerformanceMode = true;
+      if( argument.find("zoltan") != string::npos )
+        ZoltanPerformanceMode = true;
+    }
+  }
+
+  if(JAMPerformanceMode)
+    cout << "\nRunning JAM performance tests." << endl;
+  if(ZoltanPerformanceMode)
+    cout << "\nRunning Zoltan performance tests." << endl;
+  if(!JAMPerformanceMode && !ZoltanPerformanceMode)
+    cout << "\nRunning standard unit tests." << endl;
+
   int returnCode = -1;
-  
   if(numProcs == 1){
 
     // Generate the test meshes
