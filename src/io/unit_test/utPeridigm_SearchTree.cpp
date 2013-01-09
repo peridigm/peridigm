@@ -213,7 +213,7 @@ void testZoltanPerformance()
   string fileName;
   double* meshPtr;
   PeridigmNS::SearchTree* searchTree;
-  unsigned int totalBonds;
+  unsigned int numBonds, totalBonds, maxBonds;
 
   // Create a 1000-point discretization and find the neighbors of all the points
   mesh.clear();
@@ -222,14 +222,20 @@ void testZoltanPerformance()
   meshPtr = &mesh[0];
   searchTree = new PeridigmNS::ZoltanSearchTree(static_cast<int>(mesh.size()/3), meshPtr);
   totalBonds = 0;
+  maxBonds = 0;
+  neighborList.resize(130);
   for(unsigned int i=0 ; i<mesh.size()/3 ; i++){
     neighborList.clear();
     searchPointIndex = i;
     searchRadius = 1.0*3.015;
     searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
-    totalBonds += neighborList.size() - 1;
+    numBonds = neighborList.size() - 1;
+    totalBonds += numBonds;
+    if(numBonds > maxBonds)
+      maxBonds = numBonds;
   }
   BOOST_CHECK_EQUAL(totalBonds, static_cast<unsigned int>(84288));
+  BOOST_CHECK_EQUAL(maxBonds, static_cast<unsigned int>(122));
   delete searchTree;
 
   // Create a 8000-point discretization and find the neighbors of all the points
@@ -239,14 +245,20 @@ void testZoltanPerformance()
   meshPtr = &mesh[0];
   searchTree = new PeridigmNS::ZoltanSearchTree(static_cast<int>(mesh.size()/3), meshPtr);
   totalBonds = 0;
+  maxBonds = 0;
+  neighborList.resize(130);
   for(unsigned int i=0 ; i<mesh.size()/3 ; i++){
     neighborList.clear();
     searchPointIndex = i;
     searchRadius = 0.5*3.015;
     searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
-    totalBonds += neighborList.size() - 1;
+    numBonds = neighborList.size() - 1;
+    totalBonds += numBonds;
+    if(numBonds > maxBonds)
+      maxBonds = numBonds;
   }
   BOOST_CHECK_EQUAL(totalBonds, static_cast<unsigned int>(816728));
+  BOOST_CHECK_EQUAL(maxBonds, static_cast<unsigned int>(122));
   delete searchTree;
 
   // Create a 27000-point discretization and find the neighbors of all the points
@@ -256,14 +268,20 @@ void testZoltanPerformance()
   meshPtr = &mesh[0];
   searchTree = new PeridigmNS::ZoltanSearchTree(static_cast<int>(mesh.size()/3), meshPtr);
   totalBonds = 0;
+  maxBonds = 0;
+  neighborList.resize(130);
   for(unsigned int i=0 ; i<mesh.size()/3 ; i++){
     neighborList.clear();
     searchPointIndex = i;
     searchRadius = (1.0/3.0)*3.015;
     searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
-    totalBonds += neighborList.size() - 1;
+    numBonds = neighborList.size() - 1;
+    totalBonds += numBonds;
+    if(numBonds > maxBonds)
+      maxBonds = numBonds;
   }
   BOOST_CHECK_EQUAL(totalBonds, static_cast<unsigned int>(2929168));
+  BOOST_CHECK_EQUAL(maxBonds, static_cast<unsigned int>(122));
   delete searchTree;
 }
 
@@ -277,7 +295,7 @@ void testJAMPerformance()
   string fileName;
   double* meshPtr;
   PeridigmNS::SearchTree* searchTree;
-  unsigned int totalBonds;
+  unsigned int numBonds, totalBonds, maxBonds;
 
   // Create a 1000-point discretization and find the neighbors of all the points
   mesh.clear();
@@ -286,14 +304,20 @@ void testJAMPerformance()
   meshPtr = &mesh[0];
   searchTree = new PeridigmNS::JAMSearchTree(static_cast<int>(mesh.size()/3), meshPtr);
   totalBonds = 0;
+  maxBonds = 0;
+  neighborList.resize(130);
   for(unsigned int i=0 ; i<mesh.size()/3 ; i++){
     neighborList.clear();
     searchPointIndex = i;
     searchRadius = 1.0*3.015;
     searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
-    totalBonds += neighborList.size() - 1;
+    numBonds = neighborList.size() - 1;
+    totalBonds += numBonds;
+    if(numBonds > maxBonds)
+      maxBonds = numBonds;
   }
   BOOST_CHECK_EQUAL(totalBonds, static_cast<unsigned int>(84288));
+  BOOST_CHECK_EQUAL(maxBonds, static_cast<unsigned int>(122));
   delete searchTree;
 
   // Create a 8000-point discretization and find the neighbors of all the points
@@ -303,14 +327,20 @@ void testJAMPerformance()
   meshPtr = &mesh[0];
   searchTree = new PeridigmNS::JAMSearchTree(static_cast<int>(mesh.size()/3), meshPtr);
   totalBonds = 0;
+  maxBonds = 0;
+  neighborList.resize(130);
   for(unsigned int i=0 ; i<mesh.size()/3 ; i++){
     neighborList.clear();
     searchPointIndex = i;
     searchRadius = 0.5*3.015;
     searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
-    totalBonds += neighborList.size() - 1;
+    numBonds = neighborList.size() - 1;
+    totalBonds += numBonds;
+    if(numBonds > maxBonds)
+      maxBonds = numBonds;
   }
   BOOST_CHECK_EQUAL(totalBonds, static_cast<unsigned int>(816728));
+  BOOST_CHECK_EQUAL(maxBonds, static_cast<unsigned int>(122));
   delete searchTree;
 
   // Create a 27000-point discretization and find the neighbors of all the points
@@ -320,14 +350,20 @@ void testJAMPerformance()
   meshPtr = &mesh[0];
   searchTree = new PeridigmNS::JAMSearchTree(static_cast<int>(mesh.size()/3), meshPtr);
   totalBonds = 0;
+  maxBonds = 0;
+  neighborList.resize(130);
   for(unsigned int i=0 ; i<mesh.size()/3 ; i++){
     neighborList.clear();
     searchPointIndex = i;
     searchRadius = (1.0/3.0)*3.015;
     searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
-    totalBonds += neighborList.size() - 1;
+    numBonds = neighborList.size() - 1;
+    totalBonds += numBonds;
+    if(numBonds > maxBonds)
+      maxBonds = numBonds;
   }
   BOOST_CHECK_EQUAL(totalBonds, static_cast<unsigned int>(2929168));
+  BOOST_CHECK_EQUAL(maxBonds, static_cast<unsigned int>(122));
   delete searchTree;
 }
 
