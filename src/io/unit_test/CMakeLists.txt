@@ -4,7 +4,7 @@
 string (COMPARE EQUAL ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} buildInSource)
 if (NOT ${buildInSource})
    set(UT_DIRS ${UT_DIRS}  -d src/io/unit_test/input_files)
-   execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/scripts/mirror.py -s ${CMAKE_SOURCE_DIR} -b ${CMAKE_BINARY_DIR} ${UT_DIRS} )
+   execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/scripts/mirror.py -s ${CMAKE_SOURCE_DIR} -b ${CMAKE_BINARY_DIR} ${UT_DIRS})
 endif (NOT ${buildInSource})
 
 add_executable(utPeridigm_SearchTree ./utPeridigm_SearchTree.cpp)
