@@ -244,6 +244,11 @@ int main
   int returnCode = -1;
   
   if(numProcs == 1){
+
+    // Generate the test meshes
+    system("cd input_files ; python CreateTestMeshes.py");
+
+    // Run the tests
     returnCode = unit_test_main(init_unit_test, argc, argv);
   }
   else{
