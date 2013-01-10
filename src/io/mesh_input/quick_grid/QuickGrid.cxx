@@ -51,7 +51,7 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <vector>
 #include <cmath>
-#include <cstring>
+#include <string>
 #include <iostream>
 #include <strstream>
 #include <set>
@@ -79,12 +79,12 @@ shared_ptr<QuickGridMeshGenerationIterator> getMeshGenerator(size_t numProcs, co
     * Get Discretization
     */
    ptree discretization_tree=pt.find("Discretization")->second;
-   string path=discretization_tree.get<string>("Type");
+   std::string path=discretization_tree.get<std::string>("Type");
    double horizon=pt.get<double>("Discretization.Horizon");
 
-   string neighborhood_type="";
+   std::string neighborhood_type="";
    try {
-   neighborhood_type=pt.get<string>("Discretization.NeighborhoodType");
+   neighborhood_type=pt.get<std::string>("Discretization.NeighborhoodType");
    } catch(std::runtime_error& e) {
    	std::cout << "NOTE-->QUICKGRID::getMeshGenerator()\n";
    	std::cout << "\tDiscretization.NeighborhoodType was not specified.  Default square norm will be used.\n";
@@ -396,7 +396,7 @@ size_t Spec1D::getCellNeighborhoodSize(double horizon, double ringRadius) const 
 	size_t nCx = static_cast<size_t>(dCx);
 //	std::cout << "PdQPointSet1d::getCellNeighborhoodSize" << std::endl;
 //	std::cout << "\tincoming horizon = " << h << "; ratio dCx = h/dx = " << dCx << "; nCx = " << nCx << std::endl;
-	if(abs(dCx - nCx) >= .5 )
+	if(std::abs(dCx - nCx) >= .5 )
 		nCx += 1;
 //	std::cout << "Final nCx = " << nCx << std::endl;
 
@@ -423,7 +423,7 @@ SpecRing2D::SpecRing2D(Vector3D center, double innerRadius, double outerRadius, 
 
 }
 
-double SpecRing2D::getRingThickness() const { return abs(r0-rI); }
+double SpecRing2D::getRingThickness() const { return std::abs(r0-rI); }
 
 
 
@@ -457,7 +457,7 @@ std::vector<size_t> QuickGridMeshGenerationIterator::getNumCellsPerProcessor(siz
 	std::vector<size_t> cellsPerProc;
 	int numCellsPerProc = globalNumCells/numProcs;
 	int numCellsLastProc = numCellsPerProc + globalNumCells % numProcs;
-	cellsPerProc  = vector<size_t>(numProcs,numCellsPerProc);
+	cellsPerProc  = std::vector<size_t>(numProcs,numCellsPerProc);
 	cellsPerProc[numProcs-1] = numCellsLastProc;
 	return cellsPerProc;
 }
@@ -953,7 +953,7 @@ AxisSymmetricWedgeData AxisSymmetric2DCylinderMeshGenerator::create_wedge_data(Q
 			 * Every point in the master surface has y = 0.0
 			 */
 			double y = *(X+1)/R;
-			if(abs(y)<=tolerance){
+			if(std::abs(y)<=tolerance){
 				/*
 				 * This is a master point;
 				 * Add to set;
@@ -994,7 +994,7 @@ AxisSymmetricWedgeData AxisSymmetric2DCylinderMeshGenerator::create_wedge_data(Q
 			 * gid an owned 'master' ??
 			 */
 			double y = *(X+1)/R;
-			if(abs(y)<=tolerance){
+			if(std::abs(y)<=tolerance){
 				/*
 				 * this case was already handled above
 				 */
@@ -1037,7 +1037,7 @@ AxisSymmetricWedgeData AxisSymmetric2DCylinderMeshGenerator::create_wedge_data(Q
 			 * gid an owned 'master' ??
 			 */
 			double y = *(X+1)/R;
-			if(abs(y)<=tolerance){
+			if(std::abs(y)<=tolerance){
 				continue;
 			}
 			/* gid is a slave
