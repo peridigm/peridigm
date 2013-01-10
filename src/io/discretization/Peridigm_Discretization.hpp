@@ -51,9 +51,8 @@
 #include <Teuchos_RCP.hpp>
 #include <Epetra_Map.h>
 #include <Epetra_Vector.h>
-
-#include "mesh_input/quick_grid/QuickGrid.h"
 #include "Peridigm_NeighborhoodData.hpp"
+#include "mesh_input/quick_grid/QuickGrid.h"
 
 namespace PeridigmNS {
 

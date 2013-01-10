@@ -78,9 +78,8 @@
 #include "materials/Peridigm_Material.hpp"
 #include "damage/Peridigm_DamageModel.hpp"
 #include "contact/Peridigm_ContactModel.hpp"
-#include "muParser/muParserDef.h"
-
 #include "mesh_input/quick_grid/QuickGridData.h"
+#include "muParser/muParserDef.h"
 
 namespace PeridigmNS {
 

@@ -52,10 +52,8 @@
 #include <Epetra_FECrsMatrix.h>
 #include <Teuchos_ParameterList.hpp>
 
-#include "muParser/muParserDef.h" // \todo Is this required?
-#include "muParser/muParser.h"
-
 #include "Peridigm_Discretization.hpp"
+#include "muParser/muParser.h"
 
 namespace PeridigmNS {
 

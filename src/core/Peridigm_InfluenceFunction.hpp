@@ -48,11 +48,9 @@
 #ifndef PERIDIGM_INFLUENCEFUNCTION_HPP
 #define PERIDIGM_INFLUENCEFUNCTION_HPP
 
-
-#include "muParser/muParserDef.h"
-#include "muParser/muParser.h"
 #include <Teuchos_Assert.hpp>
 #include <string>
+#include "muParser/muParser.h"
 
 namespace PeridigmNS {
 
