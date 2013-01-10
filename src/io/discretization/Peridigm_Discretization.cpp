@@ -47,8 +47,7 @@
 
 #include "Peridigm_Discretization.hpp"
 
-using namespace std;
-using tr1::shared_ptr;
+using std::tr1::shared_ptr;
 
 Epetra_BlockMap PeridigmNS::Discretization::getOverlap(int ndf, int numShared, int*shared, int numOwned,const  int* owned, const Epetra_Comm& comm){
 
@@ -92,7 +91,7 @@ UTILITIES::Array<int> PeridigmNS::Discretization::getSharedGlobalIds(const QUICK
 	// Copy set into shared ptr
 	UTILITIES::Array<int> sharedGlobalIds(shared.size());
 	int *sharedPtr = sharedGlobalIds.get();
-	set<int>::iterator it;
+    std::set<int>::iterator it;
 	for ( it=shared.begin() ; it != shared.end(); it++, sharedPtr++ )
 		*sharedPtr = *it;
 
@@ -137,7 +136,7 @@ Epetra_BlockMap PeridigmNS::Discretization::getOwnedMap(const Epetra_Comm& comm,
 
 Epetra_BlockMap PeridigmNS::Discretization::getOverlapMap(const Epetra_Comm& comm,const QUICKGRID::Data& gridData, int ndf) {
 	UTILITIES::Array<int> sharedGIDS = getSharedGlobalIds(gridData);
-	std::tr1::shared_ptr<int> sharedPtr = sharedGIDS.get_shared_ptr();
+	shared_ptr<int> sharedPtr = sharedGIDS.get_shared_ptr();
 	int numShared = sharedGIDS.get_size();
 	int *shared = sharedPtr.get();
 	int *owned = gridData.myGlobalIDs.get();

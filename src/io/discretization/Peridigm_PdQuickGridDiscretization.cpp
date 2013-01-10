@@ -51,8 +51,7 @@
 #include <vector>
 #include <sstream>
 
-using namespace std;
-using tr1::shared_ptr;
+using std::tr1::shared_ptr;
 
 PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                                                                  const Teuchos::RCP<Teuchos::ParameterList>& params) :
@@ -63,7 +62,7 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
   numPID(epetra_comm->NumProc()),
   comm(epetra_comm)
 {
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(params->get<string>("Type") != "PdQuickGrid", "Invalid Type in PdQuickGridDiscretization");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(params->get<std::string>("Type") != "PdQuickGrid", "Invalid Type in PdQuickGridDiscretization");
   QUICKGRID::Data decomp = getDiscretization(params);
 
   createMaps(decomp);
@@ -114,7 +113,7 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
 
   // there is only one block, give it a name and list all the elements
   // \todo THIS WILL NOT SCALE:  We want to load only the locally-owned elements, but there is foundational work required before this is possible.
-  string blockName = "block_1";
+  std::string blockName = "block_1";
   (*elementBlocks)[blockName] = std::vector<int>( oneDimensionalMap->NumGlobalElements() );
   for(unsigned int i=0 ; i<(*elementBlocks)[blockName].size() ; ++i)
     (*elementBlocks)[blockName][i] = i;
@@ -181,7 +180,7 @@ QUICKGRID::Data PeridigmNS::PdQuickGridDiscretization::getDiscretization(const T
   QUICKGRID::NormFunctionPointer neighborhoodType = QUICKGRID::NoOpNorm;
   Teuchos::ParameterEntry* normTypeEntry=params->getEntryPtr("NeighborhoodType");
   if(NULL!=normTypeEntry){
-    std::string normType = params->get<string>("NeighborhoodType");
+    std::string normType = params->get<std::string>("NeighborhoodType");
     if(normType=="Spherical") neighborhoodType = QUICKGRID::SphericalNorm;
   }
 

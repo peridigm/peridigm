@@ -60,7 +60,6 @@
 
 namespace QUICKGRID {
 
-using namespace std;
 using std::tr1::shared_ptr;
 using UTILITIES::Minus;
 using UTILITIES::Dot;
