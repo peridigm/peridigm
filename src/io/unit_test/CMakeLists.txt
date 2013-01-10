@@ -15,3 +15,12 @@ target_link_libraries(utPeridigm_SearchTree
   ${Boost_LIBRARIES}
 )
 add_test (utPeridigm_SearchTree python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_SearchTree)
+
+# This test is not run as part of the normal test suite
+add_executable(utPeridigm_SearchTree_Performance ./utPeridigm_SearchTree.cpp)
+target_link_libraries(utPeridigm_SearchTree_Performance
+  ${Peridigm_LIBRARY}
+  ${Zoltan_LIBRARY}
+  ${REQUIRED_LIBS}
+  ${Boost_LIBRARIES}
+)
