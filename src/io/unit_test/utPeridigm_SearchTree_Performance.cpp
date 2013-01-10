@@ -50,6 +50,7 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_ALTERNATIVE_INIT_API
 #include <boost/test/unit_test.hpp>
+#include "Peridigm_Timer.hpp"
 #include "Peridigm_JAMSearchTree.hpp"
 #include "Peridigm_ZoltanSearchTree.hpp"
 #include <Epetra_SerialComm.h>
@@ -89,206 +90,187 @@ void readMeshFromTextFile(vector<double>& mesh, string fileName)
   inFile.close();
 }
 
-//! Tests the search tree associated with the equally-spaced 1000-point cube mesh
-void testEquallySpacedCubeMesh1000(vector<double>& mesh, PeridigmNS::SearchTree* searchTree)
+PeridigmNS::SearchTree* createTree(string treeType, int numPoints, double* coordinates)
 {
-  double* meshPtr = &mesh[0];
+  PeridigmNS::SearchTree* tree(NULL);
+  if(treeType == "Zoltan")
+    tree = new PeridigmNS::ZoltanSearchTree(numPoints, coordinates);
+  else if(treeType == "JAM")
+    tree = new PeridigmNS::JAMSearchTree(numPoints, coordinates);
+  return tree;
+}
+
+//! Performance tests
+void testPerformance(string treeType)
+{
   vector<int> neighborList;
   int searchPointIndex, degreesOfFreedom(3);
   double searchRadius;
-
-  // This search should find three other points
-  neighborList.clear();
-  searchPointIndex = 0;
-  searchRadius = 1.015;
-  searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
-  BOOST_CHECK_EQUAL(static_cast<int>(neighborList.size()), 4);
-}
-
-//! Zoltan 1000-point test
-void testZoltanEquallySpacedCubeMesh1000()
-{
   vector<double> mesh;
-  string fileName("./input_files/cube_1000.txt");
+  string fileName, testName;
+  double* meshPtr;
+  PeridigmNS::SearchTree* searchTree;
+  unsigned int numBonds, totalBonds, maxBonds, minBonds;
+
+  // Create a 8022-point discretization shaped like a dumbbell and find the neighbors of all the points
+  mesh.clear();
+  fileName = "./input_files/dumbbell.txt";
   readMeshFromTextFile(mesh, fileName);
-  PeridigmNS::SearchTree* searchTree = new PeridigmNS::ZoltanSearchTree(static_cast<int>(mesh.size()/3), &mesh[0]);
-  testEquallySpacedCubeMesh1000(mesh, searchTree);
+  meshPtr = &mesh[0];
+  totalBonds = 0;
+  maxBonds = 0;
+  minBonds = 1000000;
+  testName = treeType + " test 1)  Dumbbell mesh with 8022 points";
+  PeridigmNS::Timer::self().startTimer(testName);
+  searchTree = createTree(treeType, static_cast<int>(mesh.size()/3), meshPtr);
+  neighborList.resize(130);
+  for(unsigned int i=0 ; i<mesh.size()/3 ; i++){
+    neighborList.clear();
+    searchPointIndex = i;
+    searchRadius = (1.0/3.0)*3.015;
+    searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
+    numBonds = neighborList.size() - 1;
+    totalBonds += numBonds;
+    if(numBonds > maxBonds)
+      maxBonds = numBonds;
+    if(numBonds < minBonds)
+      minBonds = numBonds;
+  }
+  BOOST_CHECK_EQUAL(totalBonds, static_cast<unsigned int>(8630086));
+  BOOST_CHECK_EQUAL(maxBonds, static_cast<unsigned int>(1934));
+  BOOST_CHECK_EQUAL(minBonds, static_cast<unsigned int>(52));
   delete searchTree;
+  PeridigmNS::Timer::self().stopTimer(testName);
+
+  // Create a random, 8000-point discretization and find the neighbors of all the points
+  mesh.clear();
+  fileName = "./input_files/random.txt";
+  readMeshFromTextFile(mesh, fileName);
+  meshPtr = &mesh[0];
+  totalBonds = 0;
+  maxBonds = 0;
+  minBonds = 1000000;
+  testName = treeType + " test 2)  Random mesh with 8000 points";
+  PeridigmNS::Timer::self().startTimer(testName);
+  searchTree = createTree(treeType, static_cast<int>(mesh.size()/3), meshPtr);
+  neighborList.resize(130);
+  for(unsigned int i=0 ; i<mesh.size()/3 ; i++){
+    neighborList.clear();
+    searchPointIndex = i;
+    searchRadius = 3.0;
+    searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
+    numBonds = neighborList.size() - 1;
+    totalBonds += numBonds;
+    if(numBonds > maxBonds)
+      maxBonds = numBonds;
+    if(numBonds < minBonds)
+      minBonds = numBonds;
+  }
+  BOOST_CHECK_EQUAL(totalBonds, static_cast<unsigned int>(5005818));
+  BOOST_CHECK_EQUAL(maxBonds, static_cast<unsigned int>(963));
+  BOOST_CHECK_EQUAL(minBonds, static_cast<unsigned int>(127));
+  delete searchTree;
+  PeridigmNS::Timer::self().stopTimer(testName);
+
+  // Create a 27000-point discretization and find the neighbors of all the points
+  mesh.clear();
+  fileName = "./input_files/cube_27000.txt";
+  readMeshFromTextFile(mesh, fileName);
+  meshPtr = &mesh[0];
+  totalBonds = 0;
+  maxBonds = 0;
+  minBonds = 1000000;
+  testName = treeType + " test 3)  Equally-Spaced Cube with 27000 points";
+  PeridigmNS::Timer::self().startTimer(testName);
+  searchTree = createTree(treeType, static_cast<int>(mesh.size()/3), meshPtr);
+  neighborList.resize(130);
+  for(unsigned int i=0 ; i<mesh.size()/3 ; i++){
+    neighborList.clear();
+    searchPointIndex = i;
+    searchRadius = (1.0/3.0)*3.015;
+    searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
+    numBonds = neighborList.size() - 1;
+    totalBonds += numBonds;
+    if(numBonds > maxBonds)
+      maxBonds = numBonds;
+    if(numBonds < minBonds)
+      minBonds = numBonds;
+  }
+  BOOST_CHECK_EQUAL(totalBonds, static_cast<unsigned int>(2929168));
+  BOOST_CHECK_EQUAL(maxBonds, static_cast<unsigned int>(122));
+  BOOST_CHECK_EQUAL(minBonds, static_cast<unsigned int>(28));
+  delete searchTree;
+  PeridigmNS::Timer::self().stopTimer(testName);
+
+  // Create a 8000-point discretization and find the neighbors of all the points
+  mesh.clear();
+  fileName = "./input_files/cube_8000.txt";
+  readMeshFromTextFile(mesh, fileName);
+  meshPtr = &mesh[0];
+  totalBonds = 0;
+  maxBonds = 0;
+  minBonds = 1000000;
+  testName = treeType + " test 4)  Equally-Spaced Cube with 8000 points";
+  PeridigmNS::Timer::self().startTimer(testName);
+  searchTree = createTree(treeType, static_cast<int>(mesh.size()/3), meshPtr);
+  neighborList.resize(130);
+  for(unsigned int i=0 ; i<mesh.size()/3 ; i++){
+    neighborList.clear();
+    searchPointIndex = i;
+    searchRadius = 0.5*3.015;
+    searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
+    numBonds = neighborList.size() - 1;
+    totalBonds += numBonds;
+    if(numBonds > maxBonds)
+      maxBonds = numBonds;
+    if(numBonds < minBonds)
+      minBonds = numBonds;
+  }
+  BOOST_CHECK_EQUAL(totalBonds, static_cast<unsigned int>(816728));
+  BOOST_CHECK_EQUAL(maxBonds, static_cast<unsigned int>(122));
+  BOOST_CHECK_EQUAL(minBonds, static_cast<unsigned int>(28));
+  delete searchTree;
+  PeridigmNS::Timer::self().stopTimer(testName);
+
+  // Create a 1000-point discretization and find the neighbors of all the points
+  mesh.clear();
+  fileName = "./input_files/cube_1000.txt";
+  readMeshFromTextFile(mesh, fileName);
+  meshPtr = &mesh[0];
+  totalBonds = 0;
+  maxBonds = 0;
+  minBonds = 1000000;
+  testName = treeType + " test 5)  Equally-Spaced Cube with 1000 points";
+  PeridigmNS::Timer::self().startTimer(testName);
+  searchTree = createTree(treeType, static_cast<int>(mesh.size()/3), meshPtr);
+  neighborList.resize(130);
+  for(unsigned int i=0 ; i<mesh.size()/3 ; i++){
+    neighborList.clear();
+    searchPointIndex = i;
+    searchRadius = 1.0*3.015;
+    searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
+    numBonds = neighborList.size() - 1;
+    totalBonds += numBonds;
+    if(numBonds > maxBonds)
+      maxBonds = numBonds;
+    if(numBonds < minBonds)
+      minBonds = numBonds;
+  }
+  BOOST_CHECK_EQUAL(totalBonds, static_cast<unsigned int>(84288));
+  BOOST_CHECK_EQUAL(maxBonds, static_cast<unsigned int>(122));
+  BOOST_CHECK_EQUAL(minBonds, static_cast<unsigned int>(28));
+  delete searchTree;
+  PeridigmNS::Timer::self().stopTimer(testName);
 }
 
-//! JAM 1000-point test
-void testJAMEquallySpacedCubeMesh1000()
-{
-  vector<double> mesh;
-  string fileName("./input_files/cube_1000.txt");
-  readMeshFromTextFile(mesh, fileName);
-  PeridigmNS::SearchTree* searchTree = new PeridigmNS::JAMSearchTree(static_cast<int>(mesh.size()/3), &mesh[0]);
-  testEquallySpacedCubeMesh1000(mesh, searchTree);
-  delete searchTree;
-}
-
-//! Zoltan performance test
 void testZoltanPerformance()
 {
-  vector<int> neighborList;
-  int searchPointIndex, degreesOfFreedom(3);
-  double searchRadius;
-  vector<double> mesh;
-  string fileName;
-  double* meshPtr;
-  PeridigmNS::SearchTree* searchTree;
-  unsigned int numBonds, totalBonds, maxBonds;
-
-  // Create a 1000-point discretization and find the neighbors of all the points
-  mesh.clear();
-  fileName = "./input_files/cube_1000.txt";
-  readMeshFromTextFile(mesh, fileName);
-  meshPtr = &mesh[0];
-  searchTree = new PeridigmNS::ZoltanSearchTree(static_cast<int>(mesh.size()/3), meshPtr);
-  totalBonds = 0;
-  maxBonds = 0;
-  neighborList.resize(130);
-  for(unsigned int i=0 ; i<mesh.size()/3 ; i++){
-    neighborList.clear();
-    searchPointIndex = i;
-    searchRadius = 1.0*3.015;
-    searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
-    numBonds = neighborList.size() - 1;
-    totalBonds += numBonds;
-    if(numBonds > maxBonds)
-      maxBonds = numBonds;
-  }
-  BOOST_CHECK_EQUAL(totalBonds, static_cast<unsigned int>(84288));
-  BOOST_CHECK_EQUAL(maxBonds, static_cast<unsigned int>(122));
-  delete searchTree;
-
-  // Create a 8000-point discretization and find the neighbors of all the points
-  mesh.clear();
-  fileName = "./input_files/cube_8000.txt";
-  readMeshFromTextFile(mesh, fileName);
-  meshPtr = &mesh[0];
-  searchTree = new PeridigmNS::ZoltanSearchTree(static_cast<int>(mesh.size()/3), meshPtr);
-  totalBonds = 0;
-  maxBonds = 0;
-  neighborList.resize(130);
-  for(unsigned int i=0 ; i<mesh.size()/3 ; i++){
-    neighborList.clear();
-    searchPointIndex = i;
-    searchRadius = 0.5*3.015;
-    searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
-    numBonds = neighborList.size() - 1;
-    totalBonds += numBonds;
-    if(numBonds > maxBonds)
-      maxBonds = numBonds;
-  }
-  BOOST_CHECK_EQUAL(totalBonds, static_cast<unsigned int>(816728));
-  BOOST_CHECK_EQUAL(maxBonds, static_cast<unsigned int>(122));
-  delete searchTree;
-
-  // Create a 27000-point discretization and find the neighbors of all the points
-  mesh.clear();
-  fileName = "./input_files/cube_27000.txt";
-  readMeshFromTextFile(mesh, fileName);
-  meshPtr = &mesh[0];
-  searchTree = new PeridigmNS::ZoltanSearchTree(static_cast<int>(mesh.size()/3), meshPtr);
-  totalBonds = 0;
-  maxBonds = 0;
-  neighborList.resize(130);
-  for(unsigned int i=0 ; i<mesh.size()/3 ; i++){
-    neighborList.clear();
-    searchPointIndex = i;
-    searchRadius = (1.0/3.0)*3.015;
-    searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
-    numBonds = neighborList.size() - 1;
-    totalBonds += numBonds;
-    if(numBonds > maxBonds)
-      maxBonds = numBonds;
-  }
-  BOOST_CHECK_EQUAL(totalBonds, static_cast<unsigned int>(2929168));
-  BOOST_CHECK_EQUAL(maxBonds, static_cast<unsigned int>(122));
-  delete searchTree;
+  testPerformance("Zoltan");
 }
 
-//! JAM performance test
 void testJAMPerformance()
 {
-  vector<int> neighborList;
-  int searchPointIndex, degreesOfFreedom(3);
-  double searchRadius;
-  vector<double> mesh;
-  string fileName;
-  double* meshPtr;
-  PeridigmNS::SearchTree* searchTree;
-  unsigned int numBonds, totalBonds, maxBonds;
-
-  // Create a 1000-point discretization and find the neighbors of all the points
-  mesh.clear();
-  fileName = "./input_files/cube_1000.txt";
-  readMeshFromTextFile(mesh, fileName);
-  meshPtr = &mesh[0];
-  searchTree = new PeridigmNS::JAMSearchTree(static_cast<int>(mesh.size()/3), meshPtr);
-  totalBonds = 0;
-  maxBonds = 0;
-  neighborList.resize(130);
-  for(unsigned int i=0 ; i<mesh.size()/3 ; i++){
-    neighborList.clear();
-    searchPointIndex = i;
-    searchRadius = 1.0*3.015;
-    searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
-    numBonds = neighborList.size() - 1;
-    totalBonds += numBonds;
-    if(numBonds > maxBonds)
-      maxBonds = numBonds;
-  }
-  BOOST_CHECK_EQUAL(totalBonds, static_cast<unsigned int>(84288));
-  BOOST_CHECK_EQUAL(maxBonds, static_cast<unsigned int>(122));
-  delete searchTree;
-
-  // Create a 8000-point discretization and find the neighbors of all the points
-  mesh.clear();
-  fileName = "./input_files/cube_8000.txt";
-  readMeshFromTextFile(mesh, fileName);
-  meshPtr = &mesh[0];
-  searchTree = new PeridigmNS::JAMSearchTree(static_cast<int>(mesh.size()/3), meshPtr);
-  totalBonds = 0;
-  maxBonds = 0;
-  neighborList.resize(130);
-  for(unsigned int i=0 ; i<mesh.size()/3 ; i++){
-    neighborList.clear();
-    searchPointIndex = i;
-    searchRadius = 0.5*3.015;
-    searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
-    numBonds = neighborList.size() - 1;
-    totalBonds += numBonds;
-    if(numBonds > maxBonds)
-      maxBonds = numBonds;
-  }
-  BOOST_CHECK_EQUAL(totalBonds, static_cast<unsigned int>(816728));
-  BOOST_CHECK_EQUAL(maxBonds, static_cast<unsigned int>(122));
-  delete searchTree;
-
-  // Create a 27000-point discretization and find the neighbors of all the points
-  mesh.clear();
-  fileName = "./input_files/cube_27000.txt";
-  readMeshFromTextFile(mesh, fileName);
-  meshPtr = &mesh[0];
-  searchTree = new PeridigmNS::JAMSearchTree(static_cast<int>(mesh.size()/3), meshPtr);
-  totalBonds = 0;
-  maxBonds = 0;
-  neighborList.resize(130);
-  for(unsigned int i=0 ; i<mesh.size()/3 ; i++){
-    neighborList.clear();
-    searchPointIndex = i;
-    searchRadius = (1.0/3.0)*3.015;
-    searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
-    numBonds = neighborList.size() - 1;
-    totalBonds += numBonds;
-    if(numBonds > maxBonds)
-      maxBonds = numBonds;
-  }
-  BOOST_CHECK_EQUAL(totalBonds, static_cast<unsigned int>(2929168));
-  BOOST_CHECK_EQUAL(maxBonds, static_cast<unsigned int>(122));
-  delete searchTree;
+  testPerformance("JAM");
 }
 
 bool init_unit_test_suite()
@@ -333,6 +315,9 @@ int main
   else{
     std::cerr << "Unit test runtime ERROR: utPeridigm_State only makes sense on 1 processor." << std::endl;
   }
+
+  std::cout << endl;
+  PeridigmNS::Timer::self().printTimingData(cout);
   
 #ifdef HAVE_MPI
   MPI_Finalize();

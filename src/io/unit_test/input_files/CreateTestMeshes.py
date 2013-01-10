@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 from math import sqrt
+import ctypes
 
 def crossProduct(a, b):
     
@@ -17,12 +18,16 @@ class poorMansDeviceIndependentRandomNumber:
         self.m_w = 1234
         self.m_z = 1004321
  
+    def m32(self, n):
+        # Force 32-bit integer for device independence
+        return n & 0xffffffffL
+
     def rand(self):
         # 32-bit result
-        self.m_z = 36969 * (self.m_z & 65535) + (self.m_z >> 16)
-        self.m_w = 18000 * (self.m_w & 65535) + (self.m_w >> 16)
-        val = (self.m_z << 16) + self.m_w
-        return val
+        self.m_z = self.m32(36969) * self.m32(self.m_z & 65535) + self.m32(self.m_z >> 16)
+        self.m_w = self.m32(18000) * self.m32(self.m_w & 65535) + self.m32(self.m_w >> 16)
+        val = self.m32 ( self.m32(self.m_z << 16) + self.m_w )
+        return float(val)/4294967294.0
 
 def createEquallySpacedCubeMesh1000():
     
@@ -159,9 +164,9 @@ def createRandomMesh():
     r = poorMansDeviceIndependentRandomNumber()
 
     for i in range(numPts):
-        x = r.rand()
-        y = r.rand()
-        z = r.rand()
+        x = low + (high-low)*r.rand()
+        y = low + (high-low)*r.rand()
+        z = low + (high-low)*r.rand()
         mesh.append( (x, y, z, material, volume) )
 
     return mesh
