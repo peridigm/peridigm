@@ -61,11 +61,6 @@
 #include <BelosBlockCGSolMgr.hpp>
 #include <BelosBlockGmresSolMgr.hpp>
 #include <BelosEpetraAdapter.hpp>
-#include <NOX.H>
-#include <NOX_Epetra.H>
-#include <NOX_Epetra_Interface_Required.H>
-#include <NOX_Epetra_Interface_Jacobian.H>
-#include <NOX_Epetra_Interface_Preconditioner.H>
 
 #include "Peridigm_Block.hpp"
 #include "Peridigm_Discretization.hpp"
@@ -80,6 +75,12 @@
 #include "contact/Peridigm_ContactModel.hpp"
 #include "mesh_input/quick_grid/QuickGridData.h"
 #include "muParser/muParserDef.h"
+
+#include <NOX.H>
+#include <NOX_Epetra.H>
+#include <NOX_Epetra_Interface_Required.H>
+#include <NOX_Epetra_Interface_Jacobian.H>
+#include <NOX_Epetra_Interface_Preconditioner.H>
 
 namespace PeridigmNS {
 

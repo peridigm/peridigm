@@ -224,8 +224,8 @@ QUICKGRID::Data PeridigmNS::TextFileDiscretization::getDecomp(const string& text
   decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
 
   // execute neighbor search and update the decomp to include resulting ghosts
-  shared_ptr<PdBondFilter::BondFilter> bondFilterPtr(new PdBondFilter::BondFilterDefault(false));
-  shared_ptr<const Epetra_Comm> commSp(comm.getRawPtr(), NonDeleter<const Epetra_Comm>());
+  std::tr1::shared_ptr<PdBondFilter::BondFilter> bondFilterPtr(new PdBondFilter::BondFilterDefault(false));
+  std::tr1::shared_ptr<const Epetra_Comm> commSp(comm.getRawPtr(), NonDeleter<const Epetra_Comm>());
   PDNEIGH::NeighborhoodList list(commSp,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon,bondFilterPtr);
   decomp.neighborhood=list.get_neighborhood();
   decomp.sizeNeighborhoodList=list.get_size_neighborhood_list();

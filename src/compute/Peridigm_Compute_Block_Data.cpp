@@ -50,8 +50,6 @@
 #include "Peridigm_Compute_Block_Data.hpp"
 #include "Peridigm_Field.hpp"
 
-using namespace std;
-
 //! Standard constructor.
 PeridigmNS::Compute_Block_Data::Compute_Block_Data(Teuchos::RCP<const Teuchos::ParameterList> params,
                                                    Teuchos::RCP<const Epetra_Comm> epetraComm_)
@@ -123,7 +121,7 @@ int PeridigmNS::Compute_Block_Data::compute( Teuchos::RCP< std::vector<PeridigmN
   if(m_variableIsStated)
     step = PeridigmField::STEP_NP1;
   
-  vector<double> localData(3), globalData(3);
+  std::vector<double> localData(3), globalData(3);
 
   if(m_calculationType == MINIMUM){
     for(int i=0 ; i<3 ; ++i)

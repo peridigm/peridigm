@@ -57,18 +57,6 @@
 
 #include <boost/math/special_functions/fpclassify.hpp>
 
-#include <Epetra_Import.h>
-#include <Epetra_LinearProblem.h>
-#include <EpetraExt_BlockMapOut.h>
-#include <EpetraExt_MultiVectorOut.h>
-#include <EpetraExt_RowMatrixOut.h>
-#include <EpetraExt_Transpose_RowMatrix.h>
-#include <Epetra_RowMatrixTransposer.h>
-#include <Ifpack.h>
-#include <Ifpack_IC.h>
-#include <Teuchos_VerboseObject.hpp>
-
-#include "Peridigm.hpp"
 #include "Peridigm_Field.hpp"
 #include "Peridigm_InfluenceFunction.hpp"
 #include "Peridigm_DiscretizationFactory.hpp"
@@ -90,6 +78,18 @@
 #include "muParser/muParser.h"
 #include "muParser/muParserPeridigmFunctions.h"
 
+#include "Peridigm.hpp"
+
+#include <Epetra_Import.h>
+#include <Epetra_LinearProblem.h>
+#include <EpetraExt_BlockMapOut.h>
+#include <EpetraExt_MultiVectorOut.h>
+#include <EpetraExt_RowMatrixOut.h>
+#include <EpetraExt_Transpose_RowMatrix.h>
+#include <Epetra_RowMatrixTransposer.h>
+#include <Ifpack.h>
+#include <Ifpack_IC.h>
+#include <Teuchos_VerboseObject.hpp>
 
 using namespace std;
 
@@ -2731,7 +2731,7 @@ void PeridigmNS::Peridigm::contactSearch(Teuchos::RCP<const Epetra_BlockMap> reb
 // execute contact search
 
 //	rebalancedDecomp = createAndAddNeighborhood(rebalancedDecomp, contactSearchRadius);
-	shared_ptr<const Epetra_Comm> comm(peridigmComm.getRawPtr(),NonDeleter<const Epetra_Comm>());
+    std::tr1::shared_ptr<const Epetra_Comm> comm(peridigmComm.getRawPtr(),NonDeleter<const Epetra_Comm>());
 	QUICKGRID::Data d = rebalancedDecomp;
 	PDNEIGH::NeighborhoodList neighList(comm,d.zoltanPtr.get(),d.numPoints,d.myGlobalIDs,d.myX,contactSearchRadius);
 

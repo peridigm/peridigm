@@ -30,7 +30,8 @@
 #include <string>
 #include <stack>
 #include <vector>
-#include <memory>
+//#include <memory>
+#include "utilities/MemoryInclude.h"
 
 #include "muParserError.h"
 #include "muParserCallback.h"

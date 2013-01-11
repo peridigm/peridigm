@@ -31,7 +31,8 @@
 #include <string>
 #include <sstream>
 #include <vector>
-#include <memory>
+//#include <memory>
+#include "utilities/MemoryInclude.h"
 
 #include "muParserDef.h"
 

@@ -29,7 +29,8 @@
 //--- Standard includes ------------------------------------------------------------------------
 #include <cassert>
 #include <cmath>
-#include <memory>
+//#include <memory>
+#include "utilities/MemoryInclude.h"
 #include <vector>
 #include <deque>
 #include <sstream>
