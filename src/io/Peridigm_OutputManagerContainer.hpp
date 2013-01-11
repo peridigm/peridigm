@@ -73,7 +73,7 @@ namespace PeridigmNS {
 
     //! Write to all output managers in container
     void write(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, double current_time) {
-      vector< Teuchos::RCP< PeridigmNS::OutputManager > >::iterator it;
+      std::vector< Teuchos::RCP< PeridigmNS::OutputManager > >::iterator it;
       for ( it=outputManagers.begin() ; it < outputManagers.end(); it++ )
         (*it)->write(blocks, current_time);
     }

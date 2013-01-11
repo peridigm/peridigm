@@ -50,8 +50,6 @@
 #include "Peridigm_Compute_Nearest_Point_Data.hpp"
 #include "Peridigm_Field.hpp"
 
-using namespace std;
-
 //! Standard constructor.
 PeridigmNS::Compute_Nearest_Point_Data::Compute_Nearest_Point_Data(Teuchos::RCP<const Teuchos::ParameterList> params,
                                                                    Teuchos::RCP<const Epetra_Comm> epetraComm_)
@@ -61,8 +59,8 @@ PeridigmNS::Compute_Nearest_Point_Data::Compute_Nearest_Point_Data(Teuchos::RCP<
   m_positionX = params->get<double>("X");
   m_positionY = params->get<double>("Y");
   m_positionZ = params->get<double>("Z");
-  m_variable = params->get<string>("Variable");
-  m_outputLabel = params->get<string>("Output Label");
+  m_variable = params->get<std::string>("Variable");
+  m_outputLabel = params->get<std::string>("Output Label");
 
   if(params->isParameter("Verbose"))
     m_verbose = params->get<bool>("Verbose");
@@ -136,14 +134,14 @@ void PeridigmNS::Compute_Nearest_Point_Data::initialize( Teuchos::RCP< std::vect
   }
 
   // Parallel communication to find closest point across all processors.
-  vector<double> localMinDistanceSquared(1), globalMinDistanceSquared(1);
+  std::vector<double> localMinDistanceSquared(1), globalMinDistanceSquared(1);
   localMinDistanceSquared[0] = minDistanceSquared;
   epetraComm()->MinAll(&localMinDistanceSquared[0], &globalMinDistanceSquared[0], 1);
   if(minDistanceSquared != globalMinDistanceSquared[0])
     m_elementId = INT_MAX;
 
   // If there are ties, choose the element with the lowest global id.
-  vector<int> localData(1), globalData(1);
+  std::vector<int> localData(1), globalData(1);
   localData[0] = m_elementId;
   epetraComm()->MinAll(&localData[0], &globalData[0], 1);
   m_elementId = globalData[0];
@@ -171,7 +169,7 @@ void PeridigmNS::Compute_Nearest_Point_Data::initialize( Teuchos::RCP< std::vect
   if(m_verbose){
     
     // Find the coordinates of the element that will be tracked
-    vector<double> localValues(3), globalValues(3);
+    std::vector<double> localValues(3), globalValues(3);
     for(int i=0 ; i<3 ; ++i)
       localValues[0] = 0.0;
     for(std::vector<Block>::iterator blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
@@ -187,7 +185,7 @@ void PeridigmNS::Compute_Nearest_Point_Data::initialize( Teuchos::RCP< std::vect
 
     // Write to the root processor
     if(epetraComm->MyPID() == 0){
-      stringstream ss;
+      std::stringstream ss;
       ss << "Nearest Point Data Compute Class:" << endl;
       ss << "  Requested variable: " << m_variable << endl;
       ss << "  Requested location: " << m_positionX << ", " << m_positionY << ", " << m_positionZ << endl;
@@ -204,7 +202,7 @@ int PeridigmNS::Compute_Nearest_Point_Data::compute( Teuchos::RCP< std::vector<P
   if(m_variableIsStated)
     step = PeridigmField::STEP_NP1;
   
-  vector<double> localData(3), globalData(3);
+  std::vector<double> localData(3), globalData(3);
   localData[0] = 0.0;
 
   for(std::vector<Block>::iterator blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){

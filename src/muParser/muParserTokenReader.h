@@ -31,7 +31,8 @@
 #include <cstring>
 #include <list>
 #include <map>
-#include <memory>
+//#include <memory>
+#include "utilities/MemoryInclude.h"
 #include <stack>
 #include <string>
 
