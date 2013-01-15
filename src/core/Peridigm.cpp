@@ -1100,7 +1100,7 @@ void PeridigmNS::Peridigm::jacobianDiagnostics(Teuchos::RCP<NOX::Epetra::Group> 
 
   if(!noxGroup->isConditionNumber()){
     int conditionNumberMaxIters = 10000;
-    int conditionNumberTolerance = 1.0e3;
+    double conditionNumberTolerance = 1.0e3;
     int conditionNumberKrylovSubspaceSize = 100;
     int conditionNumberPrintOutput = false;
     returnValue = noxGroup->computeJacobianConditionNumber(conditionNumberMaxIters,
