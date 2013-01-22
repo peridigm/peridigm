@@ -156,7 +156,7 @@ void computeInternalForceLinearElasticAD
 
 	const int *neighPtr = localNeighborList;
 	double cellVolume, alpha, X_dx, X_dy, X_dz, zeta;
-    ScalarT Y_dx, Y_dy, Y_dz, dY, t, fx, fy, fz;
+        ScalarT Y_dx, Y_dy, Y_dz, dY, t, fx, fy, fz;
 	for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yOwned +=3, fOwned+=3, m++, theta++){
 
 		int numNeigh = *neighPtr; neighPtr++;
@@ -177,8 +177,8 @@ void computeInternalForceLinearElasticAD
 			Y_dy = YP[1]-Y[1];
 			Y_dz = YP[2]-Y[2];
 			dY = sqrt(Y_dx*Y_dx+Y_dy*Y_dy+Y_dz*Y_dz);
-            double omega = scalarInfluenceFunction(zeta,horizon);
-		    ScalarT c1 = omega*(*theta)*(9.0*K-15.0*MU)/(3.0*(*m));
+                        double omega = scalarInfluenceFunction(zeta,horizon);
+                        ScalarT c1 = omega*(*theta)*(9.0*K-15.0*MU)/(3.0*(*m));
 			t = (1.0-*bondDamage)*(c1 * zeta + (1.0-*bondDamage) * omega * alpha * (dY - zeta));
 			fx = t * Y_dx / dY;
 			fy = t * Y_dy / dY;
