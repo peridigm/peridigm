@@ -148,7 +148,7 @@ double computeWeightedVolume
 		double dz = XP[2]-X[2];
 		double zetaSquared = dx*dx+dy*dy+dz*dz;
 		double d = sqrt(zetaSquared);
-        double omega = scalarInfluenceFunction(d,horizon);
+                double omega = scalarInfluenceFunction(d,horizon);
 		m+=omega*(zetaSquared)*cellVolume;
 	}
 
@@ -166,7 +166,7 @@ void computeDeviatoricDilatation
 		double* dilatationOwned,
 		const int* localNeighborList,
 		int numOwnedPoints,
-        double horizon
+                double horizon
 )
 {
 	const double *xOwned = xOverlap;
