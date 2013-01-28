@@ -266,15 +266,35 @@ void PeridigmNS::Material::computeApproximateDeformationGradient(const double dt
   int coordinatesFId = fieldManager.getFieldId("Coordinates");
   int weightedVolumeFId = fieldManager.getFieldId("WeightedVolume");
   int bondDamageFId = fieldManager.getFieldId("Bond_Damage");
+  int deformationGradientXXFId = fieldManager.getFieldId("Deformation_Gradient_XX");
+  int deformationGradientXYFId = fieldManager.getFieldId("Deformation_Gradient_XY");
+  int deformationGradientXZFId = fieldManager.getFieldId("Deformation_Gradient_XZ");
+  int deformationGradientYXFId = fieldManager.getFieldId("Deformation_Gradient_YX");
+  int deformationGradientYYFId = fieldManager.getFieldId("Deformation_Gradient_YY");
+  int deformationGradientYZFId = fieldManager.getFieldId("Deformation_Gradient_YZ");
+  int deformationGradientZXFId = fieldManager.getFieldId("Deformation_Gradient_ZX");
+  int deformationGradientZYFId = fieldManager.getFieldId("Deformation_Gradient_ZY");
+  int deformationGradientZZFId = fieldManager.getFieldId("Deformation_Gradient_ZZ");
 
   // Extract pointers to the underlying data
   double *volume, *x, *y, *weightedVolume, *bondDamage;
+  double *deformationGradientXX, *deformationGradientXY, *deformationGradientXZ;
+  double *deformationGradientYX, *deformationGradientYY, *deformationGradientYZ;
+  double *deformationGradientZX, *deformationGradientZY, *deformationGradientZZ;
   dataManager.getData(volumeFId, PeridigmField::STEP_NONE)->ExtractView(&volume);
   dataManager.getData(modelCoordinatesFId, PeridigmField::STEP_NONE)->ExtractView(&x);
   dataManager.getData(coordinatesFId, PeridigmField::STEP_NP1)->ExtractView(&y);
-
   dataManager.getData(weightedVolumeFId, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
   dataManager.getData(bondDamageFId, PeridigmField::STEP_NP1)->ExtractView(&bondDamage);
+  dataManager.getData(deformationGradientXXFId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientXX);
+  dataManager.getData(deformationGradientXYFId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientXY);
+  dataManager.getData(deformationGradientXZFId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientXZ);
+  dataManager.getData(deformationGradientYXFId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientYX);
+  dataManager.getData(deformationGradientYYFId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientYY);
+  dataManager.getData(deformationGradientYZFId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientYZ);
+  dataManager.getData(deformationGradientZXFId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientZX);
+  dataManager.getData(deformationGradientZYFId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientZY);
+  dataManager.getData(deformationGradientZZFId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientZZ);
 
   double X[3], Y[3];
   double shapeTensor[3][3];
@@ -344,7 +364,17 @@ void PeridigmNS::Material::computeApproximateDeformationGradient(const double dt
         }
       }
 
-    }
+      // Copy result into data manager
+      deformationGradientXX[ID] = deformationGradient[0][0];
+      deformationGradientXY[ID] = deformationGradient[0][1];
+      deformationGradientXZ[ID] = deformationGradient[0][2];
+      deformationGradientYX[ID] = deformationGradient[1][0];
+      deformationGradientYY[ID] = deformationGradient[1][1];
+      deformationGradientYZ[ID] = deformationGradient[1][2];
+      deformationGradientZX[ID] = deformationGradient[2][0];
+      deformationGradientZY[ID] = deformationGradient[2][1];
+      deformationGradientZZ[ID] = deformationGradient[2][2];
 
+    }
   }
 }
