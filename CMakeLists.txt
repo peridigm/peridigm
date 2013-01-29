@@ -116,12 +116,14 @@ ENDIF()
 IF(PERIDIGM_LCM)
   include_directories (
     ${LCM_INCLUDE_DIR}
-    ${LCM_INCLUDE_DIR}/stk
+    ${LCM_INCLUDE_DIR}/disc
+    ${LCM_INCLUDE_DIR}/disc/stk
     ${LCM_INCLUDE_DIR}/evaluators
     ${LCM_INCLUDE_DIR}/problems
     ${LCM_INCLUDE_DIR}/LCM/evaluators
     ${LCM_INCLUDE_DIR}/LCM/problems
     ${LCM_INCLUDE_DIR}/LCM/utils
+    ${LCM_INCLUDE_DIR}/LCM/utils/tensor
   )
   link_directories (${LCM_LIBRARY_DIR})
   set(LCM_LIBRARY albanyLib)
