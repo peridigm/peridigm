@@ -45,37 +45,27 @@
 // ************************************************************************
 //@HEADER
 
+#include <Peridigm_DataManager.hpp>
 #include <Peridigm_Discretization.hpp>
 #include "../Peridigm_Compute_Force.hpp"
-#include <Peridigm_DataManager.hpp>
 #include <Peridigm_DiscretizationFactory.hpp>
+#include "Peridigm_Field.hpp"
+#include "../../core/Peridigm.hpp"
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <Epetra_ConfigDefs.h> // used to define HAVE_MPI
-#include <Epetra_Import.h>
 #include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+
+#include <vector>
+
 #ifdef HAVE_MPI
   #include <Epetra_MpiComm.h>
 #else
   #include <Epetra_SerialComm.h>
 #endif
-#include <vector>
-#include "../../core/Peridigm.hpp"
-#include "Peridigm_Field.hpp"
 
-using namespace boost::unit_test;
 using namespace PeridigmNS;
 
-Teuchos::RCP<Peridigm> createFourPointModel() {
-  Teuchos::RCP<Epetra_Comm> comm;
-#ifdef HAVE_MPI
-  comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
-#else
-  comm = Teuchos::rcp(new Epetra_SerialComm);
-#endif
-
+Teuchos::RCP<Peridigm> createFourPointModel(Teuchos::RCP<Epetra_Comm> comm) {
   // set up parameter lists
   // these data would normally be read from an input xml file
   Teuchos::RCP<Teuchos::ParameterList> peridigmParams = rcp(new Teuchos::ParameterList());
@@ -122,9 +112,27 @@ Teuchos::RCP<Peridigm> createFourPointModel() {
   return peridigm;
 }
 
-void FourPointTest() {
+// *************
+// FourPointTest
+// *************
+TEUCHOS_UNIT_TEST(Compute_Force, FourPointTest) {
 
-  Teuchos::RCP<Peridigm> peridigm = createFourPointModel();
+  Teuchos::RCP<Epetra_Comm> comm;
+  #ifdef HAVE_MPI
+    comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
+  #else
+    comm = rcp(new Epetra_SerialComm);
+  #endif
+
+  int numProcs = comm->NumProc();
+
+  TEST_COMPARE(numProcs, <=, 4);
+  if(numProcs > 4){
+    std::cerr << "Unit test runtime ERROR: utPeridigm_Compute_Force only makes sense on 1 to 4 processors." << std::endl;
+    return;
+  }
+
+  Teuchos::RCP<Peridigm> peridigm = createFourPointModel(comm);
 
   FieldManager& fieldManager = FieldManager::self();
 
@@ -152,56 +160,17 @@ void FourPointTest() {
 
   // Call the compute class
   int retval = computeForce->compute( blocks );
-  BOOST_CHECK_EQUAL( retval, 0 );
+  TEST_EQUALITY_CONST( retval, 0 );
 
   // Now check that volumes and forces are correct
   double *volume_values = volume->Values();
   double *force_values  = force->Values();
   for (int i=0;i<numElements;i++)
-    BOOST_CHECK_CLOSE(volume_values[i], 1.5, 1.0e-15);
+    TEST_FLOATING_EQUALITY(volume_values[i], 1.5, 1.0e-15);
   for (int i=0;i<numElements;i++) {
-    BOOST_CHECK_CLOSE(force_values[3*i],   1.5*(3.0*i),   1.0e-15);
-    BOOST_CHECK_CLOSE(force_values[3*i+1], 1.5*((3.0*i)+1.0), 1.0e-15);
-    BOOST_CHECK_CLOSE(force_values[3*i+2], 1.5*((3.0*i)+2.0), 1.0e-15);
+    TEST_FLOATING_EQUALITY(force_values[3*i], 1.5*(3.0*i), 1.0e-15); 
+    TEST_FLOATING_EQUALITY(force_values[3*i+1], 1.5*((3.0*i)+1.0), 1.0e-15); 
+    TEST_FLOATING_EQUALITY(force_values[3*i+2], 1.5*((3.0*i)+2.0), 1.0e-15); 
   }
 
-}
-
-
-bool init_unit_test_suite() {
-  // Add a suite for each processor in the test
-  bool success = true;
-
-  test_suite* proc = BOOST_TEST_SUITE("utPeridigm_Compute_Force");
-  proc->add(BOOST_TEST_CASE(&FourPointTest));
-  framework::master_test_suite().add(proc);
-
-  return success;
-}
-
-bool init_unit_test() {
-  return init_unit_test_suite();
-}
-
-int main (int argc, char* argv[]) {
-  int numProcs = 1;
-#ifdef HAVE_MPI
-  MPI_Init(&argc,&argv);
-  MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
-#endif
-
-  int returnCode = -1;
-  
-  if(numProcs >= 1 && numProcs <= 4){
-    returnCode = unit_test_main(init_unit_test, argc, argv);
-  }
-  else{
-    std::cerr << "Unit test runtime ERROR: utPeridigm_Compute_Force only makes sense on 1 to 4 processors." << std::endl;
-  }
-  
-#ifdef HAVE_MPI
-  MPI_Finalize();
-#endif
-  
-  return returnCode;
 }
