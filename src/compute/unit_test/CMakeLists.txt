@@ -1,12 +1,16 @@
 set(utPeridigm_Compute_Force_SOURCES
+   ./unitTestMain.cpp
    ./utPeridigm_Compute_Force.cpp
 )
+
 set(utPeridigm_Compute_Angular_Momentum_SOURCES
    ./utPeridigm_Compute_Angular_Momentum.cpp
 )
+
 set(utPeridigm_Compute_Linear_Momentum_SOURCES
    ./utPeridigm_Compute_Linear_Momentum.cpp
 )
+
 #set(utPeridigm_Compute_Energy_SOURCES
 #   ./utPeridigm_Compute_Energy.cpp
 #)
@@ -19,8 +23,8 @@ add_executable(utPeridigm_Compute_Force ${utPeridigm_Compute_Force_SOURCES})
 target_link_libraries(utPeridigm_Compute_Force
    ${Peridigm_LIBRARY}
    ${Peridigm_LINK_LIBRARIES}
-   ${Boost_LIBRARIES}
 )
+
 add_executable(utPeridigm_Compute_Angular_Momentum ${utPeridigm_Compute_Angular_Momentum_SOURCES})
 target_link_libraries(utPeridigm_Compute_Angular_Momentum
    ${Peridigm_LIBRARY}
