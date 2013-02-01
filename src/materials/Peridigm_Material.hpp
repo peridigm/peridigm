@@ -92,52 +92,38 @@ namespace PeridigmNS {
     //! Returns a vector of field IDs corresponding to the variables associated with the material.
     virtual std::vector<int> FieldIds() const = 0;
 
-	//! Initialize the material model.
-	virtual void
-	initialize(const double dt,
+    //! Initialize the material model.
+    virtual void
+    initialize(const double dt,
                const int numOwnedPoints,
                const int* ownedIDs,
                const int* neighborhoodList,
                PeridigmNS::DataManager& dataManager) const {}
 
-	//! Evaluate the internal force.
-	virtual void
-	computeForce(const double dt,
-				 const int numOwnedPoints,
-				 const int* ownedIDs,
-				 const int* neighborhoodList,
+    //! Evaluate the internal force.
+    virtual void
+    computeForce(const double dt,
+		 const int numOwnedPoints,
+		 const int* ownedIDs,
+		 const int* neighborhoodList,
                  PeridigmNS::DataManager& dataManager) const = 0;
 
-	//! Evaluate the jacobian.
-	virtual void
-	computeJacobian(const double dt,
+    //! Evaluate the jacobian.
+    virtual void
+    computeJacobian(const double dt,
                     const int numOwnedPoints,
                     const int* ownedIDs,
                     const int* neighborhoodList,
                     PeridigmNS::DataManager& dataManager,
                     PeridigmNS::SerialMatrix& jacobian) const;
 
-	//! Compute strain energy.
-	virtual void
-	computeStrainEnergy(const double dt,
+    //! Compute strain energy.
+    virtual void
+    computeStrainEnergy(const double dt,
                         const int numOwnedPoints,
                         const int* ownedIDs,
                         const int* neighborhoodList,
                         PeridigmNS::DataManager& dataManager) const {}
-
-    enum FiniteDifferenceScheme { FORWARD_DIFFERENCE=0, CENTRAL_DIFFERENCE=1 };
-
-  protected:
-
-	//! Evaluate the jacobian via finite difference (probing)
-	void
-	computeFiniteDifferenceJacobian(const double dt,
-                                    const int numOwnedPoints,
-                                    const int* ownedIDs,
-                                    const int* neighborhoodList,
-                                    PeridigmNS::DataManager& dataManager,
-                                    PeridigmNS::SerialMatrix& jacobian,
-                                    FiniteDifferenceScheme finiteDifferenceScheme) const;
 
     //! Compute the approximate deformation gradient
     void
@@ -147,6 +133,20 @@ namespace PeridigmNS {
                                           const int* neighborhoodList,
                                           PeridigmNS::DataManager& dataManager) const;
 
+    enum FiniteDifferenceScheme { FORWARD_DIFFERENCE=0, CENTRAL_DIFFERENCE=1 };
+
+  protected:
+
+    //! Evaluate the jacobian via finite difference (probing)
+    void
+    computeFiniteDifferenceJacobian(const double dt,
+                                    const int numOwnedPoints,
+                                    const int* ownedIDs,
+                                    const int* neighborhoodList,
+                                    PeridigmNS::DataManager& dataManager,
+                                    PeridigmNS::SerialMatrix& jacobian,
+                                    FiniteDifferenceScheme finiteDifferenceScheme) const;
+
     //! Scratch matrix.
     mutable ScratchMatrix scratchMatrix;
 
@@ -155,8 +155,8 @@ namespace PeridigmNS {
 
   private:
 
-	//! Default constructor with no arguments, private to prevent use.
-	Material(){}
+    //! Default constructor with no arguments, private to prevent use.
+    Material(){}
   };
 }
 
