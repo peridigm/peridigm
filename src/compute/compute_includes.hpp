@@ -16,4 +16,5 @@
 #include "./compute/Peridigm_Compute_Neighborhood_Volume.hpp"
 #include "./compute/Peridigm_Compute_Nearest_Point_Data.hpp"
 #include "./compute/Peridigm_Compute_Block_Data.hpp"
+#include "./compute/Peridigm_Compute_Deformation_Gradient.hpp"
 #include "./compute/Peridigm_Compute.hpp"
