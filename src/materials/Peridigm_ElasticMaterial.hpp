@@ -176,6 +176,7 @@ namespace PeridigmNS {
 	double m_density;
     double m_horizon;
     bool m_applyAutomaticDifferentiationJacobian;
+    bool m_applySurfaceCorrectionFactor;
 
     // field spec ids for all relevant data
     std::vector<int> m_fieldIds;
@@ -187,6 +188,7 @@ namespace PeridigmNS {
     int m_coordinatesFieldId;
     int m_forceDensityFieldId;
     int m_bondDamageFieldId;
+    int m_surfaceCorrectionFactorFieldId;
   };
 }
 
