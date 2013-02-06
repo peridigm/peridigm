@@ -1,5 +1,4 @@
-
-/*! \file ordinary_elastic.h */
+//! \file elastic.h
 
 //@HEADER
 // ************************************************************************
@@ -45,29 +44,14 @@
 //
 // ************************************************************************
 //@HEADER
-#ifndef ORDINARY_ELASTIC_H_
-#define ORDINARY_ELASTIC_H_
+#ifndef ELASTIC_H
+#define ELASTIC_H
 
 namespace MATERIAL_EVALUATION {
 
-void computeInternalForceLinearElastic
-(
-		const double* xOverlapPtr,
-		const double* yOverlapPtr,
-		const double* mOwned,
-		const double* volumeOverlapPtr,
-		const double* dilatationOwned,
-		const double* bondDamage,
-		double* fInternalOverlapPtr,
-		const int*  localNeighborList,
-		int numOwnedPoints,
-		double BULK_MODULUS,
-		double SHEAR_MODULUS,
-        double horizon
-);
-
+//! Computes contributions to the internal force resulting from owned points.
 template<typename ScalarT>
-void computeInternalForceLinearElasticAD
+void computeInternalForceLinearElastic
 (
 		const double* xOverlapPtr,
 		const ScalarT* yOverlapPtr,
@@ -85,4 +69,4 @@ void computeInternalForceLinearElasticAD
 
 }
 
-#endif /* ORDINARY_ELASTIC_H_ */
+#endif // ELASTIC_H
