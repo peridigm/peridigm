@@ -317,7 +317,7 @@ PeridigmNS::ElasticPlasticMaterial::computeAutomaticDifferentiationJacobian(cons
     vector<Sacado::Fad::DFad<double> > force_AD(numDof);
 
     // Evaluate the constitutive model using the AD types
-    MATERIAL_EVALUATION::computeDilatationAD(x,&y_AD[0],weightedVolume,cellVolume,bondDamage,&dilatation_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints,m_horizon);
+    MATERIAL_EVALUATION::computeDilatation(x,&y_AD[0],weightedVolume,cellVolume,bondDamage,&dilatation_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints,m_horizon);
     MATERIAL_EVALUATION::computeInternalForceIsotropicElasticPlasticAD(x,
                                                                        &y_AD[0],
                                                                        weightedVolume,
