@@ -62,7 +62,7 @@ using namespace std;
 
 PeridigmNS::ElasticPlasticHardeningMaterial::ElasticPlasticHardeningMaterial(const Teuchos::ParameterList & params)
   : Material(params),
-    m_applyShearCorrectionFactor(false), m_disablePlasticity(false), m_applyAutomaticDifferentiationJacobian(false),
+    m_applySurfaceCorrectionFactor(true), m_disablePlasticity(false), m_applyAutomaticDifferentiationJacobian(false),
     m_volumeFieldId(-1), m_damageFieldId(-1), m_weightedVolumeFieldId(-1), m_dilatationFieldId(-1), m_modelCoordinatesFieldId(-1),
     m_coordinatesFieldId(-1), m_forceDensityFieldId(-1), m_bondDamageFieldId(-1), m_deviatoricPlasticExtensionFieldId(-1),
     m_lambdaFieldId(-1), m_surfaceCorrectionFactorFieldId(-1)
@@ -75,7 +75,7 @@ PeridigmNS::ElasticPlasticHardeningMaterial::ElasticPlasticHardeningMaterial(con
   m_yieldStress = params.get<double>("Yield Stress");
   m_hardeningModulus = params.get<double>("Hardening Modulus");
   if(params.isParameter("Apply Shear Correction Factor"))
-    m_applyShearCorrectionFactor = params.get<bool>("Apply Shear Correction Factor");
+    m_applySurfaceCorrectionFactor = params.get<bool>("Apply Shear Correction Factor");
   if(params.isParameter("Disable Plasticity"))
     m_disablePlasticity = params.get<bool>("Disable Plasticity");
   if(params.isParameter("Apply Automatic Differentiation Jacobian"))
@@ -120,23 +120,27 @@ void PeridigmNS::ElasticPlasticHardeningMaterial::initialize(const double dt,
                                                              const int* neighborhoodList,
                                                              PeridigmNS::DataManager& dataManager) const
 {
-  double *xOverlap, *yOverlapScratch, *cellVolumeOverlap, *weightedVolume, *surfaceCorrectionFactor;
+  // Extract pointers to the underlying data
+  double *xOverlap,  *cellVolumeOverlap, *weightedVolume;
   dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&xOverlap);
-  dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&yOverlapScratch);
   dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&cellVolumeOverlap);
   dataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
-  dataManager.getData(m_surfaceCorrectionFactorFieldId, PeridigmField::STEP_NONE)->ExtractView(&surfaceCorrectionFactor);
-  
+
   MATERIAL_EVALUATION::computeWeightedVolume(xOverlap,cellVolumeOverlap,weightedVolume,numOwnedPoints,neighborhoodList,m_horizon);
 
   dataManager.getData(m_surfaceCorrectionFactorFieldId, PeridigmField::STEP_NONE)->PutScalar(1.0);
-  int lengthYOverlap = dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->MyLength();
-  if(m_applyShearCorrectionFactor)
-    MATERIAL_EVALUATION::computeShearCorrectionFactor(numOwnedPoints,lengthYOverlap,xOverlap,yOverlapScratch,cellVolumeOverlap,weightedVolume,neighborhoodList,m_horizon,surfaceCorrectionFactor);
-  
-  // \todo Move this to shear correction factor routine.
-  for(double *scf=surfaceCorrectionFactor; scf!=surfaceCorrectionFactor+numOwnedPoints;scf++)
-    *scf = 1.0/(*scf);
+  if(m_applySurfaceCorrectionFactor){
+    Epetra_Vector temp(*dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1));
+    int lengthYOverlap = temp.MyLength();
+    double  *yOverlap,  *surfaceCorrectionFactor;
+    temp.ExtractView(&yOverlap);
+    dataManager.getData(m_surfaceCorrectionFactorFieldId, PeridigmField::STEP_NONE)->ExtractView(&surfaceCorrectionFactor);
+    MATERIAL_EVALUATION::computeShearCorrectionFactor(numOwnedPoints,lengthYOverlap,xOverlap,yOverlap,cellVolumeOverlap,weightedVolume,neighborhoodList,m_horizon,surfaceCorrectionFactor);
+
+    // \todo Resolve questions regarding scf versus 1/scf and move this into shear correction factor calculation.
+    for(double *scf=surfaceCorrectionFactor; scf!=surfaceCorrectionFactor+numOwnedPoints; scf++)
+      *scf = 1.0/(*scf);
+  }
 }
 
 void
