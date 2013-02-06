@@ -1,5 +1,4 @@
-
-/*! \file ordinary_utilities.cxx */
+/*! \file material_utilities.cxx */
 
 //@HEADER
 // ************************************************************************
@@ -443,59 +442,49 @@ double compute_norm_2_deviatoric_extension
 
 void computeShearCorrectionFactor
 (
-		int numOwnedPoints,
-                int lengthYOverlap,
+        int numOwnedPoints,
+        int lengthYOverlap,
 		const double *xOverlap,
-		double *yOverlap_scratch_required_work_space,
+		double *yOverlap,
 		const double *volumeOverlap,
 		const double *owned_weighted_volume,
 		const int*  localNeighborList,
 		double horizon,
 		double *shearCorrectionFactorOwned
 ){
-        std::vector<double> yOverlapStored(lengthYOverlap);
-	for(int i=0 ; i<lengthYOverlap ; ++i)
-	  yOverlapStored[i] = yOverlap_scratch_required_work_space[i];
 	double gamma=1.0e-6;
 	double reference = 4.0 * M_PI * gamma * gamma * pow(horizon,5) / 75.0;
 	const int *neighPtr = localNeighborList;
 	const double *xOwned = xOverlap;
-	const double *yOwned = yOverlap_scratch_required_work_space;
-	double *yOverlap = yOverlap_scratch_required_work_space;
+	double *yOwned = yOverlap;
 	double *scaleFactor = shearCorrectionFactorOwned;
 	PURE_SHEAR mode;
 	for(int p=0;p<numOwnedPoints;p++, xOwned+=3, yOwned+=3, scaleFactor++, owned_weighted_volume++){
 		int numNeigh = *neighPtr;
 		const double *X = xOwned;
-		const double *Y = yOwned;
+		double *Y = yOwned;
 		double m = *owned_weighted_volume;
 		double scf, max_scf;
 
 		mode = XY;
+        Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
 		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
 		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
 		max_scf=scf;
-		for(int i=0 ; i<lengthYOverlap ; ++i)
-		  yOverlap_scratch_required_work_space[i] = yOverlapStored[i];
 
 		mode = ZX;
+        Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
 		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
 		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
 		if(scf>max_scf) max_scf = scf;
-		for(int i=0 ; i<lengthYOverlap ; ++i)
-		  yOverlap_scratch_required_work_space[i] = yOverlapStored[i];
 
 		mode = YZ;
+        Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
 		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
 		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
 		if(scf>max_scf) max_scf = scf;
-		for(int i=0 ; i<lengthYOverlap ; ++i)
-		  yOverlap_scratch_required_work_space[i] = yOverlapStored[i];
 
-		/*
-		 * Better guard against division by zero
-		 *
-		 */
+		// Guard against division by zero
 		double tolerance(1.0e-15);
 		if(max_scf/reference < tolerance)
 			max_scf=1.0;
@@ -505,7 +494,6 @@ void computeShearCorrectionFactor
 		*scaleFactor = max_scf;
 		neighPtr+=(numNeigh+1);
 	}
-
 }
 
 void computeWeightedVolume

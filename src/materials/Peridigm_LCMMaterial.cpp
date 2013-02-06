@@ -138,16 +138,16 @@ PeridigmNS::LCMMaterial::initialize(const double dt,
   //---------------------------------------------------------------------------
   // Deformation gradient
   Teuchos::ArrayRCP<ScalarT> defgrad(9);
-  for (int i(0); i < 9; ++i)
-    defgrad[i]  = 0.0;
-  defgrad[0] = 1.0;
-  defgrad[4] = 1.0;
-  defgrad[8] = 1.0;
+
+  defGrad[0] = 1.0;  defGrad[1] = 0.0;  defGrad[2] = 0.0;
+  defGrad[0] = 0.0;  defGrad[1] = 1.0;  defGrad[2] = 0.0;
+  defGrad[0] = 0.0;  defGrad[1] = 0.0;  defGrad[2] = 1.0;
+
   // SetField evaluator, which will be used to manually assign a value to the defgrad field
-  Teuchos::ParameterList setDefGradP("SetFieldDefGrad");
-  setDefGradP.set<string>("Evaluated Field Name", "F");
-  setDefGradP.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_tensor);
-  setDefGradP.set< Teuchos::ArrayRCP<ScalarT> >("Field Values", defgrad);
+  Teuchos::ParameterList setDefGradParams("SetFieldDefGrad");
+  setDefGradParams.set<string>("Evaluated Field Name", "F");
+  setDefGradParams.set<Teuchos::RCP<PHX::DataLayout> >("Evaluated Field Data Layout", dl->qp_tensor);
+  setDefGradParams.set< Teuchos::ArrayRCP<ScalarT> >("Field Values", defgrad);
   // Teuchos::RCP<LCM::SetField<Residual, Traits> > setFieldDefGrad =
   //   Teuchos::rcp(new LCM::SetField<Residual, Traits>(setDefGradP));
 

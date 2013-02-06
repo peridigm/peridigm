@@ -59,6 +59,7 @@ using namespace std;
 PeridigmNS::ElasticMaterial::ElasticMaterial(const Teuchos::ParameterList& params)
   : Material(params),
     m_applyAutomaticDifferentiationJacobian(true),
+    m_applySurfaceCorrectionFactor(true),
     m_volumeFieldId(-1), m_damageFieldId(-1), m_weightedVolumeFieldId(-1), m_dilatationFieldId(-1), m_modelCoordinatesFieldId(-1),
     m_coordinatesFieldId(-1), m_forceDensityFieldId(-1), m_bondDamageFieldId(-1), m_surfaceCorrectionFactorFieldId(-1)
 {
@@ -108,7 +109,7 @@ PeridigmNS::ElasticMaterial::initialize(const double dt,
                                         const int* neighborhoodList,
                                         PeridigmNS::DataManager& dataManager) const
 {
-  // Extract pointers to the underlying data in the constitutiveData array
+  // Extract pointers to the underlying data
   double *xOverlap,  *cellVolumeOverlap, *weightedVolume;
   dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&xOverlap);
   dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&cellVolumeOverlap);
@@ -116,12 +117,18 @@ PeridigmNS::ElasticMaterial::initialize(const double dt,
 
   MATERIAL_EVALUATION::computeWeightedVolume(xOverlap,cellVolumeOverlap,weightedVolume,numOwnedPoints,neighborhoodList,m_horizon);
 
+  dataManager.getData(m_surfaceCorrectionFactorFieldId, PeridigmField::STEP_NONE)->PutScalar(1.0);
   if(m_applySurfaceCorrectionFactor){
-	  int lengthYOverlap = dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->MyLength();
-	  double  *yOverlapScratch,  *surfaceCorrectionFactor;
-	  dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&yOverlapScratch);
-	  dataManager.getData(m_surfaceCorrectionFactorFieldId, PeridigmField::STEP_NONE)->ExtractView(&surfaceCorrectionFactor);
-	  MATERIAL_EVALUATION::computeShearCorrectionFactor(numOwnedPoints,lengthYOverlap,xOverlap,yOverlapScratch,cellVolumeOverlap,weightedVolume,neighborhoodList,m_horizon,surfaceCorrectionFactor);
+    Epetra_Vector temp(*dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1));
+    int lengthYOverlap = temp.MyLength();
+    double  *yOverlap,  *surfaceCorrectionFactor;
+    temp.ExtractView(&yOverlap);
+    dataManager.getData(m_surfaceCorrectionFactorFieldId, PeridigmField::STEP_NONE)->ExtractView(&surfaceCorrectionFactor);
+    MATERIAL_EVALUATION::computeShearCorrectionFactor(numOwnedPoints,lengthYOverlap,xOverlap,yOverlap,cellVolumeOverlap,weightedVolume,neighborhoodList,m_horizon,surfaceCorrectionFactor);
+
+    // \todo Resolve questions regarding scf versus 1/scf and move this into shear correction factor calculation.
+    for(double *scf=surfaceCorrectionFactor; scf!=surfaceCorrectionFactor+numOwnedPoints; scf++)
+      *scf = 1.0/(*scf);
   }
 }
 
