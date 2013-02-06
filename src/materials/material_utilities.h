@@ -1,4 +1,4 @@
-/*! \file ordinary_utilities.h */
+//! \file material_utilities.h
 
 //@HEADER
 // ************************************************************************
@@ -45,9 +45,8 @@
 // ************************************************************************
 //@HEADER
 
-
-#ifndef ORDINARY_UTILITIES_H_
-#define ORDINARY_UTILITIES_H_
+#ifndef MATERIAL_UTILITIES_H
+#define MATERIAL_UTILITIES_H
 
 #include <cstdlib>
 
@@ -157,19 +156,6 @@ double scalarInfluenceFunction(
         double horizon
 );
 
-void computeDilatation
-(
-		const double* xOverlap,
-		const double* yOverlap,
-		const double* mOwned,
-		const double* volumeOverlap,
-		const double* bondDamage,
-		double* dilatationOwned,
-		const int* localNeighborList,
-		int numOwnedPoints,
-        double horizon
-);
-
 void computeDeviatoricDilatation
 (
 		const double* xOverlap,
@@ -185,7 +171,7 @@ void computeDeviatoricDilatation
 );
 
 template<typename ScalarT>
-void computeDilatationAD
+void computeDilatation
 (
 		const double* xOverlap,
 		const ScalarT* yOverlap,
@@ -256,4 +242,4 @@ double compute_norm_2_deviatoric_extension
 }
 
 
-#endif /* ORDINARY_UTILITIES_H_ */
+#endif // MATERIAL_UTILITIES_H

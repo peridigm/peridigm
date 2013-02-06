@@ -1,4 +1,4 @@
-/*! \file material_utilities.cxx */
+//! \file material_utilities.cxx
 
 //@HEADER
 // ************************************************************************
@@ -198,55 +198,8 @@ void computeDeviatoricDilatation
 	}
 }
 
-void computeDilatation
-(
-		const double* xOverlap,
-		const double* yOverlap,
-		const double *mOwned,
-		const double* volumeOverlap,
-		const double* bondDamage,
-		double* dilatationOwned,
-		const int* localNeighborList,
-		int numOwnedPoints,
-        double horizon
-)
-{
-	const double *xOwned = xOverlap;
-	const double *yOwned = yOverlap;
-	const double *m = mOwned;
-	const double *v = volumeOverlap;
-	double *theta = dilatationOwned;
-	double cellVolume;
-	const int *neighPtr = localNeighborList;
-	for(int p=0; p<numOwnedPoints;p++, xOwned+=3, yOwned+=3, m++, theta++){
-		int numNeigh = *neighPtr; neighPtr++;
-		const double *X = xOwned;
-		const double *Y = yOwned;
-		*theta = 0;
-		for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++){
-			int localId = *neighPtr;
-			cellVolume = v[localId];
-			const double *XP = &xOverlap[3*localId];
-			const double *YP = &yOverlap[3*localId];
-			double dx = XP[0]-X[0];
-			double dy = XP[1]-X[1];
-			double dz = XP[2]-X[2];
-			double zetaSquared = dx*dx+dy*dy+dz*dz;
-			dx = YP[0]-Y[0];
-			dy = YP[1]-Y[1];
-			dz = YP[2]-Y[2];
-			double dY = dx*dx+dy*dy+dz*dz;
-			double d = sqrt(zetaSquared);
-			double e = sqrt(dY)-d;
-            double omega = scalarInfluenceFunction(d,horizon);
-			*theta += 3.0*omega*(1.0-*bondDamage)*d*e*cellVolume/(*m);
-		}
-		
-	}
-}
-
 template<typename ScalarT>
-void computeDilatationAD
+void computeDilatation
 (
 		const double* xOverlap,
 		const ScalarT* yOverlap,
@@ -293,10 +246,9 @@ void computeDilatationAD
 	}
 }
 
-
 /** Explicit template instantiation for double. */
 template
-void computeDilatationAD<double>
+void computeDilatation<double>
 (
 		const double* xOverlap,
 		const double* yOverlap,
@@ -312,7 +264,7 @@ void computeDilatationAD<double>
 
 /** Explicit template instantiation for Sacado::Fad::DFad<double>. */
 template
-void computeDilatationAD<Sacado::Fad::DFad<double> >
+void computeDilatation<Sacado::Fad::DFad<double> >
 (
 		const double* xOverlap,
 		const Sacado::Fad::DFad<double>* yOverlap,
