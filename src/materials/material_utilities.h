@@ -130,7 +130,7 @@ void computeShearCorrectionFactor
 		int numOwnedPoints,
 		int lengthYOverlap,
 		const double *xOverlap,
-		double *yOverlap_scratch_required_work_space,
+		double *yOverlap,
 		const double *volumeOverlap,
 		const double *owned_weighted_volume,
 		const int*  localNeighborList,
