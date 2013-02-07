@@ -318,26 +318,26 @@ PeridigmNS::ElasticPlasticMaterial::computeAutomaticDifferentiationJacobian(cons
 
     // Evaluate the constitutive model using the AD types
     MATERIAL_EVALUATION::computeDilatation(x,&y_AD[0],weightedVolume,cellVolume,bondDamage,&dilatation_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints,m_horizon);
-    MATERIAL_EVALUATION::computeInternalForceIsotropicElasticPlasticAD(x,
-                                                                       &y_AD[0],
-                                                                       weightedVolume,
-                                                                       cellVolume,
-                                                                       &dilatation_AD[0],
-                                                                       bondDamage,
-                                                                       ownedSurfaceCorrectionFactor,
-                                                                       edpN,
-                                                                       &edpNP1[0],
-                                                                       lambdaN,
-                                                                       &lambdaNP1_AD[0],
-                                                                       &force_AD[0],
-                                                                       &tempNeighborhoodList[0],
-                                                                       tempNumOwnedPoints,
-                                                                       m_bulkModulus,
-                                                                       m_shearModulus,
-                                                                       m_horizon,
-																	   m_yieldStress,
-																	   m_isPlanarProblem,
-																	   m_thickness);
+    MATERIAL_EVALUATION::computeInternalForceIsotropicElasticPlastic(x,
+                                                                     &y_AD[0],
+                                                                     weightedVolume,
+                                                                     cellVolume,
+                                                                     &dilatation_AD[0],
+                                                                     bondDamage,
+                                                                     ownedSurfaceCorrectionFactor,
+                                                                     edpN,
+                                                                     &edpNP1[0],
+                                                                     lambdaN,
+                                                                     &lambdaNP1_AD[0],
+                                                                     &force_AD[0],
+                                                                     &tempNeighborhoodList[0],
+                                                                     tempNumOwnedPoints,
+                                                                     m_bulkModulus,
+                                                                     m_shearModulus,
+                                                                     m_horizon,
+                                                                     m_yieldStress,
+                                                                     m_isPlanarProblem,
+                                                                     m_thickness);
 
     // Load derivative values into scratch matrix
     // Multiply by volume along the way to convert force density to force

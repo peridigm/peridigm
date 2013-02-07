@@ -1,4 +1,4 @@
-/*! \file ordinary_elastic_plastic.h */
+//! \file elastic_plastic.h
 
 //@HEADER
 // ************************************************************************
@@ -44,8 +44,9 @@
 //
 // ************************************************************************
 //@HEADER
-#ifndef ORDINARY_ELASTIC_PLASTIC_H_
-#define ORDINARY_ELASTIC_PLASTIC_H_
+
+#ifndef ELASTIC_PLASTIC_H
+#define ELASTIC_PLASTIC_H
 
 namespace MATERIAL_EVALUATION {
 
@@ -63,62 +64,8 @@ namespace MATERIAL_EVALUATION {
  * @param alpha          -- material property (alpha = 15 mu / m
  * @param OMEGA          -- weight function at point
  */
-double computeDeviatoricForceStateNorm
-(
-		int numNeigh,
-		double theta,
-		const int *neighPtr,
-		const double *bondDamage,
-		const double *deviatoricPlasticExtensionState,
-		const double *X,
-		const double *Y,
-		const double *xOverlap,
-		const double *yOverlap,
-		const double *volumeOverlap,
-		double alpha,
-		double OMEGA
-);
-
-void computeInternalForceIsotropicElasticPlastic
-(
-		const double* xOverlap,
-		const double *yNP1Overlap,
-		const double* mOwned,
-		const double* volumeOverlap,
-		const double* dilatationOwned,
-		const double* bondDamage,
-		const double* scfOwned_,
-		const double* deviatoricPlasticExtensionStateN,
-		double* deviatoricPlasticExtensionStateNp1,
-		const double* lambdaN_,
-		double* lambdaNP1_,
-		double* fInternalOverlap,
-		const int*  localNeighborList,
-		int numOwnedPoints,
-		double BULK_MODULUS,
-		double SHEAR_MODULUS,
-		double HORIZON,
-		double yieldStress,
-		bool isPlanarProblem,
-		double thickness
-);
-
-/**
- * Computes norm of deviatoric force state at a particular point
- * @param numNeigh -- number of neighbors at point
- * @param theta    -- dilatation at point
- * @param neighPtr -- list of neighbors at point
- * @param bondDamage     -- damage parameter for each bond at point
- * @param X              -- original coordinates of point
- * @param Y              -- current coordinates of point
- * @param xOverlap       -- pointer to overlap vector of original coordinates; use this to get neighbor original coordinates
- * @param yOverlap       -- pointer to overlap vector of current coordinates; use this to get neighbor current coordinates
- * @param volumeOverlap  -- pointer to volume overlap vector; use this to get volume of neighboring points
- * @param alpha          -- material property (alpha = 15 mu / m
- * @param OMEGA          -- weight function at point
- */
 template<typename ScalarT>
-ScalarT computeDeviatoricForceStateNormAD
+ScalarT computeDeviatoricForceStateNorm
 (
 		int numNeigh,
 		ScalarT theta,
@@ -135,7 +82,7 @@ ScalarT computeDeviatoricForceStateNormAD
 );
 
 template<typename ScalarT>
-void computeInternalForceIsotropicElasticPlasticAD
+void computeInternalForceIsotropicElasticPlastic
 (
 		const double* xOverlap,
 		const ScalarT* yNP1Overlap,
@@ -161,4 +108,4 @@ void computeInternalForceIsotropicElasticPlasticAD
 
 }
 
-#endif /* ORDINARY_ELASTIC_PLASTIC_H_ */
+#endif // ELASTIC_PLASTIC_H

@@ -1,4 +1,4 @@
-/*! \file ordinary_iso_hard_plastic.h */
+//! \file elastic_plastic_hardening.h
 
 //@HEADER
 // ************************************************************************
@@ -44,30 +44,21 @@
 //
 // ************************************************************************
 //@HEADER
-#ifndef ORDINARY_ISO_HARD_PLASTIC_H_
-#define ORDINARY_ISO_HARD_PLASTIC_H_
+
+#ifndef ELASTIC_PLASTIC_HARDENING_H
+#define ELASTIC_PLASTIC_HARDENING_H
 
 namespace MATERIAL_EVALUATION {
 
-int sign(double v); 
-
+//! Simple sign function.
 template<typename ScalarT>
-ScalarT signAD
+ScalarT sign
 (
         ScalarT v
 ); 
 
-double updateDeltaLambda
-(
-		double tdNorm,
-		const double lambdaN,
-        double pointWiseYieldValue,
-	    double alpha,
-        double HARD_MODULUS
-);
-
 template<typename ScalarT>
-ScalarT updateDeltaLambdaAD
+ScalarT updateDeltaLambda
 (
         ScalarT tdNorm,
         const double lambdaN,
@@ -76,31 +67,8 @@ ScalarT updateDeltaLambdaAD
         double HARD_MODULUS
 );
 
-void computeInternalForceIsotropicHardeningPlastic
-(
-		const double* xOverlap,
-		const double *yNP1Overlap,
-		const double* mOwned,
-		const double* volumeOverlap,
-		const double* dilatationOwned,
-		const double* bondDamage,
-		const double* scfOwned_,
-		const double* deviatoricPlasticExtensionStateN,
-		double* deviatoricPlasticExtensionStateNp1,
-		const double* lambdaN_,
-		double* lambdaNP1_,
-		double* fInternalOverlap,
-		const int*  localNeighborList,
-		int numOwnedPoints,
-		double BULK_MODULUS,
-		double SHEAR_MODULUS,
-		double HORIZON,
-		double yieldStress,
-		double HARD_MODULUS
-);
-
 template<typename ScalarT>
-void computeInternalForceIsotropicHardeningPlasticAD
+void computeInternalForceIsotropicHardeningPlastic
 (
 		const double* xOverlap,
 		const ScalarT* yNP1Overlap,
@@ -123,7 +91,6 @@ void computeInternalForceIsotropicHardeningPlasticAD
 		double HARD_MODULUS
 );
 
-
 }
 
-#endif /* ORDINARY_ISO_HARD_PLASTIC_H_ */
+#endif // ELASTIC_PLASTIC_HARDENING_H
