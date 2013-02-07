@@ -1,4 +1,4 @@
-/*! \file ordinary_std_linear_visco_solid.h */
+//! \file viscoelastic.h
 
 //@HEADER
 // ************************************************************************
@@ -44,9 +44,9 @@
 //
 // ************************************************************************
 //@HEADER
-#ifndef ORDINARY_STD_LINEAR_VISCO_SOLID_H_
-#define ORDINARY_STD_LINEAR_VISCO_SOLID_H_
 
+#ifndef VISCOELASTIC_H
+#define VISCOELASTIC_H
 
 namespace MATERIAL_EVALUATION {
 
@@ -80,4 +80,4 @@ void computeInternalForceViscoelasticStandardLinearSolid
 
 }
 
-#endif /* ORDINARY_STD_LINEAR_VISCO_SOLID_H_ */
+#endif // VISCOELASTIC_H

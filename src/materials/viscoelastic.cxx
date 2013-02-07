@@ -1,4 +1,4 @@
-/*! \file ordinary_std_linear_visco_solid.cxx */
+//! \file viscoelastic.cxx
 
 //@HEADER
 // ************************************************************************
@@ -197,7 +197,6 @@ void computeInternalForceViscoelasticStandardLinearSolid
 			fInternalOverlap[3*localId+2] -= fz*selfCellVolume;
 		}
 	}
-
 }
 
 }
