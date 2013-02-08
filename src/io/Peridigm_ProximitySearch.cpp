@@ -177,8 +177,7 @@ void PeridigmNS::ProximitySearch::GlobalProximitySearch(Epetra_Vector& x,
     numberOfNeighborsRebalancedDecompPtr[i] = static_cast<double>(numNeighbors);
     neighborListIndex += numNeighbors;
   }
-  int* myGlobalElementsOriginalMap;
-  originalMap.MyGlobalElementsPtr(myGlobalElementsOriginalMap);
+  int* myGlobalElementsOriginalMap = originalMap.MyGlobalElements();
   Epetra_BlockMap originalOneDimensionalMap(originalMap.NumGlobalElements(), originalMap.NumMyElements(), myGlobalElementsOriginalMap, 1, 0, originalMap.Comm());
   Epetra_Vector numberOfNeighborsOriginalDecomp(originalOneDimensionalMap);
   Epetra_Import oneDimensionalImporter(originalOneDimensionalMap, rebalancedOneDimensionalMap);
