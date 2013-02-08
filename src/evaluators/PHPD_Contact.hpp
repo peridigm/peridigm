@@ -1,4 +1,4 @@
-/*! \file Peridigm_ModelEvaluator.hpp */
+/*! \file PHPD_Contact.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -44,57 +44,48 @@
 //
 // ************************************************************************
 //@HEADER
+#ifndef PHPD_CONTACT_HPP
+#define PHPD_CONTACT_HPP
 
-#ifndef PERIDIGM_MODELEVALUATOR_HPP
-#define PERIDIGM_MODELEVALUATOR_HPP
+#include <Phalanx_ConfigDefs.hpp>
+#include <Phalanx_Evaluator_WithBaseImpl.hpp>
+#include <Phalanx_Evaluator_Derived.hpp>
+#include <Phalanx_MDField.hpp>
+#include "PHPD_ParameterEntry.hpp"
+#include "PHPD_ParameterGet.hpp"
+#include <vector>
 
-#include <Phalanx.hpp>
-#include "PHPD_PeridigmTraits.hpp"
+template<typename EvalT, typename Traits>
+class Contact : public PHX::EvaluatorWithBaseImpl<Traits>,
+                public PHX::EvaluatorDerived<EvalT, Traits>
+{
+  typedef typename EvalT::ScalarT ScalarT;
 
-namespace PeridigmNS {
+public:
 
-  //! The main ModelEvaluator class; provides the interface between the driver code and the computational routines.
-  class ModelEvaluator {
+  Contact(Teuchos::ParameterList& p);
 
-  public:
+  void postRegistrationSetup(typename Traits::SetupData d,
+                             PHX::FieldManager<Traits>& vm);
 
-    //! Constructor
-    ModelEvaluator(bool hasContact_);
+  void evaluateFields(typename Traits::EvalData d);
 
-    //! Destructor
-	virtual ~ModelEvaluator();
+private:
+ 
+  Teuchos::RCP<PHX::FieldTag> contact_field_tag;
+  bool m_verbose;
 
-    //! Model evaluation that acts directly on the workset
-    void evalModel(Teuchos::RCP<PHPD::Workset> workset) const;
+  std::size_t m_num_pt;
 
-    //! Jacobian evaluation that acts directly on the workset
-    void evalJacobian(Teuchos::RCP<PHPD::Workset> workset) const;
+  //! Computes the distance between nodes (a1, a2, a3) and (b1, b2, b3).
+  inline double distance(double a1, double a2, double a3,
+                         double b1, double b2, double b3) const
+  {
+    return ( sqrt( (a1-b1)*(a1-b1) + (a2-b2)*(a2-b2) + (a3-b3)*(a3-b3) ) );
+  }
 
-  protected:
+};
 
-	void constructForceEvaluators();
-	void constructJacobianEvaluators();
+#include "PHPD_Contact_Def.hpp"
 
-	//! Phalanx field manager for internal force evaluation
-	Teuchos::RCP<PHX::FieldManager<PHPD::PeridigmTraits> > forceFieldManager;
-
-	//! Phalanx field manager for jacobian evaluation
-	Teuchos::RCP<PHX::FieldManager<PHPD::PeridigmTraits> > jacobianFieldManager;
-
-    //! Contact flag
-    bool hasContact;
-
-    //! Verbosity flag
-    bool verbose;
-
-  private:
-    
-    //! Private to prohibit copying
-    ModelEvaluator(const ModelEvaluator&);
-
-    //! Private to prohibit copying
-    ModelEvaluator& operator=(const ModelEvaluator&);
-  };
-}
-
-#endif // PERIDIGM_MODELEVALUATOR_HPP
+#endif // PHPD_CONTACT_HPP

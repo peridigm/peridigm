@@ -1,4 +1,4 @@
-/*! \file Peridigm_ModelEvaluator.hpp */
+/*! \file PHPD_ParameterGet.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -44,57 +44,17 @@
 //
 // ************************************************************************
 //@HEADER
+#ifndef PHPD_PARAMETERGET_HPP
+#define PHPD_PARAMETERGET_HPP
 
-#ifndef PERIDIGM_MODELEVALUATOR_HPP
-#define PERIDIGM_MODELEVALUATOR_HPP
-
-#include <Phalanx.hpp>
-#include "PHPD_PeridigmTraits.hpp"
-
-namespace PeridigmNS {
-
-  //! The main ModelEvaluator class; provides the interface between the driver code and the computational routines.
-  class ModelEvaluator {
-
-  public:
-
-    //! Constructor
-    ModelEvaluator(bool hasContact_);
-
-    //! Destructor
-	virtual ~ModelEvaluator();
-
-    //! Model evaluation that acts directly on the workset
-    void evalModel(Teuchos::RCP<PHPD::Workset> workset) const;
-
-    //! Jacobian evaluation that acts directly on the workset
-    void evalJacobian(Teuchos::RCP<PHPD::Workset> workset) const;
-
-  protected:
-
-	void constructForceEvaluators();
-	void constructJacobianEvaluators();
-
-	//! Phalanx field manager for internal force evaluation
-	Teuchos::RCP<PHX::FieldManager<PHPD::PeridigmTraits> > forceFieldManager;
-
-	//! Phalanx field manager for jacobian evaluation
-	Teuchos::RCP<PHX::FieldManager<PHPD::PeridigmTraits> > jacobianFieldManager;
-
-    //! Contact flag
-    bool hasContact;
-
-    //! Verbosity flag
-    bool verbose;
-
+namespace PHPD {
+  template<typename EvalT> class ParameterGet {
   private:
-    
-    //! Private to prohibit copying
-    ModelEvaluator(const ModelEvaluator&);
-
-    //! Private to prohibit copying
-    ModelEvaluator& operator=(const ModelEvaluator&);
+    typedef typename EvalT::ScalarT ScalarT;
+  public:
+    virtual ~ParameterGet(){}
+    virtual ScalarT& getValue(const std::string &n) = 0;
   };
 }
 
-#endif // PERIDIGM_MODELEVALUATOR_HPP
+#endif

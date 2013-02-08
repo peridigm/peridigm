@@ -91,48 +91,6 @@ option (USE_DAKOTA
 )
 
 #
-# Optional dependency on Laboratory for Computational Mechanics (LCM)
-#
-IF(USE_LCM)
-  MESSAGE("-- LCM is enabled, compiling with -DPERIDIGM_LCM")
-  ADD_DEFINITIONS(-DPERIDIGM_LCM)
-  SET(PERIDIGM_LCM TRUE)
-  IF(NOT LCM_INCLUDE_DIR)
-    MESSAGE("\nError:  LCM_INCLUDE_DIR not defined\n")
-  ELSE()
-    MESSAGE("-- LCM_INCLUDE_DIR ${LCM_INCLUDE_DIR}")
-  ENDIF()
-  IF(NOT LCM_LIBRARY_DIR)
-    MESSAGE("\nError:  LCM_LIBRARY_DIR not defined\n")
-  ELSE()
-    MESSAGE("-- LCM_LIBRARY_DIR ${LCM_LIBRARY_DIR}")
-  ENDIF()
-  MESSAGE("")
-ELSE()
-  MESSAGE("-- LCM is NOT enabled.\n")
-  SET(PERIDIGM_LCM FALSE)
-ENDIF()
-
-IF(PERIDIGM_LCM)
-  include_directories (
-    ${LCM_INCLUDE_DIR}
-    ${LCM_INCLUDE_DIR}/disc
-    ${LCM_INCLUDE_DIR}/disc/stk
-    ${LCM_INCLUDE_DIR}/evaluators
-    ${LCM_INCLUDE_DIR}/problems
-    ${LCM_INCLUDE_DIR}/LCM/evaluators
-    ${LCM_INCLUDE_DIR}/LCM/problems
-    ${LCM_INCLUDE_DIR}/LCM/utils
-    ${LCM_INCLUDE_DIR}/LCM/utils/tensor
-  )
-  link_directories (${LCM_LIBRARY_DIR})
-  set(LCM_LIBRARY albanyLib)
-ELSE()
-  set(LCM_LIBRARY )
-ENDIF()
-
-
-#
 # Trilinos configuration
 #
 set(TRILINOS_DIR CACHE PATH "Path to Trilinos directory")
@@ -151,15 +109,40 @@ MESSAGE("   Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
 # Hack for now until Trilinos exports cmake variable for binaries directory
 SET(Trilinos_BINARY_PATH ${Trilinos_LIBRARY_DIRS}/../bin)
 # verbose output
-# MESSAGE("   Trilinos_LIBRARIES = ${Trilinos_LIBRARIES}")
-# MESSAGE("   Trilinos_INCLUDE_DIRS = ${Trilinos_INCLUDE_DIRS}")
-# MESSAGE("   Trilinos_LIBRARY_DIRS = ${Trilinos_LIBRARY_DIRS}")
+MESSAGE("   Trilinos_LIBRARIES = ${Trilinos_LIBRARIES}")
+MESSAGE("   Trilinos_INCLUDE_DIRS = ${Trilinos_INCLUDE_DIRS}")
+MESSAGE("   Trilinos_LIBRARY_DIRS = ${Trilinos_LIBRARY_DIRS}")
 MESSAGE("")
 
 # Check for netcdf
 LIST(FIND Trilinos_TPL_LIST Netcdf Netcdf_Package_Index)
 IF(Netcdf_Package_Index LESS 0)
   MESSAGE("\n\nError:  Netcdf NOT found.  Netcdf is a REQUIRED Trilinos TPL.\n\n")
+ENDIF()
+
+#
+# Optional dependency on Laboratory for Computational Mechanics (LCM)
+#
+IF(USE_LCM)
+  SET(CMAKE_PREFIX_PATH ${ALBANY_DIR} ${CMAKE_PREFIX_PATH})
+  find_package(Albany REQUIRED)
+  MESSAGE("Found Albany!  Here are the details: ")
+  MESSAGE("   Albany_DIR = ${Albany_DIR}")
+  MESSAGE("   Albany_LIBRARIES = ${Albany_LIBRARIES}")
+  MESSAGE("   Albany_INCLUDE_DIRS = ${Albany_INCLUDE_DIRS}")
+  MESSAGE("   Albany_LIBRARY_DIRS = ${Albany_LIBRARY_DIRS}")
+  MESSAGE("End of Albany details\n")
+  MESSAGE("-- LCM is enabled, compiling with -DPERIDIGM_LCM")
+  MESSAGE("")
+  ADD_DEFINITIONS(-DPERIDIGM_LCM)
+  SET(PERIDIGM_LCM TRUE)
+  include_directories(${Albany_INCLUDE_DIRS})
+  link_directories(${Albany_LIBRARY_DIRS})
+  set(LCM_LIBRARY ${Albany_LIBRARIES})
+ELSE()
+  MESSAGE("-- LCM is NOT enabled.\n")
+  SET(PERIDIGM_LCM FALSE)
+  SET(LCM_LIBRARY )
 ENDIF()
 
 # For some unit tests, we want to link only to specfic libraries

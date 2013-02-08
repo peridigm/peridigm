@@ -1,4 +1,4 @@
-/*! \file Peridigm_ModelEvaluator.hpp */
+/*! \file PHPD_EvaluateJacobian.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -44,57 +44,40 @@
 //
 // ************************************************************************
 //@HEADER
+#ifndef PHPD_EVALUATEJACOBIAN_HPP
+#define PHPD_EVALUATEJACOBIAN_HPP
 
-#ifndef PERIDIGM_MODELEVALUATOR_HPP
-#define PERIDIGM_MODELEVALUATOR_HPP
+#include <Phalanx_ConfigDefs.hpp>
+#include <Phalanx_Evaluator_WithBaseImpl.hpp>
+#include <Phalanx_Evaluator_Derived.hpp>
+#include <Phalanx_MDField.hpp>
+#include "PHPD_ParameterEntry.hpp"
+#include "PHPD_ParameterGet.hpp"
+#include <vector>
 
-#include <Phalanx.hpp>
-#include "PHPD_PeridigmTraits.hpp"
+template<typename EvalT, typename Traits>
+class EvaluateJacobian : public PHX::EvaluatorWithBaseImpl<Traits>,
+                         public PHX::EvaluatorDerived<EvalT, Traits>
+{
+  typedef typename EvalT::ScalarT ScalarT;
 
-namespace PeridigmNS {
+public:
 
-  //! The main ModelEvaluator class; provides the interface between the driver code and the computational routines.
-  class ModelEvaluator {
+  EvaluateJacobian(Teuchos::ParameterList& p);
 
-  public:
+  void postRegistrationSetup(typename Traits::SetupData d,
+                      PHX::FieldManager<Traits>& vm);
 
-    //! Constructor
-    ModelEvaluator(bool hasContact_);
+  void evaluateFields(typename Traits::EvalData d);
 
-    //! Destructor
-	virtual ~ModelEvaluator();
+private:
+ 
+  Teuchos::RCP<PHX::FieldTag> evaluate_jacobian_field_tag;
+  bool m_verbose;
 
-    //! Model evaluation that acts directly on the workset
-    void evalModel(Teuchos::RCP<PHPD::Workset> workset) const;
+  std::size_t m_num_pt;
+};
 
-    //! Jacobian evaluation that acts directly on the workset
-    void evalJacobian(Teuchos::RCP<PHPD::Workset> workset) const;
+#include "PHPD_EvaluateJacobian_Def.hpp"
 
-  protected:
-
-	void constructForceEvaluators();
-	void constructJacobianEvaluators();
-
-	//! Phalanx field manager for internal force evaluation
-	Teuchos::RCP<PHX::FieldManager<PHPD::PeridigmTraits> > forceFieldManager;
-
-	//! Phalanx field manager for jacobian evaluation
-	Teuchos::RCP<PHX::FieldManager<PHPD::PeridigmTraits> > jacobianFieldManager;
-
-    //! Contact flag
-    bool hasContact;
-
-    //! Verbosity flag
-    bool verbose;
-
-  private:
-    
-    //! Private to prohibit copying
-    ModelEvaluator(const ModelEvaluator&);
-
-    //! Private to prohibit copying
-    ModelEvaluator& operator=(const ModelEvaluator&);
-  };
-}
-
-#endif // PERIDIGM_MODELEVALUATOR_HPP
+#endif // PHPD_EVALUATEJACOBIAN_HPP

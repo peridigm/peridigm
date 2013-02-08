@@ -45,8 +45,8 @@
 // ************************************************************************
 //@HEADER
 
-#include "PHAL_Dimension.hpp"
-#include "PHAL_FactoryTraits.hpp"
+#include "PHPD_Dimension.hpp"
+#include "PHPD_FactoryTraits.hpp"
 #include "Peridigm_ModelEvaluator.hpp"
 
 PeridigmNS::ModelEvaluator::ModelEvaluator(bool hasContact_)
@@ -84,11 +84,11 @@ PeridigmNS::ModelEvaluator::constructForceEvaluators()
 
   // Create a dummy data layout that can be associated with an evaluator if needed
   //! \todo Determine how the field manager's data layout scheme works and set it up properly.
-  RCP<DataLayout> dummy = rcp(new MDALayout<Dummy>(0));
+  RCP<DataLayout> dummy = rcp(new MDALayout<PHPD::Dummy>(0));
 
   { // Evaluate force
   RCP<ParameterList> p = rcp(new ParameterList);
-  int type = FactoryTraits<PHAL::PeridigmTraits>::id_evaluate_force;
+  int type = FactoryTraits<PHPD::PeridigmTraits>::id_evaluate_force;
   p->set<int>("Type", type); 
   p->set<bool>("Verbose", verbose);
 
@@ -99,7 +99,7 @@ PeridigmNS::ModelEvaluator::constructForceEvaluators()
 
   { // Evaluate damage
   RCP<ParameterList> p = rcp(new ParameterList);
-  int type = FactoryTraits<PHAL::PeridigmTraits>::id_evaluate_damage;
+  int type = FactoryTraits<PHPD::PeridigmTraits>::id_evaluate_damage;
   p->set<int>("Type", type); 
   p->set<bool>("Verbose", verbose);
 
@@ -111,7 +111,7 @@ PeridigmNS::ModelEvaluator::constructForceEvaluators()
   // Contact
   if(hasContact){
     RCP<ParameterList> p = rcp(new ParameterList);
-    int type = FactoryTraits<PHAL::PeridigmTraits>::id_contact;
+    int type = FactoryTraits<PHPD::PeridigmTraits>::id_contact;
     p->set<int>("Type", type); 
     p->set<bool>("Verbose", verbose);
 
@@ -121,25 +121,25 @@ PeridigmNS::ModelEvaluator::constructForceEvaluators()
   }
 
   // Build Field Evaluators for each evaluation type
-  PHX::EvaluatorFactory<PHAL::PeridigmTraits, FactoryTraits<PHAL::PeridigmTraits> > factory;
-  RCP< vector< RCP<PHX::Evaluator_TemplateManager<PHAL::PeridigmTraits> > > > evaluators;
+  PHX::EvaluatorFactory<PHPD::PeridigmTraits, FactoryTraits<PHPD::PeridigmTraits> > factory;
+  RCP< vector< RCP<PHX::Evaluator_TemplateManager<PHPD::PeridigmTraits> > > > evaluators;
   evaluators = factory.buildEvaluators(evaluatorsToBuild);
 
   // Create a FieldManager
-  forceFieldManager = Teuchos::rcp(new PHX::FieldManager<PHAL::PeridigmTraits>);
+  forceFieldManager = Teuchos::rcp(new PHX::FieldManager<PHPD::PeridigmTraits>);
 
   // Register all Evaluators with the field manager
   PHX::registerEvaluators(evaluators, *forceFieldManager);
 
   // List EvaluateForce as a required field for the field manager (other evaluators will be
   // called as perscribed by dependencies).
-  PHX::Tag<PHAL::PeridigmTraits::Residual::ScalarT> evaluate_force_tag("EvaluateForce", dummy);
-  forceFieldManager->requireField<PHAL::PeridigmTraits::Residual>(evaluate_force_tag);
+  PHX::Tag<PHPD::PeridigmTraits::Residual::ScalarT> evaluate_force_tag("EvaluateForce", dummy);
+  forceFieldManager->requireField<PHPD::PeridigmTraits::Residual>(evaluate_force_tag);
 
   // Require the contact force evaluation
   if(hasContact){
-    PHX::Tag<PHAL::PeridigmTraits::Residual::ScalarT> contact_tag("Contact", dummy);
-    forceFieldManager->requireField<PHAL::PeridigmTraits::Residual>(contact_tag);
+    PHX::Tag<PHPD::PeridigmTraits::Residual::ScalarT> contact_tag("Contact", dummy);
+    forceFieldManager->requireField<PHPD::PeridigmTraits::Residual>(contact_tag);
   }
 }
 
@@ -162,12 +162,12 @@ PeridigmNS::ModelEvaluator::constructJacobianEvaluators()
 
   // Create a dummy data layout that can be associated with an evaluator if needed
   //! \todo Determine how the field manager's data layout scheme works and set it up properly.
-  RCP<DataLayout> dummy = rcp(new MDALayout<Dummy>(0));
+  RCP<DataLayout> dummy = rcp(new MDALayout<PHPD::Dummy>(0));
 
   // Jacobian
   {
     RCP<ParameterList> p = rcp(new ParameterList);
-    int type = FactoryTraits<PHAL::PeridigmTraits>::id_evaluate_jacobian;
+    int type = FactoryTraits<PHPD::PeridigmTraits>::id_evaluate_jacobian;
     p->set<int>("Type", type); 
     p->set<bool>("Verbose", verbose);
 
@@ -177,33 +177,33 @@ PeridigmNS::ModelEvaluator::constructJacobianEvaluators()
   }
 
   // Build Field Evaluators for each evaluation type
-  PHX::EvaluatorFactory<PHAL::PeridigmTraits, FactoryTraits<PHAL::PeridigmTraits> > factory;
-  RCP< vector< RCP<PHX::Evaluator_TemplateManager<PHAL::PeridigmTraits> > > > evaluators;
+  PHX::EvaluatorFactory<PHPD::PeridigmTraits, FactoryTraits<PHPD::PeridigmTraits> > factory;
+  RCP< vector< RCP<PHX::Evaluator_TemplateManager<PHPD::PeridigmTraits> > > > evaluators;
   evaluators = factory.buildEvaluators(evaluatorsToBuild);
 
   // Create a FieldManager
-  jacobianFieldManager = Teuchos::rcp(new PHX::FieldManager<PHAL::PeridigmTraits>);
+  jacobianFieldManager = Teuchos::rcp(new PHX::FieldManager<PHPD::PeridigmTraits>);
 
   // Register all Evaluators with the field manager
   PHX::registerEvaluators(evaluators, *jacobianFieldManager);
 
   // List EvaluateForce as a required field for the field manager (other evaluators will be
   // called as perscribed by dependencies).
-  PHX::Tag<PHAL::PeridigmTraits::Residual::ScalarT> evaluate_jacobian_tag("EvaluateJacobian", dummy);
-  jacobianFieldManager->requireField<PHAL::PeridigmTraits::Residual>(evaluate_jacobian_tag);
+  PHX::Tag<PHPD::PeridigmTraits::Residual::ScalarT> evaluate_jacobian_tag("EvaluateJacobian", dummy);
+  jacobianFieldManager->requireField<PHPD::PeridigmTraits::Residual>(evaluate_jacobian_tag);
 }
 
 void 
-PeridigmNS::ModelEvaluator::evalModel(Teuchos::RCP<PHAL::Workset> workset) const
+PeridigmNS::ModelEvaluator::evalModel(Teuchos::RCP<PHPD::Workset> workset) const
 {
   // call field manager with workset
-  forceFieldManager->evaluateFields<PHAL::PeridigmTraits::Residual>(*workset);
+  forceFieldManager->evaluateFields<PHPD::PeridigmTraits::Residual>(*workset);
 }
 
 void 
-PeridigmNS::ModelEvaluator::evalJacobian(Teuchos::RCP<PHAL::Workset> workset) const
+PeridigmNS::ModelEvaluator::evalJacobian(Teuchos::RCP<PHPD::Workset> workset) const
 {
   // call field manager with workset
   // \todo We should be using the template type to control force/jacobian calls.
-  jacobianFieldManager->evaluateFields<PHAL::PeridigmTraits::Residual>(*workset);
+  jacobianFieldManager->evaluateFields<PHPD::PeridigmTraits::Residual>(*workset);
 }

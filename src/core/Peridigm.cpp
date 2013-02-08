@@ -504,7 +504,7 @@ void PeridigmNS::Peridigm::initializeContact() {
 }
 
 void PeridigmNS::Peridigm::initializeWorkset() {
-  workset = Teuchos::rcp(new PHAL::Workset);
+  workset = Teuchos::rcp(new PHPD::Workset);
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   *timeStep = 0.0;
   workset->timeStep = timeStep;

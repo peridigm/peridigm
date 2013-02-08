@@ -67,11 +67,15 @@
 #include "Albany_STKDiscretization.hpp"
 #include "Albany_Layouts.hpp"
 
-#include "LCM/evaluators/SetField.hpp"
-#include "LCM/evaluators/Neohookean.hpp"
-#include "LCM/evaluators/J2Stress.hpp"
+// #include "LCM/evaluators/SetField.hpp"
+// #include "LCM/evaluators/Neohookean.hpp"
+// #include "LCM/evaluators/J2Stress.hpp"
 
-#include "Tensor.h"
+#include "SetField.hpp"
+#include "Neohookean.hpp"
+#include "J2Stress.hpp"
+
+#include "Intrepid_MiniTensor.h"
 
 #endif
 
@@ -139,9 +143,9 @@ PeridigmNS::LCMMaterial::initialize(const double dt,
   // Deformation gradient
   Teuchos::ArrayRCP<ScalarT> defgrad(9);
 
-  defGrad[0] = 1.0;  defGrad[1] = 0.0;  defGrad[2] = 0.0;
-  defGrad[0] = 0.0;  defGrad[1] = 1.0;  defGrad[2] = 0.0;
-  defGrad[0] = 0.0;  defGrad[1] = 0.0;  defGrad[2] = 1.0;
+  defgrad[0] = 1.0;  defgrad[1] = 0.0;  defgrad[2] = 0.0;
+  defgrad[3] = 0.0;  defgrad[4] = 1.0;  defgrad[5] = 0.0;
+  defgrad[6] = 0.0;  defgrad[7] = 0.0;  defgrad[8] = 1.0;
 
   // SetField evaluator, which will be used to manually assign a value to the defgrad field
   Teuchos::ParameterList setDefGradParams("SetFieldDefGrad");
