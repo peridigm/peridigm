@@ -399,7 +399,7 @@ namespace PeridigmNS {
     Teuchos::RCP<PeridigmNS::NeighborhoodData> globalContactNeighborhoodData;
 
     //! Workset that is passed to the modelEvaluator
-    Teuchos::RCP<PHAL::Workset> workset;
+    Teuchos::RCP<PHPD::Workset> workset;
 
     //! The peridigm model evaluator
     Teuchos::RCP<PeridigmNS::ModelEvaluator> modelEvaluator;

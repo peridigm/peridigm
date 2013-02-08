@@ -1,5 +1,6 @@
-/*! \file Peridigm_ModelEvaluator.hpp */
+/*! \file PHPD_PeridigmTraits.cpp */
 
+// @HEADER
 //@HEADER
 // ************************************************************************
 //
@@ -44,57 +45,14 @@
 //
 // ************************************************************************
 //@HEADER
-
-#ifndef PERIDIGM_MODELEVALUATOR_HPP
-#define PERIDIGM_MODELEVALUATOR_HPP
-
-#include <Phalanx.hpp>
 #include "PHPD_PeridigmTraits.hpp"
 
-namespace PeridigmNS {
+const std::string PHX::TypeString<PHPD::PeridigmTraits::Residual>::value = "Residual";
 
-  //! The main ModelEvaluator class; provides the interface between the driver code and the computational routines.
-  class ModelEvaluator {
+const std::string PHX::TypeString<PHPD::PeridigmTraits::Jacobian>::value = "Jacobian";
 
-  public:
+const std::string PHX::TypeString<PHPD::PeridigmTraits::Tangent>::value = "Tangent";
 
-    //! Constructor
-    ModelEvaluator(bool hasContact_);
+const std::string PHX::TypeString<double>::value = "double";
 
-    //! Destructor
-	virtual ~ModelEvaluator();
-
-    //! Model evaluation that acts directly on the workset
-    void evalModel(Teuchos::RCP<PHPD::Workset> workset) const;
-
-    //! Jacobian evaluation that acts directly on the workset
-    void evalJacobian(Teuchos::RCP<PHPD::Workset> workset) const;
-
-  protected:
-
-	void constructForceEvaluators();
-	void constructJacobianEvaluators();
-
-	//! Phalanx field manager for internal force evaluation
-	Teuchos::RCP<PHX::FieldManager<PHPD::PeridigmTraits> > forceFieldManager;
-
-	//! Phalanx field manager for jacobian evaluation
-	Teuchos::RCP<PHX::FieldManager<PHPD::PeridigmTraits> > jacobianFieldManager;
-
-    //! Contact flag
-    bool hasContact;
-
-    //! Verbosity flag
-    bool verbose;
-
-  private:
-    
-    //! Private to prohibit copying
-    ModelEvaluator(const ModelEvaluator&);
-
-    //! Private to prohibit copying
-    ModelEvaluator& operator=(const ModelEvaluator&);
-  };
-}
-
-#endif // PERIDIGM_MODELEVALUATOR_HPP
+const std::string PHX::TypeString< Sacado::Fad::DFad<double> >::value = "Sacado::Fad::DFad<double>";

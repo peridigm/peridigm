@@ -1,4 +1,4 @@
-/*! \file Peridigm_ModelEvaluator.hpp */
+/*! \file PHPD_Dimension.cpp */
 
 //@HEADER
 // ************************************************************************
@@ -44,57 +44,23 @@
 //
 // ************************************************************************
 //@HEADER
+#include "PHPD_Dimension.hpp"
 
-#ifndef PERIDIGM_MODELEVALUATOR_HPP
-#define PERIDIGM_MODELEVALUATOR_HPP
+namespace PHPD {
 
-#include <Phalanx.hpp>
-#include "PHPD_PeridigmTraits.hpp"
+const char * Node::name() const 
+{ static const char n[] = "Node" ; return n ; }
+const Node & Node::tag() 
+{ static const Node myself ; return myself ; }
 
-namespace PeridigmNS {
+const char * Cell::name() const 
+{ static const char n[] = "Cell" ; return n ; }
+const Cell & Cell::tag() 
+{ static const Cell myself ; return myself ; }
 
-  //! The main ModelEvaluator class; provides the interface between the driver code and the computational routines.
-  class ModelEvaluator {
+const char * Dummy::name() const 
+{ static const char n[] = "Dummy" ; return n ; }
+const Dummy & Dummy::tag() 
+{ static const Dummy myself ; return myself ; }
 
-  public:
-
-    //! Constructor
-    ModelEvaluator(bool hasContact_);
-
-    //! Destructor
-	virtual ~ModelEvaluator();
-
-    //! Model evaluation that acts directly on the workset
-    void evalModel(Teuchos::RCP<PHPD::Workset> workset) const;
-
-    //! Jacobian evaluation that acts directly on the workset
-    void evalJacobian(Teuchos::RCP<PHPD::Workset> workset) const;
-
-  protected:
-
-	void constructForceEvaluators();
-	void constructJacobianEvaluators();
-
-	//! Phalanx field manager for internal force evaluation
-	Teuchos::RCP<PHX::FieldManager<PHPD::PeridigmTraits> > forceFieldManager;
-
-	//! Phalanx field manager for jacobian evaluation
-	Teuchos::RCP<PHX::FieldManager<PHPD::PeridigmTraits> > jacobianFieldManager;
-
-    //! Contact flag
-    bool hasContact;
-
-    //! Verbosity flag
-    bool verbose;
-
-  private:
-    
-    //! Private to prohibit copying
-    ModelEvaluator(const ModelEvaluator&);
-
-    //! Private to prohibit copying
-    ModelEvaluator& operator=(const ModelEvaluator&);
-  };
 }
-
-#endif // PERIDIGM_MODELEVALUATOR_HPP

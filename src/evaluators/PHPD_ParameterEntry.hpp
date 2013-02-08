@@ -1,4 +1,6 @@
-/*! \file Peridigm_ModelEvaluator.hpp */
+/*! \file PHPD_ParameterEntry.hpp */
+
+// $Source: /space/CVS/Trilinos/packages/sacado/example/FEApp/FEApp_ConstantNodeBCStrategy.hpp,v $ 
 
 //@HEADER
 // ************************************************************************
@@ -45,56 +47,63 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_MODELEVALUATOR_HPP
-#define PERIDIGM_MODELEVALUATOR_HPP
+#ifndef PHPD_PARAMETERENTRY_HPP
+#define PHPD_PARAMETERENTRY_HPP
 
-#include <Phalanx.hpp>
+#include <Sacado_Traits.hpp>
+#include <sstream>
+#include "PHPD_ParameterGet.hpp"
 #include "PHPD_PeridigmTraits.hpp"
 
-namespace PeridigmNS {
+namespace PHPD {
+  /*!
+   * @brief Parameter class for sensitivity/stability analysis 
+   */
+  template <typename EvalT>
+  class ParameterEntry : 
+    public Sacado::ScalarParameterEntry<EvalT,SPL_Traits> {
 
-  //! The main ModelEvaluator class; provides the interface between the driver code and the computational routines.
-  class ModelEvaluator {
+  //! Scalar type
+  typedef typename Sacado::ScalarParameterEntry<EvalT,SPL_Traits>::ScalarT ScalarT;
 
   public:
 
     //! Constructor
-    ModelEvaluator(bool hasContact_);
+    ParameterEntry(const std::string &name_, ParameterGet<EvalT>* evaluator_,
+                            Teuchos::RCP<ParamLib> paramLib)
+      : name(name_), evaluator(evaluator_) {
+
+      if (paramLib != Teuchos::null) {
+        if (!paramLib->isParameter(name))
+          paramLib->addParameterFamily(name, true, false);
+        if (!paramLib->template isParameterForType<EvalT>(name)) {
+          paramLib->template addEntry<EvalT>(name, Teuchos::rcp(this,false));
+        }
+      }
+    }
 
     //! Destructor
-	virtual ~ModelEvaluator();
+    virtual ~ParameterEntry() {}
 
-    //! Model evaluation that acts directly on the workset
-    void evalModel(Teuchos::RCP<PHPD::Workset> workset) const;
+    //! Set real parameter value
+    virtual void setRealValue(double value) { 
+      setValue(ScalarT(value)); }
 
-    //! Jacobian evaluation that acts directly on the workset
-    void evalJacobian(Teuchos::RCP<PHPD::Workset> workset) const;
-
-  protected:
-
-	void constructForceEvaluators();
-	void constructJacobianEvaluators();
-
-	//! Phalanx field manager for internal force evaluation
-	Teuchos::RCP<PHX::FieldManager<PHPD::PeridigmTraits> > forceFieldManager;
-
-	//! Phalanx field manager for jacobian evaluation
-	Teuchos::RCP<PHX::FieldManager<PHPD::PeridigmTraits> > jacobianFieldManager;
-
-    //! Contact flag
-    bool hasContact;
-
-    //! Verbosity flag
-    bool verbose;
-
-  private:
+    //! Set parameter this object represents to \em value
+    virtual void setValue(const ScalarT& value) { 
+      evaluator->getValue(name) =  value; }
     
-    //! Private to prohibit copying
-    ModelEvaluator(const ModelEvaluator&);
-
-    //! Private to prohibit copying
-    ModelEvaluator& operator=(const ModelEvaluator&);
+    //! Get parameter value this object represents
+    virtual const ScalarT& getValue() const { 
+      return evaluator->getValue(name); 
+     }
+    
+  protected:  
+    
+    //! Pointer to source function
+    const std::string name;
+    ParameterGet<EvalT>* evaluator;
   };
 }
 
-#endif // PERIDIGM_MODELEVALUATOR_HPP
+#endif // PHPD_PARAMETERENTRY_HPP

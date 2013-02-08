@@ -1,5 +1,4 @@
-/*! \file Peridigm_ModelEvaluator.hpp */
-
+// @HEADER
 //@HEADER
 // ************************************************************************
 //
@@ -44,57 +43,36 @@
 //
 // ************************************************************************
 //@HEADER
+#ifndef PHPD_FACTORY_TRAITS_HPP
+#define PHPD_FACTORY_TRAITS_HPP
 
-#ifndef PERIDIGM_MODELEVALUATOR_HPP
-#define PERIDIGM_MODELEVALUATOR_HPP
+// User Defined Evaluator Types
+#include "PHPD_EvaluateForce.hpp"
+#include "PHPD_EvaluateDamage.hpp"
+#include "PHPD_Contact.hpp"
+#include "PHPD_EvaluateJacobian.hpp"
+#include <boost/mpl/vector.hpp>
 
-#include <Phalanx.hpp>
-#include "PHPD_PeridigmTraits.hpp"
-
-namespace PeridigmNS {
-
-  //! The main ModelEvaluator class; provides the interface between the driver code and the computational routines.
-  class ModelEvaluator {
-
-  public:
-
-    //! Constructor
-    ModelEvaluator(bool hasContact_);
-
-    //! Destructor
-	virtual ~ModelEvaluator();
-
-    //! Model evaluation that acts directly on the workset
-    void evalModel(Teuchos::RCP<PHPD::Workset> workset) const;
-
-    //! Jacobian evaluation that acts directly on the workset
-    void evalJacobian(Teuchos::RCP<PHPD::Workset> workset) const;
-
-  protected:
-
-	void constructForceEvaluators();
-	void constructJacobianEvaluators();
-
-	//! Phalanx field manager for internal force evaluation
-	Teuchos::RCP<PHX::FieldManager<PHPD::PeridigmTraits> > forceFieldManager;
-
-	//! Phalanx field manager for jacobian evaluation
-	Teuchos::RCP<PHX::FieldManager<PHPD::PeridigmTraits> > jacobianFieldManager;
-
-    //! Contact flag
-    bool hasContact;
-
-    //! Verbosity flag
-    bool verbose;
-
-  private:
+/*! \brief Struct to define Evaluator objects for the EvaluatorFactory.
     
-    //! Private to prohibit copying
-    ModelEvaluator(const ModelEvaluator&);
+    Preconditions:
+    - You must provide a boost::mpl::vector named EvaluatorTypes that contain all Evaluator objects that you wish the factory to build.  Do not confuse evaluator types (concrete instances of evaluator objects) with evaluation types (types of evaluations to perform, i.e., Residual, Jacobian). 
 
-    //! Private to prohibit copying
-    ModelEvaluator& operator=(const ModelEvaluator&);
-  };
-}
+*/
+template<typename Traits>
+struct FactoryTraits {
+  
+  static const int id_evaluate_force            = 0;
+  static const int id_evaluate_damage           = 1;
+  static const int id_contact                   = 2;
+  static const int id_evaluate_jacobian         = 3;
 
-#endif // PERIDIGM_MODELEVALUATOR_HPP
+  typedef boost::mpl::vector< EvaluateForce<_,Traits>,
+							  EvaluateDamage<_,Traits>,
+							  Contact<_,Traits>,
+                              EvaluateJacobian<_,Traits>
+  > EvaluatorTypes;
+  
+};
+
+#endif
