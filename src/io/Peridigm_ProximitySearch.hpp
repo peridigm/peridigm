@@ -58,6 +58,15 @@ namespace ProximitySearch {
 	void operator()(T* d) {}
   };
 
+  void RebalanceNeighborhoodList(Teuchos::RCP<const Epetra_BlockMap> currentOwnedMap,     /* input */
+                                 Teuchos::RCP<const Epetra_BlockMap> currentOverlapMap,   /* input */
+                                 int currentNeighborListSize,                             /* input */
+                                 const int* currentNeighborList,                          /* input */
+                                 Teuchos::RCP<const Epetra_BlockMap> targetOwnedMap,      /* input */
+                                 Teuchos::RCP<Epetra_BlockMap> targetOverlapMap,          /* ouput */
+                                 int targetNeighborListSize,                              /* ouput */
+                                 int* targetNeighborList);                                /* ouput (allocated within function) */
+
   void NeighborListToEpetraVector(int neighborListSize, const int* neighborList, Epetra_BlockMap& map, Teuchos::RCP<Epetra_Vector>& epetraVector);
 
   // x is the mothership vector of positions
