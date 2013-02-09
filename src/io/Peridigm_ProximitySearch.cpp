@@ -46,6 +46,7 @@
 
 #include <Epetra_Import.h>
 #include "Peridigm_ProximitySearch.hpp"
+#include "Peridigm_Discretization.hpp"
 #include "mesh_input/quick_grid/QuickGrid.h"
 #include "pdneigh/PdZoltan.h"
 #include "pdneigh/BondFilter.h"
@@ -53,14 +54,14 @@
 
 using namespace std;
 
-void PeridigmNS::ProximitySearch::RebalanceNeighborhoodList(Teuchos::RCP<const Epetra_BlockMap> currentOwnedMap,     /* input */
-                                                            Teuchos::RCP<const Epetra_BlockMap> currentOverlapMap,   /* input */
-                                                            int currentNeighborListSize,                             /* input */
-                                                            const int* currentNeighborList,                          /* input */
-                                                            Teuchos::RCP<const Epetra_BlockMap> targetOwnedMap,      /* input */
-                                                            Teuchos::RCP<Epetra_BlockMap> targetOverlapMap,          /* ouput */
-                                                            int targetNeighborListSize,                              /* ouput */
-                                                            int* targetNeighborList)                                 /* ouput (allocated within function) */
+void PeridigmNS::ProximitySearch::RebalanceNeighborhoodList(Teuchos::RCP<const Epetra_BlockMap> currentOwnedMap,     /* input  */
+                                                            Teuchos::RCP<const Epetra_BlockMap> currentOverlapMap,   /* input  */
+                                                            int currentNeighborListSize,                             /* input  */
+                                                            const int* currentNeighborList,                          /* input  */
+                                                            Teuchos::RCP<const Epetra_BlockMap> targetOwnedMap,      /* input  */
+                                                            Teuchos::RCP<Epetra_BlockMap> targetOverlapMap,          /* output */
+                                                            int& targetNeighborListSize,                             /* output */
+                                                            int* targetNeighborList)                                 /* output (allocated within function) */
 {
   // Communicate the number of neighbors into the target decomposition
 
@@ -90,80 +91,61 @@ void PeridigmNS::ProximitySearch::RebalanceNeighborhoodList(Teuchos::RCP<const E
   // both the current and target decompositions
 
   // Epetra_BlockMap and Epetra_Map do not allow elements of size zero
-  // So, any point with zero neighbors must be excluded from the Epetra_Vector
+  // So, within this function, if a point has no neighbors we'll create
+  // a neighbor list of length one and fill it with the value -1
 
   int numGlobalElements(-1);
   int numMyElements(0);
-  vector<int> myGlobalElements;
+  int* myGlobalElements(0);
   vector<int> elementSizeList;
   int indexBase(0);
 
-  // Construct an Epetra_BlockMap and Epetra_Vector in the current configuration
+  // Create a vector with variable-length elements and fill it with the global ids of each element's neighbors
 
+  numMyElements = currentNumOwnedPoints;
+  myGlobalElements = currentOwnedMap->MyGlobalElements();
+  elementSizeList.resize(currentNumOwnedPoints);
   for(int i=0 ; i<currentNumOwnedPoints ; ++i){
-    if(currentNumberOfNeighborsPtr[i] > 0)
-      numMyElements += 1;
-  }
-  myGlobalElements.resize(numMyElements);
-  elementSizeList.resize(numMyElements);
-
-  int offset(0);
-  for(int i=0 ; i<currentNumOwnedPoints ; ++i){
-    if(currentNumberOfNeighborsPtr[i] > 0){
-      myGlobalElements[i-offset] = currentOwnedMap->GID(i);
-      elementSizeList[i-offset] = currentNumberOfNeighborsPtr[i];
-    }
-    else{
-      offset += 1;
-    }
+    elementSizeList[i] = currentNumberOfNeighbors[i];
+    if(elementSizeList[i] == 0)
+      elementSizeList[i] = 1;
   }
 
-  Epetra_BlockMap currentNeighborMap(numGlobalElements, numMyElements, &myGlobalElements[0], &elementSizeList[0], indexBase, currentOwnedMap->Comm());
+  Epetra_BlockMap currentNeighborMap(numGlobalElements, numMyElements, myGlobalElements, &elementSizeList[0], indexBase, currentOwnedMap->Comm());
   Epetra_Vector currentNeighbors(currentNeighborMap);
   double* currentNeighborsPtr;
   currentNeighbors.ExtractView(&currentNeighborsPtr);
-
-  // Create a vector with variable-length elements and fill it with the global ids of each element's neighbors
 
   neighborListIndex = 0;
   int epetraVectorIndex(0);
   for(int i=0 ; i<currentNumOwnedPoints ; ++i){
     numNeighbors = currentNeighborList[neighborListIndex++];
+    if(numNeighbors == 0)
+      currentNeighborsPtr[epetraVectorIndex++] = -1;
     for(int j=0 ; j<numNeighbors ; ++j)
       currentNeighborsPtr[epetraVectorIndex++] = currentOverlapMap->GID( currentNeighborList[neighborListIndex++] );
   }
 
-  // Construct an Epetra_BlockMap and Epetra_Vector in the current configuration
+  // Create a vector with variable-length elements in the target configuration to recieve the neighborhood information
 
-  numMyElements = 0;
-  for(int i=0 ; i<targetNumberOfNeighbors.MyLength() ; ++i){
-    if(targetNumberOfNeighborsPtr[i] > 0)
-      numMyElements += 1;
-  }
-  myGlobalElements.resize(numMyElements);
-  elementSizeList.resize(numMyElements);
-
-  offset = 0;
-  for(int i=0 ; i<targetNumberOfNeighbors.MyLength() ; ++i){
-    if(targetNumberOfNeighborsPtr[i] > 0){
-      myGlobalElements[i-offset] = targetOwnedMap->GID(i);
-      elementSizeList[i-offset] = targetNumberOfNeighborsPtr[i];
-    }
-    else{
-      offset += 1;
-    }
+  numMyElements = targetNumOwnedPoints;
+  myGlobalElements = targetOwnedMap->MyGlobalElements();
+  elementSizeList.resize(targetNumOwnedPoints);
+  for(int i=0 ; i<targetNumOwnedPoints ; ++i){
+    elementSizeList[i] = targetNumberOfNeighborsPtr[i];
+    if(elementSizeList[i] == 0)
+      elementSizeList[i] = 1;
   }
 
-  Epetra_BlockMap targetNeighborMap(numGlobalElements, numMyElements, &myGlobalElements[0], &elementSizeList[0], indexBase, targetOwnedMap->Comm());
+  Epetra_BlockMap targetNeighborMap(numGlobalElements, numMyElements, myGlobalElements, &elementSizeList[0], indexBase, targetOwnedMap->Comm());
   Epetra_Vector targetNeighbors(targetNeighborMap);
+  double* targetNeighborsPtr;
+  targetNeighbors.ExtractView(&targetNeighborsPtr);
 
   // Import the neighborhood data
 
   Epetra_Import neighborhoodImporter(currentNeighborMap, targetNeighborMap);
   targetNeighbors.Import(currentNeighbors, neighborhoodImporter, Insert);
-
-  double* targetNeighborsPtr;
-  targetNeighbors.ExtractView(&targetNeighborsPtr);
 
   // Create a taret overlap map
   int localId, globalId;
@@ -174,7 +156,7 @@ void PeridigmNS::ProximitySearch::RebalanceNeighborhoodList(Teuchos::RCP<const E
     if(localId == -1)
       offProcessorElements.insert(globalId);
   }
-  int numOffProcessorElements = offProcessorElements.size();
+  int numOffProcessorElements = static_cast<int>( offProcessorElements.size() );
 
   vector<int> targetOverlapGlobalIds(targetNumOwnedPoints + numOffProcessorElements);
   int* targetOwnedGlobalIds = targetOwnedMap->MyGlobalElements();
@@ -189,119 +171,40 @@ void PeridigmNS::ProximitySearch::RebalanceNeighborhoodList(Teuchos::RCP<const E
   // Create the target overlap map
 
   targetOverlapMap = Teuchos::rcp(new Epetra_BlockMap(numGlobalElements,
-                                                      targetOverlapGlobalIds.size(),
+                                                      static_cast<int>( targetOverlapGlobalIds.size() ),
                                                       &targetOverlapGlobalIds[0],
                                                       1,
                                                       0,
                                                       targetOwnedMap->Comm()));
 
-  // Determine the size of the target neighbor list
+  // Allocate the target neighbor list
 
   targetNeighborListSize = 0;
-  for(int i=0 ; i<targetNumOwnedPoints ; ++i){
-    targetNeighborListSize += 1;
-    globalId = targetOwnedMap->GID(i);
-    localId = targetNeighborMap.LID(globalId);
-    // If the local id was not found, this means the point has no neighbors
-    if(localId == -1)
-      targetNeighborListSize += targetNeighborMap.ElementSize(localId);
-  }
-
-  // Allocate the target neighbor list
+  for(int i=0 ; i<targetNumOwnedPoints ; ++i)
+    targetNeighborListSize += 1 + targetNumberOfNeighborsPtr[i];
   targetNeighborList = new int[targetNeighborListSize];
 
   // Fill the target neighbor list
 
   neighborListIndex = 0;
   for(int i=0 ; i<targetNumOwnedPoints ; ++i){
-    globalId = targetOwnedMap->GID(i);
-    localId = targetNeighborMap.LID(globalId);
-    // If the local id was not found, this means the point has no neighbors
-    if(localId == -1){
-      targetNeighborList[neighborListIndex++] = 0;
-    }
-    else{
-      int numNeighbors = targetNeighborMap.ElementSize(localId);
-      targetNeighborList[neighborListIndex++] = numNeighbors;
-      int firstPointInElement = targetNeighborMap.FirstPointInElement(localId);
-      for(int j=0 ; j<numNeighbors ; ++j){
-        globalId = targetNeighborsPtr[firstPointInElement + j];
-        localId = targetOverlapMap->LID(globalId);
-        targetNeighborList[neighborListIndex++] = localId;
-      }
+    int numNeighbors = targetNumberOfNeighborsPtr[i];
+    targetNeighborList[neighborListIndex++] = numNeighbors;
+    int firstPointInElement = targetNeighborMap.FirstPointInElement(i);
+    for(int j=0 ; j<numNeighbors ; ++j){
+      globalId = targetNeighborsPtr[firstPointInElement + j];
+      localId = targetOverlapMap->LID(globalId);
+      targetNeighborList[neighborListIndex++] = localId;
     }
   }
 }
 
+void PeridigmNS::ProximitySearch::GlobalProximitySearch(Epetra_Vector& x,                         /* input  */
+                                                        double searchRadius,                      /* input  */
+                                                        Teuchos::RCP<Epetra_BlockMap> overlapMap, /* output */
+                                                        int& neighborListSize,                    /* output */
+                                                        int* neighborList)                        /* output (allocated within function) */
 
-
-
-
-
-
-
-
-
-void PeridigmNS::ProximitySearch::NeighborListToEpetraVector(int neighborListSize, const int* neighborList, Epetra_BlockMap& map, Teuchos::RCP<Epetra_Vector>& epetraVector)
-{
-  // Copy the neighbor list information into an Epetra_Vector with variable-length elements
-
-  // Epetra_BlockMap and Epetra_Map do not allow elements of size zero
-  // So, any point with zero neighbors must be excluded from the Epetra_Vector
-
-  // The following are needed to construct the Epetra_BlockMap
-  int numGlobalElements(-1);
-  int numMyElements(0);
-  vector<int> myGlobalElements;
-  vector<int> elementSizeList;
-  int indexBase(0);
-
-  // Record the number of elements in the neighborList, which could be larger
-  // than numMyElements in the event that there are points with zero neighbors
-
-  int numMyElementsInNeighborList(0);
-
-  // Determine the number of elements and resize the arrays
-  int neighborListIndex(0), numNeighbors(0);
-  while(neighborListIndex < neighborListSize){
-    numNeighbors = neighborList[neighborListIndex++];
-    neighborListIndex += numNeighbors;
-    numMyElementsInNeighborList += 1;
-    if(numNeighbors > 0)
-      numMyElements += 1;
-  }
-  myGlobalElements.resize(numMyElements);
-  elementSizeList.resize(numMyElements);
-
-  // Fill the arrays
-  neighborListIndex = 0;
-  numNeighbors = 0;
-  int numElementsWithZeroNeighbors(0);
-  for(int i=0 ; i<numMyElementsInNeighborList ; ++i){
-    numNeighbors = neighborList[neighborListIndex++];
-    neighborListIndex += numNeighbors;
-    if(numNeighbors > 0){
-      myGlobalElements[i-numElementsWithZeroNeighbors] =  map.GID(i);
-      elementSizeList[i-numElementsWithZeroNeighbors] = numNeighbors;
-    }
-    else{
-      numElementsWithZeroNeighbors += 1;
-    }
-  }
-
-  // Create the map
-  Epetra_BlockMap variableElementSizeMap(numGlobalElements, numMyElements, &myGlobalElements[0], &elementSizeList[0], indexBase, map.Comm());
-
-  // Create the vector
-  epetraVector = Teuchos::rcp(new Epetra_Vector(variableElementSizeMap));
-
-  // Fill the epetraVector with the neighbor list
-
-}
-
-void PeridigmNS::ProximitySearch::GlobalProximitySearch(Epetra_Vector& x,
-                                                        double searchRadius,
-                                                        std::vector<int>& neighborGlobalIdList)
 {
   // Copy information from the Epetra_Vector into a QUICKGRID::Data object
   const Epetra_BlockMap& originalMap = x.Map();
@@ -338,90 +241,20 @@ void PeridigmNS::ProximitySearch::GlobalProximitySearch(Epetra_Vector& x,
                                  searchRadius,
                                  bondFilterPtr);
 
-  // Perform parallel bookkeeping to get the neighbor list that is currently distributed
-  // according to the decomposition of decomp into the decomposition of the original
-  // Epetra_Vector x.
+  dimension = 1;
+  Teuchos::RCP<Epetra_BlockMap> currentOwnedMap = Teuchos::rcp(new Epetra_BlockMap(Discretization::getOwnedMap(originalMap.Comm(), decomp, dimension)));
+  Teuchos::RCP<Epetra_BlockMap> currentOverlapMap = Teuchos::rcp(new Epetra_BlockMap(Discretization::getOverlapMap(originalMap.Comm(), decomp, dimension)));
+  Teuchos::RCP<const Epetra_BlockMap> targetOwnedMap = Teuchos::rcpFromRef(originalMap);
 
-  int sizeNeighborList = list.get_size_neighborhood_list();
-  int* neighborList = list.get_neighborhood().get();
+  RebalanceNeighborhoodList(currentOwnedMap,                   /* input  */
+                            currentOverlapMap,                 /* input  */
+                            list.get_size_neighborhood_list(), /* input  */
+                            list.get_neighborhood().get(),     /* input  */
+                            targetOwnedMap,                    /* input  */
+                            overlapMap,                        /* output */
+                            neighborListSize,                  /* output */
+                            neighborList);                     /* output (allocated within function) */
 
-  // // Copy the neighbor list (in the rebalanced decomposition) into an Epetra_Vector
-  // Epetra_BlockMap neighborListRebalancedDecomp(decomp.globalNumPoints,
-  //                                              decomp.numPoints,
-  //                                              decomp.myGlobalIDs,
-  //                                              elementSizeList,
-  //                                              0,
-  //                                              originalMap.Comm());
-
-  // Create an Epetra_Vector in the original configuration that can recieve the neighbor list
-
-  // Communicate the number of neighbors
-  Epetra_BlockMap rebalancedOneDimensionalMap(decomp.globalNumPoints, decomp.numPoints, decomp.myGlobalIDs.get(), 1, 0, originalMap.Comm());
-  Epetra_Vector numberOfNeighborsRebalancedDecomp(rebalancedOneDimensionalMap);
-  double* numberOfNeighborsRebalancedDecompPtr;
-  numberOfNeighborsRebalancedDecomp.ExtractView(&numberOfNeighborsRebalancedDecompPtr);
-  int neighborListIndex(0), numNeighbors(0);
-  for(int i=0 ; i<numberOfNeighborsRebalancedDecomp.MyLength() ; ++i){
-    numNeighbors = neighborList[neighborListIndex];
-    numberOfNeighborsRebalancedDecompPtr[i] = static_cast<double>(numNeighbors);
-    neighborListIndex += numNeighbors;
-  }
-  int* myGlobalElementsOriginalMap = originalMap.MyGlobalElements();
-  Epetra_BlockMap originalOneDimensionalMap(originalMap.NumGlobalElements(), originalMap.NumMyElements(), myGlobalElementsOriginalMap, 1, 0, originalMap.Comm());
-  Epetra_Vector numberOfNeighborsOriginalDecomp(originalOneDimensionalMap);
-  Epetra_Import oneDimensionalImporter(originalOneDimensionalMap, rebalancedOneDimensionalMap);
-  numberOfNeighborsOriginalDecomp.Import(numberOfNeighborsRebalancedDecomp, oneDimensionalImporter, Insert);
-
-  // Communicate the neighbor list
-  // The fact that Epetra_BlockMaps do not allow zero-length elements adds some complexity here...
-  // int numMyElementsUpperBound = rebalancedOneDimensionalMap->NumMyElements();
-  // int numGlobalElements = -1; 
-  // int numMyElements = 0;
-  // int* rebalancedOneDimensionalMapGlobalElements = rebalancedOneDimensionalMap->MyGlobalElements();
-  // int* myGlobalElements = new int[numMyElementsUpperBound];
-  // int* elementSizeList = new int[numMyElementsUpperBound];
-  // int numPointsWithZeroNeighbors = 0;
-  // for(int i=0 ; i<numMyElementsUpperBound ; ++i){
-  //   int numBonds = (int)( (*rebalancedNumberOfBonds)[i] );
-  //   if(numBonds > 0){
-  //     numMyElements++;
-  //     myGlobalElements[i-numPointsWithZeroNeighbors] = rebalancedOneDimensionalMapGlobalElements[i];
-  //     elementSizeList[i-numPointsWithZeroNeighbors] = numBonds;
-  //   }
-  //   else{
-  //     numPointsWithZeroNeighbors++;
-  //   }
-  // }
-  // int indexBase = 0;
-  // Teuchos::RCP<Epetra_BlockMap> rebalancedBondMap = 
-  //   Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, elementSizeList, indexBase, *peridigmComm));
-  // delete[] myGlobalElements;
-  // delete[] elementSizeList;
-
-
-
-  //   int globalID = oneDimensionalMap->GID(i);
-  //   int bondMapLocalID = bondMap->LID(globalID);
-  //   if(bondMapLocalID != -1)
-  //     (*numberOfBonds)[i] = (double)( bondMap->ElementSize(i) );
-  // }
-  // Teuchos::RCP<Epetra_Vector> rebalancedNumberOfBonds = Teuchos::rcp(new Epetra_Vector(*rebalancedOneDimensionalMap));
-  // rebalancedNumberOfBonds->Import(*numberOfBonds, *oneDimensionalMapToRebalancedOneDimensionalMapImporter, Insert);
-
-
-  // Create a list of neighbors for
-
-  // decomp.neighborhood=list.get_neighborhood();
-  // decomp.sizeNeighborhoodList=list.get_size_neighborhood_list();
-  // decomp.neighborhoodPtr=list.get_neighborhood_ptr();
-
-
-
-
-
-
-
-  // Check to make sure decomp cleans up memory when deleted
-
+  // CHECK TO MAKE SURE DECOMP CLEANS UP MEMORY WHEN DELETED
 }
 

@@ -58,21 +58,23 @@ namespace ProximitySearch {
 	void operator()(T* d) {}
   };
 
-  void RebalanceNeighborhoodList(Teuchos::RCP<const Epetra_BlockMap> currentOwnedMap,     /* input */
-                                 Teuchos::RCP<const Epetra_BlockMap> currentOverlapMap,   /* input */
-                                 int currentNeighborListSize,                             /* input */
-                                 const int* currentNeighborList,                          /* input */
-                                 Teuchos::RCP<const Epetra_BlockMap> targetOwnedMap,      /* input */
-                                 Teuchos::RCP<Epetra_BlockMap> targetOverlapMap,          /* ouput */
-                                 int targetNeighborListSize,                              /* ouput */
-                                 int* targetNeighborList);                                /* ouput (allocated within function) */
-
-  void NeighborListToEpetraVector(int neighborListSize, const int* neighborList, Epetra_BlockMap& map, Teuchos::RCP<Epetra_Vector>& epetraVector);
+  void RebalanceNeighborhoodList(Teuchos::RCP<const Epetra_BlockMap> currentOwnedMap,     /* input  */
+                                 Teuchos::RCP<const Epetra_BlockMap> currentOverlapMap,   /* input  */
+                                 int currentNeighborListSize,                             /* input  */
+                                 const int* currentNeighborList,                          /* input  */
+                                 Teuchos::RCP<const Epetra_BlockMap> targetOwnedMap,      /* input  */
+                                 Teuchos::RCP<Epetra_BlockMap> targetOverlapMap,          /* output */
+                                 int& targetNeighborListSize,                             /* output */
+                                 int* targetNeighborList);                                /* output (allocated within function) */
 
   // x is the mothership vector of positions
   // searchRadius defines the spherical search region about each point
   // neighborGlobalIdList is the list of global ids for each neighbor of each point, in the format (num_neighbors_0, n_0_1, n_0_2, ..., n_0_N, num_neighbors_1, n_1_0, n_1_1, ..., n_1_N, ..., num_neighbors_N, n_N_0, n_N_1, ..., n_N_N)
-  void GlobalProximitySearch(Epetra_Vector& x, double searchRadius, std::vector<int>& neighborGlobalIdList);
+  void GlobalProximitySearch(Epetra_Vector& x,                         /* input  */
+                             double searchRadius,                      /* input  */
+                             Teuchos::RCP<Epetra_BlockMap> overlapMap, /* output */
+                             int& neighborListSize,                    /* output */
+                             int* neighborList);                       /* output (allocated within function) */
 
 }
 }
