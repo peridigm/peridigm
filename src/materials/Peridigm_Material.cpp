@@ -264,7 +264,7 @@ void PeridigmNS::Material::computeApproximateDeformationGradient(const double dt
   int volumeFId = fieldManager.getFieldId("Volume");
   int modelCoordinatesFId = fieldManager.getFieldId("Model_Coordinates");
   int coordinatesFId = fieldManager.getFieldId("Coordinates");
-  int weightedVolumeFId = fieldManager.getFieldId("WeightedVolume");
+  int weightedVolumeFId = fieldManager.getFieldId("Weighted_Volume");
   int bondDamageFId = fieldManager.getFieldId("Bond_Damage");
   int deformationGradientXXFId = fieldManager.getFieldId("Deformation_Gradient_XX");
   int deformationGradientXYFId = fieldManager.getFieldId("Deformation_Gradient_XY");

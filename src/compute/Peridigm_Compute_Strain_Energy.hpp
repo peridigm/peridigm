@@ -1,4 +1,4 @@
-/*! \file Peridigm_Compute_Deformation_Gradient.hpp */
+/*! \file Peridigm_Compute_Strain_Energy.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -47,28 +47,28 @@
 
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Deformation_Gradient,Compute_Deformation_Gradient)
+ComputeClass(Strain_Energy,Compute_Strain_Energy)
 
 #else
 
-#ifndef PERIDIGM_COMPUTE_DEFORMATION_GRADIENT_HPP
-#define PERIDIGM_COMPUTE_DEFORMATION_GRADIENT_HPP
+#ifndef PERIDIGM_COMPUTE_STRAIN_ENERGY_HPP
+#define PERIDIGM_COMPUTE_STRAIN_ENERGY_HPP
 
 #include "Peridigm_Compute.hpp"
 
 namespace PeridigmNS {
 
-  //! Class for computing approximate deformation gradient tensor
-  class Compute_Deformation_Gradient : public PeridigmNS::Compute {
+  //! Class for computing strain energy
+  class Compute_Strain_Energy : public PeridigmNS::Compute {
 
   public:
 	
     //! Constructor.
-    Compute_Deformation_Gradient( Teuchos::RCP<const Teuchos::ParameterList> params,
-                                  Teuchos::RCP<const Epetra_Comm> epetraComm_ );
+    Compute_Strain_Energy( Teuchos::RCP<const Teuchos::ParameterList> params,
+                           Teuchos::RCP<const Epetra_Comm> epetraComm_ );
 
     //! Destructor.
-    ~Compute_Deformation_Gradient();
+    ~Compute_Strain_Energy();
 
     //! Returns a vector of field IDs corresponding to the variables associated with the compute class.
     virtual std::vector<int> FieldIds() const { return m_fieldIds; }
@@ -80,11 +80,9 @@ namespace PeridigmNS {
 
     // field ids for all relevant data
     std::vector<int> m_fieldIds;
-    int m_deformationGradientXXFId, m_deformationGradientXYFId, m_deformationGradientXZFId,
-        m_deformationGradientYXFId, m_deformationGradientYYFId, m_deformationGradientYZFId,
-        m_deformationGradientZXFId, m_deformationGradientZYFId, m_deformationGradientZZFId;
+    int m_strainEnergyFId;
   };
 }
 
-#endif // PERIDIGM_COMPUTE_DEFORMATION_GRADIENT_HPP
+#endif // PERIDIGM_COMPUTE_STRAIN_ENERGY_HPP
 #endif // COMPUTE_CLASS

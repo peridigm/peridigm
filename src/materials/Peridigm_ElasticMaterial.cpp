@@ -179,7 +179,7 @@ PeridigmNS::ElasticMaterial::computeStrainEnergy(const double dt,
   dataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
   dataManager.getData(m_dilatationFieldId, PeridigmField::STEP_NP1)->ExtractView(&dilatation);
   dataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_NP1)->ExtractView(&bondDamage);
-  dataManager.getData(strainEnergyFieldId, PeridigmField::STEP_NP1)->ExtractView(&strainEnergy);
+  dataManager.getData(strainEnergyFieldId, PeridigmField::STEP_NONE)->ExtractView(&strainEnergy);
 
   int iID, iNID, numNeighbors, nodeId, neighborId;
   double nodeInitialX[3], nodeCurrentX[3];
