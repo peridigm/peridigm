@@ -1,0 +1,6 @@
+@PACKAGE_INIT@
+set_and_check(Peridigm_INCLUDE_DIRS "@PACKAGE_INCLUDE_INSTALL_DIR@")
+set_and_check(Peridigm_LIBRARY_DIRS "@PACKAGE_LIB_INSTALL_DIR@")
+include(${Peridigm_LIBRARY_DIRS}/Peridigm/cmake/peridigm-targets.cmake)
+set(Peridigm_LIBRARIES ${Peridigm_LIBRARIES})
+check_required_components(Peridigm)

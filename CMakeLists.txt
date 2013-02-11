@@ -145,6 +145,30 @@ ELSE()
   SET(LCM_LIBRARY )
 ENDIF()
 
+# Optional Installation helpers
+# Note that some of this functionality depends on CMAKE > 2.8.8
+SET(INSTALL_PERIDIGM FALSE)
+IF(ENABLE_INSTALL) 
+  IF(${CMAKE_VERSION} VERSION_GREATER 2.8.8 OR ${CMAKE_VERSION} VERSION_EQUAL 2.8.8)
+    SET(INSTALL_PERIDIGM TRUE)
+    MESSAGE("")
+    MESSAGE("Installation files for Peridigm will be created")
+    MESSAGE("-- install location = ${CMAKE_INSTALL_PREFIX}")
+    MESSAGE("")
+  ELSE()
+    MESSAGE("")
+    MESSAGE("Installation has been requested, but cannot continue")
+    MESSAGE("-- Please upgrade CMAKE to version >= 2.8.8")
+    MESSAGE("")
+  ENDIF()
+ENDIF()
+
+IF(INSTALL_PERIDIGM)
+  set(INCLUDE_INSTALL_DIR include)
+  set(LIB_INSTALL_DIR lib)
+  include(CMakePackageConfigHelpers)
+ENDIF()
+
 # For some unit tests, we want to link only to specfic libraries
 set(Epetra_LIBRARY epetra)
 set(Zoltan_LIBRARY zoltan)
