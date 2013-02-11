@@ -1,4 +1,4 @@
-/*! \file Peridigm_Compute_Deformation_Gradient.hpp */
+/*! \file Peridigm_Compute_Strain_Energy.cpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,46 +45,43 @@
 // ************************************************************************
 //@HEADER
 
-#ifdef COMPUTE_CLASS
+#include <vector>
 
-ComputeClass(Deformation_Gradient,Compute_Deformation_Gradient)
+#include "Peridigm_Compute_Strain_Energy.hpp"
+#include "Peridigm_Field.hpp"
 
-#else
-
-#ifndef PERIDIGM_COMPUTE_DEFORMATION_GRADIENT_HPP
-#define PERIDIGM_COMPUTE_DEFORMATION_GRADIENT_HPP
-
-#include "Peridigm_Compute.hpp"
-
-namespace PeridigmNS {
-
-  //! Class for computing approximate deformation gradient tensor
-  class Compute_Deformation_Gradient : public PeridigmNS::Compute {
-
-  public:
-	
-    //! Constructor.
-    Compute_Deformation_Gradient( Teuchos::RCP<const Teuchos::ParameterList> params,
-                                  Teuchos::RCP<const Epetra_Comm> epetraComm_ );
-
-    //! Destructor.
-    ~Compute_Deformation_Gradient();
-
-    //! Returns a vector of field IDs corresponding to the variables associated with the compute class.
-    virtual std::vector<int> FieldIds() const { return m_fieldIds; }
-
-    //! Perform computation
-    int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const;
-
-  private:
-
-    // field ids for all relevant data
-    std::vector<int> m_fieldIds;
-    int m_deformationGradientXXFId, m_deformationGradientXYFId, m_deformationGradientXZFId,
-        m_deformationGradientYXFId, m_deformationGradientYYFId, m_deformationGradientYZFId,
-        m_deformationGradientZXFId, m_deformationGradientZYFId, m_deformationGradientZZFId;
-  };
+//! Standard constructor.
+PeridigmNS::Compute_Strain_Energy::Compute_Strain_Energy(Teuchos::RCP<const Teuchos::ParameterList> params,
+                                                         Teuchos::RCP<const Epetra_Comm> epetraComm_)
+  : Compute(params, epetraComm_), m_strainEnergyFId(-1)
+{
+  FieldManager& fieldManager = FieldManager::self();
+  m_strainEnergyFId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Strain_Energy");
+  m_fieldIds.push_back(m_strainEnergyFId);
 }
 
-#endif // PERIDIGM_COMPUTE_DEFORMATION_GRADIENT_HPP
-#endif // COMPUTE_CLASS
+//! Destructor.
+PeridigmNS::Compute_Strain_Energy::~Compute_Strain_Energy(){}
+
+//! Compute the strain energy
+int PeridigmNS::Compute_Strain_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) const {
+
+  int retval = 0;
+
+  Teuchos::RCP<const PeridigmNS::Material> materialModel;
+  Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData;
+  Teuchos::RCP<PeridigmNS::DataManager> dataManager;
+  std::vector<PeridigmNS::Block>::iterator blockIt;
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    materialModel = blockIt->getMaterialModel();
+    neighborhoodData = blockIt->getNeighborhoodData();
+    dataManager = blockIt->getDataManager();
+    int numOwnedPoints = neighborhoodData->NumOwnedPoints();
+    int* const ownedIDs = neighborhoodData->OwnedIDs();
+    int* const neighborhoodList = neighborhoodData->NeighborhoodList();
+    materialModel->computeStrainEnergy(0.0, numOwnedPoints, ownedIDs, neighborhoodList, *dataManager);
+  }
+
+  return(retval);
+}
+
