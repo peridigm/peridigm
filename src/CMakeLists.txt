@@ -2,6 +2,40 @@
 # Main executable for Peridigm
 #
 
+# Glob header files in subdirectories
+file (GLOB computeHEADERS 
+  "${COMPUTE_DIR}/*.hpp"
+)
+file (GLOB contactHEADERS 
+  "${CONTACT_DIR}/*.hpp"
+)
+file (GLOB coreHEADERS 
+  "${CORE_DIR}/*.hpp"
+)
+file (GLOB discretizationHEADERS 
+  "${DISCRETIZATION_DIR}/*.hpp"
+)
+file (GLOB damageHEADERS 
+  "${DAMAGE_DIR}/*.hpp"
+)
+file (GLOB ioHEADERS 
+  "${IO_DIR}/*.hpp"
+)
+file (GLOB materialsHEADERS 
+  "${MATERIALS_DIR}/*.hpp"
+)
+
+set(Peridigm_HEADERS
+    ${COMPUTE_DIR}/compute_includes.hpp
+    ${computeHEADERS}
+    ${contactHEADERS}
+    ${coreHEADERS}
+    ${discretizationHEADERS}
+    ${damageHEADERS}
+    ${ioHEADERS}
+    ${materialsHEADERS}
+)
+
 # Glob source files in subdirectories
 file (GLOB computeSOURCES 
   "${COMPUTE_DIR}/*.cpp"
@@ -77,3 +111,21 @@ add_subdirectory (evaluators/)
 add_subdirectory (io/)
 add_subdirectory (materials/)
 add_subdirectory (muParser/)
+
+IF (INSTALL_PERIDIGM)
+  configure_package_config_file(PeridigmConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/PeridigmConfig.cmake
+    INSTALL_DESTINATION ${LIB_INSTALL_DIR}/Peridigm/cmake
+    PATH_VARS INCLUDE_INSTALL_DIR LIB_INSTALL_DIR)
+  install(FILES ${Peridigm_HEADERS}
+    DESTINATION ${INCLUDE_INSTALL_DIR})
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/PeridigmConfig.cmake
+    DESTINATION ${LIB_INSTALL_DIR}/Peridigm/cmake )
+  install(TARGETS PeridigmLib EXPORT peridigm-export
+    LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+    ARCHIVE DESTINATION ${LIB_INSTALL_DIR}) 
+  FILE(WRITE "${CMAKE_BINARY_DIR}/peridigm-targets.cmake"
+    "set(Peridigm_LIBRARIES ${Peridigm_LIBRARY})")
+  FILE(INSTALL "${CMAKE_BINARY_DIR}/peridigm-targets.cmake"
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/${LIB_INSTALL_DIR}/Peridigm/cmake)
+ENDIF ()
