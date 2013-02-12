@@ -405,6 +405,7 @@ void computeShearCorrectionFactor
 		double *shearCorrectionFactorOwned
 ){
 	double gamma=1.0e-6;
+	// currently un-used but may be helpful for guarding against division by very small numbers or 0.0
 	double reference = 4.0 * M_PI * gamma * gamma * pow(horizon,5) / 75.0;
 	const int *neighPtr = localNeighborList;
 	const double *xOwned = xOverlap;
@@ -436,14 +437,8 @@ void computeShearCorrectionFactor
 		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
 		if(scf>max_scf) max_scf = scf;
 
-		// Guard against division by zero
-		double tolerance(1.0e-15);
-		if(max_scf/reference < tolerance)
-			max_scf=1.0;
-		else
-			max_scf = reference/max_scf;
-
-		*scaleFactor = max_scf;
+		// \todo Guard against division by zero; TODO
+		*scaleFactor = 1.0/max_scf;
 		neighPtr+=(numNeigh+1);
 	}
 }

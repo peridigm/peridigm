@@ -268,6 +268,13 @@ double runPureShear(Teuchos::ParameterList& paramList, std::string output_file_n
 	MATERIAL_EVALUATION::computeWeightedVolume(pdGridData.myX.get(),pdGridData.cellVolume.get(),mPtr.get(),numOwnedPoints,pdGridData.neighborhood.get(),horizon);
 
 	/*
+	 * Shear Correction Factor, aka 'dsf'
+	 * Initialize and use value=1.0 on all points
+	 */
+	UTILITIES::Array<double> dsfPtr(numOwnedPoints);
+	dsfPtr.set(1.0);
+
+	/*
 	 * Dilatation: intialize to zero
 	 */
 	TemporalField<double> dilatationTemporalField(DILATATION,numOwnedPoints);
@@ -291,6 +298,7 @@ double runPureShear(Teuchos::ParameterList& paramList, std::string output_file_n
 	double *xOverlapPtr = pdGridData.myX.get();
 
 	double *mOwned = mPtr.get();
+	double *dsfOwned = dsfPtr.get();
 	double *bondDamage = bondDamagePtr.get();
 	double *volumeOverlapPtr = pdGridData.cellVolume.get();
 	int *localNeighborList = pdGridData.neighborhood.get();
@@ -322,6 +330,7 @@ double runPureShear(Teuchos::ParameterList& paramList, std::string output_file_n
 			volumeOverlapPtr,
 			dilatationTemporalField.getField(Field_ENUM::STEP_N).get(),
 			bondDamage,
+			dsfOwned,
 			fInternalOverlapPtr,
 			localNeighborList,
 			numOwnedPoints,

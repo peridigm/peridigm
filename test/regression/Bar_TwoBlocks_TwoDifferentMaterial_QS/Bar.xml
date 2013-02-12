@@ -10,8 +10,10 @@
 	<ParameterList name="LeftMaterial">
 	  <Parameter name="Material Model" type="string" value="Elastic"/>
 	  <Parameter name="Density" type="double" value="8.0e-9"/>        <!-- tonne/mm^3 -->
+	  <Parameter name="Apply Shear Correction Factor" type="bool" value="false"/>
 	  <Parameter name="Bulk Modulus" type="double" value="1.515e5"/>  <!-- MPa -->
 	  <Parameter name="Shear Modulus" type="double" value="7.813e4"/> <!-- MPa -->
+	  <Parameter name="Apply Shear Correction Factor" type="bool" value="false"/>
 	</ParameterList>
 	<ParameterList name="RightMaterial">
 	  <Parameter name="Material Model" type="string" value="Elastic Plastic"/>
