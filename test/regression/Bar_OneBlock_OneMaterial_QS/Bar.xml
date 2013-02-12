@@ -10,6 +10,7 @@
 
   <ParameterList name="Materials">
 	<ParameterList name="My Elastic Material">
+	  <Parameter name="Apply Shear Correction Factor" type="bool" value="false"/>
 	  <Parameter name="Material Model" type="string" value="Elastic"/>
 	  <Parameter name="Density" type="double" value="8.0e-9"/>        <!-- tonne/mm^3 -->
 	  <Parameter name="Bulk Modulus" type="double" value="1.515e5"/>  <!-- MPa -->
