@@ -194,7 +194,7 @@ PeridigmNS::ElasticMaterial::computeStrainEnergy(const double dt,
 	nodeCurrentX[2] = y[nodeId*3+2];
     nodeDilatation = dilatation[nodeId];
     temp = 0.0;
-    dsf=scf[iID];
+    dsf=scf[nodeId];
 
     numNeighbors = neighborhoodList[neighborhoodListIndex++];
     for(iNID=0 ; iNID<numNeighbors ; ++iNID){
