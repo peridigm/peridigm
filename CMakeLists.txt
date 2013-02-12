@@ -142,7 +142,7 @@ IF(USE_LCM)
 ELSE()
   MESSAGE("-- LCM is NOT enabled.\n")
   SET(PERIDIGM_LCM FALSE)
-  SET(LCM_LIBRARY )
+  SET(LCM_LIBRARY)
 ENDIF()
 
 # Optional Installation helpers
