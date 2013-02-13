@@ -75,6 +75,7 @@
 	  <Parameter name="Proc_Num" type="bool" value="true"/>
 	  <Parameter name="Dilatation" type="bool" value="true"/>
 	  <Parameter name="Weighted_Volume" type="bool" value="true"/>
+	  <Parameter name="Strain_Energy" type="bool" value="true"/>
 	</ParameterList>
   </ParameterList>
 
