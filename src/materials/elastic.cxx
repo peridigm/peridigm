@@ -95,6 +95,8 @@ void computeInternalForceLinearElastic
 		const ScalarT *Y = yOwned;
 		alpha = 15.0*MU/(*m);
 //		alpha = MU*(*dsf);
+//		alpha = (*dsf);
+//      std::cout << "CHECK DSF: " << 15.0*MU/(*m) << "  " << (*dsf) << std::endl;
 		double selfCellVolume = v[p];
 		for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++){
 			int localId = *neighPtr;

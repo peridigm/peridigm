@@ -167,7 +167,7 @@ PeridigmNS::ElasticMaterial::computeStrainEnergy(const double dt,
   // Placeholder for influence function
   double omega = 1.0;
 
-  double *x, *y, *cellVolume, *weightedVolume, *dilatation, *strainEnergy, *bondDamage, *scf;
+  double *x, *y, *cellVolume, *weightedVolume, *dilatation, *strainEnergy, *bondDamage, *surfaceCorrectionFactor;
   dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
   dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&y);
   dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&cellVolume);
@@ -175,14 +175,14 @@ PeridigmNS::ElasticMaterial::computeStrainEnergy(const double dt,
   dataManager.getData(m_dilatationFieldId, PeridigmField::STEP_NP1)->ExtractView(&dilatation);
   dataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_NP1)->ExtractView(&bondDamage);
   dataManager.getData(strainEnergyFieldId, PeridigmField::STEP_NONE)->ExtractView(&strainEnergy);
-  dataManager.getData(m_surfaceCorrectionFactorFieldId, PeridigmField::STEP_NONE)->ExtractView(&scf);
+  dataManager.getData(m_surfaceCorrectionFactorFieldId, PeridigmField::STEP_NONE)->ExtractView(&surfaceCorrectionFactor);
 
   int iID, iNID, numNeighbors, nodeId, neighborId;
   double nodeInitialX[3], nodeCurrentX[3];
-  double initialDistance, currentDistance, deviatoricExtension, neighborBondDamage, nodeDilatation, temp;
+  double initialDistance, currentDistance, deviatoricExtension, neighborBondDamage;
+  double nodeDilatation, alpha, temp;
 
   int neighborhoodListIndex(0), bondIndex(0);
-  double dsf;
   for(iID=0 ; iID<numOwnedPoints ; ++iID){
 
 	nodeId = ownedIDs[iID];
@@ -193,8 +193,10 @@ PeridigmNS::ElasticMaterial::computeStrainEnergy(const double dt,
 	nodeCurrentX[1] = y[nodeId*3+1];
 	nodeCurrentX[2] = y[nodeId*3+2];
     nodeDilatation = dilatation[nodeId];
+//    alpha = 15.0*m_shearModulus/weightedVolume[nodeId];
+    alpha = surfaceCorrectionFactor[nodeId];
+
     temp = 0.0;
-    dsf=scf[nodeId];
 
     numNeighbors = neighborhoodList[neighborhoodListIndex++];
     for(iNID=0 ; iNID<numNeighbors ; ++iNID){
@@ -209,7 +211,7 @@ PeridigmNS::ElasticMaterial::computeStrainEnergy(const double dt,
       deviatoricExtension = (currentDistance - initialDistance) - nodeDilatation*initialDistance/3.0;
       temp += (1.0-neighborBondDamage)*omega*deviatoricExtension*deviatoricExtension*cellVolume[neighborId];
     }
-    strainEnergy[nodeId] = cellVolume[nodeId]*( 0.5*m_bulkModulus*nodeDilatation*nodeDilatation + 0.5*(15.0*m_shearModulus/weightedVolume[nodeId])*temp);
+    strainEnergy[nodeId] = cellVolume[nodeId]*(0.5*m_bulkModulus*nodeDilatation*nodeDilatation + 0.5*alpha*temp);
   }
 }
 
