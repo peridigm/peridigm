@@ -193,8 +193,8 @@ PeridigmNS::ElasticMaterial::computeStrainEnergy(const double dt,
 	nodeCurrentX[1] = y[nodeId*3+1];
 	nodeCurrentX[2] = y[nodeId*3+2];
     nodeDilatation = dilatation[nodeId];
-//    alpha = 15.0*m_shearModulus/weightedVolume[nodeId];
-    alpha = surfaceCorrectionFactor[nodeId];
+    alpha = 15.0*m_shearModulus/weightedVolume[nodeId];
+//    alpha = surfaceCorrectionFactor[nodeId];
 
     temp = 0.0;
 
