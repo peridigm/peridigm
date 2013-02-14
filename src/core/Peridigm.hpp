@@ -365,6 +365,9 @@ namespace PeridigmNS {
     //! Global vector for acceleration
     Teuchos::RCP<Epetra_Vector> a;
 
+    //! Global vector for temperature change
+    Teuchos::RCP<Epetra_Vector> deltaTemperature;
+
     //! Global vector for force
     Teuchos::RCP<Epetra_Vector> force;
 
@@ -419,6 +422,7 @@ namespace PeridigmNS {
     int displacementFieldId;
     int velocityFieldId;
     int accelerationFieldId;
+    int deltaTemperatureFieldId;
     int forceDensityFieldId;
     int contactForceDensityFieldId;
     int partialVolumeFieldId;

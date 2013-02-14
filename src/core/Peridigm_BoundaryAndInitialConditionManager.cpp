@@ -53,7 +53,7 @@ using namespace std;
 
 PeridigmNS::BoundaryAndInitialConditionManager::BoundaryAndInitialConditionManager(const Teuchos::ParameterList& boundaryAndInitialConditionParams)
   : params(boundaryAndInitialConditionParams),
-    muParserX(0.0), muParserY(0.0), muParserZ(0.0), muParserT(0.0)
+    muParserX(0.0), muParserY(0.0), muParserZ(0.0), muParserT(0.0), m_hasThermal(false)
 {
   // Set up muParser
   try {
@@ -65,6 +65,10 @@ PeridigmNS::BoundaryAndInitialConditionManager::BoundaryAndInitialConditionManag
   } 
   catch (mu::Parser::exception_type &e)
     TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+
+  // Set flag if there is thermal information
+  if(params.isSublist("Temperature"))
+    m_hasThermal = true;
 }
 
 void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Discretization> discretization)
@@ -228,6 +232,48 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialVelocities(Teuc
         }
       }
     }
+  }
+}
+
+void PeridigmNS::BoundaryAndInitialConditionManager::applyTemperatureChange(double timeCurrent,
+                                                                            Teuchos::RCP<const Epetra_Vector> x,
+                                                                            Teuchos::RCP<Epetra_Vector> deltaT)
+{
+  if(!m_hasThermal)
+    return;
+
+  Teuchos::ParameterList& thermalParams = params.sublist("Temperature", true);
+  string function = thermalParams.get<string>("Value");
+
+  try{
+    muParser.SetExpr(function);
+  }
+  catch (mu::Parser::exception_type &e)
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+
+  double initialTemperature, currentTemperature;
+  for(int i=0 ; i<deltaT->MyLength() ; ++i){
+    muParserX = (*x)[i*3];
+    muParserY = (*x)[i*3 + 1];
+    muParserZ = (*x)[i*3 + 2];
+
+    // Find temperature at time zero
+    muParserT = 0.0;
+    try {
+      initialTemperature = muParser.Eval();
+    }
+    catch (mu::Parser::exception_type &e)
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+
+    // Find temperature at current time
+    muParserT = timeCurrent;
+    try {
+      currentTemperature = muParser.Eval();
+    }
+    catch (mu::Parser::exception_type &e)
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+
+    (*deltaT)[i] = currentTemperature - initialTemperature;
   }
 }
 

@@ -123,6 +123,11 @@ namespace PeridigmNS {
                                       Teuchos::RCP<const Epetra_Vector> x,
                                       Teuchos::RCP<Epetra_Vector> vec);
 
+    /** \brief Determines temperature change at every node based on a user-defined temperature field. **/
+    void applyTemperatureChange(double timeCurrent,
+                                Teuchos::RCP<const Epetra_Vector> x,
+                                Teuchos::RCP<Epetra_Vector> deltaT);
+
     /** \brief Set displacement in rows corresponding to kinematic boundary conditions.
      ** Intended use is setting nonzero displacements at time zero. **/
     void applyKinematicBC_SetDisplacement(double timeCurrent,
@@ -166,6 +171,9 @@ namespace PeridigmNS {
     double muParserZ;
     double muParserT;
     //@}
+
+    //! Flag indicating presence of thermal field.
+    bool m_hasThermal;
 
     //! Set either a displacement or a displacement increment.
     void setVectorValues(double timeCurrent,
