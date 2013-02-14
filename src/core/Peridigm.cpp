@@ -109,6 +109,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
     displacementFieldId(-1),
     velocityFieldId(-1),
     accelerationFieldId(-1),
+    deltaTemperatureFieldId(-1),
     forceDensityFieldId(-1),
     contactForceDensityFieldId(-1),
     partialVolumeFieldId(-1)
@@ -172,6 +173,7 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   displacementFieldId                = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Displacement");
   velocityFieldId                    = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Velocity");
   accelerationFieldId                = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Acceleration");
+  deltaTemperatureFieldId            = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Temperature_Change");
   forceDensityFieldId                = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force_Density");
   contactForceDensityFieldId         = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Contact_Force_Density");
   if(analysisHasPartialVolumes)
@@ -379,10 +381,12 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization>
 
   // Create mothership vectors
 
-  oneDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*oneDimensionalMap, 3));
-  blockIDs = Teuchos::rcp((*oneDimensionalMothership)(0), false);        // block ID
-  volume = Teuchos::rcp((*oneDimensionalMothership)(1), false);          // cell volume
-  density = Teuchos::rcp((*oneDimensionalMothership)(2), false);         // density
+  // \todo Do not allocate space for deltaTemperature if not needed.
+  oneDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*oneDimensionalMap, 4));
+  blockIDs = Teuchos::rcp((*oneDimensionalMothership)(0), false);         // block ID
+  volume = Teuchos::rcp((*oneDimensionalMothership)(1), false);           // cell volume
+  density = Teuchos::rcp((*oneDimensionalMothership)(2), false);          // density
+  deltaTemperature = Teuchos::rcp((*oneDimensionalMothership)(3), false); // change in temperature
 
   // \todo Do not allocate space for the contact force nor deltaU if not needed.
   threeDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalMap, 9));
@@ -776,6 +780,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
     blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
   }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -860,6 +865,9 @@ void PeridigmNS::Peridigm::executeExplicit() {
     boundaryAndInitialConditionManager->applyKinematicBC_SetVelocity(timeCurrent, timePrevious, x, v);
     PeridigmNS::Timer::self().stopTimer("Apply kinematic B.C.");
 
+    // Update the temperature field
+    boundaryAndInitialConditionManager->applyTemperatureChange(timeCurrent, x, deltaTemperature);
+
     // Y^{n+1} = X_{o} + U^{n} + (dt)*V^{n+1/2}
     // \todo Replace with blas call
     for(int i=0 ; i<y->MyLength() ; ++i)
@@ -877,6 +885,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
       blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
       blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
       blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
     }
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -992,6 +1001,7 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
     blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
   } 
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -1256,12 +1266,13 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
       (*initialGuess)[i] = (*v)[i]*timeIncrement;
     boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(initialGuess);
 
-    // Apply the displacement increment
+    // Apply the displacement increment and update the temperature field
     // Note that the soln vector was created to be compatible with the tangent matrix, and hence needed to be
     // constructed with an Epetra_Map.  The mothership vectors were constructed with an Epetra_BlockMap, and it's
     // this map that the boundary and intial condition manager expects.  So, make sure that the boundary and initial
     // condition manager gets the right type of vector.
     boundaryAndInitialConditionManager->applyKinematicBC_SetDisplacementIncrement(timeCurrent, timePrevious, x, deltaU);
+    boundaryAndInitialConditionManager->applyTemperatureChange(timeCurrent, x, deltaTemperature);
     if(step > 1){
       // Perform line search on this guess
       for(int i=0 ; i<y->MyLength() ; ++i)
@@ -1523,6 +1534,9 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
     // Update nodal positions for nodes with kinematic B.C.
     deltaU->PutScalar(0.0);
     boundaryAndInitialConditionManager->applyKinematicBC_SetDisplacementIncrement(timeCurrent, timePrevious, x, deltaU);
+
+    // Update the temperature field
+    boundaryAndInitialConditionManager->applyTemperatureChange(timeCurrent, x, deltaTemperature);
 
     // Set the current position
     // \todo We probably want to rework this so that the material models get valid x, u, and y values.
@@ -2068,6 +2082,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
       blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
       blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
       blockIt->importData(*a, accelerationFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
     }
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -2143,6 +2158,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
         blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
         blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
         blockIt->importData(*a, accelerationFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
       }
       PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -2291,6 +2307,7 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
     blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
   }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -2397,6 +2414,7 @@ void PeridigmNS::Peridigm::synchDataManagers() {
     blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(*force, forceDensityFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(*contactForce, contactForceDensityFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
   }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 }
@@ -2479,9 +2497,10 @@ void PeridigmNS::Peridigm::rebalance() {
   Teuchos::RCP<Epetra_MultiVector> rebalancedOneDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*rebalancedOneDimensionalMap, oneDimensionalMothership->NumVectors()));
   rebalancedOneDimensionalMothership->Import(*oneDimensionalMothership, *oneDimensionalMapImporter, Insert);
   oneDimensionalMothership = rebalancedOneDimensionalMothership;
-  blockIDs = Teuchos::rcp((*oneDimensionalMothership)(0), false);        // block ID
-  volume = Teuchos::rcp((*oneDimensionalMothership)(1), false);          // cell volume
-  density = Teuchos::rcp((*oneDimensionalMothership)(2), false);         // density
+  blockIDs = Teuchos::rcp((*oneDimensionalMothership)(0), false);         // block ID
+  volume = Teuchos::rcp((*oneDimensionalMothership)(1), false);           // cell volume
+  density = Teuchos::rcp((*oneDimensionalMothership)(2), false);          // density
+  deltaTemperature = Teuchos::rcp((*oneDimensionalMothership)(3), false); // change in temperature
 
   Teuchos::RCP<Epetra_MultiVector> rebalancedThreeDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*rebalancedThreeDimensionalMap, threeDimensionalMothership->NumVectors()));
   rebalancedThreeDimensionalMothership->Import(*threeDimensionalMothership, *threeDimensionalMapImporter, Insert);
