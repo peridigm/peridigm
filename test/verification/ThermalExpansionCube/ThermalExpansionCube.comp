@@ -1,0 +1,13 @@
+DEFAULT TOLERANCE absolute 1.0E-9
+COORDINATES absolute 1.0E-12
+TIME STEPS absolute 1.0E-14
+NODAL VARIABLES absolute 1.0E-12
+	Temperature_Change   absolute 1.0E-9
+	DisplacementX        absolute 1.0E-9
+	DisplacementY        absolute 1.0E-9
+	DisplacementZ        absolute 1.0E-9
+	ForceX               absolute 1.0E-3
+	ForceY               absolute 1.0E-3
+	ForceZ               absolute 1.0E-3
+ELEMENT VARIABLES absolute 1.E-12
+	Weighted_Volume absolute 1.0E-12
