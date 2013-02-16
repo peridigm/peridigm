@@ -405,7 +405,7 @@ void computeShearCorrectionFactor
 		double *shearCorrectionFactorOwned
 ){
 	double gamma=1.0e-6;
-	// currently un-used but may be helpful for guarding against division by very small numbers or 0.0
+	// currently un-used but may be helpful in further studies
 	double reference = 4.0 * M_PI * gamma * gamma * pow(horizon,5) / 75.0;
 	const int *neighPtr = localNeighborList;
 	const double *xOwned = xOverlap;
@@ -428,17 +428,15 @@ void computeShearCorrectionFactor
 		mode = ZX;
         Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
 		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
-		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
-		if(scf>max_scf) max_scf = scf;
+		scf+=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
 
 		mode = YZ;
         Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
 		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
-		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
-		if(scf>max_scf) max_scf = scf;
+		scf+=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
+		scf/=3.0;
 
-		// \todo Guard against division by zero; TODO
-		*scaleFactor = 1.0/max_scf;
+		*scaleFactor = gamma * gamma * m / scf / 15.0;
 		neighPtr+=(numNeigh+1);
 	}
 }
