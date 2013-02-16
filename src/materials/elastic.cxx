@@ -93,10 +93,8 @@ void computeInternalForceLinearElastic
 		int numNeigh = *neighPtr; neighPtr++;
 		const double *X = xOwned;
 		const ScalarT *Y = yOwned;
+		// alpha = (*dsf)*15.0*MU/(*m);
 		alpha = 15.0*MU/(*m);
-//		alpha = MU*(*dsf);
-//		alpha = (*dsf);
-//      std::cout << "CHECK DSF: " << 15.0*MU/(*m) << "  " << (*dsf) << std::endl;
 		double selfCellVolume = v[p];
 		for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++){
 			int localId = *neighPtr;
@@ -113,6 +111,7 @@ void computeInternalForceLinearElastic
 			dY = sqrt(Y_dx*Y_dx+Y_dy*Y_dy+Y_dz*Y_dz);
                         double omega = scalarInfluenceFunction(zeta,horizon);
                         ScalarT c1 = omega*(*theta)*(9.0*K-15.0*MU)/(3.0*(*m));
+                        // ScalarT c1 = omega*(*theta)*(3.0*K/(*m)-alpha/3.0);
 			t = (1.0-*bondDamage)*(c1 * zeta + (1.0-*bondDamage) * omega * alpha * (dY - zeta));
 			fx = t * Y_dx / dY;
 			fy = t * Y_dy / dY;
