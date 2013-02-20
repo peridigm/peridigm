@@ -286,6 +286,10 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
     (*exodusMeshNodePositions)[3*localID+2] = coordinates[2];
   }
 
+  // warning flags
+  bool tenNodedTetWarningGiven = false;
+  bool twentyNodedHexWarningGiven = false;
+
   // loop over the elements and fill the decomp data structure
   for(unsigned int iElem=0 ; iElem<elements.size() ; ++iElem){
     stk::mesh::PairIterRelation nodeRelations = elements[iElem]->node_relations();
@@ -313,12 +317,33 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
       TEUCHOS_TEST_FOR_EXCEPT_MSG(exodusVolume == NULL, "**** Volume attribute not found for sphere element.\n");
       volumes[iElem] = exodusVolume[0];
     }
-    else if(nodeRelations.size() == 4)
+    else if(nodeRelations.size() == 4){
+      // 4-noded tet
       volumes[iElem] = tetVolume(nodeCoordinates);
-    else if(nodeRelations.size() == 8)
+    }
+    else if(nodeRelations.size() == 8){
+      // 8-noded hex
       volumes[iElem] = hexVolume(nodeCoordinates);
-    else
+    }
+    else if(nodeRelations.size() == 10){
+      // 10-noded tet, treat as 4-noded tet
+      if(!tenNodedTetWarningGiven){
+        cout << "**** Warning on processor " << myPID << ", side nodes being discarded for 10-node tetrahedron element, will be treated as 4-node tetrahedron element." << endl;
+        tenNodedTetWarningGiven = true;
+      }
+      volumes[iElem] = hexVolume(nodeCoordinates);
+    }
+    else if(nodeRelations.size() == 20){
+      // 20-noded hex, treat as 8-noded tet
+      if(!twentyNodedHexWarningGiven){
+        cout << "**** Warning on processor " << myPID << ", side nodes being discarded for 20-node hexahedron element, will be treated as 8-node hexahedron element." << endl;
+        twentyNodedHexWarningGiven = true;
+      }
+      volumes[iElem] = hexVolume(nodeCoordinates);
+    }
+    else{
       TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeRelations.size() != 1 && nodeRelations.size() != 8, "**** Invalid element topology.\n");
+    }
     globalIds[iElem] = elements[iElem]->identifier() - 1; 
   }
 
