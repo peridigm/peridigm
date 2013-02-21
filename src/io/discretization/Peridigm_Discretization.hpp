@@ -49,10 +49,12 @@
 #define PERIDIGM_DISCRETIZATION_HPP
 
 #include <Teuchos_RCP.hpp>
+#include <Teuchos_ParameterList.hpp>
 #include <Epetra_Map.h>
 #include <Epetra_Vector.h>
 #include "Peridigm_NeighborhoodData.hpp"
 #include "mesh_input/quick_grid/QuickGrid.h"
+#include "pdneigh/BondFilter.h"
 
 namespace PeridigmNS {
 
@@ -134,6 +136,8 @@ namespace PeridigmNS {
     //! Get the overlap map.
     static Epetra_BlockMap getOverlapMap(const Epetra_Comm& comm, const QUICKGRID::Data& gridData, int ndf);
 
+    void createBondFilters(const Teuchos::RCP<Teuchos::ParameterList>& params);
+
   protected:
 
     //! Get the overlap map.
@@ -154,6 +158,8 @@ namespace PeridigmNS {
 
     //! Map containing node sets (node set name and list of locally-owned node IDs for each node set).
     Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets;
+
+    std::vector< std::tr1::shared_ptr<PdBondFilter::BondFilter> > bondFilters;
 
   private:
 

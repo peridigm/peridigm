@@ -143,3 +143,39 @@ Epetra_BlockMap PeridigmNS::Discretization::getOverlapMap(const Epetra_Comm& com
 	int numOwned = gridData.numPoints;
 	return getOverlap(ndf,numShared,shared,numOwned,owned,comm);
 }
+
+void PeridigmNS::Discretization::createBondFilters(const Teuchos::RCP<Teuchos::ParameterList>& params){
+  if(params->isSublist("Bond Filters")){
+    Teuchos::RCP<Teuchos::ParameterList> bondFilterParameters = sublist(params, "Bond Filters");
+    for (Teuchos::ParameterList::ConstIterator it = bondFilterParameters->begin(); it != bondFilterParameters->end(); ++it) {
+      string parameterListName = it->first;
+      Teuchos::ParameterList params = bondFilterParameters->sublist(parameterListName);
+      string type = params.get<string>("Type");
+      if(type == "Rectangular_Plane"){
+        double normal[3], lowerLeftCorner[3], bottomUnitVector[3], bottomLength, sideLength;
+        normal[0] = params.get<double>("Normal_X");
+        normal[1] = params.get<double>("Normal_Y");
+        normal[2] = params.get<double>("Normal_Z");
+        lowerLeftCorner[0] = params.get<double>("Lower_Left_Corner_X");
+        lowerLeftCorner[1] = params.get<double>("Lower_Left_Corner_Y");
+        lowerLeftCorner[2] = params.get<double>("Lower_Left_Corner_Z");
+        bottomUnitVector[0] = params.get<double>("Bottom_Unit_Vector_X");
+        bottomUnitVector[1] = params.get<double>("Bottom_Unit_Vector_Y");
+        bottomUnitVector[2] = params.get<double>("Bottom_Unit_Vector_Z");
+        bottomLength = params.get<double>("Bottom_Length");
+        sideLength = params.get<double>("Side_Length");
+        PdBondFilter::FinitePlane finitePlane(normal, lowerLeftCorner, bottomUnitVector, bottomLength, sideLength);
+        std::tr1::shared_ptr<PdBondFilter::BondFilter> bondFilter(new PdBondFilter::FinitePlaneFilter(finitePlane));
+        bondFilters.push_back(bondFilter);        
+      }
+      else{
+        string msg = "\n**** Error, invalid bond filter type:  " + type;
+        msg += "\n**** Allowable types are:  Rectangular_Plane\n";
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
+      }
+    }
+  }
+}
+
+
+

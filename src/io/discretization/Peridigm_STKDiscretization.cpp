@@ -47,7 +47,6 @@
 
 #include "Peridigm_STKDiscretization.hpp"
 #include "pdneigh/NeighborhoodList.h"
-#include "pdneigh/BondFilter.h"
 #include "pdneigh/PdZoltan.h"
 
 #include <Epetra_Map.h>
@@ -84,6 +83,9 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   if(params->isParameter("Omit Bonds Between Blocks"))
     bondFilterCommand = params->get<string>("Omit Bonds Between Blocks");
   string meshFileName = params->get<string>("Input Mesh File");
+
+  // Set up bond filters
+  createBondFilters(params);
 
   QUICKGRID::Data decomp = getDecomp(meshFileName, searchHorizon);
 
@@ -485,12 +487,16 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
   decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
   
   // execute neighbor search and update the decomp to include resulting ghosts
-  std::tr1::shared_ptr<PdBondFilter::BondFilter> bondFilterPtr(new PdBondFilter::BondFilterDefault(false));
   std::tr1::shared_ptr<const Epetra_Comm> commSp(comm.getRawPtr(),NonDeleter<const Epetra_Comm>());
-  PDNEIGH::NeighborhoodList list(commSp,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon,bondFilterPtr);
-  decomp.neighborhood=list.get_neighborhood();
-  decomp.sizeNeighborhoodList=list.get_size_neighborhood_list();
-  decomp.neighborhoodPtr=list.get_neighborhood_ptr();
+  Teuchos::RCP<PDNEIGH::NeighborhoodList> list;
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(bondFilters.size() > 1, "\n****Error:  Multiple bond filters currently unsupported.\n");
+  if(bondFilters.size() == 0)
+    list = Teuchos::rcp(new PDNEIGH::NeighborhoodList(commSp,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon));
+  else if(bondFilters.size() == 1)
+    list = Teuchos::rcp(new PDNEIGH::NeighborhoodList(commSp,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon,bondFilters[0]));
+  decomp.neighborhood=list->get_neighborhood();
+  decomp.sizeNeighborhoodList=list->get_size_neighborhood_list();
+  decomp.neighborhoodPtr=list->get_neighborhood_ptr();
 
   // Create all the maps.
   // \todo This call really should be outside this function, but we need the maps here; should somehow remove the element id stuff from this function.
