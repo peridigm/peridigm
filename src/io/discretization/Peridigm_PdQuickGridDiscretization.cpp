@@ -63,6 +63,9 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
   comm(epetra_comm)
 {
   TEUCHOS_TEST_FOR_EXCEPT_MSG(params->get<std::string>("Type") != "PdQuickGrid", "Invalid Type in PdQuickGridDiscretization");
+
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(params->isSublist("Bond Filters"), "**** Error: Bond filters not supported for PdQuickGrid discretizations.\n");
+
   QUICKGRID::Data decomp = getDiscretization(params);
 
   createMaps(decomp);
