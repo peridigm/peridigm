@@ -292,7 +292,7 @@ double PeridigmNS::Material::calculateBulkModulus(const Teuchos::ParameterList &
     computedValue = (2.0*shearModulus*(1.0 + poissonsRatio)) / (3.0*(1.0 - 2.0*poissonsRatio));
   else
     TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error:  Exactly two elastic constants must be provided.  Allowable constants are \"Bulk Modulus\", \"Shear Modulus\", \"Young's Modulus\", \"Poisson's Ratio\".\n");
-    
+
   return computedValue;
 }
 
@@ -330,14 +330,14 @@ double PeridigmNS::Material::calculateShearModulus(const Teuchos::ParameterList 
   if(shearModulusDefined)
     computedValue = shearModulus;
   else if(bulkModulusDefined && youngsModulusDefined)
-    computedValue = (3.0*bulkModulus*shearModulus) / (9.0*bulkModulus - youngsModulus);
+    computedValue = (3.0*bulkModulus*youngsModulus) / (9.0*bulkModulus - youngsModulus);
   else if(bulkModulusDefined & poissonsRatioDefined)
     computedValue = (3.0*bulkModulus*(1.0 - 2.0*poissonsRatio)) / (2.0*(1.0 + poissonsRatio));
   else if(youngsModulusDefined && poissonsRatioDefined)
     computedValue = youngsModulus / (2.0*(1.0 + poissonsRatio));
   else
     TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error:  Exactly two elastic constants must be provided.  Allowable constants are \"Bulk Modulus\", \"Shear Modulus\", \"Young's Modulus\", \"Poisson's Ratio\".\n");
-    
+
   return computedValue;
 }
 
