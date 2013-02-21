@@ -55,6 +55,7 @@
 #include <vector>
 #include <map>
 
+#include <boost/unordered_set.hpp>
 #include <boost/math/special_functions/fpclassify.hpp>
 
 #include "Peridigm_Field.hpp"
@@ -2232,7 +2233,7 @@ void PeridigmNS::Peridigm::allocateJacobian() {
   tangent = Teuchos::rcp(new Epetra_FECrsMatrix(CV, *tangentMap, numEntriesPerRow, ignoreNonLocalEntries));
 
   // Store nonzero columns for each row, with everything in global indices
-  map<int, set<int> > rowEntries;
+  map<int, boost::unordered_set<int> > rowEntries;
 
   // Loop over the neighborhood for each locally-owned point and record non-zero entries in the matrix.
   // Entries will exist for any two points that are bonded, and any two points that are bonded to a common third point.
@@ -2268,7 +2269,7 @@ void PeridigmNS::Peridigm::allocateJacobian() {
   // Allocate space in the global Epetra_FECrsMatrix
   vector<int> indices;
   vector<double> zeros;
-  for(map<int, set<int> >::iterator rowEntry=rowEntries.begin(); rowEntry!=rowEntries.end() ; ++rowEntry){
+  for(map<int, boost::unordered_set<int> >::iterator rowEntry=rowEntries.begin(); rowEntry!=rowEntries.end() ; ++rowEntry){
     unsigned int numRowNonzeros = rowEntry->second.size();
     if(zeros.size() < numRowNonzeros)
       zeros.resize(numRowNonzeros, 0.0);
@@ -2276,7 +2277,7 @@ void PeridigmNS::Peridigm::allocateJacobian() {
     // Load indices into a sorted vector
     indices.resize(numRowNonzeros);
     int i=0;
-    for(set<int>::const_iterator globalIndex=rowEntry->second.begin() ; globalIndex!=rowEntry->second.end() ; ++globalIndex)
+    for(boost::unordered_set<int>::const_iterator globalIndex=rowEntry->second.begin() ; globalIndex!=rowEntry->second.end() ; ++globalIndex)
       indices[i++] = *globalIndex;
     sort(indices.begin(), indices.end());
 
@@ -2440,7 +2441,6 @@ void PeridigmNS::Peridigm::rebalance() {
   Teuchos::RCP<Epetra_Vector> rebalancedNeighborGlobalIDs = createRebalancedNeighborGlobalIDList(rebalancedBondMap, bondMapImporter);
 
   // create a list of all the off-processor IDs that will need to be ghosted
-  // \todo Use set::reserve() for better memory allocation here.
   set<int> offProcessorIDs;
   for(int i=0 ; i<rebalancedNeighborGlobalIDs->MyLength() ; ++i){
     int globalID = (int)( (*rebalancedNeighborGlobalIDs)[i] );
