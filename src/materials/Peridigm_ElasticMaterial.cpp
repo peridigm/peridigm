@@ -68,8 +68,8 @@ PeridigmNS::ElasticMaterial::ElasticMaterial(const Teuchos::ParameterList& param
     m_deltaTemperatureFieldId(-1)
 {
   //! \todo Add meaningful asserts on material properties.
-  m_bulkModulus = params.get<double>("Bulk Modulus");
-  m_shearModulus = params.get<double>("Shear Modulus");
+  m_bulkModulus = calculateBulkModulus(params);
+  m_shearModulus = calculateShearModulus(params);
   m_density = params.get<double>("Density");
   m_horizon = params.get<double>("Horizon");
   if(params.isParameter("Apply Automatic Differentiation Jacobian"))

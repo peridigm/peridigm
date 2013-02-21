@@ -125,6 +125,12 @@ namespace PeridigmNS {
                         const int* neighborhoodList,
                         PeridigmNS::DataManager& dataManager) const {}
 
+    //! Compute the bulk modulus given any two elastic constants from among:  bulk modulus, shear modulus, Young's modulus, Poisson's ratio.
+    double calculateBulkModulus(const Teuchos::ParameterList & params) const;
+
+    //! Compute the shear modulus given any two elastic constants from among:  bulk modulus, shear modulus, Young's modulus, Poisson's ratio.
+    double calculateShearModulus(const Teuchos::ParameterList & params) const;
+
     //! Compute the approximate deformation gradient
     void
     computeApproximateDeformationGradient(const double dt,
