@@ -68,8 +68,8 @@ PeridigmNS::ElasticPlasticHardeningMaterial::ElasticPlasticHardeningMaterial(con
     m_lambdaFieldId(-1), m_surfaceCorrectionFactorFieldId(-1)
 {
   //! \todo Add meaningful asserts on material properties.
-  m_bulkModulus = params.get<double>("Bulk Modulus");
-  m_shearModulus = params.get<double>("Shear Modulus");
+  m_bulkModulus = calculateBulkModulus(params);
+  m_shearModulus = calculateShearModulus(params);
   m_horizon = params.get<double>("Horizon");
   m_density = params.get<double>("Density");
   m_yieldStress = params.get<double>("Yield Stress");

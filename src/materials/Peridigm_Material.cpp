@@ -252,6 +252,95 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
   }
 }
 
+double PeridigmNS::Material::calculateBulkModulus(const Teuchos::ParameterList & params) const
+{
+  bool bulkModulusDefined(false), shearModulusDefined(false), youngsModulusDefined(false), poissonsRatioDefined(false);
+  double bulkModulus(0.0), shearModulus(0.0), youngsModulus(0.0), poissonsRatio(0.0);
+  double computedValue;
+
+  if( params.isParameter("Bulk Modulus") ){
+    bulkModulusDefined = true;
+    bulkModulus = params.get<double>("Bulk Modulus");
+  }
+  if( params.isParameter("Shear Modulus") ){
+    shearModulus = params.get<double>("Shear Modulus");
+    shearModulusDefined = true;
+  }
+  if( params.isParameter("Young's Modulus") ){
+    youngsModulus = params.get<double>("Young's Modulus");
+    youngsModulusDefined = true;
+  }
+  if( params.isParameter("Poisson's Ratio") ){
+    poissonsRatio = params.get<double>("Poisson's Ratio");
+    poissonsRatioDefined = true;
+  }
+
+  int numDefinedConstants = static_cast<int>(bulkModulusDefined) + 
+    static_cast<int>(shearModulusDefined) + 
+    static_cast<int>(youngsModulusDefined) + 
+    static_cast<int>(poissonsRatioDefined);
+
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(numDefinedConstants != 2, "**** Error:  Exactly two elastic constants must be provided.  Allowable constants are \"Bulk Modulus\", \"Shear Modulus\", \"Young's Modulus\", \"Poisson's Ratio\".\n");
+
+  if(bulkModulusDefined)
+    computedValue = bulkModulus;
+  else if(youngsModulusDefined && shearModulusDefined)
+    computedValue = (youngsModulus * shearModulus) / (3.0*(3.0*shearModulus - youngsModulus));
+  else if(youngsModulusDefined && poissonsRatioDefined)
+    computedValue = youngsModulus / (3.0*(1.0 - 2.0*poissonsRatio));
+  else if(shearModulusDefined && poissonsRatioDefined)
+    computedValue = (2.0*shearModulus*(1.0 + poissonsRatio)) / (3.0*(1.0 - 2.0*poissonsRatio));
+  else
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error:  Exactly two elastic constants must be provided.  Allowable constants are \"Bulk Modulus\", \"Shear Modulus\", \"Young's Modulus\", \"Poisson's Ratio\".\n");
+    
+  return computedValue;
+}
+
+
+double PeridigmNS::Material::calculateShearModulus(const Teuchos::ParameterList & params) const
+{
+  bool bulkModulusDefined(false), shearModulusDefined(false), youngsModulusDefined(false), poissonsRatioDefined(false);
+  double bulkModulus(0.0), shearModulus(0.0), youngsModulus(0.0), poissonsRatio(0.0);
+  double computedValue;
+
+  if( params.isParameter("Bulk Modulus") ){
+    bulkModulusDefined = true;
+    bulkModulus = params.get<double>("Bulk Modulus");
+  }
+  if( params.isParameter("Shear Modulus") ){
+    shearModulus = params.get<double>("Shear Modulus");
+    shearModulusDefined = true;
+  }
+  if( params.isParameter("Young's Modulus") ){
+    youngsModulus = params.get<double>("Young's Modulus");
+    youngsModulusDefined = true;
+  }
+  if( params.isParameter("Poisson's Ratio") ){
+    poissonsRatio = params.get<double>("Poisson's Ratio");
+    poissonsRatioDefined = true;
+  }
+
+  int numDefinedConstants = static_cast<int>(bulkModulusDefined) + 
+    static_cast<int>(shearModulusDefined) + 
+    static_cast<int>(youngsModulusDefined) + 
+    static_cast<int>(poissonsRatioDefined);
+
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(numDefinedConstants != 2, "**** Error:  Exactly two elastic constants must be provided.  Allowable constants are \"Bulk Modulus\", \"Shear Modulus\", \"Young's Modulus\", \"Poisson's Ratio\".\n");
+
+  if(shearModulusDefined)
+    computedValue = shearModulus;
+  else if(bulkModulusDefined && youngsModulusDefined)
+    computedValue = (3.0*bulkModulus*shearModulus) / (9.0*bulkModulus - youngsModulus);
+  else if(bulkModulusDefined & poissonsRatioDefined)
+    computedValue = (3.0*bulkModulus*(1.0 - 2.0*poissonsRatio)) / (2.0*(1.0 + poissonsRatio));
+  else if(youngsModulusDefined && poissonsRatioDefined)
+    computedValue = youngsModulus / (2.0*(1.0 + poissonsRatio));
+  else
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error:  Exactly two elastic constants must be provided.  Allowable constants are \"Bulk Modulus\", \"Shear Modulus\", \"Young's Modulus\", \"Poisson's Ratio\".\n");
+    
+  return computedValue;
+}
+
 void PeridigmNS::Material::computeApproximateDeformationGradient(const double dt,
                                                                  const int numOwnedPoints,
                                                                  const int* ownedIDs,
