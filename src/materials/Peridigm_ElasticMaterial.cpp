@@ -61,7 +61,7 @@ PeridigmNS::ElasticMaterial::ElasticMaterial(const Teuchos::ParameterList& param
   : Material(params),
     m_bulkModulus(0.0), m_shearModulus(0.0), m_density(0.0), m_alpha(0.0), m_horizon(0.0),
     m_applyAutomaticDifferentiationJacobian(true),
-    m_applySurfaceCorrectionFactor(true),
+    m_applySurfaceCorrectionFactor(false),
     m_applyThermalStrains(false),
     m_volumeFieldId(-1), m_damageFieldId(-1), m_weightedVolumeFieldId(-1), m_dilatationFieldId(-1), m_modelCoordinatesFieldId(-1),
     m_coordinatesFieldId(-1), m_forceDensityFieldId(-1), m_bondDamageFieldId(-1), m_surfaceCorrectionFactorFieldId(-1),
@@ -216,7 +216,8 @@ PeridigmNS::ElasticMaterial::computeStrainEnergy(const double dt,
 	nodeCurrentX[1] = y[nodeId*3+1];
 	nodeCurrentX[2] = y[nodeId*3+2];
     nodeDilatation = dilatation[nodeId];
-    alpha = surfaceCorrectionFactor[nodeId] * 15.0*m_shearModulus/weightedVolume[nodeId];
+    alpha = 15.0*m_shearModulus/weightedVolume[nodeId];
+    alpha *= surfaceCorrectionFactor[nodeId];
 
     temp = 0.0;
 
@@ -233,7 +234,6 @@ PeridigmNS::ElasticMaterial::computeStrainEnergy(const double dt,
       deviatoricExtension = (currentDistance - initialDistance) - nodeDilatation*initialDistance/3.0;
       temp += (1.0-neighborBondDamage)*omega*deviatoricExtension*deviatoricExtension*cellVolume[neighborId];
     }
-//    nodeDilatation=0.0;
     strainEnergy[nodeId] = cellVolume[nodeId]*(0.5*m_bulkModulus*nodeDilatation*nodeDilatation + 0.5*alpha*temp);
   }
 }
