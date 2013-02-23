@@ -91,22 +91,26 @@ void set_pure_shear
 		 * Pure shear
 		 */
 		double zx(0.0), xy(0.0), yz(0.0);
+		double xz(0.0), yx(0.0), zy(0.0);
 		switch(mode){
 		case ZX:
 			zx = gamma * dx;
+			xz = gamma * dz;
 			break;
 		case XY:
 			xy = gamma * dy;
+			yx = gamma * dx;
 			break;
 		case YZ:
 			yz = gamma * dz;
+			zy = gamma * dy;
 			break;
 		}
 
 		double *YP = &yOverlap[3*localId];
-		YP[0] = XP[0] + xy;
-		YP[1] = XP[1] + yz;
-		YP[2] = XP[2] + zx;
+		YP[0] = XP[0] + xy + xz;
+		YP[1] = XP[1] + yz + yx;
+		YP[2] = XP[2] + zx + zy;
 
 	}
 
@@ -147,7 +151,7 @@ double computeWeightedVolume
 		double dz = XP[2]-X[2];
 		double zetaSquared = dx*dx+dy*dy+dz*dz;
 		double d = sqrt(zetaSquared);
-                double omega = scalarInfluenceFunction(d,horizon);
+		double omega = scalarInfluenceFunction(d,horizon);
 		m+=omega*(zetaSquared)*cellVolume;
 	}
 
@@ -417,26 +421,28 @@ void computeShearCorrectionFactor
 		const double *X = xOwned;
 		double *Y = yOwned;
 		double m = *owned_weighted_volume;
-		double scf, max_scf;
+		double scf, max_dsf;
 
 		mode = XY;
         Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
 		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
 		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
-		max_scf=scf;
+		max_dsf=scf;
 
-		mode = ZX;
-        Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
-		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
-		scf+=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
+//		mode = ZX;
+//        Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
+//		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
+//		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
+//		if(scf>max_dsf) max_dsf=scf;
+//
+//		mode = YZ;
+//        Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
+//		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
+//		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
+//		if(scf>max_dsf) max_dsf=scf;
 
-		mode = YZ;
-        Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
-		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
-		scf+=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
-		scf/=3.0;
-
-		*scaleFactor = gamma * gamma * m / scf / 15.0;
+		scf=max_dsf;
+		*scaleFactor = 4.0 * gamma * gamma  * m / scf /15.0;
 		neighPtr+=(numNeigh+1);
 	}
 }
