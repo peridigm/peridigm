@@ -424,23 +424,26 @@ void computeShearCorrectionFactor
 		double scf, max_dsf;
 
 		mode = XY;
-        Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
+		Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
 		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
 		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
 		max_dsf=scf;
 
-//		mode = ZX;
-//        Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
-//		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
-//		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
-//		if(scf>max_dsf) max_dsf=scf;
-//
-//		mode = YZ;
-//        Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
-//		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
-//		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
-//		if(scf>max_dsf) max_dsf=scf;
+		mode = ZX;
+		Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
+		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
+		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
+		if(scf>max_dsf) max_dsf=scf;
 
+		mode = YZ;
+		Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
+		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
+		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
+		if(scf>max_dsf) max_dsf=scf;
+
+		// We need to reset the location before
+		//   iterating to the next point; OTHERWISE its a BUG!
+		Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
 		scf=max_dsf;
 		*scaleFactor = 4.0 * gamma * gamma  * m / scf /15.0;
 		neighPtr+=(numNeigh+1);
