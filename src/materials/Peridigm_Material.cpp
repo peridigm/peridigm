@@ -341,8 +341,7 @@ double PeridigmNS::Material::calculateShearModulus(const Teuchos::ParameterList 
   return computedValue;
 }
 
-void PeridigmNS::Material::computeApproximateDeformationGradient(const double dt,
-                                                                 const int numOwnedPoints,
+void PeridigmNS::Material::computeApproximateDeformationGradient(const int numOwnedPoints,
                                                                  const int* ownedIDs,
                                                                  const int* neighborhoodList,
                                                                  PeridigmNS::DataManager& dataManager) const
