@@ -403,6 +403,7 @@ void PeridigmNS::Material::computeApproximateDeformationGradient(const double dt
     }
     
     // \todo Include bond damage in this calculation.
+    // \todo Include influence function in this calculation.
 
     int numNeighbors = neighborhoodList[neighborhoodListIndex++];
     for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
@@ -418,52 +419,51 @@ void PeridigmNS::Material::computeApproximateDeformationGradient(const double dt
           deformationGradientFirstTerm[i][j] += temp*Y[i]*X[j];
         }
       }
-      
-      // \todo Check condition number of shape tensor.
-
-      // Invert the shape tensor
-      double minor[9] ;
-      minor[0] = shapeTensor[1][1]*shapeTensor[2][2] - shapeTensor[1][2]*shapeTensor[2][1] ;
-      minor[1] = shapeTensor[1][0]*shapeTensor[2][2] - shapeTensor[1][2]*shapeTensor[2][0] ;
-      minor[2] = shapeTensor[1][0]*shapeTensor[2][1] - shapeTensor[1][1]*shapeTensor[2][0] ;
-      minor[3] = shapeTensor[0][1]*shapeTensor[2][2] - shapeTensor[0][2]*shapeTensor[2][1] ;
-      minor[4] = shapeTensor[0][0]*shapeTensor[2][2] - shapeTensor[2][0]*shapeTensor[0][2] ;
-      minor[5] = shapeTensor[0][0]*shapeTensor[2][1] - shapeTensor[0][1]*shapeTensor[2][0] ;
-      minor[6] = shapeTensor[0][1]*shapeTensor[1][2] - shapeTensor[0][2]*shapeTensor[1][1] ;
-      minor[7] = shapeTensor[0][0]*shapeTensor[1][2] - shapeTensor[0][2]*shapeTensor[1][0] ;
-      minor[8] = shapeTensor[0][0]*shapeTensor[1][1] - shapeTensor[0][1]*shapeTensor[1][0] ;
-      double det = shapeTensor[0][0]*minor[0] - shapeTensor[0][1]*minor[1] + shapeTensor[0][2]*minor[2] ;
-      shapeTensorInverse[0][0] = minor[0]/det;
-      shapeTensorInverse[0][1] = -1.0*minor[3]/det;
-      shapeTensorInverse[0][2] = minor[6]/det;
-      shapeTensorInverse[1][0] = -1.0*minor[1]/det;
-      shapeTensorInverse[1][1] = minor[4]/det;
-      shapeTensorInverse[1][2] = -1.0*minor[7]/det;
-      shapeTensorInverse[2][0] = minor[2]/det;
-      shapeTensorInverse[2][1] = -1.0*minor[5]/det;
-      shapeTensorInverse[2][2] = minor[8]/det;
-
-      // Compute deformation gradient
-      for(int i=0 ; i<3 ; ++i){
-        for(int j=0 ; j<3 ; ++j){
-          deformationGradient[i][j] = 
-            deformationGradientFirstTerm[i][0]*shapeTensorInverse[0][i] +
-            deformationGradientFirstTerm[i][1]*shapeTensorInverse[1][i] +
-            deformationGradientFirstTerm[i][2]*shapeTensorInverse[2][i];
-        }
-      }
-
-      // Copy result into data manager
-      deformationGradientXX[ID] = deformationGradient[0][0];
-      deformationGradientXY[ID] = deformationGradient[0][1];
-      deformationGradientXZ[ID] = deformationGradient[0][2];
-      deformationGradientYX[ID] = deformationGradient[1][0];
-      deformationGradientYY[ID] = deformationGradient[1][1];
-      deformationGradientYZ[ID] = deformationGradient[1][2];
-      deformationGradientZX[ID] = deformationGradient[2][0];
-      deformationGradientZY[ID] = deformationGradient[2][1];
-      deformationGradientZZ[ID] = deformationGradient[2][2];
-
     }
+      
+    // \todo Check condition number of shape tensor.
+
+    // Invert the shape tensor
+    double minor[9] ;
+    minor[0] = shapeTensor[1][1]*shapeTensor[2][2] - shapeTensor[1][2]*shapeTensor[2][1] ;
+    minor[1] = shapeTensor[1][0]*shapeTensor[2][2] - shapeTensor[1][2]*shapeTensor[2][0] ;
+    minor[2] = shapeTensor[1][0]*shapeTensor[2][1] - shapeTensor[1][1]*shapeTensor[2][0] ;
+    minor[3] = shapeTensor[0][1]*shapeTensor[2][2] - shapeTensor[0][2]*shapeTensor[2][1] ;
+    minor[4] = shapeTensor[0][0]*shapeTensor[2][2] - shapeTensor[2][0]*shapeTensor[0][2] ;
+    minor[5] = shapeTensor[0][0]*shapeTensor[2][1] - shapeTensor[0][1]*shapeTensor[2][0] ;
+    minor[6] = shapeTensor[0][1]*shapeTensor[1][2] - shapeTensor[0][2]*shapeTensor[1][1] ;
+    minor[7] = shapeTensor[0][0]*shapeTensor[1][2] - shapeTensor[0][2]*shapeTensor[1][0] ;
+    minor[8] = shapeTensor[0][0]*shapeTensor[1][1] - shapeTensor[0][1]*shapeTensor[1][0] ;
+    double det = shapeTensor[0][0]*minor[0] - shapeTensor[0][1]*minor[1] + shapeTensor[0][2]*minor[2] ;
+    shapeTensorInverse[0][0] = minor[0]/det;
+    shapeTensorInverse[0][1] = -1.0*minor[3]/det;
+    shapeTensorInverse[0][2] = minor[6]/det;
+    shapeTensorInverse[1][0] = -1.0*minor[1]/det;
+    shapeTensorInverse[1][1] = minor[4]/det;
+    shapeTensorInverse[1][2] = -1.0*minor[7]/det;
+    shapeTensorInverse[2][0] = minor[2]/det;
+    shapeTensorInverse[2][1] = -1.0*minor[5]/det;
+    shapeTensorInverse[2][2] = minor[8]/det;
+
+    // Compute deformation gradient
+    for(int i=0 ; i<3 ; ++i){
+      for(int j=0 ; j<3 ; ++j){
+        deformationGradient[i][j] = 
+          deformationGradientFirstTerm[i][0]*shapeTensorInverse[0][j] +
+          deformationGradientFirstTerm[i][1]*shapeTensorInverse[1][j] +
+          deformationGradientFirstTerm[i][2]*shapeTensorInverse[2][j];
+      }
+    }
+
+    // Copy result into data manager
+    deformationGradientXX[ID] = deformationGradient[0][0];
+    deformationGradientXY[ID] = deformationGradient[0][1];
+    deformationGradientXZ[ID] = deformationGradient[0][2];
+    deformationGradientYX[ID] = deformationGradient[1][0];
+    deformationGradientYY[ID] = deformationGradient[1][1];
+    deformationGradientYZ[ID] = deformationGradient[1][2];
+    deformationGradientZX[ID] = deformationGradient[2][0];
+    deformationGradientZY[ID] = deformationGradient[2][1];
+    deformationGradientZZ[ID] = deformationGradient[2][2];
   }
 }
