@@ -133,8 +133,7 @@ namespace PeridigmNS {
 
     //! Compute the approximate deformation gradient
     void
-    computeApproximateDeformationGradient(const double dt,
-                                          const int numOwnedPoints,
+    computeApproximateDeformationGradient(const int numOwnedPoints,
                                           const int* ownedIDs,
                                           const int* neighborhoodList,
                                           PeridigmNS::DataManager& dataManager) const;

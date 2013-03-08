@@ -100,9 +100,7 @@ int PeridigmNS::Compute_Deformation_Gradient::compute( Teuchos::RCP< std::vector
     int numOwnedPoints = neighborhoodData->NumOwnedPoints();
     int* const ownedIDs = neighborhoodData->OwnedIDs();
     int* const neighborhoodList = neighborhoodData->NeighborhoodList();
-    //materialModel->computeApproximateDeformationGradient(const double dt, const int numOwnedPoints, const int* ownedIDs, const int* neighborhoodList, PeridigmNS::DataManager& dataManager);
-// MLP: dt not used in method. Remove?
-    materialModel->computeApproximateDeformationGradient(0.0, numOwnedPoints, ownedIDs, neighborhoodList, *dataManager);
+    materialModel->computeApproximateDeformationGradient(numOwnedPoints, ownedIDs, neighborhoodList, *dataManager);
   }
 
 // Need some trickery to get from single request in input deck to nine outputs
