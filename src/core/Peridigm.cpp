@@ -158,13 +158,6 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   boundaryAndInitialConditionManager->initialize(peridigmDisc);
 
-  // Instantiate material models
-  instantiateMaterials();
-
-  // Instantiate damage models
-  if(params->isSublist("Damage Models"))
-     instantiateDamageModels();
-
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   elementIdFieldId                   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Element_Id");
   blockIdFieldId                     = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Block_Id");
@@ -185,6 +178,13 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   if(analysisHasPartialVolumes)
     contactForceDensityFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Partial_Volume");
+
+  // Instantiate material models
+  instantiateMaterials();
+
+  // Instantiate damage models
+  if(params->isSublist("Damage Models"))
+     instantiateDamageModels();
 
   // Instantiate compute manager
   instantiateComputeManager();
