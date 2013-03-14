@@ -181,14 +181,9 @@ PeridigmNS::ElasticMaterial::computeStrainEnergy(const double dt,
                                                  const int* neighborhoodList,
                                                  PeridigmNS::DataManager& dataManager) const
 {
-  // \todo Add influence function and thermal strains to strain energy calculation.
-
   // This function is intended to be called from a compute class.
   // The compute class should have already created the Strain_Energy field id.
   int strainEnergyFieldId = PeridigmNS::FieldManager::self().getFieldId("Strain_Energy");
-
-  // Placeholder for influence function
-  double omega = 1.0;
 
   double *x, *y, *cellVolume, *weightedVolume, *dilatation, *strainEnergy, *bondDamage, *surfaceCorrectionFactor;
   dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
@@ -200,21 +195,25 @@ PeridigmNS::ElasticMaterial::computeStrainEnergy(const double dt,
   dataManager.getData(strainEnergyFieldId, PeridigmField::STEP_NONE)->ExtractView(&strainEnergy);
   dataManager.getData(m_surfaceCorrectionFactorFieldId, PeridigmField::STEP_NONE)->ExtractView(&surfaceCorrectionFactor);
 
+  double *deltaTemperature = NULL;
+  if(m_applyThermalStrains)
+    dataManager.getData(m_deltaTemperatureFieldId, PeridigmField::STEP_NP1)->ExtractView(&deltaTemperature);
+
   int iID, iNID, numNeighbors, nodeId, neighborId;
-  double nodeInitialX[3], nodeCurrentX[3];
+  double omega, nodeInitialX[3], nodeCurrentX[3];
   double initialDistance, currentDistance, deviatoricExtension, neighborBondDamage;
   double nodeDilatation, alpha, temp;
 
   int neighborhoodListIndex(0), bondIndex(0);
   for(iID=0 ; iID<numOwnedPoints ; ++iID){
 
-	nodeId = ownedIDs[iID];
-	nodeInitialX[0] = x[nodeId*3];
+    nodeId = ownedIDs[iID];
+    nodeInitialX[0] = x[nodeId*3];
     nodeInitialX[1] = x[nodeId*3+1];
     nodeInitialX[2] = x[nodeId*3+2];
-	nodeCurrentX[0] = y[nodeId*3];
-	nodeCurrentX[1] = y[nodeId*3+1];
-	nodeCurrentX[2] = y[nodeId*3+2];
+    nodeCurrentX[0] = y[nodeId*3];
+    nodeCurrentX[1] = y[nodeId*3+1];
+    nodeCurrentX[2] = y[nodeId*3+2];
     nodeDilatation = dilatation[nodeId];
     alpha = 15.0*m_shearModulus/weightedVolume[nodeId];
     alpha *= surfaceCorrectionFactor[nodeId];
@@ -231,7 +230,10 @@ PeridigmNS::ElasticMaterial::computeStrainEnergy(const double dt,
       currentDistance = 
         distance(nodeCurrentX[0], nodeCurrentX[1], nodeCurrentX[2],
                  y[neighborId*3], y[neighborId*3+1], y[neighborId*3+2]);
+      if(m_applyThermalStrains)
+	currentDistance -= m_alpha*deltaTemperature[nodeId]*initialDistance;
       deviatoricExtension = (currentDistance - initialDistance) - nodeDilatation*initialDistance/3.0;
+      omega = MATERIAL_EVALUATION::scalarInfluenceFunction(initialDistance, m_horizon);
       temp += (1.0-neighborBondDamage)*omega*deviatoricExtension*deviatoricExtension*cellVolume[neighborId];
     }
     strainEnergy[nodeId] = cellVolume[nodeId]*(0.5*m_bulkModulus*nodeDilatation*nodeDilatation + 0.5*alpha*temp);
