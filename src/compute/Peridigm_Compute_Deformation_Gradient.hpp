@@ -47,7 +47,15 @@
 
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Deformation_Gradient,Compute_Deformation_Gradient)
+ComputeClass(Deformation_GradientXX,Compute_Deformation_Gradient)
+ComputeClass(Deformation_GradientXY,Compute_Deformation_Gradient)
+ComputeClass(Deformation_GradientXZ,Compute_Deformation_Gradient)
+ComputeClass(Deformation_GradientYX,Compute_Deformation_Gradient)
+ComputeClass(Deformation_GradientYY,Compute_Deformation_Gradient)
+ComputeClass(Deformation_GradientYZ,Compute_Deformation_Gradient)
+ComputeClass(Deformation_GradientZX,Compute_Deformation_Gradient)
+ComputeClass(Deformation_GradientZY,Compute_Deformation_Gradient)
+ComputeClass(Deformation_GradientZZ,Compute_Deformation_Gradient)
 
 #else
 
