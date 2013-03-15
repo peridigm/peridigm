@@ -102,7 +102,7 @@ public:
 
   //@}
 
-  //! Returns the list of field ids of the given relation (POINT, BOND) and length (SCALAR, VECTOR3D); if no argument is given, returns complete list of field ids.
+  //! Returns the list of field ids of the given relation (POINT, BOND) and length (SCALAR, VECTOR); if no argument is given, returns complete list of field ids.
   std::vector<int> getFieldIds(PeridigmField::Relation relation = PeridigmField::UNDEFINED_RELATION,
                                PeridigmField::Length length = PeridigmField::UNDEFINED_LENGTH);
 

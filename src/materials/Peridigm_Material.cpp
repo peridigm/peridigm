@@ -354,15 +354,15 @@ void PeridigmNS::Material::computeApproximateDeformationGradient(const int numOw
   int coordinatesFId = fieldManager.getFieldId("Coordinates");
   int weightedVolumeFId = fieldManager.getFieldId("Weighted_Volume");
   int bondDamageFId = fieldManager.getFieldId("Bond_Damage");
-  int deformationGradientXXFId = fieldManager.getFieldId("Deformation_Gradient_XX");
-  int deformationGradientXYFId = fieldManager.getFieldId("Deformation_Gradient_XY");
-  int deformationGradientXZFId = fieldManager.getFieldId("Deformation_Gradient_XZ");
-  int deformationGradientYXFId = fieldManager.getFieldId("Deformation_Gradient_YX");
-  int deformationGradientYYFId = fieldManager.getFieldId("Deformation_Gradient_YY");
-  int deformationGradientYZFId = fieldManager.getFieldId("Deformation_Gradient_YZ");
-  int deformationGradientZXFId = fieldManager.getFieldId("Deformation_Gradient_ZX");
-  int deformationGradientZYFId = fieldManager.getFieldId("Deformation_Gradient_ZY");
-  int deformationGradientZZFId = fieldManager.getFieldId("Deformation_Gradient_ZZ");
+  int deformationGradientXXFId = fieldManager.getFieldId("Deformation_GradientXX");
+  int deformationGradientXYFId = fieldManager.getFieldId("Deformation_GradientXY");
+  int deformationGradientXZFId = fieldManager.getFieldId("Deformation_GradientXZ");
+  int deformationGradientYXFId = fieldManager.getFieldId("Deformation_GradientYX");
+  int deformationGradientYYFId = fieldManager.getFieldId("Deformation_GradientYY");
+  int deformationGradientYZFId = fieldManager.getFieldId("Deformation_GradientYZ");
+  int deformationGradientZXFId = fieldManager.getFieldId("Deformation_GradientZX");
+  int deformationGradientZYFId = fieldManager.getFieldId("Deformation_GradientZY");
+  int deformationGradientZZFId = fieldManager.getFieldId("Deformation_GradientZZ");
 
   // Extract pointers to the underlying data
   double *volume, *x, *y, *weightedVolume, *bondDamage;
