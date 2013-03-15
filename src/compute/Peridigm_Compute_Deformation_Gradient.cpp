@@ -50,6 +50,9 @@
 #include "Peridigm_Compute_Deformation_Gradient.hpp"
 #include "Peridigm_Field.hpp"
 
+// Initialize ID generator
+int PeridigmNS::Compute_Deformation_Gradient::myIDGenerator = 0;
+
 //! Standard constructor.
 PeridigmNS::Compute_Deformation_Gradient::Compute_Deformation_Gradient(Teuchos::RCP<const Teuchos::ParameterList> params,
                                          Teuchos::RCP<const Epetra_Comm> epetraComm_)
@@ -58,6 +61,9 @@ PeridigmNS::Compute_Deformation_Gradient::Compute_Deformation_Gradient(Teuchos::
                                   m_deformationGradientZXFId(-1), m_deformationGradientZYFId(-1), m_deformationGradientZZFId(-1)
 
 {
+  // Initialize my unique ID
+  myID = myIDGenerator++;
+
   FieldManager& fieldManager = FieldManager::self();
 
   m_deformationGradientXXFId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientXX");
@@ -89,6 +95,9 @@ int PeridigmNS::Compute_Deformation_Gradient::compute( Teuchos::RCP< std::vector
 
   int retval = 0;
 
+  // Let object with ID 0 do all the work
+  if (!myID) return(retval);
+
   Teuchos::RCP<const PeridigmNS::Material> materialModel;
   Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData;
   Teuchos::RCP<PeridigmNS::DataManager> dataManager;
@@ -103,10 +112,7 @@ int PeridigmNS::Compute_Deformation_Gradient::compute( Teuchos::RCP< std::vector
     materialModel->computeApproximateDeformationGradient(numOwnedPoints, ownedIDs, neighborhoodList, *dataManager);
   }
 
-// Need some trickery to get from single request in input deck to nine outputs
-
   return(retval);
-
 
 }
 
