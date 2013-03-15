@@ -91,7 +91,14 @@ namespace PeridigmNS {
     int m_deformationGradientXXFId, m_deformationGradientXYFId, m_deformationGradientXZFId,
         m_deformationGradientYXFId, m_deformationGradientYYFId, m_deformationGradientYZFId,
         m_deformationGradientZXFId, m_deformationGradientZYFId, m_deformationGradientZZFId;
+
+    // Unique ID for each instance of this class
+    int myID;
+    // Static member variable to generate IDs
+    static int myIDGenerator;
+
   };
+
 }
 
 #endif // PERIDIGM_COMPUTE_DEFORMATION_GRADIENT_HPP
