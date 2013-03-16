@@ -341,11 +341,13 @@ double PeridigmNS::Material::calculateShearModulus(const Teuchos::ParameterList 
   return computedValue;
 }
 
-void PeridigmNS::Material::computeApproximateDeformationGradient(const int numOwnedPoints,
-                                                                 const int* ownedIDs,
-                                                                 const int* neighborhoodList,
-                                                                 PeridigmNS::DataManager& dataManager) const
+int PeridigmNS::Material::computeApproximateDeformationGradient(const int numOwnedPoints,
+                                                                const int* ownedIDs,
+                                                                const int* neighborhoodList,
+                                                                PeridigmNS::DataManager& dataManager) const
 {
+
+  int retval = 0;
 
   // Get field ids for all relevant data
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
@@ -434,15 +436,25 @@ void PeridigmNS::Material::computeApproximateDeformationGradient(const int numOw
     minor[7] = shapeTensor[0][0]*shapeTensor[1][2] - shapeTensor[0][2]*shapeTensor[1][0] ;
     minor[8] = shapeTensor[0][0]*shapeTensor[1][1] - shapeTensor[0][1]*shapeTensor[1][0] ;
     double det = shapeTensor[0][0]*minor[0] - shapeTensor[0][1]*minor[1] + shapeTensor[0][2]*minor[2] ;
-    shapeTensorInverse[0][0] = minor[0]/det;
-    shapeTensorInverse[0][1] = -1.0*minor[3]/det;
-    shapeTensorInverse[0][2] = minor[6]/det;
-    shapeTensorInverse[1][0] = -1.0*minor[1]/det;
-    shapeTensorInverse[1][1] = minor[4]/det;
-    shapeTensorInverse[1][2] = -1.0*minor[7]/det;
-    shapeTensorInverse[2][0] = minor[2]/det;
-    shapeTensorInverse[2][1] = -1.0*minor[5]/det;
-    shapeTensorInverse[2][2] = minor[8]/det;
+
+    if (det == 0.0) { // check for divide-by-zero
+      shapeTensorInverse[0][0] = shapeTensorInverse[0][1] = shapeTensorInverse[0][2] = 
+      shapeTensorInverse[1][0] = shapeTensorInverse[1][1] = shapeTensorInverse[1][2] = 
+      shapeTensorInverse[2][0] = shapeTensorInverse[2][1] = shapeTensorInverse[2][2] = 0.0;
+      // Set error code
+      retval = 1;
+    }
+    else { // assign values
+      shapeTensorInverse[0][0] = minor[0]/det;
+      shapeTensorInverse[0][1] = -1.0*minor[3]/det;
+      shapeTensorInverse[0][2] = minor[6]/det;
+      shapeTensorInverse[1][0] = -1.0*minor[1]/det;
+      shapeTensorInverse[1][1] = minor[4]/det;
+      shapeTensorInverse[1][2] = -1.0*minor[7]/det;
+      shapeTensorInverse[2][0] = minor[2]/det;
+      shapeTensorInverse[2][1] = -1.0*minor[5]/det;
+      shapeTensorInverse[2][2] = minor[8]/det;
+    }
 
     // Compute deformation gradient
     for(int i=0 ; i<3 ; ++i){
@@ -464,5 +476,7 @@ void PeridigmNS::Material::computeApproximateDeformationGradient(const int numOw
     deformationGradientZX[ID] = deformationGradient[2][0];
     deformationGradientZY[ID] = deformationGradient[2][1];
     deformationGradientZZ[ID] = deformationGradient[2][2];
+
   }
+  return(retval);
 }
