@@ -109,8 +109,12 @@ int PeridigmNS::Compute_Deformation_Gradient::compute( Teuchos::RCP< std::vector
     int numOwnedPoints = neighborhoodData->NumOwnedPoints();
     int* const ownedIDs = neighborhoodData->OwnedIDs();
     int* const neighborhoodList = neighborhoodData->NeighborhoodList();
-    materialModel->computeApproximateDeformationGradient(numOwnedPoints, ownedIDs, neighborhoodList, *dataManager);
+    retval = retval || materialModel->computeApproximateDeformationGradient(numOwnedPoints, ownedIDs, neighborhoodList, *dataManager);
   }
+
+  // Warn if retval not zero
+  if (retval && epetraComm->MyPID() == 0)
+    cout << "**** Warning:  computeApproximateDeformationGradient class returned warning. Some elements may have too few bonds to accurately compute deformation gradient." << endl;
 
   return(retval);
 
