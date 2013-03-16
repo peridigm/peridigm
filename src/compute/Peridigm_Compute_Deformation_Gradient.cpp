@@ -109,9 +109,7 @@ int PeridigmNS::Compute_Deformation_Gradient::compute( Teuchos::RCP< std::vector
     int numOwnedPoints = neighborhoodData->NumOwnedPoints();
     int* const ownedIDs = neighborhoodData->OwnedIDs();
     int* const neighborhoodList = neighborhoodData->NeighborhoodList();
-// DJL: Note to Mike, computeApproximateDeformationGradient() returns null, so this causes a compile error on latrobe
-//     retval = retval || materialModel->computeApproximateDeformationGradient(numOwnedPoints, ownedIDs, neighborhoodList, *dataManager);
-    materialModel->computeApproximateDeformationGradient(numOwnedPoints, ownedIDs, neighborhoodList, *dataManager);
+    retval = retval || materialModel->computeApproximateDeformationGradient(numOwnedPoints, ownedIDs, neighborhoodList, *dataManager);
   }
 
   // Warn if retval not zero

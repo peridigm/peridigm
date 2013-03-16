@@ -132,7 +132,7 @@ namespace PeridigmNS {
     double calculateShearModulus(const Teuchos::ParameterList & params) const;
 
     //! Compute the approximate deformation gradient
-    void
+    int
     computeApproximateDeformationGradient(const int numOwnedPoints,
                                           const int* ownedIDs,
                                           const int* neighborhoodList,
