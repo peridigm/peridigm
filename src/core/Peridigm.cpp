@@ -2367,8 +2367,7 @@ void PeridigmNS::Peridigm::computeImplicitJacobian(double beta) {
   // Code to symmeterize Jacobian
 
   // First, construct transpose
-  bool makeDataContiguous = true;
-  EpetraExt::RowMatrix_Transpose transposer( makeDataContiguous );
+  EpetraExt::RowMatrix_Transpose transposer;
   Epetra_CrsMatrix& transTangent = dynamic_cast<Epetra_CrsMatrix&>(transposer(*tangent));
 
   // Now loop over all owned rows and average entries of both
