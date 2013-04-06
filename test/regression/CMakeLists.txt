@@ -34,6 +34,8 @@ add_test (DefaultBlocks_np1 python ./DefaultBlocks/np1/DefaultBlocks.py)
 add_test (DefaultBlocks_np4 python ./DefaultBlocks/np4/DefaultBlocks.py)
 add_test (PrecrackedPlate_np1 python ./PrecrackedPlate/np1/PrecrackedPlate.py)
 add_test (PrecrackedPlate_np4 python ./PrecrackedPlate/np4/PrecrackedPlate.py)
+add_test (DeformationGradient_PlaneStrainCompression_np1 python ./DeformationGradient/PlaneStrainCompression_np1/PlaneStrainCompression.py)
+add_test (DeformationGradient_PlaneStrainCompression_np4 python ./DeformationGradient/PlaneStrainCompression_np4/PlaneStrainCompression.py)
 
 add_custom_target( rtest
    COMMAND ctest
