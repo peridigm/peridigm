@@ -1,0 +1,22 @@
+## /usr/local/cubit/bin/clarox
+## Cubit Version 13.2
+## Cubit Build 384700
+## Revised 2012-11-14 14:33:44 -0700 (Wed, 14 Nov 2012)
+## Running 04/05/2013 09:21:31 PM
+## Command Options:
+## -nographics
+## -warning = On
+## -information = On
+## -batch
+reset
+create brick x 1.1 y 1.1 z 1.1
+volume 1 move x 0 y 0 z 0
+block 1 volume 1
+volume all size 0.367
+block all element type HEX8
+mesh volume all
+nodeset 1 volume 1
+nodeset 1 name "cube1"
+export genesis "DeformationGradient.g" overwrite
+#  Create a hex mesh as follows:
+#  cubit -nographics -batch DeformationGradient.cub
