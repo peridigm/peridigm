@@ -38,6 +38,12 @@ add_test (DeformationGradient_PlaneStrainCompression_np1 python ./DeformationGra
 add_test (DeformationGradient_PlaneStrainCompression_np4 python ./DeformationGradient/PlaneStrainCompression_np4/PlaneStrainCompression.py)
 add_test (DeformationGradient_SimpleShear_np1 python ./DeformationGradient/SimpleShear_np1/SimpleShear.py)
 add_test (DeformationGradient_SimpleShear_np4 python ./DeformationGradient/SimpleShear_np4/SimpleShear.py)
+add_test (DeformationGradient_PureShear_np1 python ./DeformationGradient/PureShear_np1/PureShear.py)
+add_test (DeformationGradient_PureShear_np4 python ./DeformationGradient/PureShear_np4/PureShear.py)
+add_test (DeformationGradient_SolidRotation_np1 python ./DeformationGradient/SolidRotation_np1/SolidRotation.py)
+add_test (DeformationGradient_SolidRotation_np4 python ./DeformationGradient/SolidRotation_np4/SolidRotation.py)
+add_test (DeformationGradient_NoDeformation_np1 python ./DeformationGradient/NoDeformation_np1/NoDeformation.py)
+add_test (DeformationGradient_NoDeformation_np4 python ./DeformationGradient/NoDeformation_np4/NoDeformation.py)
 
 add_custom_target( rtest
    COMMAND ctest
