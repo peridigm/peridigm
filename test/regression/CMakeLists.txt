@@ -36,6 +36,8 @@ add_test (PrecrackedPlate_np1 python ./PrecrackedPlate/np1/PrecrackedPlate.py)
 add_test (PrecrackedPlate_np4 python ./PrecrackedPlate/np4/PrecrackedPlate.py)
 add_test (DeformationGradient_PlaneStrainCompression_np1 python ./DeformationGradient/PlaneStrainCompression_np1/PlaneStrainCompression.py)
 add_test (DeformationGradient_PlaneStrainCompression_np4 python ./DeformationGradient/PlaneStrainCompression_np4/PlaneStrainCompression.py)
+add_test (DeformationGradient_SimpleShear_np1 python ./DeformationGradient/SimpleShear_np1/SimpleShear.py)
+add_test (DeformationGradient_SimpleShear_np4 python ./DeformationGradient/SimpleShear_np4/SimpleShear.py)
 
 add_custom_target( rtest
    COMMAND ctest
