@@ -44,6 +44,8 @@ add_test (DeformationGradient_SolidRotation_np1 python ./DeformationGradient/Sol
 add_test (DeformationGradient_SolidRotation_np4 python ./DeformationGradient/SolidRotation_np4/SolidRotation.py)
 add_test (DeformationGradient_NoDeformation_np1 python ./DeformationGradient/NoDeformation_np1/NoDeformation.py)
 add_test (DeformationGradient_NoDeformation_np4 python ./DeformationGradient/NoDeformation_np4/NoDeformation.py)
+add_test (DeformationGradient_NoLoad_np1 python ./DeformationGradient/NoLoad_np1/NoLoad.py)
+add_test (DeformationGradient_NoLoad_np4 python ./DeformationGradient/NoLoad_np4/NoLoad.py)
 
 add_custom_target( rtest
    COMMAND ctest
