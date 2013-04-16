@@ -168,4 +168,20 @@ PeridigmNS::LCMMaterial::computeForce(const double dt,
 {
   // Zero out the forces
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+
+  // 0) Create data fields based on what LCM material model needs
+
+  // 1) Have Peridigm compute deformation gradient
+
+  // 2) Fill deformation gradient MD field 
+
+  // 3) Call ConstitutiveModel evaluator (via phalanx evaluate fields)
+  //
+  // computeState(typename Traits::EvalData workset,
+  //              std::map<std::string,Teuchos::RCP<PHX::MDField<ScalarT> > > dep_fields,
+  //              std::map<std::string,Teuchos::RCP<PHX::MDField<ScalarT> > > eval_fields) = 0;
+
+
+
+
 }
