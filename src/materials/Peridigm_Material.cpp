@@ -59,10 +59,11 @@ void PeridigmNS::Material::computeJacobian(const double dt,
                                            const int* ownedIDs,
                                            const int* neighborhoodList,
                                            PeridigmNS::DataManager& dataManager,
-                                           PeridigmNS::SerialMatrix& jacobian) const
+                                           PeridigmNS::SerialMatrix& jacobian,
+                                           PeridigmNS::Material::JacobianType jacobianType) const
 {
   // Compute a finite-difference Jacobian using either FORWARD_DIFFERENCE or CENTRAL_DIFFERENCE
-  computeFiniteDifferenceJacobian(dt, numOwnedPoints, ownedIDs, neighborhoodList, dataManager, jacobian, CENTRAL_DIFFERENCE);
+  computeFiniteDifferenceJacobian(dt, numOwnedPoints, ownedIDs, neighborhoodList, dataManager, jacobian, CENTRAL_DIFFERENCE, jacobianType);
 }
 
 void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
@@ -71,7 +72,8 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
                                                            const int* neighborhoodList,
                                                            PeridigmNS::DataManager& dataManager,
                                                            PeridigmNS::SerialMatrix& jacobian,
-                                                           FiniteDifferenceScheme finiteDifferenceScheme) const
+                                                           FiniteDifferenceScheme finiteDifferenceScheme,
+                                                           PeridigmNS::Material::JacobianType jacobianType) const
 {
   // The Jacobian is of the form:
   //
@@ -226,7 +228,11 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
             double value = ( force[3*forceID+d] - tempForce[3*forceID+d] ) / epsilon;
             if(finiteDifferenceScheme == CENTRAL_DIFFERENCE)
               value *= 0.5;
-            scratchMatrix(3*forceID+d, 3*perturbID+dof) = value;
+// MLP
+//            if (perturbID==forceID)
+              scratchMatrix(3*forceID+d, 3*perturbID+dof) = value;
+//            else 
+//              scratchMatrix(3*forceID+d, 3*perturbID+dof) = 0.0;
           }
         }
       }

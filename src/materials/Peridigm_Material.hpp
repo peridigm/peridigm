@@ -65,29 +65,29 @@ namespace PeridigmNS {
 
   public:
 
-	//! Standard constructor.
+    //! Standard constructor.
     Material(const Teuchos::ParameterList & params) : m_finiteDifferenceProbeLength(DBL_MAX) {
-	  if(params.isParameter("Finite Difference Probe Length"))
-        m_finiteDifferenceProbeLength = params.get<double>("Finite Difference Probe Length");
-	}
+      if(params.isParameter("Finite Difference Probe Length"))
+      m_finiteDifferenceProbeLength = params.get<double>("Finite Difference Probe Length");
+    }
 
-	//! Destructor.
-	virtual ~Material(){}
+    //! Destructor.
+    virtual ~Material(){}
 
-	//! Return name of material type
-	virtual string Name() const = 0;
+    //! Return name of material type
+    virtual string Name() const = 0;
 
-	//! Returns the density of the material.
-	virtual double Density() const = 0;
+    //! Returns the density of the material.
+    virtual double Density() const = 0;
 
-	//! Returns the bulk modulus of the material.
-	virtual double BulkModulus() const = 0;
+    //! Returns the bulk modulus of the material.
+    virtual double BulkModulus() const = 0;
 
-	//! Returns the shear modulus of the material.
-	virtual double ShearModulus() const = 0;
+    //! Returns the shear modulus of the material.
+    virtual double ShearModulus() const = 0;
 	
-	//! Returns the horizon.
-	virtual double Horizon() const = 0;
+    //! Returns the horizon.
+    virtual double Horizon() const = 0;
 
     //! Returns a vector of field IDs corresponding to the variables associated with the material.
     virtual std::vector<int> FieldIds() const = 0;
@@ -108,6 +108,22 @@ namespace PeridigmNS {
 		 const int* neighborhoodList,
                  PeridigmNS::DataManager& dataManager) const = 0;
 
+    /// \enum JacobianType
+    /// \brief Whether to compute the full tangent stiffness matrix or just its block diagonal entries
+    ///
+    /// The Peridigm Material base class requires all derived material model classes to implement
+    /// a computeJacobian method to compute the tangent stiffness matrix. The default behavior of this
+    /// method is to compute the full tangent stiffness matrix. However, is it occasionally useful to compute
+    /// and store only the block diagonal entries -- specifically, the only the entries of the matrix that
+    /// describe interactions between different dofs for an individual node. This manifests as a block-diagonal
+    /// with each block of dimension 3x3, and one block for each node. This block-diagonal matrix is useful,
+    /// for example, as a preconditioner for the full Jacobian matrix. The 3x3 blocks are also the "P" matrices
+    /// used by the ComputeStabilityIndex compute class. See that class for more information.
+    ///
+    /// \note The default behavior is to compute the full tangent stiffness matrix. This enum is useful to only
+    /// if you need to efficiently compute only the block diagonal entries of the full tangent stiffness matrix.
+    enum JacobianType { FULL_MATRIX=0, BLOCK_DIAGONAL=1 };
+
     //! Evaluate the jacobian.
     virtual void
     computeJacobian(const double dt,
@@ -115,7 +131,8 @@ namespace PeridigmNS {
                     const int* ownedIDs,
                     const int* neighborhoodList,
                     PeridigmNS::DataManager& dataManager,
-                    PeridigmNS::SerialMatrix& jacobian) const;
+                    PeridigmNS::SerialMatrix& jacobian,
+                    PeridigmNS::Material::JacobianType jacobianType = PeridigmNS::Material::FULL_MATRIX) const;
 
     //! Compute strain energy.
     virtual void
@@ -150,7 +167,8 @@ namespace PeridigmNS {
                                     const int* neighborhoodList,
                                     PeridigmNS::DataManager& dataManager,
                                     PeridigmNS::SerialMatrix& jacobian,
-                                    FiniteDifferenceScheme finiteDifferenceScheme) const;
+                                    FiniteDifferenceScheme finiteDifferenceScheme,
+                                    PeridigmNS::Material::JacobianType jacobianType = PeridigmNS::Material::FULL_MATRIX) const;
 
     //! Scratch matrix.
     mutable ScratchMatrix scratchMatrix;

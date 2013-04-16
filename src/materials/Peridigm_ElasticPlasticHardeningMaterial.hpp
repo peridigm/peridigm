@@ -102,7 +102,8 @@ namespace PeridigmNS {
                     const int* ownedIDs,
                     const int* neighborhoodList,
                     PeridigmNS::DataManager& dataManager,
-                    PeridigmNS::SerialMatrix& jacobian) const;
+                    PeridigmNS::SerialMatrix& jacobian,
+                    PeridigmNS::Material::JacobianType jacobianType = PeridigmNS::Material::FULL_MATRIX) const;
 
 	//! Evaluate the jacobian via automatic differentiation.
     virtual void
@@ -111,7 +112,8 @@ namespace PeridigmNS {
                                             const int* ownedIDs,
                                             const int* neighborhoodList,
                                             PeridigmNS::DataManager& dataManager,
-                                            PeridigmNS::SerialMatrix& jacobian) const;
+                                            PeridigmNS::SerialMatrix& jacobian,
+                                            PeridigmNS::Material::JacobianType jacobianType = PeridigmNS::Material::FULL_MATRIX) const;
 
   protected:
 

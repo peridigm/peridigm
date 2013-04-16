@@ -202,7 +202,8 @@ PeridigmNS::ElasticPlasticMaterial::computeJacobian(const double dt,
                                                     const int* ownedIDs,
                                                     const int* neighborhoodList,
                                                     PeridigmNS::DataManager& dataManager,
-                                                    PeridigmNS::SerialMatrix& jacobian) const
+                                                    PeridigmNS::SerialMatrix& jacobian,
+                                                    PeridigmNS::Material::JacobianType jacobianType) const
 {
   if(m_applyAutomaticDifferentiationJacobian){
     // Compute the Jacobian via automatic differentiation
@@ -220,7 +221,8 @@ PeridigmNS::ElasticPlasticMaterial::computeAutomaticDifferentiationJacobian(cons
                                                                             const int* ownedIDs,
                                                                             const int* neighborhoodList,
                                                                             PeridigmNS::DataManager& dataManager,
-                                                                            PeridigmNS::SerialMatrix& jacobian) const
+                                                                            PeridigmNS::SerialMatrix& jacobian,
+                                                                            PeridigmNS::Material::JacobianType jacobianType) const
 {
   // Compute contributions to the tangent matrix on an element-by-element basis
 

@@ -150,7 +150,8 @@ namespace PeridigmNS {
                     const int* ownedIDs,
                     const int* neighborhoodList,
                     PeridigmNS::DataManager& dataManager,
-                    PeridigmNS::SerialMatrix& jacobian) const;
+                    PeridigmNS::SerialMatrix& jacobian,
+                    PeridigmNS::Material::JacobianType jacobianType = PeridigmNS::Material::FULL_MATRIX) const;
 
 	//! Evaluate the jacobian via automatic differentiation.
 	virtual void
@@ -159,21 +160,22 @@ namespace PeridigmNS {
                                             const int* ownedIDs,
                                             const int* neighborhoodList,
                                             PeridigmNS::DataManager& dataManager,
-                                            PeridigmNS::SerialMatrix& jacobian) const;
+                                            PeridigmNS::SerialMatrix& jacobian,
+                                            PeridigmNS::Material::JacobianType jacobianType = PeridigmNS::Material::FULL_MATRIX) const;
 
   protected:
 	
-	//! Computes the distance between nodes (a1, a2, a3) and (b1, b2, b3).
-	inline double distance(double a1, double a2, double a3,
-						   double b1, double b2, double b3) const
-	{
-	  return ( sqrt( (a1-b1)*(a1-b1) + (a2-b2)*(a2-b2) + (a3-b3)*(a3-b3) ) );
-	}
+    //! Computes the distance between nodes (a1, a2, a3) and (b1, b2, b3).
+    inline double distance(double a1, double a2, double a3,
+                           double b1, double b2, double b3) const
+      {
+        return ( sqrt( (a1-b1)*(a1-b1) + (a2-b2)*(a2-b2) + (a3-b3)*(a3-b3) ) );
+      }
 
-	// material parameters
-	double m_bulkModulus;
-	double m_shearModulus;
-	double m_density;
+    // material parameters
+    double m_bulkModulus;
+    double m_shearModulus;
+    double m_density;
     double m_alpha;
     double m_horizon;
     bool m_applyAutomaticDifferentiationJacobian;
