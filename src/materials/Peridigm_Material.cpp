@@ -228,11 +228,7 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
             double value = ( force[3*forceID+d] - tempForce[3*forceID+d] ) / epsilon;
             if(finiteDifferenceScheme == CENTRAL_DIFFERENCE)
               value *= 0.5;
-// MLP
-//            if (perturbID==forceID)
               scratchMatrix(3*forceID+d, 3*perturbID+dof) = value;
-//            else 
-//              scratchMatrix(3*forceID+d, 3*perturbID+dof) = 0.0;
           }
         }
       }
