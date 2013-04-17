@@ -180,7 +180,7 @@ void computeInternalForceThermoelastic
 	const int *neighPtr = localNeighborList;
 	double cellVolume, alpha, X_dx, X_dy, X_dz, zeta, omega;
     ScalarT Y_dx, Y_dy, Y_dz, dY, t, fx, fy, fz, e, c1;
-	for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yOwned +=3, fOwned+=3, m++, theta++, dsf++){
+    for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yOwned +=3, fOwned+=3, deltaT++, m++, theta++, dsf++){
 
 		int numNeigh = *neighPtr; neighPtr++;
 		const double *X = xOwned;
