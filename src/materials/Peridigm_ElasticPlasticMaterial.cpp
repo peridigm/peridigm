@@ -84,6 +84,7 @@ PeridigmNS::ElasticPlasticMaterial::ElasticPlasticMaterial(const Teuchos::Parame
     m_isPlanarProblem= params.get<bool>("Planar Problem");
     m_thickness= params.get<double>("Thickness");
   }
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(params.isParameter("Thermal Expansion Coefficient"), "**** Error:  Thermal expansion is not currently supported for the Elastic Plastic material model.\n");
 
   if(m_disablePlasticity)
     m_yieldStress = std::numeric_limits<double>::max();

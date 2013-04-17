@@ -94,6 +94,8 @@ PeridigmNS::LCMMaterial::LCMMaterial(const Teuchos::ParameterList& params)
   m_density = params.get<double>("Density");
   m_horizon = params.get<double>("Horizon");
 
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(params.isParameter("Thermal Expansion Coefficient"), "**** Error:  Thermal expansion is not currently supported for LCM material models.\n");
+
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   m_volumeFieldId           = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Volume");
   m_damageFieldId           = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Damage");

@@ -51,19 +51,29 @@
 using namespace std;
 
 PeridigmNS::CriticalStretchDamageModel::CriticalStretchDamageModel(const Teuchos::ParameterList& params)
-  : DamageModel(params), m_modelCoordinatesFieldId(-1), m_coordinatesFieldId(-1), m_damageFieldId(-1), m_bondDamageFieldId(-1)
+  : DamageModel(params), m_applyThermalStrains(false), m_modelCoordinatesFieldId(-1), m_coordinatesFieldId(-1), m_damageFieldId(-1), m_bondDamageFieldId(-1), m_deltaTemperatureFieldId(-1)
 {
   m_criticalStretch = params.get<double>("Critical Stretch");
+
+  if(params.isParameter("Thermal Expansion Coefficient")){
+    m_alpha = params.get<double>("Thermal Expansion Coefficient");
+    m_applyThermalStrains = true;
+  }
 
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   m_modelCoordinatesFieldId = fieldManager.getFieldId("Model_Coordinates");
   m_coordinatesFieldId = fieldManager.getFieldId("Coordinates");
   m_damageFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::ELEMENT, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::TWO_STEP, "Damage");
   m_bondDamageFieldId = fieldManager.getFieldId(PeridigmNS::PeridigmField::BOND, PeridigmNS::PeridigmField::SCALAR, PeridigmNS::PeridigmField::TWO_STEP, "Bond_Damage");
+  if(m_applyThermalStrains)
+    m_deltaTemperatureFieldId = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Temperature_Change");
+
   m_fieldIds.push_back(m_modelCoordinatesFieldId);
   m_fieldIds.push_back(m_coordinatesFieldId);
   m_fieldIds.push_back(m_damageFieldId);
   m_fieldIds.push_back(m_bondDamageFieldId);
+  if(m_applyThermalStrains)
+    m_fieldIds.push_back(m_deltaTemperatureFieldId);
 }
 
 PeridigmNS::CriticalStretchDamageModel::~CriticalStretchDamageModel()
@@ -102,11 +112,14 @@ PeridigmNS::CriticalStretchDamageModel::computeDamage(const double dt,
                                                       const int* neighborhoodList,
                                                       PeridigmNS::DataManager& dataManager) const
 {
-  double *x, *y, *damage, *bondDamage;
+  double *x, *y, *damage, *bondDamage, *deltaTemperature;
   dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
   dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&y);
   dataManager.getData(m_damageFieldId, PeridigmField::STEP_NP1)->ExtractView(&damage);
   dataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_NP1)->ExtractView(&bondDamage);
+  deltaTemperature = NULL;
+  if(m_applyThermalStrains)
+    dataManager.getData(m_deltaTemperatureFieldId, PeridigmField::STEP_NP1)->ExtractView(&deltaTemperature);
 
   double trialDamage(0.0);
   int neighborhoodListIndex(0), bondIndex(0);
@@ -133,6 +146,8 @@ PeridigmNS::CriticalStretchDamageModel::computeDamage(const double dt,
       currentDistance = 
         distance(nodeCurrentX[0], nodeCurrentX[1], nodeCurrentX[2],
                  y[neighborID*3], y[neighborID*3+1], y[neighborID*3+2]);
+      if(m_applyThermalStrains)
+        currentDistance -= m_alpha*deltaTemperature[nodeId]*initialDistance;
       relativeExtension = (currentDistance - initialDistance)/initialDistance;
       trialDamage = 0.0;
       if(relativeExtension > m_criticalStretch)
