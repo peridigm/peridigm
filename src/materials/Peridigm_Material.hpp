@@ -111,8 +111,13 @@ namespace PeridigmNS {
     /// \enum JacobianType
     /// \brief Whether to compute the full tangent stiffness matrix or just its block diagonal entries
     ///
-    /// The Peridigm Material base class requires all derived material model classes to implement
-    /// a computeJacobian method to compute the tangent stiffness matrix. The default behavior of this
+    /// The Peridigm Material base class provides a computeJacobian method that all materials inherit
+    /// to compute the tangent stiffness matrix. This base class uses a finite difference method (it provides both
+    /// forward and centered) to numerically approximate the jacobian. Derived classes may override this method
+    /// to compute the jacobian via another approach (for example, automatic differentiation) or may simply 
+    /// inherit and use the finite difference Jacobian, which will work for all derived mateiral classes. 
+    ///
+    /// The default behavior of this
     /// method is to compute the full tangent stiffness matrix. However, is it occasionally useful to compute
     /// and store only the block diagonal entries -- specifically, the only the entries of the matrix that
     /// describe interactions between different dofs for an individual node. This manifests as a block-diagonal
