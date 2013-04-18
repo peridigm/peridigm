@@ -45,9 +45,10 @@
 //@HEADER
 
 #include "Peridigm_ZoltanSearchTree.hpp"
-#include <stdexcept>
-#include <stdlib.h>
-#include <stdio.h>
+// #include <stdexcept>
+// #include <stdlib.h>
+// #include <stdio.h>
+#include <Teuchos_Assert.hpp>
 
 
 PeridigmNS::ZoltanSearchTree::ZoltanSearchTree(int numPoints, double* coordinates) : SearchTree(numPoints, coordinates),
@@ -117,6 +118,8 @@ PeridigmNS::ZoltanSearchTree::ZoltanSearchTree(int numPoints, double* coordinate
 	int ierr = Zoltan_LB_Partition(zoltan, &changes, &numgid, &numlid,
 			&numimp, &impgid, &implid, &imppart, &impproc,
 			&numexp, &gid, &lid, &procs, &parts);
+
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(ierr != 0, "Error in ZoltanSearchTree::ZoltanSearchTree(), call to Zoltan_LB_Partition() returned a nonzero error code.");
 
 	for (int I = 0; I < numPoints; I++)
 	    partToCoordIdx[parts[I]] = I;

@@ -140,7 +140,7 @@ void cylindericalCellPerProcIterator1Proc()
 		QUICKGRID::QuickGridData pdGridDataProc0 = cellPerProcIter.allocatePdGridData();
 		std::pair<QUICKGRID::Cell3D,QUICKGRID::QuickGridData> p0Data = cellPerProcIter.computePdGridData(proc,cellLocator,pdGridDataProc0);
 		gridData = p0Data.second;
-		QUICKGRID::Cell3D nextCellLocator = p0Data.first;
+//		QUICKGRID::Cell3D nextCellLocator = p0Data.first;
 
 		BOOST_CHECK(3==gridData.dimension);
 		BOOST_CHECK(32==gridData.globalNumPoints);

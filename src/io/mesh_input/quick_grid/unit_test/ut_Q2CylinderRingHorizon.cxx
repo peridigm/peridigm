@@ -549,7 +549,7 @@ void Q2CylinderNeighborhoods()
 		QuickGridData pdGridDataProc0 = cellPerProcIter.allocatePdGridData();
 		std::pair<Cell3D,QuickGridData> p0Data = cellPerProcIter.computePdGridData(proc,cellLocator,pdGridDataProc0);
 		gridData = p0Data.second;
-		Cell3D nextCellLocator = p0Data.first;
+//		Cell3D nextCellLocator = p0Data.first;
 
 		BOOST_CHECK(3==gridData.dimension);
 		BOOST_CHECK(15300==gridData.globalNumPoints);

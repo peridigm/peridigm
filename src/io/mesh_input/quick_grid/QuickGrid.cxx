@@ -914,7 +914,7 @@ QuickGridData AxisSymmetric2DCylinderMeshGenerator::sweep_to_wedge
 AxisSymmetricWedgeData AxisSymmetric2DCylinderMeshGenerator::create_wedge_data(QuickGridData& decomp) const {
 
 
-	Spec1D r_spec = specs[0];
+//  Spec1D r_spec = specs[0];
 	Spec1D theta_spec = specs[1];
 	Spec1D z_spec = specs[2];
 //	size_t nr = r_spec.getNumCells();
@@ -1406,7 +1406,7 @@ std::pair<Cell3D,QuickGridData> TensorProductCylinderMeshGenerator::computePdGri
 
 	// Horizon in each of the coordinate directions
 	Horizon hX = H[0];
-	Horizon hY = H[1];
+//  Horizon hY = H[1];
 	Horizon hZ = H[2];
 
 	// Number of cells on this processor
