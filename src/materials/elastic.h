@@ -65,7 +65,10 @@ void computeInternalForceLinearElastic
 		int numOwnedPoints,
 		double BULK_MODULUS,
 		double SHEAR_MODULUS,
-        double horizon
+        double horizon,
+        double thermalExpansionCoefficient = 0,
+        const double* deltaTemperature = 0
+
 );
 
 }

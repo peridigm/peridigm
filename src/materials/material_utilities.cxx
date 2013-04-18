@@ -213,17 +213,20 @@ void computeDilatation
 		ScalarT* dilatationOwned,
 		const int* localNeighborList,
 		int numOwnedPoints,
-        double horizon
+        double horizon,
+        double thermalExpansionCoefficient,
+        const double* deltaTemperature
 )
 {
 	const double *xOwned = xOverlap;
 	const ScalarT *yOwned = yOverlap;
+    const double *deltaT = deltaTemperature;
 	const double *m = mOwned;
 	const double *v = volumeOverlap;
 	ScalarT *theta = dilatationOwned;
 	double cellVolume;
 	const int *neighPtr = localNeighborList;
-	for(int p=0; p<numOwnedPoints;p++, xOwned+=3, yOwned+=3, m++, theta++){
+	for(int p=0; p<numOwnedPoints;p++, xOwned+=3, yOwned+=3, deltaT++, m++, theta++){
 		int numNeigh = *neighPtr; neighPtr++;
 		const double *X = xOwned;
 		const ScalarT *Y = yOwned;
@@ -243,6 +246,8 @@ void computeDilatation
 			ScalarT dY = Y_dx*Y_dx+Y_dy*Y_dy+Y_dz*Y_dz;
 			double d = sqrt(zetaSquared);
 			ScalarT e = sqrt(dY)-d;
+            if(deltaTemperature)
+              e -= thermalExpansionCoefficient*(*deltaT)*d;
             double omega = scalarInfluenceFunction(d,horizon);
 			*theta += 3.0*omega*(1.0-*bondDamage)*d*e*cellVolume/(*m);
 		}
@@ -262,7 +267,9 @@ void computeDilatation<double>
 		double* dilatationOwned,
 		const int* localNeighborList,
 		int numOwnedPoints,
-        double horizon
+        double horizon,
+        double thermalExpansionCoefficient,
+        const double* deltaTemperature
  );
 
 
@@ -278,7 +285,9 @@ void computeDilatation<Sacado::Fad::DFad<double> >
 		Sacado::Fad::DFad<double>* dilatationOwned,
 		const int* localNeighborList,
 		int numOwnedPoints,
-        double horizon
+        double horizon,
+        double thermalExpansionCoefficient,
+        const double* deltaTemperature
  );
 
 /**
