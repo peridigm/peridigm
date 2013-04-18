@@ -67,7 +67,9 @@ void computeInternalForceLinearElastic
 		int numOwnedPoints,
 		double BULK_MODULUS,
 		double SHEAR_MODULUS,
-        double horizon
+        double horizon,
+        double thermalExpansionCoefficient,
+        const double* deltaTemperature
 )
 {
 
@@ -79,6 +81,7 @@ void computeInternalForceLinearElastic
 
 	const double *xOwned = xOverlap;
 	const ScalarT *yOwned = yOverlap;
+    const double *deltaT = deltaTemperature;
 	const double *m = mOwned;
 	const double *v = volumeOverlap;
 	const double *dsf = dsfOwned;
@@ -86,9 +89,9 @@ void computeInternalForceLinearElastic
 	ScalarT *fOwned = fInternalOverlap;
 
 	const int *neighPtr = localNeighborList;
-	double cellVolume, alpha, X_dx, X_dy, X_dz, zeta;
-	ScalarT Y_dx, Y_dy, Y_dz, dY, t, fx, fy, fz;
-	for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yOwned +=3, fOwned+=3, m++, theta++, dsf++){
+	double cellVolume, alpha, X_dx, X_dy, X_dz, zeta, omega;
+	ScalarT Y_dx, Y_dy, Y_dz, dY, t, fx, fy, fz, e, c1;
+	for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yOwned +=3, fOwned+=3, deltaT++, m++, theta++, dsf++){
 
 		int numNeigh = *neighPtr; neighPtr++;
 		const double *X = xOwned;
@@ -109,10 +112,13 @@ void computeInternalForceLinearElastic
 			Y_dy = YP[1]-Y[1];
 			Y_dz = YP[2]-Y[2];
 			dY = sqrt(Y_dx*Y_dx+Y_dy*Y_dy+Y_dz*Y_dz);
-			double omega = scalarInfluenceFunction(zeta,horizon);
-			// ScalarT c1 = omega*(*theta)*(9.0*K-15.0*MU)/(3.0*(*m));
-			ScalarT c1 = omega*(*theta)*(3.0*K/(*m)-alpha/3.0);
-			t = (1.0-*bondDamage)*(c1 * zeta + (1.0-*bondDamage) * omega * alpha * (dY - zeta));
+            e = dY - zeta;
+            if(deltaTemperature)
+              e -= thermalExpansionCoefficient*(*deltaT)*zeta;
+			omega = scalarInfluenceFunction(zeta,horizon);
+			// c1 = omega*(*theta)*(9.0*K-15.0*MU)/(3.0*(*m));
+			c1 = omega*(*theta)*(3.0*K/(*m)-alpha/3.0);
+			t = (1.0-*bondDamage)*(c1 * zeta + (1.0-*bondDamage) * omega * alpha * e);
 			fx = t * Y_dx / dY;
 			fy = t * Y_dy / dY;
 			fz = t * Y_dz / dY;
@@ -143,8 +149,9 @@ template void computeInternalForceLinearElastic<double>
 		int numOwnedPoints,
 		double BULK_MODULUS,
 		double SHEAR_MODULUS,
-        double horizon
-
+        double horizon,
+        double thermalExpansionCoefficient,
+        const double* deltaTemperature
  );
 
 /** Explicit template instantiation for Sacado::Fad::DFad<double>. */
@@ -162,7 +169,9 @@ template void computeInternalForceLinearElastic<Sacado::Fad::DFad<double> >
 		int numOwnedPoints,
 		double BULK_MODULUS,
 		double SHEAR_MODULUS,
-        double horizon
+        double horizon,
+        double thermalExpansionCoefficient,
+        const double* deltaTemperature
 );
 
 }

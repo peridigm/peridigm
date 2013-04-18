@@ -181,7 +181,9 @@ void computeDilatation
 		ScalarT* dilatationOwned,
 		const int* localNeighborList,
 		int numOwnedPoints,
-        double horizon
+        double horizon,
+        double thermalExpansionCoefficient = 0,
+        const double* deltaTemperature = 0
  );
 
 namespace WITH_BOND_VOLUME {

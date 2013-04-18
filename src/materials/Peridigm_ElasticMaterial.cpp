@@ -48,7 +48,6 @@
 #include "Peridigm_ElasticMaterial.hpp"
 #include "Peridigm_Field.hpp"
 #include "elastic.h"
-#include "thermoelastic.h"
 #include "material_utilities.h"
 #include <Teuchos_Assert.hpp>
 #include <Epetra_SerialComm.h>
@@ -162,16 +161,12 @@ PeridigmNS::ElasticMaterial::computeForce(const double dt,
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&force);
   dataManager.getData(m_surfaceCorrectionFactorFieldId, PeridigmField::STEP_NONE)->ExtractView(&scf);
   deltaTemperature = NULL;
-
-  if(!m_applyThermalStrains){
-    MATERIAL_EVALUATION::computeDilatation(x,y,weightedVolume,cellVolume,bondDamage,dilatation,neighborhoodList,numOwnedPoints,m_horizon);
-    MATERIAL_EVALUATION::computeInternalForceLinearElastic(x,y,weightedVolume,cellVolume,dilatation,bondDamage,scf,force,neighborhoodList,numOwnedPoints,m_bulkModulus,m_shearModulus,m_horizon);
-  }
-  else{
+  if(m_applyThermalStrains)
     dataManager.getData(m_deltaTemperatureFieldId, PeridigmField::STEP_NP1)->ExtractView(&deltaTemperature);
-    MATERIAL_EVALUATION::computeDilatation(x,y,deltaTemperature,weightedVolume,cellVolume,bondDamage,dilatation,neighborhoodList,numOwnedPoints,m_alpha,m_horizon);
-    MATERIAL_EVALUATION::computeInternalForceThermoelastic(x,y,deltaTemperature,weightedVolume,cellVolume,dilatation,bondDamage,scf,force,neighborhoodList,numOwnedPoints,m_bulkModulus,m_shearModulus,m_alpha,m_horizon);
-  }
+
+  MATERIAL_EVALUATION::computeDilatation(x,y,weightedVolume,cellVolume,bondDamage,dilatation,neighborhoodList,numOwnedPoints,m_horizon,m_alpha,deltaTemperature);
+  MATERIAL_EVALUATION::computeInternalForceLinearElastic(x,y,weightedVolume,cellVolume,dilatation,bondDamage,scf,force,neighborhoodList,numOwnedPoints,m_bulkModulus,m_shearModulus,m_horizon,m_alpha,deltaTemperature);
+
 }
 
 void
@@ -362,14 +357,8 @@ PeridigmNS::ElasticMaterial::computeAutomaticDifferentiationJacobian(const doubl
     vector<Sacado::Fad::DFad<double> > force_AD(numDof);
 
     // Evaluate the constitutive model using the AD types
-    if(!m_applyThermalStrains){
-      MATERIAL_EVALUATION::computeDilatation(x,&y_AD[0],weightedVolume,cellVolume,bondDamage,&dilatation_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints,m_horizon);
-      MATERIAL_EVALUATION::computeInternalForceLinearElastic(x,&y_AD[0],weightedVolume,cellVolume,&dilatation_AD[0],bondDamage,scf,&force_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints,m_bulkModulus,m_shearModulus,m_horizon);
-    }
-    else{
-      MATERIAL_EVALUATION::computeDilatation(x,&y_AD[0],deltaTemperature,weightedVolume,cellVolume,bondDamage,&dilatation_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints,m_alpha,m_horizon);
-      MATERIAL_EVALUATION::computeInternalForceThermoelastic(x,&y_AD[0],deltaTemperature,weightedVolume,cellVolume,&dilatation_AD[0],bondDamage,scf,&force_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints,m_bulkModulus,m_shearModulus,m_alpha,m_horizon);
-    }
+    MATERIAL_EVALUATION::computeDilatation(x,&y_AD[0],weightedVolume,cellVolume,bondDamage,&dilatation_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints,m_horizon,m_alpha,deltaTemperature);
+    MATERIAL_EVALUATION::computeInternalForceLinearElastic(x,&y_AD[0],weightedVolume,cellVolume,&dilatation_AD[0],bondDamage,scf,&force_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints,m_bulkModulus,m_shearModulus,m_horizon,m_alpha,deltaTemperature);
 
     // Load derivative values into scratch matrix
     // Multiply by volume along the way to convert force density to force
