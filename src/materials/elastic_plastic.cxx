@@ -150,8 +150,7 @@ void computeInternalForceIsotropicElasticPlastic
 	 */
     double yieldValue = 25.0 * yieldStress * yieldStress / 8 / M_PI / pow(DELTA,5);
 	if(isPlanarProblem)
-    	double yieldValue = 225.0 / 3. * yieldStress * yieldStress / 8 / M_PI / THICKNESS / pow(DELTA,4);
-
+    	yieldValue = 225.0 / 3. * yieldStress * yieldStress / 8 / M_PI / THICKNESS / pow(DELTA,4);
 
 	const double *xOwned = xOverlap;
 	const ScalarT *yOwned = yNP1Overlap;

@@ -94,7 +94,7 @@ void simplePlaneCase_1(){
 	/*
 	 * Helper functions
 	 */
-	Dot dot;
+	//Dot dot;
 	Cross cross;
 	/*
 	 * Lower left corner of plane (USER INPUT)
@@ -120,13 +120,14 @@ void simplePlaneCase_1(){
 	BOOST_CHECK(0.0 == ub[1]);
 	BOOST_CHECK(1.0 == ub[2]);
 
+#ifdef PERIDIGM_VTK
+
 	/*
 	 * bond b = p1 - p0
 	 */
 	double p1[3]; p1[0] =  .5; p1[1] = .5; p1[2] = .5;
 	double p0[3]; p0[0] = -.5; p0[1] = .5; p0[2] = .5;
 
-#ifdef PERIDIGM_VTK
 	/*
 	 * Create plane and set values
 	 */

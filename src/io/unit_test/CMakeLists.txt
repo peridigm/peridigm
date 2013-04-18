@@ -10,6 +10,7 @@ endif (NOT ${buildInSource})
 add_executable(utPeridigm_SearchTree ./utPeridigm_SearchTree.cpp)
 target_link_libraries(utPeridigm_SearchTree
   ${Peridigm_LIBRARY}
+  ${Trilinos_LIBRARIES}
   ${Zoltan_LIBRARY}
   ${REQUIRED_LIBS}
   ${Boost_LIBRARIES}
@@ -19,8 +20,8 @@ add_test (utPeridigm_SearchTree python ${CMAKE_BINARY_DIR}/scripts/run_unit_test
 # This test is not run as part of the normal test suite
 add_executable(utPeridigm_SearchTree_Performance ./utPeridigm_SearchTree_Performance.cpp)
 target_link_libraries(utPeridigm_SearchTree_Performance
-  ${Trilinos_LIBRARIES}
   ${Peridigm_LIBRARY}
+  ${Trilinos_LIBRARIES}
   ${Zoltan_LIBRARY}
   ${REQUIRED_LIBS}
   ${Boost_LIBRARIES}

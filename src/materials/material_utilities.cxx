@@ -419,7 +419,7 @@ void computeShearCorrectionFactor
 ){
 	double gamma=1.0e-6;
 	// currently un-used but may be helpful in further studies
-	double reference = 4.0 * M_PI * gamma * gamma * pow(horizon,5) / 75.0;
+//  double reference = 4.0 * M_PI * gamma * gamma * pow(horizon,5) / 75.0;
 	const int *neighPtr = localNeighborList;
 	const double *xOwned = xOverlap;
 	double *yOwned = yOverlap;
@@ -510,7 +510,7 @@ double computeWeightedVolume
 		double dy = XP[1]-X[1];
 		double dz = XP[2]-X[2];
         double zetaSquared = dx*dx+dy*dy+dz*dz;
-        double d = sqrt(zetaSquared);
+        //double d = sqrt(zetaSquared);
         double OMEGA = 1.0;
 		m+=OMEGA*(zetaSquared)*(*bond_volume);
 	}

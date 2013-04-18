@@ -181,7 +181,7 @@ void CellsPerProcessor3D_SerialTest_NumProcs_1()
 	QuickGridData pdGridDataProc0 = cellIter.allocatePdGridData();
 	std::pair<Cell3D,QuickGridData> pdGridData = cellIter.beginIterateProcs(pdGridDataProc0);
 	QuickGridData gridData = pdGridData.second;
-	Cell3D nextCellLocator = pdGridData.first;
+//	Cell3D nextCellLocator = pdGridData.first;
 
 	size_t proc = cellIter.proc();
 	// already moved to next proc
@@ -249,7 +249,7 @@ void CellsPerProcessor3D_smallNeighborhoodSerialTest_NumProcs_1()
 	QuickGridData pdGridDataProc0 = cellIter.allocatePdGridData();
 	std::pair<Cell3D,QuickGridData> pdGridData = cellIter.beginIterateProcs(pdGridDataProc0);
 	QuickGridData gridData = pdGridData.second;
-	Cell3D nextCellLocator = pdGridData.first;
+//	Cell3D nextCellLocator = pdGridData.first;
 
 	size_t proc = cellIter.proc();
 	// already moved to next proc
