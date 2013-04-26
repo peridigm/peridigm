@@ -52,8 +52,9 @@
 
 //! Standard constructor.
 PeridigmNS::Compute_Nearest_Point_Data::Compute_Nearest_Point_Data(Teuchos::RCP<const Teuchos::ParameterList> params,
-                                                                   Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute(params, epetraComm_), m_elementId(-1.0), m_blockId(-1), m_verbose(false), m_elementIdFieldId(-1),
+                                                                   Teuchos::RCP<const Epetra_Comm> epetraComm_,
+                                                                   Teuchos::RCP<const Teuchos::ParameterList> computeClassGlobalData_)
+  : Compute(params, epetraComm_, computeClassGlobalData_), m_elementId(-1.0), m_blockId(-1), m_verbose(false), m_elementIdFieldId(-1),
     m_modelCoordinatesFieldId(-1), m_variableFieldId(-1), m_outputFieldId(-1)
 {
   m_positionX = params->get<double>("X");

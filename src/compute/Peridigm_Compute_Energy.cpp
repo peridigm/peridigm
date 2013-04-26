@@ -52,8 +52,9 @@
 
 //! Standard constructor.
 PeridigmNS::Compute_Energy::Compute_Energy(Teuchos::RCP<const Teuchos::ParameterList> params,
-                                           Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute(params, epetraComm_), m_volumeFieldId(-1), m_modelCoordinatesFieldId(-1), m_coordinatesFieldId(-1), m_velocityFieldId(-1),
+                                           Teuchos::RCP<const Epetra_Comm> epetraComm_,
+                                           Teuchos::RCP<const Teuchos::ParameterList> computeClassGlobalData_)
+  : Compute(params, epetraComm_, computeClassGlobalData_), m_volumeFieldId(-1), m_modelCoordinatesFieldId(-1), m_coordinatesFieldId(-1), m_velocityFieldId(-1),
     m_weightedVolumeFieldId(-1), m_dilatationFieldId(-1), m_kineticEnergyFieldId(-1), m_strainEnergyDensityFieldId(-1), m_strainEnergyFieldId(-1),
     m_globalKineticEnergyFieldId(-1), m_globalStrainEnergyFieldId(-1)
 {

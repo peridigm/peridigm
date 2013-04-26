@@ -61,8 +61,9 @@ namespace PeridigmNS {
 	
     //! Constructor.
     Compute( Teuchos::RCP<const Teuchos::ParameterList> params,
-             Teuchos::RCP<const Epetra_Comm> epetraComm_ )
-      : epetraComm(epetraComm_) {}
+             Teuchos::RCP<const Epetra_Comm> epetraComm_,
+             Teuchos::RCP<const Teuchos::ParameterList> computeClassGlobalData_)
+      : epetraComm(epetraComm_), computeClassGlobalData(computeClassGlobalData_) {}
 
     //! Destructor.
     virtual ~Compute(){}
@@ -85,6 +86,7 @@ namespace PeridigmNS {
     Compute& operator=( const Compute& C );
 
     Teuchos::RCP<const Epetra_Comm> epetraComm;
+    Teuchos::RCP<const Teuchos::ParameterList> computeClassGlobalData;
 
   private:
 

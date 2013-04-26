@@ -51,8 +51,9 @@
 #include "Peridigm_Field.hpp"
 
 PeridigmNS::Compute_Neighborhood_Volume::Compute_Neighborhood_Volume(Teuchos::RCP<const Teuchos::ParameterList> params,
-                                                                     Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute(params, epetraComm_), m_volumeFieldId(-1), m_partialVolumeFieldId(-1), m_neighborhoodVolumeFieldId(-1)
+                                                                     Teuchos::RCP<const Epetra_Comm> epetraComm_,
+                                                                     Teuchos::RCP<const Teuchos::ParameterList> computeClassGlobalData_)
+  : Compute(params, epetraComm_, computeClassGlobalData_), m_volumeFieldId(-1), m_partialVolumeFieldId(-1), m_neighborhoodVolumeFieldId(-1)
 {
   FieldManager& fieldManager = FieldManager::self();
   m_volumeFieldId = fieldManager.getFieldId("Volume");

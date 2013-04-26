@@ -55,10 +55,12 @@ int PeridigmNS::Compute_Deformation_Gradient::myIDGenerator = 0;
 
 //! Standard constructor.
 PeridigmNS::Compute_Deformation_Gradient::Compute_Deformation_Gradient(Teuchos::RCP<const Teuchos::ParameterList> params,
-                                         Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute(params, epetraComm_), m_deformationGradientXXFId(-1), m_deformationGradientXYFId(-1), m_deformationGradientXZFId(-1),
-                                  m_deformationGradientYXFId(-1), m_deformationGradientYYFId(-1), m_deformationGradientYZFId(-1),
-                                  m_deformationGradientZXFId(-1), m_deformationGradientZYFId(-1), m_deformationGradientZZFId(-1)
+                                                                       Teuchos::RCP<const Epetra_Comm> epetraComm_,
+                                                                       Teuchos::RCP<const Teuchos::ParameterList> computeClassGlobalData_)
+  : Compute(params, epetraComm_, computeClassGlobalData_), 
+    m_deformationGradientXXFId(-1), m_deformationGradientXYFId(-1), m_deformationGradientXZFId(-1),
+    m_deformationGradientYXFId(-1), m_deformationGradientYYFId(-1), m_deformationGradientYZFId(-1),
+    m_deformationGradientZXFId(-1), m_deformationGradientZYFId(-1), m_deformationGradientZZFId(-1)
 
 {
   // Initialize my unique ID

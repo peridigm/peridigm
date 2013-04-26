@@ -51,8 +51,9 @@
 
 //! Standard constructor.
 PeridigmNS::Compute_Global_Kinetic_Energy::Compute_Global_Kinetic_Energy(Teuchos::RCP<const Teuchos::ParameterList> params,
-                                                                         Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute_Kinetic_Energy(params, epetraComm_)
+                                                                         Teuchos::RCP<const Epetra_Comm> epetraComm_,
+                                                                         Teuchos::RCP<const Teuchos::ParameterList> computeClassGlobalData_)
+  : Compute_Kinetic_Energy(params, epetraComm_, computeClassGlobalData_)
 {}
 
 //! Destructor.

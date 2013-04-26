@@ -53,7 +53,7 @@
 
 using namespace std;
 
-PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList> params, Teuchos::RCP<const Epetra_Comm> epetraComm ) {
+PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList> params, Teuchos::RCP<const Epetra_Comm> epetraComm, Teuchos::RCP<const Teuchos::ParameterList> computeClassGlobalParams ) {
 
   Teuchos::RCP<Compute> compute;
 
@@ -108,7 +108,7 @@ PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList>
     #define COMPUTE_CLASS
       #define ComputeClass(key, Class) \
       if (name == #key) { \
-        compute = Teuchos::rcp( new PeridigmNS::Class(params, epetraComm) ); \
+        compute = Teuchos::rcp( new PeridigmNS::Class(params, epetraComm, computeClassGlobalParams) ); \
         computeObjects.push_back( Teuchos::rcp_implicit_cast<Compute>(compute) ); \
       }
       #include "compute/compute_includes.hpp"

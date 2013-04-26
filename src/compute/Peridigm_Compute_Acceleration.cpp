@@ -52,8 +52,9 @@
 
 //! Standard constructor.
 PeridigmNS::Compute_Acceleration::Compute_Acceleration(Teuchos::RCP<const Teuchos::ParameterList> params,
-                                                       Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute(params, epetraComm_), m_forceDensityFieldId(-1), m_accelerationFieldId(-1)
+                                                       Teuchos::RCP<const Epetra_Comm> epetraComm_,
+                                                       Teuchos::RCP<const Teuchos::ParameterList> computeClassGlobalData_)
+  : Compute(params, epetraComm_, computeClassGlobalData_), m_forceDensityFieldId(-1), m_accelerationFieldId(-1)
 {
   FieldManager& fieldManager = FieldManager::self();
   m_forceDensityFieldId = fieldManager.getFieldId("Force_Density");
