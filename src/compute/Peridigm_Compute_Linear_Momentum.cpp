@@ -52,8 +52,9 @@
 
 //! Standard constructor.
 PeridigmNS::Compute_Linear_Momentum::Compute_Linear_Momentum(Teuchos::RCP<const Teuchos::ParameterList> params,
-                                                             Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute(params, epetraComm_), m_volumeFieldId(-1), m_velocityFieldId(-1),
+                                                             Teuchos::RCP<const Epetra_Comm> epetraComm_,
+                                                             Teuchos::RCP<const Teuchos::ParameterList> computeClassGlobalData_)
+  : Compute(params, epetraComm_, computeClassGlobalData_), m_volumeFieldId(-1), m_velocityFieldId(-1),
     m_linearMomentumFieldId(-1), m_globalLinearMomentumFieldId(-1)
 {
   FieldManager& fieldManager = FieldManager::self();

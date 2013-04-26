@@ -65,7 +65,8 @@ namespace PeridigmNS {
 	
     //! Constructor.
     Compute_Contact_Force( Teuchos::RCP<const Teuchos::ParameterList> params,
-                           Teuchos::RCP<const Epetra_Comm> epetraComm_ );
+                             Teuchos::RCP<const Epetra_Comm> epetraComm_,
+                             Teuchos::RCP<const Teuchos::ParameterList> computeClassGlobalData_);
 
     //! Destructor.
     ~Compute_Contact_Force();

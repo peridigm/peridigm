@@ -554,7 +554,13 @@ void PeridigmNS::Peridigm::instantiateComputeManager() {
       }
     }
   }
-  computeManager = Teuchos::rcp( new PeridigmNS::ComputeManager( computeParams, peridigmComm  ) );
+
+  // Initialize the parameterlist containing global Peridigm data (not stored in blocks)
+  computeClassGlobalData = Teuchos::rcp(new Teuchos::ParameterList());
+  computeClassGlobalData->set("tangent",tangent);
+  computeClassGlobalData->set("blockDiagonalTangent",blockDiagonalTangent);
+
+  computeManager = Teuchos::rcp( new PeridigmNS::ComputeManager( computeParams, peridigmComm, computeClassGlobalData ) );
 }
 
 void PeridigmNS::Peridigm::initializeBlocks(Teuchos::RCP<Discretization> disc) {
@@ -2293,6 +2299,56 @@ void PeridigmNS::Peridigm::allocateJacobian() {
   // create the serial Jacobian
   overlapJacobian = Teuchos::rcp(new PeridigmNS::SerialMatrix(tangent));
   workset->jacobian = overlapJacobian;
+}
+
+void PeridigmNS::Peridigm::allocateBlockDiagonalJacobian() {
+
+  // Construct map for global tangent matrix
+  // Note that this must be an Epetra_Map, not an Epetra_BlockMap, so we can't use threeDimensionalMap directly
+  int numGlobalElements = 3*oneDimensionalMap->NumGlobalElements();
+  int numMyElements = 3*oneDimensionalMap->NumMyElements();
+  vector<int> myGlobalElements(numMyElements);
+  int* oneDimensionalMapGlobalElements = oneDimensionalMap->MyGlobalElements();
+  for(int iElem=0 ; iElem<oneDimensionalMap->NumMyElements() ; ++iElem){
+    myGlobalElements[3*iElem]     = 3*oneDimensionalMapGlobalElements[iElem];
+    myGlobalElements[3*iElem + 1] = 3*oneDimensionalMapGlobalElements[iElem] + 1;
+    myGlobalElements[3*iElem + 2] = 3*oneDimensionalMapGlobalElements[iElem] + 2;
+  }
+  int indexBase = 0;
+  blockDiagonalTangentMap = Teuchos::rcp(new Epetra_Map(numGlobalElements, numMyElements, &myGlobalElements[0], indexBase, *peridigmComm));
+  myGlobalElements.clear();
+
+  // Create the block diagonal tangent matrix
+  Epetra_DataAccess CV = Copy;
+  int numEntriesPerRow = 3; // In the block diagonal jacobian, there are always three entries per row in 3D
+  bool ignoreNonLocalEntries = false;
+  blockDiagonalTangent = Teuchos::rcp(new Epetra_FECrsMatrix(CV, *blockDiagonalTangentMap, numEntriesPerRow, ignoreNonLocalEntries));
+
+  // Allocate storage for block diagonal tangent
+  vector<int> indices;
+  vector<double> zeros;
+  indices.resize(numEntriesPerRow, 0.0);
+  zeros.resize(numEntriesPerRow, 0.0);
+  for(int iElem=0 ; iElem<oneDimensionalMap->NumMyElements() ; ++iElem){
+    // insert all three rows for this element
+    indices[0] = 3*oneDimensionalMapGlobalElements[iElem];
+    indices[1] = 3*oneDimensionalMapGlobalElements[iElem] + 1;
+    indices[2] = 3*oneDimensionalMapGlobalElements[iElem] + 2;
+    // Allocate space in the global matrix
+    int err = blockDiagonalTangent->InsertGlobalValues(indices[0], numEntriesPerRow, (const double*)&zeros[0], (const int*)&indices[0]);
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(err < 0, "**** PeridigmNS::Peridigm::allocateBlockDiagonalJacobian(), InsertGlobalValues() returned negative error code.\n");
+    err = blockDiagonalTangent->InsertGlobalValues(indices[1], numEntriesPerRow, (const double*)&zeros[0], (const int*)&indices[0]);
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(err < 0, "**** PeridigmNS::Peridigm::allocateBlockDiagonalJacobian(), InsertGlobalValues() returned negative error code.\n");
+    err = blockDiagonalTangent->InsertGlobalValues(indices[2], numEntriesPerRow, (const double*)&zeros[0], (const int*)&indices[0]);
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(err < 0, "**** PeridigmNS::Peridigm::allocateBlockDiagonalJacobian(), InsertGlobalValues() returned negative error code.\n");
+  }
+  int err = blockDiagonalTangent->GlobalAssemble();
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::allocateBlockDiagonalJacobian(), GlobalAssemble() returned nonzero error code.\n");
+
+// create the serial Jacobian
+// MLP: What do I need to do here?
+//  overlapJacobian = Teuchos::rcp(new PeridigmNS::SerialMatrix(tangent));
+//  workset->jacobian = overlapJacobian;
 }
 
 double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vector> residual) {

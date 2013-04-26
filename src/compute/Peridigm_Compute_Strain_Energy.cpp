@@ -52,8 +52,9 @@
 
 //! Standard constructor.
 PeridigmNS::Compute_Strain_Energy::Compute_Strain_Energy(Teuchos::RCP<const Teuchos::ParameterList> params,
-                                                         Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute(params, epetraComm_), m_strainEnergyFId(-1)
+                                                               Teuchos::RCP<const Epetra_Comm> epetraComm_,
+                                                               Teuchos::RCP<const Teuchos::ParameterList> computeClassGlobalData_)
+  : Compute(params, epetraComm_, computeClassGlobalData_), m_strainEnergyFId(-1)
 {
   FieldManager& fieldManager = FieldManager::self();
   m_strainEnergyFId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Strain_Energy");

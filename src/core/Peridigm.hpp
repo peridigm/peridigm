@@ -182,6 +182,9 @@ namespace PeridigmNS {
     //! Allocate memory for non-zeros in global Jacobian
     void allocateJacobian();
 
+    //! Allocate memory for non-zeros in block diagonal Jacobian
+    void allocateBlockDiagonalJacobian();
+
     //! Compute the Jacobian for implicit dynamics
     void computeImplicitJacobian(double beta);
 
@@ -331,6 +334,8 @@ namespace PeridigmNS {
 
     //! Compute manager
     Teuchos::RCP<PeridigmNS::ComputeManager> computeManager;
+    //! Parameterlist containing global data (data not stored in a data manager) to a compute class
+    Teuchos::RCP<Teuchos::ParameterList> computeClassGlobalData;
 
     //! Mothership multivector that contains all the three-dimensional global vectors (x, u, y, v, a, force, etc.)
     Teuchos::RCP<Epetra_MultiVector> threeDimensionalMothership;
@@ -392,8 +397,14 @@ namespace PeridigmNS {
     //! Map for global tangent matrix (note, must be an Epetra_Map, not an Epetra_BlockMap)
     Teuchos::RCP<Epetra_Map> tangentMap;
 
+    //! Map for block diagonal tangent matrix (note, must be an Epetra_Map, not an Epetra_BlockMap)
+    Teuchos::RCP<Epetra_Map> blockDiagonalTangentMap;
+
     //! Global tangent matrix
     Teuchos::RCP<Epetra_FECrsMatrix> tangent;
+
+    //! Block diagonal of global tangent matrix
+    Teuchos::RCP<Epetra_FECrsMatrix> blockDiagonalTangent;
 
     //! List of neighbors for all locally-owned nodes
     Teuchos::RCP<PeridigmNS::NeighborhoodData> globalNeighborhoodData;

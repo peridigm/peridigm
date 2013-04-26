@@ -51,8 +51,9 @@
 
 //! Standard constructor.
 PeridigmNS::Compute_Global_Linear_Momentum::Compute_Global_Linear_Momentum(Teuchos::RCP<const Teuchos::ParameterList> params,
-                                                                           Teuchos::RCP<const Epetra_Comm> epetraComm_)
-  : Compute_Linear_Momentum(params, epetraComm_)
+                                                                           Teuchos::RCP<const Epetra_Comm> epetraComm_,
+                                                                           Teuchos::RCP<const Teuchos::ParameterList> computeClassGlobalData_)
+  : Compute_Linear_Momentum(params, epetraComm_, computeClassGlobalData_)
 {}
 
 //! Destructor.
