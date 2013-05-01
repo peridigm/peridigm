@@ -1,0 +1,2 @@
+blot SurfaceFactorCube.e -input SurfaceFactorCube.blot met
+python SurfaceFactorCubePostProcess.py

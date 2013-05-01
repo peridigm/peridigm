@@ -1,0 +1,11 @@
+
+reset
+create brick x 1.0 y 1.0 z 1.0
+volume 1 copy move x 2.0 y 0.0 z 0.0
+rotate volume 1 angle 30 about z include_merged
+rotate volume 1 angle 30 about y include_merged
+volume all size 0.111111111111111
+mesh volume all
+block 1 volume 1 2
+nodeset 1 volume 1 2
+export genesis 'SurfaceFactorCube.g' overwrite

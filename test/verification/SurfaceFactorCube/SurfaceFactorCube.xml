@@ -1,0 +1,161 @@
+<ParameterList>
+
+  <Parameter name="Verbose" type="bool" value="false"/>
+
+  <ParameterList name="Discretization">
+	<Parameter name="Type" type="string" value="Exodus" />
+	<Parameter name="Horizon" type="double" value="0.335"/>
+	<Parameter name="Input Mesh File" type="string" value="SurfaceFactorCube.g"/>
+  </ParameterList>
+
+  <ParameterList name="Materials">
+	<ParameterList name="My Elastic Material">
+	  <Parameter name="Material Model" type="string" value="Elastic"/>
+	  <Parameter name="Density" type="double" value="2200.0"/>        <!-- kg/m^3 -->
+	  <Parameter name="Bulk Modulus" type="double" value="14.90e9"/>  <!-- Pa -->
+	  <Parameter name="Shear Modulus" type="double" value="8.94e9"/>  <!-- Pa -->
+      <Parameter name="Apply Shear Correction Factor" type="bool" value="true"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Blocks">
+	<ParameterList name="My Group of Blocks">
+	  <Parameter name="Block Names" type="string" value="block_1"/>
+	  <Parameter name="Material" type="string" value="My Elastic Material"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Boundary Conditions">
+	<ParameterList name="Fix X">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_1"/>
+	  <Parameter name="Coordinate" type="string" value="x"/>
+	  <Parameter name="Value" type="string" value="0.0"/>
+	</ParameterList>
+	<ParameterList name="Fix Y">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_1"/>
+	  <Parameter name="Coordinate" type="string" value="y"/>
+	  <Parameter name="Value" type="string" value="0.0"/>
+	</ParameterList>
+	<ParameterList name="Fix Z">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_1"/>
+	  <Parameter name="Coordinate" type="string" value="z"/>
+	  <Parameter name="Value" type="string" value="0.0"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Solver">
+	<Parameter name="Verbose" type="bool" value="false"/>
+	<Parameter name="Initial Time" type="double" value="0.0"/>
+	<Parameter name="Final Time" type="double" value="1.0e-10"/> 
+	<ParameterList name="Verlet">
+	  <Parameter name="Fixed dt" type="double" value="10.e-10"/>
+	</ParameterList>
+  </ParameterList>
+  
+  <ParameterList name="Compute Class Parameters">
+    <ParameterList name="SCF Unrotated Block Center">
+       <Parameter name="Compute Class" type="string" value="Nearest_Point_Data"/>
+       <Parameter name="X" type="double" value="2.0"/>
+       <Parameter name="Y" type="double" value="0.0"/>
+       <Parameter name="Z" type="double" value="0.0"/>
+       <Parameter name="Variable" type="string" value="Surface_Correction_Factor"/>
+       <Parameter name="Output Label" type="string" value="SCF_Unrotated_Block_Center"/>
+       <Parameter name="Verbose" type="bool" value="True"/>
+    </ParameterList>
+    <ParameterList name="SCF Unrotated Block Face">
+       <Parameter name="Compute Class" type="string" value="Nearest_Point_Data"/>
+       <Parameter name="X" type="double" value="2.0"/>
+       <Parameter name="Y" type="double" value="0.0"/>
+       <Parameter name="Z" type="double" value="0.5"/>
+       <Parameter name="Variable" type="string" value="Surface_Correction_Factor"/>
+       <Parameter name="Output Label" type="string" value="SCF_Unrotated_Block_Face"/>
+       <Parameter name="Verbose" type="bool" value="True"/>
+    </ParameterList>
+    <ParameterList name="SCF Unrotated Block Edge">
+       <Parameter name="Compute Class" type="string" value="Nearest_Point_Data"/>
+       <Parameter name="X" type="double" value="2.5"/>
+       <Parameter name="Y" type="double" value="0.0"/>
+       <Parameter name="Z" type="double" value="0.5"/>
+       <Parameter name="Variable" type="string" value="Surface_Correction_Factor"/>
+       <Parameter name="Output Label" type="string" value="SCF_Unrotated_Block_Edge"/>
+       <Parameter name="Verbose" type="bool" value="True"/>
+    </ParameterList>
+    <ParameterList name="SCF Unrotated Block Corner">
+       <Parameter name="Compute Class" type="string" value="Nearest_Point_Data"/>
+       <Parameter name="X" type="double" value="2.5"/>
+       <Parameter name="Y" type="double" value="0.5"/>
+       <Parameter name="Z" type="double" value="0.5"/>
+       <Parameter name="Variable" type="string" value="Surface_Correction_Factor"/>
+       <Parameter name="Output Label" type="string" value="SCF_Unrotated_Block_Corner"/>
+       <Parameter name="Verbose" type="bool" value="True"/>
+    </ParameterList>
+    <ParameterList name="SCF Rotated Block Center">
+       <Parameter name="Compute Class" type="string" value="Nearest_Point_Data"/>
+       <Parameter name="X" type="double" value="0.0"/>
+       <Parameter name="Y" type="double" value="0.0"/>
+       <Parameter name="Z" type="double" value="0.0"/>
+       <Parameter name="Variable" type="string" value="Surface_Correction_Factor"/>
+       <Parameter name="Output Label" type="string" value="SCF_Rotated_Block_Center"/>
+       <Parameter name="Verbose" type="bool" value="True"/>
+    </ParameterList>
+    <ParameterList name="SCF Rotated Block Face">
+       <Parameter name="Compute Class" type="string" value="Nearest_Point_Data"/>
+       <Parameter name="X" type="double" value="0.25"/>
+       <Parameter name="Y" type="double" value="0.0"/>
+       <Parameter name="Z" type="double" value="0.433013"/>
+       <Parameter name="Variable" type="string" value="Surface_Correction_Factor"/>
+       <Parameter name="Output Label" type="string" value="SCF_Rotated_Block_Face"/>
+       <Parameter name="Verbose" type="bool" value="True"/>
+    </ParameterList>
+    <ParameterList name="SCF Rotated Block Edge">
+       <Parameter name="Compute Class" type="string" value="Nearest_Point_Data"/>
+       <Parameter name="X" type="double" value="0.625"/>
+       <Parameter name="Y" type="double" value="0.25"/>
+       <Parameter name="Z" type="double" value="0.216506"/>
+       <Parameter name="Variable" type="string" value="Surface_Correction_Factor"/>
+       <Parameter name="Output Label" type="string" value="SCF_Rotated_Block_Edge"/>
+       <Parameter name="Verbose" type="bool" value="True"/>
+    </ParameterList>
+    <ParameterList name="SCF Rotated Block Corner">
+       <Parameter name="Compute Class" type="string" value="Nearest_Point_Data"/>
+       <Parameter name="X" type="double" value="0.408494"/>
+       <Parameter name="Y" type="double" value="0.683013"/>
+       <Parameter name="Z" type="double" value="0.341506"/>
+       <Parameter name="Variable" type="string" value="Surface_Correction_Factor"/>
+       <Parameter name="Output Label" type="string" value="SCF_Rotated_Block_Corner"/>
+       <Parameter name="Verbose" type="bool" value="True"/>
+    </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Output">
+	<Parameter name="Output File Type" type="string" value="ExodusII"/>
+	<Parameter name="Output Format" type="string" value="BINARY"/>
+	<Parameter name="Output Filename" type="string" value="SurfaceFactorCube"/>
+	<Parameter name="Output Frequency" type="int" value="20"/>
+	<Parameter name="Parallel Write" type="bool" value="true"/>
+	<ParameterList name="Output Variables">
+	  <Parameter name="Displacement" type="bool" value="true"/>
+	  <Parameter name="Velocity" type="bool" value="true"/>
+	  <Parameter name="Element_Id" type="bool" value="true"/>
+	  <Parameter name="Proc_Num" type="bool" value="true"/>
+	  <Parameter name="Dilatation" type="bool" value="true"/>
+	  <Parameter name="Force_Density" type="bool" value="true"/>
+	  <Parameter name="Weighted_Volume" type="bool" value="true"/>
+	  <Parameter name="Damage" type="bool" value="true"/>
+      <Parameter name="Number_Of_Neighbors" type="bool" value="true"/>
+      <Parameter name="Surface_Correction_Factor" type="bool" value="true"/>
+      <Parameter name="SCF_Unrotated_Block_Center" type="bool" value="true"/>
+      <Parameter name="SCF_Unrotated_Block_Face" type="bool" value="true"/>
+      <Parameter name="SCF_Unrotated_Block_Edge" type="bool" value="true"/>
+      <Parameter name="SCF_Unrotated_Block_Corner" type="bool" value="true"/>
+      <Parameter name="SCF_Rotated_Block_Center" type="bool" value="true"/>
+      <Parameter name="SCF_Rotated_Block_Face" type="bool" value="true"/>
+      <Parameter name="SCF_Rotated_Block_Edge" type="bool" value="true"/>
+      <Parameter name="SCF_Rotated_Block_Corner" type="bool" value="true"/>
+	</ParameterList>
+  </ParameterList>
+  
+</ParameterList>
