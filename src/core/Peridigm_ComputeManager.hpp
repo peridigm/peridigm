@@ -53,6 +53,7 @@
 
 #include <Peridigm_Block.hpp>
 #include <compute/Peridigm_Compute.hpp>
+#include <Peridigm_ServiceManager.hpp>
 
 namespace PeridigmNS {
   
@@ -65,6 +66,9 @@ namespace PeridigmNS {
     
     //! Return list of field specs that the compute manager is handling
     virtual std::vector<int> FieldIds() const;
+
+    //! Return set of services requested by compute classes.
+    virtual std::set<PeridigmService::Service> Services() const;
 
     //! Destructor.
     virtual ~ComputeManager();

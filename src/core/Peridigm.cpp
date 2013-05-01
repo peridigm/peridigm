@@ -328,6 +328,20 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   if(analysisHasContact)
     rebalance();
 
+  // Create service manager
+  serviceManager = Teuchos::rcp(new PeridigmNS::ServiceManager());
+  serviceManager->requestService(computeManager->Services());
+
+  // Perform requested services
+
+  // Check if request for allocation of full tangent stiffness matrix
+  if (serviceManager->isRequested(PeridigmNS::PeridigmService::ALLOCATE_TANGENT))
+    allocateJacobian();
+
+  // Check if request for allocation of block diagonal tangent stiffness matrix
+  if (serviceManager->isRequested(PeridigmNS::PeridigmService::ALLOCATE_BLOCK_DIAGONAL_TANGENT))
+    allocateBlockDiagonalJacobian();
+
   // Set default value for current time;
   timeCurrent = 0.0;
 }
@@ -559,6 +573,7 @@ void PeridigmNS::Peridigm::instantiateComputeManager() {
   computeClassGlobalData = Teuchos::rcp(new Teuchos::ParameterList());
   computeClassGlobalData->set("tangent",tangent);
   computeClassGlobalData->set("blockDiagonalTangent",blockDiagonalTangent);
+  computeClassGlobalData->set("overlapJacobian",overlapJacobian);
 
   computeManager = Teuchos::rcp( new PeridigmNS::ComputeManager( computeParams, peridigmComm, computeClassGlobalData ) );
 }
@@ -2217,6 +2232,9 @@ void PeridigmNS::Peridigm::executeImplicit() {
 
 void PeridigmNS::Peridigm::allocateJacobian() {
 
+  // do not re-allocate if already allocated
+  if (tangent != Teuchos::null) return;
+
   // Construct map for global tangent matrix
   // Note that this must be an Epetra_Map, not an Epetra_BlockMap, so we can't use threeDimensionalMap directly
   int numGlobalElements = 3*oneDimensionalMap->NumGlobalElements();
@@ -2303,6 +2321,9 @@ void PeridigmNS::Peridigm::allocateJacobian() {
 
 void PeridigmNS::Peridigm::allocateBlockDiagonalJacobian() {
 
+  // do not re-allocate if already allocated
+  if (blockDiagonalTangent != Teuchos::null) return;
+
   // Construct map for global tangent matrix
   // Note that this must be an Epetra_Map, not an Epetra_BlockMap, so we can't use threeDimensionalMap directly
   int numGlobalElements = 3*oneDimensionalMap->NumGlobalElements();
@@ -2345,10 +2366,9 @@ void PeridigmNS::Peridigm::allocateBlockDiagonalJacobian() {
   int err = blockDiagonalTangent->GlobalAssemble();
   TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::allocateBlockDiagonalJacobian(), GlobalAssemble() returned nonzero error code.\n");
 
-// create the serial Jacobian
-// MLP: What do I need to do here?
-//  overlapJacobian = Teuchos::rcp(new PeridigmNS::SerialMatrix(tangent));
-//  workset->jacobian = overlapJacobian;
+  // create the serial Jacobian
+  overlapJacobian = Teuchos::rcp(new PeridigmNS::SerialMatrix(blockDiagonalTangent));
+  workset->jacobian = overlapJacobian;
 }
 
 double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vector> residual) {
