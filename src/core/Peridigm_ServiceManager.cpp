@@ -1,4 +1,4 @@
-/*! \file Peridigm_Compute.hpp */
+/*! \file Peridigm_ServiceManager.cpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,59 +45,12 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_COMPUTE_HPP
-#define PERIDIGM_COMPUTE_HPP
-
-#include <Epetra_Comm.h>
-#include <Teuchos_RCP.hpp>
-
-#include "Peridigm_Block.hpp"
 #include "Peridigm_ServiceManager.hpp"
 
-namespace PeridigmNS {
-
-  //! Base class defining the Peridigm compute class interface.
-  class Compute{
-
-  public:
-	
-    //! Constructor.
-    Compute( Teuchos::RCP<const Teuchos::ParameterList> params,
-             Teuchos::RCP<const Epetra_Comm> epetraComm_,
-             Teuchos::RCP<const Teuchos::ParameterList> computeClassGlobalData_)
-      : epetraComm(epetraComm_), computeClassGlobalData(computeClassGlobalData_) {}
-
-    //! Destructor.
-    virtual ~Compute(){}
-
-    //! Returns a vector of field IDs corresponding to the variables associated with the compute class.
-    virtual std::vector<int> FieldIds() const = 0;
-
-    //! Returns a set of services requested by the compute class.
-    virtual std::set<PeridigmService::Service> Services() const {std::set<PeridigmService::Service> emptySet; return emptySet;};
-
-    //! Initialize the compute class
-    virtual void initialize( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) {};
-
-    //! Perform computation
-    virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const = 0;
-
-  protected:
-
-    //! Copy constructor.
-    Compute( const Compute& C );
-
-    //! Assignment operator.
-    Compute& operator=( const Compute& C );
-
-    Teuchos::RCP<const Epetra_Comm> epetraComm;
-    Teuchos::RCP<const Teuchos::ParameterList> computeClassGlobalData;
-
-  private:
-
-    //! Prohibit use of the default constructor.
-    Compute(){}
-  };
+void PeridigmNS::ServiceManager::requestService(std::set<PeridigmNS::PeridigmService::Service> services ) {
+  peridigmServices.insert(services.begin(), services.end());
 }
 
-#endif // PERIDIGM_COMPUTE_HPP
+bool PeridigmNS::ServiceManager::isRequested(PeridigmNS::PeridigmService::Service service) {
+  return( peridigmServices.find(service) != peridigmServices.end() );
+}

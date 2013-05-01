@@ -217,7 +217,6 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
         y[3*perturbID+dof] = oldY;
 
         for(int i=0 ; i<numNeighbors+1 ; ++i){
-
           int forceID;
           if(i < numNeighbors)
             forceID = tempNeighborhoodList[i+1];
@@ -228,7 +227,16 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
             double value = ( force[3*forceID+d] - tempForce[3*forceID+d] ) / epsilon;
             if(finiteDifferenceScheme == CENTRAL_DIFFERENCE)
               value *= 0.5;
+// MLP
+//            if (jacobianType == PeridigmNS::Material::FULL_MATRIX)
               scratchMatrix(3*forceID+d, 3*perturbID+dof) = value;
+/*            else if (jacobianType == PeridigmNS::Material::BLOCK_DIAGONAL) {
+                if (perturbID==forceID)
+                  scratchMatrix(3*forceID+d, 3*perturbID+dof) = value;
+                else
+                  scratchMatrix(3*forceID+d, 3*perturbID+dof) = 0.0;
+              }
+*/
           }
         }
       }
@@ -250,7 +258,13 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     }
 
     // Sum the values into the global tangent matrix (this is expensive).
-    jacobian.addValues((int)globalIndices.size(), &globalIndices[0], scratchMatrix.Data());
+    if (jacobianType == PeridigmNS::Material::FULL_MATRIX)
+      jacobian.addValues((int)globalIndices.size(), &globalIndices[0], scratchMatrix.Data());
+    else if (jacobianType == PeridigmNS::Material::BLOCK_DIAGONAL) {
+      jacobian.addBlockDiagonalValues((int)globalIndices.size(), &globalIndices[0], scratchMatrix.Data());
+    }
+    else // unknown jacobian type
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Unknown Jacobian Type\n");
   }
 }
 

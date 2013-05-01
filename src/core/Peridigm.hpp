@@ -51,16 +51,21 @@
 #include <vector>
 #include <set>
 
-#include <Epetra_MpiComm.h>
-#include <Epetra_SerialComm.h>
-#include <Teuchos_FancyOStream.hpp>
-#include <Teuchos_ParameterList.hpp>
-#include <Teuchos_RCP.hpp>
-#include <Epetra_FECrsMatrix.h>
 #include <BelosLinearProblem.hpp>
 #include <BelosBlockCGSolMgr.hpp>
 #include <BelosBlockGmresSolMgr.hpp>
 #include <BelosEpetraAdapter.hpp>
+#include <Epetra_FECrsMatrix.h>
+#include <Epetra_MpiComm.h>
+#include <Epetra_SerialComm.h>
+#include <NOX.H>
+#include <NOX_Epetra.H>
+#include <NOX_Epetra_Interface_Required.H>
+#include <NOX_Epetra_Interface_Jacobian.H>
+#include <NOX_Epetra_Interface_Preconditioner.H>
+#include <Teuchos_FancyOStream.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_RCP.hpp>
 
 #include "Peridigm_Block.hpp"
 #include "Peridigm_Discretization.hpp"
@@ -70,17 +75,12 @@
 #include "Peridigm_OutputManagerContainer.hpp"
 #include "Peridigm_ComputeManager.hpp"
 #include "Peridigm_BoundaryAndInitialConditionManager.hpp"
+#include "Peridigm_ServiceManager.hpp"
 #include "materials/Peridigm_Material.hpp"
 #include "damage/Peridigm_DamageModel.hpp"
 #include "contact/Peridigm_ContactModel.hpp"
 #include "mesh_input/quick_grid/QuickGridData.h"
 #include "muParser/muParserDef.h"
-
-#include <NOX.H>
-#include <NOX_Epetra.H>
-#include <NOX_Epetra_Interface_Required.H>
-#include <NOX_Epetra_Interface_Jacobian.H>
-#include <NOX_Epetra_Interface_Preconditioner.H>
 
 namespace PeridigmNS {
 
@@ -336,6 +336,9 @@ namespace PeridigmNS {
     Teuchos::RCP<PeridigmNS::ComputeManager> computeManager;
     //! Parameterlist containing global data (data not stored in a data manager) to a compute class
     Teuchos::RCP<Teuchos::ParameterList> computeClassGlobalData;
+
+    //! Service manager
+    Teuchos::RCP<PeridigmNS::ServiceManager> serviceManager;
 
     //! Mothership multivector that contains all the three-dimensional global vectors (x, u, y, v, a, force, etc.)
     Teuchos::RCP<Epetra_MultiVector> threeDimensionalMothership;

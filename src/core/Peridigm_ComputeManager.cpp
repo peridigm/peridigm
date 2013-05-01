@@ -48,6 +48,7 @@
 #include <string>
 #include <iostream>
 
+#include "Peridigm_ServiceManager.hpp"
 #include "Peridigm_ComputeManager.hpp"
 #include "compute/compute_includes.hpp"
 
@@ -139,6 +140,21 @@ vector<int> PeridigmNS::ComputeManager::FieldIds() const {
 
   return myFieldIds;
 }
+
+set<PeridigmNS::PeridigmService::Service> PeridigmNS::ComputeManager::Services() const {
+
+  set<PeridigmNS::PeridigmService::Service> requestedServices;
+
+  // Loop over all compute objects, collect the services they request
+  for (unsigned int i=0; i < computeObjects.size(); i++) {
+    Teuchos::RCP<const PeridigmNS::Compute> compute = computeObjects[i];
+    set<PeridigmNS::PeridigmService::Service> computeServices = compute->Services();
+    requestedServices.insert(computeServices.begin(), computeServices.end());
+  }
+
+  return requestedServices;
+}
+
 
 PeridigmNS::ComputeManager::~ComputeManager() {
 }

@@ -78,6 +78,9 @@ public:
   //! Add block of data at given locations, indexed by global ID
   void addValues(int numIndicies, const int* globalIndices, const double *const * values);
 
+  //! Add only block diagonal values at given locations, indexed by global ID
+  void addBlockDiagonalValues(int numIndicies, const int* globalIndices, const double *const * values);
+
   //! Set all entries to given scalar
   void putScalar(double value);
 
