@@ -58,7 +58,7 @@ namespace QUICKGRID {
 
 using UTILITIES::Array;
 
-shared_ptr<Bond_Volume_Calculator> get_Bond_Volume_Calculator(const std::string& json_filename) {
+  std::tr1::shared_ptr<Bond_Volume_Calculator> get_Bond_Volume_Calculator(const std::string& json_filename) {
 
 	// Create an empty property tree object
 	using boost::property_tree::ptree;
@@ -81,7 +81,7 @@ shared_ptr<Bond_Volume_Calculator> get_Bond_Volume_Calculator(const std::string&
 	std::string path=discretization_tree.get<std::string>("Type");
 	double horizon=pt.get<double>("Discretization.Horizon");
 
-	shared_ptr<Bond_Volume_Calculator> c;
+	std::tr1::shared_ptr<Bond_Volume_Calculator> c;
 
 	if("QuickGrid.TensorProduct3DMeshGenerator"==path){
 		double xStart = pt.get<double>(path+".X Origin");
@@ -100,7 +100,7 @@ shared_ptr<Bond_Volume_Calculator> get_Bond_Volume_Calculator(const std::string&
 		const QUICKGRID::Spec1D xSpec(nx,xStart,xLength);
 		const QUICKGRID::Spec1D ySpec(ny,yStart,yLength);
 		const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
-		c = shared_ptr<VolumeFractionCalculator>(new VolumeFractionCalculator(xSpec,ySpec,zSpec,horizon));
+		c = std::tr1::shared_ptr<VolumeFractionCalculator>(new VolumeFractionCalculator(xSpec,ySpec,zSpec,horizon));
 	} else {
 		std::string s;
 		s = "Error-->BOND_VOLUME::QUICKGRID::get_Bond_Volume_Calculator()\n";

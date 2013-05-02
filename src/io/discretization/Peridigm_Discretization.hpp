@@ -147,10 +147,10 @@ namespace PeridigmNS {
     static UTILITIES::Array<int> getSharedGlobalIds(const QUICKGRID::Data& gridData);
 
     //! Get the local owned IDs.
-    static shared_ptr<int> getLocalOwnedIds(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap);
+    static std::tr1::shared_ptr<int> getLocalOwnedIds(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap);
 
     //! Get the local neighborhood list.
-    static shared_ptr<int> getLocalNeighborList(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap);
+    static std::tr1::shared_ptr<int> getLocalNeighborList(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap);
 
     //! \todo Eliminate old-style elementBlocks data structure.
     //! Map containing element blocks (block name and list of locally-owned element IDs for each block).

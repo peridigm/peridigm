@@ -48,7 +48,6 @@
 #ifndef QUICKGRIDDATA_H_
 #define QUICKGRIDDATA_H_
 #include "utilities/MemoryInclude.h"
-using std::tr1::shared_ptr;
 
 struct Zoltan_Struct;
 
@@ -61,13 +60,13 @@ typedef struct Data {
 	int sizeNeighborhoodList;
 	int numExport;
 	bool unPack;
-	shared_ptr<int> myGlobalIDs;
-	shared_ptr<double> myX;
-	shared_ptr<double> cellVolume;
-	shared_ptr<int> neighborhood;
-	shared_ptr<int> neighborhoodPtr;
-	shared_ptr<char> exportFlag;
-	shared_ptr<struct Zoltan_Struct> zoltanPtr;
+	std::tr1::shared_ptr<int> myGlobalIDs;
+	std::tr1::shared_ptr<double> myX;
+	std::tr1::shared_ptr<double> cellVolume;
+	std::tr1::shared_ptr<int> neighborhood;
+	std::tr1::shared_ptr<int> neighborhoodPtr;
+	std::tr1::shared_ptr<char> exportFlag;
+	std::tr1::shared_ptr<struct Zoltan_Struct> zoltanPtr;
 	Data() : dimension(-1), globalNumPoints(-1), numPoints(-1), sizeNeighborhoodList(-1), numExport(0) {}
 	Data(int d, int numPoints, int myNumPts) : dimension(d), globalNumPoints(numPoints), numPoints(myNumPts) {}
 } QuickGridData;
@@ -94,14 +93,14 @@ typedef struct {
 	 * is owned by another processor;
 	 * myGlobalIds.length=numPoints
 	 */
-	shared_ptr<int> myGlobalIDs;
+	std::tr1::shared_ptr<int> myGlobalIDs;
 	/*
 	 * On processor indices to masters.
 	 * Since we own some slaves who have masters on other processors, the
 	 * length of this array is:
 	 * 	 local_master_ids.length=num_master+num_slave_on_processor_masters
 	 */
-	shared_ptr<int> local_master_ids;
+	std::tr1::shared_ptr<int> local_master_ids;
 
 	/*
 	 * Length of the following arrays: numPoints;
@@ -114,7 +113,7 @@ typedef struct {
 	 *
 	 * myX: cell coordinates
 	 */
-	shared_ptr<double> theta, cellVolume, myX;
+	std::tr1::shared_ptr<double> theta, cellVolume, myX;
 } AxisSymmetricWedgeData;
 
 
