@@ -95,7 +95,8 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Dis
         int nodeID;
         while(ss.good()){
           ss >> nodeID;
-          nodeList.push_back(nodeID);
+          // Convert from 1-based node numbering (Exodus II) to 0-based node numbering (Epetra and all the rest of Peridigm)
+          nodeList.push_back(nodeID - 1);
         }
       }
       else{
@@ -113,8 +114,10 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Dis
             copy(istream_iterator<int>(iss),
                  istream_iterator<int>(),
                  back_inserter<vector<int> >(nodeNumbers));
-            for(unsigned int i=0 ; i<nodeNumbers.size() ; ++i)
-              nodeList.push_back(nodeNumbers[i]);
+            for(unsigned int i=0 ; i<nodeNumbers.size() ; ++i){
+              // Convert from 1-based node numbering (Exodus II) to 0-based node numbering (Epetra and all the rest of Peridigm)
+              nodeList.push_back(nodeNumbers[i] - 1);
+            }
           }
         }
         inFile.close();

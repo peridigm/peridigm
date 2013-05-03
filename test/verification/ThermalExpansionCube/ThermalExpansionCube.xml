@@ -39,9 +39,9 @@
 
   <ParameterList name="Boundary Conditions">
 
-	<Parameter name="X Axis Node Set" type="string" value="0 1 2 3 4"/>
-	<Parameter name="Y Axis Node Set" type="string" value="0 5 10 15 20"/>
-	<Parameter name="Z Axis Node Set" type="string" value="0 25 50 75 100"/>
+	<Parameter name="X Axis Node Set" type="string" value="1 2 3 4 5"/>
+	<Parameter name="Y Axis Node Set" type="string" value="1 6 11 16 21"/>
+	<Parameter name="Z Axis Node Set" type="string" value="1 26 51 76 101"/>
 
     <!-- Let the temperature rise by 1000 degrees per hour -->
     <ParameterList name="Temperature">

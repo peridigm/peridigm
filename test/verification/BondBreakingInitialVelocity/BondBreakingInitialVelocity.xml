@@ -44,10 +44,10 @@
   </ParameterList>
 
   <ParameterList name="Boundary Conditions">
-	<Parameter name="Node Set 0" type="string" value="0"/>
-	<Parameter name="Node Set 1" type="string" value="1"/>
-	<Parameter name="Node Set 2" type="string" value="2"/>
-	<Parameter name="Node Set 3" type="string" value="3"/>
+	<Parameter name="Node Set 0" type="string" value="1"/>
+	<Parameter name="Node Set 1" type="string" value="2"/>
+	<Parameter name="Node Set 2" type="string" value="3"/>
+	<Parameter name="Node Set 3" type="string" value="4"/>
 	<ParameterList name="Initial Velocity 0">
 	  <Parameter name="Type" type="string" value="Initial Velocity"/>
 	  <Parameter name="Node Set" type="string" value="Node Set 0"/>
