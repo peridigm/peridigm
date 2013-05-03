@@ -122,7 +122,6 @@
 	<Parameter name="Output Frequency" type="int" value="35"/>
 	<ParameterList name="Output Variables">
 	  <Parameter name="Global_Kinetic_Energy" type="bool" value="true"/>
-	  <Parameter name="Global_Strain_Energy" type="bool" value="true"/>
 	  <Parameter name="Global_Linear_Momentum" type="bool" value="true"/>
 	  <Parameter name="Global_Angular_Momentum" type="bool" value="true"/>
 	</ParameterList>
