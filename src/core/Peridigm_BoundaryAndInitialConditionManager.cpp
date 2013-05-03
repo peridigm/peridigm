@@ -96,6 +96,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Dis
         while(ss.good()){
           ss >> nodeID;
           // Convert from 1-based node numbering (Exodus II) to 0-based node numbering (Epetra and all the rest of Peridigm)
+          TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeID < 1, "**** Error:  Node number 0 detected in nodeset definition; node numbering must begin with 1.\n");
           nodeList.push_back(nodeID - 1);
         }
       }
@@ -116,6 +117,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Dis
                  back_inserter<vector<int> >(nodeNumbers));
             for(unsigned int i=0 ; i<nodeNumbers.size() ; ++i){
               // Convert from 1-based node numbering (Exodus II) to 0-based node numbering (Epetra and all the rest of Peridigm)
+              TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeNumbers[i] < 1, "**** Error:  Node number 0 detected in nodeset file; node numbering must begin with 1.\n");
               nodeList.push_back(nodeNumbers[i] - 1);
             }
           }

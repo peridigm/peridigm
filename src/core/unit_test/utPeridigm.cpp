@@ -111,8 +111,8 @@ Teuchos::RCP<PeridigmNS::Peridigm> createTwoPointModel()
   // node sets
   // these sets associate a name with a list of node ids, stored as a string
   // in this case there's only one node per set
-  bcParams.set("Min X Node Set", "0");
-  bcParams.set("Max X Node Set", "1");
+  bcParams.set("Min X Node Set", "1");
+  bcParams.set("Max X Node Set", "2");
   // initial velocity boundary conditions
   // each boundary condition is associated with a node set, defined above
   ParameterList& initialVelocityMinXFace = bcParams.sublist("Initial Velocity Min X Face");
