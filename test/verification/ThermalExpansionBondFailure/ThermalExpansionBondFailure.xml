@@ -60,8 +60,8 @@
          Three of the four nodes will be completely fixed.
          The fourth node will be allowed to move in the y direction.
     -->
-	<Parameter name="Nodes To Fix In XYZ Node Set" type="string" value="0 1 2"/>
-	<Parameter name="Nodes To Fix In XZ Node Set" type="string" value="3"/>
+	<Parameter name="Nodes To Fix In XYZ Node Set" type="string" value="1 2 3"/>
+	<Parameter name="Nodes To Fix In XZ Node Set" type="string" value="4"/>
 
     <!-- Let the temperature decrease by 10,000 degrees to produce 10% strain -->
     <ParameterList name="Temperature">

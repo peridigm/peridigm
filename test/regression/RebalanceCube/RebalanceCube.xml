@@ -36,8 +36,8 @@
   </ParameterList>
   
   <ParameterList name="Boundary Conditions">
-	<Parameter name="Min Z Node Set" type="string" value="0 1 2 9 10 11 18 19 20"/>
-	<Parameter name="Max Z Node Set" type="string" value="6 7 8 15 16 17 24 25 26"/>
+	<Parameter name="Min Z Node Set" type="string" value="1 2 3 10 11 12 19 20 21"/>
+	<Parameter name="Max Z Node Set" type="string" value="7 8 9 16 17 18 25 26 27"/>
 	<ParameterList name="Initial Velocity Min Z Face">
 	  <Parameter name="Type" type="string" value="Initial Velocity"/>
 	  <Parameter name="Node Set" type="string" value="Min Z Node Set"/>

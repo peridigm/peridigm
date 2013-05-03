@@ -28,8 +28,8 @@
     <!-- Node sets may be either read from file or listed explicitly -->
     <Parameter name="Node Set One" type="string" value="nodeset_1.txt"/>
     <Parameter name="Node Set Two" type="string" value="nodeset_2.txt"/>
-    <Parameter name="Node Set Three" type="string" value="1 3"/>
-    <Parameter name="Node Set Four" type="string" value="0 1"/>
+    <Parameter name="Node Set Three" type="string" value="2 4"/>
+    <Parameter name="Node Set Four" type="string" value="1 2"/>
 
 	<ParameterList name="Prescribed Displacement Min X Face">
 	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>

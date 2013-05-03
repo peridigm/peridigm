@@ -36,8 +36,8 @@
   </ParameterList>
   
   <ParameterList name="Boundary Conditions">
-	<Parameter name="Min X Node Set" type="string" value="0"/>
-	<Parameter name="Max X Node Set" type="string" value="1"/>
+	<Parameter name="Min X Node Set" type="string" value="1"/>
+	<Parameter name="Max X Node Set" type="string" value="2"/>
 	<ParameterList name="Initial Velocity Max X Face">
 	  <Parameter name="Type" type="string" value="Initial Velocity"/>
 	  <Parameter name="Node Set" type="string" value="Max X Node Set"/>

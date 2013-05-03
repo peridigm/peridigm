@@ -37,10 +37,10 @@
   </ParameterList>
 
   <ParameterList name="Boundary Conditions">
-	<Parameter name="Min X Node Set" type="string" value="0 3 6 9"/>
-	<Parameter name="Max X Node Set" type="string" value="2 5 8 11"/>
-	<Parameter name="Y Axis Node Set" type="string" value="0 3"/>
-	<Parameter name="Z Axis Node Set" type="string" value="0 6"/>
+	<Parameter name="Min X Node Set" type="string" value="1 4 7 10"/>
+	<Parameter name="Max X Node Set" type="string" value="3 6 9 12"/>
+	<Parameter name="Y Axis Node Set" type="string" value="1 4"/>
+	<Parameter name="Z Axis Node Set" type="string" value="1 7"/>
 	<ParameterList name="Prescribed Displacement Min X Face">
 	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
 	  <Parameter name="Node Set" type="string" value="Min X Node Set"/>
