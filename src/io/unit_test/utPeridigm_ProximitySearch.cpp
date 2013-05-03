@@ -62,6 +62,115 @@ using namespace Teuchos;
 using namespace PeridigmNS;
 using namespace std;
 
+void twoPointProblem()
+{
+  Teuchos::RCP<Epetra_Comm> comm;
+#ifdef HAVE_MPI
+  comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
+#else
+  comm = Teuchos::rcp(new Epetra_SerialComm);
+#endif
+  int numProc = comm->NumProc();
+
+  // This test cannot be run on more than 2 processors
+  if(numProc > 2)
+    return;
+
+  Epetra_BlockMap map(2, 3, 0, *comm);
+  Epetra_Vector x(map);
+
+  int numMyElements = map.NumMyElements();
+
+  if(numProc == 1)
+    BOOST_CHECK(numMyElements == 2);
+  if(numProc == 2)
+    BOOST_CHECK(numMyElements == 1);
+
+  vector<int> node(3);
+  std::map<int, vector<int> > nodes;
+  node[0] =  1.2 ; node[1] =  1.3 ; node[2] =  6.0 ; nodes[0] = node;
+  node[0] =  4.2 ; node[1] = -2.1 ; node[2] = -3.8 ; nodes[1] = node;
+
+  double distance = sqrt( (nodes[0][0] - nodes[1][0])*(nodes[0][0] - nodes[1][0]) + 
+                          (nodes[0][1] - nodes[1][1])*(nodes[0][1] - nodes[1][1]) + 
+                          (nodes[0][2] - nodes[1][2])*(nodes[0][2] - nodes[1][2]) );
+
+  for(int i=0 ; i<numMyElements ; ++i){
+    int globalId = map.GID(i);
+    x[3*i]   = nodes[globalId][0];
+    x[3*i+1] = nodes[globalId][1];
+    x[3*i+2] = nodes[globalId][2];
+  }
+
+  // These are filled by the proximity search
+  Teuchos::RCP<Epetra_BlockMap> overlapMap;
+  int neighborListSize(0);
+  int* neighborList(0);
+
+  // ---- Call the proximity search with a radius just below the distance ----
+
+  double searchRadius = distance - 1.0e-10;
+  ProximitySearch::GlobalProximitySearch(x, searchRadius, overlapMap, neighborListSize, neighborList);
+
+  int neighborListIndex = 0;
+  for(int i=0 ; i<numMyElements ; ++i){
+    int nodeGlobalId = map.GID(i);
+    BOOST_CHECK(neighborListIndex < neighborListSize);
+    int numNeighbors = neighborList[neighborListIndex++];
+    vector<int> neighborGlobalIds;
+    for(int j=0 ; j<numNeighbors ; ++j){
+      BOOST_CHECK(neighborListIndex < neighborListSize);
+      int neighborLocalId = neighborList[neighborListIndex++];
+      int neighborGlobalId = overlapMap->GID(neighborLocalId);
+      neighborGlobalIds.push_back(neighborGlobalId);
+    }
+
+    sort(neighborGlobalIds.begin(), neighborGlobalIds.end());
+
+    if(nodeGlobalId == 0){
+      BOOST_CHECK(numNeighbors == 0);
+      BOOST_CHECK(neighborGlobalIds.size() == 0);
+    }
+    else if(nodeGlobalId == 1){
+      BOOST_CHECK(numNeighbors == 0);
+      BOOST_CHECK(neighborGlobalIds.size() == 0);
+    }
+  }
+
+  // ---- Call the proximity search with a radius just above the distance ----
+
+  searchRadius = distance + 1.0e-10;
+  ProximitySearch::GlobalProximitySearch(x, searchRadius, overlapMap, neighborListSize, neighborList);
+
+  neighborListIndex = 0;
+  for(int i=0 ; i<numMyElements ; ++i){
+    int nodeGlobalId = map.GID(i);
+    BOOST_CHECK(neighborListIndex < neighborListSize);
+    int numNeighbors = neighborList[neighborListIndex++];
+    vector<int> neighborGlobalIds;
+    for(int j=0 ; j<numNeighbors ; ++j){
+      BOOST_CHECK(neighborListIndex < neighborListSize);
+      int neighborLocalId = neighborList[neighborListIndex++];
+      int neighborGlobalId = overlapMap->GID(neighborLocalId);
+      neighborGlobalIds.push_back(neighborGlobalId);
+    }
+
+    sort(neighborGlobalIds.begin(), neighborGlobalIds.end());
+
+    if(nodeGlobalId == 0){
+      BOOST_CHECK(numNeighbors == 1);
+      BOOST_CHECK(neighborGlobalIds.size() == 1);
+      BOOST_CHECK(neighborGlobalIds[0] == 1);
+    }
+    else if(nodeGlobalId == 1){
+      BOOST_CHECK(numNeighbors == 1);
+      BOOST_CHECK(neighborGlobalIds.size() == 1);
+      BOOST_CHECK(neighborGlobalIds[0] == 0);
+    }
+  }
+
+}
+
 void fivePointProblem()
 {
   Teuchos::RCP<Epetra_Comm> comm;
@@ -71,7 +180,10 @@ void fivePointProblem()
   comm = Teuchos::rcp(new Epetra_SerialComm);
 #endif
   int numProc = comm->NumProc();
-  // int myPID = comm->MyPID();
+
+  // This test cannot be run on more than 5 processors
+  if(numProc > 5)
+    return;
 
   Epetra_BlockMap map(5, 3, 0, *comm);
   Epetra_Vector x(map);
@@ -324,6 +436,7 @@ bool init_unit_test_suite()
 	bool success = true;
 
 	test_suite* proc = BOOST_TEST_SUITE("utPeridigm_ProximitySearch");
+	proc->add(BOOST_TEST_CASE(&twoPointProblem));
 	proc->add(BOOST_TEST_CASE(&fivePointProblem));
 	framework::master_test_suite().add(proc);
 
