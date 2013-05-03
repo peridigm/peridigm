@@ -225,7 +225,7 @@ void PeridigmNS::ProximitySearch::GlobalProximitySearch(Epetra_Vector& x,       
   for(int i=0 ; i<numMyElements ; ++i){
     decompGlobalIds[i] = globalIds[i];
     decompVolumes[i] = 1.0; // use dummy value
-    decompCoordinates[i*3] = coordinates[i*3];
+    decompCoordinates[i*3]   = coordinates[i*3];
     decompCoordinates[i*3+1] = coordinates[i*3+1];
     decompCoordinates[i*3+2] = coordinates[i*3+2];
   }
@@ -244,9 +244,14 @@ void PeridigmNS::ProximitySearch::GlobalProximitySearch(Epetra_Vector& x,       
                                  searchRadius,
                                  bondFilterPtr);
 
+
+
+
+
+
   // The neighbor search is complete, but needs to be brought back into the initial decomposition
 
-  dimension = 1;
+  //  dimension = 1;
   // Teuchos::RCP<Epetra_BlockMap> currentOwnedMap = Teuchos::rcp(new Epetra_BlockMap(Discretization::getOwnedMap(originalMap.Comm(), decomp, dimension)));
   // Teuchos::RCP<Epetra_BlockMap> currentOverlapMap = Teuchos::rcp(new Epetra_BlockMap(Discretization::getOverlapMap(originalMap.Comm(), decomp, dimension)));
 
@@ -255,7 +260,7 @@ void PeridigmNS::ProximitySearch::GlobalProximitySearch(Epetra_Vector& x,       
   //Teuchos::RCP<Epetra_BlockMap> currentOwnedMap = Teuchos::rcp(new Epetra_BlockMap(*(list.getOwnedMap(dimension).get())));
   //Teuchos::RCP<Epetra_BlockMap> currentOverlapMap = Teuchos::rcp(new Epetra_BlockMap(*(list.getOverlapMap(dimension).get())));
 
-  Teuchos::RCP<Epetra_BlockMap> currentOwnedMap = Teuchos::rcp(new Epetra_BlockMap(-1, decomp.numPoints, decomp.myGlobalIDs.get(), 1, 0, originalMap.Comm()));
+
   int listNumOwned = list.get_num_owned_points();
   int listNumShared = list.get_num_shared_points();
   int listNumTotal = listNumOwned + listNumShared;
@@ -267,16 +272,17 @@ void PeridigmNS::ProximitySearch::GlobalProximitySearch(Epetra_Vector& x,       
   for(int i=0 ; i<listNumShared ; ++i)
     overlapIds[i+listNumOwned] = listSharedIds[i];
 
+  // Teuchos::RCP<Epetra_BlockMap> currentOwnedMap = Teuchos::rcp(new Epetra_BlockMap(-1, decomp.numPoints, decomp.myGlobalIDs.get(), 1, 0, originalMap.Comm()));
+  Teuchos::RCP<Epetra_BlockMap> currentOwnedMap = Teuchos::rcp(new Epetra_BlockMap(-1, listNumOwned, &overlapIds[0], 1, 0, originalMap.Comm()));
+
   Teuchos::RCP<Epetra_BlockMap> currentOverlapMap = Teuchos::rcp(new Epetra_BlockMap(-1, listNumTotal, &overlapIds[0], 1, 0, originalMap.Comm()));
 
-
-  // Teuchos::RCP<const Epetra_BlockMap> targetOwnedMap = Teuchos::rcpFromRef(originalMap);
   Teuchos::RCP<const Epetra_BlockMap> targetOwnedMap = Teuchos::rcp(new Epetra_BlockMap(-1, originalMap.NumMyElements(), originalMap.MyGlobalElements(), 1, 0, originalMap.Comm()));
 
   RebalanceNeighborhoodList(currentOwnedMap,                   /* input  */
                             currentOverlapMap,                 /* input  */
                             list.get_size_neighborhood_list(), /* input  */
-                            list.get_neighborhood().get(),     /* input  */
+                            list.get_local_neighborhood().get(),     /* input  */    // I think we can get the global neighborhood from the list with get_neighborhood()
                             targetOwnedMap,                    /* input  */
                             overlapMap,                        /* output */
                             neighborListSize,                  /* output */

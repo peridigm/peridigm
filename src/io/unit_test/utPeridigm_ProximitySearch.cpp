@@ -71,7 +71,7 @@ void fivePointProblem()
   comm = Teuchos::rcp(new Epetra_SerialComm);
 #endif
   int numProc = comm->NumProc();
-  int myPID = comm->MyPID();
+  // int myPID = comm->MyPID();
 
   Epetra_BlockMap map(5, 3, 0, *comm);
   Epetra_Vector x(map);
@@ -130,12 +130,23 @@ void fivePointProblem()
       BOOST_CHECK(neighborGlobalIds[2] == 3);
     }
     else if(nodeGlobalId == 1){
+      BOOST_CHECK(numNeighbors == 1);
+      BOOST_CHECK(neighborGlobalIds.size() == 1);
+      BOOST_CHECK(neighborGlobalIds[0] == 0);
     }
     else if(nodeGlobalId == 2){
+      BOOST_CHECK(numNeighbors == 1);
+      BOOST_CHECK(neighborGlobalIds.size() == 1);
+      BOOST_CHECK(neighborGlobalIds[0] == 0);
     }
     else if(nodeGlobalId == 3){
+      BOOST_CHECK(numNeighbors == 1);
+      BOOST_CHECK(neighborGlobalIds.size() == 1);
+      BOOST_CHECK(neighborGlobalIds[0] == 0);
     }
     else if(nodeGlobalId == 4){
+      BOOST_CHECK(numNeighbors == 0);
+      BOOST_CHECK(neighborGlobalIds.size() == 0);
     }
 
   }
