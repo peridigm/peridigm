@@ -183,6 +183,9 @@ namespace PeridigmNS {
                          bool setIncrement,
                          double multiplier);
 
+    //! Determine if a string is the name of a file; if so return the file name, if not return an empty string.
+    std::string nodeSetStringToFileName(std::string str);
+
   private:
 
     // Private to prohibit use.

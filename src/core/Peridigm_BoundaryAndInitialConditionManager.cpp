@@ -46,8 +46,10 @@
 //@HEADER
 
 #include "Peridigm_BoundaryAndInitialConditionManager.hpp"
-
 #include "muParser/muParserPeridigmFunctions.h"
+#include <sstream>
+#include <fstream>
+#include <boost/algorithm/string/trim.hpp>
 
 using namespace std;
 
@@ -80,15 +82,44 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Dis
 	const string& name = it->first;
 	size_t position = name.find("Node Set");
 	if(position != string::npos){
-	  stringstream ss(Teuchos::getValue<string>(it->second));
+
       TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(name) != nodeSets->end(), "**** Duplicate node set found: " + name + "\n");
-	  vector<int>& nodeList = (*nodeSets)[name];
-	  int nodeID;
-	  while(ss.good()){
-		ss >> nodeID;
-		nodeList.push_back(nodeID);
-	  }
-	}
+      vector<int>& nodeList = (*nodeSets)[name];
+
+      // Determine if the string is the name of a file or a list of node numbers
+      string fileName = nodeSetStringToFileName(Teuchos::getValue<string>(it->second));
+
+      if(fileName.size() == 0){
+        // The string is a list of node numbers
+        stringstream ss(Teuchos::getValue<string>(it->second));
+        int nodeID;
+        while(ss.good()){
+          ss >> nodeID;
+          nodeList.push_back(nodeID);
+        }
+      }
+      else{
+        // The string is the name of a file containing the node numbers
+        ifstream inFile(fileName.c_str());
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(!inFile.is_open(), "**** Error opening node set text file: " + fileName + "\n");
+        while(inFile.good()){
+          string str;
+          getline(inFile, str);
+          boost::trim(str);
+          // Ignore comment lines, otherwise parse
+          if( !(str[0] == '#' || str[0] == '/' || str[0] == '*' || str.size() == 0) ){
+            istringstream iss(str);
+            vector<int> nodeNumbers;
+            copy(istream_iterator<int>(iss),
+                 istream_iterator<int>(),
+                 back_inserter<vector<int> >(nodeNumbers));
+            for(unsigned int i=0 ; i<nodeNumbers.size() ; ++i)
+              nodeList.push_back(nodeNumbers[i]);
+          }
+        }
+        inFile.close();
+      }
+    }
   }
 
   // Load node sets defined in the mesh file into the nodeSets container
@@ -518,4 +549,30 @@ void PeridigmNS::BoundaryAndInitialConditionManager::setVectorValues(double time
       }
     }
   }
+}
+
+string PeridigmNS::BoundaryAndInitialConditionManager::nodeSetStringToFileName(string str)
+{
+  // This function differentiates between two possible types of node set strings:
+  // 1)  A list of nonzero integers (i.e., a list of node numbers)
+  // 2)  The name of a file
+
+  // If the string is determined to be the name of a file, the file name is returned
+  // If the string is determined to be a list of node numbers, an empty string is returned.
+
+  string emptyString = "";
+  string whitespace = " \t";
+  
+  boost::trim(str);
+  
+  // If there is any whitespace then str is a list, not a file name
+  if(str.find_first_of(whitespace) != std::string::npos)
+    return emptyString;
+
+  // If the string is not an integer, assume it is a file name
+  char* pEnd;
+  long int integerValue = strtol(str.c_str(), &pEnd, 0);
+  if(integerValue != 0 || str == "0" || str == "+0" || str == "-0")
+    return emptyString;
+  return str;
 }
