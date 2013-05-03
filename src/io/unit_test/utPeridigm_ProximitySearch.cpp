@@ -103,7 +103,8 @@ void fivePointProblem()
   int neighborListSize(0);
   int* neighborList(0);
 
-  // Call the proximity search with a radius of 1.1
+  // ---- Call the proximity search with a radius of 1.1 ----
+
   double searchRadius = 1.1;
   ProximitySearch::GlobalProximitySearch(x, searchRadius, overlapMap, neighborListSize, neighborList);
 
@@ -148,8 +149,173 @@ void fivePointProblem()
       BOOST_CHECK(numNeighbors == 0);
       BOOST_CHECK(neighborGlobalIds.size() == 0);
     }
-
   }
+
+  // ---- Call the proximity search with a radius of 0.0001 ----
+
+  searchRadius = 0.0001;
+  ProximitySearch::GlobalProximitySearch(x, searchRadius, overlapMap, neighborListSize, neighborList);
+
+  neighborListIndex = 0;
+  for(int i=0 ; i<numMyElements ; ++i){
+    int nodeGlobalId = map.GID(i);
+    BOOST_CHECK(neighborListIndex < neighborListSize);
+    int numNeighbors = neighborList[neighborListIndex++];
+    vector<int> neighborGlobalIds;
+    for(int j=0 ; j<numNeighbors ; ++j){
+      BOOST_CHECK(neighborListIndex < neighborListSize);
+      int neighborLocalId = neighborList[neighborListIndex++];
+      int neighborGlobalId = overlapMap->GID(neighborLocalId);
+      neighborGlobalIds.push_back(neighborGlobalId);
+    }
+
+    sort(neighborGlobalIds.begin(), neighborGlobalIds.end());
+
+    if(nodeGlobalId == 0){
+      BOOST_CHECK(numNeighbors == 0);
+      BOOST_CHECK(neighborGlobalIds.size() == 0);
+    }
+    else if(nodeGlobalId == 1){
+      BOOST_CHECK(numNeighbors == 0);
+      BOOST_CHECK(neighborGlobalIds.size() == 0);
+    }
+    else if(nodeGlobalId == 2){
+      BOOST_CHECK(numNeighbors == 0);
+      BOOST_CHECK(neighborGlobalIds.size() == 0);
+    }
+    else if(nodeGlobalId == 3){
+      BOOST_CHECK(numNeighbors == 0);
+      BOOST_CHECK(neighborGlobalIds.size() == 0);
+    }
+    else if(nodeGlobalId == 4){
+      BOOST_CHECK(numNeighbors == 0);
+      BOOST_CHECK(neighborGlobalIds.size() == 0);
+    }
+  }
+
+  // ---- Call the proximity search with a radius of 1.415 ----
+
+  searchRadius = 1.415;
+  ProximitySearch::GlobalProximitySearch(x, searchRadius, overlapMap, neighborListSize, neighborList);
+
+  neighborListIndex = 0;
+  for(int i=0 ; i<numMyElements ; ++i){
+    int nodeGlobalId = map.GID(i);
+    BOOST_CHECK(neighborListIndex < neighborListSize);
+    int numNeighbors = neighborList[neighborListIndex++];
+    vector<int> neighborGlobalIds;
+    for(int j=0 ; j<numNeighbors ; ++j){
+      BOOST_CHECK(neighborListIndex < neighborListSize);
+      int neighborLocalId = neighborList[neighborListIndex++];
+      int neighborGlobalId = overlapMap->GID(neighborLocalId);
+      neighborGlobalIds.push_back(neighborGlobalId);
+    }
+
+    sort(neighborGlobalIds.begin(), neighborGlobalIds.end());
+
+    if(nodeGlobalId == 0){
+      BOOST_CHECK(numNeighbors == 3);
+      BOOST_CHECK(neighborGlobalIds.size() == 3);
+      BOOST_CHECK(neighborGlobalIds[0] == 1);
+      BOOST_CHECK(neighborGlobalIds[1] == 2);
+      BOOST_CHECK(neighborGlobalIds[2] == 3);
+    }
+    else if(nodeGlobalId == 1){
+      BOOST_CHECK(numNeighbors == 4);
+      BOOST_CHECK(neighborGlobalIds.size() == 4);
+      BOOST_CHECK(neighborGlobalIds[0] == 0);
+      BOOST_CHECK(neighborGlobalIds[1] == 2);
+      BOOST_CHECK(neighborGlobalIds[2] == 3);
+      BOOST_CHECK(neighborGlobalIds[3] == 4);
+    }
+    else if(nodeGlobalId == 2){
+      BOOST_CHECK(numNeighbors == 4);
+      BOOST_CHECK(neighborGlobalIds.size() == 4);
+      BOOST_CHECK(neighborGlobalIds[0] == 0);
+      BOOST_CHECK(neighborGlobalIds[1] == 1);
+      BOOST_CHECK(neighborGlobalIds[2] == 3);
+      BOOST_CHECK(neighborGlobalIds[3] == 4);
+    }
+    else if(nodeGlobalId == 3){
+      BOOST_CHECK(numNeighbors == 4);
+      BOOST_CHECK(neighborGlobalIds.size() == 4);
+      BOOST_CHECK(neighborGlobalIds[0] == 0);
+      BOOST_CHECK(neighborGlobalIds[1] == 1);
+      BOOST_CHECK(neighborGlobalIds[2] == 2);
+      BOOST_CHECK(neighborGlobalIds[3] == 4);
+    }
+    else if(nodeGlobalId == 4){
+      BOOST_CHECK(numNeighbors == 3);
+      BOOST_CHECK(neighborGlobalIds.size() == 3);
+      BOOST_CHECK(neighborGlobalIds[0] == 1);
+      BOOST_CHECK(neighborGlobalIds[1] == 2);
+      BOOST_CHECK(neighborGlobalIds[2] == 3);
+    }
+  }
+
+
+  // ---- Call the proximity search with a radius of 1.733 ----
+
+  searchRadius = 1.733;
+  ProximitySearch::GlobalProximitySearch(x, searchRadius, overlapMap, neighborListSize, neighborList);
+
+  neighborListIndex = 0;
+  for(int i=0 ; i<numMyElements ; ++i){
+    int nodeGlobalId = map.GID(i);
+    BOOST_CHECK(neighborListIndex < neighborListSize);
+    int numNeighbors = neighborList[neighborListIndex++];
+    vector<int> neighborGlobalIds;
+    for(int j=0 ; j<numNeighbors ; ++j){
+      BOOST_CHECK(neighborListIndex < neighborListSize);
+      int neighborLocalId = neighborList[neighborListIndex++];
+      int neighborGlobalId = overlapMap->GID(neighborLocalId);
+      neighborGlobalIds.push_back(neighborGlobalId);
+    }
+
+    sort(neighborGlobalIds.begin(), neighborGlobalIds.end());
+
+    if(nodeGlobalId == 0){
+      BOOST_CHECK(numNeighbors == 4);
+      BOOST_CHECK(neighborGlobalIds.size() == 4);
+      BOOST_CHECK(neighborGlobalIds[0] == 1);
+      BOOST_CHECK(neighborGlobalIds[1] == 2);
+      BOOST_CHECK(neighborGlobalIds[2] == 3);
+      BOOST_CHECK(neighborGlobalIds[3] == 4);
+    }
+    else if(nodeGlobalId == 1){
+      BOOST_CHECK(numNeighbors == 4);
+      BOOST_CHECK(neighborGlobalIds.size() == 4);
+      BOOST_CHECK(neighborGlobalIds[0] == 0);
+      BOOST_CHECK(neighborGlobalIds[1] == 2);
+      BOOST_CHECK(neighborGlobalIds[2] == 3);
+      BOOST_CHECK(neighborGlobalIds[3] == 4);
+    }
+    else if(nodeGlobalId == 2){
+      BOOST_CHECK(numNeighbors == 4);
+      BOOST_CHECK(neighborGlobalIds.size() == 4);
+      BOOST_CHECK(neighborGlobalIds[0] == 0);
+      BOOST_CHECK(neighborGlobalIds[1] == 1);
+      BOOST_CHECK(neighborGlobalIds[2] == 3);
+      BOOST_CHECK(neighborGlobalIds[3] == 4);
+    }
+    else if(nodeGlobalId == 3){
+      BOOST_CHECK(numNeighbors == 4);
+      BOOST_CHECK(neighborGlobalIds.size() == 4);
+      BOOST_CHECK(neighborGlobalIds[0] == 0);
+      BOOST_CHECK(neighborGlobalIds[1] == 1);
+      BOOST_CHECK(neighborGlobalIds[2] == 2);
+      BOOST_CHECK(neighborGlobalIds[3] == 4);
+    }
+    else if(nodeGlobalId == 4){
+      BOOST_CHECK(numNeighbors == 4);
+      BOOST_CHECK(neighborGlobalIds.size() == 4);
+      BOOST_CHECK(neighborGlobalIds[0] == 0);
+      BOOST_CHECK(neighborGlobalIds[1] == 1);
+      BOOST_CHECK(neighborGlobalIds[2] == 2);
+      BOOST_CHECK(neighborGlobalIds[3] == 3);
+    }
+  }
+
 }
 
 bool init_unit_test_suite()
