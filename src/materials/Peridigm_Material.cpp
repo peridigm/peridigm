@@ -252,7 +252,8 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     if (jacobianType == PeridigmNS::Material::FULL_MATRIX)
       jacobian.addValues((int)globalIndices.size(), &globalIndices[0], scratchMatrix.Data());
     else if (jacobianType == PeridigmNS::Material::BLOCK_DIAGONAL) {
-      jacobian.addBlockDiagonalValues((int)globalIndices.size(), &globalIndices[0], scratchMatrix.Data());
+      jacobian.addValues((int)globalIndices.size(), &globalIndices[0], scratchMatrix.Data());
+//      jacobian.addBlockDiagonalValues((int)globalIndices.size(), &globalIndices[0], scratchMatrix.Data());
     }
     else // unknown jacobian type
       TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Unknown Jacobian Type\n");

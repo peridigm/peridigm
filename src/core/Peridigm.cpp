@@ -571,9 +571,12 @@ void PeridigmNS::Peridigm::instantiateComputeManager() {
 
   // Initialize the parameterlist containing global Peridigm data (not stored in blocks)
   computeClassGlobalData = Teuchos::rcp(new Teuchos::ParameterList());
-  computeClassGlobalData->set("tangent",tangent);
-  computeClassGlobalData->set("blockDiagonalTangent",blockDiagonalTangent);
-  computeClassGlobalData->set("overlapJacobian",overlapJacobian);
+  Teuchos::RCP<Epetra_FECrsMatrix> *tmp1 = &( tangent );
+  Teuchos::RCP<Epetra_FECrsMatrix> *tmp2 = &( blockDiagonalTangent );
+  Teuchos::RCP<PeridigmNS::SerialMatrix> *tmp3 = &( overlapJacobian );
+  computeClassGlobalData->set("tangent",tmp1);
+  computeClassGlobalData->set("blockDiagonalTangent",tmp2);
+  computeClassGlobalData->set("overlapJacobian",tmp3);
 
   computeManager = Teuchos::rcp( new PeridigmNS::ComputeManager( computeParams, peridigmComm, computeClassGlobalData ) );
 }
