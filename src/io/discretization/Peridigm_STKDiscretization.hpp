@@ -48,13 +48,8 @@
 #ifndef PERIDIGM_STKDISCRETIZATION_HPP
 #define PERIDIGM_STKDISCRETIZATION_HPP
 
-// \todo Remove this include after next Trilinos release
-#include <Trilinos_version.h>
-
-#include <Teuchos_ParameterList.hpp>
-#include <Epetra_Comm.h>
-
 // \todo Remove backwards compatibility after next Trilinos release
+#include <Trilinos_version.h>
 #if TRILINOS_MAJOR_MINOR_VERSION > 101002
 #include <stk_io/MeshReadWriteUtils.hpp>
 #else
@@ -62,8 +57,6 @@
 #endif
 
 #include "Peridigm_Discretization.hpp"
-#include "mesh_input/quick_grid/QuickGridData.h"
-
 #include <vector>
 #include <map>
 
@@ -128,10 +121,6 @@ namespace PeridigmNS {
     //! Loads mesh data into Epetra_Vectors (initial positions, volumes, block ids) and stores original Exodus node locations and connectivity.
     void loadData(const std::string& meshFileName);
 
-    //! Creates a discretization object using STK functionality.
-    QUICKGRID::Data getDecomp(const std::string& meshFileName,
-                              double horizon);
-
   protected:
 
     template<class T>
@@ -139,14 +128,8 @@ namespace PeridigmNS {
       void operator()(T* d) {}
     };
 
-    //! Create maps
-    void createMaps(const QUICKGRID::Data& decomp);
-
     //! Create vectors
     void createVectors();
-
-    //! Create NeighborhoodData OBSOLETE
-    void createNeighborhoodData(const QUICKGRID::Data& decomp);
 
     //! Create NeighborhoodData
     void createNeighborhoodData(int neighborListSize, int* neighborList);
