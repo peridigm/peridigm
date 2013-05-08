@@ -104,7 +104,7 @@ void PeridigmNS::ProximitySearch::RebalanceNeighborhoodList(Teuchos::RCP<const E
   myGlobalElements = currentOwnedMap->MyGlobalElements();
   elementSizeList.resize(currentNumOwnedPoints);
   for(int i=0 ; i<currentNumOwnedPoints ; ++i){
-    numNeighbors = currentNumberOfNeighbors[i];
+    numNeighbors = static_cast<int>( currentNumberOfNeighbors[i] );
     if(numNeighbors == 0)
       elementSizeList[i] = 1;
     else
@@ -132,7 +132,7 @@ void PeridigmNS::ProximitySearch::RebalanceNeighborhoodList(Teuchos::RCP<const E
   myGlobalElements = targetOwnedMap->MyGlobalElements();
   elementSizeList.resize(targetNumOwnedPoints);
   for(int i=0 ; i<targetNumOwnedPoints ; ++i){
-    numNeighbors = targetNumberOfNeighborsPtr[i];
+    numNeighbors = static_cast<int>( targetNumberOfNeighborsPtr[i] );
     if(numNeighbors == 0)
       elementSizeList[i] = 1;
     else
@@ -153,7 +153,7 @@ void PeridigmNS::ProximitySearch::RebalanceNeighborhoodList(Teuchos::RCP<const E
   int localId, globalId;
   set<int> offProcessorElements;
   for(int i=0 ; i<targetNeighbors.MyLength() ; ++i){
-    globalId = targetNeighborsPtr[i];
+    globalId = static_cast<int>( targetNeighborsPtr[i] );
     // Note that in this list a globalId of -1 denotes zero neighbors
     if(globalId != -1){
       localId = targetOwnedMap->LID(globalId);
@@ -183,18 +183,18 @@ void PeridigmNS::ProximitySearch::RebalanceNeighborhoodList(Teuchos::RCP<const E
   // Allocate the target neighbor list
   targetNeighborListSize = 0;
   for(int i=0 ; i<targetNumOwnedPoints ; ++i)
-    targetNeighborListSize += 1 + targetNumberOfNeighborsPtr[i];
+    targetNeighborListSize += 1 + static_cast<int>( targetNumberOfNeighborsPtr[i] );
   targetNeighborList = new int[targetNeighborListSize];
 
   // Fill the target neighbor list
   neighborListIndex = 0;
   int firstPointInElement;
   for(int i=0 ; i<targetNumOwnedPoints ; ++i){
-    numNeighbors = targetNumberOfNeighborsPtr[i];
+    numNeighbors = static_cast<int>( targetNumberOfNeighborsPtr[i] );
     targetNeighborList[neighborListIndex++] = numNeighbors;
     firstPointInElement = targetNeighborMap.FirstPointInElement(i);
     for(int j=0 ; j<numNeighbors ; ++j){
-      globalId = targetNeighborsPtr[firstPointInElement + j];
+      globalId = static_cast<int>( targetNeighborsPtr[firstPointInElement + j] );
       localId = targetOverlapMap->LID(globalId);
       targetNeighborList[neighborListIndex++] = localId;
     }
