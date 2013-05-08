@@ -46,6 +46,7 @@
 //@HEADER
 
 #include "Peridigm_STKDiscretization.hpp"
+#include "Peridigm_ProximitySearch.hpp"
 #include "pdneigh/NeighborhoodList.h"
 #include "pdneigh/PdZoltan.h"
 
@@ -65,6 +66,8 @@
 #include <sstream>
 
 using namespace std;
+
+#define NEW
 
 PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                                                  const Teuchos::RCP<Teuchos::ParameterList>& params) :
@@ -87,11 +90,33 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   // Set up bond filters
   createBondFilters(params);
 
+#ifdef NEW
+  // Load data from mesh file
+  loadData(meshFileName);
+
+  // Execute the neighbor search
+  int neighborListSize;
+  int* neighborList;
+  ProximitySearch::GlobalProximitySearch(*initialX, horizon, oneDimensionalOverlapMap, neighborListSize, neighborList, bondFilters);
+
+  createNeighborhoodData(neighborListSize, neighborList);
+
+  // Create the three-dimensional overlap map based on the one-dimensional overlap map
+  threeDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(-1, 
+                                                                oneDimensionalOverlapMap->NumMyElements(),
+                                                                oneDimensionalOverlapMap->MyGlobalElements(),
+                                                                3,
+                                                                0,
+                                                                oneDimensionalOverlapMap->Comm()));
+#endif
+
+
+#ifdef OLD
   QUICKGRID::Data decomp = getDecomp(meshFileName, searchHorizon);
 
-  // \todo Refactor; the createMaps() call is currently inside getDecomp() due to order-of-operations issues with tracking element blocks.
-  //createMaps(decomp);
   createNeighborhoodData(decomp);
+#endif
+
 
   // \todo Move this functionality to base class, it's currently duplicated in PdQuickGridDiscretization.
   // Create the bondMap, a local map used for constitutive data stored on bonds.
@@ -124,6 +149,7 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   delete[] myGlobalElements;
   delete[] elementSizeList;
 
+#ifdef OLD
   // 3D only
   TEUCHOS_TEST_FOR_EXCEPT_MSG(decomp.dimension != 3, "Invalid dimension in decomposition (only 3D is supported)");
 
@@ -132,6 +158,7 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
 
   // fill cell volumes
   cellVolume = Teuchos::rcp(new Epetra_Vector(Copy,*oneDimensionalMap,decomp.cellVolume.get()) );
+#endif
 
   // find the minimum element radius
   for(int i=0 ; i<cellVolume->MyLength() ; ++i){
@@ -511,6 +538,345 @@ QUICKGRID::Data PeridigmNS::STKDiscretization::getDecomp(const string& meshFileN
   return decomp;
 }
 
+void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
+{
+
+  string meshType = "exodusii";
+  string workingDirectory = "";
+  Teuchos::RCP<const Epetra_MpiComm> mpiComm = Teuchos::rcp_dynamic_cast<const Epetra_MpiComm>(comm, true);
+  metaData = Teuchos::rcp(new stk::mesh::fem::FEMMetaData);
+
+  #if TRILINOS_MAJOR_MINOR_VERSION > 101002
+  meshData = Teuchos::rcp(new stk::io::MeshData);
+  #else
+  meshData = Teuchos::rcp(new stk::io::util::MeshData);
+  #endif
+  Ioss::Init::Initializer io;
+
+  #if TRILINOS_MAJOR_MINOR_VERSION > 101002
+  stk::io::create_input_mesh(meshType,
+                             meshFileName,
+                             mpiComm->Comm(),
+                             *metaData,
+                             *meshData);
+  #else
+  stk::io::util::create_input_mesh(meshType,
+                                   meshFileName,
+                                   workingDirectory,
+                                   mpiComm->Comm(),
+                                   *metaData,
+                                   *meshData);
+  #endif
+  
+  int numberOfDimensions = metaData->spatial_dimension();
+  TEUCHOS_TEST_FOR_EXCEPTION(numberOfDimensions != 3, std::invalid_argument, "Peridigm operates only on three-dimensional meshes.");
+
+  // This assigns a null Ioss::GroupingEntity attribute to the universal part
+  stk::io::put_io_part_attribute(metaData->universal_part());
+
+  // Loop over the parts and store the element parts and node parts.
+  const stk::mesh::PartVector& stkParts = metaData->get_parts();
+  stk::mesh::PartVector stkElementBlocks;
+//   stk::mesh::PartVector stkSideSets;
+  stk::mesh::PartVector stkNodeSets;
+  for(stk::mesh::PartVector::const_iterator it = stkParts.begin(); it != stkParts.end(); ++it){
+    stk::mesh::Part* const part = *it;
+    if(part->name()[0] == '{')
+      continue;
+    if(part->primary_entity_rank() == metaData->element_rank())
+      stkElementBlocks.push_back(part);
+//     else if(part->primary_entity_rank() == metaData->side_rank())
+//       stkSideSets.push_back(part);
+    else if(part->primary_entity_rank() == metaData->node_rank())
+      stkNodeSets.push_back(part);
+    else
+      if(myPID == 0)
+        cout << "Warning, unknown part type for part " << part->name() << endl;
+  }
+  if(myPID == 0){
+    stringstream ss;
+    ss << "Converting input file " << meshFileName << " to sphere mesh:" << endl;
+    ss << "  Element blocks:";
+    for(stk::mesh::PartVector::const_iterator it = stkElementBlocks.begin(); it != stkElementBlocks.end(); ++it)
+      ss << " " << (*it)->name();
+    ss << endl;
+//     ss << "  Side sets:";
+//     for(stk::mesh::PartVector::const_iterator it = stkSideSets.begin(); it != stkSideSets.end(); ++it)
+//       ss << " " << (*it)->name();
+//     ss << endl;
+    ss << "  Node sets:";
+    for(stk::mesh::PartVector::const_iterator it = stkNodeSets.begin(); it != stkNodeSets.end(); ++it)
+      ss << " " << (*it)->name();
+    ss << endl;
+    cout << ss.str() << endl;
+  }
+
+  if (!metaData->is_FEM_initialized())
+    metaData->FEM_initialize(numberOfDimensions);
+
+  stk::mesh::BulkData bulkData(stk::mesh::fem::FEMMetaData::get_meta_data(*metaData), mpiComm->Comm());
+
+  metaData->commit();
+
+  #if TRILINOS_MAJOR_MINOR_VERSION > 101002
+  stk::io::populate_bulk_data(bulkData, *meshData);
+  #else
+  stk::io::util::populate_bulk_data(bulkData, *meshData, "exodusii");
+  #endif
+  bulkData.modification_end();
+
+  stk::mesh::Field<double, stk::mesh::Cartesian>* coordinatesField = 
+    metaData->get_field< stk::mesh::Field<double, stk::mesh::Cartesian> >("coordinates");
+
+  // The volume field is present only for sphere meshes
+  // volumeField will be a null pointer for tet or hex meshes
+  stk::mesh::Field<double, stk::mesh::Cartesian>* volumeField = 
+    metaData->get_field< stk::mesh::Field<double, stk::mesh::Cartesian> >("volume");
+
+  // Create a selector to select everything in the universal part that is either locally owned or globally shared
+  stk::mesh::Selector selector = 
+    stk::mesh::Selector( metaData->universal_part() ) & ( stk::mesh::Selector( metaData->locally_owned_part() ) | stk::mesh::Selector( metaData->globally_shared_part() ) );
+
+  // Select element mesh entities that match the selector
+  std::vector<stk::mesh::Entity*> elements;
+  stk::mesh::get_selected_entities(selector, bulkData.buckets(metaData->element_rank()), elements);
+
+  // Select node mesh entities that match the selector
+  std::vector<stk::mesh::Entity*> nodes;
+  stk::mesh::get_selected_entities(selector, bulkData.buckets(metaData->node_rank()), nodes);
+
+  // Determine the total number of elements in the model
+  // \todo There must be a cleaner way to determine the number of elements in a model.
+  Teuchos::RCP<const Teuchos::Comm<int> > teuchosComm = Teuchos::createMpiComm<int>(Teuchos::opaqueWrapper<MPI_Comm>(MPI_COMM_WORLD));
+  int localElemCount = elements.size();
+  int globalElemCount(0);
+  reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, int(1), &localElemCount, &globalElemCount);
+
+  // Store the positions of the nodes in the initial mesh
+  // This is used for the calculation of partial neighbor volumes
+  vector<int> myGlobalNodeIds(nodes.size());
+  for(unsigned int i=0 ; i<nodes.size() ; ++i)
+    myGlobalNodeIds[i] = nodes[i]->identifier() - 1;
+  Epetra_BlockMap exodusMeshNodePositionsMap(-1, nodes.size(), &myGlobalNodeIds[0], 3, 0, *comm);
+  exodusMeshNodePositions = Teuchos::RCP<Epetra_Vector>(new Epetra_Vector(exodusMeshNodePositionsMap));
+  for(unsigned int iNode=0 ; iNode<nodes.size() ; ++iNode){
+    int globalID = nodes[iNode]->identifier() - 1;
+    double* coordinates = stk::mesh::field_data(*coordinatesField, *nodes[iNode]);
+    int localID = exodusMeshNodePositionsMap.LID(globalID);
+    (*exodusMeshNodePositions)[3*localID]   = coordinates[0];
+    (*exodusMeshNodePositions)[3*localID+1] = coordinates[1];
+    (*exodusMeshNodePositions)[3*localID+2] = coordinates[2];
+  }
+
+  // Create a list of owned global element ids
+  vector<int> globalElementIds(elements.size());
+  for(unsigned int iElem=0 ; iElem<elements.size() ; ++iElem){
+    stk::mesh::PairIterRelation nodeRelations = elements[iElem]->node_relations();
+    int elementId = elements[iElem]->identifier() - 1;
+    globalElementIds[iElem] = elementId;
+  }
+
+  // Create the owned maps
+  oneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(-1, elements.size(), &globalElementIds[0], 1, 0, *comm));
+  threeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(-1, elements.size(), &globalElementIds[0], 3, 0, *comm));
+
+  // Create Epetra_Vectors for the initial positions, volumes, and block_ids
+  initialX = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
+  cellVolume = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
+  blockID = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
+
+  double* initialXPtr;
+  initialX->ExtractView(&initialXPtr);
+  double* cellVolumePtr;
+  cellVolume->ExtractView(&cellVolumePtr);
+
+  // warning flags
+  bool tenNodedTetWarningGiven = false;
+  bool twentyNodedHexWarningGiven = false;
+
+  // loop over the elements and load the data into the discretization's data structures
+  for(unsigned int iElem=0 ; iElem<elements.size() ; ++iElem){
+    stk::mesh::PairIterRelation nodeRelations = elements[iElem]->node_relations();
+    int elementID = elements[iElem]->identifier() - 1;
+    exodusMeshElementConnectivity[elementID] = vector<int>();
+    initialXPtr[iElem*3] = 0.0;
+    initialXPtr[iElem*3+1] = 0.0;
+    initialXPtr[iElem*3+2] = 0.0;
+    std::vector<double*> nodeCoordinates(nodeRelations.size());
+    int iNode = 0;
+    for(stk::mesh::PairIterRelation::iterator it=nodeRelations.begin() ; it!=nodeRelations.end() ; ++it){
+      stk::mesh::Entity* node = it->entity();
+      exodusMeshElementConnectivity[elementID].push_back(node->identifier() - 1);
+      double* coordinates = stk::mesh::field_data(*coordinatesField, *node);
+      initialXPtr[iElem*3] += coordinates[0];
+      initialXPtr[iElem*3+1] += coordinates[1];
+      initialXPtr[iElem*3+2] += coordinates[2];
+      nodeCoordinates[iNode++] = coordinates;
+    }
+    initialXPtr[iElem*3] /= nodeRelations.size();
+    initialXPtr[iElem*3+1] /= nodeRelations.size();
+    initialXPtr[iElem*3+2] /= nodeRelations.size();
+    if(nodeRelations.size() == 1){
+      double* exodusVolume = stk::mesh::field_data(*volumeField, *elements[iElem]);
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(exodusVolume == NULL, "**** Volume attribute not found for sphere element.\n");
+      cellVolumePtr[iElem] = exodusVolume[0];
+    }
+    else if(nodeRelations.size() == 4){
+      // 4-noded tet
+      cellVolumePtr[iElem] = tetVolume(nodeCoordinates);
+    }
+    else if(nodeRelations.size() == 8){
+      // 8-noded hex
+      cellVolumePtr[iElem] = hexVolume(nodeCoordinates);
+    }
+    else if(nodeRelations.size() == 10){
+      // 10-noded tet, treat as 4-noded tet
+      if(!tenNodedTetWarningGiven){
+        cout << "**** Warning on processor " << myPID << ", side nodes being discarded for 10-node tetrahedron element, will be treated as 4-node tetrahedron element." << endl;
+        tenNodedTetWarningGiven = true;
+      }
+      cellVolumePtr[iElem] = hexVolume(nodeCoordinates);
+    }
+    else if(nodeRelations.size() == 20){
+      // 20-noded hex, treat as 8-noded tet
+      if(!twentyNodedHexWarningGiven){
+        cout << "**** Warning on processor " << myPID << ", side nodes being discarded for 20-node hexahedron element, will be treated as 8-node hexahedron element." << endl;
+        twentyNodedHexWarningGiven = true;
+      }
+      cellVolumePtr[iElem] = hexVolume(nodeCoordinates);
+    }
+    else{
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeRelations.size() != 1 && nodeRelations.size() != 8, "**** Invalid element topology.\n");
+    }
+  }
+
+  // loop over the element blocks
+  for(unsigned int iBlock=0 ; iBlock<stkElementBlocks.size() ; iBlock++){
+
+    const std::string blockName = stkElementBlocks[iBlock]->name();
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(elementBlocks->find(blockName) != elementBlocks->end(), "**** Duplicate block found: " + blockName + "\n");
+    (*elementBlocks)[blockName] = std::vector<int>();
+    std::vector<int>& elementBlock = (*elementBlocks)[blockName];
+
+    // Create a selector for all locally-owned elements in the block
+    stk::mesh::Selector selector = 
+      stk::mesh::Selector( *stkElementBlocks[iBlock] ) & stk::mesh::Selector( metaData->locally_owned_part() );
+
+    // Select the mesh entities that match the selector
+    std::vector<stk::mesh::Entity*> elementsInElementBlock;
+    stk::mesh::get_selected_entities(selector, bulkData.buckets(metaData->element_rank()), elementsInElementBlock);
+
+    // Loop over the elements in this block
+    std::vector<int> elementGlobalIds(elementsInElementBlock.size());
+
+    for(unsigned int iElement=0 ; iElement<elementsInElementBlock.size() ; iElement++)
+      elementGlobalIds[iElement] = elementsInElementBlock[iElement]->identifier() - 1;
+
+    // Load the element block into the elementBlock container
+    for(unsigned int i=0 ; i<elementGlobalIds.size() ; ++i)
+      elementBlock.push_back( elementGlobalIds[i] );
+  }
+
+  // loop over the node sets
+  for(unsigned int iNodeSet=0 ; iNodeSet<stkNodeSets.size() ; iNodeSet++){
+
+    const std::string nodeSetName = stkNodeSets[iNodeSet]->name();
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSetName) != nodeSets->end(), "**** Duplicate node set found: " + nodeSetName + "\n");
+    (*nodeSets)[nodeSetName] = std::vector<int>();
+    std::vector<int>& nodeSet = (*nodeSets)[nodeSetName];
+
+    // Create a selector for all locally-owned nodes in the node set
+    stk::mesh::Selector selector = 
+      stk::mesh::Selector( *stkNodeSets[iNodeSet] ) & stk::mesh::Selector( metaData->locally_owned_part() );
+
+    // Select the mesh entities that match the selector
+    std::vector<stk::mesh::Entity*> nodesInNodeSet;
+    stk::mesh::get_selected_entities(selector, bulkData.buckets(metaData->node_rank()), nodesInNodeSet);
+    
+    // Loop over the nodes in this node set
+    std::set<int> elementGlobalIds;
+    for(unsigned int iNode=0 ; iNode<nodesInNodeSet.size() ; iNode++){
+
+      // Get all the elements relations for this node and record the element ID in the node set
+      // This works because the original element ID is the same as the node ID in the sphere mesh
+      stk::mesh::PairIterRelation elementRelations = nodesInNodeSet[iNode]->relations(metaData->element_rank()); 
+      for(stk::mesh::PairIterRelation::iterator it=elementRelations.begin() ; it!=elementRelations.end() ; ++it){
+        stk::mesh::Entity* element = it->entity();
+        int globalId = element->identifier() - 1;
+        elementGlobalIds.insert(globalId);
+      }
+    }
+
+    //
+    //  \todo TEMPORARY SOLUTION THAT WILL NOT SCALE.
+    //
+    // Get the full node list on every processor.
+    // This is important because, if we're running contact, we're about to rebalance, and after we do so nodes
+    // that are locally owned may not be locally owned.  If a node that
+    // changes processor is in a node set, this will cause problems downstream
+    // when assigning initial/boundary conditions.  A simple solution is to
+    // have all processors know about all the nodes in each node set.  But this
+    // won't scale.
+    // 
+    // \todo Figure out why it doesn't work to simpily use selector = stk::mesh::Selector( *stkNodeSets[iNodeSet] ) to get the complete node set.
+    //
+    vector<int> localNodeSetLength(numPID, 0);
+    vector<int> tempLocalNodeSetLength(numPID, 0);
+    tempLocalNodeSetLength[myPID] = (int)elementGlobalIds.size();
+    reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, (int)numPID, &tempLocalNodeSetLength[0], &localNodeSetLength[0]);
+
+    int totalNodeSetLength = 0;
+    int offset = 0;
+    for(unsigned int i=0 ; i<localNodeSetLength.size() ; ++i){
+      if(i < myPID)
+        offset += localNodeSetLength[i];
+      totalNodeSetLength += localNodeSetLength[i];
+    }
+    vector<int> completeElementGlobalIds(totalNodeSetLength, 0);
+    vector<int> tempCompleteElementGlobalIds(totalNodeSetLength, 0);
+    int index = 0;
+    for(std::set<int>::iterator it=elementGlobalIds.begin() ; it!=elementGlobalIds.end() ; it++){
+      tempCompleteElementGlobalIds[index+offset] = *it;
+      index++;
+    }
+    reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, totalNodeSetLength, &tempCompleteElementGlobalIds[0], &completeElementGlobalIds[0]);
+
+    // Load the node set into the nodeSets container
+    for(unsigned int i=0 ; i<completeElementGlobalIds.size() ; ++i)
+      nodeSet.push_back( completeElementGlobalIds[i] );
+  }
+
+  // Record the element block ids
+  double* blockIDPtr;
+  blockID->ExtractView(&blockIDPtr);
+  std::map< std::string, std::vector<int> >::const_iterator it;
+  for(it = elementBlocks->begin() ; it != elementBlocks->end() ; it++){
+    const std::string& blockName = it->first;
+
+    size_t loc = blockName.find_last_of('_');
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(loc == string::npos, "\n**** Parse error, invalid block name.\n");
+    stringstream blockIDSS(blockName.substr(loc+1, blockName.size()));
+    int bID;
+    blockIDSS >> bID;
+    const std::vector<int>& elementIDs = it->second;
+    for(unsigned int i=0 ; i<elementIDs.size() ; ++i){
+      int globalID = elementIDs[i];
+      int localID = oneDimensionalMap->LID(globalID);
+      blockIDPtr[localID] = bID;
+    }
+  }
+
+  #if TRILINOS_MAJOR_MINOR_VERSION > 101002
+  // free the meshData
+  meshData = Teuchos::RCP<stk::io::MeshData>();
+  #else
+  // free the meshData
+  meshData = Teuchos::RCP<stk::io::util::MeshData>();
+  #endif
+
+  return;
+}
+
 void
 PeridigmNS::STKDiscretization::createMaps(const QUICKGRID::Data& decomp)
 {
@@ -552,6 +918,34 @@ PeridigmNS::STKDiscretization::createNeighborhoodData(const QUICKGRID::Data& dec
    memcpy(neighborhoodData->NeighborhoodList(),
  		 Discretization::getLocalNeighborList(decomp, *oneDimensionalOverlapMap).get(),
  		 decomp.sizeNeighborhoodList*sizeof(int));
+   neighborhoodData = filterBonds(neighborhoodData);
+}
+
+void
+PeridigmNS::STKDiscretization::createNeighborhoodData(int neighborListSize, int* neighborList)
+{
+
+   int numOwnedIds = oneDimensionalMap->NumMyElements();
+   
+   int* ownedGlobalIds = oneDimensionalMap->MyGlobalElements();
+
+   vector<int> ownedLocalIds(numOwnedIds);
+   vector<int> neighborhoodPtr(numOwnedIds);
+
+   int numNeighbors(0), neighborListIndex(0);
+   for(int i=0 ; i<numOwnedIds ; ++i){
+     ownedLocalIds[i] = oneDimensionalMap->LID(ownedGlobalIds[i]); // \todo This seems unnecessary, is it just i?  What if MyGlobalElements is not sorted, then is ownedLocalIds also not sorted?
+     neighborhoodPtr[i] = neighborListIndex;     
+     numNeighbors = neighborList[neighborListIndex++];
+     neighborListIndex += numNeighbors;
+   }
+
+   neighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
+   neighborhoodData->SetNumOwned(numOwnedIds);
+   memcpy(neighborhoodData->OwnedIDs(), &ownedLocalIds[0], numOwnedIds*sizeof(int));
+   memcpy(neighborhoodData->NeighborhoodPtr(), &neighborhoodPtr[0], numOwnedIds*sizeof(int));
+   neighborhoodData->SetNeighborhoodListSize(neighborListSize);
+   memcpy(neighborhoodData->NeighborhoodList(), neighborList, neighborListSize*sizeof(int));
    neighborhoodData = filterBonds(neighborhoodData);
 }
 

@@ -42,6 +42,7 @@ add_test (utPeridigm_PdQuickGridDiscretization_MPI_np2  python ${CMAKE_BINARY_DI
 add_executable(utPeridigm_STKDiscretization
                ${DISCRETIZATION_DIR}/Peridigm_Discretization.cpp
                ${DISCRETIZATION_DIR}/Peridigm_STKDiscretization.cpp
+               ${IO_DIR}/Peridigm_ProximitySearch.cpp
                ./utPeridigm_STKDiscretization.cpp)
 target_link_libraries(utPeridigm_STKDiscretization
   ${Trilinos_LIBRARIES}

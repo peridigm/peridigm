@@ -125,6 +125,9 @@ namespace PeridigmNS {
     //! Private to prohibit copying
     STKDiscretization& operator=(const STKDiscretization&);
 
+    //! Loads mesh data into Epetra_Vectors (initial positions, volumes, block ids) and stores original Exodus node locations and connectivity.
+    void loadData(const std::string& meshFileName);
+
     //! Creates a discretization object using STK functionality.
     QUICKGRID::Data getDecomp(const std::string& meshFileName,
                               double horizon);
@@ -142,8 +145,11 @@ namespace PeridigmNS {
     //! Create vectors
     void createVectors();
 
-    //! Create NeighborhoodData
+    //! Create NeighborhoodData OBSOLETE
     void createNeighborhoodData(const QUICKGRID::Data& decomp);
+
+    //! Create NeighborhoodData
+    void createNeighborhoodData(int neighborListSize, int* neighborList);
 
     //! Filter bonds from neighborhood list
     Teuchos::RCP<PeridigmNS::NeighborhoodData> filterBonds(Teuchos::RCP<PeridigmNS::NeighborhoodData> unfilteredNeighborhoodData);
