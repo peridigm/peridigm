@@ -86,8 +86,8 @@ void twoPointProblem()
   if(numProc == 2)
     BOOST_CHECK(numMyElements == 1);
 
-  vector<int> node(3);
-  std::map<int, vector<int> > nodes;
+  vector<double> node(3);
+  std::map<int, vector<double> > nodes;
   node[0] =  1.2 ; node[1] =  1.3 ; node[2] =  6.0 ; nodes[0] = node;
   node[0] =  4.2 ; node[1] = -2.1 ; node[2] = -3.8 ; nodes[1] = node;
 
@@ -195,8 +195,8 @@ void fivePointProblem()
   if(numProc == 5)
     BOOST_CHECK(numMyElements == 1);
 
-  vector<int> node(3);
-  std::map<int, vector<int> > nodes;
+  vector<double> node(3);
+  std::map<int, vector<double> > nodes;
   node[0] = 0.0 ; node[1] = 0.0 ; node[2] = 0.0 ; nodes[0] = node;
   node[0] = 1.0 ; node[1] = 0.0 ; node[2] = 0.0 ; nodes[1] = node;
   node[0] = 0.0 ; node[1] = 1.0 ; node[2] = 0.0 ; nodes[2] = node;
