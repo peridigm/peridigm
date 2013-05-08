@@ -48,7 +48,6 @@
 #include "Peridigm_ProximitySearch.hpp"
 #include "mesh_input/quick_grid/QuickGrid.h"
 #include "pdneigh/PdZoltan.h"
-#include "pdneigh/BondFilter.h"
 #include "pdneigh/NeighborhoodList.h"
 
 using namespace std;
@@ -202,11 +201,12 @@ void PeridigmNS::ProximitySearch::RebalanceNeighborhoodList(Teuchos::RCP<const E
   }
 }
 
-void PeridigmNS::ProximitySearch::GlobalProximitySearch(Epetra_Vector& x,                          /* input  */
-                                                        double searchRadius,                       /* input  */
-                                                        Teuchos::RCP<Epetra_BlockMap>& overlapMap, /* output */
-                                                        int& neighborListSize,                     /* output */
-                                                        int*& neighborList)                        /* output (allocated within function) */
+void PeridigmNS::ProximitySearch::GlobalProximitySearch(Epetra_Vector& x,                                                           /* input  */
+                                                        double searchRadius,                                                        /* input  */
+                                                        Teuchos::RCP<Epetra_BlockMap>& overlapMap,                                  /* output */
+                                                        int& neighborListSize,                                                      /* output */
+                                                        int*& neighborList,                                                         /* output (allocated within function) */
+                                                        std::vector< std::tr1::shared_ptr<PdBondFilter::BondFilter> > bondFilters)  /* optional input */
 
 {
   // Copy information from the Epetra_Vector into a QUICKGRID::Data object
@@ -232,9 +232,15 @@ void PeridigmNS::ProximitySearch::GlobalProximitySearch(Epetra_Vector& x,       
 
   // Rebalance the decomp (RCB decomposition via Zoltan)
   decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
+
+  // The initial implementation supports only a single bond filter
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(bondFilters.size() > 1, "\n****Error:  Multiple bond filters currently unsupported.\n");
+  if(bondFilters.size() == 0){
+    std::tr1::shared_ptr<PdBondFilter::BondFilter> bondFilterPtr(new PdBondFilter::BondFilterDefault(false));
+    bondFilters.push_back(bondFilterPtr);
+  }
  
   // Execute neighbor search
-  std::tr1::shared_ptr<PdBondFilter::BondFilter> bondFilterPtr(new PdBondFilter::BondFilterDefault(false));
   std::tr1::shared_ptr<const Epetra_Comm> commSp(&originalMap.Comm(), NonDeleter<const Epetra_Comm>());
   PDNEIGH::NeighborhoodList list(commSp,
                                  decomp.zoltanPtr.get(),
@@ -242,7 +248,7 @@ void PeridigmNS::ProximitySearch::GlobalProximitySearch(Epetra_Vector& x,       
                                  decomp.myGlobalIDs,
                                  decomp.myX,
                                  searchRadius,
-                                 bondFilterPtr);
+                                 bondFilters[0]);
 
   // The neighbor search is complete, but needs to be brought back into the initial decomposition
 

@@ -49,6 +49,7 @@
 #include <Teuchos_RCP.hpp>
 #include <Epetra_Vector.h>
 #include <vector>
+#include "pdneigh/BondFilter.h"
 
 namespace PeridigmNS {
 namespace ProximitySearch {
@@ -74,7 +75,8 @@ namespace ProximitySearch {
                              double searchRadius,                       /* input  */
                              Teuchos::RCP<Epetra_BlockMap>& overlapMap, /* output */
                              int& neighborListSize,                     /* output */
-                             int*& neighborList);                       /* output (allocated within function) */
+                             int*& neighborList,                        /* output (allocated within function) */
+                             std::vector< std::tr1::shared_ptr<PdBondFilter::BondFilter> > bondFilters = std::vector< std::tr1::shared_ptr<PdBondFilter::BondFilter> >()); /* optional input */
 
 }
 }
