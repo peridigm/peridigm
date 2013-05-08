@@ -335,15 +335,40 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   // Perform requested services
 
   // Check if request for allocation of full tangent stiffness matrix
-  if (serviceManager->isRequested(PeridigmNS::PeridigmService::ALLOCATE_TANGENT))
+  if (serviceManager->isRequested(PeridigmNS::PeridigmService::ALLOCATE_TANGENT)) {
+    // Allocate memory for non-zeros in global tangent and lock in the structure
+    if(peridigmComm->MyPID() == 0){
+      cout << "Allocating global tangent matrix...";
+      cout.flush();
+    }
+    PeridigmNS::Timer::self().startTimer("Allocate Global Tangent");
     allocateJacobian();
+    PeridigmNS::Timer::self().stopTimer("Allocate Global Tangent");
+    if(peridigmComm->MyPID() == 0){
+      cout << "\n  number of rows = " << tangent->NumGlobalRows() << endl;
+      cout << "  number of nonzeros = " << tangent->NumGlobalNonzeros() << "\n" << endl;
+    }
+  }
 
   // Check if request for allocation of block diagonal tangent stiffness matrix
-  if (serviceManager->isRequested(PeridigmNS::PeridigmService::ALLOCATE_BLOCK_DIAGONAL_TANGENT))
+  if (serviceManager->isRequested(PeridigmNS::PeridigmService::ALLOCATE_BLOCK_DIAGONAL_TANGENT)) {
+    // Allocate memory for non-zeros in global tangent and lock in the structure
+    if(peridigmComm->MyPID() == 0){
+      cout << "Allocating global block diagonal tangent matrix...";
+      cout.flush();
+    }
+    PeridigmNS::Timer::self().startTimer("Allocate Global Block Diagonal Tangent");
     allocateBlockDiagonalJacobian();
+    PeridigmNS::Timer::self().stopTimer("Allocate Global Block Diagonal Tangent");
+    if(peridigmComm->MyPID() == 0){
+      cout << "\n  number of rows = " << blockDiagonalTangent->NumGlobalRows() << endl;
+      cout << "  number of nonzeros = " << blockDiagonalTangent->NumGlobalNonzeros() << "\n" << endl;
+    }
+  }
 
   // Set default value for current time;
   timeCurrent = 0.0;
+
 }
 
 void PeridigmNS::Peridigm::instantiateMaterials() {
@@ -574,9 +599,11 @@ void PeridigmNS::Peridigm::instantiateComputeManager() {
   Teuchos::RCP<Epetra_FECrsMatrix> *tmp1 = &( tangent );
   Teuchos::RCP<Epetra_FECrsMatrix> *tmp2 = &( blockDiagonalTangent );
   Teuchos::RCP<PeridigmNS::SerialMatrix> *tmp3 = &( overlapJacobian );
+  Teuchos::RCP<Epetra_Map> *tmp4 = &( blockDiagonalTangentMap );
   computeClassGlobalData->set("tangent",tmp1);
   computeClassGlobalData->set("blockDiagonalTangent",tmp2);
   computeClassGlobalData->set("overlapJacobian",tmp3);
+  computeClassGlobalData->set("blockDiagonalTangentMap",tmp4);
 
   computeManager = Teuchos::rcp( new PeridigmNS::ComputeManager( computeParams, peridigmComm, computeClassGlobalData ) );
 }
@@ -2327,6 +2354,9 @@ void PeridigmNS::Peridigm::allocateBlockDiagonalJacobian() {
   // do not re-allocate if already allocated
   if (blockDiagonalTangent != Teuchos::null) return;
 
+  // err code
+  int err;
+
   // Construct map for global tangent matrix
   // Note that this must be an Epetra_Map, not an Epetra_BlockMap, so we can't use threeDimensionalMap directly
   int numGlobalElements = 3*oneDimensionalMap->NumGlobalElements();
@@ -2342,37 +2372,84 @@ void PeridigmNS::Peridigm::allocateBlockDiagonalJacobian() {
   blockDiagonalTangentMap = Teuchos::rcp(new Epetra_Map(numGlobalElements, numMyElements, &myGlobalElements[0], indexBase, *peridigmComm));
   myGlobalElements.clear();
 
-  // Create the block diagonal tangent matrix
+  // Create the global tangent matrix
   Epetra_DataAccess CV = Copy;
-  int numEntriesPerRow = 3; // In the block diagonal jacobian, there are always three entries per row in 3D
+  int numEntriesPerRow = 3;  // Indicates allocation will take place during the insertion phase
   bool ignoreNonLocalEntries = false;
   blockDiagonalTangent = Teuchos::rcp(new Epetra_FECrsMatrix(CV, *blockDiagonalTangentMap, numEntriesPerRow, ignoreNonLocalEntries));
 
-  // Allocate storage for block diagonal tangent
-  vector<int> indices;
-  vector<double> zeros;
-  indices.resize(numEntriesPerRow, 0.0);
-  zeros.resize(numEntriesPerRow, 0.0);
-  for(int iElem=0 ; iElem<oneDimensionalMap->NumMyElements() ; ++iElem){
-    // insert all three rows for this element
-    indices[0] = 3*oneDimensionalMapGlobalElements[iElem];
-    indices[1] = 3*oneDimensionalMapGlobalElements[iElem] + 1;
-    indices[2] = 3*oneDimensionalMapGlobalElements[iElem] + 2;
-    // Allocate space in the global matrix
-    int err = blockDiagonalTangent->InsertGlobalValues(indices[0], numEntriesPerRow, (const double*)&zeros[0], (const int*)&indices[0]);
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(err < 0, "**** PeridigmNS::Peridigm::allocateBlockDiagonalJacobian(), InsertGlobalValues() returned negative error code.\n");
-    err = blockDiagonalTangent->InsertGlobalValues(indices[1], numEntriesPerRow, (const double*)&zeros[0], (const int*)&indices[0]);
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(err < 0, "**** PeridigmNS::Peridigm::allocateBlockDiagonalJacobian(), InsertGlobalValues() returned negative error code.\n");
-    err = blockDiagonalTangent->InsertGlobalValues(indices[2], numEntriesPerRow, (const double*)&zeros[0], (const int*)&indices[0]);
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(err < 0, "**** PeridigmNS::Peridigm::allocateBlockDiagonalJacobian(), InsertGlobalValues() returned negative error code.\n");
+  // Store nonzero columns for each row, with everything in global indices
+  map<int, boost::unordered_set<int> > rowEntries;
+
+  // Loop over the neighborhood for each locally-owned point and record non-zero entries in the matrix.
+  // Entries will exist for any two points that are bonded, and any two points that are bonded to a common third point.
+  int* neighborhoodList = globalNeighborhoodData->NeighborhoodList();
+  int neighborhoodListIndex = 0;
+  vector<int> globalIndices;
+  int numOwnedPoints = globalNeighborhoodData->NumOwnedPoints();
+  for(int LID=0 ; LID<numOwnedPoints ; ++LID){
+    int GID = oneDimensionalOverlapMap->GID(LID);
+    int numNeighbors = neighborhoodList[neighborhoodListIndex++];
+    unsigned int numEntries = 3*(numNeighbors+1);
+    if(globalIndices.size() < numEntries)
+      globalIndices.resize(numEntries);
+    globalIndices[0] = 3*GID;
+    globalIndices[1] = 3*GID + 1;
+    globalIndices[2] = 3*GID + 2;
+    for(int j=0 ; j<numNeighbors ; ++j){
+      int neighborLocalID = neighborhoodList[neighborhoodListIndex++];
+      int neighborGlobalID = oneDimensionalOverlapMap->GID(neighborLocalID);
+      globalIndices[3*j+3] = 3*neighborGlobalID;
+      globalIndices[3*j+4] = 3*neighborGlobalID + 1;
+      globalIndices[3*j+5] = 3*neighborGlobalID + 2;
+    }
+
+    // The entries going into the tangent are a dense matrix of size numEntries by numEntries.
+    // Each global ID in the list interacts with all other global IDs in the list.
+    for(unsigned int i=0 ; i<numEntries ; ++i){
+      for(unsigned int j=0 ; j<numEntries ; ++j)
+        rowEntries[globalIndices[i]].insert(globalIndices[j]);
+    }
   }
-  int err = blockDiagonalTangent->GlobalAssemble();
+
+  // Allocate space in the global Epetra_FECrsMatrix
+  vector<int> indices;
+  vector<int> blockDiagonalIndices;
+  blockDiagonalIndices.resize(3);
+  vector<double> zeros;
+  for(map<int, boost::unordered_set<int> >::iterator rowEntry=rowEntries.begin(); rowEntry!=rowEntries.end() ; ++rowEntry){
+    unsigned int numRowNonzeros = rowEntry->second.size();
+    if(zeros.size() < numRowNonzeros)
+      zeros.resize(numRowNonzeros, 0.0);
+
+    // Load indices into a sorted vector
+    indices.resize(numRowNonzeros);
+    int i=0;
+    for(boost::unordered_set<int>::const_iterator globalIndex=rowEntry->second.begin() ; globalIndex!=rowEntry->second.end() ; ++globalIndex)
+      indices[i++] = *globalIndex;
+    sort(indices.begin(), indices.end());
+
+    // Figure out node ID from global DOF ID
+    int myID = rowEntry->first/3;
+    blockDiagonalIndices[0] = 3*myID + 0;
+    blockDiagonalIndices[1] = 3*myID + 1;
+    blockDiagonalIndices[2] = 3*myID + 2;
+
+    // Allocate space in the global matrix
+    //err = blockDiagonalTangent->InsertGlobalValues(rowEntry->first, numRowNonzeros, (const double*)&zeros[0], (const int*)&indices[0]);
+    err = blockDiagonalTangent->InsertGlobalValues(rowEntry->first, numEntriesPerRow, (const double*)&zeros[0], (const int*)&blockDiagonalIndices[0]);
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(err < 0, "**** PeridigmNS::Peridigm::allocateblockDiagonalJacobian(), InsertGlobalValues() returned negative error code.\n");
+
+    rowEntry->second.clear();
+  }
+  err = blockDiagonalTangent->GlobalAssemble();
   TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::allocateBlockDiagonalJacobian(), GlobalAssemble() returned nonzero error code.\n");
 
   // create the serial Jacobian
   overlapJacobian = Teuchos::rcp(new PeridigmNS::SerialMatrix(blockDiagonalTangent));
   workset->jacobian = overlapJacobian;
 }
+
 
 double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vector> residual) {
 
