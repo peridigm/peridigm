@@ -53,7 +53,6 @@
 #include "Epetra_Comm.h"
 #include "Epetra_Distributor.h"
 
-#include "Peridigm_VTKSearchTree.hpp"
 #include "Peridigm_JAMSearchTree.hpp"
 #include "Peridigm_ZoltanSearchTree.hpp"
 
@@ -577,15 +576,10 @@ void NeighborhoodList::buildNeighborhoodList
 {
 	/*
 	 * Create KdTree
-     * There are three implemenations available:  VTK, JAM, and Zoltan
-     * The VTK tree is only available if the code is built with the optional VTK package (-D ENABLE_VTK:BOOL=ON)
+     * There are two implemenations available:  JAM and Zoltan
 	 */
-#ifdef PERIDIGM_VTK
-    PeridigmNS::SearchTree* searchTree = new PeridigmNS::VTKSearchTree(numOverlapPoints, xOverlapPtr.get());
-#else
     //PeridigmNS::SearchTree* searchTree = new PeridigmNS::JAMSearchTree(numOverlapPoints, xOverlapPtr.get());
     PeridigmNS::SearchTree* searchTree = new PeridigmNS::ZoltanSearchTree(numOverlapPoints, xOverlapPtr.get());
-#endif
 
 	/*
 	 * this is used by bond filters
