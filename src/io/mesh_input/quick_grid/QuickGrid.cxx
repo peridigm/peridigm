@@ -358,7 +358,6 @@ Array<double>  getDiscretization(const SpecRing2D& spec, const Spec1D& axisSpec)
 	Array<double> gPtr(3*numCells);
 	double *g = gPtr.get();
 
-	// Loop over VTK points and set
 	double *z = zPtr.get();
 	for(size_t n=0;n<nz;n++,z++){
 		double *pts = ptsPtr.get();
