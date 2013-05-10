@@ -6,10 +6,9 @@ target_link_libraries(utPeridigm_ElasticPlasticMaterial
   ${Trilinos_LIBRARIES}
   QuickGrid 
   PdNeigh 
-  PdVTK 
   Utilities 
-  PdMaterialUtilities 
-  ${VTK_LIBS}
+  PdMaterialUtilities
+  PdField
   ${PARSER_LIBS}
   ${UT_REQUIRED_LIBS}
   ${TRILINOS_LIBS} 

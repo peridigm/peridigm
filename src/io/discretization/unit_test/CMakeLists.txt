@@ -16,8 +16,6 @@ target_link_libraries(utPeridigm_PdQuickGridDiscretization
   ${PDNEIGH_LIBS}
   ${Zoltan_LIBRARY}
   ${MESH_INPUT_LIBS}
-  ${MESH_OUTPUT_LIBS}
-  ${VTK_LIBS}
   ${REQUIRED_LIBS}
   ${Boost_LIBRARIES}
 )
@@ -32,8 +30,6 @@ target_link_libraries(utPeridigm_PdQuickGridDiscretization_MPI_np2
   ${PDNEIGH_LIBS}
   ${Zoltan_LIBRARY}
   ${MESH_INPUT_LIBS}
-  ${MESH_OUTPUT_LIBS}
-  ${VTK_LIBS}
   ${REQUIRED_LIBS}
   ${Boost_LIBRARIES}
 )
@@ -49,9 +45,7 @@ target_link_libraries(utPeridigm_STKDiscretization
   ${PDNEIGH_LIBS}
   ${Zoltan_LIBRARY}
   ${MESH_INPUT_LIBS}
-  ${MESH_OUTPUT_LIBS}
   ${UTILITIES_LIBS}
-  ${VTK_LIBS}
   ${REQUIRED_LIBS}
   ${Boost_LIBRARIES}
 )

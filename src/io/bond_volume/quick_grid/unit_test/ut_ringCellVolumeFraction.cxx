@@ -56,7 +56,6 @@
 #include "pdneigh/PdZoltan.h"
 #include "utilities/PdutMpiFixture.h"
 #include "mesh_output/Field.h"
-#include "mesh_output/PdVTK.h"
 #include "utilities/Vector3D.h"
 #include "utilities/Array.h"
 #include <set>
@@ -235,22 +234,6 @@ void sphere()
 	Field<double> cellVol(Field_NS::VOLUME,gridData.cellVolume,list.get_num_owned_points());
 	compute_cell_volumes(list,quadratureCellVol,xOverlapArray.get_shared_ptr(),calculator);
 	compute_neighborhood_volumes(list,neighVol,naiveNeighVol,vOverlapArray,xOverlapArray.get_shared_ptr(),calculator);
-
-	/*
-	 * Output mesh
-	 */
-#ifdef PERIDIGM_VTK
-	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(gridData.myX,gridData.numPoints);
-	Field<int> fieldRank(Field_NS::PROC_NUM,gridData.numPoints);
-	fieldRank.set(myRank);
-	PdVTK::writeField(grid,fieldRank);
-	PdVTK::writeField(grid,neighVol);
-	PdVTK::writeField(grid,naiveNeighVol);
-	PdVTK::writeField(grid,quadratureCellVol);
-	PdVTK::writeField(grid,cellVol);
-	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer = PdVTK::getWriter("ut_ringCellVolumeFraction.pvtu", numProcs, myRank);
-	PdVTK::write(writer,grid);
-#endif
 }
 
 
