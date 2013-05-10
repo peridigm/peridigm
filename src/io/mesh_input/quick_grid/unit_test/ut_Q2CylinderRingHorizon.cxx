@@ -82,8 +82,6 @@ void ringHorizon()
 	double cylinderLength = 2.0*a;
 	int numRings = 3;
 	SpecRing2D ring2dSpec(center,innerRadius,outerRadius,numRings);
-	//	vtkSmartPointer<vtkUnstructuredGrid> g4 = PdVTK::getGrid(ring2dSpec);
-	//	PdVTK::WriteUnstructured("ring2d.vtu",g4);
 	/*
 	 * This produces 85 cells in a ring for the Q2 cylinder geometry
 	 */
@@ -351,8 +349,6 @@ void Q2CylinderNeighborhoodSizes()
 	size_t numRings = 3;
 	SpecRing2D ring2dSpec(center,innerRadius,outerRadius,numRings);
 	size_t numRays = ring2dSpec.getNumRays();
-	//	vtkSmartPointer<vtkUnstructuredGrid> g4 = PdVTK::getGrid(ring2dSpec);
-	//	PdVTK::WriteUnstructured("ring2d.vtu",g4);
 	/*
 	 * This produces 85 cells in a ring for the Q2 cylinder geometry
 	 */
@@ -511,8 +507,6 @@ void Q2CylinderNeighborhoods()
 	double cylinderLength = 2.0*a;
 	size_t numRings = 3;
 	SpecRing2D ring2dSpec(center,innerRadius,outerRadius,numRings);
-	//	vtkSmartPointer<vtkUnstructuredGrid> g4 = PdVTK::getGrid(ring2dSpec);
-	//	PdVTK::WriteUnstructured("ring2d.vtu",g4);
 	/*
 	 * This produces 85 cells in a ring for the Q2 cylinder geometry
 	 */

@@ -54,6 +54,10 @@ add_executable(utFinitePlane utFinitePlane.cxx)
 target_link_libraries(utFinitePlane PdNeigh ${UT_REQUIRED_LIBS})
 add_test (utFinitePlane python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utFinitePlane)
 
+add_executable(utFinitePlaneFilter utFinitePlaneFilter)
+target_link_libraries(utFinitePlaneFilter PdNeigh QuickGrid Utilities ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
+#add_test (utFinitePlaneFilter python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utFinitePlaneFilter)
+
 add_executable(utReloadBalance_np4 utReloadBalance_np4.cxx)
 target_link_libraries(utReloadBalance_np4 PdNeigh QuickGrid Utilities ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 add_test (utReloadBalance_np4 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 4 ./utReloadBalance_np4)
