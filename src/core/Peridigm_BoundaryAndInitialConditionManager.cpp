@@ -427,8 +427,9 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
   double diagonalEntry = -1.0*diagonalNorm1/diagonal.GlobalLength();
 
   // create data structures for inserting ones and zeros into jacobian
-  vector<double> jacobianRow(mat->NumMyCols(), 0.0);
+  vector<double> jacobianValues(mat->NumMyCols(), 0.0);
   vector<int> jacobianIndices(mat->NumMyCols());
+  vector<int> jacobianColIndices(mat->NumMyCols());
   for(unsigned int i=0 ; i<jacobianIndices.size() ; ++i)
     jacobianIndices[i] = i;
 
@@ -452,29 +453,36 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
       // apply kinematic boundary conditions to locally-owned nodes
       TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
       vector<int> & nodeList = (*nodeSets)[nodeSet];
+
+      // zero out the columns associated with kinematic boundary conditions:
+      // create the list of columns only once:
+      const int numColIDs = nodeList.size();
+      for(unsigned int i=0 ; i<numColIDs ; i++){
+        const int globalID = 3*nodeList[i] + coord;
+        const int localColID = mat->LCID(globalID);
+        jacobianColIndices[i] = localColID;
+      }
+      // iterate the local rows and set the approprate column values to 0
+      // \todo Call ReplaceMyValues only for entries that actually exist in the matrix structure.
+      for(int iRow=0 ; iRow<mat->NumMyRows() ; ++iRow)
+        mat->ReplaceMyValues(iRow, numColIDs, &jacobianValues[0], &jacobianColIndices[0]);
+
       for(unsigned int i=0 ; i<nodeList.size() ; i++){
 
-        // zero out the row and column and put a 1.0 on the diagonal
-
+        // zero out the row and put a 1.0 on the diagonal
         int globalID = 3*nodeList[i] + coord;
         int localRowID = mat->LRID(globalID);
         int localColID = mat->LCID(globalID);
 
-        // zero out all locally-owned entries in the column associated with this dof
-        // \todo Call ReplaceMyValues only for entries that actually exist in the matrix structure.
-        double zero = 0.0;
-        for(int iRow=0 ; iRow<mat->NumMyRows() ; ++iRow)
-          mat->ReplaceMyValues(iRow, 1, &zero, &localColID);
-
         // zero out the row and put a 1.0 on the diagonal
         if(localRowID != -1){
-          jacobianRow[localColID] = diagonalEntry;
+          jacobianValues[localColID] = diagonalEntry;
           // From Epetra_CrsMatrix documentation:
           // If a value is not already present for the specified location in the matrix, the
           // input value will be ignored and a positive warning code will be returned.
           // \todo Do the bookkeeping to send in data only for locations that actually exist in the matrix structure.
-          mat->ReplaceMyValues(localRowID, mat->NumMyCols(), &jacobianRow[0], &jacobianIndices[0]);
-          jacobianRow[localColID] = 0.0;
+          mat->ReplaceMyValues(localRowID, mat->NumMyCols(), &jacobianValues[0], &jacobianIndices[0]);
+          jacobianValues[localColID] = 0.0;
         }
       }
     }
