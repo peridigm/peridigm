@@ -457,7 +457,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
       // zero out the columns associated with kinematic boundary conditions:
       // create the list of columns only once:
       const int numColIDs = nodeList.size();
-      for(unsigned int i=0 ; i<numColIDs ; i++){
+      for(int i=0 ; i<numColIDs ; i++){
         const int globalID = 3*nodeList[i] + coord;
         const int localColID = mat->LCID(globalID);
         jacobianColIndices[i] = localColID;

@@ -107,7 +107,7 @@ bool init_unit_test_suite()
 {
 	// Add a suite for each processor in the test
 	bool success=true;
-	test_suite* proc = BOOST_TEST_SUITE( "utPdVtkPlane" );
+	test_suite* proc = BOOST_TEST_SUITE( "utFinitePlane" );
 	proc->add(BOOST_TEST_CASE( &simplePlaneCase ));
 	framework::master_test_suite().add( proc );
 	return success;
