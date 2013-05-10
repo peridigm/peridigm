@@ -37,39 +37,6 @@ else ()
 endif ()
 
 #
-# VTK configuration
-# Questions? See http://www.cmake.org/cmake/help/cmake2.6docs.html#module:FindVTK
-#
-option (USE_VTK
-   "Enable tests and functionality that depend on a VTK installation." 
-   OFF
-)
-if(USE_VTK)
-  MESSAGE("-- VTK is enabled, compiling with -DPERIDIGM_VTK")
-  ADD_DEFINITIONS(-DPERIDIGM_VTK)
-  SET(PERIDIGM_VTK TRUE)
-  find_package (VTK ${VTK_VERSION} NAMES VTK PATHS ${VTK_ROOT})
-  if (VTK_FOUND)
-    message ("\nVTK installation:")
-    message ("   Version: ${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}")
-    message ("   Include Directories: ${VTK_INCLUDE_DIRS}")
-    message ("   Library Directory: ${VTK_LIBRARY_DIRS}")
-    message ("   VTK Kits: ${VTK_KITS}")
-    message ("   VTK_USE_FILE: ${VTK_USE_FILE}\n")
-    include (${VTK_USE_FILE})
-  else ()
-    message ("\nVTK NOT FOUND!  (Try defining VTK_DIR)\n")
-  endif ()
-  set( VTK_LIBS vtkIO )
-ELSE()
-  MESSAGE("-- VTK is NOT enabled.\n")
-  SET(PERIDIGM_VTK FALSE)
-  set( VTK_INCLUDE_DIRS )
-  set( VTK_LIBRARY_DIRS )
-  set( VTK_LIBS )
-ENDIF()
-
-#
 # Blas and Lapack Libraries  
 #
 find_library(Blas_LIBRARY  
@@ -175,7 +142,6 @@ set(Zoltan_LIBRARY zoltan)
 
 # other required libraries
 set(MESH_INPUT_LIBS QuickGrid)
-set(MESH_OUTPUT_LIBS PdVTK)
 set(PARSER_LIBS muParser)
 set(PDNEIGH_LIBS PdNeigh)
 set(UTILITIES_LIBS Utilities)
@@ -186,7 +152,6 @@ set(PdMaterialUtilitiesLib PdMaterialUtilities)
 set(INCLUDE_DIRS 
 ${Trilinos_INCLUDE_DIRS} 
 ${Trilinos_TPL_INCLUDE_DIRS}
-${VTK_INCLUDE_DIRS} 
 ${Boost_INCLUDE_DIRS} 
 ${CMAKE_SOURCE_DIR}
 ${CMAKE_SOURCE_DIR}/src
@@ -221,7 +186,6 @@ set(MESH_OUTPUT_DIR    ${CMAKE_SOURCE_DIR}/src/io/mesh_output)
 
 # link directories 
 set(LIB_DIRS 
-  ${VTK_LIBRARY_DIRS} 
   ${Boost_LIBRARY_DIRS})
 link_directories(${LIB_DIRS})
 

@@ -82,8 +82,6 @@ set(Peridigm_LINK_LIBRARIES
     ${PARSER_LIBS}
     ${MESH_INPUT_LIBS}
     ${UTILITIES_LIBS}
-    ${VTK_LIBS}
-    ${MESH_OUTPUT_LIBS}
     ${REQUIRED_LIBS}
     ${PdMaterialUtilitiesLib}
     ${Boost_LIBRARIES}

@@ -53,7 +53,6 @@
 #include "../BondFilter.h"
 
 #include "PdutMpiFixture.h"
-#include "PdVTK.h"
 #include <iostream>
 #include <set>
 #include "Epetra_ConfigDefs.h"
@@ -117,21 +116,6 @@ QUICKGRID::QuickGridData getGrid() {
 	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
 	QUICKGRID::QuickGridData gridData =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
 	gridData=getLoadBalancedDiscretization(gridData);
-	/*
-	 * Write file for debugging
-	 */
-	/*
-	const FieldSpec myRankSpec(FieldSpec::DEFAULT_FIELDTYPE,FieldSpec::SCALAR,"MyRank");
-	Field<double> X(COORD3D,gridData.myX,gridData.numPoints);
-	Field<int> rankField(myRankSpec,gridData.numPoints);
-	rankField.setValue(myRank);
-
-	vtkSmartPointer<vtkUnstructuredGrid> grid = PdVTK::getGrid(gridData.myX.get(), gridData.numPoints);
-	PdVTK::writeField(grid,X);
-	PdVTK::writeField(grid,rankField);
-	vtkSmartPointer<vtkXMLPUnstructuredGridWriter> writer= PdVTK::getWriter("ut_Y-Z_crack_jacobian_np4.pvtu", numProcs, myRank, PdVTK::vtkASCII);
-	PdVTK::write(writer,grid);
-	*/
 
 	return gridData;
 }

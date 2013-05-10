@@ -15,8 +15,8 @@ add_executable(utPeridigm_ElasticMaterial ./utPeridigm_ElasticMaterial.cpp
 target_link_libraries(utPeridigm_ElasticMaterial
   ${Peridigm_LIBRARY}
   ${Trilinos_LIBRARIES}
-  ${MESH_OUTPUT_LIBS}
   ${PdMaterialUtilitiesLib}
+  PdField
   ${PARSER_LIBS}
   ${REQUIRED_LIBS}
   ${Boost_LIBRARIES}

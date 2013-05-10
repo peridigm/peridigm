@@ -51,7 +51,6 @@
 #include "quick_grid/QuickGrid.h"
 #include "../NeighborhoodList.h"
 #include "../BondFilter.h"
-#include "PdVTK.h"
 #include "PdutMpiFixture.h"
 #include "zoltan.h"
 #include "Sortable.h"
