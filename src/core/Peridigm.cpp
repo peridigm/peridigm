@@ -83,7 +83,6 @@
 
 #include <Epetra_Import.h>
 #include <Epetra_LinearProblem.h>
-#include <EpetraExt_BlockMapOut.h>
 #include <EpetraExt_MultiVectorOut.h>
 #include <EpetraExt_RowMatrixOut.h>
 #include <EpetraExt_Transpose_RowMatrix.h>

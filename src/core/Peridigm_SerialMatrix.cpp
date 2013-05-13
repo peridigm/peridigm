@@ -169,7 +169,7 @@ void PeridigmNS::SerialMatrix::addBlockDiagonalValues(int numIndices, const int*
     // If the row is not locally owned, then sum into the global tangent with Epetra_FECrsMatrix::SumIntoGlobalValues().
     // This is expensive.
     else{
-      int err = FECrsMatrix->SumIntoGlobalValues(globalIndices[iRow], blockDiagonalNumIndices, &blockDiagonalValues[0], &blockDiagonalGlobalIndices[0]);
+      int err = FECrsMatrix->SumIntoGlobalValues(globalIndices[iRow], blockDiagonalNumIndices, const_cast<double *>(&blockDiagonalValues[0]), const_cast<int *>(&blockDiagonalGlobalIndices[0]));
       TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::SerialMatrix::addBlockDiagonalValues(), SumIntoGlobalValues() returned nonzero error code.\n");
     }
   }
