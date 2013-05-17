@@ -50,6 +50,7 @@
 #include <sstream>
 #include <fstream>
 #include <boost/algorithm/string/trim.hpp>
+#include "Peridigm_Timer.hpp"
 
 using namespace std;
 
@@ -141,6 +142,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialDisplacements(T
                                                                                Teuchos::RCP<Epetra_Vector> u,
                                                                                Teuchos::RCP<Epetra_Vector> y)
 {
+  PeridigmNS::Timer::self().startTimer("Apply Boundary Conditions");
   const Epetra_BlockMap& threeDimensionalMap = x->Map();
   TEUCHOS_TEST_FOR_EXCEPT_MSG(threeDimensionalMap.ElementSize() != 3, "**** applyInitialDisplacements() must be called with map having element size = 3.\n");
 
@@ -203,11 +205,13 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialDisplacements(T
 
   // Update curcoord field to be consistent with initial displacement
   y->Update(1.0, *x, 1.0, *u, 0.0);
+  PeridigmNS::Timer::self().stopTimer("Apply Boundary Conditions");
 }
 
 void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialVelocities(Teuchos::RCP<const Epetra_Vector> x,
                                                                             Teuchos::RCP<Epetra_Vector> v)
 {
+  PeridigmNS::Timer::self().startTimer("Apply Boundary Conditions");
   const Epetra_BlockMap& threeDimensionalMap = v->Map();
   TEUCHOS_TEST_FOR_EXCEPT_MSG(threeDimensionalMap.ElementSize() != 3, "**** applyInitialVelocities() must be called with map having element size = 3.\n");
 
@@ -269,6 +273,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialVelocities(Teuc
       }
     }
   }
+  PeridigmNS::Timer::self().stopTimer("Apply Boundary Conditions");
 }
 
 void PeridigmNS::BoundaryAndInitialConditionManager::applyTemperatureChange(double timeCurrent,
@@ -277,6 +282,8 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyTemperatureChange(doub
 {
   if(!m_hasThermal)
     return;
+
+  PeridigmNS::Timer::self().startTimer("Apply Boundary Conditions");
 
   Teuchos::ParameterList& thermalParams = params.sublist("Temperature", true);
   string function = thermalParams.get<string>("Value");
@@ -311,16 +318,19 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyTemperatureChange(doub
 
     (*deltaT)[i] = currentTemperature - initialTemperature;
   }
+  PeridigmNS::Timer::self().stopTimer("Apply Boundary Conditions");
 }
 
 void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_SetDisplacement(double timeCurrent,
                                                                                       Teuchos::RCP<const Epetra_Vector> x,
                                                                                       Teuchos::RCP<Epetra_Vector> vec)
 {
+  PeridigmNS::Timer::self().startTimer("Apply Boundary Conditions");
   double timePrevious = 0.0;
   bool setIncrement = false;
   double multiplier = 1.0;
   setVectorValues(timeCurrent, timePrevious, x, vec, setIncrement, multiplier);
+  PeridigmNS::Timer::self().stopTimer("Apply Boundary Conditions");
 }
 
 void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_SetVelocity(double timeCurrent,
@@ -328,9 +338,11 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_SetVelocit
                                                                                   Teuchos::RCP<const Epetra_Vector> x,
                                                                                   Teuchos::RCP<Epetra_Vector> vec)
 {
+  PeridigmNS::Timer::self().startTimer("Apply Boundary Conditions");
   bool setIncrement = true;
   double multiplier = 1.0/(timeCurrent - timePrevious);
   setVectorValues(timeCurrent, timePrevious, x, vec, setIncrement, multiplier);
+  PeridigmNS::Timer::self().stopTimer("Apply Boundary Conditions");
 }
 
 void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_SetDisplacementIncrement(double timeCurrent,
@@ -338,14 +350,17 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_SetDisplac
                                                                                                Teuchos::RCP<const Epetra_Vector> x,
                                                                                                Teuchos::RCP<Epetra_Vector> vec)
 {
+  PeridigmNS::Timer::self().startTimer("Apply Boundary Conditions");
   bool setIncrement = true;
   double multiplier = 1.0;
   setVectorValues(timeCurrent, timePrevious, x, vec, setIncrement, multiplier);
+  PeridigmNS::Timer::self().stopTimer("Apply Boundary Conditions");
 }
 
 void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_ComputeReactions(Teuchos::RCP<const Epetra_Vector> force,
                                                                                        Teuchos::RCP<Epetra_Vector> reaction)
 {
+  PeridigmNS::Timer::self().startTimer("Apply Boundary Conditions");
   reaction->PutScalar(0.0);
   const Epetra_BlockMap& threeDimensionalMap = force->Map();
   TEUCHOS_TEST_FOR_EXCEPT_MSG(threeDimensionalMap.ElementSize() != 3, "**** applyKinematicBC_ComputeReactions() must be called with map having element size = 3.\n");
@@ -377,10 +392,13 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_ComputeRea
       }
     }
   }
+  PeridigmNS::Timer::self().stopTimer("Apply Boundary Conditions");
 }
 
 void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZeros(Teuchos::RCP<Epetra_Vector> vec)
 {
+  PeridigmNS::Timer::self().startTimer("Apply Boundary Conditions");
+
   const Epetra_BlockMap& oneDimensionalMap = vec->Map();
   TEUCHOS_TEST_FOR_EXCEPT_MSG(oneDimensionalMap.ElementSize() != 1, "**** applyKinematicBC_InsertZeros() must be called with map having element size = 1.\n");
 
@@ -414,10 +432,14 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
       }
     }
   }
+  PeridigmNS::Timer::self().stopTimer("Apply Boundary Conditions");
+
 }
 
 void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZerosAndSetDiagonal(Teuchos::RCP<Epetra_FECrsMatrix> mat)
 {
+  PeridigmNS::Timer::self().startTimer("Apply Boundary Conditions");
+
   // determine the L2 norm of the diagonal
   // this will be used to scale the diagonal entry for kinematic B.C.s
   Epetra_Vector diagonal(mat->Map());
@@ -487,6 +509,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
       }
     }
   }
+  PeridigmNS::Timer::self().stopTimer("Apply Boundary Conditions");
 }
 
 
@@ -497,6 +520,8 @@ void PeridigmNS::BoundaryAndInitialConditionManager::setVectorValues(double time
                                                                      bool setIncrement,
                                                                      double multiplier)
 {
+  PeridigmNS::Timer::self().startTimer("Apply Boundary Conditions");
+
   const Epetra_BlockMap& threeDimensionalMap = vec->Map();
   TEUCHOS_TEST_FOR_EXCEPT_MSG(threeDimensionalMap.ElementSize() != 3, "**** setVectorValues() must be called with map having element size = 3.\n");
 
@@ -562,6 +587,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::setVectorValues(double time
       }
     }
   }
+  PeridigmNS::Timer::self().stopTimer("Apply Boundary Conditions");
 }
 
 string PeridigmNS::BoundaryAndInitialConditionManager::nodeSetStringToFileName(string str)
