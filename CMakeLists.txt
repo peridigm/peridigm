@@ -112,6 +112,15 @@ ELSE()
   SET(LCM_LIBRARY)
 ENDIF()
 
+#
+# Optional dependency on Laboratory for Computational Mechanics (LCM)
+#
+IF(USE_CJL)
+  MESSAGE("-- CJL is enabled, compiling with -DPERIDIGM_CJL")
+  ADD_DEFINITIONS(-DPERIDIGM_CJL)
+  SET(PERIDIGM_CJL TRUE)
+ENDIF()
+
 # Optional Installation helpers
 # Note that some of this functionality depends on CMAKE > 2.8.8
 SET(INSTALL_PERIDIGM FALSE)
