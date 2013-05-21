@@ -52,6 +52,9 @@
 #include "Peridigm_ElasticPlasticHardeningMaterial.hpp"
 #include "Peridigm_ViscoelasticMaterial.hpp"
 #include "Peridigm_LCMMaterial.hpp"
+#ifdef PERIDIGM_CJL
+#include "Peridigm_LammiConcreteModel.hpp"
+#endif
 
 Teuchos::RCP<PeridigmNS::Material>
 PeridigmNS::MaterialFactory::create(const Teuchos::ParameterList& materialParams)
@@ -69,6 +72,13 @@ PeridigmNS::MaterialFactory::create(const Teuchos::ParameterList& materialParams
     materialModel = Teuchos::rcp( new ViscoelasticMaterial(materialParams) );
   else if (materialModelName == "LCM")
     materialModel = Teuchos::rcp( new LCMMaterial(materialParams) );
+  else if (materialModelName == "Pressure Dependent Elastic Plastic"){
+#ifdef PERIDIGM_CJL
+    materialModel = Teuchos::rcp( new LammiConcreteModel(materialParams) );
+#else
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n**** Pressure Dependent Elastic Plastic material model unavailable, recompile with -DUSE_CJL.\n");
+#endif    
+  }
   else {
     string invalidMaterial("\n**** Unrecognized material model: ");
     invalidMaterial += materialModelName;
