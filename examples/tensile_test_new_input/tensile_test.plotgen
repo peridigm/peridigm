@@ -1,0 +1,15 @@
+
+# cross section of specimen = (0.124 in)(0.25 in) = 0.031 in^2 = 0.1999996 cm^2
+# 1 dyne/cm^2 = 1.0e-10 GPa
+
+# plot simulation results against elastic modulus
+E = 180.0
+Modulus(x) = E * x
+
+set terminal pdf enhanced font "Times-Roman,24" size 12in, 8in 
+set output "tensile_test.pdf"
+set xlabel "Engineering Strain (m/m)" font "Times-Roman,32"
+set ylabel "Engineering Stress (GPa)" font "Times-Roman,32"
+set key bottom right
+plot "tensile_test.csv" using ($4-$5)/($2-$3):($7-$6)*0.5*1.0e-10/0.1999996 with lines lw 10 lt 3 title "Peridynamic Simulation", \
+     Modulus(x) with lines lw 10 title "Elastic Modulus"

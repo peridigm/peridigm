@@ -1,0 +1,2 @@
+blot tensile_test.e -input tensile_test.blot met
+gnuplot tensile_test.plotgen

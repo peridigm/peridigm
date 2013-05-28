@@ -1,0 +1,78 @@
+#  Example of call to loadbal to create parallel input files:
+#
+#  loadbal -No_subdirectory -suffix_mesh g -suffix_spread g -p 2 tensile_test 2
+# 
+#  ./tensile_test.spd
+#
+#  or alternatively if you have the SEACAS tools from Trilinos built:
+#
+#  decomp -p 2 tensile_test.g
+#
+
+#{Units("cgs")}
+
+#{HOLE_RADIUS=0.125~in}
+#{HOLE_CENTER=0.28~in}
+#{GRIP_WIDTH=0.5~in}
+#{GRIP_RADIUS=0.25~in}
+#{LENGTH=4.00~in}
+#{GAUGE_WIDTH=0.25~in}
+#{GAUGE_LENGTH=1.5~in}
+#{THICKNESS=0.124~in}
+#{SLOT_CENTER=0.2425~in}
+#{SLOT_RADIUS=0.0625~in}
+
+#{NUM_ELEM_THROUGH_THICKNESS=5}
+#{ELEMENT_SIZE=THICKNESS/NUM_ELEM_THROUGH_THICKNESS}
+#{HORIZON=3.0*ELEMENT_SIZE}
+
+#Build geometry
+create vertex 0 0 {THICKNESS/2}
+create vertex {GAUGE_WIDTH/2} 0 {THICKNESS/2}
+create vertex {GAUGE_WIDTH/2} {-GAUGE_LENGTH/2} {THICKNESS/2}
+create curve vertex 1 vertex 2
+create curve vertex 2 vertex 3
+
+create vertex {GAUGE_WIDTH/2 + GRIP_RADIUS} {-GAUGE_LENGTH/2} {THICKNESS/2}
+create vertex {GAUGE_WIDTH/2 + GRIP_RADIUS} {-GAUGE_LENGTH/2-GRIP_RADIUS} {THICKNESS/2}
+create curve arc center vertex 5 3 6 radius {GRIP_RADIUS}
+delete vertex 5
+
+create vertex {GAUGE_WIDTH/2 + GRIP_RADIUS} {-LENGTH/2} {THICKNESS/2}
+create vertex 0 {-LENGTH/2} {THICKNESS/2}
+create curve vertex 6 vertex 8
+create curve vertex 8 vertex 9
+create curve vertex 9 vertex 1
+
+create surface curve all
+
+sweep surface all vector 0 0 -1 distance {THICKNESS}
+volume all copy reflect x
+volume all copy reflect y
+unite volume all
+compress ids
+
+webcut volume 1 with plane xplane offset {GRIP_WIDTH/2} noimprint nomerge 
+webcut volume 1 with plane xplane offset {-GRIP_WIDTH/2} noimprint nomerge 
+
+delete volume 2 to 5
+
+volume 1 size {ELEMENT_SIZE}
+
+webcut volume 1 with plane yplane offset {-LENGTH/2 + 2.0*HORIZON} noimprint nomerge 
+webcut volume 6 with plane yplane offset {LENGTH/2 - 2.0*HORIZON} noimprint nomerge 
+
+mesh volume all
+
+nodeset 1 volume 1 # bottom end              apply linear displacement field in y
+nodeset 2 volume 7 # top end                 apply linear displacement field in y
+nodeset 3 curve 74 # z-axis edge on bottom   constrain in x
+nodeset 4 curve 77 # x-axis edge on bottom   constrain in z
+nodeset 5 curve 72 # z-axis edge on top      constrain in x
+nodeset 6 curve 79 # x-axis edge on top      constrain in z
+
+block 1 volume 1
+block 2 volume 6
+block 3 volume 7
+
+export genesis 'tensile_test.g' overwrite
