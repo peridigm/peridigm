@@ -67,7 +67,7 @@ void updateIntParameter(Teuchos::Ptr<Teuchos::ParameterList> listPtr, std::strin
 void updateDoubleParameter(Teuchos::Ptr<Teuchos::ParameterList> listPtr, std::string nameIn, std::string valueIn);
 void updateBoolParameter(Teuchos::Ptr<Teuchos::ParameterList> listPtr, std::string nameIn, std::string valueIn);
 void updateStringParameter(Teuchos::Ptr<Teuchos::ParameterList> listPtr, std::string nameIn, std::string valueIn);
- void updateParametersFromTextFile(std::string inputFile, Teuchos::Ptr<Teuchos::ParameterList> peridigmParamsPtr);
+void updateParametersFromTextFile(std::string inputFile, Teuchos::Ptr<Teuchos::ParameterList> peridigmParamsPtr);
 
 PeridigmNS::PeridigmFactory::PeridigmFactory(){}
 
@@ -88,17 +88,24 @@ Teuchos::RCP<PeridigmNS::Peridigm> PeridigmNS::PeridigmFactory::create(const std
   setPeridigmParamDefaults(peridigmParams.ptr());
   setSolverParamDefaults(peridigmParams.ptr());
 
-  // Update parameters with data from xml file
+  // Determine if string has xml extension
+  bool isXML = false;
+  std::string ext;
+  if (inputFile.size() > 3) {
+    ext = inputFile.substr(inputFile.size() - 3);
+    if (ext.compare(string("xml")) == 0)
+      isXML = true;
+  }
+
+  // Update parameters from file
   Teuchos::Ptr<Teuchos::ParameterList> peridigmParamsPtr(peridigmParams.get());
-    boost::match_results<std::string::const_iterator> match;
-    boost::regex textfile("[.]xml");
-    std::string fileName = inputFile;
-    if(!boost::regex_search (fileName, textfile)){
-//    	std::cout << inputFile << std::endl;
-        updateParametersFromTextFile(inputFile, peridigmParamsPtr);
-    }else{
-        Teuchos::updateParametersFromXmlFile(inputFile, peridigmParamsPtr);
-    }
+  if (isXML) {
+    // Update parameters with data from xml file
+    Teuchos::updateParametersFromXmlFile(inputFile, peridigmParamsPtr);
+  }
+  else {
+    updateParametersFromTextFile(inputFile, peridigmParamsPtr);
+  }
 
   // Create new Peridigm object
   return rcp(new PeridigmNS::Peridigm(comm, peridigmParams));
