@@ -33,7 +33,7 @@ if __name__ == "__main__":
         os.remove(file)
 
     # run Peridigm
-    command = ["mpiexec", "-np", "2", "../../../../src/Peridigm", "../"+base_name+".txt"]
+    command = ["mpiexec", "-np", "2", "../../../../src/Peridigm", "../"+base_name+".peridigm"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:
