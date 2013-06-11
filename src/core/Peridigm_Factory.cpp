@@ -151,7 +151,8 @@ std::vector<std::string> dataType(std::string lineIn)
 {
 	std::vector<std::string> vec1;
 	boost::match_results<std::string::const_iterator> match;
-	boost::regex typeMatch("\"[+-]*[a-zA-Z0-9]+.*[a-zA-Z0-9]*[.]*.*[a-zA-Z0-9]*\"");	// matches a possible user defined type
+    boost::regex typeMatch("\".*\"");                                             // matches a possible user defined type
+	//boost::regex typeMatch("\"[+-]*[a-zA-Z0-9]+.*[a-zA-Z0-9]*[.]*.*[a-zA-Z0-9]*\"");	// matches a possible user defined type
 	if(boost::regex_search(lineIn, match, typeMatch))
 	{
         //		std::cout << lineIn << std::endl;
@@ -170,10 +171,12 @@ std::vector<std::string> match_(std::string line)
 	std::vector<std::string> name_value;
 	boost::match_results<std::string::const_iterator> match;
 	boost::regex int_re(" ([-+]*[0-9]+[.]*[a-zA-Z0-9]*[a-zA-Z0-9]*[+-]*[0-9]*)");		// matches integers, double or floats
-	boost::regex str_re("\"[+-]*[a-zA-Z0-9]+.*_*\\s*[a-zA-Z0-9]*[.]*_*\\s*.*[a-zA-Z0-9]*\"");		// matches strings
+    boost::regex str_re("\".*\"");                                                // matches strings 
+	//boost::regex str_re("\"[+-]*[a-zA-Z0-9]+.*_*\\s*[a-zA-Z0-9]*[.]*_*\\s*.*[a-zA-Z0-9]*\"");		// matches strings
 	str1 = boost::regex_replace(dataType(line)[0], int_re, "");
 	str1 = boost::regex_replace(str1, str_re, "");
-	if(boost::regex_search(line, match, int_re) || boost::regex_search(line, match, str_re)){
+    if(boost::regex_search(line, match, str_re) || boost::regex_search(line, match, int_re)){       
+	//if(boost::regex_search(line, match, int_re) || boost::regex_search(line, match, str_re)){
 		name_value.push_back(cleanUp(str1));
 		name_value.push_back(cleanUp(match.str()));
 		name_value.push_back(cleanUp(dataType(line)[1]));
