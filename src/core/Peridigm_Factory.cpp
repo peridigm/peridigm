@@ -205,8 +205,9 @@ std::vector<std::pair< std::string, int > > preParse(std::string inputFile)
 	std::pair<std::string, int> line_data;
     
 	// get results from aprepro's parsing
-	bool results = aprepro.parse_stream(infile,inputFile), tab, spc;
-    
+	bool tab, spc;
+    aprepro.parse_stream(infile,inputFile);     // \todo Check return value (bool).
+
 	// string stream to store parsed data
 	std::istringstream parsed_stream(aprepro.parsing_results().str());
 	
@@ -251,7 +252,7 @@ std::vector<std::pair< std::string, int > > preParse(std::string inputFile)
 		}catch(int e){
 			std::cout << "Warning: Error Number: " << e << std::endl;
 			std::cout << "The Combination of Spaces and Tabs Can Affect Parser Accuracy Check Line(s): ";
-			for(int i = 0; i < line_with_tabs.size()-1; i++){
+			for(unsigned int i = 0; i < line_with_tabs.size()-1; i++){
 				std::cout << line_with_tabs[i] << ", ";
 			}
 			std::cout << line_with_tabs[line_with_tabs.size() - 1] << std::endl;
@@ -266,7 +267,7 @@ std::vector<std::pair<std::string, std::string> > dataParse(std::vector<std::pai
 	std::string param, line;
 	std::pair<std::string, std::string> dataOut;
 	std::vector<std::pair<std::string, std::string> > vecOut;
-	for(int i = 1; i < dataIn.size(); i++)
+	for(unsigned int i = 1; i < dataIn.size(); i++)
 	{
 		line = dataIn[i-1].first;
 		if((dataIn[i-1].second < dataIn[i].second || match_(dataIn[i-1].first)[1].empty()) && match_(dataIn[i-1].first)[1].empty()){
@@ -286,7 +287,7 @@ std::vector<std::pair<std::vector<std::string>,std::string> > dataReturn(std::ve
 	std::vector<std::string> PLVec;
 	std::vector<std::pair<std::vector<std::string>,std::string> > returnVec;
 	std::pair<std::vector<std::string>,std::string> param_subPLVec;
-	for(int i = 0; i < parsedData.size(); i++)
+	for(unsigned int i = 0; i < parsedData.size(); i++)
 	{
 		PLVec.push_back(parsedData[i].first);
 		PLVec.push_back(parsedData[i].second);
@@ -327,42 +328,38 @@ void dataSort(Teuchos::Ptr<Teuchos::ParameterList> listPtr, std::string nameIn, 
 }
 void updateIntParameter(Teuchos::Ptr<Teuchos::ParameterList> listPtr, std::string nameIn, std::string valueIn)
 {
-	int num;
 	listPtr -> set(nameIn, atoi(valueIn.c_str()));
-	num = Teuchos::getParameter<int>(*listPtr.get(), nameIn);
+	Teuchos::getParameter<int>(*listPtr.get(), nameIn);
 }
 void updateDoubleParameter(Teuchos::Ptr<Teuchos::ParameterList> listPtr, std::string nameIn, std::string valueIn)
 {
-	double dub;
 	listPtr-> set(nameIn, std::atof(valueIn.c_str()));
-	dub = Teuchos::getParameter<double>(*listPtr.get(), nameIn);
+	Teuchos::getParameter<double>(*listPtr.get(), nameIn);
 }
 void updateBoolParameter(Teuchos::Ptr<Teuchos::ParameterList> listPtr, std::string nameIn, std::string valueIn)
 {
-	bool tf;
 	listPtr -> set(nameIn, string_to_bool(valueIn));
-	tf = Teuchos::getParameter<bool>(*listPtr.get(), nameIn);
+	Teuchos::getParameter<bool>(*listPtr.get(), nameIn);
 }
 void updateStringParameter(Teuchos::Ptr<Teuchos::ParameterList> listPtr, std::string nameIn, std::string valueIn)
 {
-	std::string str;
 	listPtr -> set(nameIn,valueIn);
-	str = Teuchos::getParameter<std::string>(*listPtr.get(), nameIn);
+	Teuchos::getParameter<std::string>(*listPtr.get(), nameIn);
 }
 // function updateParametersFromTextFile function that uses each one of the previous functions to store finally parse data to be sent to Peridigm
 void updateParametersFromTextFile(std::string inputFile, Teuchos::Ptr<Teuchos::ParameterList> My_List)
 {
 	std::string previous_list, previous_sublist;
 	std::vector<std::pair<std::vector<std::string>, std::string> > dataIn(dataReturn(dataParse(preParse(inputFile)), preParse(inputFile)));
-	for(int h = 0; h < dataIn.size(); h++){
+	for(unsigned int h = 0; h < dataIn.size(); h++){
 		if(dataIn[h].second.compare(dataIn[h].first[0]) == 0){
 			Teuchos::Ptr<Teuchos::ParameterList> paramPtr = ptr(new Teuchos::ParameterList());
 			previous_list = dataIn[h].second;
-			for(int i = h; i<dataIn.size(); i++){
+			for(unsigned int i = h; i<dataIn.size(); i++){
 				if(dataIn[i].first[1].compare(dataIn[i].first[0]) == 0 && isspace(dataIn[i].first[0][0]) && previous_list.compare(dataIn[i].second) == 0 ){
 					Teuchos::Ptr<Teuchos::ParameterList> listPtr = ptr(new Teuchos::ParameterList());
 					previous_sublist = dataIn[i].first[1];
-					for(int j = i; j<dataIn.size(); j++){
+					for(unsigned int j = i; j<dataIn.size(); j++){
 						if(dataIn[j].first[1].compare(previous_sublist) == 0 && !match_(dataIn[j].first[0])[1].empty()){
 							dataSort(listPtr, match_(dataIn[j].first[0])[0], match_(dataIn[j].first[0])[1], match_(dataIn[j].first[0])[2]);
                             //							std::cout << match_(dataIn[j].first[0])[1] << ", " << match_(dataIn[j].first[0])[2] << std::endl;
