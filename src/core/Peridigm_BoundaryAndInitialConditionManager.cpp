@@ -448,7 +448,8 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
   diagonal.Norm1(&diagonalNorm1);
   double diagonalEntry = -1.0*diagonalNorm1/diagonal.GlobalLength();
 
-  // create data structures for inserting ones and zeros into jacobian
+  // create data structures for inserting values into jacobian
+  // an upper bound on the number of entries to set to zero is given by mat->NumMyCols()
   vector<double> jacobianValues(mat->NumMyCols(), 0.0);
   vector<int> jacobianIndices(mat->NumMyCols());
   vector<int> jacobianColIndices(mat->NumMyCols());
@@ -478,33 +479,36 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
 
       // zero out the columns associated with kinematic boundary conditions:
       // create the list of columns only once:
-      const int numColIDs = nodeList.size();
-      for(int i=0 ; i<numColIDs ; i++){
-        const int globalID = 3*nodeList[i] + coord;
-        const int localColID = mat->LCID(globalID);
-        jacobianColIndices[i] = localColID;
+      int columnIndex(0);
+      for(unsigned int i=0 ; i<nodeList.size() ; i++){
+	const int globalID = 3*nodeList[i] + coord;
+	const int localColID = mat->LCID(globalID);
+	if(localColID != -1)
+	  jacobianColIndices[columnIndex++] = localColID;
       }
       // iterate the local rows and set the approprate column values to 0
-      // \todo Call ReplaceMyValues only for entries that actually exist in the matrix structure.
+      int numEntriesToSetToZero = columnIndex;
       for(int iRow=0 ; iRow<mat->NumMyRows() ; ++iRow)
-        mat->ReplaceMyValues(iRow, numColIDs, &jacobianValues[0], &jacobianColIndices[0]);
+        mat->ReplaceMyValues(iRow, numEntriesToSetToZero, &jacobianValues[0], &jacobianColIndices[0]);
 
       for(unsigned int i=0 ; i<nodeList.size() ; i++){
 
-        // zero out the row and put a 1.0 on the diagonal
+        // zero out the row and put diagonalEntry on the diagonal
         int globalID = 3*nodeList[i] + coord;
         int localRowID = mat->LRID(globalID);
         int localColID = mat->LCID(globalID);
 
-        // zero out the row and put a 1.0 on the diagonal
+        // zero out the row and put diagonalEntry on the diagonal
         if(localRowID != -1){
-          jacobianValues[localColID] = diagonalEntry;
+	  if(localColID != -1)
+	    jacobianValues[localColID] = diagonalEntry;
           // From Epetra_CrsMatrix documentation:
           // If a value is not already present for the specified location in the matrix, the
           // input value will be ignored and a positive warning code will be returned.
           // \todo Do the bookkeeping to send in data only for locations that actually exist in the matrix structure.
           mat->ReplaceMyValues(localRowID, mat->NumMyCols(), &jacobianValues[0], &jacobianIndices[0]);
-          jacobianValues[localColID] = 0.0;
+	  if(localColID != -1)
+	    jacobianValues[localColID] = 0.0;
         }
       }
     }
