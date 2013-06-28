@@ -1,0 +1,120 @@
+<ParameterList>
+
+  <Parameter name="Verbose" type="bool" value="false"/>
+
+  <ParameterList name="Discretization">
+        <Parameter name="Type" type="string" value="Exodus" />
+        <Parameter name="Horizon" type="double" value="0.75375"/>
+        <Parameter name="Input Mesh File" type="string" value="Contact_Cubes.g"/>
+  </ParameterList>
+
+  <ParameterList name="Materials">
+	<ParameterList name="My Elastic Material">
+	  <Parameter name="Material Model" type="string" value="Elastic"/>
+	  <Parameter name="Density" type="double" value="7.8e-3"/>           <!-- g/mm^3 -->
+	  <Parameter name="Bulk Modulus" type="double" value="130.0e3"/>     <!-- MPa -->
+	  <Parameter name="Shear Modulus" type="double" value="78.0e3"/>     <!-- MPa -->
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Blocks">
+    <ParameterList name="My Group of Blocks">
+      <Parameter name="Block Names" type="string" value="block_1 block_2"/>
+      <Parameter name="Material" type="string" value="My Elastic Material"/>
+    </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Contact">
+	<Parameter name="Search Radius" type="double" value="5.0"/>          <!-- mm -->
+	<Parameter name="Search Frequency" type="int" value="1000"/>
+    <ParameterList name="Models">
+	  <ParameterList name="My Contact Model">
+	    <Parameter name="Contact Model" type="string" value="Short Range Force"/>
+	    <Parameter name="Contact Radius" type="double" value="0.2"/>       <!-- mm -->
+	    <Parameter name="Spring Constant" type="double" value="1950.0e3"/> <!-- MPa -->
+	  </ParameterList>
+	</ParameterList>
+    <ParameterList name="Interactions">
+      <ParameterList name="Interaction 1 with 1">
+        <Parameter name="First Block" type="string" value="block_1"/>
+        <Parameter name="Second Block" type="string" value="block_1"/>
+	    <Parameter name="Contact Model" type="string" value="My Contact Model"/>
+	  </ParameterList>
+    </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Boundary Conditions">
+	<ParameterList name="Initial Velocity Left Cube">
+	  <Parameter name="Type" type="string" value="Initial Velocity"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_1"/>
+	  <Parameter name="Coordinate" type="string" value="x"/>
+	  <Parameter name="Value" type="string" value="1.0"/>                <!-- mm/ms -->
+	</ParameterList>
+	<ParameterList name="Initial Velocity Right Cube">
+	  <Parameter name="Type" type="string" value="Initial Velocity"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_2"/>
+	  <Parameter name="Coordinate" type="string" value="x"/>
+	  <Parameter name="Value" type="string" value="-1.0"/>               <!-- mm/ms -->
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Solver">
+	<Parameter name="Verbose" type="bool" value="false"/>
+	<Parameter name="Initial Time" type="double" value="0.0"/>           <!-- ms -->
+	<Parameter name="Final Time" type="double" value="1.0"/>             <!-- ms -->
+	<ParameterList name="Verlet">
+	  <Parameter name="Safety Factor" type="double" value="0.9"/>
+	</ParameterList>
+  </ParameterList>
+
+ <ParameterList name="Compute Class Parameters">
+    <ParameterList name="Left Block Strain Energy">
+      <Parameter name="Compute Class" type="string" value="Block_Data"/>
+      <Parameter name="Calculation Type" type="string" value="Sum"/>
+      <Parameter name="Block" type="string" value="block_1"/>
+      <Parameter name="Variable" type="string" value="Strain_Energy"/>
+      <Parameter name="Output Label" type="string" value="Left_Block_Strain_Energy"/>
+    </ParameterList>
+    <ParameterList name="Right Block Strain Energy">
+      <Parameter name="Compute Class" type="string" value="Block_Data"/>
+      <Parameter name="Calculation Type" type="string" value="Sum"/>
+      <Parameter name="Block" type="string" value="block_2"/>
+      <Parameter name="Variable" type="string" value="Strain_Energy"/>
+      <Parameter name="Output Label" type="string" value="Right_Block_Strain_Energy"/>
+    </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Output Data">
+	<Parameter name="Output File Type" type="string" value="ExodusII"/>
+	<Parameter name="Output Format" type="string" value="BINARY"/>
+	<Parameter name="Output Filename" type="string" value="Contact_Cubes"/>
+	<Parameter name="Output Frequency" type="int" value="1000"/>
+	<Parameter name="Parallel Write" type="bool" value="true"/>
+	<ParameterList name="Output Variables">
+	  <Parameter name="Displacement" type="bool" value="true"/>
+	  <Parameter name="Velocity" type="bool" value="true"/>
+	  <Parameter name="Element_Id" type="bool" value="true"/>
+	  <Parameter name="Proc_Num" type="bool" value="true"/>
+	  <Parameter name="Dilatation" type="bool" value="true"/>
+	  <Parameter name="Weighted_Volume" type="bool" value="true"/>
+      <Parameter name="Strain_Energy" type="bool" value="true"/>
+      <Parameter name="Global_Kinetic_Energy" type="bool" value="true"/>      <!-- mJ -->
+      <Parameter name="Left_Block_Strain_Energy" type="bool" value="true"/>   <!-- mJ -->
+      <Parameter name="Right_Block_Strain_Energy" type="bool" value="true"/>  <!-- mJ -->
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Output History">
+	<Parameter name="Output File Type" type="string" value="ExodusII"/>
+	<Parameter name="Output Format" type="string" value="BINARY"/>
+	<Parameter name="Output Filename" type="string" value="Contact_Cubes"/>
+	<Parameter name="Output Frequency" type="int" value="100"/>
+	<Parameter name="Parallel Write" type="bool" value="true"/>
+	<ParameterList name="Output Variables">
+      <Parameter name="Global_Kinetic_Energy" type="bool" value="true"/>      <!-- mJ -->
+      <Parameter name="Left_Block_Strain_Energy" type="bool" value="true"/>   <!-- mJ -->
+      <Parameter name="Right_Block_Strain_Energy" type="bool" value="true"/>  <!-- mJ -->
+	</ParameterList>
+  </ParameterList>
+
+</ParameterList>

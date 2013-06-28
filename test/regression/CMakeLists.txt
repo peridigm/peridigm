@@ -1,6 +1,8 @@
 # List tests to be run by "make test"
 
 add_test (RebalanceCube python ./RebalanceCube/np2/RebalanceCube.py)
+add_test (Contact_Cubes_np1 python ./Contact_Cubes/np1/Contact_Cubes.py)
+add_test (Contact_Cubes_np4 python ./Contact_Cubes/np4/Contact_Cubes.py)
 add_test (Compression_QS_3x2x2_np1 python ./Compression_QS_3x2x2/np1/Compression_QS_3x2x2.py)
 add_test (Compression_QS_3x2x2_np2 python ./Compression_QS_3x2x2/np2/Compression_QS_3x2x2.py)
 add_test (Compression_NLCGQS_3x2x2_np1 python ./Compression_NLCGQS_3x2x2/np1/Compression_NLCGQS_3x2x2.py)
