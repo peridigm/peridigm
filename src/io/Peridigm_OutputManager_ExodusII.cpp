@@ -138,12 +138,6 @@ PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Te
   // Sentinal value for file handle
   file_handle = -1;
 
-  // Rebalance count 
-  rebalanceCount = 0;
-
-  // Number of times new Exodus database written
-  newDatabaseCount = 0;
-
   // Default to storing and writing doubles
   CPU_word_size = IO_word_size = sizeof(double);
   
@@ -223,19 +217,6 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
   // If the database contains only global data, then it will be output only by the root processor
   if (globalDataOnly && myPID != 0)
     return;
-
-  // Initialize new exodus database if needed
-  // Each block is always rebalanced at the same time, so each datamanager should always return the same
-  // rebalance count. Hence, we keep only a single static int for the rebalance count. If the first block 
-  // rebalanced since last write, then all of them did. Force reinit database.
-  if ( (numProc > 1) && (rebalanceCount != blocks->begin()->getDataManager()->getRebalanceCount()) ) {
-    rebalanceCount = blocks->begin()->getDataManager()->getRebalanceCount();
-    // Rebalance does not affect databases containing only global data
-    if(!globalDataOnly){
-      initializeExodusDatabase(blocks);
-      exodusCount = 1;
-    }
-  }
 
   // If first call, intialize database
   if (!initializeExodusDatabaseCalled) {
@@ -439,10 +420,6 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
     std::ostringstream tmpstr;
     tmpstr << numProc;
     int len = tmpstr.str().length();
-    if (peridigm->analysisHasRebalance || peridigm->analysisHasContact) {
-      newDatabaseCount = newDatabaseCount + 1;
-      filename << "-s" << newDatabaseCount;
-    }
     filename << ".e";
     filename << ".";
     filename << std::setfill('0') << std::setw(len) << numProc;

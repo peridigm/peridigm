@@ -40,30 +40,18 @@ if __name__ == "__main__":
     if return_code != 0:
         result = return_code
 
-    # First merge all distributed exodus databases for each time stamp
-    files_to_join = ["Contact_Friction-s1", "Contact_Friction-s2"]
-    for file in files_to_join:
-      command = ["../../../../scripts/epu", "-p", "2", file]
-      p = Popen(command, stdout=logfile, stderr=logfile)
-      return_code = p.wait()
-      if return_code != 0:
-          result = return_code
-
-    # Now combine time series from all databaases
-    command = ["../../../../scripts/conjoin", "-output", base_name+".e", 
-               "Contact_Friction-s1.e", "Contact_Friction-s2.e"]
+    # compare output files against gold files
+    command = ["../../../../scripts/epu", "-p", "2", base_name]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:
         result = return_code
-    
-    # Now merged output file against gold file
     command = ["../../../../scripts/exodiff", \
-                   "-stat", \
-                   "-f", \
-                   "../"+base_name+".comp", \
-                   base_name+".e", \
-                   "../"+base_name+"_gold.e"]
+               "-stat", \
+               "-f", \
+               "../"+base_name+".comp", \
+               base_name+".e", \
+               "../"+base_name+"_gold.e"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:

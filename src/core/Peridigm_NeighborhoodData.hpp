@@ -113,6 +113,13 @@ public:
 	return neighborhoodList;
   }
 
+  int const memorySize() const{
+    int sizeInBytes =
+      (2*numOwnedPoints + neighborhoodListSize + 2)*sizeof(int) + 3*sizeof(int*);
+    double sizeInMegabytes = sizeInBytes/1048576.0;
+    return sizeInMegabytes;
+  }
+
 protected:
   int numOwnedPoints;
   int* ownedIDs;

@@ -3,6 +3,7 @@
 import sys
 import os
 import re
+import glob
 from subprocess import Popen
 
 test_dir = "Compression_2x1x1/np2"
@@ -27,7 +28,7 @@ if __name__ == "__main__":
     logfile = open(log_file_name, 'w')
 
     # remove old output files, if any
-    files_to_remove = base_name + ".e"
+    files_to_remove = glob.glob('*.e*')
     for file in os.listdir(os.getcwd()):
       if file in files_to_remove:
         os.remove(file)
