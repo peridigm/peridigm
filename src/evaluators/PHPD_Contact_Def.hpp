@@ -79,15 +79,15 @@ void Contact<EvalT, Traits>::evaluateFields(typename Traits::EvalData cellData)
 {
   const double dt = *cellData.timeStep;
 
-  std::vector<PeridigmNS::Block>::iterator blockIt;
-  for(blockIt = cellData.blocks->begin() ; blockIt != cellData.blocks->end() ; blockIt++){
+  std::vector<PeridigmNS::ContactBlock>::iterator contactBlockIt;
+  for(contactBlockIt = cellData.contactBlocks->begin() ; contactBlockIt != cellData.contactBlocks->end() ; contactBlockIt++){
 
-    Teuchos::RCP<PeridigmNS::NeighborhoodData> contactNeighborhoodData = blockIt->getContactNeighborhoodData();
-    const int numOwnedPoints = contactNeighborhoodData->NumOwnedPoints();
-    const int* ownedIDs = contactNeighborhoodData->OwnedIDs();
-    const int* neighborhoodList = contactNeighborhoodData->NeighborhoodList();
-    Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
-    Teuchos::RCP<const PeridigmNS::ContactModel> contactModel = blockIt->getContactModel();
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = contactBlockIt->getNeighborhoodData();
+    const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
+    const int* ownedIDs = neighborhoodData->OwnedIDs();
+    const int* neighborhoodList = neighborhoodData->NeighborhoodList();
+    Teuchos::RCP<PeridigmNS::DataManager> dataManager = contactBlockIt->getDataManager();
+    Teuchos::RCP<const PeridigmNS::ContactModel> contactModel = contactBlockIt->getContactModel();
 
     if(!contactModel.is_null())
       contactModel->computeForce(dt, 

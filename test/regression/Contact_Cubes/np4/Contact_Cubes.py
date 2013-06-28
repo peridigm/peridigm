@@ -40,38 +40,12 @@ if __name__ == "__main__":
     if return_code != 0:
         result = return_code
 
-    # First merge all distributed exodus databases for each time stamp
-    files_to_join = ["Contact_Cubes-s1", "Contact_Cubes-s2", "Contact_Cubes-s3", "Contact_Cubes-s4",
-                     "Contact_Cubes-s5", "Contact_Cubes-s6", "Contact_Cubes-s7", "Contact_Cubes-s8",
-                     "Contact_Cubes-s9", "Contact_Cubes-s10", "Contact_Cubes-s11", "Contact_Cubes-s12",
-                     "Contact_Cubes-s13", "Contact_Cubes-s14", "Contact_Cubes-s15", "Contact_Cubes-s16",
-                     "Contact_Cubes-s17", "Contact_Cubes-s18", "Contact_Cubes-s19", "Contact_Cubes-s20"]
-    for file in files_to_join:
-      command = ["../../../../scripts/epu", "-p", "4", file]
-      p = Popen(command, stdout=logfile, stderr=logfile)
-      return_code = p.wait()
-      if return_code != 0:
-          result = return_code
-
-    # Now combine time series from all databaases
-    command = ["../../../../scripts/conjoin", "-output", base_name+".e", 
-               "Contact_Cubes-s1.e", "Contact_Cubes-s2.e", "Contact_Cubes-s3.e", "Contact_Cubes-s4.e",
-               "Contact_Cubes-s5.e", "Contact_Cubes-s6.e", "Contact_Cubes-s7.e", "Contact_Cubes-s8.e",
-               "Contact_Cubes-s9.e", "Contact_Cubes-s10.e", "Contact_Cubes-s11.e", "Contact_Cubes-s12.e",
-               "Contact_Cubes-s13.e", "Contact_Cubes-s14.e", "Contact_Cubes-s15.e", "Contact_Cubes-s16.e",
-               "Contact_Cubes-s17.e", "Contact_Cubes-s18.e", "Contact_Cubes-s19.e", "Contact_Cubes-s20.e"]
-
+    # compare output files against gold files
+    command = ["../../../../scripts/epu", "-p", "4", base_name]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:
         result = return_code
-
-    # compare output files against gold files
-#    command = ["../../../../scripts/epu", "-p", "2", base_name]
-#    p = Popen(command, stdout=logfile, stderr=logfile)
-#    return_code = p.wait()
-#    if return_code != 0:
-#        result = return_code
     command = ["../../../../scripts/exodiff", \
                "-stat", \
                "-f", \

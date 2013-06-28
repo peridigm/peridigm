@@ -68,6 +68,7 @@
 #include <Teuchos_RCP.hpp>
 
 #include "Peridigm_Block.hpp"
+#include "Peridigm_ContactBlock.hpp"
 #include "Peridigm_Discretization.hpp"
 #include "Peridigm_ModelEvaluator.hpp"
 #include "Peridigm_DataManager.hpp"
@@ -194,8 +195,8 @@ namespace PeridigmNS {
     //! Synchronize data in DataManagers across processes (needed before call to OutputManager::write() )
     void synchDataManagers();
 
-    //! Rebalance the mesh
-    void rebalance();
+    //! Rebalance the secondary decomposition used for contact
+    void rebalanceContactData();
 
     //! Compute a parallel decomposion based on the current configuration
     QUICKGRID::Data currentConfigurationDecomp();
@@ -296,11 +297,14 @@ namespace PeridigmNS {
     Teuchos::RCP<const Epetra_BlockMap> bondMap;
     Teuchos::RCP<const Epetra_BlockMap> oneDimensionalOverlapMap;
 
+    //! Secondary contact maps.
+    Teuchos::RCP<const Epetra_BlockMap> oneDimensionalContactMap;
+    Teuchos::RCP<const Epetra_BlockMap> threeDimensionalContactMap;
+    Teuchos::RCP<const Epetra_BlockMap> bondContactMap;
+    Teuchos::RCP<const Epetra_BlockMap> oneDimensionalOverlapContactMap;
+
     //! Current simulation time
     double timeCurrent;
-
-    //! Number of blocks in the model
-    int numBlocks;
 
     //! Rebalance flag
     bool analysisHasRebalance;
@@ -346,11 +350,23 @@ namespace PeridigmNS {
     //! Mothership multivector that contains all the one-dimensional global vectors (blockID, volume)
     Teuchos::RCP<Epetra_MultiVector> oneDimensionalMothership;
 
+    //! Contact mothership multivector for three-dimensional data.
+    Teuchos::RCP<Epetra_MultiVector> threeDimensionalContactMothership;
+
+    //! Contact mothership multivector for one-dimensional data.
+    Teuchos::RCP<Epetra_MultiVector> oneDimensionalContactMothership;
+
     //! Blocks
     Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks;
 
     //! Block iterator, for convenience
     std::vector<PeridigmNS::Block>::iterator blockIt;
+
+    //! Contact blocks
+    Teuchos::RCP< std::vector<PeridigmNS::ContactBlock> > contactBlocks;
+
+    //! Contact block iterator, for convenience
+    std::vector<PeridigmNS::ContactBlock>::iterator contactBlockIt;
 
     //! Node sets
     Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets;
@@ -397,6 +413,30 @@ namespace PeridigmNS {
     //! Global vector for cell density
     Teuchos::RCP<Epetra_Vector> density;
 
+    //! Global contact vector for block id
+    Teuchos::RCP<Epetra_Vector> contactBlockIDs;
+
+    //! Global contact vector for volume
+    Teuchos::RCP<Epetra_Vector> contactVolume;
+
+    //! Global contact vector for current position
+    Teuchos::RCP<Epetra_Vector> contactY;
+
+    //! Global contact vector for velocity
+    Teuchos::RCP<Epetra_Vector> contactV;
+
+    //! Global contact vector for contact force
+    Teuchos::RCP<Epetra_Vector> contactContactForce;
+
+    //! Global contact vector for scratch data
+    Teuchos::RCP<Epetra_Vector> contactScratch;
+
+    //! Importer for passing one-dmensional data between the mothership vectors and the contact mothership vectors
+    Teuchos::RCP<const Epetra_Import> oneDimensionalMothershipToContactMothershipImporter;
+
+    //! Importer for passing three-dmensional data between the mothership vectors and the contact mothership vectors
+    Teuchos::RCP<const Epetra_Import> threeDimensionalMothershipToContactMothershipImporter;
+
     //! Map for global tangent matrix (note, must be an Epetra_Map, not an Epetra_BlockMap)
     Teuchos::RCP<Epetra_Map> tangentMap;
 
@@ -411,6 +451,9 @@ namespace PeridigmNS {
 
     //! List of neighbors for all locally-owned nodes
     Teuchos::RCP<PeridigmNS::NeighborhoodData> globalNeighborhoodData;
+
+    //! List of neighbors for all locally-owned nodes, stored in current configuration
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> globalNeighborhoodDataCurrentConfiguration;
 
     //! List of potential contact neighbors for all locally-owned nodes
     Teuchos::RCP<PeridigmNS::NeighborhoodData> globalContactNeighborhoodData;

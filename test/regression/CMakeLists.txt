@@ -1,6 +1,5 @@
 # List tests to be run by "make test"
 
-add_test (RebalanceCube python ./RebalanceCube/np2/RebalanceCube.py)
 add_test (Contact_Cubes_np1 python ./Contact_Cubes/np1/Contact_Cubes.py)
 add_test (Contact_Cubes_np4 python ./Contact_Cubes/np4/Contact_Cubes.py)
 add_test (Contact_Perforation_np1 python ./Contact_Perforation/np1/Contact_Perforation.py)

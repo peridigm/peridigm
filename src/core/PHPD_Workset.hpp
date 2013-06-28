@@ -50,6 +50,7 @@
 #include <vector>
 #include <map>
 #include "Peridigm_Block.hpp"
+#include "Peridigm_ContactBlock.hpp"
 #include "Peridigm_DataManager.hpp"
 #include "Peridigm_NeighborhoodData.hpp"
 #include "Peridigm_Material.hpp"
@@ -64,6 +65,7 @@ struct Workset {
   Teuchos::RCP<const double> timeStep;
   Teuchos::RCP<PeridigmNS::SerialMatrix> jacobian;
   Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks;
+  Teuchos::RCP< std::vector<PeridigmNS::ContactBlock> > contactBlocks;
 
   // MPI ID (debugging)
   int myPID;

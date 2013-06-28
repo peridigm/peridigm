@@ -1,4 +1,4 @@
-/*! \file Peridigm_Block.hpp */
+/*! \file Peridigm_ContactBlock.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,27 +45,26 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_BLOCK_HPP
-#define PERIDIGM_BLOCK_HPP
+#ifndef PERIDIGM_CONTACTBLOCK_HPP
+#define PERIDIGM_CONTACTBLOCK_HPP
 
 #include "Peridigm_BlockBase.hpp"
-#include "materials/Peridigm_Material.hpp"
-#include "damage/Peridigm_DamageModel.hpp"
+#include "contact/Peridigm_ContactModel.hpp"
 
 namespace PeridigmNS {
 
-  class Block : public BlockBase {
+class ContactBlock : public BlockBase {
   public:
 
     //! Constructor
-    Block() : BlockBase() {}
+    ContactBlock() : BlockBase() {}
 
     //! Constructor
-    Block(std::string blockName_, int blockID_, Teuchos::ParameterList& blockParams_)
+    ContactBlock(std::string blockName_, int blockID_, Teuchos::ParameterList& blockParams_)
       : BlockBase(blockName_, blockID_, blockParams_) {}
 
     //! Destructor
-    ~Block(){}
+    ~ContactBlock(){}
 
     /*! \brief Initialize the block.
      *
@@ -79,50 +78,30 @@ namespace PeridigmNS {
                     Teuchos::RCP<const Epetra_Vector> globalBlockIds,
                     Teuchos::RCP<const PeridigmNS::NeighborhoodData> globalNeighborhoodData);
 
-    //! Get the material model
-    Teuchos::RCP<const PeridigmNS::Material> getMaterialModel(){
-      return materialModel;
+    //! Get the contact model
+    Teuchos::RCP<const PeridigmNS::ContactModel> getContactModel(){ 
+      return contactModel;
     }
 
-    //! Set the material model
-    void setMaterialModel(Teuchos::RCP<const PeridigmNS::Material> materialModel_){
-      materialModel = materialModel_;
+    //! Set the contact model
+    void setContactModel(Teuchos::RCP<const PeridigmNS::ContactModel> contactModel_){
+      contactModel = contactModel_;
     }
 
-    //! Get the damage model
-    Teuchos::RCP<const PeridigmNS::DamageModel> getDamageModel(){
-      return damageModel;
-    }
-
-    //! Set the damage model
-    void setDamageModel(Teuchos::RCP<const PeridigmNS::DamageModel> damageModel_){
-      damageModel = damageModel_;
-    }
-
-    //! Get the material name
-    std::string getMaterialName(){
-      return blockParams.get<string>("Material");
-    }
-
-    //! Get the damage model name
-    std::string getDamageModelName(){
-      return blockParams.get<string>("Damage Model", "None");
-    }
-
-    //! Initialize the material model
-    void initializeMaterialModel(double timeStep = 1.0);
-
-    //! Initialize the damage model
-    void initializeDamageModel(double timeStep = 1.0);
+    //! Rebalance the block based on rebalanced global maps and neighborhood information.
+    void rebalance(Teuchos::RCP<const Epetra_BlockMap> rebalancedGlobalOwnedScalarPointMap,
+                   Teuchos::RCP<const Epetra_BlockMap> rebalancedGlobalOverlapScalarPointMap,
+                   Teuchos::RCP<const Epetra_BlockMap> rebalancedGlobalOwnedVectorPointMap,
+                   Teuchos::RCP<const Epetra_BlockMap> rebalancedGlobalOverlapVectorPointMap,
+                   Teuchos::RCP<const Epetra_BlockMap> rebalancedGlobalOwnedScalarBondMap,
+                   Teuchos::RCP<const Epetra_Vector> rebalancedGlobalBlockIds,
+                   Teuchos::RCP<const PeridigmNS::NeighborhoodData> rebalancedGlobalNeighborhoodData);
 
   protected:
 
-    //! The material model
-    Teuchos::RCP<const PeridigmNS::Material> materialModel;
-
-    //! The damage model
-    Teuchos::RCP<const PeridigmNS::DamageModel> damageModel;
+    //! The contact model
+    Teuchos::RCP<const PeridigmNS::ContactModel> contactModel;
   };
 }
 
-#endif // PERIDIGM_BLOCK_HPP
+#endif // PERIDIGM_CONTACTBLOCK_HPP
