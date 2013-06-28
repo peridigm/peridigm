@@ -1,0 +1,12 @@
+
+reset
+create brick x 1.0 y 1.0 z 1.0
+volume 1 move x -1.0 y 0.0 z 0.0
+volume 1 copy move x 2.0 y 0.0 z 0.0
+block 1 volume 1
+block 2 volume 2
+nodeset 1 volume 1
+nodeset 2 volume 2
+volume all size 0.25
+mesh volume all
+export genesis 'Contact_Cubes.g' overwrite
