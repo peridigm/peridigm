@@ -1,0 +1,104 @@
+<ParameterList>
+
+  <!--
+      Length   mm
+      Time     ms
+      Pressure MPa
+      Density g/mm^3
+  -->
+
+  <Parameter name="Verbose" type="bool" value="false"/>
+
+  <ParameterList name="Discretization">
+        <Parameter name="Type" type="string" value="Exodus" />
+        <Parameter name="Horizon" type="double" value="0.51"/>
+        <Parameter name="Input Mesh File" type="string" value="Contact_Perforation.g"/>
+  </ParameterList>
+
+  <ParameterList name="Materials">
+        <ParameterList name="Target Material">
+          <Parameter name="Material Model" type="string" value="Elastic"/>
+          <Parameter name="Density" type="double" value="2.2e-3"/>
+          <Parameter name="Bulk Modulus" type="double" value="14.90e3"/>
+          <Parameter name="Shear Modulus" type="double" value="8.94e3"/>
+        </ParameterList>
+        <ParameterList name="Projectile Material">
+          <Parameter name="Material Model" type="string" value="Elastic"/>
+          <Parameter name="Density" type="double" value="7.7e-3"/>
+          <Parameter name="Bulk Modulus" type="double" value="160.00e3"/>
+          <Parameter name="Shear Modulus" type="double" value="79.30e3"/>
+        </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Damage Models">
+        <ParameterList name="My Critical Stretch Damage Model">
+          <Parameter name="Damage Model" type="string" value="Critical Stretch"/>
+          <Parameter name="Critical Stretch" type="double" value="0.001"/>
+        </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Blocks">
+    <ParameterList name="Projectile Blocks">
+      <Parameter name="Block Names" type="string" value="block_1"/>
+      <Parameter name="Material" type="string" value="Projectile Material"/>
+    </ParameterList>
+    <ParameterList name="Target Blocks">
+      <Parameter name="Block Names" type="string" value="block_2"/>
+      <Parameter name="Material" type="string" value="Target Material"/>
+      <Parameter name="Damage Model" type="string" value="My Critical Stretch Damage Model"/>
+    </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Contact">
+	<Parameter name="Search Radius" type="double" value="0.6"/>
+	<Parameter name="Search Frequency" type="int" value="50"/>
+    <ParameterList name="Models">
+	  <ParameterList name="My Contact Model">
+	    <Parameter name="Contact Model" type="string" value="Short Range Force"/>
+	    <Parameter name="Contact Radius" type="double" value="0.2"/>
+	    <Parameter name="Spring Constant" type="double" value="1950.0e3"/>
+	  </ParameterList>
+	</ParameterList>
+    <ParameterList name="Interactions">
+      <ParameterList name="Interaction Projectile with Target">
+        <Parameter name="First Block" type="string" value="block_1"/>
+        <Parameter name="Second Block" type="string" value="block_2"/>
+	    <Parameter name="Contact Model" type="string" value="My Contact Model"/>
+	  </ParameterList>
+    </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Boundary Conditions">
+	<ParameterList name="Initial Velocity Projectile">
+	  <Parameter name="Type" type="string" value="Initial Velocity"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_1"/>
+	  <Parameter name="Coordinate" type="string" value="x"/>
+	  <Parameter name="Value" type="string" value="50.0"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Solver">
+	<Parameter name="Verbose" type="bool" value="false"/>
+	<Parameter name="Initial Time" type="double" value="0.0"/>
+	<Parameter name="Final Time" type="double" value="7.0e-2"/>
+	<ParameterList name="Verlet">
+	  <Parameter name="Safety Factor" type="double" value="0.8"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Output Data">
+	<Parameter name="Output File Type" type="string" value="ExodusII"/>
+	<Parameter name="Output Format" type="string" value="BINARY"/>
+	<Parameter name="Output Filename" type="string" value="Contact_Perforation"/>
+	<Parameter name="Output Frequency" type="int" value="200"/>
+	<Parameter name="Parallel Write" type="bool" value="true"/>
+	<ParameterList name="Output Variables">
+	  <Parameter name="Displacement" type="bool" value="true"/>
+	  <Parameter name="Velocity" type="bool" value="true"/>
+	  <Parameter name="Damage" type="bool" value="true"/>
+      <Parameter name="Number_Of_Neighbors" type="bool" value="true"/>
+      <Parameter name="Global_Kinetic_Energy" type="bool" value="true"/>
+	</ParameterList>
+  </ParameterList>
+
+</ParameterList>
