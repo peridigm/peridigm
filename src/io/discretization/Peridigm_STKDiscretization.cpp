@@ -395,9 +395,8 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
     (*nodeSets)[nodeSetName] = std::vector<int>();
     std::vector<int>& nodeSet = (*nodeSets)[nodeSetName];
 
-    // Create a selector for all locally-owned nodes in the node set
-    stk::mesh::Selector selector = 
-      stk::mesh::Selector( *stkNodeSets[iNodeSet] ) & stk::mesh::Selector( metaData->locally_owned_part() );
+    // Create a selector for all nodes in the node set
+    stk::mesh::Selector selector = stk::mesh::Selector( *stkNodeSets[iNodeSet] );
 
     // Select the mesh entities that match the selector
     std::vector<stk::mesh::Entity*> nodesInNodeSet;
@@ -413,47 +412,21 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
       for(stk::mesh::PairIterRelation::iterator it=elementRelations.begin() ; it!=elementRelations.end() ; ++it){
         stk::mesh::Entity* element = it->entity();
         int globalId = element->identifier() - 1;
-        elementGlobalIds.insert(globalId);
+        // Determine if the element is on-processor
+        bool onProcessor = false;
+        for(std::map< std::string, std::vector<int> >::iterator b_it = elementBlocks->begin() ; b_it != elementBlocks->end() && !onProcessor ; b_it++){
+          if( find(b_it->second.begin(), b_it->second.end(), globalId) != b_it->second.end() )
+            onProcessor = true;
+        }
+        // If the element is on processor, add the corresponding node to the node list
+        if(onProcessor)
+          elementGlobalIds.insert(globalId);
       }
     }
 
-    //
-    //  \todo TEMPORARY SOLUTION THAT WILL NOT SCALE.
-    //
-    // Get the full node list on every processor.
-    // This is important because, if we're running contact, we're about to rebalance, and after we do so nodes
-    // that are locally owned may not be locally owned.  If a node that
-    // changes processor is in a node set, this will cause problems downstream
-    // when assigning initial/boundary conditions.  A simple solution is to
-    // have all processors know about all the nodes in each node set.  But this
-    // won't scale.
-    // 
-    // \todo Figure out why it doesn't work to simpily use selector = stk::mesh::Selector( *stkNodeSets[iNodeSet] ) to get the complete node set.
-    //
-    vector<int> localNodeSetLength(numPID, 0);
-    vector<int> tempLocalNodeSetLength(numPID, 0);
-    tempLocalNodeSetLength[myPID] = (int)elementGlobalIds.size();
-    reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, (int)numPID, &tempLocalNodeSetLength[0], &localNodeSetLength[0]);
-
-    int totalNodeSetLength = 0;
-    int offset = 0;
-    for(unsigned int i=0 ; i<localNodeSetLength.size() ; ++i){
-      if(i < myPID)
-        offset += localNodeSetLength[i];
-      totalNodeSetLength += localNodeSetLength[i];
-    }
-    vector<int> completeElementGlobalIds(totalNodeSetLength, 0);
-    vector<int> tempCompleteElementGlobalIds(totalNodeSetLength, 0);
-    int index = 0;
-    for(std::set<int>::iterator it=elementGlobalIds.begin() ; it!=elementGlobalIds.end() ; it++){
-      tempCompleteElementGlobalIds[index+offset] = *it;
-      index++;
-    }
-    reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, totalNodeSetLength, &tempCompleteElementGlobalIds[0], &completeElementGlobalIds[0]);
-
     // Load the node set into the nodeSets container
-    for(unsigned int i=0 ; i<completeElementGlobalIds.size() ; ++i)
-      nodeSet.push_back( completeElementGlobalIds[i] );
+    for(std::set<int>::iterator it=elementGlobalIds.begin() ; it!=elementGlobalIds.end() ; it++)
+      nodeSet.push_back( *it );
   }
 
   // Record the element block ids
