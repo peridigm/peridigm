@@ -954,8 +954,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
 
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
-  this->synchDataManagers();
-
+  synchDataManagers();
   outputManager->write(blocks, timeCurrent);
   PeridigmNS::Timer::self().stopTimer("Output");
 
@@ -1075,7 +1074,7 @@ void PeridigmNS::Peridigm::executeExplicit() {
     blas.AXPY(length, dt2, aptr, vptr, 1, 1);
 
     PeridigmNS::Timer::self().startTimer("Output");
-    this->synchDataManagers();
+    synchDataManagers();
     outputManager->write(blocks, timeCurrent);
     PeridigmNS::Timer::self().stopTimer("Output");
 
@@ -1372,7 +1371,7 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
 
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
-  this->synchDataManagers();
+  synchDataManagers();
   outputManager->write(blocks, timeCurrent);
   PeridigmNS::Timer::self().stopTimer("Output");
 
@@ -1536,7 +1535,7 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
 
     // Write output for completed load step
     PeridigmNS::Timer::self().startTimer("Output");
-    this->synchDataManagers();
+    synchDataManagers();
     outputManager->write(blocks, timeCurrent);
     PeridigmNS::Timer::self().stopTimer("Output");
 
@@ -1654,7 +1653,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
 
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
-  this->synchDataManagers();
+  synchDataManagers();
   outputManager->write(blocks, timeCurrent);
   PeridigmNS::Timer::self().stopTimer("Output");
 
@@ -1786,9 +1785,9 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
         // The solver should have returned zeros, but there may be small errors.
         boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(lhs);
 
-	PeridigmNS::Timer::self().startTimer("Line Search");
+        PeridigmNS::Timer::self().startTimer("Line Search");
         alpha = quasiStaticsLineSearch(residual, lhs);
-	PeridigmNS::Timer::self().stopTimer("Line Search");
+        PeridigmNS::Timer::self().stopTimer("Line Search");
 
         // Apply increment to nodal positions
         for(int i=0 ; i<y->MyLength() ; ++i)
@@ -1858,7 +1857,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
 
     // Write output for completed load step
     PeridigmNS::Timer::self().startTimer("Output");
-    this->synchDataManagers();
+    synchDataManagers();
     outputManager->write(blocks, timeCurrent);
     PeridigmNS::Timer::self().stopTimer("Output");
 
@@ -2185,8 +2184,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
 
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
-  this->synchDataManagers();
-
+  synchDataManagers();
   outputManager->write(blocks, timeCurrent);
   PeridigmNS::Timer::self().stopTimer("Output");
 
@@ -2334,8 +2332,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
 
     // Write output for completed time step
     PeridigmNS::Timer::self().startTimer("Output");
-    this->synchDataManagers();
-
+    synchDataManagers();
     outputManager->write(blocks, timeCurrent);
     PeridigmNS::Timer::self().stopTimer("Output");
 
