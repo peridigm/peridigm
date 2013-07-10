@@ -2922,6 +2922,24 @@ Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::Peridigm::createRebalance
   return rebalancedNeighborhoodData;
 }
 
+Teuchos::RCP< map< string, vector<int> > > PeridigmNS::Peridigm::getExodusNodeSets(){
+  Teuchos::RCP< map< string, vector<int> > > exodusNodeSets = Teuchos::rcp(new map< string, vector<int> >() );
+  map< string, vector<int> >::iterator it;
+  for(it=nodeSets->begin() ; it!=nodeSets->end() ; it++){
+    const string& nodeSetName = it->first;
+    const vector<int>& nodeSet = it->second;
+    (*exodusNodeSets)[nodeSetName] = vector<int>(); // \todo Preallocate space, once we're sure the node sets are the right size
+    vector<int>& exodusNodeSet = (*exodusNodeSets)[nodeSetName];
+    for(unsigned int i=0 ; i<nodeSet.size() ; ++i){
+      int localId = oneDimensionalMap->LID(nodeSet[i]);
+      // \todo Assert that the node is on processor, need to fix node sets before this can be done because right now some are off-processor
+      if(localId != -1)
+        exodusNodeSet.push_back(localId + 1);
+    }
+  }
+  return exodusNodeSets;
+}
+
 void PeridigmNS::Peridigm::displayProgress(string title, double percentComplete){
   
   int numMarks = 20;
