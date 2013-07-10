@@ -447,20 +447,22 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
   element_output_field_map.clear();
   node_output_field_map.clear();
 
+  // Obtain the node sets
+  Teuchos::RCP< std::map< std::string, std::vector<int> > > exodusNodeSets = peridigm->getExodusNodeSets();
+  std::map< std::string, std::vector<int> >::iterator nsIt;
+
   // Initialize the database (assumes that Peridigm mothership vectors created and initialized)
   int num_dimensions = 3;
   int num_nodes = peridigm->getOneDimensionalMap()->NumMyElements();
   int num_elements = num_nodes;
   int num_element_blocks = blocks->size();
-  int num_node_sets = peridigm->getExodusNodeSets()->size();
+  int num_node_sets = exodusNodeSets()->size();
   int num_side_sets = 0;
   // Initialize exodus file with parameters
   int retval = ex_put_init(file_handle,"Peridigm", num_dimensions, num_nodes, num_elements, num_element_blocks, num_node_sets, num_side_sets);
   if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_init");
 
   // Write the node sets
-  Teuchos::RCP< std::map< std::string, std::vector<int> > > exodusNodeSets = peridigm->getExodusNodeSets();
-  std::map< std::string, std::vector<int> >::iterator nsIt;
   unsigned int numNodeSets = exodusNodeSets->size();
   int numNodesAcrossAllNodeSets = 0;
   for(nsIt = exodusNodeSets->begin() ; nsIt != exodusNodeSets->end() ; nsIt++)
@@ -483,16 +485,19 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
     node_sets_dist_index[nodeSetIndex] = 0;
     for(unsigned int i=0 ; i<nodeSet.size() ; ++i)
       node_sets_node_list[offset++] = nodeSet[i];
+    nodeSetIndex += 1;
   }
-  retval = ex_put_concat_node_sets(file_handle,
-                                   &node_set_ids[0],
-                                   &num_nodes_per_set[0],
-                                   &num_dist_per_set[0],
-                                   &node_sets_node_index[0],
-                                   &node_sets_dist_index[0],
-                                   &node_sets_node_list[0],
-                                   &node_sets_dist_fact[0]);
-  if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_concat_node_sets");
+  if(numNodeSets > 0){
+    retval = ex_put_concat_node_sets(file_handle,
+                                     &node_set_ids[0],
+                                     &num_nodes_per_set[0],
+                                     &num_dist_per_set[0],
+                                     &node_sets_node_index[0],
+                                     &node_sets_dist_index[0],
+                                     &node_sets_node_list[0],
+                                     &node_sets_dist_fact[0]);
+    if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_concat_node_sets");
+  }
 
   // Write the node set names
   char **node_set_names = NULL;

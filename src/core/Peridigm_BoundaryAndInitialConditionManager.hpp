@@ -58,40 +58,6 @@
 namespace PeridigmNS {
 
 /*! \brief Processes boundary and intial conditions.
- *
- * Boundary conditions may be applied to any combination of node sets or blocks.
- *
- * Initial velocities
- * Initial displacements...is this really used?
- * Prescribed displacement boundary conditions (displacement as a function of time)
- * Body forces
- * Leave prescribed velocity boundary conditions (velocity as a function of time) for future work?
- *
- * Use functions for everything, at least from input deck point of view
- * Question:  How expensive is the expression parser?
- * Should create noop function as a poor-man's active periods
- * Allow for wacky IC/BC via compute-manager-style interface, a la user subroutines in Sierra/SM
- * Material state variables can already be initialized by a compute manager
- * Make sure compute manager initialize is called before material model initialize
- * Nix initial_conditions directory?
- * Move all muParser/randomNumber stuff out of Peridigm.cpp, into BC/IC classes, don't forget CMakeLists.txt
- * Should we have separate managers for boundary and initial conditions?
- * Change "all node sets" to "all blocks"
- * How do we really want to handle nonzero initial displacements? 
- *
- * Initial velocity:  Applied to mothership vector once
- * Initial displacments:  Applied to mothership vector once
- * Prescribed displacement:  Applied to mothership vector, tangent, and displacement increment for QS/TD?
- * Body forces:  Applied to mothership vector at every time step
- *
- * Interface:
- * BoundaryAndInitialConditionManager(const Teuchos::RCP<Teuchos::ParameterList>& params)
- * initialize(Epetra_BlockMap)
- * applyInitialVelocities(Epetra_Vector vec)
- * applyInitialDisplacement(Epetra_Vector vec)
- * applyPrescribedDisplacement(Epetra_Vector vec)
- * applyPrescribedDisplacement(Epetra_CrsMatrix mat)
- * applyBodyForce(Epetra_Vector vec)
  */
   class BoundaryAndInitialConditionManager {
   public:
@@ -104,6 +70,11 @@ namespace PeridigmNS {
 
     //! Initialize node sets, etc.
     void initialize(Teuchos::RCP<Discretization> discretization);
+
+    //! Get node sets.
+    Teuchos::RCP< std::map< std::string, std::vector<int> > > getNodeSets() {
+      return nodeSets;
+    }
 
     //! Apply initial displacements.
     void applyInitialDisplacements(Teuchos::RCP<Epetra_Vector> x,
@@ -155,8 +126,6 @@ namespace PeridigmNS {
 
     //! Boundary and initial condition parameters
     Teuchos::ParameterList params;
-
-    // \todo Define nodesets with an Epetra_BlockMap, then export to x, v, etc., and rebalance as needed
 
     //! Node sets
     Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets;
