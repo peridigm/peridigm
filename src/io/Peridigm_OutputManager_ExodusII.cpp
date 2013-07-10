@@ -430,7 +430,6 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
     filename << filenameBase.c_str() << ".e";
   }
 
-
   /*
    * Now, initialize ExodusII database
    */
@@ -453,11 +452,59 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
   int num_nodes = peridigm->getOneDimensionalMap()->NumMyElements();
   int num_elements = num_nodes;
   int num_element_blocks = blocks->size();
-  int num_node_sets = 0;
+  int num_node_sets = peridigm->getExodusNodeSets()->size();
   int num_side_sets = 0;
   // Initialize exodus file with parameters
   int retval = ex_put_init(file_handle,"Peridigm", num_dimensions, num_nodes, num_elements, num_element_blocks, num_node_sets, num_side_sets);
   if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_init");
+
+  // Write the node sets
+  Teuchos::RCP< std::map< std::string, std::vector<int> > > exodusNodeSets = peridigm->getExodusNodeSets();
+  std::map< std::string, std::vector<int> >::iterator nsIt;
+  unsigned int numNodeSets = exodusNodeSets->size();
+  int numNodesAcrossAllNodeSets = 0;
+  for(nsIt = exodusNodeSets->begin() ; nsIt != exodusNodeSets->end() ; nsIt++)
+    numNodesAcrossAllNodeSets += nsIt->second.size();
+  vector<int> node_set_ids(numNodeSets);
+  vector<int> num_nodes_per_set(numNodeSets);
+  vector<int> num_dist_per_set(numNodeSets);
+  vector<int> node_sets_node_index(numNodeSets);
+  vector<int> node_sets_dist_index(numNodeSets);
+  vector<int> node_sets_node_list(numNodesAcrossAllNodeSets);
+  int* node_sets_dist_fact = 0;
+  int nodeSetIndex = 0;
+  int offset = 0;
+  for(nsIt = exodusNodeSets->begin() ; nsIt != exodusNodeSets->end() ; nsIt++){
+    vector<int>& nodeSet = nsIt->second;
+    node_set_ids[nodeSetIndex] = nodeSetIndex + 1;
+    num_nodes_per_set[nodeSetIndex] = nodeSet.size();
+    num_dist_per_set[nodeSetIndex] = 0;
+    node_sets_node_index[nodeSetIndex] = offset;
+    node_sets_dist_index[nodeSetIndex] = 0;
+    for(unsigned int i=0 ; i<nodeSet.size() ; ++i)
+      node_sets_node_list[offset++] = nodeSet[i];
+  }
+  retval = ex_put_concat_node_sets(file_handle,
+                                   &node_set_ids[0],
+                                   &num_nodes_per_set[0],
+                                   &num_dist_per_set[0],
+                                   &node_sets_node_index[0],
+                                   &node_sets_dist_index[0],
+                                   &node_sets_node_list[0],
+                                   &node_sets_dist_fact[0]);
+  if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_concat_node_sets");
+
+  // Write the node set names
+  char **node_set_names = NULL;
+  if(numNodeSets > 0){
+    node_set_names = new char*[numNodeSets];
+    for(unsigned int i=0;i<numNodeSets;i++) node_set_names[i] = new char[MAX_STR_LENGTH+1]; // MAX_STR_LENGTH defined in ExodusII.h
+    int index = 0;
+    for(nsIt = exodusNodeSets->begin() ; nsIt != exodusNodeSets->end() ; nsIt++)
+      strcpy(node_set_names[index++], nsIt->first.c_str());
+    retval = ex_put_names(file_handle, EX_NODE_SET, node_set_names);
+    if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_names EX_NODE_SET");
+  }
 
   // Write nodal coordinate values
   // Exodus requires pointer to x,y,z coordinates of nodes, but Peridigm stores this data using a blockmap, which interleaves the data
@@ -498,6 +545,8 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
     retval = ex_put_elem_block(file_handle,elem_block_ID[i],"SPHERE",num_elem_in_block[i],num_nodes_in_elem[i],0);
     if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_elem_block");
   }
+
+  // \todo Write the block names with ex_put_names(file_handle, EX_ELEM_BLOCK, block_names);
 
   // Write element connectivity
   for(blockIt = blocks->begin(); blockIt != blocks->end(); blockIt++) {
@@ -667,6 +716,10 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
   if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_close");
 
   // Clean up
+  if(node_set_names != NULL){
+    for (i = numNodeSets; i>0; i--) delete[] node_set_names[i-1];
+    delete[] node_set_names;
+  }
   if(global_var_names != NULL){
     for (i = num_global_vars; i>0; i--) delete[] global_var_names[i-1];
     delete[] global_var_names;

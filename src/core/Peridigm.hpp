@@ -266,6 +266,9 @@ namespace PeridigmNS {
       return Teuchos::rcpFromRef(blocks->at(blockNumber));
     }
 
+    //! Accessor for node sets
+    Teuchos::RCP< std::map< std::string, std::vector<int> > > getExodusNodeSets();
+
     //! Accessor for Material Models
     std::map< std::string, Teuchos::RCP<const PeridigmNS::Material> > getMaterialModels() {
       return materialModels;
