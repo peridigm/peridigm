@@ -136,6 +136,19 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Dis
     vector<int>& nodeList = it->second;
     (*nodeSets)[name] = nodeList;
   }
+
+  // Cull any off-processor nodes from the node lists
+  Teuchos::RCP<const Epetra_BlockMap> oneDimensionalMap = discretization->getGlobalOwnedMap(1);
+  for(map< string, vector<int> >::iterator it = nodeSets->begin() ; it != nodeSets->end() ; it++){
+    vector<int>& nodeSet = it->second;
+    vector<int>::iterator nIt = nodeSet.begin();
+    while(nIt != nodeSet.end()){
+      if(oneDimensionalMap->LID(*nIt) == -1)
+        nIt = nodeSet.erase(nIt);
+      else
+        ++nIt;
+    }
+  }
 }
 
 void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialDisplacements(Teuchos::RCP<Epetra_Vector> x,
