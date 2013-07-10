@@ -498,7 +498,7 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
   char **node_set_names = NULL;
   if(numNodeSets > 0){
     node_set_names = new char*[numNodeSets];
-    for(unsigned int i=0;i<numNodeSets;i++) node_set_names[i] = new char[MAX_STR_LENGTH+1]; // MAX_STR_LENGTH defined in ExodusII.h
+    for(unsigned int i=0;i<numNodeSets;i++) node_set_names[i] = new char[MAX_STR_LENGTH+1];
     int index = 0;
     for(nsIt = exodusNodeSets->begin() ; nsIt != exodusNodeSets->end() ; nsIt++)
       strcpy(node_set_names[index++], nsIt->first.c_str());
@@ -546,7 +546,16 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
     if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_elem_block");
   }
 
-  // \todo Write the block names with ex_put_names(file_handle, EX_ELEM_BLOCK, block_names);
+  // Write the block names
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(blocks->size() < 1, "\nPeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(), Zero element blocks found!\n");
+  char **block_names = new char*[blocks->size()];
+  for(unsigned int i=0 ; i<blocks->size() ; ++i)
+    block_names[i] = new char[MAX_STR_LENGTH+1];
+  int index = 0;
+  for(blockIt = blocks->begin(); blockIt != blocks->end(); blockIt++)
+    strcpy(block_names[index++], blockIt->getName().c_str());
+  retval = ex_put_names(file_handle, EX_ELEM_BLOCK, block_names);
+  if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_names EX_ELEM_BLOCK");
 
   // Write element connectivity
   for(blockIt = blocks->begin(); blockIt != blocks->end(); blockIt++) {
@@ -719,6 +728,10 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
   if(node_set_names != NULL){
     for (i = numNodeSets; i>0; i--) delete[] node_set_names[i-1];
     delete[] node_set_names;
+  }
+  if(block_names != NULL){
+    for (unsigned int i = blocks->size(); i>0; i--) delete[] block_names[i-1];
+    delete[] block_names;
   }
   if(global_var_names != NULL){
     for (i = num_global_vars; i>0; i--) delete[] global_var_names[i-1];
