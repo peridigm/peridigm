@@ -146,11 +146,9 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   if(!solverParams->isParameter("Finite Difference Probe Length"))
     solverParams->set("Finite Difference Probe Length", 1.0e-6*minElementRadius);
 
-  // Load node sets from input deck and/or input mesh file into nodeSets container
+  // Load node sets from input deck and/or input mesh file
   Teuchos::RCP<Teuchos::ParameterList> bcParams =
     Teuchos::rcpFromRef( peridigmParams->sublist("Boundary Conditions") );
-  initializeNodeSets(bcParams, peridigmDisc);
-
   boundaryAndInitialConditionManager =
     Teuchos::RCP<BoundaryAndInitialConditionManager>(new BoundaryAndInitialConditionManager(*bcParams));
 
@@ -486,37 +484,6 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization>
 
   // get the neighborlist from the discretization
   globalNeighborhoodData = peridigmDisc->getNeighborhoodData();
-}
-
-void PeridigmNS::Peridigm::initializeNodeSets(Teuchos::RCP<Teuchos::ParameterList>& bcParams,
-                                              Teuchos::RCP<Discretization> peridigmDisc) {
-
-  nodeSets = Teuchos::rcp(new map< string, vector<int> >());
-
-  // Load node sets defined in the input deck into the nodeSets container
-  for(Teuchos::ParameterList::ConstIterator it = bcParams->begin() ; it != bcParams->end() ; it++){
-	const string& name = it->first;
-	size_t position = name.find("Node Set");
-	if(position != string::npos){
-	  stringstream ss(Teuchos::getValue<string>(it->second));
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(name) != nodeSets->end(), "**** Duplicate node set found: " + name + "\n");
-	  vector<int>& nodeList = (*nodeSets)[name];
-	  int nodeID;
-	  while(ss.good()){
-		ss >> nodeID;
-		nodeList.push_back(nodeID);
-	  }
-	}
-  }
-
-  // Load node sets defined in the mesh file into the nodeSets container
-  Teuchos::RCP< map< string, vector<int> > > discretizationNodeSets = peridigmDisc->getNodeSets();
-  for(map< string, vector<int> >::iterator it=discretizationNodeSets->begin() ; it!=discretizationNodeSets->end() ; it++){
-    string name = it->first;
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(name) != nodeSets->end(), "**** Duplicate node set found: " + name + "\n");
-    vector<int>& nodeList = it->second;
-    (*nodeSets)[name] = nodeList;
-  }
 }
 
 void PeridigmNS::Peridigm::initializeContact() {
@@ -2923,6 +2890,7 @@ Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::Peridigm::createRebalance
 }
 
 Teuchos::RCP< map< string, vector<int> > > PeridigmNS::Peridigm::getExodusNodeSets(){
+  Teuchos::RCP< map< string, vector<int> > > nodeSets = boundaryAndInitialConditionManager->getNodeSets();
   Teuchos::RCP< map< string, vector<int> > > exodusNodeSets = Teuchos::rcp(new map< string, vector<int> >() );
   map< string, vector<int> >::iterator it;
   for(it=nodeSets->begin() ; it!=nodeSets->end() ; it++){

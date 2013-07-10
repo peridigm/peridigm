@@ -105,10 +105,6 @@ namespace PeridigmNS {
     //! Initialize discretization and maps
     void initializeDiscretization(Teuchos::RCP<Discretization> peridigmDisc);
 
-    //! Load node sets from input deck and/or input mesh into nodeSets container
-    void initializeNodeSets(Teuchos::RCP<Teuchos::ParameterList>& bcParams,
-                            Teuchos::RCP<Discretization> peridigmDisc);
-
     //! Initialize contact
     void initializeContact();
 
@@ -370,9 +366,6 @@ namespace PeridigmNS {
 
     //! Contact block iterator, for convenience
     std::vector<PeridigmNS::ContactBlock>::iterator contactBlockIt;
-
-    //! Node sets
-    Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets;
 
     //! Overlap Jacobian; filled by each processor and then assembled into the mothership Jacobian;
     Teuchos::RCP<PeridigmNS::SerialMatrix> overlapJacobian;
