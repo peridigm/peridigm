@@ -467,17 +467,17 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
   int numNodesAcrossAllNodeSets = 0;
   for(nsIt = exodusNodeSets->begin() ; nsIt != exodusNodeSets->end() ; nsIt++)
     numNodesAcrossAllNodeSets += nsIt->second.size();
-  vector<int> node_set_ids(numNodeSets);
-  vector<int> num_nodes_per_set(numNodeSets);
-  vector<int> num_dist_per_set(numNodeSets);
-  vector<int> node_sets_node_index(numNodeSets);
-  vector<int> node_sets_dist_index(numNodeSets);
-  vector<int> node_sets_node_list(numNodesAcrossAllNodeSets);
+  std::vector<int> node_set_ids(numNodeSets);
+  std::vector<int> num_nodes_per_set(numNodeSets);
+  std::vector<int> num_dist_per_set(numNodeSets);
+  std::vector<int> node_sets_node_index(numNodeSets);
+  std::vector<int> node_sets_dist_index(numNodeSets);
+  std::vector<int> node_sets_node_list(numNodesAcrossAllNodeSets);
   int* node_sets_dist_fact = 0;
   int nodeSetIndex = 0;
   int offset = 0;
   for(nsIt = exodusNodeSets->begin() ; nsIt != exodusNodeSets->end() ; nsIt++){
-    vector<int>& nodeSet = nsIt->second;
+    std::vector<int>& nodeSet = nsIt->second;
     node_set_ids[nodeSetIndex] = nodeSetIndex + 1;
     num_nodes_per_set[nodeSetIndex] = nodeSet.size();
     num_dist_per_set[nodeSetIndex] = 0;
