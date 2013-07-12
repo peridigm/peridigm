@@ -87,6 +87,12 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   // Load data from mesh file
   loadData(meshFileName);
 
+  //! TEMPORARY PLACEHOLDER FOR BLOCK-BY-BLOCK HORIZON
+  for(map<string, vector<int> >::iterator it = elementBlocks->begin() ; it != elementBlocks->end() ; it++){
+    string blockName = it->first;
+    horizons[blockName] = horizon;
+  }
+
   // Execute the neighbor search
   int neighborListSize;
   int* neighborList;

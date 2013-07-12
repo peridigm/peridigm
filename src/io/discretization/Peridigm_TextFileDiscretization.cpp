@@ -77,7 +77,7 @@ PeridigmNS::TextFileDiscretization::TextFileDiscretization(const Teuchos::RCP<co
 {
   TEUCHOS_TEST_FOR_EXCEPT_MSG(params->get<string>("Type") != "Text File", "Invalid Type in TextFileDiscretization");
 
-  horizon = params->get<double>("Horizon");
+  double horizon = params->get<double>("Horizon");
   if(params->isParameter("Omit Bonds Between Blocks"))
     bondFilterCommand = params->get<string>("Omit Bonds Between Blocks");
   string meshFileName = params->get<string>("Input Mesh File");
@@ -87,6 +87,12 @@ PeridigmNS::TextFileDiscretization::TextFileDiscretization(const Teuchos::RCP<co
   createBondFilters(params);
 
   QUICKGRID::Data decomp = getDecomp(meshFileName, searchHorizon);
+
+  //! TEMPORARY PLACEHOLDER FOR BLOCK-BY-BLOCK HORIZON
+  for(map<string, vector<int> >::iterator it = elementBlocks->begin() ; it != elementBlocks->end() ; it++){
+    string blockName = it->first;
+    horizons[blockName] = horizon;
+  }
 
   // \todo Refactor; the createMaps() call is currently inside getDecomp() due to order-of-operations issues with tracking element blocks.
   //createMaps(decomp);

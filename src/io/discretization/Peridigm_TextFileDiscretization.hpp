@@ -91,9 +91,6 @@ namespace PeridigmNS {
     //! Get the number of bonds on this processor
     virtual unsigned int getNumBonds() const;
 
-    //! Get the horizon
-    virtual double getHorizon() const { return horizon; }
-
     //! Get the minimum element radius in the model (used for example for determining magnitude of finite-difference probe).
     virtual double getMinElementRadius() const { return minElementRadius; }
 
@@ -131,26 +128,12 @@ namespace PeridigmNS {
     //! Filter bonds from neighborhood list
     Teuchos::RCP<PeridigmNS::NeighborhoodData> filterBonds(Teuchos::RCP<PeridigmNS::NeighborhoodData> unfilteredNeighborhoodData);
 
-//     //! Compute the scalar triple product
-//     double scalarTripleProduct(std::vector<double>& a,
-//                                std::vector<double>& b,
-//                                std::vector<double>& c) const;
-
-//     //! Compute the volume of a hexahedron element
-//     double hexVolume(std::vector<double*>& nodeCoordinates) const;
-
-//     //! Compute the maximum length dimension for a hexahedron element
-//     double hexMaxElementDimension(std::vector<double*>& nodeCoordinates) const;
-
     //! Maps
     Teuchos::RCP<Epetra_BlockMap> oneDimensionalMap;
     Teuchos::RCP<Epetra_BlockMap> oneDimensionalOverlapMap;
     Teuchos::RCP<Epetra_BlockMap> threeDimensionalMap;
     Teuchos::RCP<Epetra_BlockMap> threeDimensionalOverlapMap;
     Teuchos::RCP<Epetra_BlockMap> bondMap;
-
-    //! Horizon
-    double horizon;
 
     //! Minimum element radius
     double minElementRadius;
