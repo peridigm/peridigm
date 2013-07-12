@@ -109,8 +109,15 @@ namespace PeridigmNS {
     //! Get the number of bonds on this processor
     virtual unsigned int getNumBonds() const = 0;
 
-    //! Get the horizon
-    virtual double getHorizon() const = 0;
+    //! Get a list of horizons for all blocks
+    virtual std::map<std::string, double> getHorizons() { return horizons; }
+
+    //! Get the horizon for the specified block
+    virtual double getHorizon(std::string blockName) const {
+      std::map<std::string, double>::const_iterator it = horizons.find(blockName);
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(it == horizons.end(), "\nError in Discretization::getHorizon(), invalid block name.\n");
+      return it->second;
+    }
 
     //! Get the minimum element radius in the model (used for example for determining magnitude of finite-difference probe).
     virtual double getMinElementRadius() const = 0;
@@ -155,6 +162,9 @@ namespace PeridigmNS {
     //! \todo Eliminate old-style elementBlocks data structure.
     //! Map containing element blocks (block name and list of locally-owned element IDs for each block).
     Teuchos::RCP< std::map< std::string, std::vector<int> > > elementBlocks;
+
+    //! Horizons for each block
+    std::map<std::string, double> horizons;
 
     //! Map containing node sets (node set name and list of locally-owned node IDs for each node set).
     Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets;

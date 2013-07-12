@@ -67,7 +67,7 @@ void PeridigmNS::computePartialVolume(Teuchos::RCP<PeridigmNS::Block> block,
   const int* ownedIDs = neighborhoodData->OwnedIDs();
   const int* neighborhoodList = neighborhoodData->NeighborhoodList();
   
-  double horizon = discretization->getHorizon();
+  double horizon = discretization->getHorizon(block->getName());
 
   int neighborhoodListIndex = 0;
   int bondIndex = 0;

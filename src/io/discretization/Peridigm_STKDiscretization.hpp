@@ -98,9 +98,6 @@ namespace PeridigmNS {
     //! Get the number of bonds on this processor
     virtual unsigned int getNumBonds() const;
 
-    //! Get the horizon
-    virtual double getHorizon() const { return horizon; }
-
     //! Get the minimum element radius in the model (used for example for determining magnitude of finite-difference probe).
     virtual double getMinElementRadius() const { return minElementRadius; }
 

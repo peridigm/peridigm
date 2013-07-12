@@ -188,7 +188,7 @@ QUICKGRID::Data PeridigmNS::PdQuickGridDiscretization::getDiscretization(const T
   }
 
   // Get the horizion
-  horizon = params->get<double>("Horizon");
+  horizons["block_1"] = params->get<double>("Horizon");
 
   // param list should have a "sublist" with different types that we switch on here
   QUICKGRID::Data decomp;
@@ -209,6 +209,7 @@ QUICKGRID::Data PeridigmNS::PdQuickGridDiscretization::getDiscretization(const T
     const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
 
     // Create abstract decomposition iterator
+    double horizon = horizons["block_1"];
     QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numPID,horizon,xSpec,ySpec,zSpec,neighborhoodType);
     decomp =  QUICKGRID::getDiscretization(myPID, cellPerProcIter);
     // Load balance and write new decomposition
@@ -249,6 +250,7 @@ QUICKGRID::Data PeridigmNS::PdQuickGridDiscretization::getDiscretization(const T
     QUICKGRID::Spec1D axisSpec(numCellsAxis,zStart,cylinderLength);
 
     // Create abstract decomposition iterator
+    double horizon = horizons["block_1"];
     QUICKGRID::TensorProductCylinderMeshGenerator cellPerProcIter(numPID, horizon,ring2dSpec, axisSpec,neighborhoodType);
     decomp =  QUICKGRID::getDiscretization(myPID, cellPerProcIter);
     // Load balance and write new decomposition
