@@ -201,8 +201,8 @@ void PeridigmNS::ProximitySearch::RebalanceNeighborhoodList(Teuchos::RCP<const E
   }
 }
 
-void PeridigmNS::ProximitySearch::GlobalProximitySearch(Epetra_Vector& x,                                                           /* input  */
-                                                        double searchRadius,                                                        /* input  */
+void PeridigmNS::ProximitySearch::GlobalProximitySearch(Teuchos::RCP<Epetra_Vector> x,                                              /* input  */
+                                                        Teuchos::RCP<Epetra_Vector> searchRadii,                                    /* input  */
                                                         Teuchos::RCP<Epetra_BlockMap>& overlapMap,                                  /* output */
                                                         int& neighborListSize,                                                      /* output */
                                                         int*& neighborList,                                                         /* output (allocated within function) */
@@ -210,13 +210,13 @@ void PeridigmNS::ProximitySearch::GlobalProximitySearch(Epetra_Vector& x,       
 
 {
   // Copy information from the Epetra_Vector into a QUICKGRID::Data object
-  const Epetra_BlockMap& originalMap = x.Map();
+  const Epetra_BlockMap& originalMap = x->Map();
   int dimension = 3;
   int numMyElements = originalMap.NumMyElements();
   int numGlobalElements = originalMap.NumGlobalElements();
   int* globalIds = originalMap.MyGlobalElements();
   double* coordinates;
-  x.ExtractView(&coordinates);
+  x->ExtractView(&coordinates);
   QUICKGRID::Data decomp = QUICKGRID::allocatePdGridData(numMyElements, dimension);
   decomp.globalNumPoints = numGlobalElements;
   int* decompGlobalIds = decomp.myGlobalIDs.get();
@@ -233,6 +233,12 @@ void PeridigmNS::ProximitySearch::GlobalProximitySearch(Epetra_Vector& x,       
   // Rebalance the decomp (RCB decomposition via Zoltan)
   decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
 
+  // Obtain a horizon list in the rebalanced decomposition
+  Epetra_BlockMap rebalancedMap(decomp.globalNumPoints, decomp.numPoints, decomp.myGlobalIDs.get(), 1, 0, originalMap.Comm());
+  Epetra_Import searchRadiiImporter(rebalancedMap, searchRadii->Map());
+  Teuchos::RCP<Epetra_Vector> rebalancedSearchRadii = Teuchos::rcp(new Epetra_Vector(rebalancedMap));
+  rebalancedSearchRadii->Import(*searchRadii, searchRadiiImporter, Insert);
+
   // The initial implementation supports only a single bond filter
   TEUCHOS_TEST_FOR_EXCEPT_MSG(bondFilters.size() > 1, "\n****Error:  Multiple bond filters currently unsupported.\n");
   if(bondFilters.size() == 0){
@@ -242,12 +248,13 @@ void PeridigmNS::ProximitySearch::GlobalProximitySearch(Epetra_Vector& x,       
  
   // Execute neighbor search
   std::tr1::shared_ptr<const Epetra_Comm> commSp(&originalMap.Comm(), NonDeleter<const Epetra_Comm>());
+
   PDNEIGH::NeighborhoodList list(commSp,
                                  decomp.zoltanPtr.get(),
                                  decomp.numPoints,
                                  decomp.myGlobalIDs,
                                  decomp.myX,
-                                 searchRadius,
+                                 rebalancedSearchRadii,
                                  bondFilters[0]);
 
   // The neighbor search is complete, but needs to be brought back into the initial decomposition

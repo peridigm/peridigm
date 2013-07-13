@@ -92,11 +92,14 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
     string blockName = it->first;
     horizons[blockName] = horizon;
   }
+  // TEMPORARY PLACEHOLDER FOR PER-NODE SEARCH RADII
+  Teuchos::RCP<Epetra_Vector> horizonForEachNode = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
+  horizonForEachNode->PutScalar(horizon);
 
   // Execute the neighbor search
   int neighborListSize;
   int* neighborList;
-  ProximitySearch::GlobalProximitySearch(*initialX, horizon, oneDimensionalOverlapMap, neighborListSize, neighborList, bondFilters);
+  ProximitySearch::GlobalProximitySearch(initialX, horizonForEachNode, oneDimensionalOverlapMap, neighborListSize, neighborList, bondFilters);
 
   createNeighborhoodData(neighborListSize, neighborList);
 

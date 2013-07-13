@@ -121,7 +121,7 @@ QUICKGRID::QuickGridData getGrid() {
 
 
 shared_ptr< std::set<int> > constructFrame(PDNEIGH::NeighborhoodList& list) {
-	shared_ptr< std::set<int> > frameSet = UTILITIES::constructFrameSet(list.get_num_owned_points(),list.get_owned_x(),list.get_horizon());
+	shared_ptr< std::set<int> > frameSet = UTILITIES::constructFrameSet(list.get_num_owned_points(),list.get_owned_x(),list.get_frameset_buffer_size());
 	/*
 	 * There is only 1 point on each processor and by default it must show up in the frameset
 	 */

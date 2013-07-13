@@ -235,10 +235,16 @@ QUICKGRID::Data PeridigmNS::TextFileDiscretization::getDecomp(const string& text
   std::tr1::shared_ptr<const Epetra_Comm> commSp(comm.getRawPtr(), NonDeleter<const Epetra_Comm>());
   Teuchos::RCP<PDNEIGH::NeighborhoodList> list;
   TEUCHOS_TEST_FOR_EXCEPT_MSG(bondFilters.size() > 1, "\n****Error:  Multiple bond filters currently unsupported.\n");
+  
+  // TEMPORARY PLACEHOLDER FOR PER-NODE SEARCH RADII
+  Epetra_BlockMap rebalancedMap(decomp.globalNumPoints, decomp.numPoints, decomp.myGlobalIDs.get(), 1, 0, *comm);
+  Teuchos::RCP<Epetra_Vector> horizonForEachPoint = Teuchos::rcp(new Epetra_Vector(rebalancedMap));
+  horizonForEachPoint->PutScalar(horizon);
+
   if(bondFilters.size() == 0)
-    list = Teuchos::rcp(new PDNEIGH::NeighborhoodList(commSp,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon));
+    list = Teuchos::rcp(new PDNEIGH::NeighborhoodList(commSp,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizonForEachPoint));
   else if(bondFilters.size() == 1)
-    list = Teuchos::rcp(new PDNEIGH::NeighborhoodList(commSp,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon,bondFilters[0]));
+    list = Teuchos::rcp(new PDNEIGH::NeighborhoodList(commSp,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizonForEachPoint,bondFilters[0]));
   decomp.neighborhood=list->get_neighborhood();
   decomp.sizeNeighborhoodList=list->get_size_neighborhood_list();
   decomp.neighborhoodPtr=list->get_neighborhood_ptr();

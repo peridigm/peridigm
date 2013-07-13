@@ -77,7 +77,7 @@ void twoPointProblem()
     return;
 
   Epetra_BlockMap map(2, 3, 0, *comm);
-  Epetra_Vector x(map);
+  Teuchos::RCP<Epetra_Vector> x = Teuchos::rcp(new Epetra_Vector(map));
 
   int numMyElements = map.NumMyElements();
 
@@ -97,9 +97,9 @@ void twoPointProblem()
 
   for(int i=0 ; i<numMyElements ; ++i){
     int globalId = map.GID(i);
-    x[3*i]   = nodes[globalId][0];
-    x[3*i+1] = nodes[globalId][1];
-    x[3*i+2] = nodes[globalId][2];
+    (*x)[3*i]   = nodes[globalId][0];
+    (*x)[3*i+1] = nodes[globalId][1];
+    (*x)[3*i+2] = nodes[globalId][2];
   }
 
   // These are filled by the proximity search
@@ -110,7 +110,11 @@ void twoPointProblem()
   // ---- Call the proximity search with a radius just below the distance ----
 
   double searchRadius = distance - 1.0e-10;
-  ProximitySearch::GlobalProximitySearch(x, searchRadius, overlapMap, neighborListSize, neighborList);
+  Epetra_BlockMap oneDimensionalMap(map.NumGlobalElements(), map.NumMyElements(), map.MyGlobalElements(), 1, 0, *comm);
+  Teuchos::RCP<Epetra_Vector> searchRadii = Teuchos::rcp(new Epetra_Vector(oneDimensionalMap));
+  searchRadii->PutScalar(searchRadius);
+
+  ProximitySearch::GlobalProximitySearch(x, searchRadii, overlapMap, neighborListSize, neighborList);
 
   int neighborListIndex = 0;
   for(int i=0 ; i<numMyElements ; ++i){
@@ -140,7 +144,9 @@ void twoPointProblem()
   // ---- Call the proximity search with a radius just above the distance ----
 
   searchRadius = distance + 1.0e-10;
-  ProximitySearch::GlobalProximitySearch(x, searchRadius, overlapMap, neighborListSize, neighborList);
+  searchRadii->PutScalar(searchRadius);
+
+  ProximitySearch::GlobalProximitySearch(x, searchRadii, overlapMap, neighborListSize, neighborList);
 
   neighborListIndex = 0;
   for(int i=0 ; i<numMyElements ; ++i){
@@ -186,7 +192,7 @@ void fivePointProblem()
     return;
 
   Epetra_BlockMap map(5, 3, 0, *comm);
-  Epetra_Vector x(map);
+  Teuchos::RCP<Epetra_Vector> x = Teuchos::rcp(new Epetra_Vector(map));
 
   int numMyElements = map.NumMyElements();
 
@@ -205,9 +211,9 @@ void fivePointProblem()
 
   for(int i=0 ; i<numMyElements ; ++i){
     int globalId = map.GID(i);
-    x[3*i]   = nodes[globalId][0];
-    x[3*i+1] = nodes[globalId][1];
-    x[3*i+2] = nodes[globalId][2];
+    (*x)[3*i]   = nodes[globalId][0];
+    (*x)[3*i+1] = nodes[globalId][1];
+    (*x)[3*i+2] = nodes[globalId][2];
   }
 
   // These are filled by the proximity search
@@ -218,7 +224,11 @@ void fivePointProblem()
   // ---- Call the proximity search with a radius of 1.1 ----
 
   double searchRadius = 1.1;
-  ProximitySearch::GlobalProximitySearch(x, searchRadius, overlapMap, neighborListSize, neighborList);
+  Epetra_BlockMap oneDimensionalMap(map.NumGlobalElements(), map.NumMyElements(), map.MyGlobalElements(), 1, 0, *comm);
+  Teuchos::RCP<Epetra_Vector> searchRadii = Teuchos::rcp(new Epetra_Vector(oneDimensionalMap));
+  searchRadii->PutScalar(searchRadius);
+
+  ProximitySearch::GlobalProximitySearch(x, searchRadii, overlapMap, neighborListSize, neighborList);
 
   int neighborListIndex = 0;
   for(int i=0 ; i<numMyElements ; ++i){
@@ -266,7 +276,9 @@ void fivePointProblem()
   // ---- Call the proximity search with a radius of 0.0001 ----
 
   searchRadius = 0.0001;
-  ProximitySearch::GlobalProximitySearch(x, searchRadius, overlapMap, neighborListSize, neighborList);
+  searchRadii->PutScalar(searchRadius);
+
+  ProximitySearch::GlobalProximitySearch(x, searchRadii, overlapMap, neighborListSize, neighborList);
 
   neighborListIndex = 0;
   for(int i=0 ; i<numMyElements ; ++i){
@@ -308,7 +320,8 @@ void fivePointProblem()
   // ---- Call the proximity search with a radius of 1.415 ----
 
   searchRadius = 1.415;
-  ProximitySearch::GlobalProximitySearch(x, searchRadius, overlapMap, neighborListSize, neighborList);
+  searchRadii->PutScalar(searchRadius);
+  ProximitySearch::GlobalProximitySearch(x, searchRadii, overlapMap, neighborListSize, neighborList);
 
   neighborListIndex = 0;
   for(int i=0 ; i<numMyElements ; ++i){
@@ -369,7 +382,9 @@ void fivePointProblem()
   // ---- Call the proximity search with a radius of 1.733 ----
 
   searchRadius = 1.733;
-  ProximitySearch::GlobalProximitySearch(x, searchRadius, overlapMap, neighborListSize, neighborList);
+  searchRadii->PutScalar(searchRadius);
+
+  ProximitySearch::GlobalProximitySearch(x, searchRadii, overlapMap, neighborListSize, neighborList);
 
   neighborListIndex = 0;
   for(int i=0 ; i<numMyElements ; ++i){

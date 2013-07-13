@@ -51,7 +51,10 @@
 #include "BondFilter.h"
 #include "utilities/Array.h"
 
-#include "Epetra_BlockMap.h"
+#include <Teuchos_RCP.hpp>
+//#include <Epetra_BlockMap.h>
+#include <Epetra_Vector.h>
+#include <vector>
 #include <map>
 
 
@@ -66,7 +69,7 @@ What is a neighborhood and what does it do?
 * Contains a list of Global Ids (this is similar or perhaps the same as an Epetra_Map).
 * Stores owned coordinates (these coordinates are the basis for the neighborhood calculation for each point).
 * Is associated with a set of filters -- filters prevent bonds from crossing particular surfaces.
-* Produces Epetra overlap maps (scalar and vector) for a given horizon and set of points.
+* Produces Epetra overlap maps (scalar and vector) for a set of points and a corresponding set of horizons.
 * Can produce Epetra_MultiVectors (owned and overlap).
 * Can perform communications on Epetra_MultiVectors,
  *  for example -- spreading locally owned values to overlap vectors.
@@ -75,7 +78,7 @@ What is a neighborhood and what does it do?
 /*
  * Use this 'class' to perform parallel search and create a new neighborhood list;
  * This function will construct neighborhood lists including across processor boundaries;
- * @param horizon -- this is the distance that should be used to form the neighborhood list
+ * @param horizon -- this is the distance that should be used to form the neighborhood list for a given point
  * Use CASE Scenario:
  * 1) Create a mesh
  * 2) Load balance mesh
@@ -124,12 +127,21 @@ public:
 			shared_ptr<const Epetra_Comm> comm,
 			struct Zoltan_Struct* zz,
 			size_t numOwnedPoints,
-			shared_ptr<int>& ownedGIDs,
-			shared_ptr<double>& owned_coordinates,
+			shared_ptr<int> ownedGIDs,
+			shared_ptr<double> owned_coordinates,
+			Teuchos::RCP<Epetra_Vector> horizonList,
+			shared_ptr<PdBondFilter::BondFilter> bondFilterPtr = shared_ptr<PdBondFilter::BondFilter>(new PdBondFilter::BondFilterDefault())
+			);
+	NeighborhoodList(
+			shared_ptr<const Epetra_Comm> comm,
+			struct Zoltan_Struct* zz,
+			size_t numOwnedPoints,
+			shared_ptr<int> ownedGIDs,
+			shared_ptr<double> owned_coordinates,
 			double horizon,
 			shared_ptr<PdBondFilter::BondFilter> bondFilterPtr = shared_ptr<PdBondFilter::BondFilter>(new PdBondFilter::BondFilterDefault())
 			);
-	double get_horizon() const;
+	double get_frameset_buffer_size() const;
 	size_t get_num_owned_points() const;
 	size_t get_num_shared_points() const;
 	int get_num_neigh (int localId) const;
@@ -147,13 +159,6 @@ public:
 	shared_ptr<Epetra_BlockMap> getOverlapMap(int ndf) const;
 	shared_ptr<const Epetra_Comm> get_Epetra_Comm() const;
 	shared_ptr<Epetra_Distributor> create_Epetra_Distributor() const;
-	/*
-	 * This function is primarily intended for internal force operators
-	 * that do not include 'x' in the neighborhood H(x) but it is desirable
-	 * to have 'x' included in the newly cloned neighborhood -- hence the
-	 * default value 'withSelf=true'
-	 */
-	NeighborhoodList cloneAndShare(double newHorizon, bool withSelf=true);
 
 private:
 
@@ -167,7 +172,8 @@ private:
 	shared_ptr<const Epetra_Comm> epetraComm;
 	std::map<Epetra_MapTag, shared_ptr<Epetra_BlockMap>, MapComparator > epetra_block_maps;
 	size_t num_owned_points, size_neighborhood_list;
-	double horizon;
+	double frameset_buffer_size;
+    Teuchos::RCP<Epetra_Vector> horizons;
 	shared_ptr<int> owned_gids;
 	shared_ptr<double> owned_x;
 	Array<int> neighborhood, local_neighborhood, neighborhood_ptr, num_neighbors, sharedGIDs;
