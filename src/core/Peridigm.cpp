@@ -2951,7 +2951,12 @@ void PeridigmNS::Peridigm::contactSearch(Teuchos::RCP<const Epetra_BlockMap> reb
 {
   std::tr1::shared_ptr<const Epetra_Comm> comm(peridigmComm.getRawPtr(),NonDeleter<const Epetra_Comm>());
   QUICKGRID::Data d = rebalancedDecomp;
-  PDNEIGH::NeighborhoodList neighList(comm,d.zoltanPtr.get(),d.numPoints,d.myGlobalIDs,d.myX,contactSearchRadius);
+
+  // TEMPORARY PLACEHOLDER FOR PER-NODE SEARCH RADII
+  Teuchos::RCP<Epetra_Vector> contactSearchRadii = Teuchos::rcp(new Epetra_Vector(*rebalancedOneDimensionalMap));
+  contactSearchRadii->PutScalar(contactSearchRadius);
+
+  PDNEIGH::NeighborhoodList neighList(comm,d.zoltanPtr.get(),d.numPoints,d.myGlobalIDs,d.myX,contactSearchRadii);
 
   int* searchNeighborhood = neighList.get_neighborhood().get();
 

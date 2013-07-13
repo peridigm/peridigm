@@ -79,8 +79,8 @@ shared_ptr<Epetra_Distributor> NeighborhoodList::create_Epetra_Distributor() con
 	return shared_ptr<Epetra_Distributor>(epetraComm->CreateDistributor());
 }
 
-double NeighborhoodList::get_horizon() const {
-	return horizon;
+double NeighborhoodList::get_frameset_buffer_size() const {
+	return frameset_buffer_size;
 }
 
 size_t NeighborhoodList::get_num_owned_points() const {
@@ -125,7 +125,6 @@ const int* NeighborhoodList::get_local_neighborhood (int localId) const {
 	return local_neighborhood.get()+ptr;
 }
 
-
 int NeighborhoodList::get_size_neighborhood_list () const {
 	return size_neighborhood_list;
 }
@@ -139,9 +138,9 @@ NeighborhoodList::NeighborhoodList
 		shared_ptr<const Epetra_Comm> comm,
 		struct Zoltan_Struct* zz,
 		size_t numOwnedPoints,
-		shared_ptr<int>& ownedGIDs,
-		shared_ptr<double>& owned_coordinates,
-		double horizon,
+		shared_ptr<int> ownedGIDs,
+		shared_ptr<double> owned_coordinates,
+		Teuchos::RCP<Epetra_Vector> horizonList,
 		shared_ptr<PdBondFilter::BondFilter> bondFilterPtr
 )
 :
@@ -149,7 +148,8 @@ NeighborhoodList::NeighborhoodList
 		epetra_block_maps(),
 		num_owned_points(numOwnedPoints),
 		size_neighborhood_list(1),
-		horizon(horizon),
+		frameset_buffer_size(0.0),
+        horizons(horizonList),
 		owned_gids(ownedGIDs),
 		owned_x(owned_coordinates),
 		neighborhood(),
@@ -188,22 +188,68 @@ NeighborhoodList::NeighborhoodList
 	 * Compute local neighborhood list and
 	 */
 	local_neighborhood = createLocalNeighborList(*getOverlapMap(1));
-
 }
 
 
-/**
- * This function creates a 'new neighborhood' based upon an existing
- * set of owned points but with a 'newHorizon'.  This is efficient
- * in that both classes share the same underlying coordinates and
- * global ids and 'zoltan' struct.
- *
- * NOTE: THIS PERFORMS A NEW PARALLEL SEARCH
- * NOTE: Zoltan ptr stored must be valid
- */
-NeighborhoodList NeighborhoodList::cloneAndShare(double newHorizon,bool withSelf) {
-	NeighborhoodList newList(epetraComm,zoltan,num_owned_points,owned_gids,owned_x,newHorizon,filter_ptr->clone(withSelf));
-	return newList;
+NeighborhoodList::NeighborhoodList
+(
+		shared_ptr<const Epetra_Comm> comm,
+		struct Zoltan_Struct* zz,
+		size_t numOwnedPoints,
+		shared_ptr<int> ownedGIDs,
+		shared_ptr<double> owned_coordinates,
+		double horizon,
+		shared_ptr<PdBondFilter::BondFilter> bondFilterPtr
+)
+:
+		epetraComm(comm),
+		epetra_block_maps(),
+		num_owned_points(numOwnedPoints),
+		size_neighborhood_list(1),
+		frameset_buffer_size(0.0),
+		owned_gids(ownedGIDs),
+		owned_x(owned_coordinates),
+		neighborhood(),
+		local_neighborhood(),
+		neighborhood_ptr(num_owned_points),
+		num_neighbors(num_owned_points),
+		sharedGIDs(),
+		zoltan(zz),
+		filter_ptr(bondFilterPtr)
+{
+     // Create a vector that assigns the single horizon value to every point
+     Epetra_BlockMap oneDimensionalMap(-1, numOwnedPoints, ownedGIDs.get(), 1, 0, *comm);
+     horizons = Teuchos::rcp(new Epetra_Vector(oneDimensionalMap));
+     horizons->PutScalar(horizon);
+
+	/*
+	 * This single call performs the parallel search
+	 */
+	createAndAddNeighborhood();
+
+	/*
+	 * Create list of shared GIDs; these are IDs that
+	 * are appended to 'ownedIDs'; together, ownedIDs
+	 * and sharedGIDs form the overlapVectors
+	 */
+	sharedGIDs = createSharedGlobalIds();
+
+	/*
+	 * Create common maps
+	 */
+	shared_ptr<Epetra_BlockMap> owned1DMap = create_Epetra_BlockMap(Epetra_MapTag(OWNED,1));
+	epetra_block_maps[Epetra_MapTag(OWNED,1)] = owned1DMap; 
+	shared_ptr<Epetra_BlockMap> owned3DMap = create_Epetra_BlockMap(Epetra_MapTag(OWNED,3));
+	epetra_block_maps[Epetra_MapTag(OWNED,3)] = owned3DMap; 
+	shared_ptr<Epetra_BlockMap> overlap1DMap = create_Epetra_BlockMap(Epetra_MapTag(OVERLAP,1));
+	epetra_block_maps[Epetra_MapTag(OVERLAP,1)] = overlap1DMap;
+	shared_ptr<Epetra_BlockMap> overlap3DMap = create_Epetra_BlockMap(Epetra_MapTag(OVERLAP,3));
+	epetra_block_maps[Epetra_MapTag(OVERLAP,3)] = overlap3DMap;
+
+	/*
+	 * Compute local neighborhood list and
+	 */
+	local_neighborhood = createLocalNeighborList(*getOverlapMap(1));
 }
 
 Array<int> NeighborhoodList::createLocalNeighborList(const Epetra_BlockMap& overlapMap){
@@ -223,7 +269,6 @@ Array<int> NeighborhoodList::createLocalNeighborList(const Epetra_BlockMap& over
 	}
 	return localNeighborList;
 }
-
 
 Array<int> NeighborhoodList::createSharedGlobalIds() const {
 	std::set<int> ownedIds(owned_gids.get(),owned_gids.get()+num_owned_points);
@@ -258,7 +303,6 @@ Array<int> NeighborhoodList::createSharedGlobalIds() const {
 	return sharedGlobalIds;
 }
 
-
 shared_ptr<Epetra_BlockMap> NeighborhoodList::create_Epetra_BlockMap(Epetra_MapTag key) {
 	Epetra_MapType t = key.type;
 	shared_ptr<Epetra_BlockMap> m;
@@ -272,7 +316,6 @@ shared_ptr<Epetra_BlockMap> NeighborhoodList::create_Epetra_BlockMap(Epetra_MapT
 	}
 	return m;
 }
-
 
 shared_ptr<Epetra_BlockMap> NeighborhoodList::getOwnedMap(int ndf) const {
 	std::map<Epetra_MapTag, shared_ptr<Epetra_BlockMap>, MapComparator >::const_iterator i=epetra_block_maps.find(Epetra_MapTag(OWNED,ndf));
@@ -326,8 +369,15 @@ void NeighborhoodList::createAndAddNeighborhood(){
 
 	enum {COMM_CREATE=9,COMM_DO=10};
 
+    // Find the maximum horizon and use this to create the frame set
+    double maxHorizon = 0.0;
+    for(int i=0 ; i<horizons->MyLength() ; ++i){
+      if((*horizons)[i] > maxHorizon)
+        maxHorizon = (*horizons)[i];
+    }
+
 //	shared_ptr< std::set<int> > frameSet = constructParallelDecompositionFrameSet();
-	shared_ptr< std::set<int> > frameSet = UTILITIES::constructFrameSet(num_owned_points,owned_x,horizon);
+	shared_ptr< std::set<int> > frameSet = UTILITIES::constructFrameSet(num_owned_points,owned_x,maxHorizon);
 
 
 //	std::cout << "createAndAddNeighborhood:A" << std::endl;
@@ -369,6 +419,8 @@ void NeighborhoodList::createAndAddNeighborhood(){
 		int numProcsPoint;
 		std::set<int>::iterator myPointsIter = frameSet->begin();
 		double *x = owned_x.get();
+        double *horizon;
+        horizons->ExtractView(&horizon);
 
 		for(;myPointsIter!=frameSet->end();myPointsIter++){
 
@@ -377,7 +429,8 @@ void NeighborhoodList::createAndAddNeighborhood(){
 			 */
 			int id = *myPointsIter;
 			const double *xP = x+dimension*id;
-			PointCenteredBoundingBox bb(xP,horizon);
+            const double *horizonP = horizon+id;
+			PointCenteredBoundingBox bb(xP,*horizonP);
 //			if(1==rank){
 //				std::cout << "localId, x,y,z = " << id << ", " << *xP << ", " << *(xP+1) << ", " << *(xP+2) << std::endl;
 //				std::cout << "xMin, xMax " << bb.get_xMin() << ", " << bb.get_xMax() << std::endl;
@@ -526,18 +579,6 @@ void NeighborhoodList::createAndAddNeighborhood(){
 			// coordinates
 			numBytes = dimension * sizeof(double);
 			memcpy((void*)xOverlap,(void*)tmp,numBytes);
-
-			/*
-			 * DEBUG
-			 */
-//			if(rank==3){
-//				std::cout << "new number of points = " << newNumPoints << std::endl;
-//				std::cout << "receiving gId = " << *gIdsOverlap << ": x,y,z = " << *(xOverlap+0) << ", " << *(xOverlap+1) << ", " << *(xOverlap+2) << std::endl;
-//			}
-			/*
-			 * END DEBUG
-			 */
-
 		}
 
 	}
@@ -593,15 +634,17 @@ void NeighborhoodList::buildNeighborhoodList
 		 * Loop over owned points and determine number of points in horizon
 		 */
 		double *x = owned_x.get();
+        double *h;
+        horizons->ExtractView(&h);
 		const double *x_end = x+3*num_owned_points;
 		size_t localId=0;
-		for(;x!=x_end;x+=3, localId++){
+		for(;x!=x_end;x+=3, h+=1, localId++){
 
             std::vector<int> treeList;
 			/*
 			 * Note that list returned includes this point *
 			 */
-			searchTree->FindPointsWithinRadius(x, horizon, treeList);
+			searchTree->FindPointsWithinRadius(x, *h, treeList);
 
 			if(0==treeList.size()){
 				/*
@@ -611,7 +654,7 @@ void NeighborhoodList::buildNeighborhoodList
 				sstr << "\nERROR-->NeighborhoodList::buildNeighborhoodList(..)\n";
 				sstr << "\tKdTree search failed to find any points in its neighborhood including itself!\n\tThis is probably a problem.\n";
 				sstr << "\tLocal point id = " << localId << "\n"
-					 << "\tSearch horizon = " << horizon << "\n"
+					 << "\tSearch horizon = " << *h << "\n"
 					 << "\tx,y,z = " << *(x) << ", " << *(x+1) << ", " << *(x+2) << std::endl;
 				std::string message=sstr.str();
 				throw std::runtime_error(message);
@@ -644,13 +687,15 @@ void NeighborhoodList::buildNeighborhoodList
 		int neighPtr = 0;
 		int *list = neighborhood.get();
 		double *x = owned_x.get();
-		for(size_t p=0;p<num_owned_points;p++,x+=3,ptr++){
+        double *h;
+        horizons->ExtractView(&h);
+		for(size_t p=0;p<num_owned_points;p++,x+=3,h+=1,ptr++){
 			*ptr = neighPtr;
             std::vector<int> treeList;
 			/*
 			 * Note that list returned includes this point * but at start of list
 			 */
-			searchTree->FindPointsWithinRadius(x, horizon, treeList);
+			searchTree->FindPointsWithinRadius(x, *h, treeList);
 
 			sort(treeList.begin(), treeList.end());
 
