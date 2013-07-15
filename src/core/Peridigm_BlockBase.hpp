@@ -70,12 +70,7 @@ namespace PeridigmNS {
     BlockBase() : blockName("Undefined"), blockID(-1), horizon(0.0) {}
 
     //! Constructor
-    BlockBase(std::string blockName_, int blockID_, Teuchos::ParameterList& blockParams_)
-      : blockName(blockName_), blockID(blockID_), horizon(0.0), blockParams(blockParams_)
-    {
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(!blockParams.isParameter("Horizon"), "\n****Error in BlockBase constructor, Horizon parameter not found.\n");
-      horizon = blockParams.get<double>("Horizon");
-    }
+    BlockBase(std::string blockName_, int blockID_, Teuchos::ParameterList& blockParams_);
 
     //! Destructor
     ~BlockBase(){}
