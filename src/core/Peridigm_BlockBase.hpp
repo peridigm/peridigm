@@ -67,11 +67,15 @@ namespace PeridigmNS {
   public:
 
     //! Constructor
-    BlockBase() : blockName("Undefined"), blockID(-1) {}
+    BlockBase() : blockName("Undefined"), blockID(-1), horizon(0.0) {}
 
     //! Constructor
     BlockBase(std::string blockName_, int blockID_, Teuchos::ParameterList& blockParams_)
-      : blockName(blockName_), blockID(blockID_), blockParams(blockParams_) {}
+      : blockName(blockName_), blockID(blockID_), horizon(0.0), blockParams(blockParams_)
+    {
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(!blockParams.isParameter("Horizon"), "\n****Error in BlockBase constructor, Horizon parameter not found.\n");
+      horizon = blockParams.get<double>("Horizon");
+    }
 
     //! Destructor
     ~BlockBase(){}
@@ -126,6 +130,9 @@ namespace PeridigmNS {
     std::string getName(){
       return blockName;
     }
+
+    //! Get the horizon.
+    double getHorizon() { return horizon; }
 
     //! Get the number of points in the block (does not include ghosts)
     int numPoints() {
@@ -199,6 +206,9 @@ namespace PeridigmNS {
 
     std::string blockName;
     int blockID;
+
+    //! The horizon
+    double horizon;
 
     //! @name Maps
     //@{

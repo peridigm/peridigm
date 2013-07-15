@@ -1,4 +1,4 @@
-/*! \file Peridigm_Compute_Neighborhood_Volume.cpp */
+/*! \file Peridigm_Compute_Number_Of_Neighbors.cpp */
 
 //@HEADER
 // ************************************************************************
