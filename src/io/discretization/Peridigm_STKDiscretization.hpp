@@ -158,17 +158,11 @@ namespace PeridigmNS {
     Teuchos::RCP<Epetra_BlockMap> threeDimensionalOverlapMap;
     Teuchos::RCP<Epetra_BlockMap> bondMap;
 
-    //! Horizon
-    double horizon;
-
     //! Minimum element radius
     double minElementRadius;
 
     //! Maximum element dimension
     double maxElementDimension;
-
-    //! Search horizon, which may be larger than the horizon if partial volumes are used
-    double searchHorizon;
 
     //! Vector containing initial positions
     Teuchos::RCP<Epetra_Vector> initialX;

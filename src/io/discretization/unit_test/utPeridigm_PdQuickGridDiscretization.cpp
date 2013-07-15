@@ -74,7 +74,7 @@ void simpleTensorProductMesh()
   // specify a spherical neighbor search with the horizon a tad longer than the mesh spacing
   discParams->set("Type", "PdQuickGrid");
   discParams->set("NeighborhoodType", "Spherical");
-  discParams->set("Horizon", 0.501);
+  discParams->set("Horizon block_1", 0.501);
   ParameterList& quickGridParams = discParams->sublist("TensorProduct3DMeshGenerator");
   quickGridParams.set("Type", "PdQuickGrid");
   quickGridParams.set("X Origin", 0.0);

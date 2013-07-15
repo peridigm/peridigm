@@ -2,7 +2,6 @@
 
   <ParameterList name="Discretization">
 	<Parameter name="Type" type="string" value="Text File" />
-	<Parameter name="Horizon" type="double" value="1.75"/>
 	<Parameter name="Input Mesh File" type="string" value="Compression_QS_3x2x2_TextFile.txt"/>
   </ParameterList>
 
@@ -20,6 +19,7 @@
 	<ParameterList name="My Group of Blocks">
 	  <Parameter name="Block Names" type="string" value="block_1"/>
 	  <Parameter name="Material" type="string" value="My Elastic Material"/>
+      <Parameter name="Horizon" type="double" value="1.75"/>
 	</ParameterList>
   </ParameterList>
 

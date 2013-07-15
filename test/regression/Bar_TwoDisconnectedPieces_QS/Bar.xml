@@ -2,7 +2,6 @@
 
   <ParameterList name="Discretization">
 	<Parameter name="Type" type="string" value="Exodus" />
-	<Parameter name="Horizon" type="double" value="0.5025"/>
 	<Parameter name="Input Mesh File" type="string" value="Bar.g"/>
     <Parameter name="Omit Bonds Between Blocks" type="string" value="All" />
   </ParameterList>
@@ -30,10 +29,12 @@
 	<ParameterList name="MyGroup1">
 	  <Parameter name="Block Names" type="string" value="block_1"/>
 	  <Parameter name="Material" type="string" value="LeftMaterial"/>
+      <Parameter name="Horizon" type="double" value="0.5025"/>
 	</ParameterList>
 	<ParameterList name="MyGroup2">
 	  <Parameter name="Block Names" type="string" value="block_2"/>
 	  <Parameter name="Material" type="string" value="RightMaterial"/>
+      <Parameter name="Horizon" type="double" value="0.5025"/>
 	</ParameterList>
   </ParameterList>
   

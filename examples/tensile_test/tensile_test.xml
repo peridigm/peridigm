@@ -32,7 +32,6 @@
 
   <ParameterList name="Discretization">
   	<Parameter name="Type" type="string" value="Exodus" />
-	<Parameter name="Horizon" type="double" value="0.1900"/>
 	<Parameter name="Input Mesh File" type="string" value="tensile_test.g"/>
   </ParameterList>
 	
@@ -49,6 +48,7 @@
   	<ParameterList name="My Block">
   	  <Parameter name="Block Names" type="string" value="block_1 block_2 block_3"/>
   	  <Parameter name="Material" type="string" value="My Material"/>
+      <Parameter name="Horizon" type="double" value="0.1900"/>
   	</ParameterList>
   </ParameterList>
 	

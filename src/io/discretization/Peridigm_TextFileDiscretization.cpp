@@ -77,22 +77,14 @@ PeridigmNS::TextFileDiscretization::TextFileDiscretization(const Teuchos::RCP<co
 {
   TEUCHOS_TEST_FOR_EXCEPT_MSG(params->get<string>("Type") != "Text File", "Invalid Type in TextFileDiscretization");
 
-  double horizon = params->get<double>("Horizon");
+  string meshFileName = params->get<string>("Input Mesh File");
   if(params->isParameter("Omit Bonds Between Blocks"))
     bondFilterCommand = params->get<string>("Omit Bonds Between Blocks");
-  string meshFileName = params->get<string>("Input Mesh File");
-  searchHorizon = horizon;
 
   // Set up bond filters
   createBondFilters(params);
 
-  QUICKGRID::Data decomp = getDecomp(meshFileName, searchHorizon);
-
-  //! TEMPORARY PLACEHOLDER FOR BLOCK-BY-BLOCK HORIZON
-  for(map<string, vector<int> >::iterator it = elementBlocks->begin() ; it != elementBlocks->end() ; it++){
-    string blockName = it->first;
-    horizons[blockName] = horizon;
-  }
+  QUICKGRID::Data decomp = getDecomp(meshFileName, params);
 
   // \todo Refactor; the createMaps() call is currently inside getDecomp() due to order-of-operations issues with tracking element blocks.
   //createMaps(decomp);
@@ -155,7 +147,7 @@ PeridigmNS::TextFileDiscretization::~TextFileDiscretization() {}
 
 
 QUICKGRID::Data PeridigmNS::TextFileDiscretization::getDecomp(const string& textFileName,
-                                                              double horizon) {
+                                                              const Teuchos::RCP<Teuchos::ParameterList>& params) {
 
   // Read data from the text file
   vector<double> coordinates;
@@ -231,15 +223,55 @@ QUICKGRID::Data PeridigmNS::TextFileDiscretization::getDecomp(const string& text
   // call the rebalance function on the current-configuration decomp
   decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
 
+  // create a (throw-away) one-dimensional owned map in the rebalanced configuration
+  Epetra_BlockMap rebalancedMap(decomp.globalNumPoints, decomp.numPoints, decomp.myGlobalIDs.get(), 1, 0, *comm);
+
+  // Create a (throw-away) blockID vector corresponding to the load balanced decomposition
+  Epetra_Vector rebalancedBlockID(rebalancedMap);
+  Epetra_Import rebalancedImporter(rebalancedBlockID.Map(), tempBlockID.Map());
+  rebalancedBlockID.Import(tempBlockID, rebalancedImporter, Insert);
+
+  // Create the element list for each block
+  for(int i=0 ; i<rebalancedBlockID.MyLength() ; ++i){
+    stringstream blockName;
+    blockName << "block_" << rebalancedBlockID[i];
+    if(elementBlocks->find(blockName.str()) == elementBlocks->end())
+      (*elementBlocks)[blockName.str()] = std::vector<int>();
+    int globalID = rebalancedBlockID.Map().GID(i);
+    (*elementBlocks)[blockName.str()].push_back(globalID);
+  }
+
+  // Record the horizon for each block
+  for(map<string, vector<int> >::iterator it = elementBlocks->begin() ; it != elementBlocks->end() ; it++){
+    string blockName = it->first;
+    string blockHorizonParameterString = "Horizon " + blockName;
+    if(params->isParameter(blockHorizonParameterString))
+      horizons[blockName] = params->get<double>(blockHorizonParameterString);
+    else if(params->isParameter("Horizon default"))
+      horizons[blockName] = params->get<double>("Horizon default");
+    else{
+      string msg = "\n**** Error, no Horizon parameter supplied for block " + blockName;
+      msg += " and no default block parameter list provided.\n";
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
+    }
+  }
+
   // execute neighbor search and update the decomp to include resulting ghosts
   std::tr1::shared_ptr<const Epetra_Comm> commSp(comm.getRawPtr(), NonDeleter<const Epetra_Comm>());
   Teuchos::RCP<PDNEIGH::NeighborhoodList> list;
   TEUCHOS_TEST_FOR_EXCEPT_MSG(bondFilters.size() > 1, "\n****Error:  Multiple bond filters currently unsupported.\n");
   
-  // TEMPORARY PLACEHOLDER FOR PER-NODE SEARCH RADII
-  Epetra_BlockMap rebalancedMap(decomp.globalNumPoints, decomp.numPoints, decomp.myGlobalIDs.get(), 1, 0, *comm);
+  // Create a vector containing the horizon for each point
   Teuchos::RCP<Epetra_Vector> horizonForEachPoint = Teuchos::rcp(new Epetra_Vector(rebalancedMap));
-  horizonForEachPoint->PutScalar(horizon);
+  for(map<string, vector<int> >::const_iterator it = elementBlocks->begin() ; it != elementBlocks->end() ; it++){
+    const string& blockName = it->first;
+    const vector<int>& globalIds = it->second;
+    double horizonValue = horizons[blockName];
+    for(unsigned int i=0 ; i<globalIds.size() ; ++i){
+      int localId = rebalancedMap.LID(globalIds[i]);
+      (*horizonForEachPoint)[localId] = horizonValue;
+    }
+  }
 
   if(bondFilters.size() == 0)
     list = Teuchos::rcp(new PDNEIGH::NeighborhoodList(commSp,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizonForEachPoint));
@@ -252,20 +284,10 @@ QUICKGRID::Data PeridigmNS::TextFileDiscretization::getDecomp(const string& text
   // Create all the maps.
   createMaps(decomp);
 
-  // Create a blockID vector corresponding to the load balanced decomposition
+  // Create the blockID vector corresponding to the load balanced decomposition
   blockID = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
   Epetra_Import tempImporter(blockID->Map(), tempBlockID.Map());
   blockID->Import(tempBlockID, tempImporter, Insert);
-
-  // Create an element list for each block
-  for(int i=0 ; i<blockID->MyLength() ; ++i){
-    stringstream blockName;
-    blockName << "block_" << (*blockID)[i];
-    if(elementBlocks->find(blockName.str()) == elementBlocks->end())
-      (*elementBlocks)[blockName.str()] = std::vector<int>();
-    int globalID = blockID->Map().GID(i);
-    (*elementBlocks)[blockName.str()].push_back(globalID);
-  }
 
   return decomp;
 }

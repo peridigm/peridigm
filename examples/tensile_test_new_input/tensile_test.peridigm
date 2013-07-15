@@ -8,9 +8,6 @@
 Verbose "false"
 Discretization
     Type "Exodus"
-    #Here we are just demostrating the Aprepro preprocessing functionality. 
-    #Anything inside the {}'s will be evaluated arithmetically
-    Horizon {0.1900*2.0/2.0}
     Input Mesh File "tensile_test.g"
 
 Materials
@@ -24,6 +21,9 @@ Blocks
     My Block
         Block Names "block_1 block_2 block_3"
         Material "My Material"
+        # Here we are just demostrating the Aprepro preprocessing functionality. 
+        # Anything inside the {}'s will be evaluated arithmetically
+        Horizon {0.1900*2.0/2.0}
 
 Boundary Conditions
     Prescribed Displacement Bottom

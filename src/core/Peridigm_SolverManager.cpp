@@ -62,7 +62,7 @@
 
 PeridigmNS::SolverManager::SolverManager(Teuchos::RCP<Teuchos::ParameterList> sParams, 
                                          PeridigmNS::Peridigm *peridigm_)
-  : peridigm(peridigm_), sParams(sParams) {
+  : sParams(sParams), peridigm(peridigm_) {
 
 
   

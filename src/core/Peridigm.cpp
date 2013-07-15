@@ -95,8 +95,8 @@
 
 using namespace std;
 
-PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
-                   const Teuchos::RCP<Teuchos::ParameterList>& params)
+PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
+                               Teuchos::RCP<Teuchos::ParameterList> params)
   : analysisHasRebalance(false),
     rebalanceFrequency(1),
     analysisHasContact(false),
@@ -133,10 +133,23 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // \todo When using partial volumes, the horizon should be increased by a value equal to the largest element dimension in the model (largest element diagonal for hexes).
   //       For an initial test, just double the horizon and hope for the best.
-  if(analysisHasPartialVolumes)
-    discParams->set("Search Horizon", 2.0*discParams->get<double>("Horizon"));
-  else
-    discParams->set("Search Horizon", discParams->get<double>("Horizon"));
+  // if(analysisHasPartialVolumes)
+  //   discParams->set("Search Horizon", 2.0*discParams->get<double>("Horizon"));
+  // else
+  //   discParams->set("Search Horizon", discParams->get<double>("Horizon"));
+
+  // The horizon may no longer be specified in the discretization block
+  string msg = "\n**** Error, \"Horizon\" is no longer an allowable Discretization parameter.\n";
+  msg +=         "****        A horizon for each block must be specified in the Blocks section.\n";
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(discParams->isParameter("Horizon"), msg);
+
+  // Create a list of horizon values for each block and add it to the discretization parameter list
+  Teuchos::ParameterList& blockParams = peridigmParams->sublist("Blocks", true);
+  map<string, double> blockHorizonValues = parseHorizonValuesFromBlockParameters(blockParams);
+  for(map<string, double>::const_iterator it = blockHorizonValues.begin() ; it != blockHorizonValues.end() ; it++){
+    string name = "Horizon " + it->first;
+    discParams->set(name, it->second);
+  }
 
   DiscretizationFactory discFactory(discParams);
   Teuchos::RCP<Discretization> peridigmDisc = discFactory.create(peridigmComm);
@@ -177,13 +190,6 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   if(analysisHasPartialVolumes)
     contactForceDensityFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Partial_Volume");
 
-  // Instantiate material models
-  instantiateMaterials();
-
-  // Instantiate damage models
-  if(params->isSublist("Damage Models"))
-     instantiateDamageModels();
-
   // Instantiate compute manager
   instantiateComputeManager();
 
@@ -193,46 +199,77 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
   // Instantiate the blocks
   initializeBlocks(peridigmDisc);
 
+  // Obtain parameter lists and factories for material models, damage models, and contact models
+  // Material models
+  Teuchos::ParameterList materialParams = peridigmParams->sublist("Materials", true);
+  MaterialFactory materialFactory;
+  // Damage models
+  Teuchos::ParameterList damageModelParams;
+  if(peridigmParams->isSublist("Damage Models"))
+    damageModelParams = peridigmParams->sublist("Damage Models");
+  DamageModelFactory damageModelFactory;
+  // Contact models
+  Teuchos::ParameterList contactModelParams;
+  if(peridigmParams->isSublist("Contact")){
+    contactModelParams = peridigmParams->sublist("Contact").sublist("Models");
+  }
+  ContactModelFactory contactModelFactory;
+  contactBlockIt = contactBlocks->begin();
+
   // Associate material models and damage models with blocks
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
 
-    // Set the material model
-    string materialModelName = blockIt->getMaterialName();
-    std::map< std::string, Teuchos::RCP<const PeridigmNS::Material> >::iterator materialModelIt;
-    materialModelIt = materialModels.find(materialModelName);
-    if(materialModelIt == materialModels.end()){
-      string msg = "\n**** Error, invalid material model:  " + materialModelName;
-      msg += "\n**** The list of defined material models is:";
-      for(materialModelIt = materialModels.begin() ; materialModelIt != materialModels.end() ; ++ materialModelIt)
-        msg += "  " + materialModelIt->first + ",";
-      msg += "\b\n\n";
+    // Obtain the horizon for this block
+    string blockName = blockIt->getName();
+    double blockHorizon(0.0);
+    if(blockHorizonValues.find(blockName) != blockHorizonValues.end())
+      blockHorizon = blockHorizonValues[blockName];
+    else if(blockHorizonValues.find("default") != blockHorizonValues.end())
+      blockHorizon = blockHorizonValues["default"];
+    else{
+      string msg = "\n**** Error, no Horizon parameter supplied for block " + blockName + " and no default block parameter list provided.\n";
       TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
     }
-    blockIt->setMaterialModel(materialModelIt->second);
 
-    // set the damage model
+    // Set the material model
+    string materialName = blockIt->getMaterialName();
+    Teuchos::ParameterList matParams = materialParams.sublist(materialName);
+
+    // Assign the horizon to the material model
+    // Make sure the user did not try to set the horizon in the material block
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(matParams.isParameter("Horizon") , "\n**** Error, Horizon is an invalid material parameter.\n");
+    matParams.set("Horizon", blockHorizon);
+
+    // Assign the finite difference probe length
+    double finiteDifferenceProbeLength = peridigmParams->sublist("Solver", true).get<double>("Finite Difference Probe Length");
+    if(!matParams.isParameter("Finite Difference Probe Length"))
+      matParams.set("Finite Difference Probe Length", finiteDifferenceProbeLength);
+
+    // Instantiate the material model for this block
+    Teuchos::RCP<const PeridigmNS::Material> materialModel = materialFactory.create(matParams);
+    blockIt->setMaterialModel(materialModel);
+
+    // Set the damage model (if any)
     string damageModelName = blockIt->getDamageModelName();
     if(damageModelName != "None"){
-      std::map< std::string, Teuchos::RCP<const PeridigmNS::DamageModel> >::iterator damageModelIt;
-      damageModelIt = damageModels.find(damageModelName);
-      if(damageModelIt == damageModels.end()){
-        string msg = "\n**** Error, invalid damage model:  " + damageModelName;
-        msg += "\n**** The list of defined damage models is:";
-        for(damageModelIt = damageModels.begin() ; damageModelIt != damageModels.end() ; ++ damageModelIt)
-          msg += "  " + damageModelIt->first + ",";
-        msg += "\b\n\n";
-        TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
-      }
-      blockIt->setDamageModel(damageModelIt->second);
+      Teuchos::ParameterList damageParams = damageModelParams.sublist(damageModelName, true);
+      Teuchos::RCP<const PeridigmNS::DamageModel> damageModel = damageModelFactory.create(damageParams);
+      blockIt->setDamageModel(damageModel);
     }
-  }
 
-  // If there is a contact model, assign it to all contact blocks
-  // \todo Refactor contact!
-  if(analysisHasContact){
-    Teuchos::RCP<const PeridigmNS::ContactModel> contactModel = contactModels.begin()->second;
-    for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++)
+    // Set the contact model (if any) in the contact block
+    if(analysisHasContact){
+      // For the initial implementation, assume that there is only one contact model
+      // \todo Refactor contact!
+      Teuchos::ParameterList contactParams = contactModelParams.sublist( contactModelParams.begin()->first );
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(contactParams.isParameter("Horizon") , "\n**** Error, Horizon is an invalid contact model parameter.\n");
+      contactParams.set("Horizon", blockHorizon);
+      if(!contactParams.isParameter("Friction Coefficient"))
+        contactParams.set("Friction Coefficient", 0.0);
+      Teuchos::RCP<const PeridigmNS::ContactModel> contactModel = contactModelFactory.create(contactParams);
       contactBlockIt->setContactModel(contactModel);
+      contactBlockIt++;
+    }
   }
 
   // Load the auxiliary field ids into the blocks (they will be
@@ -391,36 +428,33 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // Set default value for current time;
   timeCurrent = 0.0;
-
 }
 
-void PeridigmNS::Peridigm::instantiateMaterials() {
-  Teuchos::ParameterList& materialParams = peridigmParams->sublist("Materials", true);
-  MaterialFactory materialFactory;
+map<string, double> PeridigmNS::Peridigm::parseHorizonValuesFromBlockParameters(Teuchos::ParameterList& blockParams) {
 
-  // The horizon and the finite-difference probe length will be added to the material model parameters if not already present
-  double horizon = peridigmParams->sublist("Discretization", true).get<double>("Horizon");
-  double finiteDifferenceProbeLength = peridigmParams->sublist("Solver", true).get<double>("Finite Difference Probe Length");
-  for(Teuchos::ParameterList::ConstIterator it = materialParams.begin() ; it != materialParams.end() ; it++){
-    // Get the material parameters for a given material and add the horizon if necessary
-    Teuchos::ParameterList& matParams = materialParams.sublist(it->first);
-    if(!matParams.isParameter("Horizon"))
-       matParams.set("Horizon", horizon);
-    if(!matParams.isParameter("Finite Difference Probe Length"))
-      matParams.set("Finite Difference Probe Length", finiteDifferenceProbeLength);
-    materialModels[it->first] = materialFactory.create(matParams) ;
+  map<string, double> blockHorizonValues;
+
+  // Find the horizon value for each block and record the default horizon value (if any)
+  for(Teuchos::ParameterList::ConstIterator it = blockParams.begin() ; it != blockParams.end() ; it++){
+    const string& name = it->first;
+    Teuchos::ParameterList& params = blockParams.sublist(name);
+    string blockNamesString = params.get<string>("Block Names");
+    // Parse space-delimited list of block names
+    istringstream iss(blockNamesString);
+    vector<string> blockNames;
+    copy(istream_iterator<string>(iss),
+         istream_iterator<string>(),
+         back_inserter<vector<string> >(blockNames));
+    for(vector<string>::const_iterator it = blockNames.begin() ; it != blockNames.end() ; ++it){
+      double horizonValue = params.get<double>("Horizon");
+      if( *it == "Default" || *it == "default")
+        blockHorizonValues["default"] = horizonValue;
+      else
+        blockHorizonValues[*it] = horizonValue;
+    }
   }
-
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(materialModels.size() == 0, "No material models created!");
-}
-
-void PeridigmNS::Peridigm::instantiateDamageModels() {
-  Teuchos::ParameterList& damageModelParams = peridigmParams->sublist("Damage Models", true);
-  DamageModelFactory damageModelFactory;
-  for(Teuchos::ParameterList::ConstIterator it = damageModelParams.begin() ; it != damageModelParams.end() ; it++){
-    Teuchos::ParameterList& damageParams = damageModelParams.sublist(it->first);
-    damageModels[it->first] = damageModelFactory.create(damageParams);
-  }
+  
+  return blockHorizonValues;
 }
 
 void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization> peridigmDisc) {
@@ -493,9 +527,6 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization>
 
 void PeridigmNS::Peridigm::initializeContact() {
 
-  // The horizon will be added to the contact model parameter list, if needed
-  double horizon = peridigmParams->sublist("Discretization", true).get<double>("Horizon");
-
   // Assume no contact
   analysisHasContact = false;
   contactSearchRadius = 0.0;
@@ -513,25 +544,16 @@ void PeridigmNS::Peridigm::initializeContact() {
     contactRebalanceFrequency = contactParams.get<int>("Search Frequency");
   }
 
-  // Instantiate contact models
-  ContactModelFactory contactModelFactory;
+  // For initial implementation, allow only a single contact model and disallow interactions
   if(analysisHasContact){
+    // Determine how many contact models are specified in the input deck, and error out if there are more than one
     Teuchos::ParameterList& contactModelParams = peridigmParams->sublist("Contact").sublist("Models");
-    for(Teuchos::ParameterList::ConstIterator it = contactModelParams.begin() ; it != contactModelParams.end() ; it++){
-      // Get the parameters for a given contact model and add the horizon if necessary
-      Teuchos::ParameterList& modelParams = contactModelParams.sublist(it->first);
-      if(!modelParams.isParameter("Friction Coefficient"))
-        modelParams.set("Friction Coefficient", 0.0);
-      if(!modelParams.isParameter("Horizon"))
-        modelParams.set("Horizon", horizon);
-      contactModels[it->first] = contactModelFactory.create(modelParams) ;
-    }
-  }
-
-  // \todo Refactor contact to allow for specific contact models between specific sets of blocks
-  // Print errors/warnings to let users know contact is a work in progress
-  if(analysisHasContact){
-    TEUCHOS_TEST_FOR_EXCEPTION(contactModels.size() > 1, Teuchos::Exceptions::InvalidParameter, "\n**** Error, the current version of Peridigm supports only a single contact model in a given analysis.\n");
+    int contactModelCount = 0;
+    for(Teuchos::ParameterList::ConstIterator it = contactModelParams.begin() ; it != contactModelParams.end() ; it++)
+      contactModelCount += 1;
+    TEUCHOS_TEST_FOR_EXCEPTION(contactModelCount > 1, Teuchos::Exceptions::InvalidParameter,
+                               "\n**** Error, the current version of Peridigm supports only a single contact model in a given analysis.\n");
+    // Print a warning if the user has supplied interactions (they are currently not supported, they are a work in progress)
     if(peridigmParams->sublist("Contact").isSublist("Interactions")){
       if(peridigmComm->MyPID() == 0)
         cout << "\n**** Warning, the current version of Peridigm does not support the specification of contact interactions, contact will be enabled for all elements.\n" << endl;
@@ -812,8 +834,6 @@ void PeridigmNS::Peridigm::initializeSolverManager() {
 
 void PeridigmNS::Peridigm::execute(Teuchos::RCP<Teuchos::ParameterList> solverParams) {
 
-  //Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(solverParams1, "Solver", true);
-
   TEUCHOS_TEST_FOR_EXCEPT_MSG(solverParams.is_null(), "Error in Peridigm::execute, solverParams is null.\n");
  
   // allowable explicit time integration schemes:  Verlet
@@ -835,12 +855,11 @@ void PeridigmNS::Peridigm::executeSolvers() {
 
 }
 
-void PeridigmNS::Peridigm::executeExplicit(const Teuchos::RCP<Teuchos::ParameterList>& solverParams) {
+void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> solverParams) {
 
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   workset->timeStep = timeStep;
 
-  //Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
   Teuchos::RCP<Teuchos::ParameterList> verletParams = sublist(solverParams, "Verlet", true);
 
   // Compute the approximate critical time step
@@ -1283,7 +1302,7 @@ Teuchos::RCP<Epetra_CrsMatrix> PeridigmNS::Peridigm::getJacobian() {
     return tangent;
 }
 
-void PeridigmNS::Peridigm::executeNOXQuasiStatic(const Teuchos::RCP<Teuchos::ParameterList>& solverParams) {
+void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::ParameterList> solverParams) {
 
   // Allocate memory for non-zeros in global tangent and lock in the structure
   if(peridigmComm->MyPID() == 0){
@@ -1318,7 +1337,6 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(const Teuchos::RCP<Teuchos::Par
   workset->timeStep = timeStep;
  
   // "Solver" parameter list
-  //Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
   bool performJacobianDiagnostics = solverParams->get("Jacobian Diagnostics", false);
 
   // "NOXQuasiStatic" parameter list
@@ -1558,7 +1576,7 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(const Teuchos::RCP<Teuchos::Par
     cout << endl;
 }
 
-void PeridigmNS::Peridigm::executeQuasiStatic(const Teuchos::RCP<Teuchos::ParameterList>& solverParams) {
+void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterList> solverParams) {
 
   // Allocate memory for non-zeros in global tangent and lock in the structure
   if(peridigmComm->MyPID() == 0){
@@ -1583,7 +1601,6 @@ void PeridigmNS::Peridigm::executeQuasiStatic(const Teuchos::RCP<Teuchos::Parame
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   workset->timeStep = timeStep;
 
-  //Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
   bool solverVerbose = solverParams->get("Verbose", false);
   Teuchos::RCP<Teuchos::ParameterList> quasiStaticParams = sublist(solverParams, "QuasiStatic", true);
   int maxSolverIterations = quasiStaticParams->get("Maximum Solver Iterations", 10);
@@ -2125,7 +2142,7 @@ double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> 
   return bestAlpha;
 }
 
-void PeridigmNS::Peridigm::executeImplicit(const Teuchos::RCP<Teuchos::ParameterList>& solverParams) {
+void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> solverParams) {
 
   // Allocate memory for non-zeros in global Jacobain and lock in the structure
   if(peridigmComm->MyPID() == 0)
@@ -2149,7 +2166,6 @@ void PeridigmNS::Peridigm::executeImplicit(const Teuchos::RCP<Teuchos::Parameter
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   workset->timeStep = timeStep;
 
-  //Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
   Teuchos::RCP<Teuchos::ParameterList> quasiStaticParams = sublist(solverParams, "Implicit", true);
   double timeInitial = solverParams->get("Initial Time", 0.0);
   double timeFinal = solverParams->get("Final Time", 1.0);

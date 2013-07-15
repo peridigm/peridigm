@@ -91,17 +91,14 @@ namespace PeridigmNS {
   public:
 
     //! Constructor
-    Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
-             const Teuchos::RCP<Teuchos::ParameterList>& params);
+    Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
+             Teuchos::RCP<Teuchos::ParameterList> params);
 
     //! Destructor
     ~Peridigm(){};
 
-    //! Instantiate material models
-    void instantiateMaterials();
-
-    //! Instantiate damage models
-    void instantiateDamageModels();
+    //! Parse the block-by-block values of the horizon from the input deck
+    std::map<std::string, double> parseHorizonValuesFromBlockParameters(Teuchos::ParameterList& blockParams);
 
     //! Initialize discretization and maps
     void initializeDiscretization(Teuchos::RCP<Discretization> peridigmDisc);
@@ -155,13 +152,13 @@ namespace PeridigmNS {
     //! Perform diagnostics on Jacobian and print results to screen.
     void jacobianDiagnostics(Teuchos::RCP<NOX::Epetra::Group> noxGroup);
 
-    void executeExplicit(const Teuchos::RCP<Teuchos::ParameterList>& solverParams);
+    void executeExplicit(Teuchos::RCP<Teuchos::ParameterList> solverParams);
 
     //! Main routine to drive problem solution for quasistatics
-    void executeQuasiStatic(const Teuchos::RCP<Teuchos::ParameterList>& solverParams);
+    void executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterList> solverParams);
 
     //! Main routine to drive problem solution for quasistatics using NOX
-    void executeNOXQuasiStatic(const Teuchos::RCP<Teuchos::ParameterList>& solverParams); 
+    void executeNOXQuasiStatic(Teuchos::RCP<Teuchos::ParameterList> solverParams); 
 
     //! Set the preconditioner for the global linear system
     void quasiStaticsSetPreconditioner(Belos::LinearProblem<double,Epetra_MultiVector,Epetra_Operator>& linearProblem);
@@ -181,7 +178,7 @@ namespace PeridigmNS {
 				  Teuchos::RCP<Epetra_Vector> lhs);
 
     //! Main routine to drive problem solution with implicit time integration
-    void executeImplicit(const Teuchos::RCP<Teuchos::ParameterList>& solverParams);
+    void executeImplicit(Teuchos::RCP<Teuchos::ParameterList> solverParams);
 
     //! Allocate memory for non-zeros in global Jacobian
     void allocateJacobian();
@@ -272,11 +269,6 @@ namespace PeridigmNS {
     //! Accessor for node sets
     Teuchos::RCP< std::map< std::string, std::vector<int> > > getExodusNodeSets();
 
-    //! Accessor for Material Models
-    std::map< std::string, Teuchos::RCP<const PeridigmNS::Material> > getMaterialModels() {
-      return materialModels;
-    }
-
     //! Accessor for compute manager
     Teuchos::RCP< PeridigmNS::ComputeManager > getComputeManager() { return computeManager; }
 
@@ -330,9 +322,6 @@ namespace PeridigmNS {
 
     //! Partial volume flag
     bool analysisHasPartialVolumes;
-
-    //! Material models
-    std::map< std::string, Teuchos::RCP<const PeridigmNS::Material> > materialModels;
 
     //! Damage models
     std::map< std::string, Teuchos::RCP<const PeridigmNS::DamageModel> > damageModels;

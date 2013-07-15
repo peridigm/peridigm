@@ -4,7 +4,6 @@
 
   <ParameterList name="Discretization">
 	<Parameter name="Type" type="string" value="Exodus" />
-	<Parameter name="Horizon" type="double" value="0.00601"/>
 	<Parameter name="Input Mesh File" type="string" value="WaveInBar_MultiBlock.g"/>
   </ParameterList>
 
@@ -22,6 +21,7 @@
 	<ParameterList name="My Group of Blocks">
 	  <Parameter name="Block Names" type="string" value="block_1 block_2 block_3 block_4 block_5 block_6 block_7 block_8"/>
 	  <Parameter name="Material" type="string" value="My Elastic Material"/>
+      <Parameter name="Horizon" type="double" value="0.00601"/>
 	</ParameterList>
   </ParameterList>
 

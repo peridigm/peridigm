@@ -73,9 +73,8 @@ void exodus2x2x2()
   // create a 2x2x2 discretization
   // specify a neighbor search with the horizon a tad longer than the mesh spacing
   discParams->set("Type", "Exodus");
-  discParams->set("Horizon", 0.501);
-  discParams->set("Search Horizon", 0.501);
   discParams->set("Input Mesh File", "utPeridigm_STKDiscretization_2x2x2.g");
+  discParams->set("Horizon block_1", 0.501);
 
   // create the discretization
   RCP<STKDiscretization> discretization =

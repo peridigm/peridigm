@@ -3,7 +3,6 @@
 
   <ParameterList name="Discretization">
   	<Parameter name="Type" type="string" value="Exodus" />
-	<Parameter name="Horizon" type="double" value="3.015"/>
 	<Parameter name="Input Mesh File" type="string" value="Plate.g"/>
 	<ParameterList name="Bond Filters">
 	  <ParameterList name="My First Bond Filter">
@@ -37,6 +36,7 @@
   	<ParameterList name="My Block">
   	  <Parameter name="Block Names" type="string" value="block_1"/>
   	  <Parameter name="Material" type="string" value="My Material"/>
+      <Parameter name="Horizon" type="double" value="3.015"/>
   	</ParameterList>
   </ParameterList>
 	

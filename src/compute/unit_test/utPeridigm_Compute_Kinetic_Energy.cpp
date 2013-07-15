@@ -96,11 +96,12 @@ Teuchos::RCP<Peridigm> createFourPointModel() {
   Teuchos::ParameterList& blockOneParams = blockParams.sublist("My Group of Blocks");
   blockOneParams.set("Block Names", "block_1");
   blockOneParams.set("Material", "My Elastic Material");
+  blockOneParams.set("Horizon", 5.0);
 
   // Set up discretization parameterlist
   Teuchos::ParameterList& discretizationParams = peridigmParams->sublist("Discretization");
   discretizationParams.set("Type", "PdQuickGrid");
-  discretizationParams.set("Horizon", 5.0);
+
   // pdQuickGrid tensor product mesh generator parameters
   Teuchos::ParameterList& pdQuickGridParams = discretizationParams.sublist("TensorProduct3DMeshGenerator");
   pdQuickGridParams.set("Type", "PdQuickGrid");
