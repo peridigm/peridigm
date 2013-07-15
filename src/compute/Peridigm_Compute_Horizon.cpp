@@ -67,7 +67,7 @@ void PeridigmNS::Compute_Horizon::initialize( Teuchos::RCP< std::vector<Peridigm
   for(std::vector<PeridigmNS::Block>::iterator blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
     double horizon = blockIt->getHorizon();
     Teuchos::RCP<Epetra_Vector> horizons = blockIt->getDataManager()->getData(m_horizonFieldId, PeridigmField::STEP_NONE);
-    for(unsigned int i=0 ; i<horizons->MyLength() ; ++i)
+    for(int i=0 ; i<horizons->MyLength() ; ++i)
       (*horizons)[i] = horizon;
   }
 }
