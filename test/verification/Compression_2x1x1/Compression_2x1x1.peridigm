@@ -1,6 +1,5 @@
 Discretization
     Type "PdQuickGrid"
-    Horizon 2.0
     TensorProduct3DMeshGenerator
         Type "PdQuickGrid"
         X Origin -2.0
@@ -23,6 +22,7 @@ Blocks
     My Group of Blocks
         Block Names "block_1"
         Material "My Elastic Material"
+        Horizon 2.0
 Boundary Conditions
     Min X Node Set "1"
     Max X Node Set "2"

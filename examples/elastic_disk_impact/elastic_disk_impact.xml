@@ -21,7 +21,6 @@
 
   <ParameterList name="Discretization">
 	<Parameter name="Type" type="string" value="Exodus" />
-	<Parameter name="Horizon" type="double" value="0.0031"/>
 	<Parameter name="Input Mesh File" type="string" value="disk_impact.g"/>
   </ParameterList>
 	
@@ -52,11 +51,13 @@
   	  <Parameter name="Block Names" type="string" value="block_1"/>
   	  <Parameter name="Material" type="string" value="Disk"/>
   	  <Parameter name="Damage Model" type="string" value="My Critical Stretch Damage Model"/>
-  	</ParameterList>
-  	<ParameterList name="Ball">
-          <Parameter name="Block Names" type="string" value="block_2"/>
-          <Parameter name="Material" type="string" value="Ball"/>
-        </ParameterList>
+      <Parameter name="Horizon" type="double" value="0.0031"/>
+    </ParameterList>
+    <ParameterList name="Ball">
+      <Parameter name="Block Names" type="string" value="block_2"/>
+      <Parameter name="Material" type="string" value="Ball"/>
+      <Parameter name="Horizon" type="double" value="0.0031"/>
+    </ParameterList>
   </ParameterList>  
 
   <ParameterList name="Contact">

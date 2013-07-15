@@ -4,8 +4,7 @@
 	
   <ParameterList name="Discretization">
 	<Parameter name="Type" type="string" value="PdQuickGrid" />
-	<Parameter name="Horizon" type="double" value="2.1"/>
-        <Parameter name="Influence Function" type="string" value="1.0/zeta" />
+    <Parameter name="Influence Function" type="string" value="1.0/zeta" />
 	<ParameterList name="TensorProduct3DMeshGenerator">
 	  <Parameter name="Type" type="string" value="PdQuickGrid"/>
 	  <Parameter name="X Origin" type="double" value="-1.5"/>
@@ -34,6 +33,7 @@
 	<ParameterList name="My Group of Blocks">
 	  <Parameter name="Block Names" type="string" value="block_1"/>
 	  <Parameter name="Material" type="string" value="My Elastic Material"/>
+      <Parameter name="Horizon" type="double" value="2.1"/>
 	</ParameterList>
   </ParameterList>
 

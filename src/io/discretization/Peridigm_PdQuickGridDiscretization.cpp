@@ -115,7 +115,6 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
   blockID->PutScalar(1.0);
 
   // there is only one block, give it a name and list all the elements
-  // \todo THIS WILL NOT SCALE:  We want to load only the locally-owned elements, but there is foundational work required before this is possible.
   std::string blockName = "block_1";
   (*elementBlocks)[blockName] = std::vector<int>( oneDimensionalMap->NumGlobalElements() );
   for(unsigned int i=0 ; i<(*elementBlocks)[blockName].size() ; ++i)
@@ -188,7 +187,18 @@ QUICKGRID::Data PeridigmNS::PdQuickGridDiscretization::getDiscretization(const T
   }
 
   // Get the horizion
-  horizons["block_1"] = params->get<double>("Horizon");
+  // There is only one block for QuickGrid discretizations, block_1
+  string blockName = "block_1";
+  string blockHorizonParameterString = "Horizon " + blockName;
+  if(params->isParameter(blockHorizonParameterString))
+    horizons[blockName] = params->get<double>(blockHorizonParameterString);
+  else if(params->isParameter("Horizon default"))
+    horizons[blockName] = params->get<double>("Horizon default");
+  else{
+    string msg = "\n**** Error, no Horizon parameter supplied for block " + blockName;
+    msg += " and no default block parameter list provided.\n";
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
+  }
 
   // param list should have a "sublist" with different types that we switch on here
   QUICKGRID::Data decomp;

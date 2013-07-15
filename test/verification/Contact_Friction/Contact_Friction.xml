@@ -4,7 +4,6 @@
 
   <ParameterList name="Discretization">
 	<Parameter name="Type" type="string" value="Exodus" />
-	<Parameter name="Horizon" type="double" value="0.6"/>
 	<Parameter name="Input Mesh File" type="string" value="Contact_Friction.g"/>
 	<Parameter name="Omit Bonds Between Blocks" type="string" value="All"/>
   </ParameterList>
@@ -22,10 +21,12 @@
   	<ParameterList name="block_1">
   	  <Parameter name="Block Names" type="string" value="block_1"/>
   	  <Parameter name="Material" type="string" value="Elastic"/>
+      <Parameter name="Horizon" type="double" value="0.6"/>
   	</ParameterList>
   	<ParameterList name="block_2">
   	  <Parameter name="Block Names" type="string" value="block_2"/>
   	  <Parameter name="Material" type="string" value="Elastic"/>
+      <Parameter name="Horizon" type="double" value="0.6"/>
   	</ParameterList>
   </ParameterList>  
 

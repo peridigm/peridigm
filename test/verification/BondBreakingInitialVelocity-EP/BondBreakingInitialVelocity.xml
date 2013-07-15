@@ -4,7 +4,6 @@
 
   <ParameterList name="Discretization">
 	<Parameter name="Type" type="string" value="PdQuickGrid" />
-	<Parameter name="Horizon" type="double" value="0.51"/>
 	<ParameterList name="TensorProduct3DMeshGenerator">
 	  <Parameter name="Type" type="string" value="PdQuickGrid"/>
 	  <Parameter name="X Origin" type="double" value="0.0"/>
@@ -43,6 +42,7 @@
 	  <Parameter name="Block Names" type="string" value="block_1"/>
 	  <Parameter name="Material" type="string" value="My Elastic Plastic Material"/>
 	  <Parameter name="Damage Model" type="string" value="My Critical Stretch Damage Model"/>
+      <Parameter name="Horizon" type="double" value="0.51"/>
 	</ParameterList>
   </ParameterList>
 

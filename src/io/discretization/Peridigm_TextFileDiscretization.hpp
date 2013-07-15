@@ -107,7 +107,7 @@ namespace PeridigmNS {
 
     //! Creates a discretization object based on data read from a text file.
     QUICKGRID::Data getDecomp(const std::string& textFileName,
-                              double horizon);
+                              const Teuchos::RCP<Teuchos::ParameterList>& params);
 
   protected:
 
@@ -140,9 +140,6 @@ namespace PeridigmNS {
 
     //! Maximum element dimension
     double maxElementDimension;
-
-    //! Search horizon, which may be larger than the horizon if partial volumes are used
-    double searchHorizon;
 
     //! Vector containing initial positions
     Teuchos::RCP<Epetra_Vector> initialX;

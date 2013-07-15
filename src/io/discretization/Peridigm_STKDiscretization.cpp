@@ -75,8 +75,6 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
 {
   TEUCHOS_TEST_FOR_EXCEPT_MSG(params->get<string>("Type") != "Exodus", "Invalid Type in STKDiscretization");
 
-  horizon = params->get<double>("Horizon");
-  searchHorizon = params->get<double>("Search Horizon");
   if(params->isParameter("Omit Bonds Between Blocks"))
     bondFilterCommand = params->get<string>("Omit Bonds Between Blocks");
   string meshFileName = params->get<string>("Input Mesh File");
@@ -87,14 +85,31 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   // Load data from mesh file
   loadData(meshFileName);
 
-  //! TEMPORARY PLACEHOLDER FOR BLOCK-BY-BLOCK HORIZON
+  // Record the horizon for each block
   for(map<string, vector<int> >::iterator it = elementBlocks->begin() ; it != elementBlocks->end() ; it++){
     string blockName = it->first;
-    horizons[blockName] = horizon;
+    string blockHorizonParameterString = "Horizon " + blockName;
+    if(params->isParameter(blockHorizonParameterString))
+      horizons[blockName] = params->get<double>(blockHorizonParameterString);
+    else if(params->isParameter("Horizon default"))
+      horizons[blockName] = params->get<double>("Horizon default");
+    else{
+      string msg = "\n**** Error, no Horizon parameter supplied for block " + blockName;
+      msg += " and no default block parameter list provided.\n";
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
+    }
   }
-  // TEMPORARY PLACEHOLDER FOR PER-NODE SEARCH RADII
+  // Assign the correct horizon to each node
   Teuchos::RCP<Epetra_Vector> horizonForEachNode = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
-  horizonForEachNode->PutScalar(horizon);
+  for(map<string, vector<int> >::const_iterator it = elementBlocks->begin() ; it != elementBlocks->end() ; it++){
+    const string& blockName = it->first;
+    const vector<int>& globalIds = it->second;
+    double horizonValue = horizons[blockName];
+    for(unsigned int i=0 ; i<globalIds.size() ; ++i){
+      int localId = oneDimensionalMap->LID(globalIds[i]);
+      (*horizonForEachNode)[localId] = horizonValue;
+    }
+  }
 
   // Execute the neighbor search
   int neighborListSize;

@@ -4,7 +4,6 @@
   
   <ParameterList name="Discretization">
 	<Parameter name="Type" type="string" value="Exodus" />
-	<Parameter name="Horizon" type="double" value="5.0"/>
 	<Parameter name="Input Mesh File" type="string" value="DeformationGradient.g"/>
   </ParameterList>
 
@@ -21,6 +20,7 @@
 	<ParameterList name="My Group of Blocks">
 	  <Parameter name="Block Names" type="string" value="block_1"/>
 	  <Parameter name="Material" type="string" value="My Elastic Material"/>
+      <Parameter name="Horizon" type="double" value="5.0"/>
 	</ParameterList>
   </ParameterList>
 
