@@ -64,6 +64,8 @@
 #include "Peridigm_PdQuickGridDiscretization.hpp"
 #include "Peridigm_PartialVolumeCalculator.hpp"
 #include "Peridigm_OutputManager_ExodusII.hpp"
+#include "Peridigm_SolverManager.hpp"
+#include "Peridigm_SolverManagerContainer.hpp"
 #include "Peridigm_ComputeManager.hpp"
 #include "Peridigm_BoundaryAndInitialConditionManager.hpp"
 #include "Peridigm_CriticalTimeStep.hpp"
@@ -337,6 +339,9 @@ PeridigmNS::Peridigm::Peridigm(const Teuchos::RCP<const Epetra_Comm>& comm,
 
   // Create the model evaluator
   modelEvaluator = Teuchos::rcp(new PeridigmNS::ModelEvaluator(analysisHasContact));
+  
+  // Initialize solver manager
+  initializeSolverManager();
 
   // Initialize output manager
   initializeOutputManager();
@@ -774,29 +779,68 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
 
 }
 
-void PeridigmNS::Peridigm::execute() {
+void PeridigmNS::Peridigm::initializeSolverManager() {
 
-  Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
+  // Create empty container for solver managers
+  solverManager = Teuchos::rcp(new PeridigmNS::SolverManagerContainer() );
 
+  Teuchos::RCP<Teuchos::ParameterList> solverParams;
+
+  // Loop over high level parameter list entries to find all solver lists
+  for (Teuchos::ParameterList::ConstIterator it = peridigmParams->begin(); it != peridigmParams->end(); ++it) {
+    // See if name of parameterlist entry contains "Solver".
+    const std::string output("Solver");
+    const std::string name(it->first);
+    size_t found = name.find(output);
+    if (found!=std::string::npos) {
+      // Make copy of list
+      try{
+        solverParams = Teuchos::rcp( new Teuchos::ParameterList( peridigmParams->sublist(name,true) ) );
+      }
+      catch(const std::exception &e){
+        string msg = "Peridigm::initializeSolverManager: ";
+        msg+= name;
+        msg+= " is not a Teuchos::ParameterList sublist.";
+        TEUCHOS_TEST_FOR_EXCEPT_MSG( true, msg );
+      }
+
+      solverManager->add( Teuchos::rcp(new PeridigmNS::SolverManager( solverParams, this) ) );
+    }
+  }
+
+}
+
+void PeridigmNS::Peridigm::execute(Teuchos::RCP<Teuchos::ParameterList> solverParams) {
+
+  //Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(solverParams1, "Solver", true);
+
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(solverParams.is_null(), "Error in Peridigm::execute, solverParams is null.\n");
+ 
   // allowable explicit time integration schemes:  Verlet
-  if(solverParams->isSublist("Verlet"))
-    executeExplicit();
+  if(solverParams->isSublist("Verlet")){
+    executeExplicit(solverParams);}
 
   // allowable implicit time integration schemes:  Implicit, QuasiStatic
   else if(solverParams->isSublist("QuasiStatic"))    
-    executeQuasiStatic();
+    executeQuasiStatic(solverParams);
   else if(solverParams->isSublist("NOXQuasiStatic"))    
-    executeNOXQuasiStatic();
+    executeNOXQuasiStatic(solverParams);
   else if(solverParams->isSublist("Implicit"))    
-    executeImplicit();
+    executeImplicit(solverParams);
 }
 
-void PeridigmNS::Peridigm::executeExplicit() {
+void PeridigmNS::Peridigm::executeSolvers() {
+  // Call the solver manager to execute all solvers in sequence
+  solverManager->executeSolvers();
+
+}
+
+void PeridigmNS::Peridigm::executeExplicit(const Teuchos::RCP<Teuchos::ParameterList>& solverParams) {
 
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   workset->timeStep = timeStep;
 
-  Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
+  //Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
   Teuchos::RCP<Teuchos::ParameterList> verletParams = sublist(solverParams, "Verlet", true);
 
   // Compute the approximate critical time step
@@ -1239,7 +1283,7 @@ Teuchos::RCP<Epetra_CrsMatrix> PeridigmNS::Peridigm::getJacobian() {
     return tangent;
 }
 
-void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
+void PeridigmNS::Peridigm::executeNOXQuasiStatic(const Teuchos::RCP<Teuchos::ParameterList>& solverParams) {
 
   // Allocate memory for non-zeros in global tangent and lock in the structure
   if(peridigmComm->MyPID() == 0){
@@ -1274,7 +1318,7 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
   workset->timeStep = timeStep;
  
   // "Solver" parameter list
-  Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
+  //Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
   bool performJacobianDiagnostics = solverParams->get("Jacobian Diagnostics", false);
 
   // "NOXQuasiStatic" parameter list
@@ -1514,7 +1558,7 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic() {
     cout << endl;
 }
 
-void PeridigmNS::Peridigm::executeQuasiStatic() {
+void PeridigmNS::Peridigm::executeQuasiStatic(const Teuchos::RCP<Teuchos::ParameterList>& solverParams) {
 
   // Allocate memory for non-zeros in global tangent and lock in the structure
   if(peridigmComm->MyPID() == 0){
@@ -1539,7 +1583,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic() {
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   workset->timeStep = timeStep;
 
-  Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
+  //Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
   bool solverVerbose = solverParams->get("Verbose", false);
   Teuchos::RCP<Teuchos::ParameterList> quasiStaticParams = sublist(solverParams, "QuasiStatic", true);
   int maxSolverIterations = quasiStaticParams->get("Maximum Solver Iterations", 10);
@@ -2081,7 +2125,7 @@ double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> 
   return bestAlpha;
 }
 
-void PeridigmNS::Peridigm::executeImplicit() {
+void PeridigmNS::Peridigm::executeImplicit(const Teuchos::RCP<Teuchos::ParameterList>& solverParams) {
 
   // Allocate memory for non-zeros in global Jacobain and lock in the structure
   if(peridigmComm->MyPID() == 0)
@@ -2105,7 +2149,7 @@ void PeridigmNS::Peridigm::executeImplicit() {
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   workset->timeStep = timeStep;
 
-  Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
+  //Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver", true);
   Teuchos::RCP<Teuchos::ParameterList> quasiStaticParams = sublist(solverParams, "Implicit", true);
   double timeInitial = solverParams->get("Initial Time", 0.0);
   double timeFinal = solverParams->get("Final Time", 1.0);

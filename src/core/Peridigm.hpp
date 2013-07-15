@@ -74,6 +74,7 @@
 #include "Peridigm_DataManager.hpp"
 #include "Peridigm_SerialMatrix.hpp"
 #include "Peridigm_OutputManagerContainer.hpp"
+#include "Peridigm_SolverManagerContainer.hpp"
 #include "Peridigm_ComputeManager.hpp"
 #include "Peridigm_BoundaryAndInitialConditionManager.hpp"
 #include "Peridigm_ServiceManager.hpp"
@@ -113,6 +114,9 @@ namespace PeridigmNS {
 
     //! Instantiate the compute manager
     void instantiateComputeManager();
+    
+    //! Initialize the output manager
+    void initializeSolverManager();
 
     //! Initialize the output manager
     void initializeOutputManager();
@@ -121,7 +125,10 @@ namespace PeridigmNS {
     void initializeBlocks(Teuchos::RCP<Discretization> disc);
 
     //! Main routine to drive time integration
-    void execute();
+    void execute(Teuchos::RCP<Teuchos::ParameterList> solverParams);
+    
+    //! Called from Main to drive multiple time integration solvers in sequence
+    void executeSolvers();
 
     //! Compute the residual vector (pure virtual method in NOX::Epetra::Interface::Required).
     bool computeF(const Epetra_Vector& x, Epetra_Vector& FVec, FillType fillType = Residual);
@@ -148,13 +155,13 @@ namespace PeridigmNS {
     //! Perform diagnostics on Jacobian and print results to screen.
     void jacobianDiagnostics(Teuchos::RCP<NOX::Epetra::Group> noxGroup);
 
-    void executeExplicit();
+    void executeExplicit(const Teuchos::RCP<Teuchos::ParameterList>& solverParams);
 
     //! Main routine to drive problem solution for quasistatics
-    void executeQuasiStatic();
+    void executeQuasiStatic(const Teuchos::RCP<Teuchos::ParameterList>& solverParams);
 
     //! Main routine to drive problem solution for quasistatics using NOX
-    void executeNOXQuasiStatic(); 
+    void executeNOXQuasiStatic(const Teuchos::RCP<Teuchos::ParameterList>& solverParams); 
 
     //! Set the preconditioner for the global linear system
     void quasiStaticsSetPreconditioner(Belos::LinearProblem<double,Epetra_MultiVector,Epetra_Operator>& linearProblem);
@@ -174,7 +181,7 @@ namespace PeridigmNS {
 				  Teuchos::RCP<Epetra_Vector> lhs);
 
     //! Main routine to drive problem solution with implicit time integration
-    void executeImplicit();
+    void executeImplicit(const Teuchos::RCP<Teuchos::ParameterList>& solverParams);
 
     //! Allocate memory for non-zeros in global Jacobian
     void allocateJacobian();
@@ -280,6 +287,7 @@ namespace PeridigmNS {
 
     //! Friend classes
     friend class OutputManager_ExodusII;
+    friend class SolverManager;
 
     //! Parameterlist of entire input deck
     Teuchos::RCP<Teuchos::ParameterList> peridigmParams;
@@ -462,6 +470,9 @@ namespace PeridigmNS {
 
     //! The peridigm output manager
     Teuchos::RCP<PeridigmNS::OutputManagerContainer> outputManager;
+
+    //! The peridigm solver manager
+    Teuchos::RCP<PeridigmNS::SolverManagerContainer> solverManager;
 
     //! BLAS for local-only vector updates (BLAS-1)
     Epetra_BLAS blas;
