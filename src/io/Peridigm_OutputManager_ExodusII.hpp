@@ -106,6 +106,12 @@ namespace PeridigmNS {
     //! Index of number of timesteps data actually written to exodus file
     int exodusCount;
 
+    //! Index of first plot dump step to Exodus file
+    int firstOutputStep;
+    
+    //! Index of last plot dump step to Exodus file
+    int lastOutputStep;
+
     //! Flag indicating if this is the first call to initializeExodusDatabase
     bool initializeExodusDatabaseCalled;
 

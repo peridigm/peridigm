@@ -49,6 +49,7 @@
 #include <string>
 #include <iostream>
 #include <iomanip>
+#include <limits>
 
 #include <netcdf.h>
 #include <exodusII.h>
@@ -117,6 +118,10 @@ PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Te
 
   // Output filename base
   filenameBase = params->get<string>("Output Filename","dump"); 
+  
+  // Default initial output step
+  firstOutputStep = params->get<int>("Initial Output Step",1); 
+  lastOutputStep = params->get<int>("Final Output Step",std::numeric_limits<int>::max()-1); 
 
   // User-requested fields for output 
   outputVariables = sublist(params, "Output Variables");
@@ -162,6 +167,8 @@ Teuchos::ParameterList PeridigmNS::OutputManager_ExodusII::getValidParameterList
   setIntParameter("NumProc",0,"Number of Process IDs",&validParameterList,intParam);
   validParameterList.set("Output File Type","ExodusII");
   validParameterList.set("Output Filename","dump");
+  setIntParameter("Initial Output Step",1,"Integer number of first output dump.",&validParameterList,intParam);
+  setIntParameter("Final Output Step",std::numeric_limits<int>::max()-1,"Integer number of last output dump.",&validParameterList,intParam);
   Teuchos::setStringToIntegralParameter<int>("Output Format","BINARY","ASCII or BINARY",Teuchos::tuple<string>("ASCII","BINARY"),&validParameterList);
   setIntParameter("Output Frequency",-1,"Frequency of Output",&validParameterList,intParam);
   validParameterList.set("Parallel Write",true);
@@ -205,8 +212,9 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
   // increment index count
   count = count + 1;
 
-  // Only write if frequency count match
-  if (frequency<=0 || (count-1)%frequency!=0) return;
+  // Only write if count is in between first and last dumps and frequency count match. 
+  // The +/- 1 is to account for the initialization dumps
+  if ((count<(firstOutputStep) || count>(lastOutputStep+1)) || (frequency<=0 || (count-1)%frequency!=0)) return;
 
   // increment exodus_count index
   exodusCount = exodusCount + 1;
