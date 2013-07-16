@@ -198,14 +198,14 @@ QUICKGRID::Data PeridigmNS::TextFileDiscretization::getDecomp(const string& text
   // Broadcast necessary data from root processor
   Teuchos::RCP<const Teuchos::Comm<int> > teuchosComm = Teuchos::createMpiComm<int>(Teuchos::opaqueWrapper<MPI_Comm>(MPI_COMM_WORLD));
   int numGlobalElements;
-  reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, int(1), &numElements, &numGlobalElements);
+  reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, 1, &numElements, &numGlobalElements);
 
   // Broadcast the unique block ids so that all processors are aware of the full block list
   // This is necessary because if a processor does not have any elements for a given block, it will be unaware the
   // given block exists, which causes problems downstream
-  int numUniqueBlockIds = static_cast<int>( uniqueBlockIds.size() );
+  int numLocalUniqueBlockIds = static_cast<int>( uniqueBlockIds.size() );
   int numGlobalUniqueBlockIds;
-  reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, (int)numPID, &numUniqueBlockIds, &numGlobalUniqueBlockIds);
+  reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, 1, &numLocalUniqueBlockIds, &numGlobalUniqueBlockIds);
   vector<int> uniqueLocalBlockIds(numGlobalUniqueBlockIds, 0);
   int index = 0;
   for(set<int>::const_iterator it = uniqueBlockIds.begin() ; it != uniqueBlockIds.end() ; it++)

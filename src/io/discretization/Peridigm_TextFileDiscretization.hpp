@@ -157,10 +157,10 @@ namespace PeridigmNS {
     unsigned int numBonds;
 
     //! Processor ID
-    unsigned int myPID;
+    int myPID;
 
     //! Number of Processors
-    unsigned int numPID;
+    int numPID;
 
     //! Discretization parameter controling the formation of bonds
     string bondFilterCommand;
