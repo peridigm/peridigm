@@ -1,0 +1,76 @@
+<ParameterList>
+
+  <ParameterList name="Discretization">
+	<Parameter name="Type" type="string" value="Text File" />
+	<Parameter name="Input Mesh File" type="string" value="MultipleHorizons.txt"/>
+  </ParameterList>
+
+  <ParameterList name="Materials">
+	<ParameterList name="My Elastic Material">
+      <Parameter name="Material Model" type="string" value="Elastic"/>
+	  <Parameter name="Apply Shear Correction Factor" type="bool" value="false"/>
+	  <Parameter name="Density" type="double" value="2200.0"/>        <!-- kg/m^3 -->
+	  <Parameter name="Bulk Modulus" type="double" value="14.90e9"/>  <!-- Pa -->
+	  <Parameter name="Shear Modulus" type="double" value="8.94e9"/>  <!-- Pa -->
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Blocks">
+    <!-- Default block will end up being applied to block_1 -->
+	<ParameterList name="Default Block">
+	  <Parameter name="Block Names" type="string" value="default"/>
+	  <Parameter name="Material" type="string" value="My Elastic Material"/>
+      <Parameter name="Horizon" type="double" value="1.001"/>
+	</ParameterList>
+	<ParameterList name="Block 2">
+	  <Parameter name="Block Names" type="string" value="block_2"/>
+	  <Parameter name="Material" type="string" value="My Elastic Material"/>
+      <Parameter name="Horizon" type="double" value="0.999999999999"/>
+	</ParameterList>
+	<ParameterList name="Block 3">
+	  <Parameter name="Block Names" type="string" value="block_3"/>
+	  <Parameter name="Material" type="string" value="My Elastic Material"/>
+      <Parameter name="Horizon" type="double" value="1.000000000001"/>
+	</ParameterList>
+	<ParameterList name="Block 4">
+	  <Parameter name="Block Names" type="string" value="block_4"/>
+	  <Parameter name="Material" type="string" value="My Elastic Material"/>
+      <Parameter name="Horizon" type="double" value="0.7653668647302"/>
+	</ParameterList>
+	<ParameterList name="Block 5">
+	  <Parameter name="Block Names" type="string" value="block_5"/>
+	  <Parameter name="Material" type="string" value="My Elastic Material"/>
+      <Parameter name="Horizon" type="double" value="2.1"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Solver">
+    <ParameterList name="QuasiStatic">
+      <Parameter name="Time Steps" type="string" value="0.0  0.1  0.5  1.0"/>
+      <Parameter name="Absolute Tolerance" type="double" value="1.0e-2"/>
+      <Parameter name="Maximum Solver Iterations" type="int" value="10"/>
+    </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Output">
+	<Parameter name="Output File Type" type="string" value="ExodusII"/>
+	<Parameter name="Output Format" type="string" value="BINARY"/>
+	<Parameter name="Output Filename" type="string" value="MultipleHorizons"/>
+	<Parameter name="Output Frequency" type="int" value="1"/>
+	<ParameterList name="Output Variables">
+	  <Parameter name="Displacement" type="bool" value="true"/>
+	  <Parameter name="Velocity" type="bool" value="true"/>
+	  <Parameter name="Element_Id" type="bool" value="true"/>
+	  <Parameter name="Proc_Num" type="bool" value="true"/>
+	  <Parameter name="Dilatation" type="bool" value="true"/>
+	  <Parameter name="Force_Density" type="bool" value="true"/>
+	  <Parameter name="Weighted_Volume" type="bool" value="true"/>
+
+      <!-- The primary checks are on the horizon and number of neighbors -->
+      <Parameter name="Horizon" type="bool" value="true"/>
+      <Parameter name="Number_Of_Neighbors" type="bool" value="true"/>
+
+	</ParameterList>
+  </ParameterList>
+
+</ParameterList>
