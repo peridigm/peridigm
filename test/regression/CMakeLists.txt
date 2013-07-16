@@ -6,6 +6,8 @@ add_test (Contact_Perforation_np1 python ./Contact_Perforation/np1/Contact_Perfo
 add_test (Contact_Perforation_np3 python ./Contact_Perforation/np3/Contact_Perforation.py)
 add_test (Compression_QS_3x2x2_np1 python ./Compression_QS_3x2x2/np1/Compression_QS_3x2x2.py)
 add_test (Compression_QS_3x2x2_np2 python ./Compression_QS_3x2x2/np2/Compression_QS_3x2x2.py)
+add_test (Compression_QS_Explicit_3x2x2_np1 python ./Compression_QS_Explicit_3x2x2/np1/Compression_QS_Explicit_3x2x2.py)
+add_test (Compression_QS_Explicit_3x2x2_np2 python ./Compression_QS_Explicit_3x2x2/np2/Compression_QS_Explicit_3x2x2.py)
 add_test (Compression_NLCGQS_3x2x2_np1 python ./Compression_NLCGQS_3x2x2/np1/Compression_NLCGQS_3x2x2.py)
 add_test (Compression_NLCGQS_3x2x2_np2 python ./Compression_NLCGQS_3x2x2/np2/Compression_NLCGQS_3x2x2.py)
 add_test (Compression_QS_CyclicLoading_3x2x2_np1 python ./Compression_QS_CyclicLoading_3x2x2/np1/Compression_QS_CyclicLoading_3x2x2.py)
