@@ -188,10 +188,30 @@ QUICKGRID::Data PeridigmNS::TextFileDiscretization::getDecomp(const string& text
   int numElements = static_cast<int>(blockIds.size());
   TEUCHOS_TEST_FOR_EXCEPT_MSG(myPID == 0 && numElements < 1, "**** Error reading discretization text file, no data found.\n");
 
+  // Record the block ids on the root processor
+  set<int> uniqueBlockIds;
+  if(myPID == 0){
+    for(unsigned int i=0 ; i<blockIds.size() ; ++i)
+      uniqueBlockIds.insert(blockIds[i]);
+  }
+
   // Broadcast necessary data from root processor
   Teuchos::RCP<const Teuchos::Comm<int> > teuchosComm = Teuchos::createMpiComm<int>(Teuchos::opaqueWrapper<MPI_Comm>(MPI_COMM_WORLD));
   int numGlobalElements;
   reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, int(1), &numElements, &numGlobalElements);
+
+  // Broadcast the unique block ids so that all processors are aware of the full block list
+  // This is necessary because if a processor does not have any elements for a given block, it will be unaware the
+  // given block exists, which causes problems downstream
+  int numUniqueBlockIds = static_cast<int>( uniqueBlockIds.size() );
+  int numGlobalUniqueBlockIds;
+  reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, (int)numPID, &numUniqueBlockIds, &numGlobalUniqueBlockIds);
+  vector<int> uniqueLocalBlockIds(numGlobalUniqueBlockIds, 0);
+  int index = 0;
+  for(set<int>::const_iterator it = uniqueBlockIds.begin() ; it != uniqueBlockIds.end() ; it++)
+    uniqueLocalBlockIds[index++] = *it;
+  vector<int> uniqueGlobalBlockIds(numGlobalUniqueBlockIds);  
+  reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, numGlobalUniqueBlockIds, &uniqueLocalBlockIds[0], &uniqueGlobalBlockIds[0]);
 
   // Create list of global ids
   vector<int> globalIds(numElements);
@@ -231,12 +251,20 @@ QUICKGRID::Data PeridigmNS::TextFileDiscretization::getDecomp(const string& text
   Epetra_Import rebalancedImporter(rebalancedBlockID.Map(), tempBlockID.Map());
   rebalancedBlockID.Import(tempBlockID, rebalancedImporter, Insert);
 
+  // Initialize the element list for each block
+  // Force blocks with no on-processor elements to have an entry in the elementBlocks map
+  for(unsigned int i=0 ; i<uniqueGlobalBlockIds.size() ; i++){
+    stringstream blockName;
+    blockName << "block_" << uniqueGlobalBlockIds[i];
+    (*elementBlocks)[blockName.str()] = std::vector<int>();
+  }
+
   // Create the element list for each block
   for(int i=0 ; i<rebalancedBlockID.MyLength() ; ++i){
     stringstream blockName;
     blockName << "block_" << rebalancedBlockID[i];
-    if(elementBlocks->find(blockName.str()) == elementBlocks->end())
-      (*elementBlocks)[blockName.str()] = std::vector<int>();
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(elementBlocks->find(blockName.str()) == elementBlocks->end(),
+                                "\n**** Error in TextFileDiscretization::getDecomp(), invalid block id.\n");
     int globalID = rebalancedBlockID.Map().GID(i);
     (*elementBlocks)[blockName.str()].push_back(globalID);
   }
@@ -251,7 +279,7 @@ QUICKGRID::Data PeridigmNS::TextFileDiscretization::getDecomp(const string& text
       horizons[blockName] = params->get<double>("Horizon default");
     else{
       string msg = "\n**** Error, no Horizon parameter supplied for block " + blockName;
-      msg += " and no default block parameter list provided.\n";
+      msg += "     and no default block parameter list provided.\n";
       TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
     }
   }

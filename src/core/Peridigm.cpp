@@ -2565,8 +2565,9 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
 
   PeridigmNS::Timer::self().startTimer("Compute Residual");
 
-  // The residual is computed as the L2 norm of the internal force vector with the
+  // The residual is computed as the norm of the internal force vector with the
   // entries corresponding to kinematic BC zeroed out.
+  // The specific residual measure is the L2 norm plus twenty times the infinity norm
 
   // Copy data from mothership vectors to overlap vectors in data manager
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
@@ -2593,6 +2594,11 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
   }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
   scratch->PutScalar(0.0);
+
+  // Check for NaNs in force evaluation
+  // We'd like to know now because a NaN will likely cause a difficult-to-unravel crash downstream.
+  for(int i=0 ; i<force->MyLength() ; ++i)
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*force)[i]), "**** NaN returned by force evaluation.\n");
 
   // copy the internal force to the residual vector
   // note that due to restrictions on CrsMatrix, these vectors have different (but equivalent) maps
