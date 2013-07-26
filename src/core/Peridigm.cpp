@@ -51,6 +51,8 @@
 //@HEADER
 //
 
+//#define CONTACT_REFACTOR 1
+
 #include <iostream>
 #include <vector>
 #include <map>
@@ -161,7 +163,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   if(!solverParams->isParameter("Finite Difference Probe Length"))
     solverParams->set("Finite Difference Probe Length", 1.0e-6*minElementRadius);
 
-  // Load node sets from input deck and/or input mesh file
+  // Instantiate and initialize the boundary and initial condition manager
   Teuchos::RCP<Teuchos::ParameterList> bcParams =
     Teuchos::rcpFromRef( peridigmParams->sublist("Boundary Conditions") );
   boundaryAndInitialConditionManager =
@@ -187,14 +189,37 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   // Create field ids that may be required for output
   fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Proc_Num");
 
-  if(analysisHasPartialVolumes)
-    contactForceDensityFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Partial_Volume");
-
   // Instantiate compute manager
   instantiateComputeManager();
 
+  // Instantiate the contact manager
+#ifdef CONTACT_REFACTOR
+  Teuchos::ParameterList contactParams;
+  if(peridigmParams->isSublist("Contact")){
+
+    analysisHasContact = true;
+
+    contactParams = peridigmParams->sublist("Contact");
+
+    contactManager =
+      Teuchos::RCP<ContactManager>(new ContactManager(contactParams, peridigmDisc, peridigmParams));
+    contactManager->initialize(oneDimensionalMap,
+                               threeDimensionalMap,
+                               oneDimensionalOverlapMap,
+                               bondMap,
+                               blockHorizonValues);
+    contactManager->loadAllMothershipData(blockIDs,
+                                          volume,
+                                          y, 
+                                          v);
+    contactManager->loadNeighborhoodData(globalNeighborhoodData);
+    contactManager->initializeContactBlocks();
+
+  }
+#else
   // Setup contact
   initializeContact();
+#endif
 
   // Instantiate the blocks
   initializeBlocks(peridigmDisc);
@@ -208,6 +233,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   if(peridigmParams->isSublist("Damage Models"))
     damageModelParams = peridigmParams->sublist("Damage Models");
   DamageModelFactory damageModelFactory;
+#ifndef CONTACT_REFACTOR
   // Contact models
   Teuchos::ParameterList contactModelParams;
   if(peridigmParams->isSublist("Contact")){
@@ -215,6 +241,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   }
   ContactModelFactory contactModelFactory;
   contactBlockIt = contactBlocks->begin();
+#endif
 
   // Associate material models and damage models with blocks
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
@@ -257,6 +284,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
       blockIt->setDamageModel(damageModel);
     }
 
+#ifndef CONTACT_REFACTOR
     // Set the contact model (if any) in the contact block
     if(analysisHasContact){
       // For the initial implementation, assume that there is only one contact model
@@ -270,6 +298,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
       contactBlockIt->setContactModel(contactModel);
       contactBlockIt++;
     }
+#endif
   }
 
   // Load the auxiliary field ids into the blocks (they will be
@@ -303,6 +332,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
                         blockIDs,
                         globalNeighborhoodData);
 
+#ifndef CONTACT_REFACTOR
   // Initialize the contact blocks (creates maps, neighborhoods, DataManager)
   for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++)
     contactBlockIt->initialize(peridigmDisc->getGlobalOwnedMap(1),
@@ -312,6 +342,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
                                peridigmDisc->getGlobalBondMap(),
                                blockIDs,
                                globalNeighborhoodData);
+#endif
 
   // Create a temporary vector for storing the global element ids
   Epetra_Vector elementIds(*(peridigmDisc->getCellVolume()));
@@ -328,6 +359,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
     blockIt->importData(elementIds,                       elementIdFieldId,        PeridigmField::STEP_NONE, Insert);
   }
 
+#ifndef CONTACT_REFACTOR
   // Load initial data into the contact contactBlocks
   for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
     contactBlockIt->importData(*(peridigmDisc->getBlockID()),    blockIdFieldId,          PeridigmField::STEP_NONE, Insert);
@@ -337,6 +369,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
     contactBlockIt->importData(*(peridigmDisc->getInitialX()),   coordinatesFieldId,      PeridigmField::STEP_NP1,  Insert);
     contactBlockIt->importData(elementIds,                       elementIdFieldId,        PeridigmField::STEP_NONE, Insert);
   }
+#endif
 
   // Set the density in the mothership vector
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
@@ -385,8 +418,13 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
 
   // Call rebalance function if analysis has contact
   // this is required to set up proper contact neighbor list
-  if(analysisHasContact)
+  if(analysisHasContact){
+#ifdef CONTACT_REFACTOR
+    contactManager->rebalance(0);
+#else
     rebalanceContactData();
+#endif
+  }
 
   // Create service manager
   serviceManager = Teuchos::rcp(new PeridigmNS::ServiceManager());
@@ -605,7 +643,12 @@ void PeridigmNS::Peridigm::initializeWorkset() {
   workset->timeStep = timeStep;
   workset->jacobian = overlapJacobian;
   workset->blocks = blocks;
+#ifdef CONTACT_REFACTOR
+  if(!contactManager.is_null())
+    workset->contactBlocks = contactManager->getContactBlocks();
+#else
   workset->contactBlocks = contactBlocks;
+#endif
   workset->myPID = -1;
 }
 
@@ -669,7 +712,9 @@ void PeridigmNS::Peridigm::initializeBlocks(Teuchos::RCP<Discretization> disc) {
 
   // Create vector of blocks
   blocks = Teuchos::rcp(new std::vector<PeridigmNS::Block>());
+#ifndef CONTACT_REFACTOR
   contactBlocks = Teuchos::rcp(new std::vector<PeridigmNS::ContactBlock>());
+#endif
 
   // Loop over each entry in "Blocks" section of input deck. 
   Teuchos::ParameterList& blockParams = peridigmParams->sublist("Blocks", true);
@@ -700,10 +745,12 @@ void PeridigmNS::Peridigm::initializeBlocks(Teuchos::RCP<Discretization> disc) {
       blocks->push_back(block);
 
       // \todo Refactor to create contact blocks only when needed
+#ifndef CONTACT_REFACTOR
       if(analysisHasContact){
         PeridigmNS::ContactBlock contactBlock(*it, blockID, params);
         contactBlocks->push_back(contactBlock);
       }
+#endif
     }
   }
 
@@ -729,10 +776,12 @@ void PeridigmNS::Peridigm::initializeBlocks(Teuchos::RCP<Discretization> disc) {
         blocks->push_back(block);
 
         // \todo Refactor to create contact blocks only when needed
+#ifndef CONTACT_REFACTOR
         if(analysisHasContact){
           PeridigmNS::ContactBlock contactBlock(*it, blockID, defaultBlockParams);
           contactBlocks->push_back(contactBlock);
         }
+#endif
       }
     }
   }
@@ -935,6 +984,9 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
   }
   if(analysisHasContact){
+#ifdef CONTACT_REFACTOR
+    contactManager->importData(volume, y, v);
+#else
     // Copy data from the mothership vectors to the contact mothership vectors
     contactVolume->Import(*volume, *oneDimensionalMothershipToContactMothershipImporter, Insert); // \todo This only needs to be done immediately after rebalancing the contact mothership vectors
     contactY->Import(*y, *threeDimensionalMothershipToContactMothershipImporter, Insert);
@@ -944,6 +996,7 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
       contactBlockIt->importData(*contactY, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
       contactBlockIt->importData(*contactV, velocityFieldId, PeridigmField::STEP_NP1, Insert);
     }
+#endif
   }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -963,6 +1016,9 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     force->Update(1.0, *scratch, 1.0);
   }
   if(analysisHasContact){
+#ifdef CONTACT_REFACTOR
+    contactManager->exportData(contactForce);
+#else
     // Copy contact force from the data manager to the mothership vector
     contactContactForce->PutScalar(0.0);
     for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
@@ -972,6 +1028,7 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     }
     // Copy data from the contact mothership vector to the mothership vector
     contactForce->Export(*contactContactForce, *threeDimensionalMothershipToContactMothershipImporter, Insert);
+#endif
     // Add contact forces to forces
     force->Update(1.0, *contactForce, 1.0);
   }
@@ -1001,11 +1058,17 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
       displayProgress("Explicit time integration", (step-1)*100.0/nsteps);
 
     // rebalance, if requested
+    PeridigmNS::Timer::self().startTimer("Rebalance");
+#ifdef CONTACT_REFACTOR
+    // \todo Should we load updated information first?  If so, only do this if we're really going to rebalance.
+    if(analysisHasContact)
+      contactManager->rebalance(step);
+#else
     if( (analysisHasRebalance && step%rebalanceFrequency == 0) || (analysisHasContact && step%contactRebalanceFrequency == 0) ){
-      PeridigmNS::Timer::self().startTimer("Rebalance");
       rebalanceContactData();
-      PeridigmNS::Timer::self().stopTimer("Rebalance");
     }
+#endif
+    PeridigmNS::Timer::self().stopTimer("Rebalance");
 
     // Do one step of velocity-Verlet
 
@@ -1043,6 +1106,9 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
       blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
     }
     if(analysisHasContact){
+#ifdef CONTACT_REFACTOR
+    contactManager->importData(volume, y, v);
+#else
       // Copy data from the mothership vectors to the contact mothership vectors
       contactVolume->Import(*volume, *oneDimensionalMothershipToContactMothershipImporter, Insert); // \todo This only needs to be done immediately after rebalancing the contact mothership vectors
       contactY->Import(*y, *threeDimensionalMothershipToContactMothershipImporter, Insert);
@@ -1052,6 +1118,7 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
         contactBlockIt->importData(*contactY, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
         contactBlockIt->importData(*contactV, velocityFieldId, PeridigmField::STEP_NP1, Insert);
       }
+#endif
     }
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -1076,6 +1143,9 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
       TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*force)[i]), "**** NaN returned by force evaluation.\n");
 
     if(analysisHasContact){
+#ifdef CONTACT_REFACTOR
+    contactManager->exportData(contactForce);
+#else
       // Copy contact force from the blocks to the mothership vector
       PeridigmNS::Timer::self().startTimer("Gather/Scatter");
       contactContactForce->PutScalar(0.0);
@@ -1087,6 +1157,7 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
       // Copy data from the contact mothership vector to the mothership vector
       contactForce->Export(*contactContactForce, *threeDimensionalMothershipToContactMothershipImporter, Insert);
       PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+#endif
       // Check for NaNs in contact force evaluation
       for(int i=0 ; i<contactForce->MyLength() ; ++i)
         TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*contactForce)[i]), "**** NaN returned by contact force evaluation.\n");
@@ -1111,8 +1182,10 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     // swap state N and state NP1
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
       blockIt->updateState();
+#ifndef CONTACT_REFACTOR
     for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++)
       contactBlockIt->updateState();
+#endif
   }
   displayProgress("Explicit time integration", 100.0);
   *out << "\n\n";
@@ -1537,13 +1610,6 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
     const Epetra_Vector& finalSolution = 
       dynamic_cast<const NOX::Epetra::Vector&>(solver->getSolutionGroup().getX()).getEpetraVector();
  
-    // Output the parameter list
-    //if (printing.isPrintType(NOX::Utils::Parameters)) {
-//     printing.out() << endl << "Final NOX Parameters" << endl << "****************" << endl;
-//     solver->getList().print(printing.out());
-//     printing.out() << endl;
-    //}
-
     // Print load step timing information
     double CPUTime = loadStepCPUTime.ElapsedTime();
     cummulativeLoadStepCPUTime += CPUTime;
@@ -2774,6 +2840,7 @@ void PeridigmNS::Peridigm::rebalanceContactData() {
   contactContactForce = Teuchos::rcp((*threeDimensionalContactMothership)(2), false);  // contact force
   contactScratch = Teuchos::rcp((*threeDimensionalContactMothership)(3), false);       // scratch
 
+#ifndef CONTACT_REFACTOR
   // rebalance the contact blocks
   for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++)
     contactBlockIt->rebalance(rebalancedOneDimensionalMap,
@@ -2789,6 +2856,7 @@ void PeridigmNS::Peridigm::rebalanceContactData() {
     contactBlockIt->importData(*contactVolume, volumeFieldId, PeridigmField::STEP_NONE, Insert);
     contactBlockIt->importData(*contactBlockIDs, blockIdFieldId, PeridigmField::STEP_NONE, Insert);
   }
+#endif
 
   // set all the pointers to the new maps
   oneDimensionalContactMap = rebalancedOneDimensionalMap;

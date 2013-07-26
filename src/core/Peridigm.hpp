@@ -77,6 +77,7 @@
 #include "Peridigm_SolverManagerContainer.hpp"
 #include "Peridigm_ComputeManager.hpp"
 #include "Peridigm_BoundaryAndInitialConditionManager.hpp"
+#include "Peridigm_ContactManager.hpp"
 #include "Peridigm_ServiceManager.hpp"
 #include "materials/Peridigm_Material.hpp"
 #include "damage/Peridigm_DamageModel.hpp"
@@ -331,6 +332,9 @@ namespace PeridigmNS {
 
     //! Boundary and initial condition manager
     Teuchos::RCP<PeridigmNS::BoundaryAndInitialConditionManager> boundaryAndInitialConditionManager;
+
+    //! Contact manager
+    Teuchos::RCP<PeridigmNS::ContactManager> contactManager;
 
     //! Compute manager
     Teuchos::RCP<PeridigmNS::ComputeManager> computeManager;
