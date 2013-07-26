@@ -143,12 +143,6 @@ PeridigmNS::ContactManager::ContactManager(const Teuchos::ParameterList& contact
       }
     }
   }
-
-  // DEBUGGING
-  for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++)
-    cout << "DEBUG contact block name " << contactBlockIt->getName() << endl;
-
-  // end DEBUGGING
 }
 
 void PeridigmNS::ContactManager::initialize(Teuchos::RCP<const Epetra_BlockMap> oneDimensionalMap_,
@@ -158,9 +152,6 @@ void PeridigmNS::ContactManager::initialize(Teuchos::RCP<const Epetra_BlockMap> 
                                             map<string, double> blockHorizonValues)
 {
   ContactModelFactory contactModelFactory;
-
-  cout << "DEBUGGING contactBlocks->size() " << contactBlocks->size() << endl;
-
   for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
 
     // Obtain the horizon for this block
@@ -175,7 +166,6 @@ void PeridigmNS::ContactManager::initialize(Teuchos::RCP<const Epetra_BlockMap> 
       TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
     }
 
-
     // For the initial implementation, assume that there is only one contact model
     // \todo Refactor contact!
     Teuchos::ParameterList contactModelParams = params.sublist("Models", true);
@@ -185,12 +175,8 @@ void PeridigmNS::ContactManager::initialize(Teuchos::RCP<const Epetra_BlockMap> 
     if(!contactParams.isParameter("Friction Coefficient"))
       contactParams.set("Friction Coefficient", 0.0);
     Teuchos::RCP<const PeridigmNS::ContactModel> contactModel = contactModelFactory.create(contactParams);
-    cout << "DEBUGGING setting contact model for " << blockName << ", model is " << contactModel->Name() << endl;
     contactBlockIt->setContactModel(contactModel);
-
   }
-
-
 
   oneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(*oneDimensionalMap_));
   threeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(*threeDimensionalMap_));
@@ -256,23 +242,29 @@ void PeridigmNS::ContactManager::initializeContactBlocks()
                                bondMap,
                                contactBlockIDs,
                                contactNeighborhoodData);
+
+  // Load data from the contact manager's mothership vectors into the contact blocks
+  for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
+    contactBlockIt->importData(*contactBlockIDs, blockIdFieldId, PeridigmField::STEP_NONE, Insert);
+    contactBlockIt->importData(*contactVolume, volumeFieldId, PeridigmField::STEP_NONE, Insert);
+    contactBlockIt->importData(*contactY, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
+    contactBlockIt->importData(*contactV, velocityFieldId, PeridigmField::STEP_NP1, Insert);
+  }
 }
 
 void PeridigmNS::ContactManager::importData(Teuchos::RCP<Epetra_Vector> volume,
                                             Teuchos::RCP<Epetra_Vector> coordinates,
                                             Teuchos::RCP<Epetra_Vector> velocity)
 {
- // \todo Importing volume only needs to be done immediately after rebalancing the contact mothership vectors, if we're rebalancing (which we may stop doing)
-    contactVolume->Import(*volume, *oneDimensionalMothershipToContactMothershipImporter, Insert);
+  // Import data to the contact manager's mothership vectors
+  contactY->Import(*coordinates, *threeDimensionalMothershipToContactMothershipImporter, Insert);
+  contactV->Import(*velocity, *threeDimensionalMothershipToContactMothershipImporter, Insert);
 
-    contactY->Import(*coordinates, *threeDimensionalMothershipToContactMothershipImporter, Insert);
-    contactV->Import(*velocity, *threeDimensionalMothershipToContactMothershipImporter, Insert);
-
-    // Distribute data to the contact blocks
-    for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
-      contactBlockIt->importData(*contactY, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
-      contactBlockIt->importData(*contactV, velocityFieldId, PeridigmField::STEP_NP1, Insert);
-    }
+  // Distribute data to the contact blocks
+  for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
+    contactBlockIt->importData(*contactY, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
+    contactBlockIt->importData(*contactV, velocityFieldId, PeridigmField::STEP_NP1, Insert);
+  }
 }
 
 void PeridigmNS::ContactManager::exportData(Teuchos::RCP<Epetra_Vector> contactForce)
@@ -385,10 +377,13 @@ void PeridigmNS::ContactManager::rebalance(int step)
                               contactBlockIDs,
                               contactNeighborhoodData);
 
-  // Initialize what we can for newly-created ghosts across material boundaries.
+  // Reload data from the contact manager's mothership vectors into the contact blocks
+  // \todo Cut back on loading data, it's probably correct already depending on how rebalance is handled above.
   for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
-    contactBlockIt->importData(*contactVolume, volumeFieldId, PeridigmField::STEP_NONE, Insert);
     contactBlockIt->importData(*contactBlockIDs, blockIdFieldId, PeridigmField::STEP_NONE, Insert);
+    contactBlockIt->importData(*contactVolume, volumeFieldId, PeridigmField::STEP_NONE, Insert);
+    contactBlockIt->importData(*contactY, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
+    contactBlockIt->importData(*contactV, velocityFieldId, PeridigmField::STEP_NP1, Insert);
   }
 
   // set all the pointers to the new maps

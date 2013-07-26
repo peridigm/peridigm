@@ -51,8 +51,6 @@
 //@HEADER
 //
 
-//#define CONTACT_REFACTOR 1
-
 #include <iostream>
 #include <vector>
 #include <map>
@@ -63,7 +61,6 @@
 #include "Peridigm_Field.hpp"
 #include "Peridigm_InfluenceFunction.hpp"
 #include "Peridigm_DiscretizationFactory.hpp"
-#include "Peridigm_PdQuickGridDiscretization.hpp"
 #include "Peridigm_PartialVolumeCalculator.hpp"
 #include "Peridigm_OutputManager_ExodusII.hpp"
 #include "Peridigm_SolverManager.hpp"
@@ -75,14 +72,8 @@
 #include "Peridigm_Timer.hpp"
 #include "materials/Peridigm_MaterialFactory.hpp"
 #include "damage/Peridigm_DamageModelFactory.hpp"
-#include "contact/Peridigm_ContactModelFactory.hpp"
-#include "mesh_input/quick_grid/QuickGrid.h"
-#include "mesh_input/quick_grid/QuickGridData.h"
-#include "pdneigh/PdZoltan.h"
-#include "pdneigh/NeighborhoodList.h"
 #include "muParser/muParser.h"
 #include "muParser/muParserPeridigmFunctions.h"
-
 #include "Peridigm.hpp"
 
 #include <Epetra_Import.h>
@@ -99,11 +90,7 @@ using namespace std;
 
 PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
                                Teuchos::RCP<Teuchos::ParameterList> params)
-  : analysisHasRebalance(false),
-    rebalanceFrequency(1),
-    analysisHasContact(false),
-    contactRebalanceFrequency(0),
-    contactSearchRadius(0.0),
+  : analysisHasContact(false),
     analysisHasPartialVolumes(false),
     blockIdFieldId(-1),
     volumeFieldId(-1),
@@ -193,14 +180,10 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   instantiateComputeManager();
 
   // Instantiate the contact manager
-#ifdef CONTACT_REFACTOR
   Teuchos::ParameterList contactParams;
   if(peridigmParams->isSublist("Contact")){
-
     analysisHasContact = true;
-
     contactParams = peridigmParams->sublist("Contact");
-
     contactManager =
       Teuchos::RCP<ContactManager>(new ContactManager(contactParams, peridigmDisc, peridigmParams));
     contactManager->initialize(oneDimensionalMap,
@@ -214,17 +197,12 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
                                           v);
     contactManager->loadNeighborhoodData(globalNeighborhoodData);
     contactManager->initializeContactBlocks();
-
   }
-#else
-  // Setup contact
-  initializeContact();
-#endif
 
   // Instantiate the blocks
   initializeBlocks(peridigmDisc);
 
-  // Obtain parameter lists and factories for material models, damage models, and contact models
+  // Obtain parameter lists and factories for material models ane damage models
   // Material models
   Teuchos::ParameterList materialParams = peridigmParams->sublist("Materials", true);
   MaterialFactory materialFactory;
@@ -233,15 +211,6 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   if(peridigmParams->isSublist("Damage Models"))
     damageModelParams = peridigmParams->sublist("Damage Models");
   DamageModelFactory damageModelFactory;
-#ifndef CONTACT_REFACTOR
-  // Contact models
-  Teuchos::ParameterList contactModelParams;
-  if(peridigmParams->isSublist("Contact")){
-    contactModelParams = peridigmParams->sublist("Contact").sublist("Models");
-  }
-  ContactModelFactory contactModelFactory;
-  contactBlockIt = contactBlocks->begin();
-#endif
 
   // Associate material models and damage models with blocks
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
@@ -283,26 +252,10 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
       Teuchos::RCP<const PeridigmNS::DamageModel> damageModel = damageModelFactory.create(damageParams);
       blockIt->setDamageModel(damageModel);
     }
-
-#ifndef CONTACT_REFACTOR
-    // Set the contact model (if any) in the contact block
-    if(analysisHasContact){
-      // For the initial implementation, assume that there is only one contact model
-      // \todo Refactor contact!
-      Teuchos::ParameterList contactParams = contactModelParams.sublist( contactModelParams.begin()->first );
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(contactParams.isParameter("Horizon") , "\n**** Error, Horizon is an invalid contact model parameter.\n");
-      contactParams.set("Horizon", blockHorizon);
-      if(!contactParams.isParameter("Friction Coefficient"))
-        contactParams.set("Friction Coefficient", 0.0);
-      Teuchos::RCP<const PeridigmNS::ContactModel> contactModel = contactModelFactory.create(contactParams);
-      contactBlockIt->setContactModel(contactModel);
-      contactBlockIt++;
-    }
-#endif
   }
 
   // Load the auxiliary field ids into the blocks (they will be
-  // combined with material model and contact model ids when allocating
+  // combined with material model and damage model ids when allocating
   // space in the Block's DataManager)
   vector<int> auxiliaryFieldIds;
 
@@ -332,18 +285,6 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
                         blockIDs,
                         globalNeighborhoodData);
 
-#ifndef CONTACT_REFACTOR
-  // Initialize the contact blocks (creates maps, neighborhoods, DataManager)
-  for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++)
-    contactBlockIt->initialize(peridigmDisc->getGlobalOwnedMap(1),
-                               peridigmDisc->getGlobalOverlapMap(1),
-                               peridigmDisc->getGlobalOwnedMap(3),
-                               peridigmDisc->getGlobalOverlapMap(3),
-                               peridigmDisc->getGlobalBondMap(),
-                               blockIDs,
-                               globalNeighborhoodData);
-#endif
-
   // Create a temporary vector for storing the global element ids
   Epetra_Vector elementIds(*(peridigmDisc->getCellVolume()));
   for(int i=0 ; i<elementIds.MyLength() ; ++i)
@@ -358,18 +299,6 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
     blockIt->importData(*(peridigmDisc->getInitialX()),   coordinatesFieldId,      PeridigmField::STEP_NP1,  Insert);
     blockIt->importData(elementIds,                       elementIdFieldId,        PeridigmField::STEP_NONE, Insert);
   }
-
-#ifndef CONTACT_REFACTOR
-  // Load initial data into the contact contactBlocks
-  for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
-    contactBlockIt->importData(*(peridigmDisc->getBlockID()),    blockIdFieldId,          PeridigmField::STEP_NONE, Insert);
-    contactBlockIt->importData(*(peridigmDisc->getCellVolume()), volumeFieldId,           PeridigmField::STEP_NONE, Insert);
-    contactBlockIt->importData(*(peridigmDisc->getInitialX()),   modelCoordinatesFieldId, PeridigmField::STEP_NONE, Insert);
-    contactBlockIt->importData(*(peridigmDisc->getInitialX()),   coordinatesFieldId,      PeridigmField::STEP_N,    Insert);
-    contactBlockIt->importData(*(peridigmDisc->getInitialX()),   coordinatesFieldId,      PeridigmField::STEP_NP1,  Insert);
-    contactBlockIt->importData(elementIds,                       elementIdFieldId,        PeridigmField::STEP_NONE, Insert);
-  }
-#endif
 
   // Set the density in the mothership vector
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
@@ -418,13 +347,8 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
 
   // Call rebalance function if analysis has contact
   // this is required to set up proper contact neighbor list
-  if(analysisHasContact){
-#ifdef CONTACT_REFACTOR
+  if(analysisHasContact)
     contactManager->rebalance(0);
-#else
-    rebalanceContactData();
-#endif
-  }
 
   // Create service manager
   serviceManager = Teuchos::rcp(new PeridigmNS::ServiceManager());
@@ -563,79 +487,6 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization>
   globalNeighborhoodData = peridigmDisc->getNeighborhoodData();
 }
 
-void PeridigmNS::Peridigm::initializeContact() {
-
-  // Assume no contact
-  analysisHasContact = false;
-  contactSearchRadius = 0.0;
-  contactRebalanceFrequency = 0;
-
-  // Set up global contact parameters for rebalance and proximity search
-  if(peridigmParams->isSublist("Contact")){
-    Teuchos::ParameterList & contactParams = peridigmParams->sublist("Contact");
-    analysisHasContact = true;
-    if(!contactParams.isParameter("Search Radius"))
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Contact parameter \"Search Radius\" not specified.");
-    contactSearchRadius = contactParams.get<double>("Search Radius");
-    if(!contactParams.isParameter("Search Frequency"))
-      TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Contact parameter \"Search Frequency\" not specified.");
-    contactRebalanceFrequency = contactParams.get<int>("Search Frequency");
-  }
-
-  // For initial implementation, allow only a single contact model and disallow interactions
-  if(analysisHasContact){
-    // Determine how many contact models are specified in the input deck, and error out if there are more than one
-    Teuchos::ParameterList& contactModelParams = peridigmParams->sublist("Contact").sublist("Models");
-    int contactModelCount = 0;
-    for(Teuchos::ParameterList::ConstIterator it = contactModelParams.begin() ; it != contactModelParams.end() ; it++)
-      contactModelCount += 1;
-    TEUCHOS_TEST_FOR_EXCEPTION(contactModelCount > 1, Teuchos::Exceptions::InvalidParameter,
-                               "\n**** Error, the current version of Peridigm supports only a single contact model in a given analysis.\n");
-    // Print a warning if the user has supplied interactions (they are currently not supported, they are a work in progress)
-    if(peridigmParams->sublist("Contact").isSublist("Interactions")){
-      if(peridigmComm->MyPID() == 0)
-        cout << "\n**** Warning, the current version of Peridigm does not support the specification of contact interactions, contact will be enabled for all elements.\n" << endl;
-    }
-  }
-
-  if(analysisHasContact){
-
-    // Contact uses a secondary decomposition
-
-    // Instantiate the maps for the contact mothership vectors
-    oneDimensionalContactMap = Teuchos::rcp(new Epetra_BlockMap(*oneDimensionalMap));
-    threeDimensionalContactMap = Teuchos::rcp(new Epetra_BlockMap(*threeDimensionalMap));
-    bondContactMap = Teuchos::rcp(new Epetra_BlockMap(*bondMap));
-    oneDimensionalOverlapContactMap = Teuchos::rcp(new Epetra_BlockMap(*oneDimensionalOverlapMap));
-
-    // Instantiate the importers for passing data between the mothership and contact mothership vectors
-    oneDimensionalMothershipToContactMothershipImporter = Teuchos::rcp(new Epetra_Import(*oneDimensionalContactMap, *oneDimensionalMap));
-    threeDimensionalMothershipToContactMothershipImporter = Teuchos::rcp(new Epetra_Import(*threeDimensionalContactMap, *threeDimensionalMap));
-
-    // Create the contact mothership multivectors
-    oneDimensionalContactMothership = Teuchos::rcp(new Epetra_MultiVector(*oneDimensionalContactMap, 2));
-    contactBlockIDs = Teuchos::rcp((*oneDimensionalContactMothership)(0), false);         // block ID
-    contactVolume = Teuchos::rcp((*oneDimensionalContactMothership)(1), false);           // cell volume
-
-    threeDimensionalContactMothership = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalContactMap, 4));
-    contactY = Teuchos::rcp((*threeDimensionalContactMothership)(0), false);             // current positions
-    contactV = Teuchos::rcp((*threeDimensionalContactMothership)(1), false);             // velocities
-    contactContactForce = Teuchos::rcp((*threeDimensionalContactMothership)(2), false);  // contact force
-    contactScratch = Teuchos::rcp((*threeDimensionalContactMothership)(3), false);       // scratch
-
-    // Load the contact mothership vectors
-    contactBlockIDs->Import(*blockIDs, *oneDimensionalMothershipToContactMothershipImporter, Insert);
-    contactVolume->Import(*volume, *oneDimensionalMothershipToContactMothershipImporter, Insert);
-    contactY->Import(*y, *threeDimensionalMothershipToContactMothershipImporter, Insert);
-    contactV->Import(*v, *threeDimensionalMothershipToContactMothershipImporter, Insert);
-    contactContactForce->PutScalar(0.0);
-    contactScratch->PutScalar(0.0);
-
-    // copy the neighborhood data into a NeighborhoodData container that will be periodically rebalanced for contact
-    globalNeighborhoodDataCurrentConfiguration = Teuchos::rcp(new PeridigmNS::NeighborhoodData(*globalNeighborhoodData));
-  }
-}
-
 void PeridigmNS::Peridigm::initializeWorkset() {
   workset = Teuchos::rcp(new PHPD::Workset);
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
@@ -643,12 +494,8 @@ void PeridigmNS::Peridigm::initializeWorkset() {
   workset->timeStep = timeStep;
   workset->jacobian = overlapJacobian;
   workset->blocks = blocks;
-#ifdef CONTACT_REFACTOR
   if(!contactManager.is_null())
     workset->contactBlocks = contactManager->getContactBlocks();
-#else
-  workset->contactBlocks = contactBlocks;
-#endif
   workset->myPID = -1;
 }
 
@@ -712,9 +559,6 @@ void PeridigmNS::Peridigm::initializeBlocks(Teuchos::RCP<Discretization> disc) {
 
   // Create vector of blocks
   blocks = Teuchos::rcp(new std::vector<PeridigmNS::Block>());
-#ifndef CONTACT_REFACTOR
-  contactBlocks = Teuchos::rcp(new std::vector<PeridigmNS::ContactBlock>());
-#endif
 
   // Loop over each entry in "Blocks" section of input deck. 
   Teuchos::ParameterList& blockParams = peridigmParams->sublist("Blocks", true);
@@ -743,14 +587,6 @@ void PeridigmNS::Peridigm::initializeBlocks(Teuchos::RCP<Discretization> disc) {
       blockIDSS >> blockID;
       PeridigmNS::Block block(*it, blockID, params);
       blocks->push_back(block);
-
-      // \todo Refactor to create contact blocks only when needed
-#ifndef CONTACT_REFACTOR
-      if(analysisHasContact){
-        PeridigmNS::ContactBlock contactBlock(*it, blockID, params);
-        contactBlocks->push_back(contactBlock);
-      }
-#endif
     }
   }
 
@@ -774,14 +610,6 @@ void PeridigmNS::Peridigm::initializeBlocks(Teuchos::RCP<Discretization> disc) {
         blockIDSS >> blockID;
         PeridigmNS::Block block(*it, blockID, defaultBlockParams);
         blocks->push_back(block);
-
-        // \todo Refactor to create contact blocks only when needed
-#ifndef CONTACT_REFACTOR
-        if(analysisHasContact){
-          PeridigmNS::ContactBlock contactBlock(*it, blockID, defaultBlockParams);
-          contactBlocks->push_back(contactBlock);
-        }
-#endif
       }
     }
   }
@@ -954,11 +782,7 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
   *timeStep = dt;
   double dt2 = dt/2.0;
   int nsteps = (int)floor((timeFinal-timeInitial)/dt);
-  if(solverParams->isSublist("Rebalance")){
-    Teuchos::RCP<Teuchos::ParameterList> rebalanceParams = sublist(solverParams, "Rebalance", true);
-    analysisHasRebalance = true;
-    rebalanceFrequency = rebalanceParams->get("Rebalance Frequency", 1);
-  }
+
   // Pointer index into sub-vectors for use with BLAS
   double *xptr, *uptr, *yptr, *vptr, *aptr;
   x->ExtractView( &xptr );
@@ -983,21 +807,8 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
   }
-  if(analysisHasContact){
-#ifdef CONTACT_REFACTOR
+  if(analysisHasContact)
     contactManager->importData(volume, y, v);
-#else
-    // Copy data from the mothership vectors to the contact mothership vectors
-    contactVolume->Import(*volume, *oneDimensionalMothershipToContactMothershipImporter, Insert); // \todo This only needs to be done immediately after rebalancing the contact mothership vectors
-    contactY->Import(*y, *threeDimensionalMothershipToContactMothershipImporter, Insert);
-    contactV->Import(*v, *threeDimensionalMothershipToContactMothershipImporter, Insert);
-    // Distribute data to the contact blocks
-    for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
-      contactBlockIt->importData(*contactY, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
-      contactBlockIt->importData(*contactV, velocityFieldId, PeridigmField::STEP_NP1, Insert);
-    }
-#endif
-  }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
   // \todo The velocity copied into the DataManager is actually the midstep velocity, not the NP1 velocity; this can be fixed by creating a midstep velocity field in the DataManager and setting the NP1 value as invalid.
@@ -1016,20 +827,7 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     force->Update(1.0, *scratch, 1.0);
   }
   if(analysisHasContact){
-#ifdef CONTACT_REFACTOR
     contactManager->exportData(contactForce);
-#else
-    // Copy contact force from the data manager to the mothership vector
-    contactContactForce->PutScalar(0.0);
-    for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
-      contactScratch->PutScalar(0.0);
-      contactBlockIt->exportData(*contactScratch, contactForceDensityFieldId, PeridigmField::STEP_NP1, Add);
-      contactContactForce->Update(1.0, *contactScratch, 1.0);
-    }
-    // Copy data from the contact mothership vector to the mothership vector
-    contactForce->Export(*contactContactForce, *threeDimensionalMothershipToContactMothershipImporter, Insert);
-#endif
-    // Add contact forces to forces
     force->Update(1.0, *contactForce, 1.0);
   }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
@@ -1059,15 +857,9 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
 
     // rebalance, if requested
     PeridigmNS::Timer::self().startTimer("Rebalance");
-#ifdef CONTACT_REFACTOR
     // \todo Should we load updated information first?  If so, only do this if we're really going to rebalance.
     if(analysisHasContact)
       contactManager->rebalance(step);
-#else
-    if( (analysisHasRebalance && step%rebalanceFrequency == 0) || (analysisHasContact && step%contactRebalanceFrequency == 0) ){
-      rebalanceContactData();
-    }
-#endif
     PeridigmNS::Timer::self().stopTimer("Rebalance");
 
     // Do one step of velocity-Verlet
@@ -1105,21 +897,9 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
       blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
       blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
     }
-    if(analysisHasContact){
-#ifdef CONTACT_REFACTOR
-    contactManager->importData(volume, y, v);
-#else
-      // Copy data from the mothership vectors to the contact mothership vectors
-      contactVolume->Import(*volume, *oneDimensionalMothershipToContactMothershipImporter, Insert); // \todo This only needs to be done immediately after rebalancing the contact mothership vectors
-      contactY->Import(*y, *threeDimensionalMothershipToContactMothershipImporter, Insert);
-      contactV->Import(*v, *threeDimensionalMothershipToContactMothershipImporter, Insert);
-      // Distribute data to the contact blocks
-      for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
-        contactBlockIt->importData(*contactY, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
-        contactBlockIt->importData(*contactV, velocityFieldId, PeridigmField::STEP_NP1, Insert);
-      }
-#endif
-    }
+    if(analysisHasContact)
+      contactManager->importData(volume, y, v);
+
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
     // Update forces based on new positions
@@ -1143,21 +923,7 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
       TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*force)[i]), "**** NaN returned by force evaluation.\n");
 
     if(analysisHasContact){
-#ifdef CONTACT_REFACTOR
-    contactManager->exportData(contactForce);
-#else
-      // Copy contact force from the blocks to the mothership vector
-      PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-      contactContactForce->PutScalar(0.0);
-      for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
-        contactScratch->PutScalar(0.0);
-        contactBlockIt->exportData(*contactScratch, contactForceDensityFieldId, PeridigmField::STEP_NP1, Add);
-        contactContactForce->Update(1.0, *contactScratch, 1.0);
-      }
-      // Copy data from the contact mothership vector to the mothership vector
-      contactForce->Export(*contactContactForce, *threeDimensionalMothershipToContactMothershipImporter, Insert);
-      PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
-#endif
+      contactManager->exportData(contactForce);
       // Check for NaNs in contact force evaluation
       for(int i=0 ; i<contactForce->MyLength() ; ++i)
         TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*contactForce)[i]), "**** NaN returned by contact force evaluation.\n");
@@ -1182,10 +948,6 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     // swap state N and state NP1
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
       blockIt->updateState();
-#ifndef CONTACT_REFACTOR
-    for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++)
-      contactBlockIt->updateState();
-#endif
   }
   displayProgress("Explicit time integration", 100.0);
   *out << "\n\n";
@@ -2755,274 +2517,6 @@ void PeridigmNS::Peridigm::synchDataManagers() {
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 }
 
-void FalseDeleter(Epetra_Comm* c) {}
-
-void PeridigmNS::Peridigm::rebalanceContactData() {
-
-  // \todo Handle serial case.  We don't need to rebalance, but we still want to update the contact search.
-  QUICKGRID::Data rebalancedDecomp = currentConfigurationDecomp();
-
-  Teuchos::RCP<Epetra_BlockMap> rebalancedOneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGridDiscretization::getOwnedMap(*peridigmComm, rebalancedDecomp, 1)));
-  Teuchos::RCP<const Epetra_Import> oneDimensionalMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedOneDimensionalMap, *oneDimensionalContactMap));
-
-  Teuchos::RCP<Epetra_BlockMap> rebalancedThreeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(PdQuickGridDiscretization::getOwnedMap(*peridigmComm, rebalancedDecomp, 3)));
-  Teuchos::RCP<const Epetra_Import> threeDimensionalMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedThreeDimensionalMap, *threeDimensionalContactMap));
-
-  Teuchos::RCP<Epetra_BlockMap> rebalancedBondMap = createRebalancedBondMap(rebalancedOneDimensionalMap, oneDimensionalMapImporter);
-  Teuchos::RCP<const Epetra_Import> bondMapImporter = Teuchos::rcp(new Epetra_Import(*rebalancedBondMap, *bondContactMap));
-
-  // create a list of neighbors in the rebalanced configuration
-  // this list has the global ID for each neighbor of each on-processor point (that is, on processor in the rebalanced configuration)
-  Teuchos::RCP<Epetra_Vector> rebalancedNeighborGlobalIDs = createRebalancedNeighborGlobalIDList(rebalancedBondMap, bondMapImporter);
-
-  // create a list of all the off-processor IDs that will need to be ghosted
-  set<int> offProcessorIDs;
-  for(int i=0 ; i<rebalancedNeighborGlobalIDs->MyLength() ; ++i){
-    int globalID = (int)( (*rebalancedNeighborGlobalIDs)[i] );
-    if(!rebalancedOneDimensionalMap->MyGID(globalID))
-      offProcessorIDs.insert(globalID);
-  }
-
-  // this function does three things:
-  // 1) fills the neighborhood information in rebalancedDecomp based on the contact search
-  // 2) creates a list of global IDs for each locally-owned point that will need to be searched for contact (contactNeighborGlobalIDs)
-  // 3) keeps track of the additional off-processor IDs that need to be ghosted as a result of the contact search (offProcessorContactIDs)
-  Teuchos::RCP< map<int, vector<int> > > contactNeighborGlobalIDs = Teuchos::rcp(new map<int, vector<int> >());
-  Teuchos::RCP< set<int> > offProcessorContactIDs = Teuchos::rcp(new set<int>());
-  if(analysisHasContact)
-    contactSearch(rebalancedOneDimensionalMap, rebalancedBondMap, rebalancedNeighborGlobalIDs, rebalancedDecomp, contactNeighborGlobalIDs, offProcessorContactIDs);
-
-  // add the off-processor IDs required for contact to the list of points that will be ghosted
-  for(set<int>::const_iterator it=offProcessorContactIDs->begin() ; it!=offProcessorContactIDs->end() ; it++){
-    offProcessorIDs.insert(*it);
-  }
-
-  // construct the rebalanced overlap maps
-  int numGlobalElements = -1;
-  int numMyElements = rebalancedOneDimensionalMap->NumMyElements() + offProcessorIDs.size();
-  int* myGlobalElements = new int[numMyElements];
-  rebalancedOneDimensionalMap->MyGlobalElements(myGlobalElements);
-  int offset = rebalancedOneDimensionalMap->NumMyElements();
-  int index = 0;
-  for(set<int>::const_iterator it=offProcessorIDs.begin() ; it!=offProcessorIDs.end() ; ++it, ++index){
-    myGlobalElements[offset+index] = *it;
-  }
-  int indexBase = 0;
-  Teuchos::RCP<Epetra_BlockMap> rebalancedOneDimensionalOverlapMap =
-    Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, 1, indexBase, *peridigmComm));
-  Teuchos::RCP<Epetra_BlockMap> rebalancedThreeDimensionalOverlapMap =
-    Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, 3, indexBase, *peridigmComm));
-  delete[] myGlobalElements;
-
-  // update the current-configuration neighborhood data
-  globalNeighborhoodDataCurrentConfiguration = createRebalancedNeighborhoodData(rebalancedOneDimensionalMap,
-                                                                                rebalancedOneDimensionalOverlapMap,
-                                                                                rebalancedBondMap,
-                                                                                rebalancedNeighborGlobalIDs);
-
-  // create a new NeighborhoodData object for contact
-  globalContactNeighborhoodData = createRebalancedContactNeighborhoodData(contactNeighborGlobalIDs,
-                                                                          rebalancedOneDimensionalMap,
-                                                                          rebalancedOneDimensionalOverlapMap);
-  
-  // rebalance the mothership (global) contact vectors
-  Teuchos::RCP<Epetra_MultiVector> rebalancedOneDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*rebalancedOneDimensionalMap, oneDimensionalContactMothership->NumVectors()));
-  rebalancedOneDimensionalMothership->Import(*oneDimensionalContactMothership, *oneDimensionalMapImporter, Insert);
-  oneDimensionalContactMothership = rebalancedOneDimensionalMothership;
-  contactBlockIDs = Teuchos::rcp((*oneDimensionalContactMothership)(0), false);         // block ID
-  contactVolume = Teuchos::rcp((*oneDimensionalContactMothership)(1), false);           // cell volume
-
-  Teuchos::RCP<Epetra_MultiVector> rebalancedThreeDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*rebalancedThreeDimensionalMap, threeDimensionalContactMothership->NumVectors()));
-  rebalancedThreeDimensionalMothership->Import(*threeDimensionalContactMothership, *threeDimensionalMapImporter, Insert);
-  threeDimensionalContactMothership = rebalancedThreeDimensionalMothership;
-  contactY = Teuchos::rcp((*threeDimensionalContactMothership)(0), false);             // current positions
-  contactV = Teuchos::rcp((*threeDimensionalContactMothership)(1), false);             // velocities
-  contactContactForce = Teuchos::rcp((*threeDimensionalContactMothership)(2), false);  // contact force
-  contactScratch = Teuchos::rcp((*threeDimensionalContactMothership)(3), false);       // scratch
-
-#ifndef CONTACT_REFACTOR
-  // rebalance the contact blocks
-  for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++)
-    contactBlockIt->rebalance(rebalancedOneDimensionalMap,
-                              rebalancedOneDimensionalOverlapMap,
-                              rebalancedThreeDimensionalMap,
-                              rebalancedThreeDimensionalOverlapMap,
-                              rebalancedBondMap,
-                              contactBlockIDs,
-                              globalContactNeighborhoodData);
-
-  // Initialize what we can for newly-created ghosts across material boundaries.
-  for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
-    contactBlockIt->importData(*contactVolume, volumeFieldId, PeridigmField::STEP_NONE, Insert);
-    contactBlockIt->importData(*contactBlockIDs, blockIdFieldId, PeridigmField::STEP_NONE, Insert);
-  }
-#endif
-
-  // set all the pointers to the new maps
-  oneDimensionalContactMap = rebalancedOneDimensionalMap;
-  oneDimensionalOverlapContactMap = rebalancedOneDimensionalOverlapMap;
-  threeDimensionalContactMap = rebalancedThreeDimensionalMap;
-  bondContactMap = rebalancedBondMap;
-
-  // Reset the importers for passing data between the mothership and contact mothership vectors
-  oneDimensionalMothershipToContactMothershipImporter = Teuchos::rcp(new Epetra_Import(*oneDimensionalContactMap, *oneDimensionalMap));
-  threeDimensionalMothershipToContactMothershipImporter = Teuchos::rcp(new Epetra_Import(*threeDimensionalContactMap, *threeDimensionalMap));
-}
-
-QUICKGRID::Data PeridigmNS::Peridigm::currentConfigurationDecomp() {
-
-  // Create a decomp object and fill necessary data for rebalance
-  int myNumElements = oneDimensionalMap->NumMyElements();
-  int dimension = 3;
-  QUICKGRID::Data decomp = QUICKGRID::allocatePdGridData(myNumElements, dimension);
-
-  decomp.globalNumPoints = oneDimensionalMap->NumGlobalElements();
-
-  // fill myGlobalIDs
-  UTILITIES::Array<int> myGlobalIDs(myNumElements);
-  int* myGlobalIDsPtr = myGlobalIDs.get();
-  int* gIDs = oneDimensionalMap->MyGlobalElements();
-  memcpy(myGlobalIDsPtr, gIDs, myNumElements*sizeof(int));
-  decomp.myGlobalIDs = myGlobalIDs.get_shared_ptr();
-
-  // fill myX
-  // use current positions for x
-  UTILITIES::Array<double> myX(myNumElements*dimension);
-  double* myXPtr = myX.get();
-  double* yPtr;
-  y->ExtractView(&yPtr);
-  memcpy(myXPtr, yPtr, myNumElements*dimension*sizeof(double));
-  decomp.myX = myX.get_shared_ptr();
-
-  // fill cellVolume
-  UTILITIES::Array<double> cellVolume(myNumElements);
-  double* cellVolumePtr = cellVolume.get();
-  double* volumePtr;
-  volume->ExtractView(&volumePtr);
-  memcpy(cellVolumePtr, volumePtr, myNumElements*sizeof(double));
-  decomp.cellVolume = cellVolume.get_shared_ptr();
-
-  // call the rebalance function on the current-configuration decomp
-  decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
-
-  return decomp;
-}
-
-Teuchos::RCP<Epetra_BlockMap> PeridigmNS::Peridigm::createRebalancedBondMap(Teuchos::RCP<Epetra_BlockMap> rebalancedOneDimensionalMap,
-                                                                            Teuchos::RCP<const Epetra_Import> oneDimensionalMapToRebalancedOneDimensionalMapImporter) {
-
-  // communicate the number of bonds for each point so that space for bond data can be allocated
-  Teuchos::RCP<Epetra_Vector> numberOfBonds = Teuchos::rcp(new Epetra_Vector(*oneDimensionalContactMap));
-  for(int i=0 ; i<oneDimensionalContactMap->NumMyElements() ; ++i){
-    int globalID = oneDimensionalContactMap->GID(i);
-    int bondMapLocalID = bondContactMap->LID(globalID);
-    if(bondMapLocalID != -1)
-      (*numberOfBonds)[i] = (double)( bondContactMap->ElementSize(i) );
-  }
-  Teuchos::RCP<Epetra_Vector> rebalancedNumberOfBonds = Teuchos::rcp(new Epetra_Vector(*rebalancedOneDimensionalMap));
-  rebalancedNumberOfBonds->Import(*numberOfBonds, *oneDimensionalMapToRebalancedOneDimensionalMapImporter, Insert);
-
-  // create the rebalanced bond map
-  // care must be taken because you cannot have an element with zero length
-  int numMyElementsUpperBound = rebalancedOneDimensionalMap->NumMyElements();
-  int numGlobalElements = -1; 
-  int numMyElements = 0;
-  int* rebalancedOneDimensionalMapGlobalElements = rebalancedOneDimensionalMap->MyGlobalElements();
-  int* myGlobalElements = new int[numMyElementsUpperBound];
-  int* elementSizeList = new int[numMyElementsUpperBound];
-  int numPointsWithZeroNeighbors = 0;
-  for(int i=0 ; i<numMyElementsUpperBound ; ++i){
-    int numBonds = (int)( (*rebalancedNumberOfBonds)[i] );
-    if(numBonds > 0){
-      numMyElements++;
-      myGlobalElements[i-numPointsWithZeroNeighbors] = rebalancedOneDimensionalMapGlobalElements[i];
-      elementSizeList[i-numPointsWithZeroNeighbors] = numBonds;
-    }
-    else{
-      numPointsWithZeroNeighbors++;
-    }
-  }
-  int indexBase = 0;
-  Teuchos::RCP<Epetra_BlockMap> rebalancedBondMap = 
-    Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, elementSizeList, indexBase, *peridigmComm));
-  delete[] myGlobalElements;
-  delete[] elementSizeList;
-
-  return rebalancedBondMap;
-}
-
-Teuchos::RCP<Epetra_Vector> PeridigmNS::Peridigm::createRebalancedNeighborGlobalIDList(Teuchos::RCP<Epetra_BlockMap> rebalancedBondMap,
-                                                                                       Teuchos::RCP<const Epetra_Import> bondContactMapToRebalancedBondMapImporter) {
-
-  // construct a globalID neighbor list for the current decomposition
-  Teuchos::RCP<Epetra_Vector> neighborGlobalIDs = Teuchos::rcp(new Epetra_Vector(*bondContactMap));
-  int* neighborhoodList = globalNeighborhoodDataCurrentConfiguration->NeighborhoodList();
-  int neighborhoodListIndex = 0;
-  int neighborGlobalIDIndex = 0;
-  for(int i=0 ; i<globalNeighborhoodDataCurrentConfiguration->NumOwnedPoints() ; ++i){
-    int numNeighbors = neighborhoodList[neighborhoodListIndex++];
-    for(int j=0 ; j<numNeighbors ; ++j){
-      int neighborLocalID = neighborhoodList[neighborhoodListIndex++];
-      (*neighborGlobalIDs)[neighborGlobalIDIndex++] = oneDimensionalOverlapContactMap->GID(neighborLocalID);
-    }
-  }
-
-  // redistribute the globalID neighbor list to the rebalanced configuration
-  Teuchos::RCP<Epetra_Vector> rebalancedNeighborGlobalIDs = Teuchos::rcp(new Epetra_Vector(*rebalancedBondMap));
-  rebalancedNeighborGlobalIDs->Import(*neighborGlobalIDs, *bondContactMapToRebalancedBondMapImporter, Insert);
-
-  return rebalancedNeighborGlobalIDs;
-}
-
-Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::Peridigm::createRebalancedNeighborhoodData(Teuchos::RCP<Epetra_BlockMap> rebalancedOneDimensionalMap,
-                                                                                                  Teuchos::RCP<Epetra_BlockMap> rebalancedOneDimensionalOverlapMap,
-                                                                                                  Teuchos::RCP<Epetra_BlockMap> rebalancedBondMap,
-                                                                                                  Teuchos::RCP<Epetra_Vector> rebalancedNeighborGlobalIDs) {
-
-  Teuchos::RCP<PeridigmNS::NeighborhoodData> rebalancedNeighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
-  rebalancedNeighborhoodData->SetNumOwned(rebalancedOneDimensionalMap->NumMyElements());
-  int* ownedIDs = rebalancedNeighborhoodData->OwnedIDs();
-  for(int i=0 ; i<rebalancedOneDimensionalMap->NumMyElements() ; ++i){
-    int globalID = rebalancedOneDimensionalMap->GID(i);
-    int localID = rebalancedOneDimensionalOverlapMap->LID(globalID);
-    TEUCHOS_TEST_FOR_EXCEPTION(localID == -1, Teuchos::RangeError, "Invalid index into rebalancedOneDimensionalOverlapMap");
-    ownedIDs[i] = localID;
-  }
-  rebalancedNeighborhoodData->SetNeighborhoodListSize(rebalancedOneDimensionalMap->NumMyElements() + rebalancedBondMap->NumMyPoints());
-  // numNeighbors1, n1LID, n2LID, n3LID, numNeighbors2, n1LID, n2LID, ...
-  int* neighborhoodList = rebalancedNeighborhoodData->NeighborhoodList();
-  // points into neighborhoodList, gives start of neighborhood information for each locally-owned element
-  int* neighborhoodPtr = rebalancedNeighborhoodData->NeighborhoodPtr();
-  // gives the offset at which the list of neighbors can be found in the rebalancedNeighborGlobalIDs vector for each locally-owned element
-  int* firstPointInElementList = rebalancedBondMap->FirstPointInElementList();
-  // loop over locally owned points
-  int neighborhoodIndex = 0;
-  for(int iLID=0 ; iLID<rebalancedOneDimensionalMap->NumMyElements() ; ++iLID){
-    // location of this element's neighborhood data in the neighborhoodList
-    neighborhoodPtr[iLID] = neighborhoodIndex;
-    // first entry is the number of neighbors
-    int globalID = rebalancedOneDimensionalMap->GID(iLID);
-    int rebalancedBondMapLocalID = rebalancedBondMap->LID(globalID);
-    if(rebalancedBondMapLocalID != -1){
-      int numNeighbors = rebalancedBondMap->ElementSize(rebalancedBondMapLocalID);
-      neighborhoodList[neighborhoodIndex++] = numNeighbors;
-      // next entries record the local ID of each neighbor
-      int offset = firstPointInElementList[rebalancedBondMapLocalID];
-      for(int iN=0 ; iN<numNeighbors ; ++iN){
-        int globalNeighborID = (int)( (*rebalancedNeighborGlobalIDs)[offset + iN] );
-        int localNeighborID = rebalancedOneDimensionalOverlapMap->LID(globalNeighborID);
-        TEUCHOS_TEST_FOR_EXCEPTION(localNeighborID == -1, Teuchos::RangeError, "Invalid index into rebalancedOneDimensionalOverlapMap");
-        neighborhoodList[neighborhoodIndex++] = localNeighborID;
-      }
-    }
-    else{
-      neighborhoodList[neighborhoodIndex++] = 0;
-    }
-  }
-
-  return rebalancedNeighborhoodData;
-}
-
 Teuchos::RCP< map< string, vector<int> > > PeridigmNS::Peridigm::getExodusNodeSets(){
   Teuchos::RCP< map< string, vector<int> > > nodeSets = boundaryAndInitialConditionManager->getNodeSets();
   Teuchos::RCP< map< string, vector<int> > > exodusNodeSets = Teuchos::rcp(new map< string, vector<int> >() );
@@ -3069,106 +2563,4 @@ void PeridigmNS::Peridigm::displayProgress(string title, double percentComplete)
   ss << "] ";
 
   *out << ss.str();
-}
-
-template<class T>
-struct NonDeleter{
-	void operator()(T* d) {}
-};
-
-void PeridigmNS::Peridigm::contactSearch(Teuchos::RCP<const Epetra_BlockMap> rebalancedOneDimensionalMap, 
-                                         Teuchos::RCP<const Epetra_BlockMap> rebalancedBondMap,
-                                         Teuchos::RCP<const Epetra_Vector> rebalancedNeighborGlobalIDs,
-                                         QUICKGRID::Data& rebalancedDecomp,
-                                         Teuchos::RCP< map<int, vector<int> > > contactNeighborGlobalIDs,
-                                         Teuchos::RCP< set<int> > offProcessorContactIDs)
-{
-  std::tr1::shared_ptr<const Epetra_Comm> comm(peridigmComm.getRawPtr(),NonDeleter<const Epetra_Comm>());
-  QUICKGRID::Data d = rebalancedDecomp;
-
-  // TEMPORARY PLACEHOLDER FOR PER-NODE SEARCH RADII
-  Teuchos::RCP<Epetra_Vector> contactSearchRadii = Teuchos::rcp(new Epetra_Vector(*rebalancedOneDimensionalMap));
-  contactSearchRadii->PutScalar(contactSearchRadius);
-
-  PDNEIGH::NeighborhoodList neighList(comm,d.zoltanPtr.get(),d.numPoints,d.myGlobalIDs,d.myX,contactSearchRadii);
-
-  int* searchNeighborhood = neighList.get_neighborhood().get();
-
-  int* searchGlobalIDs = neighList.get_owned_gids().get();
-  int searchListIndex = 0;
-  for(size_t iPt=0 ; iPt<rebalancedDecomp.numPoints ; ++iPt){
-
-    int globalID = searchGlobalIDs[iPt];
-    vector<int>& contactNeighborGlobalIDList = (*contactNeighborGlobalIDs)[globalID];
-
-    // create a stl::list of global IDs that this point is bonded to
-    list<int> bondedNeighbors;
-    int tempLocalID = rebalancedBondMap->LID(globalID);
-    // if there is no entry in rebalancedBondMap, then there are no bonded neighbors for this point
-    if(tempLocalID != -1){
-      int firstNeighbor = rebalancedBondMap->FirstPointInElementList()[tempLocalID];
-      int numNeighbors = rebalancedBondMap->ElementSize(tempLocalID);
-      for(int i=0 ; i<numNeighbors ; ++i){
-        int neighborGlobalID = (int)( (*rebalancedNeighborGlobalIDs)[firstNeighbor + i] );
-        bondedNeighbors.push_back(neighborGlobalID);
-      }
-    }
-
-    // loop over the neighbors found by the contact search
-    // retain only those neighbors that are not bonded
-    int searchNumNeighbors = searchNeighborhood[searchListIndex++];
-    for(int iNeighbor=0 ; iNeighbor<searchNumNeighbors ; ++iNeighbor){
-      int globalNeighborID = searchNeighborhood[searchListIndex++];
-      list<int>::iterator it = find(bondedNeighbors.begin(), bondedNeighbors.end(), globalNeighborID);  // \todo Don't consider broken bonds here
-      if(it == bondedNeighbors.end()){
-        contactNeighborGlobalIDList.push_back(globalNeighborID);
-        if(rebalancedOneDimensionalMap->LID(globalNeighborID) == -1)
-          offProcessorContactIDs->insert(globalNeighborID);
-      }
-    }
-  }
-}
-
-Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::Peridigm::createRebalancedContactNeighborhoodData(Teuchos::RCP<map<int, vector<int> > > contactNeighborGlobalIDs,
-		Teuchos::RCP<const Epetra_BlockMap> rebalancedOneDimensionalMap,
-		Teuchos::RCP<const Epetra_BlockMap> rebalancedOneDimensionalOverlapMap) {
-
-	Teuchos::RCP<PeridigmNS::NeighborhoodData> rebalancedContactNeighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
-	// record the owned IDs
-	rebalancedContactNeighborhoodData->SetNumOwned(rebalancedOneDimensionalMap->NumMyElements());
-	int* ownedIDs = rebalancedContactNeighborhoodData->OwnedIDs();
-	for(int i=0 ; i<rebalancedOneDimensionalMap->NumMyElements() ; ++i){
-		int globalID = rebalancedOneDimensionalMap->GID(i);
-		int localID = rebalancedOneDimensionalOverlapMap->LID(globalID);
-		TEUCHOS_TEST_FOR_EXCEPTION(localID == -1, Teuchos::RangeError, "Invalid index into rebalancedOneDimensionalOverlapMap");
-		ownedIDs[i] = localID;
-	}
-	// determine the neighborhood list size
-	int neighborhoodListSize = 0;
-	for(map<int, vector<int> >::const_iterator it=contactNeighborGlobalIDs->begin() ; it!=contactNeighborGlobalIDs->end() ; it++)
-		neighborhoodListSize += it->second.size() + 1;
-	rebalancedContactNeighborhoodData->SetNeighborhoodListSize(neighborhoodListSize);
-	// numNeighbors1, n1LID, n2LID, n3LID, numNeighbors2, n1LID, n2LID, ...
-	int* neighborhoodList = rebalancedContactNeighborhoodData->NeighborhoodList();
-	// points into neighborhoodList, gives start of neighborhood information for each locally-owned element
-	int* neighborhoodPtr = rebalancedContactNeighborhoodData->NeighborhoodPtr();
-	// loop over locally owned points
-	int neighborhoodIndex = 0;
-	for(int iLID=0 ; iLID<rebalancedOneDimensionalMap->NumMyElements() ; ++iLID){
-		// location of this element's neighborhood data in the neighborhoodList
-		neighborhoodPtr[iLID] = neighborhoodIndex;
-		// get the global ID of this point and the global IDs of its neighbors
-		int globalID = rebalancedOneDimensionalMap->GID(iLID);
-		// require that this globalID be present as a key into contactNeighborGlobalIDs
-		TEUCHOS_TEST_FOR_EXCEPTION(contactNeighborGlobalIDs->count(globalID) == 0, Teuchos::RangeError, "Invalid index into contactNeighborGlobalIDs");
-		const vector<int>& neighborGlobalIDs = (*contactNeighborGlobalIDs)[globalID];
-		// first entry in the neighborhoodlist is the number of neighbors
-		neighborhoodList[neighborhoodIndex++] = (int) neighborGlobalIDs.size();
-		// next entries record the local ID of each neighbor
-		for(unsigned int iNeighbor=0 ; iNeighbor<neighborGlobalIDs.size() ; ++iNeighbor){
-			neighborhoodList[neighborhoodIndex++] = rebalancedOneDimensionalOverlapMap->LID( neighborGlobalIDs[iNeighbor] );
-		}
-	}
-
-	return rebalancedContactNeighborhoodData;
 }

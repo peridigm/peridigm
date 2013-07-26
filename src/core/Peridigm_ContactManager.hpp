@@ -208,18 +208,11 @@ namespace PeridigmNS {
     Teuchos::RCP<const Epetra_Import> threeDimensionalMothershipToContactMothershipImporter;
 
     // field ids for all relevant data
-    // int elementIdFieldId;
     int blockIdFieldId;
     int volumeFieldId;
-    // int modelCoordinatesFieldId;
     int coordinatesFieldId;
-    // int displacementFieldId;
     int velocityFieldId;
-    // int accelerationFieldId;
-    // int deltaTemperatureFieldId;
-    // int forceDensityFieldId;
     int contactForceDensityFieldId;
-    // int partialVolumeFieldId;
 
     // Private to prohibit use.
     ContactManager();
