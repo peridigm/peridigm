@@ -109,7 +109,7 @@ Teuchos::ParameterList PeridigmNS::SolverManager::getValidParameterList() {
   setDoubleParameter("Safety Factor",1.0,"Time step safety factor",&validSolverVerletParameterList,dblParam);
   setDoubleParameter("Fixed dt",1.0,"User defined fixed time step",&validSolverVerletParameterList,dblParam);
 
-  Teuchos::ParameterList& validSolverQSParameterList = validParameterList.sublist("QuasiStatic");
+  //Teuchos::ParameterList& validSolverQSParameterList = validParameterList.sublist("QuasiStatic");
 
   return validParameterList;
 }
