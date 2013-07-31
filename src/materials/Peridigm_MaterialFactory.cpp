@@ -59,7 +59,7 @@
 Teuchos::RCP<PeridigmNS::Material>
 PeridigmNS::MaterialFactory::create(const Teuchos::ParameterList& materialParams)
 {
-  string materialModelName = materialParams.get<string>("Material Model");
+  std::string materialModelName = materialParams.get<std::string>("Material Model");
 
   Teuchos::RCP<PeridigmNS::Material> materialModel;
   if (materialModelName == "Elastic")
@@ -80,7 +80,7 @@ PeridigmNS::MaterialFactory::create(const Teuchos::ParameterList& materialParams
 #endif    
   }
   else {
-    string invalidMaterial("\n**** Unrecognized material model: ");
+    std::string invalidMaterial("\n**** Unrecognized material model: ");
     invalidMaterial += materialModelName;
     invalidMaterial += ", must be \"Elastic\" or \"Elastic Plastic\" or \"Elastic Plastic Hardening\" or \"Viscoelastic\" or \"LCM\".\n";
     TEUCHOS_TEST_FOR_EXCEPT_MSG(true, invalidMaterial);

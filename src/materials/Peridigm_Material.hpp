@@ -75,7 +75,7 @@ namespace PeridigmNS {
     virtual ~Material(){}
 
     //! Return name of material type
-    virtual string Name() const = 0;
+    virtual std::string Name() const = 0;
 
     //! Returns the density of the material.
     virtual double Density() const = 0;

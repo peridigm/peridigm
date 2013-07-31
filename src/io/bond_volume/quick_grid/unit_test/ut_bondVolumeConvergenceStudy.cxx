@@ -77,6 +77,8 @@ using std::tr1::shared_ptr;
 using UTILITIES::Array;
 using UTILITIES::Vector3D;
 using std::pair;
+using std::cout;
+using std::endl;
 
 static int nx;
 static int ny;

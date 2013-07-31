@@ -47,6 +47,7 @@
 
 #include "Peridigm_Discretization.hpp"
 
+using namespace std;
 using std::tr1::shared_ptr;
 
 Epetra_BlockMap PeridigmNS::Discretization::getOverlap(int ndf, int numShared, int*shared, int numOwned,const  int* owned, const Epetra_Comm& comm){

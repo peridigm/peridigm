@@ -163,7 +163,7 @@ namespace PeridigmNS {
     int numPID;
 
     //! Discretization parameter controling the formation of bonds
-    string bondFilterCommand;
+    std::string bondFilterCommand;
 
     //! Epetra communicator
     Teuchos::RCP<const Epetra_Comm> comm;

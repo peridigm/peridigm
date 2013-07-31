@@ -145,7 +145,7 @@ void printNeighborhood(int numNeigh, int* neigh){
 	for(int i=0;i<numNeigh;i++,neigh++){
 		cout << ", " << *neigh;
 	}
-	cout << endl;
+	cout << std::endl;
 }
 
 void assertNeighborhood_p0(){
@@ -191,7 +191,7 @@ void assertNeighborhood_p0(){
 		BOOST_CHECK(GIDS[j]==*gids);
 		int numNeighAnswer = N[j];
 		int numNeigh = *neigh; neigh++;
-//		cout << "rank, gid, numNeigh = " << myRank << ", " << *gids << ", " << numNeigh << endl;
+//		std::cout << "rank, gid, numNeigh = " << myRank << ", " << *gids << ", " << numNeigh << std::endl;
 //		printNeighborhood(numNeigh,neigh);
 		BOOST_CHECK(numNeighAnswer==numNeigh);
 //		int *neighAnswer = NN[j];
@@ -210,7 +210,7 @@ void assertNeighborhood_p0(){
 //{
 //		int gid=19;
 //		int numNeigh = *neigh; neigh++;
-//		cout << "gid, numNeigh = " << gid << ", " << numNeigh << endl;
+//		std::cout << "gid, numNeigh = " << gid << ", " << numNeigh << std::endl;
 //		printNeighborhood(numNeigh,neigh);
 //
 //	}

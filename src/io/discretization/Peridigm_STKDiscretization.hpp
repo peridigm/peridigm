@@ -192,7 +192,7 @@ namespace PeridigmNS {
     unsigned int numPID;
 
     //! Discretization parameter controling the formation of bonds
-    string bondFilterCommand;
+    std::string bondFilterCommand;
 
     //! Mesh meta data
     Teuchos::RCP<stk::mesh::fem::FEMMetaData> metaData;

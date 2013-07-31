@@ -101,12 +101,12 @@ namespace PeridigmNS {
 
     //! Get the material name
     std::string getMaterialName(){
-      return blockParams.get<string>("Material");
+      return blockParams.get<std::string>("Material");
     }
 
     //! Get the damage model name
     std::string getDamageModelName(){
-      return blockParams.get<string>("Damage Model", "None");
+      return blockParams.get<std::string>("Damage Model", "None");
     }
 
     //! Initialize the material model

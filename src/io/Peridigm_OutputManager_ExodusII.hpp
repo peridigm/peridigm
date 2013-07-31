@@ -122,13 +122,13 @@ namespace PeridigmNS {
     bool globalDataOnly;
 
     //! Map from global output field name to integer. Exodus uses an integer (1..k)  to index the output fields
-    std::map <string, int> global_output_field_map;
+    std::map <std::string, int> global_output_field_map;
 
     //! Map from nodal output field name to integer. Exodus uses an integer (1..k)  to index the output fields
-    std::map <string, int> node_output_field_map;
+    std::map <std::string, int> node_output_field_map;
 
     //! Map from element field name to integer. Exodus uses an integer (1..k)  to index the output fields
-    std::map <string, int> element_output_field_map;
+    std::map <std::string, int> element_output_field_map;
 
     //! Field id for processor id.
     int procNumFieldId;

@@ -55,21 +55,21 @@ namespace PeridigmNS {
   class ShortRangeForceContactModel : public ContactModel{
   public:
 
-	//! Constructor.
-        ShortRangeForceContactModel(const Teuchos::ParameterList & params);
+    //! Constructor.
+    ShortRangeForceContactModel(const Teuchos::ParameterList & params);
 
-	//! Destructor.
-	virtual ~ShortRangeForceContactModel();
+    //! Destructor.
+    virtual ~ShortRangeForceContactModel();
 
-	//! Return name of the model.
-	virtual string Name() const { return("Short-Range Force"); }
+    //! Return name of the model.
+    virtual std::string Name() const { return("Short-Range Force"); }
 
     //! Returns a vector of field IDs corresponding to the variables associated with the model.
     virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
-	//! Evaluate the forces on the cells.
-	virtual void
-	computeForce(const double dt,
+    //! Evaluate the forces on the cells.
+    virtual void
+    computeForce(const double dt,
                  const int numOwnedPoints,
                  const int* ownedIDs,
                  const int* contactNeighborhoodList,

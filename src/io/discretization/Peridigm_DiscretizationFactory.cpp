@@ -51,6 +51,7 @@
 #include "Peridigm_TextFileDiscretization.hpp"
 #include "Peridigm_PdQuickGridDiscretization.hpp"
 
+using namespace std;
 
 PeridigmNS::DiscretizationFactory::DiscretizationFactory(const Teuchos::RCP<Teuchos::ParameterList>& discParams_) :
   discParams(discParams_)

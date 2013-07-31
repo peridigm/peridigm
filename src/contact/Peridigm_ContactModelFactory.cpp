@@ -49,6 +49,8 @@
 #include "Peridigm_ContactModelFactory.hpp"
 #include "Peridigm_ShortRangeForceContactModel.hpp"
 
+using namespace std;
+
 Teuchos::RCP<PeridigmNS::ContactModel>
 PeridigmNS::ContactModelFactory::create(const Teuchos::ParameterList& contactModelParams)
 {

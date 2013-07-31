@@ -61,29 +61,29 @@ namespace PeridigmNS {
 
   public:
 	
-	//! Standard constructor.
-	CriticalStretchDamageModel(const Teuchos::ParameterList& params);
+    //! Standard constructor.
+    CriticalStretchDamageModel(const Teuchos::ParameterList& params);
 
-	//! Destructor.
-	virtual ~CriticalStretchDamageModel();
+    //! Destructor.
+    virtual ~CriticalStretchDamageModel();
 
-	//! Return name of the model.
-	virtual string Name() const { return("Critical Stretch"); }
+    //! Return name of the model.
+    virtual std::string Name() const { return("Critical Stretch"); }
 
     //! Returns a vector of field IDs corresponding to the variables associated with the model.
     virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
-	//! Initialize the damage model.
-	virtual void
-	initialize(const double dt,
+    //! Initialize the damage model.
+    virtual void
+    initialize(const double dt,
                const int numOwnedPoints,
                const int* ownedIDs,
                const int* neighborhoodList,
                PeridigmNS::DataManager& dataManager) const ;
 
-	//! Evaluate the damage
-	virtual void
-	computeDamage(const double dt,
+    //! Evaluate the damage
+    virtual void
+    computeDamage(const double dt,
                   const int numOwnedPoints,
                   const int* ownedIDs,
                   const int* neighborhoodList,
