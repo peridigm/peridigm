@@ -116,7 +116,7 @@ int PeridigmNS::Compute_Deformation_Gradient::compute( Teuchos::RCP< std::vector
 
   // Warn if retval not zero
   if (retval && epetraComm->MyPID() == 0)
-    cout << "**** Warning:  computeApproximateDeformationGradient class returned warning. Some elements may have too few bonds to accurately compute deformation gradient." << endl;
+    std::cout << "**** Warning:  computeApproximateDeformationGradient class returned warning. Some elements may have too few bonds to accurately compute deformation gradient." << std::endl;
 
   return(retval);
 

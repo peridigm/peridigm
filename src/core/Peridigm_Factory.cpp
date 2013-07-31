@@ -63,6 +63,8 @@
 #include <Teuchos_ParameterList.hpp>
 // *****************************************************************
 
+using namespace std;
+
 void updateIntParameter(Teuchos::Ptr<Teuchos::ParameterList> listPtr, std::string nameIn, std::string valueIn);
 void updateDoubleParameter(Teuchos::Ptr<Teuchos::ParameterList> listPtr, std::string nameIn, std::string valueIn);
 void updateBoolParameter(Teuchos::Ptr<Teuchos::ParameterList> listPtr, std::string nameIn, std::string valueIn);

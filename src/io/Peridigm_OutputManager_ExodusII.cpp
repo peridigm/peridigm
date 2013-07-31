@@ -62,6 +62,8 @@
 #include "Peridigm_OutputManager_ExodusII.hpp"
 #include "Peridigm_Field.hpp"
 
+using namespace std;
+
 PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Teuchos::ParameterList>& params, 
                                                            PeridigmNS::Peridigm *peridigm_,
                                                            Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks) 

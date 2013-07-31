@@ -65,6 +65,8 @@ using namespace PdBondFilter;
 using namespace PDNEIGH;
 using std::tr1::shared_ptr;
 using namespace boost::unit_test;
+using std::cout;
+using std::endl;
 
 const size_t numProcs = 1;
 const size_t myRank = 0;

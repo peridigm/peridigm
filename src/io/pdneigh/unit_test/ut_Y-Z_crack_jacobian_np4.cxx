@@ -70,6 +70,7 @@ using namespace boost::unit_test;
 
 using namespace Pdut;
 using std::cout;
+using std::endl;
 using std::set;
 
 static int myRank;

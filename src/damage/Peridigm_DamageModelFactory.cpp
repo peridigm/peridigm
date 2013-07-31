@@ -49,6 +49,8 @@
 #include "Peridigm_DamageModelFactory.hpp"
 #include "Peridigm_CriticalStretchDamageModel.hpp"
 
+using namespace std;
+
 Teuchos::RCP<PeridigmNS::DamageModel>
 PeridigmNS::DamageModelFactory::create(const Teuchos::ParameterList& damageModelParams)
 {

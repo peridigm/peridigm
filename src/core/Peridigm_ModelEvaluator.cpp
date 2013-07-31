@@ -49,6 +49,8 @@
 #include "PHPD_FactoryTraits.hpp"
 #include "Peridigm_ModelEvaluator.hpp"
 
+using namespace std;
+
 PeridigmNS::ModelEvaluator::ModelEvaluator(bool hasContact_)
   : hasContact(hasContact_),
     verbose(false)

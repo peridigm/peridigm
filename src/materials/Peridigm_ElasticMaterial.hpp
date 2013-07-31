@@ -98,54 +98,54 @@ namespace PeridigmNS {
 	//! Constructor.
     ElasticMaterial(const Teuchos::ParameterList & params);
 
-	//! Destructor.
-	virtual ~ElasticMaterial();
+    //! Destructor.
+    virtual ~ElasticMaterial();
 
-	//! Return name of material type
-	virtual string Name() const { return("Elastic"); }
+    //! Return name of material type
+    virtual std::string Name() const { return("Elastic"); }
 
-	//! Returns the density of the material.
-	virtual double Density() const { return m_density; }
+    //! Returns the density of the material.
+    virtual double Density() const { return m_density; }
 
-	//! Returns the bulk modulus of the material.
-	virtual double BulkModulus() const { return m_bulkModulus; }
+    //! Returns the bulk modulus of the material.
+    virtual double BulkModulus() const { return m_bulkModulus; }
 
-	//! Returns the shear modulus of the material.
+    //! Returns the shear modulus of the material.
     virtual double ShearModulus() const { return m_shearModulus; }
 
-	//! Returns the horizon.
-	virtual double Horizon() const { return m_horizon; }
+    //! Returns the horizon.
+    virtual double Horizon() const { return m_horizon; }
 
     //! Returns a vector of field IDs corresponding to the variables associated with the material.
     virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
-	//! Initialized data containers and computes weighted volume.
-	virtual void
-	initialize(const double dt,
+    //! Initialized data containers and computes weighted volume.
+    virtual void
+    initialize(const double dt,
                const int numOwnedPoints,
                const int* ownedIDs,
                const int* neighborhoodList,
                PeridigmNS::DataManager& dataManager) const;
 
-	//! Evaluate the internal force.
-	virtual void
-	computeForce(const double dt,
-				 const int numOwnedPoints,
-				 const int* ownedIDs,
-				 const int* neighborhoodList,
+    //! Evaluate the internal force.
+    virtual void
+    computeForce(const double dt,
+		 const int numOwnedPoints,
+		 const int* ownedIDs,
+		 const int* neighborhoodList,
                  PeridigmNS::DataManager& dataManager) const;
 
-	//! Compute strain energy.
-	virtual void
-	computeStrainEnergy(const double dt,
+    //! Compute strain energy.
+    virtual void
+    computeStrainEnergy(const double dt,
                         const int numOwnedPoints,
                         const int* ownedIDs,
                         const int* neighborhoodList,
                         PeridigmNS::DataManager& dataManager) const;
 
-	//! Evaluate the jacobian.
-	virtual void
-	computeJacobian(const double dt,
+    //! Evaluate the jacobian.
+    virtual void
+    computeJacobian(const double dt,
                     const int numOwnedPoints,
                     const int* ownedIDs,
                     const int* neighborhoodList,
@@ -153,9 +153,9 @@ namespace PeridigmNS {
                     PeridigmNS::SerialMatrix& jacobian,
                     PeridigmNS::Material::JacobianType jacobianType = PeridigmNS::Material::FULL_MATRIX) const;
 
-	//! Evaluate the jacobian via automatic differentiation.
-	virtual void
-	computeAutomaticDifferentiationJacobian(const double dt,
+    //! Evaluate the jacobian via automatic differentiation.
+    virtual void
+    computeAutomaticDifferentiationJacobian(const double dt,
                                             const int numOwnedPoints,
                                             const int* ownedIDs,
                                             const int* neighborhoodList,

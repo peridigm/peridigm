@@ -56,52 +56,52 @@ namespace PeridigmNS {
   class LCMMaterial : public Material{
   public:
 
-	//! Constructor.
+    //! Constructor.
     LCMMaterial(const Teuchos::ParameterList & params);
 
-	//! Destructor.
-	virtual ~LCMMaterial();
+    //! Destructor.
+    virtual ~LCMMaterial();
 
-	//! Return name of material type
-	virtual string Name() const { return("LCM"); }
+    //! Return name of material type
+    virtual std::string Name() const { return("LCM"); }
 
-	//! Returns the density of the material.
-	virtual double Density() const { return m_density; }
+    //! Returns the density of the material.
+    virtual double Density() const { return m_density; }
 
-	//! Returns the bulk modulus of the material.
-	virtual double BulkModulus() const { return m_bulkModulus; }
+    //! Returns the bulk modulus of the material.
+    virtual double BulkModulus() const { return m_bulkModulus; }
 
-	//! Returns the shear modulus of the material.
+    //! Returns the shear modulus of the material.
     virtual double ShearModulus() const { return m_shearModulus; }
 
-	//! Returns the horizon.
-	virtual double Horizon() const { return m_horizon; }
+    //! Returns the horizon.
+    virtual double Horizon() const { return m_horizon; }
 
     //! Returns a vector of field IDs corresponding to the variables associated with the material.
     virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
-	//! Initialized data containers and computes weighted volume.
-	virtual void
-	initialize(const double dt,
+    //! Initialized data containers and computes weighted volume.
+    virtual void
+    initialize(const double dt,
                const int numOwnedPoints,
                const int* ownedIDs,
                const int* neighborhoodList,
                PeridigmNS::DataManager& dataManager) const;
 
-	//! Evaluate the internal force.
-	virtual void
-	computeForce(const double dt,
-				 const int numOwnedPoints,
-				 const int* ownedIDs,
-				 const int* neighborhoodList,
+    //! Evaluate the internal force.
+    virtual void
+    computeForce(const double dt,
+		 const int numOwnedPoints,
+		 const int* ownedIDs,
+		 const int* neighborhoodList,
                  PeridigmNS::DataManager& dataManager) const;
 
   protected:
 
-	// material parameters
-	double m_bulkModulus;
-	double m_shearModulus;
-	double m_density;
+    // material parameters
+    double m_bulkModulus;
+    double m_shearModulus;
+    double m_density;
     double m_horizon;
 
     // field spec ids for all relevant data

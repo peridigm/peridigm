@@ -88,11 +88,11 @@ namespace PeridigmNS {
     // Output frequency
     int frequency;
     // ASCII or BINARY?
-    string outputFormat;
+    std::string outputFormat;
     // Write full neighborlist for each particle?
     bool writeNeighborlist;
     // Filename base
-    string filenameBase;
+    std::string filenameBase;
     // Parameterlist of user-requested data for output
     Teuchos::RCP<Teuchos::ParameterList> outputVariables;
 

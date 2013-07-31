@@ -162,8 +162,8 @@ void PeridigmNS::Compute_Nearest_Point_Data::initialize( Teuchos::RCP< std::vect
   localData[0] = static_cast<int>(foundTies);
   epetraComm()->SumAll(&localData[0], &globalData[0], 1);
   if(globalData[0] > 0 && epetraComm->MyPID() == 0){
-    cout << "**** Warning:  The Nearest_Neighbor_Data compute class found multiple nearest neighbors." << endl;
-    cout << "****           The element with the smallest global ID will be selected for tracking.\n" << endl;
+    std::cout << "**** Warning:  The Nearest_Neighbor_Data compute class found multiple nearest neighbors." << std::endl;
+    std::cout << "****           The element with the smallest global ID will be selected for tracking.\n" << std::endl;
   }
 
   // If verbose flag is set, write output to screen
@@ -187,12 +187,12 @@ void PeridigmNS::Compute_Nearest_Point_Data::initialize( Teuchos::RCP< std::vect
     // Write to the root processor
     if(epetraComm->MyPID() == 0){
       std::stringstream ss;
-      ss << "Nearest Point Data Compute Class:" << endl;
-      ss << "  Requested variable: " << m_variable << endl;
-      ss << "  Requested location: " << m_positionX << ", " << m_positionY << ", " << m_positionZ << endl;
-      ss << "  Closest Element Id: " << m_elementId << endl;
-      ss << "  Closest Element Position: " << globalValues[0] << ", " << globalValues[1] << ", " << globalValues[2] << endl;
-      cout << ss.str() << endl;
+      ss << "Nearest Point Data Compute Class:" << std::endl;
+      ss << "  Requested variable: " << m_variable << std::endl;
+      ss << "  Requested location: " << m_positionX << ", " << m_positionY << ", " << m_positionZ << std::endl;
+      ss << "  Closest Element Id: " << m_elementId << std::endl;
+      ss << "  Closest Element Position: " << globalValues[0] << ", " << globalValues[1] << ", " << globalValues[2] << std::endl;
+      std::cout << ss.str() << std::endl;
     }
   }
 }
