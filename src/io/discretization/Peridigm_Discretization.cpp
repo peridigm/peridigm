@@ -47,7 +47,6 @@
 
 #include "Peridigm_Discretization.hpp"
 
-using namespace std;
 using std::tr1::shared_ptr;
 
 Epetra_BlockMap PeridigmNS::Discretization::getOverlap(int ndf, int numShared, int*shared, int numOwned,const  int* owned, const Epetra_Comm& comm){
@@ -149,9 +148,9 @@ void PeridigmNS::Discretization::createBondFilters(const Teuchos::RCP<Teuchos::P
   if(params->isSublist("Bond Filters")){
     Teuchos::RCP<Teuchos::ParameterList> bondFilterParameters = sublist(params, "Bond Filters");
     for (Teuchos::ParameterList::ConstIterator it = bondFilterParameters->begin(); it != bondFilterParameters->end(); ++it) {
-      string parameterListName = it->first;
+      std::string parameterListName = it->first;
       Teuchos::ParameterList params = bondFilterParameters->sublist(parameterListName);
-      string type = params.get<string>("Type");
+      std::string type = params.get<std::string>("Type");
       if(type == "Rectangular_Plane"){
         double normal[3], lowerLeftCorner[3], bottomUnitVector[3], bottomLength, sideLength;
         normal[0] = params.get<double>("Normal_X");
@@ -170,7 +169,7 @@ void PeridigmNS::Discretization::createBondFilters(const Teuchos::RCP<Teuchos::P
         bondFilters.push_back(bondFilter);        
       }
       else{
-        string msg = "\n**** Error, invalid bond filter type:  " + type;
+	std::string msg = "\n**** Error, invalid bond filter type:  " + type;
         msg += "\n**** Allowable types are:  Rectangular_Plane\n";
         TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
       }
