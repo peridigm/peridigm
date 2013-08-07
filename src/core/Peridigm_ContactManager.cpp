@@ -58,9 +58,12 @@ using namespace std;
 PeridigmNS::ContactManager::ContactManager(const Teuchos::ParameterList& contactParams,
                                            Teuchos::RCP<Discretization> disc,
                                            Teuchos::RCP<Teuchos::ParameterList> peridigmParams)
-  : params(contactParams), contactRebalanceFrequency(0), contactSearchRadius(0.0),
+  : verbose(false), myPID(-1), params(contactParams), contactRebalanceFrequency(0), contactSearchRadius(0.0),
     blockIdFieldId(-1), volumeFieldId(-1), coordinatesFieldId(-1), velocityFieldId(-1), contactForceDensityFieldId(-1)
 {
+  if(contactParams.isParameter("Verbose"))
+    verbose = contactParams.get<bool>("Verbose");
+  myPID = disc->getGlobalOwnedMap(1)->Comm().MyPID();
 
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   blockIdFieldId = fieldManager.getFieldId("Block_Id");
@@ -76,9 +79,7 @@ PeridigmNS::ContactManager::ContactManager(const Teuchos::ParameterList& contact
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Contact parameter \"Search Frequency\" not specified.");
   contactRebalanceFrequency = contactParams.get<int>("Search Frequency");
 
-
-
-  // \todo Replace contact blocks with contact interactions; everything below should be completely refactored.
+  createContactInteractionsList(contactParams, disc);
 
   // Did user specify default blocks?
   bool defaultBlocks = false;
@@ -142,6 +143,82 @@ PeridigmNS::ContactManager::ContactManager(const Teuchos::ParameterList& contact
         contactBlocks->push_back(contactBlock);
       }
     }
+  }
+}
+
+void PeridigmNS::ContactManager::createContactInteractionsList(const Teuchos::ParameterList& contactParams,
+                                                               Teuchos::RCP<Discretization> disc)
+{
+
+  std::set< boost::tuple<int, int, std::string> > contactInteractionSet;
+  Teuchos::ParameterList interactionParams = contactParams.sublist("Interactions");
+
+  // First, check for general and self contact
+  bool hasGeneralContact = interactionParams.isSublist("General Contact");
+  std::string generalContactModelName, selfContactModelName;
+  if(hasGeneralContact)
+    generalContactModelName = interactionParams.sublist("General Contact").get<std::string>("Contact Model");
+  bool hasSelfContact = interactionParams.isSublist("Self Contact");
+  if(hasSelfContact)
+    selfContactModelName = interactionParams.sublist("Self Contact").get<std::string>("Contact Model");
+  if(hasGeneralContact || hasSelfContact){
+    std::vector<std::string> blockNames = disc->getBlockNames() ;
+    for(unsigned int i=0 ; i<blockNames.size() ; ++i){
+      for(unsigned int j=0 ; j<blockNames.size() ; ++j){
+        int blockId_1 = disc->blockNameToBlockId(blockNames[i]);
+        int blockId_2 = disc->blockNameToBlockId(blockNames[j]);
+        if(blockId_1 > blockId_2){
+          int temp = blockId_1;
+          blockId_1 = blockId_2;
+          blockId_2 = temp;
+        }
+        if(hasSelfContact && i == j){
+          boost::tuple<int, int, std::string> interactionTuple(blockId_1, blockId_2, selfContactModelName);
+          contactInteractionSet.insert(interactionTuple);          
+        }
+        if(hasGeneralContact && i != j){
+          boost::tuple<int, int, std::string> interactionTuple(blockId_1, blockId_2, generalContactModelName);
+          contactInteractionSet.insert(interactionTuple);
+        }
+      }
+    }
+  }
+
+  // Parse the individually-defined interactions
+  for(Teuchos::ParameterList::ConstIterator it = interactionParams.begin() ; it != interactionParams.end() ; it++){
+    const string& name = it->first;
+    if(name != "General Contact" && name != "Self Contact" && interactionParams.isSublist(name)){
+      Teuchos::ParameterList& interaction = interactionParams.sublist(name);
+      int blockId_1 = disc->blockNameToBlockId( interaction.get<string>("First Block") );
+      int blockId_2 = disc->blockNameToBlockId( interaction.get<string>("Second Block") );
+      std::string contactModelName = interaction.get<string>("Contact Model");
+      boost::tuple<int, int, std::string> interactionTuple(blockId_1, blockId_2, contactModelName);
+      contactInteractionSet.insert(interactionTuple);
+    }
+  }
+
+  // Elliminate duplicates and load the interactions into a vector
+  std::set< boost::tuple<int, int, string> >::iterator it, nextIt;
+  nextIt = contactInteractionSet.begin();
+  nextIt++;
+  for(it = contactInteractionSet.begin() ; it != contactInteractionSet.end() ; it++){
+    // If a block pair has multiple contact definitions, the final definition is the one that will be used
+    bool duplicate = false;
+    if( nextIt != contactInteractionSet.end() && it->get<0>() == nextIt->get<0>() && it->get<1>() == nextIt->get<1>() )
+      duplicate = true;
+    if(!duplicate)
+      contactInteractions.push_back(*it);
+    if( nextIt != contactInteractionSet.end() )
+      nextIt++;
+  }
+
+  // Print to stdout if verbose flag is set
+  if(verbose && myPID == 0){
+    std::cout << "--Contact Interactions--" << std::endl;
+    std::cout << "  First block    Second block    Contact model" << std::endl;
+    for(unsigned int i=0 ; i<contactInteractions.size() ; ++i)
+      cout << "  " << contactInteractions[i].get<0>() << "              " <<  contactInteractions[i].get<1>() << "               " <<  contactInteractions[i].get<2>() << endl;
+    cout << endl;
   }
 }
 
