@@ -459,12 +459,7 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
   std::map< std::string, std::vector<int> >::const_iterator it;
   for(it = elementBlocks->begin() ; it != elementBlocks->end() ; it++){
     const std::string& blockName = it->first;
-
-    size_t loc = blockName.find_last_of('_');
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(loc == string::npos, "\n**** Parse error, invalid block name.\n");
-    stringstream blockIDSS(blockName.substr(loc+1, blockName.size()));
-    int bID;
-    blockIDSS >> bID;
+    int bID = blockNameToBlockId(blockName);
     const std::vector<int>& elementIDs = it->second;
     for(unsigned int i=0 ; i<elementIDs.size() ; ++i){
       int globalID = elementIDs[i];

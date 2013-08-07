@@ -50,6 +50,8 @@
 
 #include <vector>
 #include <map>
+#include "boost/tuple/tuple.hpp"
+#include "boost/tuple/tuple_comparison.hpp"
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_Vector.h>
 #include <Epetra_Import.h>
@@ -73,6 +75,10 @@ namespace PeridigmNS {
     ContactManager(const Teuchos::ParameterList& contactParams,
                    Teuchos::RCP<PeridigmNS::Discretization> disc,
                    Teuchos::RCP<Teuchos::ParameterList> peridigmParams);
+
+    //! Parse parameter list and create list of contact interactions
+    void createContactInteractionsList(const Teuchos::ParameterList& contactParams,
+                                       Teuchos::RCP<Discretization> disc);
 
     //! Initialization routine to allocate and initialize data structures.
     void initialize(Teuchos::RCP<const Epetra_BlockMap> oneDimensionalMap_,
@@ -107,6 +113,12 @@ namespace PeridigmNS {
     ~ContactManager(){}
 
   protected:
+
+    //! Verbosity flag
+    bool verbose;
+    
+    //! Processor id
+    int myPID;
 
     //! Boundary and initial condition parameters
     Teuchos::ParameterList params;
@@ -176,6 +188,9 @@ namespace PeridigmNS {
 
     //! Contact models
     std::map< std::string, Teuchos::RCP<const PeridigmNS::ContactModel> > contactModels;
+
+    //! List of contact interactions; each entry has the form (block_id, block_id, contact_model_name)
+    std::vector< boost::tuple<int, int, std::string> > contactInteractions;
 
     //! Contact blocks
     Teuchos::RCP< std::vector<PeridigmNS::ContactBlock> > contactBlocks;

@@ -145,6 +145,9 @@ namespace PeridigmNS {
 
     void createBondFilters(const Teuchos::RCP<Teuchos::ParameterList>& params);
 
+    //! Get the block id for a given block name
+    int blockNameToBlockId(std::string blockName) const;
+
   protected:
 
     //! Get the overlap map.

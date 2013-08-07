@@ -46,6 +46,7 @@
 //@HEADER
 
 #include "Peridigm_Discretization.hpp"
+#include <sstream>
 
 using std::tr1::shared_ptr;
 
@@ -177,5 +178,11 @@ void PeridigmNS::Discretization::createBondFilters(const Teuchos::RCP<Teuchos::P
   }
 }
 
-
-
+int PeridigmNS::Discretization::blockNameToBlockId(std::string blockName) const {
+  size_t loc = blockName.find_last_of('_');
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(loc == string::npos, "\n**** Parse error, invalid block name.\n");
+  std::stringstream blockIDSS(blockName.substr(loc+1, blockName.size()));
+  int bID;
+  blockIDSS >> bID;
+  return bID;
+}
