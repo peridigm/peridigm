@@ -109,6 +109,8 @@ namespace PeridigmNS {
 
     void rebalance(int step);
 
+    void evaluateContactForce(double dt);
+
     //! Destructor.
     ~ContactManager(){}
 

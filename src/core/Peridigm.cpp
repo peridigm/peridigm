@@ -495,8 +495,7 @@ void PeridigmNS::Peridigm::initializeWorkset() {
   workset->jacobian = overlapJacobian;
   workset->blocks = blocks;
   if(!contactManager.is_null())
-    workset->contactBlocks = contactManager->getContactBlocks();
-  workset->myPID = -1;
+    workset->contactManager = contactManager;
 }
 
 void PeridigmNS::Peridigm::instantiateComputeManager() {

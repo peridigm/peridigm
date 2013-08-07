@@ -733,3 +733,23 @@ Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::ContactManager::createReb
 
 	return rebalancedContactNeighborhoodData;
 }
+
+void PeridigmNS::ContactManager::evaluateContactForce(double dt)
+{
+  for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
+
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = contactBlockIt->getNeighborhoodData();
+    const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
+    const int* ownedIDs = neighborhoodData->OwnedIDs();
+    const int* neighborhoodList = neighborhoodData->NeighborhoodList();
+    Teuchos::RCP<PeridigmNS::DataManager> dataManager = contactBlockIt->getDataManager();
+    Teuchos::RCP<const PeridigmNS::ContactModel> contactModel = contactBlockIt->getContactModel();
+
+    if(!contactModel.is_null())
+      contactModel->computeForce(dt, 
+                                 numOwnedPoints,
+                                 ownedIDs,
+                                 neighborhoodList,
+                                 *dataManager);
+  }
+}

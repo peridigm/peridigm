@@ -48,13 +48,8 @@
 #include <Epetra_Vector.h>
 #include <Epetra_Import.h>
 #include <vector>
-#include <map>
 #include "Peridigm_Block.hpp"
-#include "Peridigm_ContactBlock.hpp"
-#include "Peridigm_DataManager.hpp"
-#include "Peridigm_NeighborhoodData.hpp"
-#include "Peridigm_Material.hpp"
-#include "Peridigm_ContactModel.hpp"
+#include "Peridigm_ContactManager.hpp"
 
 namespace PHPD {
 
@@ -65,10 +60,7 @@ struct Workset {
   Teuchos::RCP<const double> timeStep;
   Teuchos::RCP<PeridigmNS::SerialMatrix> jacobian;
   Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks;
-  Teuchos::RCP< std::vector<PeridigmNS::ContactBlock> > contactBlocks;
-
-  // MPI ID (debugging)
-  int myPID;
+  Teuchos::RCP<PeridigmNS::ContactManager> contactManager;
 };
 
 }
