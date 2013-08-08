@@ -48,8 +48,9 @@
 #include "Peridigm_Discretization.hpp"
 #include <sstream>
 
-using std::tr1::shared_ptr;
-using namespace std;
+using std::set;
+using std::string;
+using std::stringstream;
 
 Epetra_BlockMap PeridigmNS::Discretization::getOverlap(int ndf, int numShared, int*shared, int numOwned,const  int* owned, const Epetra_Comm& comm){
 
@@ -64,7 +65,6 @@ Epetra_BlockMap PeridigmNS::Discretization::getOverlap(int ndf, int numShared, i
 		*ptr=shared[j];
 
 	return Epetra_BlockMap(-1,numPoints, ids.get(),ndf, 0,comm);
-
 }
 
 UTILITIES::Array<int> PeridigmNS::Discretization::getSharedGlobalIds(const QUICKGRID::Data& gridData){
@@ -100,7 +100,7 @@ UTILITIES::Array<int> PeridigmNS::Discretization::getSharedGlobalIds(const QUICK
 	return sharedGlobalIds;
 }
 
-shared_ptr<int> PeridigmNS::Discretization::getLocalOwnedIds(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap){
+std::tr1::shared_ptr<int> PeridigmNS::Discretization::getLocalOwnedIds(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap){
 	UTILITIES::Array<int> localIds(gridData.numPoints);
 	int *lIds = localIds.get();
 	int *end = localIds.get()+gridData.numPoints;
@@ -110,7 +110,7 @@ shared_ptr<int> PeridigmNS::Discretization::getLocalOwnedIds(const QUICKGRID::Da
 	return localIds.get_shared_ptr();
 }
 
-shared_ptr<int> PeridigmNS::Discretization::getLocalNeighborList(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap){
+std::tr1::shared_ptr<int> PeridigmNS::Discretization::getLocalNeighborList(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap){
 	UTILITIES::Array<int> localNeighborList(gridData.sizeNeighborhoodList);
 	int *localNeig = localNeighborList.get();
 	int *neighPtr = gridData.neighborhoodPtr.get();
@@ -138,7 +138,7 @@ Epetra_BlockMap PeridigmNS::Discretization::getOwnedMap(const Epetra_Comm& comm,
 
 Epetra_BlockMap PeridigmNS::Discretization::getOverlapMap(const Epetra_Comm& comm,const QUICKGRID::Data& gridData, int ndf) {
 	UTILITIES::Array<int> sharedGIDS = getSharedGlobalIds(gridData);
-	shared_ptr<int> sharedPtr = sharedGIDS.get_shared_ptr();
+	std::tr1::shared_ptr<int> sharedPtr = sharedGIDS.get_shared_ptr();
 	int numShared = sharedGIDS.get_size();
 	int *shared = sharedPtr.get();
 	int *owned = gridData.myGlobalIDs.get();
