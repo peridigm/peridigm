@@ -49,6 +49,7 @@
 #include <sstream>
 
 using std::tr1::shared_ptr;
+using namespace std;
 
 Epetra_BlockMap PeridigmNS::Discretization::getOverlap(int ndf, int numShared, int*shared, int numOwned,const  int* owned, const Epetra_Comm& comm){
 
@@ -67,11 +68,11 @@ Epetra_BlockMap PeridigmNS::Discretization::getOverlap(int ndf, int numShared, i
 }
 
 UTILITIES::Array<int> PeridigmNS::Discretization::getSharedGlobalIds(const QUICKGRID::Data& gridData){
-	std::set<int> ownedIds(gridData.myGlobalIDs.get(),gridData.myGlobalIDs.get()+gridData.numPoints);
-	std::set<int> shared;
+	set<int> ownedIds(gridData.myGlobalIDs.get(),gridData.myGlobalIDs.get()+gridData.numPoints);
+	set<int> shared;
 	int *neighPtr = gridData.neighborhoodPtr.get();
 	int *neigh = gridData.neighborhood.get();
-	std::set<int>::const_iterator ownedIdsEnd = ownedIds.end();
+	set<int>::const_iterator ownedIdsEnd = ownedIds.end();
 	for(size_t p=0;p<gridData.numPoints;p++){
 		int ptr = neighPtr[p];
 		int numNeigh = neigh[ptr];
@@ -92,7 +93,7 @@ UTILITIES::Array<int> PeridigmNS::Discretization::getSharedGlobalIds(const QUICK
 	// Copy set into shared ptr
 	UTILITIES::Array<int> sharedGlobalIds(shared.size());
 	int *sharedPtr = sharedGlobalIds.get();
-    std::set<int>::iterator it;
+    set<int>::iterator it;
 	for ( it=shared.begin() ; it != shared.end(); it++, sharedPtr++ )
 		*sharedPtr = *it;
 
@@ -149,9 +150,9 @@ void PeridigmNS::Discretization::createBondFilters(const Teuchos::RCP<Teuchos::P
   if(params->isSublist("Bond Filters")){
     Teuchos::RCP<Teuchos::ParameterList> bondFilterParameters = sublist(params, "Bond Filters");
     for (Teuchos::ParameterList::ConstIterator it = bondFilterParameters->begin(); it != bondFilterParameters->end(); ++it) {
-      std::string parameterListName = it->first;
+      string parameterListName = it->first;
       Teuchos::ParameterList params = bondFilterParameters->sublist(parameterListName);
-      std::string type = params.get<std::string>("Type");
+      string type = params.get<string>("Type");
       if(type == "Rectangular_Plane"){
         double normal[3], lowerLeftCorner[3], bottomUnitVector[3], bottomLength, sideLength;
         normal[0] = params.get<double>("Normal_X");
@@ -170,7 +171,7 @@ void PeridigmNS::Discretization::createBondFilters(const Teuchos::RCP<Teuchos::P
         bondFilters.push_back(bondFilter);        
       }
       else{
-	std::string msg = "\n**** Error, invalid bond filter type:  " + type;
+        string msg = "\n**** Error, invalid bond filter type:  " + type;
         msg += "\n**** Allowable types are:  Rectangular_Plane\n";
         TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
       }
@@ -178,10 +179,10 @@ void PeridigmNS::Discretization::createBondFilters(const Teuchos::RCP<Teuchos::P
   }
 }
 
-int PeridigmNS::Discretization::blockNameToBlockId(std::string blockName) const {
+int PeridigmNS::Discretization::blockNameToBlockId(string blockName) const {
   size_t loc = blockName.find_last_of('_');
   TEUCHOS_TEST_FOR_EXCEPT_MSG(loc == string::npos, "\n**** Parse error, invalid block name.\n");
-  std::stringstream blockIDSS(blockName.substr(loc+1, blockName.size()));
+  stringstream blockIDSS(blockName.substr(loc+1, blockName.size()));
   int bID;
   blockIDSS >> bID;
   return bID;
