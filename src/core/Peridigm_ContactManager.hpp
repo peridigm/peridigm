@@ -85,6 +85,7 @@ namespace PeridigmNS {
                     Teuchos::RCP<const Epetra_BlockMap> threeDimensionalMap_,
                     Teuchos::RCP<const Epetra_BlockMap> oneDimensionalOverlapMap_,
                     Teuchos::RCP<const Epetra_BlockMap> bondMap_,
+                    Teuchos::RCP<const Epetra_Vector> blockIds_,
                     std::map<std::string, double> blockHorizonValues);
 
     //! \todo Create map that tracks names of fields in mothership data, use it to simplify data transfers, elliminate the superfluous vector pointers
@@ -95,7 +96,9 @@ namespace PeridigmNS {
                                Teuchos::RCP<Epetra_Vector> y,
                                Teuchos::RCP<Epetra_Vector> v);
 
-    void loadNeighborhoodData(Teuchos::RCP<PeridigmNS::NeighborhoodData> globalNeighborhoodData);
+    void loadNeighborhoodData(Teuchos::RCP<PeridigmNS::NeighborhoodData> globalNeighborhoodData,
+                              Teuchos::RCP<const Epetra_BlockMap> globalNeighborhoodDataOneDimensionalMap,
+                              Teuchos::RCP<const Epetra_BlockMap> globalNeighborhoodDataOneDimensionalOverlapMap);
 
     void initializeContactBlocks();
 
@@ -168,6 +171,7 @@ namespace PeridigmNS {
     Teuchos::RCP<const Epetra_BlockMap> oneDimensionalContactMap;
     Teuchos::RCP<const Epetra_BlockMap> threeDimensionalContactMap;
     Teuchos::RCP<const Epetra_BlockMap> oneDimensionalOverlapContactMap;
+    Teuchos::RCP<const Epetra_BlockMap> threeDimensionalOverlapContactMap;
     Teuchos::RCP<const Epetra_BlockMap> bondContactMap;
 
     //! Contact mothership multivector for three-dimensional data.

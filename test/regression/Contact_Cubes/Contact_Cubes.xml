@@ -25,6 +25,7 @@
   </ParameterList>
 
   <ParameterList name="Contact">
+    <Parameter name="Verbose" type="bool" value="true"/>
 	<Parameter name="Search Radius" type="double" value="5.0"/>          <!-- mm -->
 	<Parameter name="Search Frequency" type="int" value="1000"/>
     <ParameterList name="Models">
@@ -35,9 +36,7 @@
 	  </ParameterList>
 	</ParameterList>
     <ParameterList name="Interactions">
-      <ParameterList name="Interaction 1 with 1">
-        <Parameter name="First Block" type="string" value="block_1"/>
-        <Parameter name="Second Block" type="string" value="block_1"/>
+      <ParameterList name="General Contact">
 	    <Parameter name="Contact Model" type="string" value="My Contact Model"/>
 	  </ParameterList>
     </ParameterList>

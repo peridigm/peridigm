@@ -47,6 +47,7 @@
 
 #include "Peridigm_ContactManager.hpp"
 #include "contact/Peridigm_ContactModelFactory.hpp"
+#include "Peridigm_Timer.hpp"
 #include <boost/algorithm/string/trim.hpp> // \todo Replace this include with correct include for istream_iterator.
 #include "Peridigm_PdQuickGridDiscretization.hpp"
 
@@ -54,6 +55,8 @@
 #include "pdneigh/NeighborhoodList.h"
 
 using namespace std;
+
+//#define NEW_STUFF 1
 
 PeridigmNS::ContactManager::ContactManager(const Teuchos::ParameterList& contactParams,
                                            Teuchos::RCP<Discretization> disc,
@@ -81,13 +84,16 @@ PeridigmNS::ContactManager::ContactManager(const Teuchos::ParameterList& contact
 
   createContactInteractionsList(contactParams, disc);
 
+  
+
+
   // Did user specify default blocks?
   bool defaultBlocks = false;
   // Parameterlist for default blocks
   Teuchos::ParameterList defaultBlockParams;
 
   // Create vector of blocks
-  contactBlocks = Teuchos::rcp(new std::vector<PeridigmNS::ContactBlock>());
+  contactBlocks = Teuchos::rcp(new vector<PeridigmNS::ContactBlock>());
 
   // Loop over each entry in "Blocks" section of input deck. 
   Teuchos::ParameterList& blockParams = peridigmParams->sublist("Blocks", true);
@@ -122,7 +128,7 @@ PeridigmNS::ContactManager::ContactManager(const Teuchos::ParameterList& contact
 
   // Add in all default blocks
   if (defaultBlocks) {
-    std::vector<std::string> discretizationBlockNames = disc->getBlockNames();
+    vector<string> discretizationBlockNames = disc->getBlockNames();
     for(vector<string>::const_iterator it=discretizationBlockNames.begin() ; it!=discretizationBlockNames.end() ; ++it){
       bool blockMatch = false;
       for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
@@ -149,20 +155,19 @@ PeridigmNS::ContactManager::ContactManager(const Teuchos::ParameterList& contact
 void PeridigmNS::ContactManager::createContactInteractionsList(const Teuchos::ParameterList& contactParams,
                                                                Teuchos::RCP<Discretization> disc)
 {
-
-  std::set< boost::tuple<int, int, std::string> > contactInteractionSet;
+  set< boost::tuple<int, int, string> > contactInteractionSet;
   Teuchos::ParameterList interactionParams = contactParams.sublist("Interactions");
 
   // First, check for general and self contact
   bool hasGeneralContact = interactionParams.isSublist("General Contact");
-  std::string generalContactModelName, selfContactModelName;
+  string generalContactModelName, selfContactModelName;
   if(hasGeneralContact)
-    generalContactModelName = interactionParams.sublist("General Contact").get<std::string>("Contact Model");
+    generalContactModelName = interactionParams.sublist("General Contact").get<string>("Contact Model");
   bool hasSelfContact = interactionParams.isSublist("Self Contact");
   if(hasSelfContact)
-    selfContactModelName = interactionParams.sublist("Self Contact").get<std::string>("Contact Model");
+    selfContactModelName = interactionParams.sublist("Self Contact").get<string>("Contact Model");
   if(hasGeneralContact || hasSelfContact){
-    std::vector<std::string> blockNames = disc->getBlockNames() ;
+    vector<string> blockNames = disc->getBlockNames() ;
     for(unsigned int i=0 ; i<blockNames.size() ; ++i){
       for(unsigned int j=0 ; j<blockNames.size() ; ++j){
         int blockId_1 = disc->blockNameToBlockId(blockNames[i]);
@@ -173,11 +178,11 @@ void PeridigmNS::ContactManager::createContactInteractionsList(const Teuchos::Pa
           blockId_2 = temp;
         }
         if(hasSelfContact && i == j){
-          boost::tuple<int, int, std::string> interactionTuple(blockId_1, blockId_2, selfContactModelName);
+          boost::tuple<int, int, string> interactionTuple(blockId_1, blockId_2, selfContactModelName);
           contactInteractionSet.insert(interactionTuple);          
         }
         if(hasGeneralContact && i != j){
-          boost::tuple<int, int, std::string> interactionTuple(blockId_1, blockId_2, generalContactModelName);
+          boost::tuple<int, int, string> interactionTuple(blockId_1, blockId_2, generalContactModelName);
           contactInteractionSet.insert(interactionTuple);
         }
       }
@@ -191,14 +196,14 @@ void PeridigmNS::ContactManager::createContactInteractionsList(const Teuchos::Pa
       Teuchos::ParameterList& interaction = interactionParams.sublist(name);
       int blockId_1 = disc->blockNameToBlockId( interaction.get<string>("First Block") );
       int blockId_2 = disc->blockNameToBlockId( interaction.get<string>("Second Block") );
-      std::string contactModelName = interaction.get<string>("Contact Model");
-      boost::tuple<int, int, std::string> interactionTuple(blockId_1, blockId_2, contactModelName);
+      string contactModelName = interaction.get<string>("Contact Model");
+      boost::tuple<int, int, string> interactionTuple(blockId_1, blockId_2, contactModelName);
       contactInteractionSet.insert(interactionTuple);
     }
   }
 
   // Elliminate duplicates and load the interactions into a vector
-  std::set< boost::tuple<int, int, string> >::iterator it, nextIt;
+  set< boost::tuple<int, int, string> >::iterator it, nextIt;
   nextIt = contactInteractionSet.begin();
   nextIt++;
   for(it = contactInteractionSet.begin() ; it != contactInteractionSet.end() ; it++){
@@ -214,8 +219,8 @@ void PeridigmNS::ContactManager::createContactInteractionsList(const Teuchos::Pa
 
   // Print to stdout if verbose flag is set
   if(verbose && myPID == 0){
-    std::cout << "--Contact Interactions--" << std::endl;
-    std::cout << "  First block    Second block    Contact model" << std::endl;
+    cout << "--Contact Interactions--" << endl;
+    cout << "  First block    Second block    Contact model" << endl;
     for(unsigned int i=0 ; i<contactInteractions.size() ; ++i)
       cout << "  " << contactInteractions[i].get<0>() << "              " <<  contactInteractions[i].get<1>() << "               " <<  contactInteractions[i].get<2>() << endl;
     cout << endl;
@@ -226,6 +231,7 @@ void PeridigmNS::ContactManager::initialize(Teuchos::RCP<const Epetra_BlockMap> 
                                             Teuchos::RCP<const Epetra_BlockMap> threeDimensionalMap_,
                                             Teuchos::RCP<const Epetra_BlockMap> oneDimensionalOverlapMap_,
                                             Teuchos::RCP<const Epetra_BlockMap> bondMap_,
+                                            Teuchos::RCP<const Epetra_Vector> blockIds_,
                                             map<string, double> blockHorizonValues)
 {
   ContactModelFactory contactModelFactory;
@@ -267,11 +273,73 @@ void PeridigmNS::ContactManager::initialize(Teuchos::RCP<const Epetra_BlockMap> 
                                                                 0,
                                                                 oneDimensionalOverlapMap->Comm()));
 
-  // Instantiate the maps for the contact mothership vectors
+  PeridigmNS::Timer::self().startTimer("Initialize Contact Maps");
+
+#ifdef NEW_STUFF
+
+  set<int> blocksWithContact;
+  for(vector< boost::tuple<int, int, string> >::iterator it=contactInteractions.begin() ; it!=contactInteractions.end() ; it++){
+    blocksWithContact.insert( it->get<0>() );
+    blocksWithContact.insert( it->get<1>() );
+  }
+
+  vector<int> contactGlobalIds;
+  contactGlobalIds.reserve(oneDimensionalMap->NumMyElements());
+  for(int i=0 ; i<oneDimensionalMap->NumMyElements() ; ++i){
+    int blockId = (*blockIds_)[i];
+    if(blocksWithContact.find(blockId) != blocksWithContact.end())
+      contactGlobalIds.push_back(oneDimensionalMap->GID(i));
+  }
+
+  // Instantiate the owned maps for the contact mothership vectors
+  oneDimensionalContactMap = Teuchos::rcp(new Epetra_BlockMap(-1, contactGlobalIds.size(), &contactGlobalIds[0], 1, 0, oneDimensionalMap_->Comm()));
+  threeDimensionalContactMap = Teuchos::rcp(new Epetra_BlockMap(-1, contactGlobalIds.size(), &contactGlobalIds[0], 3, 0, oneDimensionalMap_->Comm()));
+
+  // Create an overlap vector with block ids
+  Epetra_Import tempImporter(*oneDimensionalOverlapMap, *oneDimensionalMap);
+  Epetra_Vector overlapBlockIds(*oneDimensionalOverlapMap);
+  overlapBlockIds.Import(*blockIds_, tempImporter, Insert);
+
+  vector<int> contactGlobalOverlapIds;
+  contactGlobalOverlapIds.reserve(oneDimensionalOverlapMap->NumMyElements());
+  for(int i=0 ; i<oneDimensionalOverlapMap->NumMyElements() ; ++i){
+    int blockId = overlapBlockIds[i];
+    if(blocksWithContact.find(blockId) != blocksWithContact.end())
+      contactGlobalOverlapIds.push_back(oneDimensionalOverlapMap->GID(i));
+  }
+
+  // Instantiate the overlap maps for the contact mothership vectors
+  oneDimensionalOverlapContactMap = Teuchos::rcp(new Epetra_BlockMap(-1, contactGlobalOverlapIds.size(), &contactGlobalOverlapIds[0], 1, 0, oneDimensionalMap_->Comm()));
+  threeDimensionalOverlapContactMap = Teuchos::rcp(new Epetra_BlockMap(-1, contactGlobalOverlapIds.size(), &contactGlobalOverlapIds[0], 3, 0, oneDimensionalMap_->Comm()));
+
+  // Create the contact bond map
+  // Care must be taken because elements with zero neighbors are not included in the bond map (Epetra_BlockMap does not support elements with zero nodes)
+  vector<int> contactBondMapGlobalIds;
+  contactBondMapGlobalIds.reserve(bondMap_->NumMyElements());
+  vector<int> contactBondMapElementSizeList;
+  contactBondMapElementSizeList.reserve(bondMap_->NumMyElements());
+  int* bondMapElementSizes = bondMap_->ElementSizeList();
+  for(int i=0 ; i<oneDimensionalContactMap->NumMyElements() ; ++i){
+    int globalId = oneDimensionalContactMap->GID(i);
+    int bondMapLocalId = bondMap_->LID(globalId);
+    if(bondMapLocalId != -1){
+      contactBondMapGlobalIds.push_back(globalId);
+      contactBondMapElementSizeList.push_back( bondMapElementSizes[bondMapLocalId] );
+    }
+  }
+  bondContactMap = Teuchos::rcp(new Epetra_BlockMap(-1, contactBondMapGlobalIds.size(), &contactBondMapGlobalIds[0], &contactBondMapElementSizeList[0], 0, oneDimensionalMap_->Comm()));
+
+#else
+
   oneDimensionalContactMap = Teuchos::rcp(new Epetra_BlockMap(*oneDimensionalMap));
   threeDimensionalContactMap = Teuchos::rcp(new Epetra_BlockMap(*threeDimensionalMap));
   oneDimensionalOverlapContactMap = Teuchos::rcp(new Epetra_BlockMap(*oneDimensionalOverlapMap));
+  threeDimensionalOverlapContactMap = Teuchos::rcp(new Epetra_BlockMap(-1, oneDimensionalOverlapContactMap->NumMyElements(), oneDimensionalOverlapContactMap->MyGlobalElements(), 3, 0, oneDimensionalMap_->Comm()));
   bondContactMap = Teuchos::rcp(new Epetra_BlockMap(*bondMap));
+
+#endif
+
+  PeridigmNS::Timer::self().stopTimer("Initialize Contact Maps");
 
   // Instantiate the importers for passing data between the mothership and contact mothership vectors
   oneDimensionalMothershipToContactMothershipImporter = Teuchos::rcp(new Epetra_Import(*oneDimensionalContactMap, *oneDimensionalMap));
@@ -302,21 +370,78 @@ void PeridigmNS::ContactManager::loadAllMothershipData(Teuchos::RCP<Epetra_Vecto
   contactScratch->PutScalar(0.0);
 }
 
-void PeridigmNS::ContactManager::loadNeighborhoodData(Teuchos::RCP<PeridigmNS::NeighborhoodData> globalNeighborhoodData)
+void PeridigmNS::ContactManager::loadNeighborhoodData(Teuchos::RCP<PeridigmNS::NeighborhoodData> globalNeighborhoodData,
+                                                      Teuchos::RCP<const Epetra_BlockMap> globalNeighborhoodDataOneDimensionalMap,
+                                                      Teuchos::RCP<const Epetra_BlockMap> globalNeighborhoodDataOneDimensionalOverlapMap)
 {
+#ifdef NEW_STUFF
+
+  int peridigmNumOwned = globalNeighborhoodData->NumOwnedPoints();
+  int* peridigmOwnedIds = globalNeighborhoodData->OwnedIDs();
+  int peridigmNeighborhoodListSize = globalNeighborhoodData->NeighborhoodListSize();
+  int* peridigmNeighborhoodList = globalNeighborhoodData->NeighborhoodList();
+
+  vector<int> ownedIds;
+  vector<int> neighborhoodList;
+  vector<int> neighborhoodPtr;
+  ownedIds.reserve(peridigmNumOwned);
+  neighborhoodList.reserve(peridigmNeighborhoodListSize);
+  neighborhoodPtr.reserve(peridigmNumOwned);
+
+  int peridigmNeighborhoodIndex = 0;
+  for(int i=0 ; i<peridigmNumOwned; ++i){
+
+    int peridigmNumNeighbors = peridigmNeighborhoodList[peridigmNeighborhoodIndex++];
+
+    int globalId = globalNeighborhoodDataOneDimensionalMap->GID(peridigmOwnedIds[i]);
+    int localId = oneDimensionalContactMap->LID(globalId);
+    if(localId != -1){
+      ownedIds.push_back(localId);
+      vector<int> tempNeighborList;
+      for(int j=0 ; j<peridigmNumNeighbors ; ++j){
+        globalId = globalNeighborhoodDataOneDimensionalOverlapMap->GID(peridigmNeighborhoodList[peridigmNeighborhoodIndex + j]);
+        localId = oneDimensionalOverlapContactMap->LID(globalId);
+        if(localId != -1)
+          tempNeighborList.push_back(localId);
+      }
+      neighborhoodPtr.push_back(neighborhoodList.size());
+      neighborhoodList.push_back(tempNeighborList.size());
+      for(unsigned int k=0 ; k<tempNeighborList.size() ; ++k)
+        neighborhoodList.push_back(tempNeighborList[k]);
+    }
+
+    peridigmNeighborhoodIndex += peridigmNumNeighbors;
+  }
+
+  // Create the neighborhood list
+  neighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
+  neighborhoodData->SetNumOwned(ownedIds.size());
+  memcpy(neighborhoodData->OwnedIDs(), 
+ 		 &ownedIds[0],
+ 		 ownedIds.size()*sizeof(int));
+  memcpy(neighborhoodData->NeighborhoodPtr(), 
+ 		 &neighborhoodPtr[0],
+ 		 neighborhoodPtr.size()*sizeof(int));
+  neighborhoodData->SetNeighborhoodListSize(neighborhoodList.size());
+  memcpy(neighborhoodData->NeighborhoodList(),
+ 		 &neighborhoodList[0],
+ 		 neighborhoodList.size()*sizeof(int));
+
+#else
   neighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData(*globalNeighborhoodData));
-  contactNeighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData(*globalNeighborhoodData));
+#endif
+  contactNeighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData(*neighborhoodData));
 }
 
 void PeridigmNS::ContactManager::initializeContactBlocks()
 {
   // Initialize the contact blocks (creates maps, neighborhoods, DataManager)
   for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++)
-    contactBlockIt->initialize(oneDimensionalMap,
-                               oneDimensionalOverlapMap,
-                               threeDimensionalMap,
-                               threeDimensionalOverlapMap,
-                               bondMap,
+    contactBlockIt->initialize(oneDimensionalContactMap,
+                               oneDimensionalOverlapContactMap,
+                               threeDimensionalContactMap,
+                               threeDimensionalOverlapContactMap,
+                               bondContactMap,
                                contactBlockIDs,
                                contactNeighborhoodData);
 
@@ -466,6 +591,7 @@ void PeridigmNS::ContactManager::rebalance(int step)
   // set all the pointers to the new maps
   oneDimensionalContactMap = rebalancedOneDimensionalMap;
   oneDimensionalOverlapContactMap = rebalancedOneDimensionalOverlapMap;
+  threeDimensionalOverlapContactMap = rebalancedThreeDimensionalOverlapMap;
   threeDimensionalContactMap = rebalancedThreeDimensionalMap;
   bondContactMap = rebalancedBondMap;
 
@@ -629,6 +755,7 @@ Teuchos::RCP<Epetra_Vector> PeridigmNS::ContactManager::createRebalancedNeighbor
     int numNeighbors = neighborhoodList[neighborhoodListIndex++];
     for(int j=0 ; j<numNeighbors ; ++j){
       int neighborLocalID = neighborhoodList[neighborhoodListIndex++];
+      TEUCHOS_TEST_FOR_EXCEPTION(neighborGlobalIDIndex >= neighborGlobalIDs->MyLength(), Teuchos::RangeError, "ContactManager::createRebalancedNeighborGlobalIDList(), Invalid index into neighborGlobalIDs\n");
       (*neighborGlobalIDs)[neighborGlobalIDIndex++] = oneDimensionalOverlapContactMap->GID(neighborLocalID);
     }
   }
@@ -738,10 +865,10 @@ void PeridigmNS::ContactManager::evaluateContactForce(double dt)
 {
   for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
 
-    Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = contactBlockIt->getNeighborhoodData();
-    const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
-    const int* ownedIDs = neighborhoodData->OwnedIDs();
-    const int* neighborhoodList = neighborhoodData->NeighborhoodList();
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> nData = contactBlockIt->getNeighborhoodData();
+    const int numOwnedPoints = nData->NumOwnedPoints();
+    const int* ownedIDs = nData->OwnedIDs();
+    const int* neighborhoodList = nData->NeighborhoodList();
     Teuchos::RCP<PeridigmNS::DataManager> dataManager = contactBlockIt->getDataManager();
     Teuchos::RCP<const PeridigmNS::ContactModel> contactModel = contactBlockIt->getContactModel();
 
