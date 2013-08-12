@@ -2,6 +2,8 @@
 
 add_test (Contact_Cubes_np1 python ./Contact_Cubes/np1/Contact_Cubes.py)
 add_test (Contact_Cubes_np4 python ./Contact_Cubes/np4/Contact_Cubes.py)
+add_test (Contact_Cubes_Interaction_Blocks_np1 python ./Contact_Cubes_Interaction_Blocks/np1/Contact_Cubes_Interaction_Blocks.py)
+add_test (Contact_Cubes_Interaction_Blocks_np4 python ./Contact_Cubes_Interaction_Blocks/np4/Contact_Cubes_Interaction_Blocks.py)
 add_test (Contact_Perforation_np1 python ./Contact_Perforation/np1/Contact_Perforation.py)
 add_test (Contact_Perforation_np3 python ./Contact_Perforation/np3/Contact_Perforation.py)
 add_test (Compression_QS_3x2x2_np1 python ./Compression_QS_3x2x2/np1/Compression_QS_3x2x2.py)

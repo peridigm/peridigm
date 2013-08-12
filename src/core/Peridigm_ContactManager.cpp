@@ -231,6 +231,7 @@ void PeridigmNS::ContactManager::initialize(Teuchos::RCP<const Epetra_BlockMap> 
                                             Teuchos::RCP<const Epetra_BlockMap> threeDimensionalMap_,
                                             Teuchos::RCP<const Epetra_BlockMap> oneDimensionalOverlapMap_,
                                             Teuchos::RCP<const Epetra_BlockMap> bondMap_,
+                                            Teuchos::RCP<PeridigmNS::NeighborhoodData> globalNeighborhoodData_,
                                             Teuchos::RCP<const Epetra_Vector> blockIds_,
                                             map<string, double> blockHorizonValues)
 {
@@ -312,20 +313,27 @@ void PeridigmNS::ContactManager::initialize(Teuchos::RCP<const Epetra_BlockMap> 
   oneDimensionalOverlapContactMap = Teuchos::rcp(new Epetra_BlockMap(-1, contactGlobalOverlapIds.size(), &contactGlobalOverlapIds[0], 1, 0, oneDimensionalMap_->Comm()));
   threeDimensionalOverlapContactMap = Teuchos::rcp(new Epetra_BlockMap(-1, contactGlobalOverlapIds.size(), &contactGlobalOverlapIds[0], 3, 0, oneDimensionalMap_->Comm()));
 
+  loadNeighborhoodData(globalNeighborhoodData_, oneDimensionalMap_, oneDimensionalOverlapMap_);
+
   // Create the contact bond map
   // Care must be taken because elements with zero neighbors are not included in the bond map (Epetra_BlockMap does not support elements with zero nodes)
   vector<int> contactBondMapGlobalIds;
   contactBondMapGlobalIds.reserve(bondMap_->NumMyElements());
   vector<int> contactBondMapElementSizeList;
   contactBondMapElementSizeList.reserve(bondMap_->NumMyElements());
-  int* bondMapElementSizes = bondMap_->ElementSizeList();
-  for(int i=0 ; i<oneDimensionalContactMap->NumMyElements() ; ++i){
-    int globalId = oneDimensionalContactMap->GID(i);
-    int bondMapLocalId = bondMap_->LID(globalId);
-    if(bondMapLocalId != -1){
+
+  int* neighborhoodList = neighborhoodData->NeighborhoodList();
+  int neighborhoodListIndex = 0;
+  int* neighborhoodListOwnedIds = neighborhoodData->OwnedIDs();
+  for(int i=0 ; i<neighborhoodData->NumOwnedPoints() ; ++i){
+    int numNeighbors = neighborhoodList[neighborhoodListIndex++];
+    if(numNeighbors > 0){
+      int localId = neighborhoodListOwnedIds[i];
+      int globalId = oneDimensionalContactMap->GID(localId);
       contactBondMapGlobalIds.push_back(globalId);
-      contactBondMapElementSizeList.push_back( bondMapElementSizes[bondMapLocalId] );
+      contactBondMapElementSizeList.push_back(numNeighbors);
     }
+    neighborhoodListIndex += numNeighbors;
   }
   bondContactMap = Teuchos::rcp(new Epetra_BlockMap(-1, contactBondMapGlobalIds.size(), &contactBondMapGlobalIds[0], &contactBondMapElementSizeList[0], 0, oneDimensionalMap_->Comm()));
 
@@ -336,6 +344,8 @@ void PeridigmNS::ContactManager::initialize(Teuchos::RCP<const Epetra_BlockMap> 
   oneDimensionalOverlapContactMap = Teuchos::rcp(new Epetra_BlockMap(*oneDimensionalOverlapMap));
   threeDimensionalOverlapContactMap = Teuchos::rcp(new Epetra_BlockMap(-1, oneDimensionalOverlapContactMap->NumMyElements(), oneDimensionalOverlapContactMap->MyGlobalElements(), 3, 0, oneDimensionalMap_->Comm()));
   bondContactMap = Teuchos::rcp(new Epetra_BlockMap(*bondMap));
+
+  loadNeighborhoodData(globalNeighborhoodData_, oneDimensionalMap_, oneDimensionalOverlapMap_);
 
 #endif
 
@@ -393,9 +403,10 @@ void PeridigmNS::ContactManager::loadNeighborhoodData(Teuchos::RCP<PeridigmNS::N
 
     int peridigmNumNeighbors = peridigmNeighborhoodList[peridigmNeighborhoodIndex++];
 
-    int globalId = globalNeighborhoodDataOneDimensionalMap->GID(peridigmOwnedIds[i]);
+    int globalId = globalNeighborhoodDataOneDimensionalOverlapMap->GID(peridigmOwnedIds[i]);
     int localId = oneDimensionalContactMap->LID(globalId);
     if(localId != -1){
+      localId = oneDimensionalOverlapContactMap->LID(globalId);
       ownedIds.push_back(localId);
       vector<int> tempNeighborList;
       for(int j=0 ; j<peridigmNumNeighbors ; ++j){
@@ -650,7 +661,9 @@ Teuchos::RCP<Epetra_BlockMap> PeridigmNS::ContactManager::createRebalancedBondMa
     int globalID = oneDimensionalContactMap->GID(i);
     int bondMapLocalID = bondContactMap->LID(globalID);
     if(bondMapLocalID != -1)
-      (*numberOfBonds)[i] = (double)( bondContactMap->ElementSize(i) );
+      (*numberOfBonds)[i] = (double)( bondContactMap->ElementSize(bondMapLocalID) );
+    else
+      (*numberOfBonds)[i] = 0.0;
   }
   Teuchos::RCP<Epetra_Vector> rebalancedNumberOfBonds = Teuchos::rcp(new Epetra_Vector(*rebalancedOneDimensionalMap));
   rebalancedNumberOfBonds->Import(*numberOfBonds, *oneDimensionalMapToRebalancedOneDimensionalMapImporter, Insert);

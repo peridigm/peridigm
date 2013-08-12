@@ -190,15 +190,16 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
                                threeDimensionalMap,
                                oneDimensionalOverlapMap,
                                bondMap,
+                               globalNeighborhoodData,
                                peridigmDisc->getBlockID(),
                                blockHorizonValues);
+    // contactManager->loadNeighborhoodData(globalNeighborhoodData,
+    //                                      oneDimensionalMap,
+    //                                      oneDimensionalOverlapMap);
     contactManager->loadAllMothershipData(blockIDs,
                                           volume,
                                           y, 
                                           v);
-    contactManager->loadNeighborhoodData(globalNeighborhoodData,
-                                         oneDimensionalMap,
-                                         oneDimensionalOverlapMap);
     contactManager->initializeContactBlocks();
   }
 

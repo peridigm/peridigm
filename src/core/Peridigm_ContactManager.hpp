@@ -85,6 +85,7 @@ namespace PeridigmNS {
                     Teuchos::RCP<const Epetra_BlockMap> threeDimensionalMap_,
                     Teuchos::RCP<const Epetra_BlockMap> oneDimensionalOverlapMap_,
                     Teuchos::RCP<const Epetra_BlockMap> bondMap_,
+                    Teuchos::RCP<PeridigmNS::NeighborhoodData> globalNeighborhoodData_,
                     Teuchos::RCP<const Epetra_Vector> blockIds_,
                     std::map<std::string, double> blockHorizonValues);
 
