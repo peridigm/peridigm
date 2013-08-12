@@ -1,0 +1,155 @@
+<ParameterList>
+
+  <Parameter name="Verbose" type="bool" value="false"/>
+
+  <ParameterList name="Discretization">
+        <Parameter name="Type" type="string" value="Exodus"/>
+        <Parameter name="Input Mesh File" type="string" value="Contact_Ring.g"/>
+        <Parameter name="Omit Bonds Between Blocks" type="string" value="All"/>
+  </ParameterList>
+
+  <ParameterList name="Materials">
+	<ParameterList name="Ring Material">
+	  <Parameter name="Material Model" type="string" value="Elastic"/>
+	  <Parameter name="Density" type="double" value="8.9e-3"/>           <!-- g/mm^3 -->
+	  <Parameter name="Young's Modulus" type="double" value="122.0e3"/>  <!-- MPa -->
+	  <Parameter name="Poisson's Ratio" type="double" value="0.33"/>
+	</ParameterList>
+	<ParameterList name="Disk Material">
+	  <Parameter name="Material Model" type="string" value="Elastic"/>
+	  <Parameter name="Density" type="double" value="1.5e-3"/>           <!-- g/mm^3 -->
+	  <Parameter name="Young's Modulus" type="double" value="774.0e3"/>  <!-- MPa -->
+	  <Parameter name="Poisson's Ratio" type="double" value="0.2"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Blocks">
+    <ParameterList name="Ring Block">
+      <Parameter name="Block Names" type="string" value="block_1"/>
+      <Parameter name="Material" type="string" value="Ring Material"/>
+      <Parameter name="Horizon" type="double" value="0.15075"/>
+    </ParameterList>
+    <ParameterList name="Disk Blocks">
+      <Parameter name="Block Names" type="string" value="block_2 block_3 block_4"/>
+      <Parameter name="Material" type="string" value="Disk Material"/>
+      <Parameter name="Horizon" type="double" value="0.15075"/>
+    </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Contact">
+    <Parameter name="Verbose" type="bool" value="true"/>
+        <Parameter name="Search Radius" type="double" value="0.08"/>            <!-- mm -->
+        <Parameter name="Search Frequency" type="int" value="1"/>
+    <ParameterList name="Models">
+          <ParameterList name="My Contact Model">
+            <Parameter name="Contact Model" type="string" value="Short Range Force"/>
+            <Parameter name="Contact Radius" type="double" value="0.08"/>       <!-- mm -->
+            <Parameter name="Spring Constant" type="double" value="2000.0e3"/>  <!-- MPa -->
+          </ParameterList>
+        </ParameterList>
+    <ParameterList name="Interactions">
+      <ParameterList name="General Contact">
+            <Parameter name="Contact Model" type="string" value="My Contact Model"/>
+          </ParameterList>
+    </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Boundary Conditions">
+    <ParameterList name="Prescribed Displacement Fix Top">
+      <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+      <Parameter name="Node Set" type="string" value="nodelist_1"/>
+      <Parameter name="Coordinate" type="string" value="z"/>
+      <Parameter name="Value" type="string" value="0.0"/>
+    </ParameterList>
+    <ParameterList name="Prescribed Displacement Fix Bottom">
+      <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+      <Parameter name="Node Set" type="string" value="nodelist_2"/>
+      <Parameter name="Coordinate" type="string" value="z"/>
+      <Parameter name="Value" type="string" value="0.0"/>
+    </ParameterList>
+	<ParameterList name="Initial Velocity Ring X">
+	  <Parameter name="Type" type="string" value="Initial Velocity"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_3"/>
+	  <Parameter name="Coordinate" type="string" value="x"/>
+	  <Parameter name="Value" type="string" value="-2000.0 * x / sqrt(x*x + y*y)"/>  <!-- mm/ms -->
+	</ParameterList>
+	<ParameterList name="Initial Velocity Ring Y">
+	  <Parameter name="Type" type="string" value="Initial Velocity"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_3"/>
+	  <Parameter name="Coordinate" type="string" value="y"/>
+	  <Parameter name="Value" type="string" value="-2000.0 * y / sqrt(x*x + y*y)"/>  <!-- mm/ms -->
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Solver">
+	<Parameter name="Verbose" type="bool" value="false"/>
+	<Parameter name="Initial Time" type="double" value="0.0"/>   <!-- ms -->
+	<Parameter name="Final Time" type="double" value="5.0e-4"/>  <!-- ms -->
+	<ParameterList name="Verlet">
+	  <Parameter name="Fixed dt" type="double" value="2.0e-6"/>
+	</ParameterList>
+  </ParameterList>
+
+ <ParameterList name="Compute Class Parameters">
+    <ParameterList name="Block 1 Strain Energy">
+      <Parameter name="Compute Class" type="string" value="Block_Data"/>
+      <Parameter name="Calculation Type" type="string" value="Sum"/>
+      <Parameter name="Block" type="string" value="block_1"/>
+      <Parameter name="Variable" type="string" value="Strain_Energy"/>
+      <Parameter name="Output Label" type="string" value="Block_1_Strain_Energy"/>
+    </ParameterList>
+    <ParameterList name="Block 2 Strain Energy">
+      <Parameter name="Compute Class" type="string" value="Block_Data"/>
+      <Parameter name="Calculation Type" type="string" value="Sum"/>
+      <Parameter name="Block" type="string" value="block_2"/>
+      <Parameter name="Variable" type="string" value="Strain_Energy"/>
+      <Parameter name="Output Label" type="string" value="Block_2_Strain_Energy"/>
+    </ParameterList>
+    <ParameterList name="Block 3 Strain Energy">
+      <Parameter name="Compute Class" type="string" value="Block_Data"/>
+      <Parameter name="Calculation Type" type="string" value="Sum"/>
+      <Parameter name="Block" type="string" value="block_3"/>
+      <Parameter name="Variable" type="string" value="Strain_Energy"/>
+      <Parameter name="Output Label" type="string" value="Block_3_Strain_Energy"/>
+    </ParameterList>
+    <ParameterList name="Block 4 Strain Energy">
+      <Parameter name="Compute Class" type="string" value="Block_Data"/>
+      <Parameter name="Calculation Type" type="string" value="Sum"/>
+      <Parameter name="Block" type="string" value="block_4"/>
+      <Parameter name="Variable" type="string" value="Strain_Energy"/>
+      <Parameter name="Output Label" type="string" value="Block_4_Strain_Energy"/>
+    </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Output Data 1">
+	<Parameter name="Output File Type" type="string" value="ExodusII"/>
+	<Parameter name="Output Format" type="string" value="BINARY"/>
+	<Parameter name="Output Filename" type="string" value="Contact_Ring"/>
+	<Parameter name="Output Frequency" type="int" value="10"/>
+	<Parameter name="Parallel Write" type="bool" value="true"/>
+	<ParameterList name="Output Variables">
+	  <Parameter name="Displacement" type="bool" value="true"/>
+	  <Parameter name="Velocity" type="bool" value="true"/>
+	  <Parameter name="Element_Id" type="bool" value="true"/>
+	  <Parameter name="Dilatation" type="bool" value="true"/>
+	  <Parameter name="Weighted_Volume" type="bool" value="true"/>
+	  <Parameter name="Strain_Energy" type="bool" value="true"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Output Data 2">
+	<Parameter name="Output File Type" type="string" value="ExodusII"/>
+	<Parameter name="Output Format" type="string" value="BINARY"/>
+	<Parameter name="Output Filename" type="string" value="Contact_Ring"/>
+	<Parameter name="Output Frequency" type="int" value="1"/>
+	<Parameter name="Parallel Write" type="bool" value="true"/>
+	<ParameterList name="Output Variables">
+	  <Parameter name="Global_Kinetic_Energy" type="bool" value="true"/>
+	  <Parameter name="Block_1_Strain_Energy" type="bool" value="true"/>
+	  <Parameter name="Block_2_Strain_Energy" type="bool" value="true"/>
+	  <Parameter name="Block_3_Strain_Energy" type="bool" value="true"/>
+	  <Parameter name="Block_4_Strain_Energy" type="bool" value="true"/>
+	</ParameterList>
+  </ParameterList>
+
+</ParameterList>
