@@ -1,0 +1,2 @@
+blot Contact_Ring.h -input Contact_Ring.blot met
+gnuplot Contact_Ring.plotgen

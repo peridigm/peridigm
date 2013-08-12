@@ -1,0 +1,10 @@
+
+set terminal pdf enhanced font "Times-Roman,24" size 12in, 8in 
+set output "Contact_Ring.pdf"
+set xlabel "Time (ms)" font "Times-Roman,32"
+set ylabel "Energy (mJ)" font "Times-Roman,32"
+set key bottom right
+#set yrange [0.0:0.01]
+plot "Contact_Ring.csv" using ($1):($2) with lines lw 10 title "Kinetic Energy", \
+     "Contact_Ring.csv" using ($1):($3 + $4 + $5 + $6) with lines lw 10 title "Stored Elastic Energy", \
+     "Contact_Ring.csv" using ($1):($2 + $3 + $4 + $5 + $6) with lines lw 10 title "Total Energy"
