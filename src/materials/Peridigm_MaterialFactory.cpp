@@ -51,6 +51,7 @@
 #include "Peridigm_ElasticPlasticMaterial.hpp"
 #include "Peridigm_ElasticPlasticHardeningMaterial.hpp"
 #include "Peridigm_ViscoelasticMaterial.hpp"
+#include "Peridigm_ElasticCorrespondenceMaterial.hpp"
 #include "Peridigm_LCMMaterial.hpp"
 #ifdef PERIDIGM_CJL
 #include "Peridigm_LammiConcreteModel.hpp"
@@ -70,6 +71,8 @@ PeridigmNS::MaterialFactory::create(const Teuchos::ParameterList& materialParams
     materialModel = Teuchos::rcp( new ElasticPlasticHardeningMaterial(materialParams) );
   else if (materialModelName == "Viscoelastic")
     materialModel = Teuchos::rcp( new ViscoelasticMaterial(materialParams) );
+  else if (materialModelName == "Elastic Correspondence")
+    materialModel = Teuchos::rcp( new ElasticCorrespondenceMaterial(materialParams) );
   else if (materialModelName == "LCM")
     materialModel = Teuchos::rcp( new LCMMaterial(materialParams) );
   else if (materialModelName == "Pressure Dependent Elastic Plastic"){
@@ -82,7 +85,7 @@ PeridigmNS::MaterialFactory::create(const Teuchos::ParameterList& materialParams
   else {
     std::string invalidMaterial("\n**** Unrecognized material model: ");
     invalidMaterial += materialModelName;
-    invalidMaterial += ", must be \"Elastic\" or \"Elastic Plastic\" or \"Elastic Plastic Hardening\" or \"Viscoelastic\" or \"LCM\".\n";
+    invalidMaterial += ", must be \"Elastic\" or \"Elastic Plastic\" or \"Elastic Plastic Hardening\" or \"Viscoelastic\" or \"Elastic Correspondence\" or \"LCM\".\n";
     TEUCHOS_TEST_FOR_EXCEPT_MSG(true, invalidMaterial);
   }
   

@@ -361,7 +361,6 @@ int PeridigmNS::Material::computeApproximateDeformationGradient(const int numOwn
   int volumeFId = fieldManager.getFieldId("Volume");
   int modelCoordinatesFId = fieldManager.getFieldId("Model_Coordinates");
   int coordinatesFId = fieldManager.getFieldId("Coordinates");
-  int weightedVolumeFId = fieldManager.getFieldId("Weighted_Volume");
   int bondDamageFId = fieldManager.getFieldId("Bond_Damage");
   int deformationGradientXXFId = fieldManager.getFieldId("Deformation_GradientXX");
   int deformationGradientXYFId = fieldManager.getFieldId("Deformation_GradientXY");
@@ -373,15 +372,42 @@ int PeridigmNS::Material::computeApproximateDeformationGradient(const int numOwn
   int deformationGradientZYFId = fieldManager.getFieldId("Deformation_GradientZY");
   int deformationGradientZZFId = fieldManager.getFieldId("Deformation_GradientZZ");
 
+  // Record the inverse of the shape tensor if the corresponding fields are present in the DataManager
+  int shapeTensorInverseXXFId(0), shapeTensorInverseXYFId(0), shapeTensorInverseXZFId(0);
+  int shapeTensorInverseYXFId(0), shapeTensorInverseYYFId(0), shapeTensorInverseYZFId(0);
+  int shapeTensorInverseZXFId(0), shapeTensorInverseZYFId(0), shapeTensorInverseZZFId(0);
+  double *shapeTensorInverseXX(0), *shapeTensorInverseXY(0), *shapeTensorInverseXZ(0);
+  double *shapeTensorInverseYX(0), *shapeTensorInverseYY(0), *shapeTensorInverseYZ(0);
+  double *shapeTensorInverseZX(0), *shapeTensorInverseZY(0), *shapeTensorInverseZZ(0);
+  if(fieldManager.hasField("Shape_Tensor_InverseXX")){
+      shapeTensorInverseXXFId = fieldManager.getFieldId("Shape_Tensor_InverseXX");
+      shapeTensorInverseXYFId = fieldManager.getFieldId("Shape_Tensor_InverseXY");
+      shapeTensorInverseXZFId = fieldManager.getFieldId("Shape_Tensor_InverseXZ");
+      shapeTensorInverseYXFId = fieldManager.getFieldId("Shape_Tensor_InverseYX");
+      shapeTensorInverseYYFId = fieldManager.getFieldId("Shape_Tensor_InverseYY");
+      shapeTensorInverseYZFId = fieldManager.getFieldId("Shape_Tensor_InverseYZ");
+      shapeTensorInverseZXFId = fieldManager.getFieldId("Shape_Tensor_InverseZX");
+      shapeTensorInverseZYFId = fieldManager.getFieldId("Shape_Tensor_InverseZY");
+      shapeTensorInverseZZFId = fieldManager.getFieldId("Shape_Tensor_InverseZZ");
+      dataManager.getData(shapeTensorInverseXXFId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseXX);
+      dataManager.getData(shapeTensorInverseXYFId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseXY);
+      dataManager.getData(shapeTensorInverseXZFId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseXZ);
+      dataManager.getData(shapeTensorInverseYXFId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseYX);
+      dataManager.getData(shapeTensorInverseYYFId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseYY);
+      dataManager.getData(shapeTensorInverseYZFId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseYZ);
+      dataManager.getData(shapeTensorInverseZXFId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseZX);
+      dataManager.getData(shapeTensorInverseZYFId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseZY);
+      dataManager.getData(shapeTensorInverseZZFId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseZZ);
+  }
+
   // Extract pointers to the underlying data
-  double *volume, *x, *y, *weightedVolume, *bondDamage;
+  double *volume, *x, *y, *bondDamage;
   double *deformationGradientXX, *deformationGradientXY, *deformationGradientXZ;
   double *deformationGradientYX, *deformationGradientYY, *deformationGradientYZ;
   double *deformationGradientZX, *deformationGradientZY, *deformationGradientZZ;
   dataManager.getData(volumeFId, PeridigmField::STEP_NONE)->ExtractView(&volume);
   dataManager.getData(modelCoordinatesFId, PeridigmField::STEP_NONE)->ExtractView(&x);
   dataManager.getData(coordinatesFId, PeridigmField::STEP_NP1)->ExtractView(&y);
-  dataManager.getData(weightedVolumeFId, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
   dataManager.getData(bondDamageFId, PeridigmField::STEP_NP1)->ExtractView(&bondDamage);
   dataManager.getData(deformationGradientXXFId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientXX);
   dataManager.getData(deformationGradientXYFId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientXY);
@@ -461,6 +487,19 @@ int PeridigmNS::Material::computeApproximateDeformationGradient(const int numOwn
       shapeTensorInverse[2][0] = minor[2]/det;
       shapeTensorInverse[2][1] = -1.0*minor[5]/det;
       shapeTensorInverse[2][2] = minor[8]/det;
+    }
+
+    // Store the shape tensor
+    if(shapeTensorInverseXX){
+      shapeTensorInverseXX[ID] = shapeTensorInverse[0][0];
+      shapeTensorInverseXY[ID] = shapeTensorInverse[0][1];
+      shapeTensorInverseXZ[ID] = shapeTensorInverse[0][2];
+      shapeTensorInverseYX[ID] = shapeTensorInverse[1][0];
+      shapeTensorInverseYY[ID] = shapeTensorInverse[1][1];
+      shapeTensorInverseYZ[ID] = shapeTensorInverse[1][2];
+      shapeTensorInverseZX[ID] = shapeTensorInverse[2][0];
+      shapeTensorInverseZY[ID] = shapeTensorInverse[2][1];
+      shapeTensorInverseZZ[ID] = shapeTensorInverse[2][2];
     }
 
     // Compute deformation gradient
