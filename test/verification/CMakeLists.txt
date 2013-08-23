@@ -31,6 +31,8 @@ add_test (ThermalExpansionBondFailure_np1 python ./ThermalExpansionBondFailure/n
 add_test (ThermalExpansionBondFailure_np4 python ./ThermalExpansionBondFailure/np4/ThermalExpansionBondFailure.py)
 add_test (ElasticCorrespondenceFullyPrescribedTension_np1 python ./ElasticCorrespondenceFullyPrescribedTension/np1/ElasticCorrespondenceFullyPrescribedTension.py)
 add_test (ElasticCorrespondenceFullyPrescribedTension_np4 python ./ElasticCorrespondenceFullyPrescribedTension/np4/ElasticCorrespondenceFullyPrescribedTension.py)
+add_test (ElasticCorrespondenceQSTension_np1 python ./ElasticCorrespondenceQSTension/np1/ElasticCorrespondenceQSTension.py)
+add_test (ElasticCorrespondenceQSTension_np4 python ./ElasticCorrespondenceQSTension/np4/ElasticCorrespondenceQSTension.py)
 if (USE_DAKOTA)
    add_test (Dakota_2x1x1_np1 python ./Dakota_2x1x1/np1/Dakota_2x1x1.py)
 endif(USE_DAKOTA)

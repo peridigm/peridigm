@@ -1,0 +1,19 @@
+
+reset
+create brick x 1.0 y 3.0 z 1.0
+create brick x 1.0 y 1.5 z 1.0
+volume 2 move x 0.0 y 2.25 z 0.0 
+create brick x 1.0 y 1.5 z 1.0
+volume 3 move x 0.0 y -2.25 z 0.0
+block 1 volume 3
+block 2 volume 1
+block 3 volume 2
+volume all size 0.25
+mesh volume all
+nodeset 1 volume 3 # bottom block
+nodeset 2 volume 2 # top block
+nodeset 3 curve 30 # bottom x axis
+nodeset 4 curve 33 # bottom z axis
+nodeset 5 curve 20 # top x axis
+nodeset 6 curve 23 # top z axis
+export genesis "ElasticCorrespondenceQSTension.g" overwrite

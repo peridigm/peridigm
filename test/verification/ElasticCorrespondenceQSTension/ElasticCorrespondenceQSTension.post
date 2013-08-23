@@ -1,0 +1,2 @@
+blot ElasticCorrespondenceQSTension.e -input ElasticCorrespondenceQSTension.blot met
+gnuplot ElasticCorrespondenceQSTension.plotgen

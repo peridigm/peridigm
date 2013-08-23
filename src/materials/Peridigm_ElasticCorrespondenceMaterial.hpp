@@ -79,14 +79,6 @@ namespace PeridigmNS {
     //! Returns a vector of field IDs corresponding to the variables associated with the material.
     virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
-    //! Initialization routines.
-    // virtual void
-    // initialize(const double dt,
-    //            const int numOwnedPoints,
-    //            const int* ownedIDs,
-    //            const int* neighborhoodList,
-    //            PeridigmNS::DataManager& dataManager) const;
-
     //! Evaluate the internal force.
     virtual void
     computeForce(const double dt,
@@ -97,6 +89,14 @@ namespace PeridigmNS {
 
   protected:
 
+    //! Evaluate the hourglass force for suppression of zero-energy modes.
+    virtual void
+    computeHourglassForce(const double dt,
+			  const int numOwnedPoints,
+			  const int* ownedIDs,
+			  const int* neighborhoodList,
+			  PeridigmNS::DataManager& dataManager) const;
+
     // material parameters
     double m_bulkModulus;
     double m_shearModulus;
@@ -104,12 +104,14 @@ namespace PeridigmNS {
     double m_poissonsRatio;
     double m_density;
     double m_horizon;
+    double m_hourglassCoefficient;
 
     // field spec ids for all relevant data
     std::vector<int> m_fieldIds;
     int m_volumeFieldId;
     int m_modelCoordinatesFieldId;
     int m_coordinatesFieldId;
+    int m_hourglassForceDensityFieldId;
     int m_forceDensityFieldId;
     int m_bondDamageFieldId;
     int m_deformationGradientXXFieldId;
