@@ -383,7 +383,7 @@ void updateParametersFromTextFile(std::string inputFile, Teuchos::Ptr<Teuchos::P
 	}
 	if(debug_capture){
 		std::string newFileName = inputFile;
-		std::cout << newFileName << std::endl;
+		//std::cout << newFileName << std::endl;
 		while(newFileName[newFileName.size()-1] != '.'){
 			newFileName.erase(newFileName.begin() + newFileName.size() - 1);
 		}
@@ -391,7 +391,7 @@ void updateParametersFromTextFile(std::string inputFile, Teuchos::Ptr<Teuchos::P
 		const Teuchos::ParameterList paramlist(*My_List.get());
 		const std::string xmlFileName(newFileName);
 		Teuchos::writeParameterListToXmlFile( paramlist, xmlFileName);
-		std::cout << *My_List.get() << std::endl;
+		//std::cout << *My_List.get() << std::endl;
 	}
 }
 

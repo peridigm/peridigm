@@ -190,7 +190,7 @@ void PeridigmNS::Compute_Nearest_Point_Data::initialize( Teuchos::RCP< std::vect
       ss << "Nearest Point Data Compute Class:" << std::endl;
       ss << "  Requested variable: " << m_variable << std::endl;
       ss << "  Requested location: " << m_positionX << ", " << m_positionY << ", " << m_positionZ << std::endl;
-      ss << "  Closest Element Id: " << m_elementId << std::endl;
+      ss << "  Closest Element Id: " << m_elementId+1 << std::endl;
       ss << "  Closest Element Position: " << globalValues[0] << ", " << globalValues[1] << ", " << globalValues[2] << std::endl;
       std::cout << ss.str() << std::endl;
     }

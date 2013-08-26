@@ -69,7 +69,7 @@ nodeset 2 volume 7 # top end                 apply linear displacement field in 
 nodeset 3 curve 74 # z-axis edge on bottom   constrain in x
 nodeset 4 curve 77 # x-axis edge on bottom   constrain in z
 nodeset 5 curve 72 # z-axis edge on top      constrain in x
-nodeset 6 curve 79 # x-axis edge on top      constrain in z
+nodeset 6 curve 84 # x-axis edge on top      constrain in z
 
 block 1 volume 1
 block 2 volume 6
