@@ -11,5 +11,5 @@ set output "tensile_test.pdf"
 set xlabel "Engineering Strain (m/m)" font "Times-Roman,32"
 set ylabel "Engineering Stress (GPa)" font "Times-Roman,32"
 set key bottom right
-plot "tensile_test.csv" using ($4-$5)/($2-$3):($7-$6)*0.5*1.0e-10/0.1999996 with lines lw 10 lt 3 title "Peridynamic Simulation", \
+plot "tensile_test.csv" using ($4-$5)/($2-$3):($7-$6)*0.5*1.0e-10/0.1999996 with points pt 7 ps 4 lc 3 title "Peridynamic Simulation", \
      Modulus(x) with lines lw 10 title "Elastic Modulus"
