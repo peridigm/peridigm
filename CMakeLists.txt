@@ -113,12 +113,29 @@ ELSE()
 ENDIF()
 
 #
-# Optional dependency on Laboratory for Computational Mechanics (LCM)
+# Enable CJL development features
 #
 IF(USE_CJL)
-  MESSAGE("-- CJL is enabled, compiling with -DPERIDIGM_CJL")
+  MESSAGE("-- CJL is enabled, compiling with -DPERIDIGM_CJL.\n")
   ADD_DEFINITIONS(-DPERIDIGM_CJL)
   SET(PERIDIGM_CJL TRUE)
+ELSE()
+  MESSAGE("-- CJL is NOT enabled.\n")
+  SET(PERIDIGM_CJL FALSE)
+  SET(CJL_LIBRARY)
+ENDIF()
+
+#
+# Enable Sandia internal development
+#
+IF(USE_SANDIA_INTERNAL)
+  MESSAGE("-- SANDIA_INTERNAL is enabled, compiling with -DPERIDIGM_SANDIA_INTERNAL.\n")
+  ADD_DEFINITIONS(-DPERIDIGM_SANDIA_INTERNAL)
+  SET(PERIDIGM_SANDIA_INTERNAL TRUE)
+ELSE()
+  MESSAGE("-- SANDIA_INTERNAL is NOT enabled.\n")
+  SET(PERIDIGM_SANDIA_INTERNAL FALSE)
+  SET(SANDIA_INTERNAL_LIBRARY)
 ENDIF()
 
 # Optional Installation helpers
