@@ -53,6 +53,9 @@
 #include "Peridigm_ViscoelasticMaterial.hpp"
 #include "Peridigm_ElasticCorrespondenceMaterial.hpp"
 #include "Peridigm_LCMMaterial.hpp"
+#ifdef PERIDIGM_SANDIA_INTERNAL
+#include "Peridigm_ElasticPartialStressMaterial.hpp"
+#endif
 #ifdef PERIDIGM_CJL
 #include "Peridigm_LammiConcreteModel.hpp"
 #endif
@@ -75,6 +78,13 @@ PeridigmNS::MaterialFactory::create(const Teuchos::ParameterList& materialParams
     materialModel = Teuchos::rcp( new ElasticCorrespondenceMaterial(materialParams) );
   else if (materialModelName == "LCM")
     materialModel = Teuchos::rcp( new LCMMaterial(materialParams) );
+  else if (materialModelName == "Elastic Partial Stress"){
+#ifdef PERIDIGM_SANDIA_INTERNAL
+    materialModel = Teuchos::rcp( new ElasticPartialStressMaterial(materialParams) );
+#else
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n**** Elastic Partial Stress material model unavailable, recompile with -DUSE_SANDIA_INTERNAL.\n");
+#endif
+  }
   else if (materialModelName == "Pressure Dependent Elastic Plastic"){
 #ifdef PERIDIGM_CJL
     materialModel = Teuchos::rcp( new LammiConcreteModel(materialParams) );
