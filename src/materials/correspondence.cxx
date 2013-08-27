@@ -45,12 +45,116 @@
 // ************************************************************************
 //@HEADER
 
-#include <cmath>
-#include <Sacado.hpp>
 #include "correspondence.h"
-#include "material_utilities.h"
+#include <Sacado.hpp>
 
 namespace CORRESPONDENCE {
+
+template<typename ScalarT>
+int invert3by3Matrix
+(
+ const ScalarT& matrixXX,
+ const ScalarT& matrixXY,
+ const ScalarT& matrixXZ,
+ const ScalarT& matrixYX,
+ const ScalarT& matrixYY,
+ const ScalarT& matrixYZ,
+ const ScalarT& matrixZX,
+ const ScalarT& matrixZY,
+ const ScalarT& matrixZZ,
+ ScalarT& inverseXX,
+ ScalarT& inverseXY,
+ ScalarT& inverseXZ,
+ ScalarT& inverseYX,
+ ScalarT& inverseYY,
+ ScalarT& inverseYZ,
+ ScalarT& inverseZX,
+ ScalarT& inverseZY,
+ ScalarT& inverseZZ
+)
+{
+  int returnCode(0);
+
+  ScalarT minor0 =  matrixYY * matrixZZ - matrixYZ * matrixZY;
+  ScalarT minor1 =  matrixYX * matrixZZ - matrixYZ * matrixZX;
+  ScalarT minor2 =  matrixYX * matrixZY - matrixYY * matrixZX;
+  ScalarT minor3 =  matrixXY * matrixZZ - matrixXZ * matrixZY;
+  ScalarT minor4 =  matrixXX * matrixZZ - matrixZX * matrixXZ;
+  ScalarT minor5 =  matrixXX * matrixZY - matrixXY * matrixZX;
+  ScalarT minor6 =  matrixXY * matrixYZ - matrixXZ * matrixYY;
+  ScalarT minor7 =  matrixXX * matrixYZ - matrixXZ * matrixYX;
+  ScalarT minor8 =  matrixXX * matrixYY - matrixXY * matrixYX;
+  ScalarT det = matrixXX * minor0 - matrixXY * minor1 + matrixXZ * minor2;
+
+  if(det == ScalarT(0.0)){
+    returnCode = 1;
+    inverseXX = 0.0;
+    inverseXY = 0.0;
+    inverseXZ = 0.0;
+    inverseYX = 0.0;
+    inverseYY = 0.0;
+    inverseYZ = 0.0;
+    inverseZX = 0.0;
+    inverseZY = 0.0;
+    inverseZZ = 0.0;
+  }
+  else{
+    inverseXX = minor0/det;
+    inverseXY = -1.0*minor3/det;
+    inverseXZ = minor6/det;
+    inverseYX = -1.0*minor1/det;
+    inverseYY = minor4/det;
+    inverseYZ = -1.0*minor7/det;
+    inverseZX = minor2/det;
+    inverseZY = -1.0*minor5/det;
+    inverseZZ = minor8/det;
+  }
+
+  return returnCode;
+}
+
+template<typename ScalarT>
+void MatrixMultiply
+(
+ const ScalarT& aXX,
+ const ScalarT& aXY,
+ const ScalarT& aXZ,
+ const ScalarT& aYX,
+ const ScalarT& aYY,
+ const ScalarT& aYZ,
+ const ScalarT& aZX,
+ const ScalarT& aZY,
+ const ScalarT& aZZ,
+ const ScalarT& bXX,
+ const ScalarT& bXY,
+ const ScalarT& bXZ,
+ const ScalarT& bYX,
+ const ScalarT& bYY,
+ const ScalarT& bYZ,
+ const ScalarT& bZX,
+ const ScalarT& bZY,
+ const ScalarT& bZZ,
+ ScalarT& resultXX,
+ ScalarT& resultXY,
+ ScalarT& resultXZ,
+ ScalarT& resultYX,
+ ScalarT& resultYY,
+ ScalarT& resultYZ,
+ ScalarT& resultZX,
+ ScalarT& resultZY,
+ ScalarT& resultZZ
+)
+{
+  resultXX = aXX * bXX + aXY * bYX + aXZ * bZX;
+  resultXY = aXX * bXY + aXY * bYY + aXZ * bZY;
+  resultXZ = aXX * bXZ + aXY * bYZ + aXZ * bZZ;
+  resultYX = aYX * bXX + aYY * bYX + aYZ * bZX;
+  resultYY = aYX * bXY + aYY * bYY + aYZ * bZY;
+  resultYZ = aYX * bXZ + aYY * bYZ + aYZ * bZZ;
+  resultZX = aZX * bXX + aZY * bYX + aZZ * bZX;
+  resultZY = aZX * bXY + aZY * bYY + aZZ * bZY;
+  resultZZ = aZX * bXZ + aZY * bYZ + aZZ * bZZ;
+}
 
 template<typename ScalarT>
 void computeGreenLagrangeStrain
@@ -187,6 +291,59 @@ void computeClassicalElasticStress
 }
 
 /** Explicit template instantiation for double. */
+template void MatrixMultiply<double>
+(
+ const double& aXX,
+ const double& aXY,
+ const double& aXZ,
+ const double& aYX,
+ const double& aYY,
+ const double& aYZ,
+ const double& aZX,
+ const double& aZY,
+ const double& aZZ,
+ const double& bXX,
+ const double& bXY,
+ const double& bXZ,
+ const double& bYX,
+ const double& bYY,
+ const double& bYZ,
+ const double& bZX,
+ const double& bZY,
+ const double& bZZ,
+ double& resultXX,
+ double& resultXY,
+ double& resultXZ,
+ double& resultYX,
+ double& resultYY,
+ double& resultYZ,
+ double& resultZX,
+ double& resultZY,
+ double& resultZZ
+);
+
+template int invert3by3Matrix<double>
+(
+ const double& matrixXX,
+ const double& matrixXY,
+ const double& matrixXZ,
+ const double& matrixYX,
+ const double& matrixYY,
+ const double& matrixYZ,
+ const double& matrixZX,
+ const double& matrixZY,
+ const double& matrixZZ,
+ double& inverseXX,
+ double& inverseXY,
+ double& inverseXZ,
+ double& inverseYX,
+ double& inverseYY,
+ double& inverseYZ,
+ double& inverseZX,
+ double& inverseZY,
+ double& inverseZZ
+);
+
 template void computeGreenLagrangeStrain<double>
 (
   const double* deformationGradientXX,
@@ -236,6 +393,59 @@ template void computeClassicalElasticStress<double>
 );
 
 /** Explicit template instantiation for Sacado::Fad::DFad<double>. */
+template void MatrixMultiply<Sacado::Fad::DFad<double> >
+(
+ const Sacado::Fad::DFad<double>& aXX,
+ const Sacado::Fad::DFad<double>& aXY,
+ const Sacado::Fad::DFad<double>& aXZ,
+ const Sacado::Fad::DFad<double>& aYX,
+ const Sacado::Fad::DFad<double>& aYY,
+ const Sacado::Fad::DFad<double>& aYZ,
+ const Sacado::Fad::DFad<double>& aZX,
+ const Sacado::Fad::DFad<double>& aZY,
+ const Sacado::Fad::DFad<double>& aZZ,
+ const Sacado::Fad::DFad<double>& bXX,
+ const Sacado::Fad::DFad<double>& bXY,
+ const Sacado::Fad::DFad<double>& bXZ,
+ const Sacado::Fad::DFad<double>& bYX,
+ const Sacado::Fad::DFad<double>& bYY,
+ const Sacado::Fad::DFad<double>& bYZ,
+ const Sacado::Fad::DFad<double>& bZX,
+ const Sacado::Fad::DFad<double>& bZY,
+ const Sacado::Fad::DFad<double>& bZZ,
+ Sacado::Fad::DFad<double>& resultXX,
+ Sacado::Fad::DFad<double>& resultXY,
+ Sacado::Fad::DFad<double>& resultXZ,
+ Sacado::Fad::DFad<double>& resultYX,
+ Sacado::Fad::DFad<double>& resultYY,
+ Sacado::Fad::DFad<double>& resultYZ,
+ Sacado::Fad::DFad<double>& resultZX,
+ Sacado::Fad::DFad<double>& resultZY,
+ Sacado::Fad::DFad<double>& resultZZ
+);
+
+template int invert3by3Matrix<Sacado::Fad::DFad<double> >
+(
+ const Sacado::Fad::DFad<double>& matrixXX,
+ const Sacado::Fad::DFad<double>& matrixXY,
+ const Sacado::Fad::DFad<double>& matrixXZ,
+ const Sacado::Fad::DFad<double>& matrixYX,
+ const Sacado::Fad::DFad<double>& matrixYY,
+ const Sacado::Fad::DFad<double>& matrixYZ,
+ const Sacado::Fad::DFad<double>& matrixZX,
+ const Sacado::Fad::DFad<double>& matrixZY,
+ const Sacado::Fad::DFad<double>& matrixZZ,
+ Sacado::Fad::DFad<double>& inverseXX,
+ Sacado::Fad::DFad<double>& inverseXY,
+ Sacado::Fad::DFad<double>& inverseXZ,
+ Sacado::Fad::DFad<double>& inverseYX,
+ Sacado::Fad::DFad<double>& inverseYY,
+ Sacado::Fad::DFad<double>& inverseYZ,
+ Sacado::Fad::DFad<double>& inverseZX,
+ Sacado::Fad::DFad<double>& inverseZY,
+ Sacado::Fad::DFad<double>& inverseZZ
+);
+
 template void computeGreenLagrangeStrain<Sacado::Fad::DFad<double> >
 (
   const Sacado::Fad::DFad<double>* deformationGradientXX,
