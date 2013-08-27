@@ -92,7 +92,7 @@ void computeInternalForceIsotropicHardeningPlastic
 	double DELTA=HORIZON;
 	double H=HARD_MODULUS;
 	/*
-	 * 3d variety of yield value *a test comment*
+	 * 3d variety of yield value 
 	 */
 	double yieldValue = 25.0 * yieldStress * yieldStress / 8 / M_PI / pow(DELTA,5);
 	/*
