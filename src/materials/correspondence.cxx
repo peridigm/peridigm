@@ -236,7 +236,7 @@ template void computeClassicalElasticStress<double>
 );
 
 /** Explicit template instantiation for Sacado::Fad::DFad<double>. */
-template void computeGreenLagrangeStrain<Sacado::Fad::DFad<double>>
+template void computeGreenLagrangeStrain<Sacado::Fad::DFad<double> >
 (
   const Sacado::Fad::DFad<double>* deformationGradientXX,
   const Sacado::Fad::DFad<double>* deformationGradientXY,
@@ -259,7 +259,7 @@ template void computeGreenLagrangeStrain<Sacado::Fad::DFad<double>>
   int numPoints
 );
 
-template void computeClassicalElasticStress<Sacado::Fad::DFad<double>>
+template void computeClassicalElasticStress<Sacado::Fad::DFad<double> >
 (
  const Sacado::Fad::DFad<double>* strainXX,
  const Sacado::Fad::DFad<double>* strainXY,
