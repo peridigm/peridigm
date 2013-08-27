@@ -48,6 +48,7 @@
 #include "Peridigm_ElasticCorrespondenceMaterial.hpp"
 #include "Peridigm_Field.hpp"
 #include "elastic.h"
+#include "correspondence.h"
 #include "material_utilities.h"
 #include <Teuchos_Assert.hpp>
 #include <Epetra_SerialComm.h>
@@ -218,26 +219,13 @@ PeridigmNS::ElasticCorrespondenceMaterial::computeForce(const double dt,
   dataManager.getData(m_strainZZFieldId, PeridigmField::STEP_NONE)->ExtractView(&strainZZ);
 
   // Green-Lagrange Strain E = 0.5*(F^T F - I)
-  int nodeId(0);
-  double defGrad[3][3], greenLagrangeStrain[3][3];
-  for(int iID=0 ; iID<numOwnedPoints ; ++iID){
-
-    nodeId = ownedIDs[iID];
-
-    defGrad[0][0] = deformationGradientXX[nodeId] ; defGrad[0][1] = deformationGradientXY[nodeId] ; defGrad[0][2] = deformationGradientXZ[nodeId] ; 
-    defGrad[1][0] = deformationGradientYX[nodeId] ; defGrad[1][1] = deformationGradientYY[nodeId] ; defGrad[1][2] = deformationGradientYZ[nodeId] ; 
-    defGrad[2][0] = deformationGradientZX[nodeId] ; defGrad[2][1] = deformationGradientZY[nodeId] ; defGrad[2][2] = deformationGradientZZ[nodeId] ; 
-    for(int i=0 ; i<3 ; ++i){
-      for(int j=0 ; j<3 ; ++j){
-        greenLagrangeStrain[i][j] = 0.5 * ( defGrad[0][i]*defGrad[0][j] + defGrad[1][i]*defGrad[1][j] + defGrad[2][i]*defGrad[2][j] );
-        if(i == j)
-          greenLagrangeStrain[i][j] -= 0.5;
-      }
-    }
-    strainXX[nodeId] = greenLagrangeStrain[0][0] ; strainXY[nodeId] = greenLagrangeStrain[0][1] ; strainXZ[nodeId] = greenLagrangeStrain[0][2] ; 
-    strainYX[nodeId] = greenLagrangeStrain[1][0] ; strainYY[nodeId] = greenLagrangeStrain[1][1] ; strainYZ[nodeId] = greenLagrangeStrain[1][2] ; 
-    strainZX[nodeId] = greenLagrangeStrain[2][0] ; strainZY[nodeId] = greenLagrangeStrain[2][1] ; strainZZ[nodeId] = greenLagrangeStrain[2][2] ; 
-  }
+  CORRESPONDENCE::computeGreenLagrangeStrain(deformationGradientXX, deformationGradientXY, deformationGradientXZ,
+                                             deformationGradientYX, deformationGradientYY, deformationGradientYZ,
+                                             deformationGradientZX, deformationGradientZY, deformationGradientZZ,
+                                             strainXX, strainXY, strainXZ,
+                                             strainYX, strainYY, strainYZ,
+                                             strainZX, strainZY, strainZZ,
+                                             numOwnedPoints);
 
   double *shapeTensorInverseXX, *shapeTensorInverseXY, *shapeTensorInverseXZ;
   double *shapeTensorInverseYX, *shapeTensorInverseYY, *shapeTensorInverseYZ;
@@ -272,6 +260,9 @@ PeridigmNS::ElasticCorrespondenceMaterial::computeForce(const double dt,
 
   double cauchyStress[3][3], piolaStress[3][3], defGradInverse[3][3], minor[9], det, temp[3][3];
   const int *neighborListPtr = neighborhoodList;
+
+  int nodeId;
+  double defGrad[3][3];
 
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
 
