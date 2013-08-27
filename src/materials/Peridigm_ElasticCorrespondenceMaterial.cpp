@@ -258,6 +258,16 @@ PeridigmNS::ElasticCorrespondenceMaterial::computeForce(const double dt,
   dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&modelCoordinates);
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&forceDensity);
 
+  CORRESPONDENCE::computeClassicalElasticStress(strainXX, strainXY, strainXZ,
+                                                strainYX, strainYY, strainYZ,
+                                                strainZX, strainZY, strainZZ,
+                                                stressXX, stressXY, stressXZ,
+                                                stressYX, stressYY, stressYZ,
+                                                stressZX, stressZY, stressZZ,
+                                                numOwnedPoints,
+                                                m_youngsModulus,
+                                                m_poissonsRatio);
+
   double cauchyStress[3][3], piolaStress[3][3], defGradInverse[3][3], minor[9], det, temp[3][3];
   const int *neighborListPtr = neighborhoodList;
 
@@ -268,23 +278,11 @@ PeridigmNS::ElasticCorrespondenceMaterial::computeForce(const double dt,
 
     nodeId = ownedIDs[iID];
 
-    // Hooke's Law    
-    // \todo Take advantange of symmetry, don't store full tensor
-    double constant = m_youngsModulus/((1.0 + m_poissonsRatio)*(1.0 - 2.0*m_poissonsRatio));
-    cauchyStress[0][0] = constant*( (1.0 - m_poissonsRatio)*strainXX[nodeId] +         m_poissonsRatio*strainYY[nodeId] +         m_poissonsRatio*strainZZ[nodeId] ) ;
-    cauchyStress[1][1] = constant*(        m_poissonsRatio*strainXX[nodeId]  + (1.0 - m_poissonsRatio)*strainYY[nodeId] +         m_poissonsRatio*strainZZ[nodeId] ) ;
-    cauchyStress[2][2] = constant*(        m_poissonsRatio*strainXX[nodeId]  +         m_poissonsRatio*strainYY[nodeId] + (1.0 - m_poissonsRatio)*strainZZ[nodeId] ) ;
-    cauchyStress[0][1] = constant*(1.0 - 2.0*m_poissonsRatio)*strainXY[nodeId];
-    cauchyStress[1][2] = constant*(1.0 - 2.0*m_poissonsRatio)*strainYZ[nodeId];
-    cauchyStress[2][0] = constant*(1.0 - 2.0*m_poissonsRatio)*strainZX[nodeId];
-    cauchyStress[1][0] = cauchyStress[0][1];
-    cauchyStress[2][1] = cauchyStress[1][2];
-    cauchyStress[0][2] = cauchyStress[2][0];
-
-    // Store the Cauchy stress for output
-    stressXX[nodeId] = cauchyStress[0][0] ; stressXY[nodeId] = cauchyStress[0][1] ; stressXZ[nodeId] = cauchyStress[0][2] ; 
-    stressYX[nodeId] = cauchyStress[1][0] ; stressYY[nodeId] = cauchyStress[1][1] ; stressYZ[nodeId] = cauchyStress[1][2] ; 
-    stressZX[nodeId] = cauchyStress[2][0] ; stressZY[nodeId] = cauchyStress[2][1] ; stressZZ[nodeId] = cauchyStress[2][2] ; 
+    // TEMP PLACEHOLDER
+    cauchyStress[0][0] = stressXX[nodeId] ; cauchyStress[0][1] = stressXY[nodeId] ; cauchyStress[0][2] = stressXZ[nodeId]; 
+    cauchyStress[1][0] = stressYX[nodeId] ; cauchyStress[1][1] = stressYY[nodeId] ; cauchyStress[1][2] = stressYZ[nodeId] ; 
+    cauchyStress[2][0] = stressZX[nodeId] ; cauchyStress[2][1] = stressZY[nodeId] ; cauchyStress[2][2] = stressZZ[nodeId] ; 
+    // end TEMP PLACEHOLDER
 
     // first Piola-Kirchhoff stress = J * cauchyStress * defGrad^-T
 

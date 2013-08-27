@@ -71,7 +71,34 @@ void computeGreenLagrangeStrain
   ScalarT* greenLagrangeStrainZX,
   ScalarT* greenLagrangeStrainZY,
   ScalarT* greenLagrangeStrainZZ,
-  int numOwnedPoints
+  int numPoints
+);
+
+//! Classical elastic material model stress calculation (Hooke's law).
+template<typename ScalarT>
+void computeClassicalElasticStress
+(
+ const ScalarT* strainXX,
+ const ScalarT* strainXY,
+ const ScalarT* strainXZ,
+ const ScalarT* strainYX,
+ const ScalarT* strainYY,
+ const ScalarT* strainYZ,
+ const ScalarT* strainZX,
+ const ScalarT* strainZY,
+ const ScalarT* strainZZ,
+ ScalarT* cauchyStressXX,
+ ScalarT* cauchyStressXY,
+ ScalarT* cauchyStressXZ,
+ ScalarT* cauchyStressYX,
+ ScalarT* cauchyStressYY,
+ ScalarT* cauchyStressYZ,
+ ScalarT* cauchyStressZX,
+ ScalarT* cauchyStressZY,
+ ScalarT* cauchyStressZZ,
+ int numPoints,
+ double youngsModulus,
+ double poissonsRatio
 );
 
 }

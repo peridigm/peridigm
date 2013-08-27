@@ -73,7 +73,7 @@ void computeGreenLagrangeStrain
   ScalarT* greenLagrangeStrainZX,
   ScalarT* greenLagrangeStrainZY,
   ScalarT* greenLagrangeStrainZZ,
-  int numOwnedPoints
+  int numPoints
 )
 {
   // Green-Lagrange Strain E = 0.5*(F^T F - I)
@@ -97,7 +97,7 @@ void computeGreenLagrangeStrain
   ScalarT* strainZY = greenLagrangeStrainZY;
   ScalarT* strainZZ = greenLagrangeStrainZZ;
 
-  for(int iID=0 ; iID<numOwnedPoints ; ++iID, 
+  for(int iID=0 ; iID<numPoints ; ++iID, 
         ++defGradXX, ++defGradXY, ++defGradXZ,
         ++defGradYX, ++defGradYY, ++defGradYZ,
         ++defGradZX, ++defGradZY, ++defGradZZ,
@@ -114,6 +114,75 @@ void computeGreenLagrangeStrain
     *strainZX = 0.5 * ( (*defGradXZ) * (*defGradXX) + (*defGradYZ) * (*defGradYX) + (*defGradZZ) * (*defGradZX) );
     *strainZY = 0.5 * ( (*defGradXZ) * (*defGradXY) + (*defGradYZ) * (*defGradYY) + (*defGradZZ) * (*defGradZY) );
     *strainZZ = 0.5 * ( (*defGradXZ) * (*defGradXZ) + (*defGradYZ) * (*defGradYZ) + (*defGradZZ) * (*defGradZZ) - 1.0 );
+  }
+}
+
+template<typename ScalarT>
+void computeClassicalElasticStress
+(
+ const ScalarT* strainXX,
+ const ScalarT* strainXY,
+ const ScalarT* strainXZ,
+ const ScalarT* strainYX,
+ const ScalarT* strainYY,
+ const ScalarT* strainYZ,
+ const ScalarT* strainZX,
+ const ScalarT* strainZY,
+ const ScalarT* strainZZ,
+ ScalarT* cauchyStressXX,
+ ScalarT* cauchyStressXY,
+ ScalarT* cauchyStressXZ,
+ ScalarT* cauchyStressYX,
+ ScalarT* cauchyStressYY,
+ ScalarT* cauchyStressYZ,
+ ScalarT* cauchyStressZX,
+ ScalarT* cauchyStressZY,
+ ScalarT* cauchyStressZZ,
+ int numPoints,
+ double youngsModulus,
+ double poissonsRatio
+)
+{
+  // Hooke's law
+
+  const ScalarT* epsilonXX = strainXX;
+  const ScalarT* epsilonXY = strainXY;
+  const ScalarT* epsilonXZ = strainXZ;
+  const ScalarT* epsilonYX = strainYX;
+  const ScalarT* epsilonYY = strainYY;
+  const ScalarT* epsilonYZ = strainYZ;
+  const ScalarT* epsilonZX = strainZX;
+  const ScalarT* epsilonZY = strainZY;
+  const ScalarT* epsilonZZ = strainZZ;
+  ScalarT* sigmaXX = cauchyStressXX;
+  ScalarT* sigmaXY = cauchyStressXY;
+  ScalarT* sigmaXZ = cauchyStressXZ;
+  ScalarT* sigmaYX = cauchyStressYX;
+  ScalarT* sigmaYY = cauchyStressYY;
+  ScalarT* sigmaYZ = cauchyStressYZ;
+  ScalarT* sigmaZX = cauchyStressZX;
+  ScalarT* sigmaZY = cauchyStressZY;
+  ScalarT* sigmaZZ = cauchyStressZZ;
+
+  double constant = youngsModulus/((1.0 + poissonsRatio)*(1.0 - 2.0*poissonsRatio));
+
+  for(int iID=0 ; iID<numPoints ; ++iID, 
+        ++epsilonXX, ++epsilonXY, ++epsilonXZ,
+        ++epsilonYX, ++epsilonYY, ++epsilonYZ,
+        ++epsilonZX, ++epsilonZY, ++epsilonZZ,
+        ++sigmaXX, ++sigmaXY, ++sigmaXZ,
+        ++sigmaYX, ++sigmaYY, ++sigmaYZ,
+        ++sigmaZX, ++sigmaZY, ++sigmaZZ){
+
+    *sigmaXX = constant * ( (1.0 - poissonsRatio) * (*epsilonXX)  +        poissonsRatio  * (*epsilonYY) +        poissonsRatio  * (*epsilonZZ) );
+    *sigmaYY = constant * (        poissonsRatio  * (*epsilonXX)  + (1.0 - poissonsRatio) * (*epsilonYY) +        poissonsRatio  * (*epsilonZZ) );
+    *sigmaZZ = constant * (        poissonsRatio  * (*epsilonXX)  +        poissonsRatio  * (*epsilonYY) + (1.0 - poissonsRatio) * (*epsilonZZ) );
+    *sigmaXY = constant * (1.0 - 2.0*poissonsRatio) * (*epsilonXY);
+    *sigmaYZ = constant * (1.0 - 2.0*poissonsRatio) * (*epsilonYZ);
+    *sigmaZX = constant * (1.0 - 2.0*poissonsRatio) * (*epsilonZX);
+    *sigmaYX = *sigmaXY;
+    *sigmaZY = *sigmaYZ;
+    *sigmaXZ = *sigmaZX;
   }
 }
 
@@ -138,7 +207,32 @@ template void computeGreenLagrangeStrain<double>
   double* greenLagrangeStrainZX,
   double* greenLagrangeStrainZY,
   double* greenLagrangeStrainZZ,
-  int numOwnedPoints
+  int numPoints
+);
+
+template void computeClassicalElasticStress<double>
+(
+ const double* strainXX,
+ const double* strainXY,
+ const double* strainXZ,
+ const double* strainYX,
+ const double* strainYY,
+ const double* strainYZ,
+ const double* strainZX,
+ const double* strainZY,
+ const double* strainZZ,
+ double* cauchyStressXX,
+ double* cauchyStressXY,
+ double* cauchyStressXZ,
+ double* cauchyStressYX,
+ double* cauchyStressYY,
+ double* cauchyStressYZ,
+ double* cauchyStressZX,
+ double* cauchyStressZY,
+ double* cauchyStressZZ,
+ int numPoints,
+ double youngsModulus,
+ double poissonsRatio
 );
 
 /** Explicit template instantiation for Sacado::Fad::DFad<double>. */
@@ -162,7 +256,32 @@ template void computeGreenLagrangeStrain<Sacado::Fad::DFad<double>>
   Sacado::Fad::DFad<double>* greenLagrangeStrainZX,
   Sacado::Fad::DFad<double>* greenLagrangeStrainZY,
   Sacado::Fad::DFad<double>* greenLagrangeStrainZZ,
-  int numOwnedPoints
+  int numPoints
+);
+
+template void computeClassicalElasticStress<Sacado::Fad::DFad<double>>
+(
+ const Sacado::Fad::DFad<double>* strainXX,
+ const Sacado::Fad::DFad<double>* strainXY,
+ const Sacado::Fad::DFad<double>* strainXZ,
+ const Sacado::Fad::DFad<double>* strainYX,
+ const Sacado::Fad::DFad<double>* strainYY,
+ const Sacado::Fad::DFad<double>* strainYZ,
+ const Sacado::Fad::DFad<double>* strainZX,
+ const Sacado::Fad::DFad<double>* strainZY,
+ const Sacado::Fad::DFad<double>* strainZZ,
+ Sacado::Fad::DFad<double>* cauchyStressXX,
+ Sacado::Fad::DFad<double>* cauchyStressXY,
+ Sacado::Fad::DFad<double>* cauchyStressXZ,
+ Sacado::Fad::DFad<double>* cauchyStressYX,
+ Sacado::Fad::DFad<double>* cauchyStressYY,
+ Sacado::Fad::DFad<double>* cauchyStressYZ,
+ Sacado::Fad::DFad<double>* cauchyStressZX,
+ Sacado::Fad::DFad<double>* cauchyStressZY,
+ Sacado::Fad::DFad<double>* cauchyStressZZ,
+ int numPoints,
+ double youngsModulus,
+ double poissonsRatio
 );
 
 }
