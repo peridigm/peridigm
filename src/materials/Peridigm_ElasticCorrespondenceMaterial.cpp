@@ -187,7 +187,6 @@ PeridigmNS::ElasticCorrespondenceMaterial::computeForce(const double dt,
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
 
   // \todo Optimize this function and move it to a cxx file; get rid of base-class implementation
-  // \todo Create stand-alone matrix inversion routine.
   // \todo Separate def grad calculation from shape tensor inverse calculation and move to material_utilities.cxx (create one with damage and one without damage, the one with damage needs heursitics to keep running, check for possible use in Sierra/SM)
 
   computeApproximateDeformationGradient(numOwnedPoints, ownedIDs, neighborhoodList, dataManager);
@@ -240,18 +239,18 @@ PeridigmNS::ElasticCorrespondenceMaterial::computeForce(const double dt,
   dataManager.getData(m_shapeTensorInverseZYFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseZY);
   dataManager.getData(m_shapeTensorInverseZZFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseZZ);
 
-  double *stressXX, *stressXY, *stressXZ;
-  double *stressYX, *stressYY, *stressYZ;
-  double *stressZX, *stressZY, *stressZZ;
-  dataManager.getData(m_stressXXFieldId, PeridigmField::STEP_NONE)->ExtractView(&stressXX);
-  dataManager.getData(m_stressXYFieldId, PeridigmField::STEP_NONE)->ExtractView(&stressXY);
-  dataManager.getData(m_stressXZFieldId, PeridigmField::STEP_NONE)->ExtractView(&stressXZ);
-  dataManager.getData(m_stressYXFieldId, PeridigmField::STEP_NONE)->ExtractView(&stressYX);
-  dataManager.getData(m_stressYYFieldId, PeridigmField::STEP_NONE)->ExtractView(&stressYY);
-  dataManager.getData(m_stressYZFieldId, PeridigmField::STEP_NONE)->ExtractView(&stressYZ);
-  dataManager.getData(m_stressZXFieldId, PeridigmField::STEP_NONE)->ExtractView(&stressZX);
-  dataManager.getData(m_stressZYFieldId, PeridigmField::STEP_NONE)->ExtractView(&stressZY);
-  dataManager.getData(m_stressZZFieldId, PeridigmField::STEP_NONE)->ExtractView(&stressZZ);
+  double *cauchyStressXX, *cauchyStressXY, *cauchyStressXZ;
+  double *cauchyStressYX, *cauchyStressYY, *cauchyStressYZ;
+  double *cauchyStressZX, *cauchyStressZY, *cauchyStressZZ;
+  dataManager.getData(m_stressXXFieldId, PeridigmField::STEP_NONE)->ExtractView(&cauchyStressXX);
+  dataManager.getData(m_stressXYFieldId, PeridigmField::STEP_NONE)->ExtractView(&cauchyStressXY);
+  dataManager.getData(m_stressXZFieldId, PeridigmField::STEP_NONE)->ExtractView(&cauchyStressXZ);
+  dataManager.getData(m_stressYXFieldId, PeridigmField::STEP_NONE)->ExtractView(&cauchyStressYX);
+  dataManager.getData(m_stressYYFieldId, PeridigmField::STEP_NONE)->ExtractView(&cauchyStressYY);
+  dataManager.getData(m_stressYZFieldId, PeridigmField::STEP_NONE)->ExtractView(&cauchyStressYZ);
+  dataManager.getData(m_stressZXFieldId, PeridigmField::STEP_NONE)->ExtractView(&cauchyStressZX);
+  dataManager.getData(m_stressZYFieldId, PeridigmField::STEP_NONE)->ExtractView(&cauchyStressZY);
+  dataManager.getData(m_stressZZFieldId, PeridigmField::STEP_NONE)->ExtractView(&cauchyStressZZ);
 
   double *volume, *modelCoordinates, *forceDensity;
   dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&volume);
@@ -261,73 +260,108 @@ PeridigmNS::ElasticCorrespondenceMaterial::computeForce(const double dt,
   CORRESPONDENCE::computeClassicalElasticStress(strainXX, strainXY, strainXZ,
                                                 strainYX, strainYY, strainYZ,
                                                 strainZX, strainZY, strainZZ,
-                                                stressXX, stressXY, stressXZ,
-                                                stressYX, stressYY, stressYZ,
-                                                stressZX, stressZY, stressZZ,
+                                                cauchyStressXX, cauchyStressXY, cauchyStressXZ,
+                                                cauchyStressYX, cauchyStressYY, cauchyStressYZ,
+                                                cauchyStressZX, cauchyStressZY, cauchyStressZZ,
                                                 numOwnedPoints,
                                                 m_youngsModulus,
                                                 m_poissonsRatio);
 
-  double cauchyStress[3][3], piolaStress[3][3], defGradInverse[3][3], minor[9], det, temp[3][3];
+  double* defGradXX = deformationGradientXX;
+  double* defGradXY = deformationGradientXY;
+  double* defGradXZ = deformationGradientXZ;
+  double* defGradYX = deformationGradientYX;
+  double* defGradYY = deformationGradientYY;
+  double* defGradYZ = deformationGradientYZ;
+  double* defGradZX = deformationGradientZX;
+  double* defGradZY = deformationGradientZY;
+  double* defGradZZ = deformationGradientZZ;
+
+  double* stressXX = cauchyStressXX;
+  double* stressXY = cauchyStressXY;
+  double* stressXZ = cauchyStressXZ;
+  double* stressYX = cauchyStressYX;
+  double* stressYY = cauchyStressYY;
+  double* stressYZ = cauchyStressYZ;
+  double* stressZX = cauchyStressZX;
+  double* stressZY = cauchyStressZY;
+  double* stressZZ = cauchyStressZZ;
+
+  double* shapeTensorInvXX = shapeTensorInverseXX;
+  double* shapeTensorInvXY = shapeTensorInverseXY;
+  double* shapeTensorInvXZ = shapeTensorInverseXZ;
+  double* shapeTensorInvYX = shapeTensorInverseYX;
+  double* shapeTensorInvYY = shapeTensorInverseYY;
+  double* shapeTensorInvYZ = shapeTensorInverseYZ;
+  double* shapeTensorInvZX = shapeTensorInverseZX;
+  double* shapeTensorInvZY = shapeTensorInverseZY;
+  double* shapeTensorInvZZ = shapeTensorInverseZZ;
+
+  double defGradInvXX, defGradInvXY, defGradInvXZ;
+  double defGradInvYX, defGradInvYY, defGradInvYZ;
+  double defGradInvZX, defGradInvZY, defGradInvZZ;
+
+  double piolaStressXX, piolaStressXY, piolaStressXZ;
+  double piolaStressYX, piolaStressYY, piolaStressYZ;
+  double piolaStressZX, piolaStressZY, piolaStressZZ;
+
+  double tempXX, tempXY, tempXZ;
+  double tempYX, tempYY, tempYZ;
+  double tempZX, tempZY, tempZZ;
+
+  string matrixInversionErrorMessage =
+    "**** Error:  ElasticCorrespondenceMaterial::computeForce() failed to invert deformation gradient.\n";
+  matrixInversionErrorMessage +=
+    "****         Note that all nodes must have a minimum of three neighbors.  Is the horizon too small?\n";
+
   const int *neighborListPtr = neighborhoodList;
+  for(int iID=0 ; iID<numOwnedPoints ; ++iID,
+        ++defGradXX, ++defGradXY, ++defGradXZ,
+        ++defGradYX, ++defGradYY, ++defGradYZ,
+        ++defGradZX, ++defGradZY, ++defGradZZ,
+        ++stressXX, ++stressXY, ++stressXZ,
+        ++stressYX, ++stressYY, ++stressYZ,
+        ++stressZX, ++stressZY, ++stressZZ,
+        ++shapeTensorInvXX, ++shapeTensorInvXY, ++shapeTensorInvXZ,
+        ++shapeTensorInvYX, ++shapeTensorInvYY, ++shapeTensorInvYZ,
+        ++shapeTensorInvZX, ++shapeTensorInvZY, ++shapeTensorInvZZ){
 
-  int nodeId;
-  double defGrad[3][3];
-
-  for(int iID=0 ; iID<numOwnedPoints ; ++iID){
-
-    nodeId = ownedIDs[iID];
-
-    // TEMP PLACEHOLDER
-    cauchyStress[0][0] = stressXX[nodeId] ; cauchyStress[0][1] = stressXY[nodeId] ; cauchyStress[0][2] = stressXZ[nodeId]; 
-    cauchyStress[1][0] = stressYX[nodeId] ; cauchyStress[1][1] = stressYY[nodeId] ; cauchyStress[1][2] = stressYZ[nodeId] ; 
-    cauchyStress[2][0] = stressZX[nodeId] ; cauchyStress[2][1] = stressZY[nodeId] ; cauchyStress[2][2] = stressZZ[nodeId] ; 
-    // end TEMP PLACEHOLDER
 
     // first Piola-Kirchhoff stress = J * cauchyStress * defGrad^-T
 
     // Invert the deformation gradient
+    int matrixInversionReturnCode =
+      CORRESPONDENCE::invert3by3Matrix(*defGradXX, *defGradXY, *defGradXZ,
+                                       *defGradYX, *defGradYY, *defGradYZ,
+                                       *defGradZX, *defGradZY, *defGradZZ,
+                                       defGradInvXX, defGradInvXY, defGradInvXZ,
+                                       defGradInvYX, defGradInvYY, defGradInvYZ,
+                                       defGradInvZX, defGradInvZY, defGradInvZZ);
 
-    defGrad[0][0] = deformationGradientXX[nodeId] ; defGrad[0][1] = deformationGradientXY[nodeId] ; defGrad[0][2] = deformationGradientXZ[nodeId] ; 
-    defGrad[1][0] = deformationGradientYX[nodeId] ; defGrad[1][1] = deformationGradientYY[nodeId] ; defGrad[1][2] = deformationGradientYZ[nodeId] ; 
-    defGrad[2][0] = deformationGradientZX[nodeId] ; defGrad[2][1] = deformationGradientZY[nodeId] ; defGrad[2][2] = deformationGradientZZ[nodeId] ; 
-    minor[0] = defGrad[1][1]*defGrad[2][2] - defGrad[1][2]*defGrad[2][1] ;
-    minor[1] = defGrad[1][0]*defGrad[2][2] - defGrad[1][2]*defGrad[2][0] ;
-    minor[2] = defGrad[1][0]*defGrad[2][1] - defGrad[1][1]*defGrad[2][0] ;
-    minor[3] = defGrad[0][1]*defGrad[2][2] - defGrad[0][2]*defGrad[2][1] ;
-    minor[4] = defGrad[0][0]*defGrad[2][2] - defGrad[2][0]*defGrad[0][2] ;
-    minor[5] = defGrad[0][0]*defGrad[2][1] - defGrad[0][1]*defGrad[2][0] ;
-    minor[6] = defGrad[0][1]*defGrad[1][2] - defGrad[0][2]*defGrad[1][1] ;
-    minor[7] = defGrad[0][0]*defGrad[1][2] - defGrad[0][2]*defGrad[1][0] ;
-    minor[8] = defGrad[0][0]*defGrad[1][1] - defGrad[0][1]*defGrad[1][0] ;
-    det = defGrad[0][0]*minor[0] - defGrad[0][1]*minor[1] + defGrad[0][2]*minor[2] ;
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(matrixInversionReturnCode != 0, matrixInversionErrorMessage;)
 
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(det == 0.0, "**** Error:  ElasticCorrespondenceMaterial::computeForce() failed to invert deformation gradient.\n****         Note that all nodes must have a minimum of three neighbors.  Is the horizon too small?\n");
-
-    defGradInverse[0][0] = minor[0]/det;
-    defGradInverse[0][1] = -1.0*minor[3]/det;
-    defGradInverse[0][2] = minor[6]/det;
-    defGradInverse[1][0] = -1.0*minor[1]/det;
-    defGradInverse[1][1] = minor[4]/det;
-    defGradInverse[1][2] = -1.0*minor[7]/det;
-    defGradInverse[2][0] = minor[2]/det;
-    defGradInverse[2][1] = -1.0*minor[5]/det;
-    defGradInverse[2][2] = minor[8]/det;
-
-    for(int i=0 ; i<3 ; ++i)
-      for(int j=0 ; j<3 ; ++j)
-        piolaStress[i][j] = ( cauchyStress[i][0]*defGradInverse[j][0] + cauchyStress[i][1]*defGradInverse[j][1] +  cauchyStress[i][2]*defGradInverse[j][2] ) * det;
+    // Compute the 1st Piola stress as the inner product of the Cauchy stress 
+    // and the tranpose of the inverse of the deformation gradient
+    CORRESPONDENCE::MatrixMultiply(*stressXX, *stressXY, *stressXZ,
+                                   *stressYX, *stressYY, *stressYZ,
+                                   *stressZX, *stressZY, *stressZZ,
+                                   defGradInvXX, defGradInvYX, defGradInvZX, /* note: TRANSPOSE of the inverse def grad */
+                                   defGradInvXY, defGradInvYY, defGradInvZY,
+                                   defGradInvXZ, defGradInvYZ, defGradInvZZ,
+                                   piolaStressXX, piolaStressXY, piolaStressXZ,
+                                   piolaStressYX, piolaStressYY, piolaStressYZ,
+                                   piolaStressZX, piolaStressZY, piolaStressZZ);
 
     // Inner product of Piola stress and the inverse of the shape tensor
-    temp[0][0] =  piolaStress[0][0]*shapeTensorInverseXX[iID] + piolaStress[0][1]*shapeTensorInverseYX[iID] + piolaStress[0][2]*shapeTensorInverseZX[iID];
-    temp[0][1] =  piolaStress[0][0]*shapeTensorInverseXY[iID] + piolaStress[0][1]*shapeTensorInverseYY[iID] + piolaStress[0][2]*shapeTensorInverseZY[iID];
-    temp[0][2] =  piolaStress[0][0]*shapeTensorInverseXZ[iID] + piolaStress[0][1]*shapeTensorInverseYZ[iID] + piolaStress[0][2]*shapeTensorInverseZZ[iID];
-    temp[1][0] =  piolaStress[1][0]*shapeTensorInverseXX[iID] + piolaStress[1][1]*shapeTensorInverseYX[iID] + piolaStress[1][2]*shapeTensorInverseZX[iID];
-    temp[1][1] =  piolaStress[1][0]*shapeTensorInverseXY[iID] + piolaStress[1][1]*shapeTensorInverseYY[iID] + piolaStress[1][2]*shapeTensorInverseZY[iID];
-    temp[1][2] =  piolaStress[1][0]*shapeTensorInverseXZ[iID] + piolaStress[1][1]*shapeTensorInverseYZ[iID] + piolaStress[1][2]*shapeTensorInverseZZ[iID];
-    temp[2][0] =  piolaStress[2][0]*shapeTensorInverseXX[iID] + piolaStress[2][1]*shapeTensorInverseYX[iID] + piolaStress[2][2]*shapeTensorInverseZX[iID];
-    temp[2][1] =  piolaStress[2][0]*shapeTensorInverseXY[iID] + piolaStress[2][1]*shapeTensorInverseYY[iID] + piolaStress[2][2]*shapeTensorInverseZY[iID];
-    temp[2][2] =  piolaStress[2][0]*shapeTensorInverseXZ[iID] + piolaStress[2][1]*shapeTensorInverseYZ[iID] + piolaStress[2][2]*shapeTensorInverseZZ[iID];
+    CORRESPONDENCE::MatrixMultiply(piolaStressXX, piolaStressXY, piolaStressXZ,
+                                   piolaStressYX, piolaStressYY, piolaStressYZ,
+                                   piolaStressZX, piolaStressZY, piolaStressZZ,
+                                   *shapeTensorInvXX, *shapeTensorInvXY, *shapeTensorInvXZ,
+                                   *shapeTensorInvYX, *shapeTensorInvYY, *shapeTensorInvYZ,
+                                   *shapeTensorInvZX, *shapeTensorInvZY, *shapeTensorInvZZ,
+                                   tempXX, tempXY, tempXZ,
+                                   tempYX, tempYY, tempYZ,
+                                   tempZX, tempZY, tempZZ);
 
     // Loop over the neighbors and compute contribution to force densities
     double undeformedBond[3], undeformedBondLength, omega, vol, neighborVol, T[3];
@@ -343,9 +377,9 @@ PeridigmNS::ElasticCorrespondenceMaterial::computeForce(const double dt,
                                   undeformedBond[2]*undeformedBond[2]);
       omega = MATERIAL_EVALUATION::scalarInfluenceFunction(undeformedBondLength, m_horizon);
 
-      T[0] = omega * (temp[0][0]*undeformedBond[0] + temp[0][1]*undeformedBond[1] + temp[0][2]*undeformedBond[2]);
-      T[1] = omega * (temp[1][0]*undeformedBond[0] + temp[1][1]*undeformedBond[1] + temp[1][2]*undeformedBond[2]);
-      T[2] = omega * (temp[2][0]*undeformedBond[0] + temp[2][1]*undeformedBond[1] + temp[2][2]*undeformedBond[2]);
+      T[0] = omega * (tempXX*undeformedBond[0] + tempXY*undeformedBond[1] + tempXZ*undeformedBond[2]);
+      T[1] = omega * (tempYX*undeformedBond[0] + tempYY*undeformedBond[1] + tempYZ*undeformedBond[2]);
+      T[2] = omega * (tempZX*undeformedBond[0] + tempZY*undeformedBond[1] + tempZZ*undeformedBond[2]);
 
       vol = volume[iID];
       neighborVol = volume[neighborIndex];

@@ -48,6 +48,63 @@
 #define CORRESPONDENCE_H
 
 namespace CORRESPONDENCE {
+
+//! Invert a single 3-by-3 matrix; returns zero of successful, one if not successful (e.g., singular matrix).
+template<typename ScalarT>
+int invert3by3Matrix
+(
+ const ScalarT& matrixXX,
+ const ScalarT& matrixXY,
+ const ScalarT& matrixXZ,
+ const ScalarT& matrixYX,
+ const ScalarT& matrixYY,
+ const ScalarT& matrixYZ,
+ const ScalarT& matrixZX,
+ const ScalarT& matrixZY,
+ const ScalarT& matrixZZ,
+ ScalarT& inverseXX,
+ ScalarT& inverseXY,
+ ScalarT& inverseXZ,
+ ScalarT& inverseYX,
+ ScalarT& inverseYY,
+ ScalarT& inverseYZ,
+ ScalarT& inverseZX,
+ ScalarT& inverseZY,
+ ScalarT& inverseZZ
+);
+
+//! Inner product of two 3-by-3 matrices.
+template<typename ScalarT>
+void MatrixMultiply
+(
+ const ScalarT& aXX,
+ const ScalarT& aXY,
+ const ScalarT& aXZ,
+ const ScalarT& aYX,
+ const ScalarT& aYY,
+ const ScalarT& aYZ,
+ const ScalarT& aZX,
+ const ScalarT& aZY,
+ const ScalarT& aZZ,
+ const ScalarT& bXX,
+ const ScalarT& bXY,
+ const ScalarT& bXZ,
+ const ScalarT& bYX,
+ const ScalarT& bYY,
+ const ScalarT& bYZ,
+ const ScalarT& bZX,
+ const ScalarT& bZY,
+ const ScalarT& bZZ,
+ ScalarT& resultXX,
+ ScalarT& resultXY,
+ ScalarT& resultXZ,
+ ScalarT& resultYX,
+ ScalarT& resultYY,
+ ScalarT& resultYZ,
+ ScalarT& resultZX,
+ ScalarT& resultZY,
+ ScalarT& resultZZ
+);
   
 //! Green-Lagrange Strain E = 0.5*(F^T F - I).
 template<typename ScalarT>
