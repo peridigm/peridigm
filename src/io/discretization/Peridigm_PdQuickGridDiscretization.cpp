@@ -57,8 +57,10 @@ using std::tr1::shared_ptr;
 PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                                                                  const Teuchos::RCP<Teuchos::ParameterList>& params) :
   minElementRadius(1.0e50),
+  maxElementRadius(0.0),
   maxElementDimension(0.0),
   numBonds(0),
+  maxNumBondsPerElem(0),
   myPID(epetra_comm->MyPID()),
   numPID(epetra_comm->NumProc()),
   comm(epetra_comm)
@@ -78,6 +80,7 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
   int numMyElementsUpperBound = oneDimensionalMap->NumMyElements();
   int numGlobalElements = -1; 
   int numMyElements = 0;
+  int maxNumBonds = 0;
   int* oneDimensionalMapGlobalElements = oneDimensionalMap->MyGlobalElements();
   int* myGlobalElements = new int[numMyElementsUpperBound];
   int* elementSizeList = new int[numMyElementsUpperBound];
@@ -95,8 +98,10 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
       numPointsWithZeroNeighbors++;
     }
     numBonds += numNeighbors;
+    if(numNeighbors>maxNumBonds) maxNumBonds = numNeighbors;
     neighborhoodIndex += 1 + numNeighbors;
   }
+  maxNumBondsPerElem = maxNumBonds;
   int indexBase = 0;
   bondMap = Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, elementSizeList, indexBase, *comm));
   delete[] myGlobalElements;
@@ -126,6 +131,7 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
 PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                                                                  const Teuchos::RCP<const QUICKGRID::Data>& decomp) :
   minElementRadius(1.0e50),
+  maxElementRadius(0.0),
   maxElementDimension(0.0),
   numBonds(0),
   myPID(comm->MyPID()),
@@ -229,6 +235,7 @@ QUICKGRID::Data PeridigmNS::PdQuickGridDiscretization::getDiscretization(const T
 #endif
       
     minElementRadius = pow(0.238732414637843*(xLength/nx)*(yLength/ny)*(zLength/nz), 0.33333333333333333);
+    maxElementRadius = minElementRadius;
     maxElementDimension = sqrt((xLength/nx)*(xLength/nx) + (yLength/ny)*(yLength/ny) + (zLength/nz)*(zLength/nz));
   } 
   else if (params->isSublist("TensorProductCylinderMeshGenerator")){
@@ -390,4 +397,11 @@ PeridigmNS::PdQuickGridDiscretization::getNumBonds() const
 {
   return numBonds;
 }
+
+unsigned int
+PeridigmNS::PdQuickGridDiscretization::getMaxNumBondsPerElem() const
+{
+  return maxNumBondsPerElem;
+}
+
 

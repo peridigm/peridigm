@@ -142,6 +142,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
 
   DiscretizationFactory discFactory(discParams);
   Teuchos::RCP<Discretization> peridigmDisc = discFactory.create(peridigmComm);
+  checkHorizon(peridigmDisc, blockHorizonValues);
   initializeDiscretization(peridigmDisc);
 
   // If the user did not provide a finite-difference probe length, use a fraction of the minimum element radius
@@ -184,6 +185,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   if(peridigmParams->isSublist("Contact")){
     analysisHasContact = true;
     contactParams = peridigmParams->sublist("Contact");
+    checkContactSearchRadius(contactParams,peridigmDisc);
     contactManager =
       Teuchos::RCP<ContactManager>(new ContactManager(contactParams, peridigmDisc, peridigmParams));
     contactManager->initialize(oneDimensionalMap,
@@ -394,6 +396,54 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
 
   // Set default value for current time;
   timeCurrent = 0.0;
+}
+
+void PeridigmNS::Peridigm::checkHorizon(Teuchos::RCP<Discretization> peridigmDisc, map<string, double> & blockHorizonValues){
+  // Warn the user if it appears the horizon is too large and may cause memory to fill
+  const double warningPerc = 0.80; // TODO: This might need to be adjusted
+  const double maxPerc = (double)peridigmDisc->getMaxNumBondsPerElem() / (double)peridigmDisc->getNumElem();
+  if(maxPerc >= warningPerc){
+    if(peridigmComm->MyPID() == 0){
+      cout << "** Warning: elements were detected with large neighborhood sizes relative to the number of local elements.\n"
+           << "** The largest element neighborhood contains " << maxPerc * 100 << "% of the elements on this processor.\n"
+           << "** This may indicate the horizon was selected too large and could lead to memory capacity being exceeded.\n\n";
+    }
+    return;
+  }
+  // Warn the user if a block's horizon is too large compared to the max element diameter
+  const double warningSizeRatio = 25.0; // TODO: This might need to be adjusted
+  string blockName = "";
+  double horizonValue = 0.0;
+  const double maxRad = peridigmDisc->getMaxElementRadius();
+  for(map<string, double>::const_iterator it = blockHorizonValues.begin() ; it != blockHorizonValues.end() ; it++){
+    if(it->second > warningSizeRatio * maxRad){
+      blockName = it->first;
+      horizonValue = it->second;
+      if(peridigmComm->MyPID() == 0){
+        cout << "** Warning: The horizon for " << blockName << " is " << horizonValue << ", which is\n"
+             << "** more than " << warningSizeRatio <<  " times the max element radius (" << maxRad << ").\n"
+             << "** This may indicate the horizon was selected too large\n"
+             << "** and could lead to memory capacity being exceeded.\n\n";
+      }
+    }
+  }
+}
+
+void PeridigmNS::Peridigm::checkContactSearchRadius(const Teuchos::ParameterList& contactParams, Teuchos::RCP<Discretization> peridigmDisc){
+  if(!contactParams.isParameter("Search Radius"))
+    TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Contact parameter \"Search Radius\" not specified.");
+
+  const double maxRatio = 10.0;  // TODO: this might need to be adjusted
+  const double contactRad = contactParams.get<double>("Search Radius");
+  const double maxRad = peridigmDisc->getMaxElementRadius();
+
+  if(contactRad/maxRad >= maxRatio){
+    if(peridigmComm->MyPID() == 0){
+      cout << "** Warning: the selected contact search radius, " << contactRad << ", is large\n"
+           << "** relative to the maximum element diameter (" << maxRad << ").\n"
+           << "** This may lead to the memory capacity being exceeded.\n\n";
+    }
+  }
 }
 
 map<string, double> PeridigmNS::Peridigm::parseHorizonValuesFromBlockParameters(Teuchos::ParameterList& blockParams) {

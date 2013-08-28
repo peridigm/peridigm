@@ -98,8 +98,17 @@ namespace PeridigmNS {
     //! Get the number of bonds on this processor
     virtual unsigned int getNumBonds() const;
 
+    //! Get the number of elems on this processor
+    virtual unsigned int getNumElem() const {return oneDimensionalMap->NumMyElements();}
+
+    //! Get the maximum number of bonds per element on this processor
+    virtual unsigned int getMaxNumBondsPerElem() const;
+
     //! Get the minimum element radius in the model (used for example for determining magnitude of finite-difference probe).
     virtual double getMinElementRadius() const { return minElementRadius; }
+
+    //! Get the maximum element radius in the model
+    virtual double getMaxElementRadius() const { return maxElementRadius; }
 
     //! Get the maximum element dimension (for example the diagonal of a hex element, used for partial volume neighbor search).
     virtual double getMaxElementDimension() const { return maxElementDimension; }
@@ -161,6 +170,9 @@ namespace PeridigmNS {
     //! Minimum element radius
     double minElementRadius;
 
+    //! Maximum element radius
+    double maxElementRadius;
+
     //! Maximum element dimension
     double maxElementDimension;
 
@@ -184,6 +196,9 @@ namespace PeridigmNS {
 
     //! Returns number of bonds on this processor
     unsigned int numBonds;
+
+    //! Returns the max number of bonds per element on this processor
+    unsigned int maxNumBondsPerElem;
 
     //! Processor ID
     unsigned int myPID;

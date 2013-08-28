@@ -66,8 +66,10 @@ using namespace std;
 PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                                                  const Teuchos::RCP<Teuchos::ParameterList>& params) :
   minElementRadius(1.0e50),
+  maxElementRadius(0.0),
   maxElementDimension(0.0),
   numBonds(0),
+  maxNumBondsPerElem(0),
   myPID(epetra_comm->MyPID()),
   numPID(epetra_comm->NumProc()),
   bondFilterCommand("None"),
@@ -133,6 +135,7 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   int numMyElementsUpperBound = oneDimensionalMap->NumMyElements();
   int numGlobalElements = -1; 
   int numMyElements = 0;
+  int maxNumBonds = 0;
   int* oneDimensionalMapGlobalElements = oneDimensionalMap->MyGlobalElements();
   int* myGlobalElements = new int[numMyElementsUpperBound];
   int* elementSizeList = new int[numMyElementsUpperBound];
@@ -150,8 +153,10 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
       numPointsWithZeroNeighbors++;
     }
     numBonds += numNeighbors;
+    if(numNeighbors>maxNumBonds) maxNumBonds = numNeighbors;
     neighborhoodIndex += 1 + numNeighbors;
   }
+  maxNumBondsPerElem = maxNumBonds;
   int indexBase = 0;
   bondMap = Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, elementSizeList, indexBase, *comm));
   delete[] myGlobalElements;
@@ -162,12 +167,17 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
     double radius = pow(0.238732414637843*(*cellVolume)[i], 0.33333333333333333);
     if(radius < minElementRadius)
       minElementRadius = radius;
+    if(radius > maxElementRadius)
+      maxElementRadius = radius;
   }
   vector<double> localMin(1);
   vector<double> globalMin(1);
   localMin[0] = minElementRadius;
   epetra_comm->MinAll(&localMin[0], &globalMin[0], 1);
   minElementRadius = globalMin[0];
+  localMin[0] = maxElementRadius;
+  epetra_comm->MaxAll(&localMin[0], &globalMin[0], 1);
+  maxElementRadius = globalMin[0];
 }
 
 PeridigmNS::STKDiscretization::~STKDiscretization() {}
@@ -647,6 +657,13 @@ PeridigmNS::STKDiscretization::getNumBonds() const
 {
   return numBonds;
 }
+
+unsigned int
+PeridigmNS::STKDiscretization::getMaxNumBondsPerElem() const
+{
+  return maxNumBondsPerElem;
+}
+
 
 Teuchos::RCP< std::vector<double> > PeridigmNS::STKDiscretization::getExodusMeshNodePositions(int globalNodeID)
 {

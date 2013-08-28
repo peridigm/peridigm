@@ -103,6 +103,8 @@ namespace PeridigmNS {
 
     void initializeContactBlocks();
 
+    const double getContactSearchRadius() const {return contactSearchRadius;}
+
     void importData(Teuchos::RCP<Epetra_Vector> volume,
                     Teuchos::RCP<Epetra_Vector> coordinates,
                     Teuchos::RCP<Epetra_Vector> velocity);
