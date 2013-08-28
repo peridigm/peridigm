@@ -101,6 +101,12 @@ namespace PeridigmNS {
     //! Initialize discretization and maps
     void initializeDiscretization(Teuchos::RCP<Discretization> peridigmDisc);
 
+    //! Throws a warning if it seems like the horizon is too big
+    void checkHorizon(Teuchos::RCP<Discretization> peridigmDisc, std::map<string, double> & blockHorizonValues);
+
+    //! Throws a warning if it seems like the contact search radius is too big
+    void checkContactSearchRadius(const Teuchos::ParameterList& contactParams, Teuchos::RCP<Discretization> peridigmDisc);
+
     //! Initialize the workset
     void initializeWorkset();
 

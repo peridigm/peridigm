@@ -109,6 +109,12 @@ namespace PeridigmNS {
     //! Get the number of bonds on this processor
     virtual unsigned int getNumBonds() const = 0;
 
+    //! Get the number of elems on this processor
+    virtual unsigned int getNumElem() const = 0;
+
+    //! Get the max number of bonds per cell
+    virtual unsigned int getMaxNumBondsPerElem() const = 0;
+
     //! Get a list of horizons for all blocks
     virtual std::map<std::string, double> getHorizons() { return horizons; }
 
@@ -121,6 +127,9 @@ namespace PeridigmNS {
 
     //! Get the minimum element radius in the model (used for example for determining magnitude of finite-difference probe).
     virtual double getMinElementRadius() const = 0;
+
+    //! Get the minimum element radius in the model (used for example for determining magnitude of finite-difference probe).
+    virtual double getMaxElementRadius() const = 0;
 
     //! Get the maximum element dimension (for example the diagonal of a hex element, used for partial volume neighbor search).
     virtual double getMaxElementDimension() const = 0;
