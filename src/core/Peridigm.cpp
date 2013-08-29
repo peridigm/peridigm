@@ -1613,7 +1613,8 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
 
     int solverIteration = 1;
     bool dampedNewton = false;
-    bool usePreconditioner = true;
+    bool usePreconditioner = false; // \todo Determine why ifpack preconditioners started exhibiting problems with Trilinos 11.2.5 (Jul-11-2013).
+                                    //       For the record, Trilinos 11.2.4 (Jun-20-2013) works.
     int numPureNewtonSteps = 8;
     int numPreconditionerSteps = 24;
     int dampedNewtonNumStepsBetweenTangentUpdates = 8;
