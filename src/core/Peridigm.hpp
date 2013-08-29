@@ -102,7 +102,7 @@ namespace PeridigmNS {
     void initializeDiscretization(Teuchos::RCP<Discretization> peridigmDisc);
 
     //! Throws a warning if it seems like the horizon is too big
-    void checkHorizon(Teuchos::RCP<Discretization> peridigmDisc, std::map<string, double> & blockHorizonValues);
+    void checkHorizon(Teuchos::RCP<Discretization> peridigmDisc, std::map<std::string, double> & blockHorizonValues);
 
     //! Throws a warning if it seems like the contact search radius is too big
     void checkContactSearchRadius(const Teuchos::ParameterList& contactParams, Teuchos::RCP<Discretization> peridigmDisc);
