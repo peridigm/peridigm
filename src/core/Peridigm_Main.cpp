@@ -113,6 +113,8 @@ int main(int argc, char *argv[]) {
     // Solve the problem
     peridigm->executeSolvers();
 
+    peridigm->printMemoryStats();
+
 /****************************
 	EpetraExt::ModelEvaluator::InArgs params_in = App->createInArgs();
     EpetraExt::ModelEvaluator::OutArgs responses_out = App->createOutArgs();
@@ -146,6 +148,7 @@ int main(int argc, char *argv[]) {
 
   PeridigmNS::Timer::self().stopTimer("Total");
   PeridigmNS::Timer::self().printTimingData(cout);
+
 
 #ifdef HAVE_MPI
   MPI_Finalize() ;

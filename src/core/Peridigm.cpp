@@ -106,6 +106,9 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
 {
   peridigmComm = comm;
   peridigmParams = params;
+  // set the comm for memory use statistics
+  Memstat * memstat = Memstat::Instance();
+  memstat->setComm(comm);
 
   out = Teuchos::VerboseObjectBase::getDefaultOStream();
 
@@ -203,7 +206,11 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
                                           y, 
                                           v);
     contactManager->initializeContactBlocks();
+
+    const std::string statTag = "Contact Initialized";
+    memstat->addStat(statTag);
   }
+
 
   // Instantiate the blocks
   initializeBlocks(peridigmDisc);
@@ -777,6 +784,10 @@ void PeridigmNS::Peridigm::execute(Teuchos::RCP<Teuchos::ParameterList> solverPa
     executeNOXQuasiStatic(solverParams);
   else if(solverParams->isSublist("Implicit"))    
     executeImplicit(solverParams);
+
+  PeridigmNS::Memstat * memstat = PeridigmNS::Memstat::Instance();
+  const std::string statTag = "Post Execute";
+  memstat->addStat(statTag);
 }
 
 void PeridigmNS::Peridigm::executeSolvers() {
@@ -2340,6 +2351,10 @@ void PeridigmNS::Peridigm::allocateJacobian() {
   // create the serial Jacobian
   overlapJacobian = Teuchos::rcp(new PeridigmNS::SerialMatrix(tangent));
   workset->jacobian = overlapJacobian;
+
+  PeridigmNS::Memstat * memstat = PeridigmNS::Memstat::Instance();
+  const std::string statTag = "Allocated Jacobian";
+  memstat->addStat(statTag);
 }
 
 void PeridigmNS::Peridigm::allocateBlockDiagonalJacobian() {
@@ -2441,6 +2456,10 @@ void PeridigmNS::Peridigm::allocateBlockDiagonalJacobian() {
   // create the serial Jacobian
   overlapJacobian = Teuchos::rcp(new PeridigmNS::SerialMatrix(blockDiagonalTangent));
   workset->jacobian = overlapJacobian;
+
+  PeridigmNS::Memstat * memstat = PeridigmNS::Memstat::Instance();
+  const std::string statTag = "Alloc Blk Diag Jacobian";
+  memstat->addStat(statTag);
 }
 
 double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vector> residual) {
