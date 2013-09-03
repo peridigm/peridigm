@@ -57,7 +57,7 @@ void PeridigmNS::Memstat::addStat(const std::string & description){
   // otherwise create a new entry
   else
     stats.insert(std::pair<std::string,unsigned int>(description,heap_size));
-};
+}
 
 void PeridigmNS::Memstat::printStats(){
 
