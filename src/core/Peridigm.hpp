@@ -78,6 +78,7 @@
 #include "Peridigm_BoundaryAndInitialConditionManager.hpp"
 #include "Peridigm_ContactManager.hpp"
 #include "Peridigm_ServiceManager.hpp"
+#include "Peridigm_Memstat.hpp"
 #include "materials/Peridigm_Material.hpp"
 #include "damage/Peridigm_DamageModel.hpp"
 #include "muParser/muParserDef.h"
@@ -239,6 +240,9 @@ namespace PeridigmNS {
 
     //! Display a progress bar
     void displayProgress(std::string title, double percentComplete);
+
+    //! Display information about memory usage
+    void printMemoryStats(){Memstat * memstat = Memstat::Instance(); memstat->printStats();};
 
   private:
 

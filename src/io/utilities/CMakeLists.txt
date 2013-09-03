@@ -6,4 +6,4 @@ add_subdirectory(unit_test)
 #
 # Utilities library
 #
-add_library(Utilities Sortable.cxx)
+add_library(Utilities Sortable.cxx Peridigm_Memstat.cpp)

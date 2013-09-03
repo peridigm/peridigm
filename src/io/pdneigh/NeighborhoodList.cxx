@@ -55,6 +55,7 @@
 
 #include "Peridigm_JAMSearchTree.hpp"
 #include "Peridigm_ZoltanSearchTree.hpp"
+#include "Peridigm_Memstat.hpp"
 
 #include <stdexcept>
 
@@ -737,6 +738,12 @@ void NeighborhoodList::buildNeighborhoodList
 			 */
 		}
 	}
+
+	// output some memory statistics from here:
+  PeridigmNS::Memstat * memstat = PeridigmNS::Memstat::Instance();
+  memstat->addStat("Built Zoltan Search Tree");
+
+
 
 	delete searchTree;
 }
