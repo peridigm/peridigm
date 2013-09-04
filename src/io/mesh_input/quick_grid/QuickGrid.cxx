@@ -53,7 +53,6 @@
 #include <cmath>
 #include <string>
 #include <iostream>
-#include <strstream>
 #include <set>
 #include <map>
 #include <cstdlib>
@@ -127,7 +126,7 @@ shared_ptr<QuickGridMeshGenerationIterator> getMeshGenerator(size_t numProcs, co
 
 
 void print_meta_data(const QuickGridData& gridData, const std::string& label) {
-	std::strstream s;
+	std::stringstream s;
 	s << label << "\n";
 	s << "QUICKGRID.print_meta_data(const QuickGridData& gridData)\n";
 	s << "\tdimension : " << gridData.dimension << "\n";
