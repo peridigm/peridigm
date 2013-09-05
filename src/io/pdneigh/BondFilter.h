@@ -50,8 +50,8 @@
 #include <stdexcept>
 #include <vector>
 #include <string>
-#include "utilities/MemoryInclude.h"
-#include "utilities/Vector3D.h"
+#include "MemoryInclude.h"
+#include "Vector3D.h"
 
 namespace PdBondFilter {
 

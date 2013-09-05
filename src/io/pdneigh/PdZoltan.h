@@ -47,7 +47,7 @@
 #define PD_ZOLTAN_H_
 
 #include "zoltan.h"
-#include "mesh_input/quick_grid/QuickGridData.h"
+#include "QuickGridData.h"
 
 namespace PDNEIGH {
 

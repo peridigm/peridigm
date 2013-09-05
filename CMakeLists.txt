@@ -185,6 +185,7 @@ ${CMAKE_SOURCE_DIR}/src/core
 ${CMAKE_SOURCE_DIR}/src/io
 ${CMAKE_SOURCE_DIR}/src/io/discretization
 ${CMAKE_SOURCE_DIR}/src/io/mesh_input
+${CMAKE_SOURCE_DIR}/src/io/mesh_input/quick_grid
 ${CMAKE_SOURCE_DIR}/src/io/mesh_output
 ${CMAKE_SOURCE_DIR}/src/io/bond_volume
 ${CMAKE_SOURCE_DIR}/src/io/utilities
@@ -209,6 +210,9 @@ set(IO_DIR             ${CMAKE_SOURCE_DIR}/src/io)
 set(MATERIALS_DIR      ${CMAKE_SOURCE_DIR}/src/materials)
 set(DAMAGE_DIR         ${CMAKE_SOURCE_DIR}/src/damage)
 set(MESH_OUTPUT_DIR    ${CMAKE_SOURCE_DIR}/src/io/mesh_output)
+set(QUICK_GRID_DIR     ${CMAKE_SOURCE_DIR}/src/io/mesh_input/quick_grid)
+set(PDNEIGH_DIR        ${CMAKE_SOURCE_DIR}/src/io/pdneigh)
+set(UTILITIES_DIR      ${CMAKE_SOURCE_DIR}/src/io/utilities)
 
 # link directories 
 set(LIB_DIRS 
