@@ -53,8 +53,8 @@
 #include <Epetra_Map.h>
 #include <Epetra_Vector.h>
 #include "Peridigm_NeighborhoodData.hpp"
-#include "mesh_input/quick_grid/QuickGrid.h"
-#include "pdneigh/BondFilter.h"
+#include "QuickGrid.h"
+#include "BondFilter.h"
 
 namespace PeridigmNS {
 

@@ -49,7 +49,7 @@
 #include <set>
 
 #include "BondFilter.h"
-#include "utilities/Array.h"
+#include "Array.h"
 
 #include <Teuchos_RCP.hpp>
 //#include <Epetra_BlockMap.h>

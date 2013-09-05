@@ -47,7 +47,7 @@
 
 #ifndef QUICKGRIDDATA_H_
 #define QUICKGRIDDATA_H_
-#include "utilities/MemoryInclude.h"
+#include "MemoryInclude.h"
 
 struct Zoltan_Struct;
 

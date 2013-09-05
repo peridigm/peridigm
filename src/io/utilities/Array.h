@@ -46,7 +46,7 @@
 #ifndef ARRAY_H_
 #define ARRAY_H_
 
-#include "utilities/MemoryInclude.h"
+#include "MemoryInclude.h"
 #include <stdexcept>
 #include <cmath>
 #include <string>

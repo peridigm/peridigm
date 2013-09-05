@@ -52,7 +52,7 @@
 #include <Teuchos_RCP.hpp>
 #include <Epetra_Comm.h>
 #include "Peridigm_Discretization.hpp"
-#include "mesh_input/quick_grid/QuickGridData.h"
+#include "QuickGridData.h"
 
 namespace PeridigmNS {
 

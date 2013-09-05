@@ -24,6 +24,15 @@ file (GLOB ioHEADERS
 file (GLOB materialsHEADERS 
   "${MATERIALS_DIR}/*.hpp"
 )
+file (GLOB quickGridHEADERS 
+  "${QUICK_GRID_DIR}/*.h"
+)
+file (GLOB utilitiesHEADERS 
+  "${UTILITIES_DIR}/*.h"
+)
+file (GLOB pdneighHEADERS 
+  "${PDNEIGH_DIR}/*.h"
+)
 
 set(Peridigm_HEADERS
     ${COMPUTE_DIR}/compute_includes.hpp
@@ -34,6 +43,9 @@ set(Peridigm_HEADERS
     ${damageHEADERS}
     ${ioHEADERS}
     ${materialsHEADERS}
+    ${quickGridHEADERS}
+    ${utilitiesHEADERS}
+    ${pdneighHEADERS}
 )
 
 # Glob source files in subdirectories
