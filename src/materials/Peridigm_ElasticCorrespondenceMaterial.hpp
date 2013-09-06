@@ -89,14 +89,6 @@ namespace PeridigmNS {
 
   protected:
 
-    //! Evaluate the hourglass force for suppression of zero-energy modes.
-    virtual void
-    computeHourglassForce(const double dt,
-			  const int numOwnedPoints,
-			  const int* ownedIDs,
-			  const int* neighborhoodList,
-			  PeridigmNS::DataManager& dataManager) const;
-
     // material parameters
     double m_bulkModulus;
     double m_shearModulus;

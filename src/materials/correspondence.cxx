@@ -222,6 +222,96 @@ void computeGreenLagrangeStrain
 }
 
 template<typename ScalarT>
+void computeHourglassForce
+(
+const double* volume,
+const double* modelCoordinates,
+const ScalarT* coordinates,
+const ScalarT* deformationGradientXX,
+const ScalarT* deformationGradientXY,
+const ScalarT* deformationGradientXZ,
+const ScalarT* deformationGradientYX,
+const ScalarT* deformationGradientYY,
+const ScalarT* deformationGradientYZ,
+const ScalarT* deformationGradientZX,
+const ScalarT* deformationGradientZY,
+const ScalarT* deformationGradientZZ,
+ScalarT* hourglassForceDensity,
+const int* neighborhoodList,
+int numPoints,
+double horizon,
+double bulkModulus,
+double hourglassCoefficient
+)
+{
+  double undeformedBond[3], undeformedBondLength;
+  ScalarT deformedBond[3], deformedBondLength;
+  ScalarT expectedNeighborLocation[3], hourglassVector[3], bondDamage, dot, magnitude;
+  double vol, neighborVol;
+  int neighborIndex;
+
+  double constant = 18.0*hourglassCoefficient*bulkModulus/(3.1415926536*horizon*horizon*horizon*horizon);
+
+  const int *neighborListPtr = neighborhoodList;
+  for(int iID=0 ; iID<numPoints ; ++iID){
+
+    int numNeighbors = *neighborListPtr; neighborListPtr++;
+    for(int n=0; n<numNeighbors; n++, neighborListPtr++){
+      neighborIndex = *neighborListPtr;
+
+      undeformedBond[0] = modelCoordinates[3*neighborIndex]   - modelCoordinates[3*iID];
+      undeformedBond[1] = modelCoordinates[3*neighborIndex+1] - modelCoordinates[3*iID+1];
+      undeformedBond[2] = modelCoordinates[3*neighborIndex+2] - modelCoordinates[3*iID+2];
+      undeformedBondLength = sqrt(undeformedBond[0]*undeformedBond[0] +
+                                  undeformedBond[1]*undeformedBond[1] +
+                                  undeformedBond[2]*undeformedBond[2]);
+
+      deformedBond[0] = coordinates[3*neighborIndex]   - coordinates[3*iID];
+      deformedBond[1] = coordinates[3*neighborIndex+1] - coordinates[3*iID+1];
+      deformedBond[2] = coordinates[3*neighborIndex+2] - coordinates[3*iID+2];
+      deformedBondLength = sqrt(deformedBond[0]*deformedBond[0] +
+				deformedBond[1]*deformedBond[1] +
+				deformedBond[2]*deformedBond[2]);
+
+      expectedNeighborLocation[0] = coordinates[3*iID] +
+	deformationGradientXX[iID]*undeformedBond[0] +
+	deformationGradientXY[iID]*undeformedBond[1] +
+	deformationGradientXZ[iID]*undeformedBond[2];
+      expectedNeighborLocation[1] = coordinates[3*iID+1] +
+	deformationGradientYX[iID]*undeformedBond[0] +
+	deformationGradientYY[iID]*undeformedBond[1] +
+	deformationGradientYZ[iID]*undeformedBond[2];
+      expectedNeighborLocation[2] = coordinates[3*iID+2] +
+	deformationGradientZX[iID]*undeformedBond[0] +
+	deformationGradientZY[iID]*undeformedBond[1] +
+	deformationGradientZZ[iID]*undeformedBond[2];
+
+      // \todo Include bond damage in hourglass force calculation
+      bondDamage = 0.0;
+
+      hourglassVector[0] = expectedNeighborLocation[0] - coordinates[3*neighborIndex];
+      hourglassVector[1] = expectedNeighborLocation[1] - coordinates[3*neighborIndex+1];
+      hourglassVector[2] = expectedNeighborLocation[2] - coordinates[3*neighborIndex+2];
+
+      dot = -1.0 * (hourglassVector[0]*deformedBond[0] + hourglassVector[1]*deformedBond[1] + hourglassVector[2]*deformedBond[2]);
+
+      magnitude = (1.0-bondDamage) * constant * (dot/undeformedBondLength) * (1.0/deformedBondLength);
+
+      vol = volume[iID];
+      neighborVol = volume[neighborIndex];
+
+      hourglassForceDensity[3*iID]   += magnitude * deformedBond[0] * neighborVol;
+      hourglassForceDensity[3*iID+1] += magnitude * deformedBond[1] * neighborVol;
+      hourglassForceDensity[3*iID+2] += magnitude * deformedBond[2] * neighborVol;
+      hourglassForceDensity[3*neighborIndex]   -= magnitude * deformedBond[0] * vol;
+      hourglassForceDensity[3*neighborIndex+1] -= magnitude * deformedBond[1] * vol;
+      hourglassForceDensity[3*neighborIndex+2] -= magnitude * deformedBond[2] * vol;
+
+    }
+  }
+}
+
+template<typename ScalarT>
 void computeClassicalElasticStress
 (
  const ScalarT* strainXX,
@@ -367,6 +457,28 @@ template void computeGreenLagrangeStrain<double>
   int numPoints
 );
 
+template void computeHourglassForce<double>
+(
+const double* volume,
+const double* modelCoordinates,
+const double* coordinates,
+const double* deformationGradientXX,
+const double* deformationGradientXY,
+const double* deformationGradientXZ,
+const double* deformationGradientYX,
+const double* deformationGradientYY,
+const double* deformationGradientYZ,
+const double* deformationGradientZX,
+const double* deformationGradientZY,
+const double* deformationGradientZZ,
+double* hourglassForceDensity,
+const int* neighborhoodList,
+int numPoints,
+double horizon,
+double bulkModulus,
+double hourglassCoefficient
+);
+
 template void computeClassicalElasticStress<double>
 (
  const double* strainXX,
@@ -467,6 +579,28 @@ template void computeGreenLagrangeStrain<Sacado::Fad::DFad<double> >
   Sacado::Fad::DFad<double>* greenLagrangeStrainZY,
   Sacado::Fad::DFad<double>* greenLagrangeStrainZZ,
   int numPoints
+);
+
+template void computeHourglassForce<Sacado::Fad::DFad<double> >
+(
+const double* volume,
+const double* modelCoordinates,
+const Sacado::Fad::DFad<double>* coordinates,
+const Sacado::Fad::DFad<double>* deformationGradientXX,
+const Sacado::Fad::DFad<double>* deformationGradientXY,
+const Sacado::Fad::DFad<double>* deformationGradientXZ,
+const Sacado::Fad::DFad<double>* deformationGradientYX,
+const Sacado::Fad::DFad<double>* deformationGradientYY,
+const Sacado::Fad::DFad<double>* deformationGradientYZ,
+const Sacado::Fad::DFad<double>* deformationGradientZX,
+const Sacado::Fad::DFad<double>* deformationGradientZY,
+const Sacado::Fad::DFad<double>* deformationGradientZZ,
+Sacado::Fad::DFad<double>* hourglassForceDensity,
+const int* neighborhoodList,
+int numPoints,
+double horizon,
+double bulkModulus,
+double hourglassCoefficient
 );
 
 template void computeClassicalElasticStress<Sacado::Fad::DFad<double> >
