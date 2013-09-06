@@ -9,7 +9,6 @@ set(PD_MATERIAL_SOURCES
     viscoelastic.cxx
     correspondence.cxx
     material_utilities.cxx
-    pals.cxx
 )
 
 # Optional source files for Sandia internal development
