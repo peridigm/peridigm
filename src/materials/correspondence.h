@@ -131,6 +131,29 @@ void computeGreenLagrangeStrain
   int numPoints
 );
 
+template<typename ScalarT>
+void computeHourglassForce
+(
+const double* volume,
+const double* modelCoordinates,
+const ScalarT* coordinates,
+const ScalarT* deformationGradientXX,
+const ScalarT* deformationGradientXY,
+const ScalarT* deformationGradientXZ,
+const ScalarT* deformationGradientYX,
+const ScalarT* deformationGradientYY,
+const ScalarT* deformationGradientYZ,
+const ScalarT* deformationGradientZX,
+const ScalarT* deformationGradientZY,
+const ScalarT* deformationGradientZZ,
+ScalarT* hourglassForceDensity,
+const int* neighborhoodList,
+int numPoints,
+double horizon,
+double bulkModulus,
+double hourglassCoefficient
+);
+
 //! Classical elastic material model stress calculation (Hooke's law).
 template<typename ScalarT>
 void computeClassicalElasticStress

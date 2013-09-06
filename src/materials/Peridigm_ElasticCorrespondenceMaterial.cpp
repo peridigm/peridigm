@@ -404,109 +404,28 @@ PeridigmNS::ElasticCorrespondenceMaterial::computeForce(const double dt,
     }
   }
 
-  computeHourglassForce(dt, numOwnedPoints, ownedIDs, neighborhoodList, dataManager);
-}
-
-void
-PeridigmNS::ElasticCorrespondenceMaterial::computeHourglassForce(const double dt,
-								 const int numOwnedPoints,
-								 const int* ownedIDs,
-								 const int* neighborhoodList,
-								 PeridigmNS::DataManager& dataManager) const
-{
+  // Compute hourglass forces for stabilization of low-enery and/or zero-energy modes
   dataManager.getData(m_hourglassForceDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
 
-  double *volume, *modelCoordinates, *coordinates, *hourglassForceDensity, *forceDensity;
-  dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&volume);
-  dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&modelCoordinates);
+  double *coordinates, *hourglassForceDensity;
   dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&coordinates);
   dataManager.getData(m_hourglassForceDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&hourglassForceDensity);
-  dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&forceDensity);
 
-  double *deformationGradientXX, *deformationGradientXY, *deformationGradientXZ;
-  double *deformationGradientYX, *deformationGradientYY, *deformationGradientYZ;
-  double *deformationGradientZX, *deformationGradientZY, *deformationGradientZZ;
-  dataManager.getData(m_deformationGradientXXFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientXX);
-  dataManager.getData(m_deformationGradientXYFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientXY);
-  dataManager.getData(m_deformationGradientXZFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientXZ);
-  dataManager.getData(m_deformationGradientYXFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientYX);
-  dataManager.getData(m_deformationGradientYYFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientYY);
-  dataManager.getData(m_deformationGradientYZFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientYZ);
-  dataManager.getData(m_deformationGradientZXFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientZX);
-  dataManager.getData(m_deformationGradientZYFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientZY);
-  dataManager.getData(m_deformationGradientZZFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientZZ);
+  CORRESPONDENCE::computeHourglassForce(volume,
+                                        modelCoordinates,
+                                        coordinates,
+                                        deformationGradientXX, deformationGradientXY, deformationGradientXZ,
+                                        deformationGradientYX, deformationGradientYY, deformationGradientYZ,
+                                        deformationGradientZX, deformationGradientZY, deformationGradientZZ,
+                                        hourglassForceDensity,
+                                        neighborhoodList,
+                                        numOwnedPoints,
+                                        m_horizon,
+                                        m_bulkModulus,
+                                        m_hourglassCoefficient);
 
-  double undeformedBond[3], undeformedBondLength, deformedBond[3], deformedBondLength;
-  double expectedNeighborLocation[3], hourglassVector[3], bondDamage, dot, magnitude;
-  double vol, neighborVol;
-  int nodeId, neighborIndex;
-
-  double constant = 18.0*m_hourglassCoefficient*m_bulkModulus/(3.1415926536*m_horizon*m_horizon*m_horizon*m_horizon);
-
-  const int *neighborListPtr = neighborhoodList;
-  for(int iID=0 ; iID<numOwnedPoints ; ++iID){
-
-    nodeId = ownedIDs[iID];
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeId != iID, "**** Error:  THIS SHOULD NEVER HAPPEN AS FAR AS I KNOW.\n");
-
-    int numNeighbors = *neighborListPtr; neighborListPtr++;
-    for(int n=0; n<numNeighbors; n++, neighborListPtr++){
-      neighborIndex = *neighborListPtr;
-
-      undeformedBond[0] = modelCoordinates[3*neighborIndex]   - modelCoordinates[3*nodeId];
-      undeformedBond[1] = modelCoordinates[3*neighborIndex+1] - modelCoordinates[3*nodeId+1];
-      undeformedBond[2] = modelCoordinates[3*neighborIndex+2] - modelCoordinates[3*nodeId+2];
-      undeformedBondLength = sqrt(undeformedBond[0]*undeformedBond[0] +
-                                  undeformedBond[1]*undeformedBond[1] +
-                                  undeformedBond[2]*undeformedBond[2]);
-
-      deformedBond[0] = coordinates[3*neighborIndex]   - coordinates[3*nodeId];
-      deformedBond[1] = coordinates[3*neighborIndex+1] - coordinates[3*nodeId+1];
-      deformedBond[2] = coordinates[3*neighborIndex+2] - coordinates[3*nodeId+2];
-      deformedBondLength = sqrt(deformedBond[0]*deformedBond[0] +
-				deformedBond[1]*deformedBond[1] +
-				deformedBond[2]*deformedBond[2]);
-
-      expectedNeighborLocation[0] = coordinates[3*nodeId] +
-	deformationGradientXX[nodeId]*undeformedBond[0] +
-	deformationGradientXY[nodeId]*undeformedBond[1] +
-	deformationGradientXZ[nodeId]*undeformedBond[2];
-      expectedNeighborLocation[1] = coordinates[3*nodeId+1] +
-	deformationGradientYX[nodeId]*undeformedBond[0] +
-	deformationGradientYY[nodeId]*undeformedBond[1] +
-	deformationGradientYZ[nodeId]*undeformedBond[2];
-      expectedNeighborLocation[2] = coordinates[3*nodeId+2] +
-	deformationGradientZX[nodeId]*undeformedBond[0] +
-	deformationGradientZY[nodeId]*undeformedBond[1] +
-	deformationGradientZZ[nodeId]*undeformedBond[2];
-
-      // \todo Include bond damage in hourglass force calculation
-      bondDamage = 0.0;
-
-      hourglassVector[0] = expectedNeighborLocation[0] - coordinates[3*neighborIndex];
-      hourglassVector[1] = expectedNeighborLocation[1] - coordinates[3*neighborIndex+1];
-      hourglassVector[2] = expectedNeighborLocation[2] - coordinates[3*neighborIndex+2];
-
-      dot = -1.0 * (hourglassVector[0]*deformedBond[0] + hourglassVector[1]*deformedBond[1] + hourglassVector[2]*deformedBond[2]);
-
-      magnitude = (1.0-bondDamage) * constant * (dot/undeformedBondLength) * (1.0/deformedBondLength);
-
-      vol = volume[nodeId];
-      neighborVol = volume[neighborIndex];
-
-      hourglassForceDensity[3*nodeId]   += magnitude * deformedBond[0] * neighborVol;
-      hourglassForceDensity[3*nodeId+1] += magnitude * deformedBond[1] * neighborVol;
-      hourglassForceDensity[3*nodeId+2] += magnitude * deformedBond[2] * neighborVol;
-      hourglassForceDensity[3*neighborIndex]   -= magnitude * deformedBond[0] * vol;
-      hourglassForceDensity[3*neighborIndex+1] -= magnitude * deformedBond[1] * vol;
-      hourglassForceDensity[3*neighborIndex+2] -= magnitude * deformedBond[2] * vol;
-
-      forceDensity[3*nodeId]   += magnitude * deformedBond[0] * neighborVol;
-      forceDensity[3*nodeId+1] += magnitude * deformedBond[1] * neighborVol;
-      forceDensity[3*nodeId+2] += magnitude * deformedBond[2] * neighborVol;
-      forceDensity[3*neighborIndex]   -= magnitude * deformedBond[0] * vol;
-      forceDensity[3*neighborIndex+1] -= magnitude * deformedBond[1] * vol;
-      forceDensity[3*neighborIndex+2] -= magnitude * deformedBond[2] * vol;
-    }
-  }
+  // Sum the hourglass force densities into the force densities
+  Teuchos::RCP<Epetra_Vector> forceDensityVector = dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1);
+  Teuchos::RCP<Epetra_Vector> hourglassForceDensityVector = dataManager.getData(m_hourglassForceDensityFieldId, PeridigmField::STEP_NP1);
+  forceDensityVector->Update(1.0, *hourglassForceDensityVector, 1.0);
 }
