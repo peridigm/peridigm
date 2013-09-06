@@ -309,6 +309,12 @@ PeridigmNS::ElasticCorrespondenceMaterial::computeForce(const double dt,
   double tempYX, tempYY, tempYZ;
   double tempZX, tempZY, tempZZ;
 
+  double *modelCoordinatesPtr, *neighborModelCoordinatesPtr, *forceDensityPtr, *neighborForceDensityPtr;
+  double undeformedBondX, undeformedBondY, undeformedBondZ, undeformedBondLength;
+  double TX, TY, TZ;
+  double omega, vol, neighborVol;
+  int numNeighbors, neighborIndex;
+
   string matrixInversionErrorMessage =
     "**** Error:  ElasticCorrespondenceMaterial::computeForce() failed to invert deformation gradient.\n";
   matrixInversionErrorMessage +=
@@ -364,32 +370,37 @@ PeridigmNS::ElasticCorrespondenceMaterial::computeForce(const double dt,
                                    tempZX, tempZY, tempZZ);
 
     // Loop over the neighbors and compute contribution to force densities
-    double undeformedBond[3], undeformedBondLength, omega, vol, neighborVol, T[3];
-    int neighborIndex;
-    int numNeighbors = *neighborListPtr; neighborListPtr++;
+    modelCoordinatesPtr = modelCoordinates + 3*iID;
+    numNeighbors = *neighborListPtr; neighborListPtr++;
+
     for(int n=0; n<numNeighbors; n++, neighborListPtr++){
       neighborIndex = *neighborListPtr;
-      undeformedBond[0] = modelCoordinates[3*neighborIndex]   - modelCoordinates[3*iID];
-      undeformedBond[1] = modelCoordinates[3*neighborIndex+1] - modelCoordinates[3*iID+1];
-      undeformedBond[2] = modelCoordinates[3*neighborIndex+2] - modelCoordinates[3*iID+2];
-      undeformedBondLength = sqrt(undeformedBond[0]*undeformedBond[0] +
-                                  undeformedBond[1]*undeformedBond[1] +
-                                  undeformedBond[2]*undeformedBond[2]);
+      neighborModelCoordinatesPtr = modelCoordinates + 3*neighborIndex;
+      undeformedBondX = *(neighborModelCoordinatesPtr) - *(modelCoordinatesPtr);
+      undeformedBondY = *(neighborModelCoordinatesPtr+1) - *(modelCoordinatesPtr+1);
+      undeformedBondZ = *(neighborModelCoordinatesPtr+2) - *(modelCoordinatesPtr+2);
+      undeformedBondLength = sqrt(undeformedBondX*undeformedBondX +
+                                  undeformedBondY*undeformedBondY +
+                                  undeformedBondZ*undeformedBondZ);
+
       omega = MATERIAL_EVALUATION::scalarInfluenceFunction(undeformedBondLength, m_horizon);
 
-      T[0] = omega * (tempXX*undeformedBond[0] + tempXY*undeformedBond[1] + tempXZ*undeformedBond[2]);
-      T[1] = omega * (tempYX*undeformedBond[0] + tempYY*undeformedBond[1] + tempYZ*undeformedBond[2]);
-      T[2] = omega * (tempZX*undeformedBond[0] + tempZY*undeformedBond[1] + tempZZ*undeformedBond[2]);
+      TX = omega * (tempXX*undeformedBondX + tempXY*undeformedBondY + tempXZ*undeformedBondZ);
+      TY = omega * (tempYX*undeformedBondX + tempYY*undeformedBondY + tempYZ*undeformedBondZ);
+      TZ = omega * (tempZX*undeformedBondX + tempZY*undeformedBondY + tempZZ*undeformedBondZ);
 
       vol = volume[iID];
       neighborVol = volume[neighborIndex];
 
-      forceDensity[3*iID]   += T[0] * neighborVol;
-      forceDensity[3*iID+1] += T[1] * neighborVol;
-      forceDensity[3*iID+2] += T[2] * neighborVol;
-      forceDensity[3*neighborIndex]   -= T[0] * vol;
-      forceDensity[3*neighborIndex+1] -= T[1] * vol;
-      forceDensity[3*neighborIndex+2] -= T[2] * vol;
+      forceDensityPtr = forceDensity + 3*iID;
+      neighborForceDensityPtr = forceDensity + 3*neighborIndex;
+
+      *(forceDensityPtr)   += TX * neighborVol;
+      *(forceDensityPtr+1) += TY * neighborVol;
+      *(forceDensityPtr+2) += TZ * neighborVol;
+      *(neighborForceDensityPtr)   -= TX * vol;
+      *(neighborForceDensityPtr+1) -= TY * vol;
+      *(neighborForceDensityPtr+2) -= TZ * vol;
     }
   }
 
