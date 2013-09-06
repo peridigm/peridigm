@@ -186,10 +186,23 @@ PeridigmNS::ElasticCorrespondenceMaterial::computeForce(const double dt,
   // Zero out the forces
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
 
-  // \todo Optimize this function and move it to a cxx file; get rid of base-class implementation
-  // \todo Separate def grad calculation from shape tensor inverse calculation and move to material_utilities.cxx (create one with damage and one without damage, the one with damage needs heursitics to keep running, check for possible use in Sierra/SM)
+  double *volume, *modelCoordinates, *coordinates;
+  dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&volume);
+  dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&modelCoordinates);
+  dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&coordinates);
 
-  computeApproximateDeformationGradient(numOwnedPoints, ownedIDs, neighborhoodList, dataManager);
+  double *shapeTensorInverseXX, *shapeTensorInverseXY, *shapeTensorInverseXZ;
+  double *shapeTensorInverseYX, *shapeTensorInverseYY, *shapeTensorInverseYZ;
+  double *shapeTensorInverseZX, *shapeTensorInverseZY, *shapeTensorInverseZZ;
+  dataManager.getData(m_shapeTensorInverseXXFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseXX);
+  dataManager.getData(m_shapeTensorInverseXYFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseXY);
+  dataManager.getData(m_shapeTensorInverseXZFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseXZ);
+  dataManager.getData(m_shapeTensorInverseYXFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseYX);
+  dataManager.getData(m_shapeTensorInverseYYFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseYY);
+  dataManager.getData(m_shapeTensorInverseYZFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseYZ);
+  dataManager.getData(m_shapeTensorInverseZXFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseZX);
+  dataManager.getData(m_shapeTensorInverseZYFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseZY);
+  dataManager.getData(m_shapeTensorInverseZZFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseZZ);
 
   double *deformationGradientXX, *deformationGradientXY, *deformationGradientXZ;
   double *deformationGradientYX, *deformationGradientYY, *deformationGradientYZ;
@@ -203,6 +216,27 @@ PeridigmNS::ElasticCorrespondenceMaterial::computeForce(const double dt,
   dataManager.getData(m_deformationGradientZXFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientZX);
   dataManager.getData(m_deformationGradientZYFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientZY);
   dataManager.getData(m_deformationGradientZZFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientZZ);
+
+  string shapeTensorErrorMessage =
+    "**** Error:  ElasticCorrespondenceMaterial::computeForce() failed to compute shape tensor.\n";
+  shapeTensorErrorMessage +=
+    "****         Note that all nodes must have a minimum of three neighbors.  Is the horizon too small?\n";
+
+  int shapeTensorReturnCode = 
+    CORRESPONDENCE::computeShapeTensorInverseAndApproximateDeformationGradient(volume,
+                                                                               modelCoordinates,
+                                                                               coordinates,
+                                                                               shapeTensorInverseXX, shapeTensorInverseXY, shapeTensorInverseXZ,
+                                                                               shapeTensorInverseYX, shapeTensorInverseYY, shapeTensorInverseYZ,
+                                                                               shapeTensorInverseZX, shapeTensorInverseZY, shapeTensorInverseZZ,
+                                                                               deformationGradientXX, deformationGradientXY, deformationGradientXZ,
+                                                                               deformationGradientYX, deformationGradientYY, deformationGradientYZ,
+                                                                               deformationGradientZX, deformationGradientZY, deformationGradientZZ,
+                                                                               neighborhoodList,
+                                                                               numOwnedPoints,
+                                                                               m_horizon);
+
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(shapeTensorReturnCode != 0, shapeTensorErrorMessage);
 
   double *strainXX, *strainXY, *strainXZ;
   double *strainYX, *strainYY, *strainYZ;
@@ -226,19 +260,6 @@ PeridigmNS::ElasticCorrespondenceMaterial::computeForce(const double dt,
                                              strainZX, strainZY, strainZZ,
                                              numOwnedPoints);
 
-  double *shapeTensorInverseXX, *shapeTensorInverseXY, *shapeTensorInverseXZ;
-  double *shapeTensorInverseYX, *shapeTensorInverseYY, *shapeTensorInverseYZ;
-  double *shapeTensorInverseZX, *shapeTensorInverseZY, *shapeTensorInverseZZ;
-  dataManager.getData(m_shapeTensorInverseXXFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseXX);
-  dataManager.getData(m_shapeTensorInverseXYFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseXY);
-  dataManager.getData(m_shapeTensorInverseXZFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseXZ);
-  dataManager.getData(m_shapeTensorInverseYXFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseYX);
-  dataManager.getData(m_shapeTensorInverseYYFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseYY);
-  dataManager.getData(m_shapeTensorInverseYZFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseYZ);
-  dataManager.getData(m_shapeTensorInverseZXFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseZX);
-  dataManager.getData(m_shapeTensorInverseZYFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseZY);
-  dataManager.getData(m_shapeTensorInverseZZFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseZZ);
-
   double *cauchyStressXX, *cauchyStressXY, *cauchyStressXZ;
   double *cauchyStressYX, *cauchyStressYY, *cauchyStressYZ;
   double *cauchyStressZX, *cauchyStressZY, *cauchyStressZZ;
@@ -251,11 +272,6 @@ PeridigmNS::ElasticCorrespondenceMaterial::computeForce(const double dt,
   dataManager.getData(m_stressZXFieldId, PeridigmField::STEP_NONE)->ExtractView(&cauchyStressZX);
   dataManager.getData(m_stressZYFieldId, PeridigmField::STEP_NONE)->ExtractView(&cauchyStressZY);
   dataManager.getData(m_stressZZFieldId, PeridigmField::STEP_NONE)->ExtractView(&cauchyStressZZ);
-
-  double *volume, *modelCoordinates, *forceDensity;
-  dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&volume);
-  dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&modelCoordinates);
-  dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&forceDensity);
 
   CORRESPONDENCE::computeClassicalElasticStress(strainXX, strainXY, strainXZ,
                                                 strainYX, strainYY, strainYZ,
@@ -309,6 +325,9 @@ PeridigmNS::ElasticCorrespondenceMaterial::computeForce(const double dt,
   double tempYX, tempYY, tempYZ;
   double tempZX, tempZY, tempZZ;
 
+  double *forceDensity;
+  dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&forceDensity);
+
   double *modelCoordinatesPtr, *neighborModelCoordinatesPtr, *forceDensityPtr, *neighborForceDensityPtr;
   double undeformedBondX, undeformedBondY, undeformedBondZ, undeformedBondLength;
   double TX, TY, TZ;
@@ -344,7 +363,7 @@ PeridigmNS::ElasticCorrespondenceMaterial::computeForce(const double dt,
                                        defGradInvYX, defGradInvYY, defGradInvYZ,
                                        defGradInvZX, defGradInvZY, defGradInvZZ);
 
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(matrixInversionReturnCode != 0, matrixInversionErrorMessage;)
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(matrixInversionReturnCode != 0, matrixInversionErrorMessage);
 
     // Compute the 1st Piola stress as the inner product of the Cauchy stress 
     // and the tranpose of the inverse of the deformation gradient
@@ -407,8 +426,7 @@ PeridigmNS::ElasticCorrespondenceMaterial::computeForce(const double dt,
   // Compute hourglass forces for stabilization of low-enery and/or zero-energy modes
   dataManager.getData(m_hourglassForceDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
 
-  double *coordinates, *hourglassForceDensity;
-  dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&coordinates);
+  double *hourglassForceDensity;
   dataManager.getData(m_hourglassForceDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&hourglassForceDensity);
 
   CORRESPONDENCE::computeHourglassForce(volume,

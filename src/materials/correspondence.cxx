@@ -46,6 +46,7 @@
 //@HEADER
 
 #include "correspondence.h"
+#include "material_utilities.h"
 #include <Sacado.hpp>
 
 namespace CORRESPONDENCE {
@@ -154,6 +155,161 @@ void MatrixMultiply
   resultZX = aZX * bXX + aZY * bYX + aZZ * bZX;
   resultZY = aZX * bXY + aZY * bYY + aZZ * bZY;
   resultZZ = aZX * bXZ + aZY * bYZ + aZZ * bZZ;
+}
+
+template<typename ScalarT>
+int computeShapeTensorInverseAndApproximateDeformationGradient
+(
+const double* volume,
+const double* modelCoordinates,
+const ScalarT* coordinates,
+ScalarT* shapeTensorInverseXX,
+ScalarT* shapeTensorInverseXY,
+ScalarT* shapeTensorInverseXZ,
+ScalarT* shapeTensorInverseYX,
+ScalarT* shapeTensorInverseYY,
+ScalarT* shapeTensorInverseYZ,
+ScalarT* shapeTensorInverseZX,
+ScalarT* shapeTensorInverseZY,
+ScalarT* shapeTensorInverseZZ,
+ScalarT* deformationGradientXX,
+ScalarT* deformationGradientXY,
+ScalarT* deformationGradientXZ,
+ScalarT* deformationGradientYX,
+ScalarT* deformationGradientYY,
+ScalarT* deformationGradientYZ,
+ScalarT* deformationGradientZX,
+ScalarT* deformationGradientZY,
+ScalarT* deformationGradientZZ,
+const int* neighborhoodList,
+int numPoints,
+double horizon
+)
+{
+  int returnCode = 0;
+
+  const double* modelCoord = modelCoordinates;
+  const double* neighborModelCoord;
+  const ScalarT* coord = coordinates;
+  const ScalarT* neighborCoord;
+  ScalarT* shapeTensorInvXX = shapeTensorInverseXX;
+  ScalarT* shapeTensorInvXY = shapeTensorInverseXY;
+  ScalarT* shapeTensorInvXZ = shapeTensorInverseXZ;
+  ScalarT* shapeTensorInvYX = shapeTensorInverseYX;
+  ScalarT* shapeTensorInvYY = shapeTensorInverseYY;
+  ScalarT* shapeTensorInvYZ = shapeTensorInverseYZ;
+  ScalarT* shapeTensorInvZX = shapeTensorInverseZX;
+  ScalarT* shapeTensorInvZY = shapeTensorInverseZY;
+  ScalarT* shapeTensorInvZZ = shapeTensorInverseZZ;
+  ScalarT* defGradXX = deformationGradientXX;
+  ScalarT* defGradXY = deformationGradientXY;
+  ScalarT* defGradXZ = deformationGradientXZ;
+  ScalarT* defGradYX = deformationGradientYX;
+  ScalarT* defGradYY = deformationGradientYY;
+  ScalarT* defGradYZ = deformationGradientYZ;
+  ScalarT* defGradZX = deformationGradientZX;
+  ScalarT* defGradZY = deformationGradientZY;
+  ScalarT* defGradZZ = deformationGradientZZ;
+
+  ScalarT shapeTensorXX, shapeTensorXY, shapeTensorXZ;
+  ScalarT shapeTensorYX, shapeTensorYY, shapeTensorYZ;
+  ScalarT shapeTensorZX, shapeTensorZY, shapeTensorZZ;
+  
+  ScalarT defGradFirstTermXX, defGradFirstTermXY, defGradFirstTermXZ;
+  ScalarT defGradFirstTermYX, defGradFirstTermYY, defGradFirstTermYZ;
+  ScalarT defGradFirstTermZX, defGradFirstTermZY, defGradFirstTermZZ;
+
+  double undeformedBondX, undeformedBondY, undeformedBondZ, undeformedBondLength;
+  ScalarT deformedBondX, deformedBondY, deformedBondZ;
+  double neighborVolume, omega, temp;
+
+  // placeholder for bond damage
+  double bondDamage = 0.0;
+
+  int neighborIndex, numNeighbors;
+  const int *neighborListPtr = neighborhoodList;
+  for(int iID=0 ; iID<numPoints ; ++iID, modelCoord+=3, coord+=3,
+        ++shapeTensorInvXX, ++shapeTensorInvXY, ++shapeTensorInvXZ,
+        ++shapeTensorInvYX, ++shapeTensorInvYY, ++shapeTensorInvYZ,
+        ++shapeTensorInvZX, ++shapeTensorInvZY, ++shapeTensorInvZZ,
+        ++defGradXX, ++defGradXY, ++defGradXZ,
+        ++defGradYX, ++defGradYY, ++defGradYZ,
+        ++defGradZX, ++defGradZY, ++defGradZZ){
+
+    // Zero out data
+    shapeTensorXX = 0.0 ; shapeTensorXY = 0.0 ; shapeTensorXZ = 0.0 ;
+    shapeTensorYX = 0.0 ; shapeTensorYY = 0.0 ; shapeTensorYZ = 0.0 ;
+    shapeTensorZX = 0.0 ; shapeTensorZY = 0.0 ; shapeTensorZZ = 0.0 ;
+    defGradFirstTermXX = 0.0 ; defGradFirstTermXY = 0.0 ; defGradFirstTermXZ = 0.0 ;
+    defGradFirstTermYX = 0.0 ; defGradFirstTermYY = 0.0 ; defGradFirstTermYZ = 0.0 ;
+    defGradFirstTermZX = 0.0 ; defGradFirstTermZY = 0.0 ; defGradFirstTermZZ = 0.0 ;
+    
+    numNeighbors = *neighborListPtr; neighborListPtr++;
+    for(int n=0; n<numNeighbors; n++, neighborListPtr++){
+
+      neighborIndex = *neighborListPtr;
+      neighborVolume = volume[neighborIndex];
+      neighborModelCoord = modelCoordinates + 3*neighborIndex;
+      neighborCoord = coordinates + 3*neighborIndex;
+
+      undeformedBondX = *(neighborModelCoord)   - *(modelCoord);
+      undeformedBondY = *(neighborModelCoord+1) - *(modelCoord+1);
+      undeformedBondZ = *(neighborModelCoord+2) - *(modelCoord+2);
+      undeformedBondLength = sqrt(undeformedBondX*undeformedBondX +
+                                  undeformedBondY*undeformedBondY +
+                                  undeformedBondZ*undeformedBondZ);
+
+      deformedBondX = *(neighborCoord)   - *(coord);
+      deformedBondY = *(neighborCoord+1) - *(coord+1);
+      deformedBondZ = *(neighborCoord+2) - *(coord+2);
+
+      omega = MATERIAL_EVALUATION::scalarInfluenceFunction(undeformedBondLength, horizon);
+
+      temp = (1.0 - bondDamage) * omega * neighborVolume;
+
+      shapeTensorXX += temp * undeformedBondX * undeformedBondX;
+      shapeTensorXY += temp * undeformedBondX * undeformedBondY;
+      shapeTensorXZ += temp * undeformedBondX * undeformedBondZ;
+      shapeTensorYX += temp * undeformedBondY * undeformedBondX;
+      shapeTensorYY += temp * undeformedBondY * undeformedBondY;
+      shapeTensorYZ += temp * undeformedBondY * undeformedBondZ;
+      shapeTensorZX += temp * undeformedBondZ * undeformedBondX;
+      shapeTensorZY += temp * undeformedBondZ * undeformedBondY;
+      shapeTensorZZ += temp * undeformedBondZ * undeformedBondZ;
+
+      defGradFirstTermXX += temp * deformedBondX * undeformedBondX;
+      defGradFirstTermXY += temp * deformedBondX * undeformedBondY;
+      defGradFirstTermXZ += temp * deformedBondX * undeformedBondZ;
+      defGradFirstTermYX += temp * deformedBondY * undeformedBondX;
+      defGradFirstTermYY += temp * deformedBondY * undeformedBondY;
+      defGradFirstTermYZ += temp * deformedBondY * undeformedBondZ;
+      defGradFirstTermZX += temp * deformedBondZ * undeformedBondX;
+      defGradFirstTermZY += temp * deformedBondZ * undeformedBondY;
+      defGradFirstTermZZ += temp * deformedBondZ * undeformedBondZ;
+    }
+
+    int inversionReturnCode = invert3by3Matrix(shapeTensorXX, shapeTensorXY, shapeTensorXZ,
+                                               shapeTensorYX, shapeTensorYY, shapeTensorYZ,
+                                               shapeTensorZX, shapeTensorZY, shapeTensorZZ,
+                                               *shapeTensorInvXX, *shapeTensorInvXY, *shapeTensorInvXZ,
+                                               *shapeTensorInvYX, *shapeTensorInvYY, *shapeTensorInvYZ,
+                                               *shapeTensorInvZX, *shapeTensorInvZY, *shapeTensorInvZZ);
+
+    if(inversionReturnCode > 0)
+      returnCode = inversionReturnCode;
+
+    *defGradXX = defGradFirstTermXX* (*shapeTensorInvXX) + defGradFirstTermXY* (*shapeTensorInvYX) + defGradFirstTermXZ* (*shapeTensorInvZX);
+    *defGradXY = defGradFirstTermXX* (*shapeTensorInvXY) + defGradFirstTermXY* (*shapeTensorInvYY) + defGradFirstTermXZ* (*shapeTensorInvZY);
+    *defGradXZ = defGradFirstTermXX* (*shapeTensorInvXZ) + defGradFirstTermXY* (*shapeTensorInvYZ) + defGradFirstTermXZ* (*shapeTensorInvZZ);
+    *defGradYX = defGradFirstTermYX* (*shapeTensorInvXX) + defGradFirstTermYY* (*shapeTensorInvYX) + defGradFirstTermYZ* (*shapeTensorInvZX);
+    *defGradYY = defGradFirstTermYX* (*shapeTensorInvXY) + defGradFirstTermYY* (*shapeTensorInvYY) + defGradFirstTermYZ* (*shapeTensorInvZY);
+    *defGradYZ = defGradFirstTermYX* (*shapeTensorInvXZ) + defGradFirstTermYY* (*shapeTensorInvYZ) + defGradFirstTermYZ* (*shapeTensorInvZZ);
+    *defGradZX = defGradFirstTermZX* (*shapeTensorInvXX) + defGradFirstTermZY* (*shapeTensorInvYX) + defGradFirstTermZZ* (*shapeTensorInvZX);
+    *defGradZY = defGradFirstTermZX* (*shapeTensorInvXY) + defGradFirstTermZY* (*shapeTensorInvYY) + defGradFirstTermZZ* (*shapeTensorInvZY);
+    *defGradZZ = defGradFirstTermZX* (*shapeTensorInvXZ) + defGradFirstTermZY* (*shapeTensorInvYZ) + defGradFirstTermZZ* (*shapeTensorInvZZ);
+  }
+
+  return returnCode;
 }
 
 template<typename ScalarT>
@@ -460,6 +616,34 @@ template int invert3by3Matrix<double>
  double& inverseZZ
 );
 
+template int computeShapeTensorInverseAndApproximateDeformationGradient<double>
+(
+const double* volume,
+const double* modelCoordinates,
+const double* coordinates,
+double* shapeTensorInverseXX,
+double* shapeTensorInverseXY,
+double* shapeTensorInverseXZ,
+double* shapeTensorInverseYX,
+double* shapeTensorInverseYY,
+double* shapeTensorInverseYZ,
+double* shapeTensorInverseZX,
+double* shapeTensorInverseZY,
+double* shapeTensorInverseZZ,
+double* deformationGradientXX,
+double* deformationGradientXY,
+double* deformationGradientXZ,
+double* deformationGradientYX,
+double* deformationGradientYY,
+double* deformationGradientYZ,
+double* deformationGradientZX,
+double* deformationGradientZY,
+double* deformationGradientZZ,
+const int* neighborhoodList,
+int numPoints,
+double horizon
+);
+
 template void computeGreenLagrangeStrain<double>
 (
   const double* deformationGradientXX,
@@ -582,6 +766,34 @@ template int invert3by3Matrix<Sacado::Fad::DFad<double> >
  Sacado::Fad::DFad<double>& inverseZX,
  Sacado::Fad::DFad<double>& inverseZY,
  Sacado::Fad::DFad<double>& inverseZZ
+);
+
+template int computeShapeTensorInverseAndApproximateDeformationGradient<Sacado::Fad::DFad<double> >
+(
+const double* volume,
+const double* modelCoordinates,
+const Sacado::Fad::DFad<double>* coordinates,
+Sacado::Fad::DFad<double>* shapeTensorInverseXX,
+Sacado::Fad::DFad<double>* shapeTensorInverseXY,
+Sacado::Fad::DFad<double>* shapeTensorInverseXZ,
+Sacado::Fad::DFad<double>* shapeTensorInverseYX,
+Sacado::Fad::DFad<double>* shapeTensorInverseYY,
+Sacado::Fad::DFad<double>* shapeTensorInverseYZ,
+Sacado::Fad::DFad<double>* shapeTensorInverseZX,
+Sacado::Fad::DFad<double>* shapeTensorInverseZY,
+Sacado::Fad::DFad<double>* shapeTensorInverseZZ,
+Sacado::Fad::DFad<double>* deformationGradientXX,
+Sacado::Fad::DFad<double>* deformationGradientXY,
+Sacado::Fad::DFad<double>* deformationGradientXZ,
+Sacado::Fad::DFad<double>* deformationGradientYX,
+Sacado::Fad::DFad<double>* deformationGradientYY,
+Sacado::Fad::DFad<double>* deformationGradientYZ,
+Sacado::Fad::DFad<double>* deformationGradientZX,
+Sacado::Fad::DFad<double>* deformationGradientZY,
+Sacado::Fad::DFad<double>* deformationGradientZZ,
+const int* neighborhoodList,
+int numPoints,
+double horizon
 );
 
 template void computeGreenLagrangeStrain<Sacado::Fad::DFad<double> >

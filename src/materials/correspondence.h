@@ -105,7 +105,37 @@ void MatrixMultiply
  ScalarT& resultZY,
  ScalarT& resultZZ
 );
-  
+
+//! Calculation of both the inverse of the shape tensor and the approximate deformation gradient.
+template<typename ScalarT>
+int computeShapeTensorInverseAndApproximateDeformationGradient
+(
+const double* volume,
+const double* modelCoordinates,
+const ScalarT* coordinates,
+ScalarT* shapeTensorInverseXX,
+ScalarT* shapeTensorInverseXY,
+ScalarT* shapeTensorInverseXZ,
+ScalarT* shapeTensorInverseYX,
+ScalarT* shapeTensorInverseYY,
+ScalarT* shapeTensorInverseYZ,
+ScalarT* shapeTensorInverseZX,
+ScalarT* shapeTensorInverseZY,
+ScalarT* shapeTensorInverseZZ,
+ScalarT* deformationGradientXX,
+ScalarT* deformationGradientXY,
+ScalarT* deformationGradientXZ,
+ScalarT* deformationGradientYX,
+ScalarT* deformationGradientYY,
+ScalarT* deformationGradientYZ,
+ScalarT* deformationGradientZX,
+ScalarT* deformationGradientZY,
+ScalarT* deformationGradientZZ,
+const int* neighborhoodList,
+int numPoints,
+double horizon
+);
+
 //! Green-Lagrange Strain E = 0.5*(F^T F - I).
 template<typename ScalarT>
 void computeGreenLagrangeStrain
