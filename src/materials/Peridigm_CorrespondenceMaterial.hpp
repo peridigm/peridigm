@@ -1,4 +1,4 @@
-//! \file Peridigm_ElasticCorrespondenceMaterial.hpp
+//! \file Peridigm_CorrespondenceMaterial.hpp
 
 //@HEADER
 // ************************************************************************
@@ -45,39 +45,71 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_ELASTICCORRESPONDENCEMATERIAL_HPP
-#define PERIDIGM_ELASTICCORRESPONDENCEMATERIAL_HPP
+#ifndef PERIDIGM_CORRESPONDENCEMATERIAL_HPP
+#define PERIDIGM_CORRESPONDENCEMATERIAL_HPP
 
-#include "Peridigm_CorrespondenceMaterial.hpp"
+#include "Peridigm_Material.hpp"
 
 namespace PeridigmNS {
 
-  class ElasticCorrespondenceMaterial : public CorrespondenceMaterial{
+  class CorrespondenceMaterial : public Material{
   public:
 
 	//! Constructor.
-    ElasticCorrespondenceMaterial(const Teuchos::ParameterList & params);
+    CorrespondenceMaterial(const Teuchos::ParameterList & params);
 
     //! Destructor.
-    virtual ~ElasticCorrespondenceMaterial();
+    virtual ~CorrespondenceMaterial();
 
     //! Return name of material type
-    virtual std::string Name() const { return("Elastic Correspondence"); }
+    virtual std::string Name() const { return("Correspondence Base Class"); }
 
-    //! Evaluate the Cauchy stress.
+    //! Returns the density of the material.
+    virtual double Density() const { return m_density; }
+
+    //! Returns the bulk modulus of the material.
+    virtual double BulkModulus() const { return m_bulkModulus; }
+
+    //! Returns the shear modulus of the material.
+    virtual double ShearModulus() const { return m_shearModulus; }
+
+    //! Returns the horizon.
+    virtual double Horizon() const { return m_horizon; }
+
+    //! Returns a vector of field IDs corresponding to the variables associated with the material.
+    virtual std::vector<int> FieldIds() const { return m_fieldIds; }
+
+    //! Evaluate the Cauchy stress (pure virtual function, must be implemented by derived correspondence material models).
     virtual void computeCauchyStress(const double dt,
                                      const int numOwnedPoints,
                                      const int* ownedIDs,
                                      const int* neighborhoodList,
-                                     PeridigmNS::DataManager& dataManager) const;
+                                     PeridigmNS::DataManager& dataManager) const = 0;
+
+    //! Evaluate the internal force.
+    virtual void computeForce(const double dt,
+                              const int numOwnedPoints,
+                              const int* ownedIDs,
+                              const int* neighborhoodList,
+                              PeridigmNS::DataManager& dataManager) const;
 
   protected:
 
     // material parameters
-    double m_youngsModulus;
-    double m_poissonsRatio;
+    double m_bulkModulus;
+    double m_shearModulus;
+    double m_density;
+    double m_horizon;
+    double m_hourglassCoefficient;
 
     // field spec ids for all relevant data
+    std::vector<int> m_fieldIds;
+    int m_volumeFieldId;
+    int m_modelCoordinatesFieldId;
+    int m_coordinatesFieldId;
+    int m_hourglassForceDensityFieldId;
+    int m_forceDensityFieldId;
+    int m_bondDamageFieldId;
     int m_deformationGradientXXFieldId;
     int m_deformationGradientXYFieldId;
     int m_deformationGradientXZFieldId;
@@ -87,25 +119,25 @@ namespace PeridigmNS {
     int m_deformationGradientZXFieldId;
     int m_deformationGradientZYFieldId;
     int m_deformationGradientZZFieldId;
-    int m_strainXXFieldId;
-    int m_strainXYFieldId;
-    int m_strainXZFieldId;
-    int m_strainYXFieldId;
-    int m_strainYYFieldId;
-    int m_strainYZFieldId;
-    int m_strainZXFieldId;
-    int m_strainZYFieldId;
-    int m_strainZZFieldId;
-    int m_stressXXFieldId;
-    int m_stressXYFieldId;
-    int m_stressXZFieldId;
-    int m_stressYXFieldId;
-    int m_stressYYFieldId;
-    int m_stressYZFieldId;
-    int m_stressZXFieldId;
-    int m_stressZYFieldId;
-    int m_stressZZFieldId;
+    int m_shapeTensorInverseXXFieldId;
+    int m_shapeTensorInverseXYFieldId;
+    int m_shapeTensorInverseXZFieldId;
+    int m_shapeTensorInverseYXFieldId;
+    int m_shapeTensorInverseYYFieldId;
+    int m_shapeTensorInverseYZFieldId;
+    int m_shapeTensorInverseZXFieldId;
+    int m_shapeTensorInverseZYFieldId;
+    int m_shapeTensorInverseZZFieldId;
+    int m_cauchyStressXXFieldId;
+    int m_cauchyStressXYFieldId;
+    int m_cauchyStressXZFieldId;
+    int m_cauchyStressYXFieldId;
+    int m_cauchyStressYYFieldId;
+    int m_cauchyStressYZFieldId;
+    int m_cauchyStressZXFieldId;
+    int m_cauchyStressZYFieldId;
+    int m_cauchyStressZZFieldId;
   };
 }
 
-#endif // PERIDIGM_ELASTICCORRESPONDENCEMATERIAL_HPP
+#endif // PERIDIGM_CORRESPONDENCEMATERIAL_HPP
