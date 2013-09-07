@@ -83,15 +83,15 @@ PeridigmNS::CorrespondenceMaterial::CorrespondenceMaterial(const Teuchos::Parame
   m_forceDensityFieldId            = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force_Density");
   m_hourglassForceDensityFieldId   = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Hourglass_Force_Density");
   m_bondDamageFieldId              = fieldManager.getFieldId(PeridigmField::BOND,    PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Bond_Damage");
-  m_deformationGradientXXFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientXX");
-  m_deformationGradientXYFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientXY");
-  m_deformationGradientXZFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientXZ");
-  m_deformationGradientYXFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientYX");
-  m_deformationGradientYYFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientYY");
-  m_deformationGradientYZFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientYZ");
-  m_deformationGradientZXFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientZX");
-  m_deformationGradientZYFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientZY");
-  m_deformationGradientZZFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientZZ");
+  m_deformationGradientXXFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Deformation_GradientXX");
+  m_deformationGradientXYFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Deformation_GradientXY");
+  m_deformationGradientXZFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Deformation_GradientXZ");
+  m_deformationGradientYXFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Deformation_GradientYX");
+  m_deformationGradientYYFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Deformation_GradientYY");
+  m_deformationGradientYZFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Deformation_GradientYZ");
+  m_deformationGradientZXFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Deformation_GradientZX");
+  m_deformationGradientZYFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Deformation_GradientZY");
+  m_deformationGradientZZFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Deformation_GradientZZ");
   m_shapeTensorInverseXXFieldId    = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Shape_Tensor_InverseXX");
   m_shapeTensorInverseXYFieldId    = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Shape_Tensor_InverseXY");
   m_shapeTensorInverseXZFieldId    = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Shape_Tensor_InverseXZ");
@@ -151,6 +151,34 @@ PeridigmNS::CorrespondenceMaterial::~CorrespondenceMaterial()
 }
 
 void
+PeridigmNS::CorrespondenceMaterial::initialize(const double dt,
+                                               const int numOwnedPoints,
+                                               const int* ownedIDs,
+                                               const int* neighborhoodList,
+                                               PeridigmNS::DataManager& dataManager) const
+{
+  dataManager.getData(m_deformationGradientXXFieldId, PeridigmField::STEP_N)->PutScalar(1.0);
+  dataManager.getData(m_deformationGradientXYFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
+  dataManager.getData(m_deformationGradientXZFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
+  dataManager.getData(m_deformationGradientYXFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
+  dataManager.getData(m_deformationGradientYYFieldId, PeridigmField::STEP_N)->PutScalar(1.0);
+  dataManager.getData(m_deformationGradientYZFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
+  dataManager.getData(m_deformationGradientZXFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
+  dataManager.getData(m_deformationGradientZYFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
+  dataManager.getData(m_deformationGradientZZFieldId, PeridigmField::STEP_N)->PutScalar(1.0);
+
+  dataManager.getData(m_deformationGradientXXFieldId, PeridigmField::STEP_NP1)->PutScalar(1.0);
+  dataManager.getData(m_deformationGradientXYFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_deformationGradientXZFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_deformationGradientYXFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_deformationGradientYYFieldId, PeridigmField::STEP_NP1)->PutScalar(1.0);
+  dataManager.getData(m_deformationGradientYZFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_deformationGradientZXFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_deformationGradientZYFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_deformationGradientZZFieldId, PeridigmField::STEP_NP1)->PutScalar(1.0);
+}
+
+void
 PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
                                                  const int numOwnedPoints,
                                                  const int* ownedIDs,
@@ -181,15 +209,15 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
   double *deformationGradientXX, *deformationGradientXY, *deformationGradientXZ;
   double *deformationGradientYX, *deformationGradientYY, *deformationGradientYZ;
   double *deformationGradientZX, *deformationGradientZY, *deformationGradientZZ;
-  dataManager.getData(m_deformationGradientXXFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientXX);
-  dataManager.getData(m_deformationGradientXYFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientXY);
-  dataManager.getData(m_deformationGradientXZFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientXZ);
-  dataManager.getData(m_deformationGradientYXFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientYX);
-  dataManager.getData(m_deformationGradientYYFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientYY);
-  dataManager.getData(m_deformationGradientYZFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientYZ);
-  dataManager.getData(m_deformationGradientZXFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientZX);
-  dataManager.getData(m_deformationGradientZYFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientZY);
-  dataManager.getData(m_deformationGradientZZFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientZZ);
+  dataManager.getData(m_deformationGradientXXFieldId, PeridigmField::STEP_NP1)->ExtractView(&deformationGradientXX);
+  dataManager.getData(m_deformationGradientXYFieldId, PeridigmField::STEP_NP1)->ExtractView(&deformationGradientXY);
+  dataManager.getData(m_deformationGradientXZFieldId, PeridigmField::STEP_NP1)->ExtractView(&deformationGradientXZ);
+  dataManager.getData(m_deformationGradientYXFieldId, PeridigmField::STEP_NP1)->ExtractView(&deformationGradientYX);
+  dataManager.getData(m_deformationGradientYYFieldId, PeridigmField::STEP_NP1)->ExtractView(&deformationGradientYY);
+  dataManager.getData(m_deformationGradientYZFieldId, PeridigmField::STEP_NP1)->ExtractView(&deformationGradientYZ);
+  dataManager.getData(m_deformationGradientZXFieldId, PeridigmField::STEP_NP1)->ExtractView(&deformationGradientZX);
+  dataManager.getData(m_deformationGradientZYFieldId, PeridigmField::STEP_NP1)->ExtractView(&deformationGradientZY);
+  dataManager.getData(m_deformationGradientZZFieldId, PeridigmField::STEP_NP1)->ExtractView(&deformationGradientZZ);
 
   // Compute the inverse of the shape tensor and the approximate deformation gradient
   // The approximate deformation gradient will be used by the derived class (specific correspondence material model)
