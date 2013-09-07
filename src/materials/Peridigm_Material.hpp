@@ -153,13 +153,6 @@ namespace PeridigmNS {
     //! Compute the shear modulus given any two elastic constants from among:  bulk modulus, shear modulus, Young's modulus, Poisson's ratio.
     double calculateShearModulus(const Teuchos::ParameterList & params) const;
 
-    //! Compute the approximate deformation gradient
-    int
-    computeApproximateDeformationGradient(const int numOwnedPoints,
-                                          const int* ownedIDs,
-                                          const int* neighborhoodList,
-                                          PeridigmNS::DataManager& dataManager) const;
-
     enum FiniteDifferenceScheme { FORWARD_DIFFERENCE=0, CENTRAL_DIFFERENCE=1 };
 
   protected:

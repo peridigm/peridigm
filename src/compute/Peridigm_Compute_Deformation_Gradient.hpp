@@ -89,6 +89,12 @@ namespace PeridigmNS {
 
     // field ids for all relevant data
     std::vector<int> m_fieldIds;
+    int m_volumeFId;
+    int m_modelCoordinatesFId;
+    int m_coordinatesFId;
+    int m_shapeTensorInverseXXFId, m_shapeTensorInverseXYFId, m_shapeTensorInverseXZFId,
+        m_shapeTensorInverseYXFId, m_shapeTensorInverseYYFId, m_shapeTensorInverseYZFId,
+        m_shapeTensorInverseZXFId, m_shapeTensorInverseZYFId, m_shapeTensorInverseZZFId;
     int m_deformationGradientXXFId, m_deformationGradientXYFId, m_deformationGradientXZFId,
         m_deformationGradientYXFId, m_deformationGradientYYFId, m_deformationGradientYZFId,
         m_deformationGradientZXFId, m_deformationGradientZYFId, m_deformationGradientZZFId;
