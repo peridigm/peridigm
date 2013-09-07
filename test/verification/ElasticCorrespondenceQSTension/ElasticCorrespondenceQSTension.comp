@@ -18,21 +18,21 @@ ELEMENT VARIABLES absolute 1.E-12
 	Deformation_GradientZX absolute 1.0E-12
 	Deformation_GradientZY absolute 1.0E-12
 	Deformation_GradientZZ absolute 1.0E-12
-	StrainXX absolute 1.0E-12
-	StrainXY absolute 1.0E-12
-	StrainXZ absolute 1.0E-12
-	StrainYX absolute 1.0E-12
-	StrainYY absolute 1.0E-12
-	StrainYZ absolute 1.0E-12
-	StrainZX absolute 1.0E-12
-	StrainZY absolute 1.0E-12
-	StrainZZ absolute 1.0E-12
-	StressXX absolute 1.0E-2
-	StressXY absolute 1.0E-2
-	StressXZ absolute 1.0E-2
-	StressYX absolute 1.0E-2
-	StressYY absolute 1.0E-2
-	StressYZ absolute 1.0E-2
-	StressZX absolute 1.0E-2
-	StressZY absolute 1.0E-2
-	StressZZ absolute 1.0E-2
+	Green_Lagrange_StrainXX absolute 1.0E-12
+	Green_Lagrange_StrainXY absolute 1.0E-12
+	Green_Lagrange_StrainXZ absolute 1.0E-12
+	Green_Lagrange_StrainYX absolute 1.0E-12
+	Green_Lagrange_StrainYY absolute 1.0E-12
+	Green_Lagrange_StrainYZ absolute 1.0E-12
+	Green_Lagrange_StrainZX absolute 1.0E-12
+	Green_Lagrange_StrainZY absolute 1.0E-12
+	Green_Lagrange_StrainZZ absolute 1.0E-12
+	Cauchy_StressXX absolute 1.0E-2
+	Cauchy_StressXY absolute 1.0E-2
+	Cauchy_StressXZ absolute 1.0E-2
+	Cauchy_StressYX absolute 1.0E-2
+	Cauchy_StressYY absolute 1.0E-2
+	Cauchy_StressYZ absolute 1.0E-2
+	Cauchy_StressZX absolute 1.0E-2
+	Cauchy_StressZY absolute 1.0E-2
+	Cauchy_StressZZ absolute 1.0E-2

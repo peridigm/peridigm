@@ -91,24 +91,24 @@
           <Parameter name="Deformation_GradientZX" type="bool" value="true"/>
           <Parameter name="Deformation_GradientZY" type="bool" value="true"/>
           <Parameter name="Deformation_GradientZZ" type="bool" value="true"/>
-          <Parameter name="StrainXX" type="bool" value="true"/>
-          <Parameter name="StrainXY" type="bool" value="true"/>
-          <Parameter name="StrainXZ" type="bool" value="true"/>
-          <Parameter name="StrainYX" type="bool" value="true"/>
-          <Parameter name="StrainYY" type="bool" value="true"/>
-          <Parameter name="StrainYZ" type="bool" value="true"/>
-          <Parameter name="StrainZX" type="bool" value="true"/>
-          <Parameter name="StrainZY" type="bool" value="true"/>
-          <Parameter name="StrainZZ" type="bool" value="true"/>
-          <Parameter name="StressXX" type="bool" value="true"/>
-          <Parameter name="StressXY" type="bool" value="true"/>
-          <Parameter name="StressXZ" type="bool" value="true"/>
-          <Parameter name="StressYX" type="bool" value="true"/>
-          <Parameter name="StressYY" type="bool" value="true"/>
-          <Parameter name="StressYZ" type="bool" value="true"/>
-          <Parameter name="StressZX" type="bool" value="true"/>
-          <Parameter name="StressZY" type="bool" value="true"/>
-          <Parameter name="StressZZ" type="bool" value="true"/>
+          <Parameter name="Green_Lagrange_StrainXX" type="bool" value="true"/>
+          <Parameter name="Green_Lagrange_StrainXY" type="bool" value="true"/>
+          <Parameter name="Green_Lagrange_StrainXZ" type="bool" value="true"/>
+          <Parameter name="Green_Lagrange_StrainYX" type="bool" value="true"/>
+          <Parameter name="Green_Lagrange_StrainYY" type="bool" value="true"/>
+          <Parameter name="Green_Lagrange_StrainYZ" type="bool" value="true"/>
+          <Parameter name="Green_Lagrange_StrainZX" type="bool" value="true"/>
+          <Parameter name="Green_Lagrange_StrainZY" type="bool" value="true"/>
+          <Parameter name="Green_Lagrange_StrainZZ" type="bool" value="true"/>
+          <Parameter name="Cauchy_StressXX" type="bool" value="true"/>
+          <Parameter name="Cauchy_StressXY" type="bool" value="true"/>
+          <Parameter name="Cauchy_StressXZ" type="bool" value="true"/>
+          <Parameter name="Cauchy_StressYX" type="bool" value="true"/>
+          <Parameter name="Cauchy_StressYY" type="bool" value="true"/>
+          <Parameter name="Cauchy_StressYZ" type="bool" value="true"/>
+          <Parameter name="Cauchy_StressZX" type="bool" value="true"/>
+          <Parameter name="Cauchy_StressZY" type="bool" value="true"/>
+          <Parameter name="Cauchy_StressZZ" type="bool" value="true"/>
           <Parameter name="Displacement" type="bool" value="true"/>
           <Parameter name="Velocity" type="bool" value="true"/>
           <Parameter name="Force" type="bool" value="true"/>
