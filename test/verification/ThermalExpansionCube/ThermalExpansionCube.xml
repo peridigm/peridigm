@@ -43,11 +43,12 @@
 	<Parameter name="Y Axis Node Set" type="string" value="1 6 11 16 21"/>
 	<Parameter name="Z Axis Node Set" type="string" value="1 26 51 76 101"/>
 
-    <!-- Let the temperature rise by 1000 degrees per hour -->
-    <ParameterList name="Temperature">
-  	  <Parameter name="Value" type="string" value="273.0 + 1000.0*(t/3600.0)"/>
-    </ParameterList>
-
+    <!-- Let the temperature decrease by 1000 degrees per hour -->
+        <ParameterList name="Prescribed Thermal Loading">
+          <Parameter name="Type" type="string" value="Prescribed Temperature"/>
+          <Parameter name="Node Set" type="string" value="FulL DomAIN"/>
+          <Parameter name="Value" type="string" value="273.0+1000.0*(t/3600.0)"/>
+        </ParameterList>
     <!-- Elliminate rigid body modes -->
 	<ParameterList name="Prescribed Displacement X Axis Y Direction">
 	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>

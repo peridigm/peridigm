@@ -158,7 +158,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   Teuchos::RCP<Teuchos::ParameterList> bcParams =
     Teuchos::rcpFromRef( peridigmParams->sublist("Boundary Conditions") );
   boundaryAndInitialConditionManager =
-    Teuchos::RCP<BoundaryAndInitialConditionManager>(new BoundaryAndInitialConditionManager(*bcParams));
+    Teuchos::RCP<BoundaryAndInitialConditionManager>(new BoundaryAndInitialConditionManager(*bcParams, this));
 
   boundaryAndInitialConditionManager->initialize(peridigmDisc);
 
@@ -330,11 +330,10 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
       computePartialVolume(Teuchos::rcpFromRef(*blockIt), peridigmDisc);
   }
 
-  // apply initial velocities
-  boundaryAndInitialConditionManager->applyInitialVelocities(x, v);
-
-  // apply initial displacements
-  boundaryAndInitialConditionManager->applyInitialDisplacements(x, u, y);
+  // apply initial conditions
+  PeridigmNS::Timer::self().startTimer("Apply Initial Conditions");
+  boundaryAndInitialConditionManager->applyInitialConditions();
+  PeridigmNS::Timer::self().stopTimer("Apply Initial Conditions");
 
   // Initialize material models and damage models
   // Initialization functions require valid initial values, e.g. velocities and displacements.
@@ -859,9 +858,9 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
   // Set the prescribed displacements (allow for nonzero initial displacements).
   // Then back compute the displacement vector.  Leave the velocity as zero.
   // \todo How do we really want to handle nonzero initial displacements?
-//   boundaryAndInitialConditionManager->applyKinematicBC_SetDisplacement(timeInitial, x, u);
-//   for(int i=0 ; i<u->MyLength() ; ++i)
-//     (*y)[i] += (*u)[i];
+  //   boundaryAndInitialConditionManager->applyKinematicBC_SetDisplacement(timeInitial, x, u);
+  //   for(int i=0 ; i<u->MyLength() ; ++i)
+  //     (*y)[i] += (*u)[i];
 
   // Copy data from mothership vectors to overlap vectors in data manager
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
@@ -936,11 +935,11 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     // This will propagate through the Verlet integrator and result in the proper
     // displacement boundary conditions on y and consistent values for v and u.
     PeridigmNS::Timer::self().startTimer("Apply kinematic B.C.");
-    boundaryAndInitialConditionManager->applyKinematicBC_SetVelocity(timeCurrent, timePrevious, x, v);
+    boundaryAndInitialConditionManager->applyBoundaryConditions(timeCurrent,timePrevious);
     PeridigmNS::Timer::self().stopTimer("Apply kinematic B.C.");
 
     // Update the temperature field
-    boundaryAndInitialConditionManager->applyTemperatureChange(timeCurrent, x, deltaTemperature);
+    //boundaryAndInitialConditionManager->applyTemperatureChange(timeCurrent, x, deltaTemperature);
 
     // Y^{n+1} = X_{o} + U^{n} + (dt)*V^{n+1/2}
     // \todo Replace with blas call
@@ -1330,15 +1329,23 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
     // Use a predictor based on the velocity from the previous load step
     for(int i=0 ; i<initialGuess->MyLength() ; ++i)
       (*initialGuess)[i] = (*v)[i]*timeIncrement;
+    v->PutScalar(0.0); //clear v in prep for storage later
+
     boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(initialGuess);
+
+
 
     // Apply the displacement increment and update the temperature field
     // Note that the soln vector was created to be compatible with the tangent matrix, and hence needed to be
     // constructed with an Epetra_Map.  The mothership vectors were constructed with an Epetra_BlockMap, and it's
     // this map that the boundary and intial condition manager expects.  So, make sure that the boundary and initial
     // condition manager gets the right type of vector.
-    boundaryAndInitialConditionManager->applyKinematicBC_SetDisplacementIncrement(timeCurrent, timePrevious, x, deltaU);
-    boundaryAndInitialConditionManager->applyTemperatureChange(timeCurrent, x, deltaTemperature);
+
+    PeridigmNS::Timer::self().startTimer("Apply kinematic B.C.");
+    boundaryAndInitialConditionManager->applyBoundaryConditions(timeCurrent,timePrevious);
+    PeridigmNS::Timer::self().stopTimer("Apply kinematic B.C.");
+
+    //boundaryAndInitialConditionManager->applyTemperatureChange(timeCurrent, x, deltaTemperature);
     if(step > 1){
       // Perform line search on this guess
       for(int i=0 ; i<y->MyLength() ; ++i)
@@ -1443,11 +1450,8 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
       cout << setprecision(2) << "  cpu time for load step = " << CPUTime << " sec., cummulative cpu time = " << cummulativeLoadStepCPUTime << " sec.\n" << endl;
 
     // Store the velocity
-    v->PutScalar(0.0);
-    boundaryAndInitialConditionManager->applyKinematicBC_SetDisplacementIncrement(timeCurrent, timePrevious, x, v);
     for(int i=0 ; i<v->MyLength() ; ++i){
-      (*v)[i] += finalSolution[i];
-      (*v)[i] /= timeIncrement;
+      (*v)[i] += finalSolution[i]/timeIncrement;
     }
 
     // Add the converged displacement increment to the displacement
@@ -1591,10 +1595,12 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
 
     // Update nodal positions for nodes with kinematic B.C.
     deltaU->PutScalar(0.0);
-    boundaryAndInitialConditionManager->applyKinematicBC_SetDisplacementIncrement(timeCurrent, timePrevious, x, deltaU);
+    PeridigmNS::Timer::self().startTimer("Apply kinematic B.C.");
+    boundaryAndInitialConditionManager->applyBoundaryConditions(timeCurrent,timePrevious);
+    PeridigmNS::Timer::self().stopTimer("Apply kinematic B.C.");
 
     // Update the temperature field
-    boundaryAndInitialConditionManager->applyTemperatureChange(timeCurrent, x, deltaTemperature);
+    //boundaryAndInitialConditionManager->applyTemperatureChange(timeCurrent, x, deltaTemperature);
 
     // Set the current position
     // \todo We probably want to rework this so that the material models get valid x, u, and y values.

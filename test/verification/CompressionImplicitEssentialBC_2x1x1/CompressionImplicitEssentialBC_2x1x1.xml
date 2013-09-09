@@ -45,7 +45,7 @@
 	  <Parameter name="Value" type="string" value="-1.0"/>
 	</ParameterList>
 	<ParameterList name="Initial Displacement Min X Face">
-	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Type" type="string" value="Initial Displacement"/>
 	  <Parameter name="Node Set" type="string" value="Min X Node Set"/>
 	  <Parameter name="Coordinate" type="string" value="x"/>
 	  <Parameter name="Value" type="string" value="0.1"/>

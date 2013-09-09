@@ -53,9 +53,15 @@
 #include <Teuchos_ParameterList.hpp>
 
 #include "Peridigm_Discretization.hpp"
-#include "muParser/muParser.h"
+#include "Peridigm_BoundaryCondition.hpp"
+
+#include <vector>
+
+using namespace std;
 
 namespace PeridigmNS {
+
+  class Peridigm;
 
 /*! \brief Processes boundary and intial conditions.
  */
@@ -63,55 +69,30 @@ namespace PeridigmNS {
   public:
 
     //! Constructor.
-    BoundaryAndInitialConditionManager(const Teuchos::ParameterList& boundaryAndInitialConditionParams);
+    BoundaryAndInitialConditionManager(const Teuchos::ParameterList& boundaryAndInitialConditionParams,Peridigm * parent);
 
     //! Destructor.
     ~BoundaryAndInitialConditionManager(){}
 
-    //! Initialize node sets, etc.
+    //! Initialize boundary conditions, etc.
     void initialize(Teuchos::RCP<Discretization> discretization);
+
+    //! Initialize the node sets on the bc manager
+    void initializeNodeSets(Teuchos::RCP<Discretization> discretization);
 
     //! Get node sets.
     Teuchos::RCP< std::map< std::string, std::vector<int> > > getNodeSets() {
       return nodeSets;
     }
 
-    //! Apply initial displacements.
-    void applyInitialDisplacements(Teuchos::RCP<Epetra_Vector> x,
-                                   Teuchos::RCP<Epetra_Vector> u,
-                                   Teuchos::RCP<Epetra_Vector> y);
+    //! Apply all initial conditions
+    void applyInitialConditions();
 
-    //! Apply initial velocities.
-    void applyInitialVelocities(Teuchos::RCP<const Epetra_Vector> x,
-                                Teuchos::RCP<Epetra_Vector> v);
+    //! Apply all boundary conditions
+    void applyBoundaryConditions(const double & timeCurrent=0.0, const double & timePrevious=0.0);
 
-    /** \brief Set velocity in rows corresponding to kinematic boundary conditions.
-     ** Intended for use with velocity vector in explicit time integration such that
-     ** the explicit integration scheme will propagate these values through to the
-     ** displacement and current coordinate vectors. **/
-    void applyKinematicBC_SetVelocity(double timeCurrent,
-                                      double timePrevious,
-                                      Teuchos::RCP<const Epetra_Vector> x,
-                                      Teuchos::RCP<Epetra_Vector> vec);
-
-    /** \brief Determines temperature change at every node based on a user-defined temperature field. **/
-    void applyTemperatureChange(double timeCurrent,
-                                Teuchos::RCP<const Epetra_Vector> x,
-                                Teuchos::RCP<Epetra_Vector> deltaT);
-
-    /** \brief Set displacement in rows corresponding to kinematic boundary conditions.
-     ** Intended use is setting nonzero displacements at time zero. **/
-    void applyKinematicBC_SetDisplacement(double timeCurrent,
-                                          Teuchos::RCP<const Epetra_Vector> x,
-                                          Teuchos::RCP<Epetra_Vector> vec);
-
-
-    /** \brief Set displacement increment in rows corresponding to kinematic boundary conditions.
-     ** Intended for use with displacement increment vector in quasi-static time integration. **/
-    void applyKinematicBC_SetDisplacementIncrement(double timeCurrent,
-                                                   double timePrevious,
-                                                   Teuchos::RCP<const Epetra_Vector> x,
-                                                   Teuchos::RCP<Epetra_Vector> vec);
+    //! Update the current coordinates
+    void updateCurrentCoordinates();
 
     //! Copies entries corresponding to kinematic boundary contitions into the vector of reaction forces.
     void applyKinematicBC_ComputeReactions(Teuchos::RCP<const Epetra_Vector> force, Teuchos::RCP<Epetra_Vector> reaction);
@@ -130,30 +111,17 @@ namespace PeridigmNS {
     //! Node sets
     Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets;
 
-    //! Function parser
-    mu::Parser muParser;
-
-    //! @name Variables for function parser.
-    //@{ 
-    double muParserX;
-    double muParserY;
-    double muParserZ;
-    double muParserT;
-    //@}
-
-    //! Flag indicating presence of thermal field.
-    bool m_hasThermal;
-
-    //! Set either a displacement or a displacement increment.
-    void setVectorValues(double timeCurrent,
-                         double timePrevious,
-                         Teuchos::RCP<const Epetra_Vector> x,
-                         Teuchos::RCP<Epetra_Vector> vec,
-                         bool setIncrement,
-                         double multiplier);
-
     //! Determine if a string is the name of a file; if so return the file name, if not return an empty string.
     std::string nodeSetStringToFileName(std::string str);
+
+    //! Ref your parent instantiator
+    Peridigm  * peridigm;
+
+    //! Set of all the boundary conditions
+    vector<Teuchos::RCP<BoundaryCondition> > boundaryConditions;
+
+    //! Set of all the initial conditions
+    vector<Teuchos::RCP<BoundaryCondition> > initialConditions;
 
   private:
 
@@ -165,7 +133,9 @@ namespace PeridigmNS {
 
     // Private to prohibit use.
     BoundaryAndInitialConditionManager& operator=(const BoundaryAndInitialConditionManager&);
+
   };
+
 }
 
 #endif // PERIDIGM_BOUNARYANDINITIALCONDITIONMANAGER_HPP

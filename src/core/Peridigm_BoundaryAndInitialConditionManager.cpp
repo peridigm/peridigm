@@ -46,42 +46,105 @@
 //@HEADER
 
 #include "Peridigm_BoundaryAndInitialConditionManager.hpp"
-#include "muParser/muParserPeridigmFunctions.h"
 #include <sstream>
 #include <fstream>
+#include <set>
 #include <boost/algorithm/string/trim.hpp>
 #include "Peridigm_Timer.hpp"
+#include "Peridigm_Enums.hpp"
+#include "Peridigm.hpp"
 
 using namespace std;
 
-PeridigmNS::BoundaryAndInitialConditionManager::BoundaryAndInitialConditionManager(const Teuchos::ParameterList& boundaryAndInitialConditionParams)
+PeridigmNS::BoundaryAndInitialConditionManager::BoundaryAndInitialConditionManager(const Teuchos::ParameterList& boundaryAndInitialConditionParams, Peridigm * peridigm_)
   : params(boundaryAndInitialConditionParams),
-    muParserX(0.0), muParserY(0.0), muParserZ(0.0), muParserT(0.0), m_hasThermal(false)
-{
-  // Set up muParser
-  try {
-    muParser.DefineVar("x", &muParserX);
-    muParser.DefineVar("y", &muParserY);
-    muParser.DefineVar("z", &muParserZ);
-    muParser.DefineVar("t", &muParserT);
-    muParser.DefineFun(_T("rnd"), mu::Rnd, false);
-  } 
-  catch (mu::Parser::exception_type &e)
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-
-  // Set flag if there is thermal information
-  if(params.isSublist("Temperature"))
-    m_hasThermal = true;
+    peridigm(peridigm_){
 }
 
 void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Discretization> discretization)
+{
+  bool hasPrescDisp = false;
+  bool hasPrescVel = false;
+
+  // Load node sets defined in the input deck into the nodeSets container
+  for(Teuchos::ParameterList::ConstIterator it = params.begin() ; it != params.end() ; it++){
+    string name = it->first;
+    tidy_string(name);
+    size_t position = name.find("NODE_SET");
+    if(position!=string::npos) continue; // skip node set definitions, etc.
+    if(!it->second.isList()){ // ensure that no other parameters are accidentally specified
+      TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: Unknown parameter in boundary conditions specification " + name);
+    }
+    Teuchos::RCP<BoundaryCondition> bcPtr;
+    Teuchos::ParameterList & bcParams = Teuchos::getValue<Teuchos::ParameterList>(it->second);
+    const Boundary_Condition_Type bcType = to_boundary_condition_type(bcParams);
+
+    // TODO: move this to a factory class
+    switch(bcType)
+    {
+      case INITIAL_DISPLACEMENT:
+      {
+        Teuchos::RCP<Epetra_Vector> bcVector = peridigm->getU();
+        bcPtr = Teuchos::rcp(new DirichletBC(name,bcParams,bcVector,peridigm));
+        initialConditions.push_back(bcPtr);
+      }
+      break;
+      case INITIAL_VELOCITY :
+      {
+        Teuchos::RCP<Epetra_Vector> bcVector = peridigm->getV();
+        bcPtr = Teuchos::rcp(new DirichletBC(name,bcParams,bcVector,peridigm));
+        initialConditions.push_back(bcPtr);
+      }
+      break;
+      case PRESCRIBED_DISPLACEMENT:
+      {
+        hasPrescDisp = true;
+        // a prescribed displacement boundary condition will automatically update deltaU and the velocity vector
+        Teuchos::RCP<Epetra_Vector> bcVector = peridigm->getDeltaU();
+        bcPtr = Teuchos::rcp(new DirichletIncrementBC(name,bcParams,bcVector,peridigm,1.0,0.0));
+        boundaryConditions.push_back(bcPtr);
+        Teuchos::RCP<Epetra_Vector> bcVectorV = peridigm->getV();
+        bcPtr = Teuchos::rcp(new DirichletIncrementBC(name,bcParams,bcVectorV,peridigm,0.0,1.0));
+        boundaryConditions.push_back(bcPtr);
+      }
+      break;
+      case INITIAL_TEMPERATURE:
+      {
+        Teuchos::RCP<Epetra_Vector> bcVector = peridigm->getDeltaTemperature();
+        bcPtr = Teuchos::rcp(new DirichletBC(name,bcParams,bcVector,peridigm));
+        initialConditions.push_back(bcPtr);
+      }
+      break;
+      case PRESCRIBED_TEMPERATURE:
+      {
+        Teuchos::RCP<Epetra_Vector> bcVector = peridigm->getDeltaTemperature();
+        bcPtr = Teuchos::rcp(new DirichletIncrementBC(name,bcParams,bcVector,peridigm,1.0,0.0));
+        boundaryConditions.push_back(bcPtr);
+      }
+      break;
+      case NO_SUCH_BOUNDARY_CONDITION_TYPE:
+        break;
+      default :
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: unknown boundary condition type " + to_string(bcType));
+        break;
+    }
+  }
+  TEUCHOS_TEST_FOR_EXCEPTION(hasPrescDisp&&hasPrescVel,std::logic_error,"Error: cannot specify prescribed displacement and velocity boundary conditions");
+
+//      TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"ERROR: the following parameter was not used in the initialization of boundary or initial conditions: " + it->first);
+
+  initializeNodeSets(discretization);
+}
+
+void PeridigmNS::BoundaryAndInitialConditionManager::initializeNodeSets(Teuchos::RCP<Discretization> discretization)
 {
   nodeSets = Teuchos::rcp(new map< string, vector<int> >());
 
   // Load node sets defined in the input deck into the nodeSets container
   for(Teuchos::ParameterList::ConstIterator it = params.begin() ; it != params.end() ; it++){
-	const string& name = it->first;
-	size_t position = name.find("Node Set");
+	string name = it->first;
+	tidy_string(name);
+	size_t position = name.find("NODE_SET");
 	if(position != string::npos){
 
       TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(name) != nodeSets->end(), "**** Duplicate node set found: " + name + "\n");
@@ -132,6 +195,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Dis
   Teuchos::RCP< map< string, vector<int> > > discretizationNodeSets = discretization->getNodeSets();
   for(map< string, vector<int> >::iterator it=discretizationNodeSets->begin() ; it!=discretizationNodeSets->end() ; it++){
     string name = it->first;
+    tidy_string(name);
     TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(name) != nodeSets->end(), "**** Duplicate node set found: " + name + "\n");
     vector<int>& nodeList = it->second;
     (*nodeSets)[name] = nodeList;
@@ -151,223 +215,26 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Dis
   }
 }
 
-void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialDisplacements(Teuchos::RCP<Epetra_Vector> x,
-                                                                               Teuchos::RCP<Epetra_Vector> u,
-                                                                               Teuchos::RCP<Epetra_Vector> y)
-{
-  PeridigmNS::Timer::self().startTimer("Apply Boundary Conditions");
-  const Epetra_BlockMap& threeDimensionalMap = x->Map();
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(threeDimensionalMap.ElementSize() != 3, "**** applyInitialDisplacements() must be called with map having element size = 3.\n");
-
+void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialConditions(){
   // apply the initial conditions
-  Teuchos::ParameterList::ConstIterator it;
-  for(it = params.begin() ; it != params.end() ; it++){
-    const string & name = it->first;
-    size_t position = name.find("Initial Displacement");
-    if(position != string::npos){
-      Teuchos::ParameterList & boundaryConditionParams = Teuchos::getValue<Teuchos::ParameterList>(it->second);
-      string nodeSet = boundaryConditionParams.get<string>("Node Set");
-      string type = boundaryConditionParams.get<string>("Type");
-      string coordinate = boundaryConditionParams.get<string>("Coordinate");
-      string function = boundaryConditionParams.get<string>("Value");
-
-      int coord = 0;
-      if(coordinate == "y" || coordinate == "Y")
-        coord = 1;
-      if(coordinate == "z" || coordinate == "Z")
-        coord = 2;
-
-      try{
-        muParser.SetExpr(function);
-      }
-      catch (mu::Parser::exception_type &e)
-        TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-
-      if (nodeSet == "All") { // Apply initial position to all locally-owned nodes
-        for(int localNodeID = 0; localNodeID < x->MyLength(); localNodeID++) {
-          muParserX = (*x)[localNodeID*3];
-          muParserY = (*x)[localNodeID*3 + 1];
-          muParserZ = (*x)[localNodeID*3 + 2];
-          try {
-            (*u)[localNodeID*3 + coord] = muParser.Eval();
-          }
-          catch (mu::Parser::exception_type &e)
-          TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-        }
-      }
-      else { // Apply initial position to specific node set
-        // apply initial displacement boundary conditions to locally-owned nodes
-        TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
-        vector<int> & nodeList = (*nodeSets)[nodeSet];
-        for(unsigned int i=0 ; i<nodeList.size() ; i++){
-          int localNodeID = threeDimensionalMap.LID(nodeList[i]);
-          if(localNodeID != -1) {
-            muParserX = (*x)[localNodeID*3];
-            muParserY = (*x)[localNodeID*3 + 1];
-            muParserZ = (*x)[localNodeID*3 + 2];
-            try {
-              (*u)[localNodeID*3 + coord] = muParser.Eval();
-            }
-            catch (mu::Parser::exception_type &e)
-              TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-          }
-        }
-      }
-    }
+  for(unsigned i=0;i<initialConditions.size();++i)
+  {
+    initialConditions[i]->apply(nodeSets);
+    if(initialConditions[i]->getType() == INITIAL_DISPLACEMENT)
+      updateCurrentCoordinates();
   }
-
-  // Update curcoord field to be consistent with initial displacement
-  y->Update(1.0, *x, 1.0, *u, 0.0);
-  PeridigmNS::Timer::self().stopTimer("Apply Boundary Conditions");
 }
 
-void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialVelocities(Teuchos::RCP<const Epetra_Vector> x,
-                                                                            Teuchos::RCP<Epetra_Vector> v)
-{
-  PeridigmNS::Timer::self().startTimer("Apply Boundary Conditions");
-  const Epetra_BlockMap& threeDimensionalMap = v->Map();
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(threeDimensionalMap.ElementSize() != 3, "**** applyInitialVelocities() must be called with map having element size = 3.\n");
-
-  // apply the initial conditions
-  Teuchos::ParameterList::ConstIterator it;
-  for(it = params.begin() ; it != params.end() ; it++){
-    const string & name = it->first;
-    
-    size_t position = name.find("Initial Velocity");
-    if(position != string::npos){ // user wants to assign velocity using function
-      
-      Teuchos::ParameterList & boundaryConditionParams = Teuchos::getValue<Teuchos::ParameterList>(it->second);
-      string nodeSet = boundaryConditionParams.get<string>("Node Set");
-      string type = boundaryConditionParams.get<string>("Type");
-      string coordinate = boundaryConditionParams.get<string>("Coordinate");
-      string function = boundaryConditionParams.get<string>("Value");
-
-      try{
-        muParser.SetExpr(function);
-      }
-      catch (mu::Parser::exception_type &e)
-        TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-
-      int coord = 0;
-      if(coordinate == "y" || coordinate == "Y")
-        coord = 1;
-      if(coordinate == "z" || coordinate == "Z")
-        coord = 2;
-      
-      if (nodeSet == "All") { // Apply initial velocity to all locally-owned nodes
-        for(int localNodeID = 0; localNodeID < x->MyLength(); localNodeID++) {
-          muParserX = (*x)[localNodeID*3];
-          muParserY = (*x)[localNodeID*3 + 1];
-          muParserZ = (*x)[localNodeID*3 + 2];
-          try{
-            (*v)[localNodeID*3 + coord] = muParser.Eval();
-          }
-          catch (mu::Parser::exception_type &e)
-            TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-        }
-      }
-      else { // Apply initial velocity to specific node set
-        // apply initial velocity boundary conditions to locally-owned nodes
-        TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
-        vector<int> & nodeList = (*nodeSets)[nodeSet];
-        for(unsigned int i=0 ; i<nodeList.size() ; i++){
-          int localNodeID = threeDimensionalMap.LID(nodeList[i]);
-          if(localNodeID != -1) {
-            muParserX = (*x)[localNodeID*3];
-            muParserY = (*x)[localNodeID*3 + 1];
-            muParserZ = (*x)[localNodeID*3 + 2];
-            try {
-              (*v)[localNodeID*3 + coord] = muParser.Eval();
-            }
-            catch (mu::Parser::exception_type &e)
-              TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-          }
-        }
-      }
-    }
+void PeridigmNS::BoundaryAndInitialConditionManager::applyBoundaryConditions(const double & timeCurrent, const double & timePrevious){
+  // apply the boundary conditions
+  for(unsigned i=0;i<boundaryConditions.size();++i)
+  {
+    boundaryConditions[i]->apply(nodeSets,timeCurrent,timePrevious);
   }
-  PeridigmNS::Timer::self().stopTimer("Apply Boundary Conditions");
 }
 
-void PeridigmNS::BoundaryAndInitialConditionManager::applyTemperatureChange(double timeCurrent,
-                                                                            Teuchos::RCP<const Epetra_Vector> x,
-                                                                            Teuchos::RCP<Epetra_Vector> deltaT)
-{
-  if(!m_hasThermal)
-    return;
-
-  PeridigmNS::Timer::self().startTimer("Apply Boundary Conditions");
-
-  Teuchos::ParameterList& thermalParams = params.sublist("Temperature", true);
-  string function = thermalParams.get<string>("Value");
-
-  try{
-    muParser.SetExpr(function);
-  }
-  catch (mu::Parser::exception_type &e)
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-
-  double initialTemperature, currentTemperature;
-  for(int i=0 ; i<deltaT->MyLength() ; ++i){
-    muParserX = (*x)[i*3];
-    muParserY = (*x)[i*3 + 1];
-    muParserZ = (*x)[i*3 + 2];
-
-    // Find temperature at time zero
-    muParserT = 0.0;
-    try {
-      initialTemperature = muParser.Eval();
-    }
-    catch (mu::Parser::exception_type &e)
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-
-    // Find temperature at current time
-    muParserT = timeCurrent;
-    try {
-      currentTemperature = muParser.Eval();
-    }
-    catch (mu::Parser::exception_type &e)
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-
-    (*deltaT)[i] = currentTemperature - initialTemperature;
-  }
-  PeridigmNS::Timer::self().stopTimer("Apply Boundary Conditions");
-}
-
-void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_SetDisplacement(double timeCurrent,
-                                                                                      Teuchos::RCP<const Epetra_Vector> x,
-                                                                                      Teuchos::RCP<Epetra_Vector> vec)
-{
-  PeridigmNS::Timer::self().startTimer("Apply Boundary Conditions");
-  double timePrevious = 0.0;
-  bool setIncrement = false;
-  double multiplier = 1.0;
-  setVectorValues(timeCurrent, timePrevious, x, vec, setIncrement, multiplier);
-  PeridigmNS::Timer::self().stopTimer("Apply Boundary Conditions");
-}
-
-void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_SetVelocity(double timeCurrent,
-                                                                                  double timePrevious,
-                                                                                  Teuchos::RCP<const Epetra_Vector> x,
-                                                                                  Teuchos::RCP<Epetra_Vector> vec)
-{
-  PeridigmNS::Timer::self().startTimer("Apply Boundary Conditions");
-  bool setIncrement = true;
-  double multiplier = 1.0/(timeCurrent - timePrevious);
-  setVectorValues(timeCurrent, timePrevious, x, vec, setIncrement, multiplier);
-  PeridigmNS::Timer::self().stopTimer("Apply Boundary Conditions");
-}
-
-void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_SetDisplacementIncrement(double timeCurrent,
-                                                                                               double timePrevious,
-                                                                                               Teuchos::RCP<const Epetra_Vector> x,
-                                                                                               Teuchos::RCP<Epetra_Vector> vec)
-{
-  PeridigmNS::Timer::self().startTimer("Apply Boundary Conditions");
-  bool setIncrement = true;
-  double multiplier = 1.0;
-  setVectorValues(timeCurrent, timePrevious, x, vec, setIncrement, multiplier);
-  PeridigmNS::Timer::self().stopTimer("Apply Boundary Conditions");
+void PeridigmNS::BoundaryAndInitialConditionManager::updateCurrentCoordinates(){
+  peridigm->getY()->Update(1.0, *(peridigm->getX()), 1.0, *(peridigm->getU()), 0.0);
 }
 
 void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_ComputeReactions(Teuchos::RCP<const Epetra_Vector> force,
@@ -378,30 +245,41 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_ComputeRea
   const Epetra_BlockMap& threeDimensionalMap = force->Map();
   TEUCHOS_TEST_FOR_EXCEPT_MSG(threeDimensionalMap.ElementSize() != 3, "**** applyKinematicBC_ComputeReactions() must be called with map having element size = 3.\n");
 
-  // loop over kinematic boundary conditions
-  Teuchos::ParameterList::ConstIterator it;
-  for(it = params.begin() ; it != params.end() ; it++){
-    const string & name = it->first;
-    size_t position = name.find("Prescribed Displacement");
-    if(position != string::npos){
-      Teuchos::ParameterList & boundaryConditionParams = Teuchos::getValue<Teuchos::ParameterList>(it->second);
-      string nodeSet = boundaryConditionParams.get<string>("Node Set");
-      string type = boundaryConditionParams.get<string>("Type");
-      string coordinate = boundaryConditionParams.get<string>("Coordinate");
 
-      int coord = 0;
-      if(coordinate == "y" || coordinate == "Y")
-        coord = 1;
-      if(coordinate == "z" || coordinate == "Z")
-        coord = 2;
-
-      // apply kinematic boundary conditions to locally-owned nodes
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
-      vector<int> & nodeList = (*nodeSets)[nodeSet];
-      for(unsigned int i=0 ; i<nodeList.size() ; i++){
-        int localNodeID = threeDimensionalMap.LID(nodeList[i]);
-        if(!force.is_null() && localNodeID != -1)
-          (*reaction)[3*localNodeID + coord] = (*force)[3*localNodeID + coord];
+  // apply the boundary conditions
+  for(unsigned i=0;i<boundaryConditions.size();++i)
+  {
+    Teuchos::RCP<BoundaryCondition> boundaryCondition = boundaryConditions[i];
+    if(boundaryCondition->getType() == PRESCRIBED_DISPLACEMENT)
+    {
+      const int coord = boundaryCondition->getCoord();
+      const Set_Definition setDef = to_set_definition(boundaryCondition->getNodeSetName());
+      // apply the bc to every element in the entire domain
+      if(setDef==FULL_DOMAIN)
+      {
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: Dirichlet conditions on the displacement cannot be prescribed over the full domain.");
+      }
+      // apply the bc only to specific node sets
+      else{
+        std::map< std::string, std::vector<int> >::iterator itBegin;
+        std::map< std::string, std::vector<int> >::iterator itEnd;
+        if (setDef == ALL_SETS){
+          itBegin = nodeSets->begin();
+          itEnd = nodeSets->end();
+        }
+        else{
+          TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(boundaryCondition->getNodeSetName()) == nodeSets->end(), "**** Node set not found: " + boundaryCondition->getNodeSetName() + "\n");
+          itBegin = nodeSets->find(boundaryCondition->getNodeSetName());
+          itEnd = itBegin; itEnd++;
+        }
+        for(std::map<std::string,std::vector<int> > ::iterator setIt=itBegin;setIt!=itEnd;++setIt){
+          vector<int> & nodeList = setIt->second;
+          for(unsigned int i=0 ; i<nodeList.size() ; i++){
+            int localNodeID = force->Map().LID(nodeList[i]);
+            if(!force.is_null() && localNodeID != -1)
+              (*reaction)[3*localNodeID + coord] = (*force)[3*localNodeID + coord];
+          }
+        }
       }
     }
   }
@@ -415,38 +293,43 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
   const Epetra_BlockMap& oneDimensionalMap = vec->Map();
   TEUCHOS_TEST_FOR_EXCEPT_MSG(oneDimensionalMap.ElementSize() != 1, "**** applyKinematicBC_InsertZeros() must be called with map having element size = 1.\n");
 
-  // loop over kinematic boundary conditions
-  Teuchos::ParameterList::ConstIterator it;
-  for(it = params.begin() ; it != params.end() ; it++){
-    const string & name = it->first;
-    size_t position = name.find("Prescribed Displacement");
-    if(position != string::npos){
-      Teuchos::ParameterList & boundaryConditionParams = Teuchos::getValue<Teuchos::ParameterList>(it->second);
-      string nodeSet = boundaryConditionParams.get<string>("Node Set");
-      string type = boundaryConditionParams.get<string>("Type");
-      string coordinate = boundaryConditionParams.get<string>("Coordinate");
-
-      int coord = 0;
-      if(coordinate == "y" || coordinate == "Y")
-        coord = 1;
-      if(coordinate == "z" || coordinate == "Z")
-        coord = 2;
-
-      // apply kinematic boundary conditions to locally-owned nodes
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
-      vector<int> & nodeList = (*nodeSets)[nodeSet];
-      for(unsigned int i=0 ; i<nodeList.size() ; i++){
-
-        // \todo Fix this up, it's wonky because the tangent and associated vectors MUST use an Epetra_Map, whereas the nodesets correlate more directly with the 3D Epetra_BlockMap.
-        int localNodeID = oneDimensionalMap.LID(3*nodeList[i]);
-
-        if(!vec.is_null() && localNodeID != -1)
-          (*vec)[localNodeID + coord] = 0.0;
+  for(unsigned i=0;i<boundaryConditions.size();++i)
+  {
+    Teuchos::RCP<BoundaryCondition> boundaryCondition = boundaryConditions[i];
+    if(boundaryCondition->getType() == PRESCRIBED_DISPLACEMENT)
+    {
+      const int coord = boundaryCondition->getCoord();
+      const Set_Definition setDef = to_set_definition(boundaryCondition->getNodeSetName());
+      // apply the bc to every element in the entire domain
+      if(setDef==FULL_DOMAIN)
+      {
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: Dirichlet conditions on the displacement cannot be prescribed over the entire domain.");
+      }
+      // apply the bc only to specific node sets
+      else{
+        std::map< std::string, std::vector<int> >::iterator itBegin;
+        std::map< std::string, std::vector<int> >::iterator itEnd;
+        if (setDef == ALL_SETS){
+          itBegin = nodeSets->begin();
+          itEnd = nodeSets->end();
+        }
+        else{
+          TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(boundaryCondition->getNodeSetName()) == nodeSets->end(), "**** Node set not found: " + boundaryCondition->getNodeSetName() + "\n");
+          itBegin = nodeSets->find(boundaryCondition->getNodeSetName());
+          itEnd = itBegin; itEnd++;
+        }
+        for(std::map<std::string,std::vector<int> > ::iterator setIt=itBegin;setIt!=itEnd;++setIt){
+          vector<int> & nodeList = setIt->second;
+          for(unsigned int i=0 ; i<nodeList.size() ; i++){
+            int localNodeID = oneDimensionalMap.LID(3*nodeList[i]);
+            if(!vec.is_null() && localNodeID != -1)
+              (*vec)[localNodeID + coord] = 0.0;
+          }
+        }
       }
     }
   }
   PeridigmNS::Timer::self().stopTimer("Apply Boundary Conditions");
-
 }
 
 void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZerosAndSetDiagonal(Teuchos::RCP<Epetra_FECrsMatrix> mat)
@@ -461,145 +344,76 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
   diagonal.Norm1(&diagonalNorm1);
   double diagonalEntry = -1.0*diagonalNorm1/diagonal.GlobalLength();
 
-  // create data structures for inserting values into jacobian
-  // an upper bound on the number of entries to set to zero is given by mat->NumMyCols()
-  vector<double> jacobianValues(mat->NumMyCols(), 0.0);
-  vector<int> jacobianIndices(mat->NumMyCols());
-  vector<int> jacobianColIndices(mat->NumMyCols());
-  for(unsigned int i=0 ; i<jacobianIndices.size() ; ++i)
-    jacobianIndices[i] = i;
-
-  // loop over the kinematic boundary conditions
-  Teuchos::ParameterList::ConstIterator it;
-  for(it = params.begin() ; it != params.end() ; it++){
-    const string & name = it->first;
-    size_t position = name.find("Prescribed Displacement");
-    if(position != string::npos){
-      Teuchos::ParameterList & boundaryConditionParams = Teuchos::getValue<Teuchos::ParameterList>(it->second);
-      string nodeSet = boundaryConditionParams.get<string>("Node Set");
-      string type = boundaryConditionParams.get<string>("Type");
-      string coordinate = boundaryConditionParams.get<string>("Coordinate");
-
-      int coord = 0;
-      if(coordinate == "y" || coordinate == "Y")
-        coord = 1;
-      if(coordinate == "z" || coordinate == "Z")
-        coord = 2;
-
-      // apply kinematic boundary conditions to locally-owned nodes
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
-      vector<int> & nodeList = (*nodeSets)[nodeSet];
-
-      // zero out the columns associated with kinematic boundary conditions:
-      // create the list of columns only once:
-      int columnIndex(0);
-      for(unsigned int i=0 ; i<nodeList.size() ; i++){
-	const int globalID = 3*nodeList[i] + coord;
-	const int localColID = mat->LCID(globalID);
-	if(localColID != -1)
-	  jacobianColIndices[columnIndex++] = localColID;
+  for(unsigned i=0;i<boundaryConditions.size();++i)
+  {
+    Teuchos::RCP<BoundaryCondition> boundaryCondition = boundaryConditions[i];
+    if(boundaryCondition->getType() == PRESCRIBED_DISPLACEMENT)
+    {
+      const int coord = boundaryCondition->getCoord();
+      const Set_Definition setDef = to_set_definition(boundaryCondition->getNodeSetName());
+      // apply the bc to every element in the entire domain
+      if(setDef==FULL_DOMAIN)
+      {
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: Dirichlet conditions on the displacement cannot be prescribed over the full domain.");
       }
-      // iterate the local rows and set the approprate column values to 0
-      int numEntriesToSetToZero = columnIndex;
-      for(int iRow=0 ; iRow<mat->NumMyRows() ; ++iRow)
-        mat->ReplaceMyValues(iRow, numEntriesToSetToZero, &jacobianValues[0], &jacobianColIndices[0]);
-
-      for(unsigned int i=0 ; i<nodeList.size() ; i++){
-
-        // zero out the row and put diagonalEntry on the diagonal
-        int globalID = 3*nodeList[i] + coord;
-        int localRowID = mat->LRID(globalID);
-        int localColID = mat->LCID(globalID);
-
-        // zero out the row and put diagonalEntry on the diagonal
-        if(localRowID != -1){
-	  if(localColID != -1)
-	    jacobianValues[localColID] = diagonalEntry;
-          // From Epetra_CrsMatrix documentation:
-          // If a value is not already present for the specified location in the matrix, the
-          // input value will be ignored and a positive warning code will be returned.
-          // \todo Do the bookkeeping to send in data only for locations that actually exist in the matrix structure.
-          mat->ReplaceMyValues(localRowID, mat->NumMyCols(), &jacobianValues[0], &jacobianIndices[0]);
-	  if(localColID != -1)
-	    jacobianValues[localColID] = 0.0;
+      // apply the bc only to specific node sets
+      else{
+        std::map< std::string, std::vector<int> >::iterator itBegin;
+        std::map< std::string, std::vector<int> >::iterator itEnd;
+        if (setDef == ALL_SETS){
+          itBegin = nodeSets->begin();
+          itEnd = nodeSets->end();
         }
-      }
-    }
-  }
-  PeridigmNS::Timer::self().stopTimer("Apply Boundary Conditions");
-}
+        else{
+          TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(boundaryCondition->getNodeSetName()) == nodeSets->end(), "**** Node set not found: " + boundaryCondition->getNodeSetName() + "\n");
+          itBegin = nodeSets->find(boundaryCondition->getNodeSetName());
+          itEnd = itBegin; itEnd++;
+        }
+        for(std::map<std::string,std::vector<int> > ::iterator setIt=itBegin;setIt!=itEnd;++setIt){
+          vector<int> & nodeList = setIt->second;
 
+          // create data structures for inserting values into jacobian
+          // an upper bound on the number of entries to set to zero is given by mat->NumMyCols()
+          vector<double> jacobianValues(mat->NumMyCols(), 0.0);
+          vector<int> jacobianIndices(mat->NumMyCols());
+          vector<int> jacobianColIndices(mat->NumMyCols());
+          for(unsigned int i=0 ; i<jacobianIndices.size() ; ++i)
+            jacobianIndices[i] = i;
 
-void PeridigmNS::BoundaryAndInitialConditionManager::setVectorValues(double timeCurrent,
-                                                                     double timePrevious,
-                                                                     Teuchos::RCP<const Epetra_Vector> x,
-                                                                     Teuchos::RCP<Epetra_Vector> vec,
-                                                                     bool setIncrement,
-                                                                     double multiplier)
-{
-  PeridigmNS::Timer::self().startTimer("Apply Boundary Conditions");
+          // zero out the columns associated with kinematic boundary conditions:
+          // create the list of columns only once:
+          int columnIndex(0);
+          for(unsigned int i=0 ; i<nodeList.size() ; i++){
+            const int globalID = 3*nodeList[i] + coord;
+            const int localColID = mat->LCID(globalID);
+            if(localColID != -1)
+              jacobianColIndices[columnIndex++] = localColID;
+          }
+          // iterate the local rows and set the approprate column values to 0
+          int numEntriesToSetToZero = columnIndex;
+          for(int iRow=0 ; iRow<mat->NumMyRows() ; ++iRow)
+            mat->ReplaceMyValues(iRow, numEntriesToSetToZero, &jacobianValues[0], &jacobianColIndices[0]);
 
-  const Epetra_BlockMap& threeDimensionalMap = vec->Map();
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(threeDimensionalMap.ElementSize() != 3, "**** setVectorValues() must be called with map having element size = 3.\n");
+          for(unsigned int i=0 ; i<nodeList.size() ; i++){
 
-  // apply the kinematic boundary conditions
-  Teuchos::ParameterList::ConstIterator it;
-  for(it = params.begin() ; it != params.end() ; it++){
-    const string & name = it->first;
-    size_t position = name.find("Prescribed Displacement");
-    if(position != string::npos){
-      Teuchos::ParameterList & boundaryConditionParams = Teuchos::getValue<Teuchos::ParameterList>(it->second);
-      string nodeSet = boundaryConditionParams.get<string>("Node Set");
-      string type = boundaryConditionParams.get<string>("Type");
-      string coordinate = boundaryConditionParams.get<string>("Coordinate");
-      string function = boundaryConditionParams.get<string>("Value");
+            // zero out the row and put diagonalEntry on the diagonal
+            int globalID = 3*nodeList[i] + coord;
+            int localRowID = mat->LRID(globalID);
+            int localColID = mat->LCID(globalID);
 
-      try{
-        muParser.SetExpr(function);
-      }
-      catch (mu::Parser::exception_type &e)
-        TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-
-      int coord = 0;
-      if(coordinate == "y" || coordinate == "Y")
-        coord = 1;
-      if(coordinate == "z" || coordinate == "Z")
-        coord = 2;
-
-      // apply kinematic boundary conditions to locally-owned nodes
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSet) == nodeSets->end(), "**** Node set not found: " + name + "\n");
-      vector<int> & nodeList = (*nodeSets)[nodeSet];
-      for(unsigned int i=0 ; i<nodeList.size() ; i++){
-
-        // set entry in residual vector equal to the displacement increment for the kinematic bc
-        // this will cause the solution procedure to solve for the correct U at the bc
-
-        int localNodeID = threeDimensionalMap.LID(nodeList[i]);
-        if(!vec.is_null() && localNodeID != -1){
-          // set values for parser
-          muParserX = (*x)[localNodeID*3];
-          muParserY = (*x)[localNodeID*3 + 1];
-          muParserZ = (*x)[localNodeID*3 + 2];
-
-          double previousValue = 0.0;
-          if(setIncrement){
-            muParserT = timePrevious;
-            try {
-              previousValue = muParser.Eval();
+            // zero out the row and put diagonalEntry on the diagonal
+            if(localRowID != -1){
+              if(localColID != -1)
+                jacobianValues[localColID] = diagonalEntry;
+              // From Epetra_CrsMatrix documentation:
+              // If a value is not already present for the specified location in the matrix, the
+              // input value will be ignored and a positive warning code will be returned.
+              // \todo Do the bookkeeping to send in data only for locations that actually exist in the matrix structure.
+              mat->ReplaceMyValues(localRowID, mat->NumMyCols(), &jacobianValues[0], &jacobianIndices[0]);
+              if(localColID != -1)
+                jacobianValues[localColID] = 0.0;
             }
-            catch (mu::Parser::exception_type &e)
-              TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
           }
-
-          double currentValue = 0.0;
-          muParserT = timeCurrent;
-          try {
-            currentValue = muParser.Eval();
-          }
-          catch (mu::Parser::exception_type &e)
-            TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-
-          (*vec)[localNodeID*3 + coord] = (currentValue - previousValue)*multiplier ;
         }
       }
     }
