@@ -210,15 +210,16 @@ namespace PeridigmNS {
 
     //! @name Accessors for main solver-level vectors
     //@{ 
-    Teuchos::RCP<const Epetra_Vector> getBlockIDs() { return blockIDs; }
-    Teuchos::RCP<const Epetra_Vector> getX() { return x; }
-    Teuchos::RCP<const Epetra_Vector> getU() { return u; }
-    Teuchos::RCP<const Epetra_Vector> getY() { return y; }
-    Teuchos::RCP<const Epetra_Vector> getV() { return v; }
-    Teuchos::RCP<const Epetra_Vector> getA() { return a; }
-    Teuchos::RCP<const Epetra_Vector> getForce() { return force; }
-    Teuchos::RCP<const Epetra_Vector> getContactForce() { return contactForce; }
-    Teuchos::RCP<const Epetra_Vector> getDeltaU() { return deltaU; }
+    Teuchos::RCP<Epetra_Vector> getBlockIDs() { return blockIDs; }
+    Teuchos::RCP<Epetra_Vector> getX() { return x; }
+    Teuchos::RCP<Epetra_Vector> getU() { return u; }
+    Teuchos::RCP<Epetra_Vector> getY() { return y; }
+    Teuchos::RCP<Epetra_Vector> getV() { return v; }
+    Teuchos::RCP<Epetra_Vector> getA() { return a; }
+    Teuchos::RCP<Epetra_Vector> getForce() { return force; }
+    Teuchos::RCP<Epetra_Vector> getContactForce() { return contactForce; }
+    Teuchos::RCP<Epetra_Vector> getDeltaU() { return deltaU; }
+    Teuchos::RCP<Epetra_Vector> getDeltaTemperature() { return deltaTemperature; }
     //@}
 
     //! Accessor for global neighborhood data
