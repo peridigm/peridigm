@@ -562,6 +562,147 @@ void computeClassicalElasticStress
   }
 }
 
+template<typename ScalarT>
+int computeApproximateVelocityGradient
+(
+const double* volume,
+const double* modelCoordinates,
+const ScalarT* coordinates,
+const ScalarT* velocities,
+ScalarT* shapeTensorInverseXX,
+ScalarT* shapeTensorInverseXY,
+ScalarT* shapeTensorInverseXZ,
+ScalarT* shapeTensorInverseYX,
+ScalarT* shapeTensorInverseYY,
+ScalarT* shapeTensorInverseYZ,
+ScalarT* shapeTensorInverseZX,
+ScalarT* shapeTensorInverseZY,
+ScalarT* shapeTensorInverseZZ,
+ScalarT* velocityGradientXX,
+ScalarT* velocityGradientXY,
+ScalarT* velocityGradientXZ,
+ScalarT* velocityGradientYX,
+ScalarT* velocityGradientYY,
+ScalarT* velocityGradientYZ,
+ScalarT* velocityGradientZX,
+ScalarT* velocityGradientZY,
+ScalarT* velocityGradientZZ,
+const int* neighborhoodList,
+int numPoints,
+double horizon
+)
+{
+  int returnCode = 0;
+
+  const double* modelCoord = modelCoordinates;
+  const double* neighborModelCoord;
+  const ScalarT* coord = coordinates;
+  const ScalarT* neighborCoord;
+  const ScalarT* vel = velocities;
+  const ScalarT* neighborVel;
+  ScalarT* shapeTensorInvXX = shapeTensorInverseXX;
+  ScalarT* shapeTensorInvXY = shapeTensorInverseXY;
+  ScalarT* shapeTensorInvXZ = shapeTensorInverseXZ;
+  ScalarT* shapeTensorInvYX = shapeTensorInverseYX;
+  ScalarT* shapeTensorInvYY = shapeTensorInverseYY;
+  ScalarT* shapeTensorInvYZ = shapeTensorInverseYZ;
+  ScalarT* shapeTensorInvZX = shapeTensorInverseZX;
+  ScalarT* shapeTensorInvZY = shapeTensorInverseZY;
+  ScalarT* shapeTensorInvZZ = shapeTensorInverseZZ;
+  ScalarT* velGradXX = velocityGradientXX;
+  ScalarT* velGradXY = velocityGradientXY;
+  ScalarT* velGradXZ = velocityGradientXZ;
+  ScalarT* velGradYX = velocityGradientYX;
+  ScalarT* velGradYY = velocityGradientYY;
+  ScalarT* velGradYZ = velocityGradientYZ;
+  ScalarT* velGradZX = velocityGradientZX;
+  ScalarT* velGradZY = velocityGradientZY;
+  ScalarT* velGradZZ = velocityGradientZZ;
+
+  ScalarT velGradFirstTermXX, velGradFirstTermXY, velGradFirstTermXZ;
+  ScalarT velGradFirstTermYX, velGradFirstTermYY, velGradFirstTermYZ;
+  ScalarT velGradFirstTermZX, velGradFirstTermZY, velGradFirstTermZZ;
+
+  double undeformedBondX, undeformedBondY, undeformedBondZ, undeformedBondLength;
+  ScalarT deformedBondX, deformedBondY, deformedBondZ;
+  double neighborVolume, omega, temp;
+  ScalarT velStateX, velStateY, velStateZ;
+
+  // placeholder for bond damage
+  double bondDamage = 0.0;
+
+  int neighborIndex, numNeighbors;
+  const int *neighborListPtr = neighborhoodList;
+  for(int iID=0 ; iID<numPoints ; ++iID, modelCoord+=3, coord+=3,
+        ++shapeTensorInvXX, ++shapeTensorInvXY, ++shapeTensorInvXZ,
+        ++shapeTensorInvYX, ++shapeTensorInvYY, ++shapeTensorInvYZ,
+        ++shapeTensorInvZX, ++shapeTensorInvZY, ++shapeTensorInvZZ,
+        ++velGradXX, ++velGradXY, ++velGradXZ,
+        ++velGradYX, ++velGradYY, ++velGradYZ,
+        ++velGradZX, ++velGradZY, ++velGradZZ){
+
+    // Zero out data
+    velGradFirstTermXX = 0.0 ; velGradFirstTermXY = 0.0 ; velGradFirstTermXZ = 0.0 ;
+    velGradFirstTermYX = 0.0 ; velGradFirstTermYY = 0.0 ; velGradFirstTermYZ = 0.0 ;
+    velGradFirstTermZX = 0.0 ; velGradFirstTermZY = 0.0 ; velGradFirstTermZZ = 0.0 ;
+    
+    numNeighbors = *neighborListPtr; neighborListPtr++;
+    for(int n=0; n<numNeighbors; n++, neighborListPtr++){
+
+      neighborIndex = *neighborListPtr;
+      neighborVolume = volume[neighborIndex];
+      neighborModelCoord = modelCoordinates + 3*neighborIndex;
+      neighborCoord = coordinates + 3*neighborIndex;
+      neighborVel = velocities + 3*neighborIndex;
+
+      undeformedBondX = *(neighborModelCoord)   - *(modelCoord);
+      undeformedBondY = *(neighborModelCoord+1) - *(modelCoord+1);
+      undeformedBondZ = *(neighborModelCoord+2) - *(modelCoord+2);
+      undeformedBondLength = sqrt(undeformedBondX*undeformedBondX +
+                                  undeformedBondY*undeformedBondY +
+                                  undeformedBondZ*undeformedBondZ);
+
+      deformedBondX = *(neighborCoord)   - *(coord);
+      deformedBondY = *(neighborCoord+1) - *(coord+1);
+      deformedBondZ = *(neighborCoord+2) - *(coord+2);
+
+      // The velState is the relative difference in velocities of the nodes at
+      // each end of a bond. i.e., v_j - v_i
+      velStateX = *(neighborVel) - *(vel);
+      velStateY = *(neighborVel+1) - *(vel+1);
+      velStateZ = *(neighborVel+2) - *(vel+2);
+
+      omega = MATERIAL_EVALUATION::scalarInfluenceFunction(undeformedBondLength, horizon);
+
+      temp = (1.0 - bondDamage) * omega * neighborVolume;
+
+      velGradFirstTermXX += temp * velStateX * undeformedBondX;
+      velGradFirstTermXY += temp * velStateX * undeformedBondY;
+      velGradFirstTermXZ += temp * velStateX * undeformedBondZ;
+      velGradFirstTermYX += temp * velStateY * undeformedBondX;
+      velGradFirstTermYY += temp * velStateY * undeformedBondY;
+      velGradFirstTermYZ += temp * velStateY * undeformedBondZ;
+      velGradFirstTermZX += temp * velStateZ * undeformedBondX;
+      velGradFirstTermZY += temp * velStateZ * undeformedBondY;
+      velGradFirstTermZZ += temp * velStateZ * undeformedBondZ;
+    }
+
+
+    *velGradXX = velGradFirstTermXX* (*shapeTensorInvXX) + velGradFirstTermXY* (*shapeTensorInvYX) + velGradFirstTermXZ* (*shapeTensorInvZX);
+    *velGradXY = velGradFirstTermXX* (*shapeTensorInvXY) + velGradFirstTermXY* (*shapeTensorInvYY) + velGradFirstTermXZ* (*shapeTensorInvZY);
+    *velGradXZ = velGradFirstTermXX* (*shapeTensorInvXZ) + velGradFirstTermXY* (*shapeTensorInvYZ) + velGradFirstTermXZ* (*shapeTensorInvZZ);
+    *velGradYX = velGradFirstTermYX* (*shapeTensorInvXX) + velGradFirstTermYY* (*shapeTensorInvYX) + velGradFirstTermYZ* (*shapeTensorInvZX);
+    *velGradYY = velGradFirstTermYX* (*shapeTensorInvXY) + velGradFirstTermYY* (*shapeTensorInvYY) + velGradFirstTermYZ* (*shapeTensorInvZY);
+    *velGradYZ = velGradFirstTermYX* (*shapeTensorInvXZ) + velGradFirstTermYY* (*shapeTensorInvYZ) + velGradFirstTermYZ* (*shapeTensorInvZZ);
+    *velGradZX = velGradFirstTermZX* (*shapeTensorInvXX) + velGradFirstTermZY* (*shapeTensorInvYX) + velGradFirstTermZZ* (*shapeTensorInvZX);
+    *velGradZY = velGradFirstTermZX* (*shapeTensorInvXY) + velGradFirstTermZY* (*shapeTensorInvYY) + velGradFirstTermZZ* (*shapeTensorInvZY);
+    *velGradZZ = velGradFirstTermZX* (*shapeTensorInvXZ) + velGradFirstTermZY* (*shapeTensorInvYZ) + velGradFirstTermZZ* (*shapeTensorInvZZ);
+  }
+
+  // Placeholder for errors due to node being too damaged
+  return returnCode;
+}
+
 /** Explicit template instantiation for double. */
 template void MatrixMultiply<double>
 (
@@ -639,6 +780,35 @@ double* deformationGradientYZ,
 double* deformationGradientZX,
 double* deformationGradientZY,
 double* deformationGradientZZ,
+const int* neighborhoodList,
+int numPoints,
+double horizon
+);
+
+template int computeApproximateVelocityGradient<double>
+(
+const double* volume,
+const double* modelCoordinates,
+const double* coordinates,
+const double* velocities,
+double* shapeTensorInverseXX,
+double* shapeTensorInverseXY,
+double* shapeTensorInverseXZ,
+double* shapeTensorInverseYX,
+double* shapeTensorInverseYY,
+double* shapeTensorInverseYZ,
+double* shapeTensorInverseZX,
+double* shapeTensorInverseZY,
+double* shapeTensorInverseZZ,
+double* velocityGradientXX,
+double* velocityGradientXY,
+double* velocityGradientXZ,
+double* velocityGradientYX,
+double* velocityGradientYY,
+double* velocityGradientYZ,
+double* velocityGradientZX,
+double* velocityGradientZY,
+double* velocityGradientZZ,
 const int* neighborhoodList,
 int numPoints,
 double horizon
@@ -791,6 +961,35 @@ Sacado::Fad::DFad<double>* deformationGradientYZ,
 Sacado::Fad::DFad<double>* deformationGradientZX,
 Sacado::Fad::DFad<double>* deformationGradientZY,
 Sacado::Fad::DFad<double>* deformationGradientZZ,
+const int* neighborhoodList,
+int numPoints,
+double horizon
+);
+
+template int computeApproximateVelocityGradient<Sacado::Fad::DFad<double> >
+(
+const double* volume,
+const double* modelCoordinates,
+const Sacado::Fad::DFad<double>* coordinates,
+const Sacado::Fad::DFad<double>* velocities,
+Sacado::Fad::DFad<double>* shapeTensorInverseXX,
+Sacado::Fad::DFad<double>* shapeTensorInverseXY,
+Sacado::Fad::DFad<double>* shapeTensorInverseXZ,
+Sacado::Fad::DFad<double>* shapeTensorInverseYX,
+Sacado::Fad::DFad<double>* shapeTensorInverseYY,
+Sacado::Fad::DFad<double>* shapeTensorInverseYZ,
+Sacado::Fad::DFad<double>* shapeTensorInverseZX,
+Sacado::Fad::DFad<double>* shapeTensorInverseZY,
+Sacado::Fad::DFad<double>* shapeTensorInverseZZ,
+Sacado::Fad::DFad<double>* velocityGradientXX,
+Sacado::Fad::DFad<double>* velocityGradientXY,
+Sacado::Fad::DFad<double>* velocityGradientXZ,
+Sacado::Fad::DFad<double>* velocityGradientYX,
+Sacado::Fad::DFad<double>* velocityGradientYY,
+Sacado::Fad::DFad<double>* velocityGradientYZ,
+Sacado::Fad::DFad<double>* velocityGradientZX,
+Sacado::Fad::DFad<double>* velocityGradientZY,
+Sacado::Fad::DFad<double>* velocityGradientZZ,
 const int* neighborhoodList,
 int numPoints,
 double horizon
