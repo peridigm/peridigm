@@ -136,6 +136,36 @@ int numPoints,
 double horizon
 );
 
+template<typename ScalarT> 
+int computeApproximateVelocityGradient
+(
+const double* volume,
+const double* modelCoordinates,
+const ScalarT* coordinates,
+const ScalarT* velocities,
+ScalarT* shapeTensorInverseXX,
+ScalarT* shapeTensorInverseXY,
+ScalarT* shapeTensorInverseXZ,
+ScalarT* shapeTensorInverseYX,
+ScalarT* shapeTensorInverseYY,
+ScalarT* shapeTensorInverseYZ,
+ScalarT* shapeTensorInverseZX,
+ScalarT* shapeTensorInverseZY,
+ScalarT* shapeTensorInverseZZ,
+ScalarT* velocityGradientXX,
+ScalarT* velocityGradientXY,
+ScalarT* velocityGradientXZ,
+ScalarT* velocityGradientYX,
+ScalarT* velocityGradientYY,
+ScalarT* velocityGradientYZ,
+ScalarT* velocityGradientZX,
+ScalarT* velocityGradientZY,
+ScalarT* velocityGradientZZ,
+const int* neighborhoodList,
+int numPoints,
+double horizon
+);
+
 //! Green-Lagrange Strain E = 0.5*(F^T F - I).
 template<typename ScalarT>
 void computeGreenLagrangeStrain
