@@ -106,7 +106,40 @@ void MatrixMultiply
  ScalarT& resultZZ
 );
 
-//! Calculation of both the inverse of the shape tensor and the approximate deformation gradient.
+template<typename ScalarT>
+void MatrixUpdate
+(
+ const ScalarT& alpha,
+ const ScalarT& beta,
+ const ScalarT& aXX,
+ const ScalarT& aXY,
+ const ScalarT& aXZ,
+ const ScalarT& aYX,
+ const ScalarT& aYY,
+ const ScalarT& aYZ,
+ const ScalarT& aZX,
+ const ScalarT& aZY,
+ const ScalarT& aZZ,
+ const ScalarT& bXX,
+ const ScalarT& bXY,
+ const ScalarT& bXZ,
+ const ScalarT& bYX,
+ const ScalarT& bYY,
+ const ScalarT& bYZ,
+ const ScalarT& bZX,
+ const ScalarT& bZY,
+ const ScalarT& bZZ,
+ ScalarT& resultXX,
+ ScalarT& resultXY,
+ ScalarT& resultXZ,
+ ScalarT& resultYX,
+ ScalarT& resultYY,
+ ScalarT& resultYZ,
+ ScalarT& resultZX,
+ ScalarT& resultZY,
+ ScalarT& resultZZ
+);
+
 template<typename ScalarT>
 int computeShapeTensorInverseAndApproximateDeformationGradient
 (
@@ -136,34 +169,62 @@ int numPoints,
 double horizon
 );
 
-template<typename ScalarT> 
-int computeApproximateVelocityGradient
-(
+// Calculation of stretch rates following Flanagan & Taylor
+template<typename ScalarT>
+int computeUnrotatedRateOfDeformationAndRotationTensor(
 const double* volume,
 const double* modelCoordinates,
 const ScalarT* coordinates,
 const ScalarT* velocities,
-ScalarT* shapeTensorInverseXX,
-ScalarT* shapeTensorInverseXY,
-ScalarT* shapeTensorInverseXZ,
-ScalarT* shapeTensorInverseYX,
-ScalarT* shapeTensorInverseYY,
-ScalarT* shapeTensorInverseYZ,
-ScalarT* shapeTensorInverseZX,
-ScalarT* shapeTensorInverseZY,
-ScalarT* shapeTensorInverseZZ,
-ScalarT* velocityGradientXX,
-ScalarT* velocityGradientXY,
-ScalarT* velocityGradientXZ,
-ScalarT* velocityGradientYX,
-ScalarT* velocityGradientYY,
-ScalarT* velocityGradientYZ,
-ScalarT* velocityGradientZX,
-ScalarT* velocityGradientZY,
-ScalarT* velocityGradientZZ,
+const ScalarT* deformationGradientXX,
+const ScalarT* deformationGradientXY,
+const ScalarT* deformationGradientXZ,
+const ScalarT* deformationGradientYX,
+const ScalarT* deformationGradientYY,
+const ScalarT* deformationGradientYZ,
+const ScalarT* deformationGradientZX,
+const ScalarT* deformationGradientZY,
+const ScalarT* deformationGradientZZ,
+const ScalarT* shapeTensorInverseXX,
+const ScalarT* shapeTensorInverseXY,
+const ScalarT* shapeTensorInverseXZ,
+const ScalarT* shapeTensorInverseYX,
+const ScalarT* shapeTensorInverseYY,
+const ScalarT* shapeTensorInverseYZ,
+const ScalarT* shapeTensorInverseZX,
+const ScalarT* shapeTensorInverseZY,
+const ScalarT* shapeTensorInverseZZ,
+ScalarT* leftStretchTensorXX,
+ScalarT* leftStretchTensorXY,
+ScalarT* leftStretchTensorXZ,
+ScalarT* leftStretchTensorYX,
+ScalarT* leftStretchTensorYY,
+ScalarT* leftStretchTensorYZ,
+ScalarT* leftStretchTensorZX,
+ScalarT* leftStretchTensorZY,
+ScalarT* leftStretchTensorZZ,
+ScalarT* rotationTensorXX,
+ScalarT* rotationTensorXY,
+ScalarT* rotationTensorXZ,
+ScalarT* rotationTensorYX,
+ScalarT* rotationTensorYY,
+ScalarT* rotationTensorYZ,
+ScalarT* rotationTensorZX,
+ScalarT* rotationTensorZY,
+ScalarT* rotationTensorZZ,
+ScalarT* unrotatedRateOfDeformationXX,
+ScalarT* unrotatedRateOfDeformationXY,
+ScalarT* unrotatedRateOfDeformationXZ,
+ScalarT* unrotatedRateOfDeformationYX,
+ScalarT* unrotatedRateOfDeformationYY,
+ScalarT* unrotatedRateOfDeformationYZ,
+ScalarT* unrotatedRateOfDeformationZX,
+ScalarT* unrotatedRateOfDeformationZY,
+ScalarT* unrotatedRateOfDeformationZZ,
 const int* neighborhoodList,
 int numPoints,
-double horizon
+double horizon,
+double dt
 );
 
 //! Green-Lagrange Strain E = 0.5*(F^T F - I).
