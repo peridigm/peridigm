@@ -358,6 +358,8 @@ double horizon
   return returnCode;
 }
 
+//Performs kinematic computations following Flanagan and Taylor (1987), returns
+//unrotated rate-of-deformation and rotation tensors
 template<typename ScalarT>
 int computeUnrotatedRateOfDeformationAndRotationTensor(
 const double* volume,
