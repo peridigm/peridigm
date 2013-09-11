@@ -66,7 +66,7 @@ class BoundaryCondition {
 public:
 
   //! Constructor.
-  BoundaryCondition(const string & name_,const Teuchos::ParameterList& bcParams_,Teuchos::RCP<Epetra_Vector> bcVector_,Peridigm * peridigm_);
+  BoundaryCondition(const string & name_,const Teuchos::ParameterList& bcParams_,Teuchos::RCP<Epetra_Vector> toVector_,Peridigm * peridigm_, const bool isCumulative_);
 
   //! Destructor.
   virtual ~BoundaryCondition(){}
@@ -81,7 +81,7 @@ public:
   const Boundary_Condition_Type getType()const{return bcType;}
 
   //! give the field the bc is applied to
-  Teuchos::RCP<Epetra_Vector> getBCVector()const{return bcVector;}
+  Teuchos::RCP<Epetra_Vector> getBCVector()const{return toVector;}
 
   //! give the coodinate of the bc
   const int getCoord()const{return coord;}
@@ -113,7 +113,7 @@ protected:
   Boundary_Condition_Type bcType;
 
   //! the field to apply the boundary condtion to
-  Teuchos::RCP<Epetra_Vector> bcVector;
+  Teuchos::RCP<Epetra_Vector> toVector;
 
   //! coordinate direction associated with bc
   int coord;
@@ -134,6 +134,8 @@ protected:
 
   Tensor_Order tensorOrder;
 
+  bool isCumulative;
+
 private:
 
   // Private to prohibit use.
@@ -153,7 +155,7 @@ class DirichletBC : public BoundaryCondition{
 public:
 
   //! Constructor.
-  DirichletBC(const string & name_,const Teuchos::ParameterList& bcParams_,Teuchos::RCP<Epetra_Vector> bcVector_,Peridigm * peridigm_);
+  DirichletBC(const string & name_,const Teuchos::ParameterList& bcParams_,Teuchos::RCP<Epetra_Vector> toVector_,Peridigm * peridigm_, const bool isCumulative_);
 
   //! Destructor.
   ~DirichletBC(){}
@@ -173,7 +175,8 @@ public:
   //! Constructor.
   DirichletIncrementBC(const string & name_,
     const Teuchos::ParameterList& bcParams_,
-    Teuchos::RCP<Epetra_Vector> bcVector_,Peridigm * peridigm_,
+    Teuchos::RCP<Epetra_Vector> toVector_,Peridigm * peridigm_,
+    const bool isCumulative_,
     const double & coeff_=1.0,
     const double & deltaTCoeff_=0.0);
 
@@ -188,11 +191,6 @@ private:
   double coeff;
   double deltaTCoeff;
 };
-
-
-
-
-
 
 }
 

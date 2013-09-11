@@ -1,0 +1,80 @@
+<ParameterList>
+
+  <ParameterList name="Discretization">
+	<Parameter name="Type" type="string" value="Exodus" />
+	<Parameter name="Input Mesh File" type="string" value="Body_Force.g"/>
+  </ParameterList>
+
+  <ParameterList name="Materials">
+	<ParameterList name="My Elastic Material">
+	  <Parameter name="Material Model" type="string" value="Elastic"/>
+	  <Parameter name="Density" type="double" value="1000.0"/>
+	  <Parameter name="Bulk Modulus" type="double" value="66.667e3"/>
+	  <Parameter name="Shear Modulus" type="double" value="40.0e3"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Blocks">
+	<ParameterList name="My Group of Blocks">
+	  <Parameter name="Block Names" type="string" value="block_1 block_2 block_3"/>
+	  <Parameter name="Material" type="string" value="My Elastic Material"/>
+      <Parameter name="Horizon" type="double" value="0.54"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Boundary Conditions">
+	<ParameterList name="Prescribed Displacement NL2z">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_2"/>
+	  <Parameter name="Coordinate" type="string" value="z"/>
+	  <Parameter name="Value" type="string" value="0.0"/>
+	</ParameterList>
+	<ParameterList name="Prescribed Displacement NL3x">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_3"/>
+	  <Parameter name="Coordinate" type="string" value="x"/>
+	  <Parameter name="Value" type="string" value="0.0"/>
+	</ParameterList>
+	<ParameterList name="Prescribed Displacement NL3y">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_3"/>
+	  <Parameter name="Coordinate" type="string" value="y"/>
+	  <Parameter name="Value" type="string" value="0.0"/>
+	</ParameterList>
+	<ParameterList name="Applied Loading">
+	  <Parameter name="Type" type="string" value="Body Force"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_1"/>
+	  <Parameter name="Coordinate" type="string" value="z"/>
+	  <Parameter name="Value" type="string" value="100.0"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Solver">
+	<Parameter name="Verbose" type="bool" value="false"/>
+	<Parameter name="Initial Time" type="double" value="0.0"/>
+	<Parameter name="Final Time" type="double" value="1.0"/> 
+	<ParameterList name="QuasiStatic">
+	  <Parameter name="Number of Load Steps" type="int" value="1"/>
+	  <Parameter name="Absolute Tolerance" type="double" value="1.0e-2"/>
+	  <Parameter name="Maximum Solver Iterations" type="int" value="10"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Output">
+	<Parameter name="Output File Type" type="string" value="ExodusII"/>
+	<Parameter name="Output Format" type="string" value="BINARY"/>
+	<Parameter name="Output Filename" type="string" value="Body_Force_QS"/>
+	<Parameter name="Output Frequency" type="int" value="1"/>
+	<Parameter name="Parallel Write" type="bool" value="true"/>
+	<ParameterList name="Output Variables">
+	  <Parameter name="Displacement" type="bool" value="true"/>
+	  <Parameter name="Velocity" type="bool" value="true"/>
+	  <Parameter name="Element_Id" type="bool" value="true"/>
+	  <Parameter name="Proc_Num" type="bool" value="true"/>
+	  <Parameter name="Dilatation" type="bool" value="true"/>
+	  <Parameter name="Force_Density" type="bool" value="true"/>
+	  <Parameter name="Weighted_Volume" type="bool" value="true"/>
+	</ParameterList>
+  </ParameterList>
+
+</ParameterList>

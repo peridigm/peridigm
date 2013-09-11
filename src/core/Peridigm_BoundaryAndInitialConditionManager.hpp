@@ -91,6 +91,12 @@ namespace PeridigmNS {
     //! Apply all boundary conditions
     void applyBoundaryConditions(const double & timeCurrent=0.0, const double & timePrevious=0.0);
 
+    //! Apply all boundary conditions
+    void applyForceContributions(const double & timeCurrent=0.0, const double & timePrevious=0.0);
+
+    //! Apply all boundary conditions
+    void clearForceContributions();
+
     //! Update the current coordinates
     void updateCurrentCoordinates();
 
@@ -122,6 +128,11 @@ namespace PeridigmNS {
 
     //! Set of all the initial conditions
     vector<Teuchos::RCP<BoundaryCondition> > initialConditions;
+
+    //! Set of all the force contributions
+    vector<Teuchos::RCP<BoundaryCondition> > forceContributions;
+
+
 
   private:
 

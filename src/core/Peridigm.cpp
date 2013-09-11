@@ -102,6 +102,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
     deltaTemperatureFieldId(-1),
     forceDensityFieldId(-1),
     contactForceDensityFieldId(-1),
+    externalForceDensityFieldId(-1),
     partialVolumeFieldId(-1)
 {
   peridigmComm = comm;
@@ -174,6 +175,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   deltaTemperatureFieldId            = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Temperature_Change");
   forceDensityFieldId                = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force_Density");
   contactForceDensityFieldId         = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Contact_Force_Density");
+  externalForceDensityFieldId        = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "External_Force_Density");
   if(analysisHasPartialVolumes)
     partialVolumeFieldId             = fieldManager.getFieldId(PeridigmField::BOND,    PeridigmField::SCALAR, PeridigmField::CONSTANT, "Partial_Volume");
 
@@ -278,6 +280,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   auxiliaryFieldIds.push_back(coordinatesFieldId);
   auxiliaryFieldIds.push_back(displacementFieldId);
   auxiliaryFieldIds.push_back(velocityFieldId);
+  auxiliaryFieldIds.push_back(externalForceDensityFieldId);
   if(analysisHasContact)
     auxiliaryFieldIds.push_back(contactForceDensityFieldId);
 
@@ -508,7 +511,7 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization>
   deltaTemperature = Teuchos::rcp((*oneDimensionalMothership)(3), false); // change in temperature
 
   // \todo Do not allocate space for the contact force nor deltaU if not needed.
-  threeDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalMap, 9));
+  threeDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalMap, 10));
   x = Teuchos::rcp((*threeDimensionalMothership)(0), false);             // initial positions
   u = Teuchos::rcp((*threeDimensionalMothership)(1), false);             // displacement
   y = Teuchos::rcp((*threeDimensionalMothership)(2), false);             // current positions
@@ -516,8 +519,9 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization>
   a = Teuchos::rcp((*threeDimensionalMothership)(4), false);             // accelerations
   force = Teuchos::rcp((*threeDimensionalMothership)(5), false);         // force
   contactForce = Teuchos::rcp((*threeDimensionalMothership)(6), false);  // contact force (used only for contact simulations)
-  deltaU = Teuchos::rcp((*threeDimensionalMothership)(7), false);        // increment in displacement (used only for implicit time integration)
-  scratch = Teuchos::rcp((*threeDimensionalMothership)(8), false);       // scratch space
+  externalForce = Teuchos::rcp((*threeDimensionalMothership)(7), false);  // external force
+  deltaU = Teuchos::rcp((*threeDimensionalMothership)(8), false);        // increment in displacement (used only for implicit time integration)
+  scratch = Teuchos::rcp((*threeDimensionalMothership)(9), false);       // scratch space
 
   // Set the block IDs
   double* bID;
@@ -895,11 +899,16 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
   }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
+  // evaluate the external (body) forces:
+  boundaryAndInitialConditionManager->applyForceContributions(timeCurrent,0.0); // external forces are dirichlet BCs so the previous time is defaulted to 0.0
+
   // fill the acceleration vector
   (*a) = (*force);
   for(int i=0 ; i<a->MyLength() ; ++i)
+  {
+    (*a)[i] += (*externalForce)[i];
     (*a)[i] /= (*density)[i/3];
-
+  }
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
   synchDataManagers();
@@ -938,8 +947,8 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     boundaryAndInitialConditionManager->applyBoundaryConditions(timeCurrent,timePrevious);
     PeridigmNS::Timer::self().stopTimer("Apply kinematic B.C.");
 
-    // Update the temperature field
-    //boundaryAndInitialConditionManager->applyTemperatureChange(timeCurrent, x, deltaTemperature);
+    // evaluate the external (body) forces:
+    boundaryAndInitialConditionManager->applyForceContributions(timeCurrent,0.0); // external forces are dirichlet BCs so the previous time is defaulted to 0.0
 
     // Y^{n+1} = X_{o} + U^{n} + (dt)*V^{n+1/2}
     // \todo Replace with blas call
@@ -985,6 +994,11 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     for(int i=0 ; i<force->MyLength() ; ++i)
       TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*force)[i]), "**** NaN returned by force evaluation.\n");
 
+    // Check for NaNs in force evaluation
+    // We'd like to know now because a NaN will likely cause a difficult-to-unravel crash downstream.
+    for(int i=0 ; i<externalForce->MyLength() ; ++i)
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*externalForce)[i]), "**** NaN returned by external force evaluation.\n");
+
     if(analysisHasContact){
       contactManager->exportData(contactForce);
       // Check for NaNs in contact force evaluation
@@ -997,7 +1011,10 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     // fill the acceleration vector
     (*a) = (*force);
     for(int i=0 ; i<a->MyLength() ; ++i)
+    {
+      (*a)[i] += (*externalForce)[i];
       (*a)[i] /= (*density)[i/3];
+    }
 
     // V^{n+1}   = V^{n+1/2} + (dt/2)*A^{n+1}
     //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
@@ -1333,8 +1350,6 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
 
     boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(initialGuess);
 
-
-
     // Apply the displacement increment and update the temperature field
     // Note that the soln vector was created to be compatible with the tangent matrix, and hence needed to be
     // constructed with an Epetra_Map.  The mothership vectors were constructed with an Epetra_BlockMap, and it's
@@ -1345,7 +1360,9 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
     boundaryAndInitialConditionManager->applyBoundaryConditions(timeCurrent,timePrevious);
     PeridigmNS::Timer::self().stopTimer("Apply kinematic B.C.");
 
-    //boundaryAndInitialConditionManager->applyTemperatureChange(timeCurrent, x, deltaTemperature);
+    // evaluate the external (body) forces:
+    boundaryAndInitialConditionManager->applyForceContributions(timeCurrent,timePrevious);
+
     if(step > 1){
       // Perform line search on this guess
       for(int i=0 ; i<y->MyLength() ; ++i)
@@ -1599,8 +1616,8 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
     boundaryAndInitialConditionManager->applyBoundaryConditions(timeCurrent,timePrevious);
     PeridigmNS::Timer::self().stopTimer("Apply kinematic B.C.");
 
-    // Update the temperature field
-    //boundaryAndInitialConditionManager->applyTemperatureChange(timeCurrent, x, deltaTemperature);
+    // evaluate the external (body) forces:
+    boundaryAndInitialConditionManager->applyForceContributions(timeCurrent,timePrevious);
 
     // Set the current position
     // \todo We probably want to rework this so that the material models get valid x, u, and y values.
@@ -1688,7 +1705,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
             quasiStaticsDampTangent(dampedNewtonDiagonalScaleFactor, dampedNewtonDiagonalShiftFactor);
           if(usePreconditioner)
             quasiStaticsSetPreconditioner(linearProblem);
-	}
+        }
 	
         // Solve linear system
         isConverged = quasiStaticsSolveSystem(residual, lhs, linearProblem, belosSolver);
@@ -2160,12 +2177,19 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
       blockIt->exportData(*force, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
+    // evaluate the external (body) forces:
+    boundaryAndInitialConditionManager->applyForceContributions(timeCurrent,0.0);
+
+    double forceNorm;
+    externalForce->Norm2(&forceNorm);
+    cout << " This is the norm of the xternal forces: " << forceNorm << endl;
+
     // Compute the residual
     // residual = beta*dt*dt*(M*a - force)
     // Note that due to restrictions to CrsMatrix, the residual has a different (but equivalent) map
     // than the force and acceleration
     for(int i=0 ; i<residual->MyLength() ; ++i)
-      (*residual)[i] = beta*dt2*( (*density)[i/3] * (*a)[i] - (*force)[i] );
+      (*residual)[i] = beta*dt2*( (*density)[i/3] * (*a)[i] - (*force)[i] - (*externalForce)[i]);
 
     // Modify residual for kinematic BC
     boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
@@ -2241,7 +2265,7 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
       // Note that due to restrictions to CrsMatrix, the residual has a different (but equivalent) map
       // than the force and acceleration
       for(int i=0 ; i<residual->MyLength() ; ++i)
-        (*residual)[i] = beta*dt2*( (*density)[i/3] * (*a)[i] - (*force)[i] );
+        (*residual)[i] = beta*dt2*( (*density)[i/3] * (*a)[i] - (*force)[i]  - (*externalForce)[i]);
 
       // Modify residual for kinematic BC
       boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
@@ -2506,12 +2530,19 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
   // We'd like to know now because a NaN will likely cause a difficult-to-unravel crash downstream.
   for(int i=0 ; i<force->MyLength() ; ++i)
     TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*force)[i]), "**** NaN returned by force evaluation.\n");
+  for(int i=0 ; i<externalForce->MyLength() ; ++i)
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*externalForce)[i]), "**** NaN returned by external force evaluation.\n");
+
 
   // copy the internal force to the residual vector
   // note that due to restrictions on CrsMatrix, these vectors have different (but equivalent) maps
   TEUCHOS_TEST_FOR_EXCEPT_MSG(residual->MyLength() != force->MyLength(), "**** PeridigmNS::Peridigm::computeQuasiStaticResidual() incompatible vector lengths!\n");
   for(int i=0 ; i<force->MyLength() ; ++i)
     (*residual)[i] = (*force)[i];
+
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(residual->MyLength() != externalForce->MyLength(), "**** PeridigmNS::Peridigm::computeQuasiStaticResidual() incompatible vector lengths!\n");
+  for(int i=0 ; i<externalForce->MyLength() ; ++i)
+    (*residual)[i] += (*externalForce)[i];
 
   // convert force density to force
   for(int i=0 ; i<residual->MyLength() ; ++i)
@@ -2591,6 +2622,7 @@ void PeridigmNS::Peridigm::synchDataManagers() {
     blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(*force, forceDensityFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(*contactForce, contactForceDensityFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(*externalForce, externalForceDensityFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
   }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");

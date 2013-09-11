@@ -84,15 +84,15 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Dis
     {
       case INITIAL_DISPLACEMENT:
       {
-        Teuchos::RCP<Epetra_Vector> bcVector = peridigm->getU();
-        bcPtr = Teuchos::rcp(new DirichletBC(name,bcParams,bcVector,peridigm));
+        Teuchos::RCP<Epetra_Vector> toVector = peridigm->getU();
+        bcPtr = Teuchos::rcp(new DirichletBC(name,bcParams,toVector,peridigm,false));
         initialConditions.push_back(bcPtr);
       }
       break;
       case INITIAL_VELOCITY :
       {
-        Teuchos::RCP<Epetra_Vector> bcVector = peridigm->getV();
-        bcPtr = Teuchos::rcp(new DirichletBC(name,bcParams,bcVector,peridigm));
+        Teuchos::RCP<Epetra_Vector> toVector = peridigm->getV();
+        bcPtr = Teuchos::rcp(new DirichletBC(name,bcParams,toVector,peridigm,false));
         initialConditions.push_back(bcPtr);
       }
       break;
@@ -100,26 +100,33 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Dis
       {
         hasPrescDisp = true;
         // a prescribed displacement boundary condition will automatically update deltaU and the velocity vector
-        Teuchos::RCP<Epetra_Vector> bcVector = peridigm->getDeltaU();
-        bcPtr = Teuchos::rcp(new DirichletIncrementBC(name,bcParams,bcVector,peridigm,1.0,0.0));
+        Teuchos::RCP<Epetra_Vector> toVector = peridigm->getDeltaU();
+        bcPtr = Teuchos::rcp(new DirichletIncrementBC(name,bcParams,toVector,peridigm,false,1.0,0.0));
         boundaryConditions.push_back(bcPtr);
-        Teuchos::RCP<Epetra_Vector> bcVectorV = peridigm->getV();
-        bcPtr = Teuchos::rcp(new DirichletIncrementBC(name,bcParams,bcVectorV,peridigm,0.0,1.0));
+        Teuchos::RCP<Epetra_Vector> toVectorV = peridigm->getV();
+        bcPtr = Teuchos::rcp(new DirichletIncrementBC(name,bcParams,toVectorV,peridigm,false,0.0,1.0));
         boundaryConditions.push_back(bcPtr);
       }
       break;
       case INITIAL_TEMPERATURE:
       {
-        Teuchos::RCP<Epetra_Vector> bcVector = peridigm->getDeltaTemperature();
-        bcPtr = Teuchos::rcp(new DirichletBC(name,bcParams,bcVector,peridigm));
+        Teuchos::RCP<Epetra_Vector> toVector = peridigm->getDeltaTemperature();
+        bcPtr = Teuchos::rcp(new DirichletBC(name,bcParams,toVector,peridigm,false));
         initialConditions.push_back(bcPtr);
       }
       break;
       case PRESCRIBED_TEMPERATURE:
       {
-        Teuchos::RCP<Epetra_Vector> bcVector = peridigm->getDeltaTemperature();
-        bcPtr = Teuchos::rcp(new DirichletIncrementBC(name,bcParams,bcVector,peridigm,1.0,0.0));
+        Teuchos::RCP<Epetra_Vector> toVector = peridigm->getDeltaTemperature();
+        bcPtr = Teuchos::rcp(new DirichletIncrementBC(name,bcParams,toVector,peridigm,false,1.0,0.0));
         boundaryConditions.push_back(bcPtr);
+      }
+      break;
+      case BODY_FORCE:
+      {
+        Teuchos::RCP<Epetra_Vector> toVector = peridigm->getExternalForce();
+        bcPtr = Teuchos::rcp(new DirichletBC(name,bcParams,toVector,peridigm,true));
+        forceContributions.push_back(bcPtr);
       }
       break;
       case NO_SUCH_BOUNDARY_CONDITION_TYPE:
@@ -216,9 +223,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initializeNodeSets(Teuchos:
 }
 
 void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialConditions(){
-  // apply the initial conditions
-  for(unsigned i=0;i<initialConditions.size();++i)
-  {
+  for(unsigned i=0;i<initialConditions.size();++i){
     initialConditions[i]->apply(nodeSets);
     if(initialConditions[i]->getType() == INITIAL_DISPLACEMENT)
       updateCurrentCoordinates();
@@ -226,11 +231,21 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialConditions(){
 }
 
 void PeridigmNS::BoundaryAndInitialConditionManager::applyBoundaryConditions(const double & timeCurrent, const double & timePrevious){
-  // apply the boundary conditions
-  for(unsigned i=0;i<boundaryConditions.size();++i)
-  {
+  for(unsigned i=0;i<boundaryConditions.size();++i){
     boundaryConditions[i]->apply(nodeSets,timeCurrent,timePrevious);
   }
+}
+
+void PeridigmNS::BoundaryAndInitialConditionManager::applyForceContributions(const double & timeCurrent, const double & timePrevious){
+  clearForceContributions();
+  for(unsigned i=0;i<forceContributions.size();++i){
+    forceContributions[i]->apply(nodeSets,timeCurrent,timePrevious);
+  }
+}
+
+void PeridigmNS::BoundaryAndInitialConditionManager::clearForceContributions(){
+  Teuchos::RCP<Epetra_Vector> externalForce = peridigm->getExternalForce();
+  externalForce->PutScalar(0.0);
 }
 
 void PeridigmNS::BoundaryAndInitialConditionManager::updateCurrentCoordinates(){
@@ -285,6 +300,14 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_ComputeRea
   }
   PeridigmNS::Timer::self().stopTimer("Apply Boundary Conditions");
 }
+
+////! Add the external force to the residual
+//void PeridigmNS::BoundaryAndInitialConditionManager::addExternalForceToResidual(Teuchos::RCP<Epetra_Vector> residual){
+//  Teuchos::RCP<Epetra_Vector> forceVec = peridigm->getExternalForce();
+//  TEUCHOS_TEST_FOR_EXCEPTION(residual->MyLength()!=forceVec->MyLength(),std::logic_error,"ERROR: the residual and external force vectors should be the same length.");
+//  for(int i=0 ; i<residual->MyLength(); ++i)
+//     (*residual)[i] += (*forceVec)[i];
+//}
 
 void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZeros(Teuchos::RCP<Epetra_Vector> vec)
 {
