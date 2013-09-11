@@ -217,8 +217,10 @@ namespace PeridigmNS {
     Teuchos::RCP<Epetra_Vector> getV() { return v; }
     Teuchos::RCP<Epetra_Vector> getA() { return a; }
     Teuchos::RCP<Epetra_Vector> getForce() { return force; }
+    Teuchos::RCP<Epetra_Vector> getExternalForce() { return externalForce; }
     Teuchos::RCP<Epetra_Vector> getContactForce() { return contactForce; }
     Teuchos::RCP<Epetra_Vector> getDeltaU() { return deltaU; }
+    Teuchos::RCP<Epetra_Vector> getVolume() { return volume; }
     Teuchos::RCP<Epetra_Vector> getDeltaTemperature() { return deltaTemperature; }
     //@}
 
@@ -333,6 +335,9 @@ namespace PeridigmNS {
     //! Global vector for contact force (used only in simulations with contact)
     Teuchos::RCP<Epetra_Vector> contactForce;
 
+    //! Global vector for external forces
+    Teuchos::RCP<Epetra_Vector> externalForce;
+
     //! Global vector for delta u (used only in implicit time integration)
     Teuchos::RCP<Epetra_Vector> deltaU;
 
@@ -390,6 +395,7 @@ namespace PeridigmNS {
     int deltaTemperatureFieldId;
     int forceDensityFieldId;
     int contactForceDensityFieldId;
+    int externalForceDensityFieldId;
     int partialVolumeFieldId;
   };
 }

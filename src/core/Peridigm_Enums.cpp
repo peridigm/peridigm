@@ -88,6 +88,7 @@ void create_string_maps()
   boundary_condition_string[INITIAL_TEMPERATURE]                                          = "INITIAL_TEMPERATURE";
   boundary_condition_string[INITIAL_DISPLACEMENT]                                         = "INITIAL_DISPLACEMENT";
   boundary_condition_string[INITIAL_VELOCITY]                                             = "INITIAL_VELOCITY";
+  boundary_condition_string[BODY_FORCE]                                                   = "BODY_FORCE";
   boundary_condition_string[NO_SUCH_BOUNDARY_CONDITION_TYPE]                              = "NO_SUCH_BOUNDARY_CONDITION_TYPE";
 
 
