@@ -78,7 +78,7 @@ PeridigmNS::MaterialFactory::create(const Teuchos::ParameterList& materialParams
     materialModel = Teuchos::rcp( new ViscoelasticMaterial(materialParams) );
   //else if (materialModelName == "Elastic Correspondence")
     //materialModel = Teuchos::rcp( new ElasticCorrespondenceMaterial(materialParams) );
-  else if (materialModelName == "Elastic Correspondence2")
+  else if (materialModelName == "Elastic Correspondence")
     materialModel = Teuchos::rcp( new ElasticCorrespondenceMaterial2(materialParams) );
   else if (materialModelName == "LCM")
     materialModel = Teuchos::rcp( new LCMMaterial(materialParams) );
