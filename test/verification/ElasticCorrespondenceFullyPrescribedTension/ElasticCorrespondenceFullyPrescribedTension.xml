@@ -7,10 +7,10 @@
 
   <ParameterList name="Materials">
 	<ParameterList name="My Elastic Correspondence Material">
-	  <Parameter name="Material Model" type="string" value="Elastic Correspondence"/>
+	  <Parameter name="Material Model" type="string" value="Elastic Correspondence2"/>
 	  <Parameter name="Density" type="double" value="7800.0"/>
-	  <Parameter name="Young's Modulus" type="double" value="200.0e9"/>
-	  <Parameter name="Poisson's Ratio" type="double" value="0.0"/>   <!-- One-dimensional simulation -->
+	  <Parameter name="Bulk Modulus" type="double" value="160.0e9"/>
+	  <Parameter name="Shear Modulus" type="double" value="79.0e9"/>   <!-- One-dimensional simulation -->
 	  <Parameter name="Hourglass Coefficient" type="double" value="0.0"/>
 	</ParameterList>
   </ParameterList>
@@ -91,15 +91,6 @@
           <Parameter name="Deformation_GradientZX" type="bool" value="true"/>
           <Parameter name="Deformation_GradientZY" type="bool" value="true"/>
           <Parameter name="Deformation_GradientZZ" type="bool" value="true"/>
-          <Parameter name="Green_Lagrange_StrainXX" type="bool" value="true"/>
-          <Parameter name="Green_Lagrange_StrainXY" type="bool" value="true"/>
-          <Parameter name="Green_Lagrange_StrainXZ" type="bool" value="true"/>
-          <Parameter name="Green_Lagrange_StrainYX" type="bool" value="true"/>
-          <Parameter name="Green_Lagrange_StrainYY" type="bool" value="true"/>
-          <Parameter name="Green_Lagrange_StrainYZ" type="bool" value="true"/>
-          <Parameter name="Green_Lagrange_StrainZX" type="bool" value="true"/>
-          <Parameter name="Green_Lagrange_StrainZY" type="bool" value="true"/>
-          <Parameter name="Green_Lagrange_StrainZZ" type="bool" value="true"/>
           <Parameter name="Cauchy_StressXX" type="bool" value="true"/>
           <Parameter name="Cauchy_StressXY" type="bool" value="true"/>
           <Parameter name="Cauchy_StressXZ" type="bool" value="true"/>

@@ -1,4 +1,4 @@
-//! \file Peridigm_ElasticCorrespondenceMaterial.hpp
+//! \file Peridigm_ElasticCorrespondenceMaterial2.hpp
 
 //@HEADER
 // ************************************************************************
@@ -45,57 +45,46 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_ELASTICCORRESPONDENCEMATERIAL_HPP
-#define PERIDIGM_ELASTICCORRESPONDENCEMATERIAL_HPP
+#ifndef PERIDIGM_ELASTICCORRESPONDENCEMATERIAL2_HPP
+#define PERIDIGM_ELASTICCORRESPONDENCEMATERIAL2_HPP
 
-#include "Peridigm_CorrespondenceMaterial.hpp"
+#include "Peridigm_CorrespondenceMaterial2.hpp"
 
 namespace PeridigmNS {
 
-  class ElasticCorrespondenceMaterial : public CorrespondenceMaterial{
+  class ElasticCorrespondenceMaterial2 : public CorrespondenceMaterial2{
   public:
 
 	//! Constructor.
-    ElasticCorrespondenceMaterial(const Teuchos::ParameterList & params);
+    ElasticCorrespondenceMaterial2(const Teuchos::ParameterList & params);
 
     //! Destructor.
-    virtual ~ElasticCorrespondenceMaterial();
+    virtual ~ElasticCorrespondenceMaterial2();
 
     //! Return name of material type
-    virtual std::string Name() const { return("Elastic Correspondence"); }
+    virtual std::string Name() const { return("Elastic Correspondence2"); }
 
     //! Evaluate the Cauchy stress.
     virtual void computeCauchyStress(const double dt,
                                      const int numOwnedPoints,
-                                     const int* ownedIDs,
-                                     const int* neighborhoodList,
                                      PeridigmNS::DataManager& dataManager) const;
 
   protected:
 
     // material parameters
-    double m_youngsModulus;
-    double m_poissonsRatio;
+    double m_bulkModulus;
+    double m_shearModulus;
 
     // field spec ids for all relevant data
-    int m_deformationGradientXXFieldId;
-    int m_deformationGradientXYFieldId;
-    int m_deformationGradientXZFieldId;
-    int m_deformationGradientYXFieldId;
-    int m_deformationGradientYYFieldId;
-    int m_deformationGradientYZFieldId;
-    int m_deformationGradientZXFieldId;
-    int m_deformationGradientZYFieldId;
-    int m_deformationGradientZZFieldId;
-    int m_strainXXFieldId;
-    int m_strainXYFieldId;
-    int m_strainXZFieldId;
-    int m_strainYXFieldId;
-    int m_strainYYFieldId;
-    int m_strainYZFieldId;
-    int m_strainZXFieldId;
-    int m_strainZYFieldId;
-    int m_strainZZFieldId;
+    int m_unrotatedRateOfDeformationXXFieldId;
+    int m_unrotatedRateOfDeformationXYFieldId;
+    int m_unrotatedRateOfDeformationXZFieldId;
+    int m_unrotatedRateOfDeformationYXFieldId;
+    int m_unrotatedRateOfDeformationYYFieldId;
+    int m_unrotatedRateOfDeformationYZFieldId;
+    int m_unrotatedRateOfDeformationZXFieldId;
+    int m_unrotatedRateOfDeformationZYFieldId;
+    int m_unrotatedRateOfDeformationZZFieldId;
     int m_stressXXFieldId;
     int m_stressXYFieldId;
     int m_stressXZFieldId;
@@ -108,4 +97,4 @@ namespace PeridigmNS {
   };
 }
 
-#endif // PERIDIGM_ELASTICCORRESPONDENCEMATERIAL_HPP
+#endif // PERIDIGM_ELASTICCORRESPONDENCEMATERIAL2_HPP

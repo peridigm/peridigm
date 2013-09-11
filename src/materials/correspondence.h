@@ -140,6 +140,119 @@ void MatrixUpdate
  ScalarT& resultZZ
 );
 
+
+template<typename ScalarT>
+void UnrotateTensor
+(
+ const ScalarT& aXX,
+ const ScalarT& aXY,
+ const ScalarT& aXZ,
+ const ScalarT& aYX,
+ const ScalarT& aYY,
+ const ScalarT& aYZ,
+ const ScalarT& aZX,
+ const ScalarT& aZY,
+ const ScalarT& aZZ,
+ const ScalarT& rXX,
+ const ScalarT& rXY,
+ const ScalarT& rXZ,
+ const ScalarT& rYX,
+ const ScalarT& rYY,
+ const ScalarT& rYZ,
+ const ScalarT& rZX,
+ const ScalarT& rZY,
+ const ScalarT& rZZ,
+ ScalarT& resultXX,
+ ScalarT& resultXY,
+ ScalarT& resultXZ,
+ ScalarT& resultYX,
+ ScalarT& resultYY,
+ ScalarT& resultYZ,
+ ScalarT& resultZX,
+ ScalarT& resultZY,
+ ScalarT& resultZZ
+);
+
+template<typename ScalarT>
+void RotateTensor
+(
+ const ScalarT& aXX,
+ const ScalarT& aXY,
+ const ScalarT& aXZ,
+ const ScalarT& aYX,
+ const ScalarT& aYY,
+ const ScalarT& aYZ,
+ const ScalarT& aZX,
+ const ScalarT& aZY,
+ const ScalarT& aZZ,
+ const ScalarT& rXX,
+ const ScalarT& rXY,
+ const ScalarT& rXZ,
+ const ScalarT& rYX,
+ const ScalarT& rYY,
+ const ScalarT& rYZ,
+ const ScalarT& rZX,
+ const ScalarT& rZY,
+ const ScalarT& rZZ,
+ ScalarT& resultXX,
+ ScalarT& resultXY,
+ ScalarT& resultXZ,
+ ScalarT& resultYX,
+ ScalarT& resultYY,
+ ScalarT& resultYZ,
+ ScalarT& resultZX,
+ ScalarT& resultZY,
+ ScalarT& resultZZ
+);
+
+template<typename ScalarT>
+void unrotateCauchyStress
+(
+ const ScalarT* rotationTensorXX,
+ const ScalarT* rotationTensorXY,
+ const ScalarT* rotationTensorXZ,
+ const ScalarT* rotationTensorYX,
+ const ScalarT* rotationTensorYY,
+ const ScalarT* rotationTensorYZ,
+ const ScalarT* rotationTensorZX,
+ const ScalarT* rotationTensorZY,
+ const ScalarT* rotationTensorZZ,
+ ScalarT* cauchyStressXX,
+ ScalarT* cauchyStressXY,
+ ScalarT* cauchyStressXZ,
+ ScalarT* cauchyStressYX,
+ ScalarT* cauchyStressYY,
+ ScalarT* cauchyStressYZ,
+ ScalarT* cauchyStressZX,
+ ScalarT* cauchyStressZY,
+ ScalarT* cauchyStressZZ,
+ int numPoints
+);
+
+template<typename ScalarT>
+void rotateCauchyStress
+(
+ const ScalarT* rotationTensorXX,
+ const ScalarT* rotationTensorXY,
+ const ScalarT* rotationTensorXZ,
+ const ScalarT* rotationTensorYX,
+ const ScalarT* rotationTensorYY,
+ const ScalarT* rotationTensorYZ,
+ const ScalarT* rotationTensorZX,
+ const ScalarT* rotationTensorZY,
+ const ScalarT* rotationTensorZZ,
+ ScalarT* cauchyStressXX,
+ ScalarT* cauchyStressXY,
+ ScalarT* cauchyStressXZ,
+ ScalarT* cauchyStressYX,
+ ScalarT* cauchyStressYY,
+ ScalarT* cauchyStressYZ,
+ ScalarT* cauchyStressZX,
+ ScalarT* cauchyStressZY,
+ ScalarT* cauchyStressZZ,
+ int numPoints
+);
+
 template<typename ScalarT>
 int computeShapeTensorInverseAndApproximateDeformationGradient
 (

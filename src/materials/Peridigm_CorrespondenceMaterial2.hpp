@@ -1,4 +1,4 @@
-//! \file Peridigm_CorrespondenceMaterial.hpp
+//! \file Peridigm_CorrespondenceMaterial2.hpp
 
 //@HEADER
 // ************************************************************************
@@ -52,14 +52,14 @@
 
 namespace PeridigmNS {
 
-  class CorrespondenceMaterial : public Material{
+  class CorrespondenceMaterial2 : public Material{
   public:
 
 	//! Constructor.
-    CorrespondenceMaterial(const Teuchos::ParameterList & params);
+    CorrespondenceMaterial2(const Teuchos::ParameterList & params);
 
     //! Destructor.
-    virtual ~CorrespondenceMaterial();
+    virtual ~CorrespondenceMaterial2();
 
     //! Return name of material type
     virtual std::string Name() const { return("Correspondence Base Class"); }
@@ -89,8 +89,6 @@ namespace PeridigmNS {
     //! Evaluate the Cauchy stress (pure virtual function, must be implemented by derived correspondence material models).
     virtual void computeCauchyStress(const double dt,
                                      const int numOwnedPoints,
-                                     const int* ownedIDs,
-                                     const int* neighborhoodList,
                                      PeridigmNS::DataManager& dataManager) const = 0;
 
     //! Evaluate the internal force.
@@ -114,6 +112,7 @@ namespace PeridigmNS {
     int m_volumeFieldId;
     int m_modelCoordinatesFieldId;
     int m_coordinatesFieldId;
+    int m_velocitiesFieldId;
     int m_hourglassForceDensityFieldId;
     int m_forceDensityFieldId;
     int m_bondDamageFieldId;
@@ -135,6 +134,24 @@ namespace PeridigmNS {
     int m_shapeTensorInverseZXFieldId;
     int m_shapeTensorInverseZYFieldId;
     int m_shapeTensorInverseZZFieldId;
+    int m_leftStretchTensorXXFieldId;
+    int m_leftStretchTensorXYFieldId;
+    int m_leftStretchTensorXZFieldId;
+    int m_leftStretchTensorYXFieldId;
+    int m_leftStretchTensorYYFieldId;
+    int m_leftStretchTensorYZFieldId;
+    int m_leftStretchTensorZXFieldId;
+    int m_leftStretchTensorZYFieldId;
+    int m_leftStretchTensorZZFieldId;
+    int m_rotationTensorXXFieldId;
+    int m_rotationTensorXYFieldId;
+    int m_rotationTensorXZFieldId;
+    int m_rotationTensorYXFieldId;
+    int m_rotationTensorYYFieldId;
+    int m_rotationTensorYZFieldId;
+    int m_rotationTensorZXFieldId;
+    int m_rotationTensorZYFieldId;
+    int m_rotationTensorZZFieldId;
     int m_cauchyStressXXFieldId;
     int m_cauchyStressXYFieldId;
     int m_cauchyStressXZFieldId;
@@ -144,7 +161,16 @@ namespace PeridigmNS {
     int m_cauchyStressZXFieldId;
     int m_cauchyStressZYFieldId;
     int m_cauchyStressZZFieldId;
+    int m_unrotatedRateOfDeformationXXFieldId;
+    int m_unrotatedRateOfDeformationXYFieldId;
+    int m_unrotatedRateOfDeformationXZFieldId;
+    int m_unrotatedRateOfDeformationYXFieldId;
+    int m_unrotatedRateOfDeformationYYFieldId;
+    int m_unrotatedRateOfDeformationYZFieldId;
+    int m_unrotatedRateOfDeformationZXFieldId;
+    int m_unrotatedRateOfDeformationZYFieldId;
+    int m_unrotatedRateOfDeformationZZFieldId;
   };
 }
 
-#endif // PERIDIGM_CORRESPONDENCEMATERIAL_HPP
+#endif // PERIDIGM_CORRESPONDENCEMATERIAL2_HPP
