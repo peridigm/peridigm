@@ -7,10 +7,10 @@
 
   <ParameterList name="Materials">
 	<ParameterList name="My Elastic Correspondence Material">
-	  <Parameter name="Material Model" type="string" value="Elastic Correspondence2"/>
+	  <Parameter name="Material Model" type="string" value="Elastic Correspondence"/>
 	  <Parameter name="Density" type="double" value="7800.0"/>
-	  <Parameter name="Bulk Modulus" type="double" value="160.0e9"/>
-	  <Parameter name="Shear Modulus" type="double" value="79.0e9"/>   <!-- One-dimensional simulation -->
+      <Parameter name="Young's Modulus" type="double" value="200.0e9"/>
+      <Parameter name="Poisson's Ratio" type="double" value="0.0"/>   <!-- One-dimensional simulation -->
 	  <Parameter name="Hourglass Coefficient" type="double" value="0.0"/>
 	</ParameterList>
   </ParameterList>
