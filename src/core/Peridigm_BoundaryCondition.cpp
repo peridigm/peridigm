@@ -51,15 +51,15 @@
 using namespace std;
 
 PeridigmNS::BoundaryCondition::BoundaryCondition(const string & name_,const Teuchos::ParameterList& bcParams_,Teuchos::RCP<Epetra_Vector> toVector_,Peridigm * peridigm_, const bool isCumulative_)
-: name(name_),
-  peridigm(peridigm_),
+: peridigm(peridigm_),
+  name(name_),
   toVector(toVector_),
+  coord(0),
   muParserX(0.0),
   muParserY(0.0),
   muParserZ(0.0),
   muParserT(0.0),
   tensorOrder(SCALAR),
-  coord(0),
   isCumulative(isCumulative_)
 {
   bcType = to_boundary_condition_type(bcParams_);

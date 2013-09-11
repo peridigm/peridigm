@@ -118,7 +118,7 @@ const double dt
 
       strainIncXX = dt * (*rateOfDefXX);
       strainIncXY = dt * (*rateOfDefXY);
-      strainIncXX = dt * (*rateOfDefXZ);
+      strainIncXZ = dt * (*rateOfDefXZ);
       strainIncYX = dt * (*rateOfDefYX);
       strainIncYY = dt * (*rateOfDefYY);
       strainIncYZ = dt * (*rateOfDefYZ);
@@ -130,7 +130,7 @@ const double dt
 
       deviatoricStrainIncXX = strainIncXX - dilatationInc/3.0;
       deviatoricStrainIncXY = strainIncXY;
-      deviatoricStrainIncXX = strainIncXZ;
+      deviatoricStrainIncXZ = strainIncXZ;
       deviatoricStrainIncYX = strainIncYX;
       deviatoricStrainIncYY = strainIncYY - dilatationInc/3.0;
       deviatoricStrainIncYZ = strainIncYZ;
