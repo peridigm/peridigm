@@ -51,7 +51,8 @@
 #include "Peridigm_ElasticPlasticMaterial.hpp"
 #include "Peridigm_ElasticPlasticHardeningMaterial.hpp"
 #include "Peridigm_ViscoelasticMaterial.hpp"
-#include "Peridigm_ElasticCorrespondenceMaterial.hpp"
+//#include "Peridigm_ElasticCorrespondenceMaterial.hpp"
+#include "Peridigm_ElasticCorrespondenceMaterial2.hpp"
 #include "Peridigm_LCMMaterial.hpp"
 #ifdef PERIDIGM_SANDIA_INTERNAL
 #include "Peridigm_ElasticPartialStressMaterial.hpp"
@@ -75,8 +76,10 @@ PeridigmNS::MaterialFactory::create(const Teuchos::ParameterList& materialParams
     materialModel = Teuchos::rcp( new ElasticPlasticHardeningMaterial(materialParams) );
   else if (materialModelName == "Viscoelastic")
     materialModel = Teuchos::rcp( new ViscoelasticMaterial(materialParams) );
-  else if (materialModelName == "Elastic Correspondence")
-    materialModel = Teuchos::rcp( new ElasticCorrespondenceMaterial(materialParams) );
+  //else if (materialModelName == "Elastic Correspondence")
+    //materialModel = Teuchos::rcp( new ElasticCorrespondenceMaterial(materialParams) );
+  else if (materialModelName == "Elastic Correspondence2")
+    materialModel = Teuchos::rcp( new ElasticCorrespondenceMaterial2(materialParams) );
   else if (materialModelName == "LCM")
     materialModel = Teuchos::rcp( new LCMMaterial(materialParams) );
   else if (materialModelName == "Elastic Partial Stress"){

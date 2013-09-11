@@ -83,15 +83,15 @@ PeridigmNS::Compute_Deformation_Gradient::Compute_Deformation_Gradient(Teuchos::
   m_shapeTensorInverseZXFId  = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Shape_Tensor_InverseZX");
   m_shapeTensorInverseZYFId  = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Shape_Tensor_InverseZY");
   m_shapeTensorInverseZZFId  = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Shape_Tensor_InverseZZ");
-  m_deformationGradientXXFId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Deformation_GradientXX");
-  m_deformationGradientXYFId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Deformation_GradientXY");
-  m_deformationGradientXZFId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Deformation_GradientXZ");
-  m_deformationGradientYXFId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Deformation_GradientYX");
-  m_deformationGradientYYFId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Deformation_GradientYY");
-  m_deformationGradientYZFId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Deformation_GradientYZ");
-  m_deformationGradientZXFId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Deformation_GradientZX");
-  m_deformationGradientZYFId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Deformation_GradientZY");
-  m_deformationGradientZZFId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Deformation_GradientZZ");
+  m_deformationGradientXXFId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientXX");
+  m_deformationGradientXYFId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientXY");
+  m_deformationGradientXZFId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientXZ");
+  m_deformationGradientYXFId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientYX");
+  m_deformationGradientYYFId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientYY");
+  m_deformationGradientYZFId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientYZ");
+  m_deformationGradientZXFId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientZX");
+  m_deformationGradientZYFId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientZY");
+  m_deformationGradientZZFId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientZZ");
 
   m_fieldIds.push_back(m_volumeFId);
   m_fieldIds.push_back(m_modelCoordinatesFId);
@@ -157,15 +157,15 @@ int PeridigmNS::Compute_Deformation_Gradient::compute( Teuchos::RCP< std::vector
     double *deformationGradientXX, *deformationGradientXY, *deformationGradientXZ;
     double *deformationGradientYX, *deformationGradientYY, *deformationGradientYZ;
     double *deformationGradientZX, *deformationGradientZY, *deformationGradientZZ;
-    dataManager->getData(m_deformationGradientXXFId, PeridigmField::STEP_NP1)->ExtractView(&deformationGradientXX);
-    dataManager->getData(m_deformationGradientXYFId, PeridigmField::STEP_NP1)->ExtractView(&deformationGradientXY);
-    dataManager->getData(m_deformationGradientXZFId, PeridigmField::STEP_NP1)->ExtractView(&deformationGradientXZ);
-    dataManager->getData(m_deformationGradientYXFId, PeridigmField::STEP_NP1)->ExtractView(&deformationGradientYX);
-    dataManager->getData(m_deformationGradientYYFId, PeridigmField::STEP_NP1)->ExtractView(&deformationGradientYY);
-    dataManager->getData(m_deformationGradientYZFId, PeridigmField::STEP_NP1)->ExtractView(&deformationGradientYZ);
-    dataManager->getData(m_deformationGradientZXFId, PeridigmField::STEP_NP1)->ExtractView(&deformationGradientZX);
-    dataManager->getData(m_deformationGradientZYFId, PeridigmField::STEP_NP1)->ExtractView(&deformationGradientZY);
-    dataManager->getData(m_deformationGradientZZFId, PeridigmField::STEP_NP1)->ExtractView(&deformationGradientZZ);
+    dataManager->getData(m_deformationGradientXXFId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientXX);
+    dataManager->getData(m_deformationGradientXYFId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientXY);
+    dataManager->getData(m_deformationGradientXZFId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientXZ);
+    dataManager->getData(m_deformationGradientYXFId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientYX);
+    dataManager->getData(m_deformationGradientYYFId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientYY);
+    dataManager->getData(m_deformationGradientYZFId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientYZ);
+    dataManager->getData(m_deformationGradientZXFId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientZX);
+    dataManager->getData(m_deformationGradientZYFId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientZY);
+    dataManager->getData(m_deformationGradientZZFId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientZZ);
     
     retval = retval || CORRESPONDENCE::computeShapeTensorInverseAndApproximateDeformationGradient(volume,
                                                                                                   modelCoordinates,
