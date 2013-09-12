@@ -459,6 +459,7 @@ double horizon
     *defGradZX = defGradFirstTermZX* (*shapeTensorInvXX) + defGradFirstTermZY* (*shapeTensorInvYX) + defGradFirstTermZZ* (*shapeTensorInvZX);
     *defGradZY = defGradFirstTermZX* (*shapeTensorInvXY) + defGradFirstTermZY* (*shapeTensorInvYY) + defGradFirstTermZZ* (*shapeTensorInvZY);
     *defGradZZ = defGradFirstTermZX* (*shapeTensorInvXZ) + defGradFirstTermZY* (*shapeTensorInvYZ) + defGradFirstTermZZ* (*shapeTensorInvZZ);
+
   }
 
   return returnCode;
@@ -757,11 +758,6 @@ double dt
       velStateX = *(neighborVel) - *(vel);
       velStateY = *(neighborVel+1) - *(vel+1);
       velStateZ = *(neighborVel+2) - *(vel+2);
-      //std::cout << "Node: " << iID << std::endl;
-      //std::cout << *(neighborVel) << " " << *(vel) << std::endl;
-      //std::cout << FdotXX << FdotXY << FdotXZ << std::endl;
-      //std::cout << FdotYX << FdotYY << FdotYZ << std::endl;
-      //std::cout << FdotZX << FdotZY << FdotZZ << std::endl;
 
       omega = MATERIAL_EVALUATION::scalarInfluenceFunction(undeformedBondLength, horizon);
 
@@ -788,6 +784,7 @@ double dt
     FdotZY = FdotFirstTermZX* (*shapeTensorInvXY) + FdotFirstTermZY* (*shapeTensorInvYY) + FdotFirstTermZZ* (*shapeTensorInvZY);
     FdotZZ = FdotFirstTermZX* (*shapeTensorInvXZ) + FdotFirstTermZY* (*shapeTensorInvYZ) + FdotFirstTermZZ* (*shapeTensorInvZZ);
 
+
     // Compute the inverse of the deformation gradient, Finv
     int inversionReturnCode = invert3by3Matrix(*defGradXX,*defGradXY,*defGradXZ,
                                                *defGradYX,*defGradYY,*defGradYZ,
@@ -808,6 +805,7 @@ double dt
                    eulerianVelGradXX, eulerianVelGradXY, eulerianVelGradXZ,
                    eulerianVelGradYX, eulerianVelGradYY, eulerianVelGradYZ,
                    eulerianVelGradZX, eulerianVelGradZY, eulerianVelGradZZ);
+
 
     // Compute rate-of-deformation tensor, D
     MatrixUpdate(ScalarT(0.5), ScalarT(0.5),
@@ -967,6 +965,7 @@ double dt
                  *unrotRateOfDefXX, *unrotRateOfDefXY, *unrotRateOfDefXZ,
                  *unrotRateOfDefYX, *unrotRateOfDefYY, *unrotRateOfDefYZ,
                  *unrotRateOfDefZX, *unrotRateOfDefZY, *unrotRateOfDefZZ);
+    
 
     // Find V = F * Rt
     MatrixMultiply(*defGradXX, *defGradYX, *defGradZX,

@@ -55,7 +55,6 @@ using namespace std;
 
 PeridigmNS::ElasticCorrespondenceMaterial2::ElasticCorrespondenceMaterial2(const Teuchos::ParameterList& params)
   : CorrespondenceMaterial2(params),
-    m_bulkModulus(0.0), m_shearModulus(0.0),
     m_unrotatedRateOfDeformationXXFieldId(-1), m_unrotatedRateOfDeformationXYFieldId(-1), m_unrotatedRateOfDeformationXZFieldId(-1), 
     m_unrotatedRateOfDeformationYXFieldId(-1), m_unrotatedRateOfDeformationYYFieldId(-1), m_unrotatedRateOfDeformationYZFieldId(-1), 
     m_unrotatedRateOfDeformationZXFieldId(-1), m_unrotatedRateOfDeformationZYFieldId(-1), m_unrotatedRateOfDeformationZZFieldId(-1),
