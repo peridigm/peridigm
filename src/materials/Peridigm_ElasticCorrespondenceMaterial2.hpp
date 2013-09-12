@@ -71,10 +71,6 @@ namespace PeridigmNS {
 
   protected:
 
-    // material parameters
-    double m_bulkModulus;
-    double m_shearModulus;
-
     // field spec ids for all relevant data
     int m_unrotatedRateOfDeformationXXFieldId;
     int m_unrotatedRateOfDeformationXYFieldId;

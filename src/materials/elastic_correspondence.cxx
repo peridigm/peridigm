@@ -148,6 +148,7 @@ const double dt
       *sigmaZY += 2.0*shearMod*deviatoricStrainIncZY;
       *sigmaZZ += 2.0*shearMod*deviatoricStrainIncZZ + bulkMod*dilatationInc;
 
+
   }
 }
 
