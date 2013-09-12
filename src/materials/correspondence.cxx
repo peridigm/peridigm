@@ -757,8 +757,8 @@ double dt
       velStateX = *(neighborVel) - *(vel);
       velStateY = *(neighborVel+1) - *(vel+1);
       velStateZ = *(neighborVel+2) - *(vel+2);
-      std::cout << "Node: " << iID << std::endl;
-      std::cout << *(neighborVel) << " " << *(vel) << std::endl;
+      //std::cout << "Node: " << iID << std::endl;
+      //std::cout << *(neighborVel) << " " << *(vel) << std::endl;
       //std::cout << FdotXX << FdotXY << FdotXZ << std::endl;
       //std::cout << FdotYX << FdotYY << FdotYZ << std::endl;
       //std::cout << FdotZX << FdotZY << FdotZZ << std::endl;
