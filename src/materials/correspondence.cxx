@@ -831,26 +831,22 @@ double dt
                  spinYX, spinYY, spinYZ,
                  spinZX, spinZY, spinZZ);
 
-    //Following Flanagan & Taylor (T&F) find the matrix product D*V
-    MatrixMultiply(rateOfDefXX, rateOfDefXY, rateOfDefXZ,
-                   rateOfDefYX, rateOfDefYY, rateOfDefYZ,
-                   rateOfDefZX, rateOfDefZY, rateOfDefZZ,
-                   *leftStretchXX, *leftStretchXY, *leftStretchXZ,
-                   *leftStretchYX, *leftStretchYY, *leftStretchYZ,
-                   *leftStretchZX, *leftStretchZY, *leftStretchZZ,
-                   dvXX, dvXY, dvXZ,
-                   dvYX, dvYY, dvYZ,
-                   dvZX, dvZY, dvZZ);
+    //Following Flanagan & Taylor (T&F) find the matrix product
+    //Find the vector z
+    zX = -(*leftStretchXZ) * rateOfDefYX - (*leftStretchYZ) * rateOfDefYY - 
+        (*leftStretchZZ) * rateOfDefYZ + (*leftStretchXY) * rateOfDefZX + 
+        (*leftStretchYY) * rateOfDefZY + (*leftStretchZY) * rateOfDefZZ;
+    zY = (*leftStretchXZ) * rateOfDefXX + (*leftStretchYZ) * rateOfDefXY + 
+        (*leftStretchZZ) * rateOfDefXZ - (*leftStretchXX) * rateOfDefZX - 
+        (*leftStretchYX) * rateOfDefZY - (*leftStretchZX) * rateOfDefZZ;
+    zZ = -(*leftStretchXY) * rateOfDefXX - (*leftStretchYY) * rateOfDefXY - 
+        (*leftStretchZY) * rateOfDefXZ+ (*leftStretchXX) * rateOfDefYX + 
+        (*leftStretchYX) * rateOfDefYY + (*leftStretchZX) * rateOfDefYZ;
 
-    //Find the vector z, the vector dual of DV - VD = 2*dual(DV)
-    zX = dvZY - dvYZ;
-    zY = -dvZX + dvXZ;
-    zZ = dvYX - dvXY;
-
-    //Find the vector w, the vector dual of W
-    wX = -0.5 * ( spinYZ - spinZY);
-    wY = -0.5 * ( spinXZ - spinZX);
-    wZ = -0.5 * ( spinXY - spinYX);
+    //Find the vector w, the vector dual of tensor W
+    wX = 0.5 * ( -spinYZ + spinZY);
+    wY = 0.5 * (  spinXZ - spinZX);
+    wZ = 0.5 * ( -spinXY + spinYX);
 
     //Find trace(V)
     traceV = (*leftStretchXX) + (*leftStretchYY) + (*leftStretchZZ);
@@ -878,7 +874,7 @@ double dt
     if(inversionReturnCode > 0)
       returnCode = inversionReturnCode;
 
-    //Find omega vector, i.e. omega = w + (inverse of (trace(V) I - V))
+    //Find omega vector, i.e. omega = w +  (trace(V) I - V)^(-1)
     omegaX =  wX + tempInvXX*zX + tempInvXY*zY + tempInvXZ*zZ;
     omegaY =  wY + tempInvYX*zX + tempInvYY*zY + tempInvYZ*zZ;
     omegaZ =  wZ + tempInvZX*zX + tempInvZY*zY + tempInvZZ*zZ;
