@@ -41,7 +41,7 @@
 	</ParameterList>
 	<ParameterList name="Prescribed Displacement Z">
 	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
-	  <Parameter name="Node Set" type="string" value="nodelist_1"/>
+      <Parameter name="Node Set" type="string" value="nodelist_1"/>
 	  <Parameter name="Coordinate" type="string" value="z"/>
 	  <Parameter name="Value" type="string" value="0.0"/>
 	</ParameterList>
