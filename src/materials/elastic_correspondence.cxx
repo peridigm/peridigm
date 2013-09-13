@@ -63,15 +63,24 @@ const ScalarT* unrotatedRateOfDeformationYZ,
 const ScalarT* unrotatedRateOfDeformationZX, 
 const ScalarT* unrotatedRateOfDeformationZY, 
 const ScalarT* unrotatedRateOfDeformationZZ, 
-ScalarT* cauchyStressXX, 
-ScalarT* cauchyStressXY, 
-ScalarT* cauchyStressXZ, 
-ScalarT* cauchyStressYX, 
-ScalarT* cauchyStressYY, 
-ScalarT* cauchyStressYZ, 
-ScalarT* cauchyStressZX, 
-ScalarT* cauchyStressZY, 
-ScalarT* cauchyStressZZ, 
+const ScalarT* cauchyStressNXX, 
+const ScalarT* cauchyStressNXY, 
+const ScalarT* cauchyStressNXZ, 
+const ScalarT* cauchyStressNYX, 
+const ScalarT* cauchyStressNYY, 
+const ScalarT* cauchyStressNYZ, 
+const ScalarT* cauchyStressNZX, 
+const ScalarT* cauchyStressNZY, 
+const ScalarT* cauchyStressNZZ, 
+ScalarT* cauchyStressNP1XX, 
+ScalarT* cauchyStressNP1XY, 
+ScalarT* cauchyStressNP1XZ, 
+ScalarT* cauchyStressNP1YX, 
+ScalarT* cauchyStressNP1YY, 
+ScalarT* cauchyStressNP1YZ, 
+ScalarT* cauchyStressNP1ZX, 
+ScalarT* cauchyStressNP1ZY, 
+ScalarT* cauchyStressNP1ZZ, 
 const int numPoints, 
 const double bulkMod,
 const double shearMod,
@@ -88,15 +97,24 @@ const double dt
   const ScalarT* rateOfDefZX = unrotatedRateOfDeformationZX;
   const ScalarT* rateOfDefZY = unrotatedRateOfDeformationZY;
   const ScalarT* rateOfDefZZ = unrotatedRateOfDeformationZZ;
-  ScalarT* sigmaXX = cauchyStressXX;
-  ScalarT* sigmaXY = cauchyStressXY;
-  ScalarT* sigmaXZ = cauchyStressXZ;
-  ScalarT* sigmaYX = cauchyStressYX;
-  ScalarT* sigmaYY = cauchyStressYY;
-  ScalarT* sigmaYZ = cauchyStressYZ;
-  ScalarT* sigmaZX = cauchyStressZX;
-  ScalarT* sigmaZY = cauchyStressZY;
-  ScalarT* sigmaZZ = cauchyStressZZ;
+  const ScalarT* sigmaNXX = cauchyStressNXX;
+  const ScalarT* sigmaNXY = cauchyStressNXY;
+  const ScalarT* sigmaNXZ = cauchyStressNXZ;
+  const ScalarT* sigmaNYX = cauchyStressNYX;
+  const ScalarT* sigmaNYY = cauchyStressNYY;
+  const ScalarT* sigmaNYZ = cauchyStressNYZ;
+  const ScalarT* sigmaNZX = cauchyStressNZX;
+  const ScalarT* sigmaNZY = cauchyStressNZY;
+  const ScalarT* sigmaNZZ = cauchyStressNZZ;
+  ScalarT* sigmaNP1XX = cauchyStressNP1XX;
+  ScalarT* sigmaNP1XY = cauchyStressNP1XY;
+  ScalarT* sigmaNP1XZ = cauchyStressNP1XZ;
+  ScalarT* sigmaNP1YX = cauchyStressNP1YX;
+  ScalarT* sigmaNP1YY = cauchyStressNP1YY;
+  ScalarT* sigmaNP1YZ = cauchyStressNP1YZ;
+  ScalarT* sigmaNP1ZX = cauchyStressNP1ZX;
+  ScalarT* sigmaNP1ZY = cauchyStressNP1ZY;
+  ScalarT* sigmaNP1ZZ = cauchyStressNP1ZZ;
 
   ScalarT strainIncXX, strainIncXY, strainIncXZ;
   ScalarT strainIncYX, strainIncYY, strainIncYZ;
@@ -112,9 +130,12 @@ const double dt
         ++rateOfDefXX, ++rateOfDefXY, ++rateOfDefXZ,
         ++rateOfDefYX, ++rateOfDefYY, ++rateOfDefYZ,
         ++rateOfDefZX, ++rateOfDefZY, ++rateOfDefZZ,
-        ++sigmaXX, ++sigmaXY, ++sigmaXZ,
-        ++sigmaYX, ++sigmaYY, ++sigmaYZ,
-        ++sigmaZX, ++sigmaZY, ++sigmaZZ){
+        ++sigmaNXX, ++sigmaNXY, ++sigmaNXZ,
+        ++sigmaNYX, ++sigmaNYY, ++sigmaNYZ,
+        ++sigmaNZX, ++sigmaNZY, ++sigmaNZZ,
+        ++sigmaNP1XX, ++sigmaNP1XY, ++sigmaNP1XZ,
+        ++sigmaNP1YX, ++sigmaNP1YY, ++sigmaNP1YZ,
+        ++sigmaNP1ZX, ++sigmaNP1ZY, ++sigmaNP1ZZ){
 
       strainIncXX = dt * (*rateOfDefXX);
       strainIncXY = dt * (*rateOfDefXY);
@@ -138,15 +159,15 @@ const double dt
       deviatoricStrainIncZY = strainIncZY;
       deviatoricStrainIncZZ = strainIncZZ - dilatationInc/3.0;
 
-      *sigmaXX += 2.0*shearMod*deviatoricStrainIncXX + bulkMod*dilatationInc;
-      *sigmaXY += 2.0*shearMod*deviatoricStrainIncXY;
-      *sigmaXZ += 2.0*shearMod*deviatoricStrainIncXZ;
-      *sigmaYX += 2.0*shearMod*deviatoricStrainIncYX;
-      *sigmaYY += 2.0*shearMod*deviatoricStrainIncYY + bulkMod*dilatationInc;
-      *sigmaYZ += 2.0*shearMod*deviatoricStrainIncYZ;
-      *sigmaZX += 2.0*shearMod*deviatoricStrainIncZX;
-      *sigmaZY += 2.0*shearMod*deviatoricStrainIncZY;
-      *sigmaZZ += 2.0*shearMod*deviatoricStrainIncZZ + bulkMod*dilatationInc;
+      *sigmaNP1XX = (*sigmaNXX) + 2.0*shearMod*deviatoricStrainIncXX + bulkMod*dilatationInc;
+      *sigmaNP1XY = (*sigmaNXY) + 2.0*shearMod*deviatoricStrainIncXY;
+      *sigmaNP1XZ = (*sigmaNXZ) + 2.0*shearMod*deviatoricStrainIncXZ;
+      *sigmaNP1YX = (*sigmaNYX) + 2.0*shearMod*deviatoricStrainIncYX;
+      *sigmaNP1YY = (*sigmaNYY) + 2.0*shearMod*deviatoricStrainIncYY + bulkMod*dilatationInc;
+      *sigmaNP1YZ = (*sigmaNYZ) + 2.0*shearMod*deviatoricStrainIncYZ;
+      *sigmaNP1ZX = (*sigmaNZX) + 2.0*shearMod*deviatoricStrainIncZX;
+      *sigmaNP1ZY = (*sigmaNZY) + 2.0*shearMod*deviatoricStrainIncZY;
+      *sigmaNP1ZZ = (*sigmaNZZ) + 2.0*shearMod*deviatoricStrainIncZZ + bulkMod*dilatationInc;
 
 
   }
@@ -164,15 +185,24 @@ const double* unrotatedRateOfDeformationYZ,
 const double* unrotatedRateOfDeformationZX, 
 const double* unrotatedRateOfDeformationZY, 
 const double* unrotatedRateOfDeformationZZ, 
-double* cauchyStressXX, 
-double* cauchyStressXY, 
-double* cauchyStressXZ, 
-double* cauchyStressYX, 
-double* cauchyStressYY, 
-double* cauchyStressYZ, 
-double* cauchyStressZX, 
-double* cauchyStressZY, 
-double* cauchyStressZZ, 
+const double* cauchyStressNXX, 
+const double* cauchyStressNXY, 
+const double* cauchyStressNXZ, 
+const double* cauchyStressNYX, 
+const double* cauchyStressNYY, 
+const double* cauchyStressNYZ, 
+const double* cauchyStressNZX, 
+const double* cauchyStressNZY, 
+const double* cauchyStressNZZ, 
+double* cauchyStressNP1XX, 
+double* cauchyStressNP1XY, 
+double* cauchyStressNP1XZ, 
+double* cauchyStressNP1YX, 
+double* cauchyStressNP1YY, 
+double* cauchyStressNP1YZ, 
+double* cauchyStressNP1ZX, 
+double* cauchyStressNP1ZY, 
+double* cauchyStressNP1ZZ, 
 int numPoints, 
 double bulkMod,
 double shearMod,
@@ -191,15 +221,24 @@ const Sacado::Fad::DFad<double>* unrotatedRateOfDeformationYZ,
 const Sacado::Fad::DFad<double>* unrotatedRateOfDeformationZX, 
 const Sacado::Fad::DFad<double>* unrotatedRateOfDeformationZY, 
 const Sacado::Fad::DFad<double>* unrotatedRateOfDeformationZZ, 
-Sacado::Fad::DFad<double>* cauchyStressXX, 
-Sacado::Fad::DFad<double>* cauchyStressXY, 
-Sacado::Fad::DFad<double>* cauchyStressXZ, 
-Sacado::Fad::DFad<double>* cauchyStressYX, 
-Sacado::Fad::DFad<double>* cauchyStressYY, 
-Sacado::Fad::DFad<double>* cauchyStressYZ, 
-Sacado::Fad::DFad<double>* cauchyStressZX, 
-Sacado::Fad::DFad<double>* cauchyStressZY, 
-Sacado::Fad::DFad<double>* cauchyStressZZ, 
+const Sacado::Fad::DFad<double>* cauchyStressNXX, 
+const Sacado::Fad::DFad<double>* cauchyStressNXY, 
+const Sacado::Fad::DFad<double>* cauchyStressNXZ, 
+const Sacado::Fad::DFad<double>* cauchyStressNYX, 
+const Sacado::Fad::DFad<double>* cauchyStressNYY, 
+const Sacado::Fad::DFad<double>* cauchyStressNYZ, 
+const Sacado::Fad::DFad<double>* cauchyStressNZX, 
+const Sacado::Fad::DFad<double>* cauchyStressNZY, 
+const Sacado::Fad::DFad<double>* cauchyStressNZZ, 
+Sacado::Fad::DFad<double>* cauchyStressNP1XX, 
+Sacado::Fad::DFad<double>* cauchyStressNP1XY, 
+Sacado::Fad::DFad<double>* cauchyStressNP1XZ, 
+Sacado::Fad::DFad<double>* cauchyStressNP1YX, 
+Sacado::Fad::DFad<double>* cauchyStressNP1YY, 
+Sacado::Fad::DFad<double>* cauchyStressNP1YZ, 
+Sacado::Fad::DFad<double>* cauchyStressNP1ZX, 
+Sacado::Fad::DFad<double>* cauchyStressNP1ZY, 
+Sacado::Fad::DFad<double>* cauchyStressNP1ZZ, 
 int numPoints, 
 double bulkMod,
 double shearMod,

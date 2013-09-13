@@ -48,6 +48,7 @@
 #include "correspondence.h"
 #include "material_utilities.h"
 #include <Sacado.hpp>
+#include <math.h>
 
 namespace CORRESPONDENCE {
 
@@ -471,7 +472,6 @@ template<typename ScalarT>
 int computeUnrotatedRateOfDeformationAndRotationTensor(
 const double* volume,
 const double* modelCoordinates,
-const ScalarT* coordinates,
 const ScalarT* velocities,
 const ScalarT* deformationGradientXX,
 const ScalarT* deformationGradientXY,
@@ -491,24 +491,42 @@ const ScalarT* shapeTensorInverseYZ,
 const ScalarT* shapeTensorInverseZX,
 const ScalarT* shapeTensorInverseZY,
 const ScalarT* shapeTensorInverseZZ,
-ScalarT* leftStretchTensorXX,
-ScalarT* leftStretchTensorXY,
-ScalarT* leftStretchTensorXZ,
-ScalarT* leftStretchTensorYX,
-ScalarT* leftStretchTensorYY,
-ScalarT* leftStretchTensorYZ,
-ScalarT* leftStretchTensorZX,
-ScalarT* leftStretchTensorZY,
-ScalarT* leftStretchTensorZZ,
-ScalarT* rotationTensorXX,
-ScalarT* rotationTensorXY,
-ScalarT* rotationTensorXZ,
-ScalarT* rotationTensorYX,
-ScalarT* rotationTensorYY,
-ScalarT* rotationTensorYZ,
-ScalarT* rotationTensorZX,
-ScalarT* rotationTensorZY,
-ScalarT* rotationTensorZZ,
+const ScalarT* leftStretchTensorNXX,
+const ScalarT* leftStretchTensorNXY,
+const ScalarT* leftStretchTensorNXZ,
+const ScalarT* leftStretchTensorNYX,
+const ScalarT* leftStretchTensorNYY,
+const ScalarT* leftStretchTensorNYZ,
+const ScalarT* leftStretchTensorNZX,
+const ScalarT* leftStretchTensorNZY,
+const ScalarT* leftStretchTensorNZZ,
+const ScalarT* rotationTensorNXX,
+const ScalarT* rotationTensorNXY,
+const ScalarT* rotationTensorNXZ,
+const ScalarT* rotationTensorNYX,
+const ScalarT* rotationTensorNYY,
+const ScalarT* rotationTensorNYZ,
+const ScalarT* rotationTensorNZX,
+const ScalarT* rotationTensorNZY,
+const ScalarT* rotationTensorNZZ,
+ScalarT* leftStretchTensorNP1XX,
+ScalarT* leftStretchTensorNP1XY,
+ScalarT* leftStretchTensorNP1XZ,
+ScalarT* leftStretchTensorNP1YX,
+ScalarT* leftStretchTensorNP1YY,
+ScalarT* leftStretchTensorNP1YZ,
+ScalarT* leftStretchTensorNP1ZX,
+ScalarT* leftStretchTensorNP1ZY,
+ScalarT* leftStretchTensorNP1ZZ,
+ScalarT* rotationTensorNP1XX,
+ScalarT* rotationTensorNP1XY,
+ScalarT* rotationTensorNP1XZ,
+ScalarT* rotationTensorNP1YX,
+ScalarT* rotationTensorNP1YY,
+ScalarT* rotationTensorNP1YZ,
+ScalarT* rotationTensorNP1ZX,
+ScalarT* rotationTensorNP1ZY,
+ScalarT* rotationTensorNP1ZZ,
 ScalarT* unrotatedRateOfDeformationXX,
 ScalarT* unrotatedRateOfDeformationXY,
 ScalarT* unrotatedRateOfDeformationXZ,
@@ -528,8 +546,6 @@ double dt
 
   const double* modelCoord = modelCoordinates;
   const double* neighborModelCoord;
-  const ScalarT* coord = coordinates;
-  const ScalarT* neighborCoord;
   const ScalarT* vel = velocities;
   const ScalarT* neighborVel;
 
@@ -553,25 +569,45 @@ double dt
   const ScalarT* shapeTensorInvZY = shapeTensorInverseZY;
   const ScalarT* shapeTensorInvZZ = shapeTensorInverseZZ;
 
-  ScalarT* leftStretchXX = leftStretchTensorXX;
-  ScalarT* leftStretchXY = leftStretchTensorXY;
-  ScalarT* leftStretchXZ = leftStretchTensorXZ;
-  ScalarT* leftStretchYX = leftStretchTensorYX;
-  ScalarT* leftStretchYY = leftStretchTensorYY;
-  ScalarT* leftStretchYZ = leftStretchTensorYZ;
-  ScalarT* leftStretchZX = leftStretchTensorZX;
-  ScalarT* leftStretchZY = leftStretchTensorZY;
-  ScalarT* leftStretchZZ = leftStretchTensorZZ;
+  const ScalarT* leftStretchNXX = leftStretchTensorNXX;
+  const ScalarT* leftStretchNXY = leftStretchTensorNXY;
+  const ScalarT* leftStretchNXZ = leftStretchTensorNXZ;
+  const ScalarT* leftStretchNYX = leftStretchTensorNYX;
+  const ScalarT* leftStretchNYY = leftStretchTensorNYY;
+  const ScalarT* leftStretchNYZ = leftStretchTensorNYZ;
+  const ScalarT* leftStretchNZX = leftStretchTensorNZX;
+  const ScalarT* leftStretchNZY = leftStretchTensorNZY;
+  const ScalarT* leftStretchNZZ = leftStretchTensorNZZ;
 
-  ScalarT* rotTensorXX = rotationTensorXX;
-  ScalarT* rotTensorXY = rotationTensorXY;
-  ScalarT* rotTensorXZ = rotationTensorXZ;
-  ScalarT* rotTensorYX = rotationTensorYX;
-  ScalarT* rotTensorYY = rotationTensorYY;
-  ScalarT* rotTensorYZ = rotationTensorYZ;
-  ScalarT* rotTensorZX = rotationTensorZX;
-  ScalarT* rotTensorZY = rotationTensorZY;
-  ScalarT* rotTensorZZ = rotationTensorZZ;
+  const ScalarT* rotTensorNXX = rotationTensorNXX;
+  const ScalarT* rotTensorNXY = rotationTensorNXY;
+  const ScalarT* rotTensorNXZ = rotationTensorNXZ;
+  const ScalarT* rotTensorNYX = rotationTensorNYX;
+  const ScalarT* rotTensorNYY = rotationTensorNYY;
+  const ScalarT* rotTensorNYZ = rotationTensorNYZ;
+  const ScalarT* rotTensorNZX = rotationTensorNZX;
+  const ScalarT* rotTensorNZY = rotationTensorNZY;
+  const ScalarT* rotTensorNZZ = rotationTensorNZZ;
+
+  ScalarT* leftStretchNP1XX = leftStretchTensorNP1XX;
+  ScalarT* leftStretchNP1XY = leftStretchTensorNP1XY;
+  ScalarT* leftStretchNP1XZ = leftStretchTensorNP1XZ;
+  ScalarT* leftStretchNP1YX = leftStretchTensorNP1YX;
+  ScalarT* leftStretchNP1YY = leftStretchTensorNP1YY;
+  ScalarT* leftStretchNP1YZ = leftStretchTensorNP1YZ;
+  ScalarT* leftStretchNP1ZX = leftStretchTensorNP1ZX;
+  ScalarT* leftStretchNP1ZY = leftStretchTensorNP1ZY;
+  ScalarT* leftStretchNP1ZZ = leftStretchTensorNP1ZZ;
+
+  ScalarT* rotTensorNP1XX = rotationTensorNP1XX;
+  ScalarT* rotTensorNP1XY = rotationTensorNP1XY;
+  ScalarT* rotTensorNP1XZ = rotationTensorNP1XZ;
+  ScalarT* rotTensorNP1YX = rotationTensorNP1YX;
+  ScalarT* rotTensorNP1YY = rotationTensorNP1YY;
+  ScalarT* rotTensorNP1YZ = rotationTensorNP1YZ;
+  ScalarT* rotTensorNP1ZX = rotationTensorNP1ZX;
+  ScalarT* rotTensorNP1ZY = rotationTensorNP1ZY;
+  ScalarT* rotTensorNP1ZZ = rotationTensorNP1ZZ;
 
   ScalarT* unrotRateOfDefXX = unrotatedRateOfDeformationXX;
   ScalarT* unrotRateOfDefXY = unrotatedRateOfDeformationXY;
@@ -603,13 +639,13 @@ double dt
   ScalarT rateOfDefYX, rateOfDefYY, rateOfDefYZ;
   ScalarT rateOfDefZX, rateOfDefZY, rateOfDefZZ;
 
+  ScalarT rateOfStretchXX, rateOfStretchXY, rateOfStretchXZ;
+  ScalarT rateOfStretchYX, rateOfStretchYY, rateOfStretchYZ;
+  ScalarT rateOfStretchZX, rateOfStretchZY, rateOfStretchZZ;
+
   ScalarT spinXX, spinXY, spinXZ;
   ScalarT spinYX, spinYY, spinYZ;
   ScalarT spinZX, spinZY, spinZZ;
-
-  ScalarT dvXX, dvXY, dvXZ;
-  ScalarT dvYX, dvYY, dvYZ;
-  ScalarT dvZX, dvZY, dvZZ;
 
   ScalarT tempXX, tempXY, tempXZ;
   ScalarT tempYX, tempYY, tempYZ;
@@ -627,25 +663,24 @@ double dt
   ScalarT tempBYX, tempBYY, tempBYZ;
   ScalarT tempBZX, tempBZY, tempBZZ;
 
-  ScalarT tempBInvXX, tempBInvXY, tempBInvXZ;
-  ScalarT tempBInvYX, tempBInvYY, tempBInvYZ;
-  ScalarT tempBInvZX, tempBInvZY, tempBInvZZ;
+  ScalarT QMatrixXX, QMatrixXY, QMatrixXZ;
+  ScalarT QMatrixYX, QMatrixYY, QMatrixYZ;
+  ScalarT QMatrixZX, QMatrixZY, QMatrixZZ;
 
-  ScalarT omegaTensorXX, omegaTensorXY, omegaTensorXZ;
-  ScalarT omegaTensorYX, omegaTensorYY, omegaTensorYZ;
-  ScalarT omegaTensorZX, omegaTensorZY, omegaTensorZZ;
+  ScalarT OmegaTensorXX, OmegaTensorXY, OmegaTensorXZ;
+  ScalarT OmegaTensorYX, OmegaTensorYY, OmegaTensorYZ;
+  ScalarT OmegaTensorZX, OmegaTensorZY, OmegaTensorZZ;
 
-  ScalarT rotTensorOldXX, rotTensorOldXY, rotTensorOldXZ;
-  ScalarT rotTensorOldYX, rotTensorOldYY, rotTensorOldYZ;
-  ScalarT rotTensorOldZX, rotTensorOldZY, rotTensorOldZZ;
+  ScalarT OmegaTensorSqXX, OmegaTensorSqXY, OmegaTensorSqXZ;
+  ScalarT OmegaTensorSqYX, OmegaTensorSqYY, OmegaTensorSqYZ;
+  ScalarT OmegaTensorSqZX, OmegaTensorSqZY, OmegaTensorSqZZ;
 
   ScalarT omegaX, omegaY, omegaZ;
   ScalarT zX, zY, zZ;
   ScalarT wX, wY, wZ;
  
-  ScalarT deformedBondX, deformedBondY, deformedBondZ;
   ScalarT velStateX, velStateY, velStateZ;
-  ScalarT traceV, scaleFactor;
+  ScalarT traceV, Omega, OmegaSq, scaleFactor; 
 
   ScalarT identityMatrixXX, identityMatrixXY, identityMatrixXZ;
   ScalarT identityMatrixYX, identityMatrixYY, identityMatrixYZ;
@@ -659,16 +694,22 @@ double dt
 
   int neighborIndex, numNeighbors;
   const int *neighborListPtr = neighborhoodList;
-  for(int iID=0 ; iID<numPoints ; ++iID, modelCoord+=3, coord+=3, vel+=3,
+  for(int iID=0 ; iID<numPoints ; ++iID, modelCoord+=3, vel+=3,
         ++shapeTensorInvXX, ++shapeTensorInvXY, ++shapeTensorInvXZ,
         ++shapeTensorInvYX, ++shapeTensorInvYY, ++shapeTensorInvYZ,
         ++shapeTensorInvZX, ++shapeTensorInvZY, ++shapeTensorInvZZ,
-        ++rotTensorXX, ++rotTensorXY, ++rotTensorXZ,
-        ++rotTensorYX, ++rotTensorYY, ++rotTensorYZ,
-        ++rotTensorZX, ++rotTensorZY, ++rotTensorZZ,
-        ++leftStretchXX, ++leftStretchXY, ++leftStretchXZ,
-        ++leftStretchYX, ++leftStretchYY, ++leftStretchYZ,
-        ++leftStretchZX, ++leftStretchZY, ++leftStretchZZ,
+        ++rotTensorNP1XX, ++rotTensorNP1XY, ++rotTensorNP1XZ,
+        ++rotTensorNP1YX, ++rotTensorNP1YY, ++rotTensorNP1YZ,
+        ++rotTensorNP1ZX, ++rotTensorNP1ZY, ++rotTensorNP1ZZ,
+        ++rotTensorNXX, ++rotTensorNXY, ++rotTensorNXZ,
+        ++rotTensorNYX, ++rotTensorNYY, ++rotTensorNYZ,
+        ++rotTensorNZX, ++rotTensorNZY, ++rotTensorNZZ,
+        ++leftStretchNP1XX, ++leftStretchNP1XY, ++leftStretchNP1XZ,
+        ++leftStretchNP1YX, ++leftStretchNP1YY, ++leftStretchNP1YZ,
+        ++leftStretchNP1ZX, ++leftStretchNP1ZY, ++leftStretchNP1ZZ,
+        ++leftStretchNXX, ++leftStretchNXY, ++leftStretchNXZ,
+        ++leftStretchNYX, ++leftStretchNYY, ++leftStretchNYZ,
+        ++leftStretchNZX, ++leftStretchNZY, ++leftStretchNZZ,
         ++unrotRateOfDefXX, ++unrotRateOfDefXY, ++unrotRateOfDefXZ,
         ++unrotRateOfDefYX, ++unrotRateOfDefYY, ++unrotRateOfDefYZ,
         ++unrotRateOfDefZX, ++unrotRateOfDefZY, ++unrotRateOfDefZZ,
@@ -692,12 +733,12 @@ double dt
     rateOfDefXX = 0.0, rateOfDefXY = 0.0, rateOfDefXZ = 0.0;
     rateOfDefYX = 0.0, rateOfDefYY = 0.0, rateOfDefYZ = 0.0;
     rateOfDefZX = 0.0, rateOfDefZY = 0.0, rateOfDefZZ = 0.0;
+    rateOfStretchXX = 0.0, rateOfStretchXY = 0.0, rateOfStretchXZ = 0.0;
+    rateOfStretchYX = 0.0, rateOfStretchYY = 0.0, rateOfStretchYZ = 0.0;
+    rateOfStretchZX = 0.0, rateOfStretchZY = 0.0, rateOfStretchZZ = 0.0;
     spinXX = 0.0, spinXY = 0.0, spinXZ = 0.0;
     spinYX = 0.0, spinYY = 0.0, spinYZ = 0.0;
     spinZX = 0.0, spinZY = 0.0, spinZZ = 0.0;
-    dvXX = 0.0, dvXY = 0.0, dvXZ = 0.0;
-    dvYX = 0.0, dvYY = 0.0, dvYZ = 0.0;
-    dvZX = 0.0, dvZY = 0.0, dvZZ = 0.0;
     tempXX = 0.0, tempXY = 0.0, tempXZ = 0.0;
     tempYX = 0.0, tempYY = 0.0, tempYZ = 0.0;
     tempZX = 0.0, tempZY = 0.0, tempZZ = 0.0;
@@ -710,27 +751,26 @@ double dt
     tempBXX = 0.0, tempBXY = 0.0, tempBXZ = 0.0;
     tempBYX = 0.0, tempBYY = 0.0, tempBYZ = 0.0;
     tempBZX = 0.0, tempBZY = 0.0, tempBZZ = 0.0;
-    tempBInvXX = 0.0, tempBInvXY = 0.0, tempBInvXZ = 0.0;
-    tempBInvYX = 0.0, tempBInvYY = 0.0, tempBInvYZ = 0.0;
-    tempBInvZX = 0.0, tempBInvZY = 0.0, tempBInvZZ = 0.0;
-    omegaTensorXX = 0.0, omegaTensorXY = 0.0, omegaTensorXZ = 0.0;
-    omegaTensorYX = 0.0, omegaTensorYY = 0.0, omegaTensorYZ = 0.0;
-    omegaTensorZX = 0.0, omegaTensorZY = 0.0, omegaTensorZZ = 0.0;
+    QMatrixXX = 0.0, QMatrixXY = 0.0, QMatrixXZ = 0.0;
+    QMatrixYX = 0.0, QMatrixYY = 0.0, QMatrixYZ = 0.0;
+    QMatrixZX = 0.0, QMatrixZY = 0.0, QMatrixZZ = 0.0;
+    OmegaTensorXX = 0.0, OmegaTensorXY = 0.0, OmegaTensorXZ = 0.0;
+    OmegaTensorYX = 0.0, OmegaTensorYY = 0.0, OmegaTensorYZ = 0.0;
+    OmegaTensorZX = 0.0, OmegaTensorZY = 0.0, OmegaTensorZZ = 0.0;
+    OmegaTensorSqXX = 0.0, OmegaTensorSqXY = 0.0, OmegaTensorSqXZ = 0.0;
+    OmegaTensorSqYX = 0.0, OmegaTensorSqYY = 0.0, OmegaTensorSqYZ = 0.0;
+    OmegaTensorSqZX = 0.0, OmegaTensorSqZY = 0.0, OmegaTensorSqZZ = 0.0;
     omegaX = 0.0, omegaY = 0.0, omegaZ = 0.0;
     zX = 0.0, zY = 0.0, zZ = 0.0;
     wX = 0.0, wY = 0.0, wZ = 0.0;
     identityMatrixXX = 1.0, identityMatrixXY = 0.0, identityMatrixXZ = 0.0;
     identityMatrixYX = 0.0, identityMatrixYY = 1.0, identityMatrixYZ = 0.0;
     identityMatrixZX = 0.0, identityMatrixZY = 0.0, identityMatrixZZ = 1.0;
-    deformedBondX = 0.0, deformedBondY = 0.0, deformedBondZ = 0.0;
     velStateX = 0.0, velStateY = 0.0, velStateZ = 0.0;
     undeformedBondX = 0.0, undeformedBondY = 0.0, undeformedBondZ = 0.0; 
     undeformedBondLength = 0.0;
     neighborVolume = 0.0, omega = 0.0, scalarTemp = 0.0, scaleFactor = 0.0;
-    traceV = 0.0;
-    rotTensorOldXX = *rotTensorXX, rotTensorOldXY = *rotTensorXY, rotTensorOldXZ = *rotTensorXZ;
-    rotTensorOldYX = *rotTensorYX, rotTensorOldYY = *rotTensorYY, rotTensorOldYZ = *rotTensorYZ;
-    rotTensorOldZX = *rotTensorZX, rotTensorOldZY = *rotTensorZY, rotTensorOldZZ = *rotTensorZZ;
+    traceV = 0.0, Omega = 0.0; OmegaSq = 0.0;
     
     //Compute Fdot
     numNeighbors = *neighborListPtr; neighborListPtr++;
@@ -739,7 +779,6 @@ double dt
       neighborIndex = *neighborListPtr;
       neighborVolume = volume[neighborIndex];
       neighborModelCoord = modelCoordinates + 3*neighborIndex;
-      neighborCoord = coordinates + 3*neighborIndex;
       neighborVel = velocities + 3*neighborIndex;
 
       undeformedBondX = *(neighborModelCoord)   - *(modelCoord);
@@ -748,10 +787,6 @@ double dt
       undeformedBondLength = sqrt(undeformedBondX*undeformedBondX +
                                   undeformedBondY*undeformedBondY +
                                   undeformedBondZ*undeformedBondZ);
-
-      deformedBondX = *(neighborCoord)   - *(coord);
-      deformedBondY = *(neighborCoord+1) - *(coord+1);
-      deformedBondZ = *(neighborCoord+2) - *(coord+2);
 
       // The velState is the relative difference in velocities of the nodes at
       // each end of a bond. i.e., v_j - v_i
@@ -807,58 +842,65 @@ double dt
                    eulerianVelGradZX, eulerianVelGradZY, eulerianVelGradZZ);
 
 
-    // Compute rate-of-deformation tensor, D
+    // Compute rate-of-deformation tensor, D = 1/2 * (L + Lt)
     MatrixUpdate(ScalarT(0.5), ScalarT(0.5),
                  eulerianVelGradXX, eulerianVelGradXY, eulerianVelGradXZ,
                  eulerianVelGradYX, eulerianVelGradYY, eulerianVelGradYZ,
                  eulerianVelGradZX, eulerianVelGradZY, eulerianVelGradZZ,
                  eulerianVelGradXX, eulerianVelGradYX, eulerianVelGradZX,
-                 eulerianVelGradYX, eulerianVelGradYY, eulerianVelGradZY,
+                 eulerianVelGradXY, eulerianVelGradYY, eulerianVelGradZY,
                  eulerianVelGradXZ, eulerianVelGradYZ, eulerianVelGradZZ,
                  rateOfDefXX, rateOfDefXY, rateOfDefXZ,
                  rateOfDefYX, rateOfDefYY, rateOfDefYZ,
                  rateOfDefZX, rateOfDefZY, rateOfDefZZ);
 
-    // Compute spin tensor, W
+    // Compute spin tensor, W = 1/2 * (L - Lt)
     MatrixUpdate(ScalarT(0.5), ScalarT(-0.5),
                  eulerianVelGradXX, eulerianVelGradXY, eulerianVelGradXZ,
                  eulerianVelGradYX, eulerianVelGradYY, eulerianVelGradYZ,
                  eulerianVelGradZX, eulerianVelGradZY, eulerianVelGradZZ,
                  eulerianVelGradXX, eulerianVelGradYX, eulerianVelGradZX,
-                 eulerianVelGradYX, eulerianVelGradYY, eulerianVelGradZY,
+                 eulerianVelGradXY, eulerianVelGradYY, eulerianVelGradZY,
                  eulerianVelGradXZ, eulerianVelGradYZ, eulerianVelGradZZ,
                  spinXX, spinXY, spinXZ,
                  spinYX, spinYY, spinYZ,
                  spinZX, spinZY, spinZZ);
 
-    //Following Flanagan & Taylor (T&F) find the matrix product
-    //Find the vector z
-    zX = -(*leftStretchXZ) * rateOfDefYX - (*leftStretchYZ) * rateOfDefYY - 
-        (*leftStretchZZ) * rateOfDefYZ + (*leftStretchXY) * rateOfDefZX + 
-        (*leftStretchYY) * rateOfDefZY + (*leftStretchZY) * rateOfDefZZ;
-    zY = (*leftStretchXZ) * rateOfDefXX + (*leftStretchYZ) * rateOfDefXY + 
-        (*leftStretchZZ) * rateOfDefXZ - (*leftStretchXX) * rateOfDefZX - 
-        (*leftStretchYX) * rateOfDefZY - (*leftStretchZX) * rateOfDefZZ;
-    zZ = -(*leftStretchXY) * rateOfDefXX - (*leftStretchYY) * rateOfDefXY - 
-        (*leftStretchZY) * rateOfDefXZ+ (*leftStretchXX) * rateOfDefYX + 
-        (*leftStretchYX) * rateOfDefYY + (*leftStretchZX) * rateOfDefYZ;
+    //Following Flanagan & Taylor (T&F) 
+    //
+    //Find the vector z_i = \epsilon_{ikj} * D_{jm} * V_{mk} (T&F Eq. 13)
+    //
+    //where \epsilon_{ikj} is the alternator tensor.
+    //
+    //Components below copied from computer algebra solution to the expansion
+    //above
+    zX = -(*leftStretchNXZ) * rateOfDefYX - (*leftStretchNYZ) * rateOfDefYY - 
+        (*leftStretchNZZ) * rateOfDefYZ + (*leftStretchNXY) * rateOfDefZX + 
+        (*leftStretchNYY) * rateOfDefZY + (*leftStretchNZY) * rateOfDefZZ;
+    zY = (*leftStretchNXZ) * rateOfDefXX + (*leftStretchNYZ) * rateOfDefXY + 
+        (*leftStretchNZZ) * rateOfDefXZ - (*leftStretchNXX) * rateOfDefZX - 
+        (*leftStretchNYX) * rateOfDefZY - (*leftStretchNZX) * rateOfDefZZ;
+    zZ = -(*leftStretchNXY) * rateOfDefXX - (*leftStretchNYY) * rateOfDefXY - 
+        (*leftStretchNZY) * rateOfDefXZ+ (*leftStretchNXX) * rateOfDefYX + 
+        (*leftStretchNYX) * rateOfDefYY + (*leftStretchNZX) * rateOfDefYZ;
 
-    //Find the vector w, the vector dual of tensor W
+    //Find the vector w_i = -1/2 * \epsilon_{ijk} * W_{jk} (T&F Eq. 11)
     wX = 0.5 * ( -spinYZ + spinZY);
     wY = 0.5 * (  spinXZ - spinZX);
     wZ = 0.5 * ( -spinXY + spinYX);
 
-    //Find trace(V)
-    traceV = (*leftStretchXX) + (*leftStretchYY) + (*leftStretchZZ);
 
-    // Compute trace(V) I - V store in temp
+    //Find trace(V)
+    traceV = (*leftStretchNXX) + (*leftStretchNYY) + (*leftStretchNZZ);
+
+    // Compute (trace(V) * I - V) store in temp
     MatrixUpdate(traceV, ScalarT(-1.0),
                  identityMatrixXX, identityMatrixXY, identityMatrixXZ,
                  identityMatrixYX, identityMatrixYY, identityMatrixYZ,
                  identityMatrixZX, identityMatrixZY, identityMatrixZZ,
-                 *leftStretchXX, *leftStretchYX, *leftStretchZX,
-                 *leftStretchYX, *leftStretchYY, *leftStretchZY,
-                 *leftStretchXZ, *leftStretchYZ, *leftStretchZZ,
+                 *leftStretchNXX, *leftStretchNXY, *leftStretchNXZ,
+                 *leftStretchNYX, *leftStretchNYY, *leftStretchNYZ,
+                 *leftStretchNZX, *leftStretchNZY, *leftStretchNZZ,
                  tempXX, tempXY, tempXZ,
                  tempYX, tempYY, tempYZ,
                  tempZX, tempZY, tempZZ);
@@ -874,105 +916,144 @@ double dt
     if(inversionReturnCode > 0)
       returnCode = inversionReturnCode;
 
-    //Find omega vector, i.e. omega = w +  (trace(V) I - V)^(-1)
+    //Find omega vector, i.e. \omega = w +  (trace(V) I - V)^(-1) * z (T&F Eq. 12)
     omegaX =  wX + tempInvXX*zX + tempInvXY*zY + tempInvXZ*zZ;
     omegaY =  wY + tempInvYX*zX + tempInvYY*zY + tempInvYZ*zZ;
     omegaZ =  wZ + tempInvZX*zX + tempInvZY*zY + tempInvZZ*zZ;
 
-    //Find the omega tensor from it's vector dual
-    omegaTensorXX = 0.0;
-    omegaTensorXY = -omegaZ;
-    omegaTensorXZ = omegaY;
-    omegaTensorYX = omegaZ;
-    omegaTensorYY = 0.0;
-    omegaTensorYZ = -omegaX;
-    omegaTensorZX = -omegaY;
-    omegaTensorZY = omegaX;
-    omegaTensorXX = 0.0;
+    //Find the tensor \Omega_{ij} = \epsilon_{ikj} * w_k (T&F Eq. 10)
+    OmegaTensorXX = 0.0;
+    OmegaTensorXY = -omegaZ;
+    OmegaTensorXZ = omegaY;
+    OmegaTensorYX = omegaZ;
+    OmegaTensorYY = 0.0;
+    OmegaTensorYZ = -omegaX;
+    OmegaTensorZX = -omegaY;
+    OmegaTensorZY = omegaX;
+    OmegaTensorXX = 0.0;
 
-    //Increment R
+
+    //Increment R with (T&F Eq. 36 and 44) as opposed to solving (T&F 39) this
+    //is desirable for accuracy in implicit solves and has no effect on
+    //explicit solves (other than a slight decrease in speed).
     //
-    // Compute tempA = I + 0.5 * dt * omega
-    scaleFactor = 0.5*dt;
+    // Compute Q with (T&F Eq. 44)
+    //
+    // Omega^2 = w_i * w_i (T&F Eq. 42)
+    OmegaSq = omegaX*omegaX + omegaY*omegaY + omegaZ*omegaZ;
+    // Omega = \sqrt{OmegaSq}
+    Omega = sqrt(OmegaSq);
+    
+
+    // Compute temp = I + sin( dt * Omega ) * OmegaTensor / Omega
+    //              = I + scaleFactor * OmegaTensor 
+    scaleFactor = sin(dt*Omega) / Omega;
     MatrixUpdate(ScalarT(1.0), scaleFactor,
                  identityMatrixXX, identityMatrixXY, identityMatrixXZ,
                  identityMatrixYX, identityMatrixYY, identityMatrixYZ,
                  identityMatrixZX, identityMatrixZY, identityMatrixZZ,
-                 omegaTensorXX, omegaTensorYX, omegaTensorZX,
-                 omegaTensorYX, omegaTensorYY, omegaTensorZY,
-                 omegaTensorXZ, omegaTensorYZ, omegaTensorZZ,
-                 tempAXX, tempAXY, tempAXZ,
-                 tempAYX, tempAYY, tempAYZ,
-                 tempAZX, tempAZY, tempAZZ);
+                 OmegaTensorXX, OmegaTensorXY, OmegaTensorXZ,
+                 OmegaTensorYX, OmegaTensorYY, OmegaTensorYZ,
+                 OmegaTensorZX, OmegaTensorZY, OmegaTensorZZ,
+                 tempXX, tempXY, tempXZ,
+                 tempYX, tempYY, tempYZ,
+                 tempZX, tempZY, tempZZ);
 
-    // Compute tempB = I - 0.5 * dt * omega
-    scaleFactor = -0.5*dt;
+    // Now compute OmegaTensorSq = OmegaTensor^2
+    MatrixMultiply(OmegaTensorXX, OmegaTensorXY, OmegaTensorXZ,
+                   OmegaTensorYX, OmegaTensorYY, OmegaTensorYZ,
+                   OmegaTensorZX, OmegaTensorZY, OmegaTensorZZ,
+                   OmegaTensorXX, OmegaTensorXY, OmegaTensorXZ,
+                   OmegaTensorYX, OmegaTensorYY, OmegaTensorYZ,
+                   OmegaTensorZX, OmegaTensorZY, OmegaTensorZZ,
+                   OmegaTensorSqXX, OmegaTensorSqXY, OmegaTensorSqXZ,
+                   OmegaTensorSqYX, OmegaTensorSqYY, OmegaTensorSqYZ,
+                   OmegaTensorSqZX, OmegaTensorSqZY, OmegaTensorSqZZ);
+
+    // Compute Q = I + sin(dt*Omega)*OmegaTensor / Omega - (1. - cos(dt * Omega)) * omegaTensor^2 / OmegaSq
+    //           = temp + scaleFactor * OmegaTensorSq
+    scaleFactor = -(1.0 - cos(dt*Omega)) / OmegaSq;
     MatrixUpdate(ScalarT(1.0), scaleFactor,
-                 identityMatrixXX, identityMatrixXY, identityMatrixXZ,
-                 identityMatrixYX, identityMatrixYY, identityMatrixYZ,
-                 identityMatrixZX, identityMatrixZY, identityMatrixZZ,
-                 omegaTensorXX, omegaTensorYX, omegaTensorZX,
-                 omegaTensorYX, omegaTensorYY, omegaTensorZY,
-                 omegaTensorXZ, omegaTensorYZ, omegaTensorZZ,
-                 tempBXX, tempBXY, tempBXZ,
-                 tempBYX, tempBYY, tempBYZ,
-                 tempBZX, tempBZY, tempBZZ);
+                 tempXX, tempXY, tempXZ,
+                 tempYX, tempYY, tempYZ,
+                 tempZX, tempZY, tempZZ,
+                 OmegaTensorSqXX, OmegaTensorSqYX, OmegaTensorSqZX,
+                 OmegaTensorSqYX, OmegaTensorSqYY, OmegaTensorSqZY,
+                 OmegaTensorSqXZ, OmegaTensorSqYZ, OmegaTensorSqZZ,
+                 QMatrixXX, QMatrixXY, QMatrixXZ,
+                 QMatrixYX, QMatrixYY, QMatrixYZ,
+                 QMatrixZX, QMatrixZY, QMatrixZZ);
 
-    // Compute the inverse of the tempB matrix
-    inversionReturnCode = invert3by3Matrix(tempBXX, tempBXY, tempBXZ,
-                                           tempBYX, tempBYY, tempBYZ,
-                                           tempBZX, tempBZY, tempBZZ,
-                                           tempBInvXX, tempBInvXY, tempBInvXZ,
-                                           tempBInvYX, tempBInvYY, tempBInvYZ,
-                                           tempBInvZX, tempBInvZY, tempBInvZZ);
-    // Placeholder for more sophisticated error checking
-    if(inversionReturnCode > 0)
-      returnCode = inversionReturnCode;
+    // Compute R_STEP_NP1 = QMatrix * R_STEP_N (T&F Eq. 36)
+    MatrixMultiply(QMatrixXX, QMatrixXY, QMatrixXZ,
+                   QMatrixYX, QMatrixYY, QMatrixYZ,
+                   QMatrixZX, QMatrixZY, QMatrixZZ,
+                   *rotTensorNXX, *rotTensorNXY, *rotTensorNXZ,
+                   *rotTensorNYX, *rotTensorNYY, *rotTensorNYZ,
+                   *rotTensorNZX, *rotTensorNZY, *rotTensorNZZ,
+                   *rotTensorNP1XX, *rotTensorNP1XY, *rotTensorNP1XZ,
+                   *rotTensorNP1YX, *rotTensorNP1YY, *rotTensorNP1YZ,
+                   *rotTensorNP1ZX, *rotTensorNP1ZY, *rotTensorNP1ZZ);
 
-    // Compute temp = tempBinv * tempA
-    MatrixMultiply(tempBInvXX, tempBInvXY, tempBInvXZ,
-                   tempBInvYX, tempBInvYY, tempBInvYZ,
-                   tempBInvZX, tempBInvZY, tempBInvZZ,
+    // Compute rate of stretch, Vdot = L*V - V*Omega
+    // First tempA = L*V
+    MatrixMultiply(eulerianVelGradXX, eulerianVelGradXY, eulerianVelGradXZ,
+                   eulerianVelGradYX, eulerianVelGradYY, eulerianVelGradYZ,
+                   eulerianVelGradZX, eulerianVelGradZY, eulerianVelGradZZ,
+                   *leftStretchTensorNXX, *leftStretchTensorNXY, *leftStretchTensorNXZ,
+                   *leftStretchTensorNYX, *leftStretchTensorNYY, *leftStretchTensorNYZ,
+                   *leftStretchTensorNZX, *leftStretchTensorNZY, *leftStretchTensorNZZ,
                    tempAXX, tempAXY, tempAXZ,
                    tempAYX, tempAYY, tempAYZ,
-                   tempAZX, tempAZY, tempAZZ,
-                   tempXX, tempXY, tempXZ,
-                   tempYX, tempYY, tempYZ,
-                   tempZX, tempZY, tempZZ);
+                   tempAZX, tempAZY, tempAZZ);
 
-    // Compute R = temp * Rold
-    MatrixMultiply(tempInvXX, tempInvXY, tempInvXZ,
-                   tempInvYX, tempInvYY, tempInvYZ,
-                   tempInvZX, tempInvZY, tempInvZZ,
-                   rotTensorOldXX, rotTensorOldXY, rotTensorOldXZ,
-                   rotTensorOldYX, rotTensorOldYY, rotTensorOldYZ,
-                   rotTensorOldZX, rotTensorOldZY, rotTensorOldZZ,
-                   *rotTensorXX, *rotTensorXY, *rotTensorXZ,
-                   *rotTensorYX, *rotTensorYY, *rotTensorYZ,
-                   *rotTensorZX, *rotTensorZY, *rotTensorZZ);
+    // tempB = V*Omega
+    MatrixMultiply(*leftStretchTensorNXX, *leftStretchTensorNXY, *leftStretchTensorNXZ,
+                   *leftStretchTensorNYX, *leftStretchTensorNYY, *leftStretchTensorNYZ,
+                   *leftStretchTensorNZX, *leftStretchTensorNZY, *leftStretchTensorNZZ,
+                   OmegaTensorXX, OmegaTensorXY, OmegaTensorXZ,
+                   OmegaTensorYX, OmegaTensorYY, OmegaTensorYZ,
+                   OmegaTensorZX, OmegaTensorZY, OmegaTensorZZ,
+                   tempBXX, tempBXY, tempBXZ,
+                   tempBYX, tempBYY, tempBYZ,
+                   tempBZX, tempBZY, tempBZZ);
+
+
+    //Vdot = tempA + tempB
+    MatrixUpdate(ScalarT(1.0), ScalarT(1.0),
+                 tempAXX, tempAXY, tempAXZ,
+                 tempAYX, tempAYY, tempAYZ,
+                 tempAZX, tempAZY, tempAZZ,
+                 tempBXX, tempBYX, tempBZX,
+                 tempBYX, tempBYY, tempBZY,
+                 tempBXZ, tempBYZ, tempBZZ,
+                 rateOfStretchXX, rateOfStretchXY, rateOfStretchXZ,
+                 rateOfStretchYX, rateOfStretchYY, rateOfStretchYZ,
+                 rateOfStretchZX, rateOfStretchZY, rateOfStretchZZ);
+    
+    //V_STEP_NP1 = V_STEP_N + dt*Vdot
+    MatrixUpdate(ScalarT(1.0), ScalarT(dt),
+                 *leftStretchTensorNXX, *leftStretchTensorNXY, *leftStretchTensorNXZ,
+                 *leftStretchTensorNYX, *leftStretchTensorNYY, *leftStretchTensorNYZ,
+                 *leftStretchTensorNZX, *leftStretchTensorNZY, *leftStretchTensorNZZ,
+                 rateOfStretchXX, rateOfStretchYX, rateOfStretchZX,
+                 rateOfStretchYX, rateOfStretchYY, rateOfStretchZY,
+                 rateOfStretchXZ, rateOfStretchYZ, rateOfStretchZZ,
+                 *leftStretchTensorNP1XX, *leftStretchTensorNP1XY, *leftStretchTensorNP1XZ,
+                 *leftStretchTensorNP1YX, *leftStretchTensorNP1YY, *leftStretchTensorNP1YZ,
+                 *leftStretchTensorNP1ZX, *leftStretchTensorNP1ZY, *leftStretchTensorNP1ZZ);
 
     // Compute the unrotated rate-of-deformation, d, i.e., temp = Rt * D * R
     UnrotateTensor(rateOfDefXX, rateOfDefXY, rateOfDefXZ,
-                 rateOfDefYX, rateOfDefYY, rateOfDefYZ,
-                 rateOfDefZX, rateOfDefZY, rateOfDefZZ,
-                 *rotTensorXX, *rotTensorXY, *rotTensorXZ,
-                 *rotTensorYX, *rotTensorYY, *rotTensorYZ,
-                 *rotTensorZX, *rotTensorZY, *rotTensorZZ,
-                 *unrotRateOfDefXX, *unrotRateOfDefXY, *unrotRateOfDefXZ,
-                 *unrotRateOfDefYX, *unrotRateOfDefYY, *unrotRateOfDefYZ,
-                 *unrotRateOfDefZX, *unrotRateOfDefZY, *unrotRateOfDefZZ);
-    
+                   rateOfDefYX, rateOfDefYY, rateOfDefYZ,
+                   rateOfDefZX, rateOfDefZY, rateOfDefZZ,
+                   *rotTensorNP1XX, *rotTensorNP1XY, *rotTensorNP1XZ,
+                   *rotTensorNP1YX, *rotTensorNP1YY, *rotTensorNP1YZ,
+                   *rotTensorNP1ZX, *rotTensorNP1ZY, *rotTensorNP1ZZ,
+                   *unrotRateOfDefXX, *unrotRateOfDefXY, *unrotRateOfDefXZ,
+                   *unrotRateOfDefYX, *unrotRateOfDefYY, *unrotRateOfDefYZ,
+                   *unrotRateOfDefZX, *unrotRateOfDefZY, *unrotRateOfDefZZ);
 
-    // Find V = F * Rt
-    MatrixMultiply(*defGradXX, *defGradYX, *defGradZX,
-                   *defGradXY, *defGradYY, *defGradZY,
-                   *defGradXZ, *defGradYZ, *defGradZZ,
-                   *rotTensorXX, *rotTensorYX, *rotTensorZX,
-                   *rotTensorXY, *rotTensorYY, *rotTensorZY,
-                   *rotTensorXZ, *rotTensorYZ, *rotTensorZZ,
-                   *leftStretchXX, *leftStretchXY, *leftStretchXZ,
-                   *leftStretchYX, *leftStretchYY, *leftStretchYZ,
-                   *leftStretchZX, *leftStretchZY, *leftStretchZZ);
   }
 
   return returnCode;
@@ -1622,7 +1703,6 @@ template int computeUnrotatedRateOfDeformationAndRotationTensor<double>
 (
 const double* volume,
 const double* modelCoordinates,
-const double* coordinates,
 const double* velocities,
 const double* deformationGradientXX,
 const double* deformationGradientXY,
@@ -1642,24 +1722,42 @@ const double* shapeTensorInverseYZ,
 const double* shapeTensorInverseZX,
 const double* shapeTensorInverseZY,
 const double* shapeTensorInverseZZ,
-double* leftStretchTensorXX,
-double* leftStretchTensorXY,
-double* leftStretchTensorXZ,
-double* leftStretchTensorYX,
-double* leftStretchTensorYY,
-double* leftStretchTensorYZ,
-double* leftStretchTensorZX,
-double* leftStretchTensorZY,
-double* leftStretchTensorZZ,
-double* rotationTensorXX,
-double* rotationTensorXY,
-double* rotationTensorXZ,
-double* rotationTensorYX,
-double* rotationTensorYY,
-double* rotationTensorYZ,
-double* rotationTensorZX,
-double* rotationTensorZY,
-double* rotationTensorZZ,
+const double* leftStretchTensorNXX,
+const double* leftStretchTensorNXY,
+const double* leftStretchTensorNXZ,
+const double* leftStretchTensorNYX,
+const double* leftStretchTensorNYY,
+const double* leftStretchTensorNYZ,
+const double* leftStretchTensorNZX,
+const double* leftStretchTensorNZY,
+const double* leftStretchTensorNZZ,
+const double* rotationTensorNXX,
+const double* rotationTensorNXY,
+const double* rotationTensorNXZ,
+const double* rotationTensorNYX,
+const double* rotationTensorNYY,
+const double* rotationTensorNYZ,
+const double* rotationTensorNZX,
+const double* rotationTensorNZY,
+const double* rotationTensorNZZ,
+double* leftStretchTensorNP1XX,
+double* leftStretchTensorNP1XY,
+double* leftStretchTensorNP1XZ,
+double* leftStretchTensorNP1YX,
+double* leftStretchTensorNP1YY,
+double* leftStretchTensorNP1YZ,
+double* leftStretchTensorNP1ZX,
+double* leftStretchTensorNP1ZY,
+double* leftStretchTensorNP1ZZ,
+double* rotationTensorNP1XX,
+double* rotationTensorNP1XY,
+double* rotationTensorNP1XZ,
+double* rotationTensorNP1YX,
+double* rotationTensorNP1YY,
+double* rotationTensorNP1YZ,
+double* rotationTensorNP1ZX,
+double* rotationTensorNP1ZY,
+double* rotationTensorNP1ZZ,
 double* unrotatedRateOfDeformationXX,
 double* unrotatedRateOfDeformationXY,
 double* unrotatedRateOfDeformationXZ,
@@ -1973,7 +2071,6 @@ template int computeUnrotatedRateOfDeformationAndRotationTensor<Sacado::Fad::DFa
 (
 const double* volume,
 const double* modelCoordinates,
-const Sacado::Fad::DFad<double>* coordinates,
 const Sacado::Fad::DFad<double>* velocities,
 const Sacado::Fad::DFad<double>* deformationGradientXX,
 const Sacado::Fad::DFad<double>* deformationGradientXY,
@@ -1993,24 +2090,42 @@ const Sacado::Fad::DFad<double>* shapeTensorInverseYZ,
 const Sacado::Fad::DFad<double>* shapeTensorInverseZX,
 const Sacado::Fad::DFad<double>* shapeTensorInverseZY,
 const Sacado::Fad::DFad<double>* shapeTensorInverseZZ,
-Sacado::Fad::DFad<double>* leftStretchTensorXX,
-Sacado::Fad::DFad<double>* leftStretchTensorXY,
-Sacado::Fad::DFad<double>* leftStretchTensorXZ,
-Sacado::Fad::DFad<double>* leftStretchTensorYX,
-Sacado::Fad::DFad<double>* leftStretchTensorYY,
-Sacado::Fad::DFad<double>* leftStretchTensorYZ,
-Sacado::Fad::DFad<double>* leftStretchTensorZX,
-Sacado::Fad::DFad<double>* leftStretchTensorZY,
-Sacado::Fad::DFad<double>* leftStretchTensorZZ,
-Sacado::Fad::DFad<double>* rotationTensorXX,
-Sacado::Fad::DFad<double>* rotationTensorXY,
-Sacado::Fad::DFad<double>* rotationTensorXZ,
-Sacado::Fad::DFad<double>* rotationTensorYX,
-Sacado::Fad::DFad<double>* rotationTensorYY,
-Sacado::Fad::DFad<double>* rotationTensorYZ,
-Sacado::Fad::DFad<double>* rotationTensorZX,
-Sacado::Fad::DFad<double>* rotationTensorZY,
-Sacado::Fad::DFad<double>* rotationTensorZZ,
+const Sacado::Fad::DFad<double>* leftStretchTensorNXX,
+const Sacado::Fad::DFad<double>* leftStretchTensorNXY,
+const Sacado::Fad::DFad<double>* leftStretchTensorNXZ,
+const Sacado::Fad::DFad<double>* leftStretchTensorNYX,
+const Sacado::Fad::DFad<double>* leftStretchTensorNYY,
+const Sacado::Fad::DFad<double>* leftStretchTensorNYZ,
+const Sacado::Fad::DFad<double>* leftStretchTensorNZX,
+const Sacado::Fad::DFad<double>* leftStretchTensorNZY,
+const Sacado::Fad::DFad<double>* leftStretchTensorNZZ,
+const Sacado::Fad::DFad<double>* rotationTensorNXX,
+const Sacado::Fad::DFad<double>* rotationTensorNXY,
+const Sacado::Fad::DFad<double>* rotationTensorNXZ,
+const Sacado::Fad::DFad<double>* rotationTensorNYX,
+const Sacado::Fad::DFad<double>* rotationTensorNYY,
+const Sacado::Fad::DFad<double>* rotationTensorNYZ,
+const Sacado::Fad::DFad<double>* rotationTensorNZX,
+const Sacado::Fad::DFad<double>* rotationTensorNZY,
+const Sacado::Fad::DFad<double>* rotationTensorNZZ,
+Sacado::Fad::DFad<double>* leftStretchTensorNP1XX,
+Sacado::Fad::DFad<double>* leftStretchTensorNP1XY,
+Sacado::Fad::DFad<double>* leftStretchTensorNP1XZ,
+Sacado::Fad::DFad<double>* leftStretchTensorNP1YX,
+Sacado::Fad::DFad<double>* leftStretchTensorNP1YY,
+Sacado::Fad::DFad<double>* leftStretchTensorNP1YZ,
+Sacado::Fad::DFad<double>* leftStretchTensorNP1ZX,
+Sacado::Fad::DFad<double>* leftStretchTensorNP1ZY,
+Sacado::Fad::DFad<double>* leftStretchTensorNP1ZZ,
+Sacado::Fad::DFad<double>* rotationTensorNP1XX,
+Sacado::Fad::DFad<double>* rotationTensorNP1XY,
+Sacado::Fad::DFad<double>* rotationTensorNP1XZ,
+Sacado::Fad::DFad<double>* rotationTensorNP1YX,
+Sacado::Fad::DFad<double>* rotationTensorNP1YY,
+Sacado::Fad::DFad<double>* rotationTensorNP1YZ,
+Sacado::Fad::DFad<double>* rotationTensorNP1ZX,
+Sacado::Fad::DFad<double>* rotationTensorNP1ZY,
+Sacado::Fad::DFad<double>* rotationTensorNP1ZZ,
 Sacado::Fad::DFad<double>* unrotatedRateOfDeformationXX,
 Sacado::Fad::DFad<double>* unrotatedRateOfDeformationXY,
 Sacado::Fad::DFad<double>* unrotatedRateOfDeformationXZ,
