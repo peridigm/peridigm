@@ -754,8 +754,10 @@ private:
 		/*
 		 * Left
 		 */
-		rectangular_range<value_type> r_left=r.left({n->axis,n->cut});
-		rectangular_range<value_type> r_right=r.right({n->axis,n->cut});
+
+      span_axis<value_type> sa={n->axis,n->cut};
+		rectangular_range<value_type> r_left=r.left(sa);
+		rectangular_range<value_type> r_right=r.right(sa);
 		if (R.contains(r_left)){
 			/*
 			 * R contains all points below 'n'
