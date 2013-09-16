@@ -192,6 +192,10 @@ public:
 		return (!(high<r.get_low()) && !(r.get_high()<low));
 	}
 
+	bool intersects(const rectangular_range&r, component axis) const {
+		return (!(high[axis]<r.get_low()[axis]) && !(r.get_high()[axis]<low[axis]));
+	}
+
 	point<value_type> get_low() const { return low; }
 	point<value_type> get_high() const { return high; }
 
@@ -750,8 +754,8 @@ private:
 		/*
 		 * Left
 		 */
-		span_axis<value_type> sa = {n->axis, n->cut};
-		rectangular_range<value_type> r_left=r.left(sa);
+		rectangular_range<value_type> r_left=r.left({n->axis,n->cut});
+		rectangular_range<value_type> r_right=r.right({n->axis,n->cut});
 		if (R.contains(r_left)){
 			/*
 			 * R contains all points below 'n'
@@ -760,7 +764,7 @@ private:
 			//			std::cout << "\tSearch range \'contains left\' range; n->id " << n->id << std::endl;
 			report_node(n->left,neighbors);
 
-		} else if(R.intersects(r_left)){
+		} else if(R.intersects(r_left,n->axis)){
 			/*
 			 * R intersects set of points contained below 'n'
 			 * search left
@@ -773,16 +777,15 @@ private:
 		/*
 		 * Right
 		 */
-		rectangular_range<value_type> r_right=r.right(sa);
 		if (R.contains(r_right)){
 			/*
 			 * R contains all points below 'n'
 			 * report all
-			 */
+		     */
 			//			std::cout << "\tSearch range \'contains right\' range; n->id " << n->id << std::endl;			return;
 			report_node(n->right,neighbors);
 
-		} else if(R.intersects(r_right)){
+		} else if(R.intersects(r_right,n->axis)){
 			/*
 			 * R intersects set of points contained below 'n'
 			 * search right
