@@ -58,9 +58,9 @@ PeridigmNS::ElasticCorrespondenceMaterial2::ElasticCorrespondenceMaterial2(const
     m_unrotatedRateOfDeformationXXFieldId(-1), m_unrotatedRateOfDeformationXYFieldId(-1), m_unrotatedRateOfDeformationXZFieldId(-1), 
     m_unrotatedRateOfDeformationYXFieldId(-1), m_unrotatedRateOfDeformationYYFieldId(-1), m_unrotatedRateOfDeformationYZFieldId(-1), 
     m_unrotatedRateOfDeformationZXFieldId(-1), m_unrotatedRateOfDeformationZYFieldId(-1), m_unrotatedRateOfDeformationZZFieldId(-1),
-    m_stressXXFieldId(-1), m_stressXYFieldId(-1), m_stressXZFieldId(-1), 
-    m_stressYXFieldId(-1), m_stressYYFieldId(-1), m_stressYZFieldId(-1), 
-    m_stressZXFieldId(-1), m_stressZYFieldId(-1), m_stressZZFieldId(-1)
+    m_unrotatedCauchyStressXXFieldId(-1), m_unrotatedCauchyStressXYFieldId(-1), m_unrotatedCauchyStressXZFieldId(-1), 
+    m_unrotatedCauchyStressYXFieldId(-1), m_unrotatedCauchyStressYYFieldId(-1), m_unrotatedCauchyStressYZFieldId(-1), 
+    m_unrotatedCauchyStressZXFieldId(-1), m_unrotatedCauchyStressZYFieldId(-1), m_unrotatedCauchyStressZZFieldId(-1)
 {
 
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
@@ -73,15 +73,15 @@ PeridigmNS::ElasticCorrespondenceMaterial2::ElasticCorrespondenceMaterial2(const
   m_unrotatedRateOfDeformationZXFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_DeformationZX");
   m_unrotatedRateOfDeformationZYFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_DeformationZY");
   m_unrotatedRateOfDeformationZZFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_DeformationZZ");
-  m_stressXXFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressXX");
-  m_stressXYFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressXY");
-  m_stressXZFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressXZ");
-  m_stressYXFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressYX");
-  m_stressYYFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressYY");
-  m_stressYZFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressYZ");
-  m_stressZXFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressZX");
-  m_stressZYFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressZY");
-  m_stressZZFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressZZ");
+  m_unrotatedCauchyStressXXFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressXX");
+  m_unrotatedCauchyStressXYFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressXY");
+  m_unrotatedCauchyStressXZFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressXZ");
+  m_unrotatedCauchyStressYXFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressYX");
+  m_unrotatedCauchyStressYYFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressYY");
+  m_unrotatedCauchyStressYZFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressYZ");
+  m_unrotatedCauchyStressZXFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressZX");
+  m_unrotatedCauchyStressZYFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressZY");
+  m_unrotatedCauchyStressZZFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressZZ");
 
   m_fieldIds.push_back(m_unrotatedRateOfDeformationXXFieldId);
   m_fieldIds.push_back(m_unrotatedRateOfDeformationXYFieldId);
@@ -92,15 +92,15 @@ PeridigmNS::ElasticCorrespondenceMaterial2::ElasticCorrespondenceMaterial2(const
   m_fieldIds.push_back(m_unrotatedRateOfDeformationZXFieldId);
   m_fieldIds.push_back(m_unrotatedRateOfDeformationZYFieldId);
   m_fieldIds.push_back(m_unrotatedRateOfDeformationZZFieldId);
-  m_fieldIds.push_back(m_stressXXFieldId);
-  m_fieldIds.push_back(m_stressXYFieldId);
-  m_fieldIds.push_back(m_stressXZFieldId);
-  m_fieldIds.push_back(m_stressYXFieldId);
-  m_fieldIds.push_back(m_stressYYFieldId);
-  m_fieldIds.push_back(m_stressYZFieldId);
-  m_fieldIds.push_back(m_stressZXFieldId);
-  m_fieldIds.push_back(m_stressZYFieldId);
-  m_fieldIds.push_back(m_stressZZFieldId);
+  m_fieldIds.push_back(m_unrotatedCauchyStressXXFieldId);
+  m_fieldIds.push_back(m_unrotatedCauchyStressXYFieldId);
+  m_fieldIds.push_back(m_unrotatedCauchyStressXZFieldId);
+  m_fieldIds.push_back(m_unrotatedCauchyStressYXFieldId);
+  m_fieldIds.push_back(m_unrotatedCauchyStressYYFieldId);
+  m_fieldIds.push_back(m_unrotatedCauchyStressYZFieldId);
+  m_fieldIds.push_back(m_unrotatedCauchyStressZXFieldId);
+  m_fieldIds.push_back(m_unrotatedCauchyStressZYFieldId);
+  m_fieldIds.push_back(m_unrotatedCauchyStressZZFieldId);
 }
 
 PeridigmNS::ElasticCorrespondenceMaterial2::~ElasticCorrespondenceMaterial2()
@@ -112,31 +112,31 @@ PeridigmNS::ElasticCorrespondenceMaterial2::computeCauchyStress(const double dt,
                                                                const int numOwnedPoints,
                                                                PeridigmNS::DataManager& dataManager) const
 {
-  double *cauchyStressNXX, *cauchyStressNXY, *cauchyStressNXZ;
-  double *cauchyStressNYX, *cauchyStressNYY, *cauchyStressNYZ;
-  double *cauchyStressNZX, *cauchyStressNZY, *cauchyStressNZZ;
-  dataManager.getData(m_stressXXFieldId, PeridigmField::STEP_N)->ExtractView(&cauchyStressNXX);
-  dataManager.getData(m_stressXYFieldId, PeridigmField::STEP_N)->ExtractView(&cauchyStressNXY);
-  dataManager.getData(m_stressXZFieldId, PeridigmField::STEP_N)->ExtractView(&cauchyStressNXZ);
-  dataManager.getData(m_stressYXFieldId, PeridigmField::STEP_N)->ExtractView(&cauchyStressNYX);
-  dataManager.getData(m_stressYYFieldId, PeridigmField::STEP_N)->ExtractView(&cauchyStressNYY);
-  dataManager.getData(m_stressYZFieldId, PeridigmField::STEP_N)->ExtractView(&cauchyStressNYZ);
-  dataManager.getData(m_stressZXFieldId, PeridigmField::STEP_N)->ExtractView(&cauchyStressNZX);
-  dataManager.getData(m_stressZYFieldId, PeridigmField::STEP_N)->ExtractView(&cauchyStressNZY);
-  dataManager.getData(m_stressZZFieldId, PeridigmField::STEP_N)->ExtractView(&cauchyStressNZZ);
+  double *unrotatedCauchyStressNXX, *unrotatedCauchyStressNXY, *unrotatedCauchyStressNXZ;
+  double *unrotatedCauchyStressNYX, *unrotatedCauchyStressNYY, *unrotatedCauchyStressNYZ;
+  double *unrotatedCauchyStressNZX, *unrotatedCauchyStressNZY, *unrotatedCauchyStressNZZ;
+  dataManager.getData(m_unrotatedCauchyStressXXFieldId, PeridigmField::STEP_N)->ExtractView(&unrotatedCauchyStressNXX);
+  dataManager.getData(m_unrotatedCauchyStressXYFieldId, PeridigmField::STEP_N)->ExtractView(&unrotatedCauchyStressNXY);
+  dataManager.getData(m_unrotatedCauchyStressXZFieldId, PeridigmField::STEP_N)->ExtractView(&unrotatedCauchyStressNXZ);
+  dataManager.getData(m_unrotatedCauchyStressYXFieldId, PeridigmField::STEP_N)->ExtractView(&unrotatedCauchyStressNYX);
+  dataManager.getData(m_unrotatedCauchyStressYYFieldId, PeridigmField::STEP_N)->ExtractView(&unrotatedCauchyStressNYY);
+  dataManager.getData(m_unrotatedCauchyStressYZFieldId, PeridigmField::STEP_N)->ExtractView(&unrotatedCauchyStressNYZ);
+  dataManager.getData(m_unrotatedCauchyStressZXFieldId, PeridigmField::STEP_N)->ExtractView(&unrotatedCauchyStressNZX);
+  dataManager.getData(m_unrotatedCauchyStressZYFieldId, PeridigmField::STEP_N)->ExtractView(&unrotatedCauchyStressNZY);
+  dataManager.getData(m_unrotatedCauchyStressZZFieldId, PeridigmField::STEP_N)->ExtractView(&unrotatedCauchyStressNZZ);
 
-  double *cauchyStressNP1XX, *cauchyStressNP1XY, *cauchyStressNP1XZ;
-  double *cauchyStressNP1YX, *cauchyStressNP1YY, *cauchyStressNP1YZ;
-  double *cauchyStressNP1ZX, *cauchyStressNP1ZY, *cauchyStressNP1ZZ;
-  dataManager.getData(m_stressXXFieldId, PeridigmField::STEP_NP1)->ExtractView(&cauchyStressNP1XX);
-  dataManager.getData(m_stressXYFieldId, PeridigmField::STEP_NP1)->ExtractView(&cauchyStressNP1XY);
-  dataManager.getData(m_stressXZFieldId, PeridigmField::STEP_NP1)->ExtractView(&cauchyStressNP1XZ);
-  dataManager.getData(m_stressYXFieldId, PeridigmField::STEP_NP1)->ExtractView(&cauchyStressNP1YX);
-  dataManager.getData(m_stressYYFieldId, PeridigmField::STEP_NP1)->ExtractView(&cauchyStressNP1YY);
-  dataManager.getData(m_stressYZFieldId, PeridigmField::STEP_NP1)->ExtractView(&cauchyStressNP1YZ);
-  dataManager.getData(m_stressZXFieldId, PeridigmField::STEP_NP1)->ExtractView(&cauchyStressNP1ZX);
-  dataManager.getData(m_stressZYFieldId, PeridigmField::STEP_NP1)->ExtractView(&cauchyStressNP1ZY);
-  dataManager.getData(m_stressZZFieldId, PeridigmField::STEP_NP1)->ExtractView(&cauchyStressNP1ZZ);
+  double *unrotatedCauchyStressNP1XX, *unrotatedCauchyStressNP1XY, *unrotatedCauchyStressNP1XZ;
+  double *unrotatedCauchyStressNP1YX, *unrotatedCauchyStressNP1YY, *unrotatedCauchyStressNP1YZ;
+  double *unrotatedCauchyStressNP1ZX, *unrotatedCauchyStressNP1ZY, *unrotatedCauchyStressNP1ZZ;
+  dataManager.getData(m_unrotatedCauchyStressXXFieldId, PeridigmField::STEP_NP1)->ExtractView(&unrotatedCauchyStressNP1XX);
+  dataManager.getData(m_unrotatedCauchyStressXYFieldId, PeridigmField::STEP_NP1)->ExtractView(&unrotatedCauchyStressNP1XY);
+  dataManager.getData(m_unrotatedCauchyStressXZFieldId, PeridigmField::STEP_NP1)->ExtractView(&unrotatedCauchyStressNP1XZ);
+  dataManager.getData(m_unrotatedCauchyStressYXFieldId, PeridigmField::STEP_NP1)->ExtractView(&unrotatedCauchyStressNP1YX);
+  dataManager.getData(m_unrotatedCauchyStressYYFieldId, PeridigmField::STEP_NP1)->ExtractView(&unrotatedCauchyStressNP1YY);
+  dataManager.getData(m_unrotatedCauchyStressYZFieldId, PeridigmField::STEP_NP1)->ExtractView(&unrotatedCauchyStressNP1YZ);
+  dataManager.getData(m_unrotatedCauchyStressZXFieldId, PeridigmField::STEP_NP1)->ExtractView(&unrotatedCauchyStressNP1ZX);
+  dataManager.getData(m_unrotatedCauchyStressZYFieldId, PeridigmField::STEP_NP1)->ExtractView(&unrotatedCauchyStressNP1ZY);
+  dataManager.getData(m_unrotatedCauchyStressZZFieldId, PeridigmField::STEP_NP1)->ExtractView(&unrotatedCauchyStressNP1ZZ);
 
   double *unrotatedRateOfDeformationXX, *unrotatedRateOfDeformationXY, *unrotatedRateOfDeformationXZ;
   double *unrotatedRateOfDeformationYX, *unrotatedRateOfDeformationYY, *unrotatedRateOfDeformationYZ;
@@ -154,12 +154,12 @@ PeridigmNS::ElasticCorrespondenceMaterial2::computeCauchyStress(const double dt,
   CORRESPONDENCE::updateElasticCauchyStress(unrotatedRateOfDeformationXX, unrotatedRateOfDeformationXY, unrotatedRateOfDeformationXZ, 
                                             unrotatedRateOfDeformationYX, unrotatedRateOfDeformationYY, unrotatedRateOfDeformationYZ, 
                                             unrotatedRateOfDeformationZX, unrotatedRateOfDeformationZY, unrotatedRateOfDeformationZZ,
-                                            cauchyStressNXX, cauchyStressNXY, cauchyStressNXZ, 
-                                            cauchyStressNYX, cauchyStressNYY, cauchyStressNYZ, 
-                                            cauchyStressNZX, cauchyStressNZY, cauchyStressNZZ,
-                                            cauchyStressNP1XX, cauchyStressNP1XY, cauchyStressNP1XZ, 
-                                            cauchyStressNP1YX, cauchyStressNP1YY, cauchyStressNP1YZ, 
-                                            cauchyStressNP1ZX, cauchyStressNP1ZY, cauchyStressNP1ZZ,
+                                            unrotatedCauchyStressNXX, unrotatedCauchyStressNXY, unrotatedCauchyStressNXZ, 
+                                            unrotatedCauchyStressNYX, unrotatedCauchyStressNYY, unrotatedCauchyStressNYZ, 
+                                            unrotatedCauchyStressNZX, unrotatedCauchyStressNZY, unrotatedCauchyStressNZZ,
+                                            unrotatedCauchyStressNP1XX, unrotatedCauchyStressNP1XY, unrotatedCauchyStressNP1XZ, 
+                                            unrotatedCauchyStressNP1YX, unrotatedCauchyStressNP1YY, unrotatedCauchyStressNP1YZ, 
+                                            unrotatedCauchyStressNP1ZX, unrotatedCauchyStressNP1ZY, unrotatedCauchyStressNP1ZZ,
                                             numOwnedPoints,
                                             m_bulkModulus,
                                             m_shearModulus,
