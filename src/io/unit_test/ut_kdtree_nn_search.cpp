@@ -391,7 +391,7 @@ void n_x_n_points() {
 	/*
 	 * this routine will work for arbitrary n that are 'even'
 	 */
-	size_t n=1000;
+	size_t n=300;
 	size_t nx=n,ny=n,nz=1;
 	value_type x0=-1.0;
 	value_type x_length=2.0;
