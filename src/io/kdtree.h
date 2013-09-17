@@ -184,6 +184,11 @@ public:
 		return ((low<=p) && (p<=high));
 	}
 
+
+	bool contains(const point<value_type>& p, component a) const {
+		return ((low[a]<=p[a]) && (p[a]<=high[a]));
+	}
+
 	bool contains(const rectangular_range&r) const {
 		return ((low<=r.get_low()) && (r.get_high() <= high));
 	}
@@ -345,6 +350,16 @@ public:
 	 */
 	point<value_type> get_point(ordinal_type point_id) const
 	{ return point<value_type>(raw_ptr[3*point_id],raw_ptr[3*point_id+1],raw_ptr[3*point_id+2]); }
+
+
+	value_type distance_squared(ordinal_type point_id, const point<value_type>& q) const
+	{
+      const value_type *ptr=raw_ptr+3*point_id;
+      value_type dx=*(ptr+0)-q[0];
+      value_type dy=*(ptr+1)-q[1];
+      value_type dz=*(ptr+2)-q[2];
+      return dx*dx+dy*dy+dz*dz;
+   }
 
 private:
 
@@ -564,6 +579,36 @@ public:
 		return kdtree(point_data,num_points);
 	}
 
+	ordinal_type nearest_neighbor_search(const vector<value_type>& search_point) const {
+
+		if(search_point.size()!=3){
+			std::string message("ERROR\n\t \'nearest_neighbor_search\' requires input \'vector\' with size 3");
+			throw std::domain_error(message);
+		}
+
+		/*
+		 * special cases
+		 */
+		// no points
+		if(0==points.get_num_points()){
+			std::string message("ERROR\n\t \'nearest_neighbor_search\' requires NON-EMPTY tree.");
+			throw std::invalid_argument(message);
+		}
+		// '1' point
+		else if(1==points.get_num_points())
+			return 0;
+
+		/*
+		 * create unbounded range for root
+		 */
+		rectangular_range<value_type> r;
+		point<value_type> p(search_point[0],search_point[1],search_point[2]);
+
+		size_t depth=0;
+		ordinal_type best = nn_search(root,r,depth,p);
+		return best;
+	}
+
 	void all_neighbors_within_radius(const value_type *center, value_type R, vector<ordinal_type>& neighbors) const {
 
 		all_neighbors_cube(center,R,neighbors);
@@ -726,6 +771,81 @@ private:
 		}
 	}
 
+	ordinal_type nn_search
+	(
+			const node* n,
+			const rectangular_range<value_type>& r,
+			size_t depth,
+			const point<value_type>& search_point
+	) const
+	{
+		/*
+		 * if n is a leaf
+		 * then report as candidate nearest neighbor
+		 */
+		if(0==n->left && 0==n->right)
+			return n->id;
+
+		ordinal_type candidate_id=0;
+		/*
+		 * Otherwise recursion continues seeking a 'leaf'
+		 */
+		span_axis<value_type> sa={n->axis,n->cut};
+		rectangular_range<value_type> left=r.left(sa);
+		rectangular_range<value_type> right=r.right(sa);
+
+		bool is_left=false;
+		if (left.contains(search_point,n->axis)){
+			/*
+			 *  'search_point' is contained within 'left tree'
+			 */
+			candidate_id=nn_search(n->left,left,depth+1,search_point);
+
+			is_left=true;
+
+		} else {
+			/*
+			 *  'search_point' is contained within 'right tree'
+			 */
+			candidate_id=nn_search(n->right,right,depth+1,search_point);
+
+		}
+
+		/*
+		 * distance between 'search_point' and 'candidate' nearest neighbor
+		 */
+		value_type distance_n=points.distance_squared(n->id,search_point);
+		value_type distance_candidate=points.distance_squared(candidate_id,search_point);
+		if (distance_n<distance_candidate){
+			candidate_id=n->id;
+			distance_candidate=distance_n;
+		}
+		rectangular_range<value_type> box(search_point,sqrt(distance_candidate));
+
+		/*
+		 * if point is contained in 'left' from above, may intersect w/'right'
+		 */
+		ordinal_type new_candidate_id=candidate_id;
+		if(is_left){
+			if (right.intersects(box,n->axis)){
+				new_candidate_id=nn_search(n->right,right,depth+1,search_point);
+			}
+
+		} else {
+			if (left.intersects(box,n->axis)){
+				new_candidate_id=nn_search(n->left,left,depth+1,search_point);
+			}
+		}
+
+      value_type new_distance=points.distance_squared(new_candidate_id,search_point);
+		if(new_distance<distance_candidate){
+			candidate_id=new_candidate_id;
+		}
+
+		return candidate_id;
+
+	}
+
 	void search
 	(
 			const node* n,
@@ -755,7 +875,7 @@ private:
 		 * Left
 		 */
 
-      span_axis<value_type> sa={n->axis,n->cut};
+		span_axis<value_type> sa={n->axis,n->cut};
 		rectangular_range<value_type> r_left=r.left(sa);
 		rectangular_range<value_type> r_right=r.right(sa);
 		if (R.contains(r_left)){
