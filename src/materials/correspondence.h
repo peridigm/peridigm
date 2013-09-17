@@ -140,7 +140,6 @@ void MatrixUpdate
  ScalarT& resultZZ
 );
 
-
 template<typename ScalarT>
 void UnrotateTensor
 (
@@ -171,7 +170,7 @@ void UnrotateTensor
  ScalarT& resultZX,
  ScalarT& resultZY,
  ScalarT& resultZZ
-);
+ );
 
 template<typename ScalarT>
 void RotateTensor
@@ -205,29 +204,38 @@ void RotateTensor
  ScalarT& resultZZ
 );
 
-template<typename ScalarT>
-void unrotateCauchyStress
-(
- const ScalarT* rotationTensorXX,
- const ScalarT* rotationTensorXY,
- const ScalarT* rotationTensorXZ,
- const ScalarT* rotationTensorYX,
- const ScalarT* rotationTensorYY,
- const ScalarT* rotationTensorYZ,
- const ScalarT* rotationTensorZX,
- const ScalarT* rotationTensorZY,
- const ScalarT* rotationTensorZZ,
- ScalarT* cauchyStressXX,
- ScalarT* cauchyStressXY,
- ScalarT* cauchyStressXZ,
- ScalarT* cauchyStressYX,
- ScalarT* cauchyStressYY,
- ScalarT* cauchyStressYZ,
- ScalarT* cauchyStressZX,
- ScalarT* cauchyStressZY,
- ScalarT* cauchyStressZZ,
- int numPoints
-);
+/* template<typename ScalarT> */
+/* void unrotateCauchyStress */
+/* ( */
+/*  const ScalarT* rotationTensorXX, */
+/*  const ScalarT* rotationTensorXY, */
+/*  const ScalarT* rotationTensorXZ, */
+/*  const ScalarT* rotationTensorYX, */
+/*  const ScalarT* rotationTensorYY, */
+/*  const ScalarT* rotationTensorYZ, */
+/*  const ScalarT* rotationTensorZX, */
+/*  const ScalarT* rotationTensorZY, */
+/*  const ScalarT* rotationTensorZZ, */
+/*  const ScalarT* rotatedCauchyStressXX, */
+/*  const ScalarT* rotatedCauchyStressXY, */
+/*  const ScalarT* rotatedCauchyStressXZ, */
+/*  const ScalarT* rotatedCauchyStressYX, */
+/*  const ScalarT* rotatedCauchyStressYY, */
+/*  const ScalarT* rotatedCauchyStressYZ, */
+/*  const ScalarT* rotatedCauchyStressZX, */
+/*  const ScalarT* rotatedCauchyStressZY, */
+/*  const ScalarT* rotatedCauchyStressZZ, */
+/*  ScalarT* unrotatedCauchyStressXX, */
+/*  ScalarT* unrotatedCauchyStressXY, */
+/*  ScalarT* unrotatedCauchyStressXZ, */
+/*  ScalarT* unrotatedCauchyStressYX, */
+/*  ScalarT* unrotatedCauchyStressYY, */
+/*  ScalarT* unrotatedCauchyStressYZ, */
+/*  ScalarT* unrotatedCauchyStressZX, */
+/*  ScalarT* unrotatedCauchyStressZY, */
+/*  ScalarT* unrotatedCauchyStressZZ, */
+/*  int numPoints */
+/* ); */
 
 template<typename ScalarT>
 void rotateCauchyStress
@@ -241,15 +249,24 @@ void rotateCauchyStress
  const ScalarT* rotationTensorZX,
  const ScalarT* rotationTensorZY,
  const ScalarT* rotationTensorZZ,
- ScalarT* cauchyStressXX,
- ScalarT* cauchyStressXY,
- ScalarT* cauchyStressXZ,
- ScalarT* cauchyStressYX,
- ScalarT* cauchyStressYY,
- ScalarT* cauchyStressYZ,
- ScalarT* cauchyStressZX,
- ScalarT* cauchyStressZY,
- ScalarT* cauchyStressZZ,
+ const ScalarT* unrotatedCauchyStressXX,
+ const ScalarT* unrotatedCauchyStressXY,
+ const ScalarT* unrotatedCauchyStressXZ,
+ const ScalarT* unrotatedCauchyStressYX,
+ const ScalarT* unrotatedCauchyStressYY,
+ const ScalarT* unrotatedCauchyStressYZ,
+ const ScalarT* unrotatedCauchyStressZX,
+ const ScalarT* unrotatedCauchyStressZY,
+ const ScalarT* unrotatedCauchyStressZZ,
+ ScalarT* rotatedCauchyStressXX,
+ ScalarT* rotatedCauchyStressXY,
+ ScalarT* rotatedCauchyStressXZ,
+ ScalarT* rotatedCauchyStressYX,
+ ScalarT* rotatedCauchyStressYY,
+ ScalarT* rotatedCauchyStressYZ,
+ ScalarT* rotatedCauchyStressZX,
+ ScalarT* rotatedCauchyStressZY,
+ ScalarT* rotatedCauchyStressZZ,
  int numPoints
 );
 

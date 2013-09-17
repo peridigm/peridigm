@@ -152,6 +152,15 @@ namespace PeridigmNS {
     int m_rotationTensorZXFieldId;
     int m_rotationTensorZYFieldId;
     int m_rotationTensorZZFieldId;
+    int m_unrotatedCauchyStressXXFieldId;
+    int m_unrotatedCauchyStressXYFieldId;
+    int m_unrotatedCauchyStressXZFieldId;
+    int m_unrotatedCauchyStressYXFieldId;
+    int m_unrotatedCauchyStressYYFieldId;
+    int m_unrotatedCauchyStressYZFieldId;
+    int m_unrotatedCauchyStressZXFieldId;
+    int m_unrotatedCauchyStressZYFieldId;
+    int m_unrotatedCauchyStressZZFieldId;
     int m_cauchyStressXXFieldId;
     int m_cauchyStressXYFieldId;
     int m_cauchyStressXZFieldId;
