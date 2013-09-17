@@ -1,6 +1,10 @@
 #
 # Add the tests
 #
+add_test (ElasticCorrespondenceFullyPrescribedTension_np1 python ./ElasticCorrespondenceFullyPrescribedTension/np1/ElasticCorrespondenceFullyPrescribedTension.py)
+add_test (ElasticCorrespondenceFullyPrescribedTension_np4 python ./ElasticCorrespondenceFullyPrescribedTension/np4/ElasticCorrespondenceFullyPrescribedTension.py)
+#add_test (ElasticCorrespondenceQSTension_np1 python ./ElasticCorrespondenceQSTension/np1/ElasticCorrespondenceQSTension.py)
+#add_test (ElasticCorrespondenceQSTension_np4 python ./ElasticCorrespondenceQSTension/np4/ElasticCorrespondenceQSTension.py)
 add_test (MultipleHorizons_np1 python ./MultipleHorizons/np1/MultipleHorizons.py)
 add_test (MultipleHorizons_np4 python ./MultipleHorizons/np4/MultipleHorizons.py)
 add_test (Compression_2x1x1_np1 python ./Compression_2x1x1/np1/Compression_2x1x1.py)
@@ -29,10 +33,6 @@ add_test (ThermalExpansionCube_np1 python ./ThermalExpansionCube/np1/ThermalExpa
 add_test (ThermalExpansionCube_np4 python ./ThermalExpansionCube/np4/ThermalExpansionCube.py)
 add_test (ThermalExpansionBondFailure_np1 python ./ThermalExpansionBondFailure/np1/ThermalExpansionBondFailure.py)
 add_test (ThermalExpansionBondFailure_np4 python ./ThermalExpansionBondFailure/np4/ThermalExpansionBondFailure.py)
-#add_test (ElasticCorrespondenceFullyPrescribedTension_np1 python ./ElasticCorrespondenceFullyPrescribedTension/np1/ElasticCorrespondenceFullyPrescribedTension.py)
-#add_test (ElasticCorrespondenceFullyPrescribedTension_np4 python ./ElasticCorrespondenceFullyPrescribedTension/np4/ElasticCorrespondenceFullyPrescribedTension.py)
-#add_test (ElasticCorrespondenceQSTension_np1 python ./ElasticCorrespondenceQSTension/np1/ElasticCorrespondenceQSTension.py)
-#add_test (ElasticCorrespondenceQSTension_np4 python ./ElasticCorrespondenceQSTension/np4/ElasticCorrespondenceQSTension.py)
 if (USE_DAKOTA)
    add_test (Dakota_2x1x1_np1 python ./Dakota_2x1x1/np1/Dakota_2x1x1.py)
 endif(USE_DAKOTA)
