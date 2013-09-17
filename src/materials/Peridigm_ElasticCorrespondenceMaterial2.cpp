@@ -73,15 +73,15 @@ PeridigmNS::ElasticCorrespondenceMaterial2::ElasticCorrespondenceMaterial2(const
   m_unrotatedRateOfDeformationZXFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_DeformationZX");
   m_unrotatedRateOfDeformationZYFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_DeformationZY");
   m_unrotatedRateOfDeformationZZFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_DeformationZZ");
-  m_stressXXFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Cauchy_StressXX");
-  m_stressXYFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Cauchy_StressXY");
-  m_stressXZFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Cauchy_StressXZ");
-  m_stressYXFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Cauchy_StressYX");
-  m_stressYYFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Cauchy_StressYY");
-  m_stressYZFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Cauchy_StressYZ");
-  m_stressZXFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Cauchy_StressZX");
-  m_stressZYFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Cauchy_StressZY");
-  m_stressZZFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Cauchy_StressZZ");
+  m_stressXXFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressXX");
+  m_stressXYFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressXY");
+  m_stressXZFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressXZ");
+  m_stressYXFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressYX");
+  m_stressYYFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressYY");
+  m_stressYZFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressYZ");
+  m_stressZXFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressZX");
+  m_stressZYFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressZY");
+  m_stressZZFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressZZ");
 
   m_fieldIds.push_back(m_unrotatedRateOfDeformationXXFieldId);
   m_fieldIds.push_back(m_unrotatedRateOfDeformationXYFieldId);
