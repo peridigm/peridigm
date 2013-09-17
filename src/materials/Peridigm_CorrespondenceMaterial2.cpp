@@ -236,7 +236,7 @@ PeridigmNS::CorrespondenceMaterial2::initialize(const double dt,
   dataManager.getData(m_deformationGradientZYFieldId, PeridigmField::STEP_NONE)->PutScalar(0.0);
   dataManager.getData(m_deformationGradientZZFieldId, PeridigmField::STEP_NONE)->PutScalar(1.0);
 
-  dataManager.getData(m_leftStretchTensorXYFieldId, PeridigmField::STEP_N)->PutScalar(1.0);
+  dataManager.getData(m_leftStretchTensorXXFieldId, PeridigmField::STEP_N)->PutScalar(1.0);
   dataManager.getData(m_leftStretchTensorXYFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
   dataManager.getData(m_leftStretchTensorXZFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
   dataManager.getData(m_leftStretchTensorYXFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
@@ -245,6 +245,15 @@ PeridigmNS::CorrespondenceMaterial2::initialize(const double dt,
   dataManager.getData(m_leftStretchTensorZXFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
   dataManager.getData(m_leftStretchTensorZYFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
   dataManager.getData(m_leftStretchTensorZZFieldId, PeridigmField::STEP_N)->PutScalar(1.0);
+  dataManager.getData(m_leftStretchTensorXXFieldId, PeridigmField::STEP_NP1)->PutScalar(1.0);
+  dataManager.getData(m_leftStretchTensorXYFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_leftStretchTensorXZFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_leftStretchTensorYXFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_leftStretchTensorYYFieldId, PeridigmField::STEP_NP1)->PutScalar(1.0);
+  dataManager.getData(m_leftStretchTensorYZFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_leftStretchTensorZXFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_leftStretchTensorZYFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_leftStretchTensorZZFieldId, PeridigmField::STEP_NP1)->PutScalar(1.0);
   
   dataManager.getData(m_rotationTensorXXFieldId, PeridigmField::STEP_N)->PutScalar(1.0);
   dataManager.getData(m_rotationTensorXYFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
@@ -255,6 +264,15 @@ PeridigmNS::CorrespondenceMaterial2::initialize(const double dt,
   dataManager.getData(m_rotationTensorZXFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
   dataManager.getData(m_rotationTensorZYFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
   dataManager.getData(m_rotationTensorZZFieldId, PeridigmField::STEP_N)->PutScalar(1.0);
+  dataManager.getData(m_rotationTensorXXFieldId, PeridigmField::STEP_NP1)->PutScalar(1.0);
+  dataManager.getData(m_rotationTensorXYFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_rotationTensorXZFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_rotationTensorYXFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_rotationTensorYYFieldId, PeridigmField::STEP_NP1)->PutScalar(1.0);
+  dataManager.getData(m_rotationTensorYZFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_rotationTensorZXFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_rotationTensorZYFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_rotationTensorZZFieldId, PeridigmField::STEP_NP1)->PutScalar(1.0);
 }
 
 void
@@ -427,7 +445,7 @@ PeridigmNS::CorrespondenceMaterial2::computeForce(const double dt,
   rotationTensorErrorMessage +=
     "****         Note that all nodes must have a minimum of three neighbors.  Is the horizon too small?\n";
 
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(rotationTensorReturnCode != 0, shapeTensorErrorMessage);
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(rotationTensorReturnCode != 0, rotationTensorErrorMessage);
 
   // Evaluate the Cauchy stress using the routine implemented in the derived class (specific correspondence material model)
   // The general idea is to compute the stress based on:
