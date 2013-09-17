@@ -81,15 +81,15 @@ namespace PeridigmNS {
     int m_unrotatedRateOfDeformationZXFieldId;
     int m_unrotatedRateOfDeformationZYFieldId;
     int m_unrotatedRateOfDeformationZZFieldId;
-    int m_stressXXFieldId;
-    int m_stressXYFieldId;
-    int m_stressXZFieldId;
-    int m_stressYXFieldId;
-    int m_stressYYFieldId;
-    int m_stressYZFieldId;
-    int m_stressZXFieldId;
-    int m_stressZYFieldId;
-    int m_stressZZFieldId;
+    int m_unrotatedCauchyStressXXFieldId;
+    int m_unrotatedCauchyStressXYFieldId;
+    int m_unrotatedCauchyStressXZFieldId;
+    int m_unrotatedCauchyStressYXFieldId;
+    int m_unrotatedCauchyStressYYFieldId;
+    int m_unrotatedCauchyStressYZFieldId;
+    int m_unrotatedCauchyStressZXFieldId;
+    int m_unrotatedCauchyStressZYFieldId;
+    int m_unrotatedCauchyStressZZFieldId;
   };
 }
 
