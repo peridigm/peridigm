@@ -43,3 +43,8 @@ target_link_libraries(utPeridigm_SearchTree_Performance
   ${REQUIRED_LIBS}
   ${Boost_LIBRARIES}
 )
+
+add_executable(ut_kdtree_nn_search ut_kdtree_nn_search.cpp)
+target_link_libraries(ut_kdtree_nn_search QuickGrid ${Boost_LIBRARIES})
+add_test (ut_kdtree_nn_search python run_unit_test.py ./ut_kdtree_nn_search )
+
