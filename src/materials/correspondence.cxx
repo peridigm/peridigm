@@ -820,6 +820,7 @@ double dt
     FdotZZ = FdotFirstTermZX* (*shapeTensorInvXZ) + FdotFirstTermZY* (*shapeTensorInvYZ) + FdotFirstTermZZ* (*shapeTensorInvZZ);
 
 
+
     // Compute the inverse of the deformation gradient, Finv
     int inversionReturnCode = invert3by3Matrix(*defGradXX,*defGradXY,*defGradXZ,
                                                *defGradYX,*defGradYY,*defGradYZ,
@@ -854,6 +855,7 @@ double dt
                  rateOfDefYX, rateOfDefYY, rateOfDefYZ,
                  rateOfDefZX, rateOfDefZY, rateOfDefZZ);
 
+
     // Compute spin tensor, W = 1/2 * (L - Lt)
     MatrixUpdate(ScalarT(0.5), ScalarT(-0.5),
                  eulerianVelGradXX, eulerianVelGradXY, eulerianVelGradXZ,
@@ -865,6 +867,7 @@ double dt
                  spinXX, spinXY, spinXZ,
                  spinYX, spinYY, spinYZ,
                  spinZX, spinZY, spinZZ);
+
 
     //Following Flanagan & Taylor (T&F) 
     //
@@ -883,6 +886,7 @@ double dt
     zZ = -(*leftStretchNXY) * rateOfDefXX - (*leftStretchNYY) * rateOfDefXY - 
         (*leftStretchNZY) * rateOfDefXZ+ (*leftStretchNXX) * rateOfDefYX + 
         (*leftStretchNYX) * rateOfDefYY + (*leftStretchNZX) * rateOfDefYZ;
+
 
     //Find the vector w_i = -1/2 * \epsilon_{ijk} * W_{jk} (T&F Eq. 11)
     wX = 0.5 * ( -spinYZ + spinZY);
@@ -912,6 +916,9 @@ double dt
                                            tempInvXX, tempInvXY, tempInvXZ,
                                            tempInvYX, tempInvYY, tempInvYZ,
                                            tempInvZX, tempInvZY, tempInvZZ);
+
+
+
     // Placeholder for more sophisticated error checking
     if(inversionReturnCode > 0)
       returnCode = inversionReturnCode;
@@ -943,46 +950,61 @@ double dt
     OmegaSq = omegaX*omegaX + omegaY*omegaY + omegaZ*omegaZ;
     // Omega = \sqrt{OmegaSq}
     Omega = sqrt(OmegaSq);
-    
 
-    // Compute temp = I + sin( dt * Omega ) * OmegaTensor / Omega
-    //              = I + scaleFactor * OmegaTensor 
-    scaleFactor = sin(dt*Omega) / Omega;
-    MatrixUpdate(ScalarT(1.0), scaleFactor,
-                 identityMatrixXX, identityMatrixXY, identityMatrixXZ,
-                 identityMatrixYX, identityMatrixYY, identityMatrixYZ,
-                 identityMatrixZX, identityMatrixZY, identityMatrixZZ,
-                 OmegaTensorXX, OmegaTensorXY, OmegaTensorXZ,
-                 OmegaTensorYX, OmegaTensorYY, OmegaTensorYZ,
-                 OmegaTensorZX, OmegaTensorZY, OmegaTensorZZ,
-                 tempXX, tempXY, tempXZ,
-                 tempYX, tempYY, tempYZ,
-                 tempZX, tempZY, tempZZ);
 
-    // Now compute OmegaTensorSq = OmegaTensor^2
-    MatrixMultiply(OmegaTensorXX, OmegaTensorXY, OmegaTensorXZ,
-                   OmegaTensorYX, OmegaTensorYY, OmegaTensorYZ,
-                   OmegaTensorZX, OmegaTensorZY, OmegaTensorZZ,
-                   OmegaTensorXX, OmegaTensorXY, OmegaTensorXZ,
-                   OmegaTensorYX, OmegaTensorYY, OmegaTensorYZ,
-                   OmegaTensorZX, OmegaTensorZY, OmegaTensorZZ,
-                   OmegaTensorSqXX, OmegaTensorSqXY, OmegaTensorSqXZ,
-                   OmegaTensorSqYX, OmegaTensorSqYY, OmegaTensorSqYZ,
-                   OmegaTensorSqZX, OmegaTensorSqZY, OmegaTensorSqZZ);
+    // Avoid a potential divide-by-zero
+    if ( OmegaSq > 1.e-30){
 
-    // Compute Q = I + sin(dt*Omega)*OmegaTensor / Omega - (1. - cos(dt * Omega)) * omegaTensor^2 / OmegaSq
-    //           = temp + scaleFactor * OmegaTensorSq
-    scaleFactor = -(1.0 - cos(dt*Omega)) / OmegaSq;
-    MatrixUpdate(ScalarT(1.0), scaleFactor,
-                 tempXX, tempXY, tempXZ,
-                 tempYX, tempYY, tempYZ,
-                 tempZX, tempZY, tempZZ,
-                 OmegaTensorSqXX, OmegaTensorSqYX, OmegaTensorSqZX,
-                 OmegaTensorSqYX, OmegaTensorSqYY, OmegaTensorSqZY,
-                 OmegaTensorSqXZ, OmegaTensorSqYZ, OmegaTensorSqZZ,
-                 QMatrixXX, QMatrixXY, QMatrixXZ,
-                 QMatrixYX, QMatrixYY, QMatrixYZ,
-                 QMatrixZX, QMatrixZY, QMatrixZZ);
+        // Compute temp = I + sin( dt * Omega ) * OmegaTensor / Omega
+        //              = I + scaleFactor * OmegaTensor 
+        scaleFactor = sin(dt*Omega) / Omega;
+        MatrixUpdate(ScalarT(1.0), scaleFactor,
+                     identityMatrixXX, identityMatrixXY, identityMatrixXZ,
+                     identityMatrixYX, identityMatrixYY, identityMatrixYZ,
+                     identityMatrixZX, identityMatrixZY, identityMatrixZZ,
+                     OmegaTensorXX, OmegaTensorXY, OmegaTensorXZ,
+                     OmegaTensorYX, OmegaTensorYY, OmegaTensorYZ,
+                     OmegaTensorZX, OmegaTensorZY, OmegaTensorZZ,
+                     tempXX, tempXY, tempXZ,
+                     tempYX, tempYY, tempYZ,
+                     tempZX, tempZY, tempZZ);
+
+        // Now compute OmegaTensorSq = OmegaTensor^2
+        MatrixMultiply(OmegaTensorXX, OmegaTensorXY, OmegaTensorXZ,
+                       OmegaTensorYX, OmegaTensorYY, OmegaTensorYZ,
+                       OmegaTensorZX, OmegaTensorZY, OmegaTensorZZ,
+                       OmegaTensorXX, OmegaTensorXY, OmegaTensorXZ,
+                       OmegaTensorYX, OmegaTensorYY, OmegaTensorYZ,
+                       OmegaTensorZX, OmegaTensorZY, OmegaTensorZZ,
+                       OmegaTensorSqXX, OmegaTensorSqXY, OmegaTensorSqXZ,
+                       OmegaTensorSqYX, OmegaTensorSqYY, OmegaTensorSqYZ,
+                       OmegaTensorSqZX, OmegaTensorSqZY, OmegaTensorSqZZ);
+
+        // Compute Q = I + sin(dt*Omega)*OmegaTensor / Omega - (1. - cos(dt * Omega)) * omegaTensor^2 / OmegaSq
+        //           = temp + scaleFactor * OmegaTensorSq
+        scaleFactor = -(1.0 - cos(dt*Omega)) / OmegaSq;
+        MatrixUpdate(ScalarT(1.0), scaleFactor,
+                     tempXX, tempXY, tempXZ,
+                     tempYX, tempYY, tempYZ,
+                     tempZX, tempZY, tempZZ,
+                     OmegaTensorSqXX, OmegaTensorSqYX, OmegaTensorSqZX,
+                     OmegaTensorSqYX, OmegaTensorSqYY, OmegaTensorSqZY,
+                     OmegaTensorSqXZ, OmegaTensorSqYZ, OmegaTensorSqZZ,
+                     QMatrixXX, QMatrixXY, QMatrixXZ,
+                     QMatrixYX, QMatrixYY, QMatrixYZ,
+                     QMatrixZX, QMatrixZY, QMatrixZZ);
+    } else {
+
+        QMatrixXX = identityMatrixXX;
+        QMatrixXY = identityMatrixXY;
+        QMatrixXZ = identityMatrixXZ;
+        QMatrixYX = identityMatrixYX;
+        QMatrixYY = identityMatrixYY;
+        QMatrixYZ = identityMatrixYZ;
+        QMatrixZX = identityMatrixZX;
+        QMatrixZY = identityMatrixZY;
+        QMatrixZZ = identityMatrixZZ;
+    };
 
     // Compute R_STEP_NP1 = QMatrix * R_STEP_N (T&F Eq. 36)
     MatrixMultiply(QMatrixXX, QMatrixXY, QMatrixXZ,
@@ -994,6 +1016,7 @@ double dt
                    *rotTensorNP1XX, *rotTensorNP1XY, *rotTensorNP1XZ,
                    *rotTensorNP1YX, *rotTensorNP1YY, *rotTensorNP1YZ,
                    *rotTensorNP1ZX, *rotTensorNP1ZY, *rotTensorNP1ZZ);
+
 
     // Compute rate of stretch, Vdot = L*V - V*Omega
     // First tempA = L*V
@@ -1019,29 +1042,30 @@ double dt
                    tempBZX, tempBZY, tempBZZ);
 
 
-    //Vdot = tempA + tempB
-    MatrixUpdate(ScalarT(1.0), ScalarT(1.0),
+    //Vdot = tempA - tempB
+    MatrixUpdate(ScalarT(1.0), ScalarT(-1.0),
                  tempAXX, tempAXY, tempAXZ,
                  tempAYX, tempAYY, tempAYZ,
                  tempAZX, tempAZY, tempAZZ,
-                 tempBXX, tempBYX, tempBZX,
-                 tempBYX, tempBYY, tempBZY,
-                 tempBXZ, tempBYZ, tempBZZ,
+                 tempBXX, tempBXY, tempBXZ,
+                 tempBYX, tempBYY, tempBYZ,
+                 tempBZX, tempBZY, tempBZZ,
                  rateOfStretchXX, rateOfStretchXY, rateOfStretchXZ,
                  rateOfStretchYX, rateOfStretchYY, rateOfStretchYZ,
                  rateOfStretchZX, rateOfStretchZY, rateOfStretchZZ);
-    
+
     //V_STEP_NP1 = V_STEP_N + dt*Vdot
     MatrixUpdate(ScalarT(1.0), ScalarT(dt),
                  *leftStretchTensorNXX, *leftStretchTensorNXY, *leftStretchTensorNXZ,
                  *leftStretchTensorNYX, *leftStretchTensorNYY, *leftStretchTensorNYZ,
                  *leftStretchTensorNZX, *leftStretchTensorNZY, *leftStretchTensorNZZ,
-                 rateOfStretchXX, rateOfStretchYX, rateOfStretchZX,
-                 rateOfStretchYX, rateOfStretchYY, rateOfStretchZY,
-                 rateOfStretchXZ, rateOfStretchYZ, rateOfStretchZZ,
+                 rateOfStretchXX, rateOfStretchXY, rateOfStretchXZ,
+                 rateOfStretchYX, rateOfStretchYY, rateOfStretchYZ,
+                 rateOfStretchZX, rateOfStretchZY, rateOfStretchZZ,
                  *leftStretchTensorNP1XX, *leftStretchTensorNP1XY, *leftStretchTensorNP1XZ,
                  *leftStretchTensorNP1YX, *leftStretchTensorNP1YY, *leftStretchTensorNP1YZ,
                  *leftStretchTensorNP1ZX, *leftStretchTensorNP1ZY, *leftStretchTensorNP1ZZ);
+
 
     // Compute the unrotated rate-of-deformation, d, i.e., temp = Rt * D * R
     UnrotateTensor(rateOfDefXX, rateOfDefXY, rateOfDefXZ,

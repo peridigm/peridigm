@@ -76,7 +76,7 @@
      </ParameterList>
   </ParameterList>
 
-  <ParameterList name="Output">
+  <ParameterList name="Output1">
 	<Parameter name="Output File Type" type="string" value="ExodusII"/>
 	<Parameter name="Output Filename" type="string" value="ElasticCorrespondenceFullyPrescribedTension"/>
 	<Parameter name="Output Frequency" type="int" value="1"/>
@@ -104,6 +104,15 @@
           <Parameter name="Velocity" type="bool" value="true"/>
           <Parameter name="Force" type="bool" value="true"/>
           <Parameter name="Hourglass_Force_Density" type="bool" value="true"/>
+          <Parameter name="Top_Reaction_Force" type="bool" value="true"/>
+          <Parameter name="Bottom_Reaction_Force" type="bool" value="true"/>
+	</ParameterList>
+  </ParameterList>
+  <ParameterList name="Output2">
+	<Parameter name="Output File Type" type="string" value="ExodusII"/>
+	<Parameter name="Output Filename" type="string" value="ElasticCorrespondenceFullyPrescribedTension"/>
+	<Parameter name="Output Frequency" type="int" value="1"/>
+	<ParameterList name="Output Variables">
           <Parameter name="Top_Reaction_Force" type="bool" value="true"/>
           <Parameter name="Bottom_Reaction_Force" type="bool" value="true"/>
 	</ParameterList>
