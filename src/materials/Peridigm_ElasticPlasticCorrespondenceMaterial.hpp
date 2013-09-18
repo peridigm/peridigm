@@ -48,11 +48,11 @@
 #ifndef PERIDIGM_ELASTICPLASTICCORRESPONDENCEMATERIAL_HPP
 #define PERIDIGM_ELASTICPLASTICCORRESPONDENCEMATERIAL_HPP
 
-#include "Peridigm_CorrespondenceMaterial2.hpp"
+#include "Peridigm_CorrespondenceMaterial.hpp"
 
 namespace PeridigmNS {
 
-  class ElasticPlasticCorrespondenceMaterial : public CorrespondenceMaterial2{
+  class ElasticPlasticCorrespondenceMaterial : public CorrespondenceMaterial{
   public:
 
 	//! Constructor.
@@ -105,4 +105,4 @@ namespace PeridigmNS {
   };
 }
 
-#endif // PERIDIGM_ELASTICPLASTICCORRESPONDENCEMATERIAL2_HPP
+#endif // PERIDIGM_ELASTICPLASTICCORRESPONDENCEMATERIAL_HPP
