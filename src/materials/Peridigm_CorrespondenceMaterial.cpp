@@ -1,4 +1,4 @@
-/*! \file Peridigm_CorrespondenceMaterial2.cpp */
+/*! \file Peridigm_CorrespondenceMaterial.cpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,7 +45,7 @@
 // ************************************************************************
 //@HEADER
 
-#include "Peridigm_CorrespondenceMaterial2.hpp"
+#include "Peridigm_CorrespondenceMaterial.hpp"
 #include "Peridigm_Field.hpp"
 #include "elastic.h"
 #include "correspondence.h"
@@ -54,7 +54,7 @@
 
 using namespace std;
 
-PeridigmNS::CorrespondenceMaterial2::CorrespondenceMaterial2(const Teuchos::ParameterList& params)
+PeridigmNS::CorrespondenceMaterial::CorrespondenceMaterial(const Teuchos::ParameterList& params)
   : Material(params),
     m_density(0.0), m_horizon(0.0), m_hourglassCoefficient(0.0), m_volumeFieldId(-1),
     m_modelCoordinatesFieldId(-1), m_coordinatesFieldId(-1), m_velocitiesFieldId(-1), 
@@ -236,12 +236,12 @@ PeridigmNS::CorrespondenceMaterial2::CorrespondenceMaterial2(const Teuchos::Para
   m_fieldIds.push_back(m_unrotatedRateOfDeformationZZFieldId);
 }
 
-PeridigmNS::CorrespondenceMaterial2::~CorrespondenceMaterial2()
+PeridigmNS::CorrespondenceMaterial::~CorrespondenceMaterial()
 {
 }
 
 void
-PeridigmNS::CorrespondenceMaterial2::initialize(const double dt,
+PeridigmNS::CorrespondenceMaterial::initialize(const double dt,
                                                const int numOwnedPoints,
                                                const int* ownedIDs,
                                                const int* neighborhoodList,
@@ -335,7 +335,7 @@ PeridigmNS::CorrespondenceMaterial2::initialize(const double dt,
 }
 
 void
-PeridigmNS::CorrespondenceMaterial2::computeForce(const double dt,
+PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
                                                  const int numOwnedPoints,
                                                  const int* ownedIDs,
                                                  const int* neighborhoodList,
@@ -399,7 +399,7 @@ PeridigmNS::CorrespondenceMaterial2::computeForce(const double dt,
                                                                                m_horizon);
 
   string shapeTensorErrorMessage =
-    "**** Error:  CorrespondenceMaterial2::computeForce() failed to compute shape tensor.\n";
+    "**** Error:  CorrespondenceMaterial::computeForce() failed to compute shape tensor.\n";
   shapeTensorErrorMessage +=
     "****         Note that all nodes must have a minimum of three neighbors.  Is the horizon too small?\n";
 
@@ -503,7 +503,7 @@ PeridigmNS::CorrespondenceMaterial2::computeForce(const double dt,
                                                                                     dt);
   
   string rotationTensorErrorMessage =
-    "**** Error:  CorrespondenceMaterial2::computeForce() failed to compute rotation tensor.\n";
+    "**** Error:  CorrespondenceMaterial::computeForce() failed to compute rotation tensor.\n";
   rotationTensorErrorMessage +=
     "****         Note that all nodes must have a minimum of three neighbors.  Is the horizon too small?\n";
 
@@ -616,7 +616,7 @@ PeridigmNS::CorrespondenceMaterial2::computeForce(const double dt,
   int numNeighbors, neighborIndex;
 
   string matrixInversionErrorMessage =
-    "**** Error:  CorrespondenceMaterial2::computeForce() failed to invert deformation gradient.\n";
+    "**** Error:  CorrespondenceMaterial::computeForce() failed to invert deformation gradient.\n";
   matrixInversionErrorMessage +=
     "****         Note that all nodes must have a minimum of three neighbors.  Is the horizon too small?\n";
 

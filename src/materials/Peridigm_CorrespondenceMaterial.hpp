@@ -1,4 +1,4 @@
-//! \file Peridigm_CorrespondenceMaterial2.hpp
+//! \file Peridigm_CorrespondenceMaterial.hpp
 
 //@HEADER
 // ************************************************************************
@@ -52,14 +52,14 @@
 
 namespace PeridigmNS {
 
-  class CorrespondenceMaterial2 : public Material{
+  class CorrespondenceMaterial : public Material{
   public:
 
 	//! Constructor.
-    CorrespondenceMaterial2(const Teuchos::ParameterList & params);
+    CorrespondenceMaterial(const Teuchos::ParameterList & params);
 
     //! Destructor.
-    virtual ~CorrespondenceMaterial2();
+    virtual ~CorrespondenceMaterial();
 
     //! Return name of material type
     virtual std::string Name() const { return("Correspondence Base Class"); }
