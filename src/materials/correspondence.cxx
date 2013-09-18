@@ -1082,17 +1082,17 @@ double dt
     MatrixMultiply(eulerianVelGradXX, eulerianVelGradXY, eulerianVelGradXZ,
                    eulerianVelGradYX, eulerianVelGradYY, eulerianVelGradYZ,
                    eulerianVelGradZX, eulerianVelGradZY, eulerianVelGradZZ,
-                   *leftStretchTensorNXX, *leftStretchTensorNXY, *leftStretchTensorNXZ,
-                   *leftStretchTensorNYX, *leftStretchTensorNYY, *leftStretchTensorNYZ,
-                   *leftStretchTensorNZX, *leftStretchTensorNZY, *leftStretchTensorNZZ,
+                   *leftStretchNXX, *leftStretchNXY, *leftStretchNXZ,
+                   *leftStretchNYX, *leftStretchNYY, *leftStretchNYZ,
+                   *leftStretchNZX, *leftStretchNZY, *leftStretchNZZ,
                    tempAXX, tempAXY, tempAXZ,
                    tempAYX, tempAYY, tempAYZ,
                    tempAZX, tempAZY, tempAZZ);
 
     // tempB = V*Omega
-    MatrixMultiply(*leftStretchTensorNXX, *leftStretchTensorNXY, *leftStretchTensorNXZ,
-                   *leftStretchTensorNYX, *leftStretchTensorNYY, *leftStretchTensorNYZ,
-                   *leftStretchTensorNZX, *leftStretchTensorNZY, *leftStretchTensorNZZ,
+    MatrixMultiply(*leftStretchNXX, *leftStretchNXY, *leftStretchNXZ,
+                   *leftStretchNYX, *leftStretchNYY, *leftStretchNYZ,
+                   *leftStretchNZX, *leftStretchNZY, *leftStretchNZZ,
                    OmegaTensorXX, OmegaTensorXY, OmegaTensorXZ,
                    OmegaTensorYX, OmegaTensorYY, OmegaTensorYZ,
                    OmegaTensorZX, OmegaTensorZY, OmegaTensorZZ,
@@ -1115,15 +1115,15 @@ double dt
 
     //V_STEP_NP1 = V_STEP_N + dt*Vdot
     MatrixUpdate(ScalarT(1.0), ScalarT(dt),
-                 *leftStretchTensorNXX, *leftStretchTensorNXY, *leftStretchTensorNXZ,
-                 *leftStretchTensorNYX, *leftStretchTensorNYY, *leftStretchTensorNYZ,
-                 *leftStretchTensorNZX, *leftStretchTensorNZY, *leftStretchTensorNZZ,
+                 *leftStretchNXX, *leftStretchNXY, *leftStretchNXZ,
+                 *leftStretchNYX, *leftStretchNYY, *leftStretchNYZ,
+                 *leftStretchNZX, *leftStretchNZY, *leftStretchNZZ,
                  rateOfStretchXX, rateOfStretchXY, rateOfStretchXZ,
                  rateOfStretchYX, rateOfStretchYY, rateOfStretchYZ,
                  rateOfStretchZX, rateOfStretchZY, rateOfStretchZZ,
-                 *leftStretchTensorNP1XX, *leftStretchTensorNP1XY, *leftStretchTensorNP1XZ,
-                 *leftStretchTensorNP1YX, *leftStretchTensorNP1YY, *leftStretchTensorNP1YZ,
-                 *leftStretchTensorNP1ZX, *leftStretchTensorNP1ZY, *leftStretchTensorNP1ZZ);
+                 *leftStretchNP1XX, *leftStretchNP1XY, *leftStretchNP1XZ,
+                 *leftStretchNP1YX, *leftStretchNP1YY, *leftStretchNP1YZ,
+                 *leftStretchNP1ZX, *leftStretchNP1ZY, *leftStretchNP1ZZ);
 
 
     // Compute the unrotated rate-of-deformation, d, i.e., temp = Rt * D * R
