@@ -1,4 +1,4 @@
-/*! \file Peridigm_ElasticCorrespondenceMaterial2.cpp */
+/*! \file Peridigm_ElasticCorrespondenceMaterial.cpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,7 +45,7 @@
 // ************************************************************************
 //@HEADER
 
-#include "Peridigm_ElasticCorrespondenceMaterial2.hpp"
+#include "Peridigm_ElasticCorrespondenceMaterial.hpp"
 #include "Peridigm_Field.hpp"
 #include "elastic_correspondence.h"
 #include "material_utilities.h"
@@ -53,8 +53,8 @@
 
 using namespace std;
 
-PeridigmNS::ElasticCorrespondenceMaterial2::ElasticCorrespondenceMaterial2(const Teuchos::ParameterList& params)
-  : CorrespondenceMaterial2(params),
+PeridigmNS::ElasticCorrespondenceMaterial::ElasticCorrespondenceMaterial(const Teuchos::ParameterList& params)
+  : CorrespondenceMaterial(params),
     m_unrotatedRateOfDeformationXXFieldId(-1), m_unrotatedRateOfDeformationXYFieldId(-1), m_unrotatedRateOfDeformationXZFieldId(-1), 
     m_unrotatedRateOfDeformationYXFieldId(-1), m_unrotatedRateOfDeformationYYFieldId(-1), m_unrotatedRateOfDeformationYZFieldId(-1), 
     m_unrotatedRateOfDeformationZXFieldId(-1), m_unrotatedRateOfDeformationZYFieldId(-1), m_unrotatedRateOfDeformationZZFieldId(-1),
@@ -103,12 +103,12 @@ PeridigmNS::ElasticCorrespondenceMaterial2::ElasticCorrespondenceMaterial2(const
   m_fieldIds.push_back(m_unrotatedCauchyStressZZFieldId);
 }
 
-PeridigmNS::ElasticCorrespondenceMaterial2::~ElasticCorrespondenceMaterial2()
+PeridigmNS::ElasticCorrespondenceMaterial::~ElasticCorrespondenceMaterial()
 {
 }
 
 void
-PeridigmNS::ElasticCorrespondenceMaterial2::computeCauchyStress(const double dt,
+PeridigmNS::ElasticCorrespondenceMaterial::computeCauchyStress(const double dt,
                                                                const int numOwnedPoints,
                                                                PeridigmNS::DataManager& dataManager) const
 {

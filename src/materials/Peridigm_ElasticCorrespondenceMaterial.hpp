@@ -1,4 +1,4 @@
-//! \file Peridigm_ElasticCorrespondenceMaterial2.hpp
+//! \file Peridigm_ElasticCorrespondenceMaterial.hpp
 
 //@HEADER
 // ************************************************************************
@@ -48,18 +48,18 @@
 #ifndef PERIDIGM_ELASTICCORRESPONDENCEMATERIAL2_HPP
 #define PERIDIGM_ELASTICCORRESPONDENCEMATERIAL2_HPP
 
-#include "Peridigm_CorrespondenceMaterial2.hpp"
+#include "Peridigm_CorrespondenceMaterial.hpp"
 
 namespace PeridigmNS {
 
-  class ElasticCorrespondenceMaterial2 : public CorrespondenceMaterial2{
+  class ElasticCorrespondenceMaterial : public CorrespondenceMaterial{
   public:
 
 	//! Constructor.
-    ElasticCorrespondenceMaterial2(const Teuchos::ParameterList & params);
+    ElasticCorrespondenceMaterial(const Teuchos::ParameterList & params);
 
     //! Destructor.
-    virtual ~ElasticCorrespondenceMaterial2();
+    virtual ~ElasticCorrespondenceMaterial();
 
     //! Return name of material type
     virtual std::string Name() const { return("Elastic Correspondence2"); }
