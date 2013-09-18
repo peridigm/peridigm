@@ -314,24 +314,24 @@ PeridigmNS::CorrespondenceMaterial::initialize(const double dt,
   dataManager.getData(m_unrotatedCauchyStressZYFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
   dataManager.getData(m_unrotatedCauchyStressZZFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
 
-  dataManager.getData(m_cauchyStressXXFieldId, PeridigmField::STEP_N)->PutScalar(1.0);
+  dataManager.getData(m_cauchyStressXXFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
   dataManager.getData(m_cauchyStressXYFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
   dataManager.getData(m_cauchyStressXZFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
   dataManager.getData(m_cauchyStressYXFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_cauchyStressYYFieldId, PeridigmField::STEP_N)->PutScalar(1.0);
+  dataManager.getData(m_cauchyStressYYFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
   dataManager.getData(m_cauchyStressYZFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
   dataManager.getData(m_cauchyStressZXFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
   dataManager.getData(m_cauchyStressZYFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_cauchyStressZZFieldId, PeridigmField::STEP_N)->PutScalar(1.0);
-  dataManager.getData(m_cauchyStressXXFieldId, PeridigmField::STEP_NP1)->PutScalar(1.0);
+  dataManager.getData(m_cauchyStressZZFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
+  dataManager.getData(m_cauchyStressXXFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
   dataManager.getData(m_cauchyStressXYFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
   dataManager.getData(m_cauchyStressXZFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
   dataManager.getData(m_cauchyStressYXFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_cauchyStressYYFieldId, PeridigmField::STEP_NP1)->PutScalar(1.0);
+  dataManager.getData(m_cauchyStressYYFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
   dataManager.getData(m_cauchyStressYZFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
   dataManager.getData(m_cauchyStressZXFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
   dataManager.getData(m_cauchyStressZYFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_cauchyStressZZFieldId, PeridigmField::STEP_NP1)->PutScalar(1.0);
+  dataManager.getData(m_cauchyStressZZFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
 }
 
 void
@@ -342,7 +342,7 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
                                                  PeridigmNS::DataManager& dataManager) const
 {
 
-  Epetra_Vector cauchyStressN( *(dataManager.getData(m_cauchyStressYYFieldId, PeridigmField::STEP_N)) );
+  //Epetra_Vector cauchyStressN( *(dataManager.getData(m_cauchyStressYYFieldId, PeridigmField::STEP_N)) );
 
   // Zero out the forces
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
@@ -516,12 +516,13 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
   //   3) Whatever state variables are managed by the derived class
   //
 
-  // updateCauchyStress implemented in the derived class.  
+  // computeCauchyStress implemented in the derived class.  
   //   Input: unrotated rate-of-deformation tensor
   //   Input: unrotated Cauchy stress at step N
   //   Output unrotated Cauchy stress at step N+1
   //
   //   Internal state variables are managed in the derived class
+  //
   computeCauchyStress(dt, numOwnedPoints, dataManager);
 
   // rotate back to the Eulerian frame

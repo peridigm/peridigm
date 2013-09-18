@@ -116,6 +116,33 @@ int invert3by3Matrix
 }
 
 template<typename ScalarT>
+ScalarT TensorContraction
+(
+ const ScalarT& aXX,
+ const ScalarT& aXY,
+ const ScalarT& aXZ,
+ const ScalarT& aYX,
+ const ScalarT& aYY,
+ const ScalarT& aYZ,
+ const ScalarT& aZX,
+ const ScalarT& aZY,
+ const ScalarT& aZZ,
+ const ScalarT& bXX,
+ const ScalarT& bXY,
+ const ScalarT& bXZ,
+ const ScalarT& bYX,
+ const ScalarT& bYY,
+ const ScalarT& bYZ,
+ const ScalarT& bZX,
+ const ScalarT& bZY,
+ const ScalarT& bZZ
+)
+{
+    return aXX*bXX + aXY*bXY + aXZ*bXZ + aYX*bYX + aYY*bYY + 
+        aYZ*bYZ + aZX*bZX + aZY*bZY + aZZ*bZZ;
+}
+
+template<typename ScalarT>
 void MatrixMultiply
 (
  const ScalarT& aXX,
@@ -996,7 +1023,7 @@ double dt
     OmegaTensorYZ = -omegaX;
     OmegaTensorZX = -omegaY;
     OmegaTensorZY = omegaX;
-    OmegaTensorXX = 0.0;
+    OmegaTensorZZ = 0.0;
 
 
     //Increment R with (T&F Eq. 36 and 44) as opposed to solving (T&F 39) this
@@ -1593,6 +1620,28 @@ template void MatrixMultiply<double>
  double& resultZZ
 );
 
+template double TensorContraction<double>
+(
+ const double& aXX,
+ const double& aXY,
+ const double& aXZ,
+ const double& aYX,
+ const double& aYY,
+ const double& aYZ,
+ const double& aZX,
+ const double& aZY,
+ const double& aZZ,
+ const double& bXX,
+ const double& bXY,
+ const double& bXZ,
+ const double& bYX,
+ const double& bYY,
+ const double& bYZ,
+ const double& bZX,
+ const double& bZY,
+ const double& bZZ
+);
+
 template void MatrixUpdate<double>
 (
  const double& alpha,
@@ -2157,6 +2206,28 @@ template int invert3by3Matrix<Sacado::Fad::DFad<double> >
  Sacado::Fad::DFad<double>& inverseZX,
  Sacado::Fad::DFad<double>& inverseZY,
  Sacado::Fad::DFad<double>& inverseZZ
+);
+
+template Sacado::Fad::DFad<double> TensorContraction<Sacado::Fad::DFad<double> >
+(
+ const Sacado::Fad::DFad<double>& aXX,
+ const Sacado::Fad::DFad<double>& aXY,
+ const Sacado::Fad::DFad<double>& aXZ,
+ const Sacado::Fad::DFad<double>& aYX,
+ const Sacado::Fad::DFad<double>& aYY,
+ const Sacado::Fad::DFad<double>& aYZ,
+ const Sacado::Fad::DFad<double>& aZX,
+ const Sacado::Fad::DFad<double>& aZY,
+ const Sacado::Fad::DFad<double>& aZZ,
+ const Sacado::Fad::DFad<double>& bXX,
+ const Sacado::Fad::DFad<double>& bXY,
+ const Sacado::Fad::DFad<double>& bXZ,
+ const Sacado::Fad::DFad<double>& bYX,
+ const Sacado::Fad::DFad<double>& bYY,
+ const Sacado::Fad::DFad<double>& bYZ,
+ const Sacado::Fad::DFad<double>& bZX,
+ const Sacado::Fad::DFad<double>& bZY,
+ const Sacado::Fad::DFad<double>& bZZ
 );
 
 template int computeShapeTensorInverseAndApproximateDeformationGradient<Sacado::Fad::DFad<double> >
