@@ -177,7 +177,8 @@ namespace PeridigmNS {
 
     //! Perform line search
     double quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> residual,
-                                  Teuchos::RCP<Epetra_Vector> lhs);
+                                  Teuchos::RCP<Epetra_Vector> lhs,
+                                  double dt);
 
     //! Main routine to drive problem solution with implicit time integration
     void executeImplicit(Teuchos::RCP<Teuchos::ParameterList> solverParams);

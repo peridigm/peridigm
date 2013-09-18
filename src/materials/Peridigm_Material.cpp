@@ -105,6 +105,7 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   int volumeFId = fieldManager.getFieldId("Volume");
   int coordinatesFId = fieldManager.getFieldId("Coordinates");
+  int velocityFId = fieldManager.getFieldId("Velocity");
   int forceDensityFId = fieldManager.getFieldId("Force_Density");
 
   // Loop over all points.
@@ -155,9 +156,10 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     tempOwnedIDs[0] = 0;
 
     // Extract pointers to the underlying data in the constitutiveData array.
-    double *volume, *y, *force;
+    double *volume, *y, *v, *force;
     tempDataManager.getData(volumeFId, PeridigmField::STEP_NONE)->ExtractView(&volume);
     tempDataManager.getData(coordinatesFId, PeridigmField::STEP_NP1)->ExtractView(&y);
+    tempDataManager.getData(velocityFId, PeridigmField::STEP_NP1)->ExtractView(&v);
     tempDataManager.getData(forceDensityFId, PeridigmField::STEP_NP1)->ExtractView(&force);
 
     // Create a temporary vector for storing force
@@ -200,21 +202,26 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
 
         // Perturb a dof and compute the forces.
         double oldY = y[3*perturbID+dof];
+        double oldV = v[3*perturbID+dof];
 
         if(finiteDifferenceScheme == CENTRAL_DIFFERENCE){
           // Compute and store the negatively perturbed force.
           y[3*perturbID+dof] -= epsilon;
+          v[3*perturbID+dof] -= epsilon/dt;
           computeForce(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
           y[3*perturbID+dof] = oldY;
+          v[3*perturbID+dof] = oldV;
           for(int i=0 ; i<forceVector->MyLength() ; ++i)
             tempForce[i] = force[i];
         }
 
 
-	// Compute the purturbed force
+        // Compute the purturbed force
         y[3*perturbID+dof] += epsilon;
+        v[3*perturbID+dof] += epsilon/dt;
         computeForce(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
         y[3*perturbID+dof] = oldY;
+        v[3*perturbID+dof] = oldV;
 
         for(int i=0 ; i<numNeighbors+1 ; ++i){
           int forceID;
@@ -227,7 +234,7 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
             double value = ( force[3*forceID+d] - tempForce[3*forceID+d] ) / epsilon;
             if(finiteDifferenceScheme == CENTRAL_DIFFERENCE)
               value *= 0.5;
-              scratchMatrix(3*forceID+d, 3*perturbID+dof) = value;
+            scratchMatrix(3*forceID+d, 3*perturbID+dof) = value;
           }
         }
       }

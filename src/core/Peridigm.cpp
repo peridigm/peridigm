@@ -519,7 +519,7 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization>
   a = Teuchos::rcp((*threeDimensionalMothership)(4), false);             // accelerations
   force = Teuchos::rcp((*threeDimensionalMothership)(5), false);         // force
   contactForce = Teuchos::rcp((*threeDimensionalMothership)(6), false);  // contact force (used only for contact simulations)
-  externalForce = Teuchos::rcp((*threeDimensionalMothership)(7), false);  // external force
+  externalForce = Teuchos::rcp((*threeDimensionalMothership)(7), false); // external force
   deltaU = Teuchos::rcp((*threeDimensionalMothership)(8), false);        // increment in displacement (used only for implicit time integration)
   scratch = Teuchos::rcp((*threeDimensionalMothership)(9), false);       // scratch space
 
@@ -851,12 +851,12 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
   int nsteps = (int)floor((timeFinal-timeInitial)/dt);
 
   // Pointer index into sub-vectors for use with BLAS
-  double *xptr, *uptr, *yptr, *vptr, *aptr;
-  x->ExtractView( &xptr );
-  u->ExtractView( &uptr );
-  y->ExtractView( &yptr );
-  v->ExtractView( &vptr );
-  a->ExtractView( &aptr );
+  double *xPtr, *uPtr, *yPtr, *vPtr, *aPtr;
+  x->ExtractView( &xPtr );
+  u->ExtractView( &uPtr );
+  y->ExtractView( &yPtr );
+  v->ExtractView( &vPtr );
+  a->ExtractView( &aPtr );
   int length = a->MyLength();
 
   // Set the prescribed displacements (allow for nonzero initial displacements).
@@ -938,7 +938,7 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
 
     // V^{n+1/2} = V^{n} + (dt/2)*A^{n}
     // blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
-    blas.AXPY(length, dt2, aptr, vptr, 1, 1);
+    blas.AXPY(length, dt2, aPtr, vPtr, 1, 1);
 
     // Set the velocities for dof with kinematic boundary conditions.
     // This will propagate through the Verlet integrator and result in the proper
@@ -953,11 +953,11 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     // Y^{n+1} = X_{o} + U^{n} + (dt)*V^{n+1/2}
     // \todo Replace with blas call
     for(int i=0 ; i<y->MyLength() ; ++i)
-      yptr[i] = xptr[i] + uptr[i] + dt*vptr[i];
+      yPtr[i] = xPtr[i] + uPtr[i] + dt*vPtr[i];
 
     // U^{n+1} = U^{n} + (dt)*V^{n+1/2}
     // blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
-    blas.AXPY(length, dt, vptr, uptr, 1, 1);
+    blas.AXPY(length, dt, vPtr, uPtr, 1, 1);
 
     // \todo The velocity copied into the DataManager is actually the midstep velocity, not the NP1 velocity; this can be fixed by creating a midstep velocity field in the DataManager and setting the NP1 value as invalid.
 
@@ -1018,7 +1018,7 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
 
     // V^{n+1}   = V^{n+1/2} + (dt/2)*A^{n+1}
     //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
-    blas.AXPY(length, dt2, aptr, vptr, 1, 1);
+    blas.AXPY(length, dt2, aPtr, vPtr, 1, 1);
 
     PeridigmNS::Timer::self().startTimer("Output");
     synchDataManagers();
@@ -1076,6 +1076,7 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
   // copy the solution vector passed in by NOX to update the deformation 
   for(int i=0 ; i < u->MyLength() ; ++i){
     (*y)[i] = (*x)[i] + (*u)[i] + (*soln)[i];
+    (*v)[i] = (*soln)[i] / (*(workset->timeStep));
   }
 
   // Copy data from mothership vectors to overlap vectors in data manager
@@ -1251,6 +1252,14 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   workset->timeStep = timeStep;
  
+  // Pointers into mothership vectors
+  double *xPtr, *uPtr, *yPtr, *vPtr, *deltaUPtr;
+  x->ExtractView( &xPtr );
+  u->ExtractView( &uPtr );
+  y->ExtractView( &yPtr );
+  v->ExtractView( &vPtr );
+  deltaU->ExtractView( &deltaUPtr );
+
   // "Solver" parameter list
   bool performJacobianDiagnostics = solverParams->get("Jacobian Diagnostics", false);
 
@@ -1365,22 +1374,26 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
 
     if(step > 1){
       // Perform line search on this guess
-      for(int i=0 ; i<y->MyLength() ; ++i)
-        (*y)[i] = (*x)[i] + (*u)[i] + (*deltaU)[i];
-      double alpha = quasiStaticsLineSearch(residual, initialGuess);
+      for(int i=0 ; i<y->MyLength() ; ++i){
+        yPtr[i] = xPtr[i] + uPtr[i] + deltaUPtr[i];
+        vPtr[i] = deltaUPtr[i]/timeIncrement; // \todo Question: how is deltaU set for dof with bc, is it zero or is it equal to the increment in bc?  If it's zero, the velocity will be wrong.
+      }
+      double alpha = quasiStaticsLineSearch(residual, initialGuess, timeIncrement);
       initialGuess->Scale(alpha);
     }
 
     for(int i=0 ; i<u->MyLength() ; ++i)
-      (*u)[i] += (*deltaU)[i];
+      uPtr[i] += deltaUPtr[i];
 
     *soln = *initialGuess;
 
     double toleranceMultiplier = 1.0;
     if(!useAbsoluteTolerance){
       // compute the vector of reactions, i.e., the forces corresponding to degrees of freedom for which kinematic B.C. are applied
-      for(int i=0 ; i<y->MyLength() ; ++i)
-        (*y)[i] = (*x)[i] + (*u)[i];
+      for(int i=0 ; i<y->MyLength() ; ++i){
+        yPtr[i] = xPtr[i] + uPtr[i];
+        vPtr[i] = deltaUPtr[i]/timeIncrement;
+      }
       computeQuasiStaticResidual(residual);
       boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(force, reaction);
       // convert force density to force
@@ -1529,12 +1542,13 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
   }
 
   // Pointer index into sub-vectors for use with BLAS
-  double *xptr, *uptr, *yptr, *vptr, *aptr;
-  x->ExtractView( &xptr );
-  u->ExtractView( &uptr );
-  y->ExtractView( &yptr );
-  v->ExtractView( &vptr );
-  a->ExtractView( &aptr );
+  double *xPtr, *uPtr, *deltaUPtr, *yPtr, *vPtr, *aPtr;
+  x->ExtractView( &xPtr );
+  u->ExtractView( &uPtr );
+  deltaU->ExtractView( &deltaUPtr );
+  y->ExtractView( &yPtr );
+  v->ExtractView( &vPtr );
+  a->ExtractView( &aPtr );
 
   // Initialize velocity to zero
   v->PutScalar(0.0);
@@ -1619,12 +1633,14 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
     // evaluate the external (body) forces:
     boundaryAndInitialConditionManager->applyForceContributions(timeCurrent,timePrevious);
 
-    // Set the current position
+    // Set the current position and velocity
     // \todo We probably want to rework this so that the material models get valid x, u, and y values.
     // Currently the u values are from the previous load step (and if we update u here we'll be unable
     // to properly undo a time step, which we'll need to adaptive time stepping).
-    for(int i=0 ; i<y->MyLength() ; ++i)
-      (*y)[i] = (*x)[i] + (*u)[i] + (*deltaU)[i];
+    for(int i=0 ; i<y->MyLength() ; ++i){
+      yPtr[i] = xPtr[i] + uPtr[i] + deltaUPtr[i];
+      vPtr[i] = deltaUPtr[i]/timeIncrement;
+    }
 
     // compute the residual
     double residualNorm = computeQuasiStaticResidual(residual);
@@ -1730,15 +1746,16 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
         boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(lhs);
 
         PeridigmNS::Timer::self().startTimer("Line Search");
-        alpha = quasiStaticsLineSearch(residual, lhs);
+        alpha = quasiStaticsLineSearch(residual, lhs, timeIncrement);
         PeridigmNS::Timer::self().stopTimer("Line Search");
 
         // Apply increment to nodal positions
-        for(int i=0 ; i<y->MyLength() ; ++i)
-          (*deltaU)[i] += alpha*(*lhs)[i];
-        for(int i=0 ; i<y->MyLength() ; ++i)
-          (*y)[i] = (*x)[i] + (*u)[i] + (*deltaU)[i];
-      
+        for(int i=0 ; i<y->MyLength() ; ++i){
+          deltaUPtr[i] += alpha*(*lhs)[i];
+          yPtr[i] = xPtr[i] + uPtr[i] + deltaUPtr[i];
+          vPtr[i] = deltaUPtr[i]/timeIncrement;
+        }
+
         // Compute residual
         residualNorm = computeQuasiStaticResidual(residual);
 
@@ -1782,7 +1799,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
       residual->Norm2(&residualL2);
       residual->NormInf(&residualInf);
       if(peridigmComm->MyPID() == 0)
-	cout << "  iteration " << solverIteration << ": residual = " << residualNorm << ", residual L2 = " << residualL2 << ", residual inf = " << residualInf << ", alpha = " << alpha << endl;
+        cout << "  iteration " << solverIteration << ": residual = " << residualNorm << ", residual L2 = " << residualL2 << ", residual inf = " << residualInf << ", alpha = " << alpha << endl;
     }
 
     // Print load step timing information
@@ -1790,10 +1807,6 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
     cummulativeLoadStepCPUTime += CPUTime;
     if(peridigmComm->MyPID() == 0)
       cout << setprecision(2) << "  cpu time for load step = " << CPUTime << " sec., cummulative cpu time = " << cummulativeLoadStepCPUTime << " sec.\n" << endl;
-
-    // Store the velocity
-    for(int i=0 ; i<v->MyLength() ; ++i)
-      (*v)[i] = (*deltaU)[i]/timeIncrement;
 
     // Add the converged displacement increment to the displacement
     for(int i=0 ; i<u->MyLength() ; ++i)
@@ -1921,17 +1934,19 @@ Belos::ReturnType PeridigmNS::Peridigm::quasiStaticsSolveSystem(Teuchos::RCP<Epe
 }
 
 double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> residual,
-						    Teuchos::RCP<Epetra_Vector> lhs)
+                                                    Teuchos::RCP<Epetra_Vector> lhs,
+                                                    double dt)
 {
   Teuchos::RCP<Epetra_Vector> tempVector = Teuchos::rcp(new Epetra_Vector(*deltaU));
 
-  double *lhsPtr, *residualPtr, *deltaUPtr, *xPtr, *yPtr, *uPtr;
+  double *lhsPtr, *residualPtr, *deltaUPtr, *xPtr, *yPtr, *uPtr, *vPtr;
   lhs->ExtractView(&lhsPtr);
   residual->ExtractView(&residualPtr);
   deltaU->ExtractView(&deltaUPtr);
   x->ExtractView(&xPtr);
   y->ExtractView(&yPtr);
   u->ExtractView(&uPtr);
+  v->ExtractView(&vPtr);
 
   // compute the current residual
   double unperturbedResidualNorm = computeQuasiStaticResidual(residual);
@@ -1946,10 +1961,12 @@ double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> 
 
   // a systematic guess for alpha
   double epsilon = 1.0e-4;
-  for(int i=0 ; i<y->MyLength() ; ++i)
+  for(int i=0 ; i<y->MyLength() ; ++i){
     deltaUPtr[i] += epsilon*lhsPtr[i];
-  for(int i=0 ; i<y->MyLength() ; ++i)
     yPtr[i] = xPtr[i] + uPtr[i] + deltaUPtr[i];
+    vPtr[i] = deltaUPtr[i]/dt;
+  }
+
   Teuchos::RCP<Epetra_Vector> perturbedResidual = Teuchos::rcp(new Epetra_Vector(*residual));
   computeQuasiStaticResidual(perturbedResidual);
   double SR, SPerturbedR;
@@ -1958,6 +1975,7 @@ double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> 
   double tempAlpha = -1.0*epsilon*SR/(SPerturbedR - SR);
   if(tempAlpha > -0.1 && tempAlpha < 10.0)
     candidateAlphas.push_back(tempAlpha);
+  *deltaU = *tempVector;
 
   // include a few brute-force gueses
   candidateAlphas.push_back(0.1);
@@ -1970,10 +1988,11 @@ double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> 
   // compute the residual for each candidate alpha
   for(unsigned int i=0 ; i<candidateAlphas.size(); ++i){
     double alpha = candidateAlphas[i];
-    for(int i=0 ; i<y->MyLength() ; ++i)
+    for(int i=0 ; i<y->MyLength() ; ++i){
       deltaUPtr[i] += alpha*lhsPtr[i];
-    for(int i=0 ; i<y->MyLength() ; ++i)
       yPtr[i] = xPtr[i] + uPtr[i] + deltaUPtr[i];
+      vPtr[i] = deltaUPtr[i]/dt;
+    }
     double residualNorm = computeQuasiStaticResidual(residual);
     *deltaU = *tempVector;
     if(boost::math::isfinite(residualNorm) && residualNorm < bestResidual){
@@ -2013,20 +2032,21 @@ double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> 
   // compute the residual for each candidate alpha
   for(unsigned int i=0 ; i<candidateAlphas.size(); ++i){
     double alpha = candidateAlphas[i];
-    for(int i=0 ; i<y->MyLength() ; ++i)
+    for(int i=0 ; i<y->MyLength() ; ++i){
       deltaUPtr[i] += alpha*lhsPtr[i];
-    for(int i=0 ; i<y->MyLength() ; ++i)
       yPtr[i] = xPtr[i] + uPtr[i] + deltaUPtr[i];
+      vPtr[i] = deltaUPtr[i]/dt;
+    }
     double residualNorm = computeQuasiStaticResidual(residual);
     *deltaU = *tempVector;
     if(boost::math::isfinite(residualNorm)){
       if(residualNorm < bestResidual){
-	bestAlpha = alpha;
-	bestResidual = residualNorm;
+        bestAlpha = alpha;
+        bestResidual = residualNorm;
       }
       else if(residualNorm > unperturbedResidualNorm){
-	double percentIncreased = (residualNorm - unperturbedResidualNorm)/unperturbedResidualNorm;
-	residualData.push_back( pair<double,double>(alpha, percentIncreased) );
+        double percentIncreased = (residualNorm - unperturbedResidualNorm)/unperturbedResidualNorm;
+        residualData.push_back( pair<double,double>(alpha, percentIncreased) );
       }
     }
   }
@@ -2096,12 +2116,12 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
   int nsteps = (int)floor((timeFinal-timeInitial)/dt);
 
   // Pointer index into sub-vectors for use with BLAS
-  double *xptr, *uptr, *yptr, *vptr, *aptr;
-  x->ExtractView( &xptr );
-  u->ExtractView( &uptr );
-  y->ExtractView( &yptr );
-  v->ExtractView( &vptr );
-  a->ExtractView( &aptr );
+  double *xPtr, *uPtr, *yPtr, *vPtr, *aPtr;
+  x->ExtractView( &xPtr );
+  u->ExtractView( &uPtr );
+  y->ExtractView( &yPtr );
+  v->ExtractView( &vPtr );
+  a->ExtractView( &aPtr );
 
   // Data for linear solver object
   Belos::LinearProblem<double,Epetra_MultiVector,Epetra_Operator> linearProblem;
@@ -2533,7 +2553,6 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
   for(int i=0 ; i<externalForce->MyLength() ; ++i)
     TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*externalForce)[i]), "**** NaN returned by external force evaluation.\n");
 
-
   // copy the internal force to the residual vector
   // note that due to restrictions on CrsMatrix, these vectors have different (but equivalent) maps
   TEUCHOS_TEST_FOR_EXCEPT_MSG(residual->MyLength() != force->MyLength(), "**** PeridigmNS::Peridigm::computeQuasiStaticResidual() incompatible vector lengths!\n");
@@ -2639,9 +2658,8 @@ Teuchos::RCP< map< string, vector<int> > > PeridigmNS::Peridigm::getExodusNodeSe
     vector<int>& exodusNodeSet = (*exodusNodeSets)[nodeSetName];
     for(unsigned int i=0 ; i<nodeSet.size() ; ++i){
       int localId = oneDimensionalMap->LID(nodeSet[i]);
-      // \todo Assert that the node is on processor, need to fix node sets before this can be done because right now some are off-processor
-      if(localId != -1)
-        exodusNodeSet.push_back(localId + 1);
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(localId == -1, "**** Error, Peridigm::getExodusNodeSets() encountered off-processor node in node set.\n");
+      exodusNodeSet.push_back(localId + 1);
     }
   }
   return exodusNodeSets;
