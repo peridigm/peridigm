@@ -714,6 +714,10 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
   double *hourglassForceDensity;
   dataManager.getData(m_hourglassForceDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&hourglassForceDensity);
 
+  // \todo HOURGLASS FORCES ARE NOT OUTPUT TO EXODUS CORRECTLY BECAUSE THEY ARE NOT ASSEMBLED ACROSS PROCESSORS.
+  //       They are summed into the force vector below, and the force vector is assembled across processors,
+  //       so the calculation runs correctly, but the hourglass output is off.
+
   CORRESPONDENCE::computeHourglassForce(volume,
                                         modelCoordinates,
                                         coordinates,
