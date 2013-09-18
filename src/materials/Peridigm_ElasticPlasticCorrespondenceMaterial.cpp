@@ -54,7 +54,7 @@
 using namespace std;
 
 PeridigmNS::ElasticPlasticCorrespondenceMaterial::ElasticPlasticCorrespondenceMaterial(const Teuchos::ParameterList& params)
-  : CorrespondenceMaterial2(params),
+  : CorrespondenceMaterial(params),
     m_yieldStress(0.0),
     m_unrotatedRateOfDeformationXXFieldId(-1), m_unrotatedRateOfDeformationXYFieldId(-1), m_unrotatedRateOfDeformationXZFieldId(-1), 
     m_unrotatedRateOfDeformationYXFieldId(-1), m_unrotatedRateOfDeformationYYFieldId(-1), m_unrotatedRateOfDeformationYZFieldId(-1), 
@@ -124,7 +124,7 @@ PeridigmNS::ElasticPlasticCorrespondenceMaterial::initialize(const double dt,
                                                              PeridigmNS::DataManager& dataManager) const
 {
 
-  PeridigmNS::CorrespondenceMaterial2::initialize(dt,
+  PeridigmNS::CorrespondenceMaterial::initialize(dt,
                                                   numOwnedPoints,
                                                   ownedIDs,
                                                   neighborhoodList,
