@@ -9,6 +9,7 @@ set(PD_MATERIAL_SOURCES
     viscoelastic.cxx
     correspondence.cxx
     elastic_correspondence.cxx
+    elastic_plastic_correspondence.cxx
     material_utilities.cxx
 )
 
