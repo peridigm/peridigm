@@ -1336,7 +1336,7 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
     m_noxTriggerJacobianUpdate = noxQuasiStaticParams->sublist("Direction").sublist("Nonlinear CG").get<int>("Update Jacobian");
 
   Epetra_Time loadStepCPUTime(*peridigmComm);
-  double cummulativeLoadStepCPUTime = 0.0;
+  double cumulativeLoadStepCPUTime = 0.0;
 
   for(int step=1 ; step<(int)timeSteps.size() ; step++){
 
@@ -1475,9 +1475,9 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
  
     // Print load step timing information
     double CPUTime = loadStepCPUTime.ElapsedTime();
-    cummulativeLoadStepCPUTime += CPUTime;
+    cumulativeLoadStepCPUTime += CPUTime;
     if(peridigmComm->MyPID() == 0)
-      cout << setprecision(2) << "  cpu time for load step = " << CPUTime << " sec., cummulative cpu time = " << cummulativeLoadStepCPUTime << " sec.\n" << endl;
+      cout << setprecision(2) << "  cpu time for load step = " << CPUTime << " sec., cumulative cpu time = " << cumulativeLoadStepCPUTime << " sec.\n" << endl;
 
     // Store the velocity
     for(int i=0 ; i<v->MyLength() ; ++i){
@@ -1523,6 +1523,9 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
   Teuchos::RCP<Epetra_Vector> residual = Teuchos::rcp(new Epetra_Vector(tangent->Map()));
   Teuchos::RCP<Epetra_Vector> lhs = Teuchos::rcp(new Epetra_Vector(tangent->Map()));
   Teuchos::RCP<Epetra_Vector> reaction = Teuchos::rcp(new Epetra_Vector(force->Map()));
+
+  // Vector for predictor
+  Epetra_Vector predictor(v->Map());
 
   Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
   workset->timeStep = timeStep;
@@ -1613,7 +1616,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
   PeridigmNS::Timer::self().stopTimer("Output");
 
   Epetra_Time loadStepCPUTime(*peridigmComm);
-  double cummulativeLoadStepCPUTime = 0.0;
+  double cumulativeLoadStepCPUTime = 0.0;
 
   for(int step=1 ; step<(int)timeSteps.size() ; step++){
 
@@ -1686,7 +1689,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
       // On the first iteration, use a predictor based on the velocity from the previous load step
       if(solverIteration == 1 && step > 1){
         for(int i=0 ; i<lhs->MyLength() ; ++i)
-          (*lhs)[i] = (*v)[i]*timeIncrement;
+          (*lhs)[i] = predictor[i]*timeIncrement;
         boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(lhs);
         isConverged = Belos::Converged;
       }
@@ -1804,13 +1807,16 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
 
     // Print load step timing information
     double CPUTime = loadStepCPUTime.ElapsedTime();
-    cummulativeLoadStepCPUTime += CPUTime;
+    cumulativeLoadStepCPUTime += CPUTime;
     if(peridigmComm->MyPID() == 0)
-      cout << setprecision(2) << "  cpu time for load step = " << CPUTime << " sec., cummulative cpu time = " << cummulativeLoadStepCPUTime << " sec.\n" << endl;
+      cout << setprecision(2) << "  cpu time for load step = " << CPUTime << " sec., cumulative cpu time = " << cumulativeLoadStepCPUTime << " sec.\n" << endl;
 
     // Add the converged displacement increment to the displacement
     for(int i=0 ; i<u->MyLength() ; ++i)
       (*u)[i] += (*deltaU)[i];
+
+    // Store the velocity for use as a predictor in the next load step
+    predictor = *v;
 
     // Write output for completed load step
     PeridigmNS::Timer::self().startTimer("Output");
