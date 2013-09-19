@@ -72,7 +72,7 @@
   <ParameterList name="Output1">
 	<Parameter name="Output File Type" type="string" value="ExodusII"/>
 	<Parameter name="Output Filename" type="string" value="ElasticPlasticCorrespondenceFullyPrescribedTension"/>
-	<Parameter name="Output Frequency" type="int" value="1"/>
+	<Parameter name="Output Frequency" type="int" value="10"/>
 	<ParameterList name="Output Variables">
           <Parameter name="Volume" type="bool" value="true"/>
           <Parameter name="Displacement" type="bool" value="true"/>
