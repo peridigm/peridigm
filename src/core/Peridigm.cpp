@@ -1077,6 +1077,7 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
     (*y)[i] = (*x)[i] + (*u)[i] + (*soln)[i];
     (*v)[i] = (*soln)[i] / (*(workset->timeStep));
   }
+  v->Update(1.0, *noxVelocityAtDOFWithKinematicBC, 1.0); // Necessary because soln is zero at dof with kinematic bc
 
   // Copy data from mothership vectors to overlap vectors in data manager
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
@@ -1244,6 +1245,8 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
   Teuchos::RCP<NOX::Epetra::Vector> noxInitialGuess = Teuchos::rcp(new NOX::Epetra::Vector(initialGuess, NOX::Epetra::Vector::CreateView));
   initialGuess->PutScalar(0.0);
   
+  noxVelocityAtDOFWithKinematicBC = Teuchos::rcp(new Epetra_Vector(v->Map()));
+
   // Initialize velocity to zero
   v->PutScalar(0.0);
   
@@ -1354,7 +1357,8 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
     // Use a predictor based on the velocity from the previous load step
     for(int i=0 ; i<initialGuess->MyLength() ; ++i)
       (*initialGuess)[i] = (*v)[i]*timeIncrement;
-    v->PutScalar(0.0); //clear v in prep for storage later
+
+    v->PutScalar(0.0); 
 
     boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(initialGuess);
 
@@ -1365,34 +1369,27 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
     // condition manager gets the right type of vector.
 
     PeridigmNS::Timer::self().startTimer("Apply kinematic B.C.");
-    boundaryAndInitialConditionManager->applyBoundaryConditions(timeCurrent,timePrevious);
+    boundaryAndInitialConditionManager->applyBoundaryConditions(timeCurrent, timePrevious);
     PeridigmNS::Timer::self().stopTimer("Apply kinematic B.C.");
 
-    // evaluate the external (body) forces:
-    boundaryAndInitialConditionManager->applyForceContributions(timeCurrent,timePrevious);
-
-    if(step > 1){
-      // Perform line search on this guess
-      for(int i=0 ; i<y->MyLength() ; ++i){
-        yPtr[i] = xPtr[i] + uPtr[i] + deltaUPtr[i];
-        vPtr[i] = deltaUPtr[i]/timeIncrement; // \todo Question: how is deltaU set for dof with bc, is it zero or is it equal to the increment in bc?  If it's zero, the velocity will be wrong.
-      }
-      double alpha = quasiStaticsLineSearch(residual, initialGuess, timeIncrement);
-      initialGuess->Scale(alpha);
-    }
-
+    // For NOX, add the increment in displacement BC directly into the displacement vector
     for(int i=0 ; i<u->MyLength() ; ++i)
       uPtr[i] += deltaUPtr[i];
+
+    // Note:  applyBoundaryConditions() sets the velocity as well as the displacement.
+    //        This needs to be stored because NOX returns a deltaU of zero for these dof
+    *noxVelocityAtDOFWithKinematicBC = *v;
+
+    // evaluate the external (body) forces:
+    boundaryAndInitialConditionManager->applyForceContributions(timeCurrent, timePrevious);
 
     *soln = *initialGuess;
 
     double toleranceMultiplier = 1.0;
     if(!useAbsoluteTolerance){
       // compute the vector of reactions, i.e., the forces corresponding to degrees of freedom for which kinematic B.C. are applied
-      for(int i=0 ; i<y->MyLength() ; ++i){
+      for(int i=0 ; i<y->MyLength() ; ++i)
         yPtr[i] = xPtr[i] + uPtr[i];
-        vPtr[i] = deltaUPtr[i]/timeIncrement;
-      }
       computeQuasiStaticResidual(residual);
       boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(force, reaction);
       // convert force density to force
@@ -1479,9 +1476,9 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
       cout << setprecision(2) << "  cpu time for load step = " << CPUTime << " sec., cumulative cpu time = " << cumulativeLoadStepCPUTime << " sec.\n" << endl;
 
     // Store the velocity
-    for(int i=0 ; i<v->MyLength() ; ++i){
-      (*v)[i] += finalSolution[i]/timeIncrement;
-    }
+    for(int i=0 ; i<v->MyLength() ; ++i)
+      (*v)[i] = finalSolution[i]/timeIncrement;
+    v->Update(1.0, *noxVelocityAtDOFWithKinematicBC, 1.0);
 
     // Add the converged displacement increment to the displacement
     for(int i=0 ; i<u->MyLength() ; ++i)
