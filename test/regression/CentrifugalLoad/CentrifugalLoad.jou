@@ -1,0 +1,20 @@
+
+reset
+create cylinder height 2.0 radius 10.0
+#rotate volume 1 angle 90 about y
+webcut volume 1 with plane xplane offset 0.0 noimprint nomerge
+delete volume 2
+webcut volume 1 with plane yplane offset 0.0 noimprint nomerge
+delete volume 1
+block 1 volume 3
+nodeset 1 volume 3    # entire model
+nodeset 2 surface 19  # face with normal in x direction
+nodeset 3 surface 17  # face with normal in y direction
+nodeset 4 surface 18  # back face
+volume all size 0.6667
+mesh volume all
+export genesis 'CentrifugalLoad.g' overwrite
+
+
+
+
