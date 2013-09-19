@@ -2633,10 +2633,13 @@ void PeridigmNS::Peridigm::computeImplicitJacobian(double beta) {
 }
 
 void PeridigmNS::Peridigm::synchDataManagers() {
+
   // Copy data from mothership vectors to overlap vectors in blocks
   // Volume and Block_Id are synched during creation and rebalance, and otherwise never changes
   // Model_Coordinates is synched during creation and rebalance, and otherwise never changes
+
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
+
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
     blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
@@ -2646,6 +2649,26 @@ void PeridigmNS::Peridigm::synchDataManagers() {
     blockIt->importData(*externalForce, externalForceDensityFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
   }
+
+  // The hourglass force density is a special case.  It needs to be parallel assembled
+  // prior to output.
+
+  static Teuchos::RCP<Epetra_Vector> tempVector;  
+
+  if(PeridigmNS::FieldManager::self().hasField("Hourglass_Force_Density")){
+    int hourglassForceDensityFieldId = PeridigmNS::FieldManager::self().getFieldId("Hourglass_Force_Density");
+    if(tempVector.is_null())
+      tempVector = Teuchos::rcp(new Epetra_Vector(scratch->Map()));
+    tempVector->PutScalar(0.0);
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+      scratch->PutScalar(0.0);
+      blockIt->exportData(*scratch, hourglassForceDensityFieldId, PeridigmField::STEP_NP1, Add);
+      tempVector->Update(1.0, *scratch, 1.0);
+    }
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+      blockIt->importData(*tempVector, hourglassForceDensityFieldId, PeridigmField::STEP_NP1, Insert);
+  }
+
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 }
 
