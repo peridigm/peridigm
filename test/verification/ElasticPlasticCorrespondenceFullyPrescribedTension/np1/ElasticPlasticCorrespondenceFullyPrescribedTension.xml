@@ -2,11 +2,11 @@
   
   <ParameterList name="Discretization">
 	<Parameter name="Type" type="string" value="Exodus" />
-	<Parameter name="Input Mesh File" type="string" value="ElasticCorrespondenceFullyPrescribedTension.g"/>
+	<Parameter name="Input Mesh File" type="string" value="ElasticPlasticCorrespondenceFullyPrescribedTension.g"/>
   </ParameterList>
 
   <ParameterList name="Materials">
-	<ParameterList name="My Elastic Correspondence Material">
+	<ParameterList name="My Elastic Plastic Correspondence Material">
 	  <Parameter name="Material Model" type="string" value="Elastic Plastic Correspondence"/>
 	  <Parameter name="Density" type="double" value="7800.0"/>
       <Parameter name="Young's Modulus" type="double" value="200.0e9"/>
@@ -19,7 +19,7 @@
   <ParameterList name="Blocks">
 	<ParameterList name="My Group of Blocks">
 	  <Parameter name="Block Names" type="string" value="block_1 block_2"/>
-	  <Parameter name="Material" type="string" value="My Elastic Correspondence Material"/>
+	  <Parameter name="Material" type="string" value="My Elastic Plastic Correspondence Material"/>
           <Parameter name="Horizon" type="double" value="0.751"/>
 	</ParameterList>
   </ParameterList>
@@ -63,18 +63,18 @@
        <Parameter name="Variable" type="string" value="Force"/>
        <Parameter name="Output Label" type="string" value="Bottom_Reaction_Force"/>
      </ParameterList>
-     <ParameterList name="Max Stress YY">
+     <ParameterList name="Max Von Mises Stress">
        <Parameter name="Compute Class" type="string" value="Block_Data"/>
        <Parameter name="Calculation Type" type="string" value="Maximum"/>
-       <Parameter name="Block" type="string" value="block_2"/>
-       <Parameter name="Variable" type="string" value="Cauchy_Stress_YY"/>
-       <Parameter name="Output Label" type="string" value="Max_Stress_YY"/>
+       <Parameter name="Block" type="string" value="block_1"/>
+       <Parameter name="Variable" type="string" value="Von_Mises_Stress"/>
+       <Parameter name="Output Label" type="string" value="Max_Von_Mises_Stress"/>
      </ParameterList>
   </ParameterList>
 
   <ParameterList name="Output1">
 	<Parameter name="Output File Type" type="string" value="ExodusII"/>
-	<Parameter name="Output Filename" type="string" value="ElasticCorrespondenceFullyPrescribedTension"/>
+	<Parameter name="Output Filename" type="string" value="ElasticPlasticCorrespondenceFullyPrescribedTension"/>
 	<Parameter name="Output Frequency" type="int" value="1"/>
 	<ParameterList name="Output Variables">
           <Parameter name="Volume" type="bool" value="true"/>
@@ -141,16 +141,16 @@
           <Parameter name="Cauchy_StressZZ" type="bool" value="true"/>
           <Parameter name="Equivalent_Plastic_Strain" type="bool" value="true"/>
           <Parameter name="Von_Mises_Stress" type="bool" value="true"/>
-          	</ParameterList>
+         </ParameterList>
   </ParameterList>
   <ParameterList name="Output2">
 	<Parameter name="Output File Type" type="string" value="ExodusII"/>
-	<Parameter name="Output Filename" type="string" value="ElasticCorrespondenceFullyPrescribedTension"/>
+	<Parameter name="Output Filename" type="string" value="ElasticPlasticCorrespondenceFullyPrescribedTension"/>
 	<Parameter name="Output Frequency" type="int" value="1"/>
 	<ParameterList name="Output Variables">
           <Parameter name="Top_Reaction_Force" type="bool" value="true"/>
           <Parameter name="Bottom_Reaction_Force" type="bool" value="true"/>
-          <Parameter name="Max_Stress_YY" type="bool" value="true"/>
+          <Parameter name="Max_Von_Mises_Stress" type="bool" value="true"/>
 	</ParameterList>
   </ParameterList>
   
