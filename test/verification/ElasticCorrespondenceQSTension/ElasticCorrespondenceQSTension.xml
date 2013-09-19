@@ -106,6 +106,7 @@
           <Parameter name="Force" type="bool" value="true"/>
           <Parameter name="Number_Of_Neighbors" type="bool" value="true"/>
           <Parameter name="Hourglass_Force_Density" type="bool" value="true"/>
+          <Parameter name="Force_Density" type="bool" value="true"/>
           <Parameter name="Top_Reaction_Force" type="bool" value="true"/>
           <Parameter name="Bottom_Reaction_Force" type="bool" value="true"/>
           <Parameter name="Deformation_GradientXX" type="bool" value="true"/>
