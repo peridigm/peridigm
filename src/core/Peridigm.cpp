@@ -182,9 +182,6 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   // Create field ids that may be required for output
   fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Proc_Num");
 
-  // Instantiate compute manager
-  instantiateComputeManager();
-
   // Instantiate the contact manager
   Teuchos::ParameterList contactParams;
   if(peridigmParams->isSublist("Contact")){
@@ -212,7 +209,6 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
     const std::string statTag = "Contact Initialized";
     memstat->addStat(statTag);
   }
-
 
   // Instantiate the blocks
   initializeBlocks(peridigmDisc);
@@ -268,6 +264,9 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
       blockIt->setDamageModel(damageModel);
     }
   }
+
+  // Instantiate compute manager
+  instantiateComputeManager();
 
   // Load the auxiliary field ids into the blocks (they will be
   // combined with material model and damage model ids when allocating
