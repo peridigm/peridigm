@@ -18,7 +18,7 @@
 
   <ParameterList name="Blocks">
 	<ParameterList name="My Group of Blocks">
-	  <Parameter name="Block Names" type="string" value="block_1 block_2"/>
+	  <Parameter name="Block Names" type="string" value="block_1 block_2 block_3"/>
 	  <Parameter name="Material" type="string" value="My Elastic Plastic Correspondence Material"/>
           <Parameter name="Horizon" type="double" value="0.751"/>
 	</ParameterList>
