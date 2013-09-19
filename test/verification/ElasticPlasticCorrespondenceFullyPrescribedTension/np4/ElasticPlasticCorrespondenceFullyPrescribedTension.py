@@ -5,7 +5,7 @@ import os
 import re
 from subprocess import Popen
 
-test_dir = "ElasticPlasticCorrespondenceFullyPrescribedTension/np1"
+test_dir = "ElasticPlasticCorrespondenceFullyPrescribedTension/np4"
 base_name = "ElasticPlasticCorrespondenceFullyPrescribedTension"
 
 if __name__ == "__main__":
@@ -27,19 +27,26 @@ if __name__ == "__main__":
     logfile = open(log_file_name, 'w')
 
     # remove old output files, if any
-    files_to_remove = base_name + ".e"
+    # use regular expression module since differentiating
+    # between gold files and old output files can be tricky
+    files_to_remove = [base_name + ".e", base_name + ".e.0", base_name + ".e.1", base_name + ".e.2", base_name + ".e.3"]
     for file in os.listdir(os.getcwd()):
       if file in files_to_remove:
         os.remove(file)
 
     # run Peridigm
-    command = ["mpiexec -np 4 ../../../../src/Peridigm", "../"+base_name+".xml"]
+    command = ["mpiexec", "-np", "4", "../../../../src/Peridigm", "../"+base_name+".xml"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:
         result = return_code
 
     # compare output files against gold files
+    command = ["../../../../scripts/epu", "-p", "4", base_name]
+    p = Popen(command, stdout=logfile, stderr=logfile)
+    return_code = p.wait()
+    if return_code != 0:
+        result = return_code
     command = ["../../../../scripts/exodiff", \
                "-stat", \
                "-f", \

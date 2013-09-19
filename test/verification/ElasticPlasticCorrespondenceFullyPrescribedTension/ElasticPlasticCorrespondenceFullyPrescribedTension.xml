@@ -63,12 +63,12 @@
        <Parameter name="Variable" type="string" value="Force"/>
        <Parameter name="Output Label" type="string" value="Bottom_Reaction_Force"/>
      </ParameterList>
-     <ParameterList name="Max Stress YY">
+     <ParameterList name="Max Von Mises Stress">
        <Parameter name="Compute Class" type="string" value="Block_Data"/>
        <Parameter name="Calculation Type" type="string" value="Maximum"/>
-       <Parameter name="Block" type="string" value="block_2"/>
-       <Parameter name="Variable" type="string" value="Cauchy_Stress_YY"/>
-       <Parameter name="Output Label" type="string" value="Max_Stress_YY"/>
+       <Parameter name="Block" type="string" value="block_1"/>
+       <Parameter name="Variable" type="string" value="Von_Mises_Stress"/>
+       <Parameter name="Output Label" type="string" value="Max_Von_Mises_Stress"/>
      </ParameterList>
   </ParameterList>
 
@@ -141,7 +141,7 @@
           <Parameter name="Cauchy_StressZZ" type="bool" value="true"/>
           <Parameter name="Equivalent_Plastic_Strain" type="bool" value="true"/>
           <Parameter name="Von_Mises_Stress" type="bool" value="true"/>
-          	</ParameterList>
+         </ParameterList>
   </ParameterList>
   <ParameterList name="Output2">
 	<Parameter name="Output File Type" type="string" value="ExodusII"/>
@@ -150,7 +150,7 @@
 	<ParameterList name="Output Variables">
           <Parameter name="Top_Reaction_Force" type="bool" value="true"/>
           <Parameter name="Bottom_Reaction_Force" type="bool" value="true"/>
-          <Parameter name="Max_Stress_YY" type="bool" value="true"/>
+          <Parameter name="Max_Von_Mises_Stress" type="bool" value="true"/>
 	</ParameterList>
   </ParameterList>
   

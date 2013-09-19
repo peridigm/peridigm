@@ -25,6 +25,6 @@ var_names = np.array(flat_data[0:num_vars], dtype=np.str)
 
 time_steps = np.array(flat_data[num_vars::num_vars+1], dtype=np.double)
 
-data_vars = [ np.array(flat_data[num_vars+i::num_vars+1], dtype=np.double) for i in range(1,num_vars)]
+data_vars = [ np.array(flat_data[num_vars+i::num_vars+1], dtype=np.double) for i in range(1,num_vars+1)]
 
 
