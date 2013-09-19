@@ -1,0 +1,102 @@
+<ParameterList>
+
+  <ParameterList name="Discretization">
+	<Parameter name="Type" type="string" value="Exodus" />
+	<Parameter name="Input Mesh File" type="string" value="CentrifugalLoad.g"/>
+  </ParameterList>
+
+  <ParameterList name="Materials">
+	<ParameterList name="My Elastic Material">
+	  <Parameter name="Material Model" type="string" value="Elastic"/>
+	  <Parameter name="Density" type="double" value="1.0E-5"/>
+	  <Parameter name="Bulk Modulus" type="double" value="66.667e3"/>
+	  <Parameter name="Shear Modulus" type="double" value="40.0e3"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Blocks">
+	<ParameterList name="My Group of Blocks">
+	  <Parameter name="Block Names" type="string" value="block_1"/>
+	  <Parameter name="Material" type="string" value="My Elastic Material"/>
+      <Parameter name="Horizon" type="double" value="1.45"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Boundary Conditions">
+	<ParameterList name="Prescribed Displacement ZeroX">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_2"/>
+	  <Parameter name="Coordinate" type="string" value="x"/>
+	  <Parameter name="Value" type="string" value="0.0"/>
+	</ParameterList>
+	<ParameterList name="Prescribed Displacement ZeroY">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_3"/>
+	  <Parameter name="Coordinate" type="string" value="y"/>
+	  <Parameter name="Value" type="string" value="0.0"/>
+	</ParameterList>
+	<ParameterList name="Prescribed Displacement ZeroZ">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_4"/>
+	  <Parameter name="Coordinate" type="string" value="z"/>
+	  <Parameter name="Value" type="string" value="0.0"/>
+	</ParameterList>
+        <!--Body forces are in units of force per unit volume 
+            rotation about y axis at x=0 y=0 y=0
+            F_centrifugal = m*a = m*v^2/r
+            Body force mag = m*v^2/(r*v) = rho*v^2/r
+            Body force dir = (x/r,y/r)
+                rho = 1.0E-5 kg/mm^3 (steel)
+                f = 15 rpm
+                w = 2*pi*f = 94.25
+                v = w*r
+                r = sqrt(x^2 + y^2)
+              body force = rho * (2*pi*f)^2 * r = 1.0E-5 * 94.25^2 * sqrt(x^2 + y^2)
+              body force x = 1E-5 * 94.25^2 * x
+              body force y = 1E-5 * 94.25^2 * y 
+           -->
+	<ParameterList name="Applied Loading X">
+	  <Parameter name="Type" type="string" value="Body Force"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_1"/>
+	  <Parameter name="Coordinate" type="string" value="x"/>
+	  <Parameter name="Value" type="string" value="1E-5 * 94.25^2 * x"/>
+	</ParameterList>
+	<ParameterList name="Applied Loading Z">
+	  <Parameter name="Type" type="string" value="Body Force"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_1"/>
+	  <Parameter name="Coordinate" type="string" value="y"/>
+	  <Parameter name="Value" type="string" value="1E-5 * 94.25^2 * y"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Solver">
+	<Parameter name="Verbose" type="bool" value="false"/>
+	<Parameter name="Initial Time" type="double" value="0.0"/>
+	<Parameter name="Final Time" type="double" value="1.0"/> 
+	<ParameterList name="QuasiStatic">
+	  <Parameter name="Number of Load Steps" type="int" value="1"/>
+	  <Parameter name="Absolute Tolerance" type="double" value="1.0e-6"/>
+	  <Parameter name="Maximum Solver Iterations" type="int" value="10"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Output">
+	<Parameter name="Output File Type" type="string" value="ExodusII"/>
+	<Parameter name="Output Format" type="string" value="BINARY"/>
+	<Parameter name="Output Filename" type="string" value="CentrifugalLoad"/>
+	<Parameter name="Output Frequency" type="int" value="1"/>
+	<Parameter name="Parallel Write" type="bool" value="true"/>
+	<ParameterList name="Output Variables">
+	  <Parameter name="Displacement" type="bool" value="true"/>
+	  <Parameter name="Velocity" type="bool" value="true"/>
+	  <Parameter name="Element_Id" type="bool" value="true"/>
+	  <Parameter name="Proc_Num" type="bool" value="true"/>
+	  <Parameter name="Dilatation" type="bool" value="true"/>
+	  <Parameter name="Force_Density" type="bool" value="true"/>
+	  <Parameter name="Force" type="bool" value="true"/>
+	  <Parameter name="External_Force_Density" type="bool" value="true"/>
+	  <Parameter name="Weighted_Volume" type="bool" value="true"/>
+	</ParameterList>
+  </ParameterList>
+
+</ParameterList>

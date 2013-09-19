@@ -1,5 +1,7 @@
 # List tests to be run by "make test"
 
+add_test (CentrifugalLoad_np1 python ./CentrifugalLoad/np1/CentrifugalLoad.py)
+add_test (CentrifugalLoad_np4 python ./CentrifugalLoad/np4/CentrifugalLoad.py)
 add_test (Compression_NLCGQS_3x2x2_np1 python ./Compression_NLCGQS_3x2x2/np1/Compression_NLCGQS_3x2x2.py)
 add_test (Compression_NLCGQS_3x2x2_np2 python ./Compression_NLCGQS_3x2x2/np2/Compression_NLCGQS_3x2x2.py)
 add_test (Contact_Cubes_np1 python ./Contact_Cubes/np1/Contact_Cubes.py)
