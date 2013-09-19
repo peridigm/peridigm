@@ -345,6 +345,9 @@ namespace PeridigmNS {
     //! Global scratch space vector
     Teuchos::RCP<Epetra_Vector> scratch;
 
+    //! Vector containing velocities at dof with kinematic bc; used only by NOX solver.
+    Teuchos::RCP<Epetra_Vector> noxVelocityAtDOFWithKinematicBC;
+
     //! Global vector for block ID 
     Teuchos::RCP<Epetra_Vector> blockIDs;
 
