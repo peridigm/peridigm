@@ -10,8 +10,5 @@ block 2 volume 1
 block 3 volume 2
 volume all size 0.25
 mesh volume all
-nodeset 1 volume 3
-nodeset 2 volume 1
-nodeset 3 volume 2
-export genesis "ElasticCorrespondenceFullyPrescribedTension.g" overwrite
-
+nodeset 1 volume 1 2 3
+export genesis "ElasticPlasticCorrespondenceFullyPrescribedTension.g" overwrite

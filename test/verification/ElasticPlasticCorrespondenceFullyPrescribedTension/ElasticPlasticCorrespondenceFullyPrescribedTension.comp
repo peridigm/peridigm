@@ -60,15 +60,6 @@ ELEMENT VARIABLES absolute 1.E-12
 	Unrotated_Rate_Of_DeformationZX absolute 1.0E-12
 	Unrotated_Rate_Of_DeformationZY absolute 1.0E-12
 	Unrotated_Rate_Of_DeformationZZ absolute 1.0E-12
-	Unrotated_Cauchy_StressXX absolute 1.0E-2
-	Unrotated_Cauchy_StressXY absolute 1.0E-2
-	Unrotated_Cauchy_StressXZ absolute 1.0E-2
-	Unrotated_Cauchy_StressYX absolute 1.0E-2
-	Unrotated_Cauchy_StressYY absolute 1.0E-2
-	Unrotated_Cauchy_StressYZ absolute 1.0E-2
-	Unrotated_Cauchy_StressZX absolute 1.0E-2
-	Unrotated_Cauchy_StressZY absolute 1.0E-2
-	Unrotated_Cauchy_StressZZ absolute 1.0E-2
 	Cauchy_StressXX absolute 1.0E-2
 	Cauchy_StressXY absolute 1.0E-2
 	Cauchy_StressXZ absolute 1.0E-2
