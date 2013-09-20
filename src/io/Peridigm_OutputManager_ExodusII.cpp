@@ -378,8 +378,15 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
               if (retval!= 0) reportExodusError(retval, "write", "ex_put_elem_var");
             }
             else if (spec.getLength() == PeridigmField::VECTOR) {
-              // no 3D vector element data currently implemented in Peridgm.
-              TEUCHOS_TEST_FOR_EXCEPTION(true, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII::write() -- elementwise 3D vector quantities not currently supported.");
+				string tmpnameX = name+"X";
+				string tmpnameY = name+"Y";
+				string tmpnameZ = name+"Z";
+				retval = ex_put_elem_var(file_handle, exodusCount, element_output_field_map[tmpnameX], blockIt->getID(), block_num_nodes, block_ptr);
+				if (retval!= 0) reportExodusError(retval, "write", "ex_put_elem_var");
+				retval = ex_put_elem_var(file_handle, exodusCount, element_output_field_map[tmpnameY], blockIt->getID(), block_num_nodes, block_ptr);
+				if (retval!= 0) reportExodusError(retval, "write", "ex_put_elem_var");
+				retval = ex_put_elem_var(file_handle, exodusCount, element_output_field_map[tmpnameZ], blockIt->getID(), block_num_nodes, block_ptr);
+				if (retval!= 0) reportExodusError(retval, "write", "ex_put_elem_var");
             } // end switch on data dimension
           }
         }
@@ -723,8 +730,14 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
             truthTableValue = 1;
           // Global ID and processor number are special cases
           if(spec.getId() == elementIdFieldId || spec.getId() == procNumFieldId)
-            truthTableValue = 1;
-          truthTableVec[truthTableIndex++] = truthTableValue;
+			truthTableValue = 1;
+          if(spec.getLength() == PeridigmField::SCALAR)
+			truthTableVec[truthTableIndex++] = truthTableValue;
+          else if(spec.getLength() == PeridigmField::VECTOR){
+			truthTableVec[truthTableIndex++] = truthTableValue;
+			truthTableVec[truthTableIndex++] = truthTableValue;
+			truthTableVec[truthTableIndex++] = truthTableValue;
+		  }
         }
       }
     }
