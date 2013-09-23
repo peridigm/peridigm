@@ -170,6 +170,16 @@ void PeridigmNS::ComputeManager::initialize(Teuchos::RCP< vector<PeridigmNS::Blo
 
 }
 
+void PeridigmNS::ComputeManager::pre_compute(Teuchos::RCP< vector<PeridigmNS::Block> > blocks) {
+
+  // \todo Identify what the desired behavior is for compute classes and multiple blocks!
+
+  for(unsigned int i=0 ; i<computeObjects.size() ; ++i){
+     computeObjects[i]->pre_compute(blocks);
+  }
+}
+
+
 void PeridigmNS::ComputeManager::compute(Teuchos::RCP< vector<PeridigmNS::Block> > blocks) {
 
   // \todo Identify what the desired behavior is for compute classes and multiple blocks!

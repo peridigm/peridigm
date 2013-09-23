@@ -368,10 +368,24 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   serviceManager = Teuchos::rcp(new PeridigmNS::ServiceManager());
   serviceManager->requestService(computeManager->Services());
 
-  // Perform requested services
+  // Check if request for allocation request of tangent matrix
+  bool allocate_tangent = false;
+  for (Teuchos::ParameterList::ConstIterator it = peridigmParams->begin(); it != peridigmParams->end(); ++it) {
+    // See if name of parameterlist entry contains "Solver"
+    const std::string output("Solver");
+    const std::string name(it->first);
+    size_t found = name.find(output);
+    if (found!=std::string::npos) {
+      Teuchos::RCP<Teuchos::ParameterList> slvrParams = sublist(peridigmParams, name);
+      if(slvrParams->isSublist("QuasiStatic") ||
+          slvrParams->isSublist("NOXQuasiStatic") ||
+          slvrParams->isSublist("Implicit"))
+        allocate_tangent = true;
+    }
+  }
 
-  // Check if request for allocation of full tangent stiffness matrix
-  if (serviceManager->isRequested(PeridigmNS::PeridigmService::ALLOCATE_TANGENT)) {
+  // Perform requested services
+  if (serviceManager->isRequested(PeridigmNS::PeridigmService::ALLOCATE_TANGENT) || allocate_tangent) {
     // Allocate memory for non-zeros in global tangent and lock in the structure
     if(peridigmComm->MyPID() == 0){
       cout << "Allocating global tangent matrix...";
@@ -389,14 +403,14 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   // Check if request for allocation of block diagonal tangent stiffness matrix
   if (serviceManager->isRequested(PeridigmNS::PeridigmService::ALLOCATE_BLOCK_DIAGONAL_TANGENT)) {
     // Allocate memory for non-zeros in global tangent and lock in the structure
-    if(peridigmComm->MyPID() == 0){
+    if(peridigmComm->MyPID() == 0 && !allocate_tangent){
       cout << "Allocating global block diagonal tangent matrix...";
       cout.flush();
     }
     PeridigmNS::Timer::self().startTimer("Allocate Global Block Diagonal Tangent");
     allocateBlockDiagonalJacobian();
     PeridigmNS::Timer::self().stopTimer("Allocate Global Block Diagonal Tangent");
-    if(peridigmComm->MyPID() == 0){
+    if(peridigmComm->MyPID() == 0 && !allocate_tangent){
       cout << "\n  number of rows = " << blockDiagonalTangent->NumGlobalRows() << endl;
       cout << "  number of nonzeros = " << blockDiagonalTangent->NumGlobalNonzeros() << "\n" << endl;
     }
@@ -1220,19 +1234,6 @@ Teuchos::RCP<Epetra_CrsMatrix> PeridigmNS::Peridigm::getJacobian() {
 
 void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::ParameterList> solverParams) {
 
-  // Allocate memory for non-zeros in global tangent and lock in the structure
-  if(peridigmComm->MyPID() == 0){
-    cout << "Allocating global tangent matrix...";
-    cout.flush();
-  }
-  PeridigmNS::Timer::self().startTimer("Allocate Global Tangent");
-  allocateJacobian();
-  PeridigmNS::Timer::self().stopTimer("Allocate Global Tangent");
-  if(peridigmComm->MyPID() == 0){
-    cout << "\n  number of rows = " << tangent->NumGlobalRows() << endl;
-    cout << "  number of nonzeros = " << tangent->NumGlobalNonzeros() << "\n" << endl;
-  }
-
   Teuchos::RCP<Epetra_Vector> residual = Teuchos::rcp(new Epetra_Vector(tangent->Map()));
   Teuchos::RCP<Epetra_Vector> reaction = Teuchos::rcp(new Epetra_Vector(force->Map()));
 
@@ -1500,19 +1501,6 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
 
 void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterList> solverParams) {
 
-  // Allocate memory for non-zeros in global tangent and lock in the structure
-  if(peridigmComm->MyPID() == 0){
-    cout << "Allocating global tangent matrix...";
-    cout.flush();
-  }
-  PeridigmNS::Timer::self().startTimer("Allocate Global Tangent");
-  allocateJacobian();
-  PeridigmNS::Timer::self().stopTimer("Allocate Global Tangent");
-  if(peridigmComm->MyPID() == 0){
-    cout << "\n  number of rows = " << tangent->NumGlobalRows() << endl;
-    cout << "  number of nonzeros = " << tangent->NumGlobalNonzeros() << "\n" << endl;
-  }
-
   // Create vectors that are specific to quasi-statics.
   // These must use the same map as the tangent matrix, which is an Epetra_Map and is not consistent
   // with the Epetra_BlockMap used for the mothership multivector.
@@ -1711,17 +1699,19 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
           PeridigmNS::Timer::self().startTimer("Evaluate Jacobian");
           modelEvaluator->evalJacobian(workset);
           int err = tangent->GlobalAssemble();
+
           TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::executeQuasiStatic(), GlobalAssemble() returned nonzero error code.\n");
           PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
           boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
           boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndSetDiagonal(tangent);
           tangent->Scale(-1.0);
+
           if(dampedNewton)
             quasiStaticsDampTangent(dampedNewtonDiagonalScaleFactor, dampedNewtonDiagonalShiftFactor);
           if(usePreconditioner)
             quasiStaticsSetPreconditioner(linearProblem);
         }
-	
+
         // Solve linear system
         isConverged = quasiStaticsSolveSystem(residual, lhs, linearProblem, belosSolver);
 
@@ -2082,17 +2072,6 @@ double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> 
 
 void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> solverParams) {
 
-  // Allocate memory for non-zeros in global Jacobain and lock in the structure
-  if(peridigmComm->MyPID() == 0)
-    cout << "Allocating global tangent matrix...";
-  PeridigmNS::Timer::self().startTimer("Allocate Global Tangent");
-  allocateJacobian();
-  PeridigmNS::Timer::self().stopTimer("Allocate Global Tangent");
-  if(peridigmComm->MyPID() == 0){
-    cout << "\n  number of rows = " << tangent->NumGlobalRows() << endl;
-    cout << "  number of nonzeros = " << tangent->NumGlobalNonzeros() << "\n" << endl;
-  }
-
   // Create vectors that are specific to implicit dynamics
   // The residual must use the same map as the tangent matrix, which is an Epetra_Map and is not consistent
   // with the Epetra_BlockMap used for the mothership multivector.
@@ -2201,10 +2180,6 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
 
     // evaluate the external (body) forces:
     boundaryAndInitialConditionManager->applyForceContributions(timeCurrent,0.0);
-
-    double forceNorm;
-    externalForce->Norm2(&forceNorm);
-    cout << " This is the norm of the xternal forces: " << forceNorm << endl;
 
     // Compute the residual
     // residual = beta*dt*dt*(M*a - force)
@@ -2413,6 +2388,14 @@ void PeridigmNS::Peridigm::allocateBlockDiagonalJacobian() {
 
   // do not re-allocate if already allocated
   if (blockDiagonalTangent != Teuchos::null) return;
+
+  if(tangent != Teuchos::null) // the tangent matrix is alread allocated (i.e. this is an implicit or QS simulation) so use that one instead
+  {
+    blockDiagonalTangent = tangent;
+    blockDiagonalTangentMap = tangentMap;
+    return;
+  }
+
 
   // err code
   int err;

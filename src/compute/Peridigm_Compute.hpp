@@ -82,6 +82,10 @@ namespace PeridigmNS {
     //! Perform computation
     virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const = 0;
 
+    //! Pre compute initialization
+    virtual int pre_compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const {};
+
+
   protected:
 
     //! Copy constructor.
