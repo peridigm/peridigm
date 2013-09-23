@@ -214,6 +214,12 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
   // increment index count
   count = count + 1;
 
+  // NOTE this assumes that the initial configuration is allways written to file (otherwise the initialization of the compute
+  // classes will happen at the first written step
+  if(count == 1)
+    // Call compute manager; Updated any pre_computed quantities
+    peridigm->computeManager->pre_compute(blocks);
+
   // Only write if count is in between first and last dumps and frequency count match. 
   // The +/- 1 is to account for the initialization dumps
   if ((count<(firstOutputStep) || count>(lastOutputStep+1)) || (frequency<=0 || (count-1)%frequency!=0)) return;

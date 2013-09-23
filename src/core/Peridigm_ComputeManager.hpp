@@ -79,6 +79,10 @@ namespace PeridigmNS {
     //! Fire the individual compute objects
     virtual void compute(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks);
 
+    //! Pre-compute initialization of the compute objects
+    virtual void pre_compute(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks);
+
+
   private:
     
     //! Copy constructor.
