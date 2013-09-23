@@ -1,0 +1,178 @@
+<ParameterList>
+  
+  <ParameterList name="Discretization">
+	<Parameter name="Type" type="string" value="Exodus" />
+	<Parameter name="Input Mesh File" type="string" value="ViscoPlasticNeedlemanFullyPrescribedTension_WithFlaw.g"/>
+  </ParameterList>
+
+  <ParameterList name="Materials">
+	<ParameterList name="My Elastic Plastic Correspondence Material">
+	  <Parameter name="Material Model" type="string" value="Viscoplastic Needleman Correspondence"/>
+	  <Parameter name="Density" type="double" value="7800.0"/>
+      <Parameter name="Young's Modulus" type="double" value="211.0e9"/>
+      <Parameter name="Poisson's Ratio" type="double" value="0.0"/>   <!-- One-dimensional simulation -->
+	  <Parameter name="Hourglass Coefficient" type="double" value="0.0"/>
+	  <Parameter name="Yield Stress" type="double" value="460.0e6"/>
+	  <Parameter name="Strain Hardening Exponent" type="double" value="0.1"/>
+	  <Parameter name="Rate Hardening Exponent" type="double" value="0.01"/>
+	  <Parameter name="Reference Strain Rate" type="double" value="0.001"/>
+	  <Parameter name="Reference Strain 0" type="double" value="0.00218"/>
+	  <Parameter name="Reference Strain 1" type="double" value="0.436"/>
+	  <Parameter name="Enable Flaw" type="bool" value="true"/>
+	  <Parameter name="Flaw Location X" type="double" value="0.0"/>
+	  <Parameter name="Flaw Location Y" type="double" value="0.0"/>
+	  <Parameter name="Flaw Location Z" type="double" value="0.0"/>
+	  <Parameter name="Flaw Size" type="double" value="0.751"/>
+	  <Parameter name="Flaw Magnitude" type="double" value="0.2"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Blocks">
+	<ParameterList name="My Group of Blocks">
+	  <Parameter name="Block Names" type="string" value="block_1"/>
+	  <Parameter name="Material" type="string" value="My Elastic Plastic Correspondence Material"/>
+          <Parameter name="Horizon" type="double" value="0.751"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Boundary Conditions">
+
+    <!-- Fully prescribe all displacement degrees of freedom -->
+    <!-- 0.1% strain in y direction, zero displacement is x and z directions -->
+	<ParameterList name="Prescribed Displacement X">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_1"/>
+	  <Parameter name="Coordinate" type="string" value="x"/>
+	  <Parameter name="Value" type="string" value="0.0"/>
+	</ParameterList>
+	<ParameterList name="Prescribed Displacement Y">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_1"/>
+	  <Parameter name="Coordinate" type="string" value="y"/>
+	  <Parameter name="Value" type="string" value="0.001*y*t/1.0e-8"/>
+	</ParameterList>
+	<ParameterList name="Prescribed Displacement Z">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+      <Parameter name="Node Set" type="string" value="nodelist_1"/>
+	  <Parameter name="Coordinate" type="string" value="z"/>
+	  <Parameter name="Value" type="string" value="0.0"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Solver">
+	<Parameter name="Verbose" type="bool" value="false"/>
+	<Parameter name="Initial Time" type="double" value="0.0"/>
+	<Parameter name="Final Time" type="double" value="1.0e-6"/>
+	<ParameterList name="Verlet">
+	  <Parameter name="Fixed dt" type="double" value="5.0e-9"/>
+	</ParameterList>
+  </ParameterList>
+
+  <!-- Track the displacement for the ends of a strain gage       -->
+  <!-- Track the reaction forces at the top and bottom of the bar -->
+  <ParameterList name="Compute Class Parameters">
+     <ParameterList name="Max Von Mises Stress">
+       <Parameter name="Compute Class" type="string" value="Block_Data"/>
+       <Parameter name="Calculation Type" type="string" value="Maximum"/>
+       <Parameter name="Block" type="string" value="block_1"/>
+       <Parameter name="Variable" type="string" value="Von_Mises_Stress"/>
+       <Parameter name="Output Label" type="string" value="Max_Von_Mises_Stress"/>
+     </ParameterList>
+     <ParameterList name="Min Von Mises Stress">
+       <Parameter name="Compute Class" type="string" value="Block_Data"/>
+       <Parameter name="Calculation Type" type="string" value="Minimum"/>
+       <Parameter name="Block" type="string" value="block_1"/>
+       <Parameter name="Variable" type="string" value="Von_Mises_Stress"/>
+       <Parameter name="Output Label" type="string" value="Min_Von_Mises_Stress"/>
+     </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Output1">
+	<Parameter name="Output File Type" type="string" value="ExodusII"/>
+	<Parameter name="Output Filename" type="string" value="ViscoplasticNeedlemanFullyPrescribedTension_WithFlaw"/>
+	<Parameter name="Output Frequency" type="int" value="50"/>
+	<ParameterList name="Output Variables">
+          <Parameter name="Volume" type="bool" value="true"/>
+          <Parameter name="Displacement" type="bool" value="true"/>
+          <Parameter name="Velocity" type="bool" value="true"/>
+          <Parameter name="Force" type="bool" value="true"/>
+          <Parameter name="Number_Of_Neighbors" type="bool" value="true"/>
+          <Parameter name="Hourglass_Force_Density" type="bool" value="true"/>
+          <Parameter name="Deformation_GradientXX" type="bool" value="true"/>
+          <Parameter name="Deformation_GradientXY" type="bool" value="true"/>
+          <Parameter name="Deformation_GradientXZ" type="bool" value="true"/>
+          <Parameter name="Deformation_GradientYX" type="bool" value="true"/>
+          <Parameter name="Deformation_GradientYY" type="bool" value="true"/>
+          <Parameter name="Deformation_GradientYZ" type="bool" value="true"/>
+          <Parameter name="Deformation_GradientZX" type="bool" value="true"/>
+          <Parameter name="Deformation_GradientZY" type="bool" value="true"/>
+          <Parameter name="Deformation_GradientZZ" type="bool" value="true"/>
+          <Parameter name="Left_Stretch_TensorXX" type="bool" value="true"/>
+          <Parameter name="Left_Stretch_TensorXY" type="bool" value="true"/>
+          <Parameter name="Left_Stretch_TensorXZ" type="bool" value="true"/>
+          <Parameter name="Left_Stretch_TensorYX" type="bool" value="true"/>
+          <Parameter name="Left_Stretch_TensorYY" type="bool" value="true"/>
+          <Parameter name="Left_Stretch_TensorYZ" type="bool" value="true"/>
+          <Parameter name="Left_Stretch_TensorZX" type="bool" value="true"/>
+          <Parameter name="Left_Stretch_TensorZY" type="bool" value="true"/>
+          <Parameter name="Left_Stretch_TensorZZ" type="bool" value="true"/>
+          <Parameter name="Rotation_TensorXX" type="bool" value="true"/>
+          <Parameter name="Rotation_TensorXY" type="bool" value="true"/>
+          <Parameter name="Rotation_TensorXZ" type="bool" value="true"/>
+          <Parameter name="Rotation_TensorYX" type="bool" value="true"/>
+          <Parameter name="Rotation_TensorYY" type="bool" value="true"/>
+          <Parameter name="Rotation_TensorYZ" type="bool" value="true"/>
+          <Parameter name="Rotation_TensorZX" type="bool" value="true"/>
+          <Parameter name="Rotation_TensorZY" type="bool" value="true"/>
+          <Parameter name="Rotation_TensorZZ" type="bool" value="true"/>
+          <Parameter name="Shape_Tensor_InverseXX" type="bool" value="true"/>
+          <Parameter name="Shape_Tensor_InverseXY" type="bool" value="true"/>
+          <Parameter name="Shape_Tensor_InverseXZ" type="bool" value="true"/>
+          <Parameter name="Shape_Tensor_InverseYX" type="bool" value="true"/>
+          <Parameter name="Shape_Tensor_InverseYY" type="bool" value="true"/>
+          <Parameter name="Shape_Tensor_InverseYZ" type="bool" value="true"/>
+          <Parameter name="Shape_Tensor_InverseZX" type="bool" value="true"/>
+          <Parameter name="Shape_Tensor_InverseZY" type="bool" value="true"/>
+          <Parameter name="Shape_Tensor_InverseZZ" type="bool" value="true"/>
+          <Parameter name="Unrotated_Rate_Of_DeformationXX" type="bool" value="true"/>
+          <Parameter name="Unrotated_Rate_Of_DeformationXY" type="bool" value="true"/>
+          <Parameter name="Unrotated_Rate_Of_DeformationXZ" type="bool" value="true"/>
+          <Parameter name="Unrotated_Rate_Of_DeformationYX" type="bool" value="true"/>
+          <Parameter name="Unrotated_Rate_Of_DeformationYY" type="bool" value="true"/>
+          <Parameter name="Unrotated_Rate_Of_DeformationYZ" type="bool" value="true"/>
+          <Parameter name="Unrotated_Rate_Of_DeformationZX" type="bool" value="true"/>
+          <Parameter name="Unrotated_Rate_Of_DeformationZY" type="bool" value="true"/>
+          <Parameter name="Unrotated_Rate_Of_DeformationZZ" type="bool" value="true"/>
+          <Parameter name="Cauchy_StressXX" type="bool" value="true"/>
+          <Parameter name="Cauchy_StressXY" type="bool" value="true"/>
+          <Parameter name="Cauchy_StressXZ" type="bool" value="true"/>
+          <Parameter name="Cauchy_StressYX" type="bool" value="true"/>
+          <Parameter name="Cauchy_StressYY" type="bool" value="true"/>
+          <Parameter name="Cauchy_StressYZ" type="bool" value="true"/>
+          <Parameter name="Cauchy_StressZX" type="bool" value="true"/>
+          <Parameter name="Cauchy_StressZY" type="bool" value="true"/>
+          <Parameter name="Cauchy_StressZZ" type="bool" value="true"/>
+          <Parameter name="Unrotated_Cauchy_StressXX" type="bool" value="true"/>
+          <Parameter name="Unrotated_Cauchy_StressXY" type="bool" value="true"/>
+          <Parameter name="Unrotated_Cauchy_StressXZ" type="bool" value="true"/>
+          <Parameter name="Unrotated_Cauchy_StressYX" type="bool" value="true"/>
+          <Parameter name="Unrotated_Cauchy_StressYY" type="bool" value="true"/>
+          <Parameter name="Unrotated_Cauchy_StressYZ" type="bool" value="true"/>
+          <Parameter name="Unrotated_Cauchy_StressZX" type="bool" value="true"/>
+          <Parameter name="Unrotated_Cauchy_StressZY" type="bool" value="true"/>
+          <Parameter name="Unrotated_Cauchy_StressZZ" type="bool" value="true"/>
+          <Parameter name="Equivalent_Plastic_Strain" type="bool" value="true"/>
+          <Parameter name="Von_Mises_Stress" type="bool" value="true"/>
+         </ParameterList>
+  </ParameterList>
+  <ParameterList name="Output2">
+	<Parameter name="Output File Type" type="string" value="ExodusII"/>
+	<Parameter name="Output Filename" type="string" value="ViscoplasticNeedlemanFullyPrescribedTension_WithFlaw"/>
+	<Parameter name="Output Frequency" type="int" value="1"/>
+	<ParameterList name="Output Variables">
+          <Parameter name="Max_Von_Mises_Stress" type="bool" value="true"/>
+          <Parameter name="Min_Von_Mises_Stress" type="bool" value="true"/>
+	</ParameterList>
+  </ParameterList>
+  
+</ParameterList>

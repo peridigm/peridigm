@@ -48,7 +48,9 @@
 #include "correspondence.h"
 #include "material_utilities.h"
 #include <Sacado.hpp>
+#include <Teuchos_ScalarTraits.hpp>
 #include <math.h>
+#include <functional>
 
 namespace CORRESPONDENCE {
 
