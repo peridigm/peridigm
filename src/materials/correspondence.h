@@ -448,6 +448,7 @@ void computeClassicalElasticStress
  double youngsModulus,
  double poissonsRatio
 );
+ 
 
 template<typename ScalarT>
 ScalarT TensorContraction
