@@ -45,19 +45,19 @@
   <ParameterList name="Boundary Conditions">
   	<ParameterList name="Initial Velocity X">
 	  <Parameter name="Type" type="string" value="Initial Velocity"/>
-	  <Parameter name="Node Set" type="string" value="All"/>
+	  <Parameter name="Node Set" type="string" value="All sets"/>
 	  <Parameter name="Coordinate" type="string" value="x"/>
 	  <Parameter name="Value" type="string" value="(200 - 50*((z/0.05)-1)^2)*cos(atan2(y,x)) + rnd(5)"/>
 	</ParameterList>
 	<ParameterList name="Initial Velocity Y">
 	  <Parameter name="Type" type="string" value="Initial Velocity"/>
-	  <Parameter name="Node Set" type="string" value="All"/>
+	  <Parameter name="Node Set" type="string" value="All sets"/>
 	  <Parameter name="Coordinate" type="string" value="y"/>
 	  <Parameter name="Value" type="string" value="(200 - 50*((z/0.05)-1)^2)*sin(atan2(y,x)) + rnd(5)"/>
 	</ParameterList>
 	<ParameterList name="Initial Velocity Z">
 	  <Parameter name="Type" type="string" value="Initial Velocity"/>
-	  <Parameter name="Node Set" type="string" value="All"/>
+	  <Parameter name="Node Set" type="string" value="All sets"/>
 	  <Parameter name="Coordinate" type="string" value="z"/>
 	  <Parameter name="Value" type="string" value="(100*((z/0.05)-1)) + rnd(5)"/>
 	</ParameterList>

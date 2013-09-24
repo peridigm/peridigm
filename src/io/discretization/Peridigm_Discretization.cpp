@@ -181,7 +181,7 @@ void PeridigmNS::Discretization::createBondFilters(const Teuchos::RCP<Teuchos::P
 
 int PeridigmNS::Discretization::blockNameToBlockId(string blockName) const {
   size_t loc = blockName.find_last_of('_');
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(loc == string::npos, "\n**** Parse error, invalid block name.\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(loc == string::npos, "\n**** Parse error, invalid block name: " + blockName + "\n");
   stringstream blockIDSS(blockName.substr(loc+1, blockName.size()));
   int bID;
   blockIDSS >> bID;

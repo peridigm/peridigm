@@ -423,8 +423,10 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
 void PeridigmNS::Peridigm::checkHorizon(Teuchos::RCP<Discretization> peridigmDisc, map<string, double> & blockHorizonValues){
   // Warn the user if it appears the horizon is too large and may cause memory to fill
   const double warningPerc = 0.80; // TODO: This might need to be adjusted
-  const double maxPerc = (double)peridigmDisc->getMaxNumBondsPerElem() / (double)peridigmDisc->getNumElem();
-  if(maxPerc >= warningPerc){
+  const int mesh_size = peridigmDisc->getNumElem();
+  const bool mesh_size_large = mesh_size > 10000; // TODO This might need to be adjusted
+  const double maxPerc = (double)peridigmDisc->getMaxNumBondsPerElem() / (double)mesh_size;
+  if(maxPerc >= warningPerc && mesh_size_large){
     if(peridigmComm->MyPID() == 0){
       cout << "** Warning: elements were detected with large neighborhood sizes relative to the number of local elements.\n"
            << "** The largest element neighborhood contains " << maxPerc * 100 << "% of the elements on this processor.\n"
@@ -438,7 +440,7 @@ void PeridigmNS::Peridigm::checkHorizon(Teuchos::RCP<Discretization> peridigmDis
   double horizonValue = 0.0;
   const double maxRad = peridigmDisc->getMaxElementRadius();
   for(map<string, double>::const_iterator it = blockHorizonValues.begin() ; it != blockHorizonValues.end() ; it++){
-    if(it->second > warningSizeRatio * maxRad){
+    if(it->second > warningSizeRatio * maxRad && mesh_size_large){
       blockName = it->first;
       horizonValue = it->second;
       if(peridigmComm->MyPID() == 0){

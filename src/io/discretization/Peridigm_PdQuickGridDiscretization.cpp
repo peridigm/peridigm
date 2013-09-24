@@ -277,6 +277,7 @@ QUICKGRID::Data PeridigmNS::PdQuickGridDiscretization::getDiscretization(const T
 #endif
 
 //     minElementRadius = pow(0.238732414637843*(xLength/nx)*(yLength/ny)*(zLength/nz), 0.33333333333333333);
+    maxElementRadius = cellSize;
 //     maxElementDimension = sqrt((xLength/nx)*(xLength/nx) + (yLength/ny)*(yLength/ny) + (zLength/nz)*(zLength/nz));
   } 
   else { // ERROR
