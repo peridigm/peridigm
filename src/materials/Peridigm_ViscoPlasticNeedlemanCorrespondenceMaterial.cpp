@@ -45,7 +45,7 @@
 // ************************************************************************
 //@HEADER
 
-#include "Peridigm_ViscoplasticNeedlemanCorrespondenceMaterial.hpp"
+#include "Peridigm_ViscoPlasticNeedlemanCorrespondenceMaterial.hpp"
 #include "Peridigm_Field.hpp"
 #include "viscoplastic_needleman_correspondence.h"
 #include "material_utilities.h"
