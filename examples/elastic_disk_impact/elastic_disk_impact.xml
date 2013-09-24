@@ -72,8 +72,8 @@
   	</ParameterList>
   	<ParameterList name="Interactions">
   	  <ParameterList name="Interaction Disk with Ball">
-  	    <Parameter name="First Block" type="string" value="Disk"/>
-  	    <Parameter name="Second Block" type="string" value="Ball"/>
+  	    <Parameter name="First Block" type="string" value="block_1"/>
+  	    <Parameter name="Second Block" type="string" value="block_2"/>
   	    <Parameter name="Contact Model" type="string" value="My Contact Model"/>
   	  </ParameterList>
   	</ParameterList>
