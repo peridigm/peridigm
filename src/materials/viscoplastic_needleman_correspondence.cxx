@@ -674,7 +674,7 @@ ScalarT ViscoplasticNeedlemanFindRoot
     }
   }
   return sb;
-};
+}
 
 
 // Explicit template instantiation for double
