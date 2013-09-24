@@ -2,7 +2,7 @@
   
   <ParameterList name="Discretization">
 	<Parameter name="Type" type="string" value="Exodus" />
-	<Parameter name="Input Mesh File" type="string" value="ViscoPlasticNeedlemanFullyPrescribedTension_NoFlaw.g"/>
+	<Parameter name="Input Mesh File" type="string" value="ViscoplasticNeedlemanFullyPrescribedTension_NoFlaw.g"/>
   </ParameterList>
 
   <ParameterList name="Materials">
