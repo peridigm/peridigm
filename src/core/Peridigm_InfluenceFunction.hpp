@@ -69,6 +69,13 @@ static double parabolicDecay(double zeta, double horizon){
   return value;
 }
 
+static double gaussian(double zeta, double horizon)
+{
+	double h2=horizon*horizon;
+	double xi2=zeta*zeta;
+	return exp(-xi2/h2);
+}
+
 }
 
 class InfluenceFunction {
@@ -81,6 +88,26 @@ public:
   //! Singleton.
   static InfluenceFunction & self();
 
+  //! Get predefined using provide string.
+  static functionPointer getPredefinedInfluenceFunction(std::string &influenceFunctionString) {
+
+	functionPointer p=0;
+	if(influenceFunctionString == "One"){
+	   p = &PeridigmInfluenceFunction::one;
+	}
+	else if(influenceFunctionString == "Parabolic Decay"){
+	  p = &PeridigmInfluenceFunction::parabolicDecay;
+	}
+	else if(influenceFunctionString == "Gaussian"){
+	  p = &PeridigmInfluenceFunction::parabolicDecay;
+	}
+	else {
+		TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error:  InfluenceFunction::getInfluenceFunction(string), invalid influence function\n");
+	}
+	return p;
+}
+
+
   //! Sets the influence function based on the provided string.
   void setInfluenceFunction(std::string influenceFunctionString) {
 
@@ -89,6 +116,9 @@ public:
     }
     else if(influenceFunctionString == "Parabolic Decay"){
       m_influenceFunction = &PeridigmInfluenceFunction::parabolicDecay;
+    }
+    else if(influenceFunctionString == "Gaussian"){
+      m_influenceFunction = &PeridigmInfluenceFunction::gaussian;
     }
     else{
     
