@@ -83,7 +83,7 @@ namespace PeridigmNS {
     virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const = 0;
 
     //! Pre compute initialization
-    virtual int pre_compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const {};
+    virtual int pre_compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const {return 0;}
 
 
   protected:
