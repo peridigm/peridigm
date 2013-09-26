@@ -49,6 +49,7 @@
 #define PERIDIGM_ELASTICMATERIAL_HPP
 
 #include "Peridigm_Material.hpp"
+#include "Peridigm_InfluenceFunction.hpp"
 
 namespace PeridigmNS {
 
@@ -181,6 +182,7 @@ namespace PeridigmNS {
     bool m_applyAutomaticDifferentiationJacobian;
     bool m_applySurfaceCorrectionFactor;
     bool m_applyThermalStrains;
+	typename PeridigmNS::InfluenceFunction::functionPointer m_OMEGA;
 
     // field spec ids for all relevant data
     std::vector<int> m_fieldIds;

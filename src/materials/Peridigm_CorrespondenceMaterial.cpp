@@ -49,14 +49,15 @@
 #include "Peridigm_Field.hpp"
 #include "elastic.h"
 #include "correspondence.h"
-#include "material_utilities.h"
 #include <Teuchos_Assert.hpp>
 
 using namespace std;
 
 PeridigmNS::CorrespondenceMaterial::CorrespondenceMaterial(const Teuchos::ParameterList& params)
   : Material(params),
-    m_density(0.0), m_horizon(0.0), m_hourglassCoefficient(0.0), m_volumeFieldId(-1),
+    m_density(0.0), m_horizon(0.0), m_hourglassCoefficient(0.0),
+    m_OMEGA(PeridigmNS::InfluenceFunction::self().getInfluenceFunction()),
+    m_volumeFieldId(-1),
     m_modelCoordinatesFieldId(-1), m_coordinatesFieldId(-1), m_velocitiesFieldId(-1), 
     m_hourglassForceDensityFieldId(-1), m_forceDensityFieldId(-1), m_bondDamageFieldId(-1),
     m_deformationGradientXXFieldId(-1), m_deformationGradientXYFieldId(-1), m_deformationGradientXZFieldId(-1), 
@@ -687,8 +688,7 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
                                   undeformedBondY*undeformedBondY +
                                   undeformedBondZ*undeformedBondZ);
 
-      omega = MATERIAL_EVALUATION::scalarInfluenceFunction(undeformedBondLength, m_horizon);
-
+      omega = m_OMEGA(undeformedBondLength,m_horizon);
       TX = omega * (tempXX*undeformedBondX + tempXY*undeformedBondY + tempXZ*undeformedBondZ);
       TY = omega * (tempYX*undeformedBondX + tempYY*undeformedBondY + tempYZ*undeformedBondZ);
       TZ = omega * (tempZX*undeformedBondX + tempZY*undeformedBondY + tempZZ*undeformedBondZ);

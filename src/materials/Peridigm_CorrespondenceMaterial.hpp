@@ -49,6 +49,7 @@
 #define PERIDIGM_CORRESPONDENCEMATERIAL_HPP
 
 #include "Peridigm_Material.hpp"
+#include "Peridigm_InfluenceFunction.hpp"
 
 namespace PeridigmNS {
 
@@ -106,6 +107,7 @@ namespace PeridigmNS {
     double m_density;
     double m_horizon;
     double m_hourglassCoefficient;
+	typename PeridigmNS::InfluenceFunction::functionPointer m_OMEGA;
 
     // field spec ids for all relevant data
     std::vector<int> m_fieldIds;

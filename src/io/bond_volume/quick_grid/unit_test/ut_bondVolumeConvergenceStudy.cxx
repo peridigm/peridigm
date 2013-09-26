@@ -326,7 +326,7 @@ void scf_probe(const std::string& json_filename) {
 	BOND_VOLUME::QUICKGRID::compute_bond_volume(X.get(),neighborhoodPtr.get(),xPtr.get(),bondVolume.get(),c.get());
 
 	double m_analytical = 4.0 * M_PI * pow(horizon,5) / 5.0;
-	double m_code = MATERIAL_EVALUATION::WITH_BOND_VOLUME::computeWeightedVolume(X.get(),xPtr.get(),bondVolume.get(),neighborhoodPtr.get());
+	double m_code = MATERIAL_EVALUATION::WITH_BOND_VOLUME::computeWeightedVolume(X.get(),xPtr.get(),bondVolume.get(),neighborhoodPtr.get(),horizon);
 	double rel_diff = std::abs(m_analytical-m_code)/m_analytical;
 	std::cout << std::scientific;
 	std::cout.precision(3);
@@ -378,7 +378,7 @@ void probe_shear
 	 * therefore, Y=X
 	 */
 	MATERIAL_EVALUATION::set_pure_shear(neighborhoodPtr.get(),X.get(),xPtr.get(),yPtr.get(),mode,gamma);
-	double theta = MATERIAL_EVALUATION::WITH_BOND_VOLUME::computeDilatation(neighborhoodPtr.get(),X.get(),xPtr.get(),Y.get(),yPtr.get(),bondVolume.get(),m_code);
+	double theta = MATERIAL_EVALUATION::WITH_BOND_VOLUME::computeDilatation(neighborhoodPtr.get(),X.get(),xPtr.get(),Y.get(),yPtr.get(),bondVolume.get(),m_code,horizon);
 //	std::cout << "ut_bondVolumeConvergenceStudy::probe_shear dilatation = " << theta << std::endl;
 	double tolerance=1.0e-12;
 	BOOST_CHECK_SMALL(theta,tolerance);
@@ -390,7 +390,7 @@ void probe_shear
 	 * This is the reference value for ed_squared
 	 */
 	double reference = 4.0 * M_PI * gamma * gamma * pow(horizon,5) / 75.0;
-	double ed2 = MATERIAL_EVALUATION::WITH_BOND_VOLUME::compute_norm_2_deviatoric_extension(neighborhoodPtr.get(),X.get(),xPtr.get(),X.get(),yPtr.get(),bondVolume.get(),m_code);
+	double ed2 = MATERIAL_EVALUATION::WITH_BOND_VOLUME::compute_norm_2_deviatoric_extension(neighborhoodPtr.get(),X.get(),xPtr.get(),X.get(),yPtr.get(),bondVolume.get(),m_code,horizon);
 	double scf = reference/ed2;
 	double ed_err = fabs(reference-ed2)/reference;
 	std::cout << "ut_scf::probe_shear MODE = " << mode << std::endl;

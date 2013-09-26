@@ -50,6 +50,8 @@
 
 #include <cstdlib>
 
+#include "Peridigm_InfluenceFunction.hpp"
+
 class Bond_Volume_Calculator;
 
 namespace MATERIAL_EVALUATION {
@@ -57,6 +59,8 @@ namespace MATERIAL_EVALUATION {
 using std::size_t;
 
 enum PURE_SHEAR { XY=0, YZ, ZX };
+
+typedef typename PeridigmNS::InfluenceFunction::functionPointer FunctionPointer;
 
 /**
  * Call this function on a single point 'X'
@@ -84,7 +88,8 @@ void computeWeightedVolume
 		double *mOwned,
 		int myNumPoints,
 		const int* localNeighborList,
-        double horizon
+        double horizon,
+        const FunctionPointer OMEGA=PeridigmNS::InfluenceFunction::self().getInfluenceFunction()
 );
 
 
@@ -101,7 +106,9 @@ double computeDilatation
 		const double *Y,
 		const double *yOverlap,
 		const double *volumeOverlap,
-		double weightedVolume
+		double weightedVolume,
+		double horizon,
+        const FunctionPointer OMEGA=PeridigmNS::InfluenceFunction::self().getInfluenceFunction()
 );
 
 /**
@@ -121,7 +128,9 @@ double compute_norm_2_deviatoric_extension
 		const double *Y,
 		const double *yOverlap,
 		const double *volumeOverlap,
-		double weighted_volume
+		double weighted_volume,
+		double horizon,
+        const FunctionPointer OMEGA=PeridigmNS::InfluenceFunction::self().getInfluenceFunction()
 );
 
 void computeShearCorrectionFactor
@@ -148,7 +157,8 @@ double computeWeightedVolume
 		const double *xOverlap,
 		const double* volumeOverlap,
 		const int* localNeighborList,
-        double horizon
+        double horizon,
+        const FunctionPointer OMEGA=PeridigmNS::InfluenceFunction::self().getInfluenceFunction()
 );
 
 double scalarInfluenceFunction(
@@ -167,7 +177,8 @@ void computeDeviatoricDilatation
 		double* dilatationOwned,
 		const int* localNeighborList,
 		int numOwnedPoints,
-        double horizon
+        double horizon,
+        const FunctionPointer OMEGA=PeridigmNS::InfluenceFunction::self().getInfluenceFunction()
 );
 
 template<typename ScalarT>
@@ -182,6 +193,7 @@ void computeDilatation
 		const int* localNeighborList,
 		int numOwnedPoints,
         double horizon,
+        const FunctionPointer OMEGA=PeridigmNS::InfluenceFunction::self().getInfluenceFunction(),
         double thermalExpansionCoefficient = 0,
         const double* deltaTemperature = 0
  );
@@ -198,7 +210,9 @@ double computeWeightedVolume
 		const double *X,
 		const double *xOverlap,
 		const double* bondVolume,
-		const int* localNeighborList
+		const int* localNeighborList,
+		double horizon,
+        const FunctionPointer OMEGA=PeridigmNS::InfluenceFunction::self().getInfluenceFunction()
 );
 
 /**
@@ -214,7 +228,10 @@ double computeDilatation
 		const double *Y,
 		const double *yOverlap,
 		const double *bondVolume,
-		double weightedVolume
+		double weightedVolume,
+		double horizon,
+        const FunctionPointer OMEGA=PeridigmNS::InfluenceFunction::self().getInfluenceFunction()
+
 );
 
 
@@ -235,7 +252,9 @@ double compute_norm_2_deviatoric_extension
 		const double *Y,
 		const double *yOverlap,
 		const double *bondVolume,
-		double weighted_volume
+		double weightedVolume,
+		double horizon,
+        const FunctionPointer OMEGA=PeridigmNS::InfluenceFunction::self().getInfluenceFunction()
 );
 
 }
