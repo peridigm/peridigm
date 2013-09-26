@@ -107,7 +107,7 @@ namespace PeridigmNS {
     double m_density;
     double m_horizon;
     double m_hourglassCoefficient;
-	typename PeridigmNS::InfluenceFunction::functionPointer m_OMEGA;
+    PeridigmNS::InfluenceFunction::functionPointer m_OMEGA;
 
     // field spec ids for all relevant data
     std::vector<int> m_fieldIds;

@@ -182,7 +182,7 @@ namespace PeridigmNS {
     bool m_applyAutomaticDifferentiationJacobian;
     bool m_applySurfaceCorrectionFactor;
     bool m_applyThermalStrains;
-	typename PeridigmNS::InfluenceFunction::functionPointer m_OMEGA;
+    PeridigmNS::InfluenceFunction::functionPointer m_OMEGA;
 
     // field spec ids for all relevant data
     std::vector<int> m_fieldIds;
