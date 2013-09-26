@@ -62,6 +62,7 @@ PeridigmNS::ElasticMaterial::ElasticMaterial(const Teuchos::ParameterList& param
     m_applyAutomaticDifferentiationJacobian(true),
     m_applySurfaceCorrectionFactor(false),
     m_applyThermalStrains(false),
+    m_OMEGA(PeridigmNS::InfluenceFunction::self().getInfluenceFunction()),
     m_volumeFieldId(-1), m_damageFieldId(-1), m_weightedVolumeFieldId(-1), m_dilatationFieldId(-1), m_modelCoordinatesFieldId(-1),
     m_coordinatesFieldId(-1), m_forceDensityFieldId(-1), m_bondDamageFieldId(-1), m_surfaceCorrectionFactorFieldId(-1),
     m_deltaTemperatureFieldId(-1)
@@ -163,7 +164,7 @@ PeridigmNS::ElasticMaterial::computeForce(const double dt,
   if(m_applyThermalStrains)
     dataManager.getData(m_deltaTemperatureFieldId, PeridigmField::STEP_NP1)->ExtractView(&deltaTemperature);
 
-  MATERIAL_EVALUATION::computeDilatation(x,y,weightedVolume,cellVolume,bondDamage,dilatation,neighborhoodList,numOwnedPoints,m_horizon,m_alpha,deltaTemperature);
+  MATERIAL_EVALUATION::computeDilatation(x,y,weightedVolume,cellVolume,bondDamage,dilatation,neighborhoodList,numOwnedPoints,m_horizon,m_OMEGA,m_alpha,deltaTemperature);
   MATERIAL_EVALUATION::computeInternalForceLinearElastic(x,y,weightedVolume,cellVolume,dilatation,bondDamage,scf,force,neighborhoodList,numOwnedPoints,m_bulkModulus,m_shearModulus,m_horizon,m_alpha,deltaTemperature);
 
 }
@@ -227,7 +228,7 @@ PeridigmNS::ElasticMaterial::computeStrainEnergy(const double dt,
       if(m_applyThermalStrains)
 	currentDistance -= m_alpha*deltaTemperature[nodeId]*initialDistance;
       deviatoricExtension = (currentDistance - initialDistance) - nodeDilatation*initialDistance/3.0;
-      omega = MATERIAL_EVALUATION::scalarInfluenceFunction(initialDistance, m_horizon);
+      omega=m_OMEGA(initialDistance,m_horizon);
       temp += (1.0-neighborBondDamage)*omega*deviatoricExtension*deviatoricExtension*cellVolume[neighborId];
     }
     strainEnergy[nodeId] = cellVolume[nodeId]*(0.5*m_bulkModulus*nodeDilatation*nodeDilatation + 0.5*alpha*temp);
@@ -356,7 +357,7 @@ PeridigmNS::ElasticMaterial::computeAutomaticDifferentiationJacobian(const doubl
     vector<Sacado::Fad::DFad<double> > force_AD(numDof);
 
     // Evaluate the constitutive model using the AD types
-    MATERIAL_EVALUATION::computeDilatation(x,&y_AD[0],weightedVolume,cellVolume,bondDamage,&dilatation_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints,m_horizon,m_alpha,deltaTemperature);
+    MATERIAL_EVALUATION::computeDilatation(x,&y_AD[0],weightedVolume,cellVolume,bondDamage,&dilatation_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints,m_horizon,m_OMEGA,m_alpha,deltaTemperature);
     MATERIAL_EVALUATION::computeInternalForceLinearElastic(x,&y_AD[0],weightedVolume,cellVolume,&dilatation_AD[0],bondDamage,scf,&force_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints,m_bulkModulus,m_shearModulus,m_horizon,m_alpha,deltaTemperature);
 
     // Load derivative values into scratch matrix

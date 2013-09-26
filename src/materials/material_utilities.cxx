@@ -46,7 +46,6 @@
 //@HEADER
 
 #include "material_utilities.h"
-#include "Peridigm_InfluenceFunction.hpp"
 #include <cmath>
 #include <vector>
 #include <Sacado.hpp>
@@ -118,7 +117,7 @@ void set_pure_shear
 
 double scalarInfluenceFunction
 (
-        double zeta, 
+        double zeta,
         double horizon
 )
 {
@@ -135,7 +134,8 @@ double computeWeightedVolume
 		const double *xOverlap,
 		const double* volumeOverlap,
 		const int* localNeighborList,
-        double horizon
+        double horizon,
+		const FunctionPointer omega
 ){
 
 	double m=0.0;
@@ -151,8 +151,7 @@ double computeWeightedVolume
 		double dz = XP[2]-X[2];
 		double zetaSquared = dx*dx+dy*dy+dz*dz;
 		double d = sqrt(zetaSquared);
-		double omega = scalarInfluenceFunction(d,horizon);
-		m+=omega*(zetaSquared)*cellVolume;
+		m+=omega(d,horizon)*(zetaSquared)*cellVolume;
 	}
 
 	return m;
@@ -169,7 +168,8 @@ void computeDeviatoricDilatation
 		double* dilatationOwned,
 		const int* localNeighborList,
 		int numOwnedPoints,
-                double horizon
+		double horizon,
+		const FunctionPointer OMEGA
 )
 {
 	const double *xOwned = xOverlap;
@@ -194,7 +194,7 @@ void computeDeviatoricDilatation
 			double dz = XP[2]-X[2];
 			double zetaSquared = dx*dx+dy*dy+dz*dz;
 			double d = sqrt(zetaSquared);
-            double omega = scalarInfluenceFunction(d,horizon);
+            double omega = OMEGA(d,horizon);
 			double e = (*epd);
 			*theta += 3.0*omega*(1.0-*bondDamage)*d*e*cellVolume/(*m);
 		}
@@ -214,6 +214,7 @@ void computeDilatation
 		const int* localNeighborList,
 		int numOwnedPoints,
         double horizon,
+		const FunctionPointer OMEGA,
         double thermalExpansionCoefficient,
         const double* deltaTemperature
 )
@@ -248,7 +249,7 @@ void computeDilatation
 			ScalarT e = sqrt(dY)-d;
             if(deltaTemperature)
               e -= thermalExpansionCoefficient*(*deltaT)*d;
-            double omega = scalarInfluenceFunction(d,horizon);
+            double omega = OMEGA(d,horizon);
 			*theta += 3.0*omega*(1.0-*bondDamage)*d*e*cellVolume/(*m);
 		}
 
@@ -268,6 +269,7 @@ void computeDilatation<double>
 		const int* localNeighborList,
 		int numOwnedPoints,
         double horizon,
+		const FunctionPointer OMEGA,
         double thermalExpansionCoefficient,
         const double* deltaTemperature
  );
@@ -286,6 +288,7 @@ void computeDilatation<Sacado::Fad::DFad<double> >
 		const int* localNeighborList,
 		int numOwnedPoints,
         double horizon,
+		const FunctionPointer OMEGA,
         double thermalExpansionCoefficient,
         const double* deltaTemperature
  );
@@ -303,7 +306,9 @@ double computeDilatation
 		const double *Y,
 		const double *yOverlap,
 		const double *volumeOverlap,
-		double weightedVolume
+		double weightedVolume,
+		double horizon,
+		const FunctionPointer OMEGA
 )
 {
 	double bondDamage=0.0;
@@ -328,9 +333,9 @@ double computeDilatation
 		dz = YP[2]-Y[2];
 		double dY = dx*dx+dy*dy+dz*dz;
 		double d = sqrt(zetaSquared);
-        double OMEGA = 1.0;
+        double omega = OMEGA(d,horizon);
 		double e = sqrt(dY)-d;
-		theta += 3.0*OMEGA*(1.0-bondDamage)*d*e*cellVolume/m;
+		theta += 3.0*omega*(1.0-bondDamage)*d*e*cellVolume/m;
 
 	}
 	return theta;
@@ -345,7 +350,9 @@ double compute_norm_2_deviatoric_extension
 		const double *Y,
 		const double *yOverlap,
 		const double *volumeOverlap,
-		double weighted_volume
+		double weighted_volume,
+		double horizon,
+		const FunctionPointer OMEGA
 )
 {
 
@@ -362,7 +369,7 @@ double compute_norm_2_deviatoric_extension
 	/*
 	 * Compute dilatation
 	 */
-	double theta = computeDilatation(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
+	double theta = computeDilatation(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m,horizon);
 //	std::cout << NAMESPACE << "probeShearModulusScaleFactor theta = " << theta << std::endl;
 
 	/*
@@ -397,7 +404,8 @@ double compute_norm_2_deviatoric_extension
 		/*
 		 * Accumulate norm
 		 */
-		ed_squared += ed * ed * cellVolume;
+		double omega=OMEGA(zeta,horizon);
+		ed_squared += ed * omega * ed * cellVolume;
 
 	}
 
@@ -435,19 +443,19 @@ void computeShearCorrectionFactor
 		mode = XY;
 		Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
 		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
-		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
+		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m,horizon);
 		max_dsf=scf;
 
 		mode = ZX;
 		Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
 		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
-		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
+		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m,horizon);
 		if(scf>max_dsf) max_dsf=scf;
 
 		mode = YZ;
 		Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
 		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
-		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m);
+		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m,horizon);
 		if(scf>max_dsf) max_dsf=scf;
 
 		// We need to reset the location before
@@ -466,7 +474,8 @@ void computeWeightedVolume
 		double *mOwned,
 		int myNumPoints,
 		const int* localNeighborList,
-        double horizon
+        double horizon,
+        const FunctionPointer OMEGA
 ){
 	double *m = mOwned;
 	const double *xOwned = xOverlap;
@@ -493,8 +502,9 @@ double computeWeightedVolume
 		const double *X,
 		const double *xOverlap,
 		const double* bondVolume,
-		const int* localNeighborList
-       
+		const int* localNeighborList,
+		double horizon,
+		const FunctionPointer OMEGA
 ){
 
 	double m=0.0;
@@ -510,9 +520,9 @@ double computeWeightedVolume
 		double dy = XP[1]-X[1];
 		double dz = XP[2]-X[2];
         double zetaSquared = dx*dx+dy*dy+dz*dz;
-        //double d = sqrt(zetaSquared);
-        double OMEGA = 1.0;
-		m+=OMEGA*(zetaSquared)*(*bond_volume);
+        double d = sqrt(zetaSquared);
+        double omega = OMEGA(d,horizon);
+		m+=omega*(zetaSquared)*(*bond_volume);
 	}
 
 	return m;
@@ -535,7 +545,9 @@ double computeDilatation
 		const double *Y,
 		const double *yOverlap,
 		const double *bondVolume,
-		double weightedVolume
+		double weightedVolume,
+		double horizon,
+		const FunctionPointer OMEGA
 )
 {
 	double bondDamage=0.0;
@@ -558,10 +570,9 @@ double computeDilatation
 		dz = YP[2]-Y[2];
 		double dY = dx*dx+dy*dy+dz*dz;
 		double d = sqrt(zetaSquared);
-        //double omega = scalarInfluenceFunction(d,horizon);
-        double OMEGA = 1.0;
+        double omega = OMEGA(d,horizon);
 		double e = sqrt(dY)-d;
-		theta += 3.0*OMEGA*(1.0-bondDamage)*d*e*(*bondVolume)/m;
+		theta += 3.0*omega*(1.0-bondDamage)*d*e*(*bondVolume)/m;
 
 	}
 	return theta;
@@ -575,7 +586,9 @@ double compute_norm_2_deviatoric_extension
 		const double *Y,
 		const double *yOverlap,
 		const double *bondVolume,
-		double weighted_volume
+		double weighted_volume,
+		double horizon,
+		const FunctionPointer OMEGA
 )
 {
 
@@ -591,7 +604,7 @@ double compute_norm_2_deviatoric_extension
 	/*
 	 * Compute dilatation
 	 */
-	double theta = computeDilatation(neighPtr,X,xOverlap,Y,yOverlap,bondVolume,m);
+	double theta = computeDilatation(neighPtr,X,xOverlap,Y,yOverlap,bondVolume,m,horizon);
 //	std::cout << NAMESPACE << "probeShearModulusScaleFactor theta = " << theta << std::endl;
 
 	/*
@@ -626,7 +639,8 @@ double compute_norm_2_deviatoric_extension
 		/*
 		 * Accumulate norm
 		 */
-		ed_squared += ed * ed * (*bondVolume);
+		double omega=OMEGA(zeta,horizon);
+		ed_squared += ed * omega * ed * (*bondVolume);
 
 	}
 

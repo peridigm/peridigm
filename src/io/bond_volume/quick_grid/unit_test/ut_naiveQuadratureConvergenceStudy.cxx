@@ -369,7 +369,7 @@ void probe_shear
 	 * therefore, Y=X
 	 */
 	MATERIAL_EVALUATION::set_pure_shear(neighborhoodPtr.get(),X.get(),xPtr.get(),yPtr.get(),mode,gamma);
-	double theta = MATERIAL_EVALUATION::computeDilatation(neighborhoodPtr.get(),X.get(),xPtr.get(),X.get(),yPtr.get(),cellVolume.get(),m_code);
+	double theta = MATERIAL_EVALUATION::computeDilatation(neighborhoodPtr.get(),X.get(),xPtr.get(),X.get(),yPtr.get(),cellVolume.get(),m_code,horizon);
 	std::cout << "ut_naiveQuadratureConvergenceStudy::probe_shear dilatation = " << theta << std::endl;
 	double tolerance=1.0e-12;
 	BOOST_CHECK_SMALL(theta,tolerance);
@@ -381,7 +381,7 @@ void probe_shear
 	 * This is the reference value for ed_squared
 	 */
 	double reference = 4.0 * M_PI * gamma * gamma * pow(horizon,5) / 75.0;
-	double ed2 = MATERIAL_EVALUATION::compute_norm_2_deviatoric_extension(neighborhoodPtr.get(),X.get(),xPtr.get(),Y.get(),yPtr.get(),cellVolume.get(),m_code);
+	double ed2 = MATERIAL_EVALUATION::compute_norm_2_deviatoric_extension(neighborhoodPtr.get(),X.get(),xPtr.get(),Y.get(),yPtr.get(),cellVolume.get(),m_code,horizon);
 	double scf = reference/ed2;
 	double ed_err = fabs(reference-ed2)/reference;
 	std::cout << "ut_scf::probe_shear MODE = " << mode << std::endl;
