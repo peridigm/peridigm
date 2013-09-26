@@ -60,7 +60,7 @@ using std::size_t;
 
 enum PURE_SHEAR { XY=0, YZ, ZX };
 
-typedef typename PeridigmNS::InfluenceFunction::functionPointer FunctionPointer;
+typedef PeridigmNS::InfluenceFunction::functionPointer FunctionPointer;
 
 /**
  * Call this function on a single point 'X'
