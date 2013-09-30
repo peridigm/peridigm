@@ -91,7 +91,8 @@
   <ParameterList name="Solver">
   	<Parameter name="Verbose" type="bool" value="false"/>
 	<Parameter name="Initial Time" type="double" value="0.0"/>
-	<Parameter name="Final Time" type="double" value="0.0008"/> 
+	<Parameter name="Final Time" type="double" value="0.0008"/>
+<!--	<Parameter name="Final Time" type="double" value="2.3e-7"/>  -->
 	<ParameterList name="Verlet">
       <Parameter name="Safety Factor" type="double" value="0.7"/>
    	</ParameterList>
@@ -100,7 +101,7 @@
   <ParameterList name="Output1">
   	<Parameter name="Output File Type" type="string" value="ExodusII"/>
 	<Parameter name="Output Format" type="string" value="BINARY"/>
-	<Parameter name="Output Filename" type="string" value="elastic_disk_impact"/>
+	<Parameter name="Output Filename" type="string" value="disk_impact"/>
 	<Parameter name="Output Frequency" type="int" value="350"/>
 	<ParameterList name="Output Variables">
 	  <Parameter name="Displacement" type="bool" value="true"/>
@@ -119,7 +120,7 @@
   <ParameterList name="Output2">
   	<Parameter name="Output File Type" type="string" value="ExodusII"/>
 	<Parameter name="Output Format" type="string" value="BINARY"/>
-	<Parameter name="Output Filename" type="string" value="elastic_disk_impact"/>
+	<Parameter name="Output Filename" type="string" value="disk_impact"/>
 	<Parameter name="Output Frequency" type="int" value="35"/>
 	<ParameterList name="Output Variables">
 	  <Parameter name="Global_Kinetic_Energy" type="bool" value="true"/>
