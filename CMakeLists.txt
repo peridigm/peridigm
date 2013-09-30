@@ -84,7 +84,7 @@ MESSAGE("")
 # Check for netcdf
 LIST(FIND Trilinos_TPL_LIST Netcdf Netcdf_Package_Index)
 IF(Netcdf_Package_Index LESS 0)
-  MESSAGE("\n\nError:  Netcdf NOT found.  Netcdf is a REQUIRED Trilinos TPL.\n\n")
+  MESSAGE("FATAL_ERROR \n\nError:  Netcdf NOT found.  Netcdf is a REQUIRED Trilinos TPL.\n\n")
 ENDIF()
 
 #
@@ -92,6 +92,9 @@ ENDIF()
 #
 IF(TEST_PERFORMANCE)
   MESSAGE("-- Performance testing is enabled.\n")
+  IF("${MACHINE}" STREQUAL "")
+    MESSAGE(FATAL_ERROR "\n**** Error, performance testing requires definition of MACHINE.\n\n")
+  ENDIF()
 ELSE()
   MESSAGE("-- Performance testing is NOT enabled.\n")
 ENDIF()
@@ -258,6 +261,7 @@ add_subdirectory (test/performance)
 # Can exclude files with flag -e <filename>
 string (COMPARE EQUAL ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} buildInSource)
 if (NOT ${buildInSource})
+   set(UT_DIRS ${UT_DIRS}  -d examples)
    set(UT_DIRS ${UT_DIRS}  -d test/regression)
    set(UT_DIRS ${UT_DIRS}  -d test/verification)
    set(UT_DIRS ${UT_DIRS}  -d test/performance)
