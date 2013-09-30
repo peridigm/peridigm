@@ -1,0 +1,2 @@
+blot disk_impact.h -input disk_impact.blot met
+gnuplot disk_impact.plotgen

@@ -88,6 +88,15 @@ IF(Netcdf_Package_Index LESS 0)
 ENDIF()
 
 #
+# Enable performance testing
+#
+IF(TEST_PERFORMANCE)
+  MESSAGE("-- Performance testing is enabled.\n")
+ELSE()
+  MESSAGE("-- Performance testing is NOT enabled.\n")
+ENDIF()
+
+#
 # Optional dependency on Laboratory for Computational Mechanics (LCM)
 #
 IF(USE_LCM)
@@ -243,6 +252,7 @@ set (UT_REQUIRED_LIBS
 add_subdirectory (src)
 add_subdirectory (test/regression)
 add_subdirectory (test/verification)
+add_subdirectory (test/performance)
 
 # Create symbolic links to files in directories specified.  By default it recurses directories
 # Can exclude files with flag -e <filename>
@@ -250,6 +260,7 @@ string (COMPARE EQUAL ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR} buildInSource)
 if (NOT ${buildInSource})
    set(UT_DIRS ${UT_DIRS}  -d test/regression)
    set(UT_DIRS ${UT_DIRS}  -d test/verification)
+   set(UT_DIRS ${UT_DIRS}  -d test/performance)
    execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/scripts/mirror.py -s ${CMAKE_SOURCE_DIR} -b ${CMAKE_BINARY_DIR} ${UT_DIRS} )
    set(SCRIPT_DIRS ${SCRIPT_DIRS}  -d scripts)
    execute_process(COMMAND python ${CMAKE_SOURCE_DIR}/scripts/mirror.py -s ${CMAKE_SOURCE_DIR} -b ${CMAKE_BINARY_DIR} ${SCRIPT_DIRS} )
@@ -259,3 +270,4 @@ execute_process(COMMAND ln -sf ${Trilinos_BINARY_PATH}/exodiff ${CMAKE_BINARY_DI
 execute_process(COMMAND ln -sf ${Trilinos_BINARY_PATH}/epu ${CMAKE_BINARY_DIR}/scripts)
 execute_process(COMMAND ln -sf ${Trilinos_BINARY_PATH}/conjoin ${CMAKE_BINARY_DIR}/scripts)
 execute_process(COMMAND ln -sf ${Trilinos_BINARY_PATH}/exotxt ${CMAKE_BINARY_DIR}/scripts)
+execute_process(COMMAND ln -sf ${Trilinos_BINARY_PATH}/decomp ${CMAKE_BINARY_DIR}/scripts)
