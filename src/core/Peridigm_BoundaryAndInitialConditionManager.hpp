@@ -85,6 +85,9 @@ namespace PeridigmNS {
       return nodeSets;
     }
 
+    //! Create a placeholder boundary condition to take nodes that become rank deficient
+    void createRankDeficientBC();
+
     //! Apply all initial conditions
     void applyInitialConditions();
 

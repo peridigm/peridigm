@@ -72,6 +72,7 @@
 #include "Peridigm_Timer.hpp"
 #include "materials/Peridigm_MaterialFactory.hpp"
 #include "damage/Peridigm_DamageModelFactory.hpp"
+#include "damage/Peridigm_InterfaceAwareDamageModel.hpp"
 #include "muParser/muParser.h"
 #include "muParser/muParserPeridigmFunctions.h"
 #include "Peridigm.hpp"
@@ -260,8 +261,12 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
     string damageModelName = blockIt->getDamageModelName();
     if(damageModelName != "None"){
       Teuchos::ParameterList damageParams = damageModelParams.sublist(damageModelName, true);
-      Teuchos::RCP<const PeridigmNS::DamageModel> damageModel = damageModelFactory.create(damageParams);
+      Teuchos::RCP<PeridigmNS::DamageModel> damageModel = damageModelFactory.create(damageParams);
       blockIt->setDamageModel(damageModel);
+      if(damageModel->Name() =="Interface Aware"){
+        Teuchos::RCP< PeridigmNS::InterfaceAwareDamageModel > IADamageModel = Teuchos::rcp_dynamic_cast< PeridigmNS::InterfaceAwareDamageModel >(damageModel);
+        IADamageModel->setBCManager(boundaryAndInitialConditionManager);
+      }
     }
   }
 
@@ -1510,6 +1515,10 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
   Teuchos::RCP<Epetra_Vector> lhs = Teuchos::rcp(new Epetra_Vector(tangent->Map()));
   Teuchos::RCP<Epetra_Vector> reaction = Teuchos::rcp(new Epetra_Vector(force->Map()));
 
+  const bool disableHeuristics = solverParams->get("Disable Heuristics", false);
+  if(disableHeuristics && peridigmComm->MyPID() == 0)
+    cout << "\nUser has disabled solver heuristics.\n" << endl;
+
   // Vector for predictor
   Epetra_Vector predictor(v->Map());
 
@@ -1673,7 +1682,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
       }
 
       // On the first iteration, use a predictor based on the velocity from the previous load step
-      if(solverIteration == 1 && step > 1){
+      if(solverIteration == 1 && step > 1 && !disableHeuristics) {
         for(int i=0 ; i<lhs->MyLength() ; ++i)
           (*lhs)[i] = predictor[i]*timeIncrement;
         boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(lhs);
@@ -1682,7 +1691,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
       else{
         // If we reach the specified maximum number of iterations of the nonlinear solver, switch to a damped Newton approach.
         // This should hurt the convergence rate but improve robustness.
-        if(solverIteration > numPureNewtonSteps && !dampedNewton){
+        if(solverIteration > numPureNewtonSteps && !dampedNewton && !disableHeuristics){
           if(peridigmComm->MyPID() == 0)
             cout << "  --switching nonlinear solver to damped Newton--" << endl;
           dampedNewton = true;
@@ -1694,6 +1703,9 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
             cout << "  --disabling preconditioner--" << endl;
           usePreconditioner = false;
         }
+
+        // Disable the preconditioner if the user specifies disable heuristics
+        if(disableHeuristics) usePreconditioner = false;
 
         // Compute the tangent
         if( !dampedNewton || (solverIteration-numPureNewtonSteps-1)%dampedNewtonNumStepsBetweenTangentUpdates==0 ){
@@ -1717,7 +1729,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
         // Solve linear system
         isConverged = quasiStaticsSolveSystem(residual, lhs, linearProblem, belosSolver);
 
-        if(isConverged == Belos::Unconverged){
+        if(isConverged == Belos::Unconverged && !disableHeuristics){
           // Adjust the tangent and try again
           if(peridigmComm->MyPID() == 0)
             cout << "  --switching nonlinear solver to damped Newton and deactivating preconditioner--" << endl;
@@ -1736,8 +1748,9 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
         // The solver should have returned zeros, but there may be small errors.
         boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(lhs);
 
+
         PeridigmNS::Timer::self().startTimer("Line Search");
-        alpha = quasiStaticsLineSearch(residual, lhs, timeIncrement);
+        alpha = disableHeuristics ? 1.0 : quasiStaticsLineSearch(residual, lhs, timeIncrement);
         PeridigmNS::Timer::self().stopTimer("Line Search");
 
         // Apply increment to nodal positions
@@ -1746,7 +1759,6 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
           yPtr[i] = xPtr[i] + uPtr[i] + deltaUPtr[i];
           vPtr[i] = deltaUPtr[i]/timeIncrement;
         }
-
         // Compute residual
         residualNorm = computeQuasiStaticResidual(residual);
 

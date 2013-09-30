@@ -138,9 +138,29 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Dis
   }
   TEUCHOS_TEST_FOR_EXCEPTION(hasPrescDisp&&hasPrescVel,std::logic_error,"Error: cannot specify prescribed displacement and velocity boundary conditions");
 
-//      TEUCHOS_TEST_FOR_EXCEPTION(true,std::logic_error,"ERROR: the following parameter was not used in the initialization of boundary or initial conditions: " + it->first);
+  createRankDeficientBC();
 
   initializeNodeSets(discretization);
+}
+
+void PeridigmNS::BoundaryAndInitialConditionManager::createRankDeficientBC()
+{
+  // create a placeholder boundary condition to dump nodes into when they have become rank deficient (this helps with convergence for quasistatic bond breaking)
+  Teuchos::ParameterList containerParams;
+  containerParams.set("Type","Prescribed_Displacement");
+  containerParams.set("Name","Rank Deficient Nodes");
+  containerParams.set("Node Set","RANK_DEFICIENT_NODES");
+  containerParams.set("Value","0.0");
+  containerParams.set("Coordinate","x");
+  Teuchos::RCP<Epetra_Vector> toVector = peridigm->getDeltaU();
+  Teuchos::RCP<BoundaryCondition> bcPtr = Teuchos::rcp(new DirichletIncrementBC(containerParams.get<string>("Name"),containerParams,toVector,peridigm,false,1.0,0.0));
+  boundaryConditions.push_back(bcPtr);
+  containerParams.set("Coordinate","y");
+  bcPtr = Teuchos::rcp(new DirichletIncrementBC(containerParams.get<string>("Name"),containerParams,toVector,peridigm,false,1.0,0.0));
+  containerParams.set("Coordinate","z");
+  boundaryConditions.push_back(bcPtr);
+  bcPtr = Teuchos::rcp(new DirichletIncrementBC(containerParams.get<string>("Name"),containerParams,toVector,peridigm,false,1.0,0.0));
+  boundaryConditions.push_back(bcPtr);
 }
 
 void PeridigmNS::BoundaryAndInitialConditionManager::initializeNodeSets(Teuchos::RCP<Discretization> discretization)
@@ -197,6 +217,12 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initializeNodeSets(Teuchos:
       }
     }
   }
+
+
+  // Create the bogus node set that will hold any rank deficient nodes that show up
+  vector<int> noNodes;
+  (*nodeSets)["RANK_DEFICIENT_NODES"] = noNodes;
+  //nodeSets->insert(std::pair<string,vector<int> >("Rank_Deficient_Nodes",noNodes));
 
   // Load node sets defined in the mesh file into the nodeSets container
   Teuchos::RCP< map< string, vector<int> > > discretizationNodeSets = discretization->getNodeSets();
