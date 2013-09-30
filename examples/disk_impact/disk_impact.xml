@@ -92,7 +92,7 @@
   	<Parameter name="Verbose" type="bool" value="false"/>
 	<Parameter name="Initial Time" type="double" value="0.0"/>
 	<Parameter name="Final Time" type="double" value="0.0008"/>
-<!--	<Parameter name="Final Time" type="double" value="2.3e-7"/>  -->
+<!--	<Parameter name="Final Time" type="double" value="2.3e-7"/> -->
 	<ParameterList name="Verlet">
       <Parameter name="Safety Factor" type="double" value="0.7"/>
    	</ParameterList>
