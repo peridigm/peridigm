@@ -80,6 +80,7 @@ enum Type {
   CRITICAL_TIME_STEP,
   DILATATION,
   DAMAGE,
+  CRITICAL_STRETCH,
   E_DP,
   E_DB,
   PLASTIC_CONSISTENCY,
@@ -264,6 +265,7 @@ const Field_NS::FieldSpec NORM_TD                 (Field_ENUM::NORM_DEVIATORIC_F
 const Field_NS::FieldSpec SHEAR_CORRECTION_FACTOR (Field_ENUM::SHEAR_CORRECTION_FACTOR,      Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Surface_Correction_Factor");
 const Field_NS::FieldSpec BC_MASK                 (Field_ENUM::BC_MASK,                      Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "BC_MASK");
 const Field_NS::FieldSpec DAMAGE                  (Field_ENUM::DAMAGE,                       Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Damage");
+const Field_NS::FieldSpec CRITICAL_STRETCH        (Field_ENUM::CRITICAL_STRETCH,             Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Critical_Stretch");
 const Field_NS::FieldSpec KINETIC_ENERGY          (Field_ENUM::KINETIC_ENERGY,               Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Kinetic_Energy");
 const Field_NS::FieldSpec STRAIN_ENERGY           (Field_ENUM::STRAIN_ENERGY,                Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Strain_Energy");
 const Field_NS::FieldSpec STRAIN_ENERGY_DENSITY   (Field_ENUM::STRAIN_ENERGY_DENSITY,        Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Strain_Energy_Density");
@@ -322,7 +324,8 @@ struct FieldSpecMap {
 		mymap[NORM_TD.getLabel()]                      = NORM_TD;
 		mymap[SHEAR_CORRECTION_FACTOR.getLabel()]      = SHEAR_CORRECTION_FACTOR;
 		mymap[BC_MASK.getLabel()]                      = BC_MASK;
-		mymap[DAMAGE.getLabel()]                       = DAMAGE;
+    mymap[DAMAGE.getLabel()]                       = DAMAGE;
+    mymap[CRITICAL_STRETCH.getLabel()]             = CRITICAL_STRETCH;
 		mymap[KINETIC_ENERGY.getLabel()]               = KINETIC_ENERGY;
 		mymap[STRAIN_ENERGY.getLabel()]                = STRAIN_ENERGY;
 		mymap[STRAIN_ENERGY_DENSITY.getLabel()]        = STRAIN_ENERGY_DENSITY;

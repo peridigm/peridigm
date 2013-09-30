@@ -48,6 +48,7 @@
 #include <Teuchos_Assert.hpp>
 #include "Peridigm_DamageModelFactory.hpp"
 #include "Peridigm_CriticalStretchDamageModel.hpp"
+#include "Peridigm_InterfaceAwareDamageModel.hpp"
 
 using namespace std;
 
@@ -60,6 +61,8 @@ PeridigmNS::DamageModelFactory::create(const Teuchos::ParameterList& damageModel
 
   if(damageModelName == "Critical Stretch")
     damageModel = Teuchos::rcp( new CriticalStretchDamageModel(damageModelParams) );
+  else if(damageModelName == "Interface Aware")
+    damageModel = Teuchos::rcp( new InterfaceAwareDamageModel(damageModelParams) );
   else {
     string invalidDamageModel("\n**** Unrecognized damage model type: ");
     invalidDamageModel += damageModelName;
