@@ -499,7 +499,7 @@ ScalarT ViscoplasticNeedlemanYieldFunction
  const double dt
 )
 {
-  ScalarT hardTerm = yieldStress * ((1.0 + pow(eqps/refStrain0, strainHardExp)) / (1.0 + pow(eqps/refStrain1,2.0)));
+  ScalarT hardTerm = yieldStress * pow(1.0 + eqps/refStrain0, strainHardExp) / (1.0 + pow(eqps/refStrain1,2.0));
   ScalarT rateTerm = pow(sqrt(2.0/3.0) * deltaLambda / dt / refStrainRate, rateHardExp);
 
   return (hardTerm * rateTerm);
