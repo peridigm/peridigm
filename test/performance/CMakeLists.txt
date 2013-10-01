@@ -1,9 +1,9 @@
 #
 # Add the tests
 #
-if(TEST_PERFORMANCE)
-  add_test (disk_impact_np4 python ./disk_impact/disk_impact.py -machine ${MACHINE})
-endif(TEST_PERFORMANCE)
+if(PERFORMANCE_TEST_MACHINE)
+  add_test (disk_impact_performance_np4 python ./disk_impact/disk_impact.py -machine ${PERFORMANCE_TEST_MACHINE})
+endif()
 
 add_custom_target( ptest
    COMMAND ctest

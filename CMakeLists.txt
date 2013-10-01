@@ -90,11 +90,8 @@ ENDIF()
 #
 # Enable performance testing
 #
-IF(TEST_PERFORMANCE)
-  MESSAGE("-- Performance testing is enabled.\n")
-  IF("${MACHINE}" STREQUAL "")
-    MESSAGE(FATAL_ERROR "\n**** Error, performance testing requires definition of MACHINE.\n\n")
-  ENDIF()
+IF(PERFORMANCE_TEST_MACHINE)
+  MESSAGE("-- Performance testing is enabled, machine = ${PERFORMANCE_TEST_MACHINE}.\n")
 ELSE()
   MESSAGE("-- Performance testing is NOT enabled.\n")
 ENDIF()
