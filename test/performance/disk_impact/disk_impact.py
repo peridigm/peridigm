@@ -120,7 +120,7 @@ if __name__ == "__main__":
     # compare output against gold file only if the gold file is present
     gold_file_name = base_name + "_gold.e"
     if os.path.exists(gold_file_name):
-        command = ["../../../../scripts/exodiff", \
+        command = ["../../../scripts/exodiff", \
                    "-stat", \
                    "-f", \
                    "../"+base_name+".comp", \
