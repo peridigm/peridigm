@@ -99,7 +99,7 @@ public:
 	  p = &PeridigmInfluenceFunction::parabolicDecay;
 	}
 	else if(influenceFunctionString == "Gaussian"){
-	  p = &PeridigmInfluenceFunction::parabolicDecay;
+	  p = &PeridigmInfluenceFunction::gaussian;
 	}
 	else {
 		TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error:  InfluenceFunction::getInfluenceFunction(string), invalid influence function\n");
