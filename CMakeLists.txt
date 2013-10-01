@@ -271,4 +271,6 @@ execute_process(COMMAND ln -sf ${Trilinos_BINARY_PATH}/exodiff ${CMAKE_BINARY_DI
 execute_process(COMMAND ln -sf ${Trilinos_BINARY_PATH}/epu ${CMAKE_BINARY_DIR}/scripts)
 execute_process(COMMAND ln -sf ${Trilinos_BINARY_PATH}/conjoin ${CMAKE_BINARY_DIR}/scripts)
 execute_process(COMMAND ln -sf ${Trilinos_BINARY_PATH}/exotxt ${CMAKE_BINARY_DIR}/scripts)
+execute_process(COMMAND ln -sf ${Trilinos_BINARY_PATH}/nem_slice ${CMAKE_BINARY_DIR}/scripts)
+execute_process(COMMAND ln -sf ${Trilinos_BINARY_PATH}/nem_spread ${CMAKE_BINARY_DIR}/scripts)
 execute_process(COMMAND ln -sf ${Trilinos_BINARY_PATH}/decomp ${CMAKE_BINARY_DIR}/scripts)
