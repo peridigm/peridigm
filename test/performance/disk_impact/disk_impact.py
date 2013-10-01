@@ -112,11 +112,11 @@ if __name__ == "__main__":
         logfile.write("\n**** PERFORMANCE TEST FAILED:  wallclock time was LESS than benchmark value minus tolerance (code is running TOO FAST!).")
     else:
         logfile.write("\n**** PERFORMANCE TEST PASSED:  wallclock time was within tolerance.")
-    logfile.write("\n****               wallclock time  = " +  str(wallclock_time))
-    logfile.write("\n****               benchmark value = " +  str(gold_wallclock_time))
-    logfile.write("\n****               tolerance       = " +  str(gold_wallclock_time_tolerance) +"\n")
+    logfile.write("\n****                           wallclock time  = " +  str(wallclock_time))
+    logfile.write("\n****                           benchmark value = " +  str(gold_wallclock_time))
+    logfile.write("\n****                           tolerance       = " +  str(gold_wallclock_time_tolerance) +"\n")
     logfile.flush()
-        
+          
     # compare output against gold file only if the gold file is present
     gold_file_name = base_name + "_gold.e"
     if os.path.exists(gold_file_name):
@@ -131,7 +131,7 @@ if __name__ == "__main__":
         if return_code != 0:
             result = return_code
     else:
-        logfile.write("\nGold file " + gold_file_name + " not found, skipping exodiff.\n\n")
+        logfile.write("\n**** Gold file " + gold_file_name + " not found, skipping exodiff.\n\n")
 
     logfile.close()
 
