@@ -112,11 +112,12 @@ PeridigmNS::CriticalStretchDamageModel::computeDamage(const double dt,
                                                       const int* neighborhoodList,
                                                       PeridigmNS::DataManager& dataManager) const
 {
-  double *x, *y, *damage, *bondDamage, *deltaTemperature;
+  double *x, *y, *damage, *bondDamageN, *bondDamageNP1, *deltaTemperature;
   dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
   dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&y);
   dataManager.getData(m_damageFieldId, PeridigmField::STEP_NP1)->ExtractView(&damage);
-  dataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_NP1)->ExtractView(&bondDamage);
+  dataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_N)->ExtractView(&bondDamageN);
+  dataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_NP1)->ExtractView(&bondDamageNP1);
   deltaTemperature = NULL;
   if(m_applyThermalStrains)
     dataManager.getData(m_deltaTemperatureFieldId, PeridigmField::STEP_NP1)->ExtractView(&deltaTemperature);
@@ -126,14 +127,18 @@ PeridigmNS::CriticalStretchDamageModel::computeDamage(const double dt,
   int nodeId, numNeighbors, neighborID, iID, iNID;
   double nodeInitialX[3], nodeCurrentX[3], initialDistance, currentDistance, relativeExtension, totalDamage;
 
+  // Set the bond damage to the previous value
+  dataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_NP1) =
+    dataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_N);
+
   // Update the bond damage
   // Break bonds if the extension is greater than the critical extension
 
   for(iID=0 ; iID<numOwnedPoints ; ++iID){
 	nodeId = ownedIDs[iID];
 	nodeInitialX[0] = x[nodeId*3];
-    nodeInitialX[1] = x[nodeId*3+1];
-    nodeInitialX[2] = x[nodeId*3+2];
+	nodeInitialX[1] = x[nodeId*3+1];
+	nodeInitialX[2] = x[nodeId*3+2];
 	nodeCurrentX[0] = y[nodeId*3];
 	nodeCurrentX[1] = y[nodeId*3+1];
 	nodeCurrentX[2] = y[nodeId*3+2];
@@ -152,8 +157,8 @@ PeridigmNS::CriticalStretchDamageModel::computeDamage(const double dt,
       trialDamage = 0.0;
       if(relativeExtension > m_criticalStretch)
         trialDamage = 1.0;
-      if(trialDamage > bondDamage[bondIndex]){
-        bondDamage[bondIndex] = trialDamage;
+      if(trialDamage > bondDamageNP1[bondIndex]){
+        bondDamageNP1[bondIndex] = trialDamage;
       }
       bondIndex += 1;
     }
@@ -169,7 +174,7 @@ PeridigmNS::CriticalStretchDamageModel::computeDamage(const double dt,
     neighborhoodListIndex += numNeighbors;
 	totalDamage = 0.0;
 	for(iNID=0 ; iNID<numNeighbors ; ++iNID){
-	  totalDamage += bondDamage[bondIndex++];
+	  totalDamage += bondDamageNP1[bondIndex++];
 	}
 	if(numNeighbors > 0)
 	  totalDamage /= numNeighbors;
