@@ -110,6 +110,9 @@ PeridigmNS::ShortRangeForceContactModel::computeForce(const double dt,
   double normal[3], currentDotNormal, currentDotNeighbor, nodeCurrentVperp[3], nodeNeighborVperp[3], Vcm[3], nodeCurrentVrel[3], nodeNeighborVrel[3];
   double normCurrentVrel, normNeighborVrel, currentNormalForce[3], neighborNormalForce[3], normCurrentNormalForce, normNeighborNormalForce, currentFrictionForce[3], neighborFrictionForce[3];
 
+  double currentDistanceSquared;
+  double contactRadiusSquared = m_contactRadius*m_contactRadius;
+
   for(iID=0 ; iID<numOwnedPoints ; ++iID){
     numNeighbors = contactNeighborhoodList[neighborhoodListIndex++];
     if(numNeighbors > 0){
@@ -124,10 +127,11 @@ PeridigmNS::ShortRangeForceContactModel::computeForce(const double dt,
       for(iNID=0 ; iNID<numNeighbors ; ++iNID){
         neighborID = contactNeighborhoodList[neighborhoodListIndex++];
         TEUCHOS_TEST_FOR_EXCEPT_MSG(neighborID < 0, "Invalid neighbor list\n");
-        currentDistance =
-          distance(nodeCurrentX[0], nodeCurrentX[1], nodeCurrentX[2],
-                   y[neighborID*3], y[neighborID*3+1], y[neighborID*3+2]);
-        if(currentDistance < m_contactRadius){
+	currentDistanceSquared =  distanceSquared(nodeCurrentX[0], nodeCurrentX[1], nodeCurrentX[2],
+						  y[neighborID*3], y[neighborID*3+1], y[neighborID*3+2]);
+        if(currentDistanceSquared < contactRadiusSquared){
+	  currentDistance = distance(nodeCurrentX[0], nodeCurrentX[1], nodeCurrentX[2],
+				     y[neighborID*3], y[neighborID*3+1], y[neighborID*3+2]);
           c = 9.0*m_springConstant/(3.1415*m_horizon*m_horizon*m_horizon*m_horizon);	// half value (of 18) due to force being applied to both nodes
           temp = c*(m_contactRadius - currentDistance)/m_horizon;
           neighborVolume = cellVolume[neighborID];
