@@ -729,8 +729,8 @@ void PeridigmNS::ContactManager::contactSearch(Teuchos::RCP<const Epetra_BlockMa
     int globalID = searchGlobalIDs[iPt];
     vector<int>& contactNeighborGlobalIDList = (*contactNeighborGlobalIDs)[globalID];
 
-    // create a stl::list of global IDs that this point is bonded to
-    list<int> bondedNeighbors;
+    // create a list of global IDs that this point is bonded to
+    set<int> bondedNeighbors;
     int tempLocalID = rebalancedBondMap->LID(globalID);
     // if there is no entry in rebalancedBondMap, then there are no bonded neighbors for this point
     if(tempLocalID != -1){
@@ -738,7 +738,7 @@ void PeridigmNS::ContactManager::contactSearch(Teuchos::RCP<const Epetra_BlockMa
       int numNeighbors = rebalancedBondMap->ElementSize(tempLocalID);
       for(int i=0 ; i<numNeighbors ; ++i){
         int neighborGlobalID = (int)( (*rebalancedNeighborGlobalIDs)[firstNeighbor + i] );
-        bondedNeighbors.push_back(neighborGlobalID);
+        bondedNeighbors.insert(neighborGlobalID);
       }
     }
 
@@ -747,7 +747,7 @@ void PeridigmNS::ContactManager::contactSearch(Teuchos::RCP<const Epetra_BlockMa
     int searchNumNeighbors = searchNeighborhood[searchListIndex++];
     for(int iNeighbor=0 ; iNeighbor<searchNumNeighbors ; ++iNeighbor){
       int globalNeighborID = searchNeighborhood[searchListIndex++];
-      list<int>::iterator it = find(bondedNeighbors.begin(), bondedNeighbors.end(), globalNeighborID);  // \todo Don't consider broken bonds here
+      set<int>::iterator it = bondedNeighbors.find(globalNeighborID);  // \todo Don't consider broken bonds here
       if(it == bondedNeighbors.end()){
         contactNeighborGlobalIDList.push_back(globalNeighborID);
         if(rebalancedOneDimensionalMap->LID(globalNeighborID) == -1)

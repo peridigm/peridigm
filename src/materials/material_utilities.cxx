@@ -221,7 +221,7 @@ void computeDilatation
 {
 	const double *xOwned = xOverlap;
 	const ScalarT *yOwned = yOverlap;
-    const double *deltaT = deltaTemperature;
+	const double *deltaT = deltaTemperature;
 	const double *m = mOwned;
 	const double *v = volumeOverlap;
 	ScalarT *theta = dilatationOwned;
@@ -246,10 +246,11 @@ void computeDilatation
 			ScalarT Y_dz = YP[2]-Y[2];
 			ScalarT dY = Y_dx*Y_dx+Y_dy*Y_dy+Y_dz*Y_dz;
 			double d = sqrt(zetaSquared);
-			ScalarT e = sqrt(dY)-d;
-            if(deltaTemperature)
-              e -= thermalExpansionCoefficient*(*deltaT)*d;
-            double omega = OMEGA(d,horizon);
+			ScalarT e = sqrt(dY);
+			e -= d;
+			if(deltaTemperature)
+			  e -= thermalExpansionCoefficient*(*deltaT)*d;
+			double omega = OMEGA(d,horizon);
 			*theta += 3.0*omega*(1.0-*bondDamage)*d*e*cellVolume/(*m);
 		}
 
