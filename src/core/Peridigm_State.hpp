@@ -66,7 +66,7 @@ class State {
 public:
 
   //! Constructor.
-  State(){}
+  State() : numFieldIds(0) {}
 
   //! Copy constructor.
   State(const State& state){}
@@ -127,8 +127,15 @@ protected:
   Teuchos::RCP<Epetra_MultiVector> scalarBondData;
   //@}
 
+  //! Maximum value of field ids.
+  int numFieldIds;
+
   //! Map that associates a field id with an individual Epetra_Vector contained within one of the Epetra_MultiVectors.
   std::map< int, Teuchos::RCP<Epetra_Vector> > fieldIdToDataMap;
+
+  //! Vector that associates a field id with an individual Epetra_Vector contained within one of the Epetra_MultiVectors.
+  //  The vector is used in addition to the map because access is faster in getData() and this was shown to be a bottleneck.
+  std::vector< Teuchos::RCP<Epetra_Vector> > fieldIdToDataVector;
 
   //! Utility for copying locally-owned data from one multivector to another; succeeds only if all the local IDs in the target map exist in and are locally owned in the source map.
   void copyLocallyOwnedMultiVectorData(Epetra_MultiVector& source, Epetra_MultiVector& target);

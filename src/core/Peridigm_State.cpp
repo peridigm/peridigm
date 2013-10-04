@@ -56,25 +56,52 @@ using namespace std;
 void PeridigmNS::State::allocateScalarPointData(vector<int> fieldIds, Teuchos::RCP<const Epetra_BlockMap> map)
 {
   std::sort(fieldIds.begin(), fieldIds.end());
+
+  int maxFieldId = fieldIds[fieldIds.size()-1];
+  if(maxFieldId >= numFieldIds){
+    numFieldIds = maxFieldId+1;
+    fieldIdToDataVector.resize(numFieldIds);
+  }
+
   scalarPointData = Teuchos::rcp(new Epetra_MultiVector(*map, fieldIds.size()));
-  for(unsigned int i=0 ; i<fieldIds.size() ; ++i)
+  for(unsigned int i=0 ; i<fieldIds.size() ; ++i){
     fieldIdToDataMap[fieldIds[i]] = Teuchos::rcp((*scalarPointData)(i), false);
+    fieldIdToDataVector[fieldIds[i]] = Teuchos::rcp((*scalarPointData)(i), false);
+  }
 }
 
 void PeridigmNS::State::allocateVectorPointData(vector<int> fieldIds, Teuchos::RCP<const Epetra_BlockMap> map)
 {
   std::sort(fieldIds.begin(), fieldIds.end());
+
+  int maxFieldId = fieldIds[fieldIds.size()-1];
+  if(maxFieldId >= numFieldIds){
+    numFieldIds = maxFieldId+1;
+    fieldIdToDataVector.resize(numFieldIds);
+  }
+
   vectorPointData = Teuchos::rcp(new Epetra_MultiVector(*map, fieldIds.size()));
-  for(unsigned int i=0 ; i<fieldIds.size() ; ++i)
+  for(unsigned int i=0 ; i<fieldIds.size() ; ++i){
     fieldIdToDataMap[fieldIds[i]] = Teuchos::rcp((*vectorPointData)(i), false);
+    fieldIdToDataVector[fieldIds[i]] = Teuchos::rcp((*vectorPointData)(i), false);
+  }
 }
 
 void PeridigmNS::State::allocateScalarBondData(vector<int> fieldIds, Teuchos::RCP<const Epetra_BlockMap> map)
 {
   std::sort(fieldIds.begin(), fieldIds.end());
+
+  int maxFieldId = fieldIds[fieldIds.size()-1];
+  if(maxFieldId >= numFieldIds){
+    numFieldIds = maxFieldId+1;
+    fieldIdToDataVector.resize(numFieldIds);
+  }
+
   scalarBondData = Teuchos::rcp(new Epetra_MultiVector(*map, fieldIds.size()));
-  for(unsigned int i=0 ; i<fieldIds.size() ; ++i)
+  for(unsigned int i=0 ; i<fieldIds.size() ; ++i){
     fieldIdToDataMap[fieldIds[i]] = Teuchos::rcp((*scalarBondData)(i), false);
+    fieldIdToDataVector[fieldIds[i]] = Teuchos::rcp((*scalarBondData)(i), false);
+  }
 }
 
 vector<int> PeridigmNS::State::getFieldIds(PeridigmField::Relation relation,
@@ -100,14 +127,11 @@ bool PeridigmNS::State::hasData(int fieldId)
 
 Teuchos::RCP<Epetra_Vector> PeridigmNS::State::getData(int fieldId)
 {
-  // search for the data
-  std::map< int, Teuchos::RCP<Epetra_Vector> >::iterator lb = fieldIdToDataMap.lower_bound(fieldId);
-  // if the key does not exist, throw an exception
-  bool keyExists = ( lb != fieldIdToDataMap.end() && !(fieldIdToDataMap.key_comp()(fieldId, lb->first)) );
-  if(keyExists)
-    return lb->second;
-  else
-    return Teuchos::RCP<Epetra_Vector>();
+  // This class was originally written to use only the std::map fieldToDataMap.
+  // Indexing into the map with fieldToDataMap[fieldId] was shown to be a bottleneck,
+  // particularly with regard to construction of the tangent matrix in implicit calculations.
+  // To improve performance, a (redundant but faster) std::vector fieldToDataVector was added.
+  return fieldIdToDataVector[fieldId];
 }
 
 void PeridigmNS::State::copyLocallyOwnedDataFromState(Teuchos::RCP<PeridigmNS::State> source)
