@@ -4,5 +4,4 @@
 #
 
 # machine_name  number_of_processors  max_wallclock_time  wallclock_time_tolerance
-Latrobe         4                     1350.0              95.0
-Espresso        4                      990.0              70.0
+Latrobe         4                     1200.0              85.0

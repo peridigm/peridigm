@@ -4,5 +4,4 @@
 #
 
 # machine_name  number_of_processors  max_wallclock_time  wallclock_time_tolerance
-Latrobe         4                     800.0              56.0
-
+Latrobe         4                     750.0              53.0
