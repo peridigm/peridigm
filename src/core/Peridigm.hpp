@@ -73,7 +73,6 @@
 #include "Peridigm_DataManager.hpp"
 #include "Peridigm_SerialMatrix.hpp"
 #include "Peridigm_OutputManagerContainer.hpp"
-#include "Peridigm_SolverManagerContainer.hpp"
 #include "Peridigm_ComputeManager.hpp"
 #include "Peridigm_BoundaryAndInitialConditionManager.hpp"
 #include "Peridigm_ContactManager.hpp"
@@ -113,9 +112,6 @@ namespace PeridigmNS {
 
     //! Instantiate the compute manager
     void instantiateComputeManager();
-    
-    //! Initialize the output manager
-    void initializeSolverManager();
 
     //! Initialize the output manager
     void initializeOutputManager();
@@ -253,7 +249,6 @@ namespace PeridigmNS {
     //! @name Friend classes
     //@{ 
     friend class OutputManager_ExodusII;
-    friend class SolverManager;
     //@}
 
     //! Parameterlist of entire input deck
@@ -381,8 +376,8 @@ namespace PeridigmNS {
     //! The peridigm output manager
     Teuchos::RCP<PeridigmNS::OutputManagerContainer> outputManager;
 
-    //! The peridigm solver manager
-    Teuchos::RCP<PeridigmNS::SolverManagerContainer> solverManager;
+    //! Vector of parameters for each solver (multiple solvers indicates, e.g., a simulation with both implicit and explicit time integration)
+    std::vector< Teuchos::RCP<Teuchos::ParameterList> > solverParameters;
 
     //! BLAS for local-only vector updates (BLAS-1)
     Epetra_BLAS blas;

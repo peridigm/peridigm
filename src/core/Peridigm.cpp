@@ -63,8 +63,6 @@
 #include "Peridigm_DiscretizationFactory.hpp"
 #include "Peridigm_PartialVolumeCalculator.hpp"
 #include "Peridigm_OutputManager_ExodusII.hpp"
-#include "Peridigm_SolverManager.hpp"
-#include "Peridigm_SolverManagerContainer.hpp"
 #include "Peridigm_ComputeManager.hpp"
 #include "Peridigm_BoundaryAndInitialConditionManager.hpp"
 #include "Peridigm_CriticalTimeStep.hpp"
@@ -150,11 +148,21 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   checkHorizon(peridigmDisc, blockHorizonValues);
   initializeDiscretization(peridigmDisc);
 
-  // If the user did not provide a finite-difference probe length, use a fraction of the minimum element radius
-  double minElementRadius = peridigmDisc->getMinElementRadius();
-  Teuchos::RCP<Teuchos::ParameterList> solverParams = sublist(peridigmParams, "Solver");
-  if(!solverParams->isParameter("Finite Difference Probe Length"))
-    solverParams->set("Finite Difference Probe Length", 1.0e-6*minElementRadius);
+  // Create a list containing parameters for each solver
+  for (Teuchos::ParameterList::ConstIterator it = peridigmParams->begin(); it != peridigmParams->end(); ++it) {
+    // Check for string "Solver" in parameter list entry
+    const std::string name(it->first);
+    size_t found = name.find("Solver");
+    if (found!=std::string::npos)
+      solverParameters.push_back( sublist(peridigmParams, name) );
+  }
+
+  // Check solver parameters for request to allocate tangent matrix
+  bool allocateTangent = false;
+  for(unsigned int i=0 ; i<solverParameters.size() ; ++i){
+    if(solverParameters[i]->isSublist("QuasiStatic") || solverParameters[i]->isSublist("NOXQuasiStatic") || solverParameters[i]->isSublist("Implicit"))
+      allocateTangent = true;
+  }
 
   // Instantiate and initialize the boundary and initial condition manager
   Teuchos::RCP<Teuchos::ParameterList> bcParams =
@@ -214,6 +222,10 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   // Instantiate the blocks
   initializeBlocks(peridigmDisc);
 
+  // Determine a default finite-difference probe length
+  double minElementRadius = peridigmDisc->getMinElementRadius();
+  double defaultFiniteDifferenceProbeLength = 1.0e-6*minElementRadius;
+
   // Obtain parameter lists and factories for material models ane damage models
   // Material models
   Teuchos::ParameterList materialParams = peridigmParams->sublist("Materials", true);
@@ -249,9 +261,8 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
     matParams.set("Horizon", blockHorizon);
 
     // Assign the finite difference probe length
-    double finiteDifferenceProbeLength = peridigmParams->sublist("Solver", true).get<double>("Finite Difference Probe Length");
     if(!matParams.isParameter("Finite Difference Probe Length"))
-      matParams.set("Finite Difference Probe Length", finiteDifferenceProbeLength);
+      matParams.set("Finite Difference Probe Length", defaultFiniteDifferenceProbeLength);
 
     // Instantiate the material model for this block
     Teuchos::RCP<const PeridigmNS::Material> materialModel = materialFactory.create(matParams);
@@ -357,9 +368,6 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
 
   // Create the model evaluator
   modelEvaluator = Teuchos::rcp(new PeridigmNS::ModelEvaluator(analysisHasContact));
-  
-  // Initialize solver manager
-  initializeSolverManager();
 
   // Initialize output manager
   initializeOutputManager();
@@ -373,24 +381,8 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   serviceManager = Teuchos::rcp(new PeridigmNS::ServiceManager());
   serviceManager->requestService(computeManager->Services());
 
-  // Check if request for allocation request of tangent matrix
-  bool allocate_tangent = false;
-  for (Teuchos::ParameterList::ConstIterator it = peridigmParams->begin(); it != peridigmParams->end(); ++it) {
-    // See if name of parameterlist entry contains "Solver"
-    const std::string output("Solver");
-    const std::string name(it->first);
-    size_t found = name.find(output);
-    if (found!=std::string::npos) {
-      Teuchos::RCP<Teuchos::ParameterList> slvrParams = sublist(peridigmParams, name);
-      if(slvrParams->isSublist("QuasiStatic") ||
-          slvrParams->isSublist("NOXQuasiStatic") ||
-          slvrParams->isSublist("Implicit"))
-        allocate_tangent = true;
-    }
-  }
-
   // Perform requested services
-  if (serviceManager->isRequested(PeridigmNS::PeridigmService::ALLOCATE_TANGENT) || allocate_tangent) {
+  if (serviceManager->isRequested(PeridigmNS::PeridigmService::ALLOCATE_TANGENT) || allocateTangent) {
     // Allocate memory for non-zeros in global tangent and lock in the structure
     if(peridigmComm->MyPID() == 0){
       cout << "Allocating global tangent matrix...";
@@ -408,14 +400,14 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   // Check if request for allocation of block diagonal tangent stiffness matrix
   if (serviceManager->isRequested(PeridigmNS::PeridigmService::ALLOCATE_BLOCK_DIAGONAL_TANGENT)) {
     // Allocate memory for non-zeros in global tangent and lock in the structure
-    if(peridigmComm->MyPID() == 0 && !allocate_tangent){
+    if(peridigmComm->MyPID() == 0 && !allocateTangent){
       cout << "Allocating global block diagonal tangent matrix...";
       cout.flush();
     }
     PeridigmNS::Timer::self().startTimer("Allocate Global Block Diagonal Tangent");
     allocateBlockDiagonalJacobian();
     PeridigmNS::Timer::self().stopTimer("Allocate Global Block Diagonal Tangent");
-    if(peridigmComm->MyPID() == 0 && !allocate_tangent){
+    if(peridigmComm->MyPID() == 0 && !allocateTangent){
       cout << "\n  number of rows = " << blockDiagonalTangent->NumGlobalRows() << endl;
       cout << "  number of nonzeros = " << blockDiagonalTangent->NumGlobalNonzeros() << "\n" << endl;
     }
@@ -761,37 +753,6 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
 
 }
 
-void PeridigmNS::Peridigm::initializeSolverManager() {
-
-  // Create empty container for solver managers
-  solverManager = Teuchos::rcp(new PeridigmNS::SolverManagerContainer() );
-
-  Teuchos::RCP<Teuchos::ParameterList> solverParams;
-
-  // Loop over high level parameter list entries to find all solver lists
-  for (Teuchos::ParameterList::ConstIterator it = peridigmParams->begin(); it != peridigmParams->end(); ++it) {
-    // See if name of parameterlist entry contains "Solver".
-    const std::string output("Solver");
-    const std::string name(it->first);
-    size_t found = name.find(output);
-    if (found!=std::string::npos) {
-      // Make copy of list
-      try{
-        solverParams = Teuchos::rcp( new Teuchos::ParameterList( peridigmParams->sublist(name,true) ) );
-      }
-      catch(const std::exception &e){
-        string msg = "Peridigm::initializeSolverManager: ";
-        msg+= name;
-        msg+= " is not a Teuchos::ParameterList sublist.";
-        TEUCHOS_TEST_FOR_EXCEPT_MSG( true, msg );
-      }
-
-      solverManager->add( Teuchos::rcp(new PeridigmNS::SolverManager( solverParams, this) ) );
-    }
-  }
-
-}
-
 void PeridigmNS::Peridigm::execute(Teuchos::RCP<Teuchos::ParameterList> solverParams) {
 
   TEUCHOS_TEST_FOR_EXCEPT_MSG(solverParams.is_null(), "Error in Peridigm::execute, solverParams is null.\n");
@@ -814,9 +775,8 @@ void PeridigmNS::Peridigm::execute(Teuchos::RCP<Teuchos::ParameterList> solverPa
 }
 
 void PeridigmNS::Peridigm::executeSolvers() {
-  // Call the solver manager to execute all solvers in sequence
-  solverManager->executeSolvers();
-
+  for(unsigned int i=0 ; i<solverParameters.size() ; ++i)
+    execute(solverParameters[i]);
 }
 
 void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> solverParams) {
@@ -1270,7 +1230,6 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
   v->ExtractView( &vPtr );
   deltaU->ExtractView( &deltaUPtr );
 
-  // "Solver" parameter list
   bool performJacobianDiagnostics = solverParams->get("Jacobian Diagnostics", false);
 
   // "NOXQuasiStatic" parameter list
