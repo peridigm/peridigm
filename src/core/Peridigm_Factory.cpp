@@ -88,7 +88,6 @@ Teuchos::RCP<PeridigmNS::Peridigm> PeridigmNS::PeridigmFactory::create(const std
   // Set application parameters to default values
   Teuchos::RCP<Teuchos::ParameterList> peridigmParams = rcp(new Teuchos::ParameterList());
   setPeridigmParamDefaults(peridigmParams.ptr());
-  setSolverParamDefaults(peridigmParams.ptr());
 
   // Determine if string has xml extension
   bool isXML = false;
@@ -117,14 +116,6 @@ Teuchos::RCP<PeridigmNS::Peridigm> PeridigmNS::PeridigmFactory::create(const std
 void PeridigmNS::PeridigmFactory::setPeridigmParamDefaults(Teuchos::Ptr<Teuchos::ParameterList> peridigmParams_)
 {
   peridigmParams_->set("Verbose", false);
-}
-
-void PeridigmNS::PeridigmFactory::setSolverParamDefaults(Teuchos::Ptr<Teuchos::ParameterList> peridigmParams_)
-{
-  Teuchos::ParameterList& solverParams = peridigmParams_->sublist("Solver");
-
-  // general settings
-  solverParams.set("Verbose", false);
 }
 
 // function to update parameters from text file*********************************************************************************************
