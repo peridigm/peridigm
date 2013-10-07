@@ -1,4 +1,4 @@
-/*! \file Peridigm_SolverManager.hpp */
+/*! \file Peridigm_Solver.hpp */
 //@HEADER
 // ************************************************************************
 //
@@ -55,20 +55,19 @@ namespace PeridigmNS {
 
 namespace PeridigmNS {
   
-  class SolverManager {
+  class Solver {
     
   public:
     
     //! Basic constructor.
-    SolverManager(Teuchos::RCP<Teuchos::ParameterList> params, 
-                  PeridigmNS::Peridigm *peridigm_);
+    Solver(Teuchos::ParameterList& params) : sParams(sParams) {}
 
     void executeSolver();
     
     //! Destructor.
-    virtual ~SolverManager();
+    virtual ~Solver();
 
-    Teuchos::RCP<Teuchos::ParameterList> sParams;
+    Teuchos::ParameterList sParams;
 
   private:
     

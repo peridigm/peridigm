@@ -1,4 +1,3 @@
-/*! \file Peridigm_SolverManager_Container.hpp */
 //@HEADER
 // ************************************************************************
 //
@@ -43,57 +42,52 @@
 //
 // ************************************************************************
 //@HEADER
-#ifndef PERIDIGM_SOLVERMANAGER_CONTAINER_HPP
-#define PERIDIGM_SOLVERMANAGER_CONTAINER_HPP
 
+#include <fstream>
+#include <time.h>
 #include <vector>
+#include <string>
+#include <iostream>
+#include <iomanip>
 
-#include <Teuchos_RCP.hpp>
-#include <Teuchos_ParameterList.hpp>
+#include <netcdf.h>
+#include <exodusII.h>
 
-#include <Peridigm_SolverManager.hpp>
+#include <Epetra_Comm.h>
+#include "Teuchos_StandardParameterEntryValidators.hpp"
+#include <Teuchos_Assert.hpp>
 
-namespace PeridigmNS {
+#include "Peridigm.hpp"
+#include "Peridigm_Solver.hpp"
 
-  class SolverManagerContainer {
+Teuchos::ParameterList PeridigmNS::Solver::getValidParameterList() {
 
-  public:
+  // prevent Teuchos from converting parameter types
+  Teuchos::AnyNumberParameterEntryValidator::AcceptedTypes intParam(false), dblParam(false), strParam(false);
+  intParam.allowInt(true);
+  dblParam.allowDouble(true);
+  strParam.allowString(true);
 
-    //! Basic constructor.
-    SolverManagerContainer(){};
+  // Construct a ParameterList containing valid entries for Solver
+  Teuchos::ParameterList validParameterList("Solver");
+  setDoubleParameter("Initial Time",0.0,"Start time for this Solver",&validParameterList,dblParam);
+  setDoubleParameter("Final Time",0.0,"Finish time for this Solver",&validParameterList,dblParam);
+  validParameterList.set("Verbose",false);
 
-    //! Destructor.
-    ~SolverManagerContainer() {};
+  Teuchos::ParameterList& validSolverVerletParameterList = validParameterList.sublist("Verlet");
+  setDoubleParameter("Safety Factor",1.0,"Time step safety factor",&validSolverVerletParameterList,dblParam);
+  setDoubleParameter("Fixed dt",1.0,"User defined fixed time step",&validSolverVerletParameterList,dblParam);
 
-    //! Add new output manager
-    void add(Teuchos::RCP<PeridigmNS::SolverManager> SM) {
-      solverManagers.push_back( SM );
-    }
+  //Teuchos::ParameterList& validSolverQSParameterList = validParameterList.sublist("QuasiStatic");
 
-
-    //! Evaluate solver for all solver managers in container
-    void executeSolvers(){
-      std::vector< Teuchos::RCP<PeridigmNS::SolverManager> >::iterator it;
-      for ( it=solverManagers.begin() ; it < solverManagers.end(); it++ ){
-        (*it)->executeSolver();
-      }
-    }
-
-  protected:
-
-    //! Container for RCPs to individual output managers
-    std::vector< Teuchos::RCP<PeridigmNS::SolverManager> > solverManagers;
-
-  private:
-
-    //! Copy constructor.
-    SolverManagerContainer( const SolverManagerContainer& SMC );
-
-    //! Assignment operator.
-    SolverManagerContainer& operator=( const SolverManagerContainer& SMC );
-
-  };
-
+  return validParameterList;
 }
 
-#endif //PERIDIGM_SOLVERMANAGER_CONTAINER_HPP
+PeridigmNS::Solver::~Solver() {
+}
+
+void PeridigmNS::Solver::executeSolver() {
+  Teuchos::RCP<Teuchos::ParameterList> sParamsRCP = Teuchos::rcpFromRef(sParams);
+  peridigm->execute(sParamsRCP);
+}
+
