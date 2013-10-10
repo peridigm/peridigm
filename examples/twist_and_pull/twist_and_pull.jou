@@ -13,7 +13,7 @@ mesh volume all
 block 1 volume all
 nodeset 1 volume 1
 nodeset 2 volume 3
-export genesis "cylinder.g" block all overwrite
+export genesis "twist_and_pull.g" block all overwrite
 
 
 

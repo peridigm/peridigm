@@ -5,7 +5,7 @@
 Verbose "false"
 Discretization
   Type "Exodus"
-  Input Mesh File "cylinder.g"
+  Input Mesh File "twist_and_pull.g"
 Materials
   My Material
     Material Model "Elastic"
@@ -22,12 +22,12 @@ Boundary Conditions
     Type "Prescribed Displacement"
     Node Set "nodelist_1"
     Coordinate "x"
-    Value " t <= {TWIST_FINAL_TIME} ? x*cos(1.5*t)-y*sin(1.5*t) : x*cos(1.5*{TWIST_FINAL_TIME})-y*sin(1.5*{TWIST_FINAL_TIME})"
+    Value " t <= {TWIST_FINAL_TIME} ? x*cos(1.5*t)-y*sin(1.5*t)-x : x*cos(1.5*{TWIST_FINAL_TIME})-y*sin(1.5*{TWIST_FINAL_TIME})-x"
   Prescribed Displacement Bottom y
     Type "Prescribed Displacement"
     Node Set "nodelist_1"
     Coordinate "y"
-    Value " t <= {TWIST_FINAL_TIME} ? x*sin(1.5*t)+y*cos(1.5*t) : x*sin(1.5*{TWIST_FINAL_TIME})+y*cos(1.5*{TWIST_FINAL_TIME})"
+    Value " t <= {TWIST_FINAL_TIME} ? x*sin(1.5*t)+y*cos(1.5*t)-y : x*sin(1.5*{TWIST_FINAL_TIME})+y*cos(1.5*{TWIST_FINAL_TIME})-y"
   Prescribed Displacement Bottom z
     Type "Prescribed Displacement"
     Node Set "nodelist_1"
@@ -37,12 +37,12 @@ Boundary Conditions
     Type "Prescribed Displacement"
     Node Set "nodelist_2"
     Coordinate "x"
-    Value " t <= {TWIST_FINAL_TIME} ? x*cos(1.5*t)+y*sin(1.5*t) : x*cos(1.5*{TWIST_FINAL_TIME})+y*sin(1.5*{TWIST_FINAL_TIME})"
+    Value " t <= {TWIST_FINAL_TIME} ? x*cos(1.5*t)+y*sin(1.5*t)-x : x*cos(1.5*{TWIST_FINAL_TIME})+y*sin(1.5*{TWIST_FINAL_TIME})-x"
   Prescribed Displacement Top y
     Type "Prescribed Displacement"
     Node Set "nodelist_2"
     Coordinate "y"
-    Value " t <= {TWIST_FINAL_TIME} ? -x*sin(1.5*t)+y*cos(1.5*t) : -x*sin(1.5*{TWIST_FINAL_TIME})+y*cos(1.5*{TWIST_FINAL_TIME})"
+    Value " t <= {TWIST_FINAL_TIME} ? -x*sin(1.5*t)+y*cos(1.5*t)-y : -x*sin(1.5*{TWIST_FINAL_TIME})+y*cos(1.5*{TWIST_FINAL_TIME})-y"
   Prescribed Displacement Top z
     Type "Prescribed Displacement"
     Node Set "nodelist_2"
@@ -65,7 +65,7 @@ Solver2
 Output1
   Output File Type "ExodusII"
   Output Format "BINARY"
-  Output Filename "cylinderQuasiStatic"
+  Output Filename "twist_and_pullQuasiStatic"
   Output Frequency 1
   Final Output Step {NUMBER_OF_QS_STEPS}
   Parallel Write "true"
@@ -83,7 +83,7 @@ Output1
 Output2
   Output File Type "ExodusII"
   Output Format "BINARY"
-  Output Filename "cylinderExplicit"
+  Output Filename "twist_and_pullExplicit"
   Output Frequency 100
   Initial Output Step {NUMBER_OF_QS_STEPS+1}
   Parallel Write "true"

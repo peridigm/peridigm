@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-BASENAME=cylinder
+BASENAME=twist_and_pull
 NUMPROCS=4
 
 epu -p ${NUMPROCS} ${BASENAME}QuasiStatic
