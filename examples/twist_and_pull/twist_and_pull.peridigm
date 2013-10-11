@@ -14,7 +14,7 @@ Materials
     Shear Modulus 3.571e11
 Blocks
   My Block
-    Horizon 0.376875
+    Horizon 0.3125
     Block Names "block_1"
     Material "My Material"
 Boundary Conditions
