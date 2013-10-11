@@ -1,6 +1,6 @@
-{TWIST_FINAL_TIME=0.6}
-{PULL_FINAL_TIME=0.601}
-{NUMBER_OF_QS_STEPS=6}
+{TWIST_FINAL_TIME=0.2}
+{PULL_FINAL_TIME=0.2005}
+{NUMBER_OF_QS_STEPS=2}
 
 Verbose "false"
 Discretization
@@ -14,7 +14,7 @@ Materials
     Shear Modulus 3.571e11
 Blocks
   My Block
-    Horizon 0.600
+    Horizon 0.376875
     Block Names "block_1"
     Material "My Material"
 Boundary Conditions
@@ -61,7 +61,7 @@ Solver2
   Initial Time {TWIST_FINAL_TIME}
   Final Time {PULL_FINAL_TIME}
   Verlet
-    Fixed dt 1.5e-7
+    Safety Factor 0.8
 Output1
   Output File Type "ExodusII"
   Output Format "BINARY"
@@ -77,14 +77,13 @@ Output1
     Force_Density "true"
     Element_Id "true"
     Dilatation "true"
-    Damage "true"
     Weighted_Volume "true"
     Radius "true"
 Output2
   Output File Type "ExodusII"
   Output Format "BINARY"
   Output Filename "twist_and_pullExplicit"
-  Output Frequency 100
+  Output Frequency 500
   Initial Output Step {NUMBER_OF_QS_STEPS+1}
   Parallel Write "true"
   Output Variables
@@ -95,6 +94,5 @@ Output2
     Force_Density "true"
     Element_Id "true"
     Dilatation "true"
-    Damage "true"
     Weighted_Volume "true"
     Radius "true"
