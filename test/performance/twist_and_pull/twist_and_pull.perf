@@ -1,0 +1,7 @@
+#
+#  This file contains performance metrics for specific platforms.
+#  These data are used by the Peridigm performance test suite.
+#
+
+# machine_name  number_of_processors  max_wallclock_time  wallclock_time_tolerance
+Latrobe         4                     900.0              60.0
