@@ -45,19 +45,19 @@
   <ParameterList name="Boundary Conditions">
   	<ParameterList name="Initial Velocity X">
 	  <Parameter name="Type" type="string" value="Initial Velocity"/>
-	  <Parameter name="Node Set" type="string" value="All sets"/>
+	  <Parameter name="Node Set" type="string" value="Full Domain"/>
 	  <Parameter name="Coordinate" type="string" value="x"/>
 	  <Parameter name="Value" type="string" value="(200 - 50*((z/0.05)-1)^2)*cos(atan2(y,x)) + rnd(5)"/>
 	</ParameterList>
 	<ParameterList name="Initial Velocity Y">
 	  <Parameter name="Type" type="string" value="Initial Velocity"/>
-	  <Parameter name="Node Set" type="string" value="All sets"/>
+	  <Parameter name="Node Set" type="string" value="Full Domain"/>
 	  <Parameter name="Coordinate" type="string" value="y"/>
 	  <Parameter name="Value" type="string" value="(200 - 50*((z/0.05)-1)^2)*sin(atan2(y,x)) + rnd(5)"/>
 	</ParameterList>
 	<ParameterList name="Initial Velocity Z">
 	  <Parameter name="Type" type="string" value="Initial Velocity"/>
-	  <Parameter name="Node Set" type="string" value="All sets"/>
+	  <Parameter name="Node Set" type="string" value="Full Domain"/>
 	  <Parameter name="Coordinate" type="string" value="z"/>
 	  <Parameter name="Value" type="string" value="(100*((z/0.05)-1)) + rnd(5)"/>
 	</ParameterList>
@@ -68,7 +68,7 @@
   	<Parameter name="Initial Time" type="double" value="0.0"/>
 	<Parameter name="Final Time" type="double" value="2.5e-4"/>
 	<ParameterList name="Verlet">
-	  <Parameter name="Fixed dt" type="double" value="1.0e-8"/>
+	  <Parameter name="Safety Factor" type="double" value="0.7"/>
 	</ParameterList>
   </ParameterList>
 
@@ -84,10 +84,11 @@
 	  <Parameter name="Velocity" type="bool" value="true"/>
 	  <Parameter name="Acceleration" type="bool" value="true"/>
 	  <Parameter name="Force_Density" type="bool" value="true"/>
+	  <Parameter name="Force" type="bool" value="true"/>
 	  <Parameter name="Element_Id" type="bool" value="true"/>
 	  <Parameter name="Dilatation" type="bool" value="true"/>
-	  <Parameter name="Damage" type="bool" value="true"/>
 	  <Parameter name="Weighted_Volume" type="bool" value="true"/>
+	  <Parameter name="Damage" type="bool" value="true"/>
 	</ParameterList>
   </ParameterList>
 
