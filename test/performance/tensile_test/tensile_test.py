@@ -45,7 +45,7 @@ if __name__ == "__main__":
         result = 1
 
     # remove old output files, if any
-    files_to_remove = glob.glob(base_name+"*.e*")
+    files_to_remove = glob.glob(base_name+".e*")
     files_to_remove.append('*.out')
     files_to_remove.append('*.nem')
     files_to_remove.append('*.pex')
