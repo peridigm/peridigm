@@ -290,19 +290,19 @@ class TextParser {
 			boost::regex reBool("\\s*\"*[Ff]alse\"*\\s*|\\s*\"*[Tt]rue\"*\\s*");
 			if(boost::regex_match (valueIn, reInt)){
 				updateIntParameter(listPtr, nameIn, cleanUp(valueIn));
-				std::cout << nameIn << ", " << valueIn << " is an int" << std::endl;
+				//std::cout << nameIn << ", " << valueIn << " is an int" << std::endl;
 			}
 			else if(boost::regex_match (valueIn, reDouble) | boost::regex_match (valueIn, reFloat)){
 				updateDoubleParameter(listPtr, nameIn, cleanUp(valueIn));
-				std::cout << nameIn << ", " << valueIn << " is a double" << std::endl;
+				//std::cout << nameIn << ", " << valueIn << " is a double" << std::endl;
 			}
 			else if(boost::regex_match (valueIn, reBool)){
 				updateBoolParameter(listPtr, nameIn, cleanUp(valueIn));
-				std::cout << nameIn << ", " << valueIn << " is a bool" << std::endl;
+				//std::cout << nameIn << ", " << valueIn << " is a bool" << std::endl;
 			}
 			else {
 				updateStringParameter(listPtr, nameIn, cleanUp(valueIn));
-				std::cout << nameIn << ", " << valueIn << " is a string" << std::endl;
+				//std::cout << nameIn << ", " << valueIn << " is a string" << std::endl;
 			}
 		}
 		static void updateIntParameter(Teuchos::Ptr<Teuchos::ParameterList> listPtr, std::string nameIn, std::string valueIn)
@@ -510,6 +510,6 @@ void updateParametersFromTextFile(std::string inputFile, Teuchos::Ptr<Teuchos::P
 		const std::string xmlFileName(newFileName);
 		Teuchos::writeParameterListToXmlFile( paramlist, xmlFileName);
 	}
-	std::cout << *My_List.get() << std::endl;
+	//std::cout << *My_List.get() << std::endl;
 }
 
