@@ -45,7 +45,7 @@ if __name__ == "__main__":
         result = 1
 
     # remove old output files, if any
-    files_to_remove = glob.glob('*.e*')
+    files_to_remove = glob.glob(base_name+"*.e*")
     files_to_remove.append('*.out')
     files_to_remove.append('*.nem')
     files_to_remove.append('*.pex')
@@ -123,9 +123,9 @@ if __name__ == "__main__":
         command = ["../../../scripts/exodiff", \
                    "-stat", \
                    "-f", \
-                   "../"+base_name+".comp", \
+                   base_name+".comp", \
                    base_name+".e", \
-                   "../"+base_name+"_gold.e"]
+                   base_name+"_gold.e"]
         p = Popen(command, stdout=logfile, stderr=logfile)
         return_code = p.wait()
         if return_code != 0:
