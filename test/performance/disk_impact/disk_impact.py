@@ -62,7 +62,7 @@ if __name__ == "__main__":
     logfile.flush()
     
     # run Peridigm
-    command = ["mpiexec", "-np", "4", "../../../src/Peridigm", base_name+".xml"]    
+    command = ["mpiexec", "-np", "4", "../../../src/Peridigm", base_name+".peridigm"]    
     p = Popen(command, stdout=PIPE)
     return_code = p.wait()
     if return_code != 0:
