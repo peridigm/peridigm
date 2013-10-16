@@ -139,46 +139,32 @@ std::string cleanUp(std::string dataIn)
 	dataIn = boost::regex_replace(dataIn, spcMatch, "");
 	return dataIn;
 }
-// function dataType to use, if specified data type else use determinable data type
-std::vector<std::string> dataType(std::string lineIn)
-{
-	std::vector<std::string> vec1;
-	boost::match_results<std::string::const_iterator> match;
-    boost::regex typeMatch("\".*\"");                                             // matches a possible user defined type
-	//boost::regex typeMatch("\"[+-]*[a-zA-Z0-9]+.*[a-zA-Z0-9]*[.]*.*[a-zA-Z0-9]*\"");	// matches a possible user defined type
-	if(boost::regex_search(lineIn, match, typeMatch))
-	{
-        //		std::cout << lineIn << std::endl;
-		vec1.push_back(lineIn);
-		vec1.push_back("string");
-	}else{
-		vec1.push_back(lineIn);
-		vec1.push_back("default");
-	}
-	return vec1;
-}
 // function match_ which seperates each line pased in into name, value and if specified data type
 std::vector<std::string> match_(std::string line)
 {
 	std::string str1;
 	std::vector<std::string> name_value;
 	boost::match_results<std::string::const_iterator> match;
-	boost::regex int_re(" ([-+]*[0-9]+[.]*[a-zA-Z0-9]*[a-zA-Z0-9]*[+-]*[0-9]*)");		// matches integers, double or floats
-    boost::regex str_re("\".*\"");                                                // matches strings 
-	//boost::regex str_re("\"[+-]*[a-zA-Z0-9]+.*_*\\s*[a-zA-Z0-9]*[.]*_*\\s*.*[a-zA-Z0-9]*\"");		// matches strings
-	str1 = boost::regex_replace(dataType(line)[0], int_re, "");
+	boost::regex int_re(" ([-+]*[0-9]+[.]*[a-zA-Z0-9]*[a-zA-Z0-9]*[+-]*[0-9]*)");		// matches integers, double or float
+	boost::regex ver_re("[Vv][Ee][Rr][Bb][Oo][Ss][Ee]");//---------edit 8/29/13---------//
+	boost::regex str_re("\".*\"");                                                // matches strings 
+	//a extra comment . boost::regex str_re("\"[+-]*[a-zA-Z0-9]+.*_*\\s*[a-zA-Z0-9]*[.]*_*\\s*.*[a-zA-Z0-9]*\"");		// matches strings
+	str1 = boost::regex_replace(line, int_re, "");
 	str1 = boost::regex_replace(str1, str_re, "");
-    if(boost::regex_search(line, match, str_re) || boost::regex_search(line, match, int_re)){       
+	if(boost::regex_search(line, match, str_re) || boost::regex_search(line, match, int_re)){       
 	//if(boost::regex_search(line, match, int_re) || boost::regex_search(line, match, str_re)){
 		name_value.push_back(cleanUp(str1));
-		name_value.push_back(cleanUp(match.str()));
-		name_value.push_back(cleanUp(dataType(line)[1]));
+		name_value.push_back(match.str());
         //		std::cout << match.str() << std::endl;
 		return name_value;
 	}else{
-		name_value.push_back(cleanUp(str1));
-		name_value.push_back("");
-		name_value.push_back(cleanUp(dataType(line)[1]));
+		if( boost::regex_search(line, match, ver_re)) {//------------edit 8/29/13----------//|-->>
+			name_value.push_back(match.str());
+			name_value.push_back("true");
+		}else {						//--------edit e/29/13-----------//<<--|
+			name_value.push_back(cleanUp(str1));
+			name_value.push_back("");
+		}
 		return name_value;
 	}
 }
@@ -254,127 +240,268 @@ std::vector<std::pair< std::string, int > > preParse(std::string inputFile)
 	}
 	return return_data;
 }
-// function dataParse is intended to loop through data from preparse and determine listing order and style
-std::vector<std::pair<std::string, std::string> > dataParse(std::vector<std::pair< std::string, int > > dataIn)
+// this function will create a string, int pair where the int will tell the parameterlist level
+std::vector<std::pair<std::string, int > > lev_by_line(std::vector<std::pair< std::string, int > > dataIn)
 {
-	std::string param, line;
-	std::pair<std::string, std::string> dataOut;
-	std::vector<std::pair<std::string, std::string> > vecOut;
-	for(unsigned int i = 1; i < dataIn.size(); i++)
-	{
-		line = dataIn[i-1].first;
-		if((dataIn[i-1].second < dataIn[i].second || match_(dataIn[i-1].first)[1].empty()) && match_(dataIn[i-1].first)[1].empty()){
-			param = line;
+	std::vector<std::pair<std::string, int > > line_lev;
+	
+	// a map to store levels rather than spacing
+	std::map < int, int> spc_to_lev;
+
+	// determine the highest level
+	int level_count = 0; int space_count = 0;
+	spc_to_lev[space_count] = level_count;
+	std::vector<std::pair< std::string, int > >::iterator it = dataIn.begin();
+	while(it!=dataIn.end()) {
+//		std::cout << it->second << std::endl;
+		if(it->second > space_count) {
+			space_count = it->second;
+			level_count++;
+			spc_to_lev[space_count] = level_count;
 		}
-		dataOut = std::make_pair(line, param);
-		vecOut.push_back(dataOut);
+		it++;
 	}
-	dataOut = std::make_pair(dataIn[dataIn.size()-1].first, param);
-	vecOut.push_back(dataOut);
-	return vecOut;
-}
-// function dataReturn returns a vector of pairs which contain a vector filled with the line in the first place and the parameter which contains them
-std::vector<std::pair<std::vector<std::string>,std::string> > dataReturn(std::vector<std::pair<std::string, std::string> > parsedData, std::vector<std::pair< std::string, int > > dataIn)
-{
-	std::string param;
-	std::vector<std::string> PLVec;
-	std::vector<std::pair<std::vector<std::string>,std::string> > returnVec;
-	std::pair<std::vector<std::string>,std::string> param_subPLVec;
-	for(unsigned int i = 0; i < parsedData.size(); i++)
-	{
-		PLVec.push_back(parsedData[i].first);
-		PLVec.push_back(parsedData[i].second);
-		if(dataIn[i].second == 0 && match_(dataIn[i].first)[1].empty()){
-			param = dataIn[i].first;
-		}
-		param_subPLVec = std::make_pair(PLVec,param);
-		returnVec.push_back(param_subPLVec);
-		PLVec.clear();
+
+	std::advance(it,-std::distance(dataIn.begin(), dataIn.end()));
+	// print out number of levels
+//	std::cout << level_count << std::endl;
+	// iterate through and find leveling scheme
+	while(it!=dataIn.end()) {
+		line_lev.push_back(std::make_pair(it->first,spc_to_lev[it->second]) );
+//		std::cout << it->first << ", " << spc_to_lev[it->second] << std::endl;
+		it++;
 	}
-	return returnVec;
+	return line_lev;
 }
-// data sorting and distribution sends the value name and type to either one of the
-void dataSort(Teuchos::Ptr<Teuchos::ParameterList> listPtr, std::string nameIn, std::string valueIn, std::string typeIn)
-{
-	boost::regex reInt("\\s*[-+]*[0-9]+\\s*");
-	boost::regex reDouble("\\s*[-+]*[0-9]+.[0-9]+\\s*");
-	boost::regex reFloat("\\s*[-+]*[0-9]+[.]*[0-9]*[eE][+-]*[0-9]+\\s*");
-	boost::regex reBool("[Ff]alse|[Tt]rue");
-    //	std::cout << nameIn << ", " << typeIn << std::endl;
-	if(typeIn.compare("default") == 0){
-		if(boost::regex_match (valueIn, reInt)){
-			updateIntParameter(listPtr, nameIn, valueIn);
+
+// class that contains various functions hardcoded to produce upto 6 level deep parameterlist
+class TextParser {
+	public:
+		static void ParseMyTextFile (std::vector<std::pair<std::string, int> > list_in, Teuchos::Ptr<Teuchos::ParameterList> My_List) {
+			// determine parameterlist level
+			Plist4deep(list_in, My_List);
 		}
-		else if(boost::regex_match (valueIn, reDouble) | boost::regex_match (valueIn, reFloat)){
-			updateDoubleParameter(listPtr, nameIn, valueIn);
+	private:
+		static void dataSort(Teuchos::Ptr<Teuchos::ParameterList> listPtr, std::string nameIn, std::string valueIn)
+		{
+			boost::regex reInt("\\s*[-+]*[0-9]+\\s*");
+			boost::regex reDouble("\\s*[-+]*[0-9]+.[0-9]+\\s*");
+			boost::regex reFloat("\\s*[-+]*[0-9]+[.]*[0-9]*[eE][+-]*[0-9]+\\s*");
+			boost::regex reBool("\\s*\"*[Ff]alse\"*\\s*|\\s*\"*[Tt]rue\"*\\s*");
+			if(boost::regex_match (valueIn, reInt)){
+				updateIntParameter(listPtr, nameIn, cleanUp(valueIn));
+				std::cout << nameIn << ", " << valueIn << " is an int" << std::endl;
+			}
+			else if(boost::regex_match (valueIn, reDouble) | boost::regex_match (valueIn, reFloat)){
+				updateDoubleParameter(listPtr, nameIn, cleanUp(valueIn));
+				std::cout << nameIn << ", " << valueIn << " is a double" << std::endl;
+			}
+			else if(boost::regex_match (valueIn, reBool)){
+				updateBoolParameter(listPtr, nameIn, cleanUp(valueIn));
+				std::cout << nameIn << ", " << valueIn << " is a bool" << std::endl;
+			}
+			else {
+				updateStringParameter(listPtr, nameIn, cleanUp(valueIn));
+				std::cout << nameIn << ", " << valueIn << " is a string" << std::endl;
+			}
 		}
-		else if(boost::regex_match (valueIn, reBool)){
-			updateBoolParameter(listPtr, nameIn, valueIn);
+		static void updateIntParameter(Teuchos::Ptr<Teuchos::ParameterList> listPtr, std::string nameIn, std::string valueIn)
+		{
+			listPtr -> set(nameIn, atoi(valueIn.c_str()));
+			Teuchos::getParameter<int>(*listPtr.get(), nameIn);
 		}
-	}else{
-		if(boost::regex_match (valueIn, reBool)){
-			updateBoolParameter(listPtr, nameIn, valueIn);
-		}else{
-			updateStringParameter(listPtr, nameIn, valueIn);
+		static void updateDoubleParameter(Teuchos::Ptr<Teuchos::ParameterList> listPtr, std::string nameIn, std::string valueIn)
+		{
+			listPtr-> set(nameIn, std::atof(valueIn.c_str()));
+			Teuchos::getParameter<double>(*listPtr.get(), nameIn);
 		}
-	}
-}
-void updateIntParameter(Teuchos::Ptr<Teuchos::ParameterList> listPtr, std::string nameIn, std::string valueIn)
-{
-	listPtr -> set(nameIn, atoi(valueIn.c_str()));
-	Teuchos::getParameter<int>(*listPtr.get(), nameIn);
-}
-void updateDoubleParameter(Teuchos::Ptr<Teuchos::ParameterList> listPtr, std::string nameIn, std::string valueIn)
-{
-	listPtr-> set(nameIn, std::atof(valueIn.c_str()));
-	Teuchos::getParameter<double>(*listPtr.get(), nameIn);
-}
-void updateBoolParameter(Teuchos::Ptr<Teuchos::ParameterList> listPtr, std::string nameIn, std::string valueIn)
-{
-	listPtr -> set(nameIn, string_to_bool(valueIn));
-	Teuchos::getParameter<bool>(*listPtr.get(), nameIn);
-}
-void updateStringParameter(Teuchos::Ptr<Teuchos::ParameterList> listPtr, std::string nameIn, std::string valueIn)
-{
-	listPtr -> set(nameIn,valueIn);
-	Teuchos::getParameter<std::string>(*listPtr.get(), nameIn);
-}
+		static void updateBoolParameter(Teuchos::Ptr<Teuchos::ParameterList> listPtr, std::string nameIn, std::string valueIn)
+		{
+			listPtr -> set(nameIn, string_to_bool(valueIn));
+			Teuchos::getParameter<bool>(*listPtr.get(), nameIn);
+		}
+		static void updateStringParameter(Teuchos::Ptr<Teuchos::ParameterList> listPtr, std::string nameIn, std::string valueIn)
+		{
+			listPtr -> set(nameIn,valueIn);
+			Teuchos::getParameter<std::string>(*listPtr.get(), nameIn);
+		}
+		// 4 levels
+		static void Plist4deep (std::vector<std::pair<std::string, int> > list_in, Teuchos::Ptr<Teuchos::ParameterList> My_List) {
+			// 3 strings to store 3 different level parameterlist names
+			std::pair<std::string,int> previous_0list_data, 
+				previous_1list_data, 
+				previous_2list_data, 
+				previous_3list_data, 
+				previous_4list_data, 
+				previous_5list_data;
+			// create an iterator of the vector coming in
+			std::vector<std::pair<std::string,int> >::iterator it = list_in.begin();
+
+			// initiate first 0 level parameterlist name
+			previous_0list_data = *it;
+
+			// iterate through data vector coming in and build parameter list from input deck
+			while(it!=list_in.end() and std::distance(list_in.begin(),it) < list_in.size()) {
+				// test whether or not while loop needs to begin and prevent unnecessary creations of parameterlist ptr
+				if(it->second > 0) {
+					// parameter list to store first level parameter name/value and list
+					Teuchos::Ptr<Teuchos::ParameterList> lev1list = ptr(new Teuchos::ParameterList());
+					// loop as long as list level is greater than 0 level
+					while(it->second > 0 and std::distance(list_in.begin(),it) < list_in.size()) {
+						// determine 2nd level needs to be started
+						if(it->second > 1) {
+							// parameter list to strore 2nd level parameter name/value/list
+							Teuchos::Ptr<Teuchos::ParameterList> lev2list = ptr(new Teuchos::ParameterList());
+							// loop as long as entry's level is greater than 1 level
+							while(it->second > 1 and std::distance(list_in.begin(),it) < list_in.size()) {
+								// start 3rd level?
+								if(it->second > 2) {
+									// parameter list for 3level
+									Teuchos::Ptr<Teuchos::ParameterList> lev3list = ptr(new Teuchos::ParameterList());
+									// loop while level is greater than 2
+									while(it->second > 2 and std::distance(list_in.begin(),it) < list_in.size()) {
+										// start 4th level?
+										if(it->second > 3) {
+											// parameter list for 4 level
+											Teuchos::Ptr<Teuchos::ParameterList> lev4list = ptr(new Teuchos::ParameterList());
+											// loop while level is greater than 3
+											while(it->second > 3 and std::distance(list_in.begin(),it) < list_in.size()) {
+												// start 5th level
+												if(it->second > 4) {
+													// parameterlist for 5 level
+													Teuchos::Ptr<Teuchos::ParameterList> lev5list = ptr(
+															new Teuchos::ParameterList()
+															);
+													while(it->second > 4 and 
+															std::distance(list_in.begin(),it) < list_in.size()) {
+														// start 6th level
+														if(it->second > 5) {
+															// parameterlist for 6 level
+															Teuchos::Ptr<Teuchos::ParameterList>
+																lev6list = ptr(new
+																		Teuchos::ParameterList()
+																	      );
+															while(it->second > 5 and 
+																std::distance(list_in.begin(),it) 
+																< list_in.size()) {
+																// set parameters
+																dataSort(lev6list,
+																	match_(it->first)[0],
+																	match_(it->first)[1]
+																	);
+																it++;
+															}
+															lev5list->set(match_(previous_5list_data.first)[0],
+																	*lev6list.get()
+																	);
+														}
+														if(it->second == 5 and std::distance(
+																	list_in.begin(),it) < list_in.size()) {
+															if(!match_(it->first)[1].empty()){
+																// set parameters
+																dataSort(lev5list,
+																	match_(it->first)[0],
+																	match_(it->first)[1]
+																	);
+															}
+															previous_5list_data = *it;
+															it++;
+														}
+													} // while > 4
+													lev4list->set(match_(previous_4list_data.first)[0],
+															*lev5list.get()
+														     );
+												}
+												if(it->second == 4 and std::distance(list_in.begin(),it) < list_in.size()) {
+													if(!match_(it->first)[1].empty()) {
+														// set parameters 
+														dataSort(lev4list,
+															match_(it->first)[0],
+															match_(it->first)[1]
+															);
+													}
+													previous_4list_data = *it;
+													it++;
+												}
+											} // while > 3
+											lev3list->set(match_(previous_3list_data.first)[0],
+													*lev4list.get()
+												     );
+										}
+										if(it->second == 3 and std::distance(list_in.begin(),it) < list_in.size()) {
+											if(!match_(it->first)[1].empty()) {
+												// set and verify parameters
+												dataSort(lev3list,
+													match_(it->first)[0],
+													match_(it->first)[1]
+													);
+											}
+											previous_3list_data = *it;
+											it++;
+										}
+									} // while > 2
+									lev2list->set(match_(previous_2list_data.first)[0],
+											*lev3list.get()
+										     );
+								}
+								if(it->second == 2 and std::distance(list_in.begin(),it) < list_in.size()) {
+									// if entry does have a name/value combo
+									if(!match_(it->first)[1].empty()) {
+										// set parameter
+										dataSort(lev2list,
+											match_(it->first)[0],
+											match_(it->first)[1]
+											);
+									}
+									previous_2list_data = *it;
+//									std::cout << previous_2list_data.first << std::endl;
+									it++;
+								}
+							} // while > 1
+							lev1list->set(match_(previous_1list_data.first)[0],
+									*lev2list.get()
+								     );
+						}
+						if(it->second == 1 and std::distance(list_in.begin(),it) < list_in.size()) {
+							// if entry does has both name and value
+							if(!match_(it->first)[1].empty()) {
+								// set and verify parameters
+								dataSort(lev1list,
+									match_(it->first)[0],
+									match_(it->first)[1]
+									);
+							}
+							previous_1list_data = *it;
+							it++;
+						}
+					} // while > 0
+					// set parameter list of the master list
+					My_List->set(match_(previous_0list_data.first)[0],
+							*lev1list.get()
+						     );
+				}
+				if(it->second == 0 and std::distance(list_in.begin(),it) < list_in.size()) {
+					// if entry has both name and value
+					if(!match_(it->first)[1].empty()) {
+						// set and verify parameters
+						dataSort(My_List,
+							match_(it->first)[0],
+							match_(it->first)[1]
+							);
+					}
+					previous_0list_data = *it;
+				}
+				if(std::distance(list_in.begin(),it) < list_in.size()) {it++;}
+			} // loop for top level
+		}
+};
 // function updateParametersFromTextFile function that uses each one of the previous functions to store finally parse data to be sent to Peridigm
 void updateParametersFromTextFile(std::string inputFile, Teuchos::Ptr<Teuchos::ParameterList> My_List)
 {
-	std::string previous_list, previous_sublist;
-	std::vector<std::pair<std::vector<std::string>, std::string> > dataIn(dataReturn(dataParse(preParse(inputFile)), preParse(inputFile)));
-	for(unsigned int h = 0; h < dataIn.size(); h++){
-		if(dataIn[h].second.compare(dataIn[h].first[0]) == 0){
-			Teuchos::Ptr<Teuchos::ParameterList> paramPtr = ptr(new Teuchos::ParameterList());
-			previous_list = dataIn[h].second;
-			for(unsigned int i = h; i<dataIn.size(); i++){
-				if(dataIn[i].first[1].compare(dataIn[i].first[0]) == 0 && isspace(dataIn[i].first[0][0]) && previous_list.compare(dataIn[i].second) == 0 ){
-					Teuchos::Ptr<Teuchos::ParameterList> listPtr = ptr(new Teuchos::ParameterList());
-					previous_sublist = dataIn[i].first[1];
-					for(unsigned int j = i; j<dataIn.size(); j++){
-						if(dataIn[j].first[1].compare(previous_sublist) == 0 && !match_(dataIn[j].first[0])[1].empty()){
-							dataSort(listPtr, match_(dataIn[j].first[0])[0], match_(dataIn[j].first[0])[1], match_(dataIn[j].first[0])[2]);
-                            //							std::cout << match_(dataIn[j].first[0])[1] << ", " << match_(dataIn[j].first[0])[2] << std::endl;
-						}
-					}
-					paramPtr -> set( cleanUp(previous_sublist), *listPtr.get());
-				}
-				else if(dataIn[i].first[1].compare(dataIn[i].second)==0 && previous_list.compare(dataIn[i].second)==0 && !match_(dataIn[i].first[0])[1].empty())
-				{
-					dataSort(paramPtr, match_(dataIn[i].first[0])[0], match_(dataIn[i].first[0])[1], match_(dataIn[i].first[0])[2]);
-				}
-			}
-			My_List -> set(previous_list, *paramPtr.get());
-		}
-		else if(!isspace(dataIn[h].first[0][0]) && !match_(dataIn[h].first[0])[1].empty())
-		{
-			dataSort(My_List, match_(dataIn[h].first[0])[0], match_(dataIn[h].first[0])[1], match_(dataIn[h].first[0])[2]);
-		}
-	}
+	TextParser alpha;
+	alpha.ParseMyTextFile(lev_by_line(preParse(inputFile)), My_List);
 	if(debug_capture){
 		std::string newFileName = inputFile;
-		//std::cout << newFileName << std::endl;
 		while(newFileName[newFileName.size()-1] != '.'){
 			newFileName.erase(newFileName.begin() + newFileName.size() - 1);
 		}
@@ -382,7 +509,7 @@ void updateParametersFromTextFile(std::string inputFile, Teuchos::Ptr<Teuchos::P
 		const Teuchos::ParameterList paramlist(*My_List.get());
 		const std::string xmlFileName(newFileName);
 		Teuchos::writeParameterListToXmlFile( paramlist, xmlFileName);
-		//std::cout << *My_List.get() << std::endl;
 	}
+	std::cout << *My_List.get() << std::endl;
 }
 
