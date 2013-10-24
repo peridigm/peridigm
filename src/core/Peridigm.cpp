@@ -85,6 +85,7 @@
 #include <Ifpack_IC.h>
 #include <Teuchos_VerboseObject.hpp>
 
+
 using namespace std;
 
 PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
