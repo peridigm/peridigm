@@ -56,7 +56,8 @@ namespace PeridigmNS {
  *
  * DataManager is a container class for managing the data required for peridynamic simulations.
  * Data is stored in State objects which may be either stateless (STATE_NONE) or stateful (STATE_N, STATE_NP1).
- * Three types of data are supported:  scalar point data, vector point data, and scalar bond data.  In the case
+ * Two types of data are supported:  point data, and bond data.  Multiple lengths of point data are supported,
+ * for example SCALAR, LENGTH_2, VECTOR, etc.  Bond data must be SCALAR.  In the case
  * of point data, DataManger has notions of owned points and ghosted points, allowing force calcuations access
  * to off-processor points that are within the neighborhood of one or more owned points.
  * Data is accessed via the getData function, which provides access to the Epetra_Vector corresponding to
@@ -90,12 +91,12 @@ public:
                Teuchos::RCP<const Epetra_BlockMap> overlapScalarPointMap_,
                Teuchos::RCP<const Epetra_BlockMap> ownedVectorPointMap_,
                Teuchos::RCP<const Epetra_BlockMap> overlapVectorPointMap_,
-               Teuchos::RCP<const Epetra_BlockMap> ownedScalarBondMap_){
+               Teuchos::RCP<const Epetra_BlockMap> ownedBondMap_){
     ownedScalarPointMap = ownedScalarPointMap_;
     overlapScalarPointMap = overlapScalarPointMap_;
     ownedVectorPointMap = ownedVectorPointMap_;
     overlapVectorPointMap = overlapVectorPointMap_;
-    ownedScalarBondMap = ownedScalarBondMap_;
+    ownedBondMap = ownedBondMap_;
   }
 
   //! Instantiates State objects corresponding to the given list of field Ids. 
@@ -109,7 +110,7 @@ public:
                  Teuchos::RCP<const Epetra_BlockMap> rebalancedOverlapScalarPointMap,
                  Teuchos::RCP<const Epetra_BlockMap> rebalancedOwnedVectorPointMap,
                  Teuchos::RCP<const Epetra_BlockMap> rebalancedOverlapVectorPointMap,
-                 Teuchos::RCP<const Epetra_BlockMap> rebalancedOwnedScalarBondMap);
+                 Teuchos::RCP<const Epetra_BlockMap> rebalancedOwnedBondMap);
 
   //! Returns the number of times rebalance has been called.
   int getRebalanceCount(){ return rebalanceCount; }
@@ -159,7 +160,7 @@ public:
 
     // Need to perform copy on global data
     // Swapping pointers will create problems because these quantities are static
-    // and it is probably that multiple instances will call this function, leading
+    // and it is probable that multiple instances will call this function, leading
     // to a toggle-back-and-forth situation
     for(unsigned int i=0 ; i<scalarGlobalDataStateN.size() ; ++i)
       (*(scalarGlobalDataStateN[i]))[0] = (*(scalarGlobalDataStateNP1[i]))[0];
@@ -187,18 +188,14 @@ protected:
   std::vector<int> allFieldIds;
   //! Complete list of global field ids.
   static std::vector<int> allGlobalFieldIds;
-  //! Field specs for stateless scalar point data.
-  std::vector<int> statelessScalarPointFieldIds;
-  //! Field specs for stateless vector point data.
-  std::vector<int> statelessVectorPointFieldIds;
-  //! Field specs for stateless scalar bond data.
-  std::vector<int> statelessScalarBondFieldIds;
-  //! Field specs for stateful scalar point data.
-  std::vector<int> statefulScalarPointFieldIds;
-  //! Field specs for stateful vector point data.
-  std::vector<int> statefulVectorPointFieldIds;
-  //! Field specs for stateful scalar bond data.
-  std::vector<int> statefulScalarBondFieldIds;
+  //! Field specs for stateless point data.
+  std::map< PeridigmField::Length, std::vector<int> > statelessPointFieldIds;
+  //! Field specs for stateless bond data.
+  std::vector<int> statelessBondFieldIds;
+  //! Field specs for stateful point data.
+  std::map< PeridigmField::Length, std::vector<int> > statefulPointFieldIds;
+  //! Field specs for stateful bond data.
+  std::vector<int> statefulBondFieldIds;
   //@}
 
   //! @name Maps
@@ -216,7 +213,7 @@ protected:
   //! Three-dimensional overlap map for owned points and ghosts.
   Teuchos::RCP<const Epetra_BlockMap> overlapVectorPointMap;
   //! Bond map for owned points; the map contains one element for each owned point, the element length is equal to the number of bonds for that point.
-  Teuchos::RCP<const Epetra_BlockMap> ownedScalarBondMap;
+  Teuchos::RCP<const Epetra_BlockMap> ownedBondMap;
   //@}
 
   //! @name Global data
