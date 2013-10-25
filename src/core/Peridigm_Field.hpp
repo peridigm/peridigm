@@ -65,10 +65,24 @@ namespace PeridigmField {
     GLOBAL
   };
 
+  // Length corresponds to element size in an Epetra_Multivector.
+  // Note that entries are cast to int elsewhere in the code, so
+  // entries must have logically consistent values.
   enum Length {
-    UNDEFINED_LENGTH=0,
-    SCALAR,
-    VECTOR
+    UNDEFINED_LENGTH = 0,
+    LENGTH_1 = 1,
+    LENGTH_2 = 2,
+    LENGTH_3 = 3,
+    LENGTH_4 = 4,
+    LENGTH_5 = 5,
+    LENGTH_6 = 6,
+    LENGTH_7 = 7,
+    LENGTH_8 = 8,
+    LENGTH_9 = 9,
+    SCALAR = 1,
+    VECTOR = 3,
+    SYMMETRIC_TENSOR = 6,
+    FULL_TENSOR = 9
   };
 
   enum Temporal {

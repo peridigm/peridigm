@@ -53,24 +53,32 @@
 
 using namespace std;
 
-void PeridigmNS::State::allocateScalarPointData(vector<int> fieldIds, Teuchos::RCP<const Epetra_BlockMap> map)
+void PeridigmNS::State::allocatePointData(PeridigmField::Length length,
+                                          vector<int> fieldIds,
+                                          Teuchos::RCP<const Epetra_BlockMap> map)
 {
   std::sort(fieldIds.begin(), fieldIds.end());
 
-  int maxFieldId = fieldIds[fieldIds.size()-1];
+  int maxFieldId = fieldIds.back();
   if(maxFieldId >= numFieldIds){
     numFieldIds = maxFieldId+1;
     fieldIdToDataVector.resize(numFieldIds);
   }
 
-  scalarPointData = Teuchos::rcp(new Epetra_MultiVector(*map, fieldIds.size()));
+  int elementSize = static_cast<int>(length);
+
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!pointData[elementSize].is_null(),
+                              "\n**** Error:  PeridigmNS::State::allocateData(), point-wise data field of same length already allocated!\n");
+
+  pointData[elementSize] = Teuchos::rcp(new Epetra_MultiVector(*map, fieldIds.size()));
   for(unsigned int i=0 ; i<fieldIds.size() ; ++i){
-    fieldIdToDataMap[fieldIds[i]] = Teuchos::rcp((*scalarPointData)(i), false);
-    fieldIdToDataVector[fieldIds[i]] = Teuchos::rcp((*scalarPointData)(i), false);
+    fieldIdToDataMap[fieldIds[i]] = Teuchos::rcp((*pointData[elementSize])(i), false);
+    fieldIdToDataVector[fieldIds[i]] = Teuchos::rcp((*pointData[elementSize])(i), false);
   }
 }
 
-void PeridigmNS::State::allocateVectorPointData(vector<int> fieldIds, Teuchos::RCP<const Epetra_BlockMap> map)
+void PeridigmNS::State::allocateBondData(vector<int> fieldIds,
+                                         Teuchos::RCP<const Epetra_BlockMap> map)
 {
   std::sort(fieldIds.begin(), fieldIds.end());
 
@@ -80,27 +88,13 @@ void PeridigmNS::State::allocateVectorPointData(vector<int> fieldIds, Teuchos::R
     fieldIdToDataVector.resize(numFieldIds);
   }
 
-  vectorPointData = Teuchos::rcp(new Epetra_MultiVector(*map, fieldIds.size()));
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!bondData.is_null(),
+                              "\n**** Error:  PeridigmNS::State::allocateData(), bond data field already allocated!\n");
+
+  bondData = Teuchos::rcp(new Epetra_MultiVector(*map, fieldIds.size()));
   for(unsigned int i=0 ; i<fieldIds.size() ; ++i){
-    fieldIdToDataMap[fieldIds[i]] = Teuchos::rcp((*vectorPointData)(i), false);
-    fieldIdToDataVector[fieldIds[i]] = Teuchos::rcp((*vectorPointData)(i), false);
-  }
-}
-
-void PeridigmNS::State::allocateScalarBondData(vector<int> fieldIds, Teuchos::RCP<const Epetra_BlockMap> map)
-{
-  std::sort(fieldIds.begin(), fieldIds.end());
-
-  int maxFieldId = fieldIds[fieldIds.size()-1];
-  if(maxFieldId >= numFieldIds){
-    numFieldIds = maxFieldId+1;
-    fieldIdToDataVector.resize(numFieldIds);
-  }
-
-  scalarBondData = Teuchos::rcp(new Epetra_MultiVector(*map, fieldIds.size()));
-  for(unsigned int i=0 ; i<fieldIds.size() ; ++i){
-    fieldIdToDataMap[fieldIds[i]] = Teuchos::rcp((*scalarBondData)(i), false);
-    fieldIdToDataVector[fieldIds[i]] = Teuchos::rcp((*scalarBondData)(i), false);
+    fieldIdToDataMap[fieldIds[i]] = Teuchos::rcp((*bondData)(i), false);
+    fieldIdToDataVector[fieldIds[i]] = Teuchos::rcp((*bondData)(i), false);
   }
 }
 
@@ -140,20 +134,18 @@ void PeridigmNS::State::copyLocallyOwnedDataFromState(Teuchos::RCP<PeridigmNS::S
   TEUCHOS_TEST_FOR_EXCEPTION(source.is_null(), Teuchos::NullReferenceError,
                      "PeridigmNS::State::copyLocallyOwnedDataFromState() called with null ref-count pointer.\n");
 
-  if(!scalarPointData.is_null()){
-    TEUCHOS_TEST_FOR_EXCEPTION(source->getScalarPointMultiVector().is_null(), Teuchos::NullReferenceError,
-                       "PeridigmNS::State::copyLocallyOwnedDataFromState() called with incompatible State.\n");
-    copyLocallyOwnedMultiVectorData( *(source->getScalarPointMultiVector()), *scalarPointData );
+  for(unsigned int i=0 ; i<pointData.size() ; ++i){
+    if(!pointData[i].is_null()){
+      TEUCHOS_TEST_FOR_EXCEPTION(source->getPointMultiVector(i).is_null(), Teuchos::NullReferenceError,
+                                 "PeridigmNS::State::copyLocallyOwnedDataFromState() called with incompatible State.\n");
+      copyLocallyOwnedMultiVectorData( *(source->getPointMultiVector(i)), *pointData[i] );
+    }
   }
-  if(!vectorPointData.is_null()){
-    TEUCHOS_TEST_FOR_EXCEPTION(source->getVectorPointMultiVector().is_null(), Teuchos::NullReferenceError,
-                       "PeridigmNS::State::copyLocallyOwnedDataFromState() called with incompatible State.\n");
-    copyLocallyOwnedMultiVectorData( *(source->getVectorPointMultiVector()), *vectorPointData );
-  }
-  if(!scalarBondData.is_null()){
-    TEUCHOS_TEST_FOR_EXCEPTION(source->getScalarBondMultiVector().is_null(), Teuchos::NullReferenceError,
-                       "PeridigmNS::State::copyLocallyOwnedDataFromState() called with incompatible State.\n");
-    copyLocallyOwnedMultiVectorData( *(source->getScalarBondMultiVector()), *scalarBondData );
+
+  if(!bondData.is_null()){
+    TEUCHOS_TEST_FOR_EXCEPTION(source->getBondMultiVector().is_null(), Teuchos::NullReferenceError,
+                               "PeridigmNS::State::copyLocallyOwnedDataFromState() called with incompatible State.\n");
+    copyLocallyOwnedMultiVectorData( *(source->getBondMultiVector()), *bondData );
   }
 }
 
