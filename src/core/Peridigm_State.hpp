@@ -51,12 +51,13 @@
 #include <Teuchos_RCP.hpp>
 #include <Epetra_Vector.h>
 #include "Peridigm_Field.hpp"
+#include <vector>
 
 namespace PeridigmNS {
 
 /*! \brief Container class for scalar point data, vector point data, and scalar bond data.
  *
- * The State class is a container class for scalar point data, vector point data, and scalar bond data.
+ * The State class is a container class for storing fields of various length (scalar, vector, bond, etc.).
  * Data is stored in Epetra_MultiVector objects.  Individual Epetra_Vectors corresponding to a specific
  * field id are accessed through the getData function.  The State class was designed for use within a
  * DataManger.
@@ -66,43 +67,47 @@ class State {
 public:
 
   //! Constructor.
-  State() : numFieldIds(0) {}
+  State() : 
+    maxPointDataElementSize(9),
+    numFieldIds(0),
+    pointData(std::vector< Teuchos::RCP<Epetra_MultiVector> >(maxPointDataElementSize)) {}
 
   //! Copy constructor.
-  State(const State& state){}
-
+  State(const State& state) {}
+ 
   //! Destructor.
-  ~State(){}
+  ~State() {}
 
   //! @name Memory allocation functions
   //@{
 
-  //! Instantiates the Epetra_MultiVector that holds scalar point data and creates the FieldId-to-Epetra_Vector mappings.
-  void allocateScalarPointData(std::vector<int> fieldIds, Teuchos::RCP<const Epetra_BlockMap> map);
+  /** \brief Allocates underlying Epetra_Multivectors for point-wise data.
+  **
+  **  The length argument denotes data size (e.g., 1 = scalar, 3 = vector, etc.).  This function may be called only
+  **  once for a given data size.  The fieldIds and map provided must be consistent with the given length.
+  **/
+  void allocatePointData(PeridigmField::Length length, std::vector<int> fieldIds, Teuchos::RCP<const Epetra_BlockMap> map);
 
-  //! Instantiates the Epetra_MultiVector that holds vector point data and creates the FieldId-to-Epetra_Vector mappings.
-  void allocateVectorPointData(std::vector<int> fieldIds, Teuchos::RCP<const Epetra_BlockMap> map);
-
-  //! Instantiates the Epetra_MultiVector that holds scalar bond data and creates the FieldId-to-Epetra_Vector mappings.
-  void allocateScalarBondData(std::vector<int> fieldIds, Teuchos::RCP<const Epetra_BlockMap> map);
+  //! Allocates underlying Epetra_Multivector for bond data; only scalar bond data is supported.
+  void allocateBondData(std::vector<int> fieldIds, Teuchos::RCP<const Epetra_BlockMap> map);
 
   //@}
 
-  //! @name Epetra_MultiVector accessor functions
+  //! @name Accessor functions for underlying Epetra_Multivectors.
   //@{
 
-  //! Accessor for the scalar point Epetra_MultiVector.
-  Teuchos::RCP<Epetra_MultiVector> getScalarPointMultiVector() { return scalarPointData; }
+  //! Accessor for underlying point-wise data Epetra_MultiVectors.
+  Teuchos::RCP<Epetra_MultiVector> getPointMultiVector(PeridigmField::Length length) { return pointData[static_cast<int>(length)]; }
 
-  //! Accessor for the vector point Epetra_MultiVector.
-  Teuchos::RCP<Epetra_MultiVector> getVectorPointMultiVector() { return vectorPointData; }
+  //! Accessor for underlying point-wise data Epetra_MultiVectors.
+  Teuchos::RCP<Epetra_MultiVector> getPointMultiVector(int index) { return pointData[index]; }
 
-  //! Accessor for the scalar bond Epetra_MultiVector.
-  Teuchos::RCP<Epetra_MultiVector> getScalarBondMultiVector() { return scalarBondData; }
+  //! Accessor for underlying bond data Epetra_MultiVectors.
+  Teuchos::RCP<Epetra_MultiVector> getBondMultiVector() { return bondData; }
 
   //@}
 
-  //! Returns the list of field ids of the given relation (POINT, BOND) and length (SCALAR, VECTOR); if no argument is given, returns complete list of field ids.
+  //! Returns the list of field ids of the given relation and length; if no arguments are given, returns complete list of field ids.
   std::vector<int> getFieldIds(PeridigmField::Relation relation = PeridigmField::UNDEFINED_RELATION,
                                PeridigmField::Length length = PeridigmField::UNDEFINED_LENGTH);
 
@@ -115,20 +120,21 @@ public:
   //! Copies data from a different state object based on global IDs; functions only if all the local IDs in the target map exist in and are locally owned in the source map.
   void copyLocallyOwnedDataFromState(Teuchos::RCP<PeridigmNS::State> source);
 
-protected:
+private:
 
-  //! @name Epetra_MultiVectors
-  //@{
-  //! Epetra_MultiVector for scalar point data.
-  Teuchos::RCP<Epetra_MultiVector> scalarPointData;
-  //! Epetra_MultiVector for vector point data.
-  Teuchos::RCP<Epetra_MultiVector> vectorPointData;
-  //! Epetra_MultiVector for scalar bond data.
-  Teuchos::RCP<Epetra_MultiVector> scalarBondData;
-  //@}
+  //! Maximum set of an element in the pointData Epetra_MultiVector.
+  int maxPointDataElementSize;
+
+protected:
 
   //! Maximum value of field ids.
   int numFieldIds;
+
+  //! Epetra_MultiVectors for point data.
+  std::vector< Teuchos::RCP<Epetra_MultiVector> > pointData;
+
+  //! Epetra_MultiVector for bond data.
+  Teuchos::RCP<Epetra_MultiVector> bondData;
 
   //! Map that associates a field id with an individual Epetra_Vector contained within one of the Epetra_MultiVectors.
   std::map< int, Teuchos::RCP<Epetra_Vector> > fieldIdToDataMap;

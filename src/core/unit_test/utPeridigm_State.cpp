@@ -322,7 +322,7 @@ public:
           scalarPointFieldIds.push_back( fm.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Lambda") );
           scalarPointFieldIds.push_back( fm.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Surface_Correction_Factor") );
 
-          state.allocateScalarPointData(scalarPointFieldIds, overlapScalarPointMap);
+          state.allocatePointData(PeridigmField::SCALAR, scalarPointFieldIds, overlapScalarPointMap);
 
 
           // create a list of vector field specs and allocate the data
@@ -336,7 +336,7 @@ public:
          vectorPointFieldIds.push_back( fm.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force_Density") );
          vectorPointFieldIds.push_back( fm.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Contact_Force_Density") );
       
-         state.allocateVectorPointData(vectorPointFieldIds, overlapVectorPointMap);
+         state.allocatePointData(PeridigmField::VECTOR, vectorPointFieldIds, overlapVectorPointMap);
 
          
          // create a list of bond field specs and allocate the data
@@ -344,7 +344,7 @@ public:
          bondFieldIds.push_back( fm.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Bond_Damage") );
          bondFieldIds.push_back( fm.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Deviatoric_Plastic_Extension") );
 
-         state.allocateScalarBondData(bondFieldIds, ownedScalarBondMap);
+         state.allocateBondData(bondFieldIds, ownedScalarBondMap);
 
          return state;
 
@@ -427,17 +427,17 @@ protected:
 TESTWITHSETUP (TwoPointProblem)
 {
     
-    CHECK_LONGS_EQUAL(state.getScalarPointMultiVector()->NumVectors(), (int)scalarPointFieldIds.size());
-    CHECK_LONGS_EQUAL(state.getScalarPointMultiVector()->MyLength(), overlapScalarPointMap->NumMyPoints());
-    CHECK( state.getScalarPointMultiVector()->Map().SameAs( *overlapScalarPointMap ) );
+    CHECK_LONGS_EQUAL(state.getPointMultiVector(PeridigmField::SCALAR)->NumVectors(), (int)scalarPointFieldIds.size());
+    CHECK_LONGS_EQUAL(state.getPointMultiVector(PeridigmField::SCALAR)->MyLength(), overlapScalarPointMap->NumMyPoints());
+    CHECK( state.getPointMultiVector(PeridigmField::SCALAR)->Map().SameAs( *overlapScalarPointMap ) );
 
-    CHECK_LONGS_EQUAL( state.getVectorPointMultiVector()->NumVectors(), (int)vectorPointFieldIds.size() );
-    CHECK_LONGS_EQUAL( state.getVectorPointMultiVector()->MyLength(), overlapVectorPointMap->NumMyPoints() );
-    CHECK( state.getVectorPointMultiVector()->Map().SameAs( *overlapVectorPointMap ) );
+    CHECK_LONGS_EQUAL( state.getPointMultiVector(PeridigmField::VECTOR)->NumVectors(), (int)vectorPointFieldIds.size() );
+    CHECK_LONGS_EQUAL( state.getPointMultiVector(PeridigmField::VECTOR)->MyLength(), overlapVectorPointMap->NumMyPoints() );
+    CHECK( state.getPointMultiVector(PeridigmField::VECTOR)->Map().SameAs( *overlapVectorPointMap ) );
 
-    CHECK_LONGS_EQUAL( state.getScalarBondMultiVector()->NumVectors(), (int)bondFieldIds.size() );
-    CHECK_LONGS_EQUAL( state.getScalarBondMultiVector()->MyLength(), ownedScalarBondMap->NumMyPoints() );
-    CHECK( state.getScalarBondMultiVector()->Map().SameAs( *ownedScalarBondMap ) );
+    CHECK_LONGS_EQUAL( state.getBondMultiVector()->NumVectors(), (int)bondFieldIds.size() );
+    CHECK_LONGS_EQUAL( state.getBondMultiVector()->MyLength(), ownedScalarBondMap->NumMyPoints() );
+    CHECK( state.getBondMultiVector()->Map().SameAs( *ownedScalarBondMap ) );
 
     for(int i=0 ; i<coordinates->MyLength() ; ++i)
         CHECK_DOUBLES_EQUAL( (*coordinates)[i], 0.0 );
@@ -578,7 +578,7 @@ public:
          scalarPointFieldIds.push_back( fm.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Lambda") );
          scalarPointFieldIds.push_back( fm.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Surface_Correction_Factor") );
   
-         state.allocateScalarPointData(scalarPointFieldIds, overlapScalarPointMap);
+         state.allocatePointData(PeridigmField::SCALAR, scalarPointFieldIds, overlapScalarPointMap);
 
 
           // create a list of vector field specs and allocate the data
@@ -592,14 +592,14 @@ public:
          vectorPointFieldIds.push_back( fm.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force_Density") );
          vectorPointFieldIds.push_back( fm.getFieldId(PeridigmField::NODE, PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Contact_Force_Density") );
          
-         state.allocateVectorPointData(vectorPointFieldIds, overlapVectorPointMap);
+         state.allocatePointData(PeridigmField::VECTOR, vectorPointFieldIds, overlapVectorPointMap);
       
          // create a list of bond field specs and allocate the data
 
          bondFieldIds.push_back( fm.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Bond_Damage") );
          bondFieldIds.push_back( fm.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Deviatoric_Plastic_Extension") );
 
-         state.allocateScalarBondData(bondFieldIds, ownedScalarBondMap);
+         state.allocateBondData(bondFieldIds, ownedScalarBondMap);
 
          return state;
 
@@ -672,17 +672,17 @@ protected:
 TESTWITHSETUP (ThreePointProblem)
 {
     
-    CHECK_LONGS_EQUAL(state.getScalarPointMultiVector()->NumVectors(), (int)scalarPointFieldIds.size());
-    CHECK_LONGS_EQUAL(state.getScalarPointMultiVector()->MyLength(), overlapScalarPointMap->NumMyPoints());
-    CHECK( state.getScalarPointMultiVector()->Map().SameAs( *overlapScalarPointMap ) );
+    CHECK_LONGS_EQUAL(state.getPointMultiVector(PeridigmField::SCALAR)->NumVectors(), (int)scalarPointFieldIds.size());
+    CHECK_LONGS_EQUAL(state.getPointMultiVector(PeridigmField::SCALAR)->MyLength(), overlapScalarPointMap->NumMyPoints());
+    CHECK( state.getPointMultiVector(PeridigmField::SCALAR)->Map().SameAs( *overlapScalarPointMap ) );
 
-    CHECK_LONGS_EQUAL( state.getVectorPointMultiVector()->NumVectors(), (int)vectorPointFieldIds.size() );
-    CHECK_LONGS_EQUAL( state.getVectorPointMultiVector()->MyLength(), overlapVectorPointMap->NumMyPoints() );
-    CHECK( state.getVectorPointMultiVector()->Map().SameAs( *overlapVectorPointMap ) );
+    CHECK_LONGS_EQUAL( state.getPointMultiVector(PeridigmField::VECTOR)->NumVectors(), (int)vectorPointFieldIds.size() );
+    CHECK_LONGS_EQUAL( state.getPointMultiVector(PeridigmField::VECTOR)->MyLength(), overlapVectorPointMap->NumMyPoints() );
+    CHECK( state.getPointMultiVector(PeridigmField::VECTOR)->Map().SameAs( *overlapVectorPointMap ) );
 
-    CHECK_LONGS_EQUAL( state.getScalarBondMultiVector()->NumVectors(), (int)bondFieldIds.size() );
-    CHECK_LONGS_EQUAL( state.getScalarBondMultiVector()->MyLength(), ownedScalarBondMap->NumMyPoints() );
-    CHECK( state.getScalarBondMultiVector()->Map().SameAs( *ownedScalarBondMap ) );
+    CHECK_LONGS_EQUAL( state.getBondMultiVector()->NumVectors(), (int)bondFieldIds.size() );
+    CHECK_LONGS_EQUAL( state.getBondMultiVector()->MyLength(), ownedScalarBondMap->NumMyPoints() );
+    CHECK( state.getBondMultiVector()->Map().SameAs( *ownedScalarBondMap ) );
 
     for(int i=0 ; i<coordinates->MyLength() ; ++i)
         CHECK_DOUBLES_EQUAL( (*coordinates)[i], 0.0 );
@@ -761,7 +761,7 @@ public:
         // there is one owned point, processor 0 has GID 0, and processor 1 (if it exists) has GID 2
         // in either case there is one ghosted point, its neighbor, GID = 1
 
-        int procID = state.getScalarPointMultiVector()->Comm().MyPID();
+        int procID = state.getPointMultiVector(PeridigmField::SCALAR)->Comm().MyPID();
         Epetra_SerialComm serialComm;
         int numOwnedIDs = 1;
         std::vector<int> tempMyGlobalIDs(2); // includes ghost
@@ -793,21 +793,21 @@ public:
         relation = PeridigmField::ELEMENT;
         length = PeridigmField::SCALAR;
         vector<int> scalarPointFieldIds = state.getFieldIds(relation, length);
-        tempState.allocateScalarPointData(scalarPointFieldIds, tempOverlapScalarPointMap);
+        tempState.allocatePointData(PeridigmField::SCALAR, scalarPointFieldIds, tempOverlapScalarPointMap);
 
         // vector point data
 
         relation = PeridigmField::NODE;
         length = PeridigmField::VECTOR;
         vector<int> vectorFieldIds = state.getFieldIds(relation, length);
-        tempState.allocateVectorPointData(vectorFieldIds, tempOverlapVectorPointMap);
+        tempState.allocatePointData(PeridigmField::VECTOR, vectorFieldIds, tempOverlapVectorPointMap);
 
         // scalar bond data
 
         relation = PeridigmField::BOND;
         length = PeridigmField::SCALAR;
         vector<int> bondFieldIds = state.getFieldIds(relation, length);
-        tempState.allocateScalarBondData(bondFieldIds, tempOwnedScalarBondMap);
+        tempState.allocateBondData(bondFieldIds, tempOwnedScalarBondMap);
 
      }
 
@@ -834,17 +834,17 @@ protected:
 
 TESTWITHSETUP (CopyFrom)
 {
-    CHECK_LONGS_EQUAL( tempState.getVectorPointMultiVector()->NumVectors(), state.getVectorPointMultiVector()->NumVectors());
-    CHECK_LONGS_EQUAL( tempState.getVectorPointMultiVector()->MyLength(), tempOverlapVectorPointMap->NumMyPoints() );
-    CHECK( tempState.getVectorPointMultiVector()->Map().SameAs( *tempOverlapVectorPointMap ) );
+    CHECK_LONGS_EQUAL( tempState.getPointMultiVector(PeridigmField::VECTOR)->NumVectors(), state.getPointMultiVector(PeridigmField::VECTOR)->NumVectors());
+    CHECK_LONGS_EQUAL( tempState.getPointMultiVector(PeridigmField::VECTOR)->MyLength(), tempOverlapVectorPointMap->NumMyPoints() );
+    CHECK( tempState.getPointMultiVector(PeridigmField::VECTOR)->Map().SameAs( *tempOverlapVectorPointMap ) );
 
-    CHECK_LONGS_EQUAL( tempState.getVectorPointMultiVector()->NumVectors(), state.getVectorPointMultiVector()->NumVectors());
-    CHECK_LONGS_EQUAL( tempState.getVectorPointMultiVector()->MyLength(), tempOverlapVectorPointMap->NumMyPoints() );
-    CHECK( tempState.getVectorPointMultiVector()->Map().SameAs( *tempOverlapVectorPointMap ) );
+    CHECK_LONGS_EQUAL( tempState.getPointMultiVector(PeridigmField::VECTOR)->NumVectors(), state.getPointMultiVector(PeridigmField::VECTOR)->NumVectors());
+    CHECK_LONGS_EQUAL( tempState.getPointMultiVector(PeridigmField::VECTOR)->MyLength(), tempOverlapVectorPointMap->NumMyPoints() );
+    CHECK( tempState.getPointMultiVector(PeridigmField::VECTOR)->Map().SameAs( *tempOverlapVectorPointMap ) );
 
-    CHECK_LONGS_EQUAL( tempState.getScalarBondMultiVector()->NumVectors(), state.getScalarBondMultiVector()->NumVectors());
-    CHECK_LONGS_EQUAL( tempState.getScalarBondMultiVector()->MyLength(), tempOwnedScalarBondMap->NumMyPoints() );
-    CHECK( tempState.getScalarBondMultiVector()->Map().SameAs( *tempOwnedScalarBondMap ) );
+    CHECK_LONGS_EQUAL( tempState.getBondMultiVector()->NumVectors(), state.getBondMultiVector()->NumVectors());
+    CHECK_LONGS_EQUAL( tempState.getBondMultiVector()->MyLength(), tempOwnedScalarBondMap->NumMyPoints() );
+    CHECK( tempState.getBondMultiVector()->Map().SameAs( *tempOwnedScalarBondMap ) );
 
     // copy the data from the initial State to the smaller, temporary state
   tempState.copyLocallyOwnedDataFromState(Teuchos::RCP<PeridigmNS::State>(&state, false));
