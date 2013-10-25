@@ -65,15 +65,15 @@ void PeridigmNS::State::allocatePointData(PeridigmField::Length length,
     fieldIdToDataVector.resize(numFieldIds);
   }
 
-  int elementSize = static_cast<int>(length);
+  int index = static_cast<int>(length) - 1;
 
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(!pointData[elementSize].is_null(),
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!pointData[index].is_null(),
                               "\n**** Error:  PeridigmNS::State::allocateData(), point-wise data field of same length already allocated!\n");
 
-  pointData[elementSize] = Teuchos::rcp(new Epetra_MultiVector(*map, fieldIds.size()));
+  pointData[index] = Teuchos::rcp(new Epetra_MultiVector(*map, fieldIds.size()));
   for(unsigned int i=0 ; i<fieldIds.size() ; ++i){
-    fieldIdToDataMap[fieldIds[i]] = Teuchos::rcp((*pointData[elementSize])(i), false);
-    fieldIdToDataVector[fieldIds[i]] = Teuchos::rcp((*pointData[elementSize])(i), false);
+    fieldIdToDataMap[fieldIds[i]] = Teuchos::rcp((*pointData[index])(i), false);
+    fieldIdToDataVector[fieldIds[i]] = Teuchos::rcp((*pointData[index])(i), false);
   }
 }
 
