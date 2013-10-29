@@ -244,7 +244,7 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
 
   // Open exodus database for writing
   float version;
-  file_handle = ex_open(filename.str().c_str(), EX_WRITE, &CPU_word_size,&IO_word_size, &version);
+  file_handle = ex_open(filename.str().c_str(), EX_WRITE, &CPU_word_size, &IO_word_size, &version);
   if (file_handle < 0) reportExodusError(file_handle, "write", "ex_open");
 
   // Write time value
@@ -384,16 +384,45 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
               if (retval!= 0) reportExodusError(retval, "write", "ex_put_elem_var");
             }
             else if (spec.getLength() == PeridigmField::VECTOR) {
-				string tmpnameX = name+"X";
-				string tmpnameY = name+"Y";
-				string tmpnameZ = name+"Z";
-				retval = ex_put_elem_var(file_handle, exodusCount, element_output_field_map[tmpnameX], blockIt->getID(), block_num_nodes, block_ptr);
-				if (retval!= 0) reportExodusError(retval, "write", "ex_put_elem_var");
-				retval = ex_put_elem_var(file_handle, exodusCount, element_output_field_map[tmpnameY], blockIt->getID(), block_num_nodes, block_ptr);
-				if (retval!= 0) reportExodusError(retval, "write", "ex_put_elem_var");
-				retval = ex_put_elem_var(file_handle, exodusCount, element_output_field_map[tmpnameZ], blockIt->getID(), block_num_nodes, block_ptr);
-				if (retval!= 0) reportExodusError(retval, "write", "ex_put_elem_var");
-            } // end switch on data dimension
+              // copy data into x, y, and z vectors (non-interleaved)
+              for (int j=0;j<block_num_nodes; j++) {
+                xptr[j] = block_ptr[3*j];
+                yptr[j] = block_ptr[3*j+1];
+                zptr[j] = block_ptr[3*j+2];
+              }
+              // write the vectors to the exodus file
+              string tmpnameX = name+"X";
+              string tmpnameY = name+"Y";
+              string tmpnameZ = name+"Z";
+              retval = ex_put_elem_var(file_handle, exodusCount, element_output_field_map[tmpnameX], blockIt->getID(), block_num_nodes, xptr);
+              if (retval!= 0) reportExodusError(retval, "write", "ex_put_elem_var");
+              retval = ex_put_elem_var(file_handle, exodusCount, element_output_field_map[tmpnameY], blockIt->getID(), block_num_nodes, yptr);
+              if (retval!= 0) reportExodusError(retval, "write", "ex_put_elem_var");
+              retval = ex_put_elem_var(file_handle, exodusCount, element_output_field_map[tmpnameZ], blockIt->getID(), block_num_nodes, zptr);
+              if (retval!= 0) reportExodusError(retval, "write", "ex_put_elem_var");
+            }
+            else {
+              int length = static_cast<int>(spec.getLength());
+              vector<string> suffix;
+              suffix.push_back("_1");
+              suffix.push_back("_2");
+              suffix.push_back("_3");
+              suffix.push_back("_4");
+              suffix.push_back("_5");
+              suffix.push_back("_6");
+              suffix.push_back("_7");
+              suffix.push_back("_8");
+              suffix.push_back("_9");
+              for(int component=0 ; component<length ; ++component){
+                // copy data into a non-interleaved array
+                for (int j=0; j<block_num_nodes; j++)
+                  xptr[j] = block_ptr[length*j+component];
+                // write data to exodus file
+                string tmpname = name+suffix[component];
+                retval = ex_put_elem_var(file_handle, exodusCount, element_output_field_map[tmpname], blockIt->getID(), block_num_nodes, xptr);
+                if (retval!= 0) reportExodusError(retval, "write", "ex_put_elem_var");
+              }
+            }  // end switch on data dimension
           }
         }
       } // end loop over blocks
@@ -644,7 +673,7 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
         element_output_field_index = element_output_field_index + 1;
       }
     }
-    if (spec.getLength() == PeridigmField::VECTOR) {
+    else if (spec.getLength() == PeridigmField::VECTOR) {
       string tmpnameX = name+"X";
       string tmpnameY = name+"Y";
       string tmpnameZ = name+"Z";
@@ -656,7 +685,7 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
         global_output_field_map.insert( std::pair<string,int>(tmpnameZ,global_output_field_index) );
         global_output_field_index = global_output_field_index + 1;
       }
-      if (spec.getRelation() == PeridigmField::NODE) {
+      else if (spec.getRelation() == PeridigmField::NODE) {
         node_output_field_map.insert( std::pair<string,int>(tmpnameX,node_output_field_index) );
         node_output_field_index = node_output_field_index + 1;
         node_output_field_map.insert( std::pair<string,int>(tmpnameY,node_output_field_index) );
@@ -670,6 +699,25 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
         element_output_field_map.insert( std::pair<string,int>(tmpnameY,element_output_field_index) );
         element_output_field_index = element_output_field_index + 1;
         element_output_field_map.insert( std::pair<string,int>(tmpnameZ,element_output_field_index) );
+        element_output_field_index = element_output_field_index + 1;
+      }
+    }
+    else {
+      TEUCHOS_TEST_FOR_EXCEPTION(spec.getRelation() != PeridigmField::ELEMENT, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII, N-Length variables are valid only for element data.\n");
+      int length = static_cast<int>(spec.getLength());
+      vector<string> suffix;
+      suffix.push_back("_1");
+      suffix.push_back("_2");
+      suffix.push_back("_3");
+      suffix.push_back("_4");
+      suffix.push_back("_5");
+      suffix.push_back("_6");
+      suffix.push_back("_7");
+      suffix.push_back("_8");
+      suffix.push_back("_9");
+      for(int i=0 ; i<length ; ++i){
+        string tmpname = name+suffix[i];
+        element_output_field_map.insert( std::pair<string,int>(tmpname,element_output_field_index) );
         element_output_field_index = element_output_field_index + 1;
       }
     }
@@ -744,6 +792,11 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
 			truthTableVec[truthTableIndex++] = truthTableValue;
 			truthTableVec[truthTableIndex++] = truthTableValue;
 		  }
+          else{
+            int length = static_cast<int>(spec.getLength());
+            for(int i=0 ; i<length ; ++i)
+              truthTableVec[truthTableIndex++] = truthTableValue;
+          }
         }
       }
     }
@@ -885,7 +938,7 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabaseWithOnlyGlobalD
       global_output_field_map.insert( std::pair<string,int>(name,global_output_field_index) );
       global_output_field_index = global_output_field_index + 1;
     }
-    if (spec.getLength() == PeridigmField::VECTOR) {
+    else if (spec.getLength() == PeridigmField::VECTOR) {
       string tmpnameX = name+"X";
       string tmpnameY = name+"Y";
       string tmpnameZ = name+"Z";
@@ -895,6 +948,9 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabaseWithOnlyGlobalD
       global_output_field_index = global_output_field_index + 1;
       global_output_field_map.insert( std::pair<string,int>(tmpnameZ,global_output_field_index) );
       global_output_field_index = global_output_field_index + 1;
+    }
+    else{
+      TEUCHOS_TEST_FOR_EXCEPTION(spec.getRelation() != PeridigmField::ELEMENT, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII, N-Length variables are not valid for global data.\n");
     }
   }
 
