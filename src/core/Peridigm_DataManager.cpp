@@ -237,7 +237,7 @@ void PeridigmNS::DataManager::allocateData(vector<int> fieldIds)
         map = Teuchos::RCP<Epetra_BlockMap>(new Epetra_BlockMap(numGlobalElements,
                                                                 numMyElements,
                                                                 myGlobalElements,
-                                                                static_cast<int>(length),
+                                                                PeridigmField::variableDimension(length),
                                                                 indexBase,
                                                                 *getEpetraComm()));
       stateNONE->allocatePointData(length, fieldIds, map);
@@ -260,7 +260,7 @@ void PeridigmNS::DataManager::allocateData(vector<int> fieldIds)
         map = Teuchos::RCP<Epetra_BlockMap>(new Epetra_BlockMap(numGlobalElements,
                                                                 numMyElements,
                                                                 myGlobalElements,
-                                                                static_cast<int>(length),
+                                                                PeridigmField::variableDimension(length),
                                                                 indexBase,
                                                                 *getEpetraComm()));
       stateN->allocatePointData(length, fieldIds, map);
@@ -323,7 +323,7 @@ void PeridigmNS::DataManager::scatterToGhosts()
       default: TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::RangeError, "\n****Error, invalid PeridigmField::Length.\n");
         break;
       }
-      int elementSize = static_cast<int>(length);
+      int elementSize = PeridigmField::variableDimension(length);
         
       Teuchos::RCP<Epetra_MultiVector> overlapPointMultiVector = state->getPointMultiVector(length);
       if(!overlapPointMultiVector.is_null()){
@@ -339,7 +339,7 @@ void PeridigmNS::DataManager::scatterToGhosts()
           ownedMap = Teuchos::RCP<Epetra_BlockMap>(new Epetra_BlockMap(numGlobalElements,
                                                                        numMyElements,
                                                                        myGlobalElements,
-                                                                       static_cast<int>(length),
+                                                                       PeridigmField::variableDimension(length),
                                                                        indexBase,
                                                                        overlapMap.Comm()));
         }
@@ -431,7 +431,7 @@ void PeridigmNS::DataManager::rebalance(Teuchos::RCP<const Epetra_BlockMap> reba
           map = Teuchos::RCP<Epetra_BlockMap>(new Epetra_BlockMap(numGlobalElements,
                                                                   numMyElements,
                                                                   myGlobalElements,
-                                                                  static_cast<int>(length),
+                                                                  PeridigmField::variableDimension(length),
                                                                   indexBase,
                                                                   *getEpetraComm()));
         rebalancedState->allocatePointData(length, fieldIds, map);

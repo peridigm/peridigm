@@ -48,6 +48,8 @@
 #ifndef PERIDIGM_FIELD_HPP
 #define PERIDIGM_FIELD_HPP
 
+#include <Teuchos_Assert.hpp>
+#include <Teuchos_Exceptions.hpp>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -70,19 +72,19 @@ namespace PeridigmField {
   // entries must have logically consistent values.
   enum Length {
     UNDEFINED_LENGTH = 0,
-    LENGTH_1 = 1,
-    LENGTH_2 = 2,
-    LENGTH_3 = 3,
-    LENGTH_4 = 4,
-    LENGTH_5 = 5,
-    LENGTH_6 = 6,
-    LENGTH_7 = 7,
-    LENGTH_8 = 8,
-    LENGTH_9 = 9,
-    SCALAR = 1,
-    VECTOR = 3,
-    SYMMETRIC_TENSOR = 6,
-    FULL_TENSOR = 9
+    LENGTH_1,
+    LENGTH_2,
+    LENGTH_3,
+    LENGTH_4,
+    LENGTH_5,
+    LENGTH_6,
+    LENGTH_7,
+    LENGTH_8,
+    LENGTH_9,
+    SCALAR,
+    VECTOR,
+    SYMMETRIC_TENSOR,
+    FULL_TENSOR
   };
 
   enum Temporal {
@@ -97,6 +99,9 @@ namespace PeridigmField {
     STEP_N,
     STEP_NP1
   };
+
+  //! Return the integer value of the field length for a given PeridigmField::Length.
+  int variableDimension(Length length);
 
 } // namespace PeridigmField
 

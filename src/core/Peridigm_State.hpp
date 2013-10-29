@@ -100,7 +100,7 @@ public:
   //@{
 
   //! Accessor for underlying point-wise data Epetra_MultiVectors.
-  Teuchos::RCP<Epetra_MultiVector> getPointMultiVector(PeridigmField::Length length) { return pointData[static_cast<int>(length)-1]; }
+  Teuchos::RCP<Epetra_MultiVector> getPointMultiVector(PeridigmField::Length length) { return pointData[PeridigmField::variableDimension(length)-1]; }
 
   //! Accessor for underlying point-wise data Epetra_MultiVectors.
   Teuchos::RCP<Epetra_MultiVector> getPointMultiVector(int index) { return pointData[index]; }
