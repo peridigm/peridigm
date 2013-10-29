@@ -65,7 +65,7 @@ void PeridigmNS::State::allocatePointData(PeridigmField::Length length,
     fieldIdToDataVector.resize(numFieldIds);
   }
 
-  int index = static_cast<int>(length) - 1;
+  int index = PeridigmField::variableDimension(length) - 1;
 
   TEUCHOS_TEST_FOR_EXCEPT_MSG(!pointData[index].is_null(),
                               "\n**** Error:  PeridigmNS::State::allocateData(), point-wise data field of same length already allocated!\n");

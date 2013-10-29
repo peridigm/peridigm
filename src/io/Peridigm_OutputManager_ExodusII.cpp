@@ -401,8 +401,33 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
               retval = ex_put_elem_var(file_handle, exodusCount, element_output_field_map[tmpnameZ], blockIt->getID(), block_num_nodes, zptr);
               if (retval!= 0) reportExodusError(retval, "write", "ex_put_elem_var");
             }
+            else if (spec.getLength() == PeridigmField::SYMMETRIC_TENSOR) {
+              TEUCHOS_TEST_FOR_EXCEPT_MSG(spec.getLength() == PeridigmField::SYMMETRIC_TENSOR,
+                                          "\nPeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(), output for SYMMETRIC_TENSOR currently not supported!\n");
+            }
+            else if (spec.getLength() == PeridigmField::FULL_TENSOR) {
+              vector<string> suffix;
+              suffix.push_back("_xx");
+              suffix.push_back("_xy");
+              suffix.push_back("_xz");
+              suffix.push_back("_yx");
+              suffix.push_back("_yy");
+              suffix.push_back("_yz");
+              suffix.push_back("_zx");
+              suffix.push_back("_zy");
+              suffix.push_back("_zz");
+              for(int component=0 ; component<9 ; ++component){
+                // copy data into a non-interleaved array
+                for (int j=0; j<block_num_nodes; j++)
+                  xptr[j] = block_ptr[9*j+component];
+                // write data to exodus file
+                string tmpname = name+suffix[component];
+                retval = ex_put_elem_var(file_handle, exodusCount, element_output_field_map[tmpname], blockIt->getID(), block_num_nodes, xptr);
+                if (retval!= 0) reportExodusError(retval, "write", "ex_put_elem_var");
+              }
+            }
             else {
-              int length = static_cast<int>(spec.getLength());
+              int length = PeridigmField::variableDimension(spec.getLength());
               vector<string> suffix;
               suffix.push_back("_1");
               suffix.push_back("_2");
@@ -702,9 +727,35 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
         element_output_field_index = element_output_field_index + 1;
       }
     }
+    else if (spec.getLength() == PeridigmField::SYMMETRIC_TENSOR) {
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(spec.getLength() == PeridigmField::SYMMETRIC_TENSOR,
+                                  "\nPeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(), output for SYMMETRIC_TENSOR currently not supported!\n");
+      TEUCHOS_TEST_FOR_EXCEPTION(spec.getRelation() != PeridigmField::ELEMENT, std::invalid_argument,
+                                 "PeridigmNS::OutputManager_ExodusII, SYMMETRIC_TENSOR variables are valid only for element data.\n");
+    }
+    else if (spec.getLength() == PeridigmField::FULL_TENSOR) {
+      TEUCHOS_TEST_FOR_EXCEPTION(spec.getRelation() != PeridigmField::ELEMENT, std::invalid_argument,
+                                 "PeridigmNS::OutputManager_ExodusII, FULL_TENSOR variables are valid only for element data.\n");
+      vector<string> suffix;
+      suffix.push_back("_xx");
+      suffix.push_back("_xy");
+      suffix.push_back("_xz");
+      suffix.push_back("_yx");
+      suffix.push_back("_yy");
+      suffix.push_back("_yz");
+      suffix.push_back("_zx");
+      suffix.push_back("_zy");
+      suffix.push_back("_zz");
+      for(int i=0 ; i<9 ; ++i){
+        string tmpname = name+suffix[i];
+        element_output_field_map.insert( std::pair<string,int>(tmpname,element_output_field_index) );
+        element_output_field_index = element_output_field_index + 1;
+      }
+    }
     else {
-      TEUCHOS_TEST_FOR_EXCEPTION(spec.getRelation() != PeridigmField::ELEMENT, std::invalid_argument, "PeridigmNS::OutputManager_ExodusII, N-Length variables are valid only for element data.\n");
-      int length = static_cast<int>(spec.getLength());
+      TEUCHOS_TEST_FOR_EXCEPTION(spec.getRelation() != PeridigmField::ELEMENT, std::invalid_argument,
+                                 "PeridigmNS::OutputManager_ExodusII, N-Length variables are valid only for element data.\n");
+      int length = PeridigmField::variableDimension(spec.getLength());
       vector<string> suffix;
       suffix.push_back("_1");
       suffix.push_back("_2");
@@ -793,7 +844,7 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
 			truthTableVec[truthTableIndex++] = truthTableValue;
 		  }
           else{
-            int length = static_cast<int>(spec.getLength());
+            int length = PeridigmField::variableDimension(spec.getLength());
             for(int i=0 ; i<length ; ++i)
               truthTableVec[truthTableIndex++] = truthTableValue;
           }

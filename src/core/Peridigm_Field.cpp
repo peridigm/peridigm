@@ -51,6 +51,41 @@
 
 using namespace std;
 
+int PeridigmNS::PeridigmField::variableDimension(Length length){
+  int varDimension;
+  switch(length){
+  case LENGTH_1: varDimension = 1;
+    break;
+  case LENGTH_2: varDimension = 2;
+    break;
+  case LENGTH_3: varDimension = 3;
+    break;
+  case LENGTH_4: varDimension = 4;
+    break;
+  case LENGTH_5: varDimension = 5;
+    break;
+  case LENGTH_6: varDimension = 6;
+    break;
+  case LENGTH_7: varDimension = 7;
+    break;
+  case LENGTH_8: varDimension = 8;
+    break;
+  case LENGTH_9: varDimension = 9;
+    break;
+  case SCALAR: varDimension = 1;
+    break;
+  case VECTOR: varDimension = 3;
+    break;
+  case SYMMETRIC_TENSOR: varDimension = 6;
+    break;
+  case FULL_TENSOR: varDimension = 9;
+    break;
+  default: TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::RangeError, "\n****Error, invalid PeridigmField::Length detected in variableDimension().\n");
+    break;
+  }
+  return varDimension;
+}
+
 PeridigmNS::FieldManager& PeridigmNS::FieldManager::self() {
   static FieldManager fieldManager;
   return fieldManager;
