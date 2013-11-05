@@ -52,6 +52,8 @@
 
 using namespace std;
 
+// \todo Get rid of statics (was red herring) and make copy constructor and assignment operator private to avoid use.
+
 mu::Parser PeridigmNS::HorizonManager::muParser;
 double PeridigmNS::HorizonManager::muParserX(0.0);
 double PeridigmNS::HorizonManager::muParserY(0.0);
@@ -108,9 +110,9 @@ void PeridigmNS::HorizonManager::loadHorizonInformationFromBlockParameters(Teuch
 
 bool PeridigmNS::HorizonManager::blockHasConstantHorizon(string blockName){
   bool isConstant;
-  if(horizonStrings.find(blockName) != horizonStrings.end())
+  if(horizonIsConstant.find(blockName) != horizonIsConstant.end())
     isConstant = horizonIsConstant[blockName];
-  else if(horizonStrings.find("default") != horizonStrings.end())
+  else if(horizonIsConstant.find("default") != horizonIsConstant.end())
     isConstant = horizonIsConstant["default"];
   else{
     string msg = "\n**** Error, no Horizon parameter found for block " + blockName + " and no default block parameter list provided.\n";

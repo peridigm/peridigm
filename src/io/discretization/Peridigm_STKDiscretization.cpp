@@ -89,7 +89,7 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   loadData(meshFileName);
 
   // Assign the correct horizon to each node
-  PeridigmNS::HorizonManager horizonManager = PeridigmNS::HorizonManager::self();
+  PeridigmNS::HorizonManager& horizonManager = PeridigmNS::HorizonManager::self();
   horizonForEachPoint = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
   for(map<string, vector<int> >::const_iterator it = elementBlocks->begin() ; it != elementBlocks->end() ; it++){
     const string& blockName = it->first;

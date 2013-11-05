@@ -239,7 +239,7 @@ void PeridigmNS::ContactManager::initialize(Teuchos::RCP<const Epetra_BlockMap> 
   for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
 
     // Obtain the horizon for this block
-    PeridigmNS::HorizonManager horizonManager = PeridigmNS::HorizonManager::self();
+    PeridigmNS::HorizonManager& horizonManager = PeridigmNS::HorizonManager::self();
     string blockName = contactBlockIt->getName();
     TEUCHOS_TEST_FOR_EXCEPT_MSG(!horizonManager.blockHasConstantHorizon(blockName) , "\n**** Error, variable horizon not supported by contact!\n");
     double blockHorizon = horizonManager.getBlockConstantHorizonValue(blockName);
