@@ -105,12 +105,14 @@ namespace PeridigmNS {
     double m_bulkModulus;
     double m_shearModulus;
     double m_density;
+    bool m_variableHorizon;
     double m_horizon;
     double m_hourglassCoefficient;
     PeridigmNS::InfluenceFunction::functionPointer m_OMEGA;
 
     // field spec ids for all relevant data
     std::vector<int> m_fieldIds;
+    int m_horizonFieldId;
     int m_volumeFieldId;
     int m_modelCoordinatesFieldId;
     int m_coordinatesFieldId;
