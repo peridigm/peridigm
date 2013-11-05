@@ -118,7 +118,7 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
   initialX = Teuchos::rcp(new Epetra_Vector(Copy,*threeDimensionalMap,decomp.myX.get()) );
 
   // fill the vector of horizon values for each point
-  PeridigmNS::HorizonManager horizonManager = PeridigmNS::HorizonManager::self();
+  PeridigmNS::HorizonManager& horizonManager = PeridigmNS::HorizonManager::self();
   TEUCHOS_TEST_FOR_EXCEPT_MSG(!horizonManager.blockHasConstantHorizon(blockName), "\n**** Error, variable horizon not supported for QuickGrid discretizations!\n");
   double horizon = horizonManager.getBlockConstantHorizonValue(blockName);
   horizonForEachPoint = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
@@ -205,7 +205,7 @@ QUICKGRID::Data PeridigmNS::PdQuickGridDiscretization::getDiscretization(const T
 
   // Get the horizion
   // There is only one block for QuickGrid discretizations, block_1
-  PeridigmNS::HorizonManager horizonManager = PeridigmNS::HorizonManager::self();
+  PeridigmNS::HorizonManager& horizonManager = PeridigmNS::HorizonManager::self();
   string blockName = "block_1";
   TEUCHOS_TEST_FOR_EXCEPT_MSG(!horizonManager.blockHasConstantHorizon(blockName), "\n**** Error, variable horizon not supported for QuickGrid discretizations!\n");
   double horizon = horizonManager.getBlockConstantHorizonValue(blockName);

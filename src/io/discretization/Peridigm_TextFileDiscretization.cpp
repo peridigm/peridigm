@@ -281,7 +281,7 @@ QUICKGRID::Data PeridigmNS::TextFileDiscretization::getDecomp(const string& text
   }
 
   // Record the horizon for each point
-  PeridigmNS::HorizonManager horizonManager = PeridigmNS::HorizonManager::self();
+  PeridigmNS::HorizonManager& horizonManager = PeridigmNS::HorizonManager::self();
   Teuchos::RCP<Epetra_Vector> rebalancedHorizonForEachPoint = Teuchos::rcp(new Epetra_Vector(rebalancedMap));
   double* rebalancedX = decomp.myX.get();
   for(map<string, vector<int> >::const_iterator it = elementBlocks->begin() ; it != elementBlocks->end() ; it++){
