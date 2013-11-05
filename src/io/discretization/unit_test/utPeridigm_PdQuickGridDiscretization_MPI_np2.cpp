@@ -51,6 +51,7 @@
 #include <Epetra_ConfigDefs.h> // used to define HAVE_MPI
 #include <Epetra_MpiComm.h>
 #include "Peridigm_PdQuickGridDiscretization.hpp"
+#include "Peridigm_HorizonManager.hpp"
 
 using namespace boost::unit_test;
 using namespace Teuchos;
@@ -70,7 +71,6 @@ void simpleTensorProductMesh()
   // specify a spherical neighbor search with the horizon a tad longer than the mesh spacing
   discParams->set("Type", "PdQuickGrid");
   discParams->set("NeighborhoodType", "Spherical");
-  discParams->set("Horizon block_1", 0.501);
   ParameterList& quickGridParams = discParams->sublist("TensorProduct3DMeshGenerator");
   quickGridParams.set("Type", "PdQuickGrid");
   quickGridParams.set("X Origin", 0.0);
@@ -82,6 +82,13 @@ void simpleTensorProductMesh()
   quickGridParams.set("Number Points X", 2);
   quickGridParams.set("Number Points Y", 2);
   quickGridParams.set("Number Points Z", 2);
+
+  // initialize the horizon manager and set the horizon to 0.501
+  ParameterList blockParameterList;
+  ParameterList& blockParams = blockParameterList.sublist("My Block");
+  blockParams.set("Block Names", "block_1");
+  blockParams.set("Horizon", 0.501);
+  PeridigmNS::HorizonManager::self().loadHorizonInformationFromBlockParameters(blockParameterList);
 
   // create the discretization
   RCP<PdQuickGridDiscretization> discretization =

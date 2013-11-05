@@ -86,8 +86,7 @@ namespace PeridigmNS {
                     Teuchos::RCP<const Epetra_BlockMap> oneDimensionalOverlapMap_,
                     Teuchos::RCP<const Epetra_BlockMap> bondMap_,
                     Teuchos::RCP<PeridigmNS::NeighborhoodData> globalNeighborhoodData_,
-                    Teuchos::RCP<const Epetra_Vector> blockIds_,
-                    std::map<std::string, double> blockHorizonValues);
+                    Teuchos::RCP<const Epetra_Vector> blockIds_);
 
     //! \todo Create map that tracks names of fields in mothership data, use it to simplify data transfers, elliminate the superfluous vector pointers
     

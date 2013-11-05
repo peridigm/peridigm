@@ -55,6 +55,7 @@
   #include <Epetra_SerialComm.h>
 #endif
 #include "Peridigm_STKDiscretization.hpp"
+#include "Peridigm_HorizonManager.hpp"
 
 using namespace boost::unit_test;
 using namespace Teuchos;
@@ -74,7 +75,13 @@ void exodus2x2x2()
   // specify a neighbor search with the horizon a tad longer than the mesh spacing
   discParams->set("Type", "Exodus");
   discParams->set("Input Mesh File", "utPeridigm_STKDiscretization_2x2x2.g");
-  discParams->set("Horizon block_1", 0.501);
+
+  // initialize the horizon manager and set the horizon to 0.501
+  ParameterList blockParameterList;
+  ParameterList& blockParams = blockParameterList.sublist("My Block");
+  blockParams.set("Block Names", "block_1");
+  blockParams.set("Horizon", 0.501);
+  PeridigmNS::HorizonManager::self().loadHorizonInformationFromBlockParameters(blockParameterList);
 
   // create the discretization
   RCP<STKDiscretization> discretization =

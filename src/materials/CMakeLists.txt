@@ -16,7 +16,7 @@ set(PD_MATERIAL_SOURCES
 
 # Optional source files for Sandia internal development
 IF(PERIDIGM_SANDIA_INTERNAL)
-  set(PD_MATERIAL_SOURCES ${PD_MATERIAL_SOURCES} elastic_partial_stress.cxx)
+  set(PD_MATERIAL_SOURCES ${PD_MATERIAL_SOURCES} partial_stress.cxx)
 ENDIF()
 
 # Optional source files for CJL development

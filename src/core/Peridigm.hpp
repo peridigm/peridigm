@@ -96,14 +96,8 @@ namespace PeridigmNS {
     //! Destructor
     ~Peridigm(){};
 
-    //! Parse the block-by-block values of the horizon from the input deck
-    std::map<std::string, double> parseHorizonValuesFromBlockParameters(Teuchos::ParameterList& blockParams);
-
     //! Initialize discretization and maps
     void initializeDiscretization(Teuchos::RCP<Discretization> peridigmDisc);
-
-    //! Throws a warning if it seems like the horizon is too big
-    void checkHorizon(Teuchos::RCP<Discretization> peridigmDisc, std::map<std::string, double> & blockHorizonValues);
 
     //! Throws a warning if it seems like the contact search radius is too big
     void checkContactSearchRadius(const Teuchos::ParameterList& contactParams, Teuchos::RCP<Discretization> peridigmDisc);
@@ -347,6 +341,9 @@ namespace PeridigmNS {
     //! Global vector for block ID 
     Teuchos::RCP<Epetra_Vector> blockIDs;
 
+    //! Global vector containing the horizon for each point
+    Teuchos::RCP<Epetra_Vector> horizon;
+
     //! Global vector for cell volume 
     Teuchos::RCP<Epetra_Vector> volume;
 
@@ -386,6 +383,7 @@ namespace PeridigmNS {
     // field ids for all relevant data
     int elementIdFieldId;
     int blockIdFieldId;
+    int horizonFieldId;
     int volumeFieldId;
     int modelCoordinatesFieldId;
     int coordinatesFieldId;
