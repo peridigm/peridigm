@@ -12,10 +12,12 @@ add_executable(utPeridigm_PdQuickGridDiscretization
                ${DISCRETIZATION_DIR}/Peridigm_PdQuickGridDiscretization.cpp
                ./utPeridigm_PdQuickGridDiscretization.cpp)
 target_link_libraries(utPeridigm_PdQuickGridDiscretization
+  ${Peridigm_LIBRARY}
   ${Trilinos_LIBRARIES}
   ${PDNEIGH_LIBS}
   ${Zoltan_LIBRARY}
   ${MESH_INPUT_LIBS}
+  ${PARSER_LIBS}
   ${REQUIRED_LIBS}
   ${Boost_LIBRARIES}
 )
@@ -26,10 +28,12 @@ add_executable(utPeridigm_PdQuickGridDiscretization_MPI_np2
                ${DISCRETIZATION_DIR}/Peridigm_PdQuickGridDiscretization.cpp
                ./utPeridigm_PdQuickGridDiscretization_MPI_np2.cpp)
 target_link_libraries(utPeridigm_PdQuickGridDiscretization_MPI_np2
+  ${Peridigm_LIBRARY}
   ${Trilinos_LIBRARIES}
   ${PDNEIGH_LIBS}
   ${Zoltan_LIBRARY}
   ${MESH_INPUT_LIBS}
+  ${PARSER_LIBS}
   ${REQUIRED_LIBS}
   ${Boost_LIBRARIES}
 )
@@ -41,11 +45,13 @@ add_executable(utPeridigm_STKDiscretization
                ${IO_DIR}/Peridigm_ProximitySearch.cpp
                ./utPeridigm_STKDiscretization.cpp)
 target_link_libraries(utPeridigm_STKDiscretization
+  ${Peridigm_LIBRARY}
   ${Trilinos_LIBRARIES}
   ${PDNEIGH_LIBS}
   ${Zoltan_LIBRARY}
   ${MESH_INPUT_LIBS}
   ${UTILITIES_LIBS}
+  ${PARSER_LIBS}
   ${REQUIRED_LIBS}
   ${Boost_LIBRARIES}
 )

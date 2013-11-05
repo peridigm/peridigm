@@ -46,6 +46,7 @@
 //@HEADER
 
 #include "Peridigm_PdQuickGridDiscretization.hpp"
+#include "Peridigm_HorizonManager.hpp"
 #include "mesh_input/quick_grid/QuickGrid.h"
 #include "pdneigh/PdZoltan.h"
 #include <vector>
@@ -110,8 +111,18 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
   // 3D only
   TEUCHOS_TEST_FOR_EXCEPT_MSG(decomp.dimension != 3, "Invalid dimension in decomposition (only 3D is supported)");
 
+  // There is only one block and it is called "block_1"
+  std::string blockName = "block_1";
+
   // fill the x vector with the current positions (owned positions only)
   initialX = Teuchos::rcp(new Epetra_Vector(Copy,*threeDimensionalMap,decomp.myX.get()) );
+
+  // fill the vector of horizon values for each point
+  PeridigmNS::HorizonManager horizonManager = PeridigmNS::HorizonManager::self();
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!horizonManager.blockHasConstantHorizon(blockName), "\n**** Error, variable horizon not supported for QuickGrid discretizations!\n");
+  double horizon = horizonManager.getBlockConstantHorizonValue(blockName);
+  horizonForEachPoint = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
+  horizonForEachPoint->PutScalar(horizon);
 
   // fill cell volumes
   cellVolume = Teuchos::rcp(new Epetra_Vector(Copy,*oneDimensionalMap,decomp.cellVolume.get()) );
@@ -121,7 +132,6 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
   blockID->PutScalar(1.0);
 
   // there is only one block, give it a name and list all the elements
-  std::string blockName = "block_1";
   (*elementBlocks)[blockName] = std::vector<int>( oneDimensionalMap->NumGlobalElements() );
   for(unsigned int i=0 ; i<(*elementBlocks)[blockName].size() ; ++i)
     (*elementBlocks)[blockName][i] = i;
@@ -195,17 +205,10 @@ QUICKGRID::Data PeridigmNS::PdQuickGridDiscretization::getDiscretization(const T
 
   // Get the horizion
   // There is only one block for QuickGrid discretizations, block_1
+  PeridigmNS::HorizonManager horizonManager = PeridigmNS::HorizonManager::self();
   string blockName = "block_1";
-  string blockHorizonParameterString = "Horizon " + blockName;
-  if(params->isParameter(blockHorizonParameterString))
-    horizons[blockName] = params->get<double>(blockHorizonParameterString);
-  else if(params->isParameter("Horizon default"))
-    horizons[blockName] = params->get<double>("Horizon default");
-  else{
-    string msg = "\n**** Error, no Horizon parameter supplied for block " + blockName;
-    msg += " and no default block parameter list provided.\n";
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
-  }
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!horizonManager.blockHasConstantHorizon(blockName), "\n**** Error, variable horizon not supported for QuickGrid discretizations!\n");
+  double horizon = horizonManager.getBlockConstantHorizonValue(blockName);
 
   // param list should have a "sublist" with different types that we switch on here
   QUICKGRID::Data decomp;
@@ -226,7 +229,6 @@ QUICKGRID::Data PeridigmNS::PdQuickGridDiscretization::getDiscretization(const T
     const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
 
     // Create abstract decomposition iterator
-    double horizon = horizons["block_1"];
     QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numPID,horizon,xSpec,ySpec,zSpec,neighborhoodType);
     decomp =  QUICKGRID::getDiscretization(myPID, cellPerProcIter);
     // Load balance and write new decomposition
@@ -268,7 +270,6 @@ QUICKGRID::Data PeridigmNS::PdQuickGridDiscretization::getDiscretization(const T
     QUICKGRID::Spec1D axisSpec(numCellsAxis,zStart,cylinderLength);
 
     // Create abstract decomposition iterator
-    double horizon = horizons["block_1"];
     QUICKGRID::TensorProductCylinderMeshGenerator cellPerProcIter(numPID, horizon,ring2dSpec, axisSpec,neighborhoodType);
     decomp =  QUICKGRID::getDiscretization(myPID, cellPerProcIter);
     // Load balance and write new decomposition
@@ -373,6 +374,12 @@ Teuchos::RCP<Epetra_Vector>
 PeridigmNS::PdQuickGridDiscretization::getInitialX() const
 {
   return initialX;
+}
+
+Teuchos::RCP<Epetra_Vector>
+PeridigmNS::PdQuickGridDiscretization::getHorizon() const
+{
+  return horizonForEachPoint;
 }
 
 Teuchos::RCP<Epetra_Vector>

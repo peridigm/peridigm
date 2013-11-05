@@ -59,7 +59,6 @@
 #include "Peridigm_Pals_Model.hpp"
 #endif
 #ifdef PERIDIGM_SANDIA_INTERNAL
-#include "Peridigm_ElasticPartialStressMaterial.hpp"
 #include "Peridigm_ElasticCorrespondencePartialStressMaterial.hpp"
 #endif
 #ifdef PERIDIGM_CJL
@@ -94,14 +93,6 @@ PeridigmNS::MaterialFactory::create(const Teuchos::ParameterList& materialParams
     materialModel = Teuchos::rcp( new Pals_Model(materialParams) );
 #else
     TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n**** Pals model unavailable, recompile with -DUSE_PALS.\n");
-#endif
-  }
-
-  else if (materialModelName == "Elastic Partial Stress"){
-#ifdef PERIDIGM_SANDIA_INTERNAL
-    materialModel = Teuchos::rcp( new ElasticPartialStressMaterial(materialParams) );
-#else
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n**** Elastic Partial Stress material model unavailable, recompile with -DUSE_SANDIA_INTERNAL.\n");
 #endif
   }
   else if (materialModelName == "Elastic Correspondence Partial Stress"){

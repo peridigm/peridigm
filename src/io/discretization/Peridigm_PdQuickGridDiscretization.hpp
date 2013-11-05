@@ -83,6 +83,9 @@ namespace PeridigmNS {
     //! Get initial positions
     virtual Teuchos::RCP<Epetra_Vector> getInitialX() const;
 
+    //! Get the horizon value for each point.
+    virtual Teuchos::RCP<Epetra_Vector> getHorizon() const;
+
     //! Get cell volumes
     virtual Teuchos::RCP<Epetra_Vector> getCellVolume() const;
 
@@ -150,6 +153,9 @@ namespace PeridigmNS {
 
     //! Vector containing initial positions
     Teuchos::RCP<Epetra_Vector> initialX;
+
+    //! Vector containing horizons
+    Teuchos::RCP<Epetra_Vector> horizonForEachPoint;
 
     //! Vector containing cell volumes
     Teuchos::RCP<Epetra_Vector> cellVolume;

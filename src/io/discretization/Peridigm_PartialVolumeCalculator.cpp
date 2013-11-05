@@ -46,6 +46,7 @@
 //@HEADER
 
 #include "Peridigm_PartialVolumeCalculator.hpp"
+#include "Peridigm_HorizonManager.hpp"
 #include "Peridigm_Field.hpp"
 using namespace std;
 
@@ -67,7 +68,9 @@ void PeridigmNS::computePartialVolume(Teuchos::RCP<PeridigmNS::Block> block,
   const int* ownedIDs = neighborhoodData->OwnedIDs();
   const int* neighborhoodList = neighborhoodData->NeighborhoodList();
   
-  double horizon = discretization->getHorizon(block->getName());
+  PeridigmNS::HorizonManager& horizonManager = PeridigmNS::HorizonManager::self();
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!horizonManager.blockHasConstantHorizon(block->getName()) , "\n**** Error, variable horizon not supported by contact!\n");
+  double horizon = horizonManager.getBlockConstantHorizonValue(block->getName());
 
   int neighborhoodListIndex = 0;
   int bondIndex = 0;

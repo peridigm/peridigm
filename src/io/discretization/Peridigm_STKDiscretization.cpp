@@ -47,6 +47,7 @@
 
 #include "Peridigm_STKDiscretization.hpp"
 #include "Peridigm_ProximitySearch.hpp"
+#include "Peridigm_HorizonManager.hpp"
 #include <Epetra_Map.h>
 #include <Epetra_Vector.h>
 #include <Epetra_Import.h>
@@ -87,36 +88,37 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   // Load data from mesh file
   loadData(meshFileName);
 
-  // Record the horizon for each block
-  for(map<string, vector<int> >::iterator it = elementBlocks->begin() ; it != elementBlocks->end() ; it++){
-    string blockName = it->first;
-    string blockHorizonParameterString = "Horizon " + blockName;
-    if(params->isParameter(blockHorizonParameterString))
-      horizons[blockName] = params->get<double>(blockHorizonParameterString);
-    else if(params->isParameter("Horizon default"))
-      horizons[blockName] = params->get<double>("Horizon default");
-    else{
-      string msg = "\n**** Error, no Horizon parameter supplied for block " + blockName;
-      msg += " and no default block parameter list provided.\n";
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
-    }
-  }
   // Assign the correct horizon to each node
-  Teuchos::RCP<Epetra_Vector> horizonForEachNode = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
+  PeridigmNS::HorizonManager horizonManager = PeridigmNS::HorizonManager::self();
+  horizonForEachPoint = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
   for(map<string, vector<int> >::const_iterator it = elementBlocks->begin() ; it != elementBlocks->end() ; it++){
     const string& blockName = it->first;
     const vector<int>& globalIds = it->second;
-    double horizonValue = horizons[blockName];
+
+    bool hasConstantHorizon = horizonManager.blockHasConstantHorizon(blockName);
+    double constantHorizonValue(0.0);
+    if(hasConstantHorizon)
+      constantHorizonValue = horizonManager.getBlockConstantHorizonValue(blockName);
+
     for(unsigned int i=0 ; i<globalIds.size() ; ++i){
       int localId = oneDimensionalMap->LID(globalIds[i]);
-      (*horizonForEachNode)[localId] = horizonValue;
+      if(hasConstantHorizon){
+        (*horizonForEachPoint)[localId] = constantHorizonValue;
+      }
+      else{
+        double x = (*initialX)[localId*3];
+        double y = (*initialX)[localId*3 + 1];
+        double z = (*initialX)[localId*3 + 2];
+        double horizon = horizonManager.evaluateHorizon(blockName, x, y, z);
+        (*horizonForEachPoint)[localId] = horizon;
+      }
     }
   }
 
   // Execute the neighbor search
   int neighborListSize;
   int* neighborList;
-  ProximitySearch::GlobalProximitySearch(initialX, horizonForEachNode, oneDimensionalOverlapMap, neighborListSize, neighborList, bondFilters);
+  ProximitySearch::GlobalProximitySearch(initialX, horizonForEachPoint, oneDimensionalOverlapMap, neighborListSize, neighborList, bondFilters);
 
   createNeighborhoodData(neighborListSize, neighborList);
 
@@ -632,6 +634,12 @@ Teuchos::RCP<Epetra_Vector>
 PeridigmNS::STKDiscretization::getInitialX() const
 {
   return initialX;
+}
+
+Teuchos::RCP<Epetra_Vector>
+PeridigmNS::STKDiscretization::getHorizon() const
+{
+  return horizonForEachPoint;
 }
 
 Teuchos::RCP<Epetra_Vector>

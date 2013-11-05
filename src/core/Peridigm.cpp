@@ -59,6 +59,7 @@
 #include <boost/math/special_functions/fpclassify.hpp>
 
 #include "Peridigm_Field.hpp"
+#include "Peridigm_HorizonManager.hpp"
 #include "Peridigm_InfluenceFunction.hpp"
 #include "Peridigm_DiscretizationFactory.hpp"
 #include "Peridigm_PartialVolumeCalculator.hpp"
@@ -93,6 +94,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   : analysisHasContact(false),
     analysisHasPartialVolumes(false),
     blockIdFieldId(-1),
+    horizonFieldId(-1),
     volumeFieldId(-1),
     modelCoordinatesFieldId(-1),
     coordinatesFieldId(-1),
@@ -124,29 +126,19 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   Teuchos::RCP<Teuchos::ParameterList> discParams =
     Teuchos::rcpFromRef( peridigmParams->sublist("Discretization", true) );
 
-  // \todo When using partial volumes, the horizon should be increased by a value equal to the largest element dimension in the model (largest element diagonal for hexes).
-  //       For an initial test, just double the horizon and hope for the best.
-  // if(analysisHasPartialVolumes)
-  //   discParams->set("Search Horizon", 2.0*discParams->get<double>("Horizon"));
-  // else
-  //   discParams->set("Search Horizon", discParams->get<double>("Horizon"));
-
   // The horizon may no longer be specified in the discretization block
+  // Throw an exception if the user is running an old input deck with the horizon in the discretization parameter list
   string msg = "\n**** Error, \"Horizon\" is no longer an allowable Discretization parameter.\n";
   msg +=         "****        A horizon for each block must be specified in the Blocks section.\n";
   TEUCHOS_TEST_FOR_EXCEPT_MSG(discParams->isParameter("Horizon"), msg);
 
-  // Create a list of horizon values for each block and add it to the discretization parameter list
+  // Pass the blockParams to the HorizonManager
   Teuchos::ParameterList& blockParams = peridigmParams->sublist("Blocks", true);
-  map<string, double> blockHorizonValues = parseHorizonValuesFromBlockParameters(blockParams);
-  for(map<string, double>::const_iterator it = blockHorizonValues.begin() ; it != blockHorizonValues.end() ; it++){
-    string name = "Horizon " + it->first;
-    discParams->set(name, it->second);
-  }
+  PeridigmNS::HorizonManager& horizonManager = PeridigmNS::HorizonManager::self();
+  horizonManager.loadHorizonInformationFromBlockParameters(blockParams);
 
   DiscretizationFactory discFactory(discParams);
   Teuchos::RCP<Discretization> peridigmDisc = discFactory.create(peridigmComm);
-  checkHorizon(peridigmDisc, blockHorizonValues);
   initializeDiscretization(peridigmDisc);
 
   // Create a list containing parameters for each solver
@@ -176,6 +168,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   elementIdFieldId                   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Element_Id");
   blockIdFieldId                     = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Block_Id");
+  blockIdFieldId                     = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Horizon");
   volumeFieldId                      = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Volume");
   modelCoordinatesFieldId            = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::CONSTANT, "Model_Coordinates");
   coordinatesFieldId                 = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Coordinates");
@@ -205,8 +198,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
                                oneDimensionalOverlapMap,
                                bondMap,
                                globalNeighborhoodData,
-                               peridigmDisc->getBlockID(),
-                               blockHorizonValues);
+                               peridigmDisc->getBlockID());
     // contactManager->loadNeighborhoodData(globalNeighborhoodData,
     //                                      oneDimensionalMap,
     //                                      oneDimensionalOverlapMap);
@@ -242,24 +234,20 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
 
     // Obtain the horizon for this block
     string blockName = blockIt->getName();
+    bool constantHorizon = horizonManager.blockHasConstantHorizon(blockName);
     double blockHorizon(0.0);
-    if(blockHorizonValues.find(blockName) != blockHorizonValues.end())
-      blockHorizon = blockHorizonValues[blockName];
-    else if(blockHorizonValues.find("default") != blockHorizonValues.end())
-      blockHorizon = blockHorizonValues["default"];
-    else{
-      string msg = "\n**** Error, no Horizon parameter supplied for block " + blockName + " and no default block parameter list provided.\n";
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
-    }
+    if(constantHorizon)
+      blockHorizon = horizonManager.getBlockConstantHorizonValue(blockName);
 
     // Set the material model
     string materialName = blockIt->getMaterialName();
     Teuchos::ParameterList matParams = materialParams.sublist(materialName);
 
-    // Assign the horizon to the material model
+    // If the horizon is a constant value, assign it to the material model
     // Make sure the user did not try to set the horizon in the material block
     TEUCHOS_TEST_FOR_EXCEPT_MSG(matParams.isParameter("Horizon") , "\n**** Error, Horizon is an invalid material parameter.\n");
-    matParams.set("Horizon", blockHorizon);
+    if(constantHorizon)
+      matParams.set("Horizon", blockHorizon);
 
     // Assign the finite difference probe length
     if(!matParams.isParameter("Finite Difference Probe Length"))
@@ -325,6 +313,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   // Load initial data into the blocks
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
     blockIt->importData(*(peridigmDisc->getBlockID()),    blockIdFieldId,          PeridigmField::STEP_NONE, Insert);
+    blockIt->importData(*(peridigmDisc->getHorizon()),    horizonFieldId,          PeridigmField::STEP_NONE, Insert);
     blockIt->importData(*(peridigmDisc->getCellVolume()), volumeFieldId,           PeridigmField::STEP_NONE, Insert);
     blockIt->importData(*(peridigmDisc->getInitialX()),   modelCoordinatesFieldId, PeridigmField::STEP_NONE, Insert);
     blockIt->importData(*(peridigmDisc->getInitialX()),   coordinatesFieldId,      PeridigmField::STEP_N,    Insert);
@@ -418,39 +407,6 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   timeCurrent = 0.0;
 }
 
-void PeridigmNS::Peridigm::checkHorizon(Teuchos::RCP<Discretization> peridigmDisc, map<string, double> & blockHorizonValues){
-  // Warn the user if it appears the horizon is too large and may cause memory to fill
-  const double warningPerc = 0.80; // TODO: This might need to be adjusted
-  const int mesh_size = peridigmDisc->getNumElem();
-  const bool mesh_size_large = mesh_size > 10000; // TODO This might need to be adjusted
-  const double maxPerc = (double)peridigmDisc->getMaxNumBondsPerElem() / (double)mesh_size;
-  if(maxPerc >= warningPerc && mesh_size_large){
-    if(peridigmComm->MyPID() == 0){
-      cout << "** Warning: elements were detected with large neighborhood sizes relative to the number of local elements.\n"
-           << "** The largest element neighborhood contains " << maxPerc * 100 << "% of the elements on this processor.\n"
-           << "** This may indicate the horizon was selected too large and could lead to memory capacity being exceeded.\n\n";
-    }
-    return;
-  }
-  // Warn the user if a block's horizon is too large compared to the max element diameter
-  const double warningSizeRatio = 25.0; // TODO: This might need to be adjusted
-  string blockName = "";
-  double horizonValue = 0.0;
-  const double maxRad = peridigmDisc->getMaxElementRadius();
-  for(map<string, double>::const_iterator it = blockHorizonValues.begin() ; it != blockHorizonValues.end() ; it++){
-    if(it->second > warningSizeRatio * maxRad && mesh_size_large){
-      blockName = it->first;
-      horizonValue = it->second;
-      if(peridigmComm->MyPID() == 0){
-        cout << "** Warning: The horizon for " << blockName << " is " << horizonValue << ", which is\n"
-             << "** more than " << warningSizeRatio <<  " times the max element radius (" << maxRad << ").\n"
-             << "** This may indicate the horizon was selected too large\n"
-             << "** and could lead to memory capacity being exceeded.\n\n";
-      }
-    }
-  }
-}
-
 void PeridigmNS::Peridigm::checkContactSearchRadius(const Teuchos::ParameterList& contactParams, Teuchos::RCP<Discretization> peridigmDisc){
   if(!contactParams.isParameter("Search Radius"))
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Contact parameter \"Search Radius\" not specified.");
@@ -466,33 +422,6 @@ void PeridigmNS::Peridigm::checkContactSearchRadius(const Teuchos::ParameterList
            << "** This may lead to the memory capacity being exceeded.\n\n";
     }
   }
-}
-
-map<string, double> PeridigmNS::Peridigm::parseHorizonValuesFromBlockParameters(Teuchos::ParameterList& blockParams) {
-
-  map<string, double> blockHorizonValues;
-
-  // Find the horizon value for each block and record the default horizon value (if any)
-  for(Teuchos::ParameterList::ConstIterator it = blockParams.begin() ; it != blockParams.end() ; it++){
-    const string& name = it->first;
-    Teuchos::ParameterList& params = blockParams.sublist(name);
-    string blockNamesString = params.get<string>("Block Names");
-    // Parse space-delimited list of block names
-    istringstream iss(blockNamesString);
-    vector<string> blockNames;
-    copy(istream_iterator<string>(iss),
-         istream_iterator<string>(),
-         back_inserter<vector<string> >(blockNames));
-    for(vector<string>::const_iterator it = blockNames.begin() ; it != blockNames.end() ; ++it){
-      double horizonValue = params.get<double>("Horizon");
-      if( *it == "Default" || *it == "default")
-        blockHorizonValues["default"] = horizonValue;
-      else
-        blockHorizonValues[*it] = horizonValue;
-    }
-  }
-  
-  return blockHorizonValues;
 }
 
 void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization> peridigmDisc) {
@@ -517,11 +446,12 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization>
   // Create mothership vectors
 
   // \todo Do not allocate space for deltaTemperature if not needed.
-  oneDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*oneDimensionalMap, 4));
+  oneDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*oneDimensionalMap, 5));
   blockIDs = Teuchos::rcp((*oneDimensionalMothership)(0), false);         // block ID
-  volume = Teuchos::rcp((*oneDimensionalMothership)(1), false);           // cell volume
-  density = Teuchos::rcp((*oneDimensionalMothership)(2), false);          // density
-  deltaTemperature = Teuchos::rcp((*oneDimensionalMothership)(3), false); // change in temperature
+  horizon = Teuchos::rcp((*oneDimensionalMothership)(1), false);          // horizon for each point
+  volume = Teuchos::rcp((*oneDimensionalMothership)(2), false);           // cell volume
+  density = Teuchos::rcp((*oneDimensionalMothership)(3), false);          // density
+  deltaTemperature = Teuchos::rcp((*oneDimensionalMothership)(4), false); // change in temperature
 
   // \todo Do not allocate space for the contact force nor deltaU if not needed.
   threeDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalMap, 10));
@@ -542,6 +472,13 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization>
   double* blockIDsPtr;
   blockIDs->ExtractView(&blockIDsPtr);
   blas.COPY(blockIDs->MyLength(), bID, blockIDsPtr);
+
+  // Set the horizon values
+  double* discHorizonPtr;
+  peridigmDisc->getHorizon()->ExtractView(&discHorizonPtr);
+  double* horizonPtr;
+  horizon->ExtractView(&horizonPtr);
+  blas.COPY(horizon->MyLength(), discHorizonPtr, horizonPtr);
 
   // Set the volumes
   double* vol;

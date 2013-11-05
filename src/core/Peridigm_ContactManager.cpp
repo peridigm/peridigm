@@ -46,6 +46,7 @@
 //@HEADER
 
 #include "Peridigm_ContactManager.hpp"
+#include "Peridigm_HorizonManager.hpp"
 #include "contact/Peridigm_ContactModelFactory.hpp"
 #include "Peridigm_Timer.hpp"
 #include <boost/algorithm/string/trim.hpp> // \todo Replace this include with correct include for istream_iterator.
@@ -232,23 +233,16 @@ void PeridigmNS::ContactManager::initialize(Teuchos::RCP<const Epetra_BlockMap> 
                                             Teuchos::RCP<const Epetra_BlockMap> oneDimensionalOverlapMap_,
                                             Teuchos::RCP<const Epetra_BlockMap> bondMap_,
                                             Teuchos::RCP<PeridigmNS::NeighborhoodData> globalNeighborhoodData_,
-                                            Teuchos::RCP<const Epetra_Vector> blockIds_,
-                                            map<string, double> blockHorizonValues)
+                                            Teuchos::RCP<const Epetra_Vector> blockIds_)
 {
   ContactModelFactory contactModelFactory;
   for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
 
     // Obtain the horizon for this block
+    PeridigmNS::HorizonManager horizonManager = PeridigmNS::HorizonManager::self();
     string blockName = contactBlockIt->getName();
-    double blockHorizon(0.0);
-    if(blockHorizonValues.find(blockName) != blockHorizonValues.end())
-      blockHorizon = blockHorizonValues[blockName];
-    else if(blockHorizonValues.find("default") != blockHorizonValues.end())
-      blockHorizon = blockHorizonValues["default"];
-    else{
-      string msg = "\n**** Error, no Horizon parameter supplied for block " + blockName + " and no default block parameter list provided.\n";
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
-    }
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!horizonManager.blockHasConstantHorizon(blockName) , "\n**** Error, variable horizon not supported by contact!\n");
+    double blockHorizon = horizonManager.getBlockConstantHorizonValue(blockName);
 
     // For the initial implementation, assume that there is only one contact model
     // \todo Refactor contact!

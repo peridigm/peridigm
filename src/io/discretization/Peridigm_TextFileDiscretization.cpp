@@ -46,6 +46,7 @@
 //@HEADER
 
 #include "Peridigm_TextFileDiscretization.hpp"
+#include "Peridigm_HorizonManager.hpp"
 #include "pdneigh/NeighborhoodList.h"
 #include "pdneigh/PdZoltan.h"
 
@@ -130,7 +131,7 @@ PeridigmNS::TextFileDiscretization::TextFileDiscretization(const Teuchos::RCP<co
   TEUCHOS_TEST_FOR_EXCEPT_MSG(decomp.dimension != 3, "Invalid dimension in decomposition (only 3D is supported)");
 
   // fill the x vector with the current positions (owned positions only)
-  initialX = Teuchos::rcp(new Epetra_Vector(Copy,*threeDimensionalMap,decomp.myX.get()) );
+  initialX = Teuchos::rcp(new Epetra_Vector(Copy, *threeDimensionalMap, decomp.myX.get()));
 
   // fill cell volumes
   cellVolume = Teuchos::rcp(new Epetra_Vector(Copy,*oneDimensionalMap,decomp.cellVolume.get()) );
@@ -279,18 +280,31 @@ QUICKGRID::Data PeridigmNS::TextFileDiscretization::getDecomp(const string& text
     (*elementBlocks)[blockName.str()].push_back(globalID);
   }
 
-  // Record the horizon for each block
-  for(map<string, vector<int> >::iterator it = elementBlocks->begin() ; it != elementBlocks->end() ; it++){
-    string blockName = it->first;
-    string blockHorizonParameterString = "Horizon " + blockName;
-    if(params->isParameter(blockHorizonParameterString))
-      horizons[blockName] = params->get<double>(blockHorizonParameterString);
-    else if(params->isParameter("Horizon default"))
-      horizons[blockName] = params->get<double>("Horizon default");
-    else{
-      string msg = "\n**** Error, no Horizon parameter supplied for block " + blockName;
-      msg += "     and no default block parameter list provided.\n";
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
+  // Record the horizon for each point
+  PeridigmNS::HorizonManager horizonManager = PeridigmNS::HorizonManager::self();
+  Teuchos::RCP<Epetra_Vector> rebalancedHorizonForEachPoint = Teuchos::rcp(new Epetra_Vector(rebalancedMap));
+  double* rebalancedX = decomp.myX.get();
+  for(map<string, vector<int> >::const_iterator it = elementBlocks->begin() ; it != elementBlocks->end() ; it++){
+    const string& blockName = it->first;
+    const vector<int>& globalIds = it->second;
+
+    bool hasConstantHorizon = horizonManager.blockHasConstantHorizon(blockName);
+    double constantHorizonValue(0.0);
+    if(hasConstantHorizon)
+      constantHorizonValue = horizonManager.getBlockConstantHorizonValue(blockName);
+
+    for(unsigned int i=0 ; i<globalIds.size() ; ++i){
+      int localId = rebalancedMap.LID(globalIds[i]);
+      if(hasConstantHorizon){
+        (*rebalancedHorizonForEachPoint)[localId] = constantHorizonValue;
+      }
+      else{
+        double x = rebalancedX[localId*3];
+        double y = rebalancedX[localId*3 + 1];
+        double z = rebalancedX[localId*3 + 2];
+        double horizon = horizonManager.evaluateHorizon(blockName, x, y, z);
+        (*rebalancedHorizonForEachPoint)[localId] = horizon;
+      }
     }
   }
 
@@ -298,23 +312,11 @@ QUICKGRID::Data PeridigmNS::TextFileDiscretization::getDecomp(const string& text
   std::tr1::shared_ptr<const Epetra_Comm> commSp(comm.getRawPtr(), NonDeleter<const Epetra_Comm>());
   Teuchos::RCP<PDNEIGH::NeighborhoodList> list;
   TEUCHOS_TEST_FOR_EXCEPT_MSG(bondFilters.size() > 1, "\n****Error:  Multiple bond filters currently unsupported.\n");
-  
-  // Create a vector containing the horizon for each point
-  Teuchos::RCP<Epetra_Vector> horizonForEachPoint = Teuchos::rcp(new Epetra_Vector(rebalancedMap));
-  for(map<string, vector<int> >::const_iterator it = elementBlocks->begin() ; it != elementBlocks->end() ; it++){
-    const string& blockName = it->first;
-    const vector<int>& globalIds = it->second;
-    double horizonValue = horizons[blockName];
-    for(unsigned int i=0 ; i<globalIds.size() ; ++i){
-      int localId = rebalancedMap.LID(globalIds[i]);
-      (*horizonForEachPoint)[localId] = horizonValue;
-    }
-  }
 
   if(bondFilters.size() == 0)
-    list = Teuchos::rcp(new PDNEIGH::NeighborhoodList(commSp,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizonForEachPoint));
+    list = Teuchos::rcp(new PDNEIGH::NeighborhoodList(commSp,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,rebalancedHorizonForEachPoint));
   else if(bondFilters.size() == 1)
-    list = Teuchos::rcp(new PDNEIGH::NeighborhoodList(commSp,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizonForEachPoint,bondFilters[0]));
+    list = Teuchos::rcp(new PDNEIGH::NeighborhoodList(commSp,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,rebalancedHorizonForEachPoint,bondFilters[0]));
   decomp.neighborhood=list->get_neighborhood();
   decomp.sizeNeighborhoodList=list->get_size_neighborhood_list();
   decomp.neighborhoodPtr=list->get_neighborhood_ptr();
@@ -326,6 +328,11 @@ QUICKGRID::Data PeridigmNS::TextFileDiscretization::getDecomp(const string& text
   blockID = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
   Epetra_Import tempImporter(blockID->Map(), tempBlockID.Map());
   blockID->Import(tempBlockID, tempImporter, Insert);
+
+  // Create the horizonForEachPonit vector corresponding to the load balanced decomposition
+  horizonForEachPoint = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
+  Epetra_Import horizonImporter(horizonForEachPoint->Map(), rebalancedHorizonForEachPoint->Map());
+  horizonForEachPoint->Import(*rebalancedHorizonForEachPoint, horizonImporter, Insert);
 
   return decomp;
 }
@@ -489,6 +496,12 @@ Teuchos::RCP<Epetra_Vector>
 PeridigmNS::TextFileDiscretization::getInitialX() const
 {
   return initialX;
+}
+
+Teuchos::RCP<Epetra_Vector>
+PeridigmNS::TextFileDiscretization::getHorizon() const
+{
+  return horizonForEachPoint;
 }
 
 Teuchos::RCP<Epetra_Vector>
