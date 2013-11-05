@@ -48,6 +48,7 @@
 #include "Peridigm_ShortRangeForceContactModel.hpp"
 #include "Peridigm_Field.hpp"
 #include <Teuchos_Assert.hpp>
+#include <boost/math/constants/constants.hpp>
 
 PeridigmNS::ShortRangeForceContactModel::ShortRangeForceContactModel(const Teuchos::ParameterList& params)
   : ContactModel(params),
@@ -113,6 +114,8 @@ PeridigmNS::ShortRangeForceContactModel::computeForce(const double dt,
   double currentDistanceSquared;
   double contactRadiusSquared = m_contactRadius*m_contactRadius;
 
+  const double pi = boost::math::constants::pi<double>();
+
   for(iID=0 ; iID<numOwnedPoints ; ++iID){
     numNeighbors = contactNeighborhoodList[neighborhoodListIndex++];
     if(numNeighbors > 0){
@@ -132,7 +135,7 @@ PeridigmNS::ShortRangeForceContactModel::computeForce(const double dt,
         if(currentDistanceSquared < contactRadiusSquared){
 	  currentDistance = distance(nodeCurrentX[0], nodeCurrentX[1], nodeCurrentX[2],
 				     y[neighborID*3], y[neighborID*3+1], y[neighborID*3+2]);
-          c = 9.0*m_springConstant/(3.1415*m_horizon*m_horizon*m_horizon*m_horizon);	// half value (of 18) due to force being applied to both nodes
+          c = 9.0*m_springConstant/(pi*m_horizon*m_horizon*m_horizon*m_horizon);	// half value (of 18) due to force being applied to both nodes
           temp = c*(m_contactRadius - currentDistance)/m_horizon;
           neighborVolume = cellVolume[neighborID];
           
