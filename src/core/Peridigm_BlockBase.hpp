@@ -67,7 +67,7 @@ namespace PeridigmNS {
   public:
 
     //! Constructor
-    BlockBase() : blockName("Undefined"), blockID(-1), horizon(0.0) {}
+    BlockBase() : blockName("Undefined"), blockID(-1) {}
 
     //! Constructor
     BlockBase(std::string blockName_, int blockID_, Teuchos::ParameterList& blockParams_);
@@ -125,9 +125,6 @@ namespace PeridigmNS {
     std::string getName(){
       return blockName;
     }
-
-    //! Get the horizon.
-    double getHorizon() { return horizon; }
 
     //! Get the number of points in the block (does not include ghosts)
     int numPoints() {
@@ -201,9 +198,6 @@ namespace PeridigmNS {
 
     std::string blockName;
     int blockID;
-
-    //! The horizon
-    double horizon;
 
     //! @name Maps
     //@{

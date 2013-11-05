@@ -53,11 +53,8 @@
 using namespace std;
 
 PeridigmNS::BlockBase::BlockBase(std::string blockName_, int blockID_, Teuchos::ParameterList& blockParams_)
-  : blockName(blockName_), blockID(blockID_), horizon(0.0), blockParams(blockParams_)
-{
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(!blockParams.isParameter("Horizon"), "\n****Error in BlockBase constructor, Horizon parameter not found.\n");
-  horizon = blockParams.get<double>("Horizon");
-}
+  : blockName(blockName_), blockID(blockID_), blockParams(blockParams_)
+{}
 
 void PeridigmNS::BlockBase::initialize(Teuchos::RCP<const Epetra_BlockMap> globalOwnedScalarPointMap,
                                    Teuchos::RCP<const Epetra_BlockMap> globalOverlapScalarPointMap,

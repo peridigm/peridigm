@@ -50,7 +50,6 @@
 
 #include <Teuchos_ParameterList.hpp>
 #include "muParser/muParser.h"
-#include "muParser/muParserPeridigmFunctions.h"
 #include <string>
 #include <map>
 
@@ -61,7 +60,7 @@ class HorizonManager {
 public:
 
   //! Constructor
-  HorizonManager() : muParserX(0.0), muParserY(0.0), muParserZ(0.0)
+  HorizonManager()
   {
     // Set up muParser
     try {
@@ -94,14 +93,13 @@ public:
 protected:
 
   //! Function parser
-  mu::Parser muParser;
+  static mu::Parser muParser;
 
   //! @name Variables for function parser.
   //@{
-  double muParserX;
-  double muParserY;
-  double muParserZ;
-  double muParserT;
+  static double muParserX;
+  static double muParserY;
+  static double muParserZ;
   //@}
 
   //! Container for strings defining horizon for each block.
