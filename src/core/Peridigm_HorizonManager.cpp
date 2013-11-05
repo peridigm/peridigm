@@ -130,7 +130,16 @@ double PeridigmNS::HorizonManager::getBlockConstantHorizonValue(string blockName
 }
 
 double PeridigmNS::HorizonManager::evaluateHorizon(string blockName, double x, double y, double z){
-  string horizonFunction = horizonStrings[blockName];
+  string name;
+  if(horizonStrings.find(blockName) != horizonStrings.end())
+    name = blockName;
+  else if(horizonStrings.find("default") != horizonStrings.end())
+    name = "default";
+  else{
+    string msg = "\n**** Error, no Horizon parameter found for block " + blockName + " and no default block parameter list provided.\n";
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
+  }
+  string horizonFunction = horizonStrings[name];
   double horizonValue(0.0);
   try{
     muParser.SetExpr(horizonFunction);

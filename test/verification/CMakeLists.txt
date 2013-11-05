@@ -13,6 +13,8 @@ add_test (ElasticCorrespondenceQSTension_np1 python ./ElasticCorrespondenceQSTen
 add_test (ElasticCorrespondenceQSTension_np4 python ./ElasticCorrespondenceQSTension/np4/ElasticCorrespondenceQSTension.py)
 add_test (MultipleHorizons_np1 python ./MultipleHorizons/np1/MultipleHorizons.py)
 add_test (MultipleHorizons_np4 python ./MultipleHorizons/np4/MultipleHorizons.py)
+add_test (VariableHorizonParsing_np1 python ./VariableHorizonParsing/np1/VariableHorizonParsing.py)
+add_test (VariableHorizonParsing_np4 python ./VariableHorizonParsing/np4/VariableHorizonParsing.py)
 add_test (Compression_2x1x1_np1 python ./Compression_2x1x1/np1/Compression_2x1x1.py)
 add_test (Compression_2x1x1_np2 python ./Compression_2x1x1/np2/Compression_2x1x1.py)
 add_test (CompressionInitDisp_2x1x1_np1 python ./CompressionInitDisp_2x1x1/np1/CompressionInitDisp_2x1x1.py)
