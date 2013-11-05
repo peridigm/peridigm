@@ -1,0 +1,74 @@
+<ParameterList>
+
+  <Parameter name="Verbose" type="bool" value="false"/>
+
+  <ParameterList name="Discretization">
+        <Parameter name="Type" type="string" value="Exodus" />
+        <Parameter name="Input Mesh File" type="string" value="VariableHorizonParsing.g"/>
+  </ParameterList>
+
+  <ParameterList name="Materials">
+	<ParameterList name="My Material">
+	  <Parameter name="Material Model" type="string" value="Elastic Correspondence"/>
+	  <Parameter name="Density" type="double" value="7.8e-3"/>           <!-- g/mm^3 -->
+	  <Parameter name="Bulk Modulus" type="double" value="130.0e3"/>     <!-- MPa -->
+	  <Parameter name="Shear Modulus" type="double" value="78.0e3"/>     <!-- MPa -->
+      <Parameter name="Hourglass Coefficient" type="double" value="0.04"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Blocks">
+
+    <!-- block_3 and block_6 will be default blocks -->
+    <ParameterList name="Group of Blocks A">
+      <Parameter name="Block Names" type="string" value="default"/>
+      <Parameter name="Material" type="string" value="My Material"/>
+      <Parameter name="Horizon" type="string" value="0.35356"/>
+    </ParameterList>
+
+    <ParameterList name="Group of Blocks B">
+      <Parameter name="Block Names" type="string" value="block_1"/>
+      <Parameter name="Material" type="string" value="My Material"/>
+      <Parameter name="Horizon" type="string" value="0.2500001"/> <!-- value is type string -->
+    </ParameterList>
+
+    <ParameterList name="Group of Blocks C">
+      <Parameter name="Block Names" type="string" value="block_2"/>
+      <Parameter name="Material" type="string" value="My Material"/>
+      <Parameter name="Horizon" type="double" value="0.2500001"/> <!-- value is type double -->
+    </ParameterList>
+
+    <ParameterList name="Group of Blocks D">
+      <Parameter name="Block Names" type="string" value="block_4"/>
+      <Parameter name="Material" type="string" value="My Material"/>
+      <Parameter name="Horizon" type="string" value="0.5000001 + 0.2500001*x"/>
+    </ParameterList>
+
+    <ParameterList name="Group of Blocks E">
+      <Parameter name="Block Names" type="string" value="block_5"/>
+      <Parameter name="Material" type="string" value="My Material"/>
+      <Parameter name="Horizon" type="string" value="0.5000001 + 0.2500001*(x-1.625) + 0.2500001*(y-1.625) + 0.2500001*(z+0.375)"/>
+    </ParameterList>
+
+  </ParameterList>
+
+  <ParameterList name="Solver">
+	<Parameter name="Verbose" type="bool" value="false"/>
+	<Parameter name="Initial Time" type="double" value="0.0"/>   <!-- ms -->
+	<Parameter name="Final Time" type="double" value="1.0e-4"/>  <!-- ms -->
+	<ParameterList name="Verlet">
+	  <Parameter name="Fixed dt" type="double" value="5.0e-5"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Output Data">
+	<Parameter name="Output File Type" type="string" value="ExodusII"/>
+	<Parameter name="Output Filename" type="string" value="VariableHorizonParsing"/>
+	<Parameter name="Output Frequency" type="int" value="1"/>
+	<ParameterList name="Output Variables">
+	  <Parameter name="Horizon" type="bool" value="true"/>
+	  <Parameter name="Number_Of_Neighbors" type="bool" value="true"/>
+	</ParameterList>
+  </ParameterList>
+
+</ParameterList>
