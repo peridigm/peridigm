@@ -46,7 +46,9 @@
 //@HEADER
 
 #include "Peridigm_CriticalTimeStep.hpp"
+#include "Peridigm_HorizonManager.hpp"
 #include "Peridigm_Field.hpp"
+#include <boost/math/constants/constants.hpp>
 
 using namespace std;
 
@@ -60,14 +62,24 @@ double PeridigmNS::ComputeCriticalTimeStep(const Epetra_Comm& comm, PeridigmNS::
 
   double density = materialModel()->Density();
   double bulkModulus = materialModel()->BulkModulus();
-  double horizon = materialModel()->Horizon();
+
+  double horizon(0.0);
+  string blockName = block.getName();
+  PeridigmNS::HorizonManager& horizonManager = PeridigmNS::HorizonManager::self();
+  bool blockHasConstantHorizon = horizonManager.blockHasConstantHorizon(blockName);
+  if(blockHasConstantHorizon)
+    horizon = horizonManager.getBlockConstantHorizonValue(blockName);
 
   double *cellVolume, *x;
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   block.getData(fieldManager.getFieldId("Volume"), PeridigmField::STEP_NONE)->ExtractView(&cellVolume);
   block.getData(fieldManager.getFieldId("Model_Coordinates"), PeridigmField::STEP_NONE)->ExtractView(&x);
 
-  double springConstant = 18.0*bulkModulus/(3.14159265*horizon*horizon*horizon*horizon);
+  const double pi = boost::math::constants::pi<double>();
+  double springConstant(0.0);
+  if(blockHasConstantHorizon)
+    springConstant = 18.0*bulkModulus/(pi*horizon*horizon*horizon*horizon);
+
   double minCriticalTimeStep = 1.0e50;
 
   int neighborhoodListIndex = 0;
@@ -77,6 +89,11 @@ double PeridigmNS::ComputeCriticalTimeStep(const Epetra_Comm& comm, PeridigmNS::
     int nodeID = ownedIDs[iID];
     double X[3] = { x[nodeID*3], x[nodeID*3+1], x[nodeID*3+2] };
 	int numNeighbors = neighborhoodList[neighborhoodListIndex++];
+
+    if(!blockHasConstantHorizon){
+      double delta = horizonManager.evaluateHorizon(blockName, X[0], X[1], X[2]);
+      springConstant = 18.0*bulkModulus/(pi*delta*delta*delta*delta);
+    }
 
     for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
       int neighborID = neighborhoodList[neighborhoodListIndex++];

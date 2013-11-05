@@ -72,6 +72,7 @@ PeridigmNS::Compute_Deformation_Gradient::Compute_Deformation_Gradient(Teuchos::
 
   FieldManager& fieldManager = FieldManager::self();
   m_volumeFId                = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Volume");
+  m_horizonFId               = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Horizon");
   m_modelCoordinatesFId      = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::CONSTANT, "Model_Coordinates");
   m_coordinatesFId           = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Coordinates");
   m_shapeTensorInverseXXFId  = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Shape_Tensor_InverseXX");
@@ -94,6 +95,7 @@ PeridigmNS::Compute_Deformation_Gradient::Compute_Deformation_Gradient(Teuchos::
   m_deformationGradientZZFId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientZZ");
 
   m_fieldIds.push_back(m_volumeFId);
+  m_fieldIds.push_back(m_horizonFId);
   m_fieldIds.push_back(m_modelCoordinatesFId);
   m_fieldIds.push_back(m_coordinatesFId);
   m_fieldIds.push_back(m_shapeTensorInverseXXFId);
@@ -133,11 +135,11 @@ int PeridigmNS::Compute_Deformation_Gradient::compute( Teuchos::RCP< std::vector
     Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
     int numOwnedPoints = neighborhoodData->NumOwnedPoints();
     int* const neighborhoodList = neighborhoodData->NeighborhoodList();
-    double horizon = blockIt->getMaterialModel()->Horizon();
     Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
     
-    double *volume, *modelCoordinates, *coordinates;
+    double *volume, *horizon, *modelCoordinates, *coordinates;
     dataManager->getData(m_volumeFId, PeridigmField::STEP_NONE)->ExtractView(&volume);
+    dataManager->getData(m_horizonFId, PeridigmField::STEP_NONE)->ExtractView(&horizon);
     dataManager->getData(m_modelCoordinatesFId, PeridigmField::STEP_NONE)->ExtractView(&modelCoordinates);
     dataManager->getData(m_coordinatesFId, PeridigmField::STEP_NP1)->ExtractView(&coordinates);
 
@@ -168,6 +170,7 @@ int PeridigmNS::Compute_Deformation_Gradient::compute( Teuchos::RCP< std::vector
     dataManager->getData(m_deformationGradientZZFId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientZZ);
     
     retval = retval || CORRESPONDENCE::computeShapeTensorInverseAndApproximateDeformationGradient(volume,
+                                                                                                  horizon,
                                                                                                   modelCoordinates,
                                                                                                   coordinates,
                                                                                                   shapeTensorInverseXX,
@@ -189,8 +192,7 @@ int PeridigmNS::Compute_Deformation_Gradient::compute( Teuchos::RCP< std::vector
                                                                                                   deformationGradientZY,
                                                                                                   deformationGradientZZ,
                                                                                                   neighborhoodList,
-                                                                                                  numOwnedPoints,
-                                                                                                  horizon);
+                                                                                                  numOwnedPoints);
   }
 
   // Warn if retval not zero

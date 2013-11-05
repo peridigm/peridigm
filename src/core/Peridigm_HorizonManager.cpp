@@ -52,13 +52,6 @@
 
 using namespace std;
 
-// \todo Get rid of statics (was red herring) and make copy constructor and assignment operator private to avoid use.
-
-mu::Parser PeridigmNS::HorizonManager::muParser;
-double PeridigmNS::HorizonManager::muParserX(0.0);
-double PeridigmNS::HorizonManager::muParserY(0.0);
-double PeridigmNS::HorizonManager::muParserZ(0.0);
-
 PeridigmNS::HorizonManager& PeridigmNS::HorizonManager::self() {
   static HorizonManager horizonManager;
   return horizonManager;

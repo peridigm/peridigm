@@ -59,19 +59,6 @@ class HorizonManager {
 
 public:
 
-  //! Constructor
-  HorizonManager()
-  {
-    // Set up muParser
-    try {
-      muParser.DefineVar("x", &muParserX);
-      muParser.DefineVar("y", &muParserY);
-      muParser.DefineVar("z", &muParserZ);
-    }
-    catch (mu::Parser::exception_type &e)
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-  }
-
   //! Singleton.
   static HorizonManager & self();
 
@@ -93,13 +80,13 @@ public:
 protected:
 
   //! Function parser
-  static mu::Parser muParser;
+  mu::Parser muParser;
 
   //! @name Variables for function parser.
   //@{
-  static double muParserX;
-  static double muParserY;
-  static double muParserZ;
+  double muParserX;
+  double muParserY;
+  double muParserZ;
   //@}
 
   //! Container for strings defining horizon for each block.
@@ -107,6 +94,27 @@ protected:
 
   //! Record of which blocks have constant horizons.
   std::map<std::string, bool> horizonIsConstant;
+
+private:
+
+  //! Constructor, private to prohibit use.
+  HorizonManager() : muParserX(0.0), muParserY(0.0), muParserZ(0.0)
+  {
+    // Set up muParser
+    try {
+      muParser.DefineVar("x", &muParserX);
+      muParser.DefineVar("y", &muParserY);
+      muParser.DefineVar("z", &muParserZ);
+    }
+    catch (mu::Parser::exception_type &e)
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+  }
+
+  // Private to prohibit use.
+  HorizonManager(const HorizonManager&);
+
+  // Private to prohibit use.
+  HorizonManager& operator=(const HorizonManager&);
 };
 
 }

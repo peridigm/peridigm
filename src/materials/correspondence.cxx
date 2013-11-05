@@ -51,6 +51,7 @@
 #include <Teuchos_ScalarTraits.hpp>
 #include <math.h>
 #include <functional>
+#include <boost/math/constants/constants.hpp>
 
 namespace CORRESPONDENCE {
 
@@ -402,6 +403,7 @@ template<typename ScalarT>
 int computeShapeTensorInverseAndApproximateDeformationGradient
 (
 const double* volume,
+const double* horizon,
 const double* modelCoordinates,
 const ScalarT* coordinates,
 ScalarT* shapeTensorInverseXX,
@@ -423,13 +425,13 @@ ScalarT* deformationGradientZX,
 ScalarT* deformationGradientZY,
 ScalarT* deformationGradientZZ,
 const int* neighborhoodList,
-int numPoints,
-double horizon
+int numPoints
 )
 {
   int returnCode = 0;
 
   const double* modelCoord = modelCoordinates;
+  const double* delta = horizon;
   const double* neighborModelCoord;
   const ScalarT* coord = coordinates;
   const ScalarT* neighborCoord;
@@ -469,7 +471,7 @@ double horizon
 
   int neighborIndex, numNeighbors;
   const int *neighborListPtr = neighborhoodList;
-  for(int iID=0 ; iID<numPoints ; ++iID, modelCoord+=3, coord+=3,
+  for(int iID=0 ; iID<numPoints ; ++iID, delta++, modelCoord+=3, coord+=3,
         ++shapeTensorInvXX, ++shapeTensorInvXY, ++shapeTensorInvXZ,
         ++shapeTensorInvYX, ++shapeTensorInvYY, ++shapeTensorInvYZ,
         ++shapeTensorInvZX, ++shapeTensorInvZY, ++shapeTensorInvZZ,
@@ -504,7 +506,7 @@ double horizon
       deformedBondY = *(neighborCoord+1) - *(coord+1);
       deformedBondZ = *(neighborCoord+2) - *(coord+2);
 
-      omega = MATERIAL_EVALUATION::scalarInfluenceFunction(undeformedBondLength, horizon);
+      omega = MATERIAL_EVALUATION::scalarInfluenceFunction(undeformedBondLength, *delta);
 
       temp = (1.0 - bondDamage) * omega * neighborVolume;
 
@@ -559,6 +561,7 @@ double horizon
 template<typename ScalarT>
 int computeUnrotatedRateOfDeformationAndRotationTensor(
 const double* volume,
+const double* horizon,
 const double* modelCoordinates,
 const ScalarT* velocities,
 const ScalarT* deformationGradientXX,
@@ -626,12 +629,12 @@ ScalarT* unrotatedRateOfDeformationZY,
 ScalarT* unrotatedRateOfDeformationZZ,
 const int* neighborhoodList,
 int numPoints,
-double horizon,
 double dt
 )
 {
   int returnCode = 0;
 
+  const double* delta = horizon;
   const double* modelCoord = modelCoordinates;
   const double* neighborModelCoord;
   const ScalarT* vel = velocities;
@@ -782,7 +785,7 @@ double dt
 
   int neighborIndex, numNeighbors;
   const int *neighborListPtr = neighborhoodList;
-  for(int iID=0 ; iID<numPoints ; ++iID, modelCoord+=3, vel+=3,
+  for(int iID=0 ; iID<numPoints ; ++iID, delta++, modelCoord+=3, vel+=3,
         ++shapeTensorInvXX, ++shapeTensorInvXY, ++shapeTensorInvXZ,
         ++shapeTensorInvYX, ++shapeTensorInvYY, ++shapeTensorInvYZ,
         ++shapeTensorInvZX, ++shapeTensorInvZY, ++shapeTensorInvZZ,
@@ -882,7 +885,7 @@ double dt
       velStateY = *(neighborVel+1) - *(vel+1);
       velStateZ = *(neighborVel+2) - *(vel+2);
 
-      omega = MATERIAL_EVALUATION::scalarInfluenceFunction(undeformedBondLength, horizon);
+      omega = MATERIAL_EVALUATION::scalarInfluenceFunction(undeformedBondLength, *delta);
 
       scalarTemp = (1.0 - bondDamage) * omega * neighborVolume;
 
@@ -1240,6 +1243,7 @@ template<typename ScalarT>
 void computeHourglassForce
 (
 const double* volume,
+const double* horizon,
 const double* modelCoordinates,
 const ScalarT* coordinates,
 const ScalarT* deformationGradientXX,
@@ -1254,7 +1258,6 @@ const ScalarT* deformationGradientZZ,
 ScalarT* hourglassForceDensity,
 const int* neighborhoodList,
 int numPoints,
-double horizon,
 double bulkModulus,
 double hourglassCoefficient
 )
@@ -1277,6 +1280,7 @@ double hourglassCoefficient
   const ScalarT* defGradZY = deformationGradientZY;
   const ScalarT* defGradZZ = deformationGradientZZ;
 
+  const double* delta = horizon;
   const double* modelCoord = modelCoordinates;
   const double* neighborModelCoord;
   const ScalarT* coord = coordinates;
@@ -1287,14 +1291,18 @@ double hourglassCoefficient
   // placeholder for inclusion of bond damage
   double bondDamage = 0.0;
 
-  double constant = 18.0*hourglassCoefficient*bulkModulus/(3.1415926536*horizon*horizon*horizon*horizon);
+  const double pi = boost::math::constants::pi<double>();
+  double firstPartOfConstant = 18.0*hourglassCoefficient*bulkModulus/pi;
+  double constant;
 
   const int *neighborListPtr = neighborhoodList;
-  for(int iID=0 ; iID<numPoints ; ++iID, modelCoord+=3, coord+=3,
+  for(int iID=0 ; iID<numPoints ; ++iID, delta++, modelCoord+=3, coord+=3,
         ++defGradXX, ++defGradXY, ++defGradXZ,
         ++defGradYX, ++defGradYY, ++defGradYZ,
         ++defGradZX, ++defGradZY, ++defGradZZ,
         hourglassForceDensityPtr+=3){
+
+    constant = firstPartOfConstant/( (*delta)*(*delta)*(*delta)*(*delta) );
 
     numNeighbors = *neighborListPtr; neighborListPtr++;
     for(int n=0; n<numNeighbors; n++, neighborListPtr++){
@@ -1828,6 +1836,7 @@ template int invert3by3Matrix<double>
 template int computeShapeTensorInverseAndApproximateDeformationGradient<double>
 (
 const double* volume,
+const double* horizon,
 const double* modelCoordinates,
 const double* coordinates,
 double* shapeTensorInverseXX,
@@ -1849,13 +1858,13 @@ double* deformationGradientZX,
 double* deformationGradientZY,
 double* deformationGradientZZ,
 const int* neighborhoodList,
-int numPoints,
-double horizon
+int numPoints
 );
 
 template int computeUnrotatedRateOfDeformationAndRotationTensor<double>
 (
 const double* volume,
+const double* horizon,
 const double* modelCoordinates,
 const double* velocities,
 const double* deformationGradientXX,
@@ -1923,7 +1932,6 @@ double* unrotatedRateOfDeformationZY,
 double* unrotatedRateOfDeformationZZ,
 const int* neighborhoodList,
 int numPoints,
-double horizon,
 double dt
 );
 
@@ -1953,6 +1961,7 @@ template void computeGreenLagrangeStrain<double>
 template void computeHourglassForce<double>
 (
 const double* volume,
+const double* horizon,
 const double* modelCoordinates,
 const double* coordinates,
 const double* deformationGradientXX,
@@ -1967,7 +1976,6 @@ const double* deformationGradientZZ,
 double* hourglassForceDensity,
 const int* neighborhoodList,
 int numPoints,
-double horizon,
 double bulkModulus,
 double hourglassCoefficient
 );
@@ -2235,6 +2243,7 @@ template Sacado::Fad::DFad<double> TensorContraction<Sacado::Fad::DFad<double> >
 template int computeShapeTensorInverseAndApproximateDeformationGradient<Sacado::Fad::DFad<double> >
 (
 const double* volume,
+const double* horizon,
 const double* modelCoordinates,
 const Sacado::Fad::DFad<double>* coordinates,
 Sacado::Fad::DFad<double>* shapeTensorInverseXX,
@@ -2256,14 +2265,14 @@ Sacado::Fad::DFad<double>* deformationGradientZX,
 Sacado::Fad::DFad<double>* deformationGradientZY,
 Sacado::Fad::DFad<double>* deformationGradientZZ,
 const int* neighborhoodList,
-int numPoints,
-double horizon
+int numPoints
 );
 
 
 template int computeUnrotatedRateOfDeformationAndRotationTensor<Sacado::Fad::DFad<double> >
 (
 const double* volume,
+const double* horizon,
 const double* modelCoordinates,
 const Sacado::Fad::DFad<double>* velocities,
 const Sacado::Fad::DFad<double>* deformationGradientXX,
@@ -2331,7 +2340,6 @@ Sacado::Fad::DFad<double>* unrotatedRateOfDeformationZY,
 Sacado::Fad::DFad<double>* unrotatedRateOfDeformationZZ,
 const int* neighborhoodList,
 int numPoints,
-double horizon,
 double dt
 );
 
@@ -2361,6 +2369,7 @@ template void computeGreenLagrangeStrain<Sacado::Fad::DFad<double> >
 template void computeHourglassForce<Sacado::Fad::DFad<double> >
 (
 const double* volume,
+const double* horizon,
 const double* modelCoordinates,
 const Sacado::Fad::DFad<double>* coordinates,
 const Sacado::Fad::DFad<double>* deformationGradientXX,
@@ -2375,7 +2384,6 @@ const Sacado::Fad::DFad<double>* deformationGradientZZ,
 Sacado::Fad::DFad<double>* hourglassForceDensity,
 const int* neighborhoodList,
 int numPoints,
-double horizon,
 double bulkModulus,
 double hourglassCoefficient
 );

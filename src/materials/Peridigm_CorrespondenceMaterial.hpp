@@ -74,9 +74,6 @@ namespace PeridigmNS {
     //! Returns the shear modulus of the material.
     virtual double ShearModulus() const { return m_shearModulus; }
 
-    //! Returns the horizon.
-    virtual double Horizon() const { return m_horizon; }
-
     //! Returns a vector of field IDs corresponding to the variables associated with the material.
     virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
@@ -105,8 +102,6 @@ namespace PeridigmNS {
     double m_bulkModulus;
     double m_shearModulus;
     double m_density;
-    bool m_variableHorizon;
-    double m_horizon;
     double m_hourglassCoefficient;
     PeridigmNS::InfluenceFunction::functionPointer m_OMEGA;
 

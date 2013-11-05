@@ -55,9 +55,9 @@ using namespace std;
 
 PeridigmNS::CorrespondenceMaterial::CorrespondenceMaterial(const Teuchos::ParameterList& params)
   : Material(params),
-    m_density(0.0), m_horizon(0.0), m_hourglassCoefficient(0.0),
+    m_density(0.0), m_hourglassCoefficient(0.0),
     m_OMEGA(PeridigmNS::InfluenceFunction::self().getInfluenceFunction()),
-    m_variableHorizon(false), m_horizonFieldId(-1), m_volumeFieldId(-1),
+    m_horizonFieldId(-1), m_volumeFieldId(-1),
     m_modelCoordinatesFieldId(-1), m_coordinatesFieldId(-1), m_velocitiesFieldId(-1), 
     m_hourglassForceDensityFieldId(-1), m_forceDensityFieldId(-1), m_bondDamageFieldId(-1),
     m_deformationGradientXXFieldId(-1), m_deformationGradientXYFieldId(-1), m_deformationGradientXZFieldId(-1), 
@@ -86,13 +86,6 @@ PeridigmNS::CorrespondenceMaterial::CorrespondenceMaterial(const Teuchos::Parame
   m_bulkModulus = calculateBulkModulus(params);
   m_shearModulus = calculateShearModulus(params);
   m_density = params.get<double>("Density");
-  if(params.isType<double>("Horizon")){
-    m_variableHorizon = false;
-    m_horizon = params.get<double>("Horizon");
-  }
-  else{
-    m_variableHorizon = true;
-  }
   m_hourglassCoefficient = params.get<double>("Hourglass Coefficient");
 
   TEUCHOS_TEST_FOR_EXCEPT_MSG(params.isParameter("Apply Automatic Differentiation Jacobian"), "**** Error:  Automatic Differentiation is not supported for the ElasticCorrespondence2 material model.\n");
@@ -100,8 +93,7 @@ PeridigmNS::CorrespondenceMaterial::CorrespondenceMaterial(const Teuchos::Parame
   TEUCHOS_TEST_FOR_EXCEPT_MSG(params.isParameter("Thermal Expansion Coefficient"), "**** Error:  Thermal expansion is not currently supported for the ElasticCorrespondence2 material model.\n");
 
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
-  if(m_variableHorizon)
-    m_horizonFieldId               = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Horizon");
+  m_horizonFieldId                 = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Horizon");
   m_volumeFieldId                  = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Volume");
   m_modelCoordinatesFieldId        = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::CONSTANT, "Model_Coordinates");
   m_coordinatesFieldId             = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Coordinates");
@@ -173,8 +165,7 @@ PeridigmNS::CorrespondenceMaterial::CorrespondenceMaterial(const Teuchos::Parame
   m_unrotatedRateOfDeformationZYFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_DeformationZY");
   m_unrotatedRateOfDeformationZZFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_DeformationZZ");
 
-  if(m_variableHorizon)
-    m_fieldIds.push_back(m_horizonFieldId);
+  m_fieldIds.push_back(m_horizonFieldId);
   m_fieldIds.push_back(m_volumeFieldId);
   m_fieldIds.push_back(m_modelCoordinatesFieldId);
   m_fieldIds.push_back(m_coordinatesFieldId);
@@ -358,10 +349,8 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
   // Zero out the forces
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
 
-  // Get the horizon values if a variable horizon is being used
-  double *horizon(0);
-  if(m_variableHorizon)
-    dataManager.getData(m_horizonFieldId, PeridigmField::STEP_NONE)->ExtractView(&horizon);
+  double *horizon;
+  dataManager.getData(m_horizonFieldId, PeridigmField::STEP_NONE)->ExtractView(&horizon);
 
   double *volume, *modelCoordinates, *coordinates, *velocities;
   dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&volume);
@@ -402,6 +391,7 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
 
   int shapeTensorReturnCode = 
     CORRESPONDENCE::computeShapeTensorInverseAndApproximateDeformationGradient(volume,
+                                                                               horizon,
                                                                                modelCoordinates,
                                                                                coordinates,
                                                                                shapeTensorInverseXX, shapeTensorInverseXY, shapeTensorInverseXZ,
@@ -411,8 +401,7 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
                                                                                deformationGradientYX, deformationGradientYY, deformationGradientYZ,
                                                                                deformationGradientZX, deformationGradientZY, deformationGradientZZ,
                                                                                neighborhoodList,
-                                                                               numOwnedPoints,
-                                                                               m_horizon);
+                                                                               numOwnedPoints);
 
   string shapeTensorErrorMessage =
     "**** Error:  CorrespondenceMaterial::computeForce() failed to compute shape tensor.\n";
@@ -489,7 +478,8 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
   // Compute left stretch tensor and rotation tensor, returns these updated
   // quantities along with the unrotated rate-of-deformation.  Performs a polar
   // decomposition via Flanagan & Taylor (1987) algorithm.
-  int rotationTensorReturnCode = CORRESPONDENCE::computeUnrotatedRateOfDeformationAndRotationTensor(volume, 
+  int rotationTensorReturnCode = CORRESPONDENCE::computeUnrotatedRateOfDeformationAndRotationTensor(volume,
+                                                                                    horizon,
                                                                                     modelCoordinates, 
                                                                                     velocities, 
                                                                                     deformationGradientXX, deformationGradientXY, deformationGradientXZ, 
@@ -515,7 +505,6 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
                                                                                     unrotatedRateOfDeformationZX, unrotatedRateOfDeformationZY, unrotatedRateOfDeformationZZ,
                                                                                     neighborhoodList, 
                                                                                     numOwnedPoints, 
-                                                                                    m_horizon, 
                                                                                     dt);
   
   string rotationTensorErrorMessage =
@@ -626,6 +615,8 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
   double *forceDensity;
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&forceDensity);
 
+  double *delta = horizon;
+
   double *modelCoordinatesPtr, *neighborModelCoordinatesPtr, *forceDensityPtr, *neighborForceDensityPtr;
   double undeformedBondX, undeformedBondY, undeformedBondZ, undeformedBondLength;
   double TX, TY, TZ;
@@ -641,6 +632,7 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
 
   const int *neighborListPtr = neighborhoodList;
   for(int iID=0 ; iID<numOwnedPoints ; ++iID,
+        ++delta,
         ++defGradXX, ++defGradXY, ++defGradXZ,
         ++defGradYX, ++defGradYY, ++defGradYZ,
         ++defGradZX, ++defGradZY, ++defGradZZ,
@@ -703,7 +695,7 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
                                   undeformedBondY*undeformedBondY +
                                   undeformedBondZ*undeformedBondZ);
 
-      omega = m_OMEGA(undeformedBondLength,m_horizon);
+      omega = m_OMEGA(undeformedBondLength, *delta);
       TX = omega * (tempXX*undeformedBondX + tempXY*undeformedBondY + tempXZ*undeformedBondZ);
       TY = omega * (tempYX*undeformedBondX + tempYY*undeformedBondY + tempYZ*undeformedBondZ);
       TZ = omega * (tempZX*undeformedBondX + tempZY*undeformedBondY + tempZZ*undeformedBondZ);
@@ -734,6 +726,7 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
   //       so the calculation runs correctly, but the hourglass output is off.
 
   CORRESPONDENCE::computeHourglassForce(volume,
+                                        horizon,
                                         modelCoordinates,
                                         coordinates,
                                         deformationGradientXX, deformationGradientXY, deformationGradientXZ,
@@ -742,7 +735,6 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
                                         hourglassForceDensity,
                                         neighborhoodList,
                                         numOwnedPoints,
-                                        m_horizon,
                                         m_bulkModulus,
                                         m_hourglassCoefficient);
 

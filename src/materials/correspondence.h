@@ -274,6 +274,7 @@ template<typename ScalarT>
 int computeShapeTensorInverseAndApproximateDeformationGradient
 (
 const double* volume,
+const double* horizon,
 const double* modelCoordinates,
 const ScalarT* coordinates,
 ScalarT* shapeTensorInverseXX,
@@ -295,14 +296,14 @@ ScalarT* deformationGradientZX,
 ScalarT* deformationGradientZY,
 ScalarT* deformationGradientZZ,
 const int* neighborhoodList,
-int numPoints,
-double horizon
+int numPoints
 );
 
 // Calculation of stretch rates following Flanagan & Taylor
 template<typename ScalarT>
 int computeUnrotatedRateOfDeformationAndRotationTensor(
 const double* volume,
+const double* horizon,
 const double* modelCoordinates,
 const ScalarT* velocities,
 const ScalarT* deformationGradientXX,
@@ -370,7 +371,6 @@ ScalarT* unrotatedRateOfDeformationZY,
 ScalarT* unrotatedRateOfDeformationZZ,
 const int* neighborhoodList,
 int numPoints,
-double horizon,
 double dt
 );
 
@@ -403,6 +403,7 @@ template<typename ScalarT>
 void computeHourglassForce
 (
 const double* volume,
+const double* horizon,
 const double* modelCoordinates,
 const ScalarT* coordinates,
 const ScalarT* deformationGradientXX,
@@ -417,7 +418,6 @@ const ScalarT* deformationGradientZZ,
 ScalarT* hourglassForceDensity,
 const int* neighborhoodList,
 int numPoints,
-double horizon,
 double bulkModulus,
 double hourglassCoefficient
 );

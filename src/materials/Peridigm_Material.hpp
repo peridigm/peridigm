@@ -86,9 +86,6 @@ namespace PeridigmNS {
     //! Returns the shear modulus of the material.
     virtual double ShearModulus() const = 0;
 	
-    //! Returns the horizon.
-    virtual double Horizon() const = 0;
-
     //! Returns a vector of field IDs corresponding to the variables associated with the material.
     virtual std::vector<int> FieldIds() const = 0;
 
