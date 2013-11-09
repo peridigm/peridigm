@@ -1,14 +1,6 @@
-/*
- *  Created on: Sept 11, 2013
- *      Author: John A. Mitchell
- *              Sandia National Laboratory
- *              Org 1444
- *
- */
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+/*! \file ut_kdtree_nn_search.cpp */
+
+
 #include <cstddef>
 #include <cstdlib>
 #include <cstdio>
@@ -21,13 +13,14 @@
 #include <cmath>
 #include <iomanip>
 #include <ostream>
-
+#include <Epetra_SerialComm.h>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
 
 
 using std::size_t;
 using std::vector;
-//using namespace boost::unit_test;
-
 
 using QUICKGRID::Spec1D;
 using femanica::kdtree;
@@ -61,14 +54,17 @@ value_type get_random_point(value_type center, value_type width){
 	return ((value_type)(rand())/((value_type)(RAND_MAX+1.0)))*(max-min)+min;
 }
 
-void no_points(){
+
+
+TEUCHOS_UNIT_TEST(KdTree_nn_Search, No_Points) {
+
 	ordinal_type num_points=0;
 	value_type *x=0;
 	value_type *y=0;
 	value_type *z=0;
 	vector<value_type> points(3*num_points);
 	fill_vector_interlaced(num_points,x,y,z,points);
-	BOOST_CHECK(points.size()==num_points);
+	TEST_ASSERT(points.size()==num_points);
 	my_tree tree=my_tree::get_tree(points.data(),num_points);
 
 	/*
@@ -76,12 +72,12 @@ void no_points(){
 	 */
 	value_type search_point[]={2.0,2.0,0.0};
 	vector<value_type> P(search_point,search_point+3);
-	BOOST_REQUIRE_THROW(tree.nearest_neighbor_search(P),std::invalid_argument);
+	TEST_THROW(tree.nearest_neighbor_search(P),std::invalid_argument);
 
 }
 
 
-void one_point(){
+TEUCHOS_UNIT_TEST(KdTree_nn_Search, One_Point) {
 	ordinal_type num_points=1;
 	value_type x[]={0.0};
 	value_type y[]={0.0};
@@ -95,11 +91,12 @@ void one_point(){
 	value_type search_point[]={2.0,2.0,0.0};
 	vector<value_type> P(search_point,search_point+3);
 	ordinal_type best=tree.nearest_neighbor_search(P);
-	BOOST_CHECK(0==best);
+	TEST_ASSERT(0==best);
 
 }
 
-void two_points(){
+TEUCHOS_UNIT_TEST(KdTree_nn_Search, Two_Points){
+
 	ordinal_type num_points=2;
 	value_type x[]={2.0,5.0};
 	value_type y[]={3.0,4.0};
@@ -115,7 +112,7 @@ void two_points(){
 		value_type search_point[]={2.0,2.0,0.0};
 		vector<value_type> P(search_point,search_point+3);
 		ordinal_type best=tree.nearest_neighbor_search(P);
-		BOOST_CHECK(0==best);
+		TEST_ASSERT(0==best);
 	}
 	{
 		/*
@@ -124,12 +121,12 @@ void two_points(){
 		value_type search_point[]={5.0,5.0,0.0};
 		vector<value_type> P(search_point,search_point+3);
 		ordinal_type best=tree.nearest_neighbor_search(P);
-		BOOST_CHECK(1==best);
+		TEST_ASSERT(1==best);
 	}
 
 }
 
-void three_points() {
+TEUCHOS_UNIT_TEST(KdTree_nn_Search, Three_Points){
 
 	ordinal_type num_points=3;
 	value_type x[]={2.0,5.0,9.0};
@@ -146,7 +143,7 @@ void three_points() {
 		value_type search_point[]={2.0,2.0,0.0};
 		vector<value_type> P(search_point,search_point+3);
 		ordinal_type best=tree.nearest_neighbor_search(P);
-		BOOST_CHECK(0==best);
+		TEST_ASSERT(0==best);
 	}
 	{
 
@@ -156,7 +153,7 @@ void three_points() {
 		value_type search_point[]={5.0,5.0,0.0};
 		vector<value_type> P(search_point,search_point+3);
 		ordinal_type best=tree.nearest_neighbor_search(P);
-		BOOST_CHECK(1==best);
+		TEST_ASSERT(1==best);
 	}
 	{
 
@@ -166,7 +163,7 @@ void three_points() {
 		value_type search_point[]={2.0,3.1,0.0};
 		vector<value_type> P(search_point,search_point+3);
 		ordinal_type best=tree.nearest_neighbor_search(P);
-		BOOST_CHECK(0==best);
+		TEST_ASSERT(0==best);
 	}
 	{
 
@@ -176,7 +173,7 @@ void three_points() {
 		value_type search_point[]={2.0,4.0,0.0};
 		vector<value_type> P(search_point,search_point+3);
 		ordinal_type best=tree.nearest_neighbor_search(P);
-		BOOST_CHECK(0==best);
+		TEST_ASSERT(0==best);
 	}
 	{
 		/*
@@ -185,7 +182,7 @@ void three_points() {
 		value_type search_point[]={3.6,4.0,0.0};
 		vector<value_type> P(search_point,search_point+3);
 		ordinal_type best=tree.nearest_neighbor_search(P);
-		BOOST_CHECK(1==best);
+		TEST_ASSERT(1==best);
 	}
 
 	{
@@ -195,7 +192,7 @@ void three_points() {
 		value_type search_point[]={8.0,7.0,0.0};
 		vector<value_type> P(search_point,search_point+3);
 		ordinal_type best=tree.nearest_neighbor_search(P);
-		BOOST_CHECK(2==best);
+		TEST_ASSERT(2==best);
 	}
 	{
 		/*
@@ -204,7 +201,7 @@ void three_points() {
 		value_type search_point[]={10.0,10.0,0.0};
 		vector<value_type> P(search_point,search_point+3);
 		ordinal_type best=tree.nearest_neighbor_search(P);
-		BOOST_CHECK(2==best);
+		TEST_ASSERT(2==best);
 	}
 	{
 		/*
@@ -213,11 +210,12 @@ void three_points() {
 		value_type search_point[]={0.0,0.0,0.0};
 		vector<value_type> P(search_point,search_point+3);
 		ordinal_type best=tree.nearest_neighbor_search(P);
-		BOOST_CHECK(0==best);
+		TEST_ASSERT(0==best);
 	}
 }
 
-void four_points() {
+
+TEUCHOS_UNIT_TEST(KdTree_nn_Search, Four_Points){
 
 	ordinal_type num_points=4;
 	value_type x[]={2.0,5.0,9.0,3.0};
@@ -234,7 +232,7 @@ void four_points() {
 		value_type search_point[]={2.0,2.0,0.0};
 		vector<value_type> P(search_point,search_point+3);
 		ordinal_type best=tree.nearest_neighbor_search(P);
-		BOOST_CHECK(0==best);
+		TEST_ASSERT(0==best);
 	}
 	{
 
@@ -244,7 +242,7 @@ void four_points() {
 		value_type search_point[]={5.0,5.0,0.0};
 		vector<value_type> P(search_point,search_point+3);
 		ordinal_type best=tree.nearest_neighbor_search(P);
-		BOOST_CHECK(1==best);
+		TEST_ASSERT(1==best);
 	}
 	{
 
@@ -254,7 +252,7 @@ void four_points() {
 		value_type search_point[]={2.0,3.1,0.0};
 		vector<value_type> P(search_point,search_point+3);
 		ordinal_type best=tree.nearest_neighbor_search(P);
-		BOOST_CHECK(0==best);
+		TEST_ASSERT(0==best);
 	}
 	{
 
@@ -264,7 +262,7 @@ void four_points() {
 		value_type search_point[]={2.0,4.0,0.0};
 		vector<value_type> P(search_point,search_point+3);
 		ordinal_type best=tree.nearest_neighbor_search(P);
-		BOOST_CHECK(0==best);
+		TEST_ASSERT(0==best);
 	}
 	{
 		/*
@@ -273,7 +271,7 @@ void four_points() {
 		value_type search_point[]={3.6,4.0,0.0};
 		vector<value_type> P(search_point,search_point+3);
 		ordinal_type best=tree.nearest_neighbor_search(P);
-		BOOST_CHECK(1==best);
+		TEST_ASSERT(1==best);
 	}
 
 	{
@@ -283,7 +281,7 @@ void four_points() {
 		value_type search_point[]={8.0,7.0,0.0};
 		vector<value_type> P(search_point,search_point+3);
 		ordinal_type best=tree.nearest_neighbor_search(P);
-		BOOST_CHECK(2==best);
+		TEST_ASSERT(2==best);
 	}
 	{
 		/*
@@ -292,7 +290,7 @@ void four_points() {
 		value_type search_point[]={10.0,10.0,0.0};
 		vector<value_type> P(search_point,search_point+3);
 		ordinal_type best=tree.nearest_neighbor_search(P);
-		BOOST_CHECK(2==best);
+		TEST_ASSERT(2==best);
 	}
 	{
 		/*
@@ -301,7 +299,7 @@ void four_points() {
 		value_type search_point[]={0.0,0.0,0.0};
 		vector<value_type> P(search_point,search_point+3);
 		ordinal_type best=tree.nearest_neighbor_search(P);
-		BOOST_CHECK(0==best);
+		TEST_ASSERT(0==best);
 	}
 	{
 		/*
@@ -310,7 +308,7 @@ void four_points() {
 		value_type search_point[]={3.0,8.0,0.0};
 		vector<value_type> P(search_point,search_point+3);
 		ordinal_type best=tree.nearest_neighbor_search(P);
-		BOOST_CHECK(3==best);
+		TEST_ASSERT(3==best);
 	}
 	{
 		/*
@@ -319,7 +317,7 @@ void four_points() {
 		value_type search_point[]={4.0,9.0,0.0};
 		vector<value_type> P(search_point,search_point+3);
 		ordinal_type best=tree.nearest_neighbor_search(P);
-		BOOST_CHECK(3==best);
+		TEST_ASSERT(3==best);
 	}
 	{
 
@@ -337,7 +335,7 @@ void four_points() {
 			vector<value_type> P(search_point,search_point+3);
 			ordinal_type best=tree.nearest_neighbor_search(P);
 			//std::cout << "x,y,z" << std::scientific << std::setw(15) << x << ", " << y << ", " << z << std::endl;
-			BOOST_CHECK(3==best);
+			TEST_ASSERT(3==best);
 		}
 
 	}
@@ -386,8 +384,7 @@ vector<value_type> get_discretization(const Spec1D& xSpec, const Spec1D& ySpec, 
 }
 
 
-
-void n_x_n_points() {
+TEUCHOS_UNIT_TEST(KdTree_nn_Search, N_X_N_Points){
 	/*
 	 * this routine will work for arbitrary n that are 'even'
 	 */
@@ -401,10 +398,10 @@ void n_x_n_points() {
 	const size_t dimension(3);
 	size_t num_cells=x_spec.getNumCells()*z_spec.getNumCells()*y_spec.getNumCells();
 	vector<value_type> points=get_discretization(x_spec,y_spec,z_spec);
-	BOOST_CHECK(num_cells*dimension==points.size());
+	TEST_ASSERT(num_cells*dimension==points.size());
 	value_type cell_size=x_spec.getCellSize();
 
-	BOOST_CHECK(num_cells*dimension==points.size());
+	TEST_ASSERT(num_cells*dimension==points.size());
 	std::cout << "START kdtree construction with " << num_cells << " points." << std::endl;
 	my_tree tree=my_tree::get_tree(points.data(),num_cells);
 	std::cout << "\tFINISHED kdtree construction." << std::endl;
@@ -430,37 +427,19 @@ void n_x_n_points() {
 			//std::cout << "\tRandom point: x,y,z" << std::scientific << std::setw(15) << x << ", " << y << ", " << z  << std::endl;
 			vector<value_type> P(search_point,search_point+3);
 			ordinal_type best=tree.nearest_neighbor_search(P);
-			BOOST_CHECK(best==i);
+			TEST_ASSERT(best==i);
 		}
 	}
 }
 
 
-bool init_unit_test_suite() {
-	// Add a suite for each processor in the test
-	bool success = true;
-
-	boost::unit_test::test_suite* proc = BOOST_TEST_SUITE("ut_kdtree_nn_search");
-	proc->add(BOOST_TEST_CASE(&no_points));
-	proc->add(BOOST_TEST_CASE(&one_point));
-	proc->add(BOOST_TEST_CASE(&two_points));
-	proc->add(BOOST_TEST_CASE(&three_points));
-	proc->add(BOOST_TEST_CASE(&four_points));
-	proc->add(BOOST_TEST_CASE(&n_x_n_points));
-	boost::unit_test::framework::master_test_suite().add(proc);
-
-	return success;
+int main
+(int argc, char* argv[])
+{
+  
+    // Run the tests
+    
+    
+    return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
+ 
 }
-
-bool init_unit_test() {
-	init_unit_test_suite();
-	return true;
-}
-
-int main(int argc, char* argv[]) {
-
-	// Initialize UTF
-	return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
-}
-
-
