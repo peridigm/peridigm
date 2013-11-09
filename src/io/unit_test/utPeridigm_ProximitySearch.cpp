@@ -45,25 +45,26 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+
 #include <Epetra_ConfigDefs.h> // used to define HAVE_MPI
 #ifdef HAVE_MPI
   #include <Epetra_MpiComm.h>
 #endif
 #include <Epetra_SerialComm.h>
 #include "Peridigm_ProximitySearch.hpp"
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
+#include "Teuchos_GlobalMPISession.hpp"
 #include <vector>
 
-using namespace boost::unit_test;
 using namespace Teuchos;
 using namespace PeridigmNS;
 using namespace std;
 
-void twoPointProblem()
-{
+
+TEUCHOS_UNIT_TEST(ProximitySearch, TwoPointProblem) {
+
   Teuchos::RCP<Epetra_Comm> comm;
 #ifdef HAVE_MPI
   comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
@@ -73,8 +74,10 @@ void twoPointProblem()
   int numProc = comm->NumProc();
 
   // This test cannot be run on more than 2 processors
-  if(numProc > 2)
+  if(numProc > 2){
     return;
+  }
+
 
   Epetra_BlockMap map(2, 3, 0, *comm);
   Teuchos::RCP<Epetra_Vector> x = Teuchos::rcp(new Epetra_Vector(map));
@@ -82,9 +85,9 @@ void twoPointProblem()
   int numMyElements = map.NumMyElements();
 
   if(numProc == 1)
-    BOOST_CHECK(numMyElements == 2);
+    TEST_ASSERT(numMyElements == 2);
   if(numProc == 2)
-    BOOST_CHECK(numMyElements == 1);
+    TEST_ASSERT(numMyElements == 1);
 
   vector<double> node(3);
   std::map<int, vector<double> > nodes;
@@ -119,11 +122,11 @@ void twoPointProblem()
   int neighborListIndex = 0;
   for(int i=0 ; i<numMyElements ; ++i){
     int nodeGlobalId = map.GID(i);
-    BOOST_CHECK(neighborListIndex < neighborListSize);
+    TEST_ASSERT(neighborListIndex < neighborListSize);
     int numNeighbors = neighborList[neighborListIndex++];
     vector<int> neighborGlobalIds;
     for(int j=0 ; j<numNeighbors ; ++j){
-      BOOST_CHECK(neighborListIndex < neighborListSize);
+      TEST_ASSERT(neighborListIndex < neighborListSize);
       int neighborLocalId = neighborList[neighborListIndex++];
       int neighborGlobalId = overlapMap->GID(neighborLocalId);
       neighborGlobalIds.push_back(neighborGlobalId);
@@ -132,12 +135,12 @@ void twoPointProblem()
     sort(neighborGlobalIds.begin(), neighborGlobalIds.end());
 
     if(nodeGlobalId == 0){
-      BOOST_CHECK(numNeighbors == 0);
-      BOOST_CHECK(neighborGlobalIds.size() == 0);
+      TEST_ASSERT(numNeighbors == 0);
+      TEST_ASSERT(neighborGlobalIds.size() == 0);
     }
     else if(nodeGlobalId == 1){
-      BOOST_CHECK(numNeighbors == 0);
-      BOOST_CHECK(neighborGlobalIds.size() == 0);
+      TEST_ASSERT(numNeighbors == 0);
+      TEST_ASSERT(neighborGlobalIds.size() == 0);
     }
   }
 
@@ -151,11 +154,11 @@ void twoPointProblem()
   neighborListIndex = 0;
   for(int i=0 ; i<numMyElements ; ++i){
     int nodeGlobalId = map.GID(i);
-    BOOST_CHECK(neighborListIndex < neighborListSize);
+    TEST_ASSERT(neighborListIndex < neighborListSize);
     int numNeighbors = neighborList[neighborListIndex++];
     vector<int> neighborGlobalIds;
     for(int j=0 ; j<numNeighbors ; ++j){
-      BOOST_CHECK(neighborListIndex < neighborListSize);
+      TEST_ASSERT(neighborListIndex < neighborListSize);
       int neighborLocalId = neighborList[neighborListIndex++];
       int neighborGlobalId = overlapMap->GID(neighborLocalId);
       neighborGlobalIds.push_back(neighborGlobalId);
@@ -164,21 +167,21 @@ void twoPointProblem()
     sort(neighborGlobalIds.begin(), neighborGlobalIds.end());
 
     if(nodeGlobalId == 0){
-      BOOST_CHECK(numNeighbors == 1);
-      BOOST_CHECK(neighborGlobalIds.size() == 1);
-      BOOST_CHECK(neighborGlobalIds[0] == 1);
+      TEST_ASSERT(numNeighbors == 1);
+      TEST_ASSERT(neighborGlobalIds.size() == 1);
+      TEST_ASSERT(neighborGlobalIds[0] == 1);
     }
     else if(nodeGlobalId == 1){
-      BOOST_CHECK(numNeighbors == 1);
-      BOOST_CHECK(neighborGlobalIds.size() == 1);
-      BOOST_CHECK(neighborGlobalIds[0] == 0);
+      TEST_ASSERT(numNeighbors == 1);
+      TEST_ASSERT(neighborGlobalIds.size() == 1);
+      TEST_ASSERT(neighborGlobalIds[0] == 0);
     }
   }
 
 }
 
-void fivePointProblem()
-{
+TEUCHOS_UNIT_TEST(ProximitySearch, FivePointProblem) {
+
   Teuchos::RCP<Epetra_Comm> comm;
 #ifdef HAVE_MPI
   comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
@@ -188,8 +191,10 @@ void fivePointProblem()
   int numProc = comm->NumProc();
 
   // This test cannot be run on more than 5 processors
-  if(numProc > 5)
+  if(numProc > 5){
     return;
+  }
+
 
   Epetra_BlockMap map(5, 3, 0, *comm);
   Teuchos::RCP<Epetra_Vector> x = Teuchos::rcp(new Epetra_Vector(map));
@@ -197,9 +202,9 @@ void fivePointProblem()
   int numMyElements = map.NumMyElements();
 
   if(numProc == 1)
-    BOOST_CHECK(numMyElements == 5);
+    TEST_ASSERT(numMyElements == 5);
   if(numProc == 5)
-    BOOST_CHECK(numMyElements == 1);
+    TEST_ASSERT(numMyElements == 1);
 
   vector<double> node(3);
   std::map<int, vector<double> > nodes;
@@ -233,11 +238,11 @@ void fivePointProblem()
   int neighborListIndex = 0;
   for(int i=0 ; i<numMyElements ; ++i){
     int nodeGlobalId = map.GID(i);
-    BOOST_CHECK(neighborListIndex < neighborListSize);
+    TEST_ASSERT(neighborListIndex < neighborListSize);
     int numNeighbors = neighborList[neighborListIndex++];
     vector<int> neighborGlobalIds;
     for(int j=0 ; j<numNeighbors ; ++j){
-      BOOST_CHECK(neighborListIndex < neighborListSize);
+      TEST_ASSERT(neighborListIndex < neighborListSize);
       int neighborLocalId = neighborList[neighborListIndex++];
       int neighborGlobalId = overlapMap->GID(neighborLocalId);
       neighborGlobalIds.push_back(neighborGlobalId);
@@ -246,30 +251,30 @@ void fivePointProblem()
     sort(neighborGlobalIds.begin(), neighborGlobalIds.end());
 
     if(nodeGlobalId == 0){
-      BOOST_CHECK(numNeighbors == 3);
-      BOOST_CHECK(neighborGlobalIds.size() == 3);
-      BOOST_CHECK(neighborGlobalIds[0] == 1);
-      BOOST_CHECK(neighborGlobalIds[1] == 2);
-      BOOST_CHECK(neighborGlobalIds[2] == 3);
+      TEST_ASSERT(numNeighbors == 3);
+      TEST_ASSERT(neighborGlobalIds.size() == 3);
+      TEST_ASSERT(neighborGlobalIds[0] == 1);
+      TEST_ASSERT(neighborGlobalIds[1] == 2);
+      TEST_ASSERT(neighborGlobalIds[2] == 3);
     }
     else if(nodeGlobalId == 1){
-      BOOST_CHECK(numNeighbors == 1);
-      BOOST_CHECK(neighborGlobalIds.size() == 1);
-      BOOST_CHECK(neighborGlobalIds[0] == 0);
+      TEST_ASSERT(numNeighbors == 1);
+      TEST_ASSERT(neighborGlobalIds.size() == 1);
+      TEST_ASSERT(neighborGlobalIds[0] == 0);
     }
     else if(nodeGlobalId == 2){
-      BOOST_CHECK(numNeighbors == 1);
-      BOOST_CHECK(neighborGlobalIds.size() == 1);
-      BOOST_CHECK(neighborGlobalIds[0] == 0);
+      TEST_ASSERT(numNeighbors == 1);
+      TEST_ASSERT(neighborGlobalIds.size() == 1);
+      TEST_ASSERT(neighborGlobalIds[0] == 0);
     }
     else if(nodeGlobalId == 3){
-      BOOST_CHECK(numNeighbors == 1);
-      BOOST_CHECK(neighborGlobalIds.size() == 1);
-      BOOST_CHECK(neighborGlobalIds[0] == 0);
+      TEST_ASSERT(numNeighbors == 1);
+      TEST_ASSERT(neighborGlobalIds.size() == 1);
+      TEST_ASSERT(neighborGlobalIds[0] == 0);
     }
     else if(nodeGlobalId == 4){
-      BOOST_CHECK(numNeighbors == 0);
-      BOOST_CHECK(neighborGlobalIds.size() == 0);
+      TEST_ASSERT(numNeighbors == 0);
+      TEST_ASSERT(neighborGlobalIds.size() == 0);
     }
   }
 
@@ -283,11 +288,11 @@ void fivePointProblem()
   neighborListIndex = 0;
   for(int i=0 ; i<numMyElements ; ++i){
     int nodeGlobalId = map.GID(i);
-    BOOST_CHECK(neighborListIndex < neighborListSize);
+    TEST_ASSERT(neighborListIndex < neighborListSize);
     int numNeighbors = neighborList[neighborListIndex++];
     vector<int> neighborGlobalIds;
     for(int j=0 ; j<numNeighbors ; ++j){
-      BOOST_CHECK(neighborListIndex < neighborListSize);
+      TEST_ASSERT(neighborListIndex < neighborListSize);
       int neighborLocalId = neighborList[neighborListIndex++];
       int neighborGlobalId = overlapMap->GID(neighborLocalId);
       neighborGlobalIds.push_back(neighborGlobalId);
@@ -296,24 +301,24 @@ void fivePointProblem()
     sort(neighborGlobalIds.begin(), neighborGlobalIds.end());
 
     if(nodeGlobalId == 0){
-      BOOST_CHECK(numNeighbors == 0);
-      BOOST_CHECK(neighborGlobalIds.size() == 0);
+      TEST_ASSERT(numNeighbors == 0);
+      TEST_ASSERT(neighborGlobalIds.size() == 0);
     }
     else if(nodeGlobalId == 1){
-      BOOST_CHECK(numNeighbors == 0);
-      BOOST_CHECK(neighborGlobalIds.size() == 0);
+      TEST_ASSERT(numNeighbors == 0);
+      TEST_ASSERT(neighborGlobalIds.size() == 0);
     }
     else if(nodeGlobalId == 2){
-      BOOST_CHECK(numNeighbors == 0);
-      BOOST_CHECK(neighborGlobalIds.size() == 0);
+      TEST_ASSERT(numNeighbors == 0);
+      TEST_ASSERT(neighborGlobalIds.size() == 0);
     }
     else if(nodeGlobalId == 3){
-      BOOST_CHECK(numNeighbors == 0);
-      BOOST_CHECK(neighborGlobalIds.size() == 0);
+      TEST_ASSERT(numNeighbors == 0);
+      TEST_ASSERT(neighborGlobalIds.size() == 0);
     }
     else if(nodeGlobalId == 4){
-      BOOST_CHECK(numNeighbors == 0);
-      BOOST_CHECK(neighborGlobalIds.size() == 0);
+      TEST_ASSERT(numNeighbors == 0);
+      TEST_ASSERT(neighborGlobalIds.size() == 0);
     }
   }
 
@@ -326,11 +331,11 @@ void fivePointProblem()
   neighborListIndex = 0;
   for(int i=0 ; i<numMyElements ; ++i){
     int nodeGlobalId = map.GID(i);
-    BOOST_CHECK(neighborListIndex < neighborListSize);
+    TEST_ASSERT(neighborListIndex < neighborListSize);
     int numNeighbors = neighborList[neighborListIndex++];
     vector<int> neighborGlobalIds;
     for(int j=0 ; j<numNeighbors ; ++j){
-      BOOST_CHECK(neighborListIndex < neighborListSize);
+      TEST_ASSERT(neighborListIndex < neighborListSize);
       int neighborLocalId = neighborList[neighborListIndex++];
       int neighborGlobalId = overlapMap->GID(neighborLocalId);
       neighborGlobalIds.push_back(neighborGlobalId);
@@ -339,42 +344,42 @@ void fivePointProblem()
     sort(neighborGlobalIds.begin(), neighborGlobalIds.end());
 
     if(nodeGlobalId == 0){
-      BOOST_CHECK(numNeighbors == 3);
-      BOOST_CHECK(neighborGlobalIds.size() == 3);
-      BOOST_CHECK(neighborGlobalIds[0] == 1);
-      BOOST_CHECK(neighborGlobalIds[1] == 2);
-      BOOST_CHECK(neighborGlobalIds[2] == 3);
+      TEST_ASSERT(numNeighbors == 3);
+      TEST_ASSERT(neighborGlobalIds.size() == 3);
+      TEST_ASSERT(neighborGlobalIds[0] == 1);
+      TEST_ASSERT(neighborGlobalIds[1] == 2);
+      TEST_ASSERT(neighborGlobalIds[2] == 3);
     }
     else if(nodeGlobalId == 1){
-      BOOST_CHECK(numNeighbors == 4);
-      BOOST_CHECK(neighborGlobalIds.size() == 4);
-      BOOST_CHECK(neighborGlobalIds[0] == 0);
-      BOOST_CHECK(neighborGlobalIds[1] == 2);
-      BOOST_CHECK(neighborGlobalIds[2] == 3);
-      BOOST_CHECK(neighborGlobalIds[3] == 4);
+      TEST_ASSERT(numNeighbors == 4);
+      TEST_ASSERT(neighborGlobalIds.size() == 4);
+      TEST_ASSERT(neighborGlobalIds[0] == 0);
+      TEST_ASSERT(neighborGlobalIds[1] == 2);
+      TEST_ASSERT(neighborGlobalIds[2] == 3);
+      TEST_ASSERT(neighborGlobalIds[3] == 4);
     }
     else if(nodeGlobalId == 2){
-      BOOST_CHECK(numNeighbors == 4);
-      BOOST_CHECK(neighborGlobalIds.size() == 4);
-      BOOST_CHECK(neighborGlobalIds[0] == 0);
-      BOOST_CHECK(neighborGlobalIds[1] == 1);
-      BOOST_CHECK(neighborGlobalIds[2] == 3);
-      BOOST_CHECK(neighborGlobalIds[3] == 4);
+      TEST_ASSERT(numNeighbors == 4);
+      TEST_ASSERT(neighborGlobalIds.size() == 4);
+      TEST_ASSERT(neighborGlobalIds[0] == 0);
+      TEST_ASSERT(neighborGlobalIds[1] == 1);
+      TEST_ASSERT(neighborGlobalIds[2] == 3);
+      TEST_ASSERT(neighborGlobalIds[3] == 4);
     }
     else if(nodeGlobalId == 3){
-      BOOST_CHECK(numNeighbors == 4);
-      BOOST_CHECK(neighborGlobalIds.size() == 4);
-      BOOST_CHECK(neighborGlobalIds[0] == 0);
-      BOOST_CHECK(neighborGlobalIds[1] == 1);
-      BOOST_CHECK(neighborGlobalIds[2] == 2);
-      BOOST_CHECK(neighborGlobalIds[3] == 4);
+      TEST_ASSERT(numNeighbors == 4);
+      TEST_ASSERT(neighborGlobalIds.size() == 4);
+      TEST_ASSERT(neighborGlobalIds[0] == 0);
+      TEST_ASSERT(neighborGlobalIds[1] == 1);
+      TEST_ASSERT(neighborGlobalIds[2] == 2);
+      TEST_ASSERT(neighborGlobalIds[3] == 4);
     }
     else if(nodeGlobalId == 4){
-      BOOST_CHECK(numNeighbors == 3);
-      BOOST_CHECK(neighborGlobalIds.size() == 3);
-      BOOST_CHECK(neighborGlobalIds[0] == 1);
-      BOOST_CHECK(neighborGlobalIds[1] == 2);
-      BOOST_CHECK(neighborGlobalIds[2] == 3);
+      TEST_ASSERT(numNeighbors == 3);
+      TEST_ASSERT(neighborGlobalIds.size() == 3);
+      TEST_ASSERT(neighborGlobalIds[0] == 1);
+      TEST_ASSERT(neighborGlobalIds[1] == 2);
+      TEST_ASSERT(neighborGlobalIds[2] == 3);
     }
   }
 
@@ -389,11 +394,11 @@ void fivePointProblem()
   neighborListIndex = 0;
   for(int i=0 ; i<numMyElements ; ++i){
     int nodeGlobalId = map.GID(i);
-    BOOST_CHECK(neighborListIndex < neighborListSize);
+    TEST_ASSERT(neighborListIndex < neighborListSize);
     int numNeighbors = neighborList[neighborListIndex++];
     vector<int> neighborGlobalIds;
     for(int j=0 ; j<numNeighbors ; ++j){
-      BOOST_CHECK(neighborListIndex < neighborListSize);
+      TEST_ASSERT(neighborListIndex < neighborListSize);
       int neighborLocalId = neighborList[neighborListIndex++];
       int neighborGlobalId = overlapMap->GID(neighborLocalId);
       neighborGlobalIds.push_back(neighborGlobalId);
@@ -402,83 +407,50 @@ void fivePointProblem()
     sort(neighborGlobalIds.begin(), neighborGlobalIds.end());
 
     if(nodeGlobalId == 0){
-      BOOST_CHECK(numNeighbors == 4);
-      BOOST_CHECK(neighborGlobalIds.size() == 4);
-      BOOST_CHECK(neighborGlobalIds[0] == 1);
-      BOOST_CHECK(neighborGlobalIds[1] == 2);
-      BOOST_CHECK(neighborGlobalIds[2] == 3);
-      BOOST_CHECK(neighborGlobalIds[3] == 4);
+      TEST_ASSERT(numNeighbors == 4);
+      TEST_ASSERT(neighborGlobalIds.size() == 4);
+      TEST_ASSERT(neighborGlobalIds[0] == 1);
+      TEST_ASSERT(neighborGlobalIds[1] == 2);
+      TEST_ASSERT(neighborGlobalIds[2] == 3);
+      TEST_ASSERT(neighborGlobalIds[3] == 4);
     }
     else if(nodeGlobalId == 1){
-      BOOST_CHECK(numNeighbors == 4);
-      BOOST_CHECK(neighborGlobalIds.size() == 4);
-      BOOST_CHECK(neighborGlobalIds[0] == 0);
-      BOOST_CHECK(neighborGlobalIds[1] == 2);
-      BOOST_CHECK(neighborGlobalIds[2] == 3);
-      BOOST_CHECK(neighborGlobalIds[3] == 4);
+      TEST_ASSERT(numNeighbors == 4);
+      TEST_ASSERT(neighborGlobalIds.size() == 4);
+      TEST_ASSERT(neighborGlobalIds[0] == 0);
+      TEST_ASSERT(neighborGlobalIds[1] == 2);
+      TEST_ASSERT(neighborGlobalIds[2] == 3);
+      TEST_ASSERT(neighborGlobalIds[3] == 4);
     }
     else if(nodeGlobalId == 2){
-      BOOST_CHECK(numNeighbors == 4);
-      BOOST_CHECK(neighborGlobalIds.size() == 4);
-      BOOST_CHECK(neighborGlobalIds[0] == 0);
-      BOOST_CHECK(neighborGlobalIds[1] == 1);
-      BOOST_CHECK(neighborGlobalIds[2] == 3);
-      BOOST_CHECK(neighborGlobalIds[3] == 4);
+      TEST_ASSERT(numNeighbors == 4);
+      TEST_ASSERT(neighborGlobalIds.size() == 4);
+      TEST_ASSERT(neighborGlobalIds[0] == 0);
+      TEST_ASSERT(neighborGlobalIds[1] == 1);
+      TEST_ASSERT(neighborGlobalIds[2] == 3);
+      TEST_ASSERT(neighborGlobalIds[3] == 4);
     }
     else if(nodeGlobalId == 3){
-      BOOST_CHECK(numNeighbors == 4);
-      BOOST_CHECK(neighborGlobalIds.size() == 4);
-      BOOST_CHECK(neighborGlobalIds[0] == 0);
-      BOOST_CHECK(neighborGlobalIds[1] == 1);
-      BOOST_CHECK(neighborGlobalIds[2] == 2);
-      BOOST_CHECK(neighborGlobalIds[3] == 4);
+      TEST_ASSERT(numNeighbors == 4);
+      TEST_ASSERT(neighborGlobalIds.size() == 4);
+      TEST_ASSERT(neighborGlobalIds[0] == 0);
+      TEST_ASSERT(neighborGlobalIds[1] == 1);
+      TEST_ASSERT(neighborGlobalIds[2] == 2);
+      TEST_ASSERT(neighborGlobalIds[3] == 4);
     }
     else if(nodeGlobalId == 4){
-      BOOST_CHECK(numNeighbors == 4);
-      BOOST_CHECK(neighborGlobalIds.size() == 4);
-      BOOST_CHECK(neighborGlobalIds[0] == 0);
-      BOOST_CHECK(neighborGlobalIds[1] == 1);
-      BOOST_CHECK(neighborGlobalIds[2] == 2);
-      BOOST_CHECK(neighborGlobalIds[3] == 3);
+      TEST_ASSERT(numNeighbors == 4);
+      TEST_ASSERT(neighborGlobalIds.size() == 4);
+      TEST_ASSERT(neighborGlobalIds[0] == 0);
+      TEST_ASSERT(neighborGlobalIds[1] == 1);
+      TEST_ASSERT(neighborGlobalIds[2] == 2);
+      TEST_ASSERT(neighborGlobalIds[3] == 3);
     }
   }
 
 }
 
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success = true;
-
-	test_suite* proc = BOOST_TEST_SUITE("utPeridigm_ProximitySearch");
-	proc->add(BOOST_TEST_CASE(&twoPointProblem));
-	proc->add(BOOST_TEST_CASE(&fivePointProblem));
-	framework::master_test_suite().add(proc);
-
-	return success;
-}
-
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
-
-int main
-(int argc, char* argv[])
-{
-  int numProcs = 1;
-#ifdef HAVE_MPI
-  MPI_Init(&argc,&argv);
-  MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
-#endif
-
-  int returnCode = -1;
-  returnCode = unit_test_main(init_unit_test, argc, argv);
-  
-#ifdef HAVE_MPI
-  MPI_Finalize();
-#endif
-  
-  return returnCode;
+int main( int argc, char* argv[] ) {
+  Teuchos::GlobalMPISession mpiSession(&argc, &argv);
+  return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }

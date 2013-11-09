@@ -45,17 +45,17 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
 #include "Peridigm_JAMSearchTree.hpp"
 #include "Peridigm_ZoltanSearchTree.hpp"
 #include <Epetra_SerialComm.h>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
+#include "Teuchos_GlobalMPISession.hpp"
 #include <vector>
 #include <sstream>
 #include <fstream>
 
-using namespace boost::unit_test;
 using namespace std;
 using namespace PeridigmNS;
 
@@ -73,63 +73,113 @@ void eightPointMesh(vector<double>& mesh)
   mesh[21] = 1.0 ; mesh[22] = 1.0 ; mesh[23] = 1.0;
 }
 
+
 //! Test a search tree created for the eight-point cube mesh
-void testEightPointMesh(vector<double>& mesh, PeridigmNS::SearchTree* searchTree)
-{
-  double* meshPtr = &mesh[0];
+
+void testEightPointMesh(vector<double>& mesh, PeridigmNS::SearchTree* searchTree, vector<int>& neighborList, int searchPointIndex, int degreesOfFreedom, double searchRadius){
+
+ double* meshPtr = &mesh[0];
+ neighborList.clear();
+ searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
+ if (neighborList.size() > 1) 
+    sort(neighborList.begin(), neighborList.end());
+
+}
+
+
+//! Zoltan eight-point test
+
+TEUCHOS_UNIT_TEST(SearchTree, ZoltanEightPointMesh) {
+
+  vector<double> mesh;
+  eightPointMesh(mesh);
   vector<int> neighborList;
   int searchPointIndex, degreesOfFreedom(3);
   double searchRadius;
+  PeridigmNS::SearchTree* searchTree = new PeridigmNS::ZoltanSearchTree(static_cast<int>(mesh.size()/3), &mesh[0]);
 
   // This search should find all the other points
-  neighborList.clear();
+  
   searchPointIndex = 2;
   searchRadius = 3.015;
-  searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
-  BOOST_CHECK_EQUAL(static_cast<int>(neighborList.size()), 8);
-  sort(neighborList.begin(), neighborList.end());
-  for(int i=0 ; i<8 ; ++i)
-    BOOST_CHECK_EQUAL(neighborList[i], i);
+  testEightPointMesh(mesh,searchTree, neighborList, searchPointIndex, degreesOfFreedom, searchRadius);
+  TEST_EQUALITY_CONST(static_cast<int>(neighborList.size()), 8);
 
-  // This search should find thee neighbors
-  neighborList.clear();
+  for(int i=0 ; i<4 ; ++i)
+    TEST_EQUALITY(neighborList[i], i);
+  
+  
+
+ // This search should find three neighbors
+  
   searchPointIndex = 0;
   searchRadius = 1.015;
-  searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
-  BOOST_CHECK_EQUAL(static_cast<int>(neighborList.size()), 4);
-  sort(neighborList.begin(), neighborList.end());
-  BOOST_CHECK_EQUAL(neighborList[0], 0);
-  BOOST_CHECK_EQUAL(neighborList[1], 1);
-  BOOST_CHECK_EQUAL(neighborList[2], 2);
-  BOOST_CHECK_EQUAL(neighborList[3], 4);
+  testEightPointMesh(mesh,searchTree, neighborList, searchPointIndex, degreesOfFreedom, searchRadius);
+  TEST_EQUALITY_CONST(static_cast<int>(neighborList.size()), 4);
 
-  // This search should find no neighbors
-  neighborList.clear();
+  TEST_EQUALITY_CONST(neighborList[0], 0);
+  TEST_EQUALITY_CONST(neighborList[1], 1);
+  TEST_EQUALITY_CONST(neighborList[2], 2);
+  TEST_EQUALITY_CONST(neighborList[3], 4);
+   
+  
+  
+ // This search should find no neighbors
+ 
   searchPointIndex = 0;
   searchRadius = 0.015;
-  searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
-  BOOST_CHECK_EQUAL(static_cast<int>(neighborList.size()), 1);
-}
+  testEightPointMesh(mesh,searchTree, neighborList, searchPointIndex, degreesOfFreedom, searchRadius);
+  TEST_EQUALITY_CONST(static_cast<int>(neighborList.size()), 1);
 
-//! Zoltan eight-point test
-void testZoltanEightPointMesh()
-{
-  vector<double> mesh;
-  eightPointMesh(mesh);
-  PeridigmNS::SearchTree* searchTree = new PeridigmNS::ZoltanSearchTree(static_cast<int>(mesh.size()/3), &mesh[0]);
-  testEightPointMesh(mesh, searchTree);
   delete searchTree;
 }
 
 //! JAM eight-point test
-void testJAMEightPointMesh()
-{
+
+TEUCHOS_UNIT_TEST(SearchTree, JAMEightPointMesh) {
+
   vector<double> mesh;
   eightPointMesh(mesh);
+
+  vector<int> neighborList;
+  int searchPointIndex, degreesOfFreedom(3);
+  double searchRadius;
   PeridigmNS::SearchTree* searchTree = new PeridigmNS::JAMSearchTree(static_cast<int>(mesh.size()/3), &mesh[0]);
-  testEightPointMesh(mesh, searchTree);
+
+  // This search should find all the other points
+  
+  searchPointIndex = 2;
+  searchRadius = 3.015;
+  testEightPointMesh(mesh,searchTree, neighborList, searchPointIndex, degreesOfFreedom, searchRadius);
+  TEST_EQUALITY_CONST(static_cast<int>(neighborList.size()), 8);
+  
+  for(int i=0 ; i<8 ; ++i)
+    TEST_EQUALITY(neighborList[i], i);
+
+ // This search should find three neighbors
+  
+  searchPointIndex = 0;
+  searchRadius = 1.015;
+  testEightPointMesh(mesh,searchTree, neighborList, searchPointIndex, degreesOfFreedom, searchRadius);
+  TEST_EQUALITY_CONST(static_cast<int>(neighborList.size()), 4);
+   
+  TEST_EQUALITY_CONST(neighborList[0], 0);
+  TEST_EQUALITY_CONST(neighborList[1], 1);
+  TEST_EQUALITY_CONST(neighborList[2], 2);
+  TEST_EQUALITY_CONST(neighborList[3], 4);
+
+  
+ // This search should find no neighbors
+ 
+  searchPointIndex = 0;
+  searchRadius = 0.015;
+  testEightPointMesh(mesh,searchTree, neighborList, searchPointIndex, degreesOfFreedom, searchRadius);
+  TEST_EQUALITY_CONST(static_cast<int>(neighborList.size()), 1);
+ 
   delete searchTree;
 }
+
+
 
 // //! Tests the search tree associated with the equally-spaced 1000-point cube mesh
 // void testEquallySpacedCubeMesh1000(vector<double>& mesh, PeridigmNS::SearchTree* searchTree)
@@ -169,26 +219,7 @@ void testJAMEightPointMesh()
 //   delete searchTree;
 // }
 
-bool init_unit_test_suite()
-{
-  // Add a suite for each processor in the test
-  bool success = true;
 
-  test_suite* proc = BOOST_TEST_SUITE("utPeridigm_SearchTree");
-  proc->add(BOOST_TEST_CASE(&testZoltanEightPointMesh));
-  proc->add(BOOST_TEST_CASE(&testJAMEightPointMesh));
-  // proc->add(BOOST_TEST_CASE(&testZoltanEquallySpacedCubeMesh1000));
-  // proc->add(BOOST_TEST_CASE(&testJAMEquallySpacedCubeMesh1000));
-  framework::master_test_suite().add(proc);
-
-  return success;
-}
-
-bool init_unit_test()
-{
-  init_unit_test_suite();
-  return true;
-}
 
 int main
 (int argc, char* argv[])
@@ -196,23 +227,17 @@ int main
   // This is a serial test, but it requires MPI to be running (Zoltan dependency?)
 
   int numProcs = 1;
-#ifdef HAVE_MPI
-  MPI_Init(&argc,&argv);
-  MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
-#endif
+  Teuchos::GlobalMPISession mpiSession(&argc, &argv);
 
   int returnCode = -1;
   if(numProcs == 1){
     // Run the tests
-    returnCode = unit_test_main(init_unit_test, argc, argv);
+    
+    returnCode = Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
   }
   else{
     std::cerr << "Unit test runtime ERROR: utPeridigm_State only makes sense on 1 processor." << std::endl;
   }
-  
-#ifdef HAVE_MPI
-  MPI_Finalize();
-#endif
   
   return returnCode;
 }

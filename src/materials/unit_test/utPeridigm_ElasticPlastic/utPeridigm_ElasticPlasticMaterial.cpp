@@ -45,11 +45,10 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
 #include "Peridigm_ElasticPlasticMaterial.hpp"
 #include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
 #include <Epetra_SerialComm.h>
 #include "mesh_input/quick_grid/QuickGrid.h"
 #include "mesh_output/Field.h"
@@ -60,7 +59,6 @@
 
 #include <fstream>
 
-using namespace boost::unit_test;
 using namespace std;
 using namespace MATERIAL_EVALUATION;
 using std::tr1::shared_ptr;
@@ -151,6 +149,93 @@ inline double MAGNITUDE(const double *x){
 	double x2 = *(x+1);
 	double x3 = *(x+2);
 	return sqrt(x1*x1+x2*x2+x3*x3);
+}
+
+
+//
+
+void runPureShear(std::string output_file_name,  TemporalField<double> edpTemporalField, TemporalField<double> lambdaTemporalField, Field_NS::Field<double> fNField, double *x, double *u, double *v, double *y, int numPoints,  double *m, double *theta, double *bondState, double* dsfOwned, double *vol, int *neigh, double K, double MU,  double Y, double *u1x, double *v1x, double *f1x, double DELTA, std::vector<StageFunction> stages, int numStepsPerStage){
+
+     double dt = 1.0/numStepsPerStage;
+
+     /*
+      * Create data file
+      */
+
+
+     std::fstream out(output_file_name.c_str(), std::fstream::out);
+
+     /*
+	 * Write out initial condition
+	 */
+	double t=0;
+	out << 0 << " " << 0 << " " << 0 << std::endl;
+	for(std::vector<StageFunction>::iterator stageIter=stages.begin(); stageIter!=stages.end();stageIter++){
+
+		*v1x = stageIter->slope();
+		double vel = *v1x;
+
+		for(int step=0;step<numStepsPerStage;step++){
+			Field<double> edpNField = edpTemporalField.getField(Field_ENUM::STEP_N);
+			Field<double> edpNP1Field = edpTemporalField.getField(Field_ENUM::STEP_NP1);
+			double *edpN = edpNField.get();
+			double *edpNP1 = edpNP1Field.get();
+			Field<double> lambdaNField = lambdaTemporalField.getField(Field_ENUM::STEP_N);
+			Field<double> lambdaNP1Field = lambdaTemporalField.getField(Field_ENUM::STEP_NP1);
+			double *lambdaN = lambdaNField.get();
+			double *lambdaNP1 = lambdaNP1Field.get();
+			fNField.set(0.0);
+			double *f = fNField.get();
+
+			t += dt;
+
+			{
+				updateGeometry(x,u,v,y,numPoints*3,dt);
+			}
+
+			// Dummy arguments for planar case
+			bool isPlanarProblem = false;
+	        double thickness = 0.0;
+
+			/*
+			 * Do not compute dilatation -- just set it to zero
+			 */
+			computeInternalForceIsotropicElasticPlastic(x,y,m,vol,theta,bondState,dsfOwned,edpN,edpNP1,lambdaN,lambdaNP1,f,neigh,numPoints,K,MU,DELTA,Y,isPlanarProblem,thickness);
+
+
+			/*
+			 * Get sign of "f" -- this works as long as f does not ever land "exactly" on zero
+			 * Put a negative sign in front so that loading is "positive"
+			 */
+			double signF = -*f1x/abs(*f1x);
+
+			/*
+			 * Length of bar
+			 * NOTE: original coordinates of point 1 were
+			 * x=w, y=w
+			 * where w=1.0
+			 * l: New length of bar
+			 * L: Original length of bar
+			 * NOTE: yielding occurs wrt to the shear strain -- not the same as the strain along the axis of the
+			 * bond.  This distinction is important to remember.  In this case, the shear strain is equivalent
+			 * to the displacement along the x-axis
+			 */
+
+			/*
+			 * Next step; this is a bit squirrely -- has to do with updateGeometry
+			 * Update geometry takes velocity and existing displacement field (N)
+			 * Update geometry y = X + U(N) +Velocity*dt = X + U(NP1)
+			 * So, that is why we need this at the bottom of this loop
+			 */
+			*u1x += vel*dt;
+
+			out << t << " " << *u1x << " " << signF * MAGNITUDE(f1x)
+								<< std::endl;
+			edpTemporalField.advanceStep();
+			lambdaTemporalField.advanceStep();
+		}
+	}
+
 }
 
 //! Tests state variable count and name accessor functions.
@@ -255,13 +340,14 @@ QUICKGRID::QuickGridData getTwoPointGridData(){
 	 return pdGridData;
 }
 
-void runPureShear() {
+TEUCHOS_UNIT_TEST(ElasticPlasticMaterial,RunPureShear) {
+
 	Teuchos::ParameterList paramList = getParamList();
 	PeridigmNS::ElasticPlasticMaterial mat(paramList);
 	QUICKGRID::QuickGridData pdGridData = getTwoPointGridData();
 	int numPoints = pdGridData.numPoints;
-	BOOST_CHECK(2 == numPoints);
-	BOOST_CHECK(4 == pdGridData.sizeNeighborhoodList);
+	TEST_ASSERT(2 == numPoints);
+	TEST_ASSERT(4 == pdGridData.sizeNeighborhoodList);
 
 	/*
 	 * Material Props
@@ -351,7 +437,7 @@ void runPureShear() {
 	stages[2] = stages[1].next(.001275);
 
 	int numStepsPerStage = 50;
-	double dt = 1.0/numStepsPerStage;
+	//double dt = 1.0/numStepsPerStage;
 
 	/*
 	 * Pointers to data that don't change in this test
@@ -367,106 +453,14 @@ void runPureShear() {
 	double *vol = pdGridData.cellVolume.get();
 	int *neigh = pdGridData.neighborhood.get();
 
-	/*
-	 * Create data file
-	 */
-	std::fstream out("ep.dat", std::fstream::out);
+       runPureShear( "ep.dat", edpTemporalField, lambdaTemporalField, fNField, x, u, v, y,numPoints, m, theta, bondState, dsfOwned, vol, neigh, K, MU, Y, u1x, v1x, f1x, DELTA, stages, numStepsPerStage);
 
-	/*
-	 * Write out initial condition
-	 */
-	double t=0;
-	out << 0 << " " << 0 << " " << 0 << std::endl;
-	for(std::vector<StageFunction>::iterator stageIter=stages.begin(); stageIter!=stages.end();stageIter++){
-
-		*v1x = stageIter->slope();
-		double vel = *v1x;
-
-		for(int step=0;step<numStepsPerStage;step++){
-			Field<double> edpNField = edpTemporalField.getField(Field_ENUM::STEP_N);
-			Field<double> edpNP1Field = edpTemporalField.getField(Field_ENUM::STEP_NP1);
-			double *edpN = edpNField.get();
-			double *edpNP1 = edpNP1Field.get();
-			Field<double> lambdaNField = lambdaTemporalField.getField(Field_ENUM::STEP_N);
-			Field<double> lambdaNP1Field = lambdaTemporalField.getField(Field_ENUM::STEP_NP1);
-			double *lambdaN = lambdaNField.get();
-			double *lambdaNP1 = lambdaNP1Field.get();
-			fNField.set(0.0);
-			double *f = fNField.get();
-
-			t += dt;
-
-			{
-				updateGeometry(x,u,v,y,numPoints*3,dt);
-			}
-
-			// Dummy arguments for planar case
-			bool isPlanarProblem = false;
-	        double thickness = 0.0;
-
-			/*
-			 * Do not compute dilatation -- just set it to zero
-			 */
-			computeInternalForceIsotropicElasticPlastic(x,y,m,vol,theta,bondState,dsfOwned,edpN,edpNP1,lambdaN,lambdaNP1,f,neigh,numPoints,K,MU,DELTA,Y,isPlanarProblem,thickness);
-
-
-			/*
-			 * Get sign of "f" -- this works as long as f does not ever land "exactly" on zero
-			 * Put a negative sign in front so that loading is "positive"
-			 */
-			double signF = -*f1x/abs(*f1x);
-
-			/*
-			 * Length of bar
-			 * NOTE: original coordinates of point 1 were
-			 * x=w, y=w
-			 * where w=1.0
-			 * l: New length of bar
-			 * L: Original length of bar
-			 * NOTE: yielding occurs wrt to the shear strain -- not the same as the strain along the axis of the
-			 * bond.  This distinction is important to remember.  In this case, the shear strain is equivalent
-			 * to the displacement along the x-axis
-			 */
-
-			/*
-			 * Next step; this is a bit squirrely -- has to do with updateGeometry
-			 * Update geometry takes velocity and existing displacement field (N)
-			 * Update geometry y = X + U(N) +Velocity*dt = X + U(NP1)
-			 * So, that is why we need this at the bottom of this loop
-			 */
-			*u1x += vel*dt;
-
-			out << t << " " << *u1x << " " << signF * MAGNITUDE(f1x)
-								<< std::endl;
-			edpTemporalField.advanceStep();
-			lambdaTemporalField.advanceStep();
-		}
-	}
 
 }
 
-
-bool init_unit_test_suite()
-{
-  // Add a suite for each processor in the test
-  bool success = true;
-
-  test_suite* proc = BOOST_TEST_SUITE("utPeridigm_ElasticPlasticMaterial");
-  proc->add(BOOST_TEST_CASE(&runPureShear));
-  framework::master_test_suite().add(proc);
-
-  return success;
-}
-
-bool init_unit_test()
-{
-  init_unit_test_suite();
-  return true;
-}
 
 int main
 (int argc, char* argv[])
 {
-  // Initialize UTF
-  return unit_test_main(init_unit_test, argc, argv);
+  return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }

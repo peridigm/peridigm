@@ -45,11 +45,10 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
 #include "Peridigm_ViscoelasticMaterial.hpp"
 #include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
 #include <Epetra_SerialComm.h>
 #include "mesh_input/quick_grid/QuickGrid.h"
 #include "mesh_output/Field.h"
@@ -61,7 +60,6 @@
 
 #include <fstream>
 
-using namespace boost::unit_test;
 using namespace std;
 using namespace MATERIAL_EVALUATION;
 using std::tr1::shared_ptr;
@@ -214,133 +212,82 @@ void updateGeometry
 		*y = *x + *u;
 }
 
-/**
- * Function returns value of force at last time step
- */
-double runPureShear(Teuchos::ParameterList& paramList, std::string output_file_name){
-	QUICKGRID::QuickGridData pdGridData = getTwoPointGridData();
-	int numOwnedPoints = pdGridData.numPoints;
-	BOOST_CHECK(2 == numOwnedPoints);
-	BOOST_CHECK(4 == pdGridData.sizeNeighborhoodList);
+// Set material properties
 
-	/*
-	 * Material Props
-	 */
-	double K = paramList.get<double>("Bulk Modulus");
-	double MU = paramList.get<double>("Shear Modulus");
-	double horizon = paramList.get<double>("Horizon");
-	double lambda_i = paramList.get<double>("lambda_i");
-	double tau_b = paramList.get<double>("tau b");
+void setMaterialProperties( Teuchos::ParameterList& paramList, double &K, double &MU, double &horizon, double &lambda_i, double &tau_b){
 
-	/*
-	 * Time stepping data
-	 */
-	double t_start=0.0;
-	double t_end = 3.0 * tau_b;
-	size_t numSteps_stage_1(100);
-	double dt = (t_end - t_start) / numSteps_stage_1;
+         K = paramList.get<double>("Bulk Modulus");
+	 MU = paramList.get<double>("Shear Modulus");
+	 horizon = paramList.get<double>("Horizon");
+	 lambda_i = paramList.get<double>("lambda_i");
+	 tau_b = paramList.get<double>("tau b");
+}
 
-	/*
+
+// Data initialization
+     
+
+void dataInitialization( QUICKGRID::QuickGridData& pdGridData, int numOwnedPoints, double horizon, Field<double> &uOwnedField, Field_NS::Field<double> &fNField, UTILITIES::Array<double> &mPtr, UTILITIES::Array<double> &dsfPtr, TemporalField<double> &dilatationTemporalField, UTILITIES::Array<double> &bondDamagePtr, TemporalField<double> &edbTemporalField){
+
+        /*
 	 * Displacement and Internal Force Vectors
 	 */
-	FieldSpec uSpec = DISPL3D;
-	Field<double> uOwnedField(uSpec,pdGridData.numPoints);
-	FieldSpec fNSpec = FORCE_DENSITY3D;
-	Field_NS::Field<double> fNField(fNSpec,pdGridData.numPoints);
-	uOwnedField.set(0.0);
+
+        uOwnedField.set(0.0);
 	fNField.set(0.0);
-	double *u1x = uOwnedField.get()+3;
-	double *f1x = fNField.get()+3;
 
-
-
-	/*
-	 * INITIAL CONDITION
+        /*
+	 * Weighted Volume initialization
 	 */
-	*u1x = my_gamma;
 
-
-	/*
-	 * Weighted Volume
-	 */
-	UTILITIES::Array<double> mPtr(numOwnedPoints);
-	mPtr.set(0.0);
+        mPtr.set(0.0);
 	MATERIAL_EVALUATION::computeWeightedVolume(pdGridData.myX.get(),pdGridData.cellVolume.get(),mPtr.get(),numOwnedPoints,pdGridData.neighborhood.get(),horizon);
 
-	/*
+        /*
 	 * Shear Correction Factor, aka 'dsf'
 	 * Initialize and use value=1.0 on all points
 	 */
-	UTILITIES::Array<double> dsfPtr(numOwnedPoints);
-	dsfPtr.set(1.0);
+        dsfPtr.set(1.0);
 
-	/*
+        /*
 	 * Dilatation: intialize to zero
 	 */
-	TemporalField<double> dilatationTemporalField(DILATATION,numOwnedPoints);
-	{
+
+        {
 		Field<double> N = dilatationTemporalField.getField(Field_ENUM::STEP_N);
 		N.set(0.0);
 	}
-	/*
+
+        /*
 	 * Bond State and deviatoric back extension state
 	 */
-	UTILITIES::Array<double> bondDamagePtr(pdGridData.sizeNeighborhoodList-numOwnedPoints);
-	bondDamagePtr.set(0.0);
-	TemporalField<double> edbTemporalField(DEVIATORIC_BACK_EXTENSION,pdGridData.sizeNeighborhoodList-numOwnedPoints);
-	{
+   
+        bondDamagePtr.set(0.0);
+
+        {
 		Field<double> N = edbTemporalField.getField(Field_ENUM::STEP_N);
 		N.set(0.0);
 	}
-	/*
-	 * Pointers to data that don't change in this test
-	 */
-	double *xOverlapPtr = pdGridData.myX.get();
+	
 
-	double *mOwned = mPtr.get();
-	double *dsfOwned = dsfPtr.get();
-	double *bondDamage = bondDamagePtr.get();
-	double *volumeOverlapPtr = pdGridData.cellVolume.get();
-	int *localNeighborList = pdGridData.neighborhood.get();
-	double *fInternalOverlapPtr = fNField.get();
+}
 
-	/*
-	 * Current coordinates are fixed; Assign here
-	 */
-	TemporalField<double> yTemporalField(CURCOORD3D,numOwnedPoints);
-	updateGeometry(xOverlapPtr,uOwnedField.get(),yTemporalField.getField(Field_ENUM::STEP_N).get(),numOwnedPoints*3);
-	updateGeometry(xOverlapPtr,uOwnedField.get(),yTemporalField.getField(Field_ENUM::STEP_NP1).get(),numOwnedPoints*3);
-	double *yN_OverlapPtr = yTemporalField.getField(Field_ENUM::STEP_N).get();
-	double *yNp1_OverlapPtr = yTemporalField.getField(Field_ENUM::STEP_NP1).get();
+/**
+ * Function returns value of force at last time step
+ */
 
-	/*
+double runPureShear(std::string output_file_name, double K, double MU, double lambda_i, double tau_b, int numOwnedPoints, int numSteps_stage_1, double t_start, double dt, TemporalField<double> yTemporalField, Field_NS::Field<double> fNField, TemporalField<double> dilatationTemporalField, TemporalField<double> edbTemporalField, double *u1x, double *f1x, double *xOverlapPtr, double *yN_OverlapPtr, double *yNp1_OverlapPtr, double *mOwned, double *volumeOverlapPtr, double *bondDamage, int *localNeighborList, double *fInternalOverlapPtr){
+
+        double t=t_start;
+	double signF = -*f1x/fabs(*f1x);
+
+        /*
 	 * Create data file
 	 */
-	std::fstream out(output_file_name.c_str(), std::fstream::out);
+
+
+        std::fstream out(output_file_name.c_str(), std::fstream::out);
 	out << std::scientific;
-
-	/*
-	 * Compute initial force with elastic constitutive model
-	 */
-	MATERIAL_EVALUATION::computeInternalForceLinearElastic
-	(
-			xOverlapPtr,
-			yN_OverlapPtr,
-			mOwned,
-			volumeOverlapPtr,
-			dilatationTemporalField.getField(Field_ENUM::STEP_N).get(),
-			bondDamage,
-			dsfOwned,
-			fInternalOverlapPtr,
-			localNeighborList,
-			numOwnedPoints,
-			K,
-			MU,
-            horizon
-	);
-
-	double t=t_start;
-	double signF = -*f1x/fabs(*f1x);
 	out.precision(2);
 	out << t << " ";
 	out.precision(0);
@@ -348,14 +295,7 @@ double runPureShear(Teuchos::ParameterList& paramList, std::string output_file_n
 	out.precision(15);
 	out << signF*MAGNITUDE(f1x) << std::endl;
 
-	/*
-	 * this is the correct analytical value for the initial condition
-	 * ??? Why can't we get this closer than 1.0e-6 ???
-	 */
-	double f0 = 2.0 * 15.0 * E * my_gamma / 4.0 / (1+nu) / std::sqrt(2.0);
-	double tolerance=1.0e-6;
-	double rel_diff = std::fabs(f0-MAGNITUDE(f1x))/f0;
-	BOOST_CHECK_SMALL(rel_diff,tolerance);
+	
 
 	for(size_t n=0;n<numSteps_stage_1;n++){
 
@@ -402,6 +342,7 @@ double runPureShear(Teuchos::ParameterList& paramList, std::string output_file_n
 				tau_b
 		);
 
+                 
 		/*
 		 * Get sign of "f" -- this works as long as f does not ever land "exactly" on zero
 		 * Put a negative sign in front so that loading is "positive"
@@ -413,6 +354,7 @@ double runPureShear(Teuchos::ParameterList& paramList, std::string output_file_n
 		out << *u1x << " ";
 		out.precision(15);
 		out << signF*MAGNITUDE(f1x) << std::endl;
+
 		edbTemporalField.advanceStep();
 		dilatationTemporalField.advanceStep();
 		yTemporalField.advanceStep();
@@ -424,26 +366,150 @@ double runPureShear(Teuchos::ParameterList& paramList, std::string output_file_n
 	/**
 	 * this is value of force for last time step
 	 */
-	return MAGNITUDE(f1x);
-
+      
+       return MAGNITUDE(f1x);
 
 }
 
+TEUCHOS_UNIT_TEST(TwoPoint_SLS_Relaxation,Case_1) {
 
-
-void case_1() {
 	/*
 	 * This produces the 'elastic' response
 	 */
+
 	double scale=0.01;
 	Teuchos::ParameterList paramList = getParamList(scale);
 	PeridigmNS::ViscoelasticMaterial mat(paramList);
-	double f=runPureShear(paramList,"twoPoint_SLS_Elastic.dat");
+
+        QUICKGRID::QuickGridData pdGridData = getTwoPointGridData();
+	int numOwnedPoints = pdGridData.numPoints;
+	TEST_ASSERT(2 == numOwnedPoints);
+	TEST_ASSERT(4 == pdGridData.sizeNeighborhoodList);
+
+        /*
+	 * Material Props
+	 */
+
+        double K, MU, horizon, lambda_i, tau_b;
+
+        setMaterialProperties( paramList, K, MU, horizon, lambda_i, tau_b);
+
+        /*
+	 * Time stepping data
+	 */
+	double t_start=0.0;
+	double t_end = 3.0 * tau_b;
+	size_t numSteps_stage_1(100);
+
+	double dt = (t_end - t_start) / numSteps_stage_1;
+
+        /*
+	 * Displacement and Internal Force Vectors
+	 */
+
+	FieldSpec uSpec = DISPL3D;
+	Field<double> uOwnedField(uSpec,pdGridData.numPoints);
+	FieldSpec fNSpec = FORCE_DENSITY3D;
+	Field_NS::Field<double> fNField(fNSpec,pdGridData.numPoints);
+
+        /*
+	 * Weighted Volume
+	 */
+	UTILITIES::Array<double> mPtr(numOwnedPoints);
+	
+	/*
+	 * Shear Correction Factor, aka 'dsf'
+	 * Initialize and use value=1.0 on all points
+	 */
+	UTILITIES::Array<double> dsfPtr(numOwnedPoints);
+	
+	/*
+	 * Dilatation: intialize to zero
+	 */
+	TemporalField<double> dilatationTemporalField(DILATATION,numOwnedPoints);
+	
+	/*
+	 * Bond State and deviatoric back extension state
+	 */
+	UTILITIES::Array<double> bondDamagePtr(pdGridData.sizeNeighborhoodList-numOwnedPoints);
+	
+	TemporalField<double> edbTemporalField(DEVIATORIC_BACK_EXTENSION,pdGridData.sizeNeighborhoodList-numOwnedPoints);
+
+        // Data initialization
+
+        dataInitialization( pdGridData, numOwnedPoints, horizon, uOwnedField, fNField, mPtr, dsfPtr, dilatationTemporalField, bondDamagePtr, edbTemporalField);
+
+        double *u1x = uOwnedField.get()+ 3;
+	double *f1x = fNField.get()+ 3;
+
+	/*
+	 * INITIAL CONDITION
+	 */
+	*u1x = my_gamma;
+
+        /*
+	 * Pointers to data that don't change in this test
+	 */
+
+        double *xOverlapPtr = pdGridData.myX.get();
+	double *mOwned = mPtr.get();
+	double *dsfOwned = dsfPtr.get();
+	double *bondDamage = bondDamagePtr.get();
+	double *volumeOverlapPtr = pdGridData.cellVolume.get();
+	int *localNeighborList = pdGridData.neighborhood.get();
+	double *fInternalOverlapPtr = fNField.get();
+
+        /*
+	 * Current coordinates are fixed; Assign here
+	 */
+
+	TemporalField<double> yTemporalField(CURCOORD3D,numOwnedPoints);
+	updateGeometry(xOverlapPtr,uOwnedField.get(),yTemporalField.getField(Field_ENUM::STEP_N).get(),numOwnedPoints*3);
+	updateGeometry(xOverlapPtr,uOwnedField.get(),yTemporalField.getField(Field_ENUM::STEP_NP1).get(),numOwnedPoints*3);
+	double *yN_OverlapPtr = yTemporalField.getField(Field_ENUM::STEP_N).get();
+	double *yNp1_OverlapPtr = yTemporalField.getField(Field_ENUM::STEP_NP1).get();
+        
+
+        /*
+	 * Compute initial force with elastic constitutive model
+	 */
+	MATERIAL_EVALUATION::computeInternalForceLinearElastic
+	(
+			xOverlapPtr,
+			yN_OverlapPtr,
+			mOwned,
+			volumeOverlapPtr,
+			dilatationTemporalField.getField(Field_ENUM::STEP_N).get(),
+			bondDamage,
+			dsfOwned,
+			fInternalOverlapPtr,
+			localNeighborList,
+			numOwnedPoints,
+			K,
+			MU,
+            horizon
+	);
+
+        /*
+	 * this is the correct analytical value for the initial condition
+	 * ??? Why can't we get this closer than 1.0e-6 ???
+	 */
+
+	double f0 = 2.0 * 15.0 * E * my_gamma / 4.0 / (1+nu) / std::sqrt(2.0);
+	double tolerance=1.0e-6;
+	double rel_diff = std::fabs(f0-MAGNITUDE(f1x))/f0;
+	
+        TEST_COMPARE( rel_diff, <=, tolerance);
+
+        
+
+	double f = runPureShear("twoPoint_SLS_Elastic.dat", K, MU, lambda_i, tau_b, numOwnedPoints, numSteps_stage_1, t_start, dt, yTemporalField, fNField, dilatationTemporalField,  edbTemporalField, u1x, f1x,xOverlapPtr, yN_OverlapPtr, yNp1_OverlapPtr, mOwned, volumeOverlapPtr, bondDamage, localNeighborList, fInternalOverlapPtr);
+
+	
 	/*
 	 * Last value computed: tests time integrator against exact value
 	 */
-	double tau_b = paramList.get<double>("tau b");
-	double lambda_i = paramList.get<double>("lambda_i");
+
 
 	/*
 	 * step input deviatoric extension state
@@ -454,22 +520,152 @@ void case_1() {
 	double alpha = 15.0 * E / (1+nu) / 2.0 / m;
 	double tEnd=6.0;
 	double fEnd = 2.0 * ed0*((1-lambda_i) * alpha +lambda_i * alpha * std::exp(-tEnd/tau_b));
-	double rel_diff = std::fabs(fEnd-f)/fEnd;
-	double tolerance=1.0e-6;
-	BOOST_CHECK_SMALL(rel_diff,tolerance);
+	rel_diff = std::fabs(fEnd-f)/fEnd;
+	
+        TEST_COMPARE( rel_diff, <=, tolerance);
 
 }
 
-void case_2() {
-	double scale=.5;
+TEUCHOS_UNIT_TEST(TwoPoint_SLS_Relaxation,Case_2) {
+
+	/*
+	 * This produces the 'elastic' response
+	 */
+
+	double scale=0.5;
 	Teuchos::ParameterList paramList = getParamList(scale);
 	PeridigmNS::ViscoelasticMaterial mat(paramList);
-	double f=runPureShear(paramList,"twoPoint_SLS_Relaxation.dat");
+
+        QUICKGRID::QuickGridData pdGridData = getTwoPointGridData();
+	int numOwnedPoints = pdGridData.numPoints;
+	TEST_ASSERT(2 == numOwnedPoints);
+	TEST_ASSERT(4 == pdGridData.sizeNeighborhoodList);
+
+        /*
+	 * Material Props
+	 */
+
+        double K, MU, horizon, lambda_i, tau_b;
+
+        setMaterialProperties( paramList, K, MU, horizon, lambda_i, tau_b);
+
+        /*
+	 * Time stepping data
+	 */
+	double t_start=0.0;
+	double t_end = 3.0 * tau_b;
+	size_t numSteps_stage_1(100);
+
+	double dt = (t_end - t_start) / numSteps_stage_1;
+
+        /*
+	 * Displacement and Internal Force Vectors
+	 */
+
+	FieldSpec uSpec = DISPL3D;
+	Field<double> uOwnedField(uSpec,pdGridData.numPoints);
+	FieldSpec fNSpec = FORCE_DENSITY3D;
+	Field_NS::Field<double> fNField(fNSpec,pdGridData.numPoints);
+
+        /*
+	 * Weighted Volume
+	 */
+	UTILITIES::Array<double> mPtr(numOwnedPoints);
+	
+	/*
+	 * Shear Correction Factor, aka 'dsf'
+	 * Initialize and use value=1.0 on all points
+	 */
+	UTILITIES::Array<double> dsfPtr(numOwnedPoints);
+	
+	/*
+	 * Dilatation: intialize to zero
+	 */
+	TemporalField<double> dilatationTemporalField(DILATATION,numOwnedPoints);
+	
+	/*
+	 * Bond State and deviatoric back extension state
+	 */
+	UTILITIES::Array<double> bondDamagePtr(pdGridData.sizeNeighborhoodList-numOwnedPoints);
+	
+	TemporalField<double> edbTemporalField(DEVIATORIC_BACK_EXTENSION,pdGridData.sizeNeighborhoodList-numOwnedPoints);
+
+        // Data initialization
+
+        dataInitialization( pdGridData, numOwnedPoints, horizon, uOwnedField, fNField, mPtr, dsfPtr, dilatationTemporalField, bondDamagePtr, edbTemporalField);
+
+        double *u1x = uOwnedField.get()+ 3;
+	double *f1x = fNField.get()+ 3;
+
+	/*
+	 * INITIAL CONDITION
+	 */
+	*u1x = my_gamma;
+
+        /*
+	 * Pointers to data that don't change in this test
+	 */
+
+        double *xOverlapPtr = pdGridData.myX.get();
+	double *mOwned = mPtr.get();
+	double *dsfOwned = dsfPtr.get();
+	double *bondDamage = bondDamagePtr.get();
+	double *volumeOverlapPtr = pdGridData.cellVolume.get();
+	int *localNeighborList = pdGridData.neighborhood.get();
+	double *fInternalOverlapPtr = fNField.get();
+
+        /*
+	 * Current coordinates are fixed; Assign here
+	 */
+
+	TemporalField<double> yTemporalField(CURCOORD3D,numOwnedPoints);
+	updateGeometry(xOverlapPtr,uOwnedField.get(),yTemporalField.getField(Field_ENUM::STEP_N).get(),numOwnedPoints*3);
+	updateGeometry(xOverlapPtr,uOwnedField.get(),yTemporalField.getField(Field_ENUM::STEP_NP1).get(),numOwnedPoints*3);
+	double *yN_OverlapPtr = yTemporalField.getField(Field_ENUM::STEP_N).get();
+	double *yNp1_OverlapPtr = yTemporalField.getField(Field_ENUM::STEP_NP1).get();
+        
+
+        /*
+	 * Compute initial force with elastic constitutive model
+	 */
+	MATERIAL_EVALUATION::computeInternalForceLinearElastic
+	(
+			xOverlapPtr,
+			yN_OverlapPtr,
+			mOwned,
+			volumeOverlapPtr,
+			dilatationTemporalField.getField(Field_ENUM::STEP_N).get(),
+			bondDamage,
+			dsfOwned,
+			fInternalOverlapPtr,
+			localNeighborList,
+			numOwnedPoints,
+			K,
+			MU,
+            horizon
+	);
+
+        /*
+	 * this is the correct analytical value for the initial condition
+	 * ??? Why can't we get this closer than 1.0e-6 ???
+	 */
+
+
+	double f0 = 2.0 * 15.0 * E * my_gamma / 4.0 / (1+nu) / std::sqrt(2.0);
+	double tolerance=1.0e-6;
+	double rel_diff = std::fabs(f0-MAGNITUDE(f1x))/f0;
+
+	
+        TEST_COMPARE( rel_diff, <=, tolerance);
+
+
+	double f = runPureShear("twoPoint_SLS_Relaxation.dat", K, MU, lambda_i, tau_b, numOwnedPoints, numSteps_stage_1, t_start, dt, yTemporalField, fNField, dilatationTemporalField,  edbTemporalField, u1x, f1x,xOverlapPtr, yN_OverlapPtr, yNp1_OverlapPtr, mOwned, volumeOverlapPtr, bondDamage, localNeighborList, fInternalOverlapPtr);
+
+	
 	/*
 	 * Last value computed: tests time integrator against exact value
 	 */
-	double tau_b = paramList.get<double>("tau b");
-	double lambda_i = paramList.get<double>("lambda_i");
+
 
 	/*
 	 * step input deviatoric extension state
@@ -480,21 +676,151 @@ void case_2() {
 	double alpha = 15.0 * E / (1+nu) / 2.0 / m;
 	double tEnd=6.0;
 	double fEnd = 2.0 * ed0*((1-lambda_i) * alpha +lambda_i * alpha * std::exp(-tEnd/tau_b));
-	double rel_diff = std::fabs(fEnd-f)/fEnd;
-	double tolerance=1.0e-6;
-	BOOST_CHECK_SMALL(rel_diff,tolerance);
+	rel_diff = std::fabs(fEnd-f)/fEnd;
+	
+        TEST_COMPARE( rel_diff, <=, tolerance);
+
 }
 
-void case_3() {
+TEUCHOS_UNIT_TEST(TwoPoint_SLS_Relaxation,Case_3) {
+
+	/*
+	 * This produces the 'elastic' response
+	 */
+
 	double scale=0.99;
 	Teuchos::ParameterList paramList = getParamList(scale);
 	PeridigmNS::ViscoelasticMaterial mat(paramList);
-	double f=runPureShear(paramList,"twoPoint_Maxwell_Relaxation.dat");
+
+        QUICKGRID::QuickGridData pdGridData = getTwoPointGridData();
+	int numOwnedPoints = pdGridData.numPoints;
+	TEST_ASSERT(2 == numOwnedPoints);
+	TEST_ASSERT(4 == pdGridData.sizeNeighborhoodList);
+
+        /*
+	 * Material Props
+	 */
+
+        double K, MU, horizon, lambda_i, tau_b;
+
+        setMaterialProperties( paramList, K, MU, horizon, lambda_i, tau_b);
+
+        /*
+	 * Time stepping data
+	 */
+	double t_start=0.0;
+	double t_end = 3.0 * tau_b;
+	size_t numSteps_stage_1(100);
+
+	double dt = (t_end - t_start) / numSteps_stage_1;
+
+        /*
+	 * Displacement and Internal Force Vectors
+	 */
+
+	FieldSpec uSpec = DISPL3D;
+	Field<double> uOwnedField(uSpec,pdGridData.numPoints);
+	FieldSpec fNSpec = FORCE_DENSITY3D;
+	Field_NS::Field<double> fNField(fNSpec,pdGridData.numPoints);
+
+        /*
+	 * Weighted Volume
+	 */
+	UTILITIES::Array<double> mPtr(numOwnedPoints);
+	
+	/*
+	 * Shear Correction Factor, aka 'dsf'
+	 * Initialize and use value=1.0 on all points
+	 */
+	UTILITIES::Array<double> dsfPtr(numOwnedPoints);
+	
+	/*
+	 * Dilatation: intialize to zero
+	 */
+	TemporalField<double> dilatationTemporalField(DILATATION,numOwnedPoints);
+	
+	/*
+	 * Bond State and deviatoric back extension state
+	 */
+	UTILITIES::Array<double> bondDamagePtr(pdGridData.sizeNeighborhoodList-numOwnedPoints);
+	
+	TemporalField<double> edbTemporalField(DEVIATORIC_BACK_EXTENSION,pdGridData.sizeNeighborhoodList-numOwnedPoints);
+
+        // Data initialization
+
+        dataInitialization( pdGridData, numOwnedPoints, horizon, uOwnedField, fNField, mPtr, dsfPtr, dilatationTemporalField, bondDamagePtr, edbTemporalField);
+
+        double *u1x = uOwnedField.get()+ 3;
+	double *f1x = fNField.get()+ 3;
+
+	/*
+	 * INITIAL CONDITION
+	 */
+	*u1x = my_gamma;
+
+        /*
+	 * Pointers to data that don't change in this test
+	 */
+
+        double *xOverlapPtr = pdGridData.myX.get();
+	double *mOwned = mPtr.get();
+	double *dsfOwned = dsfPtr.get();
+	double *bondDamage = bondDamagePtr.get();
+	double *volumeOverlapPtr = pdGridData.cellVolume.get();
+	int *localNeighborList = pdGridData.neighborhood.get();
+	double *fInternalOverlapPtr = fNField.get();
+
+        /*
+	 * Current coordinates are fixed; Assign here
+	 */
+
+	TemporalField<double> yTemporalField(CURCOORD3D,numOwnedPoints);
+	updateGeometry(xOverlapPtr,uOwnedField.get(),yTemporalField.getField(Field_ENUM::STEP_N).get(),numOwnedPoints*3);
+	updateGeometry(xOverlapPtr,uOwnedField.get(),yTemporalField.getField(Field_ENUM::STEP_NP1).get(),numOwnedPoints*3);
+	double *yN_OverlapPtr = yTemporalField.getField(Field_ENUM::STEP_N).get();
+	double *yNp1_OverlapPtr = yTemporalField.getField(Field_ENUM::STEP_NP1).get();
+        
+
+        /*
+	 * Compute initial force with elastic constitutive model
+	 */
+	MATERIAL_EVALUATION::computeInternalForceLinearElastic
+	(
+			xOverlapPtr,
+			yN_OverlapPtr,
+			mOwned,
+			volumeOverlapPtr,
+			dilatationTemporalField.getField(Field_ENUM::STEP_N).get(),
+			bondDamage,
+			dsfOwned,
+			fInternalOverlapPtr,
+			localNeighborList,
+			numOwnedPoints,
+			K,
+			MU,
+            horizon
+	);
+
+        /*
+	 * this is the correct analytical value for the initial condition
+	 * ??? Why can't we get this closer than 1.0e-6 ???
+	 */
+ 
+
+	double f0 = 2.0 * 15.0 * E * my_gamma / 4.0 / (1+nu) / std::sqrt(2.0);
+	double tolerance=1.0e-6;
+	double rel_diff = std::fabs(f0-MAGNITUDE(f1x))/f0;
+	
+        TEST_COMPARE( rel_diff, <=, tolerance);
+
+
+	double f = runPureShear("twoPoint_Maxwell_Relaxation.dat", K, MU, lambda_i, tau_b, numOwnedPoints, numSteps_stage_1, t_start, dt, yTemporalField, fNField, dilatationTemporalField,  edbTemporalField, u1x, f1x,xOverlapPtr, yN_OverlapPtr, yNp1_OverlapPtr, mOwned, volumeOverlapPtr, bondDamage, localNeighborList, fInternalOverlapPtr);
+
+	
 	/*
 	 * Last value computed: tests time integrator against exact value
 	 */
-	double tau_b = paramList.get<double>("tau b");
-	double lambda_i = paramList.get<double>("lambda_i");
+
 
 	/*
 	 * step input deviatoric extension state
@@ -505,36 +831,16 @@ void case_3() {
 	double alpha = 15.0 * E / (1+nu) / 2.0 / m;
 	double tEnd=6.0;
 	double fEnd = 2.0 * ed0*((1-lambda_i) * alpha +lambda_i * alpha * std::exp(-tEnd/tau_b));
-	double rel_diff = std::fabs(fEnd-f)/fEnd;
-	double tolerance=1.0e-6;
-	BOOST_CHECK_SMALL(rel_diff,tolerance);
+	rel_diff = std::fabs(fEnd-f)/fEnd;
+	
+        TEST_COMPARE( rel_diff, <=, tolerance);
+
 }
 
 
-
-bool init_unit_test_suite()
-{
-  // Add a suite for each processor in the test
-  bool success = true;
-
-  test_suite* proc = BOOST_TEST_SUITE("twoPoint_SLS_Relaxation");
-  proc->add(BOOST_TEST_CASE(&case_1));
-  proc->add(BOOST_TEST_CASE(&case_2));
-  proc->add(BOOST_TEST_CASE(&case_3));
-  framework::master_test_suite().add(proc);
-
-  return success;
-}
-
-bool init_unit_test()
-{
-  init_unit_test_suite();
-  return true;
-}
 
 int main
 (int argc, char* argv[])
 {
-  // Initialize UTF
-  return unit_test_main(init_unit_test, argc, argv);
+  return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }
