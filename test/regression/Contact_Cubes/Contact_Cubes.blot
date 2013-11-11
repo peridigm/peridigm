@@ -1,7 +1,7 @@
 tplot
 Global_Kinetic_Energy
-Left_Block_Strain_Energy
-Right_Block_Strain_Energy
+Block_1_Stored_Elastic_Energy
+Block_2_Stored_Elastic_Energy
 overlay
 p
 raw

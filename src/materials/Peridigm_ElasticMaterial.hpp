@@ -141,6 +141,14 @@ namespace PeridigmNS {
                         const int* neighborhoodList,
                         PeridigmNS::DataManager& dataManager) const;
 
+    //! Compute stored elastic density energy.
+    virtual void
+    computeStoredElasticEnergyDensity(const double dt,
+                                      const int numOwnedPoints,
+                                      const int* ownedIDs,
+                                      const int* neighborhoodList,
+                                      PeridigmNS::DataManager& dataManager) const;
+
     //! Evaluate the jacobian.
     virtual void
     computeJacobian(const double dt,

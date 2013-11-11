@@ -9,6 +9,6 @@ NODAL VARIABLES absolute 1.0E-12
 	VelocityY       absolute 5.0E-8
 	VelocityZ       absolute 5.0E-8
 ELEMENT VARIABLES absolute 1.E-12
-	Weighted_Volume absolute 1.0E-12
-	Dilatation      absolute 1.0E-12
-	Strain_Energy   absolute 1.0E-12
+	Weighted_Volume         absolute 1.0E-12
+	Dilatation              absolute 1.0E-12
+	Stored_Elastic_Energy   absolute 1.0E-12
