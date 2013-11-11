@@ -91,33 +91,33 @@
   </ParameterList>
 
  <ParameterList name="Compute Class Parameters">
-    <ParameterList name="Block 1 Strain Energy">
+    <ParameterList name="Block 1 Stored Elastic Energy">
       <Parameter name="Compute Class" type="string" value="Block_Data"/>
       <Parameter name="Calculation Type" type="string" value="Sum"/>
       <Parameter name="Block" type="string" value="block_1"/>
-      <Parameter name="Variable" type="string" value="Strain_Energy"/>
-      <Parameter name="Output Label" type="string" value="Block_1_Strain_Energy"/>
+      <Parameter name="Variable" type="string" value="Stored_Elastic_Energy"/>
+      <Parameter name="Output Label" type="string" value="Block_1_Stored_Elastic_Energy"/>
     </ParameterList>
-    <ParameterList name="Block 2 Strain Energy">
+    <ParameterList name="Block 2 Stored Elastic Energy">
       <Parameter name="Compute Class" type="string" value="Block_Data"/>
       <Parameter name="Calculation Type" type="string" value="Sum"/>
       <Parameter name="Block" type="string" value="block_2"/>
-      <Parameter name="Variable" type="string" value="Strain_Energy"/>
-      <Parameter name="Output Label" type="string" value="Block_2_Strain_Energy"/>
+      <Parameter name="Variable" type="string" value="Stored_Elastic_Energy"/>
+      <Parameter name="Output Label" type="string" value="Block_2_Stored_Elastic_Energy"/>
     </ParameterList>
-    <ParameterList name="Block 3 Strain Energy">
+    <ParameterList name="Block 3 Stored Elastic Energy">
       <Parameter name="Compute Class" type="string" value="Block_Data"/>
       <Parameter name="Calculation Type" type="string" value="Sum"/>
       <Parameter name="Block" type="string" value="block_3"/>
-      <Parameter name="Variable" type="string" value="Strain_Energy"/>
-      <Parameter name="Output Label" type="string" value="Block_3_Strain_Energy"/>
+      <Parameter name="Variable" type="string" value="Stored_Elastic_Energy"/>
+      <Parameter name="Output Label" type="string" value="Block_3_Stored_Elastic_Energy"/>
     </ParameterList>
-    <ParameterList name="Block 4 Strain Energy">
+    <ParameterList name="Block 4 Stored Elastic Energy">
       <Parameter name="Compute Class" type="string" value="Block_Data"/>
       <Parameter name="Calculation Type" type="string" value="Sum"/>
       <Parameter name="Block" type="string" value="block_4"/>
-      <Parameter name="Variable" type="string" value="Strain_Energy"/>
-      <Parameter name="Output Label" type="string" value="Block_4_Strain_Energy"/>
+      <Parameter name="Variable" type="string" value="Stored_Elastic_Energy"/>
+      <Parameter name="Output Label" type="string" value="Block_4_Stored_Elastic_Energy"/>
     </ParameterList>
   </ParameterList>
 
@@ -133,7 +133,7 @@
 	  <Parameter name="Element_Id" type="bool" value="true"/>
 	  <Parameter name="Dilatation" type="bool" value="true"/>
 	  <Parameter name="Weighted_Volume" type="bool" value="true"/>
-	  <Parameter name="Strain_Energy" type="bool" value="true"/>
+	  <Parameter name="Stored_Elastic_Energy" type="bool" value="true"/>
 	</ParameterList>
   </ParameterList>
 
@@ -145,10 +145,10 @@
 	<Parameter name="Parallel Write" type="bool" value="true"/>
 	<ParameterList name="Output Variables">
 	  <Parameter name="Global_Kinetic_Energy" type="bool" value="true"/>
-	  <Parameter name="Block_1_Strain_Energy" type="bool" value="true"/>
-	  <Parameter name="Block_2_Strain_Energy" type="bool" value="true"/>
-	  <Parameter name="Block_3_Strain_Energy" type="bool" value="true"/>
-	  <Parameter name="Block_4_Strain_Energy" type="bool" value="true"/>
+	  <Parameter name="Block_1_Stored_Elastic_Energy" type="bool" value="true"/>
+	  <Parameter name="Block_2_Stored_Elastic_Energy" type="bool" value="true"/>
+	  <Parameter name="Block_3_Stored_Elastic_Energy" type="bool" value="true"/>
+	  <Parameter name="Block_4_Stored_Elastic_Energy" type="bool" value="true"/>
 	</ParameterList>
   </ParameterList>
 
