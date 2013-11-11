@@ -67,19 +67,19 @@
   </ParameterList>
 
  <ParameterList name="Compute Class Parameters">
-    <ParameterList name="Left Block Strain Energy">
+    <ParameterList name="Left Block Stored Elastic Energy">
       <Parameter name="Compute Class" type="string" value="Block_Data"/>
       <Parameter name="Calculation Type" type="string" value="Sum"/>
       <Parameter name="Block" type="string" value="block_1"/>
-      <Parameter name="Variable" type="string" value="Strain_Energy"/>
-      <Parameter name="Output Label" type="string" value="Left_Block_Strain_Energy"/>
+      <Parameter name="Variable" type="string" value="Stored_Elastic_Energy"/>
+      <Parameter name="Output Label" type="string" value="Block_1_Stored_Elastic_Energy"/>
     </ParameterList>
-    <ParameterList name="Right Block Strain Energy">
+    <ParameterList name="Right Block Stored Elastic Energy">
       <Parameter name="Compute Class" type="string" value="Block_Data"/>
       <Parameter name="Calculation Type" type="string" value="Sum"/>
       <Parameter name="Block" type="string" value="block_2"/>
-      <Parameter name="Variable" type="string" value="Strain_Energy"/>
-      <Parameter name="Output Label" type="string" value="Right_Block_Strain_Energy"/>
+      <Parameter name="Variable" type="string" value="Stored_Elastic_Energy"/>
+      <Parameter name="Output Label" type="string" value="Block_2_Stored_Elastic_Energy"/>
     </ParameterList>
   </ParameterList>
 
@@ -96,10 +96,10 @@
 	  <Parameter name="Proc_Num" type="bool" value="true"/>
 	  <Parameter name="Dilatation" type="bool" value="true"/>
 	  <Parameter name="Weighted_Volume" type="bool" value="true"/>
-      <Parameter name="Strain_Energy" type="bool" value="true"/>
-      <Parameter name="Global_Kinetic_Energy" type="bool" value="true"/>      <!-- mJ -->
-      <Parameter name="Left_Block_Strain_Energy" type="bool" value="true"/>   <!-- mJ -->
-      <Parameter name="Right_Block_Strain_Energy" type="bool" value="true"/>  <!-- mJ -->
+      <Parameter name="Stored_Elastic_Energy" type="bool" value="true"/>
+      <Parameter name="Global_Kinetic_Energy" type="bool" value="true"/>           <!-- mJ -->
+      <Parameter name="Block_1_Stored_Elastic_Energy" type="bool" value="true"/>   <!-- mJ -->
+      <Parameter name="Block_2_Stored_Elastic_Energy" type="bool" value="true"/>   <!-- mJ -->
 	</ParameterList>
   </ParameterList>
 
@@ -110,9 +110,9 @@
 	<Parameter name="Output Frequency" type="int" value="100"/>
 	<Parameter name="Parallel Write" type="bool" value="true"/>
 	<ParameterList name="Output Variables">
-      <Parameter name="Global_Kinetic_Energy" type="bool" value="true"/>      <!-- mJ -->
-      <Parameter name="Left_Block_Strain_Energy" type="bool" value="true"/>   <!-- mJ -->
-      <Parameter name="Right_Block_Strain_Energy" type="bool" value="true"/>  <!-- mJ -->
+      <Parameter name="Global_Kinetic_Energy" type="bool" value="true"/>           <!-- mJ -->
+      <Parameter name="Block_1_Stored_Elastic_Energy" type="bool" value="true"/>   <!-- mJ -->
+      <Parameter name="Block_2_Stored_Elastic_Energy" type="bool" value="true"/>   <!-- mJ -->
 	</ParameterList>
   </ParameterList>
 

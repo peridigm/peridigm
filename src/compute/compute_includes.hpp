@@ -18,4 +18,6 @@
 #include "./compute/Peridigm_Compute_Block_Data.hpp"
 #include "./compute/Peridigm_Compute_Deformation_Gradient.hpp"
 #include "./compute/Peridigm_Compute_Strain_Energy.hpp"
+#include "./compute/Peridigm_Compute_Stored_Elastic_Energy_Density.hpp"
+#include "./compute/Peridigm_Compute_Stored_Elastic_Energy.hpp"
 #include "./compute/Peridigm_Compute.hpp"

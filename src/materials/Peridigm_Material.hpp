@@ -144,6 +144,14 @@ namespace PeridigmNS {
                         const int* neighborhoodList,
                         PeridigmNS::DataManager& dataManager) const {}
 
+    //! Compute stored elastic energy density
+    virtual void
+    computeStoredElasticEnergyDensity(const double dt,
+                                      const int numOwnedPoints,
+                                      const int* ownedIDs,
+                                      const int* neighborhoodList,
+                                      PeridigmNS::DataManager& dataManager) const {}
+
     //! Compute the bulk modulus given any two elastic constants from among:  bulk modulus, shear modulus, Young's modulus, Poisson's ratio.
     double calculateBulkModulus(const Teuchos::ParameterList & params) const;
 
