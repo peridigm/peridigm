@@ -133,14 +133,6 @@ namespace PeridigmNS {
 		 const int* neighborhoodList,
                  PeridigmNS::DataManager& dataManager) const;
 
-    //! Compute strain energy.
-    virtual void
-    computeStrainEnergy(const double dt,
-                        const int numOwnedPoints,
-                        const int* ownedIDs,
-                        const int* neighborhoodList,
-                        PeridigmNS::DataManager& dataManager) const;
-
     //! Compute stored elastic density energy.
     virtual void
     computeStoredElasticEnergyDensity(const double dt,
