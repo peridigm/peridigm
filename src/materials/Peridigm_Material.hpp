@@ -136,14 +136,6 @@ namespace PeridigmNS {
                     PeridigmNS::SerialMatrix& jacobian,
                     PeridigmNS::Material::JacobianType jacobianType = PeridigmNS::Material::FULL_MATRIX) const;
 
-    //! Compute strain energy.
-    virtual void
-    computeStrainEnergy(const double dt,
-                        const int numOwnedPoints,
-                        const int* ownedIDs,
-                        const int* neighborhoodList,
-                        PeridigmNS::DataManager& dataManager) const {}
-
     //! Compute stored elastic energy density
     virtual void
     computeStoredElasticEnergyDensity(const double dt,

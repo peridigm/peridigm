@@ -55,4 +55,4 @@ Output
     Element_Id "true"
     Dilatation "true"
     Weighted_Volume "true"
-    Strain_Energy "true"
+    Stored_Elastic_Energy "true"
