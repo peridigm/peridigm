@@ -51,7 +51,7 @@ target_link_libraries(ut_QuickGrid_loadBal_np8_4x4x4  PdNeigh QuickGrid Utilitie
 add_test (ut_QuickGrid_loadBal_np8_4x4x4 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 8 ./ut_QuickGrid_loadBal_np8_4x4x4)
 
 add_executable(utFinitePlane utFinitePlane.cxx)
-target_link_libraries(utFinitePlane PdNeigh ${UT_REQUIRED_LIBS})
+target_link_libraries(utFinitePlane PdNeigh ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 add_test (utFinitePlane python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utFinitePlane)
 
 add_executable(utFinitePlaneFilter utFinitePlaneFilter)
@@ -75,13 +75,13 @@ target_link_libraries(utZoltanQuery_packUnpackPointsMultiFunction PdNeigh QuickG
 add_test (utZoltanQuery_packUnpackPointsMultiFunction python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utZoltanQuery_packUnpackPointsMultiFunction)
 
 add_executable(ut_point ut_point.cpp)
-target_link_libraries(ut_point ${UT_REQUIRED_LIBS})
+target_link_libraries(ut_point  ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 add_test (ut_point python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./ut_point)
 
 add_executable(ut_kdtree_rectangular_search ut_kdtree_rectangular_search.cpp)
-target_link_libraries(ut_kdtree_rectangular_search ${UT_REQUIRED_LIBS})
+target_link_libraries(ut_kdtree_rectangular_search ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 add_test (ut_kdtree_rectangular_search python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./ut_kdtree_rectangular_search)
 
 add_executable(ut_kdtree_spherical_search ut_kdtree_spherical_search.cpp)
-target_link_libraries(ut_kdtree_spherical_search ${UT_REQUIRED_LIBS})
+target_link_libraries(ut_kdtree_spherical_search ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 add_test (ut_kdtree_spherical_search python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./ut_kdtree_spherical_search)

@@ -43,10 +43,9 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
 #include <iostream>
 #include <cmath>
 #include <map>
@@ -70,7 +69,6 @@
 
 
 using std::tr1::shared_ptr;
-using namespace boost::unit_test;
 
 using namespace Pdut;
 using std::cout;
@@ -104,14 +102,15 @@ QUICKGRID::QuickGridData getGrid() {
 	return decomp;
 }
 
-void assertOriginalMesh() {
+TEUCHOS_UNIT_TEST(ReloadBalance_np4, AssertOriginalMesh) {
+
 	QUICKGRID::QuickGridData decomp = getGrid();
-	BOOST_CHECK(16==decomp.globalNumPoints);
+	TEST_ASSERT(16==decomp.globalNumPoints);
 
 	if(1==myRank){
 		size_t numPoints = decomp.numPoints;
-		BOOST_CHECK(numPoints==decomp.numPoints);
-		BOOST_CHECK(25==decomp.sizeNeighborhoodList);
+		TEST_ASSERT(numPoints==decomp.numPoints);
+		TEST_ASSERT(25==decomp.sizeNeighborhoodList);
 		int myIds[] = {0,1,4,5};
 		set<int> ids(myIds,myIds+numPoints);
 		set<int>::iterator i=ids.begin();
@@ -119,41 +118,41 @@ void assertOriginalMesh() {
 		int *gIds = decomp.myGlobalIDs.get();
 		for(size_t p=0;p<numPoints;p++,gIds++){
 //			cout << "myRank, gIds, localId = " << myRank << ", " << *gIds << ", " << p << endl;
-			BOOST_CHECK(iEnd!=ids.find(*gIds));
+			TEST_ASSERT(iEnd!=ids.find(*gIds));
 		}
 	}
 	if(0==myRank){
 		size_t numPoints = decomp.numPoints;
-		BOOST_CHECK(numPoints==decomp.numPoints);
-		BOOST_CHECK(25==decomp.sizeNeighborhoodList);
+		TEST_ASSERT(numPoints==decomp.numPoints);
+		TEST_ASSERT(25==decomp.sizeNeighborhoodList);
 		int myIds[] = {2,3,6,7};
 		set<int> ids(myIds,myIds+numPoints);
 		set<int>::iterator i=ids.begin();
 		set<int>::iterator iEnd=ids.end();
 		int *gIds = decomp.myGlobalIDs.get();
 		for(size_t p=0;p<numPoints;p++,gIds++){
-			BOOST_CHECK(iEnd!=ids.find(*gIds));
+			TEST_ASSERT(iEnd!=ids.find(*gIds));
 		}
 
 	}
 	if(2==myRank){
 		size_t numPoints = decomp.numPoints;
-		BOOST_CHECK(numPoints==decomp.numPoints);
-		BOOST_CHECK(25==decomp.sizeNeighborhoodList);
+		TEST_ASSERT(numPoints==decomp.numPoints);
+		TEST_ASSERT(25==decomp.sizeNeighborhoodList);
 		int myIds[] = {8,9,12,13};
 		set<int> ids(myIds,myIds+numPoints);
 		set<int>::iterator i=ids.begin();
 		set<int>::iterator iEnd=ids.end();
 		int *gIds = decomp.myGlobalIDs.get();
 		for(size_t p=0;p<numPoints;p++,gIds++){
-			BOOST_CHECK(iEnd!=ids.find(*gIds));
+			TEST_ASSERT(iEnd!=ids.find(*gIds));
 		}
 
 	}
 	if(3==myRank){
 		size_t numPoints = decomp.numPoints;
-		BOOST_CHECK(numPoints==decomp.numPoints);
-		BOOST_CHECK(25==decomp.sizeNeighborhoodList);
+		TEST_ASSERT(numPoints==decomp.numPoints);
+		TEST_ASSERT(25==decomp.sizeNeighborhoodList);
 		int myIds[] = {10,11,14,15};
 		set<int> ids(myIds,myIds+numPoints);
 		set<int>::iterator i=ids.begin();
@@ -161,13 +160,14 @@ void assertOriginalMesh() {
 		int *gIds = decomp.myGlobalIDs.get();
 		for(size_t p=0;p<numPoints;p++,gIds++){
 //			cout << "myRank, gIds, localId = " << myRank << ", " << *gIds << ", " << p << endl;
-			BOOST_CHECK(iEnd!=ids.find(*gIds));
+			TEST_ASSERT(iEnd!=ids.find(*gIds));
 		}
 	}
 
 }
 
-void moveCoordinatesAndReLoadBalance() {
+TEUCHOS_UNIT_TEST(ReloadBalance_np4, MoveCoordinatesAndReLoadBalance) {
+
 	QUICKGRID::QuickGridData decomp = getGrid();
 	/*
 	 * Swap some coordinates to that new partition is required
@@ -238,9 +238,9 @@ void moveCoordinatesAndReLoadBalance() {
 	 */
 	if(1==myRank){
 		int numPoints = decomp.numPoints;
-		BOOST_CHECK(numPoints==4);
-		BOOST_CHECK(4==list.get_num_owned_points());
-		BOOST_CHECK(25==list.get_size_neighborhood_list());
+		TEST_ASSERT(numPoints==4);
+		TEST_ASSERT(4==list.get_num_owned_points());
+		TEST_ASSERT(25==list.get_size_neighborhood_list());
 //		cout << "myRank, decomp.sizeNeighborhoodList = " << myRank << ", " << decomp.sizeNeighborhoodList  << endl;
 
 		int myIds[] = {15,1,4,5};
@@ -260,23 +260,23 @@ void moveCoordinatesAndReLoadBalance() {
 		int *gIds = decomp.myGlobalIDs.get();
 		int *neigh = list.get_neighborhood().get();
 		for(int p=0;p<numPoints;p++,gIds++){
-			BOOST_CHECK(iEnd!=ids.find(*gIds));
+			TEST_ASSERT(iEnd!=ids.find(*gIds));
 			set<int>& gIdNeigh = neighMap[*gIds];
 			size_t numNeigh = *neigh; neigh++;
 //			cout << "myRank, gIds, localId, numNeigh = " << myRank << ", " << *gIds << ", " << p << ", " << numNeigh << endl;
-			BOOST_CHECK(gIdNeigh.size() == numNeigh);
+			TEST_ASSERT(gIdNeigh.size() == numNeigh);
 			set<int>::iterator neighIter=gIdNeigh.begin();
 			set<int>::iterator neighEnd=gIdNeigh.end();
 			for(size_t n=0;n<numNeigh;n++,neigh++){
-				BOOST_CHECK(neighEnd!=gIdNeigh.find(*neigh));
+				TEST_ASSERT(neighEnd!=gIdNeigh.find(*neigh));
 			}
 		}
 	}
 	if(0==myRank){
 		int numPoints = decomp.numPoints;
-		BOOST_CHECK(numPoints==4);
-		BOOST_CHECK(4==list.get_num_owned_points());
-		BOOST_CHECK(25==list.get_size_neighborhood_list());
+		TEST_ASSERT(numPoints==4);
+		TEST_ASSERT(4==list.get_num_owned_points());
+		TEST_ASSERT(25==list.get_size_neighborhood_list());
 //		cout << "myRank, decomp.sizeNeighborhoodList = " << myRank << ", " << decomp.sizeNeighborhoodList  << endl;
 		int myIds[] = {2,3,6,7};
 		int n2[] = {1,3,5,6,7};
@@ -295,16 +295,16 @@ void moveCoordinatesAndReLoadBalance() {
 		int *gIds = decomp.myGlobalIDs.get();
 		int *neigh = list.get_neighborhood().get();
 		for(int p=0;p<numPoints;p++,gIds++){
-			BOOST_CHECK(iEnd!=ids.find(*gIds));
+			TEST_ASSERT(iEnd!=ids.find(*gIds));
 			set<int>& gIdNeigh = neighMap[*gIds];
 			int numNeigh = *neigh; neigh++;
 //			cout << "myRank, gIds, localId, numNeigh = " << myRank << ", " << *gIds << ", " << p << ", " << numNeigh << endl;
 
-			BOOST_CHECK((int)gIdNeigh.size() == numNeigh);
+			TEST_ASSERT((int)gIdNeigh.size() == numNeigh);
 			set<int>::iterator neighIter=gIdNeigh.begin();
 			set<int>::iterator neighEnd=gIdNeigh.end();
 			for(int n=0;n<numNeigh;n++,neigh++){
-				BOOST_CHECK(neighEnd!=gIdNeigh.find(*neigh));
+				TEST_ASSERT(neighEnd!=gIdNeigh.find(*neigh));
 			}
 		}
 
@@ -312,9 +312,9 @@ void moveCoordinatesAndReLoadBalance() {
 	}
 	if(2==myRank){
 		int numPoints = decomp.numPoints;
-		BOOST_CHECK(numPoints==4);
-		BOOST_CHECK(4==list.get_num_owned_points());
-		BOOST_CHECK(25==list.get_size_neighborhood_list());
+		TEST_ASSERT(numPoints==4);
+		TEST_ASSERT(4==list.get_num_owned_points());
+		TEST_ASSERT(25==list.get_size_neighborhood_list());
 		int myIds[] = {8,9,12,13};
 		int n8[] = {4,5,9,12,13};
 		int n9[] = {4,5,6,8,10,12,13,14};
@@ -332,14 +332,14 @@ void moveCoordinatesAndReLoadBalance() {
 		int *gIds = decomp.myGlobalIDs.get();
 		int *neigh = list.get_neighborhood().get();
 		for(int p=0;p<numPoints;p++,gIds++){
-			BOOST_CHECK(iEnd!=ids.find(*gIds));
+			TEST_ASSERT(iEnd!=ids.find(*gIds));
 			set<int>& gIdNeigh = neighMap[*gIds];
 			int numNeigh = *neigh; neigh++;
-			BOOST_CHECK((int)gIdNeigh.size() == numNeigh);
+			TEST_ASSERT((int)gIdNeigh.size() == numNeigh);
 			set<int>::iterator neighIter=gIdNeigh.begin();
 			set<int>::iterator neighEnd=gIdNeigh.end();
 			for(int n=0;n<numNeigh;n++,neigh++){
-				BOOST_CHECK(neighEnd!=gIdNeigh.find(*neigh));
+				TEST_ASSERT(neighEnd!=gIdNeigh.find(*neigh));
 			}
 		}
 
@@ -347,9 +347,9 @@ void moveCoordinatesAndReLoadBalance() {
 
 	if(3==myRank){
 		int numPoints = decomp.numPoints;
-		BOOST_CHECK(numPoints==4);
-		BOOST_CHECK(4==list.get_num_owned_points());
-		BOOST_CHECK(25==list.get_size_neighborhood_list());
+		TEST_ASSERT(numPoints==4);
+		TEST_ASSERT(4==list.get_num_owned_points());
+		TEST_ASSERT(25==list.get_size_neighborhood_list());
 
 		int myIds[] = {10,11,14,0};
 		int n10[] = {5,6,7,9,11,13,14,0};
@@ -367,14 +367,14 @@ void moveCoordinatesAndReLoadBalance() {
 		int *gIds = decomp.myGlobalIDs.get();
 		int *neigh = list.get_neighborhood().get();
 		for(int p=0;p<numPoints;p++,gIds++){
-			BOOST_CHECK(iEnd!=ids.find(*gIds));
+			TEST_ASSERT(iEnd!=ids.find(*gIds));
 			set<int>& gIdNeigh = neighMap[*gIds];
 			int numNeigh = *neigh; neigh++;
-			BOOST_CHECK((int)gIdNeigh.size() == numNeigh);
+			TEST_ASSERT((int)gIdNeigh.size() == numNeigh);
 			set<int>::iterator neighIter=gIdNeigh.begin();
 			set<int>::iterator neighEnd=gIdNeigh.end();
 			for(int n=0;n<numNeigh;n++,neigh++){
-				BOOST_CHECK(neighEnd!=gIdNeigh.find(*neigh));
+				TEST_ASSERT(neighEnd!=gIdNeigh.find(*neigh));
 			}
 		}
 
@@ -383,26 +383,7 @@ void moveCoordinatesAndReLoadBalance() {
 }
 
 
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success=true;
 
-	test_suite* proc = BOOST_TEST_SUITE( "utReloadBalance_np4" );
-	proc->add(BOOST_TEST_CASE( &assertOriginalMesh ));
-	proc->add(BOOST_TEST_CASE( &moveCoordinatesAndReLoadBalance ));
-	framework::master_test_suite().add( proc );
-	return success;
-
-}
-
-
-
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
 
 int main
 (
@@ -428,6 +409,6 @@ int main
 	}
 
 	// Initialize UTF
-	return unit_test_main( init_unit_test, argc, argv );
+	return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }
 

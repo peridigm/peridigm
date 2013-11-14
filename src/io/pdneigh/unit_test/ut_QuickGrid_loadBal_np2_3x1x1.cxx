@@ -43,19 +43,20 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+
 #include "pdneigh/PdZoltan.h"
 #include "mesh_input/quick_grid/QuickGrid.h"
 #include "pdneigh/NeighborhoodList.h"
 #include "PdutMpiFixture.h"
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
 #include <iostream>
+
 
 using namespace Pdut;
 using std::tr1::shared_ptr;
-using namespace boost::unit_test;
+
 using std::cout;
 
 static size_t myRank;
@@ -98,21 +99,26 @@ QUICKGRID::QuickGridData getGrid() {
 	return gridData;
 }
 
+TEUCHOS_UNIT_TEST(QuickGrid_loadBal_np2_3x1x1, p0) {
 
-void p0()
-{
+
+       // TEST_COMPARE(myRank, ==, 0);
+
+        if(myRank != 0){
+           return;
+        }
 	QUICKGRID::QuickGridData gridData = getGrid();
 
-	BOOST_CHECK(0 == myRank);
+	TEST_ASSERT(0 == myRank);
 	/*
 	 * problem dimension is 3
 	 */
-	BOOST_CHECK(3 == gridData.dimension);
+	TEST_ASSERT(3 == gridData.dimension);
 
 	/*
 	 * Total number of cells in test
 	 */
-	BOOST_CHECK(nx*ny*nz == gridData.globalNumPoints);
+	TEST_ASSERT(nx*ny*nz == gridData.globalNumPoints);
 
 	/*
 	 * Number of cells on this processor
@@ -122,12 +128,12 @@ void p0()
 	/*
 	 * Zoltan load balances this such that 2 points end up on P0
 	 */
-	BOOST_CHECK(2 == myNumPoints);
+	TEST_ASSERT(2 == myNumPoints);
 
 	/*
 	 * assert length of neighborhood list on this processor
 	 */
-	BOOST_CHECK( _neighborListSizeP0 == gridData.sizeNeighborhoodList );
+	TEST_ASSERT( _neighborListSizeP0 == gridData.sizeNeighborhoodList );
 
 	/*
 	 * Assert global ids on this processor
@@ -139,12 +145,12 @@ void p0()
 	int *_neighAns = _neighborList;
 	int start = 0;
 	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++){
-		BOOST_CHECK( *gIdsPtr == (int)id );
+		TEST_ASSERT( *gIdsPtr == (int)id );
 		int numNeigh = *_neighAns;
 
-		BOOST_CHECK( numNeigh == *neighborhoodList ); _neighAns++; neighborhoodList++;
+		TEST_ASSERT( numNeigh == *neighborhoodList ); _neighAns++; neighborhoodList++;
 		for(int i=0;i<numNeigh;i++){
-			BOOST_CHECK( *_neighAns == *neighborhoodList ); _neighAns++; neighborhoodList++;
+			TEST_ASSERT( *_neighAns == *neighborhoodList ); _neighAns++; neighborhoodList++;
 		}
 		/*
 		 * coordinates
@@ -157,37 +163,45 @@ void p0()
 	int id=0;
 	const double tolerance = 1.0e-15;
 	double *r = gridData.myX.get();
-	BOOST_CHECK_CLOSE(r[3*id+0],x1,tolerance);
-	BOOST_CHECK_CLOSE(r[3*id+1],y,tolerance);
-	BOOST_CHECK_CLOSE(r[3*id+2],z,tolerance);
+	TEST_FLOATING_EQUALITY(r[3*id+0],x1,tolerance);
+	TEST_FLOATING_EQUALITY(r[3*id+1],y,tolerance);
+	TEST_FLOATING_EQUALITY(r[3*id+2],z,tolerance);
 	id=1;
-	BOOST_CHECK_CLOSE(r[3*id+0],x2,tolerance);
-	BOOST_CHECK_CLOSE(r[3*id+1],y,tolerance);
-	BOOST_CHECK_CLOSE(r[3*id+2],z,tolerance);
+	TEST_FLOATING_EQUALITY(r[3*id+0],x2,tolerance);
+	TEST_FLOATING_EQUALITY(r[3*id+1],y,tolerance);
+	TEST_FLOATING_EQUALITY(r[3*id+2],z,tolerance);
 
 	// assert cell volumes
 	double *v = gridData.cellVolume.get();
 	double *end = v+myNumPoints;
 	for(; v != end ; v++){
-		BOOST_CHECK_CLOSE(*v,_cellVolume,tolerance);
+		TEST_FLOATING_EQUALITY(*v,_cellVolume,tolerance);
 	}
 
 }
 
-void p1()
-{
-	QUICKGRID::QuickGridData gridData = getGrid();
 
-	BOOST_CHECK(1 == myRank);
+TEUCHOS_UNIT_TEST(QuickGrid_loadBal_np2_3x1x1, p1) {
+
+
+        // TEST_COMPARE(myRank, ==, 1);
+
+         if(myRank != 1){
+            return;
+         }
+   
+        QUICKGRID::QuickGridData gridData = getGrid();
+
+	TEST_ASSERT(1 == myRank);
 	/*
 	 * problem dimension is 3
 	 */
-	BOOST_CHECK(3 == gridData.dimension);
+	TEST_ASSERT(3 == gridData.dimension);
 
 	/*
 	 * Total number of cells in test
 	 */
-	BOOST_CHECK(nx*ny*nz == gridData.globalNumPoints);
+	TEST_ASSERT(nx*ny*nz == gridData.globalNumPoints);
 
 	/*
 	 * Number of cells on this processor
@@ -197,12 +211,12 @@ void p1()
 	/*
 	 * Zoltan load balances this such that 1 points end up on P1
 	 */
-	BOOST_CHECK(1 == myNumPoints);
+	TEST_ASSERT(1 == myNumPoints);
 
 	/*
 	 * assert length of neighborhood list on this processor
 	 */
-	BOOST_CHECK( _neighborListSizeP1 == gridData.sizeNeighborhoodList );
+	TEST_ASSERT( _neighborListSizeP1 == gridData.sizeNeighborhoodList );
 
 	/*
 	 * Assert global ids on this processor
@@ -214,11 +228,11 @@ void p1()
 	int *_neighAns = &_neighborList[5];
 	int start = 2;
 	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++){
-		BOOST_CHECK( *gIdsPtr == (int)id );
+		TEST_ASSERT( *gIdsPtr == (int)id );
 		int numNeigh = *_neighAns;
-		BOOST_CHECK( numNeigh == *neighborhoodList ); _neighAns++; neighborhoodList++;
+		TEST_ASSERT( numNeigh == *neighborhoodList ); _neighAns++; neighborhoodList++;
 		for(int i=0;i<numNeigh;i++){
-			BOOST_CHECK( *_neighAns == *neighborhoodList ); _neighAns++; neighborhoodList++;
+			TEST_ASSERT( *_neighAns == *neighborhoodList ); _neighAns++; neighborhoodList++;
 		}
 	}
 
@@ -228,44 +242,20 @@ void p1()
 	int id=0; // this is a local id
 	const double tolerance = 1.0e-15;
 	double *r = gridData.myX.get();
-	BOOST_CHECK_CLOSE(r[3*id+0],x3,tolerance);
-	BOOST_CHECK_CLOSE(r[3*id+1],y,tolerance);
-	BOOST_CHECK_CLOSE(r[3*id+2],z,tolerance);
+        TEST_FLOATING_EQUALITY(r[3*id+0],x3,tolerance);
+	TEST_FLOATING_EQUALITY(r[3*id+1],y,tolerance);
+	TEST_FLOATING_EQUALITY(r[3*id+2],z,tolerance);
 
 	// assert cell volumes
 	double *v = gridData.cellVolume.get();
 	double *end = v+myNumPoints;
 	for(; v != end ; v++){
-		BOOST_CHECK_CLOSE(*v,_cellVolume,tolerance);
+		TEST_FLOATING_EQUALITY(*v,_cellVolume,tolerance);
 	}
 
 }
 
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success=true;
-	if(0 == myRank){
-		test_suite* proc = BOOST_TEST_SUITE( "ut_QuickGrid_loadBal_np2_3x1x1p0" );
-		proc->add(BOOST_TEST_CASE( &p0 ));
-		framework::master_test_suite().add( proc );
-		return success;
-	}
-	if(1 == myRank){
-		test_suite* proc = BOOST_TEST_SUITE( "ut_QuickGrid_loadBal_np2_3x1x1p1" );
-		proc->add(BOOST_TEST_CASE( &p1 ));
-		framework::master_test_suite().add( proc );
-		return success;
-	}
-	return success;
-}
 
-
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
 
 int main
 (
@@ -293,5 +283,6 @@ int main
 
 
 	// Initialize UTF
-	return unit_test_main( init_unit_test, argc, argv );
+	
+        return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }

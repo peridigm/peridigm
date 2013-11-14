@@ -43,10 +43,9 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
 #include <Epetra_SerialComm.h>
 #include <Teuchos_RCP.hpp>
 #include "../PdZoltan.h"
@@ -59,7 +58,6 @@
 
 using namespace PdBondFilter;
 using std::tr1::shared_ptr;
-using namespace boost::unit_test;
 using std::cout;
 
 static int myRank = 0;
@@ -84,6 +82,20 @@ const int numCells = nx*ny*nz;
 const double SCALE=1.1*sqrt(3);
 const double horizon = SCALE*xSpec.getCellSize();
 
+// known local ids
+	int ids[] = {0,1,2,3,4,5,6,7};
+
+double x[]={
+				0.0,0.0,0.0,
+				1.0,0.0,0.0,
+				0.0,1.0,0.0,
+				1.0,1.0,0.0,
+				0.0,0.0,1.0,
+				1.0,0.0,1.0,
+				0.0,1.0,1.0,
+				1.0,1.0,1.0
+		};
+
 template<class T>
 struct NonDeleter{
 	void operator()(T* d) {}
@@ -99,32 +111,6 @@ QUICKGRID::QuickGridData getGrid() {
 
 	// This load-balances
 	decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
-
-	{
-		/*
-		 * SANITY CHECK on Expected coordinates and IDs
-		 */
-		int numOverlapPoints = decomp.numPoints;
-		int ids[] = {0,1,2,3,4,5,6,7};
-		double x[]={
-				0.0,0.0,0.0,
-				1.0,0.0,0.0,
-				0.0,1.0,0.0,
-				1.0,1.0,0.0,
-				0.0,0.0,1.0,
-				1.0,0.0,1.0,
-				0.0,1.0,1.0,
-				1.0,1.0,1.0
-		};
-		BOOST_CHECK(8==numOverlapPoints);
-		for(int j=0;j<numOverlapPoints;j++){
-			BOOST_CHECK(decomp.myGlobalIDs.get()[j]==ids[j]);
-			BOOST_CHECK(decomp.myX.get()[j*3+0]==x[j*3+0]);
-			BOOST_CHECK(decomp.myX.get()[j*3+1]==x[j*3+1]);
-			BOOST_CHECK(decomp.myX.get()[j*3+2]==x[j*3+2]);
-		}
-
-	}
 
 	return decomp;
 }
@@ -174,9 +160,25 @@ FinitePlane getCase_3a(){
 	return FinitePlane(n,r0,ub,b,a);
 }
 
-void case_1a() {
 
+TEUCHOS_UNIT_TEST(FinitePlaneFilter, Case_1a) {
+
+       
 	QUICKGRID::QuickGridData decomp = getGrid();
+        int numOverlapPoints = decomp.numPoints;
+
+        /*
+         * SANITY CHECK on Expected coordinates and IDs
+         */
+
+        TEST_ASSERT(8==numOverlapPoints);
+		for(int j=0;j<numOverlapPoints;j++){
+			TEST_ASSERT(decomp.myGlobalIDs.get()[j]==ids[j]);
+			TEST_ASSERT(decomp.myX.get()[j*3+0]==x[j*3+0]);
+			TEST_ASSERT(decomp.myX.get()[j*3+1]==x[j*3+1]);
+			TEST_ASSERT(decomp.myX.get()[j*3+2]==x[j*3+2]);
+		}
+
 	FinitePlane plane = getCase_1a();
 	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(plane));
 
@@ -184,7 +186,7 @@ void case_1a() {
 	 * Create KdTree; Since this is serial xOwned = xOverlap and numOwned = numOverlap
 	 */
 	double* xOverlapPtr = decomp.myX.get();
-	int numOverlapPoints = decomp.numPoints;
+	
 
     PeridigmNS::ZoltanSearchTree searchTree(numOverlapPoints, xOverlapPtr);
 
@@ -192,8 +194,7 @@ void case_1a() {
 	 * ANSWERS for each ID
 	 * list size for each point
 	 */
-	// known local ids
-	int ids[] = {0,1,2,3,4,5,6,7};
+	
 	bool markForExclusion[8];
 	// Expected: filter should evaluate this list size for each id
 	int size[] = {4,2,2,4,4,2,2,4};
@@ -230,7 +231,7 @@ void case_1a() {
 			 */
 			for(int j=0;j<8;j++){
 //				cout << "filter flag, expected flag = " << *(markForExclusion+j) << ", " << *(flags+j) << endl;
-				BOOST_CHECK(*(flags+j)==*(markForExclusion+j));
+				TEST_ASSERT(*(flags+j)==*(markForExclusion+j));
 			}
 		}
 	}
@@ -254,7 +255,7 @@ void case_1a() {
 		 * neighbors in order to store 'num neighbors'
 		 * in the list.
 		 */
-		BOOST_CHECK((static_cast<int>(size[n])-1)==numNeigh);
+		TEST_ASSERT((static_cast<int>(size[n])-1)==numNeigh);
 
 		/*
 		 * Expected
@@ -262,7 +263,7 @@ void case_1a() {
 		bool *flags = expectedFlags[n];
 		for(int j=0;j<numNeigh;j++,neigh++){
           int id = *neigh;
-          BOOST_CHECK((flags+id));
+          TEST_ASSERT((flags+id));
 		}
 
 	}
@@ -270,17 +271,32 @@ void case_1a() {
 
 }
 
-void case_1b() {
+
+TEUCHOS_UNIT_TEST(FinitePlaneFilter, Case_1b) {
 
   QUICKGRID::QuickGridData decomp = getGrid();
+
+  int numOverlapPoints = decomp.numPoints;
+
+        /*
+         * SANITY CHECK on Expected coordinates and IDs
+         */
+
+        TEST_ASSERT(8==numOverlapPoints);
+		for(int j=0;j<numOverlapPoints;j++){
+			TEST_ASSERT(decomp.myGlobalIDs.get()[j]==ids[j]);
+			TEST_ASSERT(decomp.myX.get()[j*3+0]==x[j*3+0]);
+			TEST_ASSERT(decomp.myX.get()[j*3+1]==x[j*3+1]);
+			TEST_ASSERT(decomp.myX.get()[j*3+2]==x[j*3+2]);
+		}
 	FinitePlane plane = getCase_1b();
-    Teuchos::RCP<BondFilter> filterPtr=Teuchos::rcp<BondFilter>(new FinitePlaneFilter(plane));
+        Teuchos::RCP<BondFilter> filterPtr=Teuchos::rcp<BondFilter>(new FinitePlaneFilter(plane));
 
 	/*
 	 * Create KdTree; Since this is serial xOwned = xOverlap and numOwned = numOverlap
 	 */
 	double* xOverlapPtr = decomp.myX.get();
-	int numOverlapPoints = decomp.numPoints;
+	
 
     PeridigmNS::ZoltanSearchTree searchTree(numOverlapPoints, xOverlapPtr);
 
@@ -288,8 +304,7 @@ void case_1b() {
 	 * ANSWERS for each ID
 	 * list size for each point
 	 */
-	// known local ids
-	int ids[] = {0,1,2,3,4,5,6,7};
+	
 	bool markForExclusion[8];
 	// Expected: filter should evaluate this list size for each id
 	int size[] = {2,4,4,2,2,4,4,2};
@@ -327,7 +342,7 @@ void case_1b() {
 			 */
 			for(int j=0;j<8;j++){
 //				cout << "filter flag, expected flag = " << *(markForExclusion+j) << ", " << *(flags+j) << endl;
-				BOOST_CHECK(*(flags+j)==*(markForExclusion+j));
+				TEST_ASSERT(*(flags+j)==*(markForExclusion+j));
 			}
 		}
 	}
@@ -351,7 +366,7 @@ void case_1b() {
 		 * neighbors in order to store 'num neighbors'
 		 * in the list.
 		 */
-		BOOST_CHECK((size[n]-1)==numNeigh);
+		TEST_ASSERT((size[n]-1)==numNeigh);
 
 		/*
 		 * Expected
@@ -359,7 +374,7 @@ void case_1b() {
 		bool *flags = expectedFlags[n];
 		for(int j=0;j<numNeigh;j++,neigh++){
 			int id = *neigh;
-			BOOST_CHECK((flags+id));
+			TEST_ASSERT((flags+id));
 		}
 
 	}
@@ -367,9 +382,22 @@ void case_1b() {
 
 }
 
-void case_2a() {
+TEUCHOS_UNIT_TEST(FinitePlaneFilter, Case_2a) {
 
   QUICKGRID::QuickGridData decomp = getGrid();
+  int numOverlapPoints = decomp.numPoints;
+
+        /*
+         * SANITY CHECK on Expected coordinates and IDs
+         */
+
+        TEST_ASSERT(8==numOverlapPoints);
+		for(int j=0;j<numOverlapPoints;j++){
+			TEST_ASSERT(decomp.myGlobalIDs.get()[j]==ids[j]);
+			TEST_ASSERT(decomp.myX.get()[j*3+0]==x[j*3+0]);
+			TEST_ASSERT(decomp.myX.get()[j*3+1]==x[j*3+1]);
+			TEST_ASSERT(decomp.myX.get()[j*3+2]==x[j*3+2]);
+		}
 	FinitePlane plane = getCase_2a();
     Teuchos::RCP<BondFilter> filterPtr=Teuchos::rcp<BondFilter>(new FinitePlaneFilter(plane));
 
@@ -377,7 +405,7 @@ void case_2a() {
 	 * Create KdTree; Since this is serial xOwned = xOverlap and numOwned = numOverlap
 	 */
 	double* xOverlapPtr = decomp.myX.get();
-	int numOverlapPoints = decomp.numPoints;
+	
 
     PeridigmNS::ZoltanSearchTree searchTree(numOverlapPoints, xOverlapPtr);
 
@@ -386,7 +414,7 @@ void case_2a() {
 	 * list size for each point
 	 */
 	// known local ids
-	int ids[] = {0,1,2,3,4,5,6,7};
+	
 	bool markForExclusion[8];
 	// Expected: filter should evaluate this list size for each id
 	int size[] = {4,2,4,2,2,4,2,4};
@@ -423,7 +451,7 @@ void case_2a() {
 			 */
 			for(int j=0;j<8;j++){
 //				cout << "filter flag, expected flag = " << *(markForExclusion+j) << ", " << *(flags+j) << endl;
-				BOOST_CHECK(*(flags+j)==*(markForExclusion+j));
+				TEST_ASSERT(*(flags+j)==*(markForExclusion+j));
 			}
 		}
 	}
@@ -447,7 +475,7 @@ void case_2a() {
 		 * neighbors in order to store 'num neighbors'
 		 * in the list.
 		 */
-		BOOST_CHECK((size[n]-1)==numNeigh);
+		TEST_ASSERT((size[n]-1)==numNeigh);
 
 		/*
 		 * Expected
@@ -455,17 +483,31 @@ void case_2a() {
 		bool *flags = expectedFlags[n];
 		for(int j=0;j<numNeigh;j++,neigh++){
 			int id = *neigh;
-			BOOST_CHECK((flags+id));
+			TEST_ASSERT((flags+id));
 		}
 
 	}
 
 }
 
+TEUCHOS_UNIT_TEST(FinitePlaneFilter, Case_2b) {
 
-void case_2b() {
 
 	QUICKGRID::QuickGridData decomp = getGrid();
+
+         int numOverlapPoints = decomp.numPoints;
+
+        /*
+         * SANITY CHECK on Expected coordinates and IDs
+         */
+
+        TEST_ASSERT(8==numOverlapPoints);
+		for(int j=0;j<numOverlapPoints;j++){
+		        TEST_ASSERT(decomp.myGlobalIDs.get()[j]==ids[j]);
+			TEST_ASSERT(decomp.myX.get()[j*3+0]==x[j*3+0]);
+			TEST_ASSERT(decomp.myX.get()[j*3+1]==x[j*3+1]);
+			TEST_ASSERT(decomp.myX.get()[j*3+2]==x[j*3+2]);
+		}
 	FinitePlane plane = getCase_2b();
     Teuchos::RCP<BondFilter> filterPtr=Teuchos::rcp<BondFilter>(new FinitePlaneFilter(plane));
 
@@ -473,7 +515,6 @@ void case_2b() {
 	 * Create KdTree; Since this is serial xOwned = xOverlap and numOwned = numOverlap
 	 */
 	double* xOverlapPtr = decomp.myX.get();
-	int numOverlapPoints = decomp.numPoints;
 
     PeridigmNS::ZoltanSearchTree searchTree(numOverlapPoints, xOverlapPtr);
 
@@ -481,8 +522,7 @@ void case_2b() {
 	 * ANSWERS for each ID
 	 * list size for each point
 	 */
-	// known local ids
-	int ids[] = {0,1,2,3,4,5,6,7};
+	
 	bool markForExclusion[8];
 	// Expected: filter should evaluate this list size for each id
 	int size[] = {2,4,2,4,4,2,4,2};
@@ -520,7 +560,7 @@ void case_2b() {
 			 */
 			for(int j=0;j<8;j++){
 //				cout << "filter flag, expected flag = " << *(markForExclusion+j) << ", " << *(flags+j) << endl;
-				BOOST_CHECK(*(flags+j)==*(markForExclusion+j));
+				TEST_ASSERT(*(flags+j)==*(markForExclusion+j));
 			}
 		}
 	}
@@ -544,7 +584,7 @@ void case_2b() {
 		 * neighbors in order to store 'num neighbors'
 		 * in the list.
 		 */
-		BOOST_CHECK((size[n]-1)==numNeigh);
+		TEST_ASSERT((size[n]-1)==numNeigh);
 
 		/*
 		 * Expected
@@ -552,7 +592,7 @@ void case_2b() {
 		bool *flags = expectedFlags[n];
 		for(int j=0;j<numNeigh;j++,neigh++){
 			int id = *neigh;
-			BOOST_CHECK((flags+id));
+			TEST_ASSERT((flags+id));
 		}
 
 	}
@@ -560,9 +600,23 @@ void case_2b() {
 
 }
 
-void case_3a() {
+TEUCHOS_UNIT_TEST(FinitePlaneFilter, Case_3a) {
 
 	QUICKGRID::QuickGridData decomp = getGrid();
+
+         int numOverlapPoints = decomp.numPoints;
+
+        /*
+         * SANITY CHECK on Expected coordinates and IDs
+         */
+
+        TEST_ASSERT(8==numOverlapPoints);
+		for(int j=0;j<numOverlapPoints;j++){
+			TEST_ASSERT(decomp.myGlobalIDs.get()[j]==ids[j]);
+			TEST_ASSERT(decomp.myX.get()[j*3+0]==x[j*3+0]);
+			TEST_ASSERT(decomp.myX.get()[j*3+1]==x[j*3+1]);
+			TEST_ASSERT(decomp.myX.get()[j*3+2]==x[j*3+2]);
+		}
 	FinitePlane plane = getCase_3a();
     Teuchos::RCP<BondFilter> filterPtr=Teuchos::rcp<BondFilter>(new FinitePlaneFilter(plane));
 
@@ -570,7 +624,7 @@ void case_3a() {
 	 * Create KdTree; Since this is serial xOwned = xOverlap and numOwned = numOverlap
 	 */
 	double* xOverlapPtr = decomp.myX.get();
-	int numOverlapPoints = decomp.numPoints;
+	
 
     PeridigmNS::ZoltanSearchTree searchTree(numOverlapPoints, xOverlapPtr);
 
@@ -578,8 +632,7 @@ void case_3a() {
 	 * ANSWERS for each ID
 	 * list size for each point
 	 */
-	// known local ids
-	int ids[] = {0,1,2,3,4,5,6,7};
+	
 	bool markForExclusion[8];
 	// Expected: filter should evaluate this list size for each id
 	int size[] = {4,4,2,2,2,2,4,4};
@@ -616,7 +669,7 @@ void case_3a() {
 			 */
 			for(int j=0;j<8;j++){
 //				cout << "filter flag, expected flag = " << *(markForExclusion+j) << ", " << *(flags+j) << endl;
-				BOOST_CHECK(*(flags+j)==*(markForExclusion+j));
+				TEST_ASSERT(*(flags+j)==*(markForExclusion+j));
 			}
 		}
 	}
@@ -640,7 +693,7 @@ void case_3a() {
 		 * neighbors in order to store 'num neighbors'
 		 * in the list.
 		 */
-		BOOST_CHECK((size[n]-1)==numNeigh);
+		TEST_ASSERT((size[n]-1)==numNeigh);
 
 		/*
 		 * Expected
@@ -648,7 +701,7 @@ void case_3a() {
 		bool *flags = expectedFlags[n];
 		for(int j=0;j<numNeigh;j++,neigh++){
 			int id = *neigh;
-			BOOST_CHECK((flags+id));
+			TEST_ASSERT((flags+id));
 		}
 
 	}
@@ -656,26 +709,7 @@ void case_3a() {
 
 }
 
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success=true;
-	test_suite* proc = BOOST_TEST_SUITE( "utFinitePlaneFilter" );
-	proc->add(BOOST_TEST_CASE( &case_1a ));
-	proc->add(BOOST_TEST_CASE( &case_1b ));
-	proc->add(BOOST_TEST_CASE( &case_2a ));
-	proc->add(BOOST_TEST_CASE( &case_2b ));
-	proc->add(BOOST_TEST_CASE( &case_3a ));
-	framework::master_test_suite().add( proc );
-	return success;
-}
 
-
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
 
 int main
 (
@@ -686,5 +720,5 @@ int main
 
 
 	// Initialize UTF
-	return unit_test_main( init_unit_test, argc, argv );
+	 return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }

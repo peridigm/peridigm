@@ -43,17 +43,16 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
 #include "../PdZoltan.h"
 #include "quick_grid/QuickGrid.h"
 #include <iostream>
 
 
 using std::tr1::shared_ptr;
-using namespace boost::unit_test;
+
 
 QUICKGRID::QuickGridData setUp(){
 	/*
@@ -89,8 +88,9 @@ QUICKGRID::QuickGridData setUp(){
 
 }
 
-void zoltanQuery_pointSizeInBytes_smallNeighborhood()
-{
+
+TEUCHOS_UNIT_TEST(ZoltanQuery_pointSizeInBytes, SmallNeighborhood) {
+
 	/* This test is about exercising the zoltan call back
 	 * function:
 	 * void zoltanQuery_pointSizeInBytes
@@ -141,30 +141,13 @@ void zoltanQuery_pointSizeInBytes_smallNeighborhood()
 	}
 	int *neighPtr = gridData.neighborhoodPtr.get();
 	for(int p=0;p<9;p++){
-		BOOST_CHECK( ptrAnswers[p] == neighPtr[exportLocalIds[p]] );
-		BOOST_CHECK( sizeAnswers[p] == sizes[p] );
+		TEST_ASSERT( ptrAnswers[p] == neighPtr[exportLocalIds[p]] );
+		TEST_ASSERT( sizeAnswers[p] == sizes[p] );
 	}
 	std::cout << std::endl;
 }
 
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success=true;
 
-	test_suite* proc = BOOST_TEST_SUITE( "utZoltanQuery_pointSizeInBytes" );
-	proc->add(BOOST_TEST_CASE( &zoltanQuery_pointSizeInBytes_smallNeighborhood ));
-	framework::master_test_suite().add( proc );
-
-	return success;
-
-}
-
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
 
 int main
 (
@@ -174,6 +157,6 @@ int main
 {
 
 	// Initialize UTF
-	return unit_test_main( init_unit_test, argc, argv );
+	 return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }
 

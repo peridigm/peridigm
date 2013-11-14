@@ -43,10 +43,9 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
 #include "../PdZoltan.h"
 #include "quick_grid/QuickGrid.h"
 #include "../NeighborhoodList.h"
@@ -64,7 +63,7 @@
 using namespace PdBondFilter;
 using namespace PDNEIGH;
 using std::tr1::shared_ptr;
-using namespace boost::unit_test;
+
 
 const int nx = 1;
 const int ny = 1;
@@ -81,8 +80,7 @@ const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
 const int numCells = nx*ny*nz;
 
 
-
-void axialBarLinearSpacing() {
+TEUCHOS_UNIT_TEST( Neighborhood_list, AxialBarLinearSpacingTest) {
 
 	int numProcs=1;
 	int myRank=0;
@@ -118,43 +116,27 @@ void axialBarLinearSpacing() {
 	shared_ptr<BondFilter> bondFilterPtr(new PdBondFilter::BondFilterDefault(true));
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
 	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon,bondFilterPtr);
-	BOOST_CHECK((int)list.get_num_owned_points() == numPoints);
+	TEST_ASSERT((int)list.get_num_owned_points() == numPoints);
 	int size = 0;
 	for(int n=0;n<numPoints;n++)
 		size+=list.get_num_neigh(n);
-	BOOST_CHECK(65 == size);
+	TEST_ASSERT(65 == size);
 
 	for(int n=0;n<numPoints;n++){
 		size=list.get_num_neigh(n);
-		BOOST_CHECK(s[n] == size);
+		TEST_ASSERT(s[n] == size);
 		// skip first entry -- thats the size (numNeigh)
 		const int *neigh = list.get_neighborhood(n)+1;
 		std::set<int> found(neigh,neigh+size);
 		int* N = nPtr[n];
 		for(int j=0;j<size;j++){
-			BOOST_CHECK(found.end()!=found.find(N[j]));
+			TEST_ASSERT(found.end()!=found.find(N[j]));
 		}
 	}
 
 }
 
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success=true;
 
-	test_suite* proc = BOOST_TEST_SUITE( "ut_neighborhood_list" );
-	proc->add(BOOST_TEST_CASE( &axialBarLinearSpacing ));
-	framework::master_test_suite().add( proc );
-	return success;
-
-}
-
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
 
 int main
 (
@@ -164,5 +146,5 @@ int main
 {
 
 	// Initialize UTF
-	return unit_test_main( init_unit_test, argc, argv );
+	return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }

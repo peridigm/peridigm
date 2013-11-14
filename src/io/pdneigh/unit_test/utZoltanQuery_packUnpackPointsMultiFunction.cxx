@@ -43,10 +43,9 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
 #include "../PdZoltan.h"
 #include "quick_grid/QuickGrid.h"
 #include "Array.h"
@@ -54,7 +53,7 @@
 
 
 using std::tr1::shared_ptr;
-using namespace boost::unit_test;
+
 
 QUICKGRID::QuickGridData setUp(){
 	/*
@@ -90,7 +89,8 @@ QUICKGRID::QuickGridData setUp(){
 
 }
 
-void utZoltanQuery_packPointsMultiFunction()
+
+TEUCHOS_UNIT_TEST(ZoltanQuery, PackPointsMultiFunctionTest) 
 {
 	/* This test is about exercising the zoltan call back
 	 * function:
@@ -162,11 +162,11 @@ void zoltanQuery_packPointsMultiFunction
 	char *exportFlag = gridData.exportFlag.get();
 	// local ids 0 thru 8 should not have flags set
 	for(int n=0;n<9;n++)
-		BOOST_CHECK(0 == exportFlag[n]);
+		TEST_ASSERT(0 == exportFlag[n]);
 
 	// local ids 9 thru 17 should be for export
 	for(int n=9;n<18;n++)
-		BOOST_CHECK(1 == exportFlag[n]);
+		TEST_ASSERT(1 == exportFlag[n]);
 
 	int numNeighbors[]={ 7,11,7,11,17,11,7,11,7};
 	// Now look at the buffer
@@ -183,7 +183,7 @@ void zoltanQuery_packPointsMultiFunction
 		double x[] = {0.0,0.0,0.0};
 		memcpy((void*)x,(void*)tmp,numBytes);
 		for(int d=0;d<dimension;d++){
-			BOOST_CHECK_CLOSE(x[d],X[dimension*id+d],tolerance);
+			TEST_FLOATING_EQUALITY(x[d],X[dimension*id+d],tolerance);
 		}
 
 		// extract volume
@@ -191,21 +191,21 @@ void zoltanQuery_packPointsMultiFunction
 		numBytes = sizeof(double);
 		double v = 0;
 		memcpy((void*)(&v),(void*)tmp,numBytes);
-		BOOST_CHECK_CLOSE(v,V[id],tolerance);
+		TEST_FLOATING_EQUALITY(v,V[id],tolerance);
 
 		// extract neighborhood
 		tmp+=numBytes;
 		numBytes = sizeof(int);
 		int *num; num = (int*)tmp;
 		int numNeigh = *num;
-		BOOST_CHECK(numNeigh == numNeighbors[n]);
+		TEST_ASSERT(numNeigh == numNeighbors[n]);
 		tmp+=numBytes;
 		numBytes = numNeigh*sizeof(int);
 		UTILITIES::Array<int> list(numNeigh);
 		int *listPtr = list.get();
 		memcpy((void*)(listPtr),(void*)tmp,numBytes);
 		for(int j=0;j<numNeigh;j++){
-			BOOST_CHECK(listPtr[j] == neigh[neighPtr[id]+1+j]);
+			TEST_ASSERT(listPtr[j] == neigh[neighPtr[id]+1+j]);
 		}
 
 	}
@@ -213,7 +213,8 @@ void zoltanQuery_packPointsMultiFunction
 	std::cout << std::endl;
 }
 
-void utZoltanQuery_unPackPointsMultiFunction_1()
+TEUCHOS_UNIT_TEST(ZoltanQuery, UnpackPointsMultiFunction_1_Test) 
+
 {
 	/* This test is about exercising the zoltan call back
 	 * function:
@@ -281,14 +282,14 @@ void zoltanQuery_unPackPointsMultiFunction
 
 	// By importing no points, this should have reduced the original gridData from 18 points to 9 points since they were marked for export in the pack routine
 	// Assert entire data structure
-	BOOST_CHECK(3 == gridData.dimension);
-	BOOST_CHECK(18 == gridData.globalNumPoints);
-	BOOST_CHECK(9 == gridData.numPoints);
-	BOOST_CHECK(98 == gridData.sizeNeighborhoodList);
-	BOOST_CHECK(0 == gridData.numExport);
+	TEST_ASSERT(3 == gridData.dimension);
+	TEST_ASSERT(18 == gridData.globalNumPoints);
+	TEST_ASSERT(9 == gridData.numPoints);
+	TEST_ASSERT(98 == gridData.sizeNeighborhoodList);
+	TEST_ASSERT(0 == gridData.numExport);
 	int *ids = gridData.myGlobalIDs.get();
 	for(size_t i=0;i<gridData.numPoints;i++)
-		BOOST_CHECK((int)i == ids[i]);
+		TEST_ASSERT((int)i == ids[i]);
 
 	// Need to get a new grid data to compare it with the one coming back from unPack
 	QUICKGRID::QuickGridData newGridData = setUp();
@@ -302,16 +303,18 @@ void zoltanQuery_unPackPointsMultiFunction
 	// Note that we are only asserting the first 9 points (these
 	for(size_t i=0;i<gridData.numPoints;i++){
 		// Volume
-		BOOST_CHECK_CLOSE(v[i],newV[i],tolerance);
+		TEST_FLOATING_EQUALITY(v[i],newV[i],tolerance);
 		// coordinates
 		for(int j=0;j<dimension;j++)
-			BOOST_CHECK_CLOSE(x[i*dimension+j],newX[i*dimension+j],tolerance);
+			TEST_FLOATING_EQUALITY(x[i*dimension+j],newX[i*dimension+j],tolerance);
 	}
 
 	std::cout << std::endl;
 }
 
-void utZoltanQuery_unPackPointsMultiFunction_2()
+
+TEUCHOS_UNIT_TEST(ZoltanQuery, UnpackPointsMultiFunction_2_Test) 
+
 {
 	/* This test is about exercising the zoltan call back
 	 * function:
@@ -376,14 +379,14 @@ void zoltanQuery_unPackPointsMultiFunction
 	PDNEIGH::zoltanQuery_unPackPointsMultiFunction((void*)(&gridData),numGids,numImport,NULL,NULL,NULL,NULL,&zoltanErr);
 
 	// At this point, grid data only the first 9 points; This was asserted in the above tests but for fun assert metadata here too!
-	BOOST_CHECK(3 == gridData.dimension);
-	BOOST_CHECK(18 == gridData.globalNumPoints);
-	BOOST_CHECK(9 == gridData.numPoints);
-	BOOST_CHECK(98 == gridData.sizeNeighborhoodList);
-	BOOST_CHECK(0 == gridData.numExport);
+	TEST_ASSERT(3 == gridData.dimension);
+	TEST_ASSERT(18 == gridData.globalNumPoints);
+	TEST_ASSERT(9 == gridData.numPoints);
+	TEST_ASSERT(98 == gridData.sizeNeighborhoodList);
+	TEST_ASSERT(0 == gridData.numExport);
 	int *ids = gridData.myGlobalIDs.get();
 	for(size_t i=0;i<gridData.numPoints;i++)
-		BOOST_CHECK((int)i == ids[i]);
+		TEST_ASSERT((int)i == ids[i]);
 
 	// At this point, grid data only the first 9 points; The following function should restore it to its original state
 	numImport=9;
@@ -392,16 +395,16 @@ void zoltanQuery_unPackPointsMultiFunction
 
 	// Now create an original PdGridData and compare with "gridData" which should be identical
 	QUICKGRID::QuickGridData originalGridData = setUp();
-	BOOST_CHECK(originalGridData.dimension == gridData.dimension);
-	BOOST_CHECK(originalGridData.globalNumPoints == gridData.globalNumPoints);
-	BOOST_CHECK(originalGridData.numPoints == gridData.numPoints);
-	BOOST_CHECK(originalGridData.sizeNeighborhoodList == gridData.sizeNeighborhoodList);
-	BOOST_CHECK(originalGridData.numExport == gridData.numExport);
-	BOOST_CHECK(3 == gridData.dimension);
-	BOOST_CHECK(18 == gridData.globalNumPoints);
-	BOOST_CHECK(18 == gridData.numPoints);
-	BOOST_CHECK(196 == gridData.sizeNeighborhoodList);
-	BOOST_CHECK(0 == gridData.numExport);
+	TEST_ASSERT(originalGridData.dimension == gridData.dimension);
+	TEST_ASSERT(originalGridData.globalNumPoints == gridData.globalNumPoints);
+	TEST_ASSERT(originalGridData.numPoints == gridData.numPoints);
+	TEST_ASSERT(originalGridData.sizeNeighborhoodList == gridData.sizeNeighborhoodList);
+	TEST_ASSERT(originalGridData.numExport == gridData.numExport);
+	TEST_ASSERT(3 == gridData.dimension);
+	TEST_ASSERT(18 == gridData.globalNumPoints);
+	TEST_ASSERT(18 == gridData.numPoints);
+	TEST_ASSERT(196 == gridData.sizeNeighborhoodList);
+	TEST_ASSERT(0 == gridData.numExport);
 
 	// assert all quantities
 	double *oX = originalGridData.myX.get();
@@ -417,46 +420,27 @@ void zoltanQuery_unPackPointsMultiFunction
 	for(int p=0;p<numPoints;p++){
 		// coordinates
 		for(int d=0;d<3;d++){
-			BOOST_CHECK_CLOSE(oX[p*3+d],x[p*3+d],tolerance);
+			TEST_FLOATING_EQUALITY(oX[p*3+d],x[p*3+d],tolerance);
 		}
 		// volume
-		BOOST_CHECK_CLOSE(oV[p],v[p],tolerance);
+		TEST_FLOATING_EQUALITY(oV[p],v[p],tolerance);
 
 		// neighborhood ptr
-		BOOST_CHECK(neighPtr[p]==oNeighPtr[p]);
+		TEST_ASSERT(neighPtr[p]==oNeighPtr[p]);
 	}
 
 	// assert neighborhood list
 	int *neighList = gridData.neighborhood.get();
 	int *oNeighList = originalGridData.neighborhood.get();
 	for(int n=0;n<gridData.sizeNeighborhoodList;n++){
-		BOOST_CHECK(neighList[n]==oNeighList[n]);
+		TEST_ASSERT(neighList[n]==oNeighList[n]);
 	}
 
 	std::cout << std::endl;
 }
 
 
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success=true;
 
-	test_suite* proc = BOOST_TEST_SUITE( "utZoltanQuery_packAndUnPackPointsMultiFunction" );
-	proc->add(BOOST_TEST_CASE( &utZoltanQuery_packPointsMultiFunction ));
-	proc->add(BOOST_TEST_CASE( &utZoltanQuery_unPackPointsMultiFunction_1 ));
-	proc->add(BOOST_TEST_CASE( &utZoltanQuery_unPackPointsMultiFunction_2 ));
-	framework::master_test_suite().add( proc );
-
-	return success;
-
-}
-
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
 
 int main
 (
@@ -466,5 +450,5 @@ int main
 {
 
 	// Initialize UTF
-	return unit_test_main( init_unit_test, argc, argv );
+	return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }

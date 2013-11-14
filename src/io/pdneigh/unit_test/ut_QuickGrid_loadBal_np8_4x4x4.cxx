@@ -43,10 +43,9 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
 #include "../PdZoltan.h"
 #include "quick_grid/QuickGrid.h"
 #include "../NeighborhoodList.h"
@@ -55,7 +54,6 @@
 
 using namespace Pdut;
 using std::tr1::shared_ptr;
-using namespace boost::unit_test;
 using std::cout;
 
 static size_t myRank;
@@ -87,25 +85,29 @@ QUICKGRID::QuickGridData getGrid() {
 	return decomp;
 }
 
-void p0()
-{
-	QUICKGRID::QuickGridData decomp = getGrid();
-	BOOST_CHECK(0 == myRank);
+TEUCHOS_UNIT_TEST(QuickGrid_loadBal_np8_4x4x4, p0) {
+
+        if(myRank != 0){
+           return;
+        }
+
+        QUICKGRID::QuickGridData decomp = getGrid();
+	TEST_ASSERT(0 == myRank);
 	/*
 	 * problem dimension is 3
 	 */
-	BOOST_CHECK(3 == decomp.dimension);
+	TEST_ASSERT(3 == decomp.dimension);
 
 	/*
 	 * Total number of cells in test
 	 */
-	BOOST_CHECK(nx*ny*nz == decomp.globalNumPoints);
+	TEST_ASSERT(nx*ny*nz == decomp.globalNumPoints);
 
 	/*
 	 * Number of cells on this processor
 	 */
 	int myNumPoints = decomp.numPoints;
-	BOOST_CHECK(8 == myNumPoints);
+	TEST_ASSERT(8 == myNumPoints);
 
 	/*
 	 * Assert global ids on this processor; All points at x=0 end should be on this processor
@@ -115,7 +117,7 @@ void p0()
 	int *gIdsPtr = gIds.get();
 //	std::cout << "P0 gids = ";
 	for(int p=0;p<myNumPoints;p++){
-		BOOST_CHECK(gIdsPtr[p]==ids[p]);
+		TEST_ASSERT(gIdsPtr[p]==ids[p]);
 //		std::cout << gIdsPtr[p] << ", ";
 	}
 //	std::cout << std::endl;
@@ -126,31 +128,37 @@ void p0()
 	double *v = decomp.cellVolume.get();
 	double *end = v+myNumPoints;
 	for(; v != end ; v++){
-		BOOST_CHECK_CLOSE(*v,cellVolume,tolerance);
+		TEST_FLOATING_EQUALITY(*v,cellVolume,tolerance);
 	}
 
 
 }
 
-void p1()
-{
+
+TEUCHOS_UNIT_TEST(QuickGrid_loadBal_np8_4x4x4, p1) {
+
+        if(myRank != 1){
+           return;
+        }
+
+
 	QUICKGRID::QuickGridData decomp = getGrid();
-	BOOST_CHECK(1 == myRank);
+	TEST_ASSERT(1 == myRank);
 	/*
 	 * problem dimension is 3
 	 */
-	BOOST_CHECK(3 == decomp.dimension);
+	TEST_ASSERT(3 == decomp.dimension);
 
 	/*
 	 * Total number of cells in test
 	 */
-	BOOST_CHECK(nx*ny*nz == decomp.globalNumPoints);
+	TEST_ASSERT(nx*ny*nz == decomp.globalNumPoints);
 
 	/*
 	 * Number of cells on this processor
 	 */
 	int myNumPoints = decomp.numPoints;
-	BOOST_CHECK(8 == myNumPoints);
+	TEST_ASSERT(8 == myNumPoints);
 
 	/*
 	 * Assert global ids on this processor; All points at x=L end should be on this processor
@@ -160,7 +168,7 @@ void p1()
 	int *gIdsPtr = gIds.get();
 	//std::cout << "P1 gids = ";
 	for(int p=0;p<myNumPoints;p++){
-		BOOST_CHECK(gIdsPtr[p]==ids[p]);
+		TEST_ASSERT(gIdsPtr[p]==ids[p]);
 	//	std::cout << gIdsPtr[p] << ", ";
 	}
 	std::cout << std::endl;
@@ -171,30 +179,33 @@ void p1()
 	double *v = decomp.cellVolume.get();
 	double *end = v+myNumPoints;
 	for(; v != end ; v++){
-		BOOST_CHECK_CLOSE(*v,cellVolume,tolerance);
+		TEST_FLOATING_EQUALITY(*v,cellVolume,tolerance);
 	}
 
 }
 
-void p2()
-{
+TEUCHOS_UNIT_TEST(QuickGrid_loadBal_np8_4x4x4, p2) {
+
+        if(myRank != 2){
+           return;
+        }
 	QUICKGRID::QuickGridData decomp = getGrid();
-	BOOST_CHECK(2 == myRank);
+	TEST_ASSERT(2 == myRank);
 	/*
 	 * problem dimension is 3
 	 */
-	BOOST_CHECK(3 == decomp.dimension);
+	TEST_ASSERT(3 == decomp.dimension);
 
 	/*
 	 * Total number of cells in test
 	 */
-	BOOST_CHECK(nx*ny*nz == decomp.globalNumPoints);
+	TEST_ASSERT(nx*ny*nz == decomp.globalNumPoints);
 
 	/*
 	 * Number of cells on this processor
 	 */
 	int myNumPoints = decomp.numPoints;
-	BOOST_CHECK(8 == myNumPoints);
+	TEST_ASSERT(8 == myNumPoints);
 
 	/*
 	 * Assert global ids on this processor; All points at x=L end should be on this processor
@@ -204,7 +215,7 @@ void p2()
 	int *gIdsPtr = gIds.get();
 //	std::cout << "P2 gids = ";
 	for(int p=0;p<myNumPoints;p++){
-		BOOST_CHECK(gIdsPtr[p]==ids[p]);
+		TEST_ASSERT(gIdsPtr[p]==ids[p]);
 	//	std::cout << gIdsPtr[p] << ", ";
 	}
 	//std::cout << std::endl;
@@ -215,30 +226,35 @@ void p2()
 	double *v = decomp.cellVolume.get();
 	double *end = v+myNumPoints;
 	for(; v != end ; v++){
-		BOOST_CHECK_CLOSE(*v,cellVolume,tolerance);
+		TEST_FLOATING_EQUALITY(*v,cellVolume,tolerance);
 	}
 
 }
 
-void p3()
-{
+
+TEUCHOS_UNIT_TEST(QuickGrid_loadBal_np8_4x4x4, p3) {
+
+        if(myRank != 3){
+           return;
+        }
+
 	QUICKGRID::QuickGridData decomp = getGrid();
-	BOOST_CHECK(3 == myRank);
+	TEST_ASSERT(3 == myRank);
 	/*
 	 * problem dimension is 3
 	 */
-	BOOST_CHECK(3 == decomp.dimension);
+	TEST_ASSERT(3 == decomp.dimension);
 
 	/*
 	 * Total number of cells in test
 	 */
-	BOOST_CHECK(nx*ny*nz == decomp.globalNumPoints);
+	TEST_ASSERT(nx*ny*nz == decomp.globalNumPoints);
 
 	/*
 	 * Number of cells on this processor
 	 */
 	int myNumPoints = decomp.numPoints;
-	BOOST_CHECK(8 == myNumPoints);
+	TEST_ASSERT(8 == myNumPoints);
 
 	/*
 	 * Assert global ids on this processor; All points at x=L end should be on this processor
@@ -248,7 +264,7 @@ void p3()
 	int *gIdsPtr = gIds.get();
 //	std::cout << "P3 gids = ";
 	for(int p=0;p<myNumPoints;p++){
-		BOOST_CHECK(gIdsPtr[p]==ids[p]);
+		TEST_ASSERT(gIdsPtr[p]==ids[p]);
 //		std::cout << gIdsPtr[p] << ", ";
 	}
 	//std::cout << std::endl;
@@ -259,30 +275,36 @@ void p3()
 	double *v = decomp.cellVolume.get();
 	double *end = v+myNumPoints;
 	for(; v != end ; v++){
-		BOOST_CHECK_CLOSE(*v,cellVolume,tolerance);
+		TEST_FLOATING_EQUALITY(*v,cellVolume,tolerance);
 	}
 
 }
 
-void p4()
-{
+
+TEUCHOS_UNIT_TEST(QuickGrid_loadBal_np8_4x4x4, p4) {
+
+
+        if(myRank != 4){
+           return;
+        }
+
 	QUICKGRID::QuickGridData decomp = getGrid();
-	BOOST_CHECK(4 == myRank);
+	TEST_ASSERT(4 == myRank);
 	/*
 	 * problem dimension is 3
 	 */
-	BOOST_CHECK(3 == decomp.dimension);
+	TEST_ASSERT(3 == decomp.dimension);
 
 	/*
 	 * Total number of cells in test
 	 */
-	BOOST_CHECK(nx*ny*nz == decomp.globalNumPoints);
+	TEST_ASSERT(nx*ny*nz == decomp.globalNumPoints);
 
 	/*
 	 * Number of cells on this processor
 	 */
 	int myNumPoints = decomp.numPoints;
-	BOOST_CHECK(8 == myNumPoints);
+	TEST_ASSERT(8 == myNumPoints);
 
 	/*
 	 * Assert global ids on this processor; All points at x=L end should be on this processor
@@ -292,7 +314,7 @@ void p4()
 	int *gIdsPtr = gIds.get();
 //	std::cout << "P4 gids = ";
 	for(int p=0;p<myNumPoints;p++){
-		BOOST_CHECK(gIdsPtr[p]==ids[p]);
+		TEST_ASSERT(gIdsPtr[p]==ids[p]);
 //		std::cout << gIdsPtr[p] << ", ";
 	}
 	//std::cout << std::endl;
@@ -303,30 +325,35 @@ void p4()
 	double *v = decomp.cellVolume.get();
 	double *end = v+myNumPoints;
 	for(; v != end ; v++){
-		BOOST_CHECK_CLOSE(*v,cellVolume,tolerance);
+		TEST_FLOATING_EQUALITY(*v,cellVolume,tolerance);
 	}
 
 }
 
-void p5()
-{
+
+TEUCHOS_UNIT_TEST(QuickGrid_loadBal_np8_4x4x4, p5) {
+
+        if(myRank != 5){
+           return;
+        }
+
 	QUICKGRID::QuickGridData decomp = getGrid();
-	BOOST_CHECK(5 == myRank);
+	TEST_ASSERT(5 == myRank);
 	/*
 	 * problem dimension is 3
 	 */
-	BOOST_CHECK(3 == decomp.dimension);
+	TEST_ASSERT(3 == decomp.dimension);
 
 	/*
 	 * Total number of cells in test
 	 */
-	BOOST_CHECK(nx*ny*nz == decomp.globalNumPoints);
+	TEST_ASSERT(nx*ny*nz == decomp.globalNumPoints);
 
 	/*
 	 * Number of cells on this processor
 	 */
 	int myNumPoints = decomp.numPoints;
-	BOOST_CHECK(8 == myNumPoints);
+	TEST_ASSERT(8 == myNumPoints);
 
 	/*
 	 * Assert global ids on this processor; All points at x=L end should be on this processor
@@ -336,7 +363,7 @@ void p5()
 	int *gIdsPtr = gIds.get();
 //	std::cout << "P5 gids = ";
 	for(int p=0;p<myNumPoints;p++){
-		BOOST_CHECK(gIdsPtr[p]==ids[p]);
+		TEST_ASSERT(gIdsPtr[p]==ids[p]);
 //		std::cout << gIdsPtr[p] << ", ";
 	}
 //	std::cout << std::endl;
@@ -347,30 +374,35 @@ void p5()
 	double *v = decomp.cellVolume.get();
 	double *end = v+myNumPoints;
 	for(; v != end ; v++){
-		BOOST_CHECK_CLOSE(*v,cellVolume,tolerance);
+		TEST_FLOATING_EQUALITY(*v,cellVolume,tolerance);
 	}
 
 }
 
-void p6()
-{
+
+TEUCHOS_UNIT_TEST(QuickGrid_loadBal_np8_4x4x4, p6) {
+
+        if(myRank != 6){
+           return;
+        }
+
 	QUICKGRID::QuickGridData decomp = getGrid();
-	BOOST_CHECK(6 == myRank);
+	TEST_ASSERT(6 == myRank);
 	/*
 	 * problem dimension is 3
 	 */
-	BOOST_CHECK(3 == decomp.dimension);
+	TEST_ASSERT(3 == decomp.dimension);
 
 	/*
 	 * Total number of cells in test
 	 */
-	BOOST_CHECK(nx*ny*nz == decomp.globalNumPoints);
+	TEST_ASSERT(nx*ny*nz == decomp.globalNumPoints);
 
 	/*
 	 * Number of cells on this processor
 	 */
 	int myNumPoints = decomp.numPoints;
-	BOOST_CHECK(8 == myNumPoints);
+	TEST_ASSERT(8 == myNumPoints);
 
 	/*
 	 * Assert global ids on this processor; All points at x=L end should be on this processor
@@ -380,7 +412,7 @@ void p6()
 	int *gIdsPtr = gIds.get();
 //	std::cout << "P6 gids = ";
 	for(int p=0;p<myNumPoints;p++){
-		BOOST_CHECK(gIdsPtr[p]==ids[p]);
+		TEST_ASSERT(gIdsPtr[p]==ids[p]);
 //		std::cout << gIdsPtr[p] << ", ";
 	}
 //	std::cout << std::endl;
@@ -391,30 +423,35 @@ void p6()
 	double *v = decomp.cellVolume.get();
 	double *end = v+myNumPoints;
 	for(; v != end ; v++){
-		BOOST_CHECK_CLOSE(*v,cellVolume,tolerance);
+		TEST_FLOATING_EQUALITY(*v,cellVolume,tolerance);
 	}
 
 }
 
-void p7()
-{
+
+TEUCHOS_UNIT_TEST(QuickGrid_loadBal_np8_4x4x4, p7) {
+
+        if(myRank != 7){
+           return;
+        }
+
 	QUICKGRID::QuickGridData decomp = getGrid();
-	BOOST_CHECK(7 == myRank);
+	TEST_ASSERT(7 == myRank);
 	/*
 	 * problem dimension is 3
 	 */
-	BOOST_CHECK(3 == decomp.dimension);
+	TEST_ASSERT(3 == decomp.dimension);
 
 	/*
 	 * Total number of cells in test
 	 */
-	BOOST_CHECK(nx*ny*nz == decomp.globalNumPoints);
+	TEST_ASSERT(nx*ny*nz == decomp.globalNumPoints);
 
 	/*
 	 * Number of cells on this processor
 	 */
 	int myNumPoints = decomp.numPoints;
-	BOOST_CHECK(8 == myNumPoints);
+	TEST_ASSERT(8 == myNumPoints);
 
 	/*
 	 * Assert global ids on this processor; All points at x=L end should be on this processor
@@ -424,7 +461,7 @@ void p7()
 	int *gIdsPtr = gIds.get();
 //	std::cout << "P6 gids = ";
 	for(int p=0;p<myNumPoints;p++){
-		BOOST_CHECK(gIdsPtr[p]==ids[p]);
+		TEST_ASSERT(gIdsPtr[p]==ids[p]);
 //		std::cout << gIdsPtr[p] << ", ";
 	}
 //	std::cout << std::endl;
@@ -435,80 +472,12 @@ void p7()
 	double *v = decomp.cellVolume.get();
 	double *end = v+myNumPoints;
 	for(; v != end ; v++){
-		BOOST_CHECK_CLOSE(*v,cellVolume,tolerance);
+		TEST_FLOATING_EQUALITY(*v,cellVolume,tolerance);
 	}
 
 }
 
 
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success=true;
-	if(0 == myRank){
-		test_suite* proc = BOOST_TEST_SUITE( "ut_QuickGrid_loadBalMPI_np8_4x4x4p0" );
-		proc->add(BOOST_TEST_CASE( &p0 ));
-		framework::master_test_suite().add( proc );
-		return success;
-	}
-	if(1 == myRank){
-		test_suite* proc = BOOST_TEST_SUITE( "ut_QuickGrid_loadBalMPI_np8_4x4x4p1" );
-		proc->add(BOOST_TEST_CASE( &p1 ));
-		framework::master_test_suite().add( proc );
-		return success;
-	}
-
-	if(2 == myRank){
-		test_suite* proc = BOOST_TEST_SUITE( "ut_QuickGrid_loadBalMPI_np8_4x4x4p2" );
-		proc->add(BOOST_TEST_CASE( &p2 ));
-		framework::master_test_suite().add( proc );
-		return success;
-	}
-
-	if(3 == myRank){
-		test_suite* proc = BOOST_TEST_SUITE( "ut_QuickGrid_loadBalMPI_np8_4x4x4p3" );
-		proc->add(BOOST_TEST_CASE( &p3 ));
-		framework::master_test_suite().add( proc );
-		return success;
-	}
-
-	if(4 == myRank){
-		test_suite* proc = BOOST_TEST_SUITE( "ut_QuickGrid_loadBalMPI_np8_4x4x4p4" );
-		proc->add(BOOST_TEST_CASE( &p4 ));
-		framework::master_test_suite().add( proc );
-		return success;
-	}
-
-	if(5 == myRank){
-		test_suite* proc = BOOST_TEST_SUITE( "ut_QuickGrid_loadBalMPI_np8_4x4x4p5" );
-		proc->add(BOOST_TEST_CASE( &p5 ));
-		framework::master_test_suite().add( proc );
-		return success;
-	}
-
-	if(6 == myRank){
-		test_suite* proc = BOOST_TEST_SUITE( "ut_QuickGrid_loadBalMPI_np8_4x4x4p6" );
-		proc->add(BOOST_TEST_CASE( &p6 ));
-		framework::master_test_suite().add( proc );
-		return success;
-	}
-
-	if(7 == myRank){
-		test_suite* proc = BOOST_TEST_SUITE( "ut_QuickGrid_loadBalMPI_np8_4x4x4p7" );
-		proc->add(BOOST_TEST_CASE( &p7 ));
-		framework::master_test_suite().add( proc );
-		return success;
-	}
-
-	return success;
-}
-
-
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
 
 int main
 (
@@ -534,7 +503,7 @@ int main
 	}
 
 	// Initialize UTF
-	return unit_test_main(init_unit_test, argc, argv);;
+	return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }
 
 

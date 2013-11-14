@@ -43,10 +43,9 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
 #include "../PdZoltan.h"
 #include "quick_grid/QuickGrid.h"
 #include "../NeighborhoodList.h"
@@ -64,7 +63,6 @@
 using namespace PdBondFilter;
 using namespace PDNEIGH;
 using std::tr1::shared_ptr;
-using namespace boost::unit_test;
 using std::cout;
 using std::endl;
 
@@ -149,7 +147,9 @@ void printNeighborhood(int numNeigh, int* neigh){
 	cout << endl;
 }
 
-void assertNeighborhood(){
+
+TEUCHOS_UNIT_TEST( Y_Z_crack, AssertNeighborhoodTest) {
+
 	QUICKGRID::QuickGridData gridData = getGrid();
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
@@ -161,8 +161,8 @@ void assertNeighborhood(){
 	/*
 	 * There are a total of 48 points = nx * ny * nz = 4 * 4 * 3
 	 */
-	BOOST_CHECK(numCells == gridData.numPoints);
-	BOOST_CHECK(numCells == list.get_num_owned_points());
+	TEST_ASSERT(numCells == gridData.numPoints);
+	TEST_ASSERT(numCells == list.get_num_owned_points());
 
 	/*
 	 * Expected neighborhood data
@@ -190,10 +190,10 @@ void assertNeighborhood(){
 		int numNeigh = *neigh; neigh++;
 //		cout << "gid, numNeigh = " << gid << ", " << numNeigh << endl;
 //		printNeighborhood(numNeigh,neigh);
-		BOOST_CHECK(numNeighAnswer==numNeigh);
+		TEST_ASSERT(numNeighAnswer==numNeigh);
 		int *neighAnswer = NN[gid];
 		for(int n=0;n<numNeigh;n++){
-			BOOST_CHECK(*(neighAnswer+n)==*(neigh+n));
+			TEST_ASSERT(*(neighAnswer+n)==*(neigh+n));
 		}
 
 		/*
@@ -213,22 +213,7 @@ void assertNeighborhood(){
 
 }
 
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success=true;
-	test_suite* proc = BOOST_TEST_SUITE( "ut_Y-Z_crack" );
-	proc->add(BOOST_TEST_CASE( &assertNeighborhood ));
-	framework::master_test_suite().add( proc );
-	return success;
-}
 
-
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
 
 int main
 (
@@ -240,7 +225,7 @@ int main
 		MPI_Init(&argc, &argv);
 #endif
 	// Initialize UTF
-	return unit_test_main( init_unit_test, argc, argv );
+	return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 #ifdef HAVE_MPI
 	MPI_Finalize();
 #endif
