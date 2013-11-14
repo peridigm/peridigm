@@ -43,15 +43,13 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
 #include "../BondFilter.h"
 
-using namespace boost::unit_test;
+TEUCHOS_UNIT_TEST(FinitePlane, SimplePlaneCaseTest) {
 
-void simplePlaneCase(){
 	/*
 	 * Lower left corner of plane (USER INPUT)
 	 */
@@ -80,50 +78,30 @@ void simplePlaneCase(){
 	double *p0Ptr=p0;
 	double x[3];
 	double t;
-	BOOST_CHECK(0!=plane.bondIntersectInfinitePlane(p0Ptr,p1Ptr,t,x));
+	TEST_ASSERT(0!=plane.bondIntersectInfinitePlane(p0Ptr,p1Ptr,t,x));
 	/*
 	 * Assert that intersection exists and that its at the center of the bond
 	 */
-	BOOST_CHECK(0.5 == t);
-	BOOST_CHECK(0.0==x[0]);
-	BOOST_CHECK(0.5==x[1]);
-	BOOST_CHECK(0.5==x[2]);
+	TEST_ASSERT(0.5 == t);
+	TEST_ASSERT(0.0==x[0]);
+	TEST_ASSERT(0.5==x[1]);
+	TEST_ASSERT(0.5==x[2]);
 
 	/*
 	 * Assert plane function that checks for bond intersection
 	 */
-	BOOST_CHECK(true==plane.bondIntersect(x));
+	TEST_ASSERT(true==plane.bondIntersect(x));
 
 	/*
 	 * Create a 2nd bond; Should find NO intersection
 	 */
 	p1[0] = -.5; p1[1] = 1.5; p1[2] = .5;
 	p0[0] = -.5; p0[1] = .5; p0[2] = .5;
-	BOOST_CHECK(0==plane.bondIntersectInfinitePlane(p0Ptr,p1Ptr,t,x));
+	TEST_ASSERT(0==plane.bondIntersectInfinitePlane(p0Ptr,p1Ptr,t,x));
 }
 
-
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success=true;
-	test_suite* proc = BOOST_TEST_SUITE( "utFinitePlane" );
-	proc->add(BOOST_TEST_CASE( &simplePlaneCase ));
-	framework::master_test_suite().add( proc );
-	return success;
+int main( int argc, char* argv[] ) {
+  
+  return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }
 
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
-
-int main
-(
-		int argc,
-		char* argv[]
-)
-{
-	return unit_test_main( init_unit_test, argc, argv );
-}

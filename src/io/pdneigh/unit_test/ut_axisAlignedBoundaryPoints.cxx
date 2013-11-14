@@ -43,10 +43,10 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
 #include "quick_grid/QuickGrid.h"
 #include "Sortable.h"
 #include "../NeighborhoodList.h"
@@ -62,7 +62,6 @@
 using UTILITIES::CartesianComponent;
 using namespace PDNEIGH;
 using std::tr1::shared_ptr;
-using namespace boost::unit_test;
 
 
 const size_t numProcs=1;
@@ -86,15 +85,15 @@ const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
 const size_t numCells = nx*ny*nz;
 const double horizon=1.01*sqrt(pow(lX/nx,2)+pow(lY/ny,2)+pow(lZ/nz,2));
 
+TEUCHOS_UNIT_TEST(AxisAlignedBoundaryPoints, AxisAlignedMinimumTest) {
 
-void axisAlignedMinimum() {
 	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec,QUICKGRID::SphericalNorm);
 	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
 
 	CartesianComponent axis = UTILITIES::Z;
 	std::tr1::shared_ptr<double> xPtr = decomp.myX;
 	size_t numPoints = decomp.numPoints;
-	BOOST_CHECK(numCells==numPoints);
+	TEST_ASSERT(numCells==numPoints);
 
 	/*
 	 * points at z minimum end
@@ -109,20 +108,21 @@ void axisAlignedMinimum() {
 	 * This finds 2 planes of points (x-y plane) at the minimum value of z-end of the bar
 	 */
 	Array<int> bcIds = UTILITIES::getPointsAxisAlignedMinimum(axis,xPtr,numPoints,horizon);
-	BOOST_CHECK(32==bcIds.get_size());
+	TEST_ASSERT(32==bcIds.get_size());
 	for(int *ids = bcIds.get();ids!=bcIds.end();ids++)
-		BOOST_CHECK(setEnd != answerIds.find(*ids));
+		TEST_ASSERT(setEnd != answerIds.find(*ids));
 
 }
 
-void axisAlignedMaximum() {
+TEUCHOS_UNIT_TEST(AxisAlignedBoundaryPoints, AxisAlignedMaximumTest) {
+
 	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec,QUICKGRID::SphericalNorm);
 	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
 
 	CartesianComponent axis = UTILITIES::Z;
 	std::tr1::shared_ptr<double> xPtr = decomp.myX;
 	size_t numPoints = decomp.numPoints;
-	BOOST_CHECK(numCells==numPoints);
+	TEST_ASSERT(numCells==numPoints);
 
 	/*
 	 * points at z-maximum end
@@ -136,41 +136,14 @@ void axisAlignedMaximum() {
 	 * This finds 2 planes of points (x-y plane) at the maximum value of z-end of the bar
 	 */
 	Array<int> bcIds = UTILITIES::getPointsAxisAlignedMaximum(axis,xPtr,numPoints,horizon);
-	BOOST_CHECK(32==bcIds.get_size());
+	TEST_ASSERT(32==bcIds.get_size());
 	for(int *ids = bcIds.get();ids!=bcIds.end();ids++){
-		BOOST_CHECK(setEnd != answerIds.find(*ids));
+		TEST_ASSERT(setEnd != answerIds.find(*ids));
 	}
 
 }
 
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success=true;
-
-	test_suite* proc = BOOST_TEST_SUITE( "ut_axisAlignedBoundaryPoints" );
-	proc->add(BOOST_TEST_CASE( &axisAlignedMinimum ));
-	proc->add(BOOST_TEST_CASE( &axisAlignedMaximum ));
-	framework::master_test_suite().add( proc );
-	return success;
-
-}
-
-
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
-
-int main
-(
-		int argc,
-		char* argv[]
-)
-{
-
-
-	// Initialize UTF
-	return unit_test_main( init_unit_test, argc, argv );
+int main( int argc, char* argv[] ) {
+  
+  return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }

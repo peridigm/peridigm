@@ -43,19 +43,18 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+
 #include "../PdZoltan.h"
 #include "quick_grid/QuickGrid.h"
 #include "../NeighborhoodList.h"
 #include "PdutMpiFixture.h"
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
 #include <iostream>
 
 using namespace Pdut;
 using std::tr1::shared_ptr;
-using namespace boost::unit_test;
 using std::cout;
 
 static size_t myRank;
@@ -87,26 +86,30 @@ QUICKGRID::QuickGridData getGrid() {
 	return decomp;
 }
 
-void p0()
-{
+TEUCHOS_UNIT_TEST(QuickGrid_loadBal_np2_4x4x4, p0) {
+
+
+        if(myRank != 0){
+           return;
+        }
 	QUICKGRID::QuickGridData decomp = getGrid();
 
-	BOOST_CHECK(0 == myRank);
+	TEST_ASSERT(0 == myRank);
 	/*
 	 * problem dimension is 3
 	 */
-	BOOST_CHECK(3 == decomp.dimension);
+	TEST_ASSERT(3 == decomp.dimension);
 
 	/*
 	 * Total number of cells in test
 	 */
-	BOOST_CHECK(nx*ny*nz == decomp.globalNumPoints);
+	TEST_ASSERT(nx*ny*nz == decomp.globalNumPoints);
 
 	/*
 	 * Number of cells on this processor
 	 */
 	int myNumPoints = decomp.numPoints;
-	BOOST_CHECK(32 == myNumPoints);
+	TEST_ASSERT(32 == myNumPoints);
 
 	/*
 	 * Assert global ids on this processor; All points at x=0 end should be on this processor
@@ -116,7 +119,7 @@ void p0()
 	int *gIdsPtr = gIds.get();
 //	std::cout << "P0 gids = ";
 	for(int p=0;p<myNumPoints;p++){
-		BOOST_CHECK(gIdsPtr[p]==ids[p]);
+		TEST_ASSERT(gIdsPtr[p]==ids[p]);
 //		std::cout << gIdsPtr[p] << ", ";
 	}
 //	std::cout << std::endl;
@@ -127,32 +130,40 @@ void p0()
 	double *v = decomp.cellVolume.get();
 	double *end = v+myNumPoints;
 	for(; v != end ; v++){
-		BOOST_CHECK_CLOSE(*v,cellVolume,tolerance);
+		TEST_FLOATING_EQUALITY(*v,cellVolume,tolerance);
 	}
 
 
 }
 
-void p1()
-{
-	QUICKGRID::QuickGridData decomp = getGrid();
+TEUCHOS_UNIT_TEST(QuickGrid_loadBal_np2_4x4x4, p1) {
 
-	BOOST_CHECK(1 == myRank);
+	
+
+        if(myRank != 1){
+           return;
+        }
+
+
+        QUICKGRID::QuickGridData decomp = getGrid();
+
+        
+	TEST_ASSERT(1 == myRank);
 	/*
 	 * problem dimension is 3
 	 */
-	BOOST_CHECK(3 == decomp.dimension);
+	TEST_ASSERT(3 == decomp.dimension);
 
 	/*
 	 * Total number of cells in test
 	 */
-	BOOST_CHECK(nx*ny*nz == decomp.globalNumPoints);
+	TEST_ASSERT(nx*ny*nz == decomp.globalNumPoints);
 
 	/*
 	 * Number of cells on this processor
 	 */
 	int myNumPoints = decomp.numPoints;
-	BOOST_CHECK(32 == myNumPoints);
+	TEST_ASSERT(32 == myNumPoints);
 
 	/*
 	 * Assert global ids on this processor; All points at x=L end should be on this processor
@@ -162,7 +173,7 @@ void p1()
 	int *gIdsPtr = gIds.get();
 //	std::cout << "P1 gids = ";
 	for(int p=0;p<myNumPoints;p++){
-		BOOST_CHECK(gIdsPtr[p]==ids[p]);
+		TEST_ASSERT(gIdsPtr[p]==ids[p]);
 //		std::cout << gIdsPtr[p] << ", ";
 	}
 //	std::cout << std::endl;
@@ -173,39 +184,12 @@ void p1()
 	double *v = decomp.cellVolume.get();
 	double *end = v+myNumPoints;
 	for(; v != end ; v++){
-		BOOST_CHECK_CLOSE(*v,cellVolume,tolerance);
+		TEST_FLOATING_EQUALITY(*v,cellVolume,tolerance);
 	}
 
 }
 
 
-
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success=true;
-	if(0 == myRank){
-		test_suite* proc = BOOST_TEST_SUITE( "ut_QuickGrid_loadBalMPI_np2_4x4x4p0" );
-		proc->add(BOOST_TEST_CASE( &p0 ));
-		framework::master_test_suite().add( proc );
-		return success;
-	}
-	if(1 == myRank){
-		test_suite* proc = BOOST_TEST_SUITE( "ut_QuickGrid_loadBalMPI_np2_4x4x4p1" );
-		proc->add(BOOST_TEST_CASE( &p1 ));
-		framework::master_test_suite().add( proc );
-		return success;
-	}
-
-	return success;
-}
-
-
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
 
 int main
 (
@@ -231,7 +215,8 @@ int main
 	}
 
 	// Initialize UTF
-	return unit_test_main( init_unit_test, argc, argv );
+
+        return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }
 
 

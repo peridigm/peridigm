@@ -43,10 +43,9 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
 #include "../PdZoltan.h"
 #include "quick_grid/QuickGrid.h"
 #include "../NeighborhoodList.h"
@@ -73,7 +72,6 @@
 using namespace PdBondFilter;
 using namespace PDNEIGH;
 using std::tr1::shared_ptr;
-using namespace boost::unit_test;
 
 using namespace Pdut;
 using std::tr1::shared_ptr;
@@ -125,19 +123,21 @@ shared_ptr< std::set<int> > constructFrame(PDNEIGH::NeighborhoodList& list) {
 	/*
 	 * There is only 1 point on each processor and by default it must show up in the frameset
 	 */
-	BOOST_CHECK(1==frameSet->size());
+	
 	return frameSet;
 }
 
-void createNeighborhood() {
+TEUCHOS_UNIT_TEST(Frameset_2x2x1_np4, CreateNeighborhoodTest) {
+
 	QUICKGRID::QuickGridData decomp = getGrid();
-	BOOST_CHECK(1==decomp.numPoints);
-	BOOST_CHECK(4==decomp.globalNumPoints);
+	TEST_ASSERT(1==decomp.numPoints);
+	TEST_ASSERT(4==decomp.globalNumPoints);
 	shared_ptr<BondFilter> bondFilterPtr(new PdBondFilter::BondFilterDefault(true));
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
 	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,2.0*horizon,bondFilterPtr);
 	shared_ptr< std::set<int> > frameSet = constructFrame(list);
-	BOOST_CHECK(5==list.get_size_neighborhood_list());
+        TEST_ASSERT(1==frameSet->size());
+	TEST_ASSERT(5==list.get_size_neighborhood_list());
 	/*
 	 * Neighborhood of every point should have every other point
 	 */
@@ -145,31 +145,15 @@ void createNeighborhood() {
 	set<int> neighSet(n,n+4);
 	int *neighborhood = list.get_neighborhood().get();
 	int numNeigh = *neighborhood;
-	BOOST_CHECK(4==numNeigh);
+	TEST_ASSERT(4==numNeigh);
 	neighborhood++;
 	for(int i=0;i<numNeigh;i++,neighborhood++){
-		BOOST_CHECK(neighSet.end()!=neighSet.find(*neighborhood));
+		TEST_ASSERT(neighSet.end()!=neighSet.find(*neighborhood));
 	}
 
 }
 
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success=true;
 
-	test_suite* proc = BOOST_TEST_SUITE( "createNeighborhood" );
-	proc->add(BOOST_TEST_CASE( &createNeighborhood ));
-	framework::master_test_suite().add( proc );
-	return success;
-
-}
-
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
 
 int main
 (
@@ -193,6 +177,9 @@ int main
 		std::exit(-1);
 	}
 
+        
+
 	// Initialize UTF
-	return unit_test_main( init_unit_test, argc, argv );
+
+        return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }

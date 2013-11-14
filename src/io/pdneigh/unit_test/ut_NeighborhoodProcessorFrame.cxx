@@ -43,10 +43,10 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
+#include "Teuchos_as.hpp"
 #include "quick_grid/QuickGrid.h"
 #include "Sortable.h"
 #include "Array.h"
@@ -63,7 +63,6 @@ using UTILITIES::CartesianComponent;
 using UTILITIES::Sortable;
 using namespace PDNEIGH;
 using std::tr1::shared_ptr;
-using namespace boost::unit_test;
 
 using std::vector;
 using std::set;
@@ -84,8 +83,6 @@ const QUICKGRID::Spec1D xSpec(nx,xStart,xLength);
 const QUICKGRID::Spec1D ySpec(ny,yStart,yLength);
 const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
 const size_t numCells = nx*ny*nz;
-
-
 
 Array<double> createPoints(){
 	/*
@@ -109,7 +106,17 @@ Array<double> createPoints(){
 	return xPtr;
 }
 
-void leastUpperBound(){
+
+TEUCHOS_UNIT_TEST( NeighborhoodProcessorFrame,  CreatePointsTest) {
+
+	/*
+	 * Random coordinates between 0 and PI
+	 */
+	Array<double> xPtr(3*N);
+	xPtr = createPoints();
+}
+
+TEUCHOS_UNIT_TEST( NeighborhoodProcessorFrame, LeastUpperBoundTest) {
 
 
 	// Creates a random set of points
@@ -140,14 +147,15 @@ void leastUpperBound(){
 		 * assert that all points including first are greater than "value"
 		 */
 		for(;f!=end; f++){
-			BOOST_CHECK(value<=*f);
+			TEST_ASSERT(value<=*f);
 		}
 
 	}
 
 }
 
-void noCellHorizon() {
+TEUCHOS_UNIT_TEST( NeighborhoodProcessorFrame, NoCellHorizonTest) {
+
 
 	size_t numProcs=1;
 	size_t myRank=0;
@@ -159,23 +167,24 @@ void noCellHorizon() {
 	/*
 	 * Assert that there are no neighbors
 	 */
-	BOOST_CHECK(numCells == decomp.globalNumPoints);
+	TEST_ASSERT(numCells == decomp.globalNumPoints);
 	int size = decomp.sizeNeighborhoodList;
-	BOOST_CHECK(size=numCells);
+	TEST_ASSERT(size=numCells);
 	int *list = decomp.neighborhood.get();
 	int *end = list+size;
 	for(;list!=end;){
 		int numNeigh = *list; list++;
-		BOOST_CHECK(0==numNeigh);
+		TEST_ASSERT(0==numNeigh);
 		int *e = list+numNeigh;
 		for(;list!=e;list++ ){
-			BOOST_CHECK(false);
+			TEST_ASSERT(false);
 		}
 	}
 
 }
 
-void noCellHorizonFrameLeftAndRight() {
+TEUCHOS_UNIT_TEST( NeighborhoodProcessorFrame, NoCellHorizonFrameLeftAndRightTest) {
+
 
 	size_t numProcs=1;
 	size_t myRank=0;
@@ -227,17 +236,17 @@ void noCellHorizonFrameLeftAndRight() {
 		int iXMIN = *mapX;
 		double xMin = x[3*iXMIN];
 		const double tolerance = 1.0e-15;
-		BOOST_CHECK_CLOSE(xMin,(xLength/nx/2.0),tolerance);
+		TEST_FLOATING_EQUALITY(xMin,(xLength/nx/2.0),tolerance);
 		double value = xMin + horizon;
 		const Sortable::SearchIterator start=c.begin(labels[axis],sortedMaps[axis].get_shared_ptr());
 		const Sortable::SearchIterator end=start+numCells;
 		Sortable::SearchIterator upper = std::upper_bound(start,end,value);
 		int numPointsInSet = upper.numPointsFromStart();
-		BOOST_CHECK(numPointsInSet==6);
+		TEST_ASSERT(numPointsInSet==6);
 		std::set<int> found(upper.mapStart(),upper.mapIterator());
 		std::set<int>::iterator setEnd = found.end();
 		for(int *b=left;b!=left+numPointsInSet;b++){
-			BOOST_CHECK(setEnd!=found.find(*b));
+			TEST_ASSERT(setEnd!=found.find(*b));
 		}
 	}
 
@@ -256,23 +265,23 @@ void noCellHorizonFrameLeftAndRight() {
 		int iXMAX = *(mapX+numCells-1);
 		double xMax = x[3*iXMAX];
 		const double tolerance = 1.0e-13;
-		BOOST_CHECK_CLOSE(xMax,(xLength-xLength/nx/2.0),tolerance);
+		TEST_FLOATING_EQUALITY(xMax,(xLength-xLength/nx/2.0),tolerance);
 		double value = xMax - horizon;
 		const Sortable::SearchIterator start=c.begin(labels[axis],sortedMaps[axis].get_shared_ptr());
 		const Sortable::SearchIterator end=start+numCells;
 		Sortable::SearchIterator lower = std::lower_bound(start,end,value);
 		int numPointsInSet = lower.numPointsToEnd();
-		BOOST_CHECK(numPointsInSet==6);
+		TEST_ASSERT(numPointsInSet==6);
 		std::set<int> found(lower.mapIterator(),lower.mapEnd());
 		std::set<int>::iterator setEnd = found.end();
 		for(int *b=right;b!=right+numPointsInSet;b++){
-			BOOST_CHECK(setEnd!=found.find(*b));
+			TEST_ASSERT(setEnd!=found.find(*b));
 		}
 	}
 
 }
 
-void noCellHorizonFrameTopAndBottom() {
+TEUCHOS_UNIT_TEST( NeighborhoodProcessorFrame, NoCellHorizonFrameTopAndBottomTest) {
 
 	size_t numProcs=1;
 	size_t myRank=0;
@@ -324,17 +333,17 @@ void noCellHorizonFrameTopAndBottom() {
 		int iXMIN = *mapX;
 		double xMin = x[3*iXMIN+axis];
 		const double tolerance = 1.0e-15;
-		BOOST_CHECK_CLOSE(xMin,(xLength/nx/2.0),tolerance);
+		TEST_FLOATING_EQUALITY(xMin,(xLength/nx/2.0),tolerance);
 		double value = xMin + horizon;
 		const Sortable::SearchIterator start=c.begin(labels[axis],sortedMaps[axis].get_shared_ptr());
 		const Sortable::SearchIterator end=start+numCells;
 		Sortable::SearchIterator upper = std::upper_bound(start,end,value);
 		int numPointsInSet = upper.numPointsFromStart();
-		BOOST_CHECK(numPointsInSet==6);
+		TEST_ASSERT(numPointsInSet==6);
 		std::set<int> found(upper.mapStart(),upper.mapIterator());
 		std::set<int>::iterator setEnd = found.end();
 		for(int *b=bottom;b!=bottom+numPointsInSet;b++){
-			BOOST_CHECK(setEnd!=found.find(*b));
+			TEST_ASSERT(setEnd!=found.find(*b));
 		}
 	}
 
@@ -353,23 +362,23 @@ void noCellHorizonFrameTopAndBottom() {
 		int iXMAX = *(mapX+numCells-1);
 		double xMax = x[3*iXMAX+axis];
 		const double tolerance = 1.0e-13;
-		BOOST_CHECK_CLOSE(xMax,(xLength-xLength/nx/2.0),tolerance);
+		TEST_FLOATING_EQUALITY(xMax,(xLength-xLength/nx/2.0),tolerance);
 		double value = xMax - horizon;
 		const Sortable::SearchIterator start=c.begin(labels[axis],sortedMaps[axis].get_shared_ptr());
 		const Sortable::SearchIterator end=start+numCells;
 		Sortable::SearchIterator lower = std::lower_bound(start,end,value);
 		int numPointsInSet = lower.numPointsToEnd();
-		BOOST_CHECK(numPointsInSet==6);
+		TEST_ASSERT(numPointsInSet==6);
 		std::set<int> found(lower.mapIterator(),lower.mapEnd());
 		std::set<int>::iterator setEnd = found.end();
 		for(int *b=top;b!=top+numPointsInSet;b++){
-			BOOST_CHECK(setEnd!=found.find(*b));
+			TEST_ASSERT(setEnd!=found.find(*b));
 		}
 	}
 
 }
 
-void greatestLowerBound(){
+TEUCHOS_UNIT_TEST( NeighborhoodProcessorFrame, GreatestLowerBoundTest) {
 
 
 	// Creates a random set of points
@@ -403,13 +412,15 @@ void greatestLowerBound(){
 		 */
 		Sortable::SearchIterator iter=c.begin(labels[label],mapX.get_shared_ptr());
 		for(;iter!=f; iter++){
-			BOOST_CHECK(value>=*iter);
+			TEST_ASSERT(value>=*iter);
 		}
 
 	}
 
 }
-void constructFrameNoHorizon(){
+
+TEUCHOS_UNIT_TEST( NeighborhoodProcessorFrame, ConstructFrameNoHorizonTest) {
+
 	size_t numProcs=1;
 	size_t myRank=0;
 	double SCALE=0.4;
@@ -443,7 +454,7 @@ void constructFrameNoHorizon(){
 			11,17,23,29
 	};
 	frameCells.assign(frame,frame+numFrameCells);
-	BOOST_CHECK(frameCells.capacity()==numFrameCells);
+	TEST_ASSERT(frameCells.capacity()==numFrameCells);
 
 	/*
 	 * Loop over axes and collect points at min and max ranges
@@ -473,7 +484,7 @@ void constructFrameNoHorizon(){
 			const Sortable::SearchIterator end=start+numCells;
 			Sortable::SearchIterator lub = std::upper_bound(start,end,value);
 			int numPointsInSet = lub.numPointsFromStart();
-			BOOST_CHECK(numPointsInSet==6);
+			TEST_ASSERT(numPointsInSet==6);
 			frameSet.insert(lub.mapStart(),lub.mapIterator());
 
 		}
@@ -498,7 +509,7 @@ void constructFrameNoHorizon(){
 			const Sortable::SearchIterator end=start+numCells;
 			Sortable::SearchIterator glb = std::upper_bound(start,end,value);
 			int numPointsInSet = glb.numPointsToEnd();
-			BOOST_CHECK(numPointsInSet==6);
+			TEST_ASSERT(numPointsInSet==6);
 			frameSet.insert(glb.mapIterator(),glb.mapEnd());
 		}
 	}
@@ -510,13 +521,13 @@ void constructFrameNoHorizon(){
 	const vector<int>::iterator end = frameCells.end();
 	const set<int>::iterator setEnd = frameSet.end();
 	for(;i!=end;i++){
-		BOOST_CHECK(setEnd!=frameSet.find(*i));
+		TEST_ASSERT(setEnd!=frameSet.find(*i));
 	}
-
-
 }
 
-void constructFrameOneCellHorizon(){
+
+TEUCHOS_UNIT_TEST( NeighborhoodProcessorFrame, ConstructFrameOneCellHorizonTest) {
+
 	size_t numProcs=1;
 	size_t myRank=0;
 	double SCALE=1.1;
@@ -554,7 +565,7 @@ void constructFrameOneCellHorizon(){
 			19,22
 	};
 	frameCells.assign(frame,frame+numFrameCells);
-	BOOST_CHECK(frameCells.capacity()==numFrameCells);
+	TEST_ASSERT(frameCells.capacity()==numFrameCells);
 
 	/*
 	 * Loop over axes and collect points at min and max ranges
@@ -584,7 +595,7 @@ void constructFrameOneCellHorizon(){
 			const Sortable::SearchIterator end=start+numCells;
 			Sortable::SearchIterator lub = std::upper_bound(start,end,value);
 			int numPointsInSet = lub.numPointsFromStart();
-			BOOST_CHECK(numPointsInSet==12);
+			TEST_ASSERT(numPointsInSet==12);
 			frameSet.insert(lub.mapStart(),lub.mapIterator());
 
 		}
@@ -609,7 +620,7 @@ void constructFrameOneCellHorizon(){
 			const Sortable::SearchIterator end=start+numCells;
 			Sortable::SearchIterator glb = std::upper_bound(start,end,value);
 			int numPointsInSet = glb.numPointsToEnd();
-			BOOST_CHECK(numPointsInSet==12);
+			TEST_ASSERT(numPointsInSet==12);
 			frameSet.insert(glb.mapIterator(),glb.mapEnd());
 		}
 	}
@@ -621,36 +632,13 @@ void constructFrameOneCellHorizon(){
 	const vector<int>::iterator end = frameCells.end();
 	const set<int>::iterator setEnd = frameSet.end();
 	for(;i!=end;i++){
-		BOOST_CHECK(setEnd!=frameSet.find(*i));
+		TEST_ASSERT(setEnd!=frameSet.find(*i));
 	}
 
 
 }
 
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success=true;
 
-	test_suite* proc = BOOST_TEST_SUITE( "ut_NeighborhoodProcessorFrame" );
-	proc->add(BOOST_TEST_CASE( &createPoints ));
-	proc->add(BOOST_TEST_CASE( &leastUpperBound ));
-	proc->add(BOOST_TEST_CASE( &greatestLowerBound ));
-	proc->add(BOOST_TEST_CASE( &noCellHorizon ));
-	proc->add(BOOST_TEST_CASE( &noCellHorizonFrameLeftAndRight ));
-	proc->add(BOOST_TEST_CASE( &noCellHorizonFrameTopAndBottom ));
-	proc->add(BOOST_TEST_CASE( &constructFrameNoHorizon ));
-	proc->add(BOOST_TEST_CASE( &constructFrameOneCellHorizon ));
-	framework::master_test_suite().add( proc );
-	return success;
-
-}
-
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
 
 int main
 (
@@ -661,5 +649,5 @@ int main
 
 
 	// Initialize UTF
-	return unit_test_main( init_unit_test, argc, argv );
+	return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }

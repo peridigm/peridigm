@@ -43,10 +43,9 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-//#include <boost/test/parameterized_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
 #include <cstddef>
 #include <cstdlib>
 #include <vector>
@@ -76,14 +75,16 @@ void fill_vector_interlaced
 	}
 }
 
-void no_points(){
+
+TEUCHOS_UNIT_TEST(Kdtree_rectangular_search, No_pointsTest) {
+
 	ordinal_type num_points=0;
 	value_type x[1];
 	value_type y[1];
 	value_type z[1];
 	vector<value_type> points(3*num_points);
 	fill_vector_interlaced(num_points,x,y,z,points);
-	BOOST_CHECK(points.size()==num_points);
+	TEST_ASSERT(points.size()==num_points);
 	my_tree tree=my_tree::get_tree(points.data(),num_points);
 
 	/*
@@ -93,12 +94,12 @@ void no_points(){
 	value_type search_point[]={0.0,0.0,0.0};
 	value_type R(1.0);
 	tree.all_neighbors_cube(search_point,R,neighbors);
-	BOOST_CHECK(neighbors.size()==0);
+	TEST_ASSERT(neighbors.size()==0);
 
 }
 
+TEUCHOS_UNIT_TEST(Kdtree_rectangular_search, One_pointTest) {
 
-void one_point(){
 	ordinal_type num_points=1;
 	value_type x[]={0.0};
 	value_type y[]={0.0};
@@ -113,12 +114,13 @@ void one_point(){
 	value_type search_point[]={0.0,0.0,0.0};
 	value_type R(1.0);
 	tree.all_neighbors_cube(search_point,R,neighbors);
-	BOOST_CHECK(neighbors.size()==1);
-	BOOST_CHECK(neighbors[0]==0);
+	TEST_ASSERT(neighbors.size()==1);
+	TEST_ASSERT(neighbors[0]==0);
 
 }
 
-void two_points(){
+TEUCHOS_UNIT_TEST(Kdtree_rectangular_search, Two_pointsTest) {
+
 	ordinal_type num_points=2;
 	value_type x[]={2.0,3.0};
 	value_type y[]={0.0,0.0};
@@ -135,7 +137,7 @@ void two_points(){
 		value_type search_point[]={0.0,0.0,0.0};
 		value_type R(0.25);
 		tree.all_neighbors_cube(search_point,R,neighbors);
-		BOOST_CHECK(neighbors.size()==0);
+		TEST_ASSERT(neighbors.size()==0);
 
 	}
 
@@ -147,8 +149,8 @@ void two_points(){
 		value_type search_point[]={0.0,0.0,0.0};
 		value_type R(2.0);
 		tree.all_neighbors_cube(search_point,R,neighbors);
-		BOOST_CHECK(neighbors.size()==1);
-		BOOST_CHECK(neighbors[0]==0);
+		TEST_ASSERT(neighbors.size()==1);
+		TEST_ASSERT(neighbors[0]==0);
 	}
 
 	{
@@ -159,9 +161,9 @@ void two_points(){
 		value_type search_point[]={0.0,0.0,0.0};
 		value_type R(3.0);
 		tree.all_neighbors_cube(search_point,R,neighbors);
-		BOOST_CHECK(neighbors.size()==2);
-		BOOST_CHECK(neighbors[0]==0 || neighbors[0]==1);
-		BOOST_CHECK(neighbors[1]==0 || neighbors[1]==1);
+		TEST_ASSERT(neighbors.size()==2);
+		TEST_ASSERT(neighbors[0]==0 || neighbors[0]==1);
+		TEST_ASSERT(neighbors[1]==0 || neighbors[1]==1);
 	}
 
 	{
@@ -172,8 +174,8 @@ void two_points(){
 		value_type search_point[]={2.0,0.0,0.0};
 		value_type R(0.25);
 		tree.all_neighbors_cube(search_point,R,neighbors);
-		BOOST_CHECK(neighbors.size()==1);
-		BOOST_CHECK(neighbors[0]==0);
+		TEST_ASSERT(neighbors.size()==1);
+		TEST_ASSERT(neighbors[0]==0);
 	}
 	{
 		/*
@@ -183,8 +185,8 @@ void two_points(){
 		value_type search_point[]={2.0,0.0,0.0};
 		value_type R(0.5);
 		tree.all_neighbors_cube(search_point,R,neighbors);
-		BOOST_CHECK(neighbors.size()==1);
-		BOOST_CHECK(neighbors[0]==0);
+		TEST_ASSERT(neighbors.size()==1);
+		TEST_ASSERT(neighbors[0]==0);
 	}
 	{
 		/*
@@ -194,16 +196,17 @@ void two_points(){
 		value_type search_point[]={2.0,0.0,0.0};
 		value_type R(1.0);
 		tree.all_neighbors_cube(search_point,R,neighbors);
-		BOOST_CHECK(neighbors.size()==2);
-		BOOST_CHECK(neighbors[0]==0 || neighbors[0]==1);
-		BOOST_CHECK(neighbors[1]==0 || neighbors[1]==1);
-		BOOST_CHECK(neighbors[0]==0 || neighbors[1]==0);
-		BOOST_CHECK(neighbors[0]==1 || neighbors[1]==1);
+		TEST_ASSERT(neighbors.size()==2);
+		TEST_ASSERT(neighbors[0]==0 || neighbors[0]==1);
+		TEST_ASSERT(neighbors[1]==0 || neighbors[1]==1);
+		TEST_ASSERT(neighbors[0]==0 || neighbors[1]==0);
+		TEST_ASSERT(neighbors[0]==1 || neighbors[1]==1);
 
 	}
 }
 
-void three_points() {
+TEUCHOS_UNIT_TEST(Kdtree_rectangular_search, Three_pointsTest) {
+
 	{
         size_t num_cells(2);
         const size_t dimension(3);
@@ -211,12 +214,12 @@ void three_points() {
         points.push_back(-0.5) ; points.push_back(0.0) ;  points.push_back(0.0) ;
         points.push_back(0.5)  ; points.push_back(0.0) ;  points.push_back(0.0) ;
 
-		BOOST_CHECK(num_cells*dimension==points.size());
+		TEST_ASSERT(num_cells*dimension==points.size());
 
 		// add point at origin
 		points.push_back(0.0); points.push_back(0.0); points.push_back(0.0);
 		num_cells+=1;
-		BOOST_CHECK(num_cells*dimension==points.size());
+		TEST_ASSERT(num_cells*dimension==points.size());
 
 		my_tree tree=my_tree::get_tree(points.data(),num_cells);
 
@@ -228,7 +231,7 @@ void three_points() {
 			value_type search_point[]={0.25,0.0,0.0};
 			value_type R(0.2);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==0);
+			TEST_ASSERT(neighbors.size()==0);
 		}
 
 		{
@@ -239,11 +242,11 @@ void three_points() {
 			value_type search_point[]={0.0,0.0,0.0};
 			value_type R(0.25);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==1);
+			TEST_ASSERT(neighbors.size()==1);
 			/*
 			 * origin was last point added
 			 */
-			BOOST_CHECK(2==neighbors[0]);
+			TEST_ASSERT(2==neighbors[0]);
 		}
 
 		{
@@ -254,12 +257,12 @@ void three_points() {
 			value_type search_point[]={0.25,0.0,0.0};
 			value_type R(0.26);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==2);
+			TEST_ASSERT(neighbors.size()==2);
 			/*
 			 * origin was last point added; right point is 2nd point
 			 */
-			BOOST_CHECK(2==neighbors[0] || 1==neighbors[0]);
-			BOOST_CHECK(2==neighbors[1] || 1==neighbors[1]);
+			TEST_ASSERT(2==neighbors[0] || 1==neighbors[0]);
+			TEST_ASSERT(2==neighbors[1] || 1==neighbors[1]);
 		}
 
 		{
@@ -270,12 +273,12 @@ void three_points() {
 			value_type search_point[]={-0.25,0.0,0.0};
 			value_type R(0.26);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==2);
+			TEST_ASSERT(neighbors.size()==2);
 			/*
 			 * origin was last point added; left point is first point
 			 */
-			BOOST_CHECK(2==neighbors[0] || 0==neighbors[0]);
-			BOOST_CHECK(2==neighbors[1] || 0==neighbors[1]);
+			TEST_ASSERT(2==neighbors[0] || 0==neighbors[0]);
+			TEST_ASSERT(2==neighbors[1] || 0==neighbors[1]);
 		}
 
 		{
@@ -286,13 +289,13 @@ void three_points() {
 			value_type search_point[]={0.0,0.0,0.0};
 			value_type R(0.51);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==3);
+			TEST_ASSERT(neighbors.size()==3);
 			/*
 			 * origin was last point added; left point is first point
 			 */
-			BOOST_CHECK(2==neighbors[0] || 0==neighbors[0] || 1==neighbors[0]);
-			BOOST_CHECK(2==neighbors[1] || 0==neighbors[1] || 1==neighbors[1]);
-			BOOST_CHECK(2==neighbors[2] || 0==neighbors[2] || 1==neighbors[2]);
+			TEST_ASSERT(2==neighbors[0] || 0==neighbors[0] || 1==neighbors[0]);
+			TEST_ASSERT(2==neighbors[1] || 0==neighbors[1] || 1==neighbors[1]);
+			TEST_ASSERT(2==neighbors[2] || 0==neighbors[2] || 1==neighbors[2]);
 		}
 
 	}
@@ -304,12 +307,12 @@ void three_points() {
         points.push_back(-0.5) ; points.push_back(0.0) ;  points.push_back(0.0) ;
         points.push_back(0.5)  ; points.push_back(0.0) ;  points.push_back(0.0) ;
 
-        BOOST_CHECK(num_cells*dimension==points.size());
+        TEST_ASSERT(num_cells*dimension==points.size());
 
 		// add point at 0,.5,0
 		points.push_back(0.0); points.push_back(0.5); points.push_back(0.0);
 		num_cells+=1;
-		BOOST_CHECK(num_cells*dimension==points.size());
+		TEST_ASSERT(num_cells*dimension==points.size());
 
 		my_tree tree=my_tree::get_tree(points.data(),num_cells);
 
@@ -321,7 +324,7 @@ void three_points() {
 			value_type search_point[]={0.0,0.0,0.0};
 			value_type R(0.2);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==0);
+			TEST_ASSERT(neighbors.size()==0);
 		}
 
 		{
@@ -332,7 +335,7 @@ void three_points() {
 			value_type search_point[]={1.0,0.0,0.0};
 			value_type R(0.2);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==0);
+			TEST_ASSERT(neighbors.size()==0);
 		}
 
 		{
@@ -343,7 +346,7 @@ void three_points() {
 			value_type search_point[]={0.0,1.0,0.0};
 			value_type R(0.2);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==0);
+			TEST_ASSERT(neighbors.size()==0);
 		}
 
 		{
@@ -354,7 +357,7 @@ void three_points() {
 			value_type search_point[]={0.0,0.0,1.0};
 			value_type R(0.2);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==0);
+			TEST_ASSERT(neighbors.size()==0);
 		}
 
 		{
@@ -365,7 +368,7 @@ void three_points() {
 			value_type search_point[]={0.0,0.0,0.0};
 			value_type R(0.51);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==3);
+			TEST_ASSERT(neighbors.size()==3);
 		}
 
 
@@ -374,8 +377,8 @@ void three_points() {
 
 }
 
+TEUCHOS_UNIT_TEST(Kdtree_rectangular_search, Four_pointsTest) {
 
-void four_points() {
 	{
         size_t num_cells(4);
         const size_t dimension(3);
@@ -385,7 +388,7 @@ void four_points() {
         points.push_back(-0.5) ; points.push_back(0.5)  ;  points.push_back(0.0) ;
         points.push_back(0.5)  ; points.push_back(0.5)  ;  points.push_back(0.0) ;
 
-        BOOST_CHECK(num_cells*dimension==points.size());
+        TEST_ASSERT(num_cells*dimension==points.size());
 
 		my_tree tree=my_tree::get_tree(points.data(),num_cells);
 
@@ -397,7 +400,7 @@ void four_points() {
 			value_type search_point[]={0.0,0.0,0.0};
 			value_type R(0.2);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==0);
+			TEST_ASSERT(neighbors.size()==0);
 		}
 
 		{
@@ -408,7 +411,7 @@ void four_points() {
 			value_type search_point[]={0.0,0.0,0.0};
 			value_type R(0.51);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==4);
+			TEST_ASSERT(neighbors.size()==4);
 		}
 
 		{
@@ -419,7 +422,7 @@ void four_points() {
 			value_type search_point[]={1.0,0.0,0.0};
 			value_type R(0.51);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==2);
+			TEST_ASSERT(neighbors.size()==2);
 		}
 		{
 			/*
@@ -429,7 +432,7 @@ void four_points() {
 			value_type search_point[]={0.0,1.0,0.0};
 			value_type R(0.51);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==2);
+			TEST_ASSERT(neighbors.size()==2);
 		}
 
 		{
@@ -440,7 +443,7 @@ void four_points() {
 			value_type search_point[]={-1.0,0.0,0.0};
 			value_type R(0.51);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==2);
+			TEST_ASSERT(neighbors.size()==2);
 		}
 		{
 			/*
@@ -450,7 +453,7 @@ void four_points() {
 			value_type search_point[]={0.0,-1.0,0.0};
 			value_type R(0.51);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==2);
+			TEST_ASSERT(neighbors.size()==2);
 		}
 
 		{
@@ -461,7 +464,7 @@ void four_points() {
 			value_type search_point[]={1.0,1.0,0.0};
 			value_type R(0.51);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==1);
+			TEST_ASSERT(neighbors.size()==1);
 		}
 
 		{
@@ -472,7 +475,7 @@ void four_points() {
 			value_type search_point[]={-1.0,1.0,0.0};
 			value_type R(0.51);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==1);
+			TEST_ASSERT(neighbors.size()==1);
 		}
 
 		{
@@ -483,7 +486,7 @@ void four_points() {
 			value_type search_point[]={-1.0,-1.0,0.0};
 			value_type R(0.51);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==1);
+			TEST_ASSERT(neighbors.size()==1);
 		}
 
 		{
@@ -494,14 +497,16 @@ void four_points() {
 			value_type search_point[]={1.0,-1.0,0.0};
 			value_type R(0.51);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==1);
+			TEST_ASSERT(neighbors.size()==1);
 		}
 
 
 	}
 }
 
-void n_x_n_points() {
+
+TEUCHOS_UNIT_TEST(Kdtree_rectangular_search, n_x_n_pointsTest) {
+
 	{
 		/*
 		 * this routine will work for arbitrary n that are 'even'
@@ -523,7 +528,7 @@ void n_x_n_points() {
           }
         }
 
-        BOOST_CHECK(num_cells*dimension==points.size());
+        TEST_ASSERT(num_cells*dimension==points.size());
 
 		my_tree tree=my_tree::get_tree(points.data(),num_cells);
 
@@ -535,7 +540,7 @@ void n_x_n_points() {
 			value_type search_point[]={0.0,0.0,0.0};
 			value_type R(.9*cell_size/2.0);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==0);
+			TEST_ASSERT(neighbors.size()==0);
 		}
 
 		{
@@ -546,7 +551,7 @@ void n_x_n_points() {
 			value_type search_point[]={0.0,0.0,0.0};
 			value_type R(x_length/2.0);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==n*n);
+			TEST_ASSERT(neighbors.size()==n*n);
 		}
 
 		{
@@ -557,7 +562,7 @@ void n_x_n_points() {
 			value_type search_point[]={x_length/2.0,0.0,0.0};
 			value_type R(x_length/2.0);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==n*n/2);
+			TEST_ASSERT(neighbors.size()==n*n/2);
 		}
 		{
 			/*
@@ -567,7 +572,7 @@ void n_x_n_points() {
 			value_type search_point[]={0.0,x_length/2.0,0.0};
 			value_type R(x_length/2.0);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==n*n/2);
+			TEST_ASSERT(neighbors.size()==n*n/2);
 		}
 
 		{
@@ -578,7 +583,7 @@ void n_x_n_points() {
 			value_type search_point[]={-x_length/2,0.0,0.0};
 			value_type R(x_length/2);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==n*n/2);
+			TEST_ASSERT(neighbors.size()==n*n/2);
 		}
 		{
 			/*
@@ -588,7 +593,7 @@ void n_x_n_points() {
 			value_type search_point[]={0.0,-x_length/2,0.0};
 			value_type R(x_length/2);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==n*n/2);
+			TEST_ASSERT(neighbors.size()==n*n/2);
 		}
 
 		{
@@ -599,7 +604,7 @@ void n_x_n_points() {
 			value_type search_point[]={x_length/2,x_length/2,0.0};
 			value_type R(x_length/2);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==n*n/4);
+			TEST_ASSERT(neighbors.size()==n*n/4);
 		}
 
 		{
@@ -610,7 +615,7 @@ void n_x_n_points() {
 			value_type search_point[]={-x_length/2,x_length/2,0.0};
 			value_type R(x_length/2);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==n*n/4);
+			TEST_ASSERT(neighbors.size()==n*n/4);
 		}
 
 		{
@@ -621,7 +626,7 @@ void n_x_n_points() {
 			value_type search_point[]={-x_length/2,-x_length/2,0.0};
 			value_type R(x_length/2);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==n*n/4);
+			TEST_ASSERT(neighbors.size()==n*n/4);
 		}
 
 		{
@@ -632,7 +637,7 @@ void n_x_n_points() {
 			value_type search_point[]={x_length/2,-x_length/2,0.0};
 			value_type R(x_length/2);
 			tree.all_neighbors_cube(search_point,R,neighbors);
-			BOOST_CHECK(neighbors.size()==n*n/4);
+			TEST_ASSERT(neighbors.size()==n*n/4);
 		}
 
 
@@ -640,31 +645,9 @@ void n_x_n_points() {
 
 }
 
-bool init_unit_test_suite() {
-	// Add a suite for each processor in the test
-	bool success = true;
-
-	boost::unit_test::test_suite* proc = BOOST_TEST_SUITE("ut_kdtree");
-	proc->add(BOOST_TEST_CASE(&no_points));
-	proc->add(BOOST_TEST_CASE(&one_point));
-	proc->add(BOOST_TEST_CASE(&two_points));
-	proc->add(BOOST_TEST_CASE(&three_points));
-	proc->add(BOOST_TEST_CASE(&four_points));
-	proc->add(BOOST_TEST_CASE(&n_x_n_points));
-	boost::unit_test::framework::master_test_suite().add(proc);
-
-	return success;
-}
-
-bool init_unit_test() {
-	init_unit_test_suite();
-	return true;
-}
-
-int main(int argc, char* argv[]) {
-
-	// Initialize UTF
-	return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
+int main( int argc, char* argv[] ) {
+  
+  return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }
 
 

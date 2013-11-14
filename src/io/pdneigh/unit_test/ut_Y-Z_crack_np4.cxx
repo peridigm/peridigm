@@ -43,10 +43,9 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
 #include "../PdZoltan.h"
 #include "quick_grid/QuickGrid.h"
 #include "../NeighborhoodList.h"
@@ -65,7 +64,6 @@
 using namespace PdBondFilter;
 using namespace PDNEIGH;
 using std::tr1::shared_ptr;
-using namespace boost::unit_test;
 using namespace Pdut;
 using std::cout;
 using std::set;
@@ -148,7 +146,14 @@ void printNeighborhood(int numNeigh, int* neigh){
 	cout << std::endl;
 }
 
-void assertNeighborhood_p0(){
+
+TEUCHOS_UNIT_TEST(Y_Z_crack_np4, AssertNeighborhood_p0) {
+
+
+        if(myRank != 0){
+           return;
+        }
+
 	QUICKGRID::QuickGridData gridData = getGrid();
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
@@ -162,8 +167,8 @@ void assertNeighborhood_p0(){
 	 * There are a total of 48 points = nx * ny * nz = 4 * 4 * 3
 	 * Because of this mesh, each processor should get 12 points
 	 */
-	BOOST_CHECK(12 == gridData.numPoints);
-	BOOST_CHECK(12 == list.get_num_owned_points());
+	TEST_ASSERT(12 == gridData.numPoints);
+	TEST_ASSERT(12 == list.get_num_owned_points());
 	/*
 	 * GIDS ON THIS PROCESSOR
 	 *
@@ -188,17 +193,17 @@ void assertNeighborhood_p0(){
 
 	for(int j=0;j<NUMPOINTS;j++,gids++){
 
-		BOOST_CHECK(GIDS[j]==*gids);
+		TEST_ASSERT(GIDS[j]==*gids);
 		int numNeighAnswer = N[j];
 		int numNeigh = *neigh; neigh++;
 //		std::cout << "rank, gid, numNeigh = " << myRank << ", " << *gids << ", " << numNeigh << std::endl;
 //		printNeighborhood(numNeigh,neigh);
-		BOOST_CHECK(numNeighAnswer==numNeigh);
+		TEST_ASSERT(numNeighAnswer==numNeigh);
 //		int *neighAnswer = NN[j];
 		set<int> neighAnswer(NN[j],NN[j]+numNeigh);
 		set<int>::iterator end = neighAnswer.end();
 		for(int n=0;n<numNeigh;n++){
-			BOOST_CHECK(end != neighAnswer.find(*(neigh+n)));
+			TEST_ASSERT(end != neighAnswer.find(*(neigh+n)));
 		}
 
 		/*
@@ -218,7 +223,15 @@ void assertNeighborhood_p0(){
 
 }
 
-void assertNeighborhood_p1(){
+
+TEUCHOS_UNIT_TEST(Y_Z_crack_np4, AssertNeighborhood_p1) {
+
+
+        if(myRank != 1){
+           return;
+        }
+
+
 	QUICKGRID::QuickGridData gridData = getGrid();
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
@@ -229,12 +242,17 @@ void assertNeighborhood_p1(){
 	 * There are a total of 48 points = nx * ny * nz = 4 * 4 * 3
 	 * Because of this mesh, each processor should get 12 points
 	 */
-	BOOST_CHECK(12 == gridData.numPoints);
-	BOOST_CHECK(12 == list.get_num_owned_points());
+	TEST_ASSERT(12 == gridData.numPoints);
+	TEST_ASSERT(12 == list.get_num_owned_points());
 
 }
 
-void assertNeighborhood_p2(){
+TEUCHOS_UNIT_TEST(Y_Z_crack_np4, AssertNeighborhood_p2) {
+
+        if(myRank != 2){
+           return;
+        }
+
 	QUICKGRID::QuickGridData gridData = getGrid();
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
@@ -245,12 +263,18 @@ void assertNeighborhood_p2(){
 	 * There are a total of 48 points = nx * ny * nz = 4 * 4 * 3
 	 * Because of this mesh, each processor should get 12 points
 	 */
-	BOOST_CHECK(12 == gridData.numPoints);
-	BOOST_CHECK(12 == list.get_num_owned_points());
+	TEST_ASSERT(12 == gridData.numPoints);
+	TEST_ASSERT(12 == list.get_num_owned_points());
 
 }
 
-void assertNeighborhood_p3(){
+TEUCHOS_UNIT_TEST(Y_Z_crack_np4, AssertNeighborhood_p3) {
+
+        if(myRank != 3){
+           return;
+        }
+
+
 	QUICKGRID::QuickGridData gridData = getGrid();
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
@@ -261,47 +285,11 @@ void assertNeighborhood_p3(){
 	 * There are a total of 48 points = nx * ny * nz = 4 * 4 * 3
 	 * Because of this mesh, each processor should get 12 points
 	 */
-	BOOST_CHECK(12 == gridData.numPoints);
-	BOOST_CHECK(12 == list.get_num_owned_points());
-}
-
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success=true;
-	if(0 == myRank){
-		test_suite* proc = BOOST_TEST_SUITE( "ut_Y-Z_crack_np4_p0" );
-		proc->add(BOOST_TEST_CASE( &assertNeighborhood_p0 ));
-		framework::master_test_suite().add( proc );
-		return success;
-	}
-	if(1 == myRank){
-		test_suite* proc = BOOST_TEST_SUITE( "ut_Y-Z_crack_np4_p1" );
-		proc->add(BOOST_TEST_CASE( &assertNeighborhood_p1 ));
-		framework::master_test_suite().add( proc );
-		return success;
-	}
-	if(2 == myRank){
-		test_suite* proc = BOOST_TEST_SUITE( "ut_Y-Z_crack_np4_p2" );
-		proc->add(BOOST_TEST_CASE( &assertNeighborhood_p2 ));
-		framework::master_test_suite().add( proc );
-		return success;
-	}
-	if(3 == myRank){
-		test_suite* proc = BOOST_TEST_SUITE( "ut_Y-Z_crack_np4_p3" );
-		proc->add(BOOST_TEST_CASE( &assertNeighborhood_p3 ));
-		framework::master_test_suite().add( proc );
-		return success;
-	}
-        return success;
+	TEST_ASSERT(12 == gridData.numPoints);
+	TEST_ASSERT(12 == list.get_num_owned_points());
 }
 
 
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
 
 int main
 (
@@ -328,5 +316,5 @@ int main
 
 
 	// Initialize UTF
-	return unit_test_main( init_unit_test, argc, argv );
+	return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }

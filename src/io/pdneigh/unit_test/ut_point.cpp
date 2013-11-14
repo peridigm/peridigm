@@ -43,10 +43,9 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
 #include <cstddef>
 #include <cstdlib>
 #include <iostream>
@@ -66,36 +65,37 @@ point<value_type> get_point(){
 	return a;
 }
 
-void constructor() {
+TEUCHOS_UNIT_TEST( Point, ConstructorTest) {
+
 	{
 		point<value_type> a, b, c(1), d(1,1,1), e(1,2,3), f=get_point();
 		point<value_type> g(c);
-		BOOST_CHECK(a[femanica::X]==b[femanica::X]);
-		BOOST_CHECK(a[femanica::Y]==b[femanica::Y]);
-		BOOST_CHECK(a[femanica::Z]==b[femanica::Z]);
-		BOOST_CHECK(a[femanica::X]==0);
-		BOOST_CHECK(a[femanica::Y]==0);
-		BOOST_CHECK(a[femanica::Z]==0);
-		BOOST_CHECK(c[femanica::X]==f[femanica::X]);
-		BOOST_CHECK(c[femanica::Y]==f[femanica::Y]);
-		BOOST_CHECK(c[femanica::Z]==f[femanica::Z]);
-		BOOST_CHECK(c[femanica::X]==d[femanica::X]);
-		BOOST_CHECK(c[femanica::Y]==d[femanica::Y]);
-		BOOST_CHECK(c[femanica::Z]==d[femanica::Z]);
-		BOOST_CHECK(g[femanica::X]==f[femanica::X]);
-		BOOST_CHECK(g[femanica::Y]==f[femanica::Y]);
-		BOOST_CHECK(g[femanica::Z]==f[femanica::Z]);
-		BOOST_CHECK(1.0==f[femanica::X]);
-		BOOST_CHECK(1.0==f[femanica::Y]);
-		BOOST_CHECK(1.0==f[femanica::Z]);
-		BOOST_CHECK(1.0==e[femanica::X]);
-		BOOST_CHECK(2.0==e[femanica::Y]);
-		BOOST_CHECK(3.0==e[femanica::Z]);
+		TEST_ASSERT(a[femanica::X]==b[femanica::X]);
+		TEST_ASSERT(a[femanica::Y]==b[femanica::Y]);
+		TEST_ASSERT(a[femanica::Z]==b[femanica::Z]);
+		TEST_ASSERT(a[femanica::X]==0);
+		TEST_ASSERT(a[femanica::Y]==0);
+		TEST_ASSERT(a[femanica::Z]==0);
+		TEST_ASSERT(c[femanica::X]==f[femanica::X]);
+		TEST_ASSERT(c[femanica::Y]==f[femanica::Y]);
+		TEST_ASSERT(c[femanica::Z]==f[femanica::Z]);
+		TEST_ASSERT(c[femanica::X]==d[femanica::X]);
+		TEST_ASSERT(c[femanica::Y]==d[femanica::Y]);
+		TEST_ASSERT(c[femanica::Z]==d[femanica::Z]);
+		TEST_ASSERT(g[femanica::X]==f[femanica::X]);
+		TEST_ASSERT(g[femanica::Y]==f[femanica::Y]);
+		TEST_ASSERT(g[femanica::Z]==f[femanica::Z]);
+		TEST_ASSERT(1.0==f[femanica::X]);
+		TEST_ASSERT(1.0==f[femanica::Y]);
+		TEST_ASSERT(1.0==f[femanica::Z]);
+		TEST_ASSERT(1.0==e[femanica::X]);
+		TEST_ASSERT(2.0==e[femanica::Y]);
+		TEST_ASSERT(3.0==e[femanica::Z]);
 		span_axis<value_type> ax={femanica::X,0.0};
 		point<value_type> h=intersect(f,ax);
-		BOOST_CHECK(h[femanica::X]==ax.cut);
-		BOOST_CHECK(h[femanica::Y]==1.0);
-		BOOST_CHECK(h[femanica::Z]==1.0);
+		TEST_ASSERT(h[femanica::X]==ax.cut);
+		TEST_ASSERT(h[femanica::Y]==1.0);
+		TEST_ASSERT(h[femanica::Z]==1.0);
 	}
 
 	{
@@ -110,9 +110,9 @@ void constructor() {
 		q[j]=c[j];
 		q[k]=c[k];
 		point<value_type> a(q);
-		BOOST_CHECK(a[femanica::X]==0.0);
-		BOOST_CHECK(a[femanica::Y]==1.0);
-		BOOST_CHECK(a[femanica::Z]==1.0);
+		TEST_ASSERT(a[femanica::X]==0.0);
+		TEST_ASSERT(a[femanica::Y]==1.0);
+		TEST_ASSERT(a[femanica::Z]==1.0);
 
 	}
 
@@ -128,9 +128,9 @@ void constructor() {
 		q[j]=c[j];
 		q[k]=c[k];
 		point<value_type> a(q);
-		BOOST_CHECK(a[femanica::X]==1.0);
-		BOOST_CHECK(a[femanica::Y]==0.0);
-		BOOST_CHECK(a[femanica::Z]==1.0);
+		TEST_ASSERT(a[femanica::X]==1.0);
+		TEST_ASSERT(a[femanica::Y]==0.0);
+		TEST_ASSERT(a[femanica::Z]==1.0);
 
 	}
 
@@ -146,123 +146,107 @@ void constructor() {
 		q[j]=c[j];
 		q[k]=c[k];
 		point<value_type> a(q);
-		BOOST_CHECK(a[femanica::X]==1.0);
-		BOOST_CHECK(a[femanica::Y]==1.0);
-		BOOST_CHECK(a[femanica::Z]==0.0);
+		TEST_ASSERT(a[femanica::X]==1.0);
+		TEST_ASSERT(a[femanica::Y]==1.0);
+		TEST_ASSERT(a[femanica::Z]==0.0);
 
 	}
 
 }
 
+TEUCHOS_UNIT_TEST( Point, ComparatorTest) {
 
-void comparator() {
 	point<value_type> a(1), b(2), c(3), g(4);
-	BOOST_CHECK(a<=b);
-	BOOST_CHECK(b<=c);
-	BOOST_CHECK(a<=c);
-	BOOST_CHECK(!(c<=b));
+	TEST_ASSERT(a<=b);
+	TEST_ASSERT(b<=c);
+	TEST_ASSERT(a<=c);
+	TEST_ASSERT(!(c<=b));
 	point<value_type> d(1,2,3), e(0.5,1.5,2.5);
-	BOOST_CHECK(e<=d);
+	TEST_ASSERT(e<=d);
 	rectangular_range<value_type> r1(a,c), r2(point<value_type>(1.5),point<value_type>(2.5));
-	BOOST_CHECK(r1.contains(r2));
-	BOOST_CHECK(!r2.contains(r1));
-	BOOST_CHECK(r1.intersects(r2));
-	BOOST_CHECK(r2.intersects(r1));
+	TEST_ASSERT(r1.contains(r2));
+	TEST_ASSERT(!r2.contains(r1));
+	TEST_ASSERT(r1.intersects(r2));
+	TEST_ASSERT(r2.intersects(r1));
 	rectangular_range<value_type> r3(a,b), r4(c,g);
-	BOOST_CHECK(!r3.contains(r4));
-	BOOST_CHECK(!r4.contains(r3));
+	TEST_ASSERT(!r3.contains(r4));
+	TEST_ASSERT(!r4.contains(r3));
 	/*
 	 * r is the entire 3d domain
 	 */
 	rectangular_range<value_type> r;
-	BOOST_CHECK(r.contains(r1));
-	BOOST_CHECK(!r1.contains(r));
+	TEST_ASSERT(r.contains(r1));
+	TEST_ASSERT(!r1.contains(r));
 	span_axis<value_type> ax={femanica::X,0.0},ay={femanica::Y,0.0};
 	rectangular_range<value_type> left=r.left(ax);
 	rectangular_range<value_type> lower_left=left.left(ay);
 	rectangular_range<value_type> right=r.right(ax);
 	rectangular_range<value_type> upper_right=right.right(ay);
-	BOOST_CHECK(r.contains(left));
-	BOOST_CHECK(!left.contains(r));
-	BOOST_CHECK(r.contains(right));
-	BOOST_CHECK(!right.contains(r));
-	BOOST_CHECK(r.contains(lower_left));
-	BOOST_CHECK(left.contains(lower_left));
-	BOOST_CHECK(!lower_left.contains(left));
-	BOOST_CHECK(!lower_left.contains(r));
-	BOOST_CHECK(r.contains(upper_right));
-	BOOST_CHECK(right.contains(upper_right));
-	BOOST_CHECK(!upper_right.contains(right));
-	BOOST_CHECK(!upper_right.contains(r));
+	TEST_ASSERT(r.contains(left));
+	TEST_ASSERT(!left.contains(r));
+	TEST_ASSERT(r.contains(right));
+	TEST_ASSERT(!right.contains(r));
+	TEST_ASSERT(r.contains(lower_left));
+	TEST_ASSERT(left.contains(lower_left));
+	TEST_ASSERT(!lower_left.contains(left));
+	TEST_ASSERT(!lower_left.contains(r));
+	TEST_ASSERT(r.contains(upper_right));
+	TEST_ASSERT(right.contains(upper_right));
+	TEST_ASSERT(!upper_right.contains(right));
+	TEST_ASSERT(!upper_right.contains(r));
 
-	BOOST_CHECK(upper_right.contains(r1));
-	BOOST_CHECK(!r1.contains(upper_right));
+	TEST_ASSERT(upper_right.contains(r1));
+	TEST_ASSERT(!r1.contains(upper_right));
 
 	point<value_type> y(-1.0),z(-.5),w(0.0);
 	rectangular_range<value_type> r5(y,z), r6(y,w);
-	BOOST_CHECK(lower_left.contains(r5));
-	BOOST_CHECK(left.contains(r5));
-	BOOST_CHECK(r.contains(r5));
-	BOOST_CHECK(!r5.contains(r));
-	BOOST_CHECK(!r5.contains(r6));
-	BOOST_CHECK(r6.contains(r5));
-	BOOST_CHECK(r5.intersects(r6));
-	BOOST_CHECK(r6.intersects(r5));
+	TEST_ASSERT(lower_left.contains(r5));
+	TEST_ASSERT(left.contains(r5));
+	TEST_ASSERT(r.contains(r5));
+	TEST_ASSERT(!r5.contains(r));
+	TEST_ASSERT(!r5.contains(r6));
+	TEST_ASSERT(r6.contains(r5));
+	TEST_ASSERT(r5.intersects(r6));
+	TEST_ASSERT(r6.intersects(r5));
 
 }
 
-void _range() {
+TEUCHOS_UNIT_TEST( Point, _RangeTest) {
+
 	rectangular_range<value_type> r, s;
 	point<value_type> rl=r.get_low(), rh=r.get_high();
 	point<value_type> sl=s.get_low(), sh=s.get_high();
-	BOOST_CHECK(rl[femanica::X]==-numeric_limits<value_type>::max());
-	BOOST_CHECK(rl[femanica::Y]==-numeric_limits<value_type>::max());
-	BOOST_CHECK(rl[femanica::Z]==-numeric_limits<value_type>::max());
-	BOOST_CHECK(rh[femanica::X]==numeric_limits<value_type>::max());
-	BOOST_CHECK(rh[femanica::Y]==numeric_limits<value_type>::max());
-	BOOST_CHECK(rh[femanica::Z]==numeric_limits<value_type>::max());
-	BOOST_CHECK(rl[femanica::X]==sl[femanica::X]);
-	BOOST_CHECK(rl[femanica::Y]==sl[femanica::Y]);
-	BOOST_CHECK(rl[femanica::Z]==sl[femanica::Z]);
-	BOOST_CHECK(rh[femanica::X]==sh[femanica::X]);
-	BOOST_CHECK(rh[femanica::Y]==sh[femanica::Y]);
-	BOOST_CHECK(rh[femanica::Z]==sh[femanica::Z]);
+	TEST_ASSERT(rl[femanica::X]==-numeric_limits<value_type>::max());
+	TEST_ASSERT(rl[femanica::Y]==-numeric_limits<value_type>::max());
+	TEST_ASSERT(rl[femanica::Z]==-numeric_limits<value_type>::max());
+	TEST_ASSERT(rh[femanica::X]==numeric_limits<value_type>::max());
+	TEST_ASSERT(rh[femanica::Y]==numeric_limits<value_type>::max());
+	TEST_ASSERT(rh[femanica::Z]==numeric_limits<value_type>::max());
+	TEST_ASSERT(rl[femanica::X]==sl[femanica::X]);
+	TEST_ASSERT(rl[femanica::Y]==sl[femanica::Y]);
+	TEST_ASSERT(rl[femanica::Z]==sl[femanica::Z]);
+	TEST_ASSERT(rh[femanica::X]==sh[femanica::X]);
+	TEST_ASSERT(rh[femanica::Y]==sh[femanica::Y]);
+	TEST_ASSERT(rh[femanica::Z]==sh[femanica::Z]);
 	span_axis<value_type> ax={femanica::X,0.0};
 	rectangular_range<value_type> left=r.left(ax);
 	point<value_type> left_low=left.get_low();
 	point<value_type> left_high=left.get_high();
-	BOOST_CHECK(left_low[femanica::X]==-numeric_limits<value_type>::max());
-	BOOST_CHECK(left_low[femanica::Y]==-numeric_limits<value_type>::max());
-	BOOST_CHECK(left_low[femanica::Z]==-numeric_limits<value_type>::max());
-	BOOST_CHECK(left_high[femanica::X]==ax.cut);
-	BOOST_CHECK(left_high[femanica::Y]==numeric_limits<value_type>::max());
-	BOOST_CHECK(left_high[femanica::Z]==numeric_limits<value_type>::max());
+	TEST_ASSERT(left_low[femanica::X]==-numeric_limits<value_type>::max());
+	TEST_ASSERT(left_low[femanica::Y]==-numeric_limits<value_type>::max());
+	TEST_ASSERT(left_low[femanica::Z]==-numeric_limits<value_type>::max());
+	TEST_ASSERT(left_high[femanica::X]==ax.cut);
+	TEST_ASSERT(left_high[femanica::Y]==numeric_limits<value_type>::max());
+	TEST_ASSERT(left_high[femanica::Z]==numeric_limits<value_type>::max());
 }
 
 
 
-bool init_unit_test_suite() {
-	// Add a suite for each processor in the test
-	bool success = true;
-
-	boost::unit_test::test_suite* proc = BOOST_TEST_SUITE("ut_point");
-	proc->add(BOOST_TEST_CASE(&_range));
-	proc->add(BOOST_TEST_CASE(&constructor));
-	proc->add(BOOST_TEST_CASE(&comparator));
-	boost::unit_test::framework::master_test_suite().add(proc);
-
-	return success;
-}
-
-bool init_unit_test() {
-	init_unit_test_suite();
-	return true;
-}
 
 int main(int argc, char* argv[]) {
 
 	// Initialize UTF
-	return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
+	return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }
 
 
