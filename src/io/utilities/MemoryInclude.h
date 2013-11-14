@@ -45,7 +45,10 @@
 // ************************************************************************
 //@HEADER
 
- // cstddef has definitions for __GLIBCXX__ and _HAS_TR1
+#ifndef PERIDIGM_MEMORY_INCLUDES_H
+#define PERIDIGM_MEMORY_INCLUDES_H
+
+// cstddef has definitions for __GLIBCXX__ and _HAS_TR1
 #include <cstddef>
 
 // GNU or Intel with libstd++
@@ -66,3 +69,5 @@
 #include <boost/tr1/memory.hpp>
 
 #endif
+
+#endif // PERIDIGM_MEMORY_INCLUDES_H
