@@ -68,17 +68,14 @@
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
 #include "Teuchos_UnitTestRepository.hpp"
+#include "Teuchos_GlobalMPISession.hpp"
 
 using std::tr1::shared_ptr;
 
-
-using namespace Pdut;
 using std::cout;
 using std::set;
 using std::map;
 
-static size_t myRank;
-static size_t numProcs;
 
 int dimension_answer=3;
 size_t globalNumPoints_answer=2;
@@ -92,7 +89,7 @@ int neighborhoodPtr_answer[] = {0,2};
 
 using QUICKGRID::QuickGridMeshGenerationIterator;
 
-QUICKGRID::QuickGridData getGrid(const string json_filename) {
+QUICKGRID::QuickGridData getGrid(const string json_filename, int numProcs, int myRank) {
 	shared_ptr<QuickGridMeshGenerationIterator> g = QUICKGRID::getMeshGenerator(numProcs,json_filename);
 	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, *g);
 
@@ -104,13 +101,26 @@ QUICKGRID::QuickGridData getGrid(const string json_filename) {
 
 TEUCHOS_UNIT_TEST(ReLoadBalance, TwoPointReloadBalanceTest) {
 
+        Teuchos::RCP<Epetra_Comm> comm;
+
+         #ifdef HAVE_MPI
+              
+              comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
+         #else
+              comm = rcp(new Epetra_SerialComm);
+         #endif
+
+         int numProcs = comm->NumProc();
+         int myRank   = comm->MyPID();
+
+
 
         const int* gids;
         const int* neighborhood;
         const int* neighborhoodPtr;
         
 	const string json_file="input_files/ut_twoPointReLoadBalance.json";
-	QUICKGRID::QuickGridData decomp_1 = getGrid(json_file);
+	QUICKGRID::QuickGridData decomp_1 = getGrid(json_file, numProcs, myRank);
 
         std::cout << "\ttwoPointReloadBalance: UNBALANCED MESH assert_grid()\n" << "\n";
 
@@ -169,13 +179,7 @@ int main
 )
 {
 
-	// Initialize MPI and timer
-	PdutMpiFixture myMpi = PdutMpiFixture(argc,argv);
-
-	// These are static (file scope) variables
-	myRank = myMpi.rank;
-	numProcs = myMpi.numProcs;
-
+	Teuchos::GlobalMPISession mpiSession(&argc, &argv);
 	// Initialize UTF
 
 	return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);

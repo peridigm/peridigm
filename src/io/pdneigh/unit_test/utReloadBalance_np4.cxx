@@ -46,6 +46,7 @@
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
 #include "Teuchos_UnitTestRepository.hpp"
+#include "Teuchos_GlobalMPISession.hpp"
 #include <iostream>
 #include <cmath>
 #include <map>
@@ -75,8 +76,7 @@ using std::cout;
 using std::set;
 using std::map;
 
-static size_t myRank;
-static size_t numProcs;
+
 const size_t nx = 4;
 const size_t ny = 4;
 const size_t nz = 1;
@@ -92,8 +92,25 @@ const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
 const size_t numCells = nx*ny*nz;
 const double horizon = sqrt(2)*xLength/nx;
 
+bool init = false;
+Teuchos::RCP<Epetra_Comm> comm;   
 
-QUICKGRID::QuickGridData getGrid() {
+
+void initialize(){
+         
+       #ifdef HAVE_MPI
+              
+              comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
+       #else
+              comm = rcp(new Epetra_SerialComm);
+       #endif
+     
+       
+       init = true;
+}
+
+
+QUICKGRID::QuickGridData getGrid( int numProcs, int myRank) {
 	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec,QUICKGRID::SphericalNorm);
 	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
 
@@ -104,7 +121,22 @@ QUICKGRID::QuickGridData getGrid() {
 
 TEUCHOS_UNIT_TEST(ReloadBalance_np4, AssertOriginalMesh) {
 
-	QUICKGRID::QuickGridData decomp = getGrid();
+       if (!init) initialize();
+
+       int numProcs = comm->NumProc();
+       int myRank   = comm->MyPID();
+
+
+       TEST_COMPARE(numProcs, ==, 4);
+
+       if(numProcs != 4){
+          std::cerr << "Unit test runtime ERROR: utReloadBalance_np4 only makes sense on 4 processors." << std::endl;
+          return;
+      }
+
+      
+
+	QUICKGRID::QuickGridData decomp = getGrid( numProcs, myRank);
 	TEST_ASSERT(16==decomp.globalNumPoints);
 
 	if(1==myRank){
@@ -168,7 +200,20 @@ TEUCHOS_UNIT_TEST(ReloadBalance_np4, AssertOriginalMesh) {
 
 TEUCHOS_UNIT_TEST(ReloadBalance_np4, MoveCoordinatesAndReLoadBalance) {
 
-	QUICKGRID::QuickGridData decomp = getGrid();
+       if (!init) initialize();
+
+       int numProcs = comm->NumProc();
+       int myRank   = comm->MyPID();
+
+
+       TEST_COMPARE(numProcs, ==, 4);
+
+       if(numProcs != 4){
+          std::cerr << "Unit test runtime ERROR: utReloadBalance_np4 only makes sense on 4 processors." << std::endl;
+          return;
+      }
+
+	QUICKGRID::QuickGridData decomp = getGrid( numProcs, myRank);
 	/*
 	 * Swap some coordinates to that new partition is required
 	 * Swap 0 with 15, 3 with 12
@@ -392,22 +437,7 @@ int main
 )
 {
 
-	// Initialize MPI and timer
-	PdutMpiFixture myMpi = PdutMpiFixture(argc,argv);
-
-	// These are static (file scope) variables
-	myRank = myMpi.rank;
-	numProcs = myMpi.numProcs;
-	/**
-	 * This test only make sense for numProcs == 4
-	 */
-	if(4 != numProcs){
-		std::cerr << "Unit test runtime ERROR: utReloadBalance_np4 only makes sense on 4 processors" << std::endl;
-		std::cerr << "\t Re-run unit test $mpiexec -np 4 ./utReloadBalance_np4" << std::endl;
-		myMpi.PdutMpiFixture::~PdutMpiFixture();
-		std::exit(-1);
-	}
-
+         Teuchos::GlobalMPISession mpiSession(&argc, &argv);
 	// Initialize UTF
 	return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }
