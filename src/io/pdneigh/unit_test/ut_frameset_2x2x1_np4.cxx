@@ -46,10 +46,7 @@
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
 #include "Teuchos_UnitTestRepository.hpp"
-<<<<<<< HEAD
-=======
 #include "Teuchos_GlobalMPISession.hpp"
->>>>>>> FETCH_HEAD
 #include "../PdZoltan.h"
 #include "quick_grid/QuickGrid.h"
 #include "../NeighborhoodList.h"
@@ -130,9 +127,6 @@ shared_ptr< std::set<int> > constructFrame(PDNEIGH::NeighborhoodList& list) {
 
 TEUCHOS_UNIT_TEST(Frameset_2x2x1_np4, CreateNeighborhoodTest) {
 
-<<<<<<< HEAD
-	QUICKGRID::QuickGridData decomp = getGrid();
-=======
         
 
        
@@ -153,7 +147,6 @@ TEUCHOS_UNIT_TEST(Frameset_2x2x1_np4, CreateNeighborhoodTest) {
 
 	QUICKGRID::QuickGridData decomp = getGrid( numProcs, myRank);
         
->>>>>>> FETCH_HEAD
 	TEST_ASSERT(1==decomp.numPoints);
 	TEST_ASSERT(4==decomp.globalNumPoints);
 	shared_ptr<BondFilter> bondFilterPtr(new PdBondFilter::BondFilterDefault(true));
@@ -162,11 +155,8 @@ TEUCHOS_UNIT_TEST(Frameset_2x2x1_np4, CreateNeighborhoodTest) {
 	shared_ptr< std::set<int> > frameSet = constructFrame(list);
         TEST_ASSERT(1==frameSet->size());
 	TEST_ASSERT(5==list.get_size_neighborhood_list());
-<<<<<<< HEAD
-=======
 
        
->>>>>>> FETCH_HEAD
 	/*
 	 * Neighborhood of every point should have every other point
 	 */
