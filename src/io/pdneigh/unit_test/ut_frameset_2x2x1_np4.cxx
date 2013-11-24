@@ -46,11 +46,15 @@
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
 #include "Teuchos_UnitTestRepository.hpp"
+<<<<<<< HEAD
+=======
+#include "Teuchos_GlobalMPISession.hpp"
+>>>>>>> FETCH_HEAD
 #include "../PdZoltan.h"
 #include "quick_grid/QuickGrid.h"
 #include "../NeighborhoodList.h"
 #include "../BondFilter.h"
-#include "PdutMpiFixture.h"
+
 #include "zoltan.h"
 #include "Sortable.h"
 #include "mpi.h"
@@ -73,7 +77,7 @@ using namespace PdBondFilter;
 using namespace PDNEIGH;
 using std::tr1::shared_ptr;
 
-using namespace Pdut;
+
 using std::tr1::shared_ptr;
 using std::cout;
 using std::set;
@@ -82,9 +86,6 @@ using std::map;
 
 using namespace QUICKGRID;
 using namespace PDNEIGH;
-
-static int numProcs;
-static int myRank;
 
 const int nx = 2;
 const int ny = nx;
@@ -108,7 +109,7 @@ using std::endl;
 
 
 
-QUICKGRID::QuickGridData getGrid() {
+QUICKGRID::QuickGridData getGrid( int numProcs, int myRank) {
 	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
 	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
 
@@ -129,15 +130,43 @@ shared_ptr< std::set<int> > constructFrame(PDNEIGH::NeighborhoodList& list) {
 
 TEUCHOS_UNIT_TEST(Frameset_2x2x1_np4, CreateNeighborhoodTest) {
 
+<<<<<<< HEAD
 	QUICKGRID::QuickGridData decomp = getGrid();
+=======
+        
+
+       
+        shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
+
+        int numProcs = comm->NumProc();
+        int myRank = comm->MyPID();
+
+        TEST_COMPARE(numProcs, ==, 4);
+
+        if(numProcs != 4){
+           std::cerr << "Unit test runtime ERROR: ut_frameset_2x2x1_np4 only makes sense on 4 processors." << std::endl;
+           return;
+        }
+       
+
+
+
+	QUICKGRID::QuickGridData decomp = getGrid( numProcs, myRank);
+        
+>>>>>>> FETCH_HEAD
 	TEST_ASSERT(1==decomp.numPoints);
 	TEST_ASSERT(4==decomp.globalNumPoints);
 	shared_ptr<BondFilter> bondFilterPtr(new PdBondFilter::BondFilterDefault(true));
-	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
+	//shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
 	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,2.0*horizon,bondFilterPtr);
 	shared_ptr< std::set<int> > frameSet = constructFrame(list);
         TEST_ASSERT(1==frameSet->size());
 	TEST_ASSERT(5==list.get_size_neighborhood_list());
+<<<<<<< HEAD
+=======
+
+       
+>>>>>>> FETCH_HEAD
 	/*
 	 * Neighborhood of every point should have every other point
 	 */
@@ -161,21 +190,8 @@ int main
 		char* argv[]
 )
 {
-	// Initialize MPI and timer
-	PdutMpiFixture myMpi = PdutMpiFixture(argc,argv);
-
-	// These are static (file scope) variables
-	myRank = myMpi.rank;
-	numProcs = myMpi.numProcs;
-	/**
-	 * This test only make sense for numProcs == 4
-	 */
-	if(4 != numProcs){
-		std::cerr << "Unit test runtime ERROR: ut_frameset_2x2x1_np4 only makes sense on 4 processors" << std::endl;
-		std::cerr << "\t Re-run unit test $mpiexec -np 4 ./ut_frameset_2x2x1_np4." << std::endl;
-		myMpi.PdutMpiFixture::~PdutMpiFixture();
-		std::exit(-1);
-	}
+	Teuchos::GlobalMPISession mpiSession(&argc, &argv);
+        
 
         
 

@@ -46,6 +46,7 @@
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
 #include "Teuchos_UnitTestRepository.hpp"
+#include "Teuchos_GlobalMPISession.hpp"
 #include "../PdZoltan.h"
 #include "quick_grid/QuickGrid.h"
 #include "../NeighborhoodList.h"
@@ -68,8 +69,9 @@ using namespace Pdut;
 using std::cout;
 using std::set;
 
-static int myRank;
-static int numProcs;
+//static int myRank;
+//static int numProcs;
+
 const int nx = 4;
 const int ny = 4;
 const int nz = 3;
@@ -87,6 +89,10 @@ const double dx = xSpec.getCellSize();
 const double dy = ySpec.getCellSize();
 const double dz = zSpec.getCellSize();
 const double _cellVolume = dx*dy*dz;
+bool init = false;
+Teuchos::RCP<Epetra_Comm> comm;   
+
+
 /*
  * function prototype
  */
@@ -95,6 +101,20 @@ FinitePlane getYZ_CrackPlane();
  * Horizon
  */
 const double horizon=1.1*sqrt( (2.0*dx)*(2.0*dx) +(2.0*dy)*(2.0*dy) +(2.0*dz)*(2.0*dz) );
+
+void initialize(){
+         
+       #ifdef HAVE_MPI
+              
+              comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
+       #else
+              comm = rcp(new Epetra_SerialComm);
+       #endif
+     
+       
+       init = true;
+}
+
 /*
  * This demonstrates how the first and second coordinate
  * along an axis are computed
@@ -107,7 +127,7 @@ const double horizon=1.1*sqrt( (2.0*dx)*(2.0*dx) +(2.0*dy)*(2.0*dy) +(2.0*dz)*(2
 //const double z1 = z0 + zSpec.getCellSize();
 
 
-QUICKGRID::QuickGridData getGrid() {
+QUICKGRID::QuickGridData getGrid( int numProcs, int myRank) {
 
 	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs,horizon,xSpec,ySpec,zSpec);
 	QUICKGRID::QuickGridData gridData =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
@@ -150,11 +170,24 @@ void printNeighborhood(int numNeigh, int* neigh){
 TEUCHOS_UNIT_TEST(Y_Z_crack_np4, AssertNeighborhood_p0) {
 
 
-        if(myRank != 0){
-           return;
-        }
+       if (!init) initialize();
 
-	QUICKGRID::QuickGridData gridData = getGrid();
+       int numProcs = comm->NumProc();
+       int myRank   = comm->MyPID();
+
+
+       TEST_COMPARE(numProcs, ==, 4);
+
+       if(numProcs != 4){
+          std::cerr << "Unit test runtime ERROR: ut_Y-Z_crack_np4 only makes sense on 4 processors"  << std::endl;
+          return;
+       }
+
+      
+      if(myRank == 0){
+        
+
+	QUICKGRID::QuickGridData gridData = getGrid(numProcs, myRank);
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
@@ -212,6 +245,8 @@ TEUCHOS_UNIT_TEST(Y_Z_crack_np4, AssertNeighborhood_p0) {
 		neigh = neigh+numNeigh;
 	}
 
+     }
+
 //{
 //		int gid=19;
 //		int numNeigh = *neigh; neigh++;
@@ -227,12 +262,24 @@ TEUCHOS_UNIT_TEST(Y_Z_crack_np4, AssertNeighborhood_p0) {
 TEUCHOS_UNIT_TEST(Y_Z_crack_np4, AssertNeighborhood_p1) {
 
 
-        if(myRank != 1){
-           return;
-        }
+        
+       if (!init) initialize();
+
+       int numProcs = comm->NumProc();
+       int myRank   = comm->MyPID();
 
 
-	QUICKGRID::QuickGridData gridData = getGrid();
+       TEST_COMPARE(numProcs, ==, 4);
+
+       if(numProcs != 4){
+          std::cerr << "Unit test runtime ERROR: ut_Y-Z_crack_np4 only makes sense on 4 processors" << std::endl;
+          return;
+       }
+
+      
+      if(myRank == 1){
+
+	QUICKGRID::QuickGridData gridData = getGrid(numProcs, myRank);
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
@@ -244,16 +291,30 @@ TEUCHOS_UNIT_TEST(Y_Z_crack_np4, AssertNeighborhood_p1) {
 	 */
 	TEST_ASSERT(12 == gridData.numPoints);
 	TEST_ASSERT(12 == list.get_num_owned_points());
+
+       }
 
 }
 
 TEUCHOS_UNIT_TEST(Y_Z_crack_np4, AssertNeighborhood_p2) {
 
-        if(myRank != 2){
-           return;
-        }
+       if (!init) initialize();
 
-	QUICKGRID::QuickGridData gridData = getGrid();
+       int numProcs = comm->NumProc();
+       int myRank   = comm->MyPID();
+
+
+       TEST_COMPARE(numProcs, ==, 4);
+
+       if(numProcs != 4){
+          std::cerr << "Unit test runtime ERROR: ut_Y-Z_crack_np4 only makes sense on 4 processors" << std::endl;
+          return;
+       }
+
+      
+       if(myRank == 2){
+
+	QUICKGRID::QuickGridData gridData = getGrid( numProcs, myRank);
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
@@ -265,17 +326,29 @@ TEUCHOS_UNIT_TEST(Y_Z_crack_np4, AssertNeighborhood_p2) {
 	 */
 	TEST_ASSERT(12 == gridData.numPoints);
 	TEST_ASSERT(12 == list.get_num_owned_points());
+      }
 
 }
 
 TEUCHOS_UNIT_TEST(Y_Z_crack_np4, AssertNeighborhood_p3) {
 
-        if(myRank != 3){
-           return;
-        }
+       if (!init) initialize();
+
+       int numProcs = comm->NumProc();
+       int myRank   = comm->MyPID();
 
 
-	QUICKGRID::QuickGridData gridData = getGrid();
+       TEST_COMPARE(numProcs, ==, 4);
+
+       if(numProcs != 4){
+          std::cerr << "Unit test runtime ERROR: ut_Y-Z_crack_np4 only makes sense on 4 processors" << std::endl;
+          return;
+       }
+
+      
+       if(myRank == 3){
+
+	QUICKGRID::QuickGridData gridData = getGrid( numProcs, myRank);
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
@@ -287,6 +360,8 @@ TEUCHOS_UNIT_TEST(Y_Z_crack_np4, AssertNeighborhood_p3) {
 	 */
 	TEST_ASSERT(12 == gridData.numPoints);
 	TEST_ASSERT(12 == list.get_num_owned_points());
+
+       }
 }
 
 
@@ -297,22 +372,7 @@ int main
 		char* argv[]
 )
 {
-	// Initialize MPI and timer
-	PdutMpiFixture myMpi = PdutMpiFixture(argc,argv);
-
-	// These are static (file scope) variables
-	myRank = myMpi.rank;
-	numProcs = myMpi.numProcs;
-	/**
-	 * This test only make sense for numProcs == 4
-	 */
-	if(4 != numProcs){
-		std::cerr << "Unit test runtime ERROR: ut_Y-Z_crack_np4 only makes sense on 4 processors" << std::endl;
-		std::cerr << "\t Re-run unit test $mpiexec -np 4 ./ut_Y-Z_crack_np4" << std::endl;
-		myMpi.PdutMpiFixture::~PdutMpiFixture();
-		std::exit(-1);
-	}
-
+	Teuchos::GlobalMPISession mpiSession(&argc, &argv);
 
 
 	// Initialize UTF

@@ -47,18 +47,24 @@
 #include "../PdZoltan.h"
 #include "quick_grid/QuickGrid.h"
 #include "../NeighborhoodList.h"
-#include "PdutMpiFixture.h"
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
 #include "Teuchos_UnitTestRepository.hpp"
+#include "Teuchos_GlobalMPISession.hpp"
+#include "Epetra_ConfigDefs.h"
+#ifdef HAVE_MPI
+#include "mpi.h"
+#include "Epetra_MpiComm.h"
+#else
+#include "Epetra_SerialComm.h"
+#endif
 #include <iostream>
 
-using namespace Pdut;
+
 using std::tr1::shared_ptr;
 using std::cout;
 
-static size_t myRank;
-static size_t numProcs;
+
 const size_t nx = 4;
 const size_t ny = 4;
 const size_t nz = 4;
@@ -73,7 +79,26 @@ const QUICKGRID::Spec1D ySpec(ny,yStart,yLength);
 const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
 const size_t numCells = nx*ny*nz;
 
-QUICKGRID::QuickGridData getGrid() {
+bool init = false;
+Teuchos::RCP<Epetra_Comm> comm;   
+
+
+void initialize(){
+         
+       #ifdef HAVE_MPI
+              
+              comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
+       #else
+              comm = rcp(new Epetra_SerialComm);
+       #endif
+     
+       
+       init = true;
+
+
+}
+
+QUICKGRID::QuickGridData getGrid( int numProcs, int myRank) {
 	// This scale factor pushes the horizon just over the line so that 2 cells are included
 	//  in the half neighborhood
 	double SCALE=1.4;
@@ -89,10 +114,25 @@ QUICKGRID::QuickGridData getGrid() {
 TEUCHOS_UNIT_TEST(QuickGrid_loadBal_np2_4x4x4, p0) {
 
 
-        if(myRank != 0){
-           return;
-        }
-	QUICKGRID::QuickGridData decomp = getGrid();
+         if (!init) initialize();
+
+       int numProcs = comm->NumProc();
+       int myRank   = comm->MyPID();
+
+
+       TEST_COMPARE(numProcs, ==, 2);
+
+       if(numProcs != 2){
+          std::cerr << "Unit test runtime ERROR: ut_QuickGrid_loadBal_np2_4x4x4 only makes sense on 2 processors." << std::endl;
+          return;
+      }
+
+      
+
+      if(myRank == 0){
+
+
+	QUICKGRID::QuickGridData decomp = getGrid( numProcs, myRank);
 
 	TEST_ASSERT(0 == myRank);
 	/*
@@ -133,6 +173,8 @@ TEUCHOS_UNIT_TEST(QuickGrid_loadBal_np2_4x4x4, p0) {
 		TEST_FLOATING_EQUALITY(*v,cellVolume,tolerance);
 	}
 
+    }
+
 
 }
 
@@ -140,12 +182,26 @@ TEUCHOS_UNIT_TEST(QuickGrid_loadBal_np2_4x4x4, p1) {
 
 	
 
-        if(myRank != 1){
-           return;
-        }
+       if (!init) initialize();
+
+       int numProcs = comm->NumProc();
+       int myRank   = comm->MyPID();
 
 
-        QUICKGRID::QuickGridData decomp = getGrid();
+       TEST_COMPARE(numProcs, ==, 2);
+
+       if(numProcs != 2){
+          std::cerr << "Unit test runtime ERROR: ut_QuickGrid_loadBal_np2_4x4x4 only makes sense on 2 processors." << std::endl;
+          return;
+       }
+
+      
+
+        if(myRank == 1){
+          
+
+
+        QUICKGRID::QuickGridData decomp = getGrid( numProcs, myRank);
 
         
 	TEST_ASSERT(1 == myRank);
@@ -186,6 +242,7 @@ TEUCHOS_UNIT_TEST(QuickGrid_loadBal_np2_4x4x4, p1) {
 	for(; v != end ; v++){
 		TEST_FLOATING_EQUALITY(*v,cellVolume,tolerance);
 	}
+    }
 
 }
 
@@ -198,21 +255,7 @@ int main
 )
 {
 
-	// Initialize MPI and timer
-	PdutMpiFixture myMpi = PdutMpiFixture(argc,argv);
-
-	// These are static (file scope) variables
-	myRank = myMpi.rank;
-	numProcs = myMpi.numProcs;
-	/**
-	 * This test only make sense for numProcs == 2
-	 */
-	if(2 != numProcs){
-		std::cerr << "Unit test runtime ERROR: ut_QuickGrid_loadBal_np2_4x4x4 only makes sense on 2 processors" << std::endl;
-		std::cerr << "\t Re-run unit test $mpiexec -np 2 ./ut_QuickGrid_loadBal_np2_4x4x4" << std::endl;
-		myMpi.PdutMpiFixture::~PdutMpiFixture();
-		std::exit(-1);
-	}
+	Teuchos::GlobalMPISession mpiSession(&argc, &argv);
 
 	// Initialize UTF
 

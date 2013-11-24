@@ -75,6 +75,7 @@ TEUCHOS_UNIT_TEST(ProximitySearch, TwoPointProblem) {
 
   // This test cannot be run on more than 2 processors
   if(numProc > 2){
+    std::cerr << "Unit test runtime ERROR: utPeridigm_Compute_Force only makes sense on 1 to 2 processors." << std::endl;
     return;
   }
 
@@ -192,6 +193,7 @@ TEUCHOS_UNIT_TEST(ProximitySearch, FivePointProblem) {
 
   // This test cannot be run on more than 5 processors
   if(numProc > 5){
+    std::cerr << "Unit test runtime ERROR: utPeridigm_Compute_Force only makes sense on 1 to 5 processors." << std::endl;
     return;
   }
 
