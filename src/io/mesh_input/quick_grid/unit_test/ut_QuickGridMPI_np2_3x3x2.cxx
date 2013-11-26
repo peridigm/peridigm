@@ -43,17 +43,15 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
 #include "../QuickGrid.h"
 #include "PdZoltan.h"
 #include "PdutMpiFixture.h"
 #include <iostream>
 
 using std::tr1::shared_ptr;
-using namespace boost::unit_test;
 using namespace Pdut;
 using std::cout;
 
@@ -74,24 +72,26 @@ const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
 const size_t numCells = nx*ny*nz;
 static QUICKGRID::QuickGridData gridData;
 
-void p0()
-{
-	BOOST_CHECK(0 == myRank);
+TEUCHOS_UNIT_TEST( QuickGridMPI_np2_3x3x2, p0Test) {
+
+        if (myRank == 0) {
+
+	TEST_ASSERT(0 == myRank);
 	/*
 	 * problem dimension is 3
 	 */
-	BOOST_CHECK(3 == gridData.dimension);
+	TEST_ASSERT(3 == gridData.dimension);
 
 	/*
 	 * Total number of cells in test
 	 */
-	BOOST_CHECK(nx*ny*nz == gridData.globalNumPoints);
+	TEST_ASSERT(nx*ny*nz == gridData.globalNumPoints);
 
 	/*
 	 * Number of cells on this processor
 	 */
 	int myNumPoints = gridData.numPoints;
-	BOOST_CHECK(9 == myNumPoints);
+	TEST_ASSERT(9 == myNumPoints);
 
 	/*
 	 * Assert global ids on this processor
@@ -100,7 +100,7 @@ void p0()
 	int *gIdsPtr = gIds.get();
 	int start = 0;
 	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++)
-		BOOST_CHECK( *gIdsPtr == (int)id );
+		TEST_ASSERT( *gIdsPtr == (int)id );
 
 	// assert length of neighborlist
 	// sizeNeighborList = numPoints = sum(numNeighbors)
@@ -122,7 +122,7 @@ void p0()
 	for(int i=0;i<myNumPoints;i++)
 		sizeNeighborList+=numNeighbors[i];
 
-	BOOST_CHECK( sizeNeighborList == gridData.sizeNeighborhoodList );
+	TEST_ASSERT( sizeNeighborList == gridData.sizeNeighborhoodList );
 	// assert neighbor lists; in this case each point has all points
 	shared_ptr<int> neighborList = gridData.neighborhood;
 	int *nPtr = neighborList.get();
@@ -134,16 +134,16 @@ void p0()
 	for(int id=0;id<myNumPoints;id++){
 		int numNeigh = *nPtr; nPtr++;
 		// this asserts the pointers into the neighborhood
-		BOOST_CHECK( neighPtr[id] == sum);
+		TEST_ASSERT( neighPtr[id] == sum);
 		sum += (1+numNeighbors[id]);
 		// asserts number of neighbors
-		BOOST_CHECK( numNeighbors[id] == numNeigh );
+		TEST_ASSERT( numNeighbors[id] == numNeigh );
 //		std::cout << "id = " << id << std::endl;
 //		std::cout << "\t";
 		// asserts neighborhood
 		for(int i=0;i<numNeigh;i++){
 //			std::cout << ", " << *nPtr;
-			BOOST_CHECK( neighborhoodAnswers[p++] == *nPtr );
+			TEST_ASSERT( neighborhoodAnswers[p++] == *nPtr );
 			nPtr++;
 		}
 //		std::cout<< std::endl;
@@ -155,32 +155,38 @@ void p0()
 	double *v = gridData.cellVolume.get();
 	double *end = v+myNumPoints;
 	for(; v != end ; v++){
-		BOOST_CHECK_CLOSE(*v,cellVolume,tolerance);
+		TEST_FLOATING_EQUALITY(*v,cellVolume,tolerance);
 	}
 
 	std::cout << std::endl;
 
+    }
+
 
 }
 
-void p1()
-{
-	BOOST_CHECK(1 == myRank);
+
+TEUCHOS_UNIT_TEST( QuickGridMPI_np2_3x3x2, p1Test) {
+
+
+        if (myRank == 1){
+
+	TEST_ASSERT(1 == myRank);
 	/*
 	 * problem dimension is 3
 	 */
-	BOOST_CHECK(3 == gridData.dimension);
+	TEST_ASSERT(3 == gridData.dimension);
 
 	/*
 	 * Total number of cells in test
 	 */
-	BOOST_CHECK(nx*ny*nz == gridData.globalNumPoints);
+	TEST_ASSERT(nx*ny*nz == gridData.globalNumPoints);
 
 	/*
 	 * Number of cells on this processor
 	 */
 	int myNumPoints = gridData.numPoints;
-	BOOST_CHECK(9 == myNumPoints);
+	TEST_ASSERT(9 == myNumPoints);
 
 	/*
 	 * Assert global ids on this processor
@@ -189,7 +195,7 @@ void p1()
 	int *gIdsPtr = gIds.get();
 	int start = 9;
 	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++){
-		BOOST_CHECK( *gIdsPtr == (int)id );
+		TEST_ASSERT( *gIdsPtr == (int)id );
 	}
 
 	// assert length of neighborlist
@@ -212,7 +218,7 @@ void p1()
 	for(int i=0;i<myNumPoints;i++)
 		sizeNeighborList+=numNeighbors[i];
 
-	BOOST_CHECK( sizeNeighborList == gridData.sizeNeighborhoodList );
+	TEST_ASSERT( sizeNeighborList == gridData.sizeNeighborhoodList );
 	// assert neighbor lists; in this case each point has all points
 	shared_ptr<int> neighborList = gridData.neighborhood;
 	int *nPtr = neighborList.get();
@@ -224,16 +230,16 @@ void p1()
 	for(int id=0;id<myNumPoints;id++){
 		int numNeigh = *nPtr; nPtr++;
 		// this asserts the pointers into the neighborhood
-		BOOST_CHECK( neighPtr[id] == sum);
+		TEST_ASSERT( neighPtr[id] == sum);
 		sum += (1+ numNeighbors[id]);
 		// asserts number of neighbors
-		BOOST_CHECK( numNeighbors[id] == numNeigh );
+		TEST_ASSERT( numNeighbors[id] == numNeigh );
 //		std::cout << "id = " << id << std::endl;
 //		std::cout << "\t";
 		// asserts neighborhood
 		for(int i=0;i<numNeigh;i++){
 //			std::cout << ", " << *nPtr;
-			BOOST_CHECK( neighborhoodAnswers[p++] == *nPtr );
+			TEST_ASSERT( neighborhoodAnswers[p++] == *nPtr );
 			nPtr++;
 		}
 //		std::cout<< std::endl;
@@ -245,38 +251,16 @@ void p1()
 	double *v = gridData.cellVolume.get();
 	double *end = v+myNumPoints;
 	for(; v != end ; v++){
-		BOOST_CHECK_CLOSE(*v,cellVolume,tolerance);
+		TEST_FLOATING_EQUALITY(*v,cellVolume,tolerance);
 	}
 
 	std::cout << std::endl;
 
-}
+      }
 
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success=true;
-	if(0 == myRank){
-		test_suite* proc = BOOST_TEST_SUITE( "ut_QuickGridMPI_np2_3x3x2p0" );
-		proc->add(BOOST_TEST_CASE( &p0 ));
-		framework::master_test_suite().add( proc );
-		return success;
-	}
-	if(1 == myRank){
-		test_suite* proc = BOOST_TEST_SUITE( "ut_QuickGridMPI_np2_3x3x2p1" );
-		proc->add(BOOST_TEST_CASE( &p1 ));
-		framework::master_test_suite().add( proc );
-		return success;
-	}
-	return success;
 }
 
 
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
 
 int main
 (
@@ -291,6 +275,8 @@ int main
 	// These are static (file scope) variables
 	myRank = myMpi.rank;
 	numProcs = myMpi.numProcs;
+
+
 	/**
 	 * This test only make sense for numProcs == 2
 	 */
@@ -310,5 +296,5 @@ int main
 
 
 	// Initialize UTF
-	return unit_test_main( init_unit_test, argc, argv );
+	return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }

@@ -45,9 +45,8 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
 #include <Phalanx_DataLayout_MDALayout.hpp>
 #include <Epetra_SerialComm.h>
 #include "PHAL_FactoryTraits.hpp"
@@ -55,10 +54,10 @@
 #include "PHAL_EvaluateForce.hpp"
 #include "../materials/Peridigm_LinearElasticIsotropicMaterial.hpp"
 
-using namespace boost::unit_test;
-
-void testInitialize()
+TEUCHOS_UNIT_TEST(PHPD_EvaluateForce, TestInitializeTest) 
 {
+
+
   // set up a parameter list that will be passed to the evaluator constructor
   Teuchos::RCP<Teuchos::ParameterList> p = rcp(new Teuchos::ParameterList);
   int type = FactoryTraits<PHAL::PeridigmTraits>::id_evaluate_force;
@@ -73,21 +72,21 @@ void testInitialize()
   EvaluateForce<PHAL::PeridigmTraits::Residual, PHAL::PeridigmTraits> evaluator(*p);
 
   // assert the evaluator name
-  BOOST_CHECK(evaluator.getName() == "EvaluateForce");
+  TEST_ASSERT(evaluator.getName() == "EvaluateForce");
 
   // assert the vector of fields that the evaluator evaluates
   const std::vector<Teuchos::RCP< PHX::FieldTag > > & evaluatedFields = evaluator.evaluatedFields();
-  BOOST_REQUIRE(evaluatedFields.size() == 1);
-  BOOST_CHECK(evaluatedFields[0]->name() == "EvaluateForce");
-  BOOST_CHECK(evaluatedFields[0]->dataLayout() == *dummy);
+  TEST_ASSERT(evaluatedFields.size() == 1);
+  TEST_ASSERT(evaluatedFields[0]->name() == "EvaluateForce");
+  TEST_ASSERT(evaluatedFields[0]->dataLayout() == *dummy);
 
   // assert the vector of fields that the evaluator is dependent upon
   const std::vector<Teuchos::RCP< PHX::FieldTag > > & dependentFields = evaluator.dependentFields();
-  BOOST_CHECK(dependentFields.size() == 0);
+  TEST_ASSERT(dependentFields.size() == 0);
 }
 
-void testTwoPts()
-{
+
+TEUCHOS_UNIT_TEST(PHPD_EvaluateForce, TestTwoPtsTest) {
   Epetra_SerialComm comm;
 
   // set up a hard-coded layout for two points
@@ -218,41 +217,23 @@ void testTwoPts()
   // assert the data in forceOverlap
   Epetra_Vector& force = *block.getData(Field_NS::FORCE_DENSITY3D, Field_ENUM::STEP_NP1);
   double node0ForceX = force[0];
-  BOOST_CHECK_CLOSE(node0ForceX, 2.34e12, 1.0e-14);
+  TEST_FLOATING_EQUALITY(node0ForceX, 2.34e12, 1.0e-14);
   double node0ForceY = force[1];
-  BOOST_CHECK_SMALL(node0ForceY, 1.0e-14);
+  TEST_COMPARE(node0ForceY, <=, 1.0e-14);
   double node0ForceZ = force[2];
-  BOOST_CHECK_SMALL(node0ForceZ, 1.0e-14);
+  TEST_COMPARE(node0ForceZ, <= , 1.0e-14);
   double node1ForceX = force[3];
-  BOOST_CHECK_CLOSE(node1ForceX, -2.34e12, 1.0e-14);
+  TEST_FLOATING_EQUALITY(node1ForceX, -2.34e12, 1.0e-14);
   double node1ForceY = force[4];
-  BOOST_CHECK_SMALL(node1ForceY, 1.0e-14);
+  TEST_COMPARE(node1ForceY, <=, 1.0e-14);
   double node1ForceZ = force[5];
-  BOOST_CHECK_SMALL(node1ForceZ, 1.0e-14);
+  TEST_COMPARE(node1ForceZ, <=, 1.0e-14);
 }
 
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success = true;
-
-	test_suite* proc = BOOST_TEST_SUITE("utPHAL_EvaluateForce");
-	proc->add(BOOST_TEST_CASE(&testInitialize));
-  	proc->add(BOOST_TEST_CASE(&testTwoPts));
-	framework::master_test_suite().add(proc);
-
-	return success;
-}
-
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
 
 int main
 (int argc, char* argv[])
 {
 	// Initialize UTF
-	return unit_test_main(init_unit_test, argc, argv);
+	return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }

@@ -51,9 +51,10 @@
 #include <Peridigm_DataManager.hpp>
 #include <Peridigm_DiscretizationFactory.hpp>
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_GlobalMPISession.hpp"
+
 #include <Epetra_ConfigDefs.h> // used to define HAVE_MPI
 #include <Epetra_Import.h>
 #include <Teuchos_ParameterList.hpp>
@@ -66,16 +67,10 @@
 #include "../../core/Peridigm.hpp"
 #include "Peridigm_Field.hpp"
 
-using namespace boost::unit_test;
 using namespace PeridigmNS;
 
-Teuchos::RCP<Peridigm> createFourPointModel() {
-  Teuchos::RCP<Epetra_Comm> comm;
-#ifdef HAVE_MPI
-  comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
-#else
-  comm = Teuchos::rcp(new Epetra_SerialComm);
-#endif
+Teuchos::RCP<Peridigm> createFourPointModel(Teuchos::RCP<Epetra_Comm> comm) {
+  
 
   // set up parameter lists
   // these data would normally be read from an input xml file
@@ -125,8 +120,26 @@ Teuchos::RCP<Peridigm> createFourPointModel() {
   return peridigm;
 }
 
-void FourPointTest() {
-  Teuchos::RCP<Peridigm> peridigm = createFourPointModel();
+TEUCHOS_UNIT_TEST(Compute_Linear_Momentum, FourPointTest) {
+
+  Teuchos::RCP<Epetra_Comm> comm;
+
+  #ifdef HAVE_MPI
+     comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
+  #else
+     comm = Teuchos::rcp(new Epetra_SerialComm);
+  #endif
+
+   int numProcs = comm->NumProc();
+
+  TEST_COMPARE(numProcs, <=, 4);
+
+  if(numProcs > 4){
+    std::cerr << "Unit test runtime ERROR: utPeridigm_Compute_Linear_Momentum only makes sense on 1 to 4 processors." << std::endl;
+    return;
+  }
+
+  Teuchos::RCP<Peridigm> peridigm = createFourPointModel(comm);
 
   FieldManager& fieldManager = FieldManager::self();
 
@@ -165,55 +178,22 @@ void FourPointTest() {
   double *linear_momentum_values  = linear_momentum->Values();
   Teuchos::RCP<Epetra_Vector> data = blocks->begin()->getData( fieldManager.getFieldId("Global_Linear_Momentum"), PeridigmField::STEP_NONE );
   double globalLM = (*data)[0];
-  BOOST_CHECK_CLOSE(globalLM, 450715.83, 0.00001);	// Check global scalar value
+  TEST_FLOATING_EQUALITY(globalLM, 450715.83, 0.00001);	// Check global scalar value
   for (int i=0;i<numElements;i++)
-    BOOST_CHECK_CLOSE(volume_values[i], 1.5, 1.0e-15);
+    TEST_FLOATING_EQUALITY(volume_values[i], 1.5, 1.0e-15);
   for (int i=0;i<numElements;i++) {
     int ID = myGIDs[i];
     double mass = density*volume_values[ID];
-    BOOST_CHECK_CLOSE(linear_momentum_values[3*i],   mass*(3.0*ID),   1.0e-15);
-    BOOST_CHECK_CLOSE(linear_momentum_values[3*i+1], mass*((3.0*ID)+1.0), 1.0e-15);
-    BOOST_CHECK_CLOSE(linear_momentum_values[3*i+2], mass*((3.0*ID)+2.0), 1.0e-15);
+    TEST_FLOATING_EQUALITY(linear_momentum_values[3*i],   mass*(3.0*ID),   1.0e-15);
+    TEST_FLOATING_EQUALITY(linear_momentum_values[3*i+1], mass*((3.0*ID)+1.0), 1.0e-15);
+    TEST_FLOATING_EQUALITY(linear_momentum_values[3*i+2], mass*((3.0*ID)+2.0), 1.0e-15);
   }
 }
 
-bool init_unit_test_suite() 
-{
-  // Add a suite for each processor in the test
-  bool success = true;
 
-  test_suite* proc = BOOST_TEST_SUITE("utPeridigm_Compute_Linear_Momentum");
-  proc->add(BOOST_TEST_CASE(&FourPointTest));
-  framework::master_test_suite().add(proc);
-
-  return success;
-}
-
-bool init_unit_test() 
-{
-  return init_unit_test_suite();
-}
 
 int main (int argc, char* argv[]) 
 {
-  int numProcs = 1;
-#ifdef HAVE_MPI
-  MPI_Init(&argc,&argv);
-  MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
-#endif
-
-  int returnCode = -1;
-  
-  if(numProcs >= 1 && numProcs <= 4) {
-    returnCode = unit_test_main(init_unit_test, argc, argv);
-  }
-  else {
-    std::cerr << "Unit test runtime ERROR: utPeridigm_Compute_Linear_Momentum only makes sense on 1 to 4 processors." << std::endl;
-  }
-  
-#ifdef HAVE_MPI
-  MPI_Finalize();
-#endif
-  
-  return returnCode;
+  Teuchos::GlobalMPISession mpiSession(&argc, &argv);
+  return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }

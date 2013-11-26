@@ -43,10 +43,9 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
 #include "Vector3D.h"
 #include "Array.h"
 #include "../QuickGrid.h"
@@ -55,7 +54,6 @@
 #include <iostream>
 
 using std::tr1::shared_ptr;
-using namespace boost::unit_test;
 using namespace Pdut;
 using std::cout;
 
@@ -115,23 +113,28 @@ const int neighborAnswers[] = {
 
 };
 
-void p0(){
+
+TEUCHOS_UNIT_TEST( SmallMeshCylinder_np4, p0Test) {
 
 	/*
 	 * This test is for proc 0 only
 	 */
-	BOOST_CHECK(0 == myRank);
 
-	BOOST_CHECK(3 == gridData.dimension);
-	BOOST_CHECK(32 == gridData.globalNumPoints);
+
+        if (myRank == 0){
+
+	TEST_ASSERT(0 == myRank);
+
+	TEST_ASSERT(3 == gridData.dimension);
+	TEST_ASSERT(32 == gridData.globalNumPoints);
 	int myNumPoints = gridData.numPoints;
-	BOOST_CHECK(8 == myNumPoints);
+	TEST_ASSERT(8 == myNumPoints);
 
 	// assert length of neighborlist
 	// sizeNeighborList = myNumCells + myNumCells*numNeighbors
 	int sizeNeighborList = myNumPoints + myNumPoints*19;
-	BOOST_CHECK( sizeNeighborList == gridData.sizeNeighborhoodList );
-	BOOST_CHECK(0 == gridData.numExport);
+	TEST_ASSERT( sizeNeighborList == gridData.sizeNeighborhoodList );
+	TEST_ASSERT(0 == gridData.numExport);
 
 
 	double *X = gridData.myX.get();
@@ -151,43 +154,49 @@ void p0(){
 	int start=0;
     const double tolerance = 1.0e-13;
 	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++,cell++){
-		BOOST_CHECK( *gIdsPtr == (int)id );
+		TEST_ASSERT( *gIdsPtr == (int)id );
 
-		BOOST_CHECK_CLOSE(xx[id*3], X[3*cell], tolerance);
-		BOOST_CHECK_CLOSE(xx[id*3+1], X[3*cell+1], tolerance);
-		BOOST_CHECK_CLOSE(xx[id*3+2], X[3*cell+2], tolerance);
+		TEST_FLOATING_EQUALITY(xx[id*3], X[3*cell], tolerance);
+		TEST_FLOATING_EQUALITY(xx[id*3+1], X[3*cell+1], tolerance);
+		TEST_FLOATING_EQUALITY(xx[id*3+2], X[3*cell+2], tolerance);
 		int ptr = neighborhoodPtr[cell];
-		BOOST_CHECK(19==neighborhood[ptr]);
+		TEST_ASSERT(19==neighborhood[ptr]);
 		for(int p=0;p<19;p++){
-			BOOST_CHECK(neighborAnswers[p+id*19]==neighborhood[ptr+1+p]);
+			TEST_ASSERT(neighborAnswers[p+id*19]==neighborhood[ptr+1+p]);
 		}
 		double r = sqrt(xx[id*3]*xx[id*3]+xx[id*3+1]*xx[id*3+1]);
 		/*
 		 * Volume
 		 */
 		double v = r*dr*cellRads*dz;
-		BOOST_CHECK_CLOSE(v,vol[cell],tolerance);
+		TEST_FLOATING_EQUALITY(v,vol[cell],tolerance);
 	}
+
+    }
 
 }
 
-void p1(){
+
+TEUCHOS_UNIT_TEST( SmallMeshCylinder_np4, p1Test) {
 
 	/*
 	 * This test is for proc 1 only
 	 */
-	BOOST_CHECK(1 == myRank);
 
-	BOOST_CHECK(3 == gridData.dimension);
-	BOOST_CHECK(32 == gridData.globalNumPoints);
+        if (myRank == 1){
+
+	TEST_ASSERT(1 == myRank);
+
+	TEST_ASSERT(3 == gridData.dimension);
+	TEST_ASSERT(32 == gridData.globalNumPoints);
 	int myNumPoints = gridData.numPoints;
-	BOOST_CHECK(8 == myNumPoints);
+	TEST_ASSERT(8 == myNumPoints);
 
 	// assert length of neighborlist
 	// sizeNeighborList = myNumCells + myNumCells*numNeighbors
 	int sizeNeighborList = myNumPoints + myNumPoints*19;
-	BOOST_CHECK( sizeNeighborList == gridData.sizeNeighborhoodList );
-	BOOST_CHECK(0 == gridData.numExport);
+	TEST_ASSERT( sizeNeighborList == gridData.sizeNeighborhoodList );
+	TEST_ASSERT(0 == gridData.numExport);
 
 
 	double *X = gridData.myX.get();
@@ -207,43 +216,49 @@ void p1(){
 	int start=8;
     const double tolerance = 1.0e-13;
 	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++,cell++){
-		BOOST_CHECK( *gIdsPtr == (int)id );
+		TEST_ASSERT( *gIdsPtr == (int)id );
 
-		BOOST_CHECK_CLOSE(xx[id*3], X[3*cell], tolerance);
-		BOOST_CHECK_CLOSE(xx[id*3+1], X[3*cell+1], tolerance);
-		BOOST_CHECK_CLOSE(xx[id*3+2], X[3*cell+2], tolerance);
+		TEST_FLOATING_EQUALITY(xx[id*3], X[3*cell], tolerance);
+		TEST_FLOATING_EQUALITY(xx[id*3+1], X[3*cell+1], tolerance);
+		TEST_FLOATING_EQUALITY(xx[id*3+2], X[3*cell+2], tolerance);
 		int ptr = neighborhoodPtr[cell];
-		BOOST_CHECK(19==neighborhood[ptr]);
+		TEST_ASSERT(19==neighborhood[ptr]);
 		for(int p=0;p<19;p++){
-			BOOST_CHECK(neighborAnswers[p+id*19]==neighborhood[ptr+1+p]);
+			TEST_ASSERT(neighborAnswers[p+id*19]==neighborhood[ptr+1+p]);
 		}
 		double r = sqrt(xx[id*3]*xx[id*3]+xx[id*3+1]*xx[id*3+1]);
 		/*
 		 * Volume
 		 */
 		double v = r*dr*cellRads*dz;
-		BOOST_CHECK_CLOSE(v,vol[cell],tolerance);
+		TEST_FLOATING_EQUALITY(v,vol[cell],tolerance);
 	}
+
+    }
 
 }
 
-void p2(){
+TEUCHOS_UNIT_TEST( SmallMeshCylinder_np4, p2Test) {
+
 
 	/*
 	 * This test is for proc 2 only
 	 */
-	BOOST_CHECK(2 == myRank);
 
-	BOOST_CHECK(3 == gridData.dimension);
-	BOOST_CHECK(32 == gridData.globalNumPoints);
+        if (myRank == 2){
+
+	TEST_ASSERT(2 == myRank);
+
+	TEST_ASSERT(3 == gridData.dimension);
+	TEST_ASSERT(32 == gridData.globalNumPoints);
 	int myNumPoints = gridData.numPoints;
-	BOOST_CHECK(8 == myNumPoints);
+	TEST_ASSERT(8 == myNumPoints);
 
 	// assert length of neighborlist
 	// sizeNeighborList = myNumCells + myNumCells*numNeighbors
 	int sizeNeighborList = myNumPoints + myNumPoints*19;
-	BOOST_CHECK( sizeNeighborList == gridData.sizeNeighborhoodList );
-	BOOST_CHECK(0 == gridData.numExport);
+	TEST_ASSERT( sizeNeighborList == gridData.sizeNeighborhoodList );
+	TEST_ASSERT(0 == gridData.numExport);
 
 
 	double *X = gridData.myX.get();
@@ -263,43 +278,48 @@ void p2(){
 	int start=16;
     const double tolerance = 1.0e-13;
 	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++,cell++){
-		BOOST_CHECK( *gIdsPtr == (int)id );
+		TEST_ASSERT( *gIdsPtr == (int)id );
 
-		BOOST_CHECK_CLOSE(xx[id*3], X[3*cell], tolerance);
-		BOOST_CHECK_CLOSE(xx[id*3+1], X[3*cell+1], tolerance);
-		BOOST_CHECK_CLOSE(xx[id*3+2], X[3*cell+2], tolerance);
+		TEST_FLOATING_EQUALITY(xx[id*3], X[3*cell], tolerance);
+		TEST_FLOATING_EQUALITY(xx[id*3+1], X[3*cell+1], tolerance);
+		TEST_FLOATING_EQUALITY(xx[id*3+2], X[3*cell+2], tolerance);
 		int ptr = neighborhoodPtr[cell];
-		BOOST_CHECK(19==neighborhood[ptr]);
+		TEST_ASSERT(19==neighborhood[ptr]);
 		for(int p=0;p<19;p++){
-			BOOST_CHECK(neighborAnswers[p+id*19]==neighborhood[ptr+1+p]);
+			TEST_ASSERT(neighborAnswers[p+id*19]==neighborhood[ptr+1+p]);
 		}
 		double r = sqrt(xx[id*3]*xx[id*3]+xx[id*3+1]*xx[id*3+1]);
 		/*
 		 * Volume
 		 */
 		double v = r*dr*cellRads*dz;
-		BOOST_CHECK_CLOSE(v,vol[cell],tolerance);
+		TEST_FLOATING_EQUALITY(v,vol[cell],tolerance);
 	}
+
+    }
 
 }
 
-void p3(){
+
+TEUCHOS_UNIT_TEST( SmallMeshCylinder_np4, p3Test) {
 
 	/*
 	 * This test is for proc 3 only
 	 */
-	BOOST_CHECK(3 == myRank);
 
-	BOOST_CHECK(3 == gridData.dimension);
-	BOOST_CHECK(32 == gridData.globalNumPoints);
+        if (myRank == 3) {
+	TEST_ASSERT(3 == myRank);
+
+	TEST_ASSERT(3 == gridData.dimension);
+	TEST_ASSERT(32 == gridData.globalNumPoints);
 	int myNumPoints = gridData.numPoints;
-	BOOST_CHECK(8 == myNumPoints);
+	TEST_ASSERT(8 == myNumPoints);
 
 	// assert length of neighborlist
 	// sizeNeighborList = myNumCells + myNumCells*numNeighbors
 	int sizeNeighborList = myNumPoints + myNumPoints*19;
-	BOOST_CHECK( sizeNeighborList == gridData.sizeNeighborhoodList );
-	BOOST_CHECK(0 == gridData.numExport);
+	TEST_ASSERT( sizeNeighborList == gridData.sizeNeighborhoodList );
+	TEST_ASSERT(0 == gridData.numExport);
 
 
 	double *X = gridData.myX.get();
@@ -319,65 +339,29 @@ void p3(){
 	int start=24;
     const double tolerance = 1.0e-13;
 	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++,cell++){
-		BOOST_CHECK( *gIdsPtr == (int)id );
+		TEST_ASSERT( *gIdsPtr == (int)id );
 
-		BOOST_CHECK_CLOSE(xx[id*3], X[3*cell], tolerance);
-		BOOST_CHECK_CLOSE(xx[id*3+1], X[3*cell+1], tolerance);
-		BOOST_CHECK_CLOSE(xx[id*3+2], X[3*cell+2], tolerance);
+		TEST_FLOATING_EQUALITY(xx[id*3], X[3*cell], tolerance);
+		TEST_FLOATING_EQUALITY(xx[id*3+1], X[3*cell+1], tolerance);
+		TEST_FLOATING_EQUALITY(xx[id*3+2], X[3*cell+2], tolerance);
 		int ptr = neighborhoodPtr[cell];
-		BOOST_CHECK(19==neighborhood[ptr]);
+		TEST_ASSERT(19==neighborhood[ptr]);
 		for(int p=0;p<19;p++){
-			BOOST_CHECK(neighborAnswers[p+id*19]==neighborhood[ptr+1+p]);
+			TEST_ASSERT(neighborAnswers[p+id*19]==neighborhood[ptr+1+p]);
 		}
 		double r = sqrt(xx[id*3]*xx[id*3]+xx[id*3+1]*xx[id*3+1]);
 		/*
 		 * Volume
 		 */
 		double v = r*dr*cellRads*dz;
-		BOOST_CHECK_CLOSE(v,vol[cell],tolerance);
+		TEST_FLOATING_EQUALITY(v,vol[cell],tolerance);
 	}
+
+    }
 
 }
 
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success=true;
-	if(0 == myRank){
-		test_suite* proc = BOOST_TEST_SUITE( "ut_SmallMeshCylinder_np4p0" );
-		proc->add(BOOST_TEST_CASE( &p0 ));
-		framework::master_test_suite().add( proc );
-		return success;
-	}
-	if(1 == myRank){
-		test_suite* proc = BOOST_TEST_SUITE( "ut_SmallMeshCylinder_np4p1" );
-		proc->add(BOOST_TEST_CASE( &p1 ));
-		framework::master_test_suite().add( proc );
-		return success;
-	}
-	if(2 == myRank){
-		test_suite* proc = BOOST_TEST_SUITE( "ut_SmallMeshCylinder_np4p2" );
-		proc->add(BOOST_TEST_CASE( &p2 ));
-		framework::master_test_suite().add( proc );
-		return success;
-	}
 
-	if(3 == myRank){
-		test_suite* proc = BOOST_TEST_SUITE( "ut_SmallMeshCylinder_np4p3" );
-		proc->add(BOOST_TEST_CASE( &p3 ));
-		framework::master_test_suite().add( proc );
-		return success;
-	}
-
-	return success;
-}
-
-
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
 
 int main
 (
@@ -406,5 +390,5 @@ int main
 	gridData = getDiscretization(myRank, cellIter);
 
 	// Initialize UTF
-	return unit_test_main( init_unit_test, argc, argv );
+	return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }

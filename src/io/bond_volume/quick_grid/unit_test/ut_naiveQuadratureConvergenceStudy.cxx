@@ -43,10 +43,6 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
 #include <cmath>
@@ -62,7 +58,8 @@
 #include "pdneigh/PdZoltan.h"
 #include "pdneigh/BondFilter.h"
 #include "utilities/Array.h"
-
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
 #include "Epetra_ConfigDefs.h"
 #ifdef HAVE_MPI
 #include "mpi.h"
@@ -71,7 +68,7 @@
 #include "Epetra_SerialComm.h"
 #endif
 
-using namespace boost::unit_test;
+
 using std::size_t;
 using std::tr1::shared_ptr;
 using UTILITIES::Array;
@@ -101,7 +98,6 @@ void probe_shear
 		double m_code
 );
 
-void scf_probe(const std::string& json_filename);
 
 void set_static_data(const std::string& json_filename)
 {
@@ -185,165 +181,6 @@ QUICKGRID::QuickGridData getGrid(const string& _json_filename) {
 	return decomp;
 }
 
-void ut_naiveQuadratureConvergenceStudy_n3() {
-	std::string file = "./input_files/ut_bondVolumeConvergenceStudy_n=3.json";
-	set_static_data(file);
-	scf_probe(file);
-}
-
-void ut_naiveQuadratureConvergenceStudy_n5() {
-	std::string file = "./input_files/ut_bondVolumeConvergenceStudy_n=5.json";
-	set_static_data(file);
-	scf_probe(file);
-}
-
-void ut_naiveQuadratureConvergenceStudy_n7() {
-	std::string file = "./input_files/ut_bondVolumeConvergenceStudy_n=7.json";
-	set_static_data(file);
-	scf_probe(file);
-}
-
-void ut_naiveQuadratureConvergenceStudy_n9() {
-	std::string file = "./input_files/ut_bondVolumeConvergenceStudy_n=9.json";
-	set_static_data(file);
-	scf_probe(file);
-}
-
-void ut_naiveQuadratureConvergenceStudy_n11() {
-	std::string file = "./input_files/ut_bondVolumeConvergenceStudy_n=11.json";
-	set_static_data(file);
-	scf_probe(file);
-}
-
-void ut_naiveQuadratureConvergenceStudy_n13() {
-	std::string file = "./input_files/ut_bondVolumeConvergenceStudy_n=13.json";
-	set_static_data(file);
-	scf_probe(file);
-}
-
-void ut_naiveQuadratureConvergenceStudy_n17() {
-	std::string file = "./input_files/ut_bondVolumeConvergenceStudy_n=17.json";
-	set_static_data(file);
-	scf_probe(file);
-}
-
-void ut_naiveQuadratureConvergenceStudy_n33() {
-	std::string file = "./input_files/ut_bondVolumeConvergenceStudy_n=33.json";
-	set_static_data(file);
-	scf_probe(file);
-}
-
-
-
-/*
- * Dave's Influence Function
- * "x < 0.5 ? 1.0 : -4.0*x*x + 4.0*x"
- */
-
-void scf_probe(const std::string& json_filename) {
-
-	QUICKGRID::QuickGridData gridData = getGrid(json_filename);
-
-	// This load-balances
-	gridData = PDNEIGH::getLoadBalancedDiscretization(gridData);
-
-	/*
-	 * Create neighborhood with an enlarged horizon
-	 */
-
-	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
-	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon);
-
-
-	/*
-	 * Unit test looks exclusively at the cell at the center of cube;
-	 * This cell ID depends upon nx, ny, nz
-	 *
-	 * MESH INPUT MUST HAVE EVEN NUMBER OF CELLS
-	 */
-	BOOST_CHECK(0==(nx+1)%2);
-	/*
-	 * mesh must have equal number of cells along each axis
-	 */
-	BOOST_CHECK(nx==ny);
-	BOOST_CHECK(nx==nz);
-
-	// coordinate indices of center cell
-	size_t ic = (nx -1)/2;
-	size_t jc = ic;
-	size_t kc = ic;
-	size_t gId = nx * ny * kc + nx * jc + ic;
-//	std::cout << "ut_scf::center cell gID = " << gId << std::endl;
-
-	/**
-	 * WARNING: note following ASSUMPTION -- gId == local id
-	 * CAUTION: this test only makes sense in 'serial' -- local id
-	 * and gId are not the same in parallel.
-	 */
-	size_t num_neigh = list.get_num_neigh(gId);
-//	std::cout << "ut_scf::center cell num_neigh = " << num_neigh << std::endl;
-	Array<int> neighborhoodPtr(1+num_neigh);
-	{
-		/*
-		 * copy neighborhood list for center point over to array
-		 */
-		const int *neighborhood = list.get_neighborhood(gId);
-		BOOST_CHECK((int)num_neigh == *neighborhood);
-		for(size_t j=0;j<num_neigh+1;j++,neighborhood++)
-			neighborhoodPtr[j]=*neighborhood;
-	}
-	Array<double> xPtr(list.get_num_owned_points()*3,list.get_owned_x());
-//	shared_ptr<double> xPtr = list.get_owned_x();
-
-
-	/*
-	 * expectation is that cell center is at origin
-	 */
-//	std::cout << "ut_scf::cell center coordinate X = " << *(xPtr.get()+3*gId) << std::endl;
-//	std::cout << "ut_scf::cell center coordinate Y = " << *(xPtr.get()+3*gId + 1) << std::endl;
-//	std::cout << "ut_scf::cell center coordinate Z = " << *(xPtr.get()+3*gId + 2) << std::endl;
-	BOOST_CHECK_SMALL(xPtr[3*gId+0],1.0e-15);
-	BOOST_CHECK_SMALL(xPtr[3*gId+1],1.0e-15);
-	BOOST_CHECK_SMALL(xPtr[3*gId+2],1.0e-15);
-	/*
-	 * X is the center of the sphere
-	 */
-	Array<double> X(3); X.set(0.0);
-	/*
-	 * Y = X since we are fixing the center of the sphere
-	 */
-	Array<double> Y(3); Y.set(0.0);
-
-	Array<double> cellVolume(gridData.numPoints,gridData.cellVolume);
-	double m_analytical = 4.0 * M_PI * pow(horizon,5) / 5.0;
-	double m_code = MATERIAL_EVALUATION::computeWeightedVolume(X.get(),xPtr.get(),cellVolume.get(),neighborhoodPtr.get(),horizon);
-	double rel_diff = std::abs(m_analytical-m_code)/m_analytical;
-	std::cout << std::scientific;
-	std::cout.precision(3);
-	std::cout << "ut_scf::analytical value for weighted volume on sphere = " << m_analytical << std::endl;
-	std::cout << "ut_scf::code computed weighted volume on sphere = " << m_code << std::endl;
-	std::cout << "ut_scf::% relative error weighted volume = " << 100*rel_diff << std::endl;
-
-	double gamma = 1.0e-6;
-	Array<double> yPtr(3*list.get_num_owned_points());
-
-	/*
-	 * PROBE XY
-	 */
-	probe_shear(MATERIAL_EVALUATION::XY,neighborhoodPtr,X,xPtr,Y,yPtr,cellVolume,horizon,gamma,m_code);
-	/*
-	 * PROBE YZ
-	 */
-//	probe_shear(MATERIAL_EVALUATION::YZ,neighborhoodPtr,X,xPtr,Y,yPtr,volPtr,horizon,gamma,m_code);
-	/*
-	 * PROBE ZX
-	 */
-//	probe_shear(MATERIAL_EVALUATION::ZX,neighborhoodPtr,X,xPtr,Y,yPtr,volPtr,horizon,gamma,m_code);
-
-
-}
-
-
 void probe_shear
 (
 	MATERIAL_EVALUATION::PURE_SHEAR mode,
@@ -368,11 +205,15 @@ void probe_shear
 	 * NOTE: X is center of sphere and there no displacement at this point
 	 * therefore, Y=X
 	 */
-	MATERIAL_EVALUATION::set_pure_shear(neighborhoodPtr.get(),X.get(),xPtr.get(),yPtr.get(),mode,gamma);
-	double theta = MATERIAL_EVALUATION::computeDilatation(neighborhoodPtr.get(),X.get(),xPtr.get(),X.get(),yPtr.get(),cellVolume.get(),m_code,horizon);
+	/*MATERIAL_EVALUATION::set_pure_shear(neighborhoodPtr.get(),X.get(),xPtr.get(),yPtr.get(),mode,gamma);
+	
+       
+        double theta = MATERIAL_EVALUATION::computeDilatation(neighborhoodPtr.get(),X.get(),xPtr.get(),X.get(),yPtr.get(),cellVolume.get(),m_code,horizon);
 	std::cout << "ut_naiveQuadratureConvergenceStudy::probe_shear dilatation = " << theta << std::endl;
 	double tolerance=1.0e-12;
 	BOOST_CHECK_SMALL(theta,tolerance);
+*/
+      
 
 	/*
 	 * compute shear correction factor
@@ -420,30 +261,608 @@ void probe_shear
 
 }
 
+void scf_probe(PDNEIGH::NeighborhoodList list, Array<int> &neighborhoodPtr, Array<double> xPtr, Array<double> &X, Array<double> &Y, Array<double> cellVolume, Array<double> &yPtr, double gamma, double &m_analytical, double &m_code, double &rel_diff, double &theta, size_t gId, size_t num_neigh ){
 
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success=true;
-	test_suite* proc = BOOST_TEST_SUITE( "ut_naiveQuadratureConvergenceStudy" );
-	proc->add(BOOST_TEST_CASE( &ut_naiveQuadratureConvergenceStudy_n3 ));
-	proc->add(BOOST_TEST_CASE( &ut_naiveQuadratureConvergenceStudy_n5 ));
-	proc->add(BOOST_TEST_CASE( &ut_naiveQuadratureConvergenceStudy_n7 ));
-	proc->add(BOOST_TEST_CASE( &ut_naiveQuadratureConvergenceStudy_n9 ));
-	proc->add(BOOST_TEST_CASE( &ut_naiveQuadratureConvergenceStudy_n11 ));
-	proc->add(BOOST_TEST_CASE( &ut_naiveQuadratureConvergenceStudy_n13 ));
-	proc->add(BOOST_TEST_CASE( &ut_naiveQuadratureConvergenceStudy_n17 ));
-//	proc->add(BOOST_TEST_CASE( &ut_naiveQuadratureConvergenceStudy_n33 ));
-	framework::master_test_suite().add( proc );
-	return success;
+   {
+		/*
+		 * copy neighborhood list for center point over to array
+		 */
+		const int *neighborhood = list.get_neighborhood(gId);
+		
+		for(size_t j=0;j<num_neigh+1;j++,neighborhood++)
+			neighborhoodPtr[j]=*neighborhood;
+	}
+
+        /*
+	 * X is the center of the sphere
+	 */
+	 X.set(0.0);
+	/*
+	 * Y = X since we are fixing the center of the sphere
+	 */
+	Y.set(0.0);
+
+        m_analytical = 4.0 * M_PI * pow(horizon,5) / 5.0;
+	m_code = MATERIAL_EVALUATION::computeWeightedVolume(X.get(),xPtr.get(),cellVolume.get(),neighborhoodPtr.get(),horizon);
+	rel_diff = std::abs(m_analytical-m_code)/m_analytical;
+	std::cout << std::scientific;
+	std::cout.precision(3);
+	std::cout << "ut_scf::analytical value for weighted volume on sphere = " << m_analytical << std::endl;
+	std::cout << "ut_scf::code computed weighted volume on sphere = " << m_code << std::endl;
+	std::cout << "ut_scf::% relative error weighted volume = " << 100*rel_diff << std::endl;
+
+	
+
+       MATERIAL_EVALUATION::set_pure_shear(neighborhoodPtr.get(),X.get(),xPtr.get(),yPtr.get(),MATERIAL_EVALUATION::XY,gamma);
+       theta = MATERIAL_EVALUATION::computeDilatation(neighborhoodPtr.get(),X.get(),xPtr.get(),X.get(),yPtr.get(),cellVolume.get(),m_code,horizon);
+       std::cout << "ut_naiveQuadratureConvergenceStudy::probe_shear dilatation = " << theta << std::endl;
 
 }
 
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
+
+
+
+
+TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n3Test) {
+
+	std::string json_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=3.json";
+	set_static_data(json_filename);
+         /*
+	 * Unit test looks exclusively at the cell at the center of cube;
+	 * This cell ID depends upon nx, ny, nz
+	 *
+	 * MESH INPUT MUST HAVE EVEN NUMBER OF CELLS
+	 */
+	TEST_ASSERT(0==(nx+1)%2);
+	/*
+	 * mesh must have equal number of cells along each axis
+	 */
+	TEST_ASSERT(nx==ny);
+	TEST_ASSERT(nx==nz);
+
+	QUICKGRID::QuickGridData gridData = getGrid(json_filename);
+
+	// This load-balances
+	gridData = PDNEIGH::getLoadBalancedDiscretization(gridData);
+
+	/*
+	 * Create neighborhood with an enlarged horizon
+	 */
+
+	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
+	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon);
+
+
+	// coordinate indices of center cell
+	size_t ic = (nx -1)/2;
+	size_t jc = ic;
+	size_t kc = ic;
+	size_t gId = nx * ny * kc + nx * jc + ic;
+
+	/**
+	 * WARNING: note following ASSUMPTION -- gId == local id
+	 * CAUTION: this test only makes sense in 'serial' -- local id
+	 * and gId are not the same in parallel.
+	 */
+	size_t num_neigh = list.get_num_neigh(gId);
+
+	Array<int> neighborhoodPtr(1+num_neigh);
+        Array<double> xPtr(list.get_num_owned_points()*3,list.get_owned_x());
+        Array<double> X(3);
+        Array<double> Y(3); 
+        Array<double> cellVolume(gridData.numPoints,gridData.cellVolume);
+        Array<double> yPtr(3*list.get_num_owned_points());
+        double gamma = 1.0e-6;
+        
+
+        const int *neighborhood = list.get_neighborhood(gId);
+	TEST_ASSERT((int)num_neigh == *neighborhood);
+	
+	/*
+	 * expectation is that cell center is at origin
+	 */
+
+	TEST_COMPARE(xPtr[3*gId+0], <=,1.0e-15);
+	TEST_COMPARE(xPtr[3*gId+1], <=, 1.0e-15);
+	TEST_COMPARE(xPtr[3*gId+2], <=, 1.0e-15);
+
+        double m_analytical, m_code, rel_diff, theta;
+	
+	scf_probe(list, neighborhoodPtr, xPtr, X, Y, cellVolume, yPtr, gamma, m_analytical, m_code, rel_diff, theta, gId, num_neigh );
+
+	
+       double tolerance=1.0e-12;
+       TEST_COMPARE(theta, <=, tolerance);
+       
+	/*
+	 * PROBE XY
+	 */
+      probe_shear(MATERIAL_EVALUATION::XY,neighborhoodPtr,X,xPtr,Y,yPtr,cellVolume,horizon,gamma,m_code);
+	
 }
+
+
+TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n5Test) {
+
+	std::string json_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=5.json";
+	set_static_data(json_filename);
+         /*
+	 * Unit test looks exclusively at the cell at the center of cube;
+	 * This cell ID depends upon nx, ny, nz
+	 *
+	 * MESH INPUT MUST HAVE EVEN NUMBER OF CELLS
+	 */
+	TEST_ASSERT(0==(nx+1)%2);
+	/*
+	 * mesh must have equal number of cells along each axis
+	 */
+	TEST_ASSERT(nx==ny);
+	TEST_ASSERT(nx==nz);
+
+	QUICKGRID::QuickGridData gridData = getGrid(json_filename);
+
+	// This load-balances
+	gridData = PDNEIGH::getLoadBalancedDiscretization(gridData);
+
+	/*
+	 * Create neighborhood with an enlarged horizon
+	 */
+
+	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
+	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon);
+
+
+	// coordinate indices of center cell
+	size_t ic = (nx -1)/2;
+	size_t jc = ic;
+	size_t kc = ic;
+	size_t gId = nx * ny * kc + nx * jc + ic;
+
+	/**
+	 * WARNING: note following ASSUMPTION -- gId == local id
+	 * CAUTION: this test only makes sense in 'serial' -- local id
+	 * and gId are not the same in parallel.
+	 */
+	size_t num_neigh = list.get_num_neigh(gId);
+
+	Array<int> neighborhoodPtr(1+num_neigh);
+        Array<double> xPtr(list.get_num_owned_points()*3,list.get_owned_x());
+        Array<double> X(3);
+        Array<double> Y(3); 
+        Array<double> cellVolume(gridData.numPoints,gridData.cellVolume);
+        Array<double> yPtr(3*list.get_num_owned_points());
+        double gamma = 1.0e-6;
+        
+
+        const int *neighborhood = list.get_neighborhood(gId);
+	TEST_ASSERT((int)num_neigh == *neighborhood);
+	
+	/*
+	 * expectation is that cell center is at origin
+	 */
+
+	TEST_COMPARE(xPtr[3*gId+0], <=,1.0e-15);
+	TEST_COMPARE(xPtr[3*gId+1], <=, 1.0e-15);
+	TEST_COMPARE(xPtr[3*gId+2], <=, 1.0e-15);
+
+        double m_analytical, m_code, rel_diff, theta;
+	
+	scf_probe(list, neighborhoodPtr, xPtr, X, Y, cellVolume, yPtr, gamma, m_analytical, m_code, rel_diff, theta, gId, num_neigh );
+
+	
+       double tolerance=1.0e-12;
+       TEST_COMPARE(theta, <=, tolerance);
+       
+	/*
+	 * PROBE XY
+	 */
+      probe_shear(MATERIAL_EVALUATION::XY,neighborhoodPtr,X,xPtr,Y,yPtr,cellVolume,horizon,gamma,m_code);
+	
+	
+}
+
+TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n7Test) {
+
+	std::string json_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=7.json";
+	set_static_data(json_filename);
+        /*
+	 * Unit test looks exclusively at the cell at the center of cube;
+	 * This cell ID depends upon nx, ny, nz
+	 *
+	 * MESH INPUT MUST HAVE EVEN NUMBER OF CELLS
+	 */
+	TEST_ASSERT(0==(nx+1)%2);
+	/*
+	 * mesh must have equal number of cells along each axis
+	 */
+	TEST_ASSERT(nx==ny);
+	TEST_ASSERT(nx==nz);
+
+	QUICKGRID::QuickGridData gridData = getGrid(json_filename);
+
+	// This load-balances
+	gridData = PDNEIGH::getLoadBalancedDiscretization(gridData);
+
+	/*
+	 * Create neighborhood with an enlarged horizon
+	 */
+
+	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
+	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon);
+
+
+	// coordinate indices of center cell
+	size_t ic = (nx -1)/2;
+	size_t jc = ic;
+	size_t kc = ic;
+	size_t gId = nx * ny * kc + nx * jc + ic;
+
+	/**
+	 * WARNING: note following ASSUMPTION -- gId == local id
+	 * CAUTION: this test only makes sense in 'serial' -- local id
+	 * and gId are not the same in parallel.
+	 */
+	size_t num_neigh = list.get_num_neigh(gId);
+
+	Array<int> neighborhoodPtr(1+num_neigh);
+        Array<double> xPtr(list.get_num_owned_points()*3,list.get_owned_x());
+        Array<double> X(3);
+        Array<double> Y(3); 
+        Array<double> cellVolume(gridData.numPoints,gridData.cellVolume);
+        Array<double> yPtr(3*list.get_num_owned_points());
+        double gamma = 1.0e-6;
+        
+
+        const int *neighborhood = list.get_neighborhood(gId);
+	TEST_ASSERT((int)num_neigh == *neighborhood);
+	
+	/*
+	 * expectation is that cell center is at origin
+	 */
+
+	TEST_COMPARE(xPtr[3*gId+0], <=,1.0e-15);
+	TEST_COMPARE(xPtr[3*gId+1], <=, 1.0e-15);
+	TEST_COMPARE(xPtr[3*gId+2], <=, 1.0e-15);
+
+        double m_analytical, m_code, rel_diff, theta;
+	
+	scf_probe(list, neighborhoodPtr, xPtr, X, Y, cellVolume, yPtr, gamma, m_analytical, m_code, rel_diff, theta, gId, num_neigh );
+
+	
+       double tolerance=1.0e-12;
+       TEST_COMPARE(theta, <=, tolerance);
+       
+	/*
+	 * PROBE XY
+	 */
+      probe_shear(MATERIAL_EVALUATION::XY,neighborhoodPtr,X,xPtr,Y,yPtr,cellVolume,horizon,gamma,m_code);
+	
+	
+}
+
+TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n9Test) {
+
+	std::string json_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=9.json";
+	set_static_data(json_filename);
+        /*
+	 * Unit test looks exclusively at the cell at the center of cube;
+	 * This cell ID depends upon nx, ny, nz
+	 *
+	 * MESH INPUT MUST HAVE EVEN NUMBER OF CELLS
+	 */
+	TEST_ASSERT(0==(nx+1)%2);
+	/*
+	 * mesh must have equal number of cells along each axis
+	 */
+	TEST_ASSERT(nx==ny);
+	TEST_ASSERT(nx==nz);
+
+	QUICKGRID::QuickGridData gridData = getGrid(json_filename);
+
+	// This load-balances
+	gridData = PDNEIGH::getLoadBalancedDiscretization(gridData);
+
+	/*
+	 * Create neighborhood with an enlarged horizon
+	 */
+
+	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
+	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon);
+
+
+	// coordinate indices of center cell
+	size_t ic = (nx -1)/2;
+	size_t jc = ic;
+	size_t kc = ic;
+	size_t gId = nx * ny * kc + nx * jc + ic;
+
+	/**
+	 * WARNING: note following ASSUMPTION -- gId == local id
+	 * CAUTION: this test only makes sense in 'serial' -- local id
+	 * and gId are not the same in parallel.
+	 */
+	size_t num_neigh = list.get_num_neigh(gId);
+
+	Array<int> neighborhoodPtr(1+num_neigh);
+        Array<double> xPtr(list.get_num_owned_points()*3,list.get_owned_x());
+        Array<double> X(3);
+        Array<double> Y(3); 
+        Array<double> cellVolume(gridData.numPoints,gridData.cellVolume);
+        Array<double> yPtr(3*list.get_num_owned_points());
+        double gamma = 1.0e-6;
+        
+
+        const int *neighborhood = list.get_neighborhood(gId);
+	TEST_ASSERT((int)num_neigh == *neighborhood);
+	
+	/*
+	 * expectation is that cell center is at origin
+	 */
+
+	TEST_COMPARE(xPtr[3*gId+0], <=,1.0e-15);
+	TEST_COMPARE(xPtr[3*gId+1], <=, 1.0e-15);
+	TEST_COMPARE(xPtr[3*gId+2], <=, 1.0e-15);
+
+        double m_analytical, m_code, rel_diff, theta;
+	
+	scf_probe(list, neighborhoodPtr, xPtr, X, Y, cellVolume, yPtr, gamma, m_analytical, m_code, rel_diff, theta, gId, num_neigh );
+
+	
+       double tolerance=1.0e-12;
+       TEST_COMPARE(theta, <=, tolerance);
+       
+	/*
+	 * PROBE XY
+	 */
+      probe_shear(MATERIAL_EVALUATION::XY,neighborhoodPtr,X,xPtr,Y,yPtr,cellVolume,horizon,gamma,m_code);
+	
+}
+
+
+TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n11Test) {
+
+	std::string json_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=11.json";
+	set_static_data(json_filename);
+        /*
+	 * Unit test looks exclusively at the cell at the center of cube;
+	 * This cell ID depends upon nx, ny, nz
+	 *
+	 * MESH INPUT MUST HAVE EVEN NUMBER OF CELLS
+	 */
+	TEST_ASSERT(0==(nx+1)%2);
+	/*
+	 * mesh must have equal number of cells along each axis
+	 */
+	TEST_ASSERT(nx==ny);
+	TEST_ASSERT(nx==nz);
+
+	QUICKGRID::QuickGridData gridData = getGrid(json_filename);
+
+	// This load-balances
+	gridData = PDNEIGH::getLoadBalancedDiscretization(gridData);
+
+	/*
+	 * Create neighborhood with an enlarged horizon
+	 */
+
+	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
+	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon);
+
+
+	// coordinate indices of center cell
+	size_t ic = (nx -1)/2;
+	size_t jc = ic;
+	size_t kc = ic;
+	size_t gId = nx * ny * kc + nx * jc + ic;
+
+	/**
+	 * WARNING: note following ASSUMPTION -- gId == local id
+	 * CAUTION: this test only makes sense in 'serial' -- local id
+	 * and gId are not the same in parallel.
+	 */
+	size_t num_neigh = list.get_num_neigh(gId);
+
+	Array<int> neighborhoodPtr(1+num_neigh);
+        Array<double> xPtr(list.get_num_owned_points()*3,list.get_owned_x());
+        Array<double> X(3);
+        Array<double> Y(3); 
+        Array<double> cellVolume(gridData.numPoints,gridData.cellVolume);
+        Array<double> yPtr(3*list.get_num_owned_points());
+        double gamma = 1.0e-6;
+        
+
+        const int *neighborhood = list.get_neighborhood(gId);
+	TEST_ASSERT((int)num_neigh == *neighborhood);
+	
+	/*
+	 * expectation is that cell center is at origin
+	 */
+
+	TEST_COMPARE(xPtr[3*gId+0], <=,1.0e-15);
+	TEST_COMPARE(xPtr[3*gId+1], <=, 1.0e-15);
+	TEST_COMPARE(xPtr[3*gId+2], <=, 1.0e-15);
+
+        double m_analytical, m_code, rel_diff, theta;
+	
+	scf_probe(list, neighborhoodPtr, xPtr, X, Y, cellVolume, yPtr, gamma, m_analytical, m_code, rel_diff, theta, gId, num_neigh );
+
+	
+       double tolerance=1.0e-12;
+       TEST_COMPARE(theta, <=, tolerance);
+       
+	/*
+	 * PROBE XY
+	 */
+      probe_shear(MATERIAL_EVALUATION::XY,neighborhoodPtr,X,xPtr,Y,yPtr,cellVolume,horizon,gamma,m_code);
+	
+}
+
+TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n13Test) {
+
+	std::string json_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=13.json";
+	set_static_data(json_filename);
+	/*
+	 * Unit test looks exclusively at the cell at the center of cube;
+	 * This cell ID depends upon nx, ny, nz
+	 *
+	 * MESH INPUT MUST HAVE EVEN NUMBER OF CELLS
+	 */
+	TEST_ASSERT(0==(nx+1)%2);
+	/*
+	 * mesh must have equal number of cells along each axis
+	 */
+	TEST_ASSERT(nx==ny);
+	TEST_ASSERT(nx==nz);
+
+	QUICKGRID::QuickGridData gridData = getGrid(json_filename);
+
+	// This load-balances
+	gridData = PDNEIGH::getLoadBalancedDiscretization(gridData);
+
+	/*
+	 * Create neighborhood with an enlarged horizon
+	 */
+
+	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
+	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon);
+
+
+	// coordinate indices of center cell
+	size_t ic = (nx -1)/2;
+	size_t jc = ic;
+	size_t kc = ic;
+	size_t gId = nx * ny * kc + nx * jc + ic;
+
+	/**
+	 * WARNING: note following ASSUMPTION -- gId == local id
+	 * CAUTION: this test only makes sense in 'serial' -- local id
+	 * and gId are not the same in parallel.
+	 */
+	size_t num_neigh = list.get_num_neigh(gId);
+
+	Array<int> neighborhoodPtr(1+num_neigh);
+        Array<double> xPtr(list.get_num_owned_points()*3,list.get_owned_x());
+        Array<double> X(3);
+        Array<double> Y(3); 
+        Array<double> cellVolume(gridData.numPoints,gridData.cellVolume);
+        Array<double> yPtr(3*list.get_num_owned_points());
+        double gamma = 1.0e-6;
+        
+
+        const int *neighborhood = list.get_neighborhood(gId);
+	TEST_ASSERT((int)num_neigh == *neighborhood);
+	
+	/*
+	 * expectation is that cell center is at origin
+	 */
+
+	TEST_COMPARE(xPtr[3*gId+0], <=,1.0e-15);
+	TEST_COMPARE(xPtr[3*gId+1], <=, 1.0e-15);
+	TEST_COMPARE(xPtr[3*gId+2], <=, 1.0e-15);
+
+        double m_analytical, m_code, rel_diff, theta;
+	
+	scf_probe(list, neighborhoodPtr, xPtr, X, Y, cellVolume, yPtr, gamma, m_analytical, m_code, rel_diff, theta, gId, num_neigh );
+
+	
+       double tolerance=1.0e-12;
+       TEST_COMPARE(theta, <=, tolerance);
+       
+	/*
+	 * PROBE XY
+	 */
+      probe_shear(MATERIAL_EVALUATION::XY,neighborhoodPtr,X,xPtr,Y,yPtr,cellVolume,horizon,gamma,m_code);
+}
+
+TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n17Test) {
+
+	std::string json_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=17.json";
+	set_static_data(json_filename);
+
+        /*
+	 * Unit test looks exclusively at the cell at the center of cube;
+	 * This cell ID depends upon nx, ny, nz
+	 *
+	 * MESH INPUT MUST HAVE EVEN NUMBER OF CELLS
+	 */
+	TEST_ASSERT(0==(nx+1)%2);
+	/*
+	 * mesh must have equal number of cells along each axis
+	 */
+	TEST_ASSERT(nx==ny);
+	TEST_ASSERT(nx==nz);
+
+	QUICKGRID::QuickGridData gridData = getGrid(json_filename);
+
+	// This load-balances
+	gridData = PDNEIGH::getLoadBalancedDiscretization(gridData);
+
+	/*
+	 * Create neighborhood with an enlarged horizon
+	 */
+
+	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
+	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon);
+
+
+	// coordinate indices of center cell
+	size_t ic = (nx -1)/2;
+	size_t jc = ic;
+	size_t kc = ic;
+	size_t gId = nx * ny * kc + nx * jc + ic;
+
+	/**
+	 * WARNING: note following ASSUMPTION -- gId == local id
+	 * CAUTION: this test only makes sense in 'serial' -- local id
+	 * and gId are not the same in parallel.
+	 */
+	size_t num_neigh = list.get_num_neigh(gId);
+
+	Array<int> neighborhoodPtr(1+num_neigh);
+        Array<double> xPtr(list.get_num_owned_points()*3,list.get_owned_x());
+        Array<double> X(3);
+        Array<double> Y(3); 
+        Array<double> cellVolume(gridData.numPoints,gridData.cellVolume);
+        Array<double> yPtr(3*list.get_num_owned_points());
+        double gamma = 1.0e-6;
+        
+
+        const int *neighborhood = list.get_neighborhood(gId);
+	TEST_ASSERT((int)num_neigh == *neighborhood);
+	
+	/*
+	 * expectation is that cell center is at origin
+	 */
+
+	TEST_COMPARE(xPtr[3*gId+0], <=,1.0e-15);
+	TEST_COMPARE(xPtr[3*gId+1], <=, 1.0e-15);
+	TEST_COMPARE(xPtr[3*gId+2], <=, 1.0e-15);
+
+        double m_analytical, m_code, rel_diff, theta;
+	
+	scf_probe(list, neighborhoodPtr, xPtr, X, Y, cellVolume, yPtr, gamma, m_analytical, m_code, rel_diff, theta, gId, num_neigh );
+
+	
+       double tolerance=1.0e-12;
+       TEST_COMPARE(theta, <=, tolerance);
+       
+	/*
+	 * PROBE XY
+	 */
+      probe_shear(MATERIAL_EVALUATION::XY,neighborhoodPtr,X,xPtr,Y,yPtr,cellVolume,horizon,gamma,m_code);
+	
+}
+
+
+
+
+
+/*
+ * Dave's Influence Function
+ * "x < 0.5 ? 1.0 : -4.0*x*x + 4.0*x"
+ */
+
+
 
 int main
 (
@@ -457,7 +876,7 @@ int main
 //	write_table_2_header("table_2.tex");
 
 	// Initialize UTF
-	int flag = unit_test_main( init_unit_test, argc, argv );
+	int flag = Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 
 	close_table_1("naive_table_1.tex");
 	return flag;

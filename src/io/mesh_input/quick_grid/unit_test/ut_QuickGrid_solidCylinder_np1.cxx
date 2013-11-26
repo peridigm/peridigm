@@ -43,10 +43,9 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
 #include "Field.h"
 #include "../QuickGrid.h"
 #include <valarray>
@@ -56,7 +55,6 @@
 
 
 using std::tr1::shared_ptr;
-using namespace boost::unit_test;
 using std::cout;
 
 static size_t myRank;
@@ -73,12 +71,14 @@ QUICKGRID::TensorProductSolidCylinder getMeshGenerator(){
 	return meshGen;
 }
 
-void runTest() {
+
+TEUCHOS_UNIT_TEST( QuickGrid_solidCylinder_np1, RunTest) {
+
 	QUICKGRID::TensorProductSolidCylinder meshGen = getMeshGenerator();
-	BOOST_CHECK(57==meshGen.getNumGlobalCells());
+	TEST_ASSERT(57==meshGen.getNumGlobalCells());
 	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, meshGen);
 	int numPoints = decomp.numPoints;
-	BOOST_CHECK(57==numPoints);
+	TEST_ASSERT(57==numPoints);
 
 	/*
 	 * Assert that there are 3 core points
@@ -87,15 +87,15 @@ void runTest() {
 	double dz = cylinderLength/3;
 	double z0 = zStart + dz/2;
 	const double tolerance = 1.0e-15;
-	BOOST_CHECK_CLOSE(*(x+0),0.0,tolerance);
-	BOOST_CHECK_CLOSE(*(x+1),0.0,tolerance);
-	BOOST_CHECK_CLOSE(*(x+2),z0,tolerance);
-	BOOST_CHECK_CLOSE(*(x+19*3+0),0.0,tolerance);
-	BOOST_CHECK_CLOSE(*(x+19*3+1),0.0,tolerance);
-	BOOST_CHECK_CLOSE(*(x+19*3+2),z0+dz,tolerance);
-	BOOST_CHECK_CLOSE(*(x+2*19*3+0),0.0,tolerance);
-	BOOST_CHECK_CLOSE(*(x+2*19*3+1),0.0,tolerance);
-	BOOST_CHECK_CLOSE(*(x+2*19*3+2),z0+2.0*dz,tolerance);
+	TEST_FLOATING_EQUALITY(*(x+0),0.0,tolerance);
+	TEST_FLOATING_EQUALITY(*(x+1),0.0,tolerance);
+	TEST_FLOATING_EQUALITY(*(x+2),z0,tolerance);
+	TEST_FLOATING_EQUALITY(*(x+19*3+0),0.0,tolerance);
+	TEST_FLOATING_EQUALITY(*(x+19*3+1),0.0,tolerance);
+	TEST_FLOATING_EQUALITY(*(x+19*3+2),z0+dz,tolerance);
+	TEST_FLOATING_EQUALITY(*(x+2*19*3+0),0.0,tolerance);
+	TEST_FLOATING_EQUALITY(*(x+2*19*3+1),0.0,tolerance);
+	TEST_FLOATING_EQUALITY(*(x+2*19*3+2),z0+2.0*dz,tolerance);
 
 	/*
 	 * Check volume of core of 3 core points
@@ -103,38 +103,20 @@ void runTest() {
 	double rI = cylinderRadius/numRings/sqrt(M_PI);
 	double vol = M_PI*rI*rI*dz;
 	double *v = decomp.cellVolume.get();
-	BOOST_CHECK_CLOSE(*(v+0),vol,tolerance);
-	BOOST_CHECK_CLOSE(*(v+19),vol,tolerance);
-	BOOST_CHECK_CLOSE(*(v+2*19),vol,tolerance);
+	TEST_FLOATING_EQUALITY(*(v+0),vol,tolerance);
+	TEST_FLOATING_EQUALITY(*(v+19),vol,tolerance);
+	TEST_FLOATING_EQUALITY(*(v+2*19),vol,tolerance);
 
 	/*
 	 * Check global assigned "global ids"
 	 */
 	int *ids = decomp.myGlobalIDs.get();
 	for(int i=0;ids!=decomp.myGlobalIDs.get()+numPoints;ids++,i++){
-		BOOST_CHECK(*ids==i);
+		TEST_ASSERT(*ids==i);
 	}
 }
 
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success=true;
 
-	test_suite* proc = BOOST_TEST_SUITE( "ut_QuickGrid_solidCylinder_np1" );
-	proc->add(BOOST_TEST_CASE( &runTest ));
-	framework::master_test_suite().add( proc );
-	return success;
-
-}
-
-
-
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
 
 int main
 (
@@ -148,5 +130,5 @@ int main
 	numProcs = 1;
 
 	// Initialize UTF
-	return unit_test_main( init_unit_test, argc, argv );
+	return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }
