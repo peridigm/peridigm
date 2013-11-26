@@ -43,20 +43,19 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
 #include "../QuickGrid.h"
 #include <iostream>
 
 
 using namespace QUICKGRID;
 using std::tr1::shared_ptr;
-using namespace boost::unit_test;
 
-void cellNeighborhoodHorizon_11Cells()
-{
+
+TEUCHOS_UNIT_TEST( QuickGridHorizon, CellNeighborhoodHorizon_11CellsTest) {
+
 
 	size_t numCells = 11;
 	double xStart = 1.0;
@@ -81,53 +80,54 @@ void cellNeighborhoodHorizon_11Cells()
 
 	size_t i=0;
 	// Start is the index of cells to the left of "i" that are in the neighborhood
-	BOOST_CHECK(0 == h.start(i));
-	BOOST_CHECK(4 == h.numCells(i));
+	TEST_ASSERT(0 == h.start(i));
+	TEST_ASSERT(4 == h.numCells(i));
 
 	i=1;
-	BOOST_CHECK(0 == h.start(i));
-	BOOST_CHECK(5 == h.numCells(i));
+	TEST_ASSERT(0 == h.start(i));
+	TEST_ASSERT(5 == h.numCells(i));
 
 	i=2;
-	BOOST_CHECK(0 == h.start(i));
-	BOOST_CHECK(6 == h.numCells(i));
+	TEST_ASSERT(0 == h.start(i));
+	TEST_ASSERT(6 == h.numCells(i));
 
 	i=3;
-	BOOST_CHECK(0 == h.start(i));
-	BOOST_CHECK(7 == h.numCells(i));
+	TEST_ASSERT(0 == h.start(i));
+	TEST_ASSERT(7 == h.numCells(i));
 
 	i=4;
-	BOOST_CHECK(1 == h.start(i));
-	BOOST_CHECK(7 == h.numCells(i));
+	TEST_ASSERT(1 == h.start(i));
+	TEST_ASSERT(7 == h.numCells(i));
 
 	i=5;
-	BOOST_CHECK(2 == h.start(i));
-	BOOST_CHECK(7 == h.numCells(i));
+	TEST_ASSERT(2 == h.start(i));
+	TEST_ASSERT(7 == h.numCells(i));
 
 	i=6;
-	BOOST_CHECK(3 == h.start(i));
-	BOOST_CHECK(7 == h.numCells(i));
+	TEST_ASSERT(3 == h.start(i));
+	TEST_ASSERT(7 == h.numCells(i));
 
 	i=7;
-	BOOST_CHECK(4 == h.start(i));
-	BOOST_CHECK(7 == h.numCells(i));
+	TEST_ASSERT(4 == h.start(i));
+	TEST_ASSERT(7 == h.numCells(i));
 
 	i=8;
-	BOOST_CHECK(5 == h.start(i));
-	BOOST_CHECK(6 == h.numCells(i));
+	TEST_ASSERT(5 == h.start(i));
+	TEST_ASSERT(6 == h.numCells(i));
 
 	i=9;
-	BOOST_CHECK(6 == h.start(i));
-	BOOST_CHECK(5 == h.numCells(i));
+	TEST_ASSERT(6 == h.start(i));
+	TEST_ASSERT(5 == h.numCells(i));
 
 	i=10;
-	BOOST_CHECK(7 == h.start(i));
-	BOOST_CHECK(4 == h.numCells(i));
+	TEST_ASSERT(7 == h.start(i));
+	TEST_ASSERT(4 == h.numCells(i));
 
 }
 
-void cellNeighborhoodHorizon_3Cells()
-{
+
+TEUCHOS_UNIT_TEST( QuickGridHorizon, CellNeighborhoodHorizon_3CellsTest) {
+
 	size_t numCells = 3;
 	double xStart = 1.0;
 	double xLength=1.0;
@@ -151,21 +151,22 @@ void cellNeighborhoodHorizon_3Cells()
 
 	size_t i=0;
 	// Start is the index of cells to the left of "i" that are in the neighborhood
-	BOOST_CHECK(0 == h.start(i));
-	BOOST_CHECK(3 == h.numCells(i));
+	TEST_ASSERT(0 == h.start(i));
+	TEST_ASSERT(3 == h.numCells(i));
 
 	i=1;
-	BOOST_CHECK(0 == h.start(i));
-	BOOST_CHECK(3 == h.numCells(i));
+	TEST_ASSERT(0 == h.start(i));
+	TEST_ASSERT(3 == h.numCells(i));
 
 	i=2;
-	BOOST_CHECK(0 == h.start(i));
-	BOOST_CHECK(3 == h.numCells(i));
+	TEST_ASSERT(0 == h.start(i));
+	TEST_ASSERT(3 == h.numCells(i));
 
 }
 
-void CellsPerProcessor3D_SerialTest_NumProcs_1()
-{
+
+TEUCHOS_UNIT_TEST( QuickGridHorizon, CellsPerProcessor3D_SerialTest_NumProcs_1Test) {
+
 	size_t numCells = 3;
 	double xStart = 1.0;
 	double xLength=1.0;
@@ -185,22 +186,22 @@ void CellsPerProcessor3D_SerialTest_NumProcs_1()
 
 	size_t proc = cellIter.proc();
 	// already moved to next proc
-	BOOST_CHECK(1 == proc);
+	TEST_ASSERT(1 == proc);
 
-	BOOST_CHECK(27 == gridData.globalNumPoints);
-	BOOST_CHECK(3 == gridData.dimension);
+	TEST_ASSERT(27 == gridData.globalNumPoints);
+	TEST_ASSERT(3 == gridData.dimension);
 	int numPoints = gridData.numPoints;
-	BOOST_CHECK(27 == numPoints);
+	TEST_ASSERT(27 == numPoints);
 
 	shared_ptr<int> gIds = gridData.myGlobalIDs;
 	int *gIdsPtr = gIds.get();
 	for(int id=0;id<27;id++,gIdsPtr++)
-		BOOST_CHECK( *gIdsPtr == id );
+		TEST_ASSERT( *gIdsPtr == id );
 
 	// assert length of neighborlist
 	// sizeNeighborList = myNumCells + myNumCells*numNeighbors
 	int sizeNeighborList = 27 + 27*(27-1);
-	BOOST_CHECK( sizeNeighborList == gridData.sizeNeighborhoodList );
+	TEST_ASSERT( sizeNeighborList == gridData.sizeNeighborhoodList );
 	// assert neighbor lists; in this case each point has all points
 	shared_ptr<int> neighborList = gridData.neighborhood;
 	int *nPtr = neighborList.get();
@@ -208,10 +209,10 @@ void CellsPerProcessor3D_SerialTest_NumProcs_1()
 	// This iterates through all cell neighborhoods
 	for(int id=0;id<27;id++){
 		int numNeigh = *nPtr; nPtr++;
-		BOOST_CHECK( 26 == numNeigh);
+		TEST_ASSERT( 26 == numNeigh);
 		for(int i=0;i<27;i++){
 			if(i != id){
-				BOOST_CHECK( i == *nPtr ); nPtr++;
+				TEST_ASSERT( i == *nPtr ); nPtr++;
 			}
 		}
 	}
@@ -221,13 +222,14 @@ void CellsPerProcessor3D_SerialTest_NumProcs_1()
 	double *v = gridData.cellVolume.get();
 	double *end = v+numPoints;
 	for(; v != end ; v++){
-		BOOST_CHECK_CLOSE(*v,cellVolume,tolerance);
+		TEST_FLOATING_EQUALITY(*v,cellVolume,tolerance);
 	}
 
 }
 
-void CellsPerProcessor3D_smallNeighborhoodSerialTest_NumProcs_1()
-{
+
+TEUCHOS_UNIT_TEST( QuickGridHorizon, CellsPerProcessor3D_smallNeighborhoodSerialTest_NumProcs_1Test) {
+
 	// use this spec along the x and y axes
 	size_t numCells = 3;
 	double xStart = 1.0;
@@ -253,17 +255,17 @@ void CellsPerProcessor3D_smallNeighborhoodSerialTest_NumProcs_1()
 
 	size_t proc = cellIter.proc();
 	// already moved to next proc
-	BOOST_CHECK(1 == proc);
+	TEST_ASSERT(1 == proc);
 
-	BOOST_CHECK(18 == gridData.globalNumPoints);
-	BOOST_CHECK(3 == gridData.dimension);
+	TEST_ASSERT(18 == gridData.globalNumPoints);
+	TEST_ASSERT(3 == gridData.dimension);
 	size_t numPoints = gridData.numPoints;
-	BOOST_CHECK(18 == numPoints);
+	TEST_ASSERT(18 == numPoints);
 
 	shared_ptr<int> gIds = gridData.myGlobalIDs;
 	int *gIdsPtr = gIds.get();
 	for(int id=0;id<18;id++,gIdsPtr++)
-		BOOST_CHECK( *gIdsPtr == id );
+		TEST_ASSERT( *gIdsPtr == id );
 
 	// assert length of neighborlist
 	// sizeNeighborList = numPoints = sum(numNeighbors)
@@ -295,7 +297,7 @@ void CellsPerProcessor3D_smallNeighborhoodSerialTest_NumProcs_1()
 	for(size_t i=0;i<numPoints;i++)
 		sizeNeighborList+=numNeighbors[i];
 
-	BOOST_CHECK( sizeNeighborList == gridData.sizeNeighborhoodList );
+	TEST_ASSERT( sizeNeighborList == gridData.sizeNeighborhoodList );
 	// assert neighbor lists; in this case each point has all points
 	shared_ptr<int> neighborList = gridData.neighborhood;
 	int *nPtr = neighborList.get();
@@ -307,16 +309,16 @@ void CellsPerProcessor3D_smallNeighborhoodSerialTest_NumProcs_1()
 	for(size_t id=0;id<numPoints;id++){
 		int numNeigh = *nPtr; nPtr++;
 		// this asserts the pointers into the neighborhood
-		BOOST_CHECK( neighPtr[id] == sum );
+		TEST_ASSERT( neighPtr[id] == sum );
 		sum += (1+numNeighbors[id]);
 		// asserts number of neighbors
-		BOOST_CHECK( numNeighbors[id] == numNeigh );
+		TEST_ASSERT( numNeighbors[id] == numNeigh );
 //		std::cout << "id = " << id << std::endl;
 //		std::cout << "\t";
 		// asserts neighborhood
 		for(int i=0;i<numNeigh;i++){
 //			std::cout << ", " << *nPtr;
-			BOOST_CHECK( neighborhoodAnswers[p++] == *nPtr );
+			TEST_ASSERT( neighborhoodAnswers[p++] == *nPtr );
 			nPtr++;
 		}
 //		std::cout<< std::endl;
@@ -327,13 +329,14 @@ void CellsPerProcessor3D_smallNeighborhoodSerialTest_NumProcs_1()
 	double *v = gridData.cellVolume.get();
 	double *end = v+numPoints;
 	for(; v != end ; v++){
-		BOOST_CHECK_CLOSE(*v,cellVolume,tolerance);
+		TEST_FLOATING_EQUALITY(*v,cellVolume,tolerance);
 	}
 
 }
 
-void CellsPerProcessor3D_SerialTest_NumProcs_3()
-{
+
+TEUCHOS_UNIT_TEST( QuickGridHorizon, CellsPerProcessor3D_SerialTest_NumProcs_3Test) {
+
 	size_t numCells = 3;
 	double xStart = 1.0;
 	double xLength=1.0;
@@ -352,22 +355,22 @@ void CellsPerProcessor3D_SerialTest_NumProcs_3()
 	QuickGridData gridData = p0Data.second;
 	Cell3D nextCellLocator = p0Data.first;
 	// proc 0
-	BOOST_CHECK(27 == gridData.globalNumPoints);
-	BOOST_CHECK(3 == gridData.dimension);
+	TEST_ASSERT(27 == gridData.globalNumPoints);
+	TEST_ASSERT(3 == gridData.dimension);
 	int myNumPoints = gridData.numPoints;
-	BOOST_CHECK(9 == myNumPoints);
+	TEST_ASSERT(9 == myNumPoints);
 
 	// Assert global ids for this processor
 	shared_ptr<int> gIds = gridData.myGlobalIDs;
 	int *gIdsPtr = gIds.get();
 	int start = 0;
 	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++)
-		BOOST_CHECK( *gIdsPtr == (int)id );
+		TEST_ASSERT( *gIdsPtr == (int)id );
 
 	// assert length of neighborlist
 	// sizeNeighborList = myNumCells + myNumCells*numNeighbors
 	int sizeNeighborList = myNumPoints + myNumPoints*(27-1);
-	BOOST_CHECK( sizeNeighborList == gridData.sizeNeighborhoodList );
+	TEST_ASSERT( sizeNeighborList == gridData.sizeNeighborhoodList );
 
 	// assert neighbor lists; in this case each point has all points
 	shared_ptr<int> neighborList = gridData.neighborhood;
@@ -377,10 +380,10 @@ void CellsPerProcessor3D_SerialTest_NumProcs_3()
 	// each cell in neighborhood has the entire list of cells in mesh except itself
 	for(int id=0;id<myNumPoints;id++){
 		int numNeigh = *nPtr; nPtr++;
-		BOOST_CHECK( 26 == numNeigh);
+		TEST_ASSERT( 26 == numNeigh);
 		for(int i=0;i<27;i++){
 			if(i != id){
-				BOOST_CHECK( i == *nPtr ); nPtr++;
+				TEST_ASSERT( i == *nPtr ); nPtr++;
 			}
 		}
 	}
@@ -391,7 +394,7 @@ void CellsPerProcessor3D_SerialTest_NumProcs_3()
 	double *v = gridData.cellVolume.get();
 	double *end = v+myNumPoints;
 	for(; v != end ; v++){
-		BOOST_CHECK_CLOSE(*v,cellVolume,tolerance);
+		TEST_FLOATING_EQUALITY(*v,cellVolume,tolerance);
 	}
 
 	// already moved to next proc
@@ -399,22 +402,22 @@ void CellsPerProcessor3D_SerialTest_NumProcs_3()
 	start = 9;
 	while(cellIter.hasNextProc()){
 
-		BOOST_CHECK(proc == cellIter.proc());
+		TEST_ASSERT(proc == cellIter.proc());
 		std::pair<Cell3D,QuickGridData> data = cellIter.nextProc(nextCellLocator,pdGridDataProcN);
 
 		QuickGridData gridData = data.second;
 		nextCellLocator = data.first;
 
-		BOOST_CHECK(27 == gridData.globalNumPoints);
-		BOOST_CHECK(3 == gridData.dimension);
+		TEST_ASSERT(27 == gridData.globalNumPoints);
+		TEST_ASSERT(3 == gridData.dimension);
 		int myNumPoints = gridData.numPoints;
-		BOOST_CHECK(9 == myNumPoints);
+		TEST_ASSERT(9 == myNumPoints);
 
 		// assert global ids for this processor
 		shared_ptr<int> gIds = gridData.myGlobalIDs;
 		int *gIdsPtr = gIds.get();
 		for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++){
-			BOOST_CHECK( *gIdsPtr == (int)id );
+			TEST_ASSERT( *gIdsPtr == (int)id );
 		}
 
 		// there are 9 nodes per processor
@@ -423,7 +426,7 @@ void CellsPerProcessor3D_SerialTest_NumProcs_3()
 		// assert length of neighborlist
 		// sizeNeighborList = myNumCells + myNumCells*numNeighbors
 		int sizeNeighborList = myNumPoints + myNumPoints*(27-1);
-		BOOST_CHECK( sizeNeighborList == gridData.sizeNeighborhoodList );
+		TEST_ASSERT( sizeNeighborList == gridData.sizeNeighborhoodList );
 
 		// assert neighbor lists; in this case each point has all points
 		shared_ptr<int> neighborList = gridData.neighborhood;
@@ -434,11 +437,11 @@ void CellsPerProcessor3D_SerialTest_NumProcs_3()
 		gIdsPtr = gIds.get();
 		for(int id=0;id<myNumPoints;id++, gIdsPtr++){
 			int numNeigh = *nPtr; nPtr++;
-			BOOST_CHECK(26 == numNeigh);
+			TEST_ASSERT(26 == numNeigh);
 
 			for(int i=0;i<27;i++){
 				if(*gIdsPtr != i) {
-					BOOST_CHECK(i == *nPtr);
+					TEST_ASSERT(i == *nPtr);
 					nPtr++;
 				}
 			}
@@ -451,7 +454,7 @@ void CellsPerProcessor3D_SerialTest_NumProcs_3()
 		double *v = gridData.cellVolume.get();
 		double *end = v+myNumPoints;
 		for(; v != end ; v++){
-			BOOST_CHECK_CLOSE(*v,cellVolume,tolerance);
+			TEST_FLOATING_EQUALITY(*v,cellVolume,tolerance);
 		}
 
 		proc++;
@@ -460,8 +463,9 @@ void CellsPerProcessor3D_SerialTest_NumProcs_3()
 
 }
 
-void CellsPerProcessor3D_SerialTest_NumProcs_4()
-{
+
+TEUCHOS_UNIT_TEST( QuickGridHorizon, CellsPerProcessor3D_SerialTest_NumProcs_4Test) {
+
 	size_t numCells = 3;
 	double xStart = 1.0;
 	double xLength=1.0;
@@ -480,22 +484,22 @@ void CellsPerProcessor3D_SerialTest_NumProcs_4()
 	QuickGridData gridData = p0Data.second;
 	Cell3D nextCellLocator = p0Data.first;
 	// proc 0
-	BOOST_CHECK(27 == gridData.globalNumPoints);
-	BOOST_CHECK(3 == gridData.dimension);
+	TEST_ASSERT(27 == gridData.globalNumPoints);
+	TEST_ASSERT(3 == gridData.dimension);
 	int myNumPoints = gridData.numPoints;
-	BOOST_CHECK(6 == myNumPoints);
+	TEST_ASSERT(6 == myNumPoints);
 
 	// Assert global ids for this processor
 	shared_ptr<int> gIds = gridData.myGlobalIDs;
 	int *gIdsPtr = gIds.get();
 	int start = 0;
 	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++)
-		BOOST_CHECK( *gIdsPtr == (int)id );
+		TEST_ASSERT( *gIdsPtr == (int)id );
 
 	// assert length of neighborlist
 	// sizeNeighborList = myNumCells + myNumCells*numNeighbors
 	int sizeNeighborList = myNumPoints + myNumPoints*(27-1);
-	BOOST_CHECK( sizeNeighborList == gridData.sizeNeighborhoodList );
+	TEST_ASSERT( sizeNeighborList == gridData.sizeNeighborhoodList );
 
 	// assert neighbor lists; in this case each point has all points
 	shared_ptr<int> neighborList = gridData.neighborhood;
@@ -505,10 +509,10 @@ void CellsPerProcessor3D_SerialTest_NumProcs_4()
 	// each cell in neighborhood has the entire list of cells in mesh except itself
 	for(int id=0;id<myNumPoints;id++){
 		int numNeigh = *nPtr; nPtr++;
-		BOOST_CHECK( 26 == numNeigh);
+		TEST_ASSERT( 26 == numNeigh);
 		for(int i=0;i<27;i++){
 			if(i != id){
-				BOOST_CHECK( i == *nPtr ); nPtr++;
+				TEST_ASSERT( i == *nPtr ); nPtr++;
 			}
 		}
 	}
@@ -519,7 +523,7 @@ void CellsPerProcessor3D_SerialTest_NumProcs_4()
 	double *v = gridData.cellVolume.get();
 	double *end = v+myNumPoints;
 	for(; v != end ; v++){
-		BOOST_CHECK_CLOSE(*v,cellVolume,tolerance);
+		TEST_FLOATING_EQUALITY(*v,cellVolume,tolerance);
 	}
 
 
@@ -528,26 +532,26 @@ void CellsPerProcessor3D_SerialTest_NumProcs_4()
 	start = 6;
 	while(cellIter.hasNextProc()){
 
-		BOOST_CHECK(proc == cellIter.proc());
+		TEST_ASSERT(proc == cellIter.proc());
 		std::pair<Cell3D,QuickGridData> data = cellIter.nextProc(nextCellLocator,pdGridDataProcN);
 
 		QuickGridData gridData = data.second;
 		nextCellLocator = data.first;
 
-		BOOST_CHECK(27 == gridData.globalNumPoints);
-		BOOST_CHECK(3 == gridData.dimension);
+		TEST_ASSERT(27 == gridData.globalNumPoints);
+		TEST_ASSERT(3 == gridData.dimension);
 
 		int myNumPoints = gridData.numPoints;
 		int answerMyNumPoints=6;
 		if(proc==numProcs-1)
 			answerMyNumPoints = 9;
 
-		BOOST_CHECK(answerMyNumPoints == myNumPoints);
+		TEST_ASSERT(answerMyNumPoints == myNumPoints);
 		// assert global ids for this processor
 		shared_ptr<int> gIds = gridData.myGlobalIDs;
 		int *gIdsPtr = gIds.get();
 		for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++){
-			BOOST_CHECK( *gIdsPtr == (int)id );
+			TEST_ASSERT( *gIdsPtr == (int)id );
 		}
 
 		// there are 6 nodes per processor
@@ -556,7 +560,7 @@ void CellsPerProcessor3D_SerialTest_NumProcs_4()
 		// assert length of neighborlist
 		// sizeNeighborList = myNumCells + myNumCells*numNeighbors
 		int sizeNeighborList = myNumPoints + myNumPoints*(27-1);
-		BOOST_CHECK( sizeNeighborList == gridData.sizeNeighborhoodList );
+		TEST_ASSERT( sizeNeighborList == gridData.sizeNeighborhoodList );
 
 		// assert neighbor lists; in this case each point has all points
 		shared_ptr<int> neighborList = gridData.neighborhood;
@@ -567,11 +571,11 @@ void CellsPerProcessor3D_SerialTest_NumProcs_4()
 		gIdsPtr = gIds.get();
 		for(int id=0;id<myNumPoints;id++, gIdsPtr++){
 			int numNeigh = *nPtr; nPtr++;
-			BOOST_CHECK(26 == numNeigh);
+			TEST_ASSERT(26 == numNeigh);
 
 			for(int i=0;i<27;i++){
 				if(*gIdsPtr != i) {
-					BOOST_CHECK(i == *nPtr);
+					TEST_ASSERT(i == *nPtr);
 					nPtr++;
 				}
 			}
@@ -584,7 +588,7 @@ void CellsPerProcessor3D_SerialTest_NumProcs_4()
 		double *v = gridData.cellVolume.get();
 		double *end = v+myNumPoints;
 		for(; v != end ; v++){
-			BOOST_CHECK_CLOSE(*v,cellVolume,tolerance);
+			TEST_FLOATING_EQUALITY(*v,cellVolume,tolerance);
 		}
 
 		proc++;
@@ -593,8 +597,9 @@ void CellsPerProcessor3D_SerialTest_NumProcs_4()
 }
 
 
-void CellsPerProcessor3D_SerialTest_NumProcs_5 ()
-{
+
+TEUCHOS_UNIT_TEST( QuickGridHorizon, CellsPerProcessor3D_SerialTest_NumProcs_5Test) {
+
 	size_t numCells = 3;
 	double xStart = 1.0;
 	double xLength=1.0;
@@ -613,23 +618,23 @@ void CellsPerProcessor3D_SerialTest_NumProcs_5 ()
 	QuickGridData gridData = p0Data.second;
 	Cell3D nextCellLocator = p0Data.first;
 	// proc 0
-	BOOST_CHECK(27 == gridData.globalNumPoints);
-	BOOST_CHECK(3 == gridData.dimension);
+	TEST_ASSERT(27 == gridData.globalNumPoints);
+	TEST_ASSERT(3 == gridData.dimension);
 
 	int myNumPoints = gridData.numPoints;
-	BOOST_CHECK(5 == myNumPoints);
+	TEST_ASSERT(5 == myNumPoints);
 
 	// Assert global ids for this processor
 	shared_ptr<int> gIds = gridData.myGlobalIDs;
 	int *gIdsPtr = gIds.get();
 	int start = 0;
 	for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++)
-		BOOST_CHECK( *gIdsPtr == (int)id );
+		TEST_ASSERT( *gIdsPtr == (int)id );
 
 	// assert length of neighborlist
 	// sizeNeighborList = myNumCells + myNumCells*numNeighbors
 	int sizeNeighborList = myNumPoints + myNumPoints*(27-1);
-	BOOST_CHECK( sizeNeighborList == gridData.sizeNeighborhoodList );
+	TEST_ASSERT( sizeNeighborList == gridData.sizeNeighborhoodList );
 
 	// assert neighbor lists; in this case each point has all points
 	shared_ptr<int> neighborList = gridData.neighborhood;
@@ -639,10 +644,10 @@ void CellsPerProcessor3D_SerialTest_NumProcs_5 ()
 	// each cell in neighborhood has the entire list of cells in mesh except itself
 	for(int id=0;id<myNumPoints;id++){
 		int numNeigh = *nPtr; nPtr++;
-		BOOST_CHECK( 26 == numNeigh);
+		TEST_ASSERT( 26 == numNeigh);
 		for(int i=0;i<27;i++){
 			if(i != id){
-				BOOST_CHECK( i == *nPtr ); nPtr++;
+				TEST_ASSERT( i == *nPtr ); nPtr++;
 			}
 		}
 	}
@@ -653,7 +658,7 @@ void CellsPerProcessor3D_SerialTest_NumProcs_5 ()
 	double *v = gridData.cellVolume.get();
 	double *end = v+myNumPoints;
 	for(; v != end ; v++){
-		BOOST_CHECK_CLOSE(*v,cellVolume,tolerance);
+		TEST_FLOATING_EQUALITY(*v,cellVolume,tolerance);
 	}
 
 	// already moved to next proc
@@ -661,26 +666,26 @@ void CellsPerProcessor3D_SerialTest_NumProcs_5 ()
 	start = 5;
 	while(cellIter.hasNextProc()){
 
-		BOOST_CHECK(proc == cellIter.proc());
+		TEST_ASSERT(proc == cellIter.proc());
 		std::pair<Cell3D,QuickGridData> data = cellIter.nextProc(nextCellLocator,pdGridDataProcN);
 
 		QuickGridData gridData = data.second;
 		nextCellLocator = data.first;
 
-		BOOST_CHECK(27 == gridData.globalNumPoints);
-		BOOST_CHECK(3 == gridData.dimension);
+		TEST_ASSERT(27 == gridData.globalNumPoints);
+		TEST_ASSERT(3 == gridData.dimension);
 
 		int myNumPoints = gridData.numPoints;
 		int answerMyNumPoints=5;
 		if(proc==numProcs-1)
 			answerMyNumPoints = 7;
 
-		BOOST_CHECK(answerMyNumPoints == myNumPoints);
+		TEST_ASSERT(answerMyNumPoints == myNumPoints);
 		// assert global ids for this processor
 		shared_ptr<int> gIds = gridData.myGlobalIDs;
 		int *gIdsPtr = gIds.get();
 		for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++){
-			BOOST_CHECK( *gIdsPtr == (int)id );
+			TEST_ASSERT( *gIdsPtr == (int)id );
 		}
 
 		// there are 5 points per processor
@@ -689,7 +694,7 @@ void CellsPerProcessor3D_SerialTest_NumProcs_5 ()
 		// assert length of neighborlist
 		// sizeNeighborList = myNumCells + myNumCells*numNeighbors
 		int sizeNeighborList = myNumPoints + myNumPoints*(27-1);
-		BOOST_CHECK( sizeNeighborList == gridData.sizeNeighborhoodList );
+		TEST_ASSERT( sizeNeighborList == gridData.sizeNeighborhoodList );
 
 		// assert neighbor lists; in this case each point has all points
 		shared_ptr<int> neighborList = gridData.neighborhood;
@@ -700,11 +705,11 @@ void CellsPerProcessor3D_SerialTest_NumProcs_5 ()
 		gIdsPtr = gIds.get();
 		for(int id=0;id<myNumPoints;id++, gIdsPtr++){
 			int numNeigh = *nPtr; nPtr++;
-			BOOST_CHECK(26 == numNeigh);
+			TEST_ASSERT(26 == numNeigh);
 
 			for(int i=0;i<27;i++){
 				if(*gIdsPtr != i) {
-					BOOST_CHECK(i == *nPtr);
+					TEST_ASSERT(i == *nPtr);
 					nPtr++;
 				}
 			}
@@ -717,7 +722,7 @@ void CellsPerProcessor3D_SerialTest_NumProcs_5 ()
 		double *v = gridData.cellVolume.get();
 		double *end = v+myNumPoints;
 		for(; v != end ; v++){
-			BOOST_CHECK_CLOSE(*v,cellVolume,tolerance);
+			TEST_FLOATING_EQUALITY(*v,cellVolume,tolerance);
 		}
 
 		proc++;
@@ -725,8 +730,9 @@ void CellsPerProcessor3D_SerialTest_NumProcs_5 ()
 	}
 }
 
-void CellsPerProcessor3D_Large()
-{
+
+TEUCHOS_UNIT_TEST( QuickGridHorizon, CellsPerProcessor3D_LargeTest) {
+
 	size_t numCellsX = 10;
 	double xStart = 0.0;
 	double xLength=1.0;
@@ -760,7 +766,7 @@ void CellsPerProcessor3D_Large()
 
 	while(cellIter.hasNextProc()){
 
-		BOOST_CHECK(proc == cellIter.proc());
+		TEST_ASSERT(proc == cellIter.proc());
 		std::pair<Cell3D,QuickGridData> data = cellIter.nextProc(nextCellLocator,pdGridDataProcN);
 
 		QuickGridData gridData = data.second;
@@ -770,30 +776,7 @@ void CellsPerProcessor3D_Large()
 	}
 }
 
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success=true;
-	test_suite* proc = BOOST_TEST_SUITE( "ut_QuickGridHorizon" );
-	proc->add(BOOST_TEST_CASE( &cellNeighborhoodHorizon_11Cells ));
-	proc->add(BOOST_TEST_CASE( &cellNeighborhoodHorizon_3Cells ));
-	proc->add(BOOST_TEST_CASE( &CellsPerProcessor3D_SerialTest_NumProcs_1 ));
-	proc->add(BOOST_TEST_CASE( &CellsPerProcessor3D_SerialTest_NumProcs_3 ));
-	proc->add(BOOST_TEST_CASE( &CellsPerProcessor3D_SerialTest_NumProcs_4 ));
-	proc->add(BOOST_TEST_CASE( &CellsPerProcessor3D_SerialTest_NumProcs_5 ));
-	proc->add(BOOST_TEST_CASE( &CellsPerProcessor3D_Large ));
-	proc->add(BOOST_TEST_CASE( &CellsPerProcessor3D_smallNeighborhoodSerialTest_NumProcs_1 ));
-	framework::master_test_suite().add( proc );
 
-	return success;
-
-}
-
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
 
 int main
 (
@@ -803,6 +786,6 @@ int main
 {
 
 	// Initialize UTF
-	return unit_test_main( init_unit_test, argc, argv );
+	Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }
 

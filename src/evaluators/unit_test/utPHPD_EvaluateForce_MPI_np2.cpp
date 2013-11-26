@@ -45,9 +45,9 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_GlobalMPISession.hpp"
 #include <Phalanx_DataLayout_MDALayout.hpp>
 #include <Epetra_MpiComm.h>
 #include "PHAL_FactoryTraits.hpp"
@@ -57,9 +57,9 @@
 
 #include <mpi.h>
 
-using namespace boost::unit_test;
 
-void testInitialize()
+TEUCHOS_UNIT_TEST(PHPD_EvaluateForce_MPI_np2, TestInitializeTest) 
+
 {
   // set up a parameter list that will be passed to the evaluator constructor
   Teuchos::RCP<Teuchos::ParameterList> p = rcp(new Teuchos::ParameterList);
@@ -75,22 +75,24 @@ void testInitialize()
   EvaluateForce<PHAL::PeridigmTraits::Residual, PHAL::PeridigmTraits> evaluator(*p);
 
   // assert the evaluator name
-  BOOST_CHECK(evaluator.getName() == "EvaluateForce");
+  TEST_ASSERT(evaluator.getName() == "EvaluateForce");
 
   // assert the vector of fields that the evaluator evaluates
   const std::vector<Teuchos::RCP< PHX::FieldTag > > & evaluatedFields = evaluator.evaluatedFields();
-  BOOST_REQUIRE(evaluatedFields.size() == 1);
-  BOOST_CHECK(evaluatedFields[0]->name() == "EvaluateForce");
-  BOOST_CHECK(evaluatedFields[0]->dataLayout() == *dummy);
+  TEST_ASSERT(evaluatedFields.size() == 1);
+  TEST_ASSERT(evaluatedFields[0]->name() == "EvaluateForce");
+  TEST_ASSERT(evaluatedFields[0]->dataLayout() == *dummy);
 
   // assert the vector of fields that the evaluator is dependent upon
   const std::vector<Teuchos::RCP< PHX::FieldTag > > & dependentFields = evaluator.dependentFields();
-  BOOST_CHECK(dependentFields.size() == 1);
-  BOOST_CHECK(dependentFields[0]->name() == "UpdateForceState");
-  BOOST_CHECK(dependentFields[0]->dataLayout() == *dummy);
+  TEST_ASSERT(dependentFields.size() == 1);
+  TEST_ASSERT(dependentFields[0]->name() == "UpdateForceState");
+  TEST_ASSERT(dependentFields[0]->dataLayout() == *dummy);
 }
 
-void testTwoPts_MPI_np2()
+
+TEUCHOS_UNIT_TEST(PHPD_EvaluateForce_MPI_np2, TestTwoPts_MPI_np2Test) 
+
 {
   int rank, numProcs;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -98,6 +100,13 @@ void testTwoPts_MPI_np2()
 
   // set up a hard-coded layout for two points
   Epetra_MpiComm comm(MPI_COMM_WORLD);
+
+  TEST_COMPARE(numProcs, ==, 2);
+  if(numProcs != 2){
+    std::cerr << "Unit test runtime ERROR: utPHAL_EvaluateForce_MPI_np2 only makes sense on 2 processors" << std::endl;
+    return;
+  }
+
 
   // node map
   int numGlobalElements = 2;
@@ -187,7 +196,7 @@ void testTwoPts_MPI_np2()
   Epetra_Vector x(unknown_map);
   Epetra_Vector cell_volume(node_map);
   int numStateVariables = mat.NumConstitutiveVariables();
-  BOOST_CHECK(mat.NumConstitutiveVariables() == 2);
+  TEST_ASSERT(mat.NumConstitutiveVariables() == 2);
   Epetra_MultiVector force_state_data(node_map, numStateVariables);  
 
   // two-point discretization
@@ -301,97 +310,64 @@ void testTwoPts_MPI_np2()
 
   // assert the data in x_dot_overlap
   double node0_velocity_x_overlap = x_dot_overlap[0];
-  BOOST_CHECK_SMALL(node0_velocity_x_overlap, 1.0e-14);
+  TEST_COMPARE(node0_velocity_x_overlap, <=, 1.0e-14);
   double node0_velocity_y_overlap = x_dot_overlap[1];
-  BOOST_CHECK_SMALL(node0_velocity_y_overlap, 1.0e-14);
+  TEST_COMPARE(node0_velocity_y_overlap, <=,  1.0e-14);
   double node0_velocity_z_overlap = x_dot_overlap[2];
-  BOOST_CHECK_SMALL(node0_velocity_z_overlap, 1.0e-14);
+  TEST_COMPARE(node0_velocity_z_overlap, <=, 1.0e-14);
   double node1_velocity_x_overlap = x_dot_overlap[3];
-  BOOST_CHECK_SMALL(node1_velocity_x_overlap, 1.0e-14);
+  TEST_COMPARE(node1_velocity_x_overlap,  <=, 1.0e-14);
   double node1_velocity_y_overlap = x_dot_overlap[4];
-  BOOST_CHECK_SMALL(node1_velocity_y_overlap, 1.0e-14);
+  TEST_COMPARE(node1_velocity_y_overlap, <=, 1.0e-14);
   double node1_velocity_z_overlap = x_dot_overlap[5];
-  BOOST_CHECK_SMALL(node1_velocity_z_overlap, 1.0e-14);
+  TEST_COMPARE(node1_velocity_z_overlap, <=, 1.0e-14);
   double node0_acceleration_x_overlap = x_dot_overlap[6];
-  BOOST_CHECK_CLOSE(node0_acceleration_x_overlap, 1.5e8, 1.0e-14);
+  TEST_FLOATING_EQUALITY(node0_acceleration_x_overlap, 1.5e8, 1.0e-14);
   double node0_acceleration_y_overlap = x_dot_overlap[7];
-  BOOST_CHECK_SMALL(node0_acceleration_y_overlap, 1.0e-14);
+  TEST_COMPARE(node0_acceleration_y_overlap, 1.0e-14);
   double node0_acceleration_z_overlap = x_dot_overlap[8];
-  BOOST_CHECK_SMALL(node0_acceleration_z_overlap, 1.0e-14);
+  TEST_COMPARE(node0_acceleration_z_overlap, <=, 1.0e-14);
   double node1_acceleration_x_overlap = x_dot_overlap[9];
-  BOOST_CHECK_CLOSE(node1_acceleration_x_overlap, -1.5e8, 1.0e-14);
+  TEST_FLOATING_EQUALITY(node1_acceleration_x_overlap, -1.5e8, 1.0e-14);
   double node1_acceleration_y_overlap = x_dot_overlap[10];
-  BOOST_CHECK_SMALL(node1_acceleration_y_overlap, 1.0e-14);
+  TEST_COMPARE(node1_acceleration_y_overlap, 1.0e-14);
   double node1_acceleration_z_overlap = x_dot_overlap[11];
-  BOOST_CHECK_SMALL(node1_acceleration_z_overlap, 1.0e-14);
+  TEST_COMPARE(node1_acceleration_z_overlap, 1.0e-14);
 
   if(rank == 0){
 	double node0_velocity_x = x_dot[0];
-	BOOST_CHECK_SMALL(node0_velocity_x, 1.0e-14);
+	TEST_COMPARE(node0_velocity_x, <=, 1.0e-14);
 	double node0_velocity_y = x_dot[1];
-	BOOST_CHECK_SMALL(node0_velocity_y, 1.0e-14);
+	TEST_COMPARE(node0_velocity_y, <= , 1.0e-14);
 	double node0_velocity_z = x_dot[2];
-	BOOST_CHECK_SMALL(node0_velocity_z, 1.0e-14);
+	TEST_COMPARE(node0_velocity_z, <=, 1.0e-14);
 	double node0_acceleration_x = x_dot[3];
-	BOOST_CHECK_CLOSE(node0_acceleration_x, 3.0e8, 1.0e-14);
+	TEST_FLOATING_EQUALITY(node0_acceleration_x, 3.0e8, 1.0e-14);
 	double node0_acceleration_y = x_dot[4];
-	BOOST_CHECK_SMALL(node0_acceleration_y, 1.0e-14);
+	TEST_COMPARE(node0_acceleration_y, <=, 1.0e-14);
 	double node0_acceleration_z = x_dot[5];
-	BOOST_CHECK_SMALL(node0_acceleration_z, 1.0e-14);
+	TEST_COMPARE(node0_acceleration_z, <=, 1.0e-14);
   }
   else if(rank == 1){
 	double node1_velocity_x = x_dot[0];
-	BOOST_CHECK_SMALL(node1_velocity_x, 1.0e-14);
+	TEST_COMPARE(node1_velocity_x, <=, 1.0e-14);
 	double node1_velocity_y = x_dot[1];
-	BOOST_CHECK_SMALL(node1_velocity_y, 1.0e-14);
+	TEST_COMPARE(node1_velocity_y, <=, 1.0e-14);
 	double node1_velocity_z = x_dot[2];
-	BOOST_CHECK_SMALL(node1_velocity_z, 1.0e-14);
+	TEST_COMPARE(node1_velocity_z, 1.0e-14);
 	double node1_acceleration_x = x_dot[3];
-	BOOST_CHECK_CLOSE(node1_acceleration_x, -3.0e8, 1.0e-14);
+	TEST_FLOATING_EQUALITY(node1_acceleration_x, -3.0e8, 1.0e-14);
 	double node1_acceleration_y = x_dot[4];
-	BOOST_CHECK_SMALL(node1_acceleration_y, 1.0e-14);
+        TEST_COMPARE(node1_acceleration_y, <=, 1.0e-14);
 	double node1_acceleration_z = x_dot[5];
-	BOOST_CHECK_SMALL(node1_acceleration_z, 1.0e-14);
+	TEST_COMPARE(node1_acceleration_z, <=,1.0e-14);
   }
 }
 
-bool init_unit_test_suite()
-{
-  // Add a suite for each processor in the test
-  bool success = true;
-
-  test_suite* proc = BOOST_TEST_SUITE("utPHAL_EvaluateForce");
-  proc->add(BOOST_TEST_CASE(&testInitialize));
-  proc->add(BOOST_TEST_CASE(&testTwoPts_MPI_np2));
-  framework::master_test_suite().add(proc);
-
-  return success;
-}
-
-bool init_unit_test()
-{
-  init_unit_test_suite();
-  return true;
-}
 
 int main
 (int argc, char* argv[])
 {
-  MPI_Init(&argc,&argv);
-  int numProcs;
-  MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
-
-  int return_code = -1;
-
-  if(numProcs == 2){
-	return_code = unit_test_main(init_unit_test, argc, argv);
-  }
-  else{
-	std::cerr << "Unit test runtime ERROR: utPHAL_EvaluateForce_MPI_np2 only makes sense on 2 processors" << std::endl;
-	std::cerr << "Re-run unit test $mpiexec -np 2 ./utPHAL_EvaluateForce_MPI_np2" << std::endl;
-  }
-
-  MPI_Finalize();
-
-  return return_code;
+  Teuchos::GlobalMPISession mpiSession(&argc, &argv);
+  return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }

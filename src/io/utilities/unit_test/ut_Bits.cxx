@@ -43,22 +43,19 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
 #include <math.h>
 #include <iostream>
 
 using std::cout;
 using std::endl;
 
-using namespace boost::unit_test;
 
 
 
+TEUCHOS_UNIT_TEST( Bits, Bit_idsTest) {
 
-void bit_ids(){
 	enum Relation {
 				POINT=0,
 				BOND,
@@ -108,23 +105,7 @@ void bit_ids(){
 
 }
 
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success=true;
 
-	test_suite* proc = BOOST_TEST_SUITE( "ut_Bits" );
-	proc->add(BOOST_TEST_CASE( &bit_ids ));
-	framework::master_test_suite().add( proc );
-	return success;
-
-}
-
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
 
 int main
 (
@@ -134,5 +115,5 @@ int main
 {
 
 	// Initialize UTF
-	return unit_test_main( init_unit_test, argc, argv );
+	return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }

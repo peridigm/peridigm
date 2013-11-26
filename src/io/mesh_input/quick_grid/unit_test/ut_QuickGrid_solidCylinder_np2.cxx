@@ -43,10 +43,9 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
 #include "../QuickGrid.h"
 #include "../QuickGridData.h"
 #include "Field.h"
@@ -58,7 +57,6 @@
 
 
 using std::tr1::shared_ptr;
-using namespace boost::unit_test;
 using std::tr1::shared_ptr;
 
 using namespace Pdut;
@@ -81,33 +79,17 @@ QUICKGRID::TensorProductSolidCylinder getMeshGenerator(){
 	return meshGen;
 }
 
-void runTest() {
+
+TEUCHOS_UNIT_TEST( QuickGrid_solidCylinder_np2, RunTest) {
+
 	QUICKGRID::TensorProductSolidCylinder meshGen = getMeshGenerator();
-	BOOST_CHECK(57==meshGen.getNumGlobalCells());
+	TEST_ASSERT(57==meshGen.getNumGlobalCells());
 	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, meshGen);
 	decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
-	BOOST_CHECK(57==decomp.globalNumPoints);
-}
-
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success=true;
-
-	test_suite* proc = BOOST_TEST_SUITE( "ut_QuickGrid_solidCylinder_np2" );
-	proc->add(BOOST_TEST_CASE( &runTest ));
-	framework::master_test_suite().add( proc );
-	return success;
-
+	TEST_ASSERT(57==decomp.globalNumPoints);
 }
 
 
-
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
 
 int main
 (
@@ -133,5 +115,5 @@ int main
 	}
 
 	// Initialize UTF
-	return unit_test_main( init_unit_test, argc, argv );
+	return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }

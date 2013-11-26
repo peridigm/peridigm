@@ -43,10 +43,9 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
 
 #include "../QuickGrid.h"
 #include "Vector3D.h"
@@ -57,12 +56,26 @@
 using namespace QUICKGRID;
 using UTILITIES::Vector3D;
 using std::tr1::shared_ptr;
-using namespace boost::unit_test;
 using std::size_t;
 
-size_t numNeighbors(size_t kZ);
-void ringHorizon()
-{
+
+/*
+ * For the Q2 cylinder, and mesh discretization used in this file, this
+ * function returns the number of neighbors for a point in slab kZ along the axis.
+ */
+size_t numNeighbors(size_t kZ){
+	
+	if(kZ<3)
+		return (size_t)(83+kZ*21);
+	else if(kZ>=3 && kZ <=55)
+		return  (size_t)(83+3*21);
+	else
+		return  (size_t)(83+(59-kZ)*21);
+}
+
+
+TEUCHOS_UNIT_TEST( Q2CylinderRingHorizon, RingHorizonTest) {
+
 
 	/*
 	 * Construct ring spec
@@ -108,227 +121,227 @@ void ringHorizon()
 	{
 		int cell=80;
 		RingHorizon::RingHorizonIterator hIter = ringHorizon.horizonIterator(cell);
-		BOOST_CHECK(7 == hIter.numCells());
-		BOOST_CHECK(hIter.hasNextCell());
+		TEST_ASSERT(7 == hIter.numCells());
+		TEST_ASSERT(hIter.hasNextCell());
 		// loop over cells in horizon
-		BOOST_CHECK(77 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(78 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(79 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(80 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(81 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(82 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(83 == hIter.nextCell());
-		BOOST_CHECK(!hIter.hasNextCell());
+		TEST_ASSERT(77 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(78 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(79 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(80 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(81 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(82 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(83 == hIter.nextCell());
+		TEST_ASSERT(!hIter.hasNextCell());
 	}
 
 	{
 		int cell=81;
 		RingHorizon::RingHorizonIterator hIter = ringHorizon.horizonIterator(cell);
-		BOOST_CHECK(7 == hIter.numCells());
-		BOOST_CHECK(hIter.hasNextCell());
+		TEST_ASSERT(7 == hIter.numCells());
+		TEST_ASSERT(hIter.hasNextCell());
 		// loop over cells in horizon
-		BOOST_CHECK(78 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(79 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(80 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(81 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(82 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(83 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(84 == hIter.nextCell());
-		BOOST_CHECK(!hIter.hasNextCell());
+		TEST_ASSERT(78 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(79 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(80 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(81 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(82 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(83 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(84 == hIter.nextCell());
+		TEST_ASSERT(!hIter.hasNextCell());
 	}
 
 	{
 		int cell=82;
 		RingHorizon::RingHorizonIterator hIter = ringHorizon.horizonIterator(cell);
-		BOOST_CHECK(7 == hIter.numCells());
-		BOOST_CHECK(hIter.hasNextCell());
+		TEST_ASSERT(7 == hIter.numCells());
+		TEST_ASSERT(hIter.hasNextCell());
 		// loop over cells in horizon
-		BOOST_CHECK(79 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(80 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(81 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(82 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(83 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(84 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(0 == hIter.nextCell());
-		BOOST_CHECK(!hIter.hasNextCell());
+		TEST_ASSERT(79 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(80 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(81 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(82 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(83 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(84 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(0 == hIter.nextCell());
+		TEST_ASSERT(!hIter.hasNextCell());
 	}
 
 	{
 		int cell=83;
 		RingHorizon::RingHorizonIterator hIter = ringHorizon.horizonIterator(cell);
-		BOOST_CHECK(7 == hIter.numCells());
-		BOOST_CHECK(hIter.hasNextCell());
+		TEST_ASSERT(7 == hIter.numCells());
+		TEST_ASSERT(hIter.hasNextCell());
 		// loop over cells in horizon
-		BOOST_CHECK(80 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(81 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(82 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(83 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(84 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(0 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(1 == hIter.nextCell());
-		BOOST_CHECK(!hIter.hasNextCell());
+		TEST_ASSERT(80 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(81 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(82 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(83 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(84 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(0 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(1 == hIter.nextCell());
+		TEST_ASSERT(!hIter.hasNextCell());
 	}
 
 	{
 		int cell=84;
 		RingHorizon::RingHorizonIterator hIter = ringHorizon.horizonIterator(cell);
-		BOOST_CHECK(7 == hIter.numCells());
-		BOOST_CHECK(hIter.hasNextCell());
+		TEST_ASSERT(7 == hIter.numCells());
+		TEST_ASSERT(hIter.hasNextCell());
 		// loop over cells in horizon
-		BOOST_CHECK(81 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(82 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(83 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(84 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(0 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(1 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(2 == hIter.nextCell());
-		BOOST_CHECK(!hIter.hasNextCell());
+		TEST_ASSERT(81 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(82 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(83 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(84 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(0 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(1 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(2 == hIter.nextCell());
+		TEST_ASSERT(!hIter.hasNextCell());
 	}
 
 	{
 		int cell=0;
 		RingHorizon::RingHorizonIterator hIter = ringHorizon.horizonIterator(cell);
-		BOOST_CHECK(7 == hIter.numCells());
-		BOOST_CHECK(hIter.hasNextCell());
+		TEST_ASSERT(7 == hIter.numCells());
+		TEST_ASSERT(hIter.hasNextCell());
 		// loop over cells in horizon
-		BOOST_CHECK(82 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(83 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(84 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(0 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(1 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(2 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(3 == hIter.nextCell());
-		BOOST_CHECK(!hIter.hasNextCell());
+		TEST_ASSERT(82 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(83 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(84 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(0 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(1 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(2 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(3 == hIter.nextCell());
+		TEST_ASSERT(!hIter.hasNextCell());
 	}
 	{
 		int cell=1;
 		RingHorizon::RingHorizonIterator hIter = ringHorizon.horizonIterator(cell);
-		BOOST_CHECK(7 == hIter.numCells());
-		BOOST_CHECK(hIter.hasNextCell());
+		TEST_ASSERT(7 == hIter.numCells());
+		TEST_ASSERT(hIter.hasNextCell());
 		// loop over cells in horizon
-		BOOST_CHECK(83 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(84 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(0 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(1 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(2 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(3 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(4 == hIter.nextCell());
-		BOOST_CHECK(!hIter.hasNextCell());
+		TEST_ASSERT(83 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(84 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(0 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(1 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(2 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(3 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(4 == hIter.nextCell());
+		TEST_ASSERT(!hIter.hasNextCell());
 	}
 
 	{
 		int cell=2;
 		RingHorizon::RingHorizonIterator hIter = ringHorizon.horizonIterator(cell);
-		BOOST_CHECK(7 == hIter.numCells());
-		BOOST_CHECK(hIter.hasNextCell());
+		TEST_ASSERT(7 == hIter.numCells());
+		TEST_ASSERT(hIter.hasNextCell());
 		// loop over cells in horizon
-		BOOST_CHECK(84 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(0 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(1 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(2 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(3 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(4 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(5 == hIter.nextCell());
-		BOOST_CHECK(!hIter.hasNextCell());
+		TEST_ASSERT(84 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(0 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(1 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(2 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(3 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(4 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(5 == hIter.nextCell());
+		TEST_ASSERT(!hIter.hasNextCell());
 	}
 
 	{
 		int cell=3;
 		RingHorizon::RingHorizonIterator hIter = ringHorizon.horizonIterator(cell);
-		BOOST_CHECK(7 == hIter.numCells());
-		BOOST_CHECK(hIter.hasNextCell());
+		TEST_ASSERT(7 == hIter.numCells());
+		TEST_ASSERT(hIter.hasNextCell());
 		// loop over cells in horizon
-		BOOST_CHECK(0 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(1 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(2 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(3 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(4 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(5 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(6 == hIter.nextCell());
-		BOOST_CHECK(!hIter.hasNextCell());
+		TEST_ASSERT(0 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(1 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(2 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(3 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(4 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(5 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(6 == hIter.nextCell());
+		TEST_ASSERT(!hIter.hasNextCell());
 	}
 
 	{
 		int cell=4;
 		RingHorizon::RingHorizonIterator hIter = ringHorizon.horizonIterator(cell);
-		BOOST_CHECK(7 == hIter.numCells());
-		BOOST_CHECK(hIter.hasNextCell());
+		TEST_ASSERT(7 == hIter.numCells());
+		TEST_ASSERT(hIter.hasNextCell());
 		// loop over cells in horizon
-		BOOST_CHECK(1 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(2 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(3 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(4 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(5 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(6 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(7 == hIter.nextCell());
-		BOOST_CHECK(!hIter.hasNextCell());
+		TEST_ASSERT(1 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(2 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(3 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(4 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(5 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(6 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(7 == hIter.nextCell());
+		TEST_ASSERT(!hIter.hasNextCell());
 	}
 
 
 }
 
-void Q2CylinderNeighborhoodSizes()
-{
+
+TEUCHOS_UNIT_TEST( Q2CylinderRingHorizon, NeighborhoodSizesTest) {
 
 	/*
 	 * Construct ring spec
@@ -371,9 +384,9 @@ void Q2CylinderNeighborhoodSizes()
 	 * Testing
 	 */
 	{
-		BOOST_CHECK(15300==cellPerProcIter.getNumGlobalCells());
-		BOOST_CHECK(85==numRays);
-		BOOST_CHECK(60==numCellsAxis);
+		TEST_ASSERT(15300==cellPerProcIter.getNumGlobalCells());
+		TEST_ASSERT(85==numRays);
+		TEST_ASSERT(60==numCellsAxis);
 		size_t i=0,j=0,k=0;
 		size_t proc=0;
 		Cell3D cellLocator(i,j,k);
@@ -390,7 +403,7 @@ void Q2CylinderNeighborhoodSizes()
 		 *
 		 * sum all of the above, then add numPoints for storing length of list at each point
 		 */
-		BOOST_CHECK((255*8508+15300)==cellPerProcIter.getSizeNeighborList(proc,cellLocator));
+		TEST_ASSERT((255*8508+15300)==cellPerProcIter.getSizeNeighborList(proc,cellLocator));
 	}
 	/*
 	 * On one processor, its possible to calculate the length of the neighborhood list by hand
@@ -407,8 +420,9 @@ void Q2CylinderNeighborhoodSizes()
 		for(size_t j=0;j<numRays;j++){
 			for(size_t i=0;i<numRings;i++){
 				Cell3D cellLocator(i,j,k);
-				BOOST_CHECK(83==cellPerProcIter.computeNumNeighbors(i,j,k));
-				BOOST_CHECK(numNeighbors(k)==cellPerProcIter.computeNumNeighbors(i,j,k));
+				TEST_ASSERT(83==cellPerProcIter.computeNumNeighbors(i,j,k));
+                                TEST_ASSERT(k<60);
+				TEST_ASSERT(numNeighbors(k)==cellPerProcIter.computeNumNeighbors(i,j,k));
 			}
 		}
 	}
@@ -421,8 +435,9 @@ void Q2CylinderNeighborhoodSizes()
 		for(size_t j=0;j<numRays;j++){
 			for(size_t i=0;i<numRings;i++){
 				Cell3D cellLocator(i,j,k);
-				BOOST_CHECK((83+21)==cellPerProcIter.computeNumNeighbors(i,j,k));
-				BOOST_CHECK(numNeighbors(k)==cellPerProcIter.computeNumNeighbors(i,j,k));
+				TEST_ASSERT((83+21)==cellPerProcIter.computeNumNeighbors(i,j,k));
+                                TEST_ASSERT(k<60);
+				TEST_ASSERT(numNeighbors(k)==cellPerProcIter.computeNumNeighbors(i,j,k));
 			}
 		}
 	}
@@ -435,8 +450,9 @@ void Q2CylinderNeighborhoodSizes()
 		for(size_t j=0;j<numRays;j++){
 			for(size_t i=0;i<numRings;i++){
 				Cell3D cellLocator(i,j,k);
-				BOOST_CHECK((83+21+21)==cellPerProcIter.computeNumNeighbors(i,j,k));
-				BOOST_CHECK(numNeighbors(k)==cellPerProcIter.computeNumNeighbors(i,j,k));
+				TEST_ASSERT((83+21+21)==cellPerProcIter.computeNumNeighbors(i,j,k));
+                                TEST_ASSERT(k<60);
+				TEST_ASSERT(numNeighbors(k)==cellPerProcIter.computeNumNeighbors(i,j,k));
 			}
 		}
 	}
@@ -449,8 +465,9 @@ void Q2CylinderNeighborhoodSizes()
 		for(size_t j=0;j<numRays;j++){
 			for(size_t i=0;i<numRings;i++){
 				Cell3D cellLocator(i,j,k);
-				BOOST_CHECK((83+21+21+21)==cellPerProcIter.computeNumNeighbors(i,j,k));
-				BOOST_CHECK(numNeighbors(k)==cellPerProcIter.computeNumNeighbors(i,j,k));
+				TEST_ASSERT((83+21+21+21)==cellPerProcIter.computeNumNeighbors(i,j,k));
+                                TEST_ASSERT(k<60);
+				TEST_ASSERT(numNeighbors(k)==cellPerProcIter.computeNumNeighbors(i,j,k));
 			}
 		}
 	}
@@ -463,8 +480,9 @@ void Q2CylinderNeighborhoodSizes()
 		for(size_t j=0;j<numRays;j++){
 			for(size_t i=0;i<numRings;i++){
 				Cell3D cellLocator(i,j,k);
-				BOOST_CHECK((83+21+21+21)==cellPerProcIter.computeNumNeighbors(i,j,k));
-				BOOST_CHECK(numNeighbors(k)==cellPerProcIter.computeNumNeighbors(i,j,k));
+				TEST_ASSERT((83+21+21+21)==cellPerProcIter.computeNumNeighbors(i,j,k));
+                                TEST_ASSERT(k<60);
+				TEST_ASSERT(numNeighbors(k)==cellPerProcIter.computeNumNeighbors(i,j,k));
 			}
 		}
 	}
@@ -477,8 +495,9 @@ void Q2CylinderNeighborhoodSizes()
 			for(size_t j=0;j<numRays;j++){
 				for(size_t i=0;i<numRings;i++){
 					Cell3D cellLocator(i,j,k);
-					BOOST_CHECK((83+(59-k)*21)==cellPerProcIter.computeNumNeighbors(i,j,k));
-					BOOST_CHECK(numNeighbors(k)==cellPerProcIter.computeNumNeighbors(i,j,k));
+					TEST_ASSERT((83+(59-k)*21)==cellPerProcIter.computeNumNeighbors(i,j,k));
+                                        TEST_ASSERT(k<60);
+					TEST_ASSERT(numNeighbors(k)==cellPerProcIter.computeNumNeighbors(i,j,k));
 				}
 			}
 		}
@@ -486,8 +505,9 @@ void Q2CylinderNeighborhoodSizes()
 
 }
 
-void Q2CylinderNeighborhoods()
-{
+
+TEUCHOS_UNIT_TEST( Q2CylinderRingHorizon, NeighborhoodsTest) {
+
 
 	/*
 	 * Construct ring spec
@@ -545,14 +565,14 @@ void Q2CylinderNeighborhoods()
 		gridData = p0Data.second;
 //		Cell3D nextCellLocator = p0Data.first;
 
-		BOOST_CHECK(3==gridData.dimension);
-		BOOST_CHECK(15300==gridData.globalNumPoints);
-		BOOST_CHECK(15300==gridData.numPoints);
-		BOOST_CHECK((255*8508+15300)==gridData.sizeNeighborhoodList);
-		BOOST_CHECK(0==gridData.numExport);
+		TEST_ASSERT(3==gridData.dimension);
+		TEST_ASSERT(15300==gridData.globalNumPoints);
+		TEST_ASSERT(15300==gridData.numPoints);
+		TEST_ASSERT((255*8508+15300)==gridData.sizeNeighborhoodList);
+		TEST_ASSERT(0==gridData.numExport);
 		int *gIds = gridData.myGlobalIDs.get();
 		for(size_t p=0;p<gridData.numPoints;p++,gIds++)
-			BOOST_CHECK((int)p==*gIds);
+			TEST_ASSERT((int)p==*gIds);
 
 
 		/*
@@ -581,63 +601,30 @@ void Q2CylinderNeighborhoods()
 					double y = ranR*sin(ranTheta);
 					double z = ranZ;
 					int gId =  ranRid + ranThetaid * nx + ranZid * nx * ny;
-					BOOST_CHECK(x==X[3*gId]);
-					BOOST_CHECK(y==X[3*gId+1]);
-					BOOST_CHECK(z==X[3*gId+2]);
+					TEST_ASSERT(x==X[3*gId]);
+					TEST_ASSERT(y==X[3*gId+1]);
+					TEST_ASSERT(z==X[3*gId+2]);
 					int ptr = neighborhoodPtr[gId];
-					BOOST_CHECK((int)numNeighbors(ranZid)==neighborhood[ptr]);
+                                        TEST_ASSERT( ranZid < 60);
+					TEST_ASSERT((int)numNeighbors(ranZid)==neighborhood[ptr]);
 
 					/*
 					 * Volume
 					 */
 					double v = ranR*dr*cellRads*dz;
-					BOOST_CHECK(v==vol[gId]);
+					TEST_ASSERT(v==vol[gId]);
 					sumCellVol+= vol[gId];
 				}
 			}
 		}
 		const double tolerance = 1.0e-10;
-		BOOST_CHECK_CLOSE(sumCellVol,cylinderVolume,tolerance);
+		TEST_FLOATING_EQUALITY(sumCellVol,cylinderVolume,tolerance);
 	//	std::cout << "cylinderVolume = " << cylinderVolume << "; sumCellVol = " << sumCellVol << std::endl;
 	}
 
 }
 
 
-/*
- * For the Q2 cylinder, and mesh discretization used in this file, this
- * function returns the number of neighbors for a point in slab kZ along the axis.
- */
-size_t numNeighbors(size_t kZ){
-	BOOST_CHECK(kZ<60);
-	if(kZ<3)
-		return (size_t)(83+kZ*21);
-	else if(kZ>=3 && kZ <=55)
-		return  (size_t)(83+3*21);
-	else
-		return  (size_t)(83+(59-kZ)*21);
-}
-
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success=true;
-
-	test_suite* proc = BOOST_TEST_SUITE( "ut_Q2CylinderRingHorizon" );
-	proc->add(BOOST_TEST_CASE( &ringHorizon ));
-	proc->add(BOOST_TEST_CASE( &Q2CylinderNeighborhoodSizes ));
-	proc->add(BOOST_TEST_CASE( &Q2CylinderNeighborhoods ));
-	framework::master_test_suite().add( proc );
-
-	return success;
-
-}
-
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
 
 int main
 (
@@ -647,6 +634,6 @@ int main
 {
 
 	// Initialize UTF
-	return unit_test_main( init_unit_test, argc, argv );
+	return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }
 

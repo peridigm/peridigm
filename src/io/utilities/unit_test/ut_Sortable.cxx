@@ -43,10 +43,9 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+
 #include <math.h>
 #include "Sortable.h"
 
@@ -54,14 +53,13 @@ using UTILITIES::Array;
 using UTILITIES::Sortable;
 using UTILITIES::CartesianComponent;
 using std::tr1::shared_ptr;
-using namespace boost::unit_test;
+
 
 const int NUMBER_OF_POINTS_SORTED = 10000;
 const int N = NUMBER_OF_POINTS_SORTED;
 
 
-
-void sortPoints(){
+TEUCHOS_UNIT_TEST(Array, SortPointsTest) {
 	/*
 	 * Random coordinates between 0 and PI
 	 */
@@ -115,32 +113,14 @@ void sortPoints(){
 			for(;ids!=end;ids++){
 				double x1 = X[3*(*ids)+c];
 				double x2 = X[3*(*(ids+1))+c];
-				BOOST_CHECK(x1<=x2);
+				TEST_ASSERT(x1<=x2);
 			}
 		}
 
 	}
 
-
 }
 
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success=true;
-
-	test_suite* proc = BOOST_TEST_SUITE( "ut_Sortable" );
-	proc->add(BOOST_TEST_CASE( &sortPoints ));
-	framework::master_test_suite().add( proc );
-	return success;
-
-}
-
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
 
 int main
 (
@@ -150,5 +130,5 @@ int main
 {
 
 	// Initialize UTF
-	return unit_test_main( init_unit_test, argc, argv );
+	return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }

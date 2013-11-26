@@ -51,9 +51,9 @@
 #include <Peridigm_DiscretizationFactory.hpp>
 
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_GlobalMPISession.hpp"
 #include <Epetra_ConfigDefs.h> // used to define HAVE_MPI
 #include <Epetra_Import.h>
 #include <Teuchos_ParameterList.hpp>
@@ -65,18 +65,11 @@
 #include <vector>
 #include "../../core/Peridigm.hpp"
 
-using namespace boost::unit_test;
 using namespace Teuchos;
 
 
-Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel() {
-  Teuchos::RCP<Epetra_Comm> comm;
-#ifdef HAVE_MPI
-  comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
-#else
-  comm = Teuchos::rcp(new Epetra_SerialComm);
-#endif
-
+Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel(Teuchos::RCP<Epetra_Comm> comm) {
+  
   // set up parameter lists
   // these data would normally be read from an input xml file
   Teuchos::RCP<Teuchos::ParameterList> peridigmParams = rcp(new Teuchos::ParameterList());
@@ -125,9 +118,26 @@ Teuchos::RCP<PeridigmNS::Peridigm> createFourPointModel() {
   return peridigm;
 }
 
-void FourPointTest() 
+
+TEUCHOS_UNIT_TEST(Compute_Energy, FourPointTest) 
 {
-  Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createFourPointModel();
+
+  Teuchos::RCP<Epetra_Comm> comm;
+  #ifdef HAVE_MPI
+     comm = Teuchos::rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
+  #else
+     comm = Teuchos::rcp(new Epetra_SerialComm);
+  #endif
+
+  int numProcs = comm->NumProc();
+
+  TEST_COMPARE(numProcs, <=, 4);
+  if(numProcs > 4){
+    std::cerr << "Unit test runtime ERROR: utPeridigm_Compute_Energy only makes sense on 1 to 4 processors." << std::endl;
+    return;
+  }
+
+  Teuchos::RCP<PeridigmNS::Peridigm> peridigm = createFourPointModel(comm);
 
   // Get the neighborhood data
   PeridigmNS::NeighborhoodData neighborhoodData = (*peridigm->getGlobalNeighborhoodData());
@@ -173,7 +183,7 @@ void FourPointTest()
 
   // Call the compute class
   int retval = computeEnergy->compute( blocks );
-  BOOST_CHECK_EQUAL( retval, 0 );
+  TEST_EQUALITY_CONST( retval, 0 );
 
   // \todo Generalize this for multiple materials
   double density = peridigm->getBlocks()->begin()->getMaterialModel()->Density();
@@ -184,53 +194,20 @@ void FourPointTest()
   double *strain_energy_values  = strain_energy->Values();
   double *strain_energy_density_values  = strain_energy_density->Values();
   for (int i=0;i<numElements;i++)
-    BOOST_CHECK_CLOSE(volume_values[i], 1.5, 1.0e-15);
+    TEST_FLOATING_EQUALITY(volume_values[i], 1.5, 1.0e-15);
   for (int i=0;i<numElements;i++) {
     int ID = myGIDs[i];
     double mass = density*volume_values[ID];
-    BOOST_CHECK_CLOSE(kinetic_energy_values[i],  0.5*mass*(pow((3.0*ID),2)+pow(((3.0*ID)+1.0),2)+pow(((3.0*ID)+2.0),2)), 1.0e-15);
-    BOOST_CHECK_CLOSE(strain_energy_values[i],   8.559e12, 0.01);
-    BOOST_CHECK_CLOSE(strain_energy_density_values[i], 5.706e12, 0.01);
+    TEST_FLOATING_EQUALITY(kinetic_energy_values[i],  0.5*mass*(pow((3.0*ID),2)+pow(((3.0*ID)+1.0),2)+pow(((3.0*ID)+2.0),2)), 1.0e-15);
+    TEST_FLOATING_EQUALITY(strain_energy_values[i],   8.559e12, 0.01);
+    TEST_FLOATING_EQUALITY(strain_energy_density_values[i], 5.706e12, 0.01);
   }
 }
 
-bool init_unit_test_suite() 
-{
-  // Add a suite for each processor in the test
-  bool success = true;
 
-  test_suite* proc = BOOST_TEST_SUITE("utPeridigm_Compute_Energy");
-  proc->add(BOOST_TEST_CASE(&FourPointTest));
-  framework::master_test_suite().add(proc);
-
-  return success;
-}
-
-bool init_unit_test() 
-{
-  return init_unit_test_suite();
-}
 
 int main (int argc, char* argv[]) 
 {
-  int numProcs = 1;
-#ifdef HAVE_MPI
-  MPI_Init(&argc,&argv);
-  MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
-#endif
-  
-  int returnCode = -1;
-  
-  if(numProcs >= 1 && numProcs <= 4) {
-    returnCode = unit_test_main(init_unit_test, argc, argv);
-  }
-  else {
-    std::cerr << "Unit test runtime ERROR: utPeridigm_Compute_Energy only makes sense on 1 to 4 processors." << std::endl;
-  }
-  
-#ifdef HAVE_MPI
-  MPI_Finalize();
-#endif
-  
-  return returnCode;
+  Teuchos::GlobalMPISession mpiSession(&argc, &argv);
+  return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }

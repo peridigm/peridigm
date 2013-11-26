@@ -43,10 +43,9 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
+#include "Teuchos_UnitTestRepository.hpp"
 #include "Vector3D.h"
 #include "Array.h"
 #include "../QuickGrid.h"
@@ -55,13 +54,11 @@
 
 
 using std::tr1::shared_ptr;
-using namespace boost::unit_test;
 using namespace Pdut;
 using std::cout;
 
+TEUCHOS_UNIT_TEST( SmallMeshCylinder, cylindericalCellPerProcIterator1ProcTest) {
 
-void cylindericalCellPerProcIterator1Proc()
-{
 
 	/*
 	 * Construct ring spec
@@ -85,13 +82,13 @@ void cylindericalCellPerProcIterator1Proc()
 	double cylinderLength = 2.0*cellSize;
 	size_t numCellsAxis = 2;
 	QUICKGRID::Spec1D axisSpec(numCellsAxis,0.0,cylinderLength);
-	BOOST_CHECK(2==axisSpec.getNumCells());
+	TEST_ASSERT(2==axisSpec.getNumCells());
 
 	// This is a hack to get the correct number of cells in a ring
 	double SCALE=1.51;
 	double horizon = SCALE*cellSize;
 	QUICKGRID::RingHorizon ringHorizon = thetaSpec.getRingCellHorizon(horizon,(innerRadius+outerRadius)/2.0);
-	BOOST_CHECK(16 == ring2dSpec.getNumCells());
+	TEST_ASSERT(16 == ring2dSpec.getNumCells());
 	/*
 	 * Testing
 	 */
@@ -101,19 +98,19 @@ void cylindericalCellPerProcIterator1Proc()
 	{
 		int cell=0;
 		QUICKGRID::RingHorizon::RingHorizonIterator hIter = ringHorizon.horizonIterator(cell);
-		BOOST_CHECK(5 == hIter.numCells());
-		BOOST_CHECK(hIter.hasNextCell());
+		TEST_ASSERT(5 == hIter.numCells());
+		TEST_ASSERT(hIter.hasNextCell());
 		// loop over cells in horizon
-		BOOST_CHECK(6 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(7 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(0 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(1 == hIter.nextCell());
-		BOOST_CHECK(hIter.hasNextCell());
-		BOOST_CHECK(2 == hIter.nextCell());
-		BOOST_CHECK(!hIter.hasNextCell());
+		TEST_ASSERT(6 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(7 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(0 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(1 == hIter.nextCell());
+		TEST_ASSERT(hIter.hasNextCell());
+		TEST_ASSERT(2 == hIter.nextCell());
+		TEST_ASSERT(!hIter.hasNextCell());
 	}
 
 	UTILITIES::Array<double> rPtr = getDiscretization(ring2dSpec.getRaySpec());
@@ -142,14 +139,14 @@ void cylindericalCellPerProcIterator1Proc()
 		gridData = p0Data.second;
 //		QUICKGRID::Cell3D nextCellLocator = p0Data.first;
 
-		BOOST_CHECK(3==gridData.dimension);
-		BOOST_CHECK(32==gridData.globalNumPoints);
-		BOOST_CHECK(32==gridData.numPoints);
-		BOOST_CHECK((19*32+32)==gridData.sizeNeighborhoodList);
-		BOOST_CHECK(0==gridData.numExport);
+		TEST_ASSERT(3==gridData.dimension);
+		TEST_ASSERT(32==gridData.globalNumPoints);
+		TEST_ASSERT(32==gridData.numPoints);
+		TEST_ASSERT((19*32+32)==gridData.sizeNeighborhoodList);
+		TEST_ASSERT(0==gridData.numExport);
 		int *gIds = gridData.myGlobalIDs.get();
 		for(size_t p=0;p<gridData.numPoints;p++,gIds++)
-			BOOST_CHECK((int)p==*gIds);
+			TEST_ASSERT((int)p==*gIds);
 
 		int neighborAnswers[] = {
 				12,13,14,15,1,2,3,4,5,28,29,30,31,16,17,18,19,20,21,
@@ -208,18 +205,18 @@ void cylindericalCellPerProcIterator1Proc()
 					double z = ranZ;
 					int gId =  i + j * nx + k * nx * ny;
                     const double tolerance = 1.0e-13;
-					BOOST_CHECK_CLOSE(x, X[3*gId], tolerance);
-					BOOST_CHECK_CLOSE(y, X[3*gId+1], tolerance);
-					BOOST_CHECK_CLOSE(z, X[3*gId+2], tolerance);
+					TEST_FLOATING_EQUALITY(x, X[3*gId], tolerance);
+					TEST_FLOATING_EQUALITY(y, X[3*gId+1], tolerance);
+					TEST_FLOATING_EQUALITY(z, X[3*gId+2], tolerance);
 					int ptr = neighborhoodPtr[gId];
-					BOOST_CHECK(19==neighborhood[ptr]);
+					TEST_ASSERT(19==neighborhood[ptr]);
 					for(int p=0;p<19;p++)
-						BOOST_CHECK(neighborAnswers[p+gId*19]==neighborhood[ptr+1+p]);
+						TEST_ASSERT(neighborAnswers[p+gId*19]==neighborhood[ptr+1+p]);
 					/*
 					 * Volume
 					 */
 					double v =  ranR*dr*cellRads*dz;
-					BOOST_CHECK_CLOSE(v, vol[gId], tolerance);
+					TEST_FLOATING_EQUALITY(v, vol[gId], tolerance);
 				}
 			}
 		}
@@ -227,8 +224,9 @@ void cylindericalCellPerProcIterator1Proc()
 
 }
 
-void cylindericalCellPerProcIterator2Proc()
-{
+
+TEUCHOS_UNIT_TEST( SmallMeshCylinder, cylindericalCellPerProcIterator2ProcTest) {
+
 
 	/*
 	 * Construct ring spec
@@ -252,7 +250,7 @@ void cylindericalCellPerProcIterator2Proc()
 	double cylinderLength = 2.0*cellSize;
 	size_t numCellsAxis = 2;
 	QUICKGRID::Spec1D axisSpec(numCellsAxis,0.0,cylinderLength);
-	BOOST_CHECK(2==axisSpec.getNumCells());
+	TEST_ASSERT(2==axisSpec.getNumCells());
 
 	// This is a hack to get the correct number of cells in a ring
 	double SCALE=1.51;
@@ -318,23 +316,23 @@ void cylindericalCellPerProcIterator2Proc()
 		QUICKGRID::QuickGridData gridData = p0Data.second;
 		QUICKGRID::Cell3D nextCellLocator = p0Data.first;
 		// proc 0
-		BOOST_CHECK(3 == gridData.dimension);
-		BOOST_CHECK(32 == gridData.globalNumPoints);
+		TEST_ASSERT(3 == gridData.dimension);
+		TEST_ASSERT(32 == gridData.globalNumPoints);
 		int myNumPoints = gridData.numPoints;
-		BOOST_CHECK(16 == myNumPoints);
+		TEST_ASSERT(16 == myNumPoints);
 
 		// assert length of neighborlist
 		// sizeNeighborList = myNumCells + myNumCells*numNeighbors
 		int sizeNeighborList = myNumPoints + myNumPoints*19;
-		BOOST_CHECK( sizeNeighborList == gridData.sizeNeighborhoodList );
-		BOOST_CHECK(0 == gridData.numExport);
+		TEST_ASSERT( sizeNeighborList == gridData.sizeNeighborhoodList );
+		TEST_ASSERT(0 == gridData.numExport);
 
 		// Assert global ids for this processor
 		shared_ptr<int> gIds = gridData.myGlobalIDs;
 		int *gIdsPtr = gIds.get();
 		int start = 0;
 		for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++)
-			BOOST_CHECK( *gIdsPtr == (int)id );
+			TEST_ASSERT( *gIdsPtr == (int)id );
 
 		{
 			// Assert coordinates and volume
@@ -357,19 +355,19 @@ void cylindericalCellPerProcIterator2Proc()
 					double y = ranR*sin(ranTheta);
 					double z = ranZ;
                     const double tolerance = 1.0e-13;
-					BOOST_CHECK_CLOSE(x, X[3*cell], tolerance);
-					BOOST_CHECK_CLOSE(y, X[3*cell+1], tolerance);
-					BOOST_CHECK_CLOSE(z, X[3*cell+2], tolerance);
+					TEST_FLOATING_EQUALITY(x, X[3*cell], tolerance);
+					TEST_FLOATING_EQUALITY(y, X[3*cell+1], tolerance);
+					TEST_FLOATING_EQUALITY(z, X[3*cell+2], tolerance);
 					int ptr = neighborhoodPtr[cell];
-					BOOST_CHECK(19==neighborhood[ptr]);
+					TEST_ASSERT(19==neighborhood[ptr]);
 					for(int p=0;p<19;p++){
-						BOOST_CHECK(neighborAnswers[p+(cell)*19]==neighborhood[ptr+1+p]);
+						TEST_ASSERT(neighborAnswers[p+(cell)*19]==neighborhood[ptr+1+p]);
 					}
 					/*
 					 * Volume
 					 */
 					double v =  ranR*dr*cellRads*dz;
-					BOOST_CHECK_CLOSE(v, vol[cell], tolerance);
+					TEST_FLOATING_EQUALITY(v, vol[cell], tolerance);
 					cell++;
 				}
 			}
@@ -380,28 +378,28 @@ void cylindericalCellPerProcIterator2Proc()
 		start=16;
 		while(cellIter.hasNextProc()){
 
-			BOOST_CHECK(proc == cellIter.proc());
+			TEST_ASSERT(proc == cellIter.proc());
 			std::pair<QUICKGRID::Cell3D,QUICKGRID::QuickGridData> data = cellIter.nextProc(nextCellLocator,pdGridDataProcN);
 
 			QUICKGRID::QuickGridData gridData = data.second;
 			nextCellLocator = data.first;
 
-			BOOST_CHECK(3 == gridData.dimension);
-			BOOST_CHECK(32 == gridData.globalNumPoints);
+			TEST_ASSERT(3 == gridData.dimension);
+			TEST_ASSERT(32 == gridData.globalNumPoints);
 			int myNumPoints = gridData.numPoints;
-			BOOST_CHECK(16 == myNumPoints);
+			TEST_ASSERT(16 == myNumPoints);
 
 			// assert length of neighborlist
 			// sizeNeighborList = myNumCells + myNumCells*numNeighbors
 			int sizeNeighborList = myNumPoints + myNumPoints*19;
-			BOOST_CHECK( sizeNeighborList == gridData.sizeNeighborhoodList );
-			BOOST_CHECK(0 == gridData.numExport);
+			TEST_ASSERT( sizeNeighborList == gridData.sizeNeighborhoodList );
+			TEST_ASSERT(0 == gridData.numExport);
 
 			// assert global ids for this processor
 			shared_ptr<int> gIds = gridData.myGlobalIDs;
 			int *gIdsPtr = gIds.get();
 			for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++){
-				BOOST_CHECK( *gIdsPtr == (int)id );
+				TEST_ASSERT( *gIdsPtr == (int)id );
 			}
 
 			// Assert coordinates
@@ -424,19 +422,19 @@ void cylindericalCellPerProcIterator2Proc()
 					double y = ranR*sin(ranTheta);
 					double z = ranZ;
                     const double tolerance = 1.0e-13;
-                    BOOST_CHECK_CLOSE(x, X[3*cell], tolerance);
-					BOOST_CHECK_CLOSE(y, X[3*cell+1], tolerance);
-					BOOST_CHECK_CLOSE(z, X[3*cell+2], tolerance);
+                    TEST_FLOATING_EQUALITY(x, X[3*cell], tolerance);
+					TEST_FLOATING_EQUALITY(y, X[3*cell+1], tolerance);
+					TEST_FLOATING_EQUALITY(z, X[3*cell+2], tolerance);
 					int ptr = neighborhoodPtr[cell];
-					BOOST_CHECK(19==neighborhood[ptr]);
+					TEST_ASSERT(19==neighborhood[ptr]);
 					for(int p=0;p<19;p++){
-						BOOST_CHECK(neighborAnswers[p+(cell+16)*19]==neighborhood[ptr+1+p]);
+						TEST_ASSERT(neighborAnswers[p+(cell+16)*19]==neighborhood[ptr+1+p]);
 					}
 					/*
 					 * Volume
 					 */
 					double v =  ranR*dr*cellRads*dz;
-					BOOST_CHECK_CLOSE(v, vol[cell], tolerance);
+					TEST_FLOATING_EQUALITY(v, vol[cell], tolerance);
 					cell++;
 				}
 			}
@@ -452,7 +450,9 @@ void cylindericalCellPerProcIterator2Proc()
 
 }
 
-void cylindericalCellPerProcIterator4Proc()
+
+
+TEUCHOS_UNIT_TEST( SmallMeshCylinder, cylindericalCellPerProcIterator4ProcTest) 
 {
 
 	/*
@@ -477,7 +477,7 @@ void cylindericalCellPerProcIterator4Proc()
 	double cylinderLength = 2.0*cellSize;
 	int numCellsAxis = 2;
 	QUICKGRID::Spec1D axisSpec(numCellsAxis,0.0,cylinderLength);
-	BOOST_CHECK(2==axisSpec.getNumCells());
+	TEST_ASSERT(2==axisSpec.getNumCells());
 
 	// This is a hack to get the correct number of cells in a ring
 	double SCALE=1.51;
@@ -546,16 +546,16 @@ void cylindericalCellPerProcIterator4Proc()
 		nextCellLocator = p0Data.first;
 
 		// proc 0
-		BOOST_CHECK(3 == gridData.dimension);
-		BOOST_CHECK(32 == gridData.globalNumPoints);
+		TEST_ASSERT(3 == gridData.dimension);
+		TEST_ASSERT(32 == gridData.globalNumPoints);
 		int myNumPoints = gridData.numPoints;
-		BOOST_CHECK(8 == myNumPoints);
+		TEST_ASSERT(8 == myNumPoints);
 
 		// assert length of neighborlist
 		// sizeNeighborList = myNumCells + myNumCells*numNeighbors
 		int sizeNeighborList = myNumPoints + myNumPoints*19;
-		BOOST_CHECK( sizeNeighborList == gridData.sizeNeighborhoodList );
-		BOOST_CHECK(0 == gridData.numExport);
+		TEST_ASSERT( sizeNeighborList == gridData.sizeNeighborhoodList );
+		TEST_ASSERT(0 == gridData.numExport);
 
 
 		double *X = gridData.myX.get();
@@ -570,22 +570,22 @@ void cylindericalCellPerProcIterator4Proc()
 		int start=0;
         const double tolerance = 1.0e-13;
 		for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++,cell++){
-			BOOST_CHECK( *gIdsPtr == (int)id );
+			TEST_ASSERT( *gIdsPtr == (int)id );
 
-			BOOST_CHECK_CLOSE(xx[id*3], X[3*cell], tolerance);
-			BOOST_CHECK_CLOSE(xx[id*3+1], X[3*cell+1], tolerance);
-			BOOST_CHECK_CLOSE(xx[id*3+2], X[3*cell+2], tolerance);
+			TEST_FLOATING_EQUALITY(xx[id*3], X[3*cell], tolerance);
+			TEST_FLOATING_EQUALITY(xx[id*3+1], X[3*cell+1], tolerance);
+			TEST_FLOATING_EQUALITY(xx[id*3+2], X[3*cell+2], tolerance);
 			int ptr = neighborhoodPtr[cell];
-			BOOST_CHECK(19==neighborhood[ptr]);
+			TEST_ASSERT(19==neighborhood[ptr]);
 			for(int p=0;p<19;p++){
-				BOOST_CHECK(neighborAnswers[p+id*19]==neighborhood[ptr+1+p]);
+				TEST_ASSERT(neighborAnswers[p+id*19]==neighborhood[ptr+1+p]);
 			}
 			double r = sqrt(xx[id*3]*xx[id*3]+xx[id*3+1]*xx[id*3+1]);
 			/*
 			 * Volume
 			 */
 			double v = r*dr*cellRads*dz;
-			BOOST_CHECK_CLOSE(v,vol[cell],tolerance);
+			TEST_FLOATING_EQUALITY(v,vol[cell],tolerance);
 		}
 	}
 
@@ -594,22 +594,22 @@ void cylindericalCellPerProcIterator4Proc()
 		size_t proc = 1;
 		int start=8;
 		while(cellIter.hasNextProc()){
-			BOOST_CHECK(proc == cellIter.proc());
+			TEST_ASSERT(proc == cellIter.proc());
 			std::pair<QUICKGRID::Cell3D,QUICKGRID::QuickGridData> data = cellIter.nextProc(nextCellLocator,pdGridDataProcN);
 
 			QUICKGRID::QuickGridData gridData = data.second;
 			nextCellLocator = data.first;
 
-			BOOST_CHECK(3 == gridData.dimension);
-			BOOST_CHECK(32 == gridData.globalNumPoints);
+			TEST_ASSERT(3 == gridData.dimension);
+			TEST_ASSERT(32 == gridData.globalNumPoints);
 			int myNumPoints = gridData.numPoints;
-			BOOST_CHECK(8 == myNumPoints);
+			TEST_ASSERT(8 == myNumPoints);
 
 			// assert length of neighborlist
 			// sizeNeighborList = myNumCells + myNumCells*numNeighbors
 			int sizeNeighborList = myNumPoints + myNumPoints*19;
-			BOOST_CHECK( sizeNeighborList == gridData.sizeNeighborhoodList );
-			BOOST_CHECK(0 == gridData.numExport);
+			TEST_ASSERT( sizeNeighborList == gridData.sizeNeighborhoodList );
+			TEST_ASSERT(0 == gridData.numExport);
 
 
 			double *X = gridData.myX.get();
@@ -623,22 +623,22 @@ void cylindericalCellPerProcIterator4Proc()
 			int cell = 0;
             const double tolerance = 1.0e-13;
 			for(size_t id=start;id<gridData.numPoints+start;id++,gIdsPtr++,cell++){
-				BOOST_CHECK( *gIdsPtr == (int)id );
+				TEST_ASSERT( *gIdsPtr == (int)id );
 
-                BOOST_CHECK_CLOSE(xx[id*3], X[3*cell], tolerance);
-                BOOST_CHECK_CLOSE(xx[id*3+1], X[3*cell+1], tolerance);
-                BOOST_CHECK_CLOSE(xx[id*3+2], X[3*cell+2], tolerance);
+                TEST_FLOATING_EQUALITY(xx[id*3], X[3*cell], tolerance);
+                TEST_FLOATING_EQUALITY(xx[id*3+1], X[3*cell+1], tolerance);
+                TEST_FLOATING_EQUALITY(xx[id*3+2], X[3*cell+2], tolerance);
 				int ptr = neighborhoodPtr[cell];
-				BOOST_CHECK(19==neighborhood[ptr]);
+				TEST_ASSERT(19==neighborhood[ptr]);
 				for(int p=0;p<19;p++){
-					BOOST_CHECK(neighborAnswers[p+id*19]==neighborhood[ptr+1+p]);
+					TEST_ASSERT(neighborAnswers[p+id*19]==neighborhood[ptr+1+p]);
 				}
 				double r = sqrt(xx[id*3]*xx[id*3]+xx[id*3+1]*xx[id*3+1]);
 				/*
 				 * Volume
 				 */
 				double v = r*dr*cellRads*dz;
-				BOOST_CHECK_CLOSE(v,vol[cell],tolerance);
+				TEST_FLOATING_EQUALITY(v,vol[cell],tolerance);
 			}
 
 			// there are 16 nodes per processor
@@ -652,26 +652,7 @@ void cylindericalCellPerProcIterator4Proc()
 
 }
 
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success=true;
 
-	test_suite* proc = BOOST_TEST_SUITE( "ut_SmallMeshCylinder" );
-	proc->add(BOOST_TEST_CASE( &cylindericalCellPerProcIterator1Proc ));
-	proc->add(BOOST_TEST_CASE( &cylindericalCellPerProcIterator2Proc ));
-	proc->add(BOOST_TEST_CASE( &cylindericalCellPerProcIterator4Proc ));
-	framework::master_test_suite().add( proc );
-
-	return success;
-
-}
-
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
 
 int main
 (
@@ -681,6 +662,6 @@ int main
 {
 
 	// Initialize UTF
-	return unit_test_main( init_unit_test, argc, argv );
+	return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }
 

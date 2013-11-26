@@ -43,10 +43,6 @@
 // ************************************************************************
 //@HEADER
 
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_ALTERNATIVE_INIT_API
-#include <boost/test/unit_test.hpp>
-#include <boost/test/parameterized_test.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <string>
 #include "mesh_input/quick_grid/QuickGrid.h"
@@ -59,7 +55,8 @@
 #include "utilities/Vector3D.h"
 #include "utilities/Array.h"
 #include <set>
-
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_UnitTestHarness.hpp>
 #include "Epetra_Comm.h"
 #include "Epetra_BlockMap.h"
 #include "Epetra_Vector.h"
@@ -83,7 +80,7 @@ using UTILITIES::Array;
 using Field_NS::Field;
 using Field_NS::FieldSpec;
 using std::tr1::shared_ptr;
-using namespace boost::unit_test;
+
 using std::size_t;
 using std::string;
 using std::cout;
@@ -92,15 +89,50 @@ static size_t myRank;
 static size_t numProcs;
 const string json_filename="./input_files/ut_ringCellVolumeFraction.json";
 
+
 void compute_neighborhood_volumes
 (
 		const PDNEIGH::NeighborhoodList& list,
 		Field<double>& neighborhoodVol,
 		Field<double>& naiveNeighborhoodVol,
 		Array<double>& overlapCellVol,
-		shared_ptr<double> xOverlap,
+		shared_ptr<double> xOverlapPtr,
 		const BOND_VOLUME::QUICKGRID::RingVolumeFractionCalculator& calculator
-);
+)
+{
+	size_t N = list.get_num_owned_points();
+	
+
+	const int *neighPtr = list.get_local_neighborhood().get();
+	const double *xOwned = list.get_owned_x().get();
+	const double *xOverlap = xOverlapPtr.get();
+	const double *cellVolOverlap = overlapCellVol.get();
+	double *neighVol = neighborhoodVol.get();
+	double *naiveNeighVol = naiveNeighborhoodVol.get();
+	for(size_t p=0;p<N;p++, xOwned +=3, neighVol++,naiveNeighVol++){
+		int numNeigh = *neighPtr; neighPtr++;
+		/*
+		 * initialize neighborhood to zero;
+		 * computes contributions from neighborhood and does not
+		 * include self volume
+		 */
+		*neighVol = 0.0;
+		*naiveNeighVol = 0.0;
+
+		const double *P = xOwned;
+		/*
+		 * Loop over neighborhood of point P and compute
+		 * fractional volume
+		 */
+		for(int n=0;n<numNeigh;n++,neighPtr++){
+			int localId = *neighPtr;
+			const double *Q = &xOverlap[3*localId];
+			double cellVolume = cellVolOverlap[localId];
+			*neighVol += calculator(P,Q);
+			*naiveNeighVol += cellVolume;
+		}
+	}
+}
 
 void compute_cell_volumes
 (
@@ -108,10 +140,25 @@ void compute_cell_volumes
 		Field<double>& specialCellVolume,
 		shared_ptr<double> xOverlapPtr,
 		const BOND_VOLUME::QUICKGRID::RingVolumeFractionCalculator& calculator
-);
-
-void sphere()
+)
 {
+	size_t N = list.get_num_owned_points();
+	
+	const double *xOwned = list.get_owned_x().get();
+	double *vOwned = specialCellVolume.get();
+	for(size_t p=0;p<N;p++, xOwned +=3, vOwned++){
+
+		const double *P = xOwned;
+		/*
+		 * compute cell volume using quick grid quadrature
+		 */
+		*vOwned=calculator.cellVolume(P);
+
+	}
+}
+
+TEUCHOS_UNIT_TEST(RingCellVolumeFraction, SphereTest) {
+
 
     // Create an empty property tree object
     using boost::property_tree::ptree;
@@ -141,16 +188,16 @@ void sphere()
     	center[p]=i->second.get_value<double>();
 
 	double innerRadius = pt.get<double>(path+".Inner Radius");
-	BOOST_CHECK(16.0==innerRadius);
+	TEST_ASSERT(16.0==innerRadius);
 	double outerRadius = pt.get<double>(path+".Outer Radius");
-	BOOST_CHECK(17.0==outerRadius);
+	TEST_ASSERT(17.0==outerRadius);
 	double cylinderLength=pt.get<double>(path+".Cylinder Length");
-	BOOST_CHECK(1.0==cylinderLength);
+	TEST_ASSERT(1.0==cylinderLength);
 	/*
 	 * Note that zStart is set to the z - coordinate of 'center'
 	 */
 	double zStart=center[2];
-	BOOST_CHECK(0.0==zStart);
+	TEST_ASSERT(0.0==zStart);
 	size_t numRings = pt.get<size_t>(path+".Number Points Radius");
 //	BOOST_CHECK(5==numRings);
 	SpecRing2D ring2dSpec(center,innerRadius,outerRadius,numRings);
@@ -232,99 +279,19 @@ void sphere()
 	Field<double> naiveNeighVol(naiveNeighVolSpec,list.get_num_owned_points());
 	Field<double> quadratureCellVol(quadratureCellVolSpec,list.get_num_owned_points());
 	Field<double> cellVol(Field_NS::VOLUME,gridData.cellVolume,list.get_num_owned_points());
+
+        size_t N = list.get_num_owned_points();
+	TEST_ASSERT(quadratureCellVol.get_num_points()==N);
 	compute_cell_volumes(list,quadratureCellVol,xOverlapArray.get_shared_ptr(),calculator);
+        
+        TEST_ASSERT(neighVol.get_num_points()==N);
+	TEST_ASSERT(naiveNeighVol.get_num_points()==N);
 	compute_neighborhood_volumes(list,neighVol,naiveNeighVol,vOverlapArray,xOverlapArray.get_shared_ptr(),calculator);
 }
 
 
-void compute_neighborhood_volumes
-(
-		const PDNEIGH::NeighborhoodList& list,
-		Field<double>& neighborhoodVol,
-		Field<double>& naiveNeighborhoodVol,
-		Array<double>& overlapCellVol,
-		shared_ptr<double> xOverlapPtr,
-		const BOND_VOLUME::QUICKGRID::RingVolumeFractionCalculator& calculator
-)
-{
-	size_t N = list.get_num_owned_points();
-	BOOST_CHECK(neighborhoodVol.get_num_points()==N);
-	BOOST_CHECK(naiveNeighborhoodVol.get_num_points()==N);
-
-	const int *neighPtr = list.get_local_neighborhood().get();
-	const double *xOwned = list.get_owned_x().get();
-	const double *xOverlap = xOverlapPtr.get();
-	const double *cellVolOverlap = overlapCellVol.get();
-	double *neighVol = neighborhoodVol.get();
-	double *naiveNeighVol = naiveNeighborhoodVol.get();
-	for(size_t p=0;p<N;p++, xOwned +=3, neighVol++,naiveNeighVol++){
-		int numNeigh = *neighPtr; neighPtr++;
-		/*
-		 * initialize neighborhood to zero;
-		 * computes contributions from neighborhood and does not
-		 * include self volume
-		 */
-		*neighVol = 0.0;
-		*naiveNeighVol = 0.0;
-
-		const double *P = xOwned;
-		/*
-		 * Loop over neighborhood of point P and compute
-		 * fractional volume
-		 */
-		for(int n=0;n<numNeigh;n++,neighPtr++){
-			int localId = *neighPtr;
-			const double *Q = &xOverlap[3*localId];
-			double cellVolume = cellVolOverlap[localId];
-			*neighVol += calculator(P,Q);
-			*naiveNeighVol += cellVolume;
-		}
-	}
-}
-
-void compute_cell_volumes
-(
-		const PDNEIGH::NeighborhoodList& list,
-		Field<double>& specialCellVolume,
-		shared_ptr<double> xOverlapPtr,
-		const BOND_VOLUME::QUICKGRID::RingVolumeFractionCalculator& calculator
-)
-{
-	size_t N = list.get_num_owned_points();
-	BOOST_CHECK(specialCellVolume.get_num_points()==N);
-
-	const double *xOwned = list.get_owned_x().get();
-	double *vOwned = specialCellVolume.get();
-	for(size_t p=0;p<N;p++, xOwned +=3, vOwned++){
-
-		const double *P = xOwned;
-		/*
-		 * compute cell volume using quick grid quadrature
-		 */
-		*vOwned=calculator.cellVolume(P);
-
-	}
-}
 
 
-bool init_unit_test_suite()
-{
-	// Add a suite for each processor in the test
-	bool success=true;
-
-	test_suite* proc = BOOST_TEST_SUITE( "ut_ringCellVolumeFraction" );
-	proc->add(BOOST_TEST_CASE( &sphere ));
-	framework::master_test_suite().add( proc );
-
-	return success;
-
-}
-
-bool init_unit_test()
-{
-	init_unit_test_suite();
-	return true;
-}
 
 int main
 (
@@ -340,6 +307,6 @@ int main
 	numProcs = myMpi.numProcs;
 
 	// Initialize UTF
-	return unit_test_main( init_unit_test, argc, argv );
+	return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }
 
