@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import os
+import sys
 import string
 import time
 
@@ -8,7 +9,7 @@ def parse_log_files():
 
     # find all the log file (may pick up some files unrelated to performance testing)
     log_files = []
-    for root, dirs, files in os.walk('./test/performance'):
+    for root, dirs, files in os.walk('./'):
         for log_file in files:
             if log_file[-4:] == ".log":
                 file_with_path = os.path.join(root, log_file) 
@@ -22,6 +23,7 @@ def parse_log_files():
         wallclock_time = 0.0
         benchmark_value = 0.0
         tolerance = 0.0
+        test_result = "Failed"
         fin = open(log_file, 'r')
         lines = fin.readlines()
         fin.close()
@@ -33,19 +35,36 @@ def parse_log_files():
                 benchmark_value = float( line[string.rfind(line, '= ')+1 : ] )
             elif "tolerance       =" in line:
                 tolerance = float( line[string.rfind(line, '= ')+1 : ] )
-
+            elif "PERFORMANCE TEST PASSED" in line:
+                test_result = "Passed"
         if is_valid:
-            results.append([test_name, wallclock_time, benchmark_value, tolerance])
+            results.append([test_name, wallclock_time, benchmark_value, tolerance, test_result])
 
     return results
 
-if __name__ == "__main__":
+def summarize_performance_tests():
 
     results = parse_log_files()
 
-    print "\n------------------------------------------------------------------------------"
-    print "\nDate and time:", time.strftime("%m-%d-%Y %H:%M")
-    print "\nTest Name                   Wallclock Time     Benchmark Value     Tolerance"
+    table_str = ""
+    table_str += "\n---------------------------------------------------------------------------------------------\n"
+    table_str += "\nDate and time:  " + time.strftime("%m-%d-%Y %H:%M") + "\n"
+    table_str += "\nTest Name                   Wallclock Time     Benchmark Value     Tolerance     Test Result\n"
     for result in results:
-        print '{0:25}  {1:6}  {2:17}  {3:18}'.format(result[0], result[1], result[2], result[3])
-    print
+        table_str += '{0:25}  {1:6}  {2:17}  {3:17}          {4:6}\n'.format(result[0], result[1], result[2], result[3], result[4])
+    table_str += "\n"
+
+    return table_str
+
+if __name__ == "__main__":
+
+    log_file_name = "./test_summary/performance_test_summary.txt"
+    if os.path.exists(log_file_name):
+        os.remove(log_file_name)
+
+    summary_table = summarize_performance_tests()
+    log_file = open(log_file_name, 'w')
+    log_file.write(summary_table)
+    log_file.close()
+
+    sys.exit(0)
