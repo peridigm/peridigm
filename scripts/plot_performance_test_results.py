@@ -23,15 +23,17 @@ if __name__ == "__main__":
         wallclock_time = 0.0
         benchmark_value = 0.0
         tolerance = 0.0
+        test_result = "Failed"
         if "Date and time:" in line:
             date = string.splitfields(line)[-2]
         elif "Test Name" not in line and "-----------" not in line:
             vals = string.splitfields(line)
-            if len(vals) == 4:
+            if len(vals) == 5:
                 name = vals[0]
                 wallclock_time = float(vals[1])
                 benchmark_value = float(vals[2])
                 tolerance = float(vals[3])
+                test_result = vals[4]
                 if name not in results.keys():
                     results[name] = []
                 results[name].append([date, wallclock_time, benchmark_value, tolerance])
@@ -63,6 +65,7 @@ if __name__ == "__main__":
         gfile.write("set ylabel \"Run Time (sec.)\" font \"Times-Roman,32\"\n")
         gfile.write("set yrange [" + str(yrange_min) + ":" + str(yrange_max) + "]\n")
         gfile.write("plot \"" + data_file_name + "\" using 2:xticlabel(1) with points pt 7 ps 4 notitle, \\\n")
+        gfile.write("     \"" + data_file_name + "\" using 3:xticlabel(1) with lines lt 2 lw 1 notitle, \\\n")
         gfile.write("     \"" + data_file_name + "\" using ($3+$4):xticlabel(1) with lines lt 0 lw 1 notitle, \\\n")
         gfile.write("     \"" + data_file_name + "\" using ($3-$4):xticlabel(1) with lines lt 0 lw 1 notitle\n")
         pdf_file_names.append(pdf_file_name)
