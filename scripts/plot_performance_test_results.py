@@ -78,7 +78,7 @@ if __name__ == "__main__":
     print "\nCommand to generate plots:"
     print "  gnuplot", gnuplot_file_name
     print "\nCommand to concatenate pdf files:"
-    cmd_string = "  gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=performace_plots.pdf"
+    cmd_string = "  gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dAutoRotatePages -sOutputFile=performace_plots.pdf"
     for name in pdf_file_names:
         cmd_string += " " + name
     print cmd_string, "\n"

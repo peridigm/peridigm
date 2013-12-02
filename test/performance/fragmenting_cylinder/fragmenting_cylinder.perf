@@ -4,5 +4,5 @@
 #
 
 # machine_name  number_of_processors  max_wallclock_time  wallclock_time_tolerance
-Latrobe         4                     510.0              36.0
+Latrobe         4                     520.0              36.0
 DJL_Laptop      4                     360.0              25.0
