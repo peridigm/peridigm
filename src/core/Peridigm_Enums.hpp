@@ -14,9 +14,9 @@ enum Set_Definition
   NO_SUCH_SET_DEFINITION
 };
 
-const std::string to_string(const Set_Definition & set_definition);
-const Set_Definition to_set_definition(const std::string & str);
-const Set_Definition to_set_definition(const Teuchos::ParameterList & params);
+std::string to_string(const Set_Definition & set_definition);
+Set_Definition to_set_definition(const std::string & str);
+Set_Definition to_set_definition(const Teuchos::ParameterList & params);
 
 enum Spatial_Coordinate
 {
@@ -26,10 +26,10 @@ enum Spatial_Coordinate
   NO_SUCH_SPATIAL_COORDINATE
 };
 
-const std::string to_string(const Spatial_Coordinate & spatial_coordinate);
-const Spatial_Coordinate to_spatial_coordinate(const std::string & str);
-const Spatial_Coordinate to_spatial_coordinate(const Teuchos::ParameterList & params);
-const int to_index(const Spatial_Coordinate & spatial_coordinate);
+std::string to_string(const Spatial_Coordinate & spatial_coordinate);
+Spatial_Coordinate to_spatial_coordinate(const std::string & str);
+Spatial_Coordinate to_spatial_coordinate(const Teuchos::ParameterList & params);
+int to_index(const Spatial_Coordinate & spatial_coordinate);
 
 enum Tensor_Order
 {
@@ -39,10 +39,9 @@ enum Tensor_Order
   NO_SUCH_TENSOR_ORDER
 };
 
-const std::string to_string(const Tensor_Order & tensor_order);
-const Tensor_Order to_tensor_order(const std::string & str);
-const int to_dimension_size(const Tensor_Order & tensor_order);
-
+std::string to_string(const Tensor_Order & tensor_order);
+Tensor_Order to_tensor_order(const std::string & str);
+int to_dimension_size(const Tensor_Order & tensor_order);
 
 enum Boundary_Condition_Type
 {
@@ -55,11 +54,11 @@ enum Boundary_Condition_Type
   NO_SUCH_BOUNDARY_CONDITION_TYPE
 };
 
-const std::string to_string(const Boundary_Condition_Type & bc_type);
-const Boundary_Condition_Type to_boundary_condition_type(const std::string & str);
-const Boundary_Condition_Type to_boundary_condition_type(const Teuchos::ParameterList & params);
+std::string to_string(const Boundary_Condition_Type & bc_type);
+Boundary_Condition_Type to_boundary_condition_type(const std::string & str);
+Boundary_Condition_Type to_boundary_condition_type(const Teuchos::ParameterList & params);
 
 void tidy_string(std::string & str);
-const bool is_initial(const Boundary_Condition_Type & bc_type);
+bool is_initial(const Boundary_Condition_Type & bc_type);
 
 #endif /* PERIDIGM_ENUMS_HPP */

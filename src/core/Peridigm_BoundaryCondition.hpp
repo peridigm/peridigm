@@ -72,19 +72,19 @@ public:
   virtual ~BoundaryCondition(){}
 
   //! Give the name
-  const string getName()const{return name;}
+  string getName()const{return name;}
 
   //! give the name of the associated node set
-  const string getNodeSetName()const{return nodeSetName;}
+  string getNodeSetName()const{return nodeSetName;}
 
   //! give the type of boundary condition
-  const Boundary_Condition_Type getType()const{return bcType;}
+  Boundary_Condition_Type getType()const{return bcType;}
 
   //! give the field the bc is applied to
   Teuchos::RCP<Epetra_Vector> getBCVector()const{return toVector;}
 
   //! give the coodinate of the bc
-  const int getCoord()const{return coord;}
+  int getCoord()const{return coord;}
 
   //! apply the boundary condition
   virtual void apply(Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets, const double & timeCurrent=0.0, const double & timePrevious=0.0)=0;

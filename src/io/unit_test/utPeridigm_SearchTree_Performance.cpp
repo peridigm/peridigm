@@ -119,7 +119,7 @@ TEUCHOS_UNIT_TEST(SearchTree_Performance, ZoltanTest) {
   double searchRadius;
   vector<double> mesh;
   string fileName, testName, treeType;
-  PeridigmNS::SearchTree* searchTree;
+  PeridigmNS::SearchTree* searchTree(NULL);
   unsigned int totalBonds, maxBonds, minBonds;
   string str;
   vector<double> data;
@@ -359,7 +359,7 @@ TEUCHOS_UNIT_TEST(SearchTree_Performance, JAMTest) {
   double searchRadius;
   vector<double> mesh;
   string fileName, testName, treeType;
-  PeridigmNS::SearchTree* searchTree;
+  PeridigmNS::SearchTree* searchTree(NULL);
   unsigned int totalBonds, maxBonds, minBonds;
   string str;
   vector<double> data;
