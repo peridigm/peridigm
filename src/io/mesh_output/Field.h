@@ -162,15 +162,15 @@ public:
   bool operator != (const FieldSpec& right) const;
   bool operator < (const FieldSpec& right) const;
   std::ostream& print(std::ostream& os) const;
-  const Field_ENUM::Type getType() const { return type; }
-  const Field_ENUM::Relation getRelation() const { return relation; }
-  const Field_ENUM::Length getLength() const { return length; }
-  const Field_ENUM::ParallelTopology get_parallel_topology() const { return par_top; }
-  const Field_ENUM::Temporal get_temporal() const { return temporal; }
-  const unsigned int getId() const { return id; }
-  const string getLabel() const { return label; }
-  const FieldSpec get_overlap_spec() const;
-  const FieldSpec get_override(Field_ENUM::Temporal temp) const;
+  Field_ENUM::Type getType() const { return type; }
+  Field_ENUM::Relation getRelation() const { return relation; }
+  Field_ENUM::Length getLength() const { return length; }
+  Field_ENUM::ParallelTopology get_parallel_topology() const { return par_top; }
+  Field_ENUM::Temporal get_temporal() const { return temporal; }
+  unsigned int getId() const { return id; }
+  string getLabel() const { return label; }
+  FieldSpec get_overlap_spec() const;
+  FieldSpec get_override(Field_ENUM::Temporal temp) const;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const FieldSpec& fs) {

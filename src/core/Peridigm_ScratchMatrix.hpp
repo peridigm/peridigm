@@ -84,7 +84,7 @@ namespace PeridigmNS {
     int Dimension(){ return dim; }
 
     //! Access to underlying data array.
-    const double *const *const Data(){ return data; }
+    const double *const * Data(){ return data; }
 
     //! @name Accessor functions (warning: no bounds checking).
     //@{

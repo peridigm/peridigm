@@ -110,7 +110,7 @@ void create_string_maps()
   }
 }
 
-const std::string to_string(const Set_Definition & set_definition)
+std::string to_string(const Set_Definition & set_definition)
 {
   create_string_maps();
   std::map<Set_Definition,std::string>::iterator pos=set_definition_string.find(set_definition);
@@ -123,12 +123,12 @@ const std::string to_string(const Set_Definition & set_definition)
     return pos->second;
 }
 
-const Set_Definition to_set_definition(const Teuchos::ParameterList & params)
+Set_Definition to_set_definition(const Teuchos::ParameterList & params)
 {
   return to_set_definition(params.get<std::string>("Node Set"));
 }
 
-const Set_Definition to_set_definition(const std::string & str)
+Set_Definition to_set_definition(const std::string & str)
 {
   create_string_maps();
   // convert to upper case and trim the input string
@@ -144,7 +144,7 @@ const Set_Definition to_set_definition(const std::string & str)
 }
 
 
-const std::string to_string(const Tensor_Order & tensor_order)
+std::string to_string(const Tensor_Order & tensor_order)
 {
   create_string_maps();
   std::map<Tensor_Order,std::string>::iterator pos=tensor_order_string.find(tensor_order);
@@ -157,7 +157,7 @@ const std::string to_string(const Tensor_Order & tensor_order)
     return pos->second;
 }
 
-const Tensor_Order to_tensor_order(const std::string & str)
+Tensor_Order to_tensor_order(const std::string & str)
 {
   create_string_maps();
   // convert to upper case and trim the input string
@@ -179,7 +179,7 @@ const Tensor_Order to_tensor_order(const std::string & str)
   return pos->second;
 }
 
-const int to_dimension_size(const Tensor_Order & tensor_order)
+int to_dimension_size(const Tensor_Order & tensor_order)
 {
   create_string_maps();
   int size = -1;
@@ -200,11 +200,7 @@ const int to_dimension_size(const Tensor_Order & tensor_order)
   return size;
 }
 
-
-
-
-
-const std::string to_string(const Spatial_Coordinate & spatial_coordinate)
+std::string to_string(const Spatial_Coordinate & spatial_coordinate)
 {
   create_string_maps();
   std::map<Spatial_Coordinate,std::string>::iterator pos=spatial_coordinate_string.find(spatial_coordinate);
@@ -217,13 +213,13 @@ const std::string to_string(const Spatial_Coordinate & spatial_coordinate)
     return pos->second;
 }
 
-const Spatial_Coordinate to_spatial_coordinate(const Teuchos::ParameterList & params)
+Spatial_Coordinate to_spatial_coordinate(const Teuchos::ParameterList & params)
 {
   if(!params.isParameter("Coordinate")) return X;
   return to_spatial_coordinate(params.get<std::string>("Coordinate"));
 }
 
-const Spatial_Coordinate to_spatial_coordinate(const std::string & str)
+Spatial_Coordinate to_spatial_coordinate(const std::string & str)
 {
   create_string_maps();
   // convert to upper case and trim the input string
@@ -245,7 +241,7 @@ const Spatial_Coordinate to_spatial_coordinate(const std::string & str)
   return pos->second;
 }
 
-const int to_index(const Spatial_Coordinate & spatial_coordinate)
+int to_index(const Spatial_Coordinate & spatial_coordinate)
 {
   create_string_maps();
   int index = -1;
@@ -266,7 +262,7 @@ const int to_index(const Spatial_Coordinate & spatial_coordinate)
   return index;
 }
 
-const std::string to_string(const Boundary_Condition_Type & bc_type)
+std::string to_string(const Boundary_Condition_Type & bc_type)
 {
   create_string_maps();
   std::map<Boundary_Condition_Type,std::string>::iterator pos=boundary_condition_string.find(bc_type);
@@ -279,12 +275,12 @@ const std::string to_string(const Boundary_Condition_Type & bc_type)
     return pos->second;
 }
 
-const Boundary_Condition_Type to_boundary_condition_type(const Teuchos::ParameterList & params)
+Boundary_Condition_Type to_boundary_condition_type(const Teuchos::ParameterList & params)
 {
   return to_boundary_condition_type(params.get<std::string>("Type"));
 }
 
-const Boundary_Condition_Type to_boundary_condition_type(const std::string & str)
+Boundary_Condition_Type to_boundary_condition_type(const std::string & str)
 {
   create_string_maps();
   // convert to upper case and trim the input string
@@ -314,7 +310,7 @@ void tidy_string(std::string & str){
   }
 }
 
-const bool is_initial(const Boundary_Condition_Type & bc_type){
+bool is_initial(const Boundary_Condition_Type & bc_type){
   const std::string bc_str = to_string(bc_type);
   const std::string test_str = "INITIAL";
   return bc_str.find("INITIAL")!=std::string::npos;

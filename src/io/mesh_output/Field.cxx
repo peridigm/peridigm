@@ -129,11 +129,11 @@ bool FieldSpec::operator < (const FieldSpec& right) const {
   return id < right.getId();
 }
 
-const FieldSpec FieldSpec::get_overlap_spec() const {
+FieldSpec FieldSpec::get_overlap_spec() const {
   return FieldSpec(type,relation,length,Field_ENUM::OVERLAP,temporal,label);
 }
 
-const FieldSpec FieldSpec::get_override(Field_ENUM::Temporal override) const {
+FieldSpec FieldSpec::get_override(Field_ENUM::Temporal override) const {
   return FieldSpec(type,relation,length,par_top,override,label);
 }
 

@@ -129,11 +129,11 @@ public:
   bool operator != (const FieldSpec& right) const { return (id != right.id); }
   bool operator < (const FieldSpec& right) const { return (id < right.id); }
 
-  const PeridigmField::Relation getRelation() const { return relation; }
-  const PeridigmField::Length getLength() const { return length; }
-  const PeridigmField::Temporal getTemporal() const { return temporal; }
-  const std::string getLabel() const { return label; }
-  const int getId() const { return id; }
+  PeridigmField::Relation getRelation() const { return relation; }
+  PeridigmField::Length getLength() const { return length; }
+  PeridigmField::Temporal getTemporal() const { return temporal; }
+  std::string getLabel() const { return label; }
+  int getId() const { return id; }
 
   PeridigmField::Relation relation;
   PeridigmField::Length length;
