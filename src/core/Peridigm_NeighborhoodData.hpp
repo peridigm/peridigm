@@ -93,27 +93,27 @@ public:
 	neighborhoodList = new int[neighborhoodListSize];
   }
 
-  const int NumOwnedPoints() const{
+  int NumOwnedPoints() const{
 	return numOwnedPoints;
   }
 
-  int* const OwnedIDs() const{
+  int* OwnedIDs() const{
 	return ownedIDs;
   }
 
-  int* const NeighborhoodPtr() const{
+  int* NeighborhoodPtr() const{
 	return neighborhoodPtr;
   }
 
-  const int NeighborhoodListSize() const{
+  int NeighborhoodListSize() const{
 	return neighborhoodListSize;
   }
 
-  int* const NeighborhoodList() const{
+  int* NeighborhoodList() const{
 	return neighborhoodList;
   }
 
-  double const memorySize() const{
+  double memorySize() const{
     int sizeInBytes =
       (2*numOwnedPoints + neighborhoodListSize + 2)*sizeof(int) + 3*sizeof(int*);
     double sizeInMegabytes = sizeInBytes/1048576.0;
