@@ -308,9 +308,6 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
       CORRESPONDENCE::Invert3by3Matrix(defGrad, jacobianDeterminant, defGradInv);
     TEUCHOS_TEST_FOR_EXCEPT_MSG(matrixInversionReturnCode != 0, matrixInversionErrorMessage);
     
-    // \TODO REMOVE
-    jacobianDeterminant = 1.0; // DEBUG HACK TEMPORARY NEEDS TO BE REMOVED!!!!
-
     //P = J * \sigma * F^(-T)
     CORRESPONDENCE::MatrixMultiply(false, true, jacobianDeterminant, stress, defGradInv, piolaStress);
 
