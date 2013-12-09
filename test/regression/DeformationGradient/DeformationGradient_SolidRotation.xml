@@ -61,15 +61,7 @@
 	<Parameter name="Output Frequency" type="int" value="1"/>
 	<Parameter name="Parallel Write" type="bool" value="true"/>
 	<ParameterList name="Output Variables">
-          <Parameter name="Deformation_GradientXX" type="bool" value="true"/>
-          <Parameter name="Deformation_GradientYY" type="bool" value="true"/>
-          <Parameter name="Deformation_GradientZZ" type="bool" value="true"/>
-          <Parameter name="Deformation_GradientXY" type="bool" value="true"/>
-          <Parameter name="Deformation_GradientYZ" type="bool" value="true"/>
-          <Parameter name="Deformation_GradientZX" type="bool" value="true"/>
-          <Parameter name="Deformation_GradientYX" type="bool" value="true"/>
-          <Parameter name="Deformation_GradientZY" type="bool" value="true"/>
-          <Parameter name="Deformation_GradientXZ" type="bool" value="true"/>
+      <Parameter name="Deformation_Gradient" type="bool" value="true"/>
 	  <Parameter name="Displacement" type="bool" value="true"/>
 	  <Parameter name="Velocity" type="bool" value="true"/>
 	</ParameterList>

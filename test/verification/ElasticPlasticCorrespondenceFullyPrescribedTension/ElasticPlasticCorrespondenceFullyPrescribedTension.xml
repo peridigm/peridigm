@@ -80,69 +80,13 @@
           <Parameter name="Force" type="bool" value="true"/>
           <Parameter name="Number_Of_Neighbors" type="bool" value="true"/>
           <Parameter name="Hourglass_Force_Density" type="bool" value="true"/>
-          <Parameter name="Deformation_GradientXX" type="bool" value="true"/>
-          <Parameter name="Deformation_GradientXY" type="bool" value="true"/>
-          <Parameter name="Deformation_GradientXZ" type="bool" value="true"/>
-          <Parameter name="Deformation_GradientYX" type="bool" value="true"/>
-          <Parameter name="Deformation_GradientYY" type="bool" value="true"/>
-          <Parameter name="Deformation_GradientYZ" type="bool" value="true"/>
-          <Parameter name="Deformation_GradientZX" type="bool" value="true"/>
-          <Parameter name="Deformation_GradientZY" type="bool" value="true"/>
-          <Parameter name="Deformation_GradientZZ" type="bool" value="true"/>
-          <Parameter name="Left_Stretch_TensorXX" type="bool" value="true"/>
-          <Parameter name="Left_Stretch_TensorXY" type="bool" value="true"/>
-          <Parameter name="Left_Stretch_TensorXZ" type="bool" value="true"/>
-          <Parameter name="Left_Stretch_TensorYX" type="bool" value="true"/>
-          <Parameter name="Left_Stretch_TensorYY" type="bool" value="true"/>
-          <Parameter name="Left_Stretch_TensorYZ" type="bool" value="true"/>
-          <Parameter name="Left_Stretch_TensorZX" type="bool" value="true"/>
-          <Parameter name="Left_Stretch_TensorZY" type="bool" value="true"/>
-          <Parameter name="Left_Stretch_TensorZZ" type="bool" value="true"/>
-          <Parameter name="Rotation_TensorXX" type="bool" value="true"/>
-          <Parameter name="Rotation_TensorXY" type="bool" value="true"/>
-          <Parameter name="Rotation_TensorXZ" type="bool" value="true"/>
-          <Parameter name="Rotation_TensorYX" type="bool" value="true"/>
-          <Parameter name="Rotation_TensorYY" type="bool" value="true"/>
-          <Parameter name="Rotation_TensorYZ" type="bool" value="true"/>
-          <Parameter name="Rotation_TensorZX" type="bool" value="true"/>
-          <Parameter name="Rotation_TensorZY" type="bool" value="true"/>
-          <Parameter name="Rotation_TensorZZ" type="bool" value="true"/>
-          <Parameter name="Shape_Tensor_InverseXX" type="bool" value="true"/>
-          <Parameter name="Shape_Tensor_InverseXY" type="bool" value="true"/>
-          <Parameter name="Shape_Tensor_InverseXZ" type="bool" value="true"/>
-          <Parameter name="Shape_Tensor_InverseYX" type="bool" value="true"/>
-          <Parameter name="Shape_Tensor_InverseYY" type="bool" value="true"/>
-          <Parameter name="Shape_Tensor_InverseYZ" type="bool" value="true"/>
-          <Parameter name="Shape_Tensor_InverseZX" type="bool" value="true"/>
-          <Parameter name="Shape_Tensor_InverseZY" type="bool" value="true"/>
-          <Parameter name="Shape_Tensor_InverseZZ" type="bool" value="true"/>
-          <Parameter name="Unrotated_Rate_Of_DeformationXX" type="bool" value="true"/>
-          <Parameter name="Unrotated_Rate_Of_DeformationXY" type="bool" value="true"/>
-          <Parameter name="Unrotated_Rate_Of_DeformationXZ" type="bool" value="true"/>
-          <Parameter name="Unrotated_Rate_Of_DeformationYX" type="bool" value="true"/>
-          <Parameter name="Unrotated_Rate_Of_DeformationYY" type="bool" value="true"/>
-          <Parameter name="Unrotated_Rate_Of_DeformationYZ" type="bool" value="true"/>
-          <Parameter name="Unrotated_Rate_Of_DeformationZX" type="bool" value="true"/>
-          <Parameter name="Unrotated_Rate_Of_DeformationZY" type="bool" value="true"/>
-          <Parameter name="Unrotated_Rate_Of_DeformationZZ" type="bool" value="true"/>
-          <Parameter name="Cauchy_StressXX" type="bool" value="true"/>
-          <Parameter name="Cauchy_StressXY" type="bool" value="true"/>
-          <Parameter name="Cauchy_StressXZ" type="bool" value="true"/>
-          <Parameter name="Cauchy_StressYX" type="bool" value="true"/>
-          <Parameter name="Cauchy_StressYY" type="bool" value="true"/>
-          <Parameter name="Cauchy_StressYZ" type="bool" value="true"/>
-          <Parameter name="Cauchy_StressZX" type="bool" value="true"/>
-          <Parameter name="Cauchy_StressZY" type="bool" value="true"/>
-          <Parameter name="Cauchy_StressZZ" type="bool" value="true"/>
-          <Parameter name="Unrotated_Cauchy_StressXX" type="bool" value="true"/>
-          <Parameter name="Unrotated_Cauchy_StressXY" type="bool" value="true"/>
-          <Parameter name="Unrotated_Cauchy_StressXZ" type="bool" value="true"/>
-          <Parameter name="Unrotated_Cauchy_StressYX" type="bool" value="true"/>
-          <Parameter name="Unrotated_Cauchy_StressYY" type="bool" value="true"/>
-          <Parameter name="Unrotated_Cauchy_StressYZ" type="bool" value="true"/>
-          <Parameter name="Unrotated_Cauchy_StressZX" type="bool" value="true"/>
-          <Parameter name="Unrotated_Cauchy_StressZY" type="bool" value="true"/>
-          <Parameter name="Unrotated_Cauchy_StressZZ" type="bool" value="true"/>
+          <Parameter name="Deformation_Gradient" type="bool" value="true"/>
+          <Parameter name="Left_Stretch_Tensor" type="bool" value="true"/>
+          <Parameter name="Rotation_Tensor" type="bool" value="true"/>
+          <Parameter name="Shape_Tensor_Inverse" type="bool" value="true"/>
+          <Parameter name="Unrotated_Rate_Of_Deformation" type="bool" value="true"/>
+          <Parameter name="Cauchy_Stress" type="bool" value="true"/>
+          <Parameter name="Unrotated_Cauchy_Stress" type="bool" value="true"/>
           <Parameter name="Equivalent_Plastic_Strain" type="bool" value="true"/>
           <Parameter name="Von_Mises_Stress" type="bool" value="true"/>
          </ParameterList>

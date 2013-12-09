@@ -407,15 +407,15 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
             }
             else if (spec.getLength() == PeridigmField::FULL_TENSOR) {
               vector<string> suffix;
-              suffix.push_back("_xx");
-              suffix.push_back("_xy");
-              suffix.push_back("_xz");
-              suffix.push_back("_yx");
-              suffix.push_back("_yy");
-              suffix.push_back("_yz");
-              suffix.push_back("_zx");
-              suffix.push_back("_zy");
-              suffix.push_back("_zz");
+              suffix.push_back("XX");
+              suffix.push_back("XY");
+              suffix.push_back("XZ");
+              suffix.push_back("YX");
+              suffix.push_back("YY");
+              suffix.push_back("YZ");
+              suffix.push_back("ZX");
+              suffix.push_back("ZY");
+              suffix.push_back("ZZ");
               for(int component=0 ; component<9 ; ++component){
                 // copy data into a non-interleaved array
                 for (int j=0; j<block_num_nodes; j++)
@@ -737,15 +737,15 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
       TEUCHOS_TEST_FOR_EXCEPTION(spec.getRelation() != PeridigmField::ELEMENT, std::invalid_argument,
                                  "PeridigmNS::OutputManager_ExodusII, FULL_TENSOR variables are valid only for element data.\n");
       vector<string> suffix;
-      suffix.push_back("_xx");
-      suffix.push_back("_xy");
-      suffix.push_back("_xz");
-      suffix.push_back("_yx");
-      suffix.push_back("_yy");
-      suffix.push_back("_yz");
-      suffix.push_back("_zx");
-      suffix.push_back("_zy");
-      suffix.push_back("_zz");
+      suffix.push_back("XX");
+      suffix.push_back("XY");
+      suffix.push_back("XZ");
+      suffix.push_back("YX");
+      suffix.push_back("YY");
+      suffix.push_back("YZ");
+      suffix.push_back("ZX");
+      suffix.push_back("ZY");
+      suffix.push_back("ZZ");
       for(int i=0 ; i<9 ; ++i){
         string tmpname = name+suffix[i];
         element_output_field_map.insert( std::pair<string,int>(tmpname,element_output_field_index) );

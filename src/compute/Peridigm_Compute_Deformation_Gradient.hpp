@@ -47,15 +47,7 @@
 
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Deformation_GradientXX,Compute_Deformation_Gradient)
-ComputeClass(Deformation_GradientXY,Compute_Deformation_Gradient)
-ComputeClass(Deformation_GradientXZ,Compute_Deformation_Gradient)
-ComputeClass(Deformation_GradientYX,Compute_Deformation_Gradient)
-ComputeClass(Deformation_GradientYY,Compute_Deformation_Gradient)
-ComputeClass(Deformation_GradientYZ,Compute_Deformation_Gradient)
-ComputeClass(Deformation_GradientZX,Compute_Deformation_Gradient)
-ComputeClass(Deformation_GradientZY,Compute_Deformation_Gradient)
-ComputeClass(Deformation_GradientZZ,Compute_Deformation_Gradient)
+ComputeClass(Deformation_Gradient,Compute_Deformation_Gradient)
 
 #else
 
@@ -93,18 +85,8 @@ namespace PeridigmNS {
     int m_horizonFId;
     int m_modelCoordinatesFId;
     int m_coordinatesFId;
-    int m_shapeTensorInverseXXFId, m_shapeTensorInverseXYFId, m_shapeTensorInverseXZFId,
-        m_shapeTensorInverseYXFId, m_shapeTensorInverseYYFId, m_shapeTensorInverseYZFId,
-        m_shapeTensorInverseZXFId, m_shapeTensorInverseZYFId, m_shapeTensorInverseZZFId;
-    int m_deformationGradientXXFId, m_deformationGradientXYFId, m_deformationGradientXZFId,
-        m_deformationGradientYXFId, m_deformationGradientYYFId, m_deformationGradientYZFId,
-        m_deformationGradientZXFId, m_deformationGradientZYFId, m_deformationGradientZZFId;
-
-    // Unique ID for each instance of this class
-    int myID;
-    // Static member variable to generate IDs
-    static int myIDGenerator;
-
+    int m_shapeTensorInverseFId;
+    int m_deformationGradientFId;
   };
 
 }
