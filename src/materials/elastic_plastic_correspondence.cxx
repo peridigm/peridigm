@@ -56,33 +56,9 @@ namespace CORRESPONDENCE {
 template<typename ScalarT>
 void updateElasticPerfectlyPlasticCauchyStress
 (
-const ScalarT* unrotatedRateOfDeformationXX, 
-const ScalarT* unrotatedRateOfDeformationXY, 
-const ScalarT* unrotatedRateOfDeformationXZ, 
-const ScalarT* unrotatedRateOfDeformationYX, 
-const ScalarT* unrotatedRateOfDeformationYY, 
-const ScalarT* unrotatedRateOfDeformationYZ, 
-const ScalarT* unrotatedRateOfDeformationZX, 
-const ScalarT* unrotatedRateOfDeformationZY, 
-const ScalarT* unrotatedRateOfDeformationZZ, 
-const ScalarT* cauchyStressNXX, 
-const ScalarT* cauchyStressNXY, 
-const ScalarT* cauchyStressNXZ, 
-const ScalarT* cauchyStressNYX, 
-const ScalarT* cauchyStressNYY, 
-const ScalarT* cauchyStressNYZ, 
-const ScalarT* cauchyStressNZX, 
-const ScalarT* cauchyStressNZY, 
-const ScalarT* cauchyStressNZZ, 
-ScalarT* cauchyStressNP1XX, 
-ScalarT* cauchyStressNP1XY, 
-ScalarT* cauchyStressNP1XZ, 
-ScalarT* cauchyStressNP1YX, 
-ScalarT* cauchyStressNP1YY, 
-ScalarT* cauchyStressNP1YZ, 
-ScalarT* cauchyStressNP1ZX, 
-ScalarT* cauchyStressNP1ZY, 
-ScalarT* cauchyStressNP1ZZ, 
+const ScalarT* unrotatedRateOfDeformation, 
+const ScalarT* cauchyStressN, 
+ScalarT* cauchyStressNP1, 
 ScalarT* vonMisesStress,
 const ScalarT* equivalentPlasticStrainN,
 ScalarT* equivalentPlasticStrainNP1,
@@ -94,138 +70,74 @@ const double dt
 )
 {
   
-  const ScalarT* rateOfDefXX = unrotatedRateOfDeformationXX;
-  const ScalarT* rateOfDefXY = unrotatedRateOfDeformationXY;
-  const ScalarT* rateOfDefXZ = unrotatedRateOfDeformationXZ;
-  const ScalarT* rateOfDefYX = unrotatedRateOfDeformationYX;
-  const ScalarT* rateOfDefYY = unrotatedRateOfDeformationYY;
-  const ScalarT* rateOfDefYZ = unrotatedRateOfDeformationYZ;
-  const ScalarT* rateOfDefZX = unrotatedRateOfDeformationZX;
-  const ScalarT* rateOfDefZY = unrotatedRateOfDeformationZY;
-  const ScalarT* rateOfDefZZ = unrotatedRateOfDeformationZZ;
-  const ScalarT* stressNXX = cauchyStressNXX;
-  const ScalarT* stressNXY = cauchyStressNXY;
-  const ScalarT* stressNXZ = cauchyStressNXZ;
-  const ScalarT* stressNYX = cauchyStressNYX;
-  const ScalarT* stressNYY = cauchyStressNYY;
-  const ScalarT* stressNYZ = cauchyStressNYZ;
-  const ScalarT* stressNZX = cauchyStressNZX;
-  const ScalarT* stressNZY = cauchyStressNZY;
-  const ScalarT* stressNZZ = cauchyStressNZZ;
-  ScalarT* stressNP1XX = cauchyStressNP1XX;
-  ScalarT* stressNP1XY = cauchyStressNP1XY;
-  ScalarT* stressNP1XZ = cauchyStressNP1XZ;
-  ScalarT* stressNP1YX = cauchyStressNP1YX;
-  ScalarT* stressNP1YY = cauchyStressNP1YY;
-  ScalarT* stressNP1YZ = cauchyStressNP1YZ;
-  ScalarT* stressNP1ZX = cauchyStressNP1ZX;
-  ScalarT* stressNP1ZY = cauchyStressNP1ZY;
-  ScalarT* stressNP1ZZ = cauchyStressNP1ZZ;
+  const ScalarT* rateOfDef = unrotatedRateOfDeformation;
+  const ScalarT* stressN = cauchyStressN;
+  ScalarT* stressNP1 = cauchyStressNP1;
 
   ScalarT* vmStress = vonMisesStress;
 
   const ScalarT* eqpsN = equivalentPlasticStrainN;
   ScalarT* eqpsNP1 = equivalentPlasticStrainNP1;
 
-  ScalarT strainIncXX, strainIncXY, strainIncXZ;
-  ScalarT strainIncYX, strainIncYY, strainIncYZ;
-  ScalarT strainIncZX, strainIncZY, strainIncZZ;
-
-  ScalarT deviatoricStrainIncXX, deviatoricStrainIncXY, deviatoricStrainIncXZ;
-  ScalarT deviatoricStrainIncYX, deviatoricStrainIncYY, deviatoricStrainIncYZ;
-  ScalarT deviatoricStrainIncZX, deviatoricStrainIncZY, deviatoricStrainIncZZ;
-  
-  ScalarT deviatoricStressNXX, deviatoricStressNXY, deviatoricStressNXZ;
-  ScalarT deviatoricStressNYX, deviatoricStressNYY, deviatoricStressNYZ;
-  ScalarT deviatoricStressNZX, deviatoricStressNZY, deviatoricStressNZZ;
+  ScalarT strainInc[9];
+  ScalarT deviatoricStrainInc[9];
+  ScalarT deviatoricStressN[9];
   ScalarT deviatoricStressMagnitudeN;
 
-  ScalarT deviatoricStressNP1XX, deviatoricStressNP1XY, deviatoricStressNP1XZ;
-  ScalarT deviatoricStressNP1YX, deviatoricStressNP1YY, deviatoricStressNP1YZ;
-  ScalarT deviatoricStressNP1ZX, deviatoricStressNP1ZY, deviatoricStressNP1ZZ;
+  ScalarT deviatoricStressNP1[9];
   ScalarT deviatoricStressMagnitudeNP1;
 
-  ScalarT tempAXX, tempAXY, tempAXZ;
-  ScalarT tempAYX, tempAYY, tempAYZ;
-  ScalarT tempAZX, tempAZY, tempAZZ;
-
-  ScalarT tempBXX, tempBXY, tempBXZ;
-  ScalarT tempBYX, tempBYY, tempBYZ;
-  ScalarT tempBZX, tempBZY, tempBZZ;
+  ScalarT tempA[9];
+  ScalarT tempB[9];
 
   ScalarT dilatationInc;
   ScalarT sphericalStressN;
   ScalarT sphericalStressNP1;
   ScalarT tempScalar;
-  ScalarT scaleFactor1;
-  ScalarT scaleFactor2;
   ScalarT yieldFunction;
 
-  for(int iID=0 ; iID<numPoints ; ++iID, 
-        ++rateOfDefXX, ++rateOfDefXY, ++rateOfDefXZ,
-        ++rateOfDefYX, ++rateOfDefYY, ++rateOfDefYZ,
-        ++rateOfDefZX, ++rateOfDefZY, ++rateOfDefZZ,
-        ++stressNXX, ++stressNXY, ++stressNXZ,
-        ++stressNYX, ++stressNYY, ++stressNYZ,
-        ++stressNZX, ++stressNZY, ++stressNZZ,
-        ++stressNP1XX, ++stressNP1XY, ++stressNP1XZ,
-        ++stressNP1YX, ++stressNP1YY, ++stressNP1YZ,
-        ++stressNP1ZX, ++stressNP1ZY, ++stressNP1ZZ,
-        ++vmStress,++eqpsN,++eqpsNP1){
+  for(int iID=0 ; iID<numPoints ; ++iID, rateOfDef+=9, stressN+=9,
+        stressNP1+=9, ++vmStress,++eqpsN,++eqpsNP1){
 
-      strainIncXX = dt * (*rateOfDefXX);
-      strainIncXY = dt * (*rateOfDefXY);
-      strainIncXZ = dt * (*rateOfDefXZ);
-      strainIncYX = dt * (*rateOfDefYX);
-      strainIncYY = dt * (*rateOfDefYY);
-      strainIncYZ = dt * (*rateOfDefYZ);
-      strainIncZX = dt * (*rateOfDefZX);
-      strainIncZY = dt * (*rateOfDefZY);
-      strainIncZZ = dt * (*rateOfDefZZ);
+      //strainInc = dt * rateOfDef
+      for (int i = 0; i < 9; i++) {
+          strainInc[i] = *(rateOfDef+i)*dt;
+          deviatoricStrainInc[i] = strainInc[i];
+      }
 
-      dilatationInc = strainIncXX + strainIncYY + strainIncZZ;
+      //dilatation
+      dilatationInc = strainInc[0] + strainInc[4] + strainInc[8];
 
-      deviatoricStrainIncXX = strainIncXX - dilatationInc/3.0;
-      deviatoricStrainIncXY = strainIncXY;
-      deviatoricStrainIncXZ = strainIncXZ;
-      deviatoricStrainIncYX = strainIncYX;
-      deviatoricStrainIncYY = strainIncYY - dilatationInc/3.0;
-      deviatoricStrainIncYZ = strainIncYZ;
-      deviatoricStrainIncZX = strainIncZX;
-      deviatoricStrainIncZY = strainIncZY;
-      deviatoricStrainIncZZ = strainIncZZ - dilatationInc/3.0;
+      //deviatoric strain
+      deviatoricStrainInc[0] -= dilatationInc/3.0;
+      deviatoricStrainInc[4] -= dilatationInc/3.0;
+      deviatoricStrainInc[8] -= dilatationInc/3.0;
 
-      // Compute the elastic ``trial'' stress
-      *stressNP1XX = (*stressNXX) + 2.0*shearMod*deviatoricStrainIncXX + bulkMod*dilatationInc;
-      *stressNP1XY = (*stressNXY) + 2.0*shearMod*deviatoricStrainIncXY;
-      *stressNP1XZ = (*stressNXZ) + 2.0*shearMod*deviatoricStrainIncXZ;
-      *stressNP1YX = (*stressNYX) + 2.0*shearMod*deviatoricStrainIncYX;
-      *stressNP1YY = (*stressNYY) + 2.0*shearMod*deviatoricStrainIncYY + bulkMod*dilatationInc;
-      *stressNP1YZ = (*stressNYZ) + 2.0*shearMod*deviatoricStrainIncYZ;
-      *stressNP1ZX = (*stressNZX) + 2.0*shearMod*deviatoricStrainIncZX;
-      *stressNP1ZY = (*stressNZY) + 2.0*shearMod*deviatoricStrainIncZY;
-      *stressNP1ZZ = (*stressNZZ) + 2.0*shearMod*deviatoricStrainIncZZ + bulkMod*dilatationInc;
+      //Compute an elastic ``trail stress''
+      for (int i = 0; i < 9; i++) {
+          *(stressNP1+i) = *(stressN+i) + deviatoricStrainInc[i]*2.0*shearMod;
+      }
+      *(stressNP1) += bulkMod*dilatationInc;
+      *(stressNP1+4) += bulkMod*dilatationInc;
+      *(stressNP1+8) += bulkMod*dilatationInc;
 
-
-      sphericalStressNP1 = ((*stressNP1XX) + (*stressNP1YY) + (*stressNP1ZZ))/3.0;
+      sphericalStressNP1 = (*(stressNP1) + *(stressNP1+4) + *(stressNP1+8))/3.0;
 
       // Compute the ``trial'' von Mises stress
-      deviatoricStressNP1XX = *stressNP1XX - sphericalStressNP1;
-      deviatoricStressNP1XY = *stressNP1XY;
-      deviatoricStressNP1XZ = *stressNP1XZ;
-      deviatoricStressNP1YX = *stressNP1YX;
-      deviatoricStressNP1YY = *stressNP1YY - sphericalStressNP1;
-      deviatoricStressNP1YZ = *stressNP1YZ;
-      deviatoricStressNP1ZX = *stressNP1ZX;
-      deviatoricStressNP1ZY = *stressNP1ZY;
-      deviatoricStressNP1ZZ = *stressNP1ZZ - sphericalStressNP1;
+      for (int i = 0; i < 9; i++) {
+          deviatoricStressNP1[i] = *(stressNP1+i);
+      }
+      deviatoricStressNP1[0] -= sphericalStressNP1;
+      deviatoricStressNP1[4] -= sphericalStressNP1;
+      deviatoricStressNP1[8] -= sphericalStressNP1;
 
-      tempScalar = TensorContraction(deviatoricStressNP1XX, deviatoricStressNP1XY, deviatoricStressNP1XZ, 
-                                     deviatoricStressNP1YX, deviatoricStressNP1YY, deviatoricStressNP1YZ, 
-                                     deviatoricStressNP1ZX, deviatoricStressNP1ZY, deviatoricStressNP1ZZ, 
-                                     deviatoricStressNP1XX, deviatoricStressNP1XY, deviatoricStressNP1XZ, 
-                                     deviatoricStressNP1YX, deviatoricStressNP1YY, deviatoricStressNP1YZ, 
-                                     deviatoricStressNP1ZX, deviatoricStressNP1ZY, deviatoricStressNP1ZZ); 
+      // Compute \sigma_ij * \sigma_ij
+      tempScalar = 0.0;
+      for (int j = 0; j < 3; j++) {
+          for (int i = 0; i < 3; i++) {
+              tempScalar += deviatoricStressNP1[i+3*j] * deviatoricStressNP1[i+3*j];
+          }
+      }
 
       *vmStress = sqrt(3.0/2.0*tempScalar);
 
@@ -233,7 +145,7 @@ const double dt
 
       //If true, the step is plastic and we need to return to the yield
       //surface.  
-      if(*vmStress > yieldFunction){
+      if(*vmStress > yieldFunction) {
 
           // Avoid divide-by-zero
           deviatoricStressMagnitudeNP1 = std::max(1.0e-20,sqrt(tempScalar));
@@ -242,35 +154,24 @@ const double dt
           tempScalar = sqrt(2.0/3.0)*yieldFunction/deviatoricStressMagnitudeNP1;
 
           // Return the deviatoric stress to the yield surface
-          deviatoricStressNP1XX *= tempScalar; 
-          deviatoricStressNP1XY *= tempScalar;
-          deviatoricStressNP1XZ *= tempScalar;
-          deviatoricStressNP1YX *= tempScalar;
-          deviatoricStressNP1YY *= tempScalar;
-          deviatoricStressNP1YZ *= tempScalar;
-          deviatoricStressNP1ZX *= tempScalar;
-          deviatoricStressNP1ZY *= tempScalar;
-          deviatoricStressNP1ZZ *= tempScalar;
+          for (int i = 0; i < 9; i++) {
+              deviatoricStressNP1[i] *= tempScalar; 
+              *(stressNP1+i) = deviatoricStressNP1[i];
+          }
 
           // Update the Cauchy Stress
-          *stressNP1XX = deviatoricStressNP1XX + sphericalStressNP1;
-          *stressNP1XY = deviatoricStressNP1XY;
-          *stressNP1XZ = deviatoricStressNP1XZ;
-          *stressNP1YX = deviatoricStressNP1YX;
-          *stressNP1YY = deviatoricStressNP1YY + sphericalStressNP1;
-          *stressNP1YZ = deviatoricStressNP1YZ;
-          *stressNP1ZX = deviatoricStressNP1ZX;
-          *stressNP1ZY = deviatoricStressNP1ZY;
-          *stressNP1ZZ = deviatoricStressNP1ZZ + sphericalStressNP1;
+          *stressNP1 += sphericalStressNP1;
+          *(stressNP1+4) += sphericalStressNP1;
+          *(stressNP1+8) += sphericalStressNP1;
 
           // Update the von Mises stress now that the state of stress is on the
           // yield surface
-          tempScalar = TensorContraction(deviatoricStressNP1XX, deviatoricStressNP1XY, deviatoricStressNP1XZ, 
-                                         deviatoricStressNP1YX, deviatoricStressNP1YY, deviatoricStressNP1YZ, 
-                                         deviatoricStressNP1ZX, deviatoricStressNP1ZY, deviatoricStressNP1ZZ, 
-                                         deviatoricStressNP1XX, deviatoricStressNP1XY, deviatoricStressNP1XZ, 
-                                         deviatoricStressNP1YX, deviatoricStressNP1YY, deviatoricStressNP1YZ, 
-                                         deviatoricStressNP1ZX, deviatoricStressNP1ZY, deviatoricStressNP1ZZ); 
+          tempScalar = 0.0;
+          for (int j = 0; j < 3; j++) {
+              for (int i = 0; i < 3; i++) {
+                  tempScalar += deviatoricStressNP1[i+3*j] * deviatoricStressNP1[i+3*j];
+              }
+          }
 
           *vmStress = sqrt(3.0/2.0*tempScalar);
 
@@ -287,64 +188,44 @@ const double dt
           // First go back to step N and compute deviatoric stress and its
           // magnitude.  We didn't do this earlier because it wouldn't be necassary
           // if the step is elastic.
-          sphericalStressN = ((*stressNXX) + (*stressNYY) + (*stressNZZ))/3.0;
+          sphericalStressN = (*stressN + *(stressN+4) + *(stressN+8))/3.0;
 
-          deviatoricStressNXX = *stressNXX - sphericalStressN;
-          deviatoricStressNXY = *stressNXY;
-          deviatoricStressNXZ = *stressNXZ;
-          deviatoricStressNYX = *stressNYX;
-          deviatoricStressNYY = *stressNYY - sphericalStressN;
-          deviatoricStressNYZ = *stressNYZ;
-          deviatoricStressNZX = *stressNZX;
-          deviatoricStressNZY = *stressNZY;
-          deviatoricStressNZZ = *stressNZZ - sphericalStressN;
+          for (int i = 0; i < 9; i++) {
+              deviatoricStressN[i] = *(stressN+i);
+          }
+          deviatoricStressN[0] -= sphericalStressN;
+          deviatoricStressN[4] -= sphericalStressN;
+          deviatoricStressN[8] -= sphericalStressN;
 
-          tempScalar = TensorContraction(deviatoricStressNXX, deviatoricStressNXY, deviatoricStressNXZ, 
-                                         deviatoricStressNYX, deviatoricStressNYY, deviatoricStressNYZ, 
-                                         deviatoricStressNZX, deviatoricStressNZY, deviatoricStressNZZ, 
-                                         deviatoricStressNXX, deviatoricStressNXY, deviatoricStressNXZ, 
-                                         deviatoricStressNYX, deviatoricStressNYY, deviatoricStressNYZ, 
-                                         deviatoricStressNZX, deviatoricStressNZY, deviatoricStressNZZ); 
+          tempScalar = 0.0;
+          for (int j = 0; j < 3; j++) {
+              for (int i = 0; i < 3; i++) {
+                  tempScalar += deviatoricStressN[i+3*j] * deviatoricStressN[i+3*j];
+              }
+          }
 
           //Ensure that this is at least a very small number to avoid a divide by
           //zero
           deviatoricStressMagnitudeN = std::max(1.0e-20,sqrt(tempScalar));
 
-          //The plastic deviatoric strain increment tensor \Delta e_{plastic} = \Delta e_{total} - \Delta e_{elastic}
-          tempAXX = deviatoricStrainIncXX - (deviatoricStressNP1XX - deviatoricStressNXX) / 2.0 / shearMod; 
-          tempAXY = deviatoricStrainIncXY - (deviatoricStressNP1XY - deviatoricStressNXY) / 2.0 / shearMod; 
-          tempAXZ = deviatoricStrainIncXZ - (deviatoricStressNP1XZ - deviatoricStressNXZ) / 2.0 / shearMod; 
-          tempAYX = deviatoricStrainIncYX - (deviatoricStressNP1YX - deviatoricStressNYX) / 2.0 / shearMod; 
-          tempAYY = deviatoricStrainIncYY - (deviatoricStressNP1YY - deviatoricStressNYY) / 2.0 / shearMod; 
-          tempAYZ = deviatoricStrainIncYZ - (deviatoricStressNP1YZ - deviatoricStressNYZ) / 2.0 / shearMod; 
-          tempAZX = deviatoricStrainIncZX - (deviatoricStressNP1ZX - deviatoricStressNZX) / 2.0 / shearMod; 
-          tempAZY = deviatoricStrainIncZY - (deviatoricStressNP1ZY - deviatoricStressNZY) / 2.0 / shearMod; 
-          tempAZZ = deviatoricStrainIncZZ - (deviatoricStressNP1ZZ - deviatoricStressNZZ) / 2.0 / shearMod; 
-
-          //Deviatoric stress increment.  This is effectively an average of the deviatoric stress 
-          //direction unit tensors at the half-step between steps NP1 and N
-          scaleFactor1 = 1.0/deviatoricStressMagnitudeNP1/2.0;
-          scaleFactor2 = 1.0/deviatoricStressMagnitudeN/2.0;
-          MatrixUpdate(scaleFactor1, scaleFactor2,
-                       deviatoricStressNP1XX, deviatoricStressNP1XY, deviatoricStressNP1XZ,
-                       deviatoricStressNP1YX, deviatoricStressNP1YY, deviatoricStressNP1YZ,
-                       deviatoricStressNP1ZX, deviatoricStressNP1ZY, deviatoricStressNP1ZZ,
-                       deviatoricStressNXX, deviatoricStressNXY, deviatoricStressNXZ,
-                       deviatoricStressNYX, deviatoricStressNYY, deviatoricStressNYZ,
-                       deviatoricStressNZX, deviatoricStressNZY, deviatoricStressNZZ,
-                       tempBXX, tempBXY, tempBXZ,
-                       tempBYX, tempBYY, tempBYZ,
-                       tempBZX, tempBZY, tempBZZ);
-
+          for (int i = 0; i < 9; i++) {
+              //tempA -- The plastic deviatoric strain increment tensor \Delta e_{plastic} = \Delta e_{total} - \Delta e_{elastic}
+              tempA[i] = deviatoricStrainInc[i] - (deviatoricStressNP1[i] - deviatoricStressN[i]) / 2.0 / shearMod;
+              //tempB -- Deviatoric stress increment.  This is effectively an average of the deviatoric stress 
+              //direction unit tensors at the half-step between steps NP1 and N
+              tempB[i] = (deviatoricStressNP1[i]/deviatoricStressMagnitudeNP1 + 
+                      deviatoricStressN[i]/deviatoricStressMagnitudeN)/2.0;
+          }
+          
           // Contract the two tensors. This represents a projection of the plastic
           // strain increment tensor onto the "direction" of deviatoric stress
           // increment
-          tempScalar = TensorContraction(tempAXX, tempAXY, tempAXZ, 
-                                         tempAYX, tempAYY, tempAYZ, 
-                                         tempAZX, tempAZY, tempAZZ, 
-                                         tempBXX, tempBXY, tempBXZ, 
-                                         tempBYX, tempBYY, tempBYZ, 
-                                         tempBZX, tempBZY, tempBZZ); 
+          tempScalar = 0.0;
+          for (int j = 0; j < 3; j++) {
+              for (int i = 0; i < 3; i++) {
+                  tempScalar += tempA[i+3*j] * tempB[i+3*j];
+              }
+          }
 
           // Increment the plastic strain
           *eqpsNP1 = *eqpsN + std::max(0.0, sqrt(2.0/3.0) * tempScalar);
@@ -360,33 +241,9 @@ const double dt
 // Explicit template instantiation for double
 template void updateElasticPerfectlyPlasticCauchyStress<double>
 (
-const double* unrotatedRateOfDeformationXX, 
-const double* unrotatedRateOfDeformationXY, 
-const double* unrotatedRateOfDeformationXZ, 
-const double* unrotatedRateOfDeformationYX, 
-const double* unrotatedRateOfDeformationYY, 
-const double* unrotatedRateOfDeformationYZ, 
-const double* unrotatedRateOfDeformationZX, 
-const double* unrotatedRateOfDeformationZY, 
-const double* unrotatedRateOfDeformationZZ, 
-const double* cauchyStressNXX, 
-const double* cauchyStressNXY, 
-const double* cauchyStressNXZ, 
-const double* cauchyStressNYX, 
-const double* cauchyStressNYY, 
-const double* cauchyStressNYZ, 
-const double* cauchyStressNZX, 
-const double* cauchyStressNZY, 
-const double* cauchyStressNZZ, 
-double* cauchyStressNP1XX, 
-double* cauchyStressNP1XY, 
-double* cauchyStressNP1XZ, 
-double* cauchyStressNP1YX, 
-double* cauchyStressNP1YY, 
-double* cauchyStressNP1YZ, 
-double* cauchyStressNP1ZX, 
-double* cauchyStressNP1ZY, 
-double* cauchyStressNP1ZZ, 
+const double* unrotatedRateOfDeformation, 
+const double* cauchyStressN, 
+double* cauchyStressNP1, 
 double* vonMisesStress,
 const double* equivalentPlasticStrainN,
 double* equivalentPlasticStrainNP1,
@@ -400,33 +257,9 @@ const double dt
 /** Explicit template instantiation for Sacado::Fad::DFad<double>. */
 template void updateElasticPerfectlyPlasticCauchyStress<Sacado::Fad::DFad<double> >
 (
-const Sacado::Fad::DFad<double>* unrotatedRateOfDeformationXX, 
-const Sacado::Fad::DFad<double>* unrotatedRateOfDeformationXY, 
-const Sacado::Fad::DFad<double>* unrotatedRateOfDeformationXZ, 
-const Sacado::Fad::DFad<double>* unrotatedRateOfDeformationYX, 
-const Sacado::Fad::DFad<double>* unrotatedRateOfDeformationYY, 
-const Sacado::Fad::DFad<double>* unrotatedRateOfDeformationYZ, 
-const Sacado::Fad::DFad<double>* unrotatedRateOfDeformationZX, 
-const Sacado::Fad::DFad<double>* unrotatedRateOfDeformationZY, 
-const Sacado::Fad::DFad<double>* unrotatedRateOfDeformationZZ, 
-const Sacado::Fad::DFad<double>* cauchyStressNXX, 
-const Sacado::Fad::DFad<double>* cauchyStressNXY, 
-const Sacado::Fad::DFad<double>* cauchyStressNXZ, 
-const Sacado::Fad::DFad<double>* cauchyStressNYX, 
-const Sacado::Fad::DFad<double>* cauchyStressNYY, 
-const Sacado::Fad::DFad<double>* cauchyStressNYZ, 
-const Sacado::Fad::DFad<double>* cauchyStressNZX, 
-const Sacado::Fad::DFad<double>* cauchyStressNZY, 
-const Sacado::Fad::DFad<double>* cauchyStressNZZ, 
-Sacado::Fad::DFad<double>* cauchyStressNP1XX, 
-Sacado::Fad::DFad<double>* cauchyStressNP1XY, 
-Sacado::Fad::DFad<double>* cauchyStressNP1XZ, 
-Sacado::Fad::DFad<double>* cauchyStressNP1YX, 
-Sacado::Fad::DFad<double>* cauchyStressNP1YY, 
-Sacado::Fad::DFad<double>* cauchyStressNP1YZ, 
-Sacado::Fad::DFad<double>* cauchyStressNP1ZX, 
-Sacado::Fad::DFad<double>* cauchyStressNP1ZY, 
-Sacado::Fad::DFad<double>* cauchyStressNP1ZZ, 
+const Sacado::Fad::DFad<double>* unrotatedRateOfDeformation, 
+const Sacado::Fad::DFad<double>* cauchyStressN, 
+Sacado::Fad::DFad<double>* cauchyStressNP1, 
 Sacado::Fad::DFad<double>* vonMisesStress,
 const Sacado::Fad::DFad<double>* equivalentPlasticStrainN,
 Sacado::Fad::DFad<double>* equivalentPlasticStrainNP1,

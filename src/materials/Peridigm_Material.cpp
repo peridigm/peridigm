@@ -48,7 +48,6 @@
 #include "Peridigm_Material.hpp"
 #include "Peridigm_Field.hpp"
 #include <Teuchos_Assert.hpp>
-#include <Epetra_SerialDenseMatrix.h>
 #include <Epetra_SerialComm.h>
 #include <boost/math/special_functions/fpclassify.hpp>
 

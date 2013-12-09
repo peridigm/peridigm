@@ -60,27 +60,13 @@ PeridigmNS::CorrespondenceMaterial::CorrespondenceMaterial(const Teuchos::Parame
     m_horizonFieldId(-1), m_volumeFieldId(-1),
     m_modelCoordinatesFieldId(-1), m_coordinatesFieldId(-1), m_velocitiesFieldId(-1), 
     m_hourglassForceDensityFieldId(-1), m_forceDensityFieldId(-1), m_bondDamageFieldId(-1),
-    m_deformationGradientXXFieldId(-1), m_deformationGradientXYFieldId(-1), m_deformationGradientXZFieldId(-1), 
-    m_deformationGradientYXFieldId(-1), m_deformationGradientYYFieldId(-1), m_deformationGradientYZFieldId(-1), 
-    m_deformationGradientZXFieldId(-1), m_deformationGradientZYFieldId(-1), m_deformationGradientZZFieldId(-1),
-    m_shapeTensorInverseXXFieldId(-1), m_shapeTensorInverseXYFieldId(-1), m_shapeTensorInverseXZFieldId(-1), 
-    m_shapeTensorInverseYXFieldId(-1), m_shapeTensorInverseYYFieldId(-1), m_shapeTensorInverseYZFieldId(-1), 
-    m_shapeTensorInverseZXFieldId(-1), m_shapeTensorInverseZYFieldId(-1), m_shapeTensorInverseZZFieldId(-1),
-    m_leftStretchTensorXXFieldId(-1), m_leftStretchTensorXYFieldId(-1), m_leftStretchTensorXZFieldId(-1), 
-    m_leftStretchTensorYXFieldId(-1), m_leftStretchTensorYYFieldId(-1), m_leftStretchTensorYZFieldId(-1), 
-    m_leftStretchTensorZXFieldId(-1), m_leftStretchTensorZYFieldId(-1), m_leftStretchTensorZZFieldId(-1),
-    m_rotationTensorXXFieldId(-1), m_rotationTensorXYFieldId(-1), m_rotationTensorXZFieldId(-1), 
-    m_rotationTensorYXFieldId(-1), m_rotationTensorYYFieldId(-1), m_rotationTensorYZFieldId(-1), 
-    m_rotationTensorZXFieldId(-1), m_rotationTensorZYFieldId(-1), m_rotationTensorZZFieldId(-1),
-    m_unrotatedCauchyStressXXFieldId(-1), m_unrotatedCauchyStressXYFieldId(-1), m_unrotatedCauchyStressXZFieldId(-1), 
-    m_unrotatedCauchyStressYXFieldId(-1), m_unrotatedCauchyStressYYFieldId(-1), m_unrotatedCauchyStressYZFieldId(-1), 
-    m_unrotatedCauchyStressZXFieldId(-1), m_unrotatedCauchyStressZYFieldId(-1), m_unrotatedCauchyStressZZFieldId(-1),
-    m_cauchyStressXXFieldId(-1), m_cauchyStressXYFieldId(-1), m_cauchyStressXZFieldId(-1), 
-    m_cauchyStressYXFieldId(-1), m_cauchyStressYYFieldId(-1), m_cauchyStressYZFieldId(-1), 
-    m_cauchyStressZXFieldId(-1), m_cauchyStressZYFieldId(-1), m_cauchyStressZZFieldId(-1),
-    m_unrotatedRateOfDeformationXXFieldId(-1), m_unrotatedRateOfDeformationXYFieldId(-1), m_unrotatedRateOfDeformationXZFieldId(-1), 
-    m_unrotatedRateOfDeformationYXFieldId(-1), m_unrotatedRateOfDeformationYYFieldId(-1), m_unrotatedRateOfDeformationYZFieldId(-1), 
-    m_unrotatedRateOfDeformationZXFieldId(-1), m_unrotatedRateOfDeformationZYFieldId(-1), m_unrotatedRateOfDeformationZZFieldId(-1)
+    m_deformationGradientFieldId(-1),
+    m_shapeTensorInverseFieldId(-1),
+    m_leftStretchTensorFieldId(-1),
+    m_rotationTensorFieldId(-1), 
+    m_unrotatedCauchyStressFieldId(-1),
+    m_cauchyStressFieldId(-1), 
+    m_unrotatedRateOfDeformationFieldId(-1)
 {
   //! \todo Add meaningful asserts on material properties.
   m_bulkModulus = calculateBulkModulus(params);
@@ -101,69 +87,13 @@ PeridigmNS::CorrespondenceMaterial::CorrespondenceMaterial(const Teuchos::Parame
   m_forceDensityFieldId            = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force_Density");
   m_hourglassForceDensityFieldId   = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Hourglass_Force_Density");
   m_bondDamageFieldId              = fieldManager.getFieldId(PeridigmField::BOND,    PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Bond_Damage");
-  m_deformationGradientXXFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientXX");
-  m_deformationGradientXYFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientXY");
-  m_deformationGradientXZFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientXZ");
-  m_deformationGradientYXFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientYX");
-  m_deformationGradientYYFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientYY");
-  m_deformationGradientYZFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientYZ");
-  m_deformationGradientZXFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientZX");
-  m_deformationGradientZYFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientZY");
-  m_deformationGradientZZFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Deformation_GradientZZ");
-  m_leftStretchTensorXXFieldId     = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Left_Stretch_TensorXX");
-  m_leftStretchTensorXYFieldId     = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Left_Stretch_TensorXY");
-  m_leftStretchTensorXZFieldId     = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Left_Stretch_TensorXZ");
-  m_leftStretchTensorYXFieldId     = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Left_Stretch_TensorYX");
-  m_leftStretchTensorYYFieldId     = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Left_Stretch_TensorYY");
-  m_leftStretchTensorYZFieldId     = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Left_Stretch_TensorYZ");
-  m_leftStretchTensorZXFieldId     = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Left_Stretch_TensorZX");
-  m_leftStretchTensorZYFieldId     = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Left_Stretch_TensorZY");
-  m_leftStretchTensorZZFieldId     = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Left_Stretch_TensorZZ");
-  m_rotationTensorXXFieldId        = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Rotation_TensorXX");
-  m_rotationTensorXYFieldId        = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Rotation_TensorXY");
-  m_rotationTensorXZFieldId        = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Rotation_TensorXZ");
-  m_rotationTensorYXFieldId        = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Rotation_TensorYX");
-  m_rotationTensorYYFieldId        = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Rotation_TensorYY");
-  m_rotationTensorYZFieldId        = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Rotation_TensorYZ");
-  m_rotationTensorZXFieldId        = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Rotation_TensorZX");
-  m_rotationTensorZYFieldId        = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Rotation_TensorZY");
-  m_rotationTensorZZFieldId        = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Rotation_TensorZZ");
-  m_shapeTensorInverseXXFieldId    = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Shape_Tensor_InverseXX");
-  m_shapeTensorInverseXYFieldId    = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Shape_Tensor_InverseXY");
-  m_shapeTensorInverseXZFieldId    = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Shape_Tensor_InverseXZ");
-  m_shapeTensorInverseYXFieldId    = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Shape_Tensor_InverseYX");
-  m_shapeTensorInverseYYFieldId    = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Shape_Tensor_InverseYY");
-  m_shapeTensorInverseYZFieldId    = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Shape_Tensor_InverseYZ");
-  m_shapeTensorInverseZXFieldId    = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Shape_Tensor_InverseZX");
-  m_shapeTensorInverseZYFieldId    = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Shape_Tensor_InverseZY");
-  m_shapeTensorInverseZZFieldId    = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Shape_Tensor_InverseZZ");
-  m_unrotatedCauchyStressXXFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressXX");
-  m_unrotatedCauchyStressXYFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressXY");
-  m_unrotatedCauchyStressXZFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressXZ");
-  m_unrotatedCauchyStressYXFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressYX");
-  m_unrotatedCauchyStressYYFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressYY");
-  m_unrotatedCauchyStressYZFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressYZ");
-  m_unrotatedCauchyStressZXFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressZX");
-  m_unrotatedCauchyStressZYFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressZY");
-  m_unrotatedCauchyStressZZFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_StressZZ");
-  m_cauchyStressXXFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Cauchy_StressXX");
-  m_cauchyStressXYFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Cauchy_StressXY");
-  m_cauchyStressXZFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Cauchy_StressXZ");
-  m_cauchyStressYXFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Cauchy_StressYX");
-  m_cauchyStressYYFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Cauchy_StressYY");
-  m_cauchyStressYZFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Cauchy_StressYZ");
-  m_cauchyStressZXFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Cauchy_StressZX");
-  m_cauchyStressZYFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Cauchy_StressZY");
-  m_cauchyStressZZFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Cauchy_StressZZ");
-  m_unrotatedRateOfDeformationXXFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_DeformationXX");
-  m_unrotatedRateOfDeformationXYFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_DeformationXY");
-  m_unrotatedRateOfDeformationXZFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_DeformationXZ");
-  m_unrotatedRateOfDeformationYXFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_DeformationYX");
-  m_unrotatedRateOfDeformationYYFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_DeformationYY");
-  m_unrotatedRateOfDeformationYZFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_DeformationYZ");
-  m_unrotatedRateOfDeformationZXFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_DeformationZX");
-  m_unrotatedRateOfDeformationZYFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_DeformationZY");
-  m_unrotatedRateOfDeformationZZFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_DeformationZZ");
+  m_deformationGradientFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::CONSTANT, "Deformation_Gradient");
+  m_leftStretchTensorFieldId     = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::TWO_STEP, "Left_Stretch_Tensor");
+  m_rotationTensorFieldId        = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::TWO_STEP, "Rotation_Tensor");
+  m_shapeTensorInverseFieldId    = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::CONSTANT, "Shape_Tensor_Inverse");
+  m_unrotatedCauchyStressFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_Stress");
+  m_cauchyStressFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::TWO_STEP, "Cauchy_Stress");
+  m_unrotatedRateOfDeformationFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_Deformation");
 
   m_fieldIds.push_back(m_horizonFieldId);
   m_fieldIds.push_back(m_volumeFieldId);
@@ -173,69 +103,13 @@ PeridigmNS::CorrespondenceMaterial::CorrespondenceMaterial(const Teuchos::Parame
   m_fieldIds.push_back(m_hourglassForceDensityFieldId);
   m_fieldIds.push_back(m_forceDensityFieldId);
   m_fieldIds.push_back(m_bondDamageFieldId);
-  m_fieldIds.push_back(m_deformationGradientXXFieldId);
-  m_fieldIds.push_back(m_deformationGradientXYFieldId);
-  m_fieldIds.push_back(m_deformationGradientXZFieldId);
-  m_fieldIds.push_back(m_deformationGradientYXFieldId);
-  m_fieldIds.push_back(m_deformationGradientYYFieldId);
-  m_fieldIds.push_back(m_deformationGradientYZFieldId);
-  m_fieldIds.push_back(m_deformationGradientZXFieldId);
-  m_fieldIds.push_back(m_deformationGradientZYFieldId);
-  m_fieldIds.push_back(m_deformationGradientZZFieldId);
-  m_fieldIds.push_back(m_leftStretchTensorXXFieldId);
-  m_fieldIds.push_back(m_leftStretchTensorXYFieldId);
-  m_fieldIds.push_back(m_leftStretchTensorXZFieldId);
-  m_fieldIds.push_back(m_leftStretchTensorYXFieldId);
-  m_fieldIds.push_back(m_leftStretchTensorYYFieldId);
-  m_fieldIds.push_back(m_leftStretchTensorYZFieldId);
-  m_fieldIds.push_back(m_leftStretchTensorZXFieldId);
-  m_fieldIds.push_back(m_leftStretchTensorZYFieldId);
-  m_fieldIds.push_back(m_leftStretchTensorZZFieldId);
-  m_fieldIds.push_back(m_rotationTensorXXFieldId);
-  m_fieldIds.push_back(m_rotationTensorXYFieldId);
-  m_fieldIds.push_back(m_rotationTensorXZFieldId);
-  m_fieldIds.push_back(m_rotationTensorYXFieldId);
-  m_fieldIds.push_back(m_rotationTensorYYFieldId);
-  m_fieldIds.push_back(m_rotationTensorYZFieldId);
-  m_fieldIds.push_back(m_rotationTensorZXFieldId);
-  m_fieldIds.push_back(m_rotationTensorZYFieldId);
-  m_fieldIds.push_back(m_rotationTensorZZFieldId);
-  m_fieldIds.push_back(m_shapeTensorInverseXXFieldId);
-  m_fieldIds.push_back(m_shapeTensorInverseXYFieldId);
-  m_fieldIds.push_back(m_shapeTensorInverseXZFieldId);
-  m_fieldIds.push_back(m_shapeTensorInverseYXFieldId);
-  m_fieldIds.push_back(m_shapeTensorInverseYYFieldId);
-  m_fieldIds.push_back(m_shapeTensorInverseYZFieldId);
-  m_fieldIds.push_back(m_shapeTensorInverseZXFieldId);
-  m_fieldIds.push_back(m_shapeTensorInverseZYFieldId);
-  m_fieldIds.push_back(m_shapeTensorInverseZZFieldId);
-  m_fieldIds.push_back(m_unrotatedCauchyStressXXFieldId);
-  m_fieldIds.push_back(m_unrotatedCauchyStressXYFieldId);
-  m_fieldIds.push_back(m_unrotatedCauchyStressXZFieldId);
-  m_fieldIds.push_back(m_unrotatedCauchyStressYXFieldId);
-  m_fieldIds.push_back(m_unrotatedCauchyStressYYFieldId);
-  m_fieldIds.push_back(m_unrotatedCauchyStressYZFieldId);
-  m_fieldIds.push_back(m_unrotatedCauchyStressZXFieldId);
-  m_fieldIds.push_back(m_unrotatedCauchyStressZYFieldId);
-  m_fieldIds.push_back(m_unrotatedCauchyStressZZFieldId);
-  m_fieldIds.push_back(m_cauchyStressXXFieldId);
-  m_fieldIds.push_back(m_cauchyStressXYFieldId);
-  m_fieldIds.push_back(m_cauchyStressXZFieldId);
-  m_fieldIds.push_back(m_cauchyStressYXFieldId);
-  m_fieldIds.push_back(m_cauchyStressYYFieldId);
-  m_fieldIds.push_back(m_cauchyStressYZFieldId);
-  m_fieldIds.push_back(m_cauchyStressZXFieldId);
-  m_fieldIds.push_back(m_cauchyStressZYFieldId);
-  m_fieldIds.push_back(m_cauchyStressZZFieldId);
-  m_fieldIds.push_back(m_unrotatedRateOfDeformationXXFieldId);
-  m_fieldIds.push_back(m_unrotatedRateOfDeformationXYFieldId);
-  m_fieldIds.push_back(m_unrotatedRateOfDeformationXZFieldId);
-  m_fieldIds.push_back(m_unrotatedRateOfDeformationYXFieldId);
-  m_fieldIds.push_back(m_unrotatedRateOfDeformationYYFieldId);
-  m_fieldIds.push_back(m_unrotatedRateOfDeformationYZFieldId);
-  m_fieldIds.push_back(m_unrotatedRateOfDeformationZXFieldId);
-  m_fieldIds.push_back(m_unrotatedRateOfDeformationZYFieldId);
-  m_fieldIds.push_back(m_unrotatedRateOfDeformationZZFieldId);
+  m_fieldIds.push_back(m_deformationGradientFieldId);
+  m_fieldIds.push_back(m_leftStretchTensorFieldId);
+  m_fieldIds.push_back(m_rotationTensorFieldId);
+  m_fieldIds.push_back(m_shapeTensorInverseFieldId);
+  m_fieldIds.push_back(m_unrotatedCauchyStressFieldId);
+  m_fieldIds.push_back(m_cauchyStressFieldId);
+  m_fieldIds.push_back(m_unrotatedRateOfDeformationFieldId);
 }
 
 PeridigmNS::CorrespondenceMaterial::~CorrespondenceMaterial()
@@ -249,91 +123,61 @@ PeridigmNS::CorrespondenceMaterial::initialize(const double dt,
                                                const int* neighborhoodList,
                                                PeridigmNS::DataManager& dataManager) const
 {
-  dataManager.getData(m_deformationGradientXXFieldId, PeridigmField::STEP_NONE)->PutScalar(1.0);
-  dataManager.getData(m_deformationGradientXYFieldId, PeridigmField::STEP_NONE)->PutScalar(0.0);
-  dataManager.getData(m_deformationGradientXZFieldId, PeridigmField::STEP_NONE)->PutScalar(0.0);
-  dataManager.getData(m_deformationGradientYXFieldId, PeridigmField::STEP_NONE)->PutScalar(0.0);
-  dataManager.getData(m_deformationGradientYYFieldId, PeridigmField::STEP_NONE)->PutScalar(1.0);
-  dataManager.getData(m_deformationGradientYZFieldId, PeridigmField::STEP_NONE)->PutScalar(0.0);
-  dataManager.getData(m_deformationGradientZXFieldId, PeridigmField::STEP_NONE)->PutScalar(0.0);
-  dataManager.getData(m_deformationGradientZYFieldId, PeridigmField::STEP_NONE)->PutScalar(0.0);
-  dataManager.getData(m_deformationGradientZZFieldId, PeridigmField::STEP_NONE)->PutScalar(1.0);
+  dataManager.getData(m_unrotatedRateOfDeformationFieldId, PeridigmField::STEP_NONE)->PutScalar(0.0);
+  dataManager.getData(m_leftStretchTensorFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
+  dataManager.getData(m_leftStretchTensorFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_rotationTensorFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
+  dataManager.getData(m_rotationTensorFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_unrotatedCauchyStressFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
+  dataManager.getData(m_unrotatedCauchyStressFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_cauchyStressFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
+  dataManager.getData(m_cauchyStressFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
 
-  dataManager.getData(m_leftStretchTensorXXFieldId, PeridigmField::STEP_N)->PutScalar(1.0);
-  dataManager.getData(m_leftStretchTensorXYFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_leftStretchTensorXZFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_leftStretchTensorYXFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_leftStretchTensorYYFieldId, PeridigmField::STEP_N)->PutScalar(1.0);
-  dataManager.getData(m_leftStretchTensorYZFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_leftStretchTensorZXFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_leftStretchTensorZYFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_leftStretchTensorZZFieldId, PeridigmField::STEP_N)->PutScalar(1.0);
-  dataManager.getData(m_leftStretchTensorXXFieldId, PeridigmField::STEP_NP1)->PutScalar(1.0);
-  dataManager.getData(m_leftStretchTensorXYFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_leftStretchTensorXZFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_leftStretchTensorYXFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_leftStretchTensorYYFieldId, PeridigmField::STEP_NP1)->PutScalar(1.0);
-  dataManager.getData(m_leftStretchTensorYZFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_leftStretchTensorZXFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_leftStretchTensorZYFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_leftStretchTensorZZFieldId, PeridigmField::STEP_NP1)->PutScalar(1.0);
-  
-  dataManager.getData(m_rotationTensorXXFieldId, PeridigmField::STEP_N)->PutScalar(1.0);
-  dataManager.getData(m_rotationTensorXYFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_rotationTensorXZFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_rotationTensorYXFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_rotationTensorYYFieldId, PeridigmField::STEP_N)->PutScalar(1.0);
-  dataManager.getData(m_rotationTensorYZFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_rotationTensorZXFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_rotationTensorZYFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_rotationTensorZZFieldId, PeridigmField::STEP_N)->PutScalar(1.0);
-  dataManager.getData(m_rotationTensorXXFieldId, PeridigmField::STEP_NP1)->PutScalar(1.0);
-  dataManager.getData(m_rotationTensorXYFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_rotationTensorXZFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_rotationTensorYXFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_rotationTensorYYFieldId, PeridigmField::STEP_NP1)->PutScalar(1.0);
-  dataManager.getData(m_rotationTensorYZFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_rotationTensorZXFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_rotationTensorZYFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_rotationTensorZZFieldId, PeridigmField::STEP_NP1)->PutScalar(1.0);
+  double *leftStretchTensorN;
+  double *leftStretchTensorNP1;
+  double *rotationTensorN;
+  double *rotationTensorNP1;
+  dataManager.getData(m_leftStretchTensorFieldId, PeridigmField::STEP_N)->ExtractView(&leftStretchTensorN);
+  dataManager.getData(m_leftStretchTensorFieldId, PeridigmField::STEP_NP1)->ExtractView(&leftStretchTensorNP1);
+  dataManager.getData(m_rotationTensorFieldId, PeridigmField::STEP_N)->ExtractView(&rotationTensorN);
+  dataManager.getData(m_rotationTensorFieldId, PeridigmField::STEP_NP1)->ExtractView(&rotationTensorNP1);
 
-  dataManager.getData(m_unrotatedCauchyStressXXFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_unrotatedCauchyStressXYFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_unrotatedCauchyStressXZFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_unrotatedCauchyStressYXFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_unrotatedCauchyStressYYFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_unrotatedCauchyStressYZFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_unrotatedCauchyStressZXFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_unrotatedCauchyStressZYFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_unrotatedCauchyStressZZFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_unrotatedCauchyStressXXFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_unrotatedCauchyStressXYFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_unrotatedCauchyStressXZFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_unrotatedCauchyStressYXFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_unrotatedCauchyStressYYFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_unrotatedCauchyStressYZFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_unrotatedCauchyStressZXFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_unrotatedCauchyStressZYFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_unrotatedCauchyStressZZFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  //Initialize the left stretch and rotation tenor to the identity matrix
+  CORRESPONDENCE::setOnesOnDiagonalFullTensor(leftStretchTensorN, numOwnedPoints);
+  CORRESPONDENCE::setOnesOnDiagonalFullTensor(leftStretchTensorNP1, numOwnedPoints);
+  CORRESPONDENCE::setOnesOnDiagonalFullTensor(rotationTensorN, numOwnedPoints);
+  CORRESPONDENCE::setOnesOnDiagonalFullTensor(rotationTensorNP1, numOwnedPoints);
 
-  dataManager.getData(m_cauchyStressXXFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_cauchyStressXYFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_cauchyStressXZFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_cauchyStressYXFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_cauchyStressYYFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_cauchyStressYZFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_cauchyStressZXFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_cauchyStressZYFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_cauchyStressZZFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-  dataManager.getData(m_cauchyStressXXFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_cauchyStressXYFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_cauchyStressXZFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_cauchyStressYXFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_cauchyStressYYFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_cauchyStressYZFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_cauchyStressZXFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_cauchyStressZYFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-  dataManager.getData(m_cauchyStressZZFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  //Initialize the inverse of the shape tensor and the deformation gradient
+  double *volume;
+  double *horizon;
+  double *modelCoordinates;
+  double *coordinates;
+  double *shapeTensorInverse;
+  double *deformationGradient;
+  dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&volume);
+  dataManager.getData(m_horizonFieldId, PeridigmField::STEP_NONE)->ExtractView(&horizon);
+  dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&modelCoordinates);
+  dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&coordinates);
+  dataManager.getData(m_shapeTensorInverseFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverse);
+  dataManager.getData(m_deformationGradientFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradient);
+
+  int shapeTensorReturnCode = 
+    CORRESPONDENCE::computeShapeTensorInverseAndApproximateDeformationGradient(volume,
+                                                                               horizon,
+                                                                               modelCoordinates,
+                                                                               coordinates,
+                                                                               shapeTensorInverse,
+                                                                               deformationGradient,
+                                                                               neighborhoodList,
+                                                                               numOwnedPoints);
+
+  string shapeTensorErrorMessage =
+    "**** Error:  CorrespondenceMaterial::initialize() failed to compute shape tensor.\n";
+  shapeTensorErrorMessage +=
+    "****         Note that all nodes must have a minimum of three neighbors.  Is the horizon too small?\n";
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(shapeTensorReturnCode != 0, shapeTensorErrorMessage);
+
 }
 
 void
@@ -343,175 +187,64 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
                                                  const int* neighborhoodList,
                                                  PeridigmNS::DataManager& dataManager) const
 {
-
-  //Epetra_Vector cauchyStressN( *(dataManager.getData(m_cauchyStressYYFieldId, PeridigmField::STEP_N)) );
-
   // Zero out the forces
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
 
-  double *horizon;
+  double *horizon, *volume, *modelCoordinates, *coordinates, *velocities, *shapeTensorInverse, *deformationGradient;
   dataManager.getData(m_horizonFieldId, PeridigmField::STEP_NONE)->ExtractView(&horizon);
-
-  double *volume, *modelCoordinates, *coordinates, *velocities;
   dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&volume);
   dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&modelCoordinates);
   dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&coordinates);
   dataManager.getData(m_velocitiesFieldId, PeridigmField::STEP_NP1)->ExtractView(&velocities);
-
-  double *shapeTensorInverseXX, *shapeTensorInverseXY, *shapeTensorInverseXZ;
-  double *shapeTensorInverseYX, *shapeTensorInverseYY, *shapeTensorInverseYZ;
-  double *shapeTensorInverseZX, *shapeTensorInverseZY, *shapeTensorInverseZZ;
-  dataManager.getData(m_shapeTensorInverseXXFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseXX);
-  dataManager.getData(m_shapeTensorInverseXYFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseXY);
-  dataManager.getData(m_shapeTensorInverseXZFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseXZ);
-  dataManager.getData(m_shapeTensorInverseYXFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseYX);
-  dataManager.getData(m_shapeTensorInverseYYFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseYY);
-  dataManager.getData(m_shapeTensorInverseYZFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseYZ);
-  dataManager.getData(m_shapeTensorInverseZXFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseZX);
-  dataManager.getData(m_shapeTensorInverseZYFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseZY);
-  dataManager.getData(m_shapeTensorInverseZZFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverseZZ);
-
-  double *deformationGradientXX, *deformationGradientXY, *deformationGradientXZ;
-  double *deformationGradientYX, *deformationGradientYY, *deformationGradientYZ;
-  double *deformationGradientZX, *deformationGradientZY, *deformationGradientZZ;
-  dataManager.getData(m_deformationGradientXXFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientXX);
-  dataManager.getData(m_deformationGradientXYFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientXY);
-  dataManager.getData(m_deformationGradientXZFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientXZ);
-  dataManager.getData(m_deformationGradientYXFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientYX);
-  dataManager.getData(m_deformationGradientYYFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientYY);
-  dataManager.getData(m_deformationGradientYZFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientYZ);
-  dataManager.getData(m_deformationGradientZXFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientZX);
-  dataManager.getData(m_deformationGradientZYFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientZY);
-  dataManager.getData(m_deformationGradientZZFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradientZZ);
-
+  dataManager.getData(m_shapeTensorInverseFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverse);
+  dataManager.getData(m_deformationGradientFieldId, PeridigmField::STEP_NONE)->ExtractView(&deformationGradient);
+  
   // Compute the inverse of the shape tensor and the approximate deformation gradient
   // The approximate deformation gradient will be used by the derived class (specific correspondence material model)
   // to compute the Cauchy stress.
   // The inverse of the shape tensor is stored for later use after the Cauchy stress calculation
-
   int shapeTensorReturnCode = 
     CORRESPONDENCE::computeShapeTensorInverseAndApproximateDeformationGradient(volume,
                                                                                horizon,
                                                                                modelCoordinates,
                                                                                coordinates,
-                                                                               shapeTensorInverseXX, shapeTensorInverseXY, shapeTensorInverseXZ,
-                                                                               shapeTensorInverseYX, shapeTensorInverseYY, shapeTensorInverseYZ,
-                                                                               shapeTensorInverseZX, shapeTensorInverseZY, shapeTensorInverseZZ,
-                                                                               deformationGradientXX, deformationGradientXY, deformationGradientXZ,
-                                                                               deformationGradientYX, deformationGradientYY, deformationGradientYZ,
-                                                                               deformationGradientZX, deformationGradientZY, deformationGradientZZ,
+                                                                               shapeTensorInverse,
+                                                                               deformationGradient,
                                                                                neighborhoodList,
                                                                                numOwnedPoints);
-
   string shapeTensorErrorMessage =
     "**** Error:  CorrespondenceMaterial::computeForce() failed to compute shape tensor.\n";
   shapeTensorErrorMessage +=
     "****         Note that all nodes must have a minimum of three neighbors.  Is the horizon too small?\n";
-
   TEUCHOS_TEST_FOR_EXCEPT_MSG(shapeTensorReturnCode != 0, shapeTensorErrorMessage);
 
-  double *leftStretchTensorNXX, *leftStretchTensorNXY, *leftStretchTensorNXZ;
-  double *leftStretchTensorNYX, *leftStretchTensorNYY, *leftStretchTensorNYZ;
-  double *leftStretchTensorNZX, *leftStretchTensorNZY, *leftStretchTensorNZZ;
-  dataManager.getData(m_leftStretchTensorXXFieldId, PeridigmField::STEP_N)->ExtractView(&leftStretchTensorNXX);
-  dataManager.getData(m_leftStretchTensorXYFieldId, PeridigmField::STEP_N)->ExtractView(&leftStretchTensorNXY);
-  dataManager.getData(m_leftStretchTensorXZFieldId, PeridigmField::STEP_N)->ExtractView(&leftStretchTensorNXZ);
-  dataManager.getData(m_leftStretchTensorYXFieldId, PeridigmField::STEP_N)->ExtractView(&leftStretchTensorNYX);
-  dataManager.getData(m_leftStretchTensorYYFieldId, PeridigmField::STEP_N)->ExtractView(&leftStretchTensorNYY);
-  dataManager.getData(m_leftStretchTensorYZFieldId, PeridigmField::STEP_N)->ExtractView(&leftStretchTensorNYZ);
-  dataManager.getData(m_leftStretchTensorZXFieldId, PeridigmField::STEP_N)->ExtractView(&leftStretchTensorNZX);
-  dataManager.getData(m_leftStretchTensorZYFieldId, PeridigmField::STEP_N)->ExtractView(&leftStretchTensorNZY);
-  dataManager.getData(m_leftStretchTensorZZFieldId, PeridigmField::STEP_N)->ExtractView(&leftStretchTensorNZZ);
+  double *leftStretchTensorN, *leftStretchTensorNP1, *rotationTensorN, *rotationTensorNP1, *unrotatedRateOfDeformation;
+  dataManager.getData(m_leftStretchTensorFieldId, PeridigmField::STEP_N)->ExtractView(&leftStretchTensorN);
+  dataManager.getData(m_leftStretchTensorFieldId, PeridigmField::STEP_NP1)->ExtractView(&leftStretchTensorNP1);
+  dataManager.getData(m_rotationTensorFieldId, PeridigmField::STEP_N)->ExtractView(&rotationTensorN);
+  dataManager.getData(m_rotationTensorFieldId, PeridigmField::STEP_NP1)->ExtractView(&rotationTensorNP1);
+  dataManager.getData(m_unrotatedRateOfDeformationFieldId, PeridigmField::STEP_NONE)->ExtractView(&unrotatedRateOfDeformation);
 
-  double *leftStretchTensorNP1XX, *leftStretchTensorNP1XY, *leftStretchTensorNP1XZ;
-  double *leftStretchTensorNP1YX, *leftStretchTensorNP1YY, *leftStretchTensorNP1YZ;
-  double *leftStretchTensorNP1ZX, *leftStretchTensorNP1ZY, *leftStretchTensorNP1ZZ;
-  dataManager.getData(m_leftStretchTensorXXFieldId, PeridigmField::STEP_NP1)->ExtractView(&leftStretchTensorNP1XX);
-  dataManager.getData(m_leftStretchTensorXYFieldId, PeridigmField::STEP_NP1)->ExtractView(&leftStretchTensorNP1XY);
-  dataManager.getData(m_leftStretchTensorXZFieldId, PeridigmField::STEP_NP1)->ExtractView(&leftStretchTensorNP1XZ);
-  dataManager.getData(m_leftStretchTensorYXFieldId, PeridigmField::STEP_NP1)->ExtractView(&leftStretchTensorNP1YX);
-  dataManager.getData(m_leftStretchTensorYYFieldId, PeridigmField::STEP_NP1)->ExtractView(&leftStretchTensorNP1YY);
-  dataManager.getData(m_leftStretchTensorYZFieldId, PeridigmField::STEP_NP1)->ExtractView(&leftStretchTensorNP1YZ);
-  dataManager.getData(m_leftStretchTensorZXFieldId, PeridigmField::STEP_NP1)->ExtractView(&leftStretchTensorNP1ZX);
-  dataManager.getData(m_leftStretchTensorZYFieldId, PeridigmField::STEP_NP1)->ExtractView(&leftStretchTensorNP1ZY);
-  dataManager.getData(m_leftStretchTensorZZFieldId, PeridigmField::STEP_NP1)->ExtractView(&leftStretchTensorNP1ZZ);
-
-  double *rotationTensorNXX, *rotationTensorNXY, *rotationTensorNXZ;
-  double *rotationTensorNYX, *rotationTensorNYY, *rotationTensorNYZ;
-  double *rotationTensorNZX, *rotationTensorNZY, *rotationTensorNZZ;
-  dataManager.getData(m_rotationTensorXXFieldId, PeridigmField::STEP_N)->ExtractView(&rotationTensorNXX);
-  dataManager.getData(m_rotationTensorXYFieldId, PeridigmField::STEP_N)->ExtractView(&rotationTensorNXY);
-  dataManager.getData(m_rotationTensorXZFieldId, PeridigmField::STEP_N)->ExtractView(&rotationTensorNXZ);
-  dataManager.getData(m_rotationTensorYXFieldId, PeridigmField::STEP_N)->ExtractView(&rotationTensorNYX);
-  dataManager.getData(m_rotationTensorYYFieldId, PeridigmField::STEP_N)->ExtractView(&rotationTensorNYY);
-  dataManager.getData(m_rotationTensorYZFieldId, PeridigmField::STEP_N)->ExtractView(&rotationTensorNYZ);
-  dataManager.getData(m_rotationTensorZXFieldId, PeridigmField::STEP_N)->ExtractView(&rotationTensorNZX);
-  dataManager.getData(m_rotationTensorZYFieldId, PeridigmField::STEP_N)->ExtractView(&rotationTensorNZY);
-  dataManager.getData(m_rotationTensorZZFieldId, PeridigmField::STEP_N)->ExtractView(&rotationTensorNZZ);
-
-  double *rotationTensorNP1XX, *rotationTensorNP1XY, *rotationTensorNP1XZ;
-  double *rotationTensorNP1YX, *rotationTensorNP1YY, *rotationTensorNP1YZ;
-  double *rotationTensorNP1ZX, *rotationTensorNP1ZY, *rotationTensorNP1ZZ;
-  dataManager.getData(m_rotationTensorXXFieldId, PeridigmField::STEP_NP1)->ExtractView(&rotationTensorNP1XX);
-  dataManager.getData(m_rotationTensorXYFieldId, PeridigmField::STEP_NP1)->ExtractView(&rotationTensorNP1XY);
-  dataManager.getData(m_rotationTensorXZFieldId, PeridigmField::STEP_NP1)->ExtractView(&rotationTensorNP1XZ);
-  dataManager.getData(m_rotationTensorYXFieldId, PeridigmField::STEP_NP1)->ExtractView(&rotationTensorNP1YX);
-  dataManager.getData(m_rotationTensorYYFieldId, PeridigmField::STEP_NP1)->ExtractView(&rotationTensorNP1YY);
-  dataManager.getData(m_rotationTensorYZFieldId, PeridigmField::STEP_NP1)->ExtractView(&rotationTensorNP1YZ);
-  dataManager.getData(m_rotationTensorZXFieldId, PeridigmField::STEP_NP1)->ExtractView(&rotationTensorNP1ZX);
-  dataManager.getData(m_rotationTensorZYFieldId, PeridigmField::STEP_NP1)->ExtractView(&rotationTensorNP1ZY);
-  dataManager.getData(m_rotationTensorZZFieldId, PeridigmField::STEP_NP1)->ExtractView(&rotationTensorNP1ZZ);
-
-  double *unrotatedRateOfDeformationXX, *unrotatedRateOfDeformationXY, *unrotatedRateOfDeformationXZ;
-  double *unrotatedRateOfDeformationYX, *unrotatedRateOfDeformationYY, *unrotatedRateOfDeformationYZ;
-  double *unrotatedRateOfDeformationZX, *unrotatedRateOfDeformationZY, *unrotatedRateOfDeformationZZ;
-  dataManager.getData(m_unrotatedRateOfDeformationXXFieldId, PeridigmField::STEP_NONE)->ExtractView(&unrotatedRateOfDeformationXX);
-  dataManager.getData(m_unrotatedRateOfDeformationXYFieldId, PeridigmField::STEP_NONE)->ExtractView(&unrotatedRateOfDeformationXY);
-  dataManager.getData(m_unrotatedRateOfDeformationXZFieldId, PeridigmField::STEP_NONE)->ExtractView(&unrotatedRateOfDeformationXZ);
-  dataManager.getData(m_unrotatedRateOfDeformationYXFieldId, PeridigmField::STEP_NONE)->ExtractView(&unrotatedRateOfDeformationYX);
-  dataManager.getData(m_unrotatedRateOfDeformationYYFieldId, PeridigmField::STEP_NONE)->ExtractView(&unrotatedRateOfDeformationYY);
-  dataManager.getData(m_unrotatedRateOfDeformationYZFieldId, PeridigmField::STEP_NONE)->ExtractView(&unrotatedRateOfDeformationYZ);
-  dataManager.getData(m_unrotatedRateOfDeformationZXFieldId, PeridigmField::STEP_NONE)->ExtractView(&unrotatedRateOfDeformationZX);
-  dataManager.getData(m_unrotatedRateOfDeformationZYFieldId, PeridigmField::STEP_NONE)->ExtractView(&unrotatedRateOfDeformationZY);
-  dataManager.getData(m_unrotatedRateOfDeformationZZFieldId, PeridigmField::STEP_NONE)->ExtractView(&unrotatedRateOfDeformationZZ);
-
-  // Compute left stretch tensor and rotation tensor, returns these updated
-  // quantities along with the unrotated rate-of-deformation.  Performs a polar
-  // decomposition via Flanagan & Taylor (1987) algorithm.
+  // Compute left stretch tensor, rotation tensor, and unrotated rate-of-deformation.
+  // Performs a polar decomposition via Flanagan & Taylor (1987) algorithm.
   int rotationTensorReturnCode = CORRESPONDENCE::computeUnrotatedRateOfDeformationAndRotationTensor(volume,
-                                                                                    horizon,
-                                                                                    modelCoordinates, 
-                                                                                    velocities, 
-                                                                                    deformationGradientXX, deformationGradientXY, deformationGradientXZ, 
-                                                                                    deformationGradientYX, deformationGradientYY, deformationGradientYZ, 
-                                                                                    deformationGradientZX, deformationGradientZY, deformationGradientZZ, 
-                                                                                    shapeTensorInverseXX, shapeTensorInverseXY, shapeTensorInverseXZ, 
-                                                                                    shapeTensorInverseYX, shapeTensorInverseYY, shapeTensorInverseYZ, 
-                                                                                    shapeTensorInverseZX, shapeTensorInverseZY, shapeTensorInverseZZ, 
-                                                                                    leftStretchTensorNXX, leftStretchTensorNXY, leftStretchTensorNXZ, 
-                                                                                    leftStretchTensorNYX, leftStretchTensorNYY, leftStretchTensorNYZ, 
-                                                                                    leftStretchTensorNZX, leftStretchTensorNZY, leftStretchTensorNZZ, 
-                                                                                    rotationTensorNXX, rotationTensorNXY, rotationTensorNXZ, 
-                                                                                    rotationTensorNYX, rotationTensorNYY, rotationTensorNYZ, 
-                                                                                    rotationTensorNZX, rotationTensorNZY, rotationTensorNZZ, 
-                                                                                    leftStretchTensorNP1XX, leftStretchTensorNP1XY, leftStretchTensorNP1XZ, 
-                                                                                    leftStretchTensorNP1YX, leftStretchTensorNP1YY, leftStretchTensorNP1YZ, 
-                                                                                    leftStretchTensorNP1ZX, leftStretchTensorNP1ZY, leftStretchTensorNP1ZZ, 
-                                                                                    rotationTensorNP1XX, rotationTensorNP1XY, rotationTensorNP1XZ, 
-                                                                                    rotationTensorNP1YX, rotationTensorNP1YY, rotationTensorNP1YZ, 
-                                                                                    rotationTensorNP1ZX, rotationTensorNP1ZY, rotationTensorNP1ZZ, 
-                                                                                    unrotatedRateOfDeformationXX, unrotatedRateOfDeformationXY, unrotatedRateOfDeformationXZ, 
-                                                                                    unrotatedRateOfDeformationYX, unrotatedRateOfDeformationYY, unrotatedRateOfDeformationYZ, 
-                                                                                    unrotatedRateOfDeformationZX, unrotatedRateOfDeformationZY, unrotatedRateOfDeformationZZ,
-                                                                                    neighborhoodList, 
-                                                                                    numOwnedPoints, 
-                                                                                    dt);
-  
+                                                                                                    horizon,
+                                                                                                    modelCoordinates, 
+                                                                                                    velocities, 
+                                                                                                    deformationGradient,
+                                                                                                    shapeTensorInverse,
+                                                                                                    leftStretchTensorN,
+                                                                                                    rotationTensorN,
+                                                                                                    leftStretchTensorNP1,
+                                                                                                    rotationTensorNP1,
+                                                                                                    unrotatedRateOfDeformation,
+                                                                                                    neighborhoodList, 
+                                                                                                    numOwnedPoints, 
+                                                                                                    dt);
   string rotationTensorErrorMessage =
     "**** Error:  CorrespondenceMaterial::computeForce() failed to compute rotation tensor.\n";
   rotationTensorErrorMessage +=
     "****         Note that all nodes must have a minimum of three neighbors.  Is the horizon too small?\n";
-
   TEUCHOS_TEST_FOR_EXCEPT_MSG(rotationTensorReturnCode != 0, rotationTensorErrorMessage);
 
   // Evaluate the Cauchy stress using the routine implemented in the derived class (specific correspondence material model)
@@ -520,107 +253,37 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
   //   2) The time step
   //   3) Whatever state variables are managed by the derived class
   //
-
-  // computeCauchyStress implemented in the derived class.  
-  //   Input: unrotated rate-of-deformation tensor
-  //   Input: unrotated Cauchy stress at step N
-  //   Output unrotated Cauchy stress at step N+1
-  //
-  //   Internal state variables are managed in the derived class
-  //
+  // computeCauchyStress() typically uses the following fields which are accessed via the DataManager:
+  //   Input:  unrotated rate-of-deformation tensor
+  //   Input:  unrotated Cauchy stress at step N
+  //   Input:  internal state data (managed in the derived class)
+  //   Output: unrotated Cauchy stress at step N+1
   computeCauchyStress(dt, numOwnedPoints, dataManager);
 
   // rotate back to the Eulerian frame
-  double *unrotatedCauchyStressNP1XX, *unrotatedCauchyStressNP1XY, *unrotatedCauchyStressNP1XZ;
-  double *unrotatedCauchyStressNP1YX, *unrotatedCauchyStressNP1YY, *unrotatedCauchyStressNP1YZ;
-  double *unrotatedCauchyStressNP1ZX, *unrotatedCauchyStressNP1ZY, *unrotatedCauchyStressNP1ZZ;
-  dataManager.getData(m_unrotatedCauchyStressXXFieldId, PeridigmField::STEP_NP1)->ExtractView(&unrotatedCauchyStressNP1XX);
-  dataManager.getData(m_unrotatedCauchyStressXYFieldId, PeridigmField::STEP_NP1)->ExtractView(&unrotatedCauchyStressNP1XY);
-  dataManager.getData(m_unrotatedCauchyStressXZFieldId, PeridigmField::STEP_NP1)->ExtractView(&unrotatedCauchyStressNP1XZ);
-  dataManager.getData(m_unrotatedCauchyStressYXFieldId, PeridigmField::STEP_NP1)->ExtractView(&unrotatedCauchyStressNP1YX);
-  dataManager.getData(m_unrotatedCauchyStressYYFieldId, PeridigmField::STEP_NP1)->ExtractView(&unrotatedCauchyStressNP1YY);
-  dataManager.getData(m_unrotatedCauchyStressYZFieldId, PeridigmField::STEP_NP1)->ExtractView(&unrotatedCauchyStressNP1YZ);
-  dataManager.getData(m_unrotatedCauchyStressZXFieldId, PeridigmField::STEP_NP1)->ExtractView(&unrotatedCauchyStressNP1ZX);
-  dataManager.getData(m_unrotatedCauchyStressZYFieldId, PeridigmField::STEP_NP1)->ExtractView(&unrotatedCauchyStressNP1ZY);
-  dataManager.getData(m_unrotatedCauchyStressZZFieldId, PeridigmField::STEP_NP1)->ExtractView(&unrotatedCauchyStressNP1ZZ);
+  double *unrotatedCauchyStressNP1, *cauchyStressNP1;
+  dataManager.getData(m_unrotatedCauchyStressFieldId, PeridigmField::STEP_NP1)->ExtractView(&unrotatedCauchyStressNP1);
+  dataManager.getData(m_cauchyStressFieldId, PeridigmField::STEP_NP1)->ExtractView(&cauchyStressNP1);
 
-  double *cauchyStressNP1XX, *cauchyStressNP1XY, *cauchyStressNP1XZ;
-  double *cauchyStressNP1YX, *cauchyStressNP1YY, *cauchyStressNP1YZ;
-  double *cauchyStressNP1ZX, *cauchyStressNP1ZY, *cauchyStressNP1ZZ;
-  dataManager.getData(m_cauchyStressXXFieldId, PeridigmField::STEP_NP1)->ExtractView(&cauchyStressNP1XX);
-  dataManager.getData(m_cauchyStressXYFieldId, PeridigmField::STEP_NP1)->ExtractView(&cauchyStressNP1XY);
-  dataManager.getData(m_cauchyStressXZFieldId, PeridigmField::STEP_NP1)->ExtractView(&cauchyStressNP1XZ);
-  dataManager.getData(m_cauchyStressYXFieldId, PeridigmField::STEP_NP1)->ExtractView(&cauchyStressNP1YX);
-  dataManager.getData(m_cauchyStressYYFieldId, PeridigmField::STEP_NP1)->ExtractView(&cauchyStressNP1YY);
-  dataManager.getData(m_cauchyStressYZFieldId, PeridigmField::STEP_NP1)->ExtractView(&cauchyStressNP1YZ);
-  dataManager.getData(m_cauchyStressZXFieldId, PeridigmField::STEP_NP1)->ExtractView(&cauchyStressNP1ZX);
-  dataManager.getData(m_cauchyStressZYFieldId, PeridigmField::STEP_NP1)->ExtractView(&cauchyStressNP1ZY);
-  dataManager.getData(m_cauchyStressZZFieldId, PeridigmField::STEP_NP1)->ExtractView(&cauchyStressNP1ZZ);
-
-  CORRESPONDENCE::rotateCauchyStress(rotationTensorNP1XX, rotationTensorNP1XY, rotationTensorNP1XZ, 
-                                     rotationTensorNP1YX, rotationTensorNP1YY, rotationTensorNP1YZ, 
-                                     rotationTensorNP1ZX, rotationTensorNP1ZY, rotationTensorNP1ZZ,
-                                     unrotatedCauchyStressNP1XX, unrotatedCauchyStressNP1XY, unrotatedCauchyStressNP1XZ,
-                                     unrotatedCauchyStressNP1YX, unrotatedCauchyStressNP1YY, unrotatedCauchyStressNP1YZ,
-                                     unrotatedCauchyStressNP1ZX, unrotatedCauchyStressNP1ZY, unrotatedCauchyStressNP1ZZ,
-                                     cauchyStressNP1XX, cauchyStressNP1XY, cauchyStressNP1XZ,
-                                     cauchyStressNP1YX, cauchyStressNP1YY, cauchyStressNP1YZ,
-                                     cauchyStressNP1ZX, cauchyStressNP1ZY, cauchyStressNP1ZZ,
+  CORRESPONDENCE::rotateCauchyStress(rotationTensorNP1,
+                                     unrotatedCauchyStressNP1,
+                                     cauchyStressNP1,
                                      numOwnedPoints);
 
-  //Cauchy stress is now updated and in the rotated state.  Proceed with
-  //conversion to Piola-Kirchoff and force-vector states.
-  double* stressXX = cauchyStressNP1XX;
-  double* stressXY = cauchyStressNP1XY;
-  double* stressXZ = cauchyStressNP1XZ;
-  double* stressYX = cauchyStressNP1YX;
-  double* stressYY = cauchyStressNP1YY;
-  double* stressYZ = cauchyStressNP1YZ;
-  double* stressZX = cauchyStressNP1ZX;
-  double* stressZY = cauchyStressNP1ZY;
-  double* stressZZ = cauchyStressNP1ZZ;
-
-  double* defGradXX = deformationGradientXX;
-  double* defGradXY = deformationGradientXY;
-  double* defGradXZ = deformationGradientXZ;
-  double* defGradYX = deformationGradientYX;
-  double* defGradYY = deformationGradientYY;
-  double* defGradYZ = deformationGradientYZ;
-  double* defGradZX = deformationGradientZX;
-  double* defGradZY = deformationGradientZY;
-  double* defGradZZ = deformationGradientZZ;
-
-  double* shapeTensorInvXX = shapeTensorInverseXX;
-  double* shapeTensorInvXY = shapeTensorInverseXY;
-  double* shapeTensorInvXZ = shapeTensorInverseXZ;
-  double* shapeTensorInvYX = shapeTensorInverseYX;
-  double* shapeTensorInvYY = shapeTensorInverseYY;
-  double* shapeTensorInvYZ = shapeTensorInverseYZ;
-  double* shapeTensorInvZX = shapeTensorInverseZX;
-  double* shapeTensorInvZY = shapeTensorInverseZY;
-  double* shapeTensorInvZZ = shapeTensorInverseZZ;
-
-  double defGradInvXX, defGradInvXY, defGradInvXZ;
-  double defGradInvYX, defGradInvYY, defGradInvYZ;
-  double defGradInvZX, defGradInvZY, defGradInvZZ;
-
-  double piolaStressXX, piolaStressXY, piolaStressXZ;
-  double piolaStressYX, piolaStressYY, piolaStressYZ;
-  double piolaStressZX, piolaStressZY, piolaStressZZ;
-
-  double tempXX, tempXY, tempXZ;
-  double tempYX, tempYY, tempYZ;
-  double tempZX, tempZY, tempZZ;
+  // Cauchy stress is now updated and in the rotated state.  Proceed with
+  // conversion to Piola-Kirchoff and force-vector states.
 
   double *forceDensity;
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&forceDensity);
 
   double *delta = horizon;
+  double* stress = cauchyStressNP1;
+  double* shapeTensorInv = shapeTensorInverse;
+  double* defGrad = deformationGradient;
 
   double *modelCoordinatesPtr, *neighborModelCoordinatesPtr, *forceDensityPtr, *neighborForceDensityPtr;
   double undeformedBondX, undeformedBondY, undeformedBondZ, undeformedBondLength;
-  double TX, TY, TZ;
-  double omega, vol, neighborVol;
+  double TX, TY, TZ, omega, vol, neighborVol, jacobianDeterminant;
   int numNeighbors, neighborIndex;
 
   string matrixInversionErrorMessage =
@@ -628,56 +291,31 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
   matrixInversionErrorMessage +=
     "****         Note that all nodes must have a minimum of three neighbors.  Is the horizon too small?\n";
 
-  // Loop over the material points and convert the Cauchy stress into pairwise peridynamic force densities
+  vector<double> defGradInvVector(9), piolaStressVector(9), tempVector(9);
+  double* defGradInv = &defGradInvVector[0];
+  double* piolaStress = &piolaStressVector[0];
+  double* temp = &tempVector[0];
 
+  // Loop over the material points and convert the Cauchy stress into pairwise peridynamic force densities
   const int *neighborListPtr = neighborhoodList;
-  for(int iID=0 ; iID<numOwnedPoints ; ++iID,
-        ++delta,
-        ++defGradXX, ++defGradXY, ++defGradXZ,
-        ++defGradYX, ++defGradYY, ++defGradYZ,
-        ++defGradZX, ++defGradZY, ++defGradZZ,
-        ++stressXX, ++stressXY, ++stressXZ,
-        ++stressYX, ++stressYY, ++stressYZ,
-        ++stressZX, ++stressZY, ++stressZZ,
-        ++shapeTensorInvXX, ++shapeTensorInvXY, ++shapeTensorInvXZ,
-        ++shapeTensorInvYX, ++shapeTensorInvYY, ++shapeTensorInvYZ,
-        ++shapeTensorInvZX, ++shapeTensorInvZY, ++shapeTensorInvZZ){
+  for(int iID=0 ; iID<numOwnedPoints ; ++iID, 
+          ++delta, defGrad+=9, stress+=9, shapeTensorInv+=9){
 
     // first Piola-Kirchhoff stress = J * cauchyStress * defGrad^-T
 
-    // Invert the deformation gradient
+    // Invert the deformation gradient and store the determinant
     int matrixInversionReturnCode =
-      CORRESPONDENCE::invert3by3Matrix(*defGradXX, *defGradXY, *defGradXZ,
-                                       *defGradYX, *defGradYY, *defGradYZ,
-                                       *defGradZX, *defGradZY, *defGradZZ,
-                                       defGradInvXX, defGradInvXY, defGradInvXZ,
-                                       defGradInvYX, defGradInvYY, defGradInvYZ,
-                                       defGradInvZX, defGradInvZY, defGradInvZZ);
-
+      CORRESPONDENCE::Invert3by3Matrix(defGrad, jacobianDeterminant, defGradInv);
     TEUCHOS_TEST_FOR_EXCEPT_MSG(matrixInversionReturnCode != 0, matrixInversionErrorMessage);
+    
+    // \TODO REMOVE
+    jacobianDeterminant = 1.0; // DEBUG HACK TEMPORARY NEEDS TO BE REMOVED!!!!
 
-    // Compute the 1st Piola stress as the inner product of the Cauchy stress 
-    // and the tranpose of the inverse of the deformation gradient
-    CORRESPONDENCE::MatrixMultiply(*stressXX, *stressXY, *stressXZ,
-                                   *stressYX, *stressYY, *stressYZ,
-                                   *stressZX, *stressZY, *stressZZ,
-                                   defGradInvXX, defGradInvYX, defGradInvZX, /* note: TRANSPOSE of the inverse def grad */
-                                   defGradInvXY, defGradInvYY, defGradInvZY,
-                                   defGradInvXZ, defGradInvYZ, defGradInvZZ,
-                                   piolaStressXX, piolaStressXY, piolaStressXZ,
-                                   piolaStressYX, piolaStressYY, piolaStressYZ,
-                                   piolaStressZX, piolaStressZY, piolaStressZZ);
+    //P = J * \sigma * F^(-T)
+    CORRESPONDENCE::MatrixMultiply(false, true, jacobianDeterminant, stress, defGradInv, piolaStress);
 
     // Inner product of Piola stress and the inverse of the shape tensor
-    CORRESPONDENCE::MatrixMultiply(piolaStressXX, piolaStressXY, piolaStressXZ,
-                                   piolaStressYX, piolaStressYY, piolaStressYZ,
-                                   piolaStressZX, piolaStressZY, piolaStressZZ,
-                                   *shapeTensorInvXX, *shapeTensorInvXY, *shapeTensorInvXZ,
-                                   *shapeTensorInvYX, *shapeTensorInvYY, *shapeTensorInvYZ,
-                                   *shapeTensorInvZX, *shapeTensorInvZY, *shapeTensorInvZZ,
-                                   tempXX, tempXY, tempXZ,
-                                   tempYX, tempYY, tempYZ,
-                                   tempZX, tempZY, tempZZ);
+    CORRESPONDENCE::MatrixMultiply(false, false, 1.0, piolaStress, shapeTensorInv, temp);
 
     // Loop over the neighbors and compute contribution to force densities
     modelCoordinatesPtr = modelCoordinates + 3*iID;
@@ -688,7 +326,7 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
       neighborIndex = *neighborListPtr;
       neighborModelCoordinatesPtr = modelCoordinates + 3*neighborIndex;
 
-      undeformedBondX = *(neighborModelCoordinatesPtr) - *(modelCoordinatesPtr);
+      undeformedBondX = *(neighborModelCoordinatesPtr)   - *(modelCoordinatesPtr);
       undeformedBondY = *(neighborModelCoordinatesPtr+1) - *(modelCoordinatesPtr+1);
       undeformedBondZ = *(neighborModelCoordinatesPtr+2) - *(modelCoordinatesPtr+2);
       undeformedBondLength = sqrt(undeformedBondX*undeformedBondX +
@@ -696,9 +334,9 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
                                   undeformedBondZ*undeformedBondZ);
 
       omega = m_OMEGA(undeformedBondLength, *delta);
-      TX = omega * (tempXX*undeformedBondX + tempXY*undeformedBondY + tempXZ*undeformedBondZ);
-      TY = omega * (tempYX*undeformedBondX + tempYY*undeformedBondY + tempYZ*undeformedBondZ);
-      TZ = omega * (tempZX*undeformedBondX + tempZY*undeformedBondY + tempZZ*undeformedBondZ);
+      TX = omega * ( *(temp)   * undeformedBondX + *(temp+1) * undeformedBondY + *(temp+2) * undeformedBondZ );
+      TY = omega * ( *(temp+3) * undeformedBondX + *(temp+4) * undeformedBondY + *(temp+5) * undeformedBondZ );
+      TZ = omega * ( *(temp+6) * undeformedBondX + *(temp+7) * undeformedBondY + *(temp+8) * undeformedBondZ );
 
       vol = volume[iID];
       neighborVol = volume[neighborIndex];
@@ -715,7 +353,7 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
     }
   }
 
-  // Compute hourglass forces for stabilization of low-enery and/or zero-energy modes
+  // Compute hourglass forces for stabilization of low-energy and/or zero-energy modes
   dataManager.getData(m_hourglassForceDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
 
   double *hourglassForceDensity;
@@ -729,9 +367,7 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
                                         horizon,
                                         modelCoordinates,
                                         coordinates,
-                                        deformationGradientXX, deformationGradientXY, deformationGradientXZ,
-                                        deformationGradientYX, deformationGradientYY, deformationGradientYZ,
-                                        deformationGradientZX, deformationGradientZY, deformationGradientZZ,
+                                        deformationGradient,
                                         hourglassForceDensity,
                                         neighborhoodList,
                                         numOwnedPoints,

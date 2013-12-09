@@ -94,24 +94,8 @@ namespace PeridigmNS {
 
     // field spec ids for all relevant data
     int m_modelCoordinatesFieldId;
-    int m_unrotatedRateOfDeformationXXFieldId;
-    int m_unrotatedRateOfDeformationXYFieldId;
-    int m_unrotatedRateOfDeformationXZFieldId;
-    int m_unrotatedRateOfDeformationYXFieldId;
-    int m_unrotatedRateOfDeformationYYFieldId;
-    int m_unrotatedRateOfDeformationYZFieldId;
-    int m_unrotatedRateOfDeformationZXFieldId;
-    int m_unrotatedRateOfDeformationZYFieldId;
-    int m_unrotatedRateOfDeformationZZFieldId;
-    int m_unrotatedCauchyStressXXFieldId;
-    int m_unrotatedCauchyStressXYFieldId;
-    int m_unrotatedCauchyStressXZFieldId;
-    int m_unrotatedCauchyStressYXFieldId;
-    int m_unrotatedCauchyStressYYFieldId;
-    int m_unrotatedCauchyStressYZFieldId;
-    int m_unrotatedCauchyStressZXFieldId;
-    int m_unrotatedCauchyStressZYFieldId;
-    int m_unrotatedCauchyStressZZFieldId;
+    int m_unrotatedRateOfDeformationFieldId;
+    int m_unrotatedCauchyStressFieldId;
     int m_vonMisesStressFieldId;
     int m_equivalentPlasticStrainFieldId;
   };
