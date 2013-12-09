@@ -212,7 +212,6 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
                                                                                deformationGradient,
                                                                                neighborhoodList,
                                                                                numOwnedPoints);
-  // A comment from MBessa
   string shapeTensorErrorMessage =
     "**** Error:  CorrespondenceMaterial::computeForce() failed to compute shape tensor.\n";
   shapeTensorErrorMessage +=
