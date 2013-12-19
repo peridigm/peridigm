@@ -69,3 +69,4 @@ Output
         Dilatation "true"
         Weighted_Volume "true"
         Damage "true"
+        Radius "true"
