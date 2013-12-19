@@ -125,4 +125,4 @@ Output
       Bottom_Reaction_Force "true"
       Deformation_Gradient "true"
       Cauchy_Stress "true"
-
+      Radius "true"
