@@ -4,6 +4,8 @@
 #  decomp --processors 2 disk_impact.g
 #
 
+# The lentgh unit of the corresponding Peridigm simulation is meters.
+
 #
 reset
 #
