@@ -1,4 +1,26 @@
 
+#     Description
+#       Simulation of an elastic tensile bar subjected to 0.5% strain.
+#       Engineering strain is estimated by tracking the elongation of a
+#       segment of the bar using the Nearest_Point_Data compute class.
+#       Engineering stress is estimated by tracking the reaction forces
+#       in the end segments of the bar using the Block_Data compute class.
+#       Using the data computed by the compute classes, engineering strain
+#       can be determined as the change in length divided by the initial
+#       length, and engineering stress as the force in an end segment
+#       divided by the initial cross-sectional area.
+#
+#     Units are CGS
+#       mass          g
+#       length        cm
+#       time          s
+#       density       g/cm^3
+#       force         dyne
+#       pressure      dyne/cm^2
+#       velocity      cm/s
+#       acceleration  cm/s^2
+#       energy        erg
+
 Verbose "false"
 Discretization
     Type "Exodus"
