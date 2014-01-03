@@ -281,7 +281,7 @@ const double dt
 
           //Increment the plastic strain for the purposes of evaluating the
           //yield surface
-          *eqpsNP1 = *eqpsN + deltaLambda;
+          *eqpsNP1 = *eqpsN + sqrt(2.0/3.0) * deltaLambda;
           //Evaluate the extent of the yield surface with the result of
           //ViscoplasticNeedlemanFindRoot
           yieldFunctionVal = ViscoplasticNeedlemanYieldFunction(deltaLambda, 
