@@ -54,6 +54,7 @@
 #include "Peridigm_ElasticCorrespondenceMaterial.hpp"
 #include "Peridigm_ElasticPlasticCorrespondenceMaterial.hpp"
 #include "Peridigm_ViscoPlasticNeedlemanCorrespondenceMaterial.hpp"
+#include "Peridigm_IsotropicHardeningPlasticCorrespondenceMaterial.hpp"
 #include "Peridigm_LCMMaterial.hpp"
 #ifdef PERIDIGM_PALS
 #include "Peridigm_Pals_Model.hpp"
@@ -85,6 +86,8 @@ PeridigmNS::MaterialFactory::create(const Teuchos::ParameterList& materialParams
     materialModel = Teuchos::rcp( new ElasticCorrespondenceMaterial(materialParams) );
   else if (materialModelName == "Viscoplastic Needleman Correspondence")
     materialModel = Teuchos::rcp( new ViscoplasticNeedlemanCorrespondenceMaterial(materialParams) );
+  else if (materialModelName == "Isotropic Hardening Correspondence")
+    materialModel = Teuchos::rcp( new IsotropicHardeningPlasticCorrespondenceMaterial(materialParams) );
   else if (materialModelName == "LCM")
     materialModel = Teuchos::rcp( new LCMMaterial(materialParams) );
 
