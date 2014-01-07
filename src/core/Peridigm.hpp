@@ -266,9 +266,6 @@ namespace PeridigmNS {
     //! Contact flag
     bool analysisHasContact;
 
-    //! Partial volume flag
-    bool analysisHasPartialVolumes;
-
     //! Damage models
     std::map< std::string, Teuchos::RCP<const PeridigmNS::DamageModel> > damageModels;
 

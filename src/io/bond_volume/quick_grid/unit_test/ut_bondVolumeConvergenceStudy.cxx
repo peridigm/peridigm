@@ -89,7 +89,7 @@ const size_t myRank=0;
 double horizon;
 std::string neighborhoodType;
 std::string type;
-using namespace std;
+//using namespace std;
 
 void probe_shear
 (
@@ -111,7 +111,7 @@ string findNodeValue( string& str, const std::string &nodename){
       char *token;
       char *first;
       char *last;
-      char *destination;
+      char *destination = 0;
 
       
       const char* node_name = &nodename[0];
@@ -120,7 +120,7 @@ string findNodeValue( string& str, const std::string &nodename){
       char* tempStringContainer = (char*)malloc(sizeof(char)*(str.length() + 1));
      
 
-      for (int i = 0; i < str.length(); i++){
+      for (unsigned int i = 0; i < str.length(); i++){
            tempStringContainer[i] = str[i];
       }
 
@@ -194,7 +194,7 @@ string findNodeValue( string& str, const std::string &nodename){
 void set_static_data(const std::string& json_filename)
 {
 	
-        ifstream inFile;
+        std::ifstream inFile;
         string str;
 
         size_t found;

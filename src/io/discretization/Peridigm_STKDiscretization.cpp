@@ -120,6 +120,13 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   int* neighborList;
   ProximitySearch::GlobalProximitySearch(initialX, horizonForEachPoint, oneDimensionalOverlapMap, neighborListSize, neighborList, bondFilters);
 
+  // For partial volumes:
+  //
+  // Carry out global search using center of element versus original nodes of neighbors.  This should be the correct neighbor list.
+  // Then, later, after creating all the maps, perform the partial volume calculation.
+  // This will result in all-on or all-off partial volume functionality.
+
+
   createNeighborhoodData(neighborListSize, neighborList);
 
   // Create the three-dimensional overlap map based on the one-dimensional overlap map

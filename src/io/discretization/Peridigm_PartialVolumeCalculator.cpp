@@ -69,7 +69,7 @@ void PeridigmNS::computePartialVolume(Teuchos::RCP<PeridigmNS::Block> block,
   const int* neighborhoodList = neighborhoodData->NeighborhoodList();
   
   PeridigmNS::HorizonManager& horizonManager = PeridigmNS::HorizonManager::self();
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(!horizonManager.blockHasConstantHorizon(block->getName()) , "\n**** Error, variable horizon not supported by contact!\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!horizonManager.blockHasConstantHorizon(block->getName()) , "\n**** Error, variable horizon not supported by partial volume calculator!\n");
   double horizon = horizonManager.getBlockConstantHorizonValue(block->getName());
 
   int neighborhoodListIndex = 0;
