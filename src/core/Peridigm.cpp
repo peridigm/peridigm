@@ -92,7 +92,6 @@ using namespace std;
 PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
                                Teuchos::RCP<Teuchos::ParameterList> params)
   : analysisHasContact(false),
-    analysisHasPartialVolumes(false),
     blockIdFieldId(-1),
     horizonFieldId(-1),
     volumeFieldId(-1),
@@ -179,8 +178,6 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   forceDensityFieldId                = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force_Density");
   contactForceDensityFieldId         = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Contact_Force_Density");
   externalForceDensityFieldId        = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "External_Force_Density");
-  if(analysisHasPartialVolumes)
-    partialVolumeFieldId             = fieldManager.getFieldId(PeridigmField::BOND,    PeridigmField::SCALAR, PeridigmField::CONSTANT, "Partial_Volume");
 
   // Create field ids that may be required for output
   fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Proc_Num");
@@ -330,12 +327,6 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
       int mothershipLocalID = oneDimensionalMap->LID(globalID);
       (*density)[mothershipLocalID] = blockDensity;
     }
-  }
-
-  // compute partial volumes
-  if(analysisHasPartialVolumes){
-    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-      computePartialVolume(Teuchos::rcpFromRef(*blockIt), peridigmDisc);
   }
 
   // apply initial conditions
