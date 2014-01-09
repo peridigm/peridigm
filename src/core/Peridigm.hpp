@@ -143,6 +143,15 @@ namespace PeridigmNS {
     //! Residual and Jacobian matrix fills for NOX interface
     virtual bool evaluateNOX(FillType f, const Epetra_Vector *solnVector, Epetra_Vector *rhsVector, Epetra_RowMatrix *matrix);
 
+    //! Evaluate the internal force; assumes x, u, y, and v have been set, fills force (intended for use when calling Peridigm as a library).
+    void computeInternalForce();
+
+    // Update the material states (intended for use when calling Peridigm as a library).
+    void updateState() {
+      for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+        blockIt->updateState();
+    }
+
     //! Perform diagnostics on Jacobian and print results to screen.
     void jacobianDiagnostics(Teuchos::RCP<NOX::Epetra::Group> noxGroup);
 
@@ -233,6 +242,9 @@ namespace PeridigmNS {
 
     //! Accessor for compute manager
     Teuchos::RCP< PeridigmNS::ComputeManager > getComputeManager() { return computeManager; }
+
+    //! Set the time step (for use when calling Peridigm as a library).
+    void setTimeStep(double timeStep) { *(workset->timeStep) = timeStep; }
 
     //! Display a progress bar
     void displayProgress(std::string title, double percentComplete);
