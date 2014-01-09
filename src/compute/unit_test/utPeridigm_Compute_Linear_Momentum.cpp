@@ -115,7 +115,8 @@ Teuchos::RCP<Peridigm> createFourPointModel(Teuchos::RCP<Epetra_Comm> comm) {
   outputFields.set("Global_Linear_Momentum", true);
 
   // create the Peridigm object
-  Teuchos::RCP<Peridigm> peridigm = Teuchos::rcp(new Peridigm(comm, peridigmParams));
+  Teuchos::RCP<Discretization> nullDiscretization;
+  Teuchos::RCP<Peridigm> peridigm = Teuchos::rcp(new Peridigm(comm, peridigmParams, nullDiscretization));
 
   return peridigm;
 }

@@ -91,7 +91,8 @@ namespace PeridigmNS {
 
     //! Constructor
     Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
-             Teuchos::RCP<Teuchos::ParameterList> params);
+             Teuchos::RCP<Teuchos::ParameterList> params,
+             Teuchos::RCP<Discretization> inputPeridigmDiscretization);
 
     //! Destructor
     ~Peridigm(){};
