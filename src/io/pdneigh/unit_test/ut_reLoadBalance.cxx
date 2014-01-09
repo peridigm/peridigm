@@ -56,14 +56,14 @@
 #include "Epetra_SerialComm.h"
 #endif
 
-#include "utilities/Array.h"
-#include "../PdZoltan.h"
-#include "../BondFilter.h"
-#include "../NeighborhoodList.h"
-#include "mesh_input/quick_grid/QuickGrid.h"
+#include "Array.h"
+#include "PdZoltan.h"
+#include "BondFilter.h"
+#include "NeighborhoodList.h"
+#include "QuickGrid.h"
 
-#include "mesh_output/Field.h"
-#include "utilities/PdutMpiFixture.h"
+#include "Field.h"
+#include "PdutMpiFixture.h"
 
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
@@ -76,7 +76,6 @@ using std::cout;
 using std::set;
 using std::map;
 
-
 int dimension_answer=3;
 size_t globalNumPoints_answer=2;
 size_t numPoints_answer=2;
@@ -84,8 +83,6 @@ int sizeNeighborhoodList_answer=4;
 int gids_answer[] = {0,1};
 int neighborhood_answer[] = {1,1,1,0};
 int neighborhoodPtr_answer[] = {0,2};
-
-
 
 using QUICKGRID::QuickGridMeshGenerationIterator;
 

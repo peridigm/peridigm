@@ -44,9 +44,9 @@
 //@HEADER
 
 
-#include "pdneigh/PdZoltan.h"
-#include "mesh_input/quick_grid/QuickGrid.h"
-#include "pdneigh/NeighborhoodList.h"
+#include "PdZoltan.h"
+#include "QuickGrid.h"
+#include "NeighborhoodList.h"
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
 #include "Teuchos_UnitTestRepository.hpp"
@@ -61,12 +61,8 @@
 #include "Epetra_SerialComm.h"
 #endif
 
-
-
 using std::tr1::shared_ptr;
-
 using std::cout;
-
 
 const size_t nx = 3;
 const size_t ny = 1;
@@ -97,8 +93,7 @@ static int _neighborListSizeP0 = 5;
 static int _neighborListSizeP1 = 2;
 
 bool init = false;
-Teuchos::RCP<Epetra_Comm> comm;   
-
+Teuchos::RCP<Epetra_Comm> comm;
 
 void initialize(){
          

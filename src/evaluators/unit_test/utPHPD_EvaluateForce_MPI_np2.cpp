@@ -53,7 +53,7 @@
 #include "PHAL_FactoryTraits.hpp"
 #include "PHAL_Dimension.hpp" // needed for Dummy Data Layout
 #include "PHAL_EvaluateForce.hpp"
-#include "../materials/Peridigm_LinearElasticIsotropicMaterial.hpp"
+#include "Peridigm_LinearElasticIsotropicMaterial.hpp"
 
 #include <mpi.h>
 

@@ -50,7 +50,7 @@
 
 #include <Teuchos_Assert.hpp>
 #include <string>
-#include "muParser/muParser.h"
+#include "muParser.h"
 
 namespace PeridigmNS {
 

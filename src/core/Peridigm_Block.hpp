@@ -49,8 +49,8 @@
 #define PERIDIGM_BLOCK_HPP
 
 #include "Peridigm_BlockBase.hpp"
-#include "materials/Peridigm_Material.hpp"
-#include "damage/Peridigm_DamageModel.hpp"
+#include "Peridigm_Material.hpp"
+#include "Peridigm_DamageModel.hpp"
 
 namespace PeridigmNS {
 

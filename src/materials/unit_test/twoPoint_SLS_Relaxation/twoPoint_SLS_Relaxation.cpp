@@ -50,9 +50,9 @@
 #include <Teuchos_UnitTestHarness.hpp>
 #include "Teuchos_UnitTestRepository.hpp"
 #include <Epetra_SerialComm.h>
-#include "mesh_input/quick_grid/QuickGrid.h"
-#include "mesh_output/Field.h"
-#include "utilities/Array.h"
+#include "QuickGrid.h"
+#include "Field.h"
+#include "Array.h"
 #include "material_utilities.h"
 #include "elastic.h"
 #include "viscoelastic.h"
@@ -297,7 +297,7 @@ double runPureShear(std::string output_file_name, double K, double MU, double la
 
 	
 
-	for(size_t n=0;n<numSteps_stage_1;n++){
+	for(size_t n=0;n<static_cast<unsigned int>(numSteps_stage_1);n++){
 
 		t += dt;
 

@@ -46,9 +46,9 @@
 
 #include <Epetra_Import.h>
 #include "Peridigm_ProximitySearch.hpp"
-#include "mesh_input/quick_grid/QuickGrid.h"
-#include "pdneigh/PdZoltan.h"
-#include "pdneigh/NeighborhoodList.h"
+#include "QuickGrid.h"
+#include "PdZoltan.h"
+#include "NeighborhoodList.h"
 
 using namespace std;
 

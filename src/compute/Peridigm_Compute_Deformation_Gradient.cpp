@@ -49,7 +49,7 @@
 
 #include "Peridigm_Compute_Deformation_Gradient.hpp"
 #include "Peridigm_Field.hpp"
-#include "../materials/correspondence.h"
+#include "correspondence.h"
 
 //! Standard constructor.
 PeridigmNS::Compute_Deformation_Gradient::Compute_Deformation_Gradient(Teuchos::RCP<const Teuchos::ParameterList> params,

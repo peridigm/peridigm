@@ -49,7 +49,7 @@
 #define PERIDIGM_HORIZONMANAGER_HPP
 
 #include <Teuchos_ParameterList.hpp>
-#include "muParser/muParser.h"
+#include "muParser.h"
 #include <string>
 #include <map>
 

@@ -169,7 +169,7 @@ TEUCHOS_UNIT_TEST( NeighborhoodProcessorFrame, NoCellHorizonTest) {
 	 */
 	TEST_ASSERT(numCells == decomp.globalNumPoints);
 	int size = decomp.sizeNeighborhoodList;
-	TEST_ASSERT(size=numCells);
+	TEST_ASSERT((unsigned int)size == numCells);
 	int *list = decomp.neighborhood.get();
 	int *end = list+size;
 	for(;list!=end;){

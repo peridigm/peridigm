@@ -51,7 +51,7 @@
 using namespace std;
 
 PeridigmNS::InterfaceAwareDamageModel::InterfaceAwareDamageModel(const Teuchos::ParameterList& params)
-  : DamageModel(params), m_applyThermalStrains(false), m_modelCoordinatesFieldId(-1), m_coordinatesFieldId(-1), m_damageFieldId(-1), m_bondDamageFieldId(-1), m_deltaTemperatureFieldId(-1), m_criticalStretchFieldId(-1)
+  : DamageModel(params), m_applyThermalStrains(false), m_modelCoordinatesFieldId(-1), m_coordinatesFieldId(-1), m_damageFieldId(-1), m_bondDamageFieldId(-1), m_criticalStretchFieldId(-1), m_deltaTemperatureFieldId(-1)
 {
   m_criticalStretch = params.get<double>("Critical Stretch");
 
@@ -147,7 +147,6 @@ PeridigmNS::InterfaceAwareDamageModel::computeDamage(const double dt,
     nodeCurrentX[2] = y[nodeId*3+2];
     numNeighbors = neighborhoodList[neighborhoodListIndex++];
 
-    const double myCriticalStretch = criticalStretch[nodeId];
     for(iNID=0 ; iNID<numNeighbors ; ++iNID){
       neighborID = neighborhoodList[neighborhoodListIndex++];
       const double neighborCriticalStretch = criticalStretch[neighborID];

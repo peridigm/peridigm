@@ -341,31 +341,31 @@ class TextParser {
 			previous_0list_data = *it;
 
 			// iterate through data vector coming in and build parameter list from input deck
-			while(it!=list_in.end() and std::distance(list_in.begin(),it) < list_in.size()) {
+			while(it!=list_in.end() and std::distance(list_in.begin(),it) < static_cast<int>(list_in.size())) {
 				// test whether or not while loop needs to begin and prevent unnecessary creations of parameterlist ptr
 				if(it->second > 0) {
 					// parameter list to store first level parameter name/value and list
 					Teuchos::Ptr<Teuchos::ParameterList> lev1list = ptr(new Teuchos::ParameterList());
 					// loop as long as list level is greater than 0 level
-					while(it->second > 0 and std::distance(list_in.begin(),it) < list_in.size()) {
+					while(it->second > 0 and std::distance(list_in.begin(),it) < static_cast<int>(list_in.size())) {
 						// determine 2nd level needs to be started
 						if(it->second > 1) {
 							// parameter list to strore 2nd level parameter name/value/list
 							Teuchos::Ptr<Teuchos::ParameterList> lev2list = ptr(new Teuchos::ParameterList());
 							// loop as long as entry's level is greater than 1 level
-							while(it->second > 1 and std::distance(list_in.begin(),it) < list_in.size()) {
+							while(it->second > 1 and std::distance(list_in.begin(),it) < static_cast<int>(list_in.size())) {
 								// start 3rd level?
 								if(it->second > 2) {
 									// parameter list for 3level
 									Teuchos::Ptr<Teuchos::ParameterList> lev3list = ptr(new Teuchos::ParameterList());
 									// loop while level is greater than 2
-									while(it->second > 2 and std::distance(list_in.begin(),it) < list_in.size()) {
+									while(it->second > 2 and std::distance(list_in.begin(),it) < static_cast<int>(list_in.size())) {
 										// start 4th level?
 										if(it->second > 3) {
 											// parameter list for 4 level
 											Teuchos::Ptr<Teuchos::ParameterList> lev4list = ptr(new Teuchos::ParameterList());
 											// loop while level is greater than 3
-											while(it->second > 3 and std::distance(list_in.begin(),it) < list_in.size()) {
+											while(it->second > 3 and std::distance(list_in.begin(),it) < static_cast<int>(list_in.size())) {
 												// start 5th level
 												if(it->second > 4) {
 													// parameterlist for 5 level
@@ -373,7 +373,7 @@ class TextParser {
 															new Teuchos::ParameterList()
 															);
 													while(it->second > 4 and 
-															std::distance(list_in.begin(),it) < list_in.size()) {
+															std::distance(list_in.begin(),it) < static_cast<int>(list_in.size())) {
 														// start 6th level
 														if(it->second > 5) {
 															// parameterlist for 6 level
@@ -383,7 +383,7 @@ class TextParser {
 																	      );
 															while(it->second > 5 and 
 																std::distance(list_in.begin(),it) 
-																< list_in.size()) {
+																< static_cast<int>(list_in.size())) {
 																// set parameters
 																dataSort(lev6list,
 																	match_(it->first)[0],
@@ -396,7 +396,7 @@ class TextParser {
 																	);
 														}
 														if(it->second == 5 and std::distance(
-																	list_in.begin(),it) < list_in.size()) {
+																	list_in.begin(),it) < static_cast<int>(list_in.size())) {
 															if(!match_(it->first)[1].empty()){
 																// set parameters
 																dataSort(lev5list,
@@ -412,7 +412,7 @@ class TextParser {
 															*lev5list.get()
 														     );
 												}
-												if(it->second == 4 and std::distance(list_in.begin(),it) < list_in.size()) {
+												if(it->second == 4 and std::distance(list_in.begin(),it) < static_cast<int>(list_in.size())) {
 													if(!match_(it->first)[1].empty()) {
 														// set parameters 
 														dataSort(lev4list,
@@ -428,7 +428,7 @@ class TextParser {
 													*lev4list.get()
 												     );
 										}
-										if(it->second == 3 and std::distance(list_in.begin(),it) < list_in.size()) {
+										if(it->second == 3 and std::distance(list_in.begin(),it) < static_cast<int>(list_in.size())) {
 											if(!match_(it->first)[1].empty()) {
 												// set and verify parameters
 												dataSort(lev3list,
@@ -444,7 +444,7 @@ class TextParser {
 											*lev3list.get()
 										     );
 								}
-								if(it->second == 2 and std::distance(list_in.begin(),it) < list_in.size()) {
+								if(it->second == 2 and std::distance(list_in.begin(),it) < static_cast<int>(list_in.size())) {
 									// if entry does have a name/value combo
 									if(!match_(it->first)[1].empty()) {
 										// set parameter
@@ -462,7 +462,7 @@ class TextParser {
 									*lev2list.get()
 								     );
 						}
-						if(it->second == 1 and std::distance(list_in.begin(),it) < list_in.size()) {
+						if(it->second == 1 and std::distance(list_in.begin(),it) < static_cast<int>(list_in.size())) {
 							// if entry does has both name and value
 							if(!match_(it->first)[1].empty()) {
 								// set and verify parameters
@@ -480,7 +480,7 @@ class TextParser {
 							*lev1list.get()
 						     );
 				}
-				if(it->second == 0 and std::distance(list_in.begin(),it) < list_in.size()) {
+				if(it->second == 0 and std::distance(list_in.begin(),it) < static_cast<int>(list_in.size())) {
 					// if entry has both name and value
 					if(!match_(it->first)[1].empty()) {
 						// set and verify parameters
@@ -491,7 +491,7 @@ class TextParser {
 					}
 					previous_0list_data = *it;
 				}
-				if(std::distance(list_in.begin(),it) < list_in.size()) {it++;}
+				if(std::distance(list_in.begin(),it) < static_cast<int>(list_in.size())) {it++;}
 			} // loop for top level
 		}
 };

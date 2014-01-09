@@ -50,9 +50,9 @@
 #include <Teuchos_UnitTestHarness.hpp>
 #include "Teuchos_UnitTestRepository.hpp"
 #include <Epetra_SerialComm.h>
-#include "mesh_input/quick_grid/QuickGrid.h"
-#include "mesh_output/Field.h"
-#include "utilities/Array.h"
+#include "QuickGrid.h"
+#include "Field.h"
+#include "Array.h"
 #include "material_utilities.h"
 #include "elastic_plastic.h"
 #include <math.h>

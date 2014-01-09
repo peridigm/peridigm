@@ -52,7 +52,7 @@
 #include <Teuchos_RCP.hpp>
 
 #include <Peridigm_Block.hpp>
-#include <compute/Peridigm_Compute.hpp>
+#include <Peridigm_Compute.hpp>
 #include <Peridigm_ServiceManager.hpp>
 
 namespace PeridigmNS {

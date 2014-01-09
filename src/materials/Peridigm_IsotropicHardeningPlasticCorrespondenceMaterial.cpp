@@ -56,9 +56,9 @@ using namespace std;
 PeridigmNS::IsotropicHardeningPlasticCorrespondenceMaterial::IsotropicHardeningPlasticCorrespondenceMaterial(const Teuchos::ParameterList& params)
   : CorrespondenceMaterial(params),
     m_yieldStress(0.0), m_hardMod(0.0), 
+    m_isFlaw(false), m_flawLocationX(0.0), m_flawLocationY(0.0), m_flawLocationZ(0.0), m_flawSize(0.0), m_flawMagnitude(0.0),
     m_modelCoordinatesFieldId(-1), m_unrotatedRateOfDeformationFieldId(-1), m_unrotatedCauchyStressFieldId(-1), m_vonMisesStressFieldId(-1), 
-    m_equivalentPlasticStrainFieldId(-1), m_isFlaw(false), m_flawLocationX(0.0), m_flawLocationY(0.0), m_flawLocationZ(0.0), m_flawSize(0.0), 
-    m_flawMagnitude(0.0)
+    m_equivalentPlasticStrainFieldId(-1)
 {
   m_yieldStress = params.get<double>("Yield Stress");
   m_hardMod = params.get<double>("Hardening Modulus");

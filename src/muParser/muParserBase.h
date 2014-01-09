@@ -31,7 +31,7 @@
 #include <iostream>
 #include <map>
 //#include <memory>
-#include "utilities/MemoryInclude.h"
+#include "MemoryInclude.h"
 #include <locale>
 
 //--- Parser includes --------------------------------------------------------------------------

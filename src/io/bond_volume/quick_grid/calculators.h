@@ -46,11 +46,9 @@
 #ifndef CALCULATORS_H_
 #define CALCULATORS_H_
 
-#include "utilities/Vector3D.h"
-#include "mesh_input/quick_grid/QuickGrid.h"
-#include "bond_volume/bond_volume_calculator.h"
-
-
+#include "Vector3D.h"
+#include "QuickGrid.h"
+#include "bond_volume_calculator.h"
 
 namespace BOND_VOLUME {
 

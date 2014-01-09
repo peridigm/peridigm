@@ -45,15 +45,15 @@
 
 #include <boost/property_tree/json_parser.hpp>
 #include <string>
-#include "mesh_input/quick_grid/QuickGrid.h"
-#include "mesh_input/quick_grid/QuickGridData.h"
-#include "bond_volume/quick_grid/calculators.h"
-#include "pdneigh/NeighborhoodList.h"
-#include "pdneigh/PdZoltan.h"
-#include "utilities/PdutMpiFixture.h"
-#include "mesh_output/Field.h"
-#include "utilities/Vector3D.h"
-#include "utilities/Array.h"
+#include "QuickGrid.h"
+#include "QuickGridData.h"
+#include "calculators.h"
+#include "NeighborhoodList.h"
+#include "PdZoltan.h"
+#include "PdutMpiFixture.h"
+#include "Field.h"
+#include "Vector3D.h"
+#include "Array.h"
 #include <set>
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
@@ -88,7 +88,6 @@ using std::cout;
 static size_t myRank;
 static size_t numProcs;
 const string json_filename="./input_files/ut_ringCellVolumeFraction.json";
-
 
 void compute_neighborhood_volumes
 (

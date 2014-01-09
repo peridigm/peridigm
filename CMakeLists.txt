@@ -222,21 +222,32 @@ include_directories(${INCLUDE_DIRS})
 #
 # Some convenience definitions
 #
-set(COMPUTE_DIR        ${CMAKE_SOURCE_DIR}/src/compute)
-set(CONTACT_DIR        ${CMAKE_SOURCE_DIR}/src/contact)
-set(CORE_DIR           ${CMAKE_SOURCE_DIR}/src/core)
-set(DISCRETIZATION_DIR ${CMAKE_SOURCE_DIR}/src/io/discretization)
-set(EVALUATORS_DIR     ${CMAKE_SOURCE_DIR}/src/evaluators)
-set(IO_DIR             ${CMAKE_SOURCE_DIR}/src/io)
-set(MATERIALS_DIR      ${CMAKE_SOURCE_DIR}/src/materials)
-set(DAMAGE_DIR         ${CMAKE_SOURCE_DIR}/src/damage)
-set(MESH_OUTPUT_DIR    ${CMAKE_SOURCE_DIR}/src/io/mesh_output)
-set(QUICK_GRID_DIR     ${CMAKE_SOURCE_DIR}/src/io/mesh_input/quick_grid)
-set(PDNEIGH_DIR        ${CMAKE_SOURCE_DIR}/src/io/pdneigh)
-set(UTILITIES_DIR      ${CMAKE_SOURCE_DIR}/src/io/utilities)
+set(COMPUTE_DIR          ${CMAKE_SOURCE_DIR}/src/compute)
+set(CONTACT_DIR          ${CMAKE_SOURCE_DIR}/src/contact)
+set(CORE_DIR             ${CMAKE_SOURCE_DIR}/src/core)
+set(DISCRETIZATION_DIR   ${CMAKE_SOURCE_DIR}/src/io/discretization)
+set(EVALUATORS_DIR       ${CMAKE_SOURCE_DIR}/src/evaluators)
+set(IO_DIR               ${CMAKE_SOURCE_DIR}/src/io)
+set(MATERIALS_DIR        ${CMAKE_SOURCE_DIR}/src/materials)
+set(DAMAGE_DIR           ${CMAKE_SOURCE_DIR}/src/damage)
+set(MESH_OUTPUT_DIR      ${CMAKE_SOURCE_DIR}/src/io/mesh_output)
+set(QUICK_GRID_DIR       ${CMAKE_SOURCE_DIR}/src/io/mesh_input/quick_grid)
+set(PDNEIGH_DIR          ${CMAKE_SOURCE_DIR}/src/io/pdneigh)
+set(UTILITIES_DIR        ${CMAKE_SOURCE_DIR}/src/io/utilities)
+set(PARSER_DIR           ${CMAKE_SOURCE_DIR}/src/muParser)
+set(BOND_VOL_QUICK_GRID  ${CMAKE_SOURCE_DIR}/src/io/bond_volume/quick_grid)
 
 include_directories(
 ${COMPUTE_DIR}
+${CONTACT_DIR}
+${CORE_DIR}
+${MATERIALS_DIR}
+${DAMAGE_DIR}
+${QUICK_GRID_DIR}
+${PDNEIGH_DIR}
+${UTILITIES_DIR}
+${PARSER_DIR}
+${BOND_VOL_QUICK_GRID}
 )
 
 # link directories 
