@@ -50,7 +50,7 @@
 
 #include "Peridigm_ServiceManager.hpp"
 #include "Peridigm_ComputeManager.hpp"
-#include "compute/compute_includes.hpp"
+#include "compute_includes.hpp"
 
 using namespace std;
 
@@ -112,7 +112,7 @@ PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList>
         compute = Teuchos::rcp( new PeridigmNS::Class(params, epetraComm, computeClassGlobalParams) ); \
         computeObjects.push_back( Teuchos::rcp_implicit_cast<Compute>(compute) ); \
       }
-      #include "compute/compute_includes.hpp"
+      #include "compute_includes.hpp"
     #undef  COMPUTE_CLASS
   }
 }
