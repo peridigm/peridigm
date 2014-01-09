@@ -235,6 +235,10 @@ set(QUICK_GRID_DIR     ${CMAKE_SOURCE_DIR}/src/io/mesh_input/quick_grid)
 set(PDNEIGH_DIR        ${CMAKE_SOURCE_DIR}/src/io/pdneigh)
 set(UTILITIES_DIR      ${CMAKE_SOURCE_DIR}/src/io/utilities)
 
+include_directories(
+${COMPUTE_DIR}
+)
+
 # link directories 
 set(LIB_DIRS 
   ${Boost_LIBRARY_DIRS})
