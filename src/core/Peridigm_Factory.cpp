@@ -73,7 +73,9 @@ void updateParametersFromTextFile(std::string inputFile, Teuchos::Ptr<Teuchos::P
 
 PeridigmNS::PeridigmFactory::PeridigmFactory(){}
 
-Teuchos::RCP<PeridigmNS::Peridigm> PeridigmNS::PeridigmFactory::create(const std::string inputFile, const MPI_Comm& peridigmComm)
+Teuchos::RCP<PeridigmNS::Peridigm> PeridigmNS::PeridigmFactory::create(const std::string inputFile,
+                                                                       const MPI_Comm& peridigmComm,
+                                                                       Teuchos::RCP<Discretization> inputPeridigmDiscretization)
 {
   using Teuchos::RCP;
   using Teuchos::rcp;
@@ -109,8 +111,15 @@ Teuchos::RCP<PeridigmNS::Peridigm> PeridigmNS::PeridigmFactory::create(const std
   }
 
   // Create new Peridigm object
-  return rcp(new PeridigmNS::Peridigm(comm, peridigmParams));
+  return rcp(new PeridigmNS::Peridigm(comm, peridigmParams, inputPeridigmDiscretization));
 
+}
+
+Teuchos::RCP<PeridigmNS::Peridigm> PeridigmNS::PeridigmFactory::create(const std::string inputFile,
+                                                                       const MPI_Comm& peridigmComm)
+{
+  Teuchos::RCP<Discretization> nullDiscretization;
+  return create(inputFile, peridigmComm, nullDiscretization);
 }
 
 void PeridigmNS::PeridigmFactory::setPeridigmParamDefaults(Teuchos::Ptr<Teuchos::ParameterList> peridigmParams_)

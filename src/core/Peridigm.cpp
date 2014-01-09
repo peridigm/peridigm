@@ -89,7 +89,8 @@
 using namespace std;
 
 PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
-                               Teuchos::RCP<Teuchos::ParameterList> params)
+                               Teuchos::RCP<Teuchos::ParameterList> params,
+                               Teuchos::RCP<Discretization> inputPeridigmDiscretization)
   : analysisHasContact(false),
     blockIdFieldId(-1),
     horizonFieldId(-1),
@@ -135,9 +136,14 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   PeridigmNS::HorizonManager& horizonManager = PeridigmNS::HorizonManager::self();
   horizonManager.loadHorizonInformationFromBlockParameters(blockParams);
 
-  DiscretizationFactory discFactory(discParams);
-  Teuchos::RCP<Discretization> peridigmDisc = discFactory.create(peridigmComm);
-  initializeDiscretization(peridigmDisc);
+  // If a discretization was passed into the constructor, use it.
+  // If not, create one based on the Discretization ParameterList in the input deck.
+  Teuchos::RCP<Discretization> peridigmDiscretization = inputPeridigmDiscretization;
+  if(peridigmDiscretization.is_null()){
+    DiscretizationFactory discFactory(discParams);
+    peridigmDiscretization = discFactory.create(peridigmComm);
+  }
+  initializeDiscretization(peridigmDiscretization);
 
   // Create a list containing parameters for each solver
   for (Teuchos::ParameterList::ConstIterator it = peridigmParams->begin(); it != peridigmParams->end(); ++it) {
@@ -161,7 +167,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   boundaryAndInitialConditionManager =
     Teuchos::RCP<BoundaryAndInitialConditionManager>(new BoundaryAndInitialConditionManager(*bcParams, this));
 
-  boundaryAndInitialConditionManager->initialize(peridigmDisc);
+  boundaryAndInitialConditionManager->initialize(peridigmDiscretization);
 
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   elementIdFieldId                   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Element_Id");
@@ -186,15 +192,15 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   if(peridigmParams->isSublist("Contact")){
     analysisHasContact = true;
     contactParams = peridigmParams->sublist("Contact");
-    checkContactSearchRadius(contactParams,peridigmDisc);
+    checkContactSearchRadius(contactParams,peridigmDiscretization);
     contactManager =
-      Teuchos::RCP<ContactManager>(new ContactManager(contactParams, peridigmDisc, peridigmParams));
+      Teuchos::RCP<ContactManager>(new ContactManager(contactParams, peridigmDiscretization, peridigmParams));
     contactManager->initialize(oneDimensionalMap,
                                threeDimensionalMap,
                                oneDimensionalOverlapMap,
                                bondMap,
                                globalNeighborhoodData,
-                               peridigmDisc->getBlockID());
+                               peridigmDiscretization->getBlockID());
     // contactManager->loadNeighborhoodData(globalNeighborhoodData,
     //                                      oneDimensionalMap,
     //                                      oneDimensionalOverlapMap);
@@ -209,10 +215,10 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   }
 
   // Instantiate the blocks
-  initializeBlocks(peridigmDisc);
+  initializeBlocks(peridigmDiscretization);
 
   // Determine a default finite-difference probe length
-  double minElementRadius = peridigmDisc->getMinElementRadius();
+  double minElementRadius = peridigmDiscretization->getMinElementRadius();
   double defaultFiniteDifferenceProbeLength = 1.0e-6*minElementRadius;
 
   // Obtain parameter lists and factories for material models ane damage models
@@ -293,27 +299,27 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
 
   // Initialize the blocks (creates maps, neighborhoods, DataManager)
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-    blockIt->initialize(peridigmDisc->getGlobalOwnedMap(1),
-                        peridigmDisc->getGlobalOverlapMap(1),
-                        peridigmDisc->getGlobalOwnedMap(3),
-                        peridigmDisc->getGlobalOverlapMap(3),
-                        peridigmDisc->getGlobalBondMap(),
+    blockIt->initialize(peridigmDiscretization->getGlobalOwnedMap(1),
+                        peridigmDiscretization->getGlobalOverlapMap(1),
+                        peridigmDiscretization->getGlobalOwnedMap(3),
+                        peridigmDiscretization->getGlobalOverlapMap(3),
+                        peridigmDiscretization->getGlobalBondMap(),
                         blockIDs,
                         globalNeighborhoodData);
 
   // Create a temporary vector for storing the global element ids
-  Epetra_Vector elementIds(*(peridigmDisc->getCellVolume()));
+  Epetra_Vector elementIds(*(peridigmDiscretization->getCellVolume()));
   for(int i=0 ; i<elementIds.MyLength() ; ++i)
     elementIds[i] = elementIds.Map().GID(i);
 
   // Load initial data into the blocks
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    blockIt->importData(*(peridigmDisc->getBlockID()),    blockIdFieldId,          PeridigmField::STEP_NONE, Insert);
-    blockIt->importData(*(peridigmDisc->getHorizon()),    horizonFieldId,          PeridigmField::STEP_NONE, Insert);
-    blockIt->importData(*(peridigmDisc->getCellVolume()), volumeFieldId,           PeridigmField::STEP_NONE, Insert);
-    blockIt->importData(*(peridigmDisc->getInitialX()),   modelCoordinatesFieldId, PeridigmField::STEP_NONE, Insert);
-    blockIt->importData(*(peridigmDisc->getInitialX()),   coordinatesFieldId,      PeridigmField::STEP_N,    Insert);
-    blockIt->importData(*(peridigmDisc->getInitialX()),   coordinatesFieldId,      PeridigmField::STEP_NP1,  Insert);
+    blockIt->importData(*(peridigmDiscretization->getBlockID()),    blockIdFieldId,          PeridigmField::STEP_NONE, Insert);
+    blockIt->importData(*(peridigmDiscretization->getHorizon()),    horizonFieldId,          PeridigmField::STEP_NONE, Insert);
+    blockIt->importData(*(peridigmDiscretization->getCellVolume()), volumeFieldId,           PeridigmField::STEP_NONE, Insert);
+    blockIt->importData(*(peridigmDiscretization->getInitialX()),   modelCoordinatesFieldId, PeridigmField::STEP_NONE, Insert);
+    blockIt->importData(*(peridigmDiscretization->getInitialX()),   coordinatesFieldId,      PeridigmField::STEP_N,    Insert);
+    blockIt->importData(*(peridigmDiscretization->getInitialX()),   coordinatesFieldId,      PeridigmField::STEP_NP1,  Insert);
     blockIt->importData(elementIds,                       elementIdFieldId,        PeridigmField::STEP_NONE, Insert);
   }
 
