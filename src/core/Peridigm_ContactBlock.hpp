@@ -49,7 +49,7 @@
 #define PERIDIGM_CONTACTBLOCK_HPP
 
 #include "Peridigm_BlockBase.hpp"
-#include "contact/Peridigm_ContactModel.hpp"
+#include "Peridigm_ContactModel.hpp"
 
 namespace PeridigmNS {
 

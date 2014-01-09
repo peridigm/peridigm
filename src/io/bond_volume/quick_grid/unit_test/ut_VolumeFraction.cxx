@@ -43,18 +43,17 @@
 // ************************************************************************
 //@HEADER
 
-
 #include <boost/property_tree/json_parser.hpp>
 #include <string>
-#include "mesh_input/quick_grid/QuickGrid.h"
-#include "mesh_input/quick_grid/QuickGridData.h"
-#include "bond_volume/quick_grid/calculators.h"
-#include "pdneigh/NeighborhoodList.h"
-#include "pdneigh/PdZoltan.h"
-#include "utilities/PdutMpiFixture.h"
-#include "mesh_output/Field.h"
-#include "utilities/Vector3D.h"
-#include "utilities/Array.h"
+#include "QuickGrid.h"
+#include "QuickGridData.h"
+#include "calculators.h"
+#include "NeighborhoodList.h"
+#include "PdZoltan.h"
+#include "PdutMpiFixture.h"
+#include "Field.h"
+#include "Vector3D.h"
+#include "Array.h"
 #include <set>
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
@@ -72,11 +71,9 @@
 #include "Epetra_SerialComm.h"
 #endif
 
-
 #include <iostream>
 #include <cmath>
 using namespace Pdut;
-
 
 using namespace QUICKGRID;
 using UTILITIES::Vector3D;

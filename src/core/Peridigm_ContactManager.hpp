@@ -56,8 +56,8 @@
 #include <Epetra_Vector.h>
 #include <Epetra_Import.h>
 #include "Peridigm_ContactBlock.hpp"
-#include "contact/Peridigm_ContactModel.hpp"
-#include "mesh_input/quick_grid/QuickGridData.h"
+#include "Peridigm_ContactModel.hpp"
+#include "QuickGridData.h"
 
 // \todo These includes are temporary, remove them.
 #include "Peridigm_Discretization.hpp"

@@ -47,13 +47,13 @@
 
 #include "Peridigm_ContactManager.hpp"
 #include "Peridigm_HorizonManager.hpp"
-#include "contact/Peridigm_ContactModelFactory.hpp"
+#include "Peridigm_ContactModelFactory.hpp"
 #include "Peridigm_Timer.hpp"
 #include <boost/algorithm/string/trim.hpp> // \todo Replace this include with correct include for istream_iterator.
 #include "Peridigm_PdQuickGridDiscretization.hpp"
 
-#include "pdneigh/PdZoltan.h"
-#include "pdneigh/NeighborhoodList.h"
+#include "PdZoltan.h"
+#include "NeighborhoodList.h"
 
 using namespace std;
 

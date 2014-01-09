@@ -49,10 +49,9 @@
 #define PERIDIGM_BOUNARYCONDITION_HPP
 
 #include "Peridigm_Enums.hpp"
-#include "muParser/muParser.h"
-#include "muParser/muParserPeridigmFunctions.h"
+#include "muParser.h"
+#include "muParserPeridigmFunctions.h"
 #include <Epetra_Vector.h>
-
 
 using namespace std;
 

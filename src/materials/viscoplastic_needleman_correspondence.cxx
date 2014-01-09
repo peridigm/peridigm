@@ -110,9 +110,6 @@ const double dt
   ScalarT tempScalar;
   ScalarT yieldFunctionVal;
 
-  ScalarT rateTerm;
-  ScalarT hardTerm;
-
   ScalarT deltaLambda;
   ScalarT deltaLambdaOld = 0.0;
   ScalarT a;

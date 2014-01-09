@@ -63,7 +63,7 @@
   #include <Epetra_SerialComm.h>
 #endif
 #include <vector>
-#include "../../core/Peridigm.hpp"
+#include "Peridigm.hpp"
 
 using namespace Teuchos;
 

@@ -28,10 +28,13 @@ file (GLOB quickGridHEADERS
   "${QUICK_GRID_DIR}/*.h"
 )
 file (GLOB utilitiesHEADERS 
-  "${UTILITIES_DIR}/*.h"
+  "${UTILITIES_DIR}/*.h*"
 )
 file (GLOB pdneighHEADERS 
   "${PDNEIGH_DIR}/*.h"
+)
+file (GLOB parserHEADERS
+  "${PARSER_DIR}/*.h"
 )
 
 set(Peridigm_HEADERS
@@ -46,6 +49,7 @@ set(Peridigm_HEADERS
     ${quickGridHEADERS}
     ${utilitiesHEADERS}
     ${pdneighHEADERS}
+    ${parserHEADERS}
 )
 
 # Glob source files in subdirectories

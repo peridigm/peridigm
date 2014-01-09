@@ -50,7 +50,7 @@
 #include "../Peridigm_Compute_Force.hpp"
 #include <Peridigm_DiscretizationFactory.hpp>
 #include "Peridigm_Field.hpp"
-#include "../../core/Peridigm.hpp"
+#include "Peridigm.hpp"
 
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_UnitTestHarness.hpp>

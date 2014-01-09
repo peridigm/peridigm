@@ -31,7 +31,7 @@
 #include <stack>
 #include <vector>
 //#include <memory>
-#include "utilities/MemoryInclude.h"
+#include "MemoryInclude.h"
 
 #include "muParserError.h"
 #include "muParserCallback.h"

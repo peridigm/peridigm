@@ -79,9 +79,9 @@
 #include "Peridigm_ContactManager.hpp"
 #include "Peridigm_ServiceManager.hpp"
 #include "Peridigm_Memstat.hpp"
-#include "materials/Peridigm_Material.hpp"
-#include "damage/Peridigm_DamageModel.hpp"
-#include "muParser/muParserDef.h"
+#include "Peridigm_Material.hpp"
+#include "Peridigm_DamageModel.hpp"
+#include "muParserDef.h"
 
 namespace PeridigmNS {
 

@@ -50,14 +50,14 @@
 #include <fstream>
 #include <sstream>
 
-#include "mesh_output/Field.h"
-#include "mesh_input/quick_grid/QuickGrid.h"
-#include "bond_volume/quick_grid/calculators.h"
+#include "Field.h"
+#include "QuickGrid.h"
+#include "calculators.h"
 #include "material_utilities.h"
-#include "pdneigh/NeighborhoodList.h"
-#include "pdneigh/PdZoltan.h"
-#include "pdneigh/BondFilter.h"
-#include "utilities/Array.h"
+#include "NeighborhoodList.h"
+#include "PdZoltan.h"
+#include "BondFilter.h"
+#include "Array.h"
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
 #include "Epetra_ConfigDefs.h"
@@ -67,7 +67,6 @@
 #else
 #include "Epetra_SerialComm.h"
 #endif
-
 
 using std::size_t;
 using std::tr1::shared_ptr;

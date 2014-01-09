@@ -69,11 +69,11 @@
 #include "Peridigm_CriticalTimeStep.hpp"
 #include "Peridigm_RandomNumber.hpp"
 #include "Peridigm_Timer.hpp"
-#include "materials/Peridigm_MaterialFactory.hpp"
-#include "damage/Peridigm_DamageModelFactory.hpp"
-#include "damage/Peridigm_InterfaceAwareDamageModel.hpp"
-#include "muParser/muParser.h"
-#include "muParser/muParserPeridigmFunctions.h"
+#include "Peridigm_MaterialFactory.hpp"
+#include "Peridigm_DamageModelFactory.hpp"
+#include "Peridigm_InterfaceAwareDamageModel.hpp"
+#include "muParser.h"
+#include "muParserPeridigmFunctions.h"
 #include "Peridigm.hpp"
 
 #include <Epetra_Import.h>
@@ -85,7 +85,6 @@
 #include <Ifpack.h>
 #include <Ifpack_IC.h>
 #include <Teuchos_VerboseObject.hpp>
-
 
 using namespace std;
 
