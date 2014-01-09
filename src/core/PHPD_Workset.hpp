@@ -57,7 +57,7 @@ struct Workset {
   
   Workset() {}
 
-  Teuchos::RCP<const double> timeStep;
+  Teuchos::RCP<double> timeStep;
   Teuchos::RCP<PeridigmNS::SerialMatrix> jacobian;
   Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks;
   Teuchos::RCP<PeridigmNS::ContactManager> contactManager;

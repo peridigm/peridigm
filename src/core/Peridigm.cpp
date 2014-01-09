@@ -1058,6 +1058,41 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
   return true;
 }
 
+void PeridigmNS::Peridigm::computeInternalForce()
+{
+  // This function is intended for use when Peridigm is called as an external library (e.g., code coupling)
+
+  // It is assumed that the global vectors x, u, y, and v have been set.
+  // This function fills the global force vector.
+
+  // Copy data from mothership vectors to overlap vectors in data manager
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
+  } 
+
+  // Call the model evaluator
+  modelEvaluator->evalModel(workset);
+
+  // Copy force from the data manager to the mothership vector
+  force->PutScalar(0.0);
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    scratch->PutScalar(0.0);
+    blockIt->exportData(*scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
+    force->Update(1.0, *scratch, 1.0);
+  }
+  scratch->PutScalar(0.0);
+
+  // convert force density to force
+  double *f, *v;
+  force->ExtractView(&f);
+  volume->ExtractView(&v);
+  for(int i=0 ; i < force->MyLength() ; ++i)
+      f[i] *= v[i/3];
+}
+
 void PeridigmNS::Peridigm::jacobianDiagnostics(Teuchos::RCP<NOX::Epetra::Group> noxGroup){
 
   stringstream ss;
@@ -1527,7 +1562,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
     // Set the current position and velocity
     // \todo We probably want to rework this so that the material models get valid x, u, and y values.
     // Currently the u values are from the previous load step (and if we update u here we'll be unable
-    // to properly undo a time step, which we'll need to adaptive time stepping).
+    // to properly undo a time step, which we'll need for adaptive time stepping).
     for(int i=0 ; i<y->MyLength() ; ++i){
       yPtr[i] = xPtr[i] + uPtr[i] + deltaUPtr[i];
       vPtr[i] = deltaUPtr[i]/timeIncrement;
