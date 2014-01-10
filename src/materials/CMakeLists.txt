@@ -27,3 +27,9 @@ ENDIF()
 
 # PdMaterialUtilities library
 add_library(PdMaterialUtilities ${PD_MATERIAL_SOURCES})
+
+IF (INSTALL_PERIDIGM)
+   install(TARGETS PdMaterialUtilities EXPORT peridigm-export
+   LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+   ARCHIVE DESTINATION ${LIB_INSTALL_DIR})
+ENDIF ()
