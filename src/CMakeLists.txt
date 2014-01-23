@@ -121,7 +121,6 @@ set_property(TARGET Peridigm
 #
 add_subdirectory (compute/)
 add_subdirectory (core/)
-add_subdirectory (evaluators/)
 add_subdirectory (io/)
 add_subdirectory (materials/)
 add_subdirectory (muParser/)
