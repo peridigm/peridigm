@@ -61,16 +61,15 @@ namespace PHPD {
    */
   template <typename EvalT>
   class ParameterEntry : 
-    public Sacado::ScalarParameterEntry<EvalT,SPL_Traits> {
+    public Sacado::ScalarParameterEntry<EvalT,Peridigm_SPL_Traits> {
 
   //! Scalar type
-  typedef typename Sacado::ScalarParameterEntry<EvalT,SPL_Traits>::ScalarT ScalarT;
+  typedef typename Sacado::ScalarParameterEntry<EvalT,Peridigm_SPL_Traits>::ScalarT ScalarT;
 
   public:
 
     //! Constructor
-    ParameterEntry(const std::string &name_, ParameterGet<EvalT>* evaluator_,
-                            Teuchos::RCP<ParamLib> paramLib)
+    ParameterEntry(const std::string &name_, ParameterGet<EvalT>* evaluator_, Teuchos::RCP<PeridigmParamLib> paramLib)
       : name(name_), evaluator(evaluator_) {
 
       if (paramLib != Teuchos::null) {
