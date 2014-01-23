@@ -1,7 +1,6 @@
 /*! \file PHPD_PeridigmTraits.cpp */
 
 // @HEADER
-//@HEADER
 // ************************************************************************
 //
 //                             Peridigm
@@ -55,4 +54,4 @@ const std::string PHX::TypeString<PHPD::PeridigmTraits::Tangent>::value = "Tange
 
 const std::string PHX::TypeString<double>::value = "double";
 
-const std::string PHX::TypeString< Sacado::Fad::DFad<double> >::value = "Sacado::Fad::DFad<double>";
+//const std::string PHX::TypeString< Sacado::Fad::DFad<double> >::value = "Sacado::Fad::DFad<double>";

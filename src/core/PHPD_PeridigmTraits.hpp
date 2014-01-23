@@ -69,14 +69,14 @@
 // Include all of our AD types
 //#include <Sacado_Fad_DFad.hpp>
 
-// Typedef AD types to standard names
-typedef double RealType;
-typedef Sacado::Fad::DFad<double> FadType;
-
 // Include ScalarParameterLibrary to specialize its traits
 #include <Sacado_ScalarParameterLibrary.hpp>
 
 namespace PHPD {
+
+// Typedef AD types to standard names
+typedef double RealType;
+typedef Sacado::Fad::DFad<double> FadType;
 
   /*! The Traits object is a struct that defines the evaluation types, 
    *  the data types for each evaluation type, the allocator type, and the 
@@ -217,12 +217,14 @@ namespace PHX {
   template<> struct TypeString<PHPD::PeridigmTraits::Tangent> 
   { static const std::string value; };
 
+  // HERE BE DRAGONS
+
   // Data Types
   template<> struct TypeString<double> 
   { static const std::string value; };
 
-  template<> struct TypeString< Sacado::Fad::DFad<double> > 
-  { static const std::string value; };
+  // template<> struct TypeString< Sacado::Fad::DFad<double> > 
+  // { static const std::string value; };
 
  /*! String values are defined in PHPD_PeridigmTraits.cpp. */
 
@@ -231,15 +233,15 @@ namespace PHX {
 // ******************************************************************
 // Definition of Sacado::ParameterLibrary traits
 // ******************************************************************
-struct SPL_Traits {
+struct Peridigm_SPL_Traits {
   template <class T> struct apply {
     typedef typename T::ScalarT type;
   };
 };
 
 // Synonym for the ScalarParameterLibrary/Vector on our traits
-typedef Sacado::ScalarParameterLibrary<SPL_Traits> ParamLib;
-typedef Sacado::ScalarParameterVector<SPL_Traits> ParamVec;
+typedef Sacado::ScalarParameterLibrary<Peridigm_SPL_Traits> PeridigmParamLib;
+typedef Sacado::ScalarParameterVector<Peridigm_SPL_Traits> PeridigmParamVec;
 
 // Turn on/off explicit template instantiation
 #define SACADO_ETI
