@@ -212,7 +212,6 @@ ${CMAKE_SOURCE_DIR}/src/io/bond_volume
 ${CMAKE_SOURCE_DIR}/src/io/utilities
 ${CMAKE_SOURCE_DIR}/src/io/pdneigh
 ${CMAKE_SOURCE_DIR}/src/contact
-${CMAKE_SOURCE_DIR}/src/evaluators
 ${CMAKE_SOURCE_DIR}/src/materials
 ${CMAKE_SOURCE_DIR}/src/damage
 )
@@ -226,7 +225,6 @@ set(COMPUTE_DIR          ${CMAKE_SOURCE_DIR}/src/compute)
 set(CONTACT_DIR          ${CMAKE_SOURCE_DIR}/src/contact)
 set(CORE_DIR             ${CMAKE_SOURCE_DIR}/src/core)
 set(DISCRETIZATION_DIR   ${CMAKE_SOURCE_DIR}/src/io/discretization)
-set(EVALUATORS_DIR       ${CMAKE_SOURCE_DIR}/src/evaluators)
 set(IO_DIR               ${CMAKE_SOURCE_DIR}/src/io)
 set(MATERIALS_DIR        ${CMAKE_SOURCE_DIR}/src/materials)
 set(DAMAGE_DIR           ${CMAKE_SOURCE_DIR}/src/damage)
