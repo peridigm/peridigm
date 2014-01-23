@@ -244,7 +244,7 @@ namespace PeridigmNS {
     Teuchos::RCP< PeridigmNS::ComputeManager > getComputeManager() { return computeManager; }
 
     //! Set the time step (for use when calling Peridigm as a library).
-    void setTimeStep(double timeStep) { *(workset->timeStep) = timeStep; }
+    void setTimeStep(double timeStep) { workset->timeStep = timeStep; }
 
     //! Display a progress bar
     void displayProgress(std::string title, double percentComplete);
@@ -376,7 +376,7 @@ namespace PeridigmNS {
     Teuchos::RCP<PeridigmNS::NeighborhoodData> globalNeighborhoodData;
 
     //! Workset that is passed to the modelEvaluator
-    Teuchos::RCP<PHPD::Workset> workset;
+    Teuchos::RCP<Workset> workset;
 
     //! The peridigm model evaluator
     Teuchos::RCP<PeridigmNS::ModelEvaluator> modelEvaluator;

@@ -48,10 +48,19 @@
 #ifndef PERIDIGM_MODELEVALUATOR_HPP
 #define PERIDIGM_MODELEVALUATOR_HPP
 
-#include <Phalanx.hpp>
-#include "PHPD_PeridigmTraits.hpp"
+#include "Peridigm_ContactManager.hpp"
+#include "Peridigm_Block.hpp"
 
 namespace PeridigmNS {
+
+  //! Structure for passing data between Peridigm and the computational routines
+  struct Workset {
+    Workset() {}
+    double timeStep;
+    Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks;
+    Teuchos::RCP< PeridigmNS::ContactManager > contactManager;
+    Teuchos::RCP< PeridigmNS::SerialMatrix > jacobian;
+  };
 
   //! The main ModelEvaluator class; provides the interface between the driver code and the computational routines.
   class ModelEvaluator {
@@ -59,33 +68,16 @@ namespace PeridigmNS {
   public:
 
     //! Constructor
-    ModelEvaluator(bool hasContact_);
+    ModelEvaluator();
 
     //! Destructor
 	virtual ~ModelEvaluator();
 
     //! Model evaluation that acts directly on the workset
-    void evalModel(Teuchos::RCP<PHPD::Workset> workset) const;
+    void evalModel(Teuchos::RCP<Workset> workset) const;
 
     //! Jacobian evaluation that acts directly on the workset
-    void evalJacobian(Teuchos::RCP<PHPD::Workset> workset) const;
-
-  protected:
-
-	void constructForceEvaluators();
-	void constructJacobianEvaluators();
-
-	//! Phalanx field manager for internal force evaluation
-	Teuchos::RCP<PHX::FieldManager<PHPD::PeridigmTraits> > forceFieldManager;
-
-	//! Phalanx field manager for jacobian evaluation
-	Teuchos::RCP<PHX::FieldManager<PHPD::PeridigmTraits> > jacobianFieldManager;
-
-    //! Contact flag
-    bool hasContact;
-
-    //! Verbosity flag
-    bool verbose;
+    void evalJacobian(Teuchos::RCP<Workset> workset) const;
 
   private:
     

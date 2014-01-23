@@ -353,7 +353,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   initializeWorkset();
 
   // Create the model evaluator
-  modelEvaluator = Teuchos::rcp(new PeridigmNS::ModelEvaluator(analysisHasContact));
+  modelEvaluator = Teuchos::rcp(new PeridigmNS::ModelEvaluator());
 
   // Initialize output manager
   initializeOutputManager();
@@ -498,14 +498,12 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization>
 }
 
 void PeridigmNS::Peridigm::initializeWorkset() {
-  workset = Teuchos::rcp(new PHPD::Workset);
-  Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
-  *timeStep = 0.0;
-  workset->timeStep = timeStep;
-  workset->jacobian = overlapJacobian;
+  workset = Teuchos::rcp(new Workset);
+  workset->timeStep = 0.0;
   workset->blocks = blocks;
   if(!contactManager.is_null())
     workset->contactManager = contactManager;
+  workset->jacobian = overlapJacobian;
 }
 
 void PeridigmNS::Peridigm::instantiateComputeManager() {
@@ -715,9 +713,6 @@ void PeridigmNS::Peridigm::executeSolvers() {
 
 void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> solverParams) {
 
-  Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
-  workset->timeStep = timeStep;
-
   Teuchos::RCP<Teuchos::ParameterList> verletParams = sublist(solverParams, "Verlet", true);
 
   // Compute the approximate critical time step
@@ -760,7 +755,7 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
   double timeInitial = solverParams->get("Initial Time", 0.0);
   double timeFinal   = solverParams->get("Final Time", 1.0);
   timeCurrent = timeInitial;
-  *timeStep = dt;
+  workset->timeStep = dt;
   double dt2 = dt/2.0;
   int nsteps = (int)floor((timeFinal-timeInitial)/dt);
 
@@ -990,7 +985,7 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
   // copy the solution vector passed in by NOX to update the deformation 
   for(int i=0 ; i < u->MyLength() ; ++i){
     (*y)[i] = (*x)[i] + (*u)[i] + (*soln)[i];
-    (*v)[i] = (*soln)[i] / (*(workset->timeStep));
+    (*v)[i] = (*soln)[i] / (workset->timeStep);
   }
   v->Update(1.0, *noxVelocityAtDOFWithKinematicBC, 1.0); // Necessary because soln is zero at dof with kinematic bc
 
@@ -1187,10 +1182,6 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
   // Initialize velocity to zero
   v->PutScalar(0.0);
   
-  // Create a placeholder for the timestep within the workset that is passed to the model evaluator
-  Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
-  workset->timeStep = timeStep;
- 
   // Pointers into mothership vectors
   double *xPtr, *uPtr, *yPtr, *vPtr, *deltaUPtr;
   x->ExtractView( &xPtr );
@@ -1283,7 +1274,7 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
     double timePrevious = timeCurrent;
     timeCurrent = timeSteps[step];
     double timeIncrement = timeCurrent - timePrevious;
-    *timeStep = timeIncrement;
+    workset->timeStep = timeIncrement;
  
     m_noxJacobianUpdateCounter = 0;
     
@@ -1450,9 +1441,6 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
   // Vector for predictor
   Epetra_Vector predictor(v->Map());
 
-  Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
-  workset->timeStep = timeStep;
-
   bool solverVerbose = solverParams->get("Verbose", false);
   Teuchos::RCP<Teuchos::ParameterList> quasiStaticParams = sublist(solverParams, "QuasiStatic", true);
   int maxSolverIterations = quasiStaticParams->get("Maximum Solver Iterations", 10);
@@ -1548,7 +1536,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
     double timePrevious = timeCurrent;
     timeCurrent = timeSteps[step];
     double timeIncrement = timeCurrent - timePrevious;
-    *timeStep = timeIncrement;
+    workset->timeStep = timeIncrement;
 
     // Update nodal positions for nodes with kinematic B.C.
     deltaU->PutScalar(0.0);
@@ -2022,9 +2010,6 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
   Teuchos::RCP<Epetra_Vector> vn = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
   Teuchos::RCP<Epetra_Vector> an = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
 
-  Teuchos::RCP<double> timeStep = Teuchos::rcp(new double);
-  workset->timeStep = timeStep;
-
   Teuchos::RCP<Teuchos::ParameterList> quasiStaticParams = sublist(solverParams, "Implicit", true);
   double timeInitial = solverParams->get("Initial Time", 0.0);
   double timeFinal = solverParams->get("Final Time", 1.0);
@@ -2034,7 +2019,7 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
   double dt                      = quasiStaticParams->get("Fixed dt", 1.0);
   double beta                    = quasiStaticParams->get("Beta", 0.25);
   double gamma                   = quasiStaticParams->get("Gamma", 0.50);
-  *timeStep = dt;
+  workset->timeStep = dt;
   double dt2 = dt*dt;
   int nsteps = (int)floor((timeFinal-timeInitial)/dt);
 
@@ -2509,7 +2494,7 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
 void PeridigmNS::Peridigm::computeImplicitJacobian(double beta) {
 
   // MLP: Pass this in from integrator routine
-  double dt = *(workset->timeStep);
+  double dt = workset->timeStep;
   double dt2 = dt*dt;
 
   // Compute the tangent
