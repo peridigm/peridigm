@@ -67,7 +67,10 @@
 using namespace std;
 
 PeridigmNS::AlbanyDiscretization::AlbanyDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
-                                                       const Teuchos::RCP<Teuchos::ParameterList>& params) :
+                                                       const Teuchos::RCP<Teuchos::ParameterList>& params,
+						       const Teuchos::RCP<Epetra_Vector>& refCoord,
+						       const Teuchos::RCP<Epetra_Vector>& volume,
+						       const Teuchos::RCP<Epetra_Vector>& blockId) :
   minElementRadius(1.0e50),
   maxElementRadius(0.0),
   maxElementDimension(0.0),
