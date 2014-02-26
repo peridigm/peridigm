@@ -49,6 +49,7 @@
 #define PERIDIGM_ALBANYDISCRETIZATION_HPP
 
 #include "Peridigm_Discretization.hpp"
+#include <Epetra_Vector.h>
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_Comm.h>
 #include "QuickGridData.h"
@@ -62,7 +63,10 @@ namespace PeridigmNS {
 
     //! Constructor
     AlbanyDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetraComm,
-                         const Teuchos::RCP<Teuchos::ParameterList>& params);
+                         const Teuchos::RCP<Teuchos::ParameterList>& params,
+			 const Teuchos::RCP<Epetra_Vector>& refCoord,
+			 const Teuchos::RCP<Epetra_Vector>& volume,
+			 const Teuchos::RCP<Epetra_Vector>& blockId);
 
     //! Destructor
     virtual ~AlbanyDiscretization();
