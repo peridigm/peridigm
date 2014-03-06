@@ -62,7 +62,6 @@
 #include "Peridigm_HorizonManager.hpp"
 #include "Peridigm_InfluenceFunction.hpp"
 #include "Peridigm_DiscretizationFactory.hpp"
-#include "Peridigm_PartialVolumeCalculator.hpp"
 #include "Peridigm_OutputManager_ExodusII.hpp"
 #include "Peridigm_ComputeManager.hpp"
 #include "Peridigm_BoundaryAndInitialConditionManager.hpp"

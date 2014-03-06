@@ -56,3 +56,25 @@ target_link_libraries(utPeridigm_STKDiscretization
   ${Boost_LIBRARIES}
 )
 add_test (utPeridigm_STKDiscretization python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_STKDiscretization)
+
+add_executable(utPeridigm_GeometryUtils
+               ${DISCRETIZATION_DIR}/Peridigm_GeometryUtils.cpp
+               ./utPeridigm_GeometryUtils.cpp)
+target_link_libraries(utPeridigm_GeometryUtils
+  ${Peridigm_LIBRARY}
+  ${Trilinos_LIBRARIES}
+  ${PARSER_LIBS}
+)
+add_test (utPeridigm_GeometryUtils python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_GeometryUtils)
+
+#IF(PERIDIGM_SANDIA_INTERNAL)
+#  add_executable(utPeridigm_PartialVolumeCalculator
+#                 ${DISCRETIZATION_DIR}/Peridigm_PartialVolumeCalculator.cpp
+#                 ./utPeridigm_PartialVolumeCalculator.cpp)
+#  target_link_libraries(utPeridigm_PartialVolumeCalculator
+#    ${Peridigm_LIBRARY}
+#    ${Trilinos_LIBRARIES}
+#    ${PARSER_LIBS}
+#  )
+#  add_test (utPeridigm_PartialVolumeCalculator python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_PartialVolumeCalculator)
+#ENDIF()
