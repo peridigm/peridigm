@@ -1,4 +1,4 @@
-/*! \file Peridigm_PartialVolumeCalculator.hpp */
+/*! \file Peridigm_GeometryUtils.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,23 +45,27 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_PARTIALVOLUMECALCULATOR_HPP
-#define PERIDIGM_PARTIALVOLUMECALCULATOR_HPP
+#ifndef PERIDIGM_GEOMETRYUTILS_HPP
+#define PERIDIGM_GEOMETRYUTILS_HPP
 
-#include "Peridigm_Block.hpp"
-#include "Peridigm_Discretization.hpp"
 #include <vector>
 
 namespace PeridigmNS {
 
-  //! Computes the partial volumes for all neighbors of all elements in the given block.
-  void computePartialVolume(Teuchos::RCP<PeridigmNS::Block> block,
-                            Teuchos::RCP<PeridigmNS::Discretization> discretization);
+  //! Approximate the volume and centroid of a hexahedron.
+  void hexCentroidAndVolume(double* const nodeCoordinates, double* centroid, double* volume);
 
-  //! Computes the volume of the given neighbor that falls within the neighborhood of the given point.
-  double computePartialVolume(const double* const pt,
-                              const double* const neighborElementNodes,
-                              const double horizon);
+  //! Compute the centroid of a tetrahedron.
+  void tetCentroid(const std::vector<double*>& nodeCoordinates, std::vector<double>& centroid);
+
+  //! Compute the volume of a tetrahedron.
+  double tetVolume(const std::vector<double*>& nodeCoordinates);
+
+  //! Compute a scalar triple product.
+  double scalarTripleProduct(const std::vector<double>& a, const std::vector<double>& b, const std::vector<double>& c);
+
+  //! Compute the maxmimum distance from a given point to a node in an element.
+  double maxDistanceToNode(int numNodes, const double* const nodeCoordinates, double* point);
 }
 
-#endif // PERIDIGM_PARTIALVOLUMECALCULATOR_HPP
+#endif // PERIDIGM_GEOMETRYUTILS_HPP
