@@ -490,6 +490,123 @@ TEUCHOS_UNIT_TEST(GeometryUtils, TriangleSphereIntersection) {
   TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
 }
 
+//! Exercise hexahedronSphereIntersection()
+TEUCHOS_UNIT_TEST(GeometryUtils, HexahedronSphereIntersection) {
+
+  vector<double> nodes(24), sphereCenter(3);
+  double sphereRadius;
+  PeridigmNS::SphereIntersection sphereIntersection;
+
+  // Simple case
+  nodes[0]  = 0.0 ; nodes[1]  = 0.0 ; nodes[2]  = 0.0 ;
+  nodes[3]  = 1.0 ; nodes[4]  = 0.0 ; nodes[5]  = 0.0 ;
+  nodes[6]  = 1.0 ; nodes[7]  = 1.0 ; nodes[8]  = 0.0 ;
+  nodes[9]  = 0.0 ; nodes[10] = 1.0 ; nodes[11] = 0.0 ;
+  nodes[12] = 0.0 ; nodes[13] = 0.0 ; nodes[14] = 1.0 ;
+  nodes[15] = 1.0 ; nodes[16] = 0.0 ; nodes[17] = 1.0 ;
+  nodes[18] = 1.0 ; nodes[19] = 1.0 ; nodes[20] = 1.0 ;
+  nodes[21] = 0.0 ; nodes[22] = 1.0 ; nodes[23] = 1.0 ;
+  sphereCenter[0] = -1.0 ; sphereCenter[1] = 0.0 ; sphereCenter[2] = 0.0 ;
+  sphereRadius = 1.0 - 1.0e-12;
+  
+  // All nodes outside sphere, no intersection
+  sphereIntersection = hexahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::OUTSIDE_SPHERE);
+
+  // All nodes inside sphere
+  sphereRadius = 123.0;
+  sphereIntersection = hexahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INSIDE_SPHERE);
+
+  // One node inside sphere
+  sphereRadius = 1.0 + 1.0e-12;
+  sphereIntersection = hexahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
+
+  // All nodes outside sphere, but there is an intersection
+  sphereCenter[0] = -1.0 ; sphereCenter[1] = 0.5 ; sphereCenter[2] = 0.5 ;
+  sphereIntersection = hexahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
+
+  // Four nodes inside sphere
+  sphereRadius = 2.0 - 1.0e-12;
+  sphereIntersection = hexahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
+
+  // Slightly trickier case #1
+  nodes[0]  = 0.0 ; nodes[1]  = 0.0 ; nodes[2]  = 0.0 ;
+  nodes[3]  = 1.0 ; nodes[4]  = 0.0 ; nodes[5]  = 0.0 ;
+  nodes[6]  = 1.0 ; nodes[7]  = 1.0 ; nodes[8]  = 0.0 ;
+  nodes[9]  = 0.0 ; nodes[10] = 1.0 ; nodes[11] = 0.0 ;
+  nodes[12] = 0.0 ; nodes[13] = 0.0 ; nodes[14] = 2.0 ;
+  nodes[15] = 1.0 ; nodes[16] = 0.0 ; nodes[17] = 1.0 ;
+  nodes[18] = 1.0 ; nodes[19] = 1.0 ; nodes[20] = 1.0 ;
+  nodes[21] = 0.0 ; nodes[22] = 1.0 ; nodes[23] = 2.0 ;
+  sphereCenter[0] = 1.0 ; sphereCenter[1] = 0.5 ; sphereCenter[2] = 2.0 ;
+  sphereRadius = 0.5*std::sqrt(2.0) + 1.0e-12;
+  sphereIntersection = hexahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
+  sphereRadius = 0.5*std::sqrt(2.0) - 1.0e-12;
+  sphereIntersection = hexahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::OUTSIDE_SPHERE);
+  sphereRadius = std::sqrt(5.25) - 1.0e-12;
+  sphereIntersection = hexahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
+  sphereRadius = std::sqrt(5.25) + 1.0e-12;
+  sphereIntersection = hexahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INSIDE_SPHERE);
+  // Case with center of sphere inside the element, sphere touches element faces but no nodes are within sphere
+  sphereCenter[0] = 0.5 ; sphereCenter[1] = 0.5 ; sphereCenter[2] = 0.5 ;
+  sphereRadius = 0.5 + 1.0e-12;
+  sphereIntersection = hexahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
+
+  // Slightly trickier case #2
+  nodes[0] = -6.0 ; nodes[1] =  8.0 ; nodes[2] =  1.0 ;
+  nodes[3] = -1.0 ; nodes[4] =  2.0 ; nodes[5] = -8.0 ;
+  nodes[6] =  0.0 ; nodes[7] = -4.0 ; nodes[8] = -4.0 ;
+  double edge1[3], edge2[3];
+  for(int i=0 ; i<3 ; ++i){
+    edge1[i] = nodes[3+i] - nodes[i];
+    edge2[i] = nodes[6+i] - nodes[i];
+  }
+  nodes[9]  = nodes[6] - 2.0*edge1[0] ; nodes[10] = nodes[7] - 2.0*edge1[1]; nodes[11] = nodes[8] - 2.0*edge1[2];
+  nodes[12] = nodes[0] + 5.0 ; nodes[13] = nodes[1] ; nodes[14] = nodes[2] ;
+  nodes[15] = nodes[3] + 5.0 ; nodes[16] = nodes[4] ; nodes[17] = nodes[5] ;
+  nodes[18] = nodes[4] + 1.1 ; nodes[19] = nodes[5] ; nodes[20] = nodes[6] ;
+  nodes[21] = nodes[7] + 1.1 ; nodes[22] = nodes[8] ; nodes[23] = nodes[9] ;
+  sphereCenter[0] = 0.0 ; sphereCenter[1] = 0.0 ; sphereCenter[2] = 0.0 ;
+  sphereRadius = 1234.0;
+  sphereIntersection = hexahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INSIDE_SPHERE);
+  sphereRadius = sqrt(32.0) + 1.0e-12;
+  sphereIntersection = hexahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
+  for(int i=0 ; i<3 ; ++i)
+    sphereCenter[i] = 0.5*(nodes[i] + nodes[3+i]);
+  sphereRadius = 0.1;
+  sphereIntersection = hexahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
+  double normal[3];
+  normal[0] = edge1[1]*edge2[2] - edge1[2]*edge2[1];
+  normal[1] = edge1[2]*edge2[0] - edge1[0]*edge2[2];
+  normal[2] = edge1[0]*edge2[1] - edge1[1]*edge2[0];
+  double mag = std::sqrt(normal[0]*normal[0] + normal[1]*normal[1] + normal[2]*normal[2]);
+  for(int i=0 ; i<3 ; ++i)
+    normal[i] /= mag;
+  for(int i=0 ; i<3 ; ++i)
+    sphereCenter[i] += 1.123*normal[i];
+  sphereRadius = 1.123 + 1.0e-12;
+  sphereIntersection = hexahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
+  sphereRadius = 1.123 - 1.0e-12;
+  sphereIntersection = hexahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::OUTSIDE_SPHERE);
+  sphereRadius = 100.0;
+  sphereIntersection = hexahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INSIDE_SPHERE);
+}
+
 int main( int argc, char* argv[] ) {
 
     int numProcs = 1;

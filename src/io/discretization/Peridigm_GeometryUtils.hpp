@@ -67,12 +67,17 @@ namespace PeridigmNS {
   double scalarTripleProduct(const std::vector<double>& a, const std::vector<double>& b, const std::vector<double>& c);
 
   //! Compute the maxmimum distance from a given point to a node in an element.
-  double maxDistanceToNode(int numNodes, const double* const nodeCoordinates, double* point);
+  double maxDistanceToNode(int numNodes, const double* const nodeCoordinates, const double* point);
 
   //! Determine if a triangle intersects a sphere
   SphereIntersection triangleSphereIntersection(const std::vector<double*>& nodeCoordinates,
                                                 const std::vector<double>& sphereCenter,
                                                 double sphereRadius);
+
+  //! Determine if a hexahedron intersects a sphere
+  SphereIntersection hexahedronSphereIntersection(double* const nodeCoordinates,
+                                                  const std::vector<double>& sphereCenter,
+                                                  double sphereRadius);
 }
 
 #endif // PERIDIGM_GEOMETRYUTILS_HPP
