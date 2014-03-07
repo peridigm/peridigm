@@ -159,6 +159,19 @@ ELSE()
   SET(SANDIA_INTERNAL_LIBRARY)
 ENDIF()
 
+#
+# Enable Sandia internal development
+#
+IF(USE_PV)
+  MESSAGE("-- PV is enabled, compiling with -DPERIDIGM_PV.\n")
+  ADD_DEFINITIONS(-DPERIDIGM_PV)
+  SET(PERIDIGM_PV TRUE)
+ELSE()
+  MESSAGE("-- PV is NOT enabled.\n")
+  SET(PERIDIGM_PV FALSE)
+  SET(PV_LIBRARY)
+ENDIF()
+
 # Optional Installation helpers
 # Note that some of this functionality depends on CMAKE > 2.8.8
 SET(INSTALL_PERIDIGM FALSE)
