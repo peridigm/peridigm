@@ -208,3 +208,86 @@ double PeridigmNS::maxDistanceToNode(int numNodes,
   maxDistance = std::sqrt(maxDistance);
   return maxDistance;
 }
+
+PeridigmNS::SphereIntersection PeridigmNS::triangleSphereIntersection(const std::vector<double*>& nodeCoordinates,
+                                                                      const std::vector<double>& sphereCenter,
+                                                                      double sphereRadius)
+{
+  double radiusSquared(0.0), distanceSquared(0.0);
+  int numNodesInSphere(0);
+
+  radiusSquared = sphereRadius*sphereRadius;
+
+  for(int node=0 ; node<3 ; ++node){
+    distanceSquared =
+      (nodeCoordinates[node][0] - sphereCenter[0])*(nodeCoordinates[node][0] - sphereCenter[0]) +
+      (nodeCoordinates[node][1] - sphereCenter[1])*(nodeCoordinates[node][1] - sphereCenter[1]) +
+      (nodeCoordinates[node][2] - sphereCenter[2])*(nodeCoordinates[node][2] - sphereCenter[2]);
+    if(distanceSquared < radiusSquared)
+      numNodesInSphere += 1;
+  }
+
+  // If all the nodes are in the sphere, then the entire triangle is inside the sphere
+  if(numNodesInSphere == 3)
+    return PeridigmNS::INSIDE_SPHERE;
+
+  // If some node are inside the sphere and some are outside the sphere, then the triangle intersects the sphere
+  if(numNodesInSphere == 1 || numNodesInSphere == 2)
+    return PeridigmNS::INTERSECTS_SPHERE;
+
+  // Compute the normal to the triangle
+  double u[3], v[3], magnitude, normal[3];
+  for(int i=0 ; i<3 ; ++i){
+    u[i] = nodeCoordinates[1][i] - nodeCoordinates[0][i];
+    v[i] = nodeCoordinates[2][i] - nodeCoordinates[0][i];
+  }
+  normal[0] = u[1]*v[2] - u[2]*v[1];
+  normal[1] = u[2]*v[0] - u[0]*v[2];
+  normal[2] = u[0]*v[1] - u[1]*v[0];
+  magnitude = std::sqrt(normal[0]*normal[0] + normal[1]*normal[1] + normal[2]*normal[2]);
+  for(int i=0 ; i<3 ; ++i)
+    normal[i] /= magnitude;
+
+  // Compute the closest distance from the plane of the triangle to the center of the sphere
+  double distance =
+    normal[0]*(sphereCenter[0] - nodeCoordinates[0][0]) +
+    normal[1]*(sphereCenter[1] - nodeCoordinates[0][1]) +
+    normal[2]*(sphereCenter[2] - nodeCoordinates[0][2]);
+
+  if(std::abs(distance) > sphereRadius)
+    return PeridigmNS::OUTSIDE_SPHERE;
+
+  // Find the closest point on the plane to the center of the sphere
+  double pt[3];
+  for(int i=0 ; i<3 ; ++i)
+    pt[i] = sphereCenter[i] - distance*normal[i];
+
+  // Determine if the point is within the triangle
+  // Technique is based on barycentric coordinates (http://www.blackpawn.com/texts/pointinpoly/)
+  double w[3];
+  for(int i=0 ; i<3 ; ++i)
+    w[i] = pt[i] - nodeCoordinates[0][i];
+
+  double dot00 = u[0]*u[0] + u[1]*u[1] + u[2]*u[2];
+  double dot01 = u[0]*v[0] + u[1]*v[1] + u[2]*v[2];
+  double dot02 = u[0]*w[0] + u[1]*w[1] + u[2]*w[2];
+  double dot11 = v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
+  double dot12 = v[0]*w[0] + v[1]*w[1] + v[2]*w[2];
+
+  double invDenom = 1.0 / (dot00 * dot11 - dot01 * dot01);
+  double bc_1 = (dot11 * dot02 - dot01 * dot12) * invDenom;
+  double bc_2 = (dot00 * dot12 - dot01 * dot02) * invDenom;
+
+  // Check if point is in triangle
+  if( (bc_1 >= 0.0) && (bc_2 >= 0.0) && (bc_1 + bc_2 < 1.0) )
+    return PeridigmNS::INTERSECTS_SPHERE;
+ 
+  return PeridigmNS::OUTSIDE_SPHERE;
+}
+
+
+// TODO
+//
+// create function for testing if sphere intersects hex (divided into triangle faces)
+// recursive algorithm for computing partial volume
+// revist function to find largest element dimension (circumscribing sphere?)

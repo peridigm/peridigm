@@ -371,8 +371,123 @@ TEUCHOS_UNIT_TEST(GeometryUtils, HexGeometry) {
   TEST_FLOATING_EQUALITY(centroid[1], trueCentroid[1], relTolerance);
   TEST_FLOATING_EQUALITY(centroid[2], trueCentroid[2], relTolerance);
   TEST_FLOATING_EQUALITY(volume[0], trueVolume, relTolerance);
+}
 
-  //  std::cout << "\n\nTEST (" << trueCentroid[0] << ", " << trueCentroid[1] << ", " << trueCentroid[2] << ")  (" << centroid[0] << ", " << centroid[1] << ", " << centroid[2] << ")" << std::endl;
+//! Exercise triangleSphereIntersection()
+TEUCHOS_UNIT_TEST(GeometryUtils, TriangleSphereIntersection) {
+
+  vector<double*> nodes(3);
+  vector<double> n1(3), n2(3), n3(3), sphereCenter(3);
+  nodes[0] = &n1[0] ; nodes[1] = &n2[0] ; nodes[2] = &n3[0] ;
+  double sphereRadius;
+  PeridigmNS::SphereIntersection sphereIntersection;
+
+  nodes[0][0] = 1.0 ; nodes[0][1] = -1.0 ; nodes[0][2] = -1.0;
+  nodes[1][0] = 1.0 ; nodes[1][1] =  1.0 ; nodes[1][2] =  0.0;
+  nodes[2][0] = 1.0 ; nodes[2][1] = -1.0 ; nodes[2][2] =  1.0;
+  sphereCenter[0] = 0.0 ; sphereCenter[1] = 0.0 ; sphereCenter[2] = 0.0;
+  sphereRadius = std::sqrt(3) + 1.0e-12;
+  
+  // -- Cases on simple triangle defined above --
+
+  // Case 1:  All the nodes are within the sphere
+  sphereIntersection = triangleSphereIntersection(nodes, sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INSIDE_SPHERE);
+
+  // Case 2:  Some nodes are inside the sphere, and some are outside the sphere
+  sphereCenter[0] = 0.0 ; sphereCenter[1] = 1.0 ; sphereCenter[2] = 0.0;
+  sphereRadius = 1.0 + 1.0e-12;
+  sphereIntersection = triangleSphereIntersection(nodes, sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
+  sphereCenter[0] = 0.0 ; sphereCenter[1] = -1.0 ; sphereCenter[2] = 0.0;
+  sphereRadius = std::sqrt(2) + 1.0e-12;
+  sphereIntersection = triangleSphereIntersection(nodes, sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
+
+  // Case 3:  The sphere does not intersect the place of the triangle
+  sphereRadius = 1.0 - 1.0e-12;
+  sphereIntersection = triangleSphereIntersection(nodes, sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::OUTSIDE_SPHERE);
+  sphereCenter[0] = 1.1 ; sphereCenter[1] = 0.5 ; sphereCenter[2] = 0.1;
+  sphereRadius = 0.1 - 1.0e-12;
+  sphereIntersection = triangleSphereIntersection(nodes, sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::OUTSIDE_SPHERE);
+
+  // Case 4:  None of the nodes are with the sphere, the sphere intersects the (infinite) plane, and the sphere intersects the triangle
+  sphereCenter[0] = 0.0 ; sphereCenter[1] = 0.0 ; sphereCenter[2] = 0.0;
+  sphereRadius = 1.0 + 1.0e-3;
+  sphereIntersection = triangleSphereIntersection(nodes, sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
+  sphereCenter[0] = 1.1 ; sphereCenter[1] = 0.5 ; sphereCenter[2] = 0.1;
+  sphereRadius = 0.1 + 1.0e-12;
+  sphereIntersection = triangleSphereIntersection(nodes, sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
+
+  // Case 5:  None of the nodes are with the sphere, the sphere intersects the (infinite) plane, but the sphere does not intersect the triangle
+  sphereCenter[0] = 0.0 ; sphereCenter[1] = 0.0 ; sphereCenter[2] = 2.0;
+  sphereRadius = 1.0 + 1.0e-3;
+  sphereIntersection = triangleSphereIntersection(nodes, sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::OUTSIDE_SPHERE);
+  sphereCenter[0] = 1.1 ; sphereCenter[1] = 1.2 ; sphereCenter[2] = 0.1;
+  sphereRadius = 0.1 + 1.0e-12;
+  sphereIntersection = triangleSphereIntersection(nodes, sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::OUTSIDE_SPHERE);
+
+  // -- A few trickier cases --
+  
+  nodes[0][0] = 20.0  ; nodes[0][1] = -54.0 ; nodes[0][2] = -31.0;
+  nodes[1][0] = 1.0   ; nodes[1][1] = -43.0 ; nodes[1][2] = -57.0;
+  nodes[2][0] = -96.0 ; nodes[2][1] = -41.0 ; nodes[2][2] =  72.0;
+  double triangleCentroid[3] = {0.0, 0.0, 0.0};
+  for(int i=0 ; i<3 ; ++i)
+    for(int j=0 ; j<3 ; ++j)
+      triangleCentroid[j] += (1.0/3.0)*nodes[i][j];
+  double u[3], v[3], triangleNormal[3];
+  for(int i=0 ; i<3 ; ++i){
+    u[i] = nodes[1][i] - nodes[0][i];
+    v[i] = nodes[2][i] - nodes[0][i];
+  }
+  triangleNormal[0] = u[1]*v[2] - u[2]*v[1];
+  triangleNormal[1] = u[2]*v[0] - u[0]*v[2];
+  triangleNormal[2] = u[0]*v[1] - u[1]*v[0];
+  double mag = std::sqrt(triangleNormal[0]*triangleNormal[0] + triangleNormal[1]*triangleNormal[1] + triangleNormal[2]*triangleNormal[2]);
+  for(int i=0 ; i<3 ; ++i)
+    triangleNormal[i] /= mag;
+  sphereRadius = 33.0;
+  for(int i=0 ; i<3 ; ++i)
+    sphereCenter[i] = triangleCentroid[i] + sphereRadius*triangleNormal[i];
+  sphereRadius = 33.0 - 1.0e-12;
+  sphereIntersection = triangleSphereIntersection(nodes, sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::OUTSIDE_SPHERE);
+  sphereRadius = 33.0 + 1.0e-12;
+  sphereIntersection = triangleSphereIntersection(nodes, sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
+  sphereRadius = 1.0e30;
+  sphereIntersection = triangleSphereIntersection(nodes, sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INSIDE_SPHERE);
+
+  sphereRadius = 33.0;
+  for(int i=0 ; i<3 ; ++i)
+    sphereCenter[i] = triangleCentroid[i] - sphereRadius*triangleNormal[i];
+  sphereRadius = 33.0 - 1.0e-12;
+  sphereIntersection = triangleSphereIntersection(nodes, sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::OUTSIDE_SPHERE);
+  sphereRadius = 33.0 + 1.0e-12;
+  sphereIntersection = triangleSphereIntersection(nodes, sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
+  sphereRadius = 1.0e30;
+  sphereIntersection = triangleSphereIntersection(nodes, sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INSIDE_SPHERE);
+
+  sphereRadius = 33.0;
+  for(int i=0 ; i<3 ; ++i)
+    sphereCenter[i] = nodes[0][i] + sphereRadius*triangleNormal[i];
+  sphereRadius = 33.0 - 1.0e-12;
+  sphereIntersection = triangleSphereIntersection(nodes, sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::OUTSIDE_SPHERE);
+  sphereRadius = 33.0 + 1.0e-12;
+  sphereIntersection = triangleSphereIntersection(nodes, sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
 }
 
 int main( int argc, char* argv[] ) {

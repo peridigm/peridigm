@@ -52,6 +52,8 @@
 
 namespace PeridigmNS {
 
+  enum SphereIntersection { INSIDE_SPHERE = 0, INTERSECTS_SPHERE = 1, OUTSIDE_SPHERE = 2 };
+
   //! Approximate the volume and centroid of a hexahedron.
   void hexCentroidAndVolume(double* const nodeCoordinates, double* centroid, double* volume);
 
@@ -66,6 +68,11 @@ namespace PeridigmNS {
 
   //! Compute the maxmimum distance from a given point to a node in an element.
   double maxDistanceToNode(int numNodes, const double* const nodeCoordinates, double* point);
+
+  //! Determine if a triangle intersects a sphere
+  SphereIntersection triangleSphereIntersection(const std::vector<double*>& nodeCoordinates,
+                                                const std::vector<double>& sphereCenter,
+                                                double sphereRadius);
 }
 
 #endif // PERIDIGM_GEOMETRYUTILS_HPP
