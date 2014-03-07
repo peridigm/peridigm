@@ -194,7 +194,7 @@ double PeridigmNS::scalarTripleProduct(const std::vector<double>& a,
 
 double PeridigmNS::maxDistanceToNode(int numNodes,
                                      const double* const nodeCoordinates,
-                                     double* point)
+                                     const double* point)
 {
   double maxDistance(0.0), squaredDistance(0.0), x(0.0), y(0.0), z(0.0);
   for(int i=0 ; i<numNodes ; ++i){
@@ -229,11 +229,11 @@ PeridigmNS::SphereIntersection PeridigmNS::triangleSphereIntersection(const std:
 
   // If all the nodes are in the sphere, then the entire triangle is inside the sphere
   if(numNodesInSphere == 3)
-    return PeridigmNS::INSIDE_SPHERE;
+    return INSIDE_SPHERE;
 
   // If some node are inside the sphere and some are outside the sphere, then the triangle intersects the sphere
   if(numNodesInSphere == 1 || numNodesInSphere == 2)
-    return PeridigmNS::INTERSECTS_SPHERE;
+    return INTERSECTS_SPHERE;
 
   // Compute the normal to the triangle
   double u[3], v[3], magnitude, normal[3];
@@ -255,7 +255,7 @@ PeridigmNS::SphereIntersection PeridigmNS::triangleSphereIntersection(const std:
     normal[2]*(sphereCenter[2] - nodeCoordinates[0][2]);
 
   if(std::abs(distance) > sphereRadius)
-    return PeridigmNS::OUTSIDE_SPHERE;
+    return OUTSIDE_SPHERE;
 
   // Find the closest point on the plane to the center of the sphere
   double pt[3];
@@ -280,14 +280,162 @@ PeridigmNS::SphereIntersection PeridigmNS::triangleSphereIntersection(const std:
 
   // Check if point is in triangle
   if( (bc_1 >= 0.0) && (bc_2 >= 0.0) && (bc_1 + bc_2 < 1.0) )
-    return PeridigmNS::INTERSECTS_SPHERE;
+    return INTERSECTS_SPHERE;
  
-  return PeridigmNS::OUTSIDE_SPHERE;
+  return OUTSIDE_SPHERE;
 }
 
+PeridigmNS::SphereIntersection PeridigmNS::hexahedronSphereIntersection(double* const nodeCoordinates,
+                                                                        const std::vector<double>& sphereCenter,
+                                                                        double sphereRadius)
+{
+  // Perform check on the number of nodes within the sphere
+  int numNodesInSphere(0);
+  double radiusSquared, distanceSquared;
+  radiusSquared = sphereRadius*sphereRadius;
+  for(int nodeIndex=0 ; nodeIndex<24 ; nodeIndex+=3){
+    distanceSquared =
+      (nodeCoordinates[nodeIndex]   - sphereCenter[0])*(nodeCoordinates[nodeIndex]   - sphereCenter[0]) +
+      (nodeCoordinates[nodeIndex+1] - sphereCenter[1])*(nodeCoordinates[nodeIndex+1] - sphereCenter[1]) +
+      (nodeCoordinates[nodeIndex+2] - sphereCenter[2])*(nodeCoordinates[nodeIndex+2] - sphereCenter[2]);
+    if(distanceSquared < radiusSquared)
+      numNodesInSphere += 1;
+  }
+
+  if(numNodesInSphere == 8)
+    return INSIDE_SPHERE;
+  else if(numNodesInSphere > 0)
+    return INTERSECTS_SPHERE;
+
+  // If all the nodes are outside the sphere, we need to look carefully at each face
+
+  // Divide each face into two triangles
+  // Check for intersection of triangles and sphere  
+
+  SphereIntersection sphereIntersection;
+  bool allInside(true), allOutside(true);
+  std::vector<double*> triangleNodeCoordinates(3);
+
+  for(int face=0 ; face<6 ; face++){
+    for(int tri=0 ; tri<2 ; ++tri){
+
+      if(face == 0 and tri == 0){
+        // Exodus nodes 1, 2, 3
+        // 0-based      0, 1, 2
+        // stride 3     0, 3, 6
+        triangleNodeCoordinates[0] = nodeCoordinates;
+        triangleNodeCoordinates[1] = nodeCoordinates + 3;
+        triangleNodeCoordinates[2] = nodeCoordinates + 6;
+      }
+      else if(face == 0 and tri == 1){
+        // Exodus nodes 1, 3, 4
+        // 0-based      0, 2, 3
+        // stride 3     0, 6, 9
+        triangleNodeCoordinates[0] = nodeCoordinates;
+        triangleNodeCoordinates[1] = nodeCoordinates + 6;
+        triangleNodeCoordinates[2] = nodeCoordinates + 9;
+      }
+      else if(face == 1 and tri == 0){
+        // Exodus nodes 5, 6, 7
+        // 0-based      4, 5, 6
+        // stride 3     12, 15, 18
+        triangleNodeCoordinates[0] = nodeCoordinates + 12;
+        triangleNodeCoordinates[1] = nodeCoordinates + 15;
+        triangleNodeCoordinates[2] = nodeCoordinates + 18;
+      }
+      else if(face == 1 and tri == 1){
+        // Exodus nodes 5, 7, 8
+        // 0-based      4, 6, 7
+        // stride 3     12, 18, 21
+        triangleNodeCoordinates[0] = nodeCoordinates + 12;
+        triangleNodeCoordinates[1] = nodeCoordinates + 18;
+        triangleNodeCoordinates[2] = nodeCoordinates + 21;
+      }
+      else if(face == 2 and tri == 0){
+        // Exodus nodes 4, 5, 8
+        // 0-based      3, 4, 7
+        // stride 3     9, 12, 21
+        triangleNodeCoordinates[0] = nodeCoordinates + 9;
+        triangleNodeCoordinates[1] = nodeCoordinates + 12;
+        triangleNodeCoordinates[2] = nodeCoordinates + 21;
+      }
+      else if(face == 2 and tri == 1){
+        // Exodus nodes 1, 4, 5
+        // 0-based      0, 3, 4
+        // stride 3     0, 9, 12
+        triangleNodeCoordinates[0] = nodeCoordinates;
+        triangleNodeCoordinates[1] = nodeCoordinates + 9;
+        triangleNodeCoordinates[2] = nodeCoordinates + 12;
+      }
+      else if(face == 3 and tri == 0){
+        // Exodus nodes 3, 6, 7
+        // 0-based      2, 5, 6
+        // stride 3     6, 15, 18
+        triangleNodeCoordinates[0] = nodeCoordinates + 6;
+        triangleNodeCoordinates[1] = nodeCoordinates + 15;
+        triangleNodeCoordinates[2] = nodeCoordinates + 18;
+      }
+      else if(face == 3 and tri == 1){
+        // Exodus nodes 2, 3, 6
+        // 0-based      1, 2, 5
+        // stride 3     3, 6, 15
+        triangleNodeCoordinates[0] = nodeCoordinates + 3;
+        triangleNodeCoordinates[1] = nodeCoordinates + 6;
+        triangleNodeCoordinates[2] = nodeCoordinates + 15;
+      }
+      else if(face == 4 and tri == 0){
+        // Exodus nodes 1, 2, 6
+        // 0-based      0, 1, 5
+        // stride 3     0, 3, 15
+        triangleNodeCoordinates[0] = nodeCoordinates;
+        triangleNodeCoordinates[1] = nodeCoordinates + 3;
+        triangleNodeCoordinates[2] = nodeCoordinates + 15;
+      }
+      else if(face == 4 and tri == 1){
+        // Exodus nodes 1, 5, 6
+        // 0-based      0, 4, 5
+        // stride 3     0, 12, 15
+        triangleNodeCoordinates[0] = nodeCoordinates;
+        triangleNodeCoordinates[1] = nodeCoordinates + 12;
+        triangleNodeCoordinates[2] = nodeCoordinates + 15;
+      }
+      else if(face == 5 and tri == 0){
+        // Exodus nodes 3, 4, 7
+        // 0-based      2, 3, 6
+        // stride 3     6, 9, 18
+        triangleNodeCoordinates[0] = nodeCoordinates + 6;
+        triangleNodeCoordinates[1] = nodeCoordinates + 9;
+        triangleNodeCoordinates[2] = nodeCoordinates + 18;
+      }
+      else if(face == 5 and tri == 1){
+        // Exodus nodes 4, 7, 8
+        // 0-based      3, 6, 7
+        // stride 3     9, 18, 21
+        triangleNodeCoordinates[0] = nodeCoordinates + 9;
+        triangleNodeCoordinates[1] = nodeCoordinates + 18;
+        triangleNodeCoordinates[2] = nodeCoordinates + 21;
+      }
+
+      sphereIntersection = triangleSphereIntersection(triangleNodeCoordinates, sphereCenter, sphereRadius);
+      if(sphereIntersection == INTERSECTS_SPHERE)
+        return INTERSECTS_SPHERE;
+      else if(sphereIntersection == INSIDE_SPHERE)
+        allOutside = false;
+      else if(sphereIntersection == OUTSIDE_SPHERE)
+        allInside = false;
+    }
+  }
+
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(allInside && allOutside, "\n**** Error:  Nonsense result in hexahedronSphereIntersection().\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!allInside && !allOutside, "\n**** Error:  Nonsense result in hexahedronSphereIntersection().\n");
+
+  if(allOutside)
+    return OUTSIDE_SPHERE;
+  return INSIDE_SPHERE;
+}
 
 // TODO
 //
-// create function for testing if sphere intersects hex (divided into triangle faces)
+// unit test hexahedronSphereIntersection()
 // recursive algorithm for computing partial volume
 // revist function to find largest element dimension (circumscribing sphere?)
