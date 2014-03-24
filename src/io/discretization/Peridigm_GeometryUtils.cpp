@@ -90,69 +90,87 @@ void PeridigmNS::hexCentroidAndVolume(double* const nodeCoordinates,
   tetrahedronNodeCoordinates[1] = nodeCoordinates + 12;
   tetrahedronNodeCoordinates[2] = nodeCoordinates + 18;
   tetrahedronNodeCoordinates[3] = nodeCoordinates + 21;
-  tetCentroid(tetrahedronNodeCoordinates, tetrahedronCentroid);
   tetrahedronVolume = tetVolume(tetrahedronNodeCoordinates);
-  for(int i=0 ; i<3 ; ++i)
-    hexahedronCentroid[i] += tetrahedronCentroid[i]*tetrahedronVolume;
   *volume += tetrahedronVolume;
+  if(centroid != 0){
+    tetCentroid(tetrahedronNodeCoordinates, tetrahedronCentroid);
+    for(int i=0 ; i<3 ; ++i)
+      hexahedronCentroid[i] += tetrahedronCentroid[i]*tetrahedronVolume;
+  }
 
   // 6, 9, 12, 18
   tetrahedronNodeCoordinates[0] = nodeCoordinates + 6;
   tetrahedronNodeCoordinates[1] = nodeCoordinates + 9;
   tetrahedronNodeCoordinates[2] = nodeCoordinates + 12;
   tetrahedronNodeCoordinates[3] = nodeCoordinates + 18;
-  tetCentroid(tetrahedronNodeCoordinates, tetrahedronCentroid);
   tetrahedronVolume = tetVolume(tetrahedronNodeCoordinates);
-  for(int i=0 ; i<3 ; ++i)
-    hexahedronCentroid[i] += tetrahedronCentroid[i]*tetrahedronVolume;
   *volume += tetrahedronVolume;
+  if(centroid != 0){
+    tetCentroid(tetrahedronNodeCoordinates, tetrahedronCentroid);
+    for(int i=0 ; i<3 ; ++i)
+      hexahedronCentroid[i] += tetrahedronCentroid[i]*tetrahedronVolume;
+  }
 
   // 0, 6, 9, 12
   tetrahedronNodeCoordinates[0] = nodeCoordinates + 0;
   tetrahedronNodeCoordinates[1] = nodeCoordinates + 6;
   tetrahedronNodeCoordinates[2] = nodeCoordinates + 9;
   tetrahedronNodeCoordinates[3] = nodeCoordinates + 12;
-  tetCentroid(tetrahedronNodeCoordinates, tetrahedronCentroid);
   tetrahedronVolume = tetVolume(tetrahedronNodeCoordinates);
-  for(int i=0 ; i<3 ; ++i)
-    hexahedronCentroid[i] += tetrahedronCentroid[i]*tetrahedronVolume;
   *volume += tetrahedronVolume;
+  if(centroid != 0){
+    tetCentroid(tetrahedronNodeCoordinates, tetrahedronCentroid);
+    for(int i=0 ; i<3 ; ++i)
+      hexahedronCentroid[i] += tetrahedronCentroid[i]*tetrahedronVolume;
+  }
 
   // 6, 12, 15, 18
   tetrahedronNodeCoordinates[0] = nodeCoordinates + 6;
   tetrahedronNodeCoordinates[1] = nodeCoordinates + 12;
   tetrahedronNodeCoordinates[2] = nodeCoordinates + 15;
   tetrahedronNodeCoordinates[3] = nodeCoordinates + 18;
-  tetCentroid(tetrahedronNodeCoordinates, tetrahedronCentroid);
   tetrahedronVolume = tetVolume(tetrahedronNodeCoordinates);
-  for(int i=0 ; i<3 ; ++i)
-    hexahedronCentroid[i] += tetrahedronCentroid[i]*tetrahedronVolume;
   *volume += tetrahedronVolume;
+  if(centroid != 0){
+    tetCentroid(tetrahedronNodeCoordinates, tetrahedronCentroid);
+    for(int i=0 ; i<3 ; ++i)
+      hexahedronCentroid[i] += tetrahedronCentroid[i]*tetrahedronVolume;
+  }
 
   // 0, 6, 12, 15
   tetrahedronNodeCoordinates[0] = nodeCoordinates + 0;
   tetrahedronNodeCoordinates[1] = nodeCoordinates + 6;
   tetrahedronNodeCoordinates[2] = nodeCoordinates + 12;
   tetrahedronNodeCoordinates[3] = nodeCoordinates + 15;
-  tetCentroid(tetrahedronNodeCoordinates, tetrahedronCentroid);
   tetrahedronVolume = tetVolume(tetrahedronNodeCoordinates);
-  for(int i=0 ; i<3 ; ++i)
-    hexahedronCentroid[i] += tetrahedronCentroid[i]*tetrahedronVolume;
   *volume += tetrahedronVolume;
+  if(centroid != 0){
+    tetCentroid(tetrahedronNodeCoordinates, tetrahedronCentroid);
+    for(int i=0 ; i<3 ; ++i)
+      hexahedronCentroid[i] += tetrahedronCentroid[i]*tetrahedronVolume;
+  }
 
   // 0, 3, 6, 15
   tetrahedronNodeCoordinates[0] = nodeCoordinates + 0;
   tetrahedronNodeCoordinates[1] = nodeCoordinates + 3;
   tetrahedronNodeCoordinates[2] = nodeCoordinates + 6;
   tetrahedronNodeCoordinates[3] = nodeCoordinates + 15;
-  tetCentroid(tetrahedronNodeCoordinates, tetrahedronCentroid);
   tetrahedronVolume = tetVolume(tetrahedronNodeCoordinates);
-  for(int i=0 ; i<3 ; ++i)
-    hexahedronCentroid[i] += tetrahedronCentroid[i]*tetrahedronVolume;
   *volume += tetrahedronVolume;
+  if(centroid != 0){
+    tetCentroid(tetrahedronNodeCoordinates, tetrahedronCentroid);
+    for(int i=0 ; i<3 ; ++i)
+      hexahedronCentroid[i] += tetrahedronCentroid[i]*tetrahedronVolume;
+  }
 
-  for(int i=0 ; i<3 ; ++i)
-    centroid[i] = hexahedronCentroid[i]/(*volume);
+  if(centroid != 0){
+    for(int i=0 ; i<3 ; ++i)
+      centroid[i] = hexahedronCentroid[i]/(*volume);
+  }
+}
+
+void PeridigmNS::hexVolume(double* const nodeCoordinates, double* volume){
+  hexCentroidAndVolume(nodeCoordinates, 0, volume);
 }
 
 void PeridigmNS::tetCentroid(const std::vector<double*>& nodeCoordinates,
@@ -279,7 +297,7 @@ PeridigmNS::SphereIntersection PeridigmNS::triangleSphereIntersection(const std:
   double bc_2 = (dot00 * dot12 - dot01 * dot02) * invDenom;
 
   // Check if point is in triangle
-  if( (bc_1 >= 0.0) && (bc_2 >= 0.0) && (bc_1 + bc_2 < 1.0) )
+  if( (bc_1 >= 0.0) && (bc_2 >= 0.0) && (bc_1 + bc_2 <= 1.0) )
     return INTERSECTS_SPHERE;
  
   return OUTSIDE_SPHERE;
