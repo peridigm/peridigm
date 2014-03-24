@@ -74,10 +74,13 @@ public:
   static Timer& self();
 
   //! Starts specified timer, creates the timer if it does not exist.
-  void startTimer(std::string name) { timers[name].start(); }
+  void startTimer(const std::string& name) { timers[name].start(); }
 
   //! Stops specified timer.
-  void stopTimer(std::string name) { timers[name].stop(); }
+  void stopTimer(const std::string& name) { timers[name].stop(); }
+
+  //! Query specified timer for elasped time.
+  double elapsedTime(const std::string& name) { return timers[name].getElapsedTime(); }
 
   //! Prints out a table of timing data.
   void printTimingData(std::ostream &out);
