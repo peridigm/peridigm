@@ -87,6 +87,7 @@ namespace ProximitySearch {
      *  \param neighborListSize  [output]          The length of the neighbor list vector.
      *  \param neighborList      [output]          Pointer to the neighbor list containing the number of neighbors for each point and the list of neighbors for each point (indexes into x).
      *  \param bondFilters       [optional input]  Set of bond filters to employ during the proximity search.
+     *  \param radiusAddition    [optional input]  An additional length added to each radius defining the search sphere for each point.
      *
      *  The global proximity search finds, for each point in x, all the points that are within the specified search radius.  The search radius is defined separately for
      *  each point.  The neighborList is allocated within this function and becomes the responsibility of the calling routine (i.e., the calling routine is responsible for deallocation).
@@ -100,7 +101,8 @@ namespace ProximitySearch {
                              Teuchos::RCP<Epetra_BlockMap>& overlapMap,
                              int& neighborListSize,
                              int*& neighborList,
-                             std::vector< std::tr1::shared_ptr<PdBondFilter::BondFilter> > bondFilters = std::vector< std::tr1::shared_ptr<PdBondFilter::BondFilter> >());
+                             std::vector< std::tr1::shared_ptr<PdBondFilter::BondFilter> > bondFilters = std::vector< std::tr1::shared_ptr<PdBondFilter::BondFilter> >(),
+                             double radiusAddition = 0.0);
 
 }
 }

@@ -77,6 +77,7 @@ TEUCHOS_UNIT_TEST(STKDiscretization, Exodus2x2x2Test) {
   // specify a neighbor search with the horizon a tad longer than the mesh spacing
   discParams->set("Type", "Exodus");
   discParams->set("Input Mesh File", "utPeridigm_STKDiscretization_2x2x2.g");
+  discParams->set("Store Exodus Mesh", true);
 
   // initialize the horizon manager and set the horizon to 0.501
   ParameterList blockParameterList;
@@ -242,279 +243,279 @@ TEUCHOS_UNIT_TEST(STKDiscretization, Exodus2x2x2Test) {
   TEST_ASSERT(neighborhood[31]   == 6);
 
   // check the positions of the nodes in the original Exodus II mesh file
-  Teuchos::RCP< std::vector<double> > exodusNodePositions;
-
-  exodusNodePositions = discretization->getExodusMeshNodePositions(0);
-  TEST_ASSERT(exodusNodePositions->size() == 8*3);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[0],  0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[1],  0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[2],  1.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[3],  0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[4],  0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[5],  0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[6],  0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[7],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[8],  0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[9],  0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[10], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[11], 1.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[12], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[13], 0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[14], 1.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[15], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[16], 0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[17], 0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[18], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[19], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[20], 0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[21], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[22], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[23], 1.0, 1.0e-16);
-
-  exodusNodePositions = discretization->getExodusMeshNodePositions(1);
-  TEST_ASSERT(exodusNodePositions->size() == 8*3);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[0],  0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[1],  0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[2],  0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[3],  0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[4],  0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[5],  0.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[6],  0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[7],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[8],  0.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[9],  0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[10], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[11], 0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[12], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[13], 0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[14], 0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[15], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[16], 0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[17], 0.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[18], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[19], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[20], 0.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[21], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[22], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[23], 0.5, 1.0e-16);
-
-  exodusNodePositions = discretization->getExodusMeshNodePositions(2);
-  TEST_ASSERT(exodusNodePositions->size() == 8*3);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[0],  0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[1],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[2],  1.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[3],  0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[4],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[5],  0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[6],  0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[7],  1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[8],  0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[9],  0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[10], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[11], 1.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[12], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[13], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[14], 1.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[15], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[16], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[17], 0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[18], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[19], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[20], 0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[21], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[22], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[23], 1.0, 1.0e-16);
-
-  exodusNodePositions = discretization->getExodusMeshNodePositions(3);
-  TEST_ASSERT(exodusNodePositions->size() == 8*3);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[0],  0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[1],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[2],  0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[3],  0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[4],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[5],  0.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[6],  0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[7],  1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[8],  0.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[9],  0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[10], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[11], 0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[12], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[13], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[14], 0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[15], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[16], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[17], 0.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[18], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[19], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[20], 0.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[21], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[22], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[23], 0.5, 1.0e-16);
-
-  exodusNodePositions = discretization->getExodusMeshNodePositions(4);
-  TEST_ASSERT(exodusNodePositions->size() == 8*3);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[0],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[1],  0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[2],  1.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[3],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[4],  0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[5],  0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[6],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[7],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[8],  0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[9],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[10], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[11], 1.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[12], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[13], 0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[14], 1.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[15], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[16], 0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[17], 0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[18], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[19], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[20], 0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[21], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[22], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[23], 1.0, 1.0e-16);
-
-  exodusNodePositions = discretization->getExodusMeshNodePositions(5);
-  TEST_ASSERT(exodusNodePositions->size() == 8*3);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[0],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[1],  0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[2],  0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[3],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[4],  0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[5],  0.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[6],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[7],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[8],  0.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[9],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[10], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[11], 0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[12], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[13], 0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[14], 0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[15], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[16], 0.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[17], 0.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[18], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[19], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[20], 0.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[21], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[22], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[23], 0.5, 1.0e-16);
-
-  exodusNodePositions = discretization->getExodusMeshNodePositions(6);
-  TEST_ASSERT(exodusNodePositions->size() == 8*3);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[0],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[1],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[2],  1.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[3],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[4],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[5],  0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[6],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[7],  1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[8],  0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[9],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[10], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[11], 1.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[12], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[13], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[14], 1.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[15], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[16], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[17], 0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[18], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[19], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[20], 0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[21], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[22], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[23], 1.0, 1.0e-16);
-
-  exodusNodePositions = discretization->getExodusMeshNodePositions(7);
-  TEST_ASSERT(exodusNodePositions->size() == 8*3);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[0],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[1],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[2],  0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[3],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[4],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[5],  0.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[6],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[7],  1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[8],  0.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[9],  0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[10], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[11], 0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[12], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[13], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[14], 0.5, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[15], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[16], 0.5, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[17], 0.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[18], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[19], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[20], 0.0, 1.0e-16);
-
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[21], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[22], 1.0, 1.0e-16);
-  TEST_FLOATING_EQUALITY((*exodusNodePositions)[23], 0.5, 1.0e-16);    
+  std::vector<double> exodusNodePositions;
+
+  discretization->getExodusMeshNodePositions(0, exodusNodePositions);
+  TEST_ASSERT(exodusNodePositions.size() == 8*3);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[0],  0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[1],  0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[2],  1.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[3],  0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[4],  0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[5],  0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[6],  0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[7],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[8],  0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[9],  0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[10], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[11], 1.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[12], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[13], 0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[14], 1.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[15], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[16], 0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[17], 0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[18], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[19], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[20], 0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[21], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[22], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[23], 1.0, 1.0e-16);
+
+  discretization->getExodusMeshNodePositions(1, exodusNodePositions);
+  TEST_ASSERT(exodusNodePositions.size() == 8*3);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[0],  0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[1],  0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[2],  0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[3],  0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[4],  0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[5],  0.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[6],  0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[7],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[8],  0.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[9],  0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[10], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[11], 0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[12], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[13], 0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[14], 0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[15], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[16], 0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[17], 0.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[18], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[19], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[20], 0.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[21], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[22], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[23], 0.5, 1.0e-16);
+
+  discretization->getExodusMeshNodePositions(2, exodusNodePositions);
+  TEST_ASSERT(exodusNodePositions.size() == 8*3);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[0],  0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[1],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[2],  1.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[3],  0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[4],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[5],  0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[6],  0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[7],  1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[8],  0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[9],  0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[10], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[11], 1.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[12], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[13], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[14], 1.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[15], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[16], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[17], 0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[18], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[19], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[20], 0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[21], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[22], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[23], 1.0, 1.0e-16);
+
+  discretization->getExodusMeshNodePositions(3, exodusNodePositions);
+  TEST_ASSERT(exodusNodePositions.size() == 8*3);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[0],  0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[1],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[2],  0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[3],  0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[4],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[5],  0.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[6],  0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[7],  1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[8],  0.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[9],  0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[10], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[11], 0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[12], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[13], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[14], 0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[15], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[16], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[17], 0.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[18], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[19], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[20], 0.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[21], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[22], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[23], 0.5, 1.0e-16);
+
+  discretization->getExodusMeshNodePositions(4, exodusNodePositions);
+  TEST_ASSERT(exodusNodePositions.size() == 8*3);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[0],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[1],  0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[2],  1.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[3],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[4],  0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[5],  0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[6],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[7],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[8],  0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[9],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[10], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[11], 1.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[12], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[13], 0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[14], 1.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[15], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[16], 0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[17], 0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[18], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[19], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[20], 0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[21], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[22], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[23], 1.0, 1.0e-16);
+
+  discretization->getExodusMeshNodePositions(5, exodusNodePositions);
+  TEST_ASSERT(exodusNodePositions.size() == 8*3);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[0],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[1],  0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[2],  0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[3],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[4],  0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[5],  0.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[6],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[7],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[8],  0.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[9],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[10], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[11], 0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[12], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[13], 0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[14], 0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[15], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[16], 0.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[17], 0.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[18], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[19], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[20], 0.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[21], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[22], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[23], 0.5, 1.0e-16);
+
+  discretization->getExodusMeshNodePositions(6, exodusNodePositions);
+  TEST_ASSERT(exodusNodePositions.size() == 8*3);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[0],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[1],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[2],  1.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[3],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[4],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[5],  0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[6],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[7],  1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[8],  0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[9],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[10], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[11], 1.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[12], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[13], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[14], 1.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[15], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[16], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[17], 0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[18], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[19], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[20], 0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[21], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[22], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[23], 1.0, 1.0e-16);
+
+  discretization->getExodusMeshNodePositions(7, exodusNodePositions);
+  TEST_ASSERT(exodusNodePositions.size() == 8*3);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[0],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[1],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[2],  0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[3],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[4],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[5],  0.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[6],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[7],  1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[8],  0.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[9],  0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[10], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[11], 0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[12], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[13], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[14], 0.5, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[15], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[16], 0.5, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[17], 0.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[18], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[19], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[20], 0.0, 1.0e-16);
+
+  TEST_FLOATING_EQUALITY(exodusNodePositions[21], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[22], 1.0, 1.0e-16);
+  TEST_FLOATING_EQUALITY(exodusNodePositions[23], 0.5, 1.0e-16);    
 }
 
 

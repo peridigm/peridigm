@@ -66,12 +66,6 @@ namespace PeridigmNS {
   //! Compute the volume of a tetrahedron.
   double tetVolume(const std::vector<double*>& nodeCoordinates);
 
-  //! Compute a scalar triple product.
-  double scalarTripleProduct(const std::vector<double>& a, const std::vector<double>& b, const std::vector<double>& c);
-
-  //! Compute the maxmimum distance from a given point to a node in an element.
-  double maxDistanceToNode(int numNodes, const double* const nodeCoordinates, const double* point);
-
   //! Determine if a triangle intersects a sphere
   SphereIntersection triangleSphereIntersection(const std::vector<double*>& nodeCoordinates,
                                                 const std::vector<double>& sphereCenter,
@@ -81,6 +75,17 @@ namespace PeridigmNS {
   SphereIntersection hexahedronSphereIntersection(double* const nodeCoordinates,
                                                   const std::vector<double>& sphereCenter,
                                                   double sphereRadius);
+
+  // //! Find a sphere that circumscribes an element
+  // void circumscribeElementWithSphere(const std::vector<double*>& nodeCoordinates,
+  //                                    double* sphereCenter,
+  //                                    double* radius);
+
+  //! Compute a scalar triple product.
+  double scalarTripleProduct(const std::vector<double>& a, const std::vector<double>& b, const std::vector<double>& c);
+
+  //! Compute the maxmimum distance from a given point to a node in an element.
+  double maxDistanceToNode(int numNodes, const double* const nodeCoordinates, const double* point);
 }
 
 #endif // PERIDIGM_GEOMETRYUTILS_HPP
