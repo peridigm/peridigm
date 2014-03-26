@@ -206,7 +206,8 @@ void PeridigmNS::ProximitySearch::GlobalProximitySearch(Teuchos::RCP<Epetra_Vect
                                                         Teuchos::RCP<Epetra_BlockMap>& overlapMap,                                  /* output */
                                                         int& neighborListSize,                                                      /* output */
                                                         int*& neighborList,                                                         /* output (allocated within function) */
-                                                        std::vector< std::tr1::shared_ptr<PdBondFilter::BondFilter> > bondFilters)  /* optional input */
+                                                        std::vector< std::tr1::shared_ptr<PdBondFilter::BondFilter> > bondFilters,  /* optional input */
+                                                        double radiusAddition)                                                      /* optional input */
 
 {
   // Copy information from the Epetra_Vector into a QUICKGRID::Data object
@@ -238,6 +239,14 @@ void PeridigmNS::ProximitySearch::GlobalProximitySearch(Teuchos::RCP<Epetra_Vect
   Epetra_Import searchRadiiImporter(rebalancedMap, searchRadii->Map());
   Teuchos::RCP<Epetra_Vector> rebalancedSearchRadii = Teuchos::rcp(new Epetra_Vector(rebalancedMap));
   rebalancedSearchRadii->Import(*searchRadii, searchRadiiImporter, Insert);
+
+  // Add in radiusAddition, if any.
+  // Note that only rebalancedSearchRadii is modified.
+  // The input vector, searchRadii, is unchanged
+  if(radiusAddition != 0.0){
+    for(int i=0 ; i<rebalancedSearchRadii->MyLength() ; ++i)
+      (*rebalancedSearchRadii)[i] += radiusAddition;
+  }
 
   // The initial implementation supports only a single bond filter
   TEUCHOS_TEST_FOR_EXCEPT_MSG(bondFilters.size() > 1, "\n****Error:  Multiple bond filters currently unsupported.\n");

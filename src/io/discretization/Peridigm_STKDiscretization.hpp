@@ -117,9 +117,12 @@ namespace PeridigmNS {
     virtual double getMaxElementDimension() const { return maxElementDimension; }
 
     //! Get the node positions in the original Exodus hex/tet mesh.
-    virtual Teuchos::RCP< std::vector<double> > getExodusMeshNodePositions(int globalNodeID);
+    virtual void getExodusMeshNodePositions(int globalNodeID, std::vector<double>& nodePositions);
 
   private:
+
+    //! Compute the maximum element dimension.
+    double computeMaxElementDimension();
 
     //! Private to prohibit copying
     STKDiscretization(const STKDiscretization&);
@@ -146,6 +149,13 @@ namespace PeridigmNS {
     //! Filter bonds from neighborhood list
     Teuchos::RCP<PeridigmNS::NeighborhoodData> filterBonds(Teuchos::RCP<PeridigmNS::NeighborhoodData> unfilteredNeighborhoodData);
 
+    //! Refine the neighborhood list by eliminating neighbors that have zero intersection with the horizon (used only when computing element-sphere intersections).
+    void removeNonintersectingNeighborsFromNeighborList(Teuchos::RCP<Epetra_Vector> x,
+                                                        Teuchos::RCP<Epetra_Vector> searchRadii,
+                                                        Teuchos::RCP<Epetra_BlockMap>& overlapMap,
+                                                        int& neighborListSize,
+                                                        int*& neighborList);
+
     //! Compute the scalar triple product
     double scalarTripleProduct(std::vector<double>& a,
                                std::vector<double>& b,
@@ -157,11 +167,11 @@ namespace PeridigmNS {
     //! Compute the volume of a tetrahedron element
     double tetVolume(std::vector<double*>& nodeCoordinates) const;
 
-    //! Compute the maximum length dimension for a hexahedron element
-    double hexMaxElementDimension(std::vector<double*>& nodeCoordinates) const;
+    // //! Compute the maximum length dimension for a hexahedron element
+    // double hexMaxElementDimension(std::vector<double*>& nodeCoordinates) const;
 
-    //! Compute the maximum length dimension for a tetrahedron element
-    double tetMaxElementDimension(std::vector<double*>& nodeCoordinates) const;
+    // //! Compute the maximum length dimension for a tetrahedron element
+    // double tetMaxElementDimension(std::vector<double*>& nodeCoordinates) const;
 
     //! Maps
     Teuchos::RCP<Epetra_BlockMap> oneDimensionalMap;
@@ -176,9 +186,6 @@ namespace PeridigmNS {
     //! Maximum element radius
     double maxElementRadius;
 
-    //! Maximum element dimension
-    double maxElementDimension;
-
     //! Vector containing initial positions
     Teuchos::RCP<Epetra_Vector> initialX;
 
@@ -190,6 +197,15 @@ namespace PeridigmNS {
 
     //! Vector containing the block ID of each element
     Teuchos::RCP<Epetra_Vector> blockID;
+
+    //! Boolean flag for storing exodus mesh
+    bool storeExodusMesh;
+
+    //! Boolean flag indicating that element-horizon intersections should be computed
+    bool computeIntersections;
+
+    //! Maximum element dimension of the original exodus mesh
+    double maxElementDimension;
 
     //! Vector containing node positions in the initial hex/tet mesh
     Teuchos::RCP<Epetra_Vector> exodusMeshNodePositions;

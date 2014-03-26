@@ -48,6 +48,7 @@
 #include "Peridigm_STKDiscretization.hpp"
 #include "Peridigm_ProximitySearch.hpp"
 #include "Peridigm_HorizonManager.hpp"
+#include "Peridigm_GeometryUtils.hpp"
 #include <Epetra_Map.h>
 #include <Epetra_Vector.h>
 #include <Epetra_Import.h>
@@ -61,6 +62,7 @@
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/FieldData.hpp>
 #include <sstream>
+#include <boost/math/constants/constants.hpp>
 
 using namespace std;
 
@@ -68,6 +70,8 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
                                                  const Teuchos::RCP<Teuchos::ParameterList>& params) :
   minElementRadius(1.0e50),
   maxElementRadius(0.0),
+  storeExodusMesh(false),
+  computeIntersections(false), /* todo, set this only if needed based on params */
   maxElementDimension(0.0),
   numBonds(0),
   maxNumBondsPerElem(0),
@@ -82,11 +86,20 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
     bondFilterCommand = params->get<string>("Omit Bonds Between Blocks");
   string meshFileName = params->get<string>("Input Mesh File");
 
+  // Store exodus mesh for intersection calculations, or if it was specifically requested (e.g., unit tests)
+  if(params->isParameter("Store Exodus Mesh"))
+    storeExodusMesh = params->get<bool>("Store Exodus Mesh");
+  if(computeIntersections)
+    storeExodusMesh = true;
+
   // Set up bond filters
   createBondFilters(params);
 
   // Load data from mesh file
   loadData(meshFileName);
+  
+  if(computeIntersections)
+    maxElementDimension = computeMaxElementDimension();
 
   // Assign the correct horizon to each node
   PeridigmNS::HorizonManager& horizonManager = PeridigmNS::HorizonManager::self();
@@ -118,14 +131,13 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   // Execute the neighbor search
   int neighborListSize;
   int* neighborList;
-  ProximitySearch::GlobalProximitySearch(initialX, horizonForEachPoint, oneDimensionalOverlapMap, neighborListSize, neighborList, bondFilters);
-
-  // For partial volumes:
-  //
-  // Carry out global search using center of element versus original nodes of neighbors.  This should be the correct neighbor list.
-  // Then, later, after creating all the maps, perform the partial volume calculation.
-  // This will result in all-on or all-off partial volume functionality.
-
+  if(!computeIntersections){
+    ProximitySearch::GlobalProximitySearch(initialX, horizonForEachPoint, oneDimensionalOverlapMap, neighborListSize, neighborList, bondFilters);
+  }
+  else{
+    ProximitySearch::GlobalProximitySearch(initialX, horizonForEachPoint, oneDimensionalOverlapMap, neighborListSize, neighborList, bondFilters, maxElementDimension);
+    removeNonintersectingNeighborsFromNeighborList(initialX, horizonForEachPoint, oneDimensionalOverlapMap, neighborListSize, neighborList);
+  }
 
   createNeighborhoodData(neighborListSize, neighborList);
 
@@ -307,18 +319,20 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
 
   // Store the positions of the nodes in the initial mesh
   // This is used for the calculation of partial neighbor volumes
-  vector<int> myGlobalNodeIds(nodes.size());
-  for(unsigned int i=0 ; i<nodes.size() ; ++i)
-    myGlobalNodeIds[i] = nodes[i]->identifier() - 1;
-  Epetra_BlockMap exodusMeshNodePositionsMap(-1, nodes.size(), &myGlobalNodeIds[0], 3, 0, *comm);
-  exodusMeshNodePositions = Teuchos::RCP<Epetra_Vector>(new Epetra_Vector(exodusMeshNodePositionsMap));
-  for(unsigned int iNode=0 ; iNode<nodes.size() ; ++iNode){
-    int globalID = nodes[iNode]->identifier() - 1;
-    double* coordinates = stk::mesh::field_data(*coordinatesField, *nodes[iNode]);
-    int localID = exodusMeshNodePositionsMap.LID(globalID);
-    (*exodusMeshNodePositions)[3*localID]   = coordinates[0];
-    (*exodusMeshNodePositions)[3*localID+1] = coordinates[1];
-    (*exodusMeshNodePositions)[3*localID+2] = coordinates[2];
+  if(storeExodusMesh){
+    vector<int> myGlobalNodeIds(nodes.size());
+    for(unsigned int i=0 ; i<nodes.size() ; ++i)
+      myGlobalNodeIds[i] = nodes[i]->identifier() - 1;
+    Epetra_BlockMap exodusMeshNodePositionsMap(-1, nodes.size(), &myGlobalNodeIds[0], 3, 0, *comm);
+    exodusMeshNodePositions = Teuchos::RCP<Epetra_Vector>(new Epetra_Vector(exodusMeshNodePositionsMap));
+    for(unsigned int iNode=0 ; iNode<nodes.size() ; ++iNode){
+      int globalID = nodes[iNode]->identifier() - 1;
+      double* coordinates = stk::mesh::field_data(*coordinatesField, *nodes[iNode]);
+      int localID = exodusMeshNodePositionsMap.LID(globalID);
+      (*exodusMeshNodePositions)[3*localID]   = coordinates[0];
+      (*exodusMeshNodePositions)[3*localID+1] = coordinates[1];
+      (*exodusMeshNodePositions)[3*localID+2] = coordinates[2];
+    }
   }
 
   // Create a list of owned global element ids
@@ -351,7 +365,8 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
   for(unsigned int iElem=0 ; iElem<elements.size() ; ++iElem){
     stk::mesh::PairIterRelation nodeRelations = elements[iElem]->node_relations();
     int elementID = elements[iElem]->identifier() - 1;
-    exodusMeshElementConnectivity[elementID] = vector<int>();
+    if(storeExodusMesh)
+      exodusMeshElementConnectivity[elementID] = vector<int>();
     initialXPtr[iElem*3] = 0.0;
     initialXPtr[iElem*3+1] = 0.0;
     initialXPtr[iElem*3+2] = 0.0;
@@ -359,7 +374,8 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
     int iNode = 0;
     for(stk::mesh::PairIterRelation::iterator it=nodeRelations.begin() ; it!=nodeRelations.end() ; ++it){
       stk::mesh::Entity* node = it->entity();
-      exodusMeshElementConnectivity[elementID].push_back(node->identifier() - 1);
+      if(storeExodusMesh)
+        exodusMeshElementConnectivity[elementID].push_back(node->identifier() - 1);
       double* coordinates = stk::mesh::field_data(*coordinatesField, *node);
       initialXPtr[iElem*3] += coordinates[0];
       initialXPtr[iElem*3+1] += coordinates[1];
@@ -399,7 +415,7 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
       cellVolumePtr[iElem] = hexVolume(nodeCoordinates);
     }
     else{
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeRelations.size() != 1 && nodeRelations.size() != 8, "**** Invalid element topology.\n");
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Invalid element topology.\n");
     }
   }
 
@@ -679,13 +695,15 @@ PeridigmNS::STKDiscretization::getMaxNumBondsPerElem() const
   return maxNumBondsPerElem;
 }
 
-
-Teuchos::RCP< std::vector<double> > PeridigmNS::STKDiscretization::getExodusMeshNodePositions(int globalNodeID)
+void PeridigmNS::STKDiscretization::getExodusMeshNodePositions(int globalNodeID,
+                                                               vector<double>& nodePositions)
 {
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!storeExodusMesh, "**** Error:  getExodusMeshNodePositions() called, but exodus information not stored.\n");
   vector<int>& elementConnectivity = exodusMeshElementConnectivity[globalNodeID];
   unsigned int numNodes = elementConnectivity.size();
-  Teuchos::RCP< vector<double> > nodePositionsPtr = Teuchos::RCP< vector<double> >(new vector<double>(3*numNodes));
-  vector<double>& nodePositions = *nodePositionsPtr;
+  if(nodePositions.size() != 3*numNodes){
+    nodePositions.resize(3*numNodes);
+  }
   Epetra_Vector& exodusNodePositions = *exodusMeshNodePositions;
   for(unsigned int i=0 ; i<numNodes ; ++i){
     int globalID = elementConnectivity[i];
@@ -694,7 +712,116 @@ Teuchos::RCP< std::vector<double> > PeridigmNS::STKDiscretization::getExodusMesh
     nodePositions[3*i+1] = exodusNodePositions[3*localID+1];
     nodePositions[3*i+2] = exodusNodePositions[3*localID+2];
   }
-  return nodePositionsPtr;
+  return;
+}
+
+double PeridigmNS::STKDiscretization::computeMaxElementDimension()
+{
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!storeExodusMesh, "**** Error:  computeMaxElementDimension() called, but exodus information not stored.\n");
+  double length, volume, localMaxElementDimension(0.0);
+  double x, y, z;
+  int globalId, numNodes, numNodesInElement;
+  vector<double> nodeCoordinates;
+  const double pi = boost::math::constants::pi<double>();
+
+  for(int iElem=0 ; iElem<oneDimensionalMap->NumMyElements() ; ++iElem){
+    globalId = oneDimensionalMap->GID(iElem);
+    getExodusMeshNodePositions(globalId, nodeCoordinates);
+    numNodes = nodeCoordinates.size()/3;
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(numNodes != 8 &&
+                                numNodes != 4 &&
+                                numNodes != 1 &&
+                                numNodes != 10 &&
+                                numNodes != 20,
+                                "**** Invalid element topology.\n");
+    if(numNodes == 1){
+      // Sphere element
+      volume = (*cellVolume)[iElem];
+      length = std::pow( (3.0*volume)/(4.0*pi), 1.0/3.0 );
+    }
+    else{
+
+      // Consider 4- and 10-noded tets (treat either as 4-noded)
+      // Consider 10- and 20-noded hexes (treat either as 10-noded)
+      numNodesInElement = 4;
+      if(numNodes == 8 || numNodes == 20)
+        numNodesInElement = 8;
+
+      for(int i=0 ; i<numNodesInElement ; ++i){
+        for(int j=i ; j<numNodesInElement ; ++j){
+          if(i != j){
+            x = nodeCoordinates[i*3]   - nodeCoordinates[j*3];
+            y = nodeCoordinates[i*3+1] - nodeCoordinates[j*3+1];
+            z = nodeCoordinates[i*3+2] - nodeCoordinates[j*3+2];
+            length = x*x + y*y + z*z;
+            if(length > localMaxElementDimension)
+              localMaxElementDimension = length;
+          }
+        }
+      }
+    }
+  }
+
+  localMaxElementDimension = std::sqrt(localMaxElementDimension);
+
+  // Parallel communication to determine overall maximum element dimension
+  double globalMaxElementDimension;
+  comm->MaxAll(&localMaxElementDimension, &globalMaxElementDimension, 1);
+
+  return globalMaxElementDimension;
+}
+
+void PeridigmNS::STKDiscretization::removeNonintersectingNeighborsFromNeighborList(Teuchos::RCP<Epetra_Vector> x,
+                                                                                   Teuchos::RCP<Epetra_Vector> searchRadii,
+                                                                                   Teuchos::RCP<Epetra_BlockMap>& overlapMap,
+                                                                                   int& neighborListSize,
+                                                                                   int*& neighborList)
+{
+  int refinedNumNeighbors, numNeighbors, neighborLocalId, neighborGlobalId;
+  unsigned int refinedNumNeighborsIndex;
+  double horizon;
+  SphereIntersection sphereIntersection;
+  vector<double> exodusNodePositions;
+  vector<double> sphereCenter(3);
+  vector<int> refinedNeighborGlobalIdList;
+  refinedNeighborGlobalIdList.reserve(neighborListSize);
+
+  int index = 0;
+  int elemLocalId = 0;
+  while(index < neighborListSize){
+    numNeighbors = neighborList[index++];
+    refinedNumNeighborsIndex = refinedNeighborGlobalIdList.size();
+    refinedNumNeighbors = 0;
+    refinedNeighborGlobalIdList.push_back(refinedNumNeighbors);
+    for(int iNeighbor=0 ; iNeighbor<numNeighbors ; ++iNeighbor){
+      neighborLocalId = neighborList[index++];
+      neighborGlobalId = overlapMap->GID(neighborLocalId);
+
+      // Determine if the element intersects the sphere
+      sphereCenter[0] = (*x)[elemLocalId];
+      sphereCenter[1] = (*x)[elemLocalId+1];
+      sphereCenter[2] = (*x)[elemLocalId+2];
+      getExodusMeshNodePositions(neighborGlobalId, exodusNodePositions);
+      horizon = (*searchRadii)[elemLocalId];
+   
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(exodusNodePositions.size()/3 != 8,
+                                  "\n**** Error:  Element-horizon intersection calculations currently enabled only for hexahedron elements.\n");
+
+      sphereIntersection = hexahedronSphereIntersection(&exodusNodePositions[0], sphereCenter, horizon);
+
+      if(sphereIntersection != OUTSIDE_SPHERE){
+        refinedNeighborGlobalIdList.push_back(neighborGlobalId);
+        refinedNumNeighbors += 1;
+      }
+    }
+    refinedNeighborGlobalIdList[refinedNumNeighborsIndex] = refinedNumNeighbors;
+    elemLocalId += 1;
+    cout << "DEBUGGING numNeighbors = " << numNeighbors << ", refinedNumNeighbors = " << refinedNumNeighbors << endl;
+  }
+
+  // TODO
+  // Debug above code (way too many neighbors are being excluded, s.f. WaveInBar test)
+  // Create new overlap map and neighborlist based on refinedNeighborGlobalIdList
 }
 
 double PeridigmNS::STKDiscretization::scalarTripleProduct(std::vector<double>& a,
@@ -750,104 +877,104 @@ double PeridigmNS::STKDiscretization::tetVolume(std::vector<double*>& nodeCoordi
   return volume;
 }
 
-double PeridigmNS::STKDiscretization::hexMaxElementDimension(std::vector<double*>& nodeCoordinates) const
-{
-  double maxDimension = 0.0;
-  double dx, dy, dz, diagonal;
+// double PeridigmNS::STKDiscretization::hexMaxElementDimension(std::vector<double*>& nodeCoordinates) const
+// {
+//   double maxDimension = 0.0;
+//   double dx, dy, dz, diagonal;
 
-  // Check edges
+//   // Check edges
 
-  // Check face diagonals
+//   // Check face diagonals
 
-  // Check element diagonals
+//   // Check element diagonals
   
-  // Exodus nodes 1 7
-  dx = nodeCoordinates[0][0] - nodeCoordinates[6][0];
-  dy = nodeCoordinates[0][1] - nodeCoordinates[6][1];
-  dz = nodeCoordinates[0][2] - nodeCoordinates[6][2];
-  diagonal = sqrt(dx*dx + dy*dy + dz*dz);
-  if(diagonal > maxDimension)
-    maxDimension = diagonal;
+//   // Exodus nodes 1 7
+//   dx = nodeCoordinates[0][0] - nodeCoordinates[6][0];
+//   dy = nodeCoordinates[0][1] - nodeCoordinates[6][1];
+//   dz = nodeCoordinates[0][2] - nodeCoordinates[6][2];
+//   diagonal = sqrt(dx*dx + dy*dy + dz*dz);
+//   if(diagonal > maxDimension)
+//     maxDimension = diagonal;
 
-  // Exodus nodes 2 8
-  dx = nodeCoordinates[1][0] - nodeCoordinates[7][0];
-  dy = nodeCoordinates[1][1] - nodeCoordinates[7][1];
-  dz = nodeCoordinates[1][2] - nodeCoordinates[7][2];
-  diagonal = sqrt(dx*dx + dy*dy + dz*dz);
-  if(diagonal > maxDimension)
-    maxDimension = diagonal;
+//   // Exodus nodes 2 8
+//   dx = nodeCoordinates[1][0] - nodeCoordinates[7][0];
+//   dy = nodeCoordinates[1][1] - nodeCoordinates[7][1];
+//   dz = nodeCoordinates[1][2] - nodeCoordinates[7][2];
+//   diagonal = sqrt(dx*dx + dy*dy + dz*dz);
+//   if(diagonal > maxDimension)
+//     maxDimension = diagonal;
 
-  // Exodus nodes 3 5
-  dx = nodeCoordinates[2][0] - nodeCoordinates[4][0];
-  dy = nodeCoordinates[2][1] - nodeCoordinates[4][1];
-  dz = nodeCoordinates[2][2] - nodeCoordinates[4][2];
-  diagonal = sqrt(dx*dx + dy*dy + dz*dz);
-  if(diagonal > maxDimension)
-    maxDimension = diagonal;
+//   // Exodus nodes 3 5
+//   dx = nodeCoordinates[2][0] - nodeCoordinates[4][0];
+//   dy = nodeCoordinates[2][1] - nodeCoordinates[4][1];
+//   dz = nodeCoordinates[2][2] - nodeCoordinates[4][2];
+//   diagonal = sqrt(dx*dx + dy*dy + dz*dz);
+//   if(diagonal > maxDimension)
+//     maxDimension = diagonal;
 
-  // Exodus nodes 4 6
-  dx = nodeCoordinates[3][0] - nodeCoordinates[5][0];
-  dy = nodeCoordinates[3][1] - nodeCoordinates[5][1];
-  dz = nodeCoordinates[3][2] - nodeCoordinates[5][2];
-  diagonal = sqrt(dx*dx + dy*dy + dz*dz);
-  if(diagonal > maxDimension)
-    maxDimension = diagonal;
+//   // Exodus nodes 4 6
+//   dx = nodeCoordinates[3][0] - nodeCoordinates[5][0];
+//   dy = nodeCoordinates[3][1] - nodeCoordinates[5][1];
+//   dz = nodeCoordinates[3][2] - nodeCoordinates[5][2];
+//   diagonal = sqrt(dx*dx + dy*dy + dz*dz);
+//   if(diagonal > maxDimension)
+//     maxDimension = diagonal;
 
-  return maxDimension;
-}
+//   return maxDimension;
+// }
 
-double PeridigmNS::STKDiscretization::tetMaxElementDimension(std::vector<double*>& nodeCoordinates) const
-{
-  double maxDimension = 0.0;
-  double dx, dy, dz, edgeLength;
+// double PeridigmNS::STKDiscretization::tetMaxElementDimension(std::vector<double*>& nodeCoordinates) const
+// {
+//   double maxDimension = 0.0;
+//   double dx, dy, dz, edgeLength;
 
-  // Exodus nodes 1 2
-  dx = nodeCoordinates[0][0] - nodeCoordinates[1][0];
-  dy = nodeCoordinates[0][1] - nodeCoordinates[1][1];
-  dz = nodeCoordinates[0][2] - nodeCoordinates[1][2];
-  edgeLength = sqrt(dx*dx + dy*dy + dz*dz);
-  if(edgeLength > maxDimension)
-    maxDimension = edgeLength;
+//   // Exodus nodes 1 2
+//   dx = nodeCoordinates[0][0] - nodeCoordinates[1][0];
+//   dy = nodeCoordinates[0][1] - nodeCoordinates[1][1];
+//   dz = nodeCoordinates[0][2] - nodeCoordinates[1][2];
+//   edgeLength = sqrt(dx*dx + dy*dy + dz*dz);
+//   if(edgeLength > maxDimension)
+//     maxDimension = edgeLength;
 
-  // Exodus nodes 1 3
-  dx = nodeCoordinates[0][0] - nodeCoordinates[2][0];
-  dy = nodeCoordinates[0][1] - nodeCoordinates[2][1];
-  dz = nodeCoordinates[0][2] - nodeCoordinates[2][2];
-  edgeLength = sqrt(dx*dx + dy*dy + dz*dz);
-  if(edgeLength > maxDimension)
-    maxDimension = edgeLength;
+//   // Exodus nodes 1 3
+//   dx = nodeCoordinates[0][0] - nodeCoordinates[2][0];
+//   dy = nodeCoordinates[0][1] - nodeCoordinates[2][1];
+//   dz = nodeCoordinates[0][2] - nodeCoordinates[2][2];
+//   edgeLength = sqrt(dx*dx + dy*dy + dz*dz);
+//   if(edgeLength > maxDimension)
+//     maxDimension = edgeLength;
 
-  // Exodus nodes 1 4
-  dx = nodeCoordinates[0][0] - nodeCoordinates[3][0];
-  dy = nodeCoordinates[0][1] - nodeCoordinates[3][1];
-  dz = nodeCoordinates[0][2] - nodeCoordinates[3][2];
-  edgeLength = sqrt(dx*dx + dy*dy + dz*dz);
-  if(edgeLength > maxDimension)
-    maxDimension = edgeLength;
+//   // Exodus nodes 1 4
+//   dx = nodeCoordinates[0][0] - nodeCoordinates[3][0];
+//   dy = nodeCoordinates[0][1] - nodeCoordinates[3][1];
+//   dz = nodeCoordinates[0][2] - nodeCoordinates[3][2];
+//   edgeLength = sqrt(dx*dx + dy*dy + dz*dz);
+//   if(edgeLength > maxDimension)
+//     maxDimension = edgeLength;
 
-  // Exodus nodes 2 3
-  dx = nodeCoordinates[1][0] - nodeCoordinates[2][0];
-  dy = nodeCoordinates[1][1] - nodeCoordinates[2][1];
-  dz = nodeCoordinates[1][2] - nodeCoordinates[2][2];
-  edgeLength = sqrt(dx*dx + dy*dy + dz*dz);
-  if(edgeLength > maxDimension)
-    maxDimension = edgeLength;
+//   // Exodus nodes 2 3
+//   dx = nodeCoordinates[1][0] - nodeCoordinates[2][0];
+//   dy = nodeCoordinates[1][1] - nodeCoordinates[2][1];
+//   dz = nodeCoordinates[1][2] - nodeCoordinates[2][2];
+//   edgeLength = sqrt(dx*dx + dy*dy + dz*dz);
+//   if(edgeLength > maxDimension)
+//     maxDimension = edgeLength;
 
-  // Exodus nodes 2 4
-  dx = nodeCoordinates[1][0] - nodeCoordinates[3][0];
-  dy = nodeCoordinates[1][1] - nodeCoordinates[3][1];
-  dz = nodeCoordinates[1][2] - nodeCoordinates[3][2];
-  edgeLength = sqrt(dx*dx + dy*dy + dz*dz);
-  if(edgeLength > maxDimension)
-    maxDimension = edgeLength;
+//   // Exodus nodes 2 4
+//   dx = nodeCoordinates[1][0] - nodeCoordinates[3][0];
+//   dy = nodeCoordinates[1][1] - nodeCoordinates[3][1];
+//   dz = nodeCoordinates[1][2] - nodeCoordinates[3][2];
+//   edgeLength = sqrt(dx*dx + dy*dy + dz*dz);
+//   if(edgeLength > maxDimension)
+//     maxDimension = edgeLength;
 
-  // Exodus nodes 3 4
-  dx = nodeCoordinates[2][0] - nodeCoordinates[3][0];
-  dy = nodeCoordinates[2][1] - nodeCoordinates[3][1];
-  dz = nodeCoordinates[2][2] - nodeCoordinates[3][2];
-  edgeLength = sqrt(dx*dx + dy*dy + dz*dz);
-  if(edgeLength > maxDimension)
-    maxDimension = edgeLength;
+//   // Exodus nodes 3 4
+//   dx = nodeCoordinates[2][0] - nodeCoordinates[3][0];
+//   dy = nodeCoordinates[2][1] - nodeCoordinates[3][1];
+//   dz = nodeCoordinates[2][2] - nodeCoordinates[3][2];
+//   edgeLength = sqrt(dx*dx + dy*dy + dz*dz);
+//   if(edgeLength > maxDimension)
+//     maxDimension = edgeLength;
 
-  return maxDimension;
-}
+//   return maxDimension;
+// }

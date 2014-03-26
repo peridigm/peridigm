@@ -200,33 +200,6 @@ double PeridigmNS::tetVolume(const std::vector<double*>& nodeCoordinates)
   return volume;
 }
 
-double PeridigmNS::scalarTripleProduct(const std::vector<double>& a,
-                                       const std::vector<double>& b,
-                                       const std::vector<double>& c)
-{
-  double tripleProduct = 
-    a[0]*(b[1]*c[2] - b[2]*c[1]) + a[1]*(b[2]*c[0] - b[0]*c[2]) + a[2]*(b[0]*c[1] - b[1]*c[0]);
-
-  return tripleProduct;
-}
-
-double PeridigmNS::maxDistanceToNode(int numNodes,
-                                     const double* const nodeCoordinates,
-                                     const double* point)
-{
-  double maxDistance(0.0), squaredDistance(0.0), x(0.0), y(0.0), z(0.0);
-  for(int i=0 ; i<numNodes ; ++i){
-    x = nodeCoordinates[i*3]   - point[0];
-    y = nodeCoordinates[i*3+1] - point[1];
-    z = nodeCoordinates[i*3+2] - point[2];
-    squaredDistance = x*x + y*y + z*z;
-    if(squaredDistance > maxDistance)
-      maxDistance = squaredDistance;
-  }
-  maxDistance = std::sqrt(maxDistance);
-  return maxDistance;
-}
-
 PeridigmNS::SphereIntersection PeridigmNS::triangleSphereIntersection(const std::vector<double*>& nodeCoordinates,
                                                                       const std::vector<double>& sphereCenter,
                                                                       double sphereRadius)
@@ -451,6 +424,41 @@ PeridigmNS::SphereIntersection PeridigmNS::hexahedronSphereIntersection(double* 
     return OUTSIDE_SPHERE;
   return INSIDE_SPHERE;
 }
+
+// void circumscribeElementWithSphere(const std::vector<double*>& nodeCoordinates,
+//                                    double* sphereCenter,
+//                                    double* radius)
+// {
+//   if(nodeCoordinates.size
+// }
+
+double PeridigmNS::scalarTripleProduct(const std::vector<double>& a,
+                                       const std::vector<double>& b,
+                                       const std::vector<double>& c)
+{
+  double tripleProduct = 
+    a[0]*(b[1]*c[2] - b[2]*c[1]) + a[1]*(b[2]*c[0] - b[0]*c[2]) + a[2]*(b[0]*c[1] - b[1]*c[0]);
+
+  return tripleProduct;
+}
+
+double PeridigmNS::maxDistanceToNode(int numNodes,
+                                     const double* const nodeCoordinates,
+                                     const double* point)
+{
+  double maxDistance(0.0), squaredDistance(0.0), x(0.0), y(0.0), z(0.0);
+  for(int i=0 ; i<numNodes ; ++i){
+    x = nodeCoordinates[i*3]   - point[0];
+    y = nodeCoordinates[i*3+1] - point[1];
+    z = nodeCoordinates[i*3+2] - point[2];
+    squaredDistance = x*x + y*y + z*z;
+    if(squaredDistance > maxDistance)
+      maxDistance = squaredDistance;
+  }
+  maxDistance = std::sqrt(maxDistance);
+  return maxDistance;
+}
+
 
 // TODO
 //
