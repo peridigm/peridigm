@@ -279,6 +279,9 @@ namespace PeridigmNS {
     //! Contact flag
     bool analysisHasContact;
 
+    //! Flag for computing element-sphere intersections
+    bool computeIntersections;
+
     //! Damage models
     std::map< std::string, Teuchos::RCP<const PeridigmNS::DamageModel> > damageModels;
 

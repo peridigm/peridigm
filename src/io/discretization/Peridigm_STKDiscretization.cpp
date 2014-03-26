@@ -775,7 +775,7 @@ void PeridigmNS::STKDiscretization::removeNonintersectingNeighborsFromNeighborLi
                                                                                    Teuchos::RCP<Epetra_Vector> searchRadii,
                                                                                    Teuchos::RCP<Epetra_BlockMap>& overlapMap,
                                                                                    int& neighborListSize,
-                                                                                   int*& neighborList)
+                                                                                   int* neighborList)
 {
   int refinedNumNeighbors, numNeighbors, neighborLocalId, neighborGlobalId;
   unsigned int refinedNumNeighborsIndex;
@@ -784,6 +784,7 @@ void PeridigmNS::STKDiscretization::removeNonintersectingNeighborsFromNeighborLi
   vector<double> exodusNodePositions;
   vector<double> sphereCenter(3);
   vector<int> refinedNeighborGlobalIdList;
+  std::set<int> refinedGlobalIds;
   refinedNeighborGlobalIdList.reserve(neighborListSize);
 
   int index = 0;
@@ -798,9 +799,9 @@ void PeridigmNS::STKDiscretization::removeNonintersectingNeighborsFromNeighborLi
       neighborGlobalId = overlapMap->GID(neighborLocalId);
 
       // Determine if the element intersects the sphere
-      sphereCenter[0] = (*x)[elemLocalId];
-      sphereCenter[1] = (*x)[elemLocalId+1];
-      sphereCenter[2] = (*x)[elemLocalId+2];
+      sphereCenter[0] = (*x)[3*elemLocalId];
+      sphereCenter[1] = (*x)[3*elemLocalId+1];
+      sphereCenter[2] = (*x)[3*elemLocalId+2];
       getExodusMeshNodePositions(neighborGlobalId, exodusNodePositions);
       horizon = (*searchRadii)[elemLocalId];
    
@@ -811,17 +812,42 @@ void PeridigmNS::STKDiscretization::removeNonintersectingNeighborsFromNeighborLi
 
       if(sphereIntersection != OUTSIDE_SPHERE){
         refinedNeighborGlobalIdList.push_back(neighborGlobalId);
+        refinedGlobalIds.insert(neighborGlobalId);
         refinedNumNeighbors += 1;
       }
     }
     refinedNeighborGlobalIdList[refinedNumNeighborsIndex] = refinedNumNeighbors;
     elemLocalId += 1;
-    cout << "DEBUGGING numNeighbors = " << numNeighbors << ", refinedNumNeighbors = " << refinedNumNeighbors << endl;
   }
 
-  // TODO
-  // Debug above code (way too many neighbors are being excluded, s.f. WaveInBar test)
   // Create new overlap map and neighborlist based on refinedNeighborGlobalIdList
+  vector<int> refinedGlobalIdsVector(refinedGlobalIds.size());
+  index = 0;
+  for(set<int>::const_iterator it=refinedGlobalIds.begin() ; it!=refinedGlobalIds.end() ; it++)
+    refinedGlobalIdsVector[index++] = *it;
+  sort(refinedGlobalIdsVector.begin(), refinedGlobalIdsVector.end());
+  int numGlobalElements = overlapMap->NumGlobalElements();
+  overlapMap = Teuchos::rcp(new Epetra_BlockMap(numGlobalElements,
+                                                static_cast<int>( refinedGlobalIdsVector.size() ),
+                                                &refinedGlobalIdsVector[0],
+                                                1,
+                                                0,
+                                                *comm));
+  neighborListSize = static_cast<int>(refinedNeighborGlobalIdList.size());
+  delete[] neighborList;
+  neighborList = new int[neighborListSize];
+  index = 0;
+  while(index < neighborListSize){
+    numNeighbors = refinedNeighborGlobalIdList[index];
+    neighborList[index] = numNeighbors;
+    index += 1;
+    for(int i=0 ; i<numNeighbors ; ++i){
+      neighborLocalId = overlapMap->LID(refinedNeighborGlobalIdList[index]);
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(neighborLocalId == -1, "\n**** Error:  Invalid local ID in removeNonintersectingNeighborsFromNeighborList().\n");
+      neighborList[index] = neighborLocalId;
+      index += 1;
+    }
+  }
 }
 
 double PeridigmNS::STKDiscretization::scalarTripleProduct(std::vector<double>& a,

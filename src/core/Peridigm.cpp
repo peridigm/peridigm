@@ -74,6 +74,9 @@
 #include "muParser.h"
 #include "muParserPeridigmFunctions.h"
 #include "Peridigm.hpp"
+#ifdef PERIDIGM_PV
+  #include "Peridigm_PartialVolumeCalculator.hpp"
+#endif
 
 #include <Epetra_Import.h>
 #include <Epetra_LinearProblem.h>
@@ -91,6 +94,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
                                Teuchos::RCP<Teuchos::ParameterList> params,
                                Teuchos::RCP<Discretization> inputPeridigmDiscretization)
   : analysisHasContact(false),
+    computeIntersections(false),
     blockIdFieldId(-1),
     horizonFieldId(-1),
     volumeFieldId(-1),
@@ -288,6 +292,25 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   auxiliaryFieldIds.push_back(externalForceDensityFieldId);
   if(analysisHasContact)
     auxiliaryFieldIds.push_back(contactForceDensityFieldId);
+  if(computeIntersections){
+    int tempFieldId;
+    tempFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Neighbor_Volume");
+    auxiliaryFieldIds.push_back(tempFieldId);
+    tempFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Neighbor_Centroid_X");
+    auxiliaryFieldIds.push_back(tempFieldId);
+    tempFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Neighbor_Centroid_Y");
+    auxiliaryFieldIds.push_back(tempFieldId);
+    tempFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Neighbor_Centroid_Z");
+    auxiliaryFieldIds.push_back(tempFieldId);
+    tempFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Self_Volume");
+    auxiliaryFieldIds.push_back(tempFieldId);
+    tempFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Self_Centroid_X");
+    auxiliaryFieldIds.push_back(tempFieldId);
+    tempFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Self_Centroid_Y");
+    auxiliaryFieldIds.push_back(tempFieldId);
+    tempFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Self_Centroid_Z");
+    auxiliaryFieldIds.push_back(tempFieldId);
+  }
 
   // Add fields from compute classes to auxiliary field vector
   vector<int> computeManagerFieldIds = computeManager->FieldIds();
@@ -306,6 +329,23 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
                         blockIDs,
                         globalNeighborhoodData);
 
+  // Compute element-horizon intersections
+#ifdef PERIDIGM_PV
+  if(computeIntersections){
+    PeridigmNS::Timer::self().startTimer("Element-Horizon Intersections");
+    if(peridigmComm->MyPID() == 0){
+      cout << "Computing element-horizon intersections...";
+      cout.flush();
+    }
+    computePartialVolume(blocks, peridigmDiscretization);
+    if(peridigmComm->MyPID() == 0){
+      cout << "\n  Intersection calculations complete.\n" << endl;
+      cout.flush();
+    }
+    PeridigmNS::Timer::self().stopTimer("Element-Horizon Intersections");
+  }
+#endif
+
   // Create a temporary vector for storing the global element ids
   Epetra_Vector elementIds(*(peridigmDiscretization->getCellVolume()));
   for(int i=0 ; i<elementIds.MyLength() ; ++i)
@@ -319,7 +359,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
     blockIt->importData(*(peridigmDiscretization->getInitialX()),   modelCoordinatesFieldId, PeridigmField::STEP_NONE, Insert);
     blockIt->importData(*(peridigmDiscretization->getInitialX()),   coordinatesFieldId,      PeridigmField::STEP_N,    Insert);
     blockIt->importData(*(peridigmDiscretization->getInitialX()),   coordinatesFieldId,      PeridigmField::STEP_NP1,  Insert);
-    blockIt->importData(elementIds,                       elementIdFieldId,        PeridigmField::STEP_NONE, Insert);
+    blockIt->importData(elementIds,                                 elementIdFieldId,        PeridigmField::STEP_NONE, Insert);
   }
 
   // Set the density in the mothership vector
@@ -851,9 +891,9 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     // Set the velocities for dof with kinematic boundary conditions.
     // This will propagate through the Verlet integrator and result in the proper
     // displacement boundary conditions on y and consistent values for v and u.
-    PeridigmNS::Timer::self().startTimer("Apply kinematic B.C.");
+    PeridigmNS::Timer::self().startTimer("Apply Kinematic B.C.");
     boundaryAndInitialConditionManager->applyBoundaryConditions(timeCurrent,timePrevious);
-    PeridigmNS::Timer::self().stopTimer("Apply kinematic B.C.");
+    PeridigmNS::Timer::self().stopTimer("Apply Kinematic B.C.");
 
     // evaluate the external (body) forces:
     boundaryAndInitialConditionManager->applyForceContributions(timeCurrent,0.0); // external forces are dirichlet BCs so the previous time is defaulted to 0.0
@@ -1294,9 +1334,9 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
     // this map that the boundary and intial condition manager expects.  So, make sure that the boundary and initial
     // condition manager gets the right type of vector.
 
-    PeridigmNS::Timer::self().startTimer("Apply kinematic B.C.");
+    PeridigmNS::Timer::self().startTimer("Apply Kinematic B.C.");
     boundaryAndInitialConditionManager->applyBoundaryConditions(timeCurrent, timePrevious);
-    PeridigmNS::Timer::self().stopTimer("Apply kinematic B.C.");
+    PeridigmNS::Timer::self().stopTimer("Apply Kinematic B.C.");
 
     // For NOX, add the increment in displacement BC directly into the displacement vector
     for(int i=0 ; i<u->MyLength() ; ++i)
@@ -1539,9 +1579,9 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
 
     // Update nodal positions for nodes with kinematic B.C.
     deltaU->PutScalar(0.0);
-    PeridigmNS::Timer::self().startTimer("Apply kinematic B.C.");
+    PeridigmNS::Timer::self().startTimer("Apply Kinematic B.C.");
     boundaryAndInitialConditionManager->applyBoundaryConditions(timeCurrent,timePrevious);
-    PeridigmNS::Timer::self().stopTimer("Apply kinematic B.C.");
+    PeridigmNS::Timer::self().stopTimer("Apply Kinematic B.C.");
 
     // evaluate the external (body) forces:
     boundaryAndInitialConditionManager->applyForceContributions(timeCurrent,timePrevious);
