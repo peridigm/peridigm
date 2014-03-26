@@ -134,7 +134,7 @@ namespace PeridigmNS {
     virtual Teuchos::RCP< std::map< std::string, std::vector<int> > > getNodeSets() { return nodeSets; } ;
 
     //! Get the node positions in the original Exodus hex/tet mesh.
-    void getExodusMeshNodePositions(int globalNodeID, std::vector<double>& nodePositions){
+    virtual void getExodusMeshNodePositions(int globalNodeID, std::vector<double>& nodePositions){
       // The default implementation sets the nodePositions vector to length zero.
       nodePositions.clear();
       return;

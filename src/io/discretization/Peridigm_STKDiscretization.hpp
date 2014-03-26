@@ -154,7 +154,7 @@ namespace PeridigmNS {
                                                         Teuchos::RCP<Epetra_Vector> searchRadii,
                                                         Teuchos::RCP<Epetra_BlockMap>& overlapMap,
                                                         int& neighborListSize,
-                                                        int*& neighborList);
+                                                        int* neighborList);
 
     //! Compute the scalar triple product
     double scalarTripleProduct(std::vector<double>& a,
