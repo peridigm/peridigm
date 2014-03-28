@@ -204,6 +204,186 @@ PeridigmNS::SphereIntersection PeridigmNS::triangleSphereIntersection(const std:
                                                                       const std::vector<double>& sphereCenter,
                                                                       double sphereRadius)
 {
+  // This algorithm was found on Christer Ericson's blog
+  // He's the author of Real-Time Collision Detection (Morgan Kaufmann, 2005).
+  
+  // The algorithm is based on the separating axis test.
+  // A separating axis is a line, parallel to which a plane
+  // exists that separates two entities.  In this case,
+  // the entities are the sphere and the triangle.  Separating
+  // axes may exist between the sphere center and the triangle plane,
+  // the sphere center and the triangle vertices, or the sphere center
+  // and the triangle edges.  Each of these possibilities is examined,
+  // and if no separating axis is found, it's concluded that the
+  // sphere and the triangle intersect.
+
+  // Translate problem so that the sphere center is the origin
+  // The three nodes of the (translated) triangle are A, B, C
+  // The sphere origin is P
+  double A[3], B[3], C[3];
+  subtract(nodeCoordinates[0], &sphereCenter[0], A);
+  subtract(nodeCoordinates[1], &sphereCenter[0], B);
+  subtract(nodeCoordinates[2], &sphereCenter[0], C);
+  double P[3] = {0.0, 0.0, 0.0};
+
+  // Raduis squared
+  double rr = sphereRadius*sphereRadius;
+  
+  // Squared distances of each node from the sphere center
+  double aa, bb, cc;
+  dot(A, A, &aa);
+  dot(B, B, &bb);
+  dot(C, C, &cc);
+
+  // Check how many nodes are within the sphere
+  int numWithinSphere(0);
+  if(aa < rr)
+    numWithinSphere += 1;
+  if(bb < rr)
+    numWithinSphere += 1;
+  if(cc < rr)
+    numWithinSphere += 1;
+
+  // Check for all-in or intersection conditions
+  if(numWithinSphere == 1 || numWithinSphere == 2)
+    return INTERSECTS_SPHERE;
+  if(numWithinSphere == 3)
+    return INSIDE_SPHERE;
+
+  // If the function didn't just exit, all the nodes must be outside the sphere.
+
+  // Store the triangle edges
+  double AB[3], BC[3], CA[3];
+  subtract(B, A, AB);
+  subtract(C, B, BC);
+  subtract(A, C, CA);
+
+  // N is the plane normal (not normalized to avoid sqrt calculation)
+  double N[3], temp[3];
+  subtract(C, A, temp); // temp is AC
+  cross(AB, temp, N);
+  
+  // d is the shortest distance from P to the plane of the triangle
+  // N is not normalized, so to get the true distance d would have to be divided by the magnitude of N
+  double d;
+  dot(A, N, &d);
+  
+  // e is the squared magnitude of plane normal
+  double e;
+  dot(N, N, &e);
+
+  // If the shortest distance from the sphere center to the plane is larger than the sphere radius, there is a separation.
+  // Note that d*d must be divided by e because a normalization step was skipped above (to avoid sqrt calculation)
+  if( d*d/e > rr )
+    return OUTSIDE_SPHERE;
+
+  // The triangle is outside the sphere if the following two conditions are met:
+  //   1) Node A is outside the sphere (we already know it is from a check above)
+  //   2) Node B and the center of the sphere are on opposite sides of the plane
+  //      defined by the point A and the vector between A and the sphere center
+  //      (because we moved the sphere center to the origin, this vector is just A)
+  //   3) Node C and the center of the sphere are on opposite sides of the plane
+  //      defined by the point A and the vector between A and the sphere center
+  double ab, ac, bc;
+  dot(A, B, &ab);
+  dot(A, C, &ac);
+  dot(B, C, &bc);
+  // Check to see if both points are on the opposite side of the plane from the origin
+  // Because the plane normal is A, the distance to the origin will be negative.
+  // So B and C will be on opposite sides of the plane if their distances are positive.
+  //
+  // We could perform this check:
+  //   dot(AB, A, check1);
+  //   dot(AC, A, check2);
+  //   if(check1 > 0 and check2 > 0)
+  //     return OUTSIDE_SPHERE;
+  //
+  // Some calculations can be eliminated by distributing the dot product (AB is defined as B-A)
+  //   dot(AB,A) -> dot(AB) - dot(AA)
+  // Rearranging yields
+  if(ab > aa && ac > aa)
+    return OUTSIDE_SPHERE;
+  //
+  // Repeat the check for planes defined at points B and C
+  if(ab > bb && bc > bb)
+    return OUTSIDE_SPHERE;
+  if(ac > cc && bc > cc)
+    return OUTSIDE_SPHERE;
+
+  // TODO:  RE-USE VARAIBLES WHERE POSSIBLE BELOW
+
+  // The final checks for possible separating axes involve the edges.
+  //
+  // Construct a plane that contains the edge AB and has a normal that
+  // passes through the sphere center.
+  //
+  // Consider the point Q on the (infinite) line AB to which P projects.
+  double AP[3], Q[3];
+  double ap_ab, ab_ab, t;
+  subtract(P, A, AP);
+  dot(AP, AB, &ap_ab);
+  dot(AB, AB, &ab_ab);
+  t = ap_ab/ab_ab;
+  for(int i=0 ; i<3 ; ++i)
+    Q[i] = A[i] + t*AB[i];
+  // There is a separation if the following conditions are both true:
+  //   1) Q is a distance greater than the radius from the sphere center
+  //   2) The points C and the sphere center lie on opposite sides of the plane
+  double QP[3], QC[3];
+  double qp_qp, qp_qc;
+  // The first condition is true if the squared length of QP is greater than the radius squared, (qp_qp > rr)
+  subtract(P, Q, QP);
+  dot(QP, QP, &qp_qp);
+  // The second condition is true if the vectors QP and QC point in opposite directions (dot product qp_qc is negative)
+  subtract(C, Q, QC);
+  dot(QP, QC, &qp_qc);
+  if( (qp_qp > rr) && (qp_qc < 0.0) )
+    return OUTSIDE_SPHERE;
+  //
+  // Now consider edge BC
+  double BP[3];
+  double bp_bc, bc_bc;
+  subtract(P, B, BP);
+  dot(BP, BC, &bp_bc);
+  dot(BC, BC, &bc_bc);
+  t = bp_bc/bc_bc;
+  for(int i=0 ; i<3 ; ++i)
+    Q[i] = B[i] + t*BC[i];
+  double QA[3];
+  double qp_qa;
+  subtract(P, Q, QP);
+  dot(QP, QP, &qp_qp);
+  subtract(A, Q, QA);
+  dot(QP, QA, &qp_qa);
+  if( (qp_qp > rr) && (qp_qa < 0.0) )
+    return OUTSIDE_SPHERE;
+  //
+  // Now consider edge CA
+  double CP[3];
+  double cp_ca, ca_ca;
+  subtract(P, C, CP);
+  dot(CP, CA, &cp_ca);
+  dot(CA, CA, &ca_ca);
+  t = cp_ca/ca_ca;
+  for(int i=0 ; i<3 ; ++i)
+    Q[i] = C[i] + t*CA[i];
+  double QB[3];
+  double qp_qb;
+  subtract(P, Q, QP);
+  dot(QP, QP, &qp_qp);
+  subtract(B, Q, QB);
+  dot(QP, QB, &qp_qb);
+  if( (qp_qp > rr) && (qp_qb < 0.0) )
+    return OUTSIDE_SPHERE;
+
+  // All possible separating axes have been eliminated, so there must be an intersection
+  return INTERSECTS_SPHERE;
+}
+
+PeridigmNS::SphereIntersection PeridigmNS::triangleSphereIntersectionDEPRECATED(const std::vector<double*>& nodeCoordinates,
+                                                                                const std::vector<double>& sphereCenter,
+                                                                                double sphereRadius)
+{
   double radiusSquared(0.0), distanceSquared(0.0);
   int numNodesInSphere(0);
 
@@ -431,6 +611,34 @@ PeridigmNS::SphereIntersection PeridigmNS::hexahedronSphereIntersection(double* 
 // {
 //   if(nodeCoordinates.size
 // }
+
+void PeridigmNS::subtract(const double* const a,
+                          const double* const b, 
+                          double* c)
+{
+  c[0] = a[0] - b[0];
+  c[1] = a[1] - b[1];
+  c[2] = a[2] - b[2];
+  return;
+}
+
+void PeridigmNS::dot(const double* const a,
+                     const double* const b, 
+                     double* c)
+{
+  *c = a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+  return;
+}
+
+void PeridigmNS::cross(const double* const a,
+                       const double* const b, 
+                       double* c)
+{
+  c[0] = a[1]*b[2] - a[2]*b[1];
+  c[1] = a[2]*b[0] - a[0]*b[2];
+  c[2] = a[0]*b[1] - a[1]*b[0];
+  return;
+}
 
 double PeridigmNS::scalarTripleProduct(const std::vector<double>& a,
                                        const std::vector<double>& b,
