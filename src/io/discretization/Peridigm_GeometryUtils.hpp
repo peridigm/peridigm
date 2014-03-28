@@ -71,6 +71,11 @@ namespace PeridigmNS {
                                                 const std::vector<double>& sphereCenter,
                                                 double sphereRadius);
 
+  //! Determine if a triangle intersects a sphere
+  SphereIntersection triangleSphereIntersectionDEPRECATED(const std::vector<double*>& nodeCoordinates,
+                                                          const std::vector<double>& sphereCenter,
+                                                          double sphereRadius);
+
   //! Determine if a hexahedron intersects a sphere
   SphereIntersection hexahedronSphereIntersection(double* const nodeCoordinates,
                                                   const std::vector<double>& sphereCenter,
@@ -80,6 +85,15 @@ namespace PeridigmNS {
   // void circumscribeElementWithSphere(const std::vector<double*>& nodeCoordinates,
   //                                    double* sphereCenter,
   //                                    double* radius);
+
+  //! Compute the difference of two three-dimensional vectors
+  void subtract(const double* const a, const double* const b, double* c);
+
+  //! Compute dot product of two three-dimensional vectors
+  void dot(const double* const a, const double* const b, double* c);
+
+  //! Compute cross product of two three-dimensional vectors
+  void cross(const double* const a, const double* const b, double* c);
 
   //! Compute a scalar triple product.
   double scalarTripleProduct(const std::vector<double>& a, const std::vector<double>& b, const std::vector<double>& c);
