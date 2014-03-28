@@ -422,6 +422,11 @@ TEUCHOS_UNIT_TEST(GeometryUtils, TriangleSphereIntersection) {
   sphereRadius = 0.1 + 1.0e-12;
   sphereIntersection = triangleSphereIntersection(nodes, sphereCenter, sphereRadius);
   TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
+  // In this case, the projection of the sphere center onto the plane of the triangle is not in the triangle
+  sphereCenter[0] = 0.0 ; sphereCenter[1] = -2.0 ; sphereCenter[2] = 0.0;
+  sphereRadius = std::sqrt(2) + 1.0e-3;
+  sphereIntersection = triangleSphereIntersection(nodes, sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
 
   // Case 5:  None of the nodes are with the sphere, the sphere intersects the (infinite) plane, but the sphere does not intersect the triangle
   sphereCenter[0] = 0.0 ; sphereCenter[1] = 0.0 ; sphereCenter[2] = 2.0;
