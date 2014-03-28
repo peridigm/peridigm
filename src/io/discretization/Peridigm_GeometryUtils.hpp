@@ -71,11 +71,6 @@ namespace PeridigmNS {
                                                 const std::vector<double>& sphereCenter,
                                                 double sphereRadius);
 
-  //! Determine if a triangle intersects a sphere
-  SphereIntersection triangleSphereIntersectionDEPRECATED(const std::vector<double*>& nodeCoordinates,
-                                                          const std::vector<double>& sphereCenter,
-                                                          double sphereRadius);
-
   //! Determine if a hexahedron intersects a sphere
   SphereIntersection hexahedronSphereIntersection(double* const nodeCoordinates,
                                                   const std::vector<double>& sphereCenter,
