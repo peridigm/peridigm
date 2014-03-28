@@ -452,7 +452,7 @@ PeridigmNS::SphereIntersection PeridigmNS::triangleSphereIntersectionDEPRECATED(
   // Check if point is in triangle
   if( (bc_1 >= 0.0) && (bc_2 >= 0.0) && (bc_1 + bc_2 <= 1.0) )
     return INTERSECTS_SPHERE;
- 
+
   return OUTSIDE_SPHERE;
 }
 
