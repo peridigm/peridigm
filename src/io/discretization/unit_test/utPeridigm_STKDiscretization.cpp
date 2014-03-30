@@ -268,62 +268,64 @@ TEUCHOS_UNIT_TEST(STKDiscretization, Exodus2x2x2Test) {
     TEST_ASSERT(neighborhood[30]   == 5);
     TEST_ASSERT(neighborhood[31]   == 6);
   }
-  // if(numProc == 2 && myPID == 0){
+  if(numProc == 2 && myPID == 0){
 
-  //   overlapMap = discretization->getGlobalOverlapMap(1);
+    overlapMap = discretization->getGlobalOverlapMap(1);
 
-  //   TEST_ASSERT(neighborhoodPtr[0] == 0);
-  //   TEST_ASSERT(neighborhood[0]    == 3);
-  //   TEST_ASSERT(neighborhood[1]    == overlapMap->LID(1));
-  //   TEST_ASSERT(neighborhood[2]    == overlapMap->LID(2));
-  //   TEST_ASSERT(neighborhood[3]    == overlapMap->LID(4));
+    TEST_ASSERT(neighborhoodPtr[0] == 0);
+    TEST_ASSERT(neighborhood[0]    == 3);
+    TEST_ASSERT(neighborhood[1]    == overlapMap->LID(1));
+    TEST_ASSERT(neighborhood[2]    == overlapMap->LID(2));
+    TEST_ASSERT(neighborhood[3]    == overlapMap->LID(4));
 
-  //   TEST_ASSERT(neighborhoodPtr[1] == 4);
-  //   TEST_ASSERT(neighborhood[4]    == 3);
-  //   TEST_ASSERT(neighborhood[5]    == overlapMap->LID(0));
-  //   TEST_ASSERT(neighborhood[6]    == overlapMap->LID(3));
-  //   TEST_ASSERT(neighborhood[7]    == overlapMap->LID(5));
+    TEST_ASSERT(neighborhoodPtr[1] == 4);
+    TEST_ASSERT(neighborhood[4]    == 3);
+    TEST_ASSERT(neighborhood[5]    == overlapMap->LID(0));
+    TEST_ASSERT(neighborhood[6]    == overlapMap->LID(3));
+    TEST_ASSERT(neighborhood[7]    == overlapMap->LID(5));
 
-  //   TEST_ASSERT(neighborhoodPtr[2] == 8);
-  //   TEST_ASSERT(neighborhood[8]    == 3);
-  //   TEST_ASSERT(neighborhood[9]    == overlapMap->LID(0));
-  //   TEST_ASSERT(neighborhood[10]   == overlapMap->LID(3));
-  //   TEST_ASSERT(neighborhood[11]   == overlapMap->LID(6));
+    TEST_ASSERT(neighborhoodPtr[2] == 8);
+    TEST_ASSERT(neighborhood[8]    == 3);
+    TEST_ASSERT(neighborhood[9]    == overlapMap->LID(0));
+    TEST_ASSERT(neighborhood[10]   == overlapMap->LID(3));
+    TEST_ASSERT(neighborhood[11]   == overlapMap->LID(6));
 
-  //   TEST_ASSERT(neighborhoodPtr[3] == 12);
-  //   TEST_ASSERT(neighborhood[12]   == 3);
-  //   TEST_ASSERT(neighborhood[13]   == overlapMap->LID(1));
-  //   TEST_ASSERT(neighborhood[14]   == overlapMap->LID(2));
-  //   TEST_ASSERT(neighborhood[15]   == overlapMap->LID(7));
-  // }
-  // if(numProc == 2 && myPID == 1){
+    TEST_ASSERT(neighborhoodPtr[3] == 12);
+    TEST_ASSERT(neighborhood[12]   == 3);
+    TEST_ASSERT(neighborhood[13]   == overlapMap->LID(1));
+    TEST_ASSERT(neighborhood[14]   == overlapMap->LID(2));
+    TEST_ASSERT(neighborhood[15]   == overlapMap->LID(7));
+  }
+  if(numProc == 2 && myPID == 1){
 
-  //   overlapMap = discretization->getGlobalOverlapMap(1);
+    overlapMap = discretization->getGlobalOverlapMap(1);
 
-  //   TEST_ASSERT(neighborhoodPtr[0] == 0);
-  //   TEST_ASSERT(neighborhood[0]    == 3);
-  //   TEST_ASSERT(neighborhood[1]    == overlapMap->LID(0));
-  //   TEST_ASSERT(neighborhood[2]    == overlapMap->LID(5));
-  //   TEST_ASSERT(neighborhood[3]    == overlapMap->LID(6));
+    // Note, the neighborlists get rearranged on processor #2 relative to the serial case
 
-  //   TEST_ASSERT(neighborhoodPtr[1] == 4);
-  //   TEST_ASSERT(neighborhood[4]    == 3);
-  //   TEST_ASSERT(neighborhood[5]    == overlapMap->LID(1));
-  //   TEST_ASSERT(neighborhood[6]    == overlapMap->LID(4));
-  //   TEST_ASSERT(neighborhood[7]    == overlapMap->LID(7));
+    TEST_ASSERT(neighborhoodPtr[0] == 0);
+    TEST_ASSERT(neighborhood[0]    == 3);
+    TEST_ASSERT(neighborhood[1]    == overlapMap->LID(5));
+    TEST_ASSERT(neighborhood[2]    == overlapMap->LID(6));
+    TEST_ASSERT(neighborhood[3]    == overlapMap->LID(0));
 
-  //   TEST_ASSERT(neighborhoodPtr[2] == 8);
-  //   TEST_ASSERT(neighborhood[8]    == 3);
-  //   TEST_ASSERT(neighborhood[9]    == overlapMap->LID(2));
-  //   TEST_ASSERT(neighborhood[10]   == overlapMap->LID(4));
-  //   TEST_ASSERT(neighborhood[11]   == overlapMap->LID(7));
+    TEST_ASSERT(neighborhoodPtr[1] == 4);
+    TEST_ASSERT(neighborhood[4]    == 3);
+    TEST_ASSERT(neighborhood[5]    == overlapMap->LID(4));
+    TEST_ASSERT(neighborhood[6]    == overlapMap->LID(7));
+    TEST_ASSERT(neighborhood[7]    == overlapMap->LID(1));
 
-  //   TEST_ASSERT(neighborhoodPtr[3] == 12);
-  //   TEST_ASSERT(neighborhood[12]   == 3);
-  //   TEST_ASSERT(neighborhood[13]   == overlapMap->LID(3));
-  //   TEST_ASSERT(neighborhood[14]   == overlapMap->LID(5));
-  //   TEST_ASSERT(neighborhood[15]   == overlapMap->LID(6));
-  // }
+    TEST_ASSERT(neighborhoodPtr[2] == 8);
+    TEST_ASSERT(neighborhood[8]    == 3);
+    TEST_ASSERT(neighborhood[9]    == overlapMap->LID(4));
+    TEST_ASSERT(neighborhood[10]   == overlapMap->LID(7));
+    TEST_ASSERT(neighborhood[11]   == overlapMap->LID(2));
+
+    TEST_ASSERT(neighborhoodPtr[3] == 12);
+    TEST_ASSERT(neighborhood[12]   == 3);
+    TEST_ASSERT(neighborhood[13]   == overlapMap->LID(5));
+    TEST_ASSERT(neighborhood[14]   == overlapMap->LID(6));
+    TEST_ASSERT(neighborhood[15]   == overlapMap->LID(3));
+  }
 
   // check the positions of the nodes in the original Exodus II mesh file
   std::vector<double> exodusNodePositions;
