@@ -173,6 +173,9 @@ namespace PeridigmNS {
     // //! Compute the maximum length dimension for a tetrahedron element
     // double tetMaxElementDimension(std::vector<double*>& nodeCoordinates) const;
 
+    //! Perform parallel communication to make exodus mesh data available for ghosted (overlap) element.
+    void ghostExodusMeshData();
+
     //! Maps
     Teuchos::RCP<Epetra_BlockMap> oneDimensionalMap;
     Teuchos::RCP<Epetra_BlockMap> oneDimensionalOverlapMap;
@@ -211,7 +214,8 @@ namespace PeridigmNS {
     Teuchos::RCP<Epetra_Vector> exodusMeshNodePositions;
 
     //! Vector containing element connectivity in the initial hex/tet mesh
-    std::map< int, std::vector<int> > exodusMeshElementConnectivity;
+    std::map< int, std::vector<int> > exodusMeshElementConnectivityDEPRECATED;
+    Teuchos::RCP<Epetra_Vector> exodusMeshElementConnectivity;
 
     //! Struct containing neighborhoods for owned nodes.
     Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData;

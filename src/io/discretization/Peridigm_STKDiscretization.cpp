@@ -199,6 +199,11 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   localMin[0] = maxElementRadius;
   epetra_comm->MaxAll(&localMin[0], &globalMin[0], 1);
   maxElementRadius = globalMin[0];
+  
+  // Ghost the Exodus mesh data so that each processor has access to the Exodus mesh data
+  // for all elements in the oneDimensionalOverlapMap (i.e., on-processor elements + ghosts)
+  if(storeExodusMesh)
+    ghostExodusMeshData();
 }
 
 PeridigmNS::STKDiscretization::~STKDiscretization() {}
@@ -312,10 +317,10 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
 
   // Determine the total number of elements in the model
   // \todo There must be a cleaner way to determine the number of elements in a model.
-  Teuchos::RCP<const Teuchos::Comm<int> > teuchosComm = Teuchos::createMpiComm<int>(Teuchos::opaqueWrapper<MPI_Comm>(MPI_COMM_WORLD));
-  int localElemCount = elements.size();
-  int globalElemCount(0);
-  reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, int(1), &localElemCount, &globalElemCount);
+  // Teuchos::RCP<const Teuchos::Comm<int> > teuchosComm = Teuchos::createMpiComm<int>(Teuchos::opaqueWrapper<MPI_Comm>(MPI_COMM_WORLD));
+  // int localElemCount = elements.size();
+  // int globalElemCount(0);
+  // reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, int(1), &localElemCount, &globalElemCount);
 
   // Store the positions of the nodes in the initial mesh
   // This is used for the calculation of partial neighbor volumes
@@ -338,10 +343,32 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
   // Create a list of owned global element ids
   vector<int> globalElementIds(elements.size());
   for(unsigned int iElem=0 ; iElem<elements.size() ; ++iElem){
-    stk::mesh::PairIterRelation nodeRelations = elements[iElem]->node_relations();
     int elementId = elements[iElem]->identifier() - 1;
     globalElementIds[iElem] = elementId;
   }
+
+  // Create a vector for storing exodus element connectivity
+  if(storeExodusMesh){
+    int numGlobalElements = -1;
+    int numMyElements = static_cast<int>(globalElementIds.size());
+    vector<int> myGlobalElements(numMyElements);
+    vector<int> elementSizeList(numMyElements);
+    int indexBase = 0;
+
+    for(unsigned int iElem=0 ; iElem<elements.size() ; ++iElem){
+      stk::mesh::PairIterRelation nodeRelations = elements[iElem]->node_relations();
+      int elementId = elements[iElem]->identifier() - 1;
+      int numNodesInElement = nodeRelations.size();
+      myGlobalElements[iElem] = elementId;
+      elementSizeList[iElem] = numNodesInElement;
+    }
+
+    // Epetra_BlockMap exodusMeshNodePositionsMap(-1, nodes.size(), &myGlobalNodeIds[0], 3, 0, *comm);
+    //  bondMap = Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, elementSizeList, indexBase, *comm));
+    Epetra_BlockMap exodusMeshElementConnectivityMap(numGlobalElements, numMyElements, &myGlobalElements[0], &elementSizeList[0], indexBase, *comm);
+    exodusMeshElementConnectivity = Teuchos::rcp(new Epetra_Vector(exodusMeshElementConnectivityMap));
+    exodusMeshElementConnectivity->PutScalar(-1.0);
+  }  
 
   // Create the owned maps
   oneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(-1, elements.size(), &globalElementIds[0], 1, 0, *comm));
@@ -364,18 +391,29 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
   // loop over the elements and load the data into the discretization's data structures
   for(unsigned int iElem=0 ; iElem<elements.size() ; ++iElem){
     stk::mesh::PairIterRelation nodeRelations = elements[iElem]->node_relations();
-    int elementID = elements[iElem]->identifier() - 1;
-    if(storeExodusMesh)
-      exodusMeshElementConnectivity[elementID] = vector<int>();
+    int elementId = elements[iElem]->identifier() - 1;
+    if(storeExodusMesh){
+      exodusMeshElementConnectivityDEPRECATED[elementId] = vector<int>();
+    }
     initialXPtr[iElem*3] = 0.0;
     initialXPtr[iElem*3+1] = 0.0;
     initialXPtr[iElem*3+2] = 0.0;
     std::vector<double*> nodeCoordinates(nodeRelations.size());
     int iNode = 0;
+
+    int exodusMeshElementIndex = 0;
+    if(storeExodusMesh){
+      int localExodusElementId = exodusMeshElementConnectivity->Map().LID(elementId);
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(localExodusElementId == -1, "**** Invalid local Exodus element Id.\n");
+      exodusMeshElementIndex = exodusMeshElementConnectivity->Map().FirstPointInElement(localExodusElementId);
+    }
+
     for(stk::mesh::PairIterRelation::iterator it=nodeRelations.begin() ; it!=nodeRelations.end() ; ++it){
       stk::mesh::Entity* node = it->entity();
-      if(storeExodusMesh)
-        exodusMeshElementConnectivity[elementID].push_back(node->identifier() - 1);
+      if(storeExodusMesh){
+        exodusMeshElementConnectivityDEPRECATED[elementId].push_back(node->identifier() - 1);
+        (*exodusMeshElementConnectivity)[exodusMeshElementIndex++] = node->identifier() - 1;
+      }
       double* coordinates = stk::mesh::field_data(*coordinatesField, *node);
       initialXPtr[iElem*3] += coordinates[0];
       initialXPtr[iElem*3+1] += coordinates[1];
@@ -495,9 +533,9 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
   for(it = elementBlocks->begin() ; it != elementBlocks->end() ; it++){
     const std::string& blockName = it->first;
     int bID = blockNameToBlockId(blockName);
-    const std::vector<int>& elementIDs = it->second;
-    for(unsigned int i=0 ; i<elementIDs.size() ; ++i){
-      int globalID = elementIDs[i];
+    const std::vector<int>& elementIds = it->second;
+    for(unsigned int i=0 ; i<elementIds.size() ; ++i){
+      int globalID = elementIds[i];
       int localID = oneDimensionalMap->LID(globalID);
       blockIDPtr[localID] = bID;
     }
@@ -699,8 +737,20 @@ void PeridigmNS::STKDiscretization::getExodusMeshNodePositions(int globalNodeID,
                                                                vector<double>& nodePositions)
 {
   TEUCHOS_TEST_FOR_EXCEPT_MSG(!storeExodusMesh, "**** Error:  getExodusMeshNodePositions() called, but exodus information not stored.\n");
-  vector<int>& elementConnectivity = exodusMeshElementConnectivity[globalNodeID];
-  unsigned int numNodes = elementConnectivity.size();
+
+  // Using DEPRECATED functionality
+  // vector<int>& elementConnectivity = exodusMeshElementConnectivityDEPRECATED[globalNodeID];
+  // unsigned int numNodes = elementConnectivity.size();
+
+  // Using new Epetra_Vector functionality
+  int localId = exodusMeshElementConnectivity->Map().LID(globalNodeID);
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(localId == -1, "**** Invalid local Exodus element Id in getExodusMeshNodePositions().\n");
+  unsigned int numNodes = exodusMeshElementConnectivity->Map().ElementSize(localId);
+  int exodusMeshElementIndex = exodusMeshElementConnectivity->Map().FirstPointInElement(localId);
+  vector<int> elementConnectivity(numNodes);
+  for(unsigned int i=0 ; i<numNodes ; ++i)
+    elementConnectivity[i] = (*exodusMeshElementConnectivity)[exodusMeshElementIndex++];
+
   if(nodePositions.size() != 3*numNodes){
     nodePositions.resize(3*numNodes);
   }
@@ -901,6 +951,52 @@ double PeridigmNS::STKDiscretization::tetVolume(std::vector<double*>& nodeCoordi
   double volume = scalarTripleProduct(a, b, c) / 6.0;
 
   return volume;
+}
+
+void PeridigmNS::STKDiscretization::ghostExodusMeshData()
+{
+  int numGlobalElements = -1;
+  int numMyElements = oneDimensionalOverlapMap->NumMyElements();
+  int* myGlobalElements = oneDimensionalOverlapMap->MyGlobalElements();
+  vector<int> elementSizeList(numMyElements);
+  int indexBase = 0;
+
+  // Obtain the element sizes for off-processor elements that will be ghosted
+  Epetra_Vector elementSize(*oneDimensionalMap);
+  for(int i=0 ; i<elementSize.MyLength() ; ++i)
+    elementSize[i] = exodusMeshElementConnectivity->Map().ElementSize(i);
+  Epetra_Vector elementSizeOverlap(*oneDimensionalOverlapMap);
+  Epetra_Import elementSizeImporter(*oneDimensionalOverlapMap, *oneDimensionalMap);
+  elementSizeOverlap.Import(elementSize, elementSizeImporter, Insert);
+  for(int i=0 ; i<elementSizeOverlap.MyLength() ; ++i)
+    elementSizeList[i] = static_cast<int>(elementSizeOverlap[i]);
+
+  Epetra_BlockMap overlapExodusMeshElementConnectivityMap(numGlobalElements, numMyElements, &myGlobalElements[0], &elementSizeList[0], indexBase, *comm);
+
+  // Import the element connectivities into the overlap vector
+  Teuchos::RCP<Epetra_Vector> overlapExodusMeshElementConnectivity = Teuchos::rcp(new Epetra_Vector(overlapExodusMeshElementConnectivityMap));
+  overlapExodusMeshElementConnectivity->PutScalar(-1.0);
+  Epetra_Import elementConnectivityImporter(overlapExodusMeshElementConnectivityMap, exodusMeshElementConnectivity->Map());
+  overlapExodusMeshElementConnectivity->Import(*exodusMeshElementConnectivity, elementConnectivityImporter, Insert);
+
+  // Create a list of global Exodus node ids (including ghosts)
+  set<int> globalNodeIdsSet;
+  for(int i=0 ; i<overlapExodusMeshElementConnectivity->MyLength() ; ++i)
+    globalNodeIdsSet.insert( (*overlapExodusMeshElementConnectivity)[i] );
+  vector<int> globalNodeIds(globalNodeIdsSet.size());
+  int index = 0;
+  for(set<int>::const_iterator it=globalNodeIdsSet.begin() ; it!=globalNodeIdsSet.end() ; it++)
+    globalNodeIds[index++] = *it;
+  std::sort(globalNodeIds.begin(), globalNodeIds.end());
+
+  Epetra_BlockMap overlapExodusMeshNodePositionsMap(numGlobalElements, globalNodeIds.size(), &globalNodeIds[0], 3, indexBase, *comm);
+  Teuchos::RCP<Epetra_Vector> overlapExodusMeshNodePositions = Teuchos::rcp(new Epetra_Vector(overlapExodusMeshNodePositionsMap));
+  Epetra_Import exodusMeshNodePositionsImporter(overlapExodusMeshNodePositionsMap, exodusMeshNodePositions->Map());
+  overlapExodusMeshNodePositions->Import(*exodusMeshNodePositions, exodusMeshNodePositionsImporter, Insert);
+
+  // Set the exodus node positions vector and the connectivity vector to the new overlap vectors
+  exodusMeshNodePositions = overlapExodusMeshNodePositions;
+  exodusMeshElementConnectivity = overlapExodusMeshElementConnectivity;
 }
 
 // double PeridigmNS::STKDiscretization::hexMaxElementDimension(std::vector<double*>& nodeCoordinates) const
