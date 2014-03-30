@@ -37,7 +37,7 @@ target_link_libraries(utPeridigm_PdQuickGridDiscretization_MPI_np2
   ${REQUIRED_LIBS}
   ${Boost_LIBRARIES}
 )
-add_test (utPeridigm_PdQuickGridDiscretization_MPI_np2  python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_PdQuickGridDiscretization_MPI_np2)
+add_test (utPeridigm_PdQuickGridDiscretization_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_PdQuickGridDiscretization_MPI_np2)
 
 add_executable(utPeridigm_STKDiscretization
                ${DISCRETIZATION_DIR}/Peridigm_Discretization.cpp
@@ -56,6 +56,7 @@ target_link_libraries(utPeridigm_STKDiscretization
   ${Boost_LIBRARIES}
 )
 add_test (utPeridigm_STKDiscretization python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_STKDiscretization)
+add_test (utPeridigm_STKDiscretization_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_STKDiscretization)
 
 add_executable(utPeridigm_GeometryUtils
                ${DISCRETIZATION_DIR}/Peridigm_GeometryUtils.cpp

@@ -53,17 +53,13 @@
 #include "Peridigm_PdQuickGridDiscretization.hpp"
 #include "Peridigm_HorizonManager.hpp"
 
-
 using namespace Teuchos;
 using namespace PeridigmNS;
 
-
 TEUCHOS_UNIT_TEST(PdQuickGridDiscretization_MPI_np2, SimpleTensorProductMeshTest) {
-
 
   Teuchos::RCP<Epetra_Comm> comm;
   comm = rcp(new Epetra_MpiComm(MPI_COMM_WORLD));
-
 
   int numProcs = comm->NumProc();
   int rank     = comm->MyPID();
@@ -345,8 +341,6 @@ TEUCHOS_UNIT_TEST(PdQuickGridDiscretization_MPI_np2, SimpleTensorProductMeshTest
     TEST_ASSERT(neighborhood[15]   == 1);
   }
 }
-
-
 
 int main
 (int argc, char* argv[])
