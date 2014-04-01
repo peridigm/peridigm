@@ -76,6 +76,7 @@ IF(PERIDIGM_PV)
     ${Peridigm_LIBRARY}
     ${Trilinos_LIBRARIES}
     ${PARSER_LIBS}
+    ${MESH_INPUT_LIBS}
   )
   add_test (utPeridigm_PartialVolumeCalculator python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_PartialVolumeCalculator)
 
@@ -86,6 +87,7 @@ IF(PERIDIGM_PV)
     ${Peridigm_LIBRARY}
     ${Trilinos_LIBRARIES}
     ${PARSER_LIBS}
+    ${MESH_INPUT_LIBS}
   )
   add_test (utPeridigm_PartialVolumeConvergence python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_PartialVolumeConvergence)
 ENDIF()
