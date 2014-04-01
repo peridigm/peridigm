@@ -148,7 +148,7 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   // Remove elements from neighbor lists that are outside the horizon
   // Some will have been picked up in the initial neighbor search when computing element-horizon intersections
   if(computeIntersections)
-    removeNonintersectingNeighborsFromNeighborList(initialX, horizonForEachPoint, oneDimensionalOverlapMap, neighborListSize, neighborList);
+    removeNonintersectingNeighborsFromNeighborList(initialX, horizonForEachPoint, oneDimensionalMap, oneDimensionalOverlapMap, neighborListSize, neighborList);
 
   createNeighborhoodData(neighborListSize, neighborList);
 
@@ -561,9 +561,7 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
 void
 PeridigmNS::STKDiscretization::createNeighborhoodData(int neighborListSize, int* neighborList)
 {
-
    int numOwnedIds = oneDimensionalMap->NumMyElements();
-   
    int* ownedGlobalIds = oneDimensionalMap->MyGlobalElements();
 
    vector<int> ownedLocalIds(numOwnedIds);
@@ -829,6 +827,7 @@ double PeridigmNS::STKDiscretization::computeMaxElementDimension()
 
 void PeridigmNS::STKDiscretization::removeNonintersectingNeighborsFromNeighborList(Teuchos::RCP<Epetra_Vector> x,
                                                                                    Teuchos::RCP<Epetra_Vector> searchRadii,
+                                                                                   Teuchos::RCP<Epetra_BlockMap> ownedMap,
                                                                                    Teuchos::RCP<Epetra_BlockMap>& overlapMap,
                                                                                    int& neighborListSize,
                                                                                    int*& neighborList)
@@ -840,7 +839,7 @@ void PeridigmNS::STKDiscretization::removeNonintersectingNeighborsFromNeighborLi
   vector<double> exodusNodePositions;
   vector<double> sphereCenter(3);
   vector<int> refinedNeighborGlobalIdList;
-  std::set<int> refinedGlobalIds;
+  set<int> refinedGlobalIds;
   refinedNeighborGlobalIdList.reserve(neighborListSize);
 
   int index = 0;
@@ -877,15 +876,19 @@ void PeridigmNS::STKDiscretization::removeNonintersectingNeighborsFromNeighborLi
   }
 
   // Create new overlap map and neighborlist based on refinedNeighborGlobalIdList
-  vector<int> refinedGlobalIdsVector(refinedGlobalIds.size());
-  index = 0;
-  for(set<int>::const_iterator it=refinedGlobalIds.begin() ; it!=refinedGlobalIds.end() ; it++)
-    refinedGlobalIdsVector[index++] = *it;
-  sort(refinedGlobalIdsVector.begin(), refinedGlobalIdsVector.end());
-  int numGlobalElements = overlapMap->NumGlobalElements();
-  overlapMap = Teuchos::rcp(new Epetra_BlockMap(numGlobalElements,
-                                                static_cast<int>( refinedGlobalIdsVector.size() ),
-                                                &refinedGlobalIdsVector[0],
+  vector<int> refinedGlobalIdVector;
+  refinedGlobalIdVector.reserve(refinedGlobalIds.size());
+  // The non-ghost portion of the overlapMap must match the ownedMap
+  for(int i=0 ; i<ownedMap->NumMyElements() ; ++i)
+    refinedGlobalIdVector.push_back(ownedMap->GID(i));
+  // Add the ghosts to the overlapMap
+  for(set<int>::const_iterator it=refinedGlobalIds.begin() ; it!=refinedGlobalIds.end() ; it++){
+    if(!ownedMap->MyGID(*it))
+      refinedGlobalIdVector.push_back(*it);
+  }
+  overlapMap = Teuchos::rcp(new Epetra_BlockMap(-1,
+                                                static_cast<int>( refinedGlobalIdVector.size() ),
+                                                &refinedGlobalIdVector[0],
                                                 1,
                                                 0,
                                                 *comm));

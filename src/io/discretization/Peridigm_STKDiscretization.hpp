@@ -152,6 +152,7 @@ namespace PeridigmNS {
     //! Refine the neighborhood list by eliminating neighbors that have zero intersection with the horizon (used only when computing element-sphere intersections).
     void removeNonintersectingNeighborsFromNeighborList(Teuchos::RCP<Epetra_Vector> x,
                                                         Teuchos::RCP<Epetra_Vector> searchRadii,
+                                                        Teuchos::RCP<Epetra_BlockMap> ownedMap,
                                                         Teuchos::RCP<Epetra_BlockMap>& overlapMap,
                                                         int& neighborListSize,
                                                         int*& neighborList);
