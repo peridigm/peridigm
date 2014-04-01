@@ -62,7 +62,7 @@ namespace PeridigmNS {
     virtual ~ElasticCorrespondenceMaterial();
 
     //! Return name of material type
-    virtual std::string Name() const { return("Elastic Correspondence2"); }
+    virtual std::string Name() const { return("Elastic Correspondence"); }
 
     //! Evaluate the Cauchy stress.
     virtual void computeCauchyStress(const double dt,
