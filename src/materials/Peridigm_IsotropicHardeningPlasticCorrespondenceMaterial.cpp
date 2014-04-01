@@ -96,7 +96,7 @@ PeridigmNS::IsotropicHardeningPlasticCorrespondenceMaterial::initialize(const do
                                                                         const int numOwnedPoints,
                                                                         const int* ownedIDs,
                                                                         const int* neighborhoodList,
-                                                                        PeridigmNS::DataManager& dataManager) const
+                                                                        PeridigmNS::DataManager& dataManager)
 {
 
   PeridigmNS::CorrespondenceMaterial::initialize(dt,

@@ -123,7 +123,7 @@ namespace PeridigmNS {
                const int numOwnedPoints,
                const int* ownedIDs,
                const int* neighborhoodList,
-               PeridigmNS::DataManager& dataManager) const;
+               PeridigmNS::DataManager& dataManager);
 
     //! Evaluate the internal force.
     virtual void

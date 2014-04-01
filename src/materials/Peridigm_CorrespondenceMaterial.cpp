@@ -121,7 +121,7 @@ PeridigmNS::CorrespondenceMaterial::initialize(const double dt,
                                                const int numOwnedPoints,
                                                const int* ownedIDs,
                                                const int* neighborhoodList,
-                                               PeridigmNS::DataManager& dataManager) const
+                                               PeridigmNS::DataManager& dataManager)
 {
   dataManager.getData(m_unrotatedRateOfDeformationFieldId, PeridigmField::STEP_NONE)->PutScalar(0.0);
   dataManager.getData(m_leftStretchTensorFieldId, PeridigmField::STEP_N)->PutScalar(0.0);

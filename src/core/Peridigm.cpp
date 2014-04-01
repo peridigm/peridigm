@@ -266,7 +266,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
       matParams.set("Finite Difference Probe Length", defaultFiniteDifferenceProbeLength);
 
     // Instantiate the material model for this block
-    Teuchos::RCP<const PeridigmNS::Material> materialModel = materialFactory.create(matParams);
+    Teuchos::RCP<PeridigmNS::Material> materialModel = materialFactory.create(matParams);
     blockIt->setMaterialModel(materialModel);
 
     // Set the damage model (if any)
