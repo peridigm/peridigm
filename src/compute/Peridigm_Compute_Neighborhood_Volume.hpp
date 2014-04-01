@@ -85,7 +85,6 @@ namespace PeridigmNS {
     // field ids for all relevant data
     std::vector<int> m_fieldIds;
     int m_volumeFieldId;
-    int m_partialVolumeFieldId;
     int m_neighborhoodVolumeFieldId;
   };
 }

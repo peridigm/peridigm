@@ -1,6 +1,10 @@
 #
 # Add the tests
 #
+if (USE_PV)
+   add_test (NeighborhoodVolume_np1 python ./NeighborhoodVolume/np1/NeighborhoodVolume.py)
+   add_test (NeighborhoodVolume_np4 python ./NeighborhoodVolume/np4/NeighborhoodVolume.py)
+endif (USE_PV)
 add_test (ElasticCorrespondenceFullyPrescribedTension_np1 python ./ElasticCorrespondenceFullyPrescribedTension/np1/ElasticCorrespondenceFullyPrescribedTension.py)
 add_test (ElasticCorrespondenceFullyPrescribedTension_np4 python ./ElasticCorrespondenceFullyPrescribedTension/np4/ElasticCorrespondenceFullyPrescribedTension.py)
 add_test (ElasticPlasticCorrespondenceFullyPrescribedTension_np1 python ./ElasticPlasticCorrespondenceFullyPrescribedTension/np1/ElasticPlasticCorrespondenceFullyPrescribedTension.py)
@@ -47,7 +51,7 @@ add_test (ThermalExpansionBondFailure_np1 python ./ThermalExpansionBondFailure/n
 add_test (ThermalExpansionBondFailure_np4 python ./ThermalExpansionBondFailure/np4/ThermalExpansionBondFailure.py)
 if (USE_DAKOTA)
    add_test (Dakota_2x1x1_np1 python ./Dakota_2x1x1/np1/Dakota_2x1x1.py)
-endif(USE_DAKOTA)
+endif (USE_DAKOTA)
 #####add_test (ep_cube_np1 python ./ep_cube/np1/ep_cube_np1.py)
 #####add_test (ep_cube_np2 python ./ep_cube/np2/ep_cube_np2.py)
 

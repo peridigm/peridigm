@@ -71,7 +71,7 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   minElementRadius(1.0e50),
   maxElementRadius(0.0),
   storeExodusMesh(false),
-  computeIntersections(false), /* todo, set this only if needed based on params */
+  computeIntersections(false),
   maxElementDimension(0.0),
   numBonds(0),
   maxNumBondsPerElem(0),
@@ -87,10 +87,13 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   string meshFileName = params->get<string>("Input Mesh File");
 
   // Store exodus mesh for intersection calculations, or if it was specifically requested (e.g., unit tests)
-  if(params->isParameter("Store Exodus Mesh"))
+  if(params->isParameter("Store Exodus Mesh")){
     storeExodusMesh = params->get<bool>("Store Exodus Mesh");
-  if(computeIntersections)
+  }
+  if(params->isParameter("Compute Element-Horizon Intersections")){
+    computeIntersections = params->get<bool>("Compute Element-Horizon Intersections");
     storeExodusMesh = true;
+  }
 
   // Set up bond filters
   createBondFilters(params);
@@ -128,16 +131,24 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
     }
   }
 
-  // Execute the neighbor search
   int neighborListSize;
   int* neighborList;
-  if(!computeIntersections){
-    ProximitySearch::GlobalProximitySearch(initialX, horizonForEachPoint, oneDimensionalOverlapMap, neighborListSize, neighborList, bondFilters);
-  }
-  else{
+
+  // Execute the neighbor search
+  // When computing element-horizon intersections, the search is expanded by the maximum element dimension
+  if(computeIntersections)
     ProximitySearch::GlobalProximitySearch(initialX, horizonForEachPoint, oneDimensionalOverlapMap, neighborListSize, neighborList, bondFilters, maxElementDimension);
+  else
+    ProximitySearch::GlobalProximitySearch(initialX, horizonForEachPoint, oneDimensionalOverlapMap, neighborListSize, neighborList, bondFilters);
+
+  // Ghost exodus data so that element-horizon intersections can be calculated for ghosted neighbors
+  if(storeExodusMesh)
+    ghostExodusMeshData();
+
+  // Remove elements from neighbor lists that are outside the horizon
+  // Some will have been picked up in the initial neighbor search when computing element-horizon intersections
+  if(computeIntersections)
     removeNonintersectingNeighborsFromNeighborList(initialX, horizonForEachPoint, oneDimensionalOverlapMap, neighborListSize, neighborList);
-  }
 
   createNeighborhoodData(neighborListSize, neighborList);
 
@@ -199,11 +210,6 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   localMin[0] = maxElementRadius;
   epetra_comm->MaxAll(&localMin[0], &globalMin[0], 1);
   maxElementRadius = globalMin[0];
-  
-  // Ghost the Exodus mesh data so that each processor has access to the Exodus mesh data
-  // for all elements in the oneDimensionalOverlapMap (i.e., on-processor elements + ghosts)
-  if(storeExodusMesh)
-    ghostExodusMeshData();
 }
 
 PeridigmNS::STKDiscretization::~STKDiscretization() {}
@@ -825,7 +831,7 @@ void PeridigmNS::STKDiscretization::removeNonintersectingNeighborsFromNeighborLi
                                                                                    Teuchos::RCP<Epetra_Vector> searchRadii,
                                                                                    Teuchos::RCP<Epetra_BlockMap>& overlapMap,
                                                                                    int& neighborListSize,
-                                                                                   int* neighborList)
+                                                                                   int*& neighborList)
 {
   int refinedNumNeighbors, numNeighbors, neighborLocalId, neighborGlobalId;
   unsigned int refinedNumNeighborsIndex;

@@ -134,6 +134,13 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   msg +=         "****        A horizon for each block must be specified in the Blocks section.\n";
   TEUCHOS_TEST_FOR_EXCEPT_MSG(discParams->isParameter("Horizon"), msg);
 
+  // Check for command to compute horizon-element intersections
+  if(discParams->isParameter("Compute Element-Horizon Intersections"))
+    computeIntersections = discParams->get<bool>("Compute Element-Horizon Intersections");
+#ifndef PERIDIGM_PV
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(computeIntersections, "\n**** Error:  Horizon-Element intersections not enabled, recompile with -DUSE_PV.\n");
+#endif
+
   // Pass the blockParams to the HorizonManager
   Teuchos::ParameterList& blockParams = peridigmParams->sublist("Blocks", true);
   PeridigmNS::HorizonManager& horizonManager = PeridigmNS::HorizonManager::self();
@@ -294,6 +301,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
     auxiliaryFieldIds.push_back(contactForceDensityFieldId);
   if(computeIntersections){
     int tempFieldId;
+    auxiliaryFieldIds.push_back(blockIdFieldId);
     tempFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Neighbor_Volume");
     auxiliaryFieldIds.push_back(tempFieldId);
     tempFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Neighbor_Centroid_X");
@@ -329,23 +337,6 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
                         blockIDs,
                         globalNeighborhoodData);
 
-  // Compute element-horizon intersections
-#ifdef PERIDIGM_PV
-  if(computeIntersections){
-    PeridigmNS::Timer::self().startTimer("Element-Horizon Intersections");
-    if(peridigmComm->MyPID() == 0){
-      cout << "Computing element-horizon intersections...";
-      cout.flush();
-    }
-    computePartialVolume(blocks, peridigmDiscretization);
-    if(peridigmComm->MyPID() == 0){
-      cout << "\n  Intersection calculations complete.\n" << endl;
-      cout.flush();
-    }
-    PeridigmNS::Timer::self().stopTimer("Element-Horizon Intersections");
-  }
-#endif
-
   // Create a temporary vector for storing the global element ids
   Epetra_Vector elementIds(*(peridigmDiscretization->getCellVolume()));
   for(int i=0 ; i<elementIds.MyLength() ; ++i)
@@ -361,6 +352,35 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
     blockIt->importData(*(peridigmDiscretization->getInitialX()),   coordinatesFieldId,      PeridigmField::STEP_NP1,  Insert);
     blockIt->importData(elementIds,                                 elementIdFieldId,        PeridigmField::STEP_NONE, Insert);
   }
+
+  // Compute element-horizon intersections
+#ifdef PERIDIGM_PV
+  if(computeIntersections){
+
+    // Grab parameters from discretization section of input deck
+    int computeIntersectionsNumRecursion = 2;
+    if(discParams->isParameter("Element-Horizon Intersection Recursion Level"))
+      computeIntersectionsNumRecursion = discParams->get<int>("Element-Horizon Intersection Recursion Level");
+    int computeIntersectionsNumSamples = 2;
+    if(discParams->isParameter("Element-Horizon Intersection Number Of Samples"))
+      computeIntersectionsNumSamples = discParams->get<int>("Element-Horizon Intersection Number Of Samples");
+
+    PeridigmNS::Timer::self().startTimer("Element-Horizon Intersections");
+    if(peridigmComm->MyPID() == 0){
+      cout << "Computing element-horizon intersections...";
+      cout.flush();
+    }
+    computePartialVolume(blocks,
+                         peridigmDiscretization,
+                         computeIntersectionsNumRecursion,
+                         computeIntersectionsNumSamples);
+    if(peridigmComm->MyPID() == 0){
+      cout << "\n  Intersection calculations complete.\n" << endl;
+      cout.flush();
+    }
+    PeridigmNS::Timer::self().stopTimer("Element-Horizon Intersections");
+  }
+#endif
 
   // Set the density in the mothership vector
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
@@ -2584,8 +2604,7 @@ void PeridigmNS::Peridigm::computeImplicitJacobian(double beta) {
 void PeridigmNS::Peridigm::synchDataManagers() {
 
   // Copy data from mothership vectors to overlap vectors in blocks
-  // Volume and Block_Id are synched during creation and rebalance, and otherwise never changes
-  // Model_Coordinates is synched during creation and rebalance, and otherwise never changes
+  // Volume, Block_Id, and Model_Coordinates are synched at initialization and never change
 
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
 
