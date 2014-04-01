@@ -53,15 +53,11 @@
 PeridigmNS::Compute_Number_Of_Neighbors::Compute_Number_Of_Neighbors(Teuchos::RCP<const Teuchos::ParameterList> params,
                                                                      Teuchos::RCP<const Epetra_Comm> epetraComm_,
                                                                      Teuchos::RCP<const Teuchos::ParameterList> computeClassGlobalData_)
-  : Compute(params, epetraComm_, computeClassGlobalData_), m_partialVolumeFieldId(-1), m_numberOfNeighborsFieldId(-1)
+  : Compute(params, epetraComm_, computeClassGlobalData_), m_numberOfNeighborsFieldId(-1)
 {
   FieldManager& fieldManager = FieldManager::self();
   m_numberOfNeighborsFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Number_Of_Neighbors");
   m_fieldIds.push_back(m_numberOfNeighborsFieldId);
-  if(fieldManager.hasField("Partial_Volume")){
-    m_partialVolumeFieldId = fieldManager.getFieldId("Partial_Volume");
-    m_fieldIds.push_back(m_partialVolumeFieldId);
-  }
 }
 
 PeridigmNS::Compute_Number_Of_Neighbors::~Compute_Number_Of_Neighbors(){}
@@ -76,39 +72,10 @@ void PeridigmNS::Compute_Number_Of_Neighbors::initialize( Teuchos::RCP< std::vec
     double *numberOfNeighbors;
     blockIt->getData(m_numberOfNeighborsFieldId, PeridigmField::STEP_NONE)->ExtractView(&numberOfNeighbors);
 
-    double *partialVolume = 0;
-    if( m_partialVolumeFieldId != -1 )
-      blockIt->getData(m_partialVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&partialVolume);
-
     int neighborhoodListIndex = 0;
-    int bondIndex = 0;
     for(int iID=0 ; iID<numOwnedPoints ; ++iID){
       int numNeighbors = neighborhoodList[neighborhoodListIndex++];
-
-      if(partialVolume == 0){
-      
-        // The analysis does not utilize partial volumes,
-        // all neighbors are counted.
-
-        numberOfNeighbors[iID] = numNeighbors;
-      }
-      else {
-
-        // Partial volumes are present.
-
-        // Allow for the case in which an element is within the neighborhood list,
-        // but actually does not have any volume within the neighborhood.
-        // This may or may not be possible, depending on the details of the neighborhood
-        // search, which must extend beyond the neighborhood when partial volumes are
-        // considered.
-
-        numberOfNeighbors[iID] = 0;
-        for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
-          double fraction = partialVolume[bondIndex++];
-          if(fraction > 0.0)
-            numberOfNeighbors[iID] += 1;
-        }
-      }
+      numberOfNeighbors[iID] = numNeighbors;
       neighborhoodListIndex += numNeighbors;
     }
   }

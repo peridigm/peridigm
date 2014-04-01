@@ -53,14 +53,12 @@
 PeridigmNS::Compute_Neighborhood_Volume::Compute_Neighborhood_Volume(Teuchos::RCP<const Teuchos::ParameterList> params,
                                                                      Teuchos::RCP<const Epetra_Comm> epetraComm_,
                                                                      Teuchos::RCP<const Teuchos::ParameterList> computeClassGlobalData_)
-  : Compute(params, epetraComm_, computeClassGlobalData_), m_volumeFieldId(-1), m_partialVolumeFieldId(-1), m_neighborhoodVolumeFieldId(-1)
+  : Compute(params, epetraComm_, computeClassGlobalData_), m_volumeFieldId(-1), m_neighborhoodVolumeFieldId(-1)
 {
   FieldManager& fieldManager = FieldManager::self();
   m_volumeFieldId = fieldManager.getFieldId("Volume");
-  m_partialVolumeFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Partial_Volume");
   m_neighborhoodVolumeFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Neighborhood_Volume");
   m_fieldIds.push_back(m_volumeFieldId);
-  m_fieldIds.push_back(m_partialVolumeFieldId);
   m_fieldIds.push_back(m_neighborhoodVolumeFieldId);
 }
 
@@ -68,8 +66,9 @@ PeridigmNS::Compute_Neighborhood_Volume::~Compute_Neighborhood_Volume(){}
 
 void PeridigmNS::Compute_Neighborhood_Volume::initialize( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) {
 
-  std::vector<Block>::iterator blockIt;
-  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+  FieldManager& fieldManager = FieldManager::self();
+
+  for(std::vector<Block>::iterator blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
     Teuchos::RCP<NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
     const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
     const int* neighborhoodList = neighborhoodData->NeighborhoodList();
@@ -77,25 +76,32 @@ void PeridigmNS::Compute_Neighborhood_Volume::initialize( Teuchos::RCP< std::vec
     blockIt->getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&volume);
     blockIt->getData(m_neighborhoodVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborhoodVolume);
 
-    double *partialVolume = 0;
-    if( blockIt->hasData(m_partialVolumeFieldId, PeridigmField::STEP_NONE) )
-      blockIt->getData(m_partialVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&partialVolume);
+    // Use (partial) neighbor volume information, if available
+    double *neighborVolume = 0;
+    if(fieldManager.hasField("Neighbor_Volume")){
+      int neighborVolumeFieldId = fieldManager.getFieldId("Neighbor_Volume");
+      if( blockIt->hasData(neighborVolumeFieldId, PeridigmField::STEP_NONE) ){
+        blockIt->getData(neighborVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborVolume);
+      }
+    }
 
     int neighborhoodListIndex = 0;
     int bondIndex = 0;
     for(int iID=0 ; iID<numOwnedPoints ; ++iID){
-      int numNeighbors = neighborhoodList[neighborhoodListIndex++];
 
-      // Assume that the cell's volume is within its neighborhood
+      // Assume that the cell's own volume is within its neighborhood
       neighborhoodVolume[iID] = volume[iID];
 
+      // Sum in the contributions for the neighbors
+      int numNeighbors = neighborhoodList[neighborhoodListIndex++];
       for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
         int neighborID = neighborhoodList[neighborhoodListIndex++];
-        double neighborVolume = volume[neighborID];
-        double fraction = 1.0;
-        if(partialVolume != 0)
-          fraction = partialVolume[bondIndex++];
-        neighborhoodVolume[iID] += neighborVolume*fraction;
+        double vol(0.0);
+        if(neighborVolume == 0)
+          vol = volume[neighborID];
+        else
+          vol = neighborVolume[bondIndex++];
+        neighborhoodVolume[iID] += vol;
       }
     }
   }
