@@ -22,6 +22,9 @@ ENDIF()
 IF(PERIDIGM_PALS)
   set(PD_MATERIAL_SOURCES ${PD_MATERIAL_SOURCES} pals.cxx)
 ENDIF()
+IF(PERIDIGM_PV)
+  set(PD_MATERIAL_SOURCES ${PD_MATERIAL_SOURCES} elastic_pv.cxx)
+ENDIF()
 
 # Optional source files for CJL development
 IF(PERIDIGM_CJL)
