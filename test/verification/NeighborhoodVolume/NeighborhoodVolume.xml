@@ -66,9 +66,10 @@
 
   <ParameterList name="Compute Class Parameters">
     <!-- Record the neighborhood size at several points internal to the body for verification -->
+    <!-- Point A is in block_1 -->
     <ParameterList name="Horizon At Point A">
 	  <Parameter name="Compute Class" type="string" value="Nearest_Point_Data"/>
-	  <Parameter name="X" type="double" value="0.0"/>
+	  <Parameter name="X" type="double" value="0.118"/>
 	  <Parameter name="Y" type="double" value="0.0"/>
 	  <Parameter name="Z" type="double" value="0.0"/>
 	  <Parameter name="Variable" type="string" value="Horizon"/>
@@ -76,12 +77,13 @@
 	</ParameterList>
     <ParameterList name="Neighborhood Volume At Point A">
 	  <Parameter name="Compute Class" type="string" value="Nearest_Point_Data"/>
-	  <Parameter name="X" type="double" value="0.0"/>
+	  <Parameter name="X" type="double" value="0.118"/>
 	  <Parameter name="Y" type="double" value="0.0"/>
 	  <Parameter name="Z" type="double" value="0.0"/>
 	  <Parameter name="Variable" type="string" value="Neighborhood_Volume"/>
 	  <Parameter name="Output Label" type="string" value="Neighborhood_Volume_Point_A"/>
 	</ParameterList>
+    <!-- Point B is in the center of the sphere, block_2 -->
     <ParameterList name="Horizon At Point B">
 	  <Parameter name="Compute Class" type="string" value="Nearest_Point_Data"/>
 	  <Parameter name="X" type="double" value="1.5"/>
@@ -98,8 +100,26 @@
 	  <Parameter name="Variable" type="string" value="Neighborhood_Volume"/>
 	  <Parameter name="Output Label" type="string" value="Neighborhood_Volume_Point_B"/>
 	</ParameterList>
+    <!-- Point C is in block_3 (variable horizon) -->
+    <ParameterList name="Horizon At Point C">
+	  <Parameter name="Compute Class" type="string" value="Nearest_Point_Data"/>
+	  <Parameter name="X" type="double" value="-0.241"/>
+	  <Parameter name="Y" type="double" value="-0.1"/>
+	  <Parameter name="Z" type="double" value="0.144"/>
+	  <Parameter name="Variable" type="string" value="Horizon"/>
+	  <Parameter name="Output Label" type="string" value="Horizon_Point_C"/>
+	</ParameterList>
+    <ParameterList name="Neighborhood Volume At Point C">
+	  <Parameter name="Compute Class" type="string" value="Nearest_Point_Data"/>
+	  <Parameter name="X" type="double" value="-0.241"/>
+	  <Parameter name="Y" type="double" value="-0.1"/>
+	  <Parameter name="Z" type="double" value="0.144"/>
+	  <Parameter name="Variable" type="string" value="Neighborhood_Volume"/>
+	  <Parameter name="Output Label" type="string" value="Neighborhood_Volume_Point_C"/>
+	</ParameterList>
   </ParameterList>
 
+  <!-- The simulation is fully prescribed, nothing can move -->
   <ParameterList name="Solver">
 	<Parameter name="Verbose" type="bool" value="false"/>
 	<Parameter name="Initial Time" type="double" value="0.0"/>
@@ -108,8 +128,6 @@
 	  <Parameter name="Fixed dt" type="double" value="0.5e-6"/>
 	</ParameterList>
   </ParameterList>
-
-  <!-- The truth value for the neighborhood volume of interior elements is 0.1148022919995 -->
 
   <ParameterList name="Output">
 	<Parameter name="Output File Type" type="string" value="ExodusII"/>
@@ -124,6 +142,8 @@
       <Parameter name="Neighborhood_Volume_Point_A" type="bool" value="true"/>
       <Parameter name="Horizon_Point_B" type="bool" value="true"/>
       <Parameter name="Neighborhood_Volume_Point_B" type="bool" value="true"/>
+      <Parameter name="Horizon_Point_C" type="bool" value="true"/>
+      <Parameter name="Neighborhood_Volume_Point_C" type="bool" value="true"/>
     </ParameterList>
   </ParameterList>
   
