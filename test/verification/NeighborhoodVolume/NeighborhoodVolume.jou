@@ -1,0 +1,15 @@
+reset
+create pyramid height 0.8 sides 4 radius 1.0 top 0.5
+rotate volume 1 angle 270 about X include_merged
+create sphere radius 0.4
+volume 2 move x 1.5 y 0.0 z 0.0
+webcut volume 1 with plane xplane offset -0.13 noimprint nomerge
+volume 1 size 0.14
+volume 2 size 0.20
+volume 3 size 0.25
+mesh volume all
+block 1 volume 1
+block 2 volume 2
+block 3 volume 3
+nodeset 1 volume 1 2 3
+export genesis "NeighborhoodVolume.g" overwrite
