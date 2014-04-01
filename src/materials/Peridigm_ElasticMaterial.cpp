@@ -118,7 +118,7 @@ PeridigmNS::ElasticMaterial::initialize(const double dt,
                                         const int numOwnedPoints,
                                         const int* ownedIDs,
                                         const int* neighborhoodList,
-                                        PeridigmNS::DataManager& dataManager) const
+                                        PeridigmNS::DataManager& dataManager)
 {
   // Extract pointers to the underlying data
   double *xOverlap,  *cellVolumeOverlap, *weightedVolume;

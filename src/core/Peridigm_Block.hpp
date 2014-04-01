@@ -85,7 +85,7 @@ namespace PeridigmNS {
     }
 
     //! Set the material model
-    void setMaterialModel(Teuchos::RCP<const PeridigmNS::Material> materialModel_){
+    void setMaterialModel(Teuchos::RCP<PeridigmNS::Material> materialModel_){
       materialModel = materialModel_;
     }
 
@@ -95,7 +95,7 @@ namespace PeridigmNS {
     }
 
     //! Set the damage model
-    void setDamageModel(Teuchos::RCP<const PeridigmNS::DamageModel> damageModel_){
+    void setDamageModel(Teuchos::RCP<PeridigmNS::DamageModel> damageModel_){
       damageModel = damageModel_;
     }
 
@@ -118,10 +118,10 @@ namespace PeridigmNS {
   protected:
 
     //! The material model
-    Teuchos::RCP<const PeridigmNS::Material> materialModel;
+    Teuchos::RCP<PeridigmNS::Material> materialModel;
 
     //! The damage model
-    Teuchos::RCP<const PeridigmNS::DamageModel> damageModel;
+    Teuchos::RCP<PeridigmNS::DamageModel> damageModel;
   };
 }
 

@@ -102,7 +102,7 @@ void PeridigmNS::ViscoelasticMaterial::initialize(const double dt,
                                                   const int numOwnedPoints,
                                                   const int* ownedIDs,
                                                   const int* neighborhoodList,
-                                                  PeridigmNS::DataManager& dataManager) const
+                                                  PeridigmNS::DataManager& dataManager)
 {
   double *xOverlap, *cellVolumeOverlap, *weightedVolume;
   dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&xOverlap);
