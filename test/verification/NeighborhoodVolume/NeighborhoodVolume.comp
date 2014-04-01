@@ -1,0 +1,8 @@
+DEFAULT TOLERANCE absolute 1.0E-9
+COORDINATES absolute 1.0E-12
+TIME STEPS absolute 1.0E-14
+ELEMENT VARIABLES absolute 1.E-12
+	Volume                       absolute 1.0E-12
+	Horizon                      absolute 1.0E-12
+	Number_Of_Neighbors          absolute 1.0E-12
+	Neighborhood_Volume          absolute 1.0E-12
