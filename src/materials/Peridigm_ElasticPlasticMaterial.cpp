@@ -235,15 +235,12 @@ PeridigmNS::ElasticPlasticMaterial::computeAutomaticDifferentiationJacobian(cons
   int neighborhoodListIndex = 0;
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
     // Create a temporary neighborhood consisting of a single point and its neighbors.
-    // The temporary neighborhood is sorted by global ID to somewhat increase the chance
-    // that the downstream Epetra_CrsMatrix::SumIntoMyValues() calls will be as efficient
-    // as possible.
     int numNeighbors = neighborhoodList[neighborhoodListIndex++];
     int numEntries = numNeighbors+1;
     int numDof = 3*numEntries;
     vector<int> tempMyGlobalIDs(numEntries);
-    // Create a placeholder that will appear at the beginning of the sorted list.
-    tempMyGlobalIDs[0] = -1;
+    // Put the node at the center of the neighborhood at the beginning of the list.
+    tempMyGlobalIDs[0] = dataManager.getOwnedScalarPointMap()->GID(iID);
     vector<int> tempNeighborhoodList(numEntries); 
     tempNeighborhoodList[0] = numNeighbors;
     for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
@@ -251,9 +248,6 @@ PeridigmNS::ElasticPlasticMaterial::computeAutomaticDifferentiationJacobian(cons
       tempMyGlobalIDs[iNID+1] = dataManager.getOverlapScalarPointMap()->GID(neighborID);
       tempNeighborhoodList[iNID+1] = iNID+1;
     }
-    sort(tempMyGlobalIDs.begin(), tempMyGlobalIDs.end());
-    // Put the node at the center of the neighborhood at the beginning of the list.
-    tempMyGlobalIDs[0] = dataManager.getOwnedScalarPointMap()->GID(iID);
 
     Epetra_SerialComm serialComm;
     Teuchos::RCP<Epetra_BlockMap> tempOneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(numEntries, numEntries, &tempMyGlobalIDs[0], 1, 0, serialComm));
