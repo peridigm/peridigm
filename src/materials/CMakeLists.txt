@@ -4,6 +4,7 @@ add_subdirectory (unit_test)
 set(PD_MATERIAL_SOURCES
     ../core/Peridigm_InfluenceFunction.cpp
     elastic.cxx
+    elastic_kokkos.cxx
     elastic_plastic.cxx
     elastic_plastic_hardening.cxx
     viscoelastic.cxx
