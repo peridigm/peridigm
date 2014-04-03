@@ -4,7 +4,6 @@ add_subdirectory (unit_test)
 set(PD_MATERIAL_SOURCES
     ../core/Peridigm_InfluenceFunction.cpp
     elastic.cxx
-    elastic_kokkos.cxx
     elastic_plastic.cxx
     elastic_plastic_hardening.cxx
     viscoelastic.cxx
@@ -25,6 +24,9 @@ IF(PERIDIGM_PALS)
 ENDIF()
 IF(PERIDIGM_PV)
   set(PD_MATERIAL_SOURCES ${PD_MATERIAL_SOURCES} elastic_pv.cxx correspondence_pv.cxx)
+ENDIF()
+IF(PERIDIGM_KOKKOS)
+  set(PD_MATERIAL_SOURCES ${PD_MATERIAL_SOURCES} elastic_kokkos.cxx)
 ENDIF()
 
 # Optional source files for CJL development
