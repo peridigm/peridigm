@@ -538,6 +538,7 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
   // Initialize exodus file with parameters
   int retval = ex_put_init(file_handle,"Peridigm", num_dimensions, num_nodes, num_elements, num_element_blocks, num_node_sets, num_side_sets);
   if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_init");
+  writeQARecord(file_handle);
 
   // Write the node sets
   unsigned int numNodeSets = exodusNodeSets->size();
@@ -944,6 +945,7 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabaseWithOnlyGlobalD
   // Initialize exodus file with parameters
   int retval = ex_put_init(file_handle,"Peridigm", num_dimensions, num_nodes, num_elements, num_element_blocks, num_node_sets, num_side_sets);
   if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_init");
+  writeQARecord(file_handle);
 
   // Write dummy nodal coordinate values
   double xcoord_values(0.0);
@@ -1046,4 +1048,62 @@ void PeridigmNS::OutputManager_ExodusII::reportExodusError(int errorCode, const 
     ss << "PeridigmNS::OutputManager_ExodusII::" << methodName << "() -- Warning code: " << errorCode << " (" << exodusMethodName << ")";
     std::cout << ss.str() << std::endl;
   }
+}
+
+void PeridigmNS::OutputManager_ExodusII::writeQARecord(int exoid)
+{
+  // Get the current system date and time
+  std::stringstream datestream, timestream;
+  time_t rawtime;
+  struct tm* timeinfo;
+  time(&rawtime);
+  timeinfo = localtime(&rawtime);
+  int mon = timeinfo->tm_mon + 1;
+  if(mon < 10)
+    datestream << 0;
+  datestream << mon << "/";
+  int mday = timeinfo->tm_mday;
+  if(mday < 10)
+    datestream << 0;
+  datestream << mday << "/";
+  int year = timeinfo->tm_year;
+  while(year > 100)
+    year -= 100;
+  datestream << year;
+  int hour = timeinfo->tm_hour;
+  if(hour < 10)
+    timestream << 0;
+  timestream << hour << ":";
+  int min = timeinfo->tm_min;
+  if(min < 10)
+    timestream << 0;
+  timestream << min << ":";
+  int sec = timeinfo->tm_sec;
+  if(sec < 10)
+    timestream << 0;
+  timestream << sec;
+
+  // Quality assurance (QA) data
+  std::string qa_name_string, qa_descriptor_string, qa_date_string, qa_time_string;
+  qa_name_string = "peridigm";
+  qa_descriptor_string = peridigm->version();
+  qa_date_string = datestream.str();
+  qa_time_string = timestream.str();
+
+  // Copy to required c-style arrays
+  int num_qa_records = 1;
+  char* qa_records[1][4];
+  char qa_name[MAX_STR_LENGTH+1], qa_descriptor[MAX_STR_LENGTH+1], qa_date[MAX_STR_LENGTH+1], qa_time[MAX_STR_LENGTH+1];
+  qa_records[0][0] = qa_name;
+  qa_records[0][1] = qa_descriptor;
+  qa_records[0][2] = qa_date;
+  qa_records[0][3] = qa_time;
+
+  strcpy(qa_name, qa_name_string.c_str());
+  strcpy(qa_descriptor, qa_descriptor_string.c_str());
+  strcpy(qa_date, qa_date_string.c_str());
+  strcpy(qa_time, qa_time_string.c_str());
+
+  int retval = ex_put_qa(exoid, num_qa_records, qa_records); 
+  if (retval!= 0) reportExodusError(retval, "writeQARecord", "ex_put_qa");
 }
