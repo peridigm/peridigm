@@ -81,8 +81,8 @@ if __name__ == "__main__":
     val1 = float(str1)
     val2 = float(str2)
     diff = abs((val1 - val2) / val1)
-    print "diff = "+str(diff)
-    if diff > 1e-16:
+    logfile.write("diff = "+str(diff))
+    if diff > 1e-8:
        result = -1
     #command = ["diff "+base_name+".dat "+"../"+base_name+"_gold.dat"]
     #p = Popen(command, stdout=logfile, stderr=logfile, shell=True)
