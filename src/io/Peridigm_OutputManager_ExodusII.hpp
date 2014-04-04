@@ -94,6 +94,9 @@ namespace PeridigmNS {
     //! Valid Teuchos::ParameterList 
     Teuchos::ParameterList getValidParameterList();
 
+    //! Write the QA record
+    void writeQARecord(int exoid);
+
     //! Parent pointer
     PeridigmNS::Peridigm *peridigm;
 

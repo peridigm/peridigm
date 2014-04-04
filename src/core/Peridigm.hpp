@@ -97,6 +97,9 @@ namespace PeridigmNS {
     //! Destructor
     ~Peridigm(){};
 
+    //! Return a string containing the version number
+    std::string version(){ return std::string("1.0.0"); }
+
     //! Initialize discretization and maps
     void initializeDiscretization(Teuchos::RCP<Discretization> peridigmDisc);
 
