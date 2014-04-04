@@ -1,2 +1,3 @@
 blot tensile_test.e -input tensile_test.blot met
 gnuplot tensile_test.plotgen
+tensile_test_compute_modulus.py
