@@ -23,8 +23,8 @@ Peridigm peridigm.xml
 
 # extract force-density values in x-direction from the simulation output
 ./exotxt peridigm.e out.txt
-head -70 out.txt | tail -1 | cut -c19-35 > force1.tmp
-head -72 out.txt | tail -1 | cut -c19-35 > force2.tmp
+head -84 out.txt | tail -1 | cut -c50-65 > force1.tmp
+head -86 out.txt | tail -1 | cut -c50-65 > force2.tmp
 force1="$(cat force1.tmp)"
 force2="$(cat force2.tmp)"
 # bc doesn't like the + in scientific notation (i.e., 1.17000E+07), so remove it

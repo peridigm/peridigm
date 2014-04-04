@@ -148,3 +148,5 @@ Output
       Deformation_Gradient "true"
       Cauchy_Stress "true"
       Radius "true"
+      Number_Of_Neighbors "true"
+      Neighborhood_Volume "true"
