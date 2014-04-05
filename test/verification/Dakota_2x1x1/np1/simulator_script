@@ -22,18 +22,20 @@ Peridigm peridigm.xml
 # ---------------
 
 # extract force-density values in x-direction from the simulation output
-./exotxt peridigm.e out.txt
-head -84 out.txt | tail -1 | cut -c50-65 > force1.tmp
-head -86 out.txt | tail -1 | cut -c50-65 > force2.tmp
-force1="$(cat force1.tmp)"
-force2="$(cat force2.tmp)"
-# bc doesn't like the + in scientific notation (i.e., 1.17000E+07), so remove it
-floatVar1=$(echo $force1 | sed 's/\([0-9]*\(\.[0-9]*\)\?\)[eE]+\?\(-\?[0-9]*\)/(\1*10^\3)/g;s/^/scale=30;/'| bc)
-floatVar2=$(echo $force2 | sed 's/\([0-9]*\(\.[0-9]*\)\?\)[eE]+\?\(-\?[0-9]*\)/(\1*10^\3)/g;s/^/scale=30;/'| bc)
-data1=11700000.0
-data2=-11700000.0
-r1=$(echo $floatVar1+$data1 | bc)
-r2=$(echo $floatVar2+$data2 | bc)
-echo $r1 > results.tmp
-echo $r2 >> results.tmp
-mv results.tmp $2
+#./exotxt peridigm.e out.txt
+./ExtractNodalForces.py $2
+
+#head -84 out.txt | tail -1 | cut -c50-65 > force1.tmp
+#head -86 out.txt | tail -1 | cut -c50-65 > force2.tmp
+#force1="$(cat force1.tmp)"
+#force2="$(cat force2.tmp)"
+## bc doesn't like the + in scientific notation (i.e., 1.17000E+07), so remove it
+#floatVar1=$(echo $force1 | sed 's/\([0-9]*\(\.[0-9]*\)\?\)[eE]+\?\(-\?[0-9]*\)/(\1*10^\3)/g;s/^/scale=30;/'| bc)
+#floatVar2=$(echo $force2 | sed 's/\([0-9]*\(\.[0-9]*\)\?\)[eE]+\?\(-\?[0-9]*\)/(\1*10^\3)/g;s/^/scale=30;/'| bc)
+#data1=11700000.0
+#data2=-11700000.0
+#r1=$(echo $floatVar1+$data1 | bc)
+#r2=$(echo $floatVar2+$data2 | bc)
+#echo $r1 > results.tmp
+#echo $r2 >> results.tmp
+#mv results.tmp $2
