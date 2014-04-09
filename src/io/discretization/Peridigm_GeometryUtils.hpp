@@ -60,6 +60,9 @@ namespace PeridigmNS {
   //! Approximate the volume of a hexahedron.
   void hexVolume(double* const nodeCoordinates, double* volume);
 
+  //! Approximate the volume of a hexahedron (alternative argument list).
+  double hexVolume(const std::vector<double*>& nodeCoordinates);
+
   //! Compute the centroid of a tetrahedron.
   void tetCentroid(const std::vector<double*>& nodeCoordinates, std::vector<double>& centroid);
 
