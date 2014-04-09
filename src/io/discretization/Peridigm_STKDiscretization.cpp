@@ -746,7 +746,7 @@ void PeridigmNS::STKDiscretization::getExodusMeshNodePositions(int globalNodeID,
   int exodusMeshElementIndex = exodusMeshElementConnectivity->Map().FirstPointInElement(localId);
   vector<int> elementConnectivity(numNodes);
   for(unsigned int i=0 ; i<numNodes ; ++i)
-    elementConnectivity[i] = (*exodusMeshElementConnectivity)[exodusMeshElementIndex++];
+    elementConnectivity[i] = static_cast<int>( (*exodusMeshElementConnectivity)[exodusMeshElementIndex++] );
 
   if(nodePositions.size() != 3*numNodes){
     nodePositions.resize(3*numNodes);
@@ -955,7 +955,7 @@ void PeridigmNS::STKDiscretization::ghostExodusMeshData()
   // Create a list of global Exodus node ids (including ghosts)
   set<int> globalNodeIdsSet;
   for(int i=0 ; i<overlapExodusMeshElementConnectivity->MyLength() ; ++i)
-    globalNodeIdsSet.insert( (*overlapExodusMeshElementConnectivity)[i] );
+    globalNodeIdsSet.insert( static_cast<int>( (*overlapExodusMeshElementConnectivity)[i] ) );
   vector<int> globalNodeIds(globalNodeIdsSet.size());
   int index = 0;
   for(set<int>::const_iterator it=globalNodeIdsSet.begin() ; it!=globalNodeIdsSet.end() ; it++)
