@@ -76,6 +76,9 @@ namespace PeridigmNS {
   SphereIntersection hexahedronSphereIntersection(double* const nodeCoordinates,
                                                   const std::vector<double>& sphereCenter,
                                                   double sphereRadius);
+  SphereIntersection hexahedronSphereIntersectionDEPRECIATED(double* const nodeCoordinates,
+                                                             const std::vector<double>& sphereCenter,
+                                                             double sphereRadius);
 
   // //! Find a sphere that circumscribes an element
   // void circumscribeElementWithSphere(const std::vector<double*>& nodeCoordinates,
