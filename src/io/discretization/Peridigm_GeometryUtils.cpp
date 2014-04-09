@@ -53,6 +53,278 @@ void PeridigmNS::hexCentroidAndVolume(double* const nodeCoordinates,
                                       double* centroid,
                                       double* volume)
 {
+  // Pointers to each node
+  double* n0 = nodeCoordinates;
+  double* n1 = nodeCoordinates + 3;
+  double* n2 = nodeCoordinates + 6;
+  double* n3 = nodeCoordinates + 9;
+  double* n4 = nodeCoordinates + 12;
+  double* n5 = nodeCoordinates + 15;
+  double* n6 = nodeCoordinates + 18;
+  double* n7 = nodeCoordinates + 21;
+
+  // Create nodes at the barycenters of the faces, plus one at the barycenter of the hex
+  double f0[3], f1[3], f2[3], f3[3], f4[3], f5[3], c[3];
+  for(int i=0 ; i<3 ; i++){
+
+    // face 0 contains nodes 0, 1, 4, 5
+    f0[i] = 0.25*( *(n0+i) + *(n1+i) + *(n4+i) + *(n5+i) );
+
+    // face 1 contains nodes 1, 2, 5, 6
+    f1[i] = 0.25*( *(n1+i) + *(n2+i) + *(n5+i) + *(n6+i) );
+
+    // face 2 contains nodes 2, 3, 6, 7
+    f2[i] = 0.25*( *(n2+i) + *(n3+i) + *(n6+i) + *(n7+i) );
+
+    // face 3 contains nodes 0, 3, 4, 7
+    f3[i] = 0.25*( *(n0+i) + *(n3+i) + *(n4+i) + *(n7+i) );
+
+    // face 4 contains nodes 0, 1, 2, 3
+    f4[i] = 0.25*( *(n0+i) + *(n1+i) + *(n2+i) + *(n3+i) );
+
+    // face 5 contains nodes 4, 5, 6, 7
+    f5[i] = 0.25*( *(n4+i) + *(n5+i) + *(n6+i) + *(n7+i) );
+
+    // Node at the barycenter of the hexahedron
+    c[i] = 0.5*(f4[i] + f5[i]);
+  }
+
+  // Divide the hexahedron into 24 tetrahedra
+  std::vector<double*> coord(4);
+  vector<double> tetC(3), hexC(3);
+  double tetV(0.0);
+
+  hexC[0] = 0.0 ; hexC[1] = 0.0 ; hexC[2] = 0.0;
+  *volume = 0.0;
+
+  // Face 0, Tet 1
+  coord[0] = n1 ; coord[1] = n0 ; coord[2] = f0 ; coord[3] = c;
+  tetV = tetVolume(coord);
+  *volume += tetV;
+  if(centroid != 0){
+    tetCentroid(coord, tetC);
+    for(int i=0 ; i<3 ; ++i)
+      hexC[i] += tetC[i]*tetV;
+  }
+  // Face 0, Tet 2
+  coord[0] = n5 ; coord[1] = n1 ; coord[2] = f0 ; coord[3] = c;
+  tetV = tetVolume(coord);
+  *volume += tetV;
+  if(centroid != 0){
+    tetCentroid(coord, tetC);
+    for(int i=0 ; i<3 ; ++i)
+      hexC[i] += tetC[i]*tetV;
+  }
+  // Face 0, Tet 3
+  coord[0] = n4 ; coord[1] = n5 ; coord[2] = f0 ; coord[3] = c;
+  tetV = tetVolume(coord);
+  *volume += tetV;
+  if(centroid != 0){
+    tetCentroid(coord, tetC);
+    for(int i=0 ; i<3 ; ++i)
+      hexC[i] += tetC[i]*tetV;
+  }
+  // Face 0, Tet 4
+  coord[0] = n0 ; coord[1] = n4 ; coord[2] = f0 ; coord[3] = c;
+  tetV = tetVolume(coord);
+  *volume += tetV;
+  if(centroid != 0){
+    tetCentroid(coord, tetC);
+    for(int i=0 ; i<3 ; ++i)
+      hexC[i] += tetC[i]*tetV;
+  }
+  // Face 1, Tet 1
+  coord[0] = n2 ; coord[1] = n1 ; coord[2] = f1 ; coord[3] = c;
+  tetV = tetVolume(coord);
+  *volume += tetV;
+  if(centroid != 0){
+    tetCentroid(coord, tetC);
+    for(int i=0 ; i<3 ; ++i)
+      hexC[i] += tetC[i]*tetV;
+  }
+  // Face 1, Tet 2
+  coord[0] = n6 ; coord[1] = n2 ; coord[2] = f1 ; coord[3] = c;
+  tetV = tetVolume(coord);
+  *volume += tetV;
+  if(centroid != 0){
+    tetCentroid(coord, tetC);
+    for(int i=0 ; i<3 ; ++i)
+      hexC[i] += tetC[i]*tetV;
+  }
+  // Face 1, Tet 3
+  coord[0] = n5 ; coord[1] = n6 ; coord[2] = f1 ; coord[3] = c;
+  tetV = tetVolume(coord);
+  *volume += tetV;
+  if(centroid != 0){
+    tetCentroid(coord, tetC);
+    for(int i=0 ; i<3 ; ++i)
+      hexC[i] += tetC[i]*tetV;
+  }
+  // Face 1, Tet 4
+  coord[0] = n1 ; coord[1] = n5 ; coord[2] = f1 ; coord[3] = c;
+  tetV = tetVolume(coord);
+  *volume += tetV;
+  if(centroid != 0){
+    tetCentroid(coord, tetC);
+    for(int i=0 ; i<3 ; ++i)
+      hexC[i] += tetC[i]*tetV;
+  }
+  // Face 2, Tet 1
+  coord[0] = n3 ; coord[1] = n2 ; coord[2] = f2 ; coord[3] = c;
+  tetV = tetVolume(coord);
+  *volume += tetV;
+  if(centroid != 0){
+    tetCentroid(coord, tetC);
+    for(int i=0 ; i<3 ; ++i)
+      hexC[i] += tetC[i]*tetV;
+  }
+  // Face 2, Tet 2
+  coord[0] = n7 ; coord[1] = n3 ; coord[2] = f2 ; coord[3] = c;
+  tetV = tetVolume(coord);
+  *volume += tetV;
+  if(centroid != 0){
+    tetCentroid(coord, tetC);
+    for(int i=0 ; i<3 ; ++i)
+      hexC[i] += tetC[i]*tetV;
+  }
+  // Face 2, Tet 3
+  coord[0] = n6 ; coord[1] = n7 ; coord[2] = f2 ; coord[3] = c;
+  tetV = tetVolume(coord);
+  *volume += tetV;
+  if(centroid != 0){
+    tetCentroid(coord, tetC);
+    for(int i=0 ; i<3 ; ++i)
+      hexC[i] += tetC[i]*tetV;
+  }
+  // Face 2, Tet 4
+  coord[0] = n2 ; coord[1] = n6 ; coord[2] = f2 ; coord[3] = c;
+  tetV = tetVolume(coord);
+  *volume += tetV;
+  if(centroid != 0){
+    tetCentroid(coord, tetC);
+    for(int i=0 ; i<3 ; ++i)
+      hexC[i] += tetC[i]*tetV;
+  }
+  // Face 3, Tet 1
+  coord[0] = n0 ; coord[1] = n3 ; coord[2] = f3 ; coord[3] = c;
+  tetV = tetVolume(coord);
+  *volume += tetV;
+  if(centroid != 0){
+    tetCentroid(coord, tetC);
+    for(int i=0 ; i<3 ; ++i)
+      hexC[i] += tetC[i]*tetV;
+  }
+  // Face 3, Tet 2
+  coord[0] = n3 ; coord[1] = n7 ; coord[2] = f3 ; coord[3] = c;
+  tetV = tetVolume(coord);
+  *volume += tetV;
+  if(centroid != 0){
+    tetCentroid(coord, tetC);
+    for(int i=0 ; i<3 ; ++i)
+      hexC[i] += tetC[i]*tetV;
+  }
+  // Face 3, Tet 3
+  coord[0] = n7 ; coord[1] = n4 ; coord[2] = f3 ; coord[3] = c;
+  tetV = tetVolume(coord);
+  *volume += tetV;
+  if(centroid != 0){
+    tetCentroid(coord, tetC);
+    for(int i=0 ; i<3 ; ++i)
+      hexC[i] += tetC[i]*tetV;
+  }
+  // Face 3, Tet 4
+  coord[0] = n4 ; coord[1] = n0 ; coord[2] = f3 ; coord[3] = c;
+  tetV = tetVolume(coord);
+  *volume += tetV;
+  if(centroid != 0){
+    tetCentroid(coord, tetC);
+    for(int i=0 ; i<3 ; ++i)
+      hexC[i] += tetC[i]*tetV;
+  }
+  // Face 4, Tet 1
+  coord[0] = n0 ; coord[1] = n1 ; coord[2] = f4 ; coord[3] = c;
+  tetV = tetVolume(coord);
+  *volume += tetV;
+  if(centroid != 0){
+    tetCentroid(coord, tetC);
+    for(int i=0 ; i<3 ; ++i)
+      hexC[i] += tetC[i]*tetV;
+  }
+  // Face 4, Tet 2
+  coord[0] = n1 ; coord[1] = n2 ; coord[2] = f4 ; coord[3] = c;
+  tetV = tetVolume(coord);
+  *volume += tetV;
+  if(centroid != 0){
+    tetCentroid(coord, tetC);
+    for(int i=0 ; i<3 ; ++i)
+      hexC[i] += tetC[i]*tetV;
+  }
+  // Face 4, Tet 3
+  coord[0] = n2 ; coord[1] = n3 ; coord[2] = f4 ; coord[3] = c;
+  tetV = tetVolume(coord);
+  *volume += tetV;
+  if(centroid != 0){
+    tetCentroid(coord, tetC);
+    for(int i=0 ; i<3 ; ++i)
+      hexC[i] += tetC[i]*tetV;
+  }
+  // Face 4, Tet 4
+  coord[0] = n3 ; coord[1] = n0 ; coord[2] = f4 ; coord[3] = c;
+  tetV = tetVolume(coord);
+  *volume += tetV;
+  if(centroid != 0){
+    tetCentroid(coord, tetC);
+    for(int i=0 ; i<3 ; ++i)
+      hexC[i] += tetC[i]*tetV;
+  }
+  // Face 5, Tet 1
+  coord[0] = n5 ; coord[1] = n4 ; coord[2] = f5 ; coord[3] = c;
+  tetV = tetVolume(coord);
+  *volume += tetV;
+  if(centroid != 0){
+    tetCentroid(coord, tetC);
+    for(int i=0 ; i<3 ; ++i)
+      hexC[i] += tetC[i]*tetV;
+  }
+  // Face 5, Tet 2
+  coord[0] = n4 ; coord[1] = n7 ; coord[2] = f5 ; coord[3] = c;
+  tetV = tetVolume(coord);
+  *volume += tetV;
+  if(centroid != 0){
+    tetCentroid(coord, tetC);
+    for(int i=0 ; i<3 ; ++i)
+      hexC[i] += tetC[i]*tetV;
+  }
+  // Face 5, Tet 3
+  coord[0] = n7 ; coord[1] = n6 ; coord[2] = f5 ; coord[3] = c;
+  tetV = tetVolume(coord);
+  *volume += tetV;
+  if(centroid != 0){
+    tetCentroid(coord, tetC);
+    for(int i=0 ; i<3 ; ++i)
+      hexC[i] += tetC[i]*tetV;
+  }
+  // Face 5, Tet 4
+  coord[0] = n6 ; coord[1] = n5 ; coord[2] = f5 ; coord[3] = c;
+  tetV = tetVolume(coord);
+  *volume += tetV;
+  if(centroid != 0){
+    tetCentroid(coord, tetC);
+    for(int i=0 ; i<3 ; ++i)
+      hexC[i] += tetC[i]*tetV;
+  }
+
+  // Final centroid calculation
+  if(centroid != 0){
+    for(int i=0 ; i<3 ; ++i)
+      centroid[i] = hexC[i]/(*volume);
+  }
+}
+
+void PeridigmNS::hexCentroidAndVolumeDEPRECATED(double* const nodeCoordinates,
+                                      double* centroid,
+                                      double* volume)
+{
   // Divide into tets
   
   // Exodus node connectivity for tets (1-based)

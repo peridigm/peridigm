@@ -56,6 +56,7 @@ namespace PeridigmNS {
 
   //! Approximate the volume and centroid of a hexahedron.
   void hexCentroidAndVolume(double* const nodeCoordinates, double* centroid, double* volume);
+  void hexCentroidAndVolumeDEPRECATED(double* const nodeCoordinates, double* centroid, double* volume);
 
   //! Approximate the volume of a hexahedron.
   void hexVolume(double* const nodeCoordinates, double* volume);
