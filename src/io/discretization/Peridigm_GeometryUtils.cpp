@@ -49,6 +49,23 @@
 #include <Teuchos_Assert.hpp>
 using namespace std;
 
+void PeridigmNS::tetCentroidAndVolume(double* const nodeCoordinates,
+                                      double* centroid,
+                                      double* volume)
+{
+  vector<double*> nodeCoordinatesVec(4);
+  vector<double> centroidVec(3);
+  nodeCoordinatesVec[0] = nodeCoordinates;
+  nodeCoordinatesVec[1] = nodeCoordinates + 3;
+  nodeCoordinatesVec[2] = nodeCoordinates + 6;
+  nodeCoordinatesVec[3] = nodeCoordinates + 9;
+  *volume = tetVolume(nodeCoordinatesVec);
+  tetCentroid(nodeCoordinatesVec, centroidVec);
+  centroid[0] = centroidVec[0];
+  centroid[1] = centroidVec[1];
+  centroid[2] = centroidVec[2];
+}
+
 void PeridigmNS::hexCentroidAndVolume(double* const nodeCoordinates,
                                       double* centroid,
                                       double* volume)
@@ -543,6 +560,80 @@ PeridigmNS::SphereIntersection PeridigmNS::triangleSphereIntersection(const std:
 
   // All possible separating axes have been eliminated, so there must be an intersection
   return INTERSECTS_SPHERE;
+}
+
+PeridigmNS::SphereIntersection PeridigmNS::tetrahedronSphereIntersection(double* const nodeCoordinates,
+                                                                        const std::vector<double>& sphereCenter,
+                                                                        double sphereRadius)
+{
+  // Perform check on the number of nodes within the sphere
+  int numNodesInSphere(0);
+  double radiusSquared, distanceSquared;
+  radiusSquared = sphereRadius*sphereRadius;
+  for(int nodeIndex=0 ; nodeIndex<12 ; nodeIndex+=3){
+    distanceSquared =
+      (nodeCoordinates[nodeIndex]   - sphereCenter[0])*(nodeCoordinates[nodeIndex]   - sphereCenter[0]) +
+      (nodeCoordinates[nodeIndex+1] - sphereCenter[1])*(nodeCoordinates[nodeIndex+1] - sphereCenter[1]) +
+      (nodeCoordinates[nodeIndex+2] - sphereCenter[2])*(nodeCoordinates[nodeIndex+2] - sphereCenter[2]);
+    if(distanceSquared < radiusSquared)
+      numNodesInSphere += 1;
+  }
+
+  if(numNodesInSphere == 4)
+    return INSIDE_SPHERE;
+  else if(numNodesInSphere > 0)
+    return INTERSECTS_SPHERE;
+
+  // If all the nodes are outside the sphere, we need to look carefully at each face
+
+  SphereIntersection sphereIntersection;
+  bool allInside(true), allOutside(true);
+  std::vector<double*> coord(3);
+
+  // Pointers to each node
+  double* n0 = nodeCoordinates;
+  double* n1 = nodeCoordinates + 3;
+  double* n2 = nodeCoordinates + 6;
+  double* n3 = nodeCoordinates + 9;
+
+  for(int face=0 ; face<4 ; face++){
+
+    if(face == 0){
+      coord[0] = n0;
+      coord[1] = n1;
+      coord[2] = n2;
+    }
+    else if(face == 1){
+      coord[0] = n0;
+      coord[1] = n1;
+      coord[2] = n3;
+    }
+    else if(face == 2){
+      coord[0] = n0;
+      coord[1] = n2;
+      coord[2] = n3;
+    }
+    else if(face == 3){
+      coord[0] = n1;
+      coord[1] = n2;
+      coord[2] = n3;
+    }
+
+    sphereIntersection = triangleSphereIntersection(coord, sphereCenter, sphereRadius);
+    if(sphereIntersection == INTERSECTS_SPHERE)
+      return INTERSECTS_SPHERE;
+    else if(sphereIntersection == INSIDE_SPHERE)
+      allOutside = false;
+    else if(sphereIntersection == OUTSIDE_SPHERE)
+      allInside = false;
+  }
+
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(allInside && allOutside, "\n**** Error:  Nonsense result in tetrahedronSphereIntersection().\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!allInside && !allOutside, "\n**** Error:  Nonsense result in tetrahedronSphereIntersection().\n");
+
+  if(allOutside)
+    return OUTSIDE_SPHERE;
+  return INSIDE_SPHERE;
 }
 
 PeridigmNS::SphereIntersection PeridigmNS::hexahedronSphereIntersection(double* const nodeCoordinates,
