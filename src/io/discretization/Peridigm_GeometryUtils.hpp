@@ -56,7 +56,6 @@ namespace PeridigmNS {
 
   //! Approximate the volume and centroid of a hexahedron.
   void hexCentroidAndVolume(double* const nodeCoordinates, double* centroid, double* volume);
-  void hexCentroidAndVolumeDEPRECATED(double* const nodeCoordinates, double* centroid, double* volume);
 
   //! Approximate the volume of a hexahedron.
   void hexVolume(double* const nodeCoordinates, double* volume);
@@ -76,14 +75,6 @@ namespace PeridigmNS {
   SphereIntersection hexahedronSphereIntersection(double* const nodeCoordinates,
                                                   const std::vector<double>& sphereCenter,
                                                   double sphereRadius);
-  SphereIntersection hexahedronSphereIntersectionDEPRECIATED(double* const nodeCoordinates,
-                                                             const std::vector<double>& sphereCenter,
-                                                             double sphereRadius);
-
-  // //! Find a sphere that circumscribes an element
-  // void circumscribeElementWithSphere(const std::vector<double*>& nodeCoordinates,
-  //                                    double* sphereCenter,
-  //                                    double* radius);
 
   //! Compute the difference of two three-dimensional vectors
   void subtract(const double* const a, const double* const b, double* c);
