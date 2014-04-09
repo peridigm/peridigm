@@ -676,6 +676,212 @@ PeridigmNS::SphereIntersection PeridigmNS::hexahedronSphereIntersection(double* 
 
   // If all the nodes are outside the sphere, we need to look carefully at each face
 
+  // Divide each face into four triangles
+  // Check for intersection of triangles and sphere
+
+  SphereIntersection sphereIntersection;
+  bool allInside(true), allOutside(true);
+  std::vector<double*> coord(3);
+
+  // Pointers to each node
+  double* n0 = nodeCoordinates;
+  double* n1 = nodeCoordinates + 3;
+  double* n2 = nodeCoordinates + 6;
+  double* n3 = nodeCoordinates + 9;
+  double* n4 = nodeCoordinates + 12;
+  double* n5 = nodeCoordinates + 15;
+  double* n6 = nodeCoordinates + 18;
+  double* n7 = nodeCoordinates + 21;
+
+  // Create nodes at the barycenters of the faces
+  double f0[3], f1[3], f2[3], f3[3], f4[3], f5[3];
+  for(int i=0 ; i<3 ; i++){
+
+    // face 0 contains nodes 0, 1, 4, 5
+    f0[i] = 0.25*( *(n0+i) + *(n1+i) + *(n4+i) + *(n5+i) );
+
+    // face 1 contains nodes 1, 2, 5, 6
+    f1[i] = 0.25*( *(n1+i) + *(n2+i) + *(n5+i) + *(n6+i) );
+
+    // face 2 contains nodes 2, 3, 6, 7
+    f2[i] = 0.25*( *(n2+i) + *(n3+i) + *(n6+i) + *(n7+i) );
+
+    // face 3 contains nodes 0, 3, 4, 7
+    f3[i] = 0.25*( *(n0+i) + *(n3+i) + *(n4+i) + *(n7+i) );
+
+    // face 4 contains nodes 0, 1, 2, 3
+    f4[i] = 0.25*( *(n0+i) + *(n1+i) + *(n2+i) + *(n3+i) );
+
+    // face 5 contains nodes 4, 5, 6, 7
+    f5[i] = 0.25*( *(n4+i) + *(n5+i) + *(n6+i) + *(n7+i) );
+  }
+
+  for(int face=0 ; face<6 ; face++){
+    for(int tri=0 ; tri<4 ; ++tri){
+
+      if(face == 0 and tri == 0){
+        coord[0] = n1;
+        coord[1] = n0;
+        coord[2] = f0;
+      }
+      else if(face == 0 and tri == 1){
+        coord[0] = n5;
+        coord[1] = n1;
+        coord[2] = f0; 
+      }
+      else if(face == 0 and tri == 2){
+        coord[0] = n4;
+        coord[1] = n5;
+        coord[2] = f0;
+      }
+      else if(face == 0 and tri == 3){
+        coord[0] = n0;
+        coord[1] = n4;
+        coord[2] = f0;
+      }
+      else if(face == 1 and tri == 0){
+        coord[0] = n2;
+        coord[1] = n1;
+        coord[2] = f1;
+      }
+      else if(face == 1 and tri == 1){
+        coord[0] = n6;
+        coord[1] = n2;
+        coord[2] = f1;
+      }
+      else if(face == 1 and tri == 2){
+        coord[0] = n5;
+        coord[1] = n6;
+        coord[2] = f1 ;
+      }
+      else if(face == 1 and tri == 3){
+        coord[0] = n1;
+        coord[1] = n5;
+        coord[2] = f1;
+      }
+      else if(face == 2 and tri == 0){
+        coord[0] = n3;
+        coord[1] = n2;
+        coord[2] = f2;
+      }
+      else if(face == 2 and tri == 1){
+        coord[0] = n7;
+        coord[1] = n3;
+        coord[2] = f2;
+      }
+      else if(face == 2 and tri == 2){
+        coord[0] = n6;
+        coord[1] = n7;
+        coord[2] = f2;
+      }
+      else if(face == 2 and tri == 3){
+        coord[0] = n2;
+        coord[1] = n6;
+        coord[2] = f2;
+      }
+      else if(face == 3 and tri == 0){
+        coord[0] = n0;
+        coord[1] = n3;
+        coord[2] = f3;
+      }
+      else if(face == 3 and tri == 1){
+        coord[0] = n3;
+        coord[1] = n7;
+        coord[2] = f3;
+      }
+      else if(face == 3 and tri == 2){
+        coord[0] = n7;
+        coord[1] = n4;
+        coord[2] = f3;
+      }
+      else if(face == 3 and tri == 3){
+        coord[0] = n4;
+        coord[1] = n0;
+        coord[2] = f3;
+      }
+      else if(face == 4 and tri == 0){
+        coord[0] = n0;
+        coord[1] = n1;
+        coord[2] = f4;
+      }
+      else if(face == 4 and tri == 1){
+        coord[0] = n1;
+        coord[1] = n2;
+        coord[2] = f4;
+      }
+      else if(face == 4 and tri == 2){
+        coord[0] = n2;
+        coord[1] = n3;
+        coord[2] = f4;
+      }
+      else if(face == 4 and tri == 3){
+        coord[0] = n3;
+        coord[1] = n0;
+        coord[2] = f4;
+      }
+      else if(face == 5 and tri == 0){
+        coord[0] = n5;
+        coord[1] = n4;
+        coord[2] = f5;
+      }
+      else if(face == 5 and tri == 1){
+        coord[0] = n4;
+        coord[1] = n7;
+        coord[2] = f5;
+      }
+      else if(face == 5 and tri == 2){
+        coord[0] = n7;
+        coord[1] = n6;
+        coord[2] = f5;
+      }
+      else if(face == 5 and tri == 3){
+        coord[0] = n6;
+        coord[1] = n5;
+        coord[2] = f5;
+      }
+
+      sphereIntersection = triangleSphereIntersection(coord, sphereCenter, sphereRadius);
+      if(sphereIntersection == INTERSECTS_SPHERE)
+        return INTERSECTS_SPHERE;
+      else if(sphereIntersection == INSIDE_SPHERE)
+        allOutside = false;
+      else if(sphereIntersection == OUTSIDE_SPHERE)
+        allInside = false;
+    }
+  }
+
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(allInside && allOutside, "\n**** Error:  Nonsense result in hexahedronSphereIntersection().\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!allInside && !allOutside, "\n**** Error:  Nonsense result in hexahedronSphereIntersection().\n");
+
+  if(allOutside)
+    return OUTSIDE_SPHERE;
+  return INSIDE_SPHERE;
+}
+
+PeridigmNS::SphereIntersection PeridigmNS::hexahedronSphereIntersectionDEPRECIATED(double* const nodeCoordinates,
+                                                                                   const std::vector<double>& sphereCenter,
+                                                                                   double sphereRadius)
+{
+  // Perform check on the number of nodes within the sphere
+  int numNodesInSphere(0);
+  double radiusSquared, distanceSquared;
+  radiusSquared = sphereRadius*sphereRadius;
+  for(int nodeIndex=0 ; nodeIndex<24 ; nodeIndex+=3){
+    distanceSquared =
+      (nodeCoordinates[nodeIndex]   - sphereCenter[0])*(nodeCoordinates[nodeIndex]   - sphereCenter[0]) +
+      (nodeCoordinates[nodeIndex+1] - sphereCenter[1])*(nodeCoordinates[nodeIndex+1] - sphereCenter[1]) +
+      (nodeCoordinates[nodeIndex+2] - sphereCenter[2])*(nodeCoordinates[nodeIndex+2] - sphereCenter[2]);
+    if(distanceSquared < radiusSquared)
+      numNodesInSphere += 1;
+  }
+
+  if(numNodesInSphere == 8)
+    return INSIDE_SPHERE;
+  else if(numNodesInSphere > 0)
+    return INTERSECTS_SPHERE;
+
+  // If all the nodes are outside the sphere, we need to look carefully at each face
+
   // Divide each face into two triangles
   // Check for intersection of triangles and sphere  
 
