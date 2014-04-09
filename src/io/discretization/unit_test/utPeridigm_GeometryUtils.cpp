@@ -267,8 +267,67 @@ TEUCHOS_UNIT_TEST(GeometryUtils, TetGeometry) {
   TEST_FLOATING_EQUALITY(centroid[2], trueCentroid[2], relTolerance);
 }
 
+//! Exercise tetCentroidAndVolume()
+TEUCHOS_UNIT_TEST(GeometryUtils, TetCentroidAndVolume) {
+
+  vector<double> nodes(12), centroid(3), trueCentroid(3), volume(1);
+  double trueVolume;
+  double relTolerance = 1.0e-14;
+
+  // Simple case
+  nodes[0] = 0.0  ; nodes[1] = 0.0  ; nodes[2] = 0.0 ;
+  nodes[3] = 1.0  ; nodes[4] = 0.0  ; nodes[5] = 0.0 ;
+  nodes[6] = 0.0  ; nodes[7] = 1.0  ; nodes[8] = 0.0 ;
+  nodes[9] = 0.0  ; nodes[10] = 0.0 ; nodes[11] = 1.0 ;
+  trueCentroid[0] = 1.0/4.0;
+  trueCentroid[1] = 1.0/4.0;
+  trueCentroid[2] = 1.0/4.0;
+  trueVolume = 1.0/6.0;
+  tetCentroidAndVolume(&nodes[0], &centroid[0], &volume[0]);
+  TEST_FLOATING_EQUALITY(centroid[0], trueCentroid[0], relTolerance);
+  TEST_FLOATING_EQUALITY(centroid[1], trueCentroid[1], relTolerance);
+  TEST_FLOATING_EQUALITY(centroid[2], trueCentroid[2], relTolerance);
+  TEST_FLOATING_EQUALITY(volume[0], trueVolume, relTolerance);
+
+  // Another fairly simple case
+  nodes[0] = 0.25  ; nodes[1] = 0.25  ; nodes[2] = 0.521 ;
+  nodes[3] = -0.25 ; nodes[4] = 0.25  ; nodes[5] = 0.521 ;
+  nodes[6] = 0.0   ; nodes[7] = -0.01 ; nodes[8] = 0.521 ;
+  nodes[9] = 0.2   ; nodes[10] = 5.0  ; nodes[11] = 0.621;
+  trueCentroid[0] = 0.2/4.0;
+  trueCentroid[1] = (0.25 - 0.26/3.0) + 0.25*(5.0 - (0.25 - 0.26/3.0));
+  trueCentroid[2] = 0.521 + 0.1/4.0;
+  trueVolume = 0.0065/3.0;
+  tetCentroidAndVolume(&nodes[0], &centroid[0], &volume[0]);
+  TEST_FLOATING_EQUALITY(centroid[0], trueCentroid[0], relTolerance);
+  TEST_FLOATING_EQUALITY(centroid[1], trueCentroid[1], relTolerance);
+  TEST_FLOATING_EQUALITY(centroid[2], trueCentroid[2], relTolerance);
+  TEST_FLOATING_EQUALITY(volume[0], trueVolume, relTolerance);
+
+  // Case with random numbers
+  nodes[0] = 268.0  ; nodes[1] = -593.0 ; nodes[2] = 280.0  ;
+  nodes[3] = -405.0 ; nodes[4] = -586.0 ; nodes[5] = 73.0   ;
+  nodes[6] = -475.0 ; nodes[7] = -611.0 ; nodes[8] = 540.0  ;
+  nodes[9] = -740.0 ; nodes[10] = 282.0 ; nodes[11] = -900.0;
+  trueCentroid[0] = 0.25*(nodes[0] + nodes[3] + nodes[6] + nodes[9]);
+  trueCentroid[1] = 0.25*(nodes[1] + nodes[4] + nodes[7] + nodes[10]);
+  trueCentroid[2] = 0.25*(nodes[2] + nodes[5] + nodes[8] + nodes[11]);
+
+  double DA[3] = {nodes[0]-nodes[9], nodes[1]-nodes[10], nodes[2]-nodes[11]};
+  double DB[3] = {nodes[3]-nodes[9], nodes[4]-nodes[10], nodes[5]-nodes[11]};
+  double DC[3] = {nodes[6]-nodes[9], nodes[7]-nodes[10], nodes[8]-nodes[11]};
+  double DB_Cross_DC[3] = {DB[1]*DC[2] - DB[2]*DC[1], DB[2]*DC[0] - DB[0]*DC[2], DB[0]*DC[1] - DB[1]*DC[0]};
+  double DA_Dot_DB_Cross_DC = DA[0]*DB_Cross_DC[0] + DA[1]*DB_Cross_DC[1] + DA[2]*DB_Cross_DC[2];
+  trueVolume = std::abs(DA_Dot_DB_Cross_DC)/6.0;
+  tetCentroidAndVolume(&nodes[0], &centroid[0], &volume[0]);
+  TEST_FLOATING_EQUALITY(centroid[0], trueCentroid[0], relTolerance);
+  TEST_FLOATING_EQUALITY(centroid[1], trueCentroid[1], relTolerance);
+  TEST_FLOATING_EQUALITY(centroid[2], trueCentroid[2], relTolerance);
+  TEST_FLOATING_EQUALITY(volume[0], trueVolume, relTolerance);
+}
+
 //! Exercise hexCentroidAndVolume()
-TEUCHOS_UNIT_TEST(GeometryUtils, HexGeometry) {
+TEUCHOS_UNIT_TEST(GeometryUtils, HexCentroidAndVolume) {
 
   vector<double> nodes(24), centroid(3), trueCentroid(3), volume(1);
   double trueVolume;
@@ -476,6 +535,122 @@ TEUCHOS_UNIT_TEST(GeometryUtils, TriangleSphereIntersection) {
   sphereRadius = 33.0 + 1.0e-12;
   sphereIntersection = triangleSphereIntersection(nodes, sphereCenter, sphereRadius);
   TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
+}
+
+//! Exercise tetrahedronSphereIntersection()
+TEUCHOS_UNIT_TEST(GeometryUtils, TetrahedronSphereIntersection) {
+
+  vector<double> nodes(12), sphereCenter(3);
+  double sphereRadius;
+  PeridigmNS::SphereIntersection sphereIntersection;
+
+  // Simple case
+  nodes[0]  = 0.0 ; nodes[1]  = 0.0 ; nodes[2]  = 0.0 ;
+  nodes[3]  = 1.0 ; nodes[4]  = 0.0 ; nodes[5]  = 0.0 ;
+  nodes[6]  = 0.0 ; nodes[7]  = 1.0 ; nodes[8]  = 0.0 ;
+  nodes[9]  = 0.0 ; nodes[10] = 0.0 ; nodes[11] = 1.0 ;
+  sphereCenter[0] = -1.0 ; sphereCenter[1] = 0.0 ; sphereCenter[2] = 0.0 ;
+  sphereRadius = 1.0 - 1.0e-12;
+  
+  // All nodes outside sphere, no intersection
+  sphereIntersection = tetrahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::OUTSIDE_SPHERE);
+
+  // All nodes inside sphere
+  sphereRadius = 123.0;
+  sphereIntersection = tetrahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INSIDE_SPHERE);
+
+  // One node inside sphere
+  sphereRadius = 1.0 + 1.0e-12;
+  sphereIntersection = tetrahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
+
+  // Three nodes inside sphere
+  sphereCenter[0] = 1.0 ; sphereCenter[1] = 1.0 ; sphereCenter[2] = 1.0 ;
+  sphereRadius = std::sqrt(2) + 1.0e-12;
+  sphereIntersection = tetrahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
+
+  // All nodes outside sphere, but there is an intersection (or not)
+  // Kisses first face
+  sphereCenter[0] = -1.0 ; sphereCenter[1] = 0.25 ; sphereCenter[2] = 0.25 ;
+  sphereRadius = 1.0 + 1.0e-12;
+  sphereIntersection = tetrahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
+  sphereRadius = 1.0 - 1.0e-12;
+  sphereIntersection = tetrahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::OUTSIDE_SPHERE);
+  // Kisses second face
+  sphereCenter[0] = 0.25 ; sphereCenter[1] = -1.0 ; sphereCenter[2] = 0.25 ;
+  sphereRadius = 1.0 + 1.0e-12;
+  sphereIntersection = tetrahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
+  sphereRadius = 1.0 - 1.0e-12;
+  sphereIntersection = tetrahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::OUTSIDE_SPHERE);
+  // Kisses third face
+  sphereCenter[0] = 0.25 ; sphereCenter[1] = 0.25 ; sphereCenter[2] = -1.0 ;
+  sphereRadius = 1.0 + 1.0e-12;
+  sphereIntersection = tetrahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
+  sphereRadius = 1.0 - 1.0e-12;
+  sphereIntersection = tetrahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::OUTSIDE_SPHERE);
+  // Kissed fourth face
+  sphereCenter[0] = 1.0/3.0 + std::sqrt(1.0/3.0) ; sphereCenter[1] = 1.0/3.0 + + std::sqrt(1.0/3.0) ; sphereCenter[2] = 1.0/3.0 + + std::sqrt(1.0/3.0) ;
+  sphereRadius = 1.0 + 1.0e-12;
+  sphereIntersection = tetrahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
+  sphereRadius = 1.0 - 1.0e-12;
+  sphereIntersection = tetrahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::OUTSIDE_SPHERE);
+
+  // Cases where edge kisses sphere (or not)
+  nodes[0]  = 1.1 ; nodes[1]  = 0.0 ; nodes[2]  = 1.1 ;
+  nodes[3]  = 0.0 ; nodes[4]  = 1.1 ; nodes[5]  = 1.1 ;
+  nodes[6]  = 0.0 ; nodes[7]  = 0.0 ; nodes[8]  = 1.0e8 ;
+  nodes[9]  = 1.0e8 ; nodes[10] = 1.0e7 ; nodes[11] = 0.0 ;
+  sphereCenter[0] = 0.25 ; sphereCenter[1] = 0.25 ; sphereCenter[2] = 0.0 ;
+  double X1X0[3] = {sphereCenter[0] - nodes[0], sphereCenter[1] - nodes[1], sphereCenter[2] - nodes[2]};
+  double X2X0[3] = {sphereCenter[0] - nodes[3], sphereCenter[1] - nodes[4], sphereCenter[2] - nodes[5]};
+  double X2X1[3] = {nodes[3] - nodes[0], nodes[4] - nodes[1], nodes[5] - nodes[2]};
+  double X1X0_Cross_X2X0[3] = {X1X0[1]*X2X0[2] - X1X0[2]*X2X0[1], X1X0[2]*X2X0[0] - X1X0[0]*X2X0[2], X1X0[0]*X2X0[1] - X1X0[1]*X2X0[0]};
+  double shortestDistanceNumerator = std::sqrt(X1X0_Cross_X2X0[0]*X1X0_Cross_X2X0[0] + X1X0_Cross_X2X0[1]*X1X0_Cross_X2X0[1] + X1X0_Cross_X2X0[2]*X1X0_Cross_X2X0[2]);
+  double shortestDistanceDenominator = std::sqrt(X2X1[0]*X2X1[0] + X2X1[1]*X2X1[1] + X2X1[2]*X2X1[2]);
+  double shortestDistance = shortestDistanceNumerator/shortestDistanceDenominator;
+  sphereRadius = shortestDistance + 1.0e-12;
+  sphereIntersection = tetrahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
+  sphereRadius = shortestDistance - 1.0e-12;
+  sphereIntersection = tetrahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::OUTSIDE_SPHERE);
+  nodes[0]  = 8.1 ; nodes[1]  = 0.0 ; nodes[2]  = 1.1 ;
+  nodes[3]  = 0.0 ; nodes[4]  = 1.1 ; nodes[5]  = -0.1 ;
+  nodes[6]  = 100.0 ; nodes[7]  = 100.0 ; nodes[8]  = 0.0 ;
+  nodes[9]  = 100.0 ; nodes[10] = 100.0 ; nodes[11] = 0.01;
+  sphereCenter[0] = 0.25 ; sphereCenter[1] = 0.25 ; sphereCenter[2] = 0.0 ;
+  X1X0[0] = sphereCenter[0] - nodes[0];
+  X1X0[1] = sphereCenter[1] - nodes[1];
+  X1X0[2] = sphereCenter[2] - nodes[2];
+  X2X0[0] = sphereCenter[0] - nodes[3];
+  X2X0[1] = sphereCenter[1] - nodes[4];
+  X2X0[2] = sphereCenter[2] - nodes[5];
+  X2X1[0] = nodes[3] - nodes[0];
+  X2X1[1] = nodes[4] - nodes[1];
+  X2X1[2] = nodes[5] - nodes[2];
+  X1X0_Cross_X2X0[0] = X1X0[1]*X2X0[2] - X1X0[2]*X2X0[1];
+  X1X0_Cross_X2X0[1] = X1X0[2]*X2X0[0] - X1X0[0]*X2X0[2];
+  X1X0_Cross_X2X0[2] = X1X0[0]*X2X0[1] - X1X0[1]*X2X0[0];
+  shortestDistanceNumerator = std::sqrt(X1X0_Cross_X2X0[0]*X1X0_Cross_X2X0[0] + X1X0_Cross_X2X0[1]*X1X0_Cross_X2X0[1] + X1X0_Cross_X2X0[2]*X1X0_Cross_X2X0[2]);
+  shortestDistanceDenominator = std::sqrt(X2X1[0]*X2X1[0] + X2X1[1]*X2X1[1] + X2X1[2]*X2X1[2]);
+  shortestDistance = shortestDistanceNumerator/shortestDistanceDenominator;
+  sphereRadius = shortestDistance + 1.0e-12;
+  sphereIntersection = tetrahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::INTERSECTS_SPHERE);
+  sphereRadius = shortestDistance - 1.0e-12;
+  sphereIntersection = tetrahedronSphereIntersection(&nodes[0], sphereCenter, sphereRadius);
+  TEST_EQUALITY(sphereIntersection, PeridigmNS::OUTSIDE_SPHERE);
 }
 
 //! Exercise hexahedronSphereIntersection()

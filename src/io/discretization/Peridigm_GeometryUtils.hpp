@@ -54,6 +54,9 @@ namespace PeridigmNS {
 
   enum SphereIntersection { INSIDE_SPHERE = 0, INTERSECTS_SPHERE = 1, OUTSIDE_SPHERE = 2 };
 
+  //! Approximate the volume and centroid of a tetrahedron.
+  void tetCentroidAndVolume(double* const nodeCoordinates, double* centroid, double* volume);
+
   //! Approximate the volume and centroid of a hexahedron.
   void hexCentroidAndVolume(double* const nodeCoordinates, double* centroid, double* volume);
 
@@ -73,6 +76,11 @@ namespace PeridigmNS {
   SphereIntersection triangleSphereIntersection(const std::vector<double*>& nodeCoordinates,
                                                 const std::vector<double>& sphereCenter,
                                                 double sphereRadius);
+
+  //! Determine if a tetrahedron intersects a sphere
+  SphereIntersection tetrahedronSphereIntersection(double* const nodeCoordinates,
+                                                  const std::vector<double>& sphereCenter,
+                                                  double sphereRadius);
 
   //! Determine if a hexahedron intersects a sphere
   SphereIntersection hexahedronSphereIntersection(double* const nodeCoordinates,
