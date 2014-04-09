@@ -66,6 +66,8 @@
 
 using namespace std;
 
+//#define DEBUGGING_BACKWARDS_COMPATIBILITY_NEIGHBORHOOD_LIST
+
 PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                                                  const Teuchos::RCP<Teuchos::ParameterList>& params) :
   minElementRadius(1.0e50),
@@ -863,7 +865,31 @@ void PeridigmNS::STKDiscretization::removeNonintersectingNeighborsFromNeighborLi
       TEUCHOS_TEST_FOR_EXCEPT_MSG(exodusNodePositions.size()/3 != 8,
                                   "\n**** Error:  Element-horizon intersection calculations currently enabled only for hexahedron elements.\n");
 
+#ifdef DEBUGGING_BACKWARDS_COMPATIBILITY_NEIGHBORHOOD_LIST
+      double centroid[3];
+      centroid[0] = 0.0;
+      centroid[1] = 0.0;
+      centroid[2] = 0.0;
+      for(int i=0 ; i<8 ; ++i){
+        centroid[0] += exodusNodePositions[3*i];
+        centroid[1] += exodusNodePositions[3*i+1];
+        centroid[2] += exodusNodePositions[3*i+2];
+      }
+      centroid[0] /= 8.0;
+      centroid[1] /= 8.0;
+      centroid[2] /= 8.0;
+
+      double distanceSquared = (sphereCenter[0] - centroid[0])*(sphereCenter[0] - centroid[0])
+        + (sphereCenter[1] - centroid[1])*(sphereCenter[1] - centroid[1])
+        + (sphereCenter[2] - centroid[2])*(sphereCenter[2] - centroid[2]);
+
+      if(distanceSquared > horizon*horizon)
+        sphereIntersection = OUTSIDE_SPHERE;
+      else
+        sphereIntersection = INSIDE_SPHERE;
+#else
       sphereIntersection = hexahedronSphereIntersection(&exodusNodePositions[0], sphereCenter, horizon);
+#endif
 
       if(sphereIntersection != OUTSIDE_SPHERE){
         refinedNeighborGlobalIdList.push_back(neighborGlobalId);

@@ -274,11 +274,6 @@ TEUCHOS_UNIT_TEST(GeometryUtils, HexGeometry) {
   double trueVolume;
   double relTolerance = 1.0e-14;
 
-  // NOTE:  THE NODE ORDERING IS IMPORTANT, THESE TESTS ARE SET UP TO GET LUCKY
-  //        FOR THE CASE OF NONPLANEAR FACES, COMPUTING THE VOLUME BY DIVIDING INTO
-  //        SIX TETRAHEDRA IS AN APPROXIMATION AND RESULTS WILL CHANGE DEPENDING ON
-  //        WHERE EXACTLY THE "RIDGES" END UP.
-
   // Simple case
   nodes[0] = 0.0  ; nodes[1] = 0.0  ; nodes[2] = 0.0 ;
   nodes[3] = 1.0  ; nodes[4] = 0.0  ; nodes[5] = 0.0 ;
@@ -331,41 +326,29 @@ TEUCHOS_UNIT_TEST(GeometryUtils, HexGeometry) {
   trueCentroid[2] = (0.5*4.0/3.0 - 0.5*1.0/3.0 + 0.5)/2.0;
   trueVolume = 2.0;
   hexCentroidAndVolume(&nodes[0], &centroid[0], &volume[0]);
-  TEST_FLOATING_EQUALITY(centroid[0], trueCentroid[0], relTolerance);
-  TEST_FLOATING_EQUALITY(centroid[1], trueCentroid[1], relTolerance);
-  TEST_FLOATING_EQUALITY(centroid[2], trueCentroid[2], relTolerance);
-  TEST_FLOATING_EQUALITY(volume[0], trueVolume, relTolerance);
 
-  // Composite of a brick, pyramid, and wedge
-  vector<double> wedgeCentroid(3), brickCentroid(3), pyramidBaseCentroid(3), pyramidCentroid(3);
-  double wedgeVolume(0.0), brickVolume(0.0), pyramidVolume(0.0);
-  nodes[0] =  0.0 ; nodes[1] = 0.0  ; nodes[2] =  0.0 ; // 1
-  nodes[3] =  1.0 ; nodes[4] = 0.0  ; nodes[5] =  1.0 ; // 2
-  nodes[6] =  1.0 ; nodes[7] = 1.0  ; nodes[8] =  1.0 ; // 3
-  nodes[9] =  0.0 ; nodes[10] = 1.0 ; nodes[11] = 0.0 ; // 4
-  nodes[12] = 0.0 ; nodes[13] = 0.0 ; nodes[14] = 2.0 ; // 5
-  nodes[15] = 1.0 ; nodes[16] = 0.0 ; nodes[17] = 2.0 ; // 6
-  nodes[18] = 1.0 ; nodes[19] = 1.0 ; nodes[20] = 3.0 ; // 7
-  nodes[21] = 0.0 ; nodes[22] = 1.0 ; nodes[23] = 2.0 ; // 8
-  wedgeCentroid[0] = (1.0/3.0)*(nodes[3] - nodes[0]) + nodes[0];
-  wedgeCentroid[1] = (nodes[7] + nodes[1])/2.0;
-  wedgeCentroid[2] = (2.0/3.0)*(nodes[5] - nodes[2]) + nodes[0];
-  wedgeVolume = 0.5*(nodes[3] - nodes[0])*(nodes[7] - nodes[1])*(nodes[5] - nodes[2]);
-  brickCentroid[0] = 0.5*(nodes[15] - nodes[12]) + nodes[12];
-  brickCentroid[1] = 0.5*(nodes[19] - nodes[16]) + nodes[16];
-  brickCentroid[2] = 0.5*(nodes[17] - nodes[5])  + nodes[5];
-  brickVolume = (nodes[15] - nodes[12])*(nodes[19] - nodes[16])*(nodes[17] - nodes[5]);
-  pyramidBaseCentroid[0] = (nodes[15] - nodes[12])/2.0 + nodes[12];
-  pyramidBaseCentroid[1] = (nodes[19] - nodes[16])/2.0 + nodes[16];
-  pyramidBaseCentroid[2] = nodes[14];
-  pyramidCentroid[0] = 0.25*(nodes[18] - pyramidBaseCentroid[0]) + pyramidBaseCentroid[0];
-  pyramidCentroid[1] = 0.25*(nodes[19] - pyramidBaseCentroid[1]) + pyramidBaseCentroid[1];
-  pyramidCentroid[2] = 0.25*(nodes[20] - pyramidBaseCentroid[2]) + pyramidBaseCentroid[2];
-  pyramidVolume = (1.0/3.0)*(nodes[15] - nodes[12])*(nodes[19] - nodes[16])*(nodes[20] - nodes[14]);
-  trueCentroid[0] = (wedgeCentroid[0]*wedgeVolume + brickCentroid[0]*brickVolume + pyramidCentroid[0]*pyramidVolume)/(wedgeVolume + brickVolume + pyramidVolume);
-  trueCentroid[1] = (wedgeCentroid[1]*wedgeVolume + brickCentroid[1]*brickVolume + pyramidCentroid[1]*pyramidVolume)/(wedgeVolume + brickVolume + pyramidVolume);
-  trueCentroid[2] = (wedgeCentroid[2]*wedgeVolume + brickCentroid[2]*brickVolume + pyramidCentroid[2]*pyramidVolume)/(wedgeVolume + brickVolume + pyramidVolume);
-  trueVolume = wedgeVolume + brickVolume + pyramidVolume;
+  // Nonplaner face, which is approximated with four triangles
+  nodes[0] = 0.0  ; nodes[1] = 0.0  ; nodes[2] = 0.0 ;
+  nodes[3] = 1.0  ; nodes[4] = 0.0  ; nodes[5] = 0.0 ;
+  nodes[6] = 1.0  ; nodes[7] = 1.0  ; nodes[8] = 0.0 ;
+  nodes[9] = 0.0  ; nodes[10] = 1.0 ; nodes[11] = 0.0 ;
+  nodes[12] = 0.0 ; nodes[13] = 0.0 ; nodes[14] = 1.0 ;
+  nodes[15] = 1.0 ; nodes[16] = 0.0 ; nodes[17] = 1.0 ;
+  nodes[18] = 1.0 ; nodes[19] = 1.0 ; nodes[20] = 2.0 ;
+  nodes[21] = 0.0 ; nodes[22] = 1.0 ; nodes[23] = 1.0 ;
+  // The geometry is a cube + pyramid + two tetrahedra
+  double cubeVolume = 1.0;
+  double cubeCentroid[3] = {0.5, 0.5, 0.5};
+  double pyramidVolume = (1.0/3.0)*1.0*0.25;
+  double pyramidCentroid[3] = {0.5, 0.5, 1.0+0.25*0.25};
+  double tet1Volume = (1.0/3.0)*0.5*0.5;
+  double tet1Centroid[3] = {(1.0+1.0+0.5+1.0)/4.0, (0.0+1.0+0.5+1.0)/4.0, (1.0+1.0+1.25+2.0)/4.0}; 
+  double tet2Volume = (1.0/3.0)*0.5*0.5;
+  double tet2Centroid[3] = {(0.0+1.0+0.5+1.0)/4.0, (1.0+1.0+0.5+1.0)/4.0, (1.0+1.0+1.25+2.0)/4.0}; 
+  trueVolume = cubeVolume + pyramidVolume + tet1Volume + tet2Volume;
+  trueCentroid[0] = (cubeCentroid[0]*cubeVolume + pyramidCentroid[0]*pyramidVolume + tet1Centroid[0]*tet1Volume + tet2Centroid[0]*tet2Volume) / trueVolume;
+  trueCentroid[1] = (cubeCentroid[1]*cubeVolume + pyramidCentroid[1]*pyramidVolume + tet1Centroid[1]*tet1Volume + tet2Centroid[1]*tet2Volume) / trueVolume;
+  trueCentroid[2] = (cubeCentroid[2]*cubeVolume + pyramidCentroid[2]*pyramidVolume + tet1Centroid[2]*tet1Volume + tet2Centroid[2]*tet2Volume) / trueVolume;
   hexCentroidAndVolume(&nodes[0], &centroid[0], &volume[0]);
   TEST_FLOATING_EQUALITY(centroid[0], trueCentroid[0], relTolerance);
   TEST_FLOATING_EQUALITY(centroid[1], trueCentroid[1], relTolerance);
