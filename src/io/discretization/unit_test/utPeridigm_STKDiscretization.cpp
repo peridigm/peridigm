@@ -204,7 +204,7 @@ TEUCHOS_UNIT_TEST(STKDiscretization, Exodus2x2x2Test) {
   TEST_ASSERT(volume->MyLength() == numMyElementsTruth);
   TEST_ASSERT(volume->GlobalLength() == 8);
   for(int i=0 ; i<volume->MyLength() ; ++i)
-    TEST_FLOATING_EQUALITY((*volume)[i], 0.125, 1.0e-16);
+    TEST_FLOATING_EQUALITY((*volume)[i], 0.125, 1.0e-15);
 
   // check the neighbor lists
   Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = discretization->getNeighborhoodData();

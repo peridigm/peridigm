@@ -400,9 +400,6 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
   for(unsigned int iElem=0 ; iElem<elements.size() ; ++iElem){
     stk::mesh::PairIterRelation nodeRelations = elements[iElem]->node_relations();
     int elementId = elements[iElem]->identifier() - 1;
-    if(storeExodusMesh){
-      exodusMeshElementConnectivityDEPRECATED[elementId] = vector<int>();
-    }
     initialXPtr[iElem*3] = 0.0;
     initialXPtr[iElem*3+1] = 0.0;
     initialXPtr[iElem*3+2] = 0.0;
@@ -419,7 +416,6 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
     for(stk::mesh::PairIterRelation::iterator it=nodeRelations.begin() ; it!=nodeRelations.end() ; ++it){
       stk::mesh::Entity* node = it->entity();
       if(storeExodusMesh){
-        exodusMeshElementConnectivityDEPRECATED[elementId].push_back(node->identifier() - 1);
         (*exodusMeshElementConnectivity)[exodusMeshElementIndex++] = node->identifier() - 1;
       }
       double* coordinates = stk::mesh::field_data(*coordinatesField, *node);
@@ -450,7 +446,7 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
         cout << "**** Warning on processor " << myPID << ", side nodes being discarded for 10-node tetrahedron element, will be treated as 4-node tetrahedron element." << endl;
         tenNodedTetWarningGiven = true;
       }
-      cellVolumePtr[iElem] = hexVolume(nodeCoordinates);
+      cellVolumePtr[iElem] = tetVolume(nodeCoordinates);
     }
     else if(nodeRelations.size() == 20){
       // 20-noded hex, treat as 8-noded tet
@@ -744,11 +740,6 @@ void PeridigmNS::STKDiscretization::getExodusMeshNodePositions(int globalNodeID,
 {
   TEUCHOS_TEST_FOR_EXCEPT_MSG(!storeExodusMesh, "**** Error:  getExodusMeshNodePositions() called, but exodus information not stored.\n");
 
-  // Using DEPRECATED functionality
-  // vector<int>& elementConnectivity = exodusMeshElementConnectivityDEPRECATED[globalNodeID];
-  // unsigned int numNodes = elementConnectivity.size();
-
-  // Using new Epetra_Vector functionality
   int localId = exodusMeshElementConnectivity->Map().LID(globalNodeID);
   TEUCHOS_TEST_FOR_EXCEPT_MSG(localId == -1, "**** Invalid local Exodus element Id in getExodusMeshNodePositions().\n");
   unsigned int numNodes = exodusMeshElementConnectivity->Map().ElementSize(localId);
@@ -933,59 +924,6 @@ void PeridigmNS::STKDiscretization::removeNonintersectingNeighborsFromNeighborLi
       index += 1;
     }
   }
-}
-
-double PeridigmNS::STKDiscretization::scalarTripleProduct(std::vector<double>& a,
-                                                          std::vector<double>& b,
-                                                          std::vector<double>& c) const
-{
-  double tripleProduct = 
-    a[0]*(b[1]*c[2] - b[2]*c[1]) + a[1]*(b[2]*c[0] - b[0]*c[2]) + a[2]*(b[0]*c[1] - b[1]*c[0]);
-
-  return tripleProduct;
-}
-
-double PeridigmNS::STKDiscretization::hexVolume(std::vector<double*>& nodeCoordinates) const
-{
-  int map[] = {0,1,3,2,4,5,7,6};
-  std::vector<double> x17(3), x27(3), x47(3), x06(3), x05(3), x03(3), A(3), B(3), C(3);  
-  for(int dof=0 ; dof<3 ; ++dof){
-    x17[dof] = nodeCoordinates[map[7]][dof] - nodeCoordinates[map[1]][dof];
-    x27[dof] = nodeCoordinates[map[7]][dof] - nodeCoordinates[map[2]][dof];
-    x47[dof] = nodeCoordinates[map[7]][dof] - nodeCoordinates[map[4]][dof];
-    x06[dof] = nodeCoordinates[map[6]][dof] - nodeCoordinates[map[0]][dof];
-    x05[dof] = nodeCoordinates[map[5]][dof] - nodeCoordinates[map[0]][dof];
-    x03[dof] = nodeCoordinates[map[3]][dof] - nodeCoordinates[map[0]][dof];
-  }
-
-  for(int dof=0 ; dof<3 ; ++dof){
-    A[dof] = x17[dof] + x06[dof];
-    B[dof] = x27[dof] + x05[dof];
-    C[dof] = x47[dof] + x03[dof];
-  }
-
-  double v1 = fabs( scalarTripleProduct(A,x27,x03) );
-  double v2 = fabs( scalarTripleProduct(x06,B,x47) );
-  double v3 = fabs( scalarTripleProduct(x17,x05,C) );
-
-  return (v1+v2+v3)/12.0;
-}
-
-double PeridigmNS::STKDiscretization::tetVolume(std::vector<double*>& nodeCoordinates) const
-{
-  // Change the coordinate system such that the first point is at the origin.
-  // The other three points are labeled a, b, and c.
-  std::vector<double> a(3), b(3), c(3);
-  for(int dof=0 ; dof<3 ; ++dof){
-    a[dof] = nodeCoordinates[1][dof] - nodeCoordinates[0][dof];
-    b[dof] = nodeCoordinates[2][dof] - nodeCoordinates[0][dof];
-    c[dof] = nodeCoordinates[3][dof] - nodeCoordinates[0][dof];
-  }
-
-  // The volume is then | a . (b x c) | / 6
-  double volume = scalarTripleProduct(a, b, c) / 6.0;
-
-  return volume;
 }
 
 void PeridigmNS::STKDiscretization::ghostExodusMeshData()

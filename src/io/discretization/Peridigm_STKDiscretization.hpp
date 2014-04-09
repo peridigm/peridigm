@@ -157,23 +157,6 @@ namespace PeridigmNS {
                                                         int& neighborListSize,
                                                         int*& neighborList);
 
-    //! Compute the scalar triple product
-    double scalarTripleProduct(std::vector<double>& a,
-                               std::vector<double>& b,
-                               std::vector<double>& c) const;
-
-    //! Compute the volume of a hexahedron element
-    double hexVolume(std::vector<double*>& nodeCoordinates) const;
-
-    //! Compute the volume of a tetrahedron element
-    double tetVolume(std::vector<double*>& nodeCoordinates) const;
-
-    // //! Compute the maximum length dimension for a hexahedron element
-    // double hexMaxElementDimension(std::vector<double*>& nodeCoordinates) const;
-
-    // //! Compute the maximum length dimension for a tetrahedron element
-    // double tetMaxElementDimension(std::vector<double*>& nodeCoordinates) const;
-
     //! Perform parallel communication to make exodus mesh data available for ghosted (overlap) element.
     void ghostExodusMeshData();
 
@@ -215,7 +198,6 @@ namespace PeridigmNS {
     Teuchos::RCP<Epetra_Vector> exodusMeshNodePositions;
 
     //! Vector containing element connectivity in the initial hex/tet mesh
-    std::map< int, std::vector<int> > exodusMeshElementConnectivityDEPRECATED;
     Teuchos::RCP<Epetra_Vector> exodusMeshElementConnectivity;
 
     //! Struct containing neighborhoods for owned nodes.

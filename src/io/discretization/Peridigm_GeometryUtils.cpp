@@ -325,6 +325,19 @@ void PeridigmNS::hexVolume(double* const nodeCoordinates, double* volume){
   hexCentroidAndVolume(nodeCoordinates, 0, volume);
 }
 
+double PeridigmNS::hexVolume(const std::vector<double*>& nodeCoordinates)
+{
+  vector<double> n(24);
+  for(int i=0 ; i<8 ; ++i){
+    n[3*i]   = nodeCoordinates[i][0];
+    n[3*i+1] = nodeCoordinates[i][1];
+    n[3*i+2] = nodeCoordinates[i][2];
+  }
+  double volume;
+  hexVolume(&n[0], &volume);
+  return volume;
+}
+
 void PeridigmNS::tetCentroid(const std::vector<double*>& nodeCoordinates,
                              std::vector<double>& centroid)
 {
