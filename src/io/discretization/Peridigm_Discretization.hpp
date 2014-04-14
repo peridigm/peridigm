@@ -53,6 +53,7 @@
 #include <Epetra_Map.h>
 #include <Epetra_Vector.h>
 #include "Peridigm_NeighborhoodData.hpp"
+#include "Peridigm_InterfaceData.hpp"
 #include "QuickGrid.h"
 #include "BondFilter.h"
 
@@ -108,6 +109,12 @@ namespace PeridigmNS {
 
     //! Get the neighbor list for all locally-owned nodes
     virtual Teuchos::RCP<PeridigmNS::NeighborhoodData> getNeighborhoodData() const = 0;
+
+    //! Get the neighbor list for all locally-owned nodes
+    virtual Teuchos::RCP<PeridigmNS::InterfaceData> getInterfaceData() const = 0;
+
+    //! determine if interfaces are constructed
+    virtual const bool InterfacesAreConstructed() const = 0;
 
     //! Get the number of bonds on this processor
     virtual unsigned int getNumBonds() const = 0;
