@@ -232,6 +232,9 @@ namespace PeridigmNS {
     //! Accessor for global neighborhood data
     Teuchos::RCP<const PeridigmNS::NeighborhoodData> getGlobalNeighborhoodData() { return globalNeighborhoodData; }
 
+    //! Accessor for interface data
+    Teuchos::RCP<const PeridigmNS::InterfaceData> getInterfaceData() { return interfaceData; }
+
     //! Accessor for vector of Blocks
     Teuchos::RCP< std::vector<PeridigmNS::Block> > getBlocks() { return blocks; }
 
@@ -284,6 +287,9 @@ namespace PeridigmNS {
 
     //! Flag for computing element-sphere intersections
     bool computeIntersections;
+
+    //! Flag for computing interface information
+    bool constructInterfaces;
 
     //! Damage models
     std::map< std::string, Teuchos::RCP<const PeridigmNS::DamageModel> > damageModels;
@@ -380,6 +386,9 @@ namespace PeridigmNS {
 
     //! List of neighbors for all locally-owned nodes
     Teuchos::RCP<PeridigmNS::NeighborhoodData> globalNeighborhoodData;
+
+    // information about internal interfaces in the domain
+    Teuchos::RCP<PeridigmNS::InterfaceData> interfaceData;
 
     //! Workset that is passed to the modelEvaluator
     Teuchos::RCP<Workset> workset;

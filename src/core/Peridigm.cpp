@@ -95,6 +95,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
                                Teuchos::RCP<Discretization> inputPeridigmDiscretization)
   : analysisHasContact(false),
     computeIntersections(false),
+    constructInterfaces(false),
     blockIdFieldId(-1),
     horizonFieldId(-1),
     volumeFieldId(-1),
@@ -554,6 +555,11 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization>
 
   // get the neighborlist from the discretization
   globalNeighborhoodData = peridigmDisc->getNeighborhoodData();
+
+  if(peridigmDisc->InterfacesAreConstructed()){
+    interfaceData = peridigmDisc->getInterfaceData();
+    constructInterfaces = true;
+  }
 }
 
 void PeridigmNS::Peridigm::initializeWorkset() {
@@ -1797,6 +1803,9 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
     PeridigmNS::Timer::self().startTimer("Output");
     synchDataManagers();
     outputManager->write(blocks, timeCurrent);
+    if(constructInterfaces){
+      interfaceData->WriteExodusOutput(step+1,timeCurrent);
+    }
     PeridigmNS::Timer::self().stopTimer("Output");
 
     // swap state N and state NP1
@@ -1807,6 +1816,10 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
 
   if(peridigmComm->MyPID() == 0)
     cout << endl;
+
+  if(constructInterfaces)
+    interfaceData->FinalizeExodusOutput();
+
 }
 
 void PeridigmNS::Peridigm::quasiStaticsSetPreconditioner(Belos::LinearProblem<double,Epetra_MultiVector,Epetra_Operator>& linearProblem) {

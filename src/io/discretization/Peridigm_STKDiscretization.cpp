@@ -74,6 +74,7 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   maxElementRadius(0.0),
   storeExodusMesh(false),
   computeIntersections(false),
+  constructInterfaces(false),
   maxElementDimension(0.0),
   numBonds(0),
   maxNumBondsPerElem(0),
@@ -95,6 +96,11 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   if(params->isParameter("Compute Element-Horizon Intersections")){
     computeIntersections = params->get<bool>("Compute Element-Horizon Intersections");
     storeExodusMesh = true;
+  }
+  // also store the mesh if interfaces will be used (i.e. for the aperture calcs)
+  if(params->isParameter("Construct Interfaces")){
+    constructInterfaces = params->get<bool>("Construct Interfaces");
+    storeExodusMesh = constructInterfaces;
   }
 
   // Set up bond filters
@@ -153,6 +159,12 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
     removeNonintersectingNeighborsFromNeighborList(initialX, horizonForEachPoint, oneDimensionalMap, oneDimensionalOverlapMap, neighborListSize, neighborList);
 
   createNeighborhoodData(neighborListSize, neighborList);
+
+  // if interfaces are requested construct the interfaces after the neighborhood data is known:
+  if(constructInterfaces)
+    constructInterfaceData();
+
+
 
   // Create the three-dimensional overlap map based on the one-dimensional overlap map
   threeDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(-1, 
@@ -214,7 +226,8 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   maxElementRadius = globalMin[0];
 }
 
-PeridigmNS::STKDiscretization::~STKDiscretization() {}
+PeridigmNS::STKDiscretization::~STKDiscretization() {
+}
 
 void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
 {
@@ -322,6 +335,7 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
   // Select node mesh entities that match the selector
   std::vector<stk::mesh::Entity*> nodes;
   stk::mesh::get_selected_entities(selector, bulkData.buckets(metaData->node_rank()), nodes);
+
 
   // Determine the total number of elements in the model
   // \todo There must be a cleaner way to determine the number of elements in a model.
@@ -461,6 +475,7 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
     }
   }
 
+
   // loop over the element blocks
   for(unsigned int iBlock=0 ; iBlock<stkElementBlocks.size() ; iBlock++){
 
@@ -554,6 +569,97 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
   #endif
 
   return;
+}
+
+void
+PeridigmNS::STKDiscretization::constructInterfaceData()
+{
+  int* const neighPtr = neighborhoodData->NeighborhoodList();
+  const int listSize = neighborhoodData->NeighborhoodListSize();
+
+  // faces of a cube as stored by exodus ordering:
+  int faces[6][4] = {{4,5,6,7},{7,6,2,3},{0,4,7,3},{0,1,2,3},{0,4,5,1},{1,5,6,2}};
+
+  interfaceData = Teuchos::rcp(new PeridigmNS::InterfaceData);
+
+  TEUCHOS_TEST_FOR_EXCEPTION(storeExodusMesh!=true,std::logic_error," Exodus mesh should have been stored if this is called.");
+  std::vector<int> leftElements;
+  std::vector<int> rightElements;
+  std::vector<int> numNodes;
+  std::vector<std::vector<int> > interfaceNodesVec;
+
+  int elemIndex = 0;
+  for(int i=0 ; i<listSize; i++){
+    const int selfGID = oneDimensionalMap->GID(elemIndex);
+    int numNeighbors = neighPtr[i];
+    const int numNodesPerElem = exodusMeshElementConnectivity->Map().ElementSize(elemIndex);
+    const int myIndex = exodusMeshElementConnectivity->Map().FirstPointInElement(elemIndex);
+    // get the connectivity for this element:
+    std::vector<int> selfNodeIds(numNodesPerElem);
+    for(unsigned n=0;n<numNodesPerElem;++n){
+      selfNodeIds[n] = (*exodusMeshElementConnectivity)[myIndex+n];
+    }
+
+    for(unsigned j=0;j<numNeighbors;j++){
+      i++;
+      int numNodesFound = 0;
+      const int GID = oneDimensionalOverlapMap->GID(neighPtr[i]);
+      const int neighIndex = exodusMeshElementConnectivity->Map().FirstPointInElement(neighPtr[i]);
+
+      bool shareFace = false;
+      // the two elements must have a face in common to be an interface pair:
+      std::vector<int> neighNodeIds(numNodesPerElem);
+      std::vector<int> foundNodeIds(4); // 4 works for tris or quads
+      for(unsigned n=0;n<numNodesPerElem;++n)
+        neighNodeIds[n] = (*exodusMeshElementConnectivity)[neighIndex + n];
+
+      if(numNodesPerElem==8){ // cube (order needed to prevent folding the interfaces by mixing up the node numbering)
+        for(unsigned ni=0;ni<6;++ni){
+          numNodesFound = 0;
+          for(unsigned nj=0;nj<4;++nj){
+            for(unsigned nk=0;nk<numNodesPerElem;++nk){
+              if(selfNodeIds[faces[ni][nj]]==neighNodeIds[nk]){
+                numNodesFound++;
+              }
+            }
+          }
+          if(numNodesFound>2){ // this is a shared face
+            for(unsigned kn=0;kn<4;++kn)
+              foundNodeIds[kn] = selfNodeIds[faces[ni][kn]];
+            if((GID!=-1&&GID>selfGID)||(selfGID<GID)){
+              leftElements.push_back(selfGID);
+              rightElements.push_back(GID);
+              numNodes.push_back(numNodesFound);
+              interfaceNodesVec.push_back(foundNodeIds);
+              break;
+            }
+          }
+        }
+      }
+      else { // tets (order doesn't matter)
+        for(unsigned ni=0;ni<numNodesPerElem;++ni){
+          for(unsigned nj=0;nj<numNodesPerElem;++nj){
+            if(selfNodeIds[ni]==neighNodeIds[nj]){
+              foundNodeIds[numNodesFound] = selfNodeIds[ni];
+              numNodesFound++;
+            }
+          }
+        }
+        shareFace = numNodesFound>2; // works for tri and quad
+        if(((GID!=-1&&GID>selfGID)||(selfGID<GID)) && shareFace){
+          leftElements.push_back(selfGID);
+          rightElements.push_back(GID);
+          numNodes.push_back(numNodesFound);
+          interfaceNodesVec.push_back(foundNodeIds);
+        }
+      }
+    }
+    elemIndex++;
+  }
+  // now create the interface data and populate it
+  interfaceData->Initialize(leftElements, rightElements, numNodes, interfaceNodesVec, comm);
+  // generate an exodus file for output:
+  interfaceData->InitializeExodusOutput(exodusMeshElementConnectivity,exodusMeshNodePositions);
 }
 
 void

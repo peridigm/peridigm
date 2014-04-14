@@ -91,6 +91,12 @@ namespace PeridigmNS {
     //! Get the neighbor list for all locally-owned nodes
     virtual Teuchos::RCP<PeridigmNS::NeighborhoodData> getNeighborhoodData() const;
 
+    //! Get interface data for all locally-owned nodes
+    virtual Teuchos::RCP<PeridigmNS::InterfaceData> getInterfaceData() const{return Teuchos::null;}
+
+    //! determine if interface data was constructed
+    virtual const bool InterfacesAreConstructed() const{return false;}
+
     //! Get the number of bonds on this processor
     virtual unsigned int getNumBonds() const;
 

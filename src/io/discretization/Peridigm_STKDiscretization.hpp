@@ -57,6 +57,7 @@
 #endif
 
 #include "Peridigm_Discretization.hpp"
+#include "Peridigm_InterfaceData.hpp"
 #include <vector>
 #include <map>
 
@@ -97,6 +98,14 @@ namespace PeridigmNS {
 
     //! Get the neighbor list for all locally-owned nodes
     virtual Teuchos::RCP<PeridigmNS::NeighborhoodData> getNeighborhoodData() const;
+
+    //! Get the neighbor list for all locally-owned nodes
+    virtual Teuchos::RCP<PeridigmNS::InterfaceData> getInterfaceData() const{
+      return interfaceData;
+    }
+
+    // ! determine if the interface data is available
+    virtual const bool InterfacesAreConstructed() const{ return constructInterfaces;}
 
     //! Get the number of bonds on this processor
     virtual unsigned int getNumBonds() const;
@@ -146,6 +155,9 @@ namespace PeridigmNS {
     //! Create NeighborhoodData
     void createNeighborhoodData(int neighborListSize, int* neighborList);
 
+    //! Create Interfaces between elements
+    void constructInterfaceData();
+
     //! Filter bonds from neighborhood list
     Teuchos::RCP<PeridigmNS::NeighborhoodData> filterBonds(Teuchos::RCP<PeridigmNS::NeighborhoodData> unfilteredNeighborhoodData);
 
@@ -188,6 +200,9 @@ namespace PeridigmNS {
     //! Boolean flag for storing exodus mesh
     bool storeExodusMesh;
 
+    //! Boolean flag for constructing interfaces
+    bool constructInterfaces;
+
     //! Boolean flag indicating that element-horizon intersections should be computed
     bool computeIntersections;
 
@@ -202,6 +217,9 @@ namespace PeridigmNS {
 
     //! Struct containing neighborhoods for owned nodes.
     Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData;
+
+    //! Struct containing the interface varaibles and right and left elements
+    Teuchos::RCP<PeridigmNS::InterfaceData> interfaceData;
 
     //! Returns number of bonds on this processor
     unsigned int numBonds;
