@@ -47,6 +47,7 @@
 
 #include <Peridigm_InterfaceData.hpp>
 #include <exodusII.h>
+#include <Epetra_Import.h>
 
 void
 PeridigmNS::InterfaceData::Initialize(std::vector<int> leftElements, std::vector<int> rightElements, std::vector<int> numNodesPerElem,
@@ -94,19 +95,39 @@ PeridigmNS::InterfaceData::Initialize(std::vector<int> leftElements, std::vector
       (*interfaceNodes)[elemIndex + j] = interfaceNodesVec[i][j];
     }
   }
+
+  // generate an overlap map of the elements attached to all local interfaces:
+  std::set<int> ElemGIDsSet;
+  for(unsigned i=0;i<numOwnedPoints;++i){
+    ElemGIDsSet.insert(elementLeft[i]);
+    ElemGIDsSet.insert(elementRight[i]);
+  }
+  const int numOverlapIds = ElemGIDsSet.size();
+
+  int * overlapIds = new int[numOverlapIds];
+  int index = 0;
+  std::set<int>::iterator it;
+  for(it=ElemGIDsSet.begin();it!=ElemGIDsSet.end();++it){
+    overlapIds[index] = *it;
+    index++;
+  }
+
+  elemOverlapMap = Teuchos::rcp(new Epetra_BlockMap(-1,numOverlapIds,&overlapIds[0],3,0,*comm));
+
+  delete[] overlapIds;
+
 }
 
 void
 PeridigmNS::InterfaceData::InitializeExodusOutput(Teuchos::RCP<Epetra_Vector> exodusMeshElementConnectivity, Teuchos::RCP<Epetra_Vector> exodusMeshNodePositions){
 
-  std::stringstream outputFileName;
   if(comm->NumProc()>1){
-    outputFileName << "Interfaces.e." << comm->NumProc() << "." << comm->MyPID();
+    filename << "Interfaces.e." << comm->NumProc() << "." << comm->MyPID();
   }
   else{
-    outputFileName << "Interfaces.e";
+    filename << "Interfaces.e";
   }
-  std::string outputFileNameStr = outputFileName.str();
+  std::string outputFileNameStr = filename.str();
   std::vector<char> writable(outputFileNameStr.size() + 1);
   std::copy(outputFileNameStr.begin(), outputFileNameStr.end(), writable.begin());
 
@@ -130,7 +151,7 @@ PeridigmNS::InterfaceData::InitializeExodusOutput(Teuchos::RCP<Epetra_Vector> ex
   TEUCHOS_TEST_FOR_EXCEPTION(numQuads+numTris!=numShells,std::logic_error,"numQuads " << numQuads << "  + numTris " << numTris << " should sum up to numShells " << numShells);
 
 
-  const int numBlocks = 2; //(numQuads>0&&numTris>0) ? 2 : 1;
+  const int numBlocks = 2;
 
   error_int = ex_put_init(exoid, &writable[0], spaDim, numNodes, numShells, numBlocks, 0, 0);
   TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"ex_put_init(): Failure");
@@ -148,10 +169,10 @@ PeridigmNS::InterfaceData::InitializeExodusOutput(Teuchos::RCP<Epetra_Vector> ex
     x[i] = (*exodusMeshNodePositions)[nodeIndex+0];
     y[i] = (*exodusMeshNodePositions)[nodeIndex+1];
     z[i] = (*exodusMeshNodePositions)[nodeIndex+2];
-    nodeMap[i] = exodusMeshNodePositions->Map().GID(i) + 1;// i+1 // numbering is one based in exodus
+    nodeMap[i] = exodusMeshNodePositions->Map().GID(i) + 1; // numbering is one based in exodus
   }
   for(unsigned i=0;i<numShells;++i){
-    shellMap[i] = interfaceNodesMap->GID(i) +1;//i + 1; // numbering is one based in exodus
+    shellMap[i] = interfaceNodesMap->GID(i) +1; // numbering is one based in exodus
   }
 
   error_int = ex_put_coord(exoid, x, y, z);
@@ -171,25 +192,21 @@ PeridigmNS::InterfaceData::InitializeExodusOutput(Teuchos::RCP<Epetra_Vector> ex
 
   // write quad blocks:
   int blockIndex = 0;
-  //if(numQuads > 0){
-    blockIndex ++;
-    int num_nodes_per_elem_q4 = 4;
-    const std::string elem_type_str_q4 = numQuads > 0 ? "QUAD4" : "NULL";
-    char * elem_type_q4 = const_cast<char *>(elem_type_str_q4.c_str());
-    const int numElemInBlock_q4 = numQuads;
-    error_int = ex_put_elem_block(exoid, blockIndex, elem_type_q4, numElemInBlock_q4, num_nodes_per_elem_q4, 0); // no attributes put in output file
-    TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"ex_put_elem_block(): Failure");
-  //}
-  // write tri block;
-  //if(numTris > 0){
-    blockIndex ++;
-    int num_nodes_per_elem_t3 = 3;
-    const std::string elem_type_str_t3 = numTris > 0 ? "TRI3": "NULL";
-    char * elem_type_t3 = const_cast<char *>(elem_type_str_t3.c_str());
-    const int numElemInBlock_t3 = numTris;
-    error_int = ex_put_elem_block(exoid, blockIndex, elem_type_t3, numElemInBlock_t3, num_nodes_per_elem_t3, 0); // no attributes put in output file
-    TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"ex_put_elem_block(): Failure");
-  //}
+  blockIndex ++;
+  int num_nodes_per_elem_q4 = 4;
+  const std::string elem_type_str_q4 = numQuads > 0 ? "QUAD4" : "NULL";
+  char * elem_type_q4 = const_cast<char *>(elem_type_str_q4.c_str());
+  const int numElemInBlock_q4 = numQuads;
+  error_int = ex_put_elem_block(exoid, blockIndex, elem_type_q4, numElemInBlock_q4, num_nodes_per_elem_q4, 0); // no attributes put in output file
+  TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"ex_put_elem_block(): Failure");
+  blockIndex ++;
+  int num_nodes_per_elem_t3 = 3;
+  const std::string elem_type_str_t3 = numTris > 0 ? "TRI3": "NULL";
+  char * elem_type_t3 = const_cast<char *>(elem_type_str_t3.c_str());
+  const int numElemInBlock_t3 = numTris;
+  error_int = ex_put_elem_block(exoid, blockIndex, elem_type_t3, numElemInBlock_t3, num_nodes_per_elem_t3, 0); // no attributes put in output file
+  TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"ex_put_elem_block(): Failure");
+
   //  write elem connectivities
   //  HEADS UP: the connectivities will not write to file until ex_close is called
   //  also note that the nodes must be the local node ids
@@ -197,43 +214,36 @@ PeridigmNS::InterfaceData::InitializeExodusOutput(Teuchos::RCP<Epetra_Vector> ex
   const int connLength = interfaceNodes->Map().NumMyElements();
 
   blockIndex = 0;
-  //if(numQuads > 0){
-    blockIndex ++;
-    int conn_index = 0;
-    //int num_nodes_per_elem = 4;
-    int * block_connect_q4 = new int[numQuads*num_nodes_per_elem_q4];
-    for(int it=0;it<connLength;++it)
-    {
-      if(interfaceNodes->Map().ElementSize(it)!=4) continue;
-      int elemIndex = interfaceNodes->Map().FirstPointInElement(it);
-      for(unsigned nn=0;nn<4;++nn){
-        int node = (*interfaceNodes)[elemIndex+nn];
-        block_connect_q4[conn_index*num_nodes_per_elem_q4+nn] = exodusMeshNodePositions->Map().LID(node) + 1;// nodes are 1 based in exodus
-      }
-      conn_index++;
+  blockIndex ++;
+  int conn_index = 0;
+  int * block_connect_q4 = new int[numQuads*num_nodes_per_elem_q4];
+  for(int it=0;it<connLength;++it)
+  {
+    if(interfaceNodes->Map().ElementSize(it)!=4) continue;
+    int elemIndex = interfaceNodes->Map().FirstPointInElement(it);
+    for(unsigned nn=0;nn<4;++nn){
+      int node = (*interfaceNodes)[elemIndex+nn];
+      block_connect_q4[conn_index*num_nodes_per_elem_q4+nn] = exodusMeshNodePositions->Map().LID(node) + 1;// nodes are 1 based in exodus
     }
-    error_int = ex_put_elem_conn(exoid, blockIndex, block_connect_q4);
-    delete[] block_connect_q4;
-  //}
-  // write tri block;
-  //if(numTris > 0){
-    blockIndex ++;
-    //int num_nodes_per_elem = 3;
-    conn_index = 0;
-    int * block_connect_t3 = new int[numTris*num_nodes_per_elem_t3];
-    for(int it=0;it<connLength;++it)
-    {
-      if(interfaceNodes->Map().ElementSize(it)!=3) continue;
-      int elemIndex = interfaceNodes->Map().FirstPointInElement(it);
-      for(unsigned nn=0;nn<3;++nn){
-        int node = (*interfaceNodes)[elemIndex+nn];
-        block_connect_t3[conn_index*num_nodes_per_elem_t3+nn] = exodusMeshNodePositions->Map().LID(node) + 1;// nodes are 1 based in exodus
-      }
-      conn_index++;
+    conn_index++;
+  }
+  error_int = ex_put_elem_conn(exoid, blockIndex, block_connect_q4);
+  delete[] block_connect_q4;
+  blockIndex ++;
+  conn_index = 0;
+  int * block_connect_t3 = new int[numTris*num_nodes_per_elem_t3];
+  for(int it=0;it<connLength;++it)
+  {
+    if(interfaceNodes->Map().ElementSize(it)!=3) continue;
+    int elemIndex = interfaceNodes->Map().FirstPointInElement(it);
+    for(unsigned nn=0;nn<3;++nn){
+      int node = (*interfaceNodes)[elemIndex+nn];
+      block_connect_t3[conn_index*num_nodes_per_elem_t3+nn] = exodusMeshNodePositions->Map().LID(node) + 1;// nodes are 1 based in exodus
     }
-    error_int = ex_put_elem_conn(exoid, blockIndex, block_connect_t3);
-    delete[] block_connect_t3;
-  //}
+    conn_index++;
+  }
+  error_int = ex_put_elem_conn(exoid, blockIndex, block_connect_t3);
+  delete[] block_connect_t3;
 
   int numVariables = 1; // TODO careful with this, if more fields are added to the interface data this must be updated
   char** eleVarNames = new char*[numVariables];
@@ -253,15 +263,27 @@ PeridigmNS::InterfaceData::InitializeExodusOutput(Teuchos::RCP<Epetra_Vector> ex
   error_int = ex_put_elem_var_tab (exoid, numBlocks, numVariables, truth_tab);
   delete [] truth_tab;
 
-  // write a step at time zero:
-  WriteExodusOutput(1,0.0);
+  error_int = ex_update(exoid);
+  TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"Exodus file close failed.");
+  error_int = ex_close(exoid);
+  TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"Exodus file close failed.");
 
 }
 
 void
-PeridigmNS::InterfaceData::WriteExodusOutput(const int timeStep, const float & timeValue){
+PeridigmNS::InterfaceData::WriteExodusOutput(const int timeStep, const float & timeValue, Teuchos::RCP<Epetra_Vector> x, Teuchos::RCP<Epetra_Vector> y){
 
   int error_int = 0;
+
+  int CPU_word_size = 0;
+  int IO_word_size = 0;
+  float version = 0;
+  std::string outputFileNameStr = filename.str();
+  std::vector<char> writable(outputFileNameStr.size() + 1);
+  std::copy(outputFileNameStr.begin(), outputFileNameStr.end(), writable.begin());
+
+  exoid = ex_open(&writable[0], EX_WRITE, &CPU_word_size, &IO_word_size, &version);
+
   error_int = ex_put_time(exoid, timeStep, &timeValue);
   TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error, "ex_put_time(): Failure");
 
@@ -300,10 +322,64 @@ PeridigmNS::InterfaceData::WriteExodusOutput(const int timeStep, const float & t
 
   delete [] quadValues;
   delete [] triValues;
-}
 
+  // update the apertures...
+  // import the mothership vectors x and y to the overlap epetra vectors
+  Teuchos::RCP<const Epetra_Import> importer = Teuchos::rcp(new Epetra_Import(*elemOverlapMap, x->Map()));
 
-void
-PeridigmNS::InterfaceData::FinalizeExodusOutput(){
-  ex_close(exoid);
+  Teuchos::RCP<Epetra_Vector> xOverlap = Teuchos::rcp(new Epetra_Vector(*elemOverlapMap,true));
+  xOverlap->Import(*x,*importer,Insert);
+  Teuchos::RCP<Epetra_Vector> yOverlap = Teuchos::rcp(new Epetra_Vector(*elemOverlapMap,true));
+  yOverlap->Import(*y,*importer,Insert);
+
+  double *xValues;
+  xOverlap->ExtractView( &xValues );
+  double *yValues;
+  yOverlap->ExtractView( &yValues );
+
+  double xLeft=0,yLeft=0,zLeft=0,xRight=0,yRight=0,zRight=0;
+  double XLeft=0,YLeft=0,ZLeft=0,XRight=0,YRight=0,ZRight=0;
+  double X=0,Y=0;
+  double dx=0,dy=0,dz=0,dX=0,dY=0,dZ=0;
+  int elemIndexLeft=-1,elemIndexRight=-1,GIDLeft=-1,GIDRight=-1;
+
+  for(unsigned i=0;i<numOwnedPoints;++i){
+    GIDLeft = elementLeft[i];
+    GIDRight = elementRight[i];
+
+    elemIndexLeft = xOverlap->Map().FirstPointInElement(elemOverlapMap->LID(GIDLeft));
+    elemIndexRight = xOverlap->Map().FirstPointInElement(elemOverlapMap->LID(GIDRight));
+
+    xLeft = xValues[elemIndexLeft+0];
+    yLeft = xValues[elemIndexLeft+1];
+    zLeft = xValues[elemIndexLeft+2];
+    xRight = xValues[elemIndexRight+0];
+    yRight = xValues[elemIndexRight+1];
+    zRight = xValues[elemIndexRight+2];
+
+    XLeft = yValues[elemIndexLeft+0];
+    YLeft = yValues[elemIndexLeft+1];
+    ZLeft = yValues[elemIndexLeft+2];
+    XRight = yValues[elemIndexRight+0];
+    YRight = yValues[elemIndexRight+1];
+    ZRight = yValues[elemIndexRight+2];
+
+    dx = xRight - xLeft;
+    dy = yRight - yLeft;
+    dz = zRight - zLeft;
+
+    dX = XRight - XLeft;
+    dY = YRight - YLeft;
+    dZ = ZRight - ZLeft;
+
+    X = std::sqrt(dx*dx + dy*dy + dz*dz);
+    Y = std::sqrt(dX*dX + dY*dY + dZ*dZ);
+
+    interfaceAperture->ReplaceMyValue(i,0,Y-X);
+  }
+  error_int = ex_update(exoid);
+  TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"Exodus file close failed.");
+  error_int = ex_close(exoid);
+  TEUCHOS_TEST_FOR_EXCEPTION(error_int,std::logic_error,"Exodus file close failed.");
+
 }

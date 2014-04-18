@@ -78,9 +78,7 @@ public:
 
   void InitializeExodusOutput(Teuchos::RCP<Epetra_Vector> exodusMeshElementConnectivity, Teuchos::RCP<Epetra_Vector> exodusMeshNodePositions);
 
-  void FinalizeExodusOutput();
-
-  void WriteExodusOutput(const int timeStep, const float & timeValue);
+  void WriteExodusOutput(const int timeStep, const float & timeValue, Teuchos::RCP<Epetra_Vector> x, Teuchos::RCP<Epetra_Vector> y);
 
   int NumOwnedPoints() const{
   return numOwnedPoints;
@@ -109,11 +107,13 @@ protected:
   int* elementRight;
   int* numNodes;
   int exoid;
+  std::stringstream filename;
   int numQuads;
   int numTris;
   Teuchos::RCP<const Epetra_Comm> comm;
   Teuchos::RCP<Epetra_BlockMap> interfaceMap;
   Teuchos::RCP<Epetra_BlockMap> interfaceNodesMap;
+  Teuchos::RCP<Epetra_BlockMap> elemOverlapMap;
   Teuchos::RCP<Epetra_Vector> interfaceAperture;
   Teuchos::RCP<Epetra_Vector> interfaceNodes;
 
