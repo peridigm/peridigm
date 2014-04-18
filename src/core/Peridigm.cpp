@@ -1804,7 +1804,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
     synchDataManagers();
     outputManager->write(blocks, timeCurrent);
     if(constructInterfaces){
-      interfaceData->WriteExodusOutput(step+1,timeCurrent);
+      interfaceData->WriteExodusOutput(step+1,timeCurrent,x,y);
     }
     PeridigmNS::Timer::self().stopTimer("Output");
 
@@ -1816,10 +1816,6 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
 
   if(peridigmComm->MyPID() == 0)
     cout << endl;
-
-  if(constructInterfaces)
-    interfaceData->FinalizeExodusOutput();
-
 }
 
 void PeridigmNS::Peridigm::quasiStaticsSetPreconditioner(Belos::LinearProblem<double,Epetra_MultiVector,Epetra_Operator>& linearProblem) {
