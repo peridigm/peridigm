@@ -78,7 +78,7 @@ public:
 
   void InitializeExodusOutput(Teuchos::RCP<Epetra_Vector> exodusMeshElementConnectivity, Teuchos::RCP<Epetra_Vector> exodusMeshNodePositions);
 
-  void WriteExodusOutput(const int timeStep, const float & timeValue, Teuchos::RCP<Epetra_Vector> x, Teuchos::RCP<Epetra_Vector> y);
+  void WriteExodusOutput(int timeStep, const float & timeValue, Teuchos::RCP<Epetra_Vector> x, Teuchos::RCP<Epetra_Vector> y);
 
   int NumOwnedPoints() const{
   return numOwnedPoints;

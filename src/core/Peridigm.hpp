@@ -233,7 +233,10 @@ namespace PeridigmNS {
     Teuchos::RCP<const PeridigmNS::NeighborhoodData> getGlobalNeighborhoodData() { return globalNeighborhoodData; }
 
     //! Accessor for interface data
-    Teuchos::RCP<const PeridigmNS::InterfaceData> getInterfaceData() { return interfaceData; }
+    Teuchos::RCP<PeridigmNS::InterfaceData> getInterfaceData() { return interfaceData; }
+
+    //! Flag if has interface data:
+    const bool interfacesAreConstructed(){return constructInterfaces;}
 
     //! Accessor for vector of Blocks
     Teuchos::RCP< std::vector<PeridigmNS::Block> > getBlocks() { return blocks; }

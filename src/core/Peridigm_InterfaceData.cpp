@@ -271,7 +271,7 @@ PeridigmNS::InterfaceData::InitializeExodusOutput(Teuchos::RCP<Epetra_Vector> ex
 }
 
 void
-PeridigmNS::InterfaceData::WriteExodusOutput(const int timeStep, const float & timeValue, Teuchos::RCP<Epetra_Vector> x, Teuchos::RCP<Epetra_Vector> y){
+PeridigmNS::InterfaceData::WriteExodusOutput(int timeStep, const float & timeValue, Teuchos::RCP<Epetra_Vector> x, Teuchos::RCP<Epetra_Vector> y){
 
   int error_int = 0;
 
