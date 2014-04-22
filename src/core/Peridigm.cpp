@@ -1803,9 +1803,6 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
     PeridigmNS::Timer::self().startTimer("Output");
     synchDataManagers();
     outputManager->write(blocks, timeCurrent);
-    if(constructInterfaces){
-      interfaceData->WriteExodusOutput(step+1,timeCurrent,x,y);
-    }
     PeridigmNS::Timer::self().stopTimer("Output");
 
     // swap state N and state NP1

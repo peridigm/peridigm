@@ -242,6 +242,13 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
       initializeExodusDatabase(blocks);
   }
 
+  // if the interface data was constructed, output that to file
+  if(peridigm->interfacesAreConstructed()){
+    peridigm->getInterfaceData()->WriteExodusOutput(exodusCount,current_time,peridigm->getX(),peridigm->getY());
+  }
+
+
+
   // Open exodus database for writing
   float version;
   file_handle = ex_open(filename.str().c_str(), EX_WRITE, &CPU_word_size, &IO_word_size, &version);
