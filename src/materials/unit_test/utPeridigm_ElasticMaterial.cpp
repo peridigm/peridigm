@@ -662,7 +662,7 @@ TEUCHOS_UNIT_TEST(ElasticMaterial, testThreePts) {
 }
 
 //! Tests the finite-difference Jacobian for a two-point system.
-TEUCHOS_UNIT_TEST(ElasticMaterial, twoPointProbeJacobian) {
+TEUCHOS_UNIT_TEST(ElasticMaterial, twoPointTangentStiffnessMatrix) {
 
   // instantiate the material model
   ParameterList params;
@@ -674,13 +674,18 @@ TEUCHOS_UNIT_TEST(ElasticMaterial, twoPointProbeJacobian) {
 
   // arguments for calls to material model
   Epetra_SerialComm comm;
-  Epetra_Map nodeMap(2, 0, comm);
-  Epetra_Map unknownMap(6, 0, comm);
-  Epetra_Map bondMap(2, 0, comm);
+  Epetra_BlockMap scalarPointMap(2, 1, 0, comm);
+  Epetra_BlockMap vectorPointMap(2, 3, 0, comm);
+  std::vector<int> myGlobalElements(2), elementSizes(2);
+  myGlobalElements[0] = 0;
+  myGlobalElements[1] = 1;
+  elementSizes[0] = 1;
+  elementSizes[1] = 1;
+  Epetra_BlockMap bondMap(2, 2, &myGlobalElements[0], &elementSizes[0], 0, comm);
+  Epetra_Map tangentMap(6, 0, comm); // this is basically the non-BlockMap version of the vectorPointMap (CrsMatrixes don't like BlockMaps)
   int numOwnedPoints;
   int* ownedIDs;
   int* neighborhoodList;
-  // \todo check field specs
 
   // set up discretization
   numOwnedPoints = 2;
@@ -696,48 +701,73 @@ TEUCHOS_UNIT_TEST(ElasticMaterial, twoPointProbeJacobian) {
   // create the data manager
   // in serial, the overlap and non-overlap maps are the same
   PeridigmNS::DataManager dataManager;
-  dataManager.setMaps(Teuchos::rcp(&nodeMap, false),
-                      Teuchos::rcp(&nodeMap, false),
-                      Teuchos::rcp(&unknownMap, false),
-                      Teuchos::rcp(&unknownMap, false),
+  dataManager.setMaps(Teuchos::rcp(&scalarPointMap, false),
+                      Teuchos::rcp(&scalarPointMap, false),
+                      Teuchos::rcp(&vectorPointMap, false),
+                      Teuchos::rcp(&vectorPointMap, false),
                       Teuchos::rcp(&bondMap, false));
   dataManager.allocateData(mat.FieldIds());
 
-  // create the Jacobian
-//   PeridigmNS::SerialMatrix jacobian(2*3);
+  // Create the global tangent matrix
+  Epetra_DataAccess CV = Copy;
+  int numEntriesPerRow = 0;  // Indicates allocation will take place during the insertion phase
+  bool ignoreNonLocalEntries = false;
+  Teuchos::RCP<Epetra_FECrsMatrix> tangentFECrsMatrix = Teuchos::rcp(new Epetra_FECrsMatrix(CV, tangentMap, numEntriesPerRow, ignoreNonLocalEntries));
+  int numRowNonzeros = 6;
+  vector<double> zeros(6);
+  vector<int> indices(6);
+  for(unsigned int i=0 ; i<indices.size() ; ++i)
+    indices[i] = i;
+  for(unsigned int i=0 ; i<6 ; ++i){
+    // Allocate space in the global matrix
+    int err = tangentFECrsMatrix->InsertGlobalValues(i, numRowNonzeros, (const double*)&zeros[0], (const int*)&indices[0]);
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(err < 0, "**** InsertGlobalValues() returned negative error code.\n");
+  }
+  int err = tangentFECrsMatrix->GlobalAssemble();
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::allocateJacobian(), GlobalAssemble() returned nonzero error code.\n");
 
-//   Epetra_Vector& x = *dataManager.getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE);
-//   Epetra_Vector& y = *dataManager.getData(coordinatesFieldId, PeridigmField::STEP_NP1);
-//   Epetra_Vector& cellVolume = *dataManager.getData(volumeFieldId, PeridigmField::STEP_NONE);
+  // create the SerialMatrix that is fed to the material model
+  PeridigmNS::SerialMatrix tangentSerialMatrix(tangentFECrsMatrix);
 
-//   x[0] = 0.0; x[1] = 0.0; x[2] = 0.0;
-//   x[3] = 1.0; x[4] = 0.0; x[5] = 0.0;
-//   y[0] = 0.0; y[1] = 0.0; y[2] = 0.0;
-//   y[3] = 2.0; y[4] = 0.0; y[5] = 0.0;
-//   for(int i=0; i<cellVolume.MyLength(); ++i){
-// 	cellVolume[i] = 1.0;
-//   }
+  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  int modelCoordinatesFieldId = fieldManager.getFieldId("Model_Coordinates");
+  int coordinatesFieldId = fieldManager.getFieldId("Coordinates");
+  int volumeFieldId = fieldManager.getFieldId("Volume");
 
-//   mat.initialize(dt, 
-//                  numOwnedPoints,
-//                  ownedIDs,
-//                  neighborhoodList,
-//                  dataManager);
+  Epetra_Vector& x = *dataManager.getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE);
+  Epetra_Vector& y = *dataManager.getData(coordinatesFieldId, PeridigmField::STEP_NP1);
+  Epetra_Vector& cellVolume = *dataManager.getData(volumeFieldId, PeridigmField::STEP_NONE);
 
-//   mat.computeJacobian(dt, 
-//                       numOwnedPoints,
-//                       ownedIDs,
-//                       neighborhoodList,
-//                       dataManager,
-//                       jacobian);
+  x[0] = 0.0; x[1] = 0.0; x[2] = 0.0;
+  x[3] = 1.0; x[4] = 0.0; x[5] = 0.0;
+  y[0] = 0.0; y[1] = 0.0; y[2] = 0.0;
+  y[3] = 2.0; y[4] = 0.0; y[5] = 0.0;
+  for(int i=0; i<cellVolume.MyLength(); ++i){
+	cellVolume[i] = 1.0;
+  }
 
-//   cout << "\nJacobian:" << endl;
-//   jacobian.print(cout);
+  double dt = 1.0; // time step
+
+  mat.initialize(dt, 
+                 numOwnedPoints,
+                 ownedIDs,
+                 neighborhoodList,
+                 dataManager);
+
+  mat.computeJacobian(dt, 
+                      numOwnedPoints,
+                      ownedIDs,
+                      neighborhoodList,
+                      dataManager,
+                      tangentSerialMatrix);
+
+  // cout << "\nTangent Stiffness Matrix:" << endl;
+  // cout << *tangentFECrsMatrix << endl;
 }
 
 //! Tests the finite-difference Jacobian for a two-point system.
 
-TEUCHOS_UNIT_TEST(ElasticMaterial, twoPointProbeJacobianJAM) {
+TEUCHOS_UNIT_TEST(ElasticMaterial, twoPointTangentStiffnessMatrixJAM) {
 
   // instantiate the material model
   ParameterList params;
@@ -806,7 +836,7 @@ TEUCHOS_UNIT_TEST(ElasticMaterial, twoPointProbeJacobianJAM) {
 //                       dataManager,
 //                       jacobian);
 
-//   cout << "\nJacobian for twoPointProbeJacobianJAM:" << endl;
+//   cout << "\nJacobian for twoPointTangentStiffnessMatrixJAM:" << endl;
 //   jacobian.print(cout);
 }
 
