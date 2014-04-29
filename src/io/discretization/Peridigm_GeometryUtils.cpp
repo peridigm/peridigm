@@ -870,6 +870,35 @@ void PeridigmNS::cross(const double* const a,
   return;
 }
 
+double PeridigmNS::determinant3x3(const double& aa, const double& ab, const double& ac,
+                                  const double& ba, const double& bb, const double& bc,
+                                  const double& ca, const double& cb, const double& cc)
+{
+  double det = aa*(bb*cc - bc*cb) - ab*(ba*cc - bc*ca) + ac*(ba*cb - bb*ca);
+  return det;
+}
+
+double PeridigmNS::determinant4x4(const double& aa, const double& ab, const double& ac, const double& ad,
+                                  const double& ba, const double& bb, const double& bc, const double& bd,
+                                  const double& ca, const double& cb, const double& cc, const double& cd,
+                                  const double& da, const double& db, const double& dc, const double& dd)
+{
+  double minor1 = determinant3x3(bb, bc, bd,
+                                 cb, cc, cd,
+                                 db, dc, dd);
+  double minor2 = determinant3x3(ba, bc, bd,
+                                 ca, cc, cd,
+                                 da, dc, dd);
+  double minor3 = determinant3x3(ba, bb, bd,
+                                 ca, cb, cd,
+                                 da, db, dd);
+  double minor4 = determinant3x3(ba, bb, bc,
+                                 ca, cb, cc,
+                                 da, db, dc);
+  double det = aa*minor1 - ab*minor2 + ac*minor3 - ad*minor4;
+  return det;
+}
+
 double PeridigmNS::scalarTripleProduct(const std::vector<double>& a,
                                        const std::vector<double>& b,
                                        const std::vector<double>& c)
