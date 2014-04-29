@@ -24,19 +24,18 @@ if __name__ == "__main__":
     if "-verbose" in sys.argv:
         verbose = True
 
+    # modify the environment to include full paths to Peridigm and exotxt
+    test_root_dir = os.getcwd()
+    os.chdir("../../src")
+    peridigm_executable_dir = os.getcwd()
+    os.chdir("../scripts")
+    exotxt_executable_dir = os.getcwd()
+    my_env = os.environ
+    my_env["PATH"] = peridigm_executable_dir + ":" + exotxt_executable_dir + ":" + my_env["PATH"]
+    os.chdir(test_root_dir)
+
     # change to the specified test directory
     os.chdir(test_dir)
-
-    # open log file
-    log_file_name = base_name + ".log"
-    if os.path.exists(log_file_name):
-        os.remove(log_file_name)
-    logfile = open(log_file_name, 'w')
-
-    # open log file
-    dakota_log_file_name = "Dakota.log"
-    if os.path.exists(dakota_log_file_name):
-        os.remove(dakota_log_file_name)
 
     # remove old output files, if any
     files_to_remove = base_name + ".e"
@@ -44,35 +43,23 @@ if __name__ == "__main__":
       if file in files_to_remove:
         os.remove(file)
 
-    # Setup soft link to Peridigm executable so that simulation driver script can find it
-    logfile.write("Creating symbolic link to Peridigm in test directory.\n")
-    command = ["ln","-f","-s","../../../../src/Peridigm","."]
-    p = Popen(command, stdout=logfile, stderr=logfile)
-    return_code = p.wait()
-    if return_code != 0:
-        result = return_code
-    logfile.write("  Complete (return code " + str(return_code) + ").\n\n")
-    logfile.write("Creating symbolic link to Peridigm in template directory.\n")
-    command = ["ln","-f","-s","../../../../../src/Peridigm","./templatedir"]
-    p = Popen(command, stdout=logfile, stderr=logfile)
-    return_code = p.wait()
-    if return_code != 0:
-        result = return_code
-    logfile.write("  Complete (return code " + str(return_code) + ").\n\n")
-    logfile.write("Creating symbolic link to exotxt in template directory.\n")
-    command = ["ln","-f","-s","../../../../../scripts/exotxt","./templatedir"]
-    p = Popen(command, stdout=logfile, stderr=logfile)
-    return_code = p.wait()
-    if return_code != 0:
-        result = return_code
-    logfile.write("  Complete (return code " + str(return_code) + ").\n\n")
+    # open log file
+    log_file_name = base_name + ".log"
+    if os.path.exists(log_file_name):
+        os.remove(log_file_name)
+    logfile = open(log_file_name, 'w')
+
+    # open dakota log file
+    dakota_log_file_name = "Dakota.log"
+    if os.path.exists(dakota_log_file_name):
+        os.remove(dakota_log_file_name)
 
     # run Dakota
     logfile.write("Executing Dakota.\n")
-    sys.path.append("../../../../src/Peridigm")
+    #sys.path.append("../../../../src/Peridigm")
     command = ["dakota","-in","dakota_peridigm.in"]
     dakota_log_file = open(dakota_log_file_name, 'w')
-    p = Popen(command, stdout=dakota_log_file, stderr=dakota_log_file)
+    p = Popen(command, stdout=dakota_log_file, stderr=dakota_log_file, env=my_env)
     return_code = p.wait()
     dakota_log_file.close()
     if return_code != 0:

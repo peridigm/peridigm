@@ -41,7 +41,7 @@ if __name__ == "__main__":
     pt1_vals = values[:num_nodal_variables]
     pt2_vals = values[num_nodal_variables:2*num_nodal_variables]
 
-    force_index = 3
+    force_index = 6
     pt1_force = float(pt1_vals[force_index])
     pt2_force = float(pt2_vals[force_index])
 
@@ -51,14 +51,15 @@ if __name__ == "__main__":
     error1 = pt1_force - pt1_truth
     error2 = pt2_force - pt2_truth
 
-    print sys.argv
-
     if len(sys.argv) != 2:
        print "\nError:  No output file specified."
        print "Usage:  ExtractNodalForces.py <output_file>.\n"
        sys.exit(-1)
+    results_string = str(error1) + "\n" + str(error2) + "\n"
     dakota_file_name = sys.argv[-1]
     dakota_file = open(dakota_file_name, 'w')
-    dakota_file.write(str(error1) + "\n" + str(error2) + "\n")
+    dakota_file.write(results_string)
     dakota_file.close()
-    print "\nResults written to", dakota_file_name, "\n"
+    print "\nResults extracted by ExtractNodalForces.py:\n"
+    print results_string
+    print "Results written to", dakota_file_name, "\n"
