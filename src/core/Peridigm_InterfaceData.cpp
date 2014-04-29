@@ -71,7 +71,7 @@ PeridigmNS::InterfaceData::Initialize(std::vector<int> leftElements, std::vector
   elementRight = new int[numOwnedPoints];
   numNodes = new int[numOwnedPoints];
   interfaceMap = Teuchos::rcp(new Epetra_BlockMap(-1, numOwnedPoints, 1, 0, *comm));
-  for(unsigned i=0;i<numOwnedPoints;++i){
+  for(int i=0;i<numOwnedPoints;++i){
     const int interfaceGID = interfaceMap->GID(i);
     ownedIDs[i] = interfaceGID;
     elementLeft[i] = leftElements[i];
@@ -89,16 +89,16 @@ PeridigmNS::InterfaceData::Initialize(std::vector<int> leftElements, std::vector
 
   // copy over the nodes that make up each interface
   int elemIndex = 0;
-  for(unsigned i=0;i<numOwnedPoints;++i){
+  for(int i=0;i<numOwnedPoints;++i){
     elemIndex = interfaceNodes->Map().FirstPointInElement(i);
-    for(unsigned j=0;j<numNodesPerElem[i];++j){
+    for(int j=0;j<numNodesPerElem[i];++j){
       (*interfaceNodes)[elemIndex + j] = interfaceNodesVec[i][j];
     }
   }
 
   // generate an overlap map of the elements attached to all local interfaces:
   std::set<int> ElemGIDsSet;
-  for(unsigned i=0;i<numOwnedPoints;++i){
+  for(int i=0;i<numOwnedPoints;++i){
     ElemGIDsSet.insert(elementLeft[i]);
     ElemGIDsSet.insert(elementRight[i]);
   }
@@ -144,7 +144,7 @@ PeridigmNS::InterfaceData::InitializeExodusOutput(Teuchos::RCP<Epetra_Vector> ex
   // scan the connectivity to see if there are quads and tets:
   numQuads = 0;
   numTris = 0;
-  for(unsigned i=0;i<numOwnedPoints;++i){
+  for(int i=0;i<numOwnedPoints;++i){
     if(interfaceNodesMap->ElementSize(i)==4) numQuads++;
     if(interfaceNodesMap->ElementSize(i)==3) numTris++;
   }
@@ -164,14 +164,14 @@ PeridigmNS::InterfaceData::InitializeExodusOutput(Teuchos::RCP<Epetra_Vector> ex
   int * shellMap = new int[numShells];
   int * nodeMap = new int[numNodes];
 
-  for(unsigned i=0;i<numNodes;++i){
+  for(int i=0;i<numNodes;++i){
     int nodeIndex = exodusMeshNodePositions->Map().FirstPointInElement(i);
     x[i] = (*exodusMeshNodePositions)[nodeIndex+0];
     y[i] = (*exodusMeshNodePositions)[nodeIndex+1];
     z[i] = (*exodusMeshNodePositions)[nodeIndex+2];
     nodeMap[i] = exodusMeshNodePositions->Map().GID(i) + 1; // numbering is one based in exodus
   }
-  for(unsigned i=0;i<numShells;++i){
+  for(int i=0;i<numShells;++i){
     shellMap[i] = interfaceNodesMap->GID(i) +1; // numbering is one based in exodus
   }
 
@@ -221,7 +221,7 @@ PeridigmNS::InterfaceData::InitializeExodusOutput(Teuchos::RCP<Epetra_Vector> ex
   {
     if(interfaceNodes->Map().ElementSize(it)!=4) continue;
     int elemIndex = interfaceNodes->Map().FirstPointInElement(it);
-    for(unsigned nn=0;nn<4;++nn){
+    for(int nn=0;nn<4;++nn){
       int node = (*interfaceNodes)[elemIndex+nn];
       block_connect_q4[conn_index*num_nodes_per_elem_q4+nn] = exodusMeshNodePositions->Map().LID(node) + 1;// nodes are 1 based in exodus
     }
@@ -236,7 +236,7 @@ PeridigmNS::InterfaceData::InitializeExodusOutput(Teuchos::RCP<Epetra_Vector> ex
   {
     if(interfaceNodes->Map().ElementSize(it)!=3) continue;
     int elemIndex = interfaceNodes->Map().FirstPointInElement(it);
-    for(unsigned nn=0;nn<3;++nn){
+    for(int nn=0;nn<3;++nn){
       int node = (*interfaceNodes)[elemIndex+nn];
       block_connect_t3[conn_index*num_nodes_per_elem_t3+nn] = exodusMeshNodePositions->Map().LID(node) + 1;// nodes are 1 based in exodus
     }
@@ -249,7 +249,7 @@ PeridigmNS::InterfaceData::InitializeExodusOutput(Teuchos::RCP<Epetra_Vector> ex
   char** eleVarNames = new char*[numVariables];
   std::vector<std::string> strNames;
   strNames.push_back("interface_aperture");
-  for (unsigned i=0;i<numVariables;++i)
+  for (int i=0;i<numVariables;++i)
     eleVarNames[i] = (char*) (strNames[i].c_str());
   error_int = ex_put_var_param(exoid, (char*) "e", numVariables);
   error_int = ex_put_var_names(exoid, (char*) "e", numVariables, &eleVarNames[0]);
@@ -258,7 +258,7 @@ PeridigmNS::InterfaceData::InitializeExodusOutput(Teuchos::RCP<Epetra_Vector> ex
 
   // write the truth table
   int * truth_tab = new int[numVariables*numBlocks];
-  for(unsigned i=0;i<numVariables*numBlocks;++i)
+  for(int i=0;i<numVariables*numBlocks;++i)
     truth_tab[i] = 1;
   error_int = ex_put_elem_var_tab (exoid, numBlocks, numVariables, truth_tab);
   delete [] truth_tab;
@@ -293,7 +293,7 @@ PeridigmNS::InterfaceData::WriteExodusOutput(int timeStep, const float & timeVal
   // populate the quad values
   int quadIndex = 0;
   int triIndex = 0;
-  for(unsigned i=0;i<numOwnedPoints;++i){
+  for(int i=0;i<numOwnedPoints;++i){
     if(interfaceNodesMap->ElementSize(i)==4){
       quadValues[quadIndex] = (*interfaceAperture)[i];
       quadIndex++;
@@ -343,7 +343,7 @@ PeridigmNS::InterfaceData::WriteExodusOutput(int timeStep, const float & timeVal
   double dx=0,dy=0,dz=0,dX=0,dY=0,dZ=0;
   int elemIndexLeft=-1,elemIndexRight=-1,GIDLeft=-1,GIDRight=-1;
 
-  for(unsigned i=0;i<numOwnedPoints;++i){
+  for(int i=0;i<numOwnedPoints;++i){
     GIDLeft = elementLeft[i];
     GIDRight = elementRight[i];
 
