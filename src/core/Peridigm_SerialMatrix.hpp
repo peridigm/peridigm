@@ -61,7 +61,7 @@ namespace PeridigmNS {
  *  This class serves as an interface between material models and the global tangent matrix.  The material models operate on
  *  block-specific data and were designed such that a single, consistent indexing scheme is used for all calculations.  This
  *  indexing scheme differs from the global indexing scheme, hence the index values must be transformed prior to inserting
- *  values into the global tangent matrix.  This translation is the mmain purpose of PeridigmNS::SerialMatrix.
+ *  values into the global tangent matrix.  This translation is the main purpose of PeridigmNS::SerialMatrix.
  */
 class SerialMatrix {
 

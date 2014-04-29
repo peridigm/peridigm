@@ -383,6 +383,77 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   }
 #endif
 
+  // Store the locations of the original Exodus nodes for each element.
+  // This is only done if the fields "Exodus_Node_1", "Exodus_Node_2", etc., have been registered.
+  // The point of storing the node positions as element variables is to make them available in
+  // compute classes or for output (which enables various types of post-processing).
+  if( fieldManager.hasField("Exodus_Node_1") ){
+
+    int m_exodusNode1FieldId = fieldManager.getFieldId("Exodus_Node_1");
+    int m_exodusNode2FieldId = fieldManager.getFieldId("Exodus_Node_2");
+    int m_exodusNode3FieldId = fieldManager.getFieldId("Exodus_Node_3");
+    int m_exodusNode4FieldId = fieldManager.getFieldId("Exodus_Node_4");
+    int m_exodusNode5FieldId = fieldManager.getFieldId("Exodus_Node_5");
+    int m_exodusNode6FieldId = fieldManager.getFieldId("Exodus_Node_6");
+    int m_exodusNode7FieldId = fieldManager.getFieldId("Exodus_Node_7");
+    int m_exodusNode8FieldId = fieldManager.getFieldId("Exodus_Node_8");
+
+    int globalId;
+    unsigned int numExodusNodes;
+    vector<double> nodePositions;
+    Teuchos::RCP<const Epetra_BlockMap> blockScalarPointMap;
+    double *node1, *node2, *node3, *node4, *node5, *node6, *node7, *node8;
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++) {
+      blockScalarPointMap = blockIt->getOwnedScalarPointMap();
+      blockIt->getData(m_exodusNode1FieldId, PeridigmField::STEP_NONE)->ExtractView(&node1);
+      blockIt->getData(m_exodusNode2FieldId, PeridigmField::STEP_NONE)->ExtractView(&node2);
+      blockIt->getData(m_exodusNode3FieldId, PeridigmField::STEP_NONE)->ExtractView(&node3);
+      blockIt->getData(m_exodusNode4FieldId, PeridigmField::STEP_NONE)->ExtractView(&node4);
+      blockIt->getData(m_exodusNode5FieldId, PeridigmField::STEP_NONE)->ExtractView(&node5);
+      blockIt->getData(m_exodusNode6FieldId, PeridigmField::STEP_NONE)->ExtractView(&node6);
+      blockIt->getData(m_exodusNode7FieldId, PeridigmField::STEP_NONE)->ExtractView(&node7);
+      blockIt->getData(m_exodusNode8FieldId, PeridigmField::STEP_NONE)->ExtractView(&node8);
+
+      for(int i=0 ; i<blockScalarPointMap->NumMyElements() ; ++i){
+        globalId = blockScalarPointMap->GID(i);
+        peridigmDiscretization->getExodusMeshNodePositions(globalId, nodePositions);
+        numExodusNodes = nodePositions.size()/3;
+        if(numExodusNodes >= 1){
+          for(int j=0 ; j<3 ; ++j)
+            node1[3*i+j] = nodePositions[j];
+        }
+        if(numExodusNodes >= 2){
+          for(int j=0 ; j<3 ; ++j)
+            node2[3*i+j] = nodePositions[3+j];
+        }
+        if(numExodusNodes >= 3){
+          for(int j=0 ; j<3 ; ++j)
+            node3[3*i+j] = nodePositions[6+j];
+        }
+        if(numExodusNodes >= 4){
+          for(int j=0 ; j<3 ; ++j)
+            node4[3*i+j] = nodePositions[9+j];
+        }
+        if(numExodusNodes >= 5){
+          for(int j=0 ; j<3 ; ++j)
+            node5[3*i+j] = nodePositions[12+j];
+        }
+        if(numExodusNodes >= 6){
+          for(int j=0 ; j<3 ; ++j)
+            node6[3*i+j] = nodePositions[15+j];
+        }
+        if(numExodusNodes >= 7){
+          for(int j=0 ; j<3 ; ++j)
+            node7[3*i+j] = nodePositions[18+j];
+        }
+        if(numExodusNodes >= 8){
+          for(int j=0 ; j<3 ; ++j)
+            node8[3*i+j] = nodePositions[21+j];
+        }
+      }
+    }
+  }
+
   // Set the density in the mothership vector
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
     Teuchos::RCP<const Epetra_BlockMap> OwnedScalarPointMap = blockIt->getOwnedScalarPointMap();

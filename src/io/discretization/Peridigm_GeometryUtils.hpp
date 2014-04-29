@@ -96,6 +96,17 @@ namespace PeridigmNS {
   //! Compute cross product of two three-dimensional vectors
   void cross(const double* const a, const double* const b, double* c);
 
+  //! Compute the determinant of a 3x3 matrix
+  double determinant3x3(const double& aa, const double& ab, const double& ac,
+                        const double& ba, const double& bb, const double& bc,
+                        const double& ca, const double& cb, const double& cc);
+
+  //! Compute the determinant of a 4x4 matrix
+  double determinant4x4(const double& aa, const double& ab, const double& ac, const double& ad,
+                        const double& ba, const double& bb, const double& bc, const double& bd,
+                        const double& ca, const double& cb, const double& cc, const double& cd,
+                        const double& da, const double& db, const double& dc, const double& dd);
+
   //! Compute a scalar triple product.
   double scalarTripleProduct(const std::vector<double>& a, const std::vector<double>& b, const std::vector<double>& c);
 
