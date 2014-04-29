@@ -73,8 +73,8 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   minElementRadius(1.0e50),
   maxElementRadius(0.0),
   storeExodusMesh(false),
-  computeIntersections(false),
   constructInterfaces(false),
+  computeIntersections(false),
   maxElementDimension(0.0),
   numBonds(0),
   maxNumBondsPerElem(0),
@@ -596,11 +596,11 @@ PeridigmNS::STKDiscretization::constructInterfaceData()
     const int myIndex = exodusMeshElementConnectivity->Map().FirstPointInElement(elemIndex);
     // get the connectivity for this element:
     std::vector<int> selfNodeIds(numNodesPerElem);
-    for(unsigned n=0;n<numNodesPerElem;++n){
+    for(int n=0;n<numNodesPerElem;++n){
       selfNodeIds[n] = (*exodusMeshElementConnectivity)[myIndex+n];
     }
 
-    for(unsigned j=0;j<numNeighbors;j++){
+    for(int j=0;j<numNeighbors;j++){
       i++;
       int numNodesFound = 0;
       const int GID = oneDimensionalOverlapMap->GID(neighPtr[i]);
@@ -610,21 +610,21 @@ PeridigmNS::STKDiscretization::constructInterfaceData()
       // the two elements must have a face in common to be an interface pair:
       std::vector<int> neighNodeIds(numNodesPerElem);
       std::vector<int> foundNodeIds(4); // 4 works for tris or quads
-      for(unsigned n=0;n<numNodesPerElem;++n)
+      for(int n=0;n<numNodesPerElem;++n)
         neighNodeIds[n] = (*exodusMeshElementConnectivity)[neighIndex + n];
 
       if(numNodesPerElem==8){ // cube (order needed to prevent folding the interfaces by mixing up the node numbering)
-        for(unsigned ni=0;ni<6;++ni){
+        for(int ni=0;ni<6;++ni){
           numNodesFound = 0;
-          for(unsigned nj=0;nj<4;++nj){
-            for(unsigned nk=0;nk<numNodesPerElem;++nk){
+          for(int nj=0;nj<4;++nj){
+            for(int nk=0;nk<numNodesPerElem;++nk){
               if(selfNodeIds[faces[ni][nj]]==neighNodeIds[nk]){
                 numNodesFound++;
               }
             }
           }
           if(numNodesFound>2){ // this is a shared face
-            for(unsigned kn=0;kn<4;++kn)
+            for(int kn=0;kn<4;++kn)
               foundNodeIds[kn] = selfNodeIds[faces[ni][kn]];
             if((GID!=-1&&GID>selfGID)||(selfGID<GID)){
               leftElements.push_back(selfGID);
@@ -637,8 +637,8 @@ PeridigmNS::STKDiscretization::constructInterfaceData()
         }
       }
       else { // tets (order doesn't matter)
-        for(unsigned ni=0;ni<numNodesPerElem;++ni){
-          for(unsigned nj=0;nj<numNodesPerElem;++nj){
+        for(int ni=0;ni<numNodesPerElem;++ni){
+          for(int nj=0;nj<numNodesPerElem;++nj){
             if(selfNodeIds[ni]==neighNodeIds[nj]){
               foundNodeIds[numNodesFound] = selfNodeIds[ni];
               numNodesFound++;

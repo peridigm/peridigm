@@ -60,7 +60,7 @@ class InterfaceData {
 
 public:
 
-  InterfaceData(): numOwnedPoints(0), ownedIDs(0), elementLeft(0), elementRight(0), numNodes(0), exoid(0), numTris(0), numQuads(0){}
+  InterfaceData(): numOwnedPoints(0), ownedIDs(0), elementLeft(0), elementRight(0), numNodes(0), exoid(0), numQuads(0), numTris(0){}
 
   ~InterfaceData(){
     if(ownedIDs != 0)
