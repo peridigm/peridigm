@@ -19,17 +19,48 @@ if __name__ == "__main__":
     text_file.close()
 
     data = []
-    flag = False
+    names = []
+    namesFlag = False
+    dataFlag = False
     for i in range(len(lines)):
         line = lines[i]
-        if flag:
+        if namesFlag:
+            if line[0] == "!":
+                namesFlag = False
+            else:
+                names.append(line)
+        if dataFlag:
             if "!" in line:
-                flag = False
+                dataFlag = False
             else:
                 data.append(line)
+        if "Variable names" in line:
+            names = []
+            namesFlag = True
         if "Nodal variables" in line:
             data = []
-            flag = True
+            dataFlag = True
+
+    var_names = []
+    for datum in names:
+        vals = string.splitfields(datum)
+        for val in vals:
+            var_names.append(val)
+
+    num_global_vars = int(var_names[0])
+    num_nodal_vars = int(var_names[1])
+    num_element_vars = int(var_names[2])
+
+    # get rid of comments read in from exotxt file
+    var_names = var_names[8:]
+
+    # find the location of the quantity of interest
+    var_of_interest = "FORCE_DENSITYX"
+    index = 0
+    for i in xrange(len(var_names)):
+        if var_names[i] == var_of_interest:
+            index = i
+            print "\nExtractNodalForces.py found variable", var_of_interest, "at location", index
 
     values = []
     for datum in data:
@@ -37,13 +68,11 @@ if __name__ == "__main__":
         for val in vals:
             values.append(val)
 
-    num_nodal_variables = 9
-    pt1_vals = values[:num_nodal_variables]
-    pt2_vals = values[num_nodal_variables:2*num_nodal_variables]
+    pt1_vals = values[:num_nodal_vars]
+    pt2_vals = values[num_nodal_vars:2*num_nodal_vars]
 
-    force_index = 6
-    pt1_force = float(pt1_vals[force_index])
-    pt2_force = float(pt2_vals[force_index])
+    pt1_force = float(pt1_vals[index])
+    pt2_force = float(pt2_vals[index])
 
     pt1_truth = -11700000.0
     pt2_truth =  11700000.0
