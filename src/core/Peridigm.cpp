@@ -147,7 +147,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   PeridigmNS::HorizonManager& horizonManager = PeridigmNS::HorizonManager::self();
   horizonManager.loadHorizonInformationFromBlockParameters(blockParams);
 
-  // If a discretization was passed into the constructor, use it.
+  // If a discretization was passed into the constructor, use it.  This is done for code coupling with Albany.
   // If not, create one based on the Discretization ParameterList in the input deck.
   Teuchos::RCP<Discretization> peridigmDiscretization = inputPeridigmDiscretization;
   if(peridigmDiscretization.is_null()){
@@ -1192,9 +1192,15 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
 void PeridigmNS::Peridigm::computeInternalForce()
 {
   // This function is intended for use when Peridigm is called as an external library (e.g., code coupling)
+  // It is assumed that the global vectors x, u, y, and v have already been set by the driver application
 
-  // It is assumed that the global vectors x, u, y, and v have been set.
-  // This function fills the global force vector.
+  // Run some checks to make sure things haven't gone haywire
+  for(int i=0 ; i<u->MyLength() ; ++i){
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*x)[i]), "**** NaN detetected in vector x in Peridigm::computeInternalForce().\n");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*u)[i]), "**** NaN detetected in vector u in Peridigm::computeInternalForce().\n");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*y)[i]), "**** NaN detetected in vector y in Peridigm::computeInternalForce().\n");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*v)[i]), "**** NaN detetected in vector v in Peridigm::computeInternalForce().\n");
+  }
 
   // Copy data from mothership vectors to overlap vectors in data manager
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
@@ -1216,12 +1222,17 @@ void PeridigmNS::Peridigm::computeInternalForce()
   }
   scratch->PutScalar(0.0);
 
+  // Run some checks to make sure things haven't gone haywire
+  for(int i=0 ; i<force->MyLength() ; ++i){
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*force)[i]), "**** NaN detetected in force vector in Peridigm::computeInternalForce().\n");
+  }
+
   // convert force density to force
   double *f, *v;
   force->ExtractView(&f);
   volume->ExtractView(&v);
   for(int i=0 ; i < force->MyLength() ; ++i)
-      f[i] *= v[i/3];
+    f[i] *= v[i/3];
 }
 
 void PeridigmNS::Peridigm::jacobianDiagnostics(Teuchos::RCP<NOX::Epetra::Group> noxGroup){

@@ -164,8 +164,6 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   if(constructInterfaces)
     constructInterfaceData();
 
-
-
   // Create the three-dimensional overlap map based on the one-dimensional overlap map
   threeDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(-1, 
                                                                 oneDimensionalOverlapMap->NumMyElements(),

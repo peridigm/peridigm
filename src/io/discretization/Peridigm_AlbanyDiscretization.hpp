@@ -52,7 +52,6 @@
 #include <Epetra_Vector.h>
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_Comm.h>
-#include "QuickGridData.h"
 
 namespace PeridigmNS {
 
@@ -127,25 +126,13 @@ namespace PeridigmNS {
     //! Private to prohibit copying
     AlbanyDiscretization& operator=(const AlbanyDiscretization&);
 
-    //! Creates a discretization object based on data read from a text file.
-    QUICKGRID::Data getDecomp(const std::string& textFileName,
-                              const Teuchos::RCP<Teuchos::ParameterList>& params);
+    //! Create a list of on-processor elements for each block
+    void createBlockElementLists();
 
   protected:
 
-    template<class T>
-    struct NonDeleter{
-      void operator()(T* d) {}
-    };
-
-    //! Create maps
-    void createMaps(const QUICKGRID::Data& decomp);
-
-    //! Create vectors
-    void createVectors();
-
     //! Create NeighborhoodData
-    void createNeighborhoodData(const QUICKGRID::Data& decomp);
+    void createNeighborhoodData(int neighborListSize, int* neighborList);
 
     //! Filter bonds from neighborhood list
     Teuchos::RCP<PeridigmNS::NeighborhoodData> filterBonds(Teuchos::RCP<PeridigmNS::NeighborhoodData> unfilteredNeighborhoodData);

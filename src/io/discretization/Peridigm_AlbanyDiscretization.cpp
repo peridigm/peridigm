@@ -46,9 +46,8 @@
 //@HEADER
 
 #include "Peridigm_AlbanyDiscretization.hpp"
+#include "Peridigm_ProximitySearch.hpp"
 #include "Peridigm_HorizonManager.hpp"
-#include "pdneigh/NeighborhoodList.h"
-#include "pdneigh/PdZoltan.h"
 
 #include <Epetra_Map.h>
 #include <Epetra_Vector.h>
@@ -68,9 +67,9 @@ using namespace std;
 
 PeridigmNS::AlbanyDiscretization::AlbanyDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                                                        const Teuchos::RCP<Teuchos::ParameterList>& params,
-						       const Teuchos::RCP<Epetra_Vector>& refCoord,
-						       const Teuchos::RCP<Epetra_Vector>& volume,
-						       const Teuchos::RCP<Epetra_Vector>& blockId) :
+                                                       const Teuchos::RCP<Epetra_Vector>& refCoord,
+                                                       const Teuchos::RCP<Epetra_Vector>& volume,
+                                                       const Teuchos::RCP<Epetra_Vector>& blockId) :
   minElementRadius(1.0e50),
   maxElementRadius(0.0),
   maxElementDimension(0.0),
@@ -84,25 +83,67 @@ PeridigmNS::AlbanyDiscretization::AlbanyDiscretization(const Teuchos::RCP<const 
   Teuchos::RCP<Teuchos::ParameterList> discretizationParams = Teuchos::rcpFromRef(params->sublist("Discretization", true));
   Teuchos::RCP<Teuchos::ParameterList> blockParams = Teuchos::rcpFromRef(params->sublist("Blocks", true));
 
-  PeridigmNS::HorizonManager& horizonManager = PeridigmNS::HorizonManager::self();
-  horizonManager.loadHorizonInformationFromBlockParameters(*blockParams);
-
   TEUCHOS_TEST_FOR_EXCEPT_MSG(discretizationParams->get<string>("Type") != "Albany", "Invalid Type in AlbanyDiscretization");
 
-  string meshFileName = discretizationParams->get<string>("Input Mesh File");
-  if(discretizationParams->isParameter("Omit Bonds Between Blocks"))
-    bondFilterCommand = discretizationParams->get<string>("Omit Bonds Between Blocks");
+  initialX = Teuchos::RCP<Epetra_Vector>(new Epetra_Vector(*refCoord));
+  cellVolume = Teuchos::RCP<Epetra_Vector>(new Epetra_Vector(*volume));
+  blockID = Teuchos::RCP<Epetra_Vector>(new Epetra_Vector(*blockId));
+
+  oneDimensionalMap = Teuchos::RCP<Epetra_BlockMap>(new Epetra_BlockMap(cellVolume->Map()));
+  threeDimensionalMap = Teuchos::RCP<Epetra_BlockMap>(new Epetra_BlockMap(initialX->Map()));
 
   // Set up bond filters
+  if(discretizationParams->isParameter("Omit Bonds Between Blocks"))
+    bondFilterCommand = discretizationParams->get<string>("Omit Bonds Between Blocks");
   createBondFilters(discretizationParams);
 
-  QUICKGRID::Data decomp = getDecomp(meshFileName, discretizationParams);
+  // Create a list of on-processor elements for each block
+  createBlockElementLists();
 
-  // \todo Refactor; the createMaps() call is currently inside getDecomp() due to order-of-operations issues with tracking element blocks.
-  //createMaps(decomp);
-  createNeighborhoodData(decomp);
+  // Assign the correct horizon to each node
+  PeridigmNS::HorizonManager& horizonManager = PeridigmNS::HorizonManager::self();
+  horizonManager.loadHorizonInformationFromBlockParameters(*blockParams);
+  horizonForEachPoint = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
+  for(map<string, vector<int> >::const_iterator it = elementBlocks->begin() ; it != elementBlocks->end() ; it++){
+    const string& blockName = it->first;
+    const vector<int>& globalIds = it->second;
 
-  // \todo Move this functionality to base class, it's currently duplicated in PdQuickGridDiscretization.
+    bool hasConstantHorizon = horizonManager.blockHasConstantHorizon(blockName);
+    double constantHorizonValue(0.0);
+    if(hasConstantHorizon)
+      constantHorizonValue = horizonManager.getBlockConstantHorizonValue(blockName);
+
+    for(unsigned int i=0 ; i<globalIds.size() ; ++i){
+      int localId = oneDimensionalMap->LID(globalIds[i]);
+      if(hasConstantHorizon){
+        (*horizonForEachPoint)[localId] = constantHorizonValue;
+      }
+      else{
+        double x = (*initialX)[localId*3];
+        double y = (*initialX)[localId*3 + 1];
+        double z = (*initialX)[localId*3 + 2];
+        double horizon = horizonManager.evaluateHorizon(blockName, x, y, z);
+        (*horizonForEachPoint)[localId] = horizon;
+      }
+    }
+  }
+
+  // Perform the proximity search to identify neighbors
+  int neighborListSize;
+  int* neighborList;
+  ProximitySearch::GlobalProximitySearch(initialX, horizonForEachPoint, oneDimensionalOverlapMap, neighborListSize, neighborList, bondFilters);
+
+  createNeighborhoodData(neighborListSize, neighborList);
+
+  // Create the three-dimensional overlap map based on the one-dimensional overlap map
+  threeDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(-1, 
+                                                                oneDimensionalOverlapMap->NumMyElements(),
+                                                                oneDimensionalOverlapMap->MyGlobalElements(),
+                                                                3,
+                                                                0,
+                                                                oneDimensionalOverlapMap->Comm()));
+
+  // \todo Move this functionality to base class, it's currently duplicated in multiple discretizations.
   // Create the bondMap, a local map used for constitutive data stored on bonds.
   // Due to Epetra_BlockMap restrictions, there can not be any entries with length zero.
   // This means that points with no neighbors can not appear in the bondMap.
@@ -136,15 +177,6 @@ PeridigmNS::AlbanyDiscretization::AlbanyDiscretization(const Teuchos::RCP<const 
   delete[] myGlobalElements;
   delete[] elementSizeList;
 
-  // 3D only
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(decomp.dimension != 3, "Invalid dimension in decomposition (only 3D is supported)");
-
-  // fill the x vector with the current positions (owned positions only)
-  initialX = Teuchos::rcp(new Epetra_Vector(Copy, *threeDimensionalMap, decomp.myX.get()));
-
-  // fill cell volumes
-  cellVolume = Teuchos::rcp(new Epetra_Vector(Copy,*oneDimensionalMap,decomp.cellVolume.get()) );
-
   // find the minimum element radius
   for(int i=0 ; i<cellVolume->MyLength() ; ++i){
     double radius = pow(0.238732414637843*(*cellVolume)[i], 0.33333333333333333);
@@ -165,228 +197,78 @@ PeridigmNS::AlbanyDiscretization::AlbanyDiscretization(const Teuchos::RCP<const 
 
 PeridigmNS::AlbanyDiscretization::~AlbanyDiscretization() {}
 
+void PeridigmNS::AlbanyDiscretization::createBlockElementLists() {
 
-QUICKGRID::Data PeridigmNS::AlbanyDiscretization::getDecomp(const string& textFileName,
-                                                            const Teuchos::RCP<Teuchos::ParameterList>& params) {
+  // Each processor needs the compete list of block ids.
+  // Parallel communication is needed because if a processor has zero nodes/elements for a given block,
+  // it will not know that block exists.
 
-  // Read data from the text file
-  vector<double> coordinates;
-  vector<double> volumes;
-  vector<int> blockIds;
-
-  // Read the text file on the root processor
-  if(myPID == 0){
-    ifstream inFile(textFileName.c_str());
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(!inFile.is_open(), "**** Error opening discretization text file.\n");
-    while(inFile.good()){
-      string str;
-      getline(inFile, str);
-      boost::trim(str);
-      // Ignore comment lines, otherwise parse
-      if( !(str[0] == '#' || str[0] == '/' || str[0] == '*' || str.size() == 0) ){
-        istringstream iss(str);
-        vector<double> data;
-        copy(istream_iterator<double>(iss),
-             istream_iterator<double>(),
-             back_inserter<vector<double> >(data));
-        // Check for obvious problems with the data
-        if(data.size() != 5){
-          string msg = "\n**** Error parsing text file, invalid line: " + str + "\n";
-          TEUCHOS_TEST_FOR_EXCEPT_MSG(data.size() != 5, msg);
-        }
-        // Store the coordinates, block id, and volumes
-        coordinates.push_back(data[0]);
-        coordinates.push_back(data[1]);
-        coordinates.push_back(data[2]);
-        blockIds.push_back(static_cast<int>(data[3]));
-        volumes.push_back(data[4]);
-      }
-    }
-    inFile.close();
-  }
-
-  int numElements = static_cast<int>(blockIds.size());
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(myPID == 0 && numElements < 1, "**** Error reading discretization text file, no data found.\n");
-
-  // Record the block ids on the root processor
+  // Find the unique block ids on processor
   set<int> uniqueBlockIds;
-  if(myPID == 0){
-    for(unsigned int i=0 ; i<blockIds.size() ; ++i)
-      uniqueBlockIds.insert(blockIds[i]);
-  }
-
-  // Broadcast necessary data from root processor
-  Teuchos::RCP<const Teuchos::Comm<int> > teuchosComm = Teuchos::createMpiComm<int>(Teuchos::opaqueWrapper<MPI_Comm>(MPI_COMM_WORLD));
-  int numGlobalElements;
-  reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, 1, &numElements, &numGlobalElements);
+  for(int i=0 ; i<blockID->MyLength() ; ++i)
+    uniqueBlockIds.insert((*blockID)[i]);
 
   // Broadcast the unique block ids so that all processors are aware of the full block list
-  // This is necessary because if a processor does not have any elements for a given block, it will be unaware the
-  // given block exists, which causes problems downstream
+  Teuchos::RCP<const Teuchos::Comm<int> > teuchosComm = Teuchos::createMpiComm<int>(Teuchos::opaqueWrapper<MPI_Comm>(MPI_COMM_WORLD));
   int numLocalUniqueBlockIds = static_cast<int>( uniqueBlockIds.size() );
-  int numGlobalUniqueBlockIds;
-  reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, 1, &numLocalUniqueBlockIds, &numGlobalUniqueBlockIds);
-  vector<int> uniqueLocalBlockIds(numGlobalUniqueBlockIds, 0);
-  int index = 0;
+  int maxNumberOfUniqueBlockIds;
+  reduceAll(*teuchosComm, Teuchos::REDUCE_MAX, 1, &numLocalUniqueBlockIds, &maxNumberOfUniqueBlockIds);
+  int arraySize = maxNumberOfUniqueBlockIds * comm->NumProc();
+  vector<int> uniqueBlockIdsLocal(arraySize, -1);
+  int index = maxNumberOfUniqueBlockIds * comm->MyPID();
   for(set<int>::const_iterator it = uniqueBlockIds.begin() ; it != uniqueBlockIds.end() ; it++)
-    uniqueLocalBlockIds[index++] = *it;
-  vector<int> uniqueGlobalBlockIds(numGlobalUniqueBlockIds);  
-  reduceAll(*teuchosComm, Teuchos::REDUCE_SUM, numGlobalUniqueBlockIds, &uniqueLocalBlockIds[0], &uniqueGlobalBlockIds[0]);
+    uniqueBlockIdsLocal[index++] = *it;
+  vector<int> uniqueBlockIdsGlobal(arraySize);  
+  reduceAll(*teuchosComm, Teuchos::REDUCE_MAX, arraySize, &uniqueBlockIdsLocal[0], &uniqueBlockIdsGlobal[0]);
 
-  // Create list of global ids
-  vector<int> globalIds(numElements);
-  for(unsigned int i=0 ; i<globalIds.size() ; ++i)
-    globalIds[i] = i;
-
-  // Copy data into a decomp object
-  int dimension = 3;
-  QUICKGRID::Data decomp = QUICKGRID::allocatePdGridData(numElements, dimension);
-  decomp.globalNumPoints = numGlobalElements;
-  memcpy(decomp.myGlobalIDs.get(), &globalIds[0], numElements*sizeof(int)); 
-  memcpy(decomp.cellVolume.get(), &volumes[0], numElements*sizeof(double)); 
-  memcpy(decomp.myX.get(), &coordinates[0], 3*numElements*sizeof(double));
-
-  // Create a blockID vector in the current configuration
-  // That is, the configuration prior to load balancing
-  Epetra_BlockMap tempOneDimensionalMap(decomp.globalNumPoints,
-                                        decomp.numPoints,
-                                        decomp.myGlobalIDs.get(),
-                                        1,
-                                        0,
-                                        *comm);
-  Epetra_Vector tempBlockID(tempOneDimensionalMap);
-  double* tempBlockIDPtr;
-  tempBlockID.ExtractView(&tempBlockIDPtr);
-  for(unsigned int i=0 ; i<blockIds.size() ; ++i)
-    tempBlockIDPtr[i] = blockIds[i];
-
-  // call the rebalance function on the current-configuration decomp
-  decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
-
-  // create a (throw-away) one-dimensional owned map in the rebalanced configuration
-  Epetra_BlockMap rebalancedMap(decomp.globalNumPoints, decomp.numPoints, decomp.myGlobalIDs.get(), 1, 0, *comm);
-
-  // Create a (throw-away) blockID vector corresponding to the load balanced decomposition
-  Epetra_Vector rebalancedBlockID(rebalancedMap);
-  Epetra_Import rebalancedImporter(rebalancedBlockID.Map(), tempBlockID.Map());
-  rebalancedBlockID.Import(tempBlockID, rebalancedImporter, Insert);
+  // Insert off-processor block ids into the set of unique block ids
+  for(int i=0 ; i<arraySize ; ++i){
+    if(uniqueBlockIdsGlobal[i] != -1)
+      uniqueBlockIds.insert(uniqueBlockIdsGlobal[i]);
+  }
 
   // Initialize the element list for each block
   // Force blocks with no on-processor elements to have an entry in the elementBlocks map
-  for(unsigned int i=0 ; i<uniqueGlobalBlockIds.size() ; i++){
+  for(set<int>::iterator it=uniqueBlockIds.begin() ; it!=uniqueBlockIds.end() ; it++){
     stringstream blockName;
-    blockName << "block_" << uniqueGlobalBlockIds[i];
+    blockName << "block_" << *it;
     (*elementBlocks)[blockName.str()] = std::vector<int>();
   }
 
   // Create the element list for each block
-  for(int i=0 ; i<rebalancedBlockID.MyLength() ; ++i){
+  for(int i=0 ; i<blockID->MyLength() ; ++i){
     stringstream blockName;
-    blockName << "block_" << rebalancedBlockID[i];
+    blockName << "block_" << (*blockID)[i];
     TEUCHOS_TEST_FOR_EXCEPT_MSG(elementBlocks->find(blockName.str()) == elementBlocks->end(),
-                                "\n**** Error in AlbanyDiscretization::getDecomp(), invalid block id.\n");
-    int globalID = rebalancedBlockID.Map().GID(i);
+                                "\n**** Error in AlbanyDiscretization::loadData(), invalid block id.\n");
+    int globalID = blockID->Map().GID(i);
     (*elementBlocks)[blockName.str()].push_back(globalID);
   }
-
-  // Record the horizon for each point
-  PeridigmNS::HorizonManager& horizonManager = PeridigmNS::HorizonManager::self();
-  Teuchos::RCP<Epetra_Vector> rebalancedHorizonForEachPoint = Teuchos::rcp(new Epetra_Vector(rebalancedMap));
-  double* rebalancedX = decomp.myX.get();
-  for(map<string, vector<int> >::const_iterator it = elementBlocks->begin() ; it != elementBlocks->end() ; it++){
-    const string& blockName = it->first;
-    const vector<int>& globalIds = it->second;
-
-    bool hasConstantHorizon = horizonManager.blockHasConstantHorizon(blockName);
-    double constantHorizonValue(0.0);
-    if(hasConstantHorizon)
-      constantHorizonValue = horizonManager.getBlockConstantHorizonValue(blockName);
-
-    for(unsigned int i=0 ; i<globalIds.size() ; ++i){
-      int localId = rebalancedMap.LID(globalIds[i]);
-      if(hasConstantHorizon){
-        (*rebalancedHorizonForEachPoint)[localId] = constantHorizonValue;
-      }
-      else{
-        double x = rebalancedX[localId*3];
-        double y = rebalancedX[localId*3 + 1];
-        double z = rebalancedX[localId*3 + 2];
-        double horizon = horizonManager.evaluateHorizon(blockName, x, y, z);
-        (*rebalancedHorizonForEachPoint)[localId] = horizon;
-      }
-    }
-  }
-
-  // execute neighbor search and update the decomp to include resulting ghosts
-  std::tr1::shared_ptr<const Epetra_Comm> commSp(comm.getRawPtr(), NonDeleter<const Epetra_Comm>());
-  Teuchos::RCP<PDNEIGH::NeighborhoodList> list;
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(bondFilters.size() > 1, "\n****Error:  Multiple bond filters currently unsupported.\n");
-
-  if(bondFilters.size() == 0)
-    list = Teuchos::rcp(new PDNEIGH::NeighborhoodList(commSp,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,rebalancedHorizonForEachPoint));
-  else if(bondFilters.size() == 1)
-    list = Teuchos::rcp(new PDNEIGH::NeighborhoodList(commSp,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,rebalancedHorizonForEachPoint,bondFilters[0]));
-  decomp.neighborhood=list->get_neighborhood();
-  decomp.sizeNeighborhoodList=list->get_size_neighborhood_list();
-  decomp.neighborhoodPtr=list->get_neighborhood_ptr();
-
-  // Create all the maps.
-  createMaps(decomp);
-
-  // Create the blockID vector corresponding to the load balanced decomposition
-  blockID = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
-  Epetra_Import tempImporter(blockID->Map(), tempBlockID.Map());
-  blockID->Import(tempBlockID, tempImporter, Insert);
-
-  // Create the horizonForEachPonit vector corresponding to the load balanced decomposition
-  horizonForEachPoint = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
-  Epetra_Import horizonImporter(horizonForEachPoint->Map(), rebalancedHorizonForEachPoint->Map());
-  horizonForEachPoint->Import(*rebalancedHorizonForEachPoint, horizonImporter, Insert);
-
-  return decomp;
 }
 
 void
-PeridigmNS::AlbanyDiscretization::createMaps(const QUICKGRID::Data& decomp)
+PeridigmNS::AlbanyDiscretization::createNeighborhoodData(int neighborListSize, int* neighborList)
 {
-  int dimension;
+   int numOwnedIds = oneDimensionalMap->NumMyElements();
+   int* ownedGlobalIds = oneDimensionalMap->MyGlobalElements();
 
-  // oneDimensionalMap
-  // used for global IDs and scalar data
-  dimension = 1;
-  oneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(Discretization::getOwnedMap(*comm, decomp, dimension)));
+   vector<int> ownedLocalIds(numOwnedIds);
+   vector<int> neighborhoodPtr(numOwnedIds);
 
-  // oneDimensionalOverlapMap
-  // used for global IDs and scalar data, includes ghosts
-  dimension = 1;
-  oneDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(Discretization::getOverlapMap(*comm, decomp, dimension)));
+   int numNeighbors(0), neighborListIndex(0);
+   for(int i=0 ; i<numOwnedIds ; ++i){
+     ownedLocalIds[i] = oneDimensionalMap->LID(ownedGlobalIds[i]); // \todo This seems unnecessary, is it just i?  What if MyGlobalElements is not sorted, then is ownedLocalIds also not sorted?
+     neighborhoodPtr[i] = neighborListIndex;     
+     numNeighbors = neighborList[neighborListIndex++];
+     neighborListIndex += numNeighbors;
+   }
 
-  // threeDimensionalMap
-  // used for R3 vector data, e.g., u, v, etc.
-  dimension = 3;
-  threeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(Discretization::getOwnedMap(*comm, decomp, dimension)));
-
-  // threeDimensionalOverlapMap
-  // used for R3 vector data, e.g., u, v, etc.,  includes ghosts
-  dimension = 3;
-  threeDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(Discretization::getOverlapMap(*comm, decomp, dimension)));
-}
-
-void
-PeridigmNS::AlbanyDiscretization::createNeighborhoodData(const QUICKGRID::Data& decomp)
-{
    neighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
-   neighborhoodData->SetNumOwned(decomp.numPoints);
-   memcpy(neighborhoodData->OwnedIDs(), 
- 		 Discretization::getLocalOwnedIds(decomp, *oneDimensionalOverlapMap).get(),
- 		 decomp.numPoints*sizeof(int));
-   memcpy(neighborhoodData->NeighborhoodPtr(), 
- 		 decomp.neighborhoodPtr.get(),
- 		 decomp.numPoints*sizeof(int));
-   neighborhoodData->SetNeighborhoodListSize(decomp.sizeNeighborhoodList);
-   memcpy(neighborhoodData->NeighborhoodList(),
- 		 Discretization::getLocalNeighborList(decomp, *oneDimensionalOverlapMap).get(),
- 		 decomp.sizeNeighborhoodList*sizeof(int));
+   neighborhoodData->SetNumOwned(numOwnedIds);
+   memcpy(neighborhoodData->OwnedIDs(), &ownedLocalIds[0], numOwnedIds*sizeof(int));
+   memcpy(neighborhoodData->NeighborhoodPtr(), &neighborhoodPtr[0], numOwnedIds*sizeof(int));
+   neighborhoodData->SetNeighborhoodListSize(neighborListSize);
+   memcpy(neighborhoodData->NeighborhoodList(), neighborList, neighborListSize*sizeof(int));
    neighborhoodData = filterBonds(neighborhoodData);
 }
 
