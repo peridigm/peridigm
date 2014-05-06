@@ -155,6 +155,42 @@ namespace PeridigmNS {
         blockIt->updateState();
     }
 
+    //! Get the field manager (intended for use when calling Peridigm as a library).
+    Teuchos::RCP<PeridigmNS::FieldManager> getFieldManager() {
+      Teuchos::RCP<PeridigmNS::FieldManager> fieldManager = Teuchos::rcpFromRef(PeridigmNS::FieldManager::self());
+      return fieldManager;
+    }
+
+    //! Get an Epetra_Vector of data from a given block's DataManger (intended for use when calling Peridigm as a library).
+    Teuchos::RCP<const Epetra_Vector> getBlockData(std::string blockName, std::string fieldName) {
+
+      // \todo Organize all the functions that are meant to be called in library mode.
+
+      // \todo Call synchDataManagers() first?
+
+      // \todo store this mapping in a map to avoid the repeated search.
+      std::vector<PeridigmNS::Block>::iterator block;
+      bool found = false;
+      for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+        if(blockIt->getName() == blockName){
+          block = blockIt;
+          found = true;
+          continue;
+        }
+      }
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(!found, "**** Error, Peridigm::getBlockData(), block " + blockName + " not found!\n");
+
+      // \todo Keep a map of field name to field id in Albany and avoid the loop below.
+      PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+      int fieldId = fieldManager.getFieldId(fieldName);
+      PeridigmNS::FieldSpec spec = fieldManager.getFieldSpec(fieldId);
+      PeridigmNS::PeridigmField::Step step = PeridigmNS::PeridigmField::STEP_NONE;
+      if(spec.getTemporal() == PeridigmNS::PeridigmField::TWO_STEP)
+        step = PeridigmNS::PeridigmField::STEP_NP1;
+      Teuchos::RCP<Epetra_Vector> data = block->getData(fieldId, step);
+      return data;
+    }
+
     //! Perform diagnostics on Jacobian and print results to screen.
     void jacobianDiagnostics(Teuchos::RCP<NOX::Epetra::Group> noxGroup);
 
