@@ -284,7 +284,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   }
 
   // Instantiate compute manager
-  instantiateComputeManager();
+  instantiateComputeManager(peridigmDiscretization);
 
   // Load the auxiliary field ids into the blocks (they will be
   // combined with material model and damage model ids when allocating
@@ -642,7 +642,7 @@ void PeridigmNS::Peridigm::initializeWorkset() {
   workset->jacobian = overlapJacobian;
 }
 
-void PeridigmNS::Peridigm::instantiateComputeManager() {
+void PeridigmNS::Peridigm::instantiateComputeManager(Teuchos::RCP<Discretization> peridigmDiscretization) {
 
   Teuchos::RCP<Teuchos::ParameterList> computeParams = Teuchos::rcp( new Teuchos::ParameterList("Compute Manager") );
   Teuchos::ParameterList& outputVariables  = computeParams->sublist("Output Variables");
@@ -685,10 +685,12 @@ void PeridigmNS::Peridigm::instantiateComputeManager() {
   Teuchos::RCP<Epetra_FECrsMatrix> *tmp2 = &( blockDiagonalTangent );
   Teuchos::RCP<PeridigmNS::SerialMatrix> *tmp3 = &( overlapJacobian );
   Teuchos::RCP<Epetra_Map> *tmp4 = &( blockDiagonalTangentMap );
+  Teuchos::RCP<Discretization> *tmp5 = &( peridigmDiscretization );
   computeClassGlobalData->set("tangent",tmp1);
   computeClassGlobalData->set("blockDiagonalTangent",tmp2);
   computeClassGlobalData->set("overlapJacobian",tmp3);
   computeClassGlobalData->set("blockDiagonalTangentMap",tmp4);
+  computeClassGlobalData->set("discretization",tmp5);
 
   computeManager = Teuchos::rcp( new PeridigmNS::ComputeManager( computeParams, peridigmComm, computeClassGlobalData ) );
 }

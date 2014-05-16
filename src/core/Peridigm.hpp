@@ -110,7 +110,7 @@ namespace PeridigmNS {
     void initializeWorkset();
 
     //! Instantiate the compute manager
-    void instantiateComputeManager();
+    void instantiateComputeManager(Teuchos::RCP<Discretization> peridigmDiscretization);
 
     //! Initialize the output manager
     void initializeOutputManager();
