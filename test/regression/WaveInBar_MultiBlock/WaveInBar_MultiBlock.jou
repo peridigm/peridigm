@@ -60,4 +60,18 @@ mesh volume all
 #
 nodeset 1 volume 10 12 13
 #
+#
+# These node sets are here only to test the Node_Set_Data compute class
+#
+nodeset 11 volume 2
+nodeset 12 volume 4
+nodeset 13 volume 6
+nodeset 14 volume 7
+nodeset 15 volume 8
+nodeset 16 volume 10
+nodeset 17 volume 12
+nodeset 18 volume 13
+nodeset 20 volume 2 4 6
+nodeset 30 volume 2 4 6 7 8 10 12 13
+#
 export genesis 'WaveInBar_MultiBlock.g' overwrite
