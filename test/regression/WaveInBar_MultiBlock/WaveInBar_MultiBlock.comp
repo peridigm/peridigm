@@ -1,6 +1,27 @@
 DEFAULT TOLERANCE absolute 1.0E-9
 COORDINATES absolute 1.0E-12
 TIME STEPS absolute 1.0E-14
+GLOBAL VARIABLES absolute 1.0E-12
+	Volume_Block_1  absolute 1.0E-12
+	Volume_Block_2  absolute 1.0E-12
+	Volume_Block_3  absolute 1.0E-12
+	Volume_Block_4  absolute 1.0E-12
+	Volume_Block_5  absolute 1.0E-12
+	Volume_Block_6  absolute 1.0E-12
+	Volume_Block_7  absolute 1.0E-12
+	Volume_Block_8  absolute 1.0E-12
+	Volume_Node_Set_11  absolute 1.0E-12
+	Volume_Node_Set_12  absolute 1.0E-12
+	Volume_Node_Set_13  absolute 1.0E-12
+	Volume_Node_Set_14  absolute 1.0E-12
+	Volume_Node_Set_15  absolute 1.0E-12
+	Volume_Node_Set_16  absolute 1.0E-12
+	Volume_Node_Set_17  absolute 1.0E-12
+	Volume_Node_Set_18  absolute 1.0E-12
+	Volume_Node_Set_20  absolute 1.0E-12
+	Volume_Node_Set_30  absolute 1.0E-12
+	Min_Volume_Node_Set_30  absolute 1.0E-12
+	Max_Volume_Node_Set_30  absolute 1.0E-12
 NODAL VARIABLES absolute 1.0E-12
 	DisplacementX   absolute 5.0E-14
 	DisplacementY   absolute 5.0E-14
