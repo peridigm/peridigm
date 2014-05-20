@@ -126,6 +126,9 @@ namespace PeridigmNS {
     //! Ref your parent instantiator
     Peridigm  * peridigm;
 
+    //! Flag for creation of Rank_Deficient_Nodes note set
+    bool createRankDeficientNodesNodeSet;
+
     //! Set of all the boundary conditions
     vector<Teuchos::RCP<BoundaryCondition> > boundaryConditions;
 

@@ -57,8 +57,10 @@
 using namespace std;
 
 PeridigmNS::BoundaryAndInitialConditionManager::BoundaryAndInitialConditionManager(const Teuchos::ParameterList& boundaryAndInitialConditionParams, Peridigm * peridigm_)
-  : params(boundaryAndInitialConditionParams),
-    peridigm(peridigm_){
+  : params(boundaryAndInitialConditionParams), peridigm(peridigm_), createRankDeficientNodesNodeSet(false)
+{
+  if(boundaryAndInitialConditionParams.isParameter("Create Rank_Deficient_Nodes Node Set"))
+    createRankDeficientNodesNodeSet = boundaryAndInitialConditionParams.get<bool>("Create Rank_Deficient_Nodes Node Set");
 }
 
 void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Discretization> discretization)
@@ -138,7 +140,8 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Dis
   }
   TEUCHOS_TEST_FOR_EXCEPTION(hasPrescDisp&&hasPrescVel,std::logic_error,"Error: cannot specify prescribed displacement and velocity boundary conditions");
 
-  createRankDeficientBC();
+  if(createRankDeficientNodesNodeSet)
+    createRankDeficientBC();
 
   initializeNodeSets(discretization);
 }
@@ -149,7 +152,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::createRankDeficientBC()
   Teuchos::ParameterList containerParams;
   containerParams.set("Type","Prescribed_Displacement");
   containerParams.set("Name","Rank Deficient Nodes");
-  containerParams.set("Node Set","RANK_DEFICIENT_NODES");
+  containerParams.set("Node Set","Rank_Deficient_Nodes");
   containerParams.set("Value","0.0");
   containerParams.set("Coordinate","x");
   Teuchos::RCP<Epetra_Vector> toVector = peridigm->getDeltaU();
@@ -220,9 +223,8 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initializeNodeSets(Teuchos:
 
 
   // Create the bogus node set that will hold any rank deficient nodes that show up
-  vector<int> noNodes;
-  (*nodeSets)["RANK_DEFICIENT_NODES"] = noNodes;
-  //nodeSets->insert(std::pair<string,vector<int> >("Rank_Deficient_Nodes",noNodes));
+  if(createRankDeficientNodesNodeSet)
+    (*nodeSets)["Rank_Deficient_Nodes"] = vector<int>();
 
   // Load node sets defined in the mesh file into the nodeSets container
   Teuchos::RCP< map< string, vector<int> > > discretizationNodeSets = discretization->getNodeSets();

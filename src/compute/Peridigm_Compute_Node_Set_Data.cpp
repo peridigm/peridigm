@@ -121,6 +121,20 @@ PeridigmNS::Compute_Node_Set_Data::Compute_Node_Set_Data(Teuchos::RCP<const Teuc
     m_variableIsStated = true;
 }
 
+void PeridigmNS::Compute_Node_Set_Data::initialize( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) {
+  for(std::vector<Block>::iterator blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    std::string blockName = blockIt->getName();
+    m_blockLocalIds[blockName] = std::vector<int>();
+    int numOwnedPoints = blockIt->getNeighborhoodData()->NumOwnedPoints();
+    Teuchos::RCP<const Epetra_BlockMap> map = blockIt->getOwnedScalarPointMap();
+    for(int i=0 ; i<numOwnedPoints ; ++i){
+      int globalId = map->GID(i);
+      if( m_nodeSet.find(globalId) != m_nodeSet.end() )
+        m_blockLocalIds[blockName].push_back(i);
+    }
+  }
+}
+
 int PeridigmNS::Compute_Node_Set_Data::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) const {
 
   PeridigmField::Step step = PeridigmField::STEP_NONE;
@@ -146,60 +160,54 @@ int PeridigmNS::Compute_Node_Set_Data::compute( Teuchos::RCP< std::vector<Peridi
 
     double *data;
     blockIt->getData(m_variableFieldId, step)->ExtractView(&data);
-    int numOwnedPoints = blockIt->getNeighborhoodData()->NumOwnedPoints();
-    Teuchos::RCP<const Epetra_BlockMap> map = blockIt->getOwnedScalarPointMap();
-    int globalId;
+    std::string blockName = blockIt->getName();
+    const std::vector<int>& localNodeIds = m_blockLocalIds.at(blockName);
+    int localId;
 
     if(m_calculationType == MINIMUM){
-      for(int i=0 ; i<numOwnedPoints ; ++i){
-        globalId = map->GID(i);
-        if( m_nodeSet.find(globalId) != m_nodeSet.end() ){
-          if(m_variableLength == 1){
-            if(data[i] < localData[0])
-              localData[0] = data[i];
-          }
-          else if(m_variableLength == 3){
-            if(data[3*i] < localData[0])
-              localData[0] = data[3*i];
-            if(data[3*i+1] < localData[1])
-              localData[1] = data[3*i+1];
-            if(data[3*i+2] < localData[2])
-              localData[2] = data[3*i+2];
-          }
+      for(unsigned int i=0 ; i<localNodeIds.size() ; ++i){
+        localId = localNodeIds[i];
+        if(m_variableLength == 1){
+          if(data[localId] < localData[0])
+            localData[0] = data[localId];
+        }
+        else if(m_variableLength == 3){
+          if(data[3*localId] < localData[0])
+            localData[0] = data[3*localId];
+          if(data[3*localId+1] < localData[1])
+            localData[1] = data[3*localId+1];
+          if(data[3*localId+2] < localData[2])
+            localData[2] = data[3*localId+2];
         }
       }
     }
     else if(m_calculationType == MAXIMUM){
-      for(int i=0 ; i<numOwnedPoints ; ++i){
-        globalId = map->GID(i);
-        if( m_nodeSet.find(globalId) != m_nodeSet.end() ){
-          if(m_variableLength == 1){
-            if(data[i] > localData[0])
-              localData[0] = data[i];
-          }
-          else if(m_variableLength == 3){
-            if(data[3*i] > localData[0])
-              localData[0] = data[3*i];
-            if(data[3*i+1] > localData[1])
-              localData[1] = data[3*i+1];
-            if(data[3*i+2] > localData[2])
-              localData[2] = data[3*i+2];
-          }
+      for(unsigned int i=0 ; i<localNodeIds.size() ; ++i){
+        localId = localNodeIds[i];
+        if(m_variableLength == 1){
+          if(data[localId] > localData[0])
+            localData[0] = data[localId];
+        }
+        else if(m_variableLength == 3){
+          if(data[3*localId] > localData[0])
+            localData[0] = data[3*localId];
+          if(data[3*localId+1] > localData[1])
+            localData[1] = data[3*localId+1];
+          if(data[3*localId+2] > localData[2])
+            localData[2] = data[3*localId+2];
         }
       }
     }
     else if(m_calculationType == SUM){
-      for(int i=0 ; i<numOwnedPoints ; ++i){
-        globalId = map->GID(i);
-        if( m_nodeSet.find(globalId) != m_nodeSet.end() ){
-          if(m_variableLength == 1){
-            localData[0] += data[i];
-          }
-          else if(m_variableLength == 3){
-            localData[0] += data[3*i];
-            localData[1] += data[3*i+1];
-            localData[2] += data[3*i+2];
-          }
+      for(unsigned int i=0 ; i<localNodeIds.size() ; ++i){
+        localId = localNodeIds[i];
+        if(m_variableLength == 1){
+          localData[0] += data[localId];
+        }
+        else if(m_variableLength == 3){
+          localData[0] += data[3*localId];
+          localData[1] += data[3*localId+1];
+          localData[2] += data[3*localId+2];
         }
       }
     }

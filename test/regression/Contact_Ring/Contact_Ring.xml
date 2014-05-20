@@ -117,7 +117,23 @@
       <Parameter name="Calculation Type" type="string" value="Sum"/>
       <Parameter name="Block" type="string" value="block_4"/>
       <Parameter name="Variable" type="string" value="Stored_Elastic_Energy"/>
-      <Parameter name="Output Label" type="string" value="Block_4_Stored_Elastic_Energy"/>
+      <Parameter name="Output Label" type="string" value="Block_4_Stored_Elastic_Energy"/>      
+    </ParameterList>
+    <!-- These are redundant, they're here to test the Node Set Data compute class 
+         for cases where the node set is smaller than a block. -->
+    <ParameterList name="Node Set 10 Stored Elastic Energy">
+      <Parameter name="Compute Class" type="string" value="Node_Set_Data"/>
+      <Parameter name="Calculation Type" type="string" value="Sum"/>
+      <Parameter name="Node Set" type="string" value="nodelist_10"/>
+      <Parameter name="Variable" type="string" value="Stored_Elastic_Energy"/>
+      <Parameter name="Output Label" type="string" value="NS_10_Stored_Elastic_Energy"/>      
+    </ParameterList>
+    <ParameterList name="Node Set 11 Stored Elastic Energy">
+      <Parameter name="Compute Class" type="string" value="Node_Set_Data"/>
+      <Parameter name="Calculation Type" type="string" value="Sum"/>
+      <Parameter name="Node Set" type="string" value="nodelist_11"/>
+      <Parameter name="Variable" type="string" value="Stored_Elastic_Energy"/>
+      <Parameter name="Output Label" type="string" value="NS_11_Stored_Elastic_Energy"/>      
     </ParameterList>
   </ParameterList>
 
@@ -134,6 +150,13 @@
 	  <Parameter name="Dilatation" type="bool" value="true"/>
 	  <Parameter name="Weighted_Volume" type="bool" value="true"/>
 	  <Parameter name="Stored_Elastic_Energy" type="bool" value="true"/>
+	  <Parameter name="Global_Kinetic_Energy" type="bool" value="true"/>
+	  <Parameter name="Block_1_Stored_Elastic_Energy" type="bool" value="true"/>
+	  <Parameter name="Block_2_Stored_Elastic_Energy" type="bool" value="true"/>
+	  <Parameter name="Block_3_Stored_Elastic_Energy" type="bool" value="true"/>
+	  <Parameter name="Block_4_Stored_Elastic_Energy" type="bool" value="true"/>
+	  <Parameter name="NS_10_Stored_Elastic_Energy" type="bool" value="true"/>
+	  <Parameter name="NS_11_Stored_Elastic_Energy" type="bool" value="true"/>
 	</ParameterList>
   </ParameterList>
 
@@ -149,6 +172,8 @@
 	  <Parameter name="Block_2_Stored_Elastic_Energy" type="bool" value="true"/>
 	  <Parameter name="Block_3_Stored_Elastic_Energy" type="bool" value="true"/>
 	  <Parameter name="Block_4_Stored_Elastic_Energy" type="bool" value="true"/>
+	  <Parameter name="NS_10_Stored_Elastic_Energy" type="bool" value="true"/>
+	  <Parameter name="NS_11_Stored_Elastic_Energy" type="bool" value="true"/>
 	</ParameterList>
   </ParameterList>
 

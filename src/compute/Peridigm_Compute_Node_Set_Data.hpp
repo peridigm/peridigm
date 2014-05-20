@@ -74,6 +74,9 @@ namespace PeridigmNS {
     //! Returns a vector of field IDs corresponding to the variables associated with the compute class.
     virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
+    //! Initialize the compute class
+    void initialize( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  );
+
     //! Perform computation
     virtual int compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) const;
 
@@ -85,6 +88,9 @@ namespace PeridigmNS {
     bool m_variableIsStated;
     std::string m_nodeSetName;
     std::set<int> m_nodeSet;
+
+    //! List of local ids for the nodes in the node set
+    std::map< std::string, std::vector<int> > m_blockLocalIds;
 
     enum CALCULATION_TYPE {
       UNDEFINED_CALCULATION = 0,
