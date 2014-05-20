@@ -175,6 +175,20 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   // Instantiate and initialize the boundary and initial condition manager
   Teuchos::RCP<Teuchos::ParameterList> bcParams =
     Teuchos::rcpFromRef( peridigmParams->sublist("Boundary Conditions") );
+
+  // Set a flag for creation of the Rank_Deficient_Nodes node set if the simulation
+  // uses implicit time integration and has bond failure
+  bool hasDamage(false);
+  for(Teuchos::ParameterList::ConstIterator it = peridigmParams->sublist("Blocks").begin() ; it != peridigmParams->sublist("Blocks").end() ; it++){
+    if(blockParams.sublist(it->first).isParameter("Damage Model"))
+      hasDamage = true;
+  }
+  // Note that allocateTangent is true only iff it's an implicit solve
+  if(allocateTangent && hasDamage){
+    if(!bcParams->isParameter("Create Rank_Deficient_Nodes Node Set"))
+      bcParams->set<bool>("Create Rank_Deficient_Nodes Node Set", true);
+  }
+
   boundaryAndInitialConditionManager =
     Teuchos::RCP<BoundaryAndInitialConditionManager>(new BoundaryAndInitialConditionManager(*bcParams, this));
 

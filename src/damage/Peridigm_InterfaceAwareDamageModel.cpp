@@ -194,7 +194,7 @@ PeridigmNS::InterfaceAwareDamageModel::computeDamage(const double dt,
 
   if(totalDamage >= numNeighbors-2) // This would imply rank deficiency and would lead to problems in CG
   {
-    const string deficientSetName = "RANK_DEFICIENT_NODES";
+    const string deficientSetName = "Rank_Deficient_Nodes";
     TEUCHOS_TEST_FOR_EXCEPTION(nodeSetMap->find(deficientSetName)==nodeSetMap->end(),std::logic_error,"Error: The placeholder nodeset for rank deficient nodes is missing.");
     bool nodeAlreadyRegistered = false;
     vector<int> * deficientSet = &nodeSetMap->find(deficientSetName)->second;

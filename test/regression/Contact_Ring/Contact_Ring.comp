@@ -1,6 +1,14 @@
 DEFAULT TOLERANCE absolute 1.0E-9
 COORDINATES absolute 1.0E-12
 TIME STEPS absolute 1.0E-14
+GLOBAL VARIABLES absolute 1.0E-12
+	Global_Kinetic_Energy           absolute 1.0E-9
+	Block_1_Stored_Elastic_Energy   absolute 1.0E-9
+	Block_2_Stored_Elastic_Energy   absolute 1.0E-9
+	Block_3_Stored_Elastic_Energy   absolute 1.0E-9
+	Block_4_Stored_Elastic_Energy   absolute 1.0E-9
+	NS_10_Stored_Elastic_Energy     absolute 1.0E-9
+	NS_11_Stored_Elastic_Energy     absolute 1.0E-9
 NODAL VARIABLES absolute 1.0E-12
 	DisplacementX   absolute 1.0E-9
 	DisplacementY   absolute 1.0E-9
