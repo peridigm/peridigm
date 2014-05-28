@@ -66,7 +66,8 @@ PeridigmNS::CorrespondenceMaterial::CorrespondenceMaterial(const Teuchos::Parame
     m_rotationTensorFieldId(-1), 
     m_unrotatedCauchyStressFieldId(-1),
     m_cauchyStressFieldId(-1), 
-    m_unrotatedRateOfDeformationFieldId(-1)
+    m_unrotatedRateOfDeformationFieldId(-1),
+    m_partialStressFieldId(-1)
 {
   //! \todo Add meaningful asserts on material properties.
   m_bulkModulus = calculateBulkModulus(params);
@@ -79,21 +80,22 @@ PeridigmNS::CorrespondenceMaterial::CorrespondenceMaterial(const Teuchos::Parame
   TEUCHOS_TEST_FOR_EXCEPT_MSG(params.isParameter("Thermal Expansion Coefficient"), "**** Error:  Thermal expansion is not currently supported for the ElasticCorrespondence material model.\n");
 
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
-  m_horizonFieldId                 = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Horizon");
-  m_volumeFieldId                  = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Volume");
-  m_modelCoordinatesFieldId        = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::CONSTANT, "Model_Coordinates");
-  m_coordinatesFieldId             = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Coordinates");
-  m_velocitiesFieldId              = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP,  "Velocity");
-  m_forceDensityFieldId            = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force_Density");
-  m_hourglassForceDensityFieldId   = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Hourglass_Force_Density");
-  m_bondDamageFieldId              = fieldManager.getFieldId(PeridigmField::BOND,    PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Bond_Damage");
-  m_deformationGradientFieldId   = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::CONSTANT, "Deformation_Gradient");
-  m_leftStretchTensorFieldId     = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::TWO_STEP, "Left_Stretch_Tensor");
-  m_rotationTensorFieldId        = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::TWO_STEP, "Rotation_Tensor");
-  m_shapeTensorInverseFieldId    = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::CONSTANT, "Shape_Tensor_Inverse");
-  m_unrotatedCauchyStressFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_Stress");
-  m_cauchyStressFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::TWO_STEP, "Cauchy_Stress");
-  m_unrotatedRateOfDeformationFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_Deformation");
+  m_horizonFieldId                    = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Horizon");
+  m_volumeFieldId                     = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Volume");
+  m_modelCoordinatesFieldId           = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::CONSTANT, "Model_Coordinates");
+  m_coordinatesFieldId                = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Coordinates");
+  m_velocitiesFieldId                 = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Velocity");
+  m_forceDensityFieldId               = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force_Density");
+  m_hourglassForceDensityFieldId      = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Hourglass_Force_Density");
+  m_bondDamageFieldId                 = fieldManager.getFieldId(PeridigmField::BOND,    PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Bond_Damage");
+  m_deformationGradientFieldId        = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::CONSTANT, "Deformation_Gradient");
+  m_leftStretchTensorFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::TWO_STEP, "Left_Stretch_Tensor");
+  m_rotationTensorFieldId             = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::TWO_STEP, "Rotation_Tensor");
+  m_shapeTensorInverseFieldId         = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::CONSTANT, "Shape_Tensor_Inverse");
+  m_unrotatedCauchyStressFieldId      = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_Stress");
+  m_cauchyStressFieldId               = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::TWO_STEP, "Cauchy_Stress");
+  m_unrotatedRateOfDeformationFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_Deformation");
+  m_partialStressFieldId              = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::TWO_STEP, "Partial_Stress");
 
   m_fieldIds.push_back(m_horizonFieldId);
   m_fieldIds.push_back(m_volumeFieldId);
@@ -110,6 +112,7 @@ PeridigmNS::CorrespondenceMaterial::CorrespondenceMaterial(const Teuchos::Parame
   m_fieldIds.push_back(m_unrotatedCauchyStressFieldId);
   m_fieldIds.push_back(m_cauchyStressFieldId);
   m_fieldIds.push_back(m_unrotatedRateOfDeformationFieldId);
+  m_fieldIds.push_back(m_partialStressFieldId);
 }
 
 PeridigmNS::CorrespondenceMaterial::~CorrespondenceMaterial()
@@ -132,6 +135,8 @@ PeridigmNS::CorrespondenceMaterial::initialize(const double dt,
   dataManager.getData(m_unrotatedCauchyStressFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
   dataManager.getData(m_cauchyStressFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
   dataManager.getData(m_cauchyStressFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_partialStressFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
+  dataManager.getData(m_partialStressFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
 
   double *leftStretchTensorN;
   double *leftStretchTensorNP1;
@@ -187,8 +192,9 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
                                                  const int* neighborhoodList,
                                                  PeridigmNS::DataManager& dataManager) const
 {
-  // Zero out the forces
+  // Zero out the forces and partial stress
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_partialStressFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
 
   double *horizon, *volume, *modelCoordinates, *coordinates, *velocities, *shapeTensorInverse, *deformationGradient;
   dataManager.getData(m_horizonFieldId, PeridigmField::STEP_NONE)->ExtractView(&horizon);
@@ -276,12 +282,15 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
   double *forceDensity;
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&forceDensity);
 
+  double *partialStress;
+  dataManager.getData(m_partialStressFieldId, PeridigmField::STEP_NP1)->ExtractView(&partialStress);
+
   double *delta = horizon;
   double* stress = cauchyStressNP1;
   double* shapeTensorInv = shapeTensorInverse;
   double* defGrad = deformationGradient;
 
-  double *modelCoordinatesPtr, *neighborModelCoordinatesPtr, *forceDensityPtr, *neighborForceDensityPtr;
+  double *modelCoordinatesPtr, *neighborModelCoordinatesPtr, *forceDensityPtr, *neighborForceDensityPtr, *partialStressPtr;
   double undeformedBondX, undeformedBondY, undeformedBondZ, undeformedBondLength;
   double TX, TY, TZ, omega, vol, neighborVol, jacobianDeterminant;
   int numNeighbors, neighborIndex;
@@ -347,6 +356,17 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
       *(neighborForceDensityPtr)   -= TX * vol;
       *(neighborForceDensityPtr+1) -= TY * vol;
       *(neighborForceDensityPtr+2) -= TZ * vol;
+
+      partialStressPtr = partialStress + 9*iID;
+      *(partialStressPtr)   += TX*undeformedBondX*neighborVol;
+      *(partialStressPtr+1) += TX*undeformedBondY*neighborVol;
+      *(partialStressPtr+2) += TX*undeformedBondZ*neighborVol;
+      *(partialStressPtr+3) += TY*undeformedBondX*neighborVol;
+      *(partialStressPtr+4) += TY*undeformedBondY*neighborVol;
+      *(partialStressPtr+5) += TY*undeformedBondZ*neighborVol;
+      *(partialStressPtr+6) += TZ*undeformedBondX*neighborVol;
+      *(partialStressPtr+7) += TZ*undeformedBondY*neighborVol;
+      *(partialStressPtr+8) += TZ*undeformedBondZ*neighborVol;
     }
   }
 

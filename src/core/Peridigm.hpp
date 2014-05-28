@@ -155,6 +155,11 @@ namespace PeridigmNS {
         blockIt->updateState();
     }
 
+    // Write the Peridigm sub-model to an Exodus file (intended for use when calling Peridigm as a library).
+    void writePeridigmSubModel(double currentTime) {
+      outputManager->write(blocks, currentTime);
+    }
+
     //! Get the field manager (intended for use when calling Peridigm as a library).
     Teuchos::RCP<PeridigmNS::FieldManager> getFieldManager() {
       Teuchos::RCP<PeridigmNS::FieldManager> fieldManager = Teuchos::rcpFromRef(PeridigmNS::FieldManager::self());
