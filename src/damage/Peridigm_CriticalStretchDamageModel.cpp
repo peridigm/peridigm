@@ -128,8 +128,7 @@ PeridigmNS::CriticalStretchDamageModel::computeDamage(const double dt,
   double nodeInitialX[3], nodeCurrentX[3], initialDistance, currentDistance, relativeExtension, totalDamage;
 
   // Set the bond damage to the previous value
-  dataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_NP1) =
-    dataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_N);
+  *(dataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_NP1)) = *(dataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_N));
 
   // Update the bond damage
   // Break bonds if the extension is greater than the critical extension
