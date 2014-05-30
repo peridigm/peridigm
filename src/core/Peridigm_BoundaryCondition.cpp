@@ -168,7 +168,8 @@ void PeridigmNS::DirichletBC::apply(Teuchos::RCP< std::map< std::string, std::ve
       itEnd = nodeSets->end();
     }
     else{
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSetName) == nodeSets->end(), "**** Node set not found: " + nodeSetName + "\n");
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSetName) == nodeSets->end(),
+                                  "**** Error in DirichletBC::apply(), node set not found: " + nodeSetName + "\n");
       itBegin = nodeSets->find(nodeSetName);
       itEnd = itBegin; itEnd++;
     }
@@ -241,7 +242,8 @@ void PeridigmNS::DirichletIncrementBC::apply(Teuchos::RCP< std::map< std::string
       itEnd = nodeSets->end();
     }
     else{
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSetName) == nodeSets->end(), "**** Node set not found: " + nodeSetName + "\n");
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSetName) == nodeSets->end(),
+                                  "**** Error in DirichletIncrementBC::apply(), node set not found: " + nodeSetName + "\n");
       itBegin = nodeSets->find(nodeSetName);
       itEnd = itBegin; itEnd++;
     }

@@ -59,8 +59,11 @@ using namespace std;
 PeridigmNS::BoundaryAndInitialConditionManager::BoundaryAndInitialConditionManager(const Teuchos::ParameterList& boundaryAndInitialConditionParams, Peridigm * peridigm_)
   : params(boundaryAndInitialConditionParams), peridigm(peridigm_), createRankDeficientNodesNodeSet(false)
 {
-  if(boundaryAndInitialConditionParams.isParameter("Create Rank_Deficient_Nodes Node Set"))
-    createRankDeficientNodesNodeSet = boundaryAndInitialConditionParams.get<bool>("Create Rank_Deficient_Nodes Node Set");
+  if(params.isParameter("Create Node Set For Rank Deficient Nodes")){
+    createRankDeficientNodesNodeSet = params.get<bool>("Create Node Set For Rank Deficient Nodes");
+    // Remove the parameter to avoid glitches downstream in the processing of node sets
+    params.remove("Create Node Set For Rank Deficient Nodes");
+  }
 }
 
 void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Discretization> discretization)
@@ -152,7 +155,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::createRankDeficientBC()
   Teuchos::ParameterList containerParams;
   containerParams.set("Type","Prescribed_Displacement");
   containerParams.set("Name","Rank Deficient Nodes");
-  containerParams.set("Node Set","Rank_Deficient_Nodes");
+  containerParams.set("Node Set","RANK_DEFICIENT_NODES");
   containerParams.set("Value","0.0");
   containerParams.set("Coordinate","x");
   Teuchos::RCP<Epetra_Vector> toVector = peridigm->getDeltaU();
@@ -221,11 +224,6 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initializeNodeSets(Teuchos:
     }
   }
 
-
-  // Create the bogus node set that will hold any rank deficient nodes that show up
-  if(createRankDeficientNodesNodeSet)
-    (*nodeSets)["Rank_Deficient_Nodes"] = vector<int>();
-
   // Load node sets defined in the mesh file into the nodeSets container
   Teuchos::RCP< map< string, vector<int> > > discretizationNodeSets = discretization->getNodeSets();
   for(map< string, vector<int> >::iterator it=discretizationNodeSets->begin() ; it!=discretizationNodeSets->end() ; it++){
@@ -235,6 +233,10 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initializeNodeSets(Teuchos:
     vector<int>& nodeList = it->second;
     (*nodeSets)[name] = nodeList;
   }
+
+  // Create the bogus node set that will hold any rank deficient nodes that show up
+  if(createRankDeficientNodesNodeSet)
+    (*nodeSets)["RANK_DEFICIENT_NODES"] = vector<int>();
 
   // Cull any off-processor nodes from the node lists
   Teuchos::RCP<const Epetra_BlockMap> oneDimensionalMap = discretization->getGlobalOwnedMap(1);
@@ -311,7 +313,8 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_ComputeRea
           itEnd = nodeSets->end();
         }
         else{
-          TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(boundaryCondition->getNodeSetName()) == nodeSets->end(), "**** Node set not found: " + boundaryCondition->getNodeSetName() + "\n");
+          TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(boundaryCondition->getNodeSetName()) == nodeSets->end(),
+                                      "**** Error in applyKinematicBC_ComputeReactions(), node set not found: " + boundaryCondition->getNodeSetName() + "\n");
           itBegin = nodeSets->find(boundaryCondition->getNodeSetName());
           itEnd = itBegin; itEnd++;
         }
@@ -365,7 +368,8 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
           itEnd = nodeSets->end();
         }
         else{
-          TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(boundaryCondition->getNodeSetName()) == nodeSets->end(), "**** Node set not found: " + boundaryCondition->getNodeSetName() + "\n");
+          TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(boundaryCondition->getNodeSetName()) == nodeSets->end(),
+                                      "**** Error in applyKinematicBC_InsertZeros(), node set not found: " + boundaryCondition->getNodeSetName() + "\n");
           itBegin = nodeSets->find(boundaryCondition->getNodeSetName());
           itEnd = itBegin; itEnd++;
         }
@@ -416,7 +420,8 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
           itEnd = nodeSets->end();
         }
         else{
-          TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(boundaryCondition->getNodeSetName()) == nodeSets->end(), "**** Node set not found: " + boundaryCondition->getNodeSetName() + "\n");
+          TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(boundaryCondition->getNodeSetName()) == nodeSets->end(),
+                                      "**** Error in applyKinematicBC_InsertZerosAndSetDiagonal(), node set not found: " + boundaryCondition->getNodeSetName() + "\n");
           itBegin = nodeSets->find(boundaryCondition->getNodeSetName());
           itEnd = itBegin; itEnd++;
         }

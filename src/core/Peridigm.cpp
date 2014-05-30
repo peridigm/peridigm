@@ -176,7 +176,7 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   Teuchos::RCP<Teuchos::ParameterList> bcParams =
     Teuchos::rcpFromRef( peridigmParams->sublist("Boundary Conditions") );
 
-  // Set a flag for creation of the Rank_Deficient_Nodes node set if the simulation
+  // Set a flag for creation of the RANK_DEFICIENT_NODES node set if the simulation
   // uses implicit time integration and has bond failure
   bool hasDamage(false);
   for(Teuchos::ParameterList::ConstIterator it = peridigmParams->sublist("Blocks").begin() ; it != peridigmParams->sublist("Blocks").end() ; it++){
@@ -185,8 +185,8 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   }
   // Note that allocateTangent is true only iff it's an implicit solve
   if(allocateTangent && hasDamage){
-    if(!bcParams->isParameter("Create Rank_Deficient_Nodes Node Set"))
-      bcParams->set<bool>("Create Rank_Deficient_Nodes Node Set", true);
+    if(!bcParams->isParameter("Create Node Set For Rank Deficient Nodes"))
+      bcParams->set<bool>("Create Node Set For Rank Deficient Nodes", true);
   }
 
   boundaryAndInitialConditionManager =
@@ -889,6 +889,23 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     safetyFactor = verletParams->get<double>("Safety Factor");
     dt *= safetyFactor;
   }
+  double timeInitial = solverParams->get("Initial Time", 0.0);
+  double timeFinal   = solverParams->get("Final Time", 1.0);
+  timeCurrent = timeInitial;
+  workset->timeStep = dt;
+  double dt2 = dt/2.0;
+  int nsteps = static_cast<int>( floor((timeFinal-timeInitial)/dt) );
+
+  // Check to make sure the number of time steps is sane
+  if(floor((timeFinal-timeInitial)/dt) > static_cast<double>(INT_MAX)){
+    if(peridigmComm->MyPID() == 0){
+      cout << "WARNING:  The number of time steps exceed the maximum allowable value for an integer." << endl;
+      cout << "          The number of steps will be reduced to " << INT_MAX << "." << endl;
+      cout << "          Any chance you botched the units in your input deck?\n" << endl;
+    }
+    nsteps = INT_MAX;
+  }
+
   // Write time step information to stdout
   if(peridigmComm->MyPID() == 0){
     cout << "Time step (seconds):" << endl;
@@ -902,14 +919,8 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     else
       cout << "  Safety factor       not provided " << endl;
     cout << "  Time step           " << dt << "\n" << endl;
+    cout << "Total number of time steps " << nsteps << "\n" << endl;
   }
-
-  double timeInitial = solverParams->get("Initial Time", 0.0);
-  double timeFinal   = solverParams->get("Final Time", 1.0);
-  timeCurrent = timeInitial;
-  workset->timeStep = dt;
-  double dt2 = dt/2.0;
-  int nsteps = (int)floor((timeFinal-timeInitial)/dt);
 
   // Pointer index into sub-vectors for use with BLAS
   double *xPtr, *uPtr, *yPtr, *vPtr, *aPtr;
