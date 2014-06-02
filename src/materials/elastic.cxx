@@ -63,6 +63,7 @@ void computeInternalForceLinearElastic
 		const double* bondDamage,
 		const double* dsfOwned,
 		ScalarT* fInternalOverlap,
+		ScalarT* partialStressOverlap,
 		const int*  localNeighborList,
 		int numOwnedPoints,
 		double BULK_MODULUS,
@@ -87,11 +88,12 @@ void computeInternalForceLinearElastic
 	const double *dsf = dsfOwned;
 	const ScalarT *theta = dilatationOwned;
 	ScalarT *fOwned = fInternalOverlap;
+	ScalarT *psOwned = partialStressOverlap;
 
 	const int *neighPtr = localNeighborList;
 	double cellVolume, alpha, X_dx, X_dy, X_dz, zeta, omega;
 	ScalarT Y_dx, Y_dy, Y_dz, dY, t, fx, fy, fz, e, c1;
-	for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yOwned +=3, fOwned+=3, deltaT++, m++, theta++, dsf++){
+	for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yOwned +=3, fOwned+=3, psOwned+=9, deltaT++, m++, theta++, dsf++){
 
 		int numNeigh = *neighPtr; neighPtr++;
 		const double *X = xOwned;
@@ -129,6 +131,18 @@ void computeInternalForceLinearElastic
 			fInternalOverlap[3*localId+0] -= fx*selfCellVolume;
 			fInternalOverlap[3*localId+1] -= fy*selfCellVolume;
 			fInternalOverlap[3*localId+2] -= fz*selfCellVolume;
+
+			if(partialStressOverlap != 0){
+			  *(psOwned+0) += fx*X_dx*cellVolume;
+			  *(psOwned+1) += fx*X_dy*cellVolume;
+			  *(psOwned+2) += fx*X_dz*cellVolume;
+			  *(psOwned+3) += fy*X_dx*cellVolume;
+			  *(psOwned+4) += fy*X_dy*cellVolume;
+			  *(psOwned+5) += fy*X_dz*cellVolume;
+			  *(psOwned+6) += fz*X_dx*cellVolume;
+			  *(psOwned+7) += fz*X_dy*cellVolume;
+			  *(psOwned+8) += fz*X_dz*cellVolume;
+			}
 		}
 
 	}
@@ -145,6 +159,7 @@ template void computeInternalForceLinearElastic<double>
 		const double* bondDamage,
 		const double* dsfOwned,
 		double* fInternalOverlap,
+		double* partialStressOverlap,
 		const int*  localNeighborList,
 		int numOwnedPoints,
 		double BULK_MODULUS,
@@ -165,6 +180,7 @@ template void computeInternalForceLinearElastic<Sacado::Fad::DFad<double> >
 		const double* bondDamage,
 		const double* dsfOwned,
 		Sacado::Fad::DFad<double>* fInternalOverlap,
+		Sacado::Fad::DFad<double>* partialStressOverlap,
 		const int*  localNeighborList,
 		int numOwnedPoints,
 		double BULK_MODULUS,

@@ -61,6 +61,7 @@ void computeInternalForceLinearElastic
 		const double* bondDamage,
 		const double* dsfOwned,
 		ScalarT* fInternalOverlapPtr,
+		ScalarT* partialStressOverlapPtr,
 		const int*  localNeighborList,
 		int numOwnedPoints,
 		double BULK_MODULUS,
