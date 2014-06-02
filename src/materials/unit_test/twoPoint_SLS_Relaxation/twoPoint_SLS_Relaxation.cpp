@@ -469,6 +469,7 @@ TEUCHOS_UNIT_TEST(TwoPoint_SLS_Relaxation,Case_1) {
 	double *yN_OverlapPtr = yTemporalField.getField(Field_ENUM::STEP_N).get();
 	double *yNp1_OverlapPtr = yTemporalField.getField(Field_ENUM::STEP_NP1).get();
         
+	double* nullPtr = NULL;
 
         /*
 	 * Compute initial force with elastic constitutive model
@@ -483,6 +484,7 @@ TEUCHOS_UNIT_TEST(TwoPoint_SLS_Relaxation,Case_1) {
 			bondDamage,
 			dsfOwned,
 			fInternalOverlapPtr,
+			nullPtr,
 			localNeighborList,
 			numOwnedPoints,
 			K,
@@ -624,6 +626,7 @@ TEUCHOS_UNIT_TEST(TwoPoint_SLS_Relaxation,Case_2) {
 	double *yN_OverlapPtr = yTemporalField.getField(Field_ENUM::STEP_N).get();
 	double *yNp1_OverlapPtr = yTemporalField.getField(Field_ENUM::STEP_NP1).get();
         
+	double* nullPtr = NULL;
 
         /*
 	 * Compute initial force with elastic constitutive model
@@ -638,6 +641,7 @@ TEUCHOS_UNIT_TEST(TwoPoint_SLS_Relaxation,Case_2) {
 			bondDamage,
 			dsfOwned,
 			fInternalOverlapPtr,
+			nullPtr,
 			localNeighborList,
 			numOwnedPoints,
 			K,
@@ -780,6 +784,7 @@ TEUCHOS_UNIT_TEST(TwoPoint_SLS_Relaxation,Case_3) {
 	double *yN_OverlapPtr = yTemporalField.getField(Field_ENUM::STEP_N).get();
 	double *yNp1_OverlapPtr = yTemporalField.getField(Field_ENUM::STEP_NP1).get();
         
+	double* nullPtr = NULL;
 
         /*
 	 * Compute initial force with elastic constitutive model
@@ -794,6 +799,7 @@ TEUCHOS_UNIT_TEST(TwoPoint_SLS_Relaxation,Case_3) {
 			bondDamage,
 			dsfOwned,
 			fInternalOverlapPtr,
+			nullPtr,
 			localNeighborList,
 			numOwnedPoints,
 			K,
