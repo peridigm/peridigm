@@ -49,7 +49,6 @@
 #define PERIDIGM_HORIZONMANAGER_HPP
 
 #include <Teuchos_ParameterList.hpp>
-//#include "muParser.h"
 #include "FunctionRTC.hh"
 #include <string>
 #include <map>
@@ -80,16 +79,6 @@ public:
 
 protected:
 
-  //! Function parser
-  // mu::Parser muParser;
-
-  //! @name Variables for function parser.
-  //@{
-  // double muParserX;
-  // double muParserY;
-  // double muParserZ;
-  //@}
-
   //! Run-time compiler, used as function parser
   Teuchos::RCP<PG_RuntimeCompiler::Function> rtcFunction;
 
@@ -103,17 +92,6 @@ private:
 
   //! Constructor, private to prohibit use.
   HorizonManager();
-  // HorizonManager() : muParserX(0.0), muParserY(0.0), muParserZ(0.0)
-  // {
-  //   // Set up muParser
-  //   try {
-  //     muParser.DefineVar("x", &muParserX);
-  //     muParser.DefineVar("y", &muParserY);
-  //     muParser.DefineVar("z", &muParserZ);
-  //   }
-  //   catch (mu::Parser::exception_type &e)
-  //     TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-  // }
 
   // Private to prohibit use.
   HorizonManager(const HorizonManager&);

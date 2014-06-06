@@ -171,22 +171,6 @@ double PeridigmNS::HorizonManager::evaluateHorizon(string blockName, double x, d
     TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
   }
 
-
-  // try{
-  //   muParser.SetExpr(horizonFunction);
-  // }
-  // catch (mu::Parser::exception_type &e)
-  //   TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-  // muParserX = x;
-  // muParserY = y;
-  // muParserZ = z;
-  // try {
-  //   horizonValue = muParser.Eval();
-  // }
-  // catch (mu::Parser::exception_type &e)
-  //   TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-
-
   return horizonValue;
 }
 

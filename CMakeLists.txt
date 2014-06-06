@@ -216,7 +216,6 @@ set(Zoltan_LIBRARY zoltan)
 
 # other required libraries
 set(MESH_INPUT_LIBS QuickGrid)
-set(PARSER_LIBS muParser)
 set(PDNEIGH_LIBS PdNeigh)
 set(UTILITIES_LIBS Utilities)
 set(PdMaterialUtilitiesLib PdMaterialUtilities)
@@ -259,7 +258,6 @@ set(MESH_OUTPUT_DIR      ${CMAKE_SOURCE_DIR}/src/io/mesh_output)
 set(QUICK_GRID_DIR       ${CMAKE_SOURCE_DIR}/src/io/mesh_input/quick_grid)
 set(PDNEIGH_DIR          ${CMAKE_SOURCE_DIR}/src/io/pdneigh)
 set(UTILITIES_DIR        ${CMAKE_SOURCE_DIR}/src/io/utilities)
-set(PARSER_DIR           ${CMAKE_SOURCE_DIR}/src/muParser)
 set(BOND_VOL_QUICK_GRID  ${CMAKE_SOURCE_DIR}/src/io/bond_volume/quick_grid)
 
 include_directories(

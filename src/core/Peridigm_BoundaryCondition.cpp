@@ -57,12 +57,6 @@ PeridigmNS::BoundaryCondition::BoundaryCondition(const string & name_,const Teuc
   name(name_),
   toVector(toVector_),
   coord(0),
-  /*
-  muParserX(0.0),
-  muParserY(0.0),
-  muParserZ(0.0),
-  muParserT(0.0),
-  */
   tensorOrder(SCALAR),
   isCumulative(isCumulative_)
 {
@@ -72,17 +66,6 @@ PeridigmNS::BoundaryCondition::BoundaryCondition(const string & name_,const Teuc
   nodeSetName = nodeSet;
   coord = to_index(to_spatial_coordinate(bcParams_));
   function = bcParams_.get<string>("Value");
-
-  // Set up muParser
-  // try {
-  //   muParser.DefineVar("x", &muParserX);
-  //   muParser.DefineVar("y", &muParserY);
-  //   muParser.DefineVar("z", &muParserZ);
-  //   muParser.DefineVar("t", &muParserT);
-  //   muParser.DefineFun(_T("rnd"), mu::Rnd, false);
-  // }
-  // catch (mu::Parser::exception_type &e)
-  //   TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
 
   // set up RTCompiler
   rtcFunction = Teuchos::rcp<PG_RuntimeCompiler::Function>(new PG_RuntimeCompiler::Function(5, "rtcBoundaryConditionFunction"));
@@ -107,22 +90,6 @@ void PeridigmNS::BoundaryCondition::evaluateParser(const int & localNodeID, doub
   Teuchos::RCP<Epetra_Vector> x = peridigm->getX();
   const Epetra_BlockMap& threeDimensionalMap = x->Map();
   TEUCHOS_TEST_FOR_EXCEPT_MSG(threeDimensionalMap.ElementSize() != 3, "**** setVectorValues() must be called with map having element size = 3.\n");
-  // muParserX = (*x)[localNodeID*3];
-  // muParserY = (*x)[localNodeID*3 + 1];
-  // muParserZ = (*x)[localNodeID*3 + 2];
-  // muParserT = timeCurrent;
-  // try {
-  //   currentValue = muParser.Eval();
-  // }
-  // catch (mu::Parser::exception_type &e)
-  // TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-
-  // muParserT = timePrevious;
-  // try {
-  //   previousValue = muParser.Eval();
-  // }
-  // catch (mu::Parser::exception_type &e)
-  // TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
 
   bool success(true);
   // set the coordinates and set the return value to 0.0
@@ -178,12 +145,6 @@ PeridigmNS::DirichletBC::DirichletBC(const string & name_,const Teuchos::Paramet
 void PeridigmNS::DirichletBC::apply(Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets, const double & timeCurrent, const double & timePrevious){
   // get the tensor order of the bc field:
   const int fieldDimension = to_dimension_size(tensorOrder);
-
-  // try{
-  //   muParser.SetExpr(function);
-  // }
-  // catch (mu::Parser::exception_type &e)
-  // TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
 
   string rtcBody = "value = " + function;
   bool successfully_compiled = rtcFunction->addBody(rtcBody);
@@ -258,12 +219,6 @@ void PeridigmNS::DirichletIncrementBC::apply(Teuchos::RCP< std::map< std::string
 
   // get the tensor order of the bc field:
   const int fieldDimension = to_dimension_size(tensorOrder);
-
-  // try{
-  //   muParser.SetExpr(function);
-  // }
-  // catch (mu::Parser::exception_type &e)
-  // TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
 
   string rtcBody = "value = " + function;
   bool successfully_compiled = rtcFunction->addBody(rtcBody);

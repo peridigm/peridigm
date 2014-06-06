@@ -71,8 +71,6 @@
 #include "Peridigm_MaterialFactory.hpp"
 #include "Peridigm_DamageModelFactory.hpp"
 #include "Peridigm_InterfaceAwareDamageModel.hpp"
-// #include "muParser.h"
-// #include "muParserPeridigmFunctions.h"
 #include "Peridigm.hpp"
 #ifdef PERIDIGM_PV
   #include "Peridigm_PartialVolumeCalculator.hpp"

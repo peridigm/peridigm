@@ -49,8 +49,6 @@
 #define PERIDIGM_BOUNARYCONDITION_HPP
 
 #include "Peridigm_Enums.hpp"
-// #include "muParser.h"
-// #include "muParserPeridigmFunctions.h"
 #include "FunctionRTC.hh"
 #include <Epetra_Vector.h>
 
@@ -114,17 +112,6 @@ protected:
 
   //! string defined funciton
   string function;
-
-  //! Function parser
-  // mu::Parser muParser;
-
-  //! @name Variables for mu parser.
-  //@{
-  // double muParserX;
-  // double muParserY;
-  // double muParserZ;
-  // double muParserT;
-  //@}
 
   //! Run-time compiler, used as function parser
   Teuchos::RCP<PG_RuntimeCompiler::Function> rtcFunction;
