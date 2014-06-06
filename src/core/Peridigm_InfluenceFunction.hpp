@@ -51,7 +51,6 @@
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_Assert.hpp>
 #include <string>
-//#include "muParser.h"
 #include "FunctionRTC.hh"
 
 namespace PeridigmNS {
@@ -121,18 +120,8 @@ public:
     else if(influenceFunctionString == "Gaussian"){
       m_influenceFunction = &PeridigmInfluenceFunction::gaussian;
     }
-    else{
-    
+    else{    
       // Assume that unrecognized strings are user-defined influence functions.
-      // try{
-      //   muParser.SetExpr(influenceFunctionString);
-      // }
-      // catch (mu::Parser::exception_type &e){
-      //   //TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-      //   TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error:  InfluenceFunction::setInfluenceFunction(), invalid influence function\n");
-      // }
-      // m_influenceFunction = &userDefinedInfluenceFunction;
-
       std::string rtcBody = "value = " + influenceFunctionString;
       bool success = rtcFunction.addBody(rtcBody);
       if(success)
@@ -166,15 +155,6 @@ private:
 
   //! Private and unimplemented to prevent use
   InfluenceFunction & operator= ( const InfluenceFunction & );
-
-  //! @name Variables for user-defined influence functions.
-  //@{ 
-  // static double muParserZeta;
-  // static double muParserHorizon;
-  //@}
-
-  //! Function parser for user-defined influence functions.
-  // static mu::Parser muParser;
 
   //! Run-time compiler, used as function parser
   static PG_RuntimeCompiler::Function rtcFunction;

@@ -123,7 +123,6 @@ add_subdirectory (compute/)
 add_subdirectory (core/)
 add_subdirectory (io/)
 add_subdirectory (materials/)
-add_subdirectory (muParser/)
 
 IF (INSTALL_PERIDIGM)
   configure_package_config_file(PeridigmConfig.cmake.in
