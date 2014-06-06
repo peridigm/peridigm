@@ -49,9 +49,11 @@
 
 using namespace std;
 
-double PeridigmNS::InfluenceFunction::muParserZeta = 0.0;
-double PeridigmNS::InfluenceFunction::muParserHorizon = 0.0;
-mu::Parser PeridigmNS::InfluenceFunction::muParser;
+// double PeridigmNS::InfluenceFunction::muParserZeta = 0.0;
+// double PeridigmNS::InfluenceFunction::muParserHorizon = 0.0;
+// mu::Parser PeridigmNS::InfluenceFunction::muParser;
+
+PG_RuntimeCompiler::Function PeridigmNS::InfluenceFunction::rtcFunction(3, "rtcInfluenceFunctionUserDefinedFunction");
 
 PeridigmNS::InfluenceFunction& PeridigmNS::InfluenceFunction::self() {
   static InfluenceFunction influenceFunction;
@@ -64,22 +66,36 @@ PeridigmNS::InfluenceFunction::InfluenceFunction() : m_influenceFunction(NULL) {
   setInfluenceFunction("One");
 
   // Set up the muParser
-  try {
-    muParser.DefineVar("zeta", &muParserZeta);
-    muParser.DefineVar("horizon", &muParserHorizon);
-  } 
-  catch (mu::Parser::exception_type &e)
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+  // try {
+  //   muParser.DefineVar("zeta", &muParserZeta);
+  //   muParser.DefineVar("horizon", &muParserHorizon);
+  // } 
+  // catch (mu::Parser::exception_type &e)
+  //   TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+
+  // set up RTCompiler
+  rtcFunction.addVar("double", "zeta");
+  rtcFunction.addVar("double", "horizon");
+  rtcFunction.addVar("double", "value");
 }
 
 double PeridigmNS::InfluenceFunction::userDefinedInfluenceFunction(double zeta, double horizon){
-  muParserZeta = zeta;
-  muParserHorizon = horizon;
-  double value;
-  try {
-    value = muParser.Eval();
-  }
-  catch (mu::Parser::exception_type &e)
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, e.GetMsg());
+  // muParserZeta = zeta;
+  // muParserHorizon = horizon;
+  // double value;
+  // try {
+  //   value = muParser.Eval();
+  // }
+  // catch (mu::Parser::exception_type &e)
+  //   TEUCHOS_TEST_FOR_EXCEPT_MSG(true, e.GetMsg());
+
+  double value(0.0);
+  bool success = rtcFunction.varValueFill(0, zeta);
+  if(success)
+    success = rtcFunction.varValueFill(1, horizon);
+  if(success)
+    success = rtcFunction.execute();
+  if(success)
+    value = rtcFunction.getValueOfVar("value");
   return value;
 }

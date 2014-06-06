@@ -71,8 +71,8 @@
 #include "Peridigm_MaterialFactory.hpp"
 #include "Peridigm_DamageModelFactory.hpp"
 #include "Peridigm_InterfaceAwareDamageModel.hpp"
-#include "muParser.h"
-#include "muParserPeridigmFunctions.h"
+// #include "muParser.h"
+// #include "muParserPeridigmFunctions.h"
 #include "Peridigm.hpp"
 #ifdef PERIDIGM_PV
   #include "Peridigm_PartialVolumeCalculator.hpp"
@@ -1753,7 +1753,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
     bool dampedNewton = false;
     bool usePreconditioner = false; // \todo Determine why ifpack preconditioners started exhibiting problems with Trilinos 11.2.5 (Jul-11-2013).
                                     //       For the record, Trilinos 11.2.4 (Jun-20-2013) works.
-    int numPureNewtonSteps = 8;
+    int numPureNewtonSteps = 50;//8;
     int numPreconditionerSteps = 24;
     int dampedNewtonNumStepsBetweenTangentUpdates = 8;
     double alpha = 0.0;

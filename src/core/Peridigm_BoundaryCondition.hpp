@@ -49,8 +49,9 @@
 #define PERIDIGM_BOUNARYCONDITION_HPP
 
 #include "Peridigm_Enums.hpp"
-#include "muParser.h"
-#include "muParserPeridigmFunctions.h"
+// #include "muParser.h"
+// #include "muParserPeridigmFunctions.h"
+#include "FunctionRTC.hh"
 #include <Epetra_Vector.h>
 
 using namespace std;
@@ -88,14 +89,8 @@ public:
   //! apply the boundary condition
   virtual void apply(Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets, const double & timeCurrent=0.0, const double & timePrevious=0.0)=0;
 
-  //! evaluate muParser
-  void evaluateMuParser(const int & localNodeID, double & currentValue, double & previousValue, const double & timeCurrent=0.0, const double & timePrevious=0.0);
-
-  //! Set the vector values
-//  void setVectorValues_(Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets,
-//    const double & timeCurrent=0.0,
-//    const double & timePrevious=0.0,
-//    const double & multiplier=1.0);
+  //! evaluate function parser
+  void evaluateParser(const int & localNodeID, double & currentValue, double & previousValue, const double & timeCurrent=0.0, const double & timePrevious=0.0);
 
 protected:
 
@@ -121,15 +116,18 @@ protected:
   string function;
 
   //! Function parser
-  mu::Parser muParser;
+  // mu::Parser muParser;
 
-  //! @name Variables for function parser.
+  //! @name Variables for mu parser.
   //@{
-  double muParserX;
-  double muParserY;
-  double muParserZ;
-  double muParserT;
+  // double muParserX;
+  // double muParserY;
+  // double muParserZ;
+  // double muParserT;
   //@}
+
+  //! Run-time compiler, used as function parser
+  Teuchos::RCP<PG_RuntimeCompiler::Function> rtcFunction;
 
   Tensor_Order tensorOrder;
 
