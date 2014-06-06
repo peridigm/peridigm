@@ -57,10 +57,12 @@ PeridigmNS::BoundaryCondition::BoundaryCondition(const string & name_,const Teuc
   name(name_),
   toVector(toVector_),
   coord(0),
+  /*
   muParserX(0.0),
   muParserY(0.0),
   muParserZ(0.0),
   muParserT(0.0),
+  */
   tensorOrder(SCALAR),
   isCumulative(isCumulative_)
 {
@@ -72,15 +74,23 @@ PeridigmNS::BoundaryCondition::BoundaryCondition(const string & name_,const Teuc
   function = bcParams_.get<string>("Value");
 
   // Set up muParser
-  try {
-    muParser.DefineVar("x", &muParserX);
-    muParser.DefineVar("y", &muParserY);
-    muParser.DefineVar("z", &muParserZ);
-    muParser.DefineVar("t", &muParserT);
-    muParser.DefineFun(_T("rnd"), mu::Rnd, false);
-  }
-  catch (mu::Parser::exception_type &e)
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+  // try {
+  //   muParser.DefineVar("x", &muParserX);
+  //   muParser.DefineVar("y", &muParserY);
+  //   muParser.DefineVar("z", &muParserZ);
+  //   muParser.DefineVar("t", &muParserT);
+  //   muParser.DefineFun(_T("rnd"), mu::Rnd, false);
+  // }
+  // catch (mu::Parser::exception_type &e)
+  //   TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+
+  // set up RTCompiler
+  rtcFunction = Teuchos::rcp<PG_RuntimeCompiler::Function>(new PG_RuntimeCompiler::Function(5, "rtcBoundaryConditionFunction"));
+  rtcFunction->addVar("double", "x");
+  rtcFunction->addVar("double", "y");
+  rtcFunction->addVar("double", "z");
+  rtcFunction->addVar("double", "t");
+  rtcFunction->addVar("double", "value");
 
   if(toVector->Map().ElementSize()==1)
   {
@@ -93,26 +103,56 @@ PeridigmNS::BoundaryCondition::BoundaryCondition(const string & name_,const Teuc
     TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: Boundary conditions have not been implemented for fields of tensor order.");
 }
 
-void PeridigmNS::BoundaryCondition::evaluateMuParser(const int & localNodeID, double & currentValue, double & previousValue, const double & timeCurrent, const double & timePrevious){
+void PeridigmNS::BoundaryCondition::evaluateParser(const int & localNodeID, double & currentValue, double & previousValue, const double & timeCurrent, const double & timePrevious){
   Teuchos::RCP<Epetra_Vector> x = peridigm->getX();
   const Epetra_BlockMap& threeDimensionalMap = x->Map();
   TEUCHOS_TEST_FOR_EXCEPT_MSG(threeDimensionalMap.ElementSize() != 3, "**** setVectorValues() must be called with map having element size = 3.\n");
-  muParserX = (*x)[localNodeID*3];
-  muParserY = (*x)[localNodeID*3 + 1];
-  muParserZ = (*x)[localNodeID*3 + 2];
-  muParserT = timeCurrent;
-  try {
-    currentValue = muParser.Eval();
-  }
-  catch (mu::Parser::exception_type &e)
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+  // muParserX = (*x)[localNodeID*3];
+  // muParserY = (*x)[localNodeID*3 + 1];
+  // muParserZ = (*x)[localNodeID*3 + 2];
+  // muParserT = timeCurrent;
+  // try {
+  //   currentValue = muParser.Eval();
+  // }
+  // catch (mu::Parser::exception_type &e)
+  // TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
 
-  muParserT = timePrevious;
-  try {
-    previousValue = muParser.Eval();
+  // muParserT = timePrevious;
+  // try {
+  //   previousValue = muParser.Eval();
+  // }
+  // catch (mu::Parser::exception_type &e)
+  // TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+
+  bool success(true);
+  // set the coordinates and set the return value to 0.0
+  if(success)
+    rtcFunction->varValueFill(0, (*x)[localNodeID*3]);
+  if(success)
+    success = rtcFunction->varValueFill(1, (*x)[localNodeID*3 + 1]);
+  if(success)
+    success = rtcFunction->varValueFill(2, (*x)[localNodeID*3 + 2]);
+  if(success)
+    success = rtcFunction->varValueFill(4, 0.0);
+  // evaluate at previous time
+  if(success)
+    success = rtcFunction->varValueFill(3, timePrevious);
+  if(success)
+    success = rtcFunction->execute();
+  if(success)
+    previousValue = rtcFunction->getValueOfVar("value");
+  // evaluate at current time
+  if(success)
+    success = rtcFunction->varValueFill(3, timeCurrent);
+  if(success)
+    success = rtcFunction->execute();
+  if(success)
+    currentValue = rtcFunction->getValueOfVar("value");
+  if(!success){
+    string msg = "\n**** Error in BoundaryCondition::evaluateParser().\n";
+    msg += "**** " + rtcFunction->getErrors() + "\n";
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
   }
-  catch (mu::Parser::exception_type &e)
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
 
   // if this is any other boundary condition besides prescribed displacement
   // get the previous value from evaluating the string function as above
@@ -139,11 +179,19 @@ void PeridigmNS::DirichletBC::apply(Teuchos::RCP< std::map< std::string, std::ve
   // get the tensor order of the bc field:
   const int fieldDimension = to_dimension_size(tensorOrder);
 
-  try{
-    muParser.SetExpr(function);
+  // try{
+  //   muParser.SetExpr(function);
+  // }
+  // catch (mu::Parser::exception_type &e)
+  // TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+
+  string rtcBody = "value = " + function;
+  bool successfully_compiled = rtcFunction->addBody(rtcBody);
+  if(!successfully_compiled){
+    string msg = "\n**** Error:  rtcFunction->addBody(function) returned error code in PeridigmNS::DirichletBC::apply().\n";
+    msg += "**** " + rtcFunction->getErrors() + "\n";
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!successfully_compiled, msg);
   }
-  catch (mu::Parser::exception_type &e)
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
 
   // apply the bc to every element in the entire domain
   if(to_set_definition(nodeSetName)==FULL_DOMAIN)
@@ -151,7 +199,7 @@ void PeridigmNS::DirichletBC::apply(Teuchos::RCP< std::map< std::string, std::ve
     for(int localNodeID = 0; localNodeID < toVector->MyLength(); localNodeID++) {
       double currentValue = 0.0;
       double previousValue = 0.0;
-      evaluateMuParser(localNodeID,currentValue,previousValue,timeCurrent);
+      evaluateParser(localNodeID,currentValue,previousValue,timeCurrent);
       TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite(currentValue), "**** NaN returned by dirichlet BC evaluation.\n");
       if(isCumulative)
         (*toVector)[localNodeID*fieldDimension + coord] += currentValue;
@@ -180,7 +228,7 @@ void PeridigmNS::DirichletBC::apply(Teuchos::RCP< std::map< std::string, std::ve
         if(localNodeID != -1) {
           double currentValue = 0.0;
           double previousValue = 0.0;
-          evaluateMuParser(localNodeID,currentValue,previousValue,timeCurrent);
+          evaluateParser(localNodeID,currentValue,previousValue,timeCurrent);
           TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite(currentValue), "**** NaN returned by dirichlet BC evaluation.\n");
           if(isCumulative)
             (*toVector)[localNodeID*fieldDimension + coord] += currentValue;
@@ -211,11 +259,19 @@ void PeridigmNS::DirichletIncrementBC::apply(Teuchos::RCP< std::map< std::string
   // get the tensor order of the bc field:
   const int fieldDimension = to_dimension_size(tensorOrder);
 
-  try{
-    muParser.SetExpr(function);
+  // try{
+  //   muParser.SetExpr(function);
+  // }
+  // catch (mu::Parser::exception_type &e)
+  // TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+
+  string rtcBody = "value = " + function;
+  bool successfully_compiled = rtcFunction->addBody(rtcBody);
+  if(!successfully_compiled){
+    string msg = "\n**** Error:  rtcFunction->addBody(function) returned nonzero error code in PeridigmNS::DirichletBC::apply().\n";
+    msg += "**** " + rtcFunction->getErrors() + "\n";
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!successfully_compiled, msg);
   }
-  catch (mu::Parser::exception_type &e)
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
 
   // apply the bc to every element in the entire domain
   if(to_set_definition(nodeSetName)==FULL_DOMAIN)
@@ -223,7 +279,7 @@ void PeridigmNS::DirichletIncrementBC::apply(Teuchos::RCP< std::map< std::string
     for(int localNodeID = 0; localNodeID < toVector->MyLength(); localNodeID++) {
       double currentValue = 0.0;
       double previousValue = 0.0;
-      evaluateMuParser(localNodeID,currentValue,previousValue,timeCurrent,timePrevious_);
+      evaluateParser(localNodeID,currentValue,previousValue,timeCurrent,timePrevious_);
       const double value = coeff * (currentValue - previousValue)
                  + deltaTCoeff * (currentValue - previousValue) * (1.0 / (timeCurrent - timePrevious_));
       TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite(value), "**** NaN returned by dirichlet increment BC evaluation.\n");
@@ -254,7 +310,7 @@ void PeridigmNS::DirichletIncrementBC::apply(Teuchos::RCP< std::map< std::string
         if(localNodeID != -1) {
           double currentValue = 0.0;
           double previousValue = 0.0;
-          evaluateMuParser(localNodeID,currentValue,previousValue,timeCurrent,timePrevious_);
+          evaluateParser(localNodeID,currentValue,previousValue,timeCurrent,timePrevious_);
           const double value = coeff * (currentValue - previousValue)
                          + deltaTCoeff * (currentValue - previousValue) * (1.0 / (timeCurrent - timePrevious_));
           TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite(value), "**** NaN returned by dirichlet increment BC evaluation.\n");

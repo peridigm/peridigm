@@ -48,9 +48,11 @@
 #ifndef PERIDIGM_INFLUENCEFUNCTION_HPP
 #define PERIDIGM_INFLUENCEFUNCTION_HPP
 
+#include <Teuchos_RCP.hpp>
 #include <Teuchos_Assert.hpp>
 #include <string>
-#include "muParser.h"
+//#include "muParser.h"
+#include "FunctionRTC.hh"
 
 namespace PeridigmNS {
 
@@ -105,8 +107,7 @@ public:
 		TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error:  InfluenceFunction::getInfluenceFunction(string), invalid influence function\n");
 	}
 	return p;
-}
-
+  }
 
   //! Sets the influence function based on the provided string.
   void setInfluenceFunction(std::string influenceFunctionString) {
@@ -123,15 +124,25 @@ public:
     else{
     
       // Assume that unrecognized strings are user-defined influence functions.
-      try{
-        muParser.SetExpr(influenceFunctionString);
-      }
-      catch (mu::Parser::exception_type &e){
-        //TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-        TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error:  InfluenceFunction::setInfluenceFunction(), invalid influence function\n");
-      }
+      // try{
+      //   muParser.SetExpr(influenceFunctionString);
+      // }
+      // catch (mu::Parser::exception_type &e){
+      //   //TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+      //   TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error:  InfluenceFunction::setInfluenceFunction(), invalid influence function\n");
+      // }
+      // m_influenceFunction = &userDefinedInfluenceFunction;
+
+      std::string rtcBody = "value = " + influenceFunctionString;
+      bool success = rtcFunction.addBody(rtcBody);
+      if(success)
+        success = rtcFunction.varValueFill(2, 0.0); // The variable that represents the return value must be set to something
+      if(!success){
+        std::string msg = "\n**** Error in InfluenceFunction::setInfluenceFunction().\n";
+        msg += "**** " + rtcFunction.getErrors() + "\n";
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
+      }    
       m_influenceFunction = &userDefinedInfluenceFunction;
-    
     }
   }
 
@@ -158,12 +169,15 @@ private:
 
   //! @name Variables for user-defined influence functions.
   //@{ 
-  static double muParserZeta;
-  static double muParserHorizon;
+  // static double muParserZeta;
+  // static double muParserHorizon;
   //@}
 
   //! Function parser for user-defined influence functions.
-  static mu::Parser muParser;
+  // static mu::Parser muParser;
+
+  //! Run-time compiler, used as function parser
+  static PG_RuntimeCompiler::Function rtcFunction;
 
   //! Function pointer to the influence function with the signature:  double function(double zeta, double horizon).
   functionPointer m_influenceFunction;

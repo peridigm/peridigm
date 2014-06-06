@@ -81,7 +81,7 @@
 #include "Peridigm_Memstat.hpp"
 #include "Peridigm_Material.hpp"
 #include "Peridigm_DamageModel.hpp"
-#include "muParserDef.h"
+//#include "muParserDef.h"
 
 namespace PeridigmNS {
 

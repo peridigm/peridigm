@@ -52,6 +52,15 @@
 
 using namespace std;
 
+PeridigmNS::HorizonManager::HorizonManager() {
+  // set up RTCompiler
+  rtcFunction = Teuchos::rcp<PG_RuntimeCompiler::Function>(new PG_RuntimeCompiler::Function(4, "rtcHorizonFunction"));
+  rtcFunction->addVar("double", "x");
+  rtcFunction->addVar("double", "y");
+  rtcFunction->addVar("double", "z");
+  rtcFunction->addVar("double", "value");
+}
+
 PeridigmNS::HorizonManager& PeridigmNS::HorizonManager::self() {
   static HorizonManager horizonManager;
   return horizonManager;
@@ -141,19 +150,43 @@ double PeridigmNS::HorizonManager::evaluateHorizon(string blockName, double x, d
   }
   string horizonFunction = horizonStrings[name];
   double horizonValue(0.0);
-  try{
-    muParser.SetExpr(horizonFunction);
+
+  string rtcBody = "value = " + horizonFunction;
+  bool success = rtcFunction->addBody(rtcBody);
+  if(success)
+    rtcFunction->varValueFill(0, x);
+  if(success)
+    success = rtcFunction->varValueFill(1, y);
+  if(success)
+    success = rtcFunction->varValueFill(2, z);
+  if(success)
+    success = rtcFunction->varValueFill(3, 0.0);
+  if(success)
+    success = rtcFunction->execute();
+  if(success)
+    horizonValue = rtcFunction->getValueOfVar("value");
+  if(!success){
+    string msg = "\n**** Error in HorizonManager::evaluateHorizon().\n";
+    msg += "**** " + rtcFunction->getErrors() + "\n";
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
   }
-  catch (mu::Parser::exception_type &e)
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
-  muParserX = x;
-  muParserY = y;
-  muParserZ = z;
-  try {
-    horizonValue = muParser.Eval();
-  }
-  catch (mu::Parser::exception_type &e)
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+
+
+  // try{
+  //   muParser.SetExpr(horizonFunction);
+  // }
+  // catch (mu::Parser::exception_type &e)
+  //   TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+  // muParserX = x;
+  // muParserY = y;
+  // muParserZ = z;
+  // try {
+  //   horizonValue = muParser.Eval();
+  // }
+  // catch (mu::Parser::exception_type &e)
+  //   TEUCHOS_TEST_FOR_EXCEPT_MSG(1, e.GetMsg());
+
+
   return horizonValue;
 }
 
