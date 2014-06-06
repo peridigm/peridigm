@@ -206,7 +206,7 @@ void PeridigmNS::AlbanyDiscretization::createBlockElementLists() {
   // Find the unique block ids on processor
   set<int> uniqueBlockIds;
   for(int i=0 ; i<blockID->MyLength() ; ++i)
-    uniqueBlockIds.insert((*blockID)[i]);
+    uniqueBlockIds.insert( static_cast<int>( (*blockID)[i] ) );
 
   // Broadcast the unique block ids so that all processors are aware of the full block list
   Teuchos::RCP<const Teuchos::Comm<int> > teuchosComm = Teuchos::createMpiComm<int>(Teuchos::opaqueWrapper<MPI_Comm>(MPI_COMM_WORLD));

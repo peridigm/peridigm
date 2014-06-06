@@ -397,8 +397,8 @@ void PeridigmNS::DataManager::rebalance(Teuchos::RCP<const Epetra_BlockMap> reba
   for(int iState=0 ; iState<3 ; ++iState){
 
     Teuchos::RCP<State> state;
-    std::map< PeridigmField::Length, vector<int> > *pointFieldIds;
-    vector<int> *bondFieldIds;
+    std::map< PeridigmField::Length, vector<int> > *pointFieldIds(NULL);
+    vector<int> *bondFieldIds(NULL);
     if(iState == 0){
       state = stateNONE;
       pointFieldIds = &statelessPointFieldIds;

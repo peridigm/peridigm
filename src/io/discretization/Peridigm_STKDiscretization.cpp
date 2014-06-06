@@ -595,7 +595,7 @@ PeridigmNS::STKDiscretization::constructInterfaceData()
     // get the connectivity for this element:
     std::vector<int> selfNodeIds(numNodesPerElem);
     for(int n=0;n<numNodesPerElem;++n){
-      selfNodeIds[n] = (*exodusMeshElementConnectivity)[myIndex+n];
+      selfNodeIds[n] = static_cast<int>( (*exodusMeshElementConnectivity)[myIndex+n] );
     }
 
     for(int j=0;j<numNeighbors;j++){
@@ -609,7 +609,7 @@ PeridigmNS::STKDiscretization::constructInterfaceData()
       std::vector<int> neighNodeIds(numNodesPerElem);
       std::vector<int> foundNodeIds(4); // 4 works for tris or quads
       for(int n=0;n<numNodesPerElem;++n)
-        neighNodeIds[n] = (*exodusMeshElementConnectivity)[neighIndex + n];
+        neighNodeIds[n] = static_cast<int>( (*exodusMeshElementConnectivity)[neighIndex + n] );
 
       if(numNodesPerElem==8){ // cube (order needed to prevent folding the interfaces by mixing up the node numbering)
         for(int ni=0;ni<6;++ni){
