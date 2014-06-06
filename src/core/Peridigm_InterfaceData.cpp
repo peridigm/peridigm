@@ -222,7 +222,7 @@ PeridigmNS::InterfaceData::InitializeExodusOutput(Teuchos::RCP<Epetra_Vector> ex
     if(interfaceNodes->Map().ElementSize(it)!=4) continue;
     int elemIndex = interfaceNodes->Map().FirstPointInElement(it);
     for(int nn=0;nn<4;++nn){
-      int node = (*interfaceNodes)[elemIndex+nn];
+      int node = static_cast<int>( (*interfaceNodes)[elemIndex+nn] );
       block_connect_q4[conn_index*num_nodes_per_elem_q4+nn] = exodusMeshNodePositions->Map().LID(node) + 1;// nodes are 1 based in exodus
     }
     conn_index++;
@@ -237,7 +237,7 @@ PeridigmNS::InterfaceData::InitializeExodusOutput(Teuchos::RCP<Epetra_Vector> ex
     if(interfaceNodes->Map().ElementSize(it)!=3) continue;
     int elemIndex = interfaceNodes->Map().FirstPointInElement(it);
     for(int nn=0;nn<3;++nn){
-      int node = (*interfaceNodes)[elemIndex+nn];
+      int node = static_cast<int>( (*interfaceNodes)[elemIndex+nn] );
       block_connect_t3[conn_index*num_nodes_per_elem_t3+nn] = exodusMeshNodePositions->Map().LID(node) + 1;// nodes are 1 based in exodus
     }
     conn_index++;

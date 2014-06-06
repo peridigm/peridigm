@@ -104,7 +104,7 @@ int PeridigmNS::Compute_Kinetic_Energy::computeKineticEnergy( Teuchos::RCP< std:
 		// Collect values
 		double *volume_values = volume->Values();
 		double *velocity_values = velocity->Values();
-		double *kinetic_energy_values;
+		double *kinetic_energy_values(NULL);
 	        if (storeLocal)
                 	kinetic_energy_values = kinetic_energy->Values();
                  
