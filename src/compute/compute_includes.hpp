@@ -1,4 +1,5 @@
 #include "Peridigm_Compute_Acceleration.hpp"
+#include "Peridigm_Compute_Bond_Visualization.hpp"
 #include "Peridigm_Compute_Angular_Momentum.hpp"
 #include "Peridigm_Compute_Global_Angular_Momentum.hpp"
 #include "Peridigm_Compute_Local_Angular_Momentum.hpp"
