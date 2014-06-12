@@ -129,7 +129,7 @@ void PeridigmNS::Compute_Bond_Visualization::writeVTK(std::string fileName,
 {
   int globalId;
   ofstream visFile;
-  visFile.open(fileName);
+  visFile.open(fileName.c_str());
 
   // file version and identifier
   visFile << "# vtk DataFile Version 3.0" << endl;
