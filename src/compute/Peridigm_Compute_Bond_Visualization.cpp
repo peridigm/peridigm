@@ -53,16 +53,29 @@ using namespace std;
 PeridigmNS::Compute_Bond_Visualization::Compute_Bond_Visualization(Teuchos::RCP<const Teuchos::ParameterList> params,
                                                                    Teuchos::RCP<const Epetra_Comm> epetraComm_,
                                                                    Teuchos::RCP<const Teuchos::ParameterList> computeClassGlobalData_)
-  : Compute(params, epetraComm_, computeClassGlobalData_), m_modelCoordinatesFieldId(-1), m_bondVisualizationFieldId(-1)
+  : Compute(params, epetraComm_, computeClassGlobalData_), m_modelCoordinatesFieldId(-1), m_bondVisualizationFieldId(-1), m_specifiedNodesOnly(false)
 {
+  // Name of the output file
+  string baseName = "BondVisualization";
+  if(!params.is_null() && params->isParameter("File Name")){
+    baseName = params->get<string>("File Name");
+  }
   stringstream ss;
-  ss << "bond_visualization_proc_";
-  ss << epetraComm_->MyPID();
-  ss << ".vtk";
+  ss << baseName << "_Proc" << epetraComm_->MyPID() << ".vtk";
   m_fileName = ss.str();
+
+  // By default, display all the bonds in the model
+  // Alternatively, show bonds for only a specified node
+  if(!params.is_null() && params->isParameter("Node Id")){
+    m_specifiedNodesOnly = true;
+    int nodeId = params->get<int>("Node Id") - 1; // Switch from 1-based indexing (exodus) to 0-based indexing (epetra)
+    m_specifiedNodes.push_back(nodeId);
+  }
 
   FieldManager& fieldManager = FieldManager::self();
   m_modelCoordinatesFieldId  = fieldManager.getFieldId("Model_Coordinates");
+  // This is a dummy field, it's just here so that the user can trigger the creation of this compute class
+  // by requesting "Bond_Visualization" in the Output section of the input deck
   m_bondVisualizationFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Bond_Visualization");
   m_fieldIds.push_back(m_modelCoordinatesFieldId);
   m_fieldIds.push_back(m_bondVisualizationFieldId);
@@ -73,10 +86,12 @@ PeridigmNS::Compute_Bond_Visualization::~Compute_Bond_Visualization(){}
 void PeridigmNS::Compute_Bond_Visualization::initialize( Teuchos::RCP< vector<PeridigmNS::Block> > blocks ) {
 
   std::string filename;
+  std::set<int> globalNodeIdSet;
   std::vector<int> globalNodeIds;
   std::map< int, std::vector<double> > coordinates;
   std::vector< std::pair<int, int> > connectivity;
   int globalId(-1);
+  bool storeData;
 
   // Record the global id and model coordinates for all the nodes on this processor
   vector<PeridigmNS::Block>::iterator blockIt;
@@ -90,11 +105,9 @@ void PeridigmNS::Compute_Bond_Visualization::initialize( Teuchos::RCP< vector<Pe
       coord[0] = (*modelCoordinates)[3*iNode];
       coord[1] = (*modelCoordinates)[3*iNode+1];
       coord[2] = (*modelCoordinates)[3*iNode+2];
-      globalNodeIds.push_back(globalId);
       coordinates[globalId] = coord;
     }
   }
-  sort(globalNodeIds.begin(), globalNodeIds.end());
 
   // Record the bonds as bar elements (pair of global ids)
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
@@ -106,14 +119,30 @@ void PeridigmNS::Compute_Bond_Visualization::initialize( Teuchos::RCP< vector<Pe
     int iID, iNID, localNeighborId, globalId, globalNeighborId, numNeighbors(0), neighborhoodListIndex(0);
     for(iID=0 ; iID<numOwnedPoints ; ++iID){
       globalId = map->GID(iID);
+
+      storeData = true;
+      if(m_specifiedNodesOnly){
+	storeData = false;
+	if( find(m_specifiedNodes.begin(), m_specifiedNodes.end(), globalId) != m_specifiedNodes.end() )
+	  storeData = true;
+      }
+
       numNeighbors = neighborhoodList[neighborhoodListIndex++];
       for(iNID=0 ; iNID<numNeighbors ; ++iNID){
         localNeighborId = neighborhoodList[neighborhoodListIndex++];
         globalNeighborId = map->GID(localNeighborId);
-        connectivity.push_back( std::pair<int, int>(globalId, globalNeighborId) );
+	if(storeData){
+	  connectivity.push_back( std::pair<int, int>(globalId, globalNeighborId) );
+	  globalNodeIdSet.insert(globalId);
+	  globalNodeIdSet.insert(globalNeighborId);
+	}
       }
     }
   }
+
+  for(std::set<int>::iterator it = globalNodeIdSet.begin() ; it != globalNodeIdSet.end() ; it++)
+    globalNodeIds.push_back(*it);
+  sort(globalNodeIds.begin(), globalNodeIds.end());
 
   writeVTK(m_fileName, globalNodeIds, coordinates, connectivity);
 }

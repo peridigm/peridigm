@@ -94,6 +94,10 @@ namespace PeridigmNS {
 
     // Output file name
     std::string m_fileName;
+
+    // Display either all the bonds or some specified subset of the bonds
+    bool m_specifiedNodesOnly;
+    std::vector<int> m_specifiedNodes;
   };
 }
 
