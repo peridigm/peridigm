@@ -105,7 +105,7 @@ namespace PeridigmNS {
     }
 
     // ! determine if the interface data is available
-    virtual const bool InterfacesAreConstructed() const{ return constructInterfaces;}
+    virtual bool InterfacesAreConstructed() const{ return constructInterfaces;}
 
     //! Get the number of bonds on this processor
     virtual unsigned int getNumBonds() const;

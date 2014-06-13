@@ -277,7 +277,7 @@ namespace PeridigmNS {
     Teuchos::RCP<PeridigmNS::InterfaceData> getInterfaceData() { return interfaceData; }
 
     //! Flag if has interface data:
-    const bool interfacesAreConstructed(){return constructInterfaces;}
+    bool interfacesAreConstructed(){return constructInterfaces;}
 
     //! Accessor for vector of Blocks
     Teuchos::RCP< std::vector<PeridigmNS::Block> > getBlocks() { return blocks; }
