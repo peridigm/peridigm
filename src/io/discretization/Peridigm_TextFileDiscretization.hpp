@@ -95,7 +95,7 @@ namespace PeridigmNS {
     virtual Teuchos::RCP<PeridigmNS::InterfaceData> getInterfaceData() const{return Teuchos::null;}
 
     //! determine if interface data was constructed
-    virtual const bool InterfacesAreConstructed() const{return false;}
+    virtual bool InterfacesAreConstructed() const{return false;}
 
     //! Get the number of bonds on this processor
     virtual unsigned int getNumBonds() const;

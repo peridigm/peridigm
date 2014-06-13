@@ -161,7 +161,7 @@ int PeridigmNS::FieldManager::getFieldId(std::string label)
 PeridigmNS::FieldSpec PeridigmNS::FieldManager::getFieldSpec(int fieldId)
 {
   unsigned int id = static_cast<unsigned int>(fieldId);
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(id < 0 || id >= fieldSpecs.size(), "\n**** Error:  getFieldSpec(), ID not found.\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(id >= fieldSpecs.size(), "\n**** Error:  getFieldSpec(), ID not found.\n");
   return fieldSpecs[id];
 }
 
