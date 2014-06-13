@@ -47,6 +47,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <boost/algorithm/string.hpp>
 
 #include "Peridigm_ServiceManager.hpp"
 #include "Peridigm_ComputeManager.hpp"
@@ -70,7 +71,16 @@ PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList>
   if (params->isSublist("Compute Class Parameters")) {
     Teuchos::RCP<Teuchos::ParameterList> computeClassParameters = sublist(params, "Compute Class Parameters");
     for (Teuchos::ParameterList::ConstIterator it = computeClassParameters->begin(); it != computeClassParameters->end(); ++it) {
-      computeClassParameterNames.push_back(it->first);
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(!computeClassParameters->isSublist(it->first),
+				  "**** Error processing compute class parameters, expected ParameterList but found single entry.\n");
+      const Teuchos::ParameterList& params = computeClassParameters->sublist(it->first);
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(!params.isParameter("Compute Class"),
+				  "**** Error processing compute class parameters, expected \"Compute Class\" entry in ParameterList.\n");
+      string computeClassName = params.get<string>("Compute Class");
+      // Replace spaces with underscores
+      while(boost::find_first(computeClassName," "))
+	boost::replace_first(computeClassName," ","_");
+      computeClassParameterNames.push_back(computeClassName);
     }
   }
 
@@ -80,7 +90,9 @@ PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList>
   if (params->isSublist("Output Variables")) {
     Teuchos::RCP<Teuchos::ParameterList> outputVariables = sublist(params, "Output Variables");
     for (Teuchos::ParameterList::ConstIterator it = outputVariables->begin(); it != outputVariables->end(); ++it) {
-      const string& name = it->first;
+      string name = it->first;
+      while(boost::find_first(name," "))
+	boost::replace_first(name," ","_");
       if( find(computeClassParameterNames.begin(), computeClassParameterNames.end(), name) == computeClassParameterNames.end() ){
         Teuchos::RCP<Teuchos::ParameterList> nullRcp;
         pair<string, Teuchos::RCP<Teuchos::ParameterList> > nameAndParamsPair(name, nullRcp);
@@ -96,6 +108,8 @@ PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList>
       string parameterListName = it->first;
       Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcpFromRef( computeClassParameters->sublist(parameterListName) );
       string name = params->get<string>("Compute Class");
+      while(boost::find_first(name," "))
+	boost::replace_first(name," ","_");
       pair<string, Teuchos::RCP<Teuchos::ParameterList> > nameAndParamsPair(name, params);
       computeClassesToBuild.push_back(nameAndParamsPair);
     }
