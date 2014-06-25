@@ -70,6 +70,9 @@ namespace PeridigmNS {
   void tetCentroid(const std::vector<double*>& nodeCoordinates, std::vector<double>& centroid);
 
   //! Compute the volume of a tetrahedron.
+  void tetVolume(double* const nodeCoordinates, double* volume);
+
+  //! Compute the volume of a tetrahedron.
   double tetVolume(const std::vector<double*>& nodeCoordinates);
 
   //! Determine if a triangle intersects a sphere

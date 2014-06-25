@@ -48,12 +48,16 @@
 #ifndef PERIDIGM_STKDISCRETIZATION_HPP
 #define PERIDIGM_STKDISCRETIZATION_HPP
 
+//#define USE_STK
+
+#ifdef USE_STK
 // \todo Remove backwards compatibility after next Trilinos release
 #include <Trilinos_version.h>
 #if TRILINOS_MAJOR_MINOR_VERSION > 101002
 #include <stk_io/MeshReadWriteUtils.hpp>
 #else
 #include <stk_io/util/UseCase_mesh.hpp>
+#endif
 #endif
 
 #include "Peridigm_Discretization.hpp"
@@ -67,6 +71,8 @@ namespace PeridigmNS {
   class STKDiscretization : public PeridigmNS::Discretization {
 
   public:
+
+    enum ExodusElementType { UNKNOWN_ELEMENT, SPHERE_ELEMENT, TET_ELEMENT, HEX_ELEMENT };
 
     //! Constructor
     STKDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetraComm,
@@ -172,6 +178,12 @@ namespace PeridigmNS {
     //! Perform parallel communication to make exodus mesh data available for ghosted (overlap) element.
     void ghostExodusMeshData();
 
+    //! Error reporting for calls to ExodusII API
+    void reportExodusError(int errorCode, const char *methodName, const char *exodusMethodName);
+
+    //! Verbosity flag
+    bool verbose;
+
     //! Maps
     Teuchos::RCP<Epetra_BlockMap> oneDimensionalMap;
     Teuchos::RCP<Epetra_BlockMap> oneDimensionalOverlapMap;
@@ -236,6 +248,7 @@ namespace PeridigmNS {
     //! Discretization parameter controling the formation of bonds
     std::string bondFilterCommand;
 
+#ifdef USE_STK
     //! Mesh meta data
     Teuchos::RCP<stk::mesh::fem::FEMMetaData> metaData;
 
@@ -247,6 +260,7 @@ namespace PeridigmNS {
     //! Mesh bulk data
     Teuchos::RCP<stk::io::util::MeshData> meshData;
     #endif
+#endif
 
     //! Epetra communicator
     Teuchos::RCP<const Epetra_Comm> comm;

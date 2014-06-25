@@ -58,11 +58,18 @@
 #include <Teuchos_GlobalMPISession.hpp>
 #include <Teuchos_RCP.hpp>
 #include <Ionit_Initializer.h>
+#include <sstream>
+#include <boost/math/constants/constants.hpp>
+#include <boost/algorithm/string.hpp>
+#include <exodusII.h>
+
+//#define USE_STK
+
+#ifdef USE_STK
 #include <stk_io/IossBridge.hpp>
 #include <stk_mesh/base/GetEntities.hpp>
 #include <stk_mesh/base/FieldData.hpp>
-#include <sstream>
-#include <boost/math/constants/constants.hpp>
+#endif
 
 using namespace std;
 
@@ -70,6 +77,7 @@ using namespace std;
 
 PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                                                  const Teuchos::RCP<Teuchos::ParameterList>& params) :
+  verbose(false),
   minElementRadius(1.0e50),
   maxElementRadius(0.0),
   storeExodusMesh(false),
@@ -88,6 +96,10 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
   if(params->isParameter("Omit Bonds Between Blocks"))
     bondFilterCommand = params->get<string>("Omit Bonds Between Blocks");
   string meshFileName = params->get<string>("Input Mesh File");
+
+  if(params->isParameter("Verbose")){
+    verbose = params->get<bool>("Verbose");
+  }
 
   // Store exodus mesh for intersection calculations, or if it was specifically requested (e.g., unit tests)
   if(params->isParameter("Store Exodus Mesh")){
@@ -227,6 +239,398 @@ PeridigmNS::STKDiscretization::STKDiscretization(const Teuchos::RCP<const Epetra
 PeridigmNS::STKDiscretization::~STKDiscretization() {
 }
 
+#ifndef USE_STK
+void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
+{
+  // Append processor id information to the file name, if necessary
+  string fileName = meshFileName;
+  if(numPID != 1){
+    stringstream ss;
+    ss << "." << numPID << "." << myPID;
+    fileName += ss.str();
+  }
+
+  // Open the genesis file
+  int compWordSize = sizeof(double);
+  int ioWordSize = 0;
+  float exodusVersion;
+  int exodusFileId = ex_open(fileName.c_str(), EX_READ, &compWordSize, &ioWordSize, &exodusVersion);
+  if (exodusFileId < 0) reportExodusError(exodusFileId, "STKDiscretization::loadData()", "ex_open");
+
+  // Read the initialization parameters
+  int numDim, numNodes, numElem, numElemBlocks, numNodeSets, numSideSets;
+  char title[MAX_LINE_LENGTH];
+  int retval = ex_get_init(exodusFileId, title, &numDim, &numNodes, &numElem, &numElemBlocks, &numNodeSets, &numSideSets);
+  if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_get_init");
+
+  // Node coordinates
+  vector<double> exodusNodeCoordX(numNodes), exodusNodeCoordY(numNodes), exodusNodeCoordZ(numNodes);
+  retval = ex_get_coord(exodusFileId, &exodusNodeCoordX[0], &exodusNodeCoordY[0], &exodusNodeCoordZ[0]);
+  if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_get_coord");
+
+  // Global node numbering
+  vector<int> nodeIdMap(numNodes);
+  retval = ex_get_id_map(exodusFileId, EX_NODE_MAP, &nodeIdMap[0]);
+  if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_get_id_map");    
+  for(int i=0 ; i<numNodes ; ++i)
+    nodeIdMap[i] -= 1; // Note the switch from 1-based indexing to 0-based indexing
+
+  // Global element numbering
+  vector<int> elemIdMap(numElem);
+  retval = ex_get_id_map(exodusFileId, EX_ELEM_MAP, &elemIdMap[0]);
+  if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_get_id_map");
+  for(int i=0 ; i<numElem ; ++i)
+    elemIdMap[i] -= 1; // Note the switch from 1-based indexing to 0-based indexing
+
+  // Check for auxiliary node maps and element maps
+  int numNodeMaps, numElemMaps;
+  retval = ex_get_map_param(exodusFileId, &numNodeMaps, &numElemMaps);
+  if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_get_map_param");
+
+  // DJL
+  // This block of code handles the case where an extra elem or node map
+  // called "original_global_id_map" is supplied. I'm not sure where this map
+  // comes from, maybe nemslice or some such.
+  // If there is an auxiliary map provided that has a different name, throw an
+  // error because I don't know what to do with it.
+  if(numElemMaps > 0){
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(numElemMaps > 1,
+                                "**** Error in STKDiscretization::loadData(), genesis file contains invalid number of element maps (>1).\n");
+    char mapName[MAX_STR_LENGTH];
+    retval = ex_get_name(exodusFileId, EX_ELEM_MAP, 1, mapName);
+    if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_get_name");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(string(mapName) != string("original_global_id_map"),
+                                "**** Error in STKDiscretization::loadData(), unknown exodus EX_ELEM_MAP: " + string(mapName) + ".\n");
+    vector<int> auxMap(numElem);
+    retval = ex_get_num_map(exodusFileId, EX_ELEM_MAP, 1, &auxMap[0]);
+    if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_get_num_map");
+    for(int i=0 ; i<numElem ; ++i)
+      auxMap[i] -= 1; // Note the switch from 1-based indexing to 0-based indexing
+    // Use original_global_id_map instead of the map returned by ex_get_id_map()
+    elemIdMap = auxMap;
+  }
+  if(numNodeMaps > 0){
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(numNodeMaps > 1,
+                                "**** Error in STKDiscretization::loadData(), genesis file contains invalid number of node maps (>1).\n");
+    char mapName[MAX_STR_LENGTH];
+    retval = ex_get_name(exodusFileId, EX_NODE_MAP, 1, mapName);
+    if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_get_name");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(string(mapName) != string("original_global_id_map"),
+                                "**** Error in STKDiscretization::loadData(), unknown exodus EX_NODE_MAP: " + string(mapName) + ".\n");
+    vector<int> auxMap(numNodes);
+    retval = ex_get_num_map(exodusFileId, EX_NODE_MAP, 1, &auxMap[0]);
+    if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_get_num_map");
+    for(int i=0 ; i<numNodes ; ++i)
+      auxMap[i] -= 1; // Note the switch from 1-based indexing to 0-based indexing
+    // Use original_global_id_map instead of the map returned by ex_get_id_map()
+    nodeIdMap = auxMap;
+  }
+
+  // Store original exodus-mesh node positions
+  // This is for calculation of element-horizon intersetions
+  if(storeExodusMesh){
+    Epetra_BlockMap exodusMeshNodePositionsMap(-1, numNodes, &nodeIdMap[0], 3, 0, *comm);
+    exodusMeshNodePositions = Teuchos::RCP<Epetra_Vector>(new Epetra_Vector(exodusMeshNodePositionsMap));
+    for(int iNode=0 ; iNode<numNodes ; ++iNode){
+      (*exodusMeshNodePositions)[3*iNode]   = exodusNodeCoordX[iNode];
+      (*exodusMeshNodePositions)[3*iNode+1] = exodusNodeCoordY[iNode];
+      (*exodusMeshNodePositions)[3*iNode+2] = exodusNodeCoordZ[iNode];
+    }
+  }
+
+  // Create the owned maps
+  oneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(-1, numElem, &elemIdMap[0], 1, 0, *comm));
+  threeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(-1, numElem, &elemIdMap[0], 3, 0, *comm));
+
+  // Create Epetra_Vectors for the initial positions, volumes, and block_ids
+  initialX = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
+  cellVolume = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
+  blockID = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
+
+  // Process the element blocks
+  vector<int> elemBlockIds(numElemBlocks);
+  retval = ex_get_elem_blk_ids(exodusFileId, &elemBlockIds[0]);
+  if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_get_elem_blk_ids");
+
+  // Print a warning if the input mesh has side nodes (they will be ignored)
+  bool tenNodedTetWarningGiven(false), twentyNodedHexWarningGiven(false);
+
+  int localElemId(0);
+  for(int iElemBlock=0 ; iElemBlock<numElemBlocks ; iElemBlock++){
+
+    int elemBlockId = elemBlockIds[iElemBlock];
+
+    // Get the block name, if there is one
+    char exodusElemBlockName[MAX_STR_LENGTH];
+    retval = ex_get_name(exodusFileId, EX_ELEM_BLOCK, elemBlockId, exodusElemBlockName);
+    if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_get_name");
+    // If the block name came back blank, create one that looks like "block_1", "block_2", etc.
+    string elemBlockName(exodusElemBlockName);
+    if(elemBlockName.size() == 0){
+      stringstream ss;
+      ss << "block_" << elemBlockId;
+      elemBlockName = ss.str();
+    }
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(elementBlocks->find(elemBlockName) != elementBlocks->end(), "**** Duplicate block found: " + elemBlockName + "\n");
+    // Create a list for storing the element ids in this block
+    (*elementBlocks)[elemBlockName] = vector<int>();
+    vector<int>& elementBlock = (*elementBlocks)[elemBlockName];
+
+    // Get the block parameters and the element connectivity
+    char elemType[MAX_STR_LENGTH];
+    int numElemThisBlock, numNodesPerElem, numAttributes;
+    retval = ex_get_elem_block(exodusFileId, elemBlockId, elemType, &numElemThisBlock, &numNodesPerElem, &numAttributes);
+    if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_get_elem_block");
+    ExodusElementType exodusElementType(UNKNOWN_ELEMENT);
+    vector<int> conn;
+    vector<double> attributes;
+    if(numElemThisBlock > 0){
+      string elemTypeString(elemType);
+      boost::to_upper(elemTypeString);
+      if(elemTypeString == string("SPHERE"))
+        exodusElementType = SPHERE_ELEMENT;
+      else if(elemTypeString == string("TET") || elemTypeString == string("TETRA") || elemTypeString == string("TET4") || elemTypeString == string("TET10"))
+        exodusElementType = TET_ELEMENT;
+      else if(elemTypeString == string("HEX") || elemTypeString == string("HEX8") || elemTypeString == string("HEX20"))
+        exodusElementType = HEX_ELEMENT;
+      else{
+        string msg = "\n**** Error in loadData(), unknown element type " + elemTypeString + ".\n";
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
+      }
+      conn.resize(numElemThisBlock*numNodesPerElem);
+      retval = ex_get_elem_conn(exodusFileId, elemBlockId, &conn[0]);
+      if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_get_elem_conn");
+      if(exodusElementType == SPHERE_ELEMENT){
+        attributes.resize(numElemThisBlock*numAttributes);
+        retval = ex_get_elem_attr(exodusFileId, elemBlockId, &attributes[0]);
+        if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_get_elem_attr");
+      }
+    }
+
+    // Loop over the elements in the block
+    vector<double> nodeCoordinates(3*numNodesPerElem);
+    for(int iElem=0 ; iElem<numElemThisBlock ; iElem++, localElemId++){
+
+      // Node coordinates for all the nodes in this element
+      for(int i=0 ; i<numNodesPerElem ; ++i){
+        int nodeId = conn[iElem*numNodesPerElem + i] - 1;
+        nodeCoordinates[3*i] = exodusNodeCoordX[nodeId];
+        nodeCoordinates[3*i+1] = exodusNodeCoordY[nodeId];
+        nodeCoordinates[3*i+2] = exodusNodeCoordZ[nodeId];
+      }
+
+      int globalElemId = elemIdMap[localElemId];
+      elementBlock.push_back(globalElemId);
+
+      // convert elements to spheres and store the initial position and volume
+      double volume(0.0);
+      vector<double> coord(3);
+      if(exodusElementType == SPHERE_ELEMENT){
+        // The first attribute is the sph radius (for sph and contact in Sierra/SolidMechanics)
+        // The second attribute is the sphere volume
+        coord[0] = nodeCoordinates[0];
+        coord[1] = nodeCoordinates[1];
+        coord[2] = nodeCoordinates[2];
+        volume = attributes[iElem*numAttributes + 1];
+      }
+      else if(exodusElementType == TET_ELEMENT){
+
+        // Warn the user if the tet has ten nodes
+        if(numNodesPerElem == 10){
+          if(!tenNodedTetWarningGiven){
+            cout << "**** Warning on processor " << myPID
+                 << ", side nodes being discarded for 10-node tetrahedron element, will be treated as 4-node tetrahedron element." << endl;
+            tenNodedTetWarningGiven = true;
+          }
+        }
+
+        // TODO change this to call geometry utils functions
+        coord[0] = 0.0;
+        coord[1] = 0.0;
+        coord[2] = 0.0;
+        for(int i=0 ; i<numNodesPerElem; i++){
+          coord[0] += nodeCoordinates[i*3];
+          coord[1] += nodeCoordinates[i*3+1];
+          coord[2] += nodeCoordinates[i*3+2];
+        }
+        coord[0] /= numNodesPerElem;
+        coord[1] /= numNodesPerElem;
+        coord[2] /= numNodesPerElem;
+
+        tetVolume(&nodeCoordinates[0], &volume);
+      }
+      else if(exodusElementType == HEX_ELEMENT){
+
+        // Warn the user if the hex has twenty nodes
+        if(numNodesPerElem == 20){
+          // 20-noded hex, treat as 8-noded tet
+          if(!twentyNodedHexWarningGiven){
+            cout << "**** Warning on processor " << myPID
+                 << ", side nodes being discarded for 20-node hexahedron element, will be treated as 8-node hexahedron element." << endl;
+            twentyNodedHexWarningGiven = true;
+          }
+        }
+
+        // TODO change this to call geometry utils functions WILL CHANGE SIMULATION RESULTS
+        coord[0] = 0.0;
+        coord[1] = 0.0;
+        coord[2] = 0.0;
+        for(int i=0 ; i<numNodesPerElem; i++){
+          coord[0] += nodeCoordinates[i*3];
+          coord[1] += nodeCoordinates[i*3+1];
+          coord[2] += nodeCoordinates[i*3+2];
+        }
+        coord[0] /= numNodesPerElem;
+        coord[1] /= numNodesPerElem;
+        coord[2] /= numNodesPerElem;
+
+        hexVolume(&nodeCoordinates[0], &volume);
+      }
+
+      // Store the data in mothership-style vectors
+      int epetraLocalId = oneDimensionalMap->LID(globalElemId);
+      (*blockID)[epetraLocalId] = elemBlockId;
+      (*cellVolume)[epetraLocalId] = volume;
+      (*initialX)[3*epetraLocalId] = coord[0];
+      (*initialX)[3*epetraLocalId+1] = coord[1];
+      (*initialX)[3*epetraLocalId+2] = coord[2];
+    }
+  }
+
+  // Store element connectivity for original exodus mesh, if needed
+  if(storeExodusMesh){
+    int* myGlobalElements = oneDimensionalMap->MyGlobalElements();
+    vector<int> elementSizeList(numElem);
+    char elemType[MAX_STR_LENGTH];
+    int numElemThisBlock, numNodesPerElem, numAttributes;
+    int index(0);
+    for(int iElemBlock=0 ; iElemBlock<numElemBlocks ; ++iElemBlock){
+      int elemBlockId = elemBlockIds[iElemBlock];
+      retval = ex_get_elem_block(exodusFileId, elemBlockId, elemType, &numElemThisBlock, &numNodesPerElem, &numAttributes);
+      if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_get_elem_block");
+      for(int iElem=0 ; iElem<numElemThisBlock ; iElem++, index++){
+        elementSizeList[index] = numNodesPerElem;
+      }
+    }
+    int indexBase(0);
+    Epetra_BlockMap exodusMeshElementConnectivityMap(-1, numElem, myGlobalElements, &elementSizeList[0], indexBase, *comm);
+    exodusMeshElementConnectivity = Teuchos::rcp(new Epetra_Vector(exodusMeshElementConnectivityMap));
+    exodusMeshElementConnectivity->PutScalar(-1.0);
+    const Epetra_BlockMap& exodusMeshNodePositionsMap = exodusMeshNodePositions->Map();
+    index = 0;
+    for(int iElemBlock=0 ; iElemBlock<numElemBlocks ; ++iElemBlock){
+      int elemBlockId = elemBlockIds[iElemBlock];
+      retval = ex_get_elem_block(exodusFileId, elemBlockId, elemType, &numElemThisBlock, &numNodesPerElem, &numAttributes);
+      if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_get_elem_block");
+      if(numElemThisBlock > 0){
+        vector<int> conn(numElemThisBlock*numNodesPerElem);
+        retval = ex_get_elem_conn(exodusFileId, elemBlockId, &conn[0]);
+        if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_get_elem_conn");
+        for(int iElem=0 ; iElem<numElemThisBlock ; ++iElem){
+          for(int i=0 ; i<numNodesPerElem ; i++, index++){
+            int localNodeId = conn[iElem*numNodesPerElem + i] - 1;
+            int globalNodeId = exodusMeshNodePositionsMap.GID(localNodeId);
+            (*exodusMeshElementConnectivity)[index] = globalNodeId;
+          }
+        }
+      }
+    }
+  }
+
+  // For each node, record the elements that it belongs to
+  vector< vector<int> > elementsThatNodeBelongsTo(numNodes);
+  localElemId = 0;
+  for(int iElemBlock=0 ; iElemBlock<numElemBlocks ; ++iElemBlock){
+    int elemBlockId = elemBlockIds[iElemBlock];
+    char elemType[MAX_STR_LENGTH];
+    int numElemThisBlock, numNodesPerElem, numAttributes;
+    retval = ex_get_elem_block(exodusFileId, elemBlockId, elemType, &numElemThisBlock, &numNodesPerElem, &numAttributes);
+    if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_get_elem_block");
+    vector<int> conn(numElemThisBlock*numNodesPerElem);
+    if(numElemThisBlock > 0){
+      retval = ex_get_elem_conn(exodusFileId, elemBlockId, &conn[0]);
+      if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_get_elem_conn");
+      for(int iElem=0 ; iElem<numElemThisBlock ; iElem++, localElemId++){
+        for(int i=0 ; i<numNodesPerElem ; i++){
+          int localNodeId = conn[iElem*numNodesPerElem + i] - 1;
+          elementsThatNodeBelongsTo[localNodeId].push_back(localElemId);
+        }
+      }
+    }
+  }
+
+  // Node sets must be converted to new sphere mesh and stored
+  nodeSets = Teuchos::rcp< map<string, vector<int> > >(new map<string, vector<int> >() );
+  nodeSetIds = Teuchos::rcp< map<string, int> >(new map<string, int>() );
+  if(numNodeSets > 0){
+    vector<int> exodusNodeSetIds(numNodeSets);
+    retval = ex_get_node_set_ids(exodusFileId, &exodusNodeSetIds[0]);
+    if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_get_node_set_ids");
+    for(int i=0 ; i<numNodeSets ; ++i){
+      int nodeSetId = exodusNodeSetIds[i];
+      char exodusNodeSetName[MAX_STR_LENGTH];
+      retval = ex_get_name(exodusFileId, EX_NODE_SET, nodeSetId, exodusNodeSetName);
+      if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_get_name");
+      // If the node set name came back blank, create one that looks like "nodelist_1", "nodelist_2", etc.
+      string nodeSetName(exodusNodeSetName);
+      if(nodeSetName.size() == 0){
+        stringstream ss;
+        ss << "nodelist_" << nodeSetId;
+        nodeSetName = ss.str();
+      }
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSetName) != nodeSets->end(), "**** Duplicate node set found: " + nodeSetName + "\n");
+      (*nodeSets)[nodeSetName] = vector<int>();
+      (*nodeSetIds)[nodeSetName] = exodusNodeSetIds[i];
+    }
+    for(map<string, int>::iterator it = nodeSetIds->begin() ; it != nodeSetIds->end() ; it++){
+      string nodeSetName = it->first;
+      int nodeSetId = it->second;
+      int numNodesInSet, numDistributionFactorsInSet;
+      retval = ex_get_node_set_param(exodusFileId, nodeSetId, &numNodesInSet, &numDistributionFactorsInSet);
+      if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_get_node_set_param");
+      if(numNodesInSet > 0){
+        vector<int> nodeSetNodeList(numNodesInSet);
+        retval = ex_get_node_set(exodusFileId, nodeSetId, &nodeSetNodeList[0]);
+        if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_get_node_set");
+        vector<int>& nodeSet = (*nodeSets)[nodeSetName];
+        for(int i=0 ; i<numNodesInSet ; ++i){
+          // The nodes in the Peridigm sphere mesh that are included in the node set are the nodes
+          // at the centers of each exodus element (hex/tet) that contain a node in the exodus node set.
+          // This works because, in the Peridigm sphere mesh, the node ids match the element ids (one-to-one relationship).
+          const vector<int>& nodes = elementsThatNodeBelongsTo[nodeSetNodeList[i] - 1];  // Note the switch from 1-based indexing to 0-based indexing
+          for(unsigned int j=0 ; j<nodes.size() ; ++j){
+            int nodeLocalId = nodes[j];
+            int nodeGlobalId = threeDimensionalMap->GID(nodeLocalId);
+            if( find(nodeSet.begin(), nodeSet.end(), nodeGlobalId) == nodeSet.end() )
+              nodeSet.push_back(nodeGlobalId);
+          }
+        }
+      }
+    }
+  }
+
+  // TODO fix Peridigm to use nodeSetIds instead of string parsing nodeSets, which I think it does in a few places
+
+  if(verbose && myPID == 0){
+    stringstream ss;
+    ss << "\nGenesis file " << fileName << endl;
+    ss << "  title " << title << endl;
+    ss << "  number of dimensions " << numDim << endl;
+    ss << "  number of nodes " << numNodes << endl;
+    ss << "  number of elements " << numElem << endl;
+    ss << "  number of blocks " << numElemBlocks << endl;
+    ss << "  number of node sets " << numNodeSets << endl;
+    ss << "  number of side sets (ignored) " << numSideSets << endl;
+    cout << ss.str() << endl;
+  }
+
+  // Close the genesis file
+  retval = ex_close(exodusFileId);
+  if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_close");
+}
+#endif
+
+#ifdef USE_STK
 void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
 {
 
@@ -258,7 +662,7 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
   #endif
   
   int numberOfDimensions = metaData->spatial_dimension();
-  TEUCHOS_TEST_FOR_EXCEPTION(numberOfDimensions != 3, std::invalid_argument, "Peridigm operates only on three-dimensional meshes.");
+  TEUCHOS_TEST_FOR_EXCEPTION(numberOfDimensions != 3, invalid_argument, "Peridigm operates only on three-dimensional meshes.");
 
   // This assigns a null Ioss::GroupingEntity attribute to the universal part
   stk::io::put_io_part_attribute(metaData->universal_part());
@@ -327,11 +731,11 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
     stk::mesh::Selector( metaData->universal_part() ) & ( stk::mesh::Selector( metaData->locally_owned_part() ) | stk::mesh::Selector( metaData->globally_shared_part() ) );
 
   // Select element mesh entities that match the selector
-  std::vector<stk::mesh::Entity*> elements;
+  vector<stk::mesh::Entity*> elements;
   stk::mesh::get_selected_entities(selector, bulkData.buckets(metaData->element_rank()), elements);
 
   // Select node mesh entities that match the selector
-  std::vector<stk::mesh::Entity*> nodes;
+  vector<stk::mesh::Entity*> nodes;
   stk::mesh::get_selected_entities(selector, bulkData.buckets(metaData->node_rank()), nodes);
 
 
@@ -415,7 +819,7 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
     initialXPtr[iElem*3] = 0.0;
     initialXPtr[iElem*3+1] = 0.0;
     initialXPtr[iElem*3+2] = 0.0;
-    std::vector<double*> nodeCoordinates(nodeRelations.size());
+    vector<double*> nodeCoordinates(nodeRelations.size());
     int iNode = 0;
 
     int exodusMeshElementIndex = 0;
@@ -477,21 +881,21 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
   // loop over the element blocks
   for(unsigned int iBlock=0 ; iBlock<stkElementBlocks.size() ; iBlock++){
 
-    const std::string blockName = stkElementBlocks[iBlock]->name();
+    const string blockName = stkElementBlocks[iBlock]->name();
     TEUCHOS_TEST_FOR_EXCEPT_MSG(elementBlocks->find(blockName) != elementBlocks->end(), "**** Duplicate block found: " + blockName + "\n");
-    (*elementBlocks)[blockName] = std::vector<int>();
-    std::vector<int>& elementBlock = (*elementBlocks)[blockName];
+    (*elementBlocks)[blockName] = vector<int>();
+    vector<int>& elementBlock = (*elementBlocks)[blockName];
 
     // Create a selector for all locally-owned elements in the block
     stk::mesh::Selector selector = 
       stk::mesh::Selector( *stkElementBlocks[iBlock] ) & stk::mesh::Selector( metaData->locally_owned_part() );
 
     // Select the mesh entities that match the selector
-    std::vector<stk::mesh::Entity*> elementsInElementBlock;
+    vector<stk::mesh::Entity*> elementsInElementBlock;
     stk::mesh::get_selected_entities(selector, bulkData.buckets(metaData->element_rank()), elementsInElementBlock);
 
     // Loop over the elements in this block
-    std::vector<int> elementGlobalIds(elementsInElementBlock.size());
+    vector<int> elementGlobalIds(elementsInElementBlock.size());
 
     for(unsigned int iElement=0 ; iElement<elementsInElementBlock.size() ; iElement++)
       elementGlobalIds[iElement] = elementsInElementBlock[iElement]->identifier() - 1;
@@ -504,20 +908,20 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
   // loop over the node sets
   for(unsigned int iNodeSet=0 ; iNodeSet<stkNodeSets.size() ; iNodeSet++){
 
-    const std::string nodeSetName = stkNodeSets[iNodeSet]->name();
+    const string nodeSetName = stkNodeSets[iNodeSet]->name();
     TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSetName) != nodeSets->end(), "**** Duplicate node set found: " + nodeSetName + "\n");
-    (*nodeSets)[nodeSetName] = std::vector<int>();
-    std::vector<int>& nodeSet = (*nodeSets)[nodeSetName];
+    (*nodeSets)[nodeSetName] = vector<int>();
+    vector<int>& nodeSet = (*nodeSets)[nodeSetName];
 
     // Create a selector for all nodes in the node set
     stk::mesh::Selector selector = stk::mesh::Selector( *stkNodeSets[iNodeSet] );
 
     // Select the mesh entities that match the selector
-    std::vector<stk::mesh::Entity*> nodesInNodeSet;
+    vector<stk::mesh::Entity*> nodesInNodeSet;
     stk::mesh::get_selected_entities(selector, bulkData.buckets(metaData->node_rank()), nodesInNodeSet);
     
     // Loop over the nodes in this node set
-    std::set<int> elementGlobalIds;
+    set<int> elementGlobalIds;
     for(unsigned int iNode=0 ; iNode<nodesInNodeSet.size() ; iNode++){
 
       // Get all the elements relations for this node and record the element ID in the node set
@@ -528,7 +932,7 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
         int globalId = element->identifier() - 1;
         // Determine if the element is on-processor
         bool onProcessor = false;
-        for(std::map< std::string, std::vector<int> >::iterator b_it = elementBlocks->begin() ; b_it != elementBlocks->end() && !onProcessor ; b_it++){
+        for(map< string, vector<int> >::iterator b_it = elementBlocks->begin() ; b_it != elementBlocks->end() && !onProcessor ; b_it++){
           if( find(b_it->second.begin(), b_it->second.end(), globalId) != b_it->second.end() )
             onProcessor = true;
         }
@@ -539,18 +943,18 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
     }
 
     // Load the node set into the nodeSets container
-    for(std::set<int>::iterator it=elementGlobalIds.begin() ; it!=elementGlobalIds.end() ; it++)
+    for(set<int>::iterator it=elementGlobalIds.begin() ; it!=elementGlobalIds.end() ; it++)
       nodeSet.push_back( *it );
   }
 
   // Record the element block ids
   double* blockIDPtr;
   blockID->ExtractView(&blockIDPtr);
-  std::map< std::string, std::vector<int> >::const_iterator it;
+  map< string, vector<int> >::const_iterator it;
   for(it = elementBlocks->begin() ; it != elementBlocks->end() ; it++){
-    const std::string& blockName = it->first;
+    const string& blockName = it->first;
     int bID = blockNameToBlockId(blockName);
-    const std::vector<int>& elementIds = it->second;
+    const vector<int>& elementIds = it->second;
     for(unsigned int i=0 ; i<elementIds.size() ; ++i){
       int globalID = elementIds[i];
       int localID = oneDimensionalMap->LID(globalID);
@@ -568,6 +972,7 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
 
   return;
 }
+#endif
 
 void
 PeridigmNS::STKDiscretization::constructInterfaceData()
@@ -580,11 +985,11 @@ PeridigmNS::STKDiscretization::constructInterfaceData()
 
   interfaceData = Teuchos::rcp(new PeridigmNS::InterfaceData);
 
-  TEUCHOS_TEST_FOR_EXCEPTION(storeExodusMesh!=true,std::logic_error," Exodus mesh should have been stored if this is called.");
-  std::vector<int> leftElements;
-  std::vector<int> rightElements;
-  std::vector<int> numNodes;
-  std::vector<std::vector<int> > interfaceNodesVec;
+  TEUCHOS_TEST_FOR_EXCEPTION(storeExodusMesh!=true,logic_error," Exodus mesh should have been stored if this is called.");
+  vector<int> leftElements;
+  vector<int> rightElements;
+  vector<int> numNodes;
+  vector<vector<int> > interfaceNodesVec;
 
   int elemIndex = 0;
   for(int i=0 ; i<listSize; i++){
@@ -593,7 +998,7 @@ PeridigmNS::STKDiscretization::constructInterfaceData()
     const int numNodesPerElem = exodusMeshElementConnectivity->Map().ElementSize(elemIndex);
     const int myIndex = exodusMeshElementConnectivity->Map().FirstPointInElement(elemIndex);
     // get the connectivity for this element:
-    std::vector<int> selfNodeIds(numNodesPerElem);
+    vector<int> selfNodeIds(numNodesPerElem);
     for(int n=0;n<numNodesPerElem;++n){
       selfNodeIds[n] = static_cast<int>( (*exodusMeshElementConnectivity)[myIndex+n] );
     }
@@ -606,8 +1011,8 @@ PeridigmNS::STKDiscretization::constructInterfaceData()
 
       bool shareFace = false;
       // the two elements must have a face in common to be an interface pair:
-      std::vector<int> neighNodeIds(numNodesPerElem);
-      std::vector<int> foundNodeIds(4); // 4 works for tris or quads
+      vector<int> neighNodeIds(numNodesPerElem);
+      vector<int> foundNodeIds(4); // 4 works for tris or quads
       for(int n=0;n<numNodesPerElem;++n)
         neighNodeIds[n] = static_cast<int>( (*exodusMeshElementConnectivity)[neighIndex + n] );
 
@@ -691,7 +1096,7 @@ PeridigmNS::STKDiscretization::filterBonds(Teuchos::RCP<PeridigmNS::Neighborhood
 {
   // Set up a block bonding matrix, which defines whether or not bonds should be formed across blocks
   int numBlocks = getNumBlocks();
-  std::vector< std::vector<bool> > blockBondingMatrix(numBlocks);
+  vector< vector<bool> > blockBondingMatrix(numBlocks);
   for(int i=0 ; i<numBlocks ; ++i){
     blockBondingMatrix[i].resize(numBlocks, true);
   }
@@ -771,7 +1176,7 @@ PeridigmNS::STKDiscretization::getGlobalOwnedMap(int d) const
       break;
     default:
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
-                         std::endl << "STKDiscretization::getGlobalOwnedMap(int d) only supports dimensions d=1 or d=3. Supplied dimension d=" << d << std::endl); 
+                         endl << "STKDiscretization::getGlobalOwnedMap(int d) only supports dimensions d=1 or d=3. Supplied dimension d=" << d << endl); 
     }
 }
 
@@ -787,7 +1192,7 @@ PeridigmNS::STKDiscretization::getGlobalOverlapMap(int d) const
       break;
     default:
       TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
-                         std::endl << "STKDiscretization::getOverlapMap(int d) only supports dimensions d=1 or d=3. Supplied dimension d=" << d << std::endl); 
+                         endl << "STKDiscretization::getOverlapMap(int d) only supports dimensions d=1 or d=3. Supplied dimension d=" << d << endl); 
     }
 }
 
@@ -888,7 +1293,7 @@ double PeridigmNS::STKDiscretization::computeMaxElementDimension()
     if(numNodes == 1){
       // Sphere element
       volume = (*cellVolume)[iElem];
-      length = std::pow( (3.0*volume)/(4.0*pi), 1.0/3.0 );
+      length = pow( (3.0*volume)/(4.0*pi), 1.0/3.0 );
     }
     else{
 
@@ -913,7 +1318,7 @@ double PeridigmNS::STKDiscretization::computeMaxElementDimension()
     }
   }
 
-  localMaxElementDimension = std::sqrt(localMaxElementDimension);
+  localMaxElementDimension = sqrt(localMaxElementDimension);
 
   // Parallel communication to determine overall maximum element dimension
   double globalMaxElementDimension;
@@ -1064,7 +1469,7 @@ void PeridigmNS::STKDiscretization::ghostExodusMeshData()
   int index = 0;
   for(set<int>::const_iterator it=globalNodeIdsSet.begin() ; it!=globalNodeIdsSet.end() ; it++)
     globalNodeIds[index++] = *it;
-  std::sort(globalNodeIds.begin(), globalNodeIds.end());
+  sort(globalNodeIds.begin(), globalNodeIds.end());
 
   Epetra_BlockMap overlapExodusMeshNodePositionsMap(numGlobalElements, globalNodeIds.size(), &globalNodeIds[0], 3, indexBase, *comm);
   Teuchos::RCP<Epetra_Vector> overlapExodusMeshNodePositions = Teuchos::rcp(new Epetra_Vector(overlapExodusMeshNodePositionsMap));
@@ -1076,7 +1481,22 @@ void PeridigmNS::STKDiscretization::ghostExodusMeshData()
   exodusMeshElementConnectivity = overlapExodusMeshElementConnectivity;
 }
 
-// double PeridigmNS::STKDiscretization::hexMaxElementDimension(std::vector<double*>& nodeCoordinates) const
+void PeridigmNS::STKDiscretization::reportExodusError(int errorCode, const char *methodName, const char*exodusMethodName)
+{
+  stringstream ss;
+  if (errorCode < 0) { // error
+    if (numPID > 1) ss << "Error on PID #" << myPID << ": ";
+    ss << "PeridigmNS::OutputManager_ExodusII::" << methodName << "() -- Error code: " << errorCode << " (" << exodusMethodName << ")";
+    TEUCHOS_TEST_FOR_EXCEPTION(1, invalid_argument, ss.str());
+  }  
+  else {
+    if (numPID > 1) ss << "Warning on PID #" << myPID << ": ";
+    ss << "PeridigmNS::OutputManager_ExodusII::" << methodName << "() -- Warning code: " << errorCode << " (" << exodusMethodName << ")";
+    cout << ss.str() << endl;
+  }
+}
+
+// double PeridigmNS::STKDiscretization::hexMaxElementDimension(vector<double*>& nodeCoordinates) const
 // {
 //   double maxDimension = 0.0;
 //   double dx, dy, dz, diagonal;
@@ -1122,7 +1542,7 @@ void PeridigmNS::STKDiscretization::ghostExodusMeshData()
 //   return maxDimension;
 // }
 
-// double PeridigmNS::STKDiscretization::tetMaxElementDimension(std::vector<double*>& nodeCoordinates) const
+// double PeridigmNS::STKDiscretization::tetMaxElementDimension(vector<double*>& nodeCoordinates) const
 // {
 //   double maxDimension = 0.0;
 //   double dx, dy, dz, edgeLength;
