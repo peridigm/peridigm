@@ -140,6 +140,9 @@ namespace PeridigmNS {
     //! Get the locally-owned IDs for each node set
     virtual Teuchos::RCP< std::map< std::string, std::vector<int> > > getNodeSets() { return nodeSets; } ;
 
+    //! Get the locally-owned IDs for each node set
+    Teuchos::RCP< std::map< std::string, int> > getNodeSetIds() { return nodeSetIds; } ;
+
     //! Get the node positions in the original Exodus hex/tet mesh.
     virtual void getExodusMeshNodePositions(int globalNodeID, std::vector<double>& nodePositions){
       // The default implementation sets the nodePositions vector to length zero.
@@ -178,6 +181,9 @@ namespace PeridigmNS {
 
     //! Map containing node sets (node set name and list of locally-owned node IDs for each node set).
     Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets;
+
+    //! Map containing the node id for each node set
+    Teuchos::RCP< std::map< std::string, int> > nodeSetIds;
 
     std::vector< std::tr1::shared_ptr<PdBondFilter::BondFilter> > bondFilters;
 

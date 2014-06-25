@@ -363,6 +363,15 @@ void PeridigmNS::tetCentroid(const std::vector<double*>& nodeCoordinates,
   centroid[2] = (nodeCoordinates[0][2] + nodeCoordinates[1][2] + nodeCoordinates[2][2] + nodeCoordinates[3][2])*0.25;
 }
 
+void PeridigmNS::tetVolume(double* const nodeCoordinates, double* volume){
+  vector<double*> coord(4);
+  coord[0] = nodeCoordinates;
+  coord[1] = nodeCoordinates + 3;
+  coord[2] = nodeCoordinates + 6;
+  coord[3] = nodeCoordinates + 9;
+  *volume = tetVolume(coord);
+}
+
 double PeridigmNS::tetVolume(const std::vector<double*>& nodeCoordinates)
 {
   // Change the coordinate system such that the first point is at the origin.
