@@ -174,7 +174,7 @@ ELSE()
 ENDIF()
 
 #
-# Enable Sandia internal development
+# Enable partial volume calculations
 #
 IF(USE_PV)
   MESSAGE("-- PV is enabled, compiling with -DPERIDIGM_PV.\n")

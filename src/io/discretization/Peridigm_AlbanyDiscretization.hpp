@@ -63,9 +63,9 @@ namespace PeridigmNS {
     //! Constructor
     AlbanyDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetraComm,
                          const Teuchos::RCP<Teuchos::ParameterList>& params,
-			 const Teuchos::RCP<Epetra_Vector>& refCoord,
-			 const Teuchos::RCP<Epetra_Vector>& volume,
-			 const Teuchos::RCP<Epetra_Vector>& blockId);
+                         const Teuchos::RCP<Epetra_Vector>& refCoord,
+                         const Teuchos::RCP<Epetra_Vector>& volume,
+                         const Teuchos::RCP<Epetra_Vector>& blockId);
 
     //! Destructor
     virtual ~AlbanyDiscretization();
