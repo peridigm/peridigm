@@ -39,12 +39,12 @@ target_link_libraries(utPeridigm_PdQuickGridDiscretization_MPI_np2
 )
 add_test (utPeridigm_PdQuickGridDiscretization_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_PdQuickGridDiscretization_MPI_np2)
 
-add_executable(utPeridigm_STKDiscretization
+add_executable(utPeridigm_ExodusDiscretization
                ${DISCRETIZATION_DIR}/Peridigm_Discretization.cpp
-               ${DISCRETIZATION_DIR}/Peridigm_STKDiscretization.cpp
+               ${DISCRETIZATION_DIR}/Peridigm_ExodusDiscretization.cpp
                ${IO_DIR}/Peridigm_ProximitySearch.cpp
-               ./utPeridigm_STKDiscretization.cpp)
-target_link_libraries(utPeridigm_STKDiscretization
+               ./utPeridigm_ExodusDiscretization.cpp)
+target_link_libraries(utPeridigm_ExodusDiscretization
   ${Peridigm_LIBRARY}
   ${Trilinos_LIBRARIES}
   ${PDNEIGH_LIBS}
@@ -55,8 +55,8 @@ target_link_libraries(utPeridigm_STKDiscretization
   ${REQUIRED_LIBS}
   ${Boost_LIBRARIES}
 )
-add_test (utPeridigm_STKDiscretization python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_STKDiscretization)
-add_test (utPeridigm_STKDiscretization_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_STKDiscretization)
+add_test (utPeridigm_ExodusDiscretization python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_ExodusDiscretization)
+add_test (utPeridigm_ExodusDiscretization_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_ExodusDiscretization)
 
 add_executable(utPeridigm_GeometryUtils
                ${DISCRETIZATION_DIR}/Peridigm_GeometryUtils.cpp

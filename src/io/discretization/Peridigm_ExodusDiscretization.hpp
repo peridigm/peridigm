@@ -1,4 +1,4 @@
-/*! \file Peridigm_STKDiscretization.hpp */
+/*! \file Peridigm_ExodusDiscretization.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,8 +45,8 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_STKDISCRETIZATION_HPP
-#define PERIDIGM_STKDISCRETIZATION_HPP
+#ifndef PERIDIGM_EXODUSDISCRETIZATION_HPP
+#define PERIDIGM_EXODUSDISCRETIZATION_HPP
 
 //#define USE_STK
 
@@ -67,19 +67,19 @@
 
 namespace PeridigmNS {
 
-  //! Discretization class that creates discretizations using STK (reads Exodus II mesh files).
-  class STKDiscretization : public PeridigmNS::Discretization {
+  //! Discretization class that reads an exodus/genesis file (Exodus II file format).
+  class ExodusDiscretization : public PeridigmNS::Discretization {
 
   public:
 
     enum ExodusElementType { UNKNOWN_ELEMENT, SPHERE_ELEMENT, TET_ELEMENT, HEX_ELEMENT };
 
     //! Constructor
-    STKDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetraComm,
-                      const Teuchos::RCP<Teuchos::ParameterList>& params);
+    ExodusDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetraComm,
+                         const Teuchos::RCP<Teuchos::ParameterList>& params);
 
     //! Destructor
-    virtual ~STKDiscretization();
+    virtual ~ExodusDiscretization();
 
     //! Return d-dimensional map
     virtual Teuchos::RCP<const Epetra_BlockMap> getGlobalOwnedMap(int d) const;
@@ -140,10 +140,10 @@ namespace PeridigmNS {
     double computeMaxElementDimension();
 
     //! Private to prohibit copying
-    STKDiscretization(const STKDiscretization&);
+    ExodusDiscretization(const ExodusDiscretization&);
 
     //! Private to prohibit copying
-    STKDiscretization& operator=(const STKDiscretization&);
+    ExodusDiscretization& operator=(const ExodusDiscretization&);
 
     //! Loads mesh data into Epetra_Vectors (initial positions, volumes, block ids) and stores original Exodus node locations and connectivity.
     void loadData(const std::string& meshFileName);
@@ -267,4 +267,4 @@ namespace PeridigmNS {
   };
 }
 
-#endif // PERIDIGM_STKDISCRETIZATION_HPP
+#endif // PERIDIGM_EXODUSDISCRETIZATION_HPP

@@ -1,4 +1,4 @@
-/*! \file utPeridigm_STKDiscretization.cpp */
+/*! \file utPeridigm_ExodusDiscretization.cpp */
 
 //@HEADER
 // ************************************************************************
@@ -56,13 +56,13 @@
 #else
   #include <Epetra_SerialComm.h>
 #endif
-#include "Peridigm_STKDiscretization.hpp"
+#include "Peridigm_ExodusDiscretization.hpp"
 #include "Peridigm_HorizonManager.hpp"
 
 using namespace Teuchos;
 using namespace PeridigmNS;
 
-TEUCHOS_UNIT_TEST(STKDiscretization, Exodus2x2x2Test) {
+TEUCHOS_UNIT_TEST(ExodusDiscretization, Exodus2x2x2Test) {
 
   Teuchos::RCP<const Epetra_Comm> comm;
   #ifdef HAVE_MPI
@@ -85,7 +85,7 @@ TEUCHOS_UNIT_TEST(STKDiscretization, Exodus2x2x2Test) {
   // create a 2x2x2 discretization
   // specify a neighbor search with the horizon a tad longer than the mesh spacing
   discParams->set("Type", "Exodus");
-  discParams->set("Input Mesh File", "utPeridigm_STKDiscretization_2x2x2.g");
+  discParams->set("Input Mesh File", "utPeridigm_ExodusDiscretization_2x2x2.g");
   discParams->set("Store Exodus Mesh", true);
 
   // initialize the horizon manager and set the horizon to 0.501
@@ -96,8 +96,8 @@ TEUCHOS_UNIT_TEST(STKDiscretization, Exodus2x2x2Test) {
   PeridigmNS::HorizonManager::self().loadHorizonInformationFromBlockParameters(blockParameterList);
 
   // create the discretization
-  RCP<STKDiscretization> discretization =
-    rcp(new STKDiscretization(comm, discParams));
+  RCP<ExodusDiscretization> discretization =
+    rcp(new ExodusDiscretization(comm, discParams));
 
   // sanity check, calling with a dimension other than 1 or 3 should throw an exception
   TEST_THROW(discretization->getGlobalOwnedMap(0), Teuchos::Exceptions::InvalidParameter);
