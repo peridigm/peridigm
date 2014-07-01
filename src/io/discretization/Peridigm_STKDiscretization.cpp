@@ -289,13 +289,13 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
 
   // DJL
   // This block of code handles the case where an extra elem or node map
-  // called "original_global_id_map" is supplied. I'm not sure where this map
-  // comes from, maybe nemslice or some such.
+  // called "original_global_id_map" is supplied.  This can be the case
+  // for parallel decompositions created with decomp or loadbal.
   // If there is an auxiliary map provided that has a different name, throw an
   // error because I don't know what to do with it.
   if(numElemMaps > 0){
     TEUCHOS_TEST_FOR_EXCEPT_MSG(numElemMaps > 1,
-                                "**** Error in STKDiscretization::loadData(), genesis file contains invalid number of element maps (>1).\n");
+                                "**** Error in STKDiscretization::loadData(), genesis file contains invalid number of auxiliary element maps (>1).\n");
     char mapName[MAX_STR_LENGTH];
     retval = ex_get_name(exodusFileId, EX_ELEM_MAP, 1, mapName);
     if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_get_name");
@@ -311,7 +311,7 @@ void PeridigmNS::STKDiscretization::loadData(const string& meshFileName)
   }
   if(numNodeMaps > 0){
     TEUCHOS_TEST_FOR_EXCEPT_MSG(numNodeMaps > 1,
-                                "**** Error in STKDiscretization::loadData(), genesis file contains invalid number of node maps (>1).\n");
+                                "**** Error in STKDiscretization::loadData(), genesis file contains invalid number of auxiliary node maps (>1).\n");
     char mapName[MAX_STR_LENGTH];
     retval = ex_get_name(exodusFileId, EX_NODE_MAP, 1, mapName);
     if (retval != 0) reportExodusError(retval, "STKDiscretization::loadData()", "ex_get_name");
