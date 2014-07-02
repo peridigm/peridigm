@@ -151,8 +151,10 @@ double PeridigmNS::HorizonManager::evaluateHorizon(string blockName, double x, d
   string horizonFunction = horizonStrings[name];
   double horizonValue(0.0);
 
-  string rtcBody = "value = " + horizonFunction;
-  bool success = rtcFunction->addBody(rtcBody);
+  string rtcFunctionString = horizonFunction;
+  if(rtcFunctionString.find("value") == string::npos)
+    rtcFunctionString = "value = " + rtcFunctionString;
+  bool success = rtcFunction->addBody(rtcFunctionString);
   if(success)
     rtcFunction->varValueFill(0, x);
   if(success)
