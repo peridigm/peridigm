@@ -48,18 +48,6 @@
 #ifndef PERIDIGM_EXODUSDISCRETIZATION_HPP
 #define PERIDIGM_EXODUSDISCRETIZATION_HPP
 
-//#define USE_STK
-
-#ifdef USE_STK
-// \todo Remove backwards compatibility after next Trilinos release
-#include <Trilinos_version.h>
-#if TRILINOS_MAJOR_MINOR_VERSION > 101002
-#include <stk_io/MeshReadWriteUtils.hpp>
-#else
-#include <stk_io/util/UseCase_mesh.hpp>
-#endif
-#endif
-
 #include "Peridigm_Discretization.hpp"
 #include "Peridigm_InterfaceData.hpp"
 #include <vector>
@@ -247,20 +235,6 @@ namespace PeridigmNS {
 
     //! Discretization parameter controling the formation of bonds
     std::string bondFilterCommand;
-
-#ifdef USE_STK
-    //! Mesh meta data
-    Teuchos::RCP<stk::mesh::fem::FEMMetaData> metaData;
-
-    // \todo Remove backwards compatibility after next Trilinos release
-    #if TRILINOS_MAJOR_MINOR_VERSION > 101002
-    //! Mesh bulk data
-    Teuchos::RCP<stk::io::MeshData> meshData;
-    #else
-    //! Mesh bulk data
-    Teuchos::RCP<stk::io::util::MeshData> meshData;
-    #endif
-#endif
 
     //! Epetra communicator
     Teuchos::RCP<const Epetra_Comm> comm;
