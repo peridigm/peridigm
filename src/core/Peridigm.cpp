@@ -2178,19 +2178,20 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
   // The residual must use the same map as the tangent matrix, which is an Epetra_Map and is not consistent
   // with the Epetra_BlockMap used for the mothership multivector.
   Teuchos::RCP<Epetra_Vector> residual = Teuchos::rcp(new Epetra_Vector(tangent->Map()));
+  Teuchos::RCP<Epetra_Vector> displacementIncrement = Teuchos::rcp(new Epetra_Vector(tangent->Map()));
   Teuchos::RCP<Epetra_Vector> un = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
   Teuchos::RCP<Epetra_Vector> vn = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
   Teuchos::RCP<Epetra_Vector> an = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
 
-  Teuchos::RCP<Teuchos::ParameterList> quasiStaticParams = sublist(solverParams, "Implicit", true);
+  Teuchos::RCP<Teuchos::ParameterList> implicitParams = sublist(solverParams, "Implicit", true);
   double timeInitial = solverParams->get("Initial Time", 0.0);
-  double timeFinal = solverParams->get("Final Time", 1.0);
+  double timeFinal = solverParams->get<double>("Final Time");
   timeCurrent = timeInitial;
-  double absoluteTolerance       = quasiStaticParams->get("Absolute Tolerance", 1.0e-6);
-  int maxSolverIterations        = quasiStaticParams->get("Maximum Solver Iterations", 10);
-  double dt                      = quasiStaticParams->get("Fixed dt", 1.0);
-  double beta                    = quasiStaticParams->get("Beta", 0.25);
-  double gamma                   = quasiStaticParams->get("Gamma", 0.50);
+  double absoluteTolerance       = implicitParams->get("Absolute Tolerance", 1.0e-6);
+  int maxSolverIterations        = implicitParams->get("Maximum Solver Iterations", 10);
+  double dt                      = implicitParams->get<double>("Fixed dt");
+  double beta                    = implicitParams->get("Beta", 0.25);
+  double gamma                   = implicitParams->get("Gamma", 0.50);
   workset->timeStep = dt;
   double dt2 = dt*dt;
   int nsteps = (int)floor((timeFinal-timeInitial)/dt);
@@ -2204,7 +2205,7 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
   a->ExtractView( &aPtr );
 
   // Data for linear solver object
-  Belos::LinearProblem<double,Epetra_MultiVector,Epetra_Operator> linearProblem;
+  Belos::LinearProblem<double, Epetra_MultiVector, Epetra_Operator> linearProblem;
   Teuchos::ParameterList belosList;
   belosList.set( "Block Size", 1 );                                // Use single-vector iteration
   belosList.set( "Maximum Iterations", tangent->NumGlobalRows() ); // Maximum number of iterations allowed
@@ -2217,13 +2218,9 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
   Teuchos::RCP< Belos::SolverManager<double,Epetra_MultiVector,Epetra_Operator> > belosSolver
     = Teuchos::rcp( new Belos::BlockCGSolMgr<double,Epetra_MultiVector,Epetra_Operator>(Teuchos::rcp(&linearProblem,false), Teuchos::rcp(&belosList,false)) );
 
-  // Create temporary owned (e.g., "mothership") vectors for data at timestep n
-  // to be used in Newmark integration
+  // Create temporary mothership vectors for data at time step n to be used in Newmark integration
   Teuchos::RCP<Epetra_Vector> u2 = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
   Teuchos::RCP<Epetra_Vector> v2 = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
-
-  // \todo Put in mothership.
-  Teuchos::RCP<Epetra_Vector> deltaU = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
 
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
@@ -2233,21 +2230,24 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
 
   for(int step=0; step<nsteps ; step++){
 
+    if(peridigmComm->MyPID() == 0)
+      cout << "Load step " << step << ", initial time = " << step*dt << ", final time = " << (step+1)*dt << endl;
+
     *un = *u;
     *vn = *v;
     *an = *a;
 
     //u2 = un + dt*vn + 0.5*dt*dt*(1-2*beta)*an
-    u2->Update(1.0,*un,0.0);
-    u2->Update(dt, *vn, 0.5*dt2*(1.0-2*beta), *an, 1.0);
+    u2->Update(1.0, *un, 0.0);
+    u2->Update(dt, *vn, 0.5*dt2*(1.0-2.0*beta), *an, 1.0);
     //v2 = vn + dt*(1-gamma)*an
     v2->Update(1.0, *vn, dt*(1.0-gamma), *an, 0.0);
 
     // Fill the owned vectors with probe data
     // Assign predictor (use u2)
-    u->Update(1.0,*u2,0.0);
+    u->Update(1.0, *u2, 0.0);
     // a = (1.0/(beta*dt*dt))*(u_np1 - u2);
-    //  a will be zero unless a different predictor is used, so do the following computation anyway
+    // a will be zero unless a different predictor is used, so do the following computation anyway
     a->Update(1.0, *u, -1.0, *u2, 0.0);
     a->Scale(1.0/(beta*dt2));
     // v = v2 + dt*gamma*an
@@ -2272,13 +2272,16 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
     PeridigmNS::Timer::self().stopTimer("Internal Force");
 
     // Copy force from the data manager to the mothership vector
-    PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-      blockIt->exportData(*force, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
-    PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+    force->PutScalar(0.0);
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+      scratch->PutScalar(0.0);
+      blockIt->exportData(*scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
+      force->Update(1.0, *scratch, 1.0);
+    }
+    scratch->PutScalar(0.0);
 
     // evaluate the external (body) forces:
-    boundaryAndInitialConditionManager->applyForceContributions(timeCurrent,0.0);
+    boundaryAndInitialConditionManager->applyForceContributions(timeCurrent, 0.0);
 
     // Compute the residual
     // residual = beta*dt*dt*(M*a - force)
@@ -2297,25 +2300,22 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
     while(residualNorm > absoluteTolerance && NLSolverIteration <= maxSolverIterations){
 
       if(peridigmComm->MyPID() == 0)
-        cout << "Time step " << step << ", Newton iteration = " << NLSolverIteration << ", norm(residual) = " << residualNorm << endl;
+        cout << "  iteration " << NLSolverIteration << ": residual = " << residualNorm << endl;
 
       // Fill the Jacobian
-      computeImplicitJacobian(beta);
+      computeImplicitJacobian(beta, dt);
 
       // Modify Jacobian for kinematic BC
       boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndSetDiagonal(tangent);
 
-      // Want to solve J*deltaU = -residual
+      // Want to solve J*displacementIncrement = -residual
       residual->Scale(-1.0);
 
       // Solve linear system
-      deltaU->PutScalar(0.0);
+      displacementIncrement->PutScalar(0.0);
       linearProblem.setOperator(tangent);
-      bool isSet = linearProblem.setProblem(deltaU, residual);
-      if (isSet == false) {
-        if(peridigmComm->MyPID() == 0)
-          cout << std::endl << "ERROR: Belos::LinearProblem failed to set up correctly!" << endl;
-      }
+      bool isSet = linearProblem.setProblem(displacementIncrement, residual);
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(!isSet, "**** Peridigm::executeImplicit(), failed to set linear problem.\n");
       PeridigmNS::Timer::self().startTimer("Solve Linear System");
       Belos::ReturnType isConverged = belosSolver->solve();
       if(isConverged != Belos::Converged && peridigmComm->MyPID() == 0)
@@ -2323,7 +2323,8 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
       PeridigmNS::Timer::self().stopTimer("Solve Linear System");
 
       // Apply increment to nodal positions
-      u->Update(1.0,*deltaU,1.0);
+      for(int i=0 ; i<u->MyLength() ; ++i)
+        (*u)[i] += (*displacementIncrement)[i];
 
       // Update y to be consistent with u
       y->Update(1.0, *x, 1.0, *u, 0.0);
@@ -2351,10 +2352,13 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
       PeridigmNS::Timer::self().stopTimer("Internal Force");
 
       // Copy force from the data manager to the mothership vector
-      PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-      for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-        blockIt->exportData(*force, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
-      PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+      force->PutScalar(0.0);
+      for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+        scratch->PutScalar(0.0);
+        blockIt->exportData(*scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
+        force->Update(1.0, *scratch, 1.0);
+      }
+      scratch->PutScalar(0.0);
 
       // Compute residual vector and its norm
       // residual = beta*dt*dt*(M*a - force)
@@ -2372,7 +2376,7 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
     }
 
     if(peridigmComm->MyPID() == 0)
-      cout << "Time step " << step << ", Newton iteration = " << NLSolverIteration << ", norm(residual) = " << residualNorm << endl;
+      cout << "  iteration " << NLSolverIteration << ": residual = " << residualNorm << "\n" << endl;
 
     timeCurrent = timeInitial + (step+1)*dt;
 
@@ -2385,8 +2389,6 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
     // swap state N and state NP1
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
       blockIt->updateState();
-
-    cout << endl;
   }
 }
 
@@ -2663,11 +2665,7 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
   return residualNorm2 + 20.0*residualNormInf;
 }
 
-void PeridigmNS::Peridigm::computeImplicitJacobian(double beta) {
-
-  // MLP: Pass this in from integrator routine
-  double dt = workset->timeStep;
-  double dt2 = dt*dt;
+void PeridigmNS::Peridigm::computeImplicitJacobian(double beta, double dt) {
 
   // Compute the tangent
   tangent->PutScalar(0.0);
@@ -2677,41 +2675,14 @@ void PeridigmNS::Peridigm::computeImplicitJacobian(double beta) {
   TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::computeImplicitJacobian(), GlobalAssemble() returned nonzero error code.\n");
   PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
 
-  // Code to symmeterize Jacobian
-
-  // First, construct transpose
-  EpetraExt::RowMatrix_Transpose transposer;
-  Epetra_CrsMatrix& transTangent = dynamic_cast<Epetra_CrsMatrix&>(transposer(*tangent));
-
-  // Now loop over all owned rows and average entries of both
-  int numRows      = tangent->NumMyRows();
-  int numRowsTrans = transTangent.NumMyRows();
-  if (numRows != numRowsTrans) cout << "Number of rows mismatch!" << std::endl;
-  int numEntries, numEntriesTrans;
-  double *values, *valuesTrans;
-  int *indices, *indicesTrans;
-  // Assert here that numRows == numRowsTrans
-  for(int i=0;i<numRows;i++) {
-    tangent->ExtractMyRowView(i, numEntries, values, indices);
-    transTangent.ExtractMyRowView(i, numEntriesTrans, valuesTrans, indicesTrans);
-    if (numEntries != numEntriesTrans) cout << "Number of entries mismatch!" << std::endl;
-    for (int j=0;j<numEntries;j++) {
-      values[j] = 0.5*(values[j]+valuesTrans[j]);
-      if (indices[j] != indicesTrans[j]) cout << "index mismatch!" << std::endl;
-    }
-  }
-
   // tangent = M - beta*dt*dt*K
-  tangent->Scale(-beta*dt2);
+  tangent->Scale(-beta*dt*dt);
 
-  Epetra_Vector diagonal1(tangent->RowMap());
-  Epetra_Vector diagonal2(tangent->RowMap());
-  tangent->ExtractDiagonalCopy(diagonal1);
-  for(int i=0 ; i<diagonal2.MyLength() ; ++i)
-    diagonal2[i] = (*density)[i/3];
-  diagonal1.Update(1.0, diagonal2, 1.0);
-  tangent->ReplaceDiagonalValues(diagonal1);
-
+  Epetra_Vector diagonal(tangent->RowMap());
+  tangent->ExtractDiagonalCopy(diagonal);
+  for(int i=0 ; i<diagonal.MyLength() ; ++i)
+    diagonal[i] += (*density)[i/3];
+  tangent->ReplaceDiagonalValues(diagonal);
 }
 
 void PeridigmNS::Peridigm::synchDataManagers() {

@@ -235,7 +235,7 @@ namespace PeridigmNS {
     void allocateBlockDiagonalJacobian();
 
     //! Compute the Jacobian for implicit dynamics
-    void computeImplicitJacobian(double beta);
+    void computeImplicitJacobian(double beta, double dt);
 
     //! Compute the residual for quasi-statics
     double computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vector> residual);
