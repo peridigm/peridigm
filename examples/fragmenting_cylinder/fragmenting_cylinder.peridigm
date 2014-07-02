@@ -36,17 +36,17 @@ Boundary Conditions
         Type "Initial Velocity"
         Node Set "Full Domain"
         Coordinate "x"
-        Value "(200 - 50*((z/0.05)-1)^2)*cos(atan2(y,x)) + rnd(5)"
+        Value "(200 - 50*((z/0.05)-1)^2)*cos(atan2(y,x)) + 5.0*drand()"
     Initial Velocity Y
         Type "Initial Velocity"
         Node Set "Full Domain"
         Coordinate "y"
-        Value "(200 - 50*((z/0.05)-1)^2)*sin(atan2(y,x)) + rnd(5)"
+        Value "(200 - 50*((z/0.05)-1)^2)*sin(atan2(y,x)) + 5.0*drand()"
     Initial Velocity Z
         Type "Initial Velocity"
         Node Set "Full Domain"
         Coordinate "z"
-        Value "(100*((z/0.05)-1)) + rnd(5)"
+        Value "(100*((z/0.05)-1)) + 5.0*drand()"
 
 Solver
     Initial Time 0.0
