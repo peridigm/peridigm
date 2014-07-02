@@ -120,10 +120,12 @@ public:
     else if(influenceFunctionString == "Gaussian"){
       m_influenceFunction = &PeridigmInfluenceFunction::gaussian;
     }
-    else{    
+    else{
       // Assume that unrecognized strings are user-defined influence functions.
-      std::string rtcBody = "value = " + influenceFunctionString;
-      bool success = rtcFunction.addBody(rtcBody);
+      std::string rtcFunctionString = influenceFunctionString;
+      if(rtcFunctionString.find("value") == std::string::npos)
+        rtcFunctionString = "value = " + rtcFunctionString;
+      bool success = rtcFunction.addBody(rtcFunctionString);
       if(success)
         success = rtcFunction.varValueFill(2, 0.0); // The variable that represents the return value must be set to something
       if(!success){

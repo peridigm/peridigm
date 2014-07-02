@@ -146,12 +146,14 @@ void PeridigmNS::DirichletBC::apply(Teuchos::RCP< std::map< std::string, std::ve
   // get the tensor order of the bc field:
   const int fieldDimension = to_dimension_size(tensorOrder);
 
-  string rtcBody = "value = " + function;
-  bool successfully_compiled = rtcFunction->addBody(rtcBody);
-  if(!successfully_compiled){
+  string rtcFunctionString = function;
+  if(rtcFunctionString.find("value") == string::npos)
+    rtcFunctionString = "value = " + rtcFunctionString;
+  bool success = rtcFunction->addBody(rtcFunctionString);
+  if(!success){
     string msg = "\n**** Error:  rtcFunction->addBody(function) returned error code in PeridigmNS::DirichletBC::apply().\n";
     msg += "**** " + rtcFunction->getErrors() + "\n";
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(!successfully_compiled, msg);
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
   }
 
   // apply the bc to every element in the entire domain
@@ -220,12 +222,14 @@ void PeridigmNS::DirichletIncrementBC::apply(Teuchos::RCP< std::map< std::string
   // get the tensor order of the bc field:
   const int fieldDimension = to_dimension_size(tensorOrder);
 
-  string rtcBody = "value = " + function;
-  bool successfully_compiled = rtcFunction->addBody(rtcBody);
-  if(!successfully_compiled){
+  string rtcFunctionString = function;
+  if(rtcFunctionString.find("value") == string::npos)
+    rtcFunctionString = "value = " + rtcFunctionString;
+  bool success = rtcFunction->addBody(rtcFunctionString);
+  if(!success){
     string msg = "\n**** Error:  rtcFunction->addBody(function) returned nonzero error code in PeridigmNS::DirichletBC::apply().\n";
     msg += "**** " + rtcFunction->getErrors() + "\n";
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(!successfully_compiled, msg);
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
   }
 
   // apply the bc to every element in the entire domain
