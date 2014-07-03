@@ -160,21 +160,21 @@ TEUCHOS_UNIT_TEST(ExodusDiscretization, Exodus2x2x2Test) {
   TEST_ASSERT(initialX->GlobalLength() == 8*3);
 
   if(myPID == 0){
-    TEST_FLOATING_EQUALITY((*initialX)[0],  0.25, 1.0e-16);
-    TEST_FLOATING_EQUALITY((*initialX)[1],  0.25, 1.0e-16);
-    TEST_FLOATING_EQUALITY((*initialX)[2],  0.75, 1.0e-16);
+    TEST_FLOATING_EQUALITY((*initialX)[0],  0.25, 1.0e-15);
+    TEST_FLOATING_EQUALITY((*initialX)[1],  0.25, 1.0e-15);
+    TEST_FLOATING_EQUALITY((*initialX)[2],  0.75, 1.0e-15);
 
-    TEST_FLOATING_EQUALITY((*initialX)[3],  0.25, 1.0e-16);
-    TEST_FLOATING_EQUALITY((*initialX)[4],  0.25, 1.0e-16);
-    TEST_FLOATING_EQUALITY((*initialX)[5],  0.25, 1.0e-16);
+    TEST_FLOATING_EQUALITY((*initialX)[3],  0.25, 1.0e-15);
+    TEST_FLOATING_EQUALITY((*initialX)[4],  0.25, 1.0e-15);
+    TEST_FLOATING_EQUALITY((*initialX)[5],  0.25, 1.0e-15);
   
-    TEST_FLOATING_EQUALITY((*initialX)[6],  0.25, 1.0e-16);
-    TEST_FLOATING_EQUALITY((*initialX)[7],  0.75, 1.0e-16);
-    TEST_FLOATING_EQUALITY((*initialX)[8],  0.75, 1.0e-16);
+    TEST_FLOATING_EQUALITY((*initialX)[6],  0.25, 1.0e-15);
+    TEST_FLOATING_EQUALITY((*initialX)[7],  0.75, 1.0e-15);
+    TEST_FLOATING_EQUALITY((*initialX)[8],  0.75, 1.0e-15);
 
-    TEST_FLOATING_EQUALITY((*initialX)[9],  0.25, 1.0e-16);
-    TEST_FLOATING_EQUALITY((*initialX)[10], 0.75, 1.0e-16);
-    TEST_FLOATING_EQUALITY((*initialX)[11], 0.25, 1.0e-16);
+    TEST_FLOATING_EQUALITY((*initialX)[9],  0.25, 1.0e-15);
+    TEST_FLOATING_EQUALITY((*initialX)[10], 0.75, 1.0e-15);
+    TEST_FLOATING_EQUALITY((*initialX)[11], 0.25, 1.0e-15);
   }
   if(numProc == 1 || myPID == 2){
 
@@ -182,21 +182,21 @@ TEUCHOS_UNIT_TEST(ExodusDiscretization, Exodus2x2x2Test) {
     if(numProc == 1)
       offset = 12;
 
-    TEST_FLOATING_EQUALITY((*initialX)[offset+0], 0.75, 1.0e-16);
-    TEST_FLOATING_EQUALITY((*initialX)[offset+1], 0.25, 1.0e-16);
-    TEST_FLOATING_EQUALITY((*initialX)[offset+2], 0.75, 1.0e-16);
+    TEST_FLOATING_EQUALITY((*initialX)[offset+0], 0.75, 1.0e-15);
+    TEST_FLOATING_EQUALITY((*initialX)[offset+1], 0.25, 1.0e-15);
+    TEST_FLOATING_EQUALITY((*initialX)[offset+2], 0.75, 1.0e-15);
 
-    TEST_FLOATING_EQUALITY((*initialX)[offset+3], 0.75, 1.0e-16);
-    TEST_FLOATING_EQUALITY((*initialX)[offset+4], 0.25, 1.0e-16);
-    TEST_FLOATING_EQUALITY((*initialX)[offset+5], 0.25, 1.0e-16);
+    TEST_FLOATING_EQUALITY((*initialX)[offset+3], 0.75, 1.0e-15);
+    TEST_FLOATING_EQUALITY((*initialX)[offset+4], 0.25, 1.0e-15);
+    TEST_FLOATING_EQUALITY((*initialX)[offset+5], 0.25, 1.0e-15);
 
-    TEST_FLOATING_EQUALITY((*initialX)[offset+6], 0.75, 1.0e-16);
-    TEST_FLOATING_EQUALITY((*initialX)[offset+7], 0.75, 1.0e-16);
-    TEST_FLOATING_EQUALITY((*initialX)[offset+8], 0.75, 1.0e-16);
+    TEST_FLOATING_EQUALITY((*initialX)[offset+6], 0.75, 1.0e-15);
+    TEST_FLOATING_EQUALITY((*initialX)[offset+7], 0.75, 1.0e-15);
+    TEST_FLOATING_EQUALITY((*initialX)[offset+8], 0.75, 1.0e-15);
 
-    TEST_FLOATING_EQUALITY((*initialX)[offset+9], 0.75, 1.0e-16);
-    TEST_FLOATING_EQUALITY((*initialX)[offset+10], 0.75, 1.0e-16);
-    TEST_FLOATING_EQUALITY((*initialX)[offset+11], 0.25, 1.0e-16);
+    TEST_FLOATING_EQUALITY((*initialX)[offset+9], 0.75, 1.0e-15);
+    TEST_FLOATING_EQUALITY((*initialX)[offset+10], 0.75, 1.0e-15);
+    TEST_FLOATING_EQUALITY((*initialX)[offset+11], 0.25, 1.0e-15);
   }
 
   // check cell volumes
