@@ -435,20 +435,7 @@ void PeridigmNS::ExodusDiscretization::loadData(const string& meshFileName)
           }
         }
 
-        // TODO change this to call geometry utils functions
-        coord[0] = 0.0;
-        coord[1] = 0.0;
-        coord[2] = 0.0;
-        for(int i=0 ; i<numNodesPerElem; i++){
-          coord[0] += nodeCoordinates[i*3];
-          coord[1] += nodeCoordinates[i*3+1];
-          coord[2] += nodeCoordinates[i*3+2];
-        }
-        coord[0] /= numNodesPerElem;
-        coord[1] /= numNodesPerElem;
-        coord[2] /= numNodesPerElem;
-
-        tetVolume(&nodeCoordinates[0], &volume);
+        tetCentroidAndVolume(&nodeCoordinates[0], &coord[0], &volume);
       }
       else if(exodusElementType == HEX_ELEMENT){
 
@@ -462,20 +449,7 @@ void PeridigmNS::ExodusDiscretization::loadData(const string& meshFileName)
           }
         }
 
-        // TODO change this to call geometry utils functions WILL CHANGE SIMULATION RESULTS
-        coord[0] = 0.0;
-        coord[1] = 0.0;
-        coord[2] = 0.0;
-        for(int i=0 ; i<numNodesPerElem; i++){
-          coord[0] += nodeCoordinates[i*3];
-          coord[1] += nodeCoordinates[i*3+1];
-          coord[2] += nodeCoordinates[i*3+2];
-        }
-        coord[0] /= numNodesPerElem;
-        coord[1] /= numNodesPerElem;
-        coord[2] /= numNodesPerElem;
-
-        hexVolume(&nodeCoordinates[0], &volume);
+        hexCentroidAndVolume(&nodeCoordinates[0], &coord[0], &volume);
       }
 
       // Store the data in mothership-style vectors
