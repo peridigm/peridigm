@@ -62,6 +62,7 @@ add_test (DeformationGradient_NoLoad_np4 python ./DeformationGradient/NoLoad_np4
 add_test (BodyForce_QS_np1 python ./Body_Force/Body_Force_QS_np1/Body_Force_QS.py)
 add_test (BodyForce_Implicit_np1 python ./Body_Force/Body_Force_Implicit_np1/Body_Force_Implicit.py)
 add_test (BodyForce_Explicit_np1 python ./Body_Force/Body_Force_Explicit_np1/Body_Force_Explicit.py)
+add_test (BodyForce_Explicit_np4 python ./Body_Force/Body_Force_Explicit_np4/Body_Force_Explicit.py)
 add_test (Interfaces_np1 python ./Interfaces/Interfaces_np1/Interfaces.py)
 add_test (Interfaces_np4 python ./Interfaces/Interfaces_np4/Interfaces.py)
 
