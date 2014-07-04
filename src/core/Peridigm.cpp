@@ -970,12 +970,13 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
   // evaluate the external (body) forces:
-  boundaryAndInitialConditionManager->applyForceContributions(timeCurrent,0.0); // external forces are dirichlet BCs so the previous time is defaulted to 0.0
+  PeridigmNS::Timer::self().startTimer("Apply Body Forces");
+  boundaryAndInitialConditionManager->applyForceContributions(timeCurrent, 0.0); // external forces are dirichlet BCs so the previous time is defaulted to 0.0
+  PeridigmNS::Timer::self().stopTimer("Apply Body Forces");
 
   // fill the acceleration vector
   (*a) = (*force);
-  for(int i=0 ; i<a->MyLength() ; ++i)
-  {
+  for(int i=0 ; i<a->MyLength() ; ++i){
     (*a)[i] += (*externalForce)[i];
     (*a)[i] /= (*density)[i/3];
   }
@@ -1018,7 +1019,9 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     PeridigmNS::Timer::self().stopTimer("Apply Kinematic B.C.");
 
     // evaluate the external (body) forces:
-    boundaryAndInitialConditionManager->applyForceContributions(timeCurrent,0.0); // external forces are dirichlet BCs so the previous time is defaulted to 0.0
+    PeridigmNS::Timer::self().startTimer("Apply Body Forces");
+    boundaryAndInitialConditionManager->applyForceContributions(timeCurrent, 0.0); // external forces are dirichlet BCs so the previous time is defaulted to 0.0
+    PeridigmNS::Timer::self().stopTimer("Apply Body Forces");
 
     // Y^{n+1} = X_{o} + U^{n} + (dt)*V^{n+1/2}
     // \todo Replace with blas call
@@ -1041,7 +1044,6 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     }
     if(analysisHasContact)
       contactManager->importData(volume, y, v);
-
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
     // Update forces based on new positions
@@ -1080,8 +1082,7 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
 
     // fill the acceleration vector
     (*a) = (*force);
-    for(int i=0 ; i<a->MyLength() ; ++i)
-    {
+    for(int i=0 ; i<a->MyLength() ; ++i){
       (*a)[i] += (*externalForce)[i];
       (*a)[i] /= (*density)[i/3];
     }
@@ -1480,7 +1481,9 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
     *noxVelocityAtDOFWithKinematicBC = *v;
 
     // evaluate the external (body) forces:
+    PeridigmNS::Timer::self().startTimer("Apply Body Forces");
     boundaryAndInitialConditionManager->applyForceContributions(timeCurrent, timePrevious);
+    PeridigmNS::Timer::self().stopTimer("Apply Body Forces");
 
     *soln = *initialGuess;
 
@@ -1717,7 +1720,9 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
     PeridigmNS::Timer::self().stopTimer("Apply Kinematic B.C.");
 
     // evaluate the external (body) forces:
+    PeridigmNS::Timer::self().startTimer("Apply Body Forces");
     boundaryAndInitialConditionManager->applyForceContributions(timeCurrent,timePrevious);
+    PeridigmNS::Timer::self().stopTimer("Apply Body Forces");
 
     // Set the current position and velocity
     // \todo We probably want to rework this so that the material models get valid x, u, and y values.
@@ -2281,7 +2286,9 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
     scratch->PutScalar(0.0);
 
     // evaluate the external (body) forces:
+    PeridigmNS::Timer::self().startTimer("Apply Body Forces");
     boundaryAndInitialConditionManager->applyForceContributions(timeCurrent, 0.0);
+    PeridigmNS::Timer::self().stopTimer("Apply Body Forces");
 
     // Compute the residual
     // residual = beta*dt*dt*(M*a - force)
@@ -2359,6 +2366,11 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
         force->Update(1.0, *scratch, 1.0);
       }
       scratch->PutScalar(0.0);
+
+      // evaluate the external (body) forces:
+      PeridigmNS::Timer::self().startTimer("Apply Body Forces");
+      boundaryAndInitialConditionManager->applyForceContributions(timeCurrent, 0.0);
+      PeridigmNS::Timer::self().stopTimer("Apply Body Forces");
 
       // Compute residual vector and its norm
       // residual = beta*dt*dt*(M*a - force)
