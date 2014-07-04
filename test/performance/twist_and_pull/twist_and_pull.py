@@ -156,7 +156,4 @@ if __name__ == "__main__":
     if verbose == True:
         os.system("cat " + log_file_name)
 
-    # DEBUGGING
-    result = 0
-
     sys.exit(result)
