@@ -74,10 +74,6 @@ if __name__ == "__main__":
         logfile.write(err)
     logfile.flush()
 
-    # DEBUGGING
-    logfile.write("DEBUGGING A")
-    logfile.flush()
-        
     # concatenate output files
     command = ["../../../scripts/epu", "-p", "4", base_name]
     p = Popen(command, stdout=logfile, stderr=logfile)
@@ -85,20 +81,19 @@ if __name__ == "__main__":
     if return_code != 0:
         result = return_code
 
-    # DEBUGGING
-    logfile.write("DEBUGGING B")
-    logfile.flush()
-
     # compare performance statistics against gold statistics
 
     # performance data for current run
     stdout_vals = string.splitfields(out)
-    wallclock_time_index = stdout_vals.index("Total")
-    wallclock_time = float(stdout_vals[wallclock_time_index+2])
-
-    # DEBUGGING
-    logfile.write("DEBUGGING C")
-    logfile.flush()
+    wallclock_time_string = ""
+    for i in range(len(stdout_vals)):
+        if stdout_vals[i] == "Total":
+            wallclock_time_string = stdout_vals[i+2]
+    wallclock_time = 0.0
+    try:
+        wallclock_time = float(wallclock_time_string)
+    except ValueError:
+        print "Error converting wallclock time string to a floating-point value"
 
     # gold standard performance data for this machine
     perf_gold_file = open(base_name+".perf")
@@ -116,10 +111,6 @@ if __name__ == "__main__":
     gold_wallclock_time = float(gold_perf_data[2])
     gold_wallclock_time_tolerance = float(gold_perf_data[3])
 
-    # DEBUGGING
-    logfile.write("DEBUGGING D")
-    logfile.flush()
-
     if(wallclock_time > gold_wallclock_time + gold_wallclock_time_tolerance):
         result = 1
         logfile.write("\n**** PERFORMANCE TEST FAILED:  wallclock time exceeded benchmark value plus tolerance.")
@@ -133,10 +124,6 @@ if __name__ == "__main__":
     logfile.write("\n****                           tolerance       = " +  str(gold_wallclock_time_tolerance) +"\n")
     logfile.flush()
 
-    # DEBUGGING
-    logfile.write("DEBUGGING E")
-    logfile.flush()
-          
     # compare output against gold file only if the gold file is present
     gold_file_name = base_name + "_gold.e"
     if os.path.exists(gold_file_name):
@@ -153,21 +140,10 @@ if __name__ == "__main__":
     else:
         logfile.write("\n**** Gold file " + gold_file_name + " not found, skipping exodiff.\n\n")
 
-    # DEBUGGING
-    logfile.write("DEBUGGING F")
-    logfile.flush()
-
     logfile.close()
 
     # dump the output if the user requested verbose
     if verbose == True:
         os.system("cat " + log_file_name)
-
-    # DEBUGGING
-    logfile.write("DEBUGGING G")
-    logfile.flush()
-
-    # DEBUGGING
-    result = 0
 
     sys.exit(result)

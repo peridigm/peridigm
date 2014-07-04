@@ -95,8 +95,15 @@ if __name__ == "__main__":
 
     # performance data for current run
     stdout_vals = string.splitfields(out)
-    wallclock_time_index = stdout_vals.index("Total")
-    wallclock_time = float(stdout_vals[wallclock_time_index+2])
+    wallclock_time_string = ""
+    for i in range(len(stdout_vals)):
+        if stdout_vals[i] == "Total":
+            wallclock_time_string = stdout_vals[i+2]
+    wallclock_time = 0.0
+    try:
+        wallclock_time = float(wallclock_time_string)
+    except ValueError:
+        print "Error converting wallclock time string to a floating-point value"
 
     # gold standard performance data for this machine
     perf_gold_file = open(base_name+".perf")
