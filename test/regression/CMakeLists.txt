@@ -1,5 +1,10 @@
 # List tests to be run by "make test"
-
+add_test (BodyForce_Implicit_np1 python ./Body_Force/Body_Force_Implicit_np1/Body_Force_Implicit.py)
+add_test (BodyForce_Implicit_np4 python ./Body_Force/Body_Force_Implicit_np4/Body_Force_Implicit.py)
+add_test (BodyForce_Explicit_np1 python ./Body_Force/Body_Force_Explicit_np1/Body_Force_Explicit.py)
+add_test (BodyForce_Explicit_np4 python ./Body_Force/Body_Force_Explicit_np4/Body_Force_Explicit.py)
+add_test (BodyForce_QS_np1 python ./Body_Force/Body_Force_QS_np1/Body_Force_QS.py)
+add_test (BodyForce_QS_np4 python ./Body_Force/Body_Force_QS_np4/Body_Force_QS.py)
 add_test (CentrifugalLoad_np1 python ./CentrifugalLoad/np1/CentrifugalLoad.py)
 add_test (CentrifugalLoad_np4 python ./CentrifugalLoad/np4/CentrifugalLoad.py)
 add_test (Compression_NLCGQS_3x2x2_np1 python ./Compression_NLCGQS_3x2x2/np1/Compression_NLCGQS_3x2x2.py)
@@ -59,10 +64,6 @@ add_test (DeformationGradient_NoDeformation_np1 python ./DeformationGradient/NoD
 add_test (DeformationGradient_NoDeformation_np4 python ./DeformationGradient/NoDeformation_np4/NoDeformation.py)
 add_test (DeformationGradient_NoLoad_np1 python ./DeformationGradient/NoLoad_np1/NoLoad.py)
 add_test (DeformationGradient_NoLoad_np4 python ./DeformationGradient/NoLoad_np4/NoLoad.py)
-add_test (BodyForce_QS_np1 python ./Body_Force/Body_Force_QS_np1/Body_Force_QS.py)
-add_test (BodyForce_Implicit_np1 python ./Body_Force/Body_Force_Implicit_np1/Body_Force_Implicit.py)
-add_test (BodyForce_Explicit_np1 python ./Body_Force/Body_Force_Explicit_np1/Body_Force_Explicit.py)
-add_test (BodyForce_Explicit_np4 python ./Body_Force/Body_Force_Explicit_np4/Body_Force_Explicit.py)
 add_test (Interfaces_np1 python ./Interfaces/Interfaces_np1/Interfaces.py)
 add_test (Interfaces_np4 python ./Interfaces/Interfaces_np4/Interfaces.py)
 
