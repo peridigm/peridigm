@@ -14,7 +14,7 @@
 test/performance/disk_impact/disk_impact_gold.e
 test/performacne/fragmenting_cylinder/fragmenting_cylinder_gold.e
 test/performance/tensile_test/tensile_test_gold.e
-test/performacne/twist_and_pull/twist_and_pull_gold.e
+test/performance/twist_and_pull/twist_and_pull_gold.e
 
 # build directories on various machnes
 /DEBUG_WITH_STABLE_TRILINOS/
