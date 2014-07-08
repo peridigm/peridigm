@@ -37,9 +37,5 @@ WORKDIR /
 RUN mv /peridigm/scripts /usr/local/Peridigm/scripts
 RUN rm -rf /peridigm
 
-RUN mkdir -p /scratch
-VOLUME ["/scratch"]
-WORKDIR /scratch/
-
 ENV LD_LIBRARY_PATH /usr/local/netcdf/lib
 
