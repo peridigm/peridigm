@@ -35,7 +35,7 @@ WORKDIR /peridigm/build/
 RUN make && make install
 WORKDIR /
 RUN mv /peridigm/scripts /usr/local/Peridigm/scripts
-RUN rm -rf peridigm
+RUN rm -rf /peridigm
 
 RUN mkdir -p /scratch
 VOLUME ["/scratch"]
