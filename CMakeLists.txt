@@ -22,6 +22,7 @@ endif (NOT CMAKE_CXX_FLAGS)
 # Boost configuration
 # Questions?  See http://www.cmake.org/cmake/help/cmake2.6docs.html#module:FindBoost
 #
+#
 find_package (Boost 1.37.0 COMPONENTS unit_test_framework system filesystem thread regex)
 if (Boost_FOUND)
   message ("\nBoost installation:")
