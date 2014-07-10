@@ -236,8 +236,25 @@ void PeridigmNS::ExodusDiscretization::loadData(const string& meshFileName)
   // Append processor id information to the file name, if necessary
   string fileName = meshFileName;
   if(numPID != 1){
+    int width = 1;
+    if(numPID > 9)
+      width = 2;
+    if(numPID > 99)
+      width = 3;
+    if(numPID > 999)
+      width = 4;
+    if(numPID > 9999)
+      width = 5;
+    if(numPID > 99999)
+      width = 6;
+    if(numPID > 999999)
+      width = 7;
+    if(numPID > 9999999)
+      width = 8;
+    if(numPID > 99999999)
+      width = 9;
     stringstream ss;
-    ss << "." << numPID << "." << myPID;
+    ss << "." << numPID << "." << setfill('0') << setw(width) << myPID;
     fileName += ss.str();
   }
 
@@ -246,7 +263,10 @@ void PeridigmNS::ExodusDiscretization::loadData(const string& meshFileName)
   int ioWordSize = 0;
   float exodusVersion;
   int exodusFileId = ex_open(fileName.c_str(), EX_READ, &compWordSize, &ioWordSize, &exodusVersion);
-  if (exodusFileId < 0) reportExodusError(exodusFileId, "ExodusDiscretization::loadData()", "ex_open");
+  if(exodusFileId < 0){
+    cout << "\n****Error on processor " << myPID << ": unable to open file " << fileName.c_str() << "\n" << endl;
+    reportExodusError(exodusFileId, "ExodusDiscretization::loadData()", "ex_open");
+  }
 
   // Read the initialization parameters
   int numDim, numNodes, numElem, numElemBlocks, numNodeSets, numSideSets;
