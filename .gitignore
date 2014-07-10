@@ -1,0 +1,25 @@
+# compiled binaries
+*.[oa]
+
+# emacs backup files
+*~
+
+# Mac nonsense
+.DS_Store
+
+# compiled python
+*.pyc
+
+# gold files for performance tests (too big for repository)
+test/performance/disk_impact/disk_impact_gold.e
+test/performacne/fragmenting_cylinder/fragmenting_cylinder_gold.e
+test/performance/tensile_test/tensile_test_gold.e
+test/performance/twist_and_pull/twist_and_pull_gold.e
+
+# build directories on various machnes
+/DEBUG_WITH_STABLE_TRILINOS/
+/DEBUG_WITH_VOTD_TRILINOS/
+/RELEASE_WITH_STABLE_TRILINOS/
+/RELEASE_WITH_VOTD_TRILINOS/
+/GCC_4.7.2_OPT/
+/GCC_4.7.2_DBG/

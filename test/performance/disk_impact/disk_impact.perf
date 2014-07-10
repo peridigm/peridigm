@@ -3,6 +3,9 @@
 #  These data are used by the Peridigm performance test suite.
 #
 
+# Values prior to switch to rtcompiler:
+#Latrobe         4                     840.0               60.0
+
 # machine_name  number_of_processors  max_wallclock_time  wallclock_time_tolerance
-Latrobe         4                     840.0               60.0
+Latrobe         4                     840.0               100.0
 DJL_Laptop      4                     610.0               42.0
