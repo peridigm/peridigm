@@ -29,13 +29,12 @@ RUN cmake \
     -D CMAKE_CXX_COMPILER:STRING=/usr/bin/mpicxx \
     -D BOOST_ROOT=/usr/include/boost \
     -D USE_DAKOTA:BOOL=OFF \
-    ..
+    ..; \
+    make && make install
 
-WORKDIR /peridigm/build/
-RUN make && make install
 WORKDIR /
 RUN mv /peridigm/scripts /usr/local/Peridigm/scripts
-RUN rm -rf /peridigm
 
-ENV LD_LIBRARY_PATH /usr/local/netcdf/lib
+ENV LD_LIBRARY_PATH /usr/local/netcdf/lib:/usr/local/trilinos:$LD_LIBRARY_PATH
+ENV PATH /usr/local/Peridigm:/usr/local/Peridigm/scripts:/usr/local/trilinos/bin:$PATH
 
