@@ -220,10 +220,10 @@ void PeridigmNS::ContactManager::createContactInteractionsList(const Teuchos::Pa
 
   // Print to stdout if verbose flag is set
   if(verbose && myPID == 0){
-    cout << "--Contact Interactions--" << endl;
-    cout << "  First block    Second block    Contact model" << endl;
+    cout << "-- Contact Interactions" << endl;
+    cout << "   First block    Second block    Contact model" << endl;
     for(unsigned int i=0 ; i<contactInteractions.size() ; ++i)
-      cout << "  " << contactInteractions[i].get<0>() << "              " <<  contactInteractions[i].get<1>() << "               " <<  contactInteractions[i].get<2>() << endl;
+      cout << "   " << contactInteractions[i].get<0>() << "              " <<  contactInteractions[i].get<1>() << "               " <<  contactInteractions[i].get<2>() << endl;
     cout << endl;
   }
 }
