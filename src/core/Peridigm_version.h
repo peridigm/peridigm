@@ -58,8 +58,8 @@
  * 10.2.4 is designated 100204.  This preserves the comparability of
  * these version numbers with simple comparison operators used in #ifdef tests.
  */
-#define PERIDIGM_MAJOR_MINOR_VERSION 010100
+#define PERIDIGM_MAJOR_MINOR_VERSION 010300
 
-#define PERIDIGM_VERSION_STRING "1.1.0 (Dev)"
+#define PERIDIGM_VERSION_STRING "1.3.0 (Dev)"
 
 #endif // PERIDIGM_VERSION_H
