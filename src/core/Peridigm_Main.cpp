@@ -59,6 +59,7 @@
 #endif
 #include <Teuchos_RCP.hpp>
 
+#include "Peridigm_Version.hpp"
 #include "Peridigm_Factory.hpp"
 #include "Peridigm_Timer.hpp"
 
@@ -86,7 +87,8 @@ int main(int argc, char *argv[]) {
 
   // Banner
   if(mpi_id == 0){
-    cout << "\n--Peridigm--\n" << endl ;
+    cout << "\n-- Peridigm" << endl;
+    cout << "-- version " << PeridigmNS::Peridigm_Version() << "\n" << endl;
     if(mpi_size > 1)
       cout << "MPI initialized on " << mpi_size << " processors.\n" << endl;
   }
