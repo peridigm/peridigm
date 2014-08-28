@@ -1,4 +1,4 @@
-/*! \file utPeridigm_ElasticMaterial.cpp */
+/*! \file utPeridigm_MultiphysicsElasticMaterial.cpp */
 
 //@HEADER
 // ************************************************************************
@@ -48,12 +48,11 @@
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
 #include "Teuchos_UnitTestRepository.hpp"
+#include "Peridigm_MultiphysicsElasticMaterial.hpp"
 #include "Peridigm_ElasticMaterial.hpp"
 #include "Peridigm_SerialMatrix.hpp"
 #include "Peridigm_Field.hpp"
 #include <Epetra_SerialComm.h>
-#include <iostream>
-
 
 using namespace std;
 using namespace PeridigmNS;
@@ -61,21 +60,31 @@ using namespace Teuchos;
 
 //! Tests state variable count and name accessor functions.
 
-TEUCHOS_UNIT_TEST(ElasticMaterial, testStateVariableAccessors) {
+TEUCHOS_UNIT_TEST(MultiphysicsElasticMaterial, testStateVariableAccessors) {
 
   ParameterList params;
   params.set("Density", 7800.0);
   params.set("Bulk Modulus", 130.0e9);
   params.set("Shear Modulus", 78.0e9);
   params.set("Horizon", 10.0);
-  ElasticMaterial mat(params);
+	params.set("Apply Automatic Differentiation Jacobian", true);
+  params.set("Permeability", 1.0);
+	params.set("Fluid density", 1000.0);
+	params.set("Fluid dynamic viscosity", 1.0);
+	params.set("Fluid compressibility", 1.0);
+	params.set("Fluid Reynolds viscosity temperature effect", 0.0);
+	params.set("Fluid linear thermal expansion", 0.0);
+	params.set("Permeability curve inflection damage", .50);
+	params.set("Permeability alpha", .25);
+	params.set("Max permeability", 1.e-4);
 
+  MultiphysicsElasticMaterial mat(params);
   // \todo check field specs
 }
 
 //! Tests two-point system under compression against hand calculations.
 
-TEUCHOS_UNIT_TEST(ElasticMaterial, testTwoPts) {
+TEUCHOS_UNIT_TEST(MultiphysicsElasticMaterial, testTwoPts) {
 
   // instantiate the material model
   ParameterList params;
@@ -83,8 +92,20 @@ TEUCHOS_UNIT_TEST(ElasticMaterial, testTwoPts) {
   params.set("Bulk Modulus", 130.0e9);
   params.set("Shear Modulus", 78.0e9);
   params.set("Horizon", 10.0);
-  ElasticMaterial mat(params);
+	params.set("Apply Automatic Differentiation Jacobian", true);
+  params.set("Permeability", 1.0);
+	params.set("Fluid density", 1000.0);
+	params.set("Fluid dynamic viscosity", 1.0);
+	params.set("Fluid compressibility", 1.0);
+	params.set("Fluid Reynolds viscosity temperature effect", 0.0);
+	params.set("Fluid linear thermal expansion", 0.0);
+	params.set("Permeability curve inflection damage", .50);
+	params.set("Permeability alpha", .25);
+	params.set("Max permeability", 1.e-4);
 
+  MultiphysicsElasticMaterial mat(params);
+
+	
   // arguments for calls to material model
   Epetra_SerialComm comm;
   Epetra_Map nodeMap(2, 0, comm);
@@ -120,30 +141,40 @@ TEUCHOS_UNIT_TEST(ElasticMaterial, testTwoPts) {
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   int modelCoordinatesFieldId = fieldManager.getFieldId("Model_Coordinates");
   int coordinatesFieldId = fieldManager.getFieldId("Coordinates");
+	int fluidPressureYFieldId = fieldManager.getFieldId("Fluid_Pressure_Y");
   int volumeFieldId = fieldManager.getFieldId("Volume");
   int weightedVolumeFieldId = fieldManager.getFieldId("Weighted_Volume");
   int dilatationFieldId = fieldManager.getFieldId("Dilatation");
   int bondDamageFieldId = fieldManager.getFieldId("Bond_Damage");
   int forceDensityFieldId = fieldManager.getFieldId("Force_Density");
+	int flowDensityFieldId = fieldManager.getFieldId("Flux_Density");
 
   Epetra_Vector& x = *dataManager.getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE);
   Epetra_Vector& y = *dataManager.getData(coordinatesFieldId, PeridigmField::STEP_NP1);
+  Epetra_Vector& fluidPressureY = *dataManager.getData(fluidPressureYFieldId, PeridigmField::STEP_NP1);
   Epetra_Vector& cellVolume = *dataManager.getData(volumeFieldId, PeridigmField::STEP_NONE);
 
   x[0] = 0.0; x[1] = 0.0; x[2] = 0.0;
   x[3] = 1.0; x[4] = 0.0; x[5] = 0.0;
   y[0] = 0.0; y[1] = 0.0; y[2] = 0.0;
   y[3] = 2.0; y[4] = 0.0; y[5] = 0.0;
+
+	// current fluid pressure is set to zero so that the solid mechanics model is not interfered with
+	fluidPressureY[0] = 0.0;
+	fluidPressureY[1] = 0.0;
+	fluidPressureY[2] = 0.0;
+	  
   for(int i=0; i<cellVolume.MyLength(); ++i){
 	cellVolume[i] = 1.0;
   }
 
+	  
   mat.initialize(dt, 
                  numOwnedPoints,
                  ownedIDs,
                  neighborhoodList,
                  dataManager);
-
+  
   mat.computeForce(dt, 
 				   numOwnedPoints,
 				   ownedIDs,
@@ -186,15 +217,25 @@ TEUCHOS_UNIT_TEST(ElasticMaterial, testTwoPts) {
 
 //! Tests eight-cell block under compression against hand calculations.
 
-TEUCHOS_UNIT_TEST(ElasticMaterial, testEightPts) {
-
+TEUCHOS_UNIT_TEST(MultiphysicsElasticMaterial, testEightPts) {
   // instantiate the material model
   ParameterList params;
   params.set("Density", 7800.0);
   params.set("Bulk Modulus", 130.0e9);
   params.set("Shear Modulus", 78.0e9);
   params.set("Horizon", 10.0);
-  ElasticMaterial mat(params);
+	params.set("Apply Automatic Differentiation Jacobian", true);
+  params.set("Permeability", 1.0);
+	params.set("Fluid density", 1000.0);
+	params.set("Fluid dynamic viscosity", 1.0);
+	params.set("Fluid compressibility", 1.0);
+	params.set("Fluid Reynolds viscosity temperature effect", 0.0);
+	params.set("Fluid linear thermal expansion", 0.0);
+	params.set("Permeability curve inflection damage", .50);
+	params.set("Permeability alpha", .25);
+	params.set("Max permeability", 1.e-4);
+
+  MultiphysicsElasticMaterial mat(params);
 
   // arguments for calls to material model
   Epetra_SerialComm comm;
@@ -241,14 +282,17 @@ TEUCHOS_UNIT_TEST(ElasticMaterial, testEightPts) {
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   int modelCoordinatesFieldId = fieldManager.getFieldId("Model_Coordinates");
   int coordinatesFieldId = fieldManager.getFieldId("Coordinates");
+	int fluidPressureYFieldId = fieldManager.getFieldId("Fluid_Pressure_Y");
   int volumeFieldId = fieldManager.getFieldId("Volume");
   int weightedVolumeFieldId = fieldManager.getFieldId("Weighted_Volume");
   int dilatationFieldId = fieldManager.getFieldId("Dilatation");
   int bondDamageFieldId = fieldManager.getFieldId("Bond_Damage");
   int forceDensityFieldId = fieldManager.getFieldId("Force_Density");
+	int flowDensityFieldId = fieldManager.getFieldId("Flux_Density");
 
   Epetra_Vector& x = *dataManager.getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE);
   Epetra_Vector& y = *dataManager.getData(coordinatesFieldId, PeridigmField::STEP_NP1);
+  Epetra_Vector& fluidPressureY = *dataManager.getData(fluidPressureYFieldId, PeridigmField::STEP_NP1);
   Epetra_Vector& cellVolume = *dataManager.getData(volumeFieldId, PeridigmField::STEP_NONE);
 
   // initial positions
@@ -270,6 +314,12 @@ TEUCHOS_UNIT_TEST(ElasticMaterial, testEightPts) {
   y[15] = 1.0; y[16] = 0.0; y[17] = 0.98;
   y[18] = 1.0; y[19] = 1.0; y[20] = 0.0;
   y[21] = 1.0; y[22] = 1.0; y[23] = 0.98;
+
+	// current fluid pressures
+	// they are set to zero so that the solid mechanics model is not interfered with
+	for(int i=0; i<8; ++i){
+		fluidPressureY[i] = 0.0;
+	}
 
   // cell volumes
   for(int i=0; i<cellVolume.MyLength(); ++i){
@@ -453,7 +503,7 @@ TEUCHOS_UNIT_TEST(ElasticMaterial, testEightPts) {
 }
 
 //! Tests arbitrary three-cell system under arbitrary deformation against hand calculations.
-TEUCHOS_UNIT_TEST(ElasticMaterial, testThreePts) {
+TEUCHOS_UNIT_TEST(MultiphysicsElasticMaterial, testThreePts) {
 
   // instantiate the material model
   ParameterList params;
@@ -461,7 +511,18 @@ TEUCHOS_UNIT_TEST(ElasticMaterial, testThreePts) {
   params.set("Bulk Modulus", 130.0e9);
   params.set("Shear Modulus", 78.0e9);
   params.set("Horizon", 10.0);
-  ElasticMaterial mat(params);
+	params.set("Apply Automatic Differentiation Jacobian", true);
+  params.set("Permeability", 1.0);
+	params.set("Fluid density", 1000.0);
+	params.set("Fluid dynamic viscosity", 1.0);
+	params.set("Fluid compressibility", 1.0);
+	params.set("Fluid Reynolds viscosity temperature effect", 0.0);
+	params.set("Fluid linear thermal expansion", 0.0);
+	params.set("Permeability curve inflection damage", .50);
+	params.set("Permeability alpha", .25);
+	params.set("Max permeability", 1.e-4);
+
+  MultiphysicsElasticMaterial mat(params);
 
   // arguments for calls to material model
   Epetra_SerialComm comm;
@@ -506,16 +567,19 @@ TEUCHOS_UNIT_TEST(ElasticMaterial, testThreePts) {
   dataManager.allocateData(mat.FieldIds());
 
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
-  int modelCoordinatesFieldId = fieldManager.getFieldId("Model_Coordinates");
+	int modelCoordinatesFieldId = fieldManager.getFieldId("Model_Coordinates");
   int coordinatesFieldId = fieldManager.getFieldId("Coordinates");
+	int fluidPressureYFieldId = fieldManager.getFieldId("Fluid_Pressure_Y");
   int volumeFieldId = fieldManager.getFieldId("Volume");
   int weightedVolumeFieldId = fieldManager.getFieldId("Weighted_Volume");
   int dilatationFieldId = fieldManager.getFieldId("Dilatation");
   int bondDamageFieldId = fieldManager.getFieldId("Bond_Damage");
   int forceDensityFieldId = fieldManager.getFieldId("Force_Density");
+	int flowDensityFieldId = fieldManager.getFieldId("Flux_Density");
 
   Epetra_Vector& x = *dataManager.getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE);
   Epetra_Vector& y = *dataManager.getData(coordinatesFieldId, PeridigmField::STEP_NP1);
+  Epetra_Vector& fluidPressureY = *dataManager.getData(fluidPressureYFieldId, PeridigmField::STEP_NP1);
   Epetra_Vector& cellVolume = *dataManager.getData(volumeFieldId, PeridigmField::STEP_NONE);
 
   // initial positions
@@ -527,6 +591,11 @@ TEUCHOS_UNIT_TEST(ElasticMaterial, testThreePts) {
   y[0] = 1.2;  y[1] = 2.4;  y[2] = -0.1;
   y[3] = -1.9; y[4] = 0.7;  y[5] = -0.8;
   y[6] = 0.1;  y[7] = 0.21; y[8] =  1.6;
+
+	// current fluid pressures
+	for(int i=0; i<3; i++){
+		fluidPressureY[i] = 0.0;
+	}
 
   // cell volumes
   cellVolume[0] = 0.9;
@@ -543,7 +612,7 @@ TEUCHOS_UNIT_TEST(ElasticMaterial, testThreePts) {
 				   numOwnedPoints,
 				   ownedIDs,
 				   neighborhoodList,
-                   dataManager);
+           dataManager);
 
   double currentPosition;
   currentPosition = y[0];
@@ -662,8 +731,8 @@ TEUCHOS_UNIT_TEST(ElasticMaterial, testThreePts) {
   delete[] neighborhoodList;
 }
 
-//! Tests the finite-difference Jacobian for a two-point system.
-TEUCHOS_UNIT_TEST(ElasticMaterial, twoPointTangentStiffnessMatrix) {
+//! Tests the automatic-differentiation Jacobian for a two-point system.
+TEUCHOS_UNIT_TEST(MultiphysicsElasticMaterial, twoPointADJacobian) {
 
   // instantiate the material model
   ParameterList params;
@@ -671,104 +740,189 @@ TEUCHOS_UNIT_TEST(ElasticMaterial, twoPointTangentStiffnessMatrix) {
   params.set("Bulk Modulus", 130.0e9);
   params.set("Shear Modulus", 78.0e9);
   params.set("Horizon", 10.0);
-  ElasticMaterial mat(params);
+	params.set("Apply Automatic Differentiation Jacobian", true);
+  params.set("Permeability", 1.e-12);
+	params.set("Fluid density", 1000.0);
+	params.set("Fluid dynamic viscosity", 1.0);
+	params.set("Fluid compressibility", 1.e-4);
+	params.set("Fluid Reynolds viscosity temperature effect", 0.0);
+	params.set("Fluid linear thermal expansion", 0.0);
+	params.set("Permeability curve inflection damage", .50);
+	params.set("Permeability alpha", .25);
+	params.set("Max permeability", 1.e-4);
+
+  MultiphysicsElasticMaterial mat(params);
+	ElasticMaterial solidMat(params);
 
   // arguments for calls to material model
   Epetra_SerialComm comm;
-  Epetra_BlockMap scalarPointMap(2, 1, 0, comm);
-  Epetra_BlockMap vectorPointMap(2, 3, 0, comm);
-  std::vector<int> myGlobalElements(2), elementSizes(2);
-  myGlobalElements[0] = 0;
-  myGlobalElements[1] = 1;
-  elementSizes[0] = 1;
-  elementSizes[1] = 1;
-  Epetra_BlockMap bondMap(2, 2, &myGlobalElements[0], &elementSizes[0], 0, comm);
-  Epetra_Map tangentMap(6, 0, comm); // this is basically the non-BlockMap version of the vectorPointMap (CrsMatrixes don't like BlockMaps)
+	/*  
+  Epetra_Map nodeMap(2, 0, comm);
+  Epetra_Map unknownMap(6, 0, comm);
+  Epetra_Map bondMap(1, 0, comm); 
+	*/
+	// Maps are needed to form the jacobian matrices which are incompatible with the
+	// blockmaps needed by the data manager.
+	Epetra_Map jacobianRowMap(8, 0, comm);
+	Epetra_Map jacobianRowMapSolids(6, 0, comm);
+
   int numOwnedPoints;
   int* ownedIDs;
   int* neighborhoodList;
+	double dt = 1.0;
+  // \todo check field specs
 
   // set up discretization
   numOwnedPoints = 2;
   ownedIDs = new int[numOwnedPoints];
-  ownedIDs[0] = 0;
-  ownedIDs[1] = 1;
+	for(int i=0; i<numOwnedPoints; ++i){
+		ownedIDs[i] = i;
+	}
+	  
   neighborhoodList = new int[4];
   neighborhoodList[0] = 1;
   neighborhoodList[1] = 1;
   neighborhoodList[2] = 1;
   neighborhoodList[3] = 0;
 
+	double rowOEight[8];
+	int colIndices[8];
+	for(int col=0; col<8; ++col){
+		rowOEight[col] = 0.0;
+		colIndices[col] = col;
+	}
+
+  Teuchos::RCP<Epetra_BlockMap> tempOneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(2, 2, &ownedIDs[0], 1, 0, comm));
+  Teuchos::RCP<Epetra_BlockMap> tempThreeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(2, 2, &ownedIDs[0], 3, 0, comm));
+  Teuchos::RCP<Epetra_BlockMap> tempBondMap = Teuchos::rcp(new Epetra_BlockMap(2, 2, &ownedIDs[0], 1, 0, comm));
+
   // create the data manager
   // in serial, the overlap and non-overlap maps are the same
   PeridigmNS::DataManager dataManager;
-  dataManager.setMaps(Teuchos::rcp(&scalarPointMap, false),
-                      Teuchos::rcp(&scalarPointMap, false),
-                      Teuchos::rcp(&vectorPointMap, false),
-                      Teuchos::rcp(&vectorPointMap, false),
-                      Teuchos::rcp(&bondMap, false));
+  PeridigmNS::DataManager dataManagerSolids;
+	dataManager.setMaps(tempOneDimensionalMap,
+											tempOneDimensionalMap,
+											tempThreeDimensionalMap,
+											tempThreeDimensionalMap,
+											tempBondMap);
+	dataManagerSolids.setMaps(tempOneDimensionalMap,
+														tempOneDimensionalMap,
+														tempThreeDimensionalMap,
+														tempThreeDimensionalMap,
+														tempBondMap);
+
   dataManager.allocateData(mat.FieldIds());
-
-  // Create the global tangent matrix
-  Epetra_DataAccess CV = Copy;
-  int numEntriesPerRow = 0;  // Indicates allocation will take place during the insertion phase
-  bool ignoreNonLocalEntries = false;
-  Teuchos::RCP<Epetra_FECrsMatrix> tangentFECrsMatrix = Teuchos::rcp(new Epetra_FECrsMatrix(CV, tangentMap, numEntriesPerRow, ignoreNonLocalEntries));
-  int numRowNonzeros = 6;
-  vector<double> zeros(6);
-  vector<int> indices(6);
-  for(unsigned int i=0 ; i<indices.size() ; ++i)
-    indices[i] = i;
-  for(unsigned int i=0 ; i<6 ; ++i){
-    // Allocate space in the global matrix
-    int err = tangentFECrsMatrix->InsertGlobalValues(i, numRowNonzeros, (const double*)&zeros[0], (const int*)&indices[0]);
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(err < 0, "**** InsertGlobalValues() returned negative error code.\n");
-  }
-  int err = tangentFECrsMatrix->GlobalAssemble();
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::allocateJacobian(), GlobalAssemble() returned nonzero error code.\n");
-
-  // create the SerialMatrix that is fed to the material model
-  PeridigmNS::SerialMatrix tangentSerialMatrix(tangentFECrsMatrix);
+  dataManagerSolids.allocateData(solidMat.FieldIds());
 
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
-  int modelCoordinatesFieldId = fieldManager.getFieldId("Model_Coordinates");
+  PeridigmNS::FieldManager& fieldManagerSolids = PeridigmNS::FieldManager::self();
+	int modelCoordinatesFieldId = fieldManager.getFieldId("Model_Coordinates");
   int coordinatesFieldId = fieldManager.getFieldId("Coordinates");
+	int fluidPressureYFieldId = fieldManager.getFieldId("Fluid_Pressure_Y");
   int volumeFieldId = fieldManager.getFieldId("Volume");
+  int weightedVolumeFieldId = fieldManager.getFieldId("Weighted_Volume");
+  int dilatationFieldId = fieldManager.getFieldId("Dilatation");
+  int bondDamageFieldId = fieldManager.getFieldId("Bond_Damage");
+  int forceDensityFieldId = fieldManager.getFieldId("Force_Density");
+	int flowDensityFieldId = fieldManager.getFieldId("Flux_Density");
+
+	int modelCoordinatesFieldIdSolids = fieldManagerSolids.getFieldId("Model_Coordinates");
+  int coordinatesFieldIdSolids = fieldManagerSolids.getFieldId("Coordinates");
+  int volumeFieldIdSolids = fieldManagerSolids.getFieldId("Volume");
+  int weightedVolumeFieldIdSolids = fieldManagerSolids.getFieldId("Weighted_Volume");
+  int dilatationFieldIdSolids = fieldManagerSolids.getFieldId("Dilatation");
+  int bondDamageFieldIdSolids = fieldManagerSolids.getFieldId("Bond_Damage");
+  int forceDensityFieldIdSolids = fieldManagerSolids.getFieldId("Force_Density");
+
+  // create the Jacobian
+
+	Teuchos::RCP<Epetra_FECrsMatrix> jacobianFEC = Teuchos::rcp(new Epetra_FECrsMatrix(Copy, jacobianRowMap /* rowmap */, 8 /*entries per row*/));
+	for(int row=0; row <8; ++row){
+		jacobianFEC->InsertGlobalValues(row, 
+																		8 /* num entries */,
+																		rowOEight /* values */,
+																		colIndices /* column indices */);
+	}
+	jacobianFEC->GlobalAssemble();
+  PeridigmNS::SerialMatrix jacobian(jacobianFEC);
+
+	Teuchos::RCP<Epetra_FECrsMatrix> jacobianSolidsFEC = Teuchos::rcp(new Epetra_FECrsMatrix(Copy, jacobianRowMapSolids/* rowmap */, 6 /*entries per row*/));
+	for(int row=0; row <6; ++row){
+		jacobianSolidsFEC->InsertGlobalValues(row, 
+																		6 /* num entries */,
+																		rowOEight /* values */,
+																		colIndices /* column indices */);
+	}
+	jacobianSolidsFEC->GlobalAssemble();
+  PeridigmNS::SerialMatrix jacobianSolids(jacobianSolidsFEC);
 
   Epetra_Vector& x = *dataManager.getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE);
   Epetra_Vector& y = *dataManager.getData(coordinatesFieldId, PeridigmField::STEP_NP1);
+	Epetra_Vector& fluidPressureY = *dataManager.getData(fluidPressureYFieldId, PeridigmField::STEP_NP1);
   Epetra_Vector& cellVolume = *dataManager.getData(volumeFieldId, PeridigmField::STEP_NONE);
+
+	Epetra_Vector& xSolids = *dataManagerSolids.getData(modelCoordinatesFieldIdSolids, PeridigmField::STEP_NONE);
+  Epetra_Vector& ySolids = *dataManagerSolids.getData(coordinatesFieldIdSolids, PeridigmField::STEP_NP1);
+  Epetra_Vector& cellVolumeSolids = *dataManagerSolids.getData(volumeFieldIdSolids, PeridigmField::STEP_NONE);
 
   x[0] = 0.0; x[1] = 0.0; x[2] = 0.0;
   x[3] = 1.0; x[4] = 0.0; x[5] = 0.0;
   y[0] = 0.0; y[1] = 0.0; y[2] = 0.0;
   y[3] = 2.0; y[4] = 0.0; y[5] = 0.0;
+
+	fluidPressureY[0] = 0.0;
+	fluidPressureY[1] = 0.0;
+
+	xSolids[0] = 0.0; xSolids[1] = 0.0; xSolids[2] = 0.0;
+  xSolids[3] = 1.0; xSolids[4] = 0.0; xSolids[5] = 0.0;
+  ySolids[0] = 0.0; ySolids[1] = 0.0; ySolids[2] = 0.0;
+  ySolids[3] = 2.0; ySolids[4] = 0.0; ySolids[5] = 0.0;
+
   for(int i=0; i<cellVolume.MyLength(); ++i){
-	cellVolume[i] = 1.0;
+ 		cellVolume[i] = 1.0;
+		cellVolumeSolids[i] = 1.0;
   }
 
-  double dt = 1.0; // time step
+	PeridigmNS::Material::JacobianType jacotype = PeridigmNS::Material::FULL_MATRIX;
 
   mat.initialize(dt, 
                  numOwnedPoints,
                  ownedIDs,
                  neighborhoodList,
                  dataManager);
-
+	  
   mat.computeJacobian(dt, 
                       numOwnedPoints,
                       ownedIDs,
                       neighborhoodList,
                       dataManager,
-                      tangentSerialMatrix);
+                      jacobian,
+											jacotype);
 
-  // cout << "\nTangent Stiffness Matrix:" << endl;
-  // cout << *tangentFECrsMatrix << endl;
+  solidMat.initialize(dt, 
+                 numOwnedPoints,
+                 ownedIDs,
+                 neighborhoodList,
+                 dataManagerSolids);
+
+  solidMat.computeJacobian(dt, 
+                      numOwnedPoints,
+                      ownedIDs,
+                      neighborhoodList,
+                      dataManagerSolids,
+                      jacobianSolids,
+											jacotype);
+  
+	std::cout << "For the multiphysics material, the jacobian: " << std::endl;
+	jacobian.getFECrsMatrix()->Print(std::cout);
+	std::cout << "For the solids only material, the jacobian: " << std::endl;
+	jacobianSolids.getFECrsMatrix()->Print(std::cout);
+
 }
 
-//! Tests the finite-difference Jacobian for a two-point system.
-
-TEUCHOS_UNIT_TEST(ElasticMaterial, twoPointTangentStiffnessMatrixJAM) {
+//! Tests the automatic-differentiation Jacobian for a two-point system.
+/*  
+TEUCHOS_UNIT_TEST(MultiphysicsElasticMaterial, twoPointProbeJacobianJAM) {
 
   // instantiate the material model
   ParameterList params;
@@ -776,7 +930,16 @@ TEUCHOS_UNIT_TEST(ElasticMaterial, twoPointTangentStiffnessMatrixJAM) {
   params.set("Bulk Modulus", 130000.0);
   params.set("Shear Modulus", 78000.0);
   params.set("Horizon", 10.0);
-  ElasticMaterial mat(params);
+	params.set("Apply Automatic Differentiation Jacobian", true);
+  params.set("Permeability", 1.0);
+	params.set("Fluid density", 1000.0);
+	params.set("Fluid dynamic viscosity", 1.0);
+	params.set("Fluid compressibility", 1.0);
+	params.set("Fluid Reynolds viscosity temperature effect", 0.0);
+	params.set("Fluid linear thermal expansion", 0.0);
+	params.set("Permeability curve inflection damage", .50);
+
+  MultiphysicsElasticMaterial mat(params);
 
   // arguments for calls to material model
   Epetra_SerialComm comm;
@@ -837,12 +1000,14 @@ TEUCHOS_UNIT_TEST(ElasticMaterial, twoPointTangentStiffnessMatrixJAM) {
 //                       dataManager,
 //                       jacobian);
 
-//   cout << "\nJacobian for twoPointTangentStiffnessMatrixJAM:" << endl;
+//   cout << "\nJacobian for twoPointProbeJacobianJAM:" << endl;
 //   jacobian.print(cout);
 }
+*/
 
 int main
 (int argc, char* argv[])
 {
   return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
 }
+
