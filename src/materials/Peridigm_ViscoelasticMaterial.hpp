@@ -73,6 +73,9 @@ namespace PeridigmNS {
     //! Returns the shear modulus of the material.
     virtual double ShearModulus() const { return m_shearModulus; }
 
+	//! Dummy method, for now
+	virtual double lookupMaterialProperty(const std::string keyname) const {return 0.0;}
+
     //! Returns a vector of field IDs corresponding to the variables associated with the material.
     virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
