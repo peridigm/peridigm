@@ -47,7 +47,8 @@
 
 #include "Peridigm_LinearLPSPVMaterial.hpp"
 #include "Peridigm_Field.hpp"
-#include "elastic_pv.h"
+#include "elastic_pv.h"     // for weighted volume
+#include "linear_lps_pv.h"  // for internal force
 #include "material_utilities.h"
 #include <Teuchos_Assert.hpp>
 #include <Epetra_SerialComm.h>
@@ -187,48 +188,24 @@ PeridigmNS::LinearLPSPVMaterial::computeForce(const double dt,
     dataManager.getData(m_neighborCentroidZFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborCentroidZ);
   }
 
-  // MATERIAL_EVALUATION::computeDilatationPV(x,
-  //                                          y,
-  //                                          weightedVolume,
-  //                                          cellVolume,
-  //                                          selfVolume,
-  //                                          selfCentroidX,
-  //                                          selfCentroidY,
-  //                                          selfCentroidZ,
-  //                                          neighborVolume,
-  //                                          neighborCentroidX,
-  //                                          neighborCentroidY,
-  //                                          neighborCentroidZ,
-  //                                          bondDamage,
-  //                                          dilatation,
-  //                                          neighborhoodList,
-  //                                          numOwnedPoints,
-  //                                          m_horizon,
-  //                                          m_OMEGA,
-  //                                          m_alpha,
-  //                                          deltaTemperature);
-
-  // MATERIAL_EVALUATION::computeInternalForceLinearLinearLPSPV(x,
-  //                                                          y,
-  //                                                          weightedVolume,
-  //                                                          cellVolume,
-  //                                                          selfVolume,
-  //                                                          selfCentroidX,
-  //                                                          selfCentroidY,
-  //                                                          selfCentroidZ,
-  //                                                          neighborVolume,
-  //                                                          neighborCentroidX,
-  //                                                          neighborCentroidY,
-  //                                                          neighborCentroidZ,
-  //                                                          dilatation,
-  //                                                          bondDamage,
-  //                                                          force,
-  //                                                          neighborhoodList,
-  //                                                          numOwnedPoints,
-  //                                                          m_bulkModulus,
-  //                                                          m_shearModulus,
-  //                                                          m_horizon,
-  //                                                          m_alpha,
-  //                                                          deltaTemperature);
+  MATERIAL_EVALUATION::computeInternalForceLinearLPS(x,
+                                                     y,
+                                                     weightedVolume,
+                                                     cellVolume,
+                                                     selfVolume,
+                                                     selfCentroidX,
+                                                     selfCentroidY,
+                                                     selfCentroidZ,
+                                                     neighborVolume,
+                                                     neighborCentroidX,
+                                                     neighborCentroidY,
+                                                     neighborCentroidZ,
+                                                     bondDamage,
+                                                     force,
+                                                     neighborhoodList,
+                                                     numOwnedPoints,
+                                                     m_bulkModulus,
+                                                     m_shearModulus,
+                                                     m_horizon);
 
 }
