@@ -2296,6 +2296,7 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
     // than the force and acceleration
     for(int i=0 ; i<residual->MyLength() ; ++i)
       (*residual)[i] = beta*dt2*( (*density)[i/3] * (*a)[i] - (*force)[i] - (*externalForce)[i]);
+    //      (*residual)[i] = (*volume)[i/3] * (beta*dt2*( (*density)[i/3] * (*a)[i] - (*force)[i] - (*externalForce)[i]));
 
     // Modify residual for kinematic BC
     boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
@@ -2377,7 +2378,8 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
       // Note that due to restrictions to CrsMatrix, the residual has a different (but equivalent) map
       // than the force and acceleration
       for(int i=0 ; i<residual->MyLength() ; ++i)
-        (*residual)[i] = beta*dt2*( (*density)[i/3] * (*a)[i] - (*force)[i]  - (*externalForce)[i]);
+        (*residual)[i] = beta*dt2*( (*density)[i/3] * (*a)[i] - (*force)[i] - (*externalForce)[i]);
+      //        (*residual)[i] = (*volume)[i/3] * (beta*dt2*( (*density)[i/3] * (*a)[i] - (*force)[i] - (*externalForce)[i]));
 
       // Modify residual for kinematic BC
       boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
