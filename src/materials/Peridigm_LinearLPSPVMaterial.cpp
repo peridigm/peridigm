@@ -1,0 +1,234 @@
+/*! \file Peridigm_LinearLPSPVMaterial.cpp */
+
+//@HEADER
+// ************************************************************************
+//
+//                             Peridigm
+//                 Copyright (2011) Sandia Corporation
+//
+// Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+// the U.S. Government retains certain rights in this software.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+// 1. Redistributions of source code must retain the above copyright
+// notice, this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright
+// notice, this list of conditions and the following disclaimer in the
+// documentation and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the Corporation nor the names of the
+// contributors may be used to endorse or promote products derived from
+// this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+// PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+// CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+// PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+// NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Questions?
+// David J. Littlewood   djlittl@sandia.gov
+// John A. Mitchell      jamitch@sandia.gov
+// Michael L. Parks      mlparks@sandia.gov
+// Stewart A. Silling    sasilli@sandia.gov
+//
+// ************************************************************************
+//@HEADER
+
+#include "Peridigm_LinearLPSPVMaterial.hpp"
+#include "Peridigm_Field.hpp"
+#include "elastic_pv.h"
+#include "material_utilities.h"
+#include <Teuchos_Assert.hpp>
+#include <Epetra_SerialComm.h>
+#include <Sacado.hpp>
+#include <boost/math/special_functions/fpclassify.hpp>
+
+using namespace std;
+
+PeridigmNS::LinearLPSPVMaterial::LinearLPSPVMaterial(const Teuchos::ParameterList& params)
+  : Material(params),
+    m_bulkModulus(0.0), m_shearModulus(0.0), m_density(0.0), m_horizon(0.0),
+    m_OMEGA(PeridigmNS::InfluenceFunction::self().getInfluenceFunction()),
+    m_volumeFieldId(-1), m_damageFieldId(-1), m_weightedVolumeFieldId(-1), m_dilatationFieldId(-1), m_modelCoordinatesFieldId(-1),
+    m_coordinatesFieldId(-1), m_forceDensityFieldId(-1), m_bondDamageFieldId(-1),
+    m_applyPartialVolumes(false),
+    m_selfVolumeFieldId(-1), m_selfCentroidXFieldId(-1), m_selfCentroidYFieldId(-1), m_selfCentroidZFieldId(-1),
+    m_neighborVolumeFieldId(-1), m_neighborCentroidXFieldId(-1), m_neighborCentroidYFieldId(-1), m_neighborCentroidZFieldId(-1)
+{
+  //! \todo Add meaningful asserts on material properties.
+  m_bulkModulus = calculateBulkModulus(params);
+  m_shearModulus = calculateShearModulus(params);
+  m_density = params.get<double>("Density");
+  m_horizon = params.get<double>("Horizon");
+
+  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  m_volumeFieldId                  = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Volume");
+  m_damageFieldId                  = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Damage");
+  m_weightedVolumeFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Weighted_Volume");
+  m_dilatationFieldId              = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Dilatation");
+  m_modelCoordinatesFieldId        = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::CONSTANT, "Model_Coordinates");
+  m_coordinatesFieldId             = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Coordinates");
+  m_forceDensityFieldId            = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force_Density");
+  m_bondDamageFieldId              = fieldManager.getFieldId(PeridigmField::BOND,    PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Bond_Damage");
+
+  m_fieldIds.push_back(m_volumeFieldId);
+  m_fieldIds.push_back(m_damageFieldId);
+  m_fieldIds.push_back(m_weightedVolumeFieldId);
+  m_fieldIds.push_back(m_dilatationFieldId);
+  m_fieldIds.push_back(m_modelCoordinatesFieldId);
+  m_fieldIds.push_back(m_coordinatesFieldId);
+  m_fieldIds.push_back(m_forceDensityFieldId);
+  m_fieldIds.push_back(m_bondDamageFieldId);
+}
+
+PeridigmNS::LinearLPSPVMaterial::~LinearLPSPVMaterial()
+{
+}
+
+void
+PeridigmNS::LinearLPSPVMaterial::initialize(const double dt,
+                                          const int numOwnedPoints,
+                                          const int* ownedIDs,
+                                          const int* neighborhoodList,
+                                          PeridigmNS::DataManager& dataManager)
+{
+  // Determine if partial volume information is available
+  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+  if(fieldManager.hasField("Self_Volume") && fieldManager.hasField("Neighbor_Volume")){
+    m_selfVolumeFieldId = fieldManager.getFieldId("Self_Volume");
+    m_selfCentroidXFieldId = fieldManager.getFieldId("Self_Centroid_X");
+    m_selfCentroidYFieldId = fieldManager.getFieldId("Self_Centroid_Y");
+    m_selfCentroidZFieldId = fieldManager.getFieldId("Self_Centroid_Z");
+    m_neighborVolumeFieldId = fieldManager.getFieldId("Neighbor_Volume");
+    m_neighborCentroidXFieldId = fieldManager.getFieldId("Neighbor_Centroid_X");
+    m_neighborCentroidYFieldId = fieldManager.getFieldId("Neighbor_Centroid_Y");
+    m_neighborCentroidZFieldId = fieldManager.getFieldId("Neighbor_Centroid_Z");
+    m_applyPartialVolumes = dataManager.hasData(m_selfVolumeFieldId, PeridigmField::STEP_NONE) && dataManager.hasData(m_neighborVolumeFieldId, PeridigmField::STEP_NONE);
+  }
+
+  // Extract pointers to the underlying data
+  double *xOverlap,  *cellVolumeOverlap, *weightedVolume;
+  dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&xOverlap);
+  dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&cellVolumeOverlap);
+  dataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
+
+  // Extract pointers to partial volume data
+  double *selfVolume(0), *selfCentroidX(0), *selfCentroidY(0), *selfCentroidZ(0);
+  double *neighborVolume(0), *neighborCentroidX(0), *neighborCentroidY(0), *neighborCentroidZ(0);
+  if(m_applyPartialVolumes){
+    dataManager.getData(m_selfVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&selfVolume);
+    dataManager.getData(m_selfCentroidXFieldId, PeridigmField::STEP_NONE)->ExtractView(&selfCentroidX);
+    dataManager.getData(m_selfCentroidYFieldId, PeridigmField::STEP_NONE)->ExtractView(&selfCentroidY);
+    dataManager.getData(m_selfCentroidZFieldId, PeridigmField::STEP_NONE)->ExtractView(&selfCentroidZ);
+    dataManager.getData(m_neighborVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborVolume);
+    dataManager.getData(m_neighborCentroidXFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborCentroidX);
+    dataManager.getData(m_neighborCentroidYFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborCentroidY);
+    dataManager.getData(m_neighborCentroidZFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborCentroidZ);
+  }
+
+  MATERIAL_EVALUATION::computeWeightedVolumePV(xOverlap,
+                                               cellVolumeOverlap,
+                                               selfVolume,
+                                               selfCentroidX,
+                                               selfCentroidY,
+                                               selfCentroidZ,
+                                               neighborVolume,
+                                               neighborCentroidX,
+                                               neighborCentroidY,
+                                               neighborCentroidZ,
+                                               weightedVolume,
+                                               numOwnedPoints,
+                                               neighborhoodList,
+                                               m_horizon);
+}
+
+void
+PeridigmNS::LinearLPSPVMaterial::computeForce(const double dt,
+                                              const int numOwnedPoints,
+                                              const int* ownedIDs,
+                                              const int* neighborhoodList,
+                                              PeridigmNS::DataManager& dataManager) const
+{
+  // Zero out the forces
+  dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+
+  // Extract pointers to the underlying data
+  double *x, *y, *cellVolume, *weightedVolume, *dilatation, *bondDamage, *force;
+  dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
+  dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&y);
+  dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&cellVolume);
+  dataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
+  dataManager.getData(m_dilatationFieldId, PeridigmField::STEP_NP1)->ExtractView(&dilatation);
+  dataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_NP1)->ExtractView(&bondDamage);
+  dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&force);
+
+  // Extract pointers to partial volume data
+  double *selfVolume(0), *selfCentroidX(0), *selfCentroidY(0), *selfCentroidZ(0);
+  double *neighborVolume(0), *neighborCentroidX(0), *neighborCentroidY(0), *neighborCentroidZ(0);
+  if(m_applyPartialVolumes){
+    dataManager.getData(m_selfVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&selfVolume);
+    dataManager.getData(m_selfCentroidXFieldId, PeridigmField::STEP_NONE)->ExtractView(&selfCentroidX);
+    dataManager.getData(m_selfCentroidYFieldId, PeridigmField::STEP_NONE)->ExtractView(&selfCentroidY);
+    dataManager.getData(m_selfCentroidZFieldId, PeridigmField::STEP_NONE)->ExtractView(&selfCentroidZ);
+    dataManager.getData(m_neighborVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborVolume);
+    dataManager.getData(m_neighborCentroidXFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborCentroidX);
+    dataManager.getData(m_neighborCentroidYFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborCentroidY);
+    dataManager.getData(m_neighborCentroidZFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborCentroidZ);
+  }
+
+  // MATERIAL_EVALUATION::computeDilatationPV(x,
+  //                                          y,
+  //                                          weightedVolume,
+  //                                          cellVolume,
+  //                                          selfVolume,
+  //                                          selfCentroidX,
+  //                                          selfCentroidY,
+  //                                          selfCentroidZ,
+  //                                          neighborVolume,
+  //                                          neighborCentroidX,
+  //                                          neighborCentroidY,
+  //                                          neighborCentroidZ,
+  //                                          bondDamage,
+  //                                          dilatation,
+  //                                          neighborhoodList,
+  //                                          numOwnedPoints,
+  //                                          m_horizon,
+  //                                          m_OMEGA,
+  //                                          m_alpha,
+  //                                          deltaTemperature);
+
+  // MATERIAL_EVALUATION::computeInternalForceLinearLinearLPSPV(x,
+  //                                                          y,
+  //                                                          weightedVolume,
+  //                                                          cellVolume,
+  //                                                          selfVolume,
+  //                                                          selfCentroidX,
+  //                                                          selfCentroidY,
+  //                                                          selfCentroidZ,
+  //                                                          neighborVolume,
+  //                                                          neighborCentroidX,
+  //                                                          neighborCentroidY,
+  //                                                          neighborCentroidZ,
+  //                                                          dilatation,
+  //                                                          bondDamage,
+  //                                                          force,
+  //                                                          neighborhoodList,
+  //                                                          numOwnedPoints,
+  //                                                          m_bulkModulus,
+  //                                                          m_shearModulus,
+  //                                                          m_horizon,
+  //                                                          m_alpha,
+  //                                                          deltaTemperature);
+
+}

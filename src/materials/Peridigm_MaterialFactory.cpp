@@ -61,6 +61,7 @@
 #endif
 #ifdef PERIDIGM_PV
 #include "Peridigm_ElasticPVMaterial.hpp"
+#include "Peridigm_LinearLPSPVMaterial.hpp"
 #endif
 #ifdef PERIDIGM_SANDIA_INTERNAL
 #include "Peridigm_ElasticCorrespondencePartialStressMaterial.hpp"
@@ -106,6 +107,13 @@ PeridigmNS::MaterialFactory::create(const Teuchos::ParameterList& materialParams
     materialModel = Teuchos::rcp( new ElasticPVMaterial(materialParams) );
 #else
     TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n**** Elastic Partial Volume material model unavailable, recompile with -DUSE_PV.\n");
+#endif
+  }
+  else if (materialModelName == "Linear LPS Partial Volume"){
+#ifdef PERIDIGM_PV
+    materialModel = Teuchos::rcp( new LinearLPSPVMaterial(materialParams) );
+#else
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n**** Linear LPS Partial Volume material model unavailable, recompile with -DUSE_PV.\n");
 #endif
   }
   else if (materialModelName == "Elastic Correspondence Partial Stress"){
