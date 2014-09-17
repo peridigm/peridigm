@@ -85,13 +85,13 @@ void computeDilatationLinearLPS
   const ScalarT *yNeighbor;
   ScalarT u[3], uNeighbor[3], dotProduct;
   double zeta[3], volNeighbor, normZeta, omega;
-  int neighborId;
+  int p, n, numNeighbors, neighborId;
 
-  for(int p=0; p<numOwnedPoints; p++, x+=3, y+=3, m++, theta++){
+  for(p=0; p<numOwnedPoints; p++, x+=3, y+=3, m++, theta++){
     *theta = 0.0;
-    int numNeighbors = *neighborlist;
+    numNeighbors = *neighborlist;
     neighborlist++;
-    for(int n=0; n<numNeighbors; n++, neighborlist++){
+    for(n=0; n<numNeighbors; n++, neighborlist++){
       neighborId = *neighborlist;
       xNeighbor = &xOverlapPtr[3*neighborId];
       yNeighbor = &yOverlapPtr[3*neighborId];
@@ -115,8 +115,11 @@ void computeInternalForceLinearLPS
 (
  const double* xOverlapPtr,
  const ScalarT* yOverlapPtr,
- const double* mOwned,
  const double* volumeOverlapPtr,
+ const double* weightedVolumePtr,
+ const ScalarT* dilatationPtr,
+ double horizon,
+ const FunctionPointer influenceFunction,
  const double* selfVolumePtr,
  const double* selfCentroidXPtr,
  const double* selfCentroidYPtr,
@@ -127,80 +130,62 @@ void computeInternalForceLinearLPS
  const double* neighborCentroidZPtr,
  const double* bondDamage,
  ScalarT* forceOverlapPtr,
- const int*  localNeighborList,
+ const int* localNeighborList,
  int numOwnedPoints,
- double BULK_MODULUS,
- double SHEAR_MODULUS,
- double horizon,
- ScalarT* partialStressOverlap
+ double bulkModulus,
+ double shearModulus
 )
 {
-  // std::cout << "DEBUGGING " << numOwnedPoints << std::endl;
+  const double *x = xOverlapPtr;
+  const ScalarT *y = yOverlapPtr;
+  const double *vol = volumeOverlapPtr;
+  const double *m = weightedVolumePtr;
+  const ScalarT *theta = dilatationPtr;
+  ScalarT *force = forceOverlapPtr;
+  const int *neighborlist = localNeighborList;
 
-  // double K = BULK_MODULUS;
-  // double MU = SHEAR_MODULUS;
+  const double *xNeighbor;
+  const ScalarT *yNeighbor;
+  ScalarT u[3], uNeighbor[3], temp1, matVec[3], fx, fy, fz;
+  double zeta[3], volNeighbor, normZeta, omega, temp2, dyadicProduct[3][3];
+  int i, j, p, n, numNeighbors, neighborId;
 
-  // const double *xOwned = xOverlapPtr;
-  // const ScalarT *yOwned = yOverlapPtr;
-  // const double *m = mOwned;
-  // const double *v = volumeOverlapPtr;
-  // ScalarT *fOwned = forceOverlapPtr;
-  // ScalarT *psOwned = partialStressOverlap;
-
-  // const int *neighPtr = localNeighborList;
-  // double cellVolume, X_dx, X_dy, X_dz, zeta, omega, alpha;
-  // ScalarT Y_dx, Y_dy, Y_dz, dY, t, fx, fy, fz, e, c1;
-  // for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yOwned +=3, fOwned+=3, psOwned+=9, m++){
-
-  //   int numNeigh = *neighPtr; neighPtr++;
-  //   const double *X = xOwned;
-  //   const ScalarT *Y = yOwned;
-  //   alpha = 15.0*MU/(*m);
-  //   double selfCellVolume = v[p];
-  //   for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++){
-  //     int localId = *neighPtr;
-  //     cellVolume = v[localId];
-  //     const double *XP = &xOverlapPtr[3*localId];
-  //     const ScalarT *YP = &yOverlapPtr[3*localId];
-  //     X_dx = XP[0]-X[0];
-  //     X_dy = XP[1]-X[1];
-  //     X_dz = XP[2]-X[2];
-  //     zeta = sqrt(X_dx*X_dx+X_dy*X_dy+X_dz*X_dz);
-  //     Y_dx = YP[0]-Y[0];
-  //     Y_dy = YP[1]-Y[1];
-  //     Y_dz = YP[2]-Y[2];
-  //     dY = sqrt(Y_dx*Y_dx+Y_dy*Y_dy+Y_dz*Y_dz);
-  //     e = dY - zeta;
-
-  //     omega = scalarInfluenceFunction(zeta,horizon);
-
-  //     // c1 = omega*(*theta)*(3.0*K/(*m)-alpha/3.0);
-  //     // t = (1.0-*bondDamage)*(c1 * zeta + (1.0-*bondDamage) * omega * alpha * e);
-  //     // fx = t * Y_dx / dY;
-  //     // fy = t * Y_dy / dY;
-  //     // fz = t * Y_dz / dY;
-
-  //     // *(fOwned+0) += fx*cellVolume;
-  //     // *(fOwned+1) += fy*cellVolume;
-  //     // *(fOwned+2) += fz*cellVolume;
-  //     // forceOverlapPtr[3*localId+0] -= fx*selfCellVolume;
-  //     // forceOverlapPtr[3*localId+1] -= fy*selfCellVolume;
-  //     // forceOverlapPtr[3*localId+2] -= fz*selfCellVolume;
-
-  //     // if(partialStressOverlap != 0){
-  //     //   *(psOwned+0) += fx*X_dx*cellVolume;
-  //     //   *(psOwned+1) += fx*X_dy*cellVolume;
-  //     //   *(psOwned+2) += fx*X_dz*cellVolume;
-  //     //   *(psOwned+3) += fy*X_dx*cellVolume;
-  //     //   *(psOwned+4) += fy*X_dy*cellVolume;
-  //     //   *(psOwned+5) += fy*X_dz*cellVolume;
-  //     //   *(psOwned+6) += fz*X_dx*cellVolume;
-  //     //   *(psOwned+7) += fz*X_dy*cellVolume;
-  //     //   *(psOwned+8) += fz*X_dz*cellVolume;
-  //     // }
-  //   }
-
-  // }
+  for(p=0; p<numOwnedPoints; p++, x+=3, y+=3, vol++, m++, theta++, force+=3){
+    numNeighbors = *neighborlist;
+    neighborlist++;
+    for(n=0; n<numNeighbors; n++, neighborlist++){
+      neighborId = *neighborlist;
+      xNeighbor = &xOverlapPtr[3*neighborId];
+      yNeighbor = &yOverlapPtr[3*neighborId];
+      volNeighbor = volumeOverlapPtr[neighborId];
+      for(int i=0 ; i<3 ; ++i){
+        zeta[i] = xNeighbor[i] - x[i];
+        u[i] = y[i] - x[i];
+        uNeighbor[i] = yNeighbor[i] - xNeighbor[i];
+      }
+      normZeta = std::sqrt(zeta[0]*zeta[0] + zeta[1]*zeta[1] + zeta[2]*zeta[2]);
+      omega = influenceFunction(normZeta, horizon);
+      temp1 = (9.0*bulkModulus - 15.0*shearModulus)*omega*(*theta)/(3.0*(*m));
+      temp2 = 15.0*shearModulus*omega/((*m)*normZeta*normZeta);
+      for(i=0 ; i<3 ; i++){
+        for(j=0 ; j<3 ; j++){
+          dyadicProduct[i][j] = zeta[i]*zeta[j];
+        }
+      }
+      for(i=0 ; i<3 ; ++i){
+        matVec[i] = dyadicProduct[i][0]*(uNeighbor[0]-u[0]) + dyadicProduct[i][1]*(uNeighbor[1]-u[1]) + dyadicProduct[i][2]*(uNeighbor[2]-u[2]);
+      }
+      fx = temp1*zeta[0] + temp2*matVec[0];
+      fy = temp1*zeta[1] + temp2*matVec[1];
+      fz = temp1*zeta[2] + temp2*matVec[2];
+      *(force)   += fx*volNeighbor;
+      *(force+1) += fy*volNeighbor;
+      *(force+2) += fz*volNeighbor;
+      forceOverlapPtr[3*neighborId]   -= fx*(*vol);
+      forceOverlapPtr[3*neighborId+1] -= fy*(*vol);
+      forceOverlapPtr[3*neighborId+2] -= fz*(*vol);
+    } 
+  }
 }
 
 /** Explicit template instantiation for double. */
@@ -254,8 +239,11 @@ template void computeInternalForceLinearLPS<double>
 (
  const double* xOverlapPtr,
  const double* yOverlapPtr,
- const double* mOwned,
  const double* volumeOverlapPtr,
+ const double* weightedVolumePtr,
+ const double* dilatationPtr,
+ double horizon,
+ const FunctionPointer influenceFunction,
  const double* selfVolumePtr,
  const double* selfCentroidXPtr,
  const double* selfCentroidYPtr,
@@ -266,12 +254,10 @@ template void computeInternalForceLinearLPS<double>
  const double* neighborCentroidZPtr,
  const double* bondDamage,
  double* forceOverlapPtr,
- const int*  localNeighborList,
+ const int* localNeighborList,
  int numOwnedPoints,
- double BULK_MODULUS,
- double SHEAR_MODULUS,
- double horizon,
- double* partialStressOverlap = NULL
+ double bulkModulus,
+ double shearModulus
 );
 
 /** Explicit template instantiation for Sacado::Fad::DFad<double>. */
@@ -279,8 +265,11 @@ template void computeInternalForceLinearLPS<Sacado::Fad::DFad<double> >
 (
  const double* xOverlapPtr,
  const Sacado::Fad::DFad<double>* yOverlapPtr,
- const double* mOwned,
  const double* volumeOverlapPtr,
+ const double* weightedVolumePtr,
+ const Sacado::Fad::DFad<double>* dilatationPtr,
+ double horizon,
+ const FunctionPointer influenceFunction,
  const double* selfVolumePtr,
  const double* selfCentroidXPtr,
  const double* selfCentroidYPtr,
@@ -291,12 +280,10 @@ template void computeInternalForceLinearLPS<Sacado::Fad::DFad<double> >
  const double* neighborCentroidZPtr,
  const double* bondDamage,
  Sacado::Fad::DFad<double>* forceOverlapPtr,
- const int*  localNeighborList,
+ const int* localNeighborList,
  int numOwnedPoints,
- double BULK_MODULUS,
- double SHEAR_MODULUS,
- double horizon,
- Sacado::Fad::DFad<double>* partialStressOverlap = NULL
+ double bulkModulus,
+ double shearModulus
 );
 
 }
