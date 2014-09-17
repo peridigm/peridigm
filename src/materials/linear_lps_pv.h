@@ -53,6 +53,30 @@ namespace MATERIAL_EVALUATION {
 
 typedef PeridigmNS::InfluenceFunction::functionPointer FunctionPointer;
 
+//! Computes dilatation at each owned point.
+template<typename ScalarT>
+void computeDilatationLinearLPS
+(
+ const double* xOverlapPtr,
+ const ScalarT* yOverlapPtr,
+ const double* volumeOverlapPtr,
+ const double* weightedVolumePtr,
+ double horizon,
+ const FunctionPointer influenceFunction,
+ const double* selfVolumePtr,
+ const double* selfCentroidXPtr,
+ const double* selfCentroidYPtr,
+ const double* selfCentroidZPtr,
+ const double* neighborVolumePtr,
+ const double* neighborCentroidXPtr,
+ const double* neighborCentroidYPtr,
+ const double* neighborCentroidZPtr,
+ const double* bondDamage,
+ ScalarT* dilatationOwnedPtr,
+ const int* localNeighborList,
+ int numOwnedPoints
+ );
+
 //! Computes contributions to the internal force resulting from owned points.
 template<typename ScalarT>
 void computeInternalForceLinearLPS

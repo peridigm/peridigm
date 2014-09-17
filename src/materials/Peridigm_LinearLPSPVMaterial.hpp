@@ -107,7 +107,7 @@ namespace PeridigmNS {
     double m_shearModulus;
     double m_density;
     double m_horizon;
-    PeridigmNS::InfluenceFunction::functionPointer m_OMEGA;
+    PeridigmNS::InfluenceFunction::functionPointer m_omega;
 
     // field ids for all relevant data
     std::vector<int> m_fieldIds;
