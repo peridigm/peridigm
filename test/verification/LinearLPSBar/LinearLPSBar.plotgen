@@ -1,0 +1,9 @@
+
+set terminal pdf enhanced font "Times-Roman,24" size 12in, 8in 
+set output "LinearLPSVersusLPS.pdf"
+set xlabel "Time (s)" font "Times-Roman,32"
+set ylabel "Reaction Force (dyne)" font "Times-Roman,32"
+set key bottom right
+plot "LinearLPSBar.csv" using ($1):($2-$3)*0.5 with points pt 7 ps 4 lc 2 title "Linearized LPS", \
+     "LinearLPSBar.csv" using ($1):($4-$5)*0.5 with points pt 7 ps 4 lc 3 title "LPS"
+

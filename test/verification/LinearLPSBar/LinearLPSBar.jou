@@ -1,0 +1,36 @@
+
+# Unit of length is centimeters
+
+#{LENGTH=1.0}
+#{WIDTH=0.25}
+#{NUM_ELEM_ALONG_WIDTH=4}
+#{ELEMENT_SIZE=WIDTH/NUM_ELEM_ALONG_WIDTH}
+#{HORIZON=0.125}
+
+create brick x {LENGTH} y {WIDTH} z {WIDTH}
+webcut volume 1 with plane xplane offset {LENGTH/2.0 - 2.0*HORIZON} noimprint nomerge
+webcut volume 2 with plane xplane offset {2.0*HORIZON - LENGTH/2.0} noimprint nomerge
+volume 1 2 3 copy move x 0.0 y -1.0 z 0.0
+block 1 volume 3
+block 2 volume 2
+block 3 volume 1
+block 4 volume 6
+block 5 volume 5
+block 6 volume 4
+volume all size {ELEMENT_SIZE}
+mesh volume all
+nodeset 1 volume 3
+nodeset 2 volume 1
+nodeset 3 volume 1 2 3
+nodeset 4 curve 9  # z axis on min-x face
+nodeset 5 curve 7  # y axis on min-x face
+nodeset 6 curve 10 # z axis on max-x face
+nodeset 7 curve 5  # y axis on max-x face
+nodeset 11 volume 6
+nodeset 12 volume 4
+nodeset 13 volume 4 5 6
+nodeset 14 curve 80 # z axis on min-x face
+nodeset 15 curve 79 # y axis on min-x face
+nodeset 16 curve 53 # z axis on max-x face
+nodeset 17 curve 55 # y axis on max-x face
+export genesis "LinearLPSBar.g" overwrite

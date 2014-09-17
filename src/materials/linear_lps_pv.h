@@ -83,8 +83,11 @@ void computeInternalForceLinearLPS
 (
  const double* xOverlapPtr,
  const ScalarT* yOverlapPtr,
- const double* mOwned,
  const double* volumeOverlapPtr,
+ const double* weightedVolumePtr,
+ const ScalarT* dilatationPtr,
+ double horizon,
+ const FunctionPointer influenceFunction,
  const double* selfVolumePtr,
  const double* selfCentroidXPtr,
  const double* selfCentroidYPtr,
@@ -95,12 +98,10 @@ void computeInternalForceLinearLPS
  const double* neighborCentroidZPtr,
  const double* bondDamage,
  ScalarT* forceOverlapPtr,
- const int*  localNeighborList,
+ const int* localNeighborList,
  int numOwnedPoints,
- double BULK_MODULUS,
- double SHEAR_MODULUS,
- double horizon,
- ScalarT* partialStressOverlap = NULL
+ double bulkModulus,
+ double shearModulus
 );
 
 }
