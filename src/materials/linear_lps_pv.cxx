@@ -88,11 +88,11 @@ void computeDilatationLinearLPS
   double zeta[3], volNeighbor, normZeta, omega;
   int i, p, n, numNeighbors, neighborId;
 
-  for(p=0; p<numOwnedPoints; p++, x+=3, y+=3, m++, theta++, damage++){
+  for(p=0; p<numOwnedPoints; p++, x+=3, y+=3, m++, theta++){
     *theta = 0.0;
     numNeighbors = *neighborlist;
     neighborlist++;
-    for(n=0; n<numNeighbors; n++, neighborlist++){
+    for(n=0; n<numNeighbors; n++, neighborlist++, damage++){
       neighborId = *neighborlist;
       xNeighbor = &xOverlapPtr[3*neighborId];
       yNeighbor = &yOverlapPtr[3*neighborId];
@@ -142,6 +142,7 @@ void computeInternalForceLinearLPS
   const double *vol = volumeOverlapPtr;
   const double *m = weightedVolumePtr;
   const ScalarT *theta = dilatationPtr;
+  const double *damage = bondDamage;
   ScalarT *force = forceOverlapPtr;
   const int *neighborlist = localNeighborList;
 
@@ -154,7 +155,7 @@ void computeInternalForceLinearLPS
   for(p=0; p<numOwnedPoints; p++, x+=3, y+=3, vol++, m++, theta++, force+=3){
     numNeighbors = *neighborlist;
     neighborlist++;
-    for(n=0; n<numNeighbors; n++, neighborlist++){
+    for(n=0; n<numNeighbors; n++, neighborlist++, damage++){
       neighborId = *neighborlist;
       xNeighbor = &xOverlapPtr[3*neighborId];
       yNeighbor = &yOverlapPtr[3*neighborId];
@@ -176,9 +177,9 @@ void computeInternalForceLinearLPS
       for(i=0 ; i<3 ; ++i){
         matVec[i] = dyadicProduct[i][0]*(uNeighbor[0]-u[0]) + dyadicProduct[i][1]*(uNeighbor[1]-u[1]) + dyadicProduct[i][2]*(uNeighbor[2]-u[2]);
       }
-      fx = temp1*zeta[0] + temp2*matVec[0];
-      fy = temp1*zeta[1] + temp2*matVec[1];
-      fz = temp1*zeta[2] + temp2*matVec[2];
+      fx = (1.0 - *damage)*(temp1*zeta[0] + temp2*matVec[0]);
+      fy = (1.0 - *damage)*(temp1*zeta[1] + temp2*matVec[1]);
+      fz = (1.0 - *damage)*(temp1*zeta[2] + temp2*matVec[2]);
       *(force)   += fx*volNeighbor;
       *(force+1) += fy*volNeighbor;
       *(force+2) += fz*volNeighbor;
