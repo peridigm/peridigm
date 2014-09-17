@@ -3,9 +3,9 @@
 
 #{LENGTH=1.0}
 #{WIDTH=0.25}
-#{NUM_ELEM_ALONG_WIDTH=4}
+#{NUM_ELEM_ALONG_WIDTH=5}
 #{ELEMENT_SIZE=WIDTH/NUM_ELEM_ALONG_WIDTH}
-#{HORIZON=0.125}
+#{HORIZON=0.15}
 
 create brick x {LENGTH} y {WIDTH} z {WIDTH}
 webcut volume 1 with plane xplane offset {LENGTH/2.0 - 2.0*HORIZON} noimprint nomerge

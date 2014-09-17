@@ -79,15 +79,16 @@ void computeDilatationLinearLPS
   const ScalarT *y = yOverlapPtr;
   const double *m = weightedVolumePtr;
   ScalarT *theta = dilatationOwnedPtr;
+  const double *damage = bondDamage;
   const int *neighborlist = localNeighborList;
 
   const double *xNeighbor;
   const ScalarT *yNeighbor;
   ScalarT u[3], uNeighbor[3], dotProduct;
   double zeta[3], volNeighbor, normZeta, omega;
-  int p, n, numNeighbors, neighborId;
+  int i, p, n, numNeighbors, neighborId;
 
-  for(p=0; p<numOwnedPoints; p++, x+=3, y+=3, m++, theta++){
+  for(p=0; p<numOwnedPoints; p++, x+=3, y+=3, m++, theta++, damage++){
     *theta = 0.0;
     numNeighbors = *neighborlist;
     neighborlist++;
@@ -96,7 +97,7 @@ void computeDilatationLinearLPS
       xNeighbor = &xOverlapPtr[3*neighborId];
       yNeighbor = &yOverlapPtr[3*neighborId];
       volNeighbor = volumeOverlapPtr[neighborId];
-      for(int i=0 ; i<3 ; ++i){
+      for(i=0 ; i<3 ; ++i){
         zeta[i] = xNeighbor[i] - x[i];
         u[i] = y[i] - x[i];
         uNeighbor[i] = yNeighbor[i] - xNeighbor[i];
@@ -104,9 +105,9 @@ void computeDilatationLinearLPS
       normZeta = std::sqrt(zeta[0]*zeta[0] + zeta[1]*zeta[1] + zeta[2]*zeta[2]);
       omega = influenceFunction(normZeta, horizon);
       dotProduct = zeta[0]*(uNeighbor[0]-u[0]) + zeta[1]*(uNeighbor[1]-u[1]) + zeta[2]*(uNeighbor[2]-u[2]);
-      *theta += omega*dotProduct*volNeighbor;
+      *theta += omega*(1.0 - *damage)*dotProduct*volNeighbor;
     } 
-    *theta /= *m;
+    *theta *= 3.0/(*m);
   }
 }
 
