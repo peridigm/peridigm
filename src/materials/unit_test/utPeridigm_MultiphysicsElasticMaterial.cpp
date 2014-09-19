@@ -141,7 +141,7 @@ TEUCHOS_UNIT_TEST(MultiphysicsElasticMaterial, testTwoPts) {
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   int modelCoordinatesFieldId = fieldManager.getFieldId("Model_Coordinates");
   int coordinatesFieldId = fieldManager.getFieldId("Coordinates");
-	int fluidPressureYFieldId = fieldManager.getFieldId("Fluid_Pressure_Y");
+  int fluidPressureYFieldId = fieldManager.getFieldId("Fluid_Pressure_Y");
   int volumeFieldId = fieldManager.getFieldId("Volume");
   int weightedVolumeFieldId = fieldManager.getFieldId("Weighted_Volume");
   int dilatationFieldId = fieldManager.getFieldId("Dilatation");
@@ -159,10 +159,10 @@ TEUCHOS_UNIT_TEST(MultiphysicsElasticMaterial, testTwoPts) {
   y[0] = 0.0; y[1] = 0.0; y[2] = 0.0;
   y[3] = 2.0; y[4] = 0.0; y[5] = 0.0;
 
-	// current fluid pressure is set to zero so that the solid mechanics model is not interfered with
-	fluidPressureY[0] = 0.0;
-	fluidPressureY[1] = 0.0;
-	fluidPressureY[2] = 0.0;
+  // current fluid pressure is set to zero so that the solid mechanics model is not interfered with
+  for(int i=0 ; i<fluidPressureY.MyLength() ; ++i){
+    fluidPressureY[i] = 0.0;
+  }
 	  
   for(int i=0; i<cellVolume.MyLength(); ++i){
 	cellVolume[i] = 1.0;
