@@ -147,7 +147,7 @@ TEUCHOS_UNIT_TEST(MultiphysicsElasticMaterial, testTwoPts) {
   int dilatationFieldId = fieldManager.getFieldId("Dilatation");
   int bondDamageFieldId = fieldManager.getFieldId("Bond_Damage");
   int forceDensityFieldId = fieldManager.getFieldId("Force_Density");
-	int flowDensityFieldId = fieldManager.getFieldId("Flux_Density");
+//  int flowDensityFieldId = fieldManager.getFieldId("Flux_Density");
 
   Epetra_Vector& x = *dataManager.getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE);
   Epetra_Vector& y = *dataManager.getData(coordinatesFieldId, PeridigmField::STEP_NP1);
@@ -288,7 +288,7 @@ TEUCHOS_UNIT_TEST(MultiphysicsElasticMaterial, testEightPts) {
   int dilatationFieldId = fieldManager.getFieldId("Dilatation");
   int bondDamageFieldId = fieldManager.getFieldId("Bond_Damage");
   int forceDensityFieldId = fieldManager.getFieldId("Force_Density");
-	int flowDensityFieldId = fieldManager.getFieldId("Flux_Density");
+//  int flowDensityFieldId = fieldManager.getFieldId("Flux_Density");
 
   Epetra_Vector& x = *dataManager.getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE);
   Epetra_Vector& y = *dataManager.getData(coordinatesFieldId, PeridigmField::STEP_NP1);
@@ -575,7 +575,7 @@ TEUCHOS_UNIT_TEST(MultiphysicsElasticMaterial, testThreePts) {
   int dilatationFieldId = fieldManager.getFieldId("Dilatation");
   int bondDamageFieldId = fieldManager.getFieldId("Bond_Damage");
   int forceDensityFieldId = fieldManager.getFieldId("Force_Density");
-	int flowDensityFieldId = fieldManager.getFieldId("Flux_Density");
+//  int flowDensityFieldId = fieldManager.getFieldId("Flux_Density");
 
   Epetra_Vector& x = *dataManager.getData(modelCoordinatesFieldId, PeridigmField::STEP_NONE);
   Epetra_Vector& y = *dataManager.getData(coordinatesFieldId, PeridigmField::STEP_NP1);
@@ -816,23 +816,23 @@ TEUCHOS_UNIT_TEST(MultiphysicsElasticMaterial, twoPointADJacobian) {
 
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   PeridigmNS::FieldManager& fieldManagerSolids = PeridigmNS::FieldManager::self();
-	int modelCoordinatesFieldId = fieldManager.getFieldId("Model_Coordinates");
+  int modelCoordinatesFieldId = fieldManager.getFieldId("Model_Coordinates");
   int coordinatesFieldId = fieldManager.getFieldId("Coordinates");
-	int fluidPressureYFieldId = fieldManager.getFieldId("Fluid_Pressure_Y");
+  int fluidPressureYFieldId = fieldManager.getFieldId("Fluid_Pressure_Y");
   int volumeFieldId = fieldManager.getFieldId("Volume");
-  int weightedVolumeFieldId = fieldManager.getFieldId("Weighted_Volume");
-  int dilatationFieldId = fieldManager.getFieldId("Dilatation");
-  int bondDamageFieldId = fieldManager.getFieldId("Bond_Damage");
-  int forceDensityFieldId = fieldManager.getFieldId("Force_Density");
-	int flowDensityFieldId = fieldManager.getFieldId("Flux_Density");
+//   int weightedVolumeFieldId = fieldManager.getFieldId("Weighted_Volume");
+//   int dilatationFieldId = fieldManager.getFieldId("Dilatation");
+//   int bondDamageFieldId = fieldManager.getFieldId("Bond_Damage");
+//   int forceDensityFieldId = fieldManager.getFieldId("Force_Density");
+//   int flowDensityFieldId = fieldManager.getFieldId("Flux_Density");
 
-	int modelCoordinatesFieldIdSolids = fieldManagerSolids.getFieldId("Model_Coordinates");
+  int modelCoordinatesFieldIdSolids = fieldManagerSolids.getFieldId("Model_Coordinates");
   int coordinatesFieldIdSolids = fieldManagerSolids.getFieldId("Coordinates");
   int volumeFieldIdSolids = fieldManagerSolids.getFieldId("Volume");
-  int weightedVolumeFieldIdSolids = fieldManagerSolids.getFieldId("Weighted_Volume");
-  int dilatationFieldIdSolids = fieldManagerSolids.getFieldId("Dilatation");
-  int bondDamageFieldIdSolids = fieldManagerSolids.getFieldId("Bond_Damage");
-  int forceDensityFieldIdSolids = fieldManagerSolids.getFieldId("Force_Density");
+//   int weightedVolumeFieldIdSolids = fieldManagerSolids.getFieldId("Weighted_Volume");
+//   int dilatationFieldIdSolids = fieldManagerSolids.getFieldId("Dilatation");
+//   int bondDamageFieldIdSolids = fieldManagerSolids.getFieldId("Bond_Damage");
+//   int forceDensityFieldIdSolids = fieldManagerSolids.getFieldId("Force_Density");
 
   // create the Jacobian
 
