@@ -53,6 +53,7 @@
 #include <Epetra_Vector.h>
 #include <Epetra_Map.h>
 #include <vector>
+#include <string>
 #include <float.h>
 #include "Peridigm_DataManager.hpp"
 #include "Peridigm_SerialMatrix.hpp"
@@ -85,6 +86,16 @@ namespace PeridigmNS {
 
     //! Returns the shear modulus of the material.
     virtual double ShearModulus() const = 0;
+
+	//! Returns material property value for a given key 
+	// Only implemented for multiphysics elastic material
+	virtual double lookupMaterialProperty(const std::string keyname) const = 0;	
+
+	//! Returns fluid density for multiphysics materials
+	//virtual double fluidDensity() const = 0;
+
+	//! Returns fluid compressibility for multiphysics materials
+	//virtual double fluidCompressibility() const = 0;
 	
     //! Returns a vector of field IDs corresponding to the variables associated with the material.
     virtual std::vector<int> FieldIds() const = 0;

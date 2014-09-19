@@ -229,7 +229,7 @@ namespace PeridigmNS {
     void executeImplicit(Teuchos::RCP<Teuchos::ParameterList> solverParams);
 
     //! Allocate memory for non-zeros in global Jacobian
-    void allocateJacobian();
+    void allocateJacobian(const int numDoFs);
 
     //! Allocate memory for non-zeros in block diagonal Jacobian
     void allocateBlockDiagonalJacobian();
@@ -262,10 +262,15 @@ namespace PeridigmNS {
     Teuchos::RCP<Epetra_Vector> getY() { return y; }
     Teuchos::RCP<Epetra_Vector> getV() { return v; }
     Teuchos::RCP<Epetra_Vector> getA() { return a; }
+    Teuchos::RCP<Epetra_Vector> getFluidPressureU() { return fluidPressureU; }
+    Teuchos::RCP<Epetra_Vector> getFluidPressureY() { return fluidPressureY; }
+    Teuchos::RCP<Epetra_Vector> getFluidPressureV() { return fluidPressureV; }
     Teuchos::RCP<Epetra_Vector> getForce() { return force; }
+    Teuchos::RCP<Epetra_Vector> getFluidFlow() { return fluidFlow; }
     Teuchos::RCP<Epetra_Vector> getExternalForce() { return externalForce; }
     Teuchos::RCP<Epetra_Vector> getContactForce() { return contactForce; }
     Teuchos::RCP<Epetra_Vector> getDeltaU() { return deltaU; }
+    Teuchos::RCP<Epetra_Vector> getFluidPressureDeltaU() { return fluidPressureDeltaU;}
     Teuchos::RCP<Epetra_Vector> getVolume() { return volume; }
     Teuchos::RCP<Epetra_Vector> getDeltaTemperature() { return deltaTemperature; }
     //@}
@@ -320,6 +325,7 @@ namespace PeridigmNS {
     //! Maps for scalar, vector, and bond data
     Teuchos::RCP<const Epetra_BlockMap> oneDimensionalMap;
     Teuchos::RCP<const Epetra_BlockMap> threeDimensionalMap;
+    Teuchos::RCP<const Epetra_BlockMap> nDimensionalMap;
     Teuchos::RCP<const Epetra_BlockMap> bondMap;
     Teuchos::RCP<const Epetra_BlockMap> oneDimensionalOverlapMap;
 
@@ -328,6 +334,9 @@ namespace PeridigmNS {
 
     //! Contact flag
     bool analysisHasContact;
+
+    //! Multiphysics flag
+    bool analysisHasMultiphysics;
 
     //! Flag for computing element-sphere intersections
     bool computeIntersections;
@@ -356,6 +365,9 @@ namespace PeridigmNS {
     //! Mothership multivector that contains all the three-dimensional global vectors (x, u, y, v, a, force, etc.)
     Teuchos::RCP<Epetra_MultiVector> threeDimensionalMothership;
 
+    //! Mothership multivector that contains all the n-dimensional global vectors (x, u, y, v, a, force, etc.)
+    Teuchos::RCP<Epetra_MultiVector> nDimensionalMothership;
+
     //! Mothership multivector that contains all the one-dimensional global vectors (blockID, volume)
     Teuchos::RCP<Epetra_MultiVector> oneDimensionalMothership;
 
@@ -374,14 +386,25 @@ namespace PeridigmNS {
     //! Global vector for displacement
     Teuchos::RCP<Epetra_Vector> u;
 
+		//! Global vector for solid mechanics dof and additional
+    Teuchos::RCP<Epetra_Vector> combinedU;
+
     //! Global vector for current position
     Teuchos::RCP<Epetra_Vector> y;
+
+		//! Global vector for solid mechanics current position and analogous quantities
+    Teuchos::RCP<Epetra_Vector> combinedY;
 
     //! Global vector for velocity
     Teuchos::RCP<Epetra_Vector> v;
 
+		//! Gloval vector for solid mechanics velocity and analogous quantities
+    Teuchos::RCP<Epetra_Vector> combinedV;
+
     //! Global vector for acceleration
     Teuchos::RCP<Epetra_Vector> a;
+
+    Teuchos::RCP<Epetra_Vector> combinedA;
 
     //! Global vector for temperature change
     Teuchos::RCP<Epetra_Vector> deltaTemperature;
@@ -389,20 +412,32 @@ namespace PeridigmNS {
     //! Global vector for force
     Teuchos::RCP<Epetra_Vector> force;
 
+    Teuchos::RCP<Epetra_Vector> combinedForce;
+
     //! Global vector for contact force (used only in simulations with contact)
     Teuchos::RCP<Epetra_Vector> contactForce;
 
     //! Global vector for external forces
     Teuchos::RCP<Epetra_Vector> externalForce;
 
+    Teuchos::RCP<Epetra_Vector> combinedExternalForce;
+
     //! Global vector for delta u (used only in implicit time integration)
     Teuchos::RCP<Epetra_Vector> deltaU;
+
+    Teuchos::RCP<Epetra_Vector> combinedDeltaU;
 
     //! Global scratch space vector
     Teuchos::RCP<Epetra_Vector> scratch;
 
+    Teuchos::RCP<Epetra_Vector> scratchOneD;
+
+    Teuchos::RCP<Epetra_Vector> combinedScratch;
+
     //! Vector containing velocities at dof with kinematic bc; used only by NOX solver.
     Teuchos::RCP<Epetra_Vector> noxVelocityAtDOFWithKinematicBC;
+
+		Teuchos::RCP<Epetra_Vector> noxPressureVAtDOFWithKinematicBC;
 
     //! Global vector for block ID 
     Teuchos::RCP<Epetra_Vector> blockIDs;
@@ -413,8 +448,32 @@ namespace PeridigmNS {
     //! Global vector for cell volume 
     Teuchos::RCP<Epetra_Vector> volume;
 
+    //! Global vector for volume fraction occupied by fluid phase
+    Teuchos::RCP<Epetra_Vector> volumeFraction;
+
     //! Global vector for cell density
     Teuchos::RCP<Epetra_Vector> density;
+
+		//! Global vector for cell fluid density
+    Teuchos::RCP<Epetra_Vector> fluidDensity;
+
+		//! Glocal vector for cell fluid compressibility
+    Teuchos::RCP<Epetra_Vector> fluidCompressibility;
+
+    //! Global vector for fluid pressure displacement analogue
+    Teuchos::RCP<Epetra_Vector> fluidPressureU;
+
+    //! Global vector for fluid pressure current
+    Teuchos::RCP<Epetra_Vector> fluidPressureY;
+
+    //! Global vector for fluid pressure current velocity analogue
+    Teuchos::RCP<Epetra_Vector> fluidPressureV;
+
+    //! Global vector for delta fluid pressure
+    Teuchos::RCP<Epetra_Vector> fluidPressureDeltaU;
+
+    //! Global vector for fluid flow 
+    Teuchos::RCP<Epetra_Vector> fluidFlow;
 
     //! Map for global tangent matrix (note, must be an Epetra_Map, not an Epetra_BlockMap)
     Teuchos::RCP<Epetra_Map> tangentMap;
@@ -464,6 +523,14 @@ namespace PeridigmNS {
     int contactForceDensityFieldId;
     int externalForceDensityFieldId;
     int partialVolumeFieldId;
+
+    // multiphyics information
+    int fluidPressureYFieldId;
+    int fluidPressureUFieldId;
+    int fluidPressureVFieldId;
+    int fluidFlowDensityFieldId;
+    int numMultiphysDoFs;
+    string textMultiphysDoFs;
   };
 }
 

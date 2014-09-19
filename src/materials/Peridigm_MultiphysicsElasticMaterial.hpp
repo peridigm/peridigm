@@ -1,4 +1,4 @@
-//! \file Peridigm_ElasticMaterial.hpp
+//! \file Peridigm_MultiphysicsElasticMaterial.hpp
 
 //@HEADER
 // ************************************************************************
@@ -45,11 +45,12 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_ELASTICMATERIAL_HPP
-#define PERIDIGM_ELASTICMATERIAL_HPP
+#ifndef PERIDIGM_MULTIPHYSICSELASTICMATERIAL_HPP
+#define PERIDIGM_MULTIPHYSICSELASTICMATERIAL_HPP
 
 #include "Peridigm_Material.hpp"
 #include "Peridigm_InfluenceFunction.hpp"
+#include <map>
 
 namespace PeridigmNS {
 
@@ -93,20 +94,26 @@ namespace PeridigmNS {
    * \f$ \underline{e}_{d} \f$:  Deviatoric part of the extension. \f$ \underline{e}^{d} = 
    *    \underline{e} - \underline{e}^{i} \f$.
    */
-  class ElasticMaterial : public Material{
+  class MultiphysicsElasticMaterial : public Material{
   public:
 
 	//! Constructor.
-    ElasticMaterial(const Teuchos::ParameterList & params);
+    MultiphysicsElasticMaterial(const Teuchos::ParameterList & params);
 
     //! Destructor.
-    virtual ~ElasticMaterial();
+    virtual ~MultiphysicsElasticMaterial();
 
     //! Return name of material type
-    virtual std::string Name() const { return("Elastic"); }
+    virtual std::string Name() const { return("Multiphysics Elastic"); }
 
     //! Returns the density of the material.
     virtual double Density() const { return m_density; }
+
+    //! Returns the fluid density of the material.
+    //virtual double fluidDensity() const { return m_fluidDensity; }
+
+    //! Returns the fluid compressibility of the material.
+    //virtual double fluidCompressibility() const { return m_fluidCompressibility; }
 
     //! Returns the bulk modulus of the material.
     virtual double BulkModulus() const { return m_bulkModulus; }
@@ -117,9 +124,8 @@ namespace PeridigmNS {
     //! Returns a vector of field IDs corresponding to the variables associated with the material.
     virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
-    //! Returns the requested material property
-    //! A dummy method here.
-    virtual double lookupMaterialProperty(const std::string keyname) const {return 0.0;}
+		//! Returns the requested material property
+		virtual double lookupMaterialProperty(const std::string keyname) const;
 
     //! Initialized data containers and computes weighted volume.
     virtual void
@@ -183,8 +189,8 @@ namespace PeridigmNS {
     bool m_applyAutomaticDifferentiationJacobian;
     bool m_applySurfaceCorrectionFactor;
     bool m_applyThermalStrains;
-    bool m_computePartialStress;
     PeridigmNS::InfluenceFunction::functionPointer m_OMEGA;
+		std::map<std::string, double> materialProperties;
 
     // field spec ids for all relevant data
     std::vector<int> m_fieldIds;
@@ -195,11 +201,23 @@ namespace PeridigmNS {
     int m_modelCoordinatesFieldId;
     int m_coordinatesFieldId;
     int m_forceDensityFieldId;
-    int m_partialStressFieldId;
     int m_bondDamageFieldId;
     int m_surfaceCorrectionFactorFieldId;
     int m_deltaTemperatureFieldId;
+
+		// multiphysics specific 
+		int m_fluidPressureYFieldId;
+		int m_fluidFlowDensityFieldId;
+	  double m_fluidPermeabilityScalar;
+		double m_fluidDensity; 
+		double m_fluidCompressibility; 
+		double m_fluidDynamicViscosity; 
+		double m_fluidLinearThermalExpansionCoef; 
+		double m_fluidReynoldsViscosityTemperatureEffect; 
+		double m_permeabilityCurveInflectionDamage;
+		double m_maxPermeability;
+		double m_permeabilityAlpha;
   };
 }
 
-#endif // PERIDIGM_ELASTICMATERIAL_HPP
+#endif // PERIDIGM_MULTIPHYSICSELASTICMATERIAL_HPP
