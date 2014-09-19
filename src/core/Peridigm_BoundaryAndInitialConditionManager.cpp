@@ -111,6 +111,26 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Dis
         Teuchos::RCP<Epetra_Vector> toVectorV = peridigm->getV();
         bcPtr = Teuchos::rcp(new DirichletIncrementBC(name,bcParams,toVectorV,peridigm,false,0.0,1.0));
         boundaryConditions.push_back(bcPtr);
+
+      }
+      break;
+      case PRESCRIBED_FLUID_PRESSURE_U:
+      {
+				// a prescribed fluid pressure boundary condition will automatically update deltaFluidPressureU      
+        Teuchos::RCP<Epetra_Vector> toVector = peridigm->getFluidPressureDeltaU();
+        bcPtr = Teuchos::rcp(new DirichletIncrementBC(name,bcParams,toVector,peridigm,false,1.0,0.0));
+        boundaryConditions.push_back(bcPtr);
+
+				Teuchos::RCP<Epetra_Vector> toVectorV = peridigm->getFluidPressureV();
+				bcPtr = Teuchos::rcp(new DirichletIncrementBC(name,bcParams,toVectorV, peridigm, false,0.0,1.0));
+				boundaryConditions.push_back(bcPtr);
+      }
+      break;
+      case INITIAL_FLUID_PRESSURE_U:
+      {
+        Teuchos::RCP<Epetra_Vector> toVector = peridigm->getFluidPressureU();
+        bcPtr = Teuchos::rcp(new DirichletBC(name,bcParams,toVector,peridigm,false));
+        initialConditions.push_back(bcPtr);
       }
       break;
       case INITIAL_TEMPERATURE:
@@ -257,6 +277,9 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyInitialConditions(){
     initialConditions[i]->apply(nodeSets);
     if(initialConditions[i]->getType() == INITIAL_DISPLACEMENT)
       updateCurrentCoordinates();
+    if(initialConditions[i]->getType() == INITIAL_FLUID_PRESSURE_U)
+      updateFluidPressureY();
+
   }
 }
 
@@ -282,15 +305,28 @@ void PeridigmNS::BoundaryAndInitialConditionManager::updateCurrentCoordinates(){
   peridigm->getY()->Update(1.0, *(peridigm->getX()), 1.0, *(peridigm->getU()), 0.0);
 }
 
+void PeridigmNS::BoundaryAndInitialConditionManager::updateFluidPressureY(){
+  peridigm->getFluidPressureY()->Update(1.0, *(peridigm->getFluidPressureU()), 0.0);
+}
+
+// This method handles displacement boundary conditions and 3d force vectors as well as
+// pressure boundary conditions and 1d flow vectors. Reaction is always sized appropriately,
+// but logic is necessary to make the method behave correctly whether it is handling
+// solid or fluid physics.
 void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_ComputeReactions(Teuchos::RCP<const Epetra_Vector> force,
-                                                                                       Teuchos::RCP<Epetra_Vector> reaction)
+                                                                                       Teuchos::RCP<Epetra_Vector> reaction,
+																																											 const int numMultiphysDoFs)
 {
   PeridigmNS::Timer::self().startTimer("Apply Boundary Conditions");
   reaction->PutScalar(0.0);
-  const Epetra_BlockMap& threeDimensionalMap = force->Map();
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(threeDimensionalMap.ElementSize() != 3, "**** applyKinematicBC_ComputeReactions() must be called with map having element size = 3.\n");
+  const Epetra_BlockMap& forceMap = force->Map();
+  const Epetra_BlockMap& reactionMap = reaction->Map();
 
-
+  const int elementSizeReaction = reactionMap.ElementSize();
+  const int elementSizeForce = forceMap.ElementSize();
+  //TEUCHOS_TEST_FOR_EXCEPT_MSG(elementSize != 3), "**** applyKinematicBC_ComputeReactions() must be called with map having element size = 3 .\n");
+	TEUCHOS_TEST_FOR_EXCEPT_MSG(elementSizeReaction != elementSizeForce, "**** In applyKinematicBC_ComputeReactions(), force and reaction element sizes must match.");
+	const int elementSize = elementSizeForce;
   // apply the boundary conditions
   for(unsigned i=0;i<boundaryConditions.size();++i)
   {
@@ -323,34 +359,12 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_ComputeRea
           for(unsigned int i=0 ; i<nodeList.size() ; i++){
             int localNodeID = force->Map().LID(nodeList[i]);
             if(!force.is_null() && localNodeID != -1)
-              (*reaction)[3*localNodeID + coord] = (*force)[3*localNodeID + coord];
+              (*reaction)[(elementSize * localNodeID) + coord] = (*force)[(elementSize * localNodeID) + coord];
           }
         }
       }
     }
-  }
-  PeridigmNS::Timer::self().stopTimer("Apply Boundary Conditions");
-}
-
-////! Add the external force to the residual
-//void PeridigmNS::BoundaryAndInitialConditionManager::addExternalForceToResidual(Teuchos::RCP<Epetra_Vector> residual){
-//  Teuchos::RCP<Epetra_Vector> forceVec = peridigm->getExternalForce();
-//  TEUCHOS_TEST_FOR_EXCEPTION(residual->MyLength()!=forceVec->MyLength(),std::logic_error,"ERROR: the residual and external force vectors should be the same length.");
-//  for(int i=0 ; i<residual->MyLength(); ++i)
-//     (*residual)[i] += (*forceVec)[i];
-//}
-
-void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZeros(Teuchos::RCP<Epetra_Vector> vec)
-{
-  PeridigmNS::Timer::self().startTimer("Apply Boundary Conditions");
-
-  const Epetra_BlockMap& oneDimensionalMap = vec->Map();
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(oneDimensionalMap.ElementSize() != 1, "**** applyKinematicBC_InsertZeros() must be called with map having element size = 1.\n");
-
-  for(unsigned i=0;i<boundaryConditions.size();++i)
-  {
-    Teuchos::RCP<BoundaryCondition> boundaryCondition = boundaryConditions[i];
-    if(boundaryCondition->getType() == PRESCRIBED_DISPLACEMENT)
+    else if(boundaryCondition->getType() == PRESCRIBED_FLUID_PRESSURE_U)
     {
       const int coord = boundaryCondition->getCoord();
       const Set_Definition setDef = to_set_definition(boundaryCondition->getNodeSetName());
@@ -376,9 +390,11 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
         for(std::map<std::string,std::vector<int> > ::iterator setIt=itBegin;setIt!=itEnd;++setIt){
           vector<int> & nodeList = setIt->second;
           for(unsigned int i=0 ; i<nodeList.size() ; i++){
-            int localNodeID = oneDimensionalMap.LID(3*nodeList[i]);
-            if(!vec.is_null() && localNodeID != -1)
-              (*vec)[localNodeID + coord] = 0.0;
+            int localNodeID = force->Map().LID(nodeList[i]);
+            if(!force.is_null() && localNodeID != -1)
+              // This code says that the fourth dof in a reaction or force vector is fluid pressure related
+              // and it is assigned on a node wide basis not associated with a particular coordinate.
+              (*reaction)[(elementSize * localNodeID) + elementSize - numMultiphysDoFs] = (*force)[(elementSize * localNodeID) +elementSize - numMultiphysDoFs];
           }
         }
       }
@@ -387,7 +403,127 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
   PeridigmNS::Timer::self().stopTimer("Apply Boundary Conditions");
 }
 
-void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZerosAndSetDiagonal(Teuchos::RCP<Epetra_FECrsMatrix> mat)
+void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZeros(Teuchos::RCP<Epetra_Vector> vec, int numMultiphysDoFs)
+{
+  PeridigmNS::Timer::self().startTimer("Apply Boundary Conditions");
+
+  const Epetra_BlockMap& oneDimensionalMap = vec->Map();
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(oneDimensionalMap.ElementSize() != 1, "**** applyKinematicBC_InsertZeros() must be called with map having element size = 1.\n");
+
+	if(numMultiphysDoFs > 0){
+		for(unsigned i=0;i<boundaryConditions.size();++i)
+		{
+			Teuchos::RCP<BoundaryCondition> boundaryCondition = boundaryConditions[i];
+			if(boundaryCondition->getType() == PRESCRIBED_DISPLACEMENT)
+			{
+				const int coord = boundaryCondition->getCoord();
+				const Set_Definition setDef = to_set_definition(boundaryCondition->getNodeSetName());
+				// apply the bc to every element in the entire domain
+				if(setDef==FULL_DOMAIN)
+				{
+					TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: Dirichlet conditions on the displacement cannot be prescribed over the entire domain.");
+				}
+				// apply the bc only to specific node sets
+				else{
+					std::map< std::string, std::vector<int> >::iterator itBegin;
+					std::map< std::string, std::vector<int> >::iterator itEnd;
+					if (setDef == ALL_SETS){
+						itBegin = nodeSets->begin();
+						itEnd = nodeSets->end();
+					}
+					else{
+						TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(boundaryCondition->getNodeSetName()) == nodeSets->end(), "**** Node set not found: " + boundaryCondition->getNodeSetName() + "\n");
+						itBegin = nodeSets->find(boundaryCondition->getNodeSetName());
+						itEnd = itBegin; itEnd++;
+					}
+					for(std::map<std::string,std::vector<int> > ::iterator setIt=itBegin;setIt!=itEnd;++setIt){
+						vector<int> & nodeList = setIt->second;
+						for(unsigned int i=0 ; i<nodeList.size() ; i++){
+									int localNodeID = oneDimensionalMap.LID((3+numMultiphysDoFs) * nodeList[i]);
+									if(!vec.is_null() && localNodeID != -1)
+											(*vec)[localNodeID + coord] = 0.0;
+						}
+					}
+				}
+			}
+			// Fluid pressure is not associated with a particular coordinate
+			if(boundaryCondition->getType() == PRESCRIBED_FLUID_PRESSURE_U)
+			{
+				const Set_Definition setDef = to_set_definition(boundaryCondition->getNodeSetName());
+				// apply the bc to every element in the entire domain
+				if(setDef==FULL_DOMAIN)
+				{
+					TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: Dirichlet conditions on the fluid pressure cannot be prescribed over the entire domain.");
+				}
+				// apply the bc only to specific node sets
+				else{
+					std::map< std::string, std::vector<int> >::iterator itBegin;
+					std::map< std::string, std::vector<int> >::iterator itEnd;
+					if (setDef == ALL_SETS){
+						itBegin = nodeSets->begin();
+						itEnd = nodeSets->end();
+					}
+					else{
+						TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(boundaryCondition->getNodeSetName()) == nodeSets->end(), "**** Node set not found: " + boundaryCondition->getNodeSetName() + "\n");
+						itBegin = nodeSets->find(boundaryCondition->getNodeSetName());
+						itEnd = itBegin; itEnd++;
+					}
+					for(std::map<std::string,std::vector<int> > ::iterator setIt=itBegin;setIt!=itEnd;++setIt){
+						vector<int> & nodeList = setIt->second;
+						for(unsigned int i=0 ; i<nodeList.size() ; i++){
+									// Always puts prescribed pressure displacement analogue consequential zero in
+									// last degree of freedom for a node.
+									int localNodeID = oneDimensionalMap.LID((3+numMultiphysDoFs) * nodeList[i]);
+									if(!vec.is_null() && localNodeID != -1)
+											(*vec)[localNodeID+3] = 0.0;
+						}
+					}
+				}
+		}
+		}
+	}
+	else{
+		for(unsigned i=0;i<boundaryConditions.size();++i)
+		{
+			Teuchos::RCP<BoundaryCondition> boundaryCondition = boundaryConditions[i];
+			if(boundaryCondition->getType() == PRESCRIBED_DISPLACEMENT)
+			{
+				const int coord = boundaryCondition->getCoord();
+				const Set_Definition setDef = to_set_definition(boundaryCondition->getNodeSetName());
+				// apply the bc to every element in the entire domain
+				if(setDef==FULL_DOMAIN)
+				{
+					TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: Dirichlet conditions on the displacement cannot be prescribed over the entire domain.");
+				}
+				// apply the bc only to specific node sets
+				else{
+					std::map< std::string, std::vector<int> >::iterator itBegin;
+					std::map< std::string, std::vector<int> >::iterator itEnd;
+					if (setDef == ALL_SETS){
+						itBegin = nodeSets->begin();
+						itEnd = nodeSets->end();
+					}
+					else{
+						TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(boundaryCondition->getNodeSetName()) == nodeSets->end(), "**** Node set not found: " + boundaryCondition->getNodeSetName() + "\n");
+						itBegin = nodeSets->find(boundaryCondition->getNodeSetName());
+						itEnd = itBegin; itEnd++;
+					}
+					for(std::map<std::string,std::vector<int> > ::iterator setIt=itBegin;setIt!=itEnd;++setIt){
+						vector<int> & nodeList = setIt->second;
+						for(unsigned int i=0 ; i<nodeList.size() ; i++){
+									int localNodeID = oneDimensionalMap.LID(3 * nodeList[i]);
+									if(!vec.is_null() && localNodeID != -1)
+											(*vec)[localNodeID + coord] = 0.0;
+						}
+					}
+				}
+			}	
+		}
+	}
+  PeridigmNS::Timer::self().stopTimer("Apply Boundary Conditions");
+}
+
+void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZerosAndSetDiagonal(Teuchos::RCP<Epetra_FECrsMatrix> mat, const int numMultiphysDoFs)
 {
   PeridigmNS::Timer::self().startTimer("Apply Boundary Conditions");
 
@@ -398,6 +534,8 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
   double diagonalNorm1;
   diagonal.Norm1(&diagonalNorm1);
   double diagonalEntry = -1.0*diagonalNorm1/diagonal.GlobalLength();
+  // This assumes a problem that is 3d wrt position
+  const int numDoFs = 3 + numMultiphysDoFs;
 
   for(unsigned i=0;i<boundaryConditions.size();++i)
   {
@@ -440,7 +578,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
           // create the list of columns only once:
           int columnIndex(0);
           for(unsigned int i=0 ; i<nodeList.size() ; i++){
-            const int globalID = 3*nodeList[i] + coord;
+            const int globalID = numDoFs * nodeList[i] + coord;
             const int localColID = mat->LCID(globalID);
             if(localColID != -1)
               jacobianColIndices[columnIndex++] = localColID;
@@ -453,7 +591,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
           for(unsigned int i=0 ; i<nodeList.size() ; i++){
 
             // zero out the row and put diagonalEntry on the diagonal
-            int globalID = 3*nodeList[i] + coord;
+            int globalID = numDoFs * nodeList[i] + coord;
             int localRowID = mat->LRID(globalID);
             int localColID = mat->LCID(globalID);
 
@@ -473,6 +611,76 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
         }
       }
     }
+    else if((boundaryCondition->getType() == PRESCRIBED_FLUID_PRESSURE_U))
+        {
+          const Set_Definition setDef = to_set_definition(boundaryCondition->getNodeSetName());
+          // apply the bc to every element in the entire domain
+          if(setDef==FULL_DOMAIN)
+          {
+            TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: Dirichlet conditions on the displacement cannot be prescribed over the full domain.");
+          }
+          // apply the bc only to specific node sets
+          else{
+            std::map< std::string, std::vector<int> >::iterator itBegin;
+            std::map< std::string, std::vector<int> >::iterator itEnd;
+            if (setDef == ALL_SETS){
+              itBegin = nodeSets->begin();
+              itEnd = nodeSets->end();
+            }
+            else{
+              TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(boundaryCondition->getNodeSetName()) == nodeSets->end(), "**** Node set not found: " + boundaryCondition->getNodeSetName() + "\n");
+              itBegin = nodeSets->find(boundaryCondition->getNodeSetName());
+              itEnd = itBegin; itEnd++;
+            }
+            for(std::map<std::string,std::vector<int> > ::iterator setIt=itBegin;setIt!=itEnd;++setIt){
+              vector<int> & nodeList = setIt->second;
+
+              // create data structures for inserting values into jacobian
+              // an upper bound on the number of entries to set to zero is given by mat->NumMyCols()
+              vector<double> jacobianValues(mat->NumMyCols(), 0.0);
+              vector<int> jacobianIndices(mat->NumMyCols());
+              vector<int> jacobianColIndices(mat->NumMyCols());
+              for(unsigned int i=0 ; i<jacobianIndices.size() ; ++i)
+                jacobianIndices[i] = i;
+
+              // zero out the columns associated with kinematic boundary conditions:
+              // create the list of columns only once:
+              int columnIndex(0);
+              for(unsigned int i=0 ; i<nodeList.size() ; i++){
+                const int globalID = numDoFs * nodeList[i] + numDoFs - numMultiphysDoFs;
+                const int localColID = mat->LCID(globalID);
+                if(localColID != -1)
+                  jacobianColIndices[columnIndex++] = localColID;
+              }
+              // iterate the local rows and set the approprate column values to 0
+              int numEntriesToSetToZero = columnIndex;
+              for(int iRow=0 ; iRow<mat->NumMyRows() ; ++iRow)
+                    mat->ReplaceMyValues(iRow, numEntriesToSetToZero, &jacobianValues[0], &jacobianColIndices[0]);
+                
+              for(unsigned int i=0 ; i<nodeList.size() ; i++){
+                // zero out the row and put diagonalEntry on the diagonal
+								// Assumes one additional pressure term for every three sm dofs
+                int globalID = numDoFs * nodeList[i] + numDoFs - numMultiphysDoFs;
+                int localRowID = mat->LRID(globalID);
+                int localColID = mat->LCID(globalID);
+
+                // zero out the row and put diagonalEntry on the diagonal
+                if(localRowID != -1){
+                  if(localColID != -1)
+                    jacobianValues[localColID] = diagonalEntry;
+                  // From Epetra_CrsMatrix documentation:
+                  // If a value is not already present for the specified location in the matrix, the
+                  // input value will be ignored and a positive warning code will be returned.
+                  // \todo Do the bookkeeping to send in data only for locations that actually exist in the matrix structure.
+                  mat->ReplaceMyValues(localRowID, mat->NumMyCols(), &jacobianValues[0], &jacobianIndices[0]);
+                  if(localColID != -1)
+                    jacobianValues[localColID] = 0.0;
+                }
+              }
+            }
+          }
+        }
+
   }
   PeridigmNS::Timer::self().stopTimer("Apply Boundary Conditions");
 }

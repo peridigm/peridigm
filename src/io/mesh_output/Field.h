@@ -87,6 +87,11 @@ enum Type {
   NORM_DEVIATORIC_FORCE_STATE,
   SHEAR_CORRECTION_FACTOR,
   NUM_NEIGHBORS,
+  FLUID_PRESSURE_Y,
+  FLUID_PRESSURE_U,
+  FLUID_PRESSURE_V,
+  FLUX,
+  FLUX_DENSITY,
   COORDINATES,
   TANGENT_REFERENCE_COORDINATES,
   DISPLACEMENT,
@@ -246,6 +251,15 @@ const Field_NS::FieldSpec GLOBAL_LINEAR_MOMENTUM(Field_ENUM::LINEAR_MOMENTUM,   
 const Field_NS::FieldSpec GLOBAL_ANGULAR_MOMENTUM(Field_ENUM::ANGULAR_MOMENTUM,           Field_ENUM::GLOBAL, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Global_Angular_Momentum");
 
 /*
+ * Multiphysics fieldspecs
+ */
+const Field_NS::FieldSpec FLUID_PRESSURE_Y						(Field_ENUM::FLUID_PRESSURE_Y,      Field_ENUM::NODE, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Fluid_Pressure_Y");
+const Field_NS::FieldSpec FLUID_PRESSURE_U						(Field_ENUM::FLUID_PRESSURE_U,      Field_ENUM::NODE, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Fluid_Pressure_U");
+const Field_NS::FieldSpec FLUID_PRESSURE_V						(Field_ENUM::FLUID_PRESSURE_V,      Field_ENUM::NODE, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Fluid_Pressure_V");
+const Field_NS::FieldSpec FLUX                        (Field_ENUM::FLUX,                  Field_ENUM::NODE, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Flux");
+const Field_NS::FieldSpec FLUX_DENSITY                (Field_ENUM::FLUX_DENSITY,          Field_ENUM::NODE, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Flux_Density");
+
+/*
  * ELEMENT SCALAR FieldSpecs (scalar fields defined over elements)
  */
 const Field_NS::FieldSpec VOLUME                  (Field_ENUM::VOLUME,                       Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Volume");
@@ -303,11 +317,16 @@ struct FieldSpecMap {
 		mymap[FIELDSPEC_UNDEFINED.getLabel()]          = FIELDSPEC_UNDEFINED;
                 // global scalar fieldspecs
 		mymap[GLOBAL_KINETIC_ENERGY.getLabel()]        = GLOBAL_KINETIC_ENERGY;
-                mymap[GLOBAL_STRAIN_ENERGY.getLabel()]         = GLOBAL_STRAIN_ENERGY;
+        mymap[GLOBAL_STRAIN_ENERGY.getLabel()]         = GLOBAL_STRAIN_ENERGY;
 		mymap[GLOBAL_STRAIN_ENERGY_DENSITY.getLabel()] = GLOBAL_STRAIN_ENERGY_DENSITY;
 		mymap[GLOBAL_LINEAR_MOMENTUM.getLabel()]       = GLOBAL_LINEAR_MOMENTUM;
 		mymap[GLOBAL_ANGULAR_MOMENTUM.getLabel()]      = GLOBAL_ANGULAR_MOMENTUM;
 		// point scalar fieldspecs
+    	mymap[FLUID_PRESSURE_Y.getLabel()]    = FLUID_PRESSURE_Y;
+    	mymap[FLUID_PRESSURE_U.getLabel()]    = FLUID_PRESSURE_U;
+    	mymap[FLUID_PRESSURE_V.getLabel()]    = FLUID_PRESSURE_V;
+    	mymap[FLUX.getLabel()]                         = FLUX;
+    	mymap[FLUX_DENSITY.getLabel()]                 = FLUX_DENSITY;
 		mymap[VOLUME.getLabel()]                       = VOLUME;
 		mymap[DENSITY.getLabel()]                      = DENSITY;
 		mymap[GID.getLabel()]                          = GID;
@@ -324,8 +343,8 @@ struct FieldSpecMap {
 		mymap[NORM_TD.getLabel()]                      = NORM_TD;
 		mymap[SHEAR_CORRECTION_FACTOR.getLabel()]      = SHEAR_CORRECTION_FACTOR;
 		mymap[BC_MASK.getLabel()]                      = BC_MASK;
-    mymap[DAMAGE.getLabel()]                       = DAMAGE;
-    mymap[CRITICAL_STRETCH.getLabel()]             = CRITICAL_STRETCH;
+    	mymap[DAMAGE.getLabel()]                       = DAMAGE;
+    	mymap[CRITICAL_STRETCH.getLabel()]             = CRITICAL_STRETCH;
 		mymap[KINETIC_ENERGY.getLabel()]               = KINETIC_ENERGY;
 		mymap[STRAIN_ENERGY.getLabel()]                = STRAIN_ENERGY;
 		mymap[STRAIN_ENERGY_DENSITY.getLabel()]        = STRAIN_ENERGY_DENSITY;

@@ -48,6 +48,7 @@
 #include <Teuchos_Assert.hpp>
 #include "Peridigm_MaterialFactory.hpp"
 #include "Peridigm_ElasticMaterial.hpp"
+#include "Peridigm_MultiphysicsElasticMaterial.hpp"
 #include "Peridigm_ElasticPlasticMaterial.hpp"
 #include "Peridigm_ElasticPlasticHardeningMaterial.hpp"
 #include "Peridigm_ViscoelasticMaterial.hpp"
@@ -78,6 +79,8 @@ PeridigmNS::MaterialFactory::create(const Teuchos::ParameterList& materialParams
   Teuchos::RCP<PeridigmNS::Material> materialModel;
   if (materialModelName == "Elastic")
     materialModel = Teuchos::rcp( new ElasticMaterial(materialParams) );
+  else if (materialModelName == "Multiphysics Elastic")
+    materialModel = Teuchos::rcp( new MultiphysicsElasticMaterial(materialParams) );
   else if (materialModelName == "Elastic Plastic")
     materialModel = Teuchos::rcp( new ElasticPlasticMaterial(materialParams) );
   else if (materialModelName == "Elastic Plastic Hardening")

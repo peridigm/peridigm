@@ -76,6 +76,10 @@ namespace PeridigmNS {
                                      const int numOwnedPoints,
                                      PeridigmNS::DataManager& dataManager) const;
 
+    //! Returns the requested material property
+    //! A dummy method here.
+    virtual double lookupMaterialProperty(const std::string keyname) const {return 0.0;}
+
   protected:
     
     // material properties

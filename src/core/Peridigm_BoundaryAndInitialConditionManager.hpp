@@ -103,14 +103,17 @@ namespace PeridigmNS {
     //! Update the current coordinates
     void updateCurrentCoordinates();
 
+		//! Update the current fluid pressure
+		void updateFluidPressureY();
+
     //! Copies entries corresponding to kinematic boundary contitions into the vector of reaction forces.
-    void applyKinematicBC_ComputeReactions(Teuchos::RCP<const Epetra_Vector> force, Teuchos::RCP<Epetra_Vector> reaction);
+    void applyKinematicBC_ComputeReactions(Teuchos::RCP<const Epetra_Vector> force, Teuchos::RCP<Epetra_Vector> reaction, const int numMultiphysDoFs);
 
     //! Set rows corresponding to kinematic boundary conditions to zero.
-    void applyKinematicBC_InsertZeros(Teuchos::RCP<Epetra_Vector> vec);
+    void applyKinematicBC_InsertZeros(Teuchos::RCP<Epetra_Vector> vec, int numMultiphysDoFs);
 
     //! Set rows and columns corresponding to kinematic boundary conditions to zero and put 1.0 on the diagonal.
-    void applyKinematicBC_InsertZerosAndSetDiagonal(Teuchos::RCP<Epetra_FECrsMatrix> mat);
+    void applyKinematicBC_InsertZerosAndSetDiagonal(Teuchos::RCP<Epetra_FECrsMatrix> mat, const int numMultiphysDoFs);
 
   protected:
 
