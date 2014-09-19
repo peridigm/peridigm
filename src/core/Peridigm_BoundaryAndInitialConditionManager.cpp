@@ -315,7 +315,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::updateFluidPressureY(){
 // solid or fluid physics.
 void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_ComputeReactions(Teuchos::RCP<const Epetra_Vector> force,
                                                                                        Teuchos::RCP<Epetra_Vector> reaction,
-																																											 const int numMultiphysDoFs)
+                                                                                       const int numMultiphysDoFs)
 {
   PeridigmNS::Timer::self().startTimer("Apply Boundary Conditions");
   reaction->PutScalar(0.0);
@@ -366,7 +366,6 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_ComputeRea
     }
     else if(boundaryCondition->getType() == PRESCRIBED_FLUID_PRESSURE_U)
     {
-      const int coord = boundaryCondition->getCoord();
       const Set_Definition setDef = to_set_definition(boundaryCondition->getNodeSetName());
       // apply the bc to every element in the entire domain
       if(setDef==FULL_DOMAIN)
