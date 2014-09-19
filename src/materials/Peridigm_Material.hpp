@@ -89,7 +89,13 @@ namespace PeridigmNS {
 
 	//! Returns material property value for a given key 
 	// Only implemented for multiphysics elastic material
-	virtual double lookupMaterialProperty(const std::string keyname) const = 0;	
+	virtual double lookupMaterialProperty(const std::string keyname) const {
+      std::string errorMsg = "**Error, Material::lookupMaterialProperty() called for ";
+      errorMsg += Name();
+      errorMsg += " but this function is not implemented.\n";
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, errorMsg);
+      return 0.0;
+    }	
 
 	//! Returns fluid density for multiphysics materials
 	//virtual double fluidDensity() const = 0;

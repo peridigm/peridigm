@@ -264,30 +264,30 @@ void computeInternalFluidFlowDeadSimple
 	/*
 	 * Compute processor local contribution to internal fluid flow
 	 */
-	double RHO = fluidDensity; //temperature may affect this as well
+//	double RHO = fluidDensity; //temperature may affect this as well
 	// Reynolds exponential model of fluid viscosity dependence on temperature
 	// by default the baseDynamicViscosity defined in the input deck is used
 	// when no temperature effect is enabled.
-	double MU;
- // if(deltaTemperature != NULL)
+//	double MU;
+// if(deltaTemperature != NULL)
 //		MU = baseDynamicViscosity*exp(ReynoldsThermalViscosityCoefficient*deltaTemperature[0]);
 //	else
-		MU = baseDynamicViscosity;
+//	    MU = baseDynamicViscosity;
 
-	const double MAX_PERMEABILITY = maxPermeability; 
-	const double CRITICAL_DAMAGE = permeabilityInflectionDamage;
+//	const double MAX_PERMEABILITY = maxPermeability; 
+//	const double CRITICAL_DAMAGE = permeabilityInflectionDamage;
 	// This number needs to be corrected for the 3D case, it is only valid for 2D
-	const double NONLOCAL_PERMEABILITY_CORRESPONDENCE_COEF = .25;
-	const double DAMAGE_ALPHA = permeabilityAlpha;
+//	const double NONLOCAL_PERMEABILITY_CORRESPONDENCE_COEF = .25;
+//	const double DAMAGE_ALPHA = permeabilityAlpha;
 
 	//const double* xOwned = xOverlap;
 	const ScalarT *yOwned = yOverlap;
 	const ScalarT *fluidPressureYOwned = fluidPressureYOverlap;
 	const double *v = volumeOverlap;
-	double nonlocalPermeability[9];
-	ScalarT bondComponents[3];
-	double ownedPermeabilityTrace = 0.0; 
-	ScalarT effectivePermeability;
+// double nonlocalPermeability[9];
+//  ScalarT bondComponents[3];
+//	double ownedPermeabilityTrace = 0.0; 
+//	ScalarT effectivePermeability;
 
 	ScalarT *flowOwned = flowInternalOverlap;
 
@@ -298,7 +298,7 @@ void computeInternalFluidFlowDeadSimple
 	// Compute the trace of owned permeability
 	// tr(K) = K_11 + K_22 + K_33
 	// TODO: this is a placeholder. This statement is not physically correct
-	ownedPermeabilityTrace = 3*isotropicPermeabilityModulus;	
+//	ownedPermeabilityTrace = 3*isotropicPermeabilityModulus;	
 
 	for(int p=0;p<numOwnedPoints;p++, fluidPressureYOwned++, yOwned +=3, flowOwned++){
 		int numNeigh = *neighPtr; neighPtr++;
@@ -324,9 +324,9 @@ void computeInternalFluidFlowDeadSimple
 			dY = sqrt(Y_dx*Y_dx+Y_dy*Y_dy+Y_dz*Y_dz);
 
 			// We need the actual components of dY organized for indexing by number.
-			bondComponents[0] = Y_dx;
-			bondComponents[1] = Y_dy;
-			bondComponents[2] = Y_dz;
+			// bondComponents[0] = Y_dx;
+			// bondComponents[1] = Y_dy;
+			// bondComponents[2] = Y_dz;
 			//omega = scalarInfluenceFunction(zeta,horizon);
 
 			// Pressure potential
