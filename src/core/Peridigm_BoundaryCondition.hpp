@@ -49,8 +49,14 @@
 #define PERIDIGM_BOUNARYCONDITION_HPP
 
 #include "Peridigm_Enums.hpp"
-#include "FunctionRTC.hh"
 #include <Epetra_Vector.h>
+
+#include <Trilinos_version.h>
+#if TRILINOS_MAJOR_MINOR_VERSION > 111000
+#include "RTC_FunctionRTC.hh"
+#else
+#include "FunctionRTC.hh"
+#endif
 
 using namespace std;
 

@@ -49,9 +49,15 @@
 #define PERIDIGM_HORIZONMANAGER_HPP
 
 #include <Teuchos_ParameterList.hpp>
-#include "FunctionRTC.hh"
 #include <string>
 #include <map>
+
+#include <Trilinos_version.h>
+#if TRILINOS_MAJOR_MINOR_VERSION > 111000
+#include "RTC_FunctionRTC.hh"
+#else
+#include "FunctionRTC.hh"
+#endif
 
 namespace PeridigmNS{
 
