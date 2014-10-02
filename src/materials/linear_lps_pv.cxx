@@ -80,6 +80,7 @@ void computeDilatationLinearLPS
   const double *m = weightedVolumePtr;
   ScalarT *theta = dilatationOwnedPtr;
   const double *damage = bondDamage;
+  const double *neighborVolume = neighborVolumePtr;
   const int *neighborlist = localNeighborList;
 
   const double *xNeighbor;
@@ -92,11 +93,14 @@ void computeDilatationLinearLPS
     *theta = 0.0;
     numNeighbors = *neighborlist;
     neighborlist++;
-    for(n=0; n<numNeighbors; n++, neighborlist++, damage++){
+    for(n=0; n<numNeighbors; n++, neighborlist++, damage++, neighborVolume++){
       neighborId = *neighborlist;
       xNeighbor = &xOverlapPtr[3*neighborId];
       yNeighbor = &yOverlapPtr[3*neighborId];
-      volNeighbor = volumeOverlapPtr[neighborId];
+      if(neighborVolumePtr != 0)
+        volNeighbor = *neighborVolume;
+      else
+        volNeighbor = volumeOverlapPtr[neighborId];
       for(i=0 ; i<3 ; ++i){
         zeta[i] = xNeighbor[i] - x[i];
         u[i] = y[i] - x[i];
@@ -139,27 +143,35 @@ void computeInternalForceLinearLPS
 {
   const double *x = xOverlapPtr;
   const ScalarT *y = yOverlapPtr;
-  const double *vol = volumeOverlapPtr;
   const double *m = weightedVolumePtr;
   const ScalarT *theta = dilatationPtr;
   const double *damage = bondDamage;
+  const double *selfVolume = selfVolumePtr;
+  const double *neighborVolume = neighborVolumePtr;
   ScalarT *force = forceOverlapPtr;
   const int *neighborlist = localNeighborList;
 
   const double *xNeighbor;
   const ScalarT *yNeighbor;
   ScalarT u[3], uNeighbor[3], temp1, matVec[3], fx, fy, fz;
-  double zeta[3], volNeighbor, normZeta, omega, temp2, dyadicProduct[3][3];
+  double zeta[3], volSelf, volNeighbor, normZeta, omega, temp2, dyadicProduct[3][3];
   int i, j, p, n, numNeighbors, neighborId;
 
-  for(p=0; p<numOwnedPoints; p++, x+=3, y+=3, vol++, m++, theta++, force+=3){
+  for(p=0; p<numOwnedPoints; p++, x+=3, y+=3, m++, theta++, force+=3){
     numNeighbors = *neighborlist;
     neighborlist++;
-    for(n=0; n<numNeighbors; n++, neighborlist++, damage++){
+    for(n=0; n<numNeighbors; n++, neighborlist++, damage++, selfVolume++, neighborVolume++){
       neighborId = *neighborlist;
       xNeighbor = &xOverlapPtr[3*neighborId];
       yNeighbor = &yOverlapPtr[3*neighborId];
-      volNeighbor = volumeOverlapPtr[neighborId];
+      if(neighborVolumePtr != 0){
+        volSelf = *selfVolume;
+        volNeighbor = *neighborVolume;
+      }
+      else{
+        volSelf = volumeOverlapPtr[p];
+        volNeighbor = volumeOverlapPtr[neighborId];
+      }
       for(int i=0 ; i<3 ; ++i){
         zeta[i] = xNeighbor[i] - x[i];
         u[i] = y[i] - x[i];
@@ -183,9 +195,9 @@ void computeInternalForceLinearLPS
       *(force)   += fx*volNeighbor;
       *(force+1) += fy*volNeighbor;
       *(force+2) += fz*volNeighbor;
-      forceOverlapPtr[3*neighborId]   -= fx*(*vol);
-      forceOverlapPtr[3*neighborId+1] -= fy*(*vol);
-      forceOverlapPtr[3*neighborId+2] -= fz*(*vol);
+      forceOverlapPtr[3*neighborId]   -= fx*volSelf;
+      forceOverlapPtr[3*neighborId+1] -= fy*volSelf;
+      forceOverlapPtr[3*neighborId+2] -= fz*volSelf;
     } 
   }
 }
