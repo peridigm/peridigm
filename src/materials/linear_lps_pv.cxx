@@ -172,7 +172,7 @@ void computeInternalForceLinearLPS
         volSelf = volumeOverlapPtr[p];
         volNeighbor = volumeOverlapPtr[neighborId];
       }
-      for(int i=0 ; i<3 ; ++i){
+      for(i=0 ; i<3 ; ++i){
         zeta[i] = xNeighbor[i] - x[i];
         u[i] = y[i] - x[i];
         uNeighbor[i] = yNeighbor[i] - xNeighbor[i];
