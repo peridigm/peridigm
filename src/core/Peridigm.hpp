@@ -475,6 +475,9 @@ namespace PeridigmNS {
     //! Global vector for fluid flow 
     Teuchos::RCP<Epetra_Vector> fluidFlow;
 
+    //! Type of tangent to evaluate
+    PeridigmNS::Material::JacobianType jacobianType;
+
     //! Map for global tangent matrix (note, must be an Epetra_Map, not an Epetra_BlockMap)
     Teuchos::RCP<Epetra_Map> tangentMap;
 

@@ -141,7 +141,7 @@ namespace PeridigmNS {
     ///
     /// \note The default behavior is to compute the full tangent stiffness matrix. This enum is useful to only
     /// if you need to efficiently compute only the block diagonal entries of the full tangent stiffness matrix.
-    enum JacobianType { FULL_MATRIX=0, BLOCK_DIAGONAL=1 };
+    enum JacobianType { UNDEFINED=0, NONE=1, FULL_MATRIX=2, BLOCK_DIAGONAL=3 };
 
     //! Evaluate the jacobian.
     virtual void

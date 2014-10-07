@@ -197,11 +197,27 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   }
 
   // Check solver parameters for request to allocate tangent matrix
-  bool allocateTangent = false;
+  // Note that Peridigm can be run with multiple solvers, applied in sequence
+  bool implicitTimeIntegration(false), userSpecifiedFullTangent(false), userSpecifiedBlockDiagonalTangent(false);
   for(unsigned int i=0 ; i<solverParameters.size() ; ++i){
-    if(solverParameters[i]->isSublist("QuasiStatic") || solverParameters[i]->isSublist("NOXQuasiStatic") || solverParameters[i]->isSublist("Implicit"))
-      allocateTangent = true;
+    if(solverParameters[i]->isSublist("QuasiStatic") || solverParameters[i]->isSublist("NOXQuasiStatic") || solverParameters[i]->isSublist("Implicit")){
+      implicitTimeIntegration = true;
+    }
+    if(solverParameters[i]->isParameter("Tangent Type")){
+      std::string tangentType = solverParameters[i]->get<string>("Tangent Type");
+      if(tangentType == "Full Tangent")
+        userSpecifiedFullTangent = true;
+      if(tangentType == "Block 3x3")
+        userSpecifiedBlockDiagonalTangent = true;
+    }
   }
+  bool allocateTangent(false), allocateBlockDiagonalTangent(false);
+  if(userSpecifiedFullTangent)
+    allocateTangent = true;
+  if(userSpecifiedBlockDiagonalTangent)
+    allocateBlockDiagonalTangent = true;
+  if(implicitTimeIntegration && (!userSpecifiedFullTangent && !userSpecifiedBlockDiagonalTangent))
+    allocateTangent = true;
 
   // Instantiate and initialize the boundary and initial condition manager
   Teuchos::RCP<Teuchos::ParameterList> bcParams =
@@ -231,13 +247,12 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   horizonFieldId                     = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Horizon");
   volumeFieldId                      = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Volume");
 
-    
-if(analysisHasMultiphysics){
-  fluidPressureYFieldId               = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Fluid_Pressure_Y");
-  fluidPressureUFieldId               = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Fluid_Pressure_U");
-  fluidPressureVFieldId               = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Fluid_Pressure_V");
-  fluidFlowDensityFieldId             = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Flux_Density");
-}
+  if(analysisHasMultiphysics){
+    fluidPressureYFieldId            = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Fluid_Pressure_Y");
+    fluidPressureUFieldId            = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Fluid_Pressure_U");
+    fluidPressureVFieldId            = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Fluid_Pressure_V");
+    fluidFlowDensityFieldId          = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Flux_Density");
+  }
 
   modelCoordinatesFieldId            = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::CONSTANT, "Model_Coordinates");
   coordinatesFieldId                 = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Coordinates");
@@ -590,6 +605,8 @@ if(analysisHasMultiphysics){
   serviceManager = Teuchos::rcp(new PeridigmNS::ServiceManager());
   serviceManager->requestService(computeManager->Services());
 
+  jacobianType = PeridigmNS::Material::UNDEFINED;
+
   // Perform requested services
   if (serviceManager->isRequested(PeridigmNS::PeridigmService::ALLOCATE_TANGENT) || allocateTangent) {
     // Allocate memory for non-zeros in global tangent and lock in the structure
@@ -602,13 +619,15 @@ if(analysisHasMultiphysics){
     PeridigmNS::Timer::self().stopTimer("Allocate Global Tangent");
     if(peridigmComm->MyPID() == 0){
       cout << "\n  number of rows = " << tangent->NumGlobalRows() << endl;
-      cout << "\n  of those rows, " << numMultiphysDoFs << " are interspersed multiphysics terms." << endl;
+      if(numMultiphysDoFs > 0)
+        cout << "  of those rows, " << numMultiphysDoFs << " are interspersed multiphysics terms." << endl;
       cout << "  number of nonzeros = " << tangent->NumGlobalNonzeros() << "\n" << endl;
     }
+    jacobianType = PeridigmNS::Material::FULL_MATRIX;
   }
 
   // Check if request for allocation of block diagonal tangent stiffness matrix
-  if (serviceManager->isRequested(PeridigmNS::PeridigmService::ALLOCATE_BLOCK_DIAGONAL_TANGENT)) {
+  if (serviceManager->isRequested(PeridigmNS::PeridigmService::ALLOCATE_BLOCK_DIAGONAL_TANGENT) || allocateBlockDiagonalTangent) {
     // Allocate memory for non-zeros in global tangent and lock in the structure
     if(peridigmComm->MyPID() == 0 && !allocateTangent){
       cout << "Allocating global block diagonal tangent matrix...";
@@ -616,11 +635,19 @@ if(analysisHasMultiphysics){
     }
     PeridigmNS::Timer::self().startTimer("Allocate Global Block Diagonal Tangent");
     allocateBlockDiagonalJacobian();
+    // If both the full tangent and the block diagonal tangent are flagged for allocation,
+    // only the full tangent is allocated and the block diagonal just points to the full tangent.
+    // If only the block diagonal is allocated, the the pointers for the tangent should
+    // be set to the block diagonal tangent so that the block diagonal tangent gets filled.
+    tangentMap = blockDiagonalTangentMap;
+    tangent = blockDiagonalTangent;
     PeridigmNS::Timer::self().stopTimer("Allocate Global Block Diagonal Tangent");
     if(peridigmComm->MyPID() == 0 && !allocateTangent){
       cout << "\n  number of rows = " << blockDiagonalTangent->NumGlobalRows() << endl;
       cout << "  number of nonzeros = " << blockDiagonalTangent->NumGlobalNonzeros() << "\n" << endl;
     }
+    if(jacobianType == PeridigmNS::Material::UNDEFINED)
+      jacobianType = PeridigmNS::Material::BLOCK_DIAGONAL;
   }
 
   // Set default value for current time;
@@ -779,6 +806,7 @@ void PeridigmNS::Peridigm::initializeWorkset() {
   workset->blocks = blocks;
   if(!contactManager.is_null())
     workset->contactManager = contactManager;
+  workset->jacobianType = Teuchos::rcpFromRef(jacobianType);
   workset->jacobian = overlapJacobian;
 }
 
@@ -960,7 +988,6 @@ void PeridigmNS::Peridigm::initializeOutputManager() {
         outputManager->add( Teuchos::rcp(new PeridigmNS::OutputManager_ExodusII( outputParams, this, blocks ) ) );
     }
   }
-
 }
 
 void PeridigmNS::Peridigm::execute(Teuchos::RCP<Teuchos::ParameterList> solverParams) {
@@ -1257,7 +1284,10 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
   // "flag" can be used to determine how accurate your fill of F should be 
   // depending on why we are calling evaluate (Could be using computeF to 
   // populate a Jacobian or Preconditioner).
-  if (flag == NOX::Epetra::Interface::Required::Residual) {
+  if (flag == NOX::Epetra::Interface::Required::Residual ||
+      flag == NOX::Epetra::Interface::Required::FD_Res   ||
+      flag == NOX::Epetra::Interface::Required::MF_Res   ||
+      flag == NOX::Epetra::Interface::Required::MF_Jac) {
     fillF = true;
   }
   else if (flag == NOX::Epetra::Interface::Required::Jac) {
@@ -1656,8 +1686,8 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
     string timeStepString = noxQuasiStaticParams->get<string>("Time Steps");
     istringstream iss(timeStepString);
     copy(istream_iterator<double>(iss),
-	 istream_iterator<double>(),
-	 back_inserter<vector<double> >(timeSteps));
+         istream_iterator<double>(),
+         back_inserter<vector<double> >(timeSteps));
   }
   else{
     TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n****Error: No valid time step data provided.\n");
@@ -1831,18 +1861,71 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
     else if(directionMethod == "NonlinearCG")
       linearSystemParams = Teuchos::rcpFromRef( noxQuasiStaticParams->sublist("Direction").sublist("Nonlinear CG").sublist("Linear Solver") );
 
+    bool isMatrixFree = false;
+    if(linearSystemParams->isParameter("Jacobian Operator")){
+      std::string jacobianOperator = linearSystemParams->get<std::string>("Jacobian Operator");
+      if(jacobianOperator == "Matrix-Free")
+        isMatrixFree = true;
+    }
+
     // Construct the NOX linear system
     Teuchos::RCP<NOX::Epetra::Interface::Required> noxInterfaceRequired = Teuchos::RCP<NOX::Epetra::Interface::Required>(this, false);
     Teuchos::RCP<NOX::Epetra::Interface::Jacobian> noxInterfaceJacobian = Teuchos::RCP<NOX::Epetra::Interface::Jacobian>(this, false);
+    // Teuchos::RCP<NOX::Epetra::Interface::Preconditioner> noxInterfacePreconditioner = Teuchos::RCP<NOX::Epetra::Interface::Preconditioner>(this, false);
     Teuchos::RCP<Epetra_RowMatrix> noxJacobian = getJacobian();
     const NOX::Epetra::Vector& noxCloneVector = *soln;
-    Teuchos::RCP<NOX::Epetra::LinearSystemAztecOO> linSys = 
-      Teuchos::rcp(new NOX::Epetra::LinearSystemAztecOO(printParams,
-                                                        *linearSystemParams,
-                                                        noxInterfaceRequired, 
-                                                        noxInterfaceJacobian, 
-                                                        noxJacobian,
-                                                        noxCloneVector));
+    Teuchos::RCP<NOX::Epetra::LinearSystemAztecOO> linSys;
+
+    if(!isMatrixFree){
+      // call the linear system constructor in which we pass in the jacobian
+      linSys = Teuchos::rcp(new NOX::Epetra::LinearSystemAztecOO(printParams,
+                                                                 *linearSystemParams,
+                                                                 noxInterfaceRequired, 
+                                                                 noxInterfaceJacobian, 
+                                                                 noxJacobian,
+                                                                 noxCloneVector));
+    }
+    else{
+      // call the linear system constructor that does not include a jacobian
+      linSys = Teuchos::rcp(new NOX::Epetra::LinearSystemAztecOO(printParams,
+                                                                 *linearSystemParams,
+                                                                 noxInterfaceRequired, 
+                                                                 noxCloneVector));
+    }
+
+
+ 	// LinearSystemAztecOO (Teuchos::ParameterList &printingParams,
+    //                      Teuchos::ParameterList &linearSolverParams,
+    //                      const Teuchos::RCP< NOX::Epetra::Interface::Required > &iReq,
+    //                      const NOX::Epetra::Vector &cloneVector,
+    //                      const Teuchos::RCP< NOX::Epetra::Scaling > scalingObject=Teuchos::null)
+ 
+    //   // CALLING THIS NOW
+ 	// LinearSystemAztecOO (Teuchos::ParameterList &printingParams,
+    //                      Teuchos::ParameterList &linearSolverParams,
+    //                      const Teuchos::RCP< NOX::Epetra::Interface::Required > &iReq,
+    //                      const Teuchos::RCP< NOX::Epetra::Interface::Jacobian > &iJac,
+    //                      const Teuchos::RCP< Epetra_Operator > &J,
+    //                      const NOX::Epetra::Vector &cloneVector,
+    //                      const Teuchos::RCP< NOX::Epetra::Scaling > scalingObject=Teuchos::null)
+ 
+    //   // DO WE WANT THIS?
+ 	// LinearSystemAztecOO (Teuchos::ParameterList &printingParams,
+    //                      Teuchos::ParameterList &linearSolverParams,
+    //                      const Teuchos::RCP< NOX::Epetra::Interface::Required > &i,
+    //                      const Teuchos::RCP< NOX::Epetra::Interface::Preconditioner > &iPrec,
+    //                      const Teuchos::RCP< Epetra_Operator > &M, 
+    //                      const NOX::Epetra::Vector &cloneVector,
+    //                      const Teuchos::RCP< NOX::Epetra::Scaling > scalingObject=Teuchos::null)
+ 
+ 	// LinearSystemAztecOO (Teuchos::ParameterList &printingParams, 
+    //                      Teuchos::ParameterList &linearSolverParams,
+    //                      const Teuchos::RCP< NOX::Epetra::Interface::Jacobian > &iJac, 
+    //                      const Teuchos::RCP< Epetra_Operator > &J, 
+    //                      const Teuchos::RCP< NOX::Epetra::Interface::Preconditioner > &iPrec, 
+    //                      const Teuchos::RCP< Epetra_Operator > &M, 
+    //                      const NOX::Epetra::Vector &cloneVector, 
+    //                      const Teuchos::RCP< NOX::Epetra::Scaling > scalingObject=Teuchos::null)
 
     // Create the Group
     NOX::Epetra::Vector noxInitialGuess(soln, NOX::Epetra::Vector::CreateView);
@@ -1866,7 +1949,7 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
     NOX::StatusTest::StatusType noxSolverStatus = NOX::StatusTest::Unevaluated;
     int solverIteration = 1;
     while(noxSolverStatus != NOX::StatusTest::Converged && noxSolverStatus != NOX::StatusTest::Failed){
-      
+
       // carry out nonlinear iteration
       noxSolverStatus = solver->step();
 
@@ -3251,7 +3334,7 @@ void PeridigmNS::Peridigm::allocateBlockDiagonalJacobian() {
   // do not re-allocate if already allocated
   if (blockDiagonalTangent != Teuchos::null) return;
 
-  if(tangent != Teuchos::null) // the tangent matrix is already allocated (i.e. this is an implicit or QS simulation) so use that one instead
+  if(tangent != Teuchos::null) // the tangent matrix is already allocated, use it for the block diagonal as well
   {
     blockDiagonalTangent = tangent;
     blockDiagonalTangentMap = tangentMap;
@@ -3285,9 +3368,9 @@ void PeridigmNS::Peridigm::allocateBlockDiagonalJacobian() {
   const double zeros[3] = {0.0, 0.0, 0.0};
   for(int row=0 ; row<blockDiagonalTangentMap->NumMyElements() ; row++){
     int globalId = blockDiagonalTangentMap->GID(row);
-    rowEntries[0] = 3*(globalId%3);
-    rowEntries[1] = 3*(globalId%3) + 1;
-    rowEntries[2] = 3*(globalId%3) + 2;
+    rowEntries[0] = 3*(static_cast<int>(globalId)/3);
+    rowEntries[1] = 3*(static_cast<int>(globalId)/3) + 1;
+    rowEntries[2] = 3*(static_cast<int>(globalId)/3) + 2;
     err = blockDiagonalTangent->InsertGlobalValues(globalId, numEntriesPerRow, zeros, (const int*)rowEntries);
     TEUCHOS_TEST_FOR_EXCEPT_MSG(err < 0, "**** PeridigmNS::Peridigm::allocateblockDiagonalJacobian(), InsertGlobalValues() returned negative error code.\n");
   }
