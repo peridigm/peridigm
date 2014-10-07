@@ -108,6 +108,7 @@ PeridigmNS::ModelEvaluator::evalJacobian(Teuchos::RCP<Workset> workset) const
 {
   const double dt = workset->timeStep;
   std::vector<PeridigmNS::Block>::iterator blockIt;
+  PeridigmNS::Material::JacobianType jacobianType = *(workset->jacobianType);
   PeridigmNS::SerialMatrix& jacobian = *(workset->jacobian);
 
   // ---- Compute the Tangent Stiffness Matrix ----
@@ -126,6 +127,7 @@ PeridigmNS::ModelEvaluator::evalJacobian(Teuchos::RCP<Workset> workset) const
                                    ownedIDs,
                                    neighborhoodList,
                                    *dataManager,
-                                   jacobian);
+                                   jacobian,
+                                   jacobianType);
   }
 }
