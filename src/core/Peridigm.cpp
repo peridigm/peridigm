@@ -73,6 +73,7 @@
 #include "Peridigm_DamageModelFactory.hpp"
 #include "Peridigm_InterfaceAwareDamageModel.hpp"
 #include "Peridigm.hpp"
+#include "correspondence.h" // For Invert3by3Matrix
 #ifdef PERIDIGM_PV
   #include "Peridigm_PartialVolumeCalculator.hpp"
 #endif
@@ -92,7 +93,9 @@ using namespace std;
 PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
                                Teuchos::RCP<Teuchos::ParameterList> params,
                                Teuchos::RCP<Discretization> inputPeridigmDiscretization)
-  : analysisHasContact(false),
+  : agePeridigmPreconditioner(0),
+    maxAgePeridigmPreconditioner(0),
+    analysisHasContact(false),
     analysisHasMultiphysics(false),
     computeIntersections(false),
     constructInterfaces(false),
@@ -203,11 +206,13 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
     if(solverParameters[i]->isSublist("QuasiStatic") || solverParameters[i]->isSublist("NOXQuasiStatic") || solverParameters[i]->isSublist("Implicit")){
       implicitTimeIntegration = true;
     }
-    if(solverParameters[i]->isParameter("Tangent Type")){
-      std::string tangentType = solverParameters[i]->get<string>("Tangent Type");
-      if(tangentType == "Full Tangent")
+    if(solverParameters[i]->isParameter("Peridigm Preconditioner")){
+      std::string peridigmPreconditionerType = solverParameters[i]->get<string>("Peridigm Preconditioner");
+      if(peridigmPreconditionerType == "Full Tangent")
         userSpecifiedFullTangent = true;
-      if(tangentType == "Block 3x3")
+      // Note:  Currently, Peridigm must have some sort of tangent to avoid null pointer errors (\todo:  Fix this!)
+      //        For the time being, if the users requests NOX with no precondioner, go ahead and allocate the 3x3
+      if(peridigmPreconditionerType == "Block 3x3" || peridigmPreconditionerType == "None")
         userSpecifiedBlockDiagonalTangent = true;
     }
   }
@@ -1260,22 +1265,62 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
 }
 
 bool PeridigmNS::Peridigm::computeF(const Epetra_Vector& x, Epetra_Vector& FVec, NOX::Epetra::Interface::Required::FillType fillType) {
-  return evaluateNOX(fillType, &x, &FVec, 0);
+  return evaluateNOX(fillType, &x, &FVec);
 }
 
 bool PeridigmNS::Peridigm::computeJacobian(const Epetra_Vector& x, Epetra_Operator& Jac) {
-  return evaluateNOX(NOX::Epetra::Interface::Required::Jac, &x, 0, 0);
+  return evaluateNOX(NOX::Epetra::Interface::Required::Jac, &x, 0);
 }
 
-bool PeridigmNS::Peridigm::computePreconditioner(const Epetra_Vector& x, Epetra_Operator& Prec, Teuchos::ParameterList* precParams) {
-  cout << "ERROR: Peridigm::preconditionVector() - Use Explicit Jacobian only for NOX interface!" << endl;
-  throw "Interface Error";
+bool PeridigmNS::Peridigm::computePreconditioner(const Epetra_Vector& x, Epetra_Operator& M, Teuchos::ParameterList* precParams) {
+
+  if(agePeridigmPreconditioner > 0 && agePeridigmPreconditioner < maxAgePeridigmPreconditioner)
+    return true;
+  if(agePeridigmPreconditioner >= maxAgePeridigmPreconditioner)
+    agePeridigmPreconditioner = 0;
+  agePeridigmPreconditioner += 1;
+
+  // Call evaluateNOX() with the Jac flag to evaluate the tangent (or 3x3 sub-tangent)
+  evaluateNOX(NOX::Epetra::Interface::Required::Jac, &x, NULL);
+
+  // Invert the 3x3 block tangent
+  PeridigmNS::Timer::self().startTimer("Invert 3x3 Block Tangent");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(tangent->NumMyRows()%3 != 0, "****Error in Peridigm::computePreconditioner(), invalid number of rows.\n");
+  int numEntries, err;
+  double *valuesRow1, *valuesRow2, *valuesRow3;
+  double matrix[9], determinant, inverse[9];
+  for(int iBlock=0 ; iBlock<tangent->NumMyRows() ; iBlock+=3){
+    err = tangent->ExtractMyRowView(iBlock, numEntries, valuesRow1);
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::computePreconditioner(), tangent->ExtractMyRowView() returned nonzero error code.\n");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(numEntries != 3, "**** PeridigmNS::Peridigm::computePreconditioner(), number of row entries not equal to three (block 3x3 matrix required).\n");
+    for(int i=0 ; i<3 ; ++i)
+      matrix[i] = valuesRow1[i];
+    err = tangent->ExtractMyRowView(iBlock+1, numEntries, valuesRow2);
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::computePreconditioner(), tangent->ExtractMyRowView() returned nonzero error code.\n");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(numEntries != 3, "**** PeridigmNS::Peridigm::computePreconditioner(), number of row entries not equal to three (block 3x3 matrix required).\n");
+    for(int i=0 ; i<3 ; ++i)
+      matrix[3+i] = valuesRow2[i];
+    err = tangent->ExtractMyRowView(iBlock+2, numEntries, valuesRow3);
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::computePreconditioner(), tangent->ExtractMyRowView() returned nonzero error code.\n");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(numEntries != 3, "**** PeridigmNS::Peridigm::computePreconditioner(), number of row entries not equal to three (block 3x3 matrix required).\n");
+    for(int i=0 ; i<3 ; ++i)
+      matrix[6+i] = valuesRow3[i];
+    err = CORRESPONDENCE::Invert3by3Matrix(matrix, determinant, inverse);
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::computePreconditioner(), Invert3by3Matrix() returned nonzero error code.\n");
+    for(int i=0 ; i<3 ; ++i){
+      valuesRow1[i] = inverse[i];
+      valuesRow2[i] = inverse[3+i];
+      valuesRow3[i] = inverse[6+i];
+    }
+  }
+  PeridigmNS::Timer::self().stopTimer("Invert 3x3 Block Tangent");
+
+  return true;
 }
 
 bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillType flag, 
-        const Epetra_Vector* soln,
-        Epetra_Vector* tmp_rhs,
-        Epetra_RowMatrix* tmp_matrix)
+                                       const Epetra_Vector* soln,
+                                       Epetra_Vector* tmp_rhs)
 {
   //Determine what to fill (F or Jacobian)
   bool fillF = false;
@@ -1576,10 +1621,6 @@ void PeridigmNS::Peridigm::jacobianDiagnostics(Teuchos::RCP<NOX::Epetra::Group> 
     cout << ss.str() << endl;
 }
 
-Teuchos::RCP<Epetra_CrsMatrix> PeridigmNS::Peridigm::getJacobian() {
-    return tangent;
-}
-
 void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::ParameterList> solverParams) {
 
   // The tangent map was made with multiphysics compatibility already.
@@ -1847,11 +1888,6 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
     }
     double residualTolerance = tolerance*toleranceMultiplier;
 
-    // Print the load step to screen
-    if(peridigmComm->MyPID() == 0)
-      cout << "Load step " << step << ", initial time = " << timePrevious << ", final time = " << timeCurrent <<
-        ", convergence criterion = " << residualTolerance << endl;
-
     // Get the linear solver parameters from the proper sublist
     // \todo Handle all allowable "Direction" settings
     Teuchos::RCP<Teuchos::ParameterList> linearSystemParams = Teuchos::rcp(new Teuchos::ParameterList);
@@ -1860,8 +1896,23 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
       linearSystemParams = Teuchos::rcpFromRef( noxQuasiStaticParams->sublist("Direction").sublist("Newton").sublist("Linear Solver") );
     else if(directionMethod == "NonlinearCG")
       linearSystemParams = Teuchos::rcpFromRef( noxQuasiStaticParams->sublist("Direction").sublist("Nonlinear CG").sublist("Linear Solver") );
+    else{
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(directionMethod != "Newton" && directionMethod != "NonlinearCG", "\n****Error:  User-supplied NOX Direction currently not supported by Peridigm.\n");
+    }
 
-    bool isMatrixFree = false;
+    Material::JacobianType peridigmPreconditioner = Material::FULL_MATRIX;
+    if(solverParams->isParameter("Peridigm Preconditioner")){
+      std::string peridigmPreconditionerStr = solverParams->get<std::string>("Peridigm Preconditioner");
+      if(peridigmPreconditionerStr == "Full Tangent")
+        peridigmPreconditioner = Material::FULL_MATRIX;
+      else if(peridigmPreconditionerStr == "Block 3x3")
+        peridigmPreconditioner = Material::BLOCK_DIAGONAL;
+      else if(peridigmPreconditionerStr == "None")
+        peridigmPreconditioner = Material::BLOCK_DIAGONAL;
+      else
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n****Error:  Unrecognized Peridigm Preconditioner, must be \"Full Tangent\", \"Block 3x3\", or \"None\".\n");
+    }
+    bool isMatrixFree(false);
     if(linearSystemParams->isParameter("Jacobian Operator")){
       std::string jacobianOperator = linearSystemParams->get<std::string>("Jacobian Operator");
       if(jacobianOperator == "Matrix-Free")
@@ -1869,67 +1920,77 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
     }
 
     // Construct the NOX linear system
-    Teuchos::RCP<NOX::Epetra::Interface::Required> noxInterfaceRequired = Teuchos::RCP<NOX::Epetra::Interface::Required>(this, false);
-    Teuchos::RCP<NOX::Epetra::Interface::Jacobian> noxInterfaceJacobian = Teuchos::RCP<NOX::Epetra::Interface::Jacobian>(this, false);
-    // Teuchos::RCP<NOX::Epetra::Interface::Preconditioner> noxInterfacePreconditioner = Teuchos::RCP<NOX::Epetra::Interface::Preconditioner>(this, false);
-    Teuchos::RCP<Epetra_RowMatrix> noxJacobian = getJacobian();
+    // This object provides an interface that is used by the NOX nonlinear solvers to query the tangent matrix, or some approximation of that matrix
+    Teuchos::RCP<NOX::Epetra::LinearSystemAztecOO> linearSystemAztecOO;
+    Teuchos::RCP<NOX::Epetra::Interface::Required> noxRequiredInterface = Teuchos::RCP<NOX::Epetra::Interface::Required>(this, false);;
     const NOX::Epetra::Vector& noxCloneVector = *soln;
-    Teuchos::RCP<NOX::Epetra::LinearSystemAztecOO> linSys;
 
-    if(!isMatrixFree){
-      // call the linear system constructor in which we pass in the jacobian
-      linSys = Teuchos::rcp(new NOX::Epetra::LinearSystemAztecOO(printParams,
-                                                                 *linearSystemParams,
-                                                                 noxInterfaceRequired, 
-                                                                 noxInterfaceJacobian, 
-                                                                 noxJacobian,
-                                                                 noxCloneVector));
+    // If we are using the tangent matrix as the Jacobian and/or preconditioner, then we want to provide a residual
+    // evaluation ("required" interface) and the tangent
+    if(!isMatrixFree || peridigmPreconditioner != Material::BLOCK_DIAGONAL){
+      if(peridigmComm->MyPID() == 0)
+        cout << "NOX initialized with standard Jacobian operator\n" << endl;
+      Teuchos::RCP<NOX::Epetra::Interface::Jacobian> noxJacobianInterface = Teuchos::RCP<NOX::Epetra::Interface::Jacobian>(this, false);
+      Teuchos::RCP<Epetra_RowMatrix> noxJacobian = tangent;
+      linearSystemAztecOO = Teuchos::rcp(new NOX::Epetra::LinearSystemAztecOO(printParams,
+                                                                              *linearSystemParams,
+                                                                              noxRequiredInterface,
+                                                                              noxJacobianInterface,
+                                                                              noxJacobian,
+                                                                              noxCloneVector));
     }
+    // If we are using the Jacobian Free Newton Krylov approach with the block 3x3 preconditioner, then we want to provide the
+    // internal force operator (a.k.a. the "required" interface) and also the block 3x3 preconditioner (the use of the preconditioner
+    // is a optional and is specified in the input deck via "Peridigm Preconditioner Type" = "Full Tangent", "Block 3x3", or "None")
     else{
-      // call the linear system constructor that does not include a jacobian
-      linSys = Teuchos::rcp(new NOX::Epetra::LinearSystemAztecOO(printParams,
-                                                                 *linearSystemParams,
-                                                                 noxInterfaceRequired, 
-                                                                 noxCloneVector));
+      if(peridigmComm->MyPID() == 0)
+        cout << "NOX initialized with matrix-free Jacobian operator\n" << endl;
+
+      // We always want to reuse the preconditioner (it there is one) for matrix-free solves
+      // Default to 200 times within a nonlinear solve
+      maxAgePeridigmPreconditioner = noxQuasiStaticParams->get<int>("Max Age Of Prec", 200);
+      if(noxQuasiStaticParams->isParameter("Preconditioner Reuse Policy")){
+        std::string reusePolicy = noxQuasiStaticParams->get<std::string>("Preconditioner Reuse Policy");
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(reusePolicy != "Reuse", "\n****Error:  Peridigm only supports \"Preconditioner Reuse Policy = Reuse\" for NOX with Jacobian Free Newton Krylov.\n");
+      }
+
+      // For matrix-free solves with the block 3x3 preconditioner, the only valid NOX->Direction->Newton->Linear Solver->Preconditioner options
+      // are "None" and "User Defined"
+      if(linearSystemParams->isParameter("Preconditioner")){
+        std::string linSysPreconditioner = linearSystemParams->get<std::string>("Preconditioner");
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(linSysPreconditioner != "User Defined" && linSysPreconditioner != "None",
+                                  "\n****Error:  Peridigm only supports \"Preconditioner = User Defined\" and \"Preconditioner = None\" for NOX with Jacobian Free Newton Krylov and the Peridigm Block 3x3 preconditioner.\n");
+        // THIS IS A HACK TO GET AROUND APPARENT NOX LINEAR SYSTEM PARAMETER GLITCH
+        // We are providing a preconditioner via the LinearSystemAztecOO constructor
+        // For whatever reason (user error, probably), this only works if Preconditioner is set to one of the standard
+        // preconditioner types.  Logically, we want the preconditioner type to be "User Defined", but this causes a seg
+        // fault, probably because NOX looks for certain Epetra_Operator methods that are not implemented for our preconditioner.
+        // Setting the preconditioner to "AztecOO" seems to work; the Peridigm preconditioner is used directly (AztecOO does not
+        // appear to actually be involved).
+        if(linSysPreconditioner == "User Defined")
+          linearSystemParams->set("Preconditioner", "AztecOO");
+      }
+
+      Teuchos::RCP<NOX::Epetra::MatrixFree> matrixFreeJacobianOperator
+        = Teuchos::RCP<NOX::Epetra::MatrixFree>(new NOX::Epetra::MatrixFree(printParams,
+                                                                            noxRequiredInterface,
+                                                                            noxCloneVector));
+      Teuchos::RCP<NOX::Epetra::Interface::Jacobian> noxJacobianInterface = matrixFreeJacobianOperator;
+      Teuchos::RCP<Epetra_Operator> noxJacobian = matrixFreeJacobianOperator;
+      Teuchos::RCP<NOX::Epetra::Interface::Preconditioner> noxPreconditionerInterface = Teuchos::RCP<NOX::Epetra::Interface::Preconditioner>(this, false);
+      Teuchos::RCP<Epetra_Operator> noxPreconditioner = tangent;
+      linearSystemAztecOO = Teuchos::rcp(new NOX::Epetra::LinearSystemAztecOO(printParams,
+                                                                              *linearSystemParams,
+                                                                              noxJacobianInterface,
+                                                                              noxJacobian,
+                                                                              noxPreconditionerInterface,
+                                                                              noxPreconditioner,
+                                                                              noxCloneVector));
     }
-
-
- 	// LinearSystemAztecOO (Teuchos::ParameterList &printingParams,
-    //                      Teuchos::ParameterList &linearSolverParams,
-    //                      const Teuchos::RCP< NOX::Epetra::Interface::Required > &iReq,
-    //                      const NOX::Epetra::Vector &cloneVector,
-    //                      const Teuchos::RCP< NOX::Epetra::Scaling > scalingObject=Teuchos::null)
- 
-    //   // CALLING THIS NOW
- 	// LinearSystemAztecOO (Teuchos::ParameterList &printingParams,
-    //                      Teuchos::ParameterList &linearSolverParams,
-    //                      const Teuchos::RCP< NOX::Epetra::Interface::Required > &iReq,
-    //                      const Teuchos::RCP< NOX::Epetra::Interface::Jacobian > &iJac,
-    //                      const Teuchos::RCP< Epetra_Operator > &J,
-    //                      const NOX::Epetra::Vector &cloneVector,
-    //                      const Teuchos::RCP< NOX::Epetra::Scaling > scalingObject=Teuchos::null)
- 
-    //   // DO WE WANT THIS?
- 	// LinearSystemAztecOO (Teuchos::ParameterList &printingParams,
-    //                      Teuchos::ParameterList &linearSolverParams,
-    //                      const Teuchos::RCP< NOX::Epetra::Interface::Required > &i,
-    //                      const Teuchos::RCP< NOX::Epetra::Interface::Preconditioner > &iPrec,
-    //                      const Teuchos::RCP< Epetra_Operator > &M, 
-    //                      const NOX::Epetra::Vector &cloneVector,
-    //                      const Teuchos::RCP< NOX::Epetra::Scaling > scalingObject=Teuchos::null)
- 
- 	// LinearSystemAztecOO (Teuchos::ParameterList &printingParams, 
-    //                      Teuchos::ParameterList &linearSolverParams,
-    //                      const Teuchos::RCP< NOX::Epetra::Interface::Jacobian > &iJac, 
-    //                      const Teuchos::RCP< Epetra_Operator > &J, 
-    //                      const Teuchos::RCP< NOX::Epetra::Interface::Preconditioner > &iPrec, 
-    //                      const Teuchos::RCP< Epetra_Operator > &M, 
-    //                      const NOX::Epetra::Vector &cloneVector, 
-    //                      const Teuchos::RCP< NOX::Epetra::Scaling > scalingObject=Teuchos::null)
 
     // Create the Group
     NOX::Epetra::Vector noxInitialGuess(soln, NOX::Epetra::Vector::CreateView);
-    Teuchos::RCP<NOX::Epetra::Group> noxGroup = Teuchos::rcp(new NOX::Epetra::Group(printParams, noxInterfaceRequired, noxInitialGuess, linSys));
+    Teuchos::RCP<NOX::Epetra::Group> noxGroup = Teuchos::rcp(new NOX::Epetra::Group(printParams, noxRequiredInterface, noxInitialGuess, linearSystemAztecOO));
 
     // Create the convergence tests
     //NOX::Abstract::Vector::NormType normType = NOX::Abstract::Vector::NormType::TwoNorm; // OneNorm, TwoNorm, MaxNorm
@@ -1944,10 +2005,17 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
     combo->addStatusTest(absresid);
     combo->addStatusTest(maxiters);
 
-    // Create the solver and solve
+    // Create the solver
     Teuchos::RCP<NOX::Solver::Generic> solver = NOX::Solver::buildSolver(noxGroup, combo, noxQuasiStaticParams);
     NOX::StatusTest::StatusType noxSolverStatus = NOX::StatusTest::Unevaluated;
     int solverIteration = 1;
+    agePeridigmPreconditioner = 0;
+
+    if(peridigmComm->MyPID() == 0)
+      cout << "Load step " << step << ", initial time = " << timePrevious << ", final time = " << timeCurrent <<
+        ", convergence criterion = " << residualTolerance << endl;
+
+    // Solve!
     while(noxSolverStatus != NOX::StatusTest::Converged && noxSolverStatus != NOX::StatusTest::Failed){
 
       // carry out nonlinear iteration

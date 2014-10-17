@@ -28,7 +28,6 @@
 	  <Parameter name="Density" type="double" value="8.0"/>
 	  <Parameter name="Bulk Modulus" type="double" value="1.500e12"/>
 	  <Parameter name="Shear Modulus" type="double" value="6.923e11"/>
-	  <Parameter name="Apply Surface Correction Factor" type="bool" value="false"/>
 	</ParameterList>
   </ParameterList>
 
@@ -95,7 +94,6 @@
 	  <Parameter name="Force_Density" type="bool" value="true"/>
 	  <Parameter name="Force" type="bool" value="true"/>
 	  <Parameter name="Volume" type="bool" value="true"/>
-	  <Parameter name="Surface_Correction_Factor" type="bool" value="true"/>
 	  <Parameter name="Number_Of_Neighbors" type="bool" value="true"/>
 	</ParameterList>
   </ParameterList>
