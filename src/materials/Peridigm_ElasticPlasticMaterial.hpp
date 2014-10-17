@@ -125,7 +125,6 @@ namespace PeridigmNS {
     double m_density;
     double m_yieldStress;
     double m_thickness;
-    bool m_applySurfaceCorrectionFactor;
     bool m_disablePlasticity;
     bool m_applyAutomaticDifferentiationJacobian;
     bool m_isPlanarProblem;
@@ -142,7 +141,6 @@ namespace PeridigmNS {
     int m_bondDamageFieldId;
     int m_deviatoricPlasticExtensionFieldId;
     int m_lambdaFieldId;
-    int m_surfaceCorrectionFactorFieldId;
   };
 }
 

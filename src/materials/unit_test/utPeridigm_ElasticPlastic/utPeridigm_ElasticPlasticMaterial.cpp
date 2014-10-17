@@ -154,7 +154,7 @@ inline double MAGNITUDE(const double *x){
 
 //
 
-void runPureShear(std::string output_file_name,  TemporalField<double> edpTemporalField, TemporalField<double> lambdaTemporalField, Field_NS::Field<double> fNField, double *x, double *u, double *v, double *y, int numPoints,  double *m, double *theta, double *bondState, double* dsfOwned, double *vol, int *neigh, double K, double MU,  double Y, double *u1x, double *v1x, double *f1x, double DELTA, std::vector<StageFunction> stages, int numStepsPerStage){
+void runPureShear(std::string output_file_name,  TemporalField<double> edpTemporalField, TemporalField<double> lambdaTemporalField, Field_NS::Field<double> fNField, double *x, double *u, double *v, double *y, int numPoints,  double *m, double *theta, double *bondState, double *vol, int *neigh, double K, double MU,  double Y, double *u1x, double *v1x, double *f1x, double DELTA, std::vector<StageFunction> stages, int numStepsPerStage){
 
      double dt = 1.0/numStepsPerStage;
 
@@ -200,7 +200,7 @@ void runPureShear(std::string output_file_name,  TemporalField<double> edpTempor
 			/*
 			 * Do not compute dilatation -- just set it to zero
 			 */
-			computeInternalForceIsotropicElasticPlastic(x,y,m,vol,theta,bondState,dsfOwned,edpN,edpNP1,lambdaN,lambdaNP1,f,neigh,numPoints,K,MU,DELTA,Y,isPlanarProblem,thickness);
+			computeInternalForceIsotropicElasticPlastic(x,y,m,vol,theta,bondState,edpN,edpNP1,lambdaN,lambdaNP1,f,neigh,numPoints,K,MU,DELTA,Y,isPlanarProblem,thickness);
 
 
 			/*
@@ -375,13 +375,10 @@ TEUCHOS_UNIT_TEST(ElasticPlasticMaterial,RunPureShear) {
 	Field<double> velField(velocitySpec,pdGridData.numPoints);
 	FieldSpec ySpec = CURCOORD3D;
 	Field<double> yField(ySpec,pdGridData.numPoints);
-	FieldSpec dsfSpec = SHEAR_CORRECTION_FACTOR;
-	Field<double> dsfField(dsfSpec,pdGridData.numPoints);
 	uOwnedField.set(0.0);
 	velField.set(0.0);
 	fNField.set(0.0);
 	yField.set(0.0);
-	dsfField.set(1.0);
 	double *u1x = uOwnedField.get()+3;
 	double *v1x = velField.get()+3;
 	double *f1x = fNField.get()+3;
@@ -449,11 +446,10 @@ TEUCHOS_UNIT_TEST(ElasticPlasticMaterial,RunPureShear) {
 	double *m = mPtr.get();
 	double *theta = thetaPtr.get();
 	double *bondState = bondStatePtr.get();
-	double* dsfOwned = dsfField.get();
 	double *vol = pdGridData.cellVolume.get();
 	int *neigh = pdGridData.neighborhood.get();
 
-       runPureShear( "ep.dat", edpTemporalField, lambdaTemporalField, fNField, x, u, v, y,numPoints, m, theta, bondState, dsfOwned, vol, neigh, K, MU, Y, u1x, v1x, f1x, DELTA, stages, numStepsPerStage);
+       runPureShear( "ep.dat", edpTemporalField, lambdaTemporalField, fNField, x, u, v, y,numPoints, m, theta, bondState, vol, neigh, K, MU, Y, u1x, v1x, f1x, DELTA, stages, numStepsPerStage);
 
 
 }
