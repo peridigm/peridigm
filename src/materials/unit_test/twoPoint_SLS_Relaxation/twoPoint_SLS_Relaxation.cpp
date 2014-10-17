@@ -227,7 +227,7 @@ void setMaterialProperties( Teuchos::ParameterList& paramList, double &K, double
 // Data initialization
      
 
-void dataInitialization( QUICKGRID::QuickGridData& pdGridData, int numOwnedPoints, double horizon, Field<double> &uOwnedField, Field_NS::Field<double> &fNField, UTILITIES::Array<double> &mPtr, UTILITIES::Array<double> &dsfPtr, TemporalField<double> &dilatationTemporalField, UTILITIES::Array<double> &bondDamagePtr, TemporalField<double> &edbTemporalField){
+void dataInitialization( QUICKGRID::QuickGridData& pdGridData, int numOwnedPoints, double horizon, Field<double> &uOwnedField, Field_NS::Field<double> &fNField, UTILITIES::Array<double> &mPtr, TemporalField<double> &dilatationTemporalField, UTILITIES::Array<double> &bondDamagePtr, TemporalField<double> &edbTemporalField){
 
         /*
 	 * Displacement and Internal Force Vectors
@@ -242,12 +242,6 @@ void dataInitialization( QUICKGRID::QuickGridData& pdGridData, int numOwnedPoint
 
         mPtr.set(0.0);
 	MATERIAL_EVALUATION::computeWeightedVolume(pdGridData.myX.get(),pdGridData.cellVolume.get(),mPtr.get(),numOwnedPoints,pdGridData.neighborhood.get(),horizon);
-
-        /*
-	 * Shear Correction Factor, aka 'dsf'
-	 * Initialize and use value=1.0 on all points
-	 */
-        dsfPtr.set(1.0);
 
         /*
 	 * Dilatation: intialize to zero
@@ -417,11 +411,6 @@ TEUCHOS_UNIT_TEST(TwoPoint_SLS_Relaxation,Case_1) {
 	 */
 	UTILITIES::Array<double> mPtr(numOwnedPoints);
 	
-	/*
-	 * Shear Correction Factor, aka 'dsf'
-	 * Initialize and use value=1.0 on all points
-	 */
-	UTILITIES::Array<double> dsfPtr(numOwnedPoints);
 	
 	/*
 	 * Dilatation: intialize to zero
@@ -437,7 +426,7 @@ TEUCHOS_UNIT_TEST(TwoPoint_SLS_Relaxation,Case_1) {
 
         // Data initialization
 
-        dataInitialization( pdGridData, numOwnedPoints, horizon, uOwnedField, fNField, mPtr, dsfPtr, dilatationTemporalField, bondDamagePtr, edbTemporalField);
+        dataInitialization( pdGridData, numOwnedPoints, horizon, uOwnedField, fNField, mPtr,  dilatationTemporalField, bondDamagePtr, edbTemporalField);
 
         double *u1x = uOwnedField.get()+ 3;
 	double *f1x = fNField.get()+ 3;
@@ -453,7 +442,6 @@ TEUCHOS_UNIT_TEST(TwoPoint_SLS_Relaxation,Case_1) {
 
         double *xOverlapPtr = pdGridData.myX.get();
 	double *mOwned = mPtr.get();
-	double *dsfOwned = dsfPtr.get();
 	double *bondDamage = bondDamagePtr.get();
 	double *volumeOverlapPtr = pdGridData.cellVolume.get();
 	int *localNeighborList = pdGridData.neighborhood.get();
@@ -482,7 +470,6 @@ TEUCHOS_UNIT_TEST(TwoPoint_SLS_Relaxation,Case_1) {
 			volumeOverlapPtr,
 			dilatationTemporalField.getField(Field_ENUM::STEP_N).get(),
 			bondDamage,
-			dsfOwned,
 			fInternalOverlapPtr,
 			nullPtr,
 			localNeighborList,
@@ -574,11 +561,6 @@ TEUCHOS_UNIT_TEST(TwoPoint_SLS_Relaxation,Case_2) {
 	 */
 	UTILITIES::Array<double> mPtr(numOwnedPoints);
 	
-	/*
-	 * Shear Correction Factor, aka 'dsf'
-	 * Initialize and use value=1.0 on all points
-	 */
-	UTILITIES::Array<double> dsfPtr(numOwnedPoints);
 	
 	/*
 	 * Dilatation: intialize to zero
@@ -594,7 +576,7 @@ TEUCHOS_UNIT_TEST(TwoPoint_SLS_Relaxation,Case_2) {
 
         // Data initialization
 
-        dataInitialization( pdGridData, numOwnedPoints, horizon, uOwnedField, fNField, mPtr, dsfPtr, dilatationTemporalField, bondDamagePtr, edbTemporalField);
+        dataInitialization( pdGridData, numOwnedPoints, horizon, uOwnedField, fNField, mPtr, dilatationTemporalField, bondDamagePtr, edbTemporalField);
 
         double *u1x = uOwnedField.get()+ 3;
 	double *f1x = fNField.get()+ 3;
@@ -610,7 +592,6 @@ TEUCHOS_UNIT_TEST(TwoPoint_SLS_Relaxation,Case_2) {
 
         double *xOverlapPtr = pdGridData.myX.get();
 	double *mOwned = mPtr.get();
-	double *dsfOwned = dsfPtr.get();
 	double *bondDamage = bondDamagePtr.get();
 	double *volumeOverlapPtr = pdGridData.cellVolume.get();
 	int *localNeighborList = pdGridData.neighborhood.get();
@@ -639,7 +620,6 @@ TEUCHOS_UNIT_TEST(TwoPoint_SLS_Relaxation,Case_2) {
 			volumeOverlapPtr,
 			dilatationTemporalField.getField(Field_ENUM::STEP_N).get(),
 			bondDamage,
-			dsfOwned,
 			fInternalOverlapPtr,
 			nullPtr,
 			localNeighborList,
@@ -733,12 +713,6 @@ TEUCHOS_UNIT_TEST(TwoPoint_SLS_Relaxation,Case_3) {
 	UTILITIES::Array<double> mPtr(numOwnedPoints);
 	
 	/*
-	 * Shear Correction Factor, aka 'dsf'
-	 * Initialize and use value=1.0 on all points
-	 */
-	UTILITIES::Array<double> dsfPtr(numOwnedPoints);
-	
-	/*
 	 * Dilatation: intialize to zero
 	 */
 	TemporalField<double> dilatationTemporalField(DILATATION,numOwnedPoints);
@@ -752,7 +726,7 @@ TEUCHOS_UNIT_TEST(TwoPoint_SLS_Relaxation,Case_3) {
 
         // Data initialization
 
-        dataInitialization( pdGridData, numOwnedPoints, horizon, uOwnedField, fNField, mPtr, dsfPtr, dilatationTemporalField, bondDamagePtr, edbTemporalField);
+        dataInitialization( pdGridData, numOwnedPoints, horizon, uOwnedField, fNField, mPtr, dilatationTemporalField, bondDamagePtr, edbTemporalField);
 
         double *u1x = uOwnedField.get()+ 3;
 	double *f1x = fNField.get()+ 3;
@@ -768,7 +742,6 @@ TEUCHOS_UNIT_TEST(TwoPoint_SLS_Relaxation,Case_3) {
 
         double *xOverlapPtr = pdGridData.myX.get();
 	double *mOwned = mPtr.get();
-	double *dsfOwned = dsfPtr.get();
 	double *bondDamage = bondDamagePtr.get();
 	double *volumeOverlapPtr = pdGridData.cellVolume.get();
 	int *localNeighborList = pdGridData.neighborhood.get();
@@ -797,7 +770,6 @@ TEUCHOS_UNIT_TEST(TwoPoint_SLS_Relaxation,Case_3) {
 			volumeOverlapPtr,
 			dilatationTemporalField.getField(Field_ENUM::STEP_N).get(),
 			bondDamage,
-			dsfOwned,
 			fInternalOverlapPtr,
 			nullPtr,
 			localNeighborList,
