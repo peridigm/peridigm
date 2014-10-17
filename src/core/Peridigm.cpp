@@ -1907,7 +1907,7 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
         peridigmPreconditioner = Material::FULL_MATRIX;
       else if(peridigmPreconditionerStr == "Block 3x3")
         peridigmPreconditioner = Material::BLOCK_DIAGONAL;
-      else if(peridigmPreconditionerStr == "NONE")
+      else if(peridigmPreconditionerStr == "None")
         peridigmPreconditioner = Material::BLOCK_DIAGONAL;
       else
         TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n****Error:  Unrecognized Peridigm Preconditioner, must be \"Full Tangent\", \"Block 3x3\", or \"None\".\n");
@@ -1944,7 +1944,7 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
     // is a optional and is specified in the input deck via "Peridigm Preconditioner Type" = "Full Tangent", "Block 3x3", or "None")
     else{
       if(peridigmComm->MyPID() == 0)
-        cout << "\nNOX initialized with matrix-free Jacobian operator\n" << endl;
+        cout << "NOX initialized with matrix-free Jacobian operator\n" << endl;
 
       // We always want to reuse the preconditioner (it there is one) for matrix-free solves
       // Default to 200 times within a nonlinear solve
