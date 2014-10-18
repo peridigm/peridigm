@@ -439,7 +439,7 @@ namespace PeridigmNS {
     //! Vector containing velocities at dof with kinematic bc; used only by NOX solver.
     Teuchos::RCP<Epetra_Vector> noxVelocityAtDOFWithKinematicBC;
 
-		Teuchos::RCP<Epetra_Vector> noxPressureVAtDOFWithKinematicBC;
+    Teuchos::RCP<Epetra_Vector> noxPressureVAtDOFWithKinematicBC;
 
     //! Global vector for block ID 
     Teuchos::RCP<Epetra_Vector> blockIDs;
@@ -491,6 +491,9 @@ namespace PeridigmNS {
 
     //! Block diagonal of global tangent matrix
     Teuchos::RCP<Epetra_FECrsMatrix> blockDiagonalTangent;
+
+    //! Tracker for total number of iterations taken by the nonlinear solver for implicit time integration
+    Teuchos::RCP<int> nonlinearSolverIterations;
 
     //! List of neighbors for all locally-owned nodes
     Teuchos::RCP<PeridigmNS::NeighborhoodData> globalNeighborhoodData;

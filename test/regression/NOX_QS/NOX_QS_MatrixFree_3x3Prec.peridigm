@@ -1,0 +1,91 @@
+
+#     Units are CGS
+#       mass          g
+#       length        cm
+#       time          s
+#       density       g/cm^3
+#       force         dyne
+#       pressure      dyne/cm^2
+#       velocity      cm/s
+#       acceleration  cm/s^2
+#       energy        erg
+
+Verbose "false"
+Discretization
+    Type "Exodus"
+    Input Mesh File "NOX_QS.g"
+
+Materials
+    My Material
+      Material Model "Elastic"
+      Density 8.05
+      Bulk Modulus 160.0e10
+      Shear Modulus 79.3e10
+
+Blocks
+    My Block
+      Block Names "block_1 block_2 block_3"
+      Material "My Material"
+      Horizon 0.751
+
+Boundary Conditions
+    Prescribed Displacement Left X
+      Type "Prescribed Displacement"
+      Node Set "nodelist_1"
+      Coordinate "x"
+      Value "0.01*x"
+    Prescribed Displacement Left Y
+      Type "Prescribed Displacement"
+      Node Set "nodelist_2"
+      Coordinate "y"
+      Value "0.0"
+    Prescribed Displacement Left Z
+      Type "Prescribed Displacement"
+      Node Set "nodelist_3"
+      Coordinate "z"
+      Value "0.0"
+    Prescribed Displacement Right X
+      Type "Prescribed Displacement"
+      Node Set "nodelist_4"
+      Coordinate "x"
+      Value "0.01*x"
+    Prescribed Displacement Right Y
+      Type "Prescribed Displacement"
+      Node Set "nodelist_5"
+      Coordinate "y"
+      Value "0.0"
+    Prescribed Displacement Right Z
+      Type "Prescribed Displacement"
+      Node Set "nodelist_6"
+      Coordinate "z"
+      Value "0.0"
+
+Solver
+    Initial Time 0.0
+    Final Time 1.0
+    Peridigm Preconditioner "Block 3x3"
+    NOXQuasiStatic
+      Nonlinear Solver "Line Search Based"
+      Number of Load Steps 1
+      Max Solver Iterations 100
+      Relative Tolerance 1.0e-9
+      Direction
+        Method "Newton"
+        Newton
+          Linear Solver
+            Jacobian Operator "Matrix-Free"
+            Preconditioner "User Defined"
+      Line Search
+        Method "Polynomial"
+
+Output
+    Output File Type "ExodusII"
+    Output Filename "NOX_QS_MatrixFree_3x3Prec"
+    Output Frequency 1
+    Output Variables
+      Displacement "true"
+      Velocity "true"
+      Force "true"
+      Volume "true"
+      Radius "true"
+      Nonlinear_Solver_Iterations "true"

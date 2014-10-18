@@ -1,4 +1,15 @@
 # List tests to be run by "make test"
+add_test (NOX_QS_MatrixFree_NoPrec_np1 python ./NOX_QS/NOX_QS_MatrixFree_NoPrec_np1/NOX_QS_MatrixFree_NoPrec.py)
+add_test (NOX_QS_MatrixFree_NoPrec_np4 python ./NOX_QS/NOX_QS_MatrixFree_NoPrec_np4/NOX_QS_MatrixFree_NoPrec.py)
+add_test (NOX_QS_MatrixFree_3x3Prec_np1 python ./NOX_QS/NOX_QS_MatrixFree_3x3Prec_np1/NOX_QS_MatrixFree_3x3Prec.py)
+add_test (NOX_QS_MatrixFree_3x3Prec_np4 python ./NOX_QS/NOX_QS_MatrixFree_3x3Prec_np4/NOX_QS_MatrixFree_3x3Prec.py)
+add_test (NOX_QS_MatrixFree_FullTangentPrec_np1 python ./NOX_QS/NOX_QS_MatrixFree_FullTangentPrec_np1/NOX_QS_MatrixFree_FullTangentPrec.py)
+add_test (NOX_QS_MatrixFree_FullTangentPrec_np4 python ./NOX_QS/NOX_QS_MatrixFree_FullTangentPrec_np4/NOX_QS_MatrixFree_FullTangentPrec.py)
+add_test (NOX_QS_Newton_NoPrec_np1 python ./NOX_QS/NOX_QS_Newton_NoPrec_np1/NOX_QS_Newton_NoPrec.py)
+add_test (NOX_QS_Newton_NoPrec_np4 python ./NOX_QS/NOX_QS_Newton_NoPrec_np4/NOX_QS_Newton_NoPrec.py)
+add_test (NOX_QS_Newton_AztecOOPrec_np1 python ./NOX_QS/NOX_QS_Newton_AztecOOPrec_np1/NOX_QS_Newton_AztecOOPrec.py)
+add_test (NOX_QS_Newton_AztecOOPrec_np4 python ./NOX_QS/NOX_QS_Newton_AztecOOPrec_np4/NOX_QS_Newton_AztecOOPrec.py)
+#
 add_test (BodyForce_Implicit_np1 python ./Body_Force/Body_Force_Implicit_np1/Body_Force_Implicit.py)
 add_test (BodyForce_Implicit_np4 python ./Body_Force/Body_Force_Implicit_np4/Body_Force_Implicit.py)
 add_test (BodyForce_Explicit_np1 python ./Body_Force/Body_Force_Explicit_np1/Body_Force_Explicit.py)
