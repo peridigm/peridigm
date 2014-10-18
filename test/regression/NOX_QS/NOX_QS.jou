@@ -1,0 +1,14 @@
+reset
+create brick x 3.0 y 1.0 z 1.0
+create brick x 1.5 y 1.0 z 1.0
+volume 2 move x 2.25 y 0.0 z 0.0
+volume 2 copy move x -4.5 y 0.0 z 0.0
+nodeset 1 volume 3   # min-x block
+nodeset 2 curve 33   # z-axis on min-x end
+nodeset 3 curve 31   # y-axis on min-x end
+nodeset 4 volume 2   # max-x block
+nodeset 5 curve 22   # z-axis on max-x end
+nodeset 6 curve 17   # y-axis on max-x end
+volume all size 0.25
+mesh volume all
+export genesis 'NOX_QS.g' overwrite

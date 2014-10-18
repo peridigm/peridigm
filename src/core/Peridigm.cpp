@@ -124,6 +124,10 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
   Memstat * memstat = Memstat::Instance();
   memstat->setComm(comm);
 
+  // Tracker for recording the total number of iterations taken by the nonlinear solver
+  nonlinearSolverIterations = Teuchos::rcp(new int);
+  *nonlinearSolverIterations = 0;
+
   out = Teuchos::VerboseObjectBase::getDefaultOStream();
 
   // Seed random number generator for reproducable results
@@ -859,11 +863,13 @@ void PeridigmNS::Peridigm::instantiateComputeManager(Teuchos::RCP<Discretization
   Teuchos::RCP<PeridigmNS::SerialMatrix> *tmp3 = &( overlapJacobian );
   Teuchos::RCP<Epetra_Map> *tmp4 = &( blockDiagonalTangentMap );
   Teuchos::RCP<Discretization> *tmp5 = &( peridigmDiscretization );
+  Teuchos::RCP<int> *tmp6 = &( nonlinearSolverIterations );
   computeClassGlobalData->set("tangent",tmp1);
   computeClassGlobalData->set("blockDiagonalTangent",tmp2);
   computeClassGlobalData->set("overlapJacobian",tmp3);
   computeClassGlobalData->set("blockDiagonalTangentMap",tmp4);
   computeClassGlobalData->set("discretization",tmp5);
+  computeClassGlobalData->set("nonlinearSolverIterations",tmp6);
 
   computeManager = Teuchos::rcp( new PeridigmNS::ComputeManager( computeParams, peridigmComm, computeClassGlobalData ) );
 }
@@ -2018,6 +2024,9 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
     // Solve!
     while(noxSolverStatus != NOX::StatusTest::Converged && noxSolverStatus != NOX::StatusTest::Failed){
 
+      // Track the total number of iterations taken over the simulation
+      *nonlinearSolverIterations += 1;
+
       // carry out nonlinear iteration
       noxSolverStatus = solver->step();
 
@@ -2339,6 +2348,9 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
     int dampedNewtonNumStepsBetweenTangentUpdates = 8;
     double alpha = 0.0;
     while(residualNorm > tolerance*toleranceMultiplier && solverIteration <= maxSolverIterations){
+
+      // Track the total number of iterations taken over the simulation
+      *nonlinearSolverIterations += 1;
 
       if(!solverVerbose){
         if(peridigmComm->MyPID() == 0)
@@ -3140,6 +3152,9 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
 
     int NLSolverIteration = 0;
     while(residualNorm > absoluteTolerance && NLSolverIteration <= maxSolverIterations){
+
+      // Track the total number of iterations taken over the simulation
+      *nonlinearSolverIterations += 1;
 
       if(peridigmComm->MyPID() == 0)
         cout << "  iteration " << NLSolverIteration << ": residual = " << residualNorm << endl;
