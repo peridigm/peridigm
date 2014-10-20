@@ -1392,7 +1392,7 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
         blockIt->importData(*fluidPressureY, fluidPressureYFieldId, PeridigmField::STEP_NP1, Insert);
         blockIt->importData(*fluidPressureV, fluidPressureVFieldId, PeridigmField::STEP_NP1, Insert);
         blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
-    	  blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
         blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
         blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
     } 
@@ -1934,7 +1934,7 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
     // If we are using the tangent matrix as the Jacobian and/or preconditioner, then we want to provide a residual
     // evaluation ("required" interface) and the tangent
     if(!isMatrixFree || peridigmPreconditioner != Material::BLOCK_DIAGONAL){
-      if(peridigmComm->MyPID() == 0)
+      if(step == 1 && peridigmComm->MyPID() == 0)
         cout << "NOX initialized with standard Jacobian operator\n" << endl;
       Teuchos::RCP<NOX::Epetra::Interface::Jacobian> noxJacobianInterface = Teuchos::RCP<NOX::Epetra::Interface::Jacobian>(this, false);
       Teuchos::RCP<Epetra_RowMatrix> noxJacobian = tangent;
@@ -1949,7 +1949,7 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
     // internal force operator (a.k.a. the "required" interface) and also the block 3x3 preconditioner (the use of the preconditioner
     // is a optional and is specified in the input deck via "Peridigm Preconditioner Type" = "Full Tangent", "Block 3x3", or "None")
     else{
-      if(peridigmComm->MyPID() == 0)
+      if(step == 1 && peridigmComm->MyPID() == 0)
         cout << "NOX initialized with matrix-free Jacobian operator\n" << endl;
 
       // We always want to reuse the preconditioner (it there is one) for matrix-free solves
@@ -2120,8 +2120,8 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
         blockIt->updateState();
   }
-  if(peridigmComm->MyPID() == 0)
-    cout << endl;
+  // if(peridigmComm->MyPID() == 0)
+  //   cout << endl;
 }
 
 void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterList> solverParams) {
@@ -3465,7 +3465,7 @@ void PeridigmNS::Peridigm::allocateBlockDiagonalJacobian() {
   workset->jacobian = overlapJacobian;
 
   PeridigmNS::Memstat * memstat = PeridigmNS::Memstat::Instance();
-  const std::string statTag = "Alloc Blk Diag Jacobian";
+  const std::string statTag = "Block Diagonal Tangent";
   memstat->addStat(statTag);
 }
 
