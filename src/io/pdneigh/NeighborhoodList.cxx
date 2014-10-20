@@ -741,7 +741,7 @@ void NeighborhoodList::buildNeighborhoodList
 
 	// output some memory statistics from here:
   PeridigmNS::Memstat * memstat = PeridigmNS::Memstat::Instance();
-  memstat->addStat("Built Zoltan Search Tree");
+  memstat->addStat("Zoltan Search Tree");
 
 
 
