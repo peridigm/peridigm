@@ -53,7 +53,7 @@
 #include <map>
 
 #include <Trilinos_version.h>
-#if TRILINOS_MAJOR_MINOR_VERSION > 111000
+#if TRILINOS_MAJOR_MINOR_VERSION >= 111100
 #include "RTC_FunctionRTC.hh"
 #else
 #include "FunctionRTC.hh"
