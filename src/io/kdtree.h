@@ -271,28 +271,28 @@ public:
 		iterator& operator--(int)     { return operator--(); }
 
 		iterator operator+(const ordinal_type n) const {
-			if (P+n<=num_points){
+			//if (P+n<=num_points){
 				return iterator(num_points,data,component_map,c,P+n);
-			}
-			else {
+			//}
+			//else {
 				/*
 				 * Need to throw an exception here; perhaps just return end
 				 */
-				return *this;
-			}
+				//return *this;
+			//}
 		}
 
 		iterator operator-(const ordinal_type n) const {
 
-			if (P-n>=0) {
+			//if (P-n>=0) {
 				return iterator(num_points ,data,component_map,c,P-n);
-			}
-			else {
+			//}
+			//else {
 				/*
 				 * Need to throw an exception here or perhaps just return end
 				 */
-				return *this;
-			}
+				//return *this;
+			//}
 		}
 
 		iterator& operator+=(ordinal_type n)    { if (P+n<=num_points) {p+=n;P+=n;} return *this; }
