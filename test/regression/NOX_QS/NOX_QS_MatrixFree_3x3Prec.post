@@ -1,0 +1,3 @@
+blot NOX_QS_MatrixFree_3x3Prec.e -input NOX_QS.blot met
+cat NOX_QS_MatrixFree_3x3Prec.csv
+

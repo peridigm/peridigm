@@ -1,0 +1,3 @@
+blot NOX_QS_Newton_AztecOOPrec.e -input NOX_QS.blot met
+cat NOX_QS_Newton_AztecOOPrec.csv
+

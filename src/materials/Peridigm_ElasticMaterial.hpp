@@ -181,7 +181,6 @@ namespace PeridigmNS {
     double m_alpha;
     double m_horizon;
     bool m_applyAutomaticDifferentiationJacobian;
-    bool m_applySurfaceCorrectionFactor;
     bool m_applyThermalStrains;
     bool m_computePartialStress;
     PeridigmNS::InfluenceFunction::functionPointer m_OMEGA;
@@ -197,7 +196,6 @@ namespace PeridigmNS {
     int m_forceDensityFieldId;
     int m_partialStressFieldId;
     int m_bondDamageFieldId;
-    int m_surfaceCorrectionFactorFieldId;
     int m_deltaTemperatureFieldId;
   };
 }

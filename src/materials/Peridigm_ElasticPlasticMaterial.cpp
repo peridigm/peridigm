@@ -60,13 +60,12 @@ using namespace std;
 
 PeridigmNS::ElasticPlasticMaterial::ElasticPlasticMaterial(const Teuchos::ParameterList & params)
   : Material(params),
-    m_applySurfaceCorrectionFactor(true),
     m_disablePlasticity(false),
     m_applyAutomaticDifferentiationJacobian(true),
     m_isPlanarProblem(false),
     m_volumeFieldId(-1), m_damageFieldId(-1), m_weightedVolumeFieldId(-1), m_dilatationFieldId(-1), m_modelCoordinatesFieldId(-1),
     m_coordinatesFieldId(-1), m_forceDensityFieldId(-1), m_bondDamageFieldId(-1), m_deviatoricPlasticExtensionFieldId(-1),
-    m_lambdaFieldId(-1), m_surfaceCorrectionFactorFieldId(-1)
+    m_lambdaFieldId(-1)
 {
   //! \todo Add meaningful asserts on material properties.
   m_bulkModulus = calculateBulkModulus(params);
@@ -74,8 +73,6 @@ PeridigmNS::ElasticPlasticMaterial::ElasticPlasticMaterial(const Teuchos::Parame
   m_horizon = params.get<double>("Horizon");
   m_density = params.get<double>("Density");
   m_yieldStress = params.get<double>("Yield Stress");
-  if(params.isParameter("Apply Shear Correction Factor"))
-    m_applySurfaceCorrectionFactor = params.get<bool>("Apply Shear Correction Factor");
   if(params.isParameter("Disable Plasticity"))
     m_disablePlasticity = params.get<bool>("Disable Plasticity");
   if(params.isParameter("Apply Automatic Differentiation Jacobian"))
@@ -102,7 +99,6 @@ PeridigmNS::ElasticPlasticMaterial::ElasticPlasticMaterial(const Teuchos::Parame
   m_bondDamageFieldId                  = fieldManager.getFieldId(PeridigmField::BOND,    PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Bond_Damage");
   m_deviatoricPlasticExtensionFieldId  = fieldManager.getFieldId(PeridigmField::BOND,    PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Deviatoric_Plastic_Extension");
   m_lambdaFieldId                      = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Lambda");
-  m_surfaceCorrectionFactorFieldId     = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Surface_Correction_Factor");
 
   m_fieldIds.push_back(m_volumeFieldId);
   m_fieldIds.push_back(m_damageFieldId);
@@ -114,7 +110,6 @@ PeridigmNS::ElasticPlasticMaterial::ElasticPlasticMaterial(const Teuchos::Parame
   m_fieldIds.push_back(m_bondDamageFieldId);
   m_fieldIds.push_back(m_deviatoricPlasticExtensionFieldId);
   m_fieldIds.push_back(m_lambdaFieldId);
-  m_fieldIds.push_back(m_surfaceCorrectionFactorFieldId);
 }
 
 PeridigmNS::ElasticPlasticMaterial::~ElasticPlasticMaterial()
@@ -134,20 +129,6 @@ void PeridigmNS::ElasticPlasticMaterial::initialize(const double dt,
   dataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
 
   MATERIAL_EVALUATION::computeWeightedVolume(xOverlap,cellVolumeOverlap,weightedVolume,numOwnedPoints,neighborhoodList,m_horizon);
-
-  dataManager.getData(m_surfaceCorrectionFactorFieldId, PeridigmField::STEP_NONE)->PutScalar(1.0);
-  if(m_applySurfaceCorrectionFactor){
-    Epetra_Vector temp(*dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1));
-    int lengthYOverlap = temp.MyLength();
-    double  *yOverlap,  *surfaceCorrectionFactor;
-    temp.ExtractView(&yOverlap);
-    dataManager.getData(m_surfaceCorrectionFactorFieldId, PeridigmField::STEP_NONE)->ExtractView(&surfaceCorrectionFactor);
-    MATERIAL_EVALUATION::computeShearCorrectionFactor(numOwnedPoints,lengthYOverlap,xOverlap,yOverlap,cellVolumeOverlap,weightedVolume,neighborhoodList,m_horizon,surfaceCorrectionFactor);
-
-    // \todo Resolve questions regarding scf versus 1/scf and move this into shear correction factor calculation.
-    for(double *scf=surfaceCorrectionFactor; scf!=surfaceCorrectionFactor+numOwnedPoints; scf++)
-      *scf = 1.0/(*scf);
-  }
 }
 
 void
@@ -157,7 +138,7 @@ PeridigmNS::ElasticPlasticMaterial::computeForce(const double dt,
                                                  const int* neighborhoodList,
                                                  PeridigmNS::DataManager& dataManager) const
 {
-  double *x, *y, *volume, *dilatation, *weightedVolume, *bondDamage, *edpN, *edpNP1, *lambdaN, *lambdaNP1, *force, *ownedSurfaceCorrectionFactor;
+  double *x, *y, *volume, *dilatation, *weightedVolume, *bondDamage, *edpN, *edpNP1, *lambdaN, *lambdaNP1, *force;
   dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
   dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&y);
   dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&volume);
@@ -169,32 +150,33 @@ PeridigmNS::ElasticPlasticMaterial::computeForce(const double dt,
   dataManager.getData(m_lambdaFieldId, PeridigmField::STEP_N)->ExtractView(&lambdaN);
   dataManager.getData(m_lambdaFieldId, PeridigmField::STEP_NP1)->ExtractView(&lambdaNP1);
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&force);
-  dataManager.getData(m_surfaceCorrectionFactorFieldId, PeridigmField::STEP_NONE)->ExtractView(&ownedSurfaceCorrectionFactor);
 
   // Zero out the force
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
 
   MATERIAL_EVALUATION::computeDilatation(x,y,weightedVolume,volume,bondDamage,dilatation,neighborhoodList,numOwnedPoints,m_horizon);
-  MATERIAL_EVALUATION::computeInternalForceIsotropicElasticPlastic(x,
-                                                                   y,
-                                                                   weightedVolume,
-                                                                   volume,
-                                                                   dilatation,
-                                                                   bondDamage,
-                                                                   ownedSurfaceCorrectionFactor,
-                                                                   edpN,
-                                                                   edpNP1,
-                                                                   lambdaN,
-                                                                   lambdaNP1,
-                                                                   force,
-                                                                   neighborhoodList,
-                                                                   numOwnedPoints,
-                                                                   m_bulkModulus,
-                                                                   m_shearModulus,
-                                                                   m_horizon,
-                                                                   m_yieldStress,
-                                                                   m_isPlanarProblem,
-                                                                   m_thickness);
+  MATERIAL_EVALUATION::computeInternalForceIsotropicElasticPlastic
+     (
+       x,
+       y,
+       weightedVolume,
+       volume,
+       dilatation,
+       bondDamage,
+       edpN,
+       edpNP1,
+       lambdaN,
+       lambdaNP1,
+       force,
+       neighborhoodList,
+       numOwnedPoints,
+       m_bulkModulus,
+       m_shearModulus,
+       m_horizon,
+       m_yieldStress,
+       m_isPlanarProblem,
+       m_thickness
+    );
 }
 
 void
@@ -287,7 +269,7 @@ PeridigmNS::ElasticPlasticMaterial::computeAutomaticDifferentiationJacobian(cons
     }
 
     // Extract pointers to the underlying data in the constitutiveData array.
-    double *x, *y, *cellVolume, *weightedVolume, *damage, *bondDamage, *edpN, *lambdaN, *ownedSurfaceCorrectionFactor;
+    double *x, *y, *cellVolume, *weightedVolume, *damage, *bondDamage, *edpN, *lambdaN;
     tempDataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
     tempDataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&y);
     tempDataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&cellVolume);
@@ -296,7 +278,6 @@ PeridigmNS::ElasticPlasticMaterial::computeAutomaticDifferentiationJacobian(cons
     tempDataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_NP1)->ExtractView(&bondDamage);
     tempDataManager.getData(m_deviatoricPlasticExtensionFieldId, PeridigmField::STEP_N)->ExtractView(&edpN);
     tempDataManager.getData(m_lambdaFieldId, PeridigmField::STEP_N)->ExtractView(&lambdaN);
-    tempDataManager.getData(m_surfaceCorrectionFactorFieldId, PeridigmField::STEP_NONE)->ExtractView(&ownedSurfaceCorrectionFactor);
 
     // Create arrays of Fad objects for the current coordinates, dilatation, and force density
     // Modify the existing vector of Fad objects for the current coordinates
@@ -315,26 +296,27 @@ PeridigmNS::ElasticPlasticMaterial::computeAutomaticDifferentiationJacobian(cons
 
     // Evaluate the constitutive model using the AD types
     MATERIAL_EVALUATION::computeDilatation(x,&y_AD[0],weightedVolume,cellVolume,bondDamage,&dilatation_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints,m_horizon);
-    MATERIAL_EVALUATION::computeInternalForceIsotropicElasticPlastic(x,
-                                                                     &y_AD[0],
-                                                                     weightedVolume,
-                                                                     cellVolume,
-                                                                     &dilatation_AD[0],
-                                                                     bondDamage,
-                                                                     ownedSurfaceCorrectionFactor,
-                                                                     edpN,
-                                                                     &edpNP1[0],
-                                                                     lambdaN,
-                                                                     &lambdaNP1_AD[0],
-                                                                     &force_AD[0],
-                                                                     &tempNeighborhoodList[0],
-                                                                     tempNumOwnedPoints,
-                                                                     m_bulkModulus,
-                                                                     m_shearModulus,
-                                                                     m_horizon,
-                                                                     m_yieldStress,
-                                                                     m_isPlanarProblem,
-                                                                     m_thickness);
+    MATERIAL_EVALUATION::computeInternalForceIsotropicElasticPlastic
+       (
+         x,
+         &y_AD[0],
+         weightedVolume,
+         cellVolume,
+         &dilatation_AD[0],
+         bondDamage,
+         edpN,
+         &edpNP1[0],
+         lambdaN,
+         &lambdaNP1_AD[0],
+         &force_AD[0],
+         &tempNeighborhoodList[0],
+         tempNumOwnedPoints,
+         m_bulkModulus,
+         m_shearModulus,
+         m_horizon,
+         m_yieldStress,
+         m_isPlanarProblem,
+         m_thickness);
 
     // Load derivative values into scratch matrix
     // Multiply by volume along the way to convert force density to force

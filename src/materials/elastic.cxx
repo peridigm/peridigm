@@ -61,7 +61,6 @@ void computeInternalForceLinearElastic
 		const double* volumeOverlap,
 		const ScalarT* dilatationOwned,
 		const double* bondDamage,
-		const double* dsfOwned,
 		ScalarT* fInternalOverlap,
 		ScalarT* partialStressOverlap,
 		const int*  localNeighborList,
@@ -85,7 +84,6 @@ void computeInternalForceLinearElastic
     const double *deltaT = deltaTemperature;
 	const double *m = mOwned;
 	const double *v = volumeOverlap;
-	const double *dsf = dsfOwned;
 	const ScalarT *theta = dilatationOwned;
 	ScalarT *fOwned = fInternalOverlap;
 	ScalarT *psOwned = partialStressOverlap;
@@ -93,13 +91,12 @@ void computeInternalForceLinearElastic
 	const int *neighPtr = localNeighborList;
 	double cellVolume, alpha, X_dx, X_dy, X_dz, zeta, omega;
 	ScalarT Y_dx, Y_dy, Y_dz, dY, t, fx, fy, fz, e, c1;
-	for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yOwned +=3, fOwned+=3, psOwned+=9, deltaT++, m++, theta++, dsf++){
+	for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yOwned +=3, fOwned+=3, psOwned+=9, deltaT++, m++, theta++){
 
 		int numNeigh = *neighPtr; neighPtr++;
 		const double *X = xOwned;
 		const ScalarT *Y = yOwned;
 		alpha = 15.0*MU/(*m);
-		alpha *= (*dsf);
 		double selfCellVolume = v[p];
 		for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++){
 			int localId = *neighPtr;
@@ -157,7 +154,6 @@ template void computeInternalForceLinearElastic<double>
 		const double* volumeOverlap,
 		const double* dilatationOwned,
 		const double* bondDamage,
-		const double* dsfOwned,
 		double* fInternalOverlap,
 		double* partialStressOverlap,
 		const int*  localNeighborList,
@@ -178,7 +174,6 @@ template void computeInternalForceLinearElastic<Sacado::Fad::DFad<double> >
 		const double* volumeOverlap,
 		const Sacado::Fad::DFad<double>* dilatationOwned,
 		const double* bondDamage,
-		const double* dsfOwned,
 		Sacado::Fad::DFad<double>* fInternalOverlap,
 		Sacado::Fad::DFad<double>* partialStressOverlap,
 		const int*  localNeighborList,
