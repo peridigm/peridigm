@@ -1,3 +1,5 @@
+/*! \file Peridigm_Compute_Nonlinear_Solver_Iterations.cpp */
+
 //@HEADER
 // ************************************************************************
 //
@@ -42,27 +44,32 @@
 //
 // ************************************************************************
 //@HEADER
-#ifndef PHPD_WORKSET_HPP
-#define PHPD_WORKSET_HPP
 
-#include <Epetra_Vector.h>
-#include <Epetra_Import.h>
 #include <vector>
-#include "Peridigm_Block.hpp"
-#include "Peridigm_ContactManager.hpp"
 
-namespace PHPD {
+#include "Peridigm_Compute_Nonlinear_Solver_Iterations.hpp"
+#include "Peridigm_Field.hpp"
 
-struct Workset {
-  
-  Workset() {}
+using namespace std;
 
-  Teuchos::RCP<double> timeStep;
-  Teuchos::RCP<PeridigmNS::SerialMatrix> jacobian;
-  Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks;
-  Teuchos::RCP<PeridigmNS::ContactManager> contactManager;
-};
+//! Standard constructor.
+PeridigmNS::Compute_Nonlinear_Solver_Iterations::Compute_Nonlinear_Solver_Iterations(Teuchos::RCP<const Teuchos::ParameterList> params,
+                                                                                     Teuchos::RCP<const Epetra_Comm> epetraComm_,
+                                                                                     Teuchos::RCP<const Teuchos::ParameterList> computeClassGlobalData_)
+  : Compute(params, epetraComm_, computeClassGlobalData_), m_nonlinearSolverIterationsFieldId(-1)
+{
+  m_nonlinearSolverIterations = *( computeClassGlobalData_->get< Teuchos::RCP<int>* >("nonlinearSolverIterations") );
 
+  FieldManager& fieldManager = FieldManager::self();
+  m_nonlinearSolverIterationsFieldId = fieldManager.getFieldId(PeridigmField::GLOBAL, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Nonlinear_Solver_Iterations");
+  m_fieldIds.push_back(m_nonlinearSolverIterationsFieldId);
 }
 
-#endif
+void PeridigmNS::Compute_Nonlinear_Solver_Iterations::initialize( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) {
+}
+
+int PeridigmNS::Compute_Nonlinear_Solver_Iterations::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks ) const {
+  Teuchos::RCP<Epetra_Vector> nonlinearSolverIterations = blocks->begin()->getData(m_nonlinearSolverIterationsFieldId, PeridigmField::STEP_NONE);
+  (*nonlinearSolverIterations)[0] = *m_nonlinearSolverIterations;
+  return 0;
+}

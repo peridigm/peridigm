@@ -59,7 +59,6 @@ void computeInternalForceLinearElastic
 		const double* volumeOverlapPtr,
 		const ScalarT* dilatationOwned,
 		const double* bondDamage,
-		const double* dsfOwned,
 		ScalarT* fInternalOverlapPtr,
 		ScalarT* partialStressOverlapPtr,
 		const int*  localNeighborList,

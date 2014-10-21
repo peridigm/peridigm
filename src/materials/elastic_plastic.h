@@ -90,7 +90,6 @@ void computeInternalForceIsotropicElasticPlastic
 		const double* volumeOverlap,
 		const ScalarT* dilatationOwned,
 		const double* bondDamage,
-		const double* scfOwned,
 		const double* deviatoricPlasticExtensionStateN,
 		ScalarT* deviatoricPlasticExtensionStateNp1,
 		const double* lambdaN,

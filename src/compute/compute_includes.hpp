@@ -21,4 +21,5 @@
 #include "Peridigm_Compute_Deformation_Gradient.hpp"
 #include "Peridigm_Compute_Stored_Elastic_Energy_Density.hpp"
 #include "Peridigm_Compute_Stored_Elastic_Energy.hpp"
+#include "Peridigm_Compute_Nonlinear_Solver_Iterations.hpp"
 #include "Peridigm_Compute.hpp"

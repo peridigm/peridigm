@@ -85,7 +85,6 @@ enum Type {
   E_DB,
   PLASTIC_CONSISTENCY,
   NORM_DEVIATORIC_FORCE_STATE,
-  SHEAR_CORRECTION_FACTOR,
   NUM_NEIGHBORS,
   FLUID_PRESSURE_Y,
   FLUID_PRESSURE_U,
@@ -276,7 +275,6 @@ const Field_NS::FieldSpec DILATATION              (Field_ENUM::DILATATION,      
 const Field_NS::FieldSpec NUM_NEIGHBORS           (Field_ENUM::NUM_NEIGHBORS,                Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Num_Neighbors");
 const Field_NS::FieldSpec LAMBDA                  (Field_ENUM::PLASTIC_CONSISTENCY,          Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Lambda");
 const Field_NS::FieldSpec NORM_TD                 (Field_ENUM::NORM_DEVIATORIC_FORCE_STATE,  Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::SCRATCH,  "Norm_td");
-const Field_NS::FieldSpec SHEAR_CORRECTION_FACTOR (Field_ENUM::SHEAR_CORRECTION_FACTOR,      Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Surface_Correction_Factor");
 const Field_NS::FieldSpec BC_MASK                 (Field_ENUM::BC_MASK,                      Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "BC_MASK");
 const Field_NS::FieldSpec DAMAGE                  (Field_ENUM::DAMAGE,                       Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::TWO_STEP, "Damage");
 const Field_NS::FieldSpec CRITICAL_STRETCH        (Field_ENUM::CRITICAL_STRETCH,             Field_ENUM::ELEMENT, Field_ENUM::SCALAR, Field_ENUM::CONSTANT, "Critical_Stretch");
@@ -341,7 +339,6 @@ struct FieldSpecMap {
 		mymap[NUM_NEIGHBORS.getLabel()]                = NUM_NEIGHBORS;
 		mymap[LAMBDA.getLabel()]                       = LAMBDA;
 		mymap[NORM_TD.getLabel()]                      = NORM_TD;
-		mymap[SHEAR_CORRECTION_FACTOR.getLabel()]      = SHEAR_CORRECTION_FACTOR;
 		mymap[BC_MASK.getLabel()]                      = BC_MASK;
     	mymap[DAMAGE.getLabel()]                       = DAMAGE;
     	mymap[CRITICAL_STRETCH.getLabel()]             = CRITICAL_STRETCH;
