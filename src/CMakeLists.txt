@@ -92,14 +92,13 @@ set(Peridigm_LIBRARY PeridigmLib)
 set(Peridigm_LINK_LIBRARIES
     ${LCM_LIBRARY}
     ${Peridigm_LIBRARY}
-    ${Trilinos_LIBRARIES}
     ${PDNEIGH_LIBS}
-    ${Zoltan_LIBRARY}
     ${PARSER_LIBS}
     ${MESH_INPUT_LIBS}
     ${UTILITIES_LIBS}
-    ${REQUIRED_LIBS}
     ${PdMaterialUtilitiesLib}
+    ${Trilinos_LIBRARIES}
+    ${REQUIRED_LIBS}
     ${Boost_LIBRARIES}
 )
 

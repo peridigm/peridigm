@@ -46,12 +46,11 @@ add_executable(utPeridigm_ExodusDiscretization
                ./utPeridigm_ExodusDiscretization.cpp)
 target_link_libraries(utPeridigm_ExodusDiscretization
   ${Peridigm_LIBRARY}
-  ${Trilinos_LIBRARIES}
   ${PDNEIGH_LIBS}
-  ${Zoltan_LIBRARY}
   ${MESH_INPUT_LIBS}
   ${UTILITIES_LIBS}
   ${PARSER_LIBS}
+  ${Trilinos_LIBRARIES}
   ${REQUIRED_LIBS}
   ${Boost_LIBRARIES}
 )
