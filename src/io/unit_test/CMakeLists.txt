@@ -10,11 +10,10 @@ endif (NOT ${buildInSource})
 add_executable(utPeridigm_ProximitySearch ./utPeridigm_ProximitySearch.cpp)
 target_link_libraries(utPeridigm_ProximitySearch
   ${Peridigm_LIBRARY}
-  ${Trilinos_LIBRARIES}
   ${PDNEIGH_LIBS}
-  ${Zoltan_LIBRARY}
   ${MESH_INPUT_LIBS}
   ${UTILITIES_LIBS}
+  ${Trilinos_LIBRARIES}
   ${REQUIRED_LIBS}
   ${Boost_LIBRARIES}
 )
