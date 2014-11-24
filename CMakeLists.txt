@@ -76,6 +76,11 @@ MESSAGE("   Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
 MESSAGE("   Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
 # Hack for now until Trilinos exports cmake variable for binaries directory
 SET(Trilinos_BINARY_PATH ${Trilinos_LIBRARY_DIRS}/../bin)
+#
+# Remove PyTrilinos if it's there to avoid errors, we don't use it in Peridigm
+#
+LIST(REMOVE_ITEM Trilinos_LIBRARIES "pytrilinos")
+#
 # verbose output
 MESSAGE("   Trilinos_LIBRARIES = ${Trilinos_LIBRARIES}")
 MESSAGE("   Trilinos_INCLUDE_DIRS = ${Trilinos_INCLUDE_DIRS}")
