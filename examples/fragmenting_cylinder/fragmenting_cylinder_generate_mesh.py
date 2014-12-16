@@ -58,20 +58,20 @@ if __name__ == "__main__":
                 data.append([x, y, z, block_id, elem_vol])
 
     # Perturb the node locations randomly to break symmetry in the model
-    magnitude = 0.01 * element_size
+    magnitude = 0.001 * element_size
     random_number_generator_seed = 42
     random.seed(random_number_generator_seed)
     for i in range(len(data)):
-        data[i][0] += random.random() * magnitude
-        data[i][1] += random.random() * magnitude
-        data[i][2] += random.random() * magnitude
+        data[i][0] += (2.0*random.random() - 1.0) * magnitude
+        data[i][1] += (2.0*random.random() - 1.0) * magnitude
+        data[i][2] += (2.0*random.random() - 1.0) * magnitude
 
     mesh_file = open("fragmenting_cylinder.txt", 'w')
     for datum in data:
         mesh_file.write(str(datum[0]) + " " + str(datum[1]) + " " + str(datum[2]) + " " + str(datum[3]) + " " + str(datum[4]) + "\n")
     mesh_file.close()
 
-    correct_total_volume = (math.pi*cylinder_outer_radius*cylinder_outer_radius - math.pi*cylinder_inner_radius*cylinder_inner_radius)*cylinder_height
-    print "\nSanity check on volume:", total_volume, "=?", correct_total_volume
+#    correct_total_volume = (math.pi*cylinder_outer_radius*cylinder_outer_radius - math.pi*cylinder_inner_radius*cylinder_inner_radius)*cylinder_height
+#    print "\nSanity check on volume:", total_volume, "=?", correct_total_volume
 
     print "\nDiscretization written to fragmenting_cylinder.txt\n"
