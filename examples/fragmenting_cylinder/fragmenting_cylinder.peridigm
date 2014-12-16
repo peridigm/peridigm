@@ -1,16 +1,7 @@
 
 Discretization
-    Type "PdQuickGrid"
-    NeighborhoodType "Spherical"
-    TensorProductCylinderMeshGenerator
-        type "PdQuickGrid"
-        Inner Radius 0.020
-        Outer Radius 0.025
-        Cylinder Length 0.100
-        Ring Center x 0.0
-        Ring Center y 0.0
-        Z Origin 0.0
-        Number Points Radius 5
+    Type "Text File"
+    Input Mesh File "fragmenting_cylinder.txt"
 
 Materials
     My Material
@@ -36,17 +27,17 @@ Boundary Conditions
         Type "Initial Velocity"
         Node Set "Full Domain"
         Coordinate "x"
-        Value "(200 - 50*((z/0.05)-1)^2)*cos(atan2(y,x)) + 5.0*drand()"
+        Value "(200 - 50*((z/0.05)-1)^2)*cos(atan2(y,x))"
     Initial Velocity Y
         Type "Initial Velocity"
         Node Set "Full Domain"
         Coordinate "y"
-        Value "(200 - 50*((z/0.05)-1)^2)*sin(atan2(y,x)) + 5.0*drand()"
+        Value "(200 - 50*((z/0.05)-1)^2)*sin(atan2(y,x))"
     Initial Velocity Z
         Type "Initial Velocity"
         Node Set "Full Domain"
         Coordinate "z"
-        Value "(100*((z/0.05)-1)) + 5.0*drand()"
+        Value "(100*((z/0.05)-1))"
 
 Solver
     Initial Time 0.0
