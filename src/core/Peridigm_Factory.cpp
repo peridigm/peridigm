@@ -74,18 +74,18 @@ void updateParametersFromTextFile(std::string inputFile, Teuchos::Ptr<Teuchos::P
 PeridigmNS::PeridigmFactory::PeridigmFactory(){}
 
 Teuchos::RCP<PeridigmNS::Peridigm> PeridigmNS::PeridigmFactory::create(const std::string inputFile,
-                                                                       const MPI_Comm& peridigmComm,
+                                                                       const MPI_Comm& comm,
                                                                        Teuchos::RCP<Discretization> inputPeridigmDiscretization)
 {
   using Teuchos::RCP;
   using Teuchos::rcp;
 
-  Teuchos::RCP<Epetra_Comm> comm;
-  #ifdef HAVE_MPI
-    comm = rcp(new Epetra_MpiComm(peridigmComm));
-  #else
-    comm = rcp(new Epetra_SerialComm);
-  #endif
+//   Teuchos::RCP<Epetra_Comm> comm;
+//   #ifdef HAVE_MPI
+//     comm = rcp(new Epetra_MpiComm(peridigmComm));
+//   #else
+//     comm = rcp(new Epetra_SerialComm);
+//   #endif
 
   // Set application parameters to default values
   Teuchos::RCP<Teuchos::ParameterList> peridigmParams = rcp(new Teuchos::ParameterList());
@@ -116,10 +116,10 @@ Teuchos::RCP<PeridigmNS::Peridigm> PeridigmNS::PeridigmFactory::create(const std
 }
 
 Teuchos::RCP<PeridigmNS::Peridigm> PeridigmNS::PeridigmFactory::create(const std::string inputFile,
-                                                                       const MPI_Comm& peridigmComm)
+                                                                       const MPI_Comm& comm)
 {
   Teuchos::RCP<Discretization> nullDiscretization;
-  return create(inputFile, peridigmComm, nullDiscretization);
+  return create(inputFile, comm, nullDiscretization);
 }
 
 void PeridigmNS::PeridigmFactory::setPeridigmParamDefaults(Teuchos::Ptr<Teuchos::ParameterList> peridigmParams_)

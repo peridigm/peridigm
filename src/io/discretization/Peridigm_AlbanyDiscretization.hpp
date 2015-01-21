@@ -52,6 +52,7 @@
 #include <Epetra_Vector.h>
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_Comm.h>
+#include "mpi.h"
 
 namespace PeridigmNS {
 
@@ -61,11 +62,13 @@ namespace PeridigmNS {
   public:
 
     //! Constructor
-    AlbanyDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetraComm,
+    AlbanyDiscretization(const MPI_Comm& mpiComm,
                          const Teuchos::RCP<Teuchos::ParameterList>& params,
-                         const Teuchos::RCP<Epetra_Vector>& refCoord,
-                         const Teuchos::RCP<Epetra_Vector>& volume,
-                         const Teuchos::RCP<Epetra_Vector>& blockId);
+			 int numGlobalIds,
+			 const int* globalIds,
+			 const double* refCoord,
+			 const double* volume,
+			 const int* blockId);
 
     //! Destructor
     virtual ~AlbanyDiscretization();
@@ -173,12 +176,6 @@ namespace PeridigmNS {
 
     //! Returns the max number of bonds per element on this processor
     unsigned int maxNumBondsPerElem;
-
-    //! Processor ID
-    int myPID;
-
-    //! Number of Processors
-    int numPID;
 
     //! Discretization parameter controling the formation of bonds
     std::string bondFilterCommand;

@@ -90,7 +90,7 @@
 
 using namespace std;
 
-PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
+PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
                                Teuchos::RCP<Teuchos::ParameterList> params,
                                Teuchos::RCP<Discretization> inputPeridigmDiscretization)
   : agePeridigmPreconditioner(0),
@@ -118,11 +118,16 @@ PeridigmNS::Peridigm::Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
     fluidFlowDensityFieldId(-1),
     numMultiphysDoFs(0)
 {
-  peridigmComm = comm;
+#ifdef HAVE_MPI
+  peridigmComm = Teuchos::rcp(new Epetra_MpiComm(comm));
+#else
+  peridigmComm = Teuchos::rcp(new Epetra_SerialComm);
+#endif
+
   peridigmParams = params;
   // set the comm for memory use statistics
   Memstat * memstat = Memstat::Instance();
-  memstat->setComm(comm);
+  memstat->setComm(peridigmComm);
 
   // Tracker for recording the total number of iterations taken by the nonlinear solver
   nonlinearSolverIterations = Teuchos::rcp(new int);

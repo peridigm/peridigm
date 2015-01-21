@@ -89,7 +89,7 @@ namespace PeridigmNS {
   public:
 
     //! Constructor
-    Peridigm(Teuchos::RCP<const Epetra_Comm> comm,
+    Peridigm(const MPI_Comm& peridigmComm,
              Teuchos::RCP<Teuchos::ParameterList> params,
              Teuchos::RCP<Discretization> inputPeridigmDiscretization);
 
