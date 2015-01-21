@@ -51,21 +51,13 @@
 #include <Peridigm_DiscretizationFactory.hpp>
 #include "Peridigm_Field.hpp"
 #include "Peridigm.hpp"
-
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
-
 #include <vector>
-
-#ifdef HAVE_MPI
-  #include <Epetra_MpiComm.h>
-#else
-  #include <Epetra_SerialComm.h>
-#endif
 
 using namespace PeridigmNS;
 
-Teuchos::RCP<Peridigm> createFourPointModel(Teuchos::RCP<Epetra_Comm> comm) {
+Teuchos::RCP<Peridigm> createFourPointModel() {
   // set up parameter lists
   // these data would normally be read from an input xml file
   Teuchos::RCP<Teuchos::ParameterList> peridigmParams = rcp(new Teuchos::ParameterList());
@@ -109,7 +101,7 @@ Teuchos::RCP<Peridigm> createFourPointModel(Teuchos::RCP<Epetra_Comm> comm) {
 
   // create the Peridigm object
   Teuchos::RCP<Discretization> nullDiscretization;
-  Teuchos::RCP<Peridigm> peridigm = Teuchos::rcp(new Peridigm(comm, peridigmParams, nullDiscretization));
+  Teuchos::RCP<Peridigm> peridigm = Teuchos::rcp(new Peridigm(MPI_COMM_WORLD, peridigmParams, nullDiscretization));
 
   return peridigm;
 }
@@ -134,7 +126,7 @@ TEUCHOS_UNIT_TEST(Compute_Force, FourPointTest) {
     return;
   }
 
-  Teuchos::RCP<Peridigm> peridigm = createFourPointModel(comm);
+  Teuchos::RCP<Peridigm> peridigm = createFourPointModel();
 
   FieldManager& fieldManager = FieldManager::self();
 

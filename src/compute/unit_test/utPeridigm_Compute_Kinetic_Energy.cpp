@@ -51,19 +51,11 @@
 #include "../Peridigm_Compute_Global_Kinetic_Energy.hpp"
 #include <Peridigm_DataManager.hpp>
 #include <Peridigm_DiscretizationFactory.hpp>
-
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
 #include "Teuchos_GlobalMPISession.hpp"
-
 #include <Epetra_ConfigDefs.h> // used to define HAVE_MPI
 #include <Epetra_Import.h>
-
-#ifdef HAVE_MPI
-  #include <Epetra_MpiComm.h>
-#else
-  #include <Epetra_SerialComm.h>
-#endif
 #include <vector>
 #include "Peridigm.hpp"
 #include "Peridigm_Field.hpp"
@@ -72,7 +64,7 @@
 using namespace Teuchos;
 using namespace PeridigmNS;
 
-Teuchos::RCP<Peridigm> createFourPointModel(Teuchos::RCP<Epetra_Comm> comm) {
+Teuchos::RCP<Peridigm> createFourPointModel() {
   
 
   // set up parameter lists
@@ -118,7 +110,7 @@ Teuchos::RCP<Peridigm> createFourPointModel(Teuchos::RCP<Epetra_Comm> comm) {
   outputFields.set("Global_Kinetic_Energy", true);
 
   Teuchos::RCP<Discretization> nullDiscretization;
-  Teuchos::RCP<Peridigm> peridigm = Teuchos::rcp(new Peridigm(comm, peridigmParams, nullDiscretization));
+  Teuchos::RCP<Peridigm> peridigm = Teuchos::rcp(new Peridigm(MPI_COMM_WORLD, peridigmParams, nullDiscretization));
 
   return peridigm;
 }
@@ -141,7 +133,7 @@ TEUCHOS_UNIT_TEST(Compute_Kinetic_energy, FourPointTest)
     return;
   }
 
-  Teuchos::RCP<Peridigm> peridigm = createFourPointModel(comm);
+  Teuchos::RCP<Peridigm> peridigm = createFourPointModel();
 
   FieldManager& fieldManager = FieldManager::self();
 

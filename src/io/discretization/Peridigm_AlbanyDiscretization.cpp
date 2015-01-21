@@ -65,32 +65,42 @@
 
 using namespace std;
 
-PeridigmNS::AlbanyDiscretization::AlbanyDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
+PeridigmNS::AlbanyDiscretization::AlbanyDiscretization(const MPI_Comm& mpiComm,
                                                        const Teuchos::RCP<Teuchos::ParameterList>& params,
-                                                       const Teuchos::RCP<Epetra_Vector>& refCoord,
-                                                       const Teuchos::RCP<Epetra_Vector>& volume,
-                                                       const Teuchos::RCP<Epetra_Vector>& blockId) :
+						       int numGlobalIds,
+						       const int* globalIds,
+						       const double* refCoord,
+						       const double* volume,
+						       const int* blockId) :
   minElementRadius(1.0e50),
   maxElementRadius(0.0),
   maxElementDimension(0.0),
   numBonds(0),
   maxNumBondsPerElem(0),
-  myPID(epetra_comm->MyPID()),
-  numPID(epetra_comm->NumProc()),
-  bondFilterCommand("None"),
-  comm(epetra_comm)
+  bondFilterCommand("None")
 {
+  comm = Teuchos::rcp(new Epetra_MpiComm(mpiComm));
+
   Teuchos::RCP<Teuchos::ParameterList> discretizationParams = Teuchos::rcpFromRef(params->sublist("Discretization", true));
   Teuchos::RCP<Teuchos::ParameterList> blockParams = Teuchos::rcpFromRef(params->sublist("Blocks", true));
 
   TEUCHOS_TEST_FOR_EXCEPT_MSG(discretizationParams->get<string>("Type") != "Albany", "Invalid Type in AlbanyDiscretization");
 
-  initialX = Teuchos::RCP<Epetra_Vector>(new Epetra_Vector(*refCoord));
-  cellVolume = Teuchos::RCP<Epetra_Vector>(new Epetra_Vector(*volume));
-  blockID = Teuchos::RCP<Epetra_Vector>(new Epetra_Vector(*blockId));
+  // Create the owned maps
+  Teuchos::RCP<Epetra_BlockMap> oneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(-1, numGlobalIds, globalIds, 1, 0, *comm));
+  Teuchos::RCP<Epetra_BlockMap> threeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(-1, numGlobalIds, globalIds, 3, 0, *comm));
 
-  oneDimensionalMap = Teuchos::RCP<Epetra_BlockMap>(new Epetra_BlockMap(cellVolume->Map()));
-  threeDimensionalMap = Teuchos::RCP<Epetra_BlockMap>(new Epetra_BlockMap(initialX->Map()));
+  // Create Epetra_Vectors and fill them with the provided data
+  cellVolume = Teuchos::RCP<Epetra_Vector>(new Epetra_Vector(*oneDimensionalMap));
+  blockID = Teuchos::RCP<Epetra_Vector>(new Epetra_Vector(*oneDimensionalMap));
+  for(int i=0 ; i<numGlobalIds ; ++i){
+    (*cellVolume)[i] = volume[i];
+    (*blockID)[i] = blockId[i];
+  }
+  initialX = Teuchos::RCP<Epetra_Vector>(new Epetra_Vector(*threeDimensionalMap));
+  for(int i=0 ; i<3*numGlobalIds ; ++i){
+    (*initialX)[i] = refCoord[i];
+  }
 
   // Set up bond filters
   if(discretizationParams->isParameter("Omit Bonds Between Blocks"))
@@ -188,10 +198,10 @@ PeridigmNS::AlbanyDiscretization::AlbanyDiscretization(const Teuchos::RCP<const 
   vector<double> localMin(1);
   vector<double> globalMin(1);
   localMin[0] = minElementRadius;
-  epetra_comm->MinAll(&localMin[0], &globalMin[0], 1);
+  comm->MinAll(&localMin[0], &globalMin[0], 1);
   minElementRadius = globalMin[0];
   localMin[0] = maxElementRadius;
-  epetra_comm->MaxAll(&localMin[0], &globalMin[0], 1);
+  comm->MaxAll(&localMin[0], &globalMin[0], 1);
   maxElementRadius = globalMin[0];
 }
 
