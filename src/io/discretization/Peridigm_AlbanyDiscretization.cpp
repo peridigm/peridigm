@@ -87,8 +87,8 @@ PeridigmNS::AlbanyDiscretization::AlbanyDiscretization(const MPI_Comm& mpiComm,
   TEUCHOS_TEST_FOR_EXCEPT_MSG(discretizationParams->get<string>("Type") != "Albany", "Invalid Type in AlbanyDiscretization");
 
   // Create the owned maps
-  Teuchos::RCP<Epetra_BlockMap> oneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(-1, numGlobalIds, globalIds, 1, 0, *comm));
-  Teuchos::RCP<Epetra_BlockMap> threeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(-1, numGlobalIds, globalIds, 3, 0, *comm));
+  oneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(-1, numGlobalIds, globalIds, 1, 0, *comm));
+  threeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(-1, numGlobalIds, globalIds, 3, 0, *comm));
 
   // Create Epetra_Vectors and fill them with the provided data
   cellVolume = Teuchos::RCP<Epetra_Vector>(new Epetra_Vector(*oneDimensionalMap));
