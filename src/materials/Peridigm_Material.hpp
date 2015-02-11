@@ -97,12 +97,6 @@ namespace PeridigmNS {
       return 0.0;
     }	
 
-	//! Returns fluid density for multiphysics materials
-	//virtual double fluidDensity() const = 0;
-
-	//! Returns fluid compressibility for multiphysics materials
-	//virtual double fluidCompressibility() const = 0;
-	
     //! Returns a vector of field IDs corresponding to the variables associated with the material.
     virtual std::vector<int> FieldIds() const = 0;
 
@@ -117,9 +111,9 @@ namespace PeridigmNS {
     //! Evaluate the internal force.
     virtual void
     computeForce(const double dt,
-		 const int numOwnedPoints,
-		 const int* ownedIDs,
-		 const int* neighborhoodList,
+                 const int numOwnedPoints,
+                 const int* ownedIDs,
+                 const int* neighborhoodList,
                  PeridigmNS::DataManager& dataManager) const = 0;
 
     /// \enum JacobianType
