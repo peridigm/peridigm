@@ -51,9 +51,9 @@
 #include "linear_lps_pv.h"  // for internal force
 #include "material_utilities.h"
 #include <Teuchos_Assert.hpp>
-#include <Epetra_SerialComm.h>
-#include <Sacado.hpp>
+#include <Epetra_Comm.h>
 #include <boost/math/special_functions/fpclassify.hpp>
+#include <boost/math/constants/constants.hpp>
 
 using namespace std;
 
@@ -61,6 +61,7 @@ PeridigmNS::LinearLPSPVMaterial::LinearLPSPVMaterial(const Teuchos::ParameterLis
   : Material(params),
     m_bulkModulus(0.0), m_shearModulus(0.0), m_density(0.0), m_horizon(0.0),
     m_omega(PeridigmNS::InfluenceFunction::self().getInfluenceFunction()),
+    m_useAnalyticWeightedVolume(false),
     m_volumeFieldId(-1), m_damageFieldId(-1), m_weightedVolumeFieldId(-1), m_dilatationFieldId(-1), m_modelCoordinatesFieldId(-1),
     m_coordinatesFieldId(-1), m_forceDensityFieldId(-1), m_bondDamageFieldId(-1),
     m_applyPartialVolumes(false),
@@ -72,6 +73,9 @@ PeridigmNS::LinearLPSPVMaterial::LinearLPSPVMaterial(const Teuchos::ParameterLis
   m_shearModulus = calculateShearModulus(params);
   m_density = params.get<double>("Density");
   m_horizon = params.get<double>("Horizon");
+
+  if(params.isParameter("Use Analytic Weighted Volume"))
+    m_useAnalyticWeightedVolume = params.get<bool>("Use Analytic Weighted Volume");
 
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   m_volumeFieldId                  = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Volume");
@@ -138,20 +142,33 @@ PeridigmNS::LinearLPSPVMaterial::initialize(const double dt,
     dataManager.getData(m_neighborCentroidZFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborCentroidZ);
   }
 
-  MATERIAL_EVALUATION::computeWeightedVolumePV(xOverlap,
-                                               cellVolumeOverlap,
-                                               selfVolume,
-                                               selfCentroidX,
-                                               selfCentroidY,
-                                               selfCentroidZ,
-                                               neighborVolume,
-                                               neighborCentroidX,
-                                               neighborCentroidY,
-                                               neighborCentroidZ,
-                                               weightedVolume,
-                                               numOwnedPoints,
-                                               neighborhoodList,
-                                               m_horizon);
+  int myPID = dataManager.getOwnedScalarPointMap()->Comm().MyPID();
+
+  if(m_useAnalyticWeightedVolume){
+    if(myPID == 0)
+      cout << "\nLinearLPS Material Model applying analytic weighted volume.\n" << endl;
+    const double pi = boost::math::constants::pi<double>();
+    double analyticWeightedVolume = 4.0*pi*m_horizon*m_horizon*m_horizon*m_horizon*m_horizon/5.0;
+    dataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->PutScalar(analyticWeightedVolume);
+  }
+  else{
+    if(myPID == 0)
+      cout << "\nLinearLPS Material Model applying numerical weighted volume.\n" << endl;
+    MATERIAL_EVALUATION::computeWeightedVolumePV(xOverlap,
+						 cellVolumeOverlap,
+						 selfVolume,
+						 selfCentroidX,
+						 selfCentroidY,
+						 selfCentroidZ,
+						 neighborVolume,
+						 neighborCentroidX,
+						 neighborCentroidY,
+						 neighborCentroidZ,
+						 weightedVolume,
+						 numOwnedPoints,
+						 neighborhoodList,
+						 m_horizon);
+  }
 }
 
 void

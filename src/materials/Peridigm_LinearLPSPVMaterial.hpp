@@ -109,6 +109,9 @@ namespace PeridigmNS {
     double m_horizon;
     PeridigmNS::InfluenceFunction::functionPointer m_omega;
 
+    // flag for applying analytic value of the weighted volume (as opposed to the numerically-computed value)
+    bool m_useAnalyticWeightedVolume;
+
     // field ids for all relevant data
     std::vector<int> m_fieldIds;
     int m_volumeFieldId;
