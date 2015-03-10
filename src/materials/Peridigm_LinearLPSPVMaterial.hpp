@@ -102,6 +102,9 @@ namespace PeridigmNS {
         return ( sqrt( (a1-b1)*(a1-b1) + (a2-b2)*(a2-b2) + (a3-b3)*(a3-b3) ) );
       }
 
+    int m_pid;
+    bool m_verbose;
+
     // material parameters
     double m_bulkModulus;
     double m_shearModulus;
@@ -124,7 +127,8 @@ namespace PeridigmNS {
     int m_bondDamageFieldId;
 
     // field ids for partial volumes and centroids
-    bool m_applyPartialVolumes;
+    bool m_usePartialVolume;
+    bool m_usePartialCentroid;
     int m_selfVolumeFieldId;
     int m_selfCentroidXFieldId;
     int m_selfCentroidYFieldId;

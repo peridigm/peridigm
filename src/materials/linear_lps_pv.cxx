@@ -110,8 +110,10 @@ void computeDilatationLinearLPS
       omega = influenceFunction(normZeta, horizon);
       dotProduct = zeta[0]*(uNeighbor[0]-u[0]) + zeta[1]*(uNeighbor[1]-u[1]) + zeta[2]*(uNeighbor[2]-u[2]);
       *theta += omega*(1.0 - *damage)*dotProduct*volNeighbor;
-    } 
-    *theta *= 3.0/(*m);
+    }
+    if(numNeighbors > 0){
+      *theta *= 3.0/(*m);
+    }
   }
 }
 
