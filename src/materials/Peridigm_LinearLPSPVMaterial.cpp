@@ -58,24 +58,31 @@
 using namespace std;
 
 PeridigmNS::LinearLPSPVMaterial::LinearLPSPVMaterial(const Teuchos::ParameterList& params)
-  : Material(params),
+  : Material(params), m_pid(-1), m_verbose(false),
     m_bulkModulus(0.0), m_shearModulus(0.0), m_density(0.0), m_horizon(0.0),
     m_omega(PeridigmNS::InfluenceFunction::self().getInfluenceFunction()),
-    m_useAnalyticWeightedVolume(false),
+    m_useAnalyticWeightedVolume(false), m_usePartialVolume(false), m_usePartialCentroid(false),
     m_volumeFieldId(-1), m_damageFieldId(-1), m_weightedVolumeFieldId(-1), m_dilatationFieldId(-1), m_modelCoordinatesFieldId(-1),
     m_coordinatesFieldId(-1), m_forceDensityFieldId(-1), m_bondDamageFieldId(-1),
-    m_applyPartialVolumes(false),
     m_selfVolumeFieldId(-1), m_selfCentroidXFieldId(-1), m_selfCentroidYFieldId(-1), m_selfCentroidZFieldId(-1),
     m_neighborVolumeFieldId(-1), m_neighborCentroidXFieldId(-1), m_neighborCentroidYFieldId(-1), m_neighborCentroidZFieldId(-1)
 {
-  //! \todo Add meaningful asserts on material properties.
   m_bulkModulus = calculateBulkModulus(params);
   m_shearModulus = calculateShearModulus(params);
   m_density = params.get<double>("Density");
   m_horizon = params.get<double>("Horizon");
 
+  if(params.isParameter("Verbose"))
+    m_verbose = params.get<bool>("Verbose");
+
   if(params.isParameter("Use Analytic Weighted Volume"))
     m_useAnalyticWeightedVolume = params.get<bool>("Use Analytic Weighted Volume");
+
+  if(params.isParameter("Use Partial Volume"))
+    m_usePartialVolume = params.get<bool>("Use Partial Volume");
+
+  if(params.isParameter("Use Partial Centroid"))
+    m_usePartialCentroid = params.get<bool>("Use Partial Centroid");
 
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   m_volumeFieldId                  = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Volume");
@@ -103,27 +110,29 @@ PeridigmNS::LinearLPSPVMaterial::~LinearLPSPVMaterial()
 
 void
 PeridigmNS::LinearLPSPVMaterial::initialize(const double dt,
-                                          const int numOwnedPoints,
-                                          const int* ownedIDs,
-                                          const int* neighborhoodList,
-                                          PeridigmNS::DataManager& dataManager)
+					    const int numOwnedPoints,
+					    const int* ownedIDs,
+					    const int* neighborhoodList,
+					    PeridigmNS::DataManager& dataManager)
 {
-  // Determine if partial volume information is available
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
-  if(fieldManager.hasField("Self_Volume") && fieldManager.hasField("Neighbor_Volume")){
+  m_pid = dataManager.getOwnedScalarPointMap()->Comm().MyPID();
+
+  if(m_usePartialVolume){
     m_selfVolumeFieldId = fieldManager.getFieldId("Self_Volume");
+    m_neighborVolumeFieldId = fieldManager.getFieldId("Neighbor_Volume");
+  }
+  if(m_usePartialCentroid){
     m_selfCentroidXFieldId = fieldManager.getFieldId("Self_Centroid_X");
     m_selfCentroidYFieldId = fieldManager.getFieldId("Self_Centroid_Y");
     m_selfCentroidZFieldId = fieldManager.getFieldId("Self_Centroid_Z");
-    m_neighborVolumeFieldId = fieldManager.getFieldId("Neighbor_Volume");
     m_neighborCentroidXFieldId = fieldManager.getFieldId("Neighbor_Centroid_X");
     m_neighborCentroidYFieldId = fieldManager.getFieldId("Neighbor_Centroid_Y");
     m_neighborCentroidZFieldId = fieldManager.getFieldId("Neighbor_Centroid_Z");
-    m_applyPartialVolumes = dataManager.hasData(m_selfVolumeFieldId, PeridigmField::STEP_NONE) && dataManager.hasData(m_neighborVolumeFieldId, PeridigmField::STEP_NONE);
   }
 
   // Extract pointers to the underlying data
-  double *xOverlap,  *cellVolumeOverlap, *weightedVolume;
+  double *xOverlap, *cellVolumeOverlap, *weightedVolume;
   dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&xOverlap);
   dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&cellVolumeOverlap);
   dataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
@@ -131,28 +140,41 @@ PeridigmNS::LinearLPSPVMaterial::initialize(const double dt,
   // Extract pointers to partial volume data
   double *selfVolume(0), *selfCentroidX(0), *selfCentroidY(0), *selfCentroidZ(0);
   double *neighborVolume(0), *neighborCentroidX(0), *neighborCentroidY(0), *neighborCentroidZ(0);
-  if(m_applyPartialVolumes){
+  if(m_usePartialVolume){
+    if(m_verbose && m_pid == 0)
+      cout << "\nLinearLPS Material Model applying partial volume.\n" << endl;
     dataManager.getData(m_selfVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&selfVolume);
+    dataManager.getData(m_neighborVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborVolume);
+  }
+  else{
+    if(m_verbose && m_pid == 0)
+      cout << "\nLinearLPS Material Model not applying partial volume.\n" << endl;
+  }
+
+  if(m_usePartialCentroid){
+    if(m_verbose && m_pid == 0)
+      cout << "\nLinearLPS Material Model applying partial centroid.\n" << endl;
     dataManager.getData(m_selfCentroidXFieldId, PeridigmField::STEP_NONE)->ExtractView(&selfCentroidX);
     dataManager.getData(m_selfCentroidYFieldId, PeridigmField::STEP_NONE)->ExtractView(&selfCentroidY);
     dataManager.getData(m_selfCentroidZFieldId, PeridigmField::STEP_NONE)->ExtractView(&selfCentroidZ);
-    dataManager.getData(m_neighborVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborVolume);
     dataManager.getData(m_neighborCentroidXFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborCentroidX);
     dataManager.getData(m_neighborCentroidYFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborCentroidY);
     dataManager.getData(m_neighborCentroidZFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborCentroidZ);
   }
-
-  int myPID = dataManager.getOwnedScalarPointMap()->Comm().MyPID();
+  else{
+    if(m_verbose && m_pid == 0)
+      cout << "\nLinearLPS Material Model not applying partial centroid.\n" << endl;
+  }
 
   if(m_useAnalyticWeightedVolume){
-    if(myPID == 0)
+    if(m_verbose && m_pid == 0)
       cout << "\nLinearLPS Material Model applying analytic weighted volume.\n" << endl;
     const double pi = boost::math::constants::pi<double>();
     double analyticWeightedVolume = 4.0*pi*m_horizon*m_horizon*m_horizon*m_horizon*m_horizon/5.0;
     dataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->PutScalar(analyticWeightedVolume);
   }
   else{
-    if(myPID == 0)
+    if(m_verbose && m_pid == 0)
       cout << "\nLinearLPS Material Model applying numerical weighted volume.\n" << endl;
     MATERIAL_EVALUATION::computeWeightedVolumePV(xOverlap,
 						 cellVolumeOverlap,
@@ -194,12 +216,14 @@ PeridigmNS::LinearLPSPVMaterial::computeForce(const double dt,
   // Extract pointers to partial volume data
   double *selfVolume(0), *selfCentroidX(0), *selfCentroidY(0), *selfCentroidZ(0);
   double *neighborVolume(0), *neighborCentroidX(0), *neighborCentroidY(0), *neighborCentroidZ(0);
-  if(m_applyPartialVolumes){
+  if(m_usePartialVolume){
     dataManager.getData(m_selfVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&selfVolume);
+    dataManager.getData(m_neighborVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborVolume);
+  }
+  if(m_usePartialCentroid){
     dataManager.getData(m_selfCentroidXFieldId, PeridigmField::STEP_NONE)->ExtractView(&selfCentroidX);
     dataManager.getData(m_selfCentroidYFieldId, PeridigmField::STEP_NONE)->ExtractView(&selfCentroidY);
     dataManager.getData(m_selfCentroidZFieldId, PeridigmField::STEP_NONE)->ExtractView(&selfCentroidZ);
-    dataManager.getData(m_neighborVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborVolume);
     dataManager.getData(m_neighborCentroidXFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborCentroidX);
     dataManager.getData(m_neighborCentroidYFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborCentroidY);
     dataManager.getData(m_neighborCentroidZFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborCentroidZ);
