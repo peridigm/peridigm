@@ -47,8 +47,8 @@
 
 #include "Peridigm_TextFileDiscretization.hpp"
 #include "Peridigm_HorizonManager.hpp"
-#include "pdneigh/NeighborhoodList.h"
-#include "pdneigh/PdZoltan.h"
+#include "NeighborhoodList.h"
+#include "PdZoltan.h"
 
 #include <Epetra_Map.h>
 #include <Epetra_Vector.h>
