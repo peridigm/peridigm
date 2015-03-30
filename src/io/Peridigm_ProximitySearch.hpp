@@ -49,7 +49,7 @@
 #include <Teuchos_RCP.hpp>
 #include <Epetra_Vector.h>
 #include <vector>
-#include "pdneigh/BondFilter.h"
+#include "BondFilter.h"
 
 namespace PeridigmNS {
 namespace ProximitySearch {
