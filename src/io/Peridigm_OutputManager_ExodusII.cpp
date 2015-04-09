@@ -247,8 +247,6 @@ void PeridigmNS::OutputManager_ExodusII::write(Teuchos::RCP< std::vector<Peridig
     peridigm->getInterfaceData()->WriteExodusOutput(exodusCount,current_time,peridigm->getX(),peridigm->getY());
   }
 
-
-
   // Open exodus database for writing
   float version;
   file_handle = ex_open(filename.str().c_str(), EX_WRITE, &CPU_word_size, &IO_word_size, &version);
@@ -515,8 +513,26 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
   }
 
   /*
-   * Now, initialize ExodusII database
+   * Initialize ExodusII database
    */
+
+  // Obtain the node sets
+  Teuchos::RCP< std::map< std::string, std::vector<int> > > exodusNodeSets = peridigm->getExodusNodeSets();
+  std::map< std::string, std::vector<int> >::iterator nsIt;
+
+  int num_dimensions = 3;
+  int num_nodes = peridigm->getOneDimensionalMap()->NumMyElements();
+  int num_elements = num_nodes;
+  int num_element_blocks = blocks->size();
+  int num_node_sets = exodusNodeSets()->size();
+  int num_side_sets = 0;
+
+  // For code coupling simulations, there can be a situation where there
+  // are no peridynamic nodes on a processor.  This seems to cause
+  // issues with Exodus, so just bail.
+  bool haveData = true;
+  if(num_nodes == 0)
+    haveData = false;
 
   // Default to storing and writing doubles
   int CPU_word_size, IO_word_size;
@@ -531,17 +547,6 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
   element_output_field_map.clear();
   node_output_field_map.clear();
 
-  // Obtain the node sets
-  Teuchos::RCP< std::map< std::string, std::vector<int> > > exodusNodeSets = peridigm->getExodusNodeSets();
-  std::map< std::string, std::vector<int> >::iterator nsIt;
-
-  // Initialize the database (assumes that Peridigm mothership vectors created and initialized)
-  int num_dimensions = 3;
-  int num_nodes = peridigm->getOneDimensionalMap()->NumMyElements();
-  int num_elements = num_nodes;
-  int num_element_blocks = blocks->size();
-  int num_node_sets = exodusNodeSets()->size();
-  int num_side_sets = 0;
   // Initialize exodus file with parameters
   int retval = ex_put_init(file_handle,"Peridigm", num_dimensions, num_nodes, num_elements, num_element_blocks, num_node_sets, num_side_sets);
   if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_init");
@@ -787,7 +792,7 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
   // Write global var info
   int num_global_vars = global_output_field_map.size();
   char **global_var_names = NULL;
-  if(num_global_vars > 0){
+  if(num_global_vars > 0 && haveData){
     char **global_var_names = new char*[num_global_vars];
     for (i=0;i<num_global_vars;i++) global_var_names[i] = new char[MAX_STR_LENGTH+1]; // MAX_STR_LENGTH defined in ExodusII.h
     for( std::map<string,int>::iterator it=global_output_field_map.begin() ; it != global_output_field_map.end(); it++ )
@@ -801,11 +806,12 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
   // Write node var info 
   int num_node_vars = node_output_field_map.size();
   char **node_var_names = NULL;
-  if(num_node_vars > 0){
+  if(num_node_vars > 0 && haveData){
     node_var_names = new char*[num_node_vars];
     for (i=0;i<num_node_vars;i++) node_var_names[i] = new char[MAX_STR_LENGTH+1]; // MAX_STR_LENGTH defined in ExodusII.h
-    for ( std::map<string,int>::iterator it=node_output_field_map.begin() ; it != node_output_field_map.end(); it++ )
+    for ( std::map<string,int>::iterator it=node_output_field_map.begin() ; it != node_output_field_map.end(); it++ ){
       strcpy(node_var_names[(it->second)-1], it->first.c_str() );
+    }
     retval = ex_put_var_param(file_handle,"N",num_node_vars);
     if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_var_param");
     retval = ex_put_var_names(file_handle,"N",num_node_vars,node_var_names);
@@ -815,11 +821,12 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
   // Write element var info 
   int num_element_vars = element_output_field_map.size();
   char **element_var_names = NULL;
-  if(num_element_vars > 0){
+  if(num_element_vars > 0 && haveData){
     element_var_names = new char*[num_element_vars];
     for (i=0;i<num_element_vars;i++) element_var_names[i] = new char[MAX_STR_LENGTH+1]; // MAX_STR_LENGTH defined in ExodusII.h
-    for (std::map<string,int>::iterator it=element_output_field_map.begin() ; it != element_output_field_map.end(); it++)
+    for (std::map<string,int>::iterator it=element_output_field_map.begin() ; it != element_output_field_map.end(); it++){
       strcpy(element_var_names[(it->second)-1], it->first.c_str() );
+    }
     retval = ex_put_var_param(file_handle,"E",num_element_vars);
     if (retval!= 0) reportExodusError(retval, "initializeExodusDatabase", "ex_put_var_param");
     retval = ex_put_var_names(file_handle,"E",num_element_vars,element_var_names);
@@ -827,7 +834,7 @@ void PeridigmNS::OutputManager_ExodusII::initializeExodusDatabase(Teuchos::RCP< 
   }
 
   // Write element truth table (only if at least one element variable if defined)
-  if (num_element_vars > 0) {
+  if (num_element_vars > 0 && haveData) {
     std::vector<int> truthTableVec(blocks->size() * num_element_vars);
     int truthTableIndex = 0;
     for(blockIt = blocks->begin(); blockIt != blocks->end(); blockIt++){
