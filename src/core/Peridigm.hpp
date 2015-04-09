@@ -168,8 +168,38 @@ namespace PeridigmNS {
       return fieldManager;
     }
 
+    //! Query the presence of a specific data field in a given block's DataManger (intended for use when calling Peridigm as a library).
+    bool hasBlockData(std::string blockName, std::string fieldName) {
+
+      // locate the block by name
+      std::vector<PeridigmNS::Block>::iterator block;
+      bool found = false;
+      for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+        if(blockIt->getName() == blockName){
+          block = blockIt;
+          found = true;
+          continue;
+        }
+      }
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(!found, "**** Error, Peridigm::getBlockData(), block " + blockName + " not found!\n");
+
+      PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
+
+      if(!fieldManager.hasField(fieldName)){
+	return false;
+      }
+
+      int fieldId = fieldManager.getFieldId(fieldName);
+      PeridigmNS::FieldSpec spec = fieldManager.getFieldSpec(fieldId);
+      PeridigmNS::PeridigmField::Step step = PeridigmNS::PeridigmField::STEP_NONE;
+      if(spec.getTemporal() == PeridigmNS::PeridigmField::TWO_STEP)
+        step = PeridigmNS::PeridigmField::STEP_NP1;
+
+      return block->hasData(fieldId, step);
+    }
+
     //! Get an Epetra_Vector of data from a given block's DataManger (intended for use when calling Peridigm as a library).
-    Teuchos::RCP<const Epetra_Vector> getBlockData(std::string blockName, std::string fieldName) {
+    Teuchos::RCP<Epetra_Vector> getBlockData(std::string blockName, std::string fieldName) {
 
       // \todo Organize all the functions that are meant to be called in library mode.
 

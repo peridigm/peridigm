@@ -6,7 +6,6 @@
 #include "Peridigm_Compute_Linear_Momentum.hpp"
 #include "Peridigm_Compute_Global_Linear_Momentum.hpp"
 #include "Peridigm_Compute_Local_Linear_Momentum.hpp"
-//#include "Peridigm_Compute_Energy.hpp"
 #include "Peridigm_Compute_Kinetic_Energy.hpp"
 #include "Peridigm_Compute_Global_Kinetic_Energy.hpp"
 #include "Peridigm_Compute_Local_Kinetic_Energy.hpp"
@@ -22,4 +21,5 @@
 #include "Peridigm_Compute_Stored_Elastic_Energy_Density.hpp"
 #include "Peridigm_Compute_Stored_Elastic_Energy.hpp"
 #include "Peridigm_Compute_Nonlinear_Solver_Iterations.hpp"
+#include "Peridigm_Compute_OBC_Functional.hpp"
 #include "Peridigm_Compute.hpp"
