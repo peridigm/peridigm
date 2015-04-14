@@ -475,6 +475,9 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
     int computeIntersectionsNumSamples = 2;
     if(discParams->isParameter("Element-Horizon Intersection Number Of Samples"))
       computeIntersectionsNumSamples = discParams->get<int>("Element-Horizon Intersection Number Of Samples");
+    bool useLookupTable = true;
+    if(discParams->isParameter("Element-Horizon Intersection Use Lookup Table"))
+      useLookupTable = discParams->get<bool>("Element-Horizon Intersection Use Lookup Table");
 
     PeridigmNS::Timer::self().startTimer("Element-Horizon Intersections");
     if(peridigmComm->MyPID() == 0){
@@ -484,7 +487,8 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
     computePartialVolume(blocks,
                          peridigmDiscretization,
                          computeIntersectionsNumRecursion,
-                         computeIntersectionsNumSamples);
+                         computeIntersectionsNumSamples,
+			 useLookupTable);
     if(peridigmComm->MyPID() == 0){
       cout << "\n  Intersection calculations complete.\n" << endl;
       cout.flush();
