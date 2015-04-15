@@ -469,12 +469,29 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
   if(computeIntersections){
 
     // Grab parameters from discretization section of input deck
+    PartialVolumeScheme partialVolumeScheme = PV;
+    if(discParams->isParameter("Element-Horizon Intersection Partial Volume Scheme")){
+      string partialVolumeSchemeString = discParams->get<string>("Element-Horizon Intersection Partial Volume Scheme");
+      if(partialVolumeSchemeString == "FV")
+        partialVolumeScheme = FV;
+      else if(partialVolumeSchemeString == "PDLAMMPS")
+        partialVolumeScheme = PDLAMMPS;
+      else if(partialVolumeSchemeString == "HHB")
+        partialVolumeScheme = HHB;
+      else if(partialVolumeSchemeString == "PV")
+        partialVolumeScheme = PV;
+      else
+        TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Invalid option for \"Element-Horizon Intersection Partial Volume Scheme\".");
+    }
     int computeIntersectionsNumRecursion = 2;
     if(discParams->isParameter("Element-Horizon Intersection Recursion Level"))
       computeIntersectionsNumRecursion = discParams->get<int>("Element-Horizon Intersection Recursion Level");
     int computeIntersectionsNumSamples = 2;
     if(discParams->isParameter("Element-Horizon Intersection Number Of Samples"))
       computeIntersectionsNumSamples = discParams->get<int>("Element-Horizon Intersection Number Of Samples");
+    double computeIntersectionsCharacteristicElementLength = 0.0;
+    if(discParams->isParameter("Element-Horizon Intersection Characteristic Element Length"))
+      computeIntersectionsCharacteristicElementLength = discParams->get<double>("Element-Horizon Intersection Characteristic Element Length");
     bool useLookupTable = true;
     if(discParams->isParameter("Element-Horizon Intersection Use Lookup Table"))
       useLookupTable = discParams->get<bool>("Element-Horizon Intersection Use Lookup Table");
@@ -488,7 +505,9 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
                          peridigmDiscretization,
                          computeIntersectionsNumRecursion,
                          computeIntersectionsNumSamples,
-			 useLookupTable);
+                         partialVolumeScheme,
+                         computeIntersectionsCharacteristicElementLength,
+                         useLookupTable);
     if(peridigmComm->MyPID() == 0){
       cout << "\n  Intersection calculations complete.\n" << endl;
       cout.flush();
