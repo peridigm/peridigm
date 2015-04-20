@@ -65,6 +65,7 @@ double computeWeightedVolumePV
  const double* neighborCentroidXPtr,
  const double* neighborCentroidYPtr,
  const double* neighborCentroidZPtr,
+ const double* influenceFunctionValuesPtr,
  const int* localNeighborList,
  double horizon,
  const FunctionPointer omega
@@ -107,7 +108,14 @@ double computeWeightedVolumePV
     double dz = neighborZ - selfZ;
     double zetaSquared = dx*dx+dy*dy+dz*dz;
     double d = sqrt(zetaSquared);
-    m += omega(d,horizon)*zetaSquared*neighborVolume;
+    double influenceFunctionValue;
+    if(influenceFunctionValuesPtr != 0){
+      influenceFunctionValue = influenceFunctionValuesPtr[n];
+    }
+    else{
+      influenceFunctionValue = omega(d, horizon);
+    }
+    m += influenceFunctionValue*zetaSquared*neighborVolume;
   }
   return m;
 }
@@ -124,6 +132,7 @@ void computeWeightedVolumePV
  const double* neighborCentroidXPtr,
  const double* neighborCentroidYPtr,
  const double* neighborCentroidZPtr,
+ const double* influenceFunctionValuesPtr,
  double *mOwned,
  int myNumPoints,
  const int* localNeighborList,
@@ -141,6 +150,7 @@ void computeWeightedVolumePV
   const double *neighborCentroidX = neighborCentroidXPtr;
   const double *neighborCentroidY = neighborCentroidYPtr;
   const double *neighborCentroidZ = neighborCentroidZPtr;
+  const double *influenceFunctionValues = influenceFunctionValuesPtr;
 
   bool usePartialVolume = false;
   if(selfVolume != 0 && neighborVolume != 0)
@@ -148,6 +158,9 @@ void computeWeightedVolumePV
   bool usePartialCentroid = false;
   if(selfCentroidX != 0 && selfCentroidY != 0 && selfCentroidZ != 0 && neighborCentroidX != 0 && neighborCentroidY != 0 && neighborCentroidZ != 0)
     usePartialCentroid = true;
+  bool useStoredInfluenceFunctionValues = false;
+  if(influenceFunctionValues != 0)
+    useStoredInfluenceFunctionValues = true;
 
   for(int p=0;p<myNumPoints;p++, xOwned+=3, m++){
     int numNeigh = *neighPtr;
@@ -163,21 +176,25 @@ void computeWeightedVolumePV
 						    neighborCentroidX,
 						    neighborCentroidY,
 						    neighborCentroidZ,
+						    influenceFunctionValues,
 						    neighPtr,
 						    horizon,
 						    omega);
     neighPtr+=(numNeigh+1);
     if(usePartialVolume){
-      selfVolume+=numNeigh;
-      neighborVolume+=numNeigh;
+      selfVolume += numNeigh;
+      neighborVolume += numNeigh;
     }
     if(usePartialCentroid){
-      selfCentroidX+=numNeigh;
-      selfCentroidY+=numNeigh;
-      selfCentroidZ+=numNeigh;
-      neighborCentroidX+=numNeigh;
-      neighborCentroidY+=numNeigh;
-      neighborCentroidZ+=numNeigh;
+      selfCentroidX += numNeigh;
+      selfCentroidY += numNeigh;
+      selfCentroidZ += numNeigh;
+      neighborCentroidX += numNeigh;
+      neighborCentroidY += numNeigh;
+      neighborCentroidZ += numNeigh;
+    }
+    if(useStoredInfluenceFunctionValues){
+      influenceFunctionValues += numNeigh;
     }
   }
 }

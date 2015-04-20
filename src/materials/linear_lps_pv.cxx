@@ -69,6 +69,7 @@ void computeDilatationLinearLPS
  const double* neighborCentroidXPtr,
  const double* neighborCentroidYPtr,
  const double* neighborCentroidZPtr,
+ const double* influenceFunctionValues,
  const double* bondDamage,
  ScalarT* dilatationOwnedPtr,
  const int* localNeighborList,
@@ -86,8 +87,8 @@ void computeDilatationLinearLPS
   const double *xNeighbor;
   const ScalarT *yNeighbor;
   ScalarT u[3], uNeighbor[3], dotProduct;
-  double zeta[3], volNeighbor, normZeta, omega;
-  int i, p, n, numNeighbors, neighborId;
+  double zeta[3], volNeighbor, omega;
+  int i, p, n, numNeighbors, neighborId, influenceFunctionValuesIndex(0);
 
   for(p=0; p<numOwnedPoints; p++, x+=3, y+=3, m++, theta++){
     *theta = 0.0;
@@ -106,8 +107,13 @@ void computeDilatationLinearLPS
         u[i] = y[i] - x[i];
         uNeighbor[i] = yNeighbor[i] - xNeighbor[i];
       }
-      normZeta = std::sqrt(zeta[0]*zeta[0] + zeta[1]*zeta[1] + zeta[2]*zeta[2]);
-      omega = influenceFunction(normZeta, horizon);
+      if(influenceFunctionValues == 0){
+	double normZeta = std::sqrt(zeta[0]*zeta[0] + zeta[1]*zeta[1] + zeta[2]*zeta[2]);
+	omega = influenceFunction(normZeta, horizon);
+      }
+      else{
+	omega = influenceFunctionValues[influenceFunctionValuesIndex++];
+      }
       dotProduct = zeta[0]*(uNeighbor[0]-u[0]) + zeta[1]*(uNeighbor[1]-u[1]) + zeta[2]*(uNeighbor[2]-u[2]);
       *theta += omega*(1.0 - *damage)*dotProduct*volNeighbor;
     }
@@ -135,6 +141,7 @@ void computeInternalForceLinearLPS
  const double* neighborCentroidXPtr,
  const double* neighborCentroidYPtr,
  const double* neighborCentroidZPtr,
+ const double* influenceFunctionValues,
  const double* bondDamage,
  ScalarT* forceOverlapPtr,
  const int* localNeighborList,
@@ -157,7 +164,7 @@ void computeInternalForceLinearLPS
   const ScalarT *yNeighbor;
   ScalarT u[3], uNeighbor[3], temp1, matVec[3], fx, fy, fz;
   double zeta[3], volSelf, volNeighbor, normZeta, omega, temp2, dyadicProduct[3][3];
-  int i, j, p, n, numNeighbors, neighborId;
+  int i, j, p, n, numNeighbors, neighborId, influenceFunctionValuesIndex(0);
 
   for(p=0; p<numOwnedPoints; p++, x+=3, y+=3, m++, theta++, force+=3){
     numNeighbors = *neighborlist;
@@ -180,7 +187,12 @@ void computeInternalForceLinearLPS
         uNeighbor[i] = yNeighbor[i] - xNeighbor[i];
       }
       normZeta = std::sqrt(zeta[0]*zeta[0] + zeta[1]*zeta[1] + zeta[2]*zeta[2]);
-      omega = influenceFunction(normZeta, horizon);
+      if(influenceFunctionValues == 0){
+	omega = influenceFunction(normZeta, horizon);
+      }
+      else{
+	omega = influenceFunctionValues[influenceFunctionValuesIndex++];
+      }
       temp1 = (9.0*bulkModulus - 15.0*shearModulus)*omega*(*theta)/(3.0*(*m));
       temp2 = 15.0*shearModulus*omega/((*m)*normZeta*normZeta);
       for(i=0 ; i<3 ; i++){
@@ -221,6 +233,7 @@ template void computeDilatationLinearLPS<double>
  const double* neighborCentroidXPtr,
  const double* neighborCentroidYPtr,
  const double* neighborCentroidZPtr,
+ const double* influenceFunctionValues,
  const double* bondDamage,
  double* dilatationOwnedPtr,
  const int* localNeighborList,
@@ -244,6 +257,7 @@ template void computeDilatationLinearLPS<Sacado::Fad::DFad<double> >
  const double* neighborCentroidXPtr,
  const double* neighborCentroidYPtr,
  const double* neighborCentroidZPtr,
+ const double* influenceFunctionValues,
  const double* bondDamage,
  Sacado::Fad::DFad<double>* dilatationOwnedPtr,
  const int* localNeighborList,
@@ -268,6 +282,7 @@ template void computeInternalForceLinearLPS<double>
  const double* neighborCentroidXPtr,
  const double* neighborCentroidYPtr,
  const double* neighborCentroidZPtr,
+ const double* influenceFunctionValues,
  const double* bondDamage,
  double* forceOverlapPtr,
  const int* localNeighborList,
@@ -294,6 +309,7 @@ template void computeInternalForceLinearLPS<Sacado::Fad::DFad<double> >
  const double* neighborCentroidXPtr,
  const double* neighborCentroidYPtr,
  const double* neighborCentroidZPtr,
+ const double* influenceFunctionValues,
  const double* bondDamage,
  Sacado::Fad::DFad<double>* forceOverlapPtr,
  const int* localNeighborList,
