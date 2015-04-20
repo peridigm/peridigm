@@ -92,6 +92,7 @@ PeridigmNS::LinearLPSPVMaterial::LinearLPSPVMaterial(const Teuchos::ParameterLis
   m_modelCoordinatesFieldId        = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::CONSTANT, "Model_Coordinates");
   m_coordinatesFieldId             = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Coordinates");
   m_forceDensityFieldId            = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force_Density");
+  m_influenceFunctionFieldId       = fieldManager.getFieldId(PeridigmField::BOND,    PeridigmField::SCALAR, PeridigmField::CONSTANT, "Influence_Function");
   m_bondDamageFieldId              = fieldManager.getFieldId(PeridigmField::BOND,    PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Bond_Damage");
 
   m_fieldIds.push_back(m_volumeFieldId);
@@ -101,6 +102,7 @@ PeridigmNS::LinearLPSPVMaterial::LinearLPSPVMaterial(const Teuchos::ParameterLis
   m_fieldIds.push_back(m_modelCoordinatesFieldId);
   m_fieldIds.push_back(m_coordinatesFieldId);
   m_fieldIds.push_back(m_forceDensityFieldId);
+  m_fieldIds.push_back(m_influenceFunctionFieldId);
   m_fieldIds.push_back(m_bondDamageFieldId);
 }
 
@@ -118,6 +120,16 @@ PeridigmNS::LinearLPSPVMaterial::initialize(const double dt,
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   m_pid = dataManager.getOwnedScalarPointMap()->Comm().MyPID();
 
+  // Extract pointers to the underlying data
+  double *xOverlap, *influenceFunctionValues;
+  dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&xOverlap);
+  dataManager.getData(m_influenceFunctionFieldId, PeridigmField::STEP_NONE)->ExtractView(&influenceFunctionValues);
+  MATERIAL_EVALUATION::computeAndStoreInfluenceFunctionValues(xOverlap,
+							      influenceFunctionValues,
+							      numOwnedPoints,
+							      neighborhoodList,
+							      m_horizon);
+
   if(m_usePartialVolume){
     m_selfVolumeFieldId = fieldManager.getFieldId("Self_Volume");
     m_neighborVolumeFieldId = fieldManager.getFieldId("Neighbor_Volume");
@@ -132,8 +144,7 @@ PeridigmNS::LinearLPSPVMaterial::initialize(const double dt,
   }
 
   // Extract pointers to the underlying data
-  double *xOverlap, *cellVolumeOverlap, *weightedVolume;
-  dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&xOverlap);
+  double *cellVolumeOverlap, *weightedVolume;
   dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&cellVolumeOverlap);
   dataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
 
@@ -186,6 +197,7 @@ PeridigmNS::LinearLPSPVMaterial::initialize(const double dt,
 						 neighborCentroidX,
 						 neighborCentroidY,
 						 neighborCentroidZ,
+						 influenceFunctionValues,
 						 weightedVolume,
 						 numOwnedPoints,
 						 neighborhoodList,
@@ -204,12 +216,13 @@ PeridigmNS::LinearLPSPVMaterial::computeForce(const double dt,
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
 
   // Extract pointers to the underlying data
-  double *x, *y, *cellVolume, *weightedVolume, *dilatation, *bondDamage, *force;
+  double *x, *y, *cellVolume, *weightedVolume, *dilatation, *influenceFunctionValues, *bondDamage, *force;
   dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
   dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&y);
   dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&cellVolume);
   dataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
   dataManager.getData(m_dilatationFieldId, PeridigmField::STEP_NP1)->ExtractView(&dilatation);
+  dataManager.getData(m_influenceFunctionFieldId, PeridigmField::STEP_NONE)->ExtractView(&influenceFunctionValues);
   dataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_NP1)->ExtractView(&bondDamage);
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&force);
 
@@ -243,6 +256,7 @@ PeridigmNS::LinearLPSPVMaterial::computeForce(const double dt,
                                                   neighborCentroidX,
                                                   neighborCentroidY,
                                                   neighborCentroidZ,
+						  influenceFunctionValues,
                                                   bondDamage,
                                                   dilatation,
                                                   neighborhoodList,
@@ -263,6 +277,7 @@ PeridigmNS::LinearLPSPVMaterial::computeForce(const double dt,
                                                      neighborCentroidX,
                                                      neighborCentroidY,
                                                      neighborCentroidZ,
+						     influenceFunctionValues,
                                                      bondDamage,
                                                      force,
                                                      neighborhoodList,

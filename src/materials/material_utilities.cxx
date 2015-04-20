@@ -52,6 +52,36 @@
 
 namespace MATERIAL_EVALUATION {
 
+void computeAndStoreInfluenceFunctionValues
+(
+ const double* xOverlap,
+ double* influenceFunctionValues,
+ int myNumPoints,
+ const int* localNeighborList,
+ double horizon,
+ const FunctionPointer OMEGA
+){
+  double coord[3], neighborCoord[3], distance, influenceFunctionValue;
+  int numNeighbors, neighborIndex, neighborListIndex(0), influenceFunctionIndex(0);
+  for(int p=0 ; p<myNumPoints ; p++){
+    coord[0] = xOverlap[3*p];
+    coord[1] = xOverlap[3*p+1];
+    coord[2] = xOverlap[3*p+2];
+    numNeighbors = localNeighborList[neighborListIndex++];
+    for(int i=0 ; i<numNeighbors ; i++){
+      neighborIndex = localNeighborList[neighborListIndex++];
+      neighborCoord[0] = xOverlap[3*neighborIndex];
+      neighborCoord[1] = xOverlap[3*neighborIndex+1];
+      neighborCoord[2] = xOverlap[3*neighborIndex+2];
+      distance = std::sqrt( (coord[0] - neighborCoord[0])*(coord[0] - neighborCoord[0]) +
+			    (coord[1] - neighborCoord[1])*(coord[1] - neighborCoord[1]) +
+			    (coord[2] - neighborCoord[2])*(coord[2] - neighborCoord[2]) );
+      influenceFunctionValue = OMEGA(distance, horizon);
+      influenceFunctionValues[influenceFunctionIndex++] = influenceFunctionValue;
+    }
+  }
+}
+
 /**
  * Call this function on a single point 'X'
  * NOTE: neighPtr to should point to 'numNeigh' for 'X'

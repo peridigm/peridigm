@@ -124,6 +124,7 @@ namespace PeridigmNS {
     int m_modelCoordinatesFieldId;
     int m_coordinatesFieldId;
     int m_forceDensityFieldId;
+    int m_influenceFunctionFieldId;
     int m_bondDamageFieldId;
 
     // field ids for partial volumes and centroids
