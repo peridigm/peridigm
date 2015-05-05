@@ -686,9 +686,6 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
     if(jacobianType == PeridigmNS::Material::UNDEFINED)
       jacobianType = PeridigmNS::Material::BLOCK_DIAGONAL;
   }
-
-  // Set default value for current time;
-  timeCurrent = 0.0;
 }
 
 void PeridigmNS::Peridigm::checkContactSearchRadius(const Teuchos::ParameterList& contactParams, Teuchos::RCP<Discretization> peridigmDisc){
@@ -1083,7 +1080,7 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
   }
   double timeInitial = solverParams->get("Initial Time", 0.0);
   double timeFinal   = solverParams->get("Final Time", 1.0);
-  timeCurrent = timeInitial;
+  double timeCurrent = timeInitial;
   workset->timeStep = dt;
   double dt2 = dt/2.0;
   int nsteps = static_cast<int>( floor((timeFinal-timeInitial)/dt) );
@@ -1209,7 +1206,7 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     // This will propagate through the Verlet integrator and result in the proper
     // displacement boundary conditions on y and consistent values for v and u.
     PeridigmNS::Timer::self().startTimer("Apply Kinematic B.C.");
-    boundaryAndInitialConditionManager->applyBoundaryConditions(timeCurrent,timePrevious);
+    boundaryAndInitialConditionManager->applyBoundaryConditions(timeCurrent, timePrevious);
     PeridigmNS::Timer::self().stopTimer("Apply Kinematic B.C.");
 
     // evaluate the external (body) forces:
@@ -1485,7 +1482,7 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
     }
 
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
-      
+
     // Create residual vector
     Teuchos::RCP<Epetra_Vector> residual = Teuchos::rcp(new Epetra_Vector(tangent->Map()));
 
@@ -1505,7 +1502,7 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
     }
     else{
         for(int i=0 ; i < force->MyLength() ; ++i)
-            (*residual)[i] = (*force)[i];
+	  (*residual)[i] = (*force)[i] + (*externalForce)[i];
 	// convert force density to force
     	for(int i=0 ; i < residual->MyLength() ; ++i)
       	    (*residual)[i] *= (*volume)[i/3];
@@ -1767,7 +1764,8 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
   else{
     TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n****Error: No valid time step data provided.\n");
   }
-  timeCurrent = timeSteps[0];
+  double timeCurrent = timeSteps[0];
+  double timePrevious = timeCurrent;
 
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
@@ -1789,7 +1787,7 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
 
     loadStepCPUTime.ResetStartTime();
 
-    double timePrevious = timeCurrent;
+    timePrevious = timeCurrent;
     timeCurrent = timeSteps[step];
     double timeIncrement = timeCurrent - timePrevious;
     workset->timeStep = timeIncrement;

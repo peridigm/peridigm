@@ -53,7 +53,6 @@
 #include <Teuchos_Assert.hpp>
 #include <Epetra_Comm.h>
 #include <boost/math/special_functions/fpclassify.hpp>
-#include <boost/math/constants/constants.hpp>
 
 using namespace std;
 
@@ -61,7 +60,7 @@ PeridigmNS::LinearLPSPVMaterial::LinearLPSPVMaterial(const Teuchos::ParameterLis
   : Material(params), m_pid(-1), m_verbose(false),
     m_bulkModulus(0.0), m_shearModulus(0.0), m_density(0.0), m_horizon(0.0),
     m_omega(PeridigmNS::InfluenceFunction::self().getInfluenceFunction()),
-    m_useAnalyticWeightedVolume(false), m_usePartialVolume(false), m_usePartialCentroid(false),
+    m_useAnalyticWeightedVolume(false), m_analyticWeightedVolume(0.0), m_usePartialVolume(false), m_usePartialCentroid(false),
     m_volumeFieldId(-1), m_damageFieldId(-1), m_weightedVolumeFieldId(-1), m_dilatationFieldId(-1), m_modelCoordinatesFieldId(-1),
     m_coordinatesFieldId(-1), m_forceDensityFieldId(-1), m_bondDamageFieldId(-1),
     m_selfVolumeFieldId(-1), m_selfCentroidXFieldId(-1), m_selfCentroidYFieldId(-1), m_selfCentroidZFieldId(-1),
@@ -77,6 +76,8 @@ PeridigmNS::LinearLPSPVMaterial::LinearLPSPVMaterial(const Teuchos::ParameterLis
 
   if(params.isParameter("Use Analytic Weighted Volume"))
     m_useAnalyticWeightedVolume = params.get<bool>("Use Analytic Weighted Volume");
+  if(m_useAnalyticWeightedVolume)
+    m_analyticWeightedVolume = params.get<double>("Analytic Weighted Volume");
 
   if(params.isParameter("Use Partial Volume"))
     m_usePartialVolume = params.get<bool>("Use Partial Volume");
@@ -180,9 +181,7 @@ PeridigmNS::LinearLPSPVMaterial::initialize(const double dt,
   if(m_useAnalyticWeightedVolume){
     if(m_verbose && m_pid == 0)
       cout << "\nLinearLPS Material Model applying analytic weighted volume.\n" << endl;
-    const double pi = boost::math::constants::pi<double>();
-    double analyticWeightedVolume = 4.0*pi*m_horizon*m_horizon*m_horizon*m_horizon*m_horizon/5.0;
-    dataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->PutScalar(analyticWeightedVolume);
+    dataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->PutScalar(m_analyticWeightedVolume);
   }
   else{
     if(m_verbose && m_pid == 0)

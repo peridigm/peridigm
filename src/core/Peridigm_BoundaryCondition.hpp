@@ -165,7 +165,8 @@ public:
   //! Constructor.
   DirichletIncrementBC(const string & name_,
     const Teuchos::ParameterList& bcParams_,
-    Teuchos::RCP<Epetra_Vector> toVector_,Peridigm * peridigm_,
+    Teuchos::RCP<Epetra_Vector> toVector_,
+    Peridigm * peridigm_,
     const bool isCumulative_,
     const double & coeff_=1.0,
     const double & deltaTCoeff_=0.0);
