@@ -15,6 +15,8 @@ add_test (BodyForce_Explicit_np1 python ./Body_Force/Body_Force_Explicit_np1/Bod
 add_test (BodyForce_Explicit_np4 python ./Body_Force/Body_Force_Explicit_np4/Body_Force_Explicit.py)
 add_test (BodyForce_QS_np1 python ./Body_Force/Body_Force_QS_np1/Body_Force_QS.py)
 add_test (BodyForce_QS_np4 python ./Body_Force/Body_Force_QS_np4/Body_Force_QS.py)
+add_test (BodyForce_QS_NOX_np1 python ./Body_Force/Body_Force_QS_NOX_np1/Body_Force_QS_NOX.py)
+add_test (BodyForce_QS_NOX_np4 python ./Body_Force/Body_Force_QS_NOX_np4/Body_Force_QS_NOX.py)
 add_test (CentrifugalLoad_np1 python ./CentrifugalLoad/np1/CentrifugalLoad.py)
 add_test (CentrifugalLoad_np4 python ./CentrifugalLoad/np4/CentrifugalLoad.py)
 add_test (Compression_NLCGQS_3x2x2_np1 python ./Compression_NLCGQS_3x2x2/np1/Compression_NLCGQS_3x2x2.py)
