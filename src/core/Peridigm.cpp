@@ -2270,7 +2270,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
     TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n****Error: No valid time step data provided.\n");
   }
 
-  timeCurrent = timeSteps[0];
+  double timeCurrent = timeSteps[0];
 
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
@@ -2970,7 +2970,7 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
   Teuchos::RCP<Teuchos::ParameterList> implicitParams = sublist(solverParams, "Implicit", true);
   double timeInitial = solverParams->get("Initial Time", 0.0);
   double timeFinal = solverParams->get<double>("Final Time");
-  timeCurrent = timeInitial;
+  double timeCurrent = timeInitial;
   double absoluteTolerance       = implicitParams->get("Absolute Tolerance", 1.0e-6);
   int maxSolverIterations        = implicitParams->get("Maximum Solver Iterations", 10);
   double dt                      = implicitParams->get<double>("Fixed dt");
