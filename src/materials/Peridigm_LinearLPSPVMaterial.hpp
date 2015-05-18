@@ -114,6 +114,7 @@ namespace PeridigmNS {
 
     // flag for applying analytic value of the weighted volume (as opposed to the numerically-computed value)
     bool m_useAnalyticWeightedVolume;
+    double m_analyticWeightedVolume;
 
     // field ids for all relevant data
     std::vector<int> m_fieldIds;
@@ -124,6 +125,7 @@ namespace PeridigmNS {
     int m_modelCoordinatesFieldId;
     int m_coordinatesFieldId;
     int m_forceDensityFieldId;
+    int m_influenceFunctionFieldId;
     int m_bondDamageFieldId;
 
     // field ids for partial volumes and centroids

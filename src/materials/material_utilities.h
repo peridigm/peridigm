@@ -62,6 +62,17 @@ enum PURE_SHEAR { XY=0, YZ, ZX };
 
 typedef PeridigmNS::InfluenceFunction::functionPointer FunctionPointer;
 
+//! Compute and store the influence function value for each set of bonded material points.
+void computeAndStoreInfluenceFunctionValues
+(
+ const double* xOverlap,
+ double* influenceFunctionValues,
+ int myNumPoints,
+ const int* localNeighborList,
+ double horizon,
+ const FunctionPointer OMEGA=PeridigmNS::InfluenceFunction::self().getInfluenceFunction()
+);
+
 /**
  * Call this function on a single point 'X'
  * NOTE: neighPtr to should point to 'numNeigh' for 'X'

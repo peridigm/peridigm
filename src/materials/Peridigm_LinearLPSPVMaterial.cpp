@@ -53,7 +53,6 @@
 #include <Teuchos_Assert.hpp>
 #include <Epetra_Comm.h>
 #include <boost/math/special_functions/fpclassify.hpp>
-#include <boost/math/constants/constants.hpp>
 
 using namespace std;
 
@@ -61,7 +60,7 @@ PeridigmNS::LinearLPSPVMaterial::LinearLPSPVMaterial(const Teuchos::ParameterLis
   : Material(params), m_pid(-1), m_verbose(false),
     m_bulkModulus(0.0), m_shearModulus(0.0), m_density(0.0), m_horizon(0.0),
     m_omega(PeridigmNS::InfluenceFunction::self().getInfluenceFunction()),
-    m_useAnalyticWeightedVolume(false), m_usePartialVolume(false), m_usePartialCentroid(false),
+    m_useAnalyticWeightedVolume(false), m_analyticWeightedVolume(0.0), m_usePartialVolume(false), m_usePartialCentroid(false),
     m_volumeFieldId(-1), m_damageFieldId(-1), m_weightedVolumeFieldId(-1), m_dilatationFieldId(-1), m_modelCoordinatesFieldId(-1),
     m_coordinatesFieldId(-1), m_forceDensityFieldId(-1), m_bondDamageFieldId(-1),
     m_selfVolumeFieldId(-1), m_selfCentroidXFieldId(-1), m_selfCentroidYFieldId(-1), m_selfCentroidZFieldId(-1),
@@ -77,6 +76,8 @@ PeridigmNS::LinearLPSPVMaterial::LinearLPSPVMaterial(const Teuchos::ParameterLis
 
   if(params.isParameter("Use Analytic Weighted Volume"))
     m_useAnalyticWeightedVolume = params.get<bool>("Use Analytic Weighted Volume");
+  if(m_useAnalyticWeightedVolume)
+    m_analyticWeightedVolume = params.get<double>("Analytic Weighted Volume");
 
   if(params.isParameter("Use Partial Volume"))
     m_usePartialVolume = params.get<bool>("Use Partial Volume");
@@ -92,6 +93,7 @@ PeridigmNS::LinearLPSPVMaterial::LinearLPSPVMaterial(const Teuchos::ParameterLis
   m_modelCoordinatesFieldId        = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::CONSTANT, "Model_Coordinates");
   m_coordinatesFieldId             = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Coordinates");
   m_forceDensityFieldId            = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force_Density");
+  m_influenceFunctionFieldId       = fieldManager.getFieldId(PeridigmField::BOND,    PeridigmField::SCALAR, PeridigmField::CONSTANT, "Influence_Function");
   m_bondDamageFieldId              = fieldManager.getFieldId(PeridigmField::BOND,    PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Bond_Damage");
 
   m_fieldIds.push_back(m_volumeFieldId);
@@ -101,6 +103,7 @@ PeridigmNS::LinearLPSPVMaterial::LinearLPSPVMaterial(const Teuchos::ParameterLis
   m_fieldIds.push_back(m_modelCoordinatesFieldId);
   m_fieldIds.push_back(m_coordinatesFieldId);
   m_fieldIds.push_back(m_forceDensityFieldId);
+  m_fieldIds.push_back(m_influenceFunctionFieldId);
   m_fieldIds.push_back(m_bondDamageFieldId);
 }
 
@@ -118,6 +121,16 @@ PeridigmNS::LinearLPSPVMaterial::initialize(const double dt,
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   m_pid = dataManager.getOwnedScalarPointMap()->Comm().MyPID();
 
+  // Extract pointers to the underlying data
+  double *xOverlap, *influenceFunctionValues;
+  dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&xOverlap);
+  dataManager.getData(m_influenceFunctionFieldId, PeridigmField::STEP_NONE)->ExtractView(&influenceFunctionValues);
+  MATERIAL_EVALUATION::computeAndStoreInfluenceFunctionValues(xOverlap,
+							      influenceFunctionValues,
+							      numOwnedPoints,
+							      neighborhoodList,
+							      m_horizon);
+
   if(m_usePartialVolume){
     m_selfVolumeFieldId = fieldManager.getFieldId("Self_Volume");
     m_neighborVolumeFieldId = fieldManager.getFieldId("Neighbor_Volume");
@@ -132,8 +145,7 @@ PeridigmNS::LinearLPSPVMaterial::initialize(const double dt,
   }
 
   // Extract pointers to the underlying data
-  double *xOverlap, *cellVolumeOverlap, *weightedVolume;
-  dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&xOverlap);
+  double *cellVolumeOverlap, *weightedVolume;
   dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&cellVolumeOverlap);
   dataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
 
@@ -169,9 +181,7 @@ PeridigmNS::LinearLPSPVMaterial::initialize(const double dt,
   if(m_useAnalyticWeightedVolume){
     if(m_verbose && m_pid == 0)
       cout << "\nLinearLPS Material Model applying analytic weighted volume.\n" << endl;
-    const double pi = boost::math::constants::pi<double>();
-    double analyticWeightedVolume = 4.0*pi*m_horizon*m_horizon*m_horizon*m_horizon*m_horizon/5.0;
-    dataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->PutScalar(analyticWeightedVolume);
+    dataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->PutScalar(m_analyticWeightedVolume);
   }
   else{
     if(m_verbose && m_pid == 0)
@@ -186,6 +196,7 @@ PeridigmNS::LinearLPSPVMaterial::initialize(const double dt,
 						 neighborCentroidX,
 						 neighborCentroidY,
 						 neighborCentroidZ,
+						 influenceFunctionValues,
 						 weightedVolume,
 						 numOwnedPoints,
 						 neighborhoodList,
@@ -204,12 +215,13 @@ PeridigmNS::LinearLPSPVMaterial::computeForce(const double dt,
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
 
   // Extract pointers to the underlying data
-  double *x, *y, *cellVolume, *weightedVolume, *dilatation, *bondDamage, *force;
+  double *x, *y, *cellVolume, *weightedVolume, *dilatation, *influenceFunctionValues, *bondDamage, *force;
   dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
   dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&y);
   dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&cellVolume);
   dataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
   dataManager.getData(m_dilatationFieldId, PeridigmField::STEP_NP1)->ExtractView(&dilatation);
+  dataManager.getData(m_influenceFunctionFieldId, PeridigmField::STEP_NONE)->ExtractView(&influenceFunctionValues);
   dataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_NP1)->ExtractView(&bondDamage);
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&force);
 
@@ -243,6 +255,7 @@ PeridigmNS::LinearLPSPVMaterial::computeForce(const double dt,
                                                   neighborCentroidX,
                                                   neighborCentroidY,
                                                   neighborCentroidZ,
+						  influenceFunctionValues,
                                                   bondDamage,
                                                   dilatation,
                                                   neighborhoodList,
@@ -263,6 +276,7 @@ PeridigmNS::LinearLPSPVMaterial::computeForce(const double dt,
                                                      neighborCentroidX,
                                                      neighborCentroidY,
                                                      neighborCentroidZ,
+						     influenceFunctionValues,
                                                      bondDamage,
                                                      force,
                                                      neighborhoodList,

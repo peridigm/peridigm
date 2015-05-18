@@ -52,18 +52,33 @@
   <ParameterList name="Solver">
 	<Parameter name="Verbose" type="bool" value="false"/>
 	<Parameter name="Initial Time" type="double" value="0.0"/>
-	<Parameter name="Final Time" type="double" value="1.0"/> 
-	<ParameterList name="QuasiStatic">
+	<Parameter name="Final Time" type="double" value="1.0"/>
+	<Parameter name="Peridigm Preconditioner" type="string" value="None"/>
+	<ParameterList name="NOXQuasiStatic">
+	  <Parameter name="Nonlinear Solver" type="string" value="Line Search Based"/>
 	  <Parameter name="Number of Load Steps" type="int" value="1"/>
+	  <Parameter name="Max Solver Iterations" type="int" value="100"/>
 	  <Parameter name="Absolute Tolerance" type="double" value="1.0e-6"/>
-	  <Parameter name="Maximum Solver Iterations" type="int" value="10"/>
+	  <Parameter name="Max Age Of Prec" type="int" value="100"/>
+ 	  <ParameterList name="Direction">
+	    <Parameter name="Method" type="string" value="Newton"/>
+ 	    <ParameterList name="Newton">
+ 	      <ParameterList name="Linear Solver">
+	        <Parameter name="Jacobian Operator" type="string" value="Matrix-Free"/>
+	        <Parameter name="Preconditioner" type="string" value="None"/>
+	      </ParameterList>
+	    </ParameterList>
+	  </ParameterList>
+ 	  <ParameterList name="Line Search">
+	    <Parameter name="Method" type="string" value="Polynomial"/>
+	  </ParameterList>
 	</ParameterList>
   </ParameterList>
 
   <ParameterList name="Output">
 	<Parameter name="Output File Type" type="string" value="ExodusII"/>
 	<Parameter name="Output Format" type="string" value="BINARY"/>
-	<Parameter name="Output Filename" type="string" value="Body_Force_QS"/>
+	<Parameter name="Output Filename" type="string" value="Body_Force_QS_NOX"/>
 	<Parameter name="Output Frequency" type="int" value="1"/>
 	<Parameter name="Parallel Write" type="bool" value="true"/>
 	<ParameterList name="Output Variables">

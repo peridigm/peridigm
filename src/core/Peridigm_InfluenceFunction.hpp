@@ -71,6 +71,9 @@ static double one(double zeta, double horizon){
 }
 
 static double parabolicDecay(double zeta, double horizon){
+  if(zeta > horizon)
+    return 0.0;
+
   double scaledDistance = zeta/horizon;
   double value = scaledDistance < 0.5 ? 1.0 : -4.0*scaledDistance*scaledDistance + 4.0*scaledDistance;
   return value;
@@ -78,9 +81,9 @@ static double parabolicDecay(double zeta, double horizon){
 
 static double gaussian(double zeta, double horizon)
 {
-	double h2=horizon*horizon;
-	double xi2=zeta*zeta;
-	return exp(-xi2/h2);
+  double h2=horizon*horizon;
+  double xi2=zeta*zeta;
+  return exp(-xi2/h2);
 }
 
 }
@@ -98,20 +101,20 @@ public:
   //! Get predefined using provide string.
   static functionPointer getPredefinedInfluenceFunction(std::string &influenceFunctionString) {
 
-	functionPointer p=0;
-	if(influenceFunctionString == "One"){
-	   p = &PeridigmInfluenceFunction::one;
-	}
-	else if(influenceFunctionString == "Parabolic Decay"){
-	  p = &PeridigmInfluenceFunction::parabolicDecay;
-	}
-	else if(influenceFunctionString == "Gaussian"){
-	  p = &PeridigmInfluenceFunction::gaussian;
-	}
-	else {
-		TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error:  InfluenceFunction::getInfluenceFunction(string), invalid influence function\n");
-	}
-	return p;
+    functionPointer p=0;
+    if(influenceFunctionString == "One"){
+      p = &PeridigmInfluenceFunction::one;
+    }
+    else if(influenceFunctionString == "Parabolic Decay"){
+      p = &PeridigmInfluenceFunction::parabolicDecay;
+    }
+    else if(influenceFunctionString == "Gaussian"){
+      p = &PeridigmInfluenceFunction::gaussian;
+    }
+    else {
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error:  InfluenceFunction::getInfluenceFunction(string), invalid influence function\n");
+    }
+    return p;
   }
 
   //! Sets the influence function based on the provided string.
