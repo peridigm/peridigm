@@ -2316,7 +2316,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
 		for(int i=0 ; i<y->MyLength() ; ++i){
       		yPtr[i] = xPtr[i] + uPtr[i] + deltaUPtr[i];
       		vPtr[i] = deltaUPtr[i]/timeIncrement;
-  	}
+        }
     
 		//If true, then synch the content of the combined vectors with that of the uncombined.
    if(analysisHasMultiphysics){

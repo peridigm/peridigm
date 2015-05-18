@@ -480,9 +480,6 @@ namespace PeridigmNS {
     //! Global vector for cell volume 
     Teuchos::RCP<Epetra_Vector> volume;
 
-    //! Global vector for volume fraction occupied by fluid phase
-    Teuchos::RCP<Epetra_Vector> volumeFraction;
-
     //! Global vector for cell density
     Teuchos::RCP<Epetra_Vector> density;
 
