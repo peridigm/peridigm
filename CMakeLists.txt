@@ -303,7 +303,8 @@ set(LIB_DIRS
 link_directories(${LIB_DIRS})
 
 set (REQUIRED_LIBS
-  ${BlasLapack_Libraries}  
+  ${BlasLapack_Libraries}
+  ${Trilinos_TPL_LIBRARIES}
 )
 
 set (UT_REQUIRED_LIBS
