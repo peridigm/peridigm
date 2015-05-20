@@ -71,7 +71,11 @@ PeridigmNS::AlbanyDiscretization::AlbanyDiscretization(const MPI_Comm& mpiComm,
 						       const int* globalIds,
 						       const double* refCoord,
 						       const double* volume,
-						       const int* blockId) :
+						       const int* blockId,
+						       const int numNodeIds,
+						       int* nodeGlobalIds,
+						       const double* nodeCoord,
+						       const int * nodeBlockId) :
   minElementRadius(1.0e50),
   maxElementRadius(0.0),
   maxElementDimension(0.0),
@@ -87,8 +91,8 @@ PeridigmNS::AlbanyDiscretization::AlbanyDiscretization(const MPI_Comm& mpiComm,
   TEUCHOS_TEST_FOR_EXCEPT_MSG(discretizationParams->get<string>("Type") != "Albany", "Invalid Type in AlbanyDiscretization");
 
   // Create the owned maps
-  oneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(-1, numGlobalIds, globalIds, 1, 0, *comm));
-  threeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(-1, numGlobalIds, globalIds, 3, 0, *comm));
+   oneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(-1, numGlobalIds, globalIds, 1, 0, *comm));
+   threeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(-1, numGlobalIds, globalIds, 3, 0, *comm));
 
   // Create Epetra_Vectors and fill them with the provided data
   cellVolume = Teuchos::RCP<Epetra_Vector>(new Epetra_Vector(*oneDimensionalMap));
@@ -144,6 +148,147 @@ PeridigmNS::AlbanyDiscretization::AlbanyDiscretization(const MPI_Comm& mpiComm,
   ProximitySearch::GlobalProximitySearch(initialX, horizonForEachPoint, oneDimensionalOverlapMap, neighborListSize, neighborList, bondFilters);
 
   createNeighborhoodData(neighborListSize, neighborList);
+
+  if(numNodeIds > 0){
+    //  Perform the proximity search for the interface nodes in the albany discretization:
+    int albanyInterfaceNeighborListSize;
+    int * albanyInterfaceNeighborList;
+
+    // offset the node ids so that they don't interfere with actual elements:
+    const int nodeOffset = oneDimensionalMap->MaxAllGID();
+    for(int i=0;i<numNodeIds;++i)
+      nodeGlobalIds[i]+=nodeOffset;
+
+    // create a macro list with all the nodes and elements included:
+    // do the same for initial X as well
+    std::vector<int> macroIdList(numNodeIds+numGlobalIds);
+    std::vector<int> macroBlockIds(numNodeIds+numGlobalIds);
+    std::vector<double> macroCoords((numNodeIds+numGlobalIds)*3);
+    for(int i=0;i<numGlobalIds;++i){
+      macroIdList[i] = globalIds[i];
+      macroBlockIds[i] = blockId[i];
+      macroCoords[i*3+0] = refCoord[i*3+0];
+      macroCoords[i*3+1] = refCoord[i*3+1];
+      macroCoords[i*3+2] = refCoord[i*3+2];
+    }
+    for(int i=0;i<numNodeIds;++i){
+      macroIdList[i+numGlobalIds] = nodeGlobalIds[i];
+      macroBlockIds[i+numGlobalIds] = nodeBlockId[i];
+      macroCoords[(i+numGlobalIds)*3+0] = nodeCoord[i*3+0];
+      macroCoords[(i+numGlobalIds)*3+1] = nodeCoord[i*3+1];
+      macroCoords[(i+numGlobalIds)*3+2] = nodeCoord[i*3+2];
+    }
+
+    // Create the owned maps (these still include the albany nodes that have to get pruned out later)
+    Teuchos::RCP<Epetra_BlockMap> albanyInterface1DMapTemp = Teuchos::rcp(new Epetra_BlockMap(-1, macroIdList.size(), &macroIdList[0], 1, 0, *comm));
+    Teuchos::RCP<Epetra_BlockMap> albanyInterface3DMapTemp = Teuchos::rcp(new Epetra_BlockMap(-1, macroIdList.size(), &macroIdList[0], 3, 0, *comm));
+
+    Teuchos::RCP<Epetra_Vector> macroX = Teuchos::RCP<Epetra_Vector>(new Epetra_Vector(*albanyInterface3DMapTemp));
+    Teuchos::RCP<Epetra_Vector> macroBlock = Teuchos::RCP<Epetra_Vector>(new Epetra_Vector(*albanyInterface1DMapTemp));
+    for(int i=0 ; i<3*(numGlobalIds+numNodeIds) ; ++i){
+      (*macroX)[i] = macroCoords[i];
+    }
+    for(int i=0; i<numGlobalIds+numNodeIds ; ++i){
+      (*macroBlock)[i] = macroBlockIds[i];
+    }
+
+    // Assign the correct horizon to each node
+    Teuchos::RCP<Epetra_Vector> macroHorizonForEachPoint = Teuchos::rcp(new Epetra_Vector(*albanyInterface1DMapTemp));
+    for(int i=0;i<numGlobalIds+numNodeIds;++i){
+      stringstream blockName;
+      blockName << "block_" << (*macroBlock)[i];
+      bool hasConstantHorizon = horizonManager.blockHasConstantHorizon(blockName.str());
+      double horizonValue(0.0);
+      if(hasConstantHorizon)
+        horizonValue = horizonManager.getBlockConstantHorizonValue(blockName.str());
+      else{
+        double x = (*macroX)[i*3];
+        double y = (*macroX)[i*3 + 1];
+        double z = (*macroX)[i*3 + 2];
+        double horizon = horizonManager.evaluateHorizon(blockName.str(), x, y, z);
+      }
+      (*macroHorizonForEachPoint)[i] = horizonValue;
+    }
+    ProximitySearch::GlobalProximitySearch(macroX, macroHorizonForEachPoint, albanyInterface1DMapTemp, albanyInterfaceNeighborListSize, albanyInterfaceNeighborList);
+
+    // prune the neighbor list to get rid of neighbors that are nodes
+    std::vector<int> prunedListSizes(numNodeIds);
+    // count up the number of valid neighbors (actual PD particles, not nodes)
+    int index = 0;
+    for(int i=0 ; i<albanyInterfaceNeighborListSize; ++i){
+      int numValid = 0;
+      int numNeigh = albanyInterfaceNeighborList[i];
+      for(int neigh = 0;neigh < numNeigh; ++neigh){
+        i++;
+        if(albanyInterfaceNeighborList[i] < numGlobalIds) numValid++;
+      }
+      if(index >= numGlobalIds)
+        prunedListSizes[index - numGlobalIds] = numValid;
+      index++;
+    }
+    int prunedNeighborListSize = numNodeIds;
+    for(int i=0;i<numNodeIds;++i){
+      prunedNeighborListSize += prunedListSizes[i];
+    }
+    Teuchos::ArrayRCP<int> prunedNeighborList(prunedNeighborListSize);
+    // now copy the neighbor information over to the list
+    index = 0;
+    int prunedListIndex = 0;
+    for(int i=0 ; i<albanyInterfaceNeighborListSize; ++i){
+      if(index >= numGlobalIds){
+        prunedNeighborList[prunedListIndex] = prunedListSizes[index - numGlobalIds];
+        prunedListIndex++;
+      }
+      int numNeigh = albanyInterfaceNeighborList[i];
+      for(int neigh = 0;neigh < numNeigh; ++neigh){
+        i++;
+        if(albanyInterfaceNeighborList[i] < numGlobalIds && index >= numGlobalIds){
+          prunedNeighborList[prunedListIndex] = albanyInterfaceNeighborList[i];
+          prunedListIndex++;
+        }
+      }
+      index++;
+    }
+
+    // print the pruned neighbor list
+
+//    std::cout << "********************pruned neighbor list: " << std::endl;
+//    index = 0;
+//    for(int i=0 ; i<prunedNeighborListSize; ++i){
+//      std::cout << " index : " << index;
+//      int numNeigh = prunedNeighborList[i];
+//      std::cout << " num neigh: " << numNeigh << std::endl;
+//      for(int neigh = 0;neigh < numNeigh; ++neigh){
+//        i++;
+//        std::cout << "    neigh: " << prunedNeighborList[i] << std::endl;
+//      }
+//      index++;
+//    }
+
+    // convert the node ids back to original state:
+    for(int i=0;i<numNodeIds;++i)
+      nodeGlobalIds[i]-=nodeOffset;
+
+    albanyInterface1DMap = Teuchos::rcp(new Epetra_BlockMap(-1, numNodeIds, &nodeGlobalIds[0], 1, 0, *comm));
+    vector<int> ownedLocalIds(numNodeIds);
+    vector<int> neighborhoodPtr(numNodeIds);
+
+    int numNeighbors(0), neighborListIndex(0);
+    for(int i=0 ; i<numNodeIds ; ++i){
+      ownedLocalIds[i] = albanyInterface1DMap->LID(nodeGlobalIds[i]);
+      neighborhoodPtr[i] = neighborListIndex;
+      numNeighbors = neighborList[neighborListIndex++];
+      neighborListIndex += numNeighbors;
+    }
+
+    albanyPartialStressNeighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
+    albanyPartialStressNeighborhoodData->SetNumOwned(numNodeIds);
+    memcpy(albanyPartialStressNeighborhoodData->OwnedIDs(), &ownedLocalIds[0], numNodeIds*sizeof(int));
+    memcpy(albanyPartialStressNeighborhoodData->NeighborhoodPtr(), &neighborhoodPtr[0], numNodeIds*sizeof(int));
+    albanyPartialStressNeighborhoodData->SetNeighborhoodListSize(prunedNeighborListSize);
+    memcpy(albanyPartialStressNeighborhoodData->NeighborhoodList(), prunedNeighborList.getRawPtr(), prunedNeighborListSize*sizeof(int));
+    albanyPartialStressNeighborhoodData = filterBonds(albanyPartialStressNeighborhoodData);
+  }
 
   // Create the three-dimensional overlap map based on the one-dimensional overlap map
   threeDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(-1, 

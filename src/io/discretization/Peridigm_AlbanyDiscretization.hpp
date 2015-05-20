@@ -68,7 +68,11 @@ namespace PeridigmNS {
 			 const int* globalIds,
 			 const double* refCoord,
 			 const double* volume,
-			 const int* blockId);
+			 const int* blockId,
+			 const int numNodeIds = 0,
+			 int * nodeGlobalIds = 0,
+			 const double* nodeCoord = 0,
+			 const int* nodeblockId = 0);
 
     //! Destructor
     virtual ~AlbanyDiscretization();
@@ -97,6 +101,9 @@ namespace PeridigmNS {
     //! Get the neighbor list for all locally-owned nodes
     virtual Teuchos::RCP<PeridigmNS::NeighborhoodData> getNeighborhoodData() const;
 
+    //! Get the neighbor list for all locally-owned nodes
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> getAlbanyPartialStressNeighborhoodData() const{return albanyPartialStressNeighborhoodData;}
+
     //! Get interface data for all locally-owned nodes
     virtual Teuchos::RCP<PeridigmNS::InterfaceData> getInterfaceData() const{return Teuchos::null;}
 
@@ -121,6 +128,9 @@ namespace PeridigmNS {
     //! Get the maximum element dimension (for example the diagonal of a hex element, used for partial volume neighbor search).
     virtual double getMaxElementDimension() const { return maxElementDimension; }
 
+    //! Return the albany interface 1D mapxs
+    Teuchos::RCP<Epetra_BlockMap> getAlbanyInterface1DMap()const {return albanyInterface1DMap;}
+
   private:
 
     //! Private to prohibit copying
@@ -142,6 +152,7 @@ namespace PeridigmNS {
 
     //! Maps
     Teuchos::RCP<Epetra_BlockMap> oneDimensionalMap;
+    Teuchos::RCP<Epetra_BlockMap> albanyInterface1DMap;
     Teuchos::RCP<Epetra_BlockMap> oneDimensionalOverlapMap;
     Teuchos::RCP<Epetra_BlockMap> threeDimensionalMap;
     Teuchos::RCP<Epetra_BlockMap> threeDimensionalOverlapMap;
@@ -170,6 +181,9 @@ namespace PeridigmNS {
 
     //! Struct containing neighborhoods for owned nodes.
     Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData;
+
+    //! Struct containing neighborhoods for albany partial stress nodes
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> albanyPartialStressNeighborhoodData;
 
     //! Returns number of bonds on this processor
     unsigned int numBonds;
