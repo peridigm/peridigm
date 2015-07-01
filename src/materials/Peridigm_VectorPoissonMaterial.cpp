@@ -61,7 +61,6 @@ PeridigmNS::VectorPoissonMaterial::VectorPoissonMaterial(const Teuchos::Paramete
     m_forceDensityFieldId(-1)
 {
   m_horizon = params.get<double>("Horizon");
-  m_coefficient = params.get<double>("Coefficient");
 
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   m_volumeFieldId                  = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR,      PeridigmField::CONSTANT, "Volume");
@@ -99,36 +98,50 @@ PeridigmNS::VectorPoissonMaterial::computeForce(const double dt,
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
 
   // Extract pointers to the underlying data
-  double *x, *y, *cellVolume, *force;
+  double *volume, *x, *u, *f;
 
+  dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&volume);
   dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
-  dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&y);
-  dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&cellVolume);
-  dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&force);
+  dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&u);
+  dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&f);
 
   int neighborhoodListIndex(0);
   int numNeighbors, neighborID, iID, iNID;
-  double nodeInitialPosition[3], nodeDisplacement[3], initialDistance;
+  double nodeInitialPosition[3], initialDistance;
+  double nodeU, neighborU, kernel, nodeVolume, neighborVolume, temp;
 
   for(iID=0 ; iID<numOwnedPoints ; ++iID){
 
+    nodeVolume = volume[iID];
     nodeInitialPosition[0] = x[iID*3];
     nodeInitialPosition[1] = x[iID*3+1];
     nodeInitialPosition[2] = x[iID*3+2];
-    nodeDisplacement[0] = y[iID*3]   - nodeInitialPosition[0];
-    nodeDisplacement[1] = y[iID*3+1] - nodeInitialPosition[1];
-    nodeDisplacement[2] = y[iID*3+2] - nodeInitialPosition[2];
 
     numNeighbors = neighborhoodList[neighborhoodListIndex++];
     for(iNID=0 ; iNID<numNeighbors ; ++iNID){
+
       neighborID = neighborhoodList[neighborhoodListIndex++];
+      neighborVolume = volume[neighborID];
       initialDistance = distance(nodeInitialPosition[0], nodeInitialPosition[1], nodeInitialPosition[2],
 				 x[neighborID*3], x[neighborID*3+1], x[neighborID*3+2]);
+      kernel = 1.0/(m_horizon*m_horizon*m_horizon*initialDistance);
 
-      // TODO:  Write me.
+      // We are solving a Poisson equation
+      // The function is lives in three-dimensional space and has a one-dimensional scalar output
+      // Because the code infrastructure assumes both 3D input and output, we'll just solve three
+      // instances of the problem at once.
+      // u is stored in the "displacement" field but is not really displacement, it's three instances of a 1D field
+      // The function output is stored in the "force" field, but again it's really three instances of a 1D field
 
+      for(int eqn=0 ; eqn<3 ; ++eqn){
 
+	nodeU = u[iID*3+eqn];
+	neighborU = u[neighborID*3+eqn];
+	temp = (neighborU - nodeU)*kernel;
+	f[iID*3+eqn] += temp*neighborVolume;
+	f[neighborID*3+eqn] -= temp*nodeVolume;
+
+      }
     }
   }
-
 }
