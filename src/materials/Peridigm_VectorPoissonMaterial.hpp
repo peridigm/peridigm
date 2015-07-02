@@ -66,8 +66,7 @@ namespace PeridigmNS {
 
     //! Returns the density of the material.
     virtual double Density() const {
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error:  The Vector Poisson material model is valid only for Peridigm-Albany coupling.\n");
-      return 0.0;
+      return 1.0;
     }
 
     //! Returns the bulk modulus of the material.

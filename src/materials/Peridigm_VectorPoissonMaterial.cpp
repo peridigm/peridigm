@@ -47,6 +47,7 @@
 
 #include "Peridigm_VectorPoissonMaterial.hpp"
 #include "Peridigm_Field.hpp"
+#include <boost/math/constants/constants.hpp>
 #include <boost/math/special_functions/fpclassify.hpp>
 
 using namespace std;
@@ -108,7 +109,9 @@ PeridigmNS::VectorPoissonMaterial::computeForce(const double dt,
   int neighborhoodListIndex(0);
   int numNeighbors, neighborID, iID, iNID;
   double nodeInitialPosition[3], initialDistance;
-  double nodeU, neighborU, kernel, nodeVolume, neighborVolume, temp;
+  double nodeU, neighborU, kernel, nodeVolume, neighborVolume, temp, nodeForce, neighborForce;
+
+  const double pi = boost::math::constants::pi<double>();
 
   for(iID=0 ; iID<numOwnedPoints ; ++iID){
 
@@ -124,7 +127,7 @@ PeridigmNS::VectorPoissonMaterial::computeForce(const double dt,
       neighborVolume = volume[neighborID];
       initialDistance = distance(nodeInitialPosition[0], nodeInitialPosition[1], nodeInitialPosition[2],
 				 x[neighborID*3], x[neighborID*3+1], x[neighborID*3+2]);
-      kernel = 1.0/(m_horizon*m_horizon*m_horizon*initialDistance);
+      kernel = 3.0/(pi*m_horizon*m_horizon*m_horizon*m_horizon*initialDistance);
 
       // We are solving a Poisson equation
       // The function is lives in three-dimensional space and has a one-dimensional scalar output
@@ -138,8 +141,12 @@ PeridigmNS::VectorPoissonMaterial::computeForce(const double dt,
 	nodeU = u[iID*3+eqn];
 	neighborU = u[neighborID*3+eqn];
 	temp = (neighborU - nodeU)*kernel;
-	f[iID*3+eqn] += temp*neighborVolume;
-	f[neighborID*3+eqn] -= temp*nodeVolume;
+	nodeForce = temp*neighborVolume;
+	neighborForce = -temp*nodeVolume;
+	TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite(nodeForce), "**** NaN detected in VectorPoissonMaterial::computeForce().\n");
+	TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite(neighborForce), "**** NaN detected in VectorPoissonMaterial::computeForce().\n");
+	f[iID*3+eqn] += nodeForce;
+	f[neighborID*3+eqn] += neighborForce;
 
       }
     }
