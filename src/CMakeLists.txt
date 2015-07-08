@@ -18,6 +18,9 @@ file (GLOB discretizationHEADERS
 file (GLOB damageHEADERS 
   "${DAMAGE_DIR}/*.hpp"
 )
+file (GLOB apiHEADERS
+  "${API_DIR}/*.hpp"
+)
 file (GLOB ioHEADERS 
   "${IO_DIR}/*.hpp"
 )
@@ -44,6 +47,7 @@ set(Peridigm_HEADERS
     ${coreHEADERS}
     ${discretizationHEADERS}
     ${damageHEADERS}
+    ${apiHEADERS}
     ${ioHEADERS}
     ${materialsHEADERS}
     ${quickGridHEADERS}
@@ -68,6 +72,9 @@ file (GLOB discretizationSOURCES
 file (GLOB damageSOURCES 
   "${DAMAGE_DIR}/*.cpp"
 )
+file (GLOB apiSOURCES
+  "${API_DIR}/*.cpp"
+)
 file (GLOB ioSOURCES 
   "${IO_DIR}/*.cpp"
 )
@@ -82,12 +89,14 @@ set(Peridigm_SOURCES
     ${coreSOURCES}
     ${discretizationSOURCES}
     ${damageSOURCES}
+    ${apiSOURCES}
     ${ioSOURCES}
     ${materialsSOURCES}
 )
 
 add_library(PeridigmLib ${Peridigm_SOURCES})
 set(Peridigm_LIBRARY PeridigmLib)
+target_compile_definitions(PeridigmLib PRIVATE -D PD_LIB_EXPORTS_MODE)
 
 set(Peridigm_LINK_LIBRARIES
     ${LCM_LIBRARY}
@@ -122,6 +131,7 @@ add_subdirectory (compute/)
 add_subdirectory (core/)
 add_subdirectory (io/)
 add_subdirectory (materials/)
+add_subdirectory (api/)
 
 IF (INSTALL_PERIDIGM)
   configure_package_config_file(PeridigmConfig.cmake.in
