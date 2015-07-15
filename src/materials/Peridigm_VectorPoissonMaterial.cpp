@@ -99,11 +99,11 @@ PeridigmNS::VectorPoissonMaterial::computeForce(const double dt,
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
 
   // Extract pointers to the underlying data
-  double *volume, *x, *u, *f;
+  double *volume, *x, *y, *f;
 
   dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&volume);
   dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
-  dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&u);
+  dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&y);
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&f);
 
   int neighborhoodListIndex(0);
@@ -133,13 +133,11 @@ PeridigmNS::VectorPoissonMaterial::computeForce(const double dt,
       // The function is lives in three-dimensional space and has a one-dimensional scalar output
       // Because the code infrastructure assumes both 3D input and output, we'll just solve three
       // instances of the problem at once.
-      // u is stored in the "displacement" field but is not really displacement, it's three instances of a 1D field
-      // The function output is stored in the "force" field, but again it's really three instances of a 1D field
 
       for(int eqn=0 ; eqn<3 ; ++eqn){
 
-	nodeU = u[iID*3+eqn];
-	neighborU = u[neighborID*3+eqn];
+	nodeU = y[iID*3+eqn] - x[iID*3+eqn];
+	neighborU = y[neighborID*3+eqn] - x[neighborID*3+eqn];
 	temp = (neighborU - nodeU)*kernel;
 	nodeForce = temp*neighborVolume;
 	neighborForce = -temp*nodeVolume;
