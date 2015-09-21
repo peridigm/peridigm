@@ -167,7 +167,13 @@ namespace PeridigmNS {
     void exportData(Epetra_Vector& target, int fieldId, PeridigmField::Step step, Epetra_CombineMode combineMode);
 
     //! Swaps STATE_N and STATE_NP1.
-    void updateState(){ dataManager->updateState(); }
+    void updateState(){ dataManager->updateState(); };
+
+    //! Write block data
+    void writeBlocktoDisk(std::string blockName){ dataManager->writeBlocktoDisk(blockName); }
+
+    //! Read block data
+    void readBlockfromDisk(std::string blockName){ dataManager->readBlockfromDisk(blockName); }
 
   protected:
     
