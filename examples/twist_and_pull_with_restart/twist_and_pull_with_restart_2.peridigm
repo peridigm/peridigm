@@ -1,0 +1,73 @@
+{TWIST_FINAL_TIME=0.2}
+{PULL_FINAL_TIME=0.2005}
+{NUMBER_OF_QS_STEPS=2}
+
+Verbose "false"
+Discretization
+  Type "Exodus"
+  Input Mesh File "twist_and_pull.g"
+Materials
+  My Material
+    Material Model "Elastic"
+    Density 0.9
+    Bulk Modulus 1.66173e12
+    Shear Modulus 3.571e11
+Blocks
+  My Block
+    Horizon 0.3125
+    Block Names "block_1"
+    Material "My Material"
+Boundary Conditions
+  Prescribed Displacement Bottom x
+    Type "Prescribed Displacement"
+    Node Set "nodelist_1"
+    Coordinate "x"
+    Value " if(t <= {TWIST_FINAL_TIME})\{ value = x*cos(1.5*t)-y*sin(1.5*t)-x; \} else\{ value = x*cos(1.5*{TWIST_FINAL_TIME})-y*sin(1.5*{TWIST_FINAL_TIME})-x; \} "
+  Prescribed Displacement Bottom y
+    Type "Prescribed Displacement"
+    Node Set "nodelist_1"
+    Coordinate "y"
+    Value " if(t <= {TWIST_FINAL_TIME})\{ value = x*sin(1.5*t)+y*cos(1.5*t)-y; \} else\{ value = x*sin(1.5*{TWIST_FINAL_TIME})+y*cos(1.5*{TWIST_FINAL_TIME})-y; \} "
+  Prescribed Displacement Bottom z
+    Type "Prescribed Displacement"
+    Node Set "nodelist_1"
+    Coordinate "z"
+    Value " if(t <= {TWIST_FINAL_TIME})\{ value = 0.0; \} else\{ value = 1000*(t-{TWIST_FINAL_TIME}); \} "
+  Prescribed Displacement Top x
+    Type "Prescribed Displacement"
+    Node Set "nodelist_2"
+    Coordinate "x"
+    Value " if(t <= {TWIST_FINAL_TIME})\{ value = x*cos(1.5*t)+y*sin(1.5*t)-x; \} else\{ value = x*cos(1.5*{TWIST_FINAL_TIME})+y*sin(1.5*{TWIST_FINAL_TIME})-x; \} "
+  Prescribed Displacement Top y
+    Type "Prescribed Displacement"
+    Node Set "nodelist_2"
+    Coordinate "y"
+    Value " if(t <= {TWIST_FINAL_TIME})\{ value = -x*sin(1.5*t)+y*cos(1.5*t)-y; \} else\{ value = -x*sin(1.5*{TWIST_FINAL_TIME})+y*cos(1.5*{TWIST_FINAL_TIME})-y; \} "
+  Prescribed Displacement Top z
+    Type "Prescribed Displacement"
+    Node Set "nodelist_2"
+    Coordinate "z"
+    Value " if(t <= {TWIST_FINAL_TIME})\{ value = 0.0; \} else\{ value = -1000*(t-{TWIST_FINAL_TIME}); \} "
+Solver2
+  Verbose "false"
+  Initial Time {TWIST_FINAL_TIME}
+  Final Time {PULL_FINAL_TIME}
+  Verlet
+    Safety Factor 0.8
+Output2
+  Output File Type "ExodusII"
+  Output Format "BINARY"
+  Output Filename "twist_and_pullExplicit"
+  Output Frequency 500
+  Initial Output Step {NUMBER_OF_QS_STEPS+1}
+  Parallel Write "true"
+  Output Variables
+    Proc_Num "true"
+    Displacement "true"
+    Velocity "true"
+    Acceleration "true"
+    Force "true"
+    Element_Id "true"
+    Dilatation "true"
+    Weighted_Volume "true"
+    Radius "true"
