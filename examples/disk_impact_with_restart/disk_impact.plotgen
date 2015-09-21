@@ -1,0 +1,7 @@
+
+set terminal pdf enhanced font "Times-Roman,24" size 12in, 8in 
+set output "disk_impact_energy.pdf"
+set xlabel "Time (ms)" font "Times-Roman,32"
+set ylabel "Energy (J)" font "Times-Roman,32"
+set key bottom right
+plot "disk_impact.csv" using ($1/1.0e-3):2 with lines lw 10 lt 1 title "Kinetic Energy"
