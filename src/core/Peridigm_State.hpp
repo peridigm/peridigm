@@ -123,10 +123,23 @@ public:
   //! Copies data from a different state object based on global IDs; functions only if all the local IDs in the target map exist in and are locally owned in the source map.
   void copyLocallyOwnedDataFromState(Teuchos::RCP<PeridigmNS::State> source);
 
+  //! Set restart files for state data
+  void SetRestartFiles( std::string stateName, std::string blockName);
+
+  //! Write state data
+  void writeStateData(Teuchos::RCP<PeridigmNS::State> source, std::string stateName, std::string blockName);
+
+  //! Read state data
+  void readStateData(Teuchos::RCP<PeridigmNS::State> source,  std::string stateName, std::string blockName);
+
+
 private:
 
   //! Maximum set of an element in the pointData Epetra_MultiVector.
   int maxPointDataElementSize;
+
+  //! Map for restart files
+  std::map <std::string, std::string> restartStateFiles;
 
 protected:
 

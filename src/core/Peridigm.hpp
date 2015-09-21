@@ -108,6 +108,9 @@ namespace PeridigmNS {
     //! Initialize the workset
     void initializeWorkset();
 
+   //! Initialize Restart
+    void InitializeRestart();
+
     //! Instantiate the compute manager
     void instantiateComputeManager(Teuchos::RCP<Discretization> peridigmDiscretization);
 
@@ -563,7 +566,17 @@ namespace PeridigmNS {
     int fluidFlowDensityFieldId;
     int numMultiphysDoFs;
     string textMultiphysDoFs;
+
+    // Map for restart files
+    map<string, string> restartFiles;
+
+    // Write the restart files
+    void writeRestart();
+
+    //Read the restart files
+    void readRestart();
   };
 }
 
 #endif // PERIDIGM_HPP
+

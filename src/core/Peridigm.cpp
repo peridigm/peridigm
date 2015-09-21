@@ -74,6 +74,7 @@
 #include "Peridigm_InterfaceAwareDamageModel.hpp"
 #include "Peridigm.hpp"
 #include "correspondence.h" // For Invert3by3Matrix
+#include "Peridigm_DataManager.hpp" //For readBlocktoDisk & writeBlocktoDisk
 #ifdef PERIDIGM_PV
   #include "Peridigm_PartialVolumeCalculator.hpp"
 #endif
@@ -87,6 +88,12 @@
 #include <Ifpack.h>
 #include <Ifpack_IC.h>
 #include <Teuchos_VerboseObject.hpp>
+
+/* required for restart  */
+#include "EpetraExt_MultiVectorIn.h"
+#include "EpetraExt_VectorIn.h"
+#include "EpetraExt_VectorOut.h"
+#include <sys/stat.h>
 
 using namespace std;
 
@@ -463,6 +470,10 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
 			blockIt->importData(*scratchOneD, fluidPressureYFieldId, PeridigmField::STEP_NP1, Insert);
 		}
   }
+
+  //Initialize restart if requested in the input file
+   if(peridigmParams->isSublist("Restart"))
+ 	InitializeRestart();
 
   // Compute element-horizon intersections
 #ifdef PERIDIGM_PV
@@ -844,6 +855,79 @@ void PeridigmNS::Peridigm::initializeWorkset() {
   workset->jacobian = overlapJacobian;
 }
 
+void PeridigmNS::Peridigm::InitializeRestart() {
+	struct stat sb;
+	  char pathname[100];
+      //blockIDs restart file
+	  sprintf(pathname,"%sblockIDs.mat","restart/");
+	  restartFiles["blockIDs"] = pathname;
+
+      //horizon restart file
+	  sprintf(pathname,"%shorizon.mat","restart/");
+	  restartFiles["horizon"] = pathname;
+
+      //volume restart file
+	  sprintf(pathname,"%svolume.mat","restart/");
+	  restartFiles["volume"] = pathname;
+
+      //density restart file
+	  sprintf(pathname,"%sdensity.mat","restart/");
+	  restartFiles["density"] = pathname;
+
+      //deltaTemperature restart file
+	  sprintf(pathname,"%sdeltaTemperature.mat","restart/");
+	  restartFiles["deltaTemperature"] = pathname;
+
+      //x restart file
+	  sprintf(pathname,"%sx.mat","restart/");
+	  restartFiles["x"] = pathname;
+
+      //u restart file
+	  sprintf(pathname,"%su.mat","restart/");
+	  restartFiles["u"] = pathname;
+
+      //y restart file
+	  sprintf(pathname,"%sy.mat","restart/");
+	  restartFiles["y"] = pathname;
+
+      //v restart file
+	  sprintf(pathname,"%sv.mat","restart/");
+	  restartFiles["v"] = pathname;
+
+      //a restart file
+	  sprintf(pathname,"%sa.mat","restart/");
+	  restartFiles["a"] = pathname;
+
+      //force restart file
+	  sprintf(pathname,"%sforce.mat","restart/");
+	  restartFiles["force"] = pathname;
+
+      //contactForce restart file
+	  sprintf(pathname,"%scontactForce.mat","restart/");
+	  restartFiles["contactForce"] = pathname;
+
+      //externalForce restart file
+	  sprintf(pathname,"%sexternalForce.mat","restart/");
+	  restartFiles["externalForce"] = pathname;
+
+      //deltaU restart file
+	  sprintf(pathname,"%sdeltaU.mat","restart/");
+	  restartFiles["deltaU"] = pathname;
+
+      //scratch restart file
+	  sprintf(pathname,"%sscratch.mat","restart/");
+	  restartFiles["scratch"] = pathname;
+
+	cout << pathname << '\n' << "Restart is initialized" << endl;
+
+	if (stat("restart", &sb) == 0 && S_ISDIR(sb.st_mode)){
+		cout << "Restart folder exists, will attempt to read the restart files" << endl;
+		readRestart();
+	}else{
+		cout << "Restart folder does not exist" << endl;
+	}
+}
+
 void PeridigmNS::Peridigm::instantiateComputeManager(Teuchos::RCP<Discretization> peridigmDiscretization) {
 
   Teuchos::RCP<Teuchos::ParameterList> computeParams = Teuchos::rcp( new Teuchos::ParameterList("Compute Manager") );
@@ -1050,6 +1134,8 @@ void PeridigmNS::Peridigm::execute(Teuchos::RCP<Teuchos::ParameterList> solverPa
 void PeridigmNS::Peridigm::executeSolvers() {
   for(unsigned int i=0 ; i<solverParameters.size() ; ++i)
     execute(solverParameters[i]);
+    if(peridigmParams->isSublist("Restart"))
+	writeRestart();
 }
 
 void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> solverParams) {
@@ -3747,4 +3833,166 @@ void PeridigmNS::Peridigm::displayProgress(string title, double percentComplete)
   ss << "] ";
 
   *out << ss.str();
+}
+
+void PeridigmNS::Peridigm::writeRestart(){
+  //Remove previously existing folder before writing the restart files
+  system("rm -r -f restart");
+  system("mkdir restart");
+  cout << "Writing restart files" << endl;
+  if(analysisHasMultiphysics){
+	 cout << "Restart for Multiphysics is not yet implemented" << endl;
+	 exit (0);
+    }
+  else {
+	  //write block ID
+	  EpetraExt::VectorToMatrixMarketFile 	(restartFiles["blockIDs"].c_str(),
+	  		*blockIDs,"blockIDs","",true);
+      //write horizon for each point
+	  EpetraExt::VectorToMatrixMarketFile 	(restartFiles["horizon"].c_str(),
+	  		*horizon,"horizon","",true);
+	  //write cell volume
+	  EpetraExt::VectorToMatrixMarketFile 	(restartFiles["volume"].c_str(),
+	  		*volume,"volume","",true);
+	  //write density
+	  EpetraExt::VectorToMatrixMarketFile 	(restartFiles["density"].c_str(),
+	  		*density,"density","",true);
+	  //write change in temperature
+	  EpetraExt::VectorToMatrixMarketFile 	(restartFiles["deltaTemperature"].c_str(),
+	  		*deltaTemperature,"deltaTemperature","",true);
+  }
+  //write initial positions
+  EpetraExt::VectorToMatrixMarketFile 	(restartFiles["x"].c_str(),
+  		*x,"x","",true);
+  //write displacement
+  EpetraExt::VectorToMatrixMarketFile 	(restartFiles["u"].c_str(),
+  		*u,"u","",true);
+  //write current positions
+  EpetraExt::VectorToMatrixMarketFile 	(restartFiles["y"].c_str(),
+  		*y,"y","",true);
+  //write velocities
+  EpetraExt::VectorToMatrixMarketFile 	(restartFiles["v"].c_str(),
+  		*v,"v","",true);
+  //write accelerations
+  EpetraExt::VectorToMatrixMarketFile 	(restartFiles["a"].c_str(),
+  		*a,"a","",true);
+  //write force
+  EpetraExt::VectorToMatrixMarketFile 	(restartFiles["force"].c_str(),
+  		*force,"force","",true);
+  //write contact force
+  EpetraExt::VectorToMatrixMarketFile 	(restartFiles["contactForce"].c_str(),
+  		*contactForce,"contactForce","",true);
+  //write external force
+  EpetraExt::VectorToMatrixMarketFile 	(restartFiles["externalForce"].c_str(),
+  		*externalForce,"externalForce","",true);
+  //write deltaU (increment in displacement)
+  EpetraExt::VectorToMatrixMarketFile 	(restartFiles["deltaU"].c_str(),
+  		*deltaU,"deltaU","",true);
+  //write scratch
+  EpetraExt::VectorToMatrixMarketFile 	(restartFiles["scratch"].c_str(),
+  		*scratch,"scratch","",true);
+  //write block data
+	  std::vector<PeridigmNS::Block>::iterator blockIt;
+	  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+     	  std::string blockName = blockIt->getName();
+		  blockIt->writeBlocktoDisk(blockName);
+	  }
+}
+
+void PeridigmNS::Peridigm::readRestart(){
+	  double* UpdatePtr;
+	  double* oldPtr;
+	  Epetra_Vector * vectorUpdate;
+
+  cout << "Reading restart" << endl;
+  if(analysisHasMultiphysics){
+	 cout << "Restart for Multiphysics is not implemented yet" << endl;
+	 exit (0);
+    }
+  else {
+	  //read block ID
+	  EpetraExt::MatrixMarketFileToVector(restartFiles["blockIDs"].c_str(), *oneDimensionalMap, vectorUpdate);
+	  vectorUpdate->ExtractView(&UpdatePtr);
+	  blockIDs->ExtractView(&oldPtr);
+	  blas.COPY(blockIDs->MyLength(), UpdatePtr, oldPtr);
+      //read horizon for each point
+	  EpetraExt::MatrixMarketFileToVector(restartFiles["horizon"].c_str(), *oneDimensionalMap, vectorUpdate);
+	  vectorUpdate->ExtractView(&UpdatePtr);
+	  horizon->ExtractView(&oldPtr);
+	  blas.COPY(horizon->MyLength(), UpdatePtr, oldPtr);
+	  //read cell volume
+	  EpetraExt::MatrixMarketFileToVector(restartFiles["volume"].c_str(), *oneDimensionalMap, vectorUpdate);
+	  vectorUpdate->ExtractView(&UpdatePtr);
+	  volume->ExtractView(&oldPtr);
+	  blas.COPY(volume->MyLength(), UpdatePtr, oldPtr);
+	  //read density
+	  EpetraExt::MatrixMarketFileToVector(restartFiles["density"].c_str(), *oneDimensionalMap, vectorUpdate);
+	  vectorUpdate->ExtractView(&UpdatePtr);
+	  density->ExtractView(&oldPtr);
+	  blas.COPY(density->MyLength(), UpdatePtr, oldPtr);
+	  //read change in temperature
+	  EpetraExt::MatrixMarketFileToVector(restartFiles["deltaTemperature"].c_str(), *oneDimensionalMap, vectorUpdate);
+	  vectorUpdate->ExtractView(&UpdatePtr);
+	  deltaTemperature->ExtractView(&oldPtr);
+	  blas.COPY(deltaTemperature->MyLength(), UpdatePtr, oldPtr);
+  }
+	  //read initial positions
+	  EpetraExt::MatrixMarketFileToVector(restartFiles["x"].c_str(), *threeDimensionalMap, vectorUpdate);
+	  vectorUpdate->ExtractView(&UpdatePtr);
+	  x->ExtractView(&oldPtr);
+	  blas.COPY(x->MyLength(), UpdatePtr, oldPtr);
+	  //read displacement
+	  EpetraExt::MatrixMarketFileToVector(restartFiles["u"].c_str(), *threeDimensionalMap, vectorUpdate);
+	  vectorUpdate->ExtractView(&UpdatePtr);
+	  u->ExtractView(&oldPtr);
+	  blas.COPY(u->MyLength(), UpdatePtr, oldPtr);
+	  //read current positions
+	  EpetraExt::MatrixMarketFileToVector(restartFiles["y"].c_str(), *threeDimensionalMap, vectorUpdate);
+	  vectorUpdate->ExtractView(&UpdatePtr);
+	  y->ExtractView(&oldPtr);
+	  blas.COPY(y->MyLength(), UpdatePtr, oldPtr);
+	  //read velocities
+	  EpetraExt::MatrixMarketFileToVector(restartFiles["v"].c_str(), *threeDimensionalMap, vectorUpdate);
+	  vectorUpdate->ExtractView(&UpdatePtr);
+	  v->ExtractView(&oldPtr);
+	  blas.COPY(v->MyLength(), UpdatePtr, oldPtr);
+	  //read accelerations
+	  EpetraExt::MatrixMarketFileToVector(restartFiles["a"].c_str(), *threeDimensionalMap, vectorUpdate);
+	  vectorUpdate->ExtractView(&UpdatePtr);
+	  a->ExtractView(&oldPtr);
+	  blas.COPY(a->MyLength(), UpdatePtr, oldPtr);
+	  //read force
+	  EpetraExt::MatrixMarketFileToVector(restartFiles["force"].c_str(), *threeDimensionalMap, vectorUpdate);
+	  vectorUpdate->ExtractView(&UpdatePtr);
+	  force->ExtractView(&oldPtr);
+	  blas.COPY(force->MyLength(), UpdatePtr, oldPtr);
+	  //read contact force
+	  EpetraExt::MatrixMarketFileToVector(restartFiles["contactForce"].c_str(), *threeDimensionalMap, vectorUpdate);
+	  vectorUpdate->ExtractView(&UpdatePtr);
+	  contactForce->ExtractView(&oldPtr);
+	  blas.COPY(contactForce->MyLength(), UpdatePtr, oldPtr);
+	  vectorUpdate = 0;
+	  UpdatePtr = 0;
+	  oldPtr = 0;
+	  //read external force
+	  EpetraExt::MatrixMarketFileToVector(restartFiles["externalForce"].c_str(), *threeDimensionalMap, vectorUpdate);
+	  vectorUpdate->ExtractView(&UpdatePtr);
+	  externalForce->ExtractView(&oldPtr);
+	  blas.COPY(externalForce->MyLength(), UpdatePtr, oldPtr);
+	  //read deltaU (increment in displacement)
+	  EpetraExt::MatrixMarketFileToVector(restartFiles["deltaU"].c_str(), *threeDimensionalMap, vectorUpdate);
+	  vectorUpdate->ExtractView(&UpdatePtr);
+	  deltaU->ExtractView(&oldPtr);
+	  blas.COPY(deltaU->MyLength(), UpdatePtr, oldPtr);
+	  //read scratch
+	  EpetraExt::MatrixMarketFileToVector(restartFiles["scratch"].c_str(), *threeDimensionalMap, vectorUpdate);
+	  vectorUpdate->ExtractView(&UpdatePtr);
+	  scratch->ExtractView(&oldPtr);
+	  blas.COPY(scratch->MyLength(), UpdatePtr, oldPtr);
+	  //read block data
+	  	  std::vector<PeridigmNS::Block>::iterator blockIt;
+	  	  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+	     	  std::string blockName = blockIt->getName();
+			  blockIt->readBlockfromDisk(blockName);
+	  	  }
 }

@@ -173,6 +173,16 @@ public:
     // Swap pointers for all other state data
     stateN.swap(stateNP1);
   }
+  void writeBlocktoDisk(std::string blockName){
+      // StateNone is unaffected by restart so only StateN and StateNP1 are written
+	  getStateN()->writeStateData(getStateN(),"StateN",blockName);
+	  getStateNP1()->writeStateData(getStateNP1(),"StateNP1",blockName);
+  }
+  void readBlockfromDisk(std::string blockName){
+      // StateNone is unaffected by restart so only StateN and StateNP1 are red
+	  getStateN()->readStateData(getStateN(),"StateN",blockName);
+	  getStateNP1()->readStateData(getStateNP1(),"StateNP1",blockName);
+  }
 
 protected:
 
