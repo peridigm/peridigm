@@ -1,0 +1,22 @@
+
+#{LENGTH=10}
+#{RADIUS=1}
+#{MESHSIZE=RADIUS/8}
+#{HORIZON=3*MESHSIZE}
+
+reset  
+create cylinder height {LENGTH} radius {RADIUS}
+webcut volume 1 with plane zplane offset {LENGTH/2-5*HORIZON} imprint merge 
+webcut volume 2 with plane zplane offset {-LENGTH/2+5*HORIZON} imprint merge
+volume all size {MESHSIZE}
+mesh volume all
+block 1 volume all
+nodeset 1 volume 1
+nodeset 2 volume 3
+export genesis "twist_and_pull.g" block all overwrite
+
+
+
+
+
+
