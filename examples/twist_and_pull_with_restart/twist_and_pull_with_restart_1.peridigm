@@ -17,6 +17,8 @@ Blocks
     Horizon 0.3125
     Block Names "block_1"
     Material "My Material"
+Restart
+    Restart
 Boundary Conditions
   Prescribed Displacement Bottom x
     Type "Prescribed Displacement"
