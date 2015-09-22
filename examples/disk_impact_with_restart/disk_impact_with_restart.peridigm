@@ -2,6 +2,7 @@
 #     Description
 #       Simulation of an elastic sphere impacting a brittle elastic disk.
 #       A critical stretch bond failure law is applied to the disk.
+#       A restart option is used 
 #
 #     Units are SI
 #       mass          kg
@@ -72,7 +73,7 @@ Boundary Conditions
 
 Solver
     Initial Time 0.0
-    Final Time 0.0008
+    Final Time 0.0001
     Verlet
         Safety Factor 0.7
 
