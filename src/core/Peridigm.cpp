@@ -89,7 +89,7 @@
 #include <Ifpack_IC.h>
 #include <Teuchos_VerboseObject.hpp>
 
-/* required for restart  */
+// required for restart 
 #include "EpetraExt_MultiVectorIn.h"
 #include "EpetraExt_VectorIn.h"
 #include "EpetraExt_VectorOut.h"
@@ -127,10 +127,25 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
 {
 #ifdef HAVE_MPI
   peridigmComm = Teuchos::rcp(new Epetra_MpiComm(comm));
+ 
+// Check for MPI restart option
+  int size;
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  if(params->isParameter("Restart")  && size > 1){
+        std::cout<<"\n**** Restart of parallel jobs is under development. Either disable restart option or run with mpirun -np 1.\n"<< std::endl; 
+        MPI_Finalize();
+	exit(0);
+   }
+   
 #else
   peridigmComm = Teuchos::rcp(new Epetra_SerialComm);
 #endif
 
+  if(params->isParameter("Multiphysics") && params->isParameter("Restart") ) {
+  	 cout <<"Restart for Multiphysics is not implemented yet."<< endl;
+	 exit (0);
+    }
+  
   peridigmParams = params;
   // set the comm for memory use statistics
   Memstat * memstat = Memstat::Instance();
@@ -150,12 +165,12 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
   string multiphysError;
   if(peridigmParams->isParameter("Multiphysics"))
   {
-      std::cout<< "\n**** Multiphysics is selected.\n" << std::endl;
+      std::cout<<"\n**** Multiphysics is selected.\n"<< std::endl;
       if(peridigmParams->get<int>("Multiphysics") == 1)
       {
             analysisHasMultiphysics = true;    
             numMultiphysDoFs = peridigmParams->get<int>("Multiphysics");
-            std::cout<< "\n**** Multiphysics is enabled, pending material model screening.\n" << std::endl;
+            std::cout<<"\n**** Multiphysics is enabled, pending material model screening.\n"<< std::endl;
       }
       else
       {
@@ -472,7 +487,7 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
   }
 
   //Initialize restart if requested in the input file
-   if(peridigmParams->isSublist("Restart"))
+   if(peridigmParams->isParameter("Restart"))
  	InitializeRestart();
 
   // Compute element-horizon intersections
@@ -918,13 +933,13 @@ void PeridigmNS::Peridigm::InitializeRestart() {
 	  sprintf(pathname,"%sscratch.mat","restart/");
 	  restartFiles["scratch"] = pathname;
 
-	cout << pathname << '\n' << "Restart is initialized" << endl;
+	cout <<"Restart is initialized." << endl;
 
 	if (stat("restart", &sb) == 0 && S_ISDIR(sb.st_mode)){
-		cout << "Restart folder exists, will attempt to read the restart files" << endl;
+		cout <<"Restart folder exists, will attempt to read the restart files. \n"<< endl;
 		readRestart();
 	}else{
-		cout << "Restart folder does not exist" << endl;
+		cout <<"Restart folder does not exist. \n" << endl;
 	}
 }
 
@@ -1134,7 +1149,7 @@ void PeridigmNS::Peridigm::execute(Teuchos::RCP<Teuchos::ParameterList> solverPa
 void PeridigmNS::Peridigm::executeSolvers() {
   for(unsigned int i=0 ; i<solverParameters.size() ; ++i)
     execute(solverParameters[i]);
-    if(peridigmParams->isSublist("Restart"))
+    if(peridigmParams->isParameter("Restart"))
 	writeRestart();
 }
 
@@ -3839,9 +3854,9 @@ void PeridigmNS::Peridigm::writeRestart(){
   //Remove previously existing folder before writing the restart files
   system("rm -r -f restart");
   system("mkdir restart");
-  cout << "Writing restart files" << endl;
+  cout << "Writing restart files. \n" << endl;
   if(analysisHasMultiphysics){
-	 cout << "Restart for Multiphysics is not yet implemented" << endl;
+	 cout << "Restart for Multiphysics is not implemented yet." << endl;
 	 exit (0);
     }
   else {
@@ -3904,9 +3919,9 @@ void PeridigmNS::Peridigm::readRestart(){
 	  double* oldPtr;
 	  Epetra_Vector * vectorUpdate;
 
-  cout << "Reading restart" << endl;
+  cout << "Reading restart. \n" << endl;
   if(analysisHasMultiphysics){
-	 cout << "Restart for Multiphysics is not implemented yet" << endl;
+	 cout << "Restart for Multiphysics is not implemented yet." << endl;
 	 exit (0);
     }
   else {
