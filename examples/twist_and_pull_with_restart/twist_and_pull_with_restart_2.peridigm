@@ -1,3 +1,5 @@
+#       A restart option is used
+#
 {TWIST_FINAL_TIME=0.02}
 {PULL_FINAL_TIME=0.0205}
 {NUMBER_OF_QS_STEPS=2}
