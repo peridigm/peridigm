@@ -254,6 +254,8 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
     allocateBlockDiagonalTangent = true;
   if(implicitTimeIntegration && (!userSpecifiedFullTangent && !userSpecifiedBlockDiagonalTangent))
     allocateTangent = true;
+  if(peridigmParams->isParameter("Optimization Based Coupling"))
+    allocateTangent = true;
 
   // Instantiate and initialize the boundary and initial condition manager
   Teuchos::RCP<Teuchos::ParameterList> bcParams =
