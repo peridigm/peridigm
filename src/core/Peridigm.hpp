@@ -150,6 +150,19 @@ namespace PeridigmNS {
     //! Residual and Jacobian matrix fills for NOX interface
     virtual bool evaluateNOX(FillType f, const Epetra_Vector *solnVector, Epetra_Vector *rhsVector);
 
+    //! Returns the global tangent stiffness matrix (intended for use when calling Peridigm as a library).
+    Teuchos::RCP<const Epetra_FECrsMatrix> getTangentStiffnessMatrix(){ return tangent; }
+
+    //! Evaluate the tangent stiffness matrix (intended for use when calling Peridigm as a library).
+    void evaluateTangentStiffnessMatrix(){
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(tangent.is_null(), "**** PeridigmNS::Peridigm::evaluateTangentStiffnessMatrix(), tangent has not been allocated!\n");
+      tangent->PutScalar(0.0);
+      modelEvaluator->evalJacobian(workset);
+      int err = tangent->GlobalAssemble();
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::evaluateTangentStiffnessMatrix(), GlobalAssemble() returned nonzero error code.\n");
+      tangent->Scale(-1.0);
+    }
+
     //! Evaluate the internal force; assumes x, u, y, and v have been set, fills force (intended for use when calling Peridigm as a library).
     void computeInternalForce();
 
