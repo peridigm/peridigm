@@ -194,7 +194,9 @@ TEUCHOS_UNIT_TEST(Y_Z_crack_jacobian_np4, AssertNeighborhood_p0Test) {
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane,true));
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
-	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);
+	std::vector< shared_ptr<PdBondFilter::BondFilter> > bondFilterPtrs;
+	bondFilterPtrs.push_back(filterPtr);
+	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,bondFilterPtrs);
 
 	int *neigh = list.get_neighborhood().get();
 	int *gids = gridData.myGlobalIDs.get();
@@ -285,7 +287,9 @@ TEUCHOS_UNIT_TEST(Y_Z_crack_jacobian_np4, AssertNeighborhood_p1Test) {
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
-	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);
+	std::vector< shared_ptr<PdBondFilter::BondFilter> > bondFilterPtrs;
+	bondFilterPtrs.push_back(filterPtr);
+	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,bondFilterPtrs);
 
 	/*
 	 * There are a total of 48 points = nx * ny * nz = 4 * 4 * 3
@@ -322,7 +326,9 @@ TEUCHOS_UNIT_TEST(Y_Z_crack_jacobian_np4, AssertNeighborhood_p2Test) {
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
-	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);
+	std::vector< shared_ptr<PdBondFilter::BondFilter> > bondFilterPtrs;
+	bondFilterPtrs.push_back(filterPtr);
+	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,bondFilterPtrs);
 
 	/*
 	 * There are a total of 48 points = nx * ny * nz = 4 * 4 * 3
@@ -359,7 +365,9 @@ TEUCHOS_UNIT_TEST(Y_Z_crack_jacobian_np4, AssertNeighborhood_p3Test) {
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
-	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);
+	std::vector< shared_ptr<PdBondFilter::BondFilter> > bondFilterPtrs;
+	bondFilterPtrs.push_back(filterPtr);
+	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,bondFilterPtrs);
 
 	/*
 	 * There are a total of 48 points = nx * ny * nz = 4 * 4 * 3

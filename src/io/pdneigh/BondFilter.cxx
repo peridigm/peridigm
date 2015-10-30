@@ -109,11 +109,6 @@ void BondFilterDefault::filterBonds(std::vector<int>& treeList, const double *pt
 	bool *flagIter = bondFlags;
 	for(unsigned int n=0;n<treeList.size();n++,flagIter++){
 		/*
-		 * All bonds are innocent until proven guilty
-		 */
-		*flagIter=0;
-
-		/*
 		 * If we want to include 'x' then we do not mark
 		 */
 		if(includeSelf) continue;
@@ -142,10 +137,6 @@ void FinitePlaneFilter::filterBonds(std::vector<int>& treeList, const double *pt
 		 * Local id of point within neighborhood
 		 */
       size_t uid = treeList[p];
-		/*
-		 * All bonds are innocent until proven guilty
-		 */
-		*flagIter=0;
 		/*
 		 * We mark points only if we do not want to include them
 		 */

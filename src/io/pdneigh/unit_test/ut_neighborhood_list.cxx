@@ -114,8 +114,10 @@ TEUCHOS_UNIT_TEST( Neighborhood_list, AxialBarLinearSpacingTest) {
 	 * NOTE THAT: Since this is a serial test, numPoints = numOverlapPoints; and x = xOverlap
 	 */
 	shared_ptr<BondFilter> bondFilterPtr(new PdBondFilter::BondFilterDefault(true));
+        std::vector< shared_ptr<PdBondFilter::BondFilter> > bondFilterPtrs;
+        bondFilterPtrs.push_back(bondFilterPtr);
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
-	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon,bondFilterPtr);
+	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon,bondFilterPtrs);
 	TEST_ASSERT((int)list.get_num_owned_points() == numPoints);
 	int size = 0;
 	for(int n=0;n<numPoints;n++)

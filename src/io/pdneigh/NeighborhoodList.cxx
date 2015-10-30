@@ -142,7 +142,7 @@ NeighborhoodList::NeighborhoodList
 		shared_ptr<int> ownedGIDs,
 		shared_ptr<double> owned_coordinates,
 		Teuchos::RCP<Epetra_Vector> horizonList,
-		shared_ptr<PdBondFilter::BondFilter> bondFilterPtr
+		std::vector< shared_ptr<PdBondFilter::BondFilter> > bondFilters
 )
 :
 		epetraComm(comm),
@@ -150,7 +150,7 @@ NeighborhoodList::NeighborhoodList
 		num_owned_points(numOwnedPoints),
 		size_neighborhood_list(1),
 		frameset_buffer_size(0.0),
-        horizons(horizonList),
+                horizons(horizonList),
 		owned_gids(ownedGIDs),
 		owned_x(owned_coordinates),
 		neighborhood(),
@@ -159,8 +159,12 @@ NeighborhoodList::NeighborhoodList
 		num_neighbors(num_owned_points),
 		sharedGIDs(),
 		zoltan(zz),
-		filter_ptr(bondFilterPtr)
+		filter_ptrs(bondFilters)
 {
+        if(filter_ptrs.size() == 0){
+          filter_ptrs.push_back(shared_ptr<PdBondFilter::BondFilter>(new PdBondFilter::BondFilterDefault()));
+        }
+
 	/*
 	 * This single call performs the parallel search
 	 */
@@ -200,7 +204,7 @@ NeighborhoodList::NeighborhoodList
 		shared_ptr<int> ownedGIDs,
 		shared_ptr<double> owned_coordinates,
 		double horizon,
-		shared_ptr<PdBondFilter::BondFilter> bondFilterPtr
+		std::vector< shared_ptr<PdBondFilter::BondFilter> > bondFilters
 )
 :
 		epetraComm(comm),
@@ -216,8 +220,12 @@ NeighborhoodList::NeighborhoodList
 		num_neighbors(num_owned_points),
 		sharedGIDs(),
 		zoltan(zz),
-		filter_ptr(bondFilterPtr)
+		filter_ptrs(bondFilters)
 {
+     if(filter_ptrs.size() == 0){
+       filter_ptrs.push_back(shared_ptr<PdBondFilter::BondFilter>(new PdBondFilter::BondFilterDefault()));
+     }
+
      // Create a vector that assigns the single horizon value to every point
      Epetra_BlockMap oneDimensionalMap(-1, numOwnedPoints, ownedGIDs.get(), 1, 0, *comm);
      horizons = Teuchos::rcp(new Epetra_Vector(oneDimensionalMap));
@@ -701,7 +709,15 @@ void NeighborhoodList::buildNeighborhoodList
 			sort(treeList.begin(), treeList.end());
 
 			bool *bondFlags = markForExclusion.get();
-			filter_ptr->filterBonds(treeList, x, p, xOverlap, bondFlags);
+
+			// Set all flags to "unbroken"
+			for(unsigned int iBondFlag=0 ; iBondFlag<treeList.size(); ++iBondFlag){
+			  bondFlags[iBondFlag] = 0;
+			}
+
+			for(unsigned int iFilter = 0 ; iFilter<filter_ptrs.size() ; iFilter++){
+			  filter_ptrs[iFilter]->filterBonds(treeList, x, p, xOverlap, bondFlags);
+			}
 
 			/*
 			 * Determine number of neighbors from flags

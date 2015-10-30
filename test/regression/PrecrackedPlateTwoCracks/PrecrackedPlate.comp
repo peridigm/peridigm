@@ -1,0 +1,13 @@
+DEFAULT TOLERANCE absolute 1.0E-9
+COORDINATES absolute 1.0E-12
+TIME STEPS absolute 1.0E-14
+NODAL VARIABLES absolute 1.0E-12
+	DisplacementX   absolute 1.0E-12
+	DisplacementY   absolute 1.0E-12
+	DisplacementZ   absolute 1.0E-12
+	ForceX          absolute 1.0
+	ForceY          absolute 1.0
+	ForceZ          absolute 1.0
+ELEMENT VARIABLES absolute 1.E-12
+	Number_Of_Neighbors absolute 1.0E-15
+	Dilatation          absolute 1.0E-13
