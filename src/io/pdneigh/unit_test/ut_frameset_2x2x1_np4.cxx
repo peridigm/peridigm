@@ -150,8 +150,10 @@ TEUCHOS_UNIT_TEST(Frameset_2x2x1_np4, CreateNeighborhoodTest) {
 	TEST_ASSERT(1==decomp.numPoints);
 	TEST_ASSERT(4==decomp.globalNumPoints);
 	shared_ptr<BondFilter> bondFilterPtr(new PdBondFilter::BondFilterDefault(true));
+        std::vector< shared_ptr<PdBondFilter::BondFilter> > bondFilterPtrs;
+        bondFilterPtrs.push_back(bondFilterPtr);
 	//shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
-	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,2.0*horizon,bondFilterPtr);
+	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,2.0*horizon,bondFilterPtrs);
 	shared_ptr< std::set<int> > frameSet = constructFrame(list);
         TEST_ASSERT(1==frameSet->size());
 	TEST_ASSERT(5==list.get_size_neighborhood_list());
