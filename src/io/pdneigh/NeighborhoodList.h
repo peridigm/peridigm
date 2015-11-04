@@ -130,7 +130,7 @@ public:
 			shared_ptr<int> ownedGIDs,
 			shared_ptr<double> owned_coordinates,
 			Teuchos::RCP<Epetra_Vector> horizonList,
-			shared_ptr<PdBondFilter::BondFilter> bondFilterPtr = shared_ptr<PdBondFilter::BondFilter>(new PdBondFilter::BondFilterDefault())
+			std::vector< shared_ptr<PdBondFilter::BondFilter> > bondFilters = std::vector< shared_ptr<PdBondFilter::BondFilter> >()
 			);
 	NeighborhoodList(
 			shared_ptr<const Epetra_Comm> comm,
@@ -139,7 +139,7 @@ public:
 			shared_ptr<int> ownedGIDs,
 			shared_ptr<double> owned_coordinates,
 			double horizon,
-			shared_ptr<PdBondFilter::BondFilter> bondFilterPtr = shared_ptr<PdBondFilter::BondFilter>(new PdBondFilter::BondFilterDefault())
+			std::vector< shared_ptr<PdBondFilter::BondFilter> > bondFilters = std::vector< shared_ptr<PdBondFilter::BondFilter> >()
 			);
 	double get_frameset_buffer_size() const;
 	size_t get_num_owned_points() const;
@@ -178,7 +178,7 @@ private:
 	shared_ptr<double> owned_x;
 	Array<int> neighborhood, local_neighborhood, neighborhood_ptr, num_neighbors, sharedGIDs;
 	struct Zoltan_Struct* zoltan;
-	shared_ptr<PdBondFilter::BondFilter> filter_ptr;
+	std::vector< shared_ptr<PdBondFilter::BondFilter> > filter_ptrs;
 
 };
 

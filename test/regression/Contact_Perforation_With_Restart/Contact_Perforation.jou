@@ -1,0 +1,13 @@
+
+reset
+create pyramid height 1.5 sides 16 radius 0.3 top 0.07
+rotate volume 1 angle 90 about y include_merged
+move volume 1 x -1.5 y 0.0 z 0.0
+create brick x 0.3 y 3.0 z 3.0
+volume 1 size 0.25
+volume 2 size 0.15
+block 1 volume 1
+block 2 volume 2
+nodeset 1 volume 1
+mesh volume all
+export genesis 'Contact_Perforation.g' overwrite

@@ -254,7 +254,6 @@ void PeridigmNS::ProximitySearch::GlobalProximitySearch(Teuchos::RCP<Epetra_Vect
   }
 
   // The initial implementation supports only a single bond filter
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(bondFilters.size() > 1, "\n****Error:  Multiple bond filters currently unsupported.\n");
   if(bondFilters.size() == 0){
     std::tr1::shared_ptr<PdBondFilter::BondFilter> bondFilterPtr(new PdBondFilter::BondFilterDefault(false));
     bondFilters.push_back(bondFilterPtr);
@@ -269,7 +268,7 @@ void PeridigmNS::ProximitySearch::GlobalProximitySearch(Teuchos::RCP<Epetra_Vect
                                  decomp.myGlobalIDs,
                                  decomp.myX,
                                  rebalancedSearchRadii,
-                                 bondFilters[0]);
+                                 bondFilters);
 
   // The neighbor search is complete, but needs to be brought back into the initial decomposition
 

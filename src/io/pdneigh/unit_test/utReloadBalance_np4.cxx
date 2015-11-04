@@ -275,7 +275,9 @@ TEUCHOS_UNIT_TEST(ReloadBalance_np4, MoveCoordinatesAndReLoadBalance) {
 	decomp = PDNEIGH::getLoadBalancedDiscretization(decomp);
 	shared_ptr<PdBondFilter::BondFilter> bondFilterPtr(new PdBondFilter::BondFilterDefault());
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
-	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon,bondFilterPtr);
+	std::vector< shared_ptr<PdBondFilter::BondFilter> > bondFilterPtrs;
+	bondFilterPtrs.push_back(bondFilterPtr);
+	PDNEIGH::NeighborhoodList list(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon,bondFilterPtrs);
 
 	/*
 	 * Now check that new partition has swapped points and
