@@ -311,12 +311,12 @@ QUICKGRID::Data PeridigmNS::TextFileDiscretization::getDecomp(const string& text
   // execute neighbor search and update the decomp to include resulting ghosts
   std::tr1::shared_ptr<const Epetra_Comm> commSp(comm.getRawPtr(), NonDeleter<const Epetra_Comm>());
   Teuchos::RCP<PDNEIGH::NeighborhoodList> list;
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(bondFilters.size() > 1, "\n****Error:  Multiple bond filters currently unsupported.\n");
-
-  if(bondFilters.size() == 0)
+  if(bondFilters.size() == 0){
     list = Teuchos::rcp(new PDNEIGH::NeighborhoodList(commSp,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,rebalancedHorizonForEachPoint));
-  else if(bondFilters.size() == 1)
-    list = Teuchos::rcp(new PDNEIGH::NeighborhoodList(commSp,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,rebalancedHorizonForEachPoint,bondFilters[0]));
+  }
+  else{
+    list = Teuchos::rcp(new PDNEIGH::NeighborhoodList(commSp,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,rebalancedHorizonForEachPoint,bondFilters));
+  }
   decomp.neighborhood=list->get_neighborhood();
   decomp.sizeNeighborhoodList=list->get_size_neighborhood_list();
   decomp.neighborhoodPtr=list->get_neighborhood_ptr();

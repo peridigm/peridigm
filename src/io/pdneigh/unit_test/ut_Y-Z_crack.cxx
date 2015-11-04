@@ -154,7 +154,9 @@ TEUCHOS_UNIT_TEST( Y_Z_crack, AssertNeighborhoodTest) {
 	FinitePlane crackPlane=getYZ_CrackPlane();
 	shared_ptr<BondFilter> filterPtr=shared_ptr<BondFilter>(new FinitePlaneFilter(crackPlane));
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
-	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,filterPtr);
+	std::vector< shared_ptr<PdBondFilter::BondFilter> > bondFilterPtrs;
+	bondFilterPtrs.push_back(filterPtr);
+	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon,bondFilterPtrs);
 
 	int *neigh = list.get_neighborhood().get();
 

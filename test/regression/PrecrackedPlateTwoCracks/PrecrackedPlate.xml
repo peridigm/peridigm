@@ -5,16 +5,30 @@
     <Parameter name="Type" type="string" value="Exodus" />
     <Parameter name="Input Mesh File" type="string" value="Plate.g"/>
     <ParameterList name="Bond Filters">
-      <ParameterList name="My First Bond Filter">
+      <ParameterList name="Right Side Bond Filter">
+        <Parameter name="Type" type="string" value="Rectangular_Plane"/>
+        <Parameter name="Normal_X" type="double" value="0.0"/>
+        <Parameter name="Normal_Y" type="double" value="1.0"/>
+        <Parameter name="Normal_Z" type="double" value="0.0"/>
+        <Parameter name="Lower_Left_Corner_X" type="double" value="0.0"/>
+        <Parameter name="Lower_Left_Corner_Y" type="double" value="4.0"/>
+        <Parameter name="Lower_Left_Corner_Z" type="double" value="-10.0"/>
+        <Parameter name="Bottom_Unit_Vector_X" type="double" value="1.0"/>
+        <Parameter name="Bottom_Unit_Vector_Y" type="double" value="4.0"/>
+        <Parameter name="Bottom_Unit_Vector_Z" type="double" value="0.0"/>
+        <Parameter name="Bottom_Length" type="double" value="10"/>
+        <Parameter name="Side_Length" type="double" value="20"/>
+      </ParameterList>
+      <ParameterList name="Left Side Bond Filter">
         <Parameter name="Type" type="string" value="Rectangular_Plane"/>
         <Parameter name="Normal_X" type="double" value="0.0"/>
         <Parameter name="Normal_Y" type="double" value="1.0"/>
         <Parameter name="Normal_Z" type="double" value="0.0"/>
         <Parameter name="Lower_Left_Corner_X" type="double" value="-10.0"/>
-        <Parameter name="Lower_Left_Corner_Y" type="double" value="0.0"/>
+        <Parameter name="Lower_Left_Corner_Y" type="double" value="-4.0"/>
         <Parameter name="Lower_Left_Corner_Z" type="double" value="-10.0"/>
         <Parameter name="Bottom_Unit_Vector_X" type="double" value="1.0"/>
-        <Parameter name="Bottom_Unit_Vector_Y" type="double" value="0.0"/>
+        <Parameter name="Bottom_Unit_Vector_Y" type="double" value="-4.0"/>
         <Parameter name="Bottom_Unit_Vector_Z" type="double" value="0.0"/>
         <Parameter name="Bottom_Length" type="double" value="10"/>
         <Parameter name="Side_Length" type="double" value="20"/>
