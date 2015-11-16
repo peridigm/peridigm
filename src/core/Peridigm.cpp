@@ -67,7 +67,6 @@
 #include "Peridigm_ComputeManager.hpp"
 #include "Peridigm_BoundaryAndInitialConditionManager.hpp"
 #include "Peridigm_CriticalTimeStep.hpp"
-#include "Peridigm_RandomNumber.hpp"
 #include "Peridigm_Timer.hpp"
 #include "Peridigm_MaterialFactory.hpp"
 #include "Peridigm_DamageModelFactory.hpp"
@@ -156,9 +155,6 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
   *nonlinearSolverIterations = 0;
 
   out = Teuchos::VerboseObjectBase::getDefaultOStream();
-
-  // Seed random number generator for reproducable results
-  seed_rand_num( 42 );
 
   // Process and validate requests for multiphysics
   // Can the number of multiphysics DoFs be accomodated?
