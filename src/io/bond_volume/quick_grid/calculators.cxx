@@ -47,6 +47,7 @@
 #include "utilities/Array.h"
 
 #include <boost/property_tree/json_parser.hpp>
+#include <iostream>
 #include <stdexcept>
 #include <string>
 
