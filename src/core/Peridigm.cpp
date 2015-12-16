@@ -870,9 +870,9 @@ void PeridigmNS::Peridigm::initializeWorkset() {
 std::string getCmdOutput(const std::string& mStr)
 {
     std::string result, file;
-    FILE* pipe{popen(mStr.c_str(), "r")};
+    FILE* pipe;
     char buffer[256];
-
+    pipe=popen(mStr.c_str(), "r");
     while(fgets(buffer, sizeof(buffer), pipe) != NULL)
     {
         file = buffer;
