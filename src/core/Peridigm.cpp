@@ -50,11 +50,11 @@
 // ************************************************************************
 //@HEADER
 //
-
 #include <iostream>
 #include <sstream>
 #include <vector>
 #include <map>
+#include <string>
 
 #include <boost/unordered_set.hpp>
 #include <boost/math/special_functions/fpclassify.hpp>
@@ -484,9 +484,6 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
 		}
   }
 
-  //Initialize restart if requested in the input file
-   if(peridigmParams->isParameter("Restart"))
- 	InitializeRestart();
 
   // Compute element-horizon intersections
 #ifdef PERIDIGM_PV
@@ -710,6 +707,9 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
     if(jacobianType == PeridigmNS::Material::UNDEFINED)
       jacobianType = PeridigmNS::Material::BLOCK_DIAGONAL;
   }
+  //Initialize restart if requested in the input file
+  if(peridigmParams->isParameter("Restart"))
+    InitializeRestart();
 }
 
 void PeridigmNS::Peridigm::checkContactSearchRadius(const Teuchos::ParameterList& contactParams, Teuchos::RCP<Discretization> peridigmDisc){
@@ -867,80 +867,122 @@ void PeridigmNS::Peridigm::initializeWorkset() {
   workset->jacobianType = Teuchos::rcpFromRef(jacobianType);
   workset->jacobian = overlapJacobian;
 }
+std::string getCmdOutput(const std::string& mStr)
+{
+    std::string result, file;
+    FILE* pipe{popen(mStr.c_str(), "r")};
+    char buffer[256];
 
+    while(fgets(buffer, sizeof(buffer), pipe) != NULL)
+    {
+        file = buffer;
+        result += file.substr(0, file.size() - 1);
+    }
+
+    pclose(pipe);
+    return result;
+}
+std::string firstNumbersSring(std::string const & str)
+{
+  std::size_t const n = str.find_first_of("0123456789");
+  if (n != std::string::npos)
+  {
+    std::size_t const m = str.find_first_not_of("0123456789", n);
+    return str.substr(n, m != std::string::npos ? m-n : m);
+  }
+  return std::string();
+}
 void PeridigmNS::Peridigm::InitializeRestart() {
+	std::string str;
 	struct stat sb;
-	  char pathname[100];
-      //blockIDs restart file
-	  sprintf(pathname,"%sblockIDs.mat","restart/");
-	  restartFiles["blockIDs"] = pathname;
-
-      //horizon restart file
-	  sprintf(pathname,"%shorizon.mat","restart/");
-	  restartFiles["horizon"] = pathname;
-
-      //volume restart file
-	  sprintf(pathname,"%svolume.mat","restart/");
-	  restartFiles["volume"] = pathname;
-
-      //density restart file
-	  sprintf(pathname,"%sdensity.mat","restart/");
-	  restartFiles["density"] = pathname;
-
-      //deltaTemperature restart file
-	  sprintf(pathname,"%sdeltaTemperature.mat","restart/");
-	  restartFiles["deltaTemperature"] = pathname;
-
-      //x restart file
-	  sprintf(pathname,"%sx.mat","restart/");
-	  restartFiles["x"] = pathname;
-
-      //u restart file
-	  sprintf(pathname,"%su.mat","restart/");
-	  restartFiles["u"] = pathname;
-
-      //y restart file
-	  sprintf(pathname,"%sy.mat","restart/");
-	  restartFiles["y"] = pathname;
-
-      //v restart file
-	  sprintf(pathname,"%sv.mat","restart/");
-	  restartFiles["v"] = pathname;
-
-      //a restart file
-	  sprintf(pathname,"%sa.mat","restart/");
-	  restartFiles["a"] = pathname;
-
-      //force restart file
-	  sprintf(pathname,"%sforce.mat","restart/");
-	  restartFiles["force"] = pathname;
-
-      //contactForce restart file
-	  sprintf(pathname,"%scontactForce.mat","restart/");
-	  restartFiles["contactForce"] = pathname;
-
-      //externalForce restart file
-	  sprintf(pathname,"%sexternalForce.mat","restart/");
-	  restartFiles["externalForce"] = pathname;
-
-      //deltaU restart file
-	  sprintf(pathname,"%sdeltaU.mat","restart/");
-	  restartFiles["deltaU"] = pathname;
-
-      //scratch restart file
-	  sprintf(pathname,"%sscratch.mat","restart/");
-	  restartFiles["scratch"] = pathname;
-
-	cout <<"Restart is initialized." << endl;
-
-	if (stat("restart", &sb) == 0 && S_ISDIR(sb.st_mode)){
-		cout <<"Restart folder exists, will attempt to read the restart files. \n"<< endl;
-		readRestart();
+	char const * restart_directory_namePtr;
+	if (stat("restart-000001", &sb) == 0 && S_ISDIR(sb.st_mode)){
+	    str=getCmdOutput("ls --color=never -td -- ./restart*/ | head -n1 | cut -d'/' -f2");
+	    if (str != ""){
+	    	cout <<"Restart folder exists, will attempt to read the restart files. \n"<< endl;
+	    	std::vector<char> writable(str.begin(), str.end());
+	    	writable.push_back('\0');
+	    	restart_directory_namePtr=&*writable.begin();
+	    	setRestartNames(restart_directory_namePtr);
+	    	readRestart();
+	    	cout <<"Restart is initialized." << endl;
+	    }else{
+	    	cout <<"Initial restart folder exists, but it is not suitable for a restart. \n" << endl;
+	    	exit (0);
+	    }
 	}else{
-		cout <<"Restart folder does not exist. \n" << endl;
+		cout <<"Initial restart folder does not exist. \n" << endl;
+		restart_directory_namePtr ="restart-000000";
+		setRestartNames(restart_directory_namePtr);
 	}
 }
 
+void PeridigmNS::Peridigm::setRestartNames(	char const * restart_directory_namePtr) {
+char pathname[100];
+//path to current restart folder
+restartFiles["path"] = restart_directory_namePtr;
+//Current time restart file
+sprintf(pathname,"%s/currentTime.txt",restart_directory_namePtr);
+restartFiles["currentTime"] = pathname;
+//blockIDs restart file
+sprintf(pathname,"%s/blockIDs.mat",restart_directory_namePtr);
+restartFiles["blockIDs"] = pathname;
+//horizon restart file
+sprintf(pathname,"%s/horizon.mat",restart_directory_namePtr);
+restartFiles["horizon"] = pathname;
+
+//volume restart file
+sprintf(pathname,"%s/volume.mat",restart_directory_namePtr);
+restartFiles["volume"] = pathname;
+
+//density restart file
+sprintf(pathname,"%s/density.mat",restart_directory_namePtr);
+restartFiles["density"] = pathname;
+
+//deltaTemperature restart file
+sprintf(pathname,"%s/deltaTemperature.mat",restart_directory_namePtr);
+restartFiles["deltaTemperature"] = pathname;
+
+//x restart file
+sprintf(pathname,"%s/x.mat",restart_directory_namePtr);
+restartFiles["x"] = pathname;
+
+//u restart file
+sprintf(pathname,"%s/u.mat",restart_directory_namePtr);
+restartFiles["u"] = pathname;
+
+//y restart file
+sprintf(pathname,"%s/y.mat",restart_directory_namePtr);
+restartFiles["y"] = pathname;
+
+//v restart file
+sprintf(pathname,"%s/v.mat",restart_directory_namePtr);
+restartFiles["v"] = pathname;
+
+//a restart file
+sprintf(pathname,"%s/a.mat",restart_directory_namePtr);
+restartFiles["a"] = pathname;
+
+//force restart file
+sprintf(pathname,"%s/force.mat",restart_directory_namePtr);
+restartFiles["force"] = pathname;
+
+//contactForce restart file
+sprintf(pathname,"%s/contactForce.mat",restart_directory_namePtr);
+restartFiles["contactForce"] = pathname;
+
+//externalForce restart file
+sprintf(pathname,"%s/externalForce.mat",restart_directory_namePtr);
+restartFiles["externalForce"] = pathname;
+
+//deltaU restart file
+sprintf(pathname,"%s/deltaU.mat",restart_directory_namePtr);
+restartFiles["deltaU"] = pathname;
+
+//scratch restart file
+sprintf(pathname,"%s/scratch.mat",restart_directory_namePtr);
+restartFiles["scratch"] = pathname;
+}
 void PeridigmNS::Peridigm::instantiateComputeManager(Teuchos::RCP<Discretization> peridigmDiscretization) {
 
   Teuchos::RCP<Teuchos::ParameterList> computeParams = Teuchos::rcp( new Teuchos::ParameterList("Compute Manager") );
@@ -1145,10 +1187,11 @@ void PeridigmNS::Peridigm::execute(Teuchos::RCP<Teuchos::ParameterList> solverPa
 }
 
 void PeridigmNS::Peridigm::executeSolvers() {
-  for(unsigned int i=0 ; i<solverParameters.size() ; ++i)
+  for(unsigned int i=0 ; i<solverParameters.size() ; ++i){
     execute(solverParameters[i]);
     if(peridigmParams->isParameter("Restart"))
-	writeRestart();
+	   writeRestart(solverParameters[i]);
+  }
 }
 
 void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> solverParams) {
@@ -3848,11 +3891,32 @@ void PeridigmNS::Peridigm::displayProgress(string title, double percentComplete)
   *out << ss.str();
 }
 
-void PeridigmNS::Peridigm::writeRestart(){
-  //Remove previously existing folder before writing the restart files
-  system("rm -r -f restart");
-  system("mkdir restart");
+void PeridigmNS::Peridigm::writeRestart(Teuchos::RCP<Teuchos::ParameterList> solverParams){
+//  system("date +"%m-%d-%Y-%H-%M-%S"");
+  char createDirectory[100];
+  char  path[100];
+  int IterationNumber;
+
+  IterationNumber = atoi(firstNumbersSring( restartFiles["path"]  ).c_str())+1;
+  sprintf(path,"restart-%06d",IterationNumber);
+  cout << "The restart folder is " << path  <<"." << endl;
+  setRestartNames(path);
+  sprintf(createDirectory,"mkdir %s",path);
+  system(createDirectory);
   cout << "Writing restart files. \n" << endl;
+
+  double timeInitial = solverParams->get("Initial Time", 0.0);
+  if (currentTime != timeInitial){
+	  cout << "Error - Incompatible times:\n"<<"Restart final time is "<<currentTime<<", while initial time is " << timeInitial <<endl;
+	  exit(0);
+  }
+  currentTime += solverParams->get("Final Time", 1.0)-timeInitial;
+  ofstream outputFile;
+  outputFile.open(restartFiles["currentTime"].c_str());
+  outputFile << "Current time is " << "\n" << currentTime  << "\n";
+  outputFile.close();
+
+
   if(analysisHasMultiphysics){
 	 cout << "Restart for Multiphysics is not implemented yet." << endl;
 	 exit (0);
@@ -3908,7 +3972,7 @@ void PeridigmNS::Peridigm::writeRestart(){
 	  std::vector<PeridigmNS::Block>::iterator blockIt;
 	  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
      	  std::string blockName = blockIt->getName();
-		  blockIt->writeBlocktoDisk(blockName);
+		  blockIt->writeBlocktoDisk(blockName,restartFiles["path"].c_str());
 	  }
 }
 
@@ -3916,7 +3980,17 @@ void PeridigmNS::Peridigm::readRestart(){
 	  double* UpdatePtr;
 	  double* oldPtr;
 	  Epetra_Vector * vectorUpdate;
-
+	  std::string trash, data;
+	  //read global current time
+	  ifstream outputFile;
+	  outputFile.open(restartFiles["currentTime"].c_str());
+	      if (!outputFile.fail())
+	      {
+	    	  getline(outputFile,trash);
+	    	  getline(outputFile,data);
+	          outputFile.close();
+	      }
+	      currentTime = atof(data.c_str());
   cout << "Reading restart. \n" << endl;
   if(analysisHasMultiphysics){
 	 cout << "Restart for Multiphysics is not implemented yet." << endl;
@@ -4006,6 +4080,6 @@ void PeridigmNS::Peridigm::readRestart(){
 	  	  std::vector<PeridigmNS::Block>::iterator blockIt;
 	  	  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
 	     	  std::string blockName = blockIt->getName();
-			  blockIt->readBlockfromDisk(blockName);
+			  blockIt->readBlockfromDisk(blockName,restartFiles["path"].c_str());
 	  	  }
 }

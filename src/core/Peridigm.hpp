@@ -377,6 +377,8 @@ namespace PeridigmNS {
     Teuchos::RCP<const Epetra_BlockMap> bondMap;
     Teuchos::RCP<const Epetra_BlockMap> oneDimensionalOverlapMap;
 
+    //! Global current time
+    double currentTime;
     //! Contact flag
     bool analysisHasContact;
 
@@ -583,8 +585,11 @@ namespace PeridigmNS {
     // Map for restart files
     map<string, string> restartFiles;
 
+    // Set name of restart files
+    void setRestartNames(char const * path);
+
     // Write the restart files
-    void writeRestart();
+    void writeRestart(Teuchos::RCP<Teuchos::ParameterList> solverParams);
 
     //Read the restart files
     void readRestart();

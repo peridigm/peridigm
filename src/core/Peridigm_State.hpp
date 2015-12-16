@@ -124,13 +124,13 @@ public:
   void copyLocallyOwnedDataFromState(Teuchos::RCP<PeridigmNS::State> source);
 
   //! Set restart files for state data
-  void SetRestartFiles( std::string stateName, std::string blockName);
+  void SetRestartFiles( std::string stateName, std::string blockName, char const * path);
 
   //! Write state data
-  void writeStateData(Teuchos::RCP<PeridigmNS::State> source, std::string stateName, std::string blockName);
+  void writeStateData(Teuchos::RCP<PeridigmNS::State> source, std::string stateName, std::string blockName, char const * path);
 
   //! Read state data
-  void readStateData(Teuchos::RCP<PeridigmNS::State> source,  std::string stateName, std::string blockName);
+  void readStateData(Teuchos::RCP<PeridigmNS::State> source,  std::string stateName, std::string blockName, char const * path);
 
 
 private:

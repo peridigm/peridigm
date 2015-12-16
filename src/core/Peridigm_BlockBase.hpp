@@ -170,10 +170,10 @@ namespace PeridigmNS {
     void updateState(){ dataManager->updateState(); };
 
     //! Write block data
-    void writeBlocktoDisk(std::string blockName){ dataManager->writeBlocktoDisk(blockName); }
+    void writeBlocktoDisk(std::string blockName, char const * path){ dataManager->writeBlocktoDisk(blockName, path); }
 
     //! Read block data
-    void readBlockfromDisk(std::string blockName){ dataManager->readBlockfromDisk(blockName); }
+    void readBlockfromDisk(std::string blockName, char const * path){ dataManager->readBlockfromDisk(blockName, path); }
 
   protected:
     
