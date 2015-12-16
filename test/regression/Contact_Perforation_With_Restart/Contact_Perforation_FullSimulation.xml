@@ -99,7 +99,7 @@
 	<Parameter name="Output File Type" type="string" value="ExodusII"/>
 	<Parameter name="Output Format" type="string" value="BINARY"/>
 	<Parameter name="Output Filename" type="string" value="Contact_Perforation_FullSimulation"/>
-	<Parameter name="Output Frequency" type="int" value="200"/>
+	<Parameter name="Output Frequency" type="int" value="20"/>
 	<Parameter name="Parallel Write" type="bool" value="true"/>
 	<ParameterList name="Output Variables">
 	  <Parameter name="Displacement" type="bool" value="true"/>
