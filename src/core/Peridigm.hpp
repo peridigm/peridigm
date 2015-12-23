@@ -379,6 +379,7 @@ namespace PeridigmNS {
 
     //! Global current time
     double currentTime;
+
     //! Contact flag
     bool analysisHasContact;
 
