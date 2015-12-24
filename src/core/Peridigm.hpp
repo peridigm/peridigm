@@ -150,8 +150,20 @@ namespace PeridigmNS {
     //! Residual and Jacobian matrix fills for NOX interface
     virtual bool evaluateNOX(FillType f, const Epetra_Vector *solnVector, Epetra_Vector *rhsVector);
 
+    //! Returns true if tangent has been allocated, false otherwise.
+    bool hasTangentStiffnessMatrix(){
+      bool hasTangent = false;
+      if(!tangent.is_null()){
+	hasTangent = true;
+      }
+      return hasTangent;
+    }
+
     //! Returns the global tangent stiffness matrix (intended for use when calling Peridigm as a library).
-    Teuchos::RCP<const Epetra_FECrsMatrix> getTangentStiffnessMatrix(){ return tangent; }
+    Teuchos::RCP<const Epetra_FECrsMatrix> getTangentStiffnessMatrix(){
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(tangent.is_null(), "**** PeridigmNS::Peridigm::getTangentStiffnessMatrix(), tangent has not been allocated!\n");
+      return tangent;
+    }
 
     //! Evaluate the tangent stiffness matrix (intended for use when calling Peridigm as a library).
     void evaluateTangentStiffnessMatrix(){
@@ -160,7 +172,8 @@ namespace PeridigmNS {
       modelEvaluator->evalJacobian(workset);
       int err = tangent->GlobalAssemble();
       TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::evaluateTangentStiffnessMatrix(), GlobalAssemble() returned nonzero error code.\n");
-      tangent->Scale(-1.0);
+      // Note:  Peridigm expects the tangent to be scaled using tangent->Scale(-1.0);
+      //        but Albany does not.
     }
 
     //! Evaluate the internal force; assumes x, u, y, and v have been set, fills force (intended for use when calling Peridigm as a library).
