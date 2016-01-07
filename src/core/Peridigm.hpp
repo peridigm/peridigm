@@ -126,10 +126,10 @@ namespace PeridigmNS {
     //! Called from Main to drive multiple time integration solvers in sequence
     void executeSolvers();
 
-    //! Compute the residual vector (pure virtual method in NOX::Epetra::Interface::Required).
+    //! Compute the residual vector (pure virtual method in NOX::Epetra::Interface::Required)
     bool computeF(const Epetra_Vector& x, Epetra_Vector& FVec, FillType fillType = Residual);
 
-    //! Compute the Jacobian (pure virtual method in NOX::Epetra::Interface::Jacobian).
+    //! Compute the Jacobian (pure virtual method in NOX::Epetra::Interface::Jacobian)
     bool computeJacobian(const Epetra_Vector& x, Epetra_Operator& Jac);
 
     //! Current age of the 3x3 block preconditioner for NOX solves
@@ -144,7 +144,7 @@ namespace PeridigmNS {
     //! Counter for updating the Jacobian for NOX Nonlinear CG solves.
     int m_noxJacobianUpdateCounter;
 
-    //! Compute the preconditioner (pure virtual method in NOX::Epetra::Interface::Preconditioner).
+    //! Compute the preconditioner (pure virtual method in NOX::Epetra::Interface::Preconditioner)
     bool computePreconditioner(const Epetra_Vector& x, Epetra_Operator& M, Teuchos::ParameterList* precParams = 0);
 
     //! Residual and Jacobian matrix fills for NOX interface
