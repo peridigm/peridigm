@@ -126,25 +126,15 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
 {
 #ifdef HAVE_MPI
   peridigmComm = Teuchos::rcp(new Epetra_MpiComm(comm));
- 
-// Check for MPI restart option
-  int size;
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-  if(params->isParameter("Restart")  && size > 1){
-        std::cout<<"\n**** Restart of parallel jobs is under development. Either disable restart option or run with mpirun -np 1.\n"<< std::endl; 
-        MPI_Finalize();
-	exit(0);
-   }
-   
 #else
   peridigmComm = Teuchos::rcp(new Epetra_SerialComm);
 #endif
-
-  if(params->isParameter("Multiphysics") && params->isParameter("Restart") ) {
-  	 cout <<"Restart for Multiphysics is not implemented yet."<< endl;
-	 exit (0);
-    }
-  
+  if(peridigmComm->MyPID() == 0)
+	  if(params->isParameter("Multiphysics") && params->isParameter("Restart") ){
+		  TEUCHOS_TEST_FOR_EXCEPT_MSG((params->isParameter("Multiphysics") && params->isParameter("Restart") ), "Error: Restart for Multiphysics is not implemented yet.\n");
+		  MPI_Finalize();
+		  exit(0);
+	  }
   peridigmParams = params;
   // set the comm for memory use statistics
   Memstat * memstat = Memstat::Instance();
@@ -708,8 +698,9 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
       jacobianType = PeridigmNS::Material::BLOCK_DIAGONAL;
   }
   //Initialize restart if requested in the input file
-  if(peridigmParams->isParameter("Restart"))
-    InitializeRestart();
+  if(peridigmParams->isParameter("Restart")){
+	 InitializeRestart();
+  }
 }
 
 void PeridigmNS::Peridigm::checkContactSearchRadius(const Teuchos::ParameterList& contactParams, Teuchos::RCP<Discretization> peridigmDisc){
@@ -897,21 +888,33 @@ void PeridigmNS::Peridigm::InitializeRestart() {
 	struct stat sb;
 	char const * restart_directory_namePtr;
 	if (stat("restart-000001", &sb) == 0 && S_ISDIR(sb.st_mode)){
-	    str=getCmdOutput("ls --color=never -td -- ./restart*/ | head -n1 | cut -d'/' -f2");
+	    str=getCmdOutput("ls -td -- ./restart*/ | head -n1 | cut -d'/' -f2");
 	    if (str != ""){
-	    	cout <<"Restart folder exists, will attempt to read the restart files. \n"<< endl;
+	        if(peridigmComm->MyPID() == 0){
+	        	cout <<"Restart folder exists, will attempt to read the restart files. \n"<< endl;
+	        	cout.flush();
+	        }
 	    	std::vector<char> writable(str.begin(), str.end());
 	    	writable.push_back('\0');
 	    	restart_directory_namePtr=&*writable.begin();
 	    	setRestartNames(restart_directory_namePtr);
 	    	readRestart();
-	    	cout <<"Restart is initialized." << endl;
+	        if(peridigmComm->MyPID() == 0){
+			    	cout <<"Restart is initialized." << endl;
+		        	cout.flush();
+		    }
 	    }else{
-	    	cout <<"Initial restart folder exists, but it is not suitable for a restart. \n" << endl;
-	    	exit (0);
+	    	if(peridigmComm->MyPID() == 0){
+	    		TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "Error: Initial restart folder exists, but it is not suitable for a restart. \n");
+	    		MPI_Finalize();
+	    		exit(0);
+	    	}
 	    }
 	}else{
-		cout <<"Initial restart folder does not exist. \n" << endl;
+	    if(peridigmComm->MyPID() == 0){
+	    	cout <<"Initial restart folder does not exist." << endl;
+			cout.flush();
+		}
 		restart_directory_namePtr ="restart-000000";
 		setRestartNames(restart_directory_namePtr);
 	}
@@ -1189,8 +1192,9 @@ void PeridigmNS::Peridigm::execute(Teuchos::RCP<Teuchos::ParameterList> solverPa
 void PeridigmNS::Peridigm::executeSolvers() {
   for(unsigned int i=0 ; i<solverParameters.size() ; ++i){
     execute(solverParameters[i]);
-    if(peridigmParams->isParameter("Restart"))
-	   writeRestart(solverParameters[i]);
+    if(peridigmParams->isParameter("Restart")){
+    	writeRestart(solverParameters[i]);
+    }
   }
 }
 
@@ -3897,6 +3901,7 @@ void PeridigmNS::Peridigm::writeRestart(Teuchos::RCP<Teuchos::ParameterList> sol
   char  path[100];
   int IterationNumber;
 
+  if(peridigmComm->MyPID() == 0){
   IterationNumber = atoi(firstNumbersSring( restartFiles["path"]  ).c_str())+1;
   sprintf(path,"restart-%06d",IterationNumber);
   cout << "The restart folder is " << path  <<"." << endl;
@@ -3906,17 +3911,20 @@ void PeridigmNS::Peridigm::writeRestart(Teuchos::RCP<Teuchos::ParameterList> sol
   cout << "Writing restart files. \n" << endl;
 
   double timeInitial = solverParams->get("Initial Time", 0.0);
-  if (currentTime != timeInitial){
-	  cout << "Error - Incompatible times:\n"<<"Restart final time is "<<currentTime<<", while initial time is " << timeInitial <<endl;
-	  exit(0);
-  }
+  if(peridigmComm->MyPID() == 0)
+	  if (currentTime != timeInitial){
+		  char timeError[251];
+		  sprintf(timeError, "Error, Incompatible times:\nPrevious restart final time is %e, while initial time is %e.\n",currentTime,timeInitial);
+		  TEUCHOS_TEST_FOR_EXCEPT_MSG(true,timeError);
+		  MPI_Finalize();
+		  exit(0);
+	  }
   currentTime += solverParams->get("Final Time", 1.0)-timeInitial;
   ofstream outputFile;
   outputFile.open(restartFiles["currentTime"].c_str());
   outputFile << "Current time is " << "\n" << currentTime  << "\n";
   outputFile.close();
-
-
+  }
   if(analysisHasMultiphysics){
 	 cout << "Restart for Multiphysics is not implemented yet." << endl;
 	 exit (0);
@@ -3981,22 +3989,29 @@ void PeridigmNS::Peridigm::readRestart(){
 	  double* oldPtr;
 	  Epetra_Vector * vectorUpdate;
 	  std::string trash, data;
-	  //read global current time
-	  ifstream outputFile;
-	  outputFile.open(restartFiles["currentTime"].c_str());
-	      if (!outputFile.fail())
-	      {
-	    	  getline(outputFile,trash);
-	    	  getline(outputFile,data);
-	          outputFile.close();
-	      }
+	  if(peridigmComm->MyPID() == 0){
+		  //read global current time
+		  ifstream outputFile;
+		  outputFile.open(restartFiles["currentTime"].c_str());
+	      	  if (!outputFile.fail())
+	      	  {
+	      		  getline(outputFile,trash);
+	      		  getline(outputFile,data);
+	      		  outputFile.close();
+	      	  }
 	      currentTime = atof(data.c_str());
-  cout << "Reading restart. \n" << endl;
+	  }
+  if(peridigmComm->MyPID() == 0){
+  	cout <<"Reading restart. \n"<< endl;
+  	cout.flush();
+  }
   if(analysisHasMultiphysics){
-	 cout << "Restart for Multiphysics is not implemented yet." << endl;
-	 exit (0);
-    }
-  else {
+	  if(peridigmComm->MyPID() == 0){
+		  TEUCHOS_TEST_FOR_EXCEPT_MSG(true,"Error: Restart for Multiphysics is not implemented yet.\n");
+		  MPI_Finalize();
+		  exit(0);
+	  }
+  }else{
 	  //read block ID
 	  EpetraExt::MatrixMarketFileToVector(restartFiles["blockIDs"].c_str(), *oneDimensionalMap, vectorUpdate);
 	  vectorUpdate->ExtractView(&UpdatePtr);
