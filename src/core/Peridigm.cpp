@@ -71,6 +71,7 @@
 #include "Peridigm_MaterialFactory.hpp"
 #include "Peridigm_DamageModelFactory.hpp"
 #include "Peridigm_InterfaceAwareDamageModel.hpp"
+#include "Peridigm_UserDefinedTimeDependentCriticalStretchDamageModel.hpp"
 #include "Peridigm.hpp"
 #include "correspondence.h" // For Invert3by3Matrix
 #include "Peridigm_DataManager.hpp" //For readBlocktoDisk & writeBlocktoDisk
@@ -380,6 +381,10 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
     blockIt->setMaterialModel(materialModel);
 
     // Set the damage model (if any)
+    double currentValue = 0.0;
+    double previousValue = 0.0;    
+    double timeCurrent = 0.0;
+    double timePrevious = 0.0;
     string damageModelName = blockIt->getDamageModelName();
     if(damageModelName != "None"){
       Teuchos::ParameterList damageParams = damageModelParams.sublist(damageModelName, true);
@@ -388,6 +393,10 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
       if(damageModel->Name() =="Interface Aware"){
         Teuchos::RCP< PeridigmNS::InterfaceAwareDamageModel > IADamageModel = Teuchos::rcp_dynamic_cast< PeridigmNS::InterfaceAwareDamageModel >(damageModel);
         IADamageModel->setBCManager(boundaryAndInitialConditionManager);
+      }
+      else if(damageModel->Name() =="Time Dependent Critical Stretch"){
+        CSDamageModel = Teuchos::rcp_dynamic_cast< PeridigmNS::UserDefinedTimeDependentCriticalStretchDamageModel >(damageModel);
+        CSDamageModel->evaluateParserDmg(currentValue, previousValue, timeCurrent, timePrevious); 
       }
     }
   }
@@ -1327,10 +1336,31 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
   if(displayTrigger == 0)
     displayTrigger = 1;
 
+  Teuchos::ParameterList damageModelParams;
+  if(peridigmParams->isSublist("Damage Models"))
+    damageModelParams = peridigmParams->sublist("Damage Models");
+  DamageModelFactory damageModelFactory;
+
+  double currentValue = 0.0;
+  double previousValue = 0.0;
+
   for(int step=1; step<=nsteps; step++){
 
     double timePrevious = timeCurrent;
     timeCurrent = timeInitial + (step*dt);
+
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+      string damageModelName = blockIt->getDamageModelName();
+      if(damageModelName != "None"){        
+         Teuchos::ParameterList damageParams = damageModelParams.sublist(damageModelName, true);
+         Teuchos::RCP<PeridigmNS::DamageModel> damageModel = damageModelFactory.create(damageParams);
+         blockIt->setDamageModel(damageModel);
+         if(damageModel->Name() == "Time Dependent Critical Stretch"){
+           CSDamageModel = Teuchos::rcp_dynamic_cast< PeridigmNS::UserDefinedTimeDependentCriticalStretchDamageModel >(damageModel);
+           CSDamageModel->evaluateParserDmg(currentValue, previousValue, timeCurrent, timePrevious);
+         }
+      }
+    }
 
     if((step-1)%displayTrigger==0)
       displayProgress("Explicit time integration", (step-1)*100.0/nsteps);

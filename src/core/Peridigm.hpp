@@ -84,6 +84,8 @@
 
 namespace PeridigmNS {
 
+  class UserDefinedTimeDependentCriticalStretchDamageModel;
+
   class Peridigm : public NOX::Epetra::Interface::Required, public NOX::Epetra::Interface::Jacobian, public NOX::Epetra::Interface::Preconditioner {
 
   public:
@@ -407,6 +409,8 @@ namespace PeridigmNS {
 
     //! Damage models
     std::map< std::string, Teuchos::RCP<const PeridigmNS::DamageModel> > damageModels;
+
+    Teuchos::RCP< PeridigmNS::UserDefinedTimeDependentCriticalStretchDamageModel > CSDamageModel;
 
     //! Boundary and initial condition manager
     Teuchos::RCP<PeridigmNS::BoundaryAndInitialConditionManager> boundaryAndInitialConditionManager;
