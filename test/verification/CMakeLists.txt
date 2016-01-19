@@ -46,6 +46,8 @@ add_test (BondBreakingInitialVelocity_np1 python ./BondBreakingInitialVelocity/n
 add_test (BondBreakingInitialVelocity_np3 python ./BondBreakingInitialVelocity/np3/BondBreakingInitialVelocity.py)
 add_test (BondBreakingInitialVelocity-EP_np1 python ./BondBreakingInitialVelocity-EP/np1/BondBreakingInitialVelocity.py)
 add_test (BondBreakingInitialVelocity-EP_np3 python ./BondBreakingInitialVelocity-EP/np3/BondBreakingInitialVelocity.py)
+add_test (BondBreakingInitialVelocity_TimeDependentCS_np1 python ./BondBreakingInitialVelocity_TimeDependentCS/np1/BondBreakingInitialVelocity.py)
+add_test (BondBreakingInitialVelocity_TimeDependentCS_np3 python ./BondBreakingInitialVelocity_TimeDependentCS/np3/BondBreakingInitialVelocity.py)
 add_test (Contact_2x1x1_np1 python ./Contact_2x1x1/np1/Contact_2x1x1.py)
 add_test (Contact_2x1x1_np2 python ./Contact_2x1x1/np2/Contact_2x1x1.py)
 add_test (Contact_Friction_np1 python ./Contact_Friction/np1/Contact_Friction.py)
