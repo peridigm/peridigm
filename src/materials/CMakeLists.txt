@@ -14,15 +14,13 @@ set(PD_MATERIAL_SOURCES
     isotropic_hardening_correspondence.cxx
     viscoplastic_needleman_correspondence.cxx
     material_utilities.cxx
-	nonlocal_diffusion.cxx
+    nonlocal_diffusion.cxx
+    pals.cxx
 )
 
 # Optional source files for Sandia internal development
 IF(PERIDIGM_SANDIA_INTERNAL)
   set(PD_MATERIAL_SOURCES ${PD_MATERIAL_SOURCES} partial_stress.cxx)
-ENDIF()
-IF(PERIDIGM_PALS)
-  set(PD_MATERIAL_SOURCES ${PD_MATERIAL_SOURCES} pals.cxx)
 ENDIF()
 IF(PERIDIGM_PV)
   set(PD_MATERIAL_SOURCES ${PD_MATERIAL_SOURCES} elastic_pv.cxx correspondence_pv.cxx linear_lps_pv.cxx)

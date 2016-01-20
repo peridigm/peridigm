@@ -147,18 +147,6 @@ ELSE()
 ENDIF()
 
 #
-# Enable PALS development
-#
-IF(USE_PALS)
-  MESSAGE("-- PALS is enabled, compiling with -DPERIDIGM_PALS.\n")
-  ADD_DEFINITIONS(-DPERIDIGM_PALS)
-  SET(PERIDIGM_PALS TRUE)
-ELSE()
-  MESSAGE("-- PALS is NOT enabled.\n")
-  SET(PERIDIGM_PALS FALSE)
-ENDIF()
-
-#
 # Enable KOKKOS kernels
 #
 # TODO: Add some checking that KOKKOS_Core, etc is enabeled in Trilinos

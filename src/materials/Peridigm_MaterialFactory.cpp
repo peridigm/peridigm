@@ -59,9 +59,7 @@
 #include "Peridigm_LCMMaterial.hpp"
 #include "Peridigm_ElasticBondBasedMaterial.hpp"
 #include "Peridigm_VectorPoissonMaterial.hpp"
-#ifdef PERIDIGM_PALS
 #include "Peridigm_Pals_Model.hpp"
-#endif
 #ifdef PERIDIGM_PV
 #include "Peridigm_ElasticPVMaterial.hpp"
 #include "Peridigm_LinearLPSPVMaterial.hpp"
