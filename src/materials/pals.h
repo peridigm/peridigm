@@ -11,7 +11,7 @@ namespace PALS {
 
 const int NUM_LAGRANGE_MULTIPLIERS=6;
 
-typedef typename PeridigmNS::InfluenceFunction::functionPointer FunctionPointer;
+typedef PeridigmNS::InfluenceFunction::functionPointer FunctionPointer;
 
 /**
  *
