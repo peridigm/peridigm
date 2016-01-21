@@ -1,0 +1,95 @@
+<ParameterList>
+<Parameter name="Verbose" type="bool" value="false"/>
+
+  <ParameterList name="Discretization">
+  	<Parameter name="Type" type="string" value="Exodus" />
+	<Parameter name="Input Mesh File" type="string" value="cube_7x7x7.g"/>
+  </ParameterList>
+	
+  <ParameterList name="Materials">
+	<ParameterList name="My Material">
+	  <Parameter name="Material Model" type="string" value="Pals"/>
+	  <Parameter name="Dilatation Influence Function" type="string" value="One"/>
+	  <Parameter name="Deviatoric Influence Function" type="string" value="One"/>
+	  <!-- Properties of aluminum: Kg, meters, sec -->
+	  <Parameter name="Density" type="double" value="2700.0"/>
+	  <Parameter name="Bulk Modulus" type="double" value="67.55e9"/>
+	  <Parameter name="Shear Modulus" type="double" value="25.90e9"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Blocks">
+  	<ParameterList name="My Block">
+	  <Parameter name="Horizon" type="double" value="0.43071428"/>
+  	  <Parameter name="Block Names" type="string" value="block_1"/>
+  	  <Parameter name="Material" type="string" value="My Material"/>
+  	</ParameterList>
+  </ParameterList>
+	
+  <ParameterList name="Boundary Conditions">
+	<!-- impose pure shear by displacing x coordinate by an amount equal to 1.0e6 * y  -->
+	<ParameterList name="Prescribed Displacement in X">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_7"/>
+	  <Parameter name="Coordinate" type="string" value="x"/>
+	  <Parameter name="Value" type="string" value="if(t&lt;=1){value=-y*1.0e-6*t;} else{value=-y*1.0e-6*1;}"/>
+	</ParameterList>
+  	<!-- Fix all y and z displacement to zero -->
+	<ParameterList name="Prescribed Displacement in Y">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_7"/>
+	  <Parameter name="Coordinate" type="string" value="y"/>
+	  <Parameter name="Value" type="string" value="0.0"/>
+	</ParameterList>
+	<ParameterList name="Prescribed Displacement in Z">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_7"/>
+	  <Parameter name="Coordinate" type="string" value="z"/>
+	  <Parameter name="Value" type="string" value="0.0"/>
+	</ParameterList>
+
+  </ParameterList>
+
+  <ParameterList name="Solver">
+  	<Parameter name="Verbose" type="bool" value="false"/>
+	<Parameter name="Initial Time" type="double" value="0.0"/>
+	<Parameter name="Final Time" type="double" value="5.0"/> 
+	<ParameterList name="QuasiStatic">
+          <Parameter name="Time Steps" type="string" value="0.0 .25 .5 1.0 1.5 2.0 2.5 3.0 3.5 4.0 4.5 5.0"/>
+	  <Parameter name="Absolute Tolerance" type="double" value="1.0"/>
+	  <Parameter name="Maximum Solver Iterations" type="int" value="10"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Output">
+  	<Parameter name="Output File Type" type="string" value="ExodusII"/>
+	<Parameter name="Output Format" type="string" value="BINARY"/>
+	<Parameter name="Output Filename" type="string" value="Pals_Simple_Shear"/>
+	<Parameter name="Output Frequency" type="int" value="1"/>
+	<Parameter name="Parallel Write" type="bool" value="true"/>
+	<ParameterList name="Output Variables">
+	  <Parameter name="Radius" type="bool" value="true"/>
+	  <Parameter name="Volume" type="bool" value="true"/>
+	  <Parameter name="Dilatation" type="bool" value="true"/>
+	  <Parameter name="Displacement" type="bool" value="true"/>
+	  <Parameter name="Velocity" type="bool" value="true"/>
+	  <Parameter name="Force" type="bool" value="true"/>
+	  <Parameter name="Stored_Elastic_Energy_Density" type="bool" value="true"/>
+	  <Parameter name="Dilatation_Normalization" type="bool" value="true"/>
+	  <Parameter name="Deviatoric_Normalization" type="bool" value="true"/>
+	  <Parameter name="Lagrange_Multiplier_Dilatation_1" type="bool" value="true"/>
+	  <Parameter name="Lagrange_Multiplier_Dilatation_2" type="bool" value="true"/>
+	  <Parameter name="Lagrange_Multiplier_Dilatation_3" type="bool" value="true"/>
+	  <Parameter name="Lagrange_Multiplier_Dilatation_4" type="bool" value="true"/>
+	  <Parameter name="Lagrange_Multiplier_Dilatation_5" type="bool" value="true"/>
+	  <Parameter name="Lagrange_Multiplier_Dilatation_6" type="bool" value="true"/>
+	  <Parameter name="Lagrange_Multiplier_Deviatoric_1" type="bool" value="true"/>
+	  <Parameter name="Lagrange_Multiplier_Deviatoric_2" type="bool" value="true"/>
+	  <Parameter name="Lagrange_Multiplier_Deviatoric_3" type="bool" value="true"/>
+	  <Parameter name="Lagrange_Multiplier_Deviatoric_4" type="bool" value="true"/>
+	  <Parameter name="Lagrange_Multiplier_Deviatoric_5" type="bool" value="true"/>
+	  <Parameter name="Lagrange_Multiplier_Deviatoric_6" type="bool" value="true"/>
+	</ParameterList>
+  </ParameterList>
+
+</ParameterList>

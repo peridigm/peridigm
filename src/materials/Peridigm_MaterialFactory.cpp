@@ -101,14 +101,8 @@ PeridigmNS::MaterialFactory::create(const Teuchos::ParameterList& materialParams
     materialModel = Teuchos::rcp( new ElasticBondBasedMaterial(materialParams) );
   else if (materialModelName == "Vector Poisson")
     materialModel = Teuchos::rcp( new VectorPoissonMaterial(materialParams) );
-
-  else if (materialModelName == "Pals"){
-#ifdef PERIDIGM_PALS
+  else if (materialModelName == "Pals")
     materialModel = Teuchos::rcp( new Pals_Model(materialParams) );
-#else
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n**** Pals model unavailable, recompile with -DUSE_PALS.\n");
-#endif
-  }
   else if (materialModelName == "Elastic Partial Volume"){
 #ifdef PERIDIGM_PV
     materialModel = Teuchos::rcp( new ElasticPVMaterial(materialParams) );

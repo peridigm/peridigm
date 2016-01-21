@@ -1,0 +1,46 @@
+COORDINATES absolute 1.e-9    # min separation not calculated
+default tolerance absolute 1.0e-9
+TIME STEPS absolute 1.e-14
+
+
+# No GLOBAL VARIABLES
+
+NODAL VARIABLES relative 1.e-6 floor 0.0
+# NODAL VARIABLES absolute 1.e-9
+	DisplacementX  # min:               0 @ t1,n1	max:   9.2857143e-07 @ t4,n154
+	DisplacementY  # min:               0 @ t1,n1	max:               0 @ t1,n1
+	DisplacementZ  # min:               0 @ t1,n1	max:               0 @ t1,n1
+	VelocityX      # min:               0 @ t1,n1	max:   9.2857143e-07 @ t2,n154
+	VelocityY      # min:               0 @ t1,n1	max:               0 @ t1,n1
+	VelocityZ      # min:               0 @ t1,n1	max:               0 @ t1,n1
+	ForceX         # min:               0 @ t1,n1	max:       938.76545 @ t4,n120
+	#ForceY         # min:               0 @ t1,n1	max:       938.76545 @ t5,n102
+	ForceY         relative 1.e-3 floor 0.0
+	#ForceZ         # min:               0 @ t1,n1	max:       91.427661 @ t5,n47
+	ForceZ         relative 1.e-3 floor 0.0
+
+ELEMENT VARIABLES relative 1.e-6 floor 0.0
+# ELEMENT VARIABLES absolute 1.e-9
+	Radius                            # min:     0.088621499 @ t1,b1,e82	max:     0.088621499 @ t1,b1,e286
+	Volume                            # min:    0.0029154519 @ t1,b1,e82	max:    0.0029154519 @ t1,b1,e286
+	Dilatation                        # min:               0 @ t1,b1,e1	max:   5.0916608e-13 @ t4,b1,e203
+	Stored_Elastic_Energy_Density     # min:               0 @ t1,b1,e1	max:     0.012950003 @ t4,b1,e147
+	Dilatation_Normalization          # min:               1 @ t1,b1,e1	max:               1 @ t1,b1,e1
+	Deviatoric_Normalization          # min:               1 @ t1,b1,e1	max:               1 @ t1,b1,e1
+	Lagrange_Multiplier_Dilatation_1  # min:       343.72777 @ t1,b1,e268	max:       6859.6019 @ t1,b1,e301
+	Lagrange_Multiplier_Dilatation_2  # min:       343.72777 @ t1,b1,e284	max:       6859.6019 @ t1,b1,e7
+	Lagrange_Multiplier_Dilatation_3  # min:       343.72777 @ t1,b1,e188	max:       6859.6019 @ t1,b1,e1
+	Lagrange_Multiplier_Dilatation_4  # min:   2.1547462e-16 @ t1,b1,e178	max:       5891.1082 @ t1,b1,e56
+	Lagrange_Multiplier_Dilatation_5  # min:   1.7771813e-15 @ t1,b1,e227	max:       5891.1082 @ t1,b1,e296
+	Lagrange_Multiplier_Dilatation_6  # min:   8.1225243e-15 @ t1,b1,e222	max:       5891.1082 @ t1,b1,e336
+	Lagrange_Multiplier_Deviatoric_1  # min:       883.30316 @ t1,b1,e268	max:       8936.8475 @ t1,b1,e161
+	Lagrange_Multiplier_Deviatoric_2  # min:       883.30316 @ t1,b1,e284	max:       8936.8475 @ t1,b1,e321
+	Lagrange_Multiplier_Deviatoric_3  # min:       883.30316 @ t1,b1,e188	max:       8936.8475 @ t1,b1,e267
+	Lagrange_Multiplier_Deviatoric_4  # min:       96.056348 @ t1,b1,e270	max:       5812.4233 @ t1,b1,e343
+	Lagrange_Multiplier_Deviatoric_5  # min:       96.056348 @ t1,b1,e170	max:       5812.4233 @ t1,b1,e343
+	Lagrange_Multiplier_Deviatoric_6  # min:       96.056348 @ t1,b1,e158	max:       5812.4233 @ t1,b1,e343
+
+# No NODESET VARIABLES
+
+# No SIDESET VARIABLES
+
