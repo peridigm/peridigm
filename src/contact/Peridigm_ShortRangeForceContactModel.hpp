@@ -75,6 +75,9 @@ namespace PeridigmNS {
                  const int* contactNeighborhoodList,
                  PeridigmNS::DataManager& dataManager) const;
 
+    virtual void 
+    evaluateParserFriction(double & currentValue, double & previousValue, const double & timeCurrent=0.0, const double & timePrevious=0.0);               
+
   protected:
 	
 	//! Computes the distance between nodes (a1, a2, a3) and (b1, b2, b3).

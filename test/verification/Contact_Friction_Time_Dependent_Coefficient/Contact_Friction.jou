@@ -1,0 +1,13 @@
+#
+reset
+#
+brick x 0.1612 y 0.1612 z 0.1612
+volume 1 copy move 0 0.19 0
+volume all size 0.1612
+mesh volume all
+nodeset 1 volume 1
+nodeset 2 volume 2
+block 1 volume 1
+block 2 volume 2
+#
+export genesis 'Contact_Friction.g' overwrite

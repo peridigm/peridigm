@@ -65,6 +65,7 @@
 #include "Peridigm_DiscretizationFactory.hpp"
 #include "Peridigm_OutputManager_ExodusII.hpp"
 #include "Peridigm_ComputeManager.hpp"
+#include "Peridigm_ContactModelFactory.hpp"
 #include "Peridigm_BoundaryAndInitialConditionManager.hpp"
 #include "Peridigm_CriticalTimeStep.hpp"
 #include "Peridigm_Timer.hpp"
@@ -72,6 +73,8 @@
 #include "Peridigm_DamageModelFactory.hpp"
 #include "Peridigm_InterfaceAwareDamageModel.hpp"
 #include "Peridigm_UserDefinedTimeDependentCriticalStretchDamageModel.hpp"
+#include "Peridigm_ShortRangeForceContactModel.hpp"
+#include "Peridigm_UserDefinedTimeDependentShortRangeForceContactModel.hpp"
 #include "Peridigm.hpp"
 #include "correspondence.h" // For Invert3by3Matrix
 #include "Peridigm_DataManager.hpp" //For readBlocktoDisk & writeBlocktoDisk
@@ -317,6 +320,23 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
 
     const std::string statTag = "Contact Initialized";
     memstat->addStat(statTag);
+    
+    ContactModelFactory contactModelFactory;
+    
+    contactBlocks = contactManager->getContactBlocks();
+    
+    double currentValue = 0.0;
+    double previousValue = 0.0;    
+    double timeCurrent = 0.0;
+    double timePrevious =0.0;
+    
+    for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
+    	contactModel = contactBlockIt->getContactModel();
+        if(contactModel->Name() == "Time-Dependent Short-Range Force"){
+            New_contactModel = Teuchos::rcp_const_cast<PeridigmNS::ContactModel> (contactModel);
+            New_contactModel->evaluateParserFriction(currentValue, previousValue, timeCurrent, timePrevious);
+        }
+    }
   }
 
   // Instantiate the blocks
@@ -1409,8 +1429,14 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
       blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
       blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
     }
-    if(analysisHasContact)
+    if(analysisHasContact){
+      if(contactModel->Name() == "Time-Dependent Short-Range Force"){
+        for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++) {
+    	 New_contactModel->evaluateParserFriction(currentValue, previousValue, timeCurrent, timePrevious);
+        }
+      } 
       contactManager->importData(volume, y, v);
+    }
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
     // Update forces based on new positions
