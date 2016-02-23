@@ -13,7 +13,7 @@ Peridigm development began under the Physics & Engineering Models element of the
 
 Peridigm is a C++ code intended for use on Mac and Linux operating systems.  Both Peridigm and the Trilinos libraries it depends on should be built using MPI compilers and the [CMake](http://www.cmake.org/) build system.  The Peridigm test harness requires python.  The build process has been tested using gcc and Intel compilers, Open MPI, and MPICH.  The steps below should be followed in order, beginning with installation of the required third-party libraries.
 
- * [Installing Third-Party Packages and Libraries](https://peridigm.sandia.gov/content/installing-third-party-packages-and-libraries)
+ * [Installing Third-Party Packages and Libraries](https://github.com/peridigm/peridigm/blob/master/doc/InstallingThirdPartyLibs.md)
 
  * [Building Peridigm](https://peridigm.sandia.gov/content/building-peridigm)
 
