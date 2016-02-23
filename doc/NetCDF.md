@@ -28,7 +28,7 @@ been made.  This version is known to work with Trilinos and Peridigm.
 
 ````
 # Configure NetCDF
-./configure --prefix=/usr/local/netcdf --enable-parallel
+./configure --prefix=/usr/local/netcdf --enable-parallel--enable-netcdf-4 --disable-v2 --disable-fsync --disable-dap
 ````
 
 ````
