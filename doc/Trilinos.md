@@ -66,6 +66,6 @@ cmake -D CMAKE_INSTALL_PREFIX:PATH=/usr/local/trilinos \
 Once Trilinos has been successfully configured, it can be compiled and installed as follows:
 
 ````
-make -j 4
+make -j 8
 make install
 ````
