@@ -11,5 +11,3 @@ Peridigm requires Boost and a number of Trilinos packages, including SEACAS.  Th
  * [NetCDF](https://github.com/peridigm/peridigm/blob/master/doc/NetCDF.md)
  
  * [Trilinos](https://github.com/peridigm/peridigm/blob/master/doc/Trilinos.md)
- 
- ---
