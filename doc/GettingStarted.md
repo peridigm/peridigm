@@ -8,4 +8,4 @@ Peridigm is a C++ code intended for use on Mac and linux operating systems.  Bot
 
  * [Building Peridigm](https://github.com/peridigm/peridigm/blob/master/doc/BuildingPeridigm.md)
 
- * [Running Simulations with Peridigm](https://peridigm.sandia.gov/content/running-simulations-peridigm)
+ * [Running Simulations with Peridigm](https://github.com/peridigm/peridigm/blob/master/doc/RunningSimulations.md)
