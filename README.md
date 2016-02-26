@@ -15,7 +15,7 @@ Peridigm is a C++ code intended for use on Mac and Linux operating systems.  Bot
 
  * [Installing Third-Party Packages and Libraries](https://github.com/peridigm/peridigm/blob/master/doc/InstallingThirdPartyLibs.md)
 
- * [Building Peridigm](https://peridigm.sandia.gov/content/building-peridigm)
+ * [Building Peridigm](https://github.com/peridigm/peridigm/blob/master/doc/BuildingPeridigm.md)
 
- * [Running Simulations with Peridigm](https://peridigm.sandia.gov/content/running-simulations-peridigm)
+ * [Running Simulations with Peridigm](https://github.com/peridigm/peridigm/blob/master/doc/RunningSimulations.md)
 
