@@ -74,7 +74,7 @@ void PeridigmNS::HorizonManager::loadHorizonInformationFromBlockParameters(Teuch
     bool hasConstantHorizon = params.isType<double>("Horizon");
     bool hasVariableHorizon = params.isType<string>("Horizon");
     TEUCHOS_TEST_FOR_EXCEPT_MSG(hasConstantHorizon && hasVariableHorizon, "\n**** Error parsing horizon information!  Multiple horizon definitions found!\n");
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(!hasConstantHorizon && !hasVariableHorizon, "\n**** Error parsing horizon information!  No horizon definition found!\n");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!hasConstantHorizon && !hasVariableHorizon, "\n**** Error parsing horizon information!  Either the horizon is not defined or defined incorrectly!\n");
 
     // Record the horizon as a string regardless of whether or not it is constant
     string horizonString;
