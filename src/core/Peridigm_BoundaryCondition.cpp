@@ -159,7 +159,7 @@ void PeridigmNS::DirichletBC::apply(Teuchos::RCP< std::map< std::string, std::ve
   // apply the bc to every element in the entire domain
   if(to_set_definition(nodeSetName)==FULL_DOMAIN)
   {
-    for(int localNodeID = 0; localNodeID < toVector->MyLength(); localNodeID++) {
+    for(int localNodeID = 0; localNodeID < toVector->Map().NumMyElements(); localNodeID++) {
       double currentValue = 0.0;
       double previousValue = 0.0;
       evaluateParser(localNodeID,currentValue,previousValue,timeCurrent);
@@ -235,7 +235,7 @@ void PeridigmNS::DirichletIncrementBC::apply(Teuchos::RCP< std::map< std::string
   // apply the bc to every element in the entire domain
   if(to_set_definition(nodeSetName)==FULL_DOMAIN)
   {
-    for(int localNodeID = 0; localNodeID < toVector->MyLength(); localNodeID++) {
+    for(int localNodeID = 0; localNodeID < toVector->Map().NumMyElements(); localNodeID++) {
       double currentValue = 0.0;
       double previousValue = 0.0;
       evaluateParser(localNodeID,currentValue,previousValue,timeCurrent,timePrevious_);
