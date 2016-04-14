@@ -81,10 +81,15 @@
 #include "Peridigm_Memstat.hpp"
 #include "Peridigm_Material.hpp"
 #include "Peridigm_DamageModel.hpp"
+#include "Peridigm_ContactModel.hpp"
 
 namespace PeridigmNS {
 
   class UserDefinedTimeDependentCriticalStretchDamageModel;
+  
+  class ShortRangeForceContactModel;
+  
+  class UserDefinedTimeDependentShortRangeForceContactModel;
 
   class Peridigm : public NOX::Epetra::Interface::Required, public NOX::Epetra::Interface::Jacobian, public NOX::Epetra::Interface::Preconditioner {
 
@@ -412,6 +417,11 @@ namespace PeridigmNS {
 
     Teuchos::RCP< PeridigmNS::UserDefinedTimeDependentCriticalStretchDamageModel > CSDamageModel;
 
+    Teuchos::RCP<const PeridigmNS::ContactModel> contactModel;
+    Teuchos::RCP<PeridigmNS::ContactModel> New_contactModel;
+    
+    Teuchos::RCP< PeridigmNS::UserDefinedTimeDependentShortRangeForceContactModel > SRContactModel;
+
     //! Boundary and initial condition manager
     Teuchos::RCP<PeridigmNS::BoundaryAndInitialConditionManager> boundaryAndInitialConditionManager;
 
@@ -439,8 +449,14 @@ namespace PeridigmNS {
     //! Blocks
     Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks;
 
+    //! Contact Blocks
+    Teuchos::RCP< std::vector<PeridigmNS::ContactBlock> > contactBlocks;
+
     //! Block iterator, for convenience
     std::vector<PeridigmNS::Block>::iterator blockIt;
+    
+    //! Contact Block iterator, for convenience
+    std::vector<PeridigmNS::ContactBlock>::iterator contactBlockIt;
 
     //! Overlap Jacobian; filled by each processor and then assembled into the mothership Jacobian;
     Teuchos::RCP<PeridigmNS::SerialMatrix> overlapJacobian;

@@ -64,6 +64,10 @@
 
 namespace PeridigmNS {
 
+  class ShortRangeForceContactModel;
+  
+  class UserDefinedTimeDependentShortRangeForceContactModel;
+
 /*! \brief Handles contact.
  */
   class ContactManager {
