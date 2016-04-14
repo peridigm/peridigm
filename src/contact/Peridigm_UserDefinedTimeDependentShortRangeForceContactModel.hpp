@@ -1,4 +1,4 @@
-/*! \file Peridigm_ContactModel.hpp */
+//! \file Peridigm_ShortRangeForceContactModel.hpp
 
 //@HEADER
 // ************************************************************************
@@ -45,49 +45,84 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_CONTACTMODEL_HPP
-#define PERIDIGM_CONTACTMODEL_HPP
+#ifndef PERIDIGM_ADAPTIVESHORTRANGEFORCECONTACTMODEL_HPP
+#define PERIDIGM_ADAPTIVESHORTRANGEFORCECONTACTMODEL_HPP
 
-#include <Teuchos_RCP.hpp>
-#include <Teuchos_ParameterList.hpp>
-#include <Epetra_Vector.h>
-#include "Peridigm_DataManager.hpp"
+#include "Peridigm_ContactModel.hpp"
+
+#include <Trilinos_version.h>
+#if TRILINOS_MAJOR_MINOR_VERSION >= 111100
+#include "RTC_FunctionRTC.hh"
+#else
+#include "FunctionRTC.hh"
+#endif
 
 namespace PeridigmNS {
 
-  //! Base class defining the Peridigm contact model interface.
-  class ContactModel{
+  class Peridigm;
 
+  class UserDefinedTimeDependentShortRangeForceContactModel : public ContactModel{
   public:
-	
-	//! Standard constructor.
-	ContactModel(const Teuchos::ParameterList & params){}
 
-	//! Destructor.
-	virtual ~ContactModel(){}
+    //! Constructor.
+    UserDefinedTimeDependentShortRangeForceContactModel(const Teuchos::ParameterList & params);
 
-	//! Return name of contact model
-    virtual std::string Name() const = 0;
+    //! Destructor.
+    virtual ~UserDefinedTimeDependentShortRangeForceContactModel();
+
+    //! Return name of the model.
+    virtual std::string Name() const { return("Time-Dependent Short-Range Force"); }
 
     //! Returns a vector of field IDs corresponding to the variables associated with the model.
-    virtual std::vector<int> FieldIds() const = 0;
+    virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
-	//! Evaluate the forces on the cells
-	virtual void
-	computeForce(const double dt,
+    //! Evaluate the forces on the cells.
+    virtual void
+    computeForce(const double dt,
                  const int numOwnedPoints,
                  const int* ownedIDs,
                  const int* contactNeighborhoodList,
-                 PeridigmNS::DataManager& dataManager) const = 0;
-
+                 PeridigmNS::DataManager& dataManager) const;
+                 
+    //! evaluate Parser
     virtual void 
-    evaluateParserFriction(double & currentValue, double & previousValue, const double & timeCurrent=0.0, const double & timePrevious=0.0) = 0;          
-           
-  private:
+    evaluateParserFriction(double & currentValue, double & previousValue, const double & timeCurrent=0.0, const double & timePrevious=0.0);          
+    
+  protected:
 	
-	//! Default constructor with no arguments, private to prevent use.
-	ContactModel(){}
+	//! Computes the distance between nodes (a1, a2, a3) and (b1, b2, b3).
+	inline double distance(double a1, double a2, double a3,
+						   double b1, double b2, double b3) const
+	{
+	  return ( sqrt( (a1-b1)*(a1-b1) + (a2-b2)*(a2-b2) + (a3-b3)*(a3-b3) ) );
+	}
+
+	//! Computes the square of the distance between nodes (a1, a2, a3) and (b1, b2, b3).
+	inline double distanceSquared(double a1, double a2, double a3,
+						   double b1, double b2, double b3) const
+	{
+	  return ( (a1-b1)*(a1-b1) + (a2-b2)*(a2-b2) + (a3-b3)*(a3-b3) );
+	}
+
+	// model parameters
+	double m_contactRadius;
+	double m_springConstant;
+	double m_frictionCoefficient;
+    double m_horizon;
+    
+    //! string defined funciton
+    std::string functionfriction, checkfriction;
+    
+    //! Run-time compiler, used as function parser
+    Teuchos::RCP<PG_RuntimeCompiler::Function> rtcFunction;
+
+    // field ids for all relevant data
+    std::vector<int> m_fieldIds;
+    int m_volumeFieldId;
+    int m_coordinatesFieldId;
+    int m_velocityFieldId;
+    int m_contactForceDensityFieldId;
   };
 }
 
-#endif // PERIDIGM_CONTACTMODEL_HPP
+#endif // PERIDIGM_ADAPTIVESHORTRANGEFORCECONTACTMODEL_HPP

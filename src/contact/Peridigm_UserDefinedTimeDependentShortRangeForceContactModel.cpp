@@ -45,12 +45,13 @@
 // ************************************************************************
 //@HEADER
 
-#include "Peridigm_ShortRangeForceContactModel.hpp"
+#include "Peridigm_UserDefinedTimeDependentShortRangeForceContactModel.hpp"
 #include "Peridigm_Field.hpp"
 #include <Teuchos_Assert.hpp>
-#include <boost/math/constants/constants.hpp>
 
-PeridigmNS::ShortRangeForceContactModel::ShortRangeForceContactModel(const Teuchos::ParameterList& params)
+using std::string;
+
+PeridigmNS::UserDefinedTimeDependentShortRangeForceContactModel::UserDefinedTimeDependentShortRangeForceContactModel(const Teuchos::ParameterList& params)
   : ContactModel(params),
     m_contactRadius(0.0),
     m_springConstant(0.0),
@@ -61,6 +62,16 @@ PeridigmNS::ShortRangeForceContactModel::ShortRangeForceContactModel(const Teuch
     m_velocityFieldId(-1),
     m_contactForceDensityFieldId(-1)
 {
+
+  checkfriction = params.get<string>("Contact Model");
+
+  functionfriction = params.get<string>("Friction Coefficient");
+  
+  // set up RTCompiler
+  rtcFunction = Teuchos::rcp<PG_RuntimeCompiler::Function>(new PG_RuntimeCompiler::Function(2, "rtcUserDefinedTimeDependentShortRangeForceContactModel"));
+  rtcFunction->addVar("double", "t");
+  rtcFunction->addVar("double", "value");
+
   //! \todo Add meaningful asserts on parameters.
   if(!params.isParameter("Contact Radius"))
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Short range force contact parameter \"Contact Radius\" not specified.");
@@ -70,10 +81,12 @@ PeridigmNS::ShortRangeForceContactModel::ShortRangeForceContactModel(const Teuch
   m_springConstant = params.get<double>("Spring Constant");
   if(!params.isParameter("Friction Coefficient"))
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Short range force contact parameter \"Friction Coefficient\" not specified.");
-  m_frictionCoefficient = params.get<double>("Friction Coefficient");
+  //m_frictionCoefficient = params.get<string>("Friction Coefficient");
   if(!params.isParameter("Horizon"))
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, "Short range force contact parameter \"Horizon\" not specified.");
   m_horizon = params.get<double>("Horizon");
+  
+
 
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   m_volumeFieldId = fieldManager.getFieldId("Volume");
@@ -86,16 +99,50 @@ PeridigmNS::ShortRangeForceContactModel::ShortRangeForceContactModel(const Teuch
   m_fieldIds.push_back(m_contactForceDensityFieldId);
 }
 
-PeridigmNS::ShortRangeForceContactModel::~ShortRangeForceContactModel()
+PeridigmNS::UserDefinedTimeDependentShortRangeForceContactModel::~UserDefinedTimeDependentShortRangeForceContactModel()
 {
 }
 
-void PeridigmNS::ShortRangeForceContactModel::evaluateParserFriction(double & currentValue, double & previousValue, const double & timeCurrent, const double & timePrevious) 
-{
+void PeridigmNS::UserDefinedTimeDependentShortRangeForceContactModel::evaluateParserFriction(double & currentValue, double & previousValue, const double & timeCurrent, const double & timePrevious) {
+  
+  string rtcFunctionString = functionfriction;
+  if(rtcFunctionString.find("value") == string::npos)
+    rtcFunctionString = "value = " + rtcFunctionString;
+  bool success = rtcFunction->addBody(rtcFunctionString);
+  if(!success){
+    string msg = "\n**** Error:  rtcFunction->addBody(functionfriction) returned nonzero error code in UserDefinedTimeDependentShortRangeForceContactModel::evaluateParserFriction().\n";
+    msg += "**** " + rtcFunction->getErrors() + "\n";
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
+  }
+
+  // set the return value to 0.0
+  if(success)
+    success = rtcFunction->varValueFill(1, 0.0);
+  // evaluate at previous time
+  if(success)
+    success = rtcFunction->varValueFill(0, timePrevious);
+  if(success)
+    success = rtcFunction->execute();
+  if(success)
+    previousValue = rtcFunction->getValueOfVar("value");
+  // evaluate at current time
+  if(success)
+    success = rtcFunction->varValueFill(0, timeCurrent);
+  if(success)
+    success = rtcFunction->execute();
+  if(success)
+    currentValue = rtcFunction->getValueOfVar("value");
+  if(!success){
+    string msg = "\n**** Error in UserDefinedTimeDependentShortRangeForceContactModel::evaluateParserFriction().\n";
+    msg += "**** " + rtcFunction->getErrors() + "\n";
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
+  }
+
+  m_frictionCoefficient = currentValue;
 }
 
 void
-PeridigmNS::ShortRangeForceContactModel::computeForce(const double dt,
+PeridigmNS::UserDefinedTimeDependentShortRangeForceContactModel::computeForce(const double dt,
                                                       const int numOwnedPoints,
                                                       const int* ownedIDs,
                                                       const int* contactNeighborhoodList,
@@ -118,8 +165,6 @@ PeridigmNS::ShortRangeForceContactModel::computeForce(const double dt,
   double currentDistanceSquared;
   double contactRadiusSquared = m_contactRadius*m_contactRadius;
 
-  const double pi = boost::math::constants::pi<double>();
-
   for(iID=0 ; iID<numOwnedPoints ; ++iID){
     numNeighbors = contactNeighborhoodList[neighborhoodListIndex++];
     if(numNeighbors > 0){
@@ -139,7 +184,7 @@ PeridigmNS::ShortRangeForceContactModel::computeForce(const double dt,
         if(currentDistanceSquared < contactRadiusSquared){
 	  currentDistance = distance(nodeCurrentX[0], nodeCurrentX[1], nodeCurrentX[2],
 				     y[neighborID*3], y[neighborID*3+1], y[neighborID*3+2]);
-          c = 9.0*m_springConstant/(pi*m_horizon*m_horizon*m_horizon*m_horizon);	// half value (of 18) due to force being applied to both nodes
+          c = 9.0*m_springConstant/(3.1415*m_horizon*m_horizon*m_horizon*m_horizon);	// half value (of 18) due to force being applied to both nodes
           temp = c*(m_contactRadius - currentDistance)/m_horizon;
           neighborVolume = cellVolume[neighborID];
           

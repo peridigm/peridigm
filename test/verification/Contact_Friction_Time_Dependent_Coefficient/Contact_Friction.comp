@@ -1,0 +1,15 @@
+DEFAULT TOLERANCE absolute 1.0E-9
+COORDINATES absolute 1.0E-12
+TIME STEPS absolute 1.0E-14
+NODAL VARIABLES absolute 1.0E-12
+	Contact_Force_DensityX  absolute 5.0E-6
+	Contact_Force_DensityY  absolute 5.0E-6
+	Contact_Force_DensityZ  absolute 5.0E-6
+	DisplacementX           absolute 1.0E-13
+	DisplacementY           absolute 1.0E-13
+	DisplacementZ           absolute 1.0E-13
+	VelocityX               absolute 1.0E-13
+	VelocityY               absolute 1.0E-13
+	VelocityZ               absolute 1.0E-13
+ELEMENT VARIABLES absolute 1.E-12
+	Dilatation              absolute 1.0E-12

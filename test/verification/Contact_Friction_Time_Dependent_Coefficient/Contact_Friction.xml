@@ -1,0 +1,95 @@
+<ParameterList>
+
+  <Parameter name="Verbose" type="bool" value="false"/>
+
+  <ParameterList name="Discretization">
+	<Parameter name="Type" type="string" value="Exodus" />
+	<Parameter name="Input Mesh File" type="string" value="Contact_Friction.g"/>
+	<Parameter name="Omit Bonds Between Blocks" type="string" value="All"/>
+  </ParameterList>
+	
+  <ParameterList name="Materials">
+	<ParameterList name="Elastic">
+	  <Parameter name="Material Model" type="string" value="Elastic"/>
+	  <Parameter name="Density" type="double" value="8960.0"/>        <!-- kg/m^3 -->
+	  <Parameter name="Bulk Modulus" type="double" value="140.0e9"/>  <!-- Pa -->
+	  <Parameter name="Shear Modulus" type="double" value="48.0e9"/>  <!-- Pa -->
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Blocks">
+  	<ParameterList name="block_1">
+  	  <Parameter name="Block Names" type="string" value="block_1"/>
+  	  <Parameter name="Material" type="string" value="Elastic"/>
+      <Parameter name="Horizon" type="double" value="0.6"/>
+  	</ParameterList>
+  	<ParameterList name="block_2">
+  	  <Parameter name="Block Names" type="string" value="block_2"/>
+  	  <Parameter name="Material" type="string" value="Elastic"/>
+      <Parameter name="Horizon" type="double" value="0.6"/>
+  	</ParameterList>
+  </ParameterList>  
+
+  <ParameterList name="Contact">
+        <Parameter name="Search Radius" type="double" value="1.0"/>
+	<Parameter name="Search Frequency" type="int" value="100"/>
+	<ParameterList name="Models">
+	  <ParameterList name="My Contact Model">
+	    <Parameter name="Contact Model" type="string" value="Time Dependent Short Range Force"/>
+	    <Parameter name="Contact Radius" type="double" value="0.2"/>
+	    <Parameter name="Spring Constant" type="double" value="1.0e12"/>
+        <Parameter name="Friction Coefficient" type="string" value=" if(t &lt;= 4.00e-5)\{ value = 1.95; \} else\{ value = 0.3; \} "/>
+	  </ParameterList>
+  	</ParameterList>
+  	<ParameterList name="Interactions">
+  	  <ParameterList name="Contact Friction">
+  	    <Parameter name="First Block" type="string" value="block_1"/>
+  	    <Parameter name="Second Block" type="string" value="block_2"/>
+  	    <Parameter name="Contact Model" type="string" value="My Contact Model"/>
+  	  </ParameterList>
+  	</ParameterList>
+  </ParameterList>
+	
+  <ParameterList name="Boundary Conditions">
+  	<ParameterList name="Initial Velocity block_1">
+	  <Parameter name="Type" type="string" value="Initial Velocity"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_1"/>
+	  <Parameter name="Coordinate" type="string" value="x"/>
+	  <Parameter name="Value" type="string" value="10.0"/>
+	</ParameterList>
+	<ParameterList name="Initial Velocity block_2">
+	  <Parameter name="Type" type="string" value="Initial Velocity"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_2"/>
+	  <Parameter name="Coordinate" type="string" value="x"/>
+	  <Parameter name="Value" type="string" value="-10.0"/>
+	</ParameterList>                                                                                                                                                
+  </ParameterList>
+
+  <ParameterList name="Solver">
+  	<Parameter name="Verbose" type="bool" value="false"/>
+	<Parameter name="Initial Time" type="double" value="0.0"/>
+	<Parameter name="Final Time" type="double" value="0.001"/> 
+	<ParameterList name="Verlet">
+	  <Parameter name="Fixed dt" type="double" value="0.00001"/>
+   	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Output">
+  	<Parameter name="Output File Type" type="string" value="ExodusII"/>
+	<Parameter name="Output Format" type="string" value="BINARY"/>
+	<Parameter name="Output Filename" type="string" value="Contact_Friction"/>
+	<Parameter name="Output Frequency" type="int" value="10"/>
+	<Parameter name="Parallel Write" type="bool" value="true"/>
+	<ParameterList name="Output Variables">
+	  <Parameter name="Displacement" type="bool" value="true"/>
+	  <Parameter name="Velocity" type="bool" value="true"/>
+	  <Parameter name="Element_Id" type="bool" value="true"/>
+	  <Parameter name="Proc_Num" type="bool" value="true"/>
+	  <Parameter name="Dilatation" type="bool" value="true"/>
+	  <Parameter name="Force_Density" type="bool" value="true"/>
+	  <Parameter name="Contact_Force_Density" type="bool" value="true"/>
+          <Parameter name="Kinetic_Energy" type="bool" value="true"/>
+	</ParameterList>
+  </ParameterList>
+
+</ParameterList>
