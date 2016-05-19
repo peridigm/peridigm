@@ -8,8 +8,9 @@ The following commands are used by Peridigm contributors to set up a fork of Per
 
  1. [Fork the peridigm/peridigm repository on GitHub](https://github.com/peridigm/peridigm/fork).
       * This creates a personal remote repository that you can push to. This is needed because only Peridigm maintainers have push access to the main repositories.
- 2. Change to the directory containing your Peridigm installation with `cd peridigm`
- 3. Add the main Peridigm repository as an upstream remote with `git remote add upstream https://github.com/peridigm/peridigm.git`.
+ 1. Clone your forked repository with `git clone https://github.com/<YOUR_GIHUB_USER_NAME>/peridigm.git`
+ 1. Change to the directory containing your Peridigm installation with `cd peridigm`
+ 1. Add the main Peridigm repository as an upstream remote with `git remote add upstream https://github.com/peridigm/peridigm.git`.
 
 ## Create your pull request from a new branch
 
