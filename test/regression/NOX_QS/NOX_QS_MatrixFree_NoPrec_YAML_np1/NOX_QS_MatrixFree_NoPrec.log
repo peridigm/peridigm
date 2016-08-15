@@ -1,0 +1,91 @@
+
+-- Peridigm
+-- version 1.5.0 (Dev)
+
+Allocating global block diagonal tangent matrix...
+  number of rows = 1152
+  number of nonzeros = 3456
+
+NOX initialized with matrix-free Jacobian operator
+
+Load step 1, initial time = 0, final time = 1, convergence criterion = 23.2489
+  iteration 1: residual L2 norm = 3.85692e+08
+  iteration 2: residual L2 norm = 68380.4
+  iteration 3: residual L2 norm = 0.0027357
+  cpu time for load step = 0.31 sec., cumulative cpu time = 0.31 sec.
+
+Memory Usage (Heap Alloc MB):
+  Block Diagonal Tangent                  12
+  Post Execute                            12
+  Zoltan Search Tree                      11
+
+Wallclock Time (seconds):
+  Total                                              0.33
+  Output                                           0.0041
+  Internal Force                                     0.27
+  Gather/Scatter                                   0.0062
+  Compute Residual                                0.00097
+  Apply Kinematic B.C.                            0.00033
+  Apply Initial Conditions                          4e-06
+  Apply Boundary Conditions                        0.0026
+  Apply Body Forces                                 1e-06
+  Allocate Global Block Diagonal Tangent          0.00052
+
+
+   *****************************************************************
+              EXODIFF	(Version: 2.84) Modified: 2016-07-14
+              Authors:  Richard Drake, rrdrake@sandia.gov           
+                        Greg Sjaardema, gdsjaar@sandia.gov          
+              Run on    2016/08/15   15:00:41 CDT
+   *****************************************************************
+
+Reading first file ... 
+Reading second file ... 
+  FILE 1: /Users/john/projects/peridigm-dev/build/test/regression/NOX_QS/NOX_QS_MatrixFree_NoPrec_np1/NOX_QS_MatrixFree_NoPrec.e
+   Title: Peridigm
+          Dim = 3, Blocks = 3, Nodes = 384, Elements = 384, Nodesets = 6, Sidesets = 0
+          Vars: Global = 1, Nodal = 9, Element = 2, Nodeset = 0, Sideset = 0, Times = 2
+
+  FILE 2: /Users/john/projects/peridigm-dev/test/regression/NOX_QS/NOX_QS_MatrixFree_NoPrec_gold.e
+   Title: Peridigm
+          Dim = 3, Blocks = 3, Nodes = 384, Elements = 384, Nodesets = 6, Sidesets = 0
+          Vars: Global = 1, Nodal = 9, Element = 2, Nodeset = 0, Sideset = 0, Times = 2
+
+  COMMAND FILE: /Users/john/projects/peridigm-dev/test/regression/NOX_QS/NOX_QS.comp
+
+
+Nodal coordinates will be compared .. tol:    1e-12 (absolute), floor:        0
+Time step values will be compared .. tol:    1e-14 (absolute), floor:        0
+Global variables to be compared:
+	Nonlinear_Solver_Iterations      tol:    1e-12 (absolute), floor:        0
+Nodal variables to be compared:
+	DisplacementX                    tol:    1e-09 (absolute), floor:        0
+	DisplacementY                            1e-09 (absolute),               0
+	DisplacementZ                            1e-09 (absolute),               0
+	VelocityX                                5e-08 (absolute),               0
+	VelocityY                                5e-08 (absolute),               0
+	VelocityZ                                5e-08 (absolute),               0
+	ForceX                                      10 (absolute),               0
+	ForceY                                      10 (absolute),               0
+	ForceZ                                      10 (absolute),               0
+Element variables to be compared:
+	Radius                           tol:    1e-12 (absolute), floor:        0
+No Element Attribute variables on either file.
+No Nodeset variables on either file.
+No Sideset variables on either file.
+No Sideset Distribution Factors on either file.
+
+  ==============================================================
+  NOTE: All node and element ids are reported as global ids.
+
+Sideset Distribution Factors:
+  --------- Time step 1, 0.0000000e+00 ~ 0.0000000e+00, abs diff:  0.00000e+00 ---------
+Global variables:
+Nodal variables:
+Element variables:
+  --------- Time step 2, 1.0000000e+00 ~ 1.0000000e+00, abs diff:  0.00000e+00 ---------
+Global variables:
+Nodal variables:
+Element variables:
+
+exodiff: Files are the same

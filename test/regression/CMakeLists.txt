@@ -1,6 +1,10 @@
 # List tests to be run by "make test"
 add_test (NOX_QS_MatrixFree_NoPrec_np1 python ./NOX_QS/NOX_QS_MatrixFree_NoPrec_np1/NOX_QS_MatrixFree_NoPrec.py)
 add_test (NOX_QS_MatrixFree_NoPrec_np4 python ./NOX_QS/NOX_QS_MatrixFree_NoPrec_np4/NOX_QS_MatrixFree_NoPrec.py)
+if(HAVE_YAML)
+add_test (NOX_QS_MatrixFree_NoPrec_YAML_np1 python ./NOX_QS/NOX_QS_MatrixFree_NoPrec_YAML_np1/NOX_QS_MatrixFree_NoPrec.py)
+add_test (NOX_QS_MatrixFree_NoPrec_YAML_np4 python ./NOX_QS/NOX_QS_MatrixFree_NoPrec_YAML_np4/NOX_QS_MatrixFree_NoPrec.py)
+endif(HAVE_YAML)
 add_test (NOX_QS_MatrixFree_3x3Prec_np1 python ./NOX_QS/NOX_QS_MatrixFree_3x3Prec_np1/NOX_QS_MatrixFree_3x3Prec.py)
 add_test (NOX_QS_MatrixFree_3x3Prec_np4 python ./NOX_QS/NOX_QS_MatrixFree_3x3Prec_np4/NOX_QS_MatrixFree_3x3Prec.py)
 add_test (NOX_QS_MatrixFree_FullTangentPrec_np1 python ./NOX_QS/NOX_QS_MatrixFree_FullTangentPrec_np1/NOX_QS_MatrixFree_FullTangentPrec.py)

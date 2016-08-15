@@ -1,0 +1,163 @@
+
+-- Peridigm
+-- version 1.5.0 (Dev)
+
+MPI initialized on 4 processors.
+
+Allocating global block diagonal tangent matrix...
+  number of rows = 1152
+  number of nonzeros = 3456
+
+NOX initialized with matrix-free Jacobian operator
+
+Load step 1, initial time = 0, final time = 1, convergence criterion = 23.2489
+  iteration 1: residual L2 norm = 3.88664e+08
+  iteration 2: residual L2 norm = 69612.3
+  iteration 3: residual L2 norm = 0.00290966
+  cpu time for load step = 0.33 sec., cumulative cpu time = 0.33 sec.
+
+Memory Usage (Heap Alloc MB):
+                                         Min            Max            Ave
+  Zoltan Search Tree                      11             11             11
+  Post Execute                            12             12             12
+  Block Diagonal Tangent                  12             12             12
+
+Wallclock Time (seconds):
+                                                      Min            Max            Ave
+  Total                                              0.37           0.37           0.37
+  Output                                           0.0062         0.0084          0.007
+  Internal Force                                     0.11           0.13           0.12
+  Gather/Scatter                                     0.14           0.16           0.15
+  Compute Residual                                 0.0013         0.0033         0.0026
+  Apply Kinematic B.C.                            0.00014        0.00038        0.00027
+  Apply Initial Conditions                          6e-06          7e-06        6.2e-06
+  Apply Boundary Conditions                        0.0033         0.0042         0.0037
+  Apply Body Forces                                     0          1e-06        7.5e-07
+  Allocate Global Block Diagonal Tangent           0.0018         0.0018         0.0018
+
+epu --  E Pluribus Unum
+	(Out of Many One -- see http://www.greatseal.com/mottoes/unum.html)
+	ExodusII Parallel Unification Program
+	(Version: 4.17) Modified: 2016/04/13
+Input(0): './NOX_QS_MatrixFree_NoPrec.e.4.0'
+...
+Input(3): './NOX_QS_MatrixFree_NoPrec.e.4.3'
+
+IO Word sizes: 8 bytes floating point and 4 bytes integer.
+
+**** READ LOCAL (GLOBAL) INFO ****
+Node map is contiguous.
+Finished reading/writing Global Info
+
+
+**** GET BLOCK INFORMATION (INCL. ELEMENT ATTRIBUTES) ****
+Global block count = 3
+
+Getting element block info.
+Element id map is contiguous.
+
+**** GET SIDE SETS *****
+
+**** GET NODE SETS *****
+
+**** BEGIN WRITING OUTPUT FILE *****
+Output:   './NOX_QS_MatrixFree_NoPrec.e'
+IO Word sizes: 8 bytes floating point and 4 bytes integer.
+ Title: 
+
+ Number of coordinates per node       =           3
+ Number of nodes                      =         384
+ Number of elements                   =         384
+ Number of element blocks             =           3
+
+ Number of nodal point sets           =           6
+ Number of element side sets          =           0
+
+
+Reading and Writing element connectivity & attributes
+
+
+
+**** GET COORDINATE INFO ****
+Wrote coordinate names...
+Wrote coordinate information...
+
+**** GET VARIABLE INFORMATION AND NAMES ****
+Found 1 global variables.
+	Nonlinear_Solver_Iterations  
+
+Found 9 nodal variables.
+	DisplacementX  DisplacementY  DisplacementZ  VelocityX      
+	VelocityY      VelocityZ      ForceX         ForceY         
+	ForceZ         
+
+Found 2 element variables.
+	Volume  Radius  
+
+
+**** GET TRANSIENT NODAL, GLOBAL, AND ELEMENT DATA VALUES ****
+
+Number of time steps on input databases = 2
+
+	Transferring step 1 to step 2 by 1
+Wrote step  1, time 0.0000e+00		[ 50.0%, Elapsed=0.681ms, ETA=0.681ms]
+Wrote step  2, time 1.0000e+00		[100.0%, Elapsed=1.17ms, ETA=0.00s]
+******* END *******
+
+   *****************************************************************
+              EXODIFF	(Version: 2.84) Modified: 2016-07-14
+              Authors:  Richard Drake, rrdrake@sandia.gov           
+                        Greg Sjaardema, gdsjaar@sandia.gov          
+              Run on    2016/08/15   15:00:41 CDT
+   *****************************************************************
+
+Reading first file ... 
+Reading second file ... 
+  FILE 1: /Users/john/projects/peridigm-dev/build/test/regression/NOX_QS/NOX_QS_MatrixFree_NoPrec_np4/NOX_QS_MatrixFree_NoPrec.e
+   Title: 
+          Dim = 3, Blocks = 3, Nodes = 384, Elements = 384, Nodesets = 6, Sidesets = 0
+          Vars: Global = 1, Nodal = 9, Element = 2, Nodeset = 0, Sideset = 0, Times = 2
+
+  FILE 2: /Users/john/projects/peridigm-dev/test/regression/NOX_QS/NOX_QS_MatrixFree_NoPrec_gold.e
+   Title: Peridigm
+          Dim = 3, Blocks = 3, Nodes = 384, Elements = 384, Nodesets = 6, Sidesets = 0
+          Vars: Global = 1, Nodal = 9, Element = 2, Nodeset = 0, Sideset = 0, Times = 2
+
+  COMMAND FILE: /Users/john/projects/peridigm-dev/test/regression/NOX_QS/NOX_QS.comp
+
+
+Nodal coordinates will be compared .. tol:    1e-12 (absolute), floor:        0
+Time step values will be compared .. tol:    1e-14 (absolute), floor:        0
+Global variables to be compared:
+	Nonlinear_Solver_Iterations      tol:    1e-12 (absolute), floor:        0
+Nodal variables to be compared:
+	DisplacementX                    tol:    1e-09 (absolute), floor:        0
+	DisplacementY                            1e-09 (absolute),               0
+	DisplacementZ                            1e-09 (absolute),               0
+	VelocityX                                5e-08 (absolute),               0
+	VelocityY                                5e-08 (absolute),               0
+	VelocityZ                                5e-08 (absolute),               0
+	ForceX                                      10 (absolute),               0
+	ForceY                                      10 (absolute),               0
+	ForceZ                                      10 (absolute),               0
+Element variables to be compared:
+	Radius                           tol:    1e-12 (absolute), floor:        0
+No Element Attribute variables on either file.
+No Nodeset variables on either file.
+No Sideset variables on either file.
+No Sideset Distribution Factors on either file.
+
+  ==============================================================
+  NOTE: All node and element ids are reported as global ids.
+
+Sideset Distribution Factors:
+  --------- Time step 1, 0.0000000e+00 ~ 0.0000000e+00, abs diff:  0.00000e+00 ---------
+Global variables:
+Nodal variables:
+Element variables:
+  --------- Time step 2, 1.0000000e+00 ~ 1.0000000e+00, abs diff:  0.00000e+00 ---------
+Global variables:
+Nodal variables:
+Element variables:
+
+exodiff: Files are the same

@@ -63,6 +63,11 @@
 #include <Teuchos_ParameterList.hpp>
 // *****************************************************************
 
+#ifdef USE_YAML
+#include <MueLu_YamlParser_def.hpp>
+#include <MueLu_ParameterListInterpreter.hpp>
+#endif
+
 using namespace std;
 
 void updateIntParameter(Teuchos::Ptr<Teuchos::ParameterList> listPtr, std::string nameIn, std::string valueIn);
@@ -91,13 +96,23 @@ Teuchos::RCP<PeridigmNS::Peridigm> PeridigmNS::PeridigmFactory::create(const std
   Teuchos::RCP<Teuchos::ParameterList> peridigmParams = rcp(new Teuchos::ParameterList());
   setPeridigmParamDefaults(peridigmParams.ptr());
 
-  // Determine if string has xml extension
+  // Determine if string has xml or yaml extension
   bool isXML = false;
+#ifdef USE_YAML
+  bool isYAML = false;
+#endif
   std::string ext;
   if (inputFile.size() > 3) {
     ext = inputFile.substr(inputFile.size() - 3);
     if (ext.compare(string("xml")) == 0)
       isXML = true;
+#ifdef USE_YAML
+    else {
+    ext = inputFile.substr(inputFile.size() - 4);
+    if (ext.compare(string("yaml")) == 0)
+      isYAML = true;
+    }
+#endif
   }
 
   // Update parameters from file
@@ -106,8 +121,16 @@ Teuchos::RCP<PeridigmNS::Peridigm> PeridigmNS::PeridigmFactory::create(const std
     // Update parameters with data from xml file
     Teuchos::updateParametersFromXmlFile(inputFile, peridigmParamsPtr);
   }
+#ifdef USE_YAML
+  else if (isYAML) {
+    // Update parameters with data from xml file
+    MueLu::updateParametersFromYamlFile(inputFile, peridigmParamsPtr);
+  }
+#endif
   else {
     updateParametersFromTextFile(inputFile, peridigmParamsPtr);
+
+    std::cout << "WARNING!! Peridigms text file input is deprecated and will be \n removed in a future version.  You may consider installing Trilinos \n with the optional TPL_ENABLE_yaml-cpp and convert the *.peridigm input \n to *.yaml, for a similar markup.  Otherwise use the XML input format.\n\n" << std::endl;
   }
 
   // Create new Peridigm object

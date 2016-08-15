@@ -93,6 +93,14 @@ IF(Netcdf_Package_Index LESS 0)
   MESSAGE("FATAL_ERROR \n\nError:  Netcdf NOT found.  Netcdf is a REQUIRED Trilinos TPL.\n\n")
 ENDIF()
 
+# Check for netcdf
+LIST(FIND Trilinos_TPL_LIST yaml-cpp yaml-cpp_Package_Index)
+IF(yaml-cpp_Package_Index GREATER -1)
+    MESSAGE("-- Trilinos was compiled with TPL_ENABLE_yaml-cpp.\n\n   Will compile Peridigm to support YAML input files.\n\n")
+    ADD_DEFINITIONS(-DUSE_YAML)
+    SET(HAVE_YAML TRUE)
+ENDIF()
+
 #
 # Enable performance testing
 #
