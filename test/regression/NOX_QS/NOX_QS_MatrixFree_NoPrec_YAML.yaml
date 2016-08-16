@@ -8,6 +8,7 @@
 #       velocity      cm/s
 #       acceleration  cm/s^2
 #       energy        erg
+#{DENSITY=8.05}
 Peridigm:
     Verbose: "false"
     Discretization:
@@ -17,7 +18,7 @@ Peridigm:
     Materials:
        My Material:
            Material Model: "Elastic"
-           Density: 8.05
+           Density: {DENSITY}
            Bulk Modulus: 160.0e10
            Shear Modulus: 79.3e10
 

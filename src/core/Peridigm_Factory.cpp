@@ -68,6 +68,12 @@
 #include <MueLu_ParameterListInterpreter.hpp>
 #endif
 
+//#ifdef HAVE_MPI
+  //#include <Epetra_MpiComm.h>
+//#else
+  //#include <Epetra_SerialComm.h>
+//#endif
+
 using namespace std;
 
 void updateIntParameter(Teuchos::Ptr<Teuchos::ParameterList> listPtr, std::string nameIn, std::string valueIn);
@@ -123,14 +129,32 @@ Teuchos::RCP<PeridigmNS::Peridigm> PeridigmNS::PeridigmFactory::create(const std
   }
 #ifdef USE_YAML
   else if (isYAML) {
-    // Update parameters with data from xml file
-    MueLu::updateParametersFromYamlFile(inputFile, peridigmParamsPtr);
+
+	SEAMS::Aprepro aprepro;
+	std::ifstream infile(inputFile.c_str());
+    
+	// get results from aprepro's parsing
+    aprepro.parse_stream(infile,inputFile);     // TODO: Check return value (bool).
+
+    // Update parameters with data from yaml string
+    //MueLu::updateParametersFromYamlFile(inputFile, peridigmParamsPtr);
+    MueLu::updateParametersFromYamlCString((aprepro.parsing_results().str()).c_str(), peridigmParamsPtr);
   }
 #endif
   else {
     updateParametersFromTextFile(inputFile, peridigmParamsPtr);
 
+  int rank = 0;
+  #ifdef HAVE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  #endif
+
+  // Print deprecation warning message
+  if(rank == 0){
+
     std::cout << "WARNING!! Peridigms text file input is deprecated and will be \n removed in a future version.  You may consider installing Trilinos \n with the optional TPL_ENABLE_yaml-cpp and convert the *.peridigm input \n to *.yaml, for a similar markup.  Otherwise use the XML input format.\n\n" << std::endl;
+  }
+
   }
 
   // Create new Peridigm object
