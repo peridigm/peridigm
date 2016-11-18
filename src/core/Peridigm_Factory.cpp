@@ -64,7 +64,7 @@
 // *****************************************************************
 
 #ifdef USE_YAML
-#include <MueLu_YamlParser_def.hpp>
+#include <Teuchos_YamlParser_def.hpp>
 #include <MueLu_ParameterListInterpreter.hpp>
 #endif
 
