@@ -64,8 +64,8 @@
 // *****************************************************************
 
 #ifdef USE_YAML
-#include <MueLu_YamlParser_def.hpp>
-#include <MueLu_ParameterListInterpreter.hpp>
+#include <Teuchos_YamlParser_decl.hpp>
+#include <Teuchos_YamlParameterListCoreHelpers.hpp>
 #endif
 
 //#ifdef HAVE_MPI
@@ -137,8 +137,8 @@ Teuchos::RCP<PeridigmNS::Peridigm> PeridigmNS::PeridigmFactory::create(const std
     aprepro.parse_stream(infile,inputFile);     // TODO: Check return value (bool).
 
     // Update parameters with data from yaml string
-    //MueLu::updateParametersFromYamlFile(inputFile, peridigmParamsPtr);
-    MueLu::updateParametersFromYamlCString((aprepro.parsing_results().str()).c_str(), peridigmParamsPtr);
+    //Teuchos::updateParametersFromYamlFile(inputFile, peridigmParamsPtr);
+    Teuchos::updateParametersFromYamlCString((aprepro.parsing_results().str()).c_str(), peridigmParamsPtr);
   }
 #endif
   else {
