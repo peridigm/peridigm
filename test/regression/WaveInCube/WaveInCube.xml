@@ -1,0 +1,188 @@
+<ParameterList>
+
+  <Parameter name="Verbose" type="bool" value="false"/>
+
+  <ParameterList name="Discretization">
+	<Parameter name="Type" type="string" value="Exodus" />
+	<Parameter name="Input Mesh File" type="string" value="WaveInCube.g"/>
+  </ParameterList>
+
+  <ParameterList name="Materials">
+	<ParameterList name="My Elastic Material">
+	  <Parameter name="Material Model" type="string" value="Elastic"/>
+	  <Parameter name="Density" type="double" value="2200.0"/>        <!-- kg/m^3 -->
+	  <Parameter name="Bulk Modulus" type="double" value="14.90e9"/>  <!-- Pa -->
+	  <Parameter name="Shear Modulus" type="double" value="8.94e9"/>  <!-- Pa -->
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Blocks">
+	<ParameterList name="My Group of Blocks">
+	  <Parameter name="Block Names" type="string" value="block_1"/>
+	  <Parameter name="Material" type="string" value="My Elastic Material"/>
+      <Parameter name="Horizon" type="double" value="0.0603"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Boundary Conditions">
+
+	  <ParameterList name="Prescribed Initial Velocity X">
+	    <Parameter name="Type" type="string" value="Initial Displacement"/>
+	    <Parameter name="Node Set" type="string" value="nodelist_1"/>
+	    <Parameter name="Coordinate" type="string" value="x"/>
+	    <Parameter name="Value" type="string" value=
+                 "
+                  double amplitude = 0.001;
+                  double Xo = -0.5;
+                  double Xn = 0.5;
+                  double medx = 0.5*(Xo + Xn);
+                  double a0 = 0.2*(Xn - Xo);
+                  double dist = sqrt( (medx - x)*(medx - x) + (medx - y)*(medx - y) + (medx - z)*(medx - z) );
+                  double r = dist/(0.5 * a0) - 1.0;
+                  double c21 = -0.088098528242219;
+                  double c20 =  0.000000000115645;
+                  double c19 =  0.973720575237457;
+                  double c18 = -0.000000001300817;
+                  double c17 = -4.897241716183775;
+                  double c16 =  0.000000006689319;
+                  double c15 =  14.800552740472247;
+                  double c14 = -0.000000020812281;
+                  double c13 = -29.885731490355798;
+                  double c12 =  0.000000043721985;
+                  double c11 =  42.383401012952483;
+                  double c10 = -0.000000065654557;
+                  double c9  = -43.168278794320933;
+                  double c8  =  0.000000073100692;
+                  double c7  =  31.715470115427561;
+                  double c6  = -0.000000062681098;
+                  double c5  = -16.650621789606145;
+                  double c4  =  0.000000042328202;
+                  double c3  =  6.166896940467320;
+                  double c2  = -0.000000021784738;
+                  double c1  = -1.850069065848198;
+                  double c0  =  0.500000006277647;
+                  value = 0.0;
+                  if(r &lt; 1.0) {
+                  value = c0  * pow(r, 0) + c1  * pow(r, 1) + c2  * pow(r, 2) + c3  * pow(r, 3) + c4  * pow(r, 4) + c5  * pow(r, 5) + c6  * pow(r, 6) + c7  * pow(r, 7) + c8  * pow(r, 8) + c9  * pow(r, 9) + c10 * pow(r, 10) + c11 * pow(r, 11) + c12 * pow(r, 12) + c13 * pow(r, 13) + c14 * pow(r, 14) + c15 * pow(r, 15) + c16 * pow(r, 16) + c17 * pow(r, 17) + c18 * pow(r, 18) + c19 * pow(r, 19) + c20 * pow(r, 20) + c21 * pow(r, 21);
+                  value = value * amplitude * x / dist;
+                  }
+                  "/>
+	  </ParameterList>
+
+    	  <ParameterList name="Prescribed Initial Velocity Y">
+	    <Parameter name="Type" type="string" value="Initial Displacement"/>
+	    <Parameter name="Node Set" type="string" value="nodelist_1"/>
+	    <Parameter name="Coordinate" type="string" value="y"/>
+	    <Parameter name="Value" type="string" value=
+                 "
+                  double amplitude = 0.001;
+                  double Xo = -0.5;
+                  double Xn = 0.5;
+                  double medx = 0.5*(Xo + Xn);
+                  double a0 = 0.2*(Xn - Xo);
+                  double dist = sqrt( (medx - x)*(medx - x) + (medx - y)*(medx - y) + (medx - z)*(medx - z) );
+                  double r = dist/(0.5 * a0) - 1.0;
+                  double c21 = -0.088098528242219;
+                  double c20 =  0.000000000115645;
+                  double c19 =  0.973720575237457;
+                  double c18 = -0.000000001300817;
+                  double c17 = -4.897241716183775;
+                  double c16 =  0.000000006689319;
+                  double c15 =  14.800552740472247;
+                  double c14 = -0.000000020812281;
+                  double c13 = -29.885731490355798;
+                  double c12 =  0.000000043721985;
+                  double c11 =  42.383401012952483;
+                  double c10 = -0.000000065654557;
+                  double c9  = -43.168278794320933;
+                  double c8  =  0.000000073100692;
+                  double c7  =  31.715470115427561;
+                  double c6  = -0.000000062681098;
+                  double c5  = -16.650621789606145;
+                  double c4  =  0.000000042328202;
+                  double c3  =  6.166896940467320;
+                  double c2  = -0.000000021784738;
+                  double c1  = -1.850069065848198;
+                  double c0  =  0.500000006277647;
+                  value = 0.0;
+                  if(r &lt; 1.0) {
+                  value = c0  * pow(r, 0) + c1  * pow(r, 1) + c2  * pow(r, 2) + c3  * pow(r, 3) + c4  * pow(r, 4) + c5  * pow(r, 5) + c6  * pow(r, 6) + c7  * pow(r, 7) + c8  * pow(r, 8) + c9  * pow(r, 9) + c10 * pow(r, 10) + c11 * pow(r, 11) + c12 * pow(r, 12) + c13 * pow(r, 13) + c14 * pow(r, 14) + c15 * pow(r, 15) + c16 * pow(r, 16) + c17 * pow(r, 17) + c18 * pow(r, 18) + c19 * pow(r, 19) + c20 * pow(r, 20) + c21 * pow(r, 21);
+                  value = value * amplitude * y / dist;
+                  }
+                  "/>
+	      </ParameterList>
+
+        <ParameterList name="Prescribed Initial Velocity Z">
+	    <Parameter name="Type" type="string" value="Initial Displacement"/>
+	    <Parameter name="Node Set" type="string" value="nodelist_1"/>
+	    <Parameter name="Coordinate" type="string" value="z"/>
+	    <Parameter name="Value" type="string" value=
+                 "
+                  double amplitude = 0.001;
+                  double Xo = -0.5;
+                  double Xn = 0.5;
+                  double medx = 0.5*(Xo + Xn);
+                  double a0 = 0.2*(Xn - Xo);
+                  double dist = sqrt( (medx - x)*(medx - x) + (medx - y)*(medx - y) + (medx - z)*(medx - z) );
+                  double r = dist/(0.5 * a0) - 1.0;
+                  double c21 = -0.088098528242219;
+                  double c20 =  0.000000000115645;
+                  double c19 =  0.973720575237457;
+                  double c18 = -0.000000001300817;
+                  double c17 = -4.897241716183775;
+                  double c16 =  0.000000006689319;
+                  double c15 =  14.800552740472247;
+                  double c14 = -0.000000020812281;
+                  double c13 = -29.885731490355798;
+                  double c12 =  0.000000043721985;
+                  double c11 =  42.383401012952483;
+                  double c10 = -0.000000065654557;
+                  double c9  = -43.168278794320933;
+                  double c8  =  0.000000073100692;
+                  double c7  =  31.715470115427561;
+                  double c6  = -0.000000062681098;
+                  double c5  = -16.650621789606145;
+                  double c4  =  0.000000042328202;
+                  double c3  =  6.166896940467320;
+                  double c2  = -0.000000021784738;
+                  double c1  = -1.850069065848198;
+                  double c0  =  0.500000006277647;
+                  value = 0.0;
+                  if(r &lt; 1.0) {
+                  value = c0  * pow(r, 0) + c1  * pow(r, 1) + c2  * pow(r, 2) + c3  * pow(r, 3) + c4  * pow(r, 4) + c5  * pow(r, 5) + c6  * pow(r, 6) + c7  * pow(r, 7) + c8  * pow(r, 8) + c9  * pow(r, 9) + c10 * pow(r, 10) + c11 * pow(r, 11) + c12 * pow(r, 12) + c13 * pow(r, 13) + c14 * pow(r, 14) + c15 * pow(r, 15) + c16 * pow(r, 16) + c17 * pow(r, 17) + c18 * pow(r, 18) + c19 * pow(r, 19) + c20 * pow(r, 20) + c21 * pow(r, 21);
+                  value = value * amplitude * z / dist;
+                  }
+                  "/>
+	</ParameterList>
+
+  </ParameterList>
+
+  <ParameterList name="Solver">
+	<Parameter name="Verbose" type="bool" value="false"/>
+	<Parameter name="Initial Time" type="double" value="0.0"/>
+	<Parameter name="Final Time" type="double" value="0.0002"/>
+	<ParameterList name="Verlet">
+	  <Parameter name="Fixed dt" type="double" value="2.0e-6"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Output">
+	<Parameter name="Output File Type" type="string" value="ExodusII"/>
+	<Parameter name="Output Format" type="string" value="BINARY"/>
+	<Parameter name="Output Filename" type="string" value="WaveInCube"/>
+	<Parameter name="Output Frequency" type="int" value="1"/>
+	<Parameter name="Parallel Write" type="bool" value="true"/>
+	<ParameterList name="Output Variables">
+	  <Parameter name="Displacement" type="bool" value="true"/>
+	  <Parameter name="Velocity" type="bool" value="true"/>
+	  <Parameter name="Element_Id" type="bool" value="true"/>
+	  <Parameter name="Proc_Num" type="bool" value="true"/>
+	  <Parameter name="Dilatation" type="bool" value="true"/>
+	  <Parameter name="Force_Density" type="bool" value="true"/>
+	  <Parameter name="Weighted_Volume" type="bool" value="true"/>
+	  <Parameter name="Damage" type="bool" value="true"/>
+      <Parameter name="Number_Of_Neighbors" type="bool" value="true"/>
+	</ParameterList>
+  </ParameterList>
+
+</ParameterList>
