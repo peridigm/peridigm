@@ -40,22 +40,22 @@ Boundary Conditions
         Type "Initial Velocity"
         Node Set "Node Set One"
         Coordinate "x"
-        Value 100.0
+        Value "100.0"
     Bar End Fixed Displacement X
         Type "Prescribed Displacement"
         Node Set "Node Set Two"
         Coordinate "x"
-        Value 0.0
+        Value "0.0"
     Bar End Fixed Displacement Y
         Type "Prescribed Displacement"
         Node Set "Node Set Two"
         Coordinate "y"
-        Value 0.0
+        Value "0.0"
     Bar End Fixed Displacement Z
         Type "Prescribed Displacement"
         Node Set "Node Set Two"
         Coordinate "z"
-        Value 0.0
+        Value "0.0"
 
 Solver
     Final Time 0.000005
