@@ -130,15 +130,16 @@ Teuchos::RCP<PeridigmNS::Peridigm> PeridigmNS::PeridigmFactory::create(const std
 #ifdef USE_YAML
   else if (isYAML) {
 
-	SEAMS::Aprepro aprepro;
-	std::ifstream infile(inputFile.c_str());
-    
-	// get results from aprepro's parsing
+    SEAMS::Aprepro aprepro;
+    std::ifstream infile(inputFile.c_str());
+
+    // get results from aprepro's parsing
     aprepro.parse_stream(infile,inputFile);     // TODO: Check return value (bool).
 
     // Update parameters with data from yaml string
     //Teuchos::updateParametersFromYamlFile(inputFile, peridigmParamsPtr);
-    Teuchos::updateParametersFromYamlCString((aprepro.parsing_results().str()).c_str(), peridigmParamsPtr);
+    bool overwrite = true;
+    Teuchos::updateParametersFromYamlCString((aprepro.parsing_results().str()).c_str(), peridigmParamsPtr, overwrite);
   }
 #endif
   else {
