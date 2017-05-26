@@ -42,6 +42,7 @@ add_test (Compression_3x1x1_np3 python ./Compression_3x1x1/np3/Compression_3x1x1
 add_test (Compression_3x1x1_InfluenceFunction_np1 python ./Compression_3x1x1_InfluenceFunction/np1/Compression_3x1x1_InfluenceFunction.py)
 add_test (Compression_3x1x1_InfluenceFunction_np2 python ./Compression_3x1x1_InfluenceFunction/np2/Compression_3x1x1_InfluenceFunction.py)
 add_test (Compression_3x1x1_InfluenceFunction_np3 python ./Compression_3x1x1_InfluenceFunction/np3/Compression_3x1x1_InfluenceFunction.py)
+add_test (AdaptiveQuasiStaticSolver_np1 python ./AdaptiveQuasiStaticSolver/np1/AdaptiveQuasiStaticSolver.py)
 add_test (BondBreakingInitialVelocity_np1 python ./BondBreakingInitialVelocity/np1/BondBreakingInitialVelocity.py)
 add_test (BondBreakingInitialVelocity_np3 python ./BondBreakingInitialVelocity/np3/BondBreakingInitialVelocity.py)
 add_test (BondBreakingInitialVelocity-EP_np1 python ./BondBreakingInitialVelocity-EP/np1/BondBreakingInitialVelocity.py)

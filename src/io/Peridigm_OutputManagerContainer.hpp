@@ -78,6 +78,16 @@ namespace PeridigmNS {
         (*it)->write(blocks, current_time);
     }
 
+    //! Change output frequency of all output managers in container
+    //  for the sake of switch from Quasi-static to explicit solver
+    void changeOutputFrequency(int output_frequency){
+    //void changeOutputFrequency(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, int output_frequency){
+      std::vector< Teuchos::RCP< PeridigmNS::OutputManager > >::iterator it;
+      for ( it=outputManagers.begin() ; it < outputManagers.end(); it++ )
+        (*it)->changeOutputFrequency(output_frequency);
+        //(*it)->changeOutputFrequency(blocks, output_frequency);
+    }
+
   protected:
 
     //! Container for RCPs to individual output managers

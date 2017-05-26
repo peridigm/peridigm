@@ -2471,8 +2471,39 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
   else{
     TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n****Error: No valid time step data provided.\n");
   }
+  
+  // Adaptive load-stepping parameters
+  double timeFinal = timeSteps[timeSteps.size()-1];
+  bool solverFailedToConverge = false;
+  bool adaptiveLoadStepping = false;
+  bool switchToExplicit = false;
+  int maxSolverFailureInOneStep;
+  int maxTotalSolverFailure;
+  bool reduceAllSteps = false;
+  Teuchos::RCP< Teuchos::ParameterList > adaptiveQSparams;
+  Teuchos::RCP< Teuchos::ParameterList > verletSolverParams;
+  if( quasiStaticParams->isSublist("Adaptive Load-Stepping") ){
+    adaptiveLoadStepping = true;
+    adaptiveQSparams = sublist(quasiStaticParams, "Adaptive Load-Stepping", true);
+    maxSolverFailureInOneStep = adaptiveQSparams->get<int>("Maximum load step reductions in one step");
+    maxTotalSolverFailure = adaptiveQSparams->get<int>("Maximum total load step reductions");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(maxTotalSolverFailure < maxSolverFailureInOneStep, "**** 'Maximum total load step reductions' cannot be smaller than 'Maximum load step reductions in one step'. ****");
+    if( adaptiveQSparams->isParameter("Reduce all remaining load steps") ){
+      //If one load step is reduced, the remainder of the steps is also reduced
+      reduceAllSteps = adaptiveQSparams->get<bool>("Reduce all remaining load steps");
+    }
+    if( adaptiveQSparams->isSublist("Switch to Verlet") ){
+      switchToExplicit = true;
+      verletSolverParams = sublist(adaptiveQSparams, "Switch to Verlet", true);
+    }
+  }
+  int solverFailureInThisStep = 0;
+  int totalSolverFailure = 0;
+  bool convergenceHasFailedInThisStep = false;
+  bool failedQS = false;
 
   double timeCurrent = timeSteps[0];
+  double timePrevious;
 
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
@@ -2485,20 +2516,23 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
 
   for(int step=1 ; step<(int)timeSteps.size() ; step++){
 
-    loadStepCPUTime.ResetStartTime();
+    if(!adaptiveLoadStepping || !solverFailedToConverge){
+      loadStepCPUTime.ResetStartTime();
+      timePrevious = timeCurrent;
+    }
+    solverFailedToConverge = false;
 
-    double timePrevious = timeCurrent;
     timeCurrent = timeSteps[step];
     double timeIncrement = timeCurrent - timePrevious;
     workset->timeStep = timeIncrement;
 
-    // Update nodal positions for nodes with kinematic B.C.
     deltaU->PutScalar(0.0);
 		if(analysisHasMultiphysics){
 			fluidPressureDeltaU->PutScalar(0.0);
 			combinedDeltaU->PutScalar(0.0);
 		}
 
+    // Update nodal positions for nodes with kinematic B.C.
     PeridigmNS::Timer::self().startTimer("Apply Kinematic B.C.");
     boundaryAndInitialConditionManager->applyBoundaryConditions(timeCurrent,timePrevious);
     PeridigmNS::Timer::self().stopTimer("Apply Kinematic B.C.");
@@ -2509,38 +2543,34 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
     PeridigmNS::Timer::self().stopTimer("Apply Body Forces");
 
     // Set the current position and velocity
-    // \todo We probably want to rework this so that the material models get valid x, u, and y values.
-    // Currently the u values are from the previous load step (and if we update u here we'll be unable
-    // to properly undo a time step, which we'll need for adaptive time stepping).
-		 
 		for(int i=0 ; i<y->MyLength() ; ++i){
-      		yPtr[i] = xPtr[i] + uPtr[i] + deltaUPtr[i];
-      		vPtr[i] = deltaUPtr[i]/timeIncrement;
-        }
+      yPtr[i] = xPtr[i] + uPtr[i] + deltaUPtr[i];
+      vPtr[i] = deltaUPtr[i]/timeIncrement;
+    }
     
 		//If true, then synch the content of the combined vectors with that of the uncombined.
-   if(analysisHasMultiphysics){
-		for(int i=0; i<combinedDeltaU->MyLength(); i+=(3+numMultiphysDoFs)){
-			for(int j=0; j<3; ++j){
-				combinedDeltaUPtr[i+j] = deltaUPtr[i*3/(3+numMultiphysDoFs)+j];
-			}
-			combinedDeltaUPtr[i+3] = fluidPressureDeltaUPtr[i/(3+numMultiphysDoFs)];
-		}
+    if(analysisHasMultiphysics){
+      for(int i=0; i<combinedDeltaU->MyLength(); i+=(3+numMultiphysDoFs)){
+        for(int j=0; j<3; ++j){
+          combinedDeltaUPtr[i+j] = deltaUPtr[i*3/(3+numMultiphysDoFs)+j];
+        }
+        combinedDeltaUPtr[i+3] = fluidPressureDeltaUPtr[i/(3+numMultiphysDoFs)];
+      }
 
-		for(int i=0 ; i<fluidPressureY->MyLength() ; ++i){
-			fluidPressureYPtr[i] = fluidPressureUPtr[i] + fluidPressureDeltaUPtr[i];
-			fluidPressureVPtr[i] = fluidPressureDeltaUPtr[i]/timeIncrement;
-		}
+      for(int i=0 ; i<fluidPressureY->MyLength() ; ++i){
+        fluidPressureYPtr[i] = fluidPressureUPtr[i] + fluidPressureDeltaUPtr[i];
+        fluidPressureVPtr[i] = fluidPressureDeltaUPtr[i]/timeIncrement;
+      }
 
-		for(int i=0 ; i<combinedY->MyLength() ; i+=(3+numMultiphysDoFs)){
-			for(int j = 0; j<3; ++j){
-									combinedYPtr[i+j] = yPtr[i/(3+numMultiphysDoFs)*3 + j];
-									combinedVPtr[i+j] = vPtr[i/(3+numMultiphysDoFs)*3 + j];
-			}	
-								combinedYPtr[i+3] = fluidPressureYPtr[i/(3+numMultiphysDoFs)];
-								combinedVPtr[i+3] = fluidPressureVPtr[i/(3+numMultiphysDoFs)];
-		}
-   }
+      for(int i=0 ; i<combinedY->MyLength() ; i+=(3+numMultiphysDoFs)){
+        for(int j = 0; j<3; ++j){
+                    combinedYPtr[i+j] = yPtr[i/(3+numMultiphysDoFs)*3 + j];
+                    combinedVPtr[i+j] = vPtr[i/(3+numMultiphysDoFs)*3 + j];
+        }	
+                  combinedYPtr[i+3] = fluidPressureYPtr[i/(3+numMultiphysDoFs)];
+                  combinedVPtr[i+3] = fluidPressureVPtr[i/(3+numMultiphysDoFs)];
+      }
+    }
 
     // compute the residual
     double residualNorm = computeQuasiStaticResidual(residual);
@@ -2548,19 +2578,19 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
     double toleranceMultiplier = 1.0;
     if(!useAbsoluteTolerance){
       // compute the vector of reactions, i.e., the forces corresponding to degrees of freedom for which kinematic B.C. are applied
-		if(analysisHasMultiphysics){
-      		boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(combinedForce, reaction, numMultiphysDoFs);
-		}
-		else{
-      		boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(force, reaction, numMultiphysDoFs);
-		}
+      if(analysisHasMultiphysics){
+        boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(combinedForce, reaction, numMultiphysDoFs);
+      }
+      else{
+        boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(force, reaction, numMultiphysDoFs);
+      }
       // convert force density to force
-		for(int i=0 ; i<reaction->MyLength() ; ++i){
-			(*reaction)[i] *= (*volume)[i/(3+numMultiphysDoFs)];
-		}
-		double reactionNorm2;
-		reaction->Norm2(&reactionNorm2);
-		toleranceMultiplier = reactionNorm2;
+      for(int i=0 ; i<reaction->MyLength() ; ++i){
+        (*reaction)[i] *= (*volume)[i/(3+numMultiphysDoFs)];
+      }
+      double reactionNorm2;
+      reaction->Norm2(&reactionNorm2);
+      toleranceMultiplier = reactionNorm2;
     }
 
     if(peridigmComm->MyPID() == 0)
@@ -2694,94 +2724,178 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
 						vPtr[i] = deltaUPtr[i]/timeIncrement;
 					}
 				}
-               // Compute residual
+        // Compute residual
         residualNorm = computeQuasiStaticResidual(residual);
 
         solverIteration++;
       }
       else{
-        if(peridigmComm->MyPID() == 0)
+        if(peridigmComm->MyPID() == 0){
           cout << "\nError:  Belos linear solver failed to converge." << endl;
+        }
         residualNorm = 1.0e50;
         break;
       }
     } // end loop of nonlinear iterations
-
-    if(solverIteration >= maxSolverIterations && peridigmComm->MyPID() == 0)
-      cout << "\nWarning:  Nonlinear solver failed to converge in maximum allowable iterations." << endl;
 
     // If the maximum allowable number of load step reductions has been reached and the residual
     // is within a reasonable tolerance, then just accept the solution and forge ahead.
     // If not, abort the analysis.
     if(residualNorm > tolerance*toleranceMultiplier){
       if(residualNorm < 100.0*tolerance*toleranceMultiplier){
-	if(peridigmComm->MyPID() == 0)
-	  cout << "\nWarning:  Accepting current solution and progressing to next load step.\n" << endl;
+        if(peridigmComm->MyPID() == 0)
+          cout << "\nWarning:  Accepting current solution and progressing to next load step.\n" << endl;
       }
       else{
-	if(peridigmComm->MyPID() == 0)
-	  cout << "\nError:  Aborting analysis.\n" << endl;
-	break;
+
+        if(adaptiveLoadStepping){
+          solverFailureInThisStep++;
+          totalSolverFailure++;
+
+          if(totalSolverFailure > maxTotalSolverFailure || solverFailureInThisStep > maxSolverFailureInOneStep){
+            failedQS = true;
+            if(!switchToExplicit)
+              if(peridigmComm->MyPID() == 0)
+                cout << "\nError:  Aborting analysis.\n" << endl;
+
+            break;
+          }
+          else{
+            if(peridigmComm->MyPID() == 0)
+              cout << "Warning: Cutting the load step in half and redo the step.\n" << endl;
+          }
+          solverFailedToConverge = true;
+          convergenceHasFailedInThisStep = true;
+        }
+        else{
+          if(peridigmComm->MyPID() == 0)
+            cout << "\nError:  Aborting analysis.\n" << endl;
+          break;
+        }
       }
     }
 
-    // The load step is complete
-    // Update internal data and move on to the next load step
 
-    if(!solverVerbose){
+    // If adaptive load step scheme is chosen by user and QS solver failed
+    // to converge, load step is cut in half to retry with new increment.
+    if(adaptiveLoadStepping && solverFailedToConverge){
+      timeSteps.insert(timeSteps.begin()+step, timePrevious+timeIncrement/2.0);
+      step--;
+    }
+
+    if(adaptiveLoadStepping && reduceAllSteps && !solverFailedToConverge && convergenceHasFailedInThisStep){
+      // The smallest load step size so far is set to use for the rest of the simulation
+      timeSteps.erase(timeSteps.begin()+step+1, timeSteps.end());
+      int i=0;
+      while(timeSteps[step+i]<timeFinal){
+        timeSteps.push_back(timeCurrent + (i+1)*timeIncrement);
+        i++;
+      }
+    }
+
+    if(solverIteration >= maxSolverIterations && peridigmComm->MyPID() == 0)
+      cout << "\nWarning:  Nonlinear solver failed to converge in maximum allowable iterations." << endl;
+
+    if(!adaptiveLoadStepping || !solverFailedToConverge){
+      // The load step is complete
+      // Update internal data and move on to the next load step
+      convergenceHasFailedInThisStep = false;
+      solverFailureInThisStep = 0;
+
+      if(!solverVerbose){
+        if(peridigmComm->MyPID() == 0)
+    cout << "  iteration " << solverIteration << ": residual = " << residualNorm << endl;
+      }
+      else{
+        double residualL2, residualInf;
+        residual->Norm2(&residualL2);
+        residual->NormInf(&residualInf);
+        if(peridigmComm->MyPID() == 0)
+          cout << "  iteration " << solverIteration << ": residual = " << residualNorm << ", residual L2 = " << residualL2 << ", residual inf = " << residualInf << ", alpha = " << alpha << endl;
+      }
+
+      // Print load step timing information
+      double CPUTime = loadStepCPUTime.ElapsedTime();
+      cumulativeLoadStepCPUTime += CPUTime;
       if(peridigmComm->MyPID() == 0)
-	cout << "  iteration " << solverIteration << ": residual = " << residualNorm << endl;
+        cout << setprecision(2) << "  cpu time for load step = " << CPUTime << " sec., cumulative cpu time = " << cumulativeLoadStepCPUTime << " sec.\n" << endl;
+
+      // Add the converged displacement increment to the displacement
+      // Make sure even the non participating vectors are updated
+      if(analysisHasMultiphysics){
+        for(int i=0 ; i<combinedU->MyLength() ; i+=(3+numMultiphysDoFs)){
+          for(int j=0 ; j<3 ; ++j){
+            (*combinedU)[i+j] += (*combinedDeltaU)[i+j];
+            (*u)[i/(3+numMultiphysDoFs)*3 + j] += (*combinedDeltaU)[i+j];
+            (*deltaU)[i/(3+numMultiphysDoFs)*3 + j] = (*combinedDeltaU)[i+j];
+          }
+            (*combinedU)[i+3] += (*combinedDeltaU)[i+3];
+            (*fluidPressureU)[i/(3+numMultiphysDoFs)] += (*combinedDeltaU)[i+3];
+            (*fluidPressureDeltaU)[i/(3+numMultiphysDoFs)] = (*combinedDeltaU)[i+3];
+        }
+        // Store the velocity for use as a predictor in the next load step
+        for(int i=0 ; i<combinedV->MyLength() ; ++i){
+          (*predictor)[i] = (*combinedV)[i];
+        }
+      }
+      else{
+        for(int i=0 ; i<u->MyLength() ; ++i){
+          (*u)[i] += (*deltaU)[i];
+          (*predictor)[i] = (*v)[i];
+        }
+      }
+
+      // Write output for completed load step
+      PeridigmNS::Timer::self().startTimer("Output");
+      synchDataManagers();
+      outputManager->write(blocks, timeCurrent);
+      PeridigmNS::Timer::self().stopTimer("Output");
+
+      // swap state N and state NP1
+      for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+        blockIt->updateState();
     }
-    else{
-      double residualL2, residualInf;
-      residual->Norm2(&residualL2);
-      residual->NormInf(&residualInf);
-      if(peridigmComm->MyPID() == 0)
-        cout << "  iteration " << solverIteration << ": residual = " << residualNorm << ", residual L2 = " << residualL2 << ", residual inf = " << residualInf << ", alpha = " << alpha << endl;
-    }
-
-    // Print load step timing information
-    double CPUTime = loadStepCPUTime.ElapsedTime();
-    cumulativeLoadStepCPUTime += CPUTime;
-    if(peridigmComm->MyPID() == 0)
-      cout << setprecision(2) << "  cpu time for load step = " << CPUTime << " sec., cumulative cpu time = " << cumulativeLoadStepCPUTime << " sec.\n" << endl;
-
-    // Add the converged displacement increment to the displacement
-    // Make sure even the non participating vectors are updated
-    if(analysisHasMultiphysics){
-			for(int i=0 ; i<combinedU->MyLength() ; i+=(3+numMultiphysDoFs)){
-				for(int j=0 ; j<3 ; ++j){
-					(*combinedU)[i+j] += (*combinedDeltaU)[i+j];
-					(*u)[i/(3+numMultiphysDoFs)*3 + j] += (*combinedDeltaU)[i+j];
-					(*deltaU)[i/(3+numMultiphysDoFs)*3 + j] = (*combinedDeltaU)[i+j];
-				}
-					(*combinedU)[i+3] += (*combinedDeltaU)[i+3];
-					(*fluidPressureU)[i/(3+numMultiphysDoFs)] += (*combinedDeltaU)[i+3];
-					(*fluidPressureDeltaU)[i/(3+numMultiphysDoFs)] = (*combinedDeltaU)[i+3];
-			}
-			// Store the velocity for use as a predictor in the next load step
-			for(int i=0 ; i<combinedV->MyLength() ; ++i){
-				(*predictor)[i] = (*combinedV)[i];
-			}
-    }
-    else{
-	    for(int i=0 ; i<u->MyLength() ; ++i){
-	      (*u)[i] += (*deltaU)[i];
-				(*predictor)[i] = (*v)[i];
-			}
-		}
-
-    // Write output for completed load step
-    PeridigmNS::Timer::self().startTimer("Output");
-    synchDataManagers();
-    outputManager->write(blocks, timeCurrent);
-    PeridigmNS::Timer::self().stopTimer("Output");
-
-    // swap state N and state NP1
-    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-      blockIt->updateState();
 
   } // end loop over load steps
+
+  if(!switchToExplicit && failedQS){
+    if(peridigmComm->MyPID() == 0)
+      cout << "\nError: Number of Quasi-Static solver convergence failures was more than the maximum allowable number of failures." << endl;
+  }
+
+  if(switchToExplicit && failedQS){
+    if(peridigmComm->MyPID() == 0){
+      cout << "\nWarning: Number of Quasi-Static solver convergence failures was more than the maximum allowable number of failures.";
+      cout << "\nSwitching to explicit time-stepping for the rest of simulation." << endl;
+    }
+    Teuchos::RCP<Teuchos::ParameterList> explicitSolverParams = Teuchos::rcp(new Teuchos::ParameterList);
+    Teuchos::ParameterList& verletParams = explicitSolverParams->sublist("Verlet");
+    if(verletSolverParams->isParameter("Fixed dt")){
+      double userDefinedTimeStep = verletSolverParams->get<double>("Fixed dt");
+      verletParams.set("Fixed dt", userDefinedTimeStep);
+    }
+
+    if(verletSolverParams->isParameter("Safety Factor")){
+      double safetyFactor = verletSolverParams->get<double>("Safety Factor");
+      verletParams.set("Safety Factor", safetyFactor);
+    }
+
+    explicitSolverParams->set("Initial Time", timePrevious);
+    explicitSolverParams->set("Final Time", timeFinal);
+
+    if(verletSolverParams->isParameter("Output Frequency")){
+      int output_frequency = verletSolverParams->get<int>("Output Frequency");
+      outputManager->changeOutputFrequency(output_frequency);
+    }
+
+    // Restore the values to the converged ones from previous step
+		for(int i=0 ; i<y->MyLength() ; ++i){
+      yPtr[i] = xPtr[i] + uPtr[i];
+      vPtr[i] = (*predictor)[i];
+    }
+
+    executeExplicit(explicitSolverParams);
+  }
 
   if(peridigmComm->MyPID() == 0)
     cout << endl;

@@ -75,6 +75,8 @@ namespace PeridigmNS {
     //! Write data to disk
     virtual void write(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, double) = 0;
 
+    virtual void changeOutputFrequency(int) = 0;
+
   protected:
 
     //! Number of processors and processor ID
