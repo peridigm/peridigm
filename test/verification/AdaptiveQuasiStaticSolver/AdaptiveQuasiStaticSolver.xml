@@ -51,17 +51,18 @@
   <ParameterList name="Solver">
 	<Parameter name="Verbose" type="bool" value="false"/>
 	<Parameter name="Initial Time" type="double" value="0.0"/>
-	<Parameter name="Final Time" type="double" value="1.0e-2"/>
+	<Parameter name="Final Time" type="double" value="1.0e-3"/>
   <ParameterList name="QuasiStatic">
     <Parameter name="Number of Load Steps" type="int" value="1"/>
     <Parameter name="Absolute Tolerance" type="double" value="1.0e-3"/>
-    <Parameter name="Maximum Solver Iterations" type="int" value="100"/>
+    <Parameter name="Maximum Solver Iterations" type="int" value="2"/>
     <ParameterList name="Adaptive Load-Stepping">
-      <Parameter name="Maximum solver failure in one step" type="int" value="1"/>
-      <Parameter name="Maximum total solver failure" type="int" value="2"/>
+      <Parameter name="Maximum load step reductions in one step" type="int" value="2"/>
+      <Parameter name="Maximum total load step reductions" type="int" value="5"/>
       <ParameterList name="Switch to Verlet">
         <Parameter name="Safety Factor" type="double" value="0.6"/>
         <!--<Parameter name="Fixed dt" type="double" value="0.00001"/>-->
+        <Parameter name="Output Frequency" type="int" value="10"/>
       </ParameterList>
     </ParameterList>
   </ParameterList>
@@ -82,7 +83,7 @@
   <ParameterList name="Output1">
 	<Parameter name="Output File Type" type="string" value="ExodusII"/>
 	<Parameter name="Output Filename" type="string" value="AdaptiveQuasiStaticSolver"/>
-	<Parameter name="Output Frequency" type="int" value="10"/>
+	<Parameter name="Output Frequency" type="int" value="1"/>
 	<ParameterList name="Output Variables">
           <Parameter name="Volume" type="bool" value="true"/>
           <Parameter name="Displacement" type="bool" value="true"/>

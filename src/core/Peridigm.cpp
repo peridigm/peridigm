@@ -2479,22 +2479,27 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
   bool switchToExplicit = false;
   int maxSolverFailureInOneStep;
   int maxTotalSolverFailure;
+  bool reduceAllSteps = false;
   Teuchos::RCP< Teuchos::ParameterList > adaptiveQSparams;
   Teuchos::RCP< Teuchos::ParameterList > verletSolverParams;
   if( quasiStaticParams->isSublist("Adaptive Load-Stepping") ){
     adaptiveLoadStepping = true;
     adaptiveQSparams = sublist(quasiStaticParams, "Adaptive Load-Stepping", true);
-    maxSolverFailureInOneStep = adaptiveQSparams->get<int>("Maximum solver failure in one step");
-    maxTotalSolverFailure = adaptiveQSparams->get<int>("Maximum total solver failure");
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(maxTotalSolverFailure < maxSolverFailureInOneStep, "**** 'Maximum total solver failure' cannot be smaller than 'Maximum solver failure in one step'. ****");
+    maxSolverFailureInOneStep = adaptiveQSparams->get<int>("Maximum load step reductions in one step");
+    maxTotalSolverFailure = adaptiveQSparams->get<int>("Maximum total load step reductions");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(maxTotalSolverFailure < maxSolverFailureInOneStep, "**** 'Maximum total load step reductions' cannot be smaller than 'Maximum load step reductions in one step'. ****");
+    if( adaptiveQSparams->isParameter("Reduce all remaining load steps") ){
+      //If one load step is reduced, the remainder of the steps is also reduced
+      reduceAllSteps = adaptiveQSparams->get<bool>("Reduce all remaining load steps");
+    }
     if( adaptiveQSparams->isSublist("Switch to Verlet") ){
       switchToExplicit = true;
       verletSolverParams = sublist(adaptiveQSparams, "Switch to Verlet", true);
     }
   }
-  int solverFailureInOneStep = 0;
+  int solverFailureInThisStep = 0;
   int totalSolverFailure = 0;
-  bool belosSolverHasFailed = false;
+  bool convergenceHasFailedInThisStep = false;
   bool failedQS = false;
 
   double timeCurrent = timeSteps[0];
@@ -2511,11 +2516,12 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
 
   for(int step=1 ; step<(int)timeSteps.size() ; step++){
 
-    if(!adaptiveLoadStepping || !solverFailedToConverge)
+    if(!adaptiveLoadStepping || !solverFailedToConverge){
       loadStepCPUTime.ResetStartTime();
-
-    if(!adaptiveLoadStepping || !solverFailedToConverge)
       timePrevious = timeCurrent;
+    }
+    solverFailedToConverge = false;
+
     timeCurrent = timeSteps[step];
     double timeIncrement = timeCurrent - timePrevious;
     workset->timeStep = timeIncrement;
@@ -2722,56 +2728,15 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
         residualNorm = computeQuasiStaticResidual(residual);
 
         solverIteration++;
-
-        solverFailedToConverge = false;
       }
       else{
         if(peridigmComm->MyPID() == 0){
           cout << "\nError:  Belos linear solver failed to converge." << endl;
         }
         residualNorm = 1.0e50;
-
-        if(adaptiveLoadStepping){
-          if(peridigmComm->MyPID() == 0)
-            cout << "Warning: Cutting the load step in half and redo the step.\n" << endl;
-
-          solverFailureInOneStep++;
-          solverFailedToConverge = true;
-          belosSolverHasFailed = true;
-          totalSolverFailure++;
-
-          residualNorm = 0.0; // to bypass the inner iteration
-        }
         break;
       }
     } // end loop of nonlinear iterations
-
-    if(totalSolverFailure > maxTotalSolverFailure || solverFailureInOneStep > maxSolverFailureInOneStep){
-      failedQS = true;
-      break;
-    }
-
-    // If adaptive load step scheme is chosen by user and Belos solver failed
-    // to converge, load step is cut in half to retry with new increment.
-    if(adaptiveLoadStepping && solverFailedToConverge){
-      timeSteps.insert(timeSteps.begin()+step, timePrevious+timeIncrement/2.0);
-      step--;
-    }
-
-    if(adaptiveLoadStepping && !solverFailedToConverge && belosSolverHasFailed){
-      // The smallest load step size so far is set to use for the rest of the simulation
-      timeSteps.erase(timeSteps.begin()+step+1, timeSteps.end());
-      int i=0;
-      while(timeSteps[step+i]<timeFinal){
-        timeSteps.push_back(timeCurrent + (i+1)*timeIncrement);
-        i++;
-      }
-      belosSolverHasFailed = false;
-      solverFailureInOneStep = 0;
-    }
-
-    if(solverIteration >= maxSolverIterations && peridigmComm->MyPID() == 0)
-      cout << "\nWarning:  Nonlinear solver failed to converge in maximum allowable iterations." << endl;
 
     // If the maximum allowable number of load step reductions has been reached and the residual
     // is within a reasonable tolerance, then just accept the solution and forge ahead.
@@ -2782,15 +2747,60 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
           cout << "\nWarning:  Accepting current solution and progressing to next load step.\n" << endl;
       }
       else{
-        if(peridigmComm->MyPID() == 0)
-          cout << "\nError:  Aborting analysis.\n" << endl;
-        break;
+
+        if(adaptiveLoadStepping){
+          solverFailureInThisStep++;
+          totalSolverFailure++;
+
+          if(totalSolverFailure > maxTotalSolverFailure || solverFailureInThisStep > maxSolverFailureInOneStep){
+            failedQS = true;
+            if(!switchToExplicit)
+              if(peridigmComm->MyPID() == 0)
+                cout << "\nError:  Aborting analysis.\n" << endl;
+
+            break;
+          }
+          else{
+            if(peridigmComm->MyPID() == 0)
+              cout << "Warning: Cutting the load step in half and redo the step.\n" << endl;
+          }
+          solverFailedToConverge = true;
+          convergenceHasFailedInThisStep = true;
+        }
+        else{
+          if(peridigmComm->MyPID() == 0)
+            cout << "\nError:  Aborting analysis.\n" << endl;
+          break;
+        }
       }
     }
+
+
+    // If adaptive load step scheme is chosen by user and QS solver failed
+    // to converge, load step is cut in half to retry with new increment.
+    if(adaptiveLoadStepping && solverFailedToConverge){
+      timeSteps.insert(timeSteps.begin()+step, timePrevious+timeIncrement/2.0);
+      step--;
+    }
+
+    if(adaptiveLoadStepping && reduceAllSteps && !solverFailedToConverge && convergenceHasFailedInThisStep){
+      // The smallest load step size so far is set to use for the rest of the simulation
+      timeSteps.erase(timeSteps.begin()+step+1, timeSteps.end());
+      int i=0;
+      while(timeSteps[step+i]<timeFinal){
+        timeSteps.push_back(timeCurrent + (i+1)*timeIncrement);
+        i++;
+      }
+    }
+
+    if(solverIteration >= maxSolverIterations && peridigmComm->MyPID() == 0)
+      cout << "\nWarning:  Nonlinear solver failed to converge in maximum allowable iterations." << endl;
 
     if(!adaptiveLoadStepping || !solverFailedToConverge){
       // The load step is complete
       // Update internal data and move on to the next load step
+      convergenceHasFailedInThisStep = false;
+      solverFailureInThisStep = 0;
 
       if(!solverVerbose){
         if(peridigmComm->MyPID() == 0)
@@ -2872,6 +2882,11 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
 
     explicitSolverParams->set("Initial Time", timePrevious);
     explicitSolverParams->set("Final Time", timeFinal);
+
+    if(verletSolverParams->isParameter("Output Frequency")){
+      int output_frequency = verletSolverParams->get<int>("Output Frequency");
+      outputManager->changeOutputFrequency(output_frequency);
+    }
 
     // Restore the values to the converged ones from previous step
 		for(int i=0 ; i<y->MyLength() ; ++i){
