@@ -74,6 +74,10 @@ namespace PeridigmNS {
     //! Write data to disk
     virtual void write(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, double);
 
+    //! Change output frequency, for the sake of switch from Quasi-static to explicit solver
+    //virtual void changeOutputFrequency(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, int);
+    virtual void changeOutputFrequency(int);
+
   private:
     
     //! Copy constructor.
