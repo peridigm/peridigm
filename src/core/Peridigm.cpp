@@ -2480,6 +2480,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
   int maxSolverFailureInOneStep;
   int maxTotalSolverFailure;
   bool reduceAllSteps = false;
+  bool adaptiveOutputFrequency = false;
   Teuchos::RCP< Teuchos::ParameterList > adaptiveQSparams;
   Teuchos::RCP< Teuchos::ParameterList > verletSolverParams;
   if( quasiStaticParams->isSublist("Adaptive Load-Stepping") ){
@@ -2491,6 +2492,10 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
     if( adaptiveQSparams->isParameter("Reduce all remaining load steps") ){
       //If one load step is reduced, the remainder of the steps is also reduced
       reduceAllSteps = adaptiveQSparams->get<bool>("Reduce all remaining load steps");
+    }
+    if( adaptiveQSparams->isParameter("Adaptive output frequency") ){
+      //To multiply output frequency while reducing the load step size
+      adaptiveOutputFrequency = adaptiveQSparams->get<bool>("Adaptive output frequency");
     }
     if( adaptiveQSparams->isSublist("Switch to Verlet") ){
       switchToExplicit = true;
@@ -2780,6 +2785,8 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
     // to converge, load step is cut in half to retry with new increment.
     if(adaptiveLoadStepping && solverFailedToConverge){
       timeSteps.insert(timeSteps.begin()+step, timePrevious+timeIncrement/2.0);
+      if(adaptiveOutputFrequency)
+        outputManager->multiplyOutputFrequency(2.0);
       step--;
     }
 
@@ -2874,9 +2881,10 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
       double userDefinedTimeStep = verletSolverParams->get<double>("Fixed dt");
       verletParams.set("Fixed dt", userDefinedTimeStep);
     }
-
-    if(verletSolverParams->isParameter("Safety Factor")){
-      double safetyFactor = verletSolverParams->get<double>("Safety Factor");
+    else{
+      double safetyFactor = 1.0;
+      if(verletSolverParams->isParameter("Safety Factor"))
+        safetyFactor = verletSolverParams->get<double>("Safety Factor");
       verletParams.set("Safety Factor", safetyFactor);
     }
 
