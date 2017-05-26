@@ -1122,6 +1122,10 @@ void PeridigmNS::OutputManager_ExodusII::writeQARecord(int exoid)
   if (retval!= 0) reportExodusError(retval, "writeQARecord", "ex_put_qa");
 }
 
+void PeridigmNS::OutputManager_ExodusII::multiplyOutputFrequency(double multiplier) {
+  frequency *= multiplier;
+}
+
 void PeridigmNS::OutputManager_ExodusII::changeOutputFrequency(int output_frequency) {
   frequency = output_frequency;
 }

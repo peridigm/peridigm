@@ -51,14 +51,16 @@
   <ParameterList name="Solver">
 	<Parameter name="Verbose" type="bool" value="false"/>
 	<Parameter name="Initial Time" type="double" value="0.0"/>
-	<Parameter name="Final Time" type="double" value="1.0e-3"/>
+	<Parameter name="Final Time" type="double" value="5.0e-3"/>
   <ParameterList name="QuasiStatic">
     <Parameter name="Number of Load Steps" type="int" value="1"/>
     <Parameter name="Absolute Tolerance" type="double" value="1.0e-3"/>
     <Parameter name="Maximum Solver Iterations" type="int" value="2"/>
     <ParameterList name="Adaptive Load-Stepping">
-      <Parameter name="Maximum load step reductions in one step" type="int" value="2"/>
+      <Parameter name="Maximum load step reductions in one step" type="int" value="1"/>
       <Parameter name="Maximum total load step reductions" type="int" value="5"/>
+      <Parameter name="Reduce all remaining load steps" type="bool" value="true"/>
+      <Parameter name="Adaptive output frequency" type="bool" value="true"/>
       <ParameterList name="Switch to Verlet">
         <Parameter name="Safety Factor" type="double" value="0.6"/>
         <!--<Parameter name="Fixed dt" type="double" value="0.00001"/>-->
