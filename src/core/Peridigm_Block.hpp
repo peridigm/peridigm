@@ -51,6 +51,7 @@
 #include "Peridigm_BlockBase.hpp"
 #include "Peridigm_Material.hpp"
 #include "Peridigm_DamageModel.hpp"
+#include "Peridigm_RKPMKernel.hpp"
 
 namespace PeridigmNS {
 
@@ -99,6 +100,16 @@ namespace PeridigmNS {
       damageModel = damageModel_;
     }
 
+    //! Get the RKPM Kernel
+    Teuchos::RCP<const PeridigmNS::RKPMKernel> getRKPMKernel(){
+      return rkpmKernel;
+    }
+
+    //! Set the RKPM Kernel
+    void setRKPMKernel(Teuchos::RCP<PeridigmNS::RKPMKernel> rkpmKernel_){
+      rkpmKernel = rkpmKernel_;
+    }
+
     //! Get the material name
     std::string getMaterialName(){
       return blockParams.get<std::string>("Material");
@@ -109,11 +120,19 @@ namespace PeridigmNS {
       return blockParams.get<std::string>("Damage Model", "None");
     }
 
+    //! Get the RKPM Kernel name
+    std::string getRKPMKernelName(){
+      return blockParams.get<std::string>("RKPM Kernel", "None");
+    }
+
     //! Initialize the material model
     void initializeMaterialModel(double timeStep = 1.0);
 
     //! Initialize the damage model
     void initializeDamageModel(double timeStep = 1.0);
+
+    //! Initialize the RKPMKernel
+    void initializeRKPMKernel(double timeStep = 1.0);
 
   protected:
 
@@ -122,6 +141,9 @@ namespace PeridigmNS {
 
     //! The damage model
     Teuchos::RCP<PeridigmNS::DamageModel> damageModel;
+
+    //! The RKPM Kernel 
+    Teuchos::RCP<PeridigmNS::RKPMKernel> rkpmKernel;
   };
 }
 

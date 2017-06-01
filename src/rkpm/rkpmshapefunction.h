@@ -1,4 +1,4 @@
-/*! \file Peridigm_ModelEvaluator.hpp */
+//! \file rkpmshapefunction.h
 
 //@HEADER
 // ************************************************************************
@@ -44,53 +44,41 @@
 //
 // ************************************************************************
 //@HEADER
+#ifndef RKPMSHAPEFUNCTION_H
+#define RKPMSHAPEFUNCTION_H
 
-#ifndef PERIDIGM_MODELEVALUATOR_HPP
-#define PERIDIGM_MODELEVALUATOR_HPP
+#include <Teuchos_SerialDenseMatrix.hpp>
+#include <cstdlib>
 
-#include "Peridigm_ContactManager.hpp"
-#include "Peridigm_Block.hpp"
+namespace RKPM_EVALUATION {
 
-namespace PeridigmNS {
+//! Computes contributions to the internal force resulting from owned points.
+void computeShapeFunction
+(
+		const double* xOverlap,
+		const double* bondDamage,
+        int myNumPoints,
+		const int*  localNeighborList,
+		double* OwnRKPMShapeFunctionValues,
+		double* BondRKPMShapeFunctionValues,
+        double RKPMSupport,
+        int RKPMBasisOrder,
+        double PHI(double)
+);
 
-  //! Structure for passing data between Peridigm and the computational routines
-  struct Workset {
-    Workset() {}
-    double timeStep;
-    Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks;
-    Teuchos::RCP< PeridigmNS::ContactManager > contactManager;
-    Teuchos::RCP<PeridigmNS::Material::JacobianType> jacobianType;
-    Teuchos::RCP< PeridigmNS::SerialMatrix > jacobian;
-  };
+//double RKPMCubicSplineKernel(double a, double distanceKernel);
 
-  //! The main ModelEvaluator class; provides the interface between the driver code and the computational routines.
-  class ModelEvaluator {
+Teuchos::SerialDenseMatrix<int, double> RKPMBasisFunction(int RKPMBasisOrder, double *xi, double *xn);
 
-  public:
-
-    //! Constructor
-    ModelEvaluator();
-
-    //! Destructor
-	virtual ~ModelEvaluator();
-
-    //! Model evaluation that acts directly on the workset
-    void evalModel(Teuchos::RCP<Workset> workset) const;
-
-    //! Application of RKPM Shape Function  that acts directly on the workset
-    void applyFinalRKPM(Teuchos::RCP<Workset> workset) const;
-
-    //! Jacobian evaluation that acts directly on the workset
-    void evalJacobian(Teuchos::RCP<Workset> workset) const;
-
-  private:
-    
-    //! Private to prohibit copying
-    ModelEvaluator(const ModelEvaluator&);
-
-    //! Private to prohibit copying
-    ModelEvaluator& operator=(const ModelEvaluator&);
-  };
+void applyShapeFunction
+(
+		const double* xOverlap,
+		double* yOverlap,
+        int myNumPoints,
+		const int*  localNeighborList,
+		const double* OwnRKPMShapeFunctionValues,
+		const double* BondRKPMShapeFunctionValues
+);
 }
 
-#endif // PERIDIGM_MODELEVALUATOR_HPP
+#endif // RKPMSHAPEFUNCTION_H

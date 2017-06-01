@@ -1,4 +1,4 @@
-/*! \file Peridigm_ModelEvaluator.hpp */
+/*! \file Peridigm_RKPMKernelFactory.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,52 +45,39 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_MODELEVALUATOR_HPP
-#define PERIDIGM_MODELEVALUATOR_HPP
+#ifndef PERIDIGM_RKPMKERNELFACTORY_HPP
+#define PERIDIGM_RKPMKERNELFACTORY_HPP
 
-#include "Peridigm_ContactManager.hpp"
-#include "Peridigm_Block.hpp"
+#include <Teuchos_ParameterList.hpp>
+#include <Teuchos_RCP.hpp>
+#include <Epetra_Comm.h>
+#include "Peridigm_RKPMKERNEL.hpp"
 
 namespace PeridigmNS {
 
-  //! Structure for passing data between Peridigm and the computational routines
-  struct Workset {
-    Workset() {}
-    double timeStep;
-    Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks;
-    Teuchos::RCP< PeridigmNS::ContactManager > contactManager;
-    Teuchos::RCP<PeridigmNS::Material::JacobianType> jacobianType;
-    Teuchos::RCP< PeridigmNS::SerialMatrix > jacobian;
-  };
-
-  //! The main ModelEvaluator class; provides the interface between the driver code and the computational routines.
-  class ModelEvaluator {
-
+  /*!
+   * \brief A factory class to instantiate RKPM Kernel objects
+   */
+  class RKPMKernelFactory {
   public:
 
-    //! Constructor
-    ModelEvaluator();
+    //! Default constructor
+    RKPMKernelFactory() {}
 
     //! Destructor
-	virtual ~ModelEvaluator();
+    virtual ~RKPMKernelFactory() {}
 
-    //! Model evaluation that acts directly on the workset
-    void evalModel(Teuchos::RCP<Workset> workset) const;
-
-    //! Application of RKPM Shape Function  that acts directly on the workset
-    void applyFinalRKPM(Teuchos::RCP<Workset> workset) const;
-
-    //! Jacobian evaluation that acts directly on the workset
-    void evalJacobian(Teuchos::RCP<Workset> workset) const;
+    virtual Teuchos::RCP<RKPMKernel> create(const Teuchos::ParameterList& rkpmKernelParams);
 
   private:
-    
-    //! Private to prohibit copying
-    ModelEvaluator(const ModelEvaluator&);
 
     //! Private to prohibit copying
-    ModelEvaluator& operator=(const ModelEvaluator&);
+    RKPMKernelFactory(const RKPMKernelFactory&);
+
+    //! Private to prohibit copying
+    RKPMKernelFactory& operator=(const RKPMKernelFactory&);
   };
+
 }
 
-#endif // PERIDIGM_MODELEVALUATOR_HPP
+#endif // PERIDIGM_RKPMKernel_HPP

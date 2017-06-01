@@ -1,4 +1,4 @@
-/*! \file Peridigm_ModelEvaluator.hpp */
+/*! \file Peridigm_RKPMKernel.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,52 +45,67 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_MODELEVALUATOR_HPP
-#define PERIDIGM_MODELEVALUATOR_HPP
+#ifndef PERIDIGM_RKPMKERNEL_HPP
+#define PERIDIGM_RKPMKERNEL_HPP
 
-#include "Peridigm_ContactManager.hpp"
-#include "Peridigm_Block.hpp"
+#include <Teuchos_RCP.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Epetra_Vector.h>
+#include <Epetra_Map.h>
+#include "Peridigm_DataManager.hpp"
 
 namespace PeridigmNS {
 
-  //! Structure for passing data between Peridigm and the computational routines
-  struct Workset {
-    Workset() {}
-    double timeStep;
-    Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks;
-    Teuchos::RCP< PeridigmNS::ContactManager > contactManager;
-    Teuchos::RCP<PeridigmNS::Material::JacobianType> jacobianType;
-    Teuchos::RCP< PeridigmNS::SerialMatrix > jacobian;
-  };
-
-  //! The main ModelEvaluator class; provides the interface between the driver code and the computational routines.
-  class ModelEvaluator {
+  //! Base class defining the Peridigm RKPM Kernel.
+  class RKPMKernel{
 
   public:
+	
+	//! Standard constructor.
+	RKPMKernel(const Teuchos::ParameterList & params){}
 
-    //! Constructor
-    ModelEvaluator();
+	//! Destructor.
+	virtual ~RKPMKernel(){}
 
-    //! Destructor
-	virtual ~ModelEvaluator();
+	//! Return name of the model.
+    virtual std::string Name() const = 0;
 
-    //! Model evaluation that acts directly on the workset
-    void evalModel(Teuchos::RCP<Workset> workset) const;
+    //! Returns a vector of field IDs corresponding to the variables associated with the model.
+    virtual std::vector<int> FieldIds() const = 0;
 
-    //! Application of RKPM Shape Function  that acts directly on the workset
-    void applyFinalRKPM(Teuchos::RCP<Workset> workset) const;
+	//! Initialize the RKPM Kernel.
+	virtual void
+	initialize(const double dt,
+               const int numOwnedPoints,
+               const int* ownedIDs,
+               const int* neighborhoodList,
+               PeridigmNS::DataManager& dataManager) const {}
 
-    //! Jacobian evaluation that acts directly on the workset
-    void evalJacobian(Teuchos::RCP<Workset> workset) const;
+	//! Evaluate the shape function
+	virtual void
+	computeRKPMShapeFunction(const double dt,
+                             const int numOwnedPoints,
+                             const int* ownedIDs,
+                             const int* neighborhoodList,
+                             PeridigmNS::DataManager& dataManager) const = 0;
+    virtual void
+	applyRKPMShapeFunction(const double dt,
+                           const int numOwnedPoints,
+                           const int* ownedIDs,
+                           const int* neighborhoodList,
+                           PeridigmNS::DataManager& dataManager) const = 0 ;
 
+    virtual void
+	updateRKPMShapeFunction(const double dt,
+                            const int numOwnedPoints,
+                            const int* ownedIDs,
+                            const int* neighborhoodList,
+                            PeridigmNS::DataManager& dataManager) const = 0;
   private:
-    
-    //! Private to prohibit copying
-    ModelEvaluator(const ModelEvaluator&);
-
-    //! Private to prohibit copying
-    ModelEvaluator& operator=(const ModelEvaluator&);
+	
+	//! Default constructor with no arguments, private to prevent use.
+	RKPMKernel(){}
   };
 }
 
-#endif // PERIDIGM_MODELEVALUATOR_HPP
+#endif // PERIDIGM_RKPMKERNEL_HPP

@@ -85,6 +85,12 @@ void PeridigmNS::Block::initialize(Teuchos::RCP<const Epetra_BlockMap> globalOwn
     fieldIds.insert(fieldIds.end(), damageModelFieldIds.begin(), damageModelFieldIds.end());
   }
 
+  // RKPM Kernel field Ids (if any)
+  if(!rkpmKernel.is_null()){
+    vector<int> rkpmKernelFieldIds = rkpmKernel->FieldIds();
+    fieldIds.insert(fieldIds.end(), rkpmKernelFieldIds.begin(), rkpmKernelFieldIds.end());
+  }
+
   BlockBase::initializeDataManager(fieldIds);
 }
 
@@ -115,6 +121,23 @@ void PeridigmNS::Block::initializeDamageModel(double timeStep)
                       "\n**** DataManager must be initialized via Block::initializeDataManager() prior to calling Block::initializeDamageModel()\n");
 
   damageModel->initialize(timeStep,
+                          neighborhoodData->NumOwnedPoints(),
+                          neighborhoodData->OwnedIDs(),
+                          neighborhoodData->NeighborhoodList(),
+                          *dataManager);
+}
+
+void PeridigmNS::Block::initializeRKPMKernel(double timeStep)
+{
+  if(rkpmKernel.is_null())
+    return;
+
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(neighborhoodData.is_null(),
+                      "\n**** Neighborhood data must be set via Block::setNeighborhoodData() prior to calling Block::initializeRKPMKernel()\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(dataManager.is_null(),
+                      "\n**** DataManager must be initialized via Block::initializeDataManager() prior to calling Block::initializeRKPMKernel()\n");
+
+  rkpmKernel->initialize(timeStep,
                           neighborhoodData->NumOwnedPoints(),
                           neighborhoodData->OwnedIDs(),
                           neighborhoodData->NeighborhoodList(),

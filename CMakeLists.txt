@@ -239,6 +239,7 @@ set(MESH_INPUT_LIBS QuickGrid)
 set(PDNEIGH_LIBS PdNeigh)
 set(UTILITIES_LIBS Utilities)
 set(PdMaterialUtilitiesLib PdMaterialUtilities)
+set(PdRKPMUtilitiesLib PdRKPMUtilities)
 
 # include for all directories
 # Collection of include and lib directories
@@ -260,6 +261,7 @@ ${CMAKE_SOURCE_DIR}/src/io/pdneigh
 ${CMAKE_SOURCE_DIR}/src/contact
 ${CMAKE_SOURCE_DIR}/src/materials
 ${CMAKE_SOURCE_DIR}/src/damage
+${CMAKE_SOURCE_DIR}/src/rkpm
 ${CMAKE_SOURCE_DIR}/src/api
 )
 
@@ -275,6 +277,7 @@ set(DISCRETIZATION_DIR   ${CMAKE_SOURCE_DIR}/src/io/discretization)
 set(IO_DIR               ${CMAKE_SOURCE_DIR}/src/io)
 set(MATERIALS_DIR        ${CMAKE_SOURCE_DIR}/src/materials)
 set(DAMAGE_DIR           ${CMAKE_SOURCE_DIR}/src/damage)
+set(RKPM_DIR             ${CMAKE_SOURCE_DIR}/src/rkpm)
 set(API_DIR              ${CMAKE_SOURCE_DIR}/src/api)
 set(MESH_OUTPUT_DIR      ${CMAKE_SOURCE_DIR}/src/io/mesh_output)
 set(QUICK_GRID_DIR       ${CMAKE_SOURCE_DIR}/src/io/mesh_input/quick_grid)
@@ -288,6 +291,7 @@ ${CONTACT_DIR}
 ${CORE_DIR}
 ${MATERIALS_DIR}
 ${DAMAGE_DIR}
+${RKPM_DIR}
 ${API_DIR}
 ${QUICK_GRID_DIR}
 ${PDNEIGH_DIR}

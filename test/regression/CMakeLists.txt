@@ -89,6 +89,16 @@ add_test (DeformationGradient_NoLoad_np4 python ./DeformationGradient/NoLoad_np4
 add_test (Interfaces_np1 python ./Interfaces/Interfaces_np1/Interfaces.py)
 add_test (Interfaces_np4 python ./Interfaces/Interfaces_np4/Interfaces.py)
 add_test (Pals_Simple_Shear_np1 python ./Pals_Simple_Shear/np1/Pals_Simple_Shear.py)
+add_test (RKPM_Implicit_np1 python ./RKPM/RKPM_Implicit_np1/RKPM_Implicit.py)
+add_test (RKPM_Implicit_np4 python ./RKPM/RKPM_Implicit_np4/RKPM_Implicit.py)
+add_test (RKPM_Explicit_np1 python ./RKPM/RKPM_Explicit_np1/RKPM_Explicit.py)
+add_test (RKPM_Explicit_np4 python ./RKPM/RKPM_Explicit_np4/RKPM_Explicit.py)
+add_test (RKPM_QS_np1 python ./RKPM/RKPM_QS_np1/RKPM_QS.py)
+add_test (RKPM_QS_np4 python ./RKPM/RKPM_QS_np4/RKPM_QS.py)
+add_test (RKPM_QS_NOX_np1 python ./RKPM/RKPM_QS_NOX_np1/RKPM_QS_NOX.py)
+add_test (RKPM_QS_NOX_np4 python ./RKPM/RKPM_QS_NOX_np4/RKPM_QS_NOX.py)
+add_test (RKPM_UserDefinedKernel_np1 python ./RKPM_UserDefinedKernel/RKPM_UserDefinedKernel_np1/RKPM_UserDefinedKernel.py)
+add_test (RKPM_UserDefinedKernel_np4 python ./RKPM_UserDefinedKernel/RKPM_UserDefinedKernel_np4/RKPM_UserDefinedKernel.py)
 
 add_custom_target( rtest
    COMMAND ctest

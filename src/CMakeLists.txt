@@ -18,6 +18,9 @@ file (GLOB discretizationHEADERS
 file (GLOB damageHEADERS 
   "${DAMAGE_DIR}/*.hpp"
 )
+file (GLOB rkpmHEADERS 
+    "${RKPM_DIR}/*.hpp"
+)
 file (GLOB apiHEADERS
   "${API_DIR}/*.hpp"
 )
@@ -47,6 +50,7 @@ set(Peridigm_HEADERS
     ${coreHEADERS}
     ${discretizationHEADERS}
     ${damageHEADERS}
+    ${rkpmHEADERS}
     ${apiHEADERS}
     ${ioHEADERS}
     ${materialsHEADERS}
@@ -72,6 +76,9 @@ file (GLOB discretizationSOURCES
 file (GLOB damageSOURCES 
   "${DAMAGE_DIR}/*.cpp"
 )
+file (GLOB rkpmSOURCES 
+  "${RKPM_DIR}/*.cpp"
+)
 file (GLOB apiSOURCES
   "${API_DIR}/*.cpp"
 )
@@ -89,6 +96,7 @@ set(Peridigm_SOURCES
     ${coreSOURCES}
     ${discretizationSOURCES}
     ${damageSOURCES}
+    ${rkpmSOURCES}
     ${apiSOURCES}
     ${ioSOURCES}
     ${materialsSOURCES}
@@ -106,6 +114,7 @@ set(Peridigm_LINK_LIBRARIES
     ${MESH_INPUT_LIBS}
     ${UTILITIES_LIBS}
     ${PdMaterialUtilitiesLib}
+    ${PdRKPMUtilitiesLib}
     ${Trilinos_LIBRARIES}
     ${REQUIRED_LIBS}
     ${Boost_LIBRARIES}
@@ -131,6 +140,7 @@ add_subdirectory (compute/)
 add_subdirectory (core/)
 add_subdirectory (io/)
 add_subdirectory (materials/)
+add_subdirectory (rkpm/)
 
 IF (INSTALL_PERIDIGM)
   configure_package_config_file(PeridigmConfig.cmake.in

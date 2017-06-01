@@ -81,6 +81,7 @@
 #include "Peridigm_Memstat.hpp"
 #include "Peridigm_Material.hpp"
 #include "Peridigm_DamageModel.hpp"
+#include "Peridigm_RKPMKernel.hpp"
 #include "Peridigm_ContactModel.hpp"
 
 namespace PeridigmNS {
@@ -90,6 +91,8 @@ namespace PeridigmNS {
   class ShortRangeForceContactModel;
   
   class UserDefinedTimeDependentShortRangeForceContactModel;
+
+  class UserDefinedRKPMKernel;
 
   class Peridigm : public NOX::Epetra::Interface::Required, public NOX::Epetra::Interface::Jacobian, public NOX::Epetra::Interface::Preconditioner {
 
@@ -416,6 +419,10 @@ namespace PeridigmNS {
     std::map< std::string, Teuchos::RCP<const PeridigmNS::DamageModel> > damageModels;
 
     Teuchos::RCP< PeridigmNS::UserDefinedTimeDependentCriticalStretchDamageModel > CSDamageModel;
+
+    //! RKPM Kernel
+    Teuchos::RCP< PeridigmNS::RKPMKernel > rkpmModel;
+    Teuchos::RCP< PeridigmNS::UserDefinedRKPMKernel > UDFKernel;
 
     Teuchos::RCP<const PeridigmNS::ContactModel> contactModel;
     Teuchos::RCP<PeridigmNS::ContactModel> New_contactModel;

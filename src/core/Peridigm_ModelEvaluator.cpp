@@ -80,6 +80,46 @@ PeridigmNS::ModelEvaluator::evalModel(Teuchos::RCP<Workset> workset) const
     }
   }
 
+  // ---- Apply  RKPM Shape Function ----
+
+  for(blockIt = workset->blocks->begin() ; blockIt != workset->blocks->end() ; blockIt++){
+
+    Teuchos::RCP<const PeridigmNS::RKPMKernel> rkpmKernel = blockIt->getRKPMKernel();
+    Teuchos::RCP<const PeridigmNS::DamageModel> damageModel = blockIt->getDamageModel();
+    if(!rkpmKernel.is_null()){
+      Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
+      const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
+      const int* ownedIDs = neighborhoodData->OwnedIDs();
+      const int* neighborhoodList = neighborhoodData->NeighborhoodList();
+      Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
+      //  ---- Check if there is bond damage model then update RKPM
+      //  ShapeFunction ----
+      if(!damageModel.is_null())
+      {
+        rkpmKernel->computeRKPMShapeFunction(dt, 
+                                             numOwnedPoints,
+                                             ownedIDs,
+                                             neighborhoodList,
+                                             *dataManager);
+      }
+      else
+      {
+        rkpmKernel->updateRKPMShapeFunction(dt, 
+                                            numOwnedPoints,
+                                            ownedIDs,
+                                            neighborhoodList,
+                                            *dataManager);
+      }
+
+      rkpmKernel->applyRKPMShapeFunction(dt, 
+                                         numOwnedPoints,
+                                         ownedIDs,
+                                         neighborhoodList,
+                                         *dataManager);
+
+    }
+  }
+
   // ---- Evaluate Internal Force ----
 
   for(blockIt = workset->blocks->begin() ; blockIt != workset->blocks->end() ; blockIt++){
@@ -101,6 +141,38 @@ PeridigmNS::ModelEvaluator::evalModel(Teuchos::RCP<Workset> workset) const
   // ---- Evaluate Contact ----
   if(!workset->contactManager.is_null())
     workset->contactManager->evaluateContactForce(dt);
+}
+
+// ---- Apply Final RKPM Shape Function Before Output---
+void
+PeridigmNS::ModelEvaluator::applyFinalRKPM(Teuchos::RCP<Workset> workset) const
+{
+  const double dt = workset->timeStep;
+  std::vector<PeridigmNS::Block>::iterator blockIt;
+
+  for(blockIt = workset->blocks->begin() ; blockIt != workset->blocks->end() ; blockIt++){
+
+    Teuchos::RCP<const PeridigmNS::RKPMKernel> rkpmKernel = blockIt->getRKPMKernel();
+    Teuchos::RCP<const PeridigmNS::DamageModel> damageModel = blockIt->getDamageModel();
+    if(!rkpmKernel.is_null()){
+      Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
+      const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
+      const int* ownedIDs = neighborhoodData->OwnedIDs();
+      const int* neighborhoodList = neighborhoodData->NeighborhoodList();
+      Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
+      //rkpmKernel->computeRKPMShapeFunction(dt, 
+      //                                     numOwnedPoints,
+      //                                     ownedIDs,
+      //                                     neighborhoodList,
+      //                                     *dataManager);
+      rkpmKernel->applyRKPMShapeFunction(dt, 
+                                         numOwnedPoints,
+                                         ownedIDs,
+                                         neighborhoodList,
+                                         *dataManager);
+
+    }
+  }
 }
 
 void 

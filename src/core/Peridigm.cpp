@@ -73,6 +73,10 @@
 #include "Peridigm_DamageModelFactory.hpp"
 #include "Peridigm_InterfaceAwareDamageModel.hpp"
 #include "Peridigm_UserDefinedTimeDependentCriticalStretchDamageModel.hpp"
+#include "Peridigm_RKPMKernelFactory.hpp"
+#include "Peridigm_RKPMCubicSplineKernel.hpp"
+#include "Peridigm_RKPMGaussianKernel.hpp"
+#include "Peridigm_UserDefinedRKPMKernel.hpp"
 #include "Peridigm_ShortRangeForceContactModel.hpp"
 #include "Peridigm_UserDefinedTimeDependentShortRangeForceContactModel.hpp"
 #include "Peridigm.hpp"
@@ -356,6 +360,12 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
     damageModelParams = peridigmParams->sublist("Damage Models");
   DamageModelFactory damageModelFactory;
 
+  // RKPM Kernels
+  Teuchos::ParameterList rkpmKernelParams;
+  if(peridigmParams->isSublist("RKPM Kernels"))
+    rkpmKernelParams = peridigmParams->sublist("RKPM Kernels");
+  RKPMKernelFactory rkpmKernelFactory;
+
   // Associate material models and damage models with blocks
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
 
@@ -417,6 +427,22 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
       else if(damageModel->Name() =="Time Dependent Critical Stretch"){
         CSDamageModel = Teuchos::rcp_dynamic_cast< PeridigmNS::UserDefinedTimeDependentCriticalStretchDamageModel >(damageModel);
         CSDamageModel->evaluateParserDmg(currentValue, previousValue, timeCurrent, timePrevious); 
+      }
+    }
+
+    // Set the RKPM Kernel (if any)
+    string rkpmKernelName = blockIt->getRKPMKernelName();
+    if(rkpmKernelName != "None"){
+      Teuchos::ParameterList kernelParams = rkpmKernelParams.sublist(rkpmKernelName, true);
+      Teuchos::RCP<PeridigmNS::RKPMKernel> rkpmKernel = rkpmKernelFactory.create(kernelParams);
+      blockIt->setRKPMKernel(rkpmKernel);
+      if(rkpmKernel->Name() =="Gaussian"){
+        Teuchos::RCP< PeridigmNS::RKPMGaussianKernel > GaussianKernel = Teuchos::rcp_dynamic_cast< PeridigmNS::RKPMGaussianKernel >(rkpmKernel);
+      }
+      else if(rkpmKernel->Name() =="User Defined")
+      {
+        UDFKernel = Teuchos::rcp_dynamic_cast< PeridigmNS::UserDefinedRKPMKernel >(rkpmKernel);
+        UDFKernel->evaluateParserKernel(); 
       }
     }
   }
@@ -654,11 +680,12 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
   boundaryAndInitialConditionManager->applyInitialConditions();
   PeridigmNS::Timer::self().stopTimer("Apply Initial Conditions");
 
-  // Initialize material models and damage models
+  // Initialize material models ,damage models and RKPM Kernels.
   // Initialization functions require valid initial values, e.g. velocities and displacements.
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++) {
     blockIt->initializeMaterialModel();
     blockIt->initializeDamageModel();
+    blockIt->initializeRKPMKernel();
   }
 
   // Initialize the compute classes
@@ -1483,6 +1510,9 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     // V^{n+1}   = V^{n+1/2} + (dt/2)*A^{n+1}
     //blas.AXPY(const int N, const double ALPHA, const double *X, double *Y, const int INCX=1, const int INCY=1) const
     blas.AXPY(length, dt2, aPtr, vPtr, 1, 1);
+
+    // Apply RKPM before output 
+    modelEvaluator->applyFinalRKPM(workset);
 
     PeridigmNS::Timer::self().startTimer("Output");
     synchDataManagers();
@@ -2338,6 +2368,9 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
             (*u)[i] += finalSolution[i];
     }
 
+    // Apply RKPM before output 
+    modelEvaluator->applyFinalRKPM(workset);
+
     // Write output for completed load step
     PeridigmNS::Timer::self().startTimer("Output");
     synchDataManagers();
@@ -2851,6 +2884,9 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
           (*predictor)[i] = (*v)[i];
         }
       }
+
+      // Apply RKPM before output 
+      modelEvaluator->applyFinalRKPM(workset);
 
       // Write output for completed load step
       PeridigmNS::Timer::self().startTimer("Output");
@@ -3651,6 +3687,9 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
       cout << "  iteration " << NLSolverIteration << ": residual = " << residualNorm << "\n" << endl;
 
     timeCurrent = timeInitial + (step+1)*dt;
+
+    // Apply RKPM before output 
+    modelEvaluator->applyFinalRKPM(workset);
 
     // Write output for completed time step
     PeridigmNS::Timer::self().startTimer("Output");
