@@ -51,7 +51,11 @@
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_RCP.hpp>
 #include <Epetra_Comm.h>
+<<<<<<< HEAD
 #include "Peridigm_RKPMKERNEL.hpp"
+=======
+#include "Peridigm_RKPMKernel.hpp"
+>>>>>>> PD-RKPM
 
 namespace PeridigmNS {
 

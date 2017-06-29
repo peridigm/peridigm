@@ -50,7 +50,11 @@
 
 #include "Peridigm_RKPMKernel.hpp"
 #include <Teuchos_RCP.hpp>
+<<<<<<< HEAD
 #include <Teuchos_assert.hpp>
+=======
+//#include <Teuchos_assert.hpp>
+>>>>>>> PD-RKPM
 #include <Teuchos_ParameterList.hpp>
 #include <Epetra_Vector.h>
 #include <Epetra_Map.h>
