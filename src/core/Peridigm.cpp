@@ -510,8 +510,9 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
 
     // Grab parameters from discretization section of input deck
     PartialVolumeScheme partialVolumeScheme = PV;
+    string partialVolumeSchemeString = "PV (default)";
     if(discParams->isParameter("Element-Horizon Intersection Partial Volume Scheme")){
-      string partialVolumeSchemeString = discParams->get<string>("Element-Horizon Intersection Partial Volume Scheme");
+      partialVolumeSchemeString = discParams->get<string>("Element-Horizon Intersection Partial Volume Scheme");
       if(partialVolumeSchemeString == "FV")
         partialVolumeScheme = FV;
       else if(partialVolumeSchemeString == "PDLAMMPS")
@@ -538,7 +539,7 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
 
     PeridigmNS::Timer::self().startTimer("Element-Horizon Intersections");
     if(peridigmComm->MyPID() == 0){
-      cout << "Computing element-horizon intersections...";
+      cout << "Computing element-horizon intersections, scheme = " << partialVolumeSchemeString << endl;
       cout.flush();
     }
     computePartialVolume(blocks,
