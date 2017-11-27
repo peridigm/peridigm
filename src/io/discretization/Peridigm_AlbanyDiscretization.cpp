@@ -60,6 +60,7 @@
 
 #include <sstream>
 #include <fstream>
+#include <set>
 
 #include <boost/algorithm/string/trim.hpp>
 

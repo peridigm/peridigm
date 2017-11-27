@@ -47,6 +47,7 @@
 
 #include "Peridigm_Compute_Bond_Visualization.hpp"
 #include <sstream>
+#include <fstream>
 
 using namespace std;
 

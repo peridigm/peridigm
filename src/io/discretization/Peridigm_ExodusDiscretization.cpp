@@ -59,6 +59,7 @@
 #include <Teuchos_RCP.hpp>
 #include <Ionit_Initializer.h>
 #include <sstream>
+#include <set>
 #include <boost/math/constants/constants.hpp>
 #include <boost/algorithm/string.hpp>
 #include <exodusII.h>

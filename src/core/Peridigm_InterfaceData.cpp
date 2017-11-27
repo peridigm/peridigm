@@ -48,6 +48,7 @@
 #include <Peridigm_InterfaceData.hpp>
 #include <exodusII.h>
 #include <Epetra_Import.h>
+#include <set>
 
 void
 PeridigmNS::InterfaceData::Initialize(std::vector<int> leftElements, std::vector<int> rightElements, std::vector<int> numNodesPerElem,

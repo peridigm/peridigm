@@ -47,6 +47,7 @@
 
 #include "Peridigm_Discretization.hpp"
 #include <sstream>
+#include <set>
 
 using std::set;
 using std::string;
