@@ -81,7 +81,7 @@ static double parabolicDecay(double zeta, double horizon){
 
 static double gaussian(double zeta, double horizon)
 {
-  double h2=horizon*horizon;
+  double h2=horizon*horizon*0.4*0.4;
   double xi2=zeta*zeta;
   return exp(-xi2/h2);
 }
