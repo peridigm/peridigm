@@ -204,7 +204,7 @@ PeridigmNS::AlbanyDiscretization::AlbanyDiscretization(const MPI_Comm& mpiComm,
       double x = (*macroX)[i*3];
       double y = (*macroX)[i*3 + 1];
       double z = (*macroX)[i*3 + 2];
-      double horizon = horizonManager.evaluateHorizon(blockName.str(), x, y, z);
+      horizonValue = horizonManager.evaluateHorizon(blockName.str(), x, y, z);
     }
     (*macroHorizonForEachPoint)[i] = horizonValue;
   }
