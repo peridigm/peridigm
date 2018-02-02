@@ -1,5 +1,55 @@
 #!/usr/bin/env python
 
+"""
+text_to_genesis.py:  Converts a meshfree discretization from the Peridigm text file format to the genesis/exodus file format."
+"""
+
+__author__ = "David Littlewood (djlittl@sandia.gov)"
+
+# ************************************************************************
+#
+#
+#                             Peridigm
+#                 Copyright (2011) Sandia Corporation
+#
+# Under the terms of Contract DE-AC04-94AL85000 with Sandia Corporation,
+# the U.S. Government retains certain rights in this software.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright
+# notice, this list of conditions and the following disclaimer in the
+# documentation and/or other materials provided with the distribution.
+#
+# 3. Neither the name of the Corporation nor the names of the
+# contributors may be used to endorse or promote products derived from
+# this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY SANDIA CORPORATION "AS IS" AND ANY
+# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL SANDIA CORPORATION OR THE
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+# Questions?
+# David J. Littlewood   djlittl@sandia.gov
+# John A. Mitchell      jamitch@sandia.gov
+# Michael L. Parks      mlparks@sandia.gov
+# Stewart A. Silling    sasilli@sandia.gov
+#
+# ************************************************************************
+
 import sys
 import string
 import os
@@ -11,12 +61,12 @@ path_to_exodus_py = 'trilinos_install_path/lib'
 # the Trilinos install.  One solution is to create symbolic links in this directory that point to the
 # netcdf libraries (which you built as a TPL for Trilinos)
 
-sys.path.append(path_to_exodus_py)
+sys.path.append("/Users/djlittl/Software/seacas/GCC_4.9.4_THREAD_SAFE/lib")
 import exodus
 
 def read_line(file):
     """Scans the input file and ignores lines starting with a '#' or '\n'."""
-    
+
     buff = file.readline()
     if len(buff) == 0: return None
     while buff[0] == '#' or buff[0] == '\n':
@@ -46,7 +96,7 @@ if __name__ == "__main__":
     for i in range(len(nodeSetFileNames)):
         print " ", nodeSetFileNames[i]
     print
-    
+
     textFile = open(textFileName)
 
     # The text file contains (x, y, z, block_id, vol)
@@ -71,7 +121,7 @@ if __name__ == "__main__":
         blocks[block_id].append(nodeId)
         buff = read_line(textFile)
     textFile.close()
-        
+
     print "Read", len(X), "nodes and", len(blocks), "block from", textFileName
 
     nodeSets = []
@@ -145,7 +195,7 @@ if __name__ == "__main__":
     # 1) The so-called SPH radius, which is NOT the actual radius of the sphere and is NOT used by Peridigm
     # 2) The element volume
     for blockId in exodusBlockIds:
-        
+
         numberOfPoints = len(blocks[blockId])
         exodusElementConnectivity = blocks[blockId]
 
@@ -164,7 +214,7 @@ if __name__ == "__main__":
 
         # Write element attributes
         exodusFile.put_elem_attr(blockId, exodusElementAttributes)
-        
+
     # Write the node sets
     #   node_set_params (id, numSetNodes, numSetDistFacts)
     #   node_set_nodes
