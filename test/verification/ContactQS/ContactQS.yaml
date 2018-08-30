@@ -1,0 +1,86 @@
+Peridigm:
+  Blocks:
+    NoDamage:   
+      Block Names: block_1
+      Horizon: 1.42
+      Material: Rail Steel
+  Boundary Conditions:
+    Node Set Support: 1 2 3 4
+    Node Set Load: 5 6 7 8
+    Support X:
+      Type: Prescribed Displacement
+      Node Set: Node Set Support
+      Coordinate: x
+      Value: "0.0"    
+    Support Y:
+      Type: Prescribed Displacement
+      Node Set: Node Set Support
+      Coordinate: y
+      Value: "0.0"   
+    Support Z:
+      Type: Prescribed Displacement
+      Node Set: Node Set Support
+      Coordinate: z
+      Value: "0.0"
+    Displacement Y:
+      Type: Prescribed Displacement
+      Node Set: Node Set Load
+      Coordinate: y
+      Value: "1-t/10.0" 
+  Discretization:
+    Type: "Text File"
+    Input Mesh File: "../mesh.csv"
+    ## Crack plane is created from Lower_Left_Corner towards the origin
+    Bond Filters:
+      Crack:
+        Bottom_Length: 5.0
+        Bottom_Unit_Vector_X: 0.0
+        Bottom_Unit_Vector_Y: 0.0
+        Bottom_Unit_Vector_Z: 1.0
+        Lower_Left_Corner_X: 2.0
+        Lower_Left_Corner_Y: 0.5
+        Lower_Left_Corner_Z: -1.0
+        Normal_X: 0.0
+        Normal_Y: 1.0
+        Normal_Z: 0.0
+        Side_Length: 5.0
+        Type: Rectangular_Plane
+  Contact:
+    Search Radius: 1.0
+    Search Frequency: 1
+    Verbose: true
+    Models:
+      Rail Steel Contact:
+        Contact Model: Short Range Force
+        Contact Radius: 2.0
+        Spring Constant: 1e2
+    Interactions:
+      Self Contact:
+        Contact Model: Rail Steel Contact
+  Materials:
+    Rail Steel:
+      Density: 7850.0         ## kg/m3
+      Hourglass Coefficient: 0.02
+      Material Model: Elastic
+      Poisson's Ratio: 0.3
+      Young's Modulus: 188.9e9  ## Pa
+  Solver1:
+    Verbose: false
+    Initial Time: 0.0
+    Final Time: 2.0
+    QuasiStatic:
+      Belos Linear Solver: BlockCG
+      Number of Load Steps: 2
+      Absolute Tolerance: 1e-1
+      Maximum Solver Iterations: 100
+  Output:
+    Output Filename: ContactQS
+    Output Frequency: 1
+    Output Variables:
+      Model_Coordinates: true
+      Displacement: true
+      Number_Of_Neighbors: true
+      Force: true
+      Force_Density: true
+      Contact_Force_Density: true
+      
