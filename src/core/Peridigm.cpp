@@ -2531,6 +2531,9 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
   Epetra_Time loadStepCPUTime(*peridigmComm);
   double cumulativeLoadStepCPUTime = 0.0;
 
+  double currentValue = 0.0;
+  double previousValue = 0.0;  
+
   for(int step=1 ; step<(int)timeSteps.size() ; step++){
 
     if(!adaptiveLoadStepping || !solverFailedToConverge){
