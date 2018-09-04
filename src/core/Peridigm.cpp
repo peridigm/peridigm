@@ -918,6 +918,7 @@ void PeridigmNS::Peridigm::InitializeRestart() {
 	std::string str;
 	struct stat sb;
 	char const * restart_directory_namePtr;
+  currentTime = 0; // Initialize
 	if (stat("restart-000001", &sb) == 0 && S_ISDIR(sb.st_mode)){
 	    str=getCmdOutput("ls -td -- ./restart*/ | head -n1 | cut -d'/' -f2");
 	    if (str != ""){
@@ -2423,6 +2424,16 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
 	  fluidPressureV->PutScalar(0.0);
   }
 
+  // Initialize contact
+  PeridigmNS::Timer::self().startTimer("Gather/Scatter");
+  if( analysisHasContact ) {
+    if ( analysisHasMultiphysics )
+      contactManager->importData(volume, combinedY, combinedV);
+    else
+      contactManager->importData(volume, y, v);
+  }
+  PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+
   // Data for Belos linear solver object
   Belos::LinearProblem<double,Epetra_MultiVector,Epetra_Operator> linearProblem;
   string linearSolver =  quasiStaticParams->get("Belos Linear Solver", "BlockCG");
@@ -2521,6 +2532,9 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
   Epetra_Time loadStepCPUTime(*peridigmComm);
   double cumulativeLoadStepCPUTime = 0.0;
 
+  double currentValue = 0.0;
+  double previousValue = 0.0;  
+
   for(int step=1 ; step<(int)timeSteps.size() ; step++){
 
     if(!adaptiveLoadStepping || !solverFailedToConverge){
@@ -2532,6 +2546,13 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
     timeCurrent = timeSteps[step];
     double timeIncrement = timeCurrent - timePrevious;
     workset->timeStep = timeIncrement;
+
+    // Rebalance
+    //  \todo Should we rebalance? In QS nodes shouldn't move too far from their initial position.
+    PeridigmNS::Timer::self().startTimer("Rebalance");
+    if( analysisHasContact )
+      contactManager->rebalance(step);
+    PeridigmNS::Timer::self().stopTimer("Rebalance");
 
     deltaU->PutScalar(0.0);
 		if(analysisHasMultiphysics){
@@ -2578,6 +2599,21 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
                   combinedVPtr[i+3] = fluidPressureVPtr[i/(3+numMultiphysDoFs)];
       }
     }
+
+    // Update contact model with new positions and times.
+    PeridigmNS::Timer::self().startTimer("Gather/Scatter");
+    if( analysisHasContact ) {
+      if(contactModel->Name() == "Time-Dependent Short-Range Force"){
+        for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++) {
+          New_contactModel->evaluateParserFriction(currentValue, previousValue, timeCurrent, timePrevious);
+        }
+      }
+      if ( analysisHasMultiphysics )
+        contactManager->importData(volume, combinedY, combinedV);
+      else
+        contactManager->importData(volume, y, v);
+    }
+    PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
     // compute the residual
     double residualNorm = computeQuasiStaticResidual(residual);
@@ -3869,6 +3905,13 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
 			blockIt->exportData(*scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
 			blockIt->exportData(*scratchOneD, fluidFlowDensityFieldId, PeridigmField::STEP_NP1, Add);
 			force->Update(1.0, *scratch, 1.0);
+			if( analysisHasContact ) {
+				contactManager->exportData(contactForce);
+				// Check for NaNs in contact force
+				for (int i=0; i<contactForce->MyLength(); ++i)
+					TEUCHOS_TEST_FOR_EXCEPT_MSG( !boost::math::isfinite( (*contactForce)[i] ), "**** NaN returned by contact force evaluation.\n" );
+				force->Update(1.0, *contactForce, 1.0);
+			}
 			fluidFlow->Update(1.0, *scratchOneD, 1.0);
 		}
 
@@ -3885,6 +3928,13 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
 			scratch->PutScalar(0.0);
 			blockIt->exportData(*scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
 			force->Update(1.0, *scratch, 1.0);
+			if( analysisHasContact ) {
+				contactManager->exportData(contactForce);
+				// Check for NaNs in contact force
+				for (int i=0; i<contactForce->MyLength(); ++i)
+					TEUCHOS_TEST_FOR_EXCEPT_MSG( !boost::math::isfinite( (*contactForce)[i] ), "**** NaN returned by contact force evaluation.\n" );
+				force->Update(1.0, *contactForce, 1.0);
+			}
 		}
 	}
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");

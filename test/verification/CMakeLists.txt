@@ -59,6 +59,8 @@ add_test (ThermalExpansionCube_np1 python ./ThermalExpansionCube/np1/ThermalExpa
 add_test (ThermalExpansionCube_np4 python ./ThermalExpansionCube/np4/ThermalExpansionCube.py)
 add_test (ThermalExpansionBondFailure_np1 python ./ThermalExpansionBondFailure/np1/ThermalExpansionBondFailure.py)
 add_test (ThermalExpansionBondFailure_np4 python ./ThermalExpansionBondFailure/np4/ThermalExpansionBondFailure.py)
+add_test (ContactQS_np1 python ./ContactQS/np1/ContactQS.py)
+add_test (ContactQS_np2 python ./ContactQS/np2/ContactQS.py)
 #####add_test (ep_cube_np1 python ./ep_cube/np1/ep_cube_np1.py)
 #####add_test (ep_cube_np2 python ./ep_cube/np2/ep_cube_np2.py)
 
