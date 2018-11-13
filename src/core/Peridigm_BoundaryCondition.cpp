@@ -48,6 +48,7 @@
 #include "Peridigm_BoundaryCondition.hpp"
 #include "Peridigm.hpp"
 #include <boost/math/special_functions/fpclassify.hpp>
+#include <sstream>
 
 
 using namespace std;
@@ -60,12 +61,18 @@ PeridigmNS::BoundaryCondition::BoundaryCondition(const string & name_,const Teuc
   tensorOrder(SCALAR),
   isCumulative(isCumulative_)
 {
-  bcType = to_boundary_condition_type(bcParams_);
-  string nodeSet = bcParams_.get<string>("Node Set");
+  Teuchos::ParameterList bcParams(bcParams_);
+  bcType = to_boundary_condition_type(bcParams);
+  string nodeSet = bcParams.get<string>("Node Set");
   tidy_string(nodeSet);
   nodeSetName = nodeSet;
-  coord = to_index(to_spatial_coordinate(bcParams_));
-  function = bcParams_.get<string>("Value");
+  coord = to_index(to_spatial_coordinate(bcParams));
+  if(bcParams.isType<double>("Value")){
+    std::stringstream ss;
+    ss << bcParams.get<double>("Value");
+    bcParams.set("Value", ss.str());
+  }
+  function = bcParams.get<string>("Value");
 
   // set up RTCompiler
   rtcFunction = Teuchos::rcp<PG_RuntimeCompiler::Function>(new PG_RuntimeCompiler::Function(5, "rtcBoundaryConditionFunction"));
