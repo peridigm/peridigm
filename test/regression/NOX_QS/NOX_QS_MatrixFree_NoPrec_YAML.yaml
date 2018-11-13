@@ -84,9 +84,9 @@ Peridigm:
        Output Filename: "NOX_QS_MatrixFree_NoPrec_YAML"
        Output Frequency: 1
        Output Variables:
-           Displacement: "true"
-           Velocity: "true"
-           Force: "true"
-           Volume: "true"
-           Radius: "true"
-           Nonlinear_Solver_Iterations: "true"
+           Displacement: true
+           Velocity: true
+           Force: true
+           Volume: true
+           Radius: true
+           Nonlinear_Solver_Iterations: true
