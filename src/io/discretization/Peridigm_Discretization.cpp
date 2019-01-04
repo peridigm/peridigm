@@ -169,7 +169,19 @@ void PeridigmNS::Discretization::createBondFilters(const Teuchos::RCP<Teuchos::P
         sideLength = params.get<double>("Side_Length");
         PdBondFilter::FinitePlane finitePlane(normal, lowerLeftCorner, bottomUnitVector, bottomLength, sideLength);
         std::tr1::shared_ptr<PdBondFilter::BondFilter> bondFilter(new PdBondFilter::FinitePlaneFilter(finitePlane));
-        bondFilters.push_back(bondFilter);        
+        bondFilters.push_back(bondFilter);
+      }
+      else if(type == "Disk"){
+        double center[3], normal[3], radius;
+        center[0] = params.get<double>("Center_X");
+        center[1] = params.get<double>("Center_Y");
+        center[2] = params.get<double>("Center_Z");
+        normal[0] = params.get<double>("Normal_X");
+        normal[1] = params.get<double>("Normal_Y");
+        normal[2] = params.get<double>("Normal_Z");
+        radius = params.get<double>("Radius");
+        std::tr1::shared_ptr<PdBondFilter::BondFilter> bondFilter(new PdBondFilter::DiskFilter(center, normal, radius));
+        bondFilters.push_back(bondFilter);
       }
       else{
         string msg = "\n**** Error, invalid bond filter type:  " + type;

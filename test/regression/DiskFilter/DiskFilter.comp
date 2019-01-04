@@ -1,0 +1,44 @@
+
+#  *****************************************************************
+#             EXODIFF	(Version: 2.92) Modified: 2018-06-27
+#             Authors:  Richard Drake, rrdrake@sandia.gov           
+#                       Greg Sjaardema, gdsjaar@sandia.gov          
+#             Run on    2019/01/04   10:46:19 MST
+#  *****************************************************************
+
+#  FILE 1: /home/djlittl/Bart/Peridigm/test/regression/DiskFilter/DiskFilter.gold.e
+#   Title: Peridigm
+#          Dim = 3, Blocks = 1, Nodes = 2048, Elements = 2048, Nodesets = 4, Sidesets = 0
+#          Vars: Global = 0, Nodal = 6, Element = 1, Nodeset = 0, Sideset = 0, Times = 2
+
+
+# ==============================================================
+#  NOTE: All node and element ids are reported as global ids.
+
+# NOTES:  - The min/max values are reporting the min/max in absolute value.
+#         - Time values (t) are 1-offset time step numbers.
+#         - Element block numbers are the block ids.
+#         - Node(n) and element(e) numbers are 1-offset.
+
+COORDINATES absolute 1.e-6    # min separation not calculated
+
+TIME STEPS relative 1.e-6 floor 0.0     # min:               0 @ t1 max:               1 @ t2
+
+
+# No GLOBAL VARIABLES
+
+NODAL VARIABLES relative 1.e-6 floor 0.0
+	DisplacementX  absolute 1.0E-12
+	DisplacementY  absolute 1.0E-12
+	DisplacementZ  absolute 1.0E-12
+	ForceX         absolute 1.0
+	ForceY         absolute 1.0
+	ForceZ         absolute 1.0
+
+ELEMENT VARIABLES relative 1.e-6 floor 0.0
+	Number_Of_Neighbors  absolute 1.0E-12
+
+# No NODESET VARIABLES
+
+# No SIDESET VARIABLES
+

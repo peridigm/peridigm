@@ -1,0 +1,13 @@
+
+reset
+create brick x 8.0 y 4.0 z 8.0
+webcut volume 1 with plane yplane offset -1.0 noimprint nomerge
+webcut volume 2 with plane yplane offset  1.0 noimprint nomerge
+volume all size 0.5
+mesh volume all
+block 1 volume 1 2 3
+nodeset 1 volume 1 # bottom region
+nodeset 2 volume 3 # top region
+nodeset 3 curve  6 # along x axis
+nodeset 4 curve  9 # along z axis
+export genesis 'DiskFilter.g' overwrite

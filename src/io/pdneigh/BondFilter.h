@@ -55,8 +55,6 @@
 
 namespace PdBondFilter {
 
-
-
 class FinitePlane {
 public:
 	/**
@@ -93,7 +91,6 @@ private:
 	double a, b;
 };
 
-
 class BondFilter {
 public:
 	BondFilter(bool withSelf=false) : includeSelf(withSelf) {}
@@ -104,10 +101,8 @@ public:
 	 * bonds are included by default, ie flag=0; if a point is excluded then flag =1 is set
 	 */
 	virtual void filterBonds(std::vector<int>& treeList, const double *pt, const std::size_t ptLocalId, const double *xOverlap, bool* bondFlags) = 0;
-	virtual std::tr1::shared_ptr<BondFilter> clone(bool withSelf) = 0;
 protected:
 	bool includeSelf;
-
 };
 
 class BondFilterDefault : public BondFilter {
@@ -115,9 +110,7 @@ public:
 	BondFilterDefault(bool withSelf=false) : BondFilter(withSelf) {}
 	virtual ~BondFilterDefault() {}
 	virtual void filterBonds(std::vector<int>& treeList, const double *pt, const std::size_t ptLocalId, const double *xOverlap, bool* markForExclusion);
-	virtual std::tr1::shared_ptr<BondFilter> clone(bool withSelf=true);
 };
-
 
 /**
  * Filter removes bonds from Neighborhood that intersect with "FinitePlane";
@@ -125,16 +118,33 @@ public:
  */
 class FinitePlaneFilter: public BondFilter {
 public:
-	FinitePlaneFilter(const FinitePlane& plane) :                   BondFilter(false), tolerance(1.0e-15),   plane(plane) {}
+	FinitePlaneFilter(const FinitePlane& plane) : BondFilter(false), tolerance(1.0e-15),   plane(plane) {}
 	FinitePlaneFilter(const FinitePlane& plane, bool withSelf) : BondFilter(withSelf), tolerance(1.0e-15),   plane(plane) {}
-	FinitePlaneFilter(const FinitePlane& plane, double tolerance) : BondFilter(false), tolerance(tolerance), plane(plane) {}
-	FinitePlaneFilter(const FinitePlane& plane, bool withSelf, double tolerance) : BondFilter(withSelf), tolerance(tolerance), plane(plane) {}
 	virtual ~FinitePlaneFilter() {}
 	virtual void filterBonds(std::vector<int>& treeList, const double *pt, const std::size_t ptLocalId, const double *xOverlap, bool* markForExclusion);
-	virtual std::tr1::shared_ptr<BondFilter> clone(bool withSelf=true);
 private:
-	double tolerance;
+  double tolerance;
 	FinitePlane plane;
+};
+
+class DiskFilter: public BondFilter {
+public:
+  DiskFilter(double *c, double* n, double r) : BondFilter(false), tolerance(1.0e-15), radius(r) {
+    center[0] = c[0];
+    center[1] = c[1];
+    center[2] = c[2];
+    normal[0] = n[0];
+    normal[1] = n[1];
+    normal[2] = n[2];
+  }
+	virtual ~DiskFilter() {}
+	virtual void filterBonds(std::vector<int>& treeList, const double *pt, const std::size_t ptLocalId, const double *xOverlap, bool* markForExclusion);
+private:
+  bool bondIntersectsDisk(const double* p0, const double* p1) const;
+  double tolerance;
+  double center[3];
+  double normal[3];
+  double radius;
 };
 
 }
