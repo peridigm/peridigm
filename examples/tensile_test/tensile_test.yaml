@@ -1,0 +1,154 @@
+Peridigm:
+
+#     Description
+#       Simulation of an elastic tensile bar subjected to 0.5% strain.
+#       Engineering strain is estimated by tracking the elongation of a
+#       segment of the bar using the Nearest_Point_Data compute class.
+#       Engineering stress is estimated by tracking the reaction forces
+#       in the end segments of the bar using the Block_Data compute class.
+#       Using the data computed by the compute classes, engineering strain
+#       can be determined as the change in length divided by the initial
+#       length, and engineering stress as the force in an end segment
+#       divided by the initial cross-sectional area.
+#
+#     Units are CGS
+#       mass          g
+#       length        cm
+#       time          s
+#       density       g/cm^3
+#       force         dyne
+#       pressure      dyne/cm^2
+#       velocity      cm/s
+#       acceleration  cm/s^2
+#       energy        erg
+
+  Verbose: false
+  Discretization:
+      Type: "Exodus"
+      Input Mesh File: "tensile_test.g"
+
+  Materials:
+      My Material:
+        Material Model: "Elastic Correspondence"
+        Density: 8.0
+        Bulk Modulus: 1.500e12
+        Shear Modulus: 6.923e11
+        Hourglass Coefficient: 0.02
+
+  Blocks:
+      My Block:
+        Block Names: "block_1 block_2 block_3"
+        Material: "My Material"
+        Horizon: 0.16
+
+  Boundary Conditions:
+      Prescribed Displacement Bottom:
+        Type: "Prescribed Displacement"
+        Node Set: "nodelist_1"
+        Coordinate: "y"
+        Value: "y*0.005*t"
+      Prescribed Displacement Top:
+        Type: "Prescribed Displacement"
+        Node Set: "nodelist_2"
+        Coordinate: "y"
+        Value: "y*0.005*t"
+      Prescribed Displacement Fix Bottom Rigid Body Motion In X:
+        Type: "Prescribed Displacement"
+        Node Set: "nodelist_3"
+        Coordinate: "x"
+        Value: "0.0"
+      Prescribed Displacement Fix Bottom Rigid Body Motion In Z:
+        Type: "Prescribed Displacement"
+        Node Set: "nodelist_4"
+        Coordinate: "z"
+        Value: "0.0"
+      Prescribed Displacement Fix Top Rigid Body Motion In X:
+        Type: "Prescribed Displacement"
+        Node Set: "nodelist_5"
+        Coordinate: "x"
+        Value: "0.0"
+      Prescribed Displacement Fix Top Rigid Body Motion In Z:
+        Type: "Prescribed Displacement"
+        Node Set: "nodelist_6"
+        Coordinate: "z"
+        Value: "0.0"
+
+  Solver:
+      Verbose: false
+      Initial Time: 0.0
+      Final Time: 1.0
+      QuasiStatic:
+        Number of Load Steps: 4
+        Absolute Tolerance: 1.0
+        Maximum Solver Iterations: 10
+
+  Compute Class Parameters:
+      Strain Gage Top Initial Position:
+        Compute Class: "Nearest_Point_Data"
+        X: 0.0317
+        Y: 1.238
+        Z: 0.0
+        Variable: "Model_Coordinates"
+        Output Label: "Gage_Top_Initial_Position"
+        Verbose: true
+      Strain Gage Bottom Initial Position:
+        Compute Class: "Nearest_Point_Data"
+        X: 0.0317
+        Y: -1.238
+        Z: 0.0
+        Variable: "Model_Coordinates"
+        Output Label: "Gage_Bottom_Initial_Position"
+        Verbose: true
+      Strain Gage Top Displacement:
+        Compute Class: "Nearest_Point_Data"
+        X: 0.0317
+        Y: 1.238
+        Z: 0.0
+        Variable: "Displacement"
+        Output Label: "Gage_Top_Displacement"
+        Verbose: true
+      Strain Gage Bottom Displacement:
+        Compute Class: "Nearest_Point_Data"
+        X: 0.0317
+        Y: -1.238
+        Z: 0.0
+        Variable: "Displacement"
+        Output Label: "Gage_Bottom_Displacement"
+        Verbose: true
+      Top Reaction Force:
+        Compute Class: "Block_Data"
+        Calculation Type: "Sum"
+        Block: "block_3"
+        Variable: "Force"
+        Output Label: "Top_Reaction_Force"
+      Bottom Reaction Force:
+        Compute Class: "Block_Data"
+        Calculation Type: "Sum"
+        Block: "block_1"
+        Variable: "Force"
+        Output Label: "Bottom_Reaction_Force"
+
+  Output:
+      Output File Type: "ExodusII"
+      Output Filename: "tensile_test"
+      Output Frequency: 1
+      Output Variables:
+        Displacement: true
+        Velocity: true
+        Element_Id: true
+        Proc_Num: true
+        Force_Density: true
+        Hourglass_Force_Density: true
+        Force: true
+        Volume: true
+        Gage_Top_Initial_Position: true
+        Gage_Bottom_Initial_Position: true
+        Gage_Top_Displacement: true
+        Gage_Bottom_Displacement: true
+        Top_Reaction_Force: true
+        Bottom_Reaction_Force: true
+        Deformation_Gradient: true
+        Cauchy_Stress: true
+        Radius: true
+        Number_Of_Neighbors: true
+        Neighborhood_Volume: true

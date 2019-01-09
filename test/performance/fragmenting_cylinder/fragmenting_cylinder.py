@@ -52,9 +52,9 @@ if __name__ == "__main__":
     for file in os.listdir(os.getcwd()):
       if file in files_to_remove:
         os.remove(file)
-        
+
     # run Peridigm
-    command = ["mpiexec", "-np", "4", "../../../src/Peridigm", base_name+".peridigm"]    
+    command = ["mpiexec", "-np", "4", "../../../src/Peridigm", base_name+".yaml"]
     p = Popen(command, stdout=PIPE)
     return_code = p.wait()
     if return_code != 0:
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     if err != None:
         logfile.write(err)
     logfile.flush()
-        
+
     # concatenate output files
     command = ["../../../scripts/epu", "-p", "4", base_name]
     p = Popen(command, stdout=logfile, stderr=logfile)

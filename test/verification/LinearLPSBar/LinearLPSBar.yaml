@@ -1,0 +1,188 @@
+Peridigm:
+
+#     Units are CGS
+#       mass          g
+#       length        cm
+#       time          s
+#       density       g/cm^3
+#       force         dyne
+#       pressure      dyne/cm^2
+#       velocity      cm/s
+#       acceleration  cm/s^2
+#       energy        erg
+
+  Verbose: false
+  Discretization:
+      Type: "Exodus"
+      Input Mesh File: "LinearLPSBar.g"
+   #   Compute Element-Horizon Intersections: true
+   #   Element-Horizon Intersection Recursion Level: 1
+   #   Element-Horizon Intersection Number Of Samples: 1
+
+  Materials:
+      Linearized LPS Material:
+        Material Model: "Linear LPS Partial Volume"
+        Density: 8.05
+        Bulk Modulus: 160.0e10
+        Shear Modulus: 79.3e10
+      LPS Material:
+        Material Model: "Elastic Partial Volume"
+        Density: 8.05
+        Bulk Modulus: 160.0e10
+        Shear Modulus: 79.3e10
+
+  Blocks:
+      Linearized LPS Blocks:
+        Block Names: "block_1 block_2 block_3"
+        Material: "Linearized LPS Material"
+        Horizon: 0.1502
+      LPS Blocks:
+        Block Names: "block_4 block_5 block_6"
+        Material: "LPS Material"
+        Horizon: 0.1502
+
+  Boundary: Conditions
+#    Prescribed Displacement LLPS Left X
+#      Type "Prescribed Displacement"
+#      Node Set "nodelist_1"
+#      Coordinate "x"
+#      Value "0.001*x*t"
+#    Prescribed Displacement LLPS Left Y
+#      Type "Prescribed Displacement"
+#      Node Set "nodelist_4"
+#      Coordinate "y"
+#      Value "0.0"
+#    Prescribed Displacement LLPS Left Z
+#      Type "Prescribed Displacement"
+#      Node Set "nodelist_5"
+#      Coordinate "z"
+#      Value "0.0"
+#    Prescribed Displacement LLPS Right X
+#      Type "Prescribed Displacement"
+#      Node Set "nodelist_2"
+#      Coordinate "x"
+#      Value "0.001*x*t"
+#    Prescribed Displacement LLPS Right Y
+#      Type "Prescribed Displacement"
+#      Node Set "nodelist_6"
+#      Coordinate "y"
+#      Value "0.0"
+#    Prescribed Displacement LLPS Right Z
+#      Type "Prescribed Displacement"
+#      Node Set "nodelist_7"
+#      Coordinate "z"
+#      Value "0.0"
+#    Prescribed Displacement LPS Left X
+#      Type "Prescribed Displacement"
+#      Node Set "nodelist_11"
+#      Coordinate "x"
+#      Value "0.001*x*t"
+#    Prescribed Displacement LPS Left Y
+#      Type "Prescribed Displacement"
+#      Node Set "nodelist_14"
+#      Coordinate "y"
+#      Value "0.0"
+#    Prescribed Displacement LPS Left Z
+#      Type "Prescribed Displacement"
+#      Node Set "nodelist_15"
+#      Coordinate "z"
+#      Value "0.0"
+#    Prescribed Displacement LPS Right X
+#      Type "Prescribed Displacement"
+#      Node Set "nodelist_12"
+#      Coordinate "x"
+#      Value "0.001*x*t"
+#    Prescribed Displacement LPS Right Y
+#      Type "Prescribed Displacement"
+#      Node Set "nodelist_16"
+#      Coordinate "y"
+#      Value "0.0"
+#    Prescribed Displacement LPS Right Z
+#      Type "Prescribed Displacement"
+#      Node Set "nodelist_17"
+#      Coordinate "z"
+#      Value "0.0"
+
+      Prescribed Displacement LLPS X:
+        Type: "Prescribed Displacement"
+        Node Set: "nodelist_3"
+        Coordinate: "x"
+        Value: "0.1*x*t"
+      Prescribed Displacement LLPS Y:
+        Type: "Prescribed Displacement"
+        Node Set: "nodelist_3"
+        Coordinate: "y"
+        Value: "0.0"
+      Prescribed Displacement LLPS Z:
+        Type: "Prescribed Displacement"
+        Node Set: "nodelist_3"
+        Coordinate: "z"
+        Value: "0.0"
+      Prescribed Displacement LPS X:
+        Type: "Prescribed Displacement"
+        Node Set: "nodelist_13"
+        Coordinate: "x"
+        Value: "0.1*x*t"
+      Prescribed Displacement LPS Y:
+        Type: "Prescribed Displacement"
+        Node Set: "nodelist_13"
+        Coordinate: "y"
+        Value: "0.0"
+      Prescribed Displacement LPS Z:
+        Type: "Prescribed Displacement"
+        Node Set: "nodelist_13"
+        Coordinate: "z"
+        Value: "0.0"
+
+  Solver:
+      Verbose: false
+      Initial Time: 0.0
+      Final Time: 1.0
+      QuasiStatic:
+        Number of Load Steps: 5
+        Absolute Tolerance: 0.001
+        Maximum Solver Iterations: 20
+
+  Compute Class Parameters:
+      Left Reaction Force LLPS:
+        Compute Class: "Block_Data"
+        Calculation Type: "Sum"
+        Block: "block_1"
+        Variable: "Force"
+        Output Label: "Left_Reaction_Force_LLPS"
+      Right Reaction Force LLPS:
+        Compute Class: "Block_Data"
+        Calculation Type: "Sum"
+        Block: "block_3"
+        Variable: "Force"
+        Output Label: "Right_Reaction_Force_LLPS"
+      Left Reaction Force LPS:
+        Compute Class: "Block_Data"
+        Calculation Type: "Sum"
+        Block: "block_4"
+        Variable: "Force"
+        Output Label: "Left_Reaction_Force_LPS"
+      Right Reaction Force LPS:
+        Compute Class: "Block_Data"
+        Calculation Type: "Sum"
+        Block: "block_6"
+        Variable: "Force"
+        Output Label: "Right_Reaction_Force_LPS"
+
+  Output:
+      Output File Type: "ExodusII"
+      Output Filename: "LinearLPSBar"
+      Output Frequency: 1
+      Output Variables:
+        Displacement: true
+        Velocity: true
+        Element_Id: true
+        Force: true
+        Volume: true
+        Radius: true
+        Weighted_Volume: true
+        Dilatation: true
+        Left_Reaction_Force_LLPS: true
+        Right_Reaction_Force_LLPS: true
+        Left_Reaction_Force_LPS: true
+        Right_Reaction_Force_LPS: true
