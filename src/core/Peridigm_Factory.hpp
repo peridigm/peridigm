@@ -48,17 +48,10 @@
 #ifndef PERIDIGM_FACTORY_HPP
 #define PERIDIGM_FACTORY_HPP
 
+#include "Peridigm.hpp"
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_RCP.hpp>
-#ifdef HAVE_MPI
-#include <Epetra_MpiComm.h>
-#else
-typedef int MPI_Comm;
-#define MPI_COMM_WORLD 1
-#include <Epetra_SerialComm.h>
-#endif
-
-#include "Peridigm.hpp"
+#include <string>
 
 namespace PeridigmNS {
 
@@ -69,7 +62,7 @@ namespace PeridigmNS {
   public:
 
     //! Default constructor.
-    PeridigmFactory();
+    PeridigmFactory() {}
 
     //! Destructor
     virtual ~PeridigmFactory() {}
@@ -85,15 +78,12 @@ namespace PeridigmNS {
 
     //! Private function to set default problem parameter values in lieu of InArgs.
     void setPeridigmParamDefaults(Teuchos::Ptr<Teuchos::ParameterList> peridigmParams_);
-    
+
     //! Private copy constructory to prohibit copying.
     PeridigmFactory(const PeridigmFactory&);
 
     //! Private assignment operator to prohibit copying.
     PeridigmFactory& operator=(const PeridigmFactory&);
-
-  protected:
-
   };
 
 }
