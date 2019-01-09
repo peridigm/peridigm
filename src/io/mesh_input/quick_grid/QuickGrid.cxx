@@ -59,7 +59,7 @@
 
 namespace QUICKGRID {
 
-using std::tr1::shared_ptr;
+using std::shared_ptr;
 using UTILITIES::Minus;
 using UTILITIES::Dot;
 
@@ -1934,10 +1934,10 @@ QuickGridData getDiscretization(size_t rank, QuickGridMeshGenerationIterator &ce
 		ack = 0;
 		if (numPoints > 0){
 			QuickGridData 	gData = QUICKGRID::allocatePdGridData(numPoints,dimension);
-			std::tr1::shared_ptr<double> g=gData.myX;
-			std::tr1::shared_ptr<double> cellVolume=gData.cellVolume;
-			std::tr1::shared_ptr<int> gIds=gData.myGlobalIDs;
-			std::tr1::shared_ptr<int> neighborhoodPtr=gData.neighborhoodPtr;
+			std::shared_ptr<double> g=gData.myX;
+			std::shared_ptr<double> cellVolume=gData.cellVolume;
+			std::shared_ptr<int> gIds=gData.myGlobalIDs;
+			std::shared_ptr<int> neighborhoodPtr=gData.neighborhoodPtr;
 			MPI_Send(&ack, 1, MPI_INT, 0, ackTag, MPI_COMM_WORLD);
 			MPI_Recv(&globalNumPoints, 1, MPI_INT, 0, globalNumPointsTag, MPI_COMM_WORLD, &status);
 			MPI_Recv(&sizeNeighborhoodList, 1, MPI_INT, 0, sizeNeighborhoodListTag, MPI_COMM_WORLD, &status);

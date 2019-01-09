@@ -197,7 +197,7 @@ void compute_bond_volume
 /**
  * prototype
  */
- std::tr1::shared_ptr<Bond_Volume_Calculator> get_Bond_Volume_Calculator(const std::string& json_filename);
+ std::shared_ptr<Bond_Volume_Calculator> get_Bond_Volume_Calculator(const std::string& json_filename);
 
 } // namespace QUICKGRID
 

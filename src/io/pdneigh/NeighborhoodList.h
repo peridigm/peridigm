@@ -91,7 +91,7 @@ namespace PDNEIGH {
 /**
  * Utilities
  */
-using std::tr1::shared_ptr;
+using std::shared_ptr;
 using std::size_t;
 using UTILITIES::Array;
 

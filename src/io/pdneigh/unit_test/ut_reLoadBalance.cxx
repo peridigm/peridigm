@@ -70,7 +70,7 @@
 #include "Teuchos_UnitTestRepository.hpp"
 #include "Teuchos_GlobalMPISession.hpp"
 
-using std::tr1::shared_ptr;
+using std::shared_ptr;
 
 using std::cout;
 using std::set;

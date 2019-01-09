@@ -52,7 +52,7 @@
 using UTILITIES::Array;
 using UTILITIES::Sortable;
 using UTILITIES::CartesianComponent;
-using std::tr1::shared_ptr;
+using std::shared_ptr;
 
 
 const int NUMBER_OF_POINTS_SORTED = 10000;

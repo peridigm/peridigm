@@ -53,7 +53,7 @@
 #include "PdutMpiFixture.h"
 #include <iostream>
 
-using std::tr1::shared_ptr;
+using std::shared_ptr;
 using namespace Pdut;
 using std::cout;
 

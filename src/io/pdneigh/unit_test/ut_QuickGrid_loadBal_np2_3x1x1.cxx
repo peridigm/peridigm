@@ -61,7 +61,7 @@
 #include "Epetra_SerialComm.h"
 #endif
 
-using std::tr1::shared_ptr;
+using std::shared_ptr;
 using std::cout;
 
 const size_t nx = 3;

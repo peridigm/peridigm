@@ -67,7 +67,7 @@ namespace PDNEIGH {
 using Field_NS::Field;
 using Field_NS::FieldSpec;
 using UTILITIES::Array;
-using std::tr1::shared_ptr;
+using std::shared_ptr;
 
 template<typename T>
 inline Field<T> createOverlapField(NeighborhoodList& list, Field<T> ownedField) {

@@ -101,7 +101,7 @@ namespace ProximitySearch {
                              Teuchos::RCP<Epetra_BlockMap>& overlapMap,
                              int& neighborListSize,
                              int*& neighborList,
-                             std::vector< std::tr1::shared_ptr<PdBondFilter::BondFilter> > bondFilters = std::vector< std::tr1::shared_ptr<PdBondFilter::BondFilter> >(),
+                             std::vector< std::shared_ptr<PdBondFilter::BondFilter> > bondFilters = std::vector< std::shared_ptr<PdBondFilter::BondFilter> >(),
                              double radiusAddition = 0.0);
 
 }

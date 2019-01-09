@@ -55,7 +55,7 @@
 
 using namespace QUICKGRID;
 using UTILITIES::Vector3D;
-using std::tr1::shared_ptr;
+using std::shared_ptr;
 using std::size_t;
 
 
@@ -64,7 +64,7 @@ using std::size_t;
  * function returns the number of neighbors for a point in slab kZ along the axis.
  */
 size_t numNeighbors(size_t kZ){
-	
+
 	if(kZ<3)
 		return (size_t)(83+kZ*21);
 	else if(kZ>=3 && kZ <=55)

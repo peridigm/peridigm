@@ -50,7 +50,7 @@
 #include <map>
 #include "utilities/Array.h"
 
-using std::tr1::shared_ptr;
+using std::shared_ptr;
 using UTILITIES::Array;
 using std::string;
 using std::size_t;

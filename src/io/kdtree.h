@@ -14,7 +14,7 @@
 #include <vector>
 #include <stdexcept>
 #include <cmath>
-#include "utilities/MemoryInclude.h"
+#include <memory>
 
 namespace femanica {
 
@@ -22,7 +22,7 @@ using std::numeric_limits;
 using std::vector;
 
 
-using std::tr1::shared_ptr;
+using std::shared_ptr;
 
 template<class value_type, class ordinal_type>
 class array {

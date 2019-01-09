@@ -62,7 +62,7 @@
 using UTILITIES::CartesianComponent;
 using UTILITIES::Sortable;
 using namespace PDNEIGH;
-using std::tr1::shared_ptr;
+using std::shared_ptr;
 
 using std::vector;
 using std::set;

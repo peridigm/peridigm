@@ -46,14 +46,14 @@
 #ifndef ARRAY_H_
 #define ARRAY_H_
 
-#include "MemoryInclude.h"
+#include <memory>
 #include <stdexcept>
 #include <cmath>
 #include <string>
 
 namespace UTILITIES {
 
-using std::tr1::shared_ptr;
+using std::shared_ptr;
 
 template<class T>
 class Array {

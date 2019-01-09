@@ -72,10 +72,10 @@
 
 using namespace PdBondFilter;
 using namespace PDNEIGH;
-using std::tr1::shared_ptr;
+using std::shared_ptr;
 
 
-using std::tr1::shared_ptr;
+using std::shared_ptr;
 using std::cout;
 using std::set;
 using std::map;

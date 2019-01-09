@@ -61,7 +61,7 @@
 
 using UTILITIES::CartesianComponent;
 using namespace PDNEIGH;
-using std::tr1::shared_ptr;
+using std::shared_ptr;
 
 
 const size_t numProcs=1;
@@ -91,7 +91,7 @@ TEUCHOS_UNIT_TEST(AxisAlignedBoundaryPoints, AxisAlignedMinimumTest) {
 	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
 
 	CartesianComponent axis = UTILITIES::Z;
-	std::tr1::shared_ptr<double> xPtr = decomp.myX;
+	std::shared_ptr<double> xPtr = decomp.myX;
 	size_t numPoints = decomp.numPoints;
 	TEST_ASSERT(numCells==numPoints);
 
@@ -120,7 +120,7 @@ TEUCHOS_UNIT_TEST(AxisAlignedBoundaryPoints, AxisAlignedMaximumTest) {
 	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, cellPerProcIter);
 
 	CartesianComponent axis = UTILITIES::Z;
-	std::tr1::shared_ptr<double> xPtr = decomp.myX;
+	std::shared_ptr<double> xPtr = decomp.myX;
 	size_t numPoints = decomp.numPoints;
 	TEST_ASSERT(numCells==numPoints);
 

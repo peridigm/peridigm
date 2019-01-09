@@ -170,10 +170,10 @@ namespace PeridigmNS {
     static UTILITIES::Array<int> getSharedGlobalIds(const QUICKGRID::Data& gridData);
 
     //! Get the local owned IDs.
-    static std::tr1::shared_ptr<int> getLocalOwnedIds(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap);
+    static std::shared_ptr<int> getLocalOwnedIds(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap);
 
     //! Get the local neighborhood list.
-    static std::tr1::shared_ptr<int> getLocalNeighborList(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap);
+    static std::shared_ptr<int> getLocalNeighborList(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap);
 
     //! \todo Eliminate old-style elementBlocks data structure.
     //! Map containing element blocks (block name and list of locally-owned element IDs for each block).
@@ -185,7 +185,7 @@ namespace PeridigmNS {
     //! Map containing the node id for each node set
     Teuchos::RCP< std::map< std::string, int> > nodeSetIds;
 
-    std::vector< std::tr1::shared_ptr<PdBondFilter::BondFilter> > bondFilters;
+    std::vector< std::shared_ptr<PdBondFilter::BondFilter> > bondFilters;
 
   private:
 

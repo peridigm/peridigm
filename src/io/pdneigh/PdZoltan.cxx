@@ -59,7 +59,7 @@
 
 namespace PDNEIGH {
 
-using std::tr1::shared_ptr;
+using std::shared_ptr;
 using std::vector;
 using std::cerr;
 using std::cout;
@@ -653,18 +653,18 @@ void zoltanQuery_unPackPointsMultiFunction
 	 * 3) globalIds
 	 * 4) neighborhoodPtr
 	 */
-	std::tr1::shared_ptr<double> newX = newGridData.myX;                         double *newXPtr   = newX.get();
-	std::tr1::shared_ptr<double> newV = newGridData.cellVolume;                  double *newVPtr   = newV.get();
-	std::tr1::shared_ptr<int> newGlobalIds = newGridData.myGlobalIDs;            int    *newIdsPtr = newGlobalIds.get();
-	std::tr1::shared_ptr<int> newNeighborhoodPtr = newGridData.neighborhoodPtr;  int    *newNeighPtrPtr = newNeighborhoodPtr.get();
+	std::shared_ptr<double> newX = newGridData.myX;                         double *newXPtr   = newX.get();
+	std::shared_ptr<double> newV = newGridData.cellVolume;                  double *newVPtr   = newV.get();
+	std::shared_ptr<int> newGlobalIds = newGridData.myGlobalIDs;            int    *newIdsPtr = newGlobalIds.get();
+	std::shared_ptr<int> newNeighborhoodPtr = newGridData.neighborhoodPtr;  int    *newNeighPtrPtr = newNeighborhoodPtr.get();
 
-	std::tr1::shared_ptr<double> X = gridData->myX;                              double *xPtr   = X.get();
-	std::tr1::shared_ptr<double> V = gridData->cellVolume;                       double *vPtr   = V.get();
-	std::tr1::shared_ptr<int> globalIds = gridData->myGlobalIDs;                 int    *idsPtr = globalIds.get();
-	std::tr1::shared_ptr<int> neighborhoodPtr = gridData->neighborhoodPtr;       int    *neighPtrPtr = neighborhoodPtr.get();
-	std::tr1::shared_ptr<int> neighborhood = gridData->neighborhood;             int    *neighPtr = neighborhood.get();
+	std::shared_ptr<double> X = gridData->myX;                              double *xPtr   = X.get();
+	std::shared_ptr<double> V = gridData->cellVolume;                       double *vPtr   = V.get();
+	std::shared_ptr<int> globalIds = gridData->myGlobalIDs;                 int    *idsPtr = globalIds.get();
+	std::shared_ptr<int> neighborhoodPtr = gridData->neighborhoodPtr;       int    *neighPtrPtr = neighborhoodPtr.get();
+	std::shared_ptr<int> neighborhood = gridData->neighborhood;             int    *neighPtr = neighborhood.get();
 
-	std::tr1::shared_ptr<char> exportFlag = gridData->exportFlag;                char *exportPtr = exportFlag.get();
+	std::shared_ptr<char> exportFlag = gridData->exportFlag;                char *exportPtr = exportFlag.get();
 
 	// Sum over points that stay on processor for determining size of new list
 	int newSizeNeighborhoodList = 0;

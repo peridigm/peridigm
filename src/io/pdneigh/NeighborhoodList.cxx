@@ -621,7 +621,7 @@ void NeighborhoodList::createAndAddNeighborhood(){
 void NeighborhoodList::buildNeighborhoodList
 (
 		int numOverlapPoints,
-		std::tr1::shared_ptr<double> xOverlapPtr
+		std::shared_ptr<double> xOverlapPtr
 )
 {
 	/*

@@ -51,7 +51,7 @@
 
 
 using namespace QUICKGRID;
-using std::tr1::shared_ptr;
+using std::shared_ptr;
 
 
 TEUCHOS_UNIT_TEST( QuickGridHorizon, CellNeighborhoodHorizon_11CellsTest) {

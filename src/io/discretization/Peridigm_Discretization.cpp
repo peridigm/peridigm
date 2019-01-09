@@ -101,7 +101,7 @@ UTILITIES::Array<int> PeridigmNS::Discretization::getSharedGlobalIds(const QUICK
 	return sharedGlobalIds;
 }
 
-std::tr1::shared_ptr<int> PeridigmNS::Discretization::getLocalOwnedIds(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap){
+std::shared_ptr<int> PeridigmNS::Discretization::getLocalOwnedIds(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap){
 	UTILITIES::Array<int> localIds(gridData.numPoints);
 	int *lIds = localIds.get();
 	int *end = localIds.get()+gridData.numPoints;
@@ -111,7 +111,7 @@ std::tr1::shared_ptr<int> PeridigmNS::Discretization::getLocalOwnedIds(const QUI
 	return localIds.get_shared_ptr();
 }
 
-std::tr1::shared_ptr<int> PeridigmNS::Discretization::getLocalNeighborList(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap){
+std::shared_ptr<int> PeridigmNS::Discretization::getLocalNeighborList(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap){
 	UTILITIES::Array<int> localNeighborList(gridData.sizeNeighborhoodList);
 	int *localNeig = localNeighborList.get();
 	int *neighPtr = gridData.neighborhoodPtr.get();
@@ -139,7 +139,7 @@ Epetra_BlockMap PeridigmNS::Discretization::getOwnedMap(const Epetra_Comm& comm,
 
 Epetra_BlockMap PeridigmNS::Discretization::getOverlapMap(const Epetra_Comm& comm,const QUICKGRID::Data& gridData, int ndf) {
 	UTILITIES::Array<int> sharedGIDS = getSharedGlobalIds(gridData);
-	std::tr1::shared_ptr<int> sharedPtr = sharedGIDS.get_shared_ptr();
+	std::shared_ptr<int> sharedPtr = sharedGIDS.get_shared_ptr();
 	int numShared = sharedGIDS.get_size();
 	int *shared = sharedPtr.get();
 	int *owned = gridData.myGlobalIDs.get();
@@ -168,7 +168,7 @@ void PeridigmNS::Discretization::createBondFilters(const Teuchos::RCP<Teuchos::P
         bottomLength = params.get<double>("Bottom_Length");
         sideLength = params.get<double>("Side_Length");
         PdBondFilter::FinitePlane finitePlane(normal, lowerLeftCorner, bottomUnitVector, bottomLength, sideLength);
-        std::tr1::shared_ptr<PdBondFilter::BondFilter> bondFilter(new PdBondFilter::FinitePlaneFilter(finitePlane));
+        std::shared_ptr<PdBondFilter::BondFilter> bondFilter(new PdBondFilter::FinitePlaneFilter(finitePlane));
         bondFilters.push_back(bondFilter);
       }
       else if(type == "Disk"){
@@ -180,7 +180,7 @@ void PeridigmNS::Discretization::createBondFilters(const Teuchos::RCP<Teuchos::P
         normal[1] = params.get<double>("Normal_Y");
         normal[2] = params.get<double>("Normal_Z");
         radius = params.get<double>("Radius");
-        std::tr1::shared_ptr<PdBondFilter::BondFilter> bondFilter(new PdBondFilter::DiskFilter(center, normal, radius));
+        std::shared_ptr<PdBondFilter::BondFilter> bondFilter(new PdBondFilter::DiskFilter(center, normal, radius));
         bondFilters.push_back(bondFilter);
       }
       else{

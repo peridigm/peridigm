@@ -69,7 +69,7 @@
 #endif
 
 using std::size_t;
-using std::tr1::shared_ptr;
+using std::shared_ptr;
 using UTILITIES::Array;
 using UTILITIES::Vector3D;
 using std::pair;

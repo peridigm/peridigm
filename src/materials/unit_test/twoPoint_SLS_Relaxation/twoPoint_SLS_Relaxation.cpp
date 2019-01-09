@@ -62,7 +62,7 @@
 
 using namespace std;
 using namespace MATERIAL_EVALUATION;
-using std::tr1::shared_ptr;
+using std::shared_ptr;
 using namespace Field_NS;
 
 /*

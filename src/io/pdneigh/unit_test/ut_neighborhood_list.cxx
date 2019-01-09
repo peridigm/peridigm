@@ -62,7 +62,7 @@
 
 using namespace PdBondFilter;
 using namespace PDNEIGH;
-using std::tr1::shared_ptr;
+using std::shared_ptr;
 
 
 const int nx = 1;

@@ -53,7 +53,7 @@
 #include <sstream>
 
 using namespace std;
-using std::tr1::shared_ptr;
+using std::shared_ptr;
 
 PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                                                                  const Teuchos::RCP<Teuchos::ParameterList>& params) :

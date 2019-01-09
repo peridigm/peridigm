@@ -79,7 +79,7 @@ using UTILITIES::Vector3D;
 using UTILITIES::Array;
 using Field_NS::Field;
 using Field_NS::FieldSpec;
-using std::tr1::shared_ptr;
+using std::shared_ptr;
 
 using std::size_t;
 using std::string;

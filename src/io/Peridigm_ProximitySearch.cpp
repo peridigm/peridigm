@@ -206,7 +206,7 @@ void PeridigmNS::ProximitySearch::GlobalProximitySearch(Teuchos::RCP<Epetra_Vect
                                                         Teuchos::RCP<Epetra_BlockMap>& overlapMap,                                  /* output */
                                                         int& neighborListSize,                                                      /* output */
                                                         int*& neighborList,                                                         /* output (allocated within function) */
-                                                        std::vector< std::tr1::shared_ptr<PdBondFilter::BondFilter> > bondFilters,  /* optional input */
+                                                        std::vector< std::shared_ptr<PdBondFilter::BondFilter> > bondFilters,       /* optional input */
                                                         double radiusAddition)                                                      /* optional input */
 
 {
@@ -255,12 +255,12 @@ void PeridigmNS::ProximitySearch::GlobalProximitySearch(Teuchos::RCP<Epetra_Vect
 
   // The initial implementation supports only a single bond filter
   if(bondFilters.size() == 0){
-    std::tr1::shared_ptr<PdBondFilter::BondFilter> bondFilterPtr(new PdBondFilter::BondFilterDefault(false));
+    std::shared_ptr<PdBondFilter::BondFilter> bondFilterPtr(new PdBondFilter::BondFilterDefault(false));
     bondFilters.push_back(bondFilterPtr);
   }
  
   // Execute neighbor search
-  std::tr1::shared_ptr<const Epetra_Comm> commSp(&originalMap.Comm(), NonDeleter<const Epetra_Comm>());
+  std::shared_ptr<const Epetra_Comm> commSp(&originalMap.Comm(), NonDeleter<const Epetra_Comm>());
 
   PDNEIGH::NeighborhoodList list(commSp,
                                  decomp.zoltanPtr.get(),

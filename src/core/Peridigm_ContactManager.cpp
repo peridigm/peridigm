@@ -705,7 +705,7 @@ void PeridigmNS::ContactManager::contactSearch(Teuchos::RCP<const Epetra_BlockMa
 {
   const Epetra_Comm& comm = oneDimensionalMap->Comm();
 
-  std::tr1::shared_ptr<const Epetra_Comm> comm_shared_ptr(&comm,NonDeleter<const Epetra_Comm>());
+  std::shared_ptr<const Epetra_Comm> comm_shared_ptr(&comm,NonDeleter<const Epetra_Comm>());
   QUICKGRID::Data d = rebalancedDecomp;
 
   // TEMPORARY PLACEHOLDER FOR PER-NODE SEARCH RADII

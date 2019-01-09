@@ -50,7 +50,7 @@
 #include <stdexcept>
 #include <vector>
 #include <string>
-#include "MemoryInclude.h"
+#include <memory>
 #include "Vector3D.h"
 
 namespace PdBondFilter {

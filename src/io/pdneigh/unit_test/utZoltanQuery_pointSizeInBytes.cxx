@@ -51,7 +51,7 @@
 #include <iostream>
 
 
-using std::tr1::shared_ptr;
+using std::shared_ptr;
 
 
 QUICKGRID::QuickGridData setUp(){

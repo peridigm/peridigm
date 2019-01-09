@@ -57,7 +57,7 @@
 #include <iostream>
 
 using namespace PdBondFilter;
-using std::tr1::shared_ptr;
+using std::shared_ptr;
 using std::cout;
 
 static int myRank = 0;
@@ -237,7 +237,7 @@ TEUCHOS_UNIT_TEST(FinitePlaneFilter, Case_1a) {
 	}
 
     Epetra_SerialComm serialComm;
-    std::tr1::shared_ptr<const Epetra_Comm> comm(&serialComm,NonDeleter<const Epetra_Comm>());
+    std::shared_ptr<const Epetra_Comm> comm(&serialComm,NonDeleter<const Epetra_Comm>());
 	PDNEIGH::NeighborhoodList neighList(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
 
 	/*
@@ -348,7 +348,7 @@ TEUCHOS_UNIT_TEST(FinitePlaneFilter, Case_1b) {
 	}
 
     Epetra_SerialComm serialComm;
-    std::tr1::shared_ptr<const Epetra_Comm> comm(&serialComm,NonDeleter<const Epetra_Comm>());
+    std::shared_ptr<const Epetra_Comm> comm(&serialComm,NonDeleter<const Epetra_Comm>());
 	PDNEIGH::NeighborhoodList neighList(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
 
 	/*
@@ -457,7 +457,7 @@ TEUCHOS_UNIT_TEST(FinitePlaneFilter, Case_2a) {
 	}
 
     Epetra_SerialComm serialComm;
-    std::tr1::shared_ptr<const Epetra_Comm> comm(&serialComm,NonDeleter<const Epetra_Comm>());
+    std::shared_ptr<const Epetra_Comm> comm(&serialComm,NonDeleter<const Epetra_Comm>());
 	PDNEIGH::NeighborhoodList neighList(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
 
 	/*
@@ -566,7 +566,7 @@ TEUCHOS_UNIT_TEST(FinitePlaneFilter, Case_2b) {
 	}
 
     Epetra_SerialComm serialComm;
-    std::tr1::shared_ptr<const Epetra_Comm> comm(&serialComm,NonDeleter<const Epetra_Comm>());
+    std::shared_ptr<const Epetra_Comm> comm(&serialComm,NonDeleter<const Epetra_Comm>());
 	PDNEIGH::NeighborhoodList neighList(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
 
 	/*
@@ -675,7 +675,7 @@ TEUCHOS_UNIT_TEST(FinitePlaneFilter, Case_3a) {
 	}
 
     Epetra_SerialComm serialComm;
-    std::tr1::shared_ptr<const Epetra_Comm> comm(&serialComm,NonDeleter<const Epetra_Comm>());
+    std::shared_ptr<const Epetra_Comm> comm(&serialComm,NonDeleter<const Epetra_Comm>());
 	PDNEIGH::NeighborhoodList neighList(comm,decomp.zoltanPtr.get(),decomp.numPoints,decomp.myGlobalIDs,decomp.myX,horizon);
 
 	/*
