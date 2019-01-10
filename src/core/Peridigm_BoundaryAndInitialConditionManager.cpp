@@ -49,6 +49,7 @@
 #include <sstream>
 #include <fstream>
 #include <set>
+#include <iterator>
 #include "Peridigm_Timer.hpp"
 #include "Peridigm_Enums.hpp"
 #include "Peridigm.hpp"

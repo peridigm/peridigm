@@ -57,6 +57,7 @@
 #include <map>
 #include <string>
 #include <unordered_set>
+#include <iterator>
 #include <cmath>
 
 #include "Peridigm_Field.hpp"

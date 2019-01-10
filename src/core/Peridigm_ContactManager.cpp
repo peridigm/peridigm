@@ -50,6 +50,7 @@
 #include "Peridigm_ContactModelFactory.hpp"
 #include "Peridigm_Timer.hpp"
 #include <sstream>
+#include <iterator>
 #include "Peridigm_PdQuickGridDiscretization.hpp"
 #include <boost/tuple/tuple.hpp>
 
