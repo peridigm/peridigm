@@ -54,11 +54,10 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <tuple>
 #include "Peridigm_ContactBlock.hpp"
 #include "Peridigm_ContactModel.hpp"
 #include "QuickGridData.h"
-#include "boost/tuple/tuple.hpp"
-#include "boost/tuple/tuple_comparison.hpp"
 
 // \todo These includes are temporary, remove them.
 #include "Peridigm_Discretization.hpp"
@@ -223,7 +222,7 @@ class ContactManager {
 
     //! List of contact interactions; each entry has the form (block_id,
     //! block_id, contact_model_name)
-    std::vector<boost::tuple<int, int, std::string> > contactInteractions;
+    std::vector<std::tuple<int, int, std::string> > contactInteractions;
 
     //! Contact blocks
     Teuchos::RCP<std::vector<PeridigmNS::ContactBlock> > contactBlocks;

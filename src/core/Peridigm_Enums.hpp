@@ -61,6 +61,7 @@ Boundary_Condition_Type to_boundary_condition_type(const std::string & str);
 Boundary_Condition_Type to_boundary_condition_type(const Teuchos::ParameterList & params);
 
 std::string trim(std::string const & str);
+void to_upper(std::string & str);
 void tidy_string(std::string & str);
 bool is_initial(const Boundary_Condition_Type & bc_type);
 

@@ -50,6 +50,7 @@
 #include "Peridigm_HorizonManager.hpp"
 #include "Peridigm_GeometryUtils.hpp"
 #include "Peridigm_Constants.hpp"
+#include "Peridigm_Enums.hpp"
 #include <Epetra_Map.h>
 #include <Epetra_Vector.h>
 #include <Epetra_Import.h>
@@ -62,7 +63,6 @@
 #include <sstream>
 #include <set>
 #include <math.h>
-#include <boost/algorithm/string.hpp>
 #include <exodusII.h>
 
 using namespace std;
@@ -399,7 +399,7 @@ void PeridigmNS::ExodusDiscretization::loadData(const string& meshFileName)
     vector<double> attributes;
     if(numElemThisBlock > 0){
       string elemTypeString(elemType);
-      boost::to_upper(elemTypeString);
+      to_upper(elemTypeString);
       if(elemTypeString == string("SPHERE"))
         exodusElementType = SPHERE_ELEMENT;
       else if(elemTypeString == string("TET") || elemTypeString == string("TETRA") || elemTypeString == string("TET4") || elemTypeString == string("TET10"))

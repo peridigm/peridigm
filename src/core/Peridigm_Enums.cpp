@@ -47,7 +47,7 @@
 
 #include <Peridigm_Enums.hpp>
 #include <map>
-#include <boost/algorithm/string.hpp>
+#include <cctype>
 
 static bool string_maps_created = false;
 
@@ -304,8 +304,7 @@ Boundary_Condition_Type to_boundary_condition_type(const std::string & str)
   return pos->second;
 }
 
-std::string trim(std::string const & str)
-{
+std::string trim(std::string const & str){
     size_t first = str.find_first_not_of(' ');
     if (std::string::npos == first) {
         return str;
@@ -314,11 +313,19 @@ std::string trim(std::string const & str)
     return str.substr(first, (last - first + 1));
 }
 
+void to_upper(std::string& str){
+  for (std::string::iterator it = str.begin(); it != str.end(); ++it) {
+    *it = toupper((unsigned char)(*it));
+  }
+}
+
 void tidy_string(std::string & str){
-  boost::to_upper(str);
+  to_upper(str);
   str = trim(str);
-  while(boost::find_first(str," ")){
-    boost::replace_first(str," ","_");
+  for(std::string::iterator it = str.begin(); it != str.end(); ++it) {
+    if(*it == ' ') {
+      *it = '_';
+    }
   }
 }
 

@@ -49,13 +49,11 @@
 #include "Peridigm_HorizonManager.hpp"
 #include "Peridigm_ContactModelFactory.hpp"
 #include "Peridigm_Timer.hpp"
-#include <sstream>
-#include <iterator>
 #include "Peridigm_PdQuickGridDiscretization.hpp"
-#include <boost/tuple/tuple.hpp>
-
 #include "PdZoltan.h"
 #include "NeighborhoodList.h"
+#include <sstream>
+#include <iterator>
 
 using namespace std;
 
@@ -155,7 +153,7 @@ PeridigmNS::ContactManager::ContactManager(const Teuchos::ParameterList& contact
 void PeridigmNS::ContactManager::createContactInteractionsList(const Teuchos::ParameterList& contactParams,
                                                                Teuchos::RCP<Discretization> disc)
 {
-  set< boost::tuple<int, int, string> > contactInteractionSet;
+  std::set< std::tuple<int, int, string> > contactInteractionSet;
   Teuchos::ParameterList interactionParams = contactParams.sublist("Interactions");
 
   // First, check for general and self contact
@@ -178,11 +176,11 @@ void PeridigmNS::ContactManager::createContactInteractionsList(const Teuchos::Pa
           blockId_2 = temp;
         }
         if(hasSelfContact && i == j){
-          boost::tuple<int, int, string> interactionTuple(blockId_1, blockId_2, selfContactModelName);
+          std::tuple<int, int, string> interactionTuple(blockId_1, blockId_2, selfContactModelName);
           contactInteractionSet.insert(interactionTuple);
         }
         if(hasGeneralContact && i != j){
-          boost::tuple<int, int, string> interactionTuple(blockId_1, blockId_2, generalContactModelName);
+          std::tuple<int, int, string> interactionTuple(blockId_1, blockId_2, generalContactModelName);
           contactInteractionSet.insert(interactionTuple);
         }
       }
@@ -197,19 +195,19 @@ void PeridigmNS::ContactManager::createContactInteractionsList(const Teuchos::Pa
       int blockId_1 = disc->blockNameToBlockId( interaction.get<string>("First Block") );
       int blockId_2 = disc->blockNameToBlockId( interaction.get<string>("Second Block") );
       string contactModelName = interaction.get<string>("Contact Model");
-      boost::tuple<int, int, string> interactionTuple(blockId_1, blockId_2, contactModelName);
+      std::tuple<int, int, string> interactionTuple(blockId_1, blockId_2, contactModelName);
       contactInteractionSet.insert(interactionTuple);
     }
   }
 
   // Elliminate duplicates and load the interactions into a vector
-  set< boost::tuple<int, int, string> >::iterator it, nextIt;
+  std::set< std::tuple<int, int, string> >::iterator it, nextIt;
   nextIt = contactInteractionSet.begin();
   nextIt++;
   for(it = contactInteractionSet.begin() ; it != contactInteractionSet.end() ; it++){
     // If a block pair has multiple contact definitions, the final definition is the one that will be used
     bool duplicate = false;
-    if( nextIt != contactInteractionSet.end() && it->get<0>() == nextIt->get<0>() && it->get<1>() == nextIt->get<1>() )
+    if( nextIt != contactInteractionSet.end() && std::get<0>(*it) == std::get<0>(*nextIt) && std::get<1>(*it) == std::get<1>(*nextIt) )
       duplicate = true;
     if(!duplicate)
       contactInteractions.push_back(*it);
@@ -222,7 +220,7 @@ void PeridigmNS::ContactManager::createContactInteractionsList(const Teuchos::Pa
     cout << "-- Contact Interactions" << endl;
     cout << "   First block    Second block    Contact model" << endl;
     for(unsigned int i=0 ; i<contactInteractions.size() ; ++i)
-      cout << "   " << contactInteractions[i].get<0>() << "              " <<  contactInteractions[i].get<1>() << "               " <<  contactInteractions[i].get<2>() << endl;
+      cout << "   " << std::get<0>(contactInteractions[i]) << "              " <<  std::get<1>(contactInteractions[i]) << "               " <<  std::get<2>(contactInteractions[i]) << endl;
     cout << endl;
   }
 }
@@ -272,9 +270,9 @@ void PeridigmNS::ContactManager::initialize(Teuchos::RCP<const Epetra_BlockMap> 
 #ifdef NEW_STUFF
 
   set<int> blocksWithContact;
-  for(vector< boost::tuple<int, int, string> >::iterator it=contactInteractions.begin() ; it!=contactInteractions.end() ; it++){
-    blocksWithContact.insert( it->get<0>() );
-    blocksWithContact.insert( it->get<1>() );
+  for(vector< std::tuple<int, int, string> >::iterator it=contactInteractions.begin() ; it!=contactInteractions.end() ; it++){
+    blocksWithContact.insert( std::get<0>(*it) );
+    blocksWithContact.insert( std::get<1>(*it) );
   }
 
   vector<int> contactGlobalIds;
