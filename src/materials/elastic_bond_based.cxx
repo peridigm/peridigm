@@ -47,7 +47,6 @@
 
 #include <cmath>
 #include <Sacado.hpp>
-#include <boost/math/constants/constants.hpp>
 #include "elastic_bond_based.h"
 #include "material_utilities.h"
 
@@ -71,7 +70,7 @@ void computeInternalForceElasticBondBased
   ScalarT Y[3], neighborY[3], currentBondLength, stretch, t, fx, fy, fz;
   int neighborhoodIndex(0), bondDamageIndex(0), neighborId;
 
-  const double pi = boost::math::constants::pi<double>();
+  const double pi = PeridigmNS::value_of_pi();
   double constant = 18.0*BULK_MODULUS/(pi*horizon*horizon*horizon*horizon);
 
   for(int p=0 ; p<numOwnedPoints ; p++){

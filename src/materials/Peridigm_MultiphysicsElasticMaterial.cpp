@@ -56,7 +56,7 @@
 #include <Teuchos_Assert.hpp>
 #include <Epetra_SerialComm.h>
 #include <Sacado.hpp>
-#include <boost/math/special_functions/fpclassify.hpp>
+#include <cmath>
 
 using namespace std;
 
@@ -487,11 +487,11 @@ m_horizon,m_fluidReynoldsViscosityTemperatureEffect,deltaTemperature);
 			  for(int subcol=0 ; subcol<dofPerNode ; ++subcol){
 					for(int subrow=0 ; subrow<(dofPerNode-1) ; ++subrow){
 							value = force_AD[row*3/dofPerNode + subrow].dx(col + subcol) * cellVolume[row/dofPerNode];
-							TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite(value), "**** NaN detected in MultiphysicsElasticMaterial::computeAutomaticDifferentiationJacobian() (internal force).\n");
+							TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(value), "**** NaN detected in MultiphysicsElasticMaterial::computeAutomaticDifferentiationJacobian() (internal force).\n");
 							scratchMatrix(row+subrow, col+subcol) = value;
 					}
 					value = fluidFlow_AD[row/dofPerNode].dx(col + subcol) * cellVolume[row/dofPerNode];
-					TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite(value), "**** NaN detected in MultiphysicsElasticMaterial::computeAutomaticDifferentiationJacobian() (fluid flow).\n");
+					TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(value), "**** NaN detected in MultiphysicsElasticMaterial::computeAutomaticDifferentiationJacobian() (fluid flow).\n");
         	scratchMatrix(row +dofPerNode -1, col+subcol) = value;
 				}
 			}
@@ -618,7 +618,7 @@ PeridigmNS::MultiphysicsElasticMaterial::computeAutomaticDifferentiationJacobian
 	  			for(int subrow=0 ; subrow<4 ; ++subrow){
 						if(not (subcol == 3 or subrow == 3)){
 	     				value = force_AD[row*3/4 + subrow].dx(col*3/4 + subcol) * cellVolume[row/4];
-	     				TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite(value), "**** NaN detected in MultiphysicsElasticMaterial::computeAutomaticDifferentiationJacobian() (internal force).\n");
+	     				TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::math::isfinite(value), "**** NaN detected in MultiphysicsElasticMaterial::computeAutomaticDifferentiationJacobian() (internal force).\n");
 						}
 						else if(subcol = subrow)
 							value = 1.0;

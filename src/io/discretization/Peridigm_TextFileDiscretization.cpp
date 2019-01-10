@@ -47,6 +47,7 @@
 
 #include "Peridigm_TextFileDiscretization.hpp"
 #include "Peridigm_HorizonManager.hpp"
+#include "Peridigm_Enums.hpp"
 #include "NeighborhoodList.h"
 #include "PdZoltan.h"
 
@@ -61,8 +62,6 @@
 
 #include <sstream>
 #include <fstream>
-
-#include <boost/algorithm/string/trim.hpp>
 
 using namespace std;
 
@@ -172,7 +171,7 @@ QUICKGRID::Data PeridigmNS::TextFileDiscretization::getDecomp(const string& text
     while(inFile.good()){
       string str;
       getline(inFile, str);
-      boost::trim(str);
+      str = trim(str);
       // Ignore comment lines, otherwise parse
       if( !(str[0] == '#' || str[0] == '/' || str[0] == '*' || str.size() == 0) ){
         istringstream iss(str);

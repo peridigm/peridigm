@@ -47,10 +47,7 @@
 
 #include "Peridigm_VectorPoissonMaterial.hpp"
 #include "Peridigm_Field.hpp"
-#include <boost/math/constants/constants.hpp>
-#include <boost/math/special_functions/fpclassify.hpp>
-
-using namespace std;
+#include "Peridigm_Constants.hpp"
 
 PeridigmNS::VectorPoissonMaterial::VectorPoissonMaterial(const Teuchos::ParameterList& params)
   : Material(params),
@@ -111,7 +108,7 @@ PeridigmNS::VectorPoissonMaterial::computeForce(const double dt,
   double nodeInitialPosition[3], initialDistance;
   double nodeU, neighborU, kernel, nodeVolume, neighborVolume, temp, nodeForce, neighborForce;
 
-  const double pi = boost::math::constants::pi<double>();
+  const double pi = value_of_pi();
 
   for(iID=0 ; iID<numOwnedPoints ; ++iID){
 
@@ -136,15 +133,15 @@ PeridigmNS::VectorPoissonMaterial::computeForce(const double dt,
 
       for(int eqn=0 ; eqn<3 ; ++eqn){
 
-	nodeU = y[iID*3+eqn] - x[iID*3+eqn];
-	neighborU = y[neighborID*3+eqn] - x[neighborID*3+eqn];
-	temp = (neighborU - nodeU)*kernel;
-	nodeForce = temp*neighborVolume;
-	neighborForce = -temp*nodeVolume;
-	TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite(nodeForce), "**** NaN detected in VectorPoissonMaterial::computeForce().\n");
-	TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite(neighborForce), "**** NaN detected in VectorPoissonMaterial::computeForce().\n");
-	f[iID*3+eqn] += nodeForce;
-	f[neighborID*3+eqn] += neighborForce;
+        nodeU = y[iID*3+eqn] - x[iID*3+eqn];
+        neighborU = y[neighborID*3+eqn] - x[neighborID*3+eqn];
+        temp = (neighborU - nodeU)*kernel;
+        nodeForce = temp*neighborVolume;
+        neighborForce = -temp*nodeVolume;
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(nodeForce), "**** NaN detected in VectorPoissonMaterial::computeForce().\n");
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(neighborForce), "**** NaN detected in VectorPoissonMaterial::computeForce().\n");
+        f[iID*3+eqn] += nodeForce;
+        f[neighborID*3+eqn] += neighborForce;
 
       }
     }

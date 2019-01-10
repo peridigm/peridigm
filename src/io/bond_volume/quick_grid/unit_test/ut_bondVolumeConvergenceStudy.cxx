@@ -110,23 +110,20 @@ string findNodeValue( string& str, const std::string &nodename){
       char *last;
       char *destination = 0;
 
-      
       const char* node_name = &nodename[0];
-      
-     
+
       char* tempStringContainer = (char*)malloc(sizeof(char)*(str.length() + 1));
-     
 
       for (unsigned int i = 0; i < str.length(); i++){
            tempStringContainer[i] = str[i];
       }
 
       tempStringContainer[str.length()] = '\0';
-     
+
       token = strtok( tempStringContainer, delimiter);
 
       while (token != NULL){
-                                   
+
              if (strstr( token, node_name) == NULL) {
 
                 if (strrchr(token, '"') != NULL){
@@ -140,12 +137,10 @@ string findNodeValue( string& str, const std::string &nodename){
                    destination = (char*)malloc(sizeof(char)*(last_occurrence - first_occurrence));
 
                    int t = 0;
-                                         
+
                    for (int i = first_occurrence; i < (last_occurrence - 1); i++){
-                                             
                         destination[t] = token[i];
                         t++;
-
                    }
 
                    destination[t] ='\0';
@@ -154,27 +149,26 @@ string findNodeValue( string& str, const std::string &nodename){
 
 
                else{
-                
-                                   
+
                  if ( (strrchr( token, ',') != NULL)  && (token[strlen(token) - 1] == ',') ) {
                        destination = (char*)malloc(sizeof(char)*strlen(token));
-                                        
+
                        strncpy( destination, token, strlen(token) - 1 );
                        destination[strlen(token) - 1] = '\0';
-                        
+
                  }
                  else{
                       destination = (char*)malloc(sizeof(char)*(strlen(token) + 1));
 
                       strncpy( destination, token, (strlen(token) + 1) );
                       destination[strlen(token) + 1] = '\0';
-                      
+
                  }
 
-               }   
-               
+               }
+
              }
-                           
+
              token = strtok( NULL, delimiter);
         }
 
@@ -332,9 +326,9 @@ QUICKGRID::QuickGridData getGrid(const string& _json_filename) {
 void scf_probe_two( Array<int> &neighborhoodPtr, Array<double> xPtr, Array<double> &X, Array<double> &Y, Array<double> &bondVolume, shared_ptr<BOND_VOLUME::QUICKGRID::Bond_Volume_Calculator> c, double horizon, Array<double> &yPtr, PDNEIGH::NeighborhoodList list, size_t gId, size_t num_neigh, double &theta, double &m_code, double gamma){
 
       const int *neighborhood = list.get_neighborhood(gId);
-		
+
       for(size_t j=0;j<num_neigh+1;j++,neighborhood++)
-	  neighborhoodPtr[j]=*neighborhood;
+        neighborhoodPtr[j]=*neighborhood;
 
       X.set(0.0);
       Y.set(0.0);
@@ -342,7 +336,8 @@ void scf_probe_two( Array<int> &neighborhoodPtr, Array<double> xPtr, Array<doubl
 
       BOND_VOLUME::QUICKGRID::compute_bond_volume(X.get(),neighborhoodPtr.get(),xPtr.get(),bondVolume.get(),c.get());
 
-      double m_analytical = 4.0 * M_PI * pow(horizon,5) / 5.0;
+      double pi =  PeridigmNS::value_of_pi();
+      double m_analytical = 4.0 * pi * pow(horizon,5) / 5.0;
       m_code = MATERIAL_EVALUATION::WITH_BOND_VOLUME::computeWeightedVolume(X.get(),xPtr.get(),bondVolume.get(),neighborhoodPtr.get(),horizon);
       double rel_diff = std::abs(m_analytical-m_code)/m_analytical;
       std::cout << std::scientific;
@@ -389,7 +384,8 @@ void probe_shear
 	/*
 	 * This is the reference value for the weighted volume
 	 */
-	double m_analytical = 4.0 * M_PI * pow(horizon,5) / 5.0;
+  double pi =  PeridigmNS::value_of_pi();
+	double m_analytical = 4.0 * pi * pow(horizon,5) / 5.0;
 	double m_err = std::fabs(m_analytical-m_code)/m_analytical;
 	/*
 	 * NOTE: X is center of sphere and there no displacement at this point
@@ -402,7 +398,7 @@ void probe_shear
 	/*
 	 * This is the reference value for ed_squared
 	 */
-	double reference = 4.0 * M_PI * gamma * gamma * pow(horizon,5) / 75.0;
+	double reference = 4.0 * pi * gamma * gamma * pow(horizon,5) / 75.0;
 	double ed2 = MATERIAL_EVALUATION::WITH_BOND_VOLUME::compute_norm_2_deviatoric_extension(neighborhoodPtr.get(),X.get(),xPtr.get(),X.get(),yPtr.get(),bondVolume.get(),m_code,horizon);
 	double scf = reference/ed2;
 	double ed_err = fabs(reference-ed2)/reference;

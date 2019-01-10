@@ -52,6 +52,7 @@
 #include "Array.h"
 #include "Vector3D.h"
 #include "QuickGridData.h"
+#include "Peridigm_Constants.hpp"
 #include <functional>
 
 
@@ -201,7 +202,7 @@ public:
 	size_t getNumRings() const { return numRings; }
 	size_t getNumRays() const { return numRays; }
 	size_t getNumCells() const { return numCells; }
-	Spec1D getRingSpec() const {return Spec1D(getNumRays(), 0.0, 2.0*M_PI); }
+	Spec1D getRingSpec() const {return Spec1D(getNumRays(), 0.0, 2.0*PeridigmNS::value_of_pi()); }
 	Spec1D getRaySpec() const  {return Spec1D(getNumRings(), getrI(), getRingThickness()); }
 
 

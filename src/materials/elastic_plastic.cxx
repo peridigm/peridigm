@@ -47,6 +47,7 @@
 #include <cmath>
 #include <Sacado.hpp>
 #include "elastic_plastic.h"
+#include "Peridigm_Constants.hpp"
 
 namespace MATERIAL_EVALUATION {
 
@@ -147,9 +148,9 @@ void computeInternalForceIsotropicElasticPlastic
 	/*
 	 * 2d or 3d variety of yield value (uniaxial stress)
 	 */
-    double yieldValue = 25.0 * yieldStress * yieldStress / 8 / M_PI / pow(DELTA,5);
+    double yieldValue = 25.0 * yieldStress * yieldStress / 8 / PeridigmNS::value_of_pi() / pow(DELTA,5);
 	if(isPlanarProblem)
-    	yieldValue = 225.0 / 3. * yieldStress * yieldStress / 8 / M_PI / THICKNESS / pow(DELTA,4);
+    	yieldValue = 225.0 / 3. * yieldStress * yieldStress / 8 / PeridigmNS::value_of_pi() / THICKNESS / pow(DELTA,4);
 
 	const double *xOwned = xOverlap;
 	const ScalarT *yOwned = yNP1Overlap;

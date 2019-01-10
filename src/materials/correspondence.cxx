@@ -51,7 +51,6 @@
 #include <Teuchos_ScalarTraits.hpp>
 #include <math.h>
 #include <functional>
-#include <boost/math/constants/constants.hpp>
 #include <vector>
 
 namespace CORRESPONDENCE {
@@ -690,7 +689,7 @@ double hourglassCoefficient
   // placeholder for inclusion of bond damage
   double bondDamage = 0.0;
 
-  const double pi = boost::math::constants::pi<double>();
+  const double pi = PeridigmNS::value_of_pi();
   double firstPartOfConstant = 18.0*hourglassCoefficient*bulkModulus/pi;
   double constant;
 

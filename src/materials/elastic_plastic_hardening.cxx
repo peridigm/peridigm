@@ -50,6 +50,7 @@
 #include "elastic_plastic.h"
 #include "elastic_plastic_hardening.h"
 #include <complex>
+#include "Peridigm_Constants.hpp"
 
 namespace MATERIAL_EVALUATION {
 
@@ -94,13 +95,13 @@ void computeInternalForceIsotropicHardeningPlastic
 	/*
 	 * 3d variety of yield value 
 	 */
-	double yieldValue = 25.0 * yieldStress * yieldStress / 8 / M_PI / pow(DELTA,5);
+	double yieldValue = 25.0 * yieldStress * yieldStress / 8 / PeridigmNS::value_of_pi() / pow(DELTA,5);
 	/*
 	 * Planar variety of yield value
 	 */
 //		double THICKNESS=1.0;
-//		double yieldValue = 225.0 * yieldStress * yieldStress / 8 / M_PI / THICKNESS / pow(DELTA,4);
-//		double yieldValue = 0.5 * pow(15*yieldStress/weightedVol,2) * M_PI * THICKNESS * pow(DELTA,4) / 16.0;
+//		double yieldValue = 225.0 * yieldStress * yieldStress / 8 / PeridigmNS::value_of_pi() / THICKNESS / pow(DELTA,4);
+//		double yieldValue = 0.5 * pow(15*yieldStress/weightedVol,2) * PeridigmNS::value_of_pi() * THICKNESS * pow(DELTA,4) / 16.0;
 
 
 	const double *xOwned = xOverlap;
@@ -279,8 +280,8 @@ ScalarT updateDeltaLambda
         ScalarT theta = acos( R/sqrt(Q*Q*Q));
 
         ScalarT root1 = -2.*sqrt(Q)*cos(theta/3.) - a/3.;
-        ScalarT root2 = -2.*sqrt(Q)*cos(theta/3. + 2.*M_PI/3.) - a/3.;
-        ScalarT root3 = -2.*sqrt(Q)*cos(theta/3. - 2.*M_PI/3.) - a/3.;
+        ScalarT root2 = -2.*sqrt(Q)*cos(theta/3. + 2.*PeridigmNS::value_of_pi()/3.) - a/3.;
+        ScalarT root3 = -2.*sqrt(Q)*cos(theta/3. - 2.*PeridigmNS::value_of_pi()/3.) - a/3.;
         
         //if (root1 > 0 || root2 > 0 || root3 > 0)
             //std::cout << "sol 1 " << root1  << " sol 2 " << root2  << " sol 3 " << root3 << std::endl;

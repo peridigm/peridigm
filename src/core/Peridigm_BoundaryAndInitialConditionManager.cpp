@@ -49,7 +49,6 @@
 #include <sstream>
 #include <fstream>
 #include <set>
-#include <boost/algorithm/string/trim.hpp>
 #include "Peridigm_Timer.hpp"
 #include "Peridigm_Enums.hpp"
 #include "Peridigm.hpp"
@@ -224,7 +223,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initializeNodeSets(Teuchos:
         while(inFile.good()){
           string str;
           getline(inFile, str);
-          boost::trim(str);
+          str = trim(str);
           // Ignore comment lines, otherwise parse
           if( !(str[0] == '#' || str[0] == '/' || str[0] == '*' || str.size() == 0) ){
             istringstream iss(str);
@@ -695,9 +694,9 @@ string PeridigmNS::BoundaryAndInitialConditionManager::nodeSetStringToFileName(s
 
   string emptyString = "";
   string whitespace = " \t";
-  
-  boost::trim(str);
-  
+
+  str = trim(str);
+
   // If there is any whitespace then str is a list, not a file name
   if(str.find_first_of(whitespace) != std::string::npos)
     return emptyString;

@@ -304,9 +304,19 @@ Boundary_Condition_Type to_boundary_condition_type(const std::string & str)
   return pos->second;
 }
 
+std::string trim(std::string const & str)
+{
+    size_t first = str.find_first_not_of(' ');
+    if (std::string::npos == first) {
+        return str;
+    }
+    size_t last = str.find_last_not_of(' ');
+    return str.substr(first, (last - first + 1));
+}
+
 void tidy_string(std::string & str){
   boost::to_upper(str);
-  boost::algorithm::trim(str);
+  str = trim(str);
   while(boost::find_first(str," ")){
     boost::replace_first(str," ","_");
   }

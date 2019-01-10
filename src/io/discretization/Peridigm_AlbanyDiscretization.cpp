@@ -62,8 +62,6 @@
 #include <fstream>
 #include <set>
 
-#include <boost/algorithm/string/trim.hpp>
-
 using namespace std;
 
 PeridigmNS::AlbanyDiscretization::AlbanyDiscretization(const MPI_Comm& mpiComm,

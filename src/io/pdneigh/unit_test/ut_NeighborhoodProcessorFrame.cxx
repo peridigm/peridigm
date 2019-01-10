@@ -95,7 +95,7 @@ Array<double> createPoints(){
 		 */
 		srand ( time(NULL) );
 		double *X = xPtr.get();
-		double pi = M_PI;
+		double pi = PeridigmNS::value_of_pi();
 		for(size_t p=0;p<N;p++,X+=3){
 			*(X+0)= pi*(rand()%N)/N;
 			*(X+1)= pi*(rand()%N)/N;
@@ -127,7 +127,7 @@ TEUCHOS_UNIT_TEST( NeighborhoodProcessorFrame, LeastUpperBoundTest) {
 		/*
 		 * create a random value between 0 and pi
 		 */
-		double value = M_PI*(rand()%N)/N;
+		double value = PeridigmNS::value_of_pi()*(rand()%N)/N;
 
 		Sortable c(N, xPtr.get_shared_ptr());
 		/*
@@ -389,7 +389,7 @@ TEUCHOS_UNIT_TEST( NeighborhoodProcessorFrame, GreatestLowerBoundTest) {
 		/*
 		 * create a random value between 0 and pi
 		 */
-		double value = M_PI*(rand()%N)/N;
+		double value = PeridigmNS::value_of_pi()*(rand()%N)/N;
 
 		Sortable c(N, xPtr.get_shared_ptr());
 		/*

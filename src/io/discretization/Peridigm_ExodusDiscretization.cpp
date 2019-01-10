@@ -49,6 +49,7 @@
 #include "Peridigm_ProximitySearch.hpp"
 #include "Peridigm_HorizonManager.hpp"
 #include "Peridigm_GeometryUtils.hpp"
+#include "Peridigm_Constants.hpp"
 #include <Epetra_Map.h>
 #include <Epetra_Vector.h>
 #include <Epetra_Import.h>
@@ -60,7 +61,7 @@
 #include <Ionit_Initializer.h>
 #include <sstream>
 #include <set>
-#include <boost/math/constants/constants.hpp>
+#include <math.h>
 #include <boost/algorithm/string.hpp>
 #include <exodusII.h>
 
@@ -113,7 +114,7 @@ PeridigmNS::ExodusDiscretization::ExodusDiscretization(const Teuchos::RCP<const 
 
   // Load data from mesh file
   loadData(meshFileName);
-  
+
   if(computeIntersections)
     maxElementDimension = computeMaxElementDimension();
 
@@ -919,7 +920,7 @@ double PeridigmNS::ExodusDiscretization::computeMaxElementDimension()
   double x, y, z;
   int globalId, numNodes, numNodesInElement;
   vector<double> nodeCoordinates;
-  const double pi = boost::math::constants::pi<double>();
+  const double pi = value_of_pi();
 
   for(int iElem=0 ; iElem<oneDimensionalMap->NumMyElements() ; ++iElem){
     globalId = oneDimensionalMap->GID(iElem);

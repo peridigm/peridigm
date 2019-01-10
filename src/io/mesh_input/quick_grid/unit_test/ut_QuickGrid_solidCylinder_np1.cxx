@@ -100,8 +100,8 @@ TEUCHOS_UNIT_TEST( QuickGrid_solidCylinder_np1, RunTest) {
 	/*
 	 * Check volume of core of 3 core points
 	 */
-	double rI = cylinderRadius/numRings/sqrt(M_PI);
-	double vol = M_PI*rI*rI*dz;
+	double rI = cylinderRadius/numRings/sqrt(PeridigmNS::value_of_pi());
+	double vol = PeridigmNS::value_of_pi()*rI*rI*dz;
 	double *v = decomp.cellVolume.get();
 	TEST_FLOATING_EQUALITY(*(v+0),vol,tolerance);
 	TEST_FLOATING_EQUALITY(*(v+19),vol,tolerance);

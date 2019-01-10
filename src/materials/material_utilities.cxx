@@ -458,7 +458,7 @@ void computeShearCorrectionFactor
 ){
 	double gamma=1.0e-6;
 	// currently un-used but may be helpful in further studies
-//  double reference = 4.0 * M_PI * gamma * gamma * pow(horizon,5) / 75.0;
+//  double reference = 4.0 * value_of_pi() * gamma * gamma * pow(horizon,5) / 75.0;
 	const int *neighPtr = localNeighborList;
 	const double *xOwned = xOverlap;
 	double *yOwned = yOverlap;

@@ -49,8 +49,9 @@
 #include "Peridigm_HorizonManager.hpp"
 #include "Peridigm_ContactModelFactory.hpp"
 #include "Peridigm_Timer.hpp"
-#include <boost/algorithm/string/trim.hpp> // \todo Replace this include with correct include for istream_iterator.
+#include <sstream>
 #include "Peridigm_PdQuickGridDiscretization.hpp"
+#include <boost/tuple/tuple.hpp>
 
 #include "PdZoltan.h"
 #include "NeighborhoodList.h"
@@ -84,9 +85,6 @@ PeridigmNS::ContactManager::ContactManager(const Teuchos::ParameterList& contact
   contactRebalanceFrequency = contactParams.get<int>("Search Frequency");
 
   createContactInteractionsList(contactParams, disc);
-
-  
-
 
   // Did user specify default blocks?
   bool defaultBlocks = false;
@@ -180,7 +178,7 @@ void PeridigmNS::ContactManager::createContactInteractionsList(const Teuchos::Pa
         }
         if(hasSelfContact && i == j){
           boost::tuple<int, int, string> interactionTuple(blockId_1, blockId_2, selfContactModelName);
-          contactInteractionSet.insert(interactionTuple);          
+          contactInteractionSet.insert(interactionTuple);
         }
         if(hasGeneralContact && i != j){
           boost::tuple<int, int, string> interactionTuple(blockId_1, blockId_2, generalContactModelName);

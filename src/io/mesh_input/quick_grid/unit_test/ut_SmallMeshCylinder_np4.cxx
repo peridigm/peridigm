@@ -62,7 +62,7 @@ static size_t numProcs;
 
 const UTILITIES::Vector3D center;
 const double ringThickness = 2.0;
-const double innerRadius = ringThickness*(7/(2.0*M_PI)-1)*.5;
+const double innerRadius = ringThickness*(7/(2.0*PeridigmNS::value_of_pi())-1)*.5;
 const double outerRadius = innerRadius+ringThickness;
 const size_t numRings = 2;
 const double cellSize=ringThickness/numRings;

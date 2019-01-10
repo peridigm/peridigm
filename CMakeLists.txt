@@ -1,4 +1,4 @@
-# 
+#
 # CMakeLists.txt file for Peridigm
 #
 
@@ -38,23 +38,23 @@ else ()
 endif ()
 
 #
-# Blas and Lapack Libraries  
+# Blas and Lapack Libraries
 #
-find_library(Blas_LIBRARY  
-   NAMES blas  
-   PATHS ${BLAS_LIBRARY_DIRS}  
-)  
-find_library(Lapack_LIBRARY  
-   NAMES lapack  
-   PATHS ${LAPACK_LIBRARY_DIRS}  
-)  
-set(BlasLapack_Libraries ${blas} ${lapack})  
+find_library(Blas_LIBRARY
+   NAMES blas
+   PATHS ${BLAS_LIBRARY_DIRS}
+)
+find_library(Lapack_LIBRARY
+   NAMES lapack
+   PATHS ${LAPACK_LIBRARY_DIRS}
+)
+set(BlasLapack_Libraries ${blas} ${lapack})
 
 #
 # DAKOTA configuration
 #
-option (USE_DAKOTA 
-   "Enable tests and functionality that depend on a DAKOTA installation." 
+option (USE_DAKOTA
+   "Enable tests and functionality that depend on a DAKOTA installation."
    OFF
 )
 
@@ -242,10 +242,10 @@ set(PdMaterialUtilitiesLib PdMaterialUtilities)
 
 # include for all directories
 # Collection of include and lib directories
-set(INCLUDE_DIRS 
-${Trilinos_INCLUDE_DIRS} 
+set(INCLUDE_DIRS
+${Trilinos_INCLUDE_DIRS}
 ${Trilinos_TPL_INCLUDE_DIRS}
-${Boost_INCLUDE_DIRS} 
+${Boost_INCLUDE_DIRS}
 ${CMAKE_SOURCE_DIR}
 ${CMAKE_SOURCE_DIR}/src
 ${CMAKE_SOURCE_DIR}/src/core
@@ -296,8 +296,8 @@ ${PARSER_DIR}
 ${BOND_VOL_QUICK_GRID}
 )
 
-# link directories 
-set(LIB_DIRS 
+# link directories
+set(LIB_DIRS
   ${Boost_LIBRARY_DIRS})
 link_directories(${LIB_DIRS})
 
@@ -307,7 +307,7 @@ set (REQUIRED_LIBS
 )
 
 set (UT_REQUIRED_LIBS
-  ${BlasLapack_Libraries}  
+  ${BlasLapack_Libraries}
   ${Boost_LIBRARIES}
 )
 

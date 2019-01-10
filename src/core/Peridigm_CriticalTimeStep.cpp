@@ -48,9 +48,8 @@
 #include "Peridigm_CriticalTimeStep.hpp"
 #include "Peridigm_HorizonManager.hpp"
 #include "Peridigm_Field.hpp"
-#include <boost/math/constants/constants.hpp>
-
-using namespace std;
+#include "Peridigm_Constants.hpp"
+#include <cmath>
 
 double PeridigmNS::ComputeCriticalTimeStep(const Epetra_Comm& comm, PeridigmNS::Block& block){
 
@@ -64,7 +63,7 @@ double PeridigmNS::ComputeCriticalTimeStep(const Epetra_Comm& comm, PeridigmNS::
   double bulkModulus = materialModel()->BulkModulus();
 
   double horizon(0.0);
-  string blockName = block.getName();
+  std::string blockName = block.getName();
   PeridigmNS::HorizonManager& horizonManager = PeridigmNS::HorizonManager::self();
   bool blockHasConstantHorizon = horizonManager.blockHasConstantHorizon(blockName);
   if(blockHasConstantHorizon)
@@ -75,7 +74,7 @@ double PeridigmNS::ComputeCriticalTimeStep(const Epetra_Comm& comm, PeridigmNS::
   block.getData(fieldManager.getFieldId("Volume"), PeridigmField::STEP_NONE)->ExtractView(&cellVolume);
   block.getData(fieldManager.getFieldId("Model_Coordinates"), PeridigmField::STEP_NONE)->ExtractView(&x);
 
-  const double pi = boost::math::constants::pi<double>();
+  const double pi = value_of_pi();
   double springConstant(0.0);
   if(blockHasConstantHorizon)
     springConstant = 18.0*bulkModulus/(pi*horizon*horizon*horizon*horizon);
@@ -88,7 +87,7 @@ double PeridigmNS::ComputeCriticalTimeStep(const Epetra_Comm& comm, PeridigmNS::
     double timestepDenominator = 0.0;
     int nodeID = ownedIDs[iID];
     double X[3] = { x[nodeID*3], x[nodeID*3+1], x[nodeID*3+2] };
-	int numNeighbors = neighborhoodList[neighborhoodListIndex++];
+    int numNeighbors = neighborhoodList[neighborhoodListIndex++];
 
     if(!blockHasConstantHorizon){
       double delta = horizonManager.evaluateHorizon(blockName, X[0], X[1], X[2]);
@@ -98,15 +97,15 @@ double PeridigmNS::ComputeCriticalTimeStep(const Epetra_Comm& comm, PeridigmNS::
     for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
       int neighborID = neighborhoodList[neighborhoodListIndex++];
       double neighborVolume = cellVolume[neighborID];
-      double initialDistance = sqrt( (X[0] - x[neighborID*3  ])*(X[0] - x[neighborID*3  ]) +
-                                     (X[1] - x[neighborID*3+1])*(X[1] - x[neighborID*3+1]) +
-                                     (X[2] - x[neighborID*3+2])*(X[2] - x[neighborID*3+2]) );
+      double initialDistance = std::sqrt( (X[0] - x[neighborID*3  ])*(X[0] - x[neighborID*3  ]) +
+                                          (X[1] - x[neighborID*3+1])*(X[1] - x[neighborID*3+1]) +
+                                          (X[2] - x[neighborID*3+2])*(X[2] - x[neighborID*3+2]) );
 
       // Issue a warning if the bond length is very very small (as in zero)
       static bool warningGiven = false;
       if(!warningGiven && initialDistance < 1.0e-50){
-        cout << "\nWarning:  Possible zero length bond detected (length = " << initialDistance << ")." << endl;
-        cout << "            Bonds of length zero are not valid, the input mesh may contain coincident nodes.\n" << endl;
+        std::cout << "\nWarning:  Possible zero length bond detected (length = " << initialDistance << ")." << std::endl;
+        std::cout << "            Bonds of length zero are not valid, the input mesh may contain coincident nodes.\n" << std::endl;
         warningGiven = true;
       }
 

@@ -52,7 +52,6 @@
 #include "material_utilities.h"
 #include <Teuchos_Assert.hpp>
 #include <Epetra_Comm.h>
-#include <boost/math/special_functions/fpclassify.hpp>
 
 using namespace std;
 

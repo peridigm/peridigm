@@ -43,93 +43,15 @@
 // ************************************************************************
 //@HEADER
 
-#include <Teuchos_ParameterList.hpp>
-#include <Teuchos_UnitTestHarness.hpp>
+#ifndef PERIDIGM_CONSTANTS_HPP
+#define PERIDIGM_CONSTANTS_HPP
 
-#include <math.h>
-#include "Sortable.h"
-#include "Peridigm_Constants.hpp"
+namespace PeridigmNS {
 
-using UTILITIES::Array;
-using UTILITIES::Sortable;
-using UTILITIES::CartesianComponent;
-using std::shared_ptr;
-
-
-const int NUMBER_OF_POINTS_SORTED = 10000;
-const int N = NUMBER_OF_POINTS_SORTED;
-
-
-TEUCHOS_UNIT_TEST(Array, SortPointsTest) {
-	/*
-	 * Random coordinates between 0 and PI
-	 */
-	Array<double> coordinates(3*N);
-	{
-		/*
-		 * Initialize random number generator
-		 */
-		srand ( time(NULL) );
-		double *X = coordinates.get();
-		double pi = PeridigmNS::value_of_pi();
-		for(int p=0;p<N;p++,X+=3){
-			*(X+0)= pi*(rand()%N)/N;
-			*(X+1)= pi*(rand()%N)/N;
-			*(X+2)= pi*(rand()%N)/N;
-		}
-	}
-	/*
-	 * sort points
-	 */
-	int numAxes=3;
-	Array<CartesianComponent> components(numAxes);
-	components[0] = UTILITIES::X;
-	components[1] = UTILITIES::Y;
-	components[2] = UTILITIES::Z;
-
-	Sortable points(N, coordinates.get_shared_ptr());
-	Array< Array<int> > sorted_maps(numAxes);
-	for(size_t c=0;c<components.get_size();c++){
-
-		Sortable::Comparator compare = points.getComparator(components[c]);
-		Array<int> mapX = points.getIdentityMap();
-		sorted_maps[c] = mapX;
-
-		/*
-		 * Note that sort iterator acts as comparator
-		 */
-		std::sort(mapX.get(),mapX.get()+N,compare);
-
-	}
-
-	for(size_t c=0;c<components.get_size();c++){
-
-		/*
-		 * Now check that points in map are in order
-		 */
-		{
-			double *X = coordinates.get();
-			int *ids = sorted_maps[c].get();
-			int *end = ids+(N-1);
-			for(;ids!=end;ids++){
-				double x1 = X[3*(*ids)+c];
-				double x2 = X[3*(*(ids+1))+c];
-				TEST_ASSERT(x1<=x2);
-			}
-		}
-
-	}
+  static constexpr double value_of_pi() noexcept {
+    return static_cast<double>( 3.141592653589793238462643383279502884L );
+  }
 
 }
 
-
-int main
-(
-		int argc,
-		char* argv[]
-)
-{
-
-	// Initialize UTF
-	return Teuchos::UnitTestRepository::runUnitTestsFromMain(argc, argv);
-}
+#endif

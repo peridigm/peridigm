@@ -319,7 +319,8 @@ Array<double> getDiscretization(const SpecRing2D& spec) {
 	size_t numRays = spec.getNumRays();
 	size_t numRings = spec.getNumRings();
 
-	Spec1D thetaSpec(numRays, 0.0, 2.0*M_PI);
+  double pi = PeridigmNS::value_of_pi();
+	Spec1D thetaSpec(numRays, 0.0, 2.0*pi);
 	Array<double> thPtr = getDiscretization(thetaSpec);
 
 
@@ -416,7 +417,8 @@ SpecRing2D::SpecRing2D(Vector3D center, double innerRadius, double outerRadius, 
 	double R = (rI+r0)/2;
 	// Try to make cells with equal length sides -- compute angular increment
 	double dTheta = dr/R;
-	numRays = (size_t)(2 * M_PI / dTheta) + 1;
+  double pi = PeridigmNS::value_of_pi();
+	numRays = (size_t)(2 * pi / dTheta) + 1;
 	numCells = numRays * this->numRings;
 
 }
@@ -1631,9 +1633,10 @@ specs(3,Spec1D(1,0,1))
 	/*
 	 * Compute inner radius of inner most ring
 	 */
+  double pi = PeridigmNS::value_of_pi();
 	double R = radius;
 	size_t nR = numRings;
-	double rI = R/nR/sqrt(M_PI);
+	double rI = R/nR/sqrt(pi);
 	coreRadius = rI;
 
 	/*
@@ -1645,13 +1648,13 @@ specs(3,Spec1D(1,0,1))
 	 * Compute dTheta -- ring secgment size -- attempts to create cells that have
 	 * approximately the same area
 	 */
-	double dTheta = 2.0 * sqrt(M_PI) / ( sqrt(M_PI) * nR + 1);
+	double dTheta = 2.0 * sqrt(pi) / ( sqrt(pi) * nR + 1);
 
 	/*
 	 * Create ring spec
 	 */
-	size_t numRays = (int)(2 * M_PI / dTheta) + 1;
-	Spec1D ringSpec(numRays, 0.0, 2.0*M_PI);
+	size_t numRays = (int)(2 * pi / dTheta) + 1;
+	Spec1D ringSpec(numRays, 0.0, 2.0*pi);
 
 	/*
 	 * Now get approximate cell size along length of cylinder
@@ -1667,7 +1670,7 @@ specs(3,Spec1D(1,0,1))
 	/*
 	 * Compute "coreCellVolume"
 	 */
-	coreCellVolume = M_PI * coreRadius * coreRadius * axisSpec.getCellSize();
+	coreCellVolume = pi * coreRadius * coreRadius * axisSpec.getCellSize();
 
 	/*
 	 * Add in 1 cell for the "core"

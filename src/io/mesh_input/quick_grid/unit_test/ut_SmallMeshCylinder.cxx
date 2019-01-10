@@ -67,12 +67,12 @@ TEUCHOS_UNIT_TEST( SmallMeshCylinder, cylindericalCellPerProcIterator1ProcTest) 
 	// Note that ring is only translated to the location
 	UTILITIES::Vector3D center;
 	double ringThickness = 2.0;
-	double innerRadius = ringThickness*(7/(2.0*M_PI)-1)*.5;
+	double innerRadius = ringThickness*(7/(2.0*PeridigmNS::value_of_pi())-1)*.5;
 	double outerRadius = innerRadius+ringThickness;
 	size_t numRings = 2;
 	double cellSize=ringThickness/numRings;
 	QUICKGRID::SpecRing2D ring2dSpec(center,innerRadius,outerRadius,numRings);
-	QUICKGRID::Spec1D thetaSpec(ring2dSpec.getNumRays(), 0.0, 2.0*M_PI);
+	QUICKGRID::Spec1D thetaSpec(ring2dSpec.getNumRays(), 0.0, 2.0*PeridigmNS::value_of_pi());
 	/*
 	 * Compute number of cells along length of cylinder so that aspect ratio
 	 * is cells is approximately 1
@@ -235,12 +235,12 @@ TEUCHOS_UNIT_TEST( SmallMeshCylinder, cylindericalCellPerProcIterator2ProcTest) 
 	// Note that ring is only translated to the location
 	UTILITIES::Vector3D center;
 	double ringThickness = 2.0;
-	double innerRadius = ringThickness*(7/(2.0*M_PI)-1)*.5;
+	double innerRadius = ringThickness*(7/(2.0*PeridigmNS::value_of_pi())-1)*.5;
 	double outerRadius = innerRadius+ringThickness;
 	size_t numRings = 2;
 	double cellSize=ringThickness/numRings;
 	QUICKGRID::SpecRing2D ring2dSpec(center,innerRadius,outerRadius,numRings);
-	QUICKGRID::Spec1D thetaSpec(ring2dSpec.getNumRays(), 0.0, 2.0*M_PI);
+	QUICKGRID::Spec1D thetaSpec(ring2dSpec.getNumRays(), 0.0, 2.0*PeridigmNS::value_of_pi());
 	/*
 	 * Compute number of cells along length of cylinder so that aspect ratio
 	 * is cells is approximately 1
@@ -462,12 +462,12 @@ TEUCHOS_UNIT_TEST( SmallMeshCylinder, cylindericalCellPerProcIterator4ProcTest)
 	// Note that ring is only translated to the location
 	UTILITIES::Vector3D center;
 	double ringThickness = 2.0;
-	double innerRadius = ringThickness*(7/(2.0*M_PI)-1)*.5;
+	double innerRadius = ringThickness*(7/(2.0*PeridigmNS::value_of_pi())-1)*.5;
 	double outerRadius = innerRadius+ringThickness;
 	int numRings = 2;
 	double cellSize=ringThickness/numRings;
 	QUICKGRID::SpecRing2D ring2dSpec(center,innerRadius,outerRadius,numRings);
-	QUICKGRID::Spec1D thetaSpec(ring2dSpec.getNumRays(), 0.0, 2.0*M_PI);
+	QUICKGRID::Spec1D thetaSpec(ring2dSpec.getNumRays(), 0.0, 2.0*PeridigmNS::value_of_pi());
 	/*
 	 * Compute number of cells along length of cylinder so that aspect ratio
 	 * is cells is approximately 1

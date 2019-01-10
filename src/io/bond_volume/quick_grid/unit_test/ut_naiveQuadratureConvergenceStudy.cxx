@@ -61,6 +61,7 @@
 #include <Teuchos_ParameterList.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
 #include "Epetra_ConfigDefs.h"
+#include "Peridigm_Constants.hpp"
 #ifdef HAVE_MPI
 #include "mpi.h"
 #include "Epetra_MpiComm.h"
@@ -198,7 +199,8 @@ void probe_shear
 	/*
 	 * This is the reference value for the weighted volume
 	 */
-	double m_analytical = 4.0 * M_PI * pow(horizon,5) / 5.0;
+  double pi =  PeridigmNS::value_of_pi();
+	double m_analytical = 4.0 * pi * pow(horizon,5) / 5.0;
 	double m_err = std::fabs(m_analytical-m_code)/m_analytical;
 	/*
 	 * NOTE: X is center of sphere and there no displacement at this point
@@ -220,7 +222,7 @@ void probe_shear
 	/*
 	 * This is the reference value for ed_squared
 	 */
-	double reference = 4.0 * M_PI * gamma * gamma * pow(horizon,5) / 75.0;
+	double reference = 4.0 * pi * gamma * gamma * pow(horizon,5) / 75.0;
 	double ed2 = MATERIAL_EVALUATION::compute_norm_2_deviatoric_extension(neighborhoodPtr.get(),X.get(),xPtr.get(),Y.get(),yPtr.get(),cellVolume.get(),m_code,horizon);
 	double scf = reference/ed2;
 	double ed_err = fabs(reference-ed2)/reference;
@@ -267,7 +269,7 @@ void scf_probe(PDNEIGH::NeighborhoodList list, Array<int> &neighborhoodPtr, Arra
 		 * copy neighborhood list for center point over to array
 		 */
 		const int *neighborhood = list.get_neighborhood(gId);
-		
+
 		for(size_t j=0;j<num_neigh+1;j++,neighborhood++)
 			neighborhoodPtr[j]=*neighborhood;
 	}
@@ -280,8 +282,8 @@ void scf_probe(PDNEIGH::NeighborhoodList list, Array<int> &neighborhoodPtr, Arra
 	 * Y = X since we are fixing the center of the sphere
 	 */
 	Y.set(0.0);
-
-        m_analytical = 4.0 * M_PI * pow(horizon,5) / 5.0;
+  double pi =  PeridigmNS::value_of_pi();
+  m_analytical = 4.0 * pi * pow(horizon,5) / 5.0;
 	m_code = MATERIAL_EVALUATION::computeWeightedVolume(X.get(),xPtr.get(),cellVolume.get(),neighborhoodPtr.get(),horizon);
 	rel_diff = std::abs(m_analytical-m_code)/m_analytical;
 	std::cout << std::scientific;
@@ -290,11 +292,9 @@ void scf_probe(PDNEIGH::NeighborhoodList list, Array<int> &neighborhoodPtr, Arra
 	std::cout << "ut_scf::code computed weighted volume on sphere = " << m_code << std::endl;
 	std::cout << "ut_scf::% relative error weighted volume = " << 100*rel_diff << std::endl;
 
-	
-
-       MATERIAL_EVALUATION::set_pure_shear(neighborhoodPtr.get(),X.get(),xPtr.get(),yPtr.get(),MATERIAL_EVALUATION::XY,gamma);
-       theta = MATERIAL_EVALUATION::computeDilatation(neighborhoodPtr.get(),X.get(),xPtr.get(),X.get(),yPtr.get(),cellVolume.get(),m_code,horizon);
-       std::cout << "ut_naiveQuadratureConvergenceStudy::probe_shear dilatation = " << theta << std::endl;
+  MATERIAL_EVALUATION::set_pure_shear(neighborhoodPtr.get(),X.get(),xPtr.get(),yPtr.get(),MATERIAL_EVALUATION::XY,gamma);
+  theta = MATERIAL_EVALUATION::computeDilatation(neighborhoodPtr.get(),X.get(),xPtr.get(),X.get(),yPtr.get(),cellVolume.get(),m_code,horizon);
+  std::cout << "ut_naiveQuadratureConvergenceStudy::probe_shear dilatation = " << theta << std::endl;
 
 }
 

@@ -50,6 +50,7 @@
 
 #include <cstdlib>
 
+#include "Peridigm_Constants.hpp"
 #include "Peridigm_InfluenceFunction.hpp"
 
 class Bond_Volume_Calculator;

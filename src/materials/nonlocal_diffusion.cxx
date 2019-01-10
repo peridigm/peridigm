@@ -178,7 +178,7 @@ void computeInternalFluidFlow
 
 			//TODO: make correct for 3D problem
 			//This is not correct for 3D diffusion, the factor of four was derived for 2D and may be different
-			q = (RHO / MU) * (4.0 / (M_PI*horizon*horizon)) * (effectivePermeability / pow(dY, 4.0)) * dPressure;
+			q = (RHO / MU) * (4.0 / (PeridigmNS::value_of_pi()*horizon*horizon)) * (effectivePermeability / pow(dY, 4.0)) * dPressure;
 
 			*(flowOwned) += q*cellVolume;
 			flowInternalOverlap[localId] -= q*selfCellVolume;
@@ -366,8 +366,8 @@ void computeInternalFluidFlowDeadSimple
 
 			//TODO: make correct for 3D problem
 			//This is not correct for 3D diffusion, the factor of four was derived for 2D and may be different
-			//q = (RHO / MU) * (4.0 / (M_PI*horizon*horizon)) * (effectivePermeability / pow(dY, 4.0)) * dPressure;
-		  //q = (RHO / MU) * (4.0 / (3.14159*horizon*horizon)) * (1.0 / pow(dY, 4.0)) * dPressure;
+			//q = (RHO / MU) * (4.0 / (PeridigmNS::value_of_pi()*horizon*horizon)) * (effectivePermeability / pow(dY, 4.0)) * dPressure;
+		  //q = (RHO / MU) * (4.0 / (PeridigmNS::value_of_pi()*horizon*horizon)) * (1.0 / pow(dY, 4.0)) * dPressure;
 		  q = (horizon*horizon) * (1.0 / pow(dY, 4.0)) * dPressure;
 
 			//NOTE: when pressure outside of a node is greater than pressure inside the node,

@@ -55,7 +55,7 @@
 #include <Teuchos_Assert.hpp>
 #include <Epetra_SerialComm.h>
 #include <Sacado.hpp>
-#include <boost/math/special_functions/fpclassify.hpp>
+#include <cmath>
 
 using namespace std;
 
@@ -367,7 +367,7 @@ PeridigmNS::ElasticMaterial::computeAutomaticDifferentiationJacobian(const doubl
     for(int row=0 ; row<numDof ; ++row){
       for(int col=0 ; col<numDof ; ++col){
 	value = force_AD[row].dx(col) * cellVolume[row/3];
-	TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite(value), "**** NaN detected in ElasticMaterial::computeAutomaticDifferentiationJacobian().\n");
+	TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(value), "**** NaN detected in ElasticMaterial::computeAutomaticDifferentiationJacobian().\n");
         scratchMatrix(row, col) = value;
       }
     }

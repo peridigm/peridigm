@@ -47,7 +47,7 @@
 
 #include "Peridigm_BoundaryCondition.hpp"
 #include "Peridigm.hpp"
-#include <boost/math/special_functions/fpclassify.hpp>
+#include <cmath>
 #include <sstream>
 
 
@@ -170,7 +170,7 @@ void PeridigmNS::DirichletBC::apply(Teuchos::RCP< std::map< std::string, std::ve
       double currentValue = 0.0;
       double previousValue = 0.0;
       evaluateParser(localNodeID,currentValue,previousValue,timeCurrent);
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite(currentValue), "**** NaN returned by dirichlet BC evaluation.\n");
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(currentValue), "**** NaN returned by dirichlet BC evaluation.\n");
       if(isCumulative)
         (*toVector)[localNodeID*fieldDimension + coord] += currentValue;
       else
@@ -199,7 +199,7 @@ void PeridigmNS::DirichletBC::apply(Teuchos::RCP< std::map< std::string, std::ve
           double currentValue = 0.0;
           double previousValue = 0.0;
           evaluateParser(localNodeID,currentValue,previousValue,timeCurrent);
-          TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite(currentValue), "**** NaN returned by dirichlet BC evaluation.\n");
+          TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(currentValue), "**** NaN returned by dirichlet BC evaluation.\n");
           if(isCumulative)
             (*toVector)[localNodeID*fieldDimension + coord] += currentValue;
           else
@@ -248,7 +248,7 @@ void PeridigmNS::DirichletIncrementBC::apply(Teuchos::RCP< std::map< std::string
       evaluateParser(localNodeID,currentValue,previousValue,timeCurrent,timePrevious_);
       const double value = coeff * (currentValue - previousValue)
                  + deltaTCoeff * (currentValue - previousValue) * (1.0 / (timeCurrent - timePrevious_));
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite(value), "**** NaN returned by dirichlet increment BC evaluation.\n");
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(value), "**** NaN returned by dirichlet increment BC evaluation.\n");
       if(isCumulative)
         (*toVector)[localNodeID*fieldDimension + coord] += value;
       else
@@ -279,7 +279,7 @@ void PeridigmNS::DirichletIncrementBC::apply(Teuchos::RCP< std::map< std::string
           evaluateParser(localNodeID,currentValue,previousValue,timeCurrent,timePrevious_);
           const double value = coeff * (currentValue - previousValue)
                          + deltaTCoeff * (currentValue - previousValue) * (1.0 / (timeCurrent - timePrevious_));
-          TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite(value), "**** NaN returned by dirichlet increment BC evaluation.\n");
+          TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(value), "**** NaN returned by dirichlet increment BC evaluation.\n");
           if(isCumulative)
             (*toVector)[localNodeID*fieldDimension + coord] += value;
           else

@@ -56,9 +56,8 @@
 #include <vector>
 #include <map>
 #include <string>
-
-#include <boost/unordered_set.hpp>
-#include <boost/math/special_functions/fpclassify.hpp>
+#include <unordered_set>
+#include <cmath>
 
 #include "Peridigm_Field.hpp"
 #include "Peridigm_HorizonManager.hpp"
@@ -1454,23 +1453,23 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
       blockIt->exportData(*scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
       force->Update(1.0, *scratch, 1.0);
     }
-    PeridigmNS::Timer::self().stopTimer("Gather/Scatter");    
+    PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
     // Check for NaNs in force evaluation
     // We'd like to know now because a NaN will likely cause a difficult-to-unravel crash downstream.
     for(int i=0 ; i<force->MyLength() ; ++i)
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*force)[i]), "**** NaN returned by force evaluation.\n");
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite((*force)[i]), "**** NaN returned by force evaluation.\n");
 
     // Check for NaNs in force evaluation
     // We'd like to know now because a NaN will likely cause a difficult-to-unravel crash downstream.
     for(int i=0 ; i<externalForce->MyLength() ; ++i)
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*externalForce)[i]), "**** NaN returned by external force evaluation.\n");
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite((*externalForce)[i]), "**** NaN returned by external force evaluation.\n");
 
     if(analysisHasContact){
       contactManager->exportData(contactForce);
       // Check for NaNs in contact force evaluation
       for(int i=0 ; i<contactForce->MyLength() ; ++i)
-        TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*contactForce)[i]), "**** NaN returned by contact force evaluation.\n");
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite((*contactForce)[i]), "**** NaN returned by contact force evaluation.\n");
       // Add contact forces to forces
       force->Update(1.0, *contactForce, 1.0);
     }
@@ -1746,10 +1745,10 @@ void PeridigmNS::Peridigm::computeInternalForce()
 
   // Run some checks to make sure things haven't gone haywire
   for(int i=0 ; i<u->MyLength() ; ++i){
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*x)[i]), "**** NaN detetected in vector x in Peridigm::computeInternalForce().\n");
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*u)[i]), "**** NaN detetected in vector u in Peridigm::computeInternalForce().\n");
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*y)[i]), "**** NaN detetected in vector y in Peridigm::computeInternalForce().\n");
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*v)[i]), "**** NaN detetected in vector v in Peridigm::computeInternalForce().\n");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite((*x)[i]), "**** NaN detetected in vector x in Peridigm::computeInternalForce().\n");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite((*u)[i]), "**** NaN detetected in vector u in Peridigm::computeInternalForce().\n");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite((*y)[i]), "**** NaN detetected in vector y in Peridigm::computeInternalForce().\n");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite((*v)[i]), "**** NaN detetected in vector v in Peridigm::computeInternalForce().\n");
   }
 
   // Copy data from mothership vectors to overlap vectors in data manager
@@ -1774,7 +1773,7 @@ void PeridigmNS::Peridigm::computeInternalForce()
 
   // Run some checks to make sure things haven't gone haywire
   for(int i=0 ; i<force->MyLength() ; ++i){
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*force)[i]), "**** NaN detetected in force vector in Peridigm::computeInternalForce().\n");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite((*force)[i]), "**** NaN detetected in force vector in Peridigm::computeInternalForce().\n");
   }
 
   // convert force density to force
@@ -3050,7 +3049,7 @@ double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> 
 
   // compute the current residual
   double unperturbedResidualNorm = computeQuasiStaticResidual(residual);
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite(unperturbedResidualNorm), "**** NaN detected in residual calculation in quasiStaticsLineSearch().\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(unperturbedResidualNorm), "**** NaN detected in residual calculation in quasiStaticsLineSearch().\n");
   if(unperturbedResidualNorm == 0.0)
     return 0.0;
 
@@ -3159,7 +3158,7 @@ double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> 
 		else{
     	*deltaU = *tempVector;
 		}
-    if(boost::math::isfinite(residualNorm) && residualNorm < bestResidual){
+    if(std::isfinite(residualNorm) && residualNorm < bestResidual){
       bestAlpha = alpha;
       bestResidual = residualNorm;
     }
@@ -3234,7 +3233,7 @@ double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> 
 	else{
     	*deltaU = *tempVector;
 	}
-    if(boost::math::isfinite(residualNorm)){
+    if(std::isfinite(residualNorm)){
       if(residualNorm < bestResidual){
         bestAlpha = alpha;
         bestResidual = residualNorm;
@@ -3693,7 +3692,7 @@ void PeridigmNS::Peridigm::allocateJacobian(const int numDoFs) {
   tangent = Teuchos::rcp(new Epetra_FECrsMatrix(CV, *tangentMap, numEntriesPerRow, ignoreNonLocalEntries));
 
   // Store nonzero columns for each row, with everything in global indices
-  map<int, boost::unordered_set<int> > rowEntries;
+  map<int, std::unordered_set<int> > rowEntries;
 
   // Loop over the neighborhood for each locally-owned point and record non-zero entries in the matrix.
   // Entries will exist for any two points that are bonded, and any two points that are bonded to a common third point.
@@ -3734,7 +3733,7 @@ void PeridigmNS::Peridigm::allocateJacobian(const int numDoFs) {
   // Allocate space in the global Epetra_FECrsMatrix
   vector<int> indices;
   vector<double> zeros;
-  for(map<int, boost::unordered_set<int> >::iterator rowEntry=rowEntries.begin(); rowEntry!=rowEntries.end() ; ++rowEntry){
+  for(map<int, std::unordered_set<int> >::iterator rowEntry=rowEntries.begin(); rowEntry!=rowEntries.end() ; ++rowEntry){
     unsigned int numRowNonzeros = rowEntry->second.size();
     if(zeros.size() < numRowNonzeros)
       zeros.resize(numRowNonzeros, 0.0);
@@ -3742,7 +3741,7 @@ void PeridigmNS::Peridigm::allocateJacobian(const int numDoFs) {
     // Load indices into a sorted vector
     indices.resize(numRowNonzeros);
     int i=0;
-    for(boost::unordered_set<int>::const_iterator globalIndex=rowEntry->second.begin() ; globalIndex!=rowEntry->second.end() ; ++globalIndex)
+    for(std::unordered_set<int>::const_iterator globalIndex=rowEntry->second.begin() ; globalIndex!=rowEntry->second.end() ; ++globalIndex)
       indices[i++] = *globalIndex;
     sort(indices.begin(), indices.end());
 
@@ -3895,17 +3894,17 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
   // Check for NaNs in force evaluation
   // We'd like to know now because a NaN will likely cause a difficult-to-unravel crash downstream.
   for(int i=0 ; i<force->MyLength() ; ++i)
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*force)[i]), "**** NaN returned by force evaluation.\n");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite((*force)[i]), "**** NaN returned by force evaluation.\n");
 	
 if(analysisHasMultiphysics){
 		for(int i=0 ; i<fluidFlow->MyLength() ; ++i)
-			TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*fluidFlow)[i]), "**** NaN returned by fluidFlow evaluation.\n");
+			TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite((*fluidFlow)[i]), "**** NaN returned by fluidFlow evaluation.\n");
 		for(int i=0 ; i<combinedForce->MyLength() ; ++i)
-			TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*combinedForce)[i]), "**** NaN returned by fluidFlow evaluation.\n");
+			TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite((*combinedForce)[i]), "**** NaN returned by fluidFlow evaluation.\n");
 	}
 
   for(int i=0 ; i<externalForce->MyLength() ; ++i)
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(!boost::math::isfinite((*externalForce)[i]), "**** NaN returned by external force evaluation.\n");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite((*externalForce)[i]), "**** NaN returned by external force evaluation.\n");
 
   // copy the internal force to the residual vector
   // note that due to restrictions on CrsMatrix, these vectors have different (but equivalent) maps

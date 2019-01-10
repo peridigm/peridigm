@@ -98,7 +98,7 @@ TEUCHOS_UNIT_TEST( Q2CylinderRingHorizon, RingHorizonTest) {
 	/*
 	 * This produces 85 cells in a ring for the Q2 cylinder geometry
 	 */
-	Spec1D thetaSpec(ring2dSpec.getNumRays(), 0.0, 2.0*M_PI);
+	Spec1D thetaSpec(ring2dSpec.getNumRays(), 0.0, 2.0*PeridigmNS::value_of_pi());
 	/*
 	 * Compute number of cells along length of cylinder so that aspect ratio
 	 * is cells is approximately 1
@@ -365,7 +365,7 @@ TEUCHOS_UNIT_TEST( Q2CylinderRingHorizon, NeighborhoodSizesTest) {
 	/*
 	 * This produces 85 cells in a ring for the Q2 cylinder geometry
 	 */
-	Spec1D thetaSpec(ring2dSpec.getNumRays(), 0.0, 2.0*M_PI);
+	Spec1D thetaSpec(ring2dSpec.getNumRays(), 0.0, 2.0*PeridigmNS::value_of_pi());
 	/*
 	 * Compute number of cells along length of cylinder so that aspect ratio
 	 * is cells is approximately 1
@@ -530,7 +530,7 @@ TEUCHOS_UNIT_TEST( Q2CylinderRingHorizon, NeighborhoodsTest) {
 	/*
 	 * This produces 85 cells in a ring for the Q2 cylinder geometry
 	 */
-	Spec1D thetaSpec(ring2dSpec.getNumRays(), 0.0, 2.0*M_PI);
+	Spec1D thetaSpec(ring2dSpec.getNumRays(), 0.0, 2.0*PeridigmNS::value_of_pi());
 	/*
 	 * Compute number of cells along length of cylinder so that aspect ratio
 	 * is cells is approximately 1
@@ -555,7 +555,7 @@ TEUCHOS_UNIT_TEST( Q2CylinderRingHorizon, NeighborhoodsTest) {
 	/*
 	 * Testing
 	 */
-	double cylinderVolume = M_PI*(outerRadius*outerRadius-innerRadius*innerRadius)*cylinderLength;
+	double cylinderVolume = PeridigmNS::value_of_pi()*(outerRadius*outerRadius-innerRadius*innerRadius)*cylinderLength;
 	double sumCellVol=0.0;
 	{
 		size_t i=0,j=0,k=0,proc=0;
