@@ -54,6 +54,7 @@
 #include "QuickGridData.h"
 #include "Peridigm_Constants.hpp"
 #include <functional>
+#include <fstream>
 
 
 namespace QUICKGRID {
@@ -63,6 +64,11 @@ using std::shared_ptr;
 using UTILITIES::Array;
 using UTILITIES::Vector3D;
 using std::binary_function;
+
+inline bool file_exists (const std::string& name) {
+  std::ifstream f(name.c_str());
+  return f.good();
+}
 
 bool NoOpNormFunction (const double* u, const double* v, double r);
 bool SphericalNormFunction (const double* u, const double* v, double r);
@@ -82,7 +88,7 @@ Array<double> getDiscretization(const SpecRing2D& spec);
 Array<double> getDiscretization(const SpecRing2D& spec, const Spec1D& axisSpec);
 QuickGridData getDiscretization(size_t rank, QuickGridMeshGenerationIterator &cellIter);
 QuickGridData allocatePdGridData(size_t numCells, size_t dimension);
-shared_ptr<QuickGridMeshGenerationIterator> getMeshGenerator(size_t numProcs, const std::string& json_filename);
+shared_ptr<QuickGridMeshGenerationIterator> getMeshGenerator(size_t numProcs, const std::string& yaml_file_name);
 void print_meta_data(const QuickGridData& gridData, const std::string& label="");
 
 

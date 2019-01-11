@@ -43,11 +43,8 @@
 // ************************************************************************
 //@HEADER
 
-#include <boost/property_tree/json_parser.hpp>
-
 #include <cmath>
 #include <iostream>
-#include <fstream>
 #include <sstream>
 
 #include "Field.h"
@@ -58,10 +55,14 @@
 #include "PdZoltan.h"
 #include "BondFilter.h"
 #include "Array.h"
-#include <Teuchos_ParameterList.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
 #include "Epetra_ConfigDefs.h"
 #include "Peridigm_Constants.hpp"
+#include <Teuchos_ParameterList.hpp>
+#ifdef USE_YAML
+  #include <Teuchos_YamlParameterListCoreHelpers.hpp>
+#endif
+
 #ifdef HAVE_MPI
 #include "mpi.h"
 #include "Epetra_MpiComm.h"
@@ -98,42 +99,40 @@ void probe_shear
 		double m_code
 );
 
-
-void set_static_data(const std::string& json_filename)
+void set_static_data(const std::string& yaml_file_name)
 {
-	// Create an empty property tree object
-	using boost::property_tree::ptree;
-	ptree pt;
+   Teuchos::ParameterList params;
+   Teuchos::Ptr<Teuchos::ParameterList> params_ptr(&params);
+   if (!QUICKGRID::file_exists(yaml_file_name)) {
+     std::string msg = "\n\n**** Error, failed to open file " + yaml_file_name;
+     msg += " (unit tests may need to be executed from within the directory where they reside).";
+     std::cout << msg << std::endl;;
+     throw std::runtime_error(msg);
+   }
+#ifdef USE_YAML
+   Teuchos::updateParametersFromYamlFile(yaml_file_name, params_ptr);
+#else
+   std::string msg = "\n**** Error, unit test requires YAML.";
+   std::cout << "\n" << msg << std::endl;;
+   throw std::runtime_error(msg);
+#endif
 
-	try {
-		read_json(json_filename, pt);
-	} catch(std::exception& e){
-		std::cerr << e.what();
-		std::exit(1);
-	}
+   Teuchos::ParameterList disc_params = params.sublist("Discretization");
+   horizon = disc_params.get<double>("Horizon");
+   std::string type = disc_params.get<std::string>("Type");
 
-	/*
-	 * Get Discretization
-	 */
-	ptree discretization_tree=pt.find("Discretization")->second;
-	std::string path=discretization_tree.get<std::string>("Type");
-	horizon=pt.get<double>("Discretization.Horizon");
-
-	if("QuickGrid.TensorProduct3DMeshGenerator"==path){
-
-		nx = pt.get<int>(path+".Number Points X");
-		ny = pt.get<int>(path+".Number Points Y");
-		nz = pt.get<int>(path+".Number Points Z");
-
-	} else {
-		std::string s;
-		s = "Error-->ut_naiveQuadratureConvergenceStudy\n";
-		s += "\tTest only works for Discretization.Type==QuickGrid.TensorProduct3DMeshGenerator\n";
-		throw std::runtime_error(s);
-	}
-
+   if(type == "QuickGrid.TensorProduct3DMeshGenerator"){
+    Teuchos::ParameterList mesh_params = params.sublist("QuickGrid").sublist("TensorProduct3DMeshGenerator");
+   	nx = mesh_params.get<int>("Number Points X");
+   	ny = mesh_params.get<int>("Number Points Y");
+   	nz = mesh_params.get<int>("Number Points Z");
+   }
+   else{
+     std::string msg = "\n**** Error, failed to parse " + yaml_file_name + "\n";
+     std::cout << "\n" << msg << std::endl;;
+     throw std::runtime_error(msg);
+   }
 }
-
 
 void write_table_1_header(const std::string& output_tex_table){
 	std::stringstream table_out;
@@ -171,9 +170,9 @@ void close_table_1(const std::string& output_tex_table) {
 }
 
 
-QUICKGRID::QuickGridData getGrid(const string& _json_filename) {
+QUICKGRID::QuickGridData getGrid(const string& _yaml_filename) {
 	shared_ptr<QUICKGRID::QuickGridMeshGenerationIterator> g;
-	g = QUICKGRID::getMeshGenerator(numProcs,_json_filename);
+	g = QUICKGRID::getMeshGenerator(numProcs,_yaml_filename);
 	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, *g);
 
 	// This load-balances
@@ -304,8 +303,8 @@ void scf_probe(PDNEIGH::NeighborhoodList list, Array<int> &neighborhoodPtr, Arra
 
 TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n3Test) {
 
-	std::string json_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=3.json";
-	set_static_data(json_filename);
+	std::string yaml_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=3.yaml";
+	set_static_data(yaml_filename);
          /*
 	 * Unit test looks exclusively at the cell at the center of cube;
 	 * This cell ID depends upon nx, ny, nz
@@ -319,7 +318,7 @@ TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n3Test) {
 	TEST_ASSERT(nx==ny);
 	TEST_ASSERT(nx==nz);
 
-	QUICKGRID::QuickGridData gridData = getGrid(json_filename);
+	QUICKGRID::QuickGridData gridData = getGrid(yaml_filename);
 
 	// This load-balances
 	gridData = PDNEIGH::getLoadBalancedDiscretization(gridData);
@@ -383,8 +382,8 @@ TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n3Test) {
 
 TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n5Test) {
 
-	std::string json_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=5.json";
-	set_static_data(json_filename);
+	std::string yaml_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=5.yaml";
+	set_static_data(yaml_filename);
          /*
 	 * Unit test looks exclusively at the cell at the center of cube;
 	 * This cell ID depends upon nx, ny, nz
@@ -398,7 +397,7 @@ TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n5Test) {
 	TEST_ASSERT(nx==ny);
 	TEST_ASSERT(nx==nz);
 
-	QUICKGRID::QuickGridData gridData = getGrid(json_filename);
+	QUICKGRID::QuickGridData gridData = getGrid(yaml_filename);
 
 	// This load-balances
 	gridData = PDNEIGH::getLoadBalancedDiscretization(gridData);
@@ -462,8 +461,8 @@ TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n5Test) {
 
 TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n7Test) {
 
-	std::string json_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=7.json";
-	set_static_data(json_filename);
+	std::string yaml_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=7.yaml";
+	set_static_data(yaml_filename);
         /*
 	 * Unit test looks exclusively at the cell at the center of cube;
 	 * This cell ID depends upon nx, ny, nz
@@ -477,7 +476,7 @@ TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n7Test) {
 	TEST_ASSERT(nx==ny);
 	TEST_ASSERT(nx==nz);
 
-	QUICKGRID::QuickGridData gridData = getGrid(json_filename);
+	QUICKGRID::QuickGridData gridData = getGrid(yaml_filename);
 
 	// This load-balances
 	gridData = PDNEIGH::getLoadBalancedDiscretization(gridData);
@@ -541,8 +540,8 @@ TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n7Test) {
 
 TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n9Test) {
 
-	std::string json_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=9.json";
-	set_static_data(json_filename);
+	std::string yaml_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=9.yaml";
+	set_static_data(yaml_filename);
         /*
 	 * Unit test looks exclusively at the cell at the center of cube;
 	 * This cell ID depends upon nx, ny, nz
@@ -556,7 +555,7 @@ TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n9Test) {
 	TEST_ASSERT(nx==ny);
 	TEST_ASSERT(nx==nz);
 
-	QUICKGRID::QuickGridData gridData = getGrid(json_filename);
+	QUICKGRID::QuickGridData gridData = getGrid(yaml_filename);
 
 	// This load-balances
 	gridData = PDNEIGH::getLoadBalancedDiscretization(gridData);
@@ -620,8 +619,8 @@ TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n9Test) {
 
 TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n11Test) {
 
-	std::string json_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=11.json";
-	set_static_data(json_filename);
+	std::string yaml_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=11.yaml";
+	set_static_data(yaml_filename);
         /*
 	 * Unit test looks exclusively at the cell at the center of cube;
 	 * This cell ID depends upon nx, ny, nz
@@ -635,7 +634,7 @@ TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n11Test) {
 	TEST_ASSERT(nx==ny);
 	TEST_ASSERT(nx==nz);
 
-	QUICKGRID::QuickGridData gridData = getGrid(json_filename);
+	QUICKGRID::QuickGridData gridData = getGrid(yaml_filename);
 
 	// This load-balances
 	gridData = PDNEIGH::getLoadBalancedDiscretization(gridData);
@@ -698,8 +697,8 @@ TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n11Test) {
 
 TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n13Test) {
 
-	std::string json_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=13.json";
-	set_static_data(json_filename);
+	std::string yaml_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=13.yaml";
+	set_static_data(yaml_filename);
 	/*
 	 * Unit test looks exclusively at the cell at the center of cube;
 	 * This cell ID depends upon nx, ny, nz
@@ -713,7 +712,7 @@ TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n13Test) {
 	TEST_ASSERT(nx==ny);
 	TEST_ASSERT(nx==nz);
 
-	QUICKGRID::QuickGridData gridData = getGrid(json_filename);
+	QUICKGRID::QuickGridData gridData = getGrid(yaml_filename);
 
 	// This load-balances
 	gridData = PDNEIGH::getLoadBalancedDiscretization(gridData);
@@ -775,8 +774,8 @@ TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n13Test) {
 
 TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n17Test) {
 
-	std::string json_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=17.json";
-	set_static_data(json_filename);
+	std::string yaml_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=17.yaml";
+	set_static_data(yaml_filename);
 
         /*
 	 * Unit test looks exclusively at the cell at the center of cube;
@@ -791,7 +790,7 @@ TEUCHOS_UNIT_TEST(NaiveQuadratureConvergenceStudy, n17Test) {
 	TEST_ASSERT(nx==ny);
 	TEST_ASSERT(nx==nz);
 
-	QUICKGRID::QuickGridData gridData = getGrid(json_filename);
+	QUICKGRID::QuickGridData gridData = getGrid(yaml_filename);
 
 	// This load-balances
 	gridData = PDNEIGH::getLoadBalancedDiscretization(gridData);

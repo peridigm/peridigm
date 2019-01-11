@@ -43,7 +43,6 @@
 // ************************************************************************
 //@HEADER
 
-#include <boost/property_tree/json_parser.hpp>
 #include <string>
 #include "QuickGrid.h"
 #include "QuickGridData.h"
@@ -55,12 +54,15 @@
 #include "Vector3D.h"
 #include "Array.h"
 #include <set>
-#include <Teuchos_ParameterList.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
 #include "Epetra_Comm.h"
 #include "Epetra_BlockMap.h"
 #include "Epetra_Vector.h"
 #include "Epetra_Import.h"
+#include <Teuchos_ParameterList.hpp>
+#ifdef USE_YAML
+  #include <Teuchos_YamlParameterListCoreHelpers.hpp>
+#endif
 
 #include "Epetra_ConfigDefs.h"
 #ifdef HAVE_MPI
@@ -87,7 +89,7 @@ using std::cout;
 
 static size_t myRank;
 static size_t numProcs;
-const string json_filename="./input_files/ut_ringCellVolumeFraction.json";
+const string yaml_file_name="./input_files/ut_ringCellVolumeFraction.yaml";
 
 void compute_neighborhood_volumes
 (
@@ -158,46 +160,49 @@ void compute_cell_volumes
 
 TEUCHOS_UNIT_TEST(RingCellVolumeFraction, SphereTest) {
 
+  Teuchos::ParameterList params;
+  Teuchos::Ptr<Teuchos::ParameterList> params_ptr(&params);
+  if (!QUICKGRID::file_exists(yaml_file_name)) {
+    std::string msg = "\n\n**** Error, failed to open file " + yaml_file_name;
+    msg += " (unit tests may need to be executed from within the directory where they reside).";
+    std::cout << msg << std::endl;;
+    throw std::runtime_error(msg);
+  }
+#ifdef USE_YAML
+  Teuchos::updateParametersFromYamlFile(yaml_file_name, params_ptr);
+#else
+  std::string msg = "\n**** Error, unit test requires YAML.";
+  std::cout << "\n" << msg << std::endl;;
+  throw std::runtime_error(msg);
+#endif
 
-    // Create an empty property tree object
-    using boost::property_tree::ptree;
-    ptree pt;
+  Teuchos::ParameterList disc_params = params.sublist("Discretization");
+  double horizon = disc_params.get<double>("Horizon");
+  std::string type = disc_params.get<std::string>("Type");
 
-    // Load the json file into the property tree. If reading fails
-    // (cannot open file, parse error), an exception is thrown.
-    read_json(json_filename, pt);
-
-    /*
-     * Get Discretization
-     */
-    ptree discretization_tree=pt.find("Discretization")->second;
-    string path=discretization_tree.get<string>("Type");
-    double horizon=pt.get<double>("Discretization.Horizon");
-//    BOOST_CHECK(0.25==horizon);
-
-	/*
+  /*
 	 * Construct ring spec
 	 */
 	// set ring at center point
 	// Note that ring is only translated to the location
-    Vector3D center;
-    ptree center_tree = pt.get_child(path+".Ring Center");
-    size_t p=0;
-    for(ptree::iterator i=center_tree.begin();i!=center_tree.end();i++,p++)
-    	center[p]=i->second.get_value<double>();
+  Vector3D center;
+  Teuchos::ParameterList mesh_params = params.sublist("QuickGrid").sublist("TensorProductCylinderMeshGenerator");
+  center[0] = mesh_params.get<double>("Ring Center X");
+  center[1] = mesh_params.get<double>("Ring Center Y");
+  center[2] = mesh_params.get<double>("Ring Center Z");
 
-	double innerRadius = pt.get<double>(path+".Inner Radius");
+  double innerRadius = mesh_params.get<double>("Inner Radius");
 	TEST_ASSERT(16.0==innerRadius);
-	double outerRadius = pt.get<double>(path+".Outer Radius");
+	double outerRadius = mesh_params.get<double>("Outer Radius");
 	TEST_ASSERT(17.0==outerRadius);
-	double cylinderLength=pt.get<double>(path+".Cylinder Length");
+	double cylinderLength=mesh_params.get<double>("Cylinder Length");
 	TEST_ASSERT(1.0==cylinderLength);
 	/*
 	 * Note that zStart is set to the z - coordinate of 'center'
 	 */
 	double zStart=center[2];
 	TEST_ASSERT(0.0==zStart);
-	size_t numRings = pt.get<size_t>(path+".Number Points Radius");
+	size_t numRings = mesh_params.get<int>("Number Points Radius");
 //	BOOST_CHECK(5==numRings);
 	SpecRing2D ring2dSpec(center,innerRadius,outerRadius,numRings);
 

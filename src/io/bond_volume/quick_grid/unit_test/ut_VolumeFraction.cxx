@@ -43,7 +43,6 @@
 // ************************************************************************
 //@HEADER
 
-#include <boost/property_tree/json_parser.hpp>
 #include <string>
 #include "QuickGrid.h"
 #include "QuickGridData.h"
@@ -88,7 +87,6 @@ using std::cout;
 
 static size_t myRank;
 static size_t numProcs;
-const string json_filename="./input_files/ut_CartesianTensorProductVolumeFraction.json";
 
 void compute_neighborhood_volumes
 (
@@ -101,7 +99,6 @@ void compute_neighborhood_volumes
 )
 {
 	size_t N = list.get_num_owned_points();
-	
 
 	const int *neighPtr = list.get_local_neighborhood().get();
 	const double *xOwned = list.get_owned_x().get();
@@ -144,7 +141,7 @@ void compute_cell_volumes
 )
 {
 	size_t N = list.get_num_owned_points();
-	
+
 	const double *xOwned = list.get_owned_x().get();
 	double *vOwned = specialCellVolume.get();
 	for(size_t p=0;p<N;p++, xOwned +=3, vOwned++){
@@ -162,42 +159,20 @@ void compute_cell_volumes
 
 TEUCHOS_UNIT_TEST(VolumeFraction, CubeTest) {
 
-    // Create an empty property tree object
-    using boost::property_tree::ptree;
-    ptree pt;
+  double horizon = 0.375;
 
-    // Load the json file into the property tree. If reading fails
-    // (cannot open file, parse error), an exception is thrown.
-    read_json(json_filename, pt);
+	double xStart = 0.0;
+	double yStart = 0.0;
+	double zStart = 0.0;
 
-    /*
-     * Get Discretization
-     */
-    ptree discretization_tree=pt.find("Discretization")->second;
-    string path=discretization_tree.get<string>("Type");
-    double horizon=pt.get<double>("Discretization.Horizon");
+	double xLength = 1.0;
+	double yLength = 1.0;
+	double zLength = 1.0;
 
-	double xStart = pt.get<double>(path+".X Origin");
-	TEST_ASSERT(0.0==xStart);
-	double yStart = pt.get<double>(path+".Y Origin");
-	TEST_ASSERT(0.0==yStart);
-	double zStart = pt.get<double>(path+".Z Origin");
-	TEST_ASSERT(0.0==zStart);
+	const int nx = 10;
+	const int ny = 10;
+	const int nz = 10;
 
-	double xLength = pt.get<double>(path+".X Length");
-	TEST_ASSERT(1.0==xLength);
-	double yLength = pt.get<double>(path+".Y Length");
-	TEST_ASSERT(1.0==yLength);
-	double zLength = pt.get<double>(path+".Z Length");
-	TEST_ASSERT(1.0==zLength);
-
-
-	const int nx = pt.get<int>(path+".Number Points X");
-	TEST_ASSERT(10==nx);
-	const int ny = pt.get<int>(path+".Number Points Y");
-	TEST_ASSERT(10==ny);
-	const int nz = pt.get<int>(path+".Number Points Z");
-	TEST_ASSERT(10==nz);
 	const QUICKGRID::Spec1D xSpec(nx,xStart,xLength);
 	const QUICKGRID::Spec1D ySpec(ny,yStart,yLength);
 	const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);
@@ -207,7 +182,6 @@ TEUCHOS_UNIT_TEST(VolumeFraction, CubeTest) {
 	// Create decomposition iterator
 	QUICKGRID::TensorProduct3DMeshGenerator cellPerProcIter(numProcs, horizon, xSpec, ySpec, zSpec);
 	QUICKGRID::QuickGridData gridData = QUICKGRID::getDiscretization(myRank, cellPerProcIter);;
-
 
 	// This load-balances
 	gridData = PDNEIGH::getLoadBalancedDiscretization(gridData);

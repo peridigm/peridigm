@@ -86,8 +86,8 @@ int neighborhoodPtr_answer[] = {0,2};
 
 using QUICKGRID::QuickGridMeshGenerationIterator;
 
-QUICKGRID::QuickGridData getGrid(const string json_filename, int numProcs, int myRank) {
-	shared_ptr<QuickGridMeshGenerationIterator> g = QUICKGRID::getMeshGenerator(numProcs,json_filename);
+QUICKGRID::QuickGridData getGrid(const string yaml_filename, int numProcs, int myRank) {
+	shared_ptr<QuickGridMeshGenerationIterator> g = QUICKGRID::getMeshGenerator(numProcs,yaml_filename);
 	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, *g);
 
 	// This load-balances
@@ -116,8 +116,8 @@ TEUCHOS_UNIT_TEST(ReLoadBalance, TwoPointReloadBalanceTest) {
         const int* neighborhood;
         const int* neighborhoodPtr;
         
-	const string json_file="input_files/ut_twoPointReLoadBalance.json";
-	QUICKGRID::QuickGridData decomp_1 = getGrid(json_file, numProcs, myRank);
+	const string yaml_file="input_files/ut_twoPointReLoadBalance.yaml";
+	QUICKGRID::QuickGridData decomp_1 = getGrid(yaml_file, numProcs, myRank);
 
         std::cout << "\ttwoPointReloadBalance: UNBALANCED MESH assert_grid()\n" << "\n";
 
@@ -137,9 +137,6 @@ TEUCHOS_UNIT_TEST(ReLoadBalance, TwoPointReloadBalanceTest) {
         neighborhoodPtr = decomp_1.neighborhoodPtr.get();
 	for(size_t n=0;n<numPoints_answer;n++,neighborhoodPtr++)
 	    TEST_ASSERT(neighborhoodPtr_answer[n]==*neighborhoodPtr);
-        
-        
-	
 
 	/*
 	 * Reload balance

@@ -1,0 +1,16 @@
+Unit test data:
+
+	"Discretization":
+		"Horizon": 2.1
+		"Type": "QuickGrid.TensorProduct3DMeshGenerator"
+	"QuickGrid":
+		"TensorProduct3DMeshGenerator":
+			"X Origin": -2.0
+			"Y Origin": -2.0
+			"Z Origin": -2.0
+			"X Length": 4.0
+			"Y Length": 4.0
+			"Z Length": 4.0
+			"Number Points X": 2
+			"Number Points Y": 2
+			"Number Points Z": 2

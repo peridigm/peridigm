@@ -46,12 +46,14 @@
 #include "calculators.h"
 #include "utilities/Array.h"
 
-#include <boost/property_tree/json_parser.hpp>
 #include <iostream>
 #include <stdexcept>
 #include <string>
 
-
+#include <Teuchos_ParameterList.hpp>
+#ifdef USE_YAML
+  #include <Teuchos_YamlParameterListCoreHelpers.hpp>
+#endif
 
 namespace BOND_VOLUME {
 
@@ -59,45 +61,41 @@ namespace QUICKGRID {
 
 using UTILITIES::Array;
 
-  std::shared_ptr<Bond_Volume_Calculator> get_Bond_Volume_Calculator(const std::string& json_filename) {
+  std::shared_ptr<Bond_Volume_Calculator> get_Bond_Volume_Calculator(const std::string& yaml_file_name) {
 
-	// Create an empty property tree object
-	using boost::property_tree::ptree;
-	ptree pt;
+   Teuchos::ParameterList params;
+   Teuchos::Ptr<Teuchos::ParameterList> params_ptr(&params);
+   if (!::QUICKGRID::file_exists(yaml_file_name)) {
+     std::string msg = "\n**** Error, failed to open file " + yaml_file_name;
+     msg += " (unit tests may need to be executed from within the directory where they reside).";
+     std::cout << "\n" << msg << std::endl;;
+     throw std::runtime_error(msg);
+   }
+#ifdef USE_YAML
+   Teuchos::updateParametersFromYamlFile(yaml_file_name, params_ptr);
+#else
+   std::string msg = "\n\n**** Error, get_Bond_Volume_Calculator() requires YAML.";
+   std::cout << msg << std::endl;;
+   throw std::runtime_error(msg);
+#endif
 
-	// Load the json file into the property tree. If reading fails
-	// (cannot open file, parse error), an exception is thrown.
+   std::shared_ptr<Bond_Volume_Calculator> c;
 
-	try {
-		read_json(json_filename, pt);
-	} catch(std::exception& e){
-		std::cerr << e.what();
-		std::exit(1);
-	}
+   Teuchos::ParameterList disc_params = params.sublist("Discretization");
+   double horizon = disc_params.get<double>("Horizon");
+   std::string type = disc_params.get<std::string>("Type");
 
-	/*
-	 * Get Discretization
-	 */
-	ptree discretization_tree=pt.find("Discretization")->second;
-	std::string path=discretization_tree.get<std::string>("Type");
-	double horizon=pt.get<double>("Discretization.Horizon");
-
-	std::shared_ptr<Bond_Volume_Calculator> c;
-
-	if("QuickGrid.TensorProduct3DMeshGenerator"==path){
-		double xStart = pt.get<double>(path+".X Origin");
-		double yStart = pt.get<double>(path+".Y Origin");
-		double zStart = pt.get<double>(path+".Z Origin");
-
-		double xLength = pt.get<double>(path+".X Length");
-		double yLength = pt.get<double>(path+".Y Length");
-		double zLength = pt.get<double>(path+".Z Length");
-
-
-		const int nx = pt.get<int>(path+".Number Points X");
-		const int ny = pt.get<int>(path+".Number Points Y");
-		const int nz = pt.get<int>(path+".Number Points Z");
-
+   if(type == "QuickGrid.TensorProduct3DMeshGenerator"){
+    Teuchos::ParameterList mesh_params = params.sublist("QuickGrid").sublist("TensorProduct3DMeshGenerator");
+   	double xStart = mesh_params.get<double>("X Origin");
+   	double yStart = mesh_params.get<double>("Y Origin");
+   	double zStart = mesh_params.get<double>("Z Origin");
+   	double xLength = mesh_params.get<double>("X Length");
+   	double yLength = mesh_params.get<double>("Y Length");
+   	double zLength = mesh_params.get<double>("Z Length");
+   	const int nx = mesh_params.get<int>("Number Points X");
+   	const int ny = mesh_params.get<int>("Number Points Y");
+   	const int nz = mesh_params.get<int>("Number Points Z");
 		const QUICKGRID::Spec1D xSpec(nx,xStart,xLength);
 		const QUICKGRID::Spec1D ySpec(ny,yStart,yLength);
 		const QUICKGRID::Spec1D zSpec(nz,zStart,zLength);

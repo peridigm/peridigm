@@ -45,7 +45,6 @@
 
 #include <cmath>
 #include <iostream>
-#include <fstream>
 #include <sstream>
 #include <string>
 #include <string.h>
@@ -59,8 +58,11 @@
 #include "PdZoltan.h"
 #include "BondFilter.h"
 #include "Array.h"
-#include <Teuchos_ParameterList.hpp>
 #include <Teuchos_UnitTestHarness.hpp>
+#include <Teuchos_ParameterList.hpp>
+#ifdef USE_YAML
+  #include <Teuchos_YamlParameterListCoreHelpers.hpp>
+#endif
 
 #include "Epetra_ConfigDefs.h"
 #ifdef HAVE_MPI
@@ -102,180 +104,41 @@ void probe_shear
 		double m_code
 );
 
-string findNodeValue( string& str, const std::string &nodename){
-
-      const char delimiter[2] = ":";
-      char *token;
-      char *first;
-      char *last;
-      char *destination = 0;
-
-      const char* node_name = &nodename[0];
-
-      char* tempStringContainer = (char*)malloc(sizeof(char)*(str.length() + 1));
-
-      for (unsigned int i = 0; i < str.length(); i++){
-           tempStringContainer[i] = str[i];
-      }
-
-      tempStringContainer[str.length()] = '\0';
-
-      token = strtok( tempStringContainer, delimiter);
-
-      while (token != NULL){
-
-             if (strstr( token, node_name) == NULL) {
-
-                if (strrchr(token, '"') != NULL){
-
-                   first = strchr(token, '"');
-                   last  = strrchr(token, '"');
-
-                   int first_occurrence = first - token + 1;
-                   int last_occurrence = last - token + 1;
-
-                   destination = (char*)malloc(sizeof(char)*(last_occurrence - first_occurrence));
-
-                   int t = 0;
-
-                   for (int i = first_occurrence; i < (last_occurrence - 1); i++){
-                        destination[t] = token[i];
-                        t++;
-                   }
-
-                   destination[t] ='\0';
-
-               }
-
-
-               else{
-
-                 if ( (strrchr( token, ',') != NULL)  && (token[strlen(token) - 1] == ',') ) {
-                       destination = (char*)malloc(sizeof(char)*strlen(token));
-
-                       strncpy( destination, token, strlen(token) - 1 );
-                       destination[strlen(token) - 1] = '\0';
-
-                 }
-                 else{
-                      destination = (char*)malloc(sizeof(char)*(strlen(token) + 1));
-
-                      strncpy( destination, token, (strlen(token) + 1) );
-                      destination[strlen(token) + 1] = '\0';
-
-                 }
-
-               }
-
-             }
-
-             token = strtok( NULL, delimiter);
-        }
-
-     
-       free(tempStringContainer);
-      
-       string ss(destination);
-
-       return ss;
-       
-}
-
-
-void set_static_data(const std::string& json_filename)
+void set_static_data(const std::string& yaml_file_name)
 {
-	
-        std::ifstream inFile;
-        string str;
+   Teuchos::ParameterList params;
+   Teuchos::Ptr<Teuchos::ParameterList> params_ptr(&params);
+   if (!QUICKGRID::file_exists(yaml_file_name)) {
+     std::string msg = "\n**** Error, failed to open file " + yaml_file_name;
+     msg += " (unit tests may need to be executed from within the directory where they reside).";
+     std::cout << "\n" << msg << std::endl;;
+     throw std::runtime_error(msg);
+   }
+#ifdef USE_YAML
+   Teuchos::updateParametersFromYamlFile(yaml_file_name, params_ptr);
+#else
+   std::string msg = "\n\n**** Error, unit test requires YAML.";
+   std::cout << msg << std::endl;;
+   throw std::runtime_error(msg);
+#endif
 
-        size_t found;
-        
+   Teuchos::ParameterList disc_params = params.sublist("Discretization");
+   horizon = disc_params.get<double>("Horizon");
+   neighborhoodType = disc_params.get<string>("NeighborhoodType");
+   type = disc_params.get<std::string>("Type");
 
-        inFile.open(json_filename.c_str());
-
-         if(!inFile.is_open())
-             cout << "\n**** Warning:  This test can only be run from the directory where it resides (otherwise it won't find the input files) ****\n" << endl;
-
-         while(inFile.good()){
-                getline(inFile, str);
-
-               if( !(str.size() == 0) ){
-
-                  // Discretization node starts here!
-
-                   if  ( (found = str.find("Discretization")) !=  string::npos){
-
-                          getline(inFile, str);
-
-                          while ((str.size() == 0)) getline(inFile, str);
-
-                                if ((found = str.find("Horizon")) !=  string::npos){
-
-                                  
-                                   string ss = findNodeValue(str, "Horizon");
-                                   
-                                   horizon = atof( ss.c_str());
-                                  
-
-                               }
-
-                       getline(inFile, str);
-                       while ((str.size() == 0)) getline(inFile, str);
-
-                       if ((found = str.find("NeighborhoodType")) !=  string::npos){
-                            
-                            neighborhoodType = findNodeValue(str, "NeighborhoodType");
-                                   
-                       }
-
-                        getline(inFile, str);
-                        while ((str.size() == 0)) getline(inFile, str);
-
-                        if ((found = str.find("Type")) !=  string::npos){
- 
-                             type = findNodeValue(str, "Type");
-                             
-                       }
-
-
-                   }     // Discretization node ends here!
-
-
-
-                   if  ( (found = str.find("Number Points X")) !=  string::npos){
-
-                          string ss= findNodeValue(str, "Number Points X");
-                          nx = atoi( ss.c_str());
-
-                   }
-
-                    if  ( (found = str.find("Number Points Y")) !=  string::npos){
-
-                         
-                          string ss= findNodeValue(str, "Number Points Y");   
-                          ny = atoi( ss.c_str());
-                         
-                   }
-
-                    if  ( (found = str.find("Number Points Z")) !=  string::npos){
-                          
-                           string ss= findNodeValue(str, "Number Points Z");      
-                           nz = atoi( ss.c_str());
-                           
-                   }
-                  
-                }
-
-           
-         }
-
-         inFile.close();
-
-
+   if(type == "QuickGrid.TensorProduct3DMeshGenerator"){
+    Teuchos::ParameterList mesh_params = params.sublist("QuickGrid").sublist("TensorProduct3DMeshGenerator");
+   	nx = mesh_params.get<int>("Number Points X");
+   	ny = mesh_params.get<int>("Number Points Y");
+   	nz = mesh_params.get<int>("Number Points Z");
+   }
+   else{
+     std::string msg = "\n**** Error, failed to parse " + yaml_file_name + "\n";
+     std::cout << "\n" << msg << std::endl;;
+     throw std::runtime_error(msg);
+   }
 }
-
-
-
 
 void write_table_1_header(const std::string& output_tex_table){
 	std::stringstream table_out;
@@ -313,9 +176,9 @@ void close_table_1(const std::string& output_tex_table) {
 }
 
 
-QUICKGRID::QuickGridData getGrid(const string& _json_filename) {
+QUICKGRID::QuickGridData getGrid(const string& _yaml_filename) {
 	shared_ptr<QUICKGRID::QuickGridMeshGenerationIterator> g;
-	g = QUICKGRID::getMeshGenerator(numProcs,_json_filename);
+	g = QUICKGRID::getMeshGenerator(numProcs,_yaml_filename);
 	QUICKGRID::QuickGridData decomp =  QUICKGRID::getDiscretization(myRank, *g);
 
 	// This load-balances
@@ -353,12 +216,12 @@ void scf_probe_two( Array<int> &neighborhoodPtr, Array<double> xPtr, Array<doubl
 }
 
 
-void scf_probe_one( shared_ptr<BOND_VOLUME::QUICKGRID::Bond_Volume_Calculator> &c, double &horizon, QUICKGRID::QuickGridData &gridData, double &cell_diagonal, const string& json_filename){
+void scf_probe_one( shared_ptr<BOND_VOLUME::QUICKGRID::Bond_Volume_Calculator> &c, double &horizon, QUICKGRID::QuickGridData &gridData, double &cell_diagonal, const string& yaml_filename){
   
-     c = BOND_VOLUME::QUICKGRID::get_Bond_Volume_Calculator(json_filename);
+     c = BOND_VOLUME::QUICKGRID::get_Bond_Volume_Calculator(yaml_filename);
      horizon = c->get_horizon();
      cell_diagonal=c->get_cell_diagonal();
-     gridData = getGrid(json_filename);
+     gridData = getGrid(yaml_filename);
 
      // This load-balances
      gridData = PDNEIGH::getLoadBalancedDiscretization(gridData);
@@ -441,9 +304,9 @@ void probe_shear
 
 TEUCHOS_UNIT_TEST(BondVolumeConvergenceStudy, n3Test) {
 
-	std::string json_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=3.json";
+	std::string yaml_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=3.yaml";
 
-        set_static_data(json_filename);
+        set_static_data(yaml_filename);
 
          /*
 	 * Unit test looks exclusively at the cell at the center of cube;
@@ -468,7 +331,7 @@ TEUCHOS_UNIT_TEST(BondVolumeConvergenceStudy, n3Test) {
 	 */
 
         
-        scf_probe_one( c, horizon, gridData, cell_diagonal, json_filename);
+        scf_probe_one( c, horizon, gridData, cell_diagonal, yaml_filename);
   
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
 	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon+cell_diagonal);
@@ -536,9 +399,9 @@ TEUCHOS_UNIT_TEST(BondVolumeConvergenceStudy, n3Test) {
 
 TEUCHOS_UNIT_TEST(BondVolumeConvergenceStudy, n5Test) {
 
-	std::string json_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=5.json";
+	std::string yaml_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=5.yaml";
 
-        set_static_data(json_filename);
+        set_static_data(yaml_filename);
 
          /*
 	 * Unit test looks exclusively at the cell at the center of cube;
@@ -563,7 +426,7 @@ TEUCHOS_UNIT_TEST(BondVolumeConvergenceStudy, n5Test) {
 	 */
 
         
-        scf_probe_one( c, horizon, gridData, cell_diagonal, json_filename);
+        scf_probe_one( c, horizon, gridData, cell_diagonal, yaml_filename);
   
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
 	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon+cell_diagonal);
@@ -632,8 +495,8 @@ TEUCHOS_UNIT_TEST(BondVolumeConvergenceStudy, n5Test) {
 
 TEUCHOS_UNIT_TEST(BondVolumeConvergenceStudy, n7Test) {
 
-	std::string json_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=7.json";
-        set_static_data(json_filename);
+	std::string yaml_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=7.yaml";
+        set_static_data(yaml_filename);
 
          /*
 	 * Unit test looks exclusively at the cell at the center of cube;
@@ -658,7 +521,7 @@ TEUCHOS_UNIT_TEST(BondVolumeConvergenceStudy, n7Test) {
 	 */
 
         
-        scf_probe_one( c, horizon, gridData, cell_diagonal, json_filename);
+        scf_probe_one( c, horizon, gridData, cell_diagonal, yaml_filename);
   
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
 	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon+cell_diagonal);
@@ -727,8 +590,8 @@ TEUCHOS_UNIT_TEST(BondVolumeConvergenceStudy, n7Test) {
 
 TEUCHOS_UNIT_TEST(BondVolumeConvergenceStudy, n9Test) {
 
-	std::string json_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=9.json";
-        set_static_data(json_filename);
+	std::string yaml_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=9.yaml";
+        set_static_data(yaml_filename);
 
          /*
 	 * Unit test looks exclusively at the cell at the center of cube;
@@ -753,7 +616,7 @@ TEUCHOS_UNIT_TEST(BondVolumeConvergenceStudy, n9Test) {
 	 */
 
         
-        scf_probe_one( c, horizon, gridData, cell_diagonal, json_filename);
+        scf_probe_one( c, horizon, gridData, cell_diagonal, yaml_filename);
   
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
 	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon+cell_diagonal);
@@ -821,9 +684,9 @@ TEUCHOS_UNIT_TEST(BondVolumeConvergenceStudy, n9Test) {
 
 TEUCHOS_UNIT_TEST(BondVolumeConvergenceStudy, n11Test) {
 
-	std::string json_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=11.json";
+	std::string yaml_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=11.yaml";
 
-        set_static_data(json_filename);
+        set_static_data(yaml_filename);
 
          /*
 	 * Unit test looks exclusively at the cell at the center of cube;
@@ -848,7 +711,7 @@ TEUCHOS_UNIT_TEST(BondVolumeConvergenceStudy, n11Test) {
 	 */
 
         
-        scf_probe_one( c, horizon, gridData, cell_diagonal, json_filename);
+        scf_probe_one( c, horizon, gridData, cell_diagonal, yaml_filename);
   
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
 	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon+cell_diagonal);
@@ -917,8 +780,8 @@ TEUCHOS_UNIT_TEST(BondVolumeConvergenceStudy, n11Test) {
 TEUCHOS_UNIT_TEST(BondVolumeConvergenceStudy, n13Test) {
 
 
-	std::string json_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=13.json";
-        set_static_data(json_filename);
+	std::string yaml_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=13.yaml";
+        set_static_data(yaml_filename);
 
          /*
 	 * Unit test looks exclusively at the cell at the center of cube;
@@ -943,7 +806,7 @@ TEUCHOS_UNIT_TEST(BondVolumeConvergenceStudy, n13Test) {
 	 */
 
         
-        scf_probe_one( c, horizon, gridData, cell_diagonal, json_filename);
+        scf_probe_one( c, horizon, gridData, cell_diagonal, yaml_filename);
   
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
 	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon+cell_diagonal);
@@ -998,7 +861,7 @@ TEUCHOS_UNIT_TEST(BondVolumeConvergenceStudy, n13Test) {
         scf_probe_two( neighborhoodPtr, xPtr, X,Y, bondVolume, c, horizon, yPtr, list , gId, num_neigh, theta, m_code, gamma);
 
 	double tolerance=1.0e-12;
-       
+
 	TEST_COMPARE(theta, <=, tolerance);
 
 
@@ -1012,8 +875,8 @@ TEUCHOS_UNIT_TEST(BondVolumeConvergenceStudy, n13Test) {
 
 TEUCHOS_UNIT_TEST(BondVolumeConvergenceStudy, n17Test) {
 
-	std::string json_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=17.json";
-        set_static_data(json_filename);
+	std::string yaml_filename = "./input_files/ut_bondVolumeConvergenceStudy_n=17.yaml";
+        set_static_data(yaml_filename);
 
          /*
 	 * Unit test looks exclusively at the cell at the center of cube;
@@ -1037,9 +900,8 @@ TEUCHOS_UNIT_TEST(BondVolumeConvergenceStudy, n17Test) {
 	 * Create neighborhood with an enlarged horizon
 	 */
 
-        
-        scf_probe_one( c, horizon, gridData, cell_diagonal, json_filename);
-  
+        scf_probe_one( c, horizon, gridData, cell_diagonal, yaml_filename);
+
 	shared_ptr<Epetra_Comm> comm(new Epetra_MpiComm(MPI_COMM_WORLD));
 	PDNEIGH::NeighborhoodList list(comm,gridData.zoltanPtr.get(),gridData.numPoints,gridData.myGlobalIDs,gridData.myX,horizon+cell_diagonal);
 

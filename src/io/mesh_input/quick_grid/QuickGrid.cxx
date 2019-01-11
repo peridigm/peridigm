@@ -46,9 +46,12 @@
 //@HEADER
 
 #include "QuickGrid.h"
+#include <Teuchos_ParameterList.hpp>
+#ifdef USE_YAML
+  #include <Teuchos_YamlParameterListCoreHelpers.hpp>
+#endif
 
 #include "mpi.h"
-#include <boost/property_tree/json_parser.hpp>
 #include <vector>
 #include <cmath>
 #include <string>
@@ -63,46 +66,45 @@ using std::shared_ptr;
 using UTILITIES::Minus;
 using UTILITIES::Dot;
 
+shared_ptr<QuickGridMeshGenerationIterator> getMeshGenerator(size_t numProcs, const std::string& yaml_file_name) {
 
-shared_ptr<QuickGridMeshGenerationIterator> getMeshGenerator(size_t numProcs, const std::string& json_filename) {
-
-   // Create an empty property tree object
-   using boost::property_tree::ptree;
-   ptree pt;
-
-   // Load the json file into the property tree. If reading fails
-   // (cannot open file, parse error), an exception is thrown.
-   read_json(json_filename, pt);
-
-   /*
-    * Get Discretization
-    */
-   ptree discretization_tree=pt.find("Discretization")->second;
-   std::string path=discretization_tree.get<std::string>("Type");
-   double horizon=pt.get<double>("Discretization.Horizon");
-
-   std::string neighborhood_type="";
-   try {
-   neighborhood_type=pt.get<std::string>("Discretization.NeighborhoodType");
-   } catch(std::runtime_error& e) {
-   	std::cout << "NOTE-->QUICKGRID::getMeshGenerator()\n";
-   	std::cout << "\tDiscretization.NeighborhoodType was not specified.  Default square norm will be used.\n";
+   Teuchos::ParameterList params;
+   Teuchos::Ptr<Teuchos::ParameterList> params_ptr(&params);
+   if (!file_exists(yaml_file_name)) {
+     std::string msg = "\n**** Error, failed to open file " + yaml_file_name;
+     msg += " (unit tests may need to be executed from within the directory where they reside).";
+     std::cout << "\n" << msg << std::endl;;
+     throw std::runtime_error(msg);
    }
+#ifdef USE_YAML
+   Teuchos::updateParametersFromYamlFile(yaml_file_name, params_ptr);
+#else
+   std::string msg = "\n\n**** Error, getMeshGenerator() requires YAML.";
+   std::cout << msg << std::endl;
+   throw std::runtime_error(msg);
+#endif
+
+   Teuchos::ParameterList disc_params = params.sublist("Discretization");
+   double horizon = disc_params.get<double>("Horizon");
+   std::string neighborhood_type = disc_params.get<std::string>("NeighborhoodType", "Not Supplied");
+   std::string type = disc_params.get<std::string>("Type");
 
    shared_ptr<TensorProduct3DMeshGenerator> g;
    NormFunctionPointer norm = NoOpNormFunction;
-   if("QuickGrid.TensorProduct3DMeshGenerator"==path){
-   	double xStart = pt.get<double>(path+".X Origin");
-   	double yStart = pt.get<double>(path+".Y Origin");
-   	double zStart = pt.get<double>(path+".Z Origin");
+   if(type == "QuickGrid.TensorProduct3DMeshGenerator"){
 
-   	double xLength = pt.get<double>(path+".X Length");
-   	double yLength = pt.get<double>(path+".Y Length");
-   	double zLength = pt.get<double>(path+".Z Length");
+    Teuchos::ParameterList mesh_params = params.sublist("QuickGrid").sublist("TensorProduct3DMeshGenerator");
 
-   	const int nx = pt.get<int>(path+".Number Points X");
-   	const int ny = pt.get<int>(path+".Number Points Y");
-   	const int nz = pt.get<int>(path+".Number Points Z");
+   	double xStart = mesh_params.get<double>("X Origin");
+   	double yStart = mesh_params.get<double>("Y Origin");
+   	double zStart = mesh_params.get<double>("Z Origin");
+   	double xLength = mesh_params.get<double>("X Length");
+   	double yLength = mesh_params.get<double>("Y Length");
+   	double zLength = mesh_params.get<double>("Z Length");
+   	const int nx = mesh_params.get<int>("Number Points X");
+   	const int ny = mesh_params.get<int>("Number Points Y");
+   	const int nz = mesh_params.get<int>("Number Points Z");
+
    	const Spec1D xSpec(nx,xStart,xLength);
    	const Spec1D ySpec(ny,yStart,yLength);
    	const Spec1D zSpec(nz,zStart,zLength);
