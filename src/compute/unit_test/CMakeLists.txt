@@ -29,25 +29,21 @@ add_executable(utPeridigm_Compute_Angular_Momentum ${utPeridigm_Compute_Angular_
 target_link_libraries(utPeridigm_Compute_Angular_Momentum
    ${Peridigm_LIBRARY}
    ${Peridigm_LINK_LIBRARIES}
-   ${Boost_LIBRARIES}
 )
 add_executable(utPeridigm_Compute_Linear_Momentum ${utPeridigm_Compute_Linear_Momentum_SOURCES})
 target_link_libraries(utPeridigm_Compute_Linear_Momentum
    ${Peridigm_LIBRARY}
    ${Peridigm_LINK_LIBRARIES}
-   ${Boost_LIBRARIES}
 )
 #add_executable(utPeridigm_Compute_Energy ${utPeridigm_Compute_Energy_SOURCES})
 #target_link_libraries(utPeridigm_Compute_Energy
 #   ${Peridigm_LIBRARY}
 #   ${Peridigm_LINK_LIBRARIES}
-#   ${Boost_LIBRARIES}
 #)
 add_executable(utPeridigm_Compute_Kinetic_Energy ${utPeridigm_Compute_Kinetic_Energy_SOURCES})
 target_link_libraries(utPeridigm_Compute_Kinetic_Energy
    ${Peridigm_LIBRARY}
    ${Peridigm_LINK_LIBRARIES}
-   ${Boost_LIBRARIES}
 )
 
 add_test (utPeridigm_Compute_Force python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_Compute_Force)

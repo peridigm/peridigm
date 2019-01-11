@@ -205,15 +205,6 @@ void probe_shear
 	 * NOTE: X is center of sphere and there no displacement at this point
 	 * therefore, Y=X
 	 */
-	/*MATERIAL_EVALUATION::set_pure_shear(neighborhoodPtr.get(),X.get(),xPtr.get(),yPtr.get(),mode,gamma);
-	
-       
-        double theta = MATERIAL_EVALUATION::computeDilatation(neighborhoodPtr.get(),X.get(),xPtr.get(),X.get(),yPtr.get(),cellVolume.get(),m_code,horizon);
-	std::cout << "ut_naiveQuadratureConvergenceStudy::probe_shear dilatation = " << theta << std::endl;
-	double tolerance=1.0e-12;
-	BOOST_CHECK_SMALL(theta,tolerance);
-*/
-      
 
 	/*
 	 * compute shear correction factor

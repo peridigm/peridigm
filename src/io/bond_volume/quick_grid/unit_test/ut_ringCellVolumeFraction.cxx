@@ -203,7 +203,6 @@ TEUCHOS_UNIT_TEST(RingCellVolumeFraction, SphereTest) {
 	double zStart=center[2];
 	TEST_ASSERT(0.0==zStart);
 	size_t numRings = mesh_params.get<int>("Number Points Radius");
-//	BOOST_CHECK(5==numRings);
 	SpecRing2D ring2dSpec(center,innerRadius,outerRadius,numRings);
 
 	// Create 1d Spec along cylinder axis

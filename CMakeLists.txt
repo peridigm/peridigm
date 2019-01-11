@@ -19,25 +19,6 @@ if (NOT CMAKE_CXX_FLAGS)
 endif (NOT CMAKE_CXX_FLAGS)
 
 #
-# Boost configuration
-# Questions?  See http://www.cmake.org/cmake/help/cmake2.6docs.html#module:FindBoost
-#
-#
-find_package (Boost 1.37.0 COMPONENTS unit_test_framework system filesystem thread regex)
-if (Boost_FOUND)
-  message ("\nBoost installation:")
-  message ("   Version: ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}")
-  message ("   Include Directory: ${Boost_INCLUDE_DIRS}")
-  message ("   Library Directory: ${Boost_LIBRARY_DIRS}")
-  message ("   The following libraries are included in Boost_LIBRARIES:")
-  foreach (lib ${Boost_LIBRARIES})
-    message ("      ${lib}")
-  endforeach (lib)
-else ()
-  message ("\nBoost NOT FOUND!  (Try defining BOOST_ROOT)\n")
-endif ()
-
-#
 # Blas and Lapack Libraries
 #
 find_library(Blas_LIBRARY
@@ -69,8 +50,8 @@ MESSAGE("   Trilinos_DIR = ${Trilinos_DIR}")
 MESSAGE("   Trilinos_VERSION = ${Trilinos_VERSION}")
 MESSAGE("   Trilinos_PACKAGE_LIST = ${Trilinos_PACKAGE_LIST}")
 MESSAGE("   Trilinos_TPL_LIST = ${Trilinos_TPL_LIST}")
-MESSAGE("   Trilinos_TPL_INCLUDE_DIRS = ${Trilinos_TPL_INCLUDE_DIRS}")
-MESSAGE("   Trilinos_TPL_LIBRARIES = ${Trilinos_TPL_LIBRARIES}")
+#MESSAGE("   Trilinos_TPL_INCLUDE_DIRS = ${Trilinos_TPL_INCLUDE_DIRS}")
+#MESSAGE("   Trilinos_TPL_LIBRARIES = ${Trilinos_TPL_LIBRARIES}")
 MESSAGE("   Trilinos_TPL_LIBRARY_DIRS = ${Trilinos_TPL_LIBRARY_DIRS}")
 MESSAGE("   Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
 MESSAGE("   Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
@@ -82,7 +63,7 @@ SET(Trilinos_BINARY_PATH ${Trilinos_LIBRARY_DIRS}/../bin)
 LIST(REMOVE_ITEM Trilinos_LIBRARIES "pytrilinos")
 #
 # verbose output
-MESSAGE("   Trilinos_LIBRARIES = ${Trilinos_LIBRARIES}")
+#MESSAGE("   Trilinos_LIBRARIES = ${Trilinos_LIBRARIES}")
 MESSAGE("   Trilinos_INCLUDE_DIRS = ${Trilinos_INCLUDE_DIRS}")
 MESSAGE("   Trilinos_LIBRARY_DIRS = ${Trilinos_LIBRARY_DIRS}")
 MESSAGE("")
@@ -245,7 +226,6 @@ set(PdMaterialUtilitiesLib PdMaterialUtilities)
 set(INCLUDE_DIRS
 ${Trilinos_INCLUDE_DIRS}
 ${Trilinos_TPL_INCLUDE_DIRS}
-${Boost_INCLUDE_DIRS}
 ${CMAKE_SOURCE_DIR}
 ${CMAKE_SOURCE_DIR}/src
 ${CMAKE_SOURCE_DIR}/src/core
@@ -296,11 +276,6 @@ ${PARSER_DIR}
 ${BOND_VOL_QUICK_GRID}
 )
 
-# link directories
-set(LIB_DIRS
-  ${Boost_LIBRARY_DIRS})
-link_directories(${LIB_DIRS})
-
 set (REQUIRED_LIBS
   ${BlasLapack_Libraries}
   ${Trilinos_TPL_LIBRARIES}
@@ -308,7 +283,6 @@ set (REQUIRED_LIBS
 
 set (UT_REQUIRED_LIBS
   ${BlasLapack_Libraries}
-  ${Boost_LIBRARIES}
 )
 
 add_subdirectory (src)

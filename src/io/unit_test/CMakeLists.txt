@@ -15,7 +15,6 @@ target_link_libraries(utPeridigm_ProximitySearch
   ${UTILITIES_LIBS}
   ${Trilinos_LIBRARIES}
   ${REQUIRED_LIBS}
-  ${Boost_LIBRARIES}
 )
 add_test (utPeridigm_ProximitySearch_np1 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_ProximitySearch)
 add_test (utPeridigm_ProximitySearch_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_ProximitySearch)
@@ -29,7 +28,6 @@ target_link_libraries(utPeridigm_SearchTree
   ${Trilinos_LIBRARIES}
   ${Zoltan_LIBRARY}
   ${REQUIRED_LIBS}
-  ${Boost_LIBRARIES}
 )
 add_test (utPeridigm_SearchTree python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_SearchTree)
 
@@ -40,15 +38,14 @@ target_link_libraries(utPeridigm_SearchTree_Performance
   ${Trilinos_LIBRARIES}
   ${Zoltan_LIBRARY}
   ${REQUIRED_LIBS}
-  ${Boost_LIBRARIES}
 )
 
 add_executable(ut_kdtree_nn_search ut_kdtree_nn_search.cpp)
-target_link_libraries(ut_kdtree_nn_search QuickGrid 
+target_link_libraries(ut_kdtree_nn_search QuickGrid
   ${Peridigm_LIBRARY}
   ${Trilinos_LIBRARIES}
   ${Zoltan_LIBRARY}
   ${REQUIRED_LIBS}
-  ${Boost_LIBRARIES})
+)
 add_test (ut_kdtree_nn_search python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./ut_kdtree_nn_search )
 

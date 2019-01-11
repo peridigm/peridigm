@@ -194,7 +194,7 @@ TEUCHOS_UNIT_TEST(SearchTree, JAMEightPointMesh) {
 //   searchPointIndex = 0;
 //   searchRadius = 1.015;
 //   searchTree->FindPointsWithinRadius(&meshPtr[searchPointIndex*degreesOfFreedom], searchRadius, neighborList);
-//   BOOST_CHECK_EQUAL(static_cast<int>(neighborList.size()), 4);
+//   TEST_EQUALITY_CONST(static_cast<int>(neighborList.size()), 4);
 // }
 
 // //! Zoltan 1000-point test

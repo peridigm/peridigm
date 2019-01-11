@@ -108,7 +108,6 @@ set(Peridigm_LINK_LIBRARIES
     ${PdMaterialUtilitiesLib}
     ${Trilinos_LIBRARIES}
     ${REQUIRED_LIBS}
-    ${Boost_LIBRARIES}
 )
 
 add_executable(Peridigm ${CORE_DIR}/Peridigm_Main.cpp)

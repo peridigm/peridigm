@@ -19,7 +19,6 @@ target_link_libraries(utPeridigm_PdQuickGridDiscretization
   ${MESH_INPUT_LIBS}
   ${PARSER_LIBS}
   ${REQUIRED_LIBS}
-  ${Boost_LIBRARIES}
 )
 add_test (utPeridigm_PdQuickGridDiscretization python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_PdQuickGridDiscretization)
 
@@ -35,7 +34,6 @@ target_link_libraries(utPeridigm_PdQuickGridDiscretization_MPI_np2
   ${MESH_INPUT_LIBS}
   ${PARSER_LIBS}
   ${REQUIRED_LIBS}
-  ${Boost_LIBRARIES}
 )
 add_test (utPeridigm_PdQuickGridDiscretization_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_PdQuickGridDiscretization_MPI_np2)
 
@@ -52,7 +50,6 @@ target_link_libraries(utPeridigm_ExodusDiscretization
   ${PARSER_LIBS}
   ${Trilinos_LIBRARIES}
   ${REQUIRED_LIBS}
-  ${Boost_LIBRARIES}
 )
 add_test (utPeridigm_ExodusDiscretization python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_ExodusDiscretization)
 add_test (utPeridigm_ExodusDiscretization_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_ExodusDiscretization)

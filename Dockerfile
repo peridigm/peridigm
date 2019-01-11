@@ -8,7 +8,6 @@ WORKDIR /
 RUN apt-get -yq update
 RUN apt-get -yq install openmpi-bin
 RUN apt-get -yq install openssh-server
-RUN apt-get -yq install libboost1.55
 
 #Build Peridigm
 RUN mkdir peridigm
@@ -27,7 +26,6 @@ RUN cmake \
     -D CMAKE_CXX_FLAGS:STRING="-std=c++11 -O2" \
     -D TRILINOS_DIR:PATH=/usr/local/trilinos \
     -D CMAKE_CXX_COMPILER:STRING="mpicxx" \
-    -D BOOST_ROOT=/usr/include/boost \
     -D USE_DAKOTA:BOOL=OFF \
     ..; \
     make && make install; \
