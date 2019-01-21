@@ -54,46 +54,6 @@
 
 namespace PeridigmNS {
 
-  /*! \brief State-based peridynamic linear elastic isotropic material model.
-   *
-   * The state-based peridynamic linear elastic isotropic material is an
-   * ordinary peridynamic material, meaning that the force resulting from the
-   * bond between two nodes acts along the line connecting these nodes.
-   * 
-   * The magnitude of the pairwise force in a linear peridynamic solid is given by
-   *
-   * \f$ \underline{t} = \frac{\-3p}{m}\underline{\omega} \, \underline{x} + \frac{15\mu}{m} 
-   *    \underline{\omega} \, \underline{e}^{d}, \qquad p = -k \theta \f$,
-   *
-   * where \f$ p \f$ is the peridynamic pressure, \f$ \mu \f$ and \f$ k \f$ are material 
-   * constants (the shear modulus and bulk modulus, respectively), and the following 
-   * definitions apply:
-   *
-   * \f$ \underline{\omega} \f$: Influence function.
-   *
-   * \f$ \underline{x} \f$: Reference position scalar state field, the distance between two
-   * nodes in the reference configuration.
-   *
-   * \f$ \underline{y} \f$: Deformation scalar state field, the distance between two
-   * nodes in the deformed configuration.
-   *
-   * \f$ \underline{e} \f$: Extension scalar state field. \f$ \underline{e} = 
-   *    \underline{y} - \underline{x} \f$.
-   *
-   * \f$ m \f$: Weighted volume. \f$ m = \sum_{i=0}^{N} \underline{\omega}_{i} \, 
-   *    \underline{x}_{i} \, \underline{x}_{i} \, \Delta V_{\mathbf{x}_{i}} \f$.
-   *
-   * \f$ N \f$: Number of cells in the neighborhood of \f$ x \f$.
-   *
-   * \f$ \theta \f$:  Dilatation. \f$ \theta =  \sum_{i=0}^{N} \frac{3}{m} \underline{\omega}_{i} 
-   *    \, \underline{x}_{i} \, \underline{e}_{i} \, \Delta V_{\mathbf{x}_{i}} \f$.
-   *
-   * \f$ \underline{e}_{i} \f$:  Isotropic part of the extension. \f$ \underline{e}^{i} = 
-   *    \frac{\theta \underline{x}}{3} \f$.
-   *
-   * \f$ \underline{e}_{d} \f$:  Deviatoric part of the extension. \f$ \underline{e}^{d} = 
-   *    \underline{e} - \underline{e}^{i} \f$.
-   */
   class MultiphysicsElasticMaterial : public Material{
   public:
 
@@ -172,7 +132,7 @@ namespace PeridigmNS {
                                             PeridigmNS::Material::JacobianType jacobianType = PeridigmNS::Material::FULL_MATRIX) const;
 
   protected:
-	
+
     //! Computes the distance between nodes (a1, a2, a3) and (b1, b2, b3).
     inline double distance(double a1, double a2, double a3,
                            double b1, double b2, double b3) const
@@ -203,17 +163,18 @@ namespace PeridigmNS {
     int m_forceDensityFieldId;
     int m_bondDamageFieldId;
     int m_surfaceCorrectionFactorFieldId;
+    int m_temperatureFieldId;
     int m_deltaTemperatureFieldId;
 
-		// multiphysics specific 
+		// multiphysics specific
 		int m_fluidPressureYFieldId;
 		int m_fluidFlowDensityFieldId;
 	  double m_fluidPermeabilityScalar;
-		double m_fluidDensity; 
-		double m_fluidCompressibility; 
-		double m_fluidDynamicViscosity; 
-		double m_fluidLinearThermalExpansionCoef; 
-		double m_fluidReynoldsViscosityTemperatureEffect; 
+		double m_fluidDensity;
+		double m_fluidCompressibility;
+		double m_fluidDynamicViscosity;
+		double m_fluidLinearThermalExpansionCoef;
+		double m_fluidReynoldsViscosityTemperatureEffect;
 		double m_permeabilityCurveInflectionDamage;
 		double m_maxPermeability;
 		double m_permeabilityAlpha;

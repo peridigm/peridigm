@@ -90,14 +90,14 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Dis
       case INITIAL_DISPLACEMENT:
       {
         Teuchos::RCP<Epetra_Vector> toVector = peridigm->getU();
-        bcPtr = Teuchos::rcp(new DirichletBC(name,bcParams,toVector,peridigm,false));
+        bcPtr = Teuchos::rcp(new DirichletBC(name,bcParams,toVector,peridigm));
         initialConditions.push_back(bcPtr);
       }
       break;
       case INITIAL_VELOCITY :
       {
         Teuchos::RCP<Epetra_Vector> toVector = peridigm->getV();
-        bcPtr = Teuchos::rcp(new DirichletBC(name,bcParams,toVector,peridigm,false));
+        bcPtr = Teuchos::rcp(new DirichletBC(name,bcParams,toVector,peridigm));
         initialConditions.push_back(bcPtr);
       }
       break;
@@ -106,51 +106,62 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Dis
         hasPrescDisp = true;
         // a prescribed displacement boundary condition will automatically update deltaU and the velocity vector
         Teuchos::RCP<Epetra_Vector> toVector = peridigm->getDeltaU();
-        bcPtr = Teuchos::rcp(new DirichletIncrementBC(name,bcParams,toVector,peridigm,false,1.0,0.0));
+        bcPtr = Teuchos::rcp(new DirichletIncrementBC(name,bcParams,toVector,peridigm,1.0,0.0));
         boundaryConditions.push_back(bcPtr);
         Teuchos::RCP<Epetra_Vector> toVectorV = peridigm->getV();
-        bcPtr = Teuchos::rcp(new DirichletIncrementBC(name,bcParams,toVectorV,peridigm,false,0.0,1.0));
+        bcPtr = Teuchos::rcp(new DirichletIncrementBC(name,bcParams,toVectorV,peridigm,0.0,1.0));
         boundaryConditions.push_back(bcPtr);
 
       }
       break;
       case PRESCRIBED_FLUID_PRESSURE_U:
       {
-				// a prescribed fluid pressure boundary condition will automatically update deltaFluidPressureU      
+				// a prescribed fluid pressure boundary condition will automatically update deltaFluidPressureU
         Teuchos::RCP<Epetra_Vector> toVector = peridigm->getFluidPressureDeltaU();
-        bcPtr = Teuchos::rcp(new DirichletIncrementBC(name,bcParams,toVector,peridigm,false,1.0,0.0));
+        bcPtr = Teuchos::rcp(new DirichletIncrementBC(name,bcParams,toVector,peridigm,1.0,0.0));
         boundaryConditions.push_back(bcPtr);
 
 				Teuchos::RCP<Epetra_Vector> toVectorV = peridigm->getFluidPressureV();
-				bcPtr = Teuchos::rcp(new DirichletIncrementBC(name,bcParams,toVectorV, peridigm, false,0.0,1.0));
+				bcPtr = Teuchos::rcp(new DirichletIncrementBC(name,bcParams,toVectorV, peridigm,0.0,1.0));
 				boundaryConditions.push_back(bcPtr);
       }
       break;
       case INITIAL_FLUID_PRESSURE_U:
       {
         Teuchos::RCP<Epetra_Vector> toVector = peridigm->getFluidPressureU();
-        bcPtr = Teuchos::rcp(new DirichletBC(name,bcParams,toVector,peridigm,false));
+        bcPtr = Teuchos::rcp(new DirichletBC(name,bcParams,toVector,peridigm));
         initialConditions.push_back(bcPtr);
       }
       break;
-      case INITIAL_TEMPERATURE:
-      {
-        Teuchos::RCP<Epetra_Vector> toVector = peridigm->getDeltaTemperature();
-        bcPtr = Teuchos::rcp(new DirichletBC(name,bcParams,toVector,peridigm,false));
-        initialConditions.push_back(bcPtr);
-      }
-      break;
+      // case INITIAL_TEMPERATURE:
+      // {
+      //   Teuchos::RCP<Epetra_Vector> toVectorTemperature = peridigm->getTemperature();
+      //   bcPtr = Teuchos::rcp(new DirichletIncrementBC(name,bcParams,toVectorTemperature,peridigm,false,1.0,0.0));
+      //   boundaryConditions.push_back(bcPtr);
+      //
+      //   BY DEFINITION, ISN'T DELTA TEMPERATURE ZERO AT TIME ZERO?
+      //   Teuchos::RCP<Epetra_Vector> toVectorDeltaTemperature = peridigm->getDeltaTemperature();
+      //   bcPtr = Teuchos::rcp(new DirichletBC(name,bcParams,toVectorDeltaTemperature,peridigm,false));
+      //   initialConditions.push_back(bcPtr);
+      // }
+      // break;
       case PRESCRIBED_TEMPERATURE:
       {
-        Teuchos::RCP<Epetra_Vector> toVector = peridigm->getDeltaTemperature();
-        bcPtr = Teuchos::rcp(new DirichletIncrementBC(name,bcParams,toVector,peridigm,false,1.0,0.0));
+        Teuchos::RCP<Epetra_Vector> toVectorTemperature = peridigm->getTemperature();
+        bcPtr = Teuchos::rcp(new DirichletBC(name,bcParams,toVectorTemperature,peridigm));
+        boundaryConditions.push_back(bcPtr);
+
+        // Create a BC to evaluate the change in temperature (e.g., for thermal strains)
+        bool computeChangeRelativeToInitialValue = true;
+        Teuchos::RCP<Epetra_Vector> toVectorDeltaTemperature = peridigm->getDeltaTemperature();
+        bcPtr = Teuchos::rcp(new DirichletIncrementBC(name,bcParams,toVectorDeltaTemperature,peridigm,1.0,0.0,computeChangeRelativeToInitialValue));
         boundaryConditions.push_back(bcPtr);
       }
       break;
       case BODY_FORCE:
       {
         Teuchos::RCP<Epetra_Vector> toVector = peridigm->getExternalForce();
-        bcPtr = Teuchos::rcp(new DirichletBC(name,bcParams,toVector,peridigm,true));
+        bcPtr = Teuchos::rcp(new DirichletBC(name,bcParams,toVector,peridigm));
         forceContributions.push_back(bcPtr);
       }
       break;
@@ -179,13 +190,13 @@ void PeridigmNS::BoundaryAndInitialConditionManager::createRankDeficientBC()
   containerParams.set("Value","0.0");
   containerParams.set("Coordinate","x");
   Teuchos::RCP<Epetra_Vector> toVector = peridigm->getDeltaU();
-  Teuchos::RCP<BoundaryCondition> bcPtr = Teuchos::rcp(new DirichletIncrementBC(containerParams.get<string>("Name"),containerParams,toVector,peridigm,false,1.0,0.0));
+  Teuchos::RCP<BoundaryCondition> bcPtr = Teuchos::rcp(new DirichletIncrementBC(containerParams.get<string>("Name"),containerParams,toVector,peridigm,1.0,0.0));
   boundaryConditions.push_back(bcPtr);
   containerParams.set("Coordinate","y");
-  bcPtr = Teuchos::rcp(new DirichletIncrementBC(containerParams.get<string>("Name"),containerParams,toVector,peridigm,false,1.0,0.0));
+  bcPtr = Teuchos::rcp(new DirichletIncrementBC(containerParams.get<string>("Name"),containerParams,toVector,peridigm,1.0,0.0));
   containerParams.set("Coordinate","z");
   boundaryConditions.push_back(bcPtr);
-  bcPtr = Teuchos::rcp(new DirichletIncrementBC(containerParams.get<string>("Name"),containerParams,toVector,peridigm,false,1.0,0.0));
+  bcPtr = Teuchos::rcp(new DirichletIncrementBC(containerParams.get<string>("Name"),containerParams,toVector,peridigm,1.0,0.0));
   boundaryConditions.push_back(bcPtr);
 }
 
@@ -370,7 +381,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_ComputeRea
       // apply the bc to every element in the entire domain
       if(setDef==FULL_DOMAIN)
       {
-        TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: Dirichlet conditions on the displacement cannot be prescribed over the entire domain.");
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: Dirichlet conditions on the fluid pressure cannot be prescribed over the entire domain.");
       }
       // apply the bc only to specific node sets
       else{
@@ -420,7 +431,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
 				// apply the bc to every element in the entire domain
 				if(setDef==FULL_DOMAIN)
 				{
-					TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: Dirichlet conditions on the displacement cannot be prescribed over the entire domain.");
+					TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: Boundary condition cannot be prescribed over the entire domain.");
 				}
 				// apply the bc only to specific node sets
 				else{
@@ -452,7 +463,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
 				// apply the bc to every element in the entire domain
 				if(setDef==FULL_DOMAIN)
 				{
-					TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: Dirichlet conditions on the fluid pressure cannot be prescribed over the entire domain.");
+					TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: Boundary condition cannot be prescribed over the entire domain.");
 				}
 				// apply the bc only to specific node sets
 				else{
@@ -492,7 +503,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
 				// apply the bc to every element in the entire domain
 				if(setDef==FULL_DOMAIN)
 				{
-					TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: Dirichlet conditions on the displacement cannot be prescribed over the entire domain.");
+					TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: Boundary condition cannot be prescribed over the entire domain.");
 				}
 				// apply the bc only to specific node sets
 				else{
@@ -516,7 +527,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
 						}
 					}
 				}
-			}	
+			}
 		}
 	}
   PeridigmNS::Timer::self().stopTimer("Apply Boundary Conditions");
@@ -546,7 +557,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
       // apply the bc to every element in the entire domain
       if(setDef==FULL_DOMAIN)
       {
-        TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: Dirichlet conditions on the displacement cannot be prescribed over the full domain.");
+        TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: Boundary condition cannot be prescribed over the full domain.");
       }
       // apply the bc only to specific node sets
       else{
@@ -616,7 +627,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
           // apply the bc to every element in the entire domain
           if(setDef==FULL_DOMAIN)
           {
-            TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: Dirichlet conditions on the displacement cannot be prescribed over the full domain.");
+            TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,"ERROR: Boundary condition cannot be prescribed over the full domain.");
           }
           // apply the bc only to specific node sets
           else{
@@ -655,7 +666,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
               int numEntriesToSetToZero = columnIndex;
               for(int iRow=0 ; iRow<mat->NumMyRows() ; ++iRow)
                     mat->ReplaceMyValues(iRow, numEntriesToSetToZero, &jacobianValues[0], &jacobianColIndices[0]);
-                
+
               for(unsigned int i=0 ; i<nodeList.size() ; i++){
                 // zero out the row and put diagonalEntry on the diagonal
 								// Assumes one additional pressure term for every three sm dofs

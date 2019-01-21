@@ -74,20 +74,20 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
                                                            FiniteDifferenceScheme finiteDifferenceScheme,
                                                            PeridigmNS::Material::JacobianType jacobianType) const
 {
-  // The Jacobian is of the form:
+  // The mechanics Jacobian is of the form:
   //
-  // dF_0x/dx_0  dF_0x/dy_0  dF_0x/dz_0  dF_0x/dx_1  dF_0x/dy_1  dF_0x/dz_1  ...  dF_0x/dx_n  dF_0x/dy_n  dF_0x/dz_n  
-  // dF_0y/dx_0  dF_0y/dy_0  dF_0y/dz_0  dF_0y/dx_1  dF_0y/dy_1  dF_0y/dz_1  ...  dF_0y/dx_n  dF_0y/dy_n  dF_0y/dz_n  
-  // dF_0z/dx_0  dF_0z/dy_0  dF_0z/dz_0  dF_0z/dx_1  dF_0z/dy_1  dF_0z/dz_1  ...  dF_0z/dx_n  dF_0z/dy_n  dF_0z/dz_n  
-  // dF_1x/dx_0  dF_1x/dy_0  dF_1x/dz_0  dF_1x/dx_1  dF_1x/dy_1  dF_1x/dz_1  ...  dF_1x/dx_n  dF_1x/dy_n  dF_1x/dz_n  
-  // dF_1y/dx_0  dF_1y/dy_0  dF_1y/dz_0  dF_1y/dx_1  dF_1y/dy_1  dF_1y/dz_1  ...  dF_1y/dx_n  dF_1y/dy_n  dF_1y/dz_n  
-  // dF_1z/dx_0  dF_1z/dy_0  dF_1z/dz_0  dF_1z/dx_1  dF_1z/dy_1  dF_1z/dz_1  ...  dF_1z/dx_n  dF_1z/dy_n  dF_1z/dz_n  
+  // dF_0x/dx_0  dF_0x/dy_0  dF_0x/dz_0  dF_0x/dx_1  dF_0x/dy_1  dF_0x/dz_1  ...  dF_0x/dx_n  dF_0x/dy_n  dF_0x/dz_n
+  // dF_0y/dx_0  dF_0y/dy_0  dF_0y/dz_0  dF_0y/dx_1  dF_0y/dy_1  dF_0y/dz_1  ...  dF_0y/dx_n  dF_0y/dy_n  dF_0y/dz_n
+  // dF_0z/dx_0  dF_0z/dy_0  dF_0z/dz_0  dF_0z/dx_1  dF_0z/dy_1  dF_0z/dz_1  ...  dF_0z/dx_n  dF_0z/dy_n  dF_0z/dz_n
+  // dF_1x/dx_0  dF_1x/dy_0  dF_1x/dz_0  dF_1x/dx_1  dF_1x/dy_1  dF_1x/dz_1  ...  dF_1x/dx_n  dF_1x/dy_n  dF_1x/dz_n
+  // dF_1y/dx_0  dF_1y/dy_0  dF_1y/dz_0  dF_1y/dx_1  dF_1y/dy_1  dF_1y/dz_1  ...  dF_1y/dx_n  dF_1y/dy_n  dF_1y/dz_n
+  // dF_1z/dx_0  dF_1z/dy_0  dF_1z/dz_0  dF_1z/dx_1  dF_1z/dy_1  dF_1z/dz_1  ...  dF_1z/dx_n  dF_1z/dy_n  dF_1z/dz_n
   //     .           .           .           .           .           .                .           .           .
   //     .           .           .           .           .           .                .           .           .
   //     .           .           .           .           .           .                .           .           .
-  // dF_nx/dx_0  dF_nx/dy_0  dF_nx/dz_0  dF_nx/dx_1  dF_nx/dy_1  dF_nx/dz_1  ...  dF_nx/dx_n  dF_nx/dy_n  dF_nx/dz_n  
-  // dF_ny/dx_0  dF_ny/dy_0  dF_ny/dz_0  dF_ny/dx_1  dF_ny/dy_1  dF_ny/dz_1  ...  dF_ny/dx_n  dF_ny/dy_n  dF_ny/dz_n  
-  // dF_nz/dx_0  dF_nz/dy_0  dF_nz/dz_0  dF_nz/dx_1  dF_nz/dy_1  dF_nz/dz_1  ...  dF_nz/dx_n  dF_nz/dy_n  dF_nz/dz_n  
+  // dF_nx/dx_0  dF_nx/dy_0  dF_nx/dz_0  dF_nx/dx_1  dF_nx/dy_1  dF_nx/dz_1  ...  dF_nx/dx_n  dF_nx/dy_n  dF_nx/dz_n
+  // dF_ny/dx_0  dF_ny/dy_0  dF_ny/dz_0  dF_ny/dx_1  dF_ny/dy_1  dF_ny/dz_1  ...  dF_ny/dx_n  dF_ny/dy_n  dF_ny/dz_n
+  // dF_nz/dx_0  dF_nz/dy_0  dF_nz/dz_0  dF_nz/dx_1  dF_nz/dy_1  dF_nz/dz_1  ...  dF_nz/dx_n  dF_nz/dy_n  dF_nz/dz_n
 
   // Each entry is computed by finite difference:
   //
@@ -99,6 +99,8 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
 
   TEUCHOS_TEST_FOR_EXCEPT_MSG(m_finiteDifferenceProbeLength == DBL_MAX, "**** Finite-difference Jacobian requires that the \"Finite Difference Probe Length\" parameter be set.\n");
   double epsilon = m_finiteDifferenceProbeLength;
+
+  int numDoFs = 3;
 
   // Get field ids for all relevant data
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
@@ -116,7 +118,7 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     vector<int> tempMyGlobalIDs(numNeighbors+1);
     // Put the node at the center of the neighborhood at the beginning of the list.
     tempMyGlobalIDs[0] = dataManager.getOwnedScalarPointMap()->GID(iID);
-    vector<int> tempNeighborhoodList(numNeighbors+1); 
+    vector<int> tempNeighborhoodList(numNeighbors+1);
     tempNeighborhoodList[0] = numNeighbors;
     for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
       int neighborID = neighborhoodList[neighborhoodListIndex++];
@@ -148,14 +150,14 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     vector<int> tempOwnedIDs(1);
     tempOwnedIDs[0] = 0;
 
-    // Extract pointers to the underlying data in the constitutiveData array.
+    // Extract pointers to the underlying data.
     double *volume, *y, *v, *force;
     tempDataManager.getData(volumeFId, PeridigmField::STEP_NONE)->ExtractView(&volume);
     tempDataManager.getData(coordinatesFId, PeridigmField::STEP_NP1)->ExtractView(&y);
     tempDataManager.getData(velocityFId, PeridigmField::STEP_NP1)->ExtractView(&v);
     tempDataManager.getData(forceDensityFId, PeridigmField::STEP_NP1)->ExtractView(&force);
 
-    // Create a temporary vector for storing force
+    // Create a temporary vector for storing force.
     Teuchos::RCP<Epetra_Vector> forceVector = tempDataManager.getData(forceDensityFId, PeridigmField::STEP_NP1);
     Teuchos::RCP<Epetra_Vector> tempForceVector = Teuchos::rcp(new Epetra_Vector(*forceVector));
     double* tempForce;
@@ -163,15 +165,16 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
 
     // Use the scratchMatrix as sub-matrix for storing tangent values prior to loading them into the global tangent matrix.
     // Resize scratchMatrix if necessary
-    if(scratchMatrix.Dimension() < 3*(numNeighbors+1))
-      scratchMatrix.Resize(3*(numNeighbors+1));
+    if(scratchMatrix.Dimension() < numDoFs*(numNeighbors+1))
+      scratchMatrix.Resize(numDoFs*(numNeighbors+1));
 
     // Create a list of global indices for the rows/columns in the scratch matrix.
-    vector<int> globalIndices(3*(numNeighbors+1));
+    vector<int> globalIndices(numDoFs*(numNeighbors+1));
     for(int i=0 ; i<numNeighbors+1 ; ++i){
       int globalID = tempOneDimensionalMap->GID(i);
-      for(int j=0 ; j<3 ; ++j)
-        globalIndices[3*i+j] = 3*globalID+j;
+      for(int j=0 ; j<numDoFs ; ++j){
+        globalIndices[numDoFs*i+j] = numDoFs*globalID+j;
+      }
     }
 
     if(finiteDifferenceScheme == FORWARD_DIFFERENCE){
@@ -191,30 +194,30 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
       else
         perturbID = 0;
 
-      for(int dof=0 ; dof<3 ; ++dof){
+      for(int dof=0 ; dof<numDoFs ; ++dof){
 
         // Perturb a dof and compute the forces.
-        double oldY = y[3*perturbID+dof];
-        double oldV = v[3*perturbID+dof];
+        double oldY = y[numDoFs*perturbID+dof];
+        double oldV = v[numDoFs*perturbID+dof];
 
         if(finiteDifferenceScheme == CENTRAL_DIFFERENCE){
           // Compute and store the negatively perturbed force.
-          y[3*perturbID+dof] -= epsilon;
-          v[3*perturbID+dof] -= epsilon/dt;
+          y[numDoFs*perturbID+dof] -= epsilon;
+          v[numDoFs*perturbID+dof] -= epsilon/dt;
           computeForce(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
-          y[3*perturbID+dof] = oldY;
-          v[3*perturbID+dof] = oldV;
+          y[numDoFs*perturbID+dof] = oldY;
+          v[numDoFs*perturbID+dof] = oldV;
           for(int i=0 ; i<forceVector->MyLength() ; ++i)
             tempForce[i] = force[i];
         }
 
 
         // Compute the purturbed force
-        y[3*perturbID+dof] += epsilon;
-        v[3*perturbID+dof] += epsilon/dt;
+        y[numDoFs*perturbID+dof] += epsilon;
+        v[numDoFs*perturbID+dof] += epsilon/dt;
         computeForce(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
-        y[3*perturbID+dof] = oldY;
-        v[3*perturbID+dof] = oldV;
+        y[numDoFs*perturbID+dof] = oldY;
+        v[numDoFs*perturbID+dof] = oldV;
 
         for(int i=0 ; i<numNeighbors+1 ; ++i){
           int forceID;
@@ -223,11 +226,11 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
           else
             forceID = 0;
 
-          for(int d=0 ; d<3 ; ++d){
-            double value = ( force[3*forceID+d] - tempForce[3*forceID+d] ) / epsilon;
+          for(int d=0 ; d<numDoFs ; ++d){
+            double value = ( force[numDoFs*forceID+d] - tempForce[numDoFs*forceID+d] ) / epsilon;
             if(finiteDifferenceScheme == CENTRAL_DIFFERENCE)
               value *= 0.5;
-            scratchMatrix(3*forceID+d, 3*perturbID+dof) = value;
+            scratchMatrix(numDoFs*forceID+d, numDoFs*perturbID+dof) = value;
           }
         }
       }
@@ -237,7 +240,7 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     // \todo Create utility function for this in ScratchMatrix
     for(unsigned int row=0 ; row<globalIndices.size() ; ++row){
       for(unsigned int col=0 ; col<globalIndices.size() ; ++col){
-        scratchMatrix(row, col) *= volume[row/3];
+        scratchMatrix(row, col) *= volume[row/numDoFs];
       }
     }
 
@@ -282,9 +285,9 @@ double PeridigmNS::Material::calculateBulkModulus(const Teuchos::ParameterList &
     poissonsRatioDefined = true;
   }
 
-  int numDefinedConstants = static_cast<int>(bulkModulusDefined) + 
-    static_cast<int>(shearModulusDefined) + 
-    static_cast<int>(youngsModulusDefined) + 
+  int numDefinedConstants = static_cast<int>(bulkModulusDefined) +
+    static_cast<int>(shearModulusDefined) +
+    static_cast<int>(youngsModulusDefined) +
     static_cast<int>(poissonsRatioDefined);
 
   TEUCHOS_TEST_FOR_EXCEPT_MSG(numDefinedConstants != 2, "**** Error:  Exactly two elastic constants must be provided.  Allowable constants are \"Bulk Modulus\", \"Shear Modulus\", \"Young's Modulus\", \"Poisson's Ratio\".\n");
@@ -327,9 +330,9 @@ double PeridigmNS::Material::calculateShearModulus(const Teuchos::ParameterList 
     poissonsRatioDefined = true;
   }
 
-  int numDefinedConstants = static_cast<int>(bulkModulusDefined) + 
-    static_cast<int>(shearModulusDefined) + 
-    static_cast<int>(youngsModulusDefined) + 
+  int numDefinedConstants = static_cast<int>(bulkModulusDefined) +
+    static_cast<int>(shearModulusDefined) +
+    static_cast<int>(youngsModulusDefined) +
     static_cast<int>(poissonsRatioDefined);
 
   TEUCHOS_TEST_FOR_EXCEPT_MSG(numDefinedConstants != 2, "**** Error:  Exactly two elastic constants must be provided.  Allowable constants are \"Bulk Modulus\", \"Shear Modulus\", \"Young's Modulus\", \"Poisson's Ratio\".\n");

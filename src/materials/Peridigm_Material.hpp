@@ -87,7 +87,7 @@ namespace PeridigmNS {
     //! Returns the shear modulus of the material.
     virtual double ShearModulus() const = 0;
 
-	//! Returns material property value for a given key 
+	//! Returns material property value for a given key
 	// Only implemented for multiphysics elastic material
 	virtual double lookupMaterialProperty(const std::string keyname) const {
       std::string errorMsg = "**Error, Material::lookupMaterialProperty() called for ";
@@ -95,7 +95,7 @@ namespace PeridigmNS {
       errorMsg += " but this function is not implemented.\n";
       TEUCHOS_TEST_FOR_EXCEPT_MSG(true, errorMsg);
       return 0.0;
-    }	
+    }
 
     //! Returns a vector of field IDs corresponding to the variables associated with the material.
     virtual std::vector<int> FieldIds() const = 0;
@@ -116,14 +116,22 @@ namespace PeridigmNS {
                  const int* neighborhoodList,
                  PeridigmNS::DataManager& dataManager) const = 0;
 
+    //! Compute the divergence of the flux (for diffusion models).
+    virtual void
+    computeFluxDivergence(const double dt,
+                          const int numOwnedPoints,
+                          const int* ownedIDs,
+                          const int* neighborhoodList,
+                          PeridigmNS::DataManager& dataManager) const {}
+
     /// \enum JacobianType
     /// \brief Whether to compute the full tangent stiffness matrix or just its block diagonal entries
     ///
     /// The Peridigm Material base class provides a computeJacobian method that all materials inherit
     /// to compute the tangent stiffness matrix. This base class uses a finite difference method (it provides both
     /// forward and centered) to numerically approximate the jacobian. Derived classes may override this method
-    /// to compute the jacobian via another approach (for example, automatic differentiation) or may simply 
-    /// inherit and use the finite difference Jacobian, which will work for all derived mateiral classes. 
+    /// to compute the jacobian via another approach (for example, automatic differentiation) or may simply
+    /// inherit and use the finite difference Jacobian, which will work for all derived mateiral classes.
     ///
     /// The default behavior of this
     /// method is to compute the full tangent stiffness matrix. However, is it occasionally useful to compute

@@ -129,7 +129,7 @@ namespace PeridigmNS {
 
     //! Main routine to drive time integration
     void execute(Teuchos::RCP<Teuchos::ParameterList> solverParams);
-    
+
     //! Called from Main to drive multiple time integration solvers in sequence
     void executeSolvers();
 
@@ -272,8 +272,11 @@ namespace PeridigmNS {
     //! Main routine to drive problem solution for quasistatics
     void executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterList> solverParams);
 
+   //! Main routine to drive problem solution for diffusion
+    void executeImplicitDiffusion(Teuchos::RCP<Teuchos::ParameterList> solverParams);
+
     //! Main routine to drive problem solution for quasistatics using NOX
-    void executeNOXQuasiStatic(Teuchos::RCP<Teuchos::ParameterList> solverParams); 
+    void executeNOXQuasiStatic(Teuchos::RCP<Teuchos::ParameterList> solverParams);
 
     //! Set the preconditioner for the global linear system
     void quasiStaticsSetPreconditioner(Belos::LinearProblem<double,Epetra_MultiVector,Epetra_Operator>& linearProblem);
@@ -314,8 +317,8 @@ namespace PeridigmNS {
     //! Accessor for comm object
     Teuchos::RCP<const Epetra_Comm> getEpetraComm(){ return peridigmComm; }
 
-    //! @name Accessors for maps 
-    //@{ 
+    //! @name Accessors for maps
+    //@{
     Teuchos::RCP<const Epetra_BlockMap> getOneDimensionalMap() { return oneDimensionalMap; }
     Teuchos::RCP<const Epetra_BlockMap> getThreeDimensionalMap() { return threeDimensionalMap; }
     Teuchos::RCP<const Epetra_BlockMap> getBondMap() { return bondMap; }
@@ -323,7 +326,7 @@ namespace PeridigmNS {
     //@}
 
     //! @name Accessors for main solver-level vectors
-    //@{ 
+    //@{
     Teuchos::RCP<Epetra_Vector> getBlockIDs() { return blockIDs; }
     Teuchos::RCP<Epetra_Vector> getX() { return x; }
     Teuchos::RCP<Epetra_Vector> getU() { return u; }
@@ -340,6 +343,7 @@ namespace PeridigmNS {
     Teuchos::RCP<Epetra_Vector> getDeltaU() { return deltaU; }
     Teuchos::RCP<Epetra_Vector> getFluidPressureDeltaU() { return fluidPressureDeltaU;}
     Teuchos::RCP<Epetra_Vector> getVolume() { return volume; }
+    Teuchos::RCP<Epetra_Vector> getTemperature() { return temperature; }
     Teuchos::RCP<Epetra_Vector> getDeltaTemperature() { return deltaTemperature; }
     //@}
 
@@ -378,7 +382,7 @@ namespace PeridigmNS {
   private:
 
     //! @name Friend classes
-    //@{ 
+    //@{
     friend class OutputManager_ExodusII;
     //@}
 
@@ -419,7 +423,7 @@ namespace PeridigmNS {
 
     Teuchos::RCP<const PeridigmNS::ContactModel> contactModel;
     Teuchos::RCP<PeridigmNS::ContactModel> New_contactModel;
-    
+
     Teuchos::RCP< PeridigmNS::UserDefinedTimeDependentShortRangeForceContactModel > SRContactModel;
 
     //! Boundary and initial condition manager
@@ -454,7 +458,7 @@ namespace PeridigmNS {
 
     //! Block iterator, for convenience
     std::vector<PeridigmNS::Block>::iterator blockIt;
-    
+
     //! Contact Block iterator, for convenience
     std::vector<PeridigmNS::ContactBlock>::iterator contactBlockIt;
 
@@ -487,8 +491,14 @@ namespace PeridigmNS {
 
     Teuchos::RCP<Epetra_Vector> combinedA;
 
+    //! Global vector for temperature
+    Teuchos::RCP<Epetra_Vector> temperature;
+
     //! Global vector for temperature change
     Teuchos::RCP<Epetra_Vector> deltaTemperature;
+
+    //! Global vector for temperature
+    Teuchos::RCP<Epetra_Vector> fluxDivergence;
 
     //! Global vector for force
     Teuchos::RCP<Epetra_Vector> force;
@@ -520,13 +530,13 @@ namespace PeridigmNS {
 
     Teuchos::RCP<Epetra_Vector> noxPressureVAtDOFWithKinematicBC;
 
-    //! Global vector for block ID 
+    //! Global vector for block ID
     Teuchos::RCP<Epetra_Vector> blockIDs;
 
     //! Global vector containing the horizon for each point
     Teuchos::RCP<Epetra_Vector> horizon;
 
-    //! Global vector for cell volume 
+    //! Global vector for cell volume
     Teuchos::RCP<Epetra_Vector> volume;
 
     //! Global vector for cell density
@@ -550,7 +560,7 @@ namespace PeridigmNS {
     //! Global vector for delta fluid pressure
     Teuchos::RCP<Epetra_Vector> fluidPressureDeltaU;
 
-    //! Global vector for fluid flow 
+    //! Global vector for fluid flow
     Teuchos::RCP<Epetra_Vector> fluidFlow;
 
     //! Type of tangent to evaluate
@@ -602,7 +612,9 @@ namespace PeridigmNS {
     int displacementFieldId;
     int velocityFieldId;
     int accelerationFieldId;
+    int temperatureFieldId;
     int deltaTemperatureFieldId;
+    int fluxDivergenceFieldId;
     int forceDensityFieldId;
     int contactForceDensityFieldId;
     int externalForceDensityFieldId;
@@ -613,6 +625,8 @@ namespace PeridigmNS {
     int fluidPressureUFieldId;
     int fluidPressureVFieldId;
     int fluidFlowDensityFieldId;
+    int numMechanicsDoFs;
+    int numDiffusionDoFs;
     int numMultiphysDoFs;
     string textMultiphysDoFs;
 
@@ -625,7 +639,7 @@ namespace PeridigmNS {
     // Write the restart files
     void writeRestart(Teuchos::RCP<Teuchos::ParameterList> solverParams);
 
-    //Read the restart files
+    // Read the restart files
     void readRestart();
   };
 }

@@ -121,7 +121,7 @@ void PeridigmNS::SerialMatrix::addBlockDiagonalValues(int numIndices, const int*
   for(int i=0 ; i<numIndices ; ++i){
     localRowIndices[i] = FECrsMatrix->LRID(globalIndices[i]);
     int localColIndex = FECrsMatrix->LCID(globalIndices[i]);
-    // Will be receiving data for columns that we will not fill, so don't check that all column data is locally owned. 
+    // Will be receiving data for columns that we will not fill, so don't check that all column data is locally owned.
     localColIndices[i] = localColIndex;
     inverseMap[globalIndices[i]] = i;
   }
@@ -133,7 +133,7 @@ void PeridigmNS::SerialMatrix::addBlockDiagonalValues(int numIndices, const int*
   Teuchos::SerialDenseVector<int,double> blockDiagonalValues(blockDiagonalNumIndices);
 
   for(int iRow=0 ; iRow<numIndices ; ++iRow){
- 
+
     // Determine which global element iRow belongs to
     int elem = globalIndices[iRow] / 3;
     // Determine global indices of DOFs for this element
@@ -160,7 +160,7 @@ void PeridigmNS::SerialMatrix::addBlockDiagonalValues(int numIndices, const int*
     blockDiagonalGlobalIndices[0] = e1;
     blockDiagonalGlobalIndices[1] = e2;
     blockDiagonalGlobalIndices[2] = e3;
-     
+
     // If the row is locally owned, then sum into the global tangent with Epetra_CrsMatrix::SumIntoMyValues().
     if(localRowIndices[iRow] != -1){
       int err = FECrsMatrix->SumIntoMyValues(localRowIndices[iRow], blockDiagonalNumIndices, &blockDiagonalValues[0], &blockDiagonalLocalColIndices[0]);

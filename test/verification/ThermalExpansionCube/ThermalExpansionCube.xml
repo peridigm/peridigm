@@ -112,8 +112,9 @@
 	  <Parameter name="Dilatation" type="bool" value="true"/>
 	  <Parameter name="Weighted_Volume" type="bool" value="true"/>
 	  <Parameter name="Force" type="bool" value="true"/>
-	  <Parameter name="Temperature_Change" type="bool" value="true"/>
+	  <Parameter name="Temperature" type="bool" value="true"/>
+    <Parameter name="Temperature_Change" type="bool" value="true"/>
 	</ParameterList>
   </ParameterList>
-  
+
 </ParameterList>

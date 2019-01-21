@@ -53,13 +53,15 @@
 
 using namespace std;
 
-PeridigmNS::BoundaryCondition::BoundaryCondition(const string & name_,const Teuchos::ParameterList& bcParams_,Teuchos::RCP<Epetra_Vector> toVector_,Peridigm * peridigm_, const bool isCumulative_)
+PeridigmNS::BoundaryCondition::BoundaryCondition(const string & name_,
+                                                 const Teuchos::ParameterList& bcParams_,
+                                                 Teuchos::RCP<Epetra_Vector> toVector_,
+                                                 Peridigm * peridigm_)
 : peridigm(peridigm_),
   name(name_),
   toVector(toVector_),
   coord(0),
-  tensorOrder(SCALAR),
-  isCumulative(isCumulative_)
+  tensorOrder(SCALAR)
 {
   Teuchos::ParameterList bcParams(bcParams_);
   bcType = to_boundary_condition_type(bcParams);
@@ -145,11 +147,17 @@ void PeridigmNS::BoundaryCondition::evaluateParser(const int & localNodeID, doub
   // who wins?
 }
 
-PeridigmNS::DirichletBC::DirichletBC(const string & name_,const Teuchos::ParameterList& bcParams_,Teuchos::RCP<Epetra_Vector> toVector_,Peridigm * peridigm_,const bool isCumulative_)
-: BoundaryCondition(name_,bcParams_,toVector_,peridigm_,isCumulative_){
+PeridigmNS::DirichletBC::DirichletBC(const string & name_,
+                                     const Teuchos::ParameterList& bcParams_,
+                                     Teuchos::RCP<Epetra_Vector> toVector_,
+                                     Peridigm * peridigm_)
+: BoundaryCondition(name_,bcParams_,toVector_,peridigm_){
 }
 
-void PeridigmNS::DirichletBC::apply(Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets, const double & timeCurrent, const double & timePrevious){
+void PeridigmNS::DirichletBC::apply(Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets,
+                                    const double & timeCurrent,
+                                    const double & timePrevious){
+
   // get the tensor order of the bc field:
   const int fieldDimension = to_dimension_size(tensorOrder);
 
@@ -171,10 +179,7 @@ void PeridigmNS::DirichletBC::apply(Teuchos::RCP< std::map< std::string, std::ve
       double previousValue = 0.0;
       evaluateParser(localNodeID,currentValue,previousValue,timeCurrent);
       TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(currentValue), "**** NaN returned by dirichlet BC evaluation.\n");
-      if(isCumulative)
-        (*toVector)[localNodeID*fieldDimension + coord] += currentValue;
-      else
-        (*toVector)[localNodeID*fieldDimension + coord] = currentValue;
+      (*toVector)[localNodeID*fieldDimension + coord] = currentValue;
     }
   }
   // apply the bc only to specific node sets
@@ -200,10 +205,7 @@ void PeridigmNS::DirichletBC::apply(Teuchos::RCP< std::map< std::string, std::ve
           double previousValue = 0.0;
           evaluateParser(localNodeID,currentValue,previousValue,timeCurrent);
           TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(currentValue), "**** NaN returned by dirichlet BC evaluation.\n");
-          if(isCumulative)
-            (*toVector)[localNodeID*fieldDimension + coord] += currentValue;
-          else
-            (*toVector)[localNodeID*fieldDimension + coord] = currentValue;
+          (*toVector)[localNodeID*fieldDimension + coord] = currentValue;
         }
       }
     }
@@ -214,17 +216,25 @@ PeridigmNS::DirichletIncrementBC::DirichletIncrementBC(const string & name_,
   const Teuchos::ParameterList& bcParams_,
   Teuchos::RCP<Epetra_Vector> toVector_,
   Peridigm * peridigm_,
-  const bool isCumulative_,
   const double & coeff_,
-  const double & deltaTCoeff_)
-: BoundaryCondition(name_,bcParams_,toVector_,peridigm_,isCumulative_),
+  const double & deltaTCoeff_,
+  bool computeChangeRelativeToInitialValue_)
+: BoundaryCondition(name_,bcParams_,toVector_,peridigm_),
   coeff(coeff_),
-  deltaTCoeff(deltaTCoeff_){
+  deltaTCoeff(deltaTCoeff_),
+  computeChangeRelativeToInitialValue(computeChangeRelativeToInitialValue_){
 }
 
-void PeridigmNS::DirichletIncrementBC::apply(Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets, const double & timeCurrent, const double & timePrevious){
-  // for temperature bcs, the previous time should always be zero
-  const double timePrevious_ = bcType==PRESCRIBED_TEMPERATURE ? 0.0 : timePrevious;
+void PeridigmNS::DirichletIncrementBC::apply(Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets,
+                                             const double & timeCurrent,
+                                             const double & timePrevious){
+
+  // if setting BC at the onset of a simulation, timeCurrent will equal timePrevious
+  // do not apply incremental bc in this case
+  if(timeCurrent == timePrevious)
+    return;
+
+  const double timePrevious_ = computeChangeRelativeToInitialValue ? 0.0 : timePrevious;
 
   // get the tensor order of the bc field:
   const int fieldDimension = to_dimension_size(tensorOrder);
@@ -249,10 +259,7 @@ void PeridigmNS::DirichletIncrementBC::apply(Teuchos::RCP< std::map< std::string
       const double value = coeff * (currentValue - previousValue)
                  + deltaTCoeff * (currentValue - previousValue) * (1.0 / (timeCurrent - timePrevious_));
       TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(value), "**** NaN returned by dirichlet increment BC evaluation.\n");
-      if(isCumulative)
-        (*toVector)[localNodeID*fieldDimension + coord] += value;
-      else
-        (*toVector)[localNodeID*fieldDimension + coord] = value;
+      (*toVector)[localNodeID*fieldDimension + coord] = value;
     }
   }
   else
@@ -280,10 +287,7 @@ void PeridigmNS::DirichletIncrementBC::apply(Teuchos::RCP< std::map< std::string
           const double value = coeff * (currentValue - previousValue)
                          + deltaTCoeff * (currentValue - previousValue) * (1.0 / (timeCurrent - timePrevious_));
           TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(value), "**** NaN returned by dirichlet increment BC evaluation.\n");
-          if(isCumulative)
-            (*toVector)[localNodeID*fieldDimension + coord] += value;
-          else
-            (*toVector)[localNodeID*fieldDimension + coord] = value;
+          (*toVector)[localNodeID*fieldDimension + coord] = value;
         }
       }
     }

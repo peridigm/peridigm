@@ -124,8 +124,10 @@ PeridigmNS::MultiphysicsElasticMaterial::MultiphysicsElasticMaterial(const Teuch
   m_forceDensityFieldId            = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force_Density");
   m_bondDamageFieldId              = fieldManager.getFieldId(PeridigmField::BOND,    PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Bond_Damage");
   m_surfaceCorrectionFactorFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Surface_Correction_Factor");
-  if(m_applyThermalStrains)
+  if(m_applyThermalStrains){
+    m_temperatureFieldId = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Temperature");
     m_deltaTemperatureFieldId = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Temperature_Change");
+  }
 
   m_fieldIds.push_back(m_volumeFieldId);
   m_fieldIds.push_back(m_damageFieldId);
@@ -138,8 +140,10 @@ PeridigmNS::MultiphysicsElasticMaterial::MultiphysicsElasticMaterial(const Teuch
   m_fieldIds.push_back(m_forceDensityFieldId);
   m_fieldIds.push_back(m_bondDamageFieldId);
   m_fieldIds.push_back(m_surfaceCorrectionFactorFieldId);
-  if(m_applyThermalStrains)
+  if(m_applyThermalStrains){
+    m_fieldIds.push_back(m_temperatureFieldId);
     m_fieldIds.push_back(m_deltaTemperatureFieldId);
+  }
 }
 
 PeridigmNS::MultiphysicsElasticMaterial::~MultiphysicsElasticMaterial()
@@ -171,7 +175,7 @@ PeridigmNS::MultiphysicsElasticMaterial::initialize(const double dt,
   dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&cellVolumeOverlap);
   dataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
 
-	/*  
+	/*
 	dataManager.getData(m_fluidFlowDensityFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
 	dataManager.getData(m_fluidFlowDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
 	dataManager.getData(m_fluidPressureYFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
@@ -249,8 +253,8 @@ MATERIAL_EVALUATION::computeInternalFluidFlow(x,
 																							bondDamage,
 																							fluidFlow,
 																							neighborhoodList,
-																							numOwnedPoints, 
-																							m_fluidPermeabilityScalar, 
+																							numOwnedPoints,
+																							m_fluidPermeabilityScalar,
 																							m_fluidPermeabilityScalar,
 																							m_fluidDensity,
 																							m_fluidDynamicViscosity,
@@ -313,10 +317,10 @@ PeridigmNS::MultiphysicsElasticMaterial::computeStoredElasticEnergyDensity(const
     for(iNID=0 ; iNID<numNeighbors ; ++iNID){
       neighborId = neighborhoodList[neighborhoodListIndex++];
       neighborBondDamage = bondDamage[bondIndex++];
-      initialDistance = 
+      initialDistance =
         distance(nodeInitialX[0], nodeInitialX[1], nodeInitialX[2],
                  x[neighborId*3], x[neighborId*3+1], x[neighborId*3+2]);
-      currentDistance = 
+      currentDistance =
         distance(nodeCurrentX[0], nodeCurrentX[1], nodeCurrentX[2],
                  y[neighborId*3], y[neighborId*3+1], y[neighborId*3+2]);
       if(m_applyThermalStrains)
@@ -340,7 +344,7 @@ PeridigmNS::MultiphysicsElasticMaterial::computeJacobian(const double dt,
 {
   if(m_applyAutomaticDifferentiationJacobian){
     // Compute the Jacobian via automatic differentiation
-    computeAutomaticDifferentiationJacobian(dt, numOwnedPoints, ownedIDs, neighborhoodList, dataManager, jacobian, jacobianType);  
+    computeAutomaticDifferentiationJacobian(dt, numOwnedPoints, ownedIDs, neighborhoodList, dataManager, jacobian, jacobianType);
 		//jacobian.getFECrsMatrix()->Print(std::cout);
   }
   else{
@@ -379,7 +383,7 @@ PeridigmNS::MultiphysicsElasticMaterial::computeAutomaticDifferentiationJacobian
     vector<int> tempMyGlobalIDs(numEntries);
     // Put the node at the center of the neighborhood at the beginning of the list.
     tempMyGlobalIDs[0] = dataManager.getOwnedScalarPointMap()->GID(iID);
-    vector<int> tempNeighborhoodList(numEntries); 
+    vector<int> tempNeighborhoodList(numEntries);
     tempNeighborhoodList[0] = numNeighbors;
     for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
       int neighborID = neighborhoodList[neighborhoodListIndex++];
@@ -478,7 +482,7 @@ m_fluidDensity,m_fluidDynamicViscosity,
 m_permeabilityCurveInflectionDamage, m_permeabilityAlpha,
 m_maxPermeability,
 m_horizon,m_fluidReynoldsViscosityTemperatureEffect,deltaTemperature);
-		
+
     // Load derivative values into scratch matrix
     // Multiply by volume along the way to convert force density to force
     double value;
@@ -496,140 +500,6 @@ m_horizon,m_fluidReynoldsViscosityTemperatureEffect,deltaTemperature);
 				}
 			}
 		}
-						
-    // Sum the values into the global tangent matrix (this is expensive).
-    if (jacobianType == PeridigmNS::Material::FULL_MATRIX)
-      jacobian.addValues((int)globalIndices.size(), &globalIndices[0], scratchMatrix.Data());
-    else if (jacobianType == PeridigmNS::Material::BLOCK_DIAGONAL) {
-      jacobian.addBlockDiagonalValues((int)globalIndices.size(), &globalIndices[0], scratchMatrix.Data());
-    }
-    else // unknown jacobian type
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Unknown Jacobian Type\n");
-  }
-}
-
-
-/*  
-void
-PeridigmNS::MultiphysicsElasticMaterial::computeAutomaticDifferentiationJacobian(const double dt,
-                                                                     const int numOwnedPoints,
-                                                                     const int* ownedIDs,
-                                                                     const int* neighborhoodList,
-                                                                     PeridigmNS::DataManager& dataManager,
-                                                                     PeridigmNS::SerialMatrix& jacobian,
-                                                                     PeridigmNS::Material::JacobianType jacobianType) const
-{
-  // Compute contributions to the tangent matrix on an element-by-element basis
-
-  // To reduce memory re-allocation, use static variable to store Fad types for
-  // current coordinates (independent variables).
-  static vector<Sacado::Fad::DFad<double> > y_AD;
-
-  // Loop over all points.
-  int neighborhoodListIndex = 0;
-  for(int iID=0 ; iID<numOwnedPoints ; ++iID){
-
-    // Create a temporary neighborhood consisting of a single point and its neighbors.
-    int numNeighbors = neighborhoodList[neighborhoodListIndex++];
-    int numEntries = numNeighbors+1;
-    int numDof = 3*numEntries;
-    vector<int> tempMyGlobalIDs(numEntries);
-    // Put the node at the center of the neighborhood at the beginning of the list.
-    tempMyGlobalIDs[0] = dataManager.getOwnedScalarPointMap()->GID(iID);
-    vector<int> tempNeighborhoodList(numEntries); 
-    tempNeighborhoodList[0] = numNeighbors;
-    for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
-      int neighborID = neighborhoodList[neighborhoodListIndex++];
-      tempMyGlobalIDs[iNID+1] = dataManager.getOverlapScalarPointMap()->GID(neighborID);
-      tempNeighborhoodList[iNID+1] = iNID+1;
-    }
-
-    Epetra_SerialComm serialComm;
-    Teuchos::RCP<Epetra_BlockMap> tempOneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(numEntries, numEntries, &tempMyGlobalIDs[0], 1, 0, serialComm));
-    Teuchos::RCP<Epetra_BlockMap> tempThreeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(numEntries, numEntries, &tempMyGlobalIDs[0], 3, 0, serialComm));
-    Teuchos::RCP<Epetra_BlockMap> tempBondMap = Teuchos::rcp(new Epetra_BlockMap(1, 1, &tempMyGlobalIDs[0], numNeighbors, 0, serialComm));
-
-    // Create a temporary DataManager containing data for this point and its neighborhood.
-    PeridigmNS::DataManager tempDataManager;
-    tempDataManager.setMaps(Teuchos::RCP<const Epetra_BlockMap>(),
-                            tempOneDimensionalMap,
-                            Teuchos::RCP<const Epetra_BlockMap>(),
-                            tempThreeDimensionalMap,
-                            tempBondMap);
-
-    // The temporary data manager will have the same field specs and data as the real data manager.
-    vector<int> fieldIds = dataManager.getFieldIds();
-    tempDataManager.allocateData(fieldIds);
-    tempDataManager.copyLocallyOwnedDataFromDataManager(dataManager);
-
-    // Set up numOwnedPoints and ownedIDs.
-    // There is only one owned ID, and it has local ID zero in the tempDataManager.
-    int tempNumOwnedPoints = 1;
-    vector<int> tempOwnedIDs(tempNumOwnedPoints);
-    tempOwnedIDs[0] = 0;
-
-    // Use the scratchMatrix as sub-matrix for storing tangent values prior to loading them into the global tangent matrix.
-    // Resize scratchMatrix if necessary
-    if(scratchMatrix.Dimension() < numDof)
-      scratchMatrix.Resize(numEntries*4);
-
-    // Create a list of global indices for the rows/columns in the scratch matrix.
-    vector<int> globalIndices(numEntries*4);
-    for(int i=0 ; i<numEntries ; ++i){
-      int globalID = tempOneDimensionalMap->GID(i);
-      for(int j=0 ; j<4 ; ++j)
-        globalIndices[4*i+j] = 4*globalID+j;
-    }
-
-    // Extract pointers to the underlying data in the constitutiveData array.
-    double *x, *y, *cellVolume, *weightedVolume, *damage, *bondDamage, *scf, *deltaTemperature;
-    tempDataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
-    tempDataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&y);
-    tempDataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&cellVolume);
-    tempDataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
-    tempDataManager.getData(m_damageFieldId, PeridigmField::STEP_NP1)->ExtractView(&damage);
-    tempDataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_NP1)->ExtractView(&bondDamage);
-    tempDataManager.getData(m_surfaceCorrectionFactorFieldId, PeridigmField::STEP_NONE)->ExtractView(&scf);
-    deltaTemperature = NULL;
-    if(m_applyThermalStrains)
-      tempDataManager.getData(m_deltaTemperatureFieldId, PeridigmField::STEP_NP1)->ExtractView(&deltaTemperature);
-    // Create arrays of Fad objects for the current coordinates, dilatation, and force density
-    // Modify the existing vector of Fad objects for the current coordinates
-    if((int)y_AD.size() < numDof)
-      y_AD.resize(numDof);
-    for(int i=0 ; i<numDof ; ++i){
-      y_AD[i].diff(i, numDof);
-      y_AD[i].val() = y[i];
-    }
-    // Create vectors of empty AD types for the dependent variables
-    vector<Sacado::Fad::DFad<double> > dilatation_AD(numEntries);
-    vector<Sacado::Fad::DFad<double> > force_AD(numDof);
-
-    // Evaluate the constitutive model using the AD types
-    MATERIAL_EVALUATION::computeDilatation(x,&y_AD[0],weightedVolume,cellVolume,bondDamage,&dilatation_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints,m_horizon,m_OMEGA,m_alpha,deltaTemperature);
-    MATERIAL_EVALUATION::computeInternalForceLinearElastic(x,&y_AD[0],weightedVolume,cellVolume,&dilatation_AD[0],bondDamage,scf,&force_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints,m_bulkModulus,m_shearModulus,m_horizon,m_alpha,deltaTemperature);
-
-    // Load derivative values into scratch matrix
-    // Multiply by volume along the way to convert force density to force
-    double value;
-    for(int row=0 ; row<numEntries*4 ; row+=4){
-    	for(int col=0 ; col<numEntries*4 ; col+=4){
-				for(int subcol=0 ; subcol<4 ; ++subcol){
-	  			for(int subrow=0 ; subrow<4 ; ++subrow){
-						if(not (subcol == 3 or subrow == 3)){
-	     				value = force_AD[row*3/4 + subrow].dx(col*3/4 + subcol) * cellVolume[row/4];
-	     				TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::math::isfinite(value), "**** NaN detected in MultiphysicsElasticMaterial::computeAutomaticDifferentiationJacobian() (internal force).\n");
-						}
-						else if(subcol = subrow)
-							value = 1.0;
-						else
-							value = 0.0;
-	     			scratchMatrix(row+subrow, col+subcol) = value;
-	  			}
-			} 
-     }
-    }
-				
 
     // Sum the values into the global tangent matrix (this is expensive).
     if (jacobianType == PeridigmNS::Material::FULL_MATRIX)
@@ -641,4 +511,4 @@ PeridigmNS::MultiphysicsElasticMaterial::computeAutomaticDifferentiationJacobian
       TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Unknown Jacobian Type\n");
   }
 }
-*/
+

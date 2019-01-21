@@ -70,7 +70,10 @@ class BoundaryCondition {
 public:
 
   //! Constructor.
-  BoundaryCondition(const string & name_,const Teuchos::ParameterList& bcParams_,Teuchos::RCP<Epetra_Vector> toVector_,Peridigm * peridigm_, const bool isCumulative_);
+  BoundaryCondition(const string & name_,
+                    const Teuchos::ParameterList& bcParams_,
+                    Teuchos::RCP<Epetra_Vector> toVector_,
+                    Peridigm * peridigm_);
 
   //! Destructor.
   virtual ~BoundaryCondition(){}
@@ -91,10 +94,17 @@ public:
   int getCoord()const{return coord;}
 
   //! apply the boundary condition
-  virtual void apply(Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets, const double & timeCurrent=0.0, const double & timePrevious=0.0)=0;
+  virtual void apply(Teuchos::RCP< std::map< std::string,
+                     std::vector<int> > > nodeSets,
+                     const double & timeCurrent = 0.0,
+                     const double & timePrevious = 0.0) = 0;
 
   //! evaluate function parser
-  void evaluateParser(const int & localNodeID, double & currentValue, double & previousValue, const double & timeCurrent=0.0, const double & timePrevious=0.0);
+  void evaluateParser(const int & localNodeID,
+                      double & currentValue,
+                      double & previousValue,
+                      const double & timeCurrent = 0.0,
+                      const double & timePrevious = 0.0);
 
 protected:
 
@@ -124,8 +134,6 @@ protected:
 
   Tensor_Order tensorOrder;
 
-  bool isCumulative;
-
 private:
 
   // Private to prohibit use.
@@ -145,16 +153,19 @@ class DirichletBC : public BoundaryCondition{
 public:
 
   //! Constructor.
-  DirichletBC(const string & name_,const Teuchos::ParameterList& bcParams_,Teuchos::RCP<Epetra_Vector> toVector_,Peridigm * peridigm_, const bool isCumulative_);
+  DirichletBC(const string & name_,
+              const Teuchos::ParameterList& bcParams_,
+              Teuchos::RCP<Epetra_Vector> toVector_,
+              Peridigm * peridigm_);
 
   //! Destructor.
   ~DirichletBC(){}
 
   //! apply the boundary condition
-  virtual void apply(Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets, const double & timeCurrent=0.0, const double & timePrevious=0.0);
-
-protected:
-
+  virtual void apply(Teuchos::RCP< std::map< std::string,
+                     std::vector<int> > > nodeSets,
+                     const double & timeCurrent = 0.0,
+                     const double & timePrevious = 0.0);
 };
 
 /*! \brief simply apply the function values to the vector
@@ -164,23 +175,26 @@ public:
 
   //! Constructor.
   DirichletIncrementBC(const string & name_,
-    const Teuchos::ParameterList& bcParams_,
-    Teuchos::RCP<Epetra_Vector> toVector_,
-    Peridigm * peridigm_,
-    const bool isCumulative_,
-    const double & coeff_=1.0,
-    const double & deltaTCoeff_=0.0);
+                       const Teuchos::ParameterList& bcParams_,
+                       Teuchos::RCP<Epetra_Vector> toVector_,
+                       Peridigm * peridigm_,
+                       const double & coeff_ = 1.0,
+                       const double & deltaTCoeff_ = 0.0,
+                       bool computeChangeRelativeToInitialValue_ = false);
 
   //! Destructor.
   ~DirichletIncrementBC(){}
 
   //! apply the boundary condition
-  virtual void apply(Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets, const double & timeCurrent=0.0, const double & timePrevious=0.0);
+  virtual void apply(Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets,
+                     const double & timeCurrent = 0.0,
+                     const double & timePrevious = 0.0);
 
 private:
 
   double coeff;
   double deltaTCoeff;
+  bool computeChangeRelativeToInitialValue;
 };
 
 }
