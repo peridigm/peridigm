@@ -59,6 +59,7 @@
 #include "Peridigm_LCMMaterial.hpp"
 #include "Peridigm_ElasticBondBasedMaterial.hpp"
 #include "Peridigm_VectorPoissonMaterial.hpp"
+#include "Peridigm_DiffusionMaterial.hpp"
 #include "Peridigm_Pals_Model.hpp"
 #ifdef PERIDIGM_PV
 #include "Peridigm_ElasticPVMaterial.hpp"
@@ -101,6 +102,8 @@ PeridigmNS::MaterialFactory::create(const Teuchos::ParameterList& materialParams
     materialModel = Teuchos::rcp( new ElasticBondBasedMaterial(materialParams) );
   else if (materialModelName == "Vector Poisson")
     materialModel = Teuchos::rcp( new VectorPoissonMaterial(materialParams) );
+  else if (materialModelName == "Diffusion")
+    materialModel = Teuchos::rcp( new DiffusionMaterial(materialParams) );
   else if (materialModelName == "Pals")
     materialModel = Teuchos::rcp( new Pals_Model(materialParams) );
   else if (materialModelName == "Elastic Partial Volume"){
@@ -129,7 +132,7 @@ PeridigmNS::MaterialFactory::create(const Teuchos::ParameterList& materialParams
     materialModel = Teuchos::rcp( new LammiConcreteModel(materialParams) );
 #else
     TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n**** Pressure Dependent Elastic Plastic material model unavailable, recompile with -DUSE_CJL.\n");
-#endif    
+#endif
   }
   else {
     std::string invalidMaterial("\n**** Unrecognized material model: ");
@@ -137,6 +140,6 @@ PeridigmNS::MaterialFactory::create(const Teuchos::ParameterList& materialParams
     invalidMaterial += ", must be \"Elastic\" or \"Elastic Plastic\" or \"Elastic Plastic Hardening\" or \"Viscoelastic\" or \"Elastic Correspondence\" or \"LCM\" or \"Vector Poisson\".\n";
     TEUCHOS_TEST_FOR_EXCEPT_MSG(true, invalidMaterial);
   }
-  
+
   return materialModel;
 }

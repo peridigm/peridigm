@@ -1389,6 +1389,7 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     timePrevious = timeCurrent;
     timeCurrent = timeInitial + (step*dt);
 
+    // TODO this should not be here
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
       string damageModelName = blockIt->getDamageModelName();
       if(damageModelName != "None"){
@@ -2951,8 +2952,6 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
 
 void PeridigmNS::Peridigm::executeImplicitDiffusion(Teuchos::RCP<Teuchos::ParameterList> solverParams) {
 
-  std::cout << "POINT A" << std::endl;
-
   // Create vectors that are specific to implicit diffusion
   // These must use the same map as the tangent matrix, which is an Epetra_Map and is not consistent
   // with the Epetra_BlockMap used for the mothership multivector.
@@ -3023,7 +3022,7 @@ void PeridigmNS::Peridigm::executeImplicitDiffusion(Teuchos::RCP<Teuchos::Parame
   }
 
   double timeCurrent = timeSteps[0];
-  double timePrevious;
+  double timePrevious = timeCurrent;
   bool solverFailedToConverge = false;
 
   // Apply BC at time zero
@@ -3062,7 +3061,7 @@ void PeridigmNS::Peridigm::executeImplicitDiffusion(Teuchos::RCP<Teuchos::Parame
     std::cout << "DEBUGGING step " << step << " TIME " << timeCurrent << std::endl;
 
     boundaryAndInitialConditionManager->applyBoundaryConditions(timeCurrent,timePrevious);
-    //boundaryAndInitialConditionManager->applyForceContributions(timeCurrent,timePrevious);
+    boundaryAndInitialConditionManager->applyForceContributions(timeCurrent,timePrevious);
 
     // copy data into the data manager
 		for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
@@ -3103,12 +3102,7 @@ void PeridigmNS::Peridigm::executeImplicitDiffusion(Teuchos::RCP<Teuchos::Parame
     double toleranceMultiplier = 1.0;
     if(!useAbsoluteTolerance){
       // compute the vector of reactions, i.e., the forces corresponding to degrees of freedom for which kinematic B.C. are applied
-      if(analysisHasMultiphysics){
-        boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(combinedForce, reaction, numMultiphysDoFs);
-      }
-      else{
-        boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(force, reaction, numMultiphysDoFs);
-      }
+      boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(force, reaction, numMultiphysDoFs);
       // convert force density to force
       for(int i=0 ; i<reaction->MyLength() ; ++i){
         (*reaction)[i] *= (*volume)[i/(3+numMultiphysDoFs)];
@@ -3119,17 +3113,11 @@ void PeridigmNS::Peridigm::executeImplicitDiffusion(Teuchos::RCP<Teuchos::Parame
     }
 
     if(peridigmComm->MyPID() == 0)
-      cout << "Load step " << step << ", initial time = " << timePrevious << ", final time = " << timeCurrent <<
-        ", convergence criterion = " << tolerance*toleranceMultiplier << endl;
-
+      cout << "Load step " << step << ", initial time = " << timePrevious << ", final time = " << timeCurrent << ", convergence criterion = " << tolerance*toleranceMultiplier << endl;
+    */
     int solverIteration = 1;
-    bool dampedNewton = false;
-    bool usePreconditioner = false; // \todo Determine why ifpack preconditioners started exhibiting problems with Trilinos 11.2.5 (Jul-11-2013).
-                                    //       For the record, Trilinos 11.2.4 (Jun-20-2013) works.
-    int numPureNewtonSteps = 50;//8;
-    int numPreconditionerSteps = 24;
-    int dampedNewtonNumStepsBetweenTangentUpdates = 8;
     double alpha = 0.0;
+    /*
     while(residualNorm > tolerance*toleranceMultiplier && solverIteration <= maxSolverIterations){
 
       // Track the total number of iterations taken over the simulation
@@ -3147,66 +3135,19 @@ void PeridigmNS::Peridigm::executeImplicitDiffusion(Teuchos::RCP<Teuchos::Parame
           cout << "  iteration " << solverIteration << ": residual = " << residualNorm << ", residual L2 = " << residualL2 << ", residual inf = " << residualInf << ", alpha = " << alpha << endl;
       }
 
-      // On the first iteration, use a predictor based on the velocity from the previous load step
-      if(solverIteration == 1 && step > 1 && !disableHeuristics) {
-        for(int i=0 ; i<lhs->MyLength() ; ++i)
-          (*lhs)[i] = (*predictor)[i]*timeIncrement;
-        boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(lhs, numMultiphysDoFs);
-        isConverged = Belos::Converged;
-      }
-      else{
-        // If we reach the specified maximum number of iterations of the nonlinear solver, switch to a damped Newton approach.
-        // This should hurt the convergence rate but improve robustness.
-        if(solverIteration > numPureNewtonSteps && !dampedNewton && !disableHeuristics){
-          if(peridigmComm->MyPID() == 0)
-            cout << "  --switching nonlinear solver to damped Newton--" << endl;
-          dampedNewton = true;
-        }
+      // Compute the tangent
+      tangent->PutScalar(0.0);
+      PeridigmNS::Timer::self().startTimer("Evaluate Jacobian");
+      modelEvaluator->evalJacobian(workset);
+      int err = tangent->GlobalAssemble();
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::executeImplicitDiffusion(), GlobalAssemble() returned nonzero error code.\n");
+      PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
+      boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual, numMultiphysDoFs);
+      boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndSetDiagonal(tangent, numMultiphysDoFs);
+      tangent->Scale(-1.0);
 
-        // If we reach the specified maximum number of iterations of the nonlinear solver, disable the preconditioner
-        if(solverIteration > numPreconditionerSteps && usePreconditioner){
-          if(peridigmComm->MyPID() == 0)
-            cout << "  --disabling preconditioner--" << endl;
-          usePreconditioner = false;
-        }
-
-        // Disable the preconditioner if the user specifies disable heuristics
-        if(disableHeuristics) usePreconditioner = false;
-
-        // Compute the tangent
-        if( !dampedNewton || (solverIteration-numPureNewtonSteps-1)%dampedNewtonNumStepsBetweenTangentUpdates==0 ){
-          tangent->PutScalar(0.0);
-          PeridigmNS::Timer::self().startTimer("Evaluate Jacobian");
-          modelEvaluator->evalJacobian(workset);
-          int err = tangent->GlobalAssemble();
-
-          TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::executeQuasiStatic(), GlobalAssemble() returned nonzero error code.\n");
-          PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
-          boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual, numMultiphysDoFs);
-          boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndSetDiagonal(tangent, numMultiphysDoFs);
-          tangent->Scale(-1.0);
-
-          if(dampedNewton)
-            quasiStaticsDampTangent(dampedNewtonDiagonalScaleFactor, dampedNewtonDiagonalShiftFactor);
-          if(usePreconditioner)
-            quasiStaticsSetPreconditioner(linearProblem);
-        }
-
-        // Solve linear system
-        isConverged = quasiStaticsSolveSystem(residual, lhs, linearProblem, belosSolver);
-
-        if(isConverged == Belos::Unconverged && !disableHeuristics){
-          // Adjust the tangent and try again
-          if(peridigmComm->MyPID() == 0)
-            cout << "  --switching nonlinear solver to damped Newton and deactivating preconditioner--" << endl;
-          if(!dampedNewton)
-            quasiStaticsDampTangent(dampedNewtonDiagonalScaleFactor, dampedNewtonDiagonalShiftFactor);
-          dampedNewton = true;
-          linearProblem.setLeftPrec( Teuchos::RCP<Belos::EpetraPrecOp>() );
-          usePreconditioner = false;
-          isConverged = quasiStaticsSolveSystem(residual, lhs, linearProblem, belosSolver);
-        }
-      }
+      // Solve linear system
+      isConverged = quasiStaticsSolveSystem(residual, lhs, linearProblem, belosSolver);
 
       if(isConverged == Belos::Converged){
 
@@ -3214,41 +3155,16 @@ void PeridigmNS::Peridigm::executeImplicitDiffusion(Teuchos::RCP<Teuchos::Parame
         // The solver should have returned zeros, but there may be small errors.
         boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(lhs, numMultiphysDoFs);
 
-        PeridigmNS::Timer::self().startTimer("Line Search");
-        alpha = disableHeuristics ? 1.0 : quasiStaticsLineSearch(residual, lhs, timeIncrement);
-        PeridigmNS::Timer::self().stopTimer("Line Search");
+        // placeholder for line search
+        alpha = 1.0;
 
         // Apply increment to nodal positions
-				if(analysisHasMultiphysics){
-					for(int i=0 ; i<combinedY->MyLength() ; i+=(3+numMultiphysDoFs)){
-							for(int j=0 ; j<3 ; ++j){
-								combinedDeltaUPtr[i+j] += alpha*(*lhs)[i+j];
-								combinedYPtr[i+j] = xPtr[i*3/(3+numMultiphysDoFs) +j] + combinedUPtr[i+j] + combinedDeltaUPtr[i+j];
-								combinedVPtr[i+j] = combinedDeltaUPtr[i+j]/timeIncrement;
-							}
-							combinedDeltaUPtr[i+3] += alpha*(*lhs)[i+3];
-							combinedYPtr[i+3] = combinedUPtr[i+3] + combinedDeltaUPtr[i+3];
-							combinedVPtr[i+3] = combinedDeltaUPtr[i+3]/timeIncrement;
-					}
+        for(int i=0 ; i<y->MyLength() ; ++i){
+          deltaUPtr[i] += alpha*(*lhs)[i];
+          yPtr[i] = xPtr[i] + uPtr[i] + deltaUPtr[i];
+          vPtr[i] = deltaUPtr[i]/timeIncrement;
+        }
 
-					for(int i=0 ; i<y->MyLength() ; i+=3){
-						for(int j=0 ; j<3 ; ++j){
-							deltaUPtr[i+j] = combinedDeltaUPtr[i/3*(3+numMultiphysDoFs) + j];
-							yPtr[i+j] = combinedYPtr[i/3*(3+numMultiphysDoFs) + j];
-							vPtr[i+j] = combinedVPtr[i/3*(3+numMultiphysDoFs) + j];
-						}
-						fluidPressureDeltaUPtr[i/3] = combinedDeltaUPtr[i/3*(3+numMultiphysDoFs)+3];
-						fluidPressureYPtr[i/3] = combinedYPtr[i/3*(3+numMultiphysDoFs) + 3];
-						fluidPressureVPtr[i/3] = combinedVPtr[i/3*(3+numMultiphysDoFs) + 3];
-					}
-				}
-				else{
-					for(int i=0 ; i<y->MyLength() ; ++i){
-						deltaUPtr[i] += alpha*(*lhs)[i];
-						yPtr[i] = xPtr[i] + uPtr[i] + deltaUPtr[i];
-						vPtr[i] = deltaUPtr[i]/timeIncrement;
-					}
-				}
         // Compute residual
         residualNorm = computeQuasiStaticResidual(residual);
 
@@ -3262,115 +3178,47 @@ void PeridigmNS::Peridigm::executeImplicitDiffusion(Teuchos::RCP<Teuchos::Parame
         break;
       }
     } // end loop of nonlinear iterations
+    */
 
     // If the maximum allowable number of load step reductions has been reached and the residual
     // is within a reasonable tolerance, then just accept the solution and forge ahead.
     // If not, abort the analysis.
+    /*
     if(residualNorm > tolerance*toleranceMultiplier){
       if(residualNorm < 100.0*tolerance*toleranceMultiplier){
         if(peridigmComm->MyPID() == 0)
           cout << "\nWarning:  Accepting current solution and progressing to next load step.\n" << endl;
       }
       else{
-
-        if(adaptiveLoadStepping){
-          solverFailureInThisStep++;
-          totalSolverFailure++;
-
-          if(totalSolverFailure > maxTotalSolverFailure || solverFailureInThisStep > maxSolverFailureInOneStep){
-            failedQS = true;
-            if(!switchToExplicit)
-              if(peridigmComm->MyPID() == 0)
-                cout << "\nError:  Aborting analysis.\n" << endl;
-
-            break;
-          }
-          else{
-            if(peridigmComm->MyPID() == 0)
-              cout << "Warning: Cutting the load step in half and redo the step.\n" << endl;
-          }
-          solverFailedToConverge = true;
-          convergenceHasFailedInThisStep = true;
-        }
-        else{
-          if(peridigmComm->MyPID() == 0)
-            cout << "\nError:  Aborting analysis.\n" << endl;
-          break;
-        }
+        if(peridigmComm->MyPID() == 0)
+          cout << "\nError:  Aborting analysis.\n" << endl;
+        break;
       }
     }
+    */
 
-
-    // If adaptive load step scheme is chosen by user and QS solver failed
-    // to converge, load step is cut in half to retry with new increment.
-    if(adaptiveLoadStepping && solverFailedToConverge){
-      timeSteps.insert(timeSteps.begin()+step, timePrevious+timeIncrement/2.0);
-      if(adaptiveOutputFrequency)
-        outputManager->multiplyOutputFrequency(2.0);
-      step--;
-    }
-
-    if(adaptiveLoadStepping && reduceAllSteps && !solverFailedToConverge && convergenceHasFailedInThisStep){
-      // The smallest load step size so far is set to use for the rest of the simulation
-      timeSteps.erase(timeSteps.begin()+step+1, timeSteps.end());
-      int i=0;
-      while(timeSteps[step+i]<timeFinal){
-        timeSteps.push_back(timeCurrent + (i+1)*timeIncrement);
-        i++;
-      }
-    }
-
+    /*
     if(solverIteration >= maxSolverIterations && peridigmComm->MyPID() == 0)
       cout << "\nWarning:  Nonlinear solver failed to converge in maximum allowable iterations." << endl;
+    */
 
-    if(!adaptiveLoadStepping || !solverFailedToConverge){
-      // The load step is complete
-      // Update internal data and move on to the next load step
-      convergenceHasFailedInThisStep = false;
-      solverFailureInThisStep = 0;
+    // if(!solverFailedToConverge){
 
-      if(!solverVerbose){
-        if(peridigmComm->MyPID() == 0)
-    cout << "  iteration " << solverIteration << ": residual = " << residualNorm << endl;
-      }
-      else{
-        double residualL2, residualInf;
-        residual->Norm2(&residualL2);
-        residual->NormInf(&residualInf);
-        if(peridigmComm->MyPID() == 0)
-          cout << "  iteration " << solverIteration << ": residual = " << residualNorm << ", residual L2 = " << residualL2 << ", residual inf = " << residualInf << ", alpha = " << alpha << endl;
-      }
+    //   if(peridigmComm->MyPID() == 0)
+    //     cout << "  iteration " << solverIteration << ": residual = " << residualNorm << endl;
 
-      // Print load step timing information
-      double CPUTime = loadStepCPUTime.ElapsedTime();
-      cumulativeLoadStepCPUTime += CPUTime;
-      if(peridigmComm->MyPID() == 0)
-        cout << setprecision(2) << "  cpu time for load step = " << CPUTime << " sec., cumulative cpu time = " << cumulativeLoadStepCPUTime << " sec.\n" << endl;
+    //   // Print load step timing information
+    //   double CPUTime = loadStepCPUTime.ElapsedTime();
+    //   cumulativeLoadStepCPUTime += CPUTime;
+    //   if(peridigmComm->MyPID() == 0)
+    //     cout << setprecision(2) << "  cpu time for load step = " << CPUTime << " sec., cumulative cpu time = " << cumulativeLoadStepCPUTime << " sec.\n" << endl;
 
-      // Add the converged displacement increment to the displacement
-      // Make sure even the non participating vectors are updated
-      if(analysisHasMultiphysics){
-        for(int i=0 ; i<combinedU->MyLength() ; i+=(3+numMultiphysDoFs)){
-          for(int j=0 ; j<3 ; ++j){
-            (*combinedU)[i+j] += (*combinedDeltaU)[i+j];
-            (*u)[i/(3+numMultiphysDoFs)*3 + j] += (*combinedDeltaU)[i+j];
-            (*deltaU)[i/(3+numMultiphysDoFs)*3 + j] = (*combinedDeltaU)[i+j];
-          }
-            (*combinedU)[i+3] += (*combinedDeltaU)[i+3];
-            (*fluidPressureU)[i/(3+numMultiphysDoFs)] += (*combinedDeltaU)[i+3];
-            (*fluidPressureDeltaU)[i/(3+numMultiphysDoFs)] = (*combinedDeltaU)[i+3];
-        }
-        // Store the velocity for use as a predictor in the next load step
-        for(int i=0 ; i<combinedV->MyLength() ; ++i){
-          (*predictor)[i] = (*combinedV)[i];
-        }
-      }
-      else{
-        for(int i=0 ; i<u->MyLength() ; ++i){
-          (*u)[i] += (*deltaU)[i];
-          (*predictor)[i] = (*v)[i];
-        }
-      }
+    //   // Add the converged displacement increment to the displacement
+    //   // Make sure even the non participating vectors are updated
+    //   for(int i=0 ; i<u->MyLength() ; ++i){
+    //     (*u)[i] += (*deltaU)[i];
+    //     (*predictor)[i] = (*v)[i];
+    //   }
 
       // Write output for completed load step
       PeridigmNS::Timer::self().startTimer("Output");
@@ -3381,55 +3229,13 @@ void PeridigmNS::Peridigm::executeImplicitDiffusion(Teuchos::RCP<Teuchos::Parame
       // swap state N and state NP1
       for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
         blockIt->updateState();
-    }
-*/
+    // }
+
   } // end loop over load steps
-  /*
-  if(!switchToExplicit && failedQS){
-    if(peridigmComm->MyPID() == 0)
-      cout << "\nError: Number of Quasi-Static solver convergence failures was more than the maximum allowable number of failures." << endl;
-  }
-
-  if(switchToExplicit && failedQS){
-    if(peridigmComm->MyPID() == 0){
-      cout << "\nWarning: Number of Quasi-Static solver convergence failures was more than the maximum allowable number of failures.";
-      cout << "\nSwitching to explicit time-stepping for the rest of simulation." << endl;
-    }
-    Teuchos::RCP<Teuchos::ParameterList> explicitSolverParams = Teuchos::rcp(new Teuchos::ParameterList);
-    Teuchos::ParameterList& verletParams = explicitSolverParams->sublist("Verlet");
-    if(verletSolverParams->isParameter("Fixed dt")){
-      double userDefinedTimeStep = verletSolverParams->get<double>("Fixed dt");
-      verletParams.set("Fixed dt", userDefinedTimeStep);
-    }
-    else{
-      double safetyFactor = 1.0;
-      if(verletSolverParams->isParameter("Safety Factor"))
-        safetyFactor = verletSolverParams->get<double>("Safety Factor");
-      verletParams.set("Safety Factor", safetyFactor);
-    }
-
-    explicitSolverParams->set("Initial Time", timePrevious);
-    explicitSolverParams->set("Final Time", timeFinal);
-
-    if(verletSolverParams->isParameter("Output Frequency")){
-      int output_frequency = verletSolverParams->get<int>("Output Frequency");
-      outputManager->changeOutputFrequency(output_frequency);
-    }
-
-    // Restore the values to the converged ones from previous step
-		for(int i=0 ; i<y->MyLength() ; ++i){
-      yPtr[i] = xPtr[i] + uPtr[i];
-      vPtr[i] = (*predictor)[i];
-    }
-
-    executeExplicit(explicitSolverParams);
-  }
 
   if(peridigmComm->MyPID() == 0)
     cout << endl;
-  */
 }
-
 
 void PeridigmNS::Peridigm::quasiStaticsSetPreconditioner(Belos::LinearProblem<double,Epetra_MultiVector,Epetra_Operator>& linearProblem) {
   Ifpack IFPFactory;
@@ -3998,26 +3804,23 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
     // Note that due to restrictions to CrsMatrix, the residual has a different (but equivalent) map
     // than the force and acceleration
     if(analysisHasMultiphysics){
-	for(int i=0 ; i<residual->MyLength() ; i+=(3+numMultiphysDoFs)){
-	    for(int j=0 ; j<3 ; ++j){
-		(*residual)[i+j] = beta*dt2*( (*density)[i/(3+numMultiphysDoFs)] *
-				   (*a)[i/(3+numMultiphysDoFs)*3+j] -
-				   (*force)[i/(3+numMultiphysDoFs)*3+j] -
-				   (*externalForce)[i/(3+numMultiphysDoFs)*3+j]);
-		}
-			//      Expression based off of the backward Euler integration scheme as well
-			//      as Equation (34) from "A state-based peridynamic formulation of diffusive mass
-			//      transport" (Amit Katiyar, John T. Foster, and Mukul Sharma).
-			//
-			//	The residual measures how well the previous estimate of fluidPressureU_n+1
-			//	predicted the current estimate of fluidPressureU_n+1. If the difference is
-			//	minimal, little change change be expected with further iteration.
-			(*residual)[i+3] = ((*fluidPressureU)[i/(3+numMultiphysDoFs)]-
-				           (*fluidPressureUn)[i/(3+numMultiphysDoFs)])/dt -
-				           (*fluidFlow)[i/(3+numMultiphysDoFs)]/
-					   ((*fluidDensity)[i/(3+numMultiphysDoFs)]*
-					   (*fluidCompressibility)[i/(3+numMultiphysDoFs)]);
-	}
+      for(int i=0 ; i<residual->MyLength() ; i+=(3+numMultiphysDoFs)){
+        for(int j=0 ; j<3 ; ++j){
+          (*residual)[i+j] = beta*dt2*( (*density)[i/(3+numMultiphysDoFs)] *
+                                        (*a)[i/(3+numMultiphysDoFs)*3+j] -
+                                        (*force)[i/(3+numMultiphysDoFs)*3+j] -
+                                        (*externalForce)[i/(3+numMultiphysDoFs)*3+j]);
+        }
+        //      Expression based off of the backward Euler integration scheme as well
+        //      as Equation (34) from "A state-based peridynamic formulation of diffusive mass
+        //      transport" (Amit Katiyar, John T. Foster, and Mukul Sharma).
+        //
+        //	The residual measures how well the previous estimate of fluidPressureU_n+1
+        //	predicted the current estimate of fluidPressureU_n+1. If the difference is
+        //	minimal, little change change be expected with further iteration.
+        (*residual)[i+3] = ((*fluidPressureU)[i/(3+numMultiphysDoFs)]-(*fluidPressureUn)[i/(3+numMultiphysDoFs)])/dt -
+                            (*fluidFlow)[i/(3+numMultiphysDoFs)]/((*fluidDensity)[i/(3+numMultiphysDoFs)]*(*fluidCompressibility)[i/(3+numMultiphysDoFs)]);
+      }
     }
     else{
 	for(int i=0 ; i<residual->MyLength() ; ++i)

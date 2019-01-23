@@ -59,12 +59,13 @@ PeridigmNS::DiffusionMaterial::DiffusionMaterial(const Teuchos::ParameterList& p
     m_fluxDivergenceFieldId(-1)
 {
   m_horizon = params.get<double>("Horizon");
+  m_coefficient = params.get<double>("Coefficient");
 
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   m_volumeFieldId                  = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR,      PeridigmField::CONSTANT, "Volume");
   m_modelCoordinatesFieldId        = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR,      PeridigmField::CONSTANT, "Model_Coordinates");
-  m_temperatureFieldId             = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR,      PeridigmField::TWO_STEP, "Temperature");
-  m_fluxDivergenceFieldId          = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR,      PeridigmField::TWO_STEP, "Flux_Divergence");
+  m_temperatureFieldId             = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::SCALAR,      PeridigmField::TWO_STEP, "Temperature");
+  m_fluxDivergenceFieldId          = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::SCALAR,      PeridigmField::TWO_STEP, "Flux_Divergence");
 
   m_fieldIds.push_back(m_volumeFieldId);
   m_fieldIds.push_back(m_modelCoordinatesFieldId);
@@ -124,8 +125,9 @@ PeridigmNS::DiffusionMaterial::computeFluxDivergence(const double dt,
 				 modelCoord[neighborID*3], modelCoord[neighborID*3+1], modelCoord[neighborID*3+2]);
       kernel = 3.0/(pi*m_horizon*m_horizon*m_horizon*m_horizon*initialDistance);
       temperatureDifference = temperature[neighborID] - nodeTemperature;
-      nodeFluxDivergence = temperatureDifference*neighborVolume;
-      neighborFluxDivergence = -temperatureDifference*nodeVolume;
+      nodeFluxDivergence = m_coefficient*kernel*temperatureDifference*neighborVolume;
+      neighborFluxDivergence = -m_coefficient*kernel*temperatureDifference*nodeVolume;
+      std::cout << "DEBUGGING temperatureDifference " << temperatureDifference << ", nodeFluxDivergence " << nodeFluxDivergence << std::endl;
       TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(nodeFluxDivergence), "**** NaN detected in DiffusionMaterial::computeFluxDivergence().\n");
       TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(neighborFluxDivergence), "**** NaN detected in DiffusionMaterial::computeFluxDivergence().\n");
       fluxDivergence[iID] += nodeFluxDivergence;
