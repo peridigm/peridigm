@@ -78,6 +78,7 @@
 #include "Peridigm_BoundaryAndInitialConditionManager.hpp"
 #include "Peridigm_ContactManager.hpp"
 #include "Peridigm_ServiceManager.hpp"
+#include "Peridigm_DataLoader.hpp"
 #include "Peridigm_Memstat.hpp"
 #include "Peridigm_Material.hpp"
 #include "Peridigm_DamageModel.hpp"
@@ -86,9 +87,9 @@
 namespace PeridigmNS {
 
   class UserDefinedTimeDependentCriticalStretchDamageModel;
-  
+
   class ShortRangeForceContactModel;
-  
+
   class UserDefinedTimeDependentShortRangeForceContactModel;
 
   class Peridigm : public NOX::Epetra::Interface::Required, public NOX::Epetra::Interface::Jacobian, public NOX::Epetra::Interface::Preconditioner {
@@ -407,6 +408,9 @@ namespace PeridigmNS {
     //! Contact flag
     bool analysisHasContact;
 
+    //! Data loader flag
+    bool analysisHasDataLoader;
+
     //! Multiphysics flag
     bool analysisHasMultiphysics;
 
@@ -437,6 +441,8 @@ namespace PeridigmNS {
 
     //! Parameterlist containing global data (data not stored in a data manager) to a compute class
     Teuchos::RCP<Teuchos::ParameterList> computeClassGlobalData;
+
+    Teuchos::RCP<PeridigmNS::DataLoader> dataLoader;
 
     //! Service manager
     Teuchos::RCP<PeridigmNS::ServiceManager> serviceManager;

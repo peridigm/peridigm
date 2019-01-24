@@ -1130,7 +1130,7 @@ void PeridigmNS::ExodusDiscretization::reportExodusError(int errorCode, const ch
     if (numPID > 1) ss << "Error on PID #" << myPID << ": ";
     ss << "PeridigmNS::OutputManager_ExodusII::" << methodName << "() -- Error code: " << errorCode << " (" << exodusMethodName << ")";
     TEUCHOS_TEST_FOR_EXCEPTION(1, invalid_argument, ss.str());
-  }  
+  }
   else {
     if (numPID > 1) ss << "Warning on PID #" << myPID << ": ";
     ss << "PeridigmNS::OutputManager_ExodusII::" << methodName << "() -- Warning code: " << errorCode << " (" << exodusMethodName << ")";
@@ -1148,7 +1148,7 @@ void PeridigmNS::ExodusDiscretization::reportExodusError(int errorCode, const ch
 //   // Check face diagonals
 
 //   // Check element diagonals
-  
+
 //   // Exodus nodes 1 7
 //   dx = nodeCoordinates[0][0] - nodeCoordinates[6][0];
 //   dy = nodeCoordinates[0][1] - nodeCoordinates[6][1];

@@ -77,7 +77,7 @@
 #include "Peridigm_ShortRangeForceContactModel.hpp"
 #include "Peridigm_UserDefinedTimeDependentShortRangeForceContactModel.hpp"
 #include "Peridigm.hpp"
-#include "correspondence.h" // For Invert3by3Matrix
+#include "correspondence.h" // For Invert3by3Matrix // TODO this should go
 #include "Peridigm_DataManager.hpp" //For readBlocktoDisk & writeBlocktoDisk
 #ifdef PERIDIGM_PV
   #include "Peridigm_PartialVolumeCalculator.hpp"
@@ -93,7 +93,7 @@
 #include <Ifpack_IC.h>
 #include <Teuchos_VerboseObject.hpp>
 
-// required for restart 
+// required for restart
 #include "EpetraExt_MultiVectorIn.h"
 #include "EpetraExt_VectorIn.h"
 #include "EpetraExt_VectorOut.h"
@@ -107,6 +107,7 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
   : agePeridigmPreconditioner(0),
     maxAgePeridigmPreconditioner(0),
     analysisHasContact(false),
+    analysisHasDataLoader(false),
     analysisHasMultiphysics(false),
     computeIntersections(false),
     constructInterfaces(false),
@@ -349,6 +350,13 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
     }
   }
 
+  // Instantiate the data loader, if requested
+  if(peridigmParams->isSublist("Data Loader")){
+    analysisHasDataLoader = true;
+    dataLoader = Teuchos::RCP<DataLoader>(new DataLoader(peridigmParams->sublist("Data Loader"),
+                                                         oneDimensionalMap));
+  }
+
   // Instantiate the blocks
   initializeBlocks(peridigmDiscretization);
 
@@ -390,7 +398,7 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
     //The following: If we tried to enable multiphysics, but aren't using the right material model in each material block, raise an exception.
     TEUCHOS_TEST_FOR_EXCEPT_MSG((analysisHasMultiphysics && (materialName.find("Multiphysics") == std::string::npos)), "\n**** Error, material model is not multiphysics compatible.\n");
     //The following: If we have not tried to enable multiphysics, yet are attempting to use a multiphysics material model, raise an exception.
-    TEUCHOS_TEST_FOR_EXCEPT_MSG((!analysisHasMultiphysics && (materialName.find("Multiphysics") != std::string::npos)), "\n**** Error, multiphysics must be enabled at the top level of the input deck.\n"); 
+    TEUCHOS_TEST_FOR_EXCEPT_MSG((!analysisHasMultiphysics && (materialName.find("Multiphysics") != std::string::npos)), "\n**** Error, multiphysics must be enabled at the top level of the input deck.\n");
 
     Teuchos::ParameterList matParams = materialParams.sublist(materialName);
 
@@ -1331,6 +1339,14 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     contactManager->importData(volume, y, v);
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
+  // Load the data manager with data from disk, if requested
+  if(analysisHasDataLoader){
+    PeridigmNS::Timer::self().startTimer("Data Loader");
+    dataLoader->loadDataFromFile(1);
+    dataLoader->copyDataToDataManagers(blocks);
+    PeridigmNS::Timer::self().stopTimer("Data Loader");
+  }
+
   // \todo The velocity copied into the DataManager is actually the midstep velocity, not the NP1 velocity; this can be fixed by creating a midstep velocity field in the DataManager and setting the NP1 value as invalid.
 
   // Evaluate internal force and contact force in initial configuration for use in first timestep
@@ -1369,6 +1385,9 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
   synchDataManagers();
+  if(analysisHasDataLoader){
+    dataLoader->copyDataToDataManagers(blocks);
+  }
   outputManager->write(blocks, timeCurrent);
   PeridigmNS::Timer::self().stopTimer("Output");
 
@@ -1461,6 +1480,14 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     }
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
+    // Load the data manager with data from disk, if requested
+    if(analysisHasDataLoader){
+      PeridigmNS::Timer::self().startTimer("Data Loader");
+      dataLoader->loadDataFromFile(step);
+      dataLoader->copyDataToDataManagers(blocks);
+      PeridigmNS::Timer::self().stopTimer("Data Loader");
+    }
+
     // Update forces based on new positions
     PeridigmNS::Timer::self().startTimer("Internal Force");
     modelEvaluator->evalModel(workset);
@@ -1508,6 +1535,9 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
 
     PeridigmNS::Timer::self().startTimer("Output");
     synchDataManagers();
+    if(analysisHasDataLoader){
+      dataLoader->copyDataToDataManagers(blocks);
+    }
     outputManager->write(blocks, timeCurrent);
     PeridigmNS::Timer::self().stopTimer("Output");
 
