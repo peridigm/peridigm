@@ -55,14 +55,18 @@
 
 PeridigmNS::DataLoader::DataLoader(const Teuchos::ParameterList& contactParams,
                                    Teuchos::RCP<const Epetra_BlockMap> epetraMap)
-  : fileName("none"), fieldName("none"), exodusName("none"), numRanks(-1), myRank(-1)
+  : fileName("none"), fieldName("none"), exodusName("none"), exodusVariableIndex(-1), numRanks(-1), myRank(-1)
 {
   fileName = contactParams.get<std::string>("File Name");
   fieldName = contactParams.get<std::string>("Field Name");
   numRanks = epetraMap->Comm().NumProc();
   myRank = epetraMap->Comm().MyPID();
-  scratch = Teuchos::rcp(new Epetra_Vector(*epetraMap));
-  fieldId = PeridigmNS::FieldManager::self().getFieldId(fieldName);
+  int vecLength = epetraMap->NumMyElements();
+  scratchArray.resize(vecLength);
+  scratchVector = Teuchos::rcp(new Epetra_Vector(*epetraMap));
+
+  // Assume field is nodal, scalar, two-step
+  fieldId = PeridigmNS::FieldManager::self().getFieldId(PeridigmField::NODE, PeridigmField::SCALAR, PeridigmField::TWO_STEP, fieldName);
 
   // Append processor id information to the file name, if necessary
   exodusName = fileName;
@@ -88,11 +92,68 @@ PeridigmNS::DataLoader::DataLoader(const Teuchos::ParameterList& contactParams,
     ss << "." << numRanks << "." << std::setfill('0') << std::setw(width) << myRank;
     exodusName += ss.str();
   }
+
+  // Open the exodus file
+  int compWordSize = sizeof(double);
+  int ioWordSize = 0;
+  float exodusVersion;
+  int exodusFileId = ex_open(exodusName.c_str(), EX_READ, &compWordSize, &ioWordSize, &exodusVersion);
+  if(exodusFileId < 0){
+    std::cout << "\n****Error on processor " << myRank << ": unable to open file " << exodusName.c_str() << "\n" << std::endl;
+    reportExodusError(exodusFileId, "DataLoader()", "ex_open");
+  }
+
+  // Read the initialization parameters
+  int numDim, numNodes, numElem, numElemBlocks, numNodeSets, numSideSets;
+  char title[MAX_LINE_LENGTH];
+  int retval = ex_get_init(exodusFileId, title, &numDim, &numNodes, &numElem, &numElemBlocks, &numNodeSets, &numSideSets);
+  if (retval != 0) reportExodusError(retval, "DataLoader()", "ex_get_init");
+
+  int numNodalVariables;
+  retval = ex_get_variable_param(exodusFileId, EX_NODAL, &numNodalVariables);
+  if (retval != 0) reportExodusError(retval, "DataLoader()", "ex_get_variable_param");
+
+  exodusVariableIndex = -1;
+  for (int varIndex=1 ; varIndex<numNodalVariables+1 ; ++varIndex){
+    char variableName[MAX_STR_LENGTH+1];
+    retval = ex_get_variable_name(exodusFileId, EX_NODAL, varIndex, variableName);
+    if (retval != 0) reportExodusError(retval, "DataLoader()", "ex_get_variable_name");
+    if(std::string(variableName) == fieldName){
+      exodusVariableIndex = varIndex;
+    }
+  }
+
+  if (exodusVariableIndex == -1){
+    std::string msg = "**** Error in DataLoader::DataLoader(), requested variable name " + fieldName + " not found.\n";
+    msg += "**** Nodal variables in " + fileName + " are:\n";
+    for (int varIndex=1 ; varIndex<numNodalVariables+1 ; ++varIndex){
+      char variableName[MAX_STR_LENGTH+1];
+      retval = ex_get_variable_name(exodusFileId, EX_NODAL, varIndex, variableName);
+      if (retval != 0) reportExodusError(retval, "DataLoader()", "ex_get_variable_name");
+      msg += "****   " + std::string(variableName);
+    }
+    msg += "\n";
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(exodusVariableIndex == -1, msg);
+  }
+
+  // Close the genesis file
+  retval = ex_close(exodusFileId);
+  if (retval != 0) reportExodusError(retval, "DataLoader()", "ex_close");
+
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(numNodes != vecLength,
+                              "**** Error in DataLoader::DataLoader(), unexpected array length.\n");
+
+}
+
+std::vector<int> PeridigmNS::DataLoader::getFieldIds() const
+{
+  std::vector<int> fieldIds;
+  fieldIds.push_back(fieldId);
+  return fieldIds;
 }
 
 void PeridigmNS::DataLoader::loadDataFromFile(int step)
 {
-  // Open the genesis file
   int compWordSize = sizeof(double);
   int ioWordSize = 0;
   float exodusVersion;
@@ -102,65 +163,13 @@ void PeridigmNS::DataLoader::loadDataFromFile(int step)
     reportExodusError(exodusFileId, "loadData()", "ex_open");
   }
 
-  // Read the initialization parameters
-  int numDim, numNodes, numElem, numElemBlocks, numNodeSets, numSideSets;
-  char title[MAX_LINE_LENGTH];
-  int retval = ex_get_init(exodusFileId, title, &numDim, &numNodes, &numElem, &numElemBlocks, &numNodeSets, &numSideSets);
-  if (retval != 0) reportExodusError(retval, "loadData()", "ex_get_init");
-
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(numNodes != scratch->Map().NumMyElements(),
-                              "**** Error in DataLoader::loadData(), unexpected array length.\n");
-
-  // Global node numbering
-  std::vector<int> nodeIdMap(numNodes);
-  retval = ex_get_id_map(exodusFileId, EX_NODE_MAP, &nodeIdMap[0]);
-  if (retval != 0) reportExodusError(retval, "loadData()", "ex_get_id_map");
-  for(int i=0 ; i<numNodes ; ++i)
-    nodeIdMap[i] -= 1; // Note the switch from 1-based indexing to 0-based indexing
-
-  // Check for auxiliary node maps and element maps
-  int numNodeMaps, numElemMaps;
-  retval = ex_get_map_param(exodusFileId, &numNodeMaps, &numElemMaps);
-  if (retval != 0) reportExodusError(retval, "loadData()", "ex_get_map_param");
-
-  // DJL
-  // This block of code handles the case where an extra elem or node map
-  // called "original_global_id_map" is supplied.  This can be the case
-  // for parallel decompositions created with decomp or loadbal.
-  // If there is an auxiliary map provided that has a different name, throw an
-  // error because I don't know what to do with it.
-  if(numNodeMaps > 0){
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(numNodeMaps > 1,
-                                "**** Error in DataLoader::loadData(), genesis file contains invalid number of auxiliary node maps (>1).\n");
-    char mapName[MAX_STR_LENGTH];
-    retval = ex_get_name(exodusFileId, EX_NODE_MAP, 1, mapName);
-    if (retval != 0) reportExodusError(retval, "loadData()", "ex_get_name");
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(std::string(mapName) != std::string("original_global_id_map"),
-                                "**** Error in DataLoader::loadData(), unknown exodus EX_NODE_MAP: " + std::string(mapName) + ".\n");
-    std::vector<int> auxMap(numNodes);
-    retval = ex_get_num_map(exodusFileId, EX_NODE_MAP, 1, &auxMap[0]);
-    if (retval != 0) reportExodusError(retval, "loadData()", "ex_get_num_map");
-    for(int i=0 ; i<numNodes ; ++i)
-      auxMap[i] -= 1; // Note the switch from 1-based indexing to 0-based indexing
-    // Use original_global_id_map instead of the map returned by ex_get_id_map()
-    nodeIdMap = auxMap;
-  }
-
-  // int numNodeVars = 0;
-  // retval = ex_get_variable_param(exodusFileId, EX_NODAL, &numNodeVars);
-  // std::cout << "DEBUGGING numNodeVars " << numNodeVars << std::endl;
-
-  int varIndex = 1;
   int objId = 0;
-  std::vector<double> variableValues(numNodes);
-  retval = ex_get_var(exodusFileId, step, EX_NODAL, varIndex, objId, numNodes, variableValues.data());
+  int retval = ex_get_var(exodusFileId, step, EX_NODAL, exodusVariableIndex, objId, scratchArray.size(), scratchArray.data());
   if (retval != 0) reportExodusError(retval, "loadData()", "ex_get_var");
 
-  for (int i=0 ; i<numNodes ; i++) {
-    (*scratch)[i] = variableValues[i];
+  for (unsigned int i=0 ; i<scratchArray.size() ; i++) {
+    (*scratchVector)[i] = scratchArray[i];
   }
-
-  //retval = ex_get_variable_names(exodusFileId, EX_NODE, num_vars, char *var_names[]);
 
   // Close the genesis file
   retval = ex_close(exodusFileId);
@@ -170,7 +179,7 @@ void PeridigmNS::DataLoader::loadDataFromFile(int step)
 void PeridigmNS::DataLoader::copyDataToDataManagers(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks)
 {
   for(std::vector<PeridigmNS::Block>::iterator blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    blockIt->importData(*scratch, fieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(*scratchVector, fieldId, PeridigmField::STEP_NP1, Insert);
   }
 }
 

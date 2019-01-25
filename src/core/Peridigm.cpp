@@ -486,6 +486,12 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
   vector<int> computeManagerFieldIds = computeManager->FieldIds();
   auxiliaryFieldIds.insert(auxiliaryFieldIds.end(), computeManagerFieldIds.begin(), computeManagerFieldIds.end());
 
+  // Add fields from data loader, if any
+  if(analysisHasDataLoader){
+    vector<int> dataLoaderFieldIds = dataLoader->getFieldIds();
+    auxiliaryFieldIds.insert(auxiliaryFieldIds.end(), dataLoaderFieldIds.begin(), dataLoaderFieldIds.end());
+  }
+
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
     blockIt->setAuxiliaryFieldIds(auxiliaryFieldIds);
 
@@ -1101,7 +1107,7 @@ void PeridigmNS::Peridigm::initializeBlocks(Teuchos::RCP<Discretization> disc) {
   // Create vector of blocks
   blocks = Teuchos::rcp(new std::vector<PeridigmNS::Block>());
 
-  // Loop over each entry in "Blocks" section of input deck. 
+  // Loop over each entry in "Blocks" section of input deck.
   Teuchos::ParameterList& blockParams = peridigmParams->sublist("Blocks", true);
   for(Teuchos::ParameterList::ConstIterator it = blockParams.begin() ; it != blockParams.end() ; it++){
     const string& name = it->first;

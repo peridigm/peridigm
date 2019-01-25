@@ -64,6 +64,9 @@ public:
 
   ~DataLoader(){}
 
+  //! Returns a vector of field IDs corresponding to the variables associated with the material.
+  std::vector<int> getFieldIds() const;
+
   void loadDataFromFile(int step);
 
   void copyDataToDataManagers(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks);
@@ -78,9 +81,11 @@ protected:
   std::string fieldName;
   int fieldId;
   std::string exodusName;
+  int exodusVariableIndex;
   int numRanks;
   int myRank;
-  Teuchos::RCP<Epetra_Vector> scratch;
+  std::vector<double> scratchArray;
+  Teuchos::RCP<Epetra_Vector> scratchVector;
 
 private:
 
