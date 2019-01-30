@@ -127,7 +127,6 @@ PeridigmNS::DiffusionMaterial::computeFluxDivergence(const double dt,
       temperatureDifference = temperature[neighborID] - nodeTemperature;
       nodeFluxDivergence = m_coefficient*kernel*temperatureDifference*neighborVolume;
       neighborFluxDivergence = -m_coefficient*kernel*temperatureDifference*nodeVolume;
-      std::cout << "DEBUGGING temperatureDifference " << temperatureDifference << ", nodeFluxDivergence " << nodeFluxDivergence << std::endl;
       TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(nodeFluxDivergence), "**** NaN detected in DiffusionMaterial::computeFluxDivergence().\n");
       TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(neighborFluxDivergence), "**** NaN detected in DiffusionMaterial::computeFluxDivergence().\n");
       fluxDivergence[iID] += nodeFluxDivergence;

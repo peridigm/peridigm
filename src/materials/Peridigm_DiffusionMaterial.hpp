@@ -96,17 +96,6 @@ namespace PeridigmNS {
                const int* neighborhoodList,
                PeridigmNS::DataManager& dataManager);
 
-    //! Evaluate the internal force.
-    virtual void
-    computeForce(const double dt,
-		 const int numOwnedPoints,
-		 const int* ownedIDs,
-		 const int* neighborhoodList,
-                 PeridigmNS::DataManager& dataManager) const {
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error:  Unexpected call to DiffusionMaterial::computeForce().\n");
-      return;
-    }
-
     //! Apply the diffusion operator.
     virtual void
     computeFluxDivergence(const double dt,

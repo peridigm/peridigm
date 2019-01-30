@@ -94,7 +94,9 @@
   <ParameterList name="Solver">
 	<Parameter name="Verbose" type="bool" value="false"/>
 	<Parameter name="Initial Time" type="double" value="0.0"/>
-	<Parameter name="Final Time" type="double" value="0.00005"/> 
+	<Parameter name="Final Time" type="double" value="0.00005"/>
+  <Parameter name="Solve For Displacement" type="bool" value="true"/>
+  <Parameter name="Solve For Pressure" type="bool" value="true"/>
 	<ParameterList name="QuasiStatic">
 	  <Parameter name="Number of Load Steps" type="int" value="20"/>
 	  <Parameter name="Absolute Tolerance" type="double" value="1.0e-2"/>
@@ -120,5 +122,5 @@
 	  <Parameter name="Flux_Density" type="bool" value="true"/>
 	</ParameterList>
   </ParameterList>
-  
+
 </ParameterList>

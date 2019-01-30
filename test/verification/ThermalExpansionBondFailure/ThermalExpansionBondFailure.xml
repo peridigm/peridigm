@@ -62,14 +62,16 @@
     -->
 	<Parameter name="Nodes To Fix In XYZ Node Set" type="string" value="1 2 3"/>
 	<Parameter name="Nodes To Fix In XZ Node Set" type="string" value="4"/>
+  <Parameter name="Entire Domain Node Set" type="string" value="1 2 3 4"/>
 
-    <!-- Let the temperature decrease by 10,000 degrees to produce 10% strain -->
-        <ParameterList name="Prescribed Thermal Loading">
-          <Parameter name="Type" type="string" value="Prescribed Temperature"/>
-          <Parameter name="Node Set" type="string" value="FULL_domain"/>
-          <Parameter name="Value" type="string" value="10000.0 - 10000.0*0.5*(cos(3.14159265359 + t*3.14159265359/0.1) + 1.0)"/>
-        </ParameterList>
-    <!-- Completely fix three nodes -->
+  <!-- Let the temperature decrease by 10,000 degrees to produce 10% strain -->
+  <ParameterList name="Prescribed Thermal Loading">
+    <Parameter name="Type" type="string" value="Prescribed Temperature"/>
+    <Parameter name="Node Set" type="string" value="Entire Domain Node Set"/>
+    <Parameter name="Value" type="string" value="10000.0 - 10000.0*0.5*(cos(3.14159265359 + t*3.14159265359/0.1) + 1.0)"/>
+  </ParameterList>
+
+  <!-- Completely fix three nodes -->
 	<ParameterList name="Prescribed Displacement X First Three Nodes">
 	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
 	  <Parameter name="Node Set" type="string" value="Nodes To Fix In XYZ Node Set"/>

@@ -50,9 +50,7 @@
 #include <cctype>
 
 static bool string_maps_created = false;
-
-static std::map<Set_Definition,std::string> set_definition_string;
-static std::map<std::string,Set_Definition> string_set_definition;
+//static std::map<std::string,Set_Definition> string_set_definition;
 static std::map<Tensor_Order,std::string> tensor_order_string;
 static std::map<std::string,Tensor_Order> string_tensor_order;
 static std::map<Spatial_Coordinate,std::string> spatial_coordinate_string;
@@ -69,10 +67,6 @@ void create_string_maps()
   }
   string_maps_created = true;
 
-  set_definition_string[ALL_SETS]                                                         = "ALL_SETS";
-  set_definition_string[FULL_DOMAIN]                                                      = "FULL_DOMAIN";
-  set_definition_string[NO_SUCH_SET_DEFINITION]                                           = "NO_SUCH_SET_DEFINITION";
-
   tensor_order_string[SCALAR]                                                             = "SCALAR";
   tensor_order_string[VECTOR]                                                             = "VECTOR";
   tensor_order_string[TENSOR]                                                             = "TENSOR";
@@ -84,20 +78,15 @@ void create_string_maps()
   spatial_coordinate_string[NO_SUCH_SPATIAL_COORDINATE]                                   = "NO_SUCH_SPATIAL_COORDINATE";
 
   boundary_condition_string[PRESCRIBED_DISPLACEMENT]                                      = "PRESCRIBED_DISPLACEMENT";
-  boundary_condition_string[PRESCRIBED_FLUID_PRESSURE_U]                                      = "PRESCRIBED_FLUID_PRESSURE_U";
+  boundary_condition_string[PRESCRIBED_FLUID_PRESSURE_U]                                  = "PRESCRIBED_FLUID_PRESSURE_U";
   boundary_condition_string[PRESCRIBED_TEMPERATURE]                                       = "PRESCRIBED_TEMPERATURE";
-  boundary_condition_string[INITIAL_TEMPERATURE]                                          = "INITIAL_TEMPERATURE";
   boundary_condition_string[INITIAL_DISPLACEMENT]                                         = "INITIAL_DISPLACEMENT";
   boundary_condition_string[INITIAL_VELOCITY]                                             = "INITIAL_VELOCITY";
-  boundary_condition_string[INITIAL_FLUID_PRESSURE_U]                                       = "INITIAL_FLUID_PRESSURE_U";
+  boundary_condition_string[INITIAL_FLUID_PRESSURE_U]                                     = "INITIAL_FLUID_PRESSURE_U";
   boundary_condition_string[BODY_FORCE]                                                   = "BODY_FORCE";
   boundary_condition_string[NO_SUCH_BOUNDARY_CONDITION_TYPE]                              = "NO_SUCH_BOUNDARY_CONDITION_TYPE";
 
 
-  for (std::map<Set_Definition,std::string>::iterator pos = set_definition_string.begin(); pos != set_definition_string.end(); ++pos)
-  {
-    string_set_definition[pos->second] = pos->first;
-  }
   for (std::map<Tensor_Order,std::string>::iterator pos = tensor_order_string.begin(); pos != tensor_order_string.end(); ++pos)
   {
     string_tensor_order[pos->second] = pos->first;
@@ -112,38 +101,38 @@ void create_string_maps()
   }
 }
 
-std::string to_string(const Set_Definition & set_definition)
-{
-  create_string_maps();
-  std::map<Set_Definition,std::string>::iterator pos=set_definition_string.find(set_definition);
-    if (pos == set_definition_string.end())
-    {
-      std::stringstream oss;
-      oss << "ERROR: Unknown set definition: " << set_definition << std::endl;
-      TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
-    }
-    return pos->second;
-}
+// std::string to_string(const Set_Definition & set_definition)
+// {
+//   create_string_maps();
+//   std::map<Set_Definition,std::string>::iterator pos=set_definition_string.find(set_definition);
+//     if (pos == set_definition_string.end())
+//     {
+//       std::stringstream oss;
+//       oss << "ERROR: Unknown set definition: " << set_definition << std::endl;
+//       TEUCHOS_TEST_FOR_EXCEPTION(true,std::invalid_argument,oss.str());
+//     }
+//     return pos->second;
+// }
 
-Set_Definition to_set_definition(const Teuchos::ParameterList & params)
-{
-  return to_set_definition(params.get<std::string>("Node Set"));
-}
+// Set_Definition to_set_definition(const Teuchos::ParameterList & params)
+// {
+//   return to_set_definition(params.get<std::string>("Node Set"));
+// }
 
-Set_Definition to_set_definition(const std::string & str)
-{
-  create_string_maps();
-  // convert to upper case and trim the input string
-  std::string upper_str = str;
-  tidy_string(upper_str);
+// Set_Definition to_set_definition(const std::string & str)
+// {
+//   create_string_maps();
+//   // convert to upper case and trim the input string
+//   std::string upper_str = str;
+//   tidy_string(upper_str);
 
-  std::map<std::string,Set_Definition,std::string >::iterator pos=string_set_definition.find(upper_str);
-  if (pos == string_set_definition.end())
-  {
-    return NO_SUCH_SET_DEFINITION;
-  }
-  return pos->second;
-}
+//   std::map<std::string,Set_Definition,std::string >::iterator pos=string_set_definition.find(upper_str);
+//   if (pos == string_set_definition.end())
+//   {
+//     return NO_SUCH_SET_DEFINITION;
+//   }
+//   return pos->second;
+// }
 
 
 std::string to_string(const Tensor_Order & tensor_order)

@@ -506,6 +506,9 @@ namespace PeridigmNS {
     //! Global vector for temperature
     Teuchos::RCP<Epetra_Vector> fluxDivergence;
 
+    //! Global scratch vector for scalar data
+    Teuchos::RCP<Epetra_Vector> scalarScratch;
+
     //! Global vector for force
     Teuchos::RCP<Epetra_Vector> force;
 

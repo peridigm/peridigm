@@ -1,7 +1,7 @@
 <ParameterList>
 
   <Parameter name="Verbose" type="bool" value="false"/>
-  
+
   <ParameterList name="Discretization">
 	<Parameter name="Type" type="string" value="PdQuickGrid" />
 	<Parameter name="NeighborhoodType" type="string" value="Spherical"/>
@@ -42,13 +42,14 @@
 	<Parameter name="X Axis Node Set" type="string" value="1 2 3 4 5"/>
 	<Parameter name="Y Axis Node Set" type="string" value="1 6 11 16 21"/>
 	<Parameter name="Z Axis Node Set" type="string" value="1 26 51 76 101"/>
+  <Parameter name="Entire Domain Node Set" type="string" value="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100 101 102 103 104 105 106 107 108 109 110 111 112 113 114 115 116 117 118 119 120 121 122 123 124 125"/>
 
     <!-- Let the temperature decrease by 1000 degrees per hour -->
-        <ParameterList name="Prescribed Thermal Loading">
-          <Parameter name="Type" type="string" value="Prescribed Temperature"/>
-          <Parameter name="Node Set" type="string" value="FulL DomAIN"/>
-          <Parameter name="Value" type="string" value="273.0+1000.0*(t/3600.0)"/>
-        </ParameterList>
+  <ParameterList name="Prescribed Thermal Loading">
+    <Parameter name="Type" type="string" value="Prescribed Temperature"/>
+    <Parameter name="Node Set" type="string" value="Entire Domain Node Set"/>
+    <Parameter name="Value" type="string" value="273.0+1000.0*(t/3600.0)"/>
+  </ParameterList>
     <!-- Elliminate rigid body modes -->
 	<ParameterList name="Prescribed Displacement X Axis Y Direction">
 	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
@@ -91,7 +92,7 @@
   <ParameterList name="Solver">
 	<Parameter name="Verbose" type="bool" value="false"/>
 	<Parameter name="Initial Time" type="double" value="0.0"/>
-	<Parameter name="Final Time" type="double" value="3600.0"/> 
+	<Parameter name="Final Time" type="double" value="3600.0"/>
 	<ParameterList name="QuasiStatic">
 	  <Parameter name="Number of Load Steps" type="int" value="10"/>
 	  <Parameter name="Absolute Tolerance" type="double" value="1.0e-2"/>

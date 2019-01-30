@@ -96,9 +96,16 @@ PeridigmNS::ModelEvaluator::evalModel(Teuchos::RCP<Workset> workset) const
                                 ownedIDs,
                                 neighborhoodList,
                                 *dataManager);
+
+    materialModel->computeFluxDivergence(dt,
+                                         numOwnedPoints,
+                                         ownedIDs,
+                                         neighborhoodList,
+                                         *dataManager);
   }
 
   // ---- Evaluate Contact ----
+
   if(!workset->contactManager.is_null())
     workset->contactManager->evaluateContactForce(dt);
 }

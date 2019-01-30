@@ -68,6 +68,7 @@
 #include "Peridigm_ComputeManager.hpp"
 #include "Peridigm_ContactModelFactory.hpp"
 #include "Peridigm_BoundaryAndInitialConditionManager.hpp"
+#include "Peridigm_DegreesOfFreedomManager.hpp"
 #include "Peridigm_CriticalTimeStep.hpp"
 #include "Peridigm_Timer.hpp"
 #include "Peridigm_MaterialFactory.hpp"
@@ -212,6 +213,11 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
     if (found!=std::string::npos)
       solverParameters.push_back( sublist(peridigmParams, name) );
   }
+
+  // For the case where multiple solvers are used, assume that the degrees of freedom (multiphysics) are the same for all solvers.
+  PeridigmNS::DegreesOfFreedomManager& dofManager = PeridigmNS::DegreesOfFreedomManager::self();
+  if (solverParameters.size() > 0)
+    dofManager.initialize(*(solverParameters[0]));
 
   // Check solver parameters for request to allocate tangent matrix
   // Note that Peridigm can be run with multiple solvers, applied in sequence
@@ -831,7 +837,7 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization>
     fluidPressureY->PutScalar(0.0);
   }
   else {
-    oneDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*oneDimensionalMap, 7));
+    oneDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*oneDimensionalMap, 8));
     blockIDs = Teuchos::rcp((*oneDimensionalMothership)(0), false);         // block ID
     horizon = Teuchos::rcp((*oneDimensionalMothership)(1), false);          // horizon for each point
     volume = Teuchos::rcp((*oneDimensionalMothership)(2), false);           // cell volume
@@ -839,6 +845,7 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization>
     temperature = Teuchos::rcp((*oneDimensionalMothership)(4), false);      // temperature
     deltaTemperature = Teuchos::rcp((*oneDimensionalMothership)(5), false); // change in temperature
     fluxDivergence = Teuchos::rcp((*oneDimensionalMothership)(6), false);   // divergence of the flux (e.g., heat flux)
+    scalarScratch = Teuchos::rcp((*oneDimensionalMothership)(7), false);    // scratch vector corresponding to oneDimensionalMap
   }
 
   if(analysisHasMultiphysics){
@@ -1771,7 +1778,7 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
     }
 
     // zero out the rows corresponding to kinematic boundary conditions
-    boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual, numMultiphysDoFs);
+    boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
 
     // copy back to tmp_rhs
     TEUCHOS_TEST_FOR_EXCEPT_MSG(residual->MyLength() != tmp_rhs->MyLength(), "**** PeridigmNS::Peridigm::evaluateNOX() incompatible vector lengths! (tmp_rhs with residual)\n");
@@ -1787,7 +1794,7 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
     int err = tangent->GlobalAssemble();
     TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::evaluateNOX(), GlobalAssemble() returned nonzero error code.\n");
     PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
-    boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndSetDiagonal(tangent, numMultiphysDoFs);
+    boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndSetDiagonal(tangent);
   }
   if( fillMatrix )
     m_noxJacobianUpdateCounter += 1;
@@ -2096,7 +2103,7 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
 			fluidPressureV->PutScalar(0.0);
     }
 
-    boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(initialGuess, numMultiphysDoFs);
+    boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(initialGuess);
     // Apply the displacement increment and update the temperature field
     // Note that the soln vector was created to be compatible with the tangent matrix, and hence needed to be
     // constructed with an Epetra_Map.  The mothership vectors were constructed with an Epetra_BlockMap, and it's
@@ -2171,9 +2178,9 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
       computeQuasiStaticResidual(residual);
 
       if(analysisHasMultiphysics)
-        boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(combinedForce, reaction, numMultiphysDoFs);
+        boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(combinedForce, reaction);
       else
-        boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(force, reaction, numMultiphysDoFs);
+        boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(force, reaction);
 
       // convert force density to force
       if(analysisHasMultiphysics){
@@ -2661,10 +2668,10 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
     if(!useAbsoluteTolerance){
       // compute the vector of reactions, i.e., the forces corresponding to degrees of freedom for which kinematic B.C. are applied
       if(analysisHasMultiphysics){
-        boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(combinedForce, reaction, numMultiphysDoFs);
+        boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(combinedForce, reaction);
       }
       else{
-        boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(force, reaction, numMultiphysDoFs);
+        boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(force, reaction);
       }
       // convert force density to force
       for(int i=0 ; i<reaction->MyLength() ; ++i){
@@ -2708,7 +2715,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
       if(solverIteration == 1 && step > 1 && !disableHeuristics) {
         for(int i=0 ; i<lhs->MyLength() ; ++i)
           (*lhs)[i] = (*predictor)[i]*timeIncrement;
-        boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(lhs, numMultiphysDoFs);
+        boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(lhs);
         isConverged = Belos::Converged;
       }
       else{
@@ -2739,8 +2746,8 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
 
           TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::executeQuasiStatic(), GlobalAssemble() returned nonzero error code.\n");
           PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
-          boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual, numMultiphysDoFs);
-          boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndSetDiagonal(tangent, numMultiphysDoFs);
+          boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
+          boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndSetDiagonal(tangent);
           tangent->Scale(-1.0);
 
           if(dampedNewton)
@@ -2769,7 +2776,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
 
         // Zero out the entries corresponding to the kinematic boundary conditions
         // The solver should have returned zeros, but there may be small errors.
-        boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(lhs, numMultiphysDoFs);
+        boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(lhs);
 
         PeridigmNS::Timer::self().startTimer("Line Search");
         alpha = disableHeuristics ? 1.0 : quasiStaticsLineSearch(residual, lhs, timeIncrement);
@@ -2993,6 +3000,7 @@ void PeridigmNS::Peridigm::executeImplicitDiffusion(Teuchos::RCP<Teuchos::Parame
   // with the Epetra_BlockMap used for the mothership multivector.
   Teuchos::RCP<Epetra_Vector> residual = Teuchos::rcp(new Epetra_Vector(tangent->Map()));
   Teuchos::RCP<Epetra_Vector> lhs = Teuchos::rcp(new Epetra_Vector(tangent->Map()));
+  Teuchos::RCP<Epetra_Vector> reaction = Teuchos::rcp(new Epetra_Vector(fluxDivergence->Map()));;
 
   bool solverVerbose = solverParams->get("Verbose", false);
   Teuchos::RCP<Teuchos::ParameterList> implicitSolverParams = sublist(solverParams, "ImplicitDiffusion", true);
@@ -3094,8 +3102,6 @@ void PeridigmNS::Peridigm::executeImplicitDiffusion(Teuchos::RCP<Teuchos::Parame
 
     //deltaU->PutScalar(0.0);
 
-    std::cout << "DEBUGGING step " << step << " TIME " << timeCurrent << std::endl;
-
     boundaryAndInitialConditionManager->applyBoundaryConditions(timeCurrent,timePrevious);
     boundaryAndInitialConditionManager->applyForceContributions(timeCurrent,timePrevious);
 
@@ -3106,42 +3112,37 @@ void PeridigmNS::Peridigm::executeImplicitDiffusion(Teuchos::RCP<Teuchos::Parame
 
     // compute the residual
     // this loop is typically contained in evalModel()
-    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-      Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
-      const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
-      const int* ownedIDs = neighborhoodData->OwnedIDs();
-      const int* neighborhoodList = neighborhoodData->NeighborhoodList();
-      Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
-      Teuchos::RCP<const PeridigmNS::Material> materialModel = blockIt->getMaterialModel();
-      materialModel->computeFluxDivergence(timeIncrement,
-                                           numOwnedPoints,
-                                           ownedIDs,
-                                           neighborhoodList,
-                                           *dataManager);
-    }
+    // for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    //   Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
+    //   const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
+    //   const int* ownedIDs = neighborhoodData->OwnedIDs();
+    //   const int* neighborhoodList = neighborhoodData->NeighborhoodList();
+    //   Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
+    //   Teuchos::RCP<const PeridigmNS::Material> materialModel = blockIt->getMaterialModel();
+    //   materialModel->computeFluxDivergence(timeIncrement,
+    //                                        numOwnedPoints,
+    //                                        ownedIDs,
+    //                                        neighborhoodList,
+    //                                        *dataManager);
+    // }
 
-    // Copy force from the data manager to the mothership vector
-    fluxDivergence->PutScalar(0.0);
-    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-      scratch->PutScalar(0.0);
-      blockIt->exportData(*scratch, fluxDivergenceFieldId, PeridigmField::STEP_NP1, Add);
-      fluxDivergence->Update(1.0, *scratch, 1.0);
-    }
+    // // Copy flux divergence from the data manager to the mothership vector
+    // fluxDivergence->PutScalar(0.0);
+    // for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    //   scalarScratch->PutScalar(0.0);
+    //   blockIt->exportData(*scalarScratch, fluxDivergenceFieldId, PeridigmField::STEP_NP1, Add);
+    //   fluxDivergence->Update(1.0, *scalarScratch, 1.0);
+    // }
 
-    std::cout << "FLUX DIVERGENCE " << *fluxDivergence << std::endl;
+    // compute the residual
+    double residualNorm = computeQuasiStaticResidual(residual);
 
-
-
-
-
-    /*
     double toleranceMultiplier = 1.0;
     if(!useAbsoluteTolerance){
       // compute the vector of reactions, i.e., the forces corresponding to degrees of freedom for which kinematic B.C. are applied
-      boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(force, reaction, numMultiphysDoFs);
-      // convert force density to force
+      boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(fluxDivergence, reaction);
       for(int i=0 ; i<reaction->MyLength() ; ++i){
-        (*reaction)[i] *= (*volume)[i/(3+numMultiphysDoFs)];
+        (*reaction)[i] *= (*volume)[i];
       }
       double reactionNorm2;
       reaction->Norm2(&reactionNorm2);
@@ -3150,36 +3151,27 @@ void PeridigmNS::Peridigm::executeImplicitDiffusion(Teuchos::RCP<Teuchos::Parame
 
     if(peridigmComm->MyPID() == 0)
       cout << "Load step " << step << ", initial time = " << timePrevious << ", final time = " << timeCurrent << ", convergence criterion = " << tolerance*toleranceMultiplier << endl;
-    */
+
     int solverIteration = 1;
     double alpha = 0.0;
-    /*
+
     while(residualNorm > tolerance*toleranceMultiplier && solverIteration <= maxSolverIterations){
 
       // Track the total number of iterations taken over the simulation
       *nonlinearSolverIterations += 1;
 
-      if(!solverVerbose){
-        if(peridigmComm->MyPID() == 0)
-          cout << "  iteration " << solverIteration << ": residual = " << residualNorm << endl;
-      }
-      else{
-        double residualL2, residualInf;
-        residual->Norm2(&residualL2);
-        residual->NormInf(&residualInf);
-        if(peridigmComm->MyPID() == 0)
-          cout << "  iteration " << solverIteration << ": residual = " << residualNorm << ", residual L2 = " << residualL2 << ", residual inf = " << residualInf << ", alpha = " << alpha << endl;
-      }
+      if(peridigmComm->MyPID() == 0)
+        cout << "  iteration " << solverIteration << ": residual = " << residualNorm << endl;
 
       // Compute the tangent
       tangent->PutScalar(0.0);
       PeridigmNS::Timer::self().startTimer("Evaluate Jacobian");
-      modelEvaluator->evalJacobian(workset);
+      //modelEvaluator->evalJacobian(workset);
       int err = tangent->GlobalAssemble();
       TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::executeImplicitDiffusion(), GlobalAssemble() returned nonzero error code.\n");
       PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
-      boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual, numMultiphysDoFs);
-      boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndSetDiagonal(tangent, numMultiphysDoFs);
+      boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
+      boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndSetDiagonal(tangent);
       tangent->Scale(-1.0);
 
       // Solve linear system
@@ -3189,17 +3181,17 @@ void PeridigmNS::Peridigm::executeImplicitDiffusion(Teuchos::RCP<Teuchos::Parame
 
         // Zero out the entries corresponding to the kinematic boundary conditions
         // The solver should have returned zeros, but there may be small errors.
-        boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(lhs, numMultiphysDoFs);
+        boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(lhs);
 
         // placeholder for line search
         alpha = 1.0;
 
         // Apply increment to nodal positions
-        for(int i=0 ; i<y->MyLength() ; ++i){
-          deltaUPtr[i] += alpha*(*lhs)[i];
-          yPtr[i] = xPtr[i] + uPtr[i] + deltaUPtr[i];
-          vPtr[i] = deltaUPtr[i]/timeIncrement;
-        }
+        // for(int i=0 ; i<y->MyLength() ; ++i){
+        //   deltaUPtr[i] += alpha*(*lhs)[i];
+        //   yPtr[i] = xPtr[i] + uPtr[i] + deltaUPtr[i];
+        //   vPtr[i] = deltaUPtr[i]/timeIncrement;
+        // }
 
         // Compute residual
         residualNorm = computeQuasiStaticResidual(residual);
@@ -3214,7 +3206,6 @@ void PeridigmNS::Peridigm::executeImplicitDiffusion(Teuchos::RCP<Teuchos::Parame
         break;
       }
     } // end loop of nonlinear iterations
-    */
 
     // If the maximum allowable number of load step reductions has been reached and the residual
     // is within a reasonable tolerance, then just accept the solution and forge ahead.
@@ -3265,8 +3256,7 @@ void PeridigmNS::Peridigm::executeImplicitDiffusion(Teuchos::RCP<Teuchos::Parame
       // swap state N and state NP1
       for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
         blockIt->updateState();
-    // }
-
+      //}
   } // end loop over load steps
 
   if(peridigmComm->MyPID() == 0)
@@ -3280,11 +3270,11 @@ void PeridigmNS::Peridigm::quasiStaticsSetPreconditioner(Belos::LinearProblem<do
   if (linearProblem.isHermitian()) { // assume matrix Hermitian; construct IC preconditioner
     Teuchos::RCP<Ifpack_Preconditioner> Prec = Teuchos::rcp( IFPFactory.Create("IC", &(*tangent), 0) );
     Teuchos::ParameterList ifpackList;
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->SetParameters(ifpackList), 
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->SetParameters(ifpackList),
   		      "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->SetParameters() returned nonzero error code.\n");
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->Initialize(), 
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->Initialize(),
 		      "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->Initialize() returned nonzero error code.\n");
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->Compute(), 
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->Compute(),
 		      "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->Compute() returned nonzero error code.\n");
     // Create the Belos preconditioned operator from the Ifpack preconditioner.
     // NOTE:  This is necessary because Belos expects an operator to apply the
@@ -3302,11 +3292,11 @@ void PeridigmNS::Peridigm::quasiStaticsSetPreconditioner(Belos::LinearProblem<do
     // the combine mode is on the following: "Add", "Zero", "Insert", "InsertAdd", "Average", "AbsMax"
     ifpackList.set("schwarz: combine mode", "Add");
     // sets the parameters
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->SetParameters(ifpackList), 
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->SetParameters(ifpackList),
   		      "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->SetParameters() returned nonzero error code.\n");
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->Initialize(), 
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->Initialize(),
 		      "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->Initialize() returned nonzero error code.\n");
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->Compute(), 
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->Compute(),
 		      "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->Compute() returned nonzero error code.\n");
     // Create the Belos preconditioned operator from the Ifpack preconditioner.
     // NOTE:  This is necessary because Belos expects an operator to apply the
@@ -3864,7 +3854,7 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
     }
 
     // Modify residual for kinematic BC
-    boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual, numMultiphysDoFs);
+    boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
 
     double residualNorm;
     residual->Norm2(&residualNorm);
@@ -3882,7 +3872,7 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
       computeImplicitJacobian(beta, dt);
 
       // Modify Jacobian for kinematic BC
-      boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndSetDiagonal(tangent, numMultiphysDoFs);
+      boundaryAndInitialConditionManager->applyKinematicBC_InsertZerosAndSetDiagonal(tangent);
 
       // Want to solve J*displacementIncrement = -residual
       residual->Scale(-1.0);
@@ -4006,7 +3996,7 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
       }
 
       // Modify residual for kinematic BC
-      boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual, numMultiphysDoFs);
+      boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
 
       residual->Norm2(&residualNorm);
 
@@ -4227,7 +4217,10 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
 
   // Copy force from the data manager to the mothership vector
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-  force->PutScalar(0.0);
+  if(!force.is_null())
+    force->PutScalar(0.0);
+  if(!fluxDivergence.is_null())
+    fluxDivergence->PutScalar(0.0);
 	if(analysisHasMultiphysics){
 		fluidFlow->PutScalar(0.0);
 		combinedForce->PutScalar(0.0);
@@ -4239,7 +4232,6 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
 			force->Update(1.0, *scratch, 1.0);
 			fluidFlow->Update(1.0, *scratchOneD, 1.0);
 		}
-
 		for(int i=0 ; i<force->MyLength() ; i+=3){
 			for(int j=0 ; j<3 ; ++j){
 				(*combinedForce)[i/3*(3+numMultiphysDoFs) +j] = (*force)[i+j];
@@ -4249,27 +4241,36 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
 	}
 	else{
 		for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-			scratch->PutScalar(0.0);
-			blockIt->exportData(*scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
-			force->Update(1.0, *scratch, 1.0);
+      if(numMechanicsDoFs > 0){
+        scratch->PutScalar(0.0);
+        blockIt->exportData(*scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
+        force->Update(1.0, *scratch, 1.0);
+      }
+      if(numDiffusionDoFs > 0){
+        scalarScratch->PutScalar(0.0);
+        blockIt->exportData(*scalarScratch, fluxDivergenceFieldId, PeridigmField::STEP_NP1, Add);
+        fluxDivergence->Update(1.0, *scalarScratch, 1.0);
+      }
 		}
 	}
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
-  scratch->PutScalar(0.0);
-	if(analysisHasMultiphysics)
-		scratchOneD->PutScalar(0.0);
 
   // Check for NaNs in force evaluation
   // We'd like to know now because a NaN will likely cause a difficult-to-unravel crash downstream.
   for(int i=0 ; i<force->MyLength() ; ++i)
     TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite((*force)[i]), "**** NaN returned by force evaluation.\n");
 
-if(analysisHasMultiphysics){
+  if(analysisHasMultiphysics){
 		for(int i=0 ; i<fluidFlow->MyLength() ; ++i)
 			TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite((*fluidFlow)[i]), "**** NaN returned by fluidFlow evaluation.\n");
 		for(int i=0 ; i<combinedForce->MyLength() ; ++i)
 			TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite((*combinedForce)[i]), "**** NaN returned by fluidFlow evaluation.\n");
 	}
+
+  if(numDiffusionDoFs > 0){
+    for(int i=0 ; i<fluxDivergence->MyLength() ; ++i)
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite((*fluxDivergence)[i]), "**** NaN returned by flux divergence evaluation.\n");
+  }
 
   for(int i=0 ; i<externalForce->MyLength() ; ++i)
     TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite((*externalForce)[i]), "**** NaN returned by external force evaluation.\n");
@@ -4282,9 +4283,16 @@ if(analysisHasMultiphysics){
     	(*residual)[i] = (*combinedForce)[i];
 	}
 	else{
-  	TEUCHOS_TEST_FOR_EXCEPT_MSG(residual->MyLength() != force->MyLength(), "**** PeridigmNS::Peridigm::computeQuasiStaticResidual() incompatible vector lengths!\n");
-		for(int i=0 ; i<force->MyLength() ; ++i)
-    	(*residual)[i] = (*force)[i];
+    if(numDiffusionDoFs == 0){
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(residual->MyLength() != force->MyLength(), "**** PeridigmNS::Peridigm::computeQuasiStaticResidual() incompatible vector lengths!\n");
+      for(int i=0 ; i<force->MyLength() ; ++i)
+        (*residual)[i] = (*force)[i];
+    }
+    else{
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(residual->MyLength() != fluxDivergence->MyLength(), "**** PeridigmNS::Peridigm::computeQuasiStaticResidual() incompatible vector lengths!\n");
+      for(int i=0 ; i<fluxDivergence->MyLength() ; ++i)
+        (*residual)[i] = (*fluxDivergence)[i];
+    }
 	}
 
 	//TODO: if there ever will be a fluids equivalent to externalForce, this code needs to be updated.
@@ -4296,17 +4304,20 @@ if(analysisHasMultiphysics){
 			}
 	}
 	else{
-  	TEUCHOS_TEST_FOR_EXCEPT_MSG(residual->MyLength() != externalForce->MyLength(), "**** PeridigmNS::Peridigm::computeQuasiStaticResidual() incompatible vector lengths!\n");
-		for(int i=0 ; i<externalForce->MyLength() ; ++i)
-    	(*residual)[i] += (*externalForce)[i];
-	}
+    if(numDiffusionDoFs == 0){
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(residual->MyLength() != externalForce->MyLength(), "**** PeridigmNS::Peridigm::computeQuasiStaticResidual() incompatible vector lengths!\n");
+      for(int i=0 ; i<externalForce->MyLength() ; ++i)
+        (*residual)[i] += (*externalForce)[i];
+    }
+  }
 
   // convert force density to force
 	for(int i=0 ; i<residual->MyLength() ; ++i)
-   	(*residual)[i] *= (*volume)[i/(3+numMultiphysDoFs)];
+   	(*residual)[i] *= (*volume)[i/(numMechanicsDoFs+numDiffusionDoFs+numMultiphysDoFs)];
 
   // zero out the rows corresponding to kinematic boundary conditions and compute the residual
-  boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual, numMultiphysDoFs);
+  boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
+
   double residualNorm2;
   residual->Norm2(&residualNorm2);
   double residualNormInf;

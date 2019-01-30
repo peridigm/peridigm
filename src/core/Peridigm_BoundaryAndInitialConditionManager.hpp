@@ -57,19 +57,15 @@
 
 #include <vector>
 
-using namespace std;
-
 namespace PeridigmNS {
 
   class Peridigm;
 
-/*! \brief Processes boundary and intial conditions.
- */
   class BoundaryAndInitialConditionManager {
   public:
 
     //! Constructor.
-    BoundaryAndInitialConditionManager(const Teuchos::ParameterList& boundaryAndInitialConditionParams,Peridigm * parent);
+    BoundaryAndInitialConditionManager(const Teuchos::ParameterList& boundaryAndInitialConditionParams, Peridigm * parent);
 
     //! Destructor.
     ~BoundaryAndInitialConditionManager(){}
@@ -107,13 +103,13 @@ namespace PeridigmNS {
 		void updateFluidPressureY();
 
     //! Copies entries corresponding to kinematic boundary contitions into the vector of reaction forces.
-    void applyKinematicBC_ComputeReactions(Teuchos::RCP<const Epetra_Vector> force, Teuchos::RCP<Epetra_Vector> reaction, const int numMultiphysDoFs);
+    void applyKinematicBC_ComputeReactions(Teuchos::RCP<const Epetra_Vector> force, Teuchos::RCP<Epetra_Vector> reaction);
 
     //! Set rows corresponding to kinematic boundary conditions to zero.
-    void applyKinematicBC_InsertZeros(Teuchos::RCP<Epetra_Vector> vec, int numMultiphysDoFs);
+    void applyKinematicBC_InsertZeros(Teuchos::RCP<Epetra_Vector> vec);
 
     //! Set rows and columns corresponding to kinematic boundary conditions to zero and put 1.0 on the diagonal.
-    void applyKinematicBC_InsertZerosAndSetDiagonal(Teuchos::RCP<Epetra_FECrsMatrix> mat, const int numMultiphysDoFs);
+    void applyKinematicBC_InsertZerosAndSetDiagonal(Teuchos::RCP<Epetra_FECrsMatrix> mat);
 
   protected:
 
@@ -141,8 +137,6 @@ namespace PeridigmNS {
     //! Set of all the force contributions
     vector<Teuchos::RCP<BoundaryCondition> > forceContributions;
 
-
-
   private:
 
     // Private to prohibit use.
@@ -153,9 +147,8 @@ namespace PeridigmNS {
 
     // Private to prohibit use.
     BoundaryAndInitialConditionManager& operator=(const BoundaryAndInitialConditionManager&);
-
   };
 
-}
+} // namespace PeridigmNS
 
 #endif // PERIDIGM_BOUNARYANDINITIALCONDITIONMANAGER_HPP

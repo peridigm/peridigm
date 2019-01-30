@@ -7,16 +7,15 @@
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_ParameterList.hpp>
 
-enum Set_Definition
-{
-  ALL_SETS=0,
-  FULL_DOMAIN,
-  NO_SUCH_SET_DEFINITION
-};
+// enum Set_Definition
+// {
+//   ALL_SETS=0,
+//   NO_SUCH_SET_DEFINITION
+// };
 
-std::string to_string(const Set_Definition & set_definition);
-Set_Definition to_set_definition(const std::string & str);
-Set_Definition to_set_definition(const Teuchos::ParameterList & params);
+// std::string to_string(const Set_Definition & set_definition);
+// Set_Definition to_set_definition(const std::string & str);
+// Set_Definition to_set_definition(const Teuchos::ParameterList & params);
 
 enum Spatial_Coordinate
 {
@@ -48,9 +47,8 @@ enum Boundary_Condition_Type
   PRESCRIBED_DISPLACEMENT=0,
   INITIAL_DISPLACEMENT,
   INITIAL_VELOCITY,
-  INITIAL_TEMPERATURE,
-  INITIAL_FLUID_PRESSURE_U,
   PRESCRIBED_FLUID_PRESSURE_U,
+  INITIAL_FLUID_PRESSURE_U,
   PRESCRIBED_TEMPERATURE,
   BODY_FORCE,
   NO_SUCH_BOUNDARY_CONDITION_TYPE
