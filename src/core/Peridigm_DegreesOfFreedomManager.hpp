@@ -71,6 +71,12 @@ public:
 
   bool pressureTreatedAsUnknown() { return pressureTreatedAsUnknown_; }
 
+  int numberOfDisplacementDegreesOfFreedom() { return number_of_displacement_degrees_of_freedom_; }
+
+  int numberOfTemperatureDegreesOfFreedom() { return number_of_temperature_degrees_of_freedom_; }
+
+  int numberOfPressureDegreesOfFreedom() { return number_of_pressure_degrees_of_freedom_; }
+
   int totalNumberOfDegreesOfFreedom() { return total_number_of_degrees_of_freedom_; }
 
   int displacementDofOffset() { return displacement_dof_offset_; }
@@ -79,13 +85,17 @@ public:
 
   int temperatureDofOffset() { return temperature_dof_offset_; }
 
+  void print();
+
 private:
 
   //! Private constructor
   DegreesOfFreedomManager()
     : displacementTreatedAsUnknown_(true), temperatureTreatedAsUnknown_(false),
-      pressureTreatedAsUnknown_(false), total_number_of_degrees_of_freedom_(0),
-      displacement_dof_offset_(0), pressure_dof_offset_(0), temperature_dof_offset_(0)
+      pressureTreatedAsUnknown_(false), number_of_displacement_degrees_of_freedom_(0),
+      number_of_temperature_degrees_of_freedom_(0), number_of_pressure_degrees_of_freedom_(0),
+      total_number_of_degrees_of_freedom_(0), displacement_dof_offset_(0),
+      pressure_dof_offset_(0), temperature_dof_offset_(0), verbose_(false)
   {}
 
   //! Private and unimplemented to prevent use
@@ -99,10 +109,14 @@ protected:
   bool displacementTreatedAsUnknown_;
   bool temperatureTreatedAsUnknown_;
   bool pressureTreatedAsUnknown_;
+  int number_of_displacement_degrees_of_freedom_;
+  int number_of_temperature_degrees_of_freedom_;
+  int number_of_pressure_degrees_of_freedom_;
   int total_number_of_degrees_of_freedom_;
   int displacement_dof_offset_;
   int pressure_dof_offset_;
   int temperature_dof_offset_;
+  bool verbose_;
 };
 
 }

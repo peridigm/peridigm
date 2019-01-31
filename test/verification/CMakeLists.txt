@@ -66,6 +66,8 @@ add_test (ThermalExpansionBondFailure_np4 python ./ThermalExpansionBondFailure/n
 #####add_test (ep_cube_np1 python ./ep_cube/np1/ep_cube_np1.py)
 #####add_test (ep_cube_np2 python ./ep_cube/np2/ep_cube_np2.py)
 
+add_subdirectory(SimpleImplicitDiffusion)
+
 add_custom_target( vtest
    COMMAND ctest
 )

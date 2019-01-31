@@ -133,18 +133,13 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Dis
         initialConditions.push_back(bcPtr);
       }
       break;
-      // case INITIAL_TEMPERATURE:
-      // {
-      //   Teuchos::RCP<Epetra_Vector> toVectorTemperature = peridigm->getTemperature();
-      //   bcPtr = Teuchos::rcp(new DirichletIncrementBC(name,bcParams,toVectorTemperature,peridigm,false,1.0,0.0));
-      //   boundaryConditions.push_back(bcPtr);
-      //
-      //   BY DEFINITION, ISN'T DELTA TEMPERATURE ZERO AT TIME ZERO?
-      //   Teuchos::RCP<Epetra_Vector> toVectorDeltaTemperature = peridigm->getDeltaTemperature();
-      //   bcPtr = Teuchos::rcp(new DirichletBC(name,bcParams,toVectorDeltaTemperature,peridigm,false));
-      //   initialConditions.push_back(bcPtr);
-      // }
-      // break;
+      case INITIAL_TEMPERATURE:
+      {
+        Teuchos::RCP<Epetra_Vector> toVector = peridigm->getTemperature();
+        bcPtr = Teuchos::rcp(new DirichletBC(name,bcParams,toVector,peridigm));
+        initialConditions.push_back(bcPtr);
+      }
+      break;
       case PRESCRIBED_TEMPERATURE:
       {
         Teuchos::RCP<Epetra_Vector> toVectorTemperature = peridigm->getTemperature();

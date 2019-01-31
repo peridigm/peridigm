@@ -47,6 +47,7 @@
 
 #include "Peridigm_Material.hpp"
 #include "Peridigm_Field.hpp"
+#include "Peridigm_DegreesOfFreedomManager.hpp"
 #include <Teuchos_Assert.hpp>
 #include <Epetra_SerialComm.h>
 #include <cmath>
@@ -100,16 +101,29 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
   TEUCHOS_TEST_FOR_EXCEPT_MSG(m_finiteDifferenceProbeLength == DBL_MAX, "**** Finite-difference Jacobian requires that the \"Finite Difference Probe Length\" parameter be set.\n");
   double epsilon = m_finiteDifferenceProbeLength;
 
-  int numDoFs = 3;
+  PeridigmNS::DegreesOfFreedomManager& dofManager = PeridigmNS::DegreesOfFreedomManager::self();
+  bool solveForDisplacement = dofManager.displacementTreatedAsUnknown();
+  bool solveForTemperature = dofManager.temperatureTreatedAsUnknown();
+  int numDof = dofManager.totalNumberOfDegreesOfFreedom();
+  int numDisplacementDof = dofManager.numberOfDisplacementDegreesOfFreedom();
+  int numTemperatureDof = dofManager.numberOfTemperatureDegreesOfFreedom();
+  int displacementDofOffset = dofManager.displacementDofOffset();
+  int temperatureDofOffset = dofManager.temperatureDofOffset();
 
   // Get field ids for all relevant data
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
-  int volumeFId = fieldManager.getFieldId("Volume");
-  int coordinatesFId = fieldManager.getFieldId("Coordinates");
-  int velocityFId = fieldManager.getFieldId("Velocity");
-  int forceDensityFId = fieldManager.getFieldId("Force_Density");
+  int volumeFId(-1), coordinatesFId(-1), velocityFId(-1), forceDensityFId(-1), temperatureFId(-1), fluxDivergenceFId(-1);
+  volumeFId = fieldManager.getFieldId("Volume");
+  if (solveForDisplacement) {
+    coordinatesFId = fieldManager.getFieldId("Coordinates");
+    velocityFId = fieldManager.getFieldId("Velocity");
+    forceDensityFId = fieldManager.getFieldId("Force_Density");
+  }
+  if (solveForTemperature) {
+    temperatureFId = fieldManager.getFieldId("Temperature");
+    fluxDivergenceFId = fieldManager.getFieldId("Flux_Divergence");
+  }
 
-  // Loop over all points.
   int neighborhoodListIndex = 0;
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
 
@@ -151,40 +165,62 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     tempOwnedIDs[0] = 0;
 
     // Extract pointers to the underlying data.
-    double *volume, *y, *v, *force;
+    double *volume, *y, *v, *force, *temperature, *fluxDivergence;
     tempDataManager.getData(volumeFId, PeridigmField::STEP_NONE)->ExtractView(&volume);
-    tempDataManager.getData(coordinatesFId, PeridigmField::STEP_NP1)->ExtractView(&y);
-    tempDataManager.getData(velocityFId, PeridigmField::STEP_NP1)->ExtractView(&v);
-    tempDataManager.getData(forceDensityFId, PeridigmField::STEP_NP1)->ExtractView(&force);
+    if (solveForDisplacement) {
+      tempDataManager.getData(coordinatesFId, PeridigmField::STEP_NP1)->ExtractView(&y);
+      tempDataManager.getData(velocityFId, PeridigmField::STEP_NP1)->ExtractView(&v);
+      tempDataManager.getData(forceDensityFId, PeridigmField::STEP_NP1)->ExtractView(&force);
+    }
+    if (solveForTemperature) {
+      tempDataManager.getData(temperatureFId, PeridigmField::STEP_NP1)->ExtractView(&temperature);
+      tempDataManager.getData(fluxDivergenceFId, PeridigmField::STEP_NP1)->ExtractView(&fluxDivergence);
+    }
 
-    // Create a temporary vector for storing force.
-    Teuchos::RCP<Epetra_Vector> forceVector = tempDataManager.getData(forceDensityFId, PeridigmField::STEP_NP1);
-    Teuchos::RCP<Epetra_Vector> tempForceVector = Teuchos::rcp(new Epetra_Vector(*forceVector));
-    double* tempForce;
-    tempForceVector->ExtractView(&tempForce);
+    // Create a temporary vector for storing force and/or flux divergence.
+    Teuchos::RCP<Epetra_Vector> forceVector, tempForceVector, fluxDivergenceVector, tempFluxDivergenceVector;
+    double *tempForce, *tempFluxDivergence;
+    if (solveForDisplacement) {
+      forceVector = tempDataManager.getData(forceDensityFId, PeridigmField::STEP_NP1);
+      tempForceVector = Teuchos::rcp(new Epetra_Vector(*forceVector));
+      tempForceVector->ExtractView(&tempForce);
+    }
+    if (solveForTemperature) {
+      fluxDivergenceVector = tempDataManager.getData(fluxDivergenceFId, PeridigmField::STEP_NP1);
+      tempFluxDivergenceVector = Teuchos::rcp(new Epetra_Vector(*fluxDivergenceVector));
+      tempFluxDivergenceVector->ExtractView(&tempFluxDivergence);
+    }
 
     // Use the scratchMatrix as sub-matrix for storing tangent values prior to loading them into the global tangent matrix.
     // Resize scratchMatrix if necessary
-    if(scratchMatrix.Dimension() < numDoFs*(numNeighbors+1))
-      scratchMatrix.Resize(numDoFs*(numNeighbors+1));
+    if(scratchMatrix.Dimension() < numDof*(numNeighbors+1))
+      scratchMatrix.Resize(numDof*(numNeighbors+1));
 
     // Create a list of global indices for the rows/columns in the scratch matrix.
-    vector<int> globalIndices(numDoFs*(numNeighbors+1));
+    vector<int> globalIndices(numDof*(numNeighbors+1));
     for(int i=0 ; i<numNeighbors+1 ; ++i){
       int globalID = tempOneDimensionalMap->GID(i);
-      for(int j=0 ; j<numDoFs ; ++j){
-        globalIndices[numDoFs*i+j] = numDoFs*globalID+j;
+      for(int j=0 ; j<numDof ; ++j){
+        globalIndices[numDof*i+j] = numDof*globalID+j;
       }
     }
 
     if(finiteDifferenceScheme == FORWARD_DIFFERENCE){
-      // Compute and store the unperturbed force.
-      computeForce(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
-      for(int i=0 ; i<forceVector->MyLength() ; ++i)
-        tempForce[i] = force[i];
+      if (solveForDisplacement) {
+        // Compute and store the unperturbed force.
+        computeForce(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
+        for(int i=0 ; i<forceVector->MyLength() ; ++i)
+          tempForce[i] = force[i];
+      }
+      if (solveForTemperature) {
+        // Compute and store the unperturbed flux divergence.
+        computeFluxDivergence(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
+        for(int i=0 ; i<fluxDivergenceVector->MyLength() ; ++i)
+          tempFluxDivergence[i] = fluxDivergence[i];
+      }
     }
 
-    // Perturb one dof in the neighborhood at a time and compute the force.
+    // Perturb one dof in the neighborhood at a time and compute the force and/or flux divergence.
     // The point itself plus each of its neighbors must be perturbed.
     for(int iNID=0 ; iNID<numNeighbors+1 ; ++iNID){
 
@@ -194,30 +230,30 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
       else
         perturbID = 0;
 
-      for(int dof=0 ; dof<numDoFs ; ++dof){
+      // Displacement degrees of freedom
+      for(int dof=0 ; dof<numDisplacementDof ; ++dof){
 
         // Perturb a dof and compute the forces.
-        double oldY = y[numDoFs*perturbID+dof];
-        double oldV = v[numDoFs*perturbID+dof];
+        double oldY = y[numDof*perturbID+dof];
+        double oldV = v[numDof*perturbID+dof];
 
         if(finiteDifferenceScheme == CENTRAL_DIFFERENCE){
           // Compute and store the negatively perturbed force.
-          y[numDoFs*perturbID+dof] -= epsilon;
-          v[numDoFs*perturbID+dof] -= epsilon/dt;
+          y[numDof*perturbID+dof] -= epsilon;
+          v[numDof*perturbID+dof] -= epsilon/dt;
           computeForce(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
-          y[numDoFs*perturbID+dof] = oldY;
-          v[numDoFs*perturbID+dof] = oldV;
+          y[numDof*perturbID+dof] = oldY;
+          v[numDof*perturbID+dof] = oldV;
           for(int i=0 ; i<forceVector->MyLength() ; ++i)
             tempForce[i] = force[i];
         }
 
-
-        // Compute the purturbed force
-        y[numDoFs*perturbID+dof] += epsilon;
-        v[numDoFs*perturbID+dof] += epsilon/dt;
+        // Compute the purturbed force.
+        y[numDof*perturbID+dof] += epsilon;
+        v[numDof*perturbID+dof] += epsilon/dt;
         computeForce(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
-        y[numDoFs*perturbID+dof] = oldY;
-        v[numDoFs*perturbID+dof] = oldV;
+        y[numDof*perturbID+dof] = oldY;
+        v[numDof*perturbID+dof] = oldV;
 
         for(int i=0 ; i<numNeighbors+1 ; ++i){
           int forceID;
@@ -226,21 +262,54 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
           else
             forceID = 0;
 
-          for(int d=0 ; d<numDoFs ; ++d){
-            double value = ( force[numDoFs*forceID+d] - tempForce[numDoFs*forceID+d] ) / epsilon;
+          for(int d=0 ; d<numDof ; ++d){
+            double value = ( force[numDof*forceID+d] - tempForce[numDof*forceID+d] ) / epsilon;
             if(finiteDifferenceScheme == CENTRAL_DIFFERENCE)
               value *= 0.5;
-            scratchMatrix(numDoFs*forceID+d, numDoFs*perturbID+dof) = value;
+            scratchMatrix(numDof*forceID + displacementDofOffset + d, numDof*perturbID + displacementDofOffset + dof) = value;
           }
+        }
+      }
+
+      // Temperature degrees of freedom
+      if(solveForTemperature){
+
+        // Perturb a temperature value and compute the flux divergence.
+        double oldTemperature = temperature[perturbID];
+
+        if(finiteDifferenceScheme == CENTRAL_DIFFERENCE){
+          // Compute and store the negatively perturbed flux divergence.
+          temperature[perturbID] -= epsilon;
+          computeFluxDivergence(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
+          temperature[perturbID] = oldTemperature;
+          for(int i=0 ; i<fluxDivergenceVector->MyLength() ; ++i)
+            tempFluxDivergence[i] = fluxDivergence[i];
+        }
+
+        // Compute the purturbed flux divergence.
+        temperature[perturbID] += epsilon;
+        computeFluxDivergence(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
+        temperature[perturbID] = oldTemperature;
+
+        for(int i=0 ; i<numNeighbors+1 ; ++i){
+          int fluxDivergenceID;
+          if(i < numNeighbors)
+            fluxDivergenceID = tempNeighborhoodList[i+1];
+          else
+            fluxDivergenceID = 0;
+
+          double value = ( fluxDivergence[fluxDivergenceID] - tempFluxDivergence[fluxDivergenceID] ) / epsilon;
+          if(finiteDifferenceScheme == CENTRAL_DIFFERENCE)
+            value *= 0.5;
+          scratchMatrix(numDof*fluxDivergenceID + temperatureDofOffset, numDof*perturbID + temperatureDofOffset) = value;
         }
       }
     }
 
-    // Convert force density to force
-    // \todo Create utility function for this in ScratchMatrix
+    // Multiply by nodal volume
     for(unsigned int row=0 ; row<globalIndices.size() ; ++row){
       for(unsigned int col=0 ; col<globalIndices.size() ; ++col){
-        scratchMatrix(row, col) *= volume[row/numDoFs];
+        scratchMatrix(row, col) *= volume[row/numDof];
       }
     }
 

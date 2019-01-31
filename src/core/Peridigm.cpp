@@ -216,8 +216,11 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
 
   // For the case where multiple solvers are used, assume that the degrees of freedom (multiphysics) are the same for all solvers.
   PeridigmNS::DegreesOfFreedomManager& dofManager = PeridigmNS::DegreesOfFreedomManager::self();
-  if (solverParameters.size() > 0)
+  if (solverParameters.size() > 0) {
     dofManager.initialize(*(solverParameters[0]));
+    if(peridigmComm->MyPID() == 0)
+      dofManager.print();
+  }
 
   // Check solver parameters for request to allocate tangent matrix
   // Note that Peridigm can be run with multiple solvers, applied in sequence
@@ -1871,13 +1874,13 @@ void PeridigmNS::Peridigm::jacobianDiagnostics(Teuchos::RCP<NOX::Epetra::Group> 
   // Construct transpose
   Teuchos::RCP<Epetra_Operator> jacobianOperator = noxGroup->getLinearSystem()->getJacobianOperator();
   Epetra_CrsMatrix* jacobian = dynamic_cast<Epetra_CrsMatrix*>(jacobianOperator.get());
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(jacobian == NULL, "\n****Error: jacobianDiagnostics() failed to convert jacobian to Epetra_CrsMatrix.\n");  
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(jacobian == NULL, "\n****Error: jacobianDiagnostics() failed to convert jacobian to Epetra_CrsMatrix.\n");
   Epetra_CrsMatrix jacobianTranspose(*jacobian);
   Epetra_CrsMatrix* jacobianTransposePtr = &jacobianTranspose;
   Epetra_RowMatrixTransposer jacobianTransposer(jacobian);
   bool makeDataContiguous = false;
   int returnCode = jacobianTransposer.CreateTranspose(makeDataContiguous, jacobianTransposePtr);
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(returnCode != 0, "\n****Error: jacobianDiagnostics() failed to transpose jacobian.\n");  
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(returnCode != 0, "\n****Error: jacobianDiagnostics() failed to transpose jacobian.\n");
 
   // Replace entries in transpose with 0.5*(J - J^T)
   int numRows = jacobian->NumMyRows();
@@ -3076,14 +3079,15 @@ void PeridigmNS::Peridigm::executeImplicitDiffusion(Teuchos::RCP<Teuchos::Parame
   PeridigmNS::Timer::self().startTimer("Apply Body Forces");
   boundaryAndInitialConditionManager->applyForceContributions(timeCurrent,timePrevious);
   PeridigmNS::Timer::self().stopTimer("Apply Body Forces");
+  PeridigmNS::Timer::self().startTimer("Apply Initial Conditions");
+  boundaryAndInitialConditionManager->applyInitialConditions();
+  PeridigmNS::Timer::self().stopTimer("Apply Initial Conditions");
 
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
   synchDataManagers();
   outputManager->write(blocks, timeCurrent);
   PeridigmNS::Timer::self().stopTimer("Output");
-
-  std::cout << "POINT B" << std::endl;
 
   Epetra_Time loadStepCPUTime(*peridigmComm);
   double cumulativeLoadStepCPUTime = 0.0;
@@ -3109,30 +3113,6 @@ void PeridigmNS::Peridigm::executeImplicitDiffusion(Teuchos::RCP<Teuchos::Parame
 		for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
 			blockIt->importData(*temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
 		}
-
-    // compute the residual
-    // this loop is typically contained in evalModel()
-    // for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    //   Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
-    //   const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
-    //   const int* ownedIDs = neighborhoodData->OwnedIDs();
-    //   const int* neighborhoodList = neighborhoodData->NeighborhoodList();
-    //   Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
-    //   Teuchos::RCP<const PeridigmNS::Material> materialModel = blockIt->getMaterialModel();
-    //   materialModel->computeFluxDivergence(timeIncrement,
-    //                                        numOwnedPoints,
-    //                                        ownedIDs,
-    //                                        neighborhoodList,
-    //                                        *dataManager);
-    // }
-
-    // // Copy flux divergence from the data manager to the mothership vector
-    // fluxDivergence->PutScalar(0.0);
-    // for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    //   scalarScratch->PutScalar(0.0);
-    //   blockIt->exportData(*scalarScratch, fluxDivergenceFieldId, PeridigmField::STEP_NP1, Add);
-    //   fluxDivergence->Update(1.0, *scalarScratch, 1.0);
-    // }
 
     // compute the residual
     double residualNorm = computeQuasiStaticResidual(residual);
@@ -3166,7 +3146,7 @@ void PeridigmNS::Peridigm::executeImplicitDiffusion(Teuchos::RCP<Teuchos::Parame
       // Compute the tangent
       tangent->PutScalar(0.0);
       PeridigmNS::Timer::self().startTimer("Evaluate Jacobian");
-      //modelEvaluator->evalJacobian(workset);
+      modelEvaluator->evalJacobian(workset);
       int err = tangent->GlobalAssemble();
       TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::executeImplicitDiffusion(), GlobalAssemble() returned nonzero error code.\n");
       PeridigmNS::Timer::self().stopTimer("Evaluate Jacobian");
@@ -3186,12 +3166,10 @@ void PeridigmNS::Peridigm::executeImplicitDiffusion(Teuchos::RCP<Teuchos::Parame
         // placeholder for line search
         alpha = 1.0;
 
-        // Apply increment to nodal positions
-        // for(int i=0 ; i<y->MyLength() ; ++i){
-        //   deltaUPtr[i] += alpha*(*lhs)[i];
-        //   yPtr[i] = xPtr[i] + uPtr[i] + deltaUPtr[i];
-        //   vPtr[i] = deltaUPtr[i]/timeIncrement;
-        // }
+        // Apply increment to temperature
+        for(int i=0 ; i<temperature->MyLength() ; ++i){
+          (*temperature)[i] += alpha*(*lhs)[i];
+        }
 
         // Compute residual
         residualNorm = computeQuasiStaticResidual(residual);
@@ -3210,7 +3188,6 @@ void PeridigmNS::Peridigm::executeImplicitDiffusion(Teuchos::RCP<Teuchos::Parame
     // If the maximum allowable number of load step reductions has been reached and the residual
     // is within a reasonable tolerance, then just accept the solution and forge ahead.
     // If not, abort the analysis.
-    /*
     if(residualNorm > tolerance*toleranceMultiplier){
       if(residualNorm < 100.0*tolerance*toleranceMultiplier){
         if(peridigmComm->MyPID() == 0)
@@ -3222,30 +3199,20 @@ void PeridigmNS::Peridigm::executeImplicitDiffusion(Teuchos::RCP<Teuchos::Parame
         break;
       }
     }
-    */
 
-    /*
     if(solverIteration >= maxSolverIterations && peridigmComm->MyPID() == 0)
       cout << "\nWarning:  Nonlinear solver failed to converge in maximum allowable iterations." << endl;
-    */
 
-    // if(!solverFailedToConverge){
+    if(!solverFailedToConverge){
 
-    //   if(peridigmComm->MyPID() == 0)
-    //     cout << "  iteration " << solverIteration << ": residual = " << residualNorm << endl;
+      if(peridigmComm->MyPID() == 0)
+        cout << "  iteration " << solverIteration << ": residual = " << residualNorm << endl;
 
-    //   // Print load step timing information
-    //   double CPUTime = loadStepCPUTime.ElapsedTime();
-    //   cumulativeLoadStepCPUTime += CPUTime;
-    //   if(peridigmComm->MyPID() == 0)
-    //     cout << setprecision(2) << "  cpu time for load step = " << CPUTime << " sec., cumulative cpu time = " << cumulativeLoadStepCPUTime << " sec.\n" << endl;
-
-    //   // Add the converged displacement increment to the displacement
-    //   // Make sure even the non participating vectors are updated
-    //   for(int i=0 ; i<u->MyLength() ; ++i){
-    //     (*u)[i] += (*deltaU)[i];
-    //     (*predictor)[i] = (*v)[i];
-    //   }
+      // Print load step timing information
+      double CPUTime = loadStepCPUTime.ElapsedTime();
+      cumulativeLoadStepCPUTime += CPUTime;
+      if(peridigmComm->MyPID() == 0)
+        cout << setprecision(2) << "  cpu time for load step = " << CPUTime << " sec., cumulative cpu time = " << cumulativeLoadStepCPUTime << " sec.\n" << endl;
 
       // Write output for completed load step
       PeridigmNS::Timer::self().startTimer("Output");
@@ -3256,7 +3223,7 @@ void PeridigmNS::Peridigm::executeImplicitDiffusion(Teuchos::RCP<Teuchos::Parame
       // swap state N and state NP1
       for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
         blockIt->updateState();
-      //}
+    }
   } // end loop over load steps
 
   if(peridigmComm->MyPID() == 0)
@@ -4382,6 +4349,7 @@ void PeridigmNS::Peridigm::synchDataManagers() {
 			blockIt->importData(*externalForce, externalForceDensityFieldId, PeridigmField::STEP_NP1, Insert);
 			blockIt->importData(*temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
       blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(*fluxDivergence, fluxDivergenceFieldId, PeridigmField::STEP_NP1, Insert);
 		}
 	}
 
