@@ -1,0 +1,2 @@
+add_test (ElasticPlasticCorrespondenceFullyPrescribedTension_np1 python ./np1/ElasticPlasticCorrespondenceFullyPrescribedTension.py)
+add_test (ElasticPlasticCorrespondenceFullyPrescribedTension_np4 python ./np4/ElasticPlasticCorrespondenceFullyPrescribedTension.py)

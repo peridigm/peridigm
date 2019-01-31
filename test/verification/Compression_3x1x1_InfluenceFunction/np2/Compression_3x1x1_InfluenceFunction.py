@@ -5,7 +5,7 @@ import os
 import re
 from subprocess import Popen
 
-test_dir = "Compression_3x1x1_InfluenceFunction/np2"
+test_dir = "np2"
 base_name = "Compression_3x1x1_InfluenceFunction"
 
 if __name__ == "__main__":

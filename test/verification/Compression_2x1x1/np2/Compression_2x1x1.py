@@ -6,7 +6,7 @@ import re
 import glob
 from subprocess import Popen
 
-test_dir = "Compression_2x1x1/np2"
+test_dir = "np2"
 base_name = "Compression_2x1x1"
 
 if __name__ == "__main__":

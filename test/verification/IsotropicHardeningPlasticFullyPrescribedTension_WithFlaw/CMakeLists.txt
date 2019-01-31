@@ -1,0 +1,2 @@
+add_test (IsotropicHardeningPlasticFullyPrescribedTension_WithFlaw_np1 python ./np1/IsotropicHardeningPlasticFullyPrescribedTension_WithFlaw.py)
+add_test (IsotropicHardeningPlasticFullyPrescribedTension_WithFlaw_np4 python ./np4/IsotropicHardeningPlasticFullyPrescribedTension_WithFlaw.py)

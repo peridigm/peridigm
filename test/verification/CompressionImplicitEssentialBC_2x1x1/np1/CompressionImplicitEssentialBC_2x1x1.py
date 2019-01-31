@@ -5,7 +5,7 @@ import os
 import re
 from subprocess import Popen
 
-test_dir  = "CompressionImplicitEssentialBC_2x1x1/np1"
+test_dir  = "np1"
 base_name = "CompressionImplicitEssentialBC_2x1x1"
 
 if __name__ == "__main__":

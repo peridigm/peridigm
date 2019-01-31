@@ -5,7 +5,7 @@ import os
 import re
 from subprocess import Popen
 
-test_dir = "NeighborhoodVolume/np1"
+test_dir = "np1"
 base_name = "NeighborhoodVolume"
 
 if __name__ == "__main__":

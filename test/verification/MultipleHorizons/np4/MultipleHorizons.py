@@ -6,7 +6,7 @@ import re
 import glob
 from subprocess import Popen
 
-test_dir = "MultipleHorizons/np4"
+test_dir = "np4"
 base_name = "MultipleHorizons"
 
 if __name__ == "__main__":

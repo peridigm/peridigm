@@ -1,10 +1,7 @@
 <ParameterList>
 
-<ParameterList name="Problem">
-	<Parameter name="Verbose" type="bool" value="false"/>
 	<ParameterList name="Discretization">
 		<Parameter name="Type" type="string" value="PdQuickGrid" />
-		<Parameter name="Horizon" type="double" value="1.75"/>
 		<ParameterList name="TensorProduct3DMeshGenerator">
 			<Parameter name="Type" type="string" value="PdQuickGrid"/>
 			<Parameter name="X Origin" type="double" value="0.0"/>
@@ -18,18 +15,29 @@
 			<Parameter name="Number Points Z" type="int" value="2"/>
 		</ParameterList>
 	</ParameterList>
-	<ParameterList name="Material">
+
+	<ParameterList name="Materials">
 		<ParameterList name="Elastic Plastic">
+      <Parameter name="Material Model" type="string" value="Elastic Plastic"/>
 			<Parameter name="Density" type="double" value="2.7e-3"/>
 			<Parameter name="Bulk Modulus" type="double" value="67549.0"/>
 			<Parameter name="Shear Modulus" type="double" value="25902.2"/>
 			<Parameter name="Yield Stress" type="double" value="351.79"/>
-            <Parameter name="Apply Shear Correction Factor" type="bool" value="false"/>
+      <Parameter name="Apply Shear Correction Factor" type="bool" value="false"/>
 		</ParameterList>
 	</ParameterList>
+
+  <ParameterList name="Blocks">
+	  <ParameterList name="My Group of Blocks">
+	    <Parameter name="Block Names" type="string" value="block_1"/>
+	    <Parameter name="Material" type="string" value="Elastic Plastic"/>
+      <Parameter name="Horizon" type="double" value="1.75"/>
+	  </ParameterList>
+  </ParameterList>
+
 	<ParameterList name="Boundary Conditions">
-		<Parameter name="Node Set Bottom" type="string" value="0 1 2 3"/>
-		<Parameter name="Node Set Top"    type="string" value="4 5 6 7"/>
+		<Parameter name="Node Set Bottom" type="string" value="1 2 3 4"/>
+		<Parameter name="Node Set Top"    type="string" value="5 6 7 8"/>
 		<ParameterList name="Initial Velocity Bottom">
 			<Parameter name="Type" type="string" value="Initial Velocity"/>
 			<Parameter name="Node Set" type="string" value="Node Set Bottom"/>
@@ -43,25 +51,20 @@
 			<Parameter name="Value" type="string" value="200.0"/>
 		</ParameterList>
 	</ParameterList>
-</ParameterList>
 
-<ParameterList name="Solver">
-	<Parameter name="Verbose" type="bool" value="true"/>
-	<Parameter name="Initial Time" type="double" value="0.0"/>
-	<Parameter name="Final Time" type="double" value="0.35e-1"/>
-	<ParameterList name="Verlet">
-		<Parameter name="Fixed dt" type="double" value="1.0e-6"/>
-	</ParameterList>
-</ParameterList>
+  <ParameterList name="Solver">
+	  <Parameter name="Verbose" type="bool" value="true"/>
+	  <Parameter name="Initial Time" type="double" value="0.0"/>
+	  <Parameter name="Final Time" type="double" value="0.35e-1"/>
+	  <ParameterList name="Verlet">
+		  <Parameter name="Fixed dt" type="double" value="1.0e-6"/>
+	  </ParameterList>
+  </ParameterList>
 
-<ParameterList name="Output">
-	<Parameter name="Output File Type" type="string" value="ExodusII"/>
-	<Parameter name="Output Format" type="string" value="BINARY"/>
-	<Parameter name="Output Filename" type="string" value="ep_cube"/>
-	<Parameter name="Output Frequency" type="int" value="200"/>
-	<Parameter name="Parallel Write" type="bool" value="true"/>
-	<ParameterList name="Material Output Fields">
-		<ParameterList name="Elastic Plastic">
+  <ParameterList name="Output">
+    <Parameter name="Output Filename" type="string" value="ep_cube"/>
+    <Parameter name="Output Frequency" type="int" value="1000"/>
+    <ParameterList name="Output Variables">
 			<Parameter name="Displacement" type="bool" value="true"/>
 			<Parameter name="Velocity" type="bool" value="true"/>
 			<Parameter name="Element_Id" type="bool" value="true"/>
@@ -71,6 +74,4 @@
 			<Parameter name="Lambda" type="bool" value="true"/>
 		</ParameterList>
 	</ParameterList>
-</ParameterList>
-
 </ParameterList>

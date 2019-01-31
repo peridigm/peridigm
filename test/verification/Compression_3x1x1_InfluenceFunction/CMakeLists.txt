@@ -1,0 +1,3 @@
+add_test (Compression_3x1x1_InfluenceFunction_np1 python ./np1/Compression_3x1x1_InfluenceFunction.py)
+add_test (Compression_3x1x1_InfluenceFunction_np2 python ./np2/Compression_3x1x1_InfluenceFunction.py)
+add_test (Compression_3x1x1_InfluenceFunction_np3 python ./np3/Compression_3x1x1_InfluenceFunction.py)

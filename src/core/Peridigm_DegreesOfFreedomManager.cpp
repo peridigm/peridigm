@@ -10,6 +10,10 @@ PeridigmNS::DegreesOfFreedomManager& PeridigmNS::DegreesOfFreedomManager::self()
 
 void PeridigmNS::DegreesOfFreedomManager::initialize(Teuchos::ParameterList& solverParams) {
 
+  if (solverParams.isParameter("Solve For Displacement") || solverParams.isParameter("Solve For Temperature") || solverParams.isParameter("Solve For Pressure")) {
+    verbose_ = true;
+  }
+
   displacementTreatedAsUnknown_ = solverParams.get<bool>("Solve For Displacement", true);
   temperatureTreatedAsUnknown_ = solverParams.get<bool>("Solve For Temperature", false);
   pressureTreatedAsUnknown_ = solverParams.get<bool>("Solve For Pressure", false);
@@ -28,10 +32,6 @@ void PeridigmNS::DegreesOfFreedomManager::initialize(Teuchos::ParameterList& sol
     pressure_dof_offset_ = total_number_of_degrees_of_freedom_;
     number_of_pressure_degrees_of_freedom_ = 1;
     total_number_of_degrees_of_freedom_ += 1;
-  }
-
-  if (solverParams.isParameter("Solve For Displacement") || solverParams.isParameter("Solve For Temperature") || solverParams.isParameter("Solve For Pressure")) {
-    verbose_ = true;
   }
 }
 

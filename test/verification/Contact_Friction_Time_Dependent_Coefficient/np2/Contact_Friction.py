@@ -6,7 +6,7 @@ import re
 import glob
 from subprocess import Popen
 
-test_dir = "Contact_Friction/np2"
+test_dir = "np2"
 base_name = "Contact_Friction"
 
 if __name__ == "__main__":

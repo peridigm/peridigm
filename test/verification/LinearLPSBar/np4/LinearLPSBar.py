@@ -6,7 +6,7 @@ import re
 import glob
 from subprocess import Popen
 
-test_dir = "LinearLPSBar/np4"
+test_dir = "np4"
 base_name = "LinearLPSBar"
 
 if __name__ == "__main__":

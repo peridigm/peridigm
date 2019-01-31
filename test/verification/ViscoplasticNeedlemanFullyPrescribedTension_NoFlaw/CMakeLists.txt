@@ -1,0 +1,2 @@
+add_test (ViscoplasticNeedlemanFullyPrescribedTension_NoFlaw_np1 python ./np1/ViscoplasticNeedlemanFullyPrescribedTension_NoFlaw.py)
+add_test (ViscoplasticNeedlemanFullyPrescribedTension_NoFlaw_np4 python ./np4/ViscoplasticNeedlemanFullyPrescribedTension_NoFlaw.py)

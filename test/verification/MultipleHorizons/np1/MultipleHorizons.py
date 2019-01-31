@@ -5,7 +5,7 @@ import os
 import re
 from subprocess import Popen
 
-test_dir = "MultipleHorizons/np1"
+test_dir = "np1"
 base_name = "MultipleHorizons"
 
 if __name__ == "__main__":

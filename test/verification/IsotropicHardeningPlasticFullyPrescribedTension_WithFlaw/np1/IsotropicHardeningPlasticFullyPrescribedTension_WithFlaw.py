@@ -5,7 +5,7 @@ import os
 import re
 from subprocess import Popen
 
-test_dir = "IsotropicHardeningPlasticFullyPrescribedTension_WithFlaw/np1"
+test_dir = "np1"
 base_name = "IsotropicHardeningPlasticFullyPrescribedTension_WithFlaw"
 
 if __name__ == "__main__":

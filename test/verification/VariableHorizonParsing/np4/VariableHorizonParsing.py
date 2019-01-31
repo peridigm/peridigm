@@ -6,7 +6,7 @@ import re
 import glob
 from subprocess import Popen
 
-test_dir = "VariableHorizonParsing/np4"
+test_dir = "np4"
 base_name = "VariableHorizonParsing"
 
 if __name__ == "__main__":
@@ -55,7 +55,7 @@ if __name__ == "__main__":
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:
-        result = return_code    
+        result = return_code
 
     logfile.close()
 
