@@ -38,7 +38,7 @@
 	    <Parameter name="Contact Model" type="string" value="Time Dependent Short Range Force"/>
 	    <Parameter name="Contact Radius" type="double" value="0.2"/>
 	    <Parameter name="Spring Constant" type="double" value="1.0e12"/>
-        <Parameter name="Friction Coefficient" type="string" value=" if(t &lt;= 4.00e-5)\{ value = 1.95; \} else\{ value = 0.3; \} "/>
+        <Parameter name="Friction Coefficient" type="string" value=" if(t &lt;= 4.00e-5)\{ value = 1.0; \} else\{ value = 0.0; \} "/>
 	  </ParameterList>
   	</ParameterList>
   	<ParameterList name="Interactions">
@@ -68,9 +68,9 @@
   <ParameterList name="Solver">
   	<Parameter name="Verbose" type="bool" value="false"/>
 	<Parameter name="Initial Time" type="double" value="0.0"/>
-	<Parameter name="Final Time" type="double" value="0.001"/> 
+	<Parameter name="Final Time" type="double" value="2.0e-4"/> 
 	<ParameterList name="Verlet">
-	  <Parameter name="Fixed dt" type="double" value="0.00001"/>
+	  <Parameter name="Fixed dt" type="double" value="1.0e-5"/>
    	</ParameterList>
   </ParameterList>
 
@@ -78,7 +78,7 @@
   	<Parameter name="Output File Type" type="string" value="ExodusII"/>
 	<Parameter name="Output Format" type="string" value="BINARY"/>
 	<Parameter name="Output Filename" type="string" value="Contact_Friction"/>
-	<Parameter name="Output Frequency" type="int" value="10"/>
+	<Parameter name="Output Frequency" type="int" value="1"/>
 	<Parameter name="Parallel Write" type="bool" value="true"/>
 	<ParameterList name="Output Variables">
 	  <Parameter name="Displacement" type="bool" value="true"/>
