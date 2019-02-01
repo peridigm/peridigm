@@ -1487,9 +1487,11 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
       blockIt->importData(*temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
     }
     if(analysisHasContact){
-      if(contactModel->Name() == "Time-Dependent Short-Range Force"){
-        for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++) {
-    	 New_contactModel->evaluateParserFriction(currentValue, previousValue, timeCurrent, timePrevious);
+      for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
+        contactModel = contactBlockIt->getContactModel();
+        if(contactModel->Name() == "Time-Dependent Short-Range Force"){
+          New_contactModel = Teuchos::rcp_const_cast<PeridigmNS::ContactModel> (contactModel);
+          New_contactModel->evaluateParserFriction(currentValue, previousValue, timeCurrent, timePrevious);
         }
       }
       contactManager->importData(volume, y, v);
