@@ -1,0 +1,18 @@
+
+reset
+#{HORIZON=1.0}
+#{MESH_SIZE=0.3*HORIZON}
+create brick x 4.0 y 4.0 z 1.0
+create prism height 2.0 sides 3 radius 1.0
+volume 2 move x 2.0 y 0.0 z 0.0
+subtract volume 2 from volume 1
+webcut volume 1 with plane yplane offset {2.0 - HORIZON} noimprint nomerge
+webcut volume 1 with plane yplane offset {-2.0 + HORIZON} noimprint nomerge
+volume all size {MESH_SIZE}
+mesh volume all
+nodeset 1 volume 1
+nodeset 2 volume 3
+nodeset 3 volume all
+block 1 volume all
+export genesis "Notched_Plate_Data_Loader.g" overwrite
+

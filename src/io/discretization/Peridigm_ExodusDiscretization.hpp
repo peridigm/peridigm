@@ -93,7 +93,6 @@ namespace PeridigmNS {
     //! Get the neighbor list for all locally-owned nodes
     virtual Teuchos::RCP<PeridigmNS::NeighborhoodData> getNeighborhoodData() const;
 
-    //! Get the neighbor list for all locally-owned nodes
     virtual Teuchos::RCP<PeridigmNS::InterfaceData> getInterfaceData() const{
       return interfaceData;
     }

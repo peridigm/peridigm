@@ -52,6 +52,7 @@
 
 namespace PeridigmNS {
 
+  //! Classical stress-strain constitutive model, see D. Peirce, C.F. Shih and A. Needleman, A tangent modulus method for rate dependent solids, Comput. & Structures 18(5) (1984) 875-887.
   class ViscoplasticNeedlemanCorrespondenceMaterial : public CorrespondenceMaterial{
   public:
 

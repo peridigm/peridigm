@@ -1,4 +1,5 @@
-# List tests to be run by "make test"
+add_subdirectory(Notched_Plate_Data_Loader)
+
 if(HAVE_YAML)
   add_test (NOX_QS_MatrixFree_NoPrec_np1 python ./NOX_QS/NOX_QS_MatrixFree_NoPrec_np1/NOX_QS_MatrixFree_NoPrec.py)
   add_test (NOX_QS_MatrixFree_NoPrec_np4 python ./NOX_QS/NOX_QS_MatrixFree_NoPrec_np4/NOX_QS_MatrixFree_NoPrec.py)

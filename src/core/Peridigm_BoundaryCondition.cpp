@@ -173,19 +173,15 @@ void PeridigmNS::DirichletBC::apply(Teuchos::RCP< std::map< std::string, std::ve
 
   TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSetName) == nodeSets->end(),
                               "**** Error in DirichletBC::apply(), node set not found: " + nodeSetName + "\n");
-  std::map< std::string, std::vector<int> >::iterator itBegin = nodeSets->find(nodeSetName);
-  std::map< std::string, std::vector<int> >::iterator itEnd = itBegin; itEnd++;
-  for(std::map<std::string,std::vector<int> > ::iterator setIt=itBegin;setIt!=itEnd;++setIt){
-    vector<int> & nodeList = setIt->second;
-    for(unsigned int i=0 ; i<nodeList.size() ; i++){
-      int localNodeID = toVector->Map().LID(nodeList[i]);
-      if(localNodeID != -1) {
-        double currentValue = 0.0;
-        double previousValue = 0.0;
-        evaluateParser(localNodeID,currentValue,previousValue,timeCurrent);
-        TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(currentValue), "**** NaN returned by dirichlet BC evaluation.\n");
-        (*toVector)[localNodeID*fieldDimension + coord] = currentValue;
-      }
+  vector<int> & nodeList = nodeSets->find(nodeSetName)->second;
+  for(unsigned int i=0 ; i<nodeList.size() ; i++){
+    int localNodeID = toVector->Map().LID(nodeList[i]);
+    if(localNodeID != -1) {
+      double currentValue = 0.0;
+      double previousValue = 0.0;
+      evaluateParser(localNodeID,currentValue,previousValue,timeCurrent);
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(currentValue), "**** NaN returned by dirichlet BC evaluation.\n");
+      (*toVector)[localNodeID*fieldDimension + coord] = currentValue;
     }
   }
 }
@@ -229,21 +225,17 @@ void PeridigmNS::DirichletIncrementBC::apply(Teuchos::RCP< std::map< std::string
 
   TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSetName) == nodeSets->end(),
                               "**** Error in DirichletBC::apply(), node set not found: " + nodeSetName + "\n");
-  std::map< std::string, std::vector<int> >::iterator itBegin = nodeSets->find(nodeSetName);
-  std::map< std::string, std::vector<int> >::iterator itEnd = itBegin; itEnd++;
-  for(std::map<std::string,std::vector<int> > ::iterator setIt=itBegin;setIt!=itEnd;++setIt){
-    vector<int> & nodeList = setIt->second;
-    for(unsigned int i=0 ; i<nodeList.size() ; i++){
-      int localNodeID = toVector->Map().LID(nodeList[i]);
-      if(localNodeID != -1) {
-        double currentValue = 0.0;
-        double previousValue = 0.0;
-        evaluateParser(localNodeID,currentValue,previousValue,timeCurrent,timePrevious_);
-        const double value = coeff * (currentValue - previousValue)
-          + deltaTCoeff * (currentValue - previousValue) * (1.0 / (timeCurrent - timePrevious_));
-        TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(value), "**** NaN returned by dirichlet increment BC evaluation.\n");
-        (*toVector)[localNodeID*fieldDimension + coord] = value;
-      }
+  vector<int> & nodeList = nodeSets->find(nodeSetName)->second;
+  for(unsigned int i=0 ; i<nodeList.size() ; i++){
+    int localNodeID = toVector->Map().LID(nodeList[i]);
+    if(localNodeID != -1) {
+      double currentValue = 0.0;
+      double previousValue = 0.0;
+      evaluateParser(localNodeID,currentValue,previousValue,timeCurrent,timePrevious_);
+      const double value = coeff * (currentValue - previousValue)
+        + deltaTCoeff * (currentValue - previousValue) * (1.0 / (timeCurrent - timePrevious_));
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(value), "**** NaN returned by dirichlet increment BC evaluation.\n");
+      (*toVector)[localNodeID*fieldDimension + coord] = value;
     }
   }
 }

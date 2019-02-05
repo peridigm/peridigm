@@ -1,0 +1,83 @@
+#     Units are SI
+#       mass          kg
+#       length        m
+#       time          s
+#       density       kg/m^3
+#       force         N
+#       pressure      Pa
+#       velocity      m/s
+#       acceleration  m/s^2
+#       energy        J
+
+Peridigm:
+
+    Discretization:
+       Type: Exodus
+       Input Mesh File: Notched_Plate_Data_Loader_Meshfree.g
+       Bond Filters:
+         Precrack Bond Filter:
+           Type: Rectangular_Plane
+           Normal_X: 0.0
+           Normal_Y: 1.0
+           Normal_Z: 0.0
+           Lower_Left_Corner_X: 1.0
+           Lower_Left_Corner_Y: 0.0
+           Lower_Left_Corner_Z: -0.5
+           Bottom_Unit_Vector_X: 1.0
+           Bottom_Unit_Vector_Y: 0.0
+           Bottom_Unit_Vector_Z: 0.0
+           Bottom_Length: 1.0
+           Side_Length: 1.0
+
+    Materials:
+       Concrete Material Model:
+           Material Model: Elastic
+           Density: 2400.0
+           Young's Modulus: 40.0e12
+           Poisson's Ratio: 0.20
+
+    Blocks:
+       All The Blocks:
+           Block Names: block_1
+           Material: Concrete Material Model
+           Horizon: 1.0
+
+    Boundary Conditions:
+       Prescribed Displacement Bottom X:
+           Type: Prescribed Displacement
+           Node Set: nodelist_1
+           Coordinate: x
+           Value: 0.0
+       Prescribed Displacement Bottom Y:
+           Type: Prescribed Displacement
+           Node Set: nodelist_1
+           Coordinate: y
+           Value: 0.0
+       Prescribed Displacement Bottom Z:
+           Type: Prescribed Displacement
+           Node Set: nodelist_1
+           Coordinate: z
+           Value: 0.0
+       Applied Loading Top Y:
+           Type: Body Force
+           Node Set: nodelist_2
+           Coordinate: y
+           Value: "1.6e11*0.5*(cos(3.14159265359 + t*3.14159265359/0.001) + 1.0)"
+
+    Data Loader:
+      File Name: "Notched_Plate_Data_Loader_Meshfree_Fluid_Concentration.e"
+      Field Name: "Fluid_Concentration"
+
+    Solver:
+       Final Time: 0.001
+       Verlet:
+           Safety Factor: 0.8
+
+    Output:
+       Output Filename: Notched_Plate_Data_Loader
+       Output Frequency: 88
+       Output Variables:
+           Displacement: true
+           Force:  true
+           External_Force_Density: true
+           Fluid_Concentration: true

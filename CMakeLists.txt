@@ -74,7 +74,7 @@ IF(Netcdf_Package_Index LESS 0)
   MESSAGE("FATAL_ERROR \n\nError:  Netcdf NOT found.  Netcdf is a REQUIRED Trilinos TPL.\n\n")
 ENDIF()
 
-# Check for netcdf
+# Check for yaml
 LIST(FIND Trilinos_TPL_LIST yaml-cpp yaml-cpp_Package_Index)
 IF(yaml-cpp_Package_Index GREATER -1)
     MESSAGE("-- Trilinos was compiled with TPL_ENABLE_yaml-cpp.\n\n   Will compile Peridigm to support YAML input files.\n\n")
@@ -261,6 +261,7 @@ set(QUICK_GRID_DIR       ${CMAKE_SOURCE_DIR}/src/io/mesh_input/quick_grid)
 set(PDNEIGH_DIR          ${CMAKE_SOURCE_DIR}/src/io/pdneigh)
 set(UTILITIES_DIR        ${CMAKE_SOURCE_DIR}/src/io/utilities)
 set(BOND_VOL_QUICK_GRID  ${CMAKE_SOURCE_DIR}/src/io/bond_volume/quick_grid)
+set(MESH_CONVERTER_DIR   ${CMAKE_SOURCE_DIR}/src/mesh_converter)
 
 include_directories(
 ${COMPUTE_DIR}

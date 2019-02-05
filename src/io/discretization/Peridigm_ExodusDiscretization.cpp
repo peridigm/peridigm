@@ -87,13 +87,13 @@ PeridigmNS::ExodusDiscretization::ExodusDiscretization(const Teuchos::RCP<const 
 {
   TEUCHOS_TEST_FOR_EXCEPT_MSG(params->get<string>("Type") != "Exodus", "Invalid Type in ExodusDiscretization");
 
-  if(params->isParameter("Omit Bonds Between Blocks"))
-    bondFilterCommand = params->get<string>("Omit Bonds Between Blocks");
   string meshFileName = params->get<string>("Input Mesh File");
 
-  if(params->isParameter("Verbose")){
+  if(params->isParameter("Omit Bonds Between Blocks"))
+    bondFilterCommand = params->get<string>("Omit Bonds Between Blocks");
+
+  if(params->isParameter("Verbose"))
     verbose = params->get<bool>("Verbose");
-  }
 
   // Store exodus mesh for intersection calculations, or if it was specifically requested (e.g., unit tests)
   if(params->isParameter("Store Exodus Mesh")){
@@ -117,6 +117,10 @@ PeridigmNS::ExodusDiscretization::ExodusDiscretization(const Teuchos::RCP<const 
 
   if(computeIntersections)
     maxElementDimension = computeMaxElementDimension();
+
+  bool constructNeighborhood = params->get<bool>("Construct Neighborhood Lists", true);
+  if(!constructNeighborhood)
+    return;
 
   // Assign the correct horizon to each node
   PeridigmNS::HorizonManager& horizonManager = PeridigmNS::HorizonManager::self();
@@ -171,7 +175,7 @@ PeridigmNS::ExodusDiscretization::ExodusDiscretization(const Teuchos::RCP<const 
     constructInterfaceData();
 
   // Create the three-dimensional overlap map based on the one-dimensional overlap map
-  threeDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(-1, 
+  threeDimensionalOverlapMap = Teuchos::rcp(new Epetra_BlockMap(-1,
                                                                 oneDimensionalOverlapMap->NumMyElements(),
                                                                 oneDimensionalOverlapMap->MyGlobalElements(),
                                                                 3,
@@ -183,7 +187,7 @@ PeridigmNS::ExodusDiscretization::ExodusDiscretization(const Teuchos::RCP<const 
   // Due to Epetra_BlockMap restrictions, there can not be any entries with length zero.
   // This means that points with no neighbors can not appear in the bondMap.
   int numMyElementsUpperBound = oneDimensionalMap->NumMyElements();
-  int numGlobalElements = -1; 
+  int numGlobalElements = -1;
   int numMyElements = 0;
   int maxNumBonds = 0;
   int* oneDimensionalMapGlobalElements = oneDimensionalMap->MyGlobalElements();
@@ -284,7 +288,7 @@ void PeridigmNS::ExodusDiscretization::loadData(const string& meshFileName)
   // Global node numbering
   vector<int> nodeIdMap(numNodes);
   retval = ex_get_id_map(exodusFileId, EX_NODE_MAP, &nodeIdMap[0]);
-  if (retval != 0) reportExodusError(retval, "ExodusDiscretization::loadData()", "ex_get_id_map");    
+  if (retval != 0) reportExodusError(retval, "ExodusDiscretization::loadData()", "ex_get_id_map");
   for(int i=0 ; i<numNodes ; ++i)
     nodeIdMap[i] -= 1; // Note the switch from 1-based indexing to 0-based indexing
 

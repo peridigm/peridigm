@@ -1,0 +1,48 @@
+
+#  *****************************************************************
+#             EXODIFF	(Version: 2.90) Modified: 2018-02-15
+#             Authors:  Richard Drake, rrdrake@sandia.gov           
+#                       Greg Sjaardema, gdsjaar@sandia.gov          
+#             Run on    2019/02/01   18:41:01 MST
+#  *****************************************************************
+
+#  FILE 1: /Users/djlittl/PeridigmCurrent/peridigm/test/regression/Notched_Plate_Data_Loader/Notched_Plate_Data_Loader_gold.e
+#   Title: Peridigm
+#          Dim = 3, Blocks = 1, Nodes = 459, Elements = 459, Nodesets = 3, Sidesets = 0
+#          Vars: Global = 0, Nodal = 10, Element = 0, Nodeset = 0, Sideset = 0, Times = 6
+
+
+# ==============================================================
+#  NOTE: All node and element ids are reported as global ids.
+
+# NOTES:  - The min/max values are reporting the min/max in absolute value.
+#         - Time values (t) are 1-offset time step numbers.
+#         - Element block numbers are the block ids.
+#         - Node(n) and element(e) numbers are 1-offset.
+
+COORDINATES absolute 1.e-6    # min separation not calculated
+
+TIME STEPS relative 1.e-6 floor 0.0     # min:               0 @ t1 max:   0.00098943712 @ t6
+
+
+# No GLOBAL VARIABLES
+
+NODAL VARIABLES relative 1.e-6 floor 0.0
+	DisplacementX            absolute 1.135472100000e-08    # min:               0 @ t1,n1	max:     0.011354721 @ t6,n234
+	DisplacementY            absolute 2.363830000000e-08    # min:               0 @ t1,n1	max:       0.0236383 @ t6,n228
+	DisplacementZ            absolute 1.642604900000e-09    # min:               0 @ t1,n1	max:    0.0016426049 @ t6,n288
+	ForceX                   absolute 5.316029400000e+03    # min:               0 @ t1,n1	max:   5.3160294e+09 @ t6,n102
+	ForceY                   absolute 1.933602000000e+04    # min:               0 @ t1,n1	max:    1.933602e+10 @ t6,n101
+	ForceZ                   absolute 3.484021100000e+03    # min:               0 @ t1,n1	max:   3.4840211e+09 @ t6,n87
+	External_Force_DensityX  absolute 0.000000000000e+00    # min:               0 @ t1,n1	max:               0 @ t1,n1
+	External_Force_DensityY  absolute 1.599559600000e+05    # min:               0 @ t1,n1	max:   1.5995596e+11 @ t6,n118
+	External_Force_DensityZ  absolute 0.000000000000e+00    # min:               0 @ t1,n1	max:               0 @ t1,n1
+	Fluid_Concentration      absolute 9.659835500000e-07    # min:               0 @ t1,n1	max:      0.96598355 @ t6,n309
+
+# No ELEMENT VARIABLES
+
+# No NODESET VARIABLES
+
+# No SIDESET VARIABLES
+
+

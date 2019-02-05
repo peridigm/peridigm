@@ -1358,8 +1358,7 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
   // Load the data manager with data from disk, if requested
   if(analysisHasDataLoader){
     PeridigmNS::Timer::self().startTimer("Data Loader");
-    dataLoader->loadDataFromFile(1);
-    dataLoader->copyDataToDataManagers(blocks);
+    dataLoader->loadData(timeCurrent, blocks);
     PeridigmNS::Timer::self().stopTimer("Data Loader");
   }
 
@@ -1402,7 +1401,7 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
   PeridigmNS::Timer::self().startTimer("Output");
   synchDataManagers();
   if(analysisHasDataLoader){
-    dataLoader->copyDataToDataManagers(blocks);
+    dataLoader->loadData(timeCurrent, blocks);
   }
   outputManager->write(blocks, timeCurrent);
   PeridigmNS::Timer::self().stopTimer("Output");
@@ -1501,8 +1500,7 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     // Load the data manager with data from disk, if requested
     if(analysisHasDataLoader){
       PeridigmNS::Timer::self().startTimer("Data Loader");
-      dataLoader->loadDataFromFile(step);
-      dataLoader->copyDataToDataManagers(blocks);
+      dataLoader->loadData(timeCurrent, blocks);
       PeridigmNS::Timer::self().stopTimer("Data Loader");
     }
 
@@ -1554,7 +1552,7 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     PeridigmNS::Timer::self().startTimer("Output");
     synchDataManagers();
     if(analysisHasDataLoader){
-      dataLoader->copyDataToDataManagers(blocks);
+      dataLoader->loadData(timeCurrent, blocks);
     }
     outputManager->write(blocks, timeCurrent);
     PeridigmNS::Timer::self().stopTimer("Output");
