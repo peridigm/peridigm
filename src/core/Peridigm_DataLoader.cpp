@@ -55,7 +55,8 @@
 
 PeridigmNS::DataLoader::DataLoader(const Teuchos::ParameterList& contactParams,
                                    Teuchos::RCP<const Epetra_BlockMap> epetraMap)
-  : fileName_("none"), fieldName_("none"), exodusName_("none"), exodusVariableIndex_(-1), numRanks_(-1), myRank_(-1)
+  : fileName_("none"), fieldName_("none"), fieldId_(-1), exodusName_("none"), exodusVariableIndex_(-1),
+    numRanks_(-1), myRank_(-1), time_(-1.0), time_1_(-1.0), time_2_(-1.0)
 {
   fileName_ = contactParams.get<std::string>("File Name");
   fieldName_ = contactParams.get<std::string>("Field Name");
@@ -190,9 +191,9 @@ PeridigmNS::DataLoader::DataLoader(const Teuchos::ParameterList& contactParams,
 
 std::vector<int> PeridigmNS::DataLoader::getFieldIds() const
 {
-  std::vector<int> fieldId_s;
-  fieldId_s.push_back(fieldId_);
-  return fieldId_s;
+  std::vector<int> fieldIds;
+  fieldIds.push_back(fieldId_);
+  return fieldIds;
 }
 
 void PeridigmNS::DataLoader::loadData(double time,
