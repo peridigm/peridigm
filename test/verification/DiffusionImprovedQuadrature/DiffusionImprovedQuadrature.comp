@@ -1,0 +1,41 @@
+
+#  *****************************************************************
+#             EXODIFF	(Version: 2.92) Modified: 2018-06-27
+#             Authors:  Richard Drake, rrdrake@sandia.gov           
+#                       Greg Sjaardema, gdsjaar@sandia.gov          
+#             Run on    2019/02/07   17:49:45 MST
+#  *****************************************************************
+
+#  FILE 1: /Users/djlittl/NatTrask/peridigm/test/verification/DiffusionImprovedQuadrature/DiffusionImprovedQuadrature_gold.e
+#   Title: Peridigm
+#          Dim = 3, Blocks = 1, Nodes = 1728, Elements = 1728, Nodesets = 2, Sidesets = 0
+#          Vars: Global = 0, Nodal = 2, Element = 1, Nodeset = 0, Sideset = 0, Times = 4
+
+
+# ==============================================================
+#  NOTE: All node and element ids are reported as global ids.
+
+# NOTES:  - The min/max values are reporting the min/max in absolute value.
+#         - Time values (t) are 1-offset time step numbers.
+#         - Element block numbers are the block ids.
+#         - Node(n) and element(e) numbers are 1-offset.
+
+COORDINATES absolute 1.e-6    # min separation not calculated
+
+TIME STEPS relative 1.e-6 floor 0.0     # min:               0 @ t1 max:               1 @ t4
+
+
+# No GLOBAL VARIABLES
+
+NODAL VARIABLES relative 1.e-6 floor 0.0
+	Flux_Divergence  absolute 1.0e-9
+	Temperature      absolute 2.825833300000e-04    # min:             273 @ t1,n1	max:       282.58333 @ t4,n829
+
+ELEMENT VARIABLES relative 1.e-6 floor 0.0
+	Number_Of_Neighbors  absolute 1.220000000000e-04    # min:              28 @ t1,b1,e847	max:             122 @ t1,b1,e1
+
+# No NODESET VARIABLES
+
+# No SIDESET VARIABLES
+
+

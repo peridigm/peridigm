@@ -26,6 +26,7 @@ add_subdirectory(ViscoplasticNeedlemanFullyPrescribedTension_NoFlaw)
 add_subdirectory(ElasticPlasticCorrespondenceFullyPrescribedTension)
 add_subdirectory(ElasticCorrespondenceFullyPrescribedTension)
 add_subdirectory(SimpleImplicitDiffusion)
+add_subdirectory(DiffusionImprovedQuadrature)
 
 add_custom_target( vtest
    COMMAND ctest

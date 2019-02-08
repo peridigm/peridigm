@@ -116,6 +116,7 @@ namespace PeridigmNS {
     // material properties
     double m_horizon;
     double m_coefficient;
+    bool m_useImprovedQuadrature;
 
     // field spec ids for all relevant data
     std::vector<int> m_fieldIds;
@@ -123,6 +124,7 @@ namespace PeridigmNS {
     int m_modelCoordinatesFieldId;
     int m_temperatureFieldId;
     int m_fluxDivergenceFieldId;
+    int m_quadratureWeightsFieldId;
   };
 }
 

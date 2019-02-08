@@ -1,0 +1,14 @@
+reset
+#{HORIZON=0.25}
+#{MESH_SIZE=HORIZON/3.0}
+create brick x 1.0 y 1.0 z 1.0
+create brick x {1.0 - 2.0*HORIZON} y {1.0 - 2.0*HORIZON} z {1.0 - 2.0*HORIZON}
+subtract volume 2 from volume 1 keep
+delete volume 1
+webcut volume 3 with xplane
+volume all size {MESH_SIZE}
+mesh volume all
+block 1 volume all
+nodeset 1 volume 3 4
+nodeset 2 volume all
+export genesis 'DiffusionImprovedQuadrature.g' overwrite

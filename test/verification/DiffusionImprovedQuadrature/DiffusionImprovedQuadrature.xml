@@ -1,0 +1,60 @@
+<ParameterList>
+
+  <ParameterList name="Discretization">
+	<Parameter name="Type" type="string" value="Exodus" />
+	<Parameter name="Input Mesh File" type="string" value="DiffusionImprovedQuadrature.g"/>
+  </ParameterList>
+
+  <ParameterList name="Materials">
+	<ParameterList name="My Diffusion Material">
+	  <Parameter name="Material Model" type="string" value="Diffusion"/>
+	  <Parameter name="Coefficient" type="double" value="1.0"/>
+    <Parameter name="Use Improved Quadrature" type="bool" value="false"/>
+ 	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Blocks">
+	<ParameterList name="My Group of Blocks">
+	  <Parameter name="Block Names" type="string" value="block_1"/>
+	  <Parameter name="Material" type="string" value="My Diffusion Material"/>
+      <Parameter name="Horizon" type="double" value="0.25001"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Boundary Conditions">
+    <ParameterList name="Prescribed Temperature On Collar">
+      <Parameter name="Type" type="string" value="Prescribed Temperature"/>
+      <Parameter name="Node Set" type="string" value="nodelist_1"/>
+      <Parameter name="Value" type="string" value="273.0 + (x + 0.5)*10.0*t"/>
+    </ParameterList>
+    <ParameterList name="Initial Temperature Everywhere">
+      <Parameter name="Type" type="string" value="Initial Temperature"/>
+      <Parameter name="Node Set" type="string" value="nodelist_2"/>
+      <Parameter name="Value" type="string" value="273.0"/>
+    </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Solver">
+	<Parameter name="Initial Time" type="double" value="0.0"/>
+	<Parameter name="Final Time" type="double" value="1.0"/>
+  <Parameter name="Solve For Displacement" type="bool" value="false"/>
+  <Parameter name="Solve For Temperature" type="bool" value="true"/>
+  <Parameter name="Solve For Pressure" type="bool" value="false"/>
+	<ParameterList name="ImplicitDiffusion">
+	  <Parameter name="Number of Load Steps" type="int" value="3"/>
+	  <Parameter name="Relative Tolerance" type="double" value="1.0e-9"/>
+	  <Parameter name="Maximum Solver Iterations" type="int" value="10"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Output">
+	<Parameter name="Output Filename" type="string" value="DiffusionImprovedQuadrature"/>
+	<Parameter name="Output Frequency" type="int" value="1"/>
+	<ParameterList name="Output Variables">
+	  <Parameter name="Flux_Divergence" type="bool" value="true"/>
+    <Parameter name="Temperature" type="bool" value="true"/>
+    <Parameter name="Number_Of_Neighbors" type="bool" value="true"/>
+	</ParameterList>
+  </ParameterList>
+
+</ParameterList>

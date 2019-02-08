@@ -92,6 +92,7 @@ set(Peridigm_SOURCES
     ${apiSOURCES}
     ${ioSOURCES}
     ${materialsSOURCES}
+    ${IMPROVED_QUADRATURE_SOURCES}
 )
 
 add_library(PeridigmLib ${Peridigm_SOURCES})
@@ -108,6 +109,7 @@ set(Peridigm_LINK_LIBRARIES
     ${PdMaterialUtilitiesLib}
     ${Trilinos_LIBRARIES}
     ${REQUIRED_LIBS}
+    ${IMPROVED_QUADRATURE_LIBS}
 )
 
 add_executable(Peridigm ${CORE_DIR}/Peridigm_Main.cpp)

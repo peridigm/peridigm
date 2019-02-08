@@ -190,7 +190,7 @@ ENDIF()
 # Optional Installation helpers
 # Note that some of this functionality depends on CMAKE > 2.8.8
 SET(INSTALL_PERIDIGM FALSE)
-IF(ENABLE_INSTALL) 
+IF(ENABLE_INSTALL)
   IF(${CMAKE_VERSION} VERSION_GREATER 2.8.8 OR ${CMAKE_VERSION} VERSION_EQUAL 2.8.8)
     SET(INSTALL_PERIDIGM TRUE)
     MESSAGE("")
@@ -204,6 +204,25 @@ IF(ENABLE_INSTALL)
     MESSAGE("")
   ENDIF()
 ENDIF()
+
+# Optional functionality for improved quadrature
+if(USE_IMPROVED_QUADRATURE)
+  if(IMPROVED_QUADRATURE_DIR)
+    message("-- Compiling with improved quadrature:")
+    message("       IMPROVED_QUADRATURE_DIR: ${IMPROVED_QUADRATURE_DIR}\n")
+    add_definitions(-DPERIDIGM_IMPROVED_QUADRATURE)
+    set(PERIDIGM_IMPROVED_QUADRATURE TRUE)
+    set(IMPROVED_QUADRATURE_SOURCES ${IMPROVED_QUADRATURE_DIR}/nonloc.cpp)
+    set(IMPROVED_QUADRATURE_INCLUDE_DIRS ${IMPROVED_QUADRATURE_DIR})
+    find_package(GSL REQUIRED)
+    set(IMPROVED_QUADRATURE_LIBS GSL::gsl GSL::gslcblas)
+  else()
+    message(FATAL_ERROR "\n**** Error:  Expected IMPROVED_QUADRATURE_DIR.\n")
+    set(IMPROVED_QUADRATURE_SOURCES )
+    set(IMPROVED_QUADRATURE_INCLUDE_DIRS )
+    set(IMPROVED_QUADRATURE_LIBS )
+  endif()
+endif()
 
 IF(INSTALL_PERIDIGM)
   set(INCLUDE_INSTALL_DIR include)
@@ -226,6 +245,7 @@ set(PdMaterialUtilitiesLib PdMaterialUtilities)
 set(INCLUDE_DIRS
 ${Trilinos_INCLUDE_DIRS}
 ${Trilinos_TPL_INCLUDE_DIRS}
+${IMPROVED_QUADRATURE_INCLUDE_DIRS}
 ${CMAKE_SOURCE_DIR}
 ${CMAKE_SOURCE_DIR}/src
 ${CMAKE_SOURCE_DIR}/src/core
