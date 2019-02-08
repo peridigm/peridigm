@@ -131,8 +131,6 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
     fluidPressureUFieldId(-1),
     fluidPressureVFieldId(-1),
     fluidFlowDensityFieldId(-1),
-    numMechanicsDoFs(0),
-    numDiffusionDoFs(0),
     numMultiphysDoFs(0)
 {
 #ifdef HAVE_MPI
@@ -216,25 +214,24 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
 
   // For the case where multiple solvers are used, assume that the degrees of freedom (multiphysics) are the same for all solvers.
   PeridigmNS::DegreesOfFreedomManager& dofManager = PeridigmNS::DegreesOfFreedomManager::self();
+  Teuchos::ParameterList solverParamsForDofManager;
   if (solverParameters.size() > 0) {
-    dofManager.initialize(*(solverParameters[0]));
-    if(peridigmComm->MyPID() == 0)
-      dofManager.print();
+    solverParamsForDofManager = *(solverParameters[0]);
+  }
+  dofManager.initialize(solverParamsForDofManager);
+  if(peridigmComm->MyPID() == 0) {
+    dofManager.print();
   }
 
   // Check solver parameters for request to allocate tangent matrix
   // Note that Peridigm can be run with multiple solvers, applied in sequence
   bool implicitTimeIntegration(false), userSpecifiedFullTangent(false), userSpecifiedBlockDiagonalTangent(false);
-  numMechanicsDoFs = 0;
-  numDiffusionDoFs = 0;
   for(unsigned int i=0 ; i<solverParameters.size() ; ++i){
     if(solverParameters[i]->isSublist("QuasiStatic") || solverParameters[i]->isSublist("NOXQuasiStatic") || solverParameters[i]->isSublist("Implicit")){
       implicitTimeIntegration = true;
-      numMechanicsDoFs = 3;
     }
     if(solverParameters[i]->isSublist("ImplicitDiffusion")){
       implicitTimeIntegration = true;
-      numDiffusionDoFs = 1;
     }
     if(solverParameters[i]->isParameter("Peridigm Preconditioner")){
       std::string peridigmPreconditionerType = solverParameters[i]->get<string>("Peridigm Preconditioner");
@@ -515,24 +512,25 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
                         globalNeighborhoodData);
 
   // Create a temporary vector for storing the global element ids
-  Epetra_Vector elementIds(*(peridigmDiscretization->getCellVolume()));
-  for(int i=0 ; i<elementIds.MyLength() ; ++i)
-    elementIds[i] = elementIds.Map().GID(i);
+  Teuchos::RCP<Epetra_Vector> elementIds = Teuchos::rcp(new Epetra_Vector(*(peridigmDiscretization->getCellVolume())));
+  for(int i=0 ; i<elementIds->MyLength() ; ++i) {
+    (*elementIds)[i] = elementIds->Map().GID(i);
+  }
 
   // Load initial data into the blocks
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    blockIt->importData(*(peridigmDiscretization->getBlockID()),    blockIdFieldId,          PeridigmField::STEP_NONE, Insert);
-    blockIt->importData(*(peridigmDiscretization->getHorizon()),    horizonFieldId,          PeridigmField::STEP_NONE, Insert);
-    blockIt->importData(*(peridigmDiscretization->getCellVolume()), volumeFieldId,           PeridigmField::STEP_NONE, Insert);
-    blockIt->importData(*(peridigmDiscretization->getInitialX()),   modelCoordinatesFieldId, PeridigmField::STEP_NONE, Insert);
-    blockIt->importData(*(peridigmDiscretization->getInitialX()),   coordinatesFieldId,      PeridigmField::STEP_N,    Insert);
-    blockIt->importData(*(peridigmDiscretization->getInitialX()),   coordinatesFieldId,      PeridigmField::STEP_NP1,  Insert);
+    blockIt->importData(peridigmDiscretization->getBlockID(),    blockIdFieldId,          PeridigmField::STEP_NONE, Insert);
+    blockIt->importData(peridigmDiscretization->getHorizon(),    horizonFieldId,          PeridigmField::STEP_NONE, Insert);
+    blockIt->importData(peridigmDiscretization->getCellVolume(), volumeFieldId,           PeridigmField::STEP_NONE, Insert);
+    blockIt->importData(peridigmDiscretization->getInitialX(),   modelCoordinatesFieldId, PeridigmField::STEP_NONE, Insert);
+    blockIt->importData(peridigmDiscretization->getInitialX(),   coordinatesFieldId,      PeridigmField::STEP_N,    Insert);
+    blockIt->importData(peridigmDiscretization->getInitialX(),   coordinatesFieldId,      PeridigmField::STEP_NP1,  Insert);
     blockIt->importData(elementIds,                                 elementIdFieldId,        PeridigmField::STEP_NONE, Insert);
 
 		if(analysisHasMultiphysics){
-			scratchOneD->PutScalar(0.0);
-			blockIt->importData(*scratchOneD, fluidPressureYFieldId, PeridigmField::STEP_N, Insert);
-			blockIt->importData(*scratchOneD, fluidPressureYFieldId, PeridigmField::STEP_NP1, Insert);
+			scalarScratch->PutScalar(0.0);
+			blockIt->importData(scalarScratch, fluidPressureYFieldId, PeridigmField::STEP_N, Insert);
+			blockIt->importData(scalarScratch, fluidPressureYFieldId, PeridigmField::STEP_NP1, Insert);
 		}
   }
 
@@ -726,7 +724,7 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
       cout.flush();
     }
     PeridigmNS::Timer::self().startTimer("Allocate Global Tangent");
-    allocateJacobian(numMechanicsDoFs + numDiffusionDoFs + numMultiphysDoFs);
+    allocateJacobian();
     PeridigmNS::Timer::self().stopTimer("Allocate Global Tangent");
     if(peridigmComm->MyPID() == 0){
       cout << "\n  number of rows = " << tangent->NumGlobalRows() << endl;
@@ -785,6 +783,8 @@ void PeridigmNS::Peridigm::checkContactSearchRadius(const Teuchos::ParameterList
 
 void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization> peridigmDisc) {
 
+  PeridigmNS::DegreesOfFreedomManager& dofManager = PeridigmNS::DegreesOfFreedomManager::self();
+
   // oneDimensionalMap
   // used for cell volumes and scalar constitutive data
   oneDimensionalMap = peridigmDisc->getGlobalOwnedMap(1);
@@ -794,76 +794,49 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization>
   // includes ghosts
   oneDimensionalOverlapMap = peridigmDisc->getGlobalOverlapMap(1);
 
-  if(analysisHasMultiphysics){
-    //nDimensional Map is what will be used for creating the vectors needed in the solver code
-    //but not the material code. The reason is that we want the solid mechanics and multiphysics
-    //to be in the same vectors so that we can re-use Trilinos NOX and Belos utilities easily.
-    nDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(-1,
-              oneDimensionalMap->NumMyElements(),
-              oneDimensionalMap->MyGlobalElements(),
-              numMechanicsDoFs + numDiffusionDoFs + numMultiphysDoFs,
-              0,
-              oneDimensionalMap->Comm()));
-  }
-
   // threeDimensionalMap
   // used for positions, displacements, velocities and vector constitutive data
   threeDimensionalMap = peridigmDisc->getGlobalOwnedMap(3);
+
+  // unknonwnsMap
+  // used for time integrators / solvers
+  unknownsMap = Teuchos::rcp(new Epetra_BlockMap(-1,
+                                                 oneDimensionalMap->NumMyElements(),
+                                                 oneDimensionalMap->MyGlobalElements(),
+                                                 dofManager.totalNumberOfDegreesOfFreedom(),
+                                                 0,
+                                                 oneDimensionalMap->Comm()));
 
   // bondConstitutiveDataMap
   // a non-overlapping map used for storing constitutive data on bonds
   bondMap = peridigmDisc->getGlobalBondMap();
 
   // Create mothership vectors
-
-  // \todo Do not allocate space for deltaTemperature if not needed.
-  // There is no need to modify this other stuff, because we need it for
-  // proper output anyway.
+  int numOneDimensionalMothershipVectors = 8;
+  bool initializeToZero = true;
   if(analysisHasMultiphysics)
-  {
-    oneDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*oneDimensionalMap, 15));
-    blockIDs = Teuchos::rcp((*oneDimensionalMothership)(0), false);              // block ID
-    horizon = Teuchos::rcp((*oneDimensionalMothership)(1), false);               // horizon for each point
-    volume = Teuchos::rcp((*oneDimensionalMothership)(2), false);                // cell volume
-    density = Teuchos::rcp((*oneDimensionalMothership)(3), false);               // solid density
-    temperature = Teuchos::rcp((*oneDimensionalMothership)(4), false);           // temperature
-    deltaTemperature = Teuchos::rcp((*oneDimensionalMothership)(5), false);      // change in temperature
-    fluxDivergence = Teuchos::rcp((*oneDimensionalMothership)(6), false);        // divergence of the flux (e.g., heat flux)
-    fluidPressureU = Teuchos::rcp((*oneDimensionalMothership)(7), false);        // fluid pressure displacement
-    fluidPressureY = Teuchos::rcp((*oneDimensionalMothership)(8), false);        // fluid pressure current coordinates at anode
-    fluidPressureV = Teuchos::rcp((*oneDimensionalMothership)(9), false);        // fluid pressure first time derv at a node
-    fluidFlow = Teuchos::rcp((*oneDimensionalMothership)(10), false);            // flux through a node
-    fluidPressureDeltaU = Teuchos::rcp((*oneDimensionalMothership)(11), false);  // fluid pressure displacement analogue increment
-    fluidDensity = Teuchos::rcp((*oneDimensionalMothership)(12), false); 		     // fluid density at a node
-    fluidCompressibility = Teuchos::rcp((*oneDimensionalMothership)(13), false); // fluid compressibility at a node
-    scratchOneD = Teuchos::rcp((*oneDimensionalMothership)(14), false);          // flux through a node
-    fluidPressureY->PutScalar(0.0);
-  }
-  else {
-    oneDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*oneDimensionalMap, 8));
-    blockIDs = Teuchos::rcp((*oneDimensionalMothership)(0), false);         // block ID
-    horizon = Teuchos::rcp((*oneDimensionalMothership)(1), false);          // horizon for each point
-    volume = Teuchos::rcp((*oneDimensionalMothership)(2), false);           // cell volume
-    density = Teuchos::rcp((*oneDimensionalMothership)(3), false);          // density
-    temperature = Teuchos::rcp((*oneDimensionalMothership)(4), false);      // temperature
-    deltaTemperature = Teuchos::rcp((*oneDimensionalMothership)(5), false); // change in temperature
-    fluxDivergence = Teuchos::rcp((*oneDimensionalMothership)(6), false);   // divergence of the flux (e.g., heat flux)
-    scalarScratch = Teuchos::rcp((*oneDimensionalMothership)(7), false);    // scratch vector corresponding to oneDimensionalMap
+    numOneDimensionalMothershipVectors += 7;
+
+  oneDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*oneDimensionalMap, numOneDimensionalMothershipVectors, initializeToZero));
+  blockIDs = Teuchos::rcp((*oneDimensionalMothership)(0), false);              // block ID
+  horizon = Teuchos::rcp((*oneDimensionalMothership)(1), false);               // horizon for each point
+  volume = Teuchos::rcp((*oneDimensionalMothership)(2), false);                // cell volume
+  density = Teuchos::rcp((*oneDimensionalMothership)(3), false);               // solid density
+  temperature = Teuchos::rcp((*oneDimensionalMothership)(4), false);           // temperature
+  deltaTemperature = Teuchos::rcp((*oneDimensionalMothership)(5), false);      // change in temperature
+  fluxDivergence = Teuchos::rcp((*oneDimensionalMothership)(6), false);        // divergence of the flux (e.g., heat flux)
+  scalarScratch = Teuchos::rcp((*oneDimensionalMothership)(7), false);         // scratch vector corresponding to oneDimensionalMap
+  if (analysisHasMultiphysics) {
+    fluidPressureU = Teuchos::rcp((*oneDimensionalMothership)(8), false);        // fluid pressure displacement
+    fluidPressureY = Teuchos::rcp((*oneDimensionalMothership)(9), false);        // fluid pressure current coordinates at anode
+    fluidPressureV = Teuchos::rcp((*oneDimensionalMothership)(10), false);       // fluid pressure first time derv at a node
+    fluidFlow = Teuchos::rcp((*oneDimensionalMothership)(11), false);            // flux through a node
+    fluidPressureDeltaU = Teuchos::rcp((*oneDimensionalMothership)(12), false);  // fluid pressure displacement analogue increment
+    fluidDensity = Teuchos::rcp((*oneDimensionalMothership)(13), false); 		     // fluid density at a node
+    fluidCompressibility = Teuchos::rcp((*oneDimensionalMothership)(14), false); // fluid compressibility at a node
   }
 
-  if(analysisHasMultiphysics){
-      // \todo Do not allocate space for the contact force nor deltaU if not needed.
-      nDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*nDimensionalMap, 5));
-      combinedU = Teuchos::rcp((*nDimensionalMothership)(0), false);             // abstract displacement
-      combinedY = Teuchos::rcp((*nDimensionalMothership)(1), false);             // abstract current positions
-      combinedV = Teuchos::rcp((*nDimensionalMothership)(2), false);             // abstract velocities
-      combinedForce = Teuchos::rcp((*nDimensionalMothership)(3), false);         // abstract force
-      combinedDeltaU = Teuchos::rcp((*nDimensionalMothership)(4), false);        // abstract increment in displacement (used only for implicit time integration)
-			combinedY->PutScalar(0.0);
-  }
-
-  // \todo Do not allocate space for the contact force nor deltaU if not needed.
-  threeDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalMap, 10));
+  threeDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalMap, 10, initializeToZero));
   x = Teuchos::rcp((*threeDimensionalMothership)(0), false);             // initial positions
   u = Teuchos::rcp((*threeDimensionalMothership)(1), false);             // displacement
   y = Teuchos::rcp((*threeDimensionalMothership)(2), false);             // current positions
@@ -874,6 +847,13 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization>
   externalForce = Teuchos::rcp((*threeDimensionalMothership)(7), false); // external force
   deltaU = Teuchos::rcp((*threeDimensionalMothership)(8), false);        // increment in displacement (used only for implicit time integration)
   scratch = Teuchos::rcp((*threeDimensionalMothership)(9), false);       // scratch space
+
+  unknownsMothership = Teuchos::rcp(new Epetra_MultiVector(*unknownsMap, 5, initializeToZero));
+  unknownsU = Teuchos::rcp((*unknownsMothership)(0), false);             // abstract displacement
+  unknownsY = Teuchos::rcp((*unknownsMothership)(1), false);             // abstract current positions
+  unknownsV = Teuchos::rcp((*unknownsMothership)(2), false);             // abstract velocities
+  unknownsForce = Teuchos::rcp((*unknownsMothership)(3), false);         // abstract force
+  unknownsDeltaU = Teuchos::rcp((*unknownsMothership)(4), false);        // abstract increment in displacement (used only for implicit time integration)
 
   // Set the block IDs
   double* bID;
@@ -1345,11 +1325,11 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
   // Copy data from mothership vectors to overlap vectors in data manager
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
-    blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
-    blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
-    blockIt->importData(*temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
-    blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
   }
   if(analysisHasContact)
     contactManager->importData(volume, y, v);
@@ -1374,7 +1354,7 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
   force->PutScalar(0.0);
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
     scratch->PutScalar(0.0);
-    blockIt->exportData(*scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
+    blockIt->exportData(scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
     force->Update(1.0, *scratch, 1.0);
   }
   if(analysisHasContact){
@@ -1479,11 +1459,11 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     // Copy data from mothership vectors to overlap vectors in data manager
     PeridigmNS::Timer::self().startTimer("Gather/Scatter");
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-      blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
-      blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
-      blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
-      blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
-      blockIt->importData(*temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
     }
     if(analysisHasContact){
       for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
@@ -1514,7 +1494,7 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     force->PutScalar(0.0);
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
       scratch->PutScalar(0.0);
-      blockIt->exportData(*scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
+      blockIt->exportData(scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
       force->Update(1.0, *scratch, 1.0);
     }
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
@@ -1652,10 +1632,10 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
   if(analysisHasMultiphysics){
     for(int i=0 ; i < soln->MyLength() ; i+=(3+numMultiphysDoFs)){
         for(int j=0 ; j < 3 ; ++j){
-            (*y)[i*3/(3+numMultiphysDoFs) + j] = (*combinedU)[i+j] + (*x)[i*3/(3+numMultiphysDoFs) +j] + (*soln)[i+j];
+            (*y)[i*3/(3+numMultiphysDoFs) + j] = (*unknownsU)[i+j] + (*x)[i*3/(3+numMultiphysDoFs) +j] + (*soln)[i+j];
             (*v)[i*3/(3+numMultiphysDoFs) + j] = (*soln)[i+j] / (workset->timeStep);
 				}
-	      (*fluidPressureY)[i/(3+numMultiphysDoFs)] = (*combinedU)[i+3] + (*soln)[i+3];
+	      (*fluidPressureY)[i/(3+numMultiphysDoFs)] = (*unknownsU)[i+3] + (*soln)[i+3];
 	      (*fluidPressureV)[i/(3+numMultiphysDoFs)] = (*soln)[i+3] / (workset->timeStep);
     }
 		//Necessary because soln is zero at dof with kinematic bc
@@ -1663,11 +1643,11 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
 		fluidPressureV->Update(1.0, *noxPressureVAtDOFWithKinematicBC, 1.0);
 		for(int i=0 ; i<v->MyLength() ; i+=3){
 			for(int j=0 ; j<3 ; ++j){
-				(*combinedY)[i/3*(3+numMultiphysDoFs) + j] = (*y)[i+j];
-				(*combinedV)[i/3*(3+numMultiphysDoFs) + j] = (*v)[i+j];
+				(*unknownsY)[i/3*(3+numMultiphysDoFs) + j] = (*y)[i+j];
+				(*unknownsV)[i/3*(3+numMultiphysDoFs) + j] = (*v)[i+j];
 			}
-			(*combinedY)[i/3*(3+numMultiphysDoFs) + 3] = (*fluidPressureY)[i/3];
-			(*combinedV)[i/3*(3+numMultiphysDoFs) + 3] = (*fluidPressureV)[i/3];
+			(*unknownsY)[i/3*(3+numMultiphysDoFs) + 3] = (*fluidPressureY)[i/3];
+			(*unknownsV)[i/3*(3+numMultiphysDoFs) + 3] = (*fluidPressureV)[i/3];
 		}
   }
   else{
@@ -1683,25 +1663,25 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
   if(analysisHasMultiphysics){
     PeridigmNS::Timer::self().startTimer("Gather/Scatter");
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-        blockIt->importData(*fluidPressureU, fluidPressureUFieldId, PeridigmField::STEP_NP1, Insert);
-        blockIt->importData(*fluidPressureY, fluidPressureYFieldId, PeridigmField::STEP_NP1, Insert);
-        blockIt->importData(*fluidPressureV, fluidPressureVFieldId, PeridigmField::STEP_NP1, Insert);
-        blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
-        blockIt->importData(*temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
-        blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
-        blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
-        blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(fluidPressureU, fluidPressureUFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(fluidPressureY, fluidPressureYFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(fluidPressureV, fluidPressureVFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
     }
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
   }
   else{
     PeridigmNS::Timer::self().startTimer("Gather/Scatter");
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-        blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
-        blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
-        blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
-        blockIt->importData(*temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
-        blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
     }
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
   }
@@ -1714,26 +1694,26 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
 
     if(analysisHasMultiphysics){
     	PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-      combinedForce->PutScalar(0.0);
+      unknownsForce->PutScalar(0.0);
     	for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
       		scratch->PutScalar(0.0);
-      		scratchOneD->PutScalar(0.0);
+      		scalarScratch->PutScalar(0.0);
       		//scratchCombined->PutScalar(0.0);
 
 					//Assign values to scratch vectors from overlap data
-      		blockIt->exportData(*scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
-      		blockIt->exportData(*scratchOneD, fluidFlowDensityFieldId, PeridigmField::STEP_NP1, Add);
+      		blockIt->exportData(scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
+      		blockIt->exportData(scalarScratch, fluidFlowDensityFieldId, PeridigmField::STEP_NP1, Add);
 
 					//Add the values from the scratch vectors to the uncombined mothership vectors
       		force->Update(1.0, *scratch, 1.0);
-					fluidFlow->Update(1.0, *scratchOneD, 1.0);
+					fluidFlow->Update(1.0, *scalarScratch, 1.0);
 
 					//Copy the values from the uncombined mothership vectors into the combined mothership vector 
 					for(int i=0 ; i < force->MyLength() ; i+=3){
 						for(int j=0 ; j < 3 ; ++j){
-							(*combinedForce)[i/3*(3+numMultiphysDoFs) + j] = (*force)[i+j];
+							(*unknownsForce)[i/3*(3+numMultiphysDoFs) + j] = (*force)[i+j];
 						}
-						(*combinedForce)[i/3*(3+numMultiphysDoFs) + 3] = (*fluidFlow)[i/3];
+						(*unknownsForce)[i/3*(3+numMultiphysDoFs) + 3] = (*fluidFlow)[i/3];
 					}
 			}
     }
@@ -1741,16 +1721,16 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
 	    // Copy force from the data manager to the mothership vector
 	    PeridigmNS::Timer::self().startTimer("Gather/Scatter");
 	    force->PutScalar(0.0);
-	    
+
 	    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
 	      scratch->PutScalar(0.0);
-	      blockIt->exportData(*scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
+	      blockIt->exportData(scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
 	      force->Update(1.0, *scratch, 1.0);
 	    }
     }
     scratch->PutScalar(0.0);
     if(analysisHasMultiphysics){
-	    scratchOneD->PutScalar(0.0);
+	    scalarScratch->PutScalar(0.0);
     }
 
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
@@ -1764,13 +1744,13 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
         TEUCHOS_TEST_FOR_EXCEPT_MSG(residual->MyLength() != force->MyLength(), "**** PeridigmNS::Peridigm::evaluateNOX() incompatible vector lengths!\n");
     }
     else{
-        TEUCHOS_TEST_FOR_EXCEPT_MSG(residual->MyLength() != combinedForce->MyLength(), "**** PeridigmNS::Peridigm::evaluateNOX() incompatible vector lengths! (residual with combinedForce)\n");
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(residual->MyLength() != unknownsForce->MyLength(), "**** PeridigmNS::Peridigm::evaluateNOX() incompatible vector lengths! (residual with unknownsForce)\n");
     }
 
     if(analysisHasMultiphysics){
 	//Store abstract force density immediately converted to force
-        for(int i=0 ; i < combinedForce->MyLength() ; ++i)
-            (*residual)[i] = (*combinedForce)[i]*(*volume)[i/(3+numMultiphysDoFs)];
+        for(int i=0 ; i < unknownsForce->MyLength() ; ++i)
+            (*residual)[i] = (*unknownsForce)[i]*(*volume)[i/(3+numMultiphysDoFs)];
     }
     else{
         for(int i=0 ; i < force->MyLength() ; ++i)
@@ -1822,11 +1802,11 @@ void PeridigmNS::Peridigm::computeInternalForce()
 
   // Copy data from mothership vectors to overlap vectors in data manager
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
-    blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
-    blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
-    blockIt->importData(*temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
-    blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
   }
 
   // Call the model evaluator
@@ -1836,7 +1816,7 @@ void PeridigmNS::Peridigm::computeInternalForce()
   force->PutScalar(0.0);
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
     scratch->PutScalar(0.0);
-    blockIt->exportData(*scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
+    blockIt->exportData(scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
     force->Update(1.0, *scratch, 1.0);
   }
   scratch->PutScalar(0.0);
@@ -1933,7 +1913,7 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
 
   // The reaction vector is created here and will be longer if multiphysics is enabled
   if(analysisHasMultiphysics)
-    reaction = Teuchos::rcp(new Epetra_Vector(combinedForce->Map()));
+    reaction = Teuchos::rcp(new Epetra_Vector(unknownsForce->Map()));
   else
     reaction = Teuchos::rcp(new Epetra_Vector(force->Map()));
 
@@ -1954,13 +1934,13 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
   // Initialize velocity to zero
   v->PutScalar(0.0);
   if(analysisHasMultiphysics){
-      combinedV->PutScalar(0.0);
+      unknownsV->PutScalar(0.0);
 			fluidPressureV->PutScalar(0.0);
 	}
 
   // Pointers into mothership vectors
   double *xPtr, *uPtr, *yPtr, *vPtr, *deltaUPtr;
-  double *combinedUPtr, *combinedYPtr, *combinedVPtr, *combinedDeltaUPtr;
+  double *unknownsUPtr, *unknownsYPtr, *unknownsVPtr, *unknownsDeltaUPtr;
   double *fluidPressureUPtr, *fluidPressureDeltaUPtr, *fluidPressureYPtr, *fluidPressureVPtr;
   x->ExtractView( &xPtr );
   u->ExtractView( &uPtr );
@@ -1972,10 +1952,10 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
       fluidPressureY->ExtractView( &fluidPressureYPtr );
       fluidPressureV->ExtractView( &fluidPressureVPtr );
       fluidPressureDeltaU->ExtractView( &fluidPressureDeltaUPtr );
-      combinedU->ExtractView( &combinedUPtr );
-      combinedY->ExtractView( &combinedYPtr );
-      combinedV->ExtractView( &combinedVPtr );
-      combinedDeltaU->ExtractView( &combinedDeltaUPtr );
+      unknownsU->ExtractView( &unknownsUPtr );
+      unknownsY->ExtractView( &unknownsYPtr );
+      unknownsV->ExtractView( &unknownsVPtr );
+      unknownsDeltaU->ExtractView( &unknownsDeltaUPtr );
   }
 
   bool performJacobianDiagnostics = solverParams->get("Jacobian Diagnostics", false);
@@ -2080,12 +2060,12 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
 
     // soln is already appropriately sized for multiphysics
     if(analysisHasMultiphysics){
-    	combinedDeltaU->PutScalar(0.0);
+    	unknownsDeltaU->PutScalar(0.0);
 			fluidPressureDeltaU->PutScalar(0.0);
     }
 
     if(analysisHasMultiphysics){
-			// Ensure that information from v and fluidPressureV is in combinedV
+			// Ensure that information from v and fluidPressureV is in unknownsV
 			for(int i=0 ; i<initialGuess->MyLength() ; i+=(3+numMultiphysDoFs)){
 				for(int j = 0; j<3; ++j){
 					(*initialGuess)[i+j] = (*v)[i/(3+numMultiphysDoFs)*3+j]*timeIncrement;
@@ -2102,7 +2082,7 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
 
     v->PutScalar(0.0); 
     if(analysisHasMultiphysics){
-    	combinedV->PutScalar(0.0);
+    	unknownsV->PutScalar(0.0);
 			fluidPressureV->PutScalar(0.0);
     }
 
@@ -2118,7 +2098,7 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
     PeridigmNS::Timer::self().stopTimer("Apply Kinematic B.C.");
 
     // For NOX, add the increment in displacement BC directly into the displacement vector
-   //TEUCHOS_TEST_FOR_EXCEPT_MSG(initialGuess->MyLength() != combinedV->MyLength(), "**** PeridigmNS::Peridigm::executeNOXQuasiStatic() initialGuess vector different length than combinedV.\n");
+   //TEUCHOS_TEST_FOR_EXCEPT_MSG(initialGuess->MyLength() != unknownsV->MyLength(), "**** PeridigmNS::Peridigm::executeNOXQuasiStatic() initialGuess vector different length than unknownsV.\n");
     if(analysisHasMultiphysics){
 			for(int i=0 ; i<u->MyLength() ; ++i)
 				uPtr[i] += deltaUPtr[i];
@@ -2127,11 +2107,11 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
 				fluidPressureUPtr[i] += fluidPressureDeltaUPtr[i];
 			}
 
-      for(int i=0 ; i<combinedU->MyLength() ; i+=(3+numMultiphysDoFs)){
+      for(int i=0 ; i<unknownsU->MyLength() ; i+=(3+numMultiphysDoFs)){
 				for(int j = 0; j<3; ++j){
-			  	combinedUPtr[i+j] = uPtr[i*3/(3+numMultiphysDoFs) + j];
+			  	unknownsUPtr[i+j] = uPtr[i*3/(3+numMultiphysDoFs) + j];
 				}
-        combinedUPtr[i+3] = fluidPressureUPtr[i/(3+numMultiphysDoFs)];
+        unknownsUPtr[i+3] = fluidPressureUPtr[i/(3+numMultiphysDoFs)];
 			}
     }
     else{
@@ -2164,13 +2144,13 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
 					fluidPressureYPtr[i] = fluidPressureUPtr[i];
 				}
 
-        for(int i=0 ; i<combinedY->MyLength() ; i+=(3+numMultiphysDoFs)){
+        for(int i=0 ; i<unknownsY->MyLength() ; i+=(3+numMultiphysDoFs)){
 					for(int j = 0; j<3; ++j){
-						combinedYPtr[i+j] = yPtr[i/(3+numMultiphysDoFs)*3 + j];
-						combinedUPtr[i+j] = uPtr[i/(3+numMultiphysDoFs)*3 + j];
+						unknownsYPtr[i+j] = yPtr[i/(3+numMultiphysDoFs)*3 + j];
+						unknownsUPtr[i+j] = uPtr[i/(3+numMultiphysDoFs)*3 + j];
 					}
-						combinedYPtr[i+3] = fluidPressureYPtr[i/(3+numMultiphysDoFs)];
-						combinedUPtr[i+3] = fluidPressureUPtr[i/(3+numMultiphysDoFs)];
+						unknownsYPtr[i+3] = fluidPressureYPtr[i/(3+numMultiphysDoFs)];
+						unknownsUPtr[i+3] = fluidPressureUPtr[i/(3+numMultiphysDoFs)];
 				}
       }
       else{
@@ -2181,7 +2161,7 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
       computeQuasiStaticResidual(residual);
 
       if(analysisHasMultiphysics)
-        boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(combinedForce, reaction);
+        boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(unknownsForce, reaction);
       else
         boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(force, reaction);
 
@@ -2360,22 +2340,22 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
 
     // Store the velocity
     if(analysisHasMultiphysics){
-        for(int i=0 ; i<combinedV->MyLength() ; ++i)
-            (*combinedV)[i] = finalSolution[i]/timeIncrement;
+        for(int i=0 ; i<unknownsV->MyLength() ; ++i)
+            (*unknownsV)[i] = finalSolution[i]/timeIncrement;
 
         // Add the converged displacement increment to the displacement
-				//std::vector<double> whatWas(combinedU->MyLength()); 
-				//std::vector<double> theChange(combinedU->MyLength()); 
+				//std::vector<double> whatWas(unknownsU->MyLength()); 
+				//std::vector<double> theChange(unknownsU->MyLength()); 
 
-        for(int i=0 ; i<combinedU->MyLength() ; ++i){
-					  //whatWas[i] = (*combinedU)[i];
-            (*combinedU)[i] += finalSolution[i];
-						//theChange[i] = whatWas[i] - (*combinedU)[i];
+        for(int i=0 ; i<unknownsU->MyLength() ; ++i){
+					  //whatWas[i] = (*unknownsU)[i];
+            (*unknownsU)[i] += finalSolution[i];
+						//theChange[i] = whatWas[i] - (*unknownsU)[i];
 				}
 
 				/*  
 				double changeSeen = 0.0;
-        for(int i=0 ; i<combinedU->MyLength() ; ++i){
+        for(int i=0 ; i<unknownsU->MyLength() ; ++i){
 					changeSeen += (theChange[i]*theChange[i]);
 				}
 				std::cout << "**** change seen is: " << changeSeen << std::endl;
@@ -2386,11 +2366,11 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
 				// analogues. 
   			for(int i=0 ; i<v->MyLength() ; i+=3){
 					for(int j=0 ; j<3 ; ++j){
-						(*v)[i+j] = (*combinedV)[i/3*(3+numMultiphysDoFs) + j];
-						(*u)[i+j] = (*combinedU)[i/3*(3+numMultiphysDoFs) + j];
+						(*v)[i+j] = (*unknownsV)[i/3*(3+numMultiphysDoFs) + j];
+						(*u)[i+j] = (*unknownsU)[i/3*(3+numMultiphysDoFs) + j];
 					}
-					(*fluidPressureV)[i/3] = (*combinedV)[i/3*(3+numMultiphysDoFs) + 3];
-					(*fluidPressureU)[i/3] = (*combinedU)[i/3*(3+numMultiphysDoFs) + 3];
+					(*fluidPressureV)[i/3] = (*unknownsV)[i/3*(3+numMultiphysDoFs) + 3];
+					(*fluidPressureU)[i/3] = (*unknownsU)[i/3*(3+numMultiphysDoFs) + 3];
 				}
 
 				//add nox velocity vectors to uncombined velocity vectors and store back in combined vector
@@ -2399,9 +2379,9 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
 
 				for(int i=0 ; i<v->MyLength() ; i+=3){
 					for(int j=0 ; j<3 ; ++j){
-						(*combinedV)[i/3*(3+numMultiphysDoFs) + j] = (*v)[i+j];
+						(*unknownsV)[i/3*(3+numMultiphysDoFs) + j] = (*v)[i+j];
 					}
-					(*combinedV)[i/3*(3+numMultiphysDoFs) + 3] = (*fluidPressureV)[i/3];
+					(*unknownsV)[i/3*(3+numMultiphysDoFs) + 3] = (*fluidPressureV)[i/3];
 				}
 
     }
@@ -2441,7 +2421,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
   Teuchos::RCP<Epetra_Vector> reaction;
 
   if(analysisHasMultiphysics)
-	 reaction = Teuchos::rcp(new Epetra_Vector(combinedForce->Map()));
+	 reaction = Teuchos::rcp(new Epetra_Vector(unknownsForce->Map()));
   else
 	 reaction = Teuchos::rcp(new Epetra_Vector(force->Map()));
 
@@ -2453,7 +2433,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
   //Epetra_Vector predictor(v->Map());
   Teuchos::RCP<Epetra_Vector> predictor;
   if(analysisHasMultiphysics)
-  	predictor = Teuchos::rcp(new Epetra_Vector(combinedV->Map()));
+  	predictor = Teuchos::rcp(new Epetra_Vector(unknownsV->Map()));
   else
   	predictor = Teuchos::rcp(new Epetra_Vector(v->Map()));
 
@@ -2474,7 +2454,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
   // Pointer index into sub-vectors for use with BLAS
   // Pointers into mothership vectors
   double *xPtr, *uPtr, *yPtr, *vPtr, *aPtr, *deltaUPtr;
-  double *combinedUPtr, *combinedYPtr, *combinedVPtr, *combinedDeltaUPtr;
+  double *unknownsUPtr, *unknownsYPtr, *unknownsVPtr, *unknownsDeltaUPtr;
   double *fluidPressureUPtr, *fluidPressureDeltaUPtr, *fluidPressureYPtr, *fluidPressureVPtr;
   x->ExtractView( &xPtr );
   u->ExtractView( &uPtr );
@@ -2487,16 +2467,16 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
       fluidPressureY->ExtractView( &fluidPressureYPtr );
       fluidPressureV->ExtractView( &fluidPressureVPtr );
       fluidPressureDeltaU->ExtractView( &fluidPressureDeltaUPtr );
-      combinedU->ExtractView( &combinedUPtr );
-      combinedY->ExtractView( &combinedYPtr );
-      combinedV->ExtractView( &combinedVPtr );
-      combinedDeltaU->ExtractView( &combinedDeltaUPtr );
+      unknownsU->ExtractView( &unknownsUPtr );
+      unknownsY->ExtractView( &unknownsYPtr );
+      unknownsV->ExtractView( &unknownsVPtr );
+      unknownsDeltaU->ExtractView( &unknownsDeltaUPtr );
   }
 
   // Initialize velocity to zero
   v->PutScalar(0.0);
   if(analysisHasMultiphysics){
-	  combinedV->PutScalar(0.0);
+	  unknownsV->PutScalar(0.0);
 	  fluidPressureV->PutScalar(0.0);
   }
 
@@ -2621,7 +2601,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
     deltaU->PutScalar(0.0);
 		if(analysisHasMultiphysics){
 			fluidPressureDeltaU->PutScalar(0.0);
-			combinedDeltaU->PutScalar(0.0);
+			unknownsDeltaU->PutScalar(0.0);
 		}
 
     // Update nodal positions for nodes with kinematic B.C.
@@ -2642,11 +2622,11 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
 
 		//If true, then synch the content of the combined vectors with that of the uncombined.
     if(analysisHasMultiphysics){
-      for(int i=0; i<combinedDeltaU->MyLength(); i+=(3+numMultiphysDoFs)){
+      for(int i=0; i<unknownsDeltaU->MyLength(); i+=(3+numMultiphysDoFs)){
         for(int j=0; j<3; ++j){
-          combinedDeltaUPtr[i+j] = deltaUPtr[i*3/(3+numMultiphysDoFs)+j];
+          unknownsDeltaUPtr[i+j] = deltaUPtr[i*3/(3+numMultiphysDoFs)+j];
         }
-        combinedDeltaUPtr[i+3] = fluidPressureDeltaUPtr[i/(3+numMultiphysDoFs)];
+        unknownsDeltaUPtr[i+3] = fluidPressureDeltaUPtr[i/(3+numMultiphysDoFs)];
       }
 
       for(int i=0 ; i<fluidPressureY->MyLength() ; ++i){
@@ -2654,13 +2634,13 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
         fluidPressureVPtr[i] = fluidPressureDeltaUPtr[i]/timeIncrement;
       }
 
-      for(int i=0 ; i<combinedY->MyLength() ; i+=(3+numMultiphysDoFs)){
+      for(int i=0 ; i<unknownsY->MyLength() ; i+=(3+numMultiphysDoFs)){
         for(int j = 0; j<3; ++j){
-          combinedYPtr[i+j] = yPtr[i/(3+numMultiphysDoFs)*3 + j];
-          combinedVPtr[i+j] = vPtr[i/(3+numMultiphysDoFs)*3 + j];
+          unknownsYPtr[i+j] = yPtr[i/(3+numMultiphysDoFs)*3 + j];
+          unknownsVPtr[i+j] = vPtr[i/(3+numMultiphysDoFs)*3 + j];
         }
-        combinedYPtr[i+3] = fluidPressureYPtr[i/(3+numMultiphysDoFs)];
-        combinedVPtr[i+3] = fluidPressureVPtr[i/(3+numMultiphysDoFs)];
+        unknownsYPtr[i+3] = fluidPressureYPtr[i/(3+numMultiphysDoFs)];
+        unknownsVPtr[i+3] = fluidPressureVPtr[i/(3+numMultiphysDoFs)];
       }
     }
 
@@ -2671,7 +2651,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
     if(!useAbsoluteTolerance){
       // compute the vector of reactions, i.e., the forces corresponding to degrees of freedom for which kinematic B.C. are applied
       if(analysisHasMultiphysics){
-        boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(combinedForce, reaction);
+        boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(unknownsForce, reaction);
       }
       else{
         boundaryAndInitialConditionManager->applyKinematicBC_ComputeReactions(force, reaction);
@@ -2787,26 +2767,26 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
 
         // Apply increment to nodal positions
 				if(analysisHasMultiphysics){
-					for(int i=0 ; i<combinedY->MyLength() ; i+=(3+numMultiphysDoFs)){
+					for(int i=0 ; i<unknownsY->MyLength() ; i+=(3+numMultiphysDoFs)){
 							for(int j=0 ; j<3 ; ++j){
-								combinedDeltaUPtr[i+j] += alpha*(*lhs)[i+j];
-								combinedYPtr[i+j] = xPtr[i*3/(3+numMultiphysDoFs) +j] + combinedUPtr[i+j] + combinedDeltaUPtr[i+j];
-								combinedVPtr[i+j] = combinedDeltaUPtr[i+j]/timeIncrement;
+								unknownsDeltaUPtr[i+j] += alpha*(*lhs)[i+j];
+								unknownsYPtr[i+j] = xPtr[i*3/(3+numMultiphysDoFs) +j] + unknownsUPtr[i+j] + unknownsDeltaUPtr[i+j];
+								unknownsVPtr[i+j] = unknownsDeltaUPtr[i+j]/timeIncrement;
 							}
-							combinedDeltaUPtr[i+3] += alpha*(*lhs)[i+3];
-							combinedYPtr[i+3] = combinedUPtr[i+3] + combinedDeltaUPtr[i+3];
-							combinedVPtr[i+3] = combinedDeltaUPtr[i+3]/timeIncrement;
+							unknownsDeltaUPtr[i+3] += alpha*(*lhs)[i+3];
+							unknownsYPtr[i+3] = unknownsUPtr[i+3] + unknownsDeltaUPtr[i+3];
+							unknownsVPtr[i+3] = unknownsDeltaUPtr[i+3]/timeIncrement;
 					}
 
 					for(int i=0 ; i<y->MyLength() ; i+=3){
 						for(int j=0 ; j<3 ; ++j){
-							deltaUPtr[i+j] = combinedDeltaUPtr[i/3*(3+numMultiphysDoFs) + j];
-							yPtr[i+j] = combinedYPtr[i/3*(3+numMultiphysDoFs) + j];
-							vPtr[i+j] = combinedVPtr[i/3*(3+numMultiphysDoFs) + j];
+							deltaUPtr[i+j] = unknownsDeltaUPtr[i/3*(3+numMultiphysDoFs) + j];
+							yPtr[i+j] = unknownsYPtr[i/3*(3+numMultiphysDoFs) + j];
+							vPtr[i+j] = unknownsVPtr[i/3*(3+numMultiphysDoFs) + j];
 						}
-						fluidPressureDeltaUPtr[i/3] = combinedDeltaUPtr[i/3*(3+numMultiphysDoFs)+3];
-						fluidPressureYPtr[i/3] = combinedYPtr[i/3*(3+numMultiphysDoFs) + 3];
-						fluidPressureVPtr[i/3] = combinedVPtr[i/3*(3+numMultiphysDoFs) + 3];
+						fluidPressureDeltaUPtr[i/3] = unknownsDeltaUPtr[i/3*(3+numMultiphysDoFs)+3];
+						fluidPressureYPtr[i/3] = unknownsYPtr[i/3*(3+numMultiphysDoFs) + 3];
+						fluidPressureVPtr[i/3] = unknownsVPtr[i/3*(3+numMultiphysDoFs) + 3];
 					}
 				}
 				else{
@@ -2917,19 +2897,19 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
       // Add the converged displacement increment to the displacement
       // Make sure even the non participating vectors are updated
       if(analysisHasMultiphysics){
-        for(int i=0 ; i<combinedU->MyLength() ; i+=(3+numMultiphysDoFs)){
+        for(int i=0 ; i<unknownsU->MyLength() ; i+=(3+numMultiphysDoFs)){
           for(int j=0 ; j<3 ; ++j){
-            (*combinedU)[i+j] += (*combinedDeltaU)[i+j];
-            (*u)[i/(3+numMultiphysDoFs)*3 + j] += (*combinedDeltaU)[i+j];
-            (*deltaU)[i/(3+numMultiphysDoFs)*3 + j] = (*combinedDeltaU)[i+j];
+            (*unknownsU)[i+j] += (*unknownsDeltaU)[i+j];
+            (*u)[i/(3+numMultiphysDoFs)*3 + j] += (*unknownsDeltaU)[i+j];
+            (*deltaU)[i/(3+numMultiphysDoFs)*3 + j] = (*unknownsDeltaU)[i+j];
           }
-            (*combinedU)[i+3] += (*combinedDeltaU)[i+3];
-            (*fluidPressureU)[i/(3+numMultiphysDoFs)] += (*combinedDeltaU)[i+3];
-            (*fluidPressureDeltaU)[i/(3+numMultiphysDoFs)] = (*combinedDeltaU)[i+3];
+            (*unknownsU)[i+3] += (*unknownsDeltaU)[i+3];
+            (*fluidPressureU)[i/(3+numMultiphysDoFs)] += (*unknownsDeltaU)[i+3];
+            (*fluidPressureDeltaU)[i/(3+numMultiphysDoFs)] = (*unknownsDeltaU)[i+3];
         }
         // Store the velocity for use as a predictor in the next load step
-        for(int i=0 ; i<combinedV->MyLength() ; ++i){
-          (*predictor)[i] = (*combinedV)[i];
+        for(int i=0 ; i<unknownsV->MyLength() ; ++i){
+          (*predictor)[i] = (*unknownsV)[i];
         }
       }
       else{
@@ -3111,7 +3091,7 @@ void PeridigmNS::Peridigm::executeImplicitDiffusion(Teuchos::RCP<Teuchos::Parame
 
     // copy data into the data manager
 		for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-			blockIt->importData(*temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
+			blockIt->importData(temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
 		}
 
     // compute the residual
@@ -3341,13 +3321,13 @@ double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> 
 {
   Teuchos::RCP<Epetra_Vector> tempVector;
   if(analysisHasMultiphysics)
-  	tempVector = Teuchos::rcp(new Epetra_Vector(*combinedDeltaU));
+  	tempVector = Teuchos::rcp(new Epetra_Vector(*unknownsDeltaU));
   else
   	tempVector = Teuchos::rcp(new Epetra_Vector(*deltaU));
 
   // Pointers into mothership vectors
   double *xPtr, *uPtr, *yPtr, *vPtr, *deltaUPtr, *lhsPtr, *residualPtr;
-  double *combinedUPtr, *combinedYPtr, *combinedVPtr, *combinedDeltaUPtr;
+  double *unknownsUPtr, *unknownsYPtr, *unknownsVPtr, *unknownsDeltaUPtr;
   double *fluidPressureUPtr, *fluidPressureDeltaUPtr, *fluidPressureYPtr, *fluidPressureVPtr;
   x->ExtractView( &xPtr );
   u->ExtractView( &uPtr );
@@ -3361,10 +3341,10 @@ double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> 
       fluidPressureY->ExtractView( &fluidPressureYPtr );
       fluidPressureV->ExtractView( &fluidPressureVPtr );
       fluidPressureDeltaU->ExtractView( &fluidPressureDeltaUPtr );
-      combinedU->ExtractView( &combinedUPtr );
-      combinedY->ExtractView( &combinedYPtr );
-      combinedV->ExtractView( &combinedVPtr );
-      combinedDeltaU->ExtractView( &combinedDeltaUPtr );
+      unknownsU->ExtractView( &unknownsUPtr );
+      unknownsY->ExtractView( &unknownsYPtr );
+      unknownsV->ExtractView( &unknownsVPtr );
+      unknownsDeltaU->ExtractView( &unknownsDeltaUPtr );
   }
 
   // compute the current residual
@@ -3381,26 +3361,26 @@ double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> 
   // a systematic guess for alpha
   double epsilon = 1.0e-4;
   if(analysisHasMultiphysics){
-		for(int i=0 ; i<combinedY->MyLength() ; i+=(3+numMultiphysDoFs)){
+		for(int i=0 ; i<unknownsY->MyLength() ; i+=(3+numMultiphysDoFs)){
 			for(int j=0 ; j<3 ; ++j){
-				combinedDeltaUPtr[i+j] += epsilon*lhsPtr[i+j];
-      	combinedYPtr[i+j] = xPtr[i*3/(3+numMultiphysDoFs)+j] + combinedUPtr[i+j] + combinedDeltaUPtr[i+j];
-				combinedVPtr[i+j] = combinedDeltaUPtr[i+j]/dt;
+				unknownsDeltaUPtr[i+j] += epsilon*lhsPtr[i+j];
+      	unknownsYPtr[i+j] = xPtr[i*3/(3+numMultiphysDoFs)+j] + unknownsUPtr[i+j] + unknownsDeltaUPtr[i+j];
+				unknownsVPtr[i+j] = unknownsDeltaUPtr[i+j]/dt;
 			}
-			combinedDeltaUPtr[i+3] += epsilon*lhsPtr[i+3];
-      combinedYPtr[i+3] = combinedUPtr[i+3] + combinedDeltaUPtr[i+3];
-			combinedVPtr[i+3] = combinedDeltaUPtr[i+3]/dt;
+			unknownsDeltaUPtr[i+3] += epsilon*lhsPtr[i+3];
+      unknownsYPtr[i+3] = unknownsUPtr[i+3] + unknownsDeltaUPtr[i+3];
+			unknownsVPtr[i+3] = unknownsDeltaUPtr[i+3]/dt;
 		}
 
  		for(int i=0 ; i<y->MyLength() ; i+=3){
 			for(int j=0 ; j<3 ; ++j){
-				deltaUPtr[i+j] = combinedDeltaUPtr[i/3*(3+numMultiphysDoFs) + j];
-				yPtr[i+j] = combinedYPtr[i/3*(3+numMultiphysDoFs) + j];
-        vPtr[i+j] = combinedVPtr[i/3*(3+numMultiphysDoFs) + j];
+				deltaUPtr[i+j] = unknownsDeltaUPtr[i/3*(3+numMultiphysDoFs) + j];
+				yPtr[i+j] = unknownsYPtr[i/3*(3+numMultiphysDoFs) + j];
+        vPtr[i+j] = unknownsVPtr[i/3*(3+numMultiphysDoFs) + j];
 			}
-			fluidPressureDeltaUPtr[i/3] = combinedDeltaUPtr[i/3*(3+numMultiphysDoFs) + 3];
-			fluidPressureYPtr[i/3] = combinedYPtr[i/3*(3+numMultiphysDoFs) + 3];
-			fluidPressureVPtr[i/3] = combinedVPtr[i/3*(3+numMultiphysDoFs) + 3];
+			fluidPressureDeltaUPtr[i/3] = unknownsDeltaUPtr[i/3*(3+numMultiphysDoFs) + 3];
+			fluidPressureYPtr[i/3] = unknownsYPtr[i/3*(3+numMultiphysDoFs) + 3];
+			fluidPressureVPtr[i/3] = unknownsVPtr[i/3*(3+numMultiphysDoFs) + 3];
     }
   }
   else{
@@ -3422,7 +3402,7 @@ double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> 
     candidateAlphas.push_back(tempAlpha);
   if(analysisHasMultiphysics)
 	{
-  	*combinedDeltaU = *tempVector;
+  	*unknownsDeltaU = *tempVector;
 	}
   else{
   	*deltaU = *tempVector;
@@ -3441,26 +3421,26 @@ double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> 
     double alpha = candidateAlphas[i];
 
     if(analysisHasMultiphysics){
-			for(int i=0 ; i<combinedY->MyLength() ; i+=(3+numMultiphysDoFs)){
+			for(int i=0 ; i<unknownsY->MyLength() ; i+=(3+numMultiphysDoFs)){
 				for(int j=0 ; j<3 ; ++j){
-					combinedDeltaUPtr[i+j] += epsilon*lhsPtr[i+j];
-					combinedYPtr[i+j] = xPtr[i*3/(3+numMultiphysDoFs)+j] + combinedUPtr[i+j] + combinedDeltaUPtr[i+j];
-					combinedVPtr[i+j] = combinedDeltaUPtr[i+j]/dt;
+					unknownsDeltaUPtr[i+j] += epsilon*lhsPtr[i+j];
+					unknownsYPtr[i+j] = xPtr[i*3/(3+numMultiphysDoFs)+j] + unknownsUPtr[i+j] + unknownsDeltaUPtr[i+j];
+					unknownsVPtr[i+j] = unknownsDeltaUPtr[i+j]/dt;
 				}
-				combinedDeltaUPtr[i+3] += epsilon*lhsPtr[i+3];
-				combinedYPtr[i+3] = combinedUPtr[i+3] + combinedDeltaUPtr[i+3];
-				combinedVPtr[i+3] = combinedDeltaUPtr[i+3]/dt;
+				unknownsDeltaUPtr[i+3] += epsilon*lhsPtr[i+3];
+				unknownsYPtr[i+3] = unknownsUPtr[i+3] + unknownsDeltaUPtr[i+3];
+				unknownsVPtr[i+3] = unknownsDeltaUPtr[i+3]/dt;
 			}
 
 			for(int i=0 ; i<y->MyLength() ; i+=3){
 				for(int j=0 ; j<3 ; ++j){
-					deltaUPtr[i+j] = combinedDeltaUPtr[i/3*(3+numMultiphysDoFs) + j];
-					yPtr[i+j] = combinedYPtr[i/3*(3+numMultiphysDoFs) + j];
-					vPtr[i+j] = combinedVPtr[i/3*(3+numMultiphysDoFs) + j];
+					deltaUPtr[i+j] = unknownsDeltaUPtr[i/3*(3+numMultiphysDoFs) + j];
+					yPtr[i+j] = unknownsYPtr[i/3*(3+numMultiphysDoFs) + j];
+					vPtr[i+j] = unknownsVPtr[i/3*(3+numMultiphysDoFs) + j];
 				}
-				fluidPressureDeltaUPtr[i/3] = combinedDeltaUPtr[i/3*(3+numMultiphysDoFs) + 3];
-				fluidPressureYPtr[i/3] = combinedYPtr[i/3*(3+numMultiphysDoFs) + 3];
-				fluidPressureVPtr[i/3] = combinedVPtr[i/3*(3+numMultiphysDoFs) + 3];
+				fluidPressureDeltaUPtr[i/3] = unknownsDeltaUPtr[i/3*(3+numMultiphysDoFs) + 3];
+				fluidPressureYPtr[i/3] = unknownsYPtr[i/3*(3+numMultiphysDoFs) + 3];
+				fluidPressureVPtr[i/3] = unknownsVPtr[i/3*(3+numMultiphysDoFs) + 3];
 			}
 		}
     else{
@@ -3473,7 +3453,7 @@ double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> 
 
     double residualNorm = computeQuasiStaticResidual(residual);
 		if(analysisHasMultiphysics){
-			*combinedDeltaU = *tempVector;
+			*unknownsDeltaU = *tempVector;
 		}
 		else{
     	*deltaU = *tempVector;
@@ -3516,26 +3496,26 @@ double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> 
   for(unsigned int i=0 ; i<candidateAlphas.size(); ++i){
     double alpha = candidateAlphas[i];
 		if(analysisHasMultiphysics){
-			for(int i=0 ; i<combinedY->MyLength() ; i+=(3+numMultiphysDoFs)){
+			for(int i=0 ; i<unknownsY->MyLength() ; i+=(3+numMultiphysDoFs)){
 				for(int j=0 ; j<3 ; ++j){
-					combinedDeltaUPtr[i+j] += alpha*lhsPtr[i+j];
-					combinedYPtr[i+j] = xPtr[i*3/(3+numMultiphysDoFs)+j] + combinedUPtr[i+j] + combinedDeltaUPtr[i+j];
-					combinedVPtr[i+j] = combinedDeltaUPtr[i+j]/dt;
+					unknownsDeltaUPtr[i+j] += alpha*lhsPtr[i+j];
+					unknownsYPtr[i+j] = xPtr[i*3/(3+numMultiphysDoFs)+j] + unknownsUPtr[i+j] + unknownsDeltaUPtr[i+j];
+					unknownsVPtr[i+j] = unknownsDeltaUPtr[i+j]/dt;
 				}
-				combinedDeltaUPtr[i+3] += alpha*lhsPtr[i+3];
-				combinedYPtr[i+3] = combinedUPtr[i+3] + combinedDeltaUPtr[i+3];
-				combinedVPtr[i+3] = combinedDeltaUPtr[i+3]/dt;
+				unknownsDeltaUPtr[i+3] += alpha*lhsPtr[i+3];
+				unknownsYPtr[i+3] = unknownsUPtr[i+3] + unknownsDeltaUPtr[i+3];
+				unknownsVPtr[i+3] = unknownsDeltaUPtr[i+3]/dt;
 			}
 
 			for(int i=0 ; i<y->MyLength() ; i+=3){
 				for(int j=0 ; j<3 ; ++j){
-					deltaUPtr[i+j] = combinedDeltaUPtr[i/3*(3+numMultiphysDoFs) + j];
-					yPtr[i+j] = combinedYPtr[i/3*(3+numMultiphysDoFs) + j];
-					vPtr[i+j] = combinedVPtr[i/3*(3+numMultiphysDoFs) + j];
+					deltaUPtr[i+j] = unknownsDeltaUPtr[i/3*(3+numMultiphysDoFs) + j];
+					yPtr[i+j] = unknownsYPtr[i/3*(3+numMultiphysDoFs) + j];
+					vPtr[i+j] = unknownsVPtr[i/3*(3+numMultiphysDoFs) + j];
 				}
-				fluidPressureDeltaUPtr[i/3] = combinedDeltaUPtr[i/3*(3+numMultiphysDoFs) + 3];
-				fluidPressureYPtr[i/3] = combinedYPtr[i/3*(3+numMultiphysDoFs) + 3];
-				fluidPressureVPtr[i/3] = combinedVPtr[i/3*(3+numMultiphysDoFs) + 3];
+				fluidPressureDeltaUPtr[i/3] = unknownsDeltaUPtr[i/3*(3+numMultiphysDoFs) + 3];
+				fluidPressureYPtr[i/3] = unknownsYPtr[i/3*(3+numMultiphysDoFs) + 3];
+				fluidPressureVPtr[i/3] = unknownsVPtr[i/3*(3+numMultiphysDoFs) + 3];
 			}
     }
     else{
@@ -3548,7 +3528,7 @@ double PeridigmNS::Peridigm::quasiStaticsLineSearch(Teuchos::RCP<Epetra_Vector> 
 
     double residualNorm = computeQuasiStaticResidual(residual);
 	if(analysisHasMultiphysics){
-      *combinedDeltaU = *tempVector;
+      *unknownsDeltaU = *tempVector;
 	}
 	else{
     	*deltaU = *tempVector;
@@ -3741,16 +3721,16 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
     // Copy data from mothership vectors to overlap vectors in data manager
     PeridigmNS::Timer::self().startTimer("Gather/Scatter");
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-      blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
-      blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
-      blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
-      blockIt->importData(*a, accelerationFieldId, PeridigmField::STEP_NP1, Insert);
-      blockIt->importData(*temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
-      blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(a, accelerationFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
       if(analysisHasMultiphysics){
-        blockIt->importData(*fluidPressureU, fluidPressureUFieldId, PeridigmField::STEP_NP1, Insert);
-        blockIt->importData(*fluidPressureY, fluidPressureYFieldId, PeridigmField::STEP_NP1, Insert);
-        blockIt->importData(*fluidPressureV, fluidPressureVFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(fluidPressureU, fluidPressureUFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(fluidPressureY, fluidPressureYFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(fluidPressureV, fluidPressureVFieldId, PeridigmField::STEP_NP1, Insert);
       }
     }
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
@@ -3766,21 +3746,21 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
 	fluidFlow->PutScalar(0.0);
 	for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
  		scratch->PutScalar(0.0);
-		scratchOneD->PutScalar(0.0);
+		scalarScratch->PutScalar(0.0);
 
-		blockIt->exportData(*scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
-		blockIt->exportData(*scratchOneD, fluidFlowDensityFieldId, PeridigmField::STEP_NP1, Add);
+		blockIt->exportData(scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
+		blockIt->exportData(scalarScratch, fluidFlowDensityFieldId, PeridigmField::STEP_NP1, Add);
 
 		force->Update(1.0, *scratch, 1.0);
-		fluidFlow->Update(1.0, *scratchOneD, 1.0);
+		fluidFlow->Update(1.0, *scalarScratch, 1.0);
 	}
-	scratchOneD->PutScalar(0.0);
+	scalarScratch->PutScalar(0.0);
     }
     else{
 	for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
 		scratch->PutScalar(0.0);
 
-		blockIt->exportData(*scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
+		blockIt->exportData(scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
 
 		force->Update(1.0, *scratch, 1.0);
 	}
@@ -3860,7 +3840,7 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
         cout << "Warning:  Belos linear solver failed to converge!  Proceeding with nonconverged solution..." << endl;
       PeridigmNS::Timer::self().stopTimer("Solve Linear System");
 
-     //TODO: Turn all mentions of combinedDeltaU and deltaU to displacementIncrement where appropriate.
+     //TODO: Turn all mentions of unknownsDeltaU and deltaU to displacementIncrement where appropriate.
       //Update increments from combined vector
       if(analysisHasMultiphysics){
 	for(int i=0 ; i<displacementIncrement->MyLength() ; i+=(3+numMultiphysDoFs)){
@@ -3888,16 +3868,16 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
       // Copy data from mothership vectors to overlap vectors in data manager
       PeridigmNS::Timer::self().startTimer("Gather/Scatter");
       for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-        blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
-        blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
-        blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
-        blockIt->importData(*a, accelerationFieldId, PeridigmField::STEP_NP1, Insert);
-        blockIt->importData(*temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
-        blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(a, accelerationFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
 
         if(analysisHasMultiphysics){
-          blockIt->importData(*fluidPressureU, fluidPressureUFieldId, PeridigmField::STEP_NP1, Insert);
-          blockIt->importData(*fluidPressureY, fluidPressureYFieldId, PeridigmField::STEP_NP1, Insert);
+          blockIt->importData(fluidPressureU, fluidPressureUFieldId, PeridigmField::STEP_NP1, Insert);
+          blockIt->importData(fluidPressureY, fluidPressureYFieldId, PeridigmField::STEP_NP1, Insert);
         }
       }
       PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
@@ -3913,18 +3893,18 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
         fluidFlow->PutScalar(0.0);
         for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
           scratch->PutScalar(0.0);
-          scratchOneD->PutScalar(0.0);
-          blockIt->exportData(*scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
-          blockIt->exportData(*scratchOneD, fluidFlowDensityFieldId, PeridigmField::STEP_NP1, Add);
+          scalarScratch->PutScalar(0.0);
+          blockIt->exportData(scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
+          blockIt->exportData(scalarScratch, fluidFlowDensityFieldId, PeridigmField::STEP_NP1, Add);
           force->Update(1.0, *scratch, 1.0);
-          fluidFlow->Update(1.0, *scratchOneD, 1.0);
+          fluidFlow->Update(1.0, *scalarScratch, 1.0);
         }
-        scratchOneD->PutScalar(0.0);
+        scalarScratch->PutScalar(0.0);
       }
       else{
         for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
           scratch->PutScalar(0.0);
-          blockIt->exportData(*scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
+          blockIt->exportData(scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
           force->Update(1.0, *scratch, 1.0);
         }
       }
@@ -3988,20 +3968,22 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
   }
 }
 
-void PeridigmNS::Peridigm::allocateJacobian(const int numDoFs) {
+void PeridigmNS::Peridigm::allocateJacobian() {
 
   // do not re-allocate if already allocated
   if (tangent != Teuchos::null) return;
 
+  int numDofs = PeridigmNS::DegreesOfFreedomManager::self().totalNumberOfDegreesOfFreedom();
+
   // Construct map for global tangent matrix
   // Note that this must be an Epetra_Map, not an Epetra_BlockMap, so we can't use threeDimensionalMap directly
-  int numGlobalElements = numDoFs * oneDimensionalMap->NumGlobalElements();
-  int numMyElements = numDoFs * oneDimensionalMap->NumMyElements();
+  int numGlobalElements = numDofs * oneDimensionalMap->NumGlobalElements();
+  int numMyElements = numDofs * oneDimensionalMap->NumMyElements();
   vector<int> myGlobalElements(numMyElements);
   int* oneDimensionalMapGlobalElements = oneDimensionalMap->MyGlobalElements();
   for(int iElem=0 ; iElem<oneDimensionalMap->NumMyElements() ; ++iElem){
-      for(int dof = 0; dof < numDoFs; dof++){
-        myGlobalElements[(numDoFs * iElem + dof)] = numDoFs * oneDimensionalMapGlobalElements[iElem] + dof;
+      for(int dof = 0; dof < numDofs; dof++){
+        myGlobalElements[(numDofs * iElem + dof)] = numDofs * oneDimensionalMapGlobalElements[iElem] + dof;
       }
   }
   int indexBase = 0;
@@ -4027,21 +4009,21 @@ void PeridigmNS::Peridigm::allocateJacobian(const int numDoFs) {
     int GID = oneDimensionalOverlapMap->GID(LID);
     int numNeighbors = neighborhoodList[neighborhoodListIndex++];
 
-    unsigned int numEntries = numDoFs*(numNeighbors+1);
+    unsigned int numEntries = numDofs*(numNeighbors+1);
 
     if(globalIndices.size() < numEntries)
       globalIndices.resize(numEntries);
 
-    for(int dof = 0; dof < numDoFs; dof++){
-        globalIndices[dof] = numDoFs * GID + dof;
+    for(int dof = 0; dof < numDofs; dof++){
+        globalIndices[dof] = numDofs * GID + dof;
     }
 
     for(int j=0 ; j<numNeighbors ; ++j){
       int neighborLocalID = neighborhoodList[neighborhoodListIndex++];
       int neighborGlobalID = oneDimensionalOverlapMap->GID(neighborLocalID);
 
-      for(int dof = 0; dof < numDoFs; dof++){
-          globalIndices[numDoFs * j + numDoFs + dof] = numDoFs * neighborGlobalID + dof;
+      for(int dof = 0; dof < numDofs; dof++){
+          globalIndices[numDofs * j + numDofs + dof] = numDofs * neighborGlobalID + dof;
       }
     }
 
@@ -4148,139 +4130,111 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
 
   PeridigmNS::Timer::self().startTimer("Compute Residual");
 
-  // The residual is computed as the norm of the internal force vector with the
-  // entries corresponding to kinematic BC zeroed out.
-  // The specific residual measure is the L2 norm plus twenty times the infinity norm
+  PeridigmNS::DegreesOfFreedomManager& dofManager = PeridigmNS::DegreesOfFreedomManager::self();
+  int numDofs = dofManager.totalNumberOfDegreesOfFreedom();
+  bool displacementTreatedAsUnknown = dofManager.displacementTreatedAsUnknown();
+  int numDisplacementDofs = dofManager.numberOfDisplacementDegreesOfFreedom();
+  int displacementDofOffset = dofManager.displacementDofOffset();
+  bool temperatureTreatedAsUnknown = dofManager.temperatureTreatedAsUnknown();
+  int temperatureDofOffset = dofManager.temperatureDofOffset();
+  bool pressureTreatedAsUnknown = dofManager.pressureTreatedAsUnknown();
+  int pressureDofOffset = dofManager.pressureDofOffset();
 
   // Copy data from mothership vectors to overlap vectors in data manager
   PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-	if(analysisHasMultiphysics){
-		for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-			blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
-			blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
-			blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
-			blockIt->importData(*fluidPressureU, fluidPressureUFieldId, PeridigmField::STEP_NP1, Insert);
-			blockIt->importData(*fluidPressureY, fluidPressureYFieldId, PeridigmField::STEP_NP1, Insert);
-			blockIt->importData(*fluidPressureV, fluidPressureVFieldId, PeridigmField::STEP_NP1, Insert);
-			blockIt->importData(*temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
-      blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
-		}
-	}
-	else{
-		for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-			blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
-			blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
-			blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
-			blockIt->importData(*temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
-      blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
-		}
-	}
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+    blockIt->importData(u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(fluidPressureU, fluidPressureUFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(fluidPressureY, fluidPressureYFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(fluidPressureV, fluidPressureVFieldId, PeridigmField::STEP_NP1, Insert);
+  }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
-  // Update forces based on new positions
   PeridigmNS::Timer::self().startTimer("Internal Force");
   modelEvaluator->evalModel(workset);
   PeridigmNS::Timer::self().stopTimer("Internal Force");
 
   // Copy force from the data manager to the mothership vector
-  PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-  if(!force.is_null())
+  double* residual_ptr;
+  residual->ExtractView(&residual_ptr);
+  if(displacementTreatedAsUnknown) {
     force->PutScalar(0.0);
-  if(!fluxDivergence.is_null())
+    PeridigmNS::Timer::self().startTimer("Gather/Scatter");
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+      scratch->PutScalar(0.0);
+      blockIt->exportData(scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
+      force->Update(1.0, *scratch, 1.0);
+    }
+    PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+    double* force_ptr;
+    force->ExtractView(&force_ptr);
+    for(int i_node = 0; i_node < force->Map().NumMyElements(); ++i_node) {
+      for (int dof = 0; dof < numDisplacementDofs; ++dof) {
+        double value = force_ptr[i_node*numDisplacementDofs + dof];
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(value), "**** NaN returned by force evaluation.\n");
+        residual_ptr[i_node*numDofs + displacementDofOffset + dof] = value;
+      }
+    }
+  }
+  if(temperatureTreatedAsUnknown) {
     fluxDivergence->PutScalar(0.0);
-	if(analysisHasMultiphysics){
-		fluidFlow->PutScalar(0.0);
-		combinedForce->PutScalar(0.0);
-		for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-			scratch->PutScalar(0.0);
-			scratchOneD->PutScalar(0.0);
-			blockIt->exportData(*scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
-			blockIt->exportData(*scratchOneD, fluidFlowDensityFieldId, PeridigmField::STEP_NP1, Add);
-			force->Update(1.0, *scratch, 1.0);
-			fluidFlow->Update(1.0, *scratchOneD, 1.0);
-		}
-		for(int i=0 ; i<force->MyLength() ; i+=3){
-			for(int j=0 ; j<3 ; ++j){
-				(*combinedForce)[i/3*(3+numMultiphysDoFs) +j] = (*force)[i+j];
-			}
-			(*combinedForce)[i/3*(3+numMultiphysDoFs)+3] = (*fluidFlow)[i/3];
-		}
-	}
-	else{
-		for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-      if(numMechanicsDoFs > 0){
-        scratch->PutScalar(0.0);
-        blockIt->exportData(*scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
-        force->Update(1.0, *scratch, 1.0);
-      }
-      if(numDiffusionDoFs > 0){
-        scalarScratch->PutScalar(0.0);
-        blockIt->exportData(*scalarScratch, fluxDivergenceFieldId, PeridigmField::STEP_NP1, Add);
-        fluxDivergence->Update(1.0, *scalarScratch, 1.0);
-      }
-		}
-	}
-  PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
-
-  // Check for NaNs in force evaluation
-  // We'd like to know now because a NaN will likely cause a difficult-to-unravel crash downstream.
-  for(int i=0 ; i<force->MyLength() ; ++i)
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite((*force)[i]), "**** NaN returned by force evaluation.\n");
-
-  if(analysisHasMultiphysics){
-		for(int i=0 ; i<fluidFlow->MyLength() ; ++i)
-			TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite((*fluidFlow)[i]), "**** NaN returned by fluidFlow evaluation.\n");
-		for(int i=0 ; i<combinedForce->MyLength() ; ++i)
-			TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite((*combinedForce)[i]), "**** NaN returned by fluidFlow evaluation.\n");
-	}
-
-  if(numDiffusionDoFs > 0){
-    for(int i=0 ; i<fluxDivergence->MyLength() ; ++i)
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite((*fluxDivergence)[i]), "**** NaN returned by flux divergence evaluation.\n");
+    PeridigmNS::Timer::self().startTimer("Gather/Scatter");
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+      scalarScratch->PutScalar(0.0);
+      blockIt->exportData(scalarScratch, fluxDivergenceFieldId, PeridigmField::STEP_NP1, Add);
+      fluxDivergence->Update(1.0, *scalarScratch, 1.0);
+    }
+    PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+    double* flux_divergence_ptr;
+    fluxDivergence->ExtractView(&flux_divergence_ptr);
+    for(int i_node = 0; i_node < fluxDivergence->Map().NumMyElements(); ++i_node) {
+      double value = flux_divergence_ptr[i_node];
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(value), "**** NaN returned by flux divergence evaluation.\n");
+      residual_ptr[i_node*numDofs + temperatureDofOffset] = value;
+    }
   }
-
-  for(int i=0 ; i<externalForce->MyLength() ; ++i)
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite((*externalForce)[i]), "**** NaN returned by external force evaluation.\n");
-
-  // copy the internal force to the residual vector
-  // note that due to restrictions on CrsMatrix, these vectors have different (but equivalent) maps
-	if(analysisHasMultiphysics){
-  	TEUCHOS_TEST_FOR_EXCEPT_MSG(residual->MyLength() != combinedForce->MyLength(), "**** PeridigmNS::Peridigm::computeQuasiStaticResidual() incompatible vector lengths!\n");
-		for(int i=0 ; i<combinedForce->MyLength() ; ++i)
-    	(*residual)[i] = (*combinedForce)[i];
-	}
-	else{
-    if(numDiffusionDoFs == 0){
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(residual->MyLength() != force->MyLength(), "**** PeridigmNS::Peridigm::computeQuasiStaticResidual() incompatible vector lengths!\n");
-      for(int i=0 ; i<force->MyLength() ; ++i)
-        (*residual)[i] = (*force)[i];
-    }
-    else{
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(residual->MyLength() != fluxDivergence->MyLength(), "**** PeridigmNS::Peridigm::computeQuasiStaticResidual() incompatible vector lengths!\n");
-      for(int i=0 ; i<fluxDivergence->MyLength() ; ++i)
-        (*residual)[i] = (*fluxDivergence)[i];
-    }
-	}
-
-	//TODO: if there ever will be a fluids equivalent to externalForce, this code needs to be updated.
-	if(analysisHasMultiphysics){
-  	TEUCHOS_TEST_FOR_EXCEPT_MSG(residual->MyLength() != (externalForce->MyLength()+externalForce->MyLength()/3*numMultiphysDoFs), "**** PeridigmNS::Peridigm::computeQuasiStaticResidual() incompatible vector lengths!\n");
-		for(int i=0 ; i<externalForce->MyLength() ; i+=3)
-			for(int j=0 ; j<3 ; ++j){
-    		(*residual)[i/3*(3+numMultiphysDoFs) + j] += (*externalForce)[i+j];
-			}
-	}
-	else{
-    if(numDiffusionDoFs == 0){
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(residual->MyLength() != externalForce->MyLength(), "**** PeridigmNS::Peridigm::computeQuasiStaticResidual() incompatible vector lengths!\n");
-      for(int i=0 ; i<externalForce->MyLength() ; ++i)
-        (*residual)[i] += (*externalForce)[i];
+  if(pressureTreatedAsUnknown) {
+    fluidFlow->PutScalar(0.0);
+    PeridigmNS::Timer::self().startTimer("Gather/Scatter");
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+			scalarScratch->PutScalar(0.0);
+			blockIt->exportData(scalarScratch, fluidFlowDensityFieldId, PeridigmField::STEP_NP1, Add);
+			fluidFlow->Update(1.0, *scalarScratch, 1.0);
+		}
+    PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+    double* fluid_flow_ptr;
+    fluidFlow->ExtractView(&fluid_flow_ptr);
+    for(int i_node = 0; i_node < fluidFlow->Map().NumMyElements(); ++i_node) {
+      double value = fluid_flow_ptr[i_node];
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(value), "**** NaN returned by fluid flow evaluation.\n");
+      residual_ptr[i_node*numDofs + pressureDofOffset] = value;
     }
   }
 
-  // convert force density to force
-	for(int i=0 ; i<residual->MyLength() ; ++i)
-   	(*residual)[i] *= (*volume)[i/(numMechanicsDoFs+numDiffusionDoFs+numMultiphysDoFs)];
+  // Add in the external force
+  if(displacementTreatedAsUnknown) {
+    double* external_force_ptr;
+    externalForce->ExtractView(&external_force_ptr);
+    for(int i_node = 0; i_node < externalForce->Map().NumMyElements(); ++i_node) {
+      for (int dof = 0; dof < numDisplacementDofs; ++dof) {
+        residual_ptr[i_node*numDofs + displacementDofOffset + dof] += external_force_ptr[i_node*numDisplacementDofs + dof];
+      }
+    }
+  }
+
+  // multiply the residual by volume (i.e., convert force density to force)
+  double* volume_ptr;
+  volume->ExtractView(&volume_ptr);
+	for(int i_node=0 ; i_node<volume->Map().NumMyElements() ; ++i_node) {
+    double v = volume_ptr[i_node];
+    for (int dof = 0; dof < numDofs; ++dof) {
+      residual_ptr[i_node*numDofs + dof] *= v;
+    }
+  }
 
   // zero out the rows corresponding to kinematic boundary conditions and compute the residual
   boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(residual);
@@ -4325,31 +4279,31 @@ void PeridigmNS::Peridigm::synchDataManagers() {
 
 	if(analysisHasMultiphysics){
 		for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-			blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
-			blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
-			blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
-			blockIt->importData(*force, forceDensityFieldId, PeridigmField::STEP_NP1, Insert);
-			blockIt->importData(*fluidFlow, fluidFlowDensityFieldId, PeridigmField::STEP_NP1, Insert);
-			blockIt->importData(*contactForce, contactForceDensityFieldId, PeridigmField::STEP_NP1, Insert);
-			blockIt->importData(*externalForce, externalForceDensityFieldId, PeridigmField::STEP_NP1, Insert);
-			blockIt->importData(*temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
-      blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
-      blockIt->importData(*fluidPressureU, fluidPressureUFieldId, PeridigmField::STEP_NP1, Insert);
-      blockIt->importData(*fluidPressureY, fluidPressureYFieldId, PeridigmField::STEP_NP1, Insert);
-      blockIt->importData(*fluidPressureV, fluidPressureVFieldId, PeridigmField::STEP_NP1, Insert);
+			blockIt->importData(u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
+			blockIt->importData(y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
+			blockIt->importData(v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
+			blockIt->importData(force, forceDensityFieldId, PeridigmField::STEP_NP1, Insert);
+			blockIt->importData(fluidFlow, fluidFlowDensityFieldId, PeridigmField::STEP_NP1, Insert);
+			blockIt->importData(contactForce, contactForceDensityFieldId, PeridigmField::STEP_NP1, Insert);
+			blockIt->importData(externalForce, externalForceDensityFieldId, PeridigmField::STEP_NP1, Insert);
+			blockIt->importData(temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(fluidPressureU, fluidPressureUFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(fluidPressureY, fluidPressureYFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(fluidPressureV, fluidPressureVFieldId, PeridigmField::STEP_NP1, Insert);
     }
 	}
 	else{
 		for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-			blockIt->importData(*u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
-			blockIt->importData(*y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
-			blockIt->importData(*v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
-			blockIt->importData(*force, forceDensityFieldId, PeridigmField::STEP_NP1, Insert);
-			blockIt->importData(*contactForce, contactForceDensityFieldId, PeridigmField::STEP_NP1, Insert);
-			blockIt->importData(*externalForce, externalForceDensityFieldId, PeridigmField::STEP_NP1, Insert);
-			blockIt->importData(*temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
-      blockIt->importData(*deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
-      blockIt->importData(*fluxDivergence, fluxDivergenceFieldId, PeridigmField::STEP_NP1, Insert);
+			blockIt->importData(u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
+			blockIt->importData(y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
+			blockIt->importData(v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
+			blockIt->importData(force, forceDensityFieldId, PeridigmField::STEP_NP1, Insert);
+			blockIt->importData(contactForce, contactForceDensityFieldId, PeridigmField::STEP_NP1, Insert);
+			blockIt->importData(externalForce, externalForceDensityFieldId, PeridigmField::STEP_NP1, Insert);
+			blockIt->importData(temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(fluxDivergence, fluxDivergenceFieldId, PeridigmField::STEP_NP1, Insert);
 		}
 	}
 
@@ -4365,11 +4319,11 @@ void PeridigmNS::Peridigm::synchDataManagers() {
     tempVector->PutScalar(0.0);
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
       scratch->PutScalar(0.0);
-      blockIt->exportData(*scratch, hourglassForceDensityFieldId, PeridigmField::STEP_NP1, Add);
+      blockIt->exportData(scratch, hourglassForceDensityFieldId, PeridigmField::STEP_NP1, Add);
       tempVector->Update(1.0, *scratch, 1.0);
     }
     for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-      blockIt->importData(*tempVector, hourglassForceDensityFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(tempVector, hourglassForceDensityFieldId, PeridigmField::STEP_NP1, Insert);
   }
 
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
@@ -4394,7 +4348,7 @@ Teuchos::RCP< map< string, vector<int> > > PeridigmNS::Peridigm::getExodusNodeSe
 }
 
 void PeridigmNS::Peridigm::displayProgress(string title, double percentComplete){
-  
+
   int numMarks = 20;
 
   static bool firstCall = true;

@@ -301,7 +301,7 @@ namespace PeridigmNS {
     void executeImplicit(Teuchos::RCP<Teuchos::ParameterList> solverParams);
 
     //! Allocate memory for non-zeros in global Jacobian
-    void allocateJacobian(const int numDoFs);
+    void allocateJacobian();
 
     //! Allocate memory for non-zeros in block diagonal Jacobian
     void allocateBlockDiagonalJacobian();
@@ -398,7 +398,7 @@ namespace PeridigmNS {
     //! Maps for scalar, vector, and bond data
     Teuchos::RCP<const Epetra_BlockMap> oneDimensionalMap;
     Teuchos::RCP<const Epetra_BlockMap> threeDimensionalMap;
-    Teuchos::RCP<const Epetra_BlockMap> nDimensionalMap;
+    Teuchos::RCP<const Epetra_BlockMap> unknownsMap;
     Teuchos::RCP<const Epetra_BlockMap> bondMap;
     Teuchos::RCP<const Epetra_BlockMap> oneDimensionalOverlapMap;
 
@@ -447,14 +447,14 @@ namespace PeridigmNS {
     //! Service manager
     Teuchos::RCP<PeridigmNS::ServiceManager> serviceManager;
 
+    //! Mothership multivector that contains all the one-dimensional global vectors (blockID, volume)
+    Teuchos::RCP<Epetra_MultiVector> oneDimensionalMothership;
+
     //! Mothership multivector that contains all the three-dimensional global vectors (x, u, y, v, a, force, etc.)
     Teuchos::RCP<Epetra_MultiVector> threeDimensionalMothership;
 
     //! Mothership multivector that contains all the n-dimensional global vectors (x, u, y, v, a, force, etc.)
-    Teuchos::RCP<Epetra_MultiVector> nDimensionalMothership;
-
-    //! Mothership multivector that contains all the one-dimensional global vectors (blockID, volume)
-    Teuchos::RCP<Epetra_MultiVector> oneDimensionalMothership;
+    Teuchos::RCP<Epetra_MultiVector> unknownsMothership;
 
     //! Blocks
     Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks;
@@ -478,24 +478,24 @@ namespace PeridigmNS {
     Teuchos::RCP<Epetra_Vector> u;
 
 		//! Global vector for solid mechanics dof and additional
-    Teuchos::RCP<Epetra_Vector> combinedU;
+    Teuchos::RCP<Epetra_Vector> unknownsU;
 
     //! Global vector for current position
     Teuchos::RCP<Epetra_Vector> y;
 
 		//! Global vector for solid mechanics current position and analogous quantities
-    Teuchos::RCP<Epetra_Vector> combinedY;
+    Teuchos::RCP<Epetra_Vector> unknownsY;
 
     //! Global vector for velocity
     Teuchos::RCP<Epetra_Vector> v;
 
 		//! Gloval vector for solid mechanics velocity and analogous quantities
-    Teuchos::RCP<Epetra_Vector> combinedV;
+    Teuchos::RCP<Epetra_Vector> unknownsV;
 
     //! Global vector for acceleration
     Teuchos::RCP<Epetra_Vector> a;
 
-    Teuchos::RCP<Epetra_Vector> combinedA;
+    Teuchos::RCP<Epetra_Vector> unknownsA;
 
     //! Global vector for temperature
     Teuchos::RCP<Epetra_Vector> temperature;
@@ -512,7 +512,7 @@ namespace PeridigmNS {
     //! Global vector for force
     Teuchos::RCP<Epetra_Vector> force;
 
-    Teuchos::RCP<Epetra_Vector> combinedForce;
+    Teuchos::RCP<Epetra_Vector> unknownsForce;
 
     //! Global vector for contact force (used only in simulations with contact)
     Teuchos::RCP<Epetra_Vector> contactForce;
@@ -520,19 +520,13 @@ namespace PeridigmNS {
     //! Global vector for external forces
     Teuchos::RCP<Epetra_Vector> externalForce;
 
-    Teuchos::RCP<Epetra_Vector> combinedExternalForce;
-
     //! Global vector for delta u (used only in implicit time integration)
     Teuchos::RCP<Epetra_Vector> deltaU;
 
-    Teuchos::RCP<Epetra_Vector> combinedDeltaU;
+    Teuchos::RCP<Epetra_Vector> unknownsDeltaU;
 
     //! Global scratch space vector
     Teuchos::RCP<Epetra_Vector> scratch;
-
-    Teuchos::RCP<Epetra_Vector> scratchOneD;
-
-    Teuchos::RCP<Epetra_Vector> combinedScratch;
 
     //! Vector containing velocities at dof with kinematic bc; used only by NOX solver.
     Teuchos::RCP<Epetra_Vector> noxVelocityAtDOFWithKinematicBC;
@@ -634,8 +628,6 @@ namespace PeridigmNS {
     int fluidPressureUFieldId;
     int fluidPressureVFieldId;
     int fluidFlowDensityFieldId;
-    int numMechanicsDoFs;
-    int numDiffusionDoFs;
     int numMultiphysDoFs;
     string textMultiphysDoFs;
 

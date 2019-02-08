@@ -76,42 +76,42 @@ void PeridigmNS::BlockBase::initialize(Teuchos::RCP<const Epetra_BlockMap> globa
                                                                       globalNeighborhoodData);
 }
 
-void PeridigmNS::BlockBase::importData(const Epetra_Vector& source, int fieldId, PeridigmField::Step step, Epetra_CombineMode combineMode)
+void PeridigmNS::BlockBase::importData(Teuchos::RCP<const Epetra_Vector> source, int fieldId, PeridigmField::Step step, Epetra_CombineMode combineMode)
 {
-  if(dataManager->hasData(fieldId, step)){
+  if(dataManager->hasData(fieldId, step) && !source.is_null()){
 
     // scalar data
-    if(source.Map().ElementSize() == 1){
+    if(source->Map().ElementSize() == 1){
       if(oneDimensionalImporter.is_null())
-        oneDimensionalImporter = Teuchos::rcp(new Epetra_Import(*dataManager->getOverlapScalarPointMap(), source.Map()));
-      dataManager->getData(fieldId, step)->Import(source, *oneDimensionalImporter, combineMode);
+        oneDimensionalImporter = Teuchos::rcp(new Epetra_Import(*dataManager->getOverlapScalarPointMap(), source->Map()));
+      dataManager->getData(fieldId, step)->Import(*source, *oneDimensionalImporter, combineMode);
     }
 
     // vector data
-    else if(source.Map().ElementSize() == 3){
+    else if(source->Map().ElementSize() == 3){
       if(threeDimensionalImporter.is_null())
-        threeDimensionalImporter = Teuchos::rcp(new Epetra_Import(*dataManager->getOverlapVectorPointMap(), source.Map()));
-      dataManager->getData(fieldId, step)->Import(source, *threeDimensionalImporter, combineMode);
+        threeDimensionalImporter = Teuchos::rcp(new Epetra_Import(*dataManager->getOverlapVectorPointMap(), source->Map()));
+      dataManager->getData(fieldId, step)->Import(*source, *threeDimensionalImporter, combineMode);
     }
   }
 }
 
-void PeridigmNS::BlockBase::exportData(Epetra_Vector& target, int fieldId, PeridigmField::Step step, Epetra_CombineMode combineMode)
+void PeridigmNS::BlockBase::exportData(Teuchos::RCP<Epetra_Vector> target, int fieldId, PeridigmField::Step step, Epetra_CombineMode combineMode)
 {
-  if(dataManager->hasData(fieldId, step)){
+  if(dataManager->hasData(fieldId, step) && !target.is_null()){
 
     // scalar data
-    if(target.Map().ElementSize() == 1){
+    if(target->Map().ElementSize() == 1){
       if(oneDimensionalImporter.is_null())
-        oneDimensionalImporter = Teuchos::rcp(new Epetra_Import(*dataManager->getOverlapScalarPointMap(), target.Map()));
-      target.Export(*(dataManager->getData(fieldId, step)), *oneDimensionalImporter, combineMode);  
+        oneDimensionalImporter = Teuchos::rcp(new Epetra_Import(*dataManager->getOverlapScalarPointMap(), target->Map()));
+      target->Export(*(dataManager->getData(fieldId, step)), *oneDimensionalImporter, combineMode);
     }
 
     // vector data
-    else if(target.Map().ElementSize() == 3){
+    else if(target->Map().ElementSize() == 3){
       if(threeDimensionalImporter.is_null())
-        threeDimensionalImporter = Teuchos::rcp(new Epetra_Import(*dataManager->getOverlapVectorPointMap(), target.Map()));
-      target.Export(*(dataManager->getData(fieldId, step)), *threeDimensionalImporter, combineMode);  
+        threeDimensionalImporter = Teuchos::rcp(new Epetra_Import(*dataManager->getOverlapVectorPointMap(), target->Map()));
+      target->Export(*(dataManager->getData(fieldId, step)), *threeDimensionalImporter, combineMode);
     }
   }
 }

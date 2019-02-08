@@ -156,7 +156,7 @@ namespace PeridigmNS {
      *  the BlockBase's DataManager.  Note that if the BlockBase does not have space allocated for the given spec and step,
      *  then by design the function is a no-op.
      */
-    void importData(const Epetra_Vector& source, int fieldId, PeridigmField::Step step, Epetra_CombineMode combineMode);
+    void importData(Teuchos::RCP<const Epetra_Vector> source, int fieldId, PeridigmField::Step step, Epetra_CombineMode combineMode);
 
     /*! \brief Export data from the underlying source vector associated with the given field spec to the given target vector.
      *
@@ -164,7 +164,7 @@ namespace PeridigmNS {
      *  (global) vector.  Note that if the BlockBase does not have space allocated for the given spec and step, then by design
      *  the function is a no-op.
      */
-    void exportData(Epetra_Vector& target, int fieldId, PeridigmField::Step step, Epetra_CombineMode combineMode);
+    void exportData(Teuchos::RCP<Epetra_Vector> target, int fieldId, PeridigmField::Step step, Epetra_CombineMode combineMode);
 
     //! Swaps STATE_N and STATE_NP1.
     void updateState(){ dataManager->updateState(); };
@@ -176,7 +176,7 @@ namespace PeridigmNS {
     void readBlockfromDisk(std::string blockName, char const * path){ dataManager->readBlockfromDisk(blockName, path); }
 
   protected:
-    
+
     /*! \brief Creates the set of block-specific maps.
      *
      *  The block-specific maps are a subset of the global maps.  This function creates the

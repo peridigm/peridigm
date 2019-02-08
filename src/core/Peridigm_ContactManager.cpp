@@ -449,10 +449,10 @@ void PeridigmNS::ContactManager::initializeContactBlocks()
 
   // Load data from the contact manager's mothership vectors into the contact blocks
   for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
-    contactBlockIt->importData(*contactBlockIDs, blockIdFieldId, PeridigmField::STEP_NONE, Insert);
-    contactBlockIt->importData(*contactVolume, volumeFieldId, PeridigmField::STEP_NONE, Insert);
-    contactBlockIt->importData(*contactY, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
-    contactBlockIt->importData(*contactV, velocityFieldId, PeridigmField::STEP_NP1, Insert);
+    contactBlockIt->importData(contactBlockIDs, blockIdFieldId, PeridigmField::STEP_NONE, Insert);
+    contactBlockIt->importData(contactVolume, volumeFieldId, PeridigmField::STEP_NONE, Insert);
+    contactBlockIt->importData(contactY, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
+    contactBlockIt->importData(contactV, velocityFieldId, PeridigmField::STEP_NP1, Insert);
   }
 }
 
@@ -466,8 +466,8 @@ void PeridigmNS::ContactManager::importData(Teuchos::RCP<Epetra_Vector> volume,
 
   // Distribute data to the contact blocks
   for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
-    contactBlockIt->importData(*contactY, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
-    contactBlockIt->importData(*contactV, velocityFieldId, PeridigmField::STEP_NP1, Insert);
+    contactBlockIt->importData(contactY, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
+    contactBlockIt->importData(contactV, velocityFieldId, PeridigmField::STEP_NP1, Insert);
   }
 }
 
@@ -476,7 +476,7 @@ void PeridigmNS::ContactManager::exportData(Teuchos::RCP<Epetra_Vector> contactF
   contactContactForce->PutScalar(0.0);
   for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
     contactScratch->PutScalar(0.0);
-    contactBlockIt->exportData(*contactScratch, contactForceDensityFieldId, PeridigmField::STEP_NP1, Add);
+    contactBlockIt->exportData(contactScratch, contactForceDensityFieldId, PeridigmField::STEP_NP1, Add);
     contactContactForce->Update(1.0, *contactScratch, 1.0);
   }
   // Copy data from the contact mothership vector to the mothership vector
@@ -584,10 +584,10 @@ void PeridigmNS::ContactManager::rebalance(int step)
   // Reload data from the contact manager's mothership vectors into the contact blocks
   // \todo Cut back on loading data, it's probably correct already depending on how rebalance is handled above.
   for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
-    contactBlockIt->importData(*contactBlockIDs, blockIdFieldId, PeridigmField::STEP_NONE, Insert);
-    contactBlockIt->importData(*contactVolume, volumeFieldId, PeridigmField::STEP_NONE, Insert);
-    contactBlockIt->importData(*contactY, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
-    contactBlockIt->importData(*contactV, velocityFieldId, PeridigmField::STEP_NP1, Insert);
+    contactBlockIt->importData(contactBlockIDs, blockIdFieldId, PeridigmField::STEP_NONE, Insert);
+    contactBlockIt->importData(contactVolume, volumeFieldId, PeridigmField::STEP_NONE, Insert);
+    contactBlockIt->importData(contactY, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
+    contactBlockIt->importData(contactV, velocityFieldId, PeridigmField::STEP_NP1, Insert);
   }
 
   // set all the pointers to the new maps
