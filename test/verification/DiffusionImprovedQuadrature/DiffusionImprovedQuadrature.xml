@@ -9,7 +9,7 @@
 	<ParameterList name="My Diffusion Material">
 	  <Parameter name="Material Model" type="string" value="Diffusion"/>
 	  <Parameter name="Coefficient" type="double" value="1.0"/>
-    <Parameter name="Use Improved Quadrature" type="bool" value="false"/>
+    <Parameter name="Use Improved Quadrature" type="bool" value="true"/>
  	</ParameterList>
   </ParameterList>
 
