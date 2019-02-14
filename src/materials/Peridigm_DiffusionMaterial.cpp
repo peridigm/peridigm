@@ -115,7 +115,6 @@ PeridigmNS::DiffusionMaterial::initialize(const double dt,
     double neighborVolume;
 
     triple<double> X;
-    std::vector< triple<double> > bondList;
     double delta = m_horizon;
     int Porder = 2;
 
