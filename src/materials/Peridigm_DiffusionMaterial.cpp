@@ -51,8 +51,8 @@
 #ifdef PERIDIGM_IMPROVED_QUADRATURE
   #include <gsl/gsl_linalg.h>
   #include <gsl/gsl_cblas.h>
-  #include "nathelpers.h"
-  #include "nonlocQuad.h"
+  #include "scalarDiffusionQuad/nathelpers.h"
+  #include "scalarDiffusionQuad/nonlocQuad.h"
 #endif
 
 PeridigmNS::DiffusionMaterial::DiffusionMaterial(const Teuchos::ParameterList& params)
