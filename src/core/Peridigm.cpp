@@ -172,10 +172,10 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
       TEUCHOS_TEST_FOR_EXCEPT_MSG(true, multiphysError);
     }
   }
- else{
-   analysisHasMultiphysics = false;
-   numMultiphysDoFs = 0;
- }
+  else{
+    analysisHasMultiphysics = false;
+    numMultiphysDoFs = 0;
+  }
 
   // Initialize the influence function
   string influenceFunctionString = peridigmParams->sublist("Discretization").get<string>("Influence Function", "One");
@@ -3135,6 +3135,7 @@ void PeridigmNS::Peridigm::executeImplicitDiffusion(Teuchos::RCP<Teuchos::Parame
       tangent->Scale(-1.0);
 
       // Solve linear system
+      quasiStaticsSetPreconditioner(linearProblem);
       isConverged = quasiStaticsSolveSystem(residual, lhs, linearProblem, belosSolver);
 
       if(isConverged == Belos::Converged){
@@ -3214,43 +3215,22 @@ void PeridigmNS::Peridigm::quasiStaticsSetPreconditioner(Belos::LinearProblem<do
   Ifpack IFPFactory;
   Teuchos::ParameterList ifpackList;
 
-  if (linearProblem.isHermitian()) { // assume matrix Hermitian; construct IC preconditioner
-    Teuchos::RCP<Ifpack_Preconditioner> Prec = Teuchos::rcp( IFPFactory.Create("IC", &(*tangent), 0) );
-    Teuchos::ParameterList ifpackList;
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->SetParameters(ifpackList),
-  		      "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->SetParameters() returned nonzero error code.\n");
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->Initialize(),
-		      "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->Initialize() returned nonzero error code.\n");
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->Compute(),
-		      "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->Compute() returned nonzero error code.\n");
-    // Create the Belos preconditioned operator from the Ifpack preconditioner.
-    // NOTE:  This is necessary because Belos expects an operator to apply the
-    //        preconditioner with Apply() NOT ApplyInverse().
-    Teuchos::RCP<Belos::EpetraPrecOp> belosPrec = Teuchos::rcp( new Belos::EpetraPrecOp( Prec ) );
-    linearProblem.setLeftPrec( belosPrec );
-  }
-  else { // assume matrix non-Hermitian; construct ILU preconditioner
-    std::string PrecType = "ILU"; // incomplete LU
-    int OverlapLevel = 1; // must be >= 0. If Comm.NumProc() == 1, param is ignored.
-    Teuchos::RCP<Ifpack_Preconditioner> Prec = Teuchos::rcp( IFPFactory.Create(PrecType, &(*tangent), OverlapLevel) );
-    // specify parameters for ILU
-    ifpackList.set("fact: drop tolerance", 1e-9);
-    ifpackList.set("fact: ilut level-of-fill", 1);
-    // the combine mode is on the following: "Add", "Zero", "Insert", "InsertAdd", "Average", "AbsMax"
-    ifpackList.set("schwarz: combine mode", "Add");
-    // sets the parameters
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->SetParameters(ifpackList),
-  		      "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->SetParameters() returned nonzero error code.\n");
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->Initialize(),
-		      "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->Initialize() returned nonzero error code.\n");
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->Compute(),
-		      "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->Compute() returned nonzero error code.\n");
-    // Create the Belos preconditioned operator from the Ifpack preconditioner.
-    // NOTE:  This is necessary because Belos expects an operator to apply the
-    //        preconditioner with Apply() NOT ApplyInverse().
-    Teuchos::RCP<Belos::EpetraPrecOp> belosPrec = Teuchos::rcp( new Belos::EpetraPrecOp( Prec ) );
-    linearProblem.setLeftPrec( belosPrec );
-  }
+  std::string PrecType = "ILU"; // incomplete LU
+  int OverlapLevel = 1; // must be >= 0. If Comm.NumProc() == 1, param is ignored.
+  Teuchos::RCP<Ifpack_Preconditioner> Prec = Teuchos::rcp( IFPFactory.Create(PrecType, &(*tangent), OverlapLevel) );
+  // ifpackList.set("fact: drop tolerance", 1e-9);
+  ifpackList.set("fact: ilut level-of-fill", 0);
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->SetParameters(ifpackList),
+                              "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->SetParameters() returned nonzero error code.\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->Initialize(),
+                              "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->Initialize() returned nonzero error code.\n");
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(Prec->Compute(),
+                              "**** PeridigmNS::Peridigm::executeQuasiStatic(), Prec->Compute() returned nonzero error code.\n");
+  // Create the Belos preconditioned operator from the Ifpack preconditioner.
+  // NOTE:  This is necessary because Belos expects an operator to apply the
+  //        preconditioner with Apply() NOT ApplyInverse().
+  Teuchos::RCP<Belos::EpetraPrecOp> belosPrec = Teuchos::rcp( new Belos::EpetraPrecOp( Prec ) );
+  linearProblem.setLeftPrec( belosPrec );
 }
 
 void PeridigmNS::Peridigm::quasiStaticsDampTangent(double dampedNewtonDiagonalScaleFactor,
