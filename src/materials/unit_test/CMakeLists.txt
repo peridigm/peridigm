@@ -18,7 +18,6 @@ target_link_libraries(utPeridigm_ElasticMaterial
   ${Trilinos_LIBRARIES}
   ${PdMaterialUtilitiesLib}
   PdField
-  ${PARSER_LIBS}
   ${REQUIRED_LIBS}
 )
 add_test (utPeridigm_ElasticMaterial python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_ElasticMaterial)
@@ -30,7 +29,6 @@ target_link_libraries(utPeridigm_MultiphysicsElasticMaterial
   ${Trilinos_LIBRARIES}
   ${PdMaterialUtilitiesLib}
   PdField
-  ${PARSER_LIBS}
   ${REQUIRED_LIBS}
 )
 add_test (utPeridigm_MultiphysicsElasticMaterial python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_MultiphysicsElasticMaterial)

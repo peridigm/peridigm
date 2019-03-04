@@ -13,11 +13,9 @@ add_executable(utPeridigm_PdQuickGridDiscretization
                ./utPeridigm_PdQuickGridDiscretization.cpp)
 target_link_libraries(utPeridigm_PdQuickGridDiscretization
   ${Peridigm_LIBRARY}
-  ${Trilinos_LIBRARIES}
   ${PDNEIGH_LIBS}
-  ${Zoltan_LIBRARY}
+  ${Trilinos_LIBRARIES}
   ${MESH_INPUT_LIBS}
-  ${PARSER_LIBS}
   ${REQUIRED_LIBS}
 )
 add_test (utPeridigm_PdQuickGridDiscretization python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_PdQuickGridDiscretization)
@@ -28,11 +26,9 @@ add_executable(utPeridigm_PdQuickGridDiscretization_MPI_np2
                ./utPeridigm_PdQuickGridDiscretization_MPI_np2.cpp)
 target_link_libraries(utPeridigm_PdQuickGridDiscretization_MPI_np2
   ${Peridigm_LIBRARY}
-  ${Trilinos_LIBRARIES}
   ${PDNEIGH_LIBS}
-  ${Zoltan_LIBRARY}
+  ${Trilinos_LIBRARIES}
   ${MESH_INPUT_LIBS}
-  ${PARSER_LIBS}
   ${REQUIRED_LIBS}
 )
 add_test (utPeridigm_PdQuickGridDiscretization_MPI_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_PdQuickGridDiscretization_MPI_np2)
@@ -47,7 +43,6 @@ target_link_libraries(utPeridigm_ExodusDiscretization
   ${PDNEIGH_LIBS}
   ${MESH_INPUT_LIBS}
   ${UTILITIES_LIBS}
-  ${PARSER_LIBS}
   ${Trilinos_LIBRARIES}
   ${REQUIRED_LIBS}
 )
@@ -60,7 +55,6 @@ add_executable(utPeridigm_GeometryUtils
 target_link_libraries(utPeridigm_GeometryUtils
   ${Peridigm_LIBRARY}
   ${Trilinos_LIBRARIES}
-  ${PARSER_LIBS}
 )
 add_test (utPeridigm_GeometryUtils python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_GeometryUtils)
 
@@ -71,7 +65,6 @@ IF(PERIDIGM_PV)
   target_link_libraries(utPeridigm_PartialVolumeCalculator
     ${Peridigm_LIBRARY}
     ${Trilinos_LIBRARIES}
-    ${PARSER_LIBS}
     ${MESH_INPUT_LIBS}
   )
   add_test (utPeridigm_PartialVolumeCalculator python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_PartialVolumeCalculator)
@@ -82,7 +75,6 @@ IF(PERIDIGM_PV)
   target_link_libraries(utPeridigm_PartialVolumeConvergence
     ${Peridigm_LIBRARY}
     ${Trilinos_LIBRARIES}
-    ${PARSER_LIBS}
     ${MESH_INPUT_LIBS}
   )
   add_test (utPeridigm_PartialVolumeConvergence python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_PartialVolumeConvergence)

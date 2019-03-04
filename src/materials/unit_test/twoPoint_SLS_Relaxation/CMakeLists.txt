@@ -7,13 +7,11 @@ set_property(TARGET twoPoint_SLS_Relaxation
 
 target_link_libraries(twoPoint_SLS_Relaxation
   ${Peridigm_LIBRARY}
-  ${Trilinos_LIBRARIES}
-  QuickGrid 
-  PdNeigh 
-  Utilities 
+  QuickGrid
+  PdNeigh
+  Utilities
   PdMaterialUtilities
   PdField
-  ${PARSER_LIBS}
   ${UT_REQUIRED_LIBS}
   ${Trilinos_LIBRARIES}
 )

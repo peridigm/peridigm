@@ -52,23 +52,31 @@
 #include "material_utilities.h"
 #include <Teuchos_Assert.hpp>
 #include <Epetra_Comm.h>
-
-using namespace std;
+#ifdef PERIDIGM_IMPROVED_QUADRATURE
+  #include <gsl/gsl_linalg.h>
+  #include <gsl/gsl_cblas.h>
+  #include "stateBasedQuad/nathelpers.h"
+  #include "stateBasedQuad/nonlocQuadStateBasedFast.h"
+#endif
 
 PeridigmNS::LinearLPSPVMaterial::LinearLPSPVMaterial(const Teuchos::ParameterList& params)
   : Material(params), m_pid(-1), m_verbose(false),
-    m_bulkModulus(0.0), m_shearModulus(0.0), m_density(0.0), m_horizon(0.0),
+    m_bulkModulus(0.0), m_shearModulus(0.0), m_density(0.0), m_horizon(0.0), m_useImprovedQuadrature(false),
     m_omega(PeridigmNS::InfluenceFunction::self().getInfluenceFunction()),
     m_useAnalyticWeightedVolume(false), m_analyticWeightedVolume(0.0), m_usePartialVolume(false), m_usePartialCentroid(false),
     m_volumeFieldId(-1), m_damageFieldId(-1), m_weightedVolumeFieldId(-1), m_dilatationFieldId(-1), m_modelCoordinatesFieldId(-1),
     m_coordinatesFieldId(-1), m_forceDensityFieldId(-1), m_bondDamageFieldId(-1),
     m_selfVolumeFieldId(-1), m_selfCentroidXFieldId(-1), m_selfCentroidYFieldId(-1), m_selfCentroidZFieldId(-1),
-    m_neighborVolumeFieldId(-1), m_neighborCentroidXFieldId(-1), m_neighborCentroidYFieldId(-1), m_neighborCentroidZFieldId(-1)
+    m_neighborVolumeFieldId(-1), m_neighborCentroidXFieldId(-1), m_neighborCentroidYFieldId(-1), m_neighborCentroidZFieldId(-1),
+    m_quadratureWeightsFieldId(-1)
 {
   m_bulkModulus = calculateBulkModulus(params);
   m_shearModulus = calculateShearModulus(params);
   m_density = params.get<double>("Density");
   m_horizon = params.get<double>("Horizon");
+  if (params.isParameter("Use Improved Quadrature")) {
+    m_useImprovedQuadrature = params.get<bool>("Use Improved Quadrature");
+  }
 
   if(params.isParameter("Verbose"))
     m_verbose = params.get<bool>("Verbose");
@@ -104,6 +112,15 @@ PeridigmNS::LinearLPSPVMaterial::LinearLPSPVMaterial(const Teuchos::ParameterLis
   m_fieldIds.push_back(m_forceDensityFieldId);
   m_fieldIds.push_back(m_influenceFunctionFieldId);
   m_fieldIds.push_back(m_bondDamageFieldId);
+
+  if (m_useImprovedQuadrature) {
+    m_quadratureWeightsFieldId     = fieldManager.getFieldId(PeridigmField::BOND,    PeridigmField::SCALAR,      PeridigmField::CONSTANT, "Quadrature_Weights");
+    m_fieldIds.push_back(m_quadratureWeightsFieldId);
+  }
+
+#ifndef PERIDIGM_IMPROVED_QUADRATURE
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(m_useImprovedQuadrature, "**** Error:  Improved quadrature not available.  Recompile Peridigm with USE_IMPROVED_QUADRATURE:BOOL=ON\n");
+#endif
 }
 
 PeridigmNS::LinearLPSPVMaterial::~LinearLPSPVMaterial()
@@ -125,10 +142,10 @@ PeridigmNS::LinearLPSPVMaterial::initialize(const double dt,
   dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&xOverlap);
   dataManager.getData(m_influenceFunctionFieldId, PeridigmField::STEP_NONE)->ExtractView(&influenceFunctionValues);
   MATERIAL_EVALUATION::computeAndStoreInfluenceFunctionValues(xOverlap,
-							      influenceFunctionValues,
-							      numOwnedPoints,
-							      neighborhoodList,
-							      m_horizon);
+                                                              influenceFunctionValues,
+                                                              numOwnedPoints,
+                                                              neighborhoodList,
+                                                              m_horizon);
 
   if(m_usePartialVolume){
     m_selfVolumeFieldId = fieldManager.getFieldId("Self_Volume");
@@ -153,18 +170,18 @@ PeridigmNS::LinearLPSPVMaterial::initialize(const double dt,
   double *neighborVolume(0), *neighborCentroidX(0), *neighborCentroidY(0), *neighborCentroidZ(0);
   if(m_usePartialVolume){
     if(m_verbose && m_pid == 0)
-      cout << "\nLinearLPS Material Model applying partial volume.\n" << endl;
+      std::cout << "\nLinearLPS Material Model applying partial volume.\n" << std::endl;
     dataManager.getData(m_selfVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&selfVolume);
     dataManager.getData(m_neighborVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&neighborVolume);
   }
   else{
     if(m_verbose && m_pid == 0)
-      cout << "\nLinearLPS Material Model not applying partial volume.\n" << endl;
+      std::cout << "\nLinearLPS Material Model not applying partial volume.\n" << std::endl;
   }
 
   if(m_usePartialCentroid){
     if(m_verbose && m_pid == 0)
-      cout << "\nLinearLPS Material Model applying partial centroid.\n" << endl;
+      std::cout << "\nLinearLPS Material Model applying partial centroid.\n" << std::endl;
     dataManager.getData(m_selfCentroidXFieldId, PeridigmField::STEP_NONE)->ExtractView(&selfCentroidX);
     dataManager.getData(m_selfCentroidYFieldId, PeridigmField::STEP_NONE)->ExtractView(&selfCentroidY);
     dataManager.getData(m_selfCentroidZFieldId, PeridigmField::STEP_NONE)->ExtractView(&selfCentroidZ);
@@ -174,17 +191,17 @@ PeridigmNS::LinearLPSPVMaterial::initialize(const double dt,
   }
   else{
     if(m_verbose && m_pid == 0)
-      cout << "\nLinearLPS Material Model not applying partial centroid.\n" << endl;
+      std::cout << "\nLinearLPS Material Model not applying partial centroid.\n" << std::endl;
   }
 
   if(m_useAnalyticWeightedVolume){
     if(m_verbose && m_pid == 0)
-      cout << "\nLinearLPS Material Model applying analytic weighted volume.\n" << endl;
+      std::cout << "\nLinearLPS Material Model applying analytic weighted volume.\n" << std::endl;
     dataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->PutScalar(m_analyticWeightedVolume);
   }
   else{
     if(m_verbose && m_pid == 0)
-      cout << "\nLinearLPS Material Model applying numerical weighted volume.\n" << endl;
+      std::cout << "\nLinearLPS Material Model applying numerical weighted volume.\n" << std::endl;
     MATERIAL_EVALUATION::computeWeightedVolumePV(xOverlap,
 						 cellVolumeOverlap,
 						 selfVolume,
@@ -201,7 +218,52 @@ PeridigmNS::LinearLPSPVMaterial::initialize(const double dt,
 						 neighborhoodList,
 						 m_horizon);
   }
+
+#ifdef PERIDIGM_IMPROVED_QUADRATURE
+  if (m_useImprovedQuadrature) {
+    double *x, *volume, *quadratureWeights;
+    dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
+    dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&volume);
+    dataManager.getData(m_quadratureWeightsFieldId, PeridigmField::STEP_NONE)->ExtractView(&quadratureWeights);
+
+    int nodeId, numNeighbors, neighborId, neighborhoodListIndex, bondListIndex;
+    double neighborVolume;
+
+    triple<double> X;
+    double delta = m_horizon;
+    int Porder = 2;
+
+    neighborhoodListIndex = 0;
+    bondListIndex = 0;
+    for(int iID=0 ; iID<numOwnedPoints ; ++iID){
+      nodeId = ownedIDs[iID];
+      numNeighbors = neighborhoodList[neighborhoodListIndex++];
+      X = vec3(x[nodeId*3], x[nodeId*3+1], x[nodeId*3+2]);
+      std::vector< triple<double> > bondList;
+      for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
+        neighborId = neighborhoodList[neighborhoodListIndex++];
+        vec3 neighbor(x[neighborId*3], x[neighborId*3+1], x[neighborId*3+2]);
+        bondList.push_back(neighbor);
+      }
+      bondList.push_back(X);
+      // Instantiate class for generating quadrature weights
+      nonlocalQuadStateBased quad(bondList, X, delta, Porder);
+      std::vector<double> weights = quad.getWeightsState();
+      for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
+        quadratureWeights[bondListIndex++] = weights.at(iNID);
+      }
+    }
+  }
+#endif
 }
+
+void
+PeridigmNS::LinearLPSPVMaterial::precompute(const double dt,
+                                            const int numOwnedPoints,
+                                            const int* ownedIDs,
+                                            const int* neighborhoodList,
+                                            PeridigmNS::DataManager& dataManager) const
+{}
 
 void
 PeridigmNS::LinearLPSPVMaterial::computeForce(const double dt,
@@ -214,7 +276,7 @@ PeridigmNS::LinearLPSPVMaterial::computeForce(const double dt,
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
 
   // Extract pointers to the underlying data
-  double *x, *y, *cellVolume, *weightedVolume, *dilatation, *influenceFunctionValues, *bondDamage, *force;
+  double *x, *y, *cellVolume, *weightedVolume, *dilatation, *influenceFunctionValues, *bondDamage, *force, *quadratureWeights;
   dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
   dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&y);
   dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&cellVolume);
@@ -223,6 +285,9 @@ PeridigmNS::LinearLPSPVMaterial::computeForce(const double dt,
   dataManager.getData(m_influenceFunctionFieldId, PeridigmField::STEP_NONE)->ExtractView(&influenceFunctionValues);
   dataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_NP1)->ExtractView(&bondDamage);
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&force);
+  if (m_useImprovedQuadrature) {
+    dataManager.getData(m_quadratureWeightsFieldId, PeridigmField::STEP_NONE)->ExtractView(&quadratureWeights);
+  }
 
   // Extract pointers to partial volume data
   double *selfVolume(0), *selfCentroidX(0), *selfCentroidY(0), *selfCentroidZ(0);
@@ -254,7 +319,7 @@ PeridigmNS::LinearLPSPVMaterial::computeForce(const double dt,
                                                   neighborCentroidX,
                                                   neighborCentroidY,
                                                   neighborCentroidZ,
-						  influenceFunctionValues,
+                                                  influenceFunctionValues,
                                                   bondDamage,
                                                   dilatation,
                                                   neighborhoodList,
@@ -275,7 +340,7 @@ PeridigmNS::LinearLPSPVMaterial::computeForce(const double dt,
                                                      neighborCentroidX,
                                                      neighborCentroidY,
                                                      neighborCentroidZ,
-						     influenceFunctionValues,
+                                                     influenceFunctionValues,
                                                      bondDamage,
                                                      force,
                                                      neighborhoodList,

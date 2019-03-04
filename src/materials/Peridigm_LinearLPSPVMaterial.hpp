@@ -85,6 +85,14 @@ namespace PeridigmNS {
                const int* neighborhoodList,
                PeridigmNS::DataManager& dataManager);
 
+    //! Run calculations at each time step prior to evaulating the internal force.
+    virtual void
+    precompute(const double dt,
+               const int numOwnedPoints,
+               const int* ownedIDs,
+               const int* neighborhoodList,
+               PeridigmNS::DataManager& dataManager) const;
+
     //! Evaluate the internal force.
     virtual void
     computeForce(const double dt,
@@ -110,6 +118,7 @@ namespace PeridigmNS {
     double m_shearModulus;
     double m_density;
     double m_horizon;
+    bool m_useImprovedQuadrature;
     PeridigmNS::InfluenceFunction::functionPointer m_omega;
 
     // flag for applying analytic value of the weighted volume (as opposed to the numerically-computed value)
@@ -127,6 +136,7 @@ namespace PeridigmNS {
     int m_forceDensityFieldId;
     int m_influenceFunctionFieldId;
     int m_bondDamageFieldId;
+    int m_quadratureWeightsFieldId;
 
     // field ids for partial volumes and centroids
     bool m_usePartialVolume;

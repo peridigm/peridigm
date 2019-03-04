@@ -108,6 +108,14 @@ namespace PeridigmNS {
                const int* neighborhoodList,
                PeridigmNS::DataManager& dataManager) {}
 
+    //! Run calculations at each time step prior to evaulating the internal force.
+    virtual void
+    precompute(const double dt,
+               const int numOwnedPoints,
+               const int* ownedIDs,
+               const int* neighborhoodList,
+               PeridigmNS::DataManager& dataManager) const {}
+
     //! Evaluate the internal force.
     virtual void
     computeForce(const double dt,

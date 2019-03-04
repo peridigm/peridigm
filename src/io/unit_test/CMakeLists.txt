@@ -26,7 +26,6 @@ add_executable(utPeridigm_SearchTree ./utPeridigm_SearchTree.cpp)
 target_link_libraries(utPeridigm_SearchTree
   ${Peridigm_LIBRARY}
   ${Trilinos_LIBRARIES}
-  ${Zoltan_LIBRARY}
   ${REQUIRED_LIBS}
 )
 add_test (utPeridigm_SearchTree python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_SearchTree)
@@ -36,7 +35,6 @@ add_executable(utPeridigm_SearchTree_Performance ./utPeridigm_SearchTree_Perform
 target_link_libraries(utPeridigm_SearchTree_Performance
   ${Peridigm_LIBRARY}
   ${Trilinos_LIBRARIES}
-  ${Zoltan_LIBRARY}
   ${REQUIRED_LIBS}
 )
 
@@ -44,7 +42,6 @@ add_executable(ut_kdtree_nn_search ut_kdtree_nn_search.cpp)
 target_link_libraries(ut_kdtree_nn_search QuickGrid
   ${Peridigm_LIBRARY}
   ${Trilinos_LIBRARIES}
-  ${Zoltan_LIBRARY}
   ${REQUIRED_LIBS}
 )
 add_test (ut_kdtree_nn_search python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./ut_kdtree_nn_search )

@@ -230,10 +230,6 @@ IF(INSTALL_PERIDIGM)
   include(CMakePackageConfigHelpers)
 ENDIF()
 
-# For some unit tests, we want to link only to specfic libraries
-set(Epetra_LIBRARY epetra)
-set(Zoltan_LIBRARY zoltan)
-
 # other required libraries
 set(MESH_INPUT_LIBS QuickGrid)
 set(PDNEIGH_LIBS PdNeigh)
@@ -293,7 +289,6 @@ ${API_DIR}
 ${QUICK_GRID_DIR}
 ${PDNEIGH_DIR}
 ${UTILITIES_DIR}
-${PARSER_DIR}
 ${BOND_VOL_QUICK_GRID}
 )
 
