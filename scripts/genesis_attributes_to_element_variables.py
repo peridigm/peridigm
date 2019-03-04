@@ -91,6 +91,7 @@ if __name__ == "__main__":
     for var_name in elem_names_and_blocks.keys():
         e_var_names.append((var_name, elem_names_and_blocks[var_name]))
 
+    new_database.put_time(1, 0.0)
     exodus.add_variables(new_database, g_var_names, n_var_names, e_var_names)
 
     for block_id in block_ids:
