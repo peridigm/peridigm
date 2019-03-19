@@ -61,15 +61,15 @@
 #include "Peridigm_VectorPoissonMaterial.hpp"
 #include "Peridigm_DiffusionMaterial.hpp"
 #include "Peridigm_Pals_Model.hpp"
-#ifdef PERIDIGM_PV
-#include "Peridigm_ElasticPVMaterial.hpp"
 #include "Peridigm_LinearLPSPVMaterial.hpp"
+#ifdef PERIDIGM_PV
+  #include "Peridigm_ElasticPVMaterial.hpp"
 #endif
 #ifdef PERIDIGM_SANDIA_INTERNAL
-#include "Peridigm_ElasticCorrespondencePartialStressMaterial.hpp"
+  #include "Peridigm_ElasticCorrespondencePartialStressMaterial.hpp"
 #endif
 #ifdef PERIDIGM_CJL
-#include "Peridigm_LammiConcreteModel.hpp"
+  #include "Peridigm_LammiConcreteModel.hpp"
 #endif
 
 Teuchos::RCP<PeridigmNS::Material>
@@ -106,18 +106,13 @@ PeridigmNS::MaterialFactory::create(const Teuchos::ParameterList& materialParams
     materialModel = Teuchos::rcp( new DiffusionMaterial(materialParams) );
   else if (materialModelName == "Pals")
     materialModel = Teuchos::rcp( new Pals_Model(materialParams) );
+  else if (materialModelName == "Linear LPS Partial Volume")
+    materialModel = Teuchos::rcp( new LinearLPSPVMaterial(materialParams) );
   else if (materialModelName == "Elastic Partial Volume"){
 #ifdef PERIDIGM_PV
     materialModel = Teuchos::rcp( new ElasticPVMaterial(materialParams) );
 #else
     TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n**** Elastic Partial Volume material model unavailable, recompile with -DUSE_PV.\n");
-#endif
-  }
-  else if (materialModelName == "Linear LPS Partial Volume"){
-#ifdef PERIDIGM_PV
-    materialModel = Teuchos::rcp( new LinearLPSPVMaterial(materialParams) );
-#else
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n**** Linear LPS Partial Volume material model unavailable, recompile with -DUSE_PV.\n");
 #endif
   }
   else if (materialModelName == "Elastic Correspondence Partial Stress"){

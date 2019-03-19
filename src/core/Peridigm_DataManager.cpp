@@ -525,7 +525,7 @@ bool PeridigmNS::DataManager::hasData(int fieldId, PeridigmField::Step step)
     hasData = stateNP1->hasData(fieldId);
   }
   else{
-    TEUCHOS_TEST_FOR_EXCEPTION(false, Teuchos::RangeError, 
+    TEUCHOS_TEST_FOR_EXCEPTION(false, Teuchos::RangeError,
                        "PeridigmNS::DataManager::getData, invalid fieldId and step!");
   }
 

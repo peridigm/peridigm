@@ -58,13 +58,7 @@ double computeWeightedVolumePV
  const double* xOverlap,
  const double* volumeOverlap,
  const double* selfVolumePtr,
- const double* selfCentroidXPtr,
- const double* selfCentroidYPtr,
- const double* selfCentroidZPtr,
  const double* neighborVolumePtr,
- const double* neighborCentroidXPtr,
- const double* neighborCentroidYPtr,
- const double* neighborCentroidZPtr,
  const double* influenceFunctionValuesPtr,
  const int* localNeighborList,
  double horizon,
@@ -86,22 +80,12 @@ double computeWeightedVolumePV
       neighborVolume = volumeOverlap[localId];
     }
 
-    if(selfCentroidXPtr != 0){
-      selfX = X[0];//selfCentroidXPtr[n];
-      selfY = X[1];//selfCentroidYPtr[n];
-      selfZ = X[2];//selfCentroidZPtr[n];
-      neighborX = neighborCentroidXPtr[n];
-      neighborY = neighborCentroidYPtr[n];
-      neighborZ = neighborCentroidZPtr[n];
-    }
-    else{
-      selfX = X[0];
-      selfY = X[1];
-      selfZ = X[2];
-      neighborX = xOverlap[3*localId];
-      neighborY = xOverlap[3*localId+1];
-      neighborZ = xOverlap[3*localId+2];
-    }
+    selfX = X[0];
+    selfY = X[1];
+    selfZ = X[2];
+    neighborX = xOverlap[3*localId];
+    neighborY = xOverlap[3*localId+1];
+    neighborZ = xOverlap[3*localId+2];
 
     double dx = neighborX - selfX;
     double dy = neighborY - selfY;
@@ -125,13 +109,7 @@ void computeWeightedVolumePV
  const double* xOverlap,
  const double* volumeOverlap,
  const double* selfVolumePtr,
- const double* selfCentroidXPtr,
- const double* selfCentroidYPtr,
- const double* selfCentroidZPtr,
  const double* neighborVolumePtr,
- const double* neighborCentroidXPtr,
- const double* neighborCentroidYPtr,
- const double* neighborCentroidZPtr,
  const double* influenceFunctionValuesPtr,
  double *mOwned,
  int myNumPoints,
@@ -143,21 +121,12 @@ void computeWeightedVolumePV
   const double *xOwned = xOverlap;
   const int *neighPtr = localNeighborList;
   const double *selfVolume = selfVolumePtr;
-  const double *selfCentroidX = selfCentroidXPtr;
-  const double *selfCentroidY = selfCentroidYPtr;
-  const double *selfCentroidZ = selfCentroidZPtr;
   const double *neighborVolume = neighborVolumePtr;
-  const double *neighborCentroidX = neighborCentroidXPtr;
-  const double *neighborCentroidY = neighborCentroidYPtr;
-  const double *neighborCentroidZ = neighborCentroidZPtr;
   const double *influenceFunctionValues = influenceFunctionValuesPtr;
 
   bool usePartialVolume = false;
   if(selfVolume != 0 && neighborVolume != 0)
     usePartialVolume = true;
-  bool usePartialCentroid = false;
-  if(selfCentroidX != 0 && selfCentroidY != 0 && selfCentroidZ != 0 && neighborCentroidX != 0 && neighborCentroidY != 0 && neighborCentroidZ != 0)
-    usePartialCentroid = true;
   bool useStoredInfluenceFunctionValues = false;
   if(influenceFunctionValues != 0)
     useStoredInfluenceFunctionValues = true;
@@ -169,13 +138,7 @@ void computeWeightedVolumePV
 						    xOverlap,
 						    volumeOverlap,
 						    selfVolume,
-						    selfCentroidX,
-						    selfCentroidY,
-						    selfCentroidZ,
 						    neighborVolume,
-						    neighborCentroidX,
-						    neighborCentroidY,
-						    neighborCentroidZ,
 						    influenceFunctionValues,
 						    neighPtr,
 						    horizon,
@@ -184,14 +147,6 @@ void computeWeightedVolumePV
     if(usePartialVolume){
       selfVolume += numNeigh;
       neighborVolume += numNeigh;
-    }
-    if(usePartialCentroid){
-      selfCentroidX += numNeigh;
-      selfCentroidY += numNeigh;
-      selfCentroidZ += numNeigh;
-      neighborCentroidX += numNeigh;
-      neighborCentroidY += numNeigh;
-      neighborCentroidZ += numNeigh;
     }
     if(useStoredInfluenceFunctionValues){
       influenceFunctionValues += numNeigh;
@@ -207,13 +162,7 @@ void computeDilatationPV
  const double *mOwned,
  const double* volumeOverlap,
  const double* selfVolumePtr,
- const double* selfCentroidXPtr,
- const double* selfCentroidYPtr,
- const double* selfCentroidZPtr,
  const double* neighborVolumePtr,
- const double* neighborCentroidXPtr,
- const double* neighborCentroidYPtr,
- const double* neighborCentroidZPtr,
  const double* bondDamage,
  ScalarT* dilatationOwned,
  const int* localNeighborList,
@@ -273,13 +222,7 @@ void computeInternalForceLinearElasticPV
  const double* mOwned,
  const double* volumeOverlap,
  const double* selfVolumePtr,
- const double* selfCentroidXPtr,
- const double* selfCentroidYPtr,
- const double* selfCentroidZPtr,
  const double* neighborVolumePtr,
- const double* neighborCentroidXPtr,
- const double* neighborCentroidYPtr,
- const double* neighborCentroidZPtr,
  const ScalarT* dilatationOwned,
  const double* bondDamage,
  ScalarT* fInternalOverlap,
@@ -368,13 +311,7 @@ void computeDilatationPV<double>
  const double *mOwned,
  const double* volumeOverlap,
  const double* selfVolumePtr,
- const double* selfCentroidXPtr,
- const double* selfCentroidYPtr,
- const double* selfCentroidZPtr,
  const double* neighborVolumePtr,
- const double* neighborCentroidXPtr,
- const double* neighborCentroidYPtr,
- const double* neighborCentroidZPtr,
  const double* bondDamage,
  double* dilatationOwned,
  const int* localNeighborList,
@@ -392,13 +329,7 @@ template void computeInternalForceLinearElasticPV<double>
  const double* mOwned,
  const double* volumeOverlap,
  const double* selfVolumePtr,
- const double* selfCentroidXPtr,
- const double* selfCentroidYPtr,
- const double* selfCentroidZPtr,
  const double* neighborVolumePtr,
- const double* neighborCentroidXPtr,
- const double* neighborCentroidYPtr,
- const double* neighborCentroidZPtr,
  const double* dilatationOwned,
  const double* bondDamage,
  double* fInternalOverlap,
@@ -420,13 +351,7 @@ void computeDilatationPV<Sacado::Fad::DFad<double> >
  const double *mOwned,
  const double* volumeOverlap,
  const double* selfVolumePtr,
- const double* selfCentroidXPtr,
- const double* selfCentroidYPtr,
- const double* selfCentroidZPtr,
  const double* neighborVolumePtr,
- const double* neighborCentroidXPtr,
- const double* neighborCentroidYPtr,
- const double* neighborCentroidZPtr,
  const double* bondDamage,
  Sacado::Fad::DFad<double>* dilatationOwned,
  const int* localNeighborList,
@@ -444,13 +369,7 @@ template void computeInternalForceLinearElasticPV<Sacado::Fad::DFad<double> >
  const double* mOwned,
  const double* volumeOverlap,
  const double* selfVolumePtr,
- const double* selfCentroidXPtr,
- const double* selfCentroidYPtr,
- const double* selfCentroidZPtr,
  const double* neighborVolumePtr,
- const double* neighborCentroidXPtr,
- const double* neighborCentroidYPtr,
- const double* neighborCentroidZPtr,
  const Sacado::Fad::DFad<double>* dilatationOwned,
  const double* bondDamage,
  Sacado::Fad::DFad<double>* fInternalOverlap,

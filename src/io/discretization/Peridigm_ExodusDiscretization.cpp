@@ -723,7 +723,7 @@ PeridigmNS::ExodusDiscretization::createNeighborhoodData(int neighborListSize, i
    int numNeighbors(0), neighborListIndex(0);
    for(int i=0 ; i<numOwnedIds ; ++i){
      ownedLocalIds[i] = oneDimensionalMap->LID(ownedGlobalIds[i]); // \todo This seems unnecessary, is it just i?  What if MyGlobalElements is not sorted, then is ownedLocalIds also not sorted?
-     neighborhoodPtr[i] = neighborListIndex;     
+     neighborhoodPtr[i] = neighborListIndex;
      numNeighbors = neighborList[neighborListIndex++];
      neighborListIndex += numNeighbors;
    }

@@ -100,6 +100,18 @@ namespace PeridigmNS {
     //! Returns a vector of field IDs corresponding to the variables associated with the material.
     virtual std::vector<int> FieldIds() const = 0;
 
+    //! Returns a vector of field IDs that need to be synchronized across block boundaries and MPI boundaries after initialize().
+    virtual std::vector<int> FieldIdsForSynchronizationAfterInitialize() const {
+      std::vector<int> empty;
+      return empty;
+    }
+
+    //! Returns a vector of field IDs that need to be synchronized across block boundaries and MPI boundaries after precompute().
+    virtual std::vector<int> FieldIdsForSynchronizationAfterPrecompute() const {
+      std::vector<int> empty;
+      return empty;
+    }
+
     //! Initialize the material model.
     virtual void
     initialize(const double dt,

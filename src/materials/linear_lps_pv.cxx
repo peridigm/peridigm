@@ -62,13 +62,7 @@ void computeDilatationLinearLPS
  double horizon,
  const FunctionPointer influenceFunction,
  const double* selfVolumePtr,
- const double* selfCentroidXPtr,
- const double* selfCentroidYPtr,
- const double* selfCentroidZPtr,
  const double* neighborVolumePtr,
- const double* neighborCentroidXPtr,
- const double* neighborCentroidYPtr,
- const double* neighborCentroidZPtr,
  const double* influenceFunctionValues,
  const double* bondDamage,
  ScalarT* dilatationOwnedPtr,
@@ -108,11 +102,11 @@ void computeDilatationLinearLPS
         uNeighbor[i] = yNeighbor[i] - xNeighbor[i];
       }
       if(influenceFunctionValues == 0){
-	double normZeta = std::sqrt(zeta[0]*zeta[0] + zeta[1]*zeta[1] + zeta[2]*zeta[2]);
-	omega = influenceFunction(normZeta, horizon);
+        double normZeta = std::sqrt(zeta[0]*zeta[0] + zeta[1]*zeta[1] + zeta[2]*zeta[2]);
+        omega = influenceFunction(normZeta, horizon);
       }
       else{
-	omega = influenceFunctionValues[influenceFunctionValuesIndex++];
+        omega = influenceFunctionValues[influenceFunctionValuesIndex++];
       }
       dotProduct = zeta[0]*(uNeighbor[0]-u[0]) + zeta[1]*(uNeighbor[1]-u[1]) + zeta[2]*(uNeighbor[2]-u[2]);
       *theta += omega*(1.0 - *damage)*dotProduct*volNeighbor;
@@ -134,13 +128,7 @@ void computeInternalForceLinearLPS
  double horizon,
  const FunctionPointer influenceFunction,
  const double* selfVolumePtr,
- const double* selfCentroidXPtr,
- const double* selfCentroidYPtr,
- const double* selfCentroidZPtr,
  const double* neighborVolumePtr,
- const double* neighborCentroidXPtr,
- const double* neighborCentroidYPtr,
- const double* neighborCentroidZPtr,
  const double* influenceFunctionValues,
  const double* bondDamage,
  ScalarT* forceOverlapPtr,
@@ -188,10 +176,10 @@ void computeInternalForceLinearLPS
       }
       normZeta = std::sqrt(zeta[0]*zeta[0] + zeta[1]*zeta[1] + zeta[2]*zeta[2]);
       if(influenceFunctionValues == 0){
-	omega = influenceFunction(normZeta, horizon);
+        omega = influenceFunction(normZeta, horizon);
       }
       else{
-	omega = influenceFunctionValues[influenceFunctionValuesIndex++];
+        omega = influenceFunctionValues[influenceFunctionValuesIndex++];
       }
       temp1 = (9.0*bulkModulus - 15.0*shearModulus)*omega*(*theta)/(3.0*(*m));
       temp2 = 15.0*shearModulus*omega/((*m)*normZeta*normZeta);
@@ -212,7 +200,7 @@ void computeInternalForceLinearLPS
       forceOverlapPtr[3*neighborId]   -= fx*volSelf;
       forceOverlapPtr[3*neighborId+1] -= fy*volSelf;
       forceOverlapPtr[3*neighborId+2] -= fz*volSelf;
-    } 
+    }
   }
 }
 
@@ -226,13 +214,7 @@ template void computeDilatationLinearLPS<double>
  double horizon,
  const FunctionPointer influenceFunction,
  const double* selfVolumePtr,
- const double* selfCentroidXPtr,
- const double* selfCentroidYPtr,
- const double* selfCentroidZPtr,
  const double* neighborVolumePtr,
- const double* neighborCentroidXPtr,
- const double* neighborCentroidYPtr,
- const double* neighborCentroidZPtr,
  const double* influenceFunctionValues,
  const double* bondDamage,
  double* dilatationOwnedPtr,
@@ -250,13 +232,7 @@ template void computeDilatationLinearLPS<Sacado::Fad::DFad<double> >
  double horizon,
  const FunctionPointer influenceFunction,
  const double* selfVolumePtr,
- const double* selfCentroidXPtr,
- const double* selfCentroidYPtr,
- const double* selfCentroidZPtr,
  const double* neighborVolumePtr,
- const double* neighborCentroidXPtr,
- const double* neighborCentroidYPtr,
- const double* neighborCentroidZPtr,
  const double* influenceFunctionValues,
  const double* bondDamage,
  Sacado::Fad::DFad<double>* dilatationOwnedPtr,
@@ -275,13 +251,7 @@ template void computeInternalForceLinearLPS<double>
  double horizon,
  const FunctionPointer influenceFunction,
  const double* selfVolumePtr,
- const double* selfCentroidXPtr,
- const double* selfCentroidYPtr,
- const double* selfCentroidZPtr,
  const double* neighborVolumePtr,
- const double* neighborCentroidXPtr,
- const double* neighborCentroidYPtr,
- const double* neighborCentroidZPtr,
  const double* influenceFunctionValues,
  const double* bondDamage,
  double* forceOverlapPtr,
@@ -302,13 +272,7 @@ template void computeInternalForceLinearLPS<Sacado::Fad::DFad<double> >
  double horizon,
  const FunctionPointer influenceFunction,
  const double* selfVolumePtr,
- const double* selfCentroidXPtr,
- const double* selfCentroidYPtr,
- const double* selfCentroidZPtr,
  const double* neighborVolumePtr,
- const double* neighborCentroidXPtr,
- const double* neighborCentroidYPtr,
- const double* neighborCentroidZPtr,
  const double* influenceFunctionValues,
  const double* bondDamage,
  Sacado::Fad::DFad<double>* forceOverlapPtr,

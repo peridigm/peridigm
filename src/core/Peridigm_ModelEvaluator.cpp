@@ -47,8 +47,6 @@
 
 #include "Peridigm_ModelEvaluator.hpp"
 
-using namespace std;
-
 PeridigmNS::ModelEvaluator::ModelEvaluator(){
 }
 
@@ -79,6 +77,28 @@ PeridigmNS::ModelEvaluator::evalModel(Teuchos::RCP<Workset> workset) const
                                  *dataManager);
     }
   }
+
+  // ---- Evaluate Precompute ----
+
+  for(blockIt = workset->blocks->begin() ; blockIt != workset->blocks->end() ; blockIt++){
+
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
+    const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
+    const int* ownedIDs = neighborhoodData->OwnedIDs();
+    const int* neighborhoodList = neighborhoodData->NeighborhoodList();
+    Teuchos::RCP<PeridigmNS::DataManager> dataManager = blockIt->getDataManager();
+    Teuchos::RCP<const PeridigmNS::Material> materialModel = blockIt->getMaterialModel();
+
+    materialModel->precompute(dt,
+                              numOwnedPoints,
+                              ownedIDs,
+                              neighborhoodList,
+                              *dataManager);
+  }
+
+  // ---- Synchronize data computed in precompute ----
+
+  PeridigmNS::DataManagerSynchronizer::self().synchronizeDataAfterPrecompute(workset->blocks);
 
   // ---- Evaluate Internal Force ----
 

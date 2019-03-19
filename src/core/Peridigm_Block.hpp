@@ -123,6 +123,52 @@ namespace PeridigmNS {
     //! The damage model
     Teuchos::RCP<PeridigmNS::DamageModel> damageModel;
   };
+
+  class DataManagerSynchronizer {
+  public:
+
+    //! Singleton.
+    static DataManagerSynchronizer & self();
+
+    void initialize(Teuchos::RCP<const Epetra_BlockMap> oneDimensionalMap,
+                    Teuchos::RCP<const Epetra_BlockMap> threeDimensionalMap);
+
+    void setFieldIdsToSynchronizeAfterInitialize(std::vector<int>& fieldIds);
+
+    void setFieldIdsToSynchronizeAfterPrecompute(std::vector<int>& fieldIds);
+
+    void checkFieldValidity(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks);
+
+    //! Synchronize data across block boundaries and MPI partitions after material models have been initialized
+    void synchronizeDataAfterInitialize(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks);
+
+    //! Synchronize data across block boundaries and MPI partitions after material models have called precompute.
+    void synchronizeDataAfterPrecompute(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks);
+
+  protected:
+
+    void synchronize(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks,
+                     std::vector<int> fieldIds);
+
+    std::vector<int> fieldIdsToSychAfterInitialize;
+    std::vector<int> fieldIdsToSychAfterPrecompute;
+
+    Teuchos::RCP<Epetra_Vector> scalarScratch;
+    Teuchos::RCP<Epetra_Vector> scalarSum;
+    Teuchos::RCP<Epetra_Vector> vectorScratch;
+    Teuchos::RCP<Epetra_Vector> vectorSum;
+
+  private:
+
+    //! Constructor, private to prevent use (singleton class).
+    DataManagerSynchronizer() {}
+
+    //! Private and unimplemented to prevent use
+    DataManagerSynchronizer( const DataManagerSynchronizer & );
+
+    //! Private and unimplemented to prevent use
+    DataManagerSynchronizer & operator= ( const DataManagerSynchronizer & );
+  };
 }
 
 #endif // PERIDIGM_BLOCK_HPP

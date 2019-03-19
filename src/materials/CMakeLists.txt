@@ -4,6 +4,8 @@ add_subdirectory (unit_test)
 set(PD_MATERIAL_SOURCES
     ../core/Peridigm_InfluenceFunction.cpp
     elastic.cxx
+    elastic_pv.cxx
+    linear_lps_pv.cxx
     elastic_bond_based.cxx
     elastic_plastic.cxx
     elastic_plastic_hardening.cxx
@@ -21,12 +23,6 @@ set(PD_MATERIAL_SOURCES
 # Optional source files for Sandia internal development
 IF(PERIDIGM_SANDIA_INTERNAL)
   set(PD_MATERIAL_SOURCES ${PD_MATERIAL_SOURCES} partial_stress.cxx)
-ENDIF()
-IF(PERIDIGM_PV)
-  set(PD_MATERIAL_SOURCES ${PD_MATERIAL_SOURCES} elastic_pv.cxx correspondence_pv.cxx linear_lps_pv.cxx)
-ENDIF()
-IF(PERIDIGM_KOKKOS)
-  set(PD_MATERIAL_SOURCES ${PD_MATERIAL_SOURCES} elastic_kokkos.cxx)
 ENDIF()
 
 # Optional source files for CJL development

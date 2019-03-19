@@ -49,6 +49,7 @@
 #include "Peridigm_Field.hpp"
 #include <vector>
 #include <set>
+#include <sstream>
 
 using namespace std;
 
@@ -71,7 +72,7 @@ void PeridigmNS::Block::initialize(Teuchos::RCP<const Epetra_BlockMap> globalOwn
 
   TEUCHOS_TEST_FOR_EXCEPT_MSG(materialModel.is_null(),
                               "\n**** Material model must be set via Block::setMaterialModel() prior to calling Block::initialize()\n");
-  
+
   // Collect all the required field Ids
   vector<int> fieldIds;
   // Ids passed in via setAuxiliaryFieldIds(), if any
@@ -119,4 +120,130 @@ void PeridigmNS::Block::initializeDamageModel(double timeStep)
                           neighborhoodData->OwnedIDs(),
                           neighborhoodData->NeighborhoodList(),
                           *dataManager);
+}
+
+PeridigmNS::DataManagerSynchronizer& PeridigmNS::DataManagerSynchronizer::self() {
+  static DataManagerSynchronizer dataManagerSynchronizer;
+  return dataManagerSynchronizer;
+}
+
+void PeridigmNS::DataManagerSynchronizer::initialize(Teuchos::RCP<const Epetra_BlockMap> oneDimensionalMap,
+                                                     Teuchos::RCP<const Epetra_BlockMap> threeDimensionalMap) {
+  scalarScratch = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
+  scalarSum = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
+  vectorScratch = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
+  vectorSum = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
+}
+
+void PeridigmNS::DataManagerSynchronizer::setFieldIdsToSynchronizeAfterInitialize(std::vector<int>& fieldIds)
+{
+  fieldIdsToSychAfterInitialize.insert(fieldIdsToSychAfterInitialize.end(), fieldIds.begin(), fieldIds.end());
+  // Remove duplicates
+  std::sort( fieldIdsToSychAfterInitialize.begin(), fieldIdsToSychAfterInitialize.end() );
+  fieldIdsToSychAfterInitialize.erase( unique( fieldIdsToSychAfterInitialize.begin(),
+                                               fieldIdsToSychAfterInitialize.end() ),
+                                       fieldIdsToSychAfterInitialize.end() );
+}
+
+void PeridigmNS::DataManagerSynchronizer::setFieldIdsToSynchronizeAfterPrecompute(std::vector<int>& fieldIds)
+{
+  fieldIdsToSychAfterPrecompute.insert(fieldIdsToSychAfterPrecompute.end(), fieldIds.begin(), fieldIds.end());
+  // Remove duplicates
+  std::sort( fieldIdsToSychAfterPrecompute.begin(), fieldIdsToSychAfterPrecompute.end() );
+  fieldIdsToSychAfterPrecompute.erase( unique( fieldIdsToSychAfterPrecompute.begin(),
+                                               fieldIdsToSychAfterPrecompute.end() ),
+                                       fieldIdsToSychAfterPrecompute.end() );
+}
+
+void PeridigmNS::DataManagerSynchronizer::checkFieldValidity(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks)
+{
+  std::vector<int> fIds = fieldIdsToSychAfterInitialize;
+  fIds.insert(fIds.end(), fieldIdsToSychAfterPrecompute.begin(), fieldIdsToSychAfterPrecompute.end());
+
+  for (auto fieldId : fIds) {
+
+    FieldSpec fieldSpec = PeridigmNS::FieldManager::self().getFieldSpec(fieldId);
+
+    PeridigmField::Relation relation = fieldSpec.getRelation();
+    TEUCHOS_TEST_FOR_EXCEPT_MSG((relation != PeridigmField::NODE && relation != PeridigmField::ELEMENT),
+                                "**** Error in DataManagerSynchronizer::checkFieldValidity():  Parallel synchronization available only for node and elemet variables.\n");
+
+    PeridigmField::Length length = fieldSpec.getLength();
+    TEUCHOS_TEST_FOR_EXCEPT_MSG((length != PeridigmField::SCALAR && length != PeridigmField::VECTOR),
+                                "**** Error in DataManagerSynchronizer::checkFieldValidity():  Parallel synchronization available only for scalar and vector variables.\n");
+
+    PeridigmField::Temporal temporal = fieldSpec.getTemporal();
+    PeridigmField::Step step = PeridigmField::STEP_NONE;
+    if (temporal == PeridigmField::TWO_STEP) {
+      step = PeridigmField::STEP_NP1;
+    }
+
+    for(std::vector<PeridigmNS::Block>::iterator blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+      bool hasField = blockIt->getDataManager()->hasData(fieldId, step);
+      if (!hasField) {
+        std::stringstream ss;
+        ss << "**** Error in DataManagerSynchronizer::checkFieldValidity():  Field ";
+        ss << fieldSpec.getLabel() << " not present in block " << blockIt->getName() << ".\n";
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(!hasField, ss.str());
+      }
+    }
+  }
+}
+
+void PeridigmNS::DataManagerSynchronizer::synchronizeDataAfterInitialize(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks)
+{
+  synchronize(blocks, fieldIdsToSychAfterInitialize);
+}
+
+void PeridigmNS::DataManagerSynchronizer::synchronizeDataAfterPrecompute(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks)
+{
+  synchronize(blocks, fieldIdsToSychAfterPrecompute);
+}
+
+void PeridigmNS::DataManagerSynchronizer::synchronize(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks,
+                                                      std::vector<int> fieldIds)
+{
+  if (fieldIds.size() == 0)
+    return;
+
+  std::vector<PeridigmNS::Block>::iterator blockIt;
+
+  for (auto fieldId : fieldIds) {
+
+    FieldSpec fieldSpec = PeridigmNS::FieldManager::self().getFieldSpec(fieldId);
+
+    PeridigmField::Temporal temporal = fieldSpec.getTemporal();
+    PeridigmField::Step step = PeridigmField::STEP_NONE;
+    if (temporal == PeridigmField::TWO_STEP) {
+      step = PeridigmField::STEP_NP1;
+    }
+
+    PeridigmField::Length length = fieldSpec.getLength();
+    if (length == PeridigmField::SCALAR) {
+      scalarSum->PutScalar(0.0);
+      for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+        scalarScratch->PutScalar(0.0);
+        blockIt->exportData(scalarScratch, fieldId, step, Add);
+        scalarSum->Update(1.0, *(scalarScratch), 1.0);
+      }
+      for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+        blockIt->importData(scalarSum, fieldId, step, Insert);
+      }
+    }
+    else if(length == PeridigmField::VECTOR) {
+      vectorSum->PutScalar(0.0);
+      for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+        vectorScratch->PutScalar(0.0);
+        blockIt->exportData(vectorScratch, fieldId, step, Add);
+        vectorSum->Update(1.0, *(vectorScratch), 1.0);
+      }
+      for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+        blockIt->importData(vectorSum, fieldId, step, Insert);
+      }
+    }
+    else {
+      TEUCHOS_TEST_FOR_EXCEPT_MSG((length != PeridigmField::SCALAR && length != PeridigmField::VECTOR),
+                                  "**** Error in DataManagerSynchronizer::synchronize():  Parallel synchronization available only for scalar and vector variables.\n");
+    }
+  }
 }

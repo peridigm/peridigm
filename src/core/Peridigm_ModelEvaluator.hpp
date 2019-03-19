@@ -81,7 +81,7 @@ namespace PeridigmNS {
     void evalJacobian(Teuchos::RCP<Workset> workset) const;
 
   private:
-    
+
     //! Private to prohibit copying
     ModelEvaluator(const ModelEvaluator&);
 

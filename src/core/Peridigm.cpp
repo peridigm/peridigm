@@ -440,7 +440,7 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
       }
       else if(damageModel->Name() =="Time Dependent Critical Stretch"){
         CSDamageModel = Teuchos::rcp_dynamic_cast< PeridigmNS::UserDefinedTimeDependentCriticalStretchDamageModel >(damageModel);
-        CSDamageModel->evaluateParserDmg(currentValue, previousValue, timeCurrent, timePrevious); 
+        CSDamageModel->evaluateParserDmg(currentValue, previousValue, timeCurrent, timePrevious);
       }
     }
   }
@@ -699,6 +699,18 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
   // Initialize the workset
   initializeWorkset();
 
+  // Manage data synchronization across block boundaries and MPI partitions, as needed by material models
+  PeridigmNS::DataManagerSynchronizer& dataManagerSynchronizer = PeridigmNS::DataManagerSynchronizer::self();
+  dataManagerSynchronizer.initialize(oneDimensionalMap, threeDimensionalMap);
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++) {
+    std::vector<int> fieldIdsForSynchronizationAfterInitialize = blockIt->getMaterialModel()->FieldIdsForSynchronizationAfterInitialize();
+    dataManagerSynchronizer.setFieldIdsToSynchronizeAfterInitialize(fieldIdsForSynchronizationAfterInitialize);
+    std::vector<int> fieldIdsForSynchronizationAfterPrecompute = blockIt->getMaterialModel()->FieldIdsForSynchronizationAfterPrecompute();
+    dataManagerSynchronizer.setFieldIdsToSynchronizeAfterPrecompute(fieldIdsForSynchronizationAfterPrecompute);
+  }
+  dataManagerSynchronizer.checkFieldValidity(blocks);
+  dataManagerSynchronizer.synchronizeDataAfterInitialize(blocks);
+
   // Create the model evaluator
   modelEvaluator = Teuchos::rcp(new PeridigmNS::ModelEvaluator());
 
@@ -904,6 +916,7 @@ void PeridigmNS::Peridigm::initializeWorkset() {
   workset->jacobianType = Teuchos::rcpFromRef(jacobianType);
   workset->jacobian = overlapJacobian;
 }
+
 std::string getCmdOutput(const std::string& mStr)
 {
     std::string result, file;

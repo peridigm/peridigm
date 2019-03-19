@@ -116,7 +116,7 @@ namespace PeridigmNS {
     //! Initialize the workset
     void initializeWorkset();
 
-   //! Initialize Restart
+    //! Initialize Restart
     void InitializeRestart();
 
     //! Instantiate the compute manager

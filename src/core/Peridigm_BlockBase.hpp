@@ -143,7 +143,7 @@ namespace PeridigmNS {
     }
 
     //! Method for querying the DataManager for the presence of a field spec.
-    bool hasData(int fieldId, PeridigmField::Step step){
+    bool hasData(int fieldId, PeridigmField::Step step) const {
       TEUCHOS_TEST_FOR_EXCEPT_MSG(
         dataManager.is_null(),
         "\n**** DataManager must be initialized via BlockBase::initializeDataManager() prior to calling BlockBase::hasData()\n");
@@ -237,6 +237,7 @@ namespace PeridigmNS {
     //! The blocks parameterlist sublist
     Teuchos::ParameterList blockParams;
   };
+
 }
 
 #endif // PERIDIGM_BLOCKBASE_HPP

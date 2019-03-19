@@ -48,9 +48,6 @@
 #include "Peridigm_ElasticMaterial.hpp"
 #include "Peridigm_Field.hpp"
 #include "elastic.h"
-#ifdef PERIDIGM_KOKKOS
-  #include "elastic_kokkos.h"
-#endif
 #include "material_utilities.h"
 #include <Teuchos_Assert.hpp>
 #include <Epetra_SerialComm.h>
@@ -171,11 +168,7 @@ PeridigmNS::ElasticMaterial::computeForce(const double dt,
     dataManager.getData(m_partialStressFieldId, PeridigmField::STEP_NP1)->ExtractView(&partialStress);
 
   MATERIAL_EVALUATION::computeDilatation(x,y,weightedVolume,cellVolume,bondDamage,dilatation,neighborhoodList,numOwnedPoints,m_horizon,m_OMEGA,m_alpha,deltaTemperature);
-#ifdef PERIDIGM_KOKKOS
-  MATERIAL_EVALUATION::computeInternalForceLinearElasticKokkos(x,y,weightedVolume,cellVolume,dilatation,bondDamage,scf,force,neighborhoodList,numOwnedPoints,m_bulkModulus,m_shearModulus,m_horizon,m_alpha,deltaTemperature);
-#else
   MATERIAL_EVALUATION::computeInternalForceLinearElastic(x,y,weightedVolume,cellVolume,dilatation,bondDamage,force,partialStress,neighborhoodList,numOwnedPoints,m_bulkModulus,m_shearModulus,m_horizon,m_alpha,deltaTemperature);
-#endif
 }
 
 void

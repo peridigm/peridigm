@@ -41,7 +41,7 @@ Peridigm:
         Material: "LPS Material"
         Horizon: 0.1502
 
-  Boundary: Conditions
+  Boundary Conditions:
 #    Prescribed Displacement LLPS Left X
 #      Type "Prescribed Displacement"
 #      Node Set "nodelist_1"
@@ -102,37 +102,36 @@ Peridigm:
 #      Node Set "nodelist_17"
 #      Coordinate "z"
 #      Value "0.0"
-
-      Prescribed Displacement LLPS X:
-        Type: "Prescribed Displacement"
-        Node Set: "nodelist_3"
-        Coordinate: "x"
-        Value: "0.1*x*t"
-      Prescribed Displacement LLPS Y:
-        Type: "Prescribed Displacement"
-        Node Set: "nodelist_3"
-        Coordinate: "y"
-        Value: "0.0"
-      Prescribed Displacement LLPS Z:
-        Type: "Prescribed Displacement"
-        Node Set: "nodelist_3"
-        Coordinate: "z"
-        Value: "0.0"
-      Prescribed Displacement LPS X:
-        Type: "Prescribed Displacement"
-        Node Set: "nodelist_13"
-        Coordinate: "x"
-        Value: "0.1*x*t"
-      Prescribed Displacement LPS Y:
-        Type: "Prescribed Displacement"
-        Node Set: "nodelist_13"
-        Coordinate: "y"
-        Value: "0.0"
-      Prescribed Displacement LPS Z:
-        Type: "Prescribed Displacement"
-        Node Set: "nodelist_13"
-        Coordinate: "z"
-        Value: "0.0"
+    Prescribed Displacement LLPS X:
+      Type: "Prescribed Displacement"
+      Node Set: "nodelist_3"
+      Coordinate: "x"
+      Value: "0.1*x*t"
+    Prescribed Displacement LLPS Y:
+      Type: "Prescribed Displacement"
+      Node Set: "nodelist_3"
+      Coordinate: "y"
+      Value: "0.0"
+    Prescribed Displacement LLPS Z:
+      Type: "Prescribed Displacement"
+      Node Set: "nodelist_3"
+      Coordinate: "z"
+      Value: "0.0"
+    Prescribed Displacement LPS X:
+      Type: "Prescribed Displacement"
+      Node Set: "nodelist_13"
+      Coordinate: "x"
+      Value: "0.1*x*t"
+    Prescribed Displacement LPS Y:
+      Type: "Prescribed Displacement"
+      Node Set: "nodelist_13"
+      Coordinate: "y"
+      Value: "0.0"
+    Prescribed Displacement LPS Z:
+      Type: "Prescribed Displacement"
+      Node Set: "nodelist_13"
+      Coordinate: "z"
+      Value: "0.0"
 
   Solver:
       Verbose: false

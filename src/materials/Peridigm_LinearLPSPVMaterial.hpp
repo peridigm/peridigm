@@ -77,6 +77,20 @@ namespace PeridigmNS {
     //! Returns a vector of field IDs corresponding to the variables associated with the material.
     virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
+    //! Returns a vector of field IDs that need to be synchronized across block boundaries and MPI boundaries after initialize().
+    virtual std::vector<int> FieldIdsForSynchronizationAfterInitialize() const {
+      std::vector<int> fieldIds;
+      fieldIds.push_back(m_weightedVolumeFieldId);
+      return fieldIds;
+    }
+
+    //! Returns a vector of field IDs that need to be synchronized across block boundaries and MPI boundaries after precompute().
+    virtual std::vector<int> FieldIdsForSynchronizationAfterPrecompute() const {
+      std::vector<int> fieldIds;
+      fieldIds.push_back(m_dilatationFieldId);
+      return fieldIds;
+    }
+
     //! Initialized data containers and computes weighted volume.
     virtual void
     initialize(const double dt,
@@ -102,7 +116,7 @@ namespace PeridigmNS {
                  PeridigmNS::DataManager& dataManager) const;
 
   protected:
-	
+
     //! Computes the distance between nodes (a1, a2, a3) and (b1, b2, b3).
     inline double distance(double a1, double a2, double a3,
                            double b1, double b2, double b3) const
@@ -140,15 +154,8 @@ namespace PeridigmNS {
 
     // field ids for partial volumes and centroids
     bool m_usePartialVolume;
-    bool m_usePartialCentroid;
     int m_selfVolumeFieldId;
-    int m_selfCentroidXFieldId;
-    int m_selfCentroidYFieldId;
-    int m_selfCentroidZFieldId;
     int m_neighborVolumeFieldId;
-    int m_neighborCentroidXFieldId;
-    int m_neighborCentroidYFieldId;
-    int m_neighborCentroidZFieldId;
   };
 }
 

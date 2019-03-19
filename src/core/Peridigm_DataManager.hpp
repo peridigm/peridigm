@@ -66,7 +66,7 @@ namespace PeridigmNS {
 class DataManager {
 
 public:
-  
+
   //! Constructor.
   DataManager() : fieldManager(FieldManager::self()), rebalanceCount(0) {}
 
@@ -140,7 +140,7 @@ public:
   Teuchos::RCP<State> getStateNONE(){ return stateNONE; }
 
   /*! \brief Copies data from a different data manager based on global IDs.
-   * 
+   *
    * Functions only if all the local IDs in the target map exist in and are
    * locally-owned in the source map.
    */
@@ -186,7 +186,7 @@ public:
 
 protected:
 
-  //! Field manager 
+  //! Field manager
   FieldManager& fieldManager;
 
   //! Number of times rebalance has been called.

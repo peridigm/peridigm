@@ -136,19 +136,6 @@ ELSE()
 ENDIF()
 
 #
-# Enable KOKKOS kernels
-#
-# TODO: Add some checking that KOKKOS_Core, etc is enabeled in Trilinos
-IF(USE_KOKKOS)
-  MESSAGE("-- KOKKOS is enabled, compiling with -DPERIDIGM_KOKKOS.\n")
-  ADD_DEFINITIONS(-DPERIDIGM_KOKKOS)
-  SET(PERIDIGM_KOKKOS TRUE)
-ELSE()
-  MESSAGE("-- KOKKOS is NOT enabled.\n")
-  SET(PERIDIGM_KOKKOS FALSE)
-ENDIF()
-
-#
 # Enable CJL development features
 #
 IF(USE_CJL)
@@ -184,7 +171,6 @@ IF(USE_PV)
 ELSE()
   MESSAGE("-- PV is NOT enabled.\n")
   SET(PERIDIGM_PV FALSE)
-  SET(PV_LIBRARY)
 ENDIF()
 
 # Optional Installation helpers
