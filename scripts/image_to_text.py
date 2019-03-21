@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
     threshold_grayscale_value = 220
 
-    img = Image.open('florida.tiff').convert('L')
+    img = Image.open(image_file_name).convert('L')
     width, height = img.size
 
     txt_file_name = string.splitfields(image_file_name, '.')[0] + ".txt"
