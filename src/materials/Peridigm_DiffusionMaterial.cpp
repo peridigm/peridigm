@@ -51,7 +51,7 @@
 #ifdef PERIDIGM_IMPROVED_QUADRATURE
   #include <gsl/gsl_linalg.h>
   #include <gsl/gsl_cblas.h>
-  #include "scalarDiffusionQuad/nathelpers.h"
+  #include "util/nathelpers.h"
   #include "scalarDiffusionQuad/nonlocQuad.h"
 #endif
 
