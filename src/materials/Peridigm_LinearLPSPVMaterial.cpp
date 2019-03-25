@@ -121,6 +121,8 @@ PeridigmNS::LinearLPSPVMaterial::LinearLPSPVMaterial(const Teuchos::ParameterLis
 #ifndef PERIDIGM_IMPROVED_QUADRATURE
   TEUCHOS_TEST_FOR_EXCEPT_MSG(m_useImprovedQuadrature, "**** Error:  Improved quadrature not available.  Recompile Peridigm with USE_IMPROVED_QUADRATURE:BOOL=ON\n");
 #endif
+
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(m_usePartialVolume && m_useImprovedQuadrature, "**** Error:  Partial volumes and improved quadrature may not be used together.\n");
 }
 
 PeridigmNS::LinearLPSPVMaterial::~LinearLPSPVMaterial()
@@ -253,7 +255,7 @@ PeridigmNS::LinearLPSPVMaterial::precompute(const double dt,
   }
 
   const double *xSelf, *ySelf, *xNeighbor, *yNeighbor;
-  double u[3], uNeighbor[3], dotProduct, zeta[3], volNeighbor, omega;
+  double u[3], uNeighbor[3], dotProduct, zeta[3], neighborWeight, omega;
   int numNeighbors, neighborId, neighborhoodListIndex(0), bondIndex(0);
 
   for(int i_pt=0; i_pt<numOwnedPoints; i_pt++){
@@ -265,10 +267,15 @@ PeridigmNS::LinearLPSPVMaterial::precompute(const double dt,
       neighborId = neighborhoodList[neighborhoodListIndex++];
       xNeighbor = &x[3*neighborId];
       yNeighbor = &y[3*neighborId];
-      if(m_usePartialVolume)
-        volNeighbor = neighborVolume[bondIndex];
-      else
-        volNeighbor = volume[neighborId];
+      if(m_usePartialVolume){
+        neighborWeight = neighborVolume[bondIndex];
+      }
+      else if(m_useImprovedQuadrature){
+        neighborWeight = quadratureWeights[bondIndex];
+      }
+      else{
+        neighborWeight = volume[neighborId];
+      }
       for(int i=0 ; i<3 ; ++i){
         zeta[i] = xNeighbor[i] - xSelf[i];
         u[i] = ySelf[i] - xSelf[i];
@@ -276,7 +283,7 @@ PeridigmNS::LinearLPSPVMaterial::precompute(const double dt,
       }
       omega = influenceFunctionValues[bondIndex];
       dotProduct = zeta[0]*(uNeighbor[0]-u[0]) + zeta[1]*(uNeighbor[1]-u[1]) + zeta[2]*(uNeighbor[2]-u[2]);
-      dilatation[i_pt] += omega*(1.0 - damage[bondIndex])*dotProduct*volNeighbor;
+      dilatation[i_pt] += omega*(1.0 - damage[bondIndex])*dotProduct*neighborWeight;
       bondIndex += 1;
     }
     if(numNeighbors > 0){
@@ -314,7 +321,7 @@ PeridigmNS::LinearLPSPVMaterial::computeForce(const double dt,
   }
 
   const double *xSelf, *ySelf, *xNeighbor, *yNeighbor;
-  double u[3], uNeighbor[3], dotProduct, zeta[3], volSelf, volNeighbor, matVec[3], dyadicProduct[3][3];
+  double u[3], uNeighbor[3], dotProduct, zeta[3], neighborWeight, volSelf, matVec[3], dyadicProduct[3][3];
   int numNeighbors, neighborId, neighborhoodListIndex(0), bondIndex(0);
 
   for(int i_pt=0; i_pt<numOwnedPoints; i_pt++){
@@ -326,12 +333,13 @@ PeridigmNS::LinearLPSPVMaterial::computeForce(const double dt,
       xNeighbor = &x[3*neighborId];
       yNeighbor = &y[3*neighborId];
       if(m_usePartialVolume){
-        volSelf = selfVolume[bondIndex];
-        volNeighbor = neighborVolume[bondIndex];
+        neighborWeight = neighborVolume[bondIndex];
+      }
+      else if(m_useImprovedQuadrature){
+        neighborWeight = quadratureWeights[bondIndex];
       }
       else{
-        volSelf = volume[i_pt];
-        volNeighbor = volume[neighborId];
+        neighborWeight = volume[neighborId];
       }
       for(int i=0 ; i<3 ; ++i){
         zeta[i] = xNeighbor[i] - xSelf[i];
@@ -353,24 +361,32 @@ PeridigmNS::LinearLPSPVMaterial::computeForce(const double dt,
       double fx = (1.0 - damage[bondIndex])*(temp1*zeta[0] + temp2*matVec[0]);
       double fy = (1.0 - damage[bondIndex])*(temp1*zeta[1] + temp2*matVec[1]);
       double fz = (1.0 - damage[bondIndex])*(temp1*zeta[2] + temp2*matVec[2]);
-      force[3*i_pt]   += fx*volNeighbor;
-      force[3*i_pt+1] += fy*volNeighbor;
-      force[3*i_pt+2] += fz*volNeighbor;
+      force[3*i_pt]   += fx*neighborWeight;
+      force[3*i_pt+1] += fy*neighborWeight;
+      force[3*i_pt+2] += fz*neighborWeight;
 
-#if 0
-      force[3*neighborId]   -= fx*volSelf;
-      force[3*neighborId+1] -= fy*volSelf;
-      force[3*neighborId+2] -= fz*volSelf;
-#else
-      temp1 = (9.0*m_bulkModulus - 15.0*m_shearModulus)*omega*(dilatation[neighborId])/(3.0*(weightedVolume[neighborId]));
-      temp2 = 15.0*m_shearModulus*omega/((weightedVolume[neighborId])*normZetaSquared);
-      fx = -temp1*zeta[0] - temp2*matVec[0];
-      fy = -temp1*zeta[1] - temp2*matVec[1];
-      fz = -temp1*zeta[2] - temp2*matVec[2];
-      force[3*i_pt]   -= fx*volNeighbor;
-      force[3*i_pt+1] -= fy*volNeighbor;
-      force[3*i_pt+2] -= fz*volNeighbor;
-#endif
+      if (m_useImprovedQuadrature) {
+        // WARNING: THIS ASSUMES THAT THE NEIGHBOR HAS THE SAME MATERIAL MODEL AND ELASTIC MODULI
+        temp1 = (9.0*m_bulkModulus - 15.0*m_shearModulus)*omega*(dilatation[neighborId])/(3.0*(weightedVolume[neighborId]));
+        temp2 = 15.0*m_shearModulus*omega/((weightedVolume[neighborId])*normZetaSquared);
+        fx = -temp1*zeta[0] - temp2*matVec[0];
+        fy = -temp1*zeta[1] - temp2*matVec[1];
+        fz = -temp1*zeta[2] - temp2*matVec[2];
+        force[3*i_pt]   -= fx*neighborWeight;
+        force[3*i_pt+1] -= fy*neighborWeight;
+        force[3*i_pt+2] -= fz*neighborWeight;
+      }
+      else {
+        if(m_usePartialVolume){
+          volSelf = selfVolume[bondIndex];
+        }
+        else{
+          volSelf = volume[i_pt];
+        }
+        force[3*neighborId]   -= fx*volSelf;
+        force[3*neighborId+1] -= fy*volSelf;
+        force[3*neighborId+2] -= fz*volSelf;
+      }
 
       bondIndex += 1;
     }
