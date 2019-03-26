@@ -111,8 +111,10 @@ set(Peridigm_LINK_LIBRARIES
 add_executable(Peridigm ${CORE_DIR}/Peridigm_Main.cpp)
 target_link_libraries(Peridigm ${Peridigm_LINK_LIBRARIES})
 
-add_executable(MeshConverter ${MESH_CONVERTER_DIR}/Peridigm_MeshConverter_Main.cpp)
-target_link_libraries(MeshConverter ${Peridigm_LINK_LIBRARIES})
+if(HAVE_YAML)
+  add_executable(MeshConverter ${MESH_CONVERTER_DIR}/Peridigm_MeshConverter_Main.cpp)
+  target_link_libraries(MeshConverter ${Peridigm_LINK_LIBRARIES})
+endif()
 
 #
 # Install target for Peridigm main executable

@@ -48,13 +48,16 @@
 #ifndef PERIDIGM_NEIGHBORHOODDATA_HPP
 #define PERIDIGM_NEIGHBORHOODDATA_HPP
 
+#include <string>
+#include <fstream>
+
 namespace PeridigmNS {
 
 class NeighborhoodData {
 
 public:
 
-  NeighborhoodData() 
+  NeighborhoodData()
     : numOwnedPoints(0), ownedIDs(0), neighborhoodListSize(0), neighborhoodList(0), neighborhoodPtr(0) {}
 
   NeighborhoodData(const NeighborhoodData& other)
@@ -118,6 +121,22 @@ public:
       (2*numOwnedPoints + neighborhoodListSize + 2)*sizeof(int) + 3*sizeof(int*);
     double sizeInMegabytes = sizeInBytes/1048576.0;
     return sizeInMegabytes;
+  }
+
+  void WriteToDisk(std::string fileName) const {
+    std::ofstream output(fileName, std::fstream::out);
+    output << numOwnedPoints << " ";
+    for (int i=0 ; i<numOwnedPoints ; i++) {
+      output << ownedIDs[i] << " ";
+    }
+    output << neighborhoodListSize << " ";
+    for (int i=0 ; i<neighborhoodListSize ; i++) {
+      output << neighborhoodList[i] << " ";
+    }
+    for (int i=0 ; i<numOwnedPoints ; i++) {
+      output << neighborhoodPtr[i] << " ";
+    }
+    output.close();
   }
 
 protected:

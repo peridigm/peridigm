@@ -55,10 +55,12 @@
   #include <Epetra_SerialComm.h>
 #endif
 
+#include "Peridigm_HorizonManager.hpp"
 #include "Peridigm_ExodusDiscretization.hpp"
 #include "exodusII.h"
 #include <iostream>
 #include <sstream>
+#include <Teuchos_YamlParameterListCoreHelpers.hpp>
 
 void reportExodusError(int errorCode, const char *methodName, const char*exodusMethodName)
 {
@@ -97,23 +99,36 @@ int main(int argc, char *argv[]) {
 #endif
 
   // input file
-  if(argc != 3){
-    std::cout << "Usage:  MeshConverter <input_mesh.g> <output_mesh.g>\n" << std::endl;
+  if(argc != 2 && mpi_id == 0){
+    std::cout << "Usage:  MeshConverter <input_file.yaml>\n" << std::endl;
 #ifdef HAVE_MPI
     MPI_Finalize();
 #endif
     return 1;
   }
-  std::string input_file_name(argv[1]);
-  std::string output_file_name(argv[2]);
 
+  std::string yaml_file_name(argv[1]);
   Teuchos::RCP<Teuchos::ParameterList> params;
   params = Teuchos::rcp(new Teuchos::ParameterList);
-  params->set("Type", "Exodus");
-  params->set("Input Mesh File", input_file_name);
-  params->set("Verbose", true);
-  params->set("Construct Neighborhood Lists", false);
-  PeridigmNS::ExodusDiscretization discretization(epetra_comm, params);
+  Teuchos::Ptr<Teuchos::ParameterList> params_ptr(params.get());
+  Teuchos::updateParametersFromYamlFile(yaml_file_name, params_ptr);
+
+  Teuchos::ParameterList& mesh_conversion_params = params->sublist("Mesh Conversion", true);
+  std::string output_file_name = mesh_conversion_params.get<std::string>("Output Mesh File");
+  bool perform_neighborhood_search = mesh_conversion_params.get<bool>("Perform Neighborhood Search");
+  std::string output_neighborhood_file_name = mesh_conversion_params.get<std::string>("Output Neighborhood File", "None");
+
+  Teuchos::RCP<Teuchos::ParameterList> disc_params = Teuchos::rcpFromRef(params->sublist("Discretization", true));
+  if(!disc_params->isParameter("Construct Neighborhood Lists")) {
+    disc_params->set<bool>("Construct Neighborhood Lists", perform_neighborhood_search);
+  }
+
+  if (perform_neighborhood_search) {
+    Teuchos::ParameterList& block_params = params->sublist("Blocks", true);
+    PeridigmNS::HorizonManager::self().loadHorizonInformationFromBlockParameters(block_params);
+  }
+
+  PeridigmNS::ExodusDiscretization discretization(epetra_comm, disc_params);
 
   // Obtain the node sets
   Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets = discretization.getNodeSets();
@@ -295,6 +310,11 @@ int main(int argc, char *argv[]) {
   retval = ex_close(file_handle);
   if (retval!= 0) reportExodusError(retval, "MeshConverter", "ex_close");
 
+  if (perform_neighborhood_search) {
+    Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhood_data = discretization.getNeighborhoodData();
+    neighborhood_data->WriteToDisk(output_neighborhood_file_name);
+  }
+
   // Clean up
   if(node_set_names != NULL){
     for (i = numNodeSets; i>0; i--) delete[] node_set_names[i-1];
@@ -303,6 +323,14 @@ int main(int argc, char *argv[]) {
   if(block_names != NULL){
     for (unsigned int i = blocks->size(); i>0; i--) delete[] block_names[i-1];
     delete[] block_names;
+  }
+
+  if (mpi_id == 0) {
+    std::cout << "\nSphere mesh written to:        " << output_file_name << std::endl;
+    if (perform_neighborhood_search) {
+      std::cout << "Neighborhood data written to:  " << output_neighborhood_file_name << std::endl;
+    }
+    std::cout << std::endl;
   }
 
 #ifdef HAVE_MPI
