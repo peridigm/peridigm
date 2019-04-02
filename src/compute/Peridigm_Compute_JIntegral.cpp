@@ -87,7 +87,7 @@ PeridigmNS::Compute_JIntegral::Compute_JIntegral(Teuchos::RCP<const Teuchos::Par
 PeridigmNS::Compute_JIntegral::~Compute_JIntegral(){}
 
 //! Compute the J integral
-int PeridigmNS::Compute_JIntegral::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const // todo need dt
+int PeridigmNS::Compute_JIntegral::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const
 {
   // Isolate a single block over which the J integral will be computed
   std::vector<PeridigmNS::Block>::iterator block = blocks->end();
@@ -169,7 +169,6 @@ int PeridigmNS::Compute_JIntegral::compute( Teuchos::RCP< std::vector<PeridigmNS
       neighborVelocityStepNP1[1] = velocityStepNP1[neighborID*3+1];
       neighborVelocityStepNP1[2] = velocityStepNP1[neighborID*3+2];
 
-      // COMPUTE AND STORE ACC
       // COMPUTE AND STORE THE VELOCITY GRADIENT
       // delta t is stored in m_dt, which unfortunately must be passed in through the input deck for now
 
