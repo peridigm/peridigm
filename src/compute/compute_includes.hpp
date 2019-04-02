@@ -22,4 +22,5 @@
 #include "Peridigm_Compute_Stored_Elastic_Energy.hpp"
 #include "Peridigm_Compute_Nonlinear_Solver_Iterations.hpp"
 #include "Peridigm_Compute_OBC_Functional.hpp"
+#include "Peridigm_Compute_JIntegral.hpp"
 #include "Peridigm_Compute.hpp"

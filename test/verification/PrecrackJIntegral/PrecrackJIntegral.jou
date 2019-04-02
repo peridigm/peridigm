@@ -1,0 +1,19 @@
+
+#{HORIZON=3.0}
+#{ELEM_SIZE=HORIZON/3.0}
+
+reset
+create brick x 10.0 y 20.0 z 3.0
+webcut volume 1 yplane offset 5.0 imprint merge
+webcut volume 1 yplane offset -5.0 imprint merge
+webcut volume 1 yplane offset {-10.0 + HORIZON}
+webcut volume 2 yplane offset {10.0 - HORIZON}
+volume all size {ELEM_SIZE}
+mesh volume all
+block 1 volume 3
+block 2 volume 1 2 4 5
+nodeset 1 volume 1 # bottom region
+nodeset 2 volume 5 # top region
+nodeset 3 curve 6 # along x axis
+nodeset 4 curve 9 # along z axis
+export genesis 'PrecrackJIntegral.g' overwrite
