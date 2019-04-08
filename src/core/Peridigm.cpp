@@ -121,8 +121,10 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
     velocityFieldId(-1),
     accelerationFieldId(-1),
     temperatureFieldId(-1),
+    concentrationFieldId(-1),
     deltaTemperatureFieldId(-1),
     fluxDivergenceFieldId(-1),
+    concentrationFluxDivergenceFieldId(-1),
     forceDensityFieldId(-1),
     contactForceDensityFieldId(-1),
     externalForceDensityFieldId(-1),
@@ -303,8 +305,10 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
   velocityFieldId                    = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Velocity");
   accelerationFieldId                = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Acceleration");
   temperatureFieldId                 = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Temperature");
+  concentrationFieldId               = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Concentration");
   deltaTemperatureFieldId            = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Temperature_Change");
   fluxDivergenceFieldId              = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Flux_Divergence");
+  concentrationFluxDivergenceFieldId = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Concentration_Flux_Divergence");
   forceDensityFieldId                = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force_Density");
   contactForceDensityFieldId         = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Contact_Force_Density");
   externalForceDensityFieldId        = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "External_Force_Density");
@@ -824,28 +828,29 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization>
   bondMap = peridigmDisc->getGlobalBondMap();
 
   // Create mothership vectors
-  int numOneDimensionalMothershipVectors = 8;
+  int numOneDimensionalMothershipVectors = 9;
   bool initializeToZero = true;
   if(analysisHasMultiphysics)
     numOneDimensionalMothershipVectors += 7;
 
   oneDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*oneDimensionalMap, numOneDimensionalMothershipVectors, initializeToZero));
-  blockIDs = Teuchos::rcp((*oneDimensionalMothership)(0), false);              // block ID
-  horizon = Teuchos::rcp((*oneDimensionalMothership)(1), false);               // horizon for each point
-  volume = Teuchos::rcp((*oneDimensionalMothership)(2), false);                // cell volume
-  density = Teuchos::rcp((*oneDimensionalMothership)(3), false);               // solid density
-  temperature = Teuchos::rcp((*oneDimensionalMothership)(4), false);           // temperature
-  deltaTemperature = Teuchos::rcp((*oneDimensionalMothership)(5), false);      // change in temperature
-  fluxDivergence = Teuchos::rcp((*oneDimensionalMothership)(6), false);        // divergence of the flux (e.g., heat flux)
-  scalarScratch = Teuchos::rcp((*oneDimensionalMothership)(7), false);         // scratch vector corresponding to oneDimensionalMap
+  blockIDs = Teuchos::rcp((*oneDimensionalMothership)(0), false);                    // block ID
+  horizon = Teuchos::rcp((*oneDimensionalMothership)(1), false);                     // horizon for each point
+  volume = Teuchos::rcp((*oneDimensionalMothership)(2), false);                      // cell volume
+  density = Teuchos::rcp((*oneDimensionalMothership)(3), false);                     // solid density
+  temperature = Teuchos::rcp((*oneDimensionalMothership)(4), false);                 // temperature
+  deltaTemperature = Teuchos::rcp((*oneDimensionalMothership)(5), false);            // change in temperature
+  fluxDivergence = Teuchos::rcp((*oneDimensionalMothership)(6), false);              // divergence of the flux (e.g., heat flux)
+  concentrationFluxDivergence = Teuchos::rcp((*oneDimensionalMothership)(7), false); // divergence of the flux of chemical concentration
+  scalarScratch = Teuchos::rcp((*oneDimensionalMothership)(8), false);               // scratch vector corresponding to oneDimensionalMap
   if (analysisHasMultiphysics) {
-    fluidPressureU = Teuchos::rcp((*oneDimensionalMothership)(8), false);        // fluid pressure displacement
-    fluidPressureY = Teuchos::rcp((*oneDimensionalMothership)(9), false);        // fluid pressure current coordinates at anode
-    fluidPressureV = Teuchos::rcp((*oneDimensionalMothership)(10), false);       // fluid pressure first time derv at a node
-    fluidFlow = Teuchos::rcp((*oneDimensionalMothership)(11), false);            // flux through a node
-    fluidPressureDeltaU = Teuchos::rcp((*oneDimensionalMothership)(12), false);  // fluid pressure displacement analogue increment
-    fluidDensity = Teuchos::rcp((*oneDimensionalMothership)(13), false); 		     // fluid density at a node
-    fluidCompressibility = Teuchos::rcp((*oneDimensionalMothership)(14), false); // fluid compressibility at a node
+    fluidPressureU = Teuchos::rcp((*oneDimensionalMothership)(9), false);        // fluid pressure displacement
+    fluidPressureY = Teuchos::rcp((*oneDimensionalMothership)(10), false);       // fluid pressure current coordinates at anode
+    fluidPressureV = Teuchos::rcp((*oneDimensionalMothership)(11), false);       // fluid pressure first time derv at a node
+    fluidFlow = Teuchos::rcp((*oneDimensionalMothership)(12), false);            // flux through a node
+    fluidPressureDeltaU = Teuchos::rcp((*oneDimensionalMothership)(13), false);  // fluid pressure displacement analogue increment
+    fluidDensity = Teuchos::rcp((*oneDimensionalMothership)(14), false); 		     // fluid density at a node
+    fluidCompressibility = Teuchos::rcp((*oneDimensionalMothership)(15), false); // fluid compressibility at a node
   }
 
   threeDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalMap, 10, initializeToZero));
@@ -1343,6 +1348,7 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     blockIt->importData(v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(concentration, concentrationFieldId, PeridigmField::STEP_NP1, Insert);
   }
   if(analysisHasContact)
     contactManager->importData(volume, y, v);
@@ -1477,6 +1483,7 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
       blockIt->importData(v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
       blockIt->importData(deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
       blockIt->importData(temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(concentration, concentrationFieldId, PeridigmField::STEP_NP1, Insert);
     }
     if(analysisHasContact){
       for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
@@ -1681,6 +1688,7 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
         blockIt->importData(fluidPressureV, fluidPressureVFieldId, PeridigmField::STEP_NP1, Insert);
         blockIt->importData(deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
         blockIt->importData(temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(concentration, concentrationFieldId, PeridigmField::STEP_NP1, Insert);
         blockIt->importData(u, displacementFieldId, PeridigmField::STEP_NP1, Insert);
         blockIt->importData(y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
         blockIt->importData(v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
@@ -1695,6 +1703,7 @@ bool PeridigmNS::Peridigm::evaluateNOX(NOX::Epetra::Interface::Required::FillTyp
         blockIt->importData(v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
         blockIt->importData(temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
         blockIt->importData(deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(concentration, concentrationFieldId, PeridigmField::STEP_NP1, Insert);
     }
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
   }
@@ -1820,6 +1829,7 @@ void PeridigmNS::Peridigm::computeInternalForce()
     blockIt->importData(v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(concentration, concentrationFieldId, PeridigmField::STEP_NP1, Insert);
   }
 
   // Call the model evaluator
@@ -3719,6 +3729,7 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
       blockIt->importData(v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
       blockIt->importData(a, accelerationFieldId, PeridigmField::STEP_NP1, Insert);
       blockIt->importData(temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(concentration, concentrationFieldId, PeridigmField::STEP_NP1, Insert);
       blockIt->importData(deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
       if(analysisHasMultiphysics){
         blockIt->importData(fluidPressureU, fluidPressureUFieldId, PeridigmField::STEP_NP1, Insert);
@@ -3867,6 +3878,7 @@ void PeridigmNS::Peridigm::executeImplicit(Teuchos::RCP<Teuchos::ParameterList> 
         blockIt->importData(a, accelerationFieldId, PeridigmField::STEP_NP1, Insert);
         blockIt->importData(temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
         blockIt->importData(deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
+        blockIt->importData(concentration, concentrationFieldId, PeridigmField::STEP_NP1, Insert);
 
         if(analysisHasMultiphysics){
           blockIt->importData(fluidPressureU, fluidPressureUFieldId, PeridigmField::STEP_NP1, Insert);
@@ -4130,6 +4142,8 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
   int displacementDofOffset = dofManager.displacementDofOffset();
   bool temperatureTreatedAsUnknown = dofManager.temperatureTreatedAsUnknown();
   int temperatureDofOffset = dofManager.temperatureDofOffset();
+  bool concentrationTreatedAsUnknown = dofManager.concentrationTreatedAsUnknown();
+  int concentrationDofOffset = dofManager.concentrationDofOffset();
   bool pressureTreatedAsUnknown = dofManager.pressureTreatedAsUnknown();
   int pressureDofOffset = dofManager.pressureDofOffset();
 
@@ -4140,6 +4154,7 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
     blockIt->importData(y, coordinatesFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(v, velocityFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
+    blockIt->importData(concentration, concentrationFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(fluidPressureU, fluidPressureUFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(fluidPressureY, fluidPressureYFieldId, PeridigmField::STEP_NP1, Insert);
@@ -4188,6 +4203,23 @@ double PeridigmNS::Peridigm::computeQuasiStaticResidual(Teuchos::RCP<Epetra_Vect
       double value = flux_divergence_ptr[i_node];
       TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(value), "**** NaN returned by flux divergence evaluation.\n");
       residual_ptr[i_node*numDofs + temperatureDofOffset] = value;
+    }
+  }
+  if(concentrationTreatedAsUnknown) {
+    concentrationFluxDivergence->PutScalar(0.0);
+    PeridigmNS::Timer::self().startTimer("Gather/Scatter");
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+      scalarScratch->PutScalar(0.0);
+      blockIt->exportData(scalarScratch, concentrationFluxDivergenceFieldId, PeridigmField::STEP_NP1, Add);
+      concentrationFluxDivergence->Update(1.0, *scalarScratch, 1.0);
+    }
+    PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+    double* concentration_flux_divergence_ptr;
+    concentrationFluxDivergence->ExtractView(&concentration_flux_divergence_ptr);
+    for(int i_node = 0; i_node < concentrationFluxDivergence->Map().NumMyElements(); ++i_node) {
+      double value = concentration_flux_divergence_ptr[i_node];
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(value), "**** NaN returned by concentration flux divergence evaluation.\n");
+      residual_ptr[i_node*numDofs + concentrationDofOffset] = value;
     }
   }
   if(pressureTreatedAsUnknown) {
@@ -4281,6 +4313,7 @@ void PeridigmNS::Peridigm::synchDataManagers() {
 			blockIt->importData(externalForce, externalForceDensityFieldId, PeridigmField::STEP_NP1, Insert);
 			blockIt->importData(temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
       blockIt->importData(deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(concentration, concentrationFieldId, PeridigmField::STEP_NP1, Insert);
       blockIt->importData(fluidPressureU, fluidPressureUFieldId, PeridigmField::STEP_NP1, Insert);
       blockIt->importData(fluidPressureY, fluidPressureYFieldId, PeridigmField::STEP_NP1, Insert);
       blockIt->importData(fluidPressureV, fluidPressureVFieldId, PeridigmField::STEP_NP1, Insert);
@@ -4296,7 +4329,9 @@ void PeridigmNS::Peridigm::synchDataManagers() {
 			blockIt->importData(externalForce, externalForceDensityFieldId, PeridigmField::STEP_NP1, Insert);
 			blockIt->importData(temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
       blockIt->importData(deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(concentration, concentrationFieldId, PeridigmField::STEP_NP1, Insert);
       blockIt->importData(fluxDivergence, fluxDivergenceFieldId, PeridigmField::STEP_NP1, Insert);
+      blockIt->importData(concentrationFluxDivergence, concentrationFluxDivergenceFieldId, PeridigmField::STEP_NP1, Insert);
 		}
 	}
 

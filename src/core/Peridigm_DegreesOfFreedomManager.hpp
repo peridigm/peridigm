@@ -69,11 +69,15 @@ public:
 
   bool temperatureTreatedAsUnknown() { return temperatureTreatedAsUnknown_; }
 
+  bool concentrationTreatedAsUnknown() { return concentrationTreatedAsUnknown_; }
+
   bool pressureTreatedAsUnknown() { return pressureTreatedAsUnknown_; }
 
   int numberOfDisplacementDegreesOfFreedom() { return number_of_displacement_degrees_of_freedom_; }
 
   int numberOfTemperatureDegreesOfFreedom() { return number_of_temperature_degrees_of_freedom_; }
+
+  int numberOfConcentrationDegreesOfFreedom() { return number_of_concentration_degrees_of_freedom_; }
 
   int numberOfPressureDegreesOfFreedom() { return number_of_pressure_degrees_of_freedom_; }
 
@@ -81,9 +85,11 @@ public:
 
   int displacementDofOffset() { return displacement_dof_offset_; }
 
-  int pressureDofOffset() { return pressure_dof_offset_; }
+  int concentrationDofOffset() { return concentration_dof_offset_; }
 
   int temperatureDofOffset() { return temperature_dof_offset_; }
+
+  int pressureDofOffset() { return pressure_dof_offset_; }
 
   void print();
 
@@ -92,10 +98,12 @@ private:
   //! Private constructor
   DegreesOfFreedomManager()
     : displacementTreatedAsUnknown_(true), temperatureTreatedAsUnknown_(false),
-      pressureTreatedAsUnknown_(false), number_of_displacement_degrees_of_freedom_(0),
-      number_of_temperature_degrees_of_freedom_(0), number_of_pressure_degrees_of_freedom_(0),
+      concentrationTreatedAsUnknown_(false), pressureTreatedAsUnknown_(false),
+      number_of_displacement_degrees_of_freedom_(0), number_of_temperature_degrees_of_freedom_(0),
+      number_of_concentration_degrees_of_freedom_(0), number_of_pressure_degrees_of_freedom_(0),
       total_number_of_degrees_of_freedom_(0), displacement_dof_offset_(0),
-      pressure_dof_offset_(0), temperature_dof_offset_(0), verbose_(false)
+      concentration_dof_offset_(0), temperature_dof_offset_(0), pressure_dof_offset_(0),
+      verbose_(false)
   {}
 
   //! Private and unimplemented to prevent use
@@ -108,14 +116,17 @@ protected:
 
   bool displacementTreatedAsUnknown_;
   bool temperatureTreatedAsUnknown_;
+  bool concentrationTreatedAsUnknown_;
   bool pressureTreatedAsUnknown_;
   int number_of_displacement_degrees_of_freedom_;
   int number_of_temperature_degrees_of_freedom_;
+  int number_of_concentration_degrees_of_freedom_;
   int number_of_pressure_degrees_of_freedom_;
   int total_number_of_degrees_of_freedom_;
   int displacement_dof_offset_;
-  int pressure_dof_offset_;
+  int concentration_dof_offset_;
   int temperature_dof_offset_;
+  int pressure_dof_offset_;
   bool verbose_;
 };
 

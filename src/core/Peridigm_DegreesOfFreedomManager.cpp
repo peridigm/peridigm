@@ -16,6 +16,7 @@ void PeridigmNS::DegreesOfFreedomManager::initialize(Teuchos::ParameterList& sol
 
   displacementTreatedAsUnknown_ = solverParams.get<bool>("Solve For Displacement", true);
   temperatureTreatedAsUnknown_ = solverParams.get<bool>("Solve For Temperature", false);
+  concentrationTreatedAsUnknown_ = solverParams.get<bool>("Solve For Concentration", false);
   pressureTreatedAsUnknown_ = solverParams.get<bool>("Solve For Pressure", false);
 
   if (displacementTreatedAsUnknown_) {
@@ -28,6 +29,11 @@ void PeridigmNS::DegreesOfFreedomManager::initialize(Teuchos::ParameterList& sol
     number_of_temperature_degrees_of_freedom_ = 1;
     total_number_of_degrees_of_freedom_ += 1;
   }
+  if (concentrationTreatedAsUnknown_) {
+    concentration_dof_offset_ = total_number_of_degrees_of_freedom_;
+    number_of_concentration_degrees_of_freedom_ = 1;
+    total_number_of_degrees_of_freedom_ += 1;
+  }
   if (pressureTreatedAsUnknown_) {
     pressure_dof_offset_ = total_number_of_degrees_of_freedom_;
     number_of_pressure_degrees_of_freedom_ = 1;
@@ -38,8 +44,9 @@ void PeridigmNS::DegreesOfFreedomManager::initialize(Teuchos::ParameterList& sol
 void PeridigmNS::DegreesOfFreedomManager::print() {
   if (verbose_) {
     std::cout << "Degrees of freedom:" << std::endl;
-    std::cout << "  number of displacement degrees of freedom: " << number_of_displacement_degrees_of_freedom_ << std::endl;
-    std::cout << "  number of temperature degrees of freedom:  " << number_of_temperature_degrees_of_freedom_ << std::endl;
-    std::cout << "  number of pressure degrees of freedom:     " << number_of_pressure_degrees_of_freedom_ << "\n" << std::endl;
+    std::cout << "  number of displacement degrees of freedom:   " << number_of_displacement_degrees_of_freedom_ << std::endl;
+    std::cout << "  number of temperature degrees of freedom:    " << number_of_temperature_degrees_of_freedom_ << std::endl;
+    std::cout << "  number of concentration degrees of freedom:  " << number_of_concentration_degrees_of_freedom_ << std::endl;
+    std::cout << "  number of pressure degrees of freedom:       " << number_of_pressure_degrees_of_freedom_ << "\n" << std::endl;
   }
 }

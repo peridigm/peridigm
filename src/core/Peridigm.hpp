@@ -346,6 +346,7 @@ namespace PeridigmNS {
     Teuchos::RCP<Epetra_Vector> getVolume() { return volume; }
     Teuchos::RCP<Epetra_Vector> getTemperature() { return temperature; }
     Teuchos::RCP<Epetra_Vector> getDeltaTemperature() { return deltaTemperature; }
+    Teuchos::RCP<Epetra_Vector> getConcentration() { return concentration; }
     //@}
 
     //! Accessor for global neighborhood data
@@ -503,8 +504,14 @@ namespace PeridigmNS {
     //! Global vector for temperature change
     Teuchos::RCP<Epetra_Vector> deltaTemperature;
 
-    //! Global vector for temperature
+    //! Global vector for concentration
+    Teuchos::RCP<Epetra_Vector> concentration;
+
+    //! Global vector for flux divergence
     Teuchos::RCP<Epetra_Vector> fluxDivergence;
+
+    //! Global vector for concentration flux divergence
+    Teuchos::RCP<Epetra_Vector> concentrationFluxDivergence;
 
     //! Global scratch vector for scalar data
     Teuchos::RCP<Epetra_Vector> scalarScratch;
@@ -616,8 +623,10 @@ namespace PeridigmNS {
     int velocityFieldId;
     int accelerationFieldId;
     int temperatureFieldId;
+    int concentrationFieldId;
     int deltaTemperatureFieldId;
     int fluxDivergenceFieldId;
+    int concentrationFluxDivergenceFieldId;
     int forceDensityFieldId;
     int contactForceDensityFieldId;
     int externalForceDensityFieldId;
