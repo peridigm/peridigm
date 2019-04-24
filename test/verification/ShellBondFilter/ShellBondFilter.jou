@@ -1,0 +1,18 @@
+
+reset
+create brick x 2.0 y 2.0 z 2.0
+volume 1 size 0.2
+block 1 volume 1
+mesh volume 1
+nodeset 1 node with x_coord < -0.199 and y_coord < -0.199 and z_coord < -0.199
+nodeset 2 node with x_coord > 0.299 and y_coord > 0.299 and z_coord > 0.299
+export genesis "ShellBondFilter.g" overwrite
+
+reset
+create sphere radius 1.61
+move volume 1 x 1.01 y 1.01 z 1.01
+surface 1 scheme trimesh
+block 1 surface 1
+mesh surface 1
+export genesis "Shells.g" overwrite
+

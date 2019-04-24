@@ -52,6 +52,8 @@
 #include <sstream>
 #include <iomanip>
 #include <vector>
+#include <stdio.h>
+#include <unistd.h>
 
 PeridigmNS::DataLoader::DataLoader(const Teuchos::ParameterList& contactParams,
                                    Teuchos::RCP<const Epetra_BlockMap> epetraMap)
@@ -205,6 +207,7 @@ void PeridigmNS::DataLoader::loadData(double time,
 
     if (time_ < time_1_ || time_ > time_2_) {
       // data must be read from disk
+      //waitForData();
       loadDataFromFile();
     }
 
@@ -218,6 +221,65 @@ void PeridigmNS::DataLoader::loadData(double time,
   // copy data into the block DataManagers
   for(std::vector<PeridigmNS::Block>::iterator blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++) {
     blockIt->importData(scratch_, fieldId_, PeridigmField::STEP_NP1, Insert);
+  }
+}
+
+void PeridigmNS::DataLoader::waitForData()
+{
+  double pause_time = 5.0; // seconds
+  double total_pause_time = 0.0;
+  double max_pause_time = 12.0;
+  bool success = false;
+  bool time_limit = false;
+
+  std::string ready_file_name("PFLOTRAN_DONE");
+  std::ifstream ready_file(ready_file_name);
+  if (ready_file) {
+    std::cout << "FILE EXISTS" << std::endl;
+    ready_file.close();
+    remove(ready_file_name.c_str());
+  }
+  else {
+    std::cout << "FILE DOES NOT EXIST" << std::endl;
+  }
+
+
+  std::string line;
+  while(true) {
+    std::cout << "about to read" << std::endl;
+    std::ifstream steps_file("Notched_Plate_Data_Loader_Steps.txt");
+    while(std::getline(steps_file, line)) {
+      std::stringstream ss(line);
+      double time;
+      ss >> time;
+      std::cout << "Looking for time_ " << time_ << " currently have " << time << std::endl;
+      if (time > time_) {
+        success = true;
+        break;
+      }
+    }
+    steps_file.close();
+    std::cout << "end of read" << std::endl;
+    if (success) {
+      break;
+    }
+    else {
+      if (total_pause_time > max_pause_time) {
+        time_limit = true;
+        break;
+      }
+      total_pause_time += pause_time;
+      // microseconds
+      double pause_time_microseconds = pause_time * 1.0e6;
+      std::cout << "pausing" << std::endl;
+      usleep(pause_time_microseconds);
+    }
+  }
+
+  if(time_limit) {
+    std::stringstream ss;
+    ss << "**** Error in DataLoader::waitForData(), exceeded maximum wait time of " << max_pause_time << " seconds.\n";
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(time_limit, ss.str());
   }
 }
 

@@ -1,5 +1,3 @@
-/*! \file Peridigm_DataLoader.hpp */
-
 //@HEADER
 // ************************************************************************
 //
@@ -45,62 +43,18 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_DATALOADER_HPP
-#define PERIDIGM_DATALOADER_HPP
+#ifndef GENESISTOTRIANGLES_H_
+#define GENESISTOTRIANGLES_H_
 
-#include <Teuchos_ParameterList.hpp>
-#include "Peridigm_Block.hpp"
 #include <string>
-#include <iostream>
+#include <vector>
 
 namespace PeridigmNS {
 
-class DataLoader {
+  void GenesisToTriangles(std::string genesis_file_name,
+                          std::vector< std::vector< std::vector<double> > > & triangles);
 
-public:
-
-  DataLoader(const Teuchos::ParameterList& contactParams,
-             Teuchos::RCP<const Epetra_BlockMap> epetraMap);
-
-  ~DataLoader(){}
-
-  //! Returns a vector of field IDs corresponding to the variables associated with the material.
-  std::vector<int> getFieldIds() const;
-
-  void loadData(double time,
-                Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks);
-
-protected:
-
-  void waitForData();
-
-  void loadDataFromFile();
-
-  void reportExodusError(int errorCode,
-                         const char *methodName,
-                         const char *exodusMethodName);
-
-  std::string fileName_;
-  std::string fieldName_;
-  int fieldId_;
-  std::string exodusName_;
-  int exodusVariableIndex_;
-  int numRanks_;
-  int myRank_;
-  double time_;
-  double time_1_;
-  double time_2_;
-  std::vector<double> data_1_;
-  std::vector<double> data_2_;
-  Teuchos::RCP<Epetra_Vector> scratch_;
-
-private:
-
-  //! Private to prohibit use.
-  DataLoader(){}
-  DataLoader(const DataLoader& dataLoader){}
-};
-
+  void report_exodus_error(int errorCode,
+                           const char*exodusMethodName);
 }
-
-#endif // PERIDIGM_DATALOADER_HPP
+#endif

@@ -51,6 +51,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <cmath>
 #include "Vector3D.h"
 
 namespace PdBondFilter {
@@ -145,6 +146,41 @@ private:
   double center[3];
   double normal[3];
   double radius;
+};
+
+class TriangleFilter: public BondFilter {
+public:
+  TriangleFilter(double *v1, double* v2, double* v3) : BondFilter(false), tolerance_(1.0e-14) {
+    for (int i=0 ; i<3 ; i++) {
+      v1_[i] = v1[i];
+      v2_[i] = v2[i];
+      v3_[i] = v3[i];
+    }
+    double a[3], b[3];
+    a[0] = v2_[0] - v1_[0];
+    a[1] = v2_[1] - v1_[1];
+    a[2] = v2_[2] - v1_[2];
+    b[0] = v3_[0] - v1_[0];
+    b[1] = v3_[1] - v1_[1];
+    b[2] = v3_[2] - v1_[2];
+    normal_[0] = (a[1]*b[2] - a[2]*b[1]);
+    normal_[1] = (a[2]*b[0] - a[0]*b[2]);
+    normal_[2] = (a[0]*b[1] - a[1]*b[0]);
+    double normal_magnitude = std::sqrt(normal_[0]*normal_[0] + normal_[1]*normal_[1] + normal_[2]*normal_[2]);
+    normal_[0] /= normal_magnitude;
+    normal_[1] /= normal_magnitude;
+    normal_[2] /= normal_magnitude;
+  }
+	virtual ~TriangleFilter() {}
+	virtual void filterBonds(std::vector<int>& treeList, const double *pt, const std::size_t ptLocalId, const double *xOverlap, bool* markForExclusion);
+private:
+  bool bondIntersectsTriangle(const double* p0, const double* p1) const;
+  bool pointInTriangle(const double* x) const;
+  double v1_[3];
+  double v2_[3];
+  double v3_[3];
+  double normal_[3];
+  double tolerance_;
 };
 
 }

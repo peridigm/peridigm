@@ -46,6 +46,7 @@
 //@HEADER
 
 #include "Peridigm_Discretization.hpp"
+#include "Peridigm_GenesisToTriangles.hpp"
 #include <sstream>
 #include <set>
 
@@ -183,9 +184,18 @@ void PeridigmNS::Discretization::createBondFilters(const Teuchos::RCP<Teuchos::P
         std::shared_ptr<PdBondFilter::BondFilter> bondFilter(new PdBondFilter::DiskFilter(center, normal, radius));
         bondFilters.push_back(bondFilter);
       }
+      else if(type == "Exodus Mesh"){
+        std::string file_name = params.get<string>("File Name");
+        std::vector< std::vector< std::vector<double> > > triangles;
+        GenesisToTriangles(file_name, triangles);
+        for(unsigned int i=0 ; i<triangles.size() ; i++){
+          std::shared_ptr<PdBondFilter::BondFilter> bondFilter(new PdBondFilter::TriangleFilter(triangles[i][0].data(), triangles[i][1].data(), triangles[i][2].data()));
+          bondFilters.push_back(bondFilter);
+        }
+      }
       else{
         string msg = "\n**** Error, invalid bond filter type:  " + type;
-        msg += "\n**** Allowable types are:  Rectangular_Plane\n";
+        msg += "\n**** Allowable types are:  Rectangular_Plane, Exodus Mesh\n";
         TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
       }
     }

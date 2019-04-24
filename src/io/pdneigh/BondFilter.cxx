@@ -47,6 +47,8 @@
 #include <cmath>
 #include <float.h>
 
+#include <iostream>
+
 using UTILITIES::Vector3D;
 static UTILITIES::Dot dot;
 static UTILITIES::Cross cross;
@@ -177,7 +179,6 @@ bool DiskFilter::bondIntersectsDisk(const double* p0, const double* p1) const {
   double numerator   = (center[0] - p0[0]) * normal[0] + (center[1] - p0[1]) * normal[1] + (center[2] - p0[2]) * normal[2];
   double denominator = (p1[0] - p0[0]) * normal[0] + (p1[1] - p0[1]) * normal[1] + (p1[2] - p0[2]) * normal[2];
 
-  double tolerance = 1.0e-14;
   double t;
 
   if(std::abs(denominator) < tolerance){
@@ -186,8 +187,6 @@ bool DiskFilter::bondIntersectsDisk(const double* p0, const double* p1) const {
     // if it does lie on the plane, then the numerator will be zero
     // in either case, this function will return "no intersection"
     t = DBL_MAX;
-
-    // TODO deal with case where bond is on the plane
   }
   else{
     // the line intersects the plane
@@ -214,4 +213,78 @@ bool DiskFilter::bondIntersectsDisk(const double* p0, const double* p1) const {
   return false;
 }
 
+void TriangleFilter::filterBonds(std::vector<int>& treeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool *bondFlags) {
+
+  const double *p0 = pt;
+  const double *p1;
+  bool *flagIter = bondFlags;
+  for(unsigned int p=0;p<treeList.size();p++,flagIter++){
+
+    // Local id of point within neighborhood
+    size_t uid = treeList[p];
+
+    // Set flag for bonds that will be excluded from the neighborlist
+    p1 = xOverlap+(3*uid);
+    if(ptLocalId==uid && !includeSelf) {
+      *flagIter=1;
+      continue;
+    }
+    if( bondIntersectsTriangle(p0, p1) ) {
+      *flagIter=1;
+    }
+  }
 }
+
+bool TriangleFilter::bondIntersectsTriangle(const double* p0, const double* p1) const {
+
+  double numerator   = (v1_[0] - p0[0]) * normal_[0] + (v1_[1] - p0[1]) * normal_[1] + (v1_[2] - p0[2]) * normal_[2];
+  double denominator = (p1[0] - p0[0]) * normal_[0] + (p1[1] - p0[1]) * normal_[1] + (p1[2] - p0[2]) * normal_[2];
+
+  double t;
+
+  if(std::abs(denominator) < tolerance_){
+    // line is parallel to plane
+    // it may or may not lie on the plane
+    // if it does lie on the plane, then the numerator will be zero
+    // in either case, this function will return "no intersection"
+    t = DBL_MAX;
+  }
+  else {
+    // the line intersects the plane
+    t = numerator/denominator;
+  }
+
+  if (t < 0.0 || t > 1.0)
+    return false;
+
+  // intersection point
+  double x[3];
+  x[0] = p0[0] + t * (p1[0] - p0[0]);
+  x[1] = p0[1] + t * (p1[1] - p0[1]);
+  x[2] = p0[2] + t * (p1[2] - p0[2]);
+
+  // determine if the point is within the triangle
+  return pointInTriangle(x);
+}
+
+bool TriangleFilter::pointInTriangle(const double* x) const {
+
+  // check if intesection point is within triangle by computing the barycentric coordinates
+  double a[3], b[3], c[3];
+  for (int i=0 ; i<3 ; i++) {
+    a[i] = v3_[i] - v1_[i];
+    b[i] = v2_[i] - v1_[i];
+    c[i] = x[i]   - v1_[i];
+  }
+  double dot00 = a[0]*a[0] + a[1]*a[1] + a[2]*a[2];
+  double dot01 = a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+  double dot02 = a[0]*c[0] + a[1]*c[1] + a[2]*c[2];
+  double dot11 = b[0]*b[0] + b[1]*b[1] + b[2]*b[2];
+  double dot12 = b[0]*c[0] + b[1]*c[1] + b[2]*c[2];
+  double alpha = (dot11 * dot02 - dot01 * dot12) / (dot00 * dot11 - dot01 * dot01);
+  double beta  = (dot00 * dot12 - dot01 * dot02) / (dot00 * dot11 - dot01 * dot01);
+  bool in_triangle = (alpha > -tolerance_) && (beta > -tolerance_) && (alpha + beta < 1.0 + 2*tolerance_);
+  return in_triangle;
+}
+
+} // namespace PdBondFilter

@@ -1,3 +1,4 @@
+add_subdirectory(ShellBondFilter)
 add_subdirectory(LinearLPSBar)
 add_subdirectory(NeighborhoodVolume)
 add_subdirectory(ep_cube)
