@@ -1,0 +1,97 @@
+<ParameterList>
+  <ParameterList name="Discretization">
+  	<Parameter name="Type" type="string" value="Exodus" />
+  	<Parameter name="Input Mesh File" type="string" value="InitialDamage.g"/>
+  </ParameterList>
+
+  <ParameterList name="Materials">
+	<ParameterList name="My Elastic Material">
+	  <Parameter name="Material Model" type="string" value="Elastic"/>
+	  <Parameter name="Density" type="double" value="2200.0"/>
+	  <Parameter name="Bulk Modulus" type="double" value="14.90e9"/>
+	  <Parameter name="Shear Modulus" type="double" value="8.94e9"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Damage Models">
+    <ParameterList name="My Initial Damage Model">
+      <Parameter name="Damage Model" type="string" value="Initial Damage"/>
+      <ParameterList name="Bond Filters">
+        <ParameterList name="My Shell Bond Filter">
+          <Parameter name="Type" type="string" value="Exodus Mesh"/>
+          <Parameter name="File Name" type="string" value="Shells.g"/>
+        </ParameterList>
+      </ParameterList>
+    </ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Blocks">
+	<ParameterList name="My Group of Blocks">
+	  <Parameter name="Block Names" type="string" value="block_1"/>
+	  <Parameter name="Material" type="string" value="My Elastic Material"/>
+    <Parameter name="Damage Model" type="string" value="My Initial Damage Model"/>
+    <Parameter name="Horizon" type="double" value="0.603"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Boundary Conditions">
+	<ParameterList name="Displacement Lower Corner X">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_1"/>
+	  <Parameter name="Coordinate" type="string" value="x"/>
+	  <Parameter name="Value" type="string" value="-0.1 * 0.5*(cos(3.14159265359 + t*3.14159265359/1.0e-2) + 1.0)"/>
+	</ParameterList>
+	<ParameterList name="Displacement Lower Corner Y">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_1"/>
+	  <Parameter name="Coordinate" type="string" value="y"/>
+	  <Parameter name="Value" type="string" value="-0.1 * 0.5*(cos(3.14159265359 + t*3.14159265359/1.0e-2) + 1.0)"/>
+	</ParameterList>
+	<ParameterList name="Displacement Lower Corner Z">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_1"/>
+	  <Parameter name="Coordinate" type="string" value="z"/>
+	  <Parameter name="Value" type="string" value="-0.1 * 0.5*(cos(3.14159265359 + t*3.14159265359/1.0e-2) + 1.0)"/>
+	</ParameterList>
+	<ParameterList name="Displacement Upper Corner X">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_2"/>
+	  <Parameter name="Coordinate" type="string" value="x"/>
+	  <Parameter name="Value" type="string" value="0.0"/>
+	</ParameterList>
+	<ParameterList name="Displacement Upper Corner Y">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_2"/>
+	  <Parameter name="Coordinate" type="string" value="y"/>
+	  <Parameter name="Value" type="string" value="0.0"/>
+	</ParameterList>
+	<ParameterList name="Displacement Upper Corner Z">
+	  <Parameter name="Type" type="string" value="Prescribed Displacement"/>
+	  <Parameter name="Node Set" type="string" value="nodelist_2"/>
+	  <Parameter name="Coordinate" type="string" value="z"/>
+	  <Parameter name="Value" type="string" value="0.0"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Solver">
+	<Parameter name="Verbose" type="bool" value="false"/>
+	<Parameter name="Initial Time" type="double" value="0.0"/>
+	<Parameter name="Final Time" type="double" value="1.0e-2"/>
+	<ParameterList name="Verlet">
+	  <Parameter name="Fixed dt" type="double" value="2.0e-5"/>
+	</ParameterList>
+  </ParameterList>
+
+  <ParameterList name="Output">
+	<Parameter name="Output File Type" type="string" value="ExodusII"/>
+	<Parameter name="Output Format" type="string" value="BINARY"/>
+	<Parameter name="Output Filename" type="string" value="InitialDamage"/>
+	<Parameter name="Output Frequency" type="int" value="50"/>
+	<ParameterList name="Output Variables">
+	  <Parameter name="Displacement" type="bool" value="true"/>
+    <Parameter name="Number_Of_Neighbors" type="bool" value="true"/>
+    <Parameter name="Damage" type="bool" value="true"/>
+	</ParameterList>
+  </ParameterList>
+
+</ParameterList>

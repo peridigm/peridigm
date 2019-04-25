@@ -1,0 +1,43 @@
+
+#  *****************************************************************
+#             EXODIFF	(Version: 2.90) Modified: 2018-02-15
+#             Authors:  Richard Drake, rrdrake@sandia.gov           
+#                       Greg Sjaardema, gdsjaar@sandia.gov          
+#             Run on    2019/04/25   09:13:18 MDT
+#  *****************************************************************
+
+#  FILE 1: /Users/djlittl/PeridigmCurrent/peridigm/test/verification/InitialDamage/InitialDamage.e
+#   Title: Peridigm
+#          Dim = 3, Blocks = 1, Nodes = 1000, Elements = 1000, Nodesets = 2, Sidesets = 0
+#          Vars: Global = 0, Nodal = 3, Element = 2, Nodeset = 0, Sideset = 0, Times = 10
+
+
+# ==============================================================
+#  NOTE: All node and element ids are reported as global ids.
+
+# NOTES:  - The min/max values are reporting the min/max in absolute value.
+#         - Time values (t) are 1-offset time step numbers.
+#         - Element block numbers are the block ids.
+#         - Node(n) and element(e) numbers are 1-offset.
+
+COORDINATES absolute 1.e-6    # min separation not calculated
+
+TIME STEPS relative 1.e-6 floor 0.0     # min:               0 @ t1 max:           0.009 @ t10
+
+
+# No GLOBAL VARIABLES
+
+NODAL VARIABLES relative 1.e-6 floor 0.0
+	DisplacementX  absolute 1.036379900000e-07    # min:               0 @ t1,n1	max:      0.10363799 @ t10,n91
+	DisplacementY  absolute 1.036379900000e-07    # min:               0 @ t1,n1	max:      0.10363799 @ t10,n901
+	DisplacementZ  absolute 1.036379900000e-07    # min:               0 @ t1,n1	max:      0.10363799 @ t10,n1000
+
+ELEMENT VARIABLES relative 1.e-6 floor 0.0
+	Number_Of_Neighbors  absolute 1.220000000000e-04    # min:              28 @ t1,b1,e1	max:             122 @ t1,b1,e334
+	Damage               absolute 5.800000000000e-07    # min:               0 @ t1,b1,e1	max:            0.58 @ t1,b1,e442
+
+# No NODESET VARIABLES
+
+# No SIDESET VARIABLES
+
+
