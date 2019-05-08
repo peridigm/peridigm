@@ -80,7 +80,8 @@ namespace PeridigmNS {
     //! Returns a vector of field IDs that need to be synchronized across block boundaries and MPI boundaries after initialize().
     virtual std::vector<int> FieldIdsForSynchronizationAfterInitialize() const {
       std::vector<int> fieldIds;
-      fieldIds.push_back(m_weightedVolumeFieldId);
+      if (!m_useAnalyticWeightedVolume)
+        fieldIds.push_back(m_weightedVolumeFieldId);
       return fieldIds;
     }
 
