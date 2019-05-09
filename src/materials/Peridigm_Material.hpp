@@ -58,6 +58,7 @@
 #include "Peridigm_DataManager.hpp"
 #include "Peridigm_SerialMatrix.hpp"
 #include "Peridigm_ScratchMatrix.hpp"
+#include "Peridigm_BoundaryAndInitialConditionManager.hpp"
 
 namespace PeridigmNS {
 
@@ -87,15 +88,18 @@ namespace PeridigmNS {
     //! Returns the shear modulus of the material.
     virtual double ShearModulus() const = 0;
 
-	//! Returns material property value for a given key
-	// Only implemented for multiphysics elastic material
-	virtual double lookupMaterialProperty(const std::string keyname) const {
+    //! Returns material property value for a given key
+    // Only implemented for multiphysics elastic material
+    virtual double lookupMaterialProperty(const std::string keyname) const {
       std::string errorMsg = "**Error, Material::lookupMaterialProperty() called for ";
       errorMsg += Name();
       errorMsg += " but this function is not implemented.\n";
       TEUCHOS_TEST_FOR_EXCEPT_MSG(true, errorMsg);
       return 0.0;
     }
+
+    //! Mechanism allowing material models access to the boundary and initial condition manager
+    virtual void setBCManager(Teuchos::RCP<PeridigmNS::BoundaryAndInitialConditionManager> bc_manager) {}
 
     //! Returns a vector of field IDs corresponding to the variables associated with the material.
     virtual std::vector<int> FieldIds() const = 0;

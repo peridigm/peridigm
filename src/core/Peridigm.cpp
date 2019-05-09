@@ -426,7 +426,9 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
 
     // Instantiate the material model for this block
     Teuchos::RCP<PeridigmNS::Material> materialModel = materialFactory.create(matParams);
+    materialModel->setBCManager(boundaryAndInitialConditionManager);
     blockIt->setMaterialModel(materialModel);
+
 
     // Set the damage model (if any)
     double currentValue = 0.0;

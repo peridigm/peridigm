@@ -149,6 +149,9 @@ PeridigmNS::DiffusionMaterial::computeFluxDivergence(const double dt,
                                                      const int* neighborhoodList,
                                                      PeridigmNS::DataManager& dataManager) const
 {
+  Teuchos::RCP< std::map< std::string, std::vector<int> > > node_sets = bc_manager_->getNodeSets();
+  std::cout << "DEBUGGING number of node sets " << node_sets->size() << std::endl;
+
   // Zero out the flux divergence
   dataManager.getData(m_fluxDivergenceFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
 

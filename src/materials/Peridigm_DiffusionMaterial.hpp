@@ -81,6 +81,9 @@ namespace PeridigmNS {
       return 0.0;
     }
 
+    //! Mechanism allowing material models access to the boundary and initial condition manager
+    virtual void setBCManager(Teuchos::RCP<PeridigmNS::BoundaryAndInitialConditionManager> bc_manager) { bc_manager_ = bc_manager; }
+
     //! Returns a vector of field IDs corresponding to the variables associated with the material.
     virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
@@ -112,6 +115,8 @@ namespace PeridigmNS {
       {
         return ( sqrt( (a1-b1)*(a1-b1) + (a2-b2)*(a2-b2) + (a3-b3)*(a3-b3) ) );
       }
+
+    Teuchos::RCP<PeridigmNS::BoundaryAndInitialConditionManager> bc_manager_;
 
     // material properties
     double m_horizon;
