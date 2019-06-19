@@ -71,7 +71,14 @@ if __name__ == "__main__":
         mesh_file.write(str(datum[0]) + " " + str(datum[1]) + " " + str(datum[2]) + " " + str(datum[3]) + " " + str(datum[4]) + "\n")
     mesh_file.close()
 
+    # Nodeset needed for initial conditions. Nodeset indexed from 1.
+    nodeset_file = open("fragmenting_cylinder_nodeset.txt", 'w')
+    for i in range(len(data)):
+        nodeset_file.write(str(i+1) + "\n")
+    nodeset_file.close()
+
 #    correct_total_volume = (math.pi*cylinder_outer_radius*cylinder_outer_radius - math.pi*cylinder_inner_radius*cylinder_inner_radius)*cylinder_height
 #    print "\nSanity check on volume:", total_volume, "=?", correct_total_volume
 
     print "\nDiscretization written to fragmenting_cylinder.txt\n"
+    print "Node set written to fragmenting_cylinder_nodeset.txt\n"
