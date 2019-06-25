@@ -240,4 +240,61 @@ void PeridigmNS::DirichletIncrementBC::apply(Teuchos::RCP< std::map< std::string
   }
 }
 
+PeridigmNS::NeumannBC::NeumannBC(const string & name_,
+                                 const Teuchos::ParameterList& bcParams_,
+                                 Teuchos::RCP<Epetra_Vector> toVector_,
+                                 Peridigm * peridigm_,
+                                 Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets_)
+: BoundaryCondition(name_,bcParams_,toVector_,peridigm_){
 
+  // create vector with global ids that match those in the node set
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets_->find(nodeSetName) == nodeSets_->end(),
+                              "**** Error in NeumannBC::NeumannBC(), node set not found: " + nodeSetName + "\n");
+
+  vector<int> & nodeList = nodeSets_->find(nodeSetName)->second;
+  Epetra_BlockMap epetraBlockMap(-1,
+                                 nodeList.size(),
+                                 nodeList.data(),
+                                 1,
+                                 0,
+                                 toVector_->Comm());
+  nodalValues = Teuchos::rcp(new Epetra_Vector(epetraBlockMap));
+  nodalValues->PutScalar(0.0);
+
+  Teuchos::RCP<const Epetra_BlockMap> globalOneDimensionalMap = peridigm_->getOneDimensionalMap();
+  Teuchos::RCP<Epetra_Vector> nodeSetFlags = Teuchos::rcp(new Epetra_Vector(*globalOneDimensionalMap));
+  nodeSetFlags->PutScalar(0.0);
+  for(unsigned int i=0; i<nodeList.size(); i++) {
+    int local_id = globalOneDimensionalMap->LID(nodeList[i]);
+    (*nodeSetFlags)[local_id] = 1.0;
+  }
+
+  Teuchos::ParameterList parameterList;
+  PeridigmNS::BlockBase block("NeumanBC_Block", 1, parameterList);
+  block.initialize(peridigm_->getOneDimensionalMap(),
+                   peridigm_->getOneDimensionalOverlapMap(),
+                   peridigm_->getThreeDimensionalMap(),
+                   peridigm_->getThreeDimensionalOverlapMap(),
+                   peridigm_->getBondMap(),
+                   nodeSetFlags,
+                   peridigm->getGlobalNeighborhoodData());
+}
+
+void PeridigmNS::NeumannBC::apply(Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets,
+                                  const double & timeCurrent,
+                                  const double & timePrevious){
+
+  // get the tensor order of the bc field:
+  const int fieldDimension = to_dimension_size(tensorOrder);
+
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSetName) == nodeSets->end(),
+                              "**** Error in NeumannBC::apply(), node set not found: " + nodeSetName + "\n");
+  vector<int> & nodeList = nodeSets->find(nodeSetName)->second;
+  for(unsigned int i=0 ; i<nodeList.size() ; i++){
+    int toVectorLocalNodeID = toVector->Map().LID(nodeList[i]);
+    int nodalValuesLocalNodeID = nodalValues->Map().LID(nodeList[i]);
+    if(toVectorLocalNodeID != -1) {
+      (*toVector)[toVectorLocalNodeID*fieldDimension + coord] = (*nodalValues)[nodalValuesLocalNodeID];
+    }
+  }
+}

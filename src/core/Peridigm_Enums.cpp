@@ -81,6 +81,7 @@ void create_string_maps()
   boundary_condition_string[PRESCRIBED_FLUID_PRESSURE_U]                                  = "PRESCRIBED_FLUID_PRESSURE_U";
   boundary_condition_string[PRESCRIBED_TEMPERATURE]                                       = "PRESCRIBED_TEMPERATURE";
   boundary_condition_string[INITIAL_TEMPERATURE]                                          = "INITIAL_TEMPERATURE";
+  boundary_condition_string[THERMAL_FLUX]                                                 = "THERMAL_FLUX";
   boundary_condition_string[INITIAL_DISPLACEMENT]                                         = "INITIAL_DISPLACEMENT";
   boundary_condition_string[INITIAL_VELOCITY]                                             = "INITIAL_VELOCITY";
   boundary_condition_string[INITIAL_FLUID_PRESSURE_U]                                     = "INITIAL_FLUID_PRESSURE_U";

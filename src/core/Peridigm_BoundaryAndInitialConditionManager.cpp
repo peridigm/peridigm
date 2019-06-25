@@ -72,6 +72,11 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Dis
   bool hasPrescDisp = false;
   bool hasPrescVel = false;
 
+  if(createRankDeficientNodesNodeSet)
+    createRankDeficientBC();
+
+  initializeNodeSets(discretization);
+
   // Load node sets defined in the input deck into the nodeSets container
   for(Teuchos::ParameterList::ConstIterator it = params.begin() ; it != params.end() ; it++){
     string name = it->first;
@@ -153,6 +158,13 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Dis
         boundaryConditions.push_back(bcPtr);
       }
       break;
+      case THERMAL_FLUX:
+      {
+        Teuchos::RCP<Epetra_Vector> toVector = peridigm->getTemperature();
+        bcPtr = Teuchos::rcp(new NeumannBC(name,bcParams,toVector,peridigm,nodeSets));
+        boundaryConditions.push_back(bcPtr);
+      }
+      break;
       case BODY_FORCE:
       {
         Teuchos::RCP<Epetra_Vector> toVector = peridigm->getExternalForce();
@@ -168,11 +180,6 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initialize(Teuchos::RCP<Dis
     }
   }
   TEUCHOS_TEST_FOR_EXCEPTION(hasPrescDisp&&hasPrescVel,std::logic_error,"Error: cannot specify prescribed displacement and velocity boundary conditions");
-
-  if(createRankDeficientNodesNodeSet)
-    createRankDeficientBC();
-
-  initializeNodeSets(discretization);
 }
 
 void PeridigmNS::BoundaryAndInitialConditionManager::createRankDeficientBC()
@@ -332,7 +339,8 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_ComputeRea
 
     if ((boundaryCondition->getType() == PRESCRIBED_DISPLACEMENT && dofManager.displacementTreatedAsUnknown()) ||
        (boundaryCondition->getType() == PRESCRIBED_FLUID_PRESSURE_U && dofManager.pressureTreatedAsUnknown()) ||
-       (boundaryCondition->getType() == PRESCRIBED_TEMPERATURE && dofManager.temperatureTreatedAsUnknown())) {
+       (boundaryCondition->getType() == PRESCRIBED_TEMPERATURE && dofManager.temperatureTreatedAsUnknown()) ||
+       (boundaryCondition->getType() == THERMAL_FLUX && dofManager.temperatureTreatedAsUnknown())) {
 
       int offset = 0;
       if (boundaryCondition->getType() == PRESCRIBED_DISPLACEMENT) {
@@ -341,7 +349,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_ComputeRea
       else if (boundaryCondition->getType() == PRESCRIBED_FLUID_PRESSURE_U) {
         offset = dofManager.pressureDofOffset();
       }
-      else if (boundaryCondition->getType() == PRESCRIBED_TEMPERATURE) {
+      else if (boundaryCondition->getType() == PRESCRIBED_TEMPERATURE || boundaryCondition->getType() == THERMAL_FLUX) {
         offset = dofManager.temperatureDofOffset();
       }
 
@@ -377,7 +385,8 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
 
     if ((boundaryCondition->getType() == PRESCRIBED_DISPLACEMENT && dofManager.displacementTreatedAsUnknown()) ||
        (boundaryCondition->getType() == PRESCRIBED_FLUID_PRESSURE_U && dofManager.pressureTreatedAsUnknown()) ||
-       (boundaryCondition->getType() == PRESCRIBED_TEMPERATURE && dofManager.temperatureTreatedAsUnknown())) {
+       (boundaryCondition->getType() == PRESCRIBED_TEMPERATURE && dofManager.temperatureTreatedAsUnknown()) ||
+       (boundaryCondition->getType() == THERMAL_FLUX && dofManager.temperatureTreatedAsUnknown())) {
 
       int offset = 0;
       if (boundaryCondition->getType() == PRESCRIBED_DISPLACEMENT) {
@@ -386,7 +395,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
       else if (boundaryCondition->getType() == PRESCRIBED_FLUID_PRESSURE_U) {
         offset = dofManager.pressureDofOffset();
       }
-      else if (boundaryCondition->getType() == PRESCRIBED_TEMPERATURE) {
+      else if (boundaryCondition->getType() == PRESCRIBED_TEMPERATURE || boundaryCondition->getType() == THERMAL_FLUX) {
         offset = dofManager.temperatureDofOffset();
       }
 
@@ -427,7 +436,8 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
 
     if ((boundaryCondition->getType() == PRESCRIBED_DISPLACEMENT && dofManager.displacementTreatedAsUnknown()) ||
        (boundaryCondition->getType() == PRESCRIBED_FLUID_PRESSURE_U && dofManager.pressureTreatedAsUnknown()) ||
-       (boundaryCondition->getType() == PRESCRIBED_TEMPERATURE && dofManager.temperatureTreatedAsUnknown())) {
+       (boundaryCondition->getType() == PRESCRIBED_TEMPERATURE && dofManager.temperatureTreatedAsUnknown()) ||
+       (boundaryCondition->getType() == THERMAL_FLUX && dofManager.temperatureTreatedAsUnknown())) {
 
       int offset = 0;
       if (boundaryCondition->getType() == PRESCRIBED_DISPLACEMENT) {
@@ -436,7 +446,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
       else if (boundaryCondition->getType() == PRESCRIBED_FLUID_PRESSURE_U) {
         offset = dofManager.pressureDofOffset();
       }
-      else if (boundaryCondition->getType() == PRESCRIBED_TEMPERATURE) {
+      else if (boundaryCondition->getType() == PRESCRIBED_TEMPERATURE || boundaryCondition->getType() == THERMAL_FLUX) {
         offset = dofManager.temperatureDofOffset();
       }
 

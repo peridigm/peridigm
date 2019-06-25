@@ -816,6 +816,10 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization>
   // used for positions, displacements, velocities and vector constitutive data
   threeDimensionalMap = peridigmDisc->getGlobalOwnedMap(3);
 
+  // threeDimensionalOverlapMap
+  // used for NeumannBC
+  threeDimensionalOverlapMap = peridigmDisc->getGlobalOverlapMap(3);
+
   // unknonwnsMap
   // used for time integrators / solvers
   unknownsMap = Teuchos::rcp(new Epetra_BlockMap(-1,

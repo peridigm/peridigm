@@ -197,6 +197,28 @@ private:
   bool computeChangeRelativeToInitialValue;
 };
 
+class NeumannBC : public BoundaryCondition{
+public:
+
+  //! Constructor.
+  NeumannBC(const string & name_,
+            const Teuchos::ParameterList& bcParams_,
+            Teuchos::RCP<Epetra_Vector> toVector_,
+            Peridigm * peridigm_,
+            Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets_);
+
+  //! Destructor.
+  ~NeumannBC(){}
+
+  //! apply the boundary condition
+  virtual void apply(Teuchos::RCP< std::map< std::string,
+                     std::vector<int> > > nodeSets,
+                     const double & timeCurrent = 0.0,
+                     const double & timePrevious = 0.0);
+
+  Teuchos::RCP<Epetra_Vector> nodalValues;
+};
+
 }
 
 #endif // PERIDIGM_BOUNARYCONDITION_HPP

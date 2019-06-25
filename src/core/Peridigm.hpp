@@ -324,6 +324,7 @@ namespace PeridigmNS {
     Teuchos::RCP<const Epetra_BlockMap> getThreeDimensionalMap() { return threeDimensionalMap; }
     Teuchos::RCP<const Epetra_BlockMap> getBondMap() { return bondMap; }
     Teuchos::RCP<const Epetra_BlockMap> getOneDimensionalOverlapMap() { return oneDimensionalOverlapMap; }
+    Teuchos::RCP<const Epetra_BlockMap> getThreeDimensionalOverlapMap() { return threeDimensionalOverlapMap; }
     //@}
 
     //! @name Accessors for main solver-level vectors
@@ -402,6 +403,7 @@ namespace PeridigmNS {
     Teuchos::RCP<const Epetra_BlockMap> unknownsMap;
     Teuchos::RCP<const Epetra_BlockMap> bondMap;
     Teuchos::RCP<const Epetra_BlockMap> oneDimensionalOverlapMap;
+    Teuchos::RCP<const Epetra_BlockMap> threeDimensionalOverlapMap;
 
     //! Global current time
     double currentTime;
