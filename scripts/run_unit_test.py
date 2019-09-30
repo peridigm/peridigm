@@ -2,13 +2,13 @@
 
 import sys
 import os
-import string
+#import string 
 from subprocess import Popen
 
 if __name__ == "__main__":
 
     executable = sys.argv[-1]
-    base_name = string.splitfields(executable, '/')[-1]
+    base_name = executable.split('/')[-1]
     logfile = open(base_name + ".log", 'w')
 
     if not os.path.exists(executable):

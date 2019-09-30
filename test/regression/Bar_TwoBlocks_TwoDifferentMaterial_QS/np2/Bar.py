@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
     return_code = p.wait()
 
-    print "CODE", return_code
+    print("CODE", return_code)
 
     if return_code != 0:
         result = return_code
