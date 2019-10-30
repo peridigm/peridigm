@@ -278,6 +278,20 @@ PeridigmNS::NeumannBC::NeumannBC(const string & name_,
                    peridigm_->getBondMap(),
                    nodeSetFlags,
                    peridigm->getGlobalNeighborhoodData());
+
+  // In this function:
+  // 1) Set the list of variables that will be allocated in the Block and/or DataManager
+  // 2) Allocate space in the Block and/or DataManager
+  // 3) Store a RCP to the DataManager in the NeumanBC
+
+  // Create a function for updating the values in the NeumannBC
+  // 1) Create a function in the InitialAndBoundarConditionManger to update values in all NeumannBC
+  // 2) Create a function in NeumannBC (this class) to update the nodal values
+  // 3) Call the IniitialAndBoundaryConditionManager function from the proper place in Peridigm.cpp
+  // 4) Note that prior to calling the function for updating the BC, the DataManager that is stored in the NeumannBC
+  //    needs to be updated.  This is the same operation that takes place for the DataManagers in the blocks.  There
+  //    are Import/Export functions on the blocks that copy data from the MotherShip vectors into the DataManager.
+
 }
 
 void PeridigmNS::NeumannBC::apply(Teuchos::RCP< std::map< std::string, std::vector<int> > > nodeSets,

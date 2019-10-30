@@ -61,6 +61,7 @@
 #include <iostream>
 #include <sstream>
 #include <Teuchos_YamlParameterListCoreHelpers.hpp>
+#include <float.h>
 
 void reportExodusError(int errorCode, const char *methodName, const char*exodusMethodName)
 {
@@ -117,6 +118,7 @@ int main(int argc, char *argv[]) {
   std::string output_file_name = mesh_conversion_params.get<std::string>("Output Mesh File");
   bool perform_neighborhood_search = mesh_conversion_params.get<bool>("Perform Neighborhood Search");
   std::string output_neighborhood_file_name = mesh_conversion_params.get<std::string>("Output Neighborhood File", "None");
+  double scale_factor = mesh_conversion_params.get<double>("Scale Factor", 1.0);
 
   Teuchos::RCP<Teuchos::ParameterList> disc_params = Teuchos::rcpFromRef(params->sublist("Discretization", true));
   if(!disc_params->isParameter("Construct Neighborhood Lists")) {
@@ -141,6 +143,55 @@ int main(int argc, char *argv[]) {
   int num_node_sets = nodeSets()->size();
   int num_side_sets = 0;
 
+  // Add boundary layer nodes sets, if requested by user
+  std::map< std::string, std::vector<int> > boundaryLayerNodeSets;
+  if (mesh_conversion_params.isParameter("Boundary Layer Thickness")) {
+    double boundaryLayerThickness = mesh_conversion_params.get<double>("Boundary Layer Thickness");
+
+    // Determine the bounding box
+    double x_min(DBL_MAX), x_max(-DBL_MAX), y_min(DBL_MAX), y_max(-DBL_MAX), z_min(DBL_MAX), z_max(-DBL_MAX);
+    for( int i=0 ; i<num_elements ; i++ ) {
+      int firstPoint = discretization.getInitialX()->Map().FirstPointInElement(i);
+      double x = (*discretization.getInitialX())[firstPoint];
+      double y = (*discretization.getInitialX())[firstPoint+1];
+      double z = (*discretization.getInitialX())[firstPoint+2];
+      if(x < x_min) x_min = x;
+      if(x > x_max) x_max = x;
+      if(y < y_min) y_min = y;
+      if(y > y_max) y_max = y;
+      if(z < z_min) z_min = z;
+      if(z > z_max) z_max = z;
+    }
+
+    // Create boundary layer node sets
+    boundaryLayerNodeSets["min_x_face"] = std::vector<int>();
+    boundaryLayerNodeSets["max_x_face"] = std::vector<int>();
+    boundaryLayerNodeSets["min_y_face"] = std::vector<int>();
+    boundaryLayerNodeSets["max_y_face"] = std::vector<int>();
+    boundaryLayerNodeSets["min_z_face"] = std::vector<int>();
+    boundaryLayerNodeSets["max_z_face"] = std::vector<int>();
+    for( int i=0 ; i<num_elements ; i++ ) {
+      int firstPoint = discretization.getInitialX()->Map().FirstPointInElement(i);
+      double x = (*discretization.getInitialX())[firstPoint];
+      double y = (*discretization.getInitialX())[firstPoint+1];
+      double z = (*discretization.getInitialX())[firstPoint+2];
+      if(x < x_min + boundaryLayerThickness)
+        boundaryLayerNodeSets["min_x_face"].push_back(i);
+      if(x > x_max - boundaryLayerThickness)
+        boundaryLayerNodeSets["max_x_face"].push_back(i);
+      if(y < y_min + boundaryLayerThickness)
+        boundaryLayerNodeSets["min_y_face"].push_back(i);
+      if(y > y_max - boundaryLayerThickness)
+        boundaryLayerNodeSets["max_y_face"].push_back(i);
+      if(z < z_min + boundaryLayerThickness)
+        boundaryLayerNodeSets["min_z_face"].push_back(i);
+      if(z > z_max - boundaryLayerThickness)
+        boundaryLayerNodeSets["max_z_face"].push_back(i);
+    }
+  }
+
+  num_node_sets += boundaryLayerNodeSets.size();
+
   // Default to storing and writing doubles
   int CPU_word_size, IO_word_size;
   CPU_word_size = IO_word_size = sizeof(double);
@@ -155,9 +206,11 @@ int main(int argc, char *argv[]) {
   //writeQARecord(file_handle);
 
   // Write the node sets
-  unsigned int numNodeSets = nodeSets->size();
+  unsigned int numNodeSets = nodeSets->size() + boundaryLayerNodeSets.size();
   int numNodesAcrossAllNodeSets = 0;
   for(nsIt = nodeSets->begin() ; nsIt != nodeSets->end() ; nsIt++)
+    numNodesAcrossAllNodeSets += nsIt->second.size();
+  for(nsIt = boundaryLayerNodeSets.begin() ; nsIt != boundaryLayerNodeSets.end() ; nsIt++)
     numNodesAcrossAllNodeSets += nsIt->second.size();
   std::vector<int> node_set_ids(numNodeSets);
   std::vector<int> num_nodes_per_set(numNodeSets);
@@ -179,6 +232,17 @@ int main(int argc, char *argv[]) {
       node_sets_node_list[offset++] = nodeSet[i] + 1;
     nodeSetIndex += 1;
   }
+  for(nsIt = boundaryLayerNodeSets.begin() ; nsIt != boundaryLayerNodeSets.end() ; nsIt++){
+    std::vector<int>& nodeSet = nsIt->second;
+    node_set_ids[nodeSetIndex] = nodeSetIndex + 1;
+    num_nodes_per_set[nodeSetIndex] = nodeSet.size();
+    num_dist_per_set[nodeSetIndex] = 0;
+    node_sets_node_index[nodeSetIndex] = offset;
+    node_sets_dist_index[nodeSetIndex] = 0;
+    for(unsigned int i=0 ; i<nodeSet.size() ; ++i)
+      node_sets_node_list[offset++] = nodeSet[i] + 1;
+    nodeSetIndex += 1;
+  }
   if(numNodeSets > 0){
     retval = ex_put_concat_node_sets(file_handle,
                                      &node_set_ids[0],
@@ -187,7 +251,7 @@ int main(int argc, char *argv[]) {
                                      &node_sets_node_index[0],
                                      &node_sets_dist_index[0],
                                      &node_sets_node_list[0],
-                                     &node_sets_dist_fact[0]);
+                                     node_sets_dist_fact);
     if (retval!= 0) reportExodusError(retval, "MeshConverter", "ex_put_concat_node_sets");
   }
 
@@ -198,6 +262,8 @@ int main(int argc, char *argv[]) {
     for(unsigned int i=0;i<numNodeSets;i++) node_set_names[i] = new char[MAX_STR_LENGTH+1];
     int index = 0;
     for(nsIt = nodeSets->begin() ; nsIt != nodeSets->end() ; nsIt++)
+      strcpy(node_set_names[index++], nsIt->first.c_str());
+    for(nsIt = boundaryLayerNodeSets.begin() ; nsIt != boundaryLayerNodeSets.end() ; nsIt++)
       strcpy(node_set_names[index++], nsIt->first.c_str());
     retval = ex_put_names(file_handle, EX_NODE_SET, node_set_names);
     if (retval!= 0) reportExodusError(retval, "MeshConverter", "ex_put_names EX_NODE_SET");
@@ -215,9 +281,9 @@ int main(int argc, char *argv[]) {
   double *zcoord_values = &zcoord_values_vec[0];
   for( int i=0 ; i<numMyElements ; i++ ) {
     int firstPoint = discretization.getInitialX()->Map().FirstPointInElement(i);
-    xcoord_values[i] = coord_values[firstPoint];
-    ycoord_values[i] = coord_values[firstPoint+1];
-    zcoord_values[i] = coord_values[firstPoint+2];
+    xcoord_values[i] = scale_factor*coord_values[firstPoint];
+    ycoord_values[i] = scale_factor*coord_values[firstPoint+1];
+    zcoord_values[i] = scale_factor*coord_values[firstPoint+2];
   }
   retval = ex_put_coord(file_handle,xcoord_values,ycoord_values,zcoord_values);
   if (retval!= 0) reportExodusError(retval, "MeshConverter", "ex_put_coord");

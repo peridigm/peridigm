@@ -203,10 +203,31 @@ void PeridigmNS::Discretization::createBondFilters(const Teuchos::RCP<Teuchos::P
 }
 
 int PeridigmNS::Discretization::blockNameToBlockId(string blockName) const {
-  size_t loc = blockName.find_last_of('_');
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(loc == string::npos, "\n**** Parse error, invalid block name: " + blockName + "\n");
-  stringstream blockIDSS(blockName.substr(loc+1, blockName.size()));
-  int bID;
-  blockIDSS >> bID;
+
+  int bID = -1;
+
+  size_t underscore_loc = blockName.find_last_of('_');
+
+  // Dream3D naming convention is GRAIN1_SET
+  size_t prefix_loc = blockName.find_first_of("GRAIN");
+  size_t prefix_len = 5;
+  size_t suffix_loc = blockName.find_last_of("_SET");
+  size_t suffix_len = 4;
+
+  if (prefix_loc != string::npos && suffix_loc != string::npos) {
+    // Dream3D naming convention
+    size_t block_num_len = suffix_loc - suffix_len - prefix_loc - prefix_len + 1;
+    stringstream blockIDSS(blockName.substr(prefix_loc+prefix_len, block_num_len));
+    blockIDSS >> bID;
+  }
+  else if (underscore_loc != string::npos) {
+    // Cubit naming convention
+    stringstream blockIDSS(blockName.substr(underscore_loc+1, blockName.size()));
+    blockIDSS >> bID;
+  }
+  else {
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(underscore_loc == string::npos, "\n**** Parse error, invalid block name: " + blockName + "\n");
+  }
+
   return bID;
 }
