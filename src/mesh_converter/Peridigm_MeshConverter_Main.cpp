@@ -170,23 +170,39 @@ int main(int argc, char *argv[]) {
     boundaryLayerNodeSets["max_y_face"] = std::vector<int>();
     boundaryLayerNodeSets["min_z_face"] = std::vector<int>();
     boundaryLayerNodeSets["max_z_face"] = std::vector<int>();
+    boundaryLayerNodeSets["initial_velocity_node_set"] = std::vector<int>();
     for( int i=0 ; i<num_elements ; i++ ) {
       int firstPoint = discretization.getInitialX()->Map().FirstPointInElement(i);
       double x = (*discretization.getInitialX())[firstPoint];
       double y = (*discretization.getInitialX())[firstPoint+1];
       double z = (*discretization.getInitialX())[firstPoint+2];
-      if(x < x_min + boundaryLayerThickness)
+
+      if(x < x_min + boundaryLayerThickness){
         boundaryLayerNodeSets["min_x_face"].push_back(i);
-      if(x > x_max - boundaryLayerThickness)
+      }
+
+      if(x > x_max - boundaryLayerThickness){
         boundaryLayerNodeSets["max_x_face"].push_back(i);
-      if(y < y_min + boundaryLayerThickness)
+      }
+      else {
+        boundaryLayerNodeSets["initial_velocity_node_set"].push_back(i);
+      }
+
+      if(y < y_min + boundaryLayerThickness){
         boundaryLayerNodeSets["min_y_face"].push_back(i);
-      if(y > y_max - boundaryLayerThickness)
+      }
+
+      if(y > y_max - boundaryLayerThickness){
         boundaryLayerNodeSets["max_y_face"].push_back(i);
-      if(z < z_min + boundaryLayerThickness)
+      }
+
+      if(z < z_min + boundaryLayerThickness){
         boundaryLayerNodeSets["min_z_face"].push_back(i);
-      if(z > z_max - boundaryLayerThickness)
+      }
+
+      if(z > z_max - boundaryLayerThickness){
         boundaryLayerNodeSets["max_z_face"].push_back(i);
+      }
     }
   }
 
