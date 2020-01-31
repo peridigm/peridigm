@@ -52,12 +52,15 @@ namespace CORRESPONDENCE {
 template<typename ScalarT>
 void updateElasticCauchyStress
 (
-const ScalarT* unrotatedRateOfDeformation, 
-const ScalarT* unrotatedCauchyStressN, 
-ScalarT* unrotatedCauchyStressNP1, 
-const int numPoints, 
+const ScalarT* deltaTemperatureN,
+const ScalarT* deltaTemperatureNP1,
+const ScalarT* unrotatedRateOfDeformation,
+const ScalarT* unrotatedCauchyStressN,
+ScalarT* unrotatedCauchyStressNP1,
+const int numPoints,
 const double bulkMod,
 const double shearMod,
+const double alpha,
 const double dt
 );
 

@@ -55,15 +55,21 @@ namespace CORRESPONDENCE {
 template<typename ScalarT>
 void updateElasticCauchyStress
 (
-const ScalarT* unrotatedRateOfDeformation, 
-const ScalarT* unrotatedCauchyStressN, 
-ScalarT* unrotatedCauchyStressNP1, 
-const int numPoints, 
+const ScalarT* deltaTemperatureN,
+const ScalarT* deltaTemperatureNP1,
+const ScalarT* unrotatedRateOfDeformation,
+const ScalarT* unrotatedCauchyStressN,
+ScalarT* unrotatedCauchyStressNP1,
+const int numPoints,
 const double bulkMod,
 const double shearMod,
+const double alpha,
 const double dt
 )
 {
+  const ScalarT* deltaTempN = deltaTemperatureN;
+  const ScalarT* deltaTempNP1 = deltaTemperatureNP1;
+
   // Hooke's law
   const ScalarT* rateOfDef = unrotatedRateOfDeformation;
   const ScalarT* sigmaN = unrotatedCauchyStressN;
@@ -73,7 +79,7 @@ const double dt
   ScalarT strainInc[9];
   ScalarT deviatoricStrainInc[9];
 
-  for(int iID=0 ; iID<numPoints ; ++iID, 
+  for(int iID=0 ; iID<numPoints ; ++iID,
         rateOfDef+=9, sigmaN+=9, sigmaNP1+=9){
 
       //strainInc = dt * rateOfDef
@@ -90,6 +96,13 @@ const double dt
       deviatoricStrainInc[4] -= dilatationInc/3.0;
       deviatoricStrainInc[8] -= dilatationInc/3.0;
 
+      //thermal strains
+      if (deltaTemperatureN && deltaTemperatureNP1) {
+        double thermalStrainN = alpha*deltaTemperatureN[iID];
+        double thermalStrainNP1 = alpha*deltaTemperatureNP1[iID];
+        dilatationInc -= 3.0*(thermalStrainNP1 - thermalStrainN);
+      }
+
       //update stress
       for (int i = 0; i < 9; i++) {
           *(sigmaNP1+i) = *(sigmaN+i) + deviatoricStrainInc[i]*2.0*shearMod;
@@ -104,12 +117,15 @@ const double dt
 // Explicit template instantiation for double
 template void updateElasticCauchyStress<double>
 (
-const double* unrotatedRateOfDeformation, 
-const double* unrotatedCauchyStressN, 
-double* unrotatedCauchyStressNP1, 
-int numPoints, 
+const double* deltaTemperatureN,
+const double* deltaTemperatureNP1,
+const double* unrotatedRateOfDeformation,
+const double* unrotatedCauchyStressN,
+double* unrotatedCauchyStressNP1,
+int numPoints,
 double bulkMod,
 double shearMod,
+double alpha,
 double dt
 );
 
