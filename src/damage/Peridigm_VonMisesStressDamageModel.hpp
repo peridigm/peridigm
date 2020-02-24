@@ -1,4 +1,4 @@
-/*! \file Peridigm_ModelEvaluator.hpp */
+/*! \file Peridigm_VonMisesStressDamageModel.hpp */
 
 //@HEADER
 // ************************************************************************
@@ -45,53 +45,70 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef PERIDIGM_MODELEVALUATOR_HPP
-#define PERIDIGM_MODELEVALUATOR_HPP
+#ifndef PERIDIGM_VONMISESSTRESSDAMAGEMODEL_HPP
+#define PERIDIGM_VONMISESSTRESSDAMAGEMODEL_HPP
 
-#include "Peridigm_ContactManager.hpp"
-#include "Peridigm_Block.hpp"
+#include "Peridigm_DamageModel.hpp"
+#include <Teuchos_RCP.hpp>
+#include <Teuchos_ParameterList.hpp>
+#include <Epetra_Vector.h>
+#include <Epetra_Map.h>
 
 namespace PeridigmNS {
 
-  //! Structure for passing data between Peridigm and the computational routines
-  struct Workset {
-    Workset() {}
-    double timeStep;
-    Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks;
-    Teuchos::RCP< PeridigmNS::ContactManager > contactManager;
-    Teuchos::RCP<PeridigmNS::Material::JacobianType> jacobianType;
-    Teuchos::RCP< PeridigmNS::SerialMatrix > jacobian;
-  };
-
-  //! The main ModelEvaluator class; provides the interface between the driver code and the computational routines.
-  class ModelEvaluator {
+  //! Base class defining the Peridigm damage model interface.
+  class VonMisesStressDamageModel : public DamageModel{
 
   public:
+	
+    //! Standard constructor.
+    VonMisesStressDamageModel(const Teuchos::ParameterList& params);
 
-    //! Constructor
-    ModelEvaluator();
+    //! Destructor.
+    virtual ~VonMisesStressDamageModel();
 
-    //! Destructor
-	virtual ~ModelEvaluator();
+    //! Return name of the model.
+    virtual std::string Name() const { return("Von Mises Stress"); }
 
-    //! Model evaluation that acts directly on the workset
-    void evalModel(Teuchos::RCP<Workset> workset) const;
+    //! Returns a vector of field IDs corresponding to the variables associated with the model.
+    virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
-    //! Jacobian evaluation that acts directly on the workset
-    void evalJacobian(Teuchos::RCP<Workset> workset) const;
+    //! Initialize the damage model.
+    virtual void
+    initialize(const double dt,
+               const int numOwnedPoints,
+               const int* ownedIDs,
+               const int* neighborhoodList,
+               PeridigmNS::DataManager& dataManager) const ;
 
-    void computeVelocityGradient(Teuchos::RCP<Workset> workset) const;
-    
-    void computeBondVelocityGradient(Teuchos::RCP<Workset> workset) const;
+    //! Evaluate the damage
+    virtual void
+    computeDamage(const double dt,
+                  const int numOwnedPoints,
+                  const int* ownedIDs,
+                  const int* neighborhoodList,
+                  PeridigmNS::DataManager& dataManager) const ;
 
-  private:
+  protected:
 
-    //! Private to prohibit copying
-    ModelEvaluator(const ModelEvaluator&);
+    double m_thresholdDamage;
+    double m_criticalDamage;
+    double m_criticalVonMisesStress;
+    double m_criticalDamageToNeglectMaterialPoint;
 
-    //! Private to prohibit copying
-    ModelEvaluator& operator=(const ModelEvaluator&);
-  };
+    // field ids for all relevant data
+    std::vector<int> m_fieldIds;
+    int m_flyingPointFlagFieldId;
+    int m_bondDamageFieldId;
+    int m_bondLevelVonMisesStressFieldId;
+    int m_brokenBondVolumeAveragedFieldId;
+    int m_horizonFieldId;
+    int m_volumeFieldId;
+    int m_coordinatesFieldId;
+    int m_jacobianDeterminantFieldId;
+    int m_undamagedWeightedVolumeFieldId;
+ };
+
 }
 
-#endif // PERIDIGM_MODELEVALUATOR_HPP
+#endif // PERIDIGM_VONMISESSTRESSDAMAGEMODEL_HPP
