@@ -133,7 +133,14 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
     fluidPressureUFieldId(-1),
     fluidPressureVFieldId(-1),
     fluidFlowDensityFieldId(-1),
-    numMultiphysDoFs(0)
+    numMultiphysDoFs(0),
+    analysisHasBondAssociatedHypoelasticModel(false),
+    damageFieldId(-1),
+    jacobianDeterminantFieldId(-1),
+    weightedVolumeFieldId(-1),
+    velocityGradientXFieldId(-1),
+    velocityGradientYFieldId(-1),
+    velocityGradientZFieldId(-1)
 {
 #ifdef HAVE_MPI
   peridigmComm = Teuchos::rcp(new Epetra_MpiComm(comm));
@@ -255,6 +262,10 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
   if(peridigmParams->isParameter("Optimization Based Coupling"))
     allocateTangent = true;
 
+  // For the sake of the bond-associated hypoelastic model
+  if(peridigmParams->isParameter("Enable Bond-Associated Hypoelastic Model"))
+    analysisHasBondAssociatedHypoelasticModel = peridigmParams->get<bool>("Enable Bond-Associated Hypoelastic Model") == true;
+
   // If a discretization was passed into the constructor, use it.  This is done for code coupling with Albany.
   // If not, create one based on the Discretization ParameterList in the input deck.
   Teuchos::RCP<Discretization> peridigmDiscretization = inputPeridigmDiscretization;
@@ -312,6 +323,12 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
   forceDensityFieldId                = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force_Density");
   contactForceDensityFieldId         = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Contact_Force_Density");
   externalForceDensityFieldId        = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "External_Force_Density");
+  damageFieldId                      = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Damage");
+  jacobianDeterminantFieldId         = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Jacobian_Determinant");
+  weightedVolumeFieldId              = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Undamaged_Weighted_Volume");
+  velocityGradientXFieldId           = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::VECTOR, PeridigmField::CONSTANT, "Velocity_Gradient_X");
+  velocityGradientYFieldId           = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::VECTOR, PeridigmField::CONSTANT, "Velocity_Gradient_Y");
+  velocityGradientZFieldId           = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::VECTOR, PeridigmField::CONSTANT, "Velocity_Gradient_Z");
 
   // Create field ids that may be required for output
   fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Proc_Num");
@@ -472,6 +489,14 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
     auxiliaryFieldIds.push_back(fluidPressureYFieldId);
     auxiliaryFieldIds.push_back(fluidPressureUFieldId);
 		auxiliaryFieldIds.push_back(fluidPressureVFieldId);
+  }
+  if(analysisHasBondAssociatedHypoelasticModel) {
+    auxiliaryFieldIds.push_back(damageFieldId);
+    auxiliaryFieldIds.push_back(jacobianDeterminantFieldId);
+    auxiliaryFieldIds.push_back(weightedVolumeFieldId);
+    auxiliaryFieldIds.push_back(velocityGradientXFieldId);
+    auxiliaryFieldIds.push_back(velocityGradientYFieldId);
+    auxiliaryFieldIds.push_back(velocityGradientZFieldId);
   }
   if(computeIntersections){
     int tempFieldId;
@@ -838,6 +863,8 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization>
   bool initializeToZero = true;
   if(analysisHasMultiphysics)
     numOneDimensionalMothershipVectors += 7;
+  if(analysisHasBondAssociatedHypoelasticModel)
+    numOneDimensionalMothershipVectors += 3;
 
   oneDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*oneDimensionalMap, numOneDimensionalMothershipVectors, initializeToZero));
   blockIDs = Teuchos::rcp((*oneDimensionalMothership)(0), false);                    // block ID
@@ -857,9 +884,27 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization>
     fluidPressureDeltaU = Teuchos::rcp((*oneDimensionalMothership)(13), false);  // fluid pressure displacement analogue increment
     fluidDensity = Teuchos::rcp((*oneDimensionalMothership)(14), false); 		     // fluid density at a node
     fluidCompressibility = Teuchos::rcp((*oneDimensionalMothership)(15), false); // fluid compressibility at a node
+    if(analysisHasBondAssociatedHypoelasticModel){
+      damage = Teuchos::rcp((*oneDimensionalMothership)(16), false);              // damage
+      jacobianDeterminant = Teuchos::rcp((*oneDimensionalMothership)(17), false); // jacobian determinant (J)
+      weightedVolume = Teuchos::rcp((*oneDimensionalMothership)(18), false);      // weighted volume
+      damage->PutScalar(0.0);
+      jacobianDeterminant->PutScalar(1.0);
+    }
+  }
+  if(analysisHasBondAssociatedHypoelasticModel){
+    damage = Teuchos::rcp((*oneDimensionalMothership)(9), false);              // damage
+    jacobianDeterminant = Teuchos::rcp((*oneDimensionalMothership)(10), false); // jacobian determinant (J)
+    weightedVolume = Teuchos::rcp((*oneDimensionalMothership)(11), false);      // weighted volume
+    damage->PutScalar(0.0);
+    jacobianDeterminant->PutScalar(1.0);
   }
 
-  threeDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalMap, 10, initializeToZero));
+  int numThreeDimensionalMothershipVectors = 10;
+  if(analysisHasBondAssociatedHypoelasticModel)
+    numThreeDimensionalMothershipVectors += 3;
+
+  threeDimensionalMothership = Teuchos::rcp(new Epetra_MultiVector(*threeDimensionalMap, numThreeDimensionalMothershipVectors, initializeToZero));
   x = Teuchos::rcp((*threeDimensionalMothership)(0), false);             // initial positions
   u = Teuchos::rcp((*threeDimensionalMothership)(1), false);             // displacement
   y = Teuchos::rcp((*threeDimensionalMothership)(2), false);             // current positions
@@ -870,6 +915,11 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization>
   externalForce = Teuchos::rcp((*threeDimensionalMothership)(7), false); // external force
   deltaU = Teuchos::rcp((*threeDimensionalMothership)(8), false);        // increment in displacement (used only for implicit time integration)
   scratch = Teuchos::rcp((*threeDimensionalMothership)(9), false);       // scratch space
+  if(analysisHasBondAssociatedHypoelasticModel){
+    velocityGradientX = Teuchos::rcp((*threeDimensionalMothership)(10), false);  // velocity gradient XX XY XZ (L)
+    velocityGradientY = Teuchos::rcp((*threeDimensionalMothership)(11), false); // velocity gradient YX YY YZ (L)
+    velocityGradientZ = Teuchos::rcp((*threeDimensionalMothership)(12), false); // velocity gradient ZX ZY ZZ (L)
+  }
 
   unknownsMothership = Teuchos::rcp(new Epetra_MultiVector(*unknownsMap, 5, initializeToZero));
   unknownsU = Teuchos::rcp((*unknownsMothership)(0), false);             // abstract displacement
@@ -1355,10 +1405,71 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     blockIt->importData(temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
     blockIt->importData(concentration, concentrationFieldId, PeridigmField::STEP_NP1, Insert);
+    if(analysisHasBondAssociatedHypoelasticModel){
+      blockIt->importData(damage, damageFieldId, PeridigmField::STEP_N, Insert); // Note that damage lags one step in the model evaluation
+      blockIt->importData(jacobianDeterminant, jacobianDeterminantFieldId, PeridigmField::STEP_N, Insert); // Note that J lags one step in the model evaluation
+    }
   }
   if(analysisHasContact)
     contactManager->importData(volume, y, v);
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+
+  if(analysisHasBondAssociatedHypoelasticModel){
+    PeridigmNS::Timer::self().startTimer("Internal Force");
+    modelEvaluator->computeVelocityGradient(workset);
+    PeridigmNS::Timer::self().stopTimer("Internal Force");
+    
+    // Copy data from mothership vectors to overlap vectors in data manager
+    PeridigmNS::Timer::self().startTimer("Gather/Scatter");
+    jacobianDeterminant->PutScalar(0.0);
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+      scalarScratch->PutScalar(0.0);
+      blockIt->exportData(scalarScratch, jacobianDeterminantFieldId, PeridigmField::STEP_NP1, Add);
+      jacobianDeterminant->Update(1.0, *scalarScratch, 1.0);
+    }
+    weightedVolume->PutScalar(0.0);
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+      scalarScratch->PutScalar(0.0);
+      blockIt->exportData(scalarScratch, weightedVolumeFieldId, PeridigmField::STEP_NONE, Add);
+      weightedVolume->Update(1.0, *scalarScratch, 1.0);
+    }
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+      blockIt->importData(weightedVolume, weightedVolumeFieldId, PeridigmField::STEP_NONE, Insert); 
+    }
+    velocityGradientX->PutScalar(0.0);
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+      scratch->PutScalar(0.0);
+      blockIt->exportData(scratch, velocityGradientXFieldId, PeridigmField::STEP_NONE, Add);
+      velocityGradientX->Update(1.0, *scratch, 1.0);
+    }
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+      blockIt->importData(velocityGradientX, velocityGradientXFieldId, PeridigmField::STEP_NONE, Insert); 
+    }
+    velocityGradientY->PutScalar(0.0);
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+      scratch->PutScalar(0.0);
+      blockIt->exportData(scratch, velocityGradientYFieldId, PeridigmField::STEP_NONE, Add);
+      velocityGradientY->Update(1.0, *scratch, 1.0);
+    }
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+      blockIt->importData(velocityGradientY, velocityGradientYFieldId, PeridigmField::STEP_NONE, Insert); 
+    }
+    velocityGradientZ->PutScalar(0.0);
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+      scratch->PutScalar(0.0);
+      blockIt->exportData(scratch, velocityGradientZFieldId, PeridigmField::STEP_NONE, Add);
+      velocityGradientZ->Update(1.0, *scratch, 1.0);
+    }
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+      blockIt->importData(velocityGradientZ, velocityGradientZFieldId, PeridigmField::STEP_NONE, Insert); 
+    }
+    PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+
+    // Compute bond-level velocity gradient
+    PeridigmNS::Timer::self().startTimer("Internal Force");
+    modelEvaluator->computeBondVelocityGradient(workset);
+    PeridigmNS::Timer::self().stopTimer("Internal Force");
+  }
 
   // Load the data manager with data from disk, if requested
   if(analysisHasDataLoader){
@@ -1385,6 +1496,14 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
   if(analysisHasContact){
     contactManager->exportData(contactForce);
     force->Update(1.0, *contactForce, 1.0);
+  }
+  if(analysisHasBondAssociatedHypoelasticModel){
+    damage->PutScalar(0.0);
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+      scalarScratch->PutScalar(0.0);
+      blockIt->exportData(scalarScratch, damageFieldId, PeridigmField::STEP_NP1, Add);
+      damage->Update(1.0, *scalarScratch, 1.0);
+    }
   }
   PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
@@ -1490,6 +1609,10 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
       blockIt->importData(deltaTemperature, deltaTemperatureFieldId, PeridigmField::STEP_NP1, Insert);
       blockIt->importData(temperature, temperatureFieldId, PeridigmField::STEP_NP1, Insert);
       blockIt->importData(concentration, concentrationFieldId, PeridigmField::STEP_NP1, Insert);
+      if(analysisHasBondAssociatedHypoelasticModel){
+        blockIt->importData(damage, damageFieldId, PeridigmField::STEP_N, Insert); // Note that damage lags one step in the model evaluation
+        blockIt->importData(jacobianDeterminant, jacobianDeterminantFieldId, PeridigmField::STEP_N, Insert); // Note that J lags one step in the model evaluation
+      }
     }
     if(analysisHasContact){
       for(contactBlockIt = contactBlocks->begin() ; contactBlockIt != contactBlocks->end() ; contactBlockIt++){
@@ -1503,6 +1626,62 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     }
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
+    if(analysisHasBondAssociatedHypoelasticModel){
+      PeridigmNS::Timer::self().startTimer("Internal Force");
+      modelEvaluator->computeVelocityGradient(workset);
+      PeridigmNS::Timer::self().stopTimer("Internal Force");
+      
+      // Copy data from mothership vectors to overlap vectors in data manager
+      PeridigmNS::Timer::self().startTimer("Gather/Scatter");
+      jacobianDeterminant->PutScalar(0.0);
+      for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+        scalarScratch->PutScalar(0.0);
+        blockIt->exportData(scalarScratch, jacobianDeterminantFieldId, PeridigmField::STEP_NP1, Add);
+        jacobianDeterminant->Update(1.0, *scalarScratch, 1.0);
+      }
+      weightedVolume->PutScalar(0.0);
+      for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+        scalarScratch->PutScalar(0.0);
+        blockIt->exportData(scalarScratch, weightedVolumeFieldId, PeridigmField::STEP_NONE, Add);
+        weightedVolume->Update(1.0, *scalarScratch, 1.0);
+      }
+      for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+        blockIt->importData(weightedVolume, weightedVolumeFieldId, PeridigmField::STEP_NONE, Insert); 
+      }
+      velocityGradientX->PutScalar(0.0);
+      for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+        scratch->PutScalar(0.0);
+        blockIt->exportData(scratch, velocityGradientXFieldId, PeridigmField::STEP_NONE, Add);
+        velocityGradientX->Update(1.0, *scratch, 1.0);
+      }
+      for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+        blockIt->importData(velocityGradientX, velocityGradientXFieldId, PeridigmField::STEP_NONE, Insert); 
+      }
+      velocityGradientY->PutScalar(0.0);
+      for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+        scratch->PutScalar(0.0);
+        blockIt->exportData(scratch, velocityGradientYFieldId, PeridigmField::STEP_NONE, Add);
+        velocityGradientY->Update(1.0, *scratch, 1.0);
+      }
+      for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+        blockIt->importData(velocityGradientY, velocityGradientYFieldId, PeridigmField::STEP_NONE, Insert); 
+      }
+      velocityGradientZ->PutScalar(0.0);
+      for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+        scratch->PutScalar(0.0);
+        blockIt->exportData(scratch, velocityGradientZFieldId, PeridigmField::STEP_NONE, Add);
+        velocityGradientZ->Update(1.0, *scratch, 1.0);
+      }
+      for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+        blockIt->importData(velocityGradientZ, velocityGradientZFieldId, PeridigmField::STEP_NONE, Insert); 
+      }
+      PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+
+      // Compute bond-level velocity gradient
+      PeridigmNS::Timer::self().startTimer("Internal Force");
+      modelEvaluator->computeBondVelocityGradient(workset);
+      PeridigmNS::Timer::self().stopTimer("Internal Force");
+    }
     // Load the data manager with data from disk, if requested
     if(analysisHasDataLoader){
       PeridigmNS::Timer::self().startTimer("Data Loader");
@@ -1522,6 +1701,14 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
       scratch->PutScalar(0.0);
       blockIt->exportData(scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
       force->Update(1.0, *scratch, 1.0);
+    }
+    if(analysisHasBondAssociatedHypoelasticModel){
+      damage->PutScalar(0.0);
+      for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+        scalarScratch->PutScalar(0.0);
+        blockIt->exportData(scalarScratch, damageFieldId, PeridigmField::STEP_NP1, Add);
+        damage->Update(1.0, *scalarScratch, 1.0);
+      }
     }
     PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
