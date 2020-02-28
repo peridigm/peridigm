@@ -1,10 +1,10 @@
-#NetCDF
+# NetCDF
 
 [NetCDF](https://github.com/Unidata/netcdf-c/releases) is required by the Trilinos SEACAS package. 
 Prior to compiling NetCDF, it is recommended that you modify the file netcdf.h to better support 
 large-scale Peridigm simulations, as described below.
 
-An example build process for NetCDF:
+An example build process for [NetCDF](https://github.com/Unidata/netcdf-c/releases):
 
 
 ````

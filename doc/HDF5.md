@@ -1,8 +1,8 @@
 ## HDF5
 
-HDF5 is required by NetCDF and the SEACAS Trilinos package. HDF5 should be configured with the `--enable-parallel` option.
+[HDF5](https://www.hdfgroup.org/solutions/hdf5) is required by NetCDF and the SEACAS Trilinos package. HDF5 should be configured with the `--enable-parallel` option.
 
-An example build process for HDF5:
+An example build process for [HDF5](https://www.hdfgroup.org/solutions/hdf5):
 
 ````
 # Set environment variables for MPI compilers
