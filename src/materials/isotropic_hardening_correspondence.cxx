@@ -221,7 +221,7 @@ const double dt
           deviatoricStressMagnitudeN = sqrt(tempScalar);
 
           //Solve for deltaLambda
-          deltaLambda = (6.0 * scalarDeviatoricStrainInc * shearMod - 3.0 * 
+          deltaLambda = (6.0 * scalarDeviatoricStrainInc * shearMod + 3.0 * 
               deviatoricStressMagnitudeN  - sqrt(6.0) * reducedYieldStress) /
               (2.0 * (hardMod + 3.0 * shearMod));
 
