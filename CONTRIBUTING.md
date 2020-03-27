@@ -58,4 +58,4 @@ Well done, you are now a Peridigm contributor!
 
 ---
 
-**IMPORTANT:** By submitting a patch, you agree to allow the project owners to license your work under the terms of the [Peridigm License](https://peridigm.sandia.gov/content/license).
+**IMPORTANT:** By submitting a patch, you agree to allow the project owners to license your work under the terms of the [Peridigm License](https://github.com/peridigm/peridigm/blob/master/LICENSE.md).

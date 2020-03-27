@@ -1,0 +1,2 @@
+add_test (ThermalExpansionCubeElasticCorrespondence_np1 python ./np1/ThermalExpansionCubeElasticCorrespondence.py)
+add_test (ThermalExpansionCubeElasticCorrespondence_np4 python ./np4/ThermalExpansionCubeElasticCorrespondence.py)

@@ -51,6 +51,8 @@
 #include "Peridigm_UserDefinedTimeDependentCriticalStretchDamageModel.hpp"
 #include "Peridigm_InterfaceAwareDamageModel.hpp"
 #include "Peridigm_InitialDamageModel.hpp"
+#include "Peridigm_JohnsonCookDamageModel.hpp"
+#include "Peridigm_VonMisesStressDamageModel.hpp"
 
 using namespace std;
 
@@ -69,6 +71,10 @@ PeridigmNS::DamageModelFactory::create(const Teuchos::ParameterList& damageModel
     damageModel = Teuchos::rcp( new UserDefinedTimeDependentCriticalStretchDamageModel(damageModelParams) );
   else if(damageModelName == "Initial Damage")
     damageModel = Teuchos::rcp( new InitialDamageModel(damageModelParams) );
+  else if(damageModelName == "Johnson Cook")
+    damageModel = Teuchos::rcp( new JohnsonCookDamageModel(damageModelParams) );  
+  else if(damageModelName == "Von Mises Stress")
+    damageModel = Teuchos::rcp( new VonMisesStressDamageModel(damageModelParams) );  
   else {
     string invalidDamageModel("\n**** Unrecognized damage model type: ");
     invalidDamageModel += damageModelName;

@@ -51,6 +51,7 @@
 #include <Teuchos_Assert.hpp>
 #include <Epetra_SerialComm.h>
 #include <cmath>
+#include <correspondence.h> // For the semi-Lagrangian (Hypoelastic) models
 
 using namespace std;
 

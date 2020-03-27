@@ -1,8 +1,8 @@
-#Trilinos
+# Trilinos
 
 A number of [Trilinos](https://trilinos.org/) packages are required by Peridigm. The Trilinos source code distribution includes the full set of Trilinos packages, each of which may be activated or deactivated using CMake build options, as described below. It is recommended that Makefiles be created by running `cmake` from the command line, as opposed to using the `ccmake` GUI.
 
-For additional details on obtaining, configuring, and building Trilinos, please visit the Trilinos website.
+For additional details on obtaining, configuring, and building Trilinos, please visit the [Trilinos website](https://trilinos.github.io).
 
 Below is an example CMake configuration script for Trilinos. Note that the option `-std=c++11` within the `CMAKE_CXX_FLAGS` list is specific to compilers that support C++11 features. A compiler that is C++11 compliant (e.g., GCC 4.7.2 or later) is required for recent versions of Trilinos.
 

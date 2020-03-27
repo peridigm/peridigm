@@ -8,14 +8,50 @@ The 2012 [Peridigm Users' Guide](http://www.sandia.gov/~djlittl/docs/PeridigmV1.
 
 Peridigm development began under the Physics & Engineering Models element of the US DOE's Advanced Simulation and Computing (ASC) program.  The project was led by Michael Parks and managed by John Aidun.  Subsequent funding has been provided by the US DOE through the ASC, ASCR, and LDRD programs.
 
+## Examples
+<table>
+  <tr><td>
+    <img width="1500" alt="Impact and Brittle Fracture" src="https://github.com/peridigm/peridigm/blob/master/doc/slide-image-1.jpg"/>
+  </td><td>
+    The simulation of impact and brittle fracture displayed here was achieved using explicit transient dynamics, the linear peridynamic solid constitutive model, short-range force contact, and a critical stretch bond failure law.  Peridynamics provides a natural framework for capturing pervasive material failure and fracture.
+  </td></tr>
+  <tr><td>
+    <img width="1500" alt="Tensile Test Simulation" src="https://github.com/peridigm/peridigm/blob/master/doc/slide-image-2.jpg"/>
+  </td><td>
+    Peridigm is capable of performing explicit dynamic, implicit dynamic, and quasi-static time integration.  The tensile test simulation presented here was attained using an elastic correspondence constitutive model and quasi-static time integration.  Pre- and post-processing were carried out using Sandia's Cubit mesh generator and ParaView visualization code.
+  </td></tr>
+  <tr><td>
+    <img width="1500" alt="Fragmentation of an Expanding Cylinder" src="https://github.com/peridigm/peridigm/blob/master/doc/slide-image-3.jpg"/>
+  </td><td>
+    The fragmentation of an expanding cylinder, shown here, was simulated using the linear peridynamic solid constitutive model and critical-stretch bond failure rule.  Initial velocities for each node in the discretization were specified via user-supplied analytic expressions.  Peridigm utilizes the RTCompiler function parser to process C-style expressions for the specification of input parameters, including intial and boundary conditions.
+  </td></tr>
+</table>
 
 ## Getting Started
 
-Peridigm is a C++ code intended for use on Mac and Linux operating systems.  Both Peridigm and the Trilinos libraries it depends on should be built using MPI compilers and the [CMake](http://www.cmake.org/) build system.  The Peridigm test harness requires python.  The build process has been tested using gcc and Intel compilers, Open MPI, and MPICH.  The steps below should be followed in order, beginning with installation of the required third-party libraries.
+Peridigm is a C++ code intended for use on Mac and Linux operating systems.  Both Peridigm and the Trilinos libraries it depends on should be built using MPI compilers and the [CMake](http://www.cmake.org/) build system.  The Peridigm test harness requires [python](https://www.python.org).  The build process has been tested using gcc and Intel compilers, Open MPI, and MPICH.  The steps below should be followed in order, beginning with installation of the required third-party libraries.
 
  * [Installing Third-Party Packages and Libraries](https://github.com/peridigm/peridigm/blob/master/doc/InstallingThirdPartyLibs.md)
-
  * [Building Peridigm](https://github.com/peridigm/peridigm/blob/master/doc/BuildingPeridigm.md)
-
  * [Running Simulations with Peridigm](https://github.com/peridigm/peridigm/blob/master/doc/RunningSimulations.md)
 
+## Team
+
+The following individuals have made significant contributions to the Peridigm code:
+*  [Michael Parks](https://cfwebprod.sandia.gov/cfdocs/CompResearch/templates/insert/profile.cfm?snl_id=109440&ename=Parks,+Michael+L.) ([@mlparks](https://github.com/mlparks))
+*  [David Littlewood](https://cfwebprod.sandia.gov/cfdocs/CompResearch/templates/insert/profile.cfm?snl_id=195431&ename=Littlewood,+David+John) ([@djlittl](https://github.com/jdlittl))
+*  [John Mitchell](https://cfwebprod.sandia.gov/cfdocs/CompResearch/templates/insert/profile.cfm?snl_id=13850&ename=Mitchell,+John+A.) ([@jamitch-snl](https://github.com/jamitch-snl))
+*  [Stewart Silling](http://www.sandia.gov/~sasilli/)
+*  [John Aidun](http://www.cs.sandia.gov/materials_methods/)
+*  [Daniel Turner](https://cfwebprod.sandia.gov/cfdocs/CompResearch/templates/insert/profile.cfm?snl_id=121696&ename=Turner,+Daniel+Z.)
+*  [John Foster](http://idl.utsa.edu/jtfoster/) ([@johntfoster](https://github.com/johntfoster))
+
+## Citing
+
+When citing Peridigm, please reference the following:
+
+M.L. Parks, D.J. Littlewood, J.A. Mitchell, and S.A. Silling, Peridigm Users' Guide, Tech. Report SAND2012-7800, Sandia National Laboratories, 2012.
+
+## License
+
+See [our license information](https://github.com/peridigm/peridigm/blob/master/LICENSE.md).
