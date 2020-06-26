@@ -31,6 +31,7 @@ add_subdirectory(ElasticCorrespondenceFullyPrescribedTension)
 add_subdirectory(ElasticHypoelasticCorrespondenceFullyPrescribedTension)
 add_subdirectory(SimpleImplicitDiffusion)
 add_subdirectory(DiffusionImprovedQuadrature)
+add_subdirectory(InterfaceAwareDamageModel)
 
 add_custom_target( vtest
    COMMAND ctest

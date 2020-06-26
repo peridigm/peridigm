@@ -1,0 +1,5 @@
+add_test (InterfaceAwareDamageModelOneBlockNP1 python ./np1/InterfaceAwareDamageModelOneBlock.py)
+add_test (InterfaceAwareDamageModelTwoBlocksSameValuesNP1 python ./np1/InterfaceAwareDamageModelTwoBlocksSameValues.py)
+add_test (InterfaceAwareDamageModelTwoBlocksDifferentValuesNP1 python ./np1/InterfaceAwareDamageModelTwoBlocksDifferentValues.py)
+add_test (InterfaceAwareDamageModelTwoBlocksDifferentValuesNP2 python ./np2/InterfaceAwareDamageModelTwoBlocksDifferentValues.py)
+add_test (InterfaceAwareDamageModelTwoBlocksDifferentValuesNP3 python ./np3/InterfaceAwareDamageModelTwoBlocksDifferentValues.py)

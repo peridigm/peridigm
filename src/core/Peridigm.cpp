@@ -735,8 +735,18 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
   dataManagerSynchronizer.initialize(oneDimensionalMap, threeDimensionalMap);
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++) {
     std::vector<int> fieldIdsForSynchronizationAfterInitialize = blockIt->getMaterialModel()->FieldIdsForSynchronizationAfterInitialize();
+    string damageModelName = blockIt->getDamageModelName();
+    if(damageModelName != "None"){
+      std::vector<int> damageModelFieldIds = blockIt->getDamageModel()->FieldIdsForSynchronizationAfterInitialize();
+      fieldIdsForSynchronizationAfterInitialize.insert( fieldIdsForSynchronizationAfterInitialize.end(), damageModelFieldIds.begin(), damageModelFieldIds.end() );
+    }
     dataManagerSynchronizer.setFieldIdsToSynchronizeAfterInitialize(fieldIdsForSynchronizationAfterInitialize);
+
     std::vector<int> fieldIdsForSynchronizationAfterPrecompute = blockIt->getMaterialModel()->FieldIdsForSynchronizationAfterPrecompute();
+    if(damageModelName != "None"){
+      std::vector<int> damageModelFieldIds = blockIt->getDamageModel()->FieldIdsForSynchronizationAfterPrecompute();
+      fieldIdsForSynchronizationAfterPrecompute.insert( fieldIdsForSynchronizationAfterPrecompute.end(), damageModelFieldIds.begin(), damageModelFieldIds.end() );
+    }
     dataManagerSynchronizer.setFieldIdsToSynchronizeAfterPrecompute(fieldIdsForSynchronizationAfterPrecompute);
   }
   dataManagerSynchronizer.checkFieldValidity(blocks);
