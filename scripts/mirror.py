@@ -17,12 +17,12 @@ class OutOfSourceSymlinks():
 		# note default exclusions above
 		for o, a in opts:
 			if o=="-s" and src:
-				print "symlinks ERROR"
+				print("symlinks ERROR")
 				sys.exit("option [-s source directory] can only occur once on command line")
 			elif o=="-s":
 				src=a
 			elif o=="-b" and bin:
-				print "symlinks ERROR"
+				print("symlinks ERROR")
 				sys.exit("option [-b binary directory] can only occur once on command line")
 			elif o=="-b":
 				bin=a
@@ -34,7 +34,7 @@ class OutOfSourceSymlinks():
 				usage()
 				sys.exit(0)
 			else:
-				print "ERROR: invalid option(s)"
+				print("ERROR: invalid option(s)")
 				usage()
 				sys.exit(2)
 		self._src = src
@@ -44,12 +44,12 @@ class OutOfSourceSymlinks():
 		self._exclude_dirs =exclude_dirs
 
 	def mirror(self):
-		print 'Mirroring directory structure (with FILE links ONLY) from \'dirs\' in \'src\' to \'dirs\' in \'bin\''
-		print 'src = ',self._src
-		print 'bin = ',self._bin
-		print 'dirs = ',self._dirs
-		print 'exclude directories = ',self._exclude_dirs
-		print 'exclude files = ',self._exclude_files
+		print('Mirroring directory structure (with FILE links ONLY) from \'dirs\' in \'src\' to \'dirs\' in \'bin\'')
+		print('src = ',self._src)
+		print('bin = ',self._bin)
+		print('dirs = ',self._dirs)
+		print('exclude directories = ',self._exclude_dirs)
+		print('exclude files = ',self._exclude_files)
 
 		# loop over input dirs and create structure
                 num_removed_links = 0
@@ -58,7 +58,7 @@ class OutOfSourceSymlinks():
 			bin_dir=os.path.join(self._bin,d)
 			num_removed_links += mirror(src_dir,bin_dir,self._exclude_dirs,self._exclude_files)
 
-		print 'total number of symbolic links removed/replaced =',num_removed_links,'\n'
+		print('total number of symbolic links removed/replaced =',num_removed_links,'\n')
 
 def mirror(src,bin,exclude_dirs,exclude_files):
 
@@ -140,7 +140,7 @@ def main():
 
 
 def usage():
-	print """
+	print("""
 	
 	Name: cmake_symlinks.py
 	
@@ -162,7 +162,7 @@ def usage():
 		$cmake_symlinks.py  -s /home/awesome/c++/eclipseProjects/binary \\
 		          -b /home/awesome/c++/eclipseProjects/pimp.build \\ 
 		          -d operator -d intrepid -d operator/unitTests -e build.home.sh
-	"""
+	""")
 	
 if __name__=='__main__':
 	main()
