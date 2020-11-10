@@ -182,11 +182,11 @@ PeridigmNS::UserDefinedTimeDependentShortRangeForceContactModel::computeForce(co
       for(iNID=0 ; iNID<numNeighbors ; ++iNID){
         neighborID = contactNeighborhoodList[neighborhoodListIndex++];
         TEUCHOS_TEST_FOR_EXCEPT_MSG(neighborID < 0, "Invalid neighbor list\n");
-	currentDistanceSquared =  distanceSquared(nodeCurrentX[0], nodeCurrentX[1], nodeCurrentX[2],
-						  y[neighborID*3], y[neighborID*3+1], y[neighborID*3+2]);
+        currentDistanceSquared =  distanceSquared(nodeCurrentX[0], nodeCurrentX[1], nodeCurrentX[2],
+                                                  y[neighborID*3], y[neighborID*3+1], y[neighborID*3+2]);
         if(currentDistanceSquared < contactRadiusSquared){
-	  currentDistance = distance(nodeCurrentX[0], nodeCurrentX[1], nodeCurrentX[2],
-				     y[neighborID*3], y[neighborID*3+1], y[neighborID*3+2]);
+          currentDistance = distance(nodeCurrentX[0], nodeCurrentX[1], nodeCurrentX[2],
+                                     y[neighborID*3], y[neighborID*3+1], y[neighborID*3+2]);
           c = 9.0*m_springConstant/(pi*m_horizon*m_horizon*m_horizon*m_horizon);	// half value (of 18) due to force being applied to both nodes
           temp = c*(m_contactRadius - currentDistance)/m_horizon;
           neighborVolume = cellVolume[neighborID];

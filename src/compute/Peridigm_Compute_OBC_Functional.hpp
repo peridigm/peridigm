@@ -62,11 +62,11 @@ namespace PeridigmNS {
   class Compute_OBC_Functional : public PeridigmNS::Compute {
 
   public:
-	
+
     //! Standard constructor.
-    Compute_OBC_Functional( Teuchos::RCP<const Teuchos::ParameterList> params,
-			    Teuchos::RCP<const Epetra_Comm> epetraComm_,
-			    Teuchos::RCP<const Teuchos::ParameterList> computeClassGlobalData_);
+    Compute_OBC_Functional(Teuchos::RCP<const Teuchos::ParameterList> params,
+                           Teuchos::RCP<const Epetra_Comm> epetraComm_,
+                           Teuchos::RCP<const Teuchos::ParameterList> computeClassGlobalData_);
 
     //! Destructor.
     ~Compute_OBC_Functional();

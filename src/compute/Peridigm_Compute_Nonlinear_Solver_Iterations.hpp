@@ -62,7 +62,7 @@ namespace PeridigmNS {
   class Compute_Nonlinear_Solver_Iterations : public PeridigmNS::Compute {
 
   public:
-	
+
     //! Standard constructor.
     Compute_Nonlinear_Solver_Iterations( Teuchos::RCP<const Teuchos::ParameterList> params,
                                          Teuchos::RCP<const Epetra_Comm> epetraComm_,

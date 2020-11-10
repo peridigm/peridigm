@@ -60,7 +60,7 @@ PeridigmNS::DiscretizationFactory::DiscretizationFactory(const Teuchos::RCP<Teuc
   // or if a mesh file has been supplied
   if(!discParams->isParameter("Type")){
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
-					   "Discretization not specified, \"Exodus\" or \"PdQuickGrid\" required.");
+      "Discretization not specified, \"Exodus\" or \"PdQuickGrid\" required.");
   }
 
 }
@@ -73,17 +73,17 @@ PeridigmNS::DiscretizationFactory::create(const Teuchos::RCP<const Epetra_Comm>&
   string type = discParams->get<string>("Type");
 
   if(type == "Exodus"){
-	discretization = Teuchos::rcp(new PeridigmNS::ExodusDiscretization(epetra_comm, discParams));
+    discretization = Teuchos::rcp(new PeridigmNS::ExodusDiscretization(epetra_comm, discParams));
   }
   else if(type == "Text File"){
-	discretization = Teuchos::rcp(new PeridigmNS::TextFileDiscretization(epetra_comm, discParams));
+    discretization = Teuchos::rcp(new PeridigmNS::TextFileDiscretization(epetra_comm, discParams));
   }
   else if(type == "PdQuickGrid"){
-	discretization = Teuchos::rcp(new PeridigmNS::PdQuickGridDiscretization(epetra_comm, discParams));
+    discretization = Teuchos::rcp(new PeridigmNS::PdQuickGridDiscretization(epetra_comm, discParams));
   }
   else{
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
-		       "**** Invalid discretization type.  Valid types are \"Exodus\", \"Text File\", and \"PdQuickGrid\".\n");
+      "**** Invalid discretization type.  Valid types are \"Exodus\", \"Text File\", and \"PdQuickGrid\".\n");
   }
  
   return discretization;
@@ -98,11 +98,11 @@ PeridigmNS::DiscretizationFactory::create(const Teuchos::RCP<const Epetra_Comm>&
   string type = discParams->get<string>("Type");
 
   if(type == "PdQuickGrid"){
-	discretization = Teuchos::rcp(new PeridigmNS::PdQuickGridDiscretization(epetra_comm, decomp));
+    discretization = Teuchos::rcp(new PeridigmNS::PdQuickGridDiscretization(epetra_comm, decomp));
   }
   else{
     TEUCHOS_TEST_FOR_EXCEPTION(true, Teuchos::Exceptions::InvalidParameter, 
-					   "Invalid type for construction of discretization from PdGridData object.  Valid type is \"PdQuickGrid\"");
+      "Invalid type for construction of discretization from PdGridData object.  Valid type is \"PdQuickGrid\"");
   }
  
   return discretization;

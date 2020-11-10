@@ -62,7 +62,7 @@ namespace PeridigmNS {
   class Compute_Angular_Momentum : public PeridigmNS::Compute {
 
   public:
-	
+
     //! Constructor.
     Compute_Angular_Momentum(Teuchos::RCP<const Teuchos::ParameterList> params,
                              Teuchos::RCP<const Epetra_Comm> epetraComm_,

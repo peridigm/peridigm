@@ -60,7 +60,7 @@ FinitePlane::FinitePlane(double normal[3], double lowerLeftCorner[3], double bot
 : n(normal), r0(lowerLeftCorner), ub(bottom_UnitVector), ua(cross(ub,n)), a(lengthA), b(lengthBottom)
 {}
 
-int FinitePlane::bondIntersectInfinitePlane(const double *p0, const double *p1, double&t, double x[3]) {
+  int FinitePlane::bondIntersectInfinitePlane(const double *p0, const double *p1, double&t, double x[3]) {
 
   double numerator   = (r0[0] - p0[0]) * n[0] + (r0[1] - p0[1]) * n[1] + (r0[2] - p0[2]) * n[2];
   double denominator = (p1[0] - p0[0]) * n[0] + (p1[1] - p0[1]) * n[1] + (p1[2] - p0[2]) * n[2];
@@ -93,62 +93,62 @@ int FinitePlane::bondIntersectInfinitePlane(const double *p0, const double *p1, 
 }
 
 bool FinitePlane::bondIntersect(double x[3], double tolerance) {
-	double zero=tolerance;
-	double one = 1.0+zero;
-	bool intersects = false;
-	Vector3D r(x);
-	Vector3D dr(minus(r,r0));
-	double aa=dot(dr,ua);
-	double bb=dot(dr,ub);
-	if(-zero<aa && aa/a<one && -zero<bb && bb/b<one)
-		intersects=true;
-	return intersects;
+  double zero=tolerance;
+  double one = 1.0+zero;
+  bool intersects = false;
+  Vector3D r(x);
+  Vector3D dr(minus(r,r0));
+  double aa=dot(dr,ua);
+  double bb=dot(dr,ub);
+  if(-zero<aa && aa/a<one && -zero<bb && bb/b<one)
+    intersects=true;
+  return intersects;
 }
 
 void BondFilterDefault::filterBonds(std::vector<int>& treeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool *bondFlags) {
 
-	bool *flagIter = bondFlags;
-	for(unsigned int n=0;n<treeList.size();n++,flagIter++){
-		/*
-		 * If we want to include 'x' then we do not mark
-		 */
-		if(includeSelf) continue;
+  bool *flagIter = bondFlags;
+  for(unsigned int n=0;n<treeList.size();n++,flagIter++){
+    /*
+     * If we want to include 'x' then we do not mark
+     */
+    if(includeSelf) continue;
 
-		size_t uid = treeList[n];
-		if(ptLocalId==uid) *flagIter=1;
-	}
+    size_t uid = treeList[n];
+    if(ptLocalId==uid) *flagIter=1;
+  }
 
 }
 
 void FinitePlaneFilter::filterBonds(std::vector<int>& treeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool *bondFlags) {
 
-	/*
-	 * Create bond points
-	 */
-	const double *p0 = pt;
-	const double *p1;
-	double x[3], t;
-	bool *flagIter = bondFlags;
-	for(unsigned int p=0;p<treeList.size();p++,flagIter++){
-		/*
-		 * Local id of point within neighborhood
-		 */
-      size_t uid = treeList[p];
-		/*
-		 * We mark points only if we do not want to include them
-		 */
-		if(ptLocalId==uid && !includeSelf) {
-			*flagIter=1;
-			continue;
-		}
+  /*
+   * Create bond points
+   */
+  const double *p0 = pt;
+  const double *p1;
+  double x[3], t;
+  bool *flagIter = bondFlags;
+  for(unsigned int p=0;p<treeList.size();p++,flagIter++){
+    /*
+     * Local id of point within neighborhood
+     */
+    size_t uid = treeList[p];
+    /*
+     * We mark points only if we do not want to include them
+     */
+    if(ptLocalId==uid && !includeSelf) {
+      *flagIter=1;
+      continue;
+    }
 
-		/*
-		 * Now run plane filter
-		 */
-		p1 = xOverlap+(3*uid);
-		if( 0 != plane.bondIntersectInfinitePlane(p0,p1,t,x) && plane.bondIntersect(x,tolerance) ){
-			*flagIter=1;
-		}
+    /*
+     * Now run plane filter
+     */
+    p1 = xOverlap+(3*uid);
+    if( 0 != plane.bondIntersectInfinitePlane(p0,p1,t,x) && plane.bondIntersect(x,tolerance) ){
+      *flagIter=1;
+    }
 	}
 }
 

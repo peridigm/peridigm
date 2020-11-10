@@ -62,7 +62,7 @@ namespace PeridigmNS {
   class Compute_Stored_Elastic_Energy_Density : public PeridigmNS::Compute {
 
   public:
-	
+
     //! Constructor.
     Compute_Stored_Elastic_Energy_Density( Teuchos::RCP<const Teuchos::ParameterList> params,
                                            Teuchos::RCP<const Epetra_Comm> epetraComm_,

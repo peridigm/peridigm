@@ -74,7 +74,7 @@ namespace PeridigmNS {
     //! Write to all output managers in container
     void write(Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, double current_time) {
       std::vector< Teuchos::RCP< PeridigmNS::OutputManager > >::iterator it;
-      for ( it=outputManagers.begin() ; it < outputManagers.end(); it++ )
+      for( it=outputManagers.begin() ; it < outputManagers.end(); it++ )
         (*it)->write(blocks, current_time);
     }
 
@@ -82,7 +82,7 @@ namespace PeridigmNS {
     //  for the sake of reducing load step size in Adaptive Quasi-static
     void multiplyOutputFrequency(double multiplier){
       std::vector< Teuchos::RCP< PeridigmNS::OutputManager > >::iterator it;
-      for ( it=outputManagers.begin() ; it < outputManagers.end(); it++ )
+      for( it=outputManagers.begin() ; it < outputManagers.end(); it++ )
         (*it)->multiplyOutputFrequency(multiplier);
     }
 
@@ -90,7 +90,7 @@ namespace PeridigmNS {
     //  for the sake of switch from Quasi-static to explicit solver
     void changeOutputFrequency(int output_frequency){
       std::vector< Teuchos::RCP< PeridigmNS::OutputManager > >::iterator it;
-      for ( it=outputManagers.begin() ; it < outputManagers.end(); it++ )
+      for( it=outputManagers.begin() ; it < outputManagers.end(); it++ )
         (*it)->changeOutputFrequency(output_frequency);
     }
 

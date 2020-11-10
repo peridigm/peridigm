@@ -59,22 +59,22 @@ namespace PeridigmNS {
   class ContactModel{
 
   public:
-	
-	//! Standard constructor.
-	ContactModel(const Teuchos::ParameterList & params){}
 
-	//! Destructor.
-	virtual ~ContactModel(){}
+  //! Standard constructor.
+  ContactModel(const Teuchos::ParameterList & params){}
 
-	//! Return name of contact model
+  //! Destructor.
+  virtual ~ContactModel(){}
+
+  //! Return name of contact model
     virtual std::string Name() const = 0;
 
-    //! Returns a vector of field IDs corresponding to the variables associated with the model.
-    virtual std::vector<int> FieldIds() const = 0;
+  //! Returns a vector of field IDs corresponding to the variables associated with the model.
+  virtual std::vector<int> FieldIds() const = 0;
 
-	//! Evaluate the forces on the cells
-	virtual void
-	computeForce(const double dt,
+  //! Evaluate the forces on the cells
+  virtual void
+  computeForce(const double dt,
                  const int numOwnedPoints,
                  const int* ownedIDs,
                  const int* contactNeighborhoodList,
@@ -84,9 +84,9 @@ namespace PeridigmNS {
     evaluateParserFriction(double & currentValue, double & previousValue, const double & timeCurrent=0.0, const double & timePrevious=0.0) = 0;          
            
   private:
-	
-	//! Default constructor with no arguments, private to prevent use.
-	ContactModel(){}
+
+  //! Default constructor with no arguments, private to prevent use.
+  ContactModel(){}
   };
 }
 

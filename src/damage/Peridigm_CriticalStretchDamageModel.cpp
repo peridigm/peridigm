@@ -95,13 +95,13 @@ PeridigmNS::CriticalStretchDamageModel::initialize(const double dt,
   int neighborhoodListIndex = 0;
   int bondIndex = 0;
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
-	int nodeID = ownedIDs[iID];
+    int nodeID = ownedIDs[iID];
     damage[nodeID] = 0.0;
-	int numNeighbors = neighborhoodList[neighborhoodListIndex++];
+    int numNeighbors = neighborhoodList[neighborhoodListIndex++];
     neighborhoodListIndex += numNeighbors;
-	for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
+    for(int iNID=0 ; iNID<numNeighbors ; ++iNID){
       bondDamage[bondIndex++] = 0.0;
-	}
+    }
   }
 }
 
@@ -134,16 +134,16 @@ PeridigmNS::CriticalStretchDamageModel::computeDamage(const double dt,
   // Break bonds if the extension is greater than the critical extension
 
   for(iID=0 ; iID<numOwnedPoints ; ++iID){
-	nodeId = ownedIDs[iID];
-	nodeInitialX[0] = x[nodeId*3];
-	nodeInitialX[1] = x[nodeId*3+1];
-	nodeInitialX[2] = x[nodeId*3+2];
-	nodeCurrentX[0] = y[nodeId*3];
-	nodeCurrentX[1] = y[nodeId*3+1];
-	nodeCurrentX[2] = y[nodeId*3+2];
-	numNeighbors = neighborhoodList[neighborhoodListIndex++];
-	for(iNID=0 ; iNID<numNeighbors ; ++iNID){
-	  neighborID = neighborhoodList[neighborhoodListIndex++];
+    nodeId = ownedIDs[iID];
+    nodeInitialX[0] = x[nodeId*3];
+    nodeInitialX[1] = x[nodeId*3+1];
+    nodeInitialX[2] = x[nodeId*3+2];
+    nodeCurrentX[0] = y[nodeId*3];
+    nodeCurrentX[1] = y[nodeId*3+1];
+    nodeCurrentX[2] = y[nodeId*3+2];
+    numNeighbors = neighborhoodList[neighborhoodListIndex++];
+    for(iNID=0 ; iNID<numNeighbors ; ++iNID){
+      neighborID = neighborhoodList[neighborhoodListIndex++];
       initialDistance = 
         distance(nodeInitialX[0], nodeInitialX[1], nodeInitialX[2],
                  x[neighborID*3], x[neighborID*3+1], x[neighborID*3+2]);
@@ -168,17 +168,17 @@ PeridigmNS::CriticalStretchDamageModel::computeDamage(const double dt,
   neighborhoodListIndex = 0;
   bondIndex = 0;
   for(iID=0 ; iID<numOwnedPoints ; ++iID){
-	nodeId = ownedIDs[iID];
-	numNeighbors = neighborhoodList[neighborhoodListIndex++];
+    nodeId = ownedIDs[iID];
+    numNeighbors = neighborhoodList[neighborhoodListIndex++];
     neighborhoodListIndex += numNeighbors;
-	totalDamage = 0.0;
-	for(iNID=0 ; iNID<numNeighbors ; ++iNID){
-	  totalDamage += bondDamageNP1[bondIndex++];
-	}
-	if(numNeighbors > 0)
-	  totalDamage /= numNeighbors;
-	else
-	  totalDamage = 0.0;
- 	damage[nodeId] = totalDamage;
+    totalDamage = 0.0;
+    for(iNID=0 ; iNID<numNeighbors ; ++iNID){
+      totalDamage += bondDamageNP1[bondIndex++];
+    }
+    if(numNeighbors > 0)
+      totalDamage /= numNeighbors;
+    else
+      totalDamage = 0.0;
+    damage[nodeId] = totalDamage;
   }
 }

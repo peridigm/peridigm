@@ -67,42 +67,42 @@ namespace MATERIAL_EVALUATION {
 template<typename ScalarT>
 ScalarT computeDeviatoricForceStateNorm
 (
-		int numNeigh,
-		ScalarT theta,
-		const int *neighPtr,
-		const double *bondDamage,
-		const double *deviatoricPlasticExtensionState,
-		const double *X,
-		const ScalarT *Y,
-		const double *xOverlap,
-		const ScalarT *yOverlap,
-		const double *volumeOverlap,
-		double alpha,
-		double OMEGA
+    int numNeigh,
+    ScalarT theta,
+    const int *neighPtr,
+    const double *bondDamage,
+    const double *deviatoricPlasticExtensionState,
+    const double *X,
+    const ScalarT *Y,
+    const double *xOverlap,
+    const ScalarT *yOverlap,
+    const double *volumeOverlap,
+    double alpha,
+    double OMEGA
 );
 
 template<typename ScalarT>
 void computeInternalForceIsotropicElasticPlastic
 (
-		const double* xOverlap,
-		const ScalarT* yNP1Overlap,
-		const double* mOwned,
-		const double* volumeOverlap,
-		const ScalarT* dilatationOwned,
-		const double* bondDamage,
-		const double* deviatoricPlasticExtensionStateN,
-		ScalarT* deviatoricPlasticExtensionStateNp1,
-		const double* lambdaN,
-		ScalarT* lambdaNP1,
-		ScalarT* fInternalOverlap,
-		const int* localNeighborList,
-		int numOwnedPoints,
-		double BULK_MODULUS,
-		double SHEAR_MODULUS,
-		double HORIZON,
-		double yieldStress,
-		bool isPlanarProblem,
-		double thickness
+    const double* xOverlap,
+    const ScalarT* yNP1Overlap,
+    const double* mOwned,
+    const double* volumeOverlap,
+    const ScalarT* dilatationOwned,
+    const double* bondDamage,
+    const double* deviatoricPlasticExtensionStateN,
+    ScalarT* deviatoricPlasticExtensionStateNp1,
+    const double* lambdaN,
+    ScalarT* lambdaNP1,
+    ScalarT* fInternalOverlap,
+    const int* localNeighborList,
+    int numOwnedPoints,
+    double BULK_MODULUS,
+    double SHEAR_MODULUS,
+    double HORIZON,
+    double yieldStress,
+    bool isPlanarProblem,
+    double thickness
 );
 
 }

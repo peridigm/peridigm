@@ -94,7 +94,7 @@ int PeridigmNS::Compute_Linear_Momentum::computeLinearMomentum( Teuchos::RCP< st
     volume          = blockIt->getData(m_volumeFieldId, PeridigmField::STEP_NONE);
     velocity        = blockIt->getData(m_velocityFieldId, PeridigmField::STEP_NP1);
     linear_momentum = blockIt->getData(m_linearMomentumFieldId, PeridigmField::STEP_NONE);
-	
+
     // Sanity check
     if ( (velocity->Map().NumMyElements() != volume->Map().NumMyElements()) )
     {
@@ -103,7 +103,7 @@ int PeridigmNS::Compute_Linear_Momentum::computeLinearMomentum( Teuchos::RCP< st
     }
 
     *linear_momentum = *velocity;
- 	
+
     // Collect values
     double *volume_values = volume->Values();
     double *velocity_values = velocity->Values();
@@ -114,7 +114,7 @@ int PeridigmNS::Compute_Linear_Momentum::computeLinearMomentum( Teuchos::RCP< st
     linear_momentum_x = linear_momentum_y = linear_momentum_z = 0.0;
 
     double density = blockIt->getMaterialModel()->Density();
-    
+
     // volume is a scalar and force a vector, so maps are different; must do multiplication on per-element basis
     int numElements = numOwnedPoints;  	
     for (int i=0;i<numElements;i++) 
@@ -150,14 +150,14 @@ int PeridigmNS::Compute_Linear_Momentum::computeLinearMomentum( Teuchos::RCP< st
   }
 
 /*
-	if ((params, epetraComm)->MyPID() == 0)
-	{
-	std::cout << "Hello!" << std::endl;
+  if ((params, epetraComm)->MyPID() == 0)
+  {
+  std::cout << "Hello!" << std::endl;
 
-	std::cout << "Total Linear Momentum =  " << "("  << globalLinearMomentum[0]
+  std::cout << "Total Linear Momentum =  " << "("  << globalLinearMomentum[0]
                                                  << ", " << globalLinearMomentum[1]
                                                  << ", " << globalLinearMomentum[2] << ")" << std::endl;
-	}
+  }
 */
 
   // Store global energy in block (block globals are static, so only need to assign data to first block)

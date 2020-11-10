@@ -51,8 +51,8 @@
 #include "Peridigm_Field.hpp"
 
 PeridigmNS::Compute_OBC_Functional::Compute_OBC_Functional(Teuchos::RCP<const Teuchos::ParameterList> params,
-							   Teuchos::RCP<const Epetra_Comm> epetraComm_,
-							   Teuchos::RCP<const Teuchos::ParameterList> computeClassGlobalData_)
+                                                           Teuchos::RCP<const Epetra_Comm> epetraComm_,
+                                                           Teuchos::RCP<const Teuchos::ParameterList> computeClassGlobalData_)
   : Compute(params, epetraComm_, computeClassGlobalData_), m_obcFunctionalFieldId(-1)
 {
   FieldManager& fieldManager = FieldManager::self();

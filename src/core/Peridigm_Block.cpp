@@ -130,9 +130,9 @@ PeridigmNS::DataManagerSynchronizer& PeridigmNS::DataManagerSynchronizer::self()
 void PeridigmNS::DataManagerSynchronizer::initialize(Teuchos::RCP<const Epetra_BlockMap> oneDimensionalMap,
                                                      Teuchos::RCP<const Epetra_BlockMap> threeDimensionalMap) {
   scalarScratch = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
-  scalarSum = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
+  scalarSum     = Teuchos::rcp(new Epetra_Vector(*oneDimensionalMap));
   vectorScratch = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
-  vectorSum = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
+  vectorSum     = Teuchos::rcp(new Epetra_Vector(*threeDimensionalMap));
 }
 
 void PeridigmNS::DataManagerSynchronizer::setFieldIdsToSynchronizeAfterInitialize(std::vector<int>& fieldIds)

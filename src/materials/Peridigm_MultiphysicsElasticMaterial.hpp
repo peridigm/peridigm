@@ -57,7 +57,7 @@ namespace PeridigmNS {
   class MultiphysicsElasticMaterial : public Material{
   public:
 
-	//! Constructor.
+    //! Constructor.
     MultiphysicsElasticMaterial(const Teuchos::ParameterList & params);
 
     //! Destructor.
@@ -84,8 +84,8 @@ namespace PeridigmNS {
     //! Returns a vector of field IDs corresponding to the variables associated with the material.
     virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
-		//! Returns the requested material property
-		virtual double lookupMaterialProperty(const std::string keyname) const;
+    //! Returns the requested material property
+    virtual double lookupMaterialProperty(const std::string keyname) const;
 
     //! Initialized data containers and computes weighted volume.
     virtual void
@@ -98,9 +98,9 @@ namespace PeridigmNS {
     //! Evaluate the internal force.
     virtual void
     computeForce(const double dt,
-		 const int numOwnedPoints,
-		 const int* ownedIDs,
-		 const int* neighborhoodList,
+                 const int numOwnedPoints,
+                 const int* ownedIDs,
+                 const int* neighborhoodList,
                  PeridigmNS::DataManager& dataManager) const;
 
     //! Compute stored elastic density energy.
@@ -150,7 +150,7 @@ namespace PeridigmNS {
     bool m_applySurfaceCorrectionFactor;
     bool m_applyThermalStrains;
     PeridigmNS::InfluenceFunction::functionPointer m_OMEGA;
-		std::map<std::string, double> materialProperties;
+    std::map<std::string, double> materialProperties;
 
     // field spec ids for all relevant data
     std::vector<int> m_fieldIds;
@@ -166,18 +166,18 @@ namespace PeridigmNS {
     int m_temperatureFieldId;
     int m_deltaTemperatureFieldId;
 
-		// multiphysics specific
-		int m_fluidPressureYFieldId;
-		int m_fluidFlowDensityFieldId;
-	  double m_fluidPermeabilityScalar;
-		double m_fluidDensity;
-		double m_fluidCompressibility;
-		double m_fluidDynamicViscosity;
-		double m_fluidLinearThermalExpansionCoef;
-		double m_fluidReynoldsViscosityTemperatureEffect;
-		double m_permeabilityCurveInflectionDamage;
-		double m_maxPermeability;
-		double m_permeabilityAlpha;
+    // multiphysics specific
+    int m_fluidPressureYFieldId;
+    int m_fluidFlowDensityFieldId;
+    double m_fluidPermeabilityScalar;
+    double m_fluidDensity;
+    double m_fluidCompressibility;
+    double m_fluidDynamicViscosity;
+    double m_fluidLinearThermalExpansionCoef;
+    double m_fluidReynoldsViscosityTemperatureEffect;
+    double m_permeabilityCurveInflectionDamage;
+    double m_maxPermeability;
+    double m_permeabilityAlpha;
   };
 }
 

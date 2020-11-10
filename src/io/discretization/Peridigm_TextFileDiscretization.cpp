@@ -365,19 +365,19 @@ PeridigmNS::TextFileDiscretization::createMaps(const QUICKGRID::Data& decomp)
 void
 PeridigmNS::TextFileDiscretization::createNeighborhoodData(const QUICKGRID::Data& decomp)
 {
-   neighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
-   neighborhoodData->SetNumOwned(decomp.numPoints);
-   memcpy(neighborhoodData->OwnedIDs(), 
- 		 Discretization::getLocalOwnedIds(decomp, *oneDimensionalOverlapMap).get(),
- 		 decomp.numPoints*sizeof(int));
-   memcpy(neighborhoodData->NeighborhoodPtr(), 
- 		 decomp.neighborhoodPtr.get(),
- 		 decomp.numPoints*sizeof(int));
-   neighborhoodData->SetNeighborhoodListSize(decomp.sizeNeighborhoodList);
-   memcpy(neighborhoodData->NeighborhoodList(),
- 		 Discretization::getLocalNeighborList(decomp, *oneDimensionalOverlapMap).get(),
- 		 decomp.sizeNeighborhoodList*sizeof(int));
-   neighborhoodData = filterBonds(neighborhoodData);
+  neighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
+  neighborhoodData->SetNumOwned(decomp.numPoints);
+  memcpy(neighborhoodData->OwnedIDs(), 
+         Discretization::getLocalOwnedIds(decomp, *oneDimensionalOverlapMap).get(),
+         decomp.numPoints*sizeof(int));
+  memcpy(neighborhoodData->NeighborhoodPtr(), 
+         decomp.neighborhoodPtr.get(),
+         decomp.numPoints*sizeof(int));
+  neighborhoodData->SetNeighborhoodListSize(decomp.sizeNeighborhoodList);
+  memcpy(neighborhoodData->NeighborhoodList(),
+         Discretization::getLocalNeighborList(decomp, *oneDimensionalOverlapMap).get(),
+         decomp.sizeNeighborhoodList*sizeof(int));
+  neighborhoodData = filterBonds(neighborhoodData);
 }
 
 Teuchos::RCP<PeridigmNS::NeighborhoodData>
@@ -431,11 +431,11 @@ PeridigmNS::TextFileDiscretization::filterBonds(Teuchos::RCP<PeridigmNS::Neighbo
   int unfilteredNeighborhoodListIndex(0);
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
     int blockID = static_cast<int>(blockIDs[iID]);
-	int numUnfilteredNeighbors = unfilteredNeighborhoodList[unfilteredNeighborhoodListIndex++];
+    int numUnfilteredNeighbors = unfilteredNeighborhoodList[unfilteredNeighborhoodListIndex++];
     unsigned int numNeighborsIndex = neighborhoodListVec.size();
     neighborhoodListVec.push_back(-1); // placeholder for number of neighbors
     int numNeighbors = 0;
-	for(int iNID=0 ; iNID<numUnfilteredNeighbors ; ++iNID){
+    for(int iNID=0 ; iNID<numUnfilteredNeighbors ; ++iNID){
       int unfilteredNeighborID = unfilteredNeighborhoodList[unfilteredNeighborhoodListIndex++];
       int unfilteredNeighborBlockID = static_cast<int>(blockIDs[unfilteredNeighborID]);
       if(blockBondingMatrix[blockID-1][unfilteredNeighborBlockID-1] == true){

@@ -63,7 +63,7 @@ namespace PeridigmNS {
   class Compute_Error : public PeridigmNS::Compute {
 
   public:
-	
+
     //! Standard constructor.
     Compute_Error(Teuchos::RCP<const Teuchos::ParameterList> params,
                   Teuchos::RCP<const Epetra_Comm> epetraComm_,

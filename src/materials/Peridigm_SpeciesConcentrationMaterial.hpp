@@ -55,7 +55,7 @@ namespace PeridigmNS {
   class SpeciesConcentrationMaterial : public Material{
   public:
 
-	//! Constructor.
+    //! Constructor.
     SpeciesConcentrationMaterial(const Teuchos::ParameterList & params);
 
     //! Destructor.
