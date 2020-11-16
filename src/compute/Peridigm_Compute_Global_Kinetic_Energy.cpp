@@ -62,7 +62,7 @@ PeridigmNS::Compute_Global_Kinetic_Energy::~Compute_Global_Kinetic_Energy(){}
 //! Compute the global kinetic energy
 int PeridigmNS::Compute_Global_Kinetic_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const
 {
-  	bool storeLocal = false;
-  	int result = computeKineticEnergy(blocks, storeLocal);
-  	return result;
+  bool storeLocal = false;
+  int result = computeKineticEnergy(blocks, storeLocal);
+  return result;
 }

@@ -58,25 +58,26 @@ namespace MATERIAL_EVALUATION {
  *   * edbNP1 -- deviatoric back strain at end of step
  */
 void computeInternalForceViscoelasticStandardLinearSolid
-  (double delta_t,
-   const double *xOverlap,
-   const double *yNOverlap,
-   const double *yNP1Overlap,
-   const double *mOwned,
-   const double* volumeOverlap,
-   const double* dilatationOwnedN,
-   const double* dilatationOwnedNp1,
-   const double* bondDamage,
-   const double *edbN,
-   double *edbNP1,
-   double *fInternalOverlap,
-   const int*  localNeighborList,
-   int numOwnedPoints,
-   double m_bulkModulus,
-   double m_shearModulus,
-   double m_lambda_i,
-   double m_tau_b_i
-   );
+(
+    double delta_t,
+    const double *xOverlap,
+    const double *yNOverlap,
+    const double *yNP1Overlap,
+    const double *mOwned,
+    const double* volumeOverlap,
+    const double* dilatationOwnedN,
+    const double* dilatationOwnedNp1,
+    const double* bondDamage,
+    const double *edbN,
+    double *edbNP1,
+    double *fInternalOverlap,
+    const int*  localNeighborList,
+    int numOwnedPoints,
+    double m_bulkModulus,
+    double m_shearModulus,
+    double m_lambda_i,
+    double m_tau_b_i
+);
 
 }
 

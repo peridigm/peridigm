@@ -187,7 +187,7 @@ PeridigmNS::DiffusionMaterial::computeFluxDivergence(const double dt,
         quadWeight = quadratureWeights[bondListIndex++];
       }
       initialDistance = distance(nodeInitialPosition[0], nodeInitialPosition[1], nodeInitialPosition[2],
-				 modelCoord[neighborID*3], modelCoord[neighborID*3+1], modelCoord[neighborID*3+2]);
+                                 modelCoord[neighborID*3], modelCoord[neighborID*3+1], modelCoord[neighborID*3+2]);
       kernel = 6.0/(pi*m_horizon*m_horizon*m_horizon*m_horizon*initialDistance);
       temperatureDifference = temperature[neighborID] - nodeTemperature;
       nodeFluxDivergence = m_coefficient*kernel*temperatureDifference*quadWeight;

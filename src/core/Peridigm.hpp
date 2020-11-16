@@ -162,7 +162,7 @@ namespace PeridigmNS {
     bool hasTangentStiffnessMatrix(){
       bool hasTangent = false;
       if(!tangent.is_null()){
-	hasTangent = true;
+        hasTangent = true;
       }
       return hasTangent;
     }
@@ -223,7 +223,7 @@ namespace PeridigmNS {
       PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
 
       if(!fieldManager.hasField(fieldName)){
-	return false;
+        return false;
       }
 
       int fieldId = fieldManager.getFieldId(fieldName);
@@ -273,7 +273,7 @@ namespace PeridigmNS {
     //! Main routine to drive problem solution for quasistatics
     void executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterList> solverParams);
 
-   //! Main routine to drive problem solution for diffusion
+    //! Main routine to drive problem solution for diffusion
     void executeImplicitDiffusion(Teuchos::RCP<Teuchos::ParameterList> solverParams);
 
     //! Main routine to drive problem solution for quasistatics using NOX
@@ -486,19 +486,19 @@ namespace PeridigmNS {
     //! Global vector for displacement
     Teuchos::RCP<Epetra_Vector> u;
 
-		//! Global vector for solid mechanics dof and additional
+    //! Global vector for solid mechanics dof and additional
     Teuchos::RCP<Epetra_Vector> unknownsU;
 
     //! Global vector for current position
     Teuchos::RCP<Epetra_Vector> y;
 
-		//! Global vector for solid mechanics current position and analogous quantities
+    //! Global vector for solid mechanics current position and analogous quantities
     Teuchos::RCP<Epetra_Vector> unknownsY;
 
     //! Global vector for velocity
     Teuchos::RCP<Epetra_Vector> v;
 
-		//! Gloval vector for solid mechanics velocity and analogous quantities
+    //! Gloval vector for solid mechanics velocity and analogous quantities
     Teuchos::RCP<Epetra_Vector> unknownsV;
 
     //! Global vector for acceleration
@@ -560,10 +560,10 @@ namespace PeridigmNS {
     //! Global vector for cell density
     Teuchos::RCP<Epetra_Vector> density;
 
-		//! Global vector for cell fluid density
+    //! Global vector for cell fluid density
     Teuchos::RCP<Epetra_Vector> fluidDensity;
 
-		//! Glocal vector for cell fluid compressibility
+    //! Glocal vector for cell fluid compressibility
     Teuchos::RCP<Epetra_Vector> fluidCompressibility;
 
     //! Global vector for fluid pressure displacement analogue

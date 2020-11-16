@@ -131,10 +131,10 @@ PeridigmNS::LinearLPSPVMaterial::~LinearLPSPVMaterial()
 
 void
 PeridigmNS::LinearLPSPVMaterial::initialize(const double dt,
-					    const int numOwnedPoints,
-					    const int* ownedIDs,
-					    const int* neighborhoodList,
-					    PeridigmNS::DataManager& dataManager)
+                                            const int numOwnedPoints,
+                                            const int* ownedIDs,
+                                            const int* neighborhoodList,
+                                            PeridigmNS::DataManager& dataManager)
 {
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   m_pid = dataManager.getOwnedScalarPointMap()->Comm().MyPID();
@@ -181,14 +181,14 @@ PeridigmNS::LinearLPSPVMaterial::initialize(const double dt,
     if(m_verbose && m_pid == 0)
       std::cout << "\nLinearLPS Material Model applying numerical weighted volume.\n" << std::endl;
     MATERIAL_EVALUATION::computeWeightedVolumePV(xOverlap,
-						 cellVolumeOverlap,
-						 selfVolume,
-						 neighborVolume,
-						 influenceFunctionValues,
-						 weightedVolume,
-						 numOwnedPoints,
-						 neighborhoodList,
-						 m_horizon);
+                                                 cellVolumeOverlap,
+                                                 selfVolume,
+                                                 neighborVolume,
+                                                 influenceFunctionValues,
+                                                 weightedVolume,
+                                                 numOwnedPoints,
+                                                 neighborhoodList,
+                                                 m_horizon);
   }
 
 #ifdef PERIDIGM_IMPROVED_QUADRATURE

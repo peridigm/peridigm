@@ -54,15 +54,15 @@ class PointSet : public Array<double> {
 
 public:
 
-	PointSet() : Array<double>(), num_points(0) {}
+  PointSet() : Array<double>(), num_points(0) {}
 
-	PointSet(size_t num_points) : Array<double>(3*num_points), num_points(num_points) {}
+  PointSet(size_t num_points) : Array<double>(3*num_points), num_points(num_points) {}
 
-	size_t get_num_points() const { return num_points; }
+  size_t get_num_points() const { return num_points; }
 
 private:
 
-	size_t num_points;
+  size_t num_points;
 
 };
 

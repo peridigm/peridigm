@@ -56,96 +56,96 @@ using std::stringstream;
 
 Epetra_BlockMap PeridigmNS::Discretization::getOverlap(int ndf, int numShared, int*shared, int numOwned,const  int* owned, const Epetra_Comm& comm){
 
-	int numPoints = numShared+numOwned;
-	UTILITIES::Array<int> ids(numPoints);
-	int *ptr = ids.get();
+  int numPoints = numShared+numOwned;
+  UTILITIES::Array<int> ids(numPoints);
+  int *ptr = ids.get();
 
-	for(int j=0;j<numOwned;j++,ptr++)
-		*ptr=owned[j];
+  for(int j=0;j<numOwned;j++,ptr++)
+    *ptr=owned[j];
 
-	for(int j=0;j<numShared;j++,ptr++)
-		*ptr=shared[j];
+  for(int j=0;j<numShared;j++,ptr++)
+    *ptr=shared[j];
 
-	return Epetra_BlockMap(-1,numPoints, ids.get(),ndf, 0,comm);
+  return Epetra_BlockMap(-1,numPoints, ids.get(),ndf, 0,comm);
 }
 
 UTILITIES::Array<int> PeridigmNS::Discretization::getSharedGlobalIds(const QUICKGRID::Data& gridData){
-	set<int> ownedIds(gridData.myGlobalIDs.get(),gridData.myGlobalIDs.get()+gridData.numPoints);
-	set<int> shared;
-	int *neighPtr = gridData.neighborhoodPtr.get();
-	int *neigh = gridData.neighborhood.get();
-	set<int>::const_iterator ownedIdsEnd = ownedIds.end();
-	for(size_t p=0;p<gridData.numPoints;p++){
-		int ptr = neighPtr[p];
-		int numNeigh = neigh[ptr];
-		for(int n=1;n<=numNeigh;n++){
-			int id = neigh[ptr+n];
-			/*
-			 * look for id in owned points
-			 */
-			 if(ownedIdsEnd == ownedIds.find(id)){
-				 /*
-				  * add this point to shared
-				  */
-				 shared.insert(id);
-			 }
-		}
-	}
+  set<int> ownedIds(gridData.myGlobalIDs.get(),gridData.myGlobalIDs.get()+gridData.numPoints);
+  set<int> shared;
+  int *neighPtr = gridData.neighborhoodPtr.get();
+  int *neigh = gridData.neighborhood.get();
+  set<int>::const_iterator ownedIdsEnd = ownedIds.end();
+  for(size_t p=0;p<gridData.numPoints;p++){
+    int ptr = neighPtr[p];
+    int numNeigh = neigh[ptr];
+    for(int n=1;n<=numNeigh;n++){
+      int id = neigh[ptr+n];
+      /*
+       * look for id in owned points
+       */
+      if(ownedIdsEnd == ownedIds.find(id)){
+        /*
+         * add this point to shared
+         */
+        shared.insert(id);
+      }
+    }
+  }
 
-	// Copy set into shared ptr
-	UTILITIES::Array<int> sharedGlobalIds(shared.size());
-	int *sharedPtr = sharedGlobalIds.get();
-    set<int>::iterator it;
-	for ( it=shared.begin() ; it != shared.end(); it++, sharedPtr++ )
-		*sharedPtr = *it;
+  // Copy set into shared ptr
+  UTILITIES::Array<int> sharedGlobalIds(shared.size());
+  int *sharedPtr = sharedGlobalIds.get();
+  set<int>::iterator it;
+  for ( it=shared.begin() ; it != shared.end(); it++, sharedPtr++ )
+    *sharedPtr = *it;
 
-	return sharedGlobalIds;
+  return sharedGlobalIds;
 }
 
 std::shared_ptr<int> PeridigmNS::Discretization::getLocalOwnedIds(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap){
-	UTILITIES::Array<int> localIds(gridData.numPoints);
-	int *lIds = localIds.get();
-	int *end = localIds.get()+gridData.numPoints;
-	int *gIds = gridData.myGlobalIDs.get();
-	for(; lIds != end;lIds++, gIds++)
-		*lIds = overlapMap.LID(*gIds);
-	return localIds.get_shared_ptr();
+  UTILITIES::Array<int> localIds(gridData.numPoints);
+  int *lIds = localIds.get();
+  int *end = localIds.get()+gridData.numPoints;
+  int *gIds = gridData.myGlobalIDs.get();
+  for(; lIds != end;lIds++, gIds++)
+    *lIds = overlapMap.LID(*gIds);
+  return localIds.get_shared_ptr();
 }
 
 std::shared_ptr<int> PeridigmNS::Discretization::getLocalNeighborList(const QUICKGRID::Data& gridData, const Epetra_BlockMap& overlapMap){
-	UTILITIES::Array<int> localNeighborList(gridData.sizeNeighborhoodList);
-	int *localNeig = localNeighborList.get();
-	int *neighPtr = gridData.neighborhoodPtr.get();
-	int *neigh = gridData.neighborhood.get();
-	for(size_t p=0;p<gridData.numPoints;p++){
-		int ptr = neighPtr[p];
-		int numNeigh = neigh[ptr];
-		localNeig[ptr]=numNeigh;
-		for(int n=1;n<=numNeigh;n++){
-			int gid = neigh[ptr+n];
-			int localId = overlapMap.LID(gid);
-			localNeig[ptr+n] = localId;
-		}
-	}
-	return localNeighborList.get_shared_ptr();
+  UTILITIES::Array<int> localNeighborList(gridData.sizeNeighborhoodList);
+  int *localNeig = localNeighborList.get();
+  int *neighPtr = gridData.neighborhoodPtr.get();
+  int *neigh = gridData.neighborhood.get();
+  for(size_t p=0;p<gridData.numPoints;p++){
+    int ptr = neighPtr[p];
+    int numNeigh = neigh[ptr];
+    localNeig[ptr]=numNeigh;
+    for(int n=1;n<=numNeigh;n++){
+      int gid = neigh[ptr+n];
+      int localId = overlapMap.LID(gid);
+      localNeig[ptr+n] = localId;
+    }
+  }
+  return localNeighborList.get_shared_ptr();
 }
 
 Epetra_BlockMap PeridigmNS::Discretization::getOwnedMap(const Epetra_Comm& comm,const QUICKGRID::Data& gridData, int ndf) {
-	int numShared=0;
-	int *sharedPtr=NULL;
-	int numOwned = gridData.numPoints;
-	const int *ownedPtr = gridData.myGlobalIDs.get();
-	return getOverlap(ndf, numShared,sharedPtr,numOwned,ownedPtr,comm);
+  int numShared=0;
+  int *sharedPtr=NULL;
+  int numOwned = gridData.numPoints;
+  const int *ownedPtr = gridData.myGlobalIDs.get();
+  return getOverlap(ndf, numShared,sharedPtr,numOwned,ownedPtr,comm);
 }
 
 Epetra_BlockMap PeridigmNS::Discretization::getOverlapMap(const Epetra_Comm& comm,const QUICKGRID::Data& gridData, int ndf) {
-	UTILITIES::Array<int> sharedGIDS = getSharedGlobalIds(gridData);
-	std::shared_ptr<int> sharedPtr = sharedGIDS.get_shared_ptr();
-	int numShared = sharedGIDS.get_size();
-	int *shared = sharedPtr.get();
-	int *owned = gridData.myGlobalIDs.get();
-	int numOwned = gridData.numPoints;
-	return getOverlap(ndf,numShared,shared,numOwned,owned,comm);
+  UTILITIES::Array<int> sharedGIDS = getSharedGlobalIds(gridData);
+  std::shared_ptr<int> sharedPtr = sharedGIDS.get_shared_ptr();
+  int numShared = sharedGIDS.get_size();
+  int *shared = sharedPtr.get();
+  int *owned = gridData.myGlobalIDs.get();
+  int numOwned = gridData.numPoints;
+  return getOverlap(ndf,numShared,shared,numOwned,owned,comm);
 }
 
 void PeridigmNS::Discretization::createBondFilters(const Teuchos::RCP<Teuchos::ParameterList>& params){

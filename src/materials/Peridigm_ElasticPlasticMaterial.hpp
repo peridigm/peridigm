@@ -69,16 +69,16 @@ namespace PeridigmNS {
 
     //! Returns the bulk modulus of the material.
     virtual double BulkModulus() const { return m_bulkModulus; }
-	        
+
     //! Returns the shear modulus of the material.
     virtual double ShearModulus() const { return m_shearModulus; }
 
     //! Returns a vector of field IDs corresponding to the variables associated with the material.
     virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
-	  //! Returns the requested material property
-		//! A dummy method here.
-		virtual double lookupMaterialProperty(const std::string keyname) const {return 0.0;}
+    //! Returns the requested material property
+    //! A dummy method here.
+    virtual double lookupMaterialProperty(const std::string keyname) const {return 0.0;}
 
     //! Initialized data containers and computes weighted volume.
     virtual void
@@ -91,9 +91,9 @@ namespace PeridigmNS {
     //! Evaluate the internal force.
     virtual void
     computeForce(const double dt,
-		 const int numOwnedPoints,
-		 const int* ownedIDs,
-		 const int* neighborhoodList,
+                 const int numOwnedPoints,
+                 const int* ownedIDs,
+                 const int* neighborhoodList,
                  PeridigmNS::DataManager& dataManager) const;
 
     //! Evaluate the jacobian.

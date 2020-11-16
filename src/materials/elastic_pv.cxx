@@ -54,15 +54,15 @@ namespace MATERIAL_EVALUATION {
 
 double computeWeightedVolumePV
 (
- const double* X,
- const double* xOverlap,
- const double* volumeOverlap,
- const double* selfVolumePtr,
- const double* neighborVolumePtr,
- const double* influenceFunctionValuesPtr,
- const int* localNeighborList,
- double horizon,
- const FunctionPointer omega
+    const double* X,
+    const double* xOverlap,
+    const double* volumeOverlap,
+    const double* selfVolumePtr,
+    const double* neighborVolumePtr,
+    const double* influenceFunctionValuesPtr,
+    const int* localNeighborList,
+    double horizon,
+    const FunctionPointer omega
 ){
   double neighborVolume;
   double neighborX, neighborY, neighborZ;
@@ -106,16 +106,16 @@ double computeWeightedVolumePV
 
 void computeWeightedVolumePV
 (
- const double* xOverlap,
- const double* volumeOverlap,
- const double* selfVolumePtr,
- const double* neighborVolumePtr,
- const double* influenceFunctionValuesPtr,
- double *mOwned,
- int myNumPoints,
- const int* localNeighborList,
- double horizon,
- const FunctionPointer omega
+    const double* xOverlap,
+    const double* volumeOverlap,
+    const double* selfVolumePtr,
+    const double* neighborVolumePtr,
+    const double* influenceFunctionValuesPtr,
+    double *mOwned,
+    int myNumPoints,
+    const int* localNeighborList,
+    double horizon,
+    const FunctionPointer omega
 ){
   double *m = mOwned;
   const double *xOwned = xOverlap;
@@ -135,14 +135,14 @@ void computeWeightedVolumePV
     int numNeigh = *neighPtr;
     const double *X = xOwned;
     *m=MATERIAL_EVALUATION::computeWeightedVolumePV(X,
-						    xOverlap,
-						    volumeOverlap,
-						    selfVolume,
-						    neighborVolume,
-						    influenceFunctionValues,
-						    neighPtr,
-						    horizon,
-						    omega);
+                                                    xOverlap,
+                                                    volumeOverlap,
+                                                    selfVolume,
+                                                    neighborVolume,
+                                                    influenceFunctionValues,
+                                                    neighPtr,
+                                                    horizon,
+                                                    omega);
     neighPtr+=(numNeigh+1);
     if(usePartialVolume){
       selfVolume += numNeigh;
@@ -157,20 +157,20 @@ void computeWeightedVolumePV
 template<typename ScalarT>
 void computeDilatationPV
 (
- const double* xOverlap,
- const ScalarT* yOverlap,
- const double *mOwned,
- const double* volumeOverlap,
- const double* selfVolumePtr,
- const double* neighborVolumePtr,
- const double* bondDamage,
- ScalarT* dilatationOwned,
- const int* localNeighborList,
- int numOwnedPoints,
- double horizon,
- const FunctionPointer omega,
- double thermalExpansionCoefficient,
- const double* deltaTemperature
+    const double* xOverlap,
+    const ScalarT* yOverlap,
+    const double *mOwned,
+    const double* volumeOverlap,
+    const double* selfVolumePtr,
+    const double* neighborVolumePtr,
+    const double* bondDamage,
+    ScalarT* dilatationOwned,
+    const int* localNeighborList,
+    int numOwnedPoints,
+    double horizon,
+    const FunctionPointer omega,
+    double thermalExpansionCoefficient,
+    const double* deltaTemperature
 )
 {
   const double *xOwned = xOverlap;
@@ -190,9 +190,9 @@ void computeDilatationPV
     for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++,neighborVolume++){
       int localId = *neighPtr;
       if(neighborVolumePtr != 0)
-	cellVolume = *neighborVolume;
+        cellVolume = *neighborVolume;
       else
-	cellVolume = v[localId];
+        cellVolume = v[localId];
       const double *XP = &xOverlap[3*localId];
       const ScalarT *YP = &yOverlap[3*localId];
       double X_dx = XP[0]-X[0];
@@ -207,7 +207,7 @@ void computeDilatationPV
       ScalarT e = sqrt(dY);
       e -= d;
       if(deltaTemperature)
-	e -= thermalExpansionCoefficient*(*deltaT)*d;
+        e -= thermalExpansionCoefficient*(*deltaT)*d;
       double omegaVal = omega(d,horizon);
       *theta += 3.0*omegaVal*(1.0-*bondDamage)*d*e*cellVolume/(*m);
     }
@@ -217,23 +217,23 @@ void computeDilatationPV
 template<typename ScalarT>
 void computeInternalForceLinearElasticPV
 (
- const double* xOverlap,
- const ScalarT* yOverlap,
- const double* mOwned,
- const double* volumeOverlap,
- const double* selfVolumePtr,
- const double* neighborVolumePtr,
- const ScalarT* dilatationOwned,
- const double* bondDamage,
- ScalarT* fInternalOverlap,
- const int*  localNeighborList,
- int numOwnedPoints,
- double BULK_MODULUS,
- double SHEAR_MODULUS,
- double horizon,
- double thermalExpansionCoefficient,
- const double* deltaTemperature
- )
+    const double* xOverlap,
+    const ScalarT* yOverlap,
+    const double* mOwned,
+    const double* volumeOverlap,
+    const double* selfVolumePtr,
+    const double* neighborVolumePtr,
+    const ScalarT* dilatationOwned,
+    const double* bondDamage,
+    ScalarT* fInternalOverlap,
+    const int*  localNeighborList,
+    int numOwnedPoints,
+    double BULK_MODULUS,
+    double SHEAR_MODULUS,
+    double horizon,
+    double thermalExpansionCoefficient,
+    const double* deltaTemperature
+)
 {
   /*
    * Compute processor local contribution to internal force
@@ -274,7 +274,7 @@ void computeInternalForceLinearElasticPV
       dY = sqrt(Y_dx*Y_dx+Y_dy*Y_dy+Y_dz*Y_dz);
       e = dY - zeta;
       if(deltaTemperature)
-	e -= thermalExpansionCoefficient*(*deltaT)*zeta;
+        e -= thermalExpansionCoefficient*(*deltaT)*zeta;
       omega = scalarInfluenceFunction(zeta,horizon);
       // c1 = omega*(*theta)*(9.0*K-15.0*MU)/(3.0*(*m));
       c1 = omega*(*theta)*(3.0*K/(*m)-alpha/3.0);
@@ -284,12 +284,12 @@ void computeInternalForceLinearElasticPV
       fz = t * Y_dz / dY;
 
       if(selfVolumePtr != 0 && neighborVolumePtr != 0){
-	selfCellVolume = *selfVolume;
-	neighborCellVolume = *neighborVolume;
+        selfCellVolume = *selfVolume;
+        neighborCellVolume = *neighborVolume;
       }
       else{
-	selfCellVolume = volumeOverlap[p];
-	neighborCellVolume = volumeOverlap[localId];
+        selfCellVolume = volumeOverlap[p];
+        neighborCellVolume = volumeOverlap[localId];
       }
 
       *(fOwned+0) += fx*neighborCellVolume;
@@ -306,80 +306,80 @@ void computeInternalForceLinearElasticPV
 template
 void computeDilatationPV<double>
 (
- const double* xOverlap,
- const double* yOverlap,
- const double *mOwned,
- const double* volumeOverlap,
- const double* selfVolumePtr,
- const double* neighborVolumePtr,
- const double* bondDamage,
- double* dilatationOwned,
- const int* localNeighborList,
- int numOwnedPoints,
- double horizon,
- const FunctionPointer omega,
- double thermalExpansionCoefficient,
- const double* deltaTemperature
- );
+    const double* xOverlap,
+    const double* yOverlap,
+    const double *mOwned,
+    const double* volumeOverlap,
+    const double* selfVolumePtr,
+    const double* neighborVolumePtr,
+    const double* bondDamage,
+    double* dilatationOwned,
+    const int* localNeighborList,
+    int numOwnedPoints,
+    double horizon,
+    const FunctionPointer omega,
+    double thermalExpansionCoefficient,
+    const double* deltaTemperature
+);
 
 template void computeInternalForceLinearElasticPV<double>
 (
- const double* xOverlap,
- const double* yOverlap,
- const double* mOwned,
- const double* volumeOverlap,
- const double* selfVolumePtr,
- const double* neighborVolumePtr,
- const double* dilatationOwned,
- const double* bondDamage,
- double* fInternalOverlap,
- const int*  localNeighborList,
- int numOwnedPoints,
- double BULK_MODULUS,
- double SHEAR_MODULUS,
- double horizon,
- double thermalExpansionCoefficient,
- const double* deltaTemperature
- );
+    const double* xOverlap,
+    const double* yOverlap,
+    const double* mOwned,
+    const double* volumeOverlap,
+    const double* selfVolumePtr,
+    const double* neighborVolumePtr,
+    const double* dilatationOwned,
+    const double* bondDamage,
+    double* fInternalOverlap,
+    const int*  localNeighborList,
+    int numOwnedPoints,
+    double BULK_MODULUS,
+    double SHEAR_MODULUS,
+    double horizon,
+    double thermalExpansionCoefficient,
+    const double* deltaTemperature
+);
 
 /** Explicit template instantiation for Sacado::Fad::DFad<double>. */
 template
 void computeDilatationPV<Sacado::Fad::DFad<double> >
 (
- const double* xOverlap,
- const Sacado::Fad::DFad<double>* yOverlap,
- const double *mOwned,
- const double* volumeOverlap,
- const double* selfVolumePtr,
- const double* neighborVolumePtr,
- const double* bondDamage,
- Sacado::Fad::DFad<double>* dilatationOwned,
- const int* localNeighborList,
- int numOwnedPoints,
- double horizon,
- const FunctionPointer omega,
- double thermalExpansionCoefficient,
- const double* deltaTemperature
- );
+    const double* xOverlap,
+    const Sacado::Fad::DFad<double>* yOverlap,
+    const double *mOwned,
+    const double* volumeOverlap,
+    const double* selfVolumePtr,
+    const double* neighborVolumePtr,
+    const double* bondDamage,
+    Sacado::Fad::DFad<double>* dilatationOwned,
+    const int* localNeighborList,
+    int numOwnedPoints,
+    double horizon,
+    const FunctionPointer omega,
+    double thermalExpansionCoefficient,
+    const double* deltaTemperature
+);
 
 template void computeInternalForceLinearElasticPV<Sacado::Fad::DFad<double> >
 (
- const double* xOverlap,
- const Sacado::Fad::DFad<double>* yOverlap,
- const double* mOwned,
- const double* volumeOverlap,
- const double* selfVolumePtr,
- const double* neighborVolumePtr,
- const Sacado::Fad::DFad<double>* dilatationOwned,
- const double* bondDamage,
- Sacado::Fad::DFad<double>* fInternalOverlap,
- const int*  localNeighborList,
- int numOwnedPoints,
- double BULK_MODULUS,
- double SHEAR_MODULUS,
- double horizon,
- double thermalExpansionCoefficient,
- const double* deltaTemperature
+    const double* xOverlap,
+    const Sacado::Fad::DFad<double>* yOverlap,
+    const double* mOwned,
+    const double* volumeOverlap,
+    const double* selfVolumePtr,
+    const double* neighborVolumePtr,
+    const Sacado::Fad::DFad<double>* dilatationOwned,
+    const double* bondDamage,
+    Sacado::Fad::DFad<double>* fInternalOverlap,
+    const int*  localNeighborList,
+    int numOwnedPoints,
+    double BULK_MODULUS,
+    double SHEAR_MODULUS,
+    double horizon,
+    double thermalExpansionCoefficient,
+    const double* deltaTemperature
 );
 
 }

@@ -78,82 +78,80 @@ int PeridigmNS::Compute_Kinetic_Energy::compute( Teuchos::RCP< std::vector<Perid
 
 int PeridigmNS::Compute_Kinetic_Energy::computeKineticEnergy( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks, bool storeLocal ) const
 { 
-	int retval;
-	
-	double globalKE = 0.0;
-	Teuchos::RCP<Epetra_Vector> velocity, volume, force, numNeighbors, neighborID, kinetic_energy;
-	std::vector<Block>::iterator blockIt;
-	for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
-	{
-		Teuchos::RCP<NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
-		const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
-		const int* ownedIDs = neighborhoodData->OwnedIDs();
+  int retval;
 
-		volume                = blockIt->getData(m_volumeFieldId, PeridigmField::STEP_NONE);
-		velocity              = blockIt->getData(m_velocityFieldId, PeridigmField::STEP_NP1);
-		if (storeLocal)
-          kinetic_energy = blockIt->getData(m_kineticEnergyFieldId, PeridigmField::STEP_NONE);
-		
-		// Sanity check
-		if (velocity->Map().NumMyElements() != volume->Map().NumMyElements())
-		{
-			retval = 1;
-			return(retval);
-		}
- 	
-		// Collect values
-		double *volume_values = volume->Values();
-		double *velocity_values = velocity->Values();
-		double *kinetic_energy_values(NULL);
-	        if (storeLocal)
-                	kinetic_energy_values = kinetic_energy->Values();
-                 
-		// Get the material properties 
-		double density  = blockIt->getMaterialModel()->Density();
-		//double SM = blockIt->getMaterialModel()->ShearModulus();
-		//double BM = blockIt->getMaterialModel()->BulkModulus();	
+  double globalKE = 0.0;
+  Teuchos::RCP<Epetra_Vector> velocity, volume, force, numNeighbors, neighborID, kinetic_energy;
+  std::vector<Block>::iterator blockIt;
+  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++)
+  {
+    Teuchos::RCP<NeighborhoodData> neighborhoodData = blockIt->getNeighborhoodData();
+    const int numOwnedPoints = neighborhoodData->NumOwnedPoints();
+    const int* ownedIDs = neighborhoodData->OwnedIDs();
 
-		
-		// Initialize global kinetic energy value
-		double KE = 0.0;
+    volume                = blockIt->getData(m_volumeFieldId, PeridigmField::STEP_NONE);
+    velocity              = blockIt->getData(m_velocityFieldId, PeridigmField::STEP_NP1);
+    if (storeLocal)
+      kinetic_energy = blockIt->getData(m_kineticEnergyFieldId, PeridigmField::STEP_NONE);
 
-		// volume is a scalar and force a vector, so maps are different; must do multiplication on per-element basis
-		int numElements = numOwnedPoints;
-
-		double vol;
-
-		for (int i=0;i<numElements;i++) 
-		{
-			int ID = ownedIDs[i];
-			vol = volume_values[ID];
-			double v1 = velocity_values[3*ID];
-			double v2 = velocity_values[3*ID+1];
-			double v3 = velocity_values[3*ID+2];
-			
-			if (storeLocal)
-				kinetic_energy_values[i] = 0.5*vol*density*(v1*v1 + v2*v2 + v3*v3);	//Store local kinetic energy	
-			else
-                                KE = KE + 0.5*vol*density*(v1*v1 + v2*v2 + v3*v3);      // Update the global kinetic energy
-			
-		}
-
-		if (!storeLocal)
-		{
-			// Update info across processors
-			double localKE, globalBlockKE;
-			localKE = KE;
-
-			epetraComm->SumAll(&localKE, &globalBlockKE, 1);
-
-			globalKE += globalBlockKE;
-		}
-	}
-	
-	// Store global energy in block (block globals are static, so only need to assign data to first block)
-	if (!storeLocal){
-      Teuchos::RCP<Epetra_Vector> data = blocks->begin()->getData(m_globalKineticEnergyFieldId, PeridigmField::STEP_NONE);
-      (*data)[0] = globalKE;
+    // Sanity check
+    if (velocity->Map().NumMyElements() != volume->Map().NumMyElements())
+    {
+      retval = 1;
+      return(retval);
     }
+
+    // Collect values
+    double *volume_values = volume->Values();
+    double *velocity_values = velocity->Values();
+    double *kinetic_energy_values(NULL);
+    if (storeLocal)
+      kinetic_energy_values = kinetic_energy->Values();
+                 
+    // Get the material properties 
+    double density  = blockIt->getMaterialModel()->Density();
+    //double SM = blockIt->getMaterialModel()->ShearModulus();
+    //double BM = blockIt->getMaterialModel()->BulkModulus();	
+
+    // Initialize global kinetic energy value
+    double KE = 0.0;
+
+    // volume is a scalar and force a vector, so maps are different; must do multiplication on per-element basis
+    int numElements = numOwnedPoints;
+
+    double vol;
+
+    for (int i=0;i<numElements;i++) 
+    {
+      int ID = ownedIDs[i];
+      vol = volume_values[ID];
+      double v1 = velocity_values[3*ID];
+      double v2 = velocity_values[3*ID+1];
+      double v3 = velocity_values[3*ID+2];
+
+      if (storeLocal)
+        kinetic_energy_values[i] = 0.5*vol*density*(v1*v1 + v2*v2 + v3*v3);	//Store local kinetic energy	
+      else
+        KE = KE + 0.5*vol*density*(v1*v1 + v2*v2 + v3*v3);      // Update the global kinetic energy
+    }
+
+    if (!storeLocal)
+    {
+      // Update info across processors
+      double localKE, globalBlockKE;
+      localKE = KE;
+
+      epetraComm->SumAll(&localKE, &globalBlockKE, 1);
+
+      globalKE += globalBlockKE;
+    }
+  }
+
+  // Store global energy in block (block globals are static, so only need to assign data to first block)
+  if (!storeLocal){
+    Teuchos::RCP<Epetra_Vector> data = blocks->begin()->getData(m_globalKineticEnergyFieldId, PeridigmField::STEP_NONE);
+    (*data)[0] = globalKE;
+  }
 
 	return(0);
 

@@ -59,9 +59,9 @@ def IsComment(line):
 
 def CheckForAPrePro(line):
     if line[0] == "{":
-        print "**** Parsing error, peridigm_to_yaml.py does not support aprepro commands"
-        print "**** Remove aprepro commands manually and re-run peridigm_to_yaml.py"
-        print "**** Failed to parse line", line
+        print("**** Parsing error, peridigm_to_yaml.py does not support aprepro commands")
+        print("**** Remove aprepro commands manually and re-run peridigm_to_yaml.py")
+        print("**** Failed to parse line {}".format(line))
         sys.exit(1)
     return
 
@@ -75,18 +75,18 @@ def ParseKeyValue(line):
     if len(quote_positions) == 0:
         pos = line.rfind(' ')
         if pos == -1:
-            print "**** Parsing error, failed to locate white space separating key and value in line", line
+            print("**** Parsing error, failed to locate white space separating key and value in line {}".format(line))
             sys.exit(1)
         key = line[:pos]
         value = line[pos:]
     elif len(quote_positions) == 2:
         if line[quote_positions[0]-1] != " ":
-            print "**** Parsing error, expected white space to proceed quote in line", line
+            print("**** Parsing error, expected white space to proceed quote in line {}".format(line))
             sys.exit(1)
         key = line[:quote_positions[0]-1]
         value = line[quote_positions[0]-1:]
     else:
-        print "**** Parsing error, expected either zero or two quotes in line", line
+        print("**** Parsing error, expected either zero or two quotes in line {}".format(line))
         sys.exit(1)
 
     return (key, value)
@@ -111,15 +111,15 @@ def NumWhiteSpaces(line):
 
 if __name__ == "__main__":
 
-    print "\n---- Peridigm to YAML Input Deck Converter\n"
+    print("\n---- Peridigm to YAML Input Deck Converter\n")
 
     if len(sys.argv) < 2:
-        print "Usage:  peridigm_to_yaml.py <input_deck.peridigm>\n"
+        print("Usage:  peridigm_to_yaml.py <input_deck.peridigm>\n")
         sys.exit(1)
 
     peridigm_file_name = sys.argv[1]
     if peridigm_file_name[-9:] != ".peridigm":
-        print "**** Error:  Expected input file suffix to be \".peridigm\"\n"
+        print("**** Error:  Expected input file suffix to be \".peridigm\"\n")
         sys.exit(1)
 
     peridigm_file = open(peridigm_file_name)
@@ -160,5 +160,5 @@ if __name__ == "__main__":
 
     yaml_file.close()
 
-    print "Original file: ", peridigm_file_name
-    print "New file:      ", yaml_file_name, "\n"
+    print("Original file: {}".format(peridigm_file_name))
+    print("New file:      {}\n".format(yaml_file_name))

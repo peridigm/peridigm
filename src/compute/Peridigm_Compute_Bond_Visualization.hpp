@@ -62,7 +62,7 @@ namespace PeridigmNS {
   class Compute_Bond_Visualization : public PeridigmNS::Compute {
 
   public:
-	
+
     //! Standard constructor.
     Compute_Bond_Visualization( Teuchos::RCP<const Teuchos::ParameterList> params,
                                 Teuchos::RCP<const Epetra_Comm> epetraComm_,

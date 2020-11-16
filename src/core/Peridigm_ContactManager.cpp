@@ -419,15 +419,15 @@ void PeridigmNS::ContactManager::loadNeighborhoodData(Teuchos::RCP<PeridigmNS::N
   neighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
   neighborhoodData->SetNumOwned(ownedIds.size());
   memcpy(neighborhoodData->OwnedIDs(), 
- 		 &ownedIds[0],
- 		 ownedIds.size()*sizeof(int));
+    &ownedIds[0],
+    ownedIds.size()*sizeof(int));
   memcpy(neighborhoodData->NeighborhoodPtr(), 
- 		 &neighborhoodPtr[0],
- 		 neighborhoodPtr.size()*sizeof(int));
+    &neighborhoodPtr[0],
+    neighborhoodPtr.size()*sizeof(int));
   neighborhoodData->SetNeighborhoodListSize(neighborhoodList.size());
   memcpy(neighborhoodData->NeighborhoodList(),
- 		 &neighborhoodList[0],
- 		 neighborhoodList.size()*sizeof(int));
+    &neighborhoodList[0],
+    neighborhoodList.size()*sizeof(int));
 
 #else
   neighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData(*globalNeighborhoodData));
@@ -825,44 +825,44 @@ Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::ContactManager::createReb
                                                                                                                Teuchos::RCP<const Epetra_BlockMap> rebalancedOneDimensionalMap,
                                                                                                                Teuchos::RCP<const Epetra_BlockMap> rebalancedOneDimensionalOverlapMap)
 {
-	Teuchos::RCP<PeridigmNS::NeighborhoodData> rebalancedContactNeighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
-	// record the owned IDs
-	rebalancedContactNeighborhoodData->SetNumOwned(rebalancedOneDimensionalMap->NumMyElements());
-	int* ownedIDs = rebalancedContactNeighborhoodData->OwnedIDs();
-	for(int i=0 ; i<rebalancedOneDimensionalMap->NumMyElements() ; ++i){
-		int globalID = rebalancedOneDimensionalMap->GID(i);
-		int localID = rebalancedOneDimensionalOverlapMap->LID(globalID);
-		TEUCHOS_TEST_FOR_EXCEPTION(localID == -1, Teuchos::RangeError, "Invalid index into rebalancedOneDimensionalOverlapMap");
-		ownedIDs[i] = localID;
-	}
-	// determine the neighborhood list size
-	int neighborhoodListSize = 0;
-	for(map<int, vector<int> >::const_iterator it=contactNeighborGlobalIDs->begin() ; it!=contactNeighborGlobalIDs->end() ; it++)
-		neighborhoodListSize += it->second.size() + 1;
-	rebalancedContactNeighborhoodData->SetNeighborhoodListSize(neighborhoodListSize);
-	// numNeighbors1, n1LID, n2LID, n3LID, numNeighbors2, n1LID, n2LID, ...
-	int* neighborhoodList = rebalancedContactNeighborhoodData->NeighborhoodList();
-	// points into neighborhoodList, gives start of neighborhood information for each locally-owned element
-	int* neighborhoodPtr = rebalancedContactNeighborhoodData->NeighborhoodPtr();
-	// loop over locally owned points
-	int neighborhoodIndex = 0;
-	for(int iLID=0 ; iLID<rebalancedOneDimensionalMap->NumMyElements() ; ++iLID){
-		// location of this element's neighborhood data in the neighborhoodList
-		neighborhoodPtr[iLID] = neighborhoodIndex;
-		// get the global ID of this point and the global IDs of its neighbors
-		int globalID = rebalancedOneDimensionalMap->GID(iLID);
-		// require that this globalID be present as a key into contactNeighborGlobalIDs
-		TEUCHOS_TEST_FOR_EXCEPTION(contactNeighborGlobalIDs->count(globalID) == 0, Teuchos::RangeError, "Invalid index into contactNeighborGlobalIDs");
-		const vector<int>& neighborGlobalIDs = (*contactNeighborGlobalIDs)[globalID];
-		// first entry in the neighborhoodlist is the number of neighbors
-		neighborhoodList[neighborhoodIndex++] = (int) neighborGlobalIDs.size();
-		// next entries record the local ID of each neighbor
-		for(unsigned int iNeighbor=0 ; iNeighbor<neighborGlobalIDs.size() ; ++iNeighbor){
-			neighborhoodList[neighborhoodIndex++] = rebalancedOneDimensionalOverlapMap->LID( neighborGlobalIDs[iNeighbor] );
-		}
-	}
+  Teuchos::RCP<PeridigmNS::NeighborhoodData> rebalancedContactNeighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
+  // record the owned IDs
+  rebalancedContactNeighborhoodData->SetNumOwned(rebalancedOneDimensionalMap->NumMyElements());
+  int* ownedIDs = rebalancedContactNeighborhoodData->OwnedIDs();
+  for(int i=0 ; i<rebalancedOneDimensionalMap->NumMyElements() ; ++i){
+    int globalID = rebalancedOneDimensionalMap->GID(i);
+    int localID = rebalancedOneDimensionalOverlapMap->LID(globalID);
+    TEUCHOS_TEST_FOR_EXCEPTION(localID == -1, Teuchos::RangeError, "Invalid index into rebalancedOneDimensionalOverlapMap");
+    ownedIDs[i] = localID;
+  }
+  // determine the neighborhood list size
+  int neighborhoodListSize = 0;
+  for(map<int, vector<int> >::const_iterator it=contactNeighborGlobalIDs->begin() ; it!=contactNeighborGlobalIDs->end() ; it++)
+    neighborhoodListSize += it->second.size() + 1;
+  rebalancedContactNeighborhoodData->SetNeighborhoodListSize(neighborhoodListSize);
+  // numNeighbors1, n1LID, n2LID, n3LID, numNeighbors2, n1LID, n2LID, ...
+  int* neighborhoodList = rebalancedContactNeighborhoodData->NeighborhoodList();
+  // points into neighborhoodList, gives start of neighborhood information for each locally-owned element
+  int* neighborhoodPtr = rebalancedContactNeighborhoodData->NeighborhoodPtr();
+  // loop over locally owned points
+  int neighborhoodIndex = 0;
+  for(int iLID=0 ; iLID<rebalancedOneDimensionalMap->NumMyElements() ; ++iLID){
+    // location of this element's neighborhood data in the neighborhoodList
+    neighborhoodPtr[iLID] = neighborhoodIndex;
+    // get the global ID of this point and the global IDs of its neighbors
+    int globalID = rebalancedOneDimensionalMap->GID(iLID);
+    // require that this globalID be present as a key into contactNeighborGlobalIDs
+    TEUCHOS_TEST_FOR_EXCEPTION(contactNeighborGlobalIDs->count(globalID) == 0, Teuchos::RangeError, "Invalid index into contactNeighborGlobalIDs");
+    const vector<int>& neighborGlobalIDs = (*contactNeighborGlobalIDs)[globalID];
+    // first entry in the neighborhoodlist is the number of neighbors
+    neighborhoodList[neighborhoodIndex++] = (int) neighborGlobalIDs.size();
+    // next entries record the local ID of each neighbor
+    for(unsigned int iNeighbor=0 ; iNeighbor<neighborGlobalIDs.size() ; ++iNeighbor){
+      neighborhoodList[neighborhoodIndex++] = rebalancedOneDimensionalOverlapMap->LID( neighborGlobalIDs[iNeighbor] );
+    }
+  }
 
-	return rebalancedContactNeighborhoodData;
+  return rebalancedContactNeighborhoodData;
 }
 
 void PeridigmNS::ContactManager::evaluateContactForce(double dt)

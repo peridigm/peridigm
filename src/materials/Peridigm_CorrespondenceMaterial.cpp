@@ -307,7 +307,7 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
   // Loop over the material points and convert the Cauchy stress into pairwise peridynamic force densities
   const int *neighborListPtr = neighborhoodList;
   for(int iID=0 ; iID<numOwnedPoints ; ++iID, 
-          ++delta, defGrad+=9, stress+=9, shapeTensorInv+=9){
+      ++delta, defGrad+=9, stress+=9, shapeTensorInv+=9){
 
     // first Piola-Kirchhoff stress = J * cauchyStress * defGrad^-T
 

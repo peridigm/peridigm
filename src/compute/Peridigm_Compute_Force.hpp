@@ -62,7 +62,7 @@ namespace PeridigmNS {
   class Compute_Force : public PeridigmNS::Compute {
 
   public:
-	
+
     //! Constructor.
     Compute_Force( Teuchos::RCP<const Teuchos::ParameterList> params,
                              Teuchos::RCP<const Epetra_Comm> epetraComm_,

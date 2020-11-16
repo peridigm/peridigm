@@ -55,134 +55,134 @@ namespace MATERIAL_EVALUATION {
 template<typename ScalarT>
 void computeInternalForceLinearElastic
 (
-		const double* xOverlap,
-		const ScalarT* yOverlap,
-		const double* mOwned,
-		const double* volumeOverlap,
-		const ScalarT* dilatationOwned,
-		const double* bondDamage,
-		ScalarT* fInternalOverlap,
-		ScalarT* partialStressOverlap,
-		const int*  localNeighborList,
-		int numOwnedPoints,
-		double BULK_MODULUS,
-		double SHEAR_MODULUS,
-        double horizon,
-        double thermalExpansionCoefficient,
-        const double* deltaTemperature
+    const double* xOverlap,
+    const ScalarT* yOverlap,
+    const double* mOwned,
+    const double* volumeOverlap,
+    const ScalarT* dilatationOwned,
+    const double* bondDamage,
+    ScalarT* fInternalOverlap,
+    ScalarT* partialStressOverlap,
+    const int*  localNeighborList,
+    int numOwnedPoints,
+    double BULK_MODULUS,
+    double SHEAR_MODULUS,
+    double horizon,
+    double thermalExpansionCoefficient,
+    const double* deltaTemperature
 )
 {
 
-	/*
-	 * Compute processor local contribution to internal force
-	 */
-	double K = BULK_MODULUS;
-	double MU = SHEAR_MODULUS;
+  /*
+   * Compute processor local contribution to internal force
+   */
+  double K = BULK_MODULUS;
+  double MU = SHEAR_MODULUS;
 
-	const double *xOwned = xOverlap;
-	const ScalarT *yOwned = yOverlap;
-    const double *deltaT = deltaTemperature;
-	const double *m = mOwned;
-	const double *v = volumeOverlap;
-	const ScalarT *theta = dilatationOwned;
-	ScalarT *fOwned = fInternalOverlap;
-	ScalarT *psOwned = partialStressOverlap;
+  const double *xOwned = xOverlap;
+  const ScalarT *yOwned = yOverlap;
+  const double *deltaT = deltaTemperature;
+  const double *m = mOwned;
+  const double *v = volumeOverlap;
+  const ScalarT *theta = dilatationOwned;
+  ScalarT *fOwned = fInternalOverlap;
+  ScalarT *psOwned = partialStressOverlap;
 
-	const int *neighPtr = localNeighborList;
-	double cellVolume, alpha, X_dx, X_dy, X_dz, zeta, omega;
-	ScalarT Y_dx, Y_dy, Y_dz, dY, t, fx, fy, fz, e, c1;
-	for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yOwned +=3, fOwned+=3, psOwned+=9, deltaT++, m++, theta++){
+  const int *neighPtr = localNeighborList;
+  double cellVolume, alpha, X_dx, X_dy, X_dz, zeta, omega;
+  ScalarT Y_dx, Y_dy, Y_dz, dY, t, fx, fy, fz, e, c1;
+  for(int p=0;p<numOwnedPoints;p++, xOwned +=3, yOwned +=3, fOwned+=3, psOwned+=9, deltaT++, m++, theta++){
 
-		int numNeigh = *neighPtr; neighPtr++;
-		const double *X = xOwned;
-		const ScalarT *Y = yOwned;
-		alpha = 15.0*MU/(*m);
-		double selfCellVolume = v[p];
-		for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++){
-			int localId = *neighPtr;
-			cellVolume = v[localId];
-			const double *XP = &xOverlap[3*localId];
-			const ScalarT *YP = &yOverlap[3*localId];
-			X_dx = XP[0]-X[0];
-			X_dy = XP[1]-X[1];
-			X_dz = XP[2]-X[2];
-			zeta = sqrt(X_dx*X_dx+X_dy*X_dy+X_dz*X_dz);
-			Y_dx = YP[0]-Y[0];
-			Y_dy = YP[1]-Y[1];
-			Y_dz = YP[2]-Y[2];
-			dY = sqrt(Y_dx*Y_dx+Y_dy*Y_dy+Y_dz*Y_dz);
-            e = dY - zeta;
-            if(deltaTemperature)
-              e -= thermalExpansionCoefficient*(*deltaT)*zeta;
-			omega = scalarInfluenceFunction(zeta,horizon);
-			// c1 = omega*(*theta)*(9.0*K-15.0*MU)/(3.0*(*m));
-			c1 = omega*(*theta)*(3.0*K/(*m)-alpha/3.0);
-			t = (1.0-*bondDamage)*(c1 * zeta + (1.0-*bondDamage) * omega * alpha * e);
-			fx = t * Y_dx / dY;
-			fy = t * Y_dy / dY;
-			fz = t * Y_dz / dY;
+    int numNeigh = *neighPtr; neighPtr++;
+    const double *X = xOwned;
+    const ScalarT *Y = yOwned;
+    alpha = 15.0*MU/(*m);
+    double selfCellVolume = v[p];
+    for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++){
+      int localId = *neighPtr;
+      cellVolume = v[localId];
+      const double *XP = &xOverlap[3*localId];
+      const ScalarT *YP = &yOverlap[3*localId];
+      X_dx = XP[0]-X[0];
+      X_dy = XP[1]-X[1];
+      X_dz = XP[2]-X[2];
+      zeta = sqrt(X_dx*X_dx+X_dy*X_dy+X_dz*X_dz);
+      Y_dx = YP[0]-Y[0];
+      Y_dy = YP[1]-Y[1];
+      Y_dz = YP[2]-Y[2];
+      dY = sqrt(Y_dx*Y_dx+Y_dy*Y_dy+Y_dz*Y_dz);
+      e = dY - zeta;
+      if(deltaTemperature)
+        e -= thermalExpansionCoefficient*(*deltaT)*zeta;
+      omega = scalarInfluenceFunction(zeta,horizon);
+      // c1 = omega*(*theta)*(9.0*K-15.0*MU)/(3.0*(*m));
+      c1 = omega*(*theta)*(3.0*K/(*m)-alpha/3.0);
+      t = (1.0-*bondDamage)*(c1 * zeta + (1.0-*bondDamage) * omega * alpha * e);
+      fx = t * Y_dx / dY;
+      fy = t * Y_dy / dY;
+      fz = t * Y_dz / dY;
 
-			*(fOwned+0) += fx*cellVolume;
-			*(fOwned+1) += fy*cellVolume;
-			*(fOwned+2) += fz*cellVolume;
-			fInternalOverlap[3*localId+0] -= fx*selfCellVolume;
-			fInternalOverlap[3*localId+1] -= fy*selfCellVolume;
-			fInternalOverlap[3*localId+2] -= fz*selfCellVolume;
+      *(fOwned+0) += fx*cellVolume;
+      *(fOwned+1) += fy*cellVolume;
+      *(fOwned+2) += fz*cellVolume;
+      fInternalOverlap[3*localId+0] -= fx*selfCellVolume;
+      fInternalOverlap[3*localId+1] -= fy*selfCellVolume;
+      fInternalOverlap[3*localId+2] -= fz*selfCellVolume;
 
-			if(partialStressOverlap != 0){
-			  *(psOwned+0) += fx*X_dx*cellVolume;
-			  *(psOwned+1) += fx*X_dy*cellVolume;
-			  *(psOwned+2) += fx*X_dz*cellVolume;
-			  *(psOwned+3) += fy*X_dx*cellVolume;
-			  *(psOwned+4) += fy*X_dy*cellVolume;
-			  *(psOwned+5) += fy*X_dz*cellVolume;
-			  *(psOwned+6) += fz*X_dx*cellVolume;
-			  *(psOwned+7) += fz*X_dy*cellVolume;
-			  *(psOwned+8) += fz*X_dz*cellVolume;
-			}
-		}
+      if(partialStressOverlap != 0){
+        *(psOwned+0) += fx*X_dx*cellVolume;
+        *(psOwned+1) += fx*X_dy*cellVolume;
+        *(psOwned+2) += fx*X_dz*cellVolume;
+        *(psOwned+3) += fy*X_dx*cellVolume;
+        *(psOwned+4) += fy*X_dy*cellVolume;
+        *(psOwned+5) += fy*X_dz*cellVolume;
+        *(psOwned+6) += fz*X_dx*cellVolume;
+        *(psOwned+7) += fz*X_dy*cellVolume;
+        *(psOwned+8) += fz*X_dz*cellVolume;
+      }
+    }
 
-	}
+  }
 }
 
 /** Explicit template instantiation for double. */
 template void computeInternalForceLinearElastic<double>
 (
-		const double* xOverlap,
-		const double* yOverlap,
-		const double* mOwned,
-		const double* volumeOverlap,
-		const double* dilatationOwned,
-		const double* bondDamage,
-		double* fInternalOverlap,
-		double* partialStressOverlap,
-		const int*  localNeighborList,
-		int numOwnedPoints,
-		double BULK_MODULUS,
-		double SHEAR_MODULUS,
-        double horizon,
-        double thermalExpansionCoefficient,
-        const double* deltaTemperature
+    const double* xOverlap,
+    const double* yOverlap,
+    const double* mOwned,
+    const double* volumeOverlap,
+    const double* dilatationOwned,
+    const double* bondDamage,
+    double* fInternalOverlap,
+    double* partialStressOverlap,
+    const int*  localNeighborList,
+    int numOwnedPoints,
+    double BULK_MODULUS,
+    double SHEAR_MODULUS,
+    double horizon,
+    double thermalExpansionCoefficient,
+    const double* deltaTemperature
  );
 
 /** Explicit template instantiation for Sacado::Fad::DFad<double>. */
 template void computeInternalForceLinearElastic<Sacado::Fad::DFad<double> >
 (
-		const double* xOverlap,
-		const Sacado::Fad::DFad<double>* yOverlap,
-		const double* mOwned,
-		const double* volumeOverlap,
-		const Sacado::Fad::DFad<double>* dilatationOwned,
-		const double* bondDamage,
-		Sacado::Fad::DFad<double>* fInternalOverlap,
-		Sacado::Fad::DFad<double>* partialStressOverlap,
-		const int*  localNeighborList,
-		int numOwnedPoints,
-		double BULK_MODULUS,
-		double SHEAR_MODULUS,
-        double horizon,
-        double thermalExpansionCoefficient,
-        const double* deltaTemperature
+    const double* xOverlap,
+    const Sacado::Fad::DFad<double>* yOverlap,
+    const double* mOwned,
+    const double* volumeOverlap,
+    const Sacado::Fad::DFad<double>* dilatationOwned,
+    const double* bondDamage,
+    Sacado::Fad::DFad<double>* fInternalOverlap,
+    Sacado::Fad::DFad<double>* partialStressOverlap,
+    const int*  localNeighborList,
+    int numOwnedPoints,
+    double BULK_MODULUS,
+    double SHEAR_MODULUS,
+    double horizon,
+    double thermalExpansionCoefficient,
+    const double* deltaTemperature
 );
 
 }

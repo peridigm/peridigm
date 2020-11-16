@@ -4,7 +4,6 @@
 
 import sys
 import os
-import string
 import math
 
 # The following points to the location of exodus.py
@@ -15,20 +14,24 @@ path_to_exodus_py = 'trilinos_install_path/lib'
 # netcdf libraries (which you built as a TPL for Trilinos)
 
 sys.path.append(path_to_exodus_py)
-import exodus
+
+if sys.version_info >= (3, 0):
+  import exodus3 as exodus
+else:
+  import exodus2 as exodus
 
 if __name__ == "__main__":
 
     if len(sys.argv) < 3:
-        print "\nUsage:  genesis_attributes_to_node_variables.py <input.g> <output.g>\n"
+        print("\nUsage:  genesis_attributes_to_node_variables.py <input.g> <output.g>\n")
         sys.exit(1)
 
     input_file_name = sys.argv[1]
     output_file_name = sys.argv[2]
 
-    print "\n-- genesis_attributes_to_node_variables.py --\n"
-    print "Genesis input file:", input_file_name
-    print "Genesis output file:", output_file_name
+    print("\n-- genesis_attributes_to_node_variables.py --\n")
+    print("Genesis input file:{}".format(input_file_name))
+    print("Genesis output file:{}".format(output_file_name))
 
     if os.path.exists(output_file_name):
         os.remove(output_file_name)

@@ -56,7 +56,7 @@ namespace PeridigmNS {
   class ElasticBondBasedMaterial : public Material{
   public:
 
-	//! Constructor.
+    //! Constructor.
     ElasticBondBasedMaterial(const Teuchos::ParameterList & params);
 
     //! Destructor.
@@ -98,7 +98,7 @@ namespace PeridigmNS {
                  PeridigmNS::DataManager& dataManager) const;
 
   protected:
-	
+
     //! Computes the distance between nodes (a1, a2, a3) and (b1, b2, b3).
     inline double distance(double a1, double a2, double a3,
                            double b1, double b2, double b3) const

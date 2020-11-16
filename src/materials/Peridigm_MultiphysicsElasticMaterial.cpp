@@ -67,33 +67,33 @@ PeridigmNS::MultiphysicsElasticMaterial::MultiphysicsElasticMaterial(const Teuch
     m_volumeFieldId(-1), m_damageFieldId(-1), m_weightedVolumeFieldId(-1), m_dilatationFieldId(-1), m_modelCoordinatesFieldId(-1),
     m_coordinatesFieldId(-1), m_forceDensityFieldId(-1), m_bondDamageFieldId(-1), m_surfaceCorrectionFactorFieldId(-1),
     m_deltaTemperatureFieldId(-1), m_fluidPressureYFieldId(-1), m_fluidFlowDensityFieldId(-1), m_fluidPermeabilityScalar(0.0),
-		m_fluidDensity(1.0), m_fluidCompressibility(1.0), m_fluidDynamicViscosity(1.0), m_fluidLinearThermalExpansionCoef(0.0), m_fluidReynoldsViscosityTemperatureEffect(0.0), m_permeabilityCurveInflectionDamage(.50)
+    m_fluidDensity(1.0), m_fluidCompressibility(1.0), m_fluidDynamicViscosity(1.0), m_fluidLinearThermalExpansionCoef(0.0), m_fluidReynoldsViscosityTemperatureEffect(0.0), m_permeabilityCurveInflectionDamage(.50)
 {
   //! \todo Add meaningful asserts on material properties.
   m_bulkModulus = calculateBulkModulus(params);
   m_shearModulus = calculateShearModulus(params);
   m_density = params.get<double>("Density");
   m_horizon = params.get<double>("Horizon");
-	m_fluidPermeabilityScalar = params.get<double>("Permeability");
-	m_fluidDensity = params.get<double>("Fluid density");
-	m_fluidCompressibility = params.get<double>("Fluid compressibility");
-	m_fluidDynamicViscosity = params.get<double>("Fluid dynamic viscosity");
-	m_fluidLinearThermalExpansionCoef = params.get<double>("Fluid linear thermal expansion");
-	m_fluidReynoldsViscosityTemperatureEffect = params.get<double>("Fluid Reynolds viscosity temperature effect");
-	m_permeabilityCurveInflectionDamage = params.get<double>("Permeability curve inflection damage");
-	m_maxPermeability = params.get<double>("Max permeability");
-	m_permeabilityAlpha = params.get<double>("Permeability alpha");
-	materialProperties["Density"] = m_density;
-	materialProperties["Horizon"] = m_horizon;
-	materialProperties["Permeability"] = m_fluidPermeabilityScalar;
-	materialProperties["Fluid density"] = m_fluidDensity;
-	materialProperties["Fluid compressibility"] = m_fluidCompressibility;
-	materialProperties["Fluid dynamic viscosity"] = m_fluidDynamicViscosity;
-	materialProperties["Fluid linear thermal expansion"] = m_fluidLinearThermalExpansionCoef;
-	materialProperties["Fluid Reynolds viscosity temperature effect"] = m_fluidReynoldsViscosityTemperatureEffect;
-	materialProperties["Permeability curve inflection damage"] = m_permeabilityCurveInflectionDamage;
-	materialProperties["Max permeability"] = m_maxPermeability;
-	materialProperties["Permeability alpha"] = m_permeabilityAlpha;
+  m_fluidPermeabilityScalar = params.get<double>("Permeability");
+  m_fluidDensity = params.get<double>("Fluid density");
+  m_fluidCompressibility = params.get<double>("Fluid compressibility");
+  m_fluidDynamicViscosity = params.get<double>("Fluid dynamic viscosity");
+  m_fluidLinearThermalExpansionCoef = params.get<double>("Fluid linear thermal expansion");
+  m_fluidReynoldsViscosityTemperatureEffect = params.get<double>("Fluid Reynolds viscosity temperature effect");
+  m_permeabilityCurveInflectionDamage = params.get<double>("Permeability curve inflection damage");
+  m_maxPermeability = params.get<double>("Max permeability");
+  m_permeabilityAlpha = params.get<double>("Permeability alpha");
+  materialProperties["Density"] = m_density;
+  materialProperties["Horizon"] = m_horizon;
+  materialProperties["Permeability"] = m_fluidPermeabilityScalar;
+  materialProperties["Fluid density"] = m_fluidDensity;
+  materialProperties["Fluid compressibility"] = m_fluidCompressibility;
+  materialProperties["Fluid dynamic viscosity"] = m_fluidDynamicViscosity;
+  materialProperties["Fluid linear thermal expansion"] = m_fluidLinearThermalExpansionCoef;
+  materialProperties["Fluid Reynolds viscosity temperature effect"] = m_fluidReynoldsViscosityTemperatureEffect;
+  materialProperties["Permeability curve inflection damage"] = m_permeabilityCurveInflectionDamage;
+  materialProperties["Max permeability"] = m_maxPermeability;
+  materialProperties["Permeability alpha"] = m_permeabilityAlpha;
 
   if(params.isParameter("Apply Automatic Differentiation Jacobian"))
     m_applyAutomaticDifferentiationJacobian = params.get<bool>("Apply Automatic Differentiation Jacobian");
@@ -103,19 +103,19 @@ PeridigmNS::MultiphysicsElasticMaterial::MultiphysicsElasticMaterial(const Teuch
 
   if(params.isParameter("Thermal Expansion Coefficient")){
     m_alpha = params.get<double>("Thermal Expansion Coefficient");
-		materialProperties["Solid thermal expansion coefficient"] = m_alpha;
+    materialProperties["Solid thermal expansion coefficient"] = m_alpha;
     m_applyThermalStrains = true;
   }
 
-	TEUCHOS_TEST_FOR_EXCEPT_MSG((not m_applyAutomaticDifferentiationJacobian ), "**** Error: Multiphysics Elastic currently supports only AD jacobian.\n"); 
+  TEUCHOS_TEST_FOR_EXCEPT_MSG((not m_applyAutomaticDifferentiationJacobian ), "**** Error: Multiphysics Elastic currently supports only AD jacobian.\n"); 
 
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   m_volumeFieldId                  = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Volume");
   m_damageFieldId                  = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Damage");
   m_weightedVolumeFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Weighted_Volume");
   m_dilatationFieldId              = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Dilatation");
-	m_fluidFlowDensityFieldId        = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Flux_Density");
-	m_fluidPressureYFieldId          = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Fluid_Pressure_Y");
+  m_fluidFlowDensityFieldId        = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Flux_Density");
+  m_fluidPressureYFieldId          = fieldManager.getFieldId(PeridigmField::NODE, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Fluid_Pressure_Y");
   m_modelCoordinatesFieldId        = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::CONSTANT, "Model_Coordinates");
   m_coordinatesFieldId             = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Coordinates");
   m_forceDensityFieldId            = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force_Density");
@@ -130,8 +130,8 @@ PeridigmNS::MultiphysicsElasticMaterial::MultiphysicsElasticMaterial(const Teuch
   m_fieldIds.push_back(m_damageFieldId);
   m_fieldIds.push_back(m_weightedVolumeFieldId);
   m_fieldIds.push_back(m_dilatationFieldId);
-	m_fieldIds.push_back(m_fluidFlowDensityFieldId);
-	m_fieldIds.push_back(m_fluidPressureYFieldId);
+  m_fieldIds.push_back(m_fluidFlowDensityFieldId);
+  m_fieldIds.push_back(m_fluidPressureYFieldId);
   m_fieldIds.push_back(m_modelCoordinatesFieldId);
   m_fieldIds.push_back(m_coordinatesFieldId);
   m_fieldIds.push_back(m_forceDensityFieldId);
@@ -150,13 +150,13 @@ PeridigmNS::MultiphysicsElasticMaterial::~MultiphysicsElasticMaterial()
 double
 PeridigmNS::MultiphysicsElasticMaterial::lookupMaterialProperty(const std::string keyname) const
 {
-	std::map<std::string, double>::const_iterator search = materialProperties.find(keyname);
-	if(search != materialProperties.end())
-		return search->second;
-	else
-		TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error: requested material property is not in Multiphysics Elastic Material");
-	// This is a fallthrough case to make the compiler happy.
-	return 0.0;
+  std::map<std::string, double>::const_iterator search = materialProperties.find(keyname);
+  if(search != materialProperties.end())
+    return search->second;
+  else
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error: requested material property is not in Multiphysics Elastic Material");
+  // This is a fallthrough case to make the compiler happy.
+  return 0.0;
 }
 
 void
@@ -172,12 +172,12 @@ PeridigmNS::MultiphysicsElasticMaterial::initialize(const double dt,
   dataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&cellVolumeOverlap);
   dataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
 
-	/*
-	dataManager.getData(m_fluidFlowDensityFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-	dataManager.getData(m_fluidFlowDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-	dataManager.getData(m_fluidPressureYFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
-	dataManager.getData(m_fluidPressureYFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
-	*/
+  /*
+  dataManager.getData(m_fluidFlowDensityFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
+  dataManager.getData(m_fluidFlowDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  dataManager.getData(m_fluidPressureYFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
+  dataManager.getData(m_fluidPressureYFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
+  */
 
   MATERIAL_EVALUATION::computeWeightedVolume(xOverlap,cellVolumeOverlap,weightedVolume,numOwnedPoints,neighborhoodList,m_horizon);
 
@@ -205,7 +205,7 @@ PeridigmNS::MultiphysicsElasticMaterial::computeForce(const double dt,
 
   // Extract pointers to the underlying data
   double *x, *y, *cellVolume, *weightedVolume, *dilatation, *bondDamage, *force, *scf, *deltaTemperature;
-	double *fluidPressureY, *fluidFlow;
+  double *fluidPressureY, *fluidFlow;
 
   dataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
   dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&y);
@@ -215,8 +215,8 @@ PeridigmNS::MultiphysicsElasticMaterial::computeForce(const double dt,
   dataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_NP1)->ExtractView(&bondDamage);
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&force);
   dataManager.getData(m_surfaceCorrectionFactorFieldId, PeridigmField::STEP_NONE)->ExtractView(&scf);
-	dataManager.getData(m_fluidPressureYFieldId, PeridigmField::STEP_NP1)->ExtractView(&fluidPressureY);
-	dataManager.getData(m_fluidFlowDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&fluidFlow);
+  dataManager.getData(m_fluidPressureYFieldId, PeridigmField::STEP_NP1)->ExtractView(&fluidPressureY);
+  dataManager.getData(m_fluidFlowDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&fluidFlow);
   deltaTemperature = NULL;
   if(m_applyThermalStrains)
     dataManager.getData(m_deltaTemperatureFieldId, PeridigmField::STEP_NP1)->ExtractView(&deltaTemperature);
@@ -224,40 +224,40 @@ PeridigmNS::MultiphysicsElasticMaterial::computeForce(const double dt,
   MATERIAL_EVALUATION::computeDilatation(x,y,weightedVolume,cellVolume,bondDamage,dilatation,neighborhoodList,numOwnedPoints,m_horizon,m_OMEGA,m_alpha,deltaTemperature);
 
   MATERIAL_EVALUATION::computeInternalForceLinearElasticCoupled(x,
-																															  y,
-																																fluidPressureY,
-																																weightedVolume,
-																																cellVolume,
-																																dilatation,
-																																bondDamage,
-																																scf,
-																																force,
-																																neighborhoodList,
-																																numOwnedPoints,
-																																m_bulkModulus,
-																																m_shearModulus,
-																																m_horizon,
-																																m_alpha,
-																																deltaTemperature);
+                                                                y,
+                                                                fluidPressureY,
+                                                                weightedVolume,
+                                                                cellVolume,
+                                                                dilatation,
+                                                                bondDamage,
+                                                                scf,
+                                                                force,
+                                                                neighborhoodList,
+                                                                numOwnedPoints,
+                                                                m_bulkModulus,
+                                                                m_shearModulus,
+                                                                m_horizon,
+                                                                m_alpha,
+                                                                deltaTemperature);
 
 MATERIAL_EVALUATION::computeInternalFluidFlow(x,
-																						  y,
-																							fluidPressureY,
-																							cellVolume,
-																							bondDamage,
-																							fluidFlow,
-																							neighborhoodList,
-																							numOwnedPoints,
-																							m_fluidPermeabilityScalar,
-																							m_fluidPermeabilityScalar,
-																							m_fluidDensity,
-																							m_fluidDynamicViscosity,
-																							m_permeabilityCurveInflectionDamage,
-																							m_permeabilityAlpha,
-																							m_maxPermeability,
-																							m_horizon,
-																							m_fluidReynoldsViscosityTemperatureEffect,
-																							deltaTemperature);
+                                              y,
+                                              fluidPressureY,
+                                              cellVolume,
+                                              bondDamage,
+                                              fluidFlow,
+                                              neighborhoodList,
+                                              numOwnedPoints,
+                                              m_fluidPermeabilityScalar,
+                                              m_fluidPermeabilityScalar,
+                                              m_fluidDensity,
+                                              m_fluidDynamicViscosity,
+                                              m_permeabilityCurveInflectionDamage,
+                                              m_permeabilityAlpha,
+                                              m_maxPermeability,
+                                              m_horizon,
+                                              m_fluidReynoldsViscosityTemperatureEffect,
+                                              deltaTemperature);
 
 }
 
@@ -318,7 +318,7 @@ PeridigmNS::MultiphysicsElasticMaterial::computeStoredElasticEnergyDensity(const
         distance(nodeCurrentX[0], nodeCurrentX[1], nodeCurrentX[2],
                  y[neighborId*3], y[neighborId*3+1], y[neighborId*3+2]);
       if(m_applyThermalStrains)
-	currentDistance -= m_alpha*deltaTemperature[nodeId]*initialDistance;
+        currentDistance -= m_alpha*deltaTemperature[nodeId]*initialDistance;
       deviatoricExtension = (currentDistance - initialDistance) - nodeDilatation*initialDistance/3.0;
       omega=m_OMEGA(initialDistance,m_horizon);
       temp += (1.0-neighborBondDamage)*omega*deviatoricExtension*deviatoricExtension*cellVolume[neighborId];
@@ -339,11 +339,11 @@ PeridigmNS::MultiphysicsElasticMaterial::computeJacobian(const double dt,
   if(m_applyAutomaticDifferentiationJacobian){
     // Compute the Jacobian via automatic differentiation
     computeAutomaticDifferentiationJacobian(dt, numOwnedPoints, ownedIDs, neighborhoodList, dataManager, jacobian, jacobianType);
-		//jacobian.getFECrsMatrix()->Print(std::cout);
+    //jacobian.getFECrsMatrix()->Print(std::cout);
   }
   else{
     // Call the base class function, which computes the Jacobian by finite difference
-		TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error: Base class finite difference Jacobian is incompatible with multiphysics material.\n");
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error: Base class finite difference Jacobian is incompatible with multiphysics material.\n");
     //PeridigmNS::Material::computeJacobian(dt, numOwnedPoints, ownedIDs, neighborhoodList, dataManager, jacobian, jacobianType);
   }
 }
@@ -363,7 +363,7 @@ PeridigmNS::MultiphysicsElasticMaterial::computeAutomaticDifferentiationJacobian
   // To reduce memory re-allocation, use static variable to store Fad types for
   // current coordinates (independent variables).
   static vector<Sacado::Fad::DFad<double> > y_AD;
-	static vector<Sacado::Fad::DFad<double> > fPY_AD;
+  static vector<Sacado::Fad::DFad<double> > fPY_AD;
 
   // Loop over all points.
   int neighborhoodListIndex = 0;
@@ -372,7 +372,7 @@ PeridigmNS::MultiphysicsElasticMaterial::computeAutomaticDifferentiationJacobian
     // Create a temporary neighborhood consisting of a single point and its neighbors.
     int numNeighbors = neighborhoodList[neighborhoodListIndex++];
     int numEntries = numNeighbors+1;
-		int dofPerNode = 4;
+    int dofPerNode = 4;
     int numTotalNeighborhoodDof = dofPerNode*numEntries;
     vector<int> tempMyGlobalIDs(numEntries);
     // Put the node at the center of the neighborhood at the beginning of the list.
@@ -387,7 +387,7 @@ PeridigmNS::MultiphysicsElasticMaterial::computeAutomaticDifferentiationJacobian
 
     Epetra_SerialComm serialComm;
     Teuchos::RCP<Epetra_BlockMap> tempOneDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(numEntries, numEntries, &tempMyGlobalIDs[0], 1, 0, serialComm));
-		// This is not a mistake, the material is indeed defined in terms of one dimensional and three dimensional variables.
+    // This is not a mistake, the material is indeed defined in terms of one dimensional and three dimensional variables.
     Teuchos::RCP<Epetra_BlockMap> tempThreeDimensionalMap = Teuchos::rcp(new Epetra_BlockMap(numEntries, numEntries, &tempMyGlobalIDs[0], 3, 0, serialComm));
     Teuchos::RCP<Epetra_BlockMap> tempBondMap = Teuchos::rcp(new Epetra_BlockMap(1, 1, &tempMyGlobalIDs[0], numNeighbors, 0, serialComm));
 
@@ -425,10 +425,10 @@ PeridigmNS::MultiphysicsElasticMaterial::computeAutomaticDifferentiationJacobian
 
     // Extract pointers to the underlying data in the constitutiveData array.
     double *x, *y, *cellVolume, *weightedVolume, *damage, *bondDamage, *scf, *deltaTemperature;
-		double *fluidPressureY;
+    double *fluidPressureY;
     tempDataManager.getData(m_modelCoordinatesFieldId, PeridigmField::STEP_NONE)->ExtractView(&x);
     tempDataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&y);
-		tempDataManager.getData(m_fluidPressureYFieldId, PeridigmField::STEP_NP1)->ExtractView(&fluidPressureY);
+    tempDataManager.getData(m_fluidPressureYFieldId, PeridigmField::STEP_NP1)->ExtractView(&fluidPressureY);
     tempDataManager.getData(m_volumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&cellVolume);
     tempDataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->ExtractView(&weightedVolume);
     tempDataManager.getData(m_damageFieldId, PeridigmField::STEP_NP1)->ExtractView(&damage);
@@ -438,25 +438,25 @@ PeridigmNS::MultiphysicsElasticMaterial::computeAutomaticDifferentiationJacobian
     if(m_applyThermalStrains)
       tempDataManager.getData(m_deltaTemperatureFieldId, PeridigmField::STEP_NP1)->ExtractView(&deltaTemperature);
     // Create arrays of Fad objects for the current coordinates, dilatation, and force density
-		// current fluid pressure and fluid flow density
+    // current fluid pressure and fluid flow density
     // Modify the existing vector of Fad objects for the current coordinates
     if((int)y_AD.size() < (dofPerNode-1)*numEntries)
       y_AD.resize((dofPerNode-1)*numEntries);
-		if((int)fPY_AD.size() < numEntries)
+    if((int)fPY_AD.size() < numEntries)
       fPY_AD.resize(numEntries);
 
-		// We want to get derivatives with respect to y and fluidPressureY at the same time
-		// so we must determine:
-		// Out of the total columns which of these are
-		// entries for solids and which are entries for fluids?
+    // We want to get derivatives with respect to y and fluidPressureY at the same time
+    // so we must determine:
+    // Out of the total columns which of these are
+    // entries for solids and which are entries for fluids?
     for(int i=0 ; i<numTotalNeighborhoodDof ; i+=dofPerNode){
-			// First three dof in a pack of dofPerNode are for solids
-			for(int j=0 ; j<3 ; ++j){
-				y_AD[i*3/dofPerNode+j].diff(i+j, numTotalNeighborhoodDof);
-				// Convert index stride and store value
-      	y_AD[i*3/dofPerNode+j].val() = y[i*3/dofPerNode+j];
-			}
-			// Last dof in a pack of dofPerNode is always fluid pressure y
+      // First three dof in a pack of dofPerNode are for solids
+      for(int j=0 ; j<3 ; ++j){
+        y_AD[i*3/dofPerNode+j].diff(i+j, numTotalNeighborhoodDof);
+        // Convert index stride and store value
+        y_AD[i*3/dofPerNode+j].val() = y[i*3/dofPerNode+j];
+      }
+      // Last dof in a pack of dofPerNode is always fluid pressure y
       fPY_AD[i/dofPerNode].diff(i+3,numTotalNeighborhoodDof);
       fPY_AD[i/dofPerNode].val() = fluidPressureY[i/dofPerNode];
     }
@@ -465,38 +465,38 @@ PeridigmNS::MultiphysicsElasticMaterial::computeAutomaticDifferentiationJacobian
     vector<Sacado::Fad::DFad<double> > force_AD((dofPerNode-1)*numEntries);
     vector<Sacado::Fad::DFad<double> > fluidFlow_AD(numEntries);
 
-		// Compute derivatives with respect to y alone
+    // Compute derivatives with respect to y alone
     // Evaluate the constitutive model using the AD types
     MATERIAL_EVALUATION::computeDilatation(x,&y_AD[0],weightedVolume,cellVolume,bondDamage,&dilatation_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints,m_horizon,m_OMEGA,m_alpha,deltaTemperature);
     MATERIAL_EVALUATION::computeInternalForceLinearElasticCoupled(x,&y_AD[0],&fPY_AD[0],weightedVolume,cellVolume,&dilatation_AD[0],bondDamage,scf,&force_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints,m_bulkModulus,m_shearModulus,m_horizon,m_alpha,deltaTemperature);
 
-		MATERIAL_EVALUATION::computeInternalFluidFlow(x,&y_AD[0],&fPY_AD[0],cellVolume,bondDamage,&fluidFlow_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints,
-m_fluidPermeabilityScalar, m_fluidPermeabilityScalar,
-m_fluidDensity,m_fluidDynamicViscosity,
-m_permeabilityCurveInflectionDamage, m_permeabilityAlpha,
-m_maxPermeability,
-m_horizon,m_fluidReynoldsViscosityTemperatureEffect,deltaTemperature);
+    MATERIAL_EVALUATION::computeInternalFluidFlow(x,&y_AD[0],&fPY_AD[0],cellVolume,bondDamage,&fluidFlow_AD[0],&tempNeighborhoodList[0],tempNumOwnedPoints,
+                                                  m_fluidPermeabilityScalar, m_fluidPermeabilityScalar,
+                                                  m_fluidDensity,m_fluidDynamicViscosity,
+                                                  m_permeabilityCurveInflectionDamage, m_permeabilityAlpha,
+                                                  m_maxPermeability,
+                                                  m_horizon,m_fluidReynoldsViscosityTemperatureEffect,deltaTemperature);
 
     // Load derivative values into scratch matrix
     // Multiply by volume along the way to convert force density to force
     double value;
     for(int row=0 ; row<numTotalNeighborhoodDof ; row+=dofPerNode){
       for(int col=0 ; col<numTotalNeighborhoodDof ; col+=dofPerNode){
-			  for(int subcol=0 ; subcol<dofPerNode ; ++subcol){
-					for(int subrow=0 ; subrow<(dofPerNode-1) ; ++subrow){
-							value = force_AD[row*3/dofPerNode + subrow].dx(col + subcol) * cellVolume[row/dofPerNode];
-							TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(value), "**** NaN detected in MultiphysicsElasticMaterial::computeAutomaticDifferentiationJacobian() (internal force).\n");
-							scratchMatrix(row+subrow, col+subcol) = value;
-					}
-					value = fluidFlow_AD[row/dofPerNode].dx(col + subcol) * cellVolume[row/dofPerNode];
-					TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(value), "**** NaN detected in MultiphysicsElasticMaterial::computeAutomaticDifferentiationJacobian() (fluid flow).\n");
-        	scratchMatrix(row +dofPerNode -1, col+subcol) = value;
-				}
-			}
-		}
+        for(int subcol=0 ; subcol<dofPerNode ; ++subcol){
+          for(int subrow=0 ; subrow<(dofPerNode-1) ; ++subrow){
+            value = force_AD[row*3/dofPerNode + subrow].dx(col + subcol) * cellVolume[row/dofPerNode];
+            TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(value), "**** NaN detected in MultiphysicsElasticMaterial::computeAutomaticDifferentiationJacobian() (internal force).\n");
+            scratchMatrix(row+subrow, col+subcol) = value;
+          }
+          value = fluidFlow_AD[row/dofPerNode].dx(col + subcol) * cellVolume[row/dofPerNode];
+          TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(value), "**** NaN detected in MultiphysicsElasticMaterial::computeAutomaticDifferentiationJacobian() (fluid flow).\n");
+          scratchMatrix(row +dofPerNode -1, col+subcol) = value;
+        }
+      }
+    }
 
     // Sum the values into the global tangent matrix (this is expensive).
-    if (jacobianType == PeridigmNS::Material::FULL_MATRIX)
+    if(jacobianType == PeridigmNS::Material::FULL_MATRIX)
       jacobian.addValues((int)globalIndices.size(), &globalIndices[0], scratchMatrix.Data());
     else if (jacobianType == PeridigmNS::Material::BLOCK_DIAGONAL) {
       jacobian.addBlockDiagonalValues((int)globalIndices.size(), &globalIndices[0], scratchMatrix.Data());
