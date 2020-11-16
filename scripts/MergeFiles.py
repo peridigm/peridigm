@@ -34,8 +34,8 @@ def which(program):
 if __name__ == "__main__":
 
     if len(sys.argv) < 2:
-      print "\n----------------Peridigm Exodus Outfile Merger----------------\n"
-      print "Usage:  MergeFiles.py   <File Base Name>    <# of Processors>\n"
+      print("\n----------------Peridigm Exodus Outfile Merger----------------\n")
+      print("Usage:  MergeFiles.py   <File Base Name>    <# of Processors>\n")
       sys.exit(1)
 
     path = sys.argv[0];
@@ -80,7 +80,7 @@ if __name__ == "__main__":
       elif which("epu") != None:
         command = ["epu", "-p", num_proc, file]
       else:
-        print "Error: epu not found! Please execute this script from 'scripts' in your Peridigm build directory or put 'epu' in your path. 'epu' can be found in your Trilinos install 'bin' directory."
+        print("Error: epu not found! Please execute this script from 'scripts' in your Peridigm build directory or put 'epu' in your path. 'epu' can be found in your Trilinos install 'bin' directory.")
         sys.exit(-1)
       p = Popen(command, stdout=logfile, stderr=logfile)
       return_code = p.wait()
@@ -102,7 +102,7 @@ if __name__ == "__main__":
       elif which("conjoin") != None:
         command = ["conjoin", "-output", base_name+".e"]
       else:
-        print "Error: conjoin not found! Please execute this script from 'scripts' in your Peridigm build directory or put 'conjoin' in your path. 'conjoin' can be found in your Trilinos install 'bin' directory."
+        print("Error: conjoin not found! Please execute this script from 'scripts' in your Peridigm build directory or put 'conjoin' in your path. 'conjoin' can be found in your Trilinos install 'bin' directory.")
         sys.exit(-1)
       for file in files_to_conjoin:
         command.append(file)
@@ -113,6 +113,6 @@ if __name__ == "__main__":
     
       # If error print message to screen
       if result != 0:
-        print "\n Error when merging files! Check .log file for error details.\n"
+        print("\n Error when merging files! Check .log file for error details.\n")
 
     sys.exit(result)

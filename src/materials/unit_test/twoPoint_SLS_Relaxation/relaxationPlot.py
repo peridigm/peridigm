@@ -82,8 +82,7 @@ for i in range(len(fa_2)):
     ax1.plot([ta[i]],[2*fa_2[i]],'o',color=(0.0/255.0,220.0/255.0,251.0/255.0))
     ax1.plot([ta[i]],[2*fa_3[i]],'o',color='#D45500')
 
-ax1.legend((r"$\lambda_i=.01$",r'$\lambda_i=.5$', r'$\lambda_i=.99$','Analytical', 'Analytical', 'Analytical'),
-"upper right",bbox_to_anchor=(0.96, 0.89),shadow=True)
+ax1.legend([r"$\lambda_i=.01$",r'$\lambda_i=.5$', r'$\lambda_i=.99$','Analytical', 'Analytical', 'Analytical'],loc="upper right",bbox_to_anchor=(0.96, 0.89),shadow=True)
 
 xlabel("Time (miliseconds)",fontsize=20)
 ylabel("Force Density Magnitude",fontsize=20)

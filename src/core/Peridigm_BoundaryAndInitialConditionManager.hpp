@@ -99,8 +99,8 @@ namespace PeridigmNS {
     //! Update the current coordinates
     void updateCurrentCoordinates();
 
-		//! Update the current fluid pressure
-		void updateFluidPressureY();
+    //! Update the current fluid pressure
+    void updateFluidPressureY();
 
     //! Copies entries corresponding to kinematic boundary contitions into the vector of reaction forces.
     void applyKinematicBC_ComputeReactions(Teuchos::RCP<const Epetra_Vector> force, Teuchos::RCP<Epetra_Vector> reaction);

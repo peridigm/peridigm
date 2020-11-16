@@ -104,7 +104,7 @@ int PeridigmNS::Compute_Angular_Momentum::computeAngularMomentum( Teuchos::RCP< 
       retval = 1;
       return(retval);
     }
- 	
+  
     // Collect values
     double *volume_values = volume->Values();
     double *velocity_values = velocity->Values();
@@ -114,9 +114,9 @@ int PeridigmNS::Compute_Angular_Momentum::computeAngularMomentum( Teuchos::RCP< 
     // Initialize angular momentum values
     double angular_momentum_x,  angular_momentum_y, angular_momentum_z;
     angular_momentum_x = angular_momentum_y = angular_momentum_z = 0.0;
-	
+
     double density = blockIt->getMaterialModel()->Density();
-  	
+
     // volume is a scalar and force a vector, so maps are different; must do multiplication on per-element basis
     int numElements = numOwnedPoints;
     double vol, mass;
@@ -149,9 +149,9 @@ int PeridigmNS::Compute_Angular_Momentum::computeAngularMomentum( Teuchos::RCP< 
       localAngularMomentum[0] = angular_momentum_x;
       localAngularMomentum[1] = angular_momentum_y;
       localAngularMomentum[2] = angular_momentum_z;
-	
+
       epetraComm->SumAll(&localAngularMomentum[0], &globalAngularMomentum[0], 3);
-		
+
       globalAM += sqrt(globalAngularMomentum[0]*globalAngularMomentum[0] + globalAngularMomentum[1]*globalAngularMomentum[1] + globalAngularMomentum[2]*globalAngularMomentum[2]);
     }
   }

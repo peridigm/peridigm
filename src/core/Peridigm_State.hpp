@@ -74,7 +74,7 @@ public:
 
   //! Copy constructor.
   State(const State& state) {}
- 
+
   //! Destructor.
   ~State() {}
 

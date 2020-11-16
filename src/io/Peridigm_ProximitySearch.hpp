@@ -56,7 +56,7 @@ namespace ProximitySearch {
 
   template<class T>
   struct NonDeleter{
-	void operator()(T* d) {}
+    void operator()(T* d) {}
   };
 
   /** \brief Rebalance a neighborhood list.

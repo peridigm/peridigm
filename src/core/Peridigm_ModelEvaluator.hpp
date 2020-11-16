@@ -72,7 +72,7 @@ namespace PeridigmNS {
     ModelEvaluator();
 
     //! Destructor
-	virtual ~ModelEvaluator();
+    virtual ~ModelEvaluator();
 
     //! Model evaluation that acts directly on the workset
     void evalModel(Teuchos::RCP<Workset> workset) const;

@@ -57,22 +57,22 @@ namespace CORRESPONDENCE {
 
 template<typename ScalarT>
 void setOnesOnDiagonalFullTensor(ScalarT* tensor, int numPoints){
- 
+
   ScalarT *tens = tensor;
 
   for(int iID=0; iID<numPoints; ++iID, tens+=9){
-      *(tens) = 1.0;
-      *(tens+4) = 1.0;
-      *(tens+8) = 1.0;
-  };  
+    *(tens) = 1.0;
+    *(tens+4) = 1.0;
+    *(tens+8) = 1.0;
+  };
 }
 
 template<typename ScalarT>
 int Invert3by3Matrix
 (
- const ScalarT* matrix,
- ScalarT& determinant,
- ScalarT* inverse
+    const ScalarT* matrix,
+    ScalarT& determinant,
+    ScalarT* inverse
 )
 {
   int returnCode(0);
@@ -142,12 +142,12 @@ void TransposeMatrix
 template<typename ScalarT>
 void MatrixMultiply
 (
- bool transA,
- bool transB,
- ScalarT alpha,
- const ScalarT* a,
- const ScalarT* b,
- ScalarT* result
+    bool transA,
+    bool transB,
+    ScalarT alpha,
+    const ScalarT* a,
+    const ScalarT* b,
+    ScalarT* result
 )
 {
   // This function computes result = alpha * a * b
@@ -215,14 +215,14 @@ void MatrixMultiply
 template<typename ScalarT>
 int computeShapeTensorInverseAndApproximateDeformationGradient
 (
-const double* volume,
-const double* horizon,
-const double* modelCoordinates,
-const ScalarT* coordinates,
-ScalarT* shapeTensorInverse,
-ScalarT* deformationGradient,
-const int* neighborhoodList,
-int numPoints
+    const double* volume,
+    const double* horizon,
+    const double* modelCoordinates,
+    const ScalarT* coordinates,
+    ScalarT* shapeTensorInverse,
+    ScalarT* deformationGradient,
+    const int* neighborhoodList,
+    int numPoints
 )
 {
   int returnCode = 0;
@@ -254,7 +254,7 @@ int numPoints
   int neighborIndex, numNeighbors;
   const int *neighborListPtr = neighborhoodList;
   for(int iID=0 ; iID<numPoints ; ++iID, delta++, modelCoord+=3, coord+=3,
-        shapeTensorInv+=9, defGrad+=9){
+      shapeTensorInv+=9, defGrad+=9){
 
     // Zero out data
     *(shapeTensor)   = 0.0 ; *(shapeTensor+1) = 0.0 ; *(shapeTensor+2) = 0.0 ;
@@ -324,20 +324,20 @@ int numPoints
 //unrotated rate-of-deformation and rotation tensors
 template<typename ScalarT>
 int computeUnrotatedRateOfDeformationAndRotationTensor(
-const double* volume,
-const double* horizon,
-const double* modelCoordinates,
-const ScalarT* velocities,
-const ScalarT* deformationGradient,
-const ScalarT* shapeTensorInverse,
-const ScalarT* leftStretchTensorN,
-const ScalarT* rotationTensorN,
-ScalarT* leftStretchTensorNP1,
-ScalarT* rotationTensorNP1,
-ScalarT* unrotatedRateOfDeformation,
-const int* neighborhoodList,
-int numPoints,
-double dt
+    const double* volume,
+    const double* horizon,
+    const double* modelCoordinates,
+    const ScalarT* velocities,
+    const ScalarT* deformationGradient,
+    const ScalarT* shapeTensorInverse,
+    const ScalarT* leftStretchTensorN,
+    const ScalarT* rotationTensorN,
+    ScalarT* leftStretchTensorNP1,
+    ScalarT* rotationTensorNP1,
+    ScalarT* unrotatedRateOfDeformation,
+    const int* neighborhoodList,
+    int numPoints,
+    double dt
 )
 {
   int returnCode = 0;
@@ -387,8 +387,8 @@ double dt
   int neighborIndex, numNeighbors;
   const int *neighborListPtr = neighborhoodList;
   for(int iID=0 ; iID<numPoints ; ++iID, delta++, modelCoord+=3, vel+=3,
-        shapeTensorInv+=9, rotTensorN+=9, rotTensorNP1+=9, leftStretchNP1+=9, leftStretchN+=9,
-        unrotRateOfDef+=9, defGrad+=9){
+      shapeTensorInv+=9, rotTensorN+=9, rotTensorNP1+=9, leftStretchNP1+=9, leftStretchN+=9,
+      unrotRateOfDef+=9, defGrad+=9){
 
     // Initialize data
     *(FdotFirstTerm)   = 0.0 ; *(FdotFirstTerm+1) = 0.0 ;  *(FdotFirstTerm+2) = 0.0;
@@ -537,7 +537,7 @@ double dt
     Omega = sqrt(OmegaSq);
 
     // Avoid a potential divide-by-zero
-    if ( OmegaSq > 1.e-30){
+    if( OmegaSq > 1.e-30){
 
       // Compute Q = I + sin( dt * Omega ) * OmegaTensor / Omega - (1. - cos(dt * Omega)) * omegaTensor^2 / OmegaSq
       //           = I + scaleFactor1 * OmegaTensor + scaleFactor2 * OmegaTensorSq
@@ -591,25 +591,25 @@ double dt
 template<typename ScalarT>
 void computeGreenLagrangeStrain
 (
-  const ScalarT* deformationGradientXX,
-  const ScalarT* deformationGradientXY,
-  const ScalarT* deformationGradientXZ,
-  const ScalarT* deformationGradientYX,
-  const ScalarT* deformationGradientYY,
-  const ScalarT* deformationGradientYZ,
-  const ScalarT* deformationGradientZX,
-  const ScalarT* deformationGradientZY,
-  const ScalarT* deformationGradientZZ,
-  ScalarT* greenLagrangeStrainXX,
-  ScalarT* greenLagrangeStrainXY,
-  ScalarT* greenLagrangeStrainXZ,
-  ScalarT* greenLagrangeStrainYX,
-  ScalarT* greenLagrangeStrainYY,
-  ScalarT* greenLagrangeStrainYZ,
-  ScalarT* greenLagrangeStrainZX,
-  ScalarT* greenLagrangeStrainZY,
-  ScalarT* greenLagrangeStrainZZ,
-  int numPoints
+    const ScalarT* deformationGradientXX,
+    const ScalarT* deformationGradientXY,
+    const ScalarT* deformationGradientXZ,
+    const ScalarT* deformationGradientYX,
+    const ScalarT* deformationGradientYY,
+    const ScalarT* deformationGradientYZ,
+    const ScalarT* deformationGradientZX,
+    const ScalarT* deformationGradientZY,
+    const ScalarT* deformationGradientZZ,
+    ScalarT* greenLagrangeStrainXX,
+    ScalarT* greenLagrangeStrainXY,
+    ScalarT* greenLagrangeStrainXZ,
+    ScalarT* greenLagrangeStrainYX,
+    ScalarT* greenLagrangeStrainYY,
+    ScalarT* greenLagrangeStrainYZ,
+     ScalarT* greenLagrangeStrainZX,
+    ScalarT* greenLagrangeStrainZY,
+    ScalarT* greenLagrangeStrainZZ,
+    int numPoints
 )
 {
   // Green-Lagrange Strain E = 0.5*(F^T F - I)
@@ -634,12 +634,12 @@ void computeGreenLagrangeStrain
   ScalarT* strainZZ = greenLagrangeStrainZZ;
 
   for(int iID=0 ; iID<numPoints ; ++iID, 
-        ++defGradXX, ++defGradXY, ++defGradXZ,
-        ++defGradYX, ++defGradYY, ++defGradYZ,
-        ++defGradZX, ++defGradZY, ++defGradZZ,
-        ++strainXX, ++strainXY, ++strainXZ,
-        ++strainYX, ++strainYY, ++strainYZ,
-        ++strainZX, ++strainZY, ++strainZZ){
+      ++defGradXX, ++defGradXY, ++defGradXZ,
+      ++defGradYX, ++defGradYY, ++defGradYZ,
+      ++defGradZX, ++defGradZY, ++defGradZZ,
+      ++strainXX, ++strainXY, ++strainXZ,
+      ++strainYX, ++strainYY, ++strainYZ,
+      ++strainZX, ++strainZY, ++strainZZ){
 
     *strainXX = 0.5 * ( *(defGradXX) * *(defGradXX) + *(defGradYX) * *(defGradYX) + *(defGradZX) * *(defGradZX) - 1.0 );
     *strainXY = 0.5 * ( *(defGradXX) * *(defGradXY) + *(defGradYX) * *(defGradYY) + *(defGradZX) * *(defGradZY) );
@@ -656,16 +656,16 @@ void computeGreenLagrangeStrain
 template<typename ScalarT>
 void computeHourglassForce
 (
-const double* volume,
-const double* horizon,
-const double* modelCoordinates,
-const ScalarT* coordinates,
-const ScalarT* deformationGradient,
-ScalarT* hourglassForceDensity,
-const int* neighborhoodList,
-int numPoints,
-double bulkModulus,
-double hourglassCoefficient
+    const double* volume,
+    const double* horizon,
+    const double* modelCoordinates,
+    const ScalarT* coordinates,
+    const ScalarT* deformationGradient,
+    ScalarT* hourglassForceDensity,
+    const int* neighborhoodList,
+    int numPoints,
+    double bulkModulus,
+    double hourglassCoefficient
 )
 {
   double vol, neighborVol;
@@ -695,7 +695,7 @@ double hourglassCoefficient
 
   const int *neighborListPtr = neighborhoodList;
   for(int iID=0 ; iID<numPoints ; ++iID, delta++, modelCoord+=3, coord+=3,
-        defGrad+=9, hourglassForceDensityPtr+=3){
+      defGrad+=9, hourglassForceDensityPtr+=3){
 
     constant = firstPartOfConstant/( (*delta)*(*delta)*(*delta)*(*delta) );
 
@@ -758,10 +758,10 @@ double hourglassCoefficient
 template<typename ScalarT>
 void rotateCauchyStress
 (
- const ScalarT* rotationTensor,
- const ScalarT* unrotatedCauchyStress,
- ScalarT* rotatedCauchyStress,
- int numPoints
+    const ScalarT* rotationTensor,
+    const ScalarT* unrotatedCauchyStress,
+    ScalarT* rotatedCauchyStress,
+    int numPoints
 )
 {
   const ScalarT* rotTensor = rotationTensor;
@@ -770,25 +770,25 @@ void rotateCauchyStress
   ScalarT temp[9];
 
   for(int iID=0 ; iID<numPoints ; ++iID, 
-        rotTensor+=9, unrotatedStress+=9, rotatedStress+=9){ 
+      rotTensor+=9, unrotatedStress+=9, rotatedStress+=9){ 
 
-      // temp = \sigma_unrot * Rt
-      CORRESPONDENCE::MatrixMultiply(false, true, 1.0, unrotatedStress, rotTensor, temp);
-      // \sigma_rot = R * temp
-      CORRESPONDENCE::MatrixMultiply(false, false, 1.0, rotTensor, temp, rotatedStress);
+    // temp = \sigma_unrot * Rt
+    CORRESPONDENCE::MatrixMultiply(false, true, 1.0, unrotatedStress, rotTensor, temp);
+    // \sigma_rot = R * temp
+    CORRESPONDENCE::MatrixMultiply(false, false, 1.0, rotTensor, temp, rotatedStress);
   }
 }
 
 template<typename ScalarT>
 void computeUndamagedWeightedVolume
 (
-const double* volume,
-double* weightedVolume,
-const ScalarT* jacobianDeterminant,
-const double* horizon,
-const ScalarT* coordinates,
-const int* neighborhoodList,
-int numPoints
+    const double* volume,
+    double* weightedVolume,
+    const ScalarT* jacobianDeterminant,
+    const double* horizon,
+    const ScalarT* coordinates,
+    const int* neighborhoodList,
+    int numPoints
 )
 {
   const double* delta = horizon;
@@ -830,15 +830,15 @@ int numPoints
 template<typename ScalarT>
 void computeWeightedVolume
 (
-const double* volume,
-double* weightedVolume,
-const ScalarT* jacobianDeterminant,
-const double* horizon,
-const ScalarT* coordinates,
-const double* flyingPointFlag,
-const double* bondDamage,
-const int* neighborhoodList,
-int numPoints
+    const double* volume,
+    double* weightedVolume,
+    const ScalarT* jacobianDeterminant,
+    const double* horizon,
+    const ScalarT* coordinates,
+    const double* flyingPointFlag,
+    const double* bondDamage,
+    const int* neighborhoodList,
+    int numPoints
 )
 {
   const double* delta = horizon;
@@ -884,19 +884,19 @@ int numPoints
 template<typename ScalarT>
 int computeShapeTensorInverseAndApproximateNodeLevelVelocityGradient
 (
-const double* volume,
-const ScalarT* jacobianDeterminantN,
-ScalarT* jacobianDeterminantNP1,
-const double* horizon,
-const ScalarT* coordinates,
-const ScalarT* velocities,
-ScalarT* shapeTensorInverse,
-ScalarT* velocityGradient,
-const double* flyingPointFlag,
-const double* bondDamage,
-const int* neighborhoodList,
-int numPoints,
-double dt
+    const double* volume,
+    const ScalarT* jacobianDeterminantN,
+    ScalarT* jacobianDeterminantNP1,
+    const double* horizon,
+    const ScalarT* coordinates,
+    const ScalarT* velocities,
+    ScalarT* shapeTensorInverse,
+    ScalarT* velocityGradient,
+    const double* flyingPointFlag,
+    const double* bondDamage,
+    const int* neighborhoodList,
+    int numPoints,
+    double dt
 )
 {
   int returnCode = 0;
@@ -931,7 +931,7 @@ double dt
   int neighborIndex, numNeighbors;
   const int *neighborListPtr = neighborhoodList; 
   for(int iID=0 ; iID<numPoints ; ++iID, delta++, coord+=3,
-        vel+=3, shapeTensorInv+=9, velGrad+=9, flyingPointFlg++){
+      vel+=3, shapeTensorInv+=9, velGrad+=9, flyingPointFlg++){
 
     // if the node is not flying, update the values. Otherwise, just skip
     if(*flyingPointFlg < 0.0){
@@ -1022,22 +1022,22 @@ double dt
 template<typename ScalarT>
 int computeShapeTensorInverseAndApproximateNodeLevelVelocityGradient
 (
-const double* volume,
-const ScalarT* jacobianDeterminantN,
-ScalarT* jacobianDeterminantNP1,
-const double* horizon,
-const ScalarT* coordinates,
-const ScalarT* velocities,
-ScalarT* shapeTensorInverse,
-ScalarT* velocityGradient,
-ScalarT* velocityGradientX,
-ScalarT* velocityGradientY,
-ScalarT* velocityGradientZ,
-const double* flyingPointFlag,
-const double* bondDamage,
-const int* neighborhoodList,
-int numPoints,
-double dt
+    const double* volume,
+    const ScalarT* jacobianDeterminantN,
+    ScalarT* jacobianDeterminantNP1,
+    const double* horizon,
+    const ScalarT* coordinates,
+    const ScalarT* velocities,
+    ScalarT* shapeTensorInverse,
+    ScalarT* velocityGradient,
+    ScalarT* velocityGradientX,
+    ScalarT* velocityGradientY,
+    ScalarT* velocityGradientZ,
+    const double* flyingPointFlag,
+    const double* bondDamage,
+    const int* neighborhoodList,
+    int numPoints,
+    double dt
 )
 {
   int returnCode = 0;
@@ -1075,7 +1075,7 @@ double dt
   int neighborIndex, numNeighbors;
   const int *neighborListPtr = neighborhoodList; 
   for(int iID=0 ; iID<numPoints ; ++iID, delta++, coord+=3, vel+=3, shapeTensorInv+=9, 
-        velGrad+=9, velGradX+=3, velGradY+=3, velGradZ+=3, flyingPointFlg++){
+      velGrad+=9, velGradX+=3, velGradY+=3, velGradZ+=3, flyingPointFlg++){
 
     // if the node is not flying, update the values. Otherwise, just skip
     if(*flyingPointFlg < 0.0){
@@ -1170,21 +1170,21 @@ double dt
 template<typename ScalarT>
 void computeBondLevelVelocityGradient
 (
-const ScalarT* coordinates,
-const ScalarT* velocities,
-const ScalarT* velocityGradient,
-ScalarT* bondLevelVelocityGradientXX,
-ScalarT* bondLevelVelocityGradientXY,
-ScalarT* bondLevelVelocityGradientXZ,
-ScalarT* bondLevelVelocityGradientYX,
-ScalarT* bondLevelVelocityGradientYY,
-ScalarT* bondLevelVelocityGradientYZ,
-ScalarT* bondLevelVelocityGradientZX,
-ScalarT* bondLevelVelocityGradientZY,
-ScalarT* bondLevelVelocityGradientZZ,
-const double* flyingPointFlag,
-const int* neighborhoodList,
-int numPoints
+    const ScalarT* coordinates,
+    const ScalarT* velocities,
+    const ScalarT* velocityGradient,
+    ScalarT* bondLevelVelocityGradientXX,
+    ScalarT* bondLevelVelocityGradientXY,
+    ScalarT* bondLevelVelocityGradientXZ,
+    ScalarT* bondLevelVelocityGradientYX,
+    ScalarT* bondLevelVelocityGradientYY,
+    ScalarT* bondLevelVelocityGradientYZ,
+    ScalarT* bondLevelVelocityGradientZX,
+    ScalarT* bondLevelVelocityGradientZY,
+    ScalarT* bondLevelVelocityGradientZZ,
+    const double* flyingPointFlag,
+    const int* neighborhoodList,
+    int numPoints
 )
 {
   const ScalarT* coord = coordinates;
@@ -1222,9 +1222,9 @@ int numPoints
 
       numNeighbors = *neighborListPtr; neighborListPtr++;
       for(int n=0; n<numNeighbors; n++, neighborListPtr++, 
-            bondLevelVelGradXX++, bondLevelVelGradXY++, bondLevelVelGradXZ++, 
-            bondLevelVelGradYX++, bondLevelVelGradYY++, bondLevelVelGradYZ++,
-            bondLevelVelGradZX++, bondLevelVelGradZY++, bondLevelVelGradZZ++){
+          bondLevelVelGradXX++, bondLevelVelGradXY++, bondLevelVelGradXZ++, 
+          bondLevelVelGradYX++, bondLevelVelGradYY++, bondLevelVelGradYZ++,
+          bondLevelVelGradZX++, bondLevelVelGradZY++, bondLevelVelGradZZ++){
 
         neighborIndex = *neighborListPtr;
         neighborCoord = coordinates + 3*neighborIndex;
@@ -1282,23 +1282,23 @@ int numPoints
 template<typename ScalarT>
 void computeBondLevelVelocityGradient
 (
-const ScalarT* coordinates,
-const ScalarT* velocities,
-const ScalarT* velocityGradientX,
-const ScalarT* velocityGradientY,
-const ScalarT* velocityGradientZ,
-ScalarT* bondLevelVelocityGradientXX,
-ScalarT* bondLevelVelocityGradientXY,
-ScalarT* bondLevelVelocityGradientXZ,
-ScalarT* bondLevelVelocityGradientYX,
-ScalarT* bondLevelVelocityGradientYY,
-ScalarT* bondLevelVelocityGradientYZ,
-ScalarT* bondLevelVelocityGradientZX,
-ScalarT* bondLevelVelocityGradientZY,
-ScalarT* bondLevelVelocityGradientZZ,
-const double* flyingPointFlag,
-const int* neighborhoodList,
-int numPoints
+    const ScalarT* coordinates,
+    const ScalarT* velocities,
+    const ScalarT* velocityGradientX,
+    const ScalarT* velocityGradientY,
+    const ScalarT* velocityGradientZ,
+    ScalarT* bondLevelVelocityGradientXX,
+    ScalarT* bondLevelVelocityGradientXY,
+    ScalarT* bondLevelVelocityGradientXZ,
+    ScalarT* bondLevelVelocityGradientYX,
+    ScalarT* bondLevelVelocityGradientYY,
+    ScalarT* bondLevelVelocityGradientYZ,
+    ScalarT* bondLevelVelocityGradientZX,
+    ScalarT* bondLevelVelocityGradientZY,
+    ScalarT* bondLevelVelocityGradientZZ,
+    const double* flyingPointFlag,
+    const int* neighborhoodList,
+    int numPoints
 )
 {
   const ScalarT* coord = coordinates;
@@ -1334,16 +1334,16 @@ int numPoints
   int neighborIndex, numNeighbors;
   const int *neighborListPtr = neighborhoodList; 
   for(int iID=0 ; iID<numPoints ; ++iID, coord+=3, vel+=3, 
-        velGradX+=3,  velGradY+=3, velGradZ+=3, flyingPointFlg++){
+      velGradX+=3,  velGradY+=3, velGradZ+=3, flyingPointFlg++){
 
     // if the node is not flying, update the values. Otherwise, just skip
     if(*flyingPointFlg < 0.0){
 
       numNeighbors = *neighborListPtr; neighborListPtr++;
       for(int n=0; n<numNeighbors; n++, neighborListPtr++, 
-            bondLevelVelGradXX++, bondLevelVelGradXY++, bondLevelVelGradXZ++, 
-            bondLevelVelGradYX++, bondLevelVelGradYY++, bondLevelVelGradYZ++,
-            bondLevelVelGradZX++, bondLevelVelGradZY++, bondLevelVelGradZZ++){
+          bondLevelVelGradXX++, bondLevelVelGradXY++, bondLevelVelGradXZ++, 
+          bondLevelVelGradYX++, bondLevelVelGradYY++, bondLevelVelGradYZ++,
+          bondLevelVelGradZX++, bondLevelVelGradZY++, bondLevelVelGradZZ++){
 
         neighborIndex = *neighborListPtr;
         neighborCoord = coordinates + 3*neighborIndex;
@@ -1410,12 +1410,12 @@ int numPoints
 template<typename ScalarT>
 void updateDeformationGradient
 (
-const ScalarT* velocityGradient,
-const ScalarT* deformationGradientN,
-ScalarT* deformationGradientNP1,
-const double* flyingPointFlag,
-int numPoints,
-double dt
+    const ScalarT* velocityGradient,
+    const ScalarT* deformationGradientN,
+    ScalarT* deformationGradientNP1,
+    const double* flyingPointFlag,
+    int numPoints,
+    double dt
 )
 {
   const ScalarT* velGrad = velocityGradient;
@@ -1449,10 +1449,10 @@ double dt
 template<typename ScalarT>
 void computeGreenLagrangeStrain
 (
-  const ScalarT* deformationGradient,
-  ScalarT* greenLagrangeStrain,
-  const double* flyingPointFlag,
-  int numPoints
+    const ScalarT* deformationGradient,
+    ScalarT* greenLagrangeStrain,
+    const double* flyingPointFlag,
+    int numPoints
 )
 {
   // Green-Lagrange Strain E = 0.5*(F^T F - I)
@@ -1487,15 +1487,15 @@ void computeGreenLagrangeStrain
 //This function computes the node-level values
 template<typename ScalarT>
 int computeNodeLevelUnrotatedRateOfDeformationAndRotationTensor(
-const ScalarT* velocityGradient,
-const ScalarT* leftStretchTensorN,
-const ScalarT* rotationTensorN,
-ScalarT* leftStretchTensorNP1,
-ScalarT* rotationTensorNP1,
-ScalarT* unrotatedRateOfDeformation,
-const double* flyingPointFlag,
-int numPoints,
-double dt
+    const ScalarT* velocityGradient,
+    const ScalarT* leftStretchTensorN,
+    const ScalarT* rotationTensorN,
+    ScalarT* leftStretchTensorNP1,
+    ScalarT* rotationTensorNP1,
+    ScalarT* unrotatedRateOfDeformation,
+    const double* flyingPointFlag,
+    int numPoints,
+    double dt
 )
 {
   int returnCode = 0;
@@ -1531,7 +1531,7 @@ double dt
     "**** Error:  computeShapeTensorInverseAndApproximateVelocityGradient: Non-invertible matrix\n";
 
   for(int iID=0 ; iID<numPoints ; ++iID, eulerianVelGrad+=9, rotTensorN+=9, 
-        rotTensorNP1+=9, leftStretchNP1+=9, leftStretchN+=9, unrotRateOfDef+=9, flyingPointFlg++){
+      rotTensorNP1+=9, leftStretchNP1+=9, leftStretchN+=9, unrotRateOfDef+=9, flyingPointFlg++){
 
     // if the node is not flying, update the values. Otherwise, just skip
     if(*flyingPointFlg < 0.0){
@@ -1632,7 +1632,7 @@ double dt
       Omega = sqrt(OmegaSq);
 
       // Avoid a potential divide-by-zero
-      if ( OmegaSq > 1.e-30){
+      if(OmegaSq > 1.e-30){
 
         // Compute Q = I + sin( dt * Omega ) * OmegaTensor / Omega - (1. - cos(dt * Omega)) * omegaTensor^2 / OmegaSq
         //           = I + scaleFactor1 * OmegaTensor + scaleFactor2 * OmegaTensorSq
@@ -1690,64 +1690,64 @@ double dt
 //This function computes the node-based values
 template<typename ScalarT>
 int computeBondLevelUnrotatedRateOfDeformationAndRotationTensor(
-const ScalarT* bondLevelVelocityGradientXX, 
-const ScalarT* bondLevelVelocityGradientXY, 
-const ScalarT* bondLevelVelocityGradientXZ,
-const ScalarT* bondLevelVelocityGradientYX, 
-const ScalarT* bondLevelVelocityGradientYY, 
-const ScalarT* bondLevelVelocityGradientYZ, 
-const ScalarT* bondLevelVelocityGradientZX,
-const ScalarT* bondLevelVelocityGradientZY,
-const ScalarT* bondLevelVelocityGradientZZ,
-const ScalarT* bondLevelLeftStretchTensorXXN,
-const ScalarT* bondLevelLeftStretchTensorXYN,
-const ScalarT* bondLevelLeftStretchTensorXZN,
-const ScalarT* bondLevelLeftStretchTensorYXN,
-const ScalarT* bondLevelLeftStretchTensorYYN,
-const ScalarT* bondLevelLeftStretchTensorYZN,
-const ScalarT* bondLevelLeftStretchTensorZXN,
-const ScalarT* bondLevelLeftStretchTensorZYN,
-const ScalarT* bondLevelLeftStretchTensorZZN,
-const ScalarT* bondLevelRotationTensorXXN, 
-const ScalarT* bondLevelRotationTensorXYN, 
-const ScalarT* bondLevelRotationTensorXZN, 
-const ScalarT* bondLevelRotationTensorYXN, 
-const ScalarT* bondLevelRotationTensorYYN, 
-const ScalarT* bondLevelRotationTensorYZN, 
-const ScalarT* bondLevelRotationTensorZXN, 
-const ScalarT* bondLevelRotationTensorZYN, 
-const ScalarT* bondLevelRotationTensorZZN, 
-ScalarT* bondLevelLeftStretchTensorXXNP1,
-ScalarT* bondLevelLeftStretchTensorXYNP1,
-ScalarT* bondLevelLeftStretchTensorXZNP1,
-ScalarT* bondLevelLeftStretchTensorYXNP1,
-ScalarT* bondLevelLeftStretchTensorYYNP1,
-ScalarT* bondLevelLeftStretchTensorYZNP1,
-ScalarT* bondLevelLeftStretchTensorZXNP1,
-ScalarT* bondLevelLeftStretchTensorZYNP1,
-ScalarT* bondLevelLeftStretchTensorZZNP1,
-ScalarT* bondLevelRotationTensorXXNP1,
-ScalarT* bondLevelRotationTensorXYNP1,
-ScalarT* bondLevelRotationTensorXZNP1,
-ScalarT* bondLevelRotationTensorYXNP1,
-ScalarT* bondLevelRotationTensorYYNP1,
-ScalarT* bondLevelRotationTensorYZNP1,
-ScalarT* bondLevelRotationTensorZXNP1,
-ScalarT* bondLevelRotationTensorZYNP1,
-ScalarT* bondLevelRotationTensorZZNP1,
-ScalarT* bondLevelUnrotatedRateOfDeformationXX,
-ScalarT* bondLevelUnrotatedRateOfDeformationXY,
-ScalarT* bondLevelUnrotatedRateOfDeformationXZ,
-ScalarT* bondLevelUnrotatedRateOfDeformationYX,
-ScalarT* bondLevelUnrotatedRateOfDeformationYY,
-ScalarT* bondLevelUnrotatedRateOfDeformationYZ,
-ScalarT* bondLevelUnrotatedRateOfDeformationZX,
-ScalarT* bondLevelUnrotatedRateOfDeformationZY,
-ScalarT* bondLevelUnrotatedRateOfDeformationZZ,
-const double* flyingPointFlag,
-const int* neighborhoodList,
-int numPoints,
-double dt
+    const ScalarT* bondLevelVelocityGradientXX, 
+    const ScalarT* bondLevelVelocityGradientXY, 
+    const ScalarT* bondLevelVelocityGradientXZ,
+    const ScalarT* bondLevelVelocityGradientYX, 
+    const ScalarT* bondLevelVelocityGradientYY, 
+    const ScalarT* bondLevelVelocityGradientYZ, 
+    const ScalarT* bondLevelVelocityGradientZX,
+    const ScalarT* bondLevelVelocityGradientZY,
+    const ScalarT* bondLevelVelocityGradientZZ,
+    const ScalarT* bondLevelLeftStretchTensorXXN,
+    const ScalarT* bondLevelLeftStretchTensorXYN,
+    const ScalarT* bondLevelLeftStretchTensorXZN,
+    const ScalarT* bondLevelLeftStretchTensorYXN,
+    const ScalarT* bondLevelLeftStretchTensorYYN,
+    const ScalarT* bondLevelLeftStretchTensorYZN,
+    const ScalarT* bondLevelLeftStretchTensorZXN,
+    const ScalarT* bondLevelLeftStretchTensorZYN,
+    const ScalarT* bondLevelLeftStretchTensorZZN,
+    const ScalarT* bondLevelRotationTensorXXN, 
+    const ScalarT* bondLevelRotationTensorXYN, 
+    const ScalarT* bondLevelRotationTensorXZN, 
+    const ScalarT* bondLevelRotationTensorYXN, 
+    const ScalarT* bondLevelRotationTensorYYN, 
+    const ScalarT* bondLevelRotationTensorYZN, 
+    const ScalarT* bondLevelRotationTensorZXN, 
+    const ScalarT* bondLevelRotationTensorZYN, 
+    const ScalarT* bondLevelRotationTensorZZN, 
+    ScalarT* bondLevelLeftStretchTensorXXNP1,
+    ScalarT* bondLevelLeftStretchTensorXYNP1,
+    ScalarT* bondLevelLeftStretchTensorXZNP1,
+    ScalarT* bondLevelLeftStretchTensorYXNP1,
+    ScalarT* bondLevelLeftStretchTensorYYNP1,
+    ScalarT* bondLevelLeftStretchTensorYZNP1,
+    ScalarT* bondLevelLeftStretchTensorZXNP1,
+    ScalarT* bondLevelLeftStretchTensorZYNP1,
+    ScalarT* bondLevelLeftStretchTensorZZNP1,
+    ScalarT* bondLevelRotationTensorXXNP1,
+    ScalarT* bondLevelRotationTensorXYNP1,
+    ScalarT* bondLevelRotationTensorXZNP1,
+    ScalarT* bondLevelRotationTensorYXNP1,
+    ScalarT* bondLevelRotationTensorYYNP1,
+    ScalarT* bondLevelRotationTensorYZNP1,
+    ScalarT* bondLevelRotationTensorZXNP1,
+    ScalarT* bondLevelRotationTensorZYNP1,
+    ScalarT* bondLevelRotationTensorZZNP1,
+    ScalarT* bondLevelUnrotatedRateOfDeformationXX,
+    ScalarT* bondLevelUnrotatedRateOfDeformationXY,
+    ScalarT* bondLevelUnrotatedRateOfDeformationXZ,
+    ScalarT* bondLevelUnrotatedRateOfDeformationYX,
+    ScalarT* bondLevelUnrotatedRateOfDeformationYY,
+    ScalarT* bondLevelUnrotatedRateOfDeformationYZ,
+    ScalarT* bondLevelUnrotatedRateOfDeformationZX,
+    ScalarT* bondLevelUnrotatedRateOfDeformationZY,
+    ScalarT* bondLevelUnrotatedRateOfDeformationZZ,
+    const double* flyingPointFlag,
+    const int* neighborhoodList,
+    int numPoints,
+    double dt
 )
 {
   int returnCode = 0;
@@ -1847,24 +1847,24 @@ double dt
       // All is bond level.
       numNeighbors = *neighborListPtr; neighborListPtr++;
       for(int n=0; n<numNeighbors; n++, neighborListPtr++, 
-            velGradXX++, velGradXY++, velGradXZ++, 
-            velGradYX++, velGradYY++, velGradYZ++, 
-            velGradZX++, velGradZY++, velGradZZ++,
-            leftStretchXXN++, leftStretchXYN++, leftStretchXZN++, 
-            leftStretchYXN++, leftStretchYYN++, leftStretchYZN++, 
-            leftStretchZXN++, leftStretchZYN++, leftStretchZZN++,
-            rotTensorXXN++, rotTensorXYN++, rotTensorXZN++,
-            rotTensorYXN++, rotTensorYYN++, rotTensorYZN++,
-            rotTensorZXN++, rotTensorZYN++, rotTensorZZN++,
-            leftStretchXXNP1++, leftStretchXYNP1++, leftStretchXZNP1++, 
-            leftStretchYXNP1++, leftStretchYYNP1++, leftStretchYZNP1++, 
-            leftStretchZXNP1++, leftStretchZYNP1++, leftStretchZZNP1++,
-            rotTensorXXNP1++, rotTensorXYNP1++, rotTensorXZNP1++,
-            rotTensorYXNP1++, rotTensorYYNP1++, rotTensorYZNP1++,
-            rotTensorZXNP1++, rotTensorZYNP1++, rotTensorZZNP1++,
-            unrotRateOfDefXX++, unrotRateOfDefXY++, unrotRateOfDefXZ++,
-            unrotRateOfDefYX++, unrotRateOfDefYY++, unrotRateOfDefYZ++,
-            unrotRateOfDefZX++, unrotRateOfDefZY++, unrotRateOfDefZZ++){
+          velGradXX++, velGradXY++, velGradXZ++, 
+          velGradYX++, velGradYY++, velGradYZ++, 
+          velGradZX++, velGradZY++, velGradZZ++,
+          leftStretchXXN++, leftStretchXYN++, leftStretchXZN++, 
+          leftStretchYXN++, leftStretchYYN++, leftStretchYZN++, 
+          leftStretchZXN++, leftStretchZYN++, leftStretchZZN++,
+          rotTensorXXN++, rotTensorXYN++, rotTensorXZN++,
+          rotTensorYXN++, rotTensorYYN++, rotTensorYZN++,
+          rotTensorZXN++, rotTensorZYN++, rotTensorZZN++,
+          leftStretchXXNP1++, leftStretchXYNP1++, leftStretchXZNP1++, 
+          leftStretchYXNP1++, leftStretchYYNP1++, leftStretchYZNP1++, 
+          leftStretchZXNP1++, leftStretchZYNP1++, leftStretchZZNP1++,
+          rotTensorXXNP1++, rotTensorXYNP1++, rotTensorXZNP1++,
+          rotTensorYXNP1++, rotTensorYYNP1++, rotTensorYZNP1++,
+          rotTensorZXNP1++, rotTensorZYNP1++, rotTensorZZNP1++,
+          unrotRateOfDefXX++, unrotRateOfDefXY++, unrotRateOfDefXZ++,
+          unrotRateOfDefYX++, unrotRateOfDefYY++, unrotRateOfDefYZ++,
+          unrotRateOfDefZX++, unrotRateOfDefZY++, unrotRateOfDefZZ++){
 
         neighborIndex = *neighborListPtr;
 
@@ -1974,7 +1974,7 @@ double dt
         Omega = sqrt(OmegaSq);
 
         // Avoid a potential divide-by-zero
-        if ( OmegaSq > 1.e-30){
+        if(OmegaSq > 1.e-30){
 
           // Compute Q = I + sin( dt * Omega ) * OmegaTensor / Omega - (1. - cos(dt * Omega)) * omegaTensor^2 / OmegaSq
           //           = I + scaleFactor1 * OmegaTensor + scaleFactor2 * OmegaTensorSq
@@ -2065,11 +2065,11 @@ double dt
 template<typename ScalarT>
 void rotateCauchyStress
 (
- const ScalarT* rotationTensor,
- const ScalarT* unrotatedCauchyStress,
- ScalarT* rotatedCauchyStress,
- const double* flyingPointFlag,
- int numPoints
+    const ScalarT* rotationTensor,
+    const ScalarT* unrotatedCauchyStress,
+    ScalarT* rotatedCauchyStress,
+    const double* flyingPointFlag,
+    int numPoints
 )
 {
   const ScalarT* rotTensor = rotationTensor;
@@ -2097,36 +2097,36 @@ void rotateCauchyStress
 
 template<typename ScalarT>
 void rotateBondLevelCauchyStress(
-const ScalarT* bondLevelRotationTensorXX,
-const ScalarT* bondLevelRotationTensorXY,
-const ScalarT* bondLevelRotationTensorXZ,
-const ScalarT* bondLevelRotationTensorYX,
-const ScalarT* bondLevelRotationTensorYY,
-const ScalarT* bondLevelRotationTensorYZ,
-const ScalarT* bondLevelRotationTensorZX,
-const ScalarT* bondLevelRotationTensorZY,
-const ScalarT* bondLevelRotationTensorZZ,
-const ScalarT* bondLevelUnrotatedCauchyStressXX,
-const ScalarT* bondLevelUnrotatedCauchyStressXY,
-const ScalarT* bondLevelUnrotatedCauchyStressXZ,
-const ScalarT* bondLevelUnrotatedCauchyStressYX,
-const ScalarT* bondLevelUnrotatedCauchyStressYY,
-const ScalarT* bondLevelUnrotatedCauchyStressYZ,
-const ScalarT* bondLevelUnrotatedCauchyStressZX,
-const ScalarT* bondLevelUnrotatedCauchyStressZY,
-const ScalarT* bondLevelUnrotatedCauchyStressZZ,
-ScalarT* bondLevelRotatedCauchyStressXX,
-ScalarT* bondLevelRotatedCauchyStressXY,
-ScalarT* bondLevelRotatedCauchyStressXZ,
-ScalarT* bondLevelRotatedCauchyStressYX,
-ScalarT* bondLevelRotatedCauchyStressYY,
-ScalarT* bondLevelRotatedCauchyStressYZ,
-ScalarT* bondLevelRotatedCauchyStressZX,
-ScalarT* bondLevelRotatedCauchyStressZY,
-ScalarT* bondLevelRotatedCauchyStressZZ,
-const double* flyingPointFlag,
-const int* neighborhoodList,
-int numPoints
+    const ScalarT* bondLevelRotationTensorXX,
+    const ScalarT* bondLevelRotationTensorXY,
+    const ScalarT* bondLevelRotationTensorXZ,
+    const ScalarT* bondLevelRotationTensorYX,
+    const ScalarT* bondLevelRotationTensorYY,
+    const ScalarT* bondLevelRotationTensorYZ,
+    const ScalarT* bondLevelRotationTensorZX,
+    const ScalarT* bondLevelRotationTensorZY,
+    const ScalarT* bondLevelRotationTensorZZ,
+    const ScalarT* bondLevelUnrotatedCauchyStressXX,
+    const ScalarT* bondLevelUnrotatedCauchyStressXY,
+    const ScalarT* bondLevelUnrotatedCauchyStressXZ,
+    const ScalarT* bondLevelUnrotatedCauchyStressYX,
+    const ScalarT* bondLevelUnrotatedCauchyStressYY,
+    const ScalarT* bondLevelUnrotatedCauchyStressYZ,
+    const ScalarT* bondLevelUnrotatedCauchyStressZX,
+    const ScalarT* bondLevelUnrotatedCauchyStressZY,
+    const ScalarT* bondLevelUnrotatedCauchyStressZZ,
+    ScalarT* bondLevelRotatedCauchyStressXX,
+    ScalarT* bondLevelRotatedCauchyStressXY,
+    ScalarT* bondLevelRotatedCauchyStressXZ,
+    ScalarT* bondLevelRotatedCauchyStressYX,
+    ScalarT* bondLevelRotatedCauchyStressYY,
+    ScalarT* bondLevelRotatedCauchyStressYZ,
+    ScalarT* bondLevelRotatedCauchyStressZX,
+    ScalarT* bondLevelRotatedCauchyStressZY,
+    ScalarT* bondLevelRotatedCauchyStressZZ,
+    const double* flyingPointFlag,
+    const int* neighborhoodList,
+    int numPoints
 )
 {
   const ScalarT* rotTensorXX = bondLevelRotationTensorXX;
@@ -2171,15 +2171,15 @@ int numPoints
       // All is bond level.
       numNeighbors = *neighborListPtr; neighborListPtr++;
       for(int n=0; n<numNeighbors; n++, neighborListPtr++,
-            rotTensorXX++, rotTensorXY++, rotTensorXZ++, 
-            rotTensorYX++, rotTensorYY++, rotTensorYZ++, 
-            rotTensorZX++, rotTensorZY++, rotTensorZZ++, 
-            unrotatedStressXX++, unrotatedStressXY++, unrotatedStressXZ++, 
-            unrotatedStressYX++, unrotatedStressYY++, unrotatedStressYZ++, 
-            unrotatedStressZX++, unrotatedStressZY++, unrotatedStressZZ++, 
-            rotatedStressXX++, rotatedStressXY++, rotatedStressXZ++, 
-            rotatedStressYX++, rotatedStressYY++, rotatedStressYZ++, 
-            rotatedStressZX++, rotatedStressZY++, rotatedStressZZ++){
+          rotTensorXX++, rotTensorXY++, rotTensorXZ++, 
+          rotTensorYX++, rotTensorYY++, rotTensorYZ++, 
+          rotTensorZX++, rotTensorZY++, rotTensorZZ++, 
+          unrotatedStressXX++, unrotatedStressXY++, unrotatedStressXZ++, 
+          unrotatedStressYX++, unrotatedStressYY++, unrotatedStressYZ++, 
+          unrotatedStressZX++, unrotatedStressZY++, unrotatedStressZZ++, 
+          rotatedStressXX++, rotatedStressXY++, rotatedStressXZ++, 
+          rotatedStressYX++, rotatedStressYY++, rotatedStressYZ++, 
+          rotatedStressZX++, rotatedStressZY++, rotatedStressZZ++){
 
         // write in matrix form 
         rotTensor[0] = *rotTensorXX; rotTensor[1] = *rotTensorXY; rotTensor[2] = *rotTensorXZ;
@@ -2221,25 +2221,25 @@ int numPoints
 template<typename ScalarT>
 void computeNonhomogeneityIntegral
 (
-const double* volume,
-const double* weightedVolume,
-const ScalarT* jacobianDeterminant,
-const double* horizon,
-const ScalarT* coordinates,
-const ScalarT* bondLevelCauchyStressXX,
-const ScalarT* bondLevelCauchyStressXY,
-const ScalarT* bondLevelCauchyStressXZ,
-const ScalarT* bondLevelCauchyStressYX,
-const ScalarT* bondLevelCauchyStressYY,
-const ScalarT* bondLevelCauchyStressYZ,
-const ScalarT* bondLevelCauchyStressZX,
-const ScalarT* bondLevelCauchyStressZY,
-const ScalarT* bondLevelCauchyStressZZ,
-ScalarT* nonhomogeneousIntegral,
-const double* flyingPointFlag,
-const double* bondDamage,
-const int* neighborhoodList,
-int numPoints
+    const double* volume,
+    const double* weightedVolume,
+    const ScalarT* jacobianDeterminant,
+    const double* horizon,
+    const ScalarT* coordinates,
+    const ScalarT* bondLevelCauchyStressXX,
+    const ScalarT* bondLevelCauchyStressXY,
+    const ScalarT* bondLevelCauchyStressXZ,
+    const ScalarT* bondLevelCauchyStressYX,
+    const ScalarT* bondLevelCauchyStressYY,
+    const ScalarT* bondLevelCauchyStressYZ,
+    const ScalarT* bondLevelCauchyStressZX,
+    const ScalarT* bondLevelCauchyStressZY,
+    const ScalarT* bondLevelCauchyStressZZ,
+    ScalarT* nonhomogeneousIntegral,
+    const double* flyingPointFlag,
+    const double* bondDamage,
+    const int* neighborhoodList,
+    int  numPoints
 )
 {
   const double* delta = horizon;
@@ -2287,9 +2287,9 @@ int numPoints
 
       numNeighbors = *neighborListPtr; neighborListPtr++;
       for(int n=0; n<numNeighbors; n++, neighborListPtr++, bondDamagePtr++,
-            stressXX++, stressXY++, stressXZ++, 
-            stressYX++, stressYY++, stressYZ++, 
-            stressZX++, stressZY++, stressZZ++){
+          stressXX++, stressXY++, stressXZ++, 
+          stressYX++, stressYY++, stressYZ++, 
+          stressZX++, stressZY++, stressZZ++){
 
         neighborIndex = *neighborListPtr;
         neighborVolume = jacobianDeterminant[neighborIndex] * volume[neighborIndex];
@@ -2353,365 +2353,365 @@ int numPoints
 
 template void TransposeMatrix<double>
 (
- const double* matrix,
- double* transpose
+    const double* matrix,
+    double* transpose
 );
 
 template void MatrixMultiply<double>
 (
- bool transA,
- bool transB,
- double alpha,
- const double* a,
- const double* b,
- double* result
+    bool transA,
+    bool transB,
+    double alpha,
+    const double* a,
+    const double* b,
+    double* result
 );
 
 template void rotateCauchyStress<double>
 (
- const double* rotationTensor,
- const double* unrotatedCauchyStress,
- double* rotatedCauchyStress,
- int numPoints
+    const double* rotationTensor,
+    const double* unrotatedCauchyStress,
+    double* rotatedCauchyStress,
+    int numPoints
  );
 
 template int Invert3by3Matrix<double>
 (
- const double* matrix,
- double& determinant,
- double* inverse
+    const double* matrix,
+    double& determinant,
+     double* inverse
 );
 
 template int computeShapeTensorInverseAndApproximateDeformationGradient<double>
 (
-const double* volume,
-const double* horizon,
-const double* modelCoordinates,
-const double* coordinates,
-double* shapeTensorInverse,
-double* deformationGradient,
-const int* neighborhoodList,
-int numPoints
+    const double* volume,
+    const double* horizon,
+    const double* modelCoordinates,
+    const double* coordinates,
+    double* shapeTensorInverse,
+    double* deformationGradient,
+    const int* neighborhoodList,
+    int numPoints
 );
 
 template int computeUnrotatedRateOfDeformationAndRotationTensor<double>
 (
-const double* volume,
-const double* horizon,
-const double* modelCoordinates,
-const double* velocities,
-const double* deformationGradient,
-const double* shapeTensorInverse,
-const double* leftStretchTensorN,
-const double* rotationTensorN,
-double* leftStretchTensorNP1,
-double* rotationTensorNP1,
-double* unrotatedRateOfDeformation,
-const int* neighborhoodList,
-int numPoints,
-double dt
+    const double* volume,
+    const double* horizon,
+    const double* modelCoordinates,
+    const double* velocities,
+    const double* deformationGradient,
+    const double* shapeTensorInverse,
+    const double* leftStretchTensorN,
+    const double* rotationTensorN,
+    double* leftStretchTensorNP1,
+    double* rotationTensorNP1,
+    double* unrotatedRateOfDeformation,
+    const int* neighborhoodList,
+    int numPoints,
+    double dt
 );
 
 template void computeGreenLagrangeStrain<double>
 (
-  const double* deformationGradientXX,
-  const double* deformationGradientXY,
-  const double* deformationGradientXZ,
-  const double* deformationGradientYX,
-  const double* deformationGradientYY,
-  const double* deformationGradientYZ,
-  const double* deformationGradientZX,
-  const double* deformationGradientZY,
-  const double* deformationGradientZZ,
-  double* greenLagrangeStrainXX,
-  double* greenLagrangeStrainXY,
-  double* greenLagrangeStrainXZ,
-  double* greenLagrangeStrainYX,
-  double* greenLagrangeStrainYY,
-  double* greenLagrangeStrainYZ,
-  double* greenLagrangeStrainZX,
-  double* greenLagrangeStrainZY,
-  double* greenLagrangeStrainZZ,
-  int numPoints
+    const double* deformationGradientXX,
+    const double* deformationGradientXY,
+    const double* deformationGradientXZ,
+    const double* deformationGradientYX,
+    const double* deformationGradientYY,
+    const double* deformationGradientYZ,
+    const double* deformationGradientZX,
+    const double* deformationGradientZY,
+    const double* deformationGradientZZ,
+    double* greenLagrangeStrainXX,
+    double* greenLagrangeStrainXY,
+    double* greenLagrangeStrainXZ,
+    double* greenLagrangeStrainYX,
+    double* greenLagrangeStrainYY,
+    double* greenLagrangeStrainYZ,
+    double* greenLagrangeStrainZX,
+    double* greenLagrangeStrainZY,
+    double* greenLagrangeStrainZZ,
+    int numPoints
 );
 
 template void computeHourglassForce<double>
 (
-const double* volume,
-const double* horizon,
-const double* modelCoordinates,
-const double* coordinates,
-const double* deformationGradient,
-double* hourglassForceDensity,
-const int* neighborhoodList,
-int numPoints,
-double bulkModulus,
-double hourglassCoefficient
+    const double* volume,
+    const double* horizon,
+    const double* modelCoordinates,
+    const double* coordinates,
+    const double* deformationGradient,
+    double* hourglassForceDensity,
+    const int* neighborhoodList,
+    int numPoints,
+    double bulkModulus,
+    double hourglassCoefficient
 );
 
 template void setOnesOnDiagonalFullTensor<double>
 (
- double* tensor,
- int numPoints
+    double* tensor,
+    int numPoints
 );
 
 template void computeUndamagedWeightedVolume<double>
 (
-const double* volume,
-double* weightedVolume,
-const double* jacobianDeterminant,
-const double* horizon,
-const double* coordinates,
-const int* neighborhoodList,
-int numPoints
+    const double* volume,
+    double* weightedVolume,
+    const double* jacobianDeterminant,
+    const double* horizon,
+    const double* coordinates,
+    const int* neighborhoodList,
+    int numPoints
 );
 
 template void computeWeightedVolume<double>
 (
-const double* volume,
-double* weightedVolume,
-const double* jacobianDeterminant,
-const double* horizon,
-const double* coordinates,
-const double* flyingPointFlag,
-const double* bondDamage,
-const int* neighborhoodList,
-int numPoints
+    const double* volume,
+    double* weightedVolume,
+    const double* jacobianDeterminant,
+    const double* horizon,
+    const double* coordinates,
+    const double* flyingPointFlag,
+    const double* bondDamage,
+    const int* neighborhoodList,
+    int numPoints
 );
 
 template int computeShapeTensorInverseAndApproximateNodeLevelVelocityGradient<double>
 (
-const double* volume,
-const double* jacobianDeterminantN,
-double* jacobianDeterminantNP1,
-const double* horizon,
-const double* coordinates,
-const double* velocities,
-double* shapeTensorInverse,
-double* velocityGradient,
-const double* flyingPointFlag,
-const double* bondDamage,
-const int* neighborhoodList,
-int numPoints,
-double dt
+    const double* volume,
+    const double* jacobianDeterminantN,
+    double* jacobianDeterminantNP1,
+    const double* horizon,
+    const double* coordinates,
+    const double* velocities,
+    double* shapeTensorInverse,
+    double* velocityGradient,
+    const double* flyingPointFlag,
+    const double* bondDamage,
+    const int* neighborhoodList,
+    int numPoints,
+    double dt
 );
 
 template int computeShapeTensorInverseAndApproximateNodeLevelVelocityGradient<double>
 (
-const double* volume,
-const double* jacobianDeterminantN,
-double* jacobianDeterminantNP1,
-const double* horizon,
-const double* coordinates,
-const double* velocities,
-double* shapeTensorInverse,
-double* velocityGradient,
-double* velocityGradientX,
-double* velocityGradientY,
-double* velocityGradientZ,
-const double* flyingPointFlag,
-const double* bondDamage,
-const int* neighborhoodList,
-int numPoints,
-double dt
+    const double* volume,
+    const double* jacobianDeterminantN,
+    double* jacobianDeterminantNP1,
+    const double* horizon,
+    const double* coordinates,
+    const double* velocities,
+    double* shapeTensorInverse,
+    double* velocityGradient,
+    double* velocityGradientX,
+    double* velocityGradientY,
+    double* velocityGradientZ,
+    const double* flyingPointFlag,
+    const double* bondDamage,
+    const int* neighborhoodList,
+    int numPoints,
+    double dt
 );
 
 template void computeBondLevelVelocityGradient<double>
 (
-const double* coordinates,
-const double* velocities,
-const double* velocityGradient,
-double* bondLevelVelocityGradientXX,
-double* bondLevelVelocityGradientXY,
-double* bondLevelVelocityGradientXZ,
-double* bondLevelVelocityGradientYX,
-double* bondLevelVelocityGradientYY,
-double* bondLevelVelocityGradientYZ,
-double* bondLevelVelocityGradientZX,
-double* bondLevelVelocityGradientZY,
-double* bondLevelVelocityGradientZZ,
-const double* flyingPointFlag,
-const int* neighborhoodList,
-int numPoints
+    const double* coordinates,
+    const double* velocities,
+    const double* velocityGradient,
+    double* bondLevelVelocityGradientXX,
+    double* bondLevelVelocityGradientXY,
+    double* bondLevelVelocityGradientXZ,
+    double* bondLevelVelocityGradientYX,
+    double* bondLevelVelocityGradientYY,
+    double* bondLevelVelocityGradientYZ,
+    double* bondLevelVelocityGradientZX,
+    double* bondLevelVelocityGradientZY,
+    double* bondLevelVelocityGradientZZ,
+    const double* flyingPointFlag,
+    const int* neighborhoodList,
+    int numPoints
 );
 
 template void computeBondLevelVelocityGradient<double>
 (
-const double* coordinates,
-const double* velocities,
-const double* velocityGradientX,
-const double* velocityGradientY,
-const double* velocityGradientZ,
-double* bondLevelVelocityGradientXX,
-double* bondLevelVelocityGradientXY,
-double* bondLevelVelocityGradientXZ,
-double* bondLevelVelocityGradientYX,
-double* bondLevelVelocityGradientYY,
-double* bondLevelVelocityGradientYZ,
-double* bondLevelVelocityGradientZX,
-double* bondLevelVelocityGradientZY,
-double* bondLevelVelocityGradientZZ,
-const double* flyingPointFlag,
-const int* neighborhoodList,
-int numPoints
+    const double* coordinates,
+    const double* velocities,
+    const double* velocityGradientX,
+    const double* velocityGradientY,
+    const double* velocityGradientZ,
+    double* bondLevelVelocityGradientXX,
+    double* bondLevelVelocityGradientXY,
+    double* bondLevelVelocityGradientXZ,
+    double* bondLevelVelocityGradientYX,
+    double* bondLevelVelocityGradientYY,
+    double* bondLevelVelocityGradientYZ,
+    double* bondLevelVelocityGradientZX,
+    double* bondLevelVelocityGradientZY,
+    double* bondLevelVelocityGradientZZ,
+    const double* flyingPointFlag,
+    const int* neighborhoodList,
+    int numPoints
 );
 
 template int computeNodeLevelUnrotatedRateOfDeformationAndRotationTensor<double>
 (
-const double* velocityGradient,
-const double* leftStretchTensorN,
-const double* rotationTensorN,
-double* leftStretchTensorNP1,
-double* rotationTensorNP1,
-double* unrotatedRateOfDeformation,
-const double* flyingPointFlag,
-int numPoints,
-double dt
+    const double* velocityGradient,
+    const double* leftStretchTensorN,
+    const double* rotationTensorN,
+    double* leftStretchTensorNP1,
+    double* rotationTensorNP1,
+    double* unrotatedRateOfDeformation,
+    const double* flyingPointFlag,
+    int numPoints,
+    double dt
 );
 
 template void updateDeformationGradient<double>
 (
-const double* velocityGradient,
-const double* deformationGradientN,
-double* deformationGradientNP1,
-const double* flyingPointFlag,
-int numPoints,
-double dt
+    const double* velocityGradient,
+    const double* deformationGradientN,
+    double* deformationGradientNP1,
+    const double* flyingPointFlag,
+    int numPoints,
+    double dt
 );
 
 template void computeGreenLagrangeStrain<double>
 (
-  const double* deformationGradient,
-  double* greenLagrangeStrain,
-  const double* flyingPointFlag,
-  int numPoints
+    const double* deformationGradient,
+    double* greenLagrangeStrain,
+    const double* flyingPointFlag,
+    int numPoints
 );
 
 template int computeBondLevelUnrotatedRateOfDeformationAndRotationTensor<double>
 (
-const double* bondLevelVelocityGradientXX, 
-const double* bondLevelVelocityGradientXY, 
-const double* bondLevelVelocityGradientXZ,
-const double* bondLevelVelocityGradientYX, 
-const double* bondLevelVelocityGradientYY, 
-const double* bondLevelVelocityGradientYZ, 
-const double* bondLevelVelocityGradientZX,
-const double* bondLevelVelocityGradientZY,
-const double* bondLevelVelocityGradientZZ,
-const double* bondLevelLeftStretchTensorXXN,
-const double* bondLevelLeftStretchTensorXYN,
-const double* bondLevelLeftStretchTensorXZN,
-const double* bondLevelLeftStretchTensorYXN,
-const double* bondLevelLeftStretchTensorYYN,
-const double* bondLevelLeftStretchTensorYZN,
-const double* bondLevelLeftStretchTensorZXN,
-const double* bondLevelLeftStretchTensorZYN,
-const double* bondLevelLeftStretchTensorZZN,
-const double* bondLevelRotationTensorXXN, 
-const double* bondLevelRotationTensorXYN, 
-const double* bondLevelRotationTensorXZN, 
-const double* bondLevelRotationTensorYXN, 
-const double* bondLevelRotationTensorYYN, 
-const double* bondLevelRotationTensorYZN, 
-const double* bondLevelRotationTensorZXN, 
-const double* bondLevelRotationTensorZYN, 
-const double* bondLevelRotationTensorZZN, 
-double* bondLevelLeftStretchTensorXXNP1,
-double* bondLevelLeftStretchTensorXYNP1,
-double* bondLevelLeftStretchTensorXZNP1,
-double* bondLevelLeftStretchTensorYXNP1,
-double* bondLevelLeftStretchTensorYYNP1,
-double* bondLevelLeftStretchTensorYZNP1,
-double* bondLevelLeftStretchTensorZXNP1,
-double* bondLevelLeftStretchTensorZYNP1,
-double* bondLevelLeftStretchTensorZZNP1,
-double* bondLevelRotationTensorXXNP1,
-double* bondLevelRotationTensorXYNP1,
-double* bondLevelRotationTensorXZNP1,
-double* bondLevelRotationTensorYXNP1,
-double* bondLevelRotationTensorYYNP1,
-double* bondLevelRotationTensorYZNP1,
-double* bondLevelRotationTensorZXNP1,
-double* bondLevelRotationTensorZYNP1,
-double* bondLevelRotationTensorZZNP1,
-double* bondLevelUnrotatedRateOfDeformationXX,
-double* bondLevelUnrotatedRateOfDeformationXY,
-double* bondLevelUnrotatedRateOfDeformationXZ,
-double* bondLevelUnrotatedRateOfDeformationYX,
-double* bondLevelUnrotatedRateOfDeformationYY,
-double* bondLevelUnrotatedRateOfDeformationYZ,
-double* bondLevelUnrotatedRateOfDeformationZX,
-double* bondLevelUnrotatedRateOfDeformationZY,
-double* bondLevelUnrotatedRateOfDeformationZZ,
-const double* flyingPointFlag,
-const int* neighborhoodList,
-int numPoints,
-double dt
+    const double* bondLevelVelocityGradientXX, 
+    const double* bondLevelVelocityGradientXY, 
+    const double* bondLevelVelocityGradientXZ,
+    const double* bondLevelVelocityGradientYX, 
+    const double* bondLevelVelocityGradientYY, 
+    const double* bondLevelVelocityGradientYZ, 
+    const double* bondLevelVelocityGradientZX,
+    const double* bondLevelVelocityGradientZY,
+    const double* bondLevelVelocityGradientZZ,
+    const double* bondLevelLeftStretchTensorXXN,
+    const double* bondLevelLeftStretchTensorXYN,
+    const double* bondLevelLeftStretchTensorXZN,
+    const double* bondLevelLeftStretchTensorYXN,
+    const double* bondLevelLeftStretchTensorYYN,
+    const double* bondLevelLeftStretchTensorYZN,
+    const double* bondLevelLeftStretchTensorZXN,
+    const double* bondLevelLeftStretchTensorZYN,
+    const double* bondLevelLeftStretchTensorZZN,
+    const double* bondLevelRotationTensorXXN, 
+    const double* bondLevelRotationTensorXYN, 
+    const double* bondLevelRotationTensorXZN, 
+    const double* bondLevelRotationTensorYXN, 
+    const double* bondLevelRotationTensorYYN, 
+    const double* bondLevelRotationTensorYZN, 
+    const double* bondLevelRotationTensorZXN, 
+    const double* bondLevelRotationTensorZYN, 
+    const double* bondLevelRotationTensorZZN, 
+    double* bondLevelLeftStretchTensorXXNP1,
+    double* bondLevelLeftStretchTensorXYNP1,
+    double* bondLevelLeftStretchTensorXZNP1,
+    double* bondLevelLeftStretchTensorYXNP1,
+    double* bondLevelLeftStretchTensorYYNP1,
+    double* bondLevelLeftStretchTensorYZNP1,
+    double* bondLevelLeftStretchTensorZXNP1,
+    double* bondLevelLeftStretchTensorZYNP1,
+    double* bondLevelLeftStretchTensorZZNP1,
+    double* bondLevelRotationTensorXXNP1,
+    double* bondLevelRotationTensorXYNP1,
+    double* bondLevelRotationTensorXZNP1,
+    double* bondLevelRotationTensorYXNP1,
+    double* bondLevelRotationTensorYYNP1,
+    double* bondLevelRotationTensorYZNP1,
+    double* bondLevelRotationTensorZXNP1,
+    double* bondLevelRotationTensorZYNP1,
+    double* bondLevelRotationTensorZZNP1,
+    double* bondLevelUnrotatedRateOfDeformationXX,
+    double* bondLevelUnrotatedRateOfDeformationXY,
+    double* bondLevelUnrotatedRateOfDeformationXZ,
+    double* bondLevelUnrotatedRateOfDeformationYX,
+    double* bondLevelUnrotatedRateOfDeformationYY,
+    double* bondLevelUnrotatedRateOfDeformationYZ,
+    double* bondLevelUnrotatedRateOfDeformationZX,
+    double* bondLevelUnrotatedRateOfDeformationZY,
+    double* bondLevelUnrotatedRateOfDeformationZZ,
+    const double* flyingPointFlag,
+    const int* neighborhoodList,
+    int numPoints,
+    double dt
 );
 
 template void rotateCauchyStress<double>
 (
- const double* rotationTensor,
- const double* unrotatedCauchyStress,
- double* rotatedCauchyStress,
- const double* flyingPointFlag,
- int numPoints
+    const double* rotationTensor,
+    const double* unrotatedCauchyStress,
+    double* rotatedCauchyStress,
+    const double* flyingPointFlag,
+    int numPoints
 );
 
 template void rotateBondLevelCauchyStress(
-const double* bondLevelRotationTensorXX,
-const double* bondLevelRotationTensorXY,
-const double* bondLevelRotationTensorXZ,
-const double* bondLevelRotationTensorYX,
-const double* bondLevelRotationTensorYY,
-const double* bondLevelRotationTensorYZ,
-const double* bondLevelRotationTensorZX,
-const double* bondLevelRotationTensorZY,
-const double* bondLevelRotationTensorZZ,
-const double* bondLevelUnrotatedCauchyStressXX,
-const double* bondLevelUnrotatedCauchyStressXY,
-const double* bondLevelUnrotatedCauchyStressXZ,
-const double* bondLevelUnrotatedCauchyStressYX,
-const double* bondLevelUnrotatedCauchyStressYY,
-const double* bondLevelUnrotatedCauchyStressYZ,
-const double* bondLevelUnrotatedCauchyStressZX,
-const double* bondLevelUnrotatedCauchyStressZY,
-const double* bondLevelUnrotatedCauchyStressZZ,
-double* bondLevelRotatedCauchyStressXX,
-double* bondLevelRotatedCauchyStressXY,
-double* bondLevelRotatedCauchyStressXZ,
-double* bondLevelRotatedCauchyStressYX,
-double* bondLevelRotatedCauchyStressYY,
-double* bondLevelRotatedCauchyStressYZ,
-double* bondLevelRotatedCauchyStressZX,
-double* bondLevelRotatedCauchyStressZY,
-double* bondLevelRotatedCauchyStressZZ,
-const double* flyingPointFlag,
-const int* neighborhoodList,
-int numPoints
+    const double* bondLevelRotationTensorXX,
+    const double* bondLevelRotationTensorXY,
+    const double* bondLevelRotationTensorXZ,
+    const double* bondLevelRotationTensorYX,
+    const double* bondLevelRotationTensorYY,
+    const double* bondLevelRotationTensorYZ,
+    const double* bondLevelRotationTensorZX,
+    const double* bondLevelRotationTensorZY,
+    const double* bondLevelRotationTensorZZ,
+    const double* bondLevelUnrotatedCauchyStressXX,
+    const double* bondLevelUnrotatedCauchyStressXY,
+    const double* bondLevelUnrotatedCauchyStressXZ,
+    const double* bondLevelUnrotatedCauchyStressYX,
+    const double* bondLevelUnrotatedCauchyStressYY,
+    const double* bondLevelUnrotatedCauchyStressYZ,
+    const double* bondLevelUnrotatedCauchyStressZX,
+    const double* bondLevelUnrotatedCauchyStressZY,
+    const double* bondLevelUnrotatedCauchyStressZZ,
+    double* bondLevelRotatedCauchyStressXX,
+    double* bondLevelRotatedCauchyStressXY,
+    double* bondLevelRotatedCauchyStressXZ,
+    double* bondLevelRotatedCauchyStressYX,
+    double* bondLevelRotatedCauchyStressYY,
+    double* bondLevelRotatedCauchyStressYZ,
+    double* bondLevelRotatedCauchyStressZX,
+    double* bondLevelRotatedCauchyStressZY,
+    double* bondLevelRotatedCauchyStressZZ,
+    const double* flyingPointFlag,
+    const int* neighborhoodList,
+    int numPoints
 );
 
 template void computeNonhomogeneityIntegral<double>
 (
-const double* volume,
-const double* weightedVolume,
-const double* jacobianDeterminant,
-const double* horizon,
-const double* coordinates,
-const double* bondLevelCauchyStressXX,
-const double* bondLevelCauchyStressXY,
-const double* bondLevelCauchyStressXZ,
-const double* bondLevelCauchyStressYX,
-const double* bondLevelCauchyStressYY,
-const double* bondLevelCauchyStressYZ,
-const double* bondLevelCauchyStressZX,
-const double* bondLevelCauchyStressZY,
-const double* bondLevelCauchyStressZZ,
-double* nonhomogeneousIntegral,
-const double* flyingPointFlag,
-const double* bondDamage,
-const int* neighborhoodList,
-int numPoints
+    const double* volume,
+    const double* weightedVolume,
+    const double* jacobianDeterminant,
+    const double* horizon,
+    const double* coordinates,
+    const double* bondLevelCauchyStressXX,
+    const double* bondLevelCauchyStressXY,
+    const double* bondLevelCauchyStressXZ,
+    const double* bondLevelCauchyStressYX,
+    const double* bondLevelCauchyStressYY,
+    const double* bondLevelCauchyStressYZ,
+    const double* bondLevelCauchyStressZX,
+    const double* bondLevelCauchyStressZY,
+    const double* bondLevelCauchyStressZZ,
+    double* nonhomogeneousIntegral,
+    const double* flyingPointFlag,
+    const double* bondDamage,
+    const int* neighborhoodList,
+    int numPoints
 );
 
 
@@ -2719,48 +2719,48 @@ int numPoints
 
 template void TransposeMatrix<Sacado::Fad::DFad<double> >
 (
- const Sacado::Fad::DFad<double>* matrix,
- Sacado::Fad::DFad<double>* transpose
+    const Sacado::Fad::DFad<double>* matrix,
+    Sacado::Fad::DFad<double>* transpose
 );
 
 template void MatrixMultiply<Sacado::Fad::DFad<double> >
 (
- bool transA,
- bool transB,
- Sacado::Fad::DFad<double> alpha,
- const Sacado::Fad::DFad<double>* a,
- const Sacado::Fad::DFad<double>* b,
- Sacado::Fad::DFad<double>* result
+    bool transA,
+    bool transB,
+    Sacado::Fad::DFad<double> alpha,
+    const Sacado::Fad::DFad<double>* a,
+    const Sacado::Fad::DFad<double>* b,
+    Sacado::Fad::DFad<double>* result
 );
 
 template int Invert3by3Matrix<Sacado::Fad::DFad<double> >
 (
- const Sacado::Fad::DFad<double>* matrix,
- Sacado::Fad::DFad<double>& determinant,
- Sacado::Fad::DFad<double>* inverse
+    const Sacado::Fad::DFad<double>* matrix,
+    Sacado::Fad::DFad<double>& determinant,
+    Sacado::Fad::DFad<double>* inverse
 );
 
 template void computeGreenLagrangeStrain<Sacado::Fad::DFad<double> >
 (
-  const Sacado::Fad::DFad<double>* deformationGradientXX,
-  const Sacado::Fad::DFad<double>* deformationGradientXY,
-  const Sacado::Fad::DFad<double>* deformationGradientXZ,
-  const Sacado::Fad::DFad<double>* deformationGradientYX,
-  const Sacado::Fad::DFad<double>* deformationGradientYY,
-  const Sacado::Fad::DFad<double>* deformationGradientYZ,
-  const Sacado::Fad::DFad<double>* deformationGradientZX,
-  const Sacado::Fad::DFad<double>* deformationGradientZY,
-  const Sacado::Fad::DFad<double>* deformationGradientZZ,
-  Sacado::Fad::DFad<double>* greenLagrangeStrainXX,
-  Sacado::Fad::DFad<double>* greenLagrangeStrainXY,
-  Sacado::Fad::DFad<double>* greenLagrangeStrainXZ,
-  Sacado::Fad::DFad<double>* greenLagrangeStrainYX,
-  Sacado::Fad::DFad<double>* greenLagrangeStrainYY,
-  Sacado::Fad::DFad<double>* greenLagrangeStrainYZ,
-  Sacado::Fad::DFad<double>* greenLagrangeStrainZX,
-  Sacado::Fad::DFad<double>* greenLagrangeStrainZY,
-  Sacado::Fad::DFad<double>* greenLagrangeStrainZZ,
-  int numPoints
+    const Sacado::Fad::DFad<double>* deformationGradientXX,
+    const Sacado::Fad::DFad<double>* deformationGradientXY,
+    const Sacado::Fad::DFad<double>* deformationGradientXZ,
+    const Sacado::Fad::DFad<double>* deformationGradientYX,
+    const Sacado::Fad::DFad<double>* deformationGradientYY,
+    const Sacado::Fad::DFad<double>* deformationGradientYZ,
+    const Sacado::Fad::DFad<double>* deformationGradientZX,
+    const Sacado::Fad::DFad<double>* deformationGradientZY,
+    const Sacado::Fad::DFad<double>* deformationGradientZZ,
+    Sacado::Fad::DFad<double>* greenLagrangeStrainXX,
+    Sacado::Fad::DFad<double>* greenLagrangeStrainXY,
+    Sacado::Fad::DFad<double>* greenLagrangeStrainXZ,
+    Sacado::Fad::DFad<double>* greenLagrangeStrainYX,
+    Sacado::Fad::DFad<double>* greenLagrangeStrainYY,
+    Sacado::Fad::DFad<double>* greenLagrangeStrainYZ,
+    Sacado::Fad::DFad<double>* greenLagrangeStrainZX,
+    Sacado::Fad::DFad<double>* greenLagrangeStrainZY,
+    Sacado::Fad::DFad<double>* greenLagrangeStrainZZ,
+    int numPoints
 );
 
 }

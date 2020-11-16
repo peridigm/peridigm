@@ -18,11 +18,11 @@ if __name__ == "__main__":
     num_points_height = int(cylinder_height/element_size + 0.5)
     arc_length = 2.0*math.pi/num_points_circumference
 
-    print "\nGenerating cylinder mesh:"
-    print "  number of points through wall thickness:", num_points_radius
-    print "  number of points around circumference:", num_points_circumference
-    print "  number of points along cylinder length:", num_points_height
-    print "  total number of points:", num_points_radius*num_points_circumference*num_points_height
+    print("\nGenerating cylinder mesh:")
+    print("  number of points through wall thickness: {}".format(num_points_radius))
+    print("  number of points around circumference: {}".format(num_points_circumference))
+    print("  number of points along cylinder length: {}".format(num_points_height))
+    print("  total number of points: {}".format(num_points_radius*num_points_circumference*num_points_height))
 
     data = []
     total_volume = 0.0
@@ -80,5 +80,5 @@ if __name__ == "__main__":
 #    correct_total_volume = (math.pi*cylinder_outer_radius*cylinder_outer_radius - math.pi*cylinder_inner_radius*cylinder_inner_radius)*cylinder_height
 #    print "\nSanity check on volume:", total_volume, "=?", correct_total_volume
 
-    print "\nDiscretization written to fragmenting_cylinder.txt\n"
-    print "Node set written to fragmenting_cylinder_nodeset.txt\n"
+    print("\nDiscretization written to fragmenting_cylinder.txt\n")
+    print("Node set written to fragmenting_cylinder_nodeset.txt\n")

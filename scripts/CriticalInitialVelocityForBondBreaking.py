@@ -8,7 +8,7 @@ if __name__ == "__main__":
     message += "a bond between two peridynamic cells.  The configuration considered\n"
     message += "is a two-cell system with the cells moving away from each other\n"
     message += "with equal and opposite prescribed initial velocities."
-    print message
+    print(message)
 
     # material properties
     k = 130.0e9            # bulk modulus
@@ -48,22 +48,21 @@ if __name__ == "__main__":
 
     criticalVelocity = sqrt( work/mass )
 
-    print "\nMaterial properties:"
-    print "  bulk modulus =                  ", k
-    print "  shear modulus =                 ", mu
-    print "  density =                       ", density
-    print "  critical stretch =              ", criticalStretch
+    print("\nMaterial properties:")
+    print("  bulk modulus =                  {}".format(k))
+    print("  shear modulus =                 {}".format(mu))
+    print("  density =                       {}".format(density))
+    print("  critical stretch =              {}".format(criticalStretch))
 
-    print "\nInitial configuration:"
-    print "  cell volume =                   ", cellVolume
-    print "  initial distance =              ", initialDistance
+    print("\nInitial configuration:")
+    print("  cell volume =                   {}".format(cellVolume))
+    print("  initial distance =              {}".format(initialDistance))
 
-    print "\nMiscellaneous stuff:"
-    print "  mass =                          ", mass
-    print "  weighted volume =               ", weightedVolume
-    print "  extension at critical stretch = ", criticalExtension
-    print "  distance at critical stretch =  ", criticalDistance
-    print "  work =                          ", work
-
-    print "\nCritical initial velocity =       ", criticalVelocity
-    print
+    print("\nMiscellaneous stuff:")
+    print("  mass =                          {}".format(mass))
+    print("  weighted volume =               {}".format(weightedVolume))
+    print("  extension at critical stretch = {}".format(criticalExtension))
+    print("  distance at critical stretch =  {}".format(criticalDistance))
+    print("  work =                          {}".format(work))
+    print("\nCritical initial velocity =       {}".format(criticalVelocity))
+    print("")

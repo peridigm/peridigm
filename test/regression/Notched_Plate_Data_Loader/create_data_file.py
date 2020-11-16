@@ -4,11 +4,17 @@
 
 import sys
 import os
-import string
 import math
 
-sys.path.append('/Users/djlittl/Software/seacas/CLANG_5.0.0_THREAD_SAFE/lib')
-import exodus
+# The following points to the location of exodus.py
+path_to_exodus_py = 'trilinos_install_path/lib'
+
+sys.path.append(path_to_exodus_py)
+
+if sys.version_info >= (3, 0):
+  import exodus3 as exodus
+else:
+  import exodus2 as exodus
 
 def FluidConcentration(x, y, z, t):
 
@@ -21,15 +27,15 @@ def FluidConcentration(x, y, z, t):
 if __name__ == "__main__":
 
     if len(sys.argv) < 3:
-        print "\nUsage:  create_data_file.py <input.g> <output.e>\n"
+        print("\nUsage:  create_data_file.py <input.g> <output.e>\n")
         sys.exit(1)
 
     input_file_name = sys.argv[1]
     output_file_name = sys.argv[2]
 
-    print "\n-- create_data_file.py --\n"
-    print "Genesis input file:", input_file_name
-    print "Exodus output file:", output_file_name
+    print("\n-- create_data_file.py --\n")
+    print("Genesis input file: {}".format(input_file_name))
+    print("Exodus output file: {}".format(output_file_name))
 
     if os.path.exists(output_file_name):
         os.remove(output_file_name)

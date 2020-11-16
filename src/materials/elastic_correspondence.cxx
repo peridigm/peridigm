@@ -56,16 +56,16 @@ namespace CORRESPONDENCE {
 template<typename ScalarT>
 void updateElasticCauchyStress
 (
-const ScalarT* deltaTemperatureN,
-const ScalarT* deltaTemperatureNP1,
-const ScalarT* unrotatedRateOfDeformation,
-const ScalarT* unrotatedCauchyStressN,
-ScalarT* unrotatedCauchyStressNP1,
-const int numPoints,
-const double bulkMod,
-const double shearMod,
-const double alpha,
-const double dt
+    const ScalarT* deltaTemperatureN,
+    const ScalarT* deltaTemperatureNP1,
+    const ScalarT* unrotatedRateOfDeformation,
+    const ScalarT* unrotatedCauchyStressN,
+    ScalarT* unrotatedCauchyStressNP1,
+    const int numPoints,
+    const double bulkMod,
+    const double shearMod,
+    const double alpha,
+    const double dt
 )
 {
   const ScalarT* deltaTempN = deltaTemperatureN;
@@ -81,10 +81,10 @@ const double dt
   ScalarT deviatoricStrainInc[9];
 
   for(int iID=0 ; iID<numPoints ; ++iID,
-        rateOfDef+=9, sigmaN+=9, sigmaNP1+=9){
+      rateOfDef+=9, sigmaN+=9, sigmaNP1+=9){
 
       //strainInc = dt * rateOfDef
-      for (int i = 0; i < 9; i++) {
+      for(int i = 0; i < 9; i++){
           strainInc[i] = *(rateOfDef+i)*dt;
           deviatoricStrainInc[i] = strainInc[i];
       }
@@ -98,14 +98,14 @@ const double dt
       deviatoricStrainInc[8] -= dilatationInc/3.0;
 
       //thermal strains
-      if (deltaTemperatureN && deltaTemperatureNP1) {
+      if(deltaTemperatureN && deltaTemperatureNP1){
         double thermalStrainN = alpha*deltaTemperatureN[iID];
         double thermalStrainNP1 = alpha*deltaTemperatureNP1[iID];
         dilatationInc -= 3.0*(thermalStrainNP1 - thermalStrainN);
       }
 
       //update stress
-      for (int i = 0; i < 9; i++) {
+      for(int i = 0; i < 9; i++){
           *(sigmaNP1+i) = *(sigmaN+i) + deviatoricStrainInc[i]*2.0*shearMod;
       }
       *(sigmaNP1) += bulkMod*dilatationInc;
@@ -118,14 +118,14 @@ const double dt
 template<typename ScalarT>
 void updateElasticCauchyStress
 (
-const ScalarT* unrotatedRateOfDeformation, 
-const ScalarT* unrotatedCauchyStressN, 
-ScalarT* unrotatedCauchyStressNP1, 
-ScalarT* vonMisesStress,
-const int numPoints, 
-const double bulkMod,
-const double shearMod,
-const double dt
+    const ScalarT* unrotatedRateOfDeformation, 
+    const ScalarT* unrotatedCauchyStressN, 
+    ScalarT* unrotatedCauchyStressNP1, 
+    ScalarT* vonMisesStress,
+    const int numPoints, 
+    const double bulkMod,
+    const double shearMod,
+    const double dt
 )
 {
   // Hooke's law
@@ -144,10 +144,10 @@ const double dt
   ScalarT tempScalar;
 
   for(int iID=0 ; iID<numPoints ; ++iID, 
-        rateOfDef+=9, sigmaN+=9, sigmaNP1+=9, ++vmStress){
+      rateOfDef+=9, sigmaN+=9, sigmaNP1+=9, ++vmStress){
 
     //strainInc = dt * rateOfDef
-    for (int i = 0; i < 9; i++) {
+    for(int i = 0; i < 9; i++){
         strainInc[i] = *(rateOfDef+i)*dt;
         deviatoricStrainInc[i] = strainInc[i];
     }
@@ -161,8 +161,8 @@ const double dt
     deviatoricStrainInc[8] -= dilatationInc/3.0;
 
     //update stress
-    for (int i = 0; i < 9; i++) {
-        *(sigmaNP1+i) = *(sigmaN+i) + deviatoricStrainInc[i]*2.0*shearMod;
+    for(int i = 0; i < 9; i++){
+      *(sigmaNP1+i) = *(sigmaN+i) + deviatoricStrainInc[i]*2.0*shearMod;
     }
     *(sigmaNP1) += bulkMod*dilatationInc;
     *(sigmaNP1+4) += bulkMod*dilatationInc;
@@ -171,8 +171,8 @@ const double dt
     sphericalStressNP1 = (*(sigmaNP1) + *(sigmaNP1+4) + *(sigmaNP1+8))/3.0;
 
     // Compute the ``trial'' von Mises stress
-    for (int i = 0; i < 9; i++) {
-        deviatoricStressNP1[i] = *(sigmaNP1+i);
+    for(int i = 0; i < 9; i++){
+      deviatoricStressNP1[i] = *(sigmaNP1+i);
     }
     deviatoricStressNP1[0] -= sphericalStressNP1;
     deviatoricStressNP1[4] -= sphericalStressNP1;
@@ -180,10 +180,10 @@ const double dt
 
     // Compute \sigma_ij * \sigma_ij
     tempScalar = 0.0;
-    for (int j = 0; j < 3; j++) {
-        for (int i = 0; i < 3; i++) {
-            tempScalar += deviatoricStressNP1[i+3*j] * deviatoricStressNP1[i+3*j];
-        }
+    for(int j = 0; j < 3; j++){
+      for(int i = 0; i < 3; i++){
+        tempScalar += deviatoricStressNP1[i+3*j] * deviatoricStressNP1[i+3*j];
+      }
     }
 
     *vmStress = sqrt(3.0/2.0*tempScalar);
@@ -193,15 +193,15 @@ const double dt
 template<typename ScalarT>
 void updateElasticCauchyStress
 (
-const ScalarT* unrotatedRateOfDeformation, 
-const ScalarT* unrotatedCauchyStressN, 
-ScalarT* unrotatedCauchyStressNP1, 
-ScalarT* vonMisesStress,
-const double* flyingPointFlag,
-const int numPoints, 
-const double bulkMod,
-const double shearMod,
-const double dt
+    const ScalarT* unrotatedRateOfDeformation, 
+    const ScalarT* unrotatedCauchyStressN, 
+    ScalarT* unrotatedCauchyStressNP1, 
+    ScalarT* vonMisesStress,
+    const double* flyingPointFlag,
+    const int numPoints, 
+    const double bulkMod,
+    const double shearMod,
+    const double dt
 )
 {
   // Hooke's law
@@ -222,13 +222,13 @@ const double dt
   ScalarT tempScalar;
 
   for(int iID=0 ; iID<numPoints ; ++iID, 
-        rateOfDef+=9, sigmaN+=9, sigmaNP1+=9, ++vmStress, ++flyingPointFlg){
+      rateOfDef+=9, sigmaN+=9, sigmaNP1+=9, ++vmStress, ++flyingPointFlg){
 
     // if the node is not flying, update the values. Otherwise, just skip
     if(*flyingPointFlg < 0.0){
 
       //strainInc = dt * rateOfDef
-      for (int i = 0; i < 9; i++) {
+      for(int i = 0; i < 9; i++){
           strainInc[i] = *(rateOfDef+i)*dt;
           deviatoricStrainInc[i] = strainInc[i];
       }
@@ -242,7 +242,7 @@ const double dt
       deviatoricStrainInc[8] -= dilatationInc/3.0;
 
       //update stress
-      for (int i = 0; i < 9; i++) {
+      for(int i = 0; i < 9; i++){
           *(sigmaNP1+i) = *(sigmaN+i) + deviatoricStrainInc[i]*2.0*shearMod;
       }
       *(sigmaNP1) += bulkMod*dilatationInc;
@@ -252,7 +252,7 @@ const double dt
       sphericalStressNP1 = (*(sigmaNP1) + *(sigmaNP1+4) + *(sigmaNP1+8))/3.0;
 
       // Compute the ``trial'' von Mises stress
-      for (int i = 0; i < 9; i++) {
+      for(int i = 0; i < 9; i++){
           deviatoricStressNP1[i] = *(sigmaNP1+i);
       }
       deviatoricStressNP1[0] -= sphericalStressNP1;
@@ -261,8 +261,8 @@ const double dt
 
       // Compute \sigma_ij * \sigma_ij
       tempScalar = 0.0;
-      for (int j = 0; j < 3; j++) {
-          for (int i = 0; i < 3; i++) {
+      for(int j = 0; j < 3; j++){
+          for(int i = 0; i < 3; i++){
               tempScalar += deviatoricStressNP1[i+3*j] * deviatoricStressNP1[i+3*j];
           }
       }
@@ -276,39 +276,39 @@ const double dt
 template<typename ScalarT>
 void updateBondLevelElasticCauchyStress
 (
-const ScalarT* bondLevelUnrotatedRateOfDeformationXX, 
-const ScalarT* bondLevelUnrotatedRateOfDeformationXY, 
-const ScalarT* bondLevelUnrotatedRateOfDeformationXZ, 
-const ScalarT* bondLevelUnrotatedRateOfDeformationYX, 
-const ScalarT* bondLevelUnrotatedRateOfDeformationYY, 
-const ScalarT* bondLevelUnrotatedRateOfDeformationYZ, 
-const ScalarT* bondLevelUnrotatedRateOfDeformationZX, 
-const ScalarT* bondLevelUnrotatedRateOfDeformationZY, 
-const ScalarT* bondLevelUnrotatedRateOfDeformationZZ, 
-const ScalarT* bondLevelUnrotatedCauchyStressXXN, 
-const ScalarT* bondLevelUnrotatedCauchyStressXYN, 
-const ScalarT* bondLevelUnrotatedCauchyStressXZN, 
-const ScalarT* bondLevelUnrotatedCauchyStressYXN, 
-const ScalarT* bondLevelUnrotatedCauchyStressYYN, 
-const ScalarT* bondLevelUnrotatedCauchyStressYZN, 
-const ScalarT* bondLevelUnrotatedCauchyStressZXN, 
-const ScalarT* bondLevelUnrotatedCauchyStressZYN, 
-const ScalarT* bondLevelUnrotatedCauchyStressZZN, 
-ScalarT* bondLevelUnrotatedCauchyStressXXNP1, 
-ScalarT* bondLevelUnrotatedCauchyStressXYNP1, 
-ScalarT* bondLevelUnrotatedCauchyStressXZNP1, 
-ScalarT* bondLevelUnrotatedCauchyStressYXNP1, 
-ScalarT* bondLevelUnrotatedCauchyStressYYNP1, 
-ScalarT* bondLevelUnrotatedCauchyStressYZNP1, 
-ScalarT* bondLevelUnrotatedCauchyStressZXNP1, 
-ScalarT* bondLevelUnrotatedCauchyStressZYNP1, 
-ScalarT* bondLevelUnrotatedCauchyStressZZNP1, 
-ScalarT* bondLevelVonMisesStress,
-const int* neighborhoodList,
-const int numPoints, 
-const double bulkMod,
-const double shearMod,
-const double dt
+    const ScalarT* bondLevelUnrotatedRateOfDeformationXX, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationXY, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationXZ, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationYX, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationYY, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationYZ, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationZX, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationZY, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationZZ, 
+    const ScalarT* bondLevelUnrotatedCauchyStressXXN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressXYN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressXZN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressYXN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressYYN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressYZN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressZXN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressZYN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressZZN, 
+    ScalarT* bondLevelUnrotatedCauchyStressXXNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressXYNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressXZNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressYXNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressYYNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressYZNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressZXNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressZYNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressZZNP1, 
+    ScalarT* bondLevelVonMisesStress,
+    const int* neighborhoodList,
+    const int numPoints, 
+    const double bulkMod,
+    const double shearMod,
+    const double dt
 )
 {
   // Hooke's law
@@ -357,16 +357,16 @@ const double dt
     // All is bond level.
     numNeighbors = *neighborListPtr; neighborListPtr++;
     for(int n=0; n<numNeighbors; n++, neighborListPtr++, 
-          rateOfDefXX++, rateOfDefXY++, rateOfDefXZ++, 
-          rateOfDefYX++, rateOfDefYY++, rateOfDefYZ++, 
-          rateOfDefZX++, rateOfDefZY++, rateOfDefZZ++,
-          sigmaXXN++, sigmaXYN++, sigmaXZN++, 
-          sigmaYXN++, sigmaYYN++, sigmaYZN++, 
-          sigmaZXN++, sigmaZYN++, sigmaZZN++,
-          sigmaXXNP1++, sigmaXYNP1++, sigmaXZNP1++, 
-          sigmaYXNP1++, sigmaYYNP1++, sigmaYZNP1++, 
-          sigmaZXNP1++, sigmaZYNP1++, sigmaZZNP1++,
-          vmStress++){
+        rateOfDefXX++, rateOfDefXY++, rateOfDefXZ++, 
+        rateOfDefYX++, rateOfDefYY++, rateOfDefYZ++, 
+        rateOfDefZX++, rateOfDefZY++, rateOfDefZZ++,
+        sigmaXXN++, sigmaXYN++, sigmaXZN++, 
+        sigmaYXN++, sigmaYYN++, sigmaYZN++, 
+        sigmaZXN++, sigmaZYN++, sigmaZZN++,
+        sigmaXXNP1++, sigmaXYNP1++, sigmaXZNP1++, 
+        sigmaYXNP1++, sigmaYYNP1++, sigmaYZNP1++, 
+        sigmaZXNP1++, sigmaZYNP1++, sigmaZZNP1++,
+        vmStress++){
 
       //strainInc = dt * rateOfDef
       strainInc[0] = *rateOfDefXX*dt; strainInc[1] = *rateOfDefXY*dt; strainInc[2] = *rateOfDefXZ*dt;
@@ -413,8 +413,8 @@ const double dt
 
       // Compute \sigma_ij * \sigma_ij
       tempScalar = 0.0;
-      for (int j = 0; j < 3; j++) {
-        for (int i = 0; i < 3; i++) {
+      for(int j = 0; j < 3; j++){
+        for(int i = 0; i < 3; i++){
           tempScalar += deviatoricStressNP1[i+3*j] * deviatoricStressNP1[i+3*j];
         }
       }
@@ -427,40 +427,40 @@ const double dt
 template<typename ScalarT>
 void updateBondLevelElasticCauchyStress
 (
-const ScalarT* bondLevelUnrotatedRateOfDeformationXX, 
-const ScalarT* bondLevelUnrotatedRateOfDeformationXY, 
-const ScalarT* bondLevelUnrotatedRateOfDeformationXZ, 
-const ScalarT* bondLevelUnrotatedRateOfDeformationYX, 
-const ScalarT* bondLevelUnrotatedRateOfDeformationYY, 
-const ScalarT* bondLevelUnrotatedRateOfDeformationYZ, 
-const ScalarT* bondLevelUnrotatedRateOfDeformationZX, 
-const ScalarT* bondLevelUnrotatedRateOfDeformationZY, 
-const ScalarT* bondLevelUnrotatedRateOfDeformationZZ, 
-const ScalarT* bondLevelUnrotatedCauchyStressXXN, 
-const ScalarT* bondLevelUnrotatedCauchyStressXYN, 
-const ScalarT* bondLevelUnrotatedCauchyStressXZN, 
-const ScalarT* bondLevelUnrotatedCauchyStressYXN, 
-const ScalarT* bondLevelUnrotatedCauchyStressYYN, 
-const ScalarT* bondLevelUnrotatedCauchyStressYZN, 
-const ScalarT* bondLevelUnrotatedCauchyStressZXN, 
-const ScalarT* bondLevelUnrotatedCauchyStressZYN, 
-const ScalarT* bondLevelUnrotatedCauchyStressZZN, 
-ScalarT* bondLevelUnrotatedCauchyStressXXNP1, 
-ScalarT* bondLevelUnrotatedCauchyStressXYNP1, 
-ScalarT* bondLevelUnrotatedCauchyStressXZNP1, 
-ScalarT* bondLevelUnrotatedCauchyStressYXNP1, 
-ScalarT* bondLevelUnrotatedCauchyStressYYNP1, 
-ScalarT* bondLevelUnrotatedCauchyStressYZNP1, 
-ScalarT* bondLevelUnrotatedCauchyStressZXNP1, 
-ScalarT* bondLevelUnrotatedCauchyStressZYNP1, 
-ScalarT* bondLevelUnrotatedCauchyStressZZNP1, 
-ScalarT* bondLevelVonMisesStress,
-const double* flyingPointFlag,
-const int* neighborhoodList,
-const int numPoints, 
-const double bulkMod,
-const double shearMod,
-const double dt
+    const ScalarT* bondLevelUnrotatedRateOfDeformationXX, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationXY, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationXZ, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationYX, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationYY, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationYZ, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationZX, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationZY, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationZZ, 
+    const ScalarT* bondLevelUnrotatedCauchyStressXXN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressXYN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressXZN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressYXN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressYYN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressYZN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressZXN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressZYN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressZZN, 
+    ScalarT* bondLevelUnrotatedCauchyStressXXNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressXYNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressXZNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressYXNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressYYNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressYZNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressZXNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressZYNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressZZNP1, 
+    ScalarT* bondLevelVonMisesStress,
+    const double* flyingPointFlag,
+    const int* neighborhoodList,
+    const int numPoints, 
+    const double bulkMod,
+    const double shearMod,
+    const double dt
 )
 {
   // Hooke's law
@@ -514,16 +514,16 @@ const double dt
       // All is bond level.
       numNeighbors = *neighborListPtr; neighborListPtr++;
       for(int n=0; n<numNeighbors; n++, neighborListPtr++, 
-            rateOfDefXX++, rateOfDefXY++, rateOfDefXZ++, 
-            rateOfDefYX++, rateOfDefYY++, rateOfDefYZ++, 
-            rateOfDefZX++, rateOfDefZY++, rateOfDefZZ++,
-            sigmaXXN++, sigmaXYN++, sigmaXZN++, 
-            sigmaYXN++, sigmaYYN++, sigmaYZN++, 
-            sigmaZXN++, sigmaZYN++, sigmaZZN++,
-            sigmaXXNP1++, sigmaXYNP1++, sigmaXZNP1++, 
-            sigmaYXNP1++, sigmaYYNP1++, sigmaYZNP1++, 
-            sigmaZXNP1++, sigmaZYNP1++, sigmaZZNP1++,
-            vmStress++){
+          rateOfDefXX++, rateOfDefXY++, rateOfDefXZ++, 
+          rateOfDefYX++, rateOfDefYY++, rateOfDefYZ++, 
+          rateOfDefZX++, rateOfDefZY++, rateOfDefZZ++,
+          sigmaXXN++, sigmaXYN++, sigmaXZN++, 
+          sigmaYXN++, sigmaYYN++, sigmaYZN++, 
+          sigmaZXN++, sigmaZYN++, sigmaZZN++,
+          sigmaXXNP1++, sigmaXYNP1++, sigmaXZNP1++, 
+          sigmaYXNP1++, sigmaYYNP1++, sigmaYZNP1++, 
+          sigmaZXNP1++, sigmaZYNP1++, sigmaZZNP1++,
+          vmStress++){
 
         //strainInc = dt * rateOfDef
         strainInc[0] = *rateOfDefXX*dt; strainInc[1] = *rateOfDefXY*dt; strainInc[2] = *rateOfDefXZ*dt;
@@ -534,7 +534,7 @@ const double dt
         dilatationInc = strainInc[0] + strainInc[4] + strainInc[8];
 
         //deviatoric strain
-        for (int i = 0; i < 9; i++) {
+        for(int i = 0; i < 9; i++){
           deviatoricStrainInc[i] = strainInc[i];
         }
         deviatoricStrainInc[0] -= dilatationInc/3.0;
@@ -570,8 +570,8 @@ const double dt
 
         // Compute \sigma_ij * \sigma_ij
         tempScalar = 0.0;
-        for (int j = 0; j < 3; j++) {
-          for (int i = 0; i < 3; i++) {
+        for(int j = 0; j < 3; j++){
+          for(int i = 0; i < 3; i++){
             tempScalar += deviatoricStressNP1[i+3*j] * deviatoricStressNP1[i+3*j];
           }
         }
@@ -601,117 +601,117 @@ const double dt
 // Explicit template instantiation for double
 template void updateElasticCauchyStress<double>
 (
-const double* deltaTemperatureN,
-const double* deltaTemperatureNP1,
-const double* unrotatedRateOfDeformation,
-const double* unrotatedCauchyStressN,
-double* unrotatedCauchyStressNP1,
-int numPoints,
-double bulkMod,
-double shearMod,
-double alpha,
-double dt
+    const double* deltaTemperatureN,
+    const double* deltaTemperatureNP1,
+    const double* unrotatedRateOfDeformation,
+    const double* unrotatedCauchyStressN,
+    double* unrotatedCauchyStressNP1,
+    int numPoints,
+    double bulkMod,
+    double shearMod,
+    double alpha,
+    double dt
 );
 
 
 template void updateElasticCauchyStress<double>
 (
-const double* unrotatedRateOfDeformation, 
-const double* unrotatedCauchyStressN, 
-double* unrotatedCauchyStressNP1, 
-double* vonMisesStress,
-int numPoints, 
-double bulkMod,
-double shearMod,
-double dt
+    const double* unrotatedRateOfDeformation, 
+    const double* unrotatedCauchyStressN, 
+    double* unrotatedCauchyStressNP1, 
+    double* vonMisesStress,
+    int numPoints, 
+    double bulkMod,
+    double shearMod,
+    double dt
 );
 
 template void updateElasticCauchyStress<double>
 (
-const double* unrotatedRateOfDeformation, 
-const double* unrotatedCauchyStressN, 
-double* unrotatedCauchyStressNP1, 
-double* vonMisesStress,
-const double* flyingPointFlag,
-int numPoints, 
-double bulkMod,
-double shearMod,
-double dt
+    const double* unrotatedRateOfDeformation, 
+    const double* unrotatedCauchyStressN, 
+    double* unrotatedCauchyStressNP1, 
+    double* vonMisesStress,
+    const double* flyingPointFlag,
+    int numPoints, 
+    double bulkMod,
+    double shearMod,
+    double dt
 );
 
 template void updateBondLevelElasticCauchyStress<double>
 (
-const double* bondLevelUnrotatedRateOfDeformationXX, 
-const double* bondLevelUnrotatedRateOfDeformationXY, 
-const double* bondLevelUnrotatedRateOfDeformationXZ, 
-const double* bondLevelUnrotatedRateOfDeformationYX, 
-const double* bondLevelUnrotatedRateOfDeformationYY, 
-const double* bondLevelUnrotatedRateOfDeformationYZ, 
-const double* bondLevelUnrotatedRateOfDeformationZX, 
-const double* bondLevelUnrotatedRateOfDeformationZY, 
-const double* bondLevelUnrotatedRateOfDeformationZZ, 
-const double* bondLevelUnrotatedCauchyStressXXN, 
-const double* bondLevelUnrotatedCauchyStressXYN, 
-const double* bondLevelUnrotatedCauchyStressXZN, 
-const double* bondLevelUnrotatedCauchyStressYXN, 
-const double* bondLevelUnrotatedCauchyStressYYN, 
-const double* bondLevelUnrotatedCauchyStressYZN, 
-const double* bondLevelUnrotatedCauchyStressZXN, 
-const double* bondLevelUnrotatedCauchyStressZYN, 
-const double* bondLevelUnrotatedCauchyStressZZN, 
-double* bondLevelUnrotatedCauchyStressXXNP1, 
-double* bondLevelUnrotatedCauchyStressXYNP1, 
-double* bondLevelUnrotatedCauchyStressXZNP1, 
-double* bondLevelUnrotatedCauchyStressYXNP1, 
-double* bondLevelUnrotatedCauchyStressYYNP1, 
-double* bondLevelUnrotatedCauchyStressYZNP1, 
-double* bondLevelUnrotatedCauchyStressZXNP1, 
-double* bondLevelUnrotatedCauchyStressZYNP1, 
-double* bondLevelUnrotatedCauchyStressZZNP1, 
-double* bondLevelVonMisesStress,
-const int* neighborhoodList,
-const int numPoints, 
-const double bulkMod,
-const double shearMod,
-const double dt
+    const double* bondLevelUnrotatedRateOfDeformationXX, 
+    const double* bondLevelUnrotatedRateOfDeformationXY, 
+    const double* bondLevelUnrotatedRateOfDeformationXZ, 
+    const double* bondLevelUnrotatedRateOfDeformationYX, 
+    const double* bondLevelUnrotatedRateOfDeformationYY, 
+    const double* bondLevelUnrotatedRateOfDeformationYZ, 
+    const double* bondLevelUnrotatedRateOfDeformationZX, 
+    const double* bondLevelUnrotatedRateOfDeformationZY, 
+    const double* bondLevelUnrotatedRateOfDeformationZZ, 
+    const double* bondLevelUnrotatedCauchyStressXXN, 
+    const double* bondLevelUnrotatedCauchyStressXYN, 
+    const double* bondLevelUnrotatedCauchyStressXZN, 
+    const double* bondLevelUnrotatedCauchyStressYXN, 
+    const double* bondLevelUnrotatedCauchyStressYYN, 
+    const double* bondLevelUnrotatedCauchyStressYZN, 
+    const double* bondLevelUnrotatedCauchyStressZXN, 
+    const double* bondLevelUnrotatedCauchyStressZYN, 
+    const double* bondLevelUnrotatedCauchyStressZZN, 
+    double* bondLevelUnrotatedCauchyStressXXNP1, 
+    double* bondLevelUnrotatedCauchyStressXYNP1, 
+    double* bondLevelUnrotatedCauchyStressXZNP1, 
+    double* bondLevelUnrotatedCauchyStressYXNP1, 
+    double* bondLevelUnrotatedCauchyStressYYNP1, 
+    double* bondLevelUnrotatedCauchyStressYZNP1, 
+    double* bondLevelUnrotatedCauchyStressZXNP1, 
+    double* bondLevelUnrotatedCauchyStressZYNP1, 
+    double* bondLevelUnrotatedCauchyStressZZNP1, 
+    double* bondLevelVonMisesStress,
+    const int* neighborhoodList,
+    const int numPoints, 
+    const double bulkMod,
+    const double shearMod,
+    const double dt
 );
 
 template void updateBondLevelElasticCauchyStress<double>
 (
-const double* bondLevelUnrotatedRateOfDeformationXX, 
-const double* bondLevelUnrotatedRateOfDeformationXY, 
-const double* bondLevelUnrotatedRateOfDeformationXZ, 
-const double* bondLevelUnrotatedRateOfDeformationYX, 
-const double* bondLevelUnrotatedRateOfDeformationYY, 
-const double* bondLevelUnrotatedRateOfDeformationYZ, 
-const double* bondLevelUnrotatedRateOfDeformationZX, 
-const double* bondLevelUnrotatedRateOfDeformationZY, 
-const double* bondLevelUnrotatedRateOfDeformationZZ, 
-const double* bondLevelUnrotatedCauchyStressXXN, 
-const double* bondLevelUnrotatedCauchyStressXYN, 
-const double* bondLevelUnrotatedCauchyStressXZN, 
-const double* bondLevelUnrotatedCauchyStressYXN, 
-const double* bondLevelUnrotatedCauchyStressYYN, 
-const double* bondLevelUnrotatedCauchyStressYZN, 
-const double* bondLevelUnrotatedCauchyStressZXN, 
-const double* bondLevelUnrotatedCauchyStressZYN, 
-const double* bondLevelUnrotatedCauchyStressZZN, 
-double* bondLevelUnrotatedCauchyStressXXNP1, 
-double* bondLevelUnrotatedCauchyStressXYNP1, 
-double* bondLevelUnrotatedCauchyStressXZNP1, 
-double* bondLevelUnrotatedCauchyStressYXNP1, 
-double* bondLevelUnrotatedCauchyStressYYNP1, 
-double* bondLevelUnrotatedCauchyStressYZNP1, 
-double* bondLevelUnrotatedCauchyStressZXNP1, 
-double* bondLevelUnrotatedCauchyStressZYNP1, 
-double* bondLevelUnrotatedCauchyStressZZNP1, 
-double* bondLevelVonMisesStress,
-const double* flyingPointFlag,
-const int* neighborhoodList,
-const int numPoints, 
-const double bulkMod,
-const double shearMod,
-const double dt
+    const double* bondLevelUnrotatedRateOfDeformationXX, 
+    const double* bondLevelUnrotatedRateOfDeformationXY, 
+    const double* bondLevelUnrotatedRateOfDeformationXZ, 
+    const double* bondLevelUnrotatedRateOfDeformationYX, 
+    const double* bondLevelUnrotatedRateOfDeformationYY, 
+    const double* bondLevelUnrotatedRateOfDeformationYZ, 
+    const double* bondLevelUnrotatedRateOfDeformationZX, 
+    const double* bondLevelUnrotatedRateOfDeformationZY, 
+    const double* bondLevelUnrotatedRateOfDeformationZZ, 
+    const double* bondLevelUnrotatedCauchyStressXXN, 
+    const double* bondLevelUnrotatedCauchyStressXYN, 
+    const double* bondLevelUnrotatedCauchyStressXZN, 
+    const double* bondLevelUnrotatedCauchyStressYXN, 
+    const double* bondLevelUnrotatedCauchyStressYYN, 
+    const double* bondLevelUnrotatedCauchyStressYZN, 
+    const double* bondLevelUnrotatedCauchyStressZXN, 
+    const double* bondLevelUnrotatedCauchyStressZYN, 
+    const double* bondLevelUnrotatedCauchyStressZZN, 
+    double* bondLevelUnrotatedCauchyStressXXNP1, 
+    double* bondLevelUnrotatedCauchyStressXYNP1, 
+    double* bondLevelUnrotatedCauchyStressXZNP1, 
+    double* bondLevelUnrotatedCauchyStressYXNP1, 
+    double* bondLevelUnrotatedCauchyStressYYNP1, 
+    double* bondLevelUnrotatedCauchyStressYZNP1, 
+    double* bondLevelUnrotatedCauchyStressZXNP1, 
+    double* bondLevelUnrotatedCauchyStressZYNP1, 
+    double* bondLevelUnrotatedCauchyStressZZNP1, 
+    double* bondLevelVonMisesStress,
+    const double* flyingPointFlag,
+    const int* neighborhoodList,
+    const int numPoints, 
+    const double bulkMod,
+    const double shearMod,
+    const double dt
 );
 
 /** Explicit template instantiation for Sacado::Fad::DFad<double>. */

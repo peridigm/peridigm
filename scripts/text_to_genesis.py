@@ -51,7 +51,6 @@ __author__ = "David Littlewood (djlittl@sandia.gov)"
 # ************************************************************************
 
 import sys
-import string
 import os
 
 # The following points to the location of exodus.py
@@ -61,8 +60,12 @@ path_to_exodus_py = 'trilinos_install_path/lib'
 # the Trilinos install.  One solution is to create symbolic links in this directory that point to the
 # netcdf libraries (which you built as a TPL for Trilinos)
 
-sys.path.append("/Users/djlittl/Software/seacas/GCC_4.9.4_THREAD_SAFE/lib")
-import exodus
+sys.path.append(path_to_exodus_py)
+
+if sys.version_info >= (3, 0):
+  import exodus3 as exodus
+else:
+  import exodus2 as exodus
 
 def read_line(file):
     """Scans the input file and ignores lines starting with a '#' or '\n'."""
@@ -76,12 +79,12 @@ def read_line(file):
 
 if __name__ == "__main__":
 
-    print "\n---- Text to Genesis\n"
+    print("\n---- Text to Genesis\n")
 
     if len(sys.argv) < 2:
-        print "Usage:  text_to_genesis.py <discretization_file.txt> <nodeset_1.txt> <nodeset_2.txt> ... <nodeset_n.txt>\n"
-        print "The discretization file lists the nodes as (x, y, z, block_id, volume)"
-        print "The node set files list the node numbers in each node set (1-based indexing)\n"
+        print("Usage:  text_to_genesis.py <discretization_file.txt> <nodeset_1.txt> <nodeset_2.txt> ... <node(et_n.txt>\n")
+        print("The discretization file lists the nodes as (x, y, z, block_id, volume)")
+        print("The node set files list the node numbers in each node set (1-based indexing)\n")
         sys.exit(1)
 
     textFileName = sys.argv[1]
@@ -89,12 +92,12 @@ if __name__ == "__main__":
     for i in range(len(sys.argv)-2):
         nodeSetFileNames.append(sys.argv[i+2])
 
-    print "Discretization file:"
-    print " ", textFileName
-    print
-    print "Node set files:"
+    print("Discretization file:")
+    print(" {}".format(textFileName))
+    print("")
+    print("Node set files:")
     for i in range(len(nodeSetFileNames)):
-        print " ", nodeSetFileNames[i]
+        print(" {}".format(nodeSetFileNames[i]))
     print
 
     textFile = open(textFileName)
@@ -110,7 +113,7 @@ if __name__ == "__main__":
     buff = read_line(textFile)
     while buff != None:
         nodeId += 1
-        vals = string.splitfields(buff)
+        vals = buff.split()
         X.append(float(vals[0]))
         Y.append(float(vals[1]))
         Z.append(float(vals[2]))
@@ -122,7 +125,7 @@ if __name__ == "__main__":
         buff = read_line(textFile)
     textFile.close()
 
-    print "Read", len(X), "nodes and", len(blocks), "block from", textFileName
+    print("Read {} nodes and {} block from {}".format(len(X),len(blocks),textFileName))
 
     nodeSets = []
     for fileName in nodeSetFileNames:
@@ -131,13 +134,13 @@ if __name__ == "__main__":
         nodeSetFile = open(fileName)
         buff = read_line(nodeSetFile)
         while buff != None:
-            vals = string.splitfields(buff)
+            vals = buff.split()
             for val in vals:
                 node_id = int(val)
                 nodeSets[node_set_id-1].append(node_id)
             buff = read_line(nodeSetFile)
         nodeSetFile.close()
-        print "Read", len(nodeSets[node_set_id-1]), "node ids from", fileName
+        print("Read {} node ids from {}".format(len(nodeSets[node_set_id-1]),fileName))
 
     # Write the Exodus II file
     exodusFileName = textFileName[:-4] + ".g"
@@ -229,4 +232,4 @@ if __name__ == "__main__":
     # Close the output Exodus file
     exodusFile.close()
 
-    print "\nData written to Exodus II file", exodusFileName, "\n"
+    print("\nData written to Exodus II file {}\n".format(exodusFileName))

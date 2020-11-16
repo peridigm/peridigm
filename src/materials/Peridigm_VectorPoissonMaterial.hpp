@@ -55,7 +55,7 @@ namespace PeridigmNS {
   class VectorPoissonMaterial : public Material{
   public:
 
-	//! Constructor.
+    //! Constructor.
     VectorPoissonMaterial(const Teuchos::ParameterList & params);
 
     //! Destructor.
@@ -99,13 +99,13 @@ namespace PeridigmNS {
     //! Evaluate the internal force.
     virtual void
     computeForce(const double dt,
-		 const int numOwnedPoints,
-		 const int* ownedIDs,
-		 const int* neighborhoodList,
+                 const int numOwnedPoints,
+                 const int* ownedIDs,
+                 const int* neighborhoodList,
                  PeridigmNS::DataManager& dataManager) const;
 
   protected:
-	
+
     //! Computes the distance between nodes (a1, a2, a3) and (b1, b2, b3).
     inline double distance(double a1, double a2, double a3,
                            double b1, double b2, double b3) const

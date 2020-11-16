@@ -47,7 +47,7 @@
 #define PERIDIGM_API_HPP
 
 #ifdef __cplusplus
-extern "C" {
+  extern "C" {
 #endif
 
 /// For windows need to determine if to export or import
@@ -64,7 +64,7 @@ extern "C" {
 PD_LIB_DLL_EXPORT const int run_peridigm(int argc, char *argv[], const bool finalize=false);
 
 #ifdef __cplusplus
-} // extern "C"
+  } // extern "C"
 #endif
 
 #endif //PERIDIGM_API_HPP

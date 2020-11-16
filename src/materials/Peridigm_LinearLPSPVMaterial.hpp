@@ -56,7 +56,7 @@ namespace PeridigmNS {
   class LinearLPSPVMaterial : public Material{
   public:
 
-	//! Constructor.
+    //! Constructor.
     LinearLPSPVMaterial(const Teuchos::ParameterList & params);
 
     //! Destructor.

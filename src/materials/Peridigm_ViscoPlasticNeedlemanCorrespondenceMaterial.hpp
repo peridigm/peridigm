@@ -56,7 +56,7 @@ namespace PeridigmNS {
   class ViscoplasticNeedlemanCorrespondenceMaterial : public CorrespondenceMaterial{
   public:
 
-	//! Constructor.
+  //! Constructor.
     ViscoplasticNeedlemanCorrespondenceMaterial(const Teuchos::ParameterList & params);
 
     //! Destructor.
