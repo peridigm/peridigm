@@ -60,7 +60,7 @@ namespace PeridigmNS {
   class Compute{
 
   public:
-	
+
     //! Constructor.
     Compute( Teuchos::RCP<const Teuchos::ParameterList> params,
              Teuchos::RCP<const Epetra_Comm> epetraComm_,

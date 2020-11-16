@@ -10,29 +10,35 @@
 #    The path above is valid on the CEE LAN.  On other systems, you need to provide a path to a SEACAS build
 #    that includes shared libraries.
 import sys
-sys.path.append('/Users/djlittl/Software/seacas/GCC_4.9.4/lib')
-import exodus
 
-import string
+# The following points to the location of exodus.py
+path_to_exodus_py = 'trilinos_install_path/lib'
+
+sys.path.append(path_to_exodus_py)
+
+if sys.version_info >= (3, 0):
+  import exodus3 as exodus
+else:
+  import exodus2 as exodus
 
 if __name__ == "__main__":
 
     inFileName = "WaveInCube.e"
     inFile = exodus.exodus(inFileName, mode='r')
 
-    outFileLabel = string.splitfields(inFileName, '.')[0]
+    outFileLabel = inFileName.split('.')[0]
 
     # Print database parameters from inFile
-    print " "
-    print "Database version:         " + str(round(inFile.version.value,2))
-    print "Database title:           " + inFile.title()
-    print "Database dimensions:      " + str(inFile.num_dimensions())
-    print "Number of nodes:          " + str(inFile.num_nodes())
-    print "Number of elements:       " + str(inFile.num_elems())
-    print "Number of element blocks: " + str(inFile.num_blks())
-    print "Number of node sets:      " + str(inFile.num_node_sets())
-    print "Number of side sets:      " + str(inFile.num_side_sets())
-    print " "
+    print(" ")
+    print("Database version:         " + str(round(inFile.version.value,2)))
+    print("Database title:           " + inFile.title())
+    print("Database dimensions:      " + str(inFile.num_dimensions()))
+    print("Number of nodes:          " + str(inFile.num_nodes()))
+    print("Number of elements:       " + str(inFile.num_elems()))
+    print("Number of element blocks: " + str(inFile.num_blks()))
+    print("Number of node sets:      " + str(inFile.num_node_sets()))
+    print("Number of side sets:      " + str(inFile.num_side_sets()))
+    print(" ")
 
     # Extract nodal displacements and forces
     numNodes = inFile.num_nodes()
@@ -40,12 +46,12 @@ if __name__ == "__main__":
     nodeVariableNames = inFile.get_node_variable_names()
     coords = inFile.get_coords()
     num_nodes = len(coords[0])
-    print nodeVariableNames
+    print(nodeVariableNames)
     if 'DisplacementX' not in nodeVariableNames:
-        print "\nERROR:  Failed to extract DisplacementX data\n"
+        print("\nERROR:  Failed to extract DisplacementX data\n")
         sys.exit(1)
 
-    print "\nProcessing", num_nodes, "nodes...\n"
+    print("\nProcessing {} nodes...\n".format(num_nodes))
 
     target_y = 0.01
     target_z = 0.01
@@ -87,5 +93,5 @@ if __name__ == "__main__":
         outFile.write(str(initial_data[i][0]) + " " + str(initial_data[i][3]) + " " + str(final_data[i][3]) + "\n")
     outFile.close()
 
-    print "\nData written to " + outFileLabel + ".txt"
-    print
+    print("\nData written to " + outFileLabel + ".txt")
+    print("")

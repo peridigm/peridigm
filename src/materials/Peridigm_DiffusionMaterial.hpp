@@ -55,7 +55,7 @@ namespace PeridigmNS {
   class DiffusionMaterial : public Material{
   public:
 
-	//! Constructor.
+    //! Constructor.
     DiffusionMaterial(const Teuchos::ParameterList & params);
 
     //! Destructor.

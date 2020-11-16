@@ -2,7 +2,6 @@
 
 import os
 import sys
-import string
 import time
 
 def parse_log_files():
@@ -19,7 +18,7 @@ def parse_log_files():
 
     for log_file in log_files:
         is_valid = False
-        test_name = log_file[string.rfind(log_file, '/')+1 : -4]
+        test_name = log_file[log_file.rfind('/')+1 : -4]
         wallclock_time = 0.0
         benchmark_value = 0.0
         tolerance = 0.0
@@ -29,12 +28,12 @@ def parse_log_files():
         fin.close()
         for line in lines:
             if "wallclock time  =" in line:
-                wallclock_time = float( line[string.rfind(line, '= ')+1 : ] )
+                wallclock_time = float( line[line.rfind('= ')+1 : ] )
                 is_valid = True
             elif "benchmark value =" in line:
-                benchmark_value = float( line[string.rfind(line, '= ')+1 : ] )
+                benchmark_value = float( line[line.rfind('= ')+1 : ] )
             elif "tolerance       =" in line:
-                tolerance = float( line[string.rfind(line, '= ')+1 : ] )
+                tolerance = float( line[line.rfind('= ')+1 : ] )
             elif "PERFORMANCE TEST PASSED" in line:
                 test_result = "Passed"
         if is_valid:

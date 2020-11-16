@@ -55,7 +55,7 @@ namespace PeridigmNS {
   class ElasticCorrespondenceMaterial : public CorrespondenceMaterial{
   public:
 
-	//! Constructor.
+    //! Constructor.
     ElasticCorrespondenceMaterial(const Teuchos::ParameterList & params);
 
     //! Destructor.

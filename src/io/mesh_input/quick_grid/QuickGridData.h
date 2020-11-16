@@ -54,66 +54,66 @@ struct Zoltan_Struct;
 namespace QUICKGRID {
 
 typedef struct Data {
-	int dimension;
-	size_t globalNumPoints;
-	size_t numPoints;
-	int sizeNeighborhoodList;
-	int numExport;
-	bool unPack;
-	std::shared_ptr<int> myGlobalIDs;
-	std::shared_ptr<double> myX;
-	std::shared_ptr<double> cellVolume;
-	std::shared_ptr<int> neighborhood;
-	std::shared_ptr<int> neighborhoodPtr;
-	std::shared_ptr<char> exportFlag;
-	std::shared_ptr<struct Zoltan_Struct> zoltanPtr;
-	Data() : dimension(-1), globalNumPoints(-1), numPoints(-1), sizeNeighborhoodList(-1), numExport(0) {}
-	Data(int d, int numPoints, int myNumPts) : dimension(d), globalNumPoints(numPoints), numPoints(myNumPts) {}
+  int dimension;
+  size_t globalNumPoints;
+  size_t numPoints;
+  int sizeNeighborhoodList;
+  int numExport;
+  bool unPack;
+  std::shared_ptr<int> myGlobalIDs;
+  std::shared_ptr<double> myX;
+  std::shared_ptr<double> cellVolume;
+  std::shared_ptr<int> neighborhood;
+  std::shared_ptr<int> neighborhoodPtr;
+  std::shared_ptr<char> exportFlag;
+  std::shared_ptr<struct Zoltan_Struct> zoltanPtr;
+  Data() : dimension(-1), globalNumPoints(-1), numPoints(-1), sizeNeighborhoodList(-1), numExport(0) {}
+  Data(int d, int numPoints, int myNumPts) : dimension(d), globalNumPoints(numPoints), numPoints(myNumPts) {}
 } QuickGridData;
 
 typedef struct {
-	/*
-	 * numPoints is the number of points owned by this processor.
-	 * numPoints = num_master + num_slave_on_processor_masters + num_slave_off_processor_masters
-	 */
-	size_t numPoints;
+  /*
+   * numPoints is the number of points owned by this processor.
+   * numPoints = num_master + num_slave_on_processor_masters + num_slave_off_processor_masters
+   */
+  size_t numPoints;
 
-	/*
-	 * number of master points owned by this processor
-	 */
-	size_t num_master;
+  /*
+   * number of master points owned by this processor
+   */
+  size_t num_master;
 
-	/*
-	 * num_slave = num_slave_on_processor_masters + num_slave_off_processor_masters
-	 */
-	size_t num_slave_on_processor_masters, num_slave_off_processor_masters;
+  /*
+   * num_slave = num_slave_on_processor_masters + num_slave_off_processor_masters
+   */
+  size_t num_slave_on_processor_masters, num_slave_off_processor_masters;
 
-	/*
-	 * GIDs that are owned; note that some of these are slaves whose master
-	 * is owned by another processor;
-	 * myGlobalIds.length=numPoints
-	 */
-	std::shared_ptr<int> myGlobalIDs;
-	/*
-	 * On processor indices to masters.
-	 * Since we own some slaves who have masters on other processors, the
-	 * length of this array is:
-	 * 	 local_master_ids.length=num_master+num_slave_on_processor_masters
-	 */
-	std::shared_ptr<int> local_master_ids;
+  /*
+   * GIDs that are owned; note that some of these are slaves whose master
+   * is owned by another processor;
+   * myGlobalIds.length=numPoints
+   */
+  std::shared_ptr<int> myGlobalIDs;
+  /*
+   * On processor indices to masters.
+   * Since we own some slaves who have masters on other processors, the
+   * length of this array is:
+   *    local_master_ids.length=num_master+num_slave_on_processor_masters
+   */
+  std::shared_ptr<int> local_master_ids;
 
-	/*
-	 * Length of the following arrays: numPoints;
-	 *
-	 * theta: given a 3-vector associated with a master, use theta
-	 * to rotate 3-vector into slave;
-	 *
-	 * cellVolume: usual cell volume of slave point which is the same
-	 * as the cell volume of the master;
-	 *
-	 * myX: cell coordinates
-	 */
-	std::shared_ptr<double> theta, cellVolume, myX;
+  /*
+   * Length of the following arrays: numPoints;
+   *
+   * theta: given a 3-vector associated with a master, use theta
+   * to rotate 3-vector into slave;
+   *
+   * cellVolume: usual cell volume of slave point which is the same
+   * as the cell volume of the master;
+   *
+   * myX: cell coordinates
+   */
+  std::shared_ptr<double> theta, cellVolume, myX;
 } AxisSymmetricWedgeData;
 
 

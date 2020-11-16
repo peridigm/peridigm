@@ -65,7 +65,7 @@ namespace PeridigmNS {
   class Compute_Local_Linear_Momentum : public PeridigmNS::Compute_Linear_Momentum {
 
   public:
-	
+
     //! Standard constructor.
     Compute_Local_Linear_Momentum( Teuchos::RCP<const Teuchos::ParameterList> params,
                                    Teuchos::RCP<const Epetra_Comm> epetraComm_,

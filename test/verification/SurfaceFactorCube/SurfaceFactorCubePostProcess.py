@@ -1,7 +1,5 @@
 #! /usr/bin/env python
 
-import string
-
 def read_line(file):
     """Scans the input file and ignores lines starting with a '#' or '\n'."""
     
@@ -27,9 +25,9 @@ if __name__=='__main__':
     dataFile = open(infileName)
     buff = read_line(dataFile)
     while buff != None:
-        vals = string.splitfields(buff)
+        vals = buff.split()
         for i in range(len(vals)):
-            vals[i] = float(string.rstrip(vals[i], ','))
+            vals[i] = float(vals[i].rstrip(','))
         if len(vals) > 1:
             SCF_Unrotated_Block_Center = float(vals[1])
             SCF_Unrotated_Block_Face   = float(vals[2])
@@ -42,17 +40,17 @@ if __name__=='__main__':
         buff = read_line(dataFile)
     dataFile.close()
 
-    print
-    print "Surface Correction Factors"
-    print
-    print "Rotation    Location    Analytic_Value   Computed_Value"
-    print "-------------------------------------------------------"
-    print "unrotated   center      1.0              %.6f" % SCF_Unrotated_Block_Center
-    print "unrotated   face        TBD              %.6f" % SCF_Unrotated_Block_Face
-    print "unrotated   edge        TBD              %.6f" % SCF_Unrotated_Block_Edge
-    print "unrotated   corner      TBD              %.6f" % SCF_Unrotated_Block_Corner
-    print "rotated     center      1.0              %.6f" % SCF_Rotated_Block_Center
-    print "rotated     face        TBD              %.6f" % SCF_Rotated_Block_Face
-    print "rotated     edge        TBD              %.6f" % SCF_Rotated_Block_Edge
-    print "rotated     corner      TBD              %.6f" % SCF_Rotated_Block_Corner
-    print
+    print("")
+    print("Surface Correction Factors")
+    print("")
+    print("Rotation    Location    Analytic_Value   Computed_Value")
+    print("-------------------------------------------------------")
+    print("unrotated   center      1.0              {:.6f}".format(SCF_Unrotated_Block_Center))
+    print("unrotated   face        TBD              {:.6f}".format(SCF_Unrotated_Block_Face))
+    print("unrotated   edge        TBD              {:.6f}".format(SCF_Unrotated_Block_Edge))
+    print("unrotated   corner      TBD              {:.6f}".format(SCF_Unrotated_Block_Corner))
+    print("rotated     center      1.0              {:.6f}".format(SCF_Rotated_Block_Center))
+    print("rotated     face        TBD              {:.6f}".format(SCF_Rotated_Block_Face))
+    print("rotated     edge        TBD              {:.6f}".format(SCF_Rotated_Block_Edge))
+    print("rotated     corner      TBD              {:.6f}".format(SCF_Rotated_Block_Corner))
+    print("")

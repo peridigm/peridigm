@@ -65,7 +65,7 @@ namespace PeridigmNS {
   class Compute_Local_Kinetic_Energy : public PeridigmNS::Compute_Kinetic_Energy {
 
   public:
-	
+
     //! Standard constructor.
     Compute_Local_Kinetic_Energy( Teuchos::RCP<const Teuchos::ParameterList> params,
                                   Teuchos::RCP<const Epetra_Comm> epetraComm_,

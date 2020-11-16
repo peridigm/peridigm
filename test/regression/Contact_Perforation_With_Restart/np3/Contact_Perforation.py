@@ -7,7 +7,7 @@ import glob
 import shutil
 from subprocess import Popen
 
-test_dir = "/home/mesoeqs/workspace/peri-112815/test/regression/Contact_Perforation_With_Restart/np3"
+test_dir = "Contact_Perforation_With_Restart/np3"
 base_name = "Contact_Perforation"
 
 if __name__ == "__main__":

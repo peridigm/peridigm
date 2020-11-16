@@ -109,14 +109,14 @@ int PeridigmNS::Compute_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::B
     kinetic_energy        = blockIt->getData(m_kineticEnergyFieldId, PeridigmField::STEP_NONE);
     strain_energy_density = blockIt->getData(m_strainEnergyDensityFieldId, PeridigmField::STEP_NONE);
     strain_energy         = blockIt->getData(m_strainEnergyFieldId, PeridigmField::STEP_NONE);
-	
+
     // Sanity check
     if (velocity->Map().NumMyElements() != volume->Map().NumMyElements() || velocity->Map().NumMyElements() != ref->Map().NumMyElements())
       {
         retval = 1;
         return(retval);
       }
- 	
+
     // Collect values
     double *volume_values = volume->Values();
     double *velocity_values = velocity->Values();
@@ -127,7 +127,7 @@ int PeridigmNS::Compute_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::B
     double *kinetic_energy_values  = kinetic_energy->Values();
     double *strain_energy_values  = strain_energy->Values();
     double *strain_energy_density_values  = strain_energy_density->Values();
-	
+
     // Get the material properties 
     double density  = blockIt->getMaterialModel()->Density();
     double SM = blockIt->getMaterialModel()->ShearModulus();
@@ -187,7 +187,7 @@ int PeridigmNS::Compute_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::B
         // Update the strain energy density                
         W = W + 0.5*BM*dilatation_values[ID]*dilatation_values[ID] + 0.5*(15.0*SM/w_vol)*We;		
         strain_energy_density_values[i] = 0.5*BM*dilatation_values[ID]*dilatation_values[ID] + 0.5*(15.0*SM/w_vol)*We;		
-		
+
         // Update the strain energy
         strain_energy_values[i] = vol*strain_energy_density_values[i];
         SE = SE + strain_energy_values[i];
@@ -206,7 +206,7 @@ int PeridigmNS::Compute_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::B
 
     globalKE += globalBlockKE;
     globalSE += globalBlockSE;
-	}
+  }
 
   // Store global values
   Teuchos::RCP<Epetra_Vector> data;

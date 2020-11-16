@@ -60,7 +60,7 @@ namespace PeridigmNS {
   class JohnsonCookDamageModel : public DamageModel{
 
   public:
-	
+
     //! Standard constructor.
     JohnsonCookDamageModel(const Teuchos::ParameterList& params);
 

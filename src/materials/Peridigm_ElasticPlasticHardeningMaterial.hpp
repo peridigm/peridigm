@@ -91,9 +91,9 @@ namespace PeridigmNS {
     //! Evaluate the internal force.
     virtual void
     computeForce(const double dt,
-		 const int numOwnedPoints,
-		 const int* ownedIDs,
-		 const int* neighborhoodList,
+                 const int numOwnedPoints,
+                 const int* ownedIDs,
+                 const int* neighborhoodList,
                  PeridigmNS::DataManager& dataManager) const;
 
     //! Evaluate the jacobian.
@@ -106,7 +106,7 @@ namespace PeridigmNS {
                     PeridigmNS::SerialMatrix& jacobian,
                     PeridigmNS::Material::JacobianType jacobianType = PeridigmNS::Material::FULL_MATRIX) const;
 
-	//! Evaluate the jacobian via automatic differentiation.
+    //! Evaluate the jacobian via automatic differentiation.
     virtual void
     computeAutomaticDifferentiationJacobian(const double dt,
                                             const int numOwnedPoints,

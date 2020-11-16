@@ -90,7 +90,7 @@ PeridigmNS::VonMisesStressDamageModel::VonMisesStressDamageModel(const Teuchos::
   m_horizonFieldId                                 = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Horizon");
   m_volumeFieldId                                  = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Volume");
   m_coordinatesFieldId                             = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Coordinates");
-m_jacobianDeterminantFieldId                       = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Jacobian_Determinant");
+  m_jacobianDeterminantFieldId                     = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Jacobian_Determinant");
   m_undamagedWeightedVolumeFieldId                 = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Undamaged_Weighted_Volume");
 
   m_fieldIds.push_back(m_flyingPointFlagFieldId);
@@ -167,8 +167,8 @@ PeridigmNS::VonMisesStressDamageModel::computeDamage(const double dt,
   *(dataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_NP1)) = *(dataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_N));
 
   for(int iID=0 ; iID<numOwnedPoints ; ++iID, ++flyingPointFlag, 
-        ++delta, ++undamagedWeightedVolume, coord+=3, 
-        ++brokenBondVolumeAveragedN, ++brokenBondVolumeAveragedNP1)
+      ++delta, ++undamagedWeightedVolume, coord+=3, 
+      ++brokenBondVolumeAveragedN, ++brokenBondVolumeAveragedNP1)
   {
     *brokenBondVolumeAveragedNP1 = 0.0;
 
@@ -176,7 +176,7 @@ PeridigmNS::VonMisesStressDamageModel::computeDamage(const double dt,
     numNeighbors = *neighborListPtr; neighborListPtr++;
 
     for(int n=0; n<numNeighbors; n++, neighborListPtr++, 
-          bondDamage++, vonMisesStress++){
+      bondDamage++, vonMisesStress++){
 
       neighborIndex = *neighborListPtr;
       

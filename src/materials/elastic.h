@@ -53,21 +53,21 @@ namespace MATERIAL_EVALUATION {
 template<typename ScalarT>
 void computeInternalForceLinearElastic
 (
-		const double* xOverlapPtr,
-		const ScalarT* yOverlapPtr,
-		const double* mOwned,
-		const double* volumeOverlapPtr,
-		const ScalarT* dilatationOwned,
-		const double* bondDamage,
-		ScalarT* fInternalOverlapPtr,
-		ScalarT* partialStressOverlapPtr,
-		const int*  localNeighborList,
-		int numOwnedPoints,
-		double BULK_MODULUS,
-		double SHEAR_MODULUS,
-        double horizon,
-        double thermalExpansionCoefficient = 0,
-        const double* deltaTemperature = 0
+    const double* xOverlapPtr,
+    const ScalarT* yOverlapPtr,
+    const double* mOwned,
+    const double* volumeOverlapPtr,
+    const ScalarT* dilatationOwned,
+    const double* bondDamage,
+    ScalarT* fInternalOverlapPtr,
+    ScalarT* partialStressOverlapPtr,
+    const int*  localNeighborList,
+    int numOwnedPoints,
+    double BULK_MODULUS,
+    double SHEAR_MODULUS,
+    double horizon,
+    double thermalExpansionCoefficient = 0,
+    const double* deltaTemperature = 0
 
 );
 

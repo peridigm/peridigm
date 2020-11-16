@@ -118,15 +118,15 @@ int main(int argc, char *argv[]) {
     peridigm->printMemoryStats();
 
 /****************************
-	EpetraExt::ModelEvaluator::InArgs params_in = App->createInArgs();
-    EpetraExt::ModelEvaluator::OutArgs responses_out = App->createOutArgs();
+  EpetraExt::ModelEvaluator::InArgs params_in = App->createInArgs();
+  EpetraExt::ModelEvaluator::OutArgs responses_out = App->createOutArgs();
 
-	// Give OutArgs someplace to put the response
-//  	Teuchos::RCP<Epetra_Vector> g = Teuchos::rcp(new Epetra_Vector(*App->get_g_map(0)));
-//  	responses_out.set_g(0, g);
+  // Give OutArgs someplace to put the response
+//  Teuchos::RCP<Epetra_Vector> g = Teuchos::rcp(new Epetra_Vector(*App->get_g_map(0)));
+//  responses_out.set_g(0, g);
 
-    // Evaluate model
-	App->evalModel(params_in, responses_out);
+  // Evaluate model
+  App->evalModel(params_in, responses_out);
 ****************************/
   }
 

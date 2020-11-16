@@ -184,43 +184,43 @@ PeridigmNS::InterfaceAwareDamageModel::computeDamage(const double dt,
   neighborhoodListIndex = 0;
   bondIndex = 0;
   for(iID=0 ; iID<numOwnedPoints ; ++iID){
-	nodeId = ownedIDs[iID];
-	numNeighbors = neighborhoodList[neighborhoodListIndex++];
+    nodeId = ownedIDs[iID];
+    numNeighbors = neighborhoodList[neighborhoodListIndex++];
     neighborhoodListIndex += numNeighbors;
-	totalDamage = 0.0;
-  for(iNID=0 ; iNID<numNeighbors ; ++iNID){
+    totalDamage = 0.0;
+    for(iNID=0 ; iNID<numNeighbors ; ++iNID){
     totalDamage += bondDamage[bondIndex++];
-  }
-
-  if(totalDamage >= numNeighbors-2) // This would imply rank deficiency and would lead to problems in CG
-  {
-    const string deficientSetName = "RANK_DEFICIENT_NODES";
-    TEUCHOS_TEST_FOR_EXCEPTION(nodeSetMap->find(deficientSetName)==nodeSetMap->end(),std::logic_error,"Error: The placeholder nodeset for rank deficient nodes is missing.");
-    bool nodeAlreadyRegistered = false;
-    vector<int> * deficientSet = &nodeSetMap->find(deficientSetName)->second;
-    for(unsigned i=0;i<deficientSet->size();++i)
-      if((*deficientSet)[i]==nodeId)
-        nodeAlreadyRegistered = true;
-
-    if(!nodeAlreadyRegistered){
-      cout << "Warning: Potentially rank deficient node detected (Node with 2 or less bonds). " << endl
-           << "Node " << nodeId + 1 << " will be removed from the linear system." << endl;
-      deficientSet->push_back(nodeId);
-
-      // if the node is removed from the linear system break all its bonds
-      bondIndex -= numNeighbors;
-      for(iNID=0 ; iNID<numNeighbors ; ++iNID){
-        bondDamage[bondIndex++] = 1.0;
-      }
-      totalDamage = numNeighbors;
     }
-  }
+
+    if(totalDamage >= numNeighbors-2) // This would imply rank deficiency and would lead to problems in CG
+    {
+      const string deficientSetName = "RANK_DEFICIENT_NODES";
+      TEUCHOS_TEST_FOR_EXCEPTION(nodeSetMap->find(deficientSetName)==nodeSetMap->end(),std::logic_error,"Error: The placeholder nodeset for rank deficient nodes is missing.");
+      bool nodeAlreadyRegistered = false;
+      vector<int> * deficientSet = &nodeSetMap->find(deficientSetName)->second;
+      for(unsigned i=0;i<deficientSet->size();++i)
+        if((*deficientSet)[i]==nodeId)
+          nodeAlreadyRegistered = true;
+
+      if(!nodeAlreadyRegistered){
+        cout << "Warning: Potentially rank deficient node detected (Node with 2 or less bonds). " << endl
+             << "Node " << nodeId + 1 << " will be removed from the linear system." << endl;
+        deficientSet->push_back(nodeId);
+
+        // if the node is removed from the linear system break all its bonds
+        bondIndex -= numNeighbors;
+        for(iNID=0 ; iNID<numNeighbors ; ++iNID){
+          bondDamage[bondIndex++] = 1.0;
+        }
+        totalDamage = numNeighbors;
+      }
+    }
 
 
-	if(numNeighbors > 0)
-	  totalDamage /= numNeighbors;
-	else
-	  totalDamage = 0.0;
- 	damage[nodeId] = totalDamage;
+    if(numNeighbors > 0)
+      totalDamage /= numNeighbors;
+    else
+      totalDamage = 0.0;
+    damage[nodeId] = totalDamage;
   }
 }

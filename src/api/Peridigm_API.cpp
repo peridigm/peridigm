@@ -62,7 +62,7 @@
 #include <cassert>
 
 #ifdef __cplusplus
-extern "C" {
+  extern "C" {
 #endif
 
 using namespace std;
@@ -108,7 +108,7 @@ PD_LIB_DLL_EXPORT const int run_peridigm(int argc, char *argv[], const bool fina
         if(mpi_id == 0)
           cout << "Usage:  Peridigm <input.xml>\n" << endl;
 #ifdef HAVE_MPI
-        MPI_Finalize();
+  MPI_Finalize();
 #endif
         assert(false);
       }
@@ -161,5 +161,5 @@ PD_LIB_DLL_EXPORT const int run_peridigm(int argc, char *argv[], const bool fina
 
 
 #ifdef __cplusplus
-} // extern "C"
+  } // extern "C"
 #endif

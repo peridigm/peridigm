@@ -70,7 +70,7 @@ namespace PeridigmNS {
   class UserDefinedTimeDependentCriticalStretchDamageModel : public DamageModel{
 
   public:
-	
+
     //! Standard constructor.
     UserDefinedTimeDependentCriticalStretchDamageModel(const Teuchos::ParameterList& params);
 
@@ -102,7 +102,7 @@ namespace PeridigmNS {
 //                   PeridigmNS::DataManager& dataManager) ;
                   
     virtual void
-	computeDamage(const double dt,
+    computeDamage(const double dt,
                   const int numOwnedPoints,
                   const int* ownedIDs,
                   const int* neighborhoodList,
@@ -114,12 +114,12 @@ namespace PeridigmNS {
 
   protected:
 
-	//! Computes the distance between nodes (a1, a2, a3) and (b1, b2, b3).
-	inline double distance(double a1, double a2, double a3,
-						   double b1, double b2, double b3) const
-	{
-	  return ( sqrt( (a1-b1)*(a1-b1) + (a2-b2)*(a2-b2) + (a3-b3)*(a3-b3) ) );
-	}
+    //! Computes the distance between nodes (a1, a2, a3) and (b1, b2, b3).
+    inline double distance(double a1, double a2, double a3,
+                           double b1, double b2, double b3) const
+    {
+      return ( sqrt( (a1-b1)*(a1-b1) + (a2-b2)*(a2-b2) + (a3-b3)*(a3-b3) ) );
+    }
 
     double m_criticalStretch;
     double m_alpha;

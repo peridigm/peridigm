@@ -57,41 +57,41 @@ typedef PeridigmNS::InfluenceFunction::functionPointer FunctionPointer;
 template<typename ScalarT>
 void computeDilatationLinearLPS
 (
- const double* xOverlapPtr,
- const ScalarT* yOverlapPtr,
- const double* volumeOverlapPtr,
- const double* weightedVolumePtr,
- double horizon,
- const FunctionPointer influenceFunction,
- const double* selfVolumePtr,
- const double* neighborVolumePtr,
- const double* influenceFunctionValues,
- const double* bondDamage,
- ScalarT* dilatationOwnedPtr,
- const int* localNeighborList,
- int numOwnedPoints
+    const double* xOverlapPtr,
+    const ScalarT* yOverlapPtr,
+    const double* volumeOverlapPtr,
+    const double* weightedVolumePtr,
+    double horizon,
+    const FunctionPointer influenceFunction,
+    const double* selfVolumePtr,
+    const double* neighborVolumePtr,
+    const double* influenceFunctionValues,
+    const double* bondDamage,
+    ScalarT* dilatationOwnedPtr,
+    const int* localNeighborList,
+    int numOwnedPoints
  );
 
 //! Computes contributions to the internal force resulting from owned points.
 template<typename ScalarT>
 void computeInternalForceLinearLPS
 (
- const double* xOverlapPtr,
- const ScalarT* yOverlapPtr,
- const double* volumeOverlapPtr,
- const double* weightedVolumePtr,
- const ScalarT* dilatationPtr,
- double horizon,
- const FunctionPointer influenceFunction,
- const double* selfVolumePtr,
- const double* neighborVolumePtr,
- const double* influenceFunctionValues,
- const double* bondDamage,
- ScalarT* forceOverlapPtr,
- const int* localNeighborList,
- int numOwnedPoints,
- double bulkModulus,
- double shearModulus
+    const double* xOverlapPtr,
+    const ScalarT* yOverlapPtr,
+    const double* volumeOverlapPtr,
+    const double* weightedVolumePtr,
+    const ScalarT* dilatationPtr,
+    double horizon,
+    const FunctionPointer influenceFunction,
+    const double* selfVolumePtr,
+    const double* neighborVolumePtr,
+    const double* influenceFunctionValues,
+    const double* bondDamage,
+    ScalarT* forceOverlapPtr,
+    const int* localNeighborList,
+    int numOwnedPoints,
+    double bulkModulus,
+    double shearModulus
 );
 
 }

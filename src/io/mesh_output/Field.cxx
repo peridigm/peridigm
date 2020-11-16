@@ -55,8 +55,8 @@ namespace Field_NS {
 const map<string, FieldSpec> FieldSpecMap::Map =  FieldSpecMap::create_map();
 
 std::ostream& FieldSpec::print(std::ostream& os) const {
-	os << label;
-	return os;
+  os << label;
+  return os;
 }
 
 /*
