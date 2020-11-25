@@ -24,19 +24,20 @@ Peridigm:
           Horizon: 0.00417462
 
   Boundary Conditions:
+      Node Set One: "fragmenting_cylinder_nodeset.txt"
       Initial Velocity X:
           Type: "Initial Velocity"
-          Node Set: "Full Domain"
+          Node Set: "Node Set One"
           Coordinate: "x"
           Value: "(200 - 50*((z/0.05)-1)^2)*cos(atan2(y,x))"
       Initial Velocity Y:
           Type: "Initial Velocity"
-          Node Set: "Full Domain"
+          Node Set: "Node Set One"
           Coordinate: "y"
           Value: "(200 - 50*((z/0.05)-1)^2)*sin(atan2(y,x))"
       Initial Velocity Z:
           Type: "Initial Velocity"
-          Node Set: "Full Domain"
+          Node Set: "Node Set One"
           Coordinate: "z"
           Value: "(100*((z/0.05)-1))"
 
