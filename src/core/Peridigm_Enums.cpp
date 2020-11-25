@@ -157,7 +157,7 @@ Tensor_Order to_tensor_order(const std::string & str)
   std::string upper_str = str;
   tidy_string(upper_str);
 
-  std::map<std::string,Tensor_Order,std::string>::iterator const pos=string_tensor_order.find(upper_str);
+  std::map<std::string,Tensor_Order,std::string >::iterator pos=string_tensor_order.find(upper_str);
   if (pos == string_tensor_order.end())
   {
     std::stringstream oss;
