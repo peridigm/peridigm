@@ -62,7 +62,7 @@ namespace PeridigmNS {
   class Compute_Deformation_Gradient : public PeridigmNS::Compute {
 
   public:
-	
+
     //! Constructor.
     Compute_Deformation_Gradient( Teuchos::RCP<const Teuchos::ParameterList> params,
                              Teuchos::RCP<const Epetra_Comm> epetraComm_,

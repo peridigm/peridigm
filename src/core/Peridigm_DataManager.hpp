@@ -174,14 +174,14 @@ public:
     stateN.swap(stateNP1);
   }
   void writeBlocktoDisk(std::string blockName,char const * path){
-      // StateNone is unaffected by restart so only StateN and StateNP1 are written
-	  getStateN()->writeStateData(getStateN(),"StateN",blockName,path);
-	  getStateNP1()->writeStateData(getStateNP1(),"StateNP1",blockName,path);
+    // StateNone is unaffected by restart so only StateN and StateNP1 are written
+    getStateN()->writeStateData(getStateN(),"StateN",blockName,path);
+    getStateNP1()->writeStateData(getStateNP1(),"StateNP1",blockName,path);
   }
   void readBlockfromDisk(std::string blockName,char const * path){
-      // StateNone is unaffected by restart so only StateN and StateNP1 are red
-	  getStateN()->readStateData(getStateN(),"StateN",blockName,path);
-	  getStateNP1()->readStateData(getStateNP1(),"StateNP1",blockName,path);
+    // StateNone is unaffected by restart so only StateN and StateNP1 are red
+    getStateN()->readStateData(getStateN(),"StateN",blockName,path);
+    getStateNP1()->readStateData(getStateNP1(),"StateNP1",blockName,path);
   }
 
 protected:

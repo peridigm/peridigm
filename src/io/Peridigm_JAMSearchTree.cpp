@@ -59,5 +59,5 @@ PeridigmNS::JAMSearchTree::~JAMSearchTree()
 
 void PeridigmNS::JAMSearchTree::FindPointsWithinRadius(const double* point, double searchRadius, std::vector<int>& neighborList)
 {
-	tree.all_neighbors_within_radius(point,searchRadius,neighborList);
+  tree.all_neighbors_within_radius(point,searchRadius,neighborList);
 }

@@ -73,8 +73,8 @@ namespace PeridigmNS {
     //! Returns the shear modulus of the material.
     virtual double ShearModulus() const { return m_shearModulus; }
 
-	//! Dummy method, for now
-	virtual double lookupMaterialProperty(const std::string keyname) const {return 0.0;}
+    //! Dummy method, for now
+    virtual double lookupMaterialProperty(const std::string keyname) const {return 0.0;}
 
     //! Returns a vector of field IDs corresponding to the variables associated with the material.
     virtual std::vector<int> FieldIds() const { return m_fieldIds; }
@@ -90,9 +90,9 @@ namespace PeridigmNS {
     //! Evaluate the internal force.
     virtual void
     computeForce(const double dt,
-		 const int numOwnedPoints,
-		 const int* ownedIDs,
-		 const int* neighborhoodList,
+                 const int numOwnedPoints,
+                 const int* ownedIDs,
+                 const int* neighborhoodList,
                  PeridigmNS::DataManager& dataManager) const;
 
   protected:

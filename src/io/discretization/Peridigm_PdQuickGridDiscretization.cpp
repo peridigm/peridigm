@@ -318,18 +318,18 @@ PeridigmNS::PdQuickGridDiscretization::createMaps(const QUICKGRID::Data& decomp)
 void
 PeridigmNS::PdQuickGridDiscretization::createNeighborhoodData(const QUICKGRID::Data& decomp)
 {
-   neighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
-   neighborhoodData->SetNumOwned(decomp.numPoints);
-   memcpy(neighborhoodData->OwnedIDs(),
-          Discretization::getLocalOwnedIds(decomp, *oneDimensionalOverlapMap).get(),
- 		  decomp.numPoints*sizeof(int));
-   memcpy(neighborhoodData->NeighborhoodPtr(), 
- 		  decomp.neighborhoodPtr.get(),
- 		  decomp.numPoints*sizeof(int));
-   neighborhoodData->SetNeighborhoodListSize(decomp.sizeNeighborhoodList);
-   memcpy(neighborhoodData->NeighborhoodList(),
-		  Discretization::getLocalNeighborList(decomp, *oneDimensionalOverlapMap).get(),
- 		  decomp.sizeNeighborhoodList*sizeof(int));
+  neighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
+  neighborhoodData->SetNumOwned(decomp.numPoints);
+  memcpy(neighborhoodData->OwnedIDs(),
+         Discretization::getLocalOwnedIds(decomp, *oneDimensionalOverlapMap).get(),
+         decomp.numPoints*sizeof(int));
+  memcpy(neighborhoodData->NeighborhoodPtr(), 
+         decomp.neighborhoodPtr.get(),
+         decomp.numPoints*sizeof(int));
+  neighborhoodData->SetNeighborhoodListSize(decomp.sizeNeighborhoodList);
+  memcpy(neighborhoodData->NeighborhoodList(),
+         Discretization::getLocalNeighborList(decomp, *oneDimensionalOverlapMap).get(),
+         decomp.sizeNeighborhoodList*sizeof(int));
 }
 
 Teuchos::RCP<const Epetra_BlockMap>

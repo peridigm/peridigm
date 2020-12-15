@@ -62,7 +62,7 @@ namespace PeridigmNS {
   class Compute_Radius : public PeridigmNS::Compute {
 
   public:
-	
+
     //! Standard constructor.
     Compute_Radius( Teuchos::RCP<const Teuchos::ParameterList> params,
                              Teuchos::RCP<const Epetra_Comm> epetraComm_,

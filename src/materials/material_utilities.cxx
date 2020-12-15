@@ -54,12 +54,12 @@ namespace MATERIAL_EVALUATION {
 
 void computeAndStoreInfluenceFunctionValues
 (
- const double* xOverlap,
- double* influenceFunctionValues,
- int myNumPoints,
- const int* localNeighborList,
- double horizon,
- const FunctionPointer OMEGA
+    const double* xOverlap,
+    double* influenceFunctionValues,
+    int myNumPoints,
+    const int* localNeighborList,
+    double horizon,
+    const FunctionPointer OMEGA
 ){
   double coord[3], neighborCoord[3], distance, influenceFunctionValue;
   int numNeighbors, neighborIndex, neighborListIndex(0), influenceFunctionIndex(0);
@@ -74,8 +74,8 @@ void computeAndStoreInfluenceFunctionValues
       neighborCoord[1] = xOverlap[3*neighborIndex+1];
       neighborCoord[2] = xOverlap[3*neighborIndex+2];
       distance = std::sqrt( (coord[0] - neighborCoord[0])*(coord[0] - neighborCoord[0]) +
-			    (coord[1] - neighborCoord[1])*(coord[1] - neighborCoord[1]) +
-			    (coord[2] - neighborCoord[2])*(coord[2] - neighborCoord[2]) );
+                            (coord[1] - neighborCoord[1])*(coord[1] - neighborCoord[1]) +
+                            (coord[2] - neighborCoord[2])*(coord[2] - neighborCoord[2]) );
       influenceFunctionValue = OMEGA(distance, horizon);
       influenceFunctionValues[influenceFunctionIndex++] = influenceFunctionValue;
     }
@@ -94,54 +94,54 @@ void computeAndStoreInfluenceFunctionValues
 
 void set_pure_shear
 (
-		const int *neighPtr,
-		const double *X,
-		const double *xOverlap,
-		double *yOverlap,
-		PURE_SHEAR mode,
-		double gamma
+    const int *neighPtr,
+    const double *X,
+    const double *xOverlap,
+    double *yOverlap,
+    PURE_SHEAR mode,
+    double gamma
 )
 {
 
-	/*
-	 * Pure shear centered at X
-	 * X has no displacement
-	 */
-	int numNeigh=*neighPtr; neighPtr++;
-	for(int n=0;n<numNeigh;n++, neighPtr++){
-		int localId = *neighPtr;
-		const double *XP = &xOverlap[3*localId];
+  /*
+   * Pure shear centered at X
+   * X has no displacement
+   */
+  int numNeigh=*neighPtr; neighPtr++;
+  for(int n=0;n<numNeigh;n++, neighPtr++){
+    int localId = *neighPtr;
+    const double *XP = &xOverlap[3*localId];
 
-		double dx = XP[0]-X[0];
-		double dy = XP[1]-X[1];
-		double dz = XP[2]-X[2];
+    double dx = XP[0]-X[0];
+    double dy = XP[1]-X[1];
+    double dz = XP[2]-X[2];
 
-		/*
-		 * Pure shear
-		 */
-		double zx(0.0), xy(0.0), yz(0.0);
-		double xz(0.0), yx(0.0), zy(0.0);
-		switch(mode){
-		case ZX:
-			zx = gamma * dx;
-			xz = gamma * dz;
-			break;
-		case XY:
-			xy = gamma * dy;
-			yx = gamma * dx;
-			break;
-		case YZ:
-			yz = gamma * dz;
-			zy = gamma * dy;
-			break;
-		}
+    /*
+     * Pure shear
+     */
+    double zx(0.0), xy(0.0), yz(0.0);
+    double xz(0.0), yx(0.0), zy(0.0);
+    switch(mode){
+    case ZX:
+      zx = gamma * dx;
+      xz = gamma * dz;
+      break;
+    case XY:
+      xy = gamma * dy;
+      yx = gamma * dx;
+      break;
+    case YZ:
+      yz = gamma * dz;
+      zy = gamma * dy;
+      break;
+    }
 
-		double *YP = &yOverlap[3*localId];
-		YP[0] = XP[0] + xy + xz;
-		YP[1] = XP[1] + yz + yx;
-		YP[2] = XP[2] + zx + zy;
+    double *YP = &yOverlap[3*localId];
+    YP[0] = XP[0] + xy + xz;
+    YP[1] = XP[1] + yz + yx;
+    YP[2] = XP[2] + zx + zy;
 
-	}
+  }
 
 }
 
@@ -160,149 +160,149 @@ double scalarInfluenceFunction
 
 double computeWeightedVolume
 (
-		const double *X,
-		const double *xOverlap,
-		const double* volumeOverlap,
-		const int* localNeighborList,
+    const double *X,
+    const double *xOverlap,
+    const double* volumeOverlap,
+    const int* localNeighborList,
         double horizon,
-		const FunctionPointer omega
+    const FunctionPointer omega
 ){
 
-	double m=0.0;
-	double cellVolume;
-	const int *neighPtr = localNeighborList;
-	int numNeigh = *neighPtr; neighPtr++;
-	for(int n=0;n<numNeigh;n++,neighPtr++){
-		int localId = *neighPtr;
-		cellVolume = volumeOverlap[localId];
-		const double *XP = &xOverlap[3*localId];
-		double dx = XP[0]-X[0];
-		double dy = XP[1]-X[1];
-		double dz = XP[2]-X[2];
-		double zetaSquared = dx*dx+dy*dy+dz*dz;
-		double d = sqrt(zetaSquared);
-		m+=omega(d,horizon)*(zetaSquared)*cellVolume;
-	}
+  double m=0.0;
+  double cellVolume;
+  const int *neighPtr = localNeighborList;
+  int numNeigh = *neighPtr; neighPtr++;
+  for(int n=0;n<numNeigh;n++,neighPtr++){
+    int localId = *neighPtr;
+    cellVolume = volumeOverlap[localId];
+    const double *XP = &xOverlap[3*localId];
+    double dx = XP[0]-X[0];
+    double dy = XP[1]-X[1];
+    double dz = XP[2]-X[2];
+    double zetaSquared = dx*dx+dy*dy+dz*dz;
+    double d = sqrt(zetaSquared);
+    m+=omega(d,horizon)*(zetaSquared)*cellVolume;
+  }
 
-	return m;
+  return m;
 }
 
 void computeDeviatoricDilatation
 (
-		const double* xOverlap,
-		const double* yOverlap,
-		const double *mOwned,
-		const double* volumeOverlap,
-		const double* bondDamage,
-		const double* epd,
-		double* dilatationOwned,
-		const int* localNeighborList,
-		int numOwnedPoints,
-		double horizon,
-		const FunctionPointer OMEGA
+    const double* xOverlap,
+    const double* yOverlap,
+    const double *mOwned,
+    const double* volumeOverlap,
+    const double* bondDamage,
+    const double* epd,
+    double* dilatationOwned,
+    const int* localNeighborList,
+    int numOwnedPoints,
+    double horizon,
+    const FunctionPointer OMEGA
 )
 {
-	const double *xOwned = xOverlap;
-	const double *yOwned = yOverlap;
-	const double *m = mOwned;
-	const double *v = volumeOverlap;
-	double *theta = dilatationOwned;
-	double cellVolume;
-	const int *neighPtr = localNeighborList;
-	for(int p=0; p<numOwnedPoints;p++, xOwned+=3, yOwned+=3, m++, theta++){
-		int numNeigh = *neighPtr; neighPtr++;
-		const double *X = xOwned;
-		//const double *Y = yOwned;
-		*theta = 0;
-		for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++,epd++){
-			int localId = *neighPtr;
-			cellVolume = v[localId];
-			const double *XP = &xOverlap[3*localId];
-			//const double *YP = &yOverlap[3*localId];
-			double dx = XP[0]-X[0];
-			double dy = XP[1]-X[1];
-			double dz = XP[2]-X[2];
-			double zetaSquared = dx*dx+dy*dy+dz*dz;
-			double d = sqrt(zetaSquared);
-            double omega = OMEGA(d,horizon);
-			double e = (*epd);
-			*theta += 3.0*omega*(1.0-*bondDamage)*d*e*cellVolume/(*m);
-		}
+  const double *xOwned = xOverlap;
+  const double *yOwned = yOverlap;
+  const double *m = mOwned;
+  const double *v = volumeOverlap;
+  double *theta = dilatationOwned;
+  double cellVolume;
+  const int *neighPtr = localNeighborList;
+  for(int p=0; p<numOwnedPoints;p++, xOwned+=3, yOwned+=3, m++, theta++){
+    int numNeigh = *neighPtr; neighPtr++;
+    const double *X = xOwned;
+    //const double *Y = yOwned;
+    *theta = 0;
+    for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++,epd++){
+      int localId = *neighPtr;
+      cellVolume = v[localId];
+      const double *XP = &xOverlap[3*localId];
+      //const double *YP = &yOverlap[3*localId];
+      double dx = XP[0]-X[0];
+      double dy = XP[1]-X[1];
+      double dz = XP[2]-X[2];
+      double zetaSquared = dx*dx+dy*dy+dz*dz;
+      double d = sqrt(zetaSquared);
+      double omega = OMEGA(d,horizon);
+      double e = (*epd);
+      *theta += 3.0*omega*(1.0-*bondDamage)*d*e*cellVolume/(*m);
+    }
 
-	}
+  }
 }
 
 template<typename ScalarT>
 void computeDilatation
 (
-		const double* xOverlap,
-		const ScalarT* yOverlap,
-		const double *mOwned,
-		const double* volumeOverlap,
-		const double* bondDamage,
-		ScalarT* dilatationOwned,
-		const int* localNeighborList,
-		int numOwnedPoints,
-        double horizon,
-		const FunctionPointer OMEGA,
-        double thermalExpansionCoefficient,
-        const double* deltaTemperature
+    const double* xOverlap,
+    const ScalarT* yOverlap,
+    const double *mOwned,
+    const double* volumeOverlap,
+    const double* bondDamage,
+    ScalarT* dilatationOwned,
+    const int* localNeighborList,
+    int numOwnedPoints,
+    double horizon,
+    const FunctionPointer OMEGA,
+    double thermalExpansionCoefficient,
+    const double* deltaTemperature
 )
 {
-	const double *xOwned = xOverlap;
-	const ScalarT *yOwned = yOverlap;
-	const double *deltaT = deltaTemperature;
-	const double *m = mOwned;
-	const double *v = volumeOverlap;
-	ScalarT *theta = dilatationOwned;
-	double cellVolume;
-	const int *neighPtr = localNeighborList;
-	for(int p=0; p<numOwnedPoints;p++, xOwned+=3, yOwned+=3, deltaT++, m++, theta++){
-		int numNeigh = *neighPtr; neighPtr++;
-		const double *X = xOwned;
-		const ScalarT *Y = yOwned;
-		*theta = ScalarT(0.0);
-		for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++){
-			int localId = *neighPtr;
-			cellVolume = v[localId];
-			const double *XP = &xOverlap[3*localId];
-			const ScalarT *YP = &yOverlap[3*localId];
-			double X_dx = XP[0]-X[0];
-			double X_dy = XP[1]-X[1];
-			double X_dz = XP[2]-X[2];
-			double zetaSquared = X_dx*X_dx+X_dy*X_dy+X_dz*X_dz;
-			ScalarT Y_dx = YP[0]-Y[0];
-			ScalarT Y_dy = YP[1]-Y[1];
-			ScalarT Y_dz = YP[2]-Y[2];
-			ScalarT dY = Y_dx*Y_dx+Y_dy*Y_dy+Y_dz*Y_dz;
-			double d = sqrt(zetaSquared);
-			ScalarT e = sqrt(dY);
-			e -= d;
-			if(deltaTemperature)
-			  e -= thermalExpansionCoefficient*(*deltaT)*d;
-			double omega = OMEGA(d,horizon);
-			*theta += 3.0*omega*(1.0-*bondDamage)*d*e*cellVolume/(*m);
-		}
+  const double *xOwned = xOverlap;
+  const ScalarT *yOwned = yOverlap;
+  const double *deltaT = deltaTemperature;
+  const double *m = mOwned;
+  const double *v = volumeOverlap;
+  ScalarT *theta = dilatationOwned;
+  double cellVolume;
+  const int *neighPtr = localNeighborList;
+  for(int p=0; p<numOwnedPoints;p++, xOwned+=3, yOwned+=3, deltaT++, m++, theta++){
+    int numNeigh = *neighPtr; neighPtr++;
+    const double *X = xOwned;
+    const ScalarT *Y = yOwned;
+    *theta = ScalarT(0.0);
+    for(int n=0;n<numNeigh;n++,neighPtr++,bondDamage++){
+      int localId = *neighPtr;
+      cellVolume = v[localId];
+      const double *XP = &xOverlap[3*localId];
+      const ScalarT *YP = &yOverlap[3*localId];
+      double X_dx = XP[0]-X[0];
+      double X_dy = XP[1]-X[1];
+      double X_dz = XP[2]-X[2];
+      double zetaSquared = X_dx*X_dx+X_dy*X_dy+X_dz*X_dz;
+      ScalarT Y_dx = YP[0]-Y[0];
+      ScalarT Y_dy = YP[1]-Y[1];
+      ScalarT Y_dz = YP[2]-Y[2];
+      ScalarT dY = Y_dx*Y_dx+Y_dy*Y_dy+Y_dz*Y_dz;
+      double d = sqrt(zetaSquared);
+      ScalarT e = sqrt(dY);
+      e -= d;
+      if(deltaTemperature)
+        e -= thermalExpansionCoefficient*(*deltaT)*d;
+      double omega = OMEGA(d,horizon);
+      *theta += 3.0*omega*(1.0-*bondDamage)*d*e*cellVolume/(*m);
+    }
 
-	}
+  }
 }
 
 /** Explicit template instantiation for double. */
 template
 void computeDilatation<double>
 (
-		const double* xOverlap,
-		const double* yOverlap,
-		const double *mOwned,
-		const double* volumeOverlap,
-		const double* bondDamage,
-		double* dilatationOwned,
-		const int* localNeighborList,
-		int numOwnedPoints,
-        double horizon,
-		const FunctionPointer OMEGA,
-        double thermalExpansionCoefficient,
-        const double* deltaTemperature
+    const double* xOverlap,
+    const double* yOverlap,
+    const double *mOwned,
+    const double* volumeOverlap,
+    const double* bondDamage,
+    double* dilatationOwned,
+    const int* localNeighborList,
+    int numOwnedPoints,
+    double horizon,
+    const FunctionPointer OMEGA,
+    double thermalExpansionCoefficient,
+    const double* deltaTemperature
  );
 
 
@@ -310,16 +310,16 @@ void computeDilatation<double>
 template
 void computeDilatation<Sacado::Fad::DFad<double> >
 (
-		const double* xOverlap,
-		const Sacado::Fad::DFad<double>* yOverlap,
-		const double *mOwned,
-		const double* volumeOverlap,
-		const double* bondDamage,
-		Sacado::Fad::DFad<double>* dilatationOwned,
-		const int* localNeighborList,
-		int numOwnedPoints,
+    const double* xOverlap,
+    const Sacado::Fad::DFad<double>* yOverlap,
+    const double *mOwned,
+    const double* volumeOverlap,
+    const double* bondDamage,
+    Sacado::Fad::DFad<double>* dilatationOwned,
+    const int* localNeighborList,
+    int numOwnedPoints,
         double horizon,
-		const FunctionPointer OMEGA,
+    const FunctionPointer OMEGA,
         double thermalExpansionCoefficient,
         const double* deltaTemperature
  );
@@ -331,192 +331,192 @@ void computeDilatation<Sacado::Fad::DFad<double> >
  */
 double computeDilatation
 (
-		const int *neighPtr,
-		const double *X,
-		const double *xOverlap,
-		const double *Y,
-		const double *yOverlap,
-		const double *volumeOverlap,
-		double weightedVolume,
-		double horizon,
-		const FunctionPointer OMEGA
+    const int *neighPtr,
+    const double *X,
+    const double *xOverlap,
+    const double *Y,
+    const double *yOverlap,
+    const double *volumeOverlap,
+    double weightedVolume,
+    double horizon,
+    const FunctionPointer OMEGA
 )
 {
-	double bondDamage=0.0;
-	const double *v = volumeOverlap;
-	double m = weightedVolume;
-	double theta = 0.0;
-	int numNeigh=*neighPtr; neighPtr++;
-	for(int n=0;n<numNeigh;n++,neighPtr++){
+  double bondDamage=0.0;
+  const double *v = volumeOverlap;
+  double m = weightedVolume;
+  double theta = 0.0;
+  int numNeigh=*neighPtr; neighPtr++;
+  for(int n=0;n<numNeigh;n++,neighPtr++){
 
-		int localId = *neighPtr;
-		double cellVolume = v[localId];
+    int localId = *neighPtr;
+    double cellVolume = v[localId];
 
-		const double *XP = &xOverlap[3*localId];
-		double dx = XP[0]-X[0];
-		double dy = XP[1]-X[1];
-		double dz = XP[2]-X[2];
-		double zetaSquared = dx*dx+dy*dy+dz*dz;
+    const double *XP = &xOverlap[3*localId];
+    double dx = XP[0]-X[0];
+    double dy = XP[1]-X[1];
+    double dz = XP[2]-X[2];
+    double zetaSquared = dx*dx+dy*dy+dz*dz;
 
-		const double *YP = &yOverlap[3*localId];
-		dx = YP[0]-Y[0];
-		dy = YP[1]-Y[1];
-		dz = YP[2]-Y[2];
-		double dY = dx*dx+dy*dy+dz*dz;
-		double d = sqrt(zetaSquared);
-        double omega = OMEGA(d,horizon);
-		double e = sqrt(dY)-d;
-		theta += 3.0*omega*(1.0-bondDamage)*d*e*cellVolume/m;
+    const double *YP = &yOverlap[3*localId];
+    dx = YP[0]-Y[0];
+    dy = YP[1]-Y[1];
+    dz = YP[2]-Y[2];
+    double dY = dx*dx+dy*dy+dz*dz;
+    double d = sqrt(zetaSquared);
+    double omega = OMEGA(d,horizon);
+    double e = sqrt(dY)-d;
+    theta += 3.0*omega*(1.0-bondDamage)*d*e*cellVolume/m;
 
-	}
-	return theta;
+  }
+  return theta;
 }
 
 
 double compute_norm_2_deviatoric_extension
 (
-		const int *neighPtr,
-		const double *X,
-		const double *xOverlap,
-		const double *Y,
-		const double *yOverlap,
-		const double *volumeOverlap,
-		double weighted_volume,
-		double horizon,
-		const FunctionPointer OMEGA
+    const int *neighPtr,
+    const double *X,
+    const double *xOverlap,
+    const double *Y,
+    const double *yOverlap,
+    const double *volumeOverlap,
+    double weighted_volume,
+    double horizon,
+    const FunctionPointer OMEGA
 )
 {
 
-	const double *v = volumeOverlap;
-	double cellVolume, dx, dy, dz, zeta, dY, ed;
+  const double *v = volumeOverlap;
+  double cellVolume, dx, dy, dz, zeta, dY, ed;
 
-	/*
-	 * Compute weighted volume
-	 */
-	double m = weighted_volume;
-//	double m = computeWeightedVolume(X,xOverlap,volumeOverlap,neighPtr);
-//	std::cout << NAMESPACE << "probeShearModulusScaleFactor weighted volume = " << m << std::endl;
+  /*
+   * Compute weighted volume
+   */
+  double m = weighted_volume;
+//  double m = computeWeightedVolume(X,xOverlap,volumeOverlap,neighPtr);
+//  std::cout << NAMESPACE << "probeShearModulusScaleFactor weighted volume = " << m << std::endl;
 
-	/*
-	 * Compute dilatation
-	 */
-	double theta = computeDilatation(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m,horizon);
-//	std::cout << NAMESPACE << "probeShearModulusScaleFactor theta = " << theta << std::endl;
+  /*
+   * Compute dilatation
+   */
+  double theta = computeDilatation(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m,horizon);
+//  std::cout << NAMESPACE << "probeShearModulusScaleFactor theta = " << theta << std::endl;
 
-	/*
-	 * Pure shear centered at X
-	 * X has no displacement
-	 */
-	double ed_squared=0.0;
-	int numNeigh=*neighPtr; neighPtr++;
-	for(int n=0;n<numNeigh;n++, neighPtr++){
-		int localId = *neighPtr;
-		cellVolume = v[localId];
-		const double *XP = &xOverlap[3*localId];
-		dx = XP[0]-X[0];
-		dy = XP[1]-X[1];
-		dz = XP[2]-X[2];
-		zeta = sqrt(dx*dx+dy*dy+dz*dz);
+  /*
+   * Pure shear centered at X
+   * X has no displacement
+   */
+  double ed_squared=0.0;
+  int numNeigh=*neighPtr; neighPtr++;
+  for(int n=0;n<numNeigh;n++, neighPtr++){
+    int localId = *neighPtr;
+    cellVolume = v[localId];
+    const double *XP = &xOverlap[3*localId];
+    dx = XP[0]-X[0];
+    dy = XP[1]-X[1];
+    dz = XP[2]-X[2];
+    zeta = sqrt(dx*dx+dy*dy+dz*dz);
 
-		/*
-		 * Deformation State
-		 */
-		const double *YP = &yOverlap[3*localId];
-		dx = YP[0]-Y[0];
-		dy = YP[1]-Y[1];
-		dz = YP[2]-Y[2];
-		dY = sqrt(dx*dx+dy*dy+dz*dz);
+    /*
+     * Deformation State
+     */
+    const double *YP = &yOverlap[3*localId];
+    dx = YP[0]-Y[0];
+    dy = YP[1]-Y[1];
+    dz = YP[2]-Y[2];
+    dY = sqrt(dx*dx+dy*dy+dz*dz);
 
-		/*
-		 * Deviatoric extension state
-		 */
-		ed = dY-zeta-theta*zeta/3;
+    /*
+     * Deviatoric extension state
+     */
+    ed = dY-zeta-theta*zeta/3;
 
-		/*
-		 * Accumulate norm
-		 */
-		double omega=OMEGA(zeta,horizon);
-		ed_squared += ed * omega * ed * cellVolume;
+    /*
+     * Accumulate norm
+     */
+    double omega=OMEGA(zeta,horizon);
+    ed_squared += ed * omega * ed * cellVolume;
 
-	}
+  }
 
-	return ed_squared;
+  return ed_squared;
 }
 
 
 void computeShearCorrectionFactor
 (
-        int numOwnedPoints,
-        int lengthYOverlap,
-		const double *xOverlap,
-		double *yOverlap,
-		const double *volumeOverlap,
-		const double *owned_weighted_volume,
-		const int*  localNeighborList,
-		double horizon,
-		double *shearCorrectionFactorOwned
+    int numOwnedPoints,
+    int lengthYOverlap,
+    const double *xOverlap,
+    double *yOverlap,
+    const double *volumeOverlap,
+    const double *owned_weighted_volume,
+    const int*  localNeighborList,
+    double horizon,
+    double *shearCorrectionFactorOwned
 ){
-	double gamma=1.0e-6;
-	// currently un-used but may be helpful in further studies
+  double gamma=1.0e-6;
+  // currently un-used but may be helpful in further studies
 //  double reference = 4.0 * value_of_pi() * gamma * gamma * pow(horizon,5) / 75.0;
-	const int *neighPtr = localNeighborList;
-	const double *xOwned = xOverlap;
-	double *yOwned = yOverlap;
-	double *scaleFactor = shearCorrectionFactorOwned;
-	PURE_SHEAR mode;
-	for(int p=0;p<numOwnedPoints;p++, xOwned+=3, yOwned+=3, scaleFactor++, owned_weighted_volume++){
-		int numNeigh = *neighPtr;
-		const double *X = xOwned;
-		double *Y = yOwned;
-		double m = *owned_weighted_volume;
-		double scf, max_dsf;
+  const int *neighPtr = localNeighborList;
+  const double *xOwned = xOverlap;
+  double *yOwned = yOverlap;
+  double *scaleFactor = shearCorrectionFactorOwned;
+  PURE_SHEAR mode;
+  for(int p=0;p<numOwnedPoints;p++, xOwned+=3, yOwned+=3, scaleFactor++, owned_weighted_volume++){
+    int numNeigh = *neighPtr;
+    const double *X = xOwned;
+    double *Y = yOwned;
+    double m = *owned_weighted_volume;
+    double scf, max_dsf;
 
-		mode = XY;
-		Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
-		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
-		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m,horizon);
-		max_dsf=scf;
+    mode = XY;
+    Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
+    set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
+    scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m,horizon);
+    max_dsf=scf;
 
-		mode = ZX;
-		Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
-		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
-		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m,horizon);
-		if(scf>max_dsf) max_dsf=scf;
+    mode = ZX;
+    Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
+    set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
+    scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m,horizon);
+    if(scf>max_dsf) max_dsf=scf;
 
-		mode = YZ;
-		Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
-		set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
-		scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m,horizon);
-		if(scf>max_dsf) max_dsf=scf;
+    mode = YZ;
+    Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
+    set_pure_shear(neighPtr,xOwned,xOverlap,yOverlap,mode,gamma);
+    scf=compute_norm_2_deviatoric_extension(neighPtr,X,xOverlap,Y,yOverlap,volumeOverlap,m,horizon);
+    if(scf>max_dsf) max_dsf=scf;
 
-		// We need to reset the location before
-		//   iterating to the next point; OTHERWISE its a BUG!
-		Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
-		scf=max_dsf;
-		*scaleFactor = 4.0 * gamma * gamma  * m / scf /15.0;
-		neighPtr+=(numNeigh+1);
-	}
+    // We need to reset the location before
+    //   iterating to the next point; OTHERWISE its a BUG!
+    Y[0] = X[0]; Y[1] = X[1]; Y[2] = X[2];
+    scf=max_dsf;
+    *scaleFactor = 4.0 * gamma * gamma  * m / scf /15.0;
+    neighPtr+=(numNeigh+1);
+  }
 }
 
 void computeWeightedVolume
 (
-		const double* xOverlap,
-		const double* volumeOverlap,
-		double *mOwned,
-		int myNumPoints,
-		const int* localNeighborList,
-        double horizon,
-        const FunctionPointer OMEGA
+    const double* xOverlap,
+    const double* volumeOverlap,
+    double *mOwned,
+    int myNumPoints,
+    const int* localNeighborList,
+    double horizon,
+    const FunctionPointer OMEGA
 ){
-	double *m = mOwned;
-	const double *xOwned = xOverlap;
-	const int *neighPtr = localNeighborList;
-	for(int p=0;p<myNumPoints;p++, xOwned+=3, m++){
-		int numNeigh = *neighPtr;
-		const double *X = xOwned;
-		*m=MATERIAL_EVALUATION::computeWeightedVolume(X,xOverlap,volumeOverlap,neighPtr,horizon);
-		neighPtr+=(numNeigh+1);
-	}
+  double *m = mOwned;
+  const double *xOwned = xOverlap;
+  const int *neighPtr = localNeighborList;
+  for(int p=0;p<myNumPoints;p++, xOwned+=3, m++){
+    int numNeigh = *neighPtr;
+    const double *X = xOwned;
+    *m=MATERIAL_EVALUATION::computeWeightedVolume(X,xOverlap,volumeOverlap,neighPtr,horizon);
+    neighPtr+=(numNeigh+1);
+  }
 }
 
 
@@ -530,33 +530,33 @@ namespace WITH_BOND_VOLUME {
 
 double computeWeightedVolume
 (
-		const double *X,
-		const double *xOverlap,
-		const double* bondVolume,
-		const int* localNeighborList,
-		double horizon,
-		const FunctionPointer OMEGA
+    const double *X,
+    const double *xOverlap,
+    const double* bondVolume,
+    const int* localNeighborList,
+    double horizon,
+    const FunctionPointer OMEGA
 ){
 
-	double m=0.0;
-	const int *neighPtr = localNeighborList;
-	const double *bond_volume = bondVolume;
-	int numNeigh = *neighPtr; neighPtr++;
-//	std::cout << NAMESPACE <<"computeWeightedVolume\n";
-//	std::cout << "\tnumber of neighbors = " << numNeigh << std::endl;
-	for(int n=0;n<numNeigh;n++,neighPtr++,bond_volume++){
-		int localId = *neighPtr;
-		const double *XP = &xOverlap[3*localId];
-		double dx = XP[0]-X[0];
-		double dy = XP[1]-X[1];
-		double dz = XP[2]-X[2];
+  double m=0.0;
+  const int *neighPtr = localNeighborList;
+  const double *bond_volume = bondVolume;
+  int numNeigh = *neighPtr; neighPtr++;
+//  std::cout << NAMESPACE <<"computeWeightedVolume\n";
+//  std::cout << "\tnumber of neighbors = " << numNeigh << std::endl;
+  for(int n=0;n<numNeigh;n++,neighPtr++,bond_volume++){
+    int localId = *neighPtr;
+    const double *XP = &xOverlap[3*localId];
+    double dx = XP[0]-X[0];
+    double dy = XP[1]-X[1];
+    double dz = XP[2]-X[2];
         double zetaSquared = dx*dx+dy*dy+dz*dz;
         double d = sqrt(zetaSquared);
         double omega = OMEGA(d,horizon);
-		m+=omega*(zetaSquared)*(*bond_volume);
-	}
+    m+=omega*(zetaSquared)*(*bond_volume);
+  }
 
-	return m;
+  return m;
 }
 
 
@@ -570,112 +570,112 @@ double computeWeightedVolume
 
 double computeDilatation
 (
-		const int *neighPtr,
-		const double *X,
-		const double *xOverlap,
-		const double *Y,
-		const double *yOverlap,
-		const double *bondVolume,
-		double weightedVolume,
-		double horizon,
-		const FunctionPointer OMEGA
+    const int *neighPtr,
+    const double *X,
+    const double *xOverlap,
+    const double *Y,
+    const double *yOverlap,
+    const double *bondVolume,
+    double weightedVolume,
+    double horizon,
+    const FunctionPointer OMEGA
 )
 {
-	double bondDamage=0.0;
-	double m = weightedVolume;
-	double theta = 0.0;
-	int numNeigh=*neighPtr; neighPtr++;
-	for(int n=0;n<numNeigh;n++,neighPtr++, bondVolume++){
+  double bondDamage=0.0;
+  double m = weightedVolume;
+  double theta = 0.0;
+  int numNeigh=*neighPtr; neighPtr++;
+  for(int n=0;n<numNeigh;n++,neighPtr++, bondVolume++){
 
-		int localId = *neighPtr;
+    int localId = *neighPtr;
 
-		const double *XP = &xOverlap[3*localId];
-		double dx = XP[0]-X[0];
-		double dy = XP[1]-X[1];
-		double dz = XP[2]-X[2];
-		double zetaSquared = dx*dx+dy*dy+dz*dz;
+    const double *XP = &xOverlap[3*localId];
+    double dx = XP[0]-X[0];
+    double dy = XP[1]-X[1];
+    double dz = XP[2]-X[2];
+    double zetaSquared = dx*dx+dy*dy+dz*dz;
 
-		const double *YP = &yOverlap[3*localId];
-		dx = YP[0]-Y[0];
-		dy = YP[1]-Y[1];
-		dz = YP[2]-Y[2];
-		double dY = dx*dx+dy*dy+dz*dz;
-		double d = sqrt(zetaSquared);
-        double omega = OMEGA(d,horizon);
-		double e = sqrt(dY)-d;
-		theta += 3.0*omega*(1.0-bondDamage)*d*e*(*bondVolume)/m;
+    const double *YP = &yOverlap[3*localId];
+    dx = YP[0]-Y[0];
+    dy = YP[1]-Y[1];
+    dz = YP[2]-Y[2];
+    double dY = dx*dx+dy*dy+dz*dz;
+    double d = sqrt(zetaSquared);
+    double omega = OMEGA(d,horizon);
+    double e = sqrt(dY)-d;
+    theta += 3.0*omega*(1.0-bondDamage)*d*e*(*bondVolume)/m;
 
-	}
-	return theta;
+  }
+  return theta;
 }
 
 double compute_norm_2_deviatoric_extension
 (
-		const int *neighPtr,
-		const double *X,
-		const double *xOverlap,
-		const double *Y,
-		const double *yOverlap,
-		const double *bondVolume,
-		double weighted_volume,
-		double horizon,
-		const FunctionPointer OMEGA
+    const int *neighPtr,
+    const double *X,
+    const double *xOverlap,
+    const double *Y,
+    const double *yOverlap,
+    const double *bondVolume,
+    double weighted_volume,
+    double horizon,
+    const FunctionPointer OMEGA
 )
 {
 
-	double dx, dy, dz, zeta, dY, ed;
+  double dx, dy, dz, zeta, dY, ed;
 
-	/*
-	 * Compute weighted volume
-	 */
-	double m = weighted_volume;
-//	double m = computeWeightedVolume(X,xOverlap,volumeOverlap,neighPtr);
-//	std::cout << NAMESPACE << "probeShearModulusScaleFactor weighted volume = " << m << std::endl;
+  /*
+   * Compute weighted volume
+   */
+  double m = weighted_volume;
+//  double m = computeWeightedVolume(X,xOverlap,volumeOverlap,neighPtr);
+//  std::cout << NAMESPACE << "probeShearModulusScaleFactor weighted volume = " << m << std::endl;
 
-	/*
-	 * Compute dilatation
-	 */
-	double theta = computeDilatation(neighPtr,X,xOverlap,Y,yOverlap,bondVolume,m,horizon);
-//	std::cout << NAMESPACE << "probeShearModulusScaleFactor theta = " << theta << std::endl;
+  /*
+   * Compute dilatation
+   */
+  double theta = computeDilatation(neighPtr,X,xOverlap,Y,yOverlap,bondVolume,m,horizon);
+//  std::cout << NAMESPACE << "probeShearModulusScaleFactor theta = " << theta << std::endl;
 
-	/*
-	 * Pure shear centered at X
-	 * X has no displacement
-	 */
-	double ed_squared=0.0;
-	int numNeigh=*neighPtr; neighPtr++;
-	for(int n=0;n<numNeigh;n++, neighPtr++, bondVolume++){
-		int localId = *neighPtr;
+  /*
+   * Pure shear centered at X
+   * X has no displacement
+   */
+  double ed_squared=0.0;
+  int numNeigh=*neighPtr; neighPtr++;
+  for(int n=0;n<numNeigh;n++, neighPtr++, bondVolume++){
+    int localId = *neighPtr;
 
-		const double *XP = &xOverlap[3*localId];
-		dx = XP[0]-X[0];
-		dy = XP[1]-X[1];
-		dz = XP[2]-X[2];
-		zeta = sqrt(dx*dx+dy*dy+dz*dz);
+    const double *XP = &xOverlap[3*localId];
+    dx = XP[0]-X[0];
+    dy = XP[1]-X[1];
+    dz = XP[2]-X[2];
+    zeta = sqrt(dx*dx+dy*dy+dz*dz);
 
-		/*
-		 * Deformation State
-		 */
-		const double *YP = &yOverlap[3*localId];
-		dx = YP[0]-Y[0];
-		dy = YP[1]-Y[1];
-		dz = YP[2]-Y[2];
-		dY = sqrt(dx*dx+dy*dy+dz*dz);
+    /*
+     * Deformation State
+     */
+    const double *YP = &yOverlap[3*localId];
+    dx = YP[0]-Y[0];
+    dy = YP[1]-Y[1];
+    dz = YP[2]-Y[2];
+    dY = sqrt(dx*dx+dy*dy+dz*dz);
 
-		/*
-		 * Deviatoric extension state
-		 */
-		ed = dY-zeta-theta*zeta/3;
+    /*
+     * Deviatoric extension state
+     */
+    ed = dY-zeta-theta*zeta/3;
 
-		/*
-		 * Accumulate norm
-		 */
-		double omega=OMEGA(zeta,horizon);
-		ed_squared += ed * omega * ed * (*bondVolume);
+    /*
+     * Accumulate norm
+     */
+    double omega=OMEGA(zeta,horizon);
+    ed_squared += ed * omega * ed * (*bondVolume);
 
-	}
+  }
 
-	return ed_squared;
+  return ed_squared;
 }
 
 }

@@ -64,7 +64,7 @@ namespace PeridigmNS {
   class Compute_Global_Kinetic_Energy : public PeridigmNS::Compute_Kinetic_Energy {
 
   public:
-	
+
     //! Constructor.
     Compute_Global_Kinetic_Energy( Teuchos::RCP<const Teuchos::ParameterList> params,
                              Teuchos::RCP<const Epetra_Comm> epetraComm_,

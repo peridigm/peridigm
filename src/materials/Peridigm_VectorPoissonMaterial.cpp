@@ -78,19 +78,19 @@ PeridigmNS::VectorPoissonMaterial::~VectorPoissonMaterial()
 
 void
 PeridigmNS::VectorPoissonMaterial::initialize(const double dt,
-					      const int numOwnedPoints,
-					      const int* ownedIDs,
-					      const int* neighborhoodList,
-					      PeridigmNS::DataManager& dataManager)
+                                              const int numOwnedPoints,
+                                              const int* ownedIDs,
+                                              const int* neighborhoodList,
+                                              PeridigmNS::DataManager& dataManager)
 {
 }
 
 void
 PeridigmNS::VectorPoissonMaterial::computeForce(const double dt,
-						const int numOwnedPoints,
-						const int* ownedIDs,
-						const int* neighborhoodList,
-						PeridigmNS::DataManager& dataManager) const
+                                                const int numOwnedPoints,
+                                                const int* ownedIDs,
+                                                const int* neighborhoodList,
+                                                PeridigmNS::DataManager& dataManager) const
 {
   // Zero out the forces
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
@@ -123,7 +123,7 @@ PeridigmNS::VectorPoissonMaterial::computeForce(const double dt,
       neighborID = neighborhoodList[neighborhoodListIndex++];
       neighborVolume = volume[neighborID];
       initialDistance = distance(nodeInitialPosition[0], nodeInitialPosition[1], nodeInitialPosition[2],
-				 x[neighborID*3], x[neighborID*3+1], x[neighborID*3+2]);
+                                 x[neighborID*3], x[neighborID*3+1], x[neighborID*3+2]);
       kernel = 3.0/(pi*m_horizon*m_horizon*m_horizon*m_horizon*initialDistance);
 
       // We are solving a Poisson equation

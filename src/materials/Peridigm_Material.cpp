@@ -115,12 +115,12 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   int volumeFId(-1), coordinatesFId(-1), velocityFId(-1), forceDensityFId(-1), temperatureFId(-1), fluxDivergenceFId(-1);
   volumeFId = fieldManager.getFieldId("Volume");
-  if (solveForDisplacement) {
+  if(solveForDisplacement){
     coordinatesFId = fieldManager.getFieldId("Coordinates");
     velocityFId = fieldManager.getFieldId("Velocity");
     forceDensityFId = fieldManager.getFieldId("Force_Density");
   }
-  if (solveForTemperature) {
+  if(solveForTemperature){
     temperatureFId = fieldManager.getFieldId("Temperature");
     fluxDivergenceFId = fieldManager.getFieldId("Flux_Divergence");
   }
@@ -168,12 +168,12 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     // Extract pointers to the underlying data.
     double *volume, *y, *v, *force, *temperature, *fluxDivergence;
     tempDataManager.getData(volumeFId, PeridigmField::STEP_NONE)->ExtractView(&volume);
-    if (solveForDisplacement) {
+    if(solveForDisplacement){
       tempDataManager.getData(coordinatesFId, PeridigmField::STEP_NP1)->ExtractView(&y);
       tempDataManager.getData(velocityFId, PeridigmField::STEP_NP1)->ExtractView(&v);
       tempDataManager.getData(forceDensityFId, PeridigmField::STEP_NP1)->ExtractView(&force);
     }
-    if (solveForTemperature) {
+    if(solveForTemperature){
       tempDataManager.getData(temperatureFId, PeridigmField::STEP_NP1)->ExtractView(&temperature);
       tempDataManager.getData(fluxDivergenceFId, PeridigmField::STEP_NP1)->ExtractView(&fluxDivergence);
     }
@@ -181,12 +181,12 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     // Create a temporary vector for storing force and/or flux divergence.
     Teuchos::RCP<Epetra_Vector> forceVector, tempForceVector, fluxDivergenceVector, tempFluxDivergenceVector;
     double *tempForce, *tempFluxDivergence;
-    if (solveForDisplacement) {
+    if(solveForDisplacement){
       forceVector = tempDataManager.getData(forceDensityFId, PeridigmField::STEP_NP1);
       tempForceVector = Teuchos::rcp(new Epetra_Vector(*forceVector));
       tempForceVector->ExtractView(&tempForce);
     }
-    if (solveForTemperature) {
+    if(solveForTemperature){
       fluxDivergenceVector = tempDataManager.getData(fluxDivergenceFId, PeridigmField::STEP_NP1);
       tempFluxDivergenceVector = Teuchos::rcp(new Epetra_Vector(*fluxDivergenceVector));
       tempFluxDivergenceVector->ExtractView(&tempFluxDivergence);
@@ -207,13 +207,13 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     }
 
     if(finiteDifferenceScheme == FORWARD_DIFFERENCE){
-      if (solveForDisplacement) {
+      if(solveForDisplacement){
         // Compute and store the unperturbed force.
         computeForce(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
         for(int i=0 ; i<forceVector->MyLength() ; ++i)
           tempForce[i] = force[i];
       }
-      if (solveForTemperature) {
+      if(solveForTemperature){
         // Compute and store the unperturbed flux divergence.
         computeFluxDivergence(dt, tempNumOwnedPoints, &tempOwnedIDs[0], &tempNeighborhoodList[0], tempDataManager);
         for(int i=0 ; i<fluxDivergenceVector->MyLength() ; ++i)
@@ -322,9 +322,9 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     }
 
     // Sum the values into the global tangent matrix (this is expensive).
-    if (jacobianType == PeridigmNS::Material::FULL_MATRIX)
+    if(jacobianType == PeridigmNS::Material::FULL_MATRIX)
       jacobian.addValues((int)globalIndices.size(), &globalIndices[0], scratchMatrix.Data());
-    else if (jacobianType == PeridigmNS::Material::BLOCK_DIAGONAL) {
+    else if(jacobianType == PeridigmNS::Material::BLOCK_DIAGONAL){
       jacobian.addBlockDiagonalValues((int)globalIndices.size(), &globalIndices[0], scratchMatrix.Data());
     }
     else // unknown jacobian type

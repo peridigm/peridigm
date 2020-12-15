@@ -52,59 +52,59 @@ namespace CORRESPONDENCE {
 template<typename ScalarT>
 void updateElasticViscoplasticCauchyStress
 (
-const double* modelCoordinates, 
-const ScalarT* unrotatedRateOfDeformation, 
-const ScalarT* cauchyStressN, 
-ScalarT* cauchyStressNP1, 
-ScalarT* vonMisesStress,
-const ScalarT* equivalentPlasticStrainN,
-ScalarT* equivalentPlasticStrainNP1,
-const int numPoints, 
-const double bulkMod,
-const double shearMod,
-const double yieldStress,
-const double strainHardExp,
-const double rateHardExp, 
-const double refStrainRate,
-const double refStrain0,
-const double refStrain1,
-const bool m_isFlaw,
-const double m_flawLocationX,
-const double m_flawLocationY,
-const double m_flawLocationZ,
-const double m_flawSize,
-const double m_flawMagnitude,
-const double dt
+    const double* modelCoordinates, 
+    const ScalarT* unrotatedRateOfDeformation, 
+    const ScalarT* cauchyStressN, 
+    ScalarT* cauchyStressNP1, 
+    ScalarT* vonMisesStress,
+    const ScalarT* equivalentPlasticStrainN,
+    ScalarT* equivalentPlasticStrainNP1,
+    const int numPoints, 
+    const double bulkMod,
+    const double shearMod,
+    const double yieldStress,
+    const double strainHardExp,
+    const double rateHardExp, 
+    const double refStrainRate,
+    const double refStrain0,
+    const double refStrain1,
+    const bool m_isFlaw,
+    const double m_flawLocationX,
+    const double m_flawLocationY,
+    const double m_flawLocationZ,
+    const double m_flawSize,
+    const double m_flawMagnitude,
+    const double dt
 );
 
 template <typename ScalarT>
 ScalarT ViscoplasticNeedlemanFindRoot
 (
- const ScalarT eqps,
- const ScalarT scalarDeviatoricStrainInc,
- const ScalarT deviatoricStressMagnitude,
- const double yieldStress,
- const double shearMod,
- const double strainHardExp,
- const double rateHardExp, 
- const double refStrainRate,
- const double refStrain0,
- const double refStrain1,
- const double dt
+    const ScalarT eqps,
+    const ScalarT scalarDeviatoricStrainInc,
+    const ScalarT deviatoricStressMagnitude,
+    const double yieldStress,
+    const double shearMod,
+    const double strainHardExp,
+    const double rateHardExp, 
+    const double refStrainRate,
+    const double refStrain0,
+    const double refStrain1,
+    const double dt
 );
 
 template <typename ScalarT>
 ScalarT ViscoplasticNeedlemanYieldFunction
 (
- const ScalarT deltaLambda,
- const ScalarT eqps,
- const double yieldStress,
- const double strainHardExp,
- const double rateHardExp, 
- const double refStrainRate,
- const double refStrain0,
- const double refStrain1,
- const double dt
+    const ScalarT deltaLambda,
+    const ScalarT eqps,
+    const double yieldStress,
+    const double strainHardExp,
+    const double rateHardExp, 
+    const double refStrainRate,
+    const double refStrain0,
+    const double refStrain1,
+    const double dt
 );
 
 }
