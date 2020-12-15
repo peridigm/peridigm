@@ -157,13 +157,13 @@ Tensor_Order to_tensor_order(const std::string & str)
   std::string upper_str = str;
   tidy_string(upper_str);
 
-  std::map<std::string,Tensor_Order,std::string >::iterator pos=string_tensor_order.find(upper_str);
+  std::map<std::string,Tensor_Order>::iterator pos=string_tensor_order.find(upper_str);
   if (pos == string_tensor_order.end())
   {
     std::stringstream oss;
     oss << "ERROR: Unknown tensor order: " << upper_str << std::endl;
     oss << "Valid options include: " << std::endl;
-    for (std::map<std::string,Tensor_Order,std::string >::iterator it = string_tensor_order.begin(); it != string_tensor_order.end(); ++it)
+    for (std::map<std::string,Tensor_Order>::iterator it = string_tensor_order.begin(); it != string_tensor_order.end(); ++it)
     {
       oss << "  " << it->first << std::endl;
     }
@@ -219,13 +219,13 @@ Spatial_Coordinate to_spatial_coordinate(const std::string & str)
   std::string upper_str = str;
   tidy_string(upper_str);
 
-  std::map<std::string,Spatial_Coordinate,std::string >::iterator pos=string_spatial_coordinate.find(upper_str);
+  std::map<std::string,Spatial_Coordinate>::iterator pos=string_spatial_coordinate.find(upper_str);
   if (pos == string_spatial_coordinate.end())
   {
     std::stringstream oss;
     oss << "ERROR: Unknown spatial coordinate: " << upper_str << std::endl;
     oss << "Valid options include: " << std::endl;
-    for (std::map<std::string,Spatial_Coordinate,std::string >::iterator it = string_spatial_coordinate.begin(); it != string_spatial_coordinate.end(); ++it)
+    for (std::map<std::string,Spatial_Coordinate>::iterator it = string_spatial_coordinate.begin(); it != string_spatial_coordinate.end(); ++it)
     {
       oss << "  " << it->first << std::endl;
     }
@@ -280,13 +280,13 @@ Boundary_Condition_Type to_boundary_condition_type(const std::string & str)
   std::string upper_str = str;
   tidy_string(upper_str);
 
-  std::map<std::string,Boundary_Condition_Type,std::string >::iterator pos=string_boundary_condition.find(upper_str);
+  std::map<std::string,Boundary_Condition_Type>::iterator pos=string_boundary_condition.find(upper_str);
   if (pos == string_boundary_condition.end())
   {
     std::stringstream oss;
     oss << "ERROR: Unknown boundary condition type: " << upper_str << std::endl;
     oss << "Valid options include: " << std::endl;
-    for (std::map<std::string,Boundary_Condition_Type,std::string >::iterator it = string_boundary_condition.begin(); it != string_boundary_condition.end(); ++it)
+    for (std::map<std::string,Boundary_Condition_Type>::iterator it = string_boundary_condition.begin(); it != string_boundary_condition.end(); ++it)
     {
       oss << "  " << it->first << std::endl;
     }
