@@ -2,7 +2,6 @@
 
 import sys
 import os
-import re
 import glob
 import shutil
 from subprocess import Popen

@@ -2,7 +2,6 @@
 
 def read_line(file):
     """Scans the input file and ignores lines starting with a '#' or '\n'."""
-    
     buff = file.readline()
     if len(buff) == 0: return None
     while buff[0] == '#' or buff[0] == '\n':

@@ -2,7 +2,6 @@
 
 import sys
 import os
-import re
 from subprocess import Popen
 
 test_dir = "Compression_QS_Explicit_3x2x2/np2"

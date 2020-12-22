@@ -2,7 +2,6 @@
 
 import sys
 import os
-import re
 from subprocess import Popen
 
 test_dir = "Bar_TwoDisconnectedPieces_QS/np2"
