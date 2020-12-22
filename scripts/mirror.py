@@ -6,7 +6,9 @@ import getopt
 
 class OutOfSourceSymlinks():
   def __init__(self, opts, args):
-    
+    """
+      Collect all command line arguments and set the related options
+    """
     # check for options
     src=None
     bin=None
@@ -97,8 +99,6 @@ def mirror(src,bin,exclude_dirs,exclude_files):
   return num_removed_links
 
 def create_file_links(src,bin,dirs,exclude):
-  src_dirs=[]
-  bin_dirs=[]
   num_removed_links = 0
   for d in dirs:
     target_dir = os.path.join(src,d)
@@ -113,7 +113,7 @@ def create_file_links(src,bin,dirs,exclude):
         continue
       target=os.path.join(target_dir,f)
       link  =os.path.join(link_dir,f)
-#      print('\t\tCreate link to file = {}\n'.fomrat(f))
+#      print('\t\tCreate link to file = {}\n'.format(f))
 #      print('\t\t {} --> {}\n'.format(link,target)))
       if os.path.lexists(link):
         os.remove(link)
@@ -123,6 +123,9 @@ def create_file_links(src,bin,dirs,exclude):
   return num_removed_links
 
 def main():
+  """
+    Main routine
+  """
   try:
     opts, args = getopt.getopt(sys.argv[1:], "e:s:b:d:h")
   except getopt.GetoptError as err:

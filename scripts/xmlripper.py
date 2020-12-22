@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 
-''' parse Teuchos compatible xml based ParameterList to txt based ParameterList: standard xml files accepted also No Error Handling
-'''
+''' parse Teuchos compatible xml based ParameterList to txt based ParameterList: standard xml files accepted also No Error Handling'''
 import xml.etree.ElementTree as et, sys
 
 

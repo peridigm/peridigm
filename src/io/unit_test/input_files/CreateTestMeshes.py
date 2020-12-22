@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 
 from math import sqrt
-import ctypes
 
 def crossProduct(a, b):
     
@@ -14,6 +13,9 @@ def norm(a):
 class poorMansDeviceIndependentRandomNumber:
 
     def __init__(self):
+        """
+          Class to create device independent (pseudo) random numbers
+        """
         # Random number seeds
         self.m_w = 1234
         self.m_z = 1004321
@@ -184,7 +186,7 @@ def writeTestMeshes():
     mesh = createEquallySpacedCubeMesh8000()
     fname = "cube_8000.txt"
     with open(fname, 'w') as fout:
-      fout.write("# x y z block_id volume\n");
+      fout.write("# x y z block_id volume\n")
       for pt in mesh:
           fout.write(str(pt[0]) + " " + str(pt[1]) + " " + str(pt[2]) + " " + str(pt[3]) + " " + str(pt[4]) + "\n")
     print("Wrote {}\n".format(fname))
@@ -192,7 +194,7 @@ def writeTestMeshes():
     mesh = createEquallySpacedCubeMesh27000()
     fname = "cube_27000.txt"
     with open(fname, 'w') as fout:
-      fout.write("# x y z block_id volume\n");
+      fout.write("# x y z block_id volume\n")
       for pt in mesh:
           fout.write(str(pt[0]) + " " + str(pt[1]) + " " + str(pt[2]) + " " + str(pt[3]) + " " + str(pt[4]) + "\n")
     print("Wrote {}\n".format(fname))
@@ -200,7 +202,7 @@ def writeTestMeshes():
     mesh = createDumbbellMesh()
     fname = "dumbbell.txt"
     with open(fname, 'w') as fout:
-      fout.write("# x y z block_id volume\n");
+      fout.write("# x y z block_id volume\n")
       for pt in mesh:
           fout.write(str(pt[0]) + " " + str(pt[1]) + " " + str(pt[2]) + " " + str(pt[3]) + " " + str(pt[4]) + "\n")
     print("Wrote {}\n".format(fname))
@@ -208,7 +210,7 @@ def writeTestMeshes():
     mesh = createRandomMesh()
     fname = "random.txt"
     with open(fname, 'w') as fout:
-      fout.write("# x y z block_id volume\n");
+      fout.write("# x y z block_id volume\n")
       for pt in mesh:
           fout.write(str(pt[0]) + " " + str(pt[1]) + " " + str(pt[2]) + " " + str(pt[3]) + " " + str(pt[4]) + "\n")
     print("Wrote {}\n".format(fname))

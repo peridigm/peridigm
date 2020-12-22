@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
-"""
-image_to_txt.py:  Converts an image into a meshless grid in the Peridigm text file format."
-"""
+""" image_to_txt.py:  Converts an image into a meshless grid in the Peridigm text file format." """
 
 __author__ = "David Littlewood (djlittl@sandia.gov)"
 

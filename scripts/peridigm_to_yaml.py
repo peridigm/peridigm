@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
-"""
-peridigm_to_yaml.py:  Converts a *.peridigm input file to the *.yaml format."
-"""
+""" peridigm_to_yaml.py:  Converts a *.peridigm input file to the *.yaml format." """
 
 __author__ = "David Littlewood (djlittl@sandia.gov)"
 
@@ -101,8 +99,6 @@ def CorrectBoolEntry(value):
     return value
 
 def NumWhiteSpaces(line):
-
-    num_white_spaces = 0
     index = 0
     while index < len(line) and line[index] == ' ':
         index += 1
