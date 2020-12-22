@@ -39,7 +39,7 @@ if __name__ == "__main__":
       if not os.path.isdir(item):
         continue
       shutil.rmtree(item)
-    
+
     # run Peridigm
     command = ["../../../../src/Peridigm", "../"+base_name+"_Run1.xml"]
     p = Popen(command, stdout=logfile, stderr=logfile)

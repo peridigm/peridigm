@@ -14,7 +14,6 @@ def main(flname):
     tree = et.parse(flname)
     root = tree.getroot()
     fl = open(flname.replace('.xml', '.peridigm'),'w+')
-    dataVec = []
     i = 1
     for param in root.findall("./"):
 #        print(param.attrib)

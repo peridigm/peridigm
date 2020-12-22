@@ -11,7 +11,7 @@ def parse_log_files():
     for root, dirs, files in os.walk('./'):
         for log_file in files:
             if log_file[-4:] == ".log":
-                file_with_path = os.path.join(root, log_file) 
+                file_with_path = os.path.join(root, log_file)
                 log_files.append(file_with_path)
 
     results = []

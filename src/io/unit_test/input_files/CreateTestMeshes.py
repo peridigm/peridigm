@@ -3,7 +3,7 @@
 from math import sqrt
 
 def crossProduct(a, b):
-    
+
     return ( (a[1]*b[2]-a[2]*b[1]), (a[2]*b[0]-a[0]*b[2]), (a[0]*b[1]-a[1]*b[0]) )
 
 def norm(a):
@@ -19,7 +19,7 @@ class poorMansDeviceIndependentRandomNumber:
         # Random number seeds
         self.m_w = 1234
         self.m_z = 1004321
- 
+
     def m32(self, n):
         # Force 32-bit integer for device independence
         return n & 0xffffffff
@@ -58,7 +58,7 @@ def createEquallySpacedCubeMesh1000():
     return mesh
 
 def createEquallySpacedCubeMesh8000():
-    
+
     xLow = 0.25
     xHigh = 9.75
     xNum = 20
@@ -84,7 +84,7 @@ def createEquallySpacedCubeMesh8000():
     return mesh
 
 def createEquallySpacedCubeMesh27000():
-    
+
     xLow = 1.0/6.0
     xHigh = 10.0 - 1.0/6.0
     xNum = 30
@@ -110,7 +110,7 @@ def createEquallySpacedCubeMesh27000():
     return mesh
 
 def createDumbbellMesh():
-    
+
     xLow = 0.0
     xHigh = 10.0
     xNum = 60
@@ -122,7 +122,7 @@ def createDumbbellMesh():
     zNum = 100
     volume = 10.0*((float(xNum)+1.0)/float(xNum))/float(xNum) * \
         10.0*((float(yNum)+1.0)/float(yNum))/float(yNum) * \
-        10.0*((float(zNum)+1.0)/float(zNum))/float(zNum) 
+        10.0*((float(zNum)+1.0)/float(zNum))/float(zNum)
     material = 1
 
     diagonalThreshold = 0.2
@@ -156,7 +156,7 @@ def createDumbbellMesh():
     return mesh
 
 def createRandomMesh():
-    
+
     low = 0.0
     high = 10.0
     mesh = []

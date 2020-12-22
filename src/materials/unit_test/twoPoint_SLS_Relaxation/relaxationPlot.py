@@ -7,12 +7,11 @@ files=[(r'$\lambda_i=.01$',"twoPoint_SLS_Elastic.dat"),
        (r'$\lambda_i=.5$',"twoPoint_SLS_Relaxation.dat"),
        (r'$\lambda_i=.99$',"twoPoint_Maxwell_Relaxation.dat")
        ]
-    
+
 def GetTickLabels(tickValues):
     lab=["$"+str(d)+"$" for d in tickValues]
     return lab
 
-   
 # load computed data
 d0=loadtxt(files[0][1])
 d1=loadtxt(files[1][1])
@@ -30,7 +29,7 @@ E=68.9e3
 nu=.33
 G = E / (1+nu) / 2
 # weighted volume
-m=2 
+m=2
 # input step -- shear
 my_gamma=1.0e-6
 alpha = 15.0 * G / m
@@ -75,7 +74,7 @@ line13=ax1.plot(t,f1000,linewidth=2.0, color='#FF9955')
 
 
 # plot analytical
-# We need to double this force: computing the 
+# We need to double this force: computing the
 #  force density
 for i in range(len(fa_2)):
     ax1.plot([ta[i]],[2*fa_1[i]],'o',color=(4.0/255.0,250.0/255.0,33.0/255.0))

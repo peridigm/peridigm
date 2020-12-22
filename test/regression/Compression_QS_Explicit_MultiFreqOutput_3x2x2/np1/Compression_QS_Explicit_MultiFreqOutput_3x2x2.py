@@ -39,7 +39,7 @@ if __name__ == "__main__":
         result = return_code
 
     # compare output files against gold files
-    command = ["../../../../scripts/conjoin", "-output", base_name+".e", base_name+"_QS.e", base_name+"_Explicit.e"] 
+    command = ["../../../../scripts/conjoin", "-output", base_name+".e", base_name+"_QS.e", base_name+"_Explicit.e"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:

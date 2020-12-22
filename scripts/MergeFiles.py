@@ -17,7 +17,7 @@ def is_exe(fpath):
   return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
 # Determine if executable in path
-def which(program): 
+def which(program):
   # Determine if executable in path
   fpath, fname = os.path.split(program)
   if fpath:
@@ -28,7 +28,7 @@ def which(program):
       exe_file = os.path.join(path, program)
       if is_exe(exe_file):
         return exe_file
-  return None 
+  return None
 
 def create_file_list():
   # Generate listing of files <basename>-s* for merging
@@ -89,7 +89,7 @@ def merge_files(files_to_join, path, base_name, num_proc):
     return_code = p.wait()
     if return_code != 0:
       result = return_code
-  
+
     # If error print message to screen
     if result != 0:
       print("\n Error when merging files! Check .log file for error details.\n")

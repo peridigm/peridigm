@@ -16,7 +16,7 @@ if __name__ == "__main__":
     density = 7800.0
     criticalStretch = 0.02
 
-    omega = 1.0   # influence function    
+    omega = 1.0   # influence function
 
     # initial configuration
     cellVolume = 1.05

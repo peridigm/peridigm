@@ -49,7 +49,7 @@ if __name__ == "__main__":
     return_code = p.wait()
     if return_code != 0:
         result = return_code
-    command = ["../../../../scripts/conjoin", "-output", base_name+".e", base_name+"_QS.e", base_name+"_Explicit.e"] 
+    command = ["../../../../scripts/conjoin", "-output", base_name+".e", base_name+"_QS.e", base_name+"_Explicit.e"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:

@@ -70,22 +70,22 @@ def mirror(src,bin,exclude_dirs,exclude_files):
 
   # create links to files in top level 'bin'
   num_removed_links = create_file_links(src,bin,'.',exclude_files)
-  
-  # walk directory structure and create folders/links 
+
+  # walk directory structure and create folders/links
   for root, dirs, files in os.walk(src):
     (drive,tail)=os.path.split(root)
     if tail in exclude_dirs:
       continue
 #    print('dir = {}'.format(root))
-    
+
     relpath=os.path.relpath(root,src)
     binpath=os.path.join(bin,relpath)
-    
+
     # remove excluded dirs from directories
     for e in exclude_dirs:
       if e in dirs:
         dirs.remove(e)
-        
+
     for d in dirs:
       new_dir=os.path.join(binpath,d)
       doesNotExist=not os.path.exists(new_dir)
@@ -164,7 +164,7 @@ def usage():
               -b /home/awesome/c++/eclipseProjects/pimp.build \\ 
               -d operator -d intrepid -d operator/unitTests -e build.home.sh
   """)
-  
+
 if __name__=='__main__':
   main()
 
