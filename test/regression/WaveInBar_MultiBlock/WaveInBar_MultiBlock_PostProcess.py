@@ -1,9 +1,6 @@
 #! /usr/bin/env python
 
-import math
-
-if __name__ == "__main__":
-
+def verfiy_results(result = True):
     csv_file_name = "WaveInBar_MultiBlock.csv"
     csv_file = open(csv_file_name)
     lines = csv_file.readlines()
@@ -33,7 +30,6 @@ if __name__ == "__main__":
     Min_Volume_Node_Set_30 = float(vals[20].strip(","))
 
     tol = 1.0e-12
-    result = True
 
     element_vol = 8.0e-9
     num_elem_block_1 = 5
@@ -126,8 +122,18 @@ if __name__ == "__main__":
     print("Max element volume: {} should equal {}".format(Max_Volume_Node_Set_30, truth_val))
     if abs(truth_val - Max_Volume_Node_Set_30) > tol:
         result = False
+    
+    return result
+
+def main():
+    result = True
+
+    result = verfiy_results(result)
 
     if result == True:
         print("\nTest Passed.\n")
     else:
         print("\nTest FAILED.\n")
+
+if __name__ == "__main__":
+    main()

@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
-"""
-text_to_genesis.py:  Converts a meshfree discretization from the Peridigm text file format to the genesis/exodus file format."
-"""
+""" text_to_genesis.py:  Converts a meshfree discretization from the Peridigm text file format to the genesis/exodus file format." """
 
 __author__ = "David Littlewood (djlittl@sandia.gov)"
 
@@ -69,7 +67,6 @@ else:
 
 def read_line(file):
     """Scans the input file and ignores lines starting with a '#' or '\n'."""
-
     buff = file.readline()
     if len(buff) == 0: return None
     while buff[0] == '#' or buff[0] == '\n':
@@ -77,29 +74,7 @@ def read_line(file):
         if len(buff) == 0: return None
     return buff
 
-if __name__ == "__main__":
-
-    print("\n---- Text to Genesis\n")
-
-    if len(sys.argv) < 2:
-        print("Usage:  text_to_genesis.py <discretization_file.txt> <nodeset_1.txt> <nodeset_2.txt> ... <node(et_n.txt>\n")
-        print("The discretization file lists the nodes as (x, y, z, block_id, volume)")
-        print("The node set files list the node numbers in each node set (1-based indexing)\n")
-        sys.exit(1)
-
-    textFileName = sys.argv[1]
-    nodeSetFileNames = []
-    for i in range(len(sys.argv)-2):
-        nodeSetFileNames.append(sys.argv[i+2])
-
-    print("Discretization file:")
-    print(" {}".format(textFileName))
-    print("")
-    print("Node set files:")
-    for i in range(len(nodeSetFileNames)):
-        print(" {}".format(nodeSetFileNames[i]))
-    print
-
+def read_text_file(textFileName):
     textFile = open(textFileName)
 
     # The text file contains (x, y, z, block_id, vol)
@@ -127,6 +102,9 @@ if __name__ == "__main__":
 
     print("Read {} nodes and {} block from {}".format(len(X),len(blocks),textFileName))
 
+    return X, Y, Z, vol, blocks
+
+def read_node_set_files(nodeSetFileNames):
     nodeSets = []
     for fileName in nodeSetFileNames:
         nodeSets.append([])
@@ -142,6 +120,9 @@ if __name__ == "__main__":
         nodeSetFile.close()
         print("Read {} node ids from {}".format(len(nodeSets[node_set_id-1]),fileName))
 
+    return nodeSets
+
+def write_exodus_file(textFileName, X, Y, Z, vol, blocks, nodeSets):
     # Write the Exodus II file
     exodusFileName = textFileName[:-4] + ".g"
     exodusTitle = "Text to Genesis translation of " + textFileName[:-4]
@@ -233,3 +214,42 @@ if __name__ == "__main__":
     exodusFile.close()
 
     print("\nData written to Exodus II file {}\n".format(exodusFileName))
+
+
+def main():
+    """
+      Main routine
+    """
+    print("\n---- Text to Genesis\n")
+
+    usage()
+
+    textFileName = sys.argv[1]
+    nodeSetFileNames = []
+    for i in range(len(sys.argv)-2):
+        nodeSetFileNames.append(sys.argv[i+2])
+
+    print("Discretization file:")
+    print(" {}".format(textFileName))
+    print("")
+    print("Node set files:")
+    for i in range(len(nodeSetFileNames)):
+        print(" {}".format(nodeSetFileNames[i]))
+    print("")
+
+    X, Y, Z, vol, blocks = read_text_file(textFileName)
+
+    nodeSets = read_node_set_files(nodeSetFileNames)
+
+    write_exodus_file(textFileName, X, Y, Z, vol, blocks, nodeSets)
+
+def usage():
+    if len(sys.argv) < 2:
+        print("Usage:  text_to_genesis.py <discretization_file.txt> <nodeset_1.txt> <nodeset_2.txt> ... <node(et_n.txt>\n")
+        print("The discretization file lists the nodes as (x, y, z, block_id, volume)")
+        print("The node set files list the node numbers in each node set (1-based indexing)\n")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

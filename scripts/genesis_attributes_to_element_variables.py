@@ -20,22 +20,7 @@ if sys.version_info >= (3, 0):
 else:
   import exodus2 as exodus
 
-if __name__ == "__main__":
-
-    if len(sys.argv) < 3:
-        print("\nUsage:  genesis_attributes_to_node_variables.py <input.g> <output.g>\n")
-        sys.exit(1)
-
-    input_file_name = sys.argv[1]
-    output_file_name = sys.argv[2]
-
-    print("\n-- genesis_attributes_to_node_variables.py --\n")
-    print("Genesis input file:{}".format(input_file_name))
-    print("Genesis output file:{}".format(output_file_name))
-
-    if os.path.exists(output_file_name):
-        os.remove(output_file_name)
-
+def transfer_database(input_file_name, output_file_name):
     old_database = exodus.exodus(input_file_name, 'r')
     block_ids = old_database.get_elem_blk_ids()
 
@@ -103,3 +88,28 @@ if __name__ == "__main__":
 
     new_database.close()
 
+def main():
+    """
+      Main routine
+    """
+    usage()
+
+    input_file_name = sys.argv[1]
+    output_file_name = sys.argv[2]
+
+    print("\n-- genesis_attributes_to_node_variables.py --\n")
+    print("Genesis input file:{}".format(input_file_name))
+    print("Genesis output file:{}".format(output_file_name))
+
+    if os.path.exists(output_file_name):
+        os.remove(output_file_name)
+
+    transfer_database(input_file_name, output_file_name)
+
+def usage():
+    if len(sys.argv) < 3:
+        print("\nUsage:  genesis_attributes_to_node_variables.py <input.g> <output.g>\n")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()

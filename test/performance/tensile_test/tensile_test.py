@@ -10,7 +10,6 @@ base_name = "tensile_test"
 
 def read_line(file):
     """Scans the input file and ignores lines starting with a '#' or '\n'."""
-    
     buff = file.readline()
     if len(buff) == 0: return None
     while buff[0] == '#' or buff[0] == '\n':
@@ -18,23 +17,11 @@ def read_line(file):
         if len(buff) == 0: return None
     return buff
 
-if __name__ == "__main__":
-
-    result = 0
-
-    # change to the specified test directory
-    os.chdir(test_dir)
-
+def perform_test(log_file_name):
     # open log file
-    log_file_name = base_name + ".log"
     if os.path.exists(log_file_name):
         os.remove(log_file_name)
     with open(log_file_name, 'w') as logfile:
-
-        # log file will be dumped if verbose option is given
-        verbose = False
-        if "-verbose" in sys.argv:
-            verbose = True
 
         machine_name = "None"
         if "-machine" in sys.argv:
@@ -141,8 +128,32 @@ if __name__ == "__main__":
         else:
             logfile.write("\n**** Gold file " + gold_file_name + " not found, skipping exodiff.\n\n")
 
+    return result
+
+def main():
+    """
+      Main routine
+    """
+    result = 0
+
+    # change to the specified test directory
+    os.chdir(test_dir)
+
+    log_file_name = base_name + ".log"
+
+    # log file will be dumped if verbose option is given
+    verbose = False
+    if "-verbose" in sys.argv:
+        verbose = True
+
+    result = perform_test(log_file_name)
+
     # dump the output if the user requested verbose
     if verbose == True:
         os.system("cat " + log_file_name)
 
     sys.exit(result)
+
+
+if __name__ == "__main__":
+    main()
