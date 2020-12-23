@@ -46,6 +46,8 @@ def create_file_list():
   return files_to_join
 
 def merge_files(files_to_join, path, base_name, num_proc):
+  result = 0
+
   # open log file
   log_file_name = base_name + ".log"
   if os.path.exists(log_file_name):
@@ -112,8 +114,6 @@ def main():
   base_name = sys.argv[1]
   num_proc = sys.argv[2]
 
-  result = 0
-  
   # Define path to location of MergeFiles to call epu and conjoin later
   start = 0
   end   = path.find('MergeFiles')
