@@ -35,7 +35,7 @@ def main(flname):
                 if not subparam.get('value'):
                     fl.write('  ' + subparam.attrib['name'] + '\n')
                     for sub_subparam in root.findall("./ParameterList[%s]/ParameterList[%s]/" %(i, j)):
-#                       print(sub_subparam.attrib)
+#                        print(sub_subparam.attrib)
                         if sub_subparam.get('value'):
                             if sub_subparam.attrib['type'] == 'string' or sub_subparam.attrib['type'] == 'bool':
                                 fl.write('  ' + '  ' + sub_subparam.attrib['name'] + ' "' + sub_subparam.attrib['value'] + '"\n')

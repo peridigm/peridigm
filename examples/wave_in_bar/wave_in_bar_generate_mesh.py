@@ -60,4 +60,3 @@ if __name__ == "__main__":
             node_set_2_file.write(str(id) + "\n")
 
     print("\nDiscretization written to wave_in_bar.txt, node_set_1.txt, and node_set_2.txt\n")
-

@@ -32,7 +32,7 @@ class poorMansDeviceIndependentRandomNumber:
         return float(val)/4294967294.0
 
 def createEquallySpacedCubeMesh1000():
-    
+
     xLow = 0.5
     xHigh = 9.5
     xNum = 10
@@ -178,41 +178,41 @@ def writeTestMeshes():
     mesh = createEquallySpacedCubeMesh1000()
     fname = "cube_1000.txt"
     with open(fname, 'w') as fout:
-      fout.write("# x y z block_id volume\n")
-      for pt in mesh:
-          fout.write(str(pt[0]) + " " + str(pt[1]) + " " + str(pt[2]) + " " + str(pt[3]) + " " + str(pt[4]) + "\n")
+        fout.write("# x y z block_id volume\n")
+        for pt in mesh:
+            fout.write(str(pt[0]) + " " + str(pt[1]) + " " + str(pt[2]) + " " + str(pt[3]) + " " + str(pt[4]) + "\n")
     print("Wrote {}\n".format(fname))
 
     mesh = createEquallySpacedCubeMesh8000()
     fname = "cube_8000.txt"
     with open(fname, 'w') as fout:
-      fout.write("# x y z block_id volume\n")
-      for pt in mesh:
-          fout.write(str(pt[0]) + " " + str(pt[1]) + " " + str(pt[2]) + " " + str(pt[3]) + " " + str(pt[4]) + "\n")
+        fout.write("# x y z block_id volume\n")
+        for pt in mesh:
+            fout.write(str(pt[0]) + " " + str(pt[1]) + " " + str(pt[2]) + " " + str(pt[3]) + " " + str(pt[4]) + "\n")
     print("Wrote {}\n".format(fname))
 
     mesh = createEquallySpacedCubeMesh27000()
     fname = "cube_27000.txt"
     with open(fname, 'w') as fout:
-      fout.write("# x y z block_id volume\n")
-      for pt in mesh:
-          fout.write(str(pt[0]) + " " + str(pt[1]) + " " + str(pt[2]) + " " + str(pt[3]) + " " + str(pt[4]) + "\n")
+        fout.write("# x y z block_id volume\n")
+        for pt in mesh:
+            fout.write(str(pt[0]) + " " + str(pt[1]) + " " + str(pt[2]) + " " + str(pt[3]) + " " + str(pt[4]) + "\n")
     print("Wrote {}\n".format(fname))
 
     mesh = createDumbbellMesh()
     fname = "dumbbell.txt"
     with open(fname, 'w') as fout:
-      fout.write("# x y z block_id volume\n")
-      for pt in mesh:
-          fout.write(str(pt[0]) + " " + str(pt[1]) + " " + str(pt[2]) + " " + str(pt[3]) + " " + str(pt[4]) + "\n")
+        fout.write("# x y z block_id volume\n")
+        for pt in mesh:
+            fout.write(str(pt[0]) + " " + str(pt[1]) + " " + str(pt[2]) + " " + str(pt[3]) + " " + str(pt[4]) + "\n")
     print("Wrote {}\n".format(fname))
 
     mesh = createRandomMesh()
     fname = "random.txt"
     with open(fname, 'w') as fout:
-      fout.write("# x y z block_id volume\n")
-      for pt in mesh:
-          fout.write(str(pt[0]) + " " + str(pt[1]) + " " + str(pt[2]) + " " + str(pt[3]) + " " + str(pt[4]) + "\n")
+        fout.write("# x y z block_id volume\n")
+        for pt in mesh:
+            fout.write(str(pt[0]) + " " + str(pt[1]) + " " + str(pt[2]) + " " + str(pt[3]) + " " + str(pt[4]) + "\n")
     print("Wrote {}\n".format(fname))
 
     return

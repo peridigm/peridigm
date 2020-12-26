@@ -16,9 +16,9 @@ path_to_exodus_py = 'trilinos_install_path/lib'
 sys.path.append(path_to_exodus_py)
 
 if sys.version_info >= (3, 0):
-  import exodus3 as exodus
+    import exodus3 as exodus
 else:
-  import exodus2 as exodus
+    import exodus2 as exodus
 
 def transfer_database(input_file_name, output_file_name):
     old_database = exodus.exodus(input_file_name, 'r')
