@@ -2,13 +2,12 @@
 
 import sys
 import os
-import string
 from subprocess import Popen
 
 if __name__ == "__main__":
 
     executable = sys.argv[-1]
-    base_name = string.splitfields(executable, '/')[-1]
+    base_name = executable.split('/')[-1]
     logfile = open(base_name + ".log", 'w')
 
     if not os.path.exists(executable):
@@ -31,7 +30,7 @@ if __name__ == "__main__":
     if 0<return_code:
         logfile.write("\nExecution of unit test failed\n\n")
         sys.exit(1)
-        
+
     # load computed and gold data
     dFile=open('ut_naiveQuadratureConvergenceStudy.dat','r')
     dGFile=open('ut_naiveQuadratureConvergenceStudy.gold.dat','r')
@@ -45,16 +44,16 @@ if __name__ == "__main__":
     d=[(int(dd[0]),float(dd[1]),float(dd[2]), float(dd[3])) for dd in dStr]
     dGStr=[line.split(" ") for line in dGLines]
     dG=[(int(dd[0]),float(dd[1]),float(dd[2]), float(dd[3])) for dd in dGStr]
-    
+
     # diff files
     logfile.write("\nDiffing Files ...")
-    from math import pi;
-    from math import pow;
+    from math import pi
+    from math import pow
     delta=1.0
     gamma=1.0e-6
     mMag=4.0*pi*pow(delta,5)/5.0
     ed2Mag=4.0*pi*pow(gamma,2)*pow(delta,5)/75.0
-    tol=1.0e-15;
+    tol=1.0e-15
     for i in range(len(d)):
         dn=abs(d[i][0]-dG[i][0])
         dh=abs(d[i][1]-dG[i][1])
@@ -63,6 +62,6 @@ if __name__ == "__main__":
         if dn != 0 or dh > tol or dm/mMag > tol or ded2/ed2Mag > tol:
             logfile.write("\nut_naiveQuadratureConvergenceStudy.dat DIFFERs with ut_naiveQuadratureConvergenceStudy.gold.dat\n\n")
             sys.exit(1)
-            
+
     logfile.write("\nDiffing Files ...DONE\n")
     sys.exit(0)

@@ -2,7 +2,6 @@
 
 import sys
 import os
-import re
 from subprocess import Popen
 
 test_dir = "DeformationGradient/PlaneStrainCompression_np1"

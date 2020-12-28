@@ -2,12 +2,11 @@
 
 import sys
 import os
-import re
 import glob
 import shutil
 from subprocess import Popen
 
-test_dir = "/home/mesoeqs/workspace/peri-112815/test/regression/Contact_Perforation_With_Restart/np1"
+test_dir = "Contact_Perforation_With_Restart/np1"
 base_name = "Contact_Perforation"
 
 if __name__ == "__main__":
@@ -40,7 +39,7 @@ if __name__ == "__main__":
       if not os.path.isdir(item):
         continue
       shutil.rmtree(item)
-    
+
     # run Peridigm
     command = ["../../../../src/Peridigm", "../"+base_name+"_Run1.xml"]
     p = Popen(command, stdout=logfile, stderr=logfile)

@@ -1,8 +1,5 @@
 #! /usr/bin/env python
 
-import math
-import random
-
 if __name__ == "__main__":
 
     # User settings
@@ -18,14 +15,14 @@ if __name__ == "__main__":
     element_volume = bar_volume / total_num_points
     horizon = 3 * element_size
 
-    print "\nGenerating bar mesh:"
-    print "  bar length", bar_length
-    print "  bar depth", bar_depth
-    print "  total number of cells", total_num_points
-    print "  number of cells through depth", num_points_through_depth
-    print "  number of cells along length", num_points_along_length
-    print "  element size", element_size
-    print "  horizon", horizon
+    print("\nGenerating bar mesh:")
+    print("  bar length {}".format(bar_length))
+    print("  bar depth {}".format(bar_depth))
+    print("  total number of cells {}".format(total_num_points))
+    print("  number of cells through depth {}".format(num_points_through_depth))
+    print("  number of cells along length {}".format(num_points_along_length))
+    print("  element size {}".format(element_size))
+    print("  horizon {}".format(horizon))
 
     half_elem_size = element_size / 2.0
 
@@ -50,20 +47,16 @@ if __name__ == "__main__":
                     node_set_2.append(id)
                 id += 1
 
-    mesh_file = open("wave_in_bar.txt", 'w')
-    for datum in data:
-        mesh_file.write(str(datum[0]) + " " + str(datum[1]) + " " + str(datum[2]) + " " + str(datum[3]) + " " + str(datum[4]) + "\n")
-    mesh_file.close()
+    with open("wave_in_bar.txt", 'w') as mesh_file:
+        for datum in data:
+            mesh_file.write(str(datum[0]) + " " + str(datum[1]) + " " + str(datum[2]) + " " + str(datum[3]) + " " + str(datum[4]) + "\n")
 
-    node_set_1_file = open("node_set_1.txt", 'w')
-    for id in node_set_1:
-        node_set_1_file.write(str(id) + "\n")
-    node_set_1_file.close()
+    with open("node_set_1.txt", 'w') as node_set_1_file:
+        for id in node_set_1:
+            node_set_1_file.write(str(id) + "\n")
 
-    node_set_2_file = open("node_set_2.txt", 'w')
-    for id in node_set_2:
-        node_set_2_file.write(str(id) + "\n")
-    node_set_2_file.close()
+    with open("node_set_2.txt", 'w') as node_set_2_file:
+        for id in node_set_2:
+            node_set_2_file.write(str(id) + "\n")
 
-    print "\nDiscretization written to wave_in_bar.txt, node_set_1.txt, and node_set_2.txt\n"
-
+    print("\nDiscretization written to wave_in_bar.txt, node_set_1.txt, and node_set_2.txt\n")

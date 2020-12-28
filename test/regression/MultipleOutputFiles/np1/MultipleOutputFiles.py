@@ -2,7 +2,6 @@
 
 import sys
 import os
-import re
 from subprocess import Popen
 
 test_dir = "MultipleOutputFiles/np1"
@@ -31,7 +30,7 @@ if __name__ == "__main__":
     for file in os.listdir(os.getcwd()):
       if file in files_to_remove:
         os.remove(file)
-  
+
     # run Peridigm
     command = ["../../../../src/Peridigm", "../"+base_name+".xml"]
     p = Popen(command, stdout=logfile, stderr=logfile)
