@@ -226,7 +226,7 @@ PeridigmNS::ElasticMaterial::computeStoredElasticEnergyDensity(const double dt,
         distance(nodeCurrentX[0], nodeCurrentX[1], nodeCurrentX[2],
                  y[neighborId*3], y[neighborId*3+1], y[neighborId*3+2]);
       if(m_applyThermalStrains)
-	currentDistance -= m_alpha*deltaTemperature[nodeId]*initialDistance;
+        currentDistance -= m_alpha*deltaTemperature[nodeId]*initialDistance;
       deviatoricExtension = (currentDistance - initialDistance) - nodeDilatation*initialDistance/3.0;
       omega=m_OMEGA(initialDistance,m_horizon);
       temp += (1.0-neighborBondDamage)*omega*deviatoricExtension*deviatoricExtension*cellVolume[neighborId];
@@ -365,8 +365,8 @@ PeridigmNS::ElasticMaterial::computeAutomaticDifferentiationJacobian(const doubl
     double value;
     for(int row=0 ; row<numDof ; ++row){
       for(int col=0 ; col<numDof ; ++col){
-	value = force_AD[row].dx(col) * cellVolume[row/3];
-	TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(value), "**** NaN detected in ElasticMaterial::computeAutomaticDifferentiationJacobian().\n");
+        value = force_AD[row].dx(col) * cellVolume[row/3];
+        TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(value), "**** NaN detected in ElasticMaterial::computeAutomaticDifferentiationJacobian().\n");
         scratchMatrix(row, col) = value;
       }
     }

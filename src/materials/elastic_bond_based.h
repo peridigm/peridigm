@@ -53,15 +53,15 @@ namespace MATERIAL_EVALUATION {
 template<typename ScalarT>
 void computeInternalForceElasticBondBased
 (
-		const double* xOverlapPtr,
-		const ScalarT* yOverlapPtr,
-		const double* volumeOverlapPtr,
-		const double* bondDamage,
-		ScalarT* fInternalOverlapPtr,
-		const int* localNeighborList,
-		int numOwnedPoints,
-		double BULK_MODULUS,
-        double horizon
+    const double* xOverlapPtr,
+    const ScalarT* yOverlapPtr,
+    const double* volumeOverlapPtr,
+    const double* bondDamage,
+    ScalarT* fInternalOverlapPtr,
+    const int* localNeighborList,
+    int numOwnedPoints,
+    double BULK_MODULUS,
+    double horizon
 );
 
 }

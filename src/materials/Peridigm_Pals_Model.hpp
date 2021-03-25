@@ -16,47 +16,47 @@ namespace PeridigmNS {
 class Pals_Model : public Material {
 public:
 
-	typedef PeridigmNS::InfluenceFunction::functionPointer FunctionPointer;
+  typedef PeridigmNS::InfluenceFunction::functionPointer FunctionPointer;
 
-	//! Constructor.
-	Pals_Model(const Teuchos::ParameterList & params);
+  //! Constructor.
+  Pals_Model(const Teuchos::ParameterList & params);
 
-	//! Destructor.
-	virtual ~Pals_Model();
+  //! Destructor.
+  virtual ~Pals_Model();
 
-	//! Return name of material type
-	virtual std::string Name() const { return("Pals"); }
+  //! Return name of material type
+  virtual std::string Name() const { return("Pals"); }
 
-	//! Returns the density of the material.
-	virtual double Density() const { return m_density; }
+  //! Returns the density of the material.
+  virtual double Density() const { return m_density; }
 
-	//! Returns the bulk modulus of the material.
-	virtual double BulkModulus() const { return m_bulkModulus; }
+  //! Returns the bulk modulus of the material.
+  virtual double BulkModulus() const { return m_bulkModulus; }
 
-	//! Returns the shear modulus of the material.
-	virtual double ShearModulus() const { return m_shearModulus; }
+  //! Returns the shear modulus of the material.
+  virtual double ShearModulus() const { return m_shearModulus; }
 
-	//! Returns the horizon.
-	virtual double Horizon() const { return m_horizon; }
+  //! Returns the horizon.
+  virtual double Horizon() const { return m_horizon; }
 
-	//! Returns a vector of field IDs corresponding to the variables associated with the material.
-	virtual std::vector<int> FieldIds() const { return m_fieldIds; }
+  //! Returns a vector of field IDs corresponding to the variables associated with the material.
+  virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
-	//! Initialized data containers and computes weighted volume.
-	virtual void
-	initialize(const double dt,
-			  const int numOwnedPoints,
-			  const int* ownedIDs,
-			  const int* neighborhoodList,
-			  PeridigmNS::DataManager& dataManager);
+  //! Initialized data containers and computes weighted volume.
+  virtual void
+  initialize(const double dt,
+             const int numOwnedPoints,
+             const int* ownedIDs,
+             const int* neighborhoodList,
+             PeridigmNS::DataManager& dataManager);
 
-	//! Evaluate the internal force.
-	virtual void
-	computeForce(const double dt,
-		 const int numOwnedPoints,
-		 const int* ownedIDs,
-		 const int* neighborhoodList,
-				PeridigmNS::DataManager& dataManager) const;
+  //! Evaluate the internal force.
+  virtual void
+  computeForce(const double dt,
+               const int numOwnedPoints,
+               const int* ownedIDs,
+               const int* neighborhoodList,
+               PeridigmNS::DataManager& dataManager) const;
 
     //! Compute stored elastic density energy.
     virtual void

@@ -1,10 +1,9 @@
 #! /usr/bin/env python
 
 from math import sqrt
-import ctypes
 
 def crossProduct(a, b):
-    
+
     return ( (a[1]*b[2]-a[2]*b[1]), (a[2]*b[0]-a[0]*b[2]), (a[0]*b[1]-a[1]*b[0]) )
 
 def norm(a):
@@ -14,13 +13,16 @@ def norm(a):
 class poorMansDeviceIndependentRandomNumber:
 
     def __init__(self):
+        """
+          Class to create device independent (pseudo) random numbers
+        """
         # Random number seeds
         self.m_w = 1234
         self.m_z = 1004321
- 
+
     def m32(self, n):
         # Force 32-bit integer for device independence
-        return n & 0xffffffffL
+        return n & 0xffffffff
 
     def rand(self):
         # 32-bit result
@@ -30,7 +32,7 @@ class poorMansDeviceIndependentRandomNumber:
         return float(val)/4294967294.0
 
 def createEquallySpacedCubeMesh1000():
-    
+
     xLow = 0.5
     xHigh = 9.5
     xNum = 10
@@ -56,7 +58,7 @@ def createEquallySpacedCubeMesh1000():
     return mesh
 
 def createEquallySpacedCubeMesh8000():
-    
+
     xLow = 0.25
     xHigh = 9.75
     xNum = 20
@@ -82,7 +84,7 @@ def createEquallySpacedCubeMesh8000():
     return mesh
 
 def createEquallySpacedCubeMesh27000():
-    
+
     xLow = 1.0/6.0
     xHigh = 10.0 - 1.0/6.0
     xNum = 30
@@ -108,7 +110,7 @@ def createEquallySpacedCubeMesh27000():
     return mesh
 
 def createDumbbellMesh():
-    
+
     xLow = 0.0
     xHigh = 10.0
     xNum = 60
@@ -120,7 +122,7 @@ def createDumbbellMesh():
     zNum = 100
     volume = 10.0*((float(xNum)+1.0)/float(xNum))/float(xNum) * \
         10.0*((float(yNum)+1.0)/float(yNum))/float(yNum) * \
-        10.0*((float(zNum)+1.0)/float(zNum))/float(zNum) 
+        10.0*((float(zNum)+1.0)/float(zNum))/float(zNum)
     material = 1
 
     diagonalThreshold = 0.2
@@ -154,7 +156,7 @@ def createDumbbellMesh():
     return mesh
 
 def createRandomMesh():
-    
+
     low = 0.0
     high = 10.0
     mesh = []
@@ -175,48 +177,43 @@ def writeTestMeshes():
 
     mesh = createEquallySpacedCubeMesh1000()
     fname = "cube_1000.txt"
-    fout = open(fname, 'w')
-    fout.write("# x y z block_id volume\n");
-    for pt in mesh:
-        fout.write(str(pt[0]) + " " + str(pt[1]) + " " + str(pt[2]) + " " + str(pt[3]) + " " + str(pt[4]) + "\n")
-    fout.close()
-    print "Wrote", fname, "\n"
+    with open(fname, 'w') as fout:
+        fout.write("# x y z block_id volume\n")
+        for pt in mesh:
+            fout.write(str(pt[0]) + " " + str(pt[1]) + " " + str(pt[2]) + " " + str(pt[3]) + " " + str(pt[4]) + "\n")
+    print("Wrote {}\n".format(fname))
 
     mesh = createEquallySpacedCubeMesh8000()
     fname = "cube_8000.txt"
-    fout = open(fname, 'w')
-    fout.write("# x y z block_id volume\n");
-    for pt in mesh:
-        fout.write(str(pt[0]) + " " + str(pt[1]) + " " + str(pt[2]) + " " + str(pt[3]) + " " + str(pt[4]) + "\n")
-    fout.close()
-    print "Wrote", fname, "\n"
+    with open(fname, 'w') as fout:
+        fout.write("# x y z block_id volume\n")
+        for pt in mesh:
+            fout.write(str(pt[0]) + " " + str(pt[1]) + " " + str(pt[2]) + " " + str(pt[3]) + " " + str(pt[4]) + "\n")
+    print("Wrote {}\n".format(fname))
 
     mesh = createEquallySpacedCubeMesh27000()
     fname = "cube_27000.txt"
-    fout = open(fname, 'w')
-    fout.write("# x y z block_id volume\n");
-    for pt in mesh:
-        fout.write(str(pt[0]) + " " + str(pt[1]) + " " + str(pt[2]) + " " + str(pt[3]) + " " + str(pt[4]) + "\n")
-    fout.close()
-    print "Wrote", fname, "\n"
+    with open(fname, 'w') as fout:
+        fout.write("# x y z block_id volume\n")
+        for pt in mesh:
+            fout.write(str(pt[0]) + " " + str(pt[1]) + " " + str(pt[2]) + " " + str(pt[3]) + " " + str(pt[4]) + "\n")
+    print("Wrote {}\n".format(fname))
 
     mesh = createDumbbellMesh()
     fname = "dumbbell.txt"
-    fout = open(fname, 'w')
-    fout.write("# x y z block_id volume\n");
-    for pt in mesh:
-        fout.write(str(pt[0]) + " " + str(pt[1]) + " " + str(pt[2]) + " " + str(pt[3]) + " " + str(pt[4]) + "\n")
-    fout.close()
-    print "Wrote", fname, "\n"
+    with open(fname, 'w') as fout:
+        fout.write("# x y z block_id volume\n")
+        for pt in mesh:
+            fout.write(str(pt[0]) + " " + str(pt[1]) + " " + str(pt[2]) + " " + str(pt[3]) + " " + str(pt[4]) + "\n")
+    print("Wrote {}\n".format(fname))
 
     mesh = createRandomMesh()
     fname = "random.txt"
-    fout = open(fname, 'w')
-    fout.write("# x y z block_id volume\n");
-    for pt in mesh:
-        fout.write(str(pt[0]) + " " + str(pt[1]) + " " + str(pt[2]) + " " + str(pt[3]) + " " + str(pt[4]) + "\n")
-    fout.close()
-    print "Wrote", fname, "\n"
+    with open(fname, 'w') as fout:
+        fout.write("# x y z block_id volume\n")
+        for pt in mesh:
+            fout.write(str(pt[0]) + " " + str(pt[1]) + " " + str(pt[2]) + " " + str(pt[3]) + " " + str(pt[4]) + "\n")
+    print("Wrote {}\n".format(fname))
 
     return
 
@@ -227,8 +224,8 @@ if __name__ == "__main__":
     message += "for testing neighbor search algorithms.  The format of the mesh\n"
     message += "files is valid input for Peridigm, although for the search tests\n"
     message += "only the coordinates are used.\n"
-    print message
+    print(message)
 
     writeTestMeshes()
 
-    print "Complete.\n"
+    print("Complete.\n")

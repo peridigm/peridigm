@@ -46,7 +46,7 @@
 
 #ifdef COMPUTE_CLASS
 
-ComputeClass(Acceleration,Compute_Acceleration)
+  ComputeClass(Acceleration,Compute_Acceleration)
 
 #else
 
@@ -61,12 +61,12 @@ namespace PeridigmNS {
   class Compute_Acceleration : public PeridigmNS::Compute {
 
   public:
-	
+  
     //! Standard constructor.
     Compute_Acceleration(Teuchos::RCP<const Teuchos::ParameterList> params,
                              Teuchos::RCP<const Epetra_Comm> epetraComm_,
                              Teuchos::RCP<const Teuchos::ParameterList> computeClassGlobalData_);
-    
+  
     //! Destructor.
     ~Compute_Acceleration();
 

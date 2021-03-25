@@ -2,7 +2,6 @@
 
 import sys
 import os
-import re
 from subprocess import Popen
 
 test_dir = "Bar_TwoDisconnectedPieces_QS/np3"
@@ -55,7 +54,7 @@ if __name__ == "__main__":
 
     return_code = p.wait()
 
-    print "CODE", return_code
+    print("CODE {}".format(return_code))
 
     if return_code != 0:
         result = return_code

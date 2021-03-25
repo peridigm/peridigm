@@ -62,7 +62,7 @@ PeridigmNS::Compute_Local_Kinetic_Energy::~Compute_Local_Kinetic_Energy(){}
 //! Fill the kinetic energy vectors
 int PeridigmNS::Compute_Local_Kinetic_Energy::compute( Teuchos::RCP< std::vector<PeridigmNS::Block> > blocks  ) const
 {
-  	bool storeLocal = true;
-  	int result = computeKineticEnergy(blocks, storeLocal);
-  	return result;
+  bool storeLocal = true;
+  int result = computeKineticEnergy(blocks, storeLocal);
+  return result;
 }

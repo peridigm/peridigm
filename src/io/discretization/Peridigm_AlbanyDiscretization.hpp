@@ -64,15 +64,15 @@ namespace PeridigmNS {
     //! Constructor
     AlbanyDiscretization(const MPI_Comm& mpiComm,
                          const Teuchos::RCP<Teuchos::ParameterList>& params,
-			 int numGlobalIds,
-			 const int* globalIds,
-			 const double* refCoord,
-			 const double* volume,
-			 const int* blockId,
-			 const int numNodeIds = 0,
-			 int * nodeGlobalIds = 0,
-			 const double* nodeCoord = 0,
-			 const int* nodeblockId = 0);
+                         int numGlobalIds,
+                         const int* globalIds,
+                         const double* refCoord,
+                         const double* volume,
+                         const int* blockId,
+                         const int numNodeIds = 0,
+                         int * nodeGlobalIds = 0,
+                         const double* nodeCoord = 0,
+                         const int* nodeblockId = 0);
 
     //! Destructor
     virtual ~AlbanyDiscretization();

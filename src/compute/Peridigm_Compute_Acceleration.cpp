@@ -73,9 +73,9 @@ int PeridigmNS::Compute_Acceleration::compute( Teuchos::RCP< std::vector<Block> 
   Teuchos::RCP<Epetra_Vector> force, acceleration;
   std::vector<Block>::iterator blockIt;
   for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    force        = blockIt->getData(m_forceDensityFieldId, PeridigmField::STEP_NP1);
-    acceleration = blockIt->getData(m_accelerationFieldId, PeridigmField::STEP_NP1);
-    *acceleration = *force;
+    force          = blockIt->getData(m_forceDensityFieldId, PeridigmField::STEP_NP1);
+    acceleration   = blockIt->getData(m_accelerationFieldId, PeridigmField::STEP_NP1);
+    *acceleration  = *force;
     double density = blockIt->getMaterialModel()->Density();
     // Report if any calls to Scale() failed.
     retval = retval || acceleration->Scale(1.0/density);

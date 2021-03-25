@@ -66,7 +66,7 @@
 void reportExodusError(int errorCode, const char *methodName, const char*exodusMethodName)
 {
   std::stringstream ss;
-  if (errorCode < 0) { // error
+  if(errorCode < 0){ // error
     ss << "MeshConverter -- Error code: " << errorCode << " (" << exodusMethodName << ")";
     TEUCHOS_TEST_FOR_EXCEPT_MSG(1, ss.str());
   }
@@ -145,12 +145,12 @@ int main(int argc, char *argv[]) {
 
   // Add boundary layer nodes sets, if requested by user
   std::map< std::string, std::vector<int> > boundaryLayerNodeSets;
-  if (mesh_conversion_params.isParameter("Boundary Layer Thickness")) {
+  if(mesh_conversion_params.isParameter("Boundary Layer Thickness")){
     double boundaryLayerThickness = mesh_conversion_params.get<double>("Boundary Layer Thickness");
 
     // Determine the bounding box
     double x_min(DBL_MAX), x_max(-DBL_MAX), y_min(DBL_MAX), y_max(-DBL_MAX), z_min(DBL_MAX), z_max(-DBL_MAX);
-    for( int i=0 ; i<num_elements ; i++ ) {
+    for( int i=0 ; i<num_elements ; i++ ){
       int firstPoint = discretization.getInitialX()->Map().FirstPointInElement(i);
       double x = (*discretization.getInitialX())[firstPoint];
       double y = (*discretization.getInitialX())[firstPoint+1];
@@ -171,7 +171,7 @@ int main(int argc, char *argv[]) {
     boundaryLayerNodeSets["min_z_face"] = std::vector<int>();
     boundaryLayerNodeSets["max_z_face"] = std::vector<int>();
     boundaryLayerNodeSets["initial_velocity_node_set"] = std::vector<int>();
-    for( int i=0 ; i<num_elements ; i++ ) {
+    for( int i=0 ; i<num_elements ; i++ ){
       int firstPoint = discretization.getInitialX()->Map().FirstPointInElement(i);
       double x = (*discretization.getInitialX())[firstPoint];
       double y = (*discretization.getInitialX())[firstPoint+1];
@@ -214,11 +214,11 @@ int main(int argc, char *argv[]) {
 
   // Initialize exodus database; Overwrite any existing file with this name
   int file_handle = ex_create(output_file_name.c_str(), EX_CLOBBER, &CPU_word_size, &IO_word_size);
-  if (file_handle < 0) reportExodusError(file_handle, "MeshConverter", "ex_create");
+  if(file_handle < 0) reportExodusError(file_handle, "MeshConverter", "ex_create");
 
   // Initialize exodus file with parameters
   int retval = ex_put_init(file_handle, "MeshConverter", num_dimensions, num_nodes, num_elements, num_element_blocks, num_node_sets, num_side_sets);
-  if (retval!= 0) reportExodusError(retval, "MeshConverter", "ex_put_init");
+  if(retval!= 0) reportExodusError(retval, "MeshConverter", "ex_put_init");
   //writeQARecord(file_handle);
 
   // Write the node sets
@@ -268,7 +268,7 @@ int main(int argc, char *argv[]) {
                                      &node_sets_dist_index[0],
                                      &node_sets_node_list[0],
                                      node_sets_dist_fact);
-    if (retval!= 0) reportExodusError(retval, "MeshConverter", "ex_put_concat_node_sets");
+    if(retval!= 0) reportExodusError(retval, "MeshConverter", "ex_put_concat_node_sets");
   }
 
   // Write the node set names
@@ -307,7 +307,7 @@ int main(int argc, char *argv[]) {
   // Write nodal coordinate names to database
   const char *coord_names[3] = {"x", "y", "z"};
   retval = ex_put_coord_names(file_handle,const_cast<char**>(coord_names));
-  if (retval!= 0) reportExodusError(retval, "MeshConverter", "ex_put_coord_names");
+  if(retval!= 0) reportExodusError(retval, "MeshConverter", "ex_put_coord_names");
 
   // Write element block parameters
   Teuchos::RCP< std::map< std::string, std::vector<int> > > blocks = discretization.getElementBlocks();
@@ -336,7 +336,7 @@ int main(int argc, char *argv[]) {
   for(blockIt = blocks->begin(); blockIt != blocks->end(); blockIt++)
     strcpy(block_names[index++], blockIt->first.c_str());
   retval = ex_put_names(file_handle, EX_ELEM_BLOCK, block_names);
-  if (retval!= 0) reportExodusError(retval, "MeshConverter", "ex_put_names EX_ELEM_BLOCK");
+  if(retval!= 0) reportExodusError(retval, "MeshConverter", "ex_put_names EX_ELEM_BLOCK");
 
   Teuchos::RCP<const Epetra_BlockMap> oneDimensionalMap = discretization.getGlobalOwnedMap(1);
   Teuchos::RCP<Epetra_Vector> cellVolume = discretization.getCellVolume();
@@ -348,7 +348,7 @@ int main(int argc, char *argv[]) {
     std::vector<int> connect_vec(numMyElements);
     int *connect = &connect_vec[0];
     std::vector<double> element_attributes(num_attr*numMyElements);
-    for (int j=0;j<numMyElements;j++) {
+    for(int j=0;j<numMyElements;j++) {
       int globalId = blockIt->second[j];
       int localId = oneDimensionalMap->LID(globalId);
       connect[j] = localId + 1;
@@ -360,19 +360,19 @@ int main(int argc, char *argv[]) {
     }
     int blockId = discretization.blockNameToBlockId(blockIt->first);
     retval = ex_put_elem_conn(file_handle, blockId, connect);
-    if (retval!= 0) reportExodusError(retval, "MeshConverter", "ex_put_elem_conn");
+    if(retval!= 0) reportExodusError(retval, "MeshConverter", "ex_put_elem_conn");
     retval = ex_put_elem_attr(file_handle, blockId, element_attributes.data());
-    if (retval!= 0) reportExodusError(retval, "MeshConverter", "ex_put_elem_attr");
+    if(retval!= 0) reportExodusError(retval, "MeshConverter", "ex_put_elem_attr");
   }
 
   // Write global node number map (global node IDs)
   std::vector<int> node_map_vec(num_nodes);
   int *node_map = &node_map_vec[0];
-  for (i=0; i<num_nodes; i++){
+  for(i=0; i<num_nodes; i++){
     node_map[i] = oneDimensionalMap->GID(i)+1;
   }
   retval = ex_put_node_num_map(file_handle, node_map);
-  if (retval!= 0) reportExodusError(retval, "MeshConverter", "ex_put_node_num_map");
+  if(retval!= 0) reportExodusError(retval, "MeshConverter", "ex_put_node_num_map");
 
   // Write global element number map (global element IDs)
   std::vector<int> elem_map_vec(num_nodes);
@@ -384,15 +384,15 @@ int main(int argc, char *argv[]) {
     }
   }
   retval = ex_put_elem_num_map(file_handle, elem_map);
-  if (retval!= 0) reportExodusError(retval, "MeshConverter", "ex_put_elem_num_map");
+  if(retval!= 0) reportExodusError(retval, "MeshConverter", "ex_put_elem_num_map");
 
   // Close file; re-open with call to write()
   retval = ex_update(file_handle);
-  if (retval!= 0) reportExodusError(retval, "MeshConverter", "ex_update");
+  if(retval!= 0) reportExodusError(retval, "MeshConverter", "ex_update");
   retval = ex_close(file_handle);
-  if (retval!= 0) reportExodusError(retval, "MeshConverter", "ex_close");
+  if(retval!= 0) reportExodusError(retval, "MeshConverter", "ex_close");
 
-  if (perform_neighborhood_search) {
+  if(perform_neighborhood_search){
     Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhood_data = discretization.getNeighborhoodData();
     neighborhood_data->WriteToDisk(output_neighborhood_file_name);
   }
@@ -407,7 +407,7 @@ int main(int argc, char *argv[]) {
     delete[] block_names;
   }
 
-  if (mpi_id == 0) {
+  if(mpi_id == 0){
     std::cout << "\nSphere mesh written to:        " << output_file_name << std::endl;
     if (perform_neighborhood_search) {
       std::cout << "Neighborhood data written to:  " << output_neighborhood_file_name << std::endl;
@@ -416,7 +416,7 @@ int main(int argc, char *argv[]) {
   }
 
 #ifdef HAVE_MPI
-    MPI_Finalize();
+  MPI_Finalize();
 #endif
   return 0;
 }

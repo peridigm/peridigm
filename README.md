@@ -1,6 +1,6 @@
-# Peridigm
+# Peridigm [![CircleCI](https://circleci.com/gh/peridigm/peridigm.svg?style=shield)](https://circleci.com/gh/nperidigm/peridigm) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/2d390b95b314447bac5673a07e7b4ea0)](https://www.codacy.com/gh/peridigm/peridigm/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=peridigm/peridigm&amp;utm_campaign=Badge_Grade)
 
-Peridigm is an open-source computational peridynamics code developed at Sandia National Laboratories for massively-parallel multi-physics simulations.  It has been applied primarily to problems in solid mechanics involving pervasive material failure.  Peridigm is a C++ code utilizing foundational software components from Sandia's Trilinos project and is fully compatible with the Cubit mesh generator and Paraview visualization code.
+Peridigm is an open-source computational peridynamics code developed, originally at Sandia National Laboratories and open-sourced in 2011, for massively-parallel multi-physics simulations.  It has been applied primarily to problems in solid mechanics involving pervasive material failure.  Peridigm is a C++ code utilizing foundational software components from Sandia's Trilinos project and is fully compatible with the Cubit mesh generator and Paraview visualization code.
 
 The [peridigm-users](https://software.sandia.gov/mailman/listinfo/peridigm-users) e-mail list connects Peridigm enthusiasts and provides a forum for user questions.
 
@@ -44,7 +44,7 @@ The following individuals have made significant contributions to the Peridigm co
 *  [Stewart Silling](http://www.sandia.gov/~sasilli/)
 *  [John Aidun](http://www.cs.sandia.gov/materials_methods/)
 *  [Daniel Turner](https://cfwebprod.sandia.gov/cfdocs/CompResearch/templates/insert/profile.cfm?snl_id=121696&ename=Turner,+Daniel+Z.)
-*  [John Foster](http://idl.utsa.edu/jtfoster/) ([@johntfoster](https://github.com/johntfoster))
+*  [John Foster](http://johnfoster.pge.utexas.edu/) ([@johntfoster](https://github.com/johntfoster))
 
 ## Citing
 

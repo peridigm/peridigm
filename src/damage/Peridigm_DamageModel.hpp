@@ -60,18 +60,19 @@ namespace PeridigmNS {
   class DamageModel{
 
   public:
-	
-	//! Standard constructor.
-	DamageModel(const Teuchos::ParameterList & params){}
 
-	//! Destructor.
-	virtual ~DamageModel(){}
+    //! Standard constructor.
+    DamageModel(const Teuchos::ParameterList & params){}
 
-	//! Return name of the model.
+    //! Destructor.
+    virtual ~DamageModel(){}
+
+    //! Return name of the model.
     virtual std::string Name() const = 0;
 
   //! Returns a vector of field IDs corresponding to the variables associated with the model.
   virtual std::vector<int> FieldIds() const = 0;
+
 
   //! Returns a vector of field IDs that need to be synchronized across block boundaries and MPI boundaries after initialize().
   virtual std::vector<int> FieldIdsForSynchronizationAfterInitialize() const {
@@ -83,14 +84,15 @@ namespace PeridigmNS {
   virtual std::vector<int> FieldIdsForSynchronizationAfterPrecompute() const {
     std::vector<int> empty;
     return empty;
-  }  
-	//! Initialize the damage model.
-	virtual void
-	initialize(const double dt,
-               const int numOwnedPoints,
-               const int* ownedIDs,
-               const int* neighborhoodList,
-               PeridigmNS::DataManager& dataManager) const {}
+  }
+    
+  //! Initialize the damage model.
+  virtual void
+  initialize(const double dt,
+             const int numOwnedPoints,
+             const int* ownedIDs,
+             const int* neighborhoodList,
+             PeridigmNS::DataManager& dataManager) const {}
 
   //! Run calculations at each time step prior to calculating damage.
   virtual void
@@ -100,18 +102,18 @@ namespace PeridigmNS {
               const int* neighborhoodList,
               PeridigmNS::DataManager& dataManager) const {}
 
-	//! Evaluate the damage
-	virtual void
-	computeDamage(const double dt,
-                  const int numOwnedPoints,
-                  const int* ownedIDs,
-                  const int* neighborhoodList,
-                  PeridigmNS::DataManager& dataManager) const = 0;
+  //! Evaluate the damage
+  virtual void
+  computeDamage(const double dt,
+                const int numOwnedPoints,
+                const int* ownedIDs,
+                const int* neighborhoodList,
+                PeridigmNS::DataManager& dataManager) const = 0;
 
   private:
-	
-	//! Default constructor with no arguments, private to prevent use.
-	DamageModel(){}
+
+    //! Default constructor with no arguments, private to prevent use.
+    DamageModel(){}
   };
 }
 

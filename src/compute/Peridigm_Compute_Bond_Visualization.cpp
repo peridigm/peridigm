@@ -123,20 +123,20 @@ void PeridigmNS::Compute_Bond_Visualization::initialize( Teuchos::RCP< vector<Pe
 
       storeData = true;
       if(m_specifiedNodesOnly){
-	storeData = false;
-	if( find(m_specifiedNodes.begin(), m_specifiedNodes.end(), globalId) != m_specifiedNodes.end() )
-	  storeData = true;
+        storeData = false;
+        if( find(m_specifiedNodes.begin(), m_specifiedNodes.end(), globalId) != m_specifiedNodes.end() )
+          storeData = true;
       }
 
       numNeighbors = neighborhoodList[neighborhoodListIndex++];
       for(iNID=0 ; iNID<numNeighbors ; ++iNID){
         localNeighborId = neighborhoodList[neighborhoodListIndex++];
         globalNeighborId = map->GID(localNeighborId);
-	if(storeData){
-	  connectivity.push_back( std::pair<int, int>(globalId, globalNeighborId) );
-	  globalNodeIdSet.insert(globalId);
-	  globalNodeIdSet.insert(globalNeighborId);
-	}
+        if(storeData){
+          connectivity.push_back( std::pair<int, int>(globalId, globalNeighborId) );
+          globalNodeIdSet.insert(globalId);
+          globalNodeIdSet.insert(globalNeighborId);
+        }
       }
     }
   }

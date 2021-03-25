@@ -62,7 +62,7 @@ namespace PeridigmNS {
   class Compute_Block_Data : public PeridigmNS::Compute {
 
   public:
-	
+
     //! Standard constructor.
     Compute_Block_Data( Teuchos::RCP<const Teuchos::ParameterList> params,
                              Teuchos::RCP<const Epetra_Comm> epetraComm_,

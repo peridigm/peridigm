@@ -1,7 +1,5 @@
 #! /usr/bin/env python
 
-import string
-
 if __name__ == "__main__":
 
     truth_modulus = 180.0 # GPa
@@ -15,11 +13,11 @@ if __name__ == "__main__":
     engineering_strain = 0.0
 
     for line in lines:
-        vals = string.splitfields(line)
+        vals = line.split()
         entries = []
         if len(vals) == 7:
             for val in vals:
-                entries.append( float( string.strip(val, "',") ) )
+                entries.append( float( val.strip("',") ) )
             engineering_stress = (entries[6] - entries[5])*0.5/cross_sectional_area
             # convert from dyne/cm^2 to GPa
             engineering_stress = engineering_stress * 1.0e-10
@@ -29,8 +27,8 @@ if __name__ == "__main__":
                 error = modulus - truth_modulus
                 percent_error = 100.0*abs(truth_modulus - modulus)/truth_modulus
 
-    print "\nSimulation results:"
-    my_string =  "  Input modulus    = %.2f GPa\n" % truth_modulus
-    my_string += "  Computed modulus = %.2f GPa\n" % modulus
-    my_string += "  Error            =  %.2f GPa\n" % error
-    print my_string
+    print("\nSimulation results:")
+    my_string =  "  Input modulus    = {:.2f} GPa\n".format(truth_modulus)
+    my_string += "  Computed modulus = {:.2f} GPa\n".format(modulus)
+    my_string += "  Error            =  {:.2f} GPa\n".format(error)
+    print(my_string)

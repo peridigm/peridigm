@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
-"""
-image_to_txt.py:  Converts an image into a meshless grid in the Peridigm text file format."
-"""
+""" image_to_txt.py:  Converts an image into a meshless grid in the Peridigm text file format." """
 
 __author__ = "David Littlewood (djlittl@sandia.gov)"
 
@@ -50,17 +48,16 @@ __author__ = "David Littlewood (djlittl@sandia.gov)"
 #
 # ************************************************************************
 
-import string
 import sys
 from PIL import Image
 
 if __name__ == "__main__":
 
     if len(sys.argv) < 3:
-        print "\nUsage:  text_to_genesis.py <image_file> <pixel_edge_length> <extrusion_depth>\n"
-        print "        The image file must be readable by the python PIL package."
-        print "        pixel_edge_length is the physical length associated with a single pixel in the image."
-        print "        extrusion_depth is the number of nodes to be created in the out-of-plane direction.\n"
+        print("\nUsage:  image_to_text.py <image_file> <pixel_edge_length> <extrusion_depth>\n")
+        print("        The image file must be readable by the python PIL package.")
+        print("        pixel_edge_length is the physical length associated with a single pixel in the image.")
+        print("        extrusion_depth is the number of nodes to be created in the out-of-plane direction.\n")
         sys.exit(1)
 
     image_file_name = sys.argv[1]
@@ -72,14 +69,14 @@ if __name__ == "__main__":
     img = Image.open(image_file_name).convert('L')
     width, height = img.size
 
-    txt_file_name = string.splitfields(image_file_name, '.')[0] + ".txt"
+    txt_file_name = image_file_name.split('.')[0] + ".txt"
 
-    print "\n--Image to Text--\n"
-    print "  image file:", image_file_name
-    print "  pixel edge length:", pixel_edge_length
-    print "  image width:", width
-    print "  image height:", height
-    print "  extrusion depth:", depth
+    print("\n--Image to Text--\n")
+    print("  image file: {}".format(image_file_name))
+    print("  pixel edge length: {}".format(pixel_edge_length))
+    print("  image width: {}".format(width))
+    print("  image height: {}".format(height))
+    print("  extrusion depth: {}".format(depth))
 
     data = list(img.getdata())
     data = [data[offset:offset+width] for offset in range(0, width*height, width)]
@@ -105,5 +102,5 @@ if __name__ == "__main__":
         txt_file.write(str(pt[0]) + " " + str(pt[1]) + " " + str(pt[2]) + " " + str(pt[3]) + " " + str(pt[4]) + "\n")
     txt_file.close()
 
-    print "\nText file written to", txt_file_name
-    print "\nConvert to genesis with text_to_genesis.py\n"
+    print("\nText file written to {}".format(txt_file_name))
+    print("\nConvert to genesis with text_to_genesis.py\n")

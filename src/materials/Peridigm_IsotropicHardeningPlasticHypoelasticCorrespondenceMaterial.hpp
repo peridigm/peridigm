@@ -55,7 +55,7 @@ namespace PeridigmNS {
   class IsotropicHardeningPlasticHypoelasticCorrespondenceMaterial : public HypoelasticCorrespondenceMaterial{
   public:
 
-	//! Constructor.
+    //! Constructor.
     IsotropicHardeningPlasticHypoelasticCorrespondenceMaterial(const Teuchos::ParameterList & params);
 
     //! Destructor.

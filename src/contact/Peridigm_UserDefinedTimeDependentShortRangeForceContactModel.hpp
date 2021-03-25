@@ -89,25 +89,25 @@ namespace PeridigmNS {
     evaluateParserFriction(double & currentValue, double & previousValue, const double & timeCurrent=0.0, const double & timePrevious=0.0);          
     
   protected:
-	
-	//! Computes the distance between nodes (a1, a2, a3) and (b1, b2, b3).
-	inline double distance(double a1, double a2, double a3,
-						   double b1, double b2, double b3) const
-	{
-	  return ( sqrt( (a1-b1)*(a1-b1) + (a2-b2)*(a2-b2) + (a3-b3)*(a3-b3) ) );
-	}
+  
+    //! Computes the distance between nodes (a1, a2, a3) and (b1, b2, b3).
+    inline double distance(double a1, double a2, double a3,
+                           double b1, double b2, double b3) const
+    {
+      return ( sqrt( (a1-b1)*(a1-b1) + (a2-b2)*(a2-b2) + (a3-b3)*(a3-b3) ) );
+    }
 
-	//! Computes the square of the distance between nodes (a1, a2, a3) and (b1, b2, b3).
-	inline double distanceSquared(double a1, double a2, double a3,
-						   double b1, double b2, double b3) const
-	{
-	  return ( (a1-b1)*(a1-b1) + (a2-b2)*(a2-b2) + (a3-b3)*(a3-b3) );
-	}
+    //! Computes the square of the distance between nodes (a1, a2, a3) and (b1, b2, b3).
+    inline double distanceSquared(double a1, double a2, double a3,
+                                  double b1, double b2, double b3) const
+    {
+      return ( (a1-b1)*(a1-b1) + (a2-b2)*(a2-b2) + (a3-b3)*(a3-b3) );
+    }
 
-	// model parameters
-	double m_contactRadius;
-	double m_springConstant;
-	double m_frictionCoefficient;
+    // model parameters
+    double m_contactRadius;
+    double m_springConstant;
+    double m_frictionCoefficient;
     double m_horizon;
     
     //! string defined funciton

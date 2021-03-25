@@ -2,7 +2,6 @@
 
 import sys
 import os
-import re
 from subprocess import Popen
 
 test_dir = "PrecrackedPlateTwoCracks/np4"
@@ -27,7 +26,7 @@ if __name__ == "__main__":
     logfile = open(log_file_name, 'w')
 
     # remove old output files, if any
-    files_to_remove = [base_name + ".e", base_name + ".e.4.0", base_name + ".e.4.1", base_name + ".e.4.2", base_name + ".e.4.3"] 
+    files_to_remove = [base_name + ".e", base_name + ".e.4.0", base_name + ".e.4.1", base_name + ".e.4.2", base_name + ".e.4.3"]
     for file in os.listdir(os.getcwd()):
       if file in files_to_remove:
         os.remove(file)

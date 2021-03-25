@@ -55,19 +55,19 @@ namespace MATERIAL_EVALUATION {
 template<typename ScalarT>
 void computeDilatationLinearLPS
 (
- const double* xOverlapPtr,
- const ScalarT* yOverlapPtr,
- const double* volumeOverlapPtr,
- const double* weightedVolumePtr,
- double horizon,
- const FunctionPointer influenceFunction,
- const double* selfVolumePtr,
- const double* neighborVolumePtr,
- const double* influenceFunctionValues,
- const double* bondDamage,
- ScalarT* dilatationOwnedPtr,
- const int* localNeighborList,
- int numOwnedPoints
+    const double* xOverlapPtr,
+    const ScalarT* yOverlapPtr,
+    const double* volumeOverlapPtr,
+    const double* weightedVolumePtr,
+    double horizon,
+    const FunctionPointer influenceFunction,
+    const double* selfVolumePtr,
+    const double* neighborVolumePtr,
+    const double* influenceFunctionValues,
+    const double* bondDamage,
+    ScalarT* dilatationOwnedPtr,
+    const int* localNeighborList,
+    int numOwnedPoints
 )
 {
   const double *x = xOverlapPtr;
@@ -120,22 +120,22 @@ void computeDilatationLinearLPS
 template<typename ScalarT>
 void computeInternalForceLinearLPS
 (
- const double* xOverlapPtr,
- const ScalarT* yOverlapPtr,
- const double* volumeOverlapPtr,
- const double* weightedVolumePtr,
- const ScalarT* dilatationPtr,
- double horizon,
- const FunctionPointer influenceFunction,
- const double* selfVolumePtr,
- const double* neighborVolumePtr,
- const double* influenceFunctionValues,
- const double* bondDamage,
- ScalarT* forceOverlapPtr,
- const int* localNeighborList,
- int numOwnedPoints,
- double bulkModulus,
- double shearModulus
+    const double* xOverlapPtr,
+    const ScalarT* yOverlapPtr,
+    const double* volumeOverlapPtr,
+    const double* weightedVolumePtr,
+    const ScalarT* dilatationPtr,
+    double horizon,
+    const FunctionPointer influenceFunction,
+    const double* selfVolumePtr,
+    const double* neighborVolumePtr,
+    const double* influenceFunctionValues,
+    const double* bondDamage,
+    ScalarT* forceOverlapPtr,
+    const int* localNeighborList,
+    int numOwnedPoints,
+    double bulkModulus,
+    double shearModulus
 )
 {
   const double *x = xOverlapPtr;
@@ -207,79 +207,79 @@ void computeInternalForceLinearLPS
 /** Explicit template instantiation for double. */
 template void computeDilatationLinearLPS<double>
 (
- const double* xOverlapPtr,
- const double* yOverlapPtr,
- const double* volumeOverlapPtr,
- const double* weightedVolumePtr,
- double horizon,
- const FunctionPointer influenceFunction,
- const double* selfVolumePtr,
- const double* neighborVolumePtr,
- const double* influenceFunctionValues,
- const double* bondDamage,
- double* dilatationOwnedPtr,
- const int* localNeighborList,
- int numOwnedPoints
+    const double* xOverlapPtr,
+    const double* yOverlapPtr,
+    const double* volumeOverlapPtr,
+    const double* weightedVolumePtr,
+    double horizon,
+    const FunctionPointer influenceFunction,
+    const double* selfVolumePtr,
+    const double* neighborVolumePtr,
+    const double* influenceFunctionValues,
+    const double* bondDamage,
+    double* dilatationOwnedPtr,
+    const int* localNeighborList,
+    int numOwnedPoints
 );
 
 /** Explicit template instantiation for Sacado::Fad::DFad<double>. */
 template void computeDilatationLinearLPS<Sacado::Fad::DFad<double> >
 (
- const double* xOverlapPtr,
- const Sacado::Fad::DFad<double>* yOverlapPtr,
- const double* volumeOverlapPtr,
- const double* weightedVolumePtr,
- double horizon,
- const FunctionPointer influenceFunction,
- const double* selfVolumePtr,
- const double* neighborVolumePtr,
- const double* influenceFunctionValues,
- const double* bondDamage,
- Sacado::Fad::DFad<double>* dilatationOwnedPtr,
- const int* localNeighborList,
- int numOwnedPoints
+    const double* xOverlapPtr,
+    const Sacado::Fad::DFad<double>* yOverlapPtr,
+    const double* volumeOverlapPtr,
+    const double* weightedVolumePtr,
+    double horizon,
+    const FunctionPointer influenceFunction,
+    const double* selfVolumePtr,
+    const double* neighborVolumePtr,
+    const double* influenceFunctionValues,
+    const double* bondDamage,
+    Sacado::Fad::DFad<double>* dilatationOwnedPtr,
+    const int* localNeighborList,
+    int numOwnedPoints
  );
 
 /** Explicit template instantiation for double. */
 template void computeInternalForceLinearLPS<double>
 (
- const double* xOverlapPtr,
- const double* yOverlapPtr,
- const double* volumeOverlapPtr,
- const double* weightedVolumePtr,
- const double* dilatationPtr,
- double horizon,
- const FunctionPointer influenceFunction,
- const double* selfVolumePtr,
- const double* neighborVolumePtr,
- const double* influenceFunctionValues,
- const double* bondDamage,
- double* forceOverlapPtr,
- const int* localNeighborList,
- int numOwnedPoints,
- double bulkModulus,
- double shearModulus
+    const double* xOverlapPtr,
+    const double* yOverlapPtr,
+    const double* volumeOverlapPtr,
+    const double* weightedVolumePtr,
+    const double* dilatationPtr,
+    double horizon,
+    const FunctionPointer influenceFunction,
+    const double* selfVolumePtr,
+    const double* neighborVolumePtr,
+    const double* influenceFunctionValues,
+    const double* bondDamage,
+    double* forceOverlapPtr,
+    const int* localNeighborList,
+    int numOwnedPoints,
+    double bulkModulus,
+    double shearModulus
 );
 
 /** Explicit template instantiation for Sacado::Fad::DFad<double>. */
 template void computeInternalForceLinearLPS<Sacado::Fad::DFad<double> >
 (
- const double* xOverlapPtr,
- const Sacado::Fad::DFad<double>* yOverlapPtr,
- const double* volumeOverlapPtr,
- const double* weightedVolumePtr,
- const Sacado::Fad::DFad<double>* dilatationPtr,
- double horizon,
- const FunctionPointer influenceFunction,
- const double* selfVolumePtr,
- const double* neighborVolumePtr,
- const double* influenceFunctionValues,
- const double* bondDamage,
- Sacado::Fad::DFad<double>* forceOverlapPtr,
- const int* localNeighborList,
- int numOwnedPoints,
- double bulkModulus,
- double shearModulus
+    const double* xOverlapPtr,
+    const Sacado::Fad::DFad<double>* yOverlapPtr,
+    const double* volumeOverlapPtr,
+    const double* weightedVolumePtr,
+    const Sacado::Fad::DFad<double>* dilatationPtr,
+    double horizon,
+    const FunctionPointer influenceFunction,
+    const double* selfVolumePtr,
+    const double* neighborVolumePtr,
+    const double* influenceFunctionValues,
+    const double* bondDamage,
+    Sacado::Fad::DFad<double>* forceOverlapPtr,
+    const int* localNeighborList,
+    int numOwnedPoints,
+    double bulkModulus,
+    double shearModulus
 );
 
 }

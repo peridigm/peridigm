@@ -60,7 +60,7 @@ namespace PeridigmNS {
   class VonMisesStressDamageModel : public DamageModel{
 
   public:
-	
+
     //! Standard constructor.
     VonMisesStressDamageModel(const Teuchos::ParameterList& params);
 

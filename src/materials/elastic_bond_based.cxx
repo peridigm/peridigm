@@ -55,15 +55,15 @@ namespace MATERIAL_EVALUATION {
 template<typename ScalarT>
 void computeInternalForceElasticBondBased
 (
-		const double* xOverlap,
-		const ScalarT* yOverlap,
-		const double* volumeOverlap,
-		const double* bondDamage,
-		ScalarT* fInternalOverlap,
-		const int* localNeighborList,
-		int numOwnedPoints,
-		double BULK_MODULUS,
-        double horizon
+    const double* xOverlap,
+    const ScalarT* yOverlap,
+    const double* volumeOverlap,
+    const double* bondDamage,
+    ScalarT* fInternalOverlap,
+    const int* localNeighborList,
+    int numOwnedPoints,
+    double BULK_MODULUS,
+    double horizon
 )
 {
   double volume, neighborVolume, X[3], neighborX[3], initialBondLength, damageOnBond;
@@ -84,7 +84,7 @@ void computeInternalForceElasticBondBased
     volume = volumeOverlap[p];
 
     int numNeighbors = localNeighborList[neighborhoodIndex++];
-	for(int n=0; n<numNeighbors; n++){
+    for(int n=0; n<numNeighbors; n++){
 
       neighborId = localNeighborList[neighborhoodIndex++];
       neighborX[0] = xOverlap[neighborId*3];
@@ -120,29 +120,29 @@ void computeInternalForceElasticBondBased
 /** Explicit template instantiation for double. */
 template void computeInternalForceElasticBondBased<double>
 (
-		const double* xOverlap,
-		const double* yOverlap,
-		const double* volumeOverlap,
-		const double* bondDamage,
-		double* fInternalOverlap,
-		const int*  localNeighborList,
-		int numOwnedPoints,
-		double BULK_MODULUS,
-        double horizon
+    const double* xOverlap,
+    const double* yOverlap,
+    const double* volumeOverlap,
+    const double* bondDamage,
+    double* fInternalOverlap,
+    const int*  localNeighborList,
+    int numOwnedPoints,
+    double BULK_MODULUS,
+    double horizon
  );
 
 /** Explicit template instantiation for Sacado::Fad::DFad<double>. */
 template void computeInternalForceElasticBondBased<Sacado::Fad::DFad<double> >
 (
-		const double* xOverlap,
-		const Sacado::Fad::DFad<double>* yOverlap,
-		const double* volumeOverlap,
-		const double* bondDamage,
-		Sacado::Fad::DFad<double>* fInternalOverlap,
-		const int*  localNeighborList,
-		int numOwnedPoints,
-		double BULK_MODULUS,
-        double horizon
+    const double* xOverlap,
+    const Sacado::Fad::DFad<double>* yOverlap,
+    const double* volumeOverlap,
+    const double* bondDamage,
+    Sacado::Fad::DFad<double>* fInternalOverlap,
+    const int*  localNeighborList,
+    int numOwnedPoints,
+    double BULK_MODULUS,
+    double horizon
 );
 
 }

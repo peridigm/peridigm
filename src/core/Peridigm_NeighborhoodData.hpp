@@ -71,49 +71,49 @@ public:
   }
 
   ~NeighborhoodData(){
-	if(ownedIDs != 0)
-	  delete[] ownedIDs;
-	if(neighborhoodList != 0)
-	  delete[] neighborhoodList;
-    if(neighborhoodPtr != 0)
-      delete[] neighborhoodPtr;
+  if(ownedIDs != 0)
+    delete[] ownedIDs;
+  if(neighborhoodList != 0)
+    delete[] neighborhoodList;
+  if(neighborhoodPtr != 0)
+    delete[] neighborhoodPtr;
   }
 
   void SetNumOwned(int numOwned){
-	numOwnedPoints = numOwned;
-	if(ownedIDs != 0)
-	  delete[] ownedIDs;
-	ownedIDs = new int[numOwned];
-    if(neighborhoodPtr != 0)
-      delete[] neighborhoodPtr;
-    neighborhoodPtr = new int[numOwned];
+  numOwnedPoints = numOwned;
+  if(ownedIDs != 0)
+    delete[] ownedIDs;
+  ownedIDs = new int[numOwned];
+  if(neighborhoodPtr != 0)
+    delete[] neighborhoodPtr;
+  neighborhoodPtr = new int[numOwned];
   }
 
   void SetNeighborhoodListSize(int neighborhoodSize){
-	neighborhoodListSize = neighborhoodSize;
-	if(neighborhoodList != 0)
-	  delete[] neighborhoodList;
-	neighborhoodList = new int[neighborhoodListSize];
+  neighborhoodListSize = neighborhoodSize;
+  if(neighborhoodList != 0)
+    delete[] neighborhoodList;
+  neighborhoodList = new int[neighborhoodListSize];
   }
 
   int NumOwnedPoints() const{
-	return numOwnedPoints;
+    return numOwnedPoints;
   }
 
   int* OwnedIDs() const{
-	return ownedIDs;
+    return ownedIDs;
   }
 
   int* NeighborhoodPtr() const{
-	return neighborhoodPtr;
+    return neighborhoodPtr;
   }
 
   int NeighborhoodListSize() const{
-	return neighborhoodListSize;
+    return neighborhoodListSize;
   }
 
   int* NeighborhoodList() const{
-	return neighborhoodList;
+    return neighborhoodList;
   }
 
   double memorySize() const{

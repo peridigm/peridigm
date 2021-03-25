@@ -714,27 +714,27 @@ PeridigmNS::ExodusDiscretization::constructInterfaceData()
 void
 PeridigmNS::ExodusDiscretization::createNeighborhoodData(int neighborListSize, int* neighborList)
 {
-   int numOwnedIds = oneDimensionalMap->NumMyElements();
-   int* ownedGlobalIds = oneDimensionalMap->MyGlobalElements();
+  int numOwnedIds = oneDimensionalMap->NumMyElements();
+  int* ownedGlobalIds = oneDimensionalMap->MyGlobalElements();
 
-   vector<int> ownedLocalIds(numOwnedIds);
-   vector<int> neighborhoodPtr(numOwnedIds);
+  vector<int> ownedLocalIds(numOwnedIds);
+  vector<int> neighborhoodPtr(numOwnedIds);
 
-   int numNeighbors(0), neighborListIndex(0);
-   for(int i=0 ; i<numOwnedIds ; ++i){
-     ownedLocalIds[i] = oneDimensionalMap->LID(ownedGlobalIds[i]); // \todo This seems unnecessary, is it just i?  What if MyGlobalElements is not sorted, then is ownedLocalIds also not sorted?
-     neighborhoodPtr[i] = neighborListIndex;
-     numNeighbors = neighborList[neighborListIndex++];
-     neighborListIndex += numNeighbors;
-   }
+  int numNeighbors(0), neighborListIndex(0);
+  for(int i=0 ; i<numOwnedIds ; ++i){
+    ownedLocalIds[i] = oneDimensionalMap->LID(ownedGlobalIds[i]); // \todo This seems unnecessary, is it just i?  What if MyGlobalElements is not sorted, then is ownedLocalIds also not sorted?
+    neighborhoodPtr[i] = neighborListIndex;
+    numNeighbors = neighborList[neighborListIndex++];
+    neighborListIndex += numNeighbors;
+  }
 
-   neighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
-   neighborhoodData->SetNumOwned(numOwnedIds);
-   memcpy(neighborhoodData->OwnedIDs(), &ownedLocalIds[0], numOwnedIds*sizeof(int));
-   memcpy(neighborhoodData->NeighborhoodPtr(), &neighborhoodPtr[0], numOwnedIds*sizeof(int));
-   neighborhoodData->SetNeighborhoodListSize(neighborListSize);
-   memcpy(neighborhoodData->NeighborhoodList(), neighborList, neighborListSize*sizeof(int));
-   neighborhoodData = filterBonds(neighborhoodData);
+  neighborhoodData = Teuchos::rcp(new PeridigmNS::NeighborhoodData);
+  neighborhoodData->SetNumOwned(numOwnedIds);
+  memcpy(neighborhoodData->OwnedIDs(), &ownedLocalIds[0], numOwnedIds*sizeof(int));
+  memcpy(neighborhoodData->NeighborhoodPtr(), &neighborhoodPtr[0], numOwnedIds*sizeof(int));
+  neighborhoodData->SetNeighborhoodListSize(neighborListSize);
+  memcpy(neighborhoodData->NeighborhoodList(), neighborList, neighborListSize*sizeof(int));
+  neighborhoodData = filterBonds(neighborhoodData);
 }
 
 Teuchos::RCP<PeridigmNS::NeighborhoodData>
@@ -788,11 +788,11 @@ PeridigmNS::ExodusDiscretization::filterBonds(Teuchos::RCP<PeridigmNS::Neighborh
   int unfilteredNeighborhoodListIndex(0);
   for(int iID=0 ; iID<numOwnedPoints ; ++iID){
     int blockID = static_cast<int>(blockIDs[iID]);
-	int numUnfilteredNeighbors = unfilteredNeighborhoodList[unfilteredNeighborhoodListIndex++];
+    int numUnfilteredNeighbors = unfilteredNeighborhoodList[unfilteredNeighborhoodListIndex++];
     unsigned int numNeighborsIndex = neighborhoodListVec.size();
     neighborhoodListVec.push_back(-1); // placeholder for number of neighbors
     int numNeighbors = 0;
-	for(int iNID=0 ; iNID<numUnfilteredNeighbors ; ++iNID){
+    for(int iNID=0 ; iNID<numUnfilteredNeighbors ; ++iNID){
       int unfilteredNeighborID = unfilteredNeighborhoodList[unfilteredNeighborhoodListIndex++];
       int unfilteredNeighborBlockID = static_cast<int>(blockIDs[unfilteredNeighborID]);
       if(blockBondingMatrix[blockID-1][unfilteredNeighborBlockID-1] == true){

@@ -40,7 +40,7 @@ def poly1(Xo, Xn, x):
         for n in range(dimP):
             y += P[n] * math.pow(r, dimP - (n + 1))
 
-    print x, y
+    print("{} {}".format(x, y))
 
 def poly2(x):
 
@@ -98,7 +98,7 @@ def poly2(x):
                 c20 * pow(r, 20) + \
                 c21 * pow(r, 21)
 
-    print x, value
+    print("{} {}".format(x, value))
 
 if __name__ == "__main__":
 

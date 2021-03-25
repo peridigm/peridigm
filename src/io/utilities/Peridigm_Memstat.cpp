@@ -23,8 +23,8 @@ Teuchos::RCP<const Epetra_Comm > PeridigmNS::Memstat::myComm;
 PeridigmNS::Memstat * PeridigmNS::Memstat::Instance()
 {
   if (!myMemstatPtr)   // Only allow one instance of class to be generated.
-        myMemstatPtr = new Memstat;
-     return myMemstatPtr;
+    myMemstatPtr = new Memstat;
+  return myMemstatPtr;
 }
 
 
@@ -61,8 +61,8 @@ void PeridigmNS::Memstat::addStat(const std::string & description){
 
 void PeridigmNS::Memstat::printStats(){
 
-    if(myComm->NumProc()== 1){
-      if(myComm->MyPID() == 0){
+  if(myComm->NumProc()== 1){
+    if(myComm->MyPID() == 0){
       cout << "Memory Usage (Heap Alloc MB):\n";
       //cout << "  " << left << setw(30) << "Checkpoint Description" << right << setw(12) << "Heap Alloc" << "\n";
       for(std::map<std::string,unsigned int>::iterator it=stats.begin();it!=stats.end();++it){
@@ -72,28 +72,28 @@ void PeridigmNS::Memstat::printStats(){
         cout << "  " << left << setw(30) <<  desc << right << setw(12) << (double)it->second / (1024.0 * 1024.0) << "\n";
       }
       cout << "\n";
-      }
     }
-    else{
-      int count = (int)( stats.size() );
-      vector<std::string> names(count);
-      vector<double> times(count);
-      vector<double> minTimes(count);
-      vector<double> maxTimes(count);
-      vector<double> totalTimes(count);
-      int i = 0;
-      for(map<std::string, unsigned int>::reverse_iterator it=stats.rbegin() ; it!=stats.rend() ; it++){
-        std::string desc = it->first; // truncate the name if its too long
-        if(desc.length() > 25) desc.resize(25);
-        names[i] = desc;
-        times[i] = it->second;
-        i++;
-      }
-      Teuchos::RCP<const Teuchos::Comm<int> > teuchosComm = Teuchos::createMpiComm<int>(Teuchos::opaqueWrapper<MPI_Comm>(MPI_COMM_WORLD));
-      Teuchos::reduceAll<int, double>(*teuchosComm,Teuchos::REDUCE_MIN,count,&times[0], &minTimes[0]);
-      Teuchos::reduceAll<int, double>(*teuchosComm,Teuchos::REDUCE_MAX,count,&times[0], &maxTimes[0]);
-      Teuchos::reduceAll<int, double>(*teuchosComm,Teuchos::REDUCE_SUM,count,&times[0], &totalTimes[0]);
-      if(myComm->MyPID() == 0){
+  }
+  else{
+    int count = (int)( stats.size() );
+    vector<std::string> names(count);
+    vector<double> times(count);
+    vector<double> minTimes(count);
+    vector<double> maxTimes(count);
+    vector<double> totalTimes(count);
+    int i = 0;
+    for(map<std::string, unsigned int>::reverse_iterator it=stats.rbegin() ; it!=stats.rend() ; it++){
+      std::string desc = it->first; // truncate the name if its too long
+      if(desc.length() > 25) desc.resize(25);
+      names[i] = desc;
+      times[i] = it->second;
+      i++;
+    }
+    Teuchos::RCP<const Teuchos::Comm<int> > teuchosComm = Teuchos::createMpiComm<int>(Teuchos::opaqueWrapper<MPI_Comm>(MPI_COMM_WORLD));
+    Teuchos::reduceAll<int, double>(*teuchosComm,Teuchos::REDUCE_MIN,count,&times[0], &minTimes[0]);
+    Teuchos::reduceAll<int, double>(*teuchosComm,Teuchos::REDUCE_MAX,count,&times[0], &maxTimes[0]);
+    Teuchos::reduceAll<int, double>(*teuchosComm,Teuchos::REDUCE_SUM,count,&times[0], &totalTimes[0]);
+    if(myComm->MyPID() == 0){
 
       cout << "Memory Usage (Heap Alloc MB):\n";
 
@@ -104,6 +104,6 @@ void PeridigmNS::Memstat::printStats(){
                                                      << right << setw(15) << (totalTimes[i]/myComm->NumProc()) / (1024.0 * 1024.0)<< "\n";
       }
       cout << "\n";
-      }
     }
+  }
 }

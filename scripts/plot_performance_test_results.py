@@ -1,13 +1,11 @@
 #! /usr/bin/env python
 
 import sys
-import os
-import string
 
 if __name__ == "__main__":
 
     if len(sys.argv) != 2:
-        print "\nUsage:  process_accumulated_performance_test_results.py <in_file.txt>\n"
+        print("\nUsage:  plot_performance_test_results.py <in_file.txt>\n")
         sys.exit(1)
 
     infile_name = sys.argv[-1]
@@ -25,9 +23,9 @@ if __name__ == "__main__":
         tolerance = 0.0
         test_result = "Failed"
         if "Date and time:" in line:
-            date = string.splitfields(line)[-2]
+            date = line.split()[-2]
         elif "Test Name" not in line and "-----------" not in line:
-            vals = string.splitfields(line)
+            vals = line.split()
             if len(vals) == 5:
                 name = vals[0]
                 wallclock_time = float(vals[1])
@@ -52,7 +50,7 @@ if __name__ == "__main__":
     gfile = open(gnuplot_file_name, 'w')
     for key in results.keys():
         result = results[key]
-        title = key.replace('_', '\_') + " Performance Test Data"
+        title = key.replace('_', r'\_') + " Performance Test Data"
         pdf_file_name = key + "_performance.pdf"
         data_file_name = key + "_accumulated_performance_data.txt"
         yrange_min = result[-1][2] - 2.0*result[-1][3]
@@ -71,14 +69,14 @@ if __name__ == "__main__":
         pdf_file_names.append(pdf_file_name)
     gfile.close()
 
-    print "\nGenerated the following files:"
+    print("\nGenerated the following files:")
     for name in data_file_names:
-        print "  ", name
-    print "\nGnuplot command file written to: ", gnuplot_file_name
-    print "\nCommand to generate plots:"
-    print "  gnuplot", gnuplot_file_name
-    print "\nCommand to concatenate pdf files:"
+        print("  {}".format(name))
+    print("\nGnuplot command file written to: {}".format(gnuplot_file_name))
+    print("\nCommand to generate plots:")
+    print("  gnuplot {}".format(gnuplot_file_name))
+    print("\nCommand to concatenate pdf files:")
     cmd_string = "  gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -dAutoRotatePages -sOutputFile=performace_plots.pdf"
     for name in pdf_file_names:
         cmd_string += " " + name
-    print cmd_string, "\n"
+    print("{}\n".format(cmd_string))

@@ -5,7 +5,7 @@ import sys
 
 
 def clean_data(data):
-    
+
     strip_comments = [ item.split('!')[0].split() for item in data]
 
     clean = [item for sublist in strip_comments for item in sublist]

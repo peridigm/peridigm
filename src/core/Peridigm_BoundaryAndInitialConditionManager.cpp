@@ -208,10 +208,10 @@ void PeridigmNS::BoundaryAndInitialConditionManager::initializeNodeSets(Teuchos:
 
   // Load node sets defined in the input deck into the nodeSets container
   for(Teuchos::ParameterList::ConstIterator it = params.begin() ; it != params.end() ; it++){
-	string name = it->first;
-	tidy_string(name);
-	size_t position = name.find("NODE_SET");
-	if(position != string::npos){
+  string name = it->first;
+  tidy_string(name);
+  size_t position = name.find("NODE_SET");
+  if(position != string::npos){
 
       TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(name) != nodeSets->end(), "**** Duplicate node set found: " + name + "\n");
       vector<int>& nodeList = (*nodeSets)[name];

@@ -1,5 +1,5 @@
 FROM peridigm/trilinos 
-MAINTAINER John Foster <johntfosterjr@gmail.com>
+LABEL maintainer="John Foster <johntfosterjr@gmail.com>"
 
 ENV HOME /root
 
@@ -23,10 +23,8 @@ WORKDIR /peridigm/build/
 RUN cmake \
     -D CMAKE_BUILD_TYPE:STRING=Release \
     -D CMAKE_INSTALL_PREFIX:PATH=/usr/local/peridigm \
-    -D CMAKE_CXX_FLAGS:STRING="-std=c++11 -O2" \
     -D TRILINOS_DIR:PATH=/usr/local/trilinos \
     -D CMAKE_CXX_COMPILER:STRING="mpicxx" \
-    -D USE_DAKOTA:BOOL=OFF \
     ..; \
     make && make install; \
     cd ..; \
