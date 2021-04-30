@@ -74,8 +74,15 @@ namespace PeridigmNS {
     //! Returns a vector of field IDs corresponding to the variables associated with the model.
     virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
-    void setBCManager(Teuchos::RCP<PeridigmNS::BoundaryAndInitialConditionManager> bc_manager){m_bcManager = bc_manager;}
+    //! Returns a vector of field IDs that need to be synchronized across block boundaries and MPI boundaries after initialize().
+    virtual std::vector<int> FieldIdsForSynchronizationAfterInitialize() const {
+      std::vector<int> fieldIds;
+      fieldIds.push_back(m_criticalStretchFieldId);
+      return fieldIds;
+    }      
 
+    void setBCManager(Teuchos::RCP<PeridigmNS::BoundaryAndInitialConditionManager> bc_manager){m_bcManager = bc_manager;}
+    
     //! Initialize the damage model.
     virtual void
     initialize(const double dt,
