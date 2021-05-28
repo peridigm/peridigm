@@ -212,7 +212,7 @@ void PeridigmNS::ProximitySearch::GlobalProximitySearch(Teuchos::RCP<Epetra_Vect
 {
   // The proximity search does not appear to function properly if any of the search radii are set to zero
   for(int i=0 ; i<searchRadii->MyLength() ; ++i){
-    TEUCHOS_TEST_FOR_EXCEPT_MSG((*searchRadii)[i] <= 0.0, "\n****Error:  PeridigmNS::ProximitySearch::GlobalProximitySearch(), search radii must be greater than or equal to zero.\n");
+    TEUCHOS_TEST_FOR_TERMINATION((*searchRadii)[i] <= 0.0, "\n****Error:  PeridigmNS::ProximitySearch::GlobalProximitySearch(), search radii must be greater than or equal to zero.\n");
   }
 
   // Copy information from the Epetra_Vector into a QUICKGRID::Data object

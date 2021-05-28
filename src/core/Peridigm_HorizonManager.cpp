@@ -118,7 +118,7 @@ bool PeridigmNS::HorizonManager::blockHasConstantHorizon(string blockName){
     isConstant = horizonIsConstant["default"];
   else{
     string msg = "\n**** Error, no Horizon parameter found for block " + blockName + " and no default block parameter list provided.\n";
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
+    TEUCHOS_TEST_FOR_TERMINATION(true, msg);
   }
   return isConstant;
 }
@@ -131,7 +131,7 @@ double PeridigmNS::HorizonManager::getBlockConstantHorizonValue(string blockName
     name = "default";
   else{
     string msg = "\n**** Error, no Horizon parameter found for block " + blockName + " and no default block parameter list provided.\n";
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
+    TEUCHOS_TEST_FOR_TERMINATION(true, msg);
   }
   double x(0.0), y(0.0), z(0.0);
   double horizon = evaluateHorizon(name, x, y, z);
@@ -146,7 +146,7 @@ double PeridigmNS::HorizonManager::evaluateHorizon(string blockName, double x, d
     name = "default";
   else{
     string msg = "\n**** Error, no Horizon parameter found for block " + blockName + " and no default block parameter list provided.\n";
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
+    TEUCHOS_TEST_FOR_TERMINATION(true, msg);
   }
   string horizonFunction = horizonStrings[name];
   double horizonValue(0.0);
@@ -170,7 +170,7 @@ double PeridigmNS::HorizonManager::evaluateHorizon(string blockName, double x, d
   if(!success){
     string msg = "\n**** Error in HorizonManager::evaluateHorizon().\n";
     msg += "**** " + rtcFunction->getErrors() + "\n";
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
+    TEUCHOS_TEST_FOR_TERMINATION(!success, msg);
   }
 
   return horizonValue;

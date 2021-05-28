@@ -168,10 +168,10 @@ void PeridigmNS::DirichletBC::apply(Teuchos::RCP< std::map< std::string, std::ve
   if(!success){
     string msg = "\n**** Error:  rtcFunction->addBody(function) returned error code in PeridigmNS::DirichletBC::apply().\n";
     msg += "**** " + rtcFunction->getErrors() + "\n";
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
+    TEUCHOS_TEST_FOR_TERMINATION(!success, msg);
   }
 
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSetName) == nodeSets->end(),
+  TEUCHOS_TEST_FOR_TERMINATION(nodeSets->find(nodeSetName) == nodeSets->end(),
                               "**** Error in DirichletBC::apply(), node set not found: " + nodeSetName + "\n");
   vector<int> & nodeList = nodeSets->find(nodeSetName)->second;
   for(unsigned int i=0 ; i<nodeList.size() ; i++){
@@ -180,7 +180,7 @@ void PeridigmNS::DirichletBC::apply(Teuchos::RCP< std::map< std::string, std::ve
       double currentValue = 0.0;
       double previousValue = 0.0;
       evaluateParser(localNodeID,currentValue,previousValue,timeCurrent);
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(currentValue), "**** NaN returned by dirichlet BC evaluation.\n");
+      TEUCHOS_TEST_FOR_TERMINATION(!std::isfinite(currentValue), "**** NaN returned by dirichlet BC evaluation.\n");
       (*toVector)[localNodeID*fieldDimension + coord] = currentValue;
     }
   }
@@ -220,10 +220,10 @@ void PeridigmNS::DirichletIncrementBC::apply(Teuchos::RCP< std::map< std::string
   if(!success){
     string msg = "\n**** Error:  rtcFunction->addBody(function) returned nonzero error code in PeridigmNS::DirichletBC::apply().\n";
     msg += "**** " + rtcFunction->getErrors() + "\n";
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(!success, msg);
+    TEUCHOS_TEST_FOR_TERMINATION(!success, msg);
   }
 
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSetName) == nodeSets->end(),
+  TEUCHOS_TEST_FOR_TERMINATION(nodeSets->find(nodeSetName) == nodeSets->end(),
                               "**** Error in DirichletBC::apply(), node set not found: " + nodeSetName + "\n");
   vector<int> & nodeList = nodeSets->find(nodeSetName)->second;
   for(unsigned int i=0 ; i<nodeList.size() ; i++){
@@ -234,7 +234,7 @@ void PeridigmNS::DirichletIncrementBC::apply(Teuchos::RCP< std::map< std::string
       evaluateParser(localNodeID,currentValue,previousValue,timeCurrent,timePrevious_);
       const double value = coeff * (currentValue - previousValue)
         + deltaTCoeff * (currentValue - previousValue) * (1.0 / (timeCurrent - timePrevious_));
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(value), "**** NaN returned by dirichlet increment BC evaluation.\n");
+      TEUCHOS_TEST_FOR_TERMINATION(!std::isfinite(value), "**** NaN returned by dirichlet increment BC evaluation.\n");
       (*toVector)[localNodeID*fieldDimension + coord] = value;
     }
   }
@@ -248,7 +248,7 @@ PeridigmNS::NeumannBC::NeumannBC(const string & name_,
 : BoundaryCondition(name_,bcParams_,toVector_,peridigm_){
 
   // create vector with global ids that match those in the node set
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets_->find(nodeSetName) == nodeSets_->end(),
+  TEUCHOS_TEST_FOR_TERMINATION(nodeSets_->find(nodeSetName) == nodeSets_->end(),
                               "**** Error in NeumannBC::NeumannBC(), node set not found: " + nodeSetName + "\n");
 
   vector<int> & nodeList = nodeSets_->find(nodeSetName)->second;
@@ -301,7 +301,7 @@ void PeridigmNS::NeumannBC::apply(Teuchos::RCP< std::map< std::string, std::vect
   // get the tensor order of the bc field:
   const int fieldDimension = to_dimension_size(tensorOrder);
 
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeSets->find(nodeSetName) == nodeSets->end(),
+  TEUCHOS_TEST_FOR_TERMINATION(nodeSets->find(nodeSetName) == nodeSets->end(),
                               "**** Error in NeumannBC::apply(), node set not found: " + nodeSetName + "\n");
   vector<int> & nodeList = nodeSets->find(nodeSetName)->second;
   for(unsigned int i=0 ; i<nodeList.size() ; i++){

@@ -70,8 +70,8 @@ PeridigmNS::Compute_Node_Set_Data::Compute_Node_Set_Data(Teuchos::RCP<const Teuc
 
   // Make sure the requested node set exists (it's really easy for a user to get confused between nodeset_1 and nodelist_1, etc.)
   std::string msg = "**** Error:  Invalid \"Node Set\" in Node_Set_Data compute class, specified node set not found.\n";
-  msg += "             Requested node set: " + m_nodeSetName + "\n";
-  msg += "             Available node sets:";
+              msg += "             Requested node set: " + m_nodeSetName + "\n";
+              msg += "             Available node sets:";
   for(std::map< std::string, std::vector<int> >::iterator it=nodeSets->begin() ; it!=nodeSets->end() ; it++)
     msg += " " + it->first;
   msg += "\n";

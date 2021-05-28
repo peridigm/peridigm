@@ -138,8 +138,8 @@ PeridigmNS::VectorPoissonMaterial::computeForce(const double dt,
         temp = (neighborU - nodeU)*kernel;
         nodeForce = temp*neighborVolume;
         neighborForce = -temp*nodeVolume;
-        TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(nodeForce), "**** NaN detected in VectorPoissonMaterial::computeForce().\n");
-        TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(neighborForce), "**** NaN detected in VectorPoissonMaterial::computeForce().\n");
+        TEUCHOS_TEST_FOR_TERMINATION(!std::isfinite(nodeForce), "**** NaN detected in VectorPoissonMaterial::computeForce().\n");
+        TEUCHOS_TEST_FOR_TERMINATION(!std::isfinite(neighborForce), "**** NaN detected in VectorPoissonMaterial::computeForce().\n");
         f[iID*3+eqn] += nodeForce;
         f[neighborID*3+eqn] += neighborForce;
 
