@@ -317,7 +317,7 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
     // Check for NaNs
     for(unsigned int row=0 ; row<globalIndices.size() ; ++row){
       for(unsigned int col=0 ; col<globalIndices.size() ; ++col){
-        TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(scratchMatrix(row, col)), "**** NaN detected in finite-difference Jacobian.\n");
+        TEUCHOS_TEST_FOR_TERMINATION(!std::isfinite(scratchMatrix(row, col)), "**** NaN detected in finite-difference Jacobian.\n");
       }
     }
 

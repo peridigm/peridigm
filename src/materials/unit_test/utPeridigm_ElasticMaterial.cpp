@@ -722,10 +722,10 @@ TEUCHOS_UNIT_TEST(ElasticMaterial, twoPointTangentStiffnessMatrix) {
   for(unsigned int i=0 ; i<6 ; ++i){
     // Allocate space in the global matrix
     int err = tangentFECrsMatrix->InsertGlobalValues(i, numRowNonzeros, (const double*)&zeros[0], (const int*)&indices[0]);
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(err < 0, "**** InsertGlobalValues() returned negative error code.\n");
+    TEUCHOS_TEST_FOR_TERMINATION(err < 0, "**** InsertGlobalValues() returned negative error code.\n");
   }
   int err = tangentFECrsMatrix->GlobalAssemble();
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::Peridigm::allocateJacobian(), GlobalAssemble() returned nonzero error code.\n");
+  TEUCHOS_TEST_FOR_TERMINATION(err != 0, "**** PeridigmNS::Peridigm::allocateJacobian(), GlobalAssemble() returned nonzero error code.\n");
 
   // create the SerialMatrix that is fed to the material model
   PeridigmNS::SerialMatrix tangentSerialMatrix(tangentFECrsMatrix);

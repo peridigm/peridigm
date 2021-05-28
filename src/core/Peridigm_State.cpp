@@ -68,7 +68,7 @@ void PeridigmNS::State::allocatePointData(PeridigmField::Length length,
 
   int index = PeridigmField::variableDimension(length) - 1;
 
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(!pointData[index].is_null(),
+  TEUCHOS_TEST_FOR_TERMINATION(!pointData[index].is_null(),
                               "\n**** Error:  PeridigmNS::State::allocateData(), point-wise data field of same length already allocated!\n");
 
   pointData[index] = Teuchos::rcp(new Epetra_MultiVector(*map, fieldIds.size()));
@@ -89,7 +89,7 @@ void PeridigmNS::State::allocateBondData(vector<int> fieldIds,
     fieldIdToDataVector.resize(numFieldIds);
   }
 
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(!bondData.is_null(),
+  TEUCHOS_TEST_FOR_TERMINATION(!bondData.is_null(),
                               "\n**** Error:  PeridigmNS::State::allocateData(), bond data field already allocated!\n");
 
   bondData = Teuchos::rcp(new Epetra_MultiVector(*map, fieldIds.size()));

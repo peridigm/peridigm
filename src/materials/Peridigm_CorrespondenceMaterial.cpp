@@ -180,7 +180,7 @@ PeridigmNS::CorrespondenceMaterial::initialize(const double dt,
     "**** Error:  CorrespondenceMaterial::initialize() failed to compute shape tensor.\n";
   shapeTensorErrorMessage +=
     "****         Note that all nodes must have a minimum of three neighbors.  Is the horizon too small?\n";
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(shapeTensorReturnCode != 0, shapeTensorErrorMessage);
+  TEUCHOS_TEST_FOR_TERMINATION(shapeTensorReturnCode != 0, shapeTensorErrorMessage);
 
 }
 
@@ -221,7 +221,7 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
     "**** Error:  CorrespondenceMaterial::computeForce() failed to compute shape tensor.\n";
   shapeTensorErrorMessage +=
     "****         Note that all nodes must have a minimum of three neighbors.  Is the horizon too small?\n";
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(shapeTensorReturnCode != 0, shapeTensorErrorMessage);
+  TEUCHOS_TEST_FOR_TERMINATION(shapeTensorReturnCode != 0, shapeTensorErrorMessage);
 
   double *leftStretchTensorN, *leftStretchTensorNP1, *rotationTensorN, *rotationTensorNP1, *unrotatedRateOfDeformation;
   dataManager.getData(m_leftStretchTensorFieldId, PeridigmField::STEP_N)->ExtractView(&leftStretchTensorN);
@@ -250,7 +250,7 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
     "**** Error:  CorrespondenceMaterial::computeForce() failed to compute rotation tensor.\n";
   rotationTensorErrorMessage +=
     "****         Note that all nodes must have a minimum of three neighbors.  Is the horizon too small?\n";
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(rotationTensorReturnCode != 0, rotationTensorErrorMessage);
+  TEUCHOS_TEST_FOR_TERMINATION(rotationTensorReturnCode != 0, rotationTensorErrorMessage);
 
   // Evaluate the Cauchy stress using the routine implemented in the derived class (specific correspondence material model)
   // The general idea is to compute the stress based on:
@@ -314,7 +314,7 @@ PeridigmNS::CorrespondenceMaterial::computeForce(const double dt,
     // Invert the deformation gradient and store the determinant
     int matrixInversionReturnCode =
       CORRESPONDENCE::Invert3by3Matrix(defGrad, jacobianDeterminant, defGradInv);
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(matrixInversionReturnCode != 0, matrixInversionErrorMessage);
+    TEUCHOS_TEST_FOR_TERMINATION(matrixInversionReturnCode != 0, matrixInversionErrorMessage);
     
     //P = J * \sigma * F^(-T)
     CORRESPONDENCE::MatrixMultiply(false, true, jacobianDeterminant, stress, defGradInv, piolaStress);
