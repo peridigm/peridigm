@@ -124,7 +124,7 @@ PeridigmNS::SpeciesConcentrationMaterial::computeFluxDivergence(const double dt,
       double mu = 1.0; // PLACEHOLDER
       double coefficient = m_coefficient * (1.0 + 0.0001*nodeTemperature); // PLACEHOLDER
       double contribution_to_flux_divergence = mu * coefficient * (concentrationDifference / initialDistance) * neighborVolume;
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(!std::isfinite(contribution_to_flux_divergence), "**** NaN detected in SpeciesConcentrationMaterial::computeFluxDivergence().\n");
+      TEUCHOS_TEST_FOR_TERMINATION(!std::isfinite(contribution_to_flux_divergence), "**** NaN detected in SpeciesConcentrationMaterial::computeFluxDivergence().\n");
       fluxDivergence[iID] += contribution_to_flux_divergence;
     }
   }

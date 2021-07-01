@@ -181,7 +181,7 @@ PeridigmNS::UserDefinedTimeDependentShortRangeForceContactModel::computeForce(co
       nodeVolume = cellVolume[nodeID];
       for(iNID=0 ; iNID<numNeighbors ; ++iNID){
         neighborID = contactNeighborhoodList[neighborhoodListIndex++];
-        TEUCHOS_TEST_FOR_EXCEPT_MSG(neighborID < 0, "Invalid neighbor list\n");
+        TEUCHOS_TEST_FOR_TERMINATION(neighborID < 0, "Invalid neighbor list\n");
         currentDistanceSquared =  distanceSquared(nodeCurrentX[0], nodeCurrentX[1], nodeCurrentX[2],
                                                   y[neighborID*3], y[neighborID*3+1], y[neighborID*3+2]);
         if(currentDistanceSquared < contactRadiusSquared){

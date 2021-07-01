@@ -386,7 +386,7 @@ double PeridigmNS::tetVolume(const std::vector<double*>& nodeCoordinates)
   // The volume is then | a . (b x c) | / 6
   double volume = scalarTripleProduct(a, b, c) / 6.0;
 
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(volume < 0.0, "\n**** Error:  tetVolume() computed negative volume, possible element inversion or incorrect node numbering.\n");
+  TEUCHOS_TEST_FOR_TERMINATION(volume < 0.0, "\n**** Error:  tetVolume() computed negative volume, possible element inversion or incorrect node numbering.\n");
 
   return volume;
 }
@@ -637,8 +637,8 @@ PeridigmNS::SphereIntersection PeridigmNS::tetrahedronSphereIntersection(double*
       allInside = false;
   }
 
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(allInside && allOutside, "\n**** Error:  Nonsense result in tetrahedronSphereIntersection().\n");
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(!allInside && !allOutside, "\n**** Error:  Nonsense result in tetrahedronSphereIntersection().\n");
+  TEUCHOS_TEST_FOR_TERMINATION(allInside && allOutside, "\n**** Error:  Nonsense result in tetrahedronSphereIntersection().\n");
+  TEUCHOS_TEST_FOR_TERMINATION(!allInside && !allOutside, "\n**** Error:  Nonsense result in tetrahedronSphereIntersection().\n");
 
   if(allOutside)
     return OUTSIDE_SPHERE;
@@ -843,8 +843,8 @@ PeridigmNS::SphereIntersection PeridigmNS::hexahedronSphereIntersection(double* 
     }
   }
 
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(allInside && allOutside, "\n**** Error:  Nonsense result in hexahedronSphereIntersection().\n");
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(!allInside && !allOutside, "\n**** Error:  Nonsense result in hexahedronSphereIntersection().\n");
+  TEUCHOS_TEST_FOR_TERMINATION(allInside && allOutside, "\n**** Error:  Nonsense result in hexahedronSphereIntersection().\n");
+  TEUCHOS_TEST_FOR_TERMINATION(!allInside && !allOutside, "\n**** Error:  Nonsense result in hexahedronSphereIntersection().\n");
 
   if(allOutside)
     return OUTSIDE_SPHERE;

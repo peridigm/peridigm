@@ -169,17 +169,17 @@ int PeridigmNS::Compute_Error::compute( Teuchos::RCP< std::vector<PeridigmNS::Bl
       }
       bool isRectangular = (numX1 == 4 && numX2 == 4 && numY1 == 4 && numY2 == 4 && numZ1 == 4 && numZ2 == 4);
       if(!isRectangular){
-	std::stringstream ss;
-	ss << "**** Error:  Error compute class detected non-rectangular element." << std::endl;
-	for(int i=0 ; i<8 ; ++i)
-	  ss << "  (" << n[i][0] << ", " << n[i][1] << ", " << n[i][2] << ")" << std::endl;
-	ss << "  numX1 = " << numX1 << std::endl;
-	ss << "  numX2 = " << numX2 << std::endl;
-	ss << "  numY1 = " << numY1 << std::endl;
-	ss << "  numY2 = " << numY2 << std::endl;
-	ss << "  numZ1 = " << numZ1 << std::endl;
-	ss << "  numZ2 = " << numZ2 << std::endl;
-	TEUCHOS_TEST_FOR_EXCEPT_MSG(!isRectangular, ss.str());
+        std::stringstream ss;
+        ss << "**** Error:  Error compute class detected non-rectangular element." << std::endl;
+        for(int i=0 ; i<8 ; ++i)
+          ss << "  (" << n[i][0] << ", " << n[i][1] << ", " << n[i][2] << ")" << std::endl;
+        ss << "  numX1 = " << numX1 << std::endl;
+        ss << "  numX2 = " << numX2 << std::endl;
+        ss << "  numY1 = " << numY1 << std::endl;
+        ss << "  numY2 = " << numY2 << std::endl;
+        ss << "  numZ1 = " << numZ1 << std::endl;
+        ss << "  numZ2 = " << numZ2 << std::endl;
+        TEUCHOS_TEST_FOR_TERMINATION(!isRectangular, ss.str());
       }
 
       // Model coordinates for the node at the center of the element
@@ -247,8 +247,8 @@ double PeridigmNS::Compute_Error::computeError_1(double peridynamicSolutionX,
   double z2 = limitOfIntegration_Z_ub;
 
   double h = x2 - x1;
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(std::abs(y2 - y1 - h) > 1.0e12, "**** Error:  Error compute class detected non-square element.");
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(std::abs(z2 - z1 - h) > 1.0e12, "**** Error:  Error compute class detected non-square element.");
+  TEUCHOS_TEST_FOR_TERMINATION(std::abs(y2 - y1 - h) > 1.0e12, "**** Error:  Error compute class detected non-square element.");
+  TEUCHOS_TEST_FOR_TERMINATION(std::abs(z2 - z1 - h) > 1.0e12, "**** Error:  Error compute class detected non-square element.");
 
   double x = x1 + 0.5*(x2 - x1);
 

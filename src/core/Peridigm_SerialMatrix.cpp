@@ -73,7 +73,7 @@ void PeridigmNS::SerialMatrix::addValue(int globalRow, int globalCol, double val
   data[0][0] = value;
 
   int err = FECrsMatrix->SumIntoGlobalValues(numRows, &globalRow, numCols, &globalCol, data);
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::SerialMatrix::addValue(), SumIntoGlobalValues() returned nonzero error code.\n");
+  TEUCHOS_TEST_FOR_TERMINATION(err != 0, "**** PeridigmNS::SerialMatrix::addValue(), SumIntoGlobalValues() returned nonzero error code.\n");
 
   delete[] data[0];
   delete[] data;
@@ -86,7 +86,7 @@ void PeridigmNS::SerialMatrix::addValues(int numIndices, const int* globalIndice
   for(int i=0 ; i<numIndices ; ++i){
     localRowIndices[i] = FECrsMatrix->LRID(globalIndices[i]);
     int localColIndex = FECrsMatrix->LCID(globalIndices[i]);
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(localColIndex == -1, "Error in PeridigmNS::SerialMatrix::addValues(), bad column index.");
+    TEUCHOS_TEST_FOR_TERMINATION(localColIndex == -1, "Error in PeridigmNS::SerialMatrix::addValues(), bad column index.");
     localColIndices[i] = localColIndex;
   }
 
@@ -95,13 +95,13 @@ void PeridigmNS::SerialMatrix::addValues(int numIndices, const int* globalIndice
     // If the row is locally owned, then sum into the global tangent with Epetra_CrsMatrix::SumIntoMyValues().
     if(localRowIndices[iRow] != -1){
       int err = FECrsMatrix->SumIntoMyValues(localRowIndices[iRow], numIndices, values[iRow], &localColIndices[0]);
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::SerialMatrix::addValues(), SumIntoMyValues() returned nonzero error code.\n");
+      TEUCHOS_TEST_FOR_TERMINATION(err != 0, "**** PeridigmNS::SerialMatrix::addValues(), SumIntoMyValues() returned nonzero error code.\n");
     }
     // If the row is not locally owned, then sum into the global tangent with Epetra_FECrsMatrix::SumIntoGlobalValues().
     // This is expensive.
     else{
       int err = FECrsMatrix->SumIntoGlobalValues(globalIndices[iRow], numIndices, values[iRow], &globalIndices[0]);
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::SerialMatrix::addValues(), SumIntoGlobalValues() returned nonzero error code.\n");
+      TEUCHOS_TEST_FOR_TERMINATION(err != 0, "**** PeridigmNS::SerialMatrix::addValues(), SumIntoGlobalValues() returned nonzero error code.\n");
     }
   }
 }
@@ -142,9 +142,9 @@ void PeridigmNS::SerialMatrix::addBlockDiagonalValues(int numIndices, const int*
     int e3 = 3*elem + 2;
 
     // Be sure entries exist in inverseMap
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(inverseMap.count(e1)<=0, "Error in PeridigmNS::SerialMatrix::addBlockDiagonalValues(), bad index.");
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(inverseMap.count(e2)<=0, "Error in PeridigmNS::SerialMatrix::addBlockDiagonalValues(), bad index.");
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(inverseMap.count(e3)<=0, "Error in PeridigmNS::SerialMatrix::addBlockDiagonalValues(), bad index.");
+    TEUCHOS_TEST_FOR_TERMINATION(inverseMap.count(e1)<=0, "Error in PeridigmNS::SerialMatrix::addBlockDiagonalValues(), bad index.");
+    TEUCHOS_TEST_FOR_TERMINATION(inverseMap.count(e2)<=0, "Error in PeridigmNS::SerialMatrix::addBlockDiagonalValues(), bad index.");
+    TEUCHOS_TEST_FOR_TERMINATION(inverseMap.count(e3)<=0, "Error in PeridigmNS::SerialMatrix::addBlockDiagonalValues(), bad index.");
 
     // Store only the three block diagonal nonzeros to fill
     int idx1 = inverseMap[e1];
@@ -164,13 +164,13 @@ void PeridigmNS::SerialMatrix::addBlockDiagonalValues(int numIndices, const int*
     // If the row is locally owned, then sum into the global tangent with Epetra_CrsMatrix::SumIntoMyValues().
     if(localRowIndices[iRow] != -1){
       int err = FECrsMatrix->SumIntoMyValues(localRowIndices[iRow], blockDiagonalNumIndices, &blockDiagonalValues[0], &blockDiagonalLocalColIndices[0]);
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::SerialMatrix::addBlockDiagonalValues(), SumIntoMyValues() returned nonzero error code.\n");
+      TEUCHOS_TEST_FOR_TERMINATION(err != 0, "**** PeridigmNS::SerialMatrix::addBlockDiagonalValues(), SumIntoMyValues() returned nonzero error code.\n");
     }
     // If the row is not locally owned, then sum into the global tangent with Epetra_FECrsMatrix::SumIntoGlobalValues().
     // This is expensive.
     else{
       int err = FECrsMatrix->SumIntoGlobalValues(globalIndices[iRow], blockDiagonalNumIndices, const_cast<double *>(&blockDiagonalValues[0]), const_cast<int *>(&blockDiagonalGlobalIndices[0]));
-      TEUCHOS_TEST_FOR_EXCEPT_MSG(err != 0, "**** PeridigmNS::SerialMatrix::addBlockDiagonalValues(), SumIntoGlobalValues() returned nonzero error code.\n");
+      TEUCHOS_TEST_FOR_TERMINATION(err != 0, "**** PeridigmNS::SerialMatrix::addBlockDiagonalValues(), SumIntoGlobalValues() returned nonzero error code.\n");
     }
   }
 }

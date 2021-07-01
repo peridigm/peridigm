@@ -326,7 +326,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_ComputeRea
 {
   PeridigmNS::Timer::self().startTimer("Apply Boundary Conditions");
 
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(force->Map().ElementSize() != reaction->Map().ElementSize(), "**** In applyKinematicBC_ComputeReactions(), incompatible vector maps.");
+  TEUCHOS_TEST_FOR_TERMINATION(force->Map().ElementSize() != reaction->Map().ElementSize(), "**** In applyKinematicBC_ComputeReactions(), incompatible vector maps.");
 
   reaction->PutScalar(0.0);
 
@@ -374,7 +374,7 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
   PeridigmNS::Timer::self().startTimer("Apply Boundary Conditions");
 
   const Epetra_BlockMap& oneDimensionalMap = vec->Map();
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(oneDimensionalMap.ElementSize() != 1, "**** applyKinematicBC_InsertZeros() must be called with map having element size = 1.\n");
+  TEUCHOS_TEST_FOR_TERMINATION(oneDimensionalMap.ElementSize() != 1, "**** applyKinematicBC_InsertZeros() must be called with map having element size = 1.\n");
 
   PeridigmNS::DegreesOfFreedomManager& dofManager = PeridigmNS::DegreesOfFreedomManager::self();
   int numDof = dofManager.totalNumberOfDegreesOfFreedom();
@@ -384,9 +384,9 @@ void PeridigmNS::BoundaryAndInitialConditionManager::applyKinematicBC_InsertZero
     Teuchos::RCP<BoundaryCondition> boundaryCondition = boundaryConditions[i];
 
     if ((boundaryCondition->getType() == PRESCRIBED_DISPLACEMENT && dofManager.displacementTreatedAsUnknown()) ||
-       (boundaryCondition->getType() == PRESCRIBED_FLUID_PRESSURE_U && dofManager.pressureTreatedAsUnknown()) ||
-       (boundaryCondition->getType() == PRESCRIBED_TEMPERATURE && dofManager.temperatureTreatedAsUnknown()) ||
-       (boundaryCondition->getType() == THERMAL_FLUX && dofManager.temperatureTreatedAsUnknown())) {
+        (boundaryCondition->getType() == PRESCRIBED_FLUID_PRESSURE_U && dofManager.pressureTreatedAsUnknown()) ||
+        (boundaryCondition->getType() == PRESCRIBED_TEMPERATURE && dofManager.temperatureTreatedAsUnknown()) ||
+        (boundaryCondition->getType() == THERMAL_FLUX && dofManager.temperatureTreatedAsUnknown())) {
 
       int offset = 0;
       if (boundaryCondition->getType() == PRESCRIBED_DISPLACEMENT) {

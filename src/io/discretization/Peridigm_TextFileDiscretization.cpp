@@ -167,7 +167,7 @@ QUICKGRID::Data PeridigmNS::TextFileDiscretization::getDecomp(const string& text
   // Read the text file on the root processor
   if(myPID == 0){
     ifstream inFile(textFileName.c_str());
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(!inFile.is_open(), "**** Error opening discretization text file.\n");
+    TEUCHOS_TEST_FOR_TERMINATION(!inFile.is_open(), "**** Error opening discretization text file.\n");
     while(inFile.good()){
       string str;
       getline(inFile, str);
@@ -182,7 +182,7 @@ QUICKGRID::Data PeridigmNS::TextFileDiscretization::getDecomp(const string& text
         // Check for obvious problems with the data
         if(data.size() != 5){
           string msg = "\n**** Error parsing text file, invalid line: " + str + "\n";
-          TEUCHOS_TEST_FOR_EXCEPT_MSG(data.size() != 5, msg);
+          TEUCHOS_TEST_FOR_TERMINATION(data.size() != 5, msg);
         }
         // Store the coordinates, block id, and volumes
         coordinates.push_back(data[0]);
@@ -196,7 +196,7 @@ QUICKGRID::Data PeridigmNS::TextFileDiscretization::getDecomp(const string& text
   }
 
   int numElements = static_cast<int>(blockIds.size());
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(myPID == 0 && numElements < 1, "**** Error reading discretization text file, no data found.\n");
+  TEUCHOS_TEST_FOR_TERMINATION(myPID == 0 && numElements < 1, "**** Error reading discretization text file, no data found.\n");
 
   // Record the block ids on the root processor
   set<int> uniqueBlockIds;
@@ -273,7 +273,7 @@ QUICKGRID::Data PeridigmNS::TextFileDiscretization::getDecomp(const string& text
   for(int i=0 ; i<rebalancedBlockID.MyLength() ; ++i){
     stringstream blockName;
     blockName << "block_" << rebalancedBlockID[i];
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(elementBlocks->find(blockName.str()) == elementBlocks->end(),
+    TEUCHOS_TEST_FOR_TERMINATION(elementBlocks->find(blockName.str()) == elementBlocks->end(),
                                 "\n**** Error in TextFileDiscretization::getDecomp(), invalid block id.\n");
     int globalID = rebalancedBlockID.Map().GID(i);
     (*elementBlocks)[blockName.str()].push_back(globalID);
