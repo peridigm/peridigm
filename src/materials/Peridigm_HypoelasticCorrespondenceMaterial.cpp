@@ -597,7 +597,7 @@ PeridigmNS::HypoelasticCorrespondenceMaterial::computeForce(const double dt,
     "**** Error:  HypoelasticCorrespondenceMaterial::computeForce() failed to compute rotation tensor.\n";
   nodeLevelRotationTensorErrorMessage +=
     "****         Note that all nodes must have a minimum of three neighbors.  Is the horizon too small?\n";
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(nodeLevelRotationTensorReturnCode != 0, nodeLevelRotationTensorErrorMessage);
+  TEUCHOS_TEST_FOR_TERMINATION(nodeLevelRotationTensorReturnCode != 0, nodeLevelRotationTensorErrorMessage);
 
   // Compute bond-level values
   int bondLevelRotationTensorReturnCode = CORRESPONDENCE::computeBondLevelUnrotatedRateOfDeformationAndRotationTensor(bondLevelVelocityGradientXX,
@@ -662,7 +662,7 @@ PeridigmNS::HypoelasticCorrespondenceMaterial::computeForce(const double dt,
     "**** Error:  HypoelasticCorrespondenceMaterial::computeForce() failed to compute rotation tensor.\n";
   bondLevelRotationTensorErrorMessage +=
     "****         Note that all nodes must have a minimum of three neighbors.  Is the horizon too small?\n";
-  TEUCHOS_TEST_FOR_EXCEPT_MSG(bondLevelRotationTensorReturnCode != 0, bondLevelRotationTensorErrorMessage);
+  TEUCHOS_TEST_FOR_TERMINATION(bondLevelRotationTensorReturnCode != 0, bondLevelRotationTensorErrorMessage);
 
   // Evaluate the Cauchy stress using the routine implemented in the derived class (specific correspondence material model)
   // The general idea is to compute the stress based on:
