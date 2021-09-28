@@ -76,10 +76,10 @@ Teuchos::RCP<PeridigmNS::Peridigm> PeridigmNS::PeridigmFactory::create(const std
     Teuchos::updateParametersFromYamlFile(inputFile, peridigmParamsPtr);
 #else
     std::string msg = "**** Error, YAML reader not available.  Trilinos must be compiled with YAML support to enable this feature.\n";
-    msg += "**** You must obtain the yaml-cpp library, build it, and re-compile Trilinos with the the following flags:\n";
-    msg += "****   TPL_ENABLE_yaml-cpp:BOOL=ON\n";
-    msg += "****   yaml-cpp_INCLUDE_DIRS:PATH=/path/to/yaml/include\n";
-    msg += "****   yaml-cpp_LIBRARY_DIRS:PATH=/path/to/yaml/lib\n";
+                msg += "**** You must obtain the yaml-cpp library, build it, and re-compile Trilinos with the the following flags:\n";
+                msg += "****   TPL_ENABLE_yaml-cpp:BOOL=ON\n";
+                msg += "****   yaml-cpp_INCLUDE_DIRS:PATH=/path/to/yaml/include\n";
+                msg += "****   yaml-cpp_LIBRARY_DIRS:PATH=/path/to/yaml/lib\n";
     throw std::runtime_error(msg);
 #endif
   }

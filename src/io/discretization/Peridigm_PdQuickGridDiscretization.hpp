@@ -183,9 +183,6 @@ namespace PeridigmNS {
 
     //! Number of Processors
     unsigned int numPID;
-
-    //! Epetra communicator
-    Teuchos::RCP<const Epetra_Comm> comm;
   };
 }
 
