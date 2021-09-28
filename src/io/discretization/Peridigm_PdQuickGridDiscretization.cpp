@@ -57,14 +57,14 @@ using std::shared_ptr;
 
 PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                                                                  const Teuchos::RCP<Teuchos::ParameterList>& params) :
+  Discretization(epetra_comm),
   minElementRadius(1.0e50),
   maxElementRadius(0.0),
   maxElementDimension(0.0),
   numBonds(0),
   maxNumBondsPerElem(0),
   myPID(epetra_comm->MyPID()),
-  numPID(epetra_comm->NumProc()),
-  comm(epetra_comm)
+  numPID(epetra_comm->NumProc())
 {
   TEUCHOS_TEST_FOR_EXCEPT_MSG(params->get<std::string>("Type") != "PdQuickGrid", "Invalid Type in PdQuickGridDiscretization");
 
@@ -75,39 +75,6 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
   createMaps(decomp);
   createNeighborhoodData(decomp);
 
-  // Create the bondMap, a local map used for constitutive data stored on bonds.
-  // Due to Epetra_BlockMap restrictions, there can not be any entries with length zero.
-  // This means that points with no neighbors can not appear in the bondMap.
-  int numMyElementsUpperBound = oneDimensionalMap->NumMyElements();
-  int numGlobalElements = -1; 
-  int numMyElements = 0;
-  int maxNumBonds = 0;
-  int* oneDimensionalMapGlobalElements = oneDimensionalMap->MyGlobalElements();
-  int* myGlobalElements = new int[numMyElementsUpperBound];
-  int* elementSizeList = new int[numMyElementsUpperBound];
-  int* neighborhood = decomp.neighborhood.get();
-  int neighborhoodIndex = 0;
-  int numPointsWithZeroNeighbors = 0;
-  for(size_t i=0 ; i<decomp.numPoints ; ++i){
-    int numNeighbors = neighborhood[neighborhoodIndex];
-    if(numNeighbors > 0){
-      numMyElements++;
-      myGlobalElements[i-numPointsWithZeroNeighbors] = oneDimensionalMapGlobalElements[i];
-      elementSizeList[i-numPointsWithZeroNeighbors] = numNeighbors;
-    }
-    else{
-      numPointsWithZeroNeighbors++;
-    }
-    numBonds += numNeighbors;
-    if(numNeighbors>maxNumBonds) maxNumBonds = numNeighbors;
-    neighborhoodIndex += 1 + numNeighbors;
-  }
-  maxNumBondsPerElem = maxNumBonds;
-  int indexBase = 0;
-  bondMap = Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, elementSizeList, indexBase, *comm));
-  delete[] myGlobalElements;
-  delete[] elementSizeList;
-
   // 3D only
   TEUCHOS_TEST_FOR_EXCEPT_MSG(decomp.dimension != 3, "Invalid dimension in decomposition (only 3D is supported)");
 
@@ -116,6 +83,9 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
 
   // fill the x vector with the current positions (owned positions only)
   initialX = Teuchos::rcp(new Epetra_Vector(Copy,*threeDimensionalMap,decomp.myX.get()) );
+
+  // Create the bondMap, a local map used for constitutive data stored on bonds.
+  createBondMapAndCheckForZeroNeighbors(bondMap, oneDimensionalMap, neighborhoodData, numBonds, maxNumBondsPerElem);
 
   // fill the vector of horizon values for each point
   PeridigmNS::HorizonManager& horizonManager = PeridigmNS::HorizonManager::self();
@@ -140,52 +110,25 @@ PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::
 
 PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                                                                  const Teuchos::RCP<const QUICKGRID::Data>& decomp) :
+  Discretization(epetra_comm),
   minElementRadius(1.0e50),
   maxElementRadius(0.0),
   maxElementDimension(0.0),
   numBonds(0),
   myPID(comm->MyPID()),
-  numPID(comm->NumProc()),
-  comm(epetra_comm)
+  numPID(comm->NumProc())
 {
   createMaps(*decomp);
   createNeighborhoodData(*decomp);
-
-  // Create the bondMap, a local map used for constitutive data stored on bonds.
-  // Due to Epetra_BlockMap restrictions, there can not be any entries with length zero.
-  // This means that points with no neighbors can not appear in the bondMap.
-  int numMyElementsUpperBound = oneDimensionalMap->NumMyElements();
-  int numGlobalElements = -1; 
-  int numMyElements = 0;
-  int* oneDimensionalMapGlobalElements = oneDimensionalMap->MyGlobalElements();
-  int* myGlobalElements = new int[numMyElementsUpperBound];
-  int* elementSizeList = new int[numMyElementsUpperBound];
-  int* neighborhood = decomp->neighborhood.get();
-  int neighborhoodIndex = 0;
-  int numPointsWithZeroNeighbors = 0;
-  for(size_t i=0 ; i<decomp->numPoints ; ++i){
-    int numNeighbors = neighborhood[neighborhoodIndex];
-    if(numNeighbors > 0){
-      numMyElements++;
-      myGlobalElements[i-numPointsWithZeroNeighbors] = oneDimensionalMapGlobalElements[i];
-      elementSizeList[i-numPointsWithZeroNeighbors] = numNeighbors;
-    }
-    else{
-      numPointsWithZeroNeighbors++;
-    }
-    numBonds += numNeighbors;
-    neighborhoodIndex += 1 + numNeighbors;
-  }
-  int indexBase = 0;
-  bondMap = Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, elementSizeList, indexBase, *comm));
-  delete[] myGlobalElements;
-  delete[] elementSizeList;
 
   // 3D only
   TEUCHOS_TEST_FOR_EXCEPT_MSG(decomp->dimension != 3, "Invalid dimension in decomposition (only 3D is supported)");
 
   // fill the x vector with the current positions (owned positions only)
   initialX = Teuchos::rcp(new Epetra_Vector(Copy, *threeDimensionalMap, decomp->myX.get()) );
+
+  // Create the bondMap, a local map used for constitutive data stored on bonds.
+  createBondMapAndCheckForZeroNeighbors(bondMap, oneDimensionalMap, neighborhoodData, numBonds, maxNumBondsPerElem);
 
   // fill cell volumes
   cellVolume = Teuchos::rcp(new Epetra_Vector(Copy, *oneDimensionalMap, decomp->cellVolume.get()) );

@@ -71,6 +71,7 @@ using namespace std;
 
 PeridigmNS::ExodusDiscretization::ExodusDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                                                        const Teuchos::RCP<Teuchos::ParameterList>& params) :
+  Discretization(epetra_comm),
   verbose(false),
   minElementRadius(1.0e50),
   maxElementRadius(0.0),
@@ -82,8 +83,7 @@ PeridigmNS::ExodusDiscretization::ExodusDiscretization(const Teuchos::RCP<const 
   maxNumBondsPerElem(0),
   myPID(epetra_comm->MyPID()),
   numPID(epetra_comm->NumProc()),
-  bondFilterCommand("None"),
-  comm(epetra_comm)
+  bondFilterCommand("None")
 {
   TEUCHOS_TEST_FOR_EXCEPT_MSG(params->get<string>("Type") != "Exodus", "Invalid Type in ExodusDiscretization");
 
@@ -182,39 +182,8 @@ PeridigmNS::ExodusDiscretization::ExodusDiscretization(const Teuchos::RCP<const 
                                                                 0,
                                                                 oneDimensionalOverlapMap->Comm()));
 
-  // \todo Move this functionality to base class, it's currently duplicated in PdQuickGridDiscretization.
   // Create the bondMap, a local map used for constitutive data stored on bonds.
-  // Due to Epetra_BlockMap restrictions, there can not be any entries with length zero.
-  // This means that points with no neighbors can not appear in the bondMap.
-  int numMyElementsUpperBound = oneDimensionalMap->NumMyElements();
-  int numGlobalElements = -1;
-  int numMyElements = 0;
-  int maxNumBonds = 0;
-  int* oneDimensionalMapGlobalElements = oneDimensionalMap->MyGlobalElements();
-  int* myGlobalElements = new int[numMyElementsUpperBound];
-  int* elementSizeList = new int[numMyElementsUpperBound];
-  int* const neighborhood = neighborhoodData->NeighborhoodList();
-  int neighborhoodIndex = 0;
-  int numPointsWithZeroNeighbors = 0;
-  for(int i=0 ; i<neighborhoodData->NumOwnedPoints() ; ++i){
-    int numNeighbors = neighborhood[neighborhoodIndex];
-    if(numNeighbors > 0){
-      numMyElements++;
-      myGlobalElements[i-numPointsWithZeroNeighbors] = oneDimensionalMapGlobalElements[i];
-      elementSizeList[i-numPointsWithZeroNeighbors] = numNeighbors;
-    }
-    else{
-      numPointsWithZeroNeighbors++;
-    }
-    numBonds += numNeighbors;
-    if(numNeighbors>maxNumBonds) maxNumBonds = numNeighbors;
-    neighborhoodIndex += 1 + numNeighbors;
-  }
-  maxNumBondsPerElem = maxNumBonds;
-  int indexBase = 0;
-  bondMap = Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, elementSizeList, indexBase, *comm));
-  delete[] myGlobalElements;
-  delete[] elementSizeList;
+  createBondMapAndCheckForZeroNeighbors(bondMap, oneDimensionalMap, neighborhoodData, numBonds, maxNumBondsPerElem);
 
   // find the minimum element radius
   for(int i=0 ; i<cellVolume->MyLength() ; ++i){
@@ -737,8 +706,7 @@ PeridigmNS::ExodusDiscretization::createNeighborhoodData(int neighborListSize, i
   neighborhoodData = filterBonds(neighborhoodData);
 }
 
-Teuchos::RCP<PeridigmNS::NeighborhoodData>
-PeridigmNS::ExodusDiscretization::filterBonds(Teuchos::RCP<PeridigmNS::NeighborhoodData> unfilteredNeighborhoodData)
+Teuchos::RCP<PeridigmNS::NeighborhoodData> PeridigmNS::ExodusDiscretization::filterBonds(Teuchos::RCP<PeridigmNS::NeighborhoodData> unfilteredNeighborhoodData)
 {
   // Set up a block bonding matrix, which defines whether or not bonds should be formed across blocks
   int numBlocks = getNumBlocks();

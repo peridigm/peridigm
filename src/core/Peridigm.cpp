@@ -197,7 +197,7 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
   // The horizon may no longer be specified in the discretization block
   // Throw an exception if the user is running an old input deck with the horizon in the discretization parameter list
   string msg = "\n**** Error, \"Horizon\" is no longer an allowable Discretization parameter.\n";
-  msg +=         "****        A horizon for each block must be specified in the Blocks section.\n";
+         msg +=  "****        A horizon for each block must be specified in the Blocks section.\n";
   TEUCHOS_TEST_FOR_EXCEPT_MSG(discParams->isParameter("Horizon"), msg);
 
   // Check for command to compute horizon-element intersections
@@ -276,8 +276,7 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
   initializeDiscretization(peridigmDiscretization);
 
   // Instantiate and initialize the boundary and initial condition manager
-  Teuchos::RCP<Teuchos::ParameterList> bcParams =
-    Teuchos::rcpFromRef( peridigmParams->sublist("Boundary Conditions") );
+  Teuchos::RCP<Teuchos::ParameterList> bcParams = Teuchos::rcpFromRef( peridigmParams->sublist("Boundary Conditions") );
 
   // Set a flag for creation of the RANK_DEFICIENT_NODES node set if the simulation
   // uses implicit time integration and has bond failure
@@ -292,8 +291,7 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
       bcParams->set<bool>("Create Node Set For Rank Deficient Nodes", true);
   }
 
-  boundaryAndInitialConditionManager =
-    Teuchos::RCP<BoundaryAndInitialConditionManager>(new BoundaryAndInitialConditionManager(*bcParams, this));
+  boundaryAndInitialConditionManager = Teuchos::RCP<BoundaryAndInitialConditionManager>(new BoundaryAndInitialConditionManager(*bcParams, this));
 
   boundaryAndInitialConditionManager->initialize(peridigmDiscretization);
 
@@ -391,7 +389,7 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
   double minElementRadius = peridigmDiscretization->getMinElementRadius();
   double defaultFiniteDifferenceProbeLength = 1.0e-6*minElementRadius;
 
-  // Obtain parameter lists and factories for material models ane damage models
+  // Obtain parameter lists and factories for material models and damage models
   // Material models
   Teuchos::ParameterList materialParams = peridigmParams->sublist("Materials", true);
   MaterialFactory materialFactory;
@@ -783,7 +781,7 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
       cout << "\n  number of rows = " << tangent->NumGlobalRows() << endl;
       if(numMultiphysDoFs > 0)
         cout << "  of those rows, " << numMultiphysDoFs << " are interspersed multiphysics terms." << endl;
-      cout << "  number of nonzeros = " << tangent->NumGlobalNonzeros() << "\n" << endl;
+      cout << "  number of nonzeros = " << tangent->NumGlobalNonzeros64() << "\n" << endl;
     }
     jacobianType = PeridigmNS::Material::FULL_MATRIX;
   }
@@ -806,7 +804,7 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
     PeridigmNS::Timer::self().stopTimer("Allocate Global Block Diagonal Tangent");
     if(peridigmComm->MyPID() == 0 && !allocateTangent){
       cout << "\n  number of rows = " << blockDiagonalTangent->NumGlobalRows() << endl;
-      cout << "  number of nonzeros = " << blockDiagonalTangent->NumGlobalNonzeros() << "\n" << endl;
+      cout << "  number of nonzeros = " << blockDiagonalTangent->NumGlobalNonzeros64() << "\n" << endl;
     }
     if(jacobianType == PeridigmNS::Material::UNDEFINED)
       jacobianType = PeridigmNS::Material::BLOCK_DIAGONAL;
@@ -903,7 +901,7 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization>
     }
   }
   if(analysisHasBondAssociatedHypoelasticModel){
-    damage = Teuchos::rcp((*oneDimensionalMothership)(9), false);              // damage
+    damage = Teuchos::rcp((*oneDimensionalMothership)(9), false);               // damage
     jacobianDeterminant = Teuchos::rcp((*oneDimensionalMothership)(10), false); // jacobian determinant (J)
     weightedVolume = Teuchos::rcp((*oneDimensionalMothership)(11), false);      // weighted volume
     damage->PutScalar(0.0);
@@ -926,7 +924,7 @@ void PeridigmNS::Peridigm::initializeDiscretization(Teuchos::RCP<Discretization>
   deltaU = Teuchos::rcp((*threeDimensionalMothership)(8), false);        // increment in displacement (used only for implicit time integration)
   scratch = Teuchos::rcp((*threeDimensionalMothership)(9), false);       // scratch space
   if(analysisHasBondAssociatedHypoelasticModel){
-    velocityGradientX = Teuchos::rcp((*threeDimensionalMothership)(10), false);  // velocity gradient XX XY XZ (L)
+    velocityGradientX = Teuchos::rcp((*threeDimensionalMothership)(10), false); // velocity gradient XX XY XZ (L)
     velocityGradientY = Teuchos::rcp((*threeDimensionalMothership)(11), false); // velocity gradient YX YY YZ (L)
     velocityGradientZ = Teuchos::rcp((*threeDimensionalMothership)(12), false); // velocity gradient ZX ZY ZZ (L)
   }
@@ -1003,6 +1001,7 @@ std::string getCmdOutput(const std::string& mStr)
   pclose(pipe);
   return result;
 }
+
 std::string firstNumbersSring(std::string const & str)
 {
   std::size_t const n = str.find_first_of("0123456789");
@@ -1013,6 +1012,7 @@ std::string firstNumbersSring(std::string const & str)
   }
   return std::string();
 }
+
 void PeridigmNS::Peridigm::InitializeRestart() {
   Teuchos::RCP<Teuchos::ParameterList> firstSolver = solverParameters[0];
   std::string str;
@@ -1118,6 +1118,7 @@ restartFiles["deltaU"] = pathname;
 sprintf(pathname,"%s/scratch.mat",restart_directory_namePtr);
 restartFiles["scratch"] = pathname;
 }
+
 void PeridigmNS::Peridigm::instantiateComputeManager(Teuchos::RCP<Discretization> peridigmDiscretization) {
 
   Teuchos::RCP<Teuchos::ParameterList> computeParams = Teuchos::rcp( new Teuchos::ParameterList("Compute Manager") );

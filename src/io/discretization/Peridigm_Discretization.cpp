@@ -231,3 +231,54 @@ int PeridigmNS::Discretization::blockNameToBlockId(string blockName) const {
 
   return bID;
 }
+
+void PeridigmNS::Discretization::createBondMapAndCheckForZeroNeighbors(Teuchos::RCP<Epetra_BlockMap>& bondMap,
+                                                                       const Teuchos::RCP<Epetra_BlockMap> oneDimensionalMap,
+                                                                       const Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData,
+                                                                       unsigned int & numBonds,
+                                                                       unsigned int & maxNumBondsPerElem) const {
+  // Create the bondMap, a local map used for constitutive data stored on bonds.
+  // Due to Epetra_BlockMap restrictions, there can not be any entries with length zero.
+  // This means that points with no neighbors can not appear in the bondMap.
+  int numMyElementsUpperBound = oneDimensionalMap->NumMyElements();
+  int numGlobalElements = -1;
+  int numMyElements = 0;
+  int maxNumBonds = 0;
+  int* oneDimensionalMapGlobalElements = oneDimensionalMap->MyGlobalElements();
+  int* myGlobalElements = new int[numMyElementsUpperBound];
+  int* elementSizeList = new int[numMyElementsUpperBound];
+  int* const neighborhood = neighborhoodData->NeighborhoodList();
+  int neighborhoodIndex = 0;
+  int numPointsWithZeroNeighbors = 0;
+  for(int i=0 ; i<neighborhoodData->NumOwnedPoints() ; ++i){
+    int numNeighbors = neighborhood[neighborhoodIndex];
+    if(numNeighbors > 0){
+      numMyElements++;
+      myGlobalElements[i-numPointsWithZeroNeighbors] = oneDimensionalMapGlobalElements[i];
+      elementSizeList[i-numPointsWithZeroNeighbors] = numNeighbors;
+    }
+    else{
+      numPointsWithZeroNeighbors++;
+      /*
+       * Print warning message when no neighbor exist for this point.
+       * This can cause in problems downstream e.g. in computation of the
+       * jacobian matrix in quasi-static or implicit solver.
+       */
+      int globalID = oneDimensionalMapGlobalElements[i];
+      int localID  = oneDimensionalMap->LID(globalID);
+      Teuchos::RCP<Epetra_Vector> xPtr = getInitialX();
+      std::cout << "\n *** WARNING: PeridigmNS::Discretization::createBondMapAndCheckForZeroNeighbors(..)\n";
+      std::cout << "\tNumber of neighbors is less or equal 1!\n\tThis is probably a problem for the evaluation of a jacobian.\n";
+      std::cout << "\tGlobal point id = " << globalID << "\n"
+                << "\tx,y,z = " << (*xPtr)[3*localID] << ", " << (*xPtr)[3*localID+1] << ", " << (*xPtr)[3*localID+2] << "\n" << std::endl;
+    }
+    numBonds += numNeighbors;
+    if(numNeighbors>maxNumBonds) maxNumBonds = numNeighbors;
+    neighborhoodIndex += 1 + numNeighbors;
+  }
+  maxNumBondsPerElem = maxNumBonds;
+  int indexBase = 0;
+  bondMap = Teuchos::rcp(new Epetra_BlockMap(numGlobalElements, numMyElements, myGlobalElements, elementSizeList, indexBase, *comm));
+  delete[] myGlobalElements;
+  delete[] elementSizeList;
+}

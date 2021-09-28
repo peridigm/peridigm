@@ -63,9 +63,10 @@ namespace PeridigmNS {
   public:
 
     //! Constructor
-    Discretization() :
+    Discretization(const Teuchos::RCP<const Epetra_Comm>& epetraComm) :
       elementBlocks(Teuchos::rcp(new std::map< std::string, std::vector<int> >())),
-      nodeSets(Teuchos::rcp(new std::map< std::string, std::vector<int> >()))
+      nodeSets(Teuchos::rcp(new std::map< std::string, std::vector<int> >())),
+      comm(epetraComm)
     {}
 
     //! Destructor
@@ -161,6 +162,13 @@ namespace PeridigmNS {
     //! Get the block id for a given block name
     int blockNameToBlockId(std::string blockName) const;
 
+    //! Create the bondMap, a local map used for constitutive data stored on bonds.
+    void createBondMapAndCheckForZeroNeighbors(Teuchos::RCP<Epetra_BlockMap>& bondMap,
+                                               const Teuchos::RCP<Epetra_BlockMap> oneDimensionalMap,
+                                               const Teuchos::RCP<PeridigmNS::NeighborhoodData> neighborhoodData,
+                                               unsigned int & numBonds,
+                                               unsigned int & maxNumBondsPerElem) const;
+
   protected:
 
     //! Get the overlap map.
@@ -186,6 +194,9 @@ namespace PeridigmNS {
     Teuchos::RCP< std::map< std::string, int> > nodeSetIds;
 
     std::vector< std::shared_ptr<PdBondFilter::BondFilter> > bondFilters;
+
+    //! Epetra communicator
+    Teuchos::RCP<const Epetra_Comm> comm;
 
   private:
 
