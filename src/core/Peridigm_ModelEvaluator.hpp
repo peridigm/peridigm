@@ -80,10 +80,6 @@ namespace PeridigmNS {
     //! Jacobian evaluation that acts directly on the workset
     void evalJacobian(Teuchos::RCP<Workset> workset) const;
 
-    void computeVelocityGradient(Teuchos::RCP<Workset> workset) const;
-    
-    void computeBondVelocityGradient(Teuchos::RCP<Workset> workset) const;
-
   private:
 
     //! Private to prohibit copying
