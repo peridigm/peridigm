@@ -77,6 +77,27 @@ namespace PeridigmNS {
     //! Returns a vector of field IDs corresponding to the variables associated with the material.
     virtual std::vector<int> FieldIds() const { return m_fieldIds; }
 
+    //! Returns a vector of field IDs that need to be synchronized across block boundaries and MPI boundaries after initialize().
+    virtual std::vector<int> FieldIdsForSynchronizationAfterInitialize() const {
+      std::vector<int> fieldIds;
+      fieldIds.push_back(m_jacobianDeterminantFieldId);
+      fieldIds.push_back(m_flyingPointFlagFieldId);
+      return fieldIds;
+    }
+
+    //! Returns a vector of field IDs that need to be synchronized across block boundaries and MPI boundaries after precompute().
+    virtual std::vector<int> FieldIdsForSynchronizationAfterPrecompute() const {
+      std::vector<int> fieldIds;
+      fieldIds.push_back(m_jacobianDeterminantFieldId);
+      fieldIds.push_back(m_weightedVolumeFieldId);
+      fieldIds.push_back(m_undamagedWeightedVolumeFieldId);
+      fieldIds.push_back(m_flyingPointFlagFieldId);
+      fieldIds.push_back(m_velocityGradientXFieldId);
+      fieldIds.push_back(m_velocityGradientYFieldId);
+      fieldIds.push_back(m_velocityGradientZFieldId);
+      return fieldIds;
+    }
+
     //! Initialize the material model.
     virtual void initialize(const double dt,
                             const int numOwnedPoints,
@@ -97,21 +118,13 @@ namespace PeridigmNS {
                               const int* neighborhoodList,
                               PeridigmNS::DataManager& dataManager) const;
 
-    //! Evaluate the node-level (state-based) velocity gradient
+    //! Evaluate the node-level fields for symmetric bond-associated models
     virtual void 
-    computeNodeLevelVelocityGradient(const double dt,
-                                     const int numOwnedPoints,
-                                     const int* ownedIDs,
-                                     const int* neighborhoodList,
-                                     PeridigmNS::DataManager& dataManager) const;
-
-    //! Evaluate the bond-level (mixed state-based / bond-based) velocity gradient
-    virtual void
-    computeBondVelocityGradient(const double dt,
-                                const int numOwnedPoints,
-                                const int* ownedIDs,
-                                const int* neighborhoodList,
-                                PeridigmNS::DataManager& dataManager) const;
+    precompute(const double dt,
+               const int numOwnedPoints,
+               const int* ownedIDs,
+               const int* neighborhoodList,
+               PeridigmNS::DataManager& dataManager) const;
 
   protected:
 
@@ -132,6 +145,9 @@ namespace PeridigmNS {
     int m_forceDensityFieldId;
     int m_bondDamageFieldId;
     int m_velocityGradientFieldId;
+    int m_velocityGradientXFieldId;
+    int m_velocityGradientYFieldId;
+    int m_velocityGradientZFieldId;
     int m_shapeTensorInverseFieldId;
     int m_deformationGradientFieldId;
     int m_greenLagrangeStrainFieldId;

@@ -62,6 +62,9 @@ PeridigmNS::HypoelasticCorrespondenceMaterial::HypoelasticCorrespondenceMaterial
     m_coordinatesFieldId(-1), m_velocitiesFieldId(-1), 
     m_forceDensityFieldId(-1), m_bondDamageFieldId(-1),
     m_velocityGradientFieldId(-1),
+    m_velocityGradientXFieldId(-1),
+    m_velocityGradientYFieldId(-1),
+    m_velocityGradientZFieldId(-1),
     m_shapeTensorInverseFieldId(-1),
     m_deformationGradientFieldId(-1),
     m_greenLagrangeStrainFieldId(-1),
@@ -149,6 +152,9 @@ PeridigmNS::HypoelasticCorrespondenceMaterial::HypoelasticCorrespondenceMaterial
   m_forceDensityFieldId               = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force_Density");
   m_bondDamageFieldId                 = fieldManager.getFieldId(PeridigmField::BOND,    PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Bond_Damage");
   m_velocityGradientFieldId           = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::CONSTANT, "Velocity_Gradient");
+  m_velocityGradientXFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::VECTOR, PeridigmField::CONSTANT, "Velocity_Gradient_X");
+  m_velocityGradientYFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::VECTOR, PeridigmField::CONSTANT, "Velocity_Gradient_Y");
+  m_velocityGradientZFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::VECTOR, PeridigmField::CONSTANT, "Velocity_Gradient_Z");
   m_shapeTensorInverseFieldId         = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::CONSTANT, "Shape_Tensor_Inverse");
   m_deformationGradientFieldId        = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::TWO_STEP, "Deformation_Gradient");
   m_greenLagrangeStrainFieldId        = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::CONSTANT, "Green_Lagrange_Strain");
@@ -229,6 +235,9 @@ PeridigmNS::HypoelasticCorrespondenceMaterial::HypoelasticCorrespondenceMaterial
   m_fieldIds.push_back(m_forceDensityFieldId);
   m_fieldIds.push_back(m_bondDamageFieldId);
   m_fieldIds.push_back(m_velocityGradientFieldId);
+  m_fieldIds.push_back(m_velocityGradientXFieldId);
+  m_fieldIds.push_back(m_velocityGradientYFieldId);
+  m_fieldIds.push_back(m_velocityGradientZFieldId);
   m_fieldIds.push_back(m_shapeTensorInverseFieldId);
   m_fieldIds.push_back(m_deformationGradientFieldId);
   m_fieldIds.push_back(m_greenLagrangeStrainFieldId);
@@ -318,6 +327,9 @@ PeridigmNS::HypoelasticCorrespondenceMaterial::initialize(const double dt,
   dataManager.getData(m_horizonFieldId, PeridigmField::STEP_NONE)->PutScalar(m_actualHorizon);
 
   dataManager.getData(m_velocityGradientFieldId, PeridigmField::STEP_NONE)->PutScalar(0.0);
+  dataManager.getData(m_velocityGradientXFieldId, PeridigmField::STEP_NONE)->PutScalar(0.0);
+  dataManager.getData(m_velocityGradientYFieldId, PeridigmField::STEP_NONE)->PutScalar(0.0);
+  dataManager.getData(m_velocityGradientZFieldId, PeridigmField::STEP_NONE)->PutScalar(0.0);
   dataManager.getData(m_shapeTensorInverseFieldId, PeridigmField::STEP_NONE)->PutScalar(0.0);
   dataManager.getData(m_deformationGradientFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
   dataManager.getData(m_deformationGradientFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
@@ -468,7 +480,7 @@ PeridigmNS::HypoelasticCorrespondenceMaterial::computeForce(const double dt,
 
   double *horizon, *volume, *coordinates, *velocities, *shapeTensorInverse;
   double *weightedVolume, *jacobianDeterminantN, *jacobianDeterminantNP1;
-  double *velocityGradient;
+  double *velocityGradient, *velocityGradientX, *velocityGradientY, *velocityGradientZ;
   double *bondLevelVelocityGradientXX, *bondLevelVelocityGradientXY, *bondLevelVelocityGradientXZ;
   double *bondLevelVelocityGradientYX, *bondLevelVelocityGradientYY, *bondLevelVelocityGradientYZ;
   double *bondLevelVelocityGradientZX, *bondLevelVelocityGradientZY, *bondLevelVelocityGradientZZ;
@@ -481,6 +493,9 @@ PeridigmNS::HypoelasticCorrespondenceMaterial::computeForce(const double dt,
   dataManager.getData(m_velocitiesFieldId, PeridigmField::STEP_NP1)->ExtractView(&velocities);
   dataManager.getData(m_shapeTensorInverseFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverse);
   dataManager.getData(m_velocityGradientFieldId, PeridigmField::STEP_NONE)->ExtractView(&velocityGradient);
+  dataManager.getData(m_velocityGradientXFieldId, PeridigmField::STEP_NONE)->ExtractView(&velocityGradientX);
+  dataManager.getData(m_velocityGradientYFieldId, PeridigmField::STEP_NONE)->ExtractView(&velocityGradientY);
+  dataManager.getData(m_velocityGradientZFieldId, PeridigmField::STEP_NONE)->ExtractView(&velocityGradientZ);
   dataManager.getData(m_bondLevelVelocityGradientXXFieldId, PeridigmField::STEP_NONE)->ExtractView(&bondLevelVelocityGradientXX);
   dataManager.getData(m_bondLevelVelocityGradientXYFieldId, PeridigmField::STEP_NONE)->ExtractView(&bondLevelVelocityGradientXY);
   dataManager.getData(m_bondLevelVelocityGradientXZFieldId, PeridigmField::STEP_NONE)->ExtractView(&bondLevelVelocityGradientXZ);
@@ -498,6 +513,24 @@ PeridigmNS::HypoelasticCorrespondenceMaterial::computeForce(const double dt,
   double *deformationGradientN, *deformationGradientNP1;
   dataManager.getData(m_deformationGradientFieldId, PeridigmField::STEP_N)->ExtractView(&deformationGradientN);
   dataManager.getData(m_deformationGradientFieldId, PeridigmField::STEP_NP1)->ExtractView(&deformationGradientNP1);
+
+  CORRESPONDENCE::computeBondLevelVelocityGradient(coordinates,
+                                                   velocities,
+                                                   velocityGradientX,
+                                                   velocityGradientY,
+                                                   velocityGradientZ,
+                                                   bondLevelVelocityGradientXX,
+                                                   bondLevelVelocityGradientXY,
+                                                   bondLevelVelocityGradientXZ,
+                                                   bondLevelVelocityGradientYX,
+                                                   bondLevelVelocityGradientYY,
+                                                   bondLevelVelocityGradientYZ,
+                                                   bondLevelVelocityGradientZX,
+                                                   bondLevelVelocityGradientZY,
+                                                   bondLevelVelocityGradientZZ,
+                                                   flyingPointFlag,
+                                                   neighborhoodList,
+                                                   numOwnedPoints);
 
   // Update the deformation gradient so that later Green Strain tensor can be
   // computed. This step is done only for visualization purposes.
@@ -885,29 +918,12 @@ PeridigmNS::HypoelasticCorrespondenceMaterial::computeForce(const double dt,
   }
 }
 
-void PeridigmNS::HypoelasticCorrespondenceMaterial::computeNodeLevelVelocityGradient(const double dt,
-                                                                                     const int numOwnedPoints,
-                                                                                     const int* ownedIDs,
-                                                                                     const int* neighborhoodList,
-                                                                                     PeridigmNS::DataManager& dataManager) const
+void PeridigmNS::HypoelasticCorrespondenceMaterial::precompute(const double dt,
+                                                               const int numOwnedPoints,
+                                                               const int* ownedIDs,
+                                                               const int* neighborhoodList,
+                                                               PeridigmNS::DataManager& dataManager) const
 {
-  // Get field ids for all relevant data
-  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
-  int m_horizonFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Horizon");
-  int m_volumeFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Volume");
-  int m_jacobianDeterminantFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Jacobian_Determinant");
-  int m_weightedVolumeFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Weighted_Volume");
-  int m_undamagedWeightedVolumeFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Undamaged_Weighted_Volume");
-  int m_coordinatesFieldId = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Coordinates");
-  int m_velocitiesFieldId = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Velocity");
-  int m_shapeTensorInverseFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::CONSTANT, "Shape_Tensor_Inverse");
-  int m_velocityGradientFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::CONSTANT, "Velocity_Gradient");
-  int m_velocityGradientXFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::VECTOR, PeridigmField::CONSTANT, "Velocity_Gradient_X");
-  int m_velocityGradientYFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::VECTOR, PeridigmField::CONSTANT, "Velocity_Gradient_Y");
-  int m_velocityGradientZFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::VECTOR, PeridigmField::CONSTANT, "Velocity_Gradient_Z");
-  int m_flyingPointFlagFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Flying_Point_Flag");
-  int m_bondDamageFieldId = fieldManager.getFieldId(PeridigmField::BOND,    PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Bond_Damage");
-
   // Zero out the data  
   dataManager.getData(m_jacobianDeterminantFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
   dataManager.getData(m_weightedVolumeFieldId, PeridigmField::STEP_NONE)->PutScalar(0.0);
@@ -974,68 +990,4 @@ void PeridigmNS::HypoelasticCorrespondenceMaterial::computeNodeLevelVelocityGrad
                                                  coordinates,
                                                  neighborhoodList,
                                                  numOwnedPoints);
-}
-
-void PeridigmNS::HypoelasticCorrespondenceMaterial::computeBondVelocityGradient(const double dt,
-                                                                                const int numOwnedPoints,
-                                                                                const int* ownedIDs,
-                                                                                const int* neighborhoodList,
-                                                                                PeridigmNS::DataManager& dataManager) const
-{
-  // Get field ids for all relevant data
-  PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
-  int m_coordinatesFieldId = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Coordinates");
-  int m_velocitiesFieldId = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Velocity");
-  int m_velocityGradientXFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::VECTOR, PeridigmField::CONSTANT, "Velocity_Gradient_X");
-  int m_velocityGradientYFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::VECTOR, PeridigmField::CONSTANT, "Velocity_Gradient_Y");
-  int m_velocityGradientZFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::VECTOR, PeridigmField::CONSTANT, "Velocity_Gradient_Z");
-  int m_bondLevelVelocityGradientXXFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Velocity_Gradient_XX");
-  int m_bondLevelVelocityGradientXYFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Velocity_Gradient_XY");
-  int m_bondLevelVelocityGradientXZFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Velocity_Gradient_XZ");
-  int m_bondLevelVelocityGradientYXFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Velocity_Gradient_YX");
-  int m_bondLevelVelocityGradientYYFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Velocity_Gradient_YY");
-  int m_bondLevelVelocityGradientYZFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Velocity_Gradient_YZ");
-  int m_bondLevelVelocityGradientZXFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Velocity_Gradient_ZX");
-  int m_bondLevelVelocityGradientZYFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Velocity_Gradient_ZY");
-  int m_bondLevelVelocityGradientZZFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Velocity_Gradient_ZZ");
-  int m_flyingPointFlagFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Flying_Point_Flag");
-
-  double *coordinates, *velocities;
-  double *velocityGradientX, *velocityGradientY, *velocityGradientZ, *flyingPointFlag;
-  double *bondLevelVelocityGradientXX, *bondLevelVelocityGradientXY, *bondLevelVelocityGradientXZ;
-  double *bondLevelVelocityGradientYX, *bondLevelVelocityGradientYY, *bondLevelVelocityGradientYZ;
-  double *bondLevelVelocityGradientZX, *bondLevelVelocityGradientZY, *bondLevelVelocityGradientZZ;
-  dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&coordinates);
-  dataManager.getData(m_velocitiesFieldId, PeridigmField::STEP_NP1)->ExtractView(&velocities);
-  dataManager.getData(m_velocityGradientXFieldId, PeridigmField::STEP_NONE)->ExtractView(&velocityGradientX);
-  dataManager.getData(m_velocityGradientYFieldId, PeridigmField::STEP_NONE)->ExtractView(&velocityGradientY);
-  dataManager.getData(m_velocityGradientZFieldId, PeridigmField::STEP_NONE)->ExtractView(&velocityGradientZ);
-  dataManager.getData(m_bondLevelVelocityGradientXXFieldId, PeridigmField::STEP_NONE)->ExtractView(&bondLevelVelocityGradientXX);
-  dataManager.getData(m_bondLevelVelocityGradientXYFieldId, PeridigmField::STEP_NONE)->ExtractView(&bondLevelVelocityGradientXY);
-  dataManager.getData(m_bondLevelVelocityGradientXZFieldId, PeridigmField::STEP_NONE)->ExtractView(&bondLevelVelocityGradientXZ);
-  dataManager.getData(m_bondLevelVelocityGradientYXFieldId, PeridigmField::STEP_NONE)->ExtractView(&bondLevelVelocityGradientYX);
-  dataManager.getData(m_bondLevelVelocityGradientYYFieldId, PeridigmField::STEP_NONE)->ExtractView(&bondLevelVelocityGradientYY);
-  dataManager.getData(m_bondLevelVelocityGradientYZFieldId, PeridigmField::STEP_NONE)->ExtractView(&bondLevelVelocityGradientYZ);
-  dataManager.getData(m_bondLevelVelocityGradientZXFieldId, PeridigmField::STEP_NONE)->ExtractView(&bondLevelVelocityGradientZX);
-  dataManager.getData(m_bondLevelVelocityGradientZYFieldId, PeridigmField::STEP_NONE)->ExtractView(&bondLevelVelocityGradientZY);
-  dataManager.getData(m_bondLevelVelocityGradientZZFieldId, PeridigmField::STEP_NONE)->ExtractView(&bondLevelVelocityGradientZZ);
-  dataManager.getData(m_flyingPointFlagFieldId, PeridigmField::STEP_N)->ExtractView(&flyingPointFlag);
-
-  CORRESPONDENCE::computeBondLevelVelocityGradient(coordinates,
-                                                   velocities,
-                                                   velocityGradientX,
-                                                   velocityGradientY,
-                                                   velocityGradientZ,
-                                                   bondLevelVelocityGradientXX,
-                                                   bondLevelVelocityGradientXY,
-                                                   bondLevelVelocityGradientXZ,
-                                                   bondLevelVelocityGradientYX,
-                                                   bondLevelVelocityGradientYY,
-                                                   bondLevelVelocityGradientYZ,
-                                                   bondLevelVelocityGradientZX,
-                                                   bondLevelVelocityGradientZY,
-                                                   bondLevelVelocityGradientZZ,
-                                                   flyingPointFlag,
-                                                   neighborhoodList,
-                                                   numOwnedPoints);
 }

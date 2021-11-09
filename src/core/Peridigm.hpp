@@ -348,12 +348,6 @@ namespace PeridigmNS {
     Teuchos::RCP<Epetra_Vector> getTemperature() { return temperature; }
     Teuchos::RCP<Epetra_Vector> getDeltaTemperature() { return deltaTemperature; }
     Teuchos::RCP<Epetra_Vector> getConcentration() { return concentration; }
-    Teuchos::RCP<Epetra_Vector> getDamage() { return damage; }
-    Teuchos::RCP<Epetra_Vector> getJacobianDeterminant() { return jacobianDeterminant; }
-    Teuchos::RCP<Epetra_Vector> getWeightedVolume() { return weightedVolume; }
-    Teuchos::RCP<Epetra_Vector> getVelocityGradientX() { return velocityGradientX; }
-    Teuchos::RCP<Epetra_Vector> getVelocityGradientY() { return velocityGradientY; }
-    Teuchos::RCP<Epetra_Vector> getVelocityGradientZ() { return velocityGradientZ; }
     //@}
 
     //! Accessor for global neighborhood data
@@ -581,22 +575,6 @@ namespace PeridigmNS {
     //! Global vector for fluid flow
     Teuchos::RCP<Epetra_Vector> fluidFlow;
 
-    //! Global vector for damage
-    Teuchos::RCP<Epetra_Vector> damage;
-
-    //! Global vector for jacobian determinant
-    Teuchos::RCP<Epetra_Vector> jacobianDeterminant;
-
-    //! Global vector for weighted volume
-    Teuchos::RCP<Epetra_Vector> weightedVolume;
-
-    //! Global vector for velocity gradient
-    Teuchos::RCP<Epetra_Vector> velocityGradientX;
-    Teuchos::RCP<Epetra_Vector> velocityGradientY;
-    Teuchos::RCP<Epetra_Vector> velocityGradientZ;
-
-    bool analysisHasBondAssociatedHypoelasticModel;
-
     //! Type of tangent to evaluate
     PeridigmNS::Material::JacobianType jacobianType;
 
@@ -655,12 +633,6 @@ namespace PeridigmNS {
     int contactForceDensityFieldId;
     int externalForceDensityFieldId;
     int partialVolumeFieldId;
-    int damageFieldId;
-    int jacobianDeterminantFieldId;
-    int weightedVolumeFieldId;
-    int velocityGradientXFieldId;
-    int velocityGradientYFieldId;
-    int velocityGradientZFieldId;
 
     // multiphyics information
     int fluidPressureYFieldId;
