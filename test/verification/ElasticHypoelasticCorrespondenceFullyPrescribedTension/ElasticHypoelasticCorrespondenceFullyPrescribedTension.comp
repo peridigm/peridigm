@@ -40,15 +40,6 @@ ELEMENT VARIABLES absolute 1.E-12
 	Rotation_TensorZX absolute 1.0E-12
 	Rotation_TensorZY absolute 1.0E-12
 	Rotation_TensorZZ absolute 1.0E-12
-	Shape_Tensor_InverseXX absolute 1.0E-12
-	Shape_Tensor_InverseXY absolute 1.0E-12
-	Shape_Tensor_InverseXZ absolute 1.0E-12
-	Shape_Tensor_InverseYX absolute 1.0E-12
-	Shape_Tensor_InverseYY absolute 1.0E-12
-	Shape_Tensor_InverseYZ absolute 1.0E-12
-	Shape_Tensor_InverseZX absolute 1.0E-12
-	Shape_Tensor_InverseZY absolute 1.0E-12
-	Shape_Tensor_InverseZZ absolute 1.0E-12
 	Unrotated_Rate_Of_DeformationXX absolute 1.0E-8
 	Unrotated_Rate_Of_DeformationXY absolute 1.0E-8
 	Unrotated_Rate_Of_DeformationXZ absolute 1.0E-8

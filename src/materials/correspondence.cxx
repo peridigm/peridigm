@@ -52,6 +52,9 @@
 #include <math.h>
 #include <functional>
 #include <vector>
+#include "Epetra_LAPACK.h" 
+#include <Teuchos_SerialSymDenseMatrix.hpp>
+#include <Teuchos_SerialSpdDenseSolver.hpp>
 
 namespace CORRESPONDENCE {
 
@@ -211,6 +214,597 @@ void MatrixMultiply
       *(result+i) *= alpha;
   }
 }
+
+//! Invert a single N-by-N symmetric matrix; returns zero of successful, one if not successful (e.g., singular matrix).
+template<typename ScalarT>
+int computeSymmetrixMatrixInverse
+(
+    const ScalarT* matrix,
+    const int dim,
+    ScalarT* inverse
+)
+{
+  int returnCode(0);
+
+  typedef Teuchos::SerialSymDenseMatrix<int, double> SDMatrix;
+  Teuchos::SerialSpdDenseSolver<int, double> Solver;
+
+  Teuchos::RCP<SDMatrix> mat = Teuchos::rcp( new SDMatrix(dim,dim) );
+
+  std::string solverErrorMessage = 
+    "**** Error:  CORRESPONDENCE::computeSymmetrixMatrixInverse: Non-invertible matrix\n";
+
+  int i,j;
+
+  // Zero out data
+  mat->SerialSymDenseMatrix::setUpper();
+  for(j=0; j<dim; j++)
+    for(i=0; i<=j; i++)
+      (*mat)(i,j) = *(matrix+dim*i+j);
+
+  Solver.setMatrix(mat);
+  int info = Solver.invert();
+
+  if(info){
+    returnCode = 1;
+    std::cout << solverErrorMessage;
+    MPI_Abort(MPI_COMM_WORLD, 1);
+  }
+
+  for(j=0; j<dim; j++)
+    for(i=0; i<dim; i++)
+      *(inverse+dim*i+j) = (*mat)(i,j);
+
+  return returnCode;
+}
+
+
+#define SIGN(a, b) ((b) >= 0.0 ? fabs(a) : -fabs(a))
+
+static double PYTHAG(double a, 
+                     double b)
+{
+  double at = fabs(a), bt = fabs(b), ct, result;
+
+  if (at > bt){ 
+    ct = bt / at; 
+    result = at * sqrt(1.0 + ct * ct); 
+  } else if(bt > 0.0){
+    ct = at / bt; 
+    result = bt * sqrt(1.0 + ct * ct); 
+  } else 
+    result = 0.0;
+
+  return(result);
+}
+
+
+int dsvd(double *a,
+         int m,
+         int n,
+         double *w,
+         double *v)
+{
+  int flag, i, its, j, jj, k, l, nm;
+  double c, f, h, s, x, y, z;
+  double anorm = 0.0, g = 0.0, scale = 0.0;
+  double *rv1;
+
+  if (m < n){
+    fprintf(stderr, "#rows must be > #cols \n");
+    return(0);
+  }
+
+  rv1 = (double *)malloc((unsigned int) n*sizeof(double));
+
+  /* Householder reduction to bidiagonal form */
+  for (i = 0; i < n; i++){
+    /* left-hand reduction */
+    l = i + 1;
+    rv1[i] = scale * g;
+    g = s = scale = 0.0;
+
+    if (i < m){
+      for (k = i; k < m; k++)
+        scale += fabs((double)a[k*n+i]);
+
+      if (scale){
+        for (k = i; k < m; k++){
+          a[k*n+i] = (double)((double)a[k*n+i]/scale);
+          s += ((double)a[k*n+i] * (double)a[k*n+i]);
+        }
+
+        f = (double)a[i*n+i];
+        g = -SIGN(sqrt(s), f);
+        h = f * g - s;
+        a[i*n+i] = (double)(f - g);
+
+        if (i != n - 1){
+          for (j = l; j < n; j++){
+            for (s = 0.0, k = i; k < m; k++)
+              s += ((double)a[k*n+i] * (double)a[k*n+j]);
+
+            f = s / h;
+
+            for (k = i; k < m; k++)
+              a[k*n+j] += (double)(f * (double)a[k*n+i]);
+          }
+        }
+
+        for (k = i; k < m; k++)
+          a[k*n+i] = (double)((double)a[k*n+i]*scale);
+      }
+    }
+    w[i] = (double)(scale * g);
+
+    /* right-hand reduction */
+    g = s = scale = 0.0;
+
+    if (i < m && i != n - 1){
+      for (k = l; k < n; k++)
+        scale += fabs((double)a[i*n+k]);
+
+      if (scale){
+        for (k = l; k < n; k++){
+          a[i*n+k] = (double)((double)a[i*n+k]/scale);
+          s += ((double)a[i*n+k] * (double)a[i*n+k]);
+        }
+
+        f = (double)a[i*n+l];
+        g = -SIGN(sqrt(s), f);
+        h = f * g - s;
+        a[i*n+l] = (double)(f - g);
+
+        for (k = l; k < n; k++)
+          rv1[k] = (double)a[i*n+k] / h;
+
+        if (i != m - 1){
+          for (j = l; j < m; j++){
+            for (s = 0.0, k = l; k < n; k++)
+              s += ((double)a[j*n+k] * (double)a[i*n+k]);
+
+            for (k = l; k < n; k++)
+              a[j*n+k] += (double)(s * rv1[k]);
+          }
+        }
+
+        for (k = l; k < n; k++)
+        a[i*n+k] = (double)((double)a[i*n+k]*scale);
+      }
+    }
+
+    anorm = fmax(anorm, (fabs((double)w[i]) + fabs(rv1[i])));
+  }
+
+  /* accumulate the right-hand transformation */
+  for (i = n - 1; i >= 0; i--){
+    if (i < n - 1){
+      if (g){
+        for (j = l; j < n; j++)
+          v[j*n+i] = (double)(((double)a[i*n+j] / (double)a[i*n+l]) / g);
+
+        /* double division to avoid underflow */
+        for (j = l; j < n; j++){
+          for (s = 0.0, k = l; k < n; k++)
+            s += ((double)a[i*n+k] * (double)v[k*n+j]);
+
+          for (k = l; k < n; k++)
+            v[k*n+j] += (double)(s * (double)v[k*n+i]);
+        }
+      }
+      for (j = l; j < n; j++)
+        v[i*n+j] = v[j*n+i] = 0.0;
+    }
+    v[i*n+i] = 1.0;
+    g = rv1[i];
+    l = i;
+  }
+
+  /* accumulate the left-hand transformation */
+  for (i = n - 1; i >= 0; i--){
+    l = i + 1;
+    g = (double)w[i];
+
+    if (i < n - 1)
+      for (j = l; j < n; j++)
+        a[i*n+j] = 0.0;
+
+    if (g){
+      g = 1.0 / g;
+
+      if (i != n - 1){
+        for (j = l; j < n; j++){
+          for (s = 0.0, k = l; k < m; k++)
+            s += ((double)a[k*n+i] * (double)a[k*n+j]);
+
+          f = (s / (double)a[i*n+i]) * g;
+
+          for (k = i; k < m; k++)
+            a[k*n+j] += (double)(f * (double)a[k*n+i]);
+        }
+      }
+
+      for (j = i; j < m; j++)
+      a[j*n+i] = (double)((double)a[j*n+i]*g);
+    }
+    else
+    {
+      for (j = i; j < m; j++)
+        a[j*n+i] = 0.0;
+    }
+    ++a[i*n+i];
+  }
+
+  /* diagonalize the bidiagonal form */
+  for (k = n - 1; k >= 0; k--){                             /* loop over singular values */
+    for (its = 0; its < 30; its++){                         /* loop over allowed iterations */
+      flag = 1;
+
+      for (l = k; l >= 0; l--){                     /* test for splitting */
+        nm = l - 1;
+
+        if (fabs(rv1[l]) + anorm == anorm){
+          flag = 0;
+          break;
+        }
+
+        if (fabs((double)w[nm]) + anorm == anorm)
+          break;
+      }
+
+      if (flag){
+        s = 1.0;
+
+        for (i = l; i <= k; i++){
+          f = s * rv1[i];
+
+          if (fabs(f) + anorm != anorm){
+            g = (double)w[i];
+            h = PYTHAG(f, g);
+            w[i] = (double)h;
+            h = 1.0 / h;
+            c = g * h;
+            s = (- f * h);
+            for (j = 0; j < m; j++){
+              y = (double)a[j*n+nm];
+              z = (double)a[j*n+i];
+              a[j*n+nm] = (double)(y * c + z * s);
+              a[j*n+i] = (double)(z * c - y * s);
+            }
+          }
+        }
+      }
+
+      z = (double)w[k];
+      if (l == k){                  /* convergence */
+        if (z < 0.0){              /* make singular value nonnegative */
+          w[k] = (double)(-z);
+          for (j = 0; j < n; j++)
+            v[j*n+k] = (-v[j*n+k]);
+        }
+        break;
+      }
+
+      if (its >= 30) {
+        free (rv1);
+
+        fprintf(stderr, "No convergence after 30,000! iterations \n");
+        return(0);
+      }
+
+      /* shift from bottom 2 x 2 minor */
+      x = (double)w[l];
+      nm = k - 1;
+      y = (double)w[nm];
+      g = rv1[nm];
+      h = rv1[k];
+      f = ((y - z) * (y + z) + (g - h) * (g + h)) / (2.0 * h * y);
+      g = PYTHAG(f, 1.0);
+      f = ((x - z) * (x + z) + h * ((y / (f + SIGN(g, f))) - h)) / x;
+
+      /* next QR transformation */
+      c = s = 1.0;
+
+      for (j = l; j <= nm; j++){
+        i = j + 1;
+        g = rv1[i];
+        y = (double)w[i];
+        h = s * g;
+        g = c * g;
+        z = PYTHAG(f, h);
+        rv1[j] = z;
+        c = f / z;
+        s = h / z;
+        f = x * c + g * s;
+        g = g * c - x * s;
+        h = y * s;
+        y = y * c;
+        for (jj = 0; jj < n; jj++){
+          x = (double)v[jj*n+j];
+          z = (double)v[jj*n+i];
+          v[jj*n+j] = (double)(x * c + z * s);
+          v[jj*n+i] = (double)(z * c - x * s);
+        }
+
+        z = PYTHAG(f, h);
+        w[j] = (double)z;
+
+        if (z){
+          z = 1.0 / z;
+          c = f * z;
+          s = h * z;
+        }
+
+        f = (c * g) + (s * y);
+        x = (c * y) - (s * g);
+
+        for (jj = 0; jj < m; jj++){
+          y = (double)a[jj*n+j];
+          z = (double)a[jj*n+i];
+          a[jj*n+j] = (double)(y * c + z * s);
+          a[jj*n+i] = (double)(z * c - y * s);
+        }
+      }
+
+      rv1[l] = 0.0;
+      rv1[k] = f;
+      w[k] = (double)x;
+    }
+  }
+
+  free (rv1);
+
+  return(1);
+}
+
+
+//! Invert a single N-by-N symmetric matrix; returns zero of successful, one if not successful (e.g., singular matrix).
+template<typename ScalarT>
+int invertAndCond(const ScalarT* Min,
+                  ScalarT *Mout,
+                  const int size,
+                  const double thresVal)
+{
+  //    double conditioning;
+  double v[size*size];
+  double w[size];
+  double u[size*size];
+  //double *v=(double*)calloc(size*size,sizeof(double));
+  //double *w=(double*)calloc(size,sizeof(double));
+  //double *u=(double*)calloc(size*size,sizeof(double));
+
+  int i,j,k;
+
+  for(i=0;i<size*size;i++){
+    u[i]=Min[i];
+    Mout[i]=0.0;
+  }
+  dsvd(u, size, size, w, v);
+
+  for(i=0 ; i < size ; i++ ){
+    for(j=0 ; j < size ; j++ ){
+      for( k=0 ; k < size ; k++ ){
+        if(w[k] > thresVal){ // pseudo inverse approach (ignore zero eigs)
+          Mout[i*size+j] += v[i*size+k]*1.0/w[k]*u[j*size+k];
+        }
+      }
+    }
+  }
+
+  //free(u);
+  //free(w);
+  //free(v);
+
+  return 0;
+}
+
+
+template<typename ScalarT>
+int computeGradientWeights
+(
+    const double* horizon,
+    const ScalarT* coordinates,
+    const double* volume,
+    const ScalarT* jacobianDeterminant,
+    ScalarT* gradientWeight1,
+    ScalarT* gradientWeight2,
+    ScalarT* gradientWeight3,
+    const int accuracyOrder,
+    const double* flyingPointFlag,
+    const double* bondDamage,
+    const int* neighborhoodList,
+    int numPoints
+)
+{
+  //Using RK Implicit Gradient (Same as PD Gradient Operator) to construct
+  //these shapes on the parametric space (2D gradients).
+  //GMLS or other methods can be incorporated later.
+
+  int returnCode = 0;
+
+  const double* delta = horizon;
+  const ScalarT* coord = coordinates;
+  const ScalarT* neighborCoord;
+
+  ScalarT* phi1 = gradientWeight1;
+  ScalarT* phi2 = gradientWeight2;
+  ScalarT* phi3 = gradientWeight3;
+
+  const double* flyingPointFlg = flyingPointFlag;
+  const double *bondDamagePtr = bondDamage;
+
+  ScalarT deformedBondX, deformedBondY, deformedBondZ, deformedBondLength;
+
+  double neighborVolume, omega, temp;
+
+  int Qdim;
+
+  int counter, thisOrder, p1, p2, p3;
+  int i, j;
+
+  // calculate dimension of Q vector
+  Qdim = 0;
+  for(thisOrder=1; thisOrder<=accuracyOrder; thisOrder++){
+    for(p1=thisOrder; p1>=0; p1--){ // x-power
+      for(p2=thisOrder-p1; p2>=0; p2--){ // y-power
+        p3=thisOrder-p1-p2; //z-power
+        Qdim++;
+      }
+    }
+  }
+
+  std::vector<ScalarT> QVector(Qdim);
+  ScalarT* Q = &QVector[0];
+
+  double phi1const = 1.0; int phi1ind = 0;
+  double phi2const = 1.0; int phi2ind = 1;
+  double phi3const = 1.0; int phi3ind = 2;
+
+  std::vector<ScalarT> MVector(Qdim*Qdim);
+  ScalarT* M = &MVector[0];
+
+  std::vector<ScalarT> MinvVector(Qdim*Qdim);
+  ScalarT* Minv = &MinvVector[0];
+
+  double thresVal;
+
+  int inversionReturnCode(0);
+
+  int neighborIndex, numNeighbors;
+  const int *neighborListPtr = neighborhoodList;
+  for(int iID=0 ; iID<numPoints ; ++iID, delta++, coord+=3, flyingPointFlg++){
+
+    if(*flyingPointFlg < 0.5){
+
+      // Zero out data
+      for(j=0; j<Qdim; j++)
+        for(i=0; i<Qdim; i++)
+          *(M+Qdim*i+j) = 0.0;
+
+      // Calculate Moment matrix
+      numNeighbors = *neighborListPtr; neighborListPtr++;
+      for(int n=0; n<numNeighbors; n++, neighborListPtr++, bondDamagePtr++){
+
+        neighborIndex = *neighborListPtr;
+        neighborCoord = coordinates + 3*neighborIndex;
+        neighborVolume = jacobianDeterminant[neighborIndex] * volume[neighborIndex];
+
+        deformedBondX = *(neighborCoord)   - *(coord);
+        deformedBondY = *(neighborCoord+1) - *(coord+1);
+        deformedBondZ = *(neighborCoord+2) - *(coord+2);
+        deformedBondLength = sqrt(deformedBondX*deformedBondX +
+                                  deformedBondY*deformedBondY +
+                                  deformedBondZ*deformedBondZ);
+
+        // Calculate Q for this bond
+        counter = 0;
+        for(thisOrder=1; thisOrder<=accuracyOrder; thisOrder++){
+          for(p1=thisOrder; p1>=0; p1--){ // x-power
+            for(p2=thisOrder-p1; p2>=0; p2--){ // y-power
+              p3=thisOrder-p1-p2; //z-power
+
+              Q[counter] = 1.0;
+              for(i=0; i<p1; i++)
+                Q[counter] *= deformedBondX / *delta;
+              for(i=0; i<p2; i++)
+                Q[counter] *= deformedBondY / *delta;
+              for(i=0; i<p3; i++)
+                Q[counter] *= deformedBondZ / *delta;
+
+              counter++;
+            }
+          }
+        }
+
+        omega = MATERIAL_EVALUATION::scalarInfluenceFunction(deformedBondLength, *delta);
+        omega *= (1.0 - *bondDamagePtr);
+
+        temp = omega * neighborVolume;
+        for(j=0; j<Qdim; j++)
+          for(i=0; i<Qdim; i++)
+            *(M+Qdim*i+j) += temp * Q[i] * Q[j];
+      }
+
+      thresVal = 1.0e-6 * *delta * *delta * *delta; // should be area (2d) or vol (3d) multiplied by a threshold value
+
+      // calculate the inverse of the moment matrix (this must be a full rank matrix)
+      //inversionReturnCode = computeSymmetrixMatrixInverse(M, Qdim, Minv);
+      inversionReturnCode = invertAndCond(M, Minv, Qdim, thresVal);
+
+      if(inversionReturnCode > 0)
+        returnCode = inversionReturnCode;
+
+      // Re-iterate over the neighbor set and compute Phis
+      // Return the neighbor pointers to the beginning of set
+      neighborListPtr -= numNeighbors; 
+      bondDamagePtr -= numNeighbors; 
+      for(int n=0; n<numNeighbors; n++, neighborListPtr++, phi1++, phi2++, phi3++, bondDamagePtr++){
+
+        neighborIndex = *neighborListPtr;
+        neighborCoord = coordinates + 3*neighborIndex;
+
+        deformedBondX = *(neighborCoord)   - *(coord);
+        deformedBondY = *(neighborCoord+1) - *(coord+1);
+        deformedBondZ = *(neighborCoord+2) - *(coord+2);
+        deformedBondLength = sqrt(deformedBondX*deformedBondX +
+                                  deformedBondY*deformedBondY +
+                                  deformedBondZ*deformedBondZ);
+
+        // Calculate Q for this bond
+        counter = 0;
+        for(thisOrder=1; thisOrder<=accuracyOrder; thisOrder++){
+          for(p1=thisOrder; p1>=0; p1--){ // x-power
+            for(p2=thisOrder-p1; p2>=0; p2--){ // y-power
+              p3=thisOrder-p1-p2; //z-power
+
+              Q[counter] = 1.0;
+              for(i=0; i<p1; i++)
+                Q[counter] *= deformedBondX / *delta;
+              for(i=0; i<p2; i++)
+                Q[counter] *= deformedBondY / *delta;
+              for(i=0; i<p3; i++)
+                Q[counter] *= deformedBondZ / *delta;
+
+              counter++;
+            }
+          }
+        }
+
+        omega = MATERIAL_EVALUATION::scalarInfluenceFunction(deformedBondLength, *delta);
+        omega *= (1.0 - *bondDamagePtr);
+
+        // caluclate phi1
+        *phi1 = 0.0;
+        temp = phi1const * omega;  
+        for(j=0; j<Qdim; j++)
+          *phi1 += temp * *(Minv+Qdim*phi1ind+j) * Q[j] / *delta;
+
+        // caluclate phi2
+        *phi2 = 0.0;
+        temp = phi2const * omega;  
+        for(j=0; j<Qdim; j++)
+          *phi2 += temp * *(Minv+Qdim*phi2ind+j) * Q[j] / *delta;
+
+        // caluclate phi3
+        *phi3 = 0.0;
+        temp = phi3const * omega;  
+        for(j=0; j<Qdim; j++)
+          *phi3 += temp * *(Minv+Qdim*phi3ind+j) * Q[j] / *delta;
+      }
+    }
+    else{
+      // adjust the neighborhood pointer for the next point
+      numNeighbors = *neighborListPtr; 
+      neighborListPtr += numNeighbors+1;
+
+      phi1 += numNeighbors; phi2 += numNeighbors; phi3 += numNeighbors; 
+      bondDamagePtr += numNeighbors; 
+    }
+  }
+
+  return returnCode;
+}
+
 
 template<typename ScalarT>
 int computeShapeTensorInverseAndApproximateDeformationGradient
@@ -1164,6 +1758,94 @@ int computeShapeTensorInverseAndApproximateNodeLevelVelocityGradient
   }
 
   return returnCode;
+}
+
+//This function computes the node-level velocity gradient
+template<typename ScalarT>
+void computeVelocityGradient
+(
+    const double* volume,
+    const ScalarT* jacobianDeterminantN,
+    ScalarT* jacobianDeterminantNP1,
+    const ScalarT* velocities,
+    const ScalarT* gradientWeight1,
+    const ScalarT* gradientWeight2,
+    const ScalarT* gradientWeight3,
+    ScalarT* velocityGradient,
+    ScalarT* velocityGradientX,
+    ScalarT* velocityGradientY,
+    ScalarT* velocityGradientZ,
+    const double* flyingPointFlag,
+    const int* neighborhoodList,
+    int numPoints,
+    double dt
+)
+{
+  const ScalarT* vel = velocities;
+  const ScalarT* neighborVel;
+  const ScalarT* phi1 = gradientWeight1;
+  const ScalarT* phi2 = gradientWeight2;
+  const ScalarT* phi3 = gradientWeight3;
+  ScalarT* velGrad = velocityGradient;
+  ScalarT* velGradX = velocityGradientX;
+  ScalarT* velGradY = velocityGradientY;
+  ScalarT* velGradZ = velocityGradientZ;
+  ScalarT velGradTr;
+
+  const double* flyingPointFlg = flyingPointFlag;
+
+  std::vector<ScalarT> velStateVector(3) ; ScalarT* velState = &velStateVector[0];
+
+  double neighborVolume, omega, temp;
+
+  int neighborIndex, numNeighbors;
+  const int *neighborListPtr = neighborhoodList; 
+  for(int iID=0 ; iID<numPoints ; ++iID, vel+=3, velGrad+=9, 
+      velGradX+=3, velGradY+=3, velGradZ+=3, flyingPointFlg++){
+
+    // if the node is not flying, update the values. Otherwise, just skip
+    if(*flyingPointFlg < 0.5){
+
+      // Zero out data
+      *(velGrad+0) = 0.0 ; *(velGrad+1) = 0.0 ; *(velGrad+2) = 0.0 ;
+      *(velGrad+3) = 0.0 ; *(velGrad+4) = 0.0 ; *(velGrad+5) = 0.0 ;
+      *(velGrad+6) = 0.0 ; *(velGrad+7) = 0.0 ; *(velGrad+8) = 0.0 ;
+
+      numNeighbors = *neighborListPtr; neighborListPtr++;
+      for(int n=0; n<numNeighbors; n++, neighborListPtr++, phi1++, phi2++, phi3++){
+
+        neighborIndex = *neighborListPtr;
+        neighborVolume = jacobianDeterminantN[neighborIndex] * volume[neighborIndex];
+        neighborVel = velocities + 3*neighborIndex;
+
+        for(int i=0; i<3; i++){
+          *(velState+i) = *(neighborVel+i) - *(vel+i);
+        }
+
+        for(int i=0; i<3; i++){
+          *(velGrad+i*3+0) += *(velState+i) * *phi1 * neighborVolume;
+          *(velGrad+i*3+1) += *(velState+i) * *phi2 * neighborVolume;
+          *(velGrad+i*3+2) += *(velState+i) * *phi3 * neighborVolume;
+        }
+      }
+      
+      *(velGradX+0) = *(velGrad+0); *(velGradX+1) = *(velGrad+1); *(velGradX+2) = *(velGrad+2); 
+      *(velGradY+0) = *(velGrad+3); *(velGradY+1) = *(velGrad+4); *(velGradY+2) = *(velGrad+5); 
+      *(velGradZ+0) = *(velGrad+6); *(velGradZ+1) = *(velGrad+7); *(velGradZ+2) = *(velGrad+8); 
+
+      // update volume
+      // J dot = J . tr(L)
+      velGradTr = *velGrad + *(velGrad+4) + *(velGrad+8);
+      jacobianDeterminantNP1[iID] = jacobianDeterminantN[iID] * (1.0 + velGradTr*dt);
+    }
+    else{
+      // adjust the neighborhood pointer for the next point
+      numNeighbors = *neighborListPtr; 
+      neighborListPtr += numNeighbors+1;
+
+      phi1 += numNeighbors; phi2 += numNeighbors; phi3 += numNeighbors; 
+    }
+  }
 }
 
 //This function computes bond-level velocity gradient
@@ -2375,11 +3057,42 @@ template void rotateCauchyStress<double>
     int numPoints
  );
 
+template int computeGradientWeights<double>
+(
+    const double* horizon,
+    const double* coordinates,
+    const double* volume,
+    const double* jacobianDeterminant,
+    double* gradientWeight1,
+    double* gradientWeight2,
+    double* gradientWeight3,
+    const int accuracyOrder,
+    const double* flyingPointFlag,
+    const double* bondDamage,
+    const int* neighborhoodList,
+    int numPoints
+);
+
 template int Invert3by3Matrix<double>
 (
     const double* matrix,
     double& determinant,
      double* inverse
+);
+
+template int computeSymmetrixMatrixInverse<double>
+(
+    const double* matrix,
+    const int dim,
+    double* inverse
+);
+
+template int invertAndCond<double>
+(
+    const double* Min,
+    double *Mout,
+    const int size,
+    const double thresVal
 );
 
 template int computeShapeTensorInverseAndApproximateDeformationGradient<double>
@@ -2511,6 +3224,25 @@ template int computeShapeTensorInverseAndApproximateNodeLevelVelocityGradient<do
     double* velocityGradientZ,
     const double* flyingPointFlag,
     const double* bondDamage,
+    const int* neighborhoodList,
+    int numPoints,
+    double dt
+);
+
+template void computeVelocityGradient<double>
+(
+    const double* volume,
+    const double* jacobianDeterminantN,
+    double* jacobianDeterminantNP1,
+    const double* velocities,
+    const double* gradientWeight1,
+    const double* gradientWeight2,
+    const double* gradientWeight3,
+    double* velocityGradient,
+    double* velocityGradientX,
+    double* velocityGradientY,
+    double* velocityGradientZ,
+    const double* flyingPointFlag,
     const int* neighborhoodList,
     int numPoints,
     double dt

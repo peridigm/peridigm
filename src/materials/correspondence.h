@@ -89,6 +89,23 @@ void rotateCauchyStress
 );
 
 template<typename ScalarT>
+int computeGradientWeights
+(
+    const double* horizon,
+    const ScalarT* coordinates,
+    const double* volume,
+    const ScalarT* jacobianDeterminant,
+    ScalarT* gradientWeight1,
+    ScalarT* gradientWeight2,
+    ScalarT* gradientWeight3,
+    const int accuracyOrder,
+    const double* flyingPointFlag,
+    const double* bondDamage,
+    const int* neighborhoodList,
+    int numPoints
+);
+
+template<typename ScalarT>
 int computeShapeTensorInverseAndApproximateDeformationGradient
 (
     const double* volume,
@@ -164,6 +181,24 @@ template<typename ScalarT>
 void setOnesOnDiagonalFullTensor(ScalarT* tensor, int numPoints);
 
 template<typename ScalarT>
+int computeSymmetrixMatrixInverse
+(
+    const ScalarT* matrix,
+    const int dim,
+    ScalarT* inverse
+);
+
+//! Invert a single N-by-N symmetric matrix; returns zero of successful, one if not successful (e.g., singular matrix).
+template<typename ScalarT>
+int invertAndCond
+(
+    const ScalarT* Min,
+    ScalarT *Mout,
+    const int size,
+    const double thresVal
+);
+
+template<typename ScalarT>
 void computeUndamagedWeightedVolume
 (
     const double* volume,
@@ -223,6 +258,26 @@ int computeShapeTensorInverseAndApproximateNodeLevelVelocityGradient
     ScalarT* velocityGradientZ,
     const double* flyingPointFlag,
     const double* bondDamage,
+    const int* neighborhoodList,
+    int numPoints,
+    double dt
+);
+
+template<typename ScalarT>
+void computeVelocityGradient
+(
+    const double* volume,
+    const ScalarT* jacobianDeterminantN,
+    ScalarT* jacobianDeterminantNP1,
+    const ScalarT* velocities,
+    const ScalarT* gradientWeight1,
+    const ScalarT* gradientWeight2,
+    const ScalarT* gradientWeight3,
+    ScalarT* velocityGradient,
+    ScalarT* velocityGradientX,
+    ScalarT* velocityGradientY,
+    ScalarT* velocityGradientZ,
+    const double* flyingPointFlag,
     const int* neighborhoodList,
     int numPoints,
     double dt
