@@ -57,15 +57,18 @@ using namespace std;
 PeridigmNS::HypoelasticCorrespondenceMaterial::HypoelasticCorrespondenceMaterial(const Teuchos::ParameterList& params)
   : Material(params),
     m_density(0.0), m_actualHorizon(0.0),
+    m_accuracyOrder(1), 
     m_OMEGA(PeridigmNS::InfluenceFunction::self().getInfluenceFunction()),
     m_horizonFieldId(-1), m_volumeFieldId(-1),
     m_coordinatesFieldId(-1), m_velocitiesFieldId(-1), 
     m_forceDensityFieldId(-1), m_bondDamageFieldId(-1),
+    m_gradientWeightXFieldId(-1),
+    m_gradientWeightYFieldId(-1),
+    m_gradientWeightZFieldId(-1),
     m_velocityGradientFieldId(-1),
     m_velocityGradientXFieldId(-1),
     m_velocityGradientYFieldId(-1),
     m_velocityGradientZFieldId(-1),
-    m_shapeTensorInverseFieldId(-1),
     m_deformationGradientFieldId(-1),
     m_greenLagrangeStrainFieldId(-1),
     m_leftStretchTensorFieldId(-1),
@@ -140,6 +143,10 @@ PeridigmNS::HypoelasticCorrespondenceMaterial::HypoelasticCorrespondenceMaterial
 
   m_actualHorizon = params.get<double>("Actual Horizon");
 
+  if(params.isParameter("Gradient Order Of Accuracy")){
+    m_accuracyOrder = params.get<int>("Gradient Order Of Accuracy");
+  }
+
   TEUCHOS_TEST_FOR_EXCEPT_MSG(params.isParameter("Apply Automatic Differentiation Jacobian"), "**** Error:  Automatic Differentiation is not supported for the ElasticHypoelasticCorrespondence material model.\n");
   TEUCHOS_TEST_FOR_EXCEPT_MSG(params.isParameter("Apply Shear Correction Factor"), "**** Error:  Shear Correction Factor is not supported for the ElasticHypoelasticCorrespondence material model.\n");
   TEUCHOS_TEST_FOR_EXCEPT_MSG(params.isParameter("Thermal Expansion Coefficient"), "**** Error:  Thermal expansion is not currently supported for the ElasticHypoelasticCorrespondence material model.\n");
@@ -151,11 +158,13 @@ PeridigmNS::HypoelasticCorrespondenceMaterial::HypoelasticCorrespondenceMaterial
   m_velocitiesFieldId                 = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Velocity");
   m_forceDensityFieldId               = fieldManager.getFieldId(PeridigmField::NODE,    PeridigmField::VECTOR, PeridigmField::TWO_STEP, "Force_Density");
   m_bondDamageFieldId                 = fieldManager.getFieldId(PeridigmField::BOND,    PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Bond_Damage");
+  m_gradientWeightXFieldId            = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Gradient_Weight_X");
+  m_gradientWeightYFieldId            = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Gradient_Weight_Y");
+  m_gradientWeightZFieldId            = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Gradient_Weight_Z");
   m_velocityGradientFieldId           = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::CONSTANT, "Velocity_Gradient");
   m_velocityGradientXFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::VECTOR, PeridigmField::CONSTANT, "Velocity_Gradient_X");
   m_velocityGradientYFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::VECTOR, PeridigmField::CONSTANT, "Velocity_Gradient_Y");
   m_velocityGradientZFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::VECTOR, PeridigmField::CONSTANT, "Velocity_Gradient_Z");
-  m_shapeTensorInverseFieldId         = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::CONSTANT, "Shape_Tensor_Inverse");
   m_deformationGradientFieldId        = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::TWO_STEP, "Deformation_Gradient");
   m_greenLagrangeStrainFieldId        = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::CONSTANT, "Green_Lagrange_Strain");
   m_leftStretchTensorFieldId          = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::TWO_STEP, "Left_Stretch_Tensor");
@@ -234,11 +243,13 @@ PeridigmNS::HypoelasticCorrespondenceMaterial::HypoelasticCorrespondenceMaterial
   m_fieldIds.push_back(m_velocitiesFieldId);
   m_fieldIds.push_back(m_forceDensityFieldId);
   m_fieldIds.push_back(m_bondDamageFieldId);
+  m_fieldIds.push_back(m_gradientWeightXFieldId);
+  m_fieldIds.push_back(m_gradientWeightYFieldId);
+  m_fieldIds.push_back(m_gradientWeightZFieldId);
   m_fieldIds.push_back(m_velocityGradientFieldId);
   m_fieldIds.push_back(m_velocityGradientXFieldId);
   m_fieldIds.push_back(m_velocityGradientYFieldId);
   m_fieldIds.push_back(m_velocityGradientZFieldId);
-  m_fieldIds.push_back(m_shapeTensorInverseFieldId);
   m_fieldIds.push_back(m_deformationGradientFieldId);
   m_fieldIds.push_back(m_greenLagrangeStrainFieldId);
   m_fieldIds.push_back(m_leftStretchTensorFieldId);
@@ -326,11 +337,13 @@ PeridigmNS::HypoelasticCorrespondenceMaterial::initialize(const double dt,
   // later.
   dataManager.getData(m_horizonFieldId, PeridigmField::STEP_NONE)->PutScalar(m_actualHorizon);
 
+  dataManager.getData(m_gradientWeightXFieldId, PeridigmField::STEP_NONE)->PutScalar(0.0);
+  dataManager.getData(m_gradientWeightYFieldId, PeridigmField::STEP_NONE)->PutScalar(0.0);
+  dataManager.getData(m_gradientWeightZFieldId, PeridigmField::STEP_NONE)->PutScalar(0.0);
   dataManager.getData(m_velocityGradientFieldId, PeridigmField::STEP_NONE)->PutScalar(0.0);
   dataManager.getData(m_velocityGradientXFieldId, PeridigmField::STEP_NONE)->PutScalar(0.0);
   dataManager.getData(m_velocityGradientYFieldId, PeridigmField::STEP_NONE)->PutScalar(0.0);
   dataManager.getData(m_velocityGradientZFieldId, PeridigmField::STEP_NONE)->PutScalar(0.0);
-  dataManager.getData(m_shapeTensorInverseFieldId, PeridigmField::STEP_NONE)->PutScalar(0.0);
   dataManager.getData(m_deformationGradientFieldId, PeridigmField::STEP_N)->PutScalar(0.0);
   dataManager.getData(m_deformationGradientFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
   dataManager.getData(m_greenLagrangeStrainFieldId, PeridigmField::STEP_NONE)->PutScalar(0.0);
@@ -478,8 +491,9 @@ PeridigmNS::HypoelasticCorrespondenceMaterial::computeForce(const double dt,
   // Zero out the forces 
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->PutScalar(0.0);
 
-  double *horizon, *volume, *coordinates, *velocities, *shapeTensorInverse;
+  double *horizon, *volume, *coordinates, *velocities;
   double *weightedVolume, *jacobianDeterminantN, *jacobianDeterminantNP1;
+  double *gradientWeightX, *gradientWeightY, *gradientWeightZ;
   double *velocityGradient, *velocityGradientX, *velocityGradientY, *velocityGradientZ;
   double *bondLevelVelocityGradientXX, *bondLevelVelocityGradientXY, *bondLevelVelocityGradientXZ;
   double *bondLevelVelocityGradientYX, *bondLevelVelocityGradientYY, *bondLevelVelocityGradientYZ;
@@ -491,7 +505,9 @@ PeridigmNS::HypoelasticCorrespondenceMaterial::computeForce(const double dt,
   dataManager.getData(m_jacobianDeterminantFieldId, PeridigmField::STEP_NP1)->ExtractView(&jacobianDeterminantNP1);
   dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&coordinates);
   dataManager.getData(m_velocitiesFieldId, PeridigmField::STEP_NP1)->ExtractView(&velocities);
-  dataManager.getData(m_shapeTensorInverseFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverse);
+  dataManager.getData(m_gradientWeightXFieldId, PeridigmField::STEP_NONE)->ExtractView(&gradientWeightX);
+  dataManager.getData(m_gradientWeightYFieldId, PeridigmField::STEP_NONE)->ExtractView(&gradientWeightY);
+  dataManager.getData(m_gradientWeightZFieldId, PeridigmField::STEP_NONE)->ExtractView(&gradientWeightZ);
   dataManager.getData(m_velocityGradientFieldId, PeridigmField::STEP_NONE)->ExtractView(&velocityGradient);
   dataManager.getData(m_velocityGradientXFieldId, PeridigmField::STEP_NONE)->ExtractView(&velocityGradientX);
   dataManager.getData(m_velocityGradientYFieldId, PeridigmField::STEP_NONE)->ExtractView(&velocityGradientY);
@@ -827,8 +843,11 @@ PeridigmNS::HypoelasticCorrespondenceMaterial::computeForce(const double dt,
   double* stressZX = bondLevelCauchyStressZXNP1;
   double* stressZY = bondLevelCauchyStressZYNP1;
   double* stressZZ = bondLevelCauchyStressZZNP1;
-  double* shapeTensorInv = shapeTensorInverse;
   double* nonhomoIntegral = nonhomogeneousIntegral;
+
+  double* phiX = gradientWeightX;
+  double* phiY = gradientWeightY;
+  double* phiZ = gradientWeightZ;
 
   double* flyingPointFlg = flyingPointFlag;
   double *bondDamagePtr = bondDamage;
@@ -843,25 +862,20 @@ PeridigmNS::HypoelasticCorrespondenceMaterial::computeForce(const double dt,
   matrixInversionErrorMessage +=
     "****         Note that all nodes must have a minimum of three neighbors.  Is the horizon too small?\n";
 
-  vector<double> tempVector(9);
-  double* temp = &tempVector[0];
-
   // Loop over the material points and convert the Cauchy stress into pairwise peridynamic force densities
   const int *neighborListPtr = neighborhoodList;
-  for(int iID=0 ; iID<numOwnedPoints ; ++iID, ++delta, ++w0, shapeTensorInv+=9, 
+  for(int iID=0 ; iID<numOwnedPoints ; ++iID, ++delta, ++w0, 
         nonhomoIntegral+=9, flyingPointFlg++){
           
     // if the node is not flying, update the values. Otherwise, just skip
     if(*flyingPointFlg < 0.0){
-
-      // Inner product of non-homogeneous integral and the inverse of the shape tensor
-      CORRESPONDENCE::MatrixMultiply(false, false, 1.0, nonhomoIntegral, shapeTensorInv, temp);
 
       // Loop over the neighbors and compute contribution to force densities
       coordinatesPtr = coordinates + 3*iID;
       numNeighbors = *neighborListPtr; neighborListPtr++;
 
       for(int n=0; n<numNeighbors; n++, neighborListPtr++, bondDamagePtr++, 
+              phiX++, phiY++, phiZ++, 
               stressXX++, stressXY++, stressXZ++, 
               stressYX++, stressYY++, stressYZ++, 
               stressZX++, stressZY++, stressZZ++){
@@ -886,9 +900,9 @@ PeridigmNS::HypoelasticCorrespondenceMaterial::computeForce(const double dt,
           TY = omega / *w0 * ( *stressYX * deformedBondX + *stressYY * deformedBondY + *stressYZ * deformedBondZ ) / deformedBondLengthSq;
           TZ = omega / *w0 * ( *stressZX * deformedBondX + *stressZY * deformedBondY + *stressZZ * deformedBondZ ) / deformedBondLengthSq;
 
-          TX += omega * ( *(temp+0) * deformedBondX + *(temp+1) * deformedBondY + *(temp+2) * deformedBondZ ) / deformedBondLengthSq;
-          TY += omega * ( *(temp+3) * deformedBondX + *(temp+4) * deformedBondY + *(temp+5) * deformedBondZ ) / deformedBondLengthSq;
-          TZ += omega * ( *(temp+6) * deformedBondX + *(temp+7) * deformedBondY + *(temp+8) * deformedBondZ ) / deformedBondLengthSq;
+          TX += ( *(nonhomoIntegral+0) * *phiX + *(nonhomoIntegral+1) * *phiY + *(nonhomoIntegral+2) * *phiZ ); 
+          TY += ( *(nonhomoIntegral+3) * *phiX + *(nonhomoIntegral+4) * *phiY + *(nonhomoIntegral+5) * *phiZ ); 
+          TZ += ( *(nonhomoIntegral+6) * *phiX + *(nonhomoIntegral+7) * *phiY + *(nonhomoIntegral+8) * *phiZ ); 
 
           vol = jacobianDeterminantN[iID] * volume[iID];
           neighborVol = jacobianDeterminantN[neighborIndex] * volume[neighborIndex];
@@ -911,6 +925,7 @@ PeridigmNS::HypoelasticCorrespondenceMaterial::computeForce(const double dt,
       neighborListPtr += numNeighbors+1;
 
       bondDamagePtr += numNeighbors;
+      phiX += numNeighbors; phiY += numNeighbors; phiZ += numNeighbors; 
       stressXX += numNeighbors; stressXY += numNeighbors; stressXZ += numNeighbors; 
       stressYX += numNeighbors; stressYY += numNeighbors; stressYZ += numNeighbors; 
       stressZX += numNeighbors; stressZY += numNeighbors; stressZZ += numNeighbors;
@@ -934,7 +949,8 @@ void PeridigmNS::HypoelasticCorrespondenceMaterial::precompute(const double dt,
 
   double *horizon, *volume; 
   double *weightedVolume, *undamagedWeightedVolume, *jacobianDeterminantN, *jacobianDeterminantNP1;
-  double *coordinates, *velocities, *shapeTensorInverse;
+  double *coordinates, *velocities;
+  double *gradientWeightX, *gradientWeightY, *gradientWeightZ;
   double *velocityGradient, *velocityGradientX, *velocityGradientY, *velocityGradientZ;
   double *flyingPointFlag, *bondDamage;
   dataManager.getData(m_horizonFieldId, PeridigmField::STEP_NONE)->ExtractView(&horizon);
@@ -945,7 +961,9 @@ void PeridigmNS::HypoelasticCorrespondenceMaterial::precompute(const double dt,
   dataManager.getData(m_jacobianDeterminantFieldId, PeridigmField::STEP_NP1)->ExtractView(&jacobianDeterminantNP1);
   dataManager.getData(m_coordinatesFieldId, PeridigmField::STEP_NP1)->ExtractView(&coordinates);
   dataManager.getData(m_velocitiesFieldId, PeridigmField::STEP_NP1)->ExtractView(&velocities);
-  dataManager.getData(m_shapeTensorInverseFieldId, PeridigmField::STEP_NONE)->ExtractView(&shapeTensorInverse);
+  dataManager.getData(m_gradientWeightXFieldId, PeridigmField::STEP_NONE)->ExtractView(&gradientWeightX);
+  dataManager.getData(m_gradientWeightYFieldId, PeridigmField::STEP_NONE)->ExtractView(&gradientWeightY);
+  dataManager.getData(m_gradientWeightZFieldId, PeridigmField::STEP_NONE)->ExtractView(&gradientWeightZ);
   dataManager.getData(m_velocityGradientFieldId, PeridigmField::STEP_NONE)->ExtractView(&velocityGradient);
   dataManager.getData(m_velocityGradientXFieldId, PeridigmField::STEP_NONE)->ExtractView(&velocityGradientX);
   dataManager.getData(m_velocityGradientYFieldId, PeridigmField::STEP_NONE)->ExtractView(&velocityGradientY);
@@ -964,23 +982,40 @@ void PeridigmNS::HypoelasticCorrespondenceMaterial::precompute(const double dt,
                                         neighborhoodList,
                                         numOwnedPoints);
 
-  int shapeTensorReturnCode = 
-    CORRESPONDENCE::computeShapeTensorInverseAndApproximateNodeLevelVelocityGradient(volume,
-                                                                                    jacobianDeterminantN,
-                                                                                    jacobianDeterminantNP1,
-                                                                                    horizon,
-                                                                                    coordinates,
-                                                                                    velocities,
-                                                                                    shapeTensorInverse,
-                                                                                    velocityGradient,
-                                                                                    velocityGradientX,
-                                                                                    velocityGradientY,
-                                                                                    velocityGradientZ,
-                                                                                    flyingPointFlag,
-                                                                                    bondDamage,
-                                                                                    neighborhoodList,
-                                                                                    numOwnedPoints,
-                                                                                    dt);
+  int gradientWeightReturnCode = CORRESPONDENCE::computeGradientWeights(horizon,
+                                                                        coordinates,
+                                                                        volume,
+                                                                        jacobianDeterminantN,
+                                                                        gradientWeightX,
+                                                                        gradientWeightY,
+                                                                        gradientWeightZ,
+                                                                        m_accuracyOrder,
+                                                                        flyingPointFlag,
+                                                                        bondDamage,
+                                                                        neighborhoodList,
+                                                                        numOwnedPoints);
+
+  string gradientWeightErrorMessage =
+    "**** Error:  HypoelasticCorrespondenceMaterial::precompute() failed to compute gradient weights.\n";
+  gradientWeightErrorMessage +=
+    "****         Possible scenarios: 1) The horizon is too small, or 2) Too much damage around some points.\n";
+  TEUCHOS_TEST_FOR_EXCEPT_MSG(gradientWeightReturnCode != 0, gradientWeightErrorMessage);
+
+  CORRESPONDENCE::computeVelocityGradient(volume,
+                                          jacobianDeterminantN,
+                                          jacobianDeterminantNP1,
+                                          velocities,
+                                          gradientWeightX,
+                                          gradientWeightY,
+                                          gradientWeightZ,
+                                          velocityGradient,
+                                          velocityGradientX,
+                                          velocityGradientY,
+                                          velocityGradientZ,
+                                          flyingPointFlag,
+                                          neighborhoodList,
+                                          numOwnedPoints,
+                                          dt);
 
   // Compute the current undamaged weighted volume
   CORRESPONDENCE::computeUndamagedWeightedVolume(volume,

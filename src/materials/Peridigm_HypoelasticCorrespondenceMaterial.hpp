@@ -133,6 +133,7 @@ namespace PeridigmNS {
     double m_shearModulus;
     double m_density;
     double m_actualHorizon;
+    int m_accuracyOrder;
     PeridigmNS::InfluenceFunction::functionPointer m_OMEGA;
 
     // field spec ids for all relevant data
@@ -144,11 +145,13 @@ namespace PeridigmNS {
     int m_velocitiesFieldId;
     int m_forceDensityFieldId;
     int m_bondDamageFieldId;
+    int m_gradientWeightXFieldId;
+    int m_gradientWeightYFieldId;
+    int m_gradientWeightZFieldId;
     int m_velocityGradientFieldId;
     int m_velocityGradientXFieldId;
     int m_velocityGradientYFieldId;
     int m_velocityGradientZFieldId;
-    int m_shapeTensorInverseFieldId;
     int m_deformationGradientFieldId;
     int m_greenLagrangeStrainFieldId;
     int m_leftStretchTensorFieldId;
