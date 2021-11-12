@@ -110,6 +110,7 @@ PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
     analysisHasContact(false),
     analysisHasDataLoader(false),
     analysisHasMultiphysics(false),
+    analysisHasReadRestart(false),
     computeIntersections(false),
     constructInterfaces(false),
     blockIdFieldId(-1),
@@ -982,6 +983,7 @@ void PeridigmNS::Peridigm::InitializeRestart() {
       restart_directory_namePtr=&*writable.begin();
       setRestartNames(restart_directory_namePtr);
       readRestart(firstSolver);
+      analysisHasReadRestart = true;
       if(peridigmComm->MyPID() == 0){
         cout <<"Restart is initialized." << endl;
         cout.flush();
@@ -1382,41 +1384,45 @@ void PeridigmNS::Peridigm::executeExplicit(Teuchos::RCP<Teuchos::ParameterList> 
     PeridigmNS::Timer::self().stopTimer("Data Loader");
   }
 
-  // \todo The velocity copied into the DataManager is actually the midstep velocity, not the NP1 velocity; this can be fixed by creating a midstep velocity field in the DataManager and setting the NP1 value as invalid.
+  // Evaluate the initial step only if it does not read it from restart files
+  if(!analysisHasReadRestart){
+    // \todo The velocity copied into the DataManager is actually the midstep velocity, not the NP1 velocity; this can be fixed by creating a midstep velocity field in the DataManager and setting the NP1 value as invalid.
 
-  // Evaluate internal force and contact force in initial configuration for use in first timestep
-  PeridigmNS::Timer::self().startTimer("Internal Force");
-  modelEvaluator->evalModel(workset);
-  PeridigmNS::Timer::self().stopTimer("Internal Force");
+    // Evaluate internal force and contact force in initial configuration for use in first timestep
+    PeridigmNS::Timer::self().startTimer("Internal Force");
+    modelEvaluator->evalModel(workset);
+    PeridigmNS::Timer::self().stopTimer("Internal Force");
 
-  // Copy force from the data manager to the mothership vector
-  PeridigmNS::Timer::self().startTimer("Gather/Scatter");
-  force->PutScalar(0.0);
-  for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
-    scratch->PutScalar(0.0);
-    blockIt->exportData(scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
-    force->Update(1.0, *scratch, 1.0);
+    // Copy force from the data manager to the mothership vector
+    PeridigmNS::Timer::self().startTimer("Gather/Scatter");
+    force->PutScalar(0.0);
+    for(blockIt = blocks->begin() ; blockIt != blocks->end() ; blockIt++){
+      scratch->PutScalar(0.0);
+      blockIt->exportData(scratch, forceDensityFieldId, PeridigmField::STEP_NP1, Add);
+      force->Update(1.0, *scratch, 1.0);
+    }
+    if(analysisHasContact){
+      contactManager->exportData(contactForce);
+      force->Update(1.0, *contactForce, 1.0);
+    }
+    PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
+
+    // Apply BC at time zero
+    PeridigmNS::Timer::self().startTimer("Apply Kinematic B.C.");
+    boundaryAndInitialConditionManager->applyBoundaryConditions(timeCurrent,timePrevious);
+    PeridigmNS::Timer::self().stopTimer("Apply Kinematic B.C.");
+    PeridigmNS::Timer::self().startTimer("Apply Body Forces");
+    boundaryAndInitialConditionManager->applyForceContributions(timeCurrent,timePrevious);
+    PeridigmNS::Timer::self().stopTimer("Apply Body Forces");
+
+    // fill the acceleration vector
+    (*a) = (*force);
+    for(int i=0 ; i<a->MyLength() ; ++i){
+      (*a)[i] += (*externalForce)[i];
+      (*a)[i] /= (*density)[i/3];
+    }
   }
-  if(analysisHasContact){
-    contactManager->exportData(contactForce);
-    force->Update(1.0, *contactForce, 1.0);
-  }
-  PeridigmNS::Timer::self().stopTimer("Gather/Scatter");
 
-  // Apply BC at time zero
-  PeridigmNS::Timer::self().startTimer("Apply Kinematic B.C.");
-  boundaryAndInitialConditionManager->applyBoundaryConditions(timeCurrent,timePrevious);
-  PeridigmNS::Timer::self().stopTimer("Apply Kinematic B.C.");
-  PeridigmNS::Timer::self().startTimer("Apply Body Forces");
-  boundaryAndInitialConditionManager->applyForceContributions(timeCurrent,timePrevious);
-  PeridigmNS::Timer::self().stopTimer("Apply Body Forces");
-
-  // fill the acceleration vector
-  (*a) = (*force);
-  for(int i=0 ; i<a->MyLength() ; ++i){
-    (*a)[i] += (*externalForce)[i];
-    (*a)[i] /= (*density)[i/3];
-  }
   // Write initial configuration to disk
   PeridigmNS::Timer::self().startTimer("Output");
   synchDataManagers();

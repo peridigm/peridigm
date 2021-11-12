@@ -417,6 +417,9 @@ namespace PeridigmNS {
     //! Multiphysics flag
     bool analysisHasMultiphysics;
 
+    //! Read restart flag
+    bool analysisHasReadRestart;
+
     //! Flag for computing element-sphere intersections
     bool computeIntersections;
 
