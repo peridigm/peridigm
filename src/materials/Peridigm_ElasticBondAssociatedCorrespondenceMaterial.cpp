@@ -55,77 +55,17 @@ using namespace std;
 
 PeridigmNS::ElasticBondAssociatedCorrespondenceMaterial::ElasticBondAssociatedCorrespondenceMaterial(const Teuchos::ParameterList& params)
   : BondAssociatedCorrespondenceMaterial(params),
-    m_unrotatedRateOfDeformationFieldId(-1),
-    m_unrotatedCauchyStressFieldId(-1),
     m_vonMisesStressFieldId(-1), 
-    m_bondLevelUnrotatedRateOfDeformationXXFieldId(-1),
-    m_bondLevelUnrotatedRateOfDeformationXYFieldId(-1),
-    m_bondLevelUnrotatedRateOfDeformationXZFieldId(-1),
-    m_bondLevelUnrotatedRateOfDeformationYXFieldId(-1),
-    m_bondLevelUnrotatedRateOfDeformationYYFieldId(-1),
-    m_bondLevelUnrotatedRateOfDeformationYZFieldId(-1),
-    m_bondLevelUnrotatedRateOfDeformationZXFieldId(-1),
-    m_bondLevelUnrotatedRateOfDeformationZYFieldId(-1),
-    m_bondLevelUnrotatedRateOfDeformationZZFieldId(-1),
-    m_bondLevelUnrotatedCauchyStressXXFieldId(-1),
-    m_bondLevelUnrotatedCauchyStressXYFieldId(-1),
-    m_bondLevelUnrotatedCauchyStressXZFieldId(-1),
-    m_bondLevelUnrotatedCauchyStressYXFieldId(-1),
-    m_bondLevelUnrotatedCauchyStressYYFieldId(-1),
-    m_bondLevelUnrotatedCauchyStressYZFieldId(-1),
-    m_bondLevelUnrotatedCauchyStressZXFieldId(-1),
-    m_bondLevelUnrotatedCauchyStressZYFieldId(-1),
-    m_bondLevelUnrotatedCauchyStressZZFieldId(-1),
     m_bondLevelVonMisesStressFieldId(-1)
 {
 
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
-  m_unrotatedRateOfDeformationFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_Deformation");
-  m_unrotatedCauchyStressFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::FULL_TENSOR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_Stress");
   m_vonMisesStressFieldId = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Von_Mises_Stress");
 
-  m_fieldIds.push_back(m_unrotatedRateOfDeformationFieldId);
-  m_fieldIds.push_back(m_unrotatedCauchyStressFieldId);
   m_fieldIds.push_back(m_vonMisesStressFieldId);
 
-  m_bondLevelUnrotatedRateOfDeformationXXFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_Deformation_XX");
-  m_bondLevelUnrotatedRateOfDeformationXYFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_Deformation_XY");
-  m_bondLevelUnrotatedRateOfDeformationXZFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_Deformation_XZ");
-  m_bondLevelUnrotatedRateOfDeformationYXFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_Deformation_YX");
-  m_bondLevelUnrotatedRateOfDeformationYYFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_Deformation_YY");
-  m_bondLevelUnrotatedRateOfDeformationYZFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_Deformation_YZ");
-  m_bondLevelUnrotatedRateOfDeformationZXFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_Deformation_ZX");
-  m_bondLevelUnrotatedRateOfDeformationZYFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_Deformation_ZY");
-  m_bondLevelUnrotatedRateOfDeformationZZFieldId = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Unrotated_Rate_Of_Deformation_ZZ");
-  m_bondLevelUnrotatedCauchyStressXXFieldId      = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_Stress_XX");
-  m_bondLevelUnrotatedCauchyStressXYFieldId      = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_Stress_XY");
-  m_bondLevelUnrotatedCauchyStressXZFieldId      = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_Stress_XZ");
-  m_bondLevelUnrotatedCauchyStressYXFieldId      = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_Stress_YX");
-  m_bondLevelUnrotatedCauchyStressYYFieldId      = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_Stress_YY");
-  m_bondLevelUnrotatedCauchyStressYZFieldId      = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_Stress_YZ");
-  m_bondLevelUnrotatedCauchyStressZXFieldId      = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_Stress_ZX");
-  m_bondLevelUnrotatedCauchyStressZYFieldId      = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_Stress_ZY");
-  m_bondLevelUnrotatedCauchyStressZZFieldId      = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::TWO_STEP, "Unrotated_Cauchy_Stress_ZZ");
   m_bondLevelVonMisesStressFieldId               = fieldManager.getFieldId(PeridigmField::BOND, PeridigmField::SCALAR, PeridigmField::CONSTANT, "Bond_Von_Mises_Stress");
 
-  m_fieldIds.push_back(m_bondLevelUnrotatedRateOfDeformationXXFieldId);
-  m_fieldIds.push_back(m_bondLevelUnrotatedRateOfDeformationXYFieldId);
-  m_fieldIds.push_back(m_bondLevelUnrotatedRateOfDeformationXZFieldId);
-  m_fieldIds.push_back(m_bondLevelUnrotatedRateOfDeformationYXFieldId);
-  m_fieldIds.push_back(m_bondLevelUnrotatedRateOfDeformationYYFieldId);
-  m_fieldIds.push_back(m_bondLevelUnrotatedRateOfDeformationYZFieldId);
-  m_fieldIds.push_back(m_bondLevelUnrotatedRateOfDeformationZXFieldId);
-  m_fieldIds.push_back(m_bondLevelUnrotatedRateOfDeformationZYFieldId);
-  m_fieldIds.push_back(m_bondLevelUnrotatedRateOfDeformationZZFieldId);
-  m_fieldIds.push_back(m_bondLevelUnrotatedCauchyStressXXFieldId);
-  m_fieldIds.push_back(m_bondLevelUnrotatedCauchyStressXYFieldId);
-  m_fieldIds.push_back(m_bondLevelUnrotatedCauchyStressXZFieldId);
-  m_fieldIds.push_back(m_bondLevelUnrotatedCauchyStressYXFieldId);
-  m_fieldIds.push_back(m_bondLevelUnrotatedCauchyStressYYFieldId);
-  m_fieldIds.push_back(m_bondLevelUnrotatedCauchyStressYZFieldId);
-  m_fieldIds.push_back(m_bondLevelUnrotatedCauchyStressZXFieldId);
-  m_fieldIds.push_back(m_bondLevelUnrotatedCauchyStressZYFieldId);
-  m_fieldIds.push_back(m_bondLevelUnrotatedCauchyStressZZFieldId);
   m_fieldIds.push_back(m_bondLevelVonMisesStressFieldId);
 }
 

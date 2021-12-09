@@ -96,7 +96,6 @@ namespace PeridigmNS {
     double m_linearConstant;
 
     // field spec ids for all relevant data
-    int m_unrotatedRateOfDeformationFieldId;
     int m_unrotatedCauchyStressFieldId;
     int m_vonMisesStressFieldId;
     int m_equivalentPlasticStrainFieldId;

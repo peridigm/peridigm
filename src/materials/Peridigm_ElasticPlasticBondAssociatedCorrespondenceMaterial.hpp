@@ -87,30 +87,10 @@ namespace PeridigmNS {
     double m_yieldStress;
 
     // field spec ids for all relevant data
-    int m_unrotatedRateOfDeformationFieldId;
-    int m_unrotatedCauchyStressFieldId;
     int m_vonMisesStressFieldId;
     int m_equivalentPlasticStrainFieldId;
     int m_stressTriaxialityFieldId;
     
-    int m_bondLevelUnrotatedRateOfDeformationXXFieldId;
-    int m_bondLevelUnrotatedRateOfDeformationXYFieldId;
-    int m_bondLevelUnrotatedRateOfDeformationXZFieldId;
-    int m_bondLevelUnrotatedRateOfDeformationYXFieldId;
-    int m_bondLevelUnrotatedRateOfDeformationYYFieldId;
-    int m_bondLevelUnrotatedRateOfDeformationYZFieldId;
-    int m_bondLevelUnrotatedRateOfDeformationZXFieldId;
-    int m_bondLevelUnrotatedRateOfDeformationZYFieldId;
-    int m_bondLevelUnrotatedRateOfDeformationZZFieldId;
-    int m_bondLevelUnrotatedCauchyStressXXFieldId;
-    int m_bondLevelUnrotatedCauchyStressXYFieldId;
-    int m_bondLevelUnrotatedCauchyStressXZFieldId;
-    int m_bondLevelUnrotatedCauchyStressYXFieldId;
-    int m_bondLevelUnrotatedCauchyStressYYFieldId;
-    int m_bondLevelUnrotatedCauchyStressYZFieldId;
-    int m_bondLevelUnrotatedCauchyStressZXFieldId;
-    int m_bondLevelUnrotatedCauchyStressZYFieldId;
-    int m_bondLevelUnrotatedCauchyStressZZFieldId;
     int m_bondLevelVonMisesStressFieldId;
     int m_bondLevelEquivalentPlasticStrainFieldId;
     int m_bondLevelStressTriaxialityFieldId;
