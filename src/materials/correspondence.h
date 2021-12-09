@@ -120,7 +120,8 @@ int computeShapeTensorInverseAndApproximateDeformationGradient
 
 // Calculation of stretch rates following Flanagan & Taylor
 template<typename ScalarT>
-int computeUnrotatedRateOfDeformationAndRotationTensor(
+int computeUnrotatedRateOfDeformationAndRotationTensor
+(
     const double* volume,
     const double* horizon,
     const double* modelCoordinates,
@@ -346,7 +347,8 @@ void computeGreenLagrangeStrain
 );
 
 template<typename ScalarT>
-int computeNodeLevelUnrotatedRateOfDeformationAndRotationTensor(
+int computeNodeLevelUnrotatedRateOfDeformationAndRotationTensor
+(
     const ScalarT* velocityGradient,
     const ScalarT* leftStretchTensorN,
     const ScalarT* rotationTensorN,
@@ -359,7 +361,8 @@ int computeNodeLevelUnrotatedRateOfDeformationAndRotationTensor(
 );
 
 template<typename ScalarT>
-int computeBondLevelUnrotatedRateOfDeformationAndRotationTensor(
+int computeBondLevelUnrotatedRateOfDeformationAndRotationTensor
+(
     const ScalarT* bondLevelVelocityGradientXX, 
     const ScalarT* bondLevelVelocityGradientXY, 
     const ScalarT* bondLevelVelocityGradientXZ,
@@ -431,7 +434,8 @@ void rotateCauchyStress
 );
 
 template<typename ScalarT>
-void rotateBondLevelCauchyStress(
+void rotateBondLevelCauchyStress
+(
     const ScalarT* bondLevelRotationTensorXX,
     const ScalarT* bondLevelRotationTensorXY,
     const ScalarT* bondLevelRotationTensorXZ,
@@ -484,6 +488,257 @@ void computeNonhomogeneityIntegral
     ScalarT* nonhomogeneousIntegral,
     const double* flyingPointFlag,
     const double* bondDamage,
+    const int* neighborhoodList,
+    int numPoints
+);
+
+template<typename ScalarT>
+void updateGradientWeightEvaluationFlag
+(
+    const ScalarT* damageN,
+    const ScalarT* damageNP1,
+    ScalarT* gradientWeightEvaluationFlag,
+    int numPoints
+);
+
+template<typename ScalarT>
+int computeLagrangianGradientWeights
+(
+    const double* horizon,
+    const double* modelCoordinates,
+    const double* volume,
+    ScalarT* gradientWeightX,
+    ScalarT* gradientWeightY,
+    ScalarT* gradientWeightZ,
+    ScalarT* gradientWeightEvaluationFlag,
+    const double* bondDamage,
+    double* influenceState,
+    const int accuracyOrder,
+    const int* neighborhoodList,
+    int numPoints
+);
+
+template<typename ScalarT>
+void computeDeformationGradient
+(
+    const double* volume,
+    const ScalarT* displacements,
+    const ScalarT* velocities,
+    const ScalarT* gradientWeightX,
+    const ScalarT* gradientWeightY,
+    const ScalarT* gradientWeightZ,
+    ScalarT* deformationGradientX,
+    ScalarT* deformationGradientY,
+    ScalarT* deformationGradientZ,
+    ScalarT* deformationGradientDotX,
+    ScalarT* deformationGradientDotY,
+    ScalarT* deformationGradientDotZ,
+    const int* neighborhoodList,
+    int numPoints
+);
+
+template<typename ScalarT>
+void computeWeightedVolume
+(
+    const double* volume,
+    ScalarT* weightedVolume,
+    const double* influenceState,
+    const int* neighborhoodList,
+    int numPoints
+);
+
+template<typename ScalarT>
+int computeNodeLevelUnrotatedRateOfDeformationAndRotationTensor
+(
+    const ScalarT* deformationGradientX,
+    const ScalarT* deformationGradientY,
+    const ScalarT* deformationGradientZ,
+    const ScalarT* deformationGradientDotX,
+    const ScalarT* deformationGradientDotY,
+    const ScalarT* deformationGradientDotZ,
+    const ScalarT* leftStretchTensorN,
+    const ScalarT* rotationTensorN,
+    ScalarT* leftStretchTensorNP1,
+    ScalarT* rotationTensorNP1,
+    ScalarT* unrotatedRateOfDeformation,
+    int numPoints,
+    double dt
+);
+
+template<typename ScalarT>
+int computeBondLevelUnrotatedRateOfDeformationAndRotationTensor
+(
+    const double* modelCoordinates,
+    const ScalarT* coordinates,
+    const ScalarT* velocities,
+    const ScalarT* deformationGradientX,
+    const ScalarT* deformationGradientY,
+    const ScalarT* deformationGradientZ,
+    const ScalarT* deformationGradientDotX,
+    const ScalarT* deformationGradientDotY,
+    const ScalarT* deformationGradientDotZ,
+    ScalarT* bondLevelDeformationGradientInvXX, 
+    ScalarT* bondLevelDeformationGradientInvXY, 
+    ScalarT* bondLevelDeformationGradientInvXZ,
+    ScalarT* bondLevelDeformationGradientInvYX, 
+    ScalarT* bondLevelDeformationGradientInvYY, 
+    ScalarT* bondLevelDeformationGradientInvYZ, 
+    ScalarT* bondLevelDeformationGradientInvZX,
+    ScalarT* bondLevelDeformationGradientInvZY,
+    ScalarT* bondLevelDeformationGradientInvZZ,
+    ScalarT* bondLevelJacobianDeterminant,
+    const ScalarT* bondLevelLeftStretchTensorXXN,
+    const ScalarT* bondLevelLeftStretchTensorXYN,
+    const ScalarT* bondLevelLeftStretchTensorXZN,
+    const ScalarT* bondLevelLeftStretchTensorYXN,
+    const ScalarT* bondLevelLeftStretchTensorYYN,
+    const ScalarT* bondLevelLeftStretchTensorYZN,
+    const ScalarT* bondLevelLeftStretchTensorZXN,
+    const ScalarT* bondLevelLeftStretchTensorZYN,
+    const ScalarT* bondLevelLeftStretchTensorZZN,
+    const ScalarT* bondLevelRotationTensorXXN, 
+    const ScalarT* bondLevelRotationTensorXYN, 
+    const ScalarT* bondLevelRotationTensorXZN, 
+    const ScalarT* bondLevelRotationTensorYXN, 
+    const ScalarT* bondLevelRotationTensorYYN, 
+    const ScalarT* bondLevelRotationTensorYZN, 
+    const ScalarT* bondLevelRotationTensorZXN, 
+    const ScalarT* bondLevelRotationTensorZYN, 
+    const ScalarT* bondLevelRotationTensorZZN, 
+    ScalarT* bondLevelLeftStretchTensorXXNP1,
+    ScalarT* bondLevelLeftStretchTensorXYNP1,
+    ScalarT* bondLevelLeftStretchTensorXZNP1,
+    ScalarT* bondLevelLeftStretchTensorYXNP1,
+    ScalarT* bondLevelLeftStretchTensorYYNP1,
+    ScalarT* bondLevelLeftStretchTensorYZNP1,
+    ScalarT* bondLevelLeftStretchTensorZXNP1,
+    ScalarT* bondLevelLeftStretchTensorZYNP1,
+    ScalarT* bondLevelLeftStretchTensorZZNP1,
+    ScalarT* bondLevelRotationTensorXXNP1,
+    ScalarT* bondLevelRotationTensorXYNP1,
+    ScalarT* bondLevelRotationTensorXZNP1,
+    ScalarT* bondLevelRotationTensorYXNP1,
+    ScalarT* bondLevelRotationTensorYYNP1,
+    ScalarT* bondLevelRotationTensorYZNP1,
+    ScalarT* bondLevelRotationTensorZXNP1,
+    ScalarT* bondLevelRotationTensorZYNP1,
+    ScalarT* bondLevelRotationTensorZZNP1,
+    ScalarT* bondLevelUnrotatedRateOfDeformationXX,
+    ScalarT* bondLevelUnrotatedRateOfDeformationXY,
+    ScalarT* bondLevelUnrotatedRateOfDeformationXZ,
+    ScalarT* bondLevelUnrotatedRateOfDeformationYX,
+    ScalarT* bondLevelUnrotatedRateOfDeformationYY,
+    ScalarT* bondLevelUnrotatedRateOfDeformationYZ,
+    ScalarT* bondLevelUnrotatedRateOfDeformationZX,
+    ScalarT* bondLevelUnrotatedRateOfDeformationZY,
+    ScalarT* bondLevelUnrotatedRateOfDeformationZZ,
+    const double* influenceState,
+    const int* neighborhoodList,
+    int numPoints,
+    double dt
+);
+
+template<typename ScalarT>
+void updateGreenLagrangeStrain
+(
+    const ScalarT* deformationGradientX,
+    const ScalarT* deformationGradientY,
+    const ScalarT* deformationGradientZ,
+    const ScalarT* deformationGradientDotX,
+    const ScalarT* deformationGradientDotY,
+    const ScalarT* deformationGradientDotZ,
+    const ScalarT* greenLagrangeStrainN,
+    ScalarT* greenLagrangeStrainNP1,
+    int numPoints,
+    double dt
+);
+
+template<typename ScalarT>
+void rotateBondLevelCauchyStress
+(
+    const ScalarT* bondLevelRotationTensorXX,
+    const ScalarT* bondLevelRotationTensorXY,
+    const ScalarT* bondLevelRotationTensorXZ,
+    const ScalarT* bondLevelRotationTensorYX,
+    const ScalarT* bondLevelRotationTensorYY,
+    const ScalarT* bondLevelRotationTensorYZ,
+    const ScalarT* bondLevelRotationTensorZX,
+    const ScalarT* bondLevelRotationTensorZY,
+    const ScalarT* bondLevelRotationTensorZZ,
+    const ScalarT* bondLevelUnrotatedCauchyStressXX,
+    const ScalarT* bondLevelUnrotatedCauchyStressXY,
+    const ScalarT* bondLevelUnrotatedCauchyStressXZ,
+    const ScalarT* bondLevelUnrotatedCauchyStressYX,
+    const ScalarT* bondLevelUnrotatedCauchyStressYY,
+    const ScalarT* bondLevelUnrotatedCauchyStressYZ,
+    const ScalarT* bondLevelUnrotatedCauchyStressZX,
+    const ScalarT* bondLevelUnrotatedCauchyStressZY,
+    const ScalarT* bondLevelUnrotatedCauchyStressZZ,
+    ScalarT* bondLevelRotatedCauchyStressXX,
+    ScalarT* bondLevelRotatedCauchyStressXY,
+    ScalarT* bondLevelRotatedCauchyStressXZ,
+    ScalarT* bondLevelRotatedCauchyStressYX,
+    ScalarT* bondLevelRotatedCauchyStressYY,
+    ScalarT* bondLevelRotatedCauchyStressYZ,
+    ScalarT* bondLevelRotatedCauchyStressZX,
+    ScalarT* bondLevelRotatedCauchyStressZY,
+    ScalarT* bondLevelRotatedCauchyStressZZ,
+    const int* neighborhoodList,
+    int numPoints
+);
+
+template<typename ScalarT>
+void computeBondLevelPiolaStress
+(
+    const ScalarT* bondLevelJacobianDeterminant,
+    const ScalarT* bondLevelCauchyStressXX,
+    const ScalarT* bondLevelCauchyStressXY,
+    const ScalarT* bondLevelCauchyStressXZ,
+    const ScalarT* bondLevelCauchyStressYX,
+    const ScalarT* bondLevelCauchyStressYY,
+    const ScalarT* bondLevelCauchyStressYZ,
+    const ScalarT* bondLevelCauchyStressZX,
+    const ScalarT* bondLevelCauchyStressZY,
+    const ScalarT* bondLevelCauchyStressZZ,
+    const ScalarT* bondLevelDeformationGradientInvXX,
+    const ScalarT* bondLevelDeformationGradientInvXY,
+    const ScalarT* bondLevelDeformationGradientInvXZ,
+    const ScalarT* bondLevelDeformationGradientInvYX,
+    const ScalarT* bondLevelDeformationGradientInvYY,
+    const ScalarT* bondLevelDeformationGradientInvYZ,
+    const ScalarT* bondLevelDeformationGradientInvZX,
+    const ScalarT* bondLevelDeformationGradientInvZY,
+    const ScalarT* bondLevelDeformationGradientInvZZ,
+    ScalarT* bondLevelPiolaStressXX,
+    ScalarT* bondLevelPiolaStressXY,
+    ScalarT* bondLevelPiolaStressXZ,
+    ScalarT* bondLevelPiolaStressYX,
+    ScalarT* bondLevelPiolaStressYY,
+    ScalarT* bondLevelPiolaStressYZ,
+    ScalarT* bondLevelPiolaStressZX,
+    ScalarT* bondLevelPiolaStressZY,
+    ScalarT* bondLevelPiolaStressZZ,
+    const int* neighborhoodList,
+    int numPoints
+);
+
+template<typename ScalarT>
+void computeStressIntegral
+(
+    const double* volume,
+    const double* weightedVolume,
+    const double* modelCoordinates,
+    const ScalarT* bondLevelStressXX,
+    const ScalarT* bondLevelStressXY,
+    const ScalarT* bondLevelStressXZ,
+    const ScalarT* bondLevelStressYX,
+    const ScalarT* bondLevelStressYY,
+    const ScalarT* bondLevelStressYZ,
+    const ScalarT* bondLevelStressZX,
+    const ScalarT* bondLevelStressZY,
+    const ScalarT* bondLevelStressZZ,
+    ScalarT* stressIntegral,
+    const double* influenceState,
     const int* neighborhoodList,
     int numPoints
 );

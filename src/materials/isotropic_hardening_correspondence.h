@@ -94,6 +94,45 @@ void updateElasticIsotropicPowerlawHardeningPlasticCauchyStress
 );
 
 template<typename ScalarT>
+void updateElasticIsotropicPowerlawHardeningPlasticCauchyStress
+(
+    const ScalarT* unrotatedRateOfDeformation, 
+    const ScalarT* cauchyStressN, 
+    ScalarT* cauchyStressNP1, 
+    ScalarT* vonMisesStress,
+    const ScalarT* equivalentPlasticStrainN,
+    ScalarT* equivalentPlasticStrainNP1,
+    ScalarT* stressTriaxiality,
+    const int numPoints, 
+    const double bulkMod,
+    const double shearMod,
+    const double yieldStress,
+    const double hardeningCharacteristicStrain,
+    const double hardeningExponent,
+    const double dt
+);
+
+template<typename ScalarT>
+void updateElasticIsotropicSaturationExponentialHardeningPlasticCauchyStress
+(
+    const ScalarT* unrotatedRateOfDeformation, 
+    const ScalarT* cauchyStressN, 
+    ScalarT* cauchyStressNP1, 
+    ScalarT* vonMisesStress,
+    const ScalarT* equivalentPlasticStrainN,
+    ScalarT* equivalentPlasticStrainNP1,
+    ScalarT* stressTriaxiality,
+    const int numPoints, 
+    const double bulkMod,
+    const double shearMod,
+    const double initialYieldStress,
+    const double saturatedYieldStress,
+    const double exponentialConstant,
+    const double linearConstant,
+    const double dt
+);
+
+template<typename ScalarT>
 void updateBondLevelElasticIsotropicPowerlawHardeningPlasticCauchyStress
 (
     const ScalarT* bondLevelUnrotatedRateOfDeformationXX, 
@@ -135,6 +174,130 @@ void updateBondLevelElasticIsotropicPowerlawHardeningPlasticCauchyStress
     const double yieldStress,
     const double hardeningCharacteristicStrain,
     const double hardeningExponent,
+    const double dt
+);
+
+template<typename ScalarT>
+void updateBondLevelElasticIsotropicPowerlawHardeningPlasticCauchyStress
+(
+    const ScalarT* bondLevelUnrotatedRateOfDeformationXX, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationXY, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationXZ, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationYX, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationYY, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationYZ, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationZX, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationZY, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationZZ, 
+    const ScalarT* bondLevelUnrotatedCauchyStressXXN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressXYN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressXZN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressYXN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressYYN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressYZN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressZXN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressZYN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressZZN, 
+    ScalarT* bondLevelUnrotatedCauchyStressXXNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressXYNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressXZNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressYXNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressYYNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressYZNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressZXNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressZYNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressZZNP1, 
+    ScalarT* bondLevelVonMisesStress,
+    const ScalarT* bondLevelEquivalentPlasticStrainN,
+    ScalarT* bondLevelEquivalentPlasticStrainNP1,
+    ScalarT* bondLevelStressTriaxiality,
+    const int* neighborhoodList,
+    const int numPoints, 
+    const double bulkMod,
+    const double shearMod,
+    const double yieldStress,
+    const double hardeningCharacteristicStrain,
+    const double hardeningExponent,
+    const double dt
+);
+
+template<typename ScalarT>
+void updateBondLevelElasticIsotropicSaturationExponentialHardeningPlasticCauchyStress
+(
+    const ScalarT* bondLevelUnrotatedRateOfDeformationXX, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationXY, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationXZ, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationYX, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationYY, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationYZ, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationZX, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationZY, 
+    const ScalarT* bondLevelUnrotatedRateOfDeformationZZ, 
+    const ScalarT* bondLevelUnrotatedCauchyStressXXN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressXYN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressXZN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressYXN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressYYN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressYZN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressZXN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressZYN, 
+    const ScalarT* bondLevelUnrotatedCauchyStressZZN, 
+    ScalarT* bondLevelUnrotatedCauchyStressXXNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressXYNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressXZNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressYXNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressYYNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressYZNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressZXNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressZYNP1, 
+    ScalarT* bondLevelUnrotatedCauchyStressZZNP1, 
+    ScalarT* bondLevelVonMisesStress,
+    const ScalarT* bondLevelEquivalentPlasticStrainN,
+    ScalarT* bondLevelEquivalentPlasticStrainNP1,
+    ScalarT* bondLevelStressTriaxiality,
+    const int* neighborhoodList,
+    const int numPoints, 
+    const double bulkMod,
+    const double shearMod,
+    const double initialYieldStress,
+    const double saturatedYieldStress,
+    const double exponentialConstant,
+    const double linearConstant,
+    const double dt
+);
+
+template<typename ScalarT>
+void radialReturnPowerlaw
+(
+    const ScalarT* unrotatedRateOfDeformation, 
+    const ScalarT* cauchyStressN, 
+    ScalarT* cauchyStressNP1, 
+    ScalarT* vonMisesStress,
+    const ScalarT* equivalentPlasticStrainN,
+    ScalarT* equivalentPlasticStrainNP1,
+    const double bulkMod,
+    const double shearMod,
+    const double yieldStress,
+    const double hardeningCharacteristicStrain,
+    const double hardeningExponent,
+    const double dt
+);
+
+template<typename ScalarT>
+void radialReturnSaturationExponential
+(
+    const ScalarT* unrotatedRateOfDeformation, 
+    const ScalarT* cauchyStressN, 
+    ScalarT* cauchyStressNP1, 
+    ScalarT* vonMisesStress,
+    const ScalarT* equivalentPlasticStrainN,
+    ScalarT* equivalentPlasticStrainNP1,
+    const double bulkMod,
+    const double shearMod,
+    const double initialYieldStress,
+    const double saturatedYieldStress,
+    const double exponentialConstant,
+    const double linearConstant,
     const double dt
 );
 
