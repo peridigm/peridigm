@@ -4,8 +4,8 @@ import sys
 import os
 from subprocess import Popen
 
-test_dir = "np1"
-base_name = "ShellBondFilter"
+test_dir = "TriBondFilter/np1"
+base_name = "TriBondFilter"
 
 if __name__ == "__main__":
 
@@ -32,14 +32,14 @@ if __name__ == "__main__":
         os.remove(file)
 
     # run Peridigm
-    command = ["../../../../src/Peridigm", "../"+base_name+".xml"]
+    command = ["../../../../../src/Peridigm", "../"+base_name+".yaml"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:
         result = return_code
 
     # compare output files against gold files
-    command = ["../../../../scripts/exodiff", \
+    command = ["../../../../../scripts/exodiff", \
                "-stat", \
                "-f", \
                "../"+base_name+".comp", \

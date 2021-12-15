@@ -5,8 +5,8 @@ import os
 import glob
 from subprocess import Popen
 
-test_dir = "np4"
-base_name = "ShellBondFilter"
+test_dir = "QuadBondFilter/np4"
+base_name = "QuadBondFilter"
 
 if __name__ == "__main__":
 
@@ -33,24 +33,24 @@ if __name__ == "__main__":
         os.remove(file)
 
     # run Peridigm
-    command = ["mpiexec", "-np", "4", "../../../../src/Peridigm", "../"+base_name+".xml"]
+    command = ["mpiexec", "-np", "4", "../../../../../src/Peridigm", "../" + base_name + ".yaml"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:
         result = return_code
 
     # compare output files against gold files
-    command = ["../../../../scripts/epu", "-p", "4", base_name]
+    command = ["../../../../../scripts/epu", "-p", "4", base_name]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:
         result = return_code
-    command = ["../../../../scripts/exodiff", \
+    command = ["../../../../../scripts/exodiff", \
                "-stat", \
                "-f", \
-               "../"+base_name+".comp", \
-               base_name+".e", \
-               "../"+base_name+"_gold.e"]
+               "../" + base_name + ".comp", \
+               base_name + ".e", \
+               "../" + base_name + "_gold.e"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:

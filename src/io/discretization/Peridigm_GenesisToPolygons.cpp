@@ -43,14 +43,14 @@
 // ************************************************************************
 //@HEADER
 
-#include "Peridigm_GenesisToTriangles.hpp"
+#include "Peridigm_GenesisToPolygons.hpp"
 #include "Peridigm_Enums.hpp"
 #include <exodusII.h>
 #include <sstream>
 #include <iostream>
 
-void PeridigmNS::GenesisToTriangles(std::string genesis_file_name,
-                                    std::vector< std::vector< std::vector<double> > > & triangles) {
+void PeridigmNS::GenesisToPolygons(std::string genesis_file_name,
+                                    std::vector< std::vector< std::vector<double> > > & polygons) {
 
   // Open the genesis file
   int compWordSize = sizeof(double);
@@ -92,28 +92,27 @@ void PeridigmNS::GenesisToTriangles(std::string genesis_file_name,
       std::string elemTypeString(elemType);
       to_upper(elemTypeString);
       std::stringstream ss;
-      ss << "**** Error in GenesisToTriangles(), invalid element type: " << elemTypeString << ".\n";
-      TEUCHOS_TEST_FOR_EXCEPTION(elemTypeString != "TRI" && elemTypeString != "TRI3", std::invalid_argument, ss.str());
+      ss << "**** Error in GenesisToPolygons(), invalid element type: " << elemTypeString << ".\n";
+      TEUCHOS_TEST_FOR_EXCEPTION(elemTypeString != "TRI" && elemTypeString != "TRI3" && elemTypeString != "TRIANGLE" && elemTypeString != "QUAD" && elemTypeString != "QUAD4", std::invalid_argument, ss.str());
       conn.resize(numElemThisBlock*numNodesPerElem);
       retval = ex_get_elem_conn(exodusFileId, elemBlockId, &conn[0]);
       if (retval != 0) report_exodus_error(retval, "ex_get_elem_conn");
     }
 
     // Loop over the elements in the block
-
     for(int iElem=0 ; iElem<numElemThisBlock ; iElem++){
-
       // Node coordinates for all the nodes in this element
-      std::vector< std::vector<double> > triangle;
+      std::vector< std::vector<double> > polygon;
+      int nodeId;
+      std::vector<double> point(3);
       for(int i=0 ; i<numNodesPerElem ; ++i){
-        int nodeId = conn[iElem*numNodesPerElem + i] - 1;
-        std::vector<double> point(3);
+        nodeId = conn[iElem*numNodesPerElem + i] - 1;
         point[0] = exodusNodeCoordX[nodeId];
         point[1] = exodusNodeCoordY[nodeId];
         point[2] = exodusNodeCoordZ[nodeId];
-        triangle.push_back(point);
+        polygon.push_back(point);
       }
-      triangles.push_back(triangle);
+      polygons.push_back(polygon);
     }
   }
 
@@ -126,11 +125,11 @@ void PeridigmNS::report_exodus_error(int errorCode, const char*exodusMethodName)
 {
   std::stringstream ss;
   if (errorCode < 0) { // error
-    ss << "GenesisToTriangles() -- Error code: " << errorCode << " (" << exodusMethodName << ")";
+    ss << "GenesisToPolygons() -- Error code: " << errorCode << " (" << exodusMethodName << ")";
     TEUCHOS_TEST_FOR_EXCEPTION(1, std::invalid_argument, ss.str());
   }
   else {
-    ss << "GenesisToTriangles() -- Warning code: " << errorCode << " (" << exodusMethodName << ")";
+    ss << "GenesisToPolygons() -- Warning code: " << errorCode << " (" << exodusMethodName << ")";
     std::cout << ss.str() << std::endl;
   }
 }
