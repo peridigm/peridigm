@@ -43,16 +43,16 @@
 // ************************************************************************
 //@HEADER
 
-#ifndef GENESISTOTRIANGLES_H_
-#define GENESISTOTRIANGLES_H_
+#ifndef GENESISTOPOLYGONS_H_
+#define GENESISTOPOLYGONS_H_
 
 #include <string>
 #include <vector>
 
 namespace PeridigmNS {
 
-  void GenesisToTriangles(std::string genesis_file_name,
-                          std::vector< std::vector< std::vector<double> > > & triangles);
+  void GenesisToPolygons(std::string genesis_file_name,
+                          std::vector< std::vector< std::vector<double> > > & polygons);
 
   void report_exodus_error(int errorCode,
                            const char*exodusMethodName);
