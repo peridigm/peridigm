@@ -46,7 +46,7 @@
 //@HEADER
 
 #include "Peridigm_Discretization.hpp"
-#include "Peridigm_GenesisToTriangles.hpp"
+#include "Peridigm_GenesisToPolygons.hpp"
 #include <sstream>
 #include <set>
 
@@ -186,16 +186,20 @@ void PeridigmNS::Discretization::createBondFilters(const Teuchos::RCP<Teuchos::P
       }
       else if(type == "Exodus Mesh"){
         std::string file_name = params.get<string>("File Name");
-        std::vector< std::vector< std::vector<double> > > triangles;
-        GenesisToTriangles(file_name, triangles);
-        for(unsigned int i=0 ; i<triangles.size() ; i++){
-          std::shared_ptr<PdBondFilter::BondFilter> bondFilter(new PdBondFilter::TriangleFilter(triangles[i][0].data(), triangles[i][1].data(), triangles[i][2].data()));
+        std::vector< std::vector< std::vector<double> > > polygons;
+        GenesisToPolygons(file_name, polygons);
+        std::shared_ptr<PdBondFilter::BondFilter> bondFilter(nullptr);
+        for(unsigned int i=0 ; i<polygons.size() ; i++){
+          if(polygons[i].size() == 3)
+            bondFilter = std::make_shared<PdBondFilter::TriangleFilter>(PdBondFilter::TriangleFilter(polygons[i][0].data(), polygons[i][1].data(), polygons[i][2].data()));
+          else if(polygons[i].size() == 4)
+            bondFilter = std::make_shared<PdBondFilter::QuadFilter>(PdBondFilter::QuadFilter(polygons[i][0].data(), polygons[i][1].data(), polygons[i][2].data(), polygons[i][3].data()));
           bondFilters.push_back(bondFilter);
         }
       }
       else{
-        string msg = "\n**** Error, invalid bond filter type:  " + type;
-        msg += "\n**** Allowable types are:  Rectangular_Plane, Exodus Mesh\n";
+        string msg  = "\n**** Error, invalid bond filter type:  " + type;
+               msg += "\n**** Allowable types are:  Rectangular_Plane, Disk, and Exodus Mesh.\n";
         TEUCHOS_TEST_FOR_EXCEPT_MSG(true, msg);
       }
     }

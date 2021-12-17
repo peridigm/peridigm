@@ -4,6 +4,9 @@
 # emacs backup files
 *~
 
+# Visual Studio Code nonsense
+.vscode
+
 # Mac nonsense
 .DS_Store
 

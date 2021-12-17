@@ -1,0 +1,69 @@
+Peridigm:
+  Discretization:
+    Type: "Exodus"
+    Input Mesh File: "TriBondFilter.g"
+    Bond Filters:
+      My Shell Bond Filter:
+        Type: "Exodus Mesh"
+        File Name: "TriShells.g"
+
+  Materials:
+    My Elastic Material:
+      Material Model: "Elastic"
+      Density: 2200.0
+      Bulk Modulus: 14.90e9
+      Shear Modulus: 8.94e9
+
+  Blocks:
+    My Group of Blocks:
+      Block Names: "block_1"
+      Material: "My Elastic Material"
+      Horizon: 0.603
+
+  Boundary Conditions:
+    Displacement Lower Corner X:
+      Type: "Prescribed Displacement"
+      Node Set: "nodelist_1"
+      Coordinate: "x"
+      Value: "-0.1 * 0.5*(cos(3.14159265359 + t*3.14159265359/1.0e-2) + 1.0)"
+    Displacement Lower Corner Y:
+      Type: "Prescribed Displacement"
+      Node Set: "nodelist_1"
+      Coordinate: "y"
+      Value: "-0.1 * 0.5*(cos(3.14159265359 + t*3.14159265359/1.0e-2) + 1.0)"
+    Displacement Lower Corner Z:
+      Type: "Prescribed Displacement"
+      Node Set: "nodelist_1"
+      Coordinate: "z"
+      Value: "-0.1 * 0.5*(cos(3.14159265359 + t*3.14159265359/1.0e-2) + 1.0)"
+    Displacement Upper Corner X:
+      Type: "Prescribed Displacement"
+      Node Set: "nodelist_2"
+      Coordinate: "x"
+      Value: "0.0"
+    Displacement Upper Corner Y:
+      Type: "Prescribed Displacement"
+      Node Set: "nodelist_2"
+      Coordinate: "y"
+      Value: "0.0"
+    Displacement Upper Corner Z:
+      Type: "Prescribed Displacement"
+      Node Set: "nodelist_2"
+      Coordinate: "z"
+      Value: "0.0"
+
+  Solver:
+    Verbose: false
+    Initial Time: 0.0
+    Final Time: 1.0e-2
+    Verlet:
+      Fixed dt: 2.0e-5
+
+  Output:
+    Output File Type: "ExodusII"
+    Output Format: "BINARY"
+    Output Filename: "TriBondFilter"
+    Output Frequency: 50
+    Output Variables:
+      Displacement: true
+      Number_Of_Neighbors: true

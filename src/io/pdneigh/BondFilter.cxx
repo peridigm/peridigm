@@ -60,7 +60,7 @@ FinitePlane::FinitePlane(double normal[3], double lowerLeftCorner[3], double bot
 : n(normal), r0(lowerLeftCorner), ub(bottom_UnitVector), ua(cross(ub,n)), a(lengthA), b(lengthBottom)
 {}
 
-  int FinitePlane::bondIntersectInfinitePlane(const double *p0, const double *p1, double&t, double x[3]) {
+int FinitePlane::bondIntersectInfinitePlane(const double *p0, const double *p1, double&t, double x[3]) {
 
   double numerator   = (r0[0] - p0[0]) * n[0] + (r0[1] - p0[1]) * n[1] + (r0[2] - p0[2]) * n[2];
   double denominator = (p1[0] - p0[0]) * n[0] + (p1[1] - p0[1]) * n[1] + (p1[2] - p0[2]) * n[2];
@@ -269,7 +269,7 @@ bool TriangleFilter::bondIntersectsTriangle(const double* p0, const double* p1) 
 
 bool TriangleFilter::pointInTriangle(const double* x) const {
 
-  // check if intesection point is within triangle by computing the barycentric coordinates
+  // Check if intersection point is within triangle by computing the barycentric coordinates
   double a[3], b[3], c[3];
   for (int i=0 ; i<3 ; i++) {
     a[i] = v3_[i] - v1_[i];
@@ -283,8 +283,105 @@ bool TriangleFilter::pointInTriangle(const double* x) const {
   double dot12 = b[0]*c[0] + b[1]*c[1] + b[2]*c[2];
   double alpha = (dot11 * dot02 - dot01 * dot12) / (dot00 * dot11 - dot01 * dot01);
   double beta  = (dot00 * dot12 - dot01 * dot02) / (dot00 * dot11 - dot01 * dot01);
-  bool in_triangle = (alpha > -tolerance_) && (beta > -tolerance_) && (alpha + beta < 1.0 + 2*tolerance_);
+  bool in_triangle = (alpha > -tolerance_) && (beta > -tolerance_) && (alpha + beta < 1.0 + 2.0*tolerance_);
   return in_triangle;
+}
+
+void QuadFilter::filterBonds(std::vector<int>& treeList, const double *pt, const size_t ptLocalId, const double *xOverlap, bool *bondFlags) {
+
+  const double *p0 = pt;
+  const double *p1;
+  bool *flagIter = bondFlags;
+  for(unsigned int p=0;p<treeList.size();p++,flagIter++){
+
+    // Local id of point within neighborhood
+    size_t uid = treeList[p];
+
+    // Set flag for bonds that will be excluded from the neighborlist
+    p1 = xOverlap+(3*uid);
+    if(ptLocalId==uid && !includeSelf) {
+      *flagIter=1;
+      continue;
+    }
+    if( bondIntersectsQuad(p0, p1) ) {
+      *flagIter=1;
+    }
+  }
+}
+
+bool QuadFilter::bondIntersectsQuad(const double* p0, const double* p1) const {
+  // determine line-plane intersection
+  /*
+    t = (v1_ - p0)*normal/((p1-p0)*normal)
+
+    if (p1-p0)*normal = 0 then the line is contained in the plane
+    else the line intersects the plane
+
+    point of intersection is given by x = p0 + (p1-p0)*t
+  */
+  double numerator   = (v1_[0] - p0[0]) * normal_[0] + (v1_[1] - p0[1]) * normal_[1] + (v1_[2] - p0[2]) * normal_[2];
+  double denominator = (p1[0] - p0[0]) * normal_[0] + (p1[1] - p0[1]) * normal_[1] + (p1[2] - p0[2]) * normal_[2];
+
+  double t;
+
+  if(std::abs(denominator) < tolerance_){
+    // line is parallel to plane
+    // it may or may not lie on the plane
+    // if it does lie on the plane, then the numerator will be zero
+    // in either case, this function will return "no intersection"
+    t = DBL_MAX;
+  }
+  else {
+    // the line intersects the plane
+    t = numerator/denominator;
+  }
+
+  if (t < 0.0 || t > 1.0)
+    return false;
+
+  // intersection point
+  double x[3];
+  x[0] = p0[0] + t * (p1[0] - p0[0]);
+  x[1] = p0[1] + t * (p1[1] - p0[1]);
+  x[2] = p0[2] + t * (p1[2] - p0[2]);
+
+  // determine if the point is within the quad
+  return pointInQuad(x);
+}
+
+bool QuadFilter::pointInQuad(const double* x) const {
+  // Check if intersection point is within the polygon by splitting the 
+  // quad into two triangles and computing the barycentric coordinates for each
+  // triangle seperately.
+
+  double a[3], b[3], c[3], d[3];
+  for (int i=0 ; i<3 ; i++) {
+    a[i] = v3_[i] - v1_[i];
+    b[i] = v2_[i] - v1_[i];
+    c[i] = x[i]   - v1_[i];
+    d[i] = v4_[i] - v1_[i];
+  }
+
+  // Check if intersection point is within first triangle by computing the barycentric coordinates
+  double dot00 = a[0]*a[0] + a[1]*a[1] + a[2]*a[2];
+  double dot01 = a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+  double dot02 = a[0]*c[0] + a[1]*c[1] + a[2]*c[2];
+  double dot11 = b[0]*b[0] + b[1]*b[1] + b[2]*b[2];
+  double dot12 = b[0]*c[0] + b[1]*c[1] + b[2]*c[2];
+  double alpha = (dot11 * dot02 - dot01 * dot12) / (dot00 * dot11 - dot01 * dot01);
+  double beta  = (dot00 * dot12 - dot01 * dot02) / (dot00 * dot11 - dot01 * dot01);
+  bool inTriangle1 = (alpha > -tolerance_) && (beta > -tolerance_) && (alpha + beta < 1.0 + 2.0*tolerance_);
+
+  // Check if intersection point is within second triangle by computing the barycentric coordinates
+  dot01 = a[0]*d[0] + a[1]*d[1] + a[2]*d[2];
+  dot11 = d[0]*d[0] + d[1]*d[1] + d[2]*d[2];
+  dot12 = d[0]*c[0] + d[1]*c[1] + d[2]*c[2];
+  alpha = (dot11 * dot02 - dot01 * dot12) / (dot00 * dot11 - dot01 * dot01);
+  beta  = (dot00 * dot12 - dot01 * dot02) / (dot00 * dot11 - dot01 * dot01);
+  bool inTriangle2 = (alpha > -tolerance_) && (beta > -tolerance_) && (alpha + beta < 1.0 + 2.0*tolerance_);
+
+  // If the point is within one of the triangles the pooint is withon the quad
+  return inTriangle1 || inTriangle2;
 }
 
 } // namespace PdBondFilter

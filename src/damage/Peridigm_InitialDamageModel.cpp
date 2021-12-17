@@ -47,7 +47,7 @@
 
 #include "Peridigm_InitialDamageModel.hpp"
 #include "Peridigm_Field.hpp"
-#include "Peridigm_GenesisToTriangles.hpp"
+#include "Peridigm_GenesisToPolygons.hpp"
 #include "BondFilter.h"
 
 PeridigmNS::InitialDamageModel::InitialDamageModel(const Teuchos::ParameterList& params)
@@ -102,7 +102,7 @@ PeridigmNS::InitialDamageModel::initialize(const double dt,
     else if(type == "Exodus Mesh"){
       std::string file_name = params.get<std::string>("File Name");
       std::vector< std::vector< std::vector<double> > > triangles;
-      GenesisToTriangles(file_name, triangles);
+      GenesisToPolygons(file_name, triangles);
       for(unsigned int i=0 ; i<triangles.size() ; i++){
         std::shared_ptr<PdBondFilter::BondFilter> bondFilter(new PdBondFilter::TriangleFilter(triangles[i][0].data(), triangles[i][1].data(), triangles[i][2].data()));
         bondFilters.push_back(bondFilter);

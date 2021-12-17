@@ -1,4 +1,6 @@
-add_subdirectory(ShellBondFilter)
+if(HAVE_YAML)
+  add_subdirectory(ShellBondFilter)
+endif(HAVE_YAML)
 add_subdirectory(InitialDamage)
 add_subdirectory(LinearLPSBar)
 add_subdirectory(NeighborhoodVolume)
