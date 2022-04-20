@@ -4,6 +4,8 @@
 
 Cmake_minimum_required (VERSION 2.6)
 
+enable_language( Fortran )
+
 enable_testing ()
 project(Peridigm)
 
