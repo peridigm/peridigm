@@ -1,6 +1,6 @@
 # Running Simulations with Peridigm
 
-Peridigm is run from the command line and requires both an input deck (text file) and a discretization.  Input decks may be in either `.xml` format or `.peridigm` format.  The content of both file formats is identical, the main difference is that the `.peridigm` format is more human-readable.
+Peridigm is run from the command line and requires both an input deck (text file) and a discretization.  Input decks may be in either `.yaml` format or `.peridigm` format.  The content of both file formats is identical, the main difference is that the `.peridigm` format is more human-readable.
 
 An example command for running Peridigm:
 
