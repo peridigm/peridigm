@@ -41,12 +41,12 @@ if __name__ == "__main__":
       shutil.rmtree(item)
 
     # run Peridigm
-    command = ["mpiexec", "-np", "3","../../../../src/Peridigm", "../"+base_name+"_Run1.xml"]
+    command = ["mpiexec", "-np", "3", "--oversubscribe","../../../../src/Peridigm", "../"+base_name+"_Run1.xml"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:
         result = return_code
-    command = ["mpiexec", "-np", "3","../../../../src/Peridigm", "../"+base_name+"_Run2.xml"]
+    command = ["mpiexec", "-np", "3", "--oversubscribe","../../../../src/Peridigm", "../"+base_name+"_Run2.xml"]
     p = Popen(command, stdout=logfile, stderr=logfile)
     return_code = p.wait()
     if return_code != 0:
