@@ -1,4 +1,5 @@
 # Peridigm [![CircleCI](https://circleci.com/gh/peridigm/peridigm.svg?style=shield)](https://circleci.com/gh/nperidigm/peridigm) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/2d390b95b314447bac5673a07e7b4ea0)](https://www.codacy.com/gh/peridigm/peridigm/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=peridigm/peridigm&amp;utm_campaign=Badge_Grade)
+[![Github Actions](https://github.com/peridigm/peridigm/actions/workflows/test.yml/badge.svg)](https://github.com/peridigm/peridigm/actions/workflows/test.yml)
 
 Peridigm is an open-source computational peridynamics code developed, originally at Sandia National Laboratories and open-sourced in 2011, for massively-parallel multi-physics simulations.  It has been applied primarily to problems in solid mechanics involving pervasive material failure.  Peridigm is a C++ code utilizing foundational software components from Sandia's Trilinos project and is fully compatible with the Cubit mesh generator and Paraview visualization code.
 
