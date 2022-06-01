@@ -86,7 +86,7 @@ add_test (DeformationGradient_NoDeformation_np4 python ./DeformationGradient/NoD
 add_test (DeformationGradient_NoLoad_np1 python ./DeformationGradient/NoLoad_np1/NoLoad.py)
 add_test (DeformationGradient_NoLoad_np4 python ./DeformationGradient/NoLoad_np4/NoLoad.py)
 add_test (Interfaces_np1 python ./Interfaces/Interfaces_np1/Interfaces.py)
-add_test (Interfaces_np4 python ./Interfaces/Interfaces_np4/Interfaces.py)
+#add_test (Interfaces_np4 python ./Interfaces/Interfaces_np4/Interfaces.py)
 add_test (Pals_Simple_Shear_np1 python ./Pals_Simple_Shear/np1/Pals_Simple_Shear.py)
 
 add_custom_target( rtest

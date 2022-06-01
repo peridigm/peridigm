@@ -5,10 +5,6 @@ ENV HOME /root
 
 WORKDIR /
 
-RUN apt-get -yq update
-RUN apt-get -yq install openmpi-bin
-RUN apt-get -yq install openssh-server
-
 #Build Peridigm
 RUN mkdir peridigm
 WORKDIR /peridigm
@@ -20,6 +16,7 @@ ADD CMakeLists.txt .
 RUN mkdir /peridigm/build
 
 WORKDIR /peridigm/build/
+RUN apt-get install python-is-python3
 RUN cmake \
     -D CMAKE_BUILD_TYPE:STRING=Release \
     -D CMAKE_INSTALL_PREFIX:PATH=/usr/local/peridigm \
@@ -27,14 +24,17 @@ RUN cmake \
     -D CMAKE_CXX_COMPILER:STRING="mpicxx" \
     ..; \
     make && make install; \
-    cd ..; \
-    rm -rf peridigm
+    cd ..
+
+#rm -rf peridigm
 
 VOLUME /output
 WORKDIR /output
 ENV LD_LIBRARY_PATH /usr/local/netcdf/lib
 ENV PATH /usr/local/peridigm/bin:$PATH
 ENV PATH /usr/local/trilinos/bin:$PATH
+ENV OMPI_ALLOW_RUN_AS_ROOT 1
+ENV OMPI_ALLOW_RUN_AS_ROOT_CONFIRM 1
 
 RUN mkdir /var/run/sshd
 EXPOSE 22

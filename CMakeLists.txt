@@ -2,7 +2,8 @@
 # CMakeLists.txt file for Peridigm
 #
 
-Cmake_minimum_required (VERSION 2.6)
+Cmake_minimum_required (VERSION 3.3)
+cmake_policy(SET CMP0057 NEW)
 
 enable_language( Fortran )
 

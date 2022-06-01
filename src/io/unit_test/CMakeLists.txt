@@ -20,7 +20,6 @@ add_test (utPeridigm_ProximitySearch_np1 python ${CMAKE_BINARY_DIR}/scripts/run_
 add_test (utPeridigm_ProximitySearch_np2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./utPeridigm_ProximitySearch)
 add_test (utPeridigm_ProximitySearch_np3 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 3 ./utPeridigm_ProximitySearch)
 add_test (utPeridigm_ProximitySearch_np4 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 4 ./utPeridigm_ProximitySearch)
-add_test (utPeridigm_ProximitySearch_np5 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 5 ./utPeridigm_ProximitySearch)
 
 add_executable(utPeridigm_SearchTree ./utPeridigm_SearchTree.cpp)
 target_link_libraries(utPeridigm_SearchTree

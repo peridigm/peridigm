@@ -46,9 +46,9 @@ add_executable(ut_QuickGrid_loadBal_np2_4x4x4 ut_QuickGrid_loadBal_np2_4x4x4.cxx
 target_link_libraries(ut_QuickGrid_loadBal_np2_4x4x4  PdNeigh QuickGrid Utilities ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
 add_test (ut_QuickGrid_loadBal_np2_4x4x4 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 2 ./ut_QuickGrid_loadBal_np2_4x4x4)
 
-add_executable(ut_QuickGrid_loadBal_np8_4x4x4 ut_QuickGrid_loadBal_np8_4x4x4.cxx)
-target_link_libraries(ut_QuickGrid_loadBal_np8_4x4x4  PdNeigh QuickGrid Utilities ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
-add_test (ut_QuickGrid_loadBal_np8_4x4x4 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 8 ./ut_QuickGrid_loadBal_np8_4x4x4)
+#add_executable(ut_QuickGrid_loadBal_np8_4x4x4 ut_QuickGrid_loadBal_np8_4x4x4.cxx)
+#target_link_libraries(ut_QuickGrid_loadBal_np8_4x4x4  PdNeigh QuickGrid Utilities ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
+#add_test (ut_QuickGrid_loadBal_np8_4x4x4 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 8 ./ut_QuickGrid_loadBal_np8_4x4x4)
 
 add_executable(utFinitePlane utFinitePlane.cxx)
 target_link_libraries(utFinitePlane PdNeigh ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
