@@ -32,11 +32,11 @@ add_test (ut_QuickGridMPI_np2_3x3x2 python ${CMAKE_BINARY_DIR}/scripts/run_unit_
 
 add_executable(ut_QuickGridMPI_np3 ut_QuickGridMPI_np3.cxx)
 target_link_libraries(ut_QuickGridMPI_np3  QuickGrid PdNeigh ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
-add_test (ut_QuickGridMPI_np3 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 3 ./ut_QuickGridMPI_np3)
+add_test (ut_QuickGridMPI_np3 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 3 --oversubscribe ./ut_QuickGridMPI_np3)
 
 add_executable(ut_SmallMeshCylinder_np4 ut_SmallMeshCylinder_np4.cxx)
 target_link_libraries(ut_SmallMeshCylinder_np4  QuickGrid PdNeigh ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
-add_test (ut_SmallMeshCylinder_np4 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 4 ./ut_SmallMeshCylinder_np4)
+add_test (ut_SmallMeshCylinder_np4 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 4 --oversubscribe ./ut_SmallMeshCylinder_np4)
 
 add_executable(ut_SmallMeshCylinder ut_SmallMeshCylinder.cxx)
 target_link_libraries(ut_SmallMeshCylinder  QuickGrid PdNeigh ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})

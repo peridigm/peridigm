@@ -12,7 +12,7 @@ endif (NOT ${buildInSource})
 
 add_executable(ut_frameset_2x2x1_np4 ut_frameset_2x2x1_np4.cxx)
 target_link_libraries(ut_frameset_2x2x1_np4 PdNeigh QuickGrid Utilities ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
-add_test (ut_frameset_2x2x1_np4 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 4 ./ut_frameset_2x2x1_np4)
+add_test (ut_frameset_2x2x1_np4 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 4 --oversubscribe ./ut_frameset_2x2x1_np4)
 
 add_executable(ut_neighborhood_list ut_neighborhood_list.cxx)
 target_link_libraries(ut_neighborhood_list  PdNeigh QuickGrid Utilities ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
@@ -24,11 +24,11 @@ add_test (ut_Y-Z_crack python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./ut_
 
 add_executable(ut_Y-Z_crack_np4 ut_Y-Z_crack_np4.cxx)
 target_link_libraries(ut_Y-Z_crack_np4  PdNeigh QuickGrid Utilities ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
-add_test (ut_Y-Z_crack_np4 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 4 ./ut_Y-Z_crack_np4)
+add_test (ut_Y-Z_crack_np4 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 4 --oversubscribe ./ut_Y-Z_crack_np4)
 
 add_executable(ut_Y-Z_crack_jacobian_np4 ut_Y-Z_crack_jacobian_np4.cxx)
 target_link_libraries(ut_Y-Z_crack_jacobian_np4  PdNeigh QuickGrid Utilities ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
-add_test (ut_Y-Z_crack_jacobian_np4 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 4 ./ut_Y-Z_crack_jacobian_np4)
+add_test (ut_Y-Z_crack_jacobian_np4 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 4 --oversubscribe ./ut_Y-Z_crack_jacobian_np4)
 
 add_executable(ut_axisAlignedBoundaryPoints ut_axisAlignedBoundaryPoints.cxx)
 target_link_libraries(ut_axisAlignedBoundaryPoints  PdNeigh QuickGrid Utilities ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
@@ -60,7 +60,7 @@ target_link_libraries(utFinitePlaneFilter PdNeigh QuickGrid Utilities ${Trilinos
 
 add_executable(utReloadBalance_np4 utReloadBalance_np4.cxx)
 target_link_libraries(utReloadBalance_np4 PdNeigh QuickGrid Utilities ${Trilinos_LIBRARIES} ${UT_REQUIRED_LIBS})
-add_test (utReloadBalance_np4 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 4 ./utReloadBalance_np4)
+add_test (utReloadBalance_np4 python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py mpiexec -np 4 --oversubscribe ./utReloadBalance_np4)
 
 if(USE_YAML)
   add_executable(ut_reLoadBalance ut_reLoadBalance.cxx)
