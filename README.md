@@ -34,40 +34,8 @@ Peridigm is a C++ code intended for use on Mac and Linux operating systems.  Bot
  * [Installing Third-Party Packages and Libraries](https://github.com/peridigm/peridigm/blob/master/doc/InstallingThirdPartyLibs.md)
  * [Building Peridigm](https://github.com/peridigm/peridigm/blob/master/doc/BuildingPeridigm.md)
  * [Running Simulations with Peridigm](https://github.com/peridigm/peridigm/blob/master/doc/RunningSimulations.md)
+ * [Running Simulations with Peridigm Docker Image](https://github.com/peridigm/peridigm/blob/master/doc/RunningSimulationsDocker.md)
 
-## Docker Image
-
-To run Peridigm from a [docker](https://docs.docker.com/) image, simply run the following command from the terminal command line of a computer with docker installed:
-
-```bash
-sudo docker run peridigm/peridigm Peridigm [input_file.yaml]
-```
-
-where `[input_file.yaml]` should be replaced with the actual name of your
-Peridigm input file.
-
-To launch a parallel Peridigm computation, we can use [docker-compose](https://docs.docker.com/compose/) (if installed) to first launch a network of containers running Peridigm with
-
-```bash
-sudo docker-compose up --scale peridigm=4
-```
-
-from a directory that has a `docker-compose.yaml` file, e.g.
-[examples/fragmenting_cylinder](examples/fragmenting_cylinder).  In this
-example, we plan to use 4 processors, so we use the flag `--scale peridigm=4`.
-
-Once the network is running, you can run Peridigm with
-
-
-```bash
-sudo docker-compose exec peridigm mpiexec -np 4 Peridigm [input_file.yaml]
-```
-
-where `[input_file.yaml]` should be replaced with the actual name of your
-Peridigm input file.
-
-This use of `sudo` in the above commands may or may not be needed depending on
-you Docker installation, host operating system, and/or user configuration.
 
 ## Team
 
