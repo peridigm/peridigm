@@ -12,7 +12,7 @@ Peridigm input file.
 To launch a parallel Peridigm computation, we can use [docker-compose](https://docs.docker.com/compose/) (if installed) to first launch a network of containers running Peridigm with
 
 ```bash
-sudo docker-compose up --scale peridigm=4
+sudo docker-compose up --scale peridigm=4 -d
 ```
 
 from a directory that has a `docker-compose.yaml` file, e.g.

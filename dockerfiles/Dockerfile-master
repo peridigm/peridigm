@@ -1,0 +1,44 @@
+FROM peridigm/peridigm:test AS builder
+
+ENV HOME /root
+
+WORKDIR /peridigm/build
+
+#Install Peridigm
+RUN make install; \
+    cd ../..; \
+    rm -rf peridigm
+
+
+FROM debian:bookworm-slim
+
+RUN apt-get update; \
+    apt-get -yq install build-essential \
+                        zlib1g-dev \
+                        m4 \
+                        libopenmpi-dev \
+                        openmpi-bin \
+                        openssh-server \
+                        libcurl4-openssl-dev \
+                        python3 \
+                        libblas-dev \
+                        liblapack-dev \
+                        libboost-dev \
+                        libyaml-cpp-dev
+
+COPY --from=builder /usr/local/hdf5 /usr/local/hdf5
+COPY --from=builder /usr/local/netcdf /usr/local/netcdf
+COPY --from=builder /usr/local/trilinos /usr/local/trilinos
+COPY --from=builder /usr/local/peridigm /usr/local/peridigm
+
+VOLUME /output
+WORKDIR /output
+ENV LD_LIBRARY_PATH /usr/local/netcdf/lib
+ENV PATH /usr/local/peridigm/bin:$PATH
+ENV PATH /usr/local/trilinos/bin:$PATH
+ENV OMPI_ALLOW_RUN_AS_ROOT 1
+ENV OMPI_ALLOW_RUN_AS_ROOT_CONFIRM 1
+
+RUN mkdir /var/run/sshd
+EXPOSE 22
+CMD    ["/usr/sbin/sshd", "-D"]
