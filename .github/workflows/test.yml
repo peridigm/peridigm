@@ -1,7 +1,9 @@
 name: Build and test docker image
 on:
   push:
-    #tags: 'v*.*.*'
+  pull_request:
+  repository_dispatch:
+    types: [trigger]
 
 jobs:
   # Label of the container job
@@ -28,6 +30,7 @@ jobs:
           push: true
           tags: peridigm/peridigm:test
       - name: Minify docker image
+        if: ${{ success() }}
         uses: docker/build-push-action@v2
         with:
           context: .
