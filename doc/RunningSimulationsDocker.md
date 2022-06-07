@@ -3,11 +3,11 @@
 To run Peridigm from a [docker](https://docs.docker.com/) image, simply run the following command from the terminal command line of a computer with docker installed:
 
 ```bash
-sudo docker run peridigm/peridigm Peridigm [input_file.yaml]
+sudo docker run -v $PWD:/output peridigm/peridigm Peridigm [input_file.yaml]
 ```
 
 where `[input_file.yaml]` should be replaced with the actual name of your
-Peridigm input file.
+Peridigm input file.  This command should be run from the directory where `[input_file.yaml]` resides along with any geometry input files.
 
 To launch a parallel Peridigm computation, we can use [docker-compose](https://docs.docker.com/compose/) (if installed) to first launch a network of containers running Peridigm with
 
