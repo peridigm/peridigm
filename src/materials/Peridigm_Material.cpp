@@ -334,7 +334,7 @@ void PeridigmNS::Material::computeFiniteDifferenceJacobian(const double dt,
 
 double PeridigmNS::Material::calculateBulkModulus(const Teuchos::ParameterList & params) const
 {
-  bool bulkModulusDefined(false), shearModulusDefined(false), youngsModulusDefined(false), poissonsRatioDefined(false);
+  bool bulkModulusDefined(false), shearModulusDefined(false), youngsModulusDefined(false), poissonsRatioDefined(false), isPlaneStrain(false), isPlaneStress(false);
   double bulkModulus(0.0), shearModulus(0.0), youngsModulus(0.0), poissonsRatio(0.0);
   double computedValue;
 
@@ -354,6 +354,12 @@ double PeridigmNS::Material::calculateBulkModulus(const Teuchos::ParameterList &
     poissonsRatio = params.get<double>("Poisson's Ratio");
     poissonsRatioDefined = true;
   }
+  if( params.isParameter("Plane Strain") ){
+    isPlaneStrain = params.get<bool>("Plane Strain");
+  }
+  if( params.isParameter("Plane Stress") ){
+    isPlaneStress = params.get<bool>("Plane Stress");
+  }
 
   int numDefinedConstants = static_cast<int>(bulkModulusDefined) +
     static_cast<int>(shearModulusDefined) +
@@ -367,7 +373,12 @@ double PeridigmNS::Material::calculateBulkModulus(const Teuchos::ParameterList &
   else if(youngsModulusDefined && shearModulusDefined)
     computedValue = (youngsModulus * shearModulus) / (3.0*(3.0*shearModulus - youngsModulus));
   else if(youngsModulusDefined && poissonsRatioDefined)
-    computedValue = youngsModulus / (3.0*(1.0 - 2.0*poissonsRatio));
+    if( isPlaneStrain )
+      computedValue = youngsModulus / (2.0*(1.0 - poissonsRatio - 2.0*poissonsRatio*poissonsRatio));
+    else if(isPlaneStress )
+      computedValue = youngsModulus / (2.0*(1.0 - poissonsRatio));
+    else
+      computedValue = youngsModulus / (3.0*(1.0 - 2.0*poissonsRatio));
   else if(shearModulusDefined && poissonsRatioDefined)
     computedValue = (2.0*shearModulus*(1.0 + poissonsRatio)) / (3.0*(1.0 - 2.0*poissonsRatio));
   else

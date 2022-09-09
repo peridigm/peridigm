@@ -52,16 +52,32 @@
 
 PeridigmNS::ElasticBondBasedMaterial::ElasticBondBasedMaterial(const Teuchos::ParameterList& params)
   : Material(params),
-    m_bulkModulus(0.0), m_density(0.0), m_horizon(0.0), m_volumeFieldId(-1), m_damageFieldId(-1),
-    m_modelCoordinatesFieldId(-1), m_coordinatesFieldId(-1), m_forceDensityFieldId(-1), m_bondDamageFieldId(-1)
+    m_bulkModulus(0.0), m_shearModulus(0.0), m_density(0.0), m_horizon(0.0), m_isPlaneStrain(false), m_isPlaneStress(false), m_isPlaneStrainStress(false),
+    m_height(0.0), m_volumeFieldId(-1), m_damageFieldId(-1), m_modelCoordinatesFieldId(-1), m_coordinatesFieldId(-1), m_forceDensityFieldId(-1), m_bondDamageFieldId(-1)
 {
+  Teuchos::ParameterList internalParams = Teuchos::ParameterList(params); // Copy list such that it can be modified internally
   //! \todo Add meaningful asserts on material properties.
-  m_bulkModulus = params.get<double>("Bulk Modulus");
-  m_density = params.get<double>("Density");
-  m_horizon = params.get<double>("Horizon");
-  if(params.isParameter("Young's Modulus") || params.isParameter("Poisson's Ratio") || params.isParameter("Shear Modulus")){
-    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error:  The Elastic bond based material model supports only one elastic constant, the bulk modulus.");
+  m_density = internalParams.get<double>("Density");
+  m_horizon = internalParams.get<double>("Horizon");
+  if(internalParams.isParameter("Poisson's Ratio") || internalParams.isParameter("Shear Modulus") || (internalParams.isParameter("Bulk Modulus") && internalParams.isParameter("Young's Modulus"))){
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error:  The Elastic bond based material model supports only one elastic constant, the bulk modulus or Young's modulus.");
   }
+  m_isPlaneStrain = internalParams.get<bool>("Plane Strain", false);
+  m_isPlaneStress = internalParams.get<bool>("Plane Stress", false);
+  if(m_isPlaneStrain && m_isPlaneStress)
+    TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error: 'Plane Strain' and 'Plane Stress' are mutual exclusive!");
+  if(m_isPlaneStrain || m_isPlaneStress){
+    m_isPlaneStrainStress = true;
+    if(!internalParams.isParameter("Height"))
+      TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "**** Error: In case of 'Plane Strain' and 'Plane Stress' the height must be given!")
+  }
+  m_height = internalParams.get<double>("Height", 0.0);
+
+  internalParams.set<double>("Poisson's Ratio", 0.25); // 3d and plane strain case
+  if(m_isPlaneStress)
+    internalParams.set<double>("Poisson's Ratio", 1./3.); // 2d plane stress
+  m_shearModulus = calculateShearModulus(internalParams);
+  m_bulkModulus  = calculateBulkModulus(internalParams);
 
   PeridigmNS::FieldManager& fieldManager = PeridigmNS::FieldManager::self();
   m_volumeFieldId                  = fieldManager.getFieldId(PeridigmField::ELEMENT, PeridigmField::SCALAR,      PeridigmField::CONSTANT, "Volume");
@@ -111,5 +127,5 @@ PeridigmNS::ElasticBondBasedMaterial::computeForce(const double dt,
   dataManager.getData(m_bondDamageFieldId, PeridigmField::STEP_NP1)->ExtractView(&bondDamage);
   dataManager.getData(m_forceDensityFieldId, PeridigmField::STEP_NP1)->ExtractView(&force);
 
-  MATERIAL_EVALUATION::computeInternalForceElasticBondBased(x,y,cellVolume,bondDamage,force,neighborhoodList,numOwnedPoints,m_bulkModulus,m_horizon);
+  MATERIAL_EVALUATION::computeInternalForceElasticBondBased(x,y,cellVolume,bondDamage,force,neighborhoodList,numOwnedPoints,m_bulkModulus,m_horizon,m_isPlaneStrainStress,m_height);
 }

@@ -61,7 +61,9 @@ void computeInternalForceElasticBondBased
     const int* localNeighborList,
     int numOwnedPoints,
     double BULK_MODULUS,
-    double horizon
+    double horizon,
+    const bool isPlaneStrainStress,
+    const double height
 );
 
 }

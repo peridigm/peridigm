@@ -1,0 +1,13 @@
+
+# plot simulation results against elastic modulus
+E = 200.0
+Modulus(x) = E * x
+
+set terminal pdf enhanced font "Times-Roman,24" size 12in, 8in 
+set output "ElasticBondBased.pdf"
+set xlabel "Engineering Strain (m/m)" font "Times-Roman,32"
+set ylabel "Engineering Stress (GPa)" font "Times-Roman,32"
+set yrange [0.0:0.25]
+set key bottom right
+plot "ElasticBondBased.csv" using ($1)*0.001/1.0e-8:($3-$2)*0.5*1.0e-9 with points pt 7 ps 4 title "Peridynamic Simulation", \
+     Modulus(x) with lines lw 10 title "Elastic Modulus"

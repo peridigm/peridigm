@@ -72,11 +72,7 @@ namespace PeridigmNS {
     virtual double BulkModulus() const { return m_bulkModulus; }
 
     //! Returns the shear modulus of the material.
-    virtual double ShearModulus() const {
-      double nu = 0.25;
-      double shearModulus = (3.0*m_bulkModulus*(1.0 - 2.0*nu))/(2.0*(1.0 + nu));
-      return shearModulus;
-    }
+    virtual double ShearModulus() const { return m_shearModulus; }
 
     //! Returns a vector of field IDs corresponding to the variables associated with the material.
     virtual std::vector<int> FieldIds() const { return m_fieldIds; }
@@ -108,8 +104,13 @@ namespace PeridigmNS {
 
     // material parameters
     double m_bulkModulus;
+    double m_shearModulus;
     double m_density;
     double m_horizon;
+    bool m_isPlaneStrain;
+    bool m_isPlaneStress;
+    bool m_isPlaneStrainStress;
+    double m_height;
 
     // field spec ids for all relevant data
     std::vector<int> m_fieldIds;
