@@ -1,0 +1,2 @@
+blot ElasticBondBasedPlaneStress.e -input ElasticBondBased2DPlaneStress.blot met
+gnuplot ElasticBondBased2DPlaneStress.plotgen

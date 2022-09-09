@@ -1,5 +1,6 @@
 if(HAVE_YAML)
   add_subdirectory(ShellBondFilter)
+  add_subdirectory(ElasticBondBased)
 endif(HAVE_YAML)
 add_subdirectory(InitialDamage)
 add_subdirectory(LinearLPSBar)
