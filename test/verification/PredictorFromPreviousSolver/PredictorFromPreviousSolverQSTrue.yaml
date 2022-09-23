@@ -1,0 +1,62 @@
+Peridigm:
+  Blocks:
+    Crystal:
+      Block Names: block_1
+      Horizon: 0.301
+      Material: Metal
+  Boundary Conditions:
+    Node Set Bot: ../nodelist_1.csv
+    Node Set Top: ../nodelist_2.csv
+    Displacement Y:
+      Type: Prescribed Displacement
+      Node Set: Node Set Top
+      Coordinate: y
+      Value: 1e-4*y*t
+    Fixed Y:
+      Type: Prescribed Displacement
+      Node Set: Node Set Bot
+      Coordinate: y
+      Value: "0.0"
+  Discretization:
+    Type: "Text File"
+    Input Mesh File: "../mesh.csv"
+  Materials:
+    Metal:
+      Material Model: Elastic Plastic Correspondence
+      Hourglass Coefficient: 0.02
+      Young's Modulus: 200e9
+      Poisson's Ratio: 0.3
+      Density: 7000.0
+      Yield Stress: 20e6
+  Output:
+    Output Filename: PredictorFromPreviousSolverQSTrue
+    Output Frequency: 1
+    Output Variables:
+      Force: true
+      Force_Density: true
+      Displacement: true
+      Velocity: true
+      Model_Coordinates: true
+      Volume: true
+      Number_Of_Neighbors: true
+      Deformation_Gradient: true
+      Unrotated_Cauchy_Stress: true
+      Cauchy_Stress: true
+      Shape_Tensor_Inverse: true
+      Equivalent_Plastic_Strain: true 
+  Solver1:
+    Initial Time: 0.0
+    Final Time: 1.0
+    QuasiStatic:
+      Number of Load Steps: 1
+      Maximum Solver Iterations: 10
+      Absolute Tolerance: 1e-3
+  Solver2:
+    Initial Time: 1.0
+    Final Time: 2.0
+    Initialize Predictor From Previous Solver: true
+    QuasiStatic:
+      Number of Load Steps: 1
+      Maximum Solver Iterations: 10
+      Absolute Tolerance: 1e-3
+            
