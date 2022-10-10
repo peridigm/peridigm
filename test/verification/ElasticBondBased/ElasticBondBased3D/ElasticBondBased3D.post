@@ -1,0 +1,2 @@
+blot ElasticBondBased3D.e -input ElasticBondBased.blot met
+gnuplot ElasticBondBased.plotgen

@@ -1,0 +1,6 @@
+add_test (ElasticBondBased3D_np1 python ./ElasticBondBased3D/np1/ElasticBondBased3D.py)
+add_test (ElasticBondBased3D_np4 python ./ElasticBondBased3D/np4/ElasticBondBased3D.py)
+add_test (ElasticBondBased2DPlaneStrain_np1 python ./ElasticBondBased2DPlaneStrain/np1/ElasticBondBased2DPlaneStrain.py)
+add_test (ElasticBondBased2DPlaneStrain_np4 python ./ElasticBondBased2DPlaneStrain/np4/ElasticBondBased2DPlaneStrain.py)
+add_test (ElasticBondBased2DPlaneStress_np1 python ./ElasticBondBased2DPlaneStress/np1/ElasticBondBased2DPlaneStress.py)
+add_test (ElasticBondBased2DPlaneStress_np4 python ./ElasticBondBased2DPlaneStress/np4/ElasticBondBased2DPlaneStress.py)
