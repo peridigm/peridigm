@@ -63,7 +63,9 @@ void computeInternalForceElasticBondBased
     const int* localNeighborList,
     int numOwnedPoints,
     double BULK_MODULUS,
-    double horizon
+    double horizon,
+    const bool isPlaneStrainStress,
+    const double height
 )
 {
   double volume, neighborVolume, X[3], neighborX[3], initialBondLength, damageOnBond;
@@ -71,7 +73,11 @@ void computeInternalForceElasticBondBased
   int neighborhoodIndex(0), bondDamageIndex(0), neighborId;
 
   const double pi = PeridigmNS::value_of_pi();
-  double constant = 18.0*BULK_MODULUS/(pi*horizon*horizon*horizon*horizon);
+  double constant = 0.0;
+  if(isPlaneStrainStress)
+    constant = 12.0*BULK_MODULUS/(pi*height*horizon*horizon*horizon); // plain strain and plain stress
+  else
+    constant = 18.0*BULK_MODULUS/(pi*horizon*horizon*horizon*horizon); // 3d
 
   for(int p=0 ; p<numOwnedPoints ; p++){
 
@@ -128,7 +134,9 @@ template void computeInternalForceElasticBondBased<double>
     const int*  localNeighborList,
     int numOwnedPoints,
     double BULK_MODULUS,
-    double horizon
+    double horizon,
+    const bool isPlaneStrainStress,
+    const double height
  );
 
 /** Explicit template instantiation for Sacado::Fad::DFad<double>. */
@@ -142,7 +150,9 @@ template void computeInternalForceElasticBondBased<Sacado::Fad::DFad<double> >
     const int*  localNeighborList,
     int numOwnedPoints,
     double BULK_MODULUS,
-    double horizon
+    double horizon,
+    const bool isPlaneStrainStress,
+    const double height
 );
 
 }

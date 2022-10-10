@@ -1,0 +1,14 @@
+
+reset
+create brick x 1.0 y 3.0 z 0.25
+create brick x 1.0 y 1.5 z 0.25
+volume 2 move x 0.0 y 2.25 z 0.0 
+create brick x 1.0 y 1.5 z 0.25
+volume 3 move x 0.0 y -2.25 z 0.0
+block 1 volume 3
+block 2 volume 1
+block 3 volume 2
+volume all size 0.25
+mesh volume all
+nodeset 1 volume 1 2 3
+export genesis "ElasticBondBased2D.g" overwrite
