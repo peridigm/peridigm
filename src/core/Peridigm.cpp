@@ -1981,11 +1981,18 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
   if(analysisHasMultiphysics)
     noxPressureVAtDOFWithKinematicBC = Teuchos::rcp(new Epetra_Vector(fluidPressureV->Map()));
 
-  // Initialize velocity to zero
-  v->PutScalar(0.0);
-  if(analysisHasMultiphysics){
-    unknownsV->PutScalar(0.0);
-    fluidPressureV->PutScalar(0.0);
+  // By default initialize velocity to zero.
+  // If this solver was preceded by another (restart or several solvers in the same input file) we have the velocities
+  // that we can use as predictor values, so - if the user asks - don't zero them out.
+  const bool initPredictorFromPreviousSolver{solverParams->get<bool>("Initialize Predictor From Previous Solver", false)};
+  if (!initPredictorFromPreviousSolver)
+  {
+    v->PutScalar(0.0);
+    if(analysisHasMultiphysics)
+    {
+      unknownsV->PutScalar(0.0);
+      fluidPressureV->PutScalar(0.0);
+    }
   }
 
   // Pointers into mothership vectors
@@ -2132,8 +2139,8 @@ void PeridigmNS::Peridigm::executeNOXQuasiStatic(Teuchos::RCP<Teuchos::Parameter
 
     v->PutScalar(0.0); 
     if(analysisHasMultiphysics){
-      unknownsV->PutScalar(0.0);
-      fluidPressureV->PutScalar(0.0);
+    	unknownsV->PutScalar(0.0);
+			fluidPressureV->PutScalar(0.0);
     }
 
     boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(initialGuess);
@@ -2486,6 +2493,16 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
   else
     predictor = Teuchos::rcp(new Epetra_Vector(v->Map()));
 
+  // By default initialize velocity to zero.
+  // If this solver was preceded by another (restart or several solvers in the same input file) we have the velocities
+  // that we can use as predictor values, so - if the user asks - don't zero them out.
+  const bool initPredictorFromPreviousSolver{solverParams->get<bool>("Initialize Predictor From Previous Solver", false)};
+  if (initPredictorFromPreviousSolver) 
+  {
+    for(int i=0 ; i<lhs->MyLength() ; ++i)
+      (*predictor)[i] = (*v)[i];
+  }
+
   bool solverVerbose = solverParams->get("Verbose", false);
   Teuchos::RCP<Teuchos::ParameterList> quasiStaticParams = sublist(solverParams, "QuasiStatic", true);
   int maxSolverIterations = quasiStaticParams->get("Maximum Solver Iterations", 10);
@@ -2744,7 +2761,7 @@ void PeridigmNS::Peridigm::executeQuasiStatic(Teuchos::RCP<Teuchos::ParameterLis
       }
 
       // On the first iteration, use a predictor based on the velocity from the previous load step
-      if(solverIteration == 1 && step > 1 && !disableHeuristics) {
+      if(solverIteration == 1 && (step > 1 || initPredictorFromPreviousSolver) && !disableHeuristics) {
         for(int i=0 ; i<lhs->MyLength() ; ++i)
           (*lhs)[i] = (*predictor)[i]*timeIncrement;
         boundaryAndInitialConditionManager->applyKinematicBC_InsertZeros(lhs);

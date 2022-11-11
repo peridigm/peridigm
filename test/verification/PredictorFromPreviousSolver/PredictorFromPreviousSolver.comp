@@ -1,0 +1,31 @@
+
+DEFAULT TOLERANCE absolute 1.0E-9
+COORDINATES absolute 1.0E-12
+TIME STEPS absolute 1.0E-14
+NODAL VARIABLES absolute 1.0E-12
+	DisplacementX             absolute 1.0E-9
+	DisplacementY             absolute 1.0E-9
+	DisplacementZ             absolute 1.0E-9
+	ForceX                    absolute 1.0E-3
+	ForceY                    absolute 1.0E-3
+	ForceZ                    absolute 1.0E-3
+ELEMENT VARIABLES absolute 1.0E-6
+	Deformation_GradientXX
+	Deformation_GradientXY
+	Deformation_GradientXZ
+	Deformation_GradientYY
+	Deformation_GradientYX
+	Deformation_GradientYZ
+	Deformation_GradientZZ
+	Deformation_GradientZX
+	Deformation_GradientZY
+	Unrotated_Cauchy_StressXX absolute 1.0E-1
+	Unrotated_Cauchy_StressXY absolute 1.0E-1
+	Unrotated_Cauchy_StressXZ absolute 1.0E-1
+	Unrotated_Cauchy_StressYY absolute 1.0E-1
+	Unrotated_Cauchy_StressYX absolute 1.0E-1
+	Unrotated_Cauchy_StressYZ absolute 1.0E-1
+	Unrotated_Cauchy_StressZZ absolute 1.0E-1
+	Unrotated_Cauchy_StressZX absolute 1.0E-1
+	Unrotated_Cauchy_StressZY absolute 1.0E-1
+
