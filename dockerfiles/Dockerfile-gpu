@@ -9,7 +9,7 @@ RUN make install; \
     cd ../..; \
     rm -rf peridigm
 
-FROM nvidia/cuda:11.2.0-cudnn8-devel-ubuntu20.04
+FROM nvidia/cuda:12.0.0-devel-ubuntu22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update;\
@@ -28,9 +28,11 @@ RUN apt-get -yq install build-essential \
                         libblas-dev \
                         liblapack-dev \
                         libboost-dev \
-                        libyaml-cpp-dev
+                        libyaml-cpp-dev \
+			cmake
 
 
+RUN ln -s /usr/lib/x86_64-linux-gnu/libdl.so.2 /usr/lib/x86_64-linux-gnu/libdl.so 
 
 COPY --from=builder /usr/local/hdf5 /usr/local/hdf5
 COPY --from=builder /usr/local/netcdf /usr/local/netcdf
