@@ -3,9 +3,7 @@
 
 Peridigm is an open-source computational peridynamics code developed, originally at Sandia National Laboratories and open-sourced in 2011, for massively-parallel multi-physics simulations.  It has been applied primarily to problems in solid mechanics involving pervasive material failure.  Peridigm is a C++ code utilizing foundational software components from Sandia's Trilinos project and is fully compatible with the Cubit mesh generator and Paraview visualization code.
 
-The [peridigm-users](https://software.sandia.gov/mailman/listinfo/peridigm-users) e-mail list connects Peridigm enthusiasts and provides a forum for user questions.
-
-The 2012 [Peridigm Users' Guide](http://www.sandia.gov/~djlittl/docs/PeridigmV1.0.0.pdf) gives an overview of Peridigm's core capabilities. Further details on software for computational peridynamics can be found in the [Roadmap for Peridynamic Software Implementation](http://www.sandia.gov/~djlittl/docs/PeridynamicSoftwareRoadmap.pdf).
+An overview of Peridigm is given in [The Peridigm Meshfree Peridynamics Code](https://doi.org/10.1007/s42102-023-00100-0), by Littlewood, Parks, Foster, Mitchell, and Diehl, J Peridyn Nonlocal Model, 2023, and in the 2012 [Peridigm Users' Guide](http://www.sandia.gov/~djlittl/docs/PeridigmV1.0.0.pdf). Further details on software for computational peridynamics can be found in the [Roadmap for Peridynamic Software Implementation](http://www.sandia.gov/~djlittl/docs/PeridynamicSoftwareRoadmap.pdf).
 
 Peridigm development began under the Physics & Engineering Models element of the US DOE's Advanced Simulation and Computing (ASC) program.  The project was led by Michael Parks and managed by John Aidun.  Subsequent funding has been provided by the US DOE through the ASC, ASCR, and LDRD programs.
 
