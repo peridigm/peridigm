@@ -51,7 +51,8 @@ The following individuals have made significant contributions to the Peridigm co
 
 When citing Peridigm, please reference the following:
 
-M.L. Parks, D.J. Littlewood, J.A. Mitchell, and S.A. Silling, Peridigm Users' Guide, Tech. Report SAND2012-7800, Sandia National Laboratories, 2012.
+* Littlewood, D.J., Parks, M.L., Foster, J.T. et al. The Peridigm Meshfree Peridynamics Code. J Peridyn Nonlocal Model (2023). [https://doi.org/10.1007/s42102-023-00100-0](https://doi.org/10.1007/s42102-023-00100-0)
+* M.L. Parks, D.J. Littlewood, J.A. Mitchell, and S.A. Silling, Peridigm Users' Guide, Tech. Report SAND2012-7800, Sandia National Laboratories, 2012.
 
 ## License
 
