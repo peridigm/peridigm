@@ -5,6 +5,8 @@
 Cmake_minimum_required (VERSION 3.3)
 cmake_policy(SET CMP0057 NEW)
 
+set(CMAKE_CXX_STANDARD 17)
+
 enable_language( Fortran )
 
 enable_testing ()
@@ -41,6 +43,8 @@ option (USE_DAKOTA
    "Enable tests and functionality that depend on a DAKOTA installation."
    OFF
 )
+
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 #
 # Trilinos configuration
