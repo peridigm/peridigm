@@ -51,7 +51,7 @@
 #include <set>
 #include <sstream>
 
-using namespace std;
+using std::vector;
 
 void PeridigmNS::Block::initialize(Teuchos::RCP<const Epetra_BlockMap> globalOwnedScalarPointMap,
                                    Teuchos::RCP<const Epetra_BlockMap> globalOverlapScalarPointMap,

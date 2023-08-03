@@ -51,7 +51,7 @@
 #include "correspondence.h"
 #include <Teuchos_Assert.hpp>
 
-using namespace std;
+using std::vector;
 
 PeridigmNS::CorrespondenceMaterial::CorrespondenceMaterial(const Teuchos::ParameterList& params)
   : Material(params),

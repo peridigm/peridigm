@@ -51,8 +51,6 @@
 #include "material_utilities.h"
 #include <Teuchos_Assert.hpp>
 
-using namespace std;
-
 PeridigmNS::IsotropicHardeningPlasticBondAssociatedCorrespondenceMaterial::IsotropicHardeningPlasticBondAssociatedCorrespondenceMaterial(const Teuchos::ParameterList& params)
   : BondAssociatedCorrespondenceMaterial(params),
     m_yieldStress(0.0), m_hardeningStrainConstant(0.0), m_hardeningExponent(0.0),

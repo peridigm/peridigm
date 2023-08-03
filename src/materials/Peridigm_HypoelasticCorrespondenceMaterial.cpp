@@ -52,8 +52,6 @@
 #include <Teuchos_Assert.hpp>
 #include <Sacado.hpp> // for MPI_abort
 
-using namespace std;
-
 PeridigmNS::HypoelasticCorrespondenceMaterial::HypoelasticCorrespondenceMaterial(const Teuchos::ParameterList& params)
   : Material(params),
     m_density(0.0), m_actualHorizon(0.0),

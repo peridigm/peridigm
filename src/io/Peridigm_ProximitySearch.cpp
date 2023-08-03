@@ -44,13 +44,18 @@
 // ************************************************************************
 //@HEADER
 
+#include <set>
 #include <Epetra_Import.h>
 #include "Peridigm_ProximitySearch.hpp"
 #include "QuickGrid.h"
 #include "PdZoltan.h"
 #include "NeighborhoodList.h"
 
-using namespace std;
+using std::vector;
+using std::map;
+using std::pair;
+using std::cout;
+using std::set;
 
 void PeridigmNS::ProximitySearch::RebalanceNeighborhoodList(Teuchos::RCP<const Epetra_BlockMap> currentOwnedMap,     /* input  */
                                                             Teuchos::RCP<const Epetra_BlockMap> currentOverlapMap,   /* input  */

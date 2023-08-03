@@ -56,7 +56,8 @@
 #include <sstream>
 #include <fstream>
 
-using namespace std;
+using std::vector;
+using std::string;
 using namespace PeridigmNS;
 
 //! Generate simple eight-point cube mesh

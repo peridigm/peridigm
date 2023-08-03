@@ -54,7 +54,15 @@
 
 #include "Peridigm_SerialMatrix.hpp"
 
-using namespace std;
+using std::vector;
+using std::map;
+using std::pair;
+using std::copy;
+using std::cout;
+using std::ofstream;
+using std::istringstream;
+using std::endl;
+using std::setprecision;
 
 PeridigmNS::SerialMatrix::SerialMatrix(Teuchos::RCP<Epetra_FECrsMatrix> epetraFECrsMatrix)
   : FECrsMatrix(epetraFECrsMatrix)

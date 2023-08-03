@@ -52,7 +52,16 @@
 #include <sstream>
 #include <EpetraExt_MultiVectorOut.h>
 #include <EpetraExt_MultiVectorIn.h>
-using namespace std;
+using std::vector;
+using std::pair;
+using std::copy;
+using std::cout;
+using std::ofstream;
+using std::istringstream;
+using std::stringstream;
+using std::endl;
+using std::setprecision;
+using std::string;
 
 void PeridigmNS::State::allocatePointData(PeridigmField::Length length,
                                           vector<int> fieldIds,

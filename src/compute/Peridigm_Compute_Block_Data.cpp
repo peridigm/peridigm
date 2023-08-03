@@ -50,7 +50,6 @@
 #include "Peridigm_Compute_Block_Data.hpp"
 #include "Peridigm_Field.hpp"
 
-using namespace std;
 
 //! Standard constructor.
 PeridigmNS::Compute_Block_Data::Compute_Block_Data(Teuchos::RCP<const Teuchos::ParameterList> params,

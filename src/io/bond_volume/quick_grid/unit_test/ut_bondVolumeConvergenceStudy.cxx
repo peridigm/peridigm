@@ -88,7 +88,6 @@ const size_t myRank=0;
 double horizon;
 std::string neighborhoodType;
 std::string type;
-//using namespace std;
 
 void probe_shear
 (
