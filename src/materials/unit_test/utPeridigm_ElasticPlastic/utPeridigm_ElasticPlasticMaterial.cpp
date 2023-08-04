@@ -59,7 +59,6 @@
 
 #include <fstream>
 
-using namespace std;
 using namespace MATERIAL_EVALUATION;
 using std::shared_ptr;
 using namespace Field_NS;

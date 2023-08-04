@@ -65,7 +65,22 @@
 #include <math.h>
 #include <exodusII.h>
 
-using namespace std;
+using std::vector;
+using std::map;
+using std::pair;
+using std::set;
+using std::copy;
+using std::cout;
+using std::ofstream;
+using std::istringstream;
+using std::stringstream;
+using std::endl;
+using std::setprecision;
+using std::string;
+using std::setfill;
+using std::setw;
+using std::logic_error;
+using std::invalid_argument;
 
 //#define DEBUGGING_BACKWARDS_COMPATIBILITY_NEIGHBORHOOD_LIST
 

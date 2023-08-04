@@ -51,8 +51,6 @@
 #include "material_utilities.h"
 #include <Teuchos_Assert.hpp>
 
-using namespace std;
-
 PeridigmNS::ElasticBondAssociatedCorrespondenceMaterial::ElasticBondAssociatedCorrespondenceMaterial(const Teuchos::ParameterList& params)
   : BondAssociatedCorrespondenceMaterial(params),
     m_vonMisesStressFieldId(-1), 

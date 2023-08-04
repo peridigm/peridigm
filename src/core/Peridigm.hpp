@@ -646,7 +646,7 @@ namespace PeridigmNS {
     string textMultiphysDoFs;
 
     // Map for restart files
-    map<string, string> restartFiles;
+    std::map<string, string> restartFiles;
 
     // Set name of restart files
     void setRestartNames(char const * path);

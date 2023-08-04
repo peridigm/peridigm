@@ -51,8 +51,6 @@
 #include "material_utilities.h"
 #include <Teuchos_Assert.hpp>
 
-using namespace std;
-
 PeridigmNS::ViscoplasticNeedlemanCorrespondenceMaterial::ViscoplasticNeedlemanCorrespondenceMaterial(const Teuchos::ParameterList& params)
   : CorrespondenceMaterial(params),
     m_yieldStress(0.0), m_strainHardeningExponent(0.0), m_rateHardeningExponent(0.0), m_refStrainRate(0.0), m_refStrain0(0.0), m_refStrain1(0.0),

@@ -53,7 +53,7 @@
 #include <cmath>
 #include <correspondence.h> // For the semi-Lagrangian (Hypoelastic) models
 
-using namespace std;
+using std::vector;
 
 void PeridigmNS::Material::computeJacobian(const double dt,
                                            const int numOwnedPoints,

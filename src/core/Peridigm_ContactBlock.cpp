@@ -50,7 +50,8 @@
 #include <vector>
 #include <set>
 
-using namespace std;
+using std::vector;
+
 
 void PeridigmNS::ContactBlock::initialize(Teuchos::RCP<const Epetra_BlockMap> globalOwnedScalarPointMap,
                                    Teuchos::RCP<const Epetra_BlockMap> globalOverlapScalarPointMap,

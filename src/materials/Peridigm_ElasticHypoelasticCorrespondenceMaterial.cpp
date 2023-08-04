@@ -51,8 +51,6 @@
 #include "material_utilities.h"
 #include <Teuchos_Assert.hpp>
 
-using namespace std;
-
 PeridigmNS::ElasticHypoelasticCorrespondenceMaterial::ElasticHypoelasticCorrespondenceMaterial(const Teuchos::ParameterList& params)
   : HypoelasticCorrespondenceMaterial(params),
     m_unrotatedRateOfDeformationFieldId(-1),
