@@ -65,7 +65,18 @@
   extern "C" {
 #endif
 
-using namespace std;
+using std::vector;
+using std::pair;
+using std::set;
+using std::copy;
+using std::cout;
+using std::ofstream;
+using std::istringstream;
+using std::stringstream;
+using std::endl;
+using std::setprecision;
+using std::string;
+using std::back_inserter;
 
 PD_LIB_DLL_EXPORT const int run_peridigm(int argc, char *argv[], const bool finalize){
   static bool initialized = false;

@@ -50,8 +50,16 @@
 #include <cmath>
 #include <sstream>
 
-
-using namespace std;
+using std::vector;
+using std::pair;
+using std::copy;
+using std::cout;
+using std::ofstream;
+using std::istringstream;
+using std::stringstream;
+using std::endl;
+using std::setprecision;
+using std::string;
 
 PeridigmNS::BoundaryCondition::BoundaryCondition(const string & name_,
                                                  const Teuchos::ParameterList& bcParams_,

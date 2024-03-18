@@ -53,7 +53,18 @@
 #include "Peridigm_ComputeManager.hpp"
 #include "compute_includes.hpp"
 
-using namespace std;
+using std::vector;
+using std::pair;
+using std::set;
+using std::copy;
+using std::cout;
+using std::ofstream;
+using std::istringstream;
+using std::stringstream;
+using std::endl;
+using std::setprecision;
+using std::string;
+using std::back_inserter;
 
 PeridigmNS::ComputeManager::ComputeManager( Teuchos::RCP<Teuchos::ParameterList> params, Teuchos::RCP<const Epetra_Comm> epetraComm, Teuchos::RCP<const Teuchos::ParameterList> computeClassGlobalParams ) {
 

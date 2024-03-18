@@ -9,7 +9,20 @@
 #include <Teuchos_GlobalMPISession.hpp>
 #include <Teuchos_RCP.hpp>
 
-using namespace std;
+using std::ostream;
+using std::vector;
+using std::map;
+using std::pair;
+using std::copy;
+using std::cout;
+using std::ofstream;
+using std::istringstream;
+using std::stringstream;
+using std::endl;
+using std::setprecision;
+using std::string;
+using std::left;
+using std::right;
 
 PeridigmNS::Timer& PeridigmNS::Timer::self() {
   static Timer timer;

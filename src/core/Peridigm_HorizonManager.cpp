@@ -50,7 +50,20 @@
 #include <Teuchos_Exceptions.hpp>
 #include <iterator>
 
-using namespace std;
+using std::vector;
+using std::map;
+using std::pair;
+using std::copy;
+using std::cout;
+using std::string;
+using std::ofstream;
+using std::istringstream;
+using std::stringstream;
+using std::endl;
+using std::setprecision;
+using std::istream_iterator;
+using std::back_inserter;
+
 
 PeridigmNS::HorizonManager::HorizonManager() {
   // set up RTCompiler

@@ -50,7 +50,17 @@
 #include <vector>
 #include <set>
 
-using namespace std;
+using std::vector;
+using std::pair;
+using std::set;
+using std::copy;
+using std::cout;
+using std::ofstream;
+using std::istringstream;
+using std::stringstream;
+using std::endl;
+using std::setprecision;
+using std::string;
 
 PeridigmNS::BlockBase::BlockBase(std::string blockName_, int blockID_, Teuchos::ParameterList& blockParams_)
   : blockName(blockName_), blockID(blockID_), blockParams(blockParams_)

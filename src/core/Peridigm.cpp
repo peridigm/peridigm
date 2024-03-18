@@ -100,7 +100,19 @@
 #include "EpetraExt_VectorOut.h"
 #include <sys/stat.h>
 
-using namespace std;
+using std::vector;
+using std::pair;
+using std::map;
+using std::copy;
+using std::cout;
+using std::ifstream;
+using std::ofstream;
+using std::istringstream;
+using std::stringstream;
+using std::endl;
+using std::setprecision;
+using std::istream_iterator;
+using std::back_inserter;
 
 PeridigmNS::Peridigm::Peridigm(const MPI_Comm& comm,
                                Teuchos::RCP<Teuchos::ParameterList> params,

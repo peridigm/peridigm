@@ -47,7 +47,9 @@
 
 #include "Peridigm_GeometryUtils.hpp"
 #include <Teuchos_Assert.hpp>
-using namespace std;
+using std::vector;
+using std::pair;
+using std::cout;
 
 void PeridigmNS::tetCentroidAndVolume(double* const nodeCoordinates,
                                       double* centroid,
