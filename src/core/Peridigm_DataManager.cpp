@@ -51,7 +51,11 @@
 #include "Peridigm_DataManager.hpp"
 #include "Peridigm_Field.hpp"
 
-using namespace std;
+using std::vector;
+using std::map;
+using std::pair;
+using std::cout;
+using std::stringstream;
 
 std::vector<int> PeridigmNS::DataManager::allGlobalFieldIds;
 Teuchos::RCP<const Epetra_BlockMap> PeridigmNS::DataManager::scalarGlobalMap;

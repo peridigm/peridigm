@@ -50,7 +50,7 @@
 #include "Peridigm_ShortRangeForceContactModel.hpp"
 #include "Peridigm_UserDefinedTimeDependentShortRangeForceContactModel.hpp"
 
-using namespace std;
+using std::string;
 
 Teuchos::RCP<PeridigmNS::ContactModel>
 PeridigmNS::ContactModelFactory::create(const Teuchos::ParameterList& contactModelParams)

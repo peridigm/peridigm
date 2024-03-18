@@ -49,7 +49,17 @@
 #include <Teuchos_Assert.hpp>
 #include <algorithm>
 
-using namespace std;
+using std::vector;
+using std::map;
+using std::pair;
+using std::copy;
+using std::cout;
+using std::ofstream;
+using std::istringstream;
+using std::stringstream;
+using std::endl;
+using std::setprecision;
+using std::string;
 
 int PeridigmNS::PeridigmField::variableDimension(Length length){
   int varDimension;

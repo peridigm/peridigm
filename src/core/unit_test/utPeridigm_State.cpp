@@ -23,7 +23,7 @@
 
 using namespace Teuchos;
 using namespace PeridigmNS;
-using namespace std;
+using std::vector;
 
 //! Create a two-point problem for testing.
 PeridigmNS::State createTwoPointProblem(Teuchos::RCP<Epetra_Comm> comm, Teuchos::RCP<Epetra_BlockMap> &overlapScalarPointMap, Teuchos::RCP<Epetra_BlockMap> &overlapVectorPointMap, Teuchos::RCP<Epetra_BlockMap> &ownedScalarBondMap, vector<int> &scalarPointFieldIds, vector<int> &vectorPointFieldIds, vector<int> &bondFieldIds)

@@ -48,7 +48,19 @@
 #include "Peridigm_InterfaceAwareDamageModel.hpp"
 #include "Peridigm_Field.hpp"
 
-using namespace std;
+using std::vector;
+using std::map;
+using std::pair;
+using std::copy;
+using std::cout;
+using std::ofstream;
+using std::ifstream;
+using std::istringstream;
+using std::stringstream;
+using std::endl;
+using std::setprecision;
+using std::string;
+using std::back_inserter;
 
 PeridigmNS::InterfaceAwareDamageModel::InterfaceAwareDamageModel(const Teuchos::ParameterList& params)
   : DamageModel(params), m_applyThermalStrains(false), m_modelCoordinatesFieldId(-1), m_coordinatesFieldId(-1), m_damageFieldId(-1), m_bondDamageFieldId(-1), m_criticalStretchFieldId(-1), m_deltaTemperatureFieldId(-1)

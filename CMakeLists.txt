@@ -5,6 +5,8 @@
 Cmake_minimum_required (VERSION 3.3)
 cmake_policy(SET CMP0057 NEW)
 
+set(CMAKE_CXX_STANDARD 17)
+
 enable_language( Fortran )
 
 enable_testing ()
@@ -34,6 +36,16 @@ find_library(Lapack_LIBRARY
 )
 set(BlasLapack_Libraries ${blas} ${lapack})
 
+find_library(Netcdf_LIBRARY
+   NAMES Netcdf
+   PATHS ${NETCDF_LIBRARY_DIRS}
+)
+
+find_library( yamlcpp
+  NAMES yaml-cpp
+  PATHS /usr/lib64
+  )
+
 #
 # DAKOTA configuration
 #
@@ -41,6 +53,8 @@ option (USE_DAKOTA
    "Enable tests and functionality that depend on a DAKOTA installation."
    OFF
 )
+
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 #
 # Trilinos configuration
@@ -52,14 +66,11 @@ MESSAGE("Trilinos installation:")
 MESSAGE("   Trilinos_DIR = ${Trilinos_DIR}")
 MESSAGE("   Trilinos_VERSION = ${Trilinos_VERSION}")
 MESSAGE("   Trilinos_PACKAGE_LIST = ${Trilinos_PACKAGE_LIST}")
-MESSAGE("   Trilinos_TPL_LIST = ${Trilinos_TPL_LIST}")
-#MESSAGE("   Trilinos_TPL_INCLUDE_DIRS = ${Trilinos_TPL_INCLUDE_DIRS}")
-#MESSAGE("   Trilinos_TPL_LIBRARIES = ${Trilinos_TPL_LIBRARIES}")
-MESSAGE("   Trilinos_TPL_LIBRARY_DIRS = ${Trilinos_TPL_LIBRARY_DIRS}")
 MESSAGE("   Trilinos_BUILD_SHARED_LIBS = ${Trilinos_BUILD_SHARED_LIBS}")
 MESSAGE("   Trilinos_CXX_COMPILER_FLAGS = ${Trilinos_CXX_COMPILER_FLAGS}")
 # Hack for now until Trilinos exports cmake variable for binaries directory
-SET(Trilinos_BINARY_PATH ${Trilinos_LIBRARY_DIRS}/../bin)
+SET(Trilinos_BINARY_PATH ${Trilinos_INCLUDE_DIRS}/../bin)
+MESSAGE("   Trilinos_BINARY_PATH = ${Trilinos_BINARY_PATH}")
 #
 # Remove PyTrilinos if it's there to avoid errors, we don't use it in Peridigm
 #
@@ -68,22 +79,13 @@ LIST(REMOVE_ITEM Trilinos_LIBRARIES "pytrilinos")
 # verbose output
 #MESSAGE("   Trilinos_LIBRARIES = ${Trilinos_LIBRARIES}")
 MESSAGE("   Trilinos_INCLUDE_DIRS = ${Trilinos_INCLUDE_DIRS}")
-MESSAGE("   Trilinos_LIBRARY_DIRS = ${Trilinos_LIBRARY_DIRS}")
 MESSAGE("")
-
-# Check for netcdf
-LIST(FIND Trilinos_TPL_LIST Netcdf Netcdf_Package_Index)
-IF(Netcdf_Package_Index LESS 0)
-  MESSAGE("FATAL_ERROR \n\nError:  Netcdf NOT found.  Netcdf is a REQUIRED Trilinos TPL.\n\n")
-ENDIF()
 
 # Check for yaml
 LIST(FIND Trilinos_TPL_LIST yaml-cpp yaml-cpp_Package_Index)
-IF(yaml-cpp_Package_Index GREATER -1)
-    MESSAGE("-- Trilinos was compiled with TPL_ENABLE_yaml-cpp.\n\n   Will compile Peridigm to support YAML input files.\n\n")
-    ADD_DEFINITIONS(-DUSE_YAML)
-    SET(HAVE_YAML TRUE)
-ENDIF()
+ADD_DEFINITIONS(-DUSE_YAML)
+SET(HAVE_YAML TRUE)
+
 
 #
 # Enable performance testing
@@ -100,16 +102,23 @@ IF (ALBANY_SEACAS)
        SEACAS_EPU
        NAMES epu
        PATHS ${Trilinos_BIN_DIRS} ENV PATH
-  )
-  find_program(
-       SEACAS_EXODIFF
-       NAMES exodiff
-       PATHS ${Trilinos_BIN_DIRS} ENV PATH
-  )
-  find_program(
-       SEACAS_ALGEBRA
-       NAMES algebra
-       PATHS ${Trilinos_BIN_DIRS} ENV PATH
+      # PATHS /opt/apps/libs/trilinos-14.4.0-1-peri-mpi/bin
+      REQUIRED
+)
+find_program(
+      SEACAS_EXODIFF
+      NAMES exodiff
+      PATHS ${Trilinos_BIN_DIRS} ENV PATH
+      # PATHS /opt/apps/libs/trilinos-14.4.0-1-peri-mpi/bin
+      REQUIRED
+)
+find_program(
+      SEACAS_ALGEBRA
+      NAMES algebra
+      PATHS ${Trilinos_BIN_DIRS} ENV PATH
+      # PATHS /opt/apps/libs/trilinos-14.4.0-1-peri-mpi/bin
+      REQUIRED
+      
   )
 ENDIF()
 

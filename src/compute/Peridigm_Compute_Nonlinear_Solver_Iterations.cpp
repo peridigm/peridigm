@@ -50,8 +50,6 @@
 #include "Peridigm_Compute_Nonlinear_Solver_Iterations.hpp"
 #include "Peridigm_Field.hpp"
 
-using namespace std;
-
 //! Standard constructor.
 PeridigmNS::Compute_Nonlinear_Solver_Iterations::Compute_Nonlinear_Solver_Iterations(Teuchos::RCP<const Teuchos::ParameterList> params,
                                                                                      Teuchos::RCP<const Epetra_Comm> epetraComm_,

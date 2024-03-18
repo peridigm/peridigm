@@ -52,7 +52,7 @@
 #include <vector>
 #include <sstream>
 
-using namespace std;
+using std::string;
 using std::shared_ptr;
 
 PeridigmNS::PdQuickGridDiscretization::PdQuickGridDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,

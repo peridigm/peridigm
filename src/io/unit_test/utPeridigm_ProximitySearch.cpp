@@ -45,7 +45,7 @@
 // ************************************************************************
 //@HEADER
 
-
+#include <set>
 #include <Epetra_ConfigDefs.h> // used to define HAVE_MPI
 #ifdef HAVE_MPI
   #include <Epetra_MpiComm.h>
@@ -60,7 +60,11 @@
 
 using namespace Teuchos;
 using namespace PeridigmNS;
-using namespace std;
+using std::vector;
+using std::map;
+using std::pair;
+using std::cout;
+using std::set;
 
 
 TEUCHOS_UNIT_TEST(ProximitySearch, TwoPointProblem) {
