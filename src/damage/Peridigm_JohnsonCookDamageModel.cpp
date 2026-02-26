@@ -51,8 +51,6 @@
 #include "material_utilities.h" // to use Influence Function 
 #include "correspondence.h" // to compute weighted volume
 
-using namespace std;
-
 PeridigmNS::JohnsonCookDamageModel::JohnsonCookDamageModel(const Teuchos::ParameterList& params)
   : DamageModel(params), 
     m_thresholdDamage(0.0), 

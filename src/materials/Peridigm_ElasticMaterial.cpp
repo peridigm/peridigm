@@ -54,7 +54,7 @@
 #include <Sacado.hpp>
 #include <cmath>
 
-using namespace std;
+using std::vector;
 
 PeridigmNS::ElasticMaterial::ElasticMaterial(const Teuchos::ParameterList& params)
   : Material(params),

@@ -48,8 +48,6 @@
 #include "Peridigm_CriticalStretchDamageModel.hpp"
 #include "Peridigm_Field.hpp"
 
-using namespace std;
-
 PeridigmNS::CriticalStretchDamageModel::CriticalStretchDamageModel(const Teuchos::ParameterList& params)
   : DamageModel(params), m_applyThermalStrains(false), m_modelCoordinatesFieldId(-1), m_coordinatesFieldId(-1), m_damageFieldId(-1), m_bondDamageFieldId(-1), m_deltaTemperatureFieldId(-1)
 {

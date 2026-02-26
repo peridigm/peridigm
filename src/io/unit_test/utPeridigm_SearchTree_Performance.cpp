@@ -61,7 +61,12 @@
 #include <fstream>
 
 
-using namespace std;
+using std::vector;
+using std::string;
+using std::ifstream;
+using std::cout;
+using std::endl;
+using std::istringstream;
 using namespace PeridigmNS;
 
 

@@ -51,8 +51,6 @@
 #include "Peridigm_Discretization.hpp"
 #include "Peridigm_Field.hpp"
 
-using namespace std;
-
 //! Standard constructor.
 PeridigmNS::Compute_Node_Set_Data::Compute_Node_Set_Data(Teuchos::RCP<const Teuchos::ParameterList> params,
                                                          Teuchos::RCP<const Epetra_Comm> epetraComm_,

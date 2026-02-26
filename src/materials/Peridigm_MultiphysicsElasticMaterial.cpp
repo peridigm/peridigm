@@ -55,7 +55,7 @@
 #include <Sacado.hpp>
 #include <cmath>
 
-using namespace std;
+using std::vector;
 
 PeridigmNS::MultiphysicsElasticMaterial::MultiphysicsElasticMaterial(const Teuchos::ParameterList& params)
   : Material(params),

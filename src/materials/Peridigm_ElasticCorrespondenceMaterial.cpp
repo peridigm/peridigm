@@ -51,8 +51,6 @@
 #include "material_utilities.h"
 #include <Teuchos_Assert.hpp>
 
-using namespace std;
-
 PeridigmNS::ElasticCorrespondenceMaterial::ElasticCorrespondenceMaterial(const Teuchos::ParameterList& params)
   : CorrespondenceMaterial(params),
     m_applyThermalStrains(false),

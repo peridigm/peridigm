@@ -54,7 +54,6 @@
 #include "Peridigm_Field.hpp"
 #include <Epetra_SerialComm.h>
 
-using namespace std;
 using namespace PeridigmNS;
 using namespace Teuchos;
 

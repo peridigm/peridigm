@@ -60,7 +60,7 @@
 
 using namespace Teuchos;
 using namespace PeridigmNS;
-using namespace std;
+using std::vector;
 
 //! Exercise tetVolume() and tetCentroid functions
 TEUCHOS_UNIT_TEST(GeometryUtils, TetGeometry) {
