@@ -50,7 +50,7 @@
 #include "material_utilities.h" // to use Influence Function 
 #include "correspondence.h" // to compute weighted volume
 
-using namespace std;
+using std::max;
 
 PeridigmNS::VonMisesStressDamageModel::VonMisesStressDamageModel(const Teuchos::ParameterList& params)
   : DamageModel(params), 

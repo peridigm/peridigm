@@ -63,7 +63,21 @@
 #include <sstream>
 #include <fstream>
 
-using namespace std;
+using std::vector;
+using std::map;
+using std::pair;
+using std::set;
+using std::copy;
+using std::cout;
+using std::ofstream;
+using std::ifstream;
+using std::istringstream;
+using std::stringstream;
+using std::endl;
+using std::setprecision;
+using std::string;
+using std::istream_iterator;
+using std::back_inserter;
 
 PeridigmNS::TextFileDiscretization::TextFileDiscretization(const Teuchos::RCP<const Epetra_Comm>& epetra_comm,
                                                            const Teuchos::RCP<Teuchos::ParameterList>& params) :

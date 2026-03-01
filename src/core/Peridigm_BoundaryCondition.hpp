@@ -58,7 +58,7 @@
 #include "FunctionRTC.hh"
 #endif
 
-using namespace std;
+using std::string;
 
 namespace PeridigmNS {
 

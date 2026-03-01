@@ -54,8 +54,6 @@
 #include "Peridigm_JohnsonCookDamageModel.hpp"
 #include "Peridigm_VonMisesStressDamageModel.hpp"
 
-using namespace std;
-
 Teuchos::RCP<PeridigmNS::DamageModel>
 PeridigmNS::DamageModelFactory::create(const Teuchos::ParameterList& damageModelParams)
 {

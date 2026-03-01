@@ -55,7 +55,7 @@
 #include <iostream>
 
 
-using namespace std;
+using std::vector;
 using namespace PeridigmNS;
 using namespace Teuchos;
 

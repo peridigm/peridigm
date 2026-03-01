@@ -55,7 +55,20 @@
 #include <sstream>
 #include <iterator>
 
-using namespace std;
+using std::vector;
+using std::map;
+using std::pair;
+using std::set;
+using std::copy;
+using std::cout;
+using std::ofstream;
+using std::istringstream;
+using std::stringstream;
+using std::endl;
+using std::setprecision;
+using std::string;
+using std::istream_iterator;
+using std::back_inserter;
 
 //#define NEW_STUFF 1
 

@@ -56,7 +56,7 @@
 #include <limits>
 #include <vector>
 
-using namespace std;
+using std::vector;
 
 PeridigmNS::ElasticPlasticMaterial::ElasticPlasticMaterial(const Teuchos::ParameterList & params)
   : Material(params),

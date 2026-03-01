@@ -49,7 +49,11 @@
 #include <sstream>
 #include <fstream>
 
-using namespace std;
+using std::vector;
+using std::endl;
+using std::stringstream;
+using std::ofstream;
+using std::pair;
 
 PeridigmNS::Compute_Bond_Visualization::Compute_Bond_Visualization(Teuchos::RCP<const Teuchos::ParameterList> params,
                                                                    Teuchos::RCP<const Epetra_Comm> epetraComm_,

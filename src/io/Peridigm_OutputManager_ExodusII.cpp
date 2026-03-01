@@ -62,7 +62,19 @@
 #include "Peridigm_OutputManager_ExodusII.hpp"
 #include "Peridigm_Field.hpp"
 
-using namespace std;
+using std::vector;
+using std::map;
+using std::pair;
+using std::copy;
+using std::cout;
+using std::ofstream;
+using std::ifstream;
+using std::istringstream;
+using std::stringstream;
+using std::endl;
+using std::setprecision;
+using std::string;
+using std::back_inserter;
 
 PeridigmNS::OutputManager_ExodusII::OutputManager_ExodusII(const Teuchos::RCP<Teuchos::ParameterList>& params, 
                                                            PeridigmNS::Peridigm *peridigm_,

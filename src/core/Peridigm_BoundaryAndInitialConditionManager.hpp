@@ -129,13 +129,13 @@ namespace PeridigmNS {
     bool createRankDeficientNodesNodeSet;
 
     //! Set of all the boundary conditions
-    vector<Teuchos::RCP<BoundaryCondition> > boundaryConditions;
+    std::vector<Teuchos::RCP<BoundaryCondition> > boundaryConditions;
 
     //! Set of all the initial conditions
-    vector<Teuchos::RCP<BoundaryCondition> > initialConditions;
+    std::vector<Teuchos::RCP<BoundaryCondition> > initialConditions;
 
     //! Set of all the force contributions
-    vector<Teuchos::RCP<BoundaryCondition> > forceContributions;
+    std::vector<Teuchos::RCP<BoundaryCondition> > forceContributions;
 
   private:
 

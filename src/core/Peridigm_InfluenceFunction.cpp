@@ -47,8 +47,6 @@
 
 #include "Peridigm_InfluenceFunction.hpp"
 
-using namespace std;
-
 PG_RuntimeCompiler::Function PeridigmNS::InfluenceFunction::rtcFunction(3, "rtcInfluenceFunctionUserDefinedFunction");
 
 PeridigmNS::InfluenceFunction& PeridigmNS::InfluenceFunction::self() {

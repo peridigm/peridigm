@@ -55,7 +55,7 @@
 #include <string>
 #include <cstdio>
 
-using namespace std;
+using std::vector;
 
 using MATERIAL_EVALUATION::PALS::NUM_LAGRANGE_MULTIPLIERS;
 

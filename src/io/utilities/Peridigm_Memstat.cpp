@@ -14,7 +14,14 @@
 #include <Teuchos_GlobalMPISession.hpp>
 #include <Teuchos_RCP.hpp>
 
-using namespace std;
+using std::vector;
+using std::map;
+using std::pair;
+using std::cout;
+using std::left;
+using std::right;
+using std::setw;
+using std::endl;
 
 PeridigmNS::Memstat * PeridigmNS::Memstat::myMemstatPtr = 0;
 Teuchos::RCP<const Epetra_Comm > PeridigmNS::Memstat::myComm;

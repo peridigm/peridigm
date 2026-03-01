@@ -79,8 +79,6 @@
 
 #endif
 
-using namespace std;
-
 PeridigmNS::LCMMaterial::LCMMaterial(const Teuchos::ParameterList& params)
   : Material(params)
 {

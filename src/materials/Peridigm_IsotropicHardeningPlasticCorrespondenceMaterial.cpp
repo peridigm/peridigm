@@ -51,8 +51,6 @@
 #include "material_utilities.h"
 #include <Teuchos_Assert.hpp>
 
-using namespace std;
-
 PeridigmNS::IsotropicHardeningPlasticCorrespondenceMaterial::IsotropicHardeningPlasticCorrespondenceMaterial(const Teuchos::ParameterList& params)
   : CorrespondenceMaterial(params),
     m_yieldStress(0.0), m_hardMod(0.0), 
