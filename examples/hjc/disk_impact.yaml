@@ -1,0 +1,97 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Adapted from ../disk_impact/disk_impact.yaml; SI units.
+# Run from this directory, or update Input Mesh File to the existing mesh.
+Peridigm:
+  Discretization:
+    Type: "Exodus"
+    Input Mesh File: "../disk_impact/disk_impact.g"
+
+  Materials:
+    Disk Material:
+      Material Model: "HJC Correspondence"
+      Density: 2700.0
+      Shear Modulus: 2.417e10
+      Hourglass Coefficient: 0.05
+      A: 0.29
+      B: 2.06
+      C: 0.0013
+      N: 0.866
+      Compressive Strength: 1.19e8
+      Tensile Strength: 8.2e6
+      Reference Strain Rate: 1.0
+      EFMIN: 0.01
+      SFMAX: 5.0
+      Crushing Pressure: 4.0e7
+      Crushing Volumetric Strain: 0.00124
+      Locking Pressure: 1.2e9
+      Locking Plastic Volumetric Strain: 0.011
+      D1: 0.04
+      D2: 1.0
+      K1: 1.287e10
+      K2: 1.631e10
+      K3: 6.495e10
+    Ball Material:
+      Material Model: "Elastic"
+      Density: 7700.0
+      Bulk Modulus: 160.0e9
+      Shear Modulus: 78.30e9
+
+  Blocks:
+    Disk Block:
+      Block Names: "block_1"
+      Material: "Disk Material"
+      Horizon: 0.0031
+    Ball Block:
+      Block Names: "block_2"
+      Material: "Ball Material"
+      Horizon: 0.0031
+
+  Contact:
+    Search Radius: 0.01
+    Search Frequency: 10
+    Models:
+      Disk Ball Contact:
+        Contact Model: "Short Range Force"
+        Contact Radius: 0.000775
+        Spring Constant: 1.0e12
+    Interactions:
+      Disk with Ball:
+        First Block: "block_1"
+        Second Block: "block_2"
+        Contact Model: "Disk Ball Contact"
+
+  Boundary Conditions:
+    Sphere Initial Displacement:
+      Type: "Initial Displacement"
+      Node Set: "nodelist_1"
+      Coordinate: "z"
+      Value: "-0.008"
+    Sphere Initial Velocity:
+      Type: "Initial Velocity"
+      Node Set: "nodelist_1"
+      Coordinate: "z"
+      Value: "-100.0"
+
+  Solver:
+    Initial Time: 0.0
+    Final Time: 0.000050
+    Verlet:
+      Fixed dt: 5.0e-8
+
+  Output:
+    Output File Type: "ExodusII"
+    Output Filename: "hjc_disk_impact"
+    Output Frequency: 20
+    Output Variables:
+      Displacement: true
+      Velocity: true
+      Volume: true
+      Element_Id: true
+      Contact_Force: true
+      HJC_Pressure: true
+      Von_Mises_Stress: true
+      HJC_Damage: true
+      HJC_Plastic_Volume: true
+      Equivalent_Plastic_Strain: true
+      Deformation_Gradient: true
+      Global_Kinetic_Energy: true

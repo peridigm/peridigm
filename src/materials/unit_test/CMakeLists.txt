@@ -23,6 +23,12 @@ target_link_libraries(utPeridigm_ElasticMaterial
 )
 add_test (utPeridigm_ElasticMaterial python ${CMAKE_BINARY_DIR}/scripts/run_unit_test.py ./utPeridigm_ElasticMaterial)
 
+add_executable(utPeridigm_HJCCorrespondenceMaterial utPeridigm_HJCCorrespondenceMaterial.cpp)
+target_link_libraries(utPeridigm_HJCCorrespondenceMaterial
+  ${Peridigm_LIBRARY} ${PdMaterialUtilitiesLib} PdField QuickGrid
+  ${REQUIRED_LIBS} ${Trilinos_LIBRARIES})
+add_test(NAME utPeridigm_HJCCorrespondenceMaterial COMMAND utPeridigm_HJCCorrespondenceMaterial)
+
 
 add_executable(utPeridigm_MultiphysicsElasticMaterial ./utPeridigm_MultiphysicsElasticMaterial.cpp)
 target_link_libraries(utPeridigm_MultiphysicsElasticMaterial

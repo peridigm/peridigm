@@ -47,6 +47,7 @@
 
 #include <Teuchos_Assert.hpp>
 #include "Peridigm_MaterialFactory.hpp"
+#include "Peridigm_HJCCorrespondenceMaterial.hpp"
 #include "Peridigm_ElasticMaterial.hpp"
 #include "Peridigm_MultiphysicsElasticMaterial.hpp"
 #include "Peridigm_ElasticPlasticMaterial.hpp"
@@ -140,6 +141,8 @@ PeridigmNS::MaterialFactory::create(const Teuchos::ParameterList& materialParams
     TEUCHOS_TEST_FOR_EXCEPT_MSG(true, "\n**** Elastic Correspondence Partial Stress material model unavailable, recompile with -DUSE_SANDIA_INTERNAL.\n");
 #endif
   }
+  else if (materialModelName == "HJC Correspondence")
+    materialModel = Teuchos::rcp( new HJCCorrespondenceMaterial(materialParams) );
   else if (materialModelName == "Pressure Dependent Elastic Plastic"){
 #ifdef PERIDIGM_CJL
     materialModel = Teuchos::rcp( new LammiConcreteModel(materialParams) );
